@@ -1967,7 +1967,7 @@ lives_filter_error_t weed_apply_instance (weed_plant_t *inst, weed_plant_t *init
       // layer needs resizing
 
       if (prefs->pb_quality==PB_QUALITY_HIGH||opwidth==0||opheight==0) {
-	if (!resize_layer(layer,width,height,GDK_INTERP_HYPER,cpalette,iclamping)) return FILTER_ERROR_UNABLE_TO_RESIZE;
+	if (!resize_layer(layer,width,height,LIVES_INTERP_BEST,cpalette,iclamping)) return FILTER_ERROR_UNABLE_TO_RESIZE;
       }
       else {
 	if (!resize_layer(layer,width,height,get_interp_value(prefs->pb_quality),cpalette,iclamping)) return FILTER_ERROR_UNABLE_TO_RESIZE;
@@ -2091,7 +2091,7 @@ lives_filter_error_t weed_apply_instance (weed_plant_t *inst, weed_plant_t *init
 	  width=weed_get_int_value(channel,"width",&error);
 	  height=weed_get_int_value(channel,"height",&error);
 	  if (width != opwidth || height != opheight) {
-	    if (!resize_layer(channel,opwidth,opheight,GDK_INTERP_HYPER,WEED_PALETTE_END,0)) return FILTER_ERROR_UNABLE_TO_RESIZE;
+	    if (!resize_layer(channel,opwidth,opheight,LIVES_INTERP_BEST,WEED_PALETTE_END,0)) return FILTER_ERROR_UNABLE_TO_RESIZE;
 
 	  }
 	}
@@ -7373,7 +7373,7 @@ boolean weed_playback_gen_start (void) {
 	  mainw->current_file=fg_generator_clip;
 	  cfile->fps=weed_get_double_value(inst,"target_fps",&error);
 	  set_main_title(cfile->file_name,0);
-	  lives_spin_button_set_value(GTK_SPIN_BUTTON(mainw->spinbutton_pb_fps),cfile->fps);
+	  lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_pb_fps),cfile->fps);
 	  mainw->current_file=current_file;
 	}
 

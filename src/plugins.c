@@ -595,7 +595,7 @@ void on_vppa_cancel_clicked (GtkButton *button, gpointer user_data) {
   g_free(vppw);
 
   if (prefsw!=NULL) {
-    lives_window_present(GTK_WINDOW(prefsw->prefs_dialog));
+    lives_window_present(LIVES_WINDOW(prefsw->prefs_dialog));
     gdk_window_raise(lives_widget_get_xwindow(prefsw->prefs_dialog));
   }
 }
@@ -613,11 +613,11 @@ void on_vppa_ok_clicked (GtkButton *button, gpointer user_data) {
   _vid_playback_plugin *vpp=vppw->plugin;
 
   if (vpp==mainw->vpp) {
-    if (vppw->spinbuttonw!=NULL) mainw->vpp->fwidth=lives_spin_button_get_value_as_int(GTK_SPIN_BUTTON(vppw->spinbuttonw));
-    if (vppw->spinbuttonh!=NULL) mainw->vpp->fheight=lives_spin_button_get_value_as_int(GTK_SPIN_BUTTON(vppw->spinbuttonh));
-    if (vppw->fps_entry!=NULL) fixed_fps=lives_entry_get_text(GTK_ENTRY(vppw->fps_entry));
+    if (vppw->spinbuttonw!=NULL) mainw->vpp->fwidth=lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(vppw->spinbuttonw));
+    if (vppw->spinbuttonh!=NULL) mainw->vpp->fheight=lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(vppw->spinbuttonh));
+    if (vppw->fps_entry!=NULL) fixed_fps=lives_entry_get_text(LIVES_ENTRY(vppw->fps_entry));
     if (vppw->pal_entry!=NULL) {
-      cur_pal=g_strdup(lives_entry_get_text(GTK_ENTRY(vppw->pal_entry)));
+      cur_pal=g_strdup(lives_entry_get_text(LIVES_ENTRY(vppw->pal_entry)));
 
       if (get_token_count(cur_pal,' ')>1) {
 	gchar **array=g_strsplit(cur_pal," ",2);
@@ -715,7 +715,7 @@ void on_vppa_ok_clicked (GtkButton *button, gpointer user_data) {
 		(*vpp->init_screen)(mainw->pwidth,mainw->pheight,TRUE,xwinid,vpp->extra_argc,vpp->extra_argv);
 	      }
 	      if (mainw->vpp->capabilities&VPP_LOCAL_DISPLAY&&prefs->play_monitor==0) {
-		gtk_window_set_keep_below(GTK_WINDOW(mainw->play_window),TRUE);
+		gtk_window_set_keep_below(LIVES_WINDOW(mainw->play_window),TRUE);
 		mainw->ext_keyboard=TRUE;
 	      }
 	    }
@@ -747,14 +747,14 @@ void on_vppa_ok_clicked (GtkButton *button, gpointer user_data) {
   }
   else {
     if (vppw->spinbuttonw!=NULL) 
-      future_prefs->vpp_fwidth=lives_spin_button_get_value_as_int(GTK_SPIN_BUTTON(vppw->spinbuttonw));
+      future_prefs->vpp_fwidth=lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(vppw->spinbuttonw));
     else future_prefs->vpp_fwidth=-1;
     if (vppw->spinbuttonh!=NULL) 
-      future_prefs->vpp_fheight=lives_spin_button_get_value_as_int(GTK_SPIN_BUTTON(vppw->spinbuttonh));
+      future_prefs->vpp_fheight=lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(vppw->spinbuttonh));
     else future_prefs->vpp_fheight=-1;
-    if (vppw->fps_entry!=NULL) fixed_fps=lives_entry_get_text(GTK_ENTRY(vppw->fps_entry));
+    if (vppw->fps_entry!=NULL) fixed_fps=lives_entry_get_text(LIVES_ENTRY(vppw->fps_entry));
     if (vppw->pal_entry!=NULL) {
-      cur_pal=g_strdup(lives_entry_get_text(GTK_ENTRY(vppw->pal_entry)));
+      cur_pal=g_strdup(lives_entry_get_text(LIVES_ENTRY(vppw->pal_entry)));
 
       if (get_token_count(cur_pal,' ')>1) {
 	gchar **array=g_strsplit(cur_pal," ",2);
@@ -919,17 +919,17 @@ _vppaw *on_vpp_advanced_clicked (GtkButton *button, gpointer user_data) {
   g_free(title);
 
   accel_group = GTK_ACCEL_GROUP(lives_accel_group_new ());
-  gtk_window_add_accel_group (GTK_WINDOW (vppa->dialog), accel_group);
+  gtk_window_add_accel_group (LIVES_WINDOW (vppa->dialog), accel_group);
 
   if (prefs->show_gui) {
-    if (prefsw!=NULL) gtk_window_set_transient_for(GTK_WINDOW(vppa->dialog),GTK_WINDOW(prefsw->prefs_dialog));
+    if (prefsw!=NULL) gtk_window_set_transient_for(LIVES_WINDOW(vppa->dialog),GTK_WINDOW(prefsw->prefs_dialog));
     else {
-      if (mainw->multitrack==NULL) gtk_window_set_transient_for(GTK_WINDOW(vppa->dialog),GTK_WINDOW(mainw->LiVES));
-      else gtk_window_set_transient_for(GTK_WINDOW(vppa->dialog),GTK_WINDOW(mainw->multitrack->window));
+      if (mainw->multitrack==NULL) gtk_window_set_transient_for(LIVES_WINDOW(vppa->dialog),GTK_WINDOW(mainw->LiVES));
+      else gtk_window_set_transient_for(LIVES_WINDOW(vppa->dialog),GTK_WINDOW(mainw->multitrack->window));
     }
   }
 
-  dialog_vbox = lives_dialog_get_content_area(GTK_DIALOG(vppa->dialog));
+  dialog_vbox = lives_dialog_get_content_area(LIVES_DIALOG(vppa->dialog));
 
   // the filling...
   if (tmpvpp->get_description!=NULL) {
@@ -962,7 +962,7 @@ _vppaw *on_vpp_advanced_clicked (GtkButton *button, gpointer user_data) {
     g_free(tmp);
     g_free(tmp2);
     vppa->fps_entry=lives_combo_get_entry(LIVES_COMBO(combo));
-    lives_entry_set_width_chars (GTK_ENTRY (lives_combo_get_entry(LIVES_COMBO(combo))), 14);
+    lives_entry_set_width_chars (LIVES_ENTRY (lives_combo_get_entry(LIVES_COMBO(combo))), 14);
 
 
     g_list_free_strings(fps_list_strings);
@@ -972,12 +972,12 @@ _vppaw *on_vpp_advanced_clicked (GtkButton *button, gpointer user_data) {
 
     if (tmpvpp->fixed_fps_numer>0) {
       gchar *tmp=g_strdup_printf("%d:%d",tmpvpp->fixed_fps_numer,tmpvpp->fixed_fps_denom);
-      lives_entry_set_text(GTK_ENTRY(vppa->fps_entry),tmp);
+      lives_entry_set_text(LIVES_ENTRY(vppa->fps_entry),tmp);
       g_free(tmp);
     }
     else {
       gchar *tmp=remove_trailing_zeroes(tmpvpp->fixed_fpsd);
-      lives_entry_set_text(GTK_ENTRY(vppa->fps_entry),tmp);
+      lives_entry_set_text(LIVES_ENTRY(vppa->fps_entry),tmp);
       g_free(tmp);
     }
   }
@@ -1039,7 +1039,7 @@ _vppaw *on_vpp_advanced_clicked (GtkButton *button, gpointer user_data) {
 			      weed_yuv_clamping_get_name(tmpvpp->YUV_clamping));
     }
     if (ctext==NULL) ctext=g_strdup(weed_palette_get_name(tmpvpp->palette));
-    lives_entry_set_text(GTK_ENTRY(vppa->pal_entry),ctext);
+    lives_entry_set_text(LIVES_ENTRY(vppa->pal_entry),ctext);
     g_free(ctext);
     g_list_free_strings(pal_list_strings);
     g_list_free(pal_list_strings);
@@ -1073,7 +1073,7 @@ _vppaw *on_vpp_advanced_clicked (GtkButton *button, gpointer user_data) {
 
 
   cancelbutton = gtk_button_new_from_stock ("gtk-cancel");
-  lives_dialog_add_action_widget (GTK_DIALOG (vppa->dialog), cancelbutton, GTK_RESPONSE_CANCEL);
+  lives_dialog_add_action_widget (LIVES_DIALOG (vppa->dialog), cancelbutton, GTK_RESPONSE_CANCEL);
   lives_widget_set_can_focus (cancelbutton,TRUE);
 
   lives_widget_add_accelerator (cancelbutton, "activate", accel_group,
@@ -1081,12 +1081,12 @@ _vppaw *on_vpp_advanced_clicked (GtkButton *button, gpointer user_data) {
 
 
   savebutton = gtk_button_new_from_stock ("gtk-save-as");
-  lives_dialog_add_action_widget (GTK_DIALOG (vppa->dialog), savebutton, 1);
+  lives_dialog_add_action_widget (LIVES_DIALOG (vppa->dialog), savebutton, 1);
   lives_widget_set_can_focus (savebutton,TRUE);
   lives_widget_set_tooltip_text( savebutton, _("Save settings to an alternate file.\n"));
 
   okbutton = gtk_button_new_from_stock ("gtk-ok");
-  lives_dialog_add_action_widget (GTK_DIALOG (vppa->dialog), okbutton, GTK_RESPONSE_OK);
+  lives_dialog_add_action_widget (LIVES_DIALOG (vppa->dialog), okbutton, GTK_RESPONSE_OK);
   lives_widget_set_can_focus_and_default (okbutton);
 
   g_signal_connect (GTK_OBJECT (cancelbutton), "clicked",
@@ -1104,7 +1104,7 @@ _vppaw *on_vpp_advanced_clicked (GtkButton *button, gpointer user_data) {
 
 
   lives_widget_show_all(vppa->dialog);
-  lives_window_present (GTK_WINDOW (vppa->dialog));
+  lives_window_present (LIVES_WINDOW (vppa->dialog));
   gdk_window_raise(lives_widget_get_xwindow(vppa->dialog));
 
   return vppa;
@@ -1125,7 +1125,7 @@ void close_vid_playback_plugin(_vid_playback_plugin *vpp) {
 #endif
 	if (mainw->vpp->capabilities&VPP_LOCAL_DISPLAY) 
 	  if (mainw->play_window!=NULL&&prefs->play_monitor==0)
-	    gtk_window_set_keep_below(GTK_WINDOW(mainw->play_window),FALSE);
+	    gtk_window_set_keep_below(LIVES_WINDOW(mainw->play_window),FALSE);
       }
       mainw->stream_ticks=-1;
       mainw->vpp=NULL;
@@ -1201,8 +1201,8 @@ _vid_playback_plugin *open_vid_playback_plugin (const gchar *name, boolean in_us
 
   if (handle==NULL) {
     gchar *msg=g_strdup_printf (_("\n\nFailed to open playback plugin %s\nError was %s\n"),plugname,dlerror());
-    if (prefsw!=NULL) do_error_dialog_with_check_transient(msg,TRUE,0,prefsw!=NULL?GTK_WINDOW(prefsw->prefs_dialog):
-							   GTK_WINDOW(mainw->LiVES));
+    if (prefsw!=NULL) do_error_dialog_with_check_transient(msg,TRUE,0,prefsw!=NULL?LIVES_WINDOW(prefsw->prefs_dialog):
+							   LIVES_WINDOW(mainw->LiVES));
     else do_error_dialog(msg);
     g_free (msg);
     g_free(plugname);
@@ -1248,8 +1248,8 @@ _vid_playback_plugin *open_vid_playback_plugin (const gchar *name, boolean in_us
     gchar *msg=g_strdup_printf 
       (_("\n\nPlayback module %s\nis missing a mandatory function.\nUnable to use it.\n"),plugname);
     set_pref ("vid_playback_plugin","none");
-    do_error_dialog_with_check_transient(msg,TRUE,0,prefsw!=NULL?GTK_WINDOW(prefsw->prefs_dialog):
-					 GTK_WINDOW(mainw->LiVES));
+    do_error_dialog_with_check_transient(msg,TRUE,0,prefsw!=NULL?LIVES_WINDOW(prefsw->prefs_dialog):
+					 LIVES_WINDOW(mainw->LiVES));
     g_free (msg);
     dlclose (handle);
     g_free (vpp);
@@ -1260,8 +1260,8 @@ _vid_playback_plugin *open_vid_playback_plugin (const gchar *name, boolean in_us
 
   if ((pl_error=(*vpp->module_check_init)())!=NULL) {
     msg=g_strdup_printf(_("Video playback plugin failed to initialise.\nError was: %s\n"),pl_error);
-    do_error_dialog_with_check_transient(msg,TRUE,0,prefsw!=NULL?GTK_WINDOW(prefsw->prefs_dialog):
-					 GTK_WINDOW(mainw->LiVES));
+    do_error_dialog_with_check_transient(msg,TRUE,0,prefsw!=NULL?LIVES_WINDOW(prefsw->prefs_dialog):
+					 LIVES_WINDOW(mainw->LiVES));
     g_free(msg);
     dlclose (handle);
     g_free (vpp);
@@ -1490,13 +1490,13 @@ void vid_playback_plugin_exit (void) {
     mainw->ext_playback=FALSE;
     if (mainw->vpp->capabilities&VPP_LOCAL_DISPLAY) 
       if (mainw->play_window!=NULL&&prefs->play_monitor==0)
-	gtk_window_set_keep_below(GTK_WINDOW(mainw->play_window),FALSE);
+	gtk_window_set_keep_below(LIVES_WINDOW(mainw->play_window),FALSE);
   }
   mainw->stream_ticks=-1;
 
-  if (mainw->playing_file>-1&&mainw->fs&&mainw->sep_win) lives_window_fullscreen(GTK_WINDOW(mainw->play_window));
+  if (mainw->playing_file>-1&&mainw->fs&&mainw->sep_win) lives_window_fullscreen(LIVES_WINDOW(mainw->play_window));
   if (mainw->play_window!=NULL) 
-    lives_window_set_title (GTK_WINDOW (mainw->play_window),_("LiVES: - Play Window"));
+    lives_window_set_title (LIVES_WINDOW (mainw->play_window),_("LiVES: - Play Window"));
 }
 
 
@@ -1564,7 +1564,7 @@ int64_t get_best_audio(_vid_playback_plugin *vpp) {
 	if (strlen(buf)>0) {
 	  if (i==0&&prefsw!=NULL) { 
 	    do_error_dialog_with_check_transient 
-	      (buf,TRUE,0,GTK_WINDOW(prefsw->prefs_dialog));
+	      (buf,TRUE,0,LIVES_WINDOW(prefsw->prefs_dialog));
 	    msg=g_strdup_printf(_("Audio stream unable to use preferred format '%s'\n"),anames[fmts[i]]);
 	    d_print(msg);
 	    g_free(msg);
@@ -1612,7 +1612,7 @@ void do_plugin_encoder_error(const gchar *plugin_name) {
   if (plugin_name==NULL) {
     msg=g_strdup_printf(_("LiVES was unable to find its encoder plugins. Please make sure you have the plugins installed in\n%s%s%s\nor change the value of <lib_dir> in %s\n"),prefs->lib_dir,PLUGIN_EXEC_DIR,PLUGIN_ENCODERS,(tmp=g_filename_to_utf8(capable->rcfile,-1,NULL,NULL,NULL)));
     g_free(tmp);
-    if (rdet!=NULL) do_error_dialog_with_check_transient(msg,FALSE,0,GTK_WINDOW(rdet->dialog));
+    if (rdet!=NULL) do_error_dialog_with_check_transient(msg,FALSE,0,LIVES_WINDOW(rdet->dialog));
     else do_error_dialog(msg);
     g_free(msg);
     return;
@@ -2032,9 +2032,9 @@ boolean check_encoder_restrictions (boolean get_extension, boolean user_audio, b
       }
     }
     if (rdet!=NULL&&!rdet->is_encoding) {
-      rdet->arate=(int)atoi (lives_entry_get_text(GTK_ENTRY(resaudw->entry_arate)));
-      rdet->achans=(int)atoi (lives_entry_get_text(GTK_ENTRY(resaudw->entry_achans)));
-      rdet->asamps=(int)atoi (lives_entry_get_text(GTK_ENTRY(resaudw->entry_asamps)));
+      rdet->arate=(int)atoi (lives_entry_get_text(LIVES_ENTRY(resaudw->entry_arate)));
+      rdet->achans=(int)atoi (lives_entry_get_text(LIVES_ENTRY(resaudw->entry_achans)));
+      rdet->asamps=(int)atoi (lives_entry_get_text(LIVES_ENTRY(resaudw->entry_asamps)));
       rdet->aendian=get_signed_endian(lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(resaudw->rb_unsigned)),
 				      lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(resaudw->rb_littleend)));
 
@@ -2063,13 +2063,13 @@ boolean check_encoder_restrictions (boolean get_extension, boolean user_audio, b
 	      rdet->fps=(best_fps_num*1.)/(best_fps_denom*1.);
 	    }
 	    else rdet->fps=best_fps;
-	    lives_spin_button_set_value(GTK_SPIN_BUTTON(rdet->spinbutton_fps),rdet->fps);
+	    lives_spin_button_set_value(LIVES_SPIN_BUTTON(rdet->spinbutton_fps),rdet->fps);
 	  }
-	  lives_spin_button_set_value(GTK_SPIN_BUTTON(rdet->spinbutton_width),rdet->width);
-	  lives_spin_button_set_value(GTK_SPIN_BUTTON(rdet->spinbutton_height),rdet->height);
+	  lives_spin_button_set_value(LIVES_SPIN_BUTTON(rdet->spinbutton_width),rdet->width);
+	  lives_spin_button_set_value(LIVES_SPIN_BUTTON(rdet->spinbutton_height),rdet->height);
 	  if (best_arate!=-1) {
 	    arate_string=g_strdup_printf("%d",best_arate);
-	    lives_entry_set_text (GTK_ENTRY (resaudw->entry_arate),arate_string);
+	    lives_entry_set_text (LIVES_ENTRY (resaudw->entry_arate),arate_string);
 	    g_free(arate_string);
 	  }
 	  rdet->suggestion_followed=TRUE;
@@ -2477,7 +2477,7 @@ static void dpa_ok_clicked (GtkButton *button, gpointer user_data) {
   lives_general_button_clicked(button,NULL);
 
   if (prefsw!=NULL) {
-    lives_window_present(GTK_WINDOW(prefsw->prefs_dialog));
+    lives_window_present(LIVES_WINDOW(prefsw->prefs_dialog));
     gdk_window_raise(lives_widget_get_xwindow(prefsw->prefs_dialog));
     if (string_lists_differ(future_prefs->disabled_decoders,future_prefs->disabled_decoders_new))
       apply_button_set_enabled(NULL,NULL);
@@ -2497,7 +2497,7 @@ static void dpa_cancel_clicked (GtkButton *button, gpointer user_data) {
   lives_general_button_clicked(button,NULL);
 
   if (prefsw!=NULL) {
-    lives_window_present(GTK_WINDOW(prefsw->prefs_dialog));
+    lives_window_present(LIVES_WINDOW(prefsw->prefs_dialog));
     gdk_window_raise(lives_widget_get_xwindow(prefsw->prefs_dialog));
   }
 
@@ -2544,14 +2544,14 @@ void on_decplug_advanced_clicked (GtkButton *button, gpointer user_data) {
   dialog = lives_standard_dialog_new (_("LiVES: - Decoder Plugins"),FALSE);
 
   if (prefs->show_gui) {
-    if (prefsw!=NULL) gtk_window_set_transient_for(GTK_WINDOW(dialog),GTK_WINDOW(prefsw->prefs_dialog));
+    if (prefsw!=NULL) gtk_window_set_transient_for(LIVES_WINDOW(dialog),GTK_WINDOW(prefsw->prefs_dialog));
     else {
-      if (mainw->multitrack==NULL) gtk_window_set_transient_for(GTK_WINDOW(dialog),GTK_WINDOW(mainw->LiVES));
-      else gtk_window_set_transient_for(GTK_WINDOW(dialog),GTK_WINDOW(mainw->multitrack->window));
+      if (mainw->multitrack==NULL) gtk_window_set_transient_for(LIVES_WINDOW(dialog),GTK_WINDOW(mainw->LiVES));
+      else gtk_window_set_transient_for(LIVES_WINDOW(dialog),GTK_WINDOW(mainw->multitrack->window));
     }
   }
 
-  dialog_vbox = lives_dialog_get_content_area(GTK_DIALOG(dialog));
+  dialog_vbox = lives_dialog_get_content_area(LIVES_DIALOG(dialog));
 
   vbox = lives_vbox_new (FALSE, 0);
 
@@ -2584,10 +2584,10 @@ void on_decplug_advanced_clicked (GtkButton *button, gpointer user_data) {
 
 
   cancelbutton = gtk_button_new_from_stock ("gtk-cancel");
-  lives_dialog_add_action_widget (GTK_DIALOG (dialog), cancelbutton, GTK_RESPONSE_CANCEL);
+  lives_dialog_add_action_widget (LIVES_DIALOG (dialog), cancelbutton, GTK_RESPONSE_CANCEL);
 
   okbutton = gtk_button_new_from_stock ("gtk-ok");
-  lives_dialog_add_action_widget (GTK_DIALOG (dialog), okbutton, GTK_RESPONSE_OK);
+  lives_dialog_add_action_widget (LIVES_DIALOG (dialog), okbutton, GTK_RESPONSE_OK);
   lives_widget_set_can_focus_and_default (okbutton);
 
   g_signal_connect (GTK_OBJECT (cancelbutton), "clicked",
@@ -2599,7 +2599,7 @@ void on_decplug_advanced_clicked (GtkButton *button, gpointer user_data) {
 		    NULL);
 
   lives_widget_show_all(dialog);
-  lives_window_present (GTK_WINDOW (dialog));
+  lives_window_present (LIVES_WINDOW (dialog));
   gdk_window_raise(lives_widget_get_xwindow(dialog));
 
   future_prefs->disabled_decoders_new=g_list_copy_strings(future_prefs->disabled_decoders);
@@ -3756,12 +3756,12 @@ gchar *plugin_run_param_window(const gchar *get_com, GtkVBox *vbox, lives_rfx_t 
       on_fx_pre_activate(rfx,1,NULL);
 
       if (prefs->show_gui) {
-	if (mainw->multitrack==NULL) gtk_window_set_transient_for(GTK_WINDOW(fx_dialog[1]),GTK_WINDOW(mainw->LiVES));
-	else gtk_window_set_transient_for(GTK_WINDOW(fx_dialog[1]),GTK_WINDOW(mainw->multitrack->window));
+	if (mainw->multitrack==NULL) gtk_window_set_transient_for(LIVES_WINDOW(fx_dialog[1]),GTK_WINDOW(mainw->LiVES));
+	else gtk_window_set_transient_for(LIVES_WINDOW(fx_dialog[1]),GTK_WINDOW(mainw->multitrack->window));
       }
-      gtk_window_set_modal (GTK_WINDOW (fx_dialog[1]), TRUE);
+      gtk_window_set_modal (LIVES_WINDOW (fx_dialog[1]), TRUE);
       
-      if (lives_dialog_run(GTK_DIALOG(fx_dialog[1]))==GTK_RESPONSE_OK) {
+      if (lives_dialog_run(LIVES_DIALOG(fx_dialog[1]))==GTK_RESPONSE_OK) {
 	// marshall our params for passing to the plugin
 	res_string=param_marshall(rfx,FALSE);
       }

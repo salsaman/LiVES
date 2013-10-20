@@ -46,7 +46,7 @@ void on_edit_rfx_activate (GtkMenuItem *menuitem, gpointer user_data) {
   }
   g_free (script_name);
   rfxbuilder->mode=RFX_BUILDER_MODE_EDIT;
-  rfxbuilder->oname=g_strdup (lives_entry_get_text (GTK_ENTRY (rfxbuilder->name_entry)));
+  rfxbuilder->oname=g_strdup (lives_entry_get_text (LIVES_ENTRY (rfxbuilder->name_entry)));
   lives_widget_show (rfxbuilder->dialog);
 }
 
@@ -140,15 +140,15 @@ rfx_build_window_t *make_rfx_build_window (const gchar *script_name, lives_rfx_s
   g_free(title);
 
   if (prefs->show_gui) {
-    gtk_window_set_transient_for(GTK_WINDOW(rfxbuilder->dialog),GTK_WINDOW(mainw->LiVES));
+    gtk_window_set_transient_for(LIVES_WINDOW(rfxbuilder->dialog),GTK_WINDOW(mainw->LiVES));
   }
 
 
-  gtk_window_add_accel_group (GTK_WINDOW (rfxbuilder->dialog), accel_group);
+  gtk_window_add_accel_group (LIVES_WINDOW (rfxbuilder->dialog), accel_group);
 
   lives_container_set_border_width (LIVES_CONTAINER (rfxbuilder->dialog), widget_opts.border_width>>1);
 
-  dialog_vbox = lives_dialog_get_content_area(GTK_DIALOG(rfxbuilder->dialog));
+  dialog_vbox = lives_dialog_get_content_area(LIVES_DIALOG(rfxbuilder->dialog));
 
   top_vbox = lives_vbox_new (FALSE, 0);
 
@@ -328,10 +328,10 @@ rfx_build_window_t *make_rfx_build_window (const gchar *script_name, lives_rfx_s
   gtk_button_box_set_layout (GTK_BUTTON_BOX (dialog_action_area), GTK_BUTTONBOX_END);
 
   cancelbutton = gtk_button_new_from_stock ("gtk-cancel");
-  lives_dialog_add_action_widget (GTK_DIALOG (rfxbuilder->dialog), cancelbutton, GTK_RESPONSE_CANCEL);
+  lives_dialog_add_action_widget (LIVES_DIALOG (rfxbuilder->dialog), cancelbutton, GTK_RESPONSE_CANCEL);
 
   okbutton = gtk_button_new_from_stock ("gtk-ok");
-  lives_dialog_add_action_widget (GTK_DIALOG (rfxbuilder->dialog), okbutton, GTK_RESPONSE_OK);
+  lives_dialog_add_action_widget (LIVES_DIALOG (rfxbuilder->dialog), okbutton, GTK_RESPONSE_OK);
   lives_widget_set_can_focus_and_default (okbutton);
 
   lives_widget_add_accelerator (cancelbutton, "activate", accel_group,
@@ -561,13 +561,13 @@ void on_list_table_clicked (GtkButton *button, gpointer user_data) {
   dialog = lives_standard_dialog_new (title,FALSE);
   if (title!=NULL) g_free(title);
 
-  gtk_window_add_accel_group (GTK_WINDOW (dialog), accel_group);
+  gtk_window_add_accel_group (LIVES_WINDOW (dialog), accel_group);
 
   if (prefs->show_gui) {
-    gtk_window_set_transient_for(GTK_WINDOW(dialog),GTK_WINDOW(mainw->LiVES));
+    gtk_window_set_transient_for(LIVES_WINDOW(dialog),GTK_WINDOW(mainw->LiVES));
   }
 
-  dialog_vbox = lives_dialog_get_content_area(GTK_DIALOG(dialog));
+  dialog_vbox = lives_dialog_get_content_area(LIVES_DIALOG(dialog));
 
 
   // create table and add rows
@@ -577,7 +577,7 @@ void on_list_table_clicked (GtkButton *button, gpointer user_data) {
     rfxbuilder->table=lives_table_new (rfxbuilder->num_reqs,1,FALSE);
     for (i=0;i<rfxbuilder->num_reqs;i++) {
       on_table_add_row (NULL,(gpointer)rfxbuilder);
-      lives_entry_set_text (GTK_ENTRY (rfxbuilder->entry[i]),rfxbuilder->reqs[i]);
+      lives_entry_set_text (LIVES_ENTRY (rfxbuilder->entry[i]),rfxbuilder->reqs[i]);
     }
   }
   else if (rfxbuilder->table_type==RFX_TABLE_TYPE_PARAMS) {
@@ -651,14 +651,14 @@ void on_list_table_clicked (GtkButton *button, gpointer user_data) {
   gtk_button_box_set_layout (GTK_BUTTON_BOX (dialog_action_area), GTK_BUTTONBOX_END);
 
   cancelbutton = gtk_button_new_from_stock ("gtk-cancel");
-  lives_dialog_add_action_widget (GTK_DIALOG (dialog), cancelbutton, GTK_RESPONSE_CANCEL);
+  lives_dialog_add_action_widget (LIVES_DIALOG (dialog), cancelbutton, GTK_RESPONSE_CANCEL);
 
   lives_widget_add_accelerator (cancelbutton, "activate", accel_group,
                               LIVES_KEY_Escape, (GdkModifierType)0, (GtkAccelFlags)0);
 
 
   okbutton = gtk_button_new_from_stock ("gtk-ok");
-  lives_dialog_add_action_widget (GTK_DIALOG (dialog), okbutton, GTK_RESPONSE_OK);
+  lives_dialog_add_action_widget (LIVES_DIALOG (dialog), okbutton, GTK_RESPONSE_OK);
   lives_widget_set_can_focus_and_default (okbutton);
 
   if (rfxbuilder->table_type==RFX_TABLE_TYPE_REQUIREMENTS) {
@@ -734,7 +734,7 @@ void on_requirements_ok (GtkButton *button, gpointer user_data) {
     g_free (rfxbuilder->reqs[i]);
   }
   for (i=0;i<rfxbuilder->num_reqs;i++) {
-    rfxbuilder->reqs[i]=g_strdup (lives_entry_get_text (GTK_ENTRY (rfxbuilder->entry[i])));
+    rfxbuilder->reqs[i]=g_strdup (lives_entry_get_text (LIVES_ENTRY (rfxbuilder->entry[i])));
   }
   lives_general_button_clicked(button,NULL);
 }
@@ -832,8 +832,8 @@ void on_param_window_ok (GtkButton *button, gpointer user_data) {
     g_free (rfxbuilder->paramw_hints[i]);
   }
   for (i=0;i<rfxbuilder->num_paramw_hints;i++) {
-    rfxbuilder->paramw_hints[i]=g_strdup_printf ("%s%s%s",lives_entry_get_text (GTK_ENTRY (rfxbuilder->entry[i])),rfxbuilder->field_delim,
-						 lives_entry_get_text (GTK_ENTRY (rfxbuilder->entry2[i])));
+    rfxbuilder->paramw_hints[i]=g_strdup_printf ("%s%s%s",lives_entry_get_text (LIVES_ENTRY (rfxbuilder->entry[i])),rfxbuilder->field_delim,
+						 lives_entry_get_text (LIVES_ENTRY (rfxbuilder->entry2[i])));
   }
   lives_general_button_clicked(button,NULL);
 }
@@ -866,7 +866,7 @@ void on_code_ok (GtkButton *button, gpointer user_data) {
 
   case RFX_CODE_TYPE_STRDEF:
     {
-      int maxlen=lives_spin_button_get_value_as_int (GTK_SPIN_BUTTON (rfxbuilder->spinbutton_param_max));
+      int maxlen=lives_spin_button_get_value_as_int (LIVES_SPIN_BUTTON (rfxbuilder->spinbutton_param_max));
       gchar buf[++maxlen];
       
       if (rfxbuilder->copy_params[rfxbuilder->edit_param].def!=NULL) g_free (rfxbuilder->copy_params[rfxbuilder->edit_param].def);
@@ -962,13 +962,13 @@ void on_properties_clicked (GtkButton *button, gpointer user_data) {
   rfx_build_window_t *rfxbuilder=(rfx_build_window_t *)user_data;
 
   dialog = lives_standard_dialog_new (_("LiVES: - RFX Properties"),FALSE);
-  gtk_window_add_accel_group (GTK_WINDOW (dialog), accel_group);
+  gtk_window_add_accel_group (LIVES_WINDOW (dialog), accel_group);
 
   if (prefs->show_gui) {
-    gtk_window_set_transient_for(GTK_WINDOW(dialog),GTK_WINDOW(rfxbuilder->dialog));
+    gtk_window_set_transient_for(LIVES_WINDOW(dialog),GTK_WINDOW(rfxbuilder->dialog));
   }
 
-  dialog_vbox = lives_dialog_get_content_area(GTK_DIALOG(dialog));
+  dialog_vbox = lives_dialog_get_content_area(LIVES_DIALOG(dialog));
 
   rfxbuilder->prop_slow= lives_standard_check_button_new (_("_Slow (hint to GUI)"),TRUE,LIVES_BOX(dialog_vbox),NULL);
 
@@ -991,10 +991,10 @@ void on_properties_clicked (GtkButton *button, gpointer user_data) {
   gtk_button_box_set_layout (GTK_BUTTON_BOX (dialog_action_area), GTK_BUTTONBOX_END);
 
   cancelbutton = gtk_button_new_from_stock ("gtk-cancel");
-  lives_dialog_add_action_widget (GTK_DIALOG (dialog), cancelbutton, GTK_RESPONSE_CANCEL);
+  lives_dialog_add_action_widget (LIVES_DIALOG (dialog), cancelbutton, GTK_RESPONSE_CANCEL);
 
   okbutton = gtk_button_new_from_stock ("gtk-ok");
-  lives_dialog_add_action_widget (GTK_DIALOG (dialog), okbutton, GTK_RESPONSE_OK);
+  lives_dialog_add_action_widget (LIVES_DIALOG (dialog), okbutton, GTK_RESPONSE_OK);
   lives_widget_set_can_focus_and_default (okbutton);
 
   gtk_widget_grab_default (okbutton);
@@ -1144,7 +1144,7 @@ void on_table_add_row (GtkButton *button, gpointer user_data) {
 
       param_dialog=make_param_dialog(-1,rfxbuilder);
       do {
-	if (lives_dialog_run (GTK_DIALOG (param_dialog))==GTK_RESPONSE_CANCEL) {
+	if (lives_dialog_run (LIVES_DIALOG (param_dialog))==GTK_RESPONSE_CANCEL) {
 	  g_free (param->def);
 	  lives_widget_destroy (entry);
 	  lives_widget_destroy (entry2);
@@ -1156,13 +1156,13 @@ void on_table_add_row (GtkButton *button, gpointer user_data) {
       
       rfxbuilder->num_params++;
 
-      lives_entry_set_text (GTK_ENTRY (entry2),lives_entry_get_text (GTK_ENTRY (rfxbuilder->param_name_entry)));
+      lives_entry_set_text (LIVES_ENTRY (entry2),lives_entry_get_text (GTK_ENTRY (rfxbuilder->param_name_entry)));
     }
     else {
-      lives_entry_set_text (GTK_ENTRY (entry2),rfxbuilder->params[rfxbuilder->table_rows].name);
+      lives_entry_set_text (LIVES_ENTRY (entry2),rfxbuilder->params[rfxbuilder->table_rows].name);
     }
 
-    lives_entry_set_text (GTK_ENTRY (entry),(tmpx=g_strdup_printf ("p%d",rfxbuilder->table_rows)));
+    lives_entry_set_text (LIVES_ENTRY (entry),(tmpx=g_strdup_printf ("p%d",rfxbuilder->table_rows)));
     g_free(tmpx);
 
     lives_entry_set_editable (LIVES_ENTRY (entry), FALSE);
@@ -1204,20 +1204,20 @@ void on_table_add_row (GtkButton *button, gpointer user_data) {
     
     switch (param->type) {
     case LIVES_PARAM_NUM:
-      lives_entry_set_text (GTK_ENTRY (entry3),(tmpx=g_strdup_printf ("num%d",param->dp)));
+      lives_entry_set_text (LIVES_ENTRY (entry3),(tmpx=g_strdup_printf ("num%d",param->dp)));
       g_free(tmpx);
       break;
     case LIVES_PARAM_BOOL:
-      lives_entry_set_text (GTK_ENTRY (entry3),"bool");
+      lives_entry_set_text (LIVES_ENTRY (entry3),"bool");
       break;
     case LIVES_PARAM_COLRGB24:
-      lives_entry_set_text (GTK_ENTRY (entry3),"colRGB24");
+      lives_entry_set_text (LIVES_ENTRY (entry3),"colRGB24");
       break;
     case LIVES_PARAM_STRING:
-      lives_entry_set_text (GTK_ENTRY (entry3),"string");
+      lives_entry_set_text (LIVES_ENTRY (entry3),"string");
       break;
     case LIVES_PARAM_STRING_LIST:
-      lives_entry_set_text (GTK_ENTRY (entry3),"string_list");
+      lives_entry_set_text (LIVES_ENTRY (entry3),"string_list");
       break;
     default:
       break;
@@ -1236,7 +1236,7 @@ void on_table_add_row (GtkButton *button, gpointer user_data) {
 
     if (button==NULL) goto add_row_done;
     
-    lives_widget_queue_resize(lives_widget_get_parent(GTK_WIDGET(rfxbuilder->table)));
+    lives_widget_queue_resize(lives_widget_get_parent(LIVES_WIDGET(rfxbuilder->table)));
     lives_widget_destroy (param_dialog);
     break;
 
@@ -1244,20 +1244,20 @@ void on_table_add_row (GtkButton *button, gpointer user_data) {
   case RFX_TABLE_TYPE_PARAM_WINDOW:
     if (button!=NULL) {
       param_window_dialog=make_param_window_dialog(-1,rfxbuilder);
-      if (lives_dialog_run (GTK_DIALOG (param_window_dialog))==GTK_RESPONSE_CANCEL) {
+      if (lives_dialog_run (LIVES_DIALOG (param_window_dialog))==GTK_RESPONSE_CANCEL) {
 	lives_widget_destroy (param_window_dialog);
 	return;
       }
       entry = rfxbuilder->entry[rfxbuilder->table_rows] = gtk_entry_new ();
       ctext=lives_combo_get_active_text(LIVES_COMBO(rfxbuilder->paramw_kw_combo));
-      lives_entry_set_text (GTK_ENTRY (entry),ctext);
+      lives_entry_set_text (LIVES_ENTRY (entry),ctext);
       g_free(ctext);
       rfxbuilder->num_paramw_hints++;
     }
     else {
       gchar **array=g_strsplit(rfxbuilder->paramw_hints[rfxbuilder->table_rows],rfxbuilder->field_delim,2);
       entry = rfxbuilder->entry[rfxbuilder->table_rows] = gtk_entry_new ();
-      lives_entry_set_text (GTK_ENTRY (entry),array[0]);
+      lives_entry_set_text (LIVES_ENTRY (entry),array[0]);
       g_strfreev (array);
     }
 
@@ -1276,22 +1276,22 @@ void on_table_add_row (GtkButton *button, gpointer user_data) {
     entry2 = rfxbuilder->entry2[rfxbuilder->table_rows-1] = gtk_entry_new ();
 
     if (button!=NULL) {
-      if (!strcmp (lives_entry_get_text (GTK_ENTRY (entry)),"layout")) {
-	lives_entry_set_text (GTK_ENTRY (entry2),lives_entry_get_text (GTK_ENTRY (rfxbuilder->paramw_rest_entry)));
+      if (!strcmp (lives_entry_get_text (LIVES_ENTRY (entry)),"layout")) {
+	lives_entry_set_text (LIVES_ENTRY (entry2),lives_entry_get_text (GTK_ENTRY (rfxbuilder->paramw_rest_entry)));
       }
       else {
 	// TODO - use lives_rfx_special_t->has_subtype,name,num_params
 	ctext=lives_combo_get_active_text(LIVES_COMBO(rfxbuilder->paramw_sp_combo));
 	if (!strcmp (ctext,"framedraw")) {
 	  gchar *ctext2=lives_combo_get_active_text(LIVES_COMBO(rfxbuilder->paramw_spsub_combo));
-	  lives_entry_set_text (GTK_ENTRY (entry2),(tmpx=g_strdup_printf ("%s%s%s%s%s",ctext,rfxbuilder->field_delim,ctext2,
+	  lives_entry_set_text (LIVES_ENTRY (entry2),(tmpx=g_strdup_printf ("%s%s%s%s%s",ctext,rfxbuilder->field_delim,ctext2,
 									rfxbuilder->field_delim, 
-									lives_entry_get_text (GTK_ENTRY (rfxbuilder->paramw_rest_entry)))));
+									lives_entry_get_text (LIVES_ENTRY (rfxbuilder->paramw_rest_entry)))));
 	  g_free(ctext2);
 	}
 	else {
-	  lives_entry_set_text (GTK_ENTRY (entry2),(tmpx=g_strdup_printf ("%s%s%s",ctext,rfxbuilder->field_delim,
-									lives_entry_get_text (GTK_ENTRY (rfxbuilder->paramw_rest_entry)))));
+	  lives_entry_set_text (LIVES_ENTRY (entry2),(tmpx=g_strdup_printf ("%s%s%s",ctext,rfxbuilder->field_delim,
+									lives_entry_get_text (LIVES_ENTRY (rfxbuilder->paramw_rest_entry)))));
 	}
 	g_free(tmpx);
 	g_free(ctext);
@@ -1299,7 +1299,7 @@ void on_table_add_row (GtkButton *button, gpointer user_data) {
     }
     else {
       gchar **array=g_strsplit(rfxbuilder->paramw_hints[rfxbuilder->table_rows-1],rfxbuilder->field_delim,2);
-      lives_entry_set_text (GTK_ENTRY (entry2),array[1]);
+      lives_entry_set_text (LIVES_ENTRY (entry2),array[1]);
       g_strfreev (array);
     }
 
@@ -1318,7 +1318,7 @@ void on_table_add_row (GtkButton *button, gpointer user_data) {
     if (button==NULL) goto add_row_done;
 
     lives_widget_destroy (param_window_dialog);
-    lives_widget_queue_resize (lives_widget_get_parent(GTK_WIDGET(rfxbuilder->table)));
+    lives_widget_queue_resize (lives_widget_get_parent(LIVES_WIDGET(rfxbuilder->table)));
     break;
 
 
@@ -1327,16 +1327,16 @@ void on_table_add_row (GtkButton *button, gpointer user_data) {
 
     if (button!=NULL) {
       trigger_dialog=make_trigger_dialog(-1,rfxbuilder);
-      if (lives_dialog_run (GTK_DIALOG (trigger_dialog))==GTK_RESPONSE_CANCEL) {
+      if (lives_dialog_run (LIVES_DIALOG (trigger_dialog))==GTK_RESPONSE_CANCEL) {
 	lives_widget_destroy (trigger_dialog);
 	return;
       }
-      lives_entry_set_text (GTK_ENTRY (entry),lives_entry_get_text (GTK_ENTRY (rfxbuilder->trigger_when_entry)));
+      lives_entry_set_text (LIVES_ENTRY (entry),lives_entry_get_text (GTK_ENTRY (rfxbuilder->trigger_when_entry)));
       rfxbuilder->num_triggers++;
     }
     else {
       gchar *tmpx2=NULL;
-      lives_entry_set_text (GTK_ENTRY (entry),rfxbuilder->triggers[rfxbuilder->table_rows].when?
+      lives_entry_set_text (LIVES_ENTRY (entry),rfxbuilder->triggers[rfxbuilder->table_rows].when?
 			  (tmpx2=g_strdup_printf ("%d",rfxbuilder->triggers[rfxbuilder->table_rows].when-1)):"init");
       if (tmpx2!=NULL) g_free(tmpx2);
     }
@@ -1357,8 +1357,8 @@ void on_table_add_row (GtkButton *button, gpointer user_data) {
 
     rfxbuilder->copy_triggers[rfxbuilder->table_rows-1].code=text_view_get_text(LIVES_TEXT_VIEW (rfxbuilder->code_textview));
     
-    rfxbuilder->copy_triggers[rfxbuilder->table_rows-1].when=atoi (lives_entry_get_text (GTK_ENTRY (rfxbuilder->trigger_when_entry)))+1;
-    if (!strcmp(lives_entry_get_text (GTK_ENTRY (rfxbuilder->trigger_when_entry)),"init")) rfxbuilder->copy_triggers[rfxbuilder->table_rows-1].when=0;
+    rfxbuilder->copy_triggers[rfxbuilder->table_rows-1].when=atoi (lives_entry_get_text (LIVES_ENTRY (rfxbuilder->trigger_when_entry)))+1;
+    if (!strcmp(lives_entry_get_text (LIVES_ENTRY (rfxbuilder->trigger_when_entry)),"init")) rfxbuilder->copy_triggers[rfxbuilder->table_rows-1].when=0;
 
     if (!rfxbuilder->copy_triggers[rfxbuilder->table_rows-1].when) {
       rfxbuilder->has_init_trigger=TRUE;
@@ -1368,7 +1368,7 @@ void on_table_add_row (GtkButton *button, gpointer user_data) {
     }
 
     lives_widget_destroy (trigger_dialog);
-    lives_widget_queue_resize (lives_widget_get_parent(GTK_WIDGET(rfxbuilder->table)));
+    lives_widget_queue_resize (lives_widget_get_parent(LIVES_WIDGET(rfxbuilder->table)));
     break;
   default:
     return;
@@ -1451,8 +1451,8 @@ void param_set_from_dialog (lives_param_t *copy_param, rfx_build_window_t *rfxbu
   // this is called after adding a new copy_param or editing an existing one
   gchar *ctext=lives_combo_get_active_text(LIVES_COMBO(rfxbuilder->param_type_combo));
 
-  copy_param->name=g_strdup (lives_entry_get_text (GTK_ENTRY (rfxbuilder->param_name_entry)));
-  copy_param->label=g_strdup (lives_entry_get_text (GTK_ENTRY (rfxbuilder->param_label_entry)));
+  copy_param->name=g_strdup (lives_entry_get_text (LIVES_ENTRY (rfxbuilder->param_name_entry)));
+  copy_param->label=g_strdup (lives_entry_get_text (LIVES_ENTRY (rfxbuilder->param_label_entry)));
   
   if (!strcmp (ctext,"num")) {
     copy_param->type=LIVES_PARAM_NUM;
@@ -1472,8 +1472,8 @@ void param_set_from_dialog (lives_param_t *copy_param, rfx_build_window_t *rfxbu
 
   g_free(ctext);
 
-  copy_param->dp=lives_spin_button_get_value_as_int(GTK_SPIN_BUTTON(rfxbuilder->spinbutton_param_dp));
-  copy_param->group=lives_spin_button_get_value_as_int(GTK_SPIN_BUTTON(rfxbuilder->spinbutton_param_group));
+  copy_param->dp=lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(rfxbuilder->spinbutton_param_dp));
+  copy_param->group=lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(rfxbuilder->spinbutton_param_group));
   copy_param->onchange=FALSE;  // no trigger assigned yet
   
   // TODO - check
@@ -1482,26 +1482,26 @@ void param_set_from_dialog (lives_param_t *copy_param, rfx_build_window_t *rfxbu
   
   switch (copy_param->type) {
   case LIVES_PARAM_NUM:
-    copy_param->min=lives_spin_button_get_value(GTK_SPIN_BUTTON(rfxbuilder->spinbutton_param_min));
-    copy_param->max=lives_spin_button_get_value(GTK_SPIN_BUTTON(rfxbuilder->spinbutton_param_max));
-    copy_param->step_size=lives_spin_button_get_value(GTK_SPIN_BUTTON(rfxbuilder->spinbutton_param_step));
+    copy_param->min=lives_spin_button_get_value(LIVES_SPIN_BUTTON(rfxbuilder->spinbutton_param_min));
+    copy_param->max=lives_spin_button_get_value(LIVES_SPIN_BUTTON(rfxbuilder->spinbutton_param_max));
+    copy_param->step_size=lives_spin_button_get_value(LIVES_SPIN_BUTTON(rfxbuilder->spinbutton_param_step));
     copy_param->wrap=gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(rfxbuilder->param_wrap_checkbutton));
     if (!copy_param->dp) {
       copy_param->def=g_malloc (sizint);
-      set_int_param (copy_param->def,lives_spin_button_get_value_as_int(GTK_SPIN_BUTTON(rfxbuilder->spinbutton_param_def)));
+      set_int_param (copy_param->def,lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(rfxbuilder->spinbutton_param_def)));
     }
     else {
       copy_param->def=g_malloc (sizdbl);
-      set_double_param (copy_param->def,lives_spin_button_get_value(GTK_SPIN_BUTTON(rfxbuilder->spinbutton_param_def)));
+      set_double_param (copy_param->def,lives_spin_button_get_value(LIVES_SPIN_BUTTON(rfxbuilder->spinbutton_param_def)));
     }
     break;
   case LIVES_PARAM_BOOL:
     copy_param->def=g_malloc (sizint);
-    set_bool_param (copy_param->def,lives_spin_button_get_value_as_int(GTK_SPIN_BUTTON(rfxbuilder->spinbutton_param_def)));
+    set_bool_param (copy_param->def,lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(rfxbuilder->spinbutton_param_def)));
     copy_param->dp=0;
     break;
   case LIVES_PARAM_STRING:
-    copy_param->max=lives_spin_button_get_value(GTK_SPIN_BUTTON(rfxbuilder->spinbutton_param_max));
+    copy_param->max=lives_spin_button_get_value(LIVES_SPIN_BUTTON(rfxbuilder->spinbutton_param_max));
     copy_param->dp=0;
     break;
   case LIVES_PARAM_STRING_LIST:
@@ -1511,9 +1511,9 @@ void param_set_from_dialog (lives_param_t *copy_param, rfx_build_window_t *rfxbu
     break;
   case LIVES_PARAM_COLRGB24:
     copy_param->def=g_malloc (3*sizint);
-    set_colRGB24_param (copy_param->def,lives_spin_button_get_value_as_int(GTK_SPIN_BUTTON(rfxbuilder->spinbutton_param_def)),
-			lives_spin_button_get_value_as_int(GTK_SPIN_BUTTON(rfxbuilder->spinbutton_param_min)),
-			lives_spin_button_get_value_as_int(GTK_SPIN_BUTTON(rfxbuilder->spinbutton_param_max)));
+    set_colRGB24_param (copy_param->def,lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(rfxbuilder->spinbutton_param_def)),
+			lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(rfxbuilder->spinbutton_param_min)),
+			lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(rfxbuilder->spinbutton_param_max)));
     copy_param->dp=0;
     break;
   default:
@@ -1565,7 +1565,7 @@ void on_table_edit_row (GtkButton *button, gpointer user_data) {
   case RFX_TABLE_TYPE_PARAMS:
     param_dialog=make_param_dialog(found,rfxbuilder);
     do {
-      if (lives_dialog_run (GTK_DIALOG (param_dialog))==GTK_RESPONSE_CANCEL) {
+      if (lives_dialog_run (LIVES_DIALOG (param_dialog))==GTK_RESPONSE_CANCEL) {
 	lives_widget_destroy (param_dialog);
 	return;
       }
@@ -1573,23 +1573,23 @@ void on_table_edit_row (GtkButton *button, gpointer user_data) {
     } while (!param_ok);
     
     param_set_from_dialog ((param=&rfxbuilder->copy_params[found]),rfxbuilder);
-    lives_entry_set_text (GTK_ENTRY (rfxbuilder->entry2[found]),param->name);
+    lives_entry_set_text (LIVES_ENTRY (rfxbuilder->entry2[found]),param->name);
     switch (param->type) {
     case LIVES_PARAM_NUM:
-      lives_entry_set_text (GTK_ENTRY (rfxbuilder->entry3[found]),(tmpx=g_strdup_printf ("num%d",param->dp)));
+      lives_entry_set_text (LIVES_ENTRY (rfxbuilder->entry3[found]),(tmpx=g_strdup_printf ("num%d",param->dp)));
       g_free(tmpx);
       break;
     case LIVES_PARAM_BOOL:
-      lives_entry_set_text (GTK_ENTRY (rfxbuilder->entry3[found]),"bool");
+      lives_entry_set_text (LIVES_ENTRY (rfxbuilder->entry3[found]),"bool");
       break;
     case LIVES_PARAM_COLRGB24:
-      lives_entry_set_text (GTK_ENTRY (rfxbuilder->entry3[found]),"colRGB24");
+      lives_entry_set_text (LIVES_ENTRY (rfxbuilder->entry3[found]),"colRGB24");
       break;
     case LIVES_PARAM_STRING:
-      lives_entry_set_text (GTK_ENTRY (rfxbuilder->entry3[found]),"string");
+      lives_entry_set_text (LIVES_ENTRY (rfxbuilder->entry3[found]),"string");
       break;
     case LIVES_PARAM_STRING_LIST:
-      lives_entry_set_text (GTK_ENTRY (rfxbuilder->entry3[found]),"string_list");
+      lives_entry_set_text (LIVES_ENTRY (rfxbuilder->entry3[found]),"string_list");
       break;
     default:
       break;
@@ -1599,30 +1599,30 @@ void on_table_edit_row (GtkButton *button, gpointer user_data) {
 
   case RFX_TABLE_TYPE_PARAM_WINDOW:
     paramw_dialog=make_param_window_dialog(found,rfxbuilder);
-    if (lives_dialog_run (GTK_DIALOG (paramw_dialog))==GTK_RESPONSE_CANCEL) {
+    if (lives_dialog_run (LIVES_DIALOG (paramw_dialog))==GTK_RESPONSE_CANCEL) {
       lives_widget_destroy (paramw_dialog);
       return;
     }
     ctext=lives_combo_get_active_text(LIVES_COMBO(rfxbuilder->paramw_kw_combo));
-    lives_entry_set_text (GTK_ENTRY (rfxbuilder->entry[found]),ctext);
+    lives_entry_set_text (LIVES_ENTRY (rfxbuilder->entry[found]),ctext);
     g_free(ctext);
-    if (!strcmp (lives_entry_get_text (GTK_ENTRY (rfxbuilder->entry[found])),"layout")) {
-      lives_entry_set_text (GTK_ENTRY (rfxbuilder->entry2[found]),lives_entry_get_text (GTK_ENTRY (rfxbuilder->paramw_rest_entry)));
+    if (!strcmp (lives_entry_get_text (LIVES_ENTRY (rfxbuilder->entry[found])),"layout")) {
+      lives_entry_set_text (LIVES_ENTRY (rfxbuilder->entry2[found]),lives_entry_get_text (GTK_ENTRY (rfxbuilder->paramw_rest_entry)));
     }
     else {
       // TODO - use lives_rfx_special_t->has_subtype,name,num_params
       ctext=lives_combo_get_active_text(LIVES_COMBO(rfxbuilder->paramw_sp_combo));
       if (!strcmp (ctext,"framedraw")) {
 	gchar *ctext2=lives_combo_get_active_text(LIVES_COMBO(rfxbuilder->paramw_spsub_combo));
-	lives_entry_set_text (GTK_ENTRY (rfxbuilder->entry2[found]),
+	lives_entry_set_text (LIVES_ENTRY (rfxbuilder->entry2[found]),
 			    (tmpx=g_strdup_printf ("%s%s%s%s%s",ctext,rfxbuilder->field_delim,ctext2,rfxbuilder->field_delim,
-						   lives_entry_get_text (GTK_ENTRY (rfxbuilder->paramw_rest_entry)))));
+						   lives_entry_get_text (LIVES_ENTRY (rfxbuilder->paramw_rest_entry)))));
 	g_free(ctext2);
       }
       else {
-	lives_entry_set_text (GTK_ENTRY (rfxbuilder->entry2[found]),
+	lives_entry_set_text (LIVES_ENTRY (rfxbuilder->entry2[found]),
 			    (tmpx=g_strdup_printf ("%s%s%s",ctext,rfxbuilder->field_delim,lives_entry_get_text 
-						   (GTK_ENTRY (rfxbuilder->paramw_rest_entry)))));
+						   (LIVES_ENTRY (rfxbuilder->paramw_rest_entry)))));
       }
       g_free(ctext);
       g_free(tmpx);
@@ -1632,7 +1632,7 @@ void on_table_edit_row (GtkButton *button, gpointer user_data) {
 
   case RFX_TABLE_TYPE_TRIGGERS:
     trigger_dialog=make_trigger_dialog(found,rfxbuilder);
-    if (lives_dialog_run (GTK_DIALOG (trigger_dialog))==GTK_RESPONSE_CANCEL) {
+    if (lives_dialog_run (LIVES_DIALOG (trigger_dialog))==GTK_RESPONSE_CANCEL) {
       lives_widget_destroy (trigger_dialog);
       return;
     }
@@ -1674,14 +1674,14 @@ void on_table_swap_row (GtkButton *button, gpointer user_data) {
     }
     if (rfxbuilder->table_swap_row2<0||rfxbuilder->table_swap_row2>=rfxbuilder->table_rows) return;
 
-    entry_text=g_strdup(lives_entry_get_text(GTK_ENTRY(rfxbuilder->entry[found])));
-    lives_entry_set_text (GTK_ENTRY (rfxbuilder->entry[found]),lives_entry_get_text (GTK_ENTRY (rfxbuilder->entry[rfxbuilder->table_swap_row2])));
-    lives_entry_set_text (GTK_ENTRY (rfxbuilder->entry[rfxbuilder->table_swap_row2]),entry_text);
+    entry_text=g_strdup(lives_entry_get_text(LIVES_ENTRY(rfxbuilder->entry[found])));
+    lives_entry_set_text (LIVES_ENTRY (rfxbuilder->entry[found]),lives_entry_get_text (GTK_ENTRY (rfxbuilder->entry[rfxbuilder->table_swap_row2])));
+    lives_entry_set_text (LIVES_ENTRY (rfxbuilder->entry[rfxbuilder->table_swap_row2]),entry_text);
     g_free (entry_text);
 
-    entry_text=g_strdup(lives_entry_get_text(GTK_ENTRY(rfxbuilder->entry2[found])));
-    lives_entry_set_text (GTK_ENTRY (rfxbuilder->entry2[found]),lives_entry_get_text (GTK_ENTRY (rfxbuilder->entry2[rfxbuilder->table_swap_row2])));
-    lives_entry_set_text (GTK_ENTRY (rfxbuilder->entry2[rfxbuilder->table_swap_row2]),entry_text);
+    entry_text=g_strdup(lives_entry_get_text(LIVES_ENTRY(rfxbuilder->entry2[found])));
+    lives_entry_set_text (LIVES_ENTRY (rfxbuilder->entry2[found]),lives_entry_get_text (GTK_ENTRY (rfxbuilder->entry2[rfxbuilder->table_swap_row2])));
+    lives_entry_set_text (LIVES_ENTRY (rfxbuilder->entry2[rfxbuilder->table_swap_row2]),entry_text);
     g_free (entry_text);
 
     break;
@@ -1738,7 +1738,7 @@ void on_table_delete_row (GtkButton *button, gpointer user_data) {
 	// note - parameters become renumbered here
 	gchar *tmpx;
 	rfxbuilder->entry[i-1]=rfxbuilder->entry[i];
-	lives_entry_set_text (GTK_ENTRY (rfxbuilder->entry[i-1]),(tmpx=g_strdup_printf ("p%d",i-1)));
+	lives_entry_set_text (LIVES_ENTRY (rfxbuilder->entry[i-1]),(tmpx=g_strdup_printf ("p%d",i-1)));
 	g_free(tmpx);
 	rfxbuilder->entry2[i-1]=rfxbuilder->entry2[i];
 	rfxbuilder->entry3[i-1]=rfxbuilder->entry3[i];
@@ -1836,9 +1836,9 @@ void on_table_delete_row (GtkButton *button, gpointer user_data) {
 	g_free (rfxbuilder->copy_triggers[i].code);
       }
       else if (lives_widget_get_state(rfxbuilder->entry[i])&LIVES_WIDGET_STATE_INSENSITIVE) {
-	int when=atoi (lives_entry_get_text (GTK_ENTRY (rfxbuilder->entry[i])))+1;
+	int when=atoi (lives_entry_get_text (LIVES_ENTRY (rfxbuilder->entry[i])))+1;
 
-	if (!strcmp(lives_entry_get_text (GTK_ENTRY (rfxbuilder->entry[i])),"init")) rfxbuilder->has_init_trigger=FALSE;
+	if (!strcmp(lives_entry_get_text (LIVES_ENTRY (rfxbuilder->entry[i])),"init")) rfxbuilder->has_init_trigger=FALSE;
 	else rfxbuilder->params[when-1].onchange=FALSE;
 
 	lives_widget_destroy (rfxbuilder->entry[i]);
@@ -1904,13 +1904,13 @@ GtkWidget * make_param_dialog (int pnum, rfx_build_window_t *rfxbuilder) {
   dialog = lives_standard_dialog_new (title,TRUE);
   g_free(title);
 
-  gtk_window_add_accel_group (GTK_WINDOW (dialog), accel_group);
+  gtk_window_add_accel_group (LIVES_WINDOW (dialog), accel_group);
 
   if (prefs->show_gui) {
-    gtk_window_set_transient_for(GTK_WINDOW(dialog),GTK_WINDOW(mainw->LiVES));
+    gtk_window_set_transient_for(LIVES_WINDOW(dialog),GTK_WINDOW(mainw->LiVES));
   }
 
-  dialog_vbox = lives_dialog_get_content_area(GTK_DIALOG(dialog));
+  dialog_vbox = lives_dialog_get_content_area(LIVES_DIALOG(dialog));
 
   // name
 
@@ -1951,19 +1951,19 @@ GtkWidget * make_param_dialog (int pnum, rfx_build_window_t *rfxbuilder) {
   if (pnum>=0) {
     switch(rfxbuilder->copy_params[pnum].type) {
     case LIVES_PARAM_NUM:
-      lives_combo_set_active_index(GTK_COMBO_BOX(rfxbuilder->param_type_combo),0);
+      lives_combo_set_active_index(LIVES_COMBO(rfxbuilder->param_type_combo),0);
       break;
     case LIVES_PARAM_BOOL:
-      lives_combo_set_active_index(GTK_COMBO_BOX(rfxbuilder->param_type_combo),1);
+      lives_combo_set_active_index(LIVES_COMBO(rfxbuilder->param_type_combo),1);
       break;
     case LIVES_PARAM_STRING:
-      lives_combo_set_active_index(GTK_COMBO_BOX(rfxbuilder->param_type_combo),2);
+      lives_combo_set_active_index(LIVES_COMBO(rfxbuilder->param_type_combo),2);
       break;
     case LIVES_PARAM_COLRGB24:
-      lives_combo_set_active_index(GTK_COMBO_BOX(rfxbuilder->param_type_combo),3);
+      lives_combo_set_active_index(LIVES_COMBO(rfxbuilder->param_type_combo),3);
       break;
     case LIVES_PARAM_STRING_LIST:
-      lives_combo_set_active_index(GTK_COMBO_BOX(rfxbuilder->param_type_combo),4);
+      lives_combo_set_active_index(LIVES_COMBO(rfxbuilder->param_type_combo),4);
       break;
     default:
       break;
@@ -2001,27 +2001,27 @@ GtkWidget * make_param_dialog (int pnum, rfx_build_window_t *rfxbuilder) {
 
   rfxbuilder->param_def_combo = lives_standard_combo_new (_("_Default: "),TRUE,NULL,LIVES_BOX(rfxbuilder->param_strlist_hbox),NULL);
 
-  gtk_label_set_mnemonic_widget (GTK_LABEL (rfxbuilder->param_def_label),rfxbuilder->param_def_combo);
+  gtk_label_set_mnemonic_widget (LIVES_LABEL (rfxbuilder->param_def_label),rfxbuilder->param_def_combo);
 
   if (pnum>=0) {
     switch (rfxbuilder->copy_params[pnum].type) {
     case LIVES_PARAM_NUM:
       if (!rfxbuilder->copy_params[pnum].dp) {
-	lives_spin_button_set_value (GTK_SPIN_BUTTON (rfxbuilder->spinbutton_param_def),
+	lives_spin_button_set_value (LIVES_SPIN_BUTTON (rfxbuilder->spinbutton_param_def),
 				   (double)get_int_param (rfxbuilder->copy_params[pnum].def));
       }
       else {
-	lives_spin_button_set_value (GTK_SPIN_BUTTON (rfxbuilder->spinbutton_param_def),
+	lives_spin_button_set_value (LIVES_SPIN_BUTTON (rfxbuilder->spinbutton_param_def),
 				   get_double_param (rfxbuilder->copy_params[pnum].def));
       }
       break;
     case LIVES_PARAM_BOOL:
-      lives_spin_button_set_value (GTK_SPIN_BUTTON (rfxbuilder->spinbutton_param_def),
+      lives_spin_button_set_value (LIVES_SPIN_BUTTON (rfxbuilder->spinbutton_param_def),
 				 (double)get_bool_param (rfxbuilder->copy_params[pnum].def));
       break;
     case LIVES_PARAM_COLRGB24:
       get_colRGB24_param (rfxbuilder->copy_params[pnum].def,&rgb);
-      lives_spin_button_set_value (GTK_SPIN_BUTTON (rfxbuilder->spinbutton_param_def),(double)rgb.red);
+      lives_spin_button_set_value (LIVES_SPIN_BUTTON (rfxbuilder->spinbutton_param_def),(double)rgb.red);
       break;
     default:
       break;
@@ -2038,7 +2038,7 @@ GtkWidget * make_param_dialog (int pnum, rfx_build_window_t *rfxbuilder) {
 								       (tmp2=g_strdup(_("A non-zero value can be used to group radio buttons."))));
 
   if (pnum>=0) {
-    lives_spin_button_set_value (GTK_SPIN_BUTTON (rfxbuilder->spinbutton_param_group),(double)rfxbuilder->copy_params[pnum].group);
+    lives_spin_button_set_value (LIVES_SPIN_BUTTON (rfxbuilder->spinbutton_param_group),(double)rfxbuilder->copy_params[pnum].group);
   }
 
   // min
@@ -2106,19 +2106,19 @@ GtkWidget * make_param_dialog (int pnum, rfx_build_window_t *rfxbuilder) {
   if (pnum>=0) {
     switch (rfxbuilder->copy_params[pnum].type) {
     case LIVES_PARAM_NUM:
-      lives_spin_button_set_value (GTK_SPIN_BUTTON (rfxbuilder->spinbutton_param_min),rfxbuilder->copy_params[pnum].min);
-      lives_spin_button_set_value (GTK_SPIN_BUTTON (rfxbuilder->spinbutton_param_max),rfxbuilder->copy_params[pnum].max);
-      lives_spin_button_set_value (GTK_SPIN_BUTTON (rfxbuilder->spinbutton_param_step),
+      lives_spin_button_set_value (LIVES_SPIN_BUTTON (rfxbuilder->spinbutton_param_min),rfxbuilder->copy_params[pnum].min);
+      lives_spin_button_set_value (LIVES_SPIN_BUTTON (rfxbuilder->spinbutton_param_max),rfxbuilder->copy_params[pnum].max);
+      lives_spin_button_set_value (LIVES_SPIN_BUTTON (rfxbuilder->spinbutton_param_step),
 				 rfxbuilder->copy_params[pnum].step_size);
       lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(rfxbuilder->param_wrap_checkbutton),
 				     rfxbuilder->copy_params[pnum].wrap);
       break;
     case LIVES_PARAM_COLRGB24:
-      lives_spin_button_set_value (GTK_SPIN_BUTTON (rfxbuilder->spinbutton_param_min),(double)rgb.green);
-      lives_spin_button_set_value (GTK_SPIN_BUTTON (rfxbuilder->spinbutton_param_max),(double)rgb.blue);
+      lives_spin_button_set_value (LIVES_SPIN_BUTTON (rfxbuilder->spinbutton_param_min),(double)rgb.green);
+      lives_spin_button_set_value (LIVES_SPIN_BUTTON (rfxbuilder->spinbutton_param_max),(double)rgb.blue);
       break;
     case LIVES_PARAM_STRING:
-      lives_spin_button_set_value (GTK_SPIN_BUTTON (rfxbuilder->spinbutton_param_max),rfxbuilder->copy_params[pnum].max);
+      lives_spin_button_set_value (LIVES_SPIN_BUTTON (rfxbuilder->spinbutton_param_max),rfxbuilder->copy_params[pnum].max);
       break;
     default:
       break;
@@ -2126,7 +2126,7 @@ GtkWidget * make_param_dialog (int pnum, rfx_build_window_t *rfxbuilder) {
   }
   lives_widget_show_all (dialog);
   on_param_type_changed (LIVES_COMBO (rfxbuilder->param_type_combo),(gpointer)rfxbuilder);
-  after_param_dp_changed(GTK_SPIN_BUTTON(rfxbuilder->spinbutton_param_dp),(gpointer)rfxbuilder);
+  after_param_dp_changed(LIVES_SPIN_BUTTON(rfxbuilder->spinbutton_param_dp),(gpointer)rfxbuilder);
   return dialog;
 }
 
@@ -2143,38 +2143,38 @@ void after_param_dp_changed (GtkSpinButton *spinbutton, gpointer user_data) {
 
   g_free(ctext);
 
-  dp=lives_spin_button_get_value_as_int (GTK_SPIN_BUTTON (spinbutton));
+  dp=lives_spin_button_get_value_as_int (LIVES_SPIN_BUTTON (spinbutton));
 
-  lives_spin_button_set_digits (GTK_SPIN_BUTTON (rfxbuilder->spinbutton_param_def),dp);
-  lives_spin_button_set_digits (GTK_SPIN_BUTTON (rfxbuilder->spinbutton_param_min),dp);
-  lives_spin_button_set_digits (GTK_SPIN_BUTTON (rfxbuilder->spinbutton_param_max),dp);
-  lives_spin_button_set_digits (GTK_SPIN_BUTTON (rfxbuilder->spinbutton_param_step),dp);
+  lives_spin_button_set_digits (LIVES_SPIN_BUTTON (rfxbuilder->spinbutton_param_def),dp);
+  lives_spin_button_set_digits (LIVES_SPIN_BUTTON (rfxbuilder->spinbutton_param_min),dp);
+  lives_spin_button_set_digits (LIVES_SPIN_BUTTON (rfxbuilder->spinbutton_param_max),dp);
+  lives_spin_button_set_digits (LIVES_SPIN_BUTTON (rfxbuilder->spinbutton_param_step),dp);
 
   if (dp>0) {
-    double max=lives_spin_button_get_value(GTK_SPIN_BUTTON (rfxbuilder->spinbutton_param_max));
-    double min=lives_spin_button_get_value(GTK_SPIN_BUTTON (rfxbuilder->spinbutton_param_min));
-    lives_spin_button_set_range(GTK_SPIN_BUTTON(rfxbuilder->spinbutton_param_def),-G_MAXFLOAT,G_MAXFLOAT);
-    lives_spin_button_set_range(GTK_SPIN_BUTTON(rfxbuilder->spinbutton_param_min),-G_MAXFLOAT,G_MAXFLOAT);
-    lives_spin_button_set_range(GTK_SPIN_BUTTON(rfxbuilder->spinbutton_param_max),-G_MAXFLOAT,G_MAXFLOAT);
-    lives_spin_button_set_range(GTK_SPIN_BUTTON(rfxbuilder->spinbutton_param_step),1./(double)lives_10pow(dp),(max-min)>1.?(max-min):1.);
+    double max=lives_spin_button_get_value(LIVES_SPIN_BUTTON (rfxbuilder->spinbutton_param_max));
+    double min=lives_spin_button_get_value(LIVES_SPIN_BUTTON (rfxbuilder->spinbutton_param_min));
+    lives_spin_button_set_range(LIVES_SPIN_BUTTON(rfxbuilder->spinbutton_param_def),-G_MAXFLOAT,G_MAXFLOAT);
+    lives_spin_button_set_range(LIVES_SPIN_BUTTON(rfxbuilder->spinbutton_param_min),-G_MAXFLOAT,G_MAXFLOAT);
+    lives_spin_button_set_range(LIVES_SPIN_BUTTON(rfxbuilder->spinbutton_param_max),-G_MAXFLOAT,G_MAXFLOAT);
+    lives_spin_button_set_range(LIVES_SPIN_BUTTON(rfxbuilder->spinbutton_param_step),1./(double)lives_10pow(dp),(max-min)>1.?(max-min):1.);
 
-    lives_entry_set_width_chars (GTK_ENTRY (rfxbuilder->spinbutton_param_step),MAXFLOATLEN+dp);
-    lives_entry_set_width_chars (GTK_ENTRY (rfxbuilder->spinbutton_param_def),MAXFLOATLEN+dp);
-    lives_entry_set_width_chars (GTK_ENTRY (rfxbuilder->spinbutton_param_min),MAXFLOATLEN+dp);
-    lives_entry_set_width_chars (GTK_ENTRY (rfxbuilder->spinbutton_param_max),MAXFLOATLEN+dp);
+    lives_entry_set_width_chars (LIVES_ENTRY (rfxbuilder->spinbutton_param_step),MAXFLOATLEN+dp);
+    lives_entry_set_width_chars (LIVES_ENTRY (rfxbuilder->spinbutton_param_def),MAXFLOATLEN+dp);
+    lives_entry_set_width_chars (LIVES_ENTRY (rfxbuilder->spinbutton_param_min),MAXFLOATLEN+dp);
+    lives_entry_set_width_chars (LIVES_ENTRY (rfxbuilder->spinbutton_param_max),MAXFLOATLEN+dp);
   }
   else {
-    int max=lives_spin_button_get_value_as_int(GTK_SPIN_BUTTON (rfxbuilder->spinbutton_param_max));
-    int min=lives_spin_button_get_value_as_int(GTK_SPIN_BUTTON (rfxbuilder->spinbutton_param_min));
-    lives_spin_button_set_range(GTK_SPIN_BUTTON(rfxbuilder->spinbutton_param_def),-G_MAXINT,G_MAXINT);
-    lives_spin_button_set_range(GTK_SPIN_BUTTON(rfxbuilder->spinbutton_param_min),-G_MAXINT,G_MAXINT);
-    lives_spin_button_set_range(GTK_SPIN_BUTTON(rfxbuilder->spinbutton_param_max),-G_MAXINT,G_MAXINT);
-    lives_spin_button_set_range(GTK_SPIN_BUTTON(rfxbuilder->spinbutton_param_step),1,(max-min)>1?(max-min):1);
+    int max=lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON (rfxbuilder->spinbutton_param_max));
+    int min=lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON (rfxbuilder->spinbutton_param_min));
+    lives_spin_button_set_range(LIVES_SPIN_BUTTON(rfxbuilder->spinbutton_param_def),-G_MAXINT,G_MAXINT);
+    lives_spin_button_set_range(LIVES_SPIN_BUTTON(rfxbuilder->spinbutton_param_min),-G_MAXINT,G_MAXINT);
+    lives_spin_button_set_range(LIVES_SPIN_BUTTON(rfxbuilder->spinbutton_param_max),-G_MAXINT,G_MAXINT);
+    lives_spin_button_set_range(LIVES_SPIN_BUTTON(rfxbuilder->spinbutton_param_step),1,(max-min)>1?(max-min):1);
     
-    lives_entry_set_width_chars (GTK_ENTRY (rfxbuilder->spinbutton_param_step),MAXINTLEN);
-    lives_entry_set_width_chars (GTK_ENTRY (rfxbuilder->spinbutton_param_def),MAXINTLEN);
-    lives_entry_set_width_chars (GTK_ENTRY (rfxbuilder->spinbutton_param_min),MAXINTLEN);
-    lives_entry_set_width_chars (GTK_ENTRY (rfxbuilder->spinbutton_param_max),MAXINTLEN);
+    lives_entry_set_width_chars (LIVES_ENTRY (rfxbuilder->spinbutton_param_step),MAXINTLEN);
+    lives_entry_set_width_chars (LIVES_ENTRY (rfxbuilder->spinbutton_param_def),MAXINTLEN);
+    lives_entry_set_width_chars (LIVES_ENTRY (rfxbuilder->spinbutton_param_min),MAXINTLEN);
+    lives_entry_set_width_chars (LIVES_ENTRY (rfxbuilder->spinbutton_param_max),MAXINTLEN);
   }
 }
 
@@ -2194,34 +2194,34 @@ void after_param_min_changed (GtkSpinButton *spinbutton, gpointer user_data) {
   g_signal_handler_block (rfxbuilder->spinbutton_param_max,rfxbuilder->max_spin_f);
   g_signal_handler_block (rfxbuilder->spinbutton_param_def,rfxbuilder->def_spin_f);
 
-  if ((dp=lives_spin_button_get_value_as_int (GTK_SPIN_BUTTON (rfxbuilder->spinbutton_param_dp)))>0) {
-    if (lives_spin_button_get_value(GTK_SPIN_BUTTON(rfxbuilder->spinbutton_param_def))<
-	lives_spin_button_get_value(GTK_SPIN_BUTTON(rfxbuilder->spinbutton_param_min))) {
-      lives_spin_button_set_value(GTK_SPIN_BUTTON(rfxbuilder->spinbutton_param_def),
-				lives_spin_button_get_value(GTK_SPIN_BUTTON(rfxbuilder->spinbutton_param_min)));
+  if ((dp=lives_spin_button_get_value_as_int (LIVES_SPIN_BUTTON (rfxbuilder->spinbutton_param_dp)))>0) {
+    if (lives_spin_button_get_value(LIVES_SPIN_BUTTON(rfxbuilder->spinbutton_param_def))<
+	lives_spin_button_get_value(LIVES_SPIN_BUTTON(rfxbuilder->spinbutton_param_min))) {
+      lives_spin_button_set_value(LIVES_SPIN_BUTTON(rfxbuilder->spinbutton_param_def),
+				lives_spin_button_get_value(LIVES_SPIN_BUTTON(rfxbuilder->spinbutton_param_min)));
     }
 
-    lives_spin_button_set_range(GTK_SPIN_BUTTON(rfxbuilder->spinbutton_param_max),
-			      lives_spin_button_get_value (GTK_SPIN_BUTTON (rfxbuilder->spinbutton_param_min)),G_MAXFLOAT);
-    lives_spin_button_set_range(GTK_SPIN_BUTTON(rfxbuilder->spinbutton_param_step),
+    lives_spin_button_set_range(LIVES_SPIN_BUTTON(rfxbuilder->spinbutton_param_max),
+			      lives_spin_button_get_value (LIVES_SPIN_BUTTON (rfxbuilder->spinbutton_param_min)),G_MAXFLOAT);
+    lives_spin_button_set_range(LIVES_SPIN_BUTTON(rfxbuilder->spinbutton_param_step),
 			      1./(double)lives_10pow(dp),lives_spin_button_get_value 
-			      (GTK_SPIN_BUTTON (rfxbuilder->spinbutton_param_max))-
-			      lives_spin_button_get_value (GTK_SPIN_BUTTON (rfxbuilder->spinbutton_param_min)));
+			      (LIVES_SPIN_BUTTON (rfxbuilder->spinbutton_param_max))-
+			      lives_spin_button_get_value (LIVES_SPIN_BUTTON (rfxbuilder->spinbutton_param_min)));
 
   }
   else {
-    if (lives_spin_button_get_value_as_int(GTK_SPIN_BUTTON(rfxbuilder->spinbutton_param_def))<
-	lives_spin_button_get_value_as_int(GTK_SPIN_BUTTON(rfxbuilder->spinbutton_param_min))) {
-      lives_spin_button_set_value(GTK_SPIN_BUTTON(rfxbuilder->spinbutton_param_def),
-				lives_spin_button_get_value_as_int(GTK_SPIN_BUTTON(rfxbuilder->spinbutton_param_min)));
+    if (lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(rfxbuilder->spinbutton_param_def))<
+	lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(rfxbuilder->spinbutton_param_min))) {
+      lives_spin_button_set_value(LIVES_SPIN_BUTTON(rfxbuilder->spinbutton_param_def),
+				lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(rfxbuilder->spinbutton_param_min)));
     }
 
-    lives_spin_button_set_range(GTK_SPIN_BUTTON(rfxbuilder->spinbutton_param_max),
-			      lives_spin_button_get_value_as_int (GTK_SPIN_BUTTON (rfxbuilder->spinbutton_param_min)),
+    lives_spin_button_set_range(LIVES_SPIN_BUTTON(rfxbuilder->spinbutton_param_max),
+			      lives_spin_button_get_value_as_int (LIVES_SPIN_BUTTON (rfxbuilder->spinbutton_param_min)),
 			      G_MAXINT);
-    lives_spin_button_set_range(GTK_SPIN_BUTTON(rfxbuilder->spinbutton_param_step),1,
-			      lives_spin_button_get_value_as_int (GTK_SPIN_BUTTON (rfxbuilder->spinbutton_param_max))-
-			      lives_spin_button_get_value_as_int (GTK_SPIN_BUTTON (rfxbuilder->spinbutton_param_min)));
+    lives_spin_button_set_range(LIVES_SPIN_BUTTON(rfxbuilder->spinbutton_param_step),1,
+			      lives_spin_button_get_value_as_int (LIVES_SPIN_BUTTON (rfxbuilder->spinbutton_param_max))-
+			      lives_spin_button_get_value_as_int (LIVES_SPIN_BUTTON (rfxbuilder->spinbutton_param_min)));
 
   }
 
@@ -2245,33 +2245,33 @@ void after_param_max_changed (GtkSpinButton *spinbutton, gpointer user_data) {
   g_signal_handler_block (rfxbuilder->spinbutton_param_min,rfxbuilder->min_spin_f);
   g_signal_handler_block (rfxbuilder->spinbutton_param_def,rfxbuilder->def_spin_f);
 
-  if ((dp=lives_spin_button_get_value_as_int (GTK_SPIN_BUTTON (rfxbuilder->spinbutton_param_dp)))>0) {
-    if (lives_spin_button_get_value(GTK_SPIN_BUTTON(rfxbuilder->spinbutton_param_def))>
-	lives_spin_button_get_value(GTK_SPIN_BUTTON(rfxbuilder->spinbutton_param_max))) {
-      lives_spin_button_set_value(GTK_SPIN_BUTTON(rfxbuilder->spinbutton_param_def),
-				lives_spin_button_get_value(GTK_SPIN_BUTTON(rfxbuilder->spinbutton_param_max)));
+  if ((dp=lives_spin_button_get_value_as_int (LIVES_SPIN_BUTTON (rfxbuilder->spinbutton_param_dp)))>0) {
+    if (lives_spin_button_get_value(LIVES_SPIN_BUTTON(rfxbuilder->spinbutton_param_def))>
+	lives_spin_button_get_value(LIVES_SPIN_BUTTON(rfxbuilder->spinbutton_param_max))) {
+      lives_spin_button_set_value(LIVES_SPIN_BUTTON(rfxbuilder->spinbutton_param_def),
+				lives_spin_button_get_value(LIVES_SPIN_BUTTON(rfxbuilder->spinbutton_param_max)));
     }
 
-    lives_spin_button_set_range(GTK_SPIN_BUTTON(rfxbuilder->spinbutton_param_min),-G_MAXFLOAT,
-			      lives_spin_button_get_value (GTK_SPIN_BUTTON (rfxbuilder->spinbutton_param_max)));
-    lives_spin_button_set_range(GTK_SPIN_BUTTON(rfxbuilder->spinbutton_param_step),
+    lives_spin_button_set_range(LIVES_SPIN_BUTTON(rfxbuilder->spinbutton_param_min),-G_MAXFLOAT,
+			      lives_spin_button_get_value (LIVES_SPIN_BUTTON (rfxbuilder->spinbutton_param_max)));
+    lives_spin_button_set_range(LIVES_SPIN_BUTTON(rfxbuilder->spinbutton_param_step),
 			      1./(double)lives_10pow(dp),
-			      lives_spin_button_get_value (GTK_SPIN_BUTTON (rfxbuilder->spinbutton_param_max))-
-			      lives_spin_button_get_value (GTK_SPIN_BUTTON (rfxbuilder->spinbutton_param_min)));
+			      lives_spin_button_get_value (LIVES_SPIN_BUTTON (rfxbuilder->spinbutton_param_max))-
+			      lives_spin_button_get_value (LIVES_SPIN_BUTTON (rfxbuilder->spinbutton_param_min)));
 
   }
   else {
-    if (lives_spin_button_get_value_as_int(GTK_SPIN_BUTTON(rfxbuilder->spinbutton_param_def))>
-	lives_spin_button_get_value_as_int(GTK_SPIN_BUTTON(rfxbuilder->spinbutton_param_max))) {
-      lives_spin_button_set_value(GTK_SPIN_BUTTON(rfxbuilder->spinbutton_param_def),
-				lives_spin_button_get_value_as_int(GTK_SPIN_BUTTON(rfxbuilder->spinbutton_param_max)));
+    if (lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(rfxbuilder->spinbutton_param_def))>
+	lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(rfxbuilder->spinbutton_param_max))) {
+      lives_spin_button_set_value(LIVES_SPIN_BUTTON(rfxbuilder->spinbutton_param_def),
+				lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(rfxbuilder->spinbutton_param_max)));
     }
 
-    lives_spin_button_set_range(GTK_SPIN_BUTTON(rfxbuilder->spinbutton_param_min),-G_MAXINT,
-			      lives_spin_button_get_value_as_int (GTK_SPIN_BUTTON (rfxbuilder->spinbutton_param_max)));
-    lives_spin_button_set_range(GTK_SPIN_BUTTON(rfxbuilder->spinbutton_param_step),1,
-			      lives_spin_button_get_value_as_int (GTK_SPIN_BUTTON (rfxbuilder->spinbutton_param_max))
-			      -lives_spin_button_get_value_as_int (GTK_SPIN_BUTTON (rfxbuilder->spinbutton_param_min)));
+    lives_spin_button_set_range(LIVES_SPIN_BUTTON(rfxbuilder->spinbutton_param_min),-G_MAXINT,
+			      lives_spin_button_get_value_as_int (LIVES_SPIN_BUTTON (rfxbuilder->spinbutton_param_max)));
+    lives_spin_button_set_range(LIVES_SPIN_BUTTON(rfxbuilder->spinbutton_param_step),1,
+			      lives_spin_button_get_value_as_int (LIVES_SPIN_BUTTON (rfxbuilder->spinbutton_param_max))
+			      -lives_spin_button_get_value_as_int (LIVES_SPIN_BUTTON (rfxbuilder->spinbutton_param_min)));
 
   }
 
@@ -2291,22 +2291,22 @@ void after_param_def_changed (GtkSpinButton *spinbutton, gpointer user_data) {
 
   g_free(ctext);
 
-  if (lives_spin_button_get_value_as_int (GTK_SPIN_BUTTON (rfxbuilder->spinbutton_param_dp))) {
-    double dbl_def=lives_spin_button_get_value (GTK_SPIN_BUTTON (rfxbuilder->spinbutton_param_def));
-    if (dbl_def<lives_spin_button_get_value (GTK_SPIN_BUTTON (rfxbuilder->spinbutton_param_min))) {
-      lives_spin_button_set_value (GTK_SPIN_BUTTON (rfxbuilder->spinbutton_param_min),dbl_def);
+  if (lives_spin_button_get_value_as_int (LIVES_SPIN_BUTTON (rfxbuilder->spinbutton_param_dp))) {
+    double dbl_def=lives_spin_button_get_value (LIVES_SPIN_BUTTON (rfxbuilder->spinbutton_param_def));
+    if (dbl_def<lives_spin_button_get_value (LIVES_SPIN_BUTTON (rfxbuilder->spinbutton_param_min))) {
+      lives_spin_button_set_value (LIVES_SPIN_BUTTON (rfxbuilder->spinbutton_param_min),dbl_def);
     }
-    else if (dbl_def>lives_spin_button_get_value (GTK_SPIN_BUTTON (rfxbuilder->spinbutton_param_max))) {
-      lives_spin_button_set_value (GTK_SPIN_BUTTON (rfxbuilder->spinbutton_param_max),dbl_def);
+    else if (dbl_def>lives_spin_button_get_value (LIVES_SPIN_BUTTON (rfxbuilder->spinbutton_param_max))) {
+      lives_spin_button_set_value (LIVES_SPIN_BUTTON (rfxbuilder->spinbutton_param_max),dbl_def);
     }
   }
   else {
-    int int_def=lives_spin_button_get_value_as_int (GTK_SPIN_BUTTON (rfxbuilder->spinbutton_param_def));
-    if (int_def<lives_spin_button_get_value_as_int (GTK_SPIN_BUTTON (rfxbuilder->spinbutton_param_min))) {
-      lives_spin_button_set_value (GTK_SPIN_BUTTON (rfxbuilder->spinbutton_param_min),(double)int_def);
+    int int_def=lives_spin_button_get_value_as_int (LIVES_SPIN_BUTTON (rfxbuilder->spinbutton_param_def));
+    if (int_def<lives_spin_button_get_value_as_int (LIVES_SPIN_BUTTON (rfxbuilder->spinbutton_param_min))) {
+      lives_spin_button_set_value (LIVES_SPIN_BUTTON (rfxbuilder->spinbutton_param_min),(double)int_def);
     }
-    else if (int_def>lives_spin_button_get_value_as_int (GTK_SPIN_BUTTON (rfxbuilder->spinbutton_param_max))) {
-      lives_spin_button_set_value (GTK_SPIN_BUTTON (rfxbuilder->spinbutton_param_max),(double)int_def);
+    else if (int_def>lives_spin_button_get_value_as_int (LIVES_SPIN_BUTTON (rfxbuilder->spinbutton_param_max))) {
+      lives_spin_button_set_value (LIVES_SPIN_BUTTON (rfxbuilder->spinbutton_param_max),(double)int_def);
     }
   }
 }
@@ -2378,25 +2378,25 @@ void on_param_type_changed (GtkComboBox *param_type_combo, gpointer user_data) {
   else {
     if (!strcmp (ctext,"num")) {
       rfxbuilder->copy_params[pnum].type=LIVES_PARAM_NUM;
-      lives_label_set_text_with_mnemonic (GTK_LABEL (rfxbuilder->param_def_label),(_("_Default value:    ")));
-      lives_label_set_text_with_mnemonic (GTK_LABEL (rfxbuilder->param_min_label),(_("_Minimum value: ")));
-      lives_label_set_text_with_mnemonic (GTK_LABEL (rfxbuilder->param_max_label),(_("Ma_ximum value: ")));
+      lives_label_set_text_with_mnemonic (LIVES_LABEL (rfxbuilder->param_def_label),(_("_Default value:    ")));
+      lives_label_set_text_with_mnemonic (LIVES_LABEL (rfxbuilder->param_min_label),(_("_Minimum value: ")));
+      lives_label_set_text_with_mnemonic (LIVES_LABEL (rfxbuilder->param_max_label),(_("Ma_ximum value: ")));
       lives_widget_show (rfxbuilder->spinbutton_param_step);
       lives_widget_show (rfxbuilder->param_step_label);
       lives_widget_show_all (rfxbuilder->param_wrap_hbox);
 
-      after_param_dp_changed(GTK_SPIN_BUTTON(rfxbuilder->spinbutton_param_dp),(gpointer)rfxbuilder);
+      after_param_dp_changed(LIVES_SPIN_BUTTON(rfxbuilder->spinbutton_param_dp),(gpointer)rfxbuilder);
 
       if (pnum<0) {
-	lives_spin_button_set_value(GTK_SPIN_BUTTON(rfxbuilder->spinbutton_param_min),0.);
-	lives_spin_button_set_value(GTK_SPIN_BUTTON(rfxbuilder->spinbutton_param_max),RFX_DEF_NUM_MAX);
-	lives_spin_button_set_value(GTK_SPIN_BUTTON(rfxbuilder->spinbutton_param_def),0.);
-	lives_spin_button_set_value(GTK_SPIN_BUTTON(rfxbuilder->spinbutton_param_step),1.);
+	lives_spin_button_set_value(LIVES_SPIN_BUTTON(rfxbuilder->spinbutton_param_min),0.);
+	lives_spin_button_set_value(LIVES_SPIN_BUTTON(rfxbuilder->spinbutton_param_max),RFX_DEF_NUM_MAX);
+	lives_spin_button_set_value(LIVES_SPIN_BUTTON(rfxbuilder->spinbutton_param_def),0.);
+	lives_spin_button_set_value(LIVES_SPIN_BUTTON(rfxbuilder->spinbutton_param_step),1.);
       }
     }
     else if (!strcmp (ctext,"bool")) {
       rfxbuilder->copy_params[pnum].type=LIVES_PARAM_BOOL;
-      lives_label_set_text_with_mnemonic (GTK_LABEL (rfxbuilder->param_def_label),(_("_Default value:    ")));
+      lives_label_set_text_with_mnemonic (LIVES_LABEL (rfxbuilder->param_def_label),(_("_Default value:    ")));
       lives_widget_hide (rfxbuilder->param_min_label);
       lives_widget_hide (rfxbuilder->param_max_label);
       lives_widget_hide (rfxbuilder->spinbutton_param_min);
@@ -2404,31 +2404,31 @@ void on_param_type_changed (GtkComboBox *param_type_combo, gpointer user_data) {
       lives_widget_hide (rfxbuilder->spinbutton_param_dp);
       lives_widget_hide (rfxbuilder->param_dp_label);
       lives_widget_show (rfxbuilder->hbox_bg);
-      lives_spin_button_set_range(GTK_SPIN_BUTTON(rfxbuilder->spinbutton_param_def),0,1);
-      lives_spin_button_set_digits (GTK_SPIN_BUTTON (rfxbuilder->spinbutton_param_def),0);
-      lives_spin_button_set_digits (GTK_SPIN_BUTTON (rfxbuilder->spinbutton_param_min),0);
-      lives_spin_button_set_digits (GTK_SPIN_BUTTON (rfxbuilder->spinbutton_param_max),0);
+      lives_spin_button_set_range(LIVES_SPIN_BUTTON(rfxbuilder->spinbutton_param_def),0,1);
+      lives_spin_button_set_digits (LIVES_SPIN_BUTTON (rfxbuilder->spinbutton_param_def),0);
+      lives_spin_button_set_digits (LIVES_SPIN_BUTTON (rfxbuilder->spinbutton_param_min),0);
+      lives_spin_button_set_digits (LIVES_SPIN_BUTTON (rfxbuilder->spinbutton_param_max),0);
     }
     else if (!strcmp (ctext,"colRGB24")) {
       rfxbuilder->copy_params[pnum].type=LIVES_PARAM_COLRGB24;
       lives_widget_hide (rfxbuilder->spinbutton_param_dp);
       lives_widget_hide (rfxbuilder->param_dp_label);
-      lives_label_set_text_with_mnemonic (GTK_LABEL (rfxbuilder->param_def_label),(_("Default _Red:  ")));
-      lives_label_set_text_with_mnemonic (GTK_LABEL (rfxbuilder->param_min_label),(_("Default _Green:")));
-      lives_label_set_text_with_mnemonic (GTK_LABEL (rfxbuilder->param_max_label),(_("Default _Blue: ")));
-      lives_entry_set_width_chars (GTK_ENTRY (rfxbuilder->spinbutton_param_def),4);
-      lives_entry_set_width_chars (GTK_ENTRY (rfxbuilder->spinbutton_param_min),4);
-      lives_entry_set_width_chars (GTK_ENTRY (rfxbuilder->spinbutton_param_max),4);
-      lives_spin_button_set_range(GTK_SPIN_BUTTON(rfxbuilder->spinbutton_param_def),0,255);
-      lives_spin_button_set_range(GTK_SPIN_BUTTON(rfxbuilder->spinbutton_param_min),0,255);
-      lives_spin_button_set_range(GTK_SPIN_BUTTON(rfxbuilder->spinbutton_param_max),0,255);
-      lives_spin_button_set_digits (GTK_SPIN_BUTTON (rfxbuilder->spinbutton_param_def),0);
-      lives_spin_button_set_digits (GTK_SPIN_BUTTON (rfxbuilder->spinbutton_param_min),0);
-      lives_spin_button_set_digits (GTK_SPIN_BUTTON (rfxbuilder->spinbutton_param_max),0);
+      lives_label_set_text_with_mnemonic (LIVES_LABEL (rfxbuilder->param_def_label),(_("Default _Red:  ")));
+      lives_label_set_text_with_mnemonic (LIVES_LABEL (rfxbuilder->param_min_label),(_("Default _Green:")));
+      lives_label_set_text_with_mnemonic (LIVES_LABEL (rfxbuilder->param_max_label),(_("Default _Blue: ")));
+      lives_entry_set_width_chars (LIVES_ENTRY (rfxbuilder->spinbutton_param_def),4);
+      lives_entry_set_width_chars (LIVES_ENTRY (rfxbuilder->spinbutton_param_min),4);
+      lives_entry_set_width_chars (LIVES_ENTRY (rfxbuilder->spinbutton_param_max),4);
+      lives_spin_button_set_range(LIVES_SPIN_BUTTON(rfxbuilder->spinbutton_param_def),0,255);
+      lives_spin_button_set_range(LIVES_SPIN_BUTTON(rfxbuilder->spinbutton_param_min),0,255);
+      lives_spin_button_set_range(LIVES_SPIN_BUTTON(rfxbuilder->spinbutton_param_max),0,255);
+      lives_spin_button_set_digits (LIVES_SPIN_BUTTON (rfxbuilder->spinbutton_param_def),0);
+      lives_spin_button_set_digits (LIVES_SPIN_BUTTON (rfxbuilder->spinbutton_param_min),0);
+      lives_spin_button_set_digits (LIVES_SPIN_BUTTON (rfxbuilder->spinbutton_param_max),0);
       if (pnum<0) {
-	lives_spin_button_set_value (GTK_SPIN_BUTTON (rfxbuilder->spinbutton_param_max),0.);
-	lives_spin_button_set_value (GTK_SPIN_BUTTON (rfxbuilder->spinbutton_param_min),0.);
-	lives_spin_button_set_value (GTK_SPIN_BUTTON (rfxbuilder->spinbutton_param_def),0.);
+	lives_spin_button_set_value (LIVES_SPIN_BUTTON (rfxbuilder->spinbutton_param_max),0.);
+	lives_spin_button_set_value (LIVES_SPIN_BUTTON (rfxbuilder->spinbutton_param_min),0.);
+	lives_spin_button_set_value (LIVES_SPIN_BUTTON (rfxbuilder->spinbutton_param_def),0.);
       }
     }
     else if (!strcmp (ctext,"string")) {
@@ -2441,12 +2441,12 @@ void on_param_type_changed (GtkComboBox *param_type_combo, gpointer user_data) {
       
       lives_button_set_label (GTK_BUTTON (rfxbuilder->param_strdef_button),(_("Set _default")));
       lives_widget_show (rfxbuilder->param_strdef_hbox);
-      lives_label_set_text (GTK_LABEL (rfxbuilder->param_def_label),(_ ("Default value:  ")));
-      lives_label_set_text (GTK_LABEL (rfxbuilder->param_max_label),(_ ("Maximum length (chars): ")));
-      lives_spin_button_set_range(GTK_SPIN_BUTTON(rfxbuilder->spinbutton_param_max),1,RFX_MAXSTRINGLEN);
-      if (pnum<0) lives_spin_button_set_value(GTK_SPIN_BUTTON(rfxbuilder->spinbutton_param_max),RFX_TEXT_MAGIC);
-      lives_spin_button_set_digits (GTK_SPIN_BUTTON (rfxbuilder->spinbutton_param_def),0);
-      lives_spin_button_set_digits (GTK_SPIN_BUTTON (rfxbuilder->spinbutton_param_max),0);
+      lives_label_set_text (LIVES_LABEL (rfxbuilder->param_def_label),(_ ("Default value:  ")));
+      lives_label_set_text (LIVES_LABEL (rfxbuilder->param_max_label),(_ ("Maximum length (chars): ")));
+      lives_spin_button_set_range(LIVES_SPIN_BUTTON(rfxbuilder->spinbutton_param_max),1,RFX_MAXSTRINGLEN);
+      if (pnum<0) lives_spin_button_set_value(LIVES_SPIN_BUTTON(rfxbuilder->spinbutton_param_max),RFX_TEXT_MAGIC);
+      lives_spin_button_set_digits (LIVES_SPIN_BUTTON (rfxbuilder->spinbutton_param_def),0);
+      lives_spin_button_set_digits (LIVES_SPIN_BUTTON (rfxbuilder->spinbutton_param_max),0);
       
       if (rfxbuilder->copy_params[pnum].def==NULL) {
 	rfxbuilder->copy_params[pnum].def=g_strdup ("");
@@ -2487,20 +2487,20 @@ GtkWidget * make_param_window_dialog (int pnum, rfx_build_window_t *rfxbuilder) 
   g_free(title);
 
   if (prefs->show_gui) {
-    gtk_window_set_transient_for(GTK_WINDOW(dialog),GTK_WINDOW(mainw->LiVES));
+    gtk_window_set_transient_for(LIVES_WINDOW(dialog),GTK_WINDOW(mainw->LiVES));
   }
 
-  dialog_vbox = lives_dialog_get_content_area(GTK_DIALOG(dialog));
+  dialog_vbox = lives_dialog_get_content_area(LIVES_DIALOG(dialog));
 
   if (pnum>=0) {
-    kw=g_strdup (lives_entry_get_text (GTK_ENTRY (rfxbuilder->entry[pnum])));
+    kw=g_strdup (lives_entry_get_text (LIVES_ENTRY (rfxbuilder->entry[pnum])));
     if (!strcmp (kw,"layout")) {
-      rest=g_strdup (lives_entry_get_text (GTK_ENTRY (rfxbuilder->entry2[pnum])));
+      rest=g_strdup (lives_entry_get_text (LIVES_ENTRY (rfxbuilder->entry2[pnum])));
     }
     else if (!strcmp (kw,"special")) {
-      int numtok=get_token_count (lives_entry_get_text (GTK_ENTRY (rfxbuilder->entry2[pnum])),
+      int numtok=get_token_count (lives_entry_get_text (LIVES_ENTRY (rfxbuilder->entry2[pnum])),
 				   (int)rfxbuilder->field_delim[0]);
-      gchar **array=g_strsplit(lives_entry_get_text (GTK_ENTRY (rfxbuilder->entry2[pnum])),rfxbuilder->field_delim,3);
+      gchar **array=g_strsplit(lives_entry_get_text (LIVES_ENTRY (rfxbuilder->entry2[pnum])),rfxbuilder->field_delim,3);
       sp=g_strdup (array[0]);
       if (!strcmp (sp,"framedraw")) {
 	if (numtok>1) {
@@ -2589,7 +2589,7 @@ GtkWidget * make_param_window_dialog (int pnum, rfx_build_window_t *rfxbuilder) 
 		    G_CALLBACK (on_paramw_spsub_changed),(gpointer)rfxbuilder);
 
   lives_widget_show_all(dialog);
-  on_paramw_kw_changed (GTK_COMBO_BOX (rfxbuilder->paramw_kw_combo),(gpointer)rfxbuilder);
+  on_paramw_kw_changed (LIVES_COMBO (rfxbuilder->paramw_kw_combo),(gpointer)rfxbuilder);
 
   return dialog;
 }
@@ -2603,11 +2603,11 @@ void on_paramw_kw_changed (GtkComboBox *combo, gpointer user_data) {
 
   if (!strcmp (ctext,"special")) {
     lives_widget_show_all (lives_widget_get_parent(rfxbuilder->paramw_sp_combo));
-    on_paramw_sp_changed (GTK_COMBO_BOX(rfxbuilder->paramw_sp_combo),(gpointer)rfxbuilder);
+    on_paramw_sp_changed (LIVES_COMBO(rfxbuilder->paramw_sp_combo),(gpointer)rfxbuilder);
     lives_widget_grab_focus (lives_combo_get_entry(LIVES_COMBO(rfxbuilder->paramw_sp_combo)));
   }
   else {
-    lives_label_set_text (GTK_LABEL (rfxbuilder->paramw_rest_label),(_("Row:    ")));
+    lives_label_set_text (LIVES_LABEL (rfxbuilder->paramw_rest_label),(_("Row:    ")));
     lives_widget_hide (lives_widget_get_parent(rfxbuilder->paramw_sp_combo));
     lives_widget_hide (lives_widget_get_parent(rfxbuilder->paramw_spsub_combo));
     lives_widget_grab_focus (rfxbuilder->paramw_rest_entry);
@@ -2626,13 +2626,13 @@ void on_paramw_sp_changed (GtkComboBox *combo, gpointer user_data) {
 
   if (!strcmp (ctext,"framedraw")) {
     lives_widget_show_all (lives_widget_get_parent(rfxbuilder->paramw_spsub_combo));
-    on_paramw_spsub_changed (GTK_COMBO_BOX(rfxbuilder->paramw_spsub_combo),(gpointer)rfxbuilder);
+    on_paramw_spsub_changed (LIVES_COMBO(rfxbuilder->paramw_spsub_combo),(gpointer)rfxbuilder);
     lives_widget_grab_focus (lives_combo_get_entry(LIVES_COMBO(rfxbuilder->paramw_spsub_combo)));
   }
   else {
     if (!strcmp(ctext,"fileread")||!strcmp(ctext,"password")) npars=1;
     else npars=2;
-    lives_label_set_text (GTK_LABEL (rfxbuilder->paramw_rest_label),
+    lives_label_set_text (LIVES_LABEL (rfxbuilder->paramw_rest_label),
 			(tmpx=g_strdup_printf(_("Linked parameters (%d):    "),npars)));
     g_free(tmpx);
     lives_widget_hide (lives_widget_get_parent(rfxbuilder->paramw_spsub_combo));
@@ -2650,10 +2650,10 @@ void on_paramw_spsub_changed (GtkComboBox *combo, gpointer user_data) {
 
   if (!strcmp (ctext,"rectdemask")||
       !strcmp (ctext,"multrect")||!strcmp(ctext,"multirect")) {
-    lives_label_set_text (GTK_LABEL (rfxbuilder->paramw_rest_label),(_("Linked parameters (4):    ")));
+    lives_label_set_text (LIVES_LABEL (rfxbuilder->paramw_rest_label),(_("Linked parameters (4):    ")));
   }
   else if (!strcmp (ctext,"singlepoint")) {
-    lives_label_set_text (GTK_LABEL (rfxbuilder->paramw_rest_label),(_("Linked parameters (2):    ")));
+    lives_label_set_text (LIVES_LABEL (rfxbuilder->paramw_rest_label),(_("Linked parameters (2):    ")));
   }
 
   g_free(ctext);
@@ -2688,10 +2688,10 @@ GtkWidget * make_trigger_dialog (int tnum, rfx_build_window_t *rfxbuilder) {
   g_free(title);
 
   if (prefs->show_gui) {
-    gtk_window_set_transient_for(GTK_WINDOW(dialog),GTK_WINDOW(mainw->LiVES));
+    gtk_window_set_transient_for(LIVES_WINDOW(dialog),GTK_WINDOW(mainw->LiVES));
   }
 
-  dialog_vbox = lives_dialog_get_content_area(GTK_DIALOG(dialog));
+  dialog_vbox = lives_dialog_get_content_area(LIVES_DIALOG(dialog));
 
   // when
 
@@ -2767,10 +2767,10 @@ void on_code_clicked (GtkButton *button, gpointer user_data) {
   dialog = lives_standard_dialog_new (NULL,FALSE);
 
   if (prefs->show_gui) {
-    gtk_window_set_transient_for(GTK_WINDOW(dialog),GTK_WINDOW(mainw->LiVES));
+    gtk_window_set_transient_for(LIVES_WINDOW(dialog),GTK_WINDOW(mainw->LiVES));
   }
 
-  dialog_vbox = lives_dialog_get_content_area(GTK_DIALOG(dialog));
+  dialog_vbox = lives_dialog_get_content_area(LIVES_DIALOG(dialog));
 
   // code area
   rfxbuilder->code_textview = gtk_text_view_new ();
@@ -2805,33 +2805,33 @@ void on_code_clicked (GtkButton *button, gpointer user_data) {
 
   if (button==GTK_BUTTON (rfxbuilder->pre_button)) {
     rfxbuilder->codetype=RFX_CODE_TYPE_PRE;
-    lives_window_set_title (GTK_WINDOW (dialog), _("LiVES: - Pre Loop Code"));
+    lives_window_set_title (LIVES_WINDOW (dialog), _("LiVES: - Pre Loop Code"));
     text_view_set_text (LIVES_TEXT_VIEW (rfxbuilder->code_textview), 
 			rfxbuilder->pre_code,-1);
   }
 
   else if (button==GTK_BUTTON (rfxbuilder->loop_button)) {
     rfxbuilder->codetype=RFX_CODE_TYPE_LOOP;
-    lives_window_set_title (GTK_WINDOW (dialog), _("LiVES: - Loop Code"));
+    lives_window_set_title (LIVES_WINDOW (dialog), _("LiVES: - Loop Code"));
     text_view_set_text (LIVES_TEXT_VIEW (rfxbuilder->code_textview), 
 			rfxbuilder->loop_code,-1);
   }
 
   else if (button==GTK_BUTTON (rfxbuilder->post_button)) {
     rfxbuilder->codetype=RFX_CODE_TYPE_POST;
-    lives_window_set_title (GTK_WINDOW (dialog), _("LiVES: - Post Loop Code"));
+    lives_window_set_title (LIVES_WINDOW (dialog), _("LiVES: - Post Loop Code"));
     text_view_set_text (LIVES_TEXT_VIEW (rfxbuilder->code_textview), 
 			rfxbuilder->post_code,-1);
   }
 
   else if (button==GTK_BUTTON (rfxbuilder->param_strdef_button)) {
     if (rfxbuilder->copy_params[rfxbuilder->edit_param].type!=LIVES_PARAM_STRING_LIST) {
-      int len,maxlen=lives_spin_button_get_value_as_int (GTK_SPIN_BUTTON (rfxbuilder->spinbutton_param_max));
+      int len,maxlen=lives_spin_button_get_value_as_int (LIVES_SPIN_BUTTON (rfxbuilder->spinbutton_param_max));
 
       if ((len=strlen ((gchar *)rfxbuilder->copy_params[rfxbuilder->edit_param].def))>maxlen) len=maxlen;
       
       rfxbuilder->codetype=RFX_CODE_TYPE_STRDEF;
-      lives_window_set_title (GTK_WINDOW (dialog), (tmpx=g_strdup_printf 
+      lives_window_set_title (LIVES_WINDOW (dialog), (tmpx=g_strdup_printf 
 						  (_("LiVES: - Default text (max length %d)"),maxlen)));
       g_free(tmpx);
       gtk_text_view_set_wrap_mode (GTK_TEXT_VIEW (rfxbuilder->code_textview),GTK_WRAP_WORD);
@@ -2845,7 +2845,7 @@ void on_code_clicked (GtkButton *button, gpointer user_data) {
       GtkTextIter start_iter;
 
       rfxbuilder->codetype=RFX_CODE_TYPE_STRING_LIST;
-      lives_window_set_title (GTK_WINDOW (dialog), (tmpx=g_strdup (_("LiVES: - Enter values, one per line"))));
+      lives_window_set_title (LIVES_WINDOW (dialog), (tmpx=g_strdup (_("LiVES: - Enter values, one per line"))));
       g_free(tmpx);
       if (rfxbuilder->copy_params[rfxbuilder->edit_param].list!=NULL) {
 	for (i=0;i<g_list_length (rfxbuilder->copy_params[rfxbuilder->edit_param].list);i++) {
@@ -2866,11 +2866,11 @@ void on_code_clicked (GtkButton *button, gpointer user_data) {
   gtk_button_box_set_layout (GTK_BUTTON_BOX (dialog_action_area), GTK_BUTTONBOX_END);
 
   cancelbutton = gtk_button_new_from_stock ("gtk-cancel");
-  lives_dialog_add_action_widget (GTK_DIALOG (dialog), cancelbutton, GTK_RESPONSE_CANCEL);
+  lives_dialog_add_action_widget (LIVES_DIALOG (dialog), cancelbutton, GTK_RESPONSE_CANCEL);
   lives_widget_set_can_focus_and_default (cancelbutton);
 
   okbutton = gtk_button_new_from_stock ("gtk-ok");
-  lives_dialog_add_action_widget (GTK_DIALOG (dialog), okbutton, GTK_RESPONSE_OK);
+  lives_dialog_add_action_widget (LIVES_DIALOG (dialog), okbutton, GTK_RESPONSE_OK);
   lives_widget_set_can_focus_and_default (okbutton);
 
   g_signal_connect (GTK_OBJECT (okbutton), "clicked",
@@ -2953,7 +2953,7 @@ void rfxbuilder_destroy (rfx_build_window_t *rfxbuilder) {
 
 
 boolean perform_rfxbuilder_checks (rfx_build_window_t *rfxbuilder) {
-  gchar *name=g_strdup (lives_entry_get_text (GTK_ENTRY (rfxbuilder->name_entry)));
+  gchar *name=g_strdup (lives_entry_get_text (LIVES_ENTRY (rfxbuilder->name_entry)));
 
   if (!strlen (name)) {
     do_blocking_error_dialog (_ ("\n\nName must not be blank.\n"));
@@ -2965,18 +2965,18 @@ boolean perform_rfxbuilder_checks (rfx_build_window_t *rfxbuilder) {
     g_free (name);
     return FALSE;
   }
-  if (!strlen(lives_entry_get_text (GTK_ENTRY (rfxbuilder->menu_text_entry)))) {
+  if (!strlen(lives_entry_get_text (LIVES_ENTRY (rfxbuilder->menu_text_entry)))) {
     do_blocking_error_dialog (_ ("\n\nMenu text must not be blank.\n"));
     g_free (name);
     return FALSE;
   }
-  if (!strlen(lives_entry_get_text (GTK_ENTRY (rfxbuilder->action_desc_entry)))&&
+  if (!strlen(lives_entry_get_text (LIVES_ENTRY (rfxbuilder->action_desc_entry)))&&
       rfxbuilder->type!=RFX_BUILD_TYPE_UTILITY) {
     do_blocking_error_dialog (_ ("\n\nAction description must not be blank.\n"));
     g_free (name);
     return FALSE;
   }
-  if (!strlen(lives_entry_get_text (GTK_ENTRY (rfxbuilder->author_entry)))) {
+  if (!strlen(lives_entry_get_text (LIVES_ENTRY (rfxbuilder->author_entry)))) {
     do_blocking_error_dialog (_ ("\n\nAuthor must not be blank.\n"));
     g_free (name);
     return FALSE;
@@ -3011,12 +3011,12 @@ boolean perform_rfxbuilder_checks (rfx_build_window_t *rfxbuilder) {
 boolean perform_param_checks (rfx_build_window_t *rfxbuilder, int index, int rows) {
   register int i;
 
-  if (!strlen(lives_entry_get_text (GTK_ENTRY (rfxbuilder->param_name_entry)))) {
+  if (!strlen(lives_entry_get_text (LIVES_ENTRY (rfxbuilder->param_name_entry)))) {
     do_blocking_error_dialog (_ ("\n\nParameter name must not be blank.\n"));
     return FALSE;
   }
   for (i=0;i<rows;i++) {
-    if (i!=index&&!(strcmp(lives_entry_get_text (GTK_ENTRY (rfxbuilder->param_name_entry)),
+    if (i!=index&&!(strcmp(lives_entry_get_text (LIVES_ENTRY (rfxbuilder->param_name_entry)),
 			   rfxbuilder->copy_params[i].name))) {
       do_blocking_error_dialog(_("\n\nDuplicate parameter name detected. Parameter names must be unique in a plugin.\n\n"));
       return FALSE;
@@ -3035,7 +3035,7 @@ boolean rfxbuilder_to_script (rfx_build_window_t *rfxbuilder) {
 
   uint32_t props;
 
-  const gchar *name=lives_entry_get_text (GTK_ENTRY (rfxbuilder->name_entry));
+  const gchar *name=lives_entry_get_text (LIVES_ENTRY (rfxbuilder->name_entry));
 
   gchar *script_file,*script_file_dir;
   gchar *script_name=g_strdup_printf ("%s.%s",name,RFXBUILDER_SCRIPT_SUFFIX);
@@ -3085,7 +3085,7 @@ boolean rfxbuilder_to_script (rfx_build_window_t *rfxbuilder) {
   do {
     retval=0;
     if (!(sfile=fopen(script_file,"w"))) {
-      retval=do_write_failed_error_s_with_retry(script_file,g_strerror(errno),GTK_WINDOW(rfxbuilder->dialog));
+      retval=do_write_failed_error_s_with_retry(script_file,g_strerror(errno),LIVES_WINDOW(rfxbuilder->dialog));
       if (retval==LIVES_CANCEL) {
 	g_free (msg);
 	g_free (script_file);
@@ -3106,25 +3106,25 @@ boolean rfxbuilder_to_script (rfx_build_window_t *rfxbuilder) {
       lives_fputs(name,sfile);
       lives_fputs("\n</name>\n\n",sfile);
       lives_fputs("<version>\n",sfile);
-      buf=g_strdup_printf ("%d",lives_spin_button_get_value_as_int (GTK_SPIN_BUTTON (rfxbuilder->spinbutton_version)));
+      buf=g_strdup_printf ("%d",lives_spin_button_get_value_as_int (LIVES_SPIN_BUTTON (rfxbuilder->spinbutton_version)));
       lives_fputs (buf,sfile);
       g_free (buf);
       lives_fputs("\n</version>\n\n",sfile);
       lives_fputs("<author>\n",sfile);
-      lives_fputs(lives_entry_get_text (GTK_ENTRY (rfxbuilder->author_entry)),sfile);
+      lives_fputs(lives_entry_get_text (LIVES_ENTRY (rfxbuilder->author_entry)),sfile);
       lives_fputs(rfxbuilder->field_delim,sfile);
-      lives_fputs(lives_entry_get_text (GTK_ENTRY (rfxbuilder->url_entry)),sfile);
+      lives_fputs(lives_entry_get_text (LIVES_ENTRY (rfxbuilder->url_entry)),sfile);
       lives_fputs("\n</author>\n\n",sfile);
       lives_fputs("<description>\n",sfile);
-      lives_fputs(lives_entry_get_text (GTK_ENTRY (rfxbuilder->menu_text_entry)),sfile);
+      lives_fputs(lives_entry_get_text (LIVES_ENTRY (rfxbuilder->menu_text_entry)),sfile);
       lives_fputs(rfxbuilder->field_delim,sfile);
-      lives_fputs(lives_entry_get_text (GTK_ENTRY (rfxbuilder->action_desc_entry)),sfile);
+      lives_fputs(lives_entry_get_text (LIVES_ENTRY (rfxbuilder->action_desc_entry)),sfile);
       lives_fputs(rfxbuilder->field_delim,sfile);
       if (rfxbuilder->type==RFX_BUILD_TYPE_UTILITY) {
 	buf=g_strdup ("-1");
       }
       else {
-	buf=g_strdup_printf ("%d",lives_spin_button_get_value_as_int (GTK_SPIN_BUTTON (rfxbuilder->spinbutton_min_frames)));
+	buf=g_strdup_printf ("%d",lives_spin_button_get_value_as_int (LIVES_SPIN_BUTTON (rfxbuilder->spinbutton_min_frames)));
       }
       lives_fputs (buf,sfile);
       g_free (buf);
@@ -3338,7 +3338,7 @@ boolean rfxbuilder_to_script (rfx_build_window_t *rfxbuilder) {
 
       if (mainw->write_failed) {
 	mainw->write_failed=FALSE;
-	retval=do_write_failed_error_s_with_retry(script_file,NULL,GTK_WINDOW(rfxbuilder->dialog));
+	retval=do_write_failed_error_s_with_retry(script_file,NULL,LIVES_WINDOW(rfxbuilder->dialog));
 	if (retval==LIVES_CANCEL) d_print_file_error_failed();
       }
 
@@ -3409,7 +3409,7 @@ boolean script_to_rfxbuilder (rfx_build_window_t *rfxbuilder, const gchar *scrip
     g_snprintf(mainw->msg,512,"%s",(_("No <name> section found in script.\n")));
     return FALSE;
   }
-  lives_entry_set_text (GTK_ENTRY (rfxbuilder->name_entry),(gchar *)g_list_nth_data (list,0));
+  lives_entry_set_text (LIVES_ENTRY (rfxbuilder->name_entry),(gchar *)g_list_nth_data (list,0));
   g_list_free_strings (list);
   g_list_free (list);
 
@@ -3417,7 +3417,7 @@ boolean script_to_rfxbuilder (rfx_build_window_t *rfxbuilder, const gchar *scrip
     g_snprintf(mainw->msg,512,"%s",(_("No <version> section found in script.\n")));
     return FALSE;
   }
-  lives_spin_button_set_value (GTK_SPIN_BUTTON (rfxbuilder->spinbutton_version),
+  lives_spin_button_set_value (LIVES_SPIN_BUTTON (rfxbuilder->spinbutton_version),
 			     (double)atoi ((gchar *)g_list_nth_data (list,0)));
   g_list_free_strings (list);
   g_list_free (list);
@@ -3427,9 +3427,9 @@ boolean script_to_rfxbuilder (rfx_build_window_t *rfxbuilder, const gchar *scrip
     return FALSE;
   }
   array=g_strsplit ((gchar *)g_list_nth_data (list,0),rfxbuilder->field_delim,2);
-  lives_entry_set_text (GTK_ENTRY (rfxbuilder->author_entry),array[0]);
+  lives_entry_set_text (LIVES_ENTRY (rfxbuilder->author_entry),array[0]);
   if (get_token_count ((gchar *)g_list_nth_data (list,0),(int)rfxbuilder->field_delim[0])>1) {
-    lives_entry_set_text (GTK_ENTRY (rfxbuilder->url_entry),array[1]);
+    lives_entry_set_text (LIVES_ENTRY (rfxbuilder->url_entry),array[1]);
   }
   g_strfreev (array);
   g_list_free_strings (list);
@@ -3449,9 +3449,9 @@ boolean script_to_rfxbuilder (rfx_build_window_t *rfxbuilder, const gchar *scrip
   array=g_strsplit ((gchar *)g_list_nth_data (list,0),rfxbuilder->field_delim,-1);
   g_list_free_strings (list);
   g_list_free (list);
-  lives_entry_set_text (GTK_ENTRY (rfxbuilder->menu_text_entry),array[0]);
-  lives_entry_set_text (GTK_ENTRY (rfxbuilder->action_desc_entry),array[1]);
-  lives_spin_button_set_value (GTK_SPIN_BUTTON (rfxbuilder->spinbutton_min_frames),(double)atoi (array[2]));
+  lives_entry_set_text (LIVES_ENTRY (rfxbuilder->menu_text_entry),array[0]);
+  lives_entry_set_text (LIVES_ENTRY (rfxbuilder->action_desc_entry),array[1]);
+  lives_spin_button_set_value (LIVES_SPIN_BUTTON (rfxbuilder->spinbutton_min_frames),(double)atoi (array[2]));
   num_channels=atoi (array[3]);
 
   if (num_channels==2) {
@@ -4131,10 +4131,10 @@ gchar *prompt_for_script_name(const gchar *sname, lives_rfx_status_t status) {
   dialog = lives_standard_dialog_new (NULL,FALSE);
 
   if (prefs->show_gui) {
-    gtk_window_set_transient_for(GTK_WINDOW(dialog),GTK_WINDOW(mainw->LiVES));
+    gtk_window_set_transient_for(LIVES_WINDOW(dialog),GTK_WINDOW(mainw->LiVES));
   }
 
-  vbox = lives_dialog_get_content_area(GTK_DIALOG(dialog));
+  vbox = lives_dialog_get_content_area(LIVES_DIALOG(dialog));
 
   hbox = lives_hbox_new (FALSE, 0);
   lives_box_pack_start (LIVES_BOX (vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
@@ -4150,7 +4150,7 @@ gchar *prompt_for_script_name(const gchar *sname, lives_rfx_status_t status) {
   add_fill_to_box(LIVES_BOX(vbox));
   
   if (copy_mode) {
-    lives_window_set_title (GTK_WINDOW (dialog), _("LiVES: - Copy RFX Script"));
+    lives_window_set_title (LIVES_WINDOW (dialog), _("LiVES: - Copy RFX Script"));
 
     status_combo = lives_standard_combo_new (_ ("_From type:    "),TRUE,status_list,LIVES_BOX(hbox),NULL);
 
@@ -4168,13 +4168,13 @@ gchar *prompt_for_script_name(const gchar *sname, lives_rfx_status_t status) {
   }
   else {
     if (status==RFX_STATUS_RENAME) {
-      lives_window_set_title (GTK_WINDOW (dialog), _("LiVES: - Rename test RFX Script"));
+      lives_window_set_title (LIVES_WINDOW (dialog), _("LiVES: - Rename test RFX Script"));
       label = lives_standard_label_new (_ ("From script: "));
       rename_mode=TRUE;
       status=RFX_STATUS_TEST;
     }
     else {
-      lives_window_set_title (GTK_WINDOW (dialog), _("LiVES: - RFX Script name"));
+      lives_window_set_title (LIVES_WINDOW (dialog), _("LiVES: - RFX Script name"));
       label = lives_standard_label_new (_ ("Script name: "));
     }
     lives_box_pack_start (LIVES_BOX (hbox), label, FALSE, FALSE, 0);
@@ -4206,12 +4206,12 @@ gchar *prompt_for_script_name(const gchar *sname, lives_rfx_status_t status) {
       lives_box_pack_start (LIVES_BOX (hbox), label, FALSE, FALSE, widget_opts.packing_width);
     }
     else {
-      lives_entry_set_text (GTK_ENTRY (name_entry),sname);
+      lives_entry_set_text (LIVES_ENTRY (name_entry),sname);
     }
     lives_box_pack_start (LIVES_BOX (hbox), name_entry, TRUE, TRUE, widget_opts.packing_width);
   }
   lives_widget_grab_focus (name_entry);
-  gtk_entry_set_activates_default (GTK_ENTRY (name_entry), TRUE);
+  gtk_entry_set_activates_default (LIVES_ENTRY (name_entry), TRUE);
 
 
   dialog_action_area = lives_dialog_get_action_area(LIVES_DIALOG (dialog));
@@ -4219,10 +4219,10 @@ gchar *prompt_for_script_name(const gchar *sname, lives_rfx_status_t status) {
   gtk_button_box_set_layout (GTK_BUTTON_BOX (dialog_action_area), GTK_BUTTONBOX_END);
 
   cancelbutton = gtk_button_new_from_stock ("gtk-cancel");
-  lives_dialog_add_action_widget (GTK_DIALOG (dialog), cancelbutton, GTK_RESPONSE_CANCEL);
+  lives_dialog_add_action_widget (LIVES_DIALOG (dialog), cancelbutton, GTK_RESPONSE_CANCEL);
 
   copy_script_okbutton = gtk_button_new_from_stock ("gtk-ok");
-  lives_dialog_add_action_widget (GTK_DIALOG (dialog), copy_script_okbutton, GTK_RESPONSE_OK);
+  lives_dialog_add_action_widget (LIVES_DIALOG (dialog), copy_script_okbutton, GTK_RESPONSE_OK);
   lives_widget_set_can_focus_and_default (copy_script_okbutton);
   gtk_widget_grab_default (copy_script_okbutton); 
 
@@ -4233,9 +4233,9 @@ gchar *prompt_for_script_name(const gchar *sname, lives_rfx_status_t status) {
 
   do {
     OK=TRUE;
-    if (lives_dialog_run(GTK_DIALOG (dialog))==GTK_RESPONSE_OK) {
+    if (lives_dialog_run(LIVES_DIALOG (dialog))==GTK_RESPONSE_OK) {
       if (name!=NULL) g_free (name);
-      name=g_strdup(lives_entry_get_text (GTK_ENTRY (name_entry)));
+      name=g_strdup(lives_entry_get_text (LIVES_ENTRY (name_entry)));
       if (copy_mode) {
 	if (find_rfx_plugin_by_name (name,RFX_STATUS_TEST)>-1||
 	    find_rfx_plugin_by_name (name,RFX_STATUS_CUSTOM)>-1||
@@ -4245,8 +4245,8 @@ gchar *prompt_for_script_name(const gchar *sname, lives_rfx_status_t status) {
 	}
 	//copy selected script to test
 	else {
-	  from_name=g_strdup(lives_entry_get_text (GTK_ENTRY (script_combo_entry)));
-	  from_status=g_strdup(lives_entry_get_text (GTK_ENTRY (status_combo_entry)));
+	  from_name=g_strdup(lives_entry_get_text (LIVES_ENTRY (script_combo_entry)));
+	  from_status=g_strdup(lives_entry_get_text (LIVES_ENTRY (status_combo_entry)));
 	  if (!strcmp (from_status,mainw->string_constants[LIVES_STRING_CONSTANT_BUILTIN])) status=RFX_STATUS_BUILTIN;
 	  else {
 	    if (!strcmp (from_status,mainw->string_constants[LIVES_STRING_CONSTANT_CUSTOM])) status=RFX_STATUS_CUSTOM;
@@ -4262,7 +4262,7 @@ gchar *prompt_for_script_name(const gchar *sname, lives_rfx_status_t status) {
 	  g_free (from_status);
 
 	  if (OK) {
-	    lives_entry_set_text (GTK_ENTRY (rfxbuilder->name_entry),name);
+	    lives_entry_set_text (LIVES_ENTRY (rfxbuilder->name_entry),name);
 	    rfxbuilder->mode=RFX_BUILDER_MODE_COPY;
 	    lives_widget_show (rfxbuilder->dialog);
 	  }
@@ -4280,7 +4280,7 @@ gchar *prompt_for_script_name(const gchar *sname, lives_rfx_status_t status) {
 	  int ret;
 	  gchar *tmp;
 
-	  from_name=g_strdup(lives_entry_get_text (GTK_ENTRY (script_combo_entry)));
+	  from_name=g_strdup(lives_entry_get_text (LIVES_ENTRY (script_combo_entry)));
 	  rfx_script_from=g_build_filename (capable->home_dir,LIVES_CONFIG_DIR,
 					    PLUGIN_RENDERED_EFFECTS_TEST_SCRIPTS,from_name,NULL);
 	  rfx_script_to=g_build_filename (capable->home_dir,LIVES_CONFIG_DIR,

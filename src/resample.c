@@ -725,9 +725,9 @@ on_resaudio_ok_clicked                      (GtkButton *button,
   boolean has_lmap_error=FALSE;
 
   if (button!=NULL) {
-    arps=arate=(int)atoi (lives_entry_get_text(GTK_ENTRY(resaudw->entry_arate)));
-    achans=(int)atoi (lives_entry_get_text(GTK_ENTRY(resaudw->entry_achans)));
-    asampsize=(int)atoi (lives_entry_get_text(GTK_ENTRY(resaudw->entry_asamps)));
+    arps=arate=(int)atoi (lives_entry_get_text(LIVES_ENTRY(resaudw->entry_arate)));
+    achans=(int)atoi (lives_entry_get_text(LIVES_ENTRY(resaudw->entry_achans)));
+    asampsize=(int)atoi (lives_entry_get_text(LIVES_ENTRY(resaudw->entry_asamps)));
     if (lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(resaudw->rb_unsigned))) {
       asigned=0;
     }
@@ -900,7 +900,7 @@ static void on_resaudw_achans_changed (GtkWidget *widg, gpointer user_data) {
     }
   }
   else {
-    if (atoi (lives_entry_get_text (GTK_ENTRY (resaudw->entry_asamps)))!=8) {
+    if (atoi (lives_entry_get_text (LIVES_ENTRY (resaudw->entry_asamps)))!=8) {
       lives_widget_set_sensitive (resaudw->rb_bigend,TRUE);
       lives_widget_set_sensitive (resaudw->rb_littleend,TRUE);
     }
@@ -917,7 +917,7 @@ static void on_resaudw_achans_changed (GtkWidget *widg, gpointer user_data) {
     }
 
     tmp=g_strdup_printf ("%d",DEFAULT_AUDIO_CHANS);
-    lives_entry_set_text (GTK_ENTRY (resaudw->entry_achans),tmp);
+    lives_entry_set_text (LIVES_ENTRY (resaudw->entry_achans),tmp);
     g_free (tmp);
 
   }
@@ -928,7 +928,7 @@ static void on_resaudw_achans_changed (GtkWidget *widg, gpointer user_data) {
 
 void 
 on_resaudw_asamps_changed (GtkWidget *irrelevant, gpointer rubbish) {
-  if (atoi (lives_entry_get_text (GTK_ENTRY (resaudw->entry_asamps)))==8) {
+  if (atoi (lives_entry_get_text (LIVES_ENTRY (resaudw->entry_asamps)))==8) {
     lives_widget_set_sensitive (resaudw->rb_bigend,FALSE);
     lives_widget_set_sensitive (resaudw->rb_littleend,FALSE);
     lives_widget_set_sensitive (resaudw->rb_signed,FALSE);
@@ -938,7 +938,7 @@ on_resaudw_asamps_changed (GtkWidget *irrelevant, gpointer rubbish) {
   else {
     lives_widget_set_sensitive (resaudw->rb_bigend,TRUE);
     lives_widget_set_sensitive (resaudw->rb_littleend,TRUE);
-    if (atoi (lives_entry_get_text (GTK_ENTRY (resaudw->entry_asamps)))==16) {
+    if (atoi (lives_entry_get_text (LIVES_ENTRY (resaudw->entry_asamps)))==16) {
       lives_widget_set_sensitive (resaudw->rb_signed,TRUE);
       lives_widget_set_sensitive (resaudw->rb_unsigned,FALSE);
       lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(resaudw->rb_signed),TRUE);
@@ -1205,13 +1205,13 @@ _resaudw *create_resaudw (gshort type, render_details *rdet, GtkWidget *top_vbox
     g_free(title);
 
     accel_group = GTK_ACCEL_GROUP(lives_accel_group_new ());
-    gtk_window_add_accel_group (GTK_WINDOW (resaudw->dialog), accel_group);
+    gtk_window_add_accel_group (LIVES_WINDOW (resaudw->dialog), accel_group);
 
     if (prefs->show_gui) {
-      gtk_window_set_transient_for(GTK_WINDOW(resaudw->dialog),GTK_WINDOW(mainw->LiVES));
+      gtk_window_set_transient_for(LIVES_WINDOW(resaudw->dialog),GTK_WINDOW(mainw->LiVES));
     }
 
-    dialog_vbox = lives_dialog_get_content_area(GTK_DIALOG(resaudw->dialog));
+    dialog_vbox = lives_dialog_get_content_area(LIVES_DIALOG(resaudw->dialog));
 
     vboxx = lives_vbox_new (FALSE, 0);
 
@@ -1359,14 +1359,14 @@ _resaudw *create_resaudw (gshort type, render_details *rdet, GtkWidget *top_vbox
     
     resaudw->entry_arate = lives_combo_get_entry(LIVES_COMBO(combo4));
 
-    lives_entry_set_width_chars (GTK_ENTRY (resaudw->entry_arate), 6);
+    lives_entry_set_width_chars (LIVES_ENTRY (resaudw->entry_arate), 6);
     if (type==7) lives_widget_set_sensitive(combo4,FALSE);
   
     if (type<3||(type>4&&type<8)||type==11) tmp=g_strdup_printf ("%d",(int)mainw->fx1_val);
     else if (type==8) tmp=g_strdup_printf ("%d",DEFAULT_AUDIO_RATE);
     else if (type==3) tmp=g_strdup_printf ("%d",rdet->arate);
     else tmp=g_strdup_printf ("%d",prefs->mt_def_arate);
-    lives_entry_set_text (GTK_ENTRY (resaudw->entry_arate),tmp);
+    lives_entry_set_text (LIVES_ENTRY (resaudw->entry_arate),tmp);
     g_free (tmp);
 
     combo5 = lives_standard_combo_new ((type>=3&&type!=11?(_("_Channels")):(_("Channels"))),type>=3&&type!=11,
@@ -1376,13 +1376,13 @@ _resaudw *create_resaudw (gshort type, render_details *rdet, GtkWidget *top_vbox
     if (type==7) lives_widget_set_sensitive(combo5,FALSE);
 
     resaudw->entry_achans = lives_combo_get_entry(LIVES_COMBO(combo5));
-    lives_entry_set_width_chars (GTK_ENTRY (resaudw->entry_achans), 2);
+    lives_entry_set_width_chars (LIVES_ENTRY (resaudw->entry_achans), 2);
     
     if (type<3||(type>4&&type<8)||type==11) tmp=g_strdup_printf ("%d",(int)mainw->fx2_val);
     else if (type==8) tmp=g_strdup_printf ("%d",DEFAULT_AUDIO_CHANS);
     else if (type==3) tmp=g_strdup_printf ("%d",rdet->achans);
     else tmp=g_strdup_printf ("%d",prefs->mt_def_achans==0?DEFAULT_AUDIO_CHANS:prefs->mt_def_achans);
-    lives_entry_set_text (GTK_ENTRY (resaudw->entry_achans),tmp);
+    lives_entry_set_text (LIVES_ENTRY (resaudw->entry_achans),tmp);
     g_free (tmp);
     
     if (chans_fixed) {
@@ -1397,15 +1397,15 @@ _resaudw *create_resaudw (gshort type, render_details *rdet, GtkWidget *top_vbox
     if (type==7) lives_widget_set_sensitive(combo6,FALSE);
 
     resaudw->entry_asamps = lives_combo_get_entry(LIVES_COMBO(combo6));
-    gtk_entry_set_max_length (GTK_ENTRY (resaudw->entry_asamps), 2);
+    gtk_entry_set_max_length (LIVES_ENTRY (resaudw->entry_asamps), 2);
     gtk_editable_set_editable (GTK_EDITABLE (resaudw->entry_asamps), FALSE);
-    lives_entry_set_width_chars (GTK_ENTRY (resaudw->entry_asamps), 2);
+    lives_entry_set_width_chars (LIVES_ENTRY (resaudw->entry_asamps), 2);
     
     if (type<3||(type>4&&type<8)||type==11) tmp=g_strdup_printf ("%d",(int)mainw->fx3_val);
     else if (type==8) tmp=g_strdup_printf ("%d",DEFAULT_AUDIO_SAMPS);
     else if (type==3) tmp=g_strdup_printf ("%d",rdet->asamps);
     else tmp=g_strdup_printf ("%d",prefs->mt_def_asamps);
-    lives_entry_set_text (GTK_ENTRY (resaudw->entry_asamps),tmp);
+    lives_entry_set_text (LIVES_ENTRY (resaudw->entry_asamps),tmp);
 
     if (!strcmp(tmp,"8")) is_8bit=TRUE;
     else is_8bit=FALSE;
@@ -1476,7 +1476,7 @@ _resaudw *create_resaudw (gshort type, render_details *rdet, GtkWidget *top_vbox
       lives_toggle_button_set_active (LIVES_TOGGLE_BUTTON (resaudw->rb_littleend), TRUE);
     }
 
-    if (!strcmp(lives_entry_get_text (GTK_ENTRY (resaudw->entry_asamps)),"8")) {
+    if (!strcmp(lives_entry_get_text (LIVES_ENTRY (resaudw->entry_asamps)),"8")) {
       lives_widget_set_sensitive (resaudw->rb_littleend, FALSE);
       lives_widget_set_sensitive (resaudw->rb_bigend, FALSE);
     }
@@ -1572,7 +1572,7 @@ _resaudw *create_resaudw (gshort type, render_details *rdet, GtkWidget *top_vbox
     
     cancelbutton = gtk_button_new_from_stock ("gtk-cancel");
  
-    lives_dialog_add_action_widget (GTK_DIALOG (resaudw->dialog), cancelbutton, GTK_RESPONSE_CANCEL);
+    lives_dialog_add_action_widget (LIVES_DIALOG (resaudw->dialog), cancelbutton, GTK_RESPONSE_CANCEL);
     lives_widget_set_can_focus_and_default (cancelbutton);
     
     if (accel_group!=NULL) lives_widget_add_accelerator (cancelbutton, "activate", accel_group,
@@ -1581,7 +1581,7 @@ _resaudw *create_resaudw (gshort type, render_details *rdet, GtkWidget *top_vbox
       
     okbutton = gtk_button_new_from_stock ("gtk-ok");
  
-    lives_dialog_add_action_widget (GTK_DIALOG (resaudw->dialog), okbutton, GTK_RESPONSE_OK);
+    lives_dialog_add_action_widget (LIVES_DIALOG (resaudw->dialog), okbutton, GTK_RESPONSE_OK);
     lives_widget_set_can_focus_and_default (okbutton);
     gtk_widget_grab_default (okbutton);
 
@@ -1679,13 +1679,13 @@ void create_new_pb_speed (short type) {
   lives_container_set_border_width (LIVES_CONTAINER (new_pb_speed), widget_opts.border_width*2);
 
   accel_group = GTK_ACCEL_GROUP(lives_accel_group_new ());
-  gtk_window_add_accel_group (GTK_WINDOW (new_pb_speed), accel_group);
+  gtk_window_add_accel_group (LIVES_WINDOW (new_pb_speed), accel_group);
 
   if (prefs->show_gui) {
-    gtk_window_set_transient_for(GTK_WINDOW(new_pb_speed),GTK_WINDOW(mainw->LiVES));
+    gtk_window_set_transient_for(LIVES_WINDOW(new_pb_speed),GTK_WINDOW(mainw->LiVES));
   }
 
-  dialog_vbox = lives_dialog_get_content_area(GTK_DIALOG(new_pb_speed));
+  dialog_vbox = lives_dialog_get_content_area(LIVES_DIALOG(new_pb_speed));
 
   vbox = lives_vbox_new (FALSE, 0);
   
@@ -1733,11 +1733,11 @@ void create_new_pb_speed (short type) {
 							 (double)((int)(cfile->frames/cfile->fps*100.))/100., 
 							 1./FPS_MAX, cfile->frames, 1., 10., 2, LIVES_BOX(hbox),NULL);
 
-    gtk_label_set_mnemonic_widget (GTK_LABEL (label2), spinbutton_pb_time);
+    gtk_label_set_mnemonic_widget (LIVES_LABEL (label2), spinbutton_pb_time);
 
   }
 
-  gtk_label_set_mnemonic_widget (GTK_LABEL (label), spinbutton_pb_speed);
+  gtk_label_set_mnemonic_widget (LIVES_LABEL (label), spinbutton_pb_speed);
 
 
   ca_hbox = lives_hbox_new (FALSE, 0);
@@ -1751,14 +1751,14 @@ void create_new_pb_speed (short type) {
   gtk_button_box_set_layout (GTK_BUTTON_BOX (dialog_action_area), GTK_BUTTONBOX_END);
 
   cancelbutton = gtk_button_new_from_stock ("gtk-cancel");
-  lives_dialog_add_action_widget (GTK_DIALOG (new_pb_speed), cancelbutton, GTK_RESPONSE_CANCEL);
+  lives_dialog_add_action_widget (LIVES_DIALOG (new_pb_speed), cancelbutton, GTK_RESPONSE_CANCEL);
   lives_widget_set_can_focus (cancelbutton,TRUE);
 
   lives_widget_add_accelerator (cancelbutton, "activate", accel_group,
                               LIVES_KEY_Escape, (GdkModifierType)0, (GtkAccelFlags)0);
 
   change_pb_ok = gtk_button_new_from_stock ("gtk-ok");
-  lives_dialog_add_action_widget (GTK_DIALOG (new_pb_speed), change_pb_ok, GTK_RESPONSE_OK);
+  lives_dialog_add_action_widget (LIVES_DIALOG (new_pb_speed), change_pb_ok, GTK_RESPONSE_OK);
   lives_widget_set_can_focus_and_default (change_pb_ok);
   gtk_widget_grab_default (change_pb_ok);
   lives_widget_grab_focus(spinbutton_pb_speed);

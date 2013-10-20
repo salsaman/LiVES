@@ -581,7 +581,7 @@ on_live_tvcard_activate                      (GtkMenuItem     *menuitem,
   tvcardw=(lives_tvcardw_t *)g_object_get_data(G_OBJECT(card_dialog),"tvcard_data");
 
 
-  response=lives_dialog_run(GTK_DIALOG(card_dialog));
+  response=lives_dialog_run(LIVES_DIALOG(card_dialog));
   if (response==GTK_RESPONSE_CANCEL) {
     lives_widget_destroy(card_dialog);
     g_free(fifofile);
@@ -642,12 +642,12 @@ on_live_tvcard_activate                      (GtkMenuItem     *menuitem,
     gdouble fps=0.;
     gchar *driver=NULL,*outfmt=NULL;
     gint width=0,height=0;
-    gint input=lives_spin_button_get_value_as_int(GTK_SPIN_BUTTON(tvcardw->spinbuttoni));
+    gint input=lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(tvcardw->spinbuttoni));
     
     if (!lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(tvcardw->radiobuttond))) {
-      width=lives_spin_button_get_value_as_int(GTK_SPIN_BUTTON(tvcardw->spinbuttonw));
-      height=lives_spin_button_get_value_as_int(GTK_SPIN_BUTTON(tvcardw->spinbuttonh));
-      fps=lives_spin_button_get_value(GTK_SPIN_BUTTON(tvcardw->spinbuttonf));
+      width=lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(tvcardw->spinbuttonw));
+      height=lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(tvcardw->spinbuttonh));
+      fps=lives_spin_button_get_value(LIVES_SPIN_BUTTON(tvcardw->spinbuttonf));
     }
 
     driver=lives_combo_get_active_text(LIVES_COMBO(tvcardw->combod));
@@ -719,7 +719,7 @@ on_live_fw_activate                      (GtkMenuItem     *menuitem,
   mainw->open_deint=FALSE;
 
   card_dialog=create_cdtrack_dialog(5,NULL);
-  response=lives_dialog_run(GTK_DIALOG(card_dialog));
+  response=lives_dialog_run(LIVES_DIALOG(card_dialog));
   if (response==GTK_RESPONSE_CANCEL) {
     lives_widget_destroy(card_dialog);
     g_free(fifofile);

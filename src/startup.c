@@ -78,12 +78,12 @@ boolean do_tempdir_query(void) {
   tdentry=create_rename_dialog(6);
 
   while (!ok) {
-    response=lives_dialog_run(GTK_DIALOG(tdentry->dialog));
+    response=lives_dialog_run(LIVES_DIALOG(tdentry->dialog));
 
     if (response==GTK_RESPONSE_CANCEL) {
       return FALSE;
     }
-    dirname=g_strdup(lives_entry_get_text(GTK_ENTRY(tdentry->entry)));
+    dirname=g_strdup(lives_entry_get_text(LIVES_ENTRY(tdentry->entry)));
 
     if (strcmp(dirname+strlen(dirname)-1,G_DIR_SEPARATOR_S)) {
       gchar *tmp=g_strdup_printf("%s%s",dirname,G_DIR_SEPARATOR_S);
@@ -277,9 +277,9 @@ boolean do_audio_choice_dialog(short startup_phase) {
   dialog = lives_standard_dialog_new (_("LiVES: - Choose an audio player"),FALSE);
 
   accel_group = GTK_ACCEL_GROUP(lives_accel_group_new ());
-  gtk_window_add_accel_group (GTK_WINDOW (dialog), accel_group);
+  gtk_window_add_accel_group (LIVES_WINDOW (dialog), accel_group);
 
-  dialog_vbox = lives_dialog_get_content_area(GTK_DIALOG(dialog));
+  dialog_vbox = lives_dialog_get_content_area(LIVES_DIALOG(dialog));
   
   label=lives_standard_label_new(msg);
   lives_container_add (LIVES_CONTAINER (dialog_vbox), label);
@@ -373,7 +373,7 @@ boolean do_audio_choice_dialog(short startup_phase) {
 
   cancelbutton = gtk_button_new_from_stock ("gtk-cancel");
   lives_widget_show (cancelbutton);
-  lives_dialog_add_action_widget (GTK_DIALOG (dialog), cancelbutton, GTK_RESPONSE_CANCEL);
+  lives_dialog_add_action_widget (LIVES_DIALOG (dialog), cancelbutton, GTK_RESPONSE_CANCEL);
 
   lives_widget_add_accelerator (cancelbutton, "activate", accel_group,
                               LIVES_KEY_Escape, (GdkModifierType)0, (GtkAccelFlags)0);
@@ -381,7 +381,7 @@ boolean do_audio_choice_dialog(short startup_phase) {
   okbutton = gtk_button_new_from_stock ("gtk-go-forward");
   lives_button_set_label(GTK_BUTTON(okbutton),_("_Next"));
   lives_widget_show (okbutton);
-  lives_dialog_add_action_widget (GTK_DIALOG (dialog), okbutton, GTK_RESPONSE_OK);
+  lives_dialog_add_action_widget (LIVES_DIALOG (dialog), okbutton, GTK_RESPONSE_OK);
   lives_widget_set_can_focus_and_default (okbutton);
   gtk_widget_grab_default(okbutton);
   lives_widget_grab_focus(okbutton);
@@ -394,7 +394,7 @@ boolean do_audio_choice_dialog(short startup_phase) {
 
   lives_widget_show_all(dialog);
 
-  response=lives_dialog_run(GTK_DIALOG(dialog));
+  response=lives_dialog_run(LIVES_DIALOG(dialog));
 
   lives_widget_destroy(dialog);
 
@@ -526,18 +526,18 @@ boolean do_startup_tests(boolean tshoot) {
   dialog = lives_standard_dialog_new (title,FALSE);
 
   accel_group = GTK_ACCEL_GROUP(lives_accel_group_new ());
-  gtk_window_add_accel_group (GTK_WINDOW (dialog), accel_group);
+  gtk_window_add_accel_group (LIVES_WINDOW (dialog), accel_group);
 
   g_free(title);
 
-  dialog_vbox = lives_dialog_get_content_area(GTK_DIALOG(dialog));
+  dialog_vbox = lives_dialog_get_content_area(LIVES_DIALOG(dialog));
 
   label=lives_standard_label_new(_("LiVES will now run some basic configuration tests\n"));
   lives_container_add (LIVES_CONTAINER (dialog_vbox), label);
 
   cancelbutton = gtk_button_new_from_stock ("gtk-cancel");
   lives_widget_show (cancelbutton);
-  lives_dialog_add_action_widget (GTK_DIALOG (dialog), cancelbutton, GTK_RESPONSE_CANCEL);
+  lives_dialog_add_action_widget (LIVES_DIALOG (dialog), cancelbutton, GTK_RESPONSE_CANCEL);
 
   lives_widget_add_accelerator (cancelbutton, "activate", accel_group,
                               LIVES_KEY_Escape, (GdkModifierType)0, (GtkAccelFlags)0);
@@ -548,7 +548,7 @@ boolean do_startup_tests(boolean tshoot) {
   }
   else okbutton = gtk_button_new_from_stock ("gtk-ok");
   lives_widget_show (okbutton);
-  lives_dialog_add_action_widget (GTK_DIALOG (dialog), okbutton, GTK_RESPONSE_OK);
+  lives_dialog_add_action_widget (LIVES_DIALOG (dialog), okbutton, GTK_RESPONSE_OK);
   lives_widget_set_can_focus_and_default (okbutton);
   gtk_widget_grab_default(okbutton);
   lives_widget_grab_focus(okbutton);
@@ -867,7 +867,7 @@ boolean do_startup_tests(boolean tshoot) {
     lives_widget_show(label);
   }
 
-  response=lives_dialog_run(GTK_DIALOG(dialog));
+  response=lives_dialog_run(LIVES_DIALOG(dialog));
 
   lives_widget_destroy(dialog);
   mainw->suppress_dprint=FALSE;
@@ -910,7 +910,7 @@ void do_startup_interface_query(void) {
 
   dialog = lives_standard_dialog_new (_("LiVES: - Choose the startup interface"),FALSE);
 
-  dialog_vbox = lives_dialog_get_content_area(GTK_DIALOG(dialog));
+  dialog_vbox = lives_dialog_get_content_area(LIVES_DIALOG(dialog));
   
   label=lives_standard_label_new(msg);
   lives_container_add (LIVES_CONTAINER (dialog_vbox), label);
@@ -942,7 +942,7 @@ void do_startup_interface_query(void) {
   lives_button_set_label(GTK_BUTTON(okbutton),_("_Finish"));
 
   lives_widget_show (okbutton);
-  lives_dialog_add_action_widget (GTK_DIALOG (dialog), okbutton, GTK_RESPONSE_OK);
+  lives_dialog_add_action_widget (LIVES_DIALOG (dialog), okbutton, GTK_RESPONSE_OK);
   lives_widget_set_can_focus_and_default (okbutton);
   gtk_widget_grab_default(okbutton);
   lives_widget_grab_focus(okbutton);
@@ -950,7 +950,7 @@ void do_startup_interface_query(void) {
 
   lives_widget_show_all(dialog);
 
-  lives_dialog_run(GTK_DIALOG(dialog));
+  lives_dialog_run(LIVES_DIALOG(dialog));
 
 
   if (lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(radiobutton1))) 

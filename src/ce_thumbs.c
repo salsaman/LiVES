@@ -393,7 +393,7 @@ void start_ce_thumb_mode(void) {
   }
 
   if (prefs->open_maximised) {
-    lives_window_maximize (GTK_WINDOW(mainw->LiVES));
+    lives_window_maximize (LIVES_WINDOW(mainw->LiVES));
   }
 
   lives_widget_show_all(top_hbox);

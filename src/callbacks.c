@@ -523,7 +523,7 @@ void lives_exit (void) {
 
 
 void on_filesel_button_clicked (GtkButton *button, gpointer user_data) {
-  GtkWidget *tentry=GTK_WIDGET(user_data);
+  GtkWidget *tentry=LIVES_WIDGET(user_data);
   gchar *dirname;
   gchar *fname;
   gchar *tmp;
@@ -5743,7 +5743,7 @@ on_about_activate                     (GtkMenuItem     *menuitem,
   gtk_about_dialog_set_email_hook (activate_url, NULL, NULL);
 #endif
 
-  gtk_show_about_dialog (GTK_WINDOW(mainw->LiVES),
+  gtk_show_about_dialog (LIVES_WINDOW(mainw->LiVES),
 			 "logo", NULL,
 			 "name", "LiVES",
 			 "version", LiVES_VERSION,
@@ -7704,7 +7704,7 @@ on_sticky_activate               (GtkMenuItem     *menuitem,
 	else {
 	  if (mainw->sepwin_scale!=100.) xtrabit=g_strdup_printf(_(" (%d %% scale)"),(int)mainw->sepwin_scale);
 	  else xtrabit=g_strdup("");
-	  title=g_strdup_printf("%s%s",gtk_window_get_title(GTK_WINDOW
+	  title=g_strdup_printf("%s%s",gtk_window_get_title(LIVES_WINDOW
 							    (mainw->multitrack==NULL?mainw->LiVES:
 							     mainw->multitrack->window)),xtrabit);
 	  if (mainw->play_window!=NULL)
@@ -8623,7 +8623,7 @@ void popup_lmap_errors(GtkMenuItem *menuitem, gpointer user_data) {
 
   textwindow->clear_button = lives_button_new_with_mnemonic (_("Clear _Errors"));
 
-  lives_dialog_add_action_widget (GTK_DIALOG (textwindow->dialog), textwindow->clear_button, GTK_RESPONSE_CANCEL);
+  lives_dialog_add_action_widget (LIVES_DIALOG (textwindow->dialog), textwindow->clear_button, GTK_RESPONSE_CANCEL);
 
   g_signal_connect (GTK_OBJECT (textwindow->clear_button), "clicked",
 		    G_CALLBACK (on_lerrors_clear_clicked),

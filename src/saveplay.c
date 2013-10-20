@@ -942,13 +942,13 @@ void open_file_sel(const gchar *file_name, double start, int frames) {
       cfile->end++;
 
       g_signal_handler_block(mainw->spinbutton_end,mainw->spin_end_func);
-      lives_spin_button_set_range(GTK_SPIN_BUTTON(mainw->spinbutton_end),cfile->frames==0?0:1,cfile->frames);
-      lives_spin_button_set_value(GTK_SPIN_BUTTON(mainw->spinbutton_end),cfile->end);
+      lives_spin_button_set_range(LIVES_SPIN_BUTTON(mainw->spinbutton_end),cfile->frames==0?0:1,cfile->frames);
+      lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_end),cfile->end);
       g_signal_handler_unblock(mainw->spinbutton_end,mainw->spin_end_func);
        
       g_signal_handler_block(mainw->spinbutton_start,mainw->spin_start_func);
-      lives_spin_button_set_range(GTK_SPIN_BUTTON(mainw->spinbutton_start),cfile->frames==0?0:1,cfile->frames);
-      lives_spin_button_set_value(GTK_SPIN_BUTTON(mainw->spinbutton_start),cfile->start);
+      lives_spin_button_set_range(LIVES_SPIN_BUTTON(mainw->spinbutton_start),cfile->frames==0?0:1,cfile->frames);
+      lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_start),cfile->start);
       g_signal_handler_unblock(mainw->spinbutton_start,mainw->spin_start_func);
       lives_set_cursor_style(LIVES_CURSOR_NORMAL,NULL);
       mainw->noswitch=FALSE;
@@ -1191,7 +1191,7 @@ void save_file (int clip, int start, int end, const char *filename) {
     if (prefs->show_rdet) {
       gint response;
       rdet=create_render_details(1); // WARNING !! - rdet is global in events.h
-      response=lives_dialog_run(GTK_DIALOG(rdet->dialog));
+      response=lives_dialog_run(LIVES_DIALOG(rdet->dialog));
       lives_widget_hide (rdet->dialog);
       
       if (response==GTK_RESPONSE_CANCEL) {
@@ -2340,7 +2340,7 @@ void play_file (void) {
 	  else xtrabit=g_strdup("");
 	  title=g_strdup_printf(_("LiVES: - Play Window%s"),xtrabit);
 	  if (mainw->play_window!=NULL)
-	    lives_window_set_title (GTK_WINDOW (mainw->play_window), title);
+	    lives_window_set_title (LIVES_WINDOW (mainw->play_window), title);
 	  g_free(title);
 	  g_free(xtrabit);
 	}
@@ -2356,7 +2356,7 @@ void play_file (void) {
 	else {
 	  // this doesn't get called if we don't call resize_play_window()
 	  if (mainw->play_window!=NULL) {
-	    lives_window_present (GTK_WINDOW (mainw->play_window));
+	    lives_window_present (LIVES_WINDOW (mainw->play_window));
 	    gdk_window_raise(lives_widget_get_xwindow(mainw->play_window));
 	  }
 	}
@@ -2367,13 +2367,13 @@ void play_file (void) {
       hide_cursor (lives_widget_get_xwindow(mainw->play_window));
       lives_widget_set_app_paintable(mainw->play_window,TRUE);
       if (mainw->vpp!=NULL&&!(mainw->vpp->capabilities&VPP_LOCAL_DISPLAY)&&mainw->fs) 
-	lives_window_set_title (GTK_WINDOW (mainw->play_window),_("LiVES: - Streaming"));
+	lives_window_set_title (LIVES_WINDOW (mainw->play_window),_("LiVES: - Streaming"));
       else {
 	gchar *title,*xtrabit;
 	if (mainw->sepwin_scale!=100.) xtrabit=g_strdup_printf(_(" (%d %% scale)"),(int)mainw->sepwin_scale);
 	else xtrabit=g_strdup("");
 	title=g_strdup_printf(_("LiVES: - Play Window%s"),xtrabit);
-	lives_window_set_title (GTK_WINDOW (mainw->play_window), title);
+	lives_window_set_title (LIVES_WINDOW (mainw->play_window), title);
 	g_free(title);
 	g_free(xtrabit);
       }
@@ -2476,7 +2476,7 @@ void play_file (void) {
 
 
 
-  lives_spin_button_set_value(GTK_SPIN_BUTTON(mainw->spinbutton_pb_fps),cfile->pb_fps);
+  lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_pb_fps),cfile->pb_fps);
     
   mainw->last_blend_file=-1;
 
@@ -2969,11 +2969,11 @@ void play_file (void) {
       resize_play_window();
       if (mainw->sepwin_scale!=100.) xtrabit=g_strdup_printf(_(" (%d %% scale)"),(int)mainw->sepwin_scale);
       else xtrabit=g_strdup("");
-      title=g_strdup_printf("%s%s",gtk_window_get_title(GTK_WINDOW
+      title=g_strdup_printf("%s%s",gtk_window_get_title(LIVES_WINDOW
 							(mainw->multitrack==NULL?mainw->LiVES:
 							 mainw->multitrack->window)),xtrabit);
       if (mainw->play_window!=NULL)
-	lives_window_set_title(GTK_WINDOW(mainw->play_window),title);
+	lives_window_set_title(LIVES_WINDOW(mainw->play_window),title);
       g_free(title);
       g_free(xtrabit);
     }
@@ -3000,11 +3000,11 @@ void play_file (void) {
   if (lives_widget_get_allocation_height(mainw->eventbox)+lives_widget_get_allocation_height(mainw->menubar)
       >mainw->scr_height-2||lives_widget_get_allocation_width(mainw->LiVES)>mainw->scr_width-2) {
     // the screen grew too much...remaximise it
-    lives_window_unmaximize (GTK_WINDOW(mainw->LiVES));
+    lives_window_unmaximize (LIVES_WINDOW(mainw->LiVES));
     mainw->noswitch=TRUE;
     lives_widget_context_update();
     mainw->noswitch=FALSE;
-    lives_window_maximize (GTK_WINDOW(mainw->LiVES));
+    lives_window_maximize (LIVES_WINDOW(mainw->LiVES));
   }
   
   if (mainw->multitrack==NULL) {
@@ -3037,13 +3037,13 @@ void play_file (void) {
   if (mainw->multitrack==NULL) {
     // update screen for internal players
     lives_widget_hide(mainw->framebar);
-    lives_entry_set_text(GTK_ENTRY(mainw->framecounter),"");
+    lives_entry_set_text(LIVES_ENTRY(mainw->framecounter),"");
     lives_image_set_from_pixbuf(GTK_IMAGE(mainw->image274),NULL);
   }
 
   // kill the separate play window
   if (mainw->play_window!=NULL) {
-    lives_window_unfullscreen(GTK_WINDOW(mainw->play_window));
+    lives_window_unfullscreen(LIVES_WINDOW(mainw->play_window));
     if (prefs->sepwin_type==0) {
       kill_play_window();
     }
@@ -3071,10 +3071,10 @@ void play_file (void) {
 
 	  if (mainw->sepwin_scale!=100.) xtrabit=g_strdup_printf(_(" (%d %% scale)"),(int)mainw->sepwin_scale);
 	  else xtrabit=g_strdup("");
-	  title=g_strdup_printf("%s%s",gtk_window_get_title(GTK_WINDOW
+	  title=g_strdup_printf("%s%s",gtk_window_get_title(LIVES_WINDOW
 							    (mainw->multitrack==NULL?mainw->LiVES:
 							     mainw->multitrack->window)),xtrabit);
-	  lives_window_set_title(GTK_WINDOW(mainw->play_window),title);
+	  lives_window_set_title(LIVES_WINDOW(mainw->play_window),title);
 	  g_free(title);
 	  g_free(xtrabit);
 
@@ -3090,14 +3090,14 @@ void play_file (void) {
 	    mainw->noswitch=FALSE;
 	    if (mainw->sepwin_scale!=100.) xtrabit=g_strdup_printf(_(" (%d %% scale)"),(int)mainw->sepwin_scale);
 	    else xtrabit=g_strdup("");
-	    title=g_strdup_printf("%s%s",gtk_window_get_title(GTK_WINDOW
+	    title=g_strdup_printf("%s%s",gtk_window_get_title(LIVES_WINDOW
 							      (mainw->multitrack==NULL?mainw->LiVES:
 							       mainw->multitrack->window)),xtrabit);
-	    lives_window_set_title(GTK_WINDOW(mainw->play_window),title);
+	    lives_window_set_title(LIVES_WINDOW(mainw->play_window),title);
 	    g_free(title);
 	    g_free(xtrabit);
 
-	    lives_window_present (GTK_WINDOW (mainw->play_window));
+	    lives_window_present (LIVES_WINDOW (mainw->play_window));
 	    gdk_window_raise(lives_widget_get_xwindow(mainw->play_window));
 	    unhide_cursor (lives_widget_get_xwindow(mainw->play_window));
 	  }
@@ -5035,7 +5035,7 @@ int save_to_scrap_file (weed_plant_t *layer) {
 	// TRANSLATORS: rec(ord) ?? M(ega)B(ytes)
 	framecount=g_strdup(_("rec ?? MB"));
     }
-    lives_entry_set_text(GTK_ENTRY(mainw->framecounter),framecount);
+    lives_entry_set_text(LIVES_ENTRY(mainw->framecounter),framecount);
     g_free(framecount);
   }
 

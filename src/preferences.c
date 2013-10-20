@@ -357,7 +357,7 @@ void set_vpp(boolean set_in_prefs) {
 	  if (!mainw->ext_playback) 
 	    do_error_dialog_with_check_transient 
 	      (_ ("\n\nVideo playback plugins are only activated in\nfull screen, separate window (fs) mode\n"),
-	       TRUE,0,prefsw!=NULL?GTK_WINDOW(prefsw->prefs_dialog):GTK_WINDOW(mainw->LiVES));
+	       TRUE,0,prefsw!=NULL?LIVES_WINDOW(prefsw->prefs_dialog):GTK_WINDOW(mainw->LiVES));
 	}
       }
     }
@@ -416,7 +416,7 @@ static void set_temp_label_text(GtkLabel *label) {
   tmpx1=g_strdup(_("The temp directory is LiVES working directory where opened clips and sets are stored.\nIt should be in a partition with plenty of free disk space.\n"));
 
   markup = g_markup_printf_escaped ("<span background=\"white\" foreground=\"red\"><b>%s</b></span>%s",tmpx1,tmpx2);
-  gtk_label_set_markup (GTK_LABEL (label), markup);
+  gtk_label_set_markup (LIVES_LABEL (label), markup);
   g_free (markup);
   g_free(tmpx1);
   g_free(tmpx2);
@@ -427,16 +427,16 @@ static void set_temp_label_text(GtkLabel *label) {
 
 boolean apply_prefs(boolean skip_warn) {
   // set current prefs from prefs dialog
-  const gchar *video_open_command=lives_entry_get_text(GTK_ENTRY(prefsw->video_open_entry));
-  const gchar *audio_play_command=lives_entry_get_text(GTK_ENTRY(prefsw->audio_command_entry));
-  const gchar *def_vid_load_dir=lives_entry_get_text(GTK_ENTRY(prefsw->vid_load_dir_entry));
-  const gchar *def_vid_save_dir=lives_entry_get_text(GTK_ENTRY(prefsw->vid_save_dir_entry));
-  const gchar *def_audio_dir=lives_entry_get_text(GTK_ENTRY(prefsw->audio_dir_entry));
-  const gchar *def_image_dir=lives_entry_get_text(GTK_ENTRY(prefsw->image_dir_entry));
-  const gchar *def_proj_dir=lives_entry_get_text(GTK_ENTRY(prefsw->proj_dir_entry));
-  const gchar *wp_path=lives_entry_get_text(GTK_ENTRY(prefsw->wpp_entry));
-  const gchar *frei0r_path=lives_entry_get_text(GTK_ENTRY(prefsw->frei0r_entry));
-  const gchar *ladspa_path=lives_entry_get_text(GTK_ENTRY(prefsw->ladspa_entry));
+  const gchar *video_open_command=lives_entry_get_text(LIVES_ENTRY(prefsw->video_open_entry));
+  const gchar *audio_play_command=lives_entry_get_text(LIVES_ENTRY(prefsw->audio_command_entry));
+  const gchar *def_vid_load_dir=lives_entry_get_text(LIVES_ENTRY(prefsw->vid_load_dir_entry));
+  const gchar *def_vid_save_dir=lives_entry_get_text(LIVES_ENTRY(prefsw->vid_save_dir_entry));
+  const gchar *def_audio_dir=lives_entry_get_text(LIVES_ENTRY(prefsw->audio_dir_entry));
+  const gchar *def_image_dir=lives_entry_get_text(LIVES_ENTRY(prefsw->image_dir_entry));
+  const gchar *def_proj_dir=lives_entry_get_text(LIVES_ENTRY(prefsw->proj_dir_entry));
+  const gchar *wp_path=lives_entry_get_text(LIVES_ENTRY(prefsw->wpp_entry));
+  const gchar *frei0r_path=lives_entry_get_text(LIVES_ENTRY(prefsw->frei0r_entry));
+  const gchar *ladspa_path=lives_entry_get_text(LIVES_ENTRY(prefsw->ladspa_entry));
 
   gchar tmpdir[PATH_MAX];
   gchar *theme = lives_combo_get_active_text( LIVES_COMBO(prefsw->theme_combo) );
@@ -449,12 +449,12 @@ boolean apply_prefs(boolean skip_warn) {
 
   boolean needs_restart=FALSE;
 
-  double default_fps=lives_spin_button_get_value(GTK_SPIN_BUTTON(prefsw->spinbutton_def_fps));
+  double default_fps=lives_spin_button_get_value(LIVES_SPIN_BUTTON(prefsw->spinbutton_def_fps));
 
   boolean antialias=lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_antialias));
   boolean fx_threads=lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_threads));
 
-  int nfx_threads=lives_spin_button_get_value_as_int(GTK_SPIN_BUTTON(prefsw->spinbutton_nfx_threads));
+  int nfx_threads=lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(prefsw->spinbutton_nfx_threads));
 
   boolean stop_screensaver=lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->stop_screensaver_check));
   boolean open_maximised=lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->open_maximised_check));
@@ -463,8 +463,8 @@ boolean apply_prefs(boolean skip_warn) {
   boolean stream_audio_out=lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_stream_audio));
   boolean rec_after_pb=lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_rec_after_pb));
 
-  uint64_t ds_warn_level=(uint64_t)lives_spin_button_get_value_as_int(GTK_SPIN_BUTTON(prefsw->spinbutton_warn_ds))*1000000;
-  uint64_t ds_crit_level=(uint64_t)lives_spin_button_get_value_as_int(GTK_SPIN_BUTTON(prefsw->spinbutton_crit_ds))*1000000;
+  uint64_t ds_warn_level=(uint64_t)lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(prefsw->spinbutton_warn_ds))*1000000;
+  uint64_t ds_crit_level=(uint64_t)lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(prefsw->spinbutton_crit_ds))*1000000;
 
   boolean warn_fps=lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_warn_fps));
   boolean warn_save_set=lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_warn_save_set));
@@ -514,9 +514,9 @@ lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_warn_yuv4
   boolean mouse_scroll=lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->mouse_scroll));
   boolean ce_maxspect=lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_ce_maxspect));
 
-  int fsize_to_warn=lives_spin_button_get_value_as_int(GTK_SPIN_BUTTON(prefsw->spinbutton_warn_fsize));
-  int dl_bwidth=lives_spin_button_get_value_as_int(GTK_SPIN_BUTTON(prefsw->spinbutton_bwidth));
-  int ocp=lives_spin_button_get_value_as_int(GTK_SPIN_BUTTON(prefsw->spinbutton_ocp));
+  int fsize_to_warn=lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(prefsw->spinbutton_warn_fsize));
+  int dl_bwidth=lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(prefsw->spinbutton_bwidth));
+  int ocp=lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(prefsw->spinbutton_ocp));
 
   boolean rec_frames=lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->rframes));
   boolean rec_fps=lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->rfps));
@@ -531,15 +531,15 @@ lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_warn_yuv4
   boolean mt_enter_prompt=lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->mt_enter_prompt));
   boolean render_prompt=!lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_render_prompt));
 
-  int mt_def_width=lives_spin_button_get_value_as_int(GTK_SPIN_BUTTON(prefsw->spinbutton_mt_def_width));
-  int mt_def_height=lives_spin_button_get_value_as_int(GTK_SPIN_BUTTON(prefsw->spinbutton_mt_def_height));
-  int mt_def_fps=lives_spin_button_get_value(GTK_SPIN_BUTTON(prefsw->spinbutton_mt_def_fps));
-  int mt_def_arate=atoi(lives_entry_get_text(GTK_ENTRY(resaudw->entry_arate)));
-  int mt_def_achans=atoi(lives_entry_get_text(GTK_ENTRY(resaudw->entry_achans)));
-  int mt_def_asamps=atoi(lives_entry_get_text(GTK_ENTRY(resaudw->entry_asamps)));
+  int mt_def_width=lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(prefsw->spinbutton_mt_def_width));
+  int mt_def_height=lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(prefsw->spinbutton_mt_def_height));
+  int mt_def_fps=lives_spin_button_get_value(LIVES_SPIN_BUTTON(prefsw->spinbutton_mt_def_fps));
+  int mt_def_arate=atoi(lives_entry_get_text(LIVES_ENTRY(resaudw->entry_arate)));
+  int mt_def_achans=atoi(lives_entry_get_text(LIVES_ENTRY(resaudw->entry_achans)));
+  int mt_def_asamps=atoi(lives_entry_get_text(LIVES_ENTRY(resaudw->entry_asamps)));
   int mt_def_signed_endian=lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(resaudw->rb_unsigned))*
     AFORM_UNSIGNED+lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(resaudw->rb_bigend))*AFORM_BIG_ENDIAN;
-  int mt_undo_buf=lives_spin_button_get_value_as_int(GTK_SPIN_BUTTON(prefsw->spinbutton_mt_undo_buf));
+  int mt_undo_buf=lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(prefsw->spinbutton_mt_undo_buf));
 
   boolean mt_exit_render=lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_mt_exit_render));
   boolean mt_enable_audio=lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(resaudw->aud_checkbutton));
@@ -549,9 +549,9 @@ lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_warn_yuv4
   boolean mt_autoback_always=lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->mt_autoback_always));
   boolean mt_autoback_never=lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->mt_autoback_never));
 
-  int mt_autoback_time=lives_spin_button_get_value(GTK_SPIN_BUTTON(prefsw->spinbutton_mt_ab_time));
-  int gui_monitor=lives_spin_button_get_value(GTK_SPIN_BUTTON(prefsw->spinbutton_gmoni));
-  int play_monitor=lives_spin_button_get_value(GTK_SPIN_BUTTON(prefsw->spinbutton_pmoni));
+  int mt_autoback_time=lives_spin_button_get_value(LIVES_SPIN_BUTTON(prefsw->spinbutton_mt_ab_time));
+  int gui_monitor=lives_spin_button_get_value(LIVES_SPIN_BUTTON(prefsw->spinbutton_gmoni));
+  int play_monitor=lives_spin_button_get_value(LIVES_SPIN_BUTTON(prefsw->spinbutton_pmoni));
 
   boolean ce_thumbs=lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->ce_thumbs));
 
@@ -590,25 +590,25 @@ lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_warn_yuv4
 #endif
 
 #ifdef ENABLE_OSC
-  uint32_t osc_udp_port=lives_spin_button_get_value_as_int(GTK_SPIN_BUTTON(prefsw->spinbutton_osc_udp));
+  uint32_t osc_udp_port=lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(prefsw->spinbutton_osc_udp));
   boolean osc_start=lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->enable_OSC_start));
   boolean osc_enable=lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->enable_OSC));
 #endif
 
-  int rte_keys_virtual=lives_spin_button_get_value_as_int(GTK_SPIN_BUTTON(prefsw->spinbutton_rte_keys));
+  int rte_keys_virtual=lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(prefsw->spinbutton_rte_keys));
 
 #ifdef ENABLE_OSC
 #ifdef OMC_JS_IMPL
   boolean omc_js_enable=lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_omc_js));
-  const gchar *omc_js_fname=lives_entry_get_text(GTK_ENTRY(prefsw->omc_js_entry));
+  const gchar *omc_js_fname=lives_entry_get_text(LIVES_ENTRY(prefsw->omc_js_entry));
 #endif
 
 
 #ifdef OMC_MIDI_IMPL
   boolean omc_midi_enable=lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_omc_midi));
-  const gchar *omc_midi_fname=lives_entry_get_text(GTK_ENTRY(prefsw->omc_midi_entry));
-  int midicr=lives_spin_button_get_value_as_int(GTK_SPIN_BUTTON(prefsw->spinbutton_midicr));
-  int midirpt=lives_spin_button_get_value_as_int(GTK_SPIN_BUTTON(prefsw->spinbutton_midirpt));
+  const gchar *omc_midi_fname=lives_entry_get_text(LIVES_ENTRY(prefsw->omc_midi_entry));
+  int midicr=lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(prefsw->spinbutton_midicr));
+  int midirpt=lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(prefsw->spinbutton_midirpt));
 
 #ifdef ALSA_MIDI
   boolean use_alsa_midi=lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->alsa_midi));
@@ -617,7 +617,7 @@ lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_warn_yuv4
 #endif
 #endif
 
-  int rec_gb=lives_spin_button_get_value_as_int(GTK_SPIN_BUTTON(prefsw->spinbutton_rec_gb));
+  int rec_gb=lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(prefsw->spinbutton_rec_gb));
 
   gchar audio_player[256];
   int listlen=g_list_length (prefs->acodec_list);
@@ -637,7 +637,7 @@ lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_warn_yuv4
 
   gchar *tmp;
 
-  gchar *cdplay_device=g_filename_from_utf8(lives_entry_get_text(GTK_ENTRY(prefsw->cdplay_entry)),-1,NULL,NULL,NULL);
+  gchar *cdplay_device=g_filename_from_utf8(lives_entry_get_text(LIVES_ENTRY(prefsw->cdplay_entry)),-1,NULL,NULL,NULL);
 
   if (capable->has_encoder_plugins) {
     audio_codec = lives_combo_get_active_text( LIVES_COMBO(prefsw->acodec_combo) );
@@ -650,7 +650,7 @@ lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_warn_yuv4
   }
   else future_prefs->encoder.audio_codec=0;
 
-  g_snprintf (tmpdir,PATH_MAX,"%s",(tmp=g_filename_from_utf8(lives_entry_get_text(GTK_ENTRY(prefsw->tmpdir_entry)),
+  g_snprintf (tmpdir,PATH_MAX,"%s",(tmp=g_filename_from_utf8(lives_entry_get_text(LIVES_ENTRY(prefsw->tmpdir_entry)),
 							     -1,NULL,NULL,NULL)));
   g_free(tmp);
 
@@ -772,7 +772,7 @@ lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_warn_yuv4
       }
       else {
 	g_snprintf(future_prefs->tmpdir,PATH_MAX,"%s",tmpdir);
-	set_temp_label_text(GTK_LABEL(prefsw->temp_label));
+	set_temp_label_text(LIVES_LABEL(prefsw->temp_label));
 	lives_widget_queue_draw(prefsw->temp_label);
 	lives_widget_context_update(); // update prefs window before showing confirmation box
 
@@ -783,7 +783,7 @@ lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_warn_yuv4
 	}
 	else {
 	  g_snprintf(future_prefs->tmpdir,PATH_MAX,"%s",prefs->tmpdir);
-          lives_entry_set_text(GTK_ENTRY(prefsw->tmpdir_entry), prefs->tmpdir);
+          lives_entry_set_text(LIVES_ENTRY(prefsw->tmpdir_entry), prefs->tmpdir);
 	}
       }
       g_free (msg);
@@ -1143,13 +1143,13 @@ lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_warn_yuv4
   if (prefs->audio_player==AUD_PLAYER_JACK&&!capable->has_jackd) {
     do_error_dialog_with_check_transient
       (_("\nUnable to switch audio players to jack - jackd must be installed first.\nSee http://jackaudio.org\n"),
-       TRUE,0,prefsw!=NULL?GTK_WINDOW(prefsw->prefs_dialog):GTK_WINDOW(mainw->LiVES));
+       TRUE,0,prefsw!=NULL?LIVES_WINDOW(prefsw->prefs_dialog):GTK_WINDOW(mainw->LiVES));
   }
   else {
     if (prefs->audio_player==AUD_PLAYER_JACK&&strcmp(audio_player,"jack")) {
       do_error_dialog_with_check_transient
 	(_("\nSwitching audio players requires restart (jackd must not be running)\n"),
-	 TRUE,0,prefsw!=NULL?GTK_WINDOW(prefsw->prefs_dialog):GTK_WINDOW(mainw->LiVES));
+	 TRUE,0,prefsw!=NULL?LIVES_WINDOW(prefsw->prefs_dialog):GTK_WINDOW(mainw->LiVES));
     }
 
     // switch to sox
@@ -1176,7 +1176,7 @@ lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_warn_yuv4
       if (!capable->has_pulse_audio) {
 	do_error_dialog_with_check_transient
 	  (_("\nUnable to switch audio players to pulse audio\npulseaudio must be installed first.\nSee http://www.pulseaudio.org\n"),
-	   TRUE,0,prefsw!=NULL?GTK_WINDOW(prefsw->prefs_dialog):GTK_WINDOW(mainw->LiVES));
+	   TRUE,0,prefsw!=NULL?LIVES_WINDOW(prefsw->prefs_dialog):GTK_WINDOW(mainw->LiVES));
       }
       else {
 	if (!switch_aud_to_pulse()) {
@@ -1459,11 +1459,11 @@ void set_acodec_list_from_allowed (_prefsw *prefsw, render_details *rdet) {
 
     if (prefsw!=NULL) {
       lives_combo_populate(LIVES_COMBO(prefsw->acodec_combo), prefs->acodec_list);
-      lives_combo_set_active_index(GTK_COMBO_BOX(prefsw->acodec_combo), 0);
+      lives_combo_set_active_index(LIVES_COMBO(prefsw->acodec_combo), 0);
     }
     if (rdet!=NULL) {
       lives_combo_populate(LIVES_COMBO(rdet->acodec_combo), prefs->acodec_list);
-      lives_combo_set_active_index(GTK_COMBO_BOX(rdet->acodec_combo), 0);
+      lives_combo_set_active_index(LIVES_COMBO(rdet->acodec_combo), 0);
     }
     return;
   }
@@ -1490,10 +1490,10 @@ void set_acodec_list_from_allowed (_prefsw *prefsw, render_details *rdet) {
   for (idx=0; idx < g_list_length(prefs->acodec_list); idx++) {
     if (prefs->acodec_list_to_format[idx]==future_prefs->encoder.audio_codec) {
       if (prefsw!=NULL){
-        lives_combo_set_active_index(GTK_COMBO_BOX(prefsw->acodec_combo), idx);
+        lives_combo_set_active_index(LIVES_COMBO(prefsw->acodec_combo), idx);
       }
       if (rdet!=NULL){
-        lives_combo_set_active_index(GTK_COMBO_BOX(rdet->acodec_combo), idx);
+        lives_combo_set_active_index(LIVES_COMBO(rdet->acodec_combo), idx);
       }
       break;
     }
@@ -1506,10 +1506,10 @@ void after_vpp_changed (GtkWidget *vpp_combo, gpointer advbutton) {
   _vid_playback_plugin *tmpvpp;
 
   if (!g_ascii_strcasecmp(newvpp,mainw->string_constants[LIVES_STRING_CONSTANT_NONE])) {
-    lives_widget_set_sensitive (GTK_WIDGET(advbutton), FALSE);
+    lives_widget_set_sensitive (LIVES_WIDGET(advbutton), FALSE);
   }
   else {
-    lives_widget_set_sensitive (GTK_WIDGET(advbutton), TRUE);
+    lives_widget_set_sensitive (LIVES_WIDGET(advbutton), TRUE);
 
     // will call set_astream_settings
     if ((tmpvpp=open_vid_playback_plugin (newvpp, FALSE))==NULL) {
@@ -1537,8 +1537,8 @@ void after_vpp_changed (GtkWidget *vpp_combo, gpointer advbutton) {
 
 
 static void on_forcesmon_toggled (GtkToggleButton *tbutton, gpointer user_data) {
-  int gui_monitor=lives_spin_button_get_value(GTK_SPIN_BUTTON(prefsw->spinbutton_gmoni));
-  int play_monitor=lives_spin_button_get_value(GTK_SPIN_BUTTON(prefsw->spinbutton_pmoni));
+  int gui_monitor=lives_spin_button_get_value(LIVES_SPIN_BUTTON(prefsw->spinbutton_gmoni));
+  int play_monitor=lives_spin_button_get_value(LIVES_SPIN_BUTTON(prefsw->spinbutton_pmoni));
   lives_widget_set_sensitive(prefsw->spinbutton_gmoni,!lives_toggle_button_get_active(tbutton));
   lives_widget_set_sensitive(prefsw->spinbutton_pmoni,!lives_toggle_button_get_active(tbutton));
   lives_widget_set_sensitive(prefsw->ce_thumbs,!lives_toggle_button_get_active(tbutton)&&
@@ -1547,8 +1547,8 @@ static void on_forcesmon_toggled (GtkToggleButton *tbutton, gpointer user_data) 
 }
 
 static void pmoni_gmoni_changed (GtkWidget *sbut, gpointer advbutton) {
-  int gui_monitor=lives_spin_button_get_value(GTK_SPIN_BUTTON(prefsw->spinbutton_gmoni));
-  int play_monitor=lives_spin_button_get_value(GTK_SPIN_BUTTON(prefsw->spinbutton_pmoni));
+  int gui_monitor=lives_spin_button_get_value(LIVES_SPIN_BUTTON(prefsw->spinbutton_gmoni));
+  int play_monitor=lives_spin_button_get_value(LIVES_SPIN_BUTTON(prefsw->spinbutton_pmoni));
   lives_widget_set_sensitive(prefsw->ce_thumbs,play_monitor!=gui_monitor&&
 			     play_monitor!=0&&!lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->forcesmon))&&
 			     capable->nmonitors>0);
@@ -1905,26 +1905,26 @@ void on_prefDomainChanged(GtkTreeSelection *widget, gpointer dummy) {
  * Function makes apply button sensitive
  */
 void apply_button_set_enabled(GtkWidget *widget, gpointer func_data) {
-  lives_widget_set_sensitive(GTK_WIDGET(prefsw->applybutton), TRUE);
-  lives_widget_set_sensitive(GTK_WIDGET(prefsw->cancelbutton), TRUE);
-  lives_widget_set_sensitive(GTK_WIDGET(prefsw->closebutton), FALSE);
+  lives_widget_set_sensitive(LIVES_WIDGET(prefsw->applybutton), TRUE);
+  lives_widget_set_sensitive(LIVES_WIDGET(prefsw->cancelbutton), TRUE);
+  lives_widget_set_sensitive(LIVES_WIDGET(prefsw->closebutton), FALSE);
 }
 
 // toggle sets other widget sensitive/insensitive
 static void toggle_set_sensitive(GtkWidget *widget, gpointer func_data) {
-  lives_widget_set_sensitive(GTK_WIDGET(func_data), lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(widget)));
+  lives_widget_set_sensitive(LIVES_WIDGET(func_data), lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(widget)));
 }
 
 // toggle sets other widget insensitive/sensitive
 static void toggle_set_insensitive(GtkWidget *widget, gpointer func_data) {
-  lives_widget_set_sensitive(GTK_WIDGET(func_data), !lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(widget)));
+  lives_widget_set_sensitive(LIVES_WIDGET(func_data), !lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(widget)));
 }
 
 
 
 static void spinbutton_crit_ds_value_changed (GtkSpinButton *crit_ds, gpointer user_data) {
   double myval=lives_spin_button_get_value(crit_ds);
-  lives_spin_button_set_range (GTK_SPIN_BUTTON (prefsw->spinbutton_warn_ds),myval,DS_WARN_CRIT_MAX);
+  lives_spin_button_set_range (LIVES_SPIN_BUTTON (prefsw->spinbutton_warn_ds),myval,DS_WARN_CRIT_MAX);
   apply_button_set_enabled(NULL,NULL);
 }
 
@@ -2032,18 +2032,18 @@ _prefsw *create_prefs_dialog (void) {
 
   // Create new modal dialog window and set some attributes
   prefsw->prefs_dialog = lives_standard_dialog_new (_("LiVES: - Preferences"),FALSE);
-  gtk_window_add_accel_group (GTK_WINDOW (prefsw->prefs_dialog), accel_group);
+  gtk_window_add_accel_group (LIVES_WINDOW (prefsw->prefs_dialog), accel_group);
 
-  gtk_window_set_default_size (GTK_WINDOW (prefsw->prefs_dialog), PREF_WIN_WIDTH, PREF_WIN_HEIGHT);
+  gtk_window_set_default_size (LIVES_WINDOW (prefsw->prefs_dialog), PREF_WIN_WIDTH, PREF_WIN_HEIGHT);
   lives_widget_set_size_request (prefsw->prefs_dialog, PREF_WIN_WIDTH, PREF_WIN_HEIGHT);
 
   if (prefs->show_gui) {
-    if (mainw->multitrack==NULL) gtk_window_set_transient_for(GTK_WINDOW(prefsw->prefs_dialog),GTK_WINDOW(mainw->LiVES));
-    else gtk_window_set_transient_for(GTK_WINDOW(prefsw->prefs_dialog),GTK_WINDOW(mainw->multitrack->window));
+    if (mainw->multitrack==NULL) gtk_window_set_transient_for(LIVES_WINDOW(prefsw->prefs_dialog),GTK_WINDOW(mainw->LiVES));
+    else gtk_window_set_transient_for(LIVES_WINDOW(prefsw->prefs_dialog),GTK_WINDOW(mainw->multitrack->window));
   }
 
   // Get dialog's vbox and show it
-  dialog_vbox_main = lives_dialog_get_content_area(GTK_DIALOG(prefsw->prefs_dialog));
+  dialog_vbox_main = lives_dialog_get_content_area(LIVES_DIALOG(prefsw->prefs_dialog));
   lives_widget_show (dialog_vbox_main);
 
   // Create dialog horizontal panels
@@ -2451,7 +2451,7 @@ _prefsw *create_prefs_dialog (void) {
   }
   else {
     lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(prefsw->mt_autoback_every),TRUE);
-    lives_spin_button_set_value(GTK_SPIN_BUTTON(prefsw->spinbutton_mt_ab_time),prefs->mt_auto_back);
+    lives_spin_button_set_value(LIVES_SPIN_BUTTON(prefsw->spinbutton_mt_ab_time),prefs->mt_auto_back);
   }
   // ---
   icon = g_build_filename(prefs->prefix_dir, ICON_DIR, "pref_multitrack.png", NULL);
@@ -2622,10 +2622,10 @@ _prefsw *create_prefs_dialog (void) {
 
   switch (prefs->pb_quality) {
   case PB_QUALITY_HIGH:
-    lives_combo_set_active_index(GTK_COMBO_BOX(prefsw->pbq_combo), 2);
+    lives_combo_set_active_index(LIVES_COMBO(prefsw->pbq_combo), 2);
     break;
   case PB_QUALITY_MED:
-    lives_combo_set_active_index(GTK_COMBO_BOX(prefsw->pbq_combo), 1);
+    lives_combo_set_active_index(LIVES_COMBO(prefsw->pbq_combo), 1);
   }
 
   // ---
@@ -2664,7 +2664,7 @@ _prefsw *create_prefs_dialog (void) {
     lives_combo_set_active_string(LIVES_COMBO(pp_combo), mainw->vpp->name);
   }
   else {
-    lives_combo_set_active_index(GTK_COMBO_BOX(pp_combo), 0);
+    lives_combo_set_active_index(LIVES_COMBO(pp_combo), 0);
     lives_widget_set_sensitive (advbutton, FALSE);
   }
   g_list_free_strings (vid_playback_plugins);
@@ -2785,9 +2785,9 @@ _prefsw *create_prefs_dialog (void) {
 
   // get from prefs
   if (prefs->audio_player!=AUD_PLAYER_JACK&&prefs->audio_player!=AUD_PLAYER_PULSE) 
-    lives_entry_set_text(GTK_ENTRY(prefsw->audio_command_entry),prefs->audio_play_command);
+    lives_entry_set_text(LIVES_ENTRY(prefsw->audio_command_entry),prefs->audio_play_command);
   else {
-    lives_entry_set_text(GTK_ENTRY(prefsw->audio_command_entry),(_("- internal -")));
+    lives_entry_set_text(LIVES_ENTRY(prefsw->audio_command_entry),(_("- internal -")));
     lives_widget_set_sensitive(prefsw->audio_command_entry,FALSE);
   }
 
@@ -3194,7 +3194,7 @@ _prefsw *create_prefs_dialog (void) {
 
 
   prefsw->vid_load_dir_entry = gtk_entry_new ();
-  gtk_entry_set_max_length(GTK_ENTRY(prefsw->vid_load_dir_entry),PATH_MAX);
+  gtk_entry_set_max_length(LIVES_ENTRY(prefsw->vid_load_dir_entry),PATH_MAX);
   lives_table_attach (LIVES_TABLE (prefsw->table_right_directories), prefsw->vid_load_dir_entry, 1, 2, 4, 5,
 		    (GtkAttachOptions) (GTK_EXPAND | GTK_FILL),
 		    (GtkAttachOptions) (0), 0, 0);
@@ -3209,7 +3209,7 @@ _prefsw *create_prefs_dialog (void) {
   widget_opts.justify=LIVES_JUSTIFY_CENTER;
   label = lives_standard_label_new ("");
   widget_opts.justify=LIVES_JUSTIFY_DEFAULT;
-  set_temp_label_text(GTK_LABEL(label));
+  set_temp_label_text(LIVES_LABEL(label));
   lives_table_attach (LIVES_TABLE (prefsw->table_right_directories), label, 0, 3, 0, 2,
 		    (GtkAttachOptions) (GTK_EXPAND | GTK_FILL),
 		    (GtkAttachOptions) (0), 0, 0);
@@ -3219,7 +3219,7 @@ _prefsw *create_prefs_dialog (void) {
 
  
   // get from prefs
-  lives_entry_set_text(GTK_ENTRY(prefsw->vid_load_dir_entry),prefs->def_vid_load_dir);
+  lives_entry_set_text(LIVES_ENTRY(prefsw->vid_load_dir_entry),prefs->def_vid_load_dir);
 
 
   
@@ -4112,7 +4112,7 @@ _prefsw *create_prefs_dialog (void) {
   // Preferences 'Revert' button
   prefsw->cancelbutton = gtk_button_new_from_stock ("gtk-revert-to-saved");
   lives_widget_show (prefsw->cancelbutton);
-  lives_dialog_add_action_widget (GTK_DIALOG (prefsw->prefs_dialog), prefsw->cancelbutton, GTK_RESPONSE_CANCEL);
+  lives_dialog_add_action_widget (LIVES_DIALOG (prefsw->prefs_dialog), prefsw->cancelbutton, GTK_RESPONSE_CANCEL);
 
   lives_widget_set_can_focus (prefsw->cancelbutton,TRUE);
 
@@ -4122,7 +4122,7 @@ _prefsw *create_prefs_dialog (void) {
   // Preferences 'Apply' button
   prefsw->applybutton = gtk_button_new_from_stock ("gtk-apply");
   lives_widget_show (prefsw->applybutton);
-  lives_dialog_add_action_widget (GTK_DIALOG (prefsw->prefs_dialog), prefsw->applybutton, 0);
+  lives_dialog_add_action_widget (LIVES_DIALOG (prefsw->prefs_dialog), prefsw->applybutton, 0);
 
   lives_widget_set_can_focus_and_default (prefsw->applybutton);
   // Set 'Apply' button as inactive since there is no changes yet
@@ -4131,7 +4131,7 @@ _prefsw *create_prefs_dialog (void) {
   // Preferences 'Close' button
   prefsw->closebutton = gtk_button_new_from_stock ("gtk-close");
   lives_widget_show(prefsw->closebutton);
-  lives_dialog_add_action_widget(GTK_DIALOG(prefsw->prefs_dialog), prefsw->closebutton, GTK_RESPONSE_OK);
+  lives_dialog_add_action_widget(LIVES_DIALOG(prefsw->prefs_dialog), prefsw->closebutton, GTK_RESPONSE_OK);
 
   lives_widget_set_can_focus_and_default (prefsw->closebutton);
 
@@ -4343,14 +4343,14 @@ _prefsw *create_prefs_dialog (void) {
 #endif
    
   if (capable->has_encoder_plugins) {
-    prefsw->encoder_name_fn = g_signal_connect(GTK_OBJECT(GTK_COMBO_BOX(prefsw->encoder_combo)), "changed", 
+    prefsw->encoder_name_fn = g_signal_connect(GTK_OBJECT(LIVES_COMBO(prefsw->encoder_combo)), "changed", 
 					       G_CALLBACK(on_encoder_entry_changed), NULL);
     // ---
-    prefsw->encoder_ofmt_fn = g_signal_connect(GTK_OBJECT(GTK_COMBO_BOX(prefsw->ofmt_combo)), "changed", 
+    prefsw->encoder_ofmt_fn = g_signal_connect(GTK_OBJECT(LIVES_COMBO(prefsw->ofmt_combo)), "changed", 
 					       G_CALLBACK(on_encoder_ofmt_changed), NULL);
   }
    
-  prefsw->audp_entry_func = g_signal_connect(GTK_OBJECT(GTK_COMBO_BOX(prefsw->audp_combo)), "changed", 
+  prefsw->audp_entry_func = g_signal_connect(GTK_OBJECT(LIVES_COMBO(prefsw->audp_combo)), "changed", 
 					     G_CALLBACK(on_audp_entry_changed), NULL);
 
 #ifdef ENABLE_OSC
@@ -4396,7 +4396,7 @@ void on_preferences_activate(GtkMenuItem *menuitem, gpointer user_data) {
   if (menuitem!=NULL) prefs_current_page=-1;
 
   if (prefsw != NULL && prefsw->prefs_dialog != NULL) {
-    lives_window_present(GTK_WINDOW(prefsw->prefs_dialog));
+    lives_window_present(LIVES_WINDOW(prefsw->prefs_dialog));
     gdk_window_raise(lives_widget_get_xwindow(prefsw->prefs_dialog));
     return;
   }
@@ -4448,9 +4448,9 @@ void on_prefs_apply_clicked(GtkButton *button, gpointer user_data) {
   needs_restart = apply_prefs(FALSE);
 
   // do this now in case anything was changed or reverted
-  lives_widget_set_sensitive(GTK_WIDGET(prefsw->applybutton), FALSE);
-  lives_widget_set_sensitive(GTK_WIDGET(prefsw->cancelbutton), FALSE);
-  lives_widget_set_sensitive(GTK_WIDGET(prefsw->closebutton), TRUE);
+  lives_widget_set_sensitive(LIVES_WIDGET(prefsw->applybutton), FALSE);
+  lives_widget_set_sensitive(LIVES_WIDGET(prefsw->cancelbutton), FALSE);
+  lives_widget_set_sensitive(LIVES_WIDGET(prefsw->closebutton), TRUE);
 
   if (FALSE == mainw->prefs_need_restart){
     mainw->prefs_need_restart = needs_restart;

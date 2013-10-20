@@ -1502,7 +1502,7 @@ boolean add_param_to_box (GtkBox *box, lives_rfx_t *rfx, int pnum, boolean add_s
     }
 
 
-    gtk_spin_button_set_wrap(LIVES_SPIN_BUTTON(spinbutton),param->wrap);
+    lives_spin_button_set_wrap(LIVES_SPIN_BUTTON(spinbutton),param->wrap);
 
     g_signal_connect_after (GTK_OBJECT (spinbutton), "value_changed",
 			    G_CALLBACK (after_param_value_changed),

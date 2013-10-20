@@ -1359,7 +1359,7 @@ _resaudw *create_resaudw (gshort type, render_details *rdet, GtkWidget *top_vbox
     
     resaudw->entry_arate = lives_combo_get_entry(LIVES_COMBO(combo4));
 
-    gtk_entry_set_width_chars (GTK_ENTRY (resaudw->entry_arate), 6);
+    lives_entry_set_width_chars (GTK_ENTRY (resaudw->entry_arate), 6);
     if (type==7) lives_widget_set_sensitive(combo4,FALSE);
   
     if (type<3||(type>4&&type<8)||type==11) tmp=g_strdup_printf ("%d",(int)mainw->fx1_val);
@@ -1376,7 +1376,7 @@ _resaudw *create_resaudw (gshort type, render_details *rdet, GtkWidget *top_vbox
     if (type==7) lives_widget_set_sensitive(combo5,FALSE);
 
     resaudw->entry_achans = lives_combo_get_entry(LIVES_COMBO(combo5));
-    gtk_entry_set_width_chars (GTK_ENTRY (resaudw->entry_achans), 2);
+    lives_entry_set_width_chars (GTK_ENTRY (resaudw->entry_achans), 2);
     
     if (type<3||(type>4&&type<8)||type==11) tmp=g_strdup_printf ("%d",(int)mainw->fx2_val);
     else if (type==8) tmp=g_strdup_printf ("%d",DEFAULT_AUDIO_CHANS);
@@ -1399,7 +1399,7 @@ _resaudw *create_resaudw (gshort type, render_details *rdet, GtkWidget *top_vbox
     resaudw->entry_asamps = lives_combo_get_entry(LIVES_COMBO(combo6));
     gtk_entry_set_max_length (GTK_ENTRY (resaudw->entry_asamps), 2);
     gtk_editable_set_editable (GTK_EDITABLE (resaudw->entry_asamps), FALSE);
-    gtk_entry_set_width_chars (GTK_ENTRY (resaudw->entry_asamps), 2);
+    lives_entry_set_width_chars (GTK_ENTRY (resaudw->entry_asamps), 2);
     
     if (type<3||(type>4&&type<8)||type==11) tmp=g_strdup_printf ("%d",(int)mainw->fx3_val);
     else if (type==8) tmp=g_strdup_printf ("%d",DEFAULT_AUDIO_SAMPS);

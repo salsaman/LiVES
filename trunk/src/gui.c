@@ -2071,7 +2071,7 @@ void create_LiVES (void) {
   lives_box_pack_start (LIVES_BOX (mainw->framebar), mainw->framecounter, FALSE, TRUE, 0);
   lives_entry_set_editable (LIVES_ENTRY (mainw->framecounter), FALSE);
   gtk_entry_set_has_frame (GTK_ENTRY (mainw->framecounter), FALSE);
-  gtk_entry_set_width_chars (GTK_ENTRY (mainw->framecounter), 18);
+  lives_entry_set_width_chars (GTK_ENTRY (mainw->framecounter), 18);
 
   lives_widget_set_can_focus (mainw->framecounter, FALSE);
 
@@ -2267,7 +2267,7 @@ void create_LiVES (void) {
     lives_widget_set_fg_color(mainw->arrow1, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
   }
 
-  gtk_entry_set_width_chars (GTK_ENTRY (mainw->spinbutton_start),12);
+  lives_entry_set_width_chars (GTK_ENTRY (mainw->spinbutton_start),12);
   mainw->sel_label = lives_standard_label_new(NULL);
 
   if (palette->style&STYLE_1) {
@@ -2298,7 +2298,7 @@ void create_LiVES (void) {
   lives_widget_show (mainw->spinbutton_end);
 
 
-  gtk_entry_set_width_chars (GTK_ENTRY (mainw->spinbutton_end),12);
+  lives_entry_set_width_chars (GTK_ENTRY (mainw->spinbutton_end),12);
 
   if (palette->style&STYLE_1&&palette->style&STYLE_2) {
 #if !GTK_CHECK_VERSION(3,0,0)
@@ -3564,7 +3564,7 @@ void make_preview_box (void) {
   lives_box_pack_start (LIVES_BOX (mainw->preview_controls), mainw->preview_scale,FALSE, FALSE, 0);
   lives_box_pack_start (LIVES_BOX (mainw->preview_controls), hbox, FALSE, FALSE, 0);
 
-  gtk_entry_set_width_chars (GTK_ENTRY (mainw->preview_spinbutton),8);
+  lives_entry_set_width_chars (GTK_ENTRY (mainw->preview_spinbutton),8);
 
   radiobutton_free=lives_standard_radio_button_new((tmp=g_strdup(_ ("_Free"))),TRUE,radiobutton_group,LIVES_BOX(hbox),
 						   (tmp2=g_strdup(_("Free choice of frame number"))));

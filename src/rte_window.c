@@ -2572,11 +2572,11 @@ void rte_set_key_defs (GtkButton *button, lives_rfx_t *rfx) {
 
 
 void rte_set_defs_ok (GtkButton *button, lives_rfx_t *rfx) {
-  weed_plant_t **ptmpls,*filter;
+  weed_plant_t *ptmpl,*filter;
+
   lives_colRGB24_t *rgbp;
 
-  int i;
-  int error;
+  register int i;
 
   if (mainw->textwidget_focus!=NULL) {
     GtkWidget *textwidget=(GtkWidget *)g_object_get_data (G_OBJECT (mainw->textwidget_focus),"textwidget");
@@ -2585,31 +2585,30 @@ void rte_set_defs_ok (GtkButton *button, lives_rfx_t *rfx) {
 
   if (rfx->num_params>0) {
     filter=weed_instance_get_filter((weed_plant_t *)rfx->source,TRUE);
-    ptmpls=weed_get_plantptr_array(filter,"in_parameter_templates",&error);
     for (i=0;i<rfx->num_params;i++) {
+      ptmpl=weed_filter_in_paramtmpl(filter,i,FALSE);
       switch (rfx->params[i].type) {
       case LIVES_PARAM_COLRGB24:
 	rgbp=(lives_colRGB24_t *)rfx->params[i].value;
-	update_weed_color_value(ptmpls[i],i,rgbp->red,rgbp->green,rgbp->blue,0);
+	update_weed_color_value(filter,i,rgbp->red,rgbp->green,rgbp->blue,0);
 	break;
       case LIVES_PARAM_STRING:
-	weed_set_string_value(ptmpls[i],"host_default",(gchar *)rfx->params[i].value);
+	weed_set_string_value(ptmpl,"host_default",(gchar *)rfx->params[i].value);
 	break;
       case LIVES_PARAM_STRING_LIST:
-	weed_set_int_array(ptmpls[i],"host_default",1,(int *)rfx->params[i].value);
+	weed_set_int_array(ptmpl,"host_default",1,(int *)rfx->params[i].value);
 	break;
       case LIVES_PARAM_NUM:
-	if (weed_leaf_seed_type(ptmpls[i],"default")==WEED_SEED_DOUBLE) weed_set_double_array(ptmpls[i],"host_default",1,(double *)rfx->params[i].value);
-	else weed_set_int_array(ptmpls[i],"host_default",1,(int *)rfx->params[i].value);
+	if (weed_leaf_seed_type(ptmpl,"default")==WEED_SEED_DOUBLE) weed_set_double_array(ptmpl,"host_default",1,(double *)rfx->params[i].value);
+	else weed_set_int_array(ptmpl,"host_default",1,(int *)rfx->params[i].value);
 	break;
       case LIVES_PARAM_BOOL:
-	weed_set_boolean_array(ptmpls[i],"host_default",1,(int *)rfx->params[i].value);
+	weed_set_boolean_array(ptmpl,"host_default",1,(int *)rfx->params[i].value);
 	break;
       default:
 	break;
       }
     }
-    weed_free(ptmpls);
   }
 
   on_paramwindow_cancel_clicked(button,rfx);

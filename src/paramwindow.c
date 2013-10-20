@@ -81,7 +81,7 @@ GList *do_onchange_init(lives_rfx_t *rfx) {
 	// onchange is init
 	// create dummy object with data
 	GtkWidget *dummy_widget=lives_label_new(NULL);
-	g_object_set_data (G_OBJECT (dummy_widget),"param_number",GINT_TO_POINTER (-1));
+	g_object_set_data (G_OBJECT (dummy_widget),"param_number",LIVES_INT_TO_POINTER (-1));
 	retvals=do_onchange (G_OBJECT (dummy_widget),rfx);
 	lives_widget_destroy (dummy_widget);
 	g_strfreev (array);
@@ -593,7 +593,7 @@ static boolean add_sizes(GtkBox *vbox, boolean add_fps, lives_rfx_t *rfx) {
 			    G_CALLBACK (gen_width_changed),
 			    tmpl);
     weed_leaf_delete(tmpl,"host_width"); // force a reset
-    gen_width_changed(GTK_SPIN_BUTTON(spinbuttonw),tmpl);
+    gen_width_changed(LIVES_SPIN_BUTTON(spinbuttonw),tmpl);
 
     if (weed_plant_has_leaf(tmpl,"host_height")) def_height=weed_get_int_value(tmpl,"host_height",&error);
     if (def_height==0) def_height=DEF_GEN_HEIGHT;
@@ -612,7 +612,7 @@ static boolean add_sizes(GtkBox *vbox, boolean add_fps, lives_rfx_t *rfx) {
 			    G_CALLBACK (gen_height_changed),
 			    tmpl);
     weed_leaf_delete(tmpl,"host_height"); // force a reset
-    gen_height_changed(GTK_SPIN_BUTTON(spinbuttonh),tmpl);
+    gen_height_changed(LIVES_SPIN_BUTTON(spinbuttonh),tmpl);
 
   }
 
@@ -1369,7 +1369,7 @@ boolean add_param_to_box (GtkBox *box, lives_rfx_t *rfx, int pnum, boolean add_s
   GSList *rbgroup;
 
   lives_colRGB24_t rgb;
-  GdkColor colr;
+  LiVESWidgetColor colr;
 
   gchar *name;
   gchar *txt,*tmp,*tmp2;
@@ -1424,7 +1424,7 @@ boolean add_param_to_box (GtkBox *box, lives_rfx_t *rfx, int pnum, boolean add_s
 			      (gpointer)rfx);
       
       // store parameter so we know whose trigger to use
-      g_object_set_data (G_OBJECT (checkbutton),"param_number",GINT_TO_POINTER (pnum));
+      g_object_set_data (G_OBJECT (checkbutton),"param_number",LIVES_INT_TO_POINTER (pnum));
       param->widgets[0]=checkbutton;
       if (param->hidden) lives_widget_set_sensitive(checkbutton,FALSE);
     }
@@ -1474,7 +1474,7 @@ boolean add_param_to_box (GtkBox *box, lives_rfx_t *rfx, int pnum, boolean add_s
       lives_toggle_button_set_active (LIVES_TOGGLE_BUTTON (radiobutton), get_bool_param(param->value));
 
       // store parameter so we know whose trigger to use
-      g_object_set_data (G_OBJECT (radiobutton),"param_number",GINT_TO_POINTER (pnum));
+      g_object_set_data (G_OBJECT (radiobutton),"param_number",LIVES_INT_TO_POINTER (pnum));
       param->widgets[0]=radiobutton;
       if (param->hidden) lives_widget_set_sensitive(radiobutton,FALSE);
     }
@@ -1502,21 +1502,21 @@ boolean add_param_to_box (GtkBox *box, lives_rfx_t *rfx, int pnum, boolean add_s
     }
 
 
-    gtk_spin_button_set_wrap(GTK_SPIN_BUTTON(spinbutton),param->wrap);
+    gtk_spin_button_set_wrap(LIVES_SPIN_BUTTON(spinbutton),param->wrap);
 
     g_signal_connect_after (GTK_OBJECT (spinbutton), "value_changed",
 			    G_CALLBACK (after_param_value_changed),
 			    (gpointer)rfx);
     
     // store parameter so we know whose trigger to use
-    g_object_set_data (G_OBJECT (spinbutton),"param_number",GINT_TO_POINTER (pnum));
+    g_object_set_data (G_OBJECT (spinbutton),"param_number",LIVES_INT_TO_POINTER (pnum));
     param->widgets[0]=spinbutton;
     g_object_set_data (G_OBJECT (param->widgets[0]),"rfx",rfx);
     if (param->hidden) lives_widget_set_sensitive(spinbutton,FALSE);
 
 
     if (add_scalers) {
-      spinbutton_adj=gtk_spin_button_get_adjustment(GTK_SPIN_BUTTON(spinbutton));
+      spinbutton_adj=gtk_spin_button_get_adjustment(LIVES_SPIN_BUTTON(spinbutton));
 #ifdef ENABLE_GIW
       if (!prefs->lamp_buttons) {
 #endif
@@ -1573,11 +1573,12 @@ boolean add_param_to_box (GtkBox *box, lives_rfx_t *rfx, int pnum, boolean add_s
     colr.green=rgb.green<<8;
     colr.blue=rgb.blue<<8;
 
-    cbutton = gtk_color_button_new_with_color(&colr); // TODO ***
-    gtk_color_button_set_title (GTK_COLOR_BUTTON(cbutton),_("LiVES: - Select Colour"));
-    gtk_color_button_set_color(GTK_COLOR_BUTTON(cbutton),&colr);
+    cbutton = lives_color_button_new_with_color(&colr);
+    lives_color_button_set_use_alpha(LIVES_COLOR_BUTTON(cbutton),FALSE);
+    lives_color_button_set_title (LIVES_COLOR_BUTTON(cbutton),_("LiVES: - Select Colour"));
+    lives_color_button_set_color(LIVES_COLOR_BUTTON(cbutton),&colr);
 
-    g_object_set_data (G_OBJECT (cbutton),"param_number",GINT_TO_POINTER (pnum));
+    g_object_set_data (G_OBJECT (cbutton),"param_number",LIVES_INT_TO_POINTER (pnum));
     if (param->desc!=NULL) lives_widget_set_tooltip_text( cbutton, param->desc);
     else lives_widget_set_tooltip_text( cbutton, (_("Click to set the colour")));
 
@@ -1623,9 +1624,9 @@ boolean add_param_to_box (GtkBox *box, lives_rfx_t *rfx, int pnum, boolean add_s
 			    (gpointer)rfx);
     
     // store parameter so we know whose trigger to use
-    g_object_set_data (G_OBJECT (spinbutton_red),"param_number",GINT_TO_POINTER (pnum));
-    g_object_set_data (G_OBJECT (spinbutton_green),"param_number",GINT_TO_POINTER (pnum));
-    g_object_set_data (G_OBJECT (spinbutton_blue),"param_number",GINT_TO_POINTER (pnum));
+    g_object_set_data (G_OBJECT (spinbutton_red),"param_number",LIVES_INT_TO_POINTER (pnum));
+    g_object_set_data (G_OBJECT (spinbutton_green),"param_number",LIVES_INT_TO_POINTER (pnum));
+    g_object_set_data (G_OBJECT (spinbutton_blue),"param_number",LIVES_INT_TO_POINTER (pnum));
     
     param->widgets[0]=spinbutton_red;
     param->widgets[1]=spinbutton_green;
@@ -1731,7 +1732,7 @@ boolean add_param_to_box (GtkBox *box, lives_rfx_t *rfx, int pnum, boolean add_s
     g_free (txt);
 
     g_object_set_data(G_OBJECT(hbox),"textwidget",(gpointer)param->widgets[0]);
-    g_object_set_data (G_OBJECT (param->widgets[0]),"param_number",GINT_TO_POINTER (pnum));
+    g_object_set_data (G_OBJECT (param->widgets[0]),"param_number",LIVES_INT_TO_POINTER (pnum));
     g_object_set_data (G_OBJECT (param->widgets[0]),"rfx",rfx);
 
     param->widgets[1]=label;
@@ -1757,7 +1758,7 @@ boolean add_param_to_box (GtkBox *box, lives_rfx_t *rfx, int pnum, boolean add_s
 			    G_CALLBACK (after_string_list_changed), (gpointer) rfx);
 
     // store parameter so we know whose trigger to use
-    g_object_set_data (G_OBJECT (combo),"param_number",GINT_TO_POINTER (pnum));
+    g_object_set_data (G_OBJECT (combo),"param_number",LIVES_INT_TO_POINTER (pnum));
     param->widgets[0]=combo;
     if (param->hidden) lives_widget_set_sensitive(combo,FALSE);
     break;
@@ -1944,10 +1945,10 @@ after_param_value_changed           (GtkSpinButton   *spinbutton,
   }
 
   if (param->dp>0) {
-    set_double_param(param->value,(new_double=lives_spin_button_get_value(GTK_SPIN_BUTTON(spinbutton))));
+    set_double_param(param->value,(new_double=lives_spin_button_get_value(LIVES_SPIN_BUTTON(spinbutton))));
   }
   else {
-    set_int_param(param->value,(new_int=lives_spin_button_get_value_as_int(GTK_SPIN_BUTTON(spinbutton))));
+    set_int_param(param->value,(new_int=lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(spinbutton))));
   }
 
 
@@ -2166,18 +2167,22 @@ void update_weed_color_value(weed_plant_t *inst, int pnum, int c1, int c2, int c
 }
 
 
-void
-after_param_red_changed           (GtkSpinButton   *spinbutton,
-				   lives_rfx_t *rfx) {
-  int param_number=GPOINTER_TO_INT (g_object_get_data (G_OBJECT (spinbutton),"param_number"));
+void after_param_red_changed (GtkSpinButton *spinbutton, lives_rfx_t *rfx) {
   GList *retvals=NULL;
-  lives_param_t *param=&rfx->params[param_number];
+
   lives_colRGB24_t old_value;
-  int new_red;
-  GdkColor colr;
+
+  LiVESWidgetColor colr;
+
   GtkWidget *cbutton;
-  boolean was_reinited=FALSE;
+
+  int param_number=GPOINTER_TO_INT (g_object_get_data (G_OBJECT (spinbutton),"param_number"));
+  int new_red;
   int copyto=-1;
+
+  boolean was_reinited=FALSE;
+
+  lives_param_t *param=&rfx->params[param_number];
 
   if (mainw->block_param_updates) return; // updates are blocked until all params are ready
 
@@ -2190,14 +2195,15 @@ after_param_red_changed           (GtkSpinButton   *spinbutton,
   }
 
   get_colRGB24_param(param->value,&old_value);
-  new_red=lives_spin_button_get_value_as_int(GTK_SPIN_BUTTON(spinbutton));
+  new_red=lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(spinbutton));
   set_colRGB24_param(param->value,new_red,old_value.green,old_value.blue);
 
-  colr.red=new_red<<8;
-  colr.green=old_value.green<<8;
-  colr.blue=old_value.blue<<8;
+  colr.red=LIVES_WIDGET_COLOR_SCALE_255(new_red);
+  colr.green=LIVES_WIDGET_COLOR_SCALE_255(old_value.green);
+  colr.blue=LIVES_WIDGET_COLOR_SCALE_255(old_value.blue);
+
   cbutton=param->widgets[4];
-  gtk_color_button_set_color(GTK_COLOR_BUTTON(cbutton),&colr);
+  lives_color_button_set_color(LIVES_COLOR_BUTTON(cbutton),&colr);
 
 
   if (mainw->framedraw_preview!=NULL) lives_widget_set_sensitive(mainw->framedraw_preview,TRUE);
@@ -2242,18 +2248,24 @@ after_param_red_changed           (GtkSpinButton   *spinbutton,
 }
 
 
-void
-after_param_green_changed           (GtkSpinButton   *spinbutton,
-				     lives_rfx_t *rfx) {
-  int param_number=GPOINTER_TO_INT (g_object_get_data (G_OBJECT (spinbutton),"param_number"));
+void after_param_green_changed (GtkSpinButton *spinbutton, lives_rfx_t *rfx) {
   GList *retvals=NULL;
-  lives_param_t *param=&rfx->params[param_number];
+
   lives_colRGB24_t old_value;
-  int new_green;
-  GdkColor colr;
+
+  LiVESWidgetColor colr;
+
   GtkWidget *cbutton;
-  boolean was_reinited=FALSE;
+
+  int new_green;
   int copyto=-1;
+
+  int param_number=GPOINTER_TO_INT (g_object_get_data (G_OBJECT (spinbutton),"param_number"));
+
+  boolean was_reinited=FALSE;
+
+  lives_param_t *param=&rfx->params[param_number];
+
 
   if (mainw->block_param_updates) return; // updates are blocked until all params are ready
 
@@ -2266,14 +2278,15 @@ after_param_green_changed           (GtkSpinButton   *spinbutton,
   }
 
   get_colRGB24_param(param->value,&old_value);
-  new_green=lives_spin_button_get_value_as_int(GTK_SPIN_BUTTON(spinbutton));
+  new_green=lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(spinbutton));
   set_colRGB24_param(param->value,old_value.red,new_green,old_value.blue);
 
-  colr.red=old_value.red<<8;
-  colr.green=new_green<<8;
-  colr.blue=old_value.blue<<8;
+  colr.red=LIVES_WIDGET_COLOR_SCALE_255(old_value.red);
+  colr.green=LIVES_WIDGET_COLOR_SCALE_255(new_green);
+  colr.blue=LIVES_WIDGET_COLOR_SCALE_255(old_value.blue);
+
   cbutton=param->widgets[4];
-  gtk_color_button_set_color(GTK_COLOR_BUTTON(cbutton),&colr);
+  lives_color_button_set_color(LIVES_COLOR_BUTTON(cbutton),&colr);
 
   if (mainw->framedraw_preview!=NULL) lives_widget_set_sensitive(mainw->framedraw_preview,TRUE);
 
@@ -2317,18 +2330,22 @@ after_param_green_changed           (GtkSpinButton   *spinbutton,
   param->changed=TRUE;
 }
 
-void
-after_param_blue_changed           (GtkSpinButton   *spinbutton,
-				    lives_rfx_t *rfx) {
-  int param_number=GPOINTER_TO_INT (g_object_get_data (G_OBJECT (spinbutton),"param_number"));
+void after_param_blue_changed (GtkSpinButton *spinbutton, lives_rfx_t *rfx) {
   GList *retvals=NULL;
-  lives_param_t *param=&rfx->params[param_number];
+
   lives_colRGB24_t old_value;
-  int new_blue;
-  GdkColor colr;
+
+  LiVESWidgetColor colr;
+
   GtkWidget *cbutton;
-  boolean was_reinited=FALSE;
+
+  int new_blue;
   int copyto=-1;
+  int param_number=GPOINTER_TO_INT (g_object_get_data (G_OBJECT (spinbutton),"param_number"));
+
+  boolean was_reinited=FALSE;
+
+  lives_param_t *param=&rfx->params[param_number];
 
   if (mainw->block_param_updates) return; // updates are blocked until all params are ready
 
@@ -2341,14 +2358,15 @@ after_param_blue_changed           (GtkSpinButton   *spinbutton,
   }
 
   get_colRGB24_param(param->value,&old_value);
-  new_blue=lives_spin_button_get_value_as_int(GTK_SPIN_BUTTON(spinbutton));
+  new_blue=lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(spinbutton));
   set_colRGB24_param(param->value,old_value.red,old_value.green,new_blue);
 
-  colr.red=old_value.red<<8;
-  colr.green=old_value.green<<8;
-  colr.blue=new_blue<<8;
+  colr.red=LIVES_WIDGET_COLOR_SCALE_255(old_value.red);
+  colr.green=LIVES_WIDGET_COLOR_SCALE_255(old_value.green);
+  colr.blue=LIVES_WIDGET_COLOR_SCALE_255(new_blue);
+
   cbutton=param->widgets[4];
-  gtk_color_button_set_color(GTK_COLOR_BUTTON(cbutton),&colr);
+  lives_color_button_set_color(LIVES_COLOR_BUTTON(cbutton),&colr);
 
 
   if (mainw->framedraw_preview!=NULL) lives_widget_set_sensitive(mainw->framedraw_preview,TRUE);
@@ -2401,7 +2419,7 @@ after_param_alpha_changed           (GtkSpinButton   *spinbutton,
   GList *retvals=NULL;
   lives_param_t *param=&rfx->params[param_number];
   lives_colRGBA32_t old_value;
-  int new_alpha=lives_spin_button_get_value_as_int(GTK_SPIN_BUTTON(spinbutton));
+  int new_alpha=lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(spinbutton));
   //boolean was_reinited=FALSE;
   int copyto=-1;
 
@@ -2499,7 +2517,7 @@ void after_param_text_changed (GtkWidget *textwidget, lives_rfx_t *rfx) {
     param->value=g_strdup(text_view_get_text (LIVES_TEXT_VIEW(textwidget)));
   }
   else {
-    param->value=g_strdup (lives_entry_get_text (GTK_ENTRY (textwidget)));
+    param->value=g_strdup (lives_entry_get_text (LIVES_ENTRY (textwidget)));
   }
 
   if (mainw->framedraw_preview!=NULL) lives_widget_set_sensitive(mainw->framedraw_preview,TRUE);
@@ -2543,7 +2561,7 @@ void after_param_text_changed (GtkWidget *textwidget, lives_rfx_t *rfx) {
 	  gtk_text_buffer_set_text (GTK_TEXT_BUFFER (textbuffer), (gchar *)param->value, -1);
 	}
 	else {
-	  lives_entry_set_text(GTK_ENTRY(textwidget),disp_string);
+	  lives_entry_set_text(LIVES_ENTRY(textwidget),disp_string);
 	}
 	weed_free(disp_string);
       }
@@ -2815,7 +2833,7 @@ gchar *param_marshall (lives_rfx_t *rfx, boolean with_min_max) {
 
       if (merge_opts->spinbutton_loops!=NULL&&
 	  cfile->end-cfile->start+1>(cb_frames*(ttl=lives_spin_button_get_value_as_int
-						(GTK_SPIN_BUTTON (merge_opts->spinbutton_loops))))&&
+						(LIVES_SPIN_BUTTON (merge_opts->spinbutton_loops))))&&
 	  !merge_opts->loop_to_fit) {
 	end=cb_frames*ttl;
 	if (!merge_opts->align_start) {
@@ -2994,11 +3012,11 @@ int set_param_from_list(GList *plist, lives_param_t *param, int pnum, boolean wi
 	if (param->widgets[0]&&GTK_IS_SPIN_BUTTON (param->widgets[0])) {
 	  lives_rfx_t *rfx=(lives_rfx_t *)g_object_get_data(G_OBJECT(param->widgets[0]),"rfx");
 	  g_signal_handlers_block_by_func(param->widgets[0],(gpointer)after_param_value_changed,(gpointer)rfx);
-	  lives_spin_button_set_range (GTK_SPIN_BUTTON (param->widgets[0]),(double)param->min,(double)param->max);
-	  gtk_spin_button_update(GTK_SPIN_BUTTON(param->widgets[0]));
+	  lives_spin_button_set_range (LIVES_SPIN_BUTTON (param->widgets[0]),(double)param->min,(double)param->max);
+	  gtk_spin_button_update(LIVES_SPIN_BUTTON(param->widgets[0]));
 	  g_signal_handlers_unblock_by_func(param->widgets[0],(gpointer)after_param_value_changed,(gpointer)rfx);
-	  lives_spin_button_set_value (GTK_SPIN_BUTTON (param->widgets[0]),get_double_param(param->value));
-	  gtk_spin_button_update(GTK_SPIN_BUTTON(param->widgets[0]));
+	  lives_spin_button_set_value (LIVES_SPIN_BUTTON (param->widgets[0]),get_double_param(param->value));
+	  gtk_spin_button_update(LIVES_SPIN_BUTTON(param->widgets[0]));
 	}
       }
       else set_double_param(param->def,double_val);
@@ -3029,11 +3047,11 @@ int set_param_from_list(GList *plist, lives_param_t *param, int pnum, boolean wi
 	if (param->widgets[0]&&GTK_IS_SPIN_BUTTON (param->widgets[0])) {
 	  lives_rfx_t *rfx=(lives_rfx_t *)g_object_get_data(G_OBJECT(param->widgets[0]),"rfx");
 	  g_signal_handlers_block_by_func(param->widgets[0],(gpointer)after_param_value_changed,(gpointer)rfx);
-	  lives_spin_button_set_range (GTK_SPIN_BUTTON (param->widgets[0]),(double)param->min,(double)param->max);
-	  gtk_spin_button_update(GTK_SPIN_BUTTON(param->widgets[0]));
+	  lives_spin_button_set_range (LIVES_SPIN_BUTTON (param->widgets[0]),(double)param->min,(double)param->max);
+	  gtk_spin_button_update(LIVES_SPIN_BUTTON(param->widgets[0]));
 	  g_signal_handlers_unblock_by_func(param->widgets[0],(gpointer)after_param_value_changed,(gpointer)rfx);
-	  lives_spin_button_set_value (GTK_SPIN_BUTTON (param->widgets[0]),(double)get_int_param(param->value));
-	  gtk_spin_button_update(GTK_SPIN_BUTTON(param->widgets[0]));
+	  lives_spin_button_set_value (LIVES_SPIN_BUTTON (param->widgets[0]),(double)get_int_param(param->value));
+	  gtk_spin_button_update(LIVES_SPIN_BUTTON(param->widgets[0]));
 	}
       }
       else set_int_param(param->def,int_value);
@@ -3056,13 +3074,13 @@ int set_param_from_list(GList *plist, lives_param_t *param, int pnum, boolean wi
 
     if (upd) {
       if (param->widgets[0]&&GTK_IS_SPIN_BUTTON (param->widgets[0])) {
-	lives_spin_button_set_value (GTK_SPIN_BUTTON (param->widgets[0]),(double)red);
+	lives_spin_button_set_value (LIVES_SPIN_BUTTON (param->widgets[0]),(double)red);
       }
       if (param->widgets[1]&&GTK_IS_SPIN_BUTTON (param->widgets[1])) {
-	lives_spin_button_set_value (GTK_SPIN_BUTTON (param->widgets[1]),(double)green);
+	lives_spin_button_set_value (LIVES_SPIN_BUTTON (param->widgets[1]),(double)green);
       }
       if (param->widgets[2]&&GTK_IS_SPIN_BUTTON (param->widgets[2])) {
-	lives_spin_button_set_value (GTK_SPIN_BUTTON (param->widgets[2]),(double)blue);
+	lives_spin_button_set_value (LIVES_SPIN_BUTTON (param->widgets[2]),(double)blue);
       }
     }
     else set_colRGB24_param(param->def,red,green,blue);
@@ -3078,7 +3096,7 @@ int set_param_from_list(GList *plist, lives_param_t *param, int pnum, boolean wi
 	  g_free(string);
 	}
 	else {
-	  lives_entry_set_text (GTK_ENTRY (param->widgets[0]),(gchar *)param->value);
+	  lives_entry_set_text (LIVES_ENTRY (param->widgets[0]),(gchar *)param->value);
 	}
       }
     }
@@ -3182,21 +3200,26 @@ GList *do_onchange (GObject *object, lives_rfx_t *rfx) {
 
 
 void on_pwcolsel (GtkButton *button, lives_rfx_t *rfx) {
-  GdkColor selected;
+  LiVESWidgetColor selected;
+
   int pnum=GPOINTER_TO_INT (g_object_get_data (G_OBJECT (button),"param_number"));
+  int r,g,b;
+
   lives_param_t *param=&rfx->params[pnum];
 
-  gtk_color_button_get_color(GTK_COLOR_BUTTON(button),&selected);
+  lives_color_button_get_color(LIVES_COLOR_BUTTON(button),&selected);
 
-  set_colRGB24_param(param->value,
-		     (int)((selected.red+128)/257),
-		     (int)((selected.green+128)/257),
-		     (int)((selected.blue+128)/257));
+  r=(int)((double)(selected.red+LIVES_WIDGET_COLOR_SCALE_255(0.5))/(double)LIVES_WIDGET_COLOR_SCALE_255(1.));
+  g=(int)((double)(selected.green+LIVES_WIDGET_COLOR_SCALE_255(0.5))/(double)LIVES_WIDGET_COLOR_SCALE_255(1.));
+  b=(int)((double)(selected.blue+LIVES_WIDGET_COLOR_SCALE_255(0.5))/(double)LIVES_WIDGET_COLOR_SCALE_255(1.));
 
-  lives_spin_button_set_value(GTK_SPIN_BUTTON(param->widgets[0]),(double)(int)((selected.red+128)/257));
-  lives_spin_button_set_value(GTK_SPIN_BUTTON(param->widgets[1]),(double)(int)((selected.green+128)/257));
-  lives_spin_button_set_value(GTK_SPIN_BUTTON(param->widgets[2]),(double)(int)((selected.blue+128)/257));
-  gtk_color_button_set_color(GTK_COLOR_BUTTON(param->widgets[4]),&selected);
+  set_colRGB24_param(param->value,r,g,b);
+
+
+  lives_spin_button_set_value(LIVES_SPIN_BUTTON(param->widgets[0]),(double)r);
+  lives_spin_button_set_value(LIVES_SPIN_BUTTON(param->widgets[1]),(double)g);
+  lives_spin_button_set_value(LIVES_SPIN_BUTTON(param->widgets[2]),(double)b);
+  lives_color_button_set_color(LIVES_COLOR_BUTTON(param->widgets[4]),&selected);
 }
 
 

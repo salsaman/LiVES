@@ -7361,7 +7361,8 @@ void create_empty_pixel_data(weed_plant_t *layer, boolean black_fill, boolean ma
 #else
     rowstride=width*3;
 #endif
-    framesize=CEIL(rowstride*height,32);
+    framesize=CEIL(rowstride*height,32)+64;
+
     pixel_data=(uint8_t *)lives_calloc(framesize>>4,16);
     if (pixel_data==NULL) return;
     weed_set_voidptr_value(layer,"pixel_data",pixel_data);
@@ -7374,7 +7375,7 @@ void create_empty_pixel_data(weed_plant_t *layer, boolean black_fill, boolean ma
 #else
     rowstride=width*3;
 #endif
-    framesize=CEIL(rowstride*height,32);
+    framesize=CEIL(rowstride*height,32)+64;
     if (!black_fill) {
       pixel_data=(uint8_t *)lives_calloc(framesize>>4,16);
       if (pixel_data==NULL) return;
@@ -7397,7 +7398,7 @@ void create_empty_pixel_data(weed_plant_t *layer, boolean black_fill, boolean ma
     break;
 
   case WEED_PALETTE_UYVY8888:
-    framesize=CEIL(width*height*4,32);
+    framesize=CEIL(width*height*4,32)+64;
     if (!black_fill) {
       pixel_data=(uint8_t *)lives_calloc(framesize>>4,16);
       if (pixel_data==NULL) return;
@@ -7421,7 +7422,7 @@ void create_empty_pixel_data(weed_plant_t *layer, boolean black_fill, boolean ma
     break;
 
   case WEED_PALETTE_YUYV8888:
-    framesize=CEIL(width*height*4,32);
+    framesize=CEIL(width*height*4,32)+64;
     if (!black_fill) {
       pixel_data=(uint8_t *)lives_calloc(framesize>>4,16);
       if (pixel_data==NULL) return;
@@ -7450,7 +7451,7 @@ void create_empty_pixel_data(weed_plant_t *layer, boolean black_fill, boolean ma
 #else
     rowstride=width*4;
 #endif
-    framesize=CEIL(rowstride*height,32);
+    framesize=CEIL(rowstride*height,32)+64;
     if (!black_fill) {
       pixel_data=(uint8_t *)lives_calloc(framesize>>4,16);
       if (pixel_data==NULL) return;
@@ -7476,7 +7477,7 @@ void create_empty_pixel_data(weed_plant_t *layer, boolean black_fill, boolean ma
 #else
     rowstride=width*4;
 #endif
-    framesize=CEIL(rowstride*height,32);
+    framesize=CEIL(rowstride*height,32)+64;
     if (!black_fill) {
       pixel_data=(uint8_t *)lives_calloc(framesize>>4,16);
       if (pixel_data==NULL) return;
@@ -7502,7 +7503,7 @@ void create_empty_pixel_data(weed_plant_t *layer, boolean black_fill, boolean ma
 #else
     rowstride=width*4;
 #endif
-    framesize=CEIL(rowstride*height,32);
+    framesize=CEIL(rowstride*height,32)+64;
     if (!black_fill) {
       pixel_data=(uint8_t *)lives_calloc(framesize>>4,16);
       if (pixel_data==NULL) return;
@@ -7530,7 +7531,7 @@ void create_empty_pixel_data(weed_plant_t *layer, boolean black_fill, boolean ma
 #else
     rowstride=width*4;
 #endif
-    framesize=CEIL(rowstride*height,32);
+    framesize=CEIL(rowstride*height,32)+64;
     if (!black_fill) {
       pixel_data=(uint8_t *)lives_calloc(framesize>>4,16);
       if (pixel_data==NULL) return;
@@ -7582,7 +7583,7 @@ void create_empty_pixel_data(weed_plant_t *layer, boolean black_fill, boolean ma
 	  g_free(pd_array);
 	  return;
 	}
-	pd_array[2]=(uint8_t *)lives_calloc(framesize>>4,4);
+	pd_array[2]=(uint8_t *)lives_calloc((framesize>>4)+8,4);
 	if (pd_array[2]==NULL) {
 	  g_free(pd_array[1]);
 	  g_free(pd_array[0]);
@@ -7604,7 +7605,7 @@ void create_empty_pixel_data(weed_plant_t *layer, boolean black_fill, boolean ma
 	  return;
 	}
 	memset(pd_array[1],128,width*height/4);
-	pd_array[2]=(uint8_t *)g_try_malloc(framesize>>2);
+	pd_array[2]=(uint8_t *)g_try_malloc((framesize>>2)+64);
 	if (pd_array[2]==NULL) {
 	  g_free(pd_array[1]);
 	  g_free(pd_array[0]);
@@ -7618,7 +7619,7 @@ void create_empty_pixel_data(weed_plant_t *layer, boolean black_fill, boolean ma
       weed_set_boolean_value(layer,"host_pixel_data_contiguous",WEED_TRUE);
 
       if (!black_fill) {
-	memblock=(uint8_t *)lives_calloc((framesize*3)>>3,4);
+	memblock=(uint8_t *)lives_calloc(((framesize*3)>>3)+8,4);
 	if (memblock==NULL) return;
 	pd_array[0]=(uint8_t *)memblock;
 	pd_array[1]=(uint8_t *)(memblock+framesize);
@@ -7666,7 +7667,7 @@ void create_empty_pixel_data(weed_plant_t *layer, boolean black_fill, boolean ma
 	  g_free(pd_array);
 	  return;
 	}
-	pd_array[2]=(uint8_t *)lives_calloc(framesize>>3,4);
+	pd_array[2]=(uint8_t *)lives_calloc((framesize>>3)+8,4);
 	if (pd_array[2]==NULL) {
 	  g_free(pd_array[1]);
 	  g_free(pd_array[0]);
@@ -7688,7 +7689,7 @@ void create_empty_pixel_data(weed_plant_t *layer, boolean black_fill, boolean ma
 	  return;
 	}
 	memset(pd_array[1],128,width*height/2);
-	pd_array[2]=(uint8_t *)g_try_malloc(framesize>>1);
+	pd_array[2]=(uint8_t *)g_try_malloc((framesize>>1)+64);
 	if (pd_array[2]==NULL) {
 	  g_free(pd_array[1]);
 	  g_free(pd_array[0]);
@@ -7704,14 +7705,14 @@ void create_empty_pixel_data(weed_plant_t *layer, boolean black_fill, boolean ma
 
 
       if (!black_fill) {
-	memblock=(uint8_t *)lives_calloc(framesize>>1,4);
+	memblock=(uint8_t *)lives_calloc((framesize>>1)+8,4);
 	if (memblock==NULL) return;
 	pd_array[0]=(uint8_t *)memblock;
 	pd_array[1]=(uint8_t *)(memblock+framesize);
 	pd_array[2]=(uint8_t *)(memblock+((3*framesize)>>1));
       }
       else {
-	memblock=(uint8_t *)g_try_malloc(framesize*2);
+	memblock=(uint8_t *)g_try_malloc((framesize*2)+64);
 	if (memblock==NULL) return;
 	pd_array[0]=(uint8_t *)memblock;
 	pd_array[1]=(uint8_t *)(memblock+framesize);
@@ -7749,7 +7750,7 @@ void create_empty_pixel_data(weed_plant_t *layer, boolean black_fill, boolean ma
 	  g_free(pd_array);
 	  return;
 	}
-	pd_array[2]=(uint8_t *)lives_calloc(framesize>>4,16);
+	pd_array[2]=(uint8_t *)lives_calloc((framesize>>4)+4,16);
 	if (pd_array[2]==NULL) {
 	  g_free(pd_array[1]);
 	  g_free(pd_array[0]);
@@ -7771,7 +7772,7 @@ void create_empty_pixel_data(weed_plant_t *layer, boolean black_fill, boolean ma
 	  return;
 	}
 	memset(pd_array[1],128,width*height);
-	pd_array[2]=(uint8_t *)g_try_malloc(framesize);
+	pd_array[2]=(uint8_t *)g_try_malloc(framesize+64);
 	if (pd_array[2]==NULL) {
 	  g_free(pd_array[1]);
 	  g_free(pd_array[0]);
@@ -7785,7 +7786,7 @@ void create_empty_pixel_data(weed_plant_t *layer, boolean black_fill, boolean ma
     } else {
       weed_set_boolean_value(layer,"host_pixel_data_contiguous",WEED_TRUE);
       if (!black_fill) {
-	memblock=(uint8_t *)lives_calloc((framesize*3)>>4,16);
+	memblock=(uint8_t *)lives_calloc(((framesize*3)>>4)+4,16);
 	if (memblock==NULL) return;
 	pd_array[0]=memblock;
 	pd_array[1]=memblock+framesize;
@@ -7793,7 +7794,7 @@ void create_empty_pixel_data(weed_plant_t *layer, boolean black_fill, boolean ma
 
       }
       else {
-	memblock=(uint8_t *)g_try_malloc(framesize*3);
+	memblock=(uint8_t *)g_try_malloc(framesize*3+64);
 	if (memblock==NULL) return;
 	pd_array[0]=memblock;
 	memset(pd_array[0],y_black,width*height);
@@ -7838,7 +7839,7 @@ void create_empty_pixel_data(weed_plant_t *layer, boolean black_fill, boolean ma
 	  g_free(pd_array);
 	  return;
 	}
-	pd_array[3]=(uint8_t *)lives_calloc(framesize>>4,16);
+	pd_array[3]=(uint8_t *)lives_calloc((framesize>>4)+4,16);
 	if (pd_array[3]==NULL) {
 	  g_free(pd_array[2]);
 	  g_free(pd_array[1]);
@@ -7869,7 +7870,7 @@ void create_empty_pixel_data(weed_plant_t *layer, boolean black_fill, boolean ma
 	  return;
 	}
 	memset(pd_array[2],128,width*height);
-	pd_array[3]=(uint8_t *)g_try_malloc(framesize);
+	pd_array[3]=(uint8_t *)g_try_malloc(framesize+64);
 	if (pd_array[3]==NULL) {
 	  g_free(pd_array[2]);
 	  g_free(pd_array[1]);
@@ -7885,7 +7886,7 @@ void create_empty_pixel_data(weed_plant_t *layer, boolean black_fill, boolean ma
       weed_set_boolean_value(layer,"host_pixel_data_contiguous",WEED_TRUE);
     
       if (!black_fill) {
-	memblock=(uint8_t *)lives_calloc(framesize,4);
+	memblock=(uint8_t *)lives_calloc(framesize+16,4);
 	if (memblock==NULL) return;
 	pd_array[0]=memblock;
 	pd_array[1]=memblock+framesize;
@@ -7893,7 +7894,7 @@ void create_empty_pixel_data(weed_plant_t *layer, boolean black_fill, boolean ma
 	pd_array[3]=memblock+framesize*3;
       }
       else {
-	memblock=(uint8_t *)g_try_malloc(framesize*4);
+	memblock=(uint8_t *)g_try_malloc(framesize*4+64);
 	if (memblock==NULL) return;
 	pd_array[0]=memblock;
 	memset(pd_array[0],y_black,width*height);
@@ -7915,11 +7916,11 @@ void create_empty_pixel_data(weed_plant_t *layer, boolean black_fill, boolean ma
   case WEED_PALETTE_YUV411:
     weed_set_int_value(layer,"width",width);
     rowstride=width*6; // a macro-pixel is 6 bytes, and contains 4 real pixels
-    if (!black_fill) pixel_data=(uint8_t *)lives_calloc(width*height*3,2);
+    if (!black_fill) pixel_data=(uint8_t *)lives_calloc(width*height*3+32,2);
     else {
       black[0]=black[3]=128;
       black[1]=black[2]=black[4]=black[5]=y_black;
-      pixel_data=(uint8_t *)lives_calloc(width*height*3,2);
+      pixel_data=(uint8_t *)lives_calloc(width*height*3+32,2);
       if (pixel_data==NULL) return;
       ptr=pixel_data;
       for (i=0;i<height;i++) {
@@ -7936,7 +7937,7 @@ void create_empty_pixel_data(weed_plant_t *layer, boolean black_fill, boolean ma
 
   case WEED_PALETTE_RGBFLOAT:
     rowstride=width*3*sizeof(float);
-    pixel_data=(uint8_t *)lives_calloc(width*height*3,sizeof(float));
+    pixel_data=(uint8_t *)lives_calloc(width*height*3+(64/sizeof(float)),sizeof(float));
     if (pixel_data==NULL) return;
     weed_set_voidptr_value(layer,"pixel_data",pixel_data);
     weed_set_int_value(layer,"rowstrides",rowstride);
@@ -7944,10 +7945,10 @@ void create_empty_pixel_data(weed_plant_t *layer, boolean black_fill, boolean ma
 
   case WEED_PALETTE_RGBAFLOAT:
     rowstride=width*4*sizeof(float);
-    if (!black_fill) pixel_data=(uint8_t *)lives_calloc(width*height*4,sizeof(float));
+    if (!black_fill) pixel_data=(uint8_t *)lives_calloc(width*height*4+(64/sizeof(float)),sizeof(float));
     else {
       size_t sizf=4*sizeof(float);
-      pixel_data=(uint8_t *)g_try_malloc(width*height*sizf);
+      pixel_data=(uint8_t *)g_try_malloc(width*height*sizf+64);
       if (pixel_data==NULL) return;
       ptr=pixel_data;
       for (i=0;i<height;i++) {
@@ -7964,10 +7965,10 @@ void create_empty_pixel_data(weed_plant_t *layer, boolean black_fill, boolean ma
 
   case WEED_PALETTE_AFLOAT:
     rowstride=width*sizeof(float);
-    if (!black_fill) pixel_data=(uint8_t *)lives_calloc(width*height,sizeof(float));
+    if (!black_fill) pixel_data=(uint8_t *)lives_calloc(width*height+(64/sizeof(float)),sizeof(float));
     else {
       size_t sizf=sizeof(float);
-      pixel_data=(uint8_t *)g_try_malloc(width*height*sizf);
+      pixel_data=(uint8_t *)g_try_malloc(width*height*sizf+64);
       if (pixel_data==NULL) return;
       ptr=pixel_data;
       blackf[0]=1.;
@@ -7985,7 +7986,7 @@ void create_empty_pixel_data(weed_plant_t *layer, boolean black_fill, boolean ma
 
   case WEED_PALETTE_A8:
     rowstride=width;
-    framesize=CEIL(width*height,32);
+    framesize=CEIL(width*height,32)+64;
     if (!black_fill) pixel_data=(uint8_t *)lives_calloc(framesize,1);
     else {
       pixel_data=(uint8_t *)g_try_malloc(framesize);
@@ -7999,7 +8000,7 @@ void create_empty_pixel_data(weed_plant_t *layer, boolean black_fill, boolean ma
 
   case WEED_PALETTE_A1:
     rowstride=(width+7)>>3;
-    framesize=CEIL(rowstride*height,32);
+    framesize=CEIL(rowstride*height,32)+64;
     if (!black_fill) pixel_data=(uint8_t *)lives_calloc(framesize,1);
     else {
       pixel_data=(uint8_t *)g_try_malloc(framesize);

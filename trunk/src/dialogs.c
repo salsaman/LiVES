@@ -1860,7 +1860,7 @@ boolean do_auto_dialog (const gchar *text, int type) {
     }
   }
 
-  while ((type==1&&mainw->cancelled==CANCEL_NONE)||(type==0&&!(infofile=fopen(cfile->info_file,"r")))) {
+  while (((type==1||type==2)&&mainw->cancelled==CANCEL_NONE)&&((type==0||type==2)&&!(infofile=fopen(cfile->info_file,"r")))) {
     gtk_progress_bar_pulse(GTK_PROGRESS_BAR(proc_ptr->progressbar));
     lives_widget_context_update();
     g_usleep(prefs->sleep_time);
@@ -1889,14 +1889,6 @@ boolean do_auto_dialog (const gchar *text, int type) {
       lives_widget_context_update();
       g_usleep(prefs->sleep_time);
       count--;
-    }
-  }
-
-  if (type==2) {
-    while (!mainw->cancelled) {
-      gtk_progress_bar_pulse(GTK_PROGRESS_BAR(proc_ptr->progressbar));
-      lives_widget_context_update();
-      g_usleep(prefs->sleep_time);
     }
   }
 

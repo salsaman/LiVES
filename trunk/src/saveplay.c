@@ -920,6 +920,8 @@ void open_file_sel(const gchar *file_name, double start, int frames) {
 			  cfile->handle,mainw->files[mainw->img_concat_clip]->frames,
 			  mainw->files[mainw->img_concat_clip]->hsize,mainw->files[mainw->img_concat_clip]->vsize);
 
+      mainw->current_file=mainw->img_concat_clip;
+
       unlink (cfile->info_file);
 
       mainw->cancelled=CANCEL_NONE;
@@ -930,12 +932,14 @@ void open_file_sel(const gchar *file_name, double start, int frames) {
       g_free(com);
 
       do_auto_dialog(_("Adding image..."),2);
-      close_current_file(mainw->img_concat_clip);
+
+      if (current_file!=mainw->img_concat_clip) {
+	mainw->current_file=current_file;
+	close_current_file(mainw->img_concat_clip);
+      }
 
       if (mainw->cancelled||mainw->error) {
-	lives_set_cursor_style(LIVES_CURSOR_NORMAL,NULL);
-	mainw->noswitch=FALSE;
-	return;
+	goto load_done;
       }
 
       cfile->frames++;
@@ -965,6 +969,8 @@ void open_file_sel(const gchar *file_name, double start, int frames) {
   }
 
   if (prefs->crash_recovery) add_to_recovery_file(cfile->handle);
+
+load_done:
   mainw->noswitch=FALSE;
 
   if (mainw->multitrack==NULL) {

@@ -3905,7 +3905,7 @@ boolean layer_from_png(FILE *fp, weed_plant_t *layer, boolean prog) {
   size_t bsize=fread(buff,1,8,fp),framesize;
   boolean is_png = !png_sig_cmp(buff, 0, bsize);
 
-  float screen_gamma=2.2;
+  float screen_gamma=SCREEN_GAMMA;
   double file_gamma;
 
   if (!is_png) return FALSE;
@@ -3940,10 +3940,11 @@ boolean layer_from_png(FILE *fp, weed_plant_t *layer, boolean prog) {
 
 #if PNG_LIBPNG_VER >= 10504
   png_set_alpha_mode(png_ptr, PNG_ALPHA_STANDARD, PNG_DEFAULT_sRGB);
-  png_set_gamma(png_ptr, screen_gamma, 1.0/screen_gamma);
-#else
-  png_set_gamma(png_ptr, screen_gamma, 1.0/screen_gamma);
 #endif
+  if (png_get_gAMA(png_ptr, info_ptr, &file_gamma))
+    png_set_gamma(png_ptr, screen_gamma, file_gamma);
+  else
+    png_set_gamma(png_ptr, screen_gamma, 1.0/screen_gamma);
   
   // read header info
   png_read_info(png_ptr, info_ptr);
@@ -3988,7 +3989,6 @@ boolean layer_from_png(FILE *fp, weed_plant_t *layer, boolean prog) {
   height = png_get_image_height(png_ptr, info_ptr);
   *rowstrides = png_get_rowbytes(png_ptr, info_ptr);
   
-  png_get_gAMA(png_ptr, info_ptr, &file_gamma);
 
   weed_set_int_value(layer,"width",width);
   weed_set_int_value(layer,"height",height);

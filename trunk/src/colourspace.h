@@ -9,6 +9,7 @@
 #ifndef HAS_LIVES_COLOURSPACE_H
 #define HAS_LIVES_COLOURSPACE_H
 
+#define SCREEN_GAMMA 2.2
 
 typedef struct {
   uint8_t u0;

@@ -26,6 +26,9 @@
 #include "paramwindow.h"
 #include "ce_thumbs.h"
 
+static GtkWidget *rte_window_back=NULL;
+static int old_rte_keys_virtual=0;
+
 static GtkWidget **key_checks;
 static GtkWidget **key_grabs;
 static GtkWidget **mode_radios;
@@ -1881,51 +1884,52 @@ static void on_params_clicked (GtkButton *button, gpointer user_data) {
 
 
 static boolean on_rtew_delete_event (GtkWidget *widget, GdkEvent *event, gpointer user_data) {
-
-  if (hash_list!=NULL) {
-    g_list_free_strings(hash_list);
-    g_list_free(hash_list);
-    hash_list=NULL;
+  if (user_data==NULL) {
+    rte_window_back=rte_window;
+    old_rte_keys_virtual=prefs->rte_keys_virtual;
+    lives_widget_hide(rte_window);
   }
+  else {
+    if (hash_list!=NULL) {
+      g_list_free_strings(hash_list);
+      g_list_free(hash_list);
+      hash_list=NULL;
+    }
 
-  if (name_list!=NULL) {
-    g_list_free_strings(name_list);
-    g_list_free(name_list);
-    name_list=NULL;
+    if (name_list!=NULL) {
+      g_list_free_strings(name_list);
+      g_list_free(name_list);
+      name_list=NULL;
+    }
+
+    if (name_type_list!=NULL) {
+      g_list_free_strings(name_type_list);
+      g_list_free(name_type_list);
+      name_type_list=NULL;
+    }
+
+    g_free(key_checks);
+    g_free(key_grabs);
+    g_free(mode_radios);
+    g_free(combo_entries);
+    g_free(combos);
+    g_free(ch_fns);
+    g_free(mode_ra_fns);
+    g_free(gr_fns);
+    g_free(nlabels);
+    g_free(type_labels);
+    g_free(info_buttons);
+    g_free(param_buttons);
+    g_free(conx_buttons);
+    g_free(clear_buttons);
   }
-
-  if (name_type_list!=NULL) {
-    g_list_free_strings(name_type_list);
-    g_list_free(name_type_list);
-    name_type_list=NULL;
-  }
-
-  g_free(key_checks);
-  g_free(key_grabs);
-  g_free(mode_radios);
-  g_free(combo_entries);
-  g_free(combos);
-  g_free(ch_fns);
-  g_free(mode_ra_fns);
-  g_free(gr_fns);
-  g_free(nlabels);
-  g_free(type_labels);
-  g_free(info_buttons);
-  g_free(param_buttons);
-  g_free(conx_buttons);
-  g_free(clear_buttons);
   rte_window=NULL;
   return FALSE;
 }
 
 
 static void on_rtew_ok_clicked (GtkButton *button, gpointer user_data) {
-  lives_set_cursor_style(LIVES_CURSOR_BUSY,NULL);
-  lives_set_cursor_style(LIVES_CURSOR_BUSY,rte_window);
-  lives_widget_context_update();
-  lives_general_button_clicked(button,NULL);
   on_rtew_delete_event (NULL,NULL,NULL);
-  lives_set_cursor_style(LIVES_CURSOR_NORMAL,NULL);
 }
 
 
@@ -2147,6 +2151,7 @@ GtkWidget * create_rte_window (void) {
   register int i,j;
 
   ///////////////////////////////////////////////////////////////////////////
+
   lives_set_cursor_style(LIVES_CURSOR_BUSY,NULL);
   lives_widget_context_update();
 
@@ -2161,6 +2166,13 @@ GtkWidget * create_rte_window (void) {
 
   winsize_h=scr_width-100;
   winsize_v=scr_height-200;
+
+  if (rte_window_back!=NULL) {
+    rte_window=rte_window_back;
+    rte_window_back=NULL;
+    if (prefs->rte_keys_virtual!=old_rte_keys_virtual) return refresh_rte_window();
+    goto rte_window_ready;
+  }
 
   key_checks=(GtkWidget **)g_malloc((prefs->rte_keys_virtual)*sizeof(GtkWidget *));
   key_grabs=(GtkWidget **)g_malloc((prefs->rte_keys_virtual)*sizeof(GtkWidget *));
@@ -2394,6 +2406,8 @@ GtkWidget * create_rte_window (void) {
 		    G_CALLBACK (on_clear_all_clicked),
 		    GINT_TO_POINTER(1));
 
+ rte_window_ready:
+
   lives_widget_show_all(rte_window);
   lives_widget_hide(dummy_radio);
 
@@ -2415,15 +2429,16 @@ GtkWidget * create_rte_window (void) {
 }
 
 
-void refresh_rte_window (void) {
+GtkWidget *refresh_rte_window (void) {
   if (rte_window!=NULL) {
     lives_set_cursor_style(LIVES_CURSOR_BUSY,NULL);
     lives_set_cursor_style(LIVES_CURSOR_BUSY,rte_window);
     lives_widget_context_update();
-    on_rtew_delete_event(NULL,NULL,NULL);
+    on_rtew_delete_event(NULL,NULL,LIVES_INT_TO_POINTER(1));
+    lives_widget_destroy(rte_window);
     rte_window=create_rte_window();
-    lives_widget_show (rte_window);
   }
+  return rte_window;
 }
 
 

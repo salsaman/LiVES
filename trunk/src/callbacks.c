@@ -516,7 +516,7 @@ void lives_exit (void) {
   if (trString!=NULL) g_free(trString);
 #endif
 
-  exit(0);
+  _exit(0);
 }
 
 

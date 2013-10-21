@@ -1277,7 +1277,7 @@ LiVESPixbuf *make_thumb (lives_mt *, int file, int width, int height, int frame,
 LiVESPixbuf *mt_framedraw(lives_mt *, LiVESPixbuf *);
 
 // rte_window.c
-void refresh_rte_window (void);
+GtkWidget *refresh_rte_window (void);
 
 // effects-weed.c
 void * lives_malloc(size_t size);

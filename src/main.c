@@ -4002,7 +4002,7 @@ boolean layer_from_png(FILE *fp, weed_plant_t *layer, boolean prog) {
   // so here we round up
   framesize=CEIL(*rowstrides*height,32);
 
-  ptr=mem=(unsigned char *)g_malloc(framesize);
+  ptr=mem=(unsigned char *)g_malloc(framesize+64);
   weed_set_voidptr_value(layer, "pixel_data", mem);
   
   // libpng needs pointers to each row
@@ -4018,11 +4018,6 @@ boolean layer_from_png(FILE *fp, weed_plant_t *layer, boolean prog) {
   // end read
   png_read_end(png_ptr, (png_infop)NULL);
   
-  // do we need this ? maybe only when compositing
-  //if (file_gamma!=0.) {
-    //ungamma_layer(layer,file_gamma);
-  //}
-
   g_free(row_ptrs);
 
   png_destroy_read_struct(&png_ptr, &info_ptr,

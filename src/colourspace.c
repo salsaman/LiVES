@@ -267,19 +267,22 @@ static int conv_YY_inited=0;
 
 // gamma correction
 
+//#define TEST_GAMMA
+#ifdef TEST_GAMMA
+
 uint8_t gamma_lut[256];
 double current_gamma=-1.;
 
 /* Updates the gamma look-up-table. */
-/*static inline void update_gamma_lut(double gamma) {
+static inline void update_gamma_lut(double gamma) {
   register int i;
-  double inv_gamma = (gamma);
+  double inv_gamma = (1./gamma);
   gamma_lut[0] = 0;
   for (i=1; i<256; ++i) gamma_lut[i] = CLAMP0255( myround(255.0 * pow( (double)i / 255.0, inv_gamma ) ) );
   current_gamma=gamma;
-  }*/
+}
 
-
+#endif
 
 
 
@@ -10078,6 +10081,31 @@ LiVESPixbuf *layer_to_pixbuf (weed_plant_t *layer) {
     pixel_data=NULL;
     weed_set_voidptr_value(layer,"pixel_data",pixel_data);
   }
+
+#ifdef TEST_GAMMA
+  register int j,k;
+
+  if (current_gamma!=SCREEN_GAMMA*.6) update_gamma_lut(SCREEN_GAMMA*.6);
+
+  width = gdk_pixbuf_get_width(pixbuf);
+  height = gdk_pixbuf_get_height(pixbuf);
+
+  pixels = gdk_pixbuf_get_pixels(pixbuf);
+  orowstride = gdk_pixbuf_get_rowstride(pixbuf);
+  end=pixels+height*orowstride;
+  done=FALSE;
+
+  for (;pixels<end&&!done;pixels+=orowstride) {
+    if (pixels+orowstride>=end) {
+      orowstride=get_last_rowstride_value(width,n_channels);
+      done=TRUE;
+    }
+    for (j=0;j<width*3;j+=3) {
+      for (k=0;k<3;k++) pixels[j+k]=gamma_lut[pixels[j+k]];
+    }
+  }
+#endif
+
   return pixbuf;
 }
 

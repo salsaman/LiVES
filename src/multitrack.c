@@ -7865,9 +7865,9 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
 
   gtk_notebook_set_tab_label (GTK_NOTEBOOK (mt->nb), gtk_notebook_get_nth_page (GTK_NOTEBOOK (mt->nb), 0), label);
 
-#if !GTK_CHECK_VERSION(3,0,0)
-  if (palette->style&STYLE_1) {
+
     /*
+      if (palette->style&STYLE_1) {
     GtkCssProvider *provider = gtk_css_provider_new ();
     gtk_style_context_add_provider (GTK_STYLE_PROVIDER     
 				    (provider), GTK_STYLE_PROVIDER_PRIORITY_APPLICATION);
@@ -7885,8 +7885,9 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
 
     gtk_widget_set_name (GTK_WIDGET(mt->nb), "notebook");
     gtk_widget_set_name (GTK_WIDGET(label), "settings_tab");
+    }
     */
-#endif
+    
 
   gtk_paned_pack1 (GTK_PANED (mt->hpaned), mt->nb, TRUE, FALSE);
 

@@ -28,6 +28,7 @@
 
 #include <libavformat/avformat.h>
 #include <libavcodec/avcodec.h>
+#include <libavutil/samplefmt.h>
 
 #include "avformat_decoder.h"
 
@@ -65,85 +66,6 @@ static int stream_peek(int fd, unsigned char *str, size_t len) {
   }
   return rv;
 }
-
-
-static int64_t stream_tell (int fd) {
-    return lseek64(fd,0,SEEK_CUR); // get current posn 
-}
-
-static int stream_seek (int fd, off64_t pos) {
-    return (lseek64(fd,pos,SEEK_SET));
-}
-
-
-static int64_t stream_size(int fd) {
-    struct stat sb;
-    fstat(fd,&sb);
-    return sb.st_size;
-}
-
-
-
-/*****************************************************************************
- * I/O wrappers for libavformat
- *****************************************************************************/
-static int IORead( void *opaque, uint8_t *buf, int buf_size )
-{
-    int ret;
-    lives_av_priv_t *priv = opaque;
-    if( buf_size < 0 ) return -1;
-    ret = read( priv->fd, buf, buf_size );
-    return ret ? ret : -1;
-}
-
-
-static int64_t IOSeek( void *opaque, int64_t offset, int whence ) {
-
-    lives_av_priv_t *priv = opaque;
-    int64_t i_absolute;
-    int64_t i_size = stream_size( priv->fd );
-
-#ifdef AVFORMAT_DEBUG
-    fprintf( stderr, "IOSeek offset: %ld, whence: %i\n", offset, whence );
-#endif
-
-    switch( whence ) {
-#ifdef AVSEEK_SIZE
-    case AVSEEK_SIZE:
-	return i_size;
-#endif
-    case SEEK_SET:
-	i_absolute = (int64_t)offset;
-	break;
-    case SEEK_CUR:
-	i_absolute = stream_tell( priv->fd ) + (int64_t)offset;
-	break;
-    case SEEK_END:
-	i_absolute = i_size + (int64_t)offset;
-	break;
-    default:
-	return -1;
-	
-    }
-
-    if( i_absolute < 0 ) {
-        fprintf( stderr, "Trying to seek before the beginning\n" );
-        return -1;
-    }
-
-    if( i_size > 0 && i_absolute >= i_size ) {
-        //fprintf( stderr, "Trying to seek too far : EOF?\n" );
-        return -1;
-    }
-
-    if( stream_seek( priv->fd, i_absolute )==-1 ) {
-        fprintf( stderr, "we were not allowed to seek, or EOF %d %d\n",errno,priv->fd );
-        return -1;
-    }
-
-    return stream_tell( priv->fd );
-}
-
 
 
 
@@ -197,11 +119,11 @@ static int pix_fmt_to_palette(enum PixelFormat pix_fmt, int *clamped) {
 
 
 
-void get_samps_and_signed(enum SampleFormat sfmt, int *asamps, boolean *asigned) {
-    *asamps=av_get_bits_per_sample_format(sfmt);
+void get_samps_and_signed(enum AVSampleFormat sfmt, int *asamps, boolean *asigned) {
+    *asamps=av_get_bytes_per_sample(sfmt)*8;
 
     switch (sfmt) {
-    case SAMPLE_FMT_U8:
+    case AV_SAMPLE_FMT_U8:
 	*asigned=FALSE;
 	break;
     default:
@@ -224,7 +146,7 @@ static boolean attach_stream(lives_clip_data_t *cdata) {
 
   int i;
 
-  int64_t i_start_time;
+  int64_t i_start_time=0;
 
   if ((priv->fd=open(cdata->URI,O_RDONLY))==-1) {
       fprintf(stderr, "avformat_decoder: unable to open %s\n",cdata->URI);
@@ -269,16 +191,15 @@ static boolean attach_stream(lives_clip_data_t *cdata) {
 
   priv->fmt=fmt;
   priv->ic=NULL;
-  priv->io_buffer_size = 32768;  /* FIXME ???*/
+  /*  priv->io_buffer_size = 32768;
   priv->io_buffer = malloc( priv->io_buffer_size );
 
   init_put_byte( &priv->io, priv->io_buffer, priv->io_buffer_size,
-		 0, priv, IORead, NULL, IOSeek );
+  0, priv, IORead, NULL, IOSeek );*/
   
   /* Open it */
-  if( av_open_input_stream( &priv->ic, &priv->io, cdata->URI,
-			    priv->fmt, NULL ) ) {
-      fprintf( stderr, "av_open_input_stream failed\n" );
+  if( avformat_open_input( &priv->ic, cdata->URI, priv->fmt, NULL ) ) {
+      fprintf( stderr, "avformat_open_input failed\n" );
       return FALSE;
   }
   
@@ -326,7 +247,7 @@ static boolean attach_stream(lives_clip_data_t *cdata) {
 	fcc = VLC_FOURCC( 'u', 'n', 'd', 'f' );*/
 
       switch( cc->codec_type ) {
-      case CODEC_TYPE_AUDIO:
+      case AVMEDIA_TYPE_AUDIO:
 	  if (priv->astream!=-1) {
 	      fprintf(stderr, "Warning - got multiple audio streams\n");
 	      break;
@@ -349,7 +270,7 @@ static boolean attach_stream(lives_clip_data_t *cdata) {
 	  break;
 
 
-        case CODEC_TYPE_VIDEO:
+        case AVMEDIA_TYPE_VIDEO:
 	    if (priv->vstream!=-1) {
 		fprintf(stderr, "Warning - got multiple video streams\n");
 		break;
@@ -381,17 +302,19 @@ static boolean attach_stream(lives_clip_data_t *cdata) {
 	    if (cdata->par==0) cdata->par=1;
 
 	    cdata->fps=cc->time_base.den/cc->time_base.num;
+
+	    priv->ctx=cc;
 	    
-	    if (ctx->ticks_per_frame==2) {
+	    if (priv->ctx->ticks_per_frame==2) {
 	      // needs checking
 	      cdata->fps/=2.;
-	      cdata->interlace=LIVES_INTERLACE_BOTTOM;
+	      cdata->interlace=LIVES_INTERLACE_BOTTOM_FIRST;
 	    }
 
 	    fprintf(stderr,"fps is %.4f\n",cdata->fps);
 
-	    //cdata->nframes=((double)priv->ic->duration/(double)AV_TIME_BASE * cdata->fps -  .5);
-	    //if (cdata->fps==1000.&&s->nb_frames>1) cdata->nframes=s->nb_frames;
+	    cdata->nframes=((double)priv->ic->duration/(double)AV_TIME_BASE * cdata->fps -  .5);
+	    if (cdata->fps==1000.&&s->nb_frames>1) cdata->nframes=s->nb_frames;
 
 	    priv->vstream=i;
 
@@ -549,7 +472,8 @@ static boolean attach_stream(lives_clip_data_t *cdata) {
                  psz_type, (char*)&fcc );
         TAB_APPEND( p_sys->i_tk, p_sys->tk, es );
 */
-
+      default:
+	break;
 
       }
   }
@@ -593,7 +517,7 @@ static boolean attach_stream(lives_clip_data_t *cdata) {
 #endif
 
   return TRUE;
-  }
+}
 
 
 
@@ -602,8 +526,7 @@ static void detach_stream (lives_clip_data_t *cdata) {
   lives_av_priv_t *priv=cdata->priv;
   close(priv->fd);
 
-  if (priv->ic !=NULL) av_close_input_stream(priv->ic);
-  if (priv->io_buffer!=NULL) free(priv->io_buffer);
+  if (priv->ic !=NULL) av_close_input_file(priv->ic);
 
   if (priv->pFrame!=NULL) {
       av_free(priv->pFrame);
@@ -616,7 +539,6 @@ static void detach_stream (lives_clip_data_t *cdata) {
 
   priv->packet_valid=FALSE;
 
-  priv->io_buffer=NULL;
   priv->ic=NULL;
 
   priv->astream=-1;
@@ -658,14 +580,12 @@ static lives_clip_data_t *init_cdata (void) {
 
   priv->fd=-1;
 
-  priv->io_buffer=NULL;
   priv->ic=NULL;
 
   priv->astream=-1;
   priv->vstream=-1;
 
-  // cannot seek...
-  priv->seek_flag=0;
+  cdata->seek_flag=LIVES_SEEK_FAST;
 
   return cdata;
 }
@@ -722,8 +642,7 @@ lives_clip_data_t *get_clip_data(const char *URI, lives_clip_data_t *cdata) {
 // tune this so small jumps forward are efficient
 #define JUMP_FRAMES 32
 
-
-boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, void **pixel_data) {
+boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstrides, int height, void **pixel_data) {
   // seek to frame, and return pixel_data
 
   // tframe starts at 0
@@ -738,7 +657,7 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, void **pixel_d
 
   int gotFrame;
 
-  int p,i,nplanes=1,height,pal,dstwidth=0;
+  int p,i,nplanes=1,pal,dstwidth=0;
 
   boolean hit_target=FALSE;
 
@@ -749,6 +668,8 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, void **pixel_d
   if (tframe!=priv->last_frame) {
       // same frame -> we reuse priv-pFrame;
 
+    fprintf(stderr,"pt a1 %d %ld\n",priv->last_frame,tframe);
+
       if (priv->pFrame!=NULL) av_free(priv->pFrame);
       priv->pFrame=NULL;
 
@@ -758,12 +679,12 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, void **pixel_d
   
       if (tframe < priv->last_frame || tframe-priv->last_frame > JUMP_FRAMES ) {
 	  // free packet, seek to new frame
-	  if (priv->packet_valid) x_av_free_packet(&priv->packet);
+	  if (priv->packet_valid) av_free_packet(&priv->packet);
 	  av_seek_frame( priv->ic, -1, target_pts, AVSEEK_FLAG_BACKWARD * (tframe<priv->last_frame) );
 	  priv->packet_valid=FALSE;
       }
       
-      cc->hurry_up = 1;
+      //cc->hurry_up = 1;
       
       do {
 	  if (!priv->packet_valid) {
@@ -773,10 +694,14 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, void **pixel_d
 	      }
 	      while (priv->packet.stream_index!=priv->vstream);
 	  }
-	  
+
 	  priv->packet_valid=TRUE;
 	  
-	  MyPts = av_rescale( priv->packet.pts, AV_TIME_BASE * (int64_t) s->time_base.num, s->time_base.den );
+	  MyPts = av_rescale( priv->packet.pts, AV_TIME_BASE * (int64_t) s->time_base.num, s->time_base.den )-priv->ic->start_time;
+
+	  fprintf(stderr,"pt b1 %ld %ld\n",MyPts,target_pts);
+
+
 	  // Once we pass the target point, break from the loop
 	  if( MyPts >= target_pts ) break;
 
@@ -785,16 +710,26 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, void **pixel_d
 	      if (priv->pFrame==NULL) priv->pFrame=avcodec_alloc_frame();
 
 #if LIBAVCODEC_VERSION_MAJOR >= 53
-	      avcodec_decode_video2( cc, priv->pFrame, &gotFrame, priv->packet );
+	      avcodec_decode_video2( cc, priv->pFrame, &gotFrame, &priv->packet );
 #else 
 	      avcodec_decode_video( cc, priv->pFrame, &gotFrame, priv->packet.data, priv->packet.size );
 #endif
+	      fprintf(stderr,"pt 1 %d %ld\n",priv->pFrame->display_picture_number,tframe);
+
+	      if (gotFrame) break;
+
+
 	      if (priv->pFrame->display_picture_number>=tframe||priv->pFrame->display_picture_number==0) {
 		  // stop if we pass the target
 		  hit_target=TRUE;
 		  break;
 	      }
 	      
+	      if( MyPts >= target_pts ) {
+		  hit_target=TRUE;
+		  break;
+	      }
+
 	      // otherwise discard this frame
 	      if (gotFrame) av_free(priv->pFrame);
 	      priv->pFrame=NULL;
@@ -808,7 +743,7 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, void **pixel_d
       
       // we hit either the pts or frame number
 
-      cc->hurry_up = 0;
+      //cc->hurry_up = 0;
       
       if (!hit_target) {
 	  // hit the pts but not frame number
@@ -822,7 +757,7 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, void **pixel_d
 	      priv->pFrame=avcodec_alloc_frame();
 
 #if LIBAVCODEC_VERSION_MAJOR >= 53
-	      avcodec_decode_video2( cc, priv->pFrame, &gotFrame, priv->packet );
+	      avcodec_decode_video2( cc, priv->pFrame, &gotFrame, &priv->packet );
 #else 
 	      avcodec_decode_video( cc, priv->pFrame, &gotFrame, priv->packet.data, priv->packet.size );
 #endif
@@ -842,7 +777,7 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, void **pixel_d
 
   //fprintf(stderr,"asked for %ld got %d\n",tframe,priv->pFrame->display_picture_number);
 
-  height=cdata->height;
+  //height=cdata->height;
   
   pal=cdata->current_palette;
   

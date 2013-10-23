@@ -7,11 +7,9 @@
 typedef struct  {
     // input
     int fd;
-    int io_buffer_size;
-    uint8_t *io_buffer;
-    ByteIOContext io;
     AVInputFormat *fmt;
     AVFormatContext *ic;
+    AVCodecContext *ctx;
     AVFrame *pFrame;
     AVPacket packet;
     boolean packet_valid;

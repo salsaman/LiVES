@@ -153,6 +153,7 @@ typedef struct {
   GtkWidget **ccombo;
   GtkWidget **acheck;
   GtkWidget *allcheckc;
+  GtkWidget *allcheck_label;
   int *ikeys;
   int *imodes;
   int *idx;

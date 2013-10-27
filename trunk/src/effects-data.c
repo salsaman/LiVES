@@ -2973,6 +2973,8 @@ static GtkWidget *conx_scroll_new(weed_plant_t *filter, int key, lives_conx_w *c
   GtkWidget *hbox,*hbox2;
   GtkWidget *scrolledwindow;
 
+  GtkWidget *tablep,*tablec;
+
   GtkWidget *fx_entry;
 
   weed_plant_t *chan,*param;
@@ -2985,6 +2987,7 @@ static GtkWidget *conx_scroll_new(weed_plant_t *filter, int key, lives_conx_w *c
   boolean hasrange;
 
   int defelems,pflags,stype;
+  int trows;
 
   int error;
 
@@ -3005,6 +3008,7 @@ static GtkWidget *conx_scroll_new(weed_plant_t *filter, int key, lives_conx_w *c
 
   scrolledwindow = lives_standard_scrolled_window_new (-1,-1,top_vbox);
 
+
   if (conxwp->num_alpha>0) {
     weed_plant_t **ochans=weed_get_plantptr_array(filter,"out_channel_templates",&error);
 
@@ -3017,18 +3021,35 @@ static GtkWidget *conx_scroll_new(weed_plant_t *filter, int key, lives_conx_w *c
     label=lives_standard_label_new(_("Alpha Channel Connections"));
     lives_box_pack_start (LIVES_BOX (top_vbox), label, FALSE, FALSE, widget_opts.packing_height);
 
+    tablec=lives_table_new(0,6,FALSE);
+    lives_table_set_row_spacings(LIVES_TABLE(tablec),widget_opts.packing_height);
+    lives_box_pack_start (LIVES_BOX (top_vbox), tablec, FALSE, FALSE, widget_opts.packing_height);
+
+    trows=1;
+
     for (i=0;i<conxwp->num_alpha;i++) {
       chan=ochans[j++];
 
       if (!has_alpha_palette(chan)) continue;
 
+      lives_table_resize(LIVES_TABLE(tablec),++trows,6);
+
       hbox=lives_hbox_new (FALSE, 0);
-      lives_box_pack_start (LIVES_BOX (top_vbox), hbox, FALSE, FALSE, widget_opts.packing_width);
+
+      lives_table_attach (LIVES_TABLE (tablec), hbox, 0, 1, trows-1, trows,
+			  (GtkAttachOptions) (GTK_FILL|GTK_EXPAND),
+			  (GtkAttachOptions) (0), 0, 0);
 
       channame=weed_get_string_value(chan,"name",&error);
       label=lives_standard_label_new(channame);
       lives_box_pack_start (LIVES_BOX (hbox), label, FALSE, FALSE, widget_opts.packing_width);
       weed_free(channame);
+
+      hbox=lives_hbox_new (FALSE, 0);
+
+      lives_table_attach (LIVES_TABLE (tablec), hbox, 1, 2, trows-1, trows,
+			  (GtkAttachOptions) (GTK_FILL|GTK_EXPAND),
+			  (GtkAttachOptions) (0), 0, 0);
 
       label=lives_standard_label_new(lctext);
       lives_box_pack_start (LIVES_BOX (hbox), label, FALSE, FALSE, widget_opts.packing_width);
@@ -3041,12 +3062,20 @@ static GtkWidget *conx_scroll_new(weed_plant_t *filter, int key, lives_conx_w *c
 
       lives_combo_set_entry_text_column(LIVES_COMBO(conxwp->cfxcombo[x]),NAME_COLUMN);
 
-      lives_box_pack_start (LIVES_BOX (hbox), conxwp->cfxcombo[x], FALSE, FALSE, widget_opts.packing_width);
+      lives_table_attach (LIVES_TABLE (tablec), conxwp->cfxcombo[x], 2, 3, trows-1, trows,
+			  (GtkAttachOptions) (GTK_FILL|GTK_EXPAND),
+			  (GtkAttachOptions) (0), 0, 0);
 
       fx_entry = lives_combo_get_entry(LIVES_COMBO(conxwp->cfxcombo[x]));
       lives_entry_set_text (LIVES_ENTRY (fx_entry),mainw->string_constants[LIVES_STRING_CONSTANT_NONE]);
       lives_entry_set_editable (LIVES_ENTRY (fx_entry), FALSE);
 
+
+      hbox=lives_hbox_new (FALSE, 0);
+
+      lives_table_attach (LIVES_TABLE (tablec), hbox, 3, 4, trows-1, trows,
+			  (GtkAttachOptions) (GTK_FILL|GTK_EXPAND),
+			  (GtkAttachOptions) (0), 0, 0);
 
       conxwp->ccombo[x]=lives_standard_combo_new("",FALSE,NULL,LIVES_BOX(hbox),NULL);
 
@@ -3076,23 +3105,34 @@ static GtkWidget *conx_scroll_new(weed_plant_t *filter, int key, lives_conx_w *c
     if (weed_plant_has_leaf(filter,"out_parameter_templates")) 
       oparams=weed_get_plantptr_array(filter,"out_parameter_templates",&error);
 
+    // TODO - use linked lists
     conxwp->pfxcombo=(GtkWidget **)g_malloc(conxwp->num_params*sizeof(GtkWidget *));
     conxwp->pcombo=(GtkWidget **)g_malloc(conxwp->num_params*sizeof(GtkWidget *));
+
     conxwp->dpp_func=(gulong *)g_malloc(conxwp->num_params*sizeof(gulong));
     conxwp->acheck_func=(gulong *)g_malloc(conxwp->num_params*sizeof(gulong));
 
     conxwp->acheck=(GtkWidget **)g_malloc(conxwp->num_params*sizeof(GtkWidget *));
 
-    x=0;
-
     label=lives_standard_label_new(_("Parameter Data Connections"));
     lives_box_pack_start (LIVES_BOX (top_vbox), label, FALSE, FALSE, widget_opts.packing_height);
 
-    hbox=lives_hbox_new (FALSE, 0);
-    lives_box_pack_start (LIVES_BOX (top_vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
+
+    tablep=lives_table_new(1,7,FALSE);
+    lives_table_set_row_spacings(LIVES_TABLE(tablep),widget_opts.packing_height);
+    lives_box_pack_start (LIVES_BOX (top_vbox), tablep, FALSE, FALSE, widget_opts.packing_height);
+
+    trows=1;
+    x=0;
+
     hbox2=lives_hbox_new (FALSE, 0);
-    lives_box_pack_end (LIVES_BOX (hbox), hbox2, FALSE, FALSE, widget_opts.packing_width);
+
+    lives_table_attach (LIVES_TABLE (tablep), hbox2, 5, 6, 0, 1,
+			(GtkAttachOptions) (GTK_FILL|GTK_EXPAND),
+			(GtkAttachOptions) (0), 0, 0);
+
     conxwp->allcheckc=lives_standard_check_button_new(_("Autoscale All"),FALSE,LIVES_BOX(hbox2),NULL);
+    conxwp->allcheck_label=widget_opts.last_label;
 
     lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(conxwp->allcheckc),TRUE);
 
@@ -3100,9 +3140,19 @@ static GtkWidget *conx_scroll_new(weed_plant_t *filter, int key, lives_conx_w *c
 			    G_CALLBACK (on_allcheck_toggled),
 			    (gpointer)conxwp);
 
+
+    // TODO - need to get number of connections for each out parameter
+
+
     if (EXTRA_PARAMS_OUT>0) {
+
+      lives_table_resize(LIVES_TABLE(tablep),++trows,7);
+
       hbox=lives_hbox_new (FALSE, 0);
-      lives_box_pack_start (LIVES_BOX (top_vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
+
+      lives_table_attach (LIVES_TABLE (tablep), hbox, 0, 1, trows-1, trows,
+			  (GtkAttachOptions) (GTK_FILL|GTK_EXPAND),
+			  (GtkAttachOptions) (0), 0, 0);
 
       /* TRANSLATORS - as in "Effect ACTIVATED" */
       pname=g_strdup(_("ACTIVATED"));
@@ -3116,6 +3166,13 @@ static GtkWidget *conx_scroll_new(weed_plant_t *filter, int key, lives_conx_w *c
 
       g_free(pname); g_free(ptype);
 
+      hbox=lives_hbox_new (FALSE, 0);
+
+      lives_table_attach (LIVES_TABLE (tablep), hbox, 1, 2, trows-1, trows,
+			  (GtkAttachOptions) (GTK_FILL|GTK_EXPAND),
+			  (GtkAttachOptions) (0), 0, 0);
+
+
       label=lives_standard_label_new(lctext);
       lives_box_pack_start (LIVES_BOX (hbox), label, FALSE, FALSE, widget_opts.packing_width);
 
@@ -3126,17 +3183,24 @@ static GtkWidget *conx_scroll_new(weed_plant_t *filter, int key, lives_conx_w *c
 
       lives_combo_set_entry_text_column(LIVES_COMBO(conxwp->pfxcombo[x]),NAME_COLUMN);
      
-      lives_box_pack_start (LIVES_BOX (hbox), conxwp->pfxcombo[x], FALSE, FALSE, widget_opts.packing_width);
+      lives_table_attach (LIVES_TABLE (tablep), conxwp->pfxcombo[x], 2, 3, trows-1, trows,
+			  (GtkAttachOptions) (GTK_FILL|GTK_EXPAND),
+			  (GtkAttachOptions) (0), 0, 0);
 
       fx_entry = lives_combo_get_entry(LIVES_COMBO(conxwp->pfxcombo[x]));
       lives_entry_set_text (LIVES_ENTRY (fx_entry),mainw->string_constants[LIVES_STRING_CONSTANT_NONE]);
       lives_entry_set_editable (LIVES_ENTRY (fx_entry), FALSE);
 
+      hbox=lives_hbox_new (FALSE, 0);
 
       conxwp->pcombo[x]=lives_standard_combo_new("",FALSE,NULL,LIVES_BOX(hbox),NULL);
       g_object_set_data(G_OBJECT(conxwp->pcombo[x]),"idx",GINT_TO_POINTER(-1));
 
-      add_fill_to_box(LIVES_BOX(hbox));
+
+      lives_table_attach (LIVES_TABLE (tablep), hbox, 3, 4, trows-1, trows,
+			  (GtkAttachOptions) (GTK_FILL|GTK_EXPAND),
+			  (GtkAttachOptions) (0), 0, 0);
+
 
       g_signal_connect(GTK_OBJECT (conxwp->pfxcombo[x]), "changed",
 		       G_CALLBACK (dfxp_changed),(gpointer)conxwp);
@@ -3152,8 +3216,9 @@ static GtkWidget *conx_scroll_new(weed_plant_t *filter, int key, lives_conx_w *c
 
     for (i=0;i<conxwp->num_params-EXTRA_PARAMS_OUT;i++) {
 
+      lives_table_resize(LIVES_TABLE(tablep),++trows,7);
+
       hbox=lives_hbox_new (FALSE, 0);
-      lives_box_pack_start (LIVES_BOX (top_vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
 
       param=oparams[i];
 
@@ -3188,6 +3253,17 @@ static GtkWidget *conx_scroll_new(weed_plant_t *filter, int key, lives_conx_w *c
       lives_box_pack_start (LIVES_BOX (hbox), label, FALSE, FALSE, widget_opts.packing_width);
       weed_free(pname); g_free(ptype); g_free(array_type); g_free(range); g_free(text);
 
+      lives_table_attach (LIVES_TABLE (tablep), hbox, 0, 1, trows-1, trows,
+			  (GtkAttachOptions) (GTK_FILL|GTK_EXPAND),
+			  (GtkAttachOptions) (0), 0, 0);
+
+
+      hbox=lives_hbox_new (FALSE, 0);
+
+      lives_table_attach (LIVES_TABLE (tablep), hbox, 1, 2, trows-1, trows,
+			  (GtkAttachOptions) (GTK_FILL|GTK_EXPAND),
+			  (GtkAttachOptions) (0), 0, 0);
+
       label=lives_standard_label_new(lctext);
       lives_box_pack_start (LIVES_BOX (hbox), label, FALSE, FALSE, widget_opts.packing_width);
 
@@ -3198,17 +3274,30 @@ static GtkWidget *conx_scroll_new(weed_plant_t *filter, int key, lives_conx_w *c
 
       lives_combo_set_entry_text_column(LIVES_COMBO(conxwp->pfxcombo[x]),NAME_COLUMN);
 
-      lives_box_pack_start (LIVES_BOX (hbox), conxwp->pfxcombo[x], FALSE, FALSE, widget_opts.packing_width);
+      lives_table_attach (LIVES_TABLE (tablep), conxwp->pfxcombo[x], 2, 3, trows-1, trows,
+			  (GtkAttachOptions) (GTK_FILL|GTK_EXPAND),
+			  (GtkAttachOptions) (0), 0, 0);
 
       fx_entry = lives_combo_get_entry(LIVES_COMBO(conxwp->pfxcombo[x]));
       lives_entry_set_text (LIVES_ENTRY (fx_entry),mainw->string_constants[LIVES_STRING_CONSTANT_NONE]);
       lives_entry_set_editable (LIVES_ENTRY (fx_entry), FALSE);
 
 
+      hbox=lives_hbox_new (FALSE, 0);
+
+      lives_table_attach (LIVES_TABLE (tablep), hbox, 3, 4, trows-1, trows,
+			  (GtkAttachOptions) (GTK_FILL|GTK_EXPAND),
+			  (GtkAttachOptions) (0), 0, 0);
+
       conxwp->pcombo[x]=lives_standard_combo_new("",FALSE,NULL,LIVES_BOX(hbox),NULL);
       g_object_set_data(G_OBJECT(conxwp->pcombo[x]),"idx",GINT_TO_POINTER(-1));
 
-      add_fill_to_box(LIVES_BOX(hbox));
+      hbox=lives_hbox_new (FALSE, 0);
+
+      lives_table_attach (LIVES_TABLE (tablep), hbox, 5, 6, trows-1, trows,
+			  (GtkAttachOptions) (GTK_FILL|GTK_EXPAND),
+			  (GtkAttachOptions) (0), 0, 0);
+
 
       conxwp->acheck[x]=lives_standard_check_button_new(_("Autoscale"),FALSE,LIVES_BOX(hbox),NULL);
 
@@ -3671,6 +3760,11 @@ GtkWidget *make_datacon_window(int key, int mode) {
 
 
   lives_widget_show_all (conxw.conx_dialog);
+
+  if (conxw.num_params==EXTRA_PARAMS_OUT&&EXTRA_PARAMS_OUT>0) {
+    lives_widget_hide(conxw.allcheckc);
+    lives_widget_hide(conxw.allcheck_label);
+  }
 
   return conxw.conx_dialog;
 }

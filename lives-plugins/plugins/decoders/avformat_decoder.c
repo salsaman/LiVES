@@ -37,13 +37,14 @@ const char *plugin_version="LiVES avformat decoder version 1.0";
 static pthread_mutex_t avcodec_mutex=PTHREAD_MUTEX_INITIALIZER;
 
 
-static inline void x_av_free_packet(AVPacket *pkt)
-{
-    if (pkt && pkt->destruct) {
-        pkt->destruct(pkt);
-    }
-}
+#ifndef FF_API_AVCODEC_OPEN
+#define FF_API_AVCODEC_OPEN     (LIBAVCODEC_VERSION_MAJOR < 55)
+#endif
 
+
+#if FF_API_AVCODEC_OPEN
+#define avcodec_open2(a, b, c) avcodec_open(a, b)
+#endif
 
 
 static void lives_avcodec_lock(void) {
@@ -277,7 +278,7 @@ static boolean attach_stream(lives_clip_data_t *cdata) {
 	    }
 
 	    vdecoder=avcodec_find_decoder(cc->codec_id);
-	    avcodec_open(cc,vdecoder);
+	    avcodec_open2(cc,vdecoder, NULL);
 
             cdata->frame_width=cdata->width = cc->width;
             cdata->frame_height=cdata->height = cc->height;
@@ -534,7 +535,7 @@ static void detach_stream (lives_clip_data_t *cdata) {
   }
 
   if (priv->packet_valid) {
-      x_av_free_packet(&priv->packet);
+    av_free_packet(&priv->packet);
   }
 
   priv->packet_valid=FALSE;
@@ -639,6 +640,38 @@ lives_clip_data_t *get_clip_data(const char *URI, lives_clip_data_t *cdata) {
   return cdata;
 }
 
+
+
+
+
+uint64_t global_video_pkt_pts = AV_NOPTS_VALUE;
+
+/* These are called whenever we allocate a frame
+ * buffer. We use this to store the global_pts in
+ * a frame at the time it is allocated.
+ */
+int our_get_buffer(struct AVCodecContext *c, AVFrame *pic) {
+  int ret = avcodec_default_get_buffer(c, pic);
+  uint64_t *pts = av_malloc(sizeof(uint64_t));
+  *pts = global_video_pkt_pts;
+  pic->opaque = pts;
+  return ret;
+}
+void our_release_buffer(struct AVCodecContext *c, AVFrame *pic) {
+  if(pic) av_freep(&pic->opaque);
+  avcodec_default_release_buffer(c, pic);
+}
+
+
+
+
+
+
+
+
+
+
+
 // tune this so small jumps forward are efficient
 #define JUMP_FRAMES 32
 
@@ -653,7 +686,7 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstride
   AVStream *s = priv->ic->streams[priv->vstream];
   AVCodecContext *cc = s->codec;
 
-  int64_t target_pts, MyPts;
+  int64_t target_pts, MyPts, seek_target=10000000000;
 
   int gotFrame;
 
@@ -665,10 +698,15 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstride
 
   if (tframe<0||tframe>cdata->nframes||cdata->fps==0.) return FALSE;
 
-  if (tframe!=priv->last_frame) {
+  //cc->get_buffer = our_get_buffer;
+  //cc->release_buffer = our_release_buffer;
+
+  if (priv->pFrame==NULL||tframe!=priv->last_frame) {
       // same frame -> we reuse priv-pFrame;
 
+#ifdef DEBUG
     fprintf(stderr,"pt a1 %d %ld\n",priv->last_frame,tframe);
+#endif
 
       if (priv->pFrame!=NULL) av_free(priv->pFrame);
       priv->pFrame=NULL;
@@ -679,32 +717,47 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstride
   
       if (tframe < priv->last_frame || tframe-priv->last_frame > JUMP_FRAMES ) {
 	  // free packet, seek to new frame
-	  if (priv->packet_valid) av_free_packet(&priv->packet);
-	  av_seek_frame( priv->ic, -1, target_pts, AVSEEK_FLAG_BACKWARD * (tframe<priv->last_frame) );
-	  priv->packet_valid=FALSE;
+	if (priv->packet_valid) {
+	  av_free_packet(&priv->packet);
+	  av_init_packet(&priv->packet);
+	}
+	seek_target=av_rescale_q(target_pts, AV_TIME_BASE_Q, s->time_base);
+	av_seek_frame( priv->ic, priv->vstream, seek_target, AVSEEK_FLAG_BACKWARD );
+	avcodec_flush_buffers(cc);
+	priv->packet_valid=FALSE;
+	MyPts=-1;
       }
-      
-      //cc->hurry_up = 1;
-      
+      else {
+	MyPts=(priv->last_frame+1.)/cdata->fps*(double)AV_TIME_BASE;
+      }
+
+      //cc->skip_frame=AVDISCARD_ALL;
+
       do {
 	  if (!priv->packet_valid) {
 	      // get next packet for vstream
 	      do {
-		  av_read_frame( priv->ic, &priv->packet );
+		  int ret=av_read_frame( priv->ic, &priv->packet );
+#ifdef DEBUG
+		  fprintf(stderr,"ret was %d for tframe %ld\n",ret,tframe);
+#endif
+		  if (ret<0) {
+		    priv->last_frame=tframe;
+		    return FALSE;
+		  }
 	      }
 	      while (priv->packet.stream_index!=priv->vstream);
+	      if (MyPts==-1) {
+		MyPts = priv->packet.pts;
+		MyPts = av_rescale( MyPts, AV_TIME_BASE * (int64_t) s->time_base.num, s->time_base.den )-priv->ic->start_time;
+	      }
 	  }
 
 	  priv->packet_valid=TRUE;
 	  
-	  MyPts = av_rescale( priv->packet.pts, AV_TIME_BASE * (int64_t) s->time_base.num, s->time_base.den )-priv->ic->start_time;
-
-	  fprintf(stderr,"pt b1 %ld %ld\n",MyPts,target_pts);
-
-
-	  // Once we pass the target point, break from the loop
-	  if( MyPts >= target_pts ) break;
-
+#ifdef DEBUG
+	  fprintf(stderr,"pt b1 %ld %ld %ld\n",MyPts,target_pts,seek_target);
+#endif
 	  do {
 	      // decode any frames from this packet
 	      if (priv->pFrame==NULL) priv->pFrame=avcodec_alloc_frame();
@@ -714,71 +767,39 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstride
 #else 
 	      avcodec_decode_video( cc, priv->pFrame, &gotFrame, priv->packet.data, priv->packet.size );
 #endif
-	      fprintf(stderr,"pt 1 %d %ld\n",priv->pFrame->display_picture_number,tframe);
-
-	      if (gotFrame) break;
-
-
-	      if (priv->pFrame->display_picture_number>=tframe||priv->pFrame->display_picture_number==0) {
-		  // stop if we pass the target
+#ifdef DEBUG
+	      fprintf(stderr,"pt 1 %ld %d %ld\n",tframe,gotFrame,MyPts);
+#endif
+	      if( MyPts >= target_pts - 100 ) {
 		  hit_target=TRUE;
-		  break;
 	      }
-	      
-	      if( MyPts >= target_pts ) {
-		  hit_target=TRUE;
-		  break;
+
+	      if (hit_target&&gotFrame) {
+		break;
 	      }
 
 	      // otherwise discard this frame
-	      if (gotFrame) av_free(priv->pFrame);
-	      priv->pFrame=NULL;
+	      if (gotFrame) {
+		MyPts+=(double)AV_TIME_BASE/cdata->fps;
+		av_free(priv->pFrame);
+		priv->pFrame=NULL;
+	      }
 
-	  } while (gotFrame);
+	  } while (0 && gotFrame);
 
-	  // squeezed all frames out of this packet, get the next packet
-	  x_av_free_packet( &priv->packet );
+	  av_free_packet(&priv->packet);
+	  av_init_packet(&priv->packet);
 	  priv->packet_valid=FALSE;
+
+	  if (hit_target&&gotFrame) break;
+
       } while(1);
       
-      // we hit either the pts or frame number
 
-      //cc->hurry_up = 0;
-      
-      if (!hit_target) {
-	  // hit the pts but not frame number
-	  do {
-
-	      if (priv->pFrame!=NULL) {
-		  av_free(priv->pFrame);
-		  priv->pFrame=NULL;
-	      }
-
-	      priv->pFrame=avcodec_alloc_frame();
-
-#if LIBAVCODEC_VERSION_MAJOR >= 53
-	      avcodec_decode_video2( cc, priv->pFrame, &gotFrame, &priv->packet );
-#else 
-	      avcodec_decode_video( cc, priv->pFrame, &gotFrame, priv->packet.data, priv->packet.size );
-#endif
-	      if (!gotFrame) {
-		  // need another packet
-		  x_av_free_packet( &priv->packet );
-		  do {
-		      av_read_frame( priv->ic, &priv->packet );
-		  }
-		  while (priv->packet.stream_index!=priv->vstream);
-	      }
-
-	  } while (!gotFrame||(priv->pFrame->display_picture_number<tframe&&priv->pFrame->display_picture_number>0));
-	  
-      }
   }
 
-  //fprintf(stderr,"asked for %ld got %d\n",tframe,priv->pFrame->display_picture_number);
-
   //height=cdata->height;
-  
+
   pal=cdata->current_palette;
   
   if (pal==WEED_PALETTE_YUV420P||pal==WEED_PALETTE_YVU420P||pal==WEED_PALETTE_YUV422P||pal==WEED_PALETTE_YUV444P) nplanes=3;

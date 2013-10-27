@@ -4262,6 +4262,7 @@ boolean pull_frame_at_size (weed_plant_t *layer, const gchar *image_ext, weed_ti
       if (sfile->clip_type==CLIP_TYPE_FILE&&sfile->frame_index!=NULL&&frame>0&&
 	  frame<=sfile->frames&&sfile->frame_index[frame-1]>=0) {
 	lives_decoder_t *dplug=(lives_decoder_t *)sfile->ext_src;
+	if (dplug==NULL) return FALSE;
 	if (target_palette!=dplug->cdata->current_palette) {
 	  // try to switch palette
 	  if (decplugin_supports_palette(dplug,target_palette)) {

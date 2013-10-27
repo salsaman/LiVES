@@ -3580,7 +3580,7 @@ boolean add_file_info(const gchar *check_handle, boolean aud_only) {
 
     if (xduration>0.) {
 	lives_clip_data_t *cdata=((lives_decoder_t *)cfile->ext_src)->cdata;
-// we should not (!) do this, but broken codecs force us to !
+	// we should not (!) do this, but we don t have proper handling for variable fps clips
 	cdata->nframes=cfile->frames=xduration*cfile->fps;
 	cdata->fps=cfile->fps;
     }

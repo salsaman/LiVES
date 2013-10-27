@@ -151,7 +151,6 @@ static GList *get_plugin_result (const gchar *command, const gchar *delim, boole
     return list;
   }
 
-  //#define DEBUG_PLUGINS
 #ifdef DEBUG_PLUGINS
   g_printerr("plugin msg: %s %d\n",buffer,error);
 #endif

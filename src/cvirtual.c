@@ -246,7 +246,7 @@ boolean check_clip_integrity(int fileno, const lives_clip_data_t *cdata) {
   return TRUE;
 
  mismatch:
-  sfile->fps=sfile->pb_fps=cdata->fps;
+  ((lives_clip_data_t *)cdata)->fps=sfile->pb_fps=sfile->fps;
 
   // something mismatched - trust the disk version
   sfile->img_type=empirical_img_type;

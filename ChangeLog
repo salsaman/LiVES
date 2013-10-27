@@ -1,11 +1,17 @@
 Version 2.0.7
 -------------
+Fix crash in swscale when frame width is not multiple of 4.
+Fix breakage in multiple image loading.
 Compilation fixes for Debian Sid.
 Various improvements to rte window.
 Add "randomiser" data processing plugin.
 Fix jack transport during playback (regression).
 Fix for saving data connection mappings.
+Fix problems with setting defaults for colour values.
 Decoder plugin fixes for ffmpeg 2.2 (needs testing).
+Small fixes for rfx_builder window.
+Minor GUI improvements.
+
 
 
 

@@ -1736,12 +1736,12 @@ void on_rte_info_clicked (GtkButton *button, gpointer user_data) {
   hbuttonbox = lives_hbutton_box_new ();
   lives_box_pack_start (LIVES_BOX (vbox), hbuttonbox, TRUE, TRUE, 0);
 
-  ok_button = gtk_button_new_from_stock ("gtk-ok");
+  ok_button = lives_button_new_from_stock ("gtk-ok");
   lives_widget_show (ok_button);
 
   lives_container_add (LIVES_CONTAINER (hbuttonbox), ok_button);
   lives_widget_set_can_focus_and_default (ok_button);
-  gtk_widget_grab_default (ok_button);
+  lives_widget_grab_default (ok_button);
 
   set_button_width(hbuttonbox,ok_button,DEF_BUTTON_WIDTH);
 
@@ -2283,10 +2283,10 @@ GtkWidget * create_rte_window (void) {
 
       type_labels[idx] = lives_standard_label_new ("");
 
-      info_buttons[idx] = gtk_button_new_with_label (_("Info"));
-      param_buttons[idx] = gtk_button_new_with_label (_("Set Parameters"));
-      conx_buttons[idx] = gtk_button_new_with_label (_("Set Connections"));
-      clear_buttons[idx] = gtk_button_new_with_label (_("Clear"));
+      info_buttons[idx] = lives_button_new_with_label (_("Info"));
+      param_buttons[idx] = lives_button_new_with_label (_("Set Parameters"));
+      conx_buttons[idx] = lives_button_new_with_label (_("Set Connections"));
+      clear_buttons[idx] = lives_button_new_with_label (_("Clear"));
 
       vbox = lives_vbox_new (FALSE, 0);
       lives_box_pack_start (LIVES_BOX (hbox), vbox, FALSE, FALSE, widget_opts.packing_width);

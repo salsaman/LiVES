@@ -517,10 +517,12 @@ LIVES_INLINE LiVESWidget *lives_image_new_from_stock(const char *stock_id, lives
 #ifdef GUI_GTK
   GtkIconSet *iset=gtk_icon_factory_lookup_default(stock_id);
   if (iset!=NULL) {
+    // TODO - deprecated
     image=gtk_image_new_from_stock(stock_id,size);
   }
   else {
     image=gtk_image_new_from_stock(GTK_STOCK_MISSING_IMAGE,size);
+    // TODO - deprecated
     if (image==NULL) image=gtk_image_new_from_stock(GTK_STOCK_NO,size);
     if (image==NULL) image=gtk_image_new_from_stock(GTK_STOCK_CLOSE,size);
   }
@@ -1245,6 +1247,15 @@ LIVES_INLINE int lives_combo_get_active(LiVESCombo *combo) {
 }
 
 
+LIVES_INLINE LiVESWidget *lives_button_new(void) {
+  LiVESWidget *button=NULL;
+#ifdef GUI_GTK
+  button=gtk_button_new();
+#endif
+  return button;
+}
+
+
 LIVES_INLINE LiVESWidget *lives_button_new_with_mnemonic(const char *label) {
   LiVESWidget *button=NULL;
 #ifdef GUI_GTK
@@ -1254,11 +1265,50 @@ LIVES_INLINE LiVESWidget *lives_button_new_with_mnemonic(const char *label) {
 }
 
 
+LIVES_INLINE LiVESWidget *lives_button_new_with_label(const char *label) {
+  LiVESWidget *button=NULL;
+#ifdef GUI_GTK
+  button=gtk_button_new_with_label(label);
+#endif
+  return button;
+}
 
-LIVES_INLINE void lives_button_set_label(LiVESButton *button, const char *label) {
+
+LIVES_INLINE LiVESWidget *lives_button_new_from_stock(const char *stock_id) {
+  LiVESWidget *button=NULL;
+#ifdef GUI_GTK
+#if GTK_CHECK_VERSION(2,6,0)
+  if (!strcmp(stock_id,LIVES_STOCK_ADD) || 
+      !strcmp(stock_id,LIVES_STOCK_REMOVE)
+      ) {
+    LiVESWidget *image=gtk_image_new_from_icon_name(stock_id,GTK_ICON_SIZE_BUTTON);
+    button=gtk_button_new();
+    gtk_button_set_image(GTK_BUTTON(button),image);
+#if GTK_CHECK_VERSION(3,6,0)
+    gtk_button_set_always_show_image(GTK_BUTTON(button),TRUE);
+#endif
+  }
+  else {
+    // TODO - deprecated
+    button=gtk_button_new_from_stock(stock_id);
+  }
+
+#else
+  button=gtk_button_new_from_stock(stock_id);
+#endif
+
+#endif
+  return button;
+}
+
+
+
+LIVES_INLINE boolean lives_button_set_label(LiVESButton *button, const char *label) {
 #ifdef GUI_GTK
   gtk_button_set_label(button,label);
+  return TRUE;
 #endif
+  return FALSE;
 }
 
 
@@ -1295,6 +1345,13 @@ LIVES_INLINE void lives_widget_set_tooltip_text(LiVESWidget *widget, const char 
 LIVES_INLINE void lives_widget_grab_focus(LiVESWidget *widget) {
 #ifdef GUI_GTK
   gtk_widget_grab_focus(widget);
+#endif
+}
+
+
+LIVES_INLINE void lives_widget_grab_default(LiVESWidget *widget) {
+#ifdef GUI_GTK
+  gtk_widget_grab_default(widget);
 #endif
 }
 
@@ -1849,6 +1906,7 @@ LIVES_INLINE LiVESWidget *lives_menu_item_new_with_label(const char *label) {
 LIVES_INLINE LiVESWidget *lives_image_menu_item_new_with_label(const char *label) {
   LiVESWidget *menuitem;
 #ifdef GUI_GTK
+  // TODO - deprecated
   menuitem=gtk_image_menu_item_new_with_label(label);
 #endif
   return menuitem;
@@ -1876,6 +1934,7 @@ LIVES_INLINE LiVESWidget *lives_check_menu_item_new_with_label(const char *label
 LIVES_INLINE LiVESWidget *lives_check_menu_item_new_with_mnemonic(const char *label) {
   LiVESWidget *menuitem;
 #ifdef GUI_GTK
+  // TODO - deprecated
   menuitem=gtk_check_menu_item_new_with_mnemonic(label);
 #endif
   return menuitem;
@@ -1885,6 +1944,7 @@ LIVES_INLINE LiVESWidget *lives_check_menu_item_new_with_mnemonic(const char *la
 LIVES_INLINE LiVESWidget *lives_image_menu_item_new_from_stock(const char *stock_id, LiVESAccelGroup *accel_group) {
   LiVESWidget *menuitem;
 #ifdef GUI_GTK
+  // TODO - deprecated
   menuitem=gtk_image_menu_item_new_from_stock(stock_id,accel_group);
 #endif
   return menuitem;
@@ -2734,7 +2794,7 @@ LiVESWidget *lives_standard_combo_new (const char *labeltext, boolean use_mnemon
 
 
     if (widget_opts.expand==LIVES_EXPAND_DEFAULT) {
-      GtkWidget *label=lives_standard_label_new("");
+      LiVESWidget *label=lives_standard_label_new("");
       lives_box_pack_start (LIVES_BOX (hbox), label, TRUE, FALSE, 0);
     }
 
@@ -2874,8 +2934,8 @@ LiVESWidget *lives_standard_dialog_new(const char *title, boolean add_std_button
 
   if (add_std_buttons) {
     GtkAccelGroup *accel_group=GTK_ACCEL_GROUP(lives_accel_group_new ());
-    GtkWidget *cancelbutton = gtk_button_new_from_stock ("gtk-cancel");
-    GtkWidget *okbutton = gtk_button_new_from_stock ("gtk-ok");
+    GtkWidget *cancelbutton = lives_button_new_from_stock ("gtk-cancel");
+    GtkWidget *okbutton = lives_button_new_from_stock ("gtk-ok");
 
     gtk_window_add_accel_group (LIVES_WINDOW (dialog), accel_group);
 
@@ -2889,7 +2949,7 @@ LiVESWidget *lives_standard_dialog_new(const char *title, boolean add_std_button
     lives_dialog_add_action_widget (LIVES_DIALOG (dialog), okbutton, GTK_RESPONSE_OK);
 
     lives_widget_set_can_focus_and_default(okbutton);
-    gtk_widget_grab_default (okbutton);
+    lives_widget_grab_default (okbutton);
   }
 
   g_signal_connect (GTK_OBJECT (dialog), "delete_event",
@@ -3105,7 +3165,7 @@ LIVES_INLINE LiVESWidget *lives_standard_file_button_new(boolean is_dir, const c
   LiVESWidget *fbutton=NULL;
 #ifdef GUI_GTK
   GtkWidget *image = lives_image_new_from_stock ("gtk-open", LIVES_ICON_SIZE_BUTTON);
-  fbutton = gtk_button_new ();
+  fbutton = lives_button_new ();
   g_object_set_data(G_OBJECT(fbutton),"is_dir",GINT_TO_POINTER(is_dir));
   if (def_dir!=NULL) g_object_set_data(G_OBJECT(fbutton),"def_dir",(livespointer)def_dir);
   lives_container_add (LIVES_CONTAINER (fbutton), image);

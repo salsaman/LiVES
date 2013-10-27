@@ -120,7 +120,7 @@ void add_warn_check (GtkBox *box, int warn_mask_number) {
 
 
 static void add_clear_ds_button(GtkDialog* dialog) {
-  GtkWidget *button = gtk_button_new_from_stock ("gtk-clear");
+  GtkWidget *button = lives_button_new_from_stock ("gtk-clear");
 
   lives_button_set_label(GTK_BUTTON(button),_("_Recover disk space"));
   if (mainw->tried_ds_recover) lives_widget_set_sensitive(button,FALSE);
@@ -181,9 +181,9 @@ static GtkWidget* create_warn_dialog (int warn_mask_number, GtkWindow *transient
     widget_opts.justify=LIVES_JUSTIFY_CENTER;
     mainw->warning_label = lives_standard_label_new (_("warning"));
     widget_opts.justify=LIVES_JUSTIFY_DEFAULT;
-    warning_cancelbutton = gtk_button_new_from_stock ("gtk-cancel");
+    warning_cancelbutton = lives_button_new_from_stock ("gtk-cancel");
     lives_dialog_add_action_widget (LIVES_DIALOG (dialog), warning_cancelbutton, GTK_RESPONSE_CANCEL);
-    warning_okbutton = gtk_button_new_from_stock ("gtk-ok");
+    warning_okbutton = lives_button_new_from_stock ("gtk-ok");
     lives_dialog_add_action_widget (LIVES_DIALOG (dialog), warning_okbutton, GTK_RESPONSE_OK);
     break;
   case LIVES_DIALOG_YESNO:
@@ -192,9 +192,9 @@ static GtkWidget* create_warn_dialog (int warn_mask_number, GtkWindow *transient
     widget_opts.justify=LIVES_JUSTIFY_CENTER;
     mainw->warning_label = lives_standard_label_new (_("question"));
     widget_opts.justify=LIVES_JUSTIFY_DEFAULT;
-    warning_cancelbutton = gtk_button_new_from_stock ("gtk-no");
+    warning_cancelbutton = lives_button_new_from_stock ("gtk-no");
     lives_dialog_add_action_widget (LIVES_DIALOG (dialog), warning_cancelbutton, LIVES_NO);
-    warning_okbutton = gtk_button_new_from_stock ("gtk-yes");
+    warning_okbutton = lives_button_new_from_stock ("gtk-yes");
     lives_dialog_add_action_widget (LIVES_DIALOG (dialog), warning_okbutton, LIVES_YES);
     break;
   case LIVES_DIALOG_ABORT_CANCEL_RETRY:
@@ -203,12 +203,12 @@ static GtkWidget* create_warn_dialog (int warn_mask_number, GtkWindow *transient
     widget_opts.justify=LIVES_JUSTIFY_CENTER;
     mainw->warning_label = lives_standard_label_new (_("File Error"));
     widget_opts.justify=LIVES_JUSTIFY_DEFAULT;
-    abortbutton = gtk_button_new_from_stock ("gtk-quit");
+    abortbutton = lives_button_new_from_stock ("gtk-quit");
     lives_button_set_label(GTK_BUTTON(abortbutton),_("_Abort"));
     lives_dialog_add_action_widget (LIVES_DIALOG (dialog), abortbutton, LIVES_ABORT);
-    warning_cancelbutton = gtk_button_new_from_stock ("gtk-cancel");
+    warning_cancelbutton = lives_button_new_from_stock ("gtk-cancel");
     lives_dialog_add_action_widget (LIVES_DIALOG (dialog), warning_cancelbutton, LIVES_CANCEL);
-    warning_okbutton = gtk_button_new_from_stock ("gtk-refresh");
+    warning_okbutton = lives_button_new_from_stock ("gtk-refresh");
     lives_button_set_label(GTK_BUTTON(warning_okbutton),_("_Retry"));
     lives_dialog_add_action_widget (LIVES_DIALOG (dialog), warning_okbutton, LIVES_RETRY);
     break;
@@ -265,7 +265,7 @@ static GtkWidget* create_warn_dialog (int warn_mask_number, GtkWindow *transient
 			      LIVES_KEY_Return, (GdkModifierType)0, (GtkAccelFlags)0);
 
   lives_widget_set_can_focus_and_default (warning_okbutton);
-  gtk_widget_grab_default (warning_okbutton);
+  lives_widget_grab_default (warning_okbutton);
 
   lives_widget_show_all(dialog);
 
@@ -1679,7 +1679,7 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const gchar *te
       else lives_widget_show (cfile->proc_ptr->pause_button);
 
       if (!cfile->opening&&!cfile->nopreview) {
-	gtk_widget_grab_default (cfile->proc_ptr->preview_button);
+	lives_widget_grab_default (cfile->proc_ptr->preview_button);
 	if (mainw->preview_box!=NULL) lives_widget_set_tooltip_text( mainw->p_playbutton,_ ("Preview"));
 	lives_widget_set_tooltip_text( mainw->m_playbutton,_ ("Preview"));
 	gtk_widget_remove_accelerator (mainw->playall, mainw->accel_group, LIVES_KEY_p, (GdkModifierType)0);
@@ -2510,7 +2510,7 @@ static void create_threaded_dialog(gchar *text, gboolean has_cancel) {
   lives_box_pack_start (LIVES_BOX (vbox), procw->label3, FALSE, FALSE, 0);
 
   if (has_cancel) {
-    GtkWidget *cancelbutton = gtk_button_new_from_stock ("gtk-cancel");
+    GtkWidget *cancelbutton = lives_button_new_from_stock ("gtk-cancel");
     lives_widget_show (cancelbutton);
 
     if (mainw->current_file>-1&&cfile!=NULL&&cfile->opening_only_audio) {

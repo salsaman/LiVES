@@ -375,6 +375,12 @@ typedef GLogLevelFlags LiVESLogLevelFlags;
 #define LIVES_LOG_LEVEL_CRITICAL G_LOG_LEVEL_CRITICAL
 #define LIVES_LOG_FATAL_MASK G_LOG_FATAL_MASK
 
+
+// stock images for buttons etc.
+#define LIVES_STOCK_ADD GTK_STOCK_ADD
+#define LIVES_STOCK_REMOVE GTK_STOCK_REMOVE
+
+
 typedef GdkModifierType LiVESModifierType;
 
 #define LIVES_CONTROL_MASK GDK_CONTROL_MASK
@@ -682,10 +688,13 @@ LiVESWidget *lives_label_new_with_mnemonic(const char *text);
 LiVESWidget *lives_button_new(void);
 LiVESWidget *lives_button_new_from_stock(const char *stock_id);
 LiVESWidget *lives_button_new_with_label(const char *label);
+LiVESWidget *lives_button_new_with_mnemonic(const char *label);
+
+boolean lives_button_set_label(LiVESButton *, const char *label);
+
 LiVESWidget *lives_check_button_new(void);
 LiVESWidget *lives_check_button_new_with_label(const char *label);
 LiVESWidget *lives_spin_button_new(LiVESAdjustment *, double climb_rate, uint32_t digits);
-
 
 LiVESWidget *lives_window_new(lives_window_type_t wintype);
 
@@ -782,11 +791,6 @@ void lives_combo_populate(LiVESCombo *, LiVESList *list);
 
 boolean lives_toggle_button_get_active(LiVESToggleButton *);
 void lives_toggle_button_set_active(LiVESToggleButton *, boolean active);
-
-
-LiVESWidget *lives_button_new_with_mnemonic(const char *label);
-
-void lives_button_set_label(LiVESButton *, const char *label);
 
 
 void lives_tooltips_set (LiVESWidget *, const char *tip_text);
@@ -902,6 +906,7 @@ char *lives_file_chooser_get_filename(LiVESFileChooser *);
 LiVESSList *lives_file_chooser_get_filenames(LiVESFileChooser *);
 
 void lives_widget_grab_focus(LiVESWidget *);
+void lives_widget_grab_default(LiVESWidget *);
 
 void lives_widget_set_tooltip_text(LiVESWidget *, const char *text);
 

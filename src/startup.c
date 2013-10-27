@@ -371,19 +371,19 @@ boolean do_audio_choice_dialog(short startup_phase) {
   }
 
 
-  cancelbutton = gtk_button_new_from_stock ("gtk-cancel");
+  cancelbutton = lives_button_new_from_stock ("gtk-cancel");
   lives_widget_show (cancelbutton);
   lives_dialog_add_action_widget (LIVES_DIALOG (dialog), cancelbutton, GTK_RESPONSE_CANCEL);
 
   lives_widget_add_accelerator (cancelbutton, "activate", accel_group,
                               LIVES_KEY_Escape, (GdkModifierType)0, (GtkAccelFlags)0);
 
-  okbutton = gtk_button_new_from_stock ("gtk-go-forward");
+  okbutton = lives_button_new_from_stock ("gtk-go-forward");
   lives_button_set_label(GTK_BUTTON(okbutton),_("_Next"));
   lives_widget_show (okbutton);
   lives_dialog_add_action_widget (LIVES_DIALOG (dialog), okbutton, GTK_RESPONSE_OK);
   lives_widget_set_can_focus_and_default (okbutton);
-  gtk_widget_grab_default(okbutton);
+  lives_widget_grab_default(okbutton);
   lives_widget_grab_focus(okbutton);
 
 
@@ -535,7 +535,7 @@ boolean do_startup_tests(boolean tshoot) {
   label=lives_standard_label_new(_("LiVES will now run some basic configuration tests\n"));
   lives_container_add (LIVES_CONTAINER (dialog_vbox), label);
 
-  cancelbutton = gtk_button_new_from_stock ("gtk-cancel");
+  cancelbutton = lives_button_new_from_stock ("gtk-cancel");
   lives_widget_show (cancelbutton);
   lives_dialog_add_action_widget (LIVES_DIALOG (dialog), cancelbutton, GTK_RESPONSE_CANCEL);
 
@@ -543,14 +543,14 @@ boolean do_startup_tests(boolean tshoot) {
                               LIVES_KEY_Escape, (GdkModifierType)0, (GtkAccelFlags)0);
 
   if (!tshoot) {
-    okbutton = gtk_button_new_from_stock ("gtk-go-forward");
+    okbutton = lives_button_new_from_stock ("gtk-go-forward");
     lives_button_set_label(GTK_BUTTON(okbutton),_("_Next"));
   }
-  else okbutton = gtk_button_new_from_stock ("gtk-ok");
+  else okbutton = lives_button_new_from_stock ("gtk-ok");
   lives_widget_show (okbutton);
   lives_dialog_add_action_widget (LIVES_DIALOG (dialog), okbutton, GTK_RESPONSE_OK);
   lives_widget_set_can_focus_and_default (okbutton);
-  gtk_widget_grab_default(okbutton);
+  lives_widget_grab_default(okbutton);
   lives_widget_grab_focus(okbutton);
 
 
@@ -938,13 +938,13 @@ void do_startup_interface_query(void) {
     lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(radiobutton1),TRUE);
   }
 
-  okbutton = gtk_button_new_from_stock ("gtk-go-forward");
+  okbutton = lives_button_new_from_stock ("gtk-go-forward");
   lives_button_set_label(GTK_BUTTON(okbutton),_("_Finish"));
 
   lives_widget_show (okbutton);
   lives_dialog_add_action_widget (LIVES_DIALOG (dialog), okbutton, GTK_RESPONSE_OK);
   lives_widget_set_can_focus_and_default (okbutton);
-  gtk_widget_grab_default(okbutton);
+  lives_widget_grab_default(okbutton);
   lives_widget_grab_focus(okbutton);
 
 

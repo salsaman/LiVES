@@ -2993,6 +2993,9 @@ static GtkWidget *conx_scroll_new(weed_plant_t *filter, int key, lives_conx_w *c
 
   register int i,j=0,x=0;
 
+  conxwp->add_button=(GtkWidget **)g_malloc((conxwp->num_params+conxwp->num_alpha)*sizeof(GtkWidget *));
+  conxwp->del_button=(GtkWidget **)g_malloc((conxwp->num_params+conxwp->num_alpha)*sizeof(GtkWidget *));
+
   conxwp->cfxcombo=conxwp->ccombo=conxwp->pcombo=conxwp->pfxcombo=conxwp->acheck=NULL;
   conxwp->dpp_func=conxwp->dpc_func=conxwp->acheck_func=NULL;
 
@@ -3023,6 +3026,7 @@ static GtkWidget *conx_scroll_new(weed_plant_t *filter, int key, lives_conx_w *c
 
     tablec=lives_table_new(0,6,FALSE);
     lives_table_set_row_spacings(LIVES_TABLE(tablec),widget_opts.packing_height);
+    lives_table_set_col_spacings(LIVES_TABLE(tablec),widget_opts.packing_width);
     lives_box_pack_start (LIVES_BOX (top_vbox), tablec, FALSE, FALSE, widget_opts.packing_height);
 
     trows=1;
@@ -3086,6 +3090,26 @@ static GtkWidget *conx_scroll_new(weed_plant_t *filter, int key, lives_conx_w *c
       conxwp->dpc_func[x]=g_signal_connect(GTK_OBJECT (conxwp->ccombo[x]), "changed",
 					   G_CALLBACK (dpc_changed),(gpointer)conxwp);
       
+      conxwp->del_button[x]=lives_button_new_from_stock(LIVES_STOCK_REMOVE);
+      lives_widget_set_tooltip_text(conxwp->del_button[x],_("Delete this connection"));
+
+      lives_table_attach (LIVES_TABLE (tablec), conxwp->del_button[x], 5, 6, trows-1, trows,
+			  (GtkAttachOptions) (0),
+			  (GtkAttachOptions) (0), 0, 0);
+
+      lives_widget_set_sensitive(conxwp->del_button[x], FALSE);
+
+
+      conxwp->add_button[x]=lives_button_new_from_stock(LIVES_STOCK_ADD);
+      lives_widget_set_tooltip_text(conxwp->add_button[x],_("Add another connection for this output channel"));
+      
+
+      lives_table_attach (LIVES_TABLE (tablec), conxwp->add_button[x], 6, 7, trows-1, trows,
+			  (GtkAttachOptions) (0),
+			  (GtkAttachOptions) (0), 0, 0);
+
+      lives_widget_set_sensitive(conxwp->add_button[x], FALSE);
+
 
       x++;
     }
@@ -3120,6 +3144,7 @@ static GtkWidget *conx_scroll_new(weed_plant_t *filter, int key, lives_conx_w *c
 
     tablep=lives_table_new(1,7,FALSE);
     lives_table_set_row_spacings(LIVES_TABLE(tablep),widget_opts.packing_height);
+    lives_table_set_col_spacings(LIVES_TABLE(tablep),widget_opts.packing_width);
     lives_box_pack_start (LIVES_BOX (top_vbox), tablep, FALSE, FALSE, widget_opts.packing_height);
 
     trows=1;
@@ -3127,7 +3152,7 @@ static GtkWidget *conx_scroll_new(weed_plant_t *filter, int key, lives_conx_w *c
 
     hbox2=lives_hbox_new (FALSE, 0);
 
-    lives_table_attach (LIVES_TABLE (tablep), hbox2, 5, 6, 0, 1,
+    lives_table_attach (LIVES_TABLE (tablep), hbox2, 4, 5, 0, 1,
 			(GtkAttachOptions) (GTK_FILL|GTK_EXPAND),
 			(GtkAttachOptions) (0), 0, 0);
 
@@ -3208,7 +3233,30 @@ static GtkWidget *conx_scroll_new(weed_plant_t *filter, int key, lives_conx_w *c
 
       conxwp->dpp_func[x]=g_signal_connect(GTK_OBJECT (conxwp->pcombo[x]), "changed",
 					   G_CALLBACK (dpp_changed),(gpointer)conxwp);
+
+
+      conxwp->del_button[x+conxwp->num_alpha]=lives_button_new_from_stock(LIVES_STOCK_REMOVE);
+      lives_widget_set_tooltip_text(conxwp->del_button[x+conxwp->num_alpha],_("Delete this connection"));
+
+
+      lives_table_attach (LIVES_TABLE (tablep), conxwp->del_button[x+conxwp->num_alpha], 5, 6, trows-1, trows,
+			  (GtkAttachOptions) (0),
+			  (GtkAttachOptions) (0), 0, 0);
+
+
+      lives_widget_set_sensitive(conxwp->del_button[x+conxwp->num_alpha], FALSE);
+
+
+      conxwp->add_button[x+conxwp->num_alpha]=lives_button_new_from_stock(LIVES_STOCK_ADD);
+      lives_widget_set_tooltip_text(conxwp->add_button[x+conxwp->num_alpha],_("Add another connection for this output parameter"));
       
+
+      lives_table_attach (LIVES_TABLE (tablep), conxwp->add_button[x+conxwp->num_alpha], 6, 7, trows-1, trows,
+			  (GtkAttachOptions) (0),
+			  (GtkAttachOptions) (0), 0, 0);
+
+
+      lives_widget_set_sensitive(conxwp->add_button[x+conxwp->num_alpha], FALSE);
 
       x++;
 
@@ -3294,7 +3342,7 @@ static GtkWidget *conx_scroll_new(weed_plant_t *filter, int key, lives_conx_w *c
 
       hbox=lives_hbox_new (FALSE, 0);
 
-      lives_table_attach (LIVES_TABLE (tablep), hbox, 5, 6, trows-1, trows,
+      lives_table_attach (LIVES_TABLE (tablep), hbox, 4, 5, trows-1, trows,
 			  (GtkAttachOptions) (GTK_FILL|GTK_EXPAND),
 			  (GtkAttachOptions) (0), 0, 0);
 
@@ -3315,6 +3363,28 @@ static GtkWidget *conx_scroll_new(weed_plant_t *filter, int key, lives_conx_w *c
       conxwp->dpp_func[x]=g_signal_connect(GTK_OBJECT (conxwp->pcombo[x]), "changed",
 					   G_CALLBACK (dpp_changed),(gpointer)conxwp);
       
+
+      conxwp->del_button[x+conxwp->num_alpha]=lives_button_new_from_stock(LIVES_STOCK_REMOVE);
+      lives_widget_set_tooltip_text(conxwp->del_button[x+conxwp->num_alpha],_("Delete this connection"));
+
+
+      lives_table_attach (LIVES_TABLE (tablep), conxwp->del_button[x+conxwp->num_alpha], 5, 6, trows-1, trows,
+			  (GtkAttachOptions) (0),
+			  (GtkAttachOptions) (0), 0, 0);
+
+
+      lives_widget_set_sensitive(conxwp->del_button[x+conxwp->num_alpha], FALSE);
+
+      conxwp->add_button[x+conxwp->num_alpha]=lives_button_new_from_stock(LIVES_STOCK_ADD);
+      lives_widget_set_tooltip_text(conxwp->add_button[x+conxwp->num_alpha],_("Add another connection for this output parameter"));
+
+
+      lives_table_attach (LIVES_TABLE (tablep), conxwp->add_button[x+conxwp->num_alpha], 6, 7, trows-1, trows,
+			  (GtkAttachOptions) (0),
+			  (GtkAttachOptions) (0), 0, 0);
+
+
+      lives_widget_set_sensitive(conxwp->add_button[x+conxwp->num_alpha], FALSE);
 
       x++;
     }
@@ -3337,6 +3407,8 @@ static void conxw_cancel_clicked(GtkWidget *button, gpointer user_data) {
   if (conxwp->pfxcombo!=NULL) g_free(conxwp->pfxcombo);
   if (conxwp->pcombo!=NULL) g_free(conxwp->pcombo);
   if (conxwp->acheck!=NULL) g_free(conxwp->acheck);
+  if (conxwp->add_button!=NULL) g_free(conxwp->add_button);
+  if (conxwp->del_button!=NULL) g_free(conxwp->del_button);
   if (conxwp->dpp_func!=NULL) g_free(conxwp->dpp_func);
   if (conxwp->dpc_func!=NULL) g_free(conxwp->dpc_func);
   if (conxwp->acheck_func!=NULL) g_free(conxwp->acheck_func);
@@ -3736,14 +3808,14 @@ GtkWidget *make_datacon_window(int key, int mode) {
   lives_box_pack_start (LIVES_BOX (cbox), scrolledwindow, TRUE, TRUE, 0);
 
 
-  cancelbutton = gtk_button_new_from_stock ("gtk-cancel");
+  cancelbutton = lives_button_new_from_stock ("gtk-cancel");
   lives_dialog_add_action_widget (LIVES_DIALOG (conxw.conx_dialog), cancelbutton, GTK_RESPONSE_CANCEL);
 
-  okbutton = gtk_button_new_from_stock ("gtk-ok");
+  okbutton = lives_button_new_from_stock ("gtk-ok");
   lives_dialog_add_action_widget (LIVES_DIALOG (conxw.conx_dialog), okbutton, GTK_RESPONSE_OK);
 
   lives_widget_set_can_focus_and_default (okbutton);
-  gtk_widget_grab_default(okbutton);
+  lives_widget_grab_default(okbutton);
 
   lives_widget_add_accelerator (cancelbutton, "activate", accel_group,
 				LIVES_KEY_Escape,  (GdkModifierType)0, (GtkAccelFlags)0);

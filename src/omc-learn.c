@@ -1358,7 +1358,7 @@ static omclearn_w *create_omclearn_dialog(void) {
   
   lives_widget_set_can_focus_and_default (ok_button);
 
-  gtk_widget_grab_default (ok_button);
+  lives_widget_grab_default (ok_button);
 
 #if !GTK_CHECK_VERSION(3,0,0)
   gtk_button_box_set_child_size (GTK_BUTTON_BOX (hbuttonbox), DEF_BUTTON_WIDTH, -1);

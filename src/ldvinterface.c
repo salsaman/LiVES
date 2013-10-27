@@ -95,44 +95,44 @@ struct _dvgrabw *create_camwindow (s_cam *cam, gint type)
   lives_box_pack_start(LIVES_BOX(vbox),hbuttonbox1,FALSE,FALSE,widget_opts.packing_height);
 
 #if GTK_CHECK_VERSION(2,6,0)
-  button3 = gtk_button_new_from_stock (GTK_STOCK_MEDIA_REWIND);
+  button3 = lives_button_new_from_stock (GTK_STOCK_MEDIA_REWIND);
 #else
-  button3 = gtk_button_new_from_stock (GTK_STOCK_GO_BACK);
+  button3 = lives_button_new_from_stock (GTK_STOCK_GO_BACK);
 #endif
 
   lives_container_add (LIVES_CONTAINER (hbuttonbox1), button3);
   lives_widget_set_can_focus (button3,TRUE);
 
 #if GTK_CHECK_VERSION(2,6,0)
-  button4 = gtk_button_new_from_stock (GTK_STOCK_MEDIA_FORWARD);
+  button4 = lives_button_new_from_stock (GTK_STOCK_MEDIA_FORWARD);
 #else
-  button4 = gtk_button_new_from_stock (GTK_STOCK_GO_FORWARD);
+  button4 = lives_button_new_from_stock (GTK_STOCK_GO_FORWARD);
 #endif
   lives_container_add (LIVES_CONTAINER (hbuttonbox1), button4);
   lives_widget_set_can_focus (button4,TRUE);
 
 #if GTK_CHECK_VERSION(2,6,0)
-  dvgrabw->stop = gtk_button_new_from_stock (GTK_STOCK_MEDIA_STOP);
+  dvgrabw->stop = lives_button_new_from_stock (GTK_STOCK_MEDIA_STOP);
 #else
-  dvgrabw->stop = gtk_button_new_from_stock (GTK_STOCK_STOP);
+  dvgrabw->stop = lives_button_new_from_stock (GTK_STOCK_STOP);
 #endif
   lives_container_add (LIVES_CONTAINER (hbuttonbox1), dvgrabw->stop);
   lives_widget_set_can_focus_and_default (dvgrabw->stop);
   lives_widget_set_sensitive(dvgrabw->stop,FALSE);
 
 #if GTK_CHECK_VERSION(2,6,0)
-  dvgrabw->play = gtk_button_new_from_stock (GTK_STOCK_MEDIA_PLAY);
+  dvgrabw->play = lives_button_new_from_stock (GTK_STOCK_MEDIA_PLAY);
 #else
-  dvgrabw->play = gtk_button_new_from_stock (GTK_STOCK_GO_FORWARD);
+  dvgrabw->play = lives_button_new_from_stock (GTK_STOCK_GO_FORWARD);
 #endif
   lives_container_add (LIVES_CONTAINER (hbuttonbox1), dvgrabw->play);
   lives_widget_set_can_focus_and_default (dvgrabw->play);
   gtk_button_set_use_stock(GTK_BUTTON(dvgrabw->play),TRUE);
 
 #if GTK_CHECK_VERSION(2,6,0)
-  dvgrabw->grab = gtk_button_new_from_stock (GTK_STOCK_MEDIA_RECORD);
+  dvgrabw->grab = lives_button_new_from_stock (GTK_STOCK_MEDIA_RECORD);
 #else
-  dvgrabw->grab = gtk_button_new_from_stock (GTK_STOCK_NO);
+  dvgrabw->grab = lives_button_new_from_stock (GTK_STOCK_NO);
 #endif
   lives_container_add (LIVES_CONTAINER (hbuttonbox1), dvgrabw->grab);
   lives_widget_set_can_focus_and_default (dvgrabw->grab);
@@ -152,7 +152,7 @@ struct _dvgrabw *create_camwindow (s_cam *cam, gint type)
   hbuttonbox2 = lives_hbutton_box_new ();
   lives_box_pack_start(LIVES_BOX(vbox),hbuttonbox2,FALSE,FALSE,widget_opts.packing_height);
 
-  dvgrabw->quit = gtk_button_new_from_stock (GTK_STOCK_CLOSE);
+  dvgrabw->quit = lives_button_new_from_stock (GTK_STOCK_CLOSE);
   lives_container_add (LIVES_CONTAINER (hbuttonbox2), dvgrabw->quit);
   lives_widget_set_can_focus_and_default (dvgrabw->quit);
 

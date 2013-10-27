@@ -152,6 +152,8 @@ typedef struct {
   GtkWidget **pcombo;
   GtkWidget **ccombo;
   GtkWidget **acheck;
+  GtkWidget **add_button;
+  GtkWidget **del_button;
   GtkWidget *allcheckc;
   GtkWidget *allcheck_label;
   int *ikeys;

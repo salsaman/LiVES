@@ -1570,7 +1570,7 @@ _resaudw *create_resaudw (gshort type, render_details *rdet, GtkWidget *top_vbox
     lives_widget_show (dialog_action_area);
     gtk_button_box_set_layout (GTK_BUTTON_BOX (dialog_action_area), GTK_BUTTONBOX_END);
     
-    cancelbutton = gtk_button_new_from_stock ("gtk-cancel");
+    cancelbutton = lives_button_new_from_stock ("gtk-cancel");
  
     lives_dialog_add_action_widget (LIVES_DIALOG (resaudw->dialog), cancelbutton, GTK_RESPONSE_CANCEL);
     lives_widget_set_can_focus_and_default (cancelbutton);
@@ -1579,11 +1579,11 @@ _resaudw *create_resaudw (gshort type, render_details *rdet, GtkWidget *top_vbox
 						       LIVES_KEY_Escape, (GdkModifierType)0, (GtkAccelFlags)0);
     
       
-    okbutton = gtk_button_new_from_stock ("gtk-ok");
+    okbutton = lives_button_new_from_stock ("gtk-ok");
  
     lives_dialog_add_action_widget (LIVES_DIALOG (resaudw->dialog), okbutton, GTK_RESPONSE_OK);
     lives_widget_set_can_focus_and_default (okbutton);
-    gtk_widget_grab_default (okbutton);
+    lives_widget_grab_default (okbutton);
 
     if (type<8||type==11) {
       g_signal_connect (GTK_OBJECT (cancelbutton), "clicked",
@@ -1750,17 +1750,17 @@ void create_new_pb_speed (short type) {
   dialog_action_area = lives_dialog_get_action_area(LIVES_DIALOG (new_pb_speed));
   gtk_button_box_set_layout (GTK_BUTTON_BOX (dialog_action_area), GTK_BUTTONBOX_END);
 
-  cancelbutton = gtk_button_new_from_stock ("gtk-cancel");
+  cancelbutton = lives_button_new_from_stock ("gtk-cancel");
   lives_dialog_add_action_widget (LIVES_DIALOG (new_pb_speed), cancelbutton, GTK_RESPONSE_CANCEL);
   lives_widget_set_can_focus (cancelbutton,TRUE);
 
   lives_widget_add_accelerator (cancelbutton, "activate", accel_group,
                               LIVES_KEY_Escape, (GdkModifierType)0, (GtkAccelFlags)0);
 
-  change_pb_ok = gtk_button_new_from_stock ("gtk-ok");
+  change_pb_ok = lives_button_new_from_stock ("gtk-ok");
   lives_dialog_add_action_widget (LIVES_DIALOG (new_pb_speed), change_pb_ok, GTK_RESPONSE_OK);
   lives_widget_set_can_focus_and_default (change_pb_ok);
-  gtk_widget_grab_default (change_pb_ok);
+  lives_widget_grab_default (change_pb_ok);
   lives_widget_grab_focus(spinbutton_pb_speed);
 
 

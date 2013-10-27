@@ -4110,7 +4110,7 @@ _prefsw *create_prefs_dialog (void) {
   gtk_button_box_set_layout (GTK_BUTTON_BOX (dialog_action_area), GTK_BUTTONBOX_END);
    
   // Preferences 'Revert' button
-  prefsw->cancelbutton = gtk_button_new_from_stock ("gtk-revert-to-saved");
+  prefsw->cancelbutton = lives_button_new_from_stock ("gtk-revert-to-saved");
   lives_widget_show (prefsw->cancelbutton);
   lives_dialog_add_action_widget (LIVES_DIALOG (prefsw->prefs_dialog), prefsw->cancelbutton, GTK_RESPONSE_CANCEL);
 
@@ -4120,7 +4120,7 @@ _prefsw *create_prefs_dialog (void) {
   lives_widget_set_sensitive(prefsw->cancelbutton, FALSE);
    
   // Preferences 'Apply' button
-  prefsw->applybutton = gtk_button_new_from_stock ("gtk-apply");
+  prefsw->applybutton = lives_button_new_from_stock ("gtk-apply");
   lives_widget_show (prefsw->applybutton);
   lives_dialog_add_action_widget (LIVES_DIALOG (prefsw->prefs_dialog), prefsw->applybutton, 0);
 
@@ -4129,7 +4129,7 @@ _prefsw *create_prefs_dialog (void) {
   lives_widget_set_sensitive(prefsw->applybutton, FALSE);
    
   // Preferences 'Close' button
-  prefsw->closebutton = gtk_button_new_from_stock ("gtk-close");
+  prefsw->closebutton = lives_button_new_from_stock ("gtk-close");
   lives_widget_show(prefsw->closebutton);
   lives_dialog_add_action_widget(LIVES_DIALOG(prefsw->prefs_dialog), prefsw->closebutton, GTK_RESPONSE_OK);
 

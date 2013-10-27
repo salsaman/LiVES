@@ -874,7 +874,7 @@ void on_fx_pre_activate (lives_rfx_t *rfx, int didx, LiVESWidget *pbox) {
 
   if (top_dialog_vbox!=NULL) {
 
-    cancelbutton = gtk_button_new_from_stock ("gtk-cancel");
+    cancelbutton = lives_button_new_from_stock ("gtk-cancel");
     
     fxw_accel_group = GTK_ACCEL_GROUP(lives_accel_group_new ());
     gtk_window_add_accel_group (LIVES_WINDOW (fx_dialog[didx]), fxw_accel_group);
@@ -894,7 +894,7 @@ void on_fx_pre_activate (lives_rfx_t *rfx, int didx, LiVESWidget *pbox) {
 	if (!has_param) lives_widget_set_sensitive(resetbutton,FALSE);
 	lives_dialog_add_action_widget (LIVES_DIALOG (fx_dialog[didx]), resetbutton, LIVES_RESET);
       }
-      else okbutton = gtk_button_new_from_stock ("gtk-ok");
+      else okbutton = lives_button_new_from_stock ("gtk-ok");
       lives_dialog_add_action_widget (LIVES_DIALOG (fx_dialog[didx]), okbutton, GTK_RESPONSE_OK);
     }
     else {
@@ -919,7 +919,7 @@ void on_fx_pre_activate (lives_rfx_t *rfx, int didx, LiVESWidget *pbox) {
 
     if (lives_widget_get_parent(okbutton)!=NULL) {
       lives_widget_set_can_focus_and_default (okbutton);
-      gtk_widget_grab_default (okbutton);
+      lives_widget_grab_default (okbutton);
     }
 
     lives_widget_show_all (fx_dialog[didx]);

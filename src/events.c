@@ -2135,7 +2135,7 @@ GtkWidget *events_rec_dialog (boolean allow_mt) {
 		    G_CALLBACK (set_render_choice),
 		    GINT_TO_POINTER (RENDER_CHOICE_EVENT_LIST));
 
-  cancelbutton = gtk_button_new_from_stock ("gtk-cancel");
+  cancelbutton = lives_button_new_from_stock ("gtk-cancel");
   lives_widget_set_can_focus (cancelbutton,TRUE);
 
   lives_dialog_add_action_widget (LIVES_DIALOG (e_rec_dialog), cancelbutton, GTK_RESPONSE_CANCEL);
@@ -2150,11 +2150,11 @@ GtkWidget *events_rec_dialog (boolean allow_mt) {
 
   gtk_window_add_accel_group (LIVES_WINDOW (e_rec_dialog), accel_group);
 
-  okbutton = gtk_button_new_from_stock ("gtk-ok");
+  okbutton = lives_button_new_from_stock ("gtk-ok");
   lives_widget_show (okbutton);
   lives_dialog_add_action_widget (LIVES_DIALOG (e_rec_dialog), okbutton, GTK_RESPONSE_OK);
   lives_widget_set_can_focus_and_default (okbutton);
-  gtk_widget_grab_default (okbutton);
+  lives_widget_grab_default (okbutton);
   lives_widget_show_all (e_rec_dialog);
 
   return e_rec_dialog;
@@ -4838,7 +4838,7 @@ GtkWidget *create_event_list_dialog (weed_plant_t *event_list, weed_timecode_t s
 #endif
 
   lives_widget_set_can_focus_and_default (ok_button);
-  gtk_widget_grab_default (ok_button);
+  lives_widget_grab_default (ok_button);
  
   g_signal_connect (GTK_OBJECT (ok_button), "clicked",
 		    G_CALLBACK (response_ok),
@@ -5240,7 +5240,7 @@ render_details *create_render_details (int type) {
   if (!specified) {
   }
 
-  cancelbutton = gtk_button_new_from_stock ("gtk-cancel");
+  cancelbutton = lives_button_new_from_stock ("gtk-cancel");
   if (!(prefs->startup_interface==STARTUP_MT&&!mainw->is_ready)) {
     lives_dialog_add_action_widget (LIVES_DIALOG (rdet->dialog), cancelbutton, GTK_RESPONSE_CANCEL);
 
@@ -5251,20 +5251,20 @@ render_details *create_render_details (int type) {
 
 
   if (!specified) {
-    rdet->okbutton = gtk_button_new_from_stock ("gtk-ok");
+    rdet->okbutton = lives_button_new_from_stock ("gtk-ok");
 
 #if !GTK_CHECK_VERSION(3,0,0)
     gtk_button_box_set_child_size (GTK_BUTTON_BOX (daa), DEF_BUTTON_WIDTH, -1);
 #endif
   }
   else  {
-    rdet->okbutton = gtk_button_new_from_stock ("gtk-go-forward");
+    rdet->okbutton = lives_button_new_from_stock ("gtk-go-forward");
     lives_button_set_label(GTK_BUTTON(rdet->okbutton),_("_Next"));
   }
 
   lives_dialog_add_action_widget (LIVES_DIALOG (rdet->dialog), rdet->okbutton, GTK_RESPONSE_OK);
   lives_widget_set_can_focus_and_default (rdet->okbutton);
-  gtk_widget_grab_default (rdet->okbutton);
+  lives_widget_grab_default (rdet->okbutton);
 
   lives_widget_add_accelerator (cancelbutton, "activate", rdet_accel_group,
                               LIVES_KEY_Escape, (GdkModifierType)0, (GtkAccelFlags)0);

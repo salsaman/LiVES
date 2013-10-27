@@ -64,12 +64,6 @@ ogg_decoder_la_LDFLAGS = $(shared_ldflags) -Wl,/usr/i686-pc-mingw32/sys-root/min
 
 endif
 
-# TODO - at least  mpegps, mp4, mov, mng
-# provided they support frame accurate seeking
-
-# avi is broken and needs a patch for decoding
-
-# h264 does not work and needs a patch
 
 
 if HAVE_AVFORMAT
@@ -111,14 +105,12 @@ mpegts_decoder_la_LDFLAGS = $(shared_ldflags) $(MPEGTSDEC_LIBS)
 
 
 
-#does not work - unable to parse video packets (patch would be very nice...)
-
-#avi_libs = avi_decoder.la
-#AVIDEC_LIBS = @LIBAVCODEC_LIBS@ @LIBAVFORMAT_LIBS@
-#AVIDEC_CFLAGS = @LIBAVFORMAT_CFLAGS@ @LIBAVCODEC_CFLAGS@ -Wno-deprecated-declarations
-#avi_decoder_la_SOURCES = avi_decoder.c avi_decoder.h
-#avi_decoder_la_CFLAGS = $(shared_cflags) $(weed_cflags) $(AVIDEC_CFLAGS)
-#avi_decoder_la_LDFLAGS = $(shared_ldflags) $(AVIDEC_LIBS)
+zyavformat_libs = zyavformat_decoder.la
+AVIDEC_LIBS = @LIBAVCODEC_LIBS@ @LIBAVFORMAT_LIBS@
+AVIDEC_CFLAGS = @LIBAVFORMAT_CFLAGS@ @LIBAVCODEC_CFLAGS@ -Wno-deprecated-declarations
+zyavformat_decoder_la_SOURCES = avformat_decoder.c avformat_decoder.h
+zyavformat_decoder_la_CFLAGS = $(shared_cflags) $(weed_cflags) $(AVIDEC_CFLAGS)
+zyavformat_decoder_la_LDFLAGS = $(shared_ldflags) $(AVIDEC_LIBS)
 
 
 endif
@@ -127,6 +119,6 @@ endif
 
 
 
-decoderpluginslib_LTLIBRARIES = $(ogg_libs) $(dv_libs) $(flv_libs) $(asf_libs) $(mkv_libs) $(mpegts_libs) #$(avi_libs)
+decoderpluginslib_LTLIBRARIES = $(ogg_libs) $(dv_libs) $(flv_libs) $(asf_libs) $(mkv_libs) $(mpegts_libs) $(zyavformat_libs)
 
 EXTRA_DIST = decplugin.h

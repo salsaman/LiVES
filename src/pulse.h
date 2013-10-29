@@ -60,10 +60,10 @@ typedef struct {
 
   uint64_t num_calls; /**< count of process_audio() calls */
 
-  audio_buffer_t* aPlayPtr; ///< data read from file
+  audio_buffer_t *aPlayPtr; ///< data read from file
   lives_audio_loop_t loop;
 
-  guchar* sound_buffer; ///< transformed data
+  uint8_t *sound_buffer; ///< transformed data
 
   float volume[PULSE_MAX_OUTPUT_CHANS]; ///< amount volume, 1.0 is full volume
 
@@ -95,10 +95,10 @@ typedef struct {
 
   boolean is_output; ///< is output FROM host to jack
 
-  gint playing_file;
+  int playing_file;
 
   lives_audio_buf_t **abufs;
-  volatile gint read_abuf;
+  volatile int read_abuf;
 
   uint64_t chunk_size;
 
@@ -122,9 +122,9 @@ void pulse_close_client(pulse_driver_t *);
 
 void pulse_shutdown(void); ///< shudown server, mainloop, context
 
-void pulse_aud_pb_ready(gint fileno);
+void pulse_aud_pb_ready(int fileno);
 
-size_t pulse_flush_read_data(pulse_driver_t *pulsed, int fileno, size_t rbytes, boolean rev_endian, void *data);
+size_t pulse_flush_read_data(pulse_driver_t *, int fileno, size_t rbytes, boolean rev_endian, void *data);
 
 void pulse_driver_uncork(pulse_driver_t *);
 
@@ -142,7 +142,7 @@ gdouble lives_pulse_get_pos(pulse_driver_t *);
 
 //////////////////////
 
-boolean pulse_audio_seek_frame (pulse_driver_t *, gint frame); ///< seek to (video) frame
+boolean pulse_audio_seek_frame (pulse_driver_t *, int frame); ///< seek to (video) frame
 
 void pulse_get_rec_avals(pulse_driver_t *);
 

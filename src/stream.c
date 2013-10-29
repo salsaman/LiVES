@@ -820,23 +820,10 @@ void weed_layer_set_from_lives2lives(weed_plant_t *layer, int clip, lives_vstrea
     if (weed_plant_has_leaf(layer,"width")) width=weed_get_int_value(layer,"width",&error);
 
     if (lstream->hsize!=width||lstream->vsize!=height) {
-      if (weed_plant_has_leaf(layer,"pixel_data")) {
-	// ...free old pixel_data
-	int i,np=weed_leaf_num_elements(layer,"pixel_data");
-	pixel_data=weed_get_voidptr_array(layer,"pixel_data",&error);
-	if (weed_plant_has_leaf(layer,"host_pixel_data_contiguous") && 
-	    weed_get_boolean_value(layer,"host_pixel_data_contiguous",&error)==WEED_TRUE)
-	  np=1;
-	for (i=0;i<np;i++) {
-	  g_free(pixel_data[i]);
-	}
-	weed_free(pixel_data);
-	weed_leaf_delete(layer,"pixel_data");
-      }
+      weed_layer_pixel_data_free(layer);
     }
 
-
-    if (!weed_plant_has_leaf(layer,"pixel_data")) {
+    if (!weed_plant_has_leaf(layer,"pixel_data")||weed_get_voidptr_value(layer,"pixel_data",&error)==NULL) {
       weed_set_int_value(layer,"width",lstream->hsize);
       weed_set_int_value(layer,"height",lstream->vsize);
       weed_set_int_value(layer,"current_palette",lstream->palette);

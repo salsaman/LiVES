@@ -15,7 +15,7 @@
 
 
 
-static boolean prompt_existing_dir(gchar *dirname, guint64 freespace, boolean wrtable) {
+static boolean prompt_existing_dir(gchar *dirname, uint64_t freespace, boolean wrtable) {
   gchar *msg;
   boolean res=FALSE;
 
@@ -41,7 +41,7 @@ static boolean prompt_existing_dir(gchar *dirname, guint64 freespace, boolean wr
 
 
 
-static boolean prompt_new_dir(gchar *dirname, guint64 freespace, boolean wrtable) {
+static boolean prompt_new_dir(gchar *dirname, uint64_t freespace, boolean wrtable) {
   boolean res=FALSE;
   gchar *msg;
   if (wrtable) {
@@ -63,12 +63,13 @@ static boolean prompt_new_dir(gchar *dirname, guint64 freespace, boolean wrtable
 
 
 boolean do_tempdir_query(void) {
+  _entryw *tdentry;
+  uint64_t freesp;
+
   int response;
   boolean ok=FALSE;
-  _entryw *tdentry;
-  gchar *dirname;
-  guint64 freesp;
 
+  gchar *dirname;
 #ifndef IS_MINGW
   gchar *com;
 #endif
@@ -176,7 +177,7 @@ boolean do_tempdir_query(void) {
 
 
 static void on_init_aplayer_toggled (GtkToggleButton *tbutton, gpointer user_data) {
-  gint audp=GPOINTER_TO_INT(user_data);
+  int audp=GPOINTER_TO_INT(user_data);
 
   if (!lives_toggle_button_get_active(tbutton)) return;
 
@@ -213,7 +214,7 @@ boolean do_audio_choice_dialog(short startup_phase) {
 
   gchar *txt0,*txt1,*txt2,*txt3,*txt4,*txt5,*txt6,*txt7,*msg;
 
-  gint response;
+  int response;
 
   if (startup_phase==2) {
     txt0=g_strdup(_("LiVES FAILED TO START YOUR SELECTED AUDIO PLAYER !\n\n"));
@@ -410,7 +411,7 @@ boolean do_audio_choice_dialog(short startup_phase) {
 }
 
 
-static void add_test(GtkWidget *table, gint row, gchar *ttext, boolean noskip) {
+static void add_test(GtkWidget *table, int row, gchar *ttext, boolean noskip) {
   GtkWidget *label=lives_standard_label_new(ttext);
 
   lives_table_attach (LIVES_TABLE (table), label, 0, 1, row, row+1, (GtkAttachOptions)0, (GtkAttachOptions)0, 10, 10);
@@ -432,7 +433,7 @@ static void add_test(GtkWidget *table, gint row, gchar *ttext, boolean noskip) {
 }
 
 
-static boolean pass_test(GtkWidget *table, gint row) {
+static boolean pass_test(GtkWidget *table, int row) {
   // TRANSLATORS - as in "passed test"
   GtkWidget *label=lives_standard_label_new(_("Passed"));
   GtkWidget *image=lives_image_new_from_stock(GTK_STOCK_APPLY,LIVES_ICON_SIZE_LARGE_TOOLBAR);
@@ -448,7 +449,7 @@ static boolean pass_test(GtkWidget *table, gint row) {
 }
 
 
-static boolean fail_test(GtkWidget *table, gint row, gchar *ftext) {
+static boolean fail_test(GtkWidget *table, int row, gchar *ftext) {
   GtkWidget *label;
   GtkWidget *image=lives_image_new_from_stock(GTK_STOCK_CANCEL,LIVES_ICON_SIZE_LARGE_TOOLBAR);
 
@@ -492,15 +493,16 @@ boolean do_startup_tests(boolean tshoot) {
   gchar *com,*rname,*afile,*tmp;
   gchar *image_ext=g_strdup(prefs->image_ext);
   gchar *title;
-  guchar *abuff;
+
+  uint8_t *abuff;
 
   size_t fsize;
 
   boolean success,success2,success3,success4;
   boolean imgext_switched=FALSE;
 
-  gint response,res;
-  gint current_file=mainw->current_file;
+  int response,res;
+  int current_file=mainw->current_file;
 
   int out_fd,info_fd;
 
@@ -600,7 +602,7 @@ boolean do_startup_tests(boolean tshoot) {
     else mainw->write_failed=FALSE;
 
     if (!mainw->write_failed) {
-      abuff=(guchar *)lives_calloc(44100,4);
+      abuff=(uint8_t *)lives_calloc(44100,4);
       if (!abuff) {
 	tmp=g_strdup(_("Unable to allocate 176400 bytes memory."));
 	fail_test(table,1,tmp);
@@ -966,7 +968,6 @@ void do_startup_interface_query(void) {
 
 
 
-void on_troubleshoot_activate                     (GtkMenuItem     *menuitem,
-						   gpointer         user_data) {
+void on_troubleshoot_activate (GtkMenuItem *menuitem, gpointer user_data) {
   do_startup_tests(TRUE);
 }

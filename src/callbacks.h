@@ -651,31 +651,17 @@ void on_open_vcd_activate (GtkMenuItem *, gpointer int_type);
 
 void on_load_vcd_ok_clicked (GtkButton *, gpointer user_data);
 
+void on_ping_pong_activate (GtkMenuItem *, gpointer);
 
+void on_show_keys_activate (GtkMenuItem *, gpointer);
 
-void
-on_ping_pong_activate                (GtkMenuItem     *menuitem,
-				      gpointer         user_data);
+void on_vj_reset_activate (GtkMenuItem *, gpointer);
 
+void on_prv_link_toggled (GtkToggleButton *, gpointer);
 
-void
-on_show_keys_activate            (GtkMenuItem     *menuitem,
-				  gpointer         user_data);
+boolean on_del_audio_activate (GtkMenuItem *, gpointer);
 
-void
-on_vj_reset_activate            (GtkMenuItem     *menuitem,
-				 gpointer         user_data);
-
-void
-on_prv_link_toggled                (GtkToggleButton *togglebutton,
-				    gpointer         user_data);
-
-void
-on_del_audio_activate (GtkMenuItem     *menuitem,
-		       gpointer         user_data);
-void
-on_ins_silence_activate (GtkMenuItem     *menuitem,
-			 gpointer         user_data);
+boolean on_ins_silence_activate (GtkMenuItem *, gpointer);
 
 void on_ins_silence_details_clicked (GtkButton *, gpointer);
 

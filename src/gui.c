@@ -3129,6 +3129,7 @@ void fade_background(void) {
   lives_widget_set_bg_color (mainw->eventbox4, LIVES_WIDGET_STATE_NORMAL, &palette->fade_colour);
   lives_widget_set_bg_color (mainw->eventbox, LIVES_WIDGET_STATE_NORMAL, &palette->fade_colour);
   lives_widget_set_bg_color (mainw->pl_eventbox, LIVES_WIDGET_STATE_NORMAL, &palette->fade_colour);
+  lives_widget_set_bg_color (mainw->image274, LIVES_WIDGET_STATE_NORMAL, &palette->fade_colour);
 
   lives_widget_set_bg_color (mainw->frame1, LIVES_WIDGET_STATE_NORMAL, &palette->fade_colour);
   lives_widget_set_bg_color (mainw->frame2, LIVES_WIDGET_STATE_NORMAL, &palette->fade_colour);
@@ -3274,6 +3275,7 @@ void unfade_background(void) {
   lives_widget_set_bg_color (mainw->frame2, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
   lives_widget_set_bg_color (mainw->freventbox0, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
   lives_widget_set_bg_color (mainw->freventbox1, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
+  lives_widget_set_bg_color (mainw->image274, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
 
   lives_widget_set_bg_color (mainw->playframe, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
   lives_widget_show(mainw->menu_hbox);
@@ -4179,8 +4181,8 @@ void resize_play_window (void) {
       if (pmonitor==0) lives_window_move (LIVES_WINDOW (mainw->play_window), (mainw->scr_width-mainw->pwidth)/2, 
 					(mainw->scr_height-mainw->pheight)/2);
       else {
-	gint xcen=mainw->mgeom[pmonitor-1].x+(mainw->mgeom[pmonitor-1].width-mainw->pwidth)/2;
-	gint ycen=mainw->mgeom[pmonitor-1].y+(mainw->mgeom[pmonitor-1].height-mainw->pheight)/2;
+	int xcen=mainw->mgeom[pmonitor-1].x+(mainw->mgeom[pmonitor-1].width-mainw->pwidth)/2;
+	int ycen=mainw->mgeom[pmonitor-1].y+(mainw->mgeom[pmonitor-1].height-mainw->pheight)/2;
 	gtk_window_set_screen(LIVES_WINDOW(mainw->play_window),mainw->mgeom[pmonitor-1].screen);
 	lives_window_move (LIVES_WINDOW (mainw->play_window), xcen, ycen);
       }
@@ -4205,7 +4207,7 @@ void resize_play_window (void) {
 	if (pmonitor==0) lives_window_move (LIVES_WINDOW (mainw->play_window), (mainw->scr_width-mainw->pwidth)/2, 
 					  (mainw->scr_height-mainw->pheight-mainw->sepwin_minheight*2)/2);
 	else {
-	  gint xcen=mainw->mgeom[pmonitor-1].x+(mainw->mgeom[pmonitor-1].width-mainw->pwidth)/2;
+	  int xcen=mainw->mgeom[pmonitor-1].x+(mainw->mgeom[pmonitor-1].width-mainw->pwidth)/2;
 	  gtk_window_set_screen(LIVES_WINDOW(mainw->play_window),mainw->mgeom[pmonitor-1].screen);
 	  lives_window_move (LIVES_WINDOW (mainw->play_window), xcen, (mainw->mgeom[pmonitor-1].height-mainw->pheight-mainw->sepwin_minheight*2)/2);
 	}
@@ -4215,7 +4217,7 @@ void resize_play_window (void) {
       if (gmonitor==0) lives_window_move (LIVES_WINDOW (mainw->play_window), (mainw->scr_width-mainw->pwidth)/2, 
 					(mainw->scr_height-mainw->pheight-mainw->sepwin_minheight*2)/2);
       else {
-	gint xcen=mainw->mgeom[gmonitor-1].x+(mainw->mgeom[gmonitor-1].width-mainw->pwidth)/2;
+	int xcen=mainw->mgeom[gmonitor-1].x+(mainw->mgeom[gmonitor-1].width-mainw->pwidth)/2;
 	gtk_window_set_screen(LIVES_WINDOW(mainw->play_window),mainw->mgeom[gmonitor-1].screen);
 	lives_window_move (LIVES_WINDOW (mainw->play_window), xcen, (mainw->mgeom[gmonitor-1].height-mainw->pheight-mainw->sepwin_minheight*2)/2);
       }

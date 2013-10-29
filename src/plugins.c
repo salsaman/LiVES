@@ -2306,7 +2306,7 @@ const lives_clip_data_t *get_decoder_cdata(file *sfile, GList *disabled) {
 
   if (sfile->ext_src!=NULL) {
     dplug=(lives_decoder_t *)sfile->ext_src;
-    msg=g_strdup_printf(" :: using decoder plugin %s",(dplug->decoder->name));
+    msg=g_strdup_printf(_(" using %s"),dplug->decoder->version());
     d_print(msg);
     g_free(msg);
 

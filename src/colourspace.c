@@ -7703,7 +7703,6 @@ void create_empty_pixel_data(weed_plant_t *layer, boolean black_fill, boolean ma
     } else {
       weed_set_boolean_value(layer,"host_pixel_data_contiguous",WEED_TRUE);
 
-
       if (!black_fill) {
 	memblock=(uint8_t *)lives_calloc((framesize>>1)+8,4);
 	if (memblock==NULL) return;
@@ -7818,7 +7817,6 @@ void create_empty_pixel_data(weed_plant_t *layer, boolean black_fill, boolean ma
 
     if (!may_contig) {
       weed_leaf_delete(layer,"host_pixel_data_contiguous");
-
 
       if (!black_fill) {
 	pd_array[0]=(uint8_t *)lives_calloc(framesize>>4,16);
@@ -10164,7 +10162,7 @@ void compact_rowstrides(weed_plant_t *layer) {
   int xheight;
   int crow=width*weed_palette_get_bits_per_macropixel(pal)/8;
   int cxrow;
-  int nplanes=weed_palette_get_numplanes(pal),mplanes;
+  int nplanes=weed_palette_get_numplanes(pal);
   register int i,j;
 
   size_t framesize=0;
@@ -10172,7 +10170,6 @@ void compact_rowstrides(weed_plant_t *layer) {
   void **pixel_data,**new_pixel_data,*npixel_data;
 
   boolean needs_change=FALSE;
-
 
   pixel_data=weed_get_voidptr_array(layer,"pixel_data",&error);
 
@@ -10218,14 +10215,7 @@ void compact_rowstrides(weed_plant_t *layer) {
 
   }
 
-  if (weed_plant_has_leaf(layer,"host_pixel_data_contiguous") && 
-      weed_get_boolean_value(layer,"host_pixel_data_contiguous",&error)==WEED_TRUE)
-    mplanes=1;
-  else mplanes=nplanes;
-
-  for (i=0;i<mplanes;i++) {
-    g_free(pixel_data[i]);
-  }
+  weed_layer_pixel_data_free(layer);
 
   if (nplanes>1) 
     weed_set_boolean_value(layer,"host_pixel_data_contiguous",WEED_TRUE);
@@ -11237,7 +11227,8 @@ weed_plant_t *weed_layer_copy (weed_plant_t *dlayer, weed_plant_t *slayer) {
 }
 
 
-void weed_layer_free (weed_plant_t *layer) {
+
+void weed_layer_pixel_data_free(weed_plant_t *layer) {
   void **pixel_data;
 
   int error;
@@ -11248,7 +11239,7 @@ void weed_layer_free (weed_plant_t *layer) {
   if (layer==NULL) return;
 
   if (weed_plant_has_leaf(layer,"host_orig_pdata")&&weed_get_boolean_value(layer,"host_orig_pdata",&error)==WEED_TRUE) 
-    goto wpf;
+    return;
 
   if (weed_plant_has_leaf(layer,"pixel_data")) {
     pd_elements=weed_leaf_num_elements(layer,"pixel_data");
@@ -11258,20 +11249,26 @@ void weed_layer_free (weed_plant_t *layer) {
       pixel_data=weed_get_voidptr_array(layer,"pixel_data",&error);
       if (pixel_data!=NULL) {
 
-	if (weed_plant_has_leaf(layer,"host_pixel_data_contiguous") && 
-	    weed_get_boolean_value(layer,"host_pixel_data_contiguous",&error)==WEED_TRUE)
-	  pd_elements=1;
+	if (weed_plant_has_leaf(layer,"host_pixel_data_contiguous")) {
+	    if (weed_get_boolean_value(layer,"host_pixel_data_contiguous",&error)==WEED_TRUE)
+	      pd_elements=1;
+	    weed_leaf_delete(layer,"host_pixel_data_contiguous");
+	  }
 
-	for (i=0;i<pd_elements;i++) {
-	  if (pixel_data[i]!=NULL) g_free(pixel_data[i]);
-	}
-	weed_free(pixel_data);
+	  for (i=0;i<pd_elements;i++) {
+	    if (pixel_data[i]!=NULL) g_free(pixel_data[i]);
+	  }
+
+	  weed_free(pixel_data);
       }
     }
   }
+}
 
+void weed_layer_free (weed_plant_t *layer) {
 
- wpf:
+  if (layer==NULL) return;
+  weed_layer_pixel_data_free(layer);
   weed_plant_free(layer);
 }
 

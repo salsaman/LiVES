@@ -123,6 +123,7 @@ boolean convert_layer_palette_full(weed_plant_t *layer, int outpl, int osamtype,
 boolean resize_layer (weed_plant_t *layer, int width, int height, LiVESInterpType interp, int opal_hint, int oclamp_hint);
 void letterbox_layer (weed_plant_t *layer, int width, int height, int nwidth, int nheight);
 void compact_rowstrides(weed_plant_t *layer);
+void weed_layer_pixel_data_free(weed_plant_t *layer);
 void create_empty_pixel_data(weed_plant_t *layer, boolean black_fill, boolean may_contig);
 void pixel_data_planar_from_membuf(void **pixel_data, void *data, size_t size, int palette);
 LiVESPixbuf *layer_to_pixbuf (weed_plant_t *layer);

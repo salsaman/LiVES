@@ -232,7 +232,7 @@ typedef int lives_pgid_t;
 /// (can be overridden in prefs)
 #define WARN_FILE_SIZE 500
 
-/// maximum fps we will allow (gdouble)
+/// maximum fps we will allow (double)
 #define FPS_MAX 200.
 
 #define MAX_FRAME_WIDTH 100000.
@@ -284,8 +284,8 @@ typedef  void *(*fn_ptr) (void *ptr);
 /// this struct is used only when physically resampling frames on the disk
 /// we create an array of these and write them to the disk
 typedef struct {
-  gint value;
-  gint64 reltime;
+  int value;
+  int64_t reltime;
 } event;
 
 typedef struct {
@@ -299,7 +299,7 @@ typedef struct {
   GtkWidget *preview_button;
   GtkWidget *cancel_button;
   GtkWidget *scrolledwindow;
-  guint frames_done;
+  uint32_t frames_done;
 } xprocess;
 
 
@@ -477,20 +477,20 @@ typedef enum {
 /// corresponds to one clip in the GUI
 typedef struct {
   // basic info (saved during backup)
-  gint bpp;
-  gdouble fps;
-  gint hsize; ///< in pixels (NOT macropixels !)
-  gint vsize;
-  gint arps; ///< audio sample rate
-  guint signed_endian; ///< bitfield
+  int bpp;
+  double fps;
+  int hsize; ///< in pixels (NOT macropixels !)
+  int vsize;
+  int arps; ///< audio sample rate
+  uint32_t signed_endian; ///< bitfield
 
-  gint arate; ///< audio playback rate
-  guint64 unique_id;    ///< this and the handle can be used to uniquely id a file
-  gint achans;
-  gint asampsize;
+  int arate; ///< audio playback rate
+  uint64_t unique_id;    ///< this and the handle can be used to uniquely id a file
+  int achans;
+  int asampsize;
 
   /////////////////
-  gint frames;
+  int frames;
   gchar title[256];
   gchar author[256];
   gchar comment[256];
@@ -500,39 +500,39 @@ typedef struct {
   lives_interlace_t interlace; ///< interlace type (if known - none, topfirst, bottomfirst or : see plugins.h)
 
   // extended info (not saved)
-  gint header_version;
+  int header_version;
 
 #define LIVES_CLIP_HEADER_VERSION 100
 
-  gint rowstride;
+  int rowstride;
 
   /// the processing window
   xprocess *proc_ptr;
 
   gchar handle[256];
-  gint ohsize;
-  gint ovsize;
+  int ohsize;
+  int ovsize;
   int64_t f_size;
   int64_t afilesize;
-  gint old_frames; ///< for deordering, etc.
+  int old_frames; ///< for deordering, etc.
   gchar file_name[PATH_MAX]; ///< input file
   gchar info_file[PATH_MAX];
   gchar name[256];  ///< the display name
   gchar save_file_name[PATH_MAX];
   gchar type[40];
-  gint start;
-  gint end;
-  gint insert_start;
-  gint insert_end;
-  gint progress_start;
-  gint progress_end;
+  int start;
+  int end;
+  int insert_start;
+  int insert_end;
+  int progress_start;
+  int progress_end;
   boolean changed;
   GtkWidget *menuentry;
   boolean orig_file_name;
   boolean was_renamed;
   boolean is_untitled;
-  gdouble pb_fps;
-  gdouble freeze_fps;
+  double pb_fps;
+  double freeze_fps;
   boolean play_paused;
   
   //opening/restoring status
@@ -549,16 +549,16 @@ typedef struct {
   /// don't show the 'keep' button - e.g. for operations which resize frames
   boolean nokeep;
 
-  // various times; total time is calculated as the gint64est of video, laudio and raudio
-  gdouble total_time;
-  gdouble video_time;
-  gdouble laudio_time;
-  gdouble raudio_time;
-  gdouble pointer_time;
+  // various times; total time is calculated as the longest of video, laudio and raudio
+  double total_time;
+  double video_time;
+  double laudio_time;
+  double raudio_time;
+  double pointer_time;
 
   // current and last played index frames for internal player
-  gint frameno;
-  gint last_frameno;
+  int frameno;
+  int last_frameno;
 
 
 
@@ -579,30 +579,30 @@ typedef struct {
   ///undo
   lives_undo_t undo_action;
 
-  gint undo_start;
-  gint undo_end;
+  int undo_start;
+  int undo_end;
   gchar undo_text[32];
   gchar redo_text[32];
   boolean undoable;
   boolean redoable;
 
   // used for storing undo values
-  gint undo1_int;
-  gint undo2_int;
-  gint undo3_int;
-  gint undo4_int;
-  guint undo1_uint;
-  gdouble undo1_dbl;
-  gdouble undo2_dbl;
+  int undo1_int;
+  int undo2_int;
+  int undo3_int;
+  int undo4_int;
+  uint32_t undo1_uint;
+  double undo1_dbl;
+  double undo2_dbl;
   boolean undo1_boolean;
   boolean undo2_boolean;
   boolean undo3_boolean;
 
-  gint undo_arate; ///< audio playback rate
-  guint undo_signed_endian;
-  gint undo_achans;
-  gint undo_asampsize;
-  gint undo_arps; ///< audio sample rate
+  int undo_arate; ///< audio playback rate
+  uint32_t undo_signed_endian;
+  int undo_achans;
+  int undo_asampsize;
+  int undo_arps; ///< audio sample rate
 
   lives_clip_type_t clip_type;
 
@@ -616,7 +616,7 @@ typedef struct {
 
   int *frame_index_back; ///< for undo
 
-  gint fx_frame_pump; ///< rfx frame pump for virtual clips (CLIP_TYPE_FILE)
+  int fx_frame_pump; ///< rfx frame pump for virtual clips (CLIP_TYPE_FILE)
 
 #define FX_FRAME_PUMP_VAL 200 ///< how many frames to prime the pump for realtime effects and resampler
 
@@ -636,15 +636,15 @@ typedef struct {
   lives_image_type_t img_type;
 
   /// layout map for the current layout
-  gint stored_layout_frame;
-  gint stored_layout_idx;
-  gdouble stored_layout_audio;
-  gdouble stored_layout_fps;
+  int stored_layout_frame;
+  int stored_layout_idx;
+  double stored_layout_audio;
+  double stored_layout_fps;
 
   lives_subtitles_t *subt;
 
   gchar *op_dir;
-  guint64 op_ds_warn_level; ///< current disk space warning level for any output directory
+  uint64_t op_ds_warn_level; ///< current disk space warning level for any output directory
 
   boolean no_proc_sys_errors; ///< skip system error dialogs in processing
   boolean no_proc_read_errors; ///< skip read error dialogs in processing
@@ -702,9 +702,9 @@ typedef struct {
   boolean has_encoder_plugins;
 
   boolean has_python;
-  guint64 python_version;
+  uint64_t python_version;
 
-  gshort cpu_bits;
+  short cpu_bits;
   
 
   gchar *myname_full;
@@ -712,9 +712,9 @@ typedef struct {
 
   boolean has_stderr;
 
-  gint nmonitors;
+  int nmonitors;
 
-  gint ncpus;
+  int ncpus;
 
 
 #define LIVES_LITTLE_ENDIAN G_LITTLE_ENDIAN
@@ -858,8 +858,8 @@ void handle_backend_errors(void);
 boolean check_backend_return(file *sfile);
 
 /** warn about disk space */
-gchar *ds_critical_msg(const gchar *dir, guint64 dsval);
-gchar *ds_warning_msg(const gchar *dir, guint64 dsval, guint64 cwarn, guint64 nwarn);
+gchar *ds_critical_msg(const gchar *dir, uint64_t dsval);
+gchar *ds_warning_msg(const gchar *dir, uint64_t dsval, uint64_t cwarn, uint64_t nwarn);
 boolean check_storage_space(file *sfile, boolean is_processing);
 
 gchar *get_upd_msg(void);
@@ -872,7 +872,7 @@ void do_memory_error_dialog (void);
 void too_many_files(void);
 void tempdir_warning (void);
 void do_audio_import_error(void);
-void do_mt_backup_space_error(lives_mt *, gint memreq_mb);
+void do_mt_backup_space_error(lives_mt *, int memreq_mb);
 
 boolean do_clipboard_fps_warning(void);
 void perf_mem_warning(void);
@@ -914,7 +914,7 @@ void do_nojack_rec_error(void);
 void do_vpp_palette_error (void);
 void do_vpp_fps_error (void);
 void do_decoder_palette_error (void);
-void do_rmem_max_error (gint size);
+void do_rmem_max_error (int size);
 boolean do_original_lost_warning(const gchar *fname);
 void do_no_decoder_error(const gchar *fname);
 void do_jack_noopen_warn(void);
@@ -990,7 +990,7 @@ const gchar *get_deinterlace_string(void);
 
 // saveplay.c backup
 void backup_file(int clip, int start, int end, const gchar *filename);
-gint save_event_frames(void);
+int save_event_frames(void);
 boolean write_headers (file *file);
 
 // saveplay.c restore
@@ -998,7 +998,7 @@ void restore_file(const gchar *filename);
 boolean read_headers(const gchar *file_name);
 
 // saveplay.c sets
-void open_set_file (const gchar *set_name, gint clipnum);
+void open_set_file (const gchar *set_name, int clipnum);
 
 
 // saveplay.c scrap file
@@ -1019,12 +1019,12 @@ void defer_sigint(int signum);
 boolean startup_message_fatal(const gchar *msg);
 boolean startup_message_nonfatal(const gchar *msg);
 boolean startup_message_info(const gchar *msg);
-boolean startup_message_nonfatal_dismissable(const gchar *msg, gint warning_mask);
+boolean startup_message_nonfatal_dismissable(const gchar *msg, int warning_mask);
 capability *get_capabilities(void);
 void get_monitors(void);
 void set_ce_frame_from_pixbuf(GtkImage *image, GdkPixbuf *pixbuf, lives_painter_t *);
-void load_start_image(gint frame);
-void load_end_image(gint frame);
+void load_start_image(int frame);
+void load_end_image(int frame);
 void load_preview_image(boolean update_always);
 
 boolean pull_frame(weed_plant_t *layer, const gchar *image_ext, weed_timecode_t tc);
@@ -1037,19 +1037,19 @@ LiVESPixbuf *pull_lives_pixbuf(int clip, int frame, const char *image_ext, weed_
 GError * lives_pixbuf_save(GdkPixbuf *pixbuf, gchar *fname, lives_image_type_t imgtype, 
 			   int quality, boolean do_chmod, GError **gerrorptr);
 
-void load_frame_image(gint frame);
+void load_frame_image(int frame);
 void sensitize(void);
 void desensitize(void);
 void procw_desensitize(void);
-void close_current_file (gint file_to_switch_to);  ///< close current file, and try to switch to file_to_switch_to
+void close_current_file (int file_to_switch_to);  ///< close current file, and try to switch to file_to_switch_to
 void get_next_free_file(void);
-void switch_to_file(gint old_file, gint new_file);
-void do_quick_switch (gint new_file);
-void switch_audio_clip(gint new_file, boolean activate);
-void resize (gdouble scale);
+void switch_to_file(int old_file, int new_file);
+void do_quick_switch (int new_file);
+void switch_audio_clip(int new_file, boolean activate);
+void resize (double scale);
 void do_start_messages(void);
 void set_palette_colours (void);
-void set_main_title(const gchar *filename, gint or_untitled_number);
+void set_main_title(const gchar *filename, int or_untitled_number);
 void set_record (void);
 
 //gui.c
@@ -1141,7 +1141,6 @@ void get_play_times(void);
 void get_total_time (file *file);
 uint32_t get_signed_endian (boolean is_signed, boolean little_endian);
 void fullscreen_internal(void);
-void colour_equal(GdkColor *c1, const GdkColor *c2);
 void switch_to_int_player(void);
 void switch_to_mplayer(void);
 void switch_aud_to_sox(boolean set_pref);
@@ -1209,7 +1208,7 @@ void find_when_to_stop (void);
 int calc_new_playback_position(int fileno, uint64_t otc, uint64_t *ntc);
 void calc_aframeno(int fileno);
 void minimise_aspect_delta (double allowed_aspect,int hblock,int vblock,int hsize,int vsize,int *width,int *height);
-LiVESInterpType get_interp_value(gshort quality);
+LiVESInterpType get_interp_value(short quality);
 
 GList *g_list_move_to_first(GList *list, GList *item) WARN_UNUSED;
 GList *g_list_delete_string(GList *, char *string) WARN_UNUSED;
@@ -1300,8 +1299,8 @@ boolean save_srt_subtitles(file *sfile, double start_time, double end_time, doub
 
 // osc.c
 #ifdef ENABLE_OSC
-boolean lives_osc_init(guint osc_udp_port);
-gint lives_osc_poll(gpointer data);
+boolean lives_osc_init(uint32_t osc_udp_port);
+int lives_osc_poll(gpointer data);
 void lives_osc_end(void);
 boolean lives_osc_notify(int msgtype, const char *msgstring);
 void lives_osc_notify_success (const gchar *msg);

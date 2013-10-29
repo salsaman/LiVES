@@ -1019,8 +1019,11 @@ void on_stop_clicked (GtkMenuItem *menuitem, gpointer user_data) {
     lives_widget_set_sensitive(cfile->proc_ptr->cancel_button, FALSE);
   }
 
+  mainw->enough_pressed=TRUE;
+
   // resume to allow return
   if (mainw->effects_paused) {
+    mainw->enough_pressed=FALSE;
 #ifndef IS_MINGW
     com=g_strdup_printf("%s stopsubsub \"%s\" SIGCONT 2>/dev/null",prefs->backend_sync,cfile->handle);
     lives_system(com,TRUE);
@@ -2442,16 +2445,14 @@ on_redo_activate                      (GtkMenuItem     *menuitem,
 
 //////////////////////////////////////////////////
 
-void
-on_copy_activate                      (GtkMenuItem     *menuitem,
-                                        gpointer         user_data)
-{
+void on_copy_activate (GtkMenuItem *menuitem, gpointer user_data) {
   gchar *com;
-  int current_file=mainw->current_file;
-  int start,end;
-
   gchar *text=g_strdup_printf(_ ("Copying frames %d to %d%s to the clipboard..."),cfile->start,cfile->end,
 			      mainw->ccpd_with_sound&&cfile->achans>0?" (with sound)":"");
+
+
+  int current_file=mainw->current_file;
+  int start,end;
 
   desensitize();
 
@@ -2473,7 +2474,7 @@ on_copy_activate                      (GtkMenuItem     *menuitem,
     cfile->progress_start=1;
     cfile->progress_end=count_virtual_frames(cfile->frame_index,start,end);
     do_threaded_dialog(_("Pulling frames from clip"),TRUE);
-    retb=virtual_to_images(mainw->current_file,start,end,TRUE);
+    retb=virtual_to_images(mainw->current_file,start,end,TRUE,NULL);
     end_threaded_dialog();
 
     if (mainw->cancelled!=CANCEL_NONE||!retb) {
@@ -3941,7 +3942,11 @@ on_record_perf_activate                      (GtkMenuItem     *menuitem,
 #ifdef ENABLE_JACK
 	if (prefs->audio_player==AUD_PLAYER_JACK) {
 	  if (mainw->agen_key==0&&!mainw->agen_needs_reinit) {
-	    if (mainw->jackd_read!=NULL) jack_rec_audio_to_clip(mainw->ascrap_file, -1, RECA_EXTERNAL);
+
+	    // TODO - check
+	    jack_rec_audio_to_clip(mainw->ascrap_file, -1, RECA_EXTERNAL);
+
+
 	  }
 	  else {
 	    if (mainw->jackd!=NULL) jack_rec_audio_to_clip(mainw->ascrap_file, -1, RECA_GENERATED);
@@ -11157,10 +11162,7 @@ void on_fade_audio_activate (GtkMenuItem *menuitem, gpointer user_data) {
 
 
 
-void
-on_del_audio_activate (GtkMenuItem     *menuitem,
-		       gpointer         user_data)
-{
+boolean on_del_audio_activate (GtkMenuItem *menuitem, gpointer user_data) {
   double start,end;
   gchar *com,*msg=NULL;
   boolean has_lmap_error=FALSE;
@@ -11181,7 +11183,7 @@ on_del_audio_activate (GtkMenuItem     *menuitem,
 	    g_list_free_strings(mainw->xlays);
 	    g_list_free(mainw->xlays);
 	    mainw->xlays=NULL;
-	    return;
+	    return FALSE;
 	  }
 	  add_lmap_error(LMAP_ERROR_DELETE_AUDIO,cfile->name,(gpointer)cfile->layout_map,mainw->current_file,0,0.,
 			 cfile->stored_layout_audio>0.);
@@ -11198,7 +11200,7 @@ on_del_audio_activate (GtkMenuItem     *menuitem,
 	  g_list_free_strings(mainw->xlays);
 	  g_list_free(mainw->xlays);
 	  mainw->xlays=NULL;
-	  return;
+	  return FALSE;
 	}
 	add_lmap_error(LMAP_ERROR_ALTER_AUDIO,cfile->name,(gpointer)cfile->layout_map,mainw->current_file,0,0.,
 		       cfile->stored_layout_audio>0.);
@@ -11210,7 +11212,7 @@ on_del_audio_activate (GtkMenuItem     *menuitem,
 
       if (!cfile->frames) {
 	if (do_warning_dialog(_ ("\nDeleting all audio will close this file.\nAre you sure ?"))) close_current_file(0);
-	return;
+	return FALSE;
       }
       msg=g_strdup(_ ("Deleting all audio..."));
       start=end=0.;
@@ -11229,7 +11231,7 @@ on_del_audio_activate (GtkMenuItem     *menuitem,
 	    g_list_free_strings(mainw->xlays);
 	    g_list_free(mainw->xlays);
 	    mainw->xlays=NULL;
-	    return;
+	    return FALSE;
 	  }
 	  add_lmap_error(LMAP_ERROR_SHIFT_AUDIO,cfile->name,(gpointer)cfile->layout_map,mainw->current_file,0,start,
 			 cfile->stored_layout_audio>end);
@@ -11247,7 +11249,7 @@ on_del_audio_activate (GtkMenuItem     *menuitem,
 	    g_list_free_strings(mainw->xlays);
 	    g_list_free(mainw->xlays);
 	    mainw->xlays=NULL;
-	    return;
+	    return FALSE;
 	  }
 	  add_lmap_error(LMAP_ERROR_DELETE_AUDIO,cfile->name,(gpointer)cfile->layout_map,mainw->current_file,0,start,
 			 cfile->stored_layout_audio>start);
@@ -11264,7 +11266,7 @@ on_del_audio_activate (GtkMenuItem     *menuitem,
 	  g_list_free_strings(mainw->xlays);
 	  g_list_free(mainw->xlays);
 	  mainw->xlays=NULL;
-	  return;
+	  return FALSE;
 	}
 	add_lmap_error(LMAP_ERROR_ALTER_AUDIO,cfile->name,(gpointer)cfile->layout_map,mainw->current_file,0,0.,
 		       cfile->stored_layout_audio>0.);
@@ -11302,14 +11304,14 @@ on_del_audio_activate (GtkMenuItem     *menuitem,
 
   if (mainw->com_failed) {
     if (menuitem!=NULL) d_print_failed();
-    return;
+    return FALSE;
   }
 
   do_progress_dialog(TRUE, FALSE, _ ("Deleting Audio"));
 
   if (mainw->error) {
     if (menuitem!=NULL) d_print_failed();
-    return;
+    return FALSE;
   }
 
   set_undoable (_("Delete Audio"),TRUE);
@@ -11339,7 +11341,7 @@ on_del_audio_activate (GtkMenuItem     *menuitem,
     stored_event_list_free_undos();
   }
 
-
+  return TRUE;
 }
 
 
@@ -11669,7 +11671,8 @@ on_recaudclip_ok_clicked                      (GtkButton *button,
 #endif
 }
 
-void on_ins_silence_activate (GtkMenuItem *menuitem, gpointer user_data) {
+
+boolean on_ins_silence_activate (GtkMenuItem *menuitem, gpointer user_data) {
   double start=0,end=0;
   gchar *com,*msg;
   boolean has_lmap_error=FALSE;
@@ -11692,10 +11695,10 @@ void on_ins_silence_activate (GtkMenuItem *menuitem, gpointer user_data) {
     mainw->fx3_val=DEFAULT_AUDIO_SAMPS;
     mainw->fx4_val=mainw->endian;
     resaudw=create_resaudw(2,NULL,NULL);
-    if (lives_dialog_run(LIVES_DIALOG(resaudw->dialog))!=GTK_RESPONSE_OK) return;
+    if (lives_dialog_run(LIVES_DIALOG(resaudw->dialog))!=GTK_RESPONSE_OK) return FALSE;
     if (mainw->error) {
       mainw->error=FALSE;
-      return;
+      return FALSE;
     }
     has_new_audio=TRUE;
   }
@@ -11712,7 +11715,7 @@ void on_ins_silence_activate (GtkMenuItem *menuitem, gpointer user_data) {
 	  g_list_free(mainw->xlays);
 	  mainw->xlays=NULL;
 	  if (has_new_audio) cfile->achans=cfile->arate=cfile->asampsize=cfile->arps=0;
-	  return;
+	  return FALSE;
 	}
 	add_lmap_error(LMAP_ERROR_SHIFT_AUDIO,cfile->name,(gpointer)cfile->layout_map,mainw->current_file,0,start,
 		       cfile->stored_layout_audio>start);
@@ -11730,7 +11733,7 @@ void on_ins_silence_activate (GtkMenuItem *menuitem, gpointer user_data) {
 	g_list_free(mainw->xlays);
 	mainw->xlays=NULL;
 	if (has_new_audio) cfile->achans=cfile->arate=cfile->asampsize=cfile->arps=0;
-	return;
+	return FALSE;
       }
       add_lmap_error(LMAP_ERROR_ALTER_AUDIO,cfile->name,(gpointer)cfile->layout_map,mainw->current_file,0,start,
 		     cfile->stored_layout_audio>0.);
@@ -11766,7 +11769,7 @@ void on_ins_silence_activate (GtkMenuItem *menuitem, gpointer user_data) {
   if (mainw->com_failed) {
     d_print_failed();
     if (has_new_audio) cfile->achans=cfile->arate=cfile->asampsize=cfile->arps=0;
-    return;
+    return FALSE;
   }
 
   do_progress_dialog(TRUE, FALSE, _("Inserting Silence"));
@@ -11774,7 +11777,7 @@ void on_ins_silence_activate (GtkMenuItem *menuitem, gpointer user_data) {
   if (mainw->error) {
     d_print_failed();
     if (has_new_audio) cfile->achans=cfile->arate=cfile->asampsize=cfile->arps=0;
-    return;
+    return FALSE;
   }
 
 
@@ -11799,7 +11802,7 @@ void on_ins_silence_activate (GtkMenuItem *menuitem, gpointer user_data) {
     stored_event_list_free_undos();
   }
 
-
+  return TRUE;
 }
 
 

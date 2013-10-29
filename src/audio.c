@@ -1283,6 +1283,9 @@ LIVES_INLINE void aud_fade(int fileno, double startt, double endt, double startv
 void jack_rec_audio_to_clip(int fileno, int old_file, lives_rec_audio_type_t rec_type) {
   // open audio file for writing
   file *outfile;
+
+  boolean jackd_read_started=(mainw->jackd_read!=NULL);
+
   int retval;
 
   if (fileno==-1) {
@@ -1322,7 +1325,7 @@ void jack_rec_audio_to_clip(int fileno, int old_file, lives_rec_audio_type_t rec
     mainw->jackd->playing_file=fileno;
   }
   else {
-    mainw->jackd_read=jack_get_driver(0,FALSE);
+    if (!jackd_read_started) mainw->jackd_read=jack_get_driver(0,FALSE);
     mainw->jackd_read->playing_file=fileno;
     mainw->jackd_read->frames_written=0;
   }
@@ -1341,9 +1344,13 @@ void jack_rec_audio_to_clip(int fileno, int old_file, lives_rec_audio_type_t rec
       mainw->jackd_read->reverse_endian=FALSE;
       
       // start jack recording
-      jack_open_device_read(mainw->jackd_read);
-      jack_read_driver_activate(mainw->jackd_read,FALSE);
-      
+
+      // TODO - only if not active
+      if (!jackd_read_started) {
+	jack_open_device_read(mainw->jackd_read);
+	jack_read_driver_activate(mainw->jackd_read,FALSE);
+      }
+
       outfile->arate=outfile->arps=mainw->jackd_read->sample_in_rate;
       outfile->achans=mainw->jackd_read->num_input_channels;
       

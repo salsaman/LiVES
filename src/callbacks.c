@@ -7110,7 +7110,7 @@ void on_full_screen_activate (GtkMenuItem *menuitem, gpointer user_data) {
   }
   else lives_widget_set_tooltip_text(mainw->t_fullscreen,_("Fullscreen playback off (f)"));
 
-  gtk_tool_button_set_icon_widget(GTK_TOOL_BUTTON(mainw->t_fullscreen),fs_img);
+  lives_tool_button_set_icon_widget(LIVES_TOOL_BUTTON(mainw->t_fullscreen),fs_img);
 
   if (mainw->playing_file>-1){
     if (mainw->fs) {
@@ -7337,7 +7337,7 @@ on_double_size_activate               (GtkMenuItem     *menuitem,
     }
     
     lives_widget_show(sngl_img);
-    gtk_tool_button_set_icon_widget(GTK_TOOL_BUTTON(mainw->t_double),sngl_img);
+    lives_tool_button_set_icon_widget(LIVES_TOOL_BUTTON(mainw->t_double),sngl_img);
   }
 
   if (mainw->playing_file>-1&&!mainw->fs) {
@@ -7476,8 +7476,8 @@ void on_sepwin_activate (GtkMenuItem *menuitem, gpointer user_data) {
 
   lives_widget_show(sep_img);
   lives_widget_show(sep_img2);
-  gtk_tool_button_set_icon_widget(GTK_TOOL_BUTTON(mainw->m_sepwinbutton),sep_img);
-  gtk_tool_button_set_icon_widget(GTK_TOOL_BUTTON(mainw->t_sepwin),sep_img2);
+  lives_tool_button_set_icon_widget(LIVES_TOOL_BUTTON(mainw->m_sepwinbutton),sep_img);
+  lives_tool_button_set_icon_widget(LIVES_TOOL_BUTTON(mainw->t_sepwin),sep_img2);
 
   if (prefs->sepwin_type==1&&mainw->playing_file==-1) {
     if (mainw->sep_win) {
@@ -7707,7 +7707,7 @@ on_sticky_activate               (GtkMenuItem     *menuitem,
 	else {
 	  if (mainw->sepwin_scale!=100.) xtrabit=g_strdup_printf(_(" (%d %% scale)"),(int)mainw->sepwin_scale);
 	  else xtrabit=g_strdup("");
-	  title=g_strdup_printf("%s%s",gtk_window_get_title(LIVES_WINDOW
+	  title=g_strdup_printf("%s%s",lives_window_get_title(LIVES_WINDOW
 							    (mainw->multitrack==NULL?mainw->LiVES:
 							     mainw->multitrack->window)),xtrabit);
 	  if (mainw->play_window!=NULL)
@@ -7816,7 +7816,7 @@ on_loop_cont_activate                (GtkMenuItem     *menuitem,
   }
 
   lives_widget_show(loop_img);
-  gtk_tool_button_set_icon_widget(GTK_TOOL_BUTTON(mainw->m_loopbutton),loop_img);
+  lives_tool_button_set_icon_widget(LIVES_TOOL_BUTTON(mainw->m_loopbutton),loop_img);
 
   lives_widget_set_sensitive (mainw->playclip, !(clipboard==NULL));
   if (mainw->current_file>-1) find_when_to_stop();
@@ -7930,7 +7930,7 @@ on_mute_activate                (GtkMenuItem     *menuitem,
 
   lives_widget_show(mute_img);
 
-  gtk_tool_button_set_icon_widget(GTK_TOOL_BUTTON(mainw->m_mutebutton),mute_img);
+  lives_tool_button_set_icon_widget(LIVES_TOOL_BUTTON(mainw->m_mutebutton),mute_img);
 
   if (mainw->preview_box!=NULL) {
     lives_widget_show(mute_img2);

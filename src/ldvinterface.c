@@ -35,8 +35,8 @@ struct _dvgrabw *create_camwindow (s_cam *cam, int type)
   lives_container_set_border_width (LIVES_CONTAINER (dvgrabw->dialog), widget_opts.border_width*2);
 
   if (prefs->show_gui) {
-    if (mainw->multitrack==NULL) gtk_window_set_transient_for(LIVES_WINDOW(dvgrabw->dialog),GTK_WINDOW(mainw->LiVES));
-    else gtk_window_set_transient_for(LIVES_WINDOW(dvgrabw->dialog),GTK_WINDOW(mainw->multitrack->window));
+    if (mainw->multitrack==NULL) lives_window_set_transient_for(LIVES_WINDOW(dvgrabw->dialog),GTK_WINDOW(mainw->LiVES));
+    else lives_window_set_transient_for(LIVES_WINDOW(dvgrabw->dialog),GTK_WINDOW(mainw->multitrack->window));
   }
 
   vbox=lives_dialog_get_content_area(LIVES_DIALOG(dvgrabw->dialog));

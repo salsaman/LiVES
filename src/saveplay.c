@@ -2999,7 +2999,7 @@ void play_file (void) {
       resize_play_window();
       if (mainw->sepwin_scale!=100.) xtrabit=g_strdup_printf(_(" (%d %% scale)"),(int)mainw->sepwin_scale);
       else xtrabit=g_strdup("");
-      title=g_strdup_printf("%s%s",gtk_window_get_title(LIVES_WINDOW
+      title=g_strdup_printf("%s%s",lives_window_get_title(LIVES_WINDOW
 							(mainw->multitrack==NULL?mainw->LiVES:
 							 mainw->multitrack->window)),xtrabit);
       if (mainw->play_window!=NULL)
@@ -3101,7 +3101,7 @@ void play_file (void) {
 
 	  if (mainw->sepwin_scale!=100.) xtrabit=g_strdup_printf(_(" (%d %% scale)"),(int)mainw->sepwin_scale);
 	  else xtrabit=g_strdup("");
-	  title=g_strdup_printf("%s%s",gtk_window_get_title(LIVES_WINDOW
+	  title=g_strdup_printf("%s%s",lives_window_get_title(LIVES_WINDOW
 							    (mainw->multitrack==NULL?mainw->LiVES:
 							     mainw->multitrack->window)),xtrabit);
 	  lives_window_set_title(LIVES_WINDOW(mainw->play_window),title);
@@ -3120,7 +3120,7 @@ void play_file (void) {
 	    mainw->noswitch=FALSE;
 	    if (mainw->sepwin_scale!=100.) xtrabit=g_strdup_printf(_(" (%d %% scale)"),(int)mainw->sepwin_scale);
 	    else xtrabit=g_strdup("");
-	    title=g_strdup_printf("%s%s",gtk_window_get_title(LIVES_WINDOW
+	    title=g_strdup_printf("%s%s",lives_window_get_title(LIVES_WINDOW
 							      (mainw->multitrack==NULL?mainw->LiVES:
 							       mainw->multitrack->window)),xtrabit);
 	    lives_window_set_title(LIVES_WINDOW(mainw->play_window),title);

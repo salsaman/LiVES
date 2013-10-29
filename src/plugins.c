@@ -714,7 +714,7 @@ void on_vppa_ok_clicked (GtkButton *button, gpointer user_data) {
 		(*vpp->init_screen)(mainw->pwidth,mainw->pheight,TRUE,xwinid,vpp->extra_argc,vpp->extra_argv);
 	      }
 	      if (mainw->vpp->capabilities&VPP_LOCAL_DISPLAY&&prefs->play_monitor==0) {
-		gtk_window_set_keep_below(LIVES_WINDOW(mainw->play_window),TRUE);
+		lives_window_set_keep_below(LIVES_WINDOW(mainw->play_window),TRUE);
 		mainw->ext_keyboard=TRUE;
 	      }
 	    }
@@ -918,13 +918,13 @@ _vppaw *on_vpp_advanced_clicked (GtkButton *button, gpointer user_data) {
   g_free(title);
 
   accel_group = GTK_ACCEL_GROUP(lives_accel_group_new ());
-  gtk_window_add_accel_group (LIVES_WINDOW (vppa->dialog), accel_group);
+  lives_window_add_accel_group (LIVES_WINDOW (vppa->dialog), accel_group);
 
   if (prefs->show_gui) {
-    if (prefsw!=NULL) gtk_window_set_transient_for(LIVES_WINDOW(vppa->dialog),GTK_WINDOW(prefsw->prefs_dialog));
+    if (prefsw!=NULL) lives_window_set_transient_for(LIVES_WINDOW(vppa->dialog),GTK_WINDOW(prefsw->prefs_dialog));
     else {
-      if (mainw->multitrack==NULL) gtk_window_set_transient_for(LIVES_WINDOW(vppa->dialog),GTK_WINDOW(mainw->LiVES));
-      else gtk_window_set_transient_for(LIVES_WINDOW(vppa->dialog),GTK_WINDOW(mainw->multitrack->window));
+      if (mainw->multitrack==NULL) lives_window_set_transient_for(LIVES_WINDOW(vppa->dialog),GTK_WINDOW(mainw->LiVES));
+      else lives_window_set_transient_for(LIVES_WINDOW(vppa->dialog),GTK_WINDOW(mainw->multitrack->window));
     }
   }
 
@@ -1124,7 +1124,7 @@ void close_vid_playback_plugin(_vid_playback_plugin *vpp) {
 #endif
 	if (mainw->vpp->capabilities&VPP_LOCAL_DISPLAY) 
 	  if (mainw->play_window!=NULL&&prefs->play_monitor==0)
-	    gtk_window_set_keep_below(LIVES_WINDOW(mainw->play_window),FALSE);
+	    lives_window_set_keep_below(LIVES_WINDOW(mainw->play_window),FALSE);
       }
       mainw->stream_ticks=-1;
       mainw->vpp=NULL;
@@ -1489,7 +1489,7 @@ void vid_playback_plugin_exit (void) {
     mainw->ext_playback=FALSE;
     if (mainw->vpp->capabilities&VPP_LOCAL_DISPLAY) 
       if (mainw->play_window!=NULL&&prefs->play_monitor==0)
-	gtk_window_set_keep_below(LIVES_WINDOW(mainw->play_window),FALSE);
+	lives_window_set_keep_below(LIVES_WINDOW(mainw->play_window),FALSE);
   }
   mainw->stream_ticks=-1;
 
@@ -2543,10 +2543,10 @@ void on_decplug_advanced_clicked (GtkButton *button, gpointer user_data) {
   dialog = lives_standard_dialog_new (_("LiVES: - Decoder Plugins"),FALSE);
 
   if (prefs->show_gui) {
-    if (prefsw!=NULL) gtk_window_set_transient_for(LIVES_WINDOW(dialog),GTK_WINDOW(prefsw->prefs_dialog));
+    if (prefsw!=NULL) lives_window_set_transient_for(LIVES_WINDOW(dialog),GTK_WINDOW(prefsw->prefs_dialog));
     else {
-      if (mainw->multitrack==NULL) gtk_window_set_transient_for(LIVES_WINDOW(dialog),GTK_WINDOW(mainw->LiVES));
-      else gtk_window_set_transient_for(LIVES_WINDOW(dialog),GTK_WINDOW(mainw->multitrack->window));
+      if (mainw->multitrack==NULL) lives_window_set_transient_for(LIVES_WINDOW(dialog),GTK_WINDOW(mainw->LiVES));
+      else lives_window_set_transient_for(LIVES_WINDOW(dialog),GTK_WINDOW(mainw->multitrack->window));
     }
   }
 
@@ -3755,10 +3755,10 @@ gchar *plugin_run_param_window(const gchar *get_com, GtkVBox *vbox, lives_rfx_t 
       on_fx_pre_activate(rfx,1,NULL);
 
       if (prefs->show_gui) {
-	if (mainw->multitrack==NULL) gtk_window_set_transient_for(LIVES_WINDOW(fx_dialog[1]),GTK_WINDOW(mainw->LiVES));
-	else gtk_window_set_transient_for(LIVES_WINDOW(fx_dialog[1]),GTK_WINDOW(mainw->multitrack->window));
+	if (mainw->multitrack==NULL) lives_window_set_transient_for(LIVES_WINDOW(fx_dialog[1]),GTK_WINDOW(mainw->LiVES));
+	else lives_window_set_transient_for(LIVES_WINDOW(fx_dialog[1]),GTK_WINDOW(mainw->multitrack->window));
       }
-      gtk_window_set_modal (LIVES_WINDOW (fx_dialog[1]), TRUE);
+      lives_window_set_modal (LIVES_WINDOW (fx_dialog[1]), TRUE);
       
       if (lives_dialog_run(LIVES_DIALOG(fx_dialog[1]))==GTK_RESPONSE_OK) {
 	// marshall our params for passing to the plugin

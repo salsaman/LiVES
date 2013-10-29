@@ -1091,7 +1091,7 @@ static void lives_init(_ign_opts *ign_opts) {
 						      lives_widget_get_allocation_width(mainw->LiVES))/2;
       gint ycen=mainw->mgeom[prefs->gui_monitor-1].y+(mainw->mgeom[prefs->gui_monitor-1].height-
 						      lives_widget_get_allocation_height(mainw->LiVES))/2;
-      gtk_window_set_screen(LIVES_WINDOW(mainw->LiVES),mainw->mgeom[prefs->gui_monitor-1].screen);
+      lives_window_set_screen(LIVES_WINDOW(mainw->LiVES),mainw->mgeom[prefs->gui_monitor-1].screen);
       lives_window_move(LIVES_WINDOW(mainw->LiVES),xcen,ycen);
 
     }
@@ -5937,7 +5937,7 @@ void close_current_file(gint file_to_switch_to) {
       lives_chdir(cwd,FALSE);
       g_free(cwd);
     }
-
+  
     if (cfile->frame_index!=NULL) g_free(cfile->frame_index);
     if (cfile->frame_index_back!=NULL) g_free(cfile->frame_index_back);
 

@@ -3759,7 +3759,7 @@ GtkWidget *make_datacon_window(int key, int mode) {
   lives_widget_set_size_request (conxw.conx_dialog, winsize_h, winsize_v);
 
   accel_group = GTK_ACCEL_GROUP(lives_accel_group_new ());
-  gtk_window_add_accel_group (LIVES_WINDOW (conxw.conx_dialog), accel_group);
+  lives_window_add_accel_group (LIVES_WINDOW (conxw.conx_dialog), accel_group);
 
   abox = lives_dialog_get_action_area(LIVES_DIALOG(conxw.conx_dialog));
 

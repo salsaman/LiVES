@@ -1205,10 +1205,10 @@ _resaudw *create_resaudw (gshort type, render_details *rdet, GtkWidget *top_vbox
     g_free(title);
 
     accel_group = GTK_ACCEL_GROUP(lives_accel_group_new ());
-    gtk_window_add_accel_group (LIVES_WINDOW (resaudw->dialog), accel_group);
+    lives_window_add_accel_group (LIVES_WINDOW (resaudw->dialog), accel_group);
 
     if (prefs->show_gui) {
-      gtk_window_set_transient_for(LIVES_WINDOW(resaudw->dialog),GTK_WINDOW(mainw->LiVES));
+      lives_window_set_transient_for(LIVES_WINDOW(resaudw->dialog),GTK_WINDOW(mainw->LiVES));
     }
 
     dialog_vbox = lives_dialog_get_content_area(LIVES_DIALOG(resaudw->dialog));
@@ -1679,10 +1679,10 @@ void create_new_pb_speed (short type) {
   lives_container_set_border_width (LIVES_CONTAINER (new_pb_speed), widget_opts.border_width*2);
 
   accel_group = GTK_ACCEL_GROUP(lives_accel_group_new ());
-  gtk_window_add_accel_group (LIVES_WINDOW (new_pb_speed), accel_group);
+  lives_window_add_accel_group (LIVES_WINDOW (new_pb_speed), accel_group);
 
   if (prefs->show_gui) {
-    gtk_window_set_transient_for(LIVES_WINDOW(new_pb_speed),GTK_WINDOW(mainw->LiVES));
+    lives_window_set_transient_for(LIVES_WINDOW(new_pb_speed),GTK_WINDOW(mainw->LiVES));
   }
 
   dialog_vbox = lives_dialog_get_content_area(LIVES_DIALOG(new_pb_speed));

@@ -11,7 +11,6 @@ typedef struct  {
   AVCodecContext *ctx;
   AVFrame *pFrame;
   AVPacket packet;
-  boolean packet_valid;
   boolean fps_avg;
   boolean black_fill;
 

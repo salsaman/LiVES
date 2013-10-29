@@ -217,15 +217,15 @@ static GtkWidget* create_warn_dialog (int warn_mask_number, GtkWindow *transient
     break;
   }
 
-  gtk_window_add_accel_group (LIVES_WINDOW (dialog), accel_group);
+  lives_window_add_accel_group (LIVES_WINDOW (dialog), accel_group);
 
   if (widget_opts.apply_theme&&(palette->style&STYLE_1)) {
     lives_dialog_set_has_separator(LIVES_DIALOG(dialog),FALSE);
     lives_widget_set_bg_color(dialog, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
   }
 
-  gtk_window_set_deletable(LIVES_WINDOW(dialog), FALSE);
-  gtk_window_set_resizable (LIVES_WINDOW (dialog), FALSE);
+  lives_window_set_deletable(LIVES_WINDOW(dialog), FALSE);
+  lives_window_set_resizable (LIVES_WINDOW (dialog), FALSE);
 
   lives_container_set_border_width (LIVES_CONTAINER (dialog), widget_opts.border_width*2);
 
@@ -271,7 +271,7 @@ static GtkWidget* create_warn_dialog (int warn_mask_number, GtkWindow *transient
 
   lives_window_center(LIVES_WINDOW(dialog));
 
-  gtk_window_set_modal (LIVES_WINDOW (dialog), TRUE);
+  lives_window_set_modal (LIVES_WINDOW (dialog), TRUE);
 
   if (prefs->present) {
     lives_window_present (LIVES_WINDOW (dialog));
@@ -492,7 +492,7 @@ void do_error_dialog_with_check_transient(const gchar *text, boolean is_blocking
   mytext=g_strdup(text);
   err_box=create_info_error_dialog(mytext,is_blocking,warn_mask_number,warn_mask_number==0?LIVES_INFO_TYPE_ERROR:LIVES_INFO_TYPE_WARNING);
   if (mytext!=NULL) g_free(mytext);
-  if (transient!=NULL) gtk_window_set_transient_for(LIVES_WINDOW(err_box),transient);
+  if (transient!=NULL) lives_window_set_transient_for(LIVES_WINDOW(err_box),transient);
 
   if (is_blocking) {
     lives_dialog_run(LIVES_DIALOG (err_box));
@@ -512,7 +512,7 @@ void do_info_dialog_with_transient(const gchar *text, boolean is_blocking, GtkWi
   mytext=g_strdup(text);
   info_box=create_info_error_dialog(mytext,is_blocking,0,LIVES_INFO_TYPE_INFO);
   if (mytext!=NULL) g_free(mytext);
-  if (transient!=NULL) gtk_window_set_transient_for(LIVES_WINDOW(info_box),transient);
+  if (transient!=NULL) lives_window_set_transient_for(LIVES_WINDOW(info_box),transient);
 
   if (is_blocking) {
     lives_dialog_run(LIVES_DIALOG (info_box));
@@ -1829,7 +1829,7 @@ boolean do_auto_dialog (const gchar *text, int type) {
   proc_ptr=create_processing (mytext);
   if (mytext!=NULL) g_free(mytext);
   lives_widget_hide (proc_ptr->stop_button);
-  gtk_window_set_modal (LIVES_WINDOW (proc_ptr->processing), TRUE);
+  lives_window_set_modal (LIVES_WINDOW (proc_ptr->processing), TRUE);
      
   if (type==2) {
     lives_widget_show (proc_ptr->cancel_button);
@@ -2474,10 +2474,10 @@ static void create_threaded_dialog(gchar *text, boolean has_cancel) {
 
   procw->processing = lives_standard_dialog_new (_("LiVES: - Processing..."),FALSE);
 
-  gtk_window_add_accel_group (LIVES_WINDOW (procw->processing), mainw->accel_group);
+  lives_window_add_accel_group (LIVES_WINDOW (procw->processing), mainw->accel_group);
 
-  if (mainw->multitrack==NULL) gtk_window_set_transient_for(LIVES_WINDOW(procw->processing),GTK_WINDOW(mainw->LiVES));
-  else gtk_window_set_transient_for(LIVES_WINDOW(procw->processing),GTK_WINDOW(mainw->multitrack->window));
+  if (mainw->multitrack==NULL) lives_window_set_transient_for(LIVES_WINDOW(procw->processing),GTK_WINDOW(mainw->LiVES));
+  else lives_window_set_transient_for(LIVES_WINDOW(procw->processing),GTK_WINDOW(mainw->multitrack->window));
 
   dialog_vbox = lives_dialog_get_content_area(LIVES_DIALOG(procw->processing));
 
@@ -3048,7 +3048,7 @@ void do_do_not_close_d (void) {
     else if (mainw->multitrack!=NULL&&mainw->multitrack->is_ready) transient=LIVES_WINDOW(mainw->multitrack->window);
   }
 
-  if (transient!=NULL) gtk_window_set_transient_for(LIVES_WINDOW(err_box),transient);
+  if (transient!=NULL) lives_window_set_transient_for(LIVES_WINDOW(err_box),transient);
   lives_widget_show(err_box);
 
   lives_window_present (LIVES_WINDOW (err_box));

@@ -1671,16 +1671,16 @@ void on_rte_info_clicked (GtkButton *button, gpointer user_data) {
 
   filter_version=weed_get_int_value(filter,"version",&weed_error);
 
-  rte_info_window = gtk_window_new (LIVES_WINDOW_TOPLEVEL);
+  rte_info_window = lives_window_new (LIVES_WINDOW_TOPLEVEL);
   lives_window_set_title (LIVES_WINDOW (rte_info_window), g_strdup_printf(_("LiVES: Information for %s"),filter_name));
   if (palette->style&STYLE_1) {
     lives_widget_set_bg_color(rte_info_window, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
   }
 
   lives_container_set_border_width (LIVES_CONTAINER (rte_info_window), widget_opts.border_width);
-  gtk_window_set_transient_for(LIVES_WINDOW(rte_info_window),GTK_WINDOW(lives_widget_get_toplevel(LIVES_WIDGET(button))));
+  lives_window_set_transient_for(LIVES_WINDOW(rte_info_window),GTK_WINDOW(lives_widget_get_toplevel(LIVES_WIDGET(button))));
 
-  gtk_window_set_default_size (LIVES_WINDOW (rte_info_window), RTE_INFO_WIDTH, RTE_INFO_HEIGHT);
+  lives_window_set_default_size (LIVES_WINDOW (rte_info_window), RTE_INFO_WIDTH, RTE_INFO_HEIGHT);
 
   vbox = lives_vbox_new (FALSE, widget_opts.packing_height*2);
   lives_container_add (LIVES_CONTAINER (rte_info_window), vbox);
@@ -2190,13 +2190,13 @@ GtkWidget * create_rte_window (void) {
   gr_fns=(gulong *)g_malloc((prefs->rte_keys_virtual)*sizeof(gulong));
   mode_ra_fns=(gulong *)g_malloc((prefs->rte_keys_virtual)*modes*sizeof(gulong));
 
-  rte_window = gtk_window_new (LIVES_WINDOW_TOPLEVEL);
+  rte_window = lives_window_new (LIVES_WINDOW_TOPLEVEL);
   if (palette->style&STYLE_1) {
     lives_widget_set_bg_color(rte_window, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
     lives_widget_set_text_color(rte_window, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars_fore);
   }
   lives_window_set_title (LIVES_WINDOW (rte_window), _("LiVES: Real time effect mapping"));
-  gtk_window_add_accel_group (LIVES_WINDOW (rte_window), mainw->accel_group);
+  lives_window_add_accel_group (LIVES_WINDOW (rte_window), mainw->accel_group);
 
   table = lives_table_new (prefs->rte_keys_virtual, modes+1, FALSE);
 
@@ -2381,7 +2381,7 @@ GtkWidget * create_rte_window (void) {
 
 
   rtew_accel_group = GTK_ACCEL_GROUP(lives_accel_group_new ());
-  gtk_window_add_accel_group (LIVES_WINDOW (rte_window), rtew_accel_group);
+  lives_window_add_accel_group (LIVES_WINDOW (rte_window), rtew_accel_group);
 
   lives_widget_add_accelerator (ok_button, "activate", rtew_accel_group,
                               LIVES_KEY_Escape, (GdkModifierType)0, (GtkAccelFlags)0);
@@ -2416,7 +2416,7 @@ GtkWidget * create_rte_window (void) {
 						    lives_widget_get_allocation_width(rte_window))/2;
     int ycen=mainw->mgeom[prefs->gui_monitor-1].y+(mainw->mgeom[prefs->gui_monitor-1].height-
 						    lives_widget_get_allocation_height(rte_window))/2;
-    gtk_window_set_screen(LIVES_WINDOW(rte_window),mainw->mgeom[prefs->gui_monitor-1].screen);
+    lives_window_set_screen(LIVES_WINDOW(rte_window),mainw->mgeom[prefs->gui_monitor-1].screen);
     lives_window_move(LIVES_WINDOW(rte_window),xcen,ycen);
   }
 

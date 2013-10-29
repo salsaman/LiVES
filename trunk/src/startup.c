@@ -278,7 +278,7 @@ boolean do_audio_choice_dialog(short startup_phase) {
   dialog = lives_standard_dialog_new (_("LiVES: - Choose an audio player"),FALSE);
 
   accel_group = GTK_ACCEL_GROUP(lives_accel_group_new ());
-  gtk_window_add_accel_group (LIVES_WINDOW (dialog), accel_group);
+  lives_window_add_accel_group (LIVES_WINDOW (dialog), accel_group);
 
   dialog_vbox = lives_dialog_get_content_area(LIVES_DIALOG(dialog));
   
@@ -528,7 +528,7 @@ boolean do_startup_tests(boolean tshoot) {
   dialog = lives_standard_dialog_new (title,FALSE);
 
   accel_group = GTK_ACCEL_GROUP(lives_accel_group_new ());
-  gtk_window_add_accel_group (LIVES_WINDOW (dialog), accel_group);
+  lives_window_add_accel_group (LIVES_WINDOW (dialog), accel_group);
 
   g_free(title);
 

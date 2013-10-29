@@ -5860,8 +5860,8 @@ sub append_silence {
 	}
     }
 
-    my $fsize= -s $audio_file;
-    $fsize=&align($fsize-$offset); #insert at $fsize-$offset
+    my $gsize= -s $audio_file;
+    my $fsize=&align($gsize-$offset); #insert at $fsize-$offset
     my $size=&align($end-$fsize); #insert to $end
 
     if ($size>0) {
@@ -5875,7 +5875,7 @@ sub append_silence {
 		}
 		open AUD,"+<","$audio_file" or $panic=sig_write_error("$audio_file");
 		return if $panic;
-		seek AUD,-$offset,SEEK_END or $panic=sig_write_error("$audio_file");
+		seek AUD,$gsize-$offset,SEEK_SET or $panic=sig_write_error("$audio_file");
 		return if $panic;
 		for ($i=0;$i<$size;$i++) {
 		    print AUD chr(0) or $panic=sig_write_error("$audio_file");
@@ -5901,7 +5901,7 @@ sub append_silence {
 	    }
 	    open AUD,"+<","$audio_file" or $panic=sig_write_error("$audio_file");
 	    return if $panic;
-	    seek AUD,-$offset,SEEK_END or $panic=sig_write_error("$audio_file");
+	    seek AUD,$gsize-$offset,SEEK_SET or $panic=sig_write_error("$audio_file");
 	    return if $panic;
 	    if ($asamps==8) {
 		for ($i=0;$i<$size;$i++) {

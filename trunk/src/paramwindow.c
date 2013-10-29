@@ -819,8 +819,8 @@ void on_fx_pre_activate (lives_rfx_t *rfx, int didx, LiVESWidget *pbox) {
   if (didx==0) {
     // activated from the menu for a rendered effect
     if (prefs->show_gui) {
-      if (mainw->multitrack==NULL) gtk_window_set_transient_for(LIVES_WINDOW(fx_dialog[0]),GTK_WINDOW(mainw->LiVES));
-      else gtk_window_set_transient_for(LIVES_WINDOW(fx_dialog[0]),GTK_WINDOW(mainw->multitrack->window));
+      if (mainw->multitrack==NULL) lives_window_set_transient_for(LIVES_WINDOW(fx_dialog[0]),GTK_WINDOW(mainw->LiVES));
+      else lives_window_set_transient_for(LIVES_WINDOW(fx_dialog[0]),GTK_WINDOW(mainw->multitrack->window));
     }
   }
 
@@ -877,7 +877,7 @@ void on_fx_pre_activate (lives_rfx_t *rfx, int didx, LiVESWidget *pbox) {
     cancelbutton = lives_button_new_from_stock ("gtk-cancel");
     
     fxw_accel_group = GTK_ACCEL_GROUP(lives_accel_group_new ());
-    gtk_window_add_accel_group (LIVES_WINDOW (fx_dialog[didx]), fxw_accel_group);
+    lives_window_add_accel_group (LIVES_WINDOW (fx_dialog[didx]), fxw_accel_group);
 
     dialog_action_area = lives_dialog_get_action_area(LIVES_DIALOG (fx_dialog[didx]));
 
@@ -2485,9 +2485,9 @@ boolean after_param_text_focus_changed (GtkWidget *hbox, GtkWidget *child, lives
 
   if (mainw->multitrack!=NULL) {
     if (child!=NULL)
-      gtk_window_remove_accel_group(LIVES_WINDOW(mainw->multitrack->window),mainw->multitrack->accel_group);
+      lives_window_remove_accel_group(LIVES_WINDOW(mainw->multitrack->window),mainw->multitrack->accel_group);
     else
-      gtk_window_add_accel_group(LIVES_WINDOW(mainw->multitrack->window),mainw->multitrack->accel_group);
+      lives_window_add_accel_group(LIVES_WINDOW(mainw->multitrack->window),mainw->multitrack->accel_group);
 
   }
   
@@ -3022,10 +3022,10 @@ int set_param_from_list(GList *plist, lives_param_t *param, int pnum, boolean wi
 	  lives_rfx_t *rfx=(lives_rfx_t *)g_object_get_data(G_OBJECT(param->widgets[0]),"rfx");
 	  g_signal_handlers_block_by_func(param->widgets[0],(gpointer)after_param_value_changed,(gpointer)rfx);
 	  lives_spin_button_set_range (LIVES_SPIN_BUTTON (param->widgets[0]),(double)param->min,(double)param->max);
-	  gtk_spin_button_update(LIVES_SPIN_BUTTON(param->widgets[0]));
+	  lives_spin_button_update(LIVES_SPIN_BUTTON(param->widgets[0]));
 	  g_signal_handlers_unblock_by_func(param->widgets[0],(gpointer)after_param_value_changed,(gpointer)rfx);
 	  lives_spin_button_set_value (LIVES_SPIN_BUTTON (param->widgets[0]),get_double_param(param->value));
-	  gtk_spin_button_update(LIVES_SPIN_BUTTON(param->widgets[0]));
+	  lives_spin_button_update(LIVES_SPIN_BUTTON(param->widgets[0]));
 	}
       }
       else set_double_param(param->def,double_val);
@@ -3057,10 +3057,10 @@ int set_param_from_list(GList *plist, lives_param_t *param, int pnum, boolean wi
 	  lives_rfx_t *rfx=(lives_rfx_t *)g_object_get_data(G_OBJECT(param->widgets[0]),"rfx");
 	  g_signal_handlers_block_by_func(param->widgets[0],(gpointer)after_param_value_changed,(gpointer)rfx);
 	  lives_spin_button_set_range (LIVES_SPIN_BUTTON (param->widgets[0]),(double)param->min,(double)param->max);
-	  gtk_spin_button_update(LIVES_SPIN_BUTTON(param->widgets[0]));
+	  lives_spin_button_update(LIVES_SPIN_BUTTON(param->widgets[0]));
 	  g_signal_handlers_unblock_by_func(param->widgets[0],(gpointer)after_param_value_changed,(gpointer)rfx);
 	  lives_spin_button_set_value (LIVES_SPIN_BUTTON (param->widgets[0]),(double)get_int_param(param->value));
-	  gtk_spin_button_update(LIVES_SPIN_BUTTON(param->widgets[0]));
+	  lives_spin_button_update(LIVES_SPIN_BUTTON(param->widgets[0]));
 	}
       }
       else set_int_param(param->def,int_value);

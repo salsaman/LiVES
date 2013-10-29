@@ -1379,7 +1379,7 @@ static omclearn_w *create_omclearn_dialog(void) {
 						    -lives_widget_get_allocation_width(omclw->dialog))/2;
     gint ycen=mainw->mgeom[prefs->gui_monitor-1].y+(mainw->mgeom[prefs->gui_monitor-1].height
 						    -lives_widget_get_allocation_height(omclw->dialog))/2;
-    gtk_window_set_screen(LIVES_WINDOW(omclw->dialog),mainw->mgeom[prefs->gui_monitor-1].screen);
+    lives_window_set_screen(LIVES_WINDOW(omclw->dialog),mainw->mgeom[prefs->gui_monitor-1].screen);
     lives_window_move(LIVES_WINDOW(omclw->dialog),xcen,ycen);
   }
   

@@ -85,10 +85,10 @@ void create_merge_dialog (void) {
   merge_opts->merge_dialog = lives_standard_dialog_new (_("LiVES: - Merge"),FALSE);
 
   accel_group = GTK_ACCEL_GROUP(lives_accel_group_new ());
-  gtk_window_add_accel_group (LIVES_WINDOW (merge_opts->merge_dialog), accel_group);
+  lives_window_add_accel_group (LIVES_WINDOW (merge_opts->merge_dialog), accel_group);
 
   if (prefs->show_gui) {
-    gtk_window_set_transient_for(LIVES_WINDOW(merge_opts->merge_dialog),GTK_WINDOW(mainw->LiVES));
+    lives_window_set_transient_for(LIVES_WINDOW(merge_opts->merge_dialog),GTK_WINDOW(mainw->LiVES));
   }
 
   dialog_vbox = lives_dialog_get_content_area(LIVES_DIALOG(merge_opts->merge_dialog));

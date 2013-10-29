@@ -616,61 +616,202 @@ LIVES_INLINE void lives_dialog_add_action_widget(LiVESDialog *dialog, LiVESWidge
 }
 
 
+LIVES_INLINE LiVESWidget *lives_window_new(lives_window_type_t wintype) {
+  LiVESWidget *window=NULL;
+#ifdef GUI_GTK
+  window=gtk_window_new(wintype);
+#endif
+  return window;
+}
 
-LIVES_INLINE void lives_window_set_title(LiVESWindow *window, const char *title) {
+
+LIVES_INLINE boolean lives_window_set_title(LiVESWindow *window, const char *title) {
 #ifdef GUI_GTK
   gtk_window_set_title(window,title);
+  return TRUE;
 #endif
+  return FALSE;
 }
 
 
-LIVES_INLINE void lives_window_move(LiVESWindow *window, int x, int y) {
+LIVES_INLINE boolean lives_window_set_transient_for(LiVESWindow *window, LiVESWindow *parent) {
+#ifdef GUI_GTK
+  gtk_window_set_transient_for(window,parent);
+  return TRUE;
+#endif
+  return FALSE;
+}
+
+
+LIVES_INLINE boolean lives_window_set_modal(LiVESWindow *window, boolean modal) {
+#ifdef GUI_GTK
+  gtk_window_set_modal(window,modal);
+  return TRUE;
+#endif
+  return FALSE;
+}
+
+
+LIVES_INLINE boolean lives_window_set_deletable(LiVESWindow *window, boolean deletable) {
+#ifdef GUI_GTK
+  gtk_window_set_deletable(window,deletable);
+  return TRUE;
+#endif
+  return FALSE;
+}
+
+
+LIVES_INLINE boolean lives_window_set_resizable(LiVESWindow *window, boolean resizable) {
+#ifdef GUI_GTK
+  gtk_window_set_resizable(window,resizable);
+  return TRUE;
+#endif
+  return FALSE;
+}
+
+
+LIVES_INLINE boolean lives_window_set_keep_below(LiVESWindow *window, boolean set) {
+#ifdef GUI_GTK
+  gtk_window_set_keep_below(window,set);
+  return TRUE;
+#endif
+  return FALSE;
+}
+
+
+LIVES_INLINE boolean lives_window_set_decorated(LiVESWindow *window, boolean set) {
+#ifdef GUI_GTK
+  gtk_window_set_decorated(window,set);
+  return TRUE;
+#endif
+  return FALSE;
+}
+
+
+LIVES_INLINE boolean lives_window_set_auto_startup_notification(boolean set) {
+#ifdef GUI_GTK
+  gtk_window_set_auto_startup_notification(set);
+  return TRUE;
+#endif
+  return FALSE;
+}
+
+
+
+LIVES_INLINE boolean lives_window_set_screen(LiVESWindow *window, LiVESXScreen *screen) {
+#ifdef GUI_GTK
+  gtk_window_set_screen(window,screen);
+  return TRUE;
+#endif
+  return FALSE;
+}
+
+
+LIVES_INLINE boolean lives_window_set_default_size(LiVESWindow *window, int width, int height) {
+#ifdef GUI_GTK
+  gtk_window_set_default_size(window,width,height);
+  return TRUE;
+#endif
+  return FALSE;
+}
+
+
+LIVES_INLINE const char *lives_window_get_title(LiVESWindow *window) {
+#ifdef GUI_GTK
+  return gtk_window_get_title(window);
+#endif
+  return NULL;
+}
+
+
+LIVES_INLINE boolean lives_window_move(LiVESWindow *window, int x, int y) {
 #ifdef GUI_GTK
   gtk_window_move(window,x,y);
+  return TRUE;
 #endif
+  return FALSE;
 }
 
 
-LIVES_INLINE void lives_window_resize(LiVESWindow *window, int width, int height) {
+LIVES_INLINE boolean lives_window_resize(LiVESWindow *window, int width, int height) {
 #ifdef GUI_GTK
   gtk_window_resize(window,width,height);
+  return TRUE;
 #endif
+  return FALSE;
 }
 
 
-LIVES_INLINE void lives_window_present(LiVESWindow *window) {
+LIVES_INLINE boolean lives_window_present(LiVESWindow *window) {
 #ifdef GUI_GTK
   gtk_window_present(window);
+  return TRUE;
 #endif
+  return FALSE;
 }
 
 
-LIVES_INLINE void lives_window_fullscreen(LiVESWindow *window) {
+LIVES_INLINE boolean lives_window_fullscreen(LiVESWindow *window) {
 #ifdef GUI_GTK
   gtk_window_fullscreen(window);
+  return TRUE;
 #endif
+  return FALSE;
 }
 
 
-LIVES_INLINE void lives_window_unfullscreen(LiVESWindow *window) {
+LIVES_INLINE boolean lives_window_unfullscreen(LiVESWindow *window) {
 #ifdef GUI_GTK
   gtk_window_unfullscreen(window);
+  return TRUE;
 #endif
+  return FALSE;
 }
 
 
-LIVES_INLINE void lives_window_maximize(LiVESWindow *window) {
+LIVES_INLINE boolean lives_window_maximize(LiVESWindow *window) {
 #ifdef GUI_GTK
   gtk_window_maximize(window);
+  return TRUE;
 #endif
+  return FALSE;
 }
 
 
-LIVES_INLINE void lives_window_unmaximize(LiVESWindow *window) {
+LIVES_INLINE boolean lives_window_unmaximize(LiVESWindow *window) {
 #ifdef GUI_GTK
   gtk_window_unmaximize(window);
+  return TRUE;
 #endif
+  return FALSE;
 }
+
+
+LIVES_INLINE boolean lives_window_add_accel_group(LiVESWindow *window, LiVESAccelGroup *group) {
+#ifdef GUI_GTK
+  gtk_window_add_accel_group(window,group);
+  return TRUE;
+#endif
+  return FALSE;
+}
+
+
+LIVES_INLINE boolean lives_window_remove_accel_group(LiVESWindow *window, LiVESAccelGroup *group) {
+#ifdef GUI_GTK
+  gtk_window_remove_accel_group(window,group);
+  return TRUE;
+#endif
+  return FALSE;
+}
+
+
+LIVES_INLINE boolean lives_window_has_toplevel_focus(LiVESWindow *window) {
+#ifdef GUI_GTK
+  return gtk_window_has_toplevel_focus(window);
+#endif
+  return FALSE;
+}
+
 
 
 LIVES_INLINE LiVESPixbuf *lives_pixbuf_new(boolean has_alpha, int width, int height) {
@@ -1522,6 +1663,63 @@ LIVES_INLINE boolean lives_spin_button_set_digits(LiVESSpinButton *button, uint3
 }
 
 
+LIVES_INLINE boolean lives_spin_button_update(LiVESSpinButton *button) {
+#ifdef GUI_GTK
+  gtk_spin_button_update(button);
+  return TRUE;
+#endif
+  return FALSE;
+}
+
+
+
+
+LIVES_INLINE LiVESToolItem *lives_tool_button_new(LiVESWidget *icon_widget, const char *label) {
+  LiVESToolItem *button=NULL;
+#ifdef GUI_GTK
+  button=gtk_tool_button_new(icon_widget,label);
+#endif
+  return button;
+}
+
+
+LIVES_INLINE boolean lives_tool_button_set_label(LiVESToolButton *button, const char *label) {
+#ifdef GUI_GTK
+  gtk_tool_button_set_label(button,label);
+  return TRUE;
+#endif
+  return FALSE;
+}
+
+
+LIVES_INLINE boolean lives_tool_button_set_icon_widget(LiVESToolButton *button, LiVESWidget *icon) {
+#ifdef GUI_GTK
+  gtk_tool_button_set_icon_widget(button,icon);
+  return TRUE;
+#endif
+  return FALSE;
+}
+
+
+LIVES_INLINE boolean lives_tool_button_set_label_widget(LiVESToolButton *button, LiVESWidget *label) {
+#ifdef GUI_GTK
+  gtk_tool_button_set_label_widget(button,label);
+  return TRUE;
+#endif
+  return FALSE;
+}
+
+
+LIVES_INLINE boolean lives_tool_button_set_use_underline(LiVESToolButton *button, boolean use_underline) {
+#ifdef GUI_GTK
+  gtk_tool_button_set_use_underline(button,use_underline);
+  return TRUE;
+#endif
+  return FALSE;
+}
+
+
+
 LIVES_INLINE void lives_ruler_set_range(LiVESRuler *ruler, double lower, double upper, double position, double max_size) {
 #ifdef GUI_GTK
 #if GTK_CHECK_VERSION(3,0,0)
@@ -1579,6 +1777,64 @@ LIVES_INLINE double lives_ruler_set_lower(LiVESRuler *ruler, double value) {
 #endif
   return value;
 }
+
+
+LIVES_INLINE LiVESWidget *lives_toolbar_new(void) {
+  LiVESWidget *toolbar=NULL;
+#ifdef GUI_GTK
+  toolbar=gtk_toolbar_new();
+#endif
+  return toolbar;
+}
+
+
+
+LIVES_INLINE boolean lives_toolbar_insert(LiVESToolbar *toolbar, LiVESToolItem *item, int pos) {
+#ifdef GUI_GTK
+  gtk_toolbar_insert(toolbar,item,pos);
+  return TRUE;
+#endif
+  return FALSE;
+}
+
+
+LIVES_INLINE boolean lives_toolbar_set_show_arrow(LiVESToolbar *toolbar, boolean show) {
+#ifdef GUI_GTK
+  gtk_toolbar_set_show_arrow(toolbar,show);
+  return TRUE;
+#endif
+  return FALSE;
+}
+
+
+LIVES_INLINE lives_icon_size_t lives_toolbar_get_icon_size(LiVESToolbar *toolbar) {
+#ifdef GUI_GTK
+  return gtk_toolbar_get_icon_size(toolbar);
+#endif
+  return LIVES_ICON_SIZE_INVALID;
+}
+
+
+
+LIVES_INLINE boolean lives_toolbar_set_icon_size(LiVESToolbar *toolbar, lives_icon_size_t icon_size) {
+#ifdef GUI_GTK
+  gtk_toolbar_set_icon_size(toolbar,icon_size);
+  return TRUE;
+#endif
+  return FALSE;
+}
+
+
+LIVES_INLINE boolean lives_toolbar_set_style(LiVESToolbar *toolbar, lives_toolbar_style_t style) {
+#ifdef GUI_GTK
+  gtk_toolbar_set_style(toolbar,style);
+  return TRUE;
+#endif
+  return FALSE;
+}
+
+
+
 
 
 LIVES_INLINE int lives_widget_get_allocation_x(LiVESWidget *widget) {
@@ -2914,8 +3170,8 @@ LiVESWidget *lives_standard_dialog_new(const char *title, boolean add_std_button
   if (title!=NULL)
     lives_window_set_title (LIVES_WINDOW (dialog), title);
 
-  gtk_window_set_deletable(LIVES_WINDOW(dialog), FALSE);
-  gtk_window_set_resizable (LIVES_WINDOW (dialog), FALSE);
+  lives_window_set_deletable(LIVES_WINDOW(dialog), FALSE);
+  lives_window_set_resizable (LIVES_WINDOW (dialog), FALSE);
 
   lives_widget_set_hexpand(dialog,TRUE);
   lives_widget_set_vexpand(dialog,TRUE);
@@ -2938,7 +3194,7 @@ LiVESWidget *lives_standard_dialog_new(const char *title, boolean add_std_button
     GtkWidget *cancelbutton = lives_button_new_from_stock ("gtk-cancel");
     GtkWidget *okbutton = lives_button_new_from_stock ("gtk-ok");
 
-    gtk_window_add_accel_group (LIVES_WINDOW (dialog), accel_group);
+    lives_window_add_accel_group (LIVES_WINDOW (dialog), accel_group);
 
     lives_dialog_add_action_widget (LIVES_DIALOG (dialog), cancelbutton, GTK_RESPONSE_CANCEL);
 
@@ -2964,7 +3220,7 @@ LiVESWidget *lives_standard_dialog_new(const char *title, boolean add_std_button
   }
 
   if (!widget_opts.non_modal)
-    gtk_window_set_modal (LIVES_WINDOW (dialog), TRUE);
+    lives_window_set_modal (LIVES_WINDOW (dialog), TRUE);
 
 #endif
 
@@ -3199,7 +3455,7 @@ void lives_window_center(LiVESWindow *window) {
   if (prefs->show_gui) {
     if (prefs->gui_monitor>0) {
       int xcen,ycen;
-      gtk_window_set_screen(LIVES_WINDOW(window),mainw->mgeom[prefs->gui_monitor-1].screen);
+      lives_window_set_screen(LIVES_WINDOW(window),mainw->mgeom[prefs->gui_monitor-1].screen);
 
       xcen=mainw->mgeom[prefs->gui_monitor-1].x+(mainw->mgeom[prefs->gui_monitor-1].width-
 						 lives_widget_get_allocation_width(LIVES_WIDGET(window)))/2;

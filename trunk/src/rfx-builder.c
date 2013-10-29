@@ -140,11 +140,11 @@ rfx_build_window_t *make_rfx_build_window (const gchar *script_name, lives_rfx_s
   g_free(title);
 
   if (prefs->show_gui) {
-    gtk_window_set_transient_for(LIVES_WINDOW(rfxbuilder->dialog),GTK_WINDOW(mainw->LiVES));
+    lives_window_set_transient_for(LIVES_WINDOW(rfxbuilder->dialog),GTK_WINDOW(mainw->LiVES));
   }
 
 
-  gtk_window_add_accel_group (LIVES_WINDOW (rfxbuilder->dialog), accel_group);
+  lives_window_add_accel_group (LIVES_WINDOW (rfxbuilder->dialog), accel_group);
 
   lives_container_set_border_width (LIVES_CONTAINER (rfxbuilder->dialog), widget_opts.border_width>>1);
 
@@ -561,10 +561,10 @@ void on_list_table_clicked (GtkButton *button, gpointer user_data) {
   dialog = lives_standard_dialog_new (title,FALSE);
   if (title!=NULL) g_free(title);
 
-  gtk_window_add_accel_group (LIVES_WINDOW (dialog), accel_group);
+  lives_window_add_accel_group (LIVES_WINDOW (dialog), accel_group);
 
   if (prefs->show_gui) {
-    gtk_window_set_transient_for(LIVES_WINDOW(dialog),GTK_WINDOW(mainw->LiVES));
+    lives_window_set_transient_for(LIVES_WINDOW(dialog),GTK_WINDOW(mainw->LiVES));
   }
 
   dialog_vbox = lives_dialog_get_content_area(LIVES_DIALOG(dialog));
@@ -962,10 +962,10 @@ void on_properties_clicked (GtkButton *button, gpointer user_data) {
   rfx_build_window_t *rfxbuilder=(rfx_build_window_t *)user_data;
 
   dialog = lives_standard_dialog_new (_("LiVES: - RFX Properties"),FALSE);
-  gtk_window_add_accel_group (LIVES_WINDOW (dialog), accel_group);
+  lives_window_add_accel_group (LIVES_WINDOW (dialog), accel_group);
 
   if (prefs->show_gui) {
-    gtk_window_set_transient_for(LIVES_WINDOW(dialog),GTK_WINDOW(rfxbuilder->dialog));
+    lives_window_set_transient_for(LIVES_WINDOW(dialog),GTK_WINDOW(rfxbuilder->dialog));
   }
 
   dialog_vbox = lives_dialog_get_content_area(LIVES_DIALOG(dialog));
@@ -1904,10 +1904,10 @@ GtkWidget * make_param_dialog (int pnum, rfx_build_window_t *rfxbuilder) {
   dialog = lives_standard_dialog_new (title,TRUE);
   g_free(title);
 
-  gtk_window_add_accel_group (LIVES_WINDOW (dialog), accel_group);
+  lives_window_add_accel_group (LIVES_WINDOW (dialog), accel_group);
 
   if (prefs->show_gui) {
-    gtk_window_set_transient_for(LIVES_WINDOW(dialog),GTK_WINDOW(mainw->LiVES));
+    lives_window_set_transient_for(LIVES_WINDOW(dialog),GTK_WINDOW(mainw->LiVES));
   }
 
   dialog_vbox = lives_dialog_get_content_area(LIVES_DIALOG(dialog));
@@ -2487,7 +2487,7 @@ GtkWidget * make_param_window_dialog (int pnum, rfx_build_window_t *rfxbuilder) 
   g_free(title);
 
   if (prefs->show_gui) {
-    gtk_window_set_transient_for(LIVES_WINDOW(dialog),GTK_WINDOW(mainw->LiVES));
+    lives_window_set_transient_for(LIVES_WINDOW(dialog),GTK_WINDOW(mainw->LiVES));
   }
 
   dialog_vbox = lives_dialog_get_content_area(LIVES_DIALOG(dialog));
@@ -2688,7 +2688,7 @@ GtkWidget * make_trigger_dialog (int tnum, rfx_build_window_t *rfxbuilder) {
   g_free(title);
 
   if (prefs->show_gui) {
-    gtk_window_set_transient_for(LIVES_WINDOW(dialog),GTK_WINDOW(mainw->LiVES));
+    lives_window_set_transient_for(LIVES_WINDOW(dialog),GTK_WINDOW(mainw->LiVES));
   }
 
   dialog_vbox = lives_dialog_get_content_area(LIVES_DIALOG(dialog));
@@ -2767,7 +2767,7 @@ void on_code_clicked (GtkButton *button, gpointer user_data) {
   dialog = lives_standard_dialog_new (NULL,FALSE);
 
   if (prefs->show_gui) {
-    gtk_window_set_transient_for(LIVES_WINDOW(dialog),GTK_WINDOW(mainw->LiVES));
+    lives_window_set_transient_for(LIVES_WINDOW(dialog),GTK_WINDOW(mainw->LiVES));
   }
 
   dialog_vbox = lives_dialog_get_content_area(LIVES_DIALOG(dialog));
@@ -4131,7 +4131,7 @@ gchar *prompt_for_script_name(const gchar *sname, lives_rfx_status_t status) {
   dialog = lives_standard_dialog_new (NULL,FALSE);
 
   if (prefs->show_gui) {
-    gtk_window_set_transient_for(LIVES_WINDOW(dialog),GTK_WINDOW(mainw->LiVES));
+    lives_window_set_transient_for(LIVES_WINDOW(dialog),GTK_WINDOW(mainw->LiVES));
   }
 
   vbox = lives_dialog_get_content_area(LIVES_DIALOG(dialog));

@@ -2060,7 +2060,7 @@ GtkWidget *events_rec_dialog (boolean allow_mt) {
 
   e_rec_dialog = lives_standard_dialog_new (_("LiVES: - Events recorded"),FALSE);
 
-  if (prefs->show_gui) gtk_window_set_transient_for(LIVES_WINDOW(e_rec_dialog),GTK_WINDOW(mainw->LiVES));
+  if (prefs->show_gui) lives_window_set_transient_for(LIVES_WINDOW(e_rec_dialog),GTK_WINDOW(mainw->LiVES));
 
   dialog_vbox = lives_dialog_get_content_area(LIVES_DIALOG(e_rec_dialog));
 
@@ -2148,7 +2148,7 @@ GtkWidget *events_rec_dialog (boolean allow_mt) {
   lives_widget_add_accelerator (cancelbutton, "activate", accel_group,
                               LIVES_KEY_Escape, (GdkModifierType)0, (GtkAccelFlags)0);
 
-  gtk_window_add_accel_group (LIVES_WINDOW (e_rec_dialog), accel_group);
+  lives_window_add_accel_group (LIVES_WINDOW (e_rec_dialog), accel_group);
 
   okbutton = lives_button_new_from_stock ("gtk-ok");
   lives_widget_show (okbutton);
@@ -4560,7 +4560,7 @@ GtkWidget *create_event_list_dialog (weed_plant_t *event_list, weed_timecode_t s
   event_dialog = lives_standard_dialog_new (_("LiVES: Event list"),FALSE);
 
   accel_group = GTK_ACCEL_GROUP(lives_accel_group_new ());
-  gtk_window_add_accel_group (LIVES_WINDOW (event_dialog), accel_group);
+  lives_window_add_accel_group (LIVES_WINDOW (event_dialog), accel_group);
 
   top_vbox=lives_dialog_get_content_area(LIVES_DIALOG(event_dialog));
 
@@ -4852,7 +4852,7 @@ GtkWidget *create_event_list_dialog (weed_plant_t *event_list, weed_timecode_t s
       (mainw->mgeom[prefs->gui_monitor-1].width-lives_widget_get_allocation_width(event_dialog))/2;
     int ycen=mainw->mgeom[prefs->gui_monitor-1].y+
       (mainw->mgeom[prefs->gui_monitor-1].height-lives_widget_get_allocation_height(event_dialog))/2;
-    gtk_window_set_screen(LIVES_WINDOW(event_dialog),mainw->mgeom[prefs->gui_monitor-1].screen);
+    lives_window_set_screen(LIVES_WINDOW(event_dialog),mainw->mgeom[prefs->gui_monitor-1].screen);
     lives_window_move(LIVES_WINDOW(event_dialog),xcen,ycen);
   }
 
@@ -4965,10 +4965,10 @@ render_details *create_render_details (int type) {
 
   g_free(title);
 
-  if (prefs->show_gui&&mainw->is_ready) gtk_window_set_transient_for(LIVES_WINDOW(rdet->dialog),GTK_WINDOW(mainw->LiVES));
+  if (prefs->show_gui&&mainw->is_ready) lives_window_set_transient_for(LIVES_WINDOW(rdet->dialog),GTK_WINDOW(mainw->LiVES));
 
   rdet_accel_group = GTK_ACCEL_GROUP(lives_accel_group_new ());
-  gtk_window_add_accel_group (LIVES_WINDOW (rdet->dialog), rdet_accel_group);
+  lives_window_add_accel_group (LIVES_WINDOW (rdet->dialog), rdet_accel_group);
 
   dialog_vbox = lives_dialog_get_content_area(LIVES_DIALOG(rdet->dialog));
 

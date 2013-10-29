@@ -1144,8 +1144,6 @@ typedef struct {
   uint32_t signal_caught;
   boolean signals_deferred;
 
-  boolean enough_pressed;
-
   boolean ce_thumbs;
 
 #define SCREEN_AREA_FOREGROUND 0

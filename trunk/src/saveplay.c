@@ -458,7 +458,7 @@ void open_file_sel(const gchar *file_name, double start, int frames) {
 	    // for some codecs this can be helpful since we can locate the last frame while audio is loading
 	    if (cfile->clip_type==CLIP_TYPE_FILE&&mainw->playing_file==-1) resize(1);
 
-	    mainw->enough_pressed=FALSE;
+	    mainw->effects_paused=FALSE; // set to TRUE if user clicks "Enough"
 
 	    msgstr=g_strdup_printf(_("Opening audio"),file_name);
 	    if (!do_progress_dialog(TRUE,TRUE,msgstr)) {
@@ -531,7 +531,7 @@ void open_file_sel(const gchar *file_name, double start, int frames) {
 		  cfile->changed=FALSE;
 		}
 	      }
-	      if (!mainw->enough_pressed&&cfile->afilesize>0&&cfile->total_time>cfile->laudio_time) {
+	      if (!mainw->effects_paused&&cfile->afilesize>0&&cfile->total_time>cfile->laudio_time) {
 		if (cdata->sync_hint&SYNC_HINT_AUDIO_PAD_START) {
 		  cfile->undo1_dbl=0.;
 		  cfile->undo2_dbl=cfile->total_time-cfile->laudio_time;

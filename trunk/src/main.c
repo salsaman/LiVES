@@ -1047,8 +1047,6 @@ static void lives_init(_ign_opts *ign_opts) {
 
   mainw->active_sa_clips=mainw->active_sa_fx=SCREEN_AREA_FOREGROUND;
 
-  mainw->enough_pressed=FALSE;
-
   /////////////////////////////////////////////////// add new stuff just above here ^^
 
 

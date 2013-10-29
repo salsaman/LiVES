@@ -1019,11 +1019,9 @@ void on_stop_clicked (GtkMenuItem *menuitem, gpointer user_data) {
     lives_widget_set_sensitive(cfile->proc_ptr->cancel_button, FALSE);
   }
 
-  mainw->enough_pressed=TRUE;
 
   // resume to allow return
   if (mainw->effects_paused) {
-    mainw->enough_pressed=FALSE;
 #ifndef IS_MINGW
     com=g_strdup_printf("%s stopsubsub \"%s\" SIGCONT 2>/dev/null",prefs->backend_sync,cfile->handle);
     lives_system(com,TRUE);
@@ -9409,7 +9407,7 @@ void on_effects_paused (GtkButton *button, gpointer user_data) {
   }
 
   if (mainw->iochan==NULL) {
-    // pause during effects processing
+    // pause during effects processing or opening
     gettimeofday(&tv, NULL);
     xticks=U_SECL*(tv.tv_sec-mainw->origsecs)+tv.tv_usec*U_SEC_RATIO-mainw->origusecs*U_SEC_RATIO;
     
@@ -9419,10 +9417,21 @@ void on_effects_paused (GtkButton *button, gpointer user_data) {
       if (!mainw->preview) {
 	lives_button_set_label(LIVES_BUTTON(button),_ ("Resume"));
 	if (!cfile->nokeep) {
-	  if (!cfile->opening) lives_button_set_label(LIVES_BUTTON(cfile->proc_ptr->cancel_button),_ ("Keep"));
-	  else lives_button_set_label(LIVES_BUTTON(cfile->proc_ptr->cancel_button),_ ("Enough"));
+	  gchar *tmp,*ltext;
+
+	  if (!cfile->opening) {
+	    ltext=g_strdup(_("Keep"));
+	  }
+	  else {
+	    ltext=g_strdup(_("Enough"));
+	  }
+	  lives_button_set_label(LIVES_BUTTON(cfile->proc_ptr->cancel_button),ltext);
 	  lives_label_set_text(LIVES_LABEL(cfile->proc_ptr->label2),
-			     _ ("\nPaused\n(click Keep to keep what you have and stop)\n(click Resume to continue processing)"));
+			       (tmp=g_strdup_printf(
+						    _ ("\nPaused\n(click %s to keep what you have and stop)\n(click Resume to continue processing)"),
+						    ltext)));
+	  g_free(tmp);
+	  g_free(ltext);
 	}
 	d_print(_ ("paused..."));
       }

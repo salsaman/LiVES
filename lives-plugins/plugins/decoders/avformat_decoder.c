@@ -611,14 +611,10 @@ static void detach_stream (lives_clip_data_t *cdata) {
   lives_av_priv_t *priv=cdata->priv;
   close(priv->fd);
 
+  // will close and free the context
   if (priv->ic !=NULL) av_close_input_file(priv->ic);
 
-  if (priv->ctx!=NULL) {
-    avcodec_close(priv->ctx);
-    //av_free(priv->ctx);
-  }
   priv->ctx=NULL;
-
 
   if (priv->pFrame!=NULL) {
     av_free(priv->pFrame);

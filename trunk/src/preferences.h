@@ -508,6 +508,7 @@ typedef struct {
   GtkWidget *checkbutton_render_prompt;
   GtkWidget *checkbutton_instant_open;
   GtkWidget *checkbutton_auto_deint;
+  GtkWidget *checkbutton_auto_trim;
   GtkWidget *checkbutton_nobord;
   GtkWidget *checkbutton_concat_images;
   GtkWidget *forcesmon;

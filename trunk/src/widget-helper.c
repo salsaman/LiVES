@@ -1464,6 +1464,7 @@ LIVES_INLINE void lives_container_remove(LiVESContainer *container, LiVESWidget 
 
 
 LIVES_INLINE void lives_container_set_border_width(LiVESContainer *container, uint32_t width) {
+  // sets border OUTSIDE container
 #ifdef GUI_GTK
   gtk_container_set_border_width(container,width);
 #endif

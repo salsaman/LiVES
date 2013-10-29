@@ -18,6 +18,7 @@
 #include <sys/types.h>
 #include <unistd.h>
 #include <pthread.h>
+#include <sys/time.h>
 
 /* ffmpeg header */
 //#if defined(HAVE_LIBAVFORMAT_AVFORMAT_H)
@@ -28,7 +29,9 @@
 
 #include <libavformat/avformat.h>
 #include <libavcodec/avcodec.h>
+#include <libavcodec/version.h>
 #include <libavutil/samplefmt.h>
+#include <libavutil/mathematics.h>
 
 #include "avformat_decoder.h"
 
@@ -46,6 +49,8 @@ static pthread_mutex_t avcodec_mutex=PTHREAD_MUTEX_INITIALIZER;
 #define avcodec_open2(a, b, c) avcodec_open(a, b)
 #endif
 
+
+#define FAST_SEEK_LIMIT 100000 // microseconds
 
 static void lives_avcodec_lock(void) {
     pthread_mutex_lock(&avcodec_mutex);
@@ -132,9 +137,69 @@ void get_samps_and_signed(enum AVSampleFormat sfmt, int *asamps, boolean *asigne
     }
 }
 
+static int64_t get_current_ticks(void) {
+  struct timeval tv;
+  gettimeofday(&tv, NULL);
+  return tv.tv_sec*1000000+tv.tv_usec;
+}
 
 
+static int64_t get_real_last_frame(lives_clip_data_t *cdata) {
+  int64_t diff=0;
+  int64_t olframe=(cdata->nframes==0?0:cdata->nframes-1),lframe=olframe;
+  int64_t timex,tottime=0;
 
+  int nseeks=0;
+
+  while (1) {
+    nseeks++;
+#ifdef DEBUG
+    fprintf(stderr,"will check frame %ld of %ld...",lframe+1,cdata->nframes);
+#endif
+    
+    timex=get_current_ticks();
+    if (!get_frame(cdata,lframe,NULL,0,NULL)) {
+      timex=get_current_ticks()-timex;
+      tottime+=timex;
+#ifdef DEBUG
+      fprintf(stderr,"no (%ld)\n",timex);
+#endif
+      if (diff==1) {
+	tottime/=nseeks;
+	//#ifdef DEBUG
+	fprintf(stderr,"av seek was %ld\n",tottime);
+	//#endif
+	if (tottime<=FAST_SEEK_LIMIT)
+	  cdata->seek_flag=LIVES_SEEK_FAST;
+	return lframe-1;
+      }
+      if (diff<0) diff*=2;
+      else if (diff==0) diff=-1;
+      else diff/=2;
+      lframe=olframe+diff;
+    }
+    else {
+      timex=get_current_ticks()-timex;
+      tottime+=timex;
+#ifdef DEBUG
+      fprintf(stderr,"yes ! (%ld)\n",timex);
+#endif
+      if (diff<2&&diff>-4) {
+	tottime/=nseeks;
+	//#ifdef DEBUG
+	fprintf(stderr,"av seek was %ld\n",tottime);
+	//#endif
+	if (tottime<=FAST_SEEK_LIMIT)
+	  cdata->seek_flag=LIVES_SEEK_FAST;
+	return lframe;
+      }
+      diff/=2;
+      if (diff<0) diff=-diff/2;
+      olframe=lframe;
+      lframe+=diff;
+    }
+  }
+}
 
 
 static boolean attach_stream(lives_clip_data_t *cdata) {
@@ -201,6 +266,11 @@ static boolean attach_stream(lives_clip_data_t *cdata) {
   /* Open it */
   if( avformat_open_input( &priv->ic, cdata->URI, priv->fmt, NULL ) ) {
       fprintf( stderr, "avformat_open_input failed\n" );
+      return FALSE;
+  }
+  
+  if (!priv->ic->pb->seekable) {
+      fprintf( stderr, "avformat stream non-seekable\n" );
       return FALSE;
   }
   
@@ -302,20 +372,31 @@ static boolean attach_stream(lives_clip_data_t *cdata) {
 	    cdata->par=cc->sample_aspect_ratio.num/cc->sample_aspect_ratio.den;
 	    if (cdata->par==0) cdata->par=1;
 
-	    cdata->fps=cc->time_base.den/cc->time_base.num;
+	    priv->fps_avg=FALSE;
+	    cdata->fps=s->time_base.den/s->time_base.num;
+	    if (cdata->fps>=1000.||cdata->fps==0.) {
+	      cdata->fps=(float)s->avg_frame_rate.num/(float)s->avg_frame_rate.den;
+	      priv->fps_avg=TRUE;
+	      if (isnan(cdata->fps)) {
+		cdata->fps=s->time_base.den/s->time_base.num;
+		priv->fps_avg=FALSE;
+	      }
+	    }
 
 	    priv->ctx=cc;
 	    
 	    if (priv->ctx->ticks_per_frame==2) {
 	      // needs checking
-	      cdata->fps/=2.;
 	      cdata->interlace=LIVES_INTERLACE_BOTTOM_FIRST;
 	    }
 
-	    fprintf(stderr,"fps is %.4f\n",cdata->fps);
+#ifdef DEBUG
+	    fprintf(stderr,"fps is %.4f %d %d %d %d %d\n",cdata->fps,s->time_base.den,s->time_base.num,cc->time_base.den,cc->time_base.num,priv->ctx->ticks_per_frame);
+#endif
 
-	    cdata->nframes=((double)priv->ic->duration/(double)AV_TIME_BASE * cdata->fps -  .5);
-	    if (cdata->fps==1000.&&s->nb_frames>1) cdata->nframes=s->nb_frames;
+	    if (priv->ic->duration!=(int64_t)AV_NOPTS_VALUE)
+	      cdata->nframes=((double)priv->ic->duration/(double)AV_TIME_BASE * cdata->fps -  .5);
+	    if ((cdata->nframes==0||cdata->fps==1000.)&&s->nb_frames>1) cdata->nframes=s->nb_frames;
 
 	    priv->vstream=i;
 
@@ -517,6 +598,9 @@ static boolean attach_stream(lives_clip_data_t *cdata) {
 	}*/
 #endif
 
+  priv->last_frame=-1;
+  priv->black_fill=FALSE;
+
   return TRUE;
 }
 
@@ -537,6 +621,7 @@ static void detach_stream (lives_clip_data_t *cdata) {
   if (priv->packet_valid) {
     av_free_packet(&priv->packet);
   }
+
 
   priv->packet_valid=FALSE;
 
@@ -586,7 +671,12 @@ static lives_clip_data_t *init_cdata (void) {
   priv->astream=-1;
   priv->vstream=-1;
 
-  cdata->seek_flag=LIVES_SEEK_FAST;
+  cdata->seek_flag=0;
+
+  priv->ctx=NULL;
+  priv->pFrame=NULL;
+
+  cdata->sync_hint=SYNC_HINT_AUDIO_PAD_START;
 
   return cdata;
 }
@@ -602,8 +692,9 @@ lives_clip_data_t *get_clip_data(const char *URI, lives_clip_data_t *cdata) {
 
   // if the host wants a different URI or a different current_clip, this must be called again with the same
   // cdata as the second parameter
+  int64_t real_frames;
 
-    lives_av_priv_t *priv;
+  lives_av_priv_t *priv;
 
   if (cdata!=NULL&&cdata->current_clip>0) {
     // currently we only support one clip per container
@@ -636,44 +727,89 @@ lives_clip_data_t *get_clip_data(const char *URI, lives_clip_data_t *cdata) {
     priv->pFrame=NULL;
   }
 
+  real_frames=get_real_last_frame(cdata)+1;
+
+  if (cdata->nframes>100&&real_frames<cdata->nframes*.75) {
+    fprintf(stderr,"avformat_decoder: ERROR - could only seek to %ld frames out of %ld\navformat_decoder: I will pass on this file as it may be broken.\n",
+	    real_frames,cdata->nframes);
+    detach_stream(cdata);
+    free(cdata->URI);
+    cdata->URI=NULL;
+    clip_data_free(cdata);
+    return NULL;
+  }
+
+  priv=cdata->priv;
+
+  if (priv->fps_avg&&cdata->nframes>1) {
+    //cdata->fps=cdata->fps*(cdata->nframes-1.)/(float)real_frames;
+  }
+
+  cdata->nframes=real_frames;
+
+  if (cdata->seek_flag==0)
+    cdata->seek_flag=LIVES_SEEK_NEEDS_CALCULATION;
+
+  av_free(priv->pFrame);
+  priv->pFrame=NULL;
 
   return cdata;
 }
 
 
 
+static size_t write_black_pixel(unsigned char *idst, int pal, int npixels, int y_black) {
+  unsigned char *dst=idst;
+  register int i;
 
-
-uint64_t global_video_pkt_pts = AV_NOPTS_VALUE;
-
-/* These are called whenever we allocate a frame
- * buffer. We use this to store the global_pts in
- * a frame at the time it is allocated.
- */
-int our_get_buffer(struct AVCodecContext *c, AVFrame *pic) {
-  int ret = avcodec_default_get_buffer(c, pic);
-  uint64_t *pts = av_malloc(sizeof(uint64_t));
-  *pts = global_video_pkt_pts;
-  pic->opaque = pts;
-  return ret;
+  for (i=0;i<npixels;i++) {
+    switch (pal) {
+    case WEED_PALETTE_RGBA32:
+    case WEED_PALETTE_BGRA32:
+      dst[0]=dst[1]=dst[2]=0;
+      dst[3]=255;
+      dst+=4;
+      break;
+    case WEED_PALETTE_ARGB32:
+      dst[1]=dst[2]=dst[3]=0;
+      dst[0]=255;
+      dst+=4;
+      break;
+    case WEED_PALETTE_UYVY8888:
+      dst[1]=dst[3]=y_black;
+      dst[0]=dst[2]=128;
+      dst+=4;
+      break;
+    case WEED_PALETTE_YUYV8888:
+      dst[0]=dst[2]=y_black;
+      dst[1]=dst[3]=128;
+      dst+=4;
+      break;
+    case WEED_PALETTE_YUV888:
+      dst[0]=y_black;
+      dst[1]=dst[2]=128;
+      dst+=3;
+      break;
+    case WEED_PALETTE_YUVA8888:
+      dst[0]=y_black;
+      dst[1]=dst[2]=128;
+      dst[3]=255;
+      dst+=4;
+      break;
+    case WEED_PALETTE_YUV411:
+      dst[0]=dst[3]=128;
+      dst[1]=dst[2]=dst[4]=dst[5]=y_black;
+      dst+=6;
+    default: break;
+    }
+  }
+  return idst-dst;
 }
-void our_release_buffer(struct AVCodecContext *c, AVFrame *pic) {
-  if(pic) av_freep(&pic->opaque);
-  avcodec_default_release_buffer(c, pic);
-}
-
-
-
-
-
-
-
-
 
 
 
 // tune this so small jumps forward are efficient
-#define JUMP_FRAMES 32
+#define JUMP_FRAMES 64
 
 boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstrides, int height, void **pixel_data) {
   // seek to frame, and return pixel_data
@@ -688,18 +824,62 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstride
 
   int64_t target_pts, MyPts, seek_target=10000000000;
 
-  int gotFrame;
-
-  int p,i,nplanes=1,pal,dstwidth=0;
+  unsigned char *dst, *src;
+  unsigned char black[4]={0,0,0,255};
 
   boolean hit_target=FALSE;
 
-  unsigned char *dst, *src;
+  int gotFrame;
+  int p,i;
+  int xheight=cdata->frame_height,pal=cdata->current_palette,nplanes=1,dstwidth=cdata->width,psize=1;
+  int btop=cdata->offs_y,bbot=xheight-1-btop;
+  int bleft=cdata->offs_x,bright=cdata->frame_width-cdata->width-bleft;
+  int y_black=(cdata->YUV_clamping==WEED_YUV_CLAMPING_CLAMPED)?16:0;
 
   if (tframe<0||tframe>cdata->nframes||cdata->fps==0.) return FALSE;
 
   //cc->get_buffer = our_get_buffer;
   //cc->release_buffer = our_release_buffer;
+
+  if (pixel_data!=NULL) {
+    
+    // calc frame width and height, including any border
+    
+    if (pal==WEED_PALETTE_YUV420P||pal==WEED_PALETTE_YVU420P||pal==WEED_PALETTE_YUV422P||pal==WEED_PALETTE_YUV444P) {
+      nplanes=3;
+      black[0]=y_black;
+      black[1]=black[2]=128;
+    }
+    else if (pal==WEED_PALETTE_YUVA4444P) {
+      nplanes=4;
+      black[0]=y_black;
+      black[1]=black[2]=128;
+      black[3]=255;
+    }
+    
+    if (pal==WEED_PALETTE_RGB24||pal==WEED_PALETTE_BGR24) psize=3;
+    
+    if (pal==WEED_PALETTE_RGBA32||pal==WEED_PALETTE_BGRA32||pal==WEED_PALETTE_ARGB32||pal==WEED_PALETTE_UYVY8888||
+	pal==WEED_PALETTE_YUYV8888||pal==WEED_PALETTE_YUV888||pal==WEED_PALETTE_YUVA8888) psize=4;
+    
+    if (pal==WEED_PALETTE_YUV411) psize=6;
+    
+    if (pal==WEED_PALETTE_A1) dstwidth>>=3;
+    
+    dstwidth*=psize;
+    
+    if (cdata->frame_height > cdata->height && height == cdata->height) {
+      // host ignores vertical border
+      btop=0;
+      xheight=cdata->height;
+      bbot=xheight-1;
+    }
+    
+    if (cdata->frame_width > cdata->width && rowstrides[0] < cdata->frame_width*psize) {
+      // host ignores horizontal border
+      bleft=bright=0;
+    }
+  }
 
   if (priv->pFrame==NULL||tframe!=priv->last_frame) {
       // same frame -> we reuse priv-pFrame;
@@ -722,9 +902,10 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstride
 	  av_init_packet(&priv->packet);
 	}
 	seek_target=av_rescale_q(target_pts, AV_TIME_BASE_Q, s->time_base);
-	av_seek_frame( priv->ic, priv->vstream, seek_target, AVSEEK_FLAG_BACKWARD );
+	av_seek_frame( priv->ic, priv->vstream, seek_target, AVSEEK_FLAG_BACKWARD);
 	avcodec_flush_buffers(cc);
 	priv->packet_valid=FALSE;
+	priv->black_fill=FALSE;
 	MyPts=-1;
       }
       else {
@@ -743,13 +924,15 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstride
 #endif
 		  if (ret<0) {
 		    priv->last_frame=tframe;
-		    return FALSE;
+		    if (pixel_data==NULL) return FALSE;
+		    priv->black_fill=TRUE;
+		    goto framedone;
 		  }
 	      }
 	      while (priv->packet.stream_index!=priv->vstream);
 	      if (MyPts==-1) {
 		MyPts = priv->packet.pts;
-		MyPts = av_rescale( MyPts, AV_TIME_BASE * (int64_t) s->time_base.num, s->time_base.den )-priv->ic->start_time;
+		MyPts = av_rescale_q( MyPts, s->time_base, AV_TIME_BASE_Q)-priv->ic->start_time;
 	      }
 	  }
 
@@ -798,36 +981,68 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstride
 
   }
 
-  //height=cdata->height;
-
-  pal=cdata->current_palette;
-  
-  if (pal==WEED_PALETTE_YUV420P||pal==WEED_PALETTE_YVU420P||pal==WEED_PALETTE_YUV422P||pal==WEED_PALETTE_YUV444P) nplanes=3;
-  else if (pal==WEED_PALETTE_YUVA4444P) nplanes=4;
-  
-  if (pal==WEED_PALETTE_A8||pal==WEED_PALETTE_YUV420P||pal==WEED_PALETTE_YVU420P||pal==WEED_PALETTE_YUV422P||pal==WEED_PALETTE_YUV444P||pal==WEED_PALETTE_YUVA4444P) dstwidth=cdata->width;
-  if (pal==WEED_PALETTE_RGB24||pal==WEED_PALETTE_BGR24) dstwidth=cdata->width*3;
-  if (pal==WEED_PALETTE_RGBA32||pal==WEED_PALETTE_BGRA32||pal==WEED_PALETTE_ARGB32||pal==WEED_PALETTE_UYVY8888||pal==WEED_PALETTE_YUYV8888||pal==WEED_PALETTE_YUV888||pal==WEED_PALETTE_YUVA8888) dstwidth=cdata->width*4;
-  if (pal==WEED_PALETTE_YUV411) dstwidth=cdata->width*6;
-  if (pal==WEED_PALETTE_A1) dstwidth=cdata->width/8;
-
-  for (p=0;p<nplanes;p++) {
-      dst=pixel_data[p];
-      src=priv->pFrame->data[p];
-
-      for (i=0;i<height;i++) {
-	  memcpy(dst,src,dstwidth);
-
-	  dst+=dstwidth;
-	  src+=priv->pFrame->linesize[p];
-      }
-      if (p==0&&(pal==WEED_PALETTE_YUV420P||pal==WEED_PALETTE_YVU420P||pal==WEED_PALETTE_YUV422P)) dstwidth>>=1;
-      if (p==0&&(pal==WEED_PALETTE_YUV420P||pal==WEED_PALETTE_YVU420P)) height>>=1;
-  }
-  
+    framedone:
 
   priv->last_frame=tframe;
-  
+
+  if (priv->pFrame==NULL||pixel_data==NULL) return TRUE;
+
+  //height=cdata->height;
+
+  if (priv->black_fill) btop=cdata->frame_height;
+
+  for (p=0;p<nplanes;p++) {
+    dst=pixel_data[p];
+    src=priv->pFrame->data[p];
+
+    for (i=0;i<xheight;i++) {
+      if (i<btop||i>bbot) {
+	// top or bottom border, copy black row
+	if (pal==WEED_PALETTE_YUV420P||pal==WEED_PALETTE_YVU420P||pal==WEED_PALETTE_YUV422P||pal==WEED_PALETTE_YUV444P||
+	    pal==WEED_PALETTE_YUVA4444P||pal==WEED_PALETTE_RGB24||pal==WEED_PALETTE_BGR24) {
+	  memset(dst,black[p],dstwidth+(bleft+bright)*psize);
+	  dst+=dstwidth+(bleft+bright)*psize;
+	}
+	else dst+=write_black_pixel(dst,pal,dstwidth/psize+bleft+bright,y_black);
+	continue;
+      }
+
+      if (bleft>0) {
+	if (pal==WEED_PALETTE_YUV420P||pal==WEED_PALETTE_YVU420P||pal==WEED_PALETTE_YUV422P||pal==WEED_PALETTE_YUV444P||
+	    pal==WEED_PALETTE_YUVA4444P||pal==WEED_PALETTE_RGB24||pal==WEED_PALETTE_BGR24) {
+	  memset(dst,black[p],bleft*psize);
+	  dst+=bleft*psize;
+	}
+	else dst+=write_black_pixel(dst,pal,bleft,y_black);
+      }
+
+      memcpy(dst,src,dstwidth);
+      dst+=dstwidth;
+
+      if (bright>0) {
+	if (pal==WEED_PALETTE_YUV420P||pal==WEED_PALETTE_YVU420P||pal==WEED_PALETTE_YUV422P||pal==WEED_PALETTE_YUV444P||
+	    pal==WEED_PALETTE_YUVA4444P||pal==WEED_PALETTE_RGB24||pal==WEED_PALETTE_BGR24) {
+	  memset(dst,black[p],bright*psize);
+	  dst+=bright*psize;
+	}
+	else dst+=write_black_pixel(dst,pal,bright,y_black);
+      }
+
+      src+=priv->pFrame->linesize[p];
+    }
+    if (p==0&&(pal==WEED_PALETTE_YUV420P||pal==WEED_PALETTE_YVU420P||pal==WEED_PALETTE_YUV422P)) {
+      dstwidth>>=1;
+      bleft>>=1;
+      bright>>=1;
+    }
+    if (p==0&&(pal==WEED_PALETTE_YUV420P||pal==WEED_PALETTE_YVU420P)) {
+      xheight>>=1;
+      btop>>=1;
+      bbot>>=1;
+    }
+  }
+
+
   return TRUE;
 }
 

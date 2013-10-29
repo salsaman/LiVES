@@ -3505,18 +3505,8 @@ weed_plant_t *weed_apply_effects (weed_plant_t **layers, weed_plant_t *filter_ma
 	   tc>get_event_timecode((weed_plant_t *)weed_get_voidptr_value
 				 (mainw->multitrack->init_event,"deinit_event",&error)))))) {
       if (output!=-1) {
-	void **pixel_data;
 	if (!weed_plant_has_leaf(layers[i],"pixel_data")) continue;
-	pixel_data=weed_get_voidptr_array(layers[i],"pixel_data",&error);
-	if (pixel_data!=NULL&&pixel_data[0]!=NULL) {
-	  int j;
-	  int numplanes=weed_leaf_num_elements(layers[i],"pixel_data");
-	  if (weed_plant_has_leaf(layers[i],"host_pixel_data_contiguous") && 
-	      weed_get_boolean_value(layers[i],"host_pixel_data_contiguous",&error)==WEED_TRUE)
-	    numplanes=1;
-	  for (j=0;j<numplanes;j++) if (pixel_data[j]!=NULL) g_free(pixel_data[j]);
-	  weed_free(pixel_data);
-	}
+	weed_layer_pixel_data_free(layers[i]);
       }
       else output=i;
     }
@@ -6016,8 +6006,6 @@ static void set_default_channel_sizes (weed_plant_t **in_channels, weed_plant_t 
   // set some reasonable default channel sizes when we first init the effect
   weed_plant_t *channel,*chantmpl;
 
-  void **pixel_data;
-
   int *rowstrides;
 
   boolean is_gen=TRUE;
@@ -6027,7 +6015,7 @@ static void set_default_channel_sizes (weed_plant_t **in_channels, weed_plant_t 
   int numplanes,width,height;
   int error;
 
-  register int i,j;
+  register int i;
 
   // ignore filters with no in/out channels (e.g. data processors)
   if ((in_channels==NULL||in_channels[0]==NULL)&&(out_channels==NULL||out_channels[0]==NULL)) return;
@@ -6054,13 +6042,7 @@ static void set_default_channel_sizes (weed_plant_t **in_channels, weed_plant_t 
       rowstrides=weed_get_int_array(channel,"rowstrides",&error);
       set_channel_size(channel,width,height,numplanes,rowstrides);
       weed_free(rowstrides);
-      pixel_data=weed_get_voidptr_array(channel,"pixel_data",&error);
-      if (weed_plant_has_leaf(channel,"host_pixel_data_contiguous") && 
-	  weed_get_boolean_value(channel,"host_pixel_data_contiguous",&error)==WEED_TRUE)
-	numplanes=1;
-      for (j=0;j<numplanes;j++) g_free(pixel_data[j]);
-      weed_free(pixel_data);
-      weed_set_voidptr_value(channel,"pixel_data",NULL);
+      weed_layer_pixel_data_free(channel);
     }
     else {
       if (mainw->current_file==-1) {
@@ -6099,13 +6081,7 @@ static void set_default_channel_sizes (weed_plant_t **in_channels, weed_plant_t 
       rowstrides=weed_get_int_array(channel,"rowstrides",&error);
       set_channel_size(channel,width,height,numplanes,rowstrides);
       weed_free(rowstrides);
-      pixel_data=weed_get_voidptr_array(channel,"pixel_data",&error);
-      if (weed_plant_has_leaf(channel,"host_pixel_data_contiguous") && 
-	  weed_get_boolean_value(channel,"host_pixel_data_contiguous",&error)==WEED_TRUE)
-	numplanes=1;
-      for (j=0;j<numplanes;j++) g_free(pixel_data[j]);
-      weed_free(pixel_data);
-      weed_set_voidptr_value(channel,"pixel_data",NULL);
+      weed_layer_pixel_data_free(channel);
     }
     else {
       if (mainw->current_file==-1||!has_aud_in_chans) {

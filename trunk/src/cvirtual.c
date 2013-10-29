@@ -294,7 +294,7 @@ boolean check_if_non_virtual(int fileno, int start, int end) {
 
 
 
-boolean virtual_to_images(int sfileno, int sframe, int eframe, boolean update_progress) {
+boolean virtual_to_images(int sfileno, int sframe, int eframe, boolean update_progress, LiVESPixbuf **pbr) {
   // pull frames from a clip to images
   // from sframe to eframe inclusive (first frame is 1)
 
@@ -302,11 +302,13 @@ boolean virtual_to_images(int sfileno, int sframe, int eframe, boolean update_pr
 
   // should be threadsafe apart from progress update
 
+  // if pbr is non-null, it will be set to point to the pulled pixbuf (
+
   // return FALSE on write error
 
   register int i;
   file *sfile=mainw->files[sfileno];
-  LiVESPixbuf *pixbuf;
+  LiVESPixbuf *pixbuf=NULL;
   GError *error=NULL;
   char *oname;
   int retval;
@@ -320,9 +322,13 @@ boolean virtual_to_images(int sfileno, int sframe, int eframe, boolean update_pr
 
     if (sfile->frame_index[i-1]>=0) {
       oname=NULL;
-      threaded_dialog_spin();
 
-      lives_widget_context_update();
+      if (update_progress) {
+	threaded_dialog_spin();
+	lives_widget_context_update();
+      }
+
+      if (pbr!=NULL&&pixbuf!=NULL) lives_object_unref(pixbuf);
 
       pixbuf=pull_lives_pixbuf_at_size(sfileno,i,get_image_ext_for_type(sfile->img_type),
 				       q_gint64((i-1.)/sfile->fps,sfile->fps),sfile->hsize,sfile->vsize,LIVES_INTERP_BEST);
@@ -332,7 +338,7 @@ boolean virtual_to_images(int sfileno, int sframe, int eframe, boolean update_pr
       do {
 	retval=0;
 	lives_pixbuf_save (pixbuf, oname, sfile->img_type, 100-prefs->ocp, TRUE, &error);
-	if (error!=NULL) {
+	if (error!=NULL&&pbr==NULL) {
 	  retval=do_write_failed_error_s_with_retry(oname,error->message,NULL);
 	  g_error_free(error);
 	  error=NULL;
@@ -340,8 +346,11 @@ boolean virtual_to_images(int sfileno, int sframe, int eframe, boolean update_pr
       } while (retval==LIVES_RETRY);
 
       if (oname!=NULL) g_free(oname);
-      if (pixbuf!=NULL) lives_object_unref(pixbuf);
-      pixbuf=NULL;
+
+      if (pbr==NULL) {
+	if (pixbuf!=NULL) lives_object_unref(pixbuf);
+	pixbuf=NULL;
+      }
 
       if (retval==LIVES_CANCEL) return FALSE;
 
@@ -353,17 +362,19 @@ boolean virtual_to_images(int sfileno, int sframe, int eframe, boolean update_pr
       if (update_progress) {
 	// sig_progress...
 	g_snprintf (mainw->msg,256,"%d",progress++);
+	threaded_dialog_spin();
 	lives_widget_context_update();
       }
 
-      threaded_dialog_spin();
-
       if (mainw->cancelled!=CANCEL_NONE) {
 	if (!check_if_non_virtual(sfileno,1,sfile->frames)) save_frame_index(sfileno);
+	if (pbr!=NULL) *pbr=pixbuf;
 	return TRUE;
       }
     }
   }
+
+  if (pbr!=NULL) *pbr=pixbuf;
 
   if (!check_if_non_virtual(sfileno,1,sfile->frames)) if (!save_frame_index(sfileno)) return FALSE;
 

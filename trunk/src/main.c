@@ -1047,7 +1047,9 @@ static void lives_init(_ign_opts *ign_opts) {
 
   mainw->active_sa_clips=mainw->active_sa_fx=SCREEN_AREA_FOREGROUND;
 
-   /////////////////////////////////////////////////// add new stuff just above here ^^
+  mainw->enough_pressed=FALSE;
+
+  /////////////////////////////////////////////////// add new stuff just above here ^^
 
 
   memset (mainw->set_name,0,1);
@@ -1159,7 +1161,7 @@ static void lives_init(_ign_opts *ign_opts) {
 
     prefs->alpha_post=FALSE; ///< allow pre-multiplied alpha internally
 
-    prefs->auto_trim_audio=TRUE;
+    prefs->auto_trim_audio=get_boolean_pref("auto_trim_pad_audio");
 
     prefs->force64bit=FALSE;
 
@@ -3402,14 +3404,17 @@ void set_ce_frame_from_pixbuf(GtkImage *image, GdkPixbuf *pixbuf, lives_painter_
 
 
 
-void load_start_image(gint frame) {
+void load_start_image(int frame) {
   GdkPixbuf *start_pixbuf=NULL;
+
   weed_plant_t *layer;
+
   weed_timecode_t tc;
-  gint rwidth,rheight,width,height;
-  boolean noswitch=mainw->noswitch;
+
   LiVESInterpType interp;
 
+  boolean noswitch=mainw->noswitch;
+  int rwidth,rheight,width,height;
 
   if (!prefs->show_gui) return;
 
@@ -3456,6 +3461,16 @@ void load_start_image(gint frame) {
 
   if (!prefs->ce_maxspect||(mainw->double_size&&mainw->playing_file>-1)) {
     threaded_dialog_spin();
+
+    // if we are not playing, and it would be slow to seek to the frame, convert it to an image
+    if (mainw->playing_file==-1&&cfile->clip_type==CLIP_TYPE_FILE&&!check_if_non_virtual(mainw->current_file,frame,frame)&&cfile->ext_src!=NULL) {
+      lives_clip_data_t *cdata=((lives_decoder_t *)cfile->ext_src)->cdata;
+      if (cdata!=NULL&&!(cdata->seek_flag&LIVES_SEEK_FAST)) {
+	boolean resb=virtual_to_images(mainw->current_file,frame,frame,FALSE,NULL);
+	resb=resb; // dont care (much) if it fails
+      }
+    }
+
     layer=weed_plant_new(WEED_PLANT_CHANNEL);
     weed_set_int_value(layer,"clip",mainw->current_file);
     weed_set_int_value(layer,"frame",frame);
@@ -3467,7 +3482,7 @@ void load_start_image(gint frame) {
       start_pixbuf=layer_to_pixbuf(layer);
     }
     weed_plant_free(layer);
-  
+
     if (GDK_IS_PIXBUF(start_pixbuf)) {
       set_ce_frame_from_pixbuf(GTK_IMAGE(mainw->image272),start_pixbuf,NULL);
     }
@@ -3505,6 +3520,16 @@ void load_start_image(gint frame) {
 
     calc_maxspect(rwidth,rheight,&width,&height);
 
+    // if we are not playing, and it would be slow to seek to the frame, convert it to an image
+    if (mainw->playing_file==-1&&cfile->clip_type==CLIP_TYPE_FILE&&!check_if_non_virtual(mainw->current_file,frame,frame)&&cfile->ext_src!=NULL) {
+      lives_clip_data_t *cdata=((lives_decoder_t *)cfile->ext_src)->cdata;
+      if (cdata!=NULL&&!(cdata->seek_flag&LIVES_SEEK_FAST)) {
+	boolean resb=virtual_to_images(mainw->current_file,frame,frame,FALSE,NULL);
+	resb=resb; // dont care (much) if it fails
+	
+      }
+    }
+
     layer=weed_plant_new(WEED_PLANT_CHANNEL);
     weed_set_int_value(layer,"clip",mainw->current_file);
     weed_set_int_value(layer,"frame",frame);
@@ -3516,7 +3541,7 @@ void load_start_image(gint frame) {
       start_pixbuf=layer_to_pixbuf(layer);
     }
     weed_plant_free(layer);
-  
+
     if (GDK_IS_PIXBUF(start_pixbuf)) {
       set_ce_frame_from_pixbuf(GTK_IMAGE(mainw->image272),start_pixbuf,NULL);
     }
@@ -3604,6 +3629,16 @@ void load_end_image(gint frame) {
 
   if (!prefs->ce_maxspect||(mainw->double_size&&mainw->playing_file>-1)) {
     threaded_dialog_spin();
+
+    // if we are not playing, and it would be slow to seek to the frame, convert it to an image
+    if (mainw->playing_file==-1&&cfile->clip_type==CLIP_TYPE_FILE&&!check_if_non_virtual(mainw->current_file,frame,frame)&&cfile->ext_src!=NULL) {
+      lives_clip_data_t *cdata=((lives_decoder_t *)cfile->ext_src)->cdata;
+      if (cdata!=NULL&&!(cdata->seek_flag&LIVES_SEEK_FAST)) {
+	boolean resb=virtual_to_images(mainw->current_file,frame,frame,FALSE,NULL);
+	resb=resb; // dont care (much) if it fails
+      }
+    }
+
     layer=weed_plant_new(WEED_PLANT_CHANNEL);
     weed_set_int_value(layer,"clip",mainw->current_file);
     weed_set_int_value(layer,"frame",frame);
@@ -3616,7 +3651,7 @@ void load_end_image(gint frame) {
       end_pixbuf=layer_to_pixbuf(layer);
     }
     weed_plant_free(layer);
-  
+
     if (GDK_IS_PIXBUF(end_pixbuf)) {
       set_ce_frame_from_pixbuf(GTK_IMAGE(mainw->image273),end_pixbuf,NULL);
     }
@@ -3650,6 +3685,15 @@ void load_end_image(gint frame) {
 
     calc_maxspect(rwidth,rheight,&width,&height);
 
+    // if we are not playing, and it would be slow to seek to the frame, convert it to an image
+    if (mainw->playing_file==-1&&cfile->clip_type==CLIP_TYPE_FILE&&!check_if_non_virtual(mainw->current_file,frame,frame)&&cfile->ext_src!=NULL) {
+      lives_clip_data_t *cdata=((lives_decoder_t *)cfile->ext_src)->cdata;
+      if (cdata!=NULL&&!(cdata->seek_flag&LIVES_SEEK_FAST)) {
+	boolean resb=virtual_to_images(mainw->current_file,frame,frame,FALSE,NULL);
+	resb=resb; // dont care (much) if it fails
+      }
+    }
+
     layer=weed_plant_new(WEED_PLANT_CHANNEL);
     weed_set_int_value(layer,"clip",mainw->current_file);
     weed_set_int_value(layer,"frame",frame);
@@ -3662,7 +3706,7 @@ void load_end_image(gint frame) {
     }
 
     weed_plant_free(layer);
-  
+
     if (GDK_IS_PIXBUF(end_pixbuf)) {
       set_ce_frame_from_pixbuf(GTK_IMAGE(mainw->image273),end_pixbuf,NULL);
     }
@@ -3798,6 +3842,17 @@ void load_preview_image(boolean update_always) {
   else {
     weed_plant_t *layer=weed_plant_new(WEED_PLANT_CHANNEL);
     weed_timecode_t tc=((mainw->preview_frame-1.))/cfile->fps*U_SECL;
+
+    // if we are not playing, and it would be slow to seek to the frame, convert it to an image
+    if (mainw->playing_file==-1&&cfile->clip_type==CLIP_TYPE_FILE&&
+	!check_if_non_virtual(mainw->current_file,mainw->preview_frame,mainw->preview_frame)&&cfile->ext_src!=NULL) {
+      lives_clip_data_t *cdata=((lives_decoder_t *)cfile->ext_src)->cdata;
+      if (cdata!=NULL&&!(cdata->seek_flag&LIVES_SEEK_FAST)) {
+	boolean resb=virtual_to_images(mainw->current_file,mainw->preview_frame,mainw->preview_frame,FALSE,NULL);
+	resb=resb; // dont care (much) if it fails
+      }
+    }
+
     weed_set_int_value(layer,"clip",mainw->current_file);
     weed_set_int_value(layer,"frame",mainw->preview_frame);
     if (pull_frame_at_size(layer,get_image_ext_for_type(cfile->img_type),tc,mainw->pwidth,mainw->pheight,
@@ -4296,8 +4351,13 @@ boolean pull_frame_at_size (weed_plant_t *layer, const gchar *image_ext, weed_ti
 	pixel_data=weed_get_voidptr_array(layer,"pixel_data",&error);
 	rowstrides=weed_get_int_array(layer,"rowstrides",&error);
 
-	(*dplug->decoder->get_frame)(dplug->cdata,(int64_t)(sfile->frame_index[frame-1]),
-				     rowstrides,sfile->vsize,pixel_data);
+	if (!(*dplug->decoder->get_frame)(dplug->cdata,(int64_t)(sfile->frame_index[frame-1]),
+					  rowstrides,sfile->vsize,pixel_data)) {
+
+	  // if get_frame fails, return a black frame
+	  weed_layer_pixel_data_free(layer);
+	  create_empty_pixel_data(layer,TRUE,TRUE);
+	}
 
 	weed_free(pixel_data);
 	weed_free(rowstrides);

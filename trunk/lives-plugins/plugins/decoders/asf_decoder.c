@@ -2407,18 +2407,23 @@ static size_t write_black_pixel(unsigned char *idst, int pal, int npixels, int y
 boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstrides, int height, void **pixel_data) {
   // seek to frame,
 
-  int64_t nextframe=0;
-  int tfrag=0;
   lives_asf_priv_t *priv=cdata->priv;
+
+  int64_t nextframe=0;
   int64_t target_pts=frame_to_dts(cdata,tframe);
+
+  unsigned char *dst,*src;
+  unsigned char black[4]={0,0,0,255};
+
+  boolean got_picture=FALSE;
+
+  int tfrag=0;
   int xheight=cdata->frame_height,pal=cdata->current_palette,nplanes=1,dstwidth=cdata->width,psize=1;
   int btop=cdata->offs_y,bbot=xheight-1-btop;
   int bleft=cdata->offs_x,bright=cdata->frame_width-cdata->width-bleft;
   int rescan_limit=16;  // pick some arbitrary value
   int y_black=(cdata->YUV_clamping==WEED_YUV_CLAMPING_CLAMPED)?16:0;
-  boolean got_picture=FALSE;
-  unsigned char *dst,*src;
-  unsigned char black[4]={0,0,0,255};
+
   register int i,p;
 
 #ifdef DEBUG_KFRAMES
@@ -2443,7 +2448,8 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstride
     
     if (pal==WEED_PALETTE_RGB24||pal==WEED_PALETTE_BGR24) psize=3;
     
-    if (pal==WEED_PALETTE_RGBA32||pal==WEED_PALETTE_BGRA32||pal==WEED_PALETTE_ARGB32||pal==WEED_PALETTE_UYVY8888||pal==WEED_PALETTE_YUYV8888||pal==WEED_PALETTE_YUV888||pal==WEED_PALETTE_YUVA8888) psize=4;
+    if (pal==WEED_PALETTE_RGBA32||pal==WEED_PALETTE_BGRA32||pal==WEED_PALETTE_ARGB32||pal==WEED_PALETTE_UYVY8888||
+	pal==WEED_PALETTE_YUYV8888||pal==WEED_PALETTE_YUV888||pal==WEED_PALETTE_YUVA8888) psize=4;
     
     if (pal==WEED_PALETTE_YUV411) psize=6;
     
@@ -2561,7 +2567,8 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstride
     for (i=0;i<xheight;i++) {
       if (i<btop||i>bbot) {
 	// top or bottom border, copy black row
-	if (pal==WEED_PALETTE_YUV420P||pal==WEED_PALETTE_YVU420P||pal==WEED_PALETTE_YUV422P||pal==WEED_PALETTE_YUV444P||pal==WEED_PALETTE_YUVA4444P||pal==WEED_PALETTE_RGB24||pal==WEED_PALETTE_BGR24) {
+	if (pal==WEED_PALETTE_YUV420P||pal==WEED_PALETTE_YVU420P||pal==WEED_PALETTE_YUV422P||pal==WEED_PALETTE_YUV444P||
+	    pal==WEED_PALETTE_YUVA4444P||pal==WEED_PALETTE_RGB24||pal==WEED_PALETTE_BGR24) {
 	  memset(dst,black[p],dstwidth+(bleft+bright)*psize);
 	  dst+=dstwidth+(bleft+bright)*psize;
 	}
@@ -2570,7 +2577,8 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstride
       }
 
       if (bleft>0) {
-	if (pal==WEED_PALETTE_YUV420P||pal==WEED_PALETTE_YVU420P||pal==WEED_PALETTE_YUV422P||pal==WEED_PALETTE_YUV444P||pal==WEED_PALETTE_YUVA4444P||pal==WEED_PALETTE_RGB24||pal==WEED_PALETTE_BGR24) {
+	if (pal==WEED_PALETTE_YUV420P||pal==WEED_PALETTE_YVU420P||pal==WEED_PALETTE_YUV422P||pal==WEED_PALETTE_YUV444P||
+	    pal==WEED_PALETTE_YUVA4444P||pal==WEED_PALETTE_RGB24||pal==WEED_PALETTE_BGR24) {
 	  memset(dst,black[p],bleft*psize);
 	  dst+=bleft*psize;
 	}
@@ -2581,7 +2589,8 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstride
       dst+=dstwidth;
 
       if (bright>0) {
-	if (pal==WEED_PALETTE_YUV420P||pal==WEED_PALETTE_YVU420P||pal==WEED_PALETTE_YUV422P||pal==WEED_PALETTE_YUV444P||pal==WEED_PALETTE_YUVA4444P||pal==WEED_PALETTE_RGB24||pal==WEED_PALETTE_BGR24) {
+	if (pal==WEED_PALETTE_YUV420P||pal==WEED_PALETTE_YVU420P||pal==WEED_PALETTE_YUV422P||pal==WEED_PALETTE_YUV444P||
+	    pal==WEED_PALETTE_YUVA4444P||pal==WEED_PALETTE_RGB24||pal==WEED_PALETTE_BGR24) {
 	  memset(dst,black[p],bright*psize);
 	  dst+=bright*psize;
 	}

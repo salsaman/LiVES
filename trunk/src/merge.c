@@ -334,18 +334,18 @@ on_merge_ok_clicked                   (GtkButton       *button,
 				       gpointer         user_data)
 {
   gchar *msg;
-  gint start,end;
+  int start,end;
 
-  gint cb_start=1;
+  int cb_start=1;
   boolean cb_video_change=FALSE;
-  gint current_file=mainw->current_file;
-  gint old_frames=clipboard->frames;
+  int current_file=mainw->current_file;
+  int old_frames=clipboard->frames;
 
   // save original values in case we cancel
-  gint oundo_start=cfile->undo_start;
-  gint oundo_end=cfile->undo_end;
-  gint cb_end,excess_frames;
-  gint times_to_loop=1;
+  int oundo_start=cfile->undo_start;
+  int oundo_end=cfile->undo_end;
+  int cb_end,excess_frames;
+  int times_to_loop=1;
 
   lives_rfx_t *rfx;
 

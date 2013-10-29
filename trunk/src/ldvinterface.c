@@ -10,7 +10,7 @@
 #include "ldvinterface.h"
 
 
-struct _dvgrabw *create_camwindow (s_cam *cam, gint type)
+struct _dvgrabw *create_camwindow (s_cam *cam, int type)
 {
   GtkWidget *hbuttonbox1;
   GtkWidget *hbuttonbox2;

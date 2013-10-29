@@ -5,18 +5,19 @@
 
 
 typedef struct  {
-    // input
-    int fd;
-    AVInputFormat *fmt;
-    AVFormatContext *ic;
-    AVCodecContext *ctx;
-    AVFrame *pFrame;
-    AVPacket packet;
-    boolean packet_valid;
-    
-    int astream;
-    int vstream;
+  int fd;
+  AVInputFormat *fmt;
+  AVFormatContext *ic;
+  AVCodecContext *ctx;
+  AVFrame *pFrame;
+  AVPacket packet;
+  boolean packet_valid;
+  boolean fps_avg;
+  boolean black_fill;
 
-    int last_frame;
+  int astream;
+  int vstream;
+
+  int last_frame;
 } lives_av_priv_t;
 

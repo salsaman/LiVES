@@ -244,7 +244,8 @@ typedef struct {
 
   int seek_flag;
 
-#define SYNC_HINT_AUDIO_TRIM_START 1
+#define SYNC_HINT_AUDIO_TRIM_START (1<<0)
+#define SYNC_HINT_AUDIO_PAD_START (1<<1)
 
   int sync_hint;
 

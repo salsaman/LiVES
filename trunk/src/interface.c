@@ -318,7 +318,40 @@ xprocess * create_processing (const gchar *text) {
 
 #define TB_WIDTH 200
 #define TB_HEIGHT_VID 80
-#define TB_HEIGHT_A 50
+#define TB_HEIGHT_AUD 50
+
+static GtkWidget *vid_text_view_new(void) {
+  GtkWidget *textview=gtk_text_view_new();
+
+  if (palette->style&STYLE_1) {
+    lives_widget_set_base_color(textview, LIVES_WIDGET_STATE_NORMAL, &palette->info_base);
+    lives_widget_set_text_color(textview, LIVES_WIDGET_STATE_NORMAL, &palette->info_text);
+  }
+
+  lives_widget_set_size_request (textview, TB_WIDTH, TB_HEIGHT_VID);
+  gtk_text_view_set_editable (GTK_TEXT_VIEW (textview), FALSE);
+  gtk_text_view_set_justification (GTK_TEXT_VIEW (textview), GTK_JUSTIFY_CENTER);
+  gtk_text_view_set_cursor_visible (GTK_TEXT_VIEW (textview), FALSE);
+
+  return textview;
+}
+
+static GtkWidget *aud_text_view_new(void) {
+  GtkWidget *textview=gtk_text_view_new();
+
+  if (palette->style&STYLE_1) {
+    lives_widget_set_base_color(textview, LIVES_WIDGET_STATE_NORMAL, &palette->info_base);
+    lives_widget_set_text_color(textview, LIVES_WIDGET_STATE_NORMAL, &palette->info_text);
+  }
+
+  lives_widget_set_size_request (textview, TB_WIDTH, TB_HEIGHT_AUD);
+  gtk_text_view_set_editable (GTK_TEXT_VIEW (textview), FALSE);
+  gtk_text_view_set_justification (GTK_TEXT_VIEW (textview), GTK_JUSTIFY_CENTER);
+  gtk_text_view_set_cursor_visible (GTK_TEXT_VIEW (textview), FALSE);
+
+  return textview;
+}
+
 
 lives_clipinfo_t *create_clip_info_window (int audio_channels, boolean is_mt) {
   // TODO : rewrite this horrible code
@@ -372,7 +405,6 @@ lives_clipinfo_t *create_clip_info_window (int audio_channels, boolean is_mt) {
 
   if (cfile->frames>0||is_mt) {
     frame4 = gtk_frame_new (NULL);
-    lives_widget_set_size_request (frame4, 800, 340);
 
     lives_box_pack_start (LIVES_BOX (dialog_vbox), frame4, TRUE, TRUE, 0);
     if (palette->style&STYLE_1) {
@@ -381,54 +413,25 @@ lives_clipinfo_t *create_clip_info_window (int audio_channels, boolean is_mt) {
 
     fixed3 = gtk_fixed_new ();
     lives_container_add (LIVES_CONTAINER (frame4), fixed3);
+    lives_container_set_border_width (LIVES_CONTAINER (fixed3), widget_opts.border_width);
     
-    filew->textview24 = gtk_text_view_new ();
-
+    filew->textview24 = vid_text_view_new ();
     gtk_fixed_put (GTK_FIXED (fixed3), filew->textview24, TB_WIDTH, 48);
-    lives_widget_set_size_request (filew->textview24, TB_WIDTH, TB_HEIGHT_VID);
-    gtk_text_view_set_editable (GTK_TEXT_VIEW (filew->textview24), FALSE);
-    gtk_text_view_set_justification (GTK_TEXT_VIEW (filew->textview24), GTK_JUSTIFY_CENTER);
-    gtk_text_view_set_cursor_visible (GTK_TEXT_VIEW (filew->textview24), FALSE);
     
-    filew->textview25 = gtk_text_view_new ();
-
+    filew->textview25 = vid_text_view_new ();
     gtk_fixed_put (GTK_FIXED (fixed3), filew->textview25, TB_WIDTH+400, 48);
-    lives_widget_set_size_request (filew->textview25, TB_WIDTH, TB_HEIGHT_VID);
-    gtk_text_view_set_editable (GTK_TEXT_VIEW (filew->textview25), FALSE);
-    gtk_text_view_set_justification (GTK_TEXT_VIEW (filew->textview25), GTK_JUSTIFY_CENTER);
-    gtk_text_view_set_cursor_visible (GTK_TEXT_VIEW (filew->textview25), FALSE);
-    
-    filew->textview26 = gtk_text_view_new ();
-
+  
+    filew->textview26 = vid_text_view_new ();
     gtk_fixed_put (GTK_FIXED (fixed3), filew->textview26, TB_WIDTH, 136);
-    lives_widget_set_size_request (filew->textview26, TB_WIDTH, TB_HEIGHT_VID);
-    gtk_text_view_set_editable (GTK_TEXT_VIEW (filew->textview26), FALSE);
-    gtk_text_view_set_justification (GTK_TEXT_VIEW (filew->textview26), GTK_JUSTIFY_CENTER);
-    gtk_text_view_set_cursor_visible (GTK_TEXT_VIEW (filew->textview26), FALSE);
     
-    filew->textview27 = gtk_text_view_new ();
-
+    filew->textview27 = vid_text_view_new ();
     gtk_fixed_put (GTK_FIXED (fixed3), filew->textview27, TB_WIDTH+400, 136);
-    lives_widget_set_size_request (filew->textview27, TB_WIDTH, TB_HEIGHT_VID);
-    gtk_text_view_set_editable (GTK_TEXT_VIEW (filew->textview27), FALSE);
-    gtk_text_view_set_justification (GTK_TEXT_VIEW (filew->textview27), GTK_JUSTIFY_CENTER);
-    gtk_text_view_set_cursor_visible (GTK_TEXT_VIEW (filew->textview27), FALSE);
     
-    filew->textview28 = gtk_text_view_new ();
-
+    filew->textview28 = vid_text_view_new ();
     gtk_fixed_put (GTK_FIXED (fixed3), filew->textview28, TB_WIDTH+400, 224);
-    lives_widget_set_size_request (filew->textview28, TB_WIDTH, TB_HEIGHT_VID);
-    gtk_text_view_set_editable (GTK_TEXT_VIEW (filew->textview28), FALSE);
-    gtk_text_view_set_justification (GTK_TEXT_VIEW (filew->textview28), GTK_JUSTIFY_CENTER);
-    gtk_text_view_set_cursor_visible (GTK_TEXT_VIEW (filew->textview28), FALSE);
     
-    filew->textview29 = gtk_text_view_new ();
-
+    filew->textview29 = vid_text_view_new ();
     gtk_fixed_put (GTK_FIXED (fixed3), filew->textview29, TB_WIDTH, 224);
-    lives_widget_set_size_request (filew->textview29, TB_WIDTH, TB_HEIGHT_VID);
-    gtk_text_view_set_editable (GTK_TEXT_VIEW (filew->textview29), FALSE);
-    gtk_text_view_set_justification (GTK_TEXT_VIEW (filew->textview29), GTK_JUSTIFY_CENTER);
-    gtk_text_view_set_cursor_visible (GTK_TEXT_VIEW (filew->textview29), FALSE);
     
     label45 = lives_standard_label_new (_("Format"));
 
@@ -469,7 +472,6 @@ lives_clipinfo_t *create_clip_info_window (int audio_channels, boolean is_mt) {
 
   if (audio_channels>0) {
     frame5 = gtk_frame_new (NULL);
-    lives_widget_set_size_request (frame5, 700, 140);
 
     lives_box_pack_start (LIVES_BOX (dialog_vbox), frame5, TRUE, TRUE, 0);
     if (palette->style&STYLE_1) {
@@ -486,17 +488,12 @@ lives_clipinfo_t *create_clip_info_window (int audio_channels, boolean is_mt) {
     gtk_frame_set_label_widget (GTK_FRAME (frame5), left);
 
     fixed5 = gtk_fixed_new ();
-
     lives_container_add (LIVES_CONTAINER (frame5), fixed5);
+    lives_container_set_border_width (LIVES_CONTAINER (fixed5), widget_opts.border_width);
 
     if (!is_mt) {
-      filew->textview_ltime = gtk_text_view_new ();
-
+      filew->textview_ltime = aud_text_view_new ();
       gtk_fixed_put (GTK_FIXED (fixed5), filew->textview_ltime, TB_WIDTH+400, 16);
-      lives_widget_set_size_request (filew->textview_ltime, TB_WIDTH, TB_HEIGHT_A);
-      gtk_text_view_set_editable (GTK_TEXT_VIEW (filew->textview_ltime), FALSE);
-      gtk_text_view_set_justification (GTK_TEXT_VIEW (filew->textview_ltime), GTK_JUSTIFY_CENTER);
-      gtk_text_view_set_cursor_visible (GTK_TEXT_VIEW (filew->textview_ltime), FALSE);
       
       label50 = lives_standard_label_new (_("Total time"));
 
@@ -504,22 +501,15 @@ lives_clipinfo_t *create_clip_info_window (int audio_channels, boolean is_mt) {
       lives_widget_set_size_request (label50, 145, 16);
     }
 
-    filew->textview_lrate = gtk_text_view_new ();
-
+    filew->textview_lrate = aud_text_view_new ();
     gtk_fixed_put (GTK_FIXED (fixed5), filew->textview_lrate, TB_WIDTH, 16);
-    lives_widget_set_size_request (filew->textview_lrate, TB_WIDTH, TB_HEIGHT_A);
-    gtk_text_view_set_editable (GTK_TEXT_VIEW (filew->textview_lrate), FALSE);
-    gtk_text_view_set_justification (GTK_TEXT_VIEW (filew->textview_lrate), GTK_JUSTIFY_CENTER);
-    gtk_text_view_set_cursor_visible (GTK_TEXT_VIEW (filew->textview_lrate), FALSE);
     
     label52 = lives_standard_label_new (_("Rate/size"));
-
     gtk_fixed_put (GTK_FIXED (fixed5), label52, 30, 32);
     lives_widget_set_size_request (label52, 130, 16);
 
     if (audio_channels>1) {
       frame6 = gtk_frame_new (NULL);
-      lives_widget_set_size_request (frame6, 600, 100);
 
       lives_box_pack_start (LIVES_BOX (dialog_vbox), frame6, TRUE, TRUE, 0);
       if (palette->style&STYLE_1) {
@@ -527,34 +517,22 @@ lives_clipinfo_t *create_clip_info_window (int audio_channels, boolean is_mt) {
       }
 
       fixed6 = gtk_fixed_new ();
-
       lives_container_add (LIVES_CONTAINER (frame6), fixed6);
+      lives_container_set_border_width (LIVES_CONTAINER (fixed6), widget_opts.border_width);
       
       if (!is_mt) {
-	filew->textview_rtime = gtk_text_view_new ();
-
+	filew->textview_rtime = aud_text_view_new ();
 	gtk_fixed_put (GTK_FIXED (fixed6), filew->textview_rtime, TB_WIDTH+400, 16);
-	lives_widget_set_size_request (filew->textview_rtime, TB_WIDTH, TB_HEIGHT_A);
-	gtk_text_view_set_editable (GTK_TEXT_VIEW (filew->textview_rtime), FALSE);
-	gtk_text_view_set_justification (GTK_TEXT_VIEW (filew->textview_rtime), GTK_JUSTIFY_CENTER);
-	gtk_text_view_set_cursor_visible (GTK_TEXT_VIEW (filew->textview_rtime), FALSE);
 	
 	label51 = lives_standard_label_new (_("Total time"));
-
 	gtk_fixed_put (GTK_FIXED (fixed6), label51, 450, 32);
 	lives_widget_set_size_request (label51, 145, 16);
       }
 
-      filew->textview_rrate = gtk_text_view_new ();
-
+      filew->textview_rrate = aud_text_view_new ();
       gtk_fixed_put (GTK_FIXED (fixed6), filew->textview_rrate, TB_WIDTH, 16);
-      lives_widget_set_size_request (filew->textview_rrate, TB_WIDTH, TB_HEIGHT_A);
-      gtk_text_view_set_editable (GTK_TEXT_VIEW (filew->textview_rrate), FALSE);
-      gtk_text_view_set_justification (GTK_TEXT_VIEW (filew->textview_rrate), GTK_JUSTIFY_CENTER);
-      gtk_text_view_set_cursor_visible (GTK_TEXT_VIEW (filew->textview_rrate), FALSE);
       
       label53 = lives_standard_label_new (_("Rate/size"));
-
       gtk_fixed_put (GTK_FIXED (fixed6), label53, 30, 32);
       lives_widget_set_size_request (label53, 130, 16);
       
@@ -2054,7 +2032,7 @@ static void rb_aud_sel_pressed (GtkButton *button, gpointer user_data) {
 
 
 
-aud_dialog_t *create_audfade_dialog (gint type) {
+aud_dialog_t *create_audfade_dialog (int type) {
   // type 0 = fade in
   // type 1 = fade out
 
@@ -2088,7 +2066,7 @@ aud_dialog_t *create_audfade_dialog (gint type) {
 
   dialog_vbox = lives_dialog_get_content_area(LIVES_DIALOG(audd->dialog));
 
-  hbox = lives_hbox_new (FALSE, TB_HEIGHT_A);
+  hbox = lives_hbox_new (FALSE, TB_HEIGHT_AUD);
   lives_box_pack_start (LIVES_BOX (dialog_vbox), hbox, TRUE, TRUE, widget_opts.packing_height);
 
   if (type==0) {
@@ -2435,7 +2413,7 @@ gchar *choose_file(gchar *dir, gchar *fname, gchar **filt, lives_file_chooser_ac
 }
 
 
-static void chooser_response(GtkDialog *dialog, gint response, gpointer user_data) {
+static void chooser_response(GtkDialog *dialog, int response, gpointer user_data) {
   int type=GPOINTER_TO_INT(user_data);
 
   if (response!=GTK_RESPONSE_CANCEL) {
@@ -2499,7 +2477,7 @@ void choose_file_with_preview (gchar *dir, const gchar *title, int preview_type)
 
 
 //cancel/discard/save dialog
-_entryw* create_cds_dialog (gint type) {
+_entryw* create_cds_dialog (int type) {
   GtkWidget *dialog_vbox;
   GtkWidget *dialog_action_area;
   GtkWidget *cancelbutton;

@@ -522,7 +522,7 @@ void load_rfx_preview(lives_rfx_t *rfx) {
     do {
       lives_widget_context_update();
       if (is_virtual_frame(mainw->current_file,vend)) {
-	retb=virtual_to_images(mainw->current_file,vend,vend,FALSE);
+	retb=virtual_to_images(mainw->current_file,vend,vend,FALSE,NULL);
 	if (!retb) return;
       }
       vend++;
@@ -546,7 +546,7 @@ void load_rfx_preview(lives_rfx_t *rfx) {
       do {
 	retb=FALSE;
 	if (is_virtual_frame(mainw->current_file,vend)) {
-	  retb=virtual_to_images(mainw->current_file,vend,vend,FALSE);
+	  retb=virtual_to_images(mainw->current_file,vend,vend,FALSE,NULL);
 	  if (!retb) {
 	    fclose(infofile);
 	    return;

@@ -458,6 +458,8 @@ void open_file_sel(const gchar *file_name, double start, int frames) {
 	    // for some codecs this can be helpful since we can locate the last frame while audio is loading
 	    if (cfile->clip_type==CLIP_TYPE_FILE&&mainw->playing_file==-1) resize(1);
 
+	    mainw->enough_pressed=FALSE;
+
 	    msgstr=g_strdup_printf(_("Opening audio"),file_name);
 	    if (!do_progress_dialog(TRUE,TRUE,msgstr)) {
 	      // user cancelled or switched to another clip
@@ -516,17 +518,39 @@ void open_file_sel(const gchar *file_name, double start, int frames) {
 	    reget_afilesize(mainw->current_file);
 	    get_total_time(cfile);
 
-	    if (prefs->auto_trim_audio&&(cfile->total_time>cfile->video_time)) {
-	      if (cdata->sync_hint&SYNC_HINT_AUDIO_TRIM_START) {
-		cfile->undo1_dbl=0.;
-		cfile->undo2_dbl=cfile->total_time-cfile->video_time;
-		on_del_audio_activate(NULL,NULL);
-		cfile->changed=FALSE;
+	    if (prefs->auto_trim_audio) {
+	      if (cfile->total_time>cfile->video_time) {
+		if (cdata->sync_hint&SYNC_HINT_AUDIO_TRIM_START) {
+		  cfile->undo1_dbl=0.;
+		  cfile->undo2_dbl=cfile->total_time-cfile->video_time;
+		  msgstr=g_strdup_printf(_ ("Auto trimming %.2f seconds of audio at start..."),cfile->undo2_dbl);
+		  d_print(msgstr);
+		  g_free(msgstr);
+		  if (on_del_audio_activate(NULL,NULL)) d_print_done();
+		  else d_print("\n");
+		  cfile->changed=FALSE;
+		}
+	      }
+	      if (!mainw->enough_pressed&&cfile->afilesize>0&&cfile->total_time>cfile->laudio_time) {
+		if (cdata->sync_hint&SYNC_HINT_AUDIO_PAD_START) {
+		  cfile->undo1_dbl=0.;
+		  cfile->undo2_dbl=cfile->total_time-cfile->laudio_time;
+		  cfile->undo_arate=cfile->arate;
+		  cfile->undo_signed_endian=cfile->signed_endian;
+		  cfile->undo_achans=cfile->achans;
+		  cfile->undo_asampsize=cfile->asampsize;
+		  cfile->undo_arps=cfile->arps;
+		  msgstr=g_strdup_printf(_ ("Auto padding with %.2f seconds of silence at start..."),cfile->undo2_dbl);
+		  d_print(msgstr);
+		  g_free(msgstr);
+		  if (on_ins_silence_activate(NULL,NULL)) d_print_done();
+		  else d_print("\n");
+		  cfile->changed=FALSE;
+		}
 	      }
 	    }
 	  }
 	}
-
 	get_mime_type(cfile->type,40,cdata);
 
       }
@@ -1354,7 +1378,7 @@ void save_file (int clip, int start, int end, const char *filename) {
 
     // pull at least one frame so we know the file ext
     if (sfile->clip_type==CLIP_TYPE_FILE) {
-      resb=virtual_to_images(clip,start,end,TRUE);
+      resb=virtual_to_images(clip,start,end,TRUE,NULL);
       
       if (!resb) {
 	if (mainw->subt_save_file!=NULL) g_free(mainw->subt_save_file);
@@ -1417,7 +1441,7 @@ void save_file (int clip, int start, int end, const char *filename) {
       cfile->progress_start=1;
       cfile->progress_end=count_virtual_frames(sfile->frame_index,start,end);
       do_threaded_dialog(_("Pulling frames from clip"),TRUE);
-      resb=virtual_to_images(clip,start,end,TRUE);
+      resb=virtual_to_images(clip,start,end,TRUE,NULL);
       end_threaded_dialog();
       
       if (mainw->cancelled!=CANCEL_NONE||!resb) {
@@ -1571,7 +1595,7 @@ void save_file (int clip, int start, int end, const char *filename) {
       cfile->progress_end=count_virtual_frames(sfile->frame_index,start,end);
 
       do_threaded_dialog(_("Pulling frames from clip"),TRUE);
-      resb=virtual_to_images(clip,start,end,TRUE);
+      resb=virtual_to_images(clip,start,end,TRUE,NULL);
       end_threaded_dialog();
       
       if (mainw->cancelled!=CANCEL_NONE||!resb) {
@@ -1633,7 +1657,7 @@ void save_file (int clip, int start, int end, const char *filename) {
       cfile->progress_start=1;
       cfile->progress_end=count_virtual_frames(sfile->frame_index,1,sfile->frames);
       do_threaded_dialog(_("Pulling frames from clip"),TRUE);
-      resb=virtual_to_images(clip,1,sfile->frames,TRUE);
+      resb=virtual_to_images(clip,1,sfile->frames,TRUE,NULL);
       end_threaded_dialog();
       
       if (mainw->cancelled!=CANCEL_NONE||!resb) {
@@ -3729,7 +3753,7 @@ boolean save_frame_inner(int clip, int frame, const gchar *file_name, int width,
     g_free(com);
     
     if (sfile->clip_type==CLIP_TYPE_FILE) {
-      boolean resb=virtual_to_images(clip,frame,frame,FALSE);
+      boolean resb=virtual_to_images(clip,frame,frame,FALSE,NULL);
       if (!resb) {
 	d_print_file_error_failed();
 	return FALSE;
@@ -3842,7 +3866,7 @@ void backup_file(int clip, int start, int end, const gchar *file_name) {
     cfile->progress_start=1;
     cfile->progress_end=count_virtual_frames(sfile->frame_index,1,sfile->frames);
     do_threaded_dialog(_("Pulling frames from clip"),TRUE);
-    resb=virtual_to_images(clip,1,sfile->frames,TRUE);
+    resb=virtual_to_images(clip,1,sfile->frames,TRUE,NULL);
     end_threaded_dialog();
 
     if (mainw->cancelled!=CANCEL_NONE||!resb) {

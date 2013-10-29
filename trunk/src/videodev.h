@@ -1,5 +1,5 @@
 // LiVES - videodev input
-// (c) G. Finch 2010 <salsaman@gmail.com>
+// (c) G. Finch 2010 - 2013 <salsaman@gmail.com>
 // released under the GNU GPL 3 or later
 // see file COPYING or www.gnu.org for details
 
@@ -18,7 +18,7 @@ typedef struct {
   int YUV_sampling;
   int YUV_subspace;
   int YUV_clamping;
-  gboolean is_really_grey; ///< for greyscale we lie and say it is YUV444P (i.e we add U and V planes)
+  boolean is_really_grey; ///< for greyscale we lie and say it is YUV444P (i.e we add U and V planes)
 } lives_vdev_t;
 
 
@@ -26,7 +26,7 @@ typedef struct {
 #define MAX_FORMATS 1024
 
 void on_open_vdev_activate (GtkMenuItem *, gpointer);
-gboolean weed_layer_set_from_lvdev (weed_plant_t *layer, file *sfile, gdouble timeoutsecs);
+boolean weed_layer_set_from_lvdev (weed_plant_t *layer, file *sfile, double timeoutsecs);
 void lives_vdev_free(lives_vdev_t *);
 
 

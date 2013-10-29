@@ -828,7 +828,7 @@ static void cancel_process(boolean visible) {
   if (prefs->show_player_stats&&!visible&&mainw->fps_measure>0.) {
     // statistics
     gettimeofday(&tv, NULL);
-    mainw->fps_measure/=(gdouble)(U_SECL*(tv.tv_sec-mainw->origsecs)+tv.tv_usec*U_SEC_RATIO-mainw->origusecs*
+    mainw->fps_measure/=(double)(U_SECL*(tv.tv_sec-mainw->origsecs)+tv.tv_usec*U_SEC_RATIO-mainw->origusecs*
 				  U_SEC_RATIO-mainw->offsetticks)/U_SEC;
   }
   if (visible) {
@@ -875,7 +875,7 @@ static void disp_fraction(int done, int start, int end, double timesofar, xproce
   if (done>disp_frames_done) gtk_progress_bar_set_fraction(GTK_PROGRESS_BAR(proc->progressbar),fraction_done);
 
   est_time=timesofar/fraction_done-timesofar;
-  prog_label=g_strdup_printf(_("\n%s%d%% done. Time remaining: %u sec%s\n"),stretch,(gint)(fraction_done*100.),(guint)(est_time+.5),stretch);
+  prog_label=g_strdup_printf(_("\n%s%d%% done. Time remaining: %u sec%s\n"),stretch,(int)(fraction_done*100.),(guint)(est_time+.5),stretch);
   if (GTK_IS_LABEL(proc->label3)) lives_label_set_text(LIVES_LABEL(proc->label3),prog_label);
   g_free(prog_label);
 
@@ -1064,7 +1064,7 @@ boolean process_one (boolean visible) {
 	  cfile->achans>0&&(!mainw->is_rendering||(mainw->multitrack!=NULL&&!mainw->multitrack->is_rendering))&&
 	  (mainw->currticks-mainw->offsetticks)>U_SECL*10&&(audio_ticks=lives_jack_get_time(mainw->jackd,TRUE))>
 	  mainw->offsetticks) {
-	if ((audio_stretch=(gdouble)(audio_ticks-mainw->offsetticks)/(gdouble)(mainw->currticks-mainw->offsetticks))<2.) {
+	if ((audio_stretch=(double)(audio_ticks-mainw->offsetticks)/(double)(mainw->currticks-mainw->offsetticks))<2.) {
 	  // if audio_stretch is > 1. it means that audio is playing too fast
 	  // < 1. it is playing too slow
 
@@ -1092,7 +1092,7 @@ boolean process_one (boolean visible) {
 	  (mainw->currticks-mainw->offsetticks)>U_SECL*10&&(audio_ticks=lives_pulse_get_time(mainw->pulsed,TRUE))>
 	  mainw->offsetticks) {
 	// fps is synched to external source, so we adjust the audio rate to fit
-	if ((audio_stretch=(gdouble)(audio_ticks-mainw->offsetticks)/(gdouble)(mainw->currticks-mainw->offsetticks))<2.) {
+	if ((audio_stretch=(double)(audio_ticks-mainw->offsetticks)/(double)(mainw->currticks-mainw->offsetticks))<2.) {
 	  // if audio_stretch is > 1. it means that audio is playing too fast
 	  // < 1. it is playing too slow
 
@@ -1175,7 +1175,7 @@ boolean process_one (boolean visible) {
       // calculate the audio 'frame' for no-realtime audio players
       // for realtime players, we did this in calc_new_playback_position()
       if (prefs->audio_player==AUD_PLAYER_SOX||prefs->audio_player==AUD_PLAYER_MPLAYER) {
-	mainw->aframeno=(gint64)(mainw->currticks-mainw->firstticks)*cfile->fps/U_SEC+audio_start;
+	mainw->aframeno=(int64_t)(mainw->currticks-mainw->firstticks)*cfile->fps/U_SEC+audio_start;
 	if (G_UNLIKELY(mainw->loop_cont&&(mainw->aframeno>(mainw->audio_end?mainw->audio_end:
 							   cfile->laudio_time*cfile->fps)))) {
 	  mainw->firstticks=mainw->startticks-mainw->deltaticks;
@@ -1245,7 +1245,7 @@ boolean process_one (boolean visible) {
       if (mainw->cancelled==CANCEL_NONE) mainw->cancelled=CANCEL_NO_PROPOGATE;
     }
     else {
-      gdouble fraction_done,timesofar;
+      double fraction_done,timesofar;
       gchar *prog_label;
 
       if (GTK_IS_SPIN_BUTTON(mainw->framedraw_spinbutton)) 
@@ -1264,7 +1264,7 @@ boolean process_one (boolean visible) {
 	  last_open_check_ticks=mainw->currticks;
 	  if (mainw->opening_frames>1) {
 	    if (cfile->frames>0&&cfile->frames!=123456789) {
-	      fraction_done=(gdouble)(mainw->opening_frames-1)/(gdouble)cfile->frames;
+	      fraction_done=(double)(mainw->opening_frames-1)/(double)cfile->frames;
 	      if (fraction_done>1.) fraction_done=1.;
 	      if (!mainw->effects_paused) {
 		timesofar=(mainw->currticks-mainw->timeout_ticks)/U_SEC;
@@ -1299,8 +1299,8 @@ boolean process_one (boolean visible) {
 
     if (cfile->clip_type==CLIP_TYPE_FILE&&cfile->fx_frame_pump>0&&
 	(cfile->progress_start+frames_done+FX_FRAME_PUMP_VAL>cfile->fx_frame_pump)) {
-      gint vend=cfile->fx_frame_pump;
-      gboolean retb=virtual_to_images(mainw->current_file,vend,vend,FALSE);
+      int vend=cfile->fx_frame_pump;
+      boolean retb=virtual_to_images(mainw->current_file,vend,vend,FALSE,NULL);
       if (retb) cfile->fx_frame_pump=vend+1;
       else mainw->cancelled=CANCEL_ERROR;
       if (vend==cfile->end) cfile->fx_frame_pump=0; // all frames were realised
@@ -1428,12 +1428,12 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const gchar *te
     // (encoding and copying have their own mechanism which realises all frames in the selection first) 
 
     if (cfile->clip_type==CLIP_TYPE_FILE&&cfile->fx_frame_pump>0) {
-      gint vend=cfile->fx_frame_pump+FX_FRAME_PUMP_VAL;
+      int vend=cfile->fx_frame_pump+FX_FRAME_PUMP_VAL;
       if (vend>cfile->progress_end) vend=cfile->progress_end;
       if (vend>=cfile->fx_frame_pump) {
 	register int i;
 	for (i=cfile->fx_frame_pump;i<=vend;i++) {
-	  gboolean retb=virtual_to_images(mainw->current_file,i,i,FALSE);
+	  boolean retb=virtual_to_images(mainw->current_file,i,i,FALSE,NULL);
 	  if (mainw->cancelled||!retb) {
 	    if (mainw->current_file>-1&&cfile!=NULL) lives_freep((void**)&cfile->op_dir);
 	    return FALSE;
@@ -1517,15 +1517,15 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const gchar *te
 
     // WARNING: origticks could be negative
 
-    gint64 origticks=mainw->origsecs*U_SEC+mainw->origusecs*U_SEC_RATIO-
+    int64_t origticks=mainw->origsecs*U_SEC+mainw->origusecs*U_SEC_RATIO-
       (mainw->offsetticks=get_event_timecode(mainw->multitrack->pb_start_event));
     mainw->origsecs=origticks/U_SEC;
-    mainw->origusecs=((gint64)(origticks/U_SEC_RATIO)-mainw->origsecs*1000000.);
+    mainw->origusecs=((int64_t)(origticks/U_SEC_RATIO)-mainw->origsecs*1000000.);
   }
 
 
   // set initial audio seek position for current file
-  if (cfile->achans) cfile->aseek_pos=(int64_t)((gdouble)(mainw->play_start-1.)/
+  if (cfile->achans) cfile->aseek_pos=(int64_t)((double)(mainw->play_start-1.)/
 					     cfile->fps*cfile->arate*cfile->achans*(cfile->asampsize/8));
 
 
@@ -1542,7 +1542,7 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const gchar *te
     mainw->rec_aclip=mainw->current_file;
     mainw->rec_avel=cfile->pb_fps/cfile->fps;
     if (!(mainw->record&&!mainw->record_paused&&(prefs->audio_src==AUDIO_SRC_EXT||mainw->agen_key!=0||mainw->agen_needs_reinit)))
-      mainw->rec_aseek=(gdouble)cfile->aseek_pos/(gdouble)(cfile->arate*cfile->achans*(cfile->asampsize/8));
+      mainw->rec_aseek=(double)cfile->aseek_pos/(double)(cfile->arate*cfile->achans*(cfile->asampsize/8));
     else {
       mainw->rec_aclip=mainw->ascrap_file;
       mainw->rec_avel=1.;
@@ -1573,7 +1573,7 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const gchar *te
     mainw->rec_aclip=mainw->current_file;
     mainw->rec_avel=cfile->pb_fps/cfile->fps;
     if (!(mainw->record&&!mainw->record_paused&&(prefs->audio_src==AUDIO_SRC_EXT||mainw->agen_key!=0||mainw->agen_needs_reinit)))
-      mainw->rec_aseek=(gdouble)cfile->aseek_pos/(gdouble)(cfile->arate*cfile->achans*(cfile->asampsize/8));
+      mainw->rec_aseek=(double)cfile->aseek_pos/(double)(cfile->arate*cfile->achans*(cfile->asampsize/8));
     else {
       mainw->rec_aclip=mainw->ascrap_file;
       mainw->rec_avel=1.;
@@ -1697,7 +1697,7 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const gchar *te
       // processing not yet completed...
       if (visible) {
 	// last frame processed ->> will go from cfile->start to cfile->end
-	gint numtok=get_token_count (mainw->msg,'|');
+	int numtok=get_token_count (mainw->msg,'|');
 	// get progress count from backend
 	if (numtok>1) {
 	  gchar **array=g_strsplit(mainw->msg,"|",numtok);
@@ -1782,7 +1782,7 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const gchar *te
     if (prefs->show_player_stats) {
       if (mainw->fps_measure>0.) {
 	gettimeofday(&tv, NULL);
-	mainw->fps_measure/=(gdouble)(U_SECL*(tv.tv_sec-mainw->origsecs)+tv.tv_usec*U_SEC_RATIO-
+	mainw->fps_measure/=(double)(U_SECL*(tv.tv_sec-mainw->origsecs)+tv.tv_usec*U_SEC_RATIO-
 				      mainw->origusecs*U_SEC_RATIO-mainw->offsetticks)/U_SEC;
       }
     }
@@ -1867,7 +1867,7 @@ boolean do_auto_dialog (const gchar *text, int type) {
     if (type==1&&mainw->rec_end_time!=-1.) {
       gettimeofday(&tv, NULL);
       time=tv.tv_sec*1000000.+tv.tv_usec; // time in microseconds
-      time_rem=(gint)((gdouble)(end_time-time)/1000000.+.5);
+      time_rem=(int)((double)(end_time-time)/1000000.+.5);
       if (time_rem>=0&&time_rem<last_time_rem) {
 	label_text=g_strdup_printf(_("\nTime remaining: %d sec"),time_rem);
 	lives_label_set_text(LIVES_LABEL(proc_ptr->label2),label_text);
@@ -2287,7 +2287,7 @@ void do_audio_import_error(void) {
 }
 
 
-gboolean prompt_remove_layout_files(void) {
+boolean prompt_remove_layout_files(void) {
   return (do_yesno_dialog(_("\nDo you wish to remove the layout files associated with this set ?\n(They will not be usable without the set).\n")));
 }
 
@@ -2352,7 +2352,7 @@ void do_jack_noopen_warn2(void) {
 }
 
 
-void do_mt_backup_space_error(lives_mt *mt, gint memreq_mb) {
+void do_mt_backup_space_error(lives_mt *mt, int memreq_mb) {
   gchar *msg=g_strdup_printf(_("\n\nLiVES needs more backup space for this layout.\nYou can increase the value in Preferences/Multitrack.\nIt is recommended to increase it to at least %d MB"),memreq_mb);
     do_error_dialog_with_check_transient(msg,TRUE,WARN_MASK_MT_BACKUP_SPACE,LIVES_WINDOW(mt->window));
     g_free(msg);
@@ -2464,7 +2464,7 @@ void do_rmem_max_error (int size) {
 static xprocess *procw=NULL;
 
 
-static void create_threaded_dialog(gchar *text, gboolean has_cancel) {
+static void create_threaded_dialog(gchar *text, boolean has_cancel) {
 
   GtkWidget *dialog_vbox;
   GtkWidget *vbox;
@@ -2542,12 +2542,12 @@ static void create_threaded_dialog(gchar *text, gboolean has_cancel) {
 }
 
 
-static gdouble sttime;
+static double sttime;
 
 
 void threaded_dialog_spin (void) {
-  gdouble timesofar;
-  gint progress;
+  double timesofar;
+  int progress;
 
   if (mainw->splash_window!=NULL) {
     do_splash_progress();
@@ -2564,7 +2564,7 @@ void threaded_dialog_spin (void) {
   else {
     // show fraction
     gettimeofday(&tv, NULL);
-    timesofar=(gdouble)(tv.tv_sec*1000000+tv.tv_usec-sttime)*U_SEC_RATIO/U_SEC;
+    timesofar=(double)(tv.tv_sec*1000000+tv.tv_usec-sttime)*U_SEC_RATIO/U_SEC;
     disp_fraction(progress,cfile->progress_start,cfile->progress_end,timesofar,procw);
   }
 

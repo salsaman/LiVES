@@ -104,21 +104,24 @@ static void *y4frame_thread (void *arg) {
 
 
 static gboolean lives_yuv_stream_start_read (file *sfile) {
+  double ofps=sfile->fps;
+
+  lives_yuv4m_t *yuv4mpeg=(lives_yuv4m_t *)sfile->ext_src;
+
+  pthread_t y4thread;
+
+  struct timeval otv;
+
+  int64_t ntime=0,stime;
+
+  void *retval;
+
+  gchar *filename=yuv4mpeg->filename,*tmp;
+
   int i;
 
   int ohsize=sfile->hsize;
   int ovsize=sfile->vsize;
-  gdouble ofps=sfile->fps;
-
-  lives_yuv4m_t *yuv4mpeg=(lives_yuv4m_t *)sfile->ext_src;
-
-  gchar *filename=yuv4mpeg->filename,*tmp;
-
-  pthread_t y4thread;
-  struct timeval otv;
-  int64_t ntime=0,stime;
-
-  void *retval;
 
   if (filename==NULL) return FALSE;
 
@@ -301,9 +304,9 @@ void weed_layer_set_from_yuv4m (weed_plant_t *layer, file *sfile) {
 
 
 
-static gboolean open_yuv4m_inner(const gchar *filename, const gchar *fname, gint new_file, gint type, gint cardno) {
+static gboolean open_yuv4m_inner(const gchar *filename, const gchar *fname, int new_file, int type, int cardno) {
   // create a virtual clip
-  gint old_file=mainw->current_file;
+  int old_file=mainw->current_file;
 
   lives_yuv4m_t *yuv4mpeg;
 
@@ -346,7 +349,7 @@ void on_open_yuv4m_activate (GtkMenuItem *menuitem, gpointer user_data) {
   // open a general yuvmpeg stream
   // start "playing" but open frames in yuv4mpeg format on stdin
 
-  gint old_file=mainw->current_file,new_file=mainw->first_free_file;
+  int old_file=mainw->current_file,new_file=mainw->first_free_file;
   gchar *tmp;
   gchar *filename;
   gchar *fname;
@@ -458,7 +461,7 @@ void on_open_yuv4m_activate (GtkMenuItem *menuitem, gpointer user_data) {
 
 
 gboolean 
-lives_yuv_stream_start_write (lives_yuv4m_t * yuv4mpeg, const gchar *filename, gint hsize, gint vsize, gdouble fps) {
+lives_yuv_stream_start_write (lives_yuv4m_t * yuv4mpeg, const gchar *filename, int hsize, int vsize, double fps) {
   int i;
 
   if (mainw->fixed_fpsd>-1.&&mainw->fixed_fpsd!=fps) {
@@ -556,11 +559,11 @@ void
 on_live_tvcard_activate                      (GtkMenuItem     *menuitem,
 					      gpointer         user_data)
 {
-  gint cardno=0;
+  int cardno=0;
 
-  gint new_file=mainw->first_free_file;
+  int new_file=mainw->first_free_file;
 
-  gint response;
+  int response;
 
   gchar *com,*tmp;
   gchar *fifofile=g_strdup_printf("%s/tvpic.%d",prefs->tmpdir,getpid());
@@ -589,8 +592,8 @@ on_live_tvcard_activate                      (GtkMenuItem     *menuitem,
     return;
   }
 
-  cardno=(gint)mainw->fx1_val;
-  chanstr=g_strdup_printf("%d",(gint)mainw->fx2_val);
+  cardno=(int)mainw->fx1_val;
+  chanstr=g_strdup_printf("%d",(int)mainw->fx2_val);
 
   if (g_list_find(mainw->videodevs,GINT_TO_POINTER(cardno))) {
     lives_widget_destroy(card_dialog);
@@ -639,10 +642,10 @@ on_live_tvcard_activate                      (GtkMenuItem     *menuitem,
 			devstr,fifofile);
   }
   else {
-    gdouble fps=0.;
+    double fps=0.;
     gchar *driver=NULL,*outfmt=NULL;
-    gint width=0,height=0;
-    gint input=lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(tvcardw->spinbuttoni));
+    int width=0,height=0;
+    int input=lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(tvcardw->spinbuttoni));
     
     if (!lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(tvcardw->radiobuttond))) {
       width=lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(tvcardw->spinbuttonw));
@@ -704,12 +707,12 @@ on_live_fw_activate                      (GtkMenuItem     *menuitem,
 {
 
   gchar *com,*tmp;
-  gint cardno;
-  gint cache=1024;
+  int cardno;
+  int cache=1024;
 
-  gint new_file=mainw->first_free_file;
+  int new_file=mainw->first_free_file;
 
-  gint response;
+  int response;
 
   gchar *fifofile=g_strdup_printf("%s/firew.%d",prefs->tmpdir,getpid());
   gchar *fname;
@@ -726,7 +729,7 @@ on_live_fw_activate                      (GtkMenuItem     *menuitem,
     return;
   }
 
-  cardno=(gint)mainw->fx1_val;
+  cardno=(int)mainw->fx1_val;
 
   lives_widget_destroy(card_dialog);
 

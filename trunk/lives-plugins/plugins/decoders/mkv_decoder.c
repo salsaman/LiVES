@@ -106,6 +106,14 @@ const char *plugin_version="LiVES mkv decoder version 1.2";
 #define avcodec_alloc_context3(a) avcodec_alloc_context()
 #endif
 
+#if HAVE_AVFORMAT_NEW_STREAM
+#define av_new_stream(a, b) avformat_new_stream(a, NULL)
+#endif
+
+#if HAVE_AVPRIV_SET_PTS_INFO
+#define av_set_pts_info(a,b,c,d) avpriv_set_pts_info(a,b,c,d)
+#endif
+
 
 #include "mkv_decoder.h"
 

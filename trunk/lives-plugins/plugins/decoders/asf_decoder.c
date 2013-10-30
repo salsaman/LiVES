@@ -81,7 +81,13 @@ const char *plugin_version="LiVES asf/wmv decoder version 1.0";
 #define avcodec_open2(a, b, c) avcodec_open(a, b)
 #endif
 
+#if HAVE_AVFORMAT_NEW_STREAM
+#define av_new_stream(a, b) avformat_new_stream(a, NULL)
+#endif
 
+#if HAVE_AVPRIV_SET_PTS_INFO
+#define av_set_pts_info(a,b,c,d) avpriv_set_pts_info(a,b,c,d)
+#endif
 
 static enum CodecID ff_codec_get_id(const AVCodecTag *tags, unsigned int tag)
 {

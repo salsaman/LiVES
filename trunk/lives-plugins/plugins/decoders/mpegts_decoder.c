@@ -67,11 +67,8 @@ const char *plugin_version="LiVES mpegts decoder version 1.0";
 
 #include "mpegts_decoder.h"
 
-#ifndef FF_API_OLD_AVOPTIONS
-#define FF_API_OLD_AVOPTIONS            (LIBAVUTIL_VERSION_MAJOR < 53)
-#endif
 
-#if FF_API_OLD_AVOPTIONS
+#if ((LIBAVUTIL_VERSION_MAJOR < 51) || (LIBAVUTIL_VERSION_MAJOR == 51) && (LIBAVUTIL_VERSION_MINOR < 22))
 #define AV_OPT_TYPE_INT FF_OPT_TYPE_INT
 #endif
 
@@ -109,6 +106,13 @@ const char *plugin_version="LiVES mpegts decoder version 1.0";
 #define avcodec_alloc_context3(a) avcodec_alloc_context()
 #endif
 
+#if HAVE_AVFORMAT_NEW_STREAM
+#define av_new_stream(a, b) avformat_new_stream(a, NULL)
+#endif
+
+#if HAVE_AVPRIV_SET_PTS_INFO
+#define av_set_pts_info(a,b,c,d) avpriv_set_pts_info(a,b,c,d)
+#endif
 
 /**
  * Read 1-25 bits.
@@ -1042,6 +1046,7 @@ static int mpegts_set_stream_info(lives_clip_data_t *cdata, AVStream *st, PESCon
       memcpy(sub_pes, pes, sizeof(*sub_pes));
 
       sub_st = av_new_stream(pes->stream, pes->pid);
+
       if (!sub_st) {
 	av_free(sub_pes);
 	return AVERROR(ENOMEM);

@@ -10086,11 +10086,11 @@ LiVESPixbuf *layer_to_pixbuf (weed_plant_t *layer) {
 
   if (current_gamma!=SCREEN_GAMMA*.6) update_gamma_lut(SCREEN_GAMMA*.6);
 
-  width = gdk_pixbuf_get_width(pixbuf);
-  height = gdk_pixbuf_get_height(pixbuf);
+  width = lives_pixbuf_get_width(pixbuf);
+  height = lives_pixbuf_get_height(pixbuf);
 
-  pixels = gdk_pixbuf_get_pixels(pixbuf);
-  orowstride = gdk_pixbuf_get_rowstride(pixbuf);
+  pixels = lives_pixbuf_get_pixels(pixbuf);
+  orowstride = lives_pixbuf_get_rowstride(pixbuf);
   end=pixels+height*orowstride;
   done=FALSE;
 

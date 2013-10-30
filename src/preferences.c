@@ -2277,7 +2277,7 @@ _prefsw *create_prefs_dialog (void) {
   lives_toggle_button_set_active (LIVES_TOGGLE_BUTTON (prefsw->ce_thumbs), prefs->ce_thumb_mode);
 
   icon = g_build_filename(prefs->prefix_dir, ICON_DIR, "pref_gui.png", NULL);
-  pixbuf_gui = gdk_pixbuf_new_from_file(icon, NULL);
+  pixbuf_gui = lives_pixbuf_new_from_file(icon, NULL);
   g_free(icon);
 
   prefs_add_to_list(prefsw->prefs_list, pixbuf_gui, _("GUI"), LIST_ENTRY_GUI);
@@ -2461,7 +2461,7 @@ _prefsw *create_prefs_dialog (void) {
   }
   // ---
   icon = g_build_filename(prefs->prefix_dir, ICON_DIR, "pref_multitrack.png", NULL);
-  pixbuf_multitrack = gdk_pixbuf_new_from_file(icon, NULL);
+  pixbuf_multitrack = lives_pixbuf_new_from_file(icon, NULL);
   g_free(icon);
 
   prefs_add_to_list(prefsw->prefs_list, pixbuf_multitrack, _("Multitrack/Render"), LIST_ENTRY_MULTITRACK);
@@ -2599,7 +2599,7 @@ _prefsw *create_prefs_dialog (void) {
 
   // ---
   icon = g_build_filename(prefs->prefix_dir, ICON_DIR, "pref_decoding.png", NULL);
-  pixbuf_decoding = gdk_pixbuf_new_from_file(icon, NULL);
+  pixbuf_decoding = lives_pixbuf_new_from_file(icon, NULL);
   g_free(icon);
 
 
@@ -2865,7 +2865,7 @@ _prefsw *create_prefs_dialog (void) {
   gtk_frame_set_label_widget (GTK_FRAME (frame), label);
 
   icon = g_build_filename(prefs->prefix_dir, ICON_DIR, "pref_playback.png", NULL);
-  pixbuf_playback = gdk_pixbuf_new_from_file(icon, NULL);
+  pixbuf_playback = lives_pixbuf_new_from_file(icon, NULL);
   g_free(icon);
 
   prefs_add_to_list(prefsw->prefs_list, pixbuf_playback, _("Playback"), LIST_ENTRY_PLAYBACK);
@@ -3000,7 +3000,7 @@ _prefsw *create_prefs_dialog (void) {
   lives_box_pack_start (LIVES_BOX (hbox), label, FALSE, FALSE, widget_opts.packing_width);
 
   icon = g_build_filename(prefs->prefix_dir, ICON_DIR, "pref_record.png", NULL);
-  pixbuf_recording = gdk_pixbuf_new_from_file(icon, NULL);
+  pixbuf_recording = lives_pixbuf_new_from_file(icon, NULL);
   g_free(icon);
 
   prefs_add_to_list(prefsw->prefs_list, pixbuf_recording, _("Recording"), LIST_ENTRY_RECORDING);
@@ -3082,7 +3082,7 @@ _prefsw *create_prefs_dialog (void) {
   else prefsw->acodec_combo=NULL;
 
   icon = g_build_filename(prefs->prefix_dir, ICON_DIR, "pref_encoding.png", NULL);
-  pixbuf_encoding = gdk_pixbuf_new_from_file(icon, NULL);
+  pixbuf_encoding = lives_pixbuf_new_from_file(icon, NULL);
   g_free(icon);
 
   prefs_add_to_list(prefsw->prefs_list, pixbuf_encoding, _("Encoding"), LIST_ENTRY_ENCODING);
@@ -3158,7 +3158,7 @@ _prefsw *create_prefs_dialog (void) {
 
 
   icon = g_build_filename(prefs->prefix_dir, ICON_DIR, "pref_effects.png", NULL);
-  pixbuf_effects = gdk_pixbuf_new_from_file(icon, NULL);
+  pixbuf_effects = lives_pixbuf_new_from_file(icon, NULL);
   g_free(icon);
 
   prefs_add_to_list(prefsw->prefs_list, pixbuf_effects, _("Effects"), LIST_ENTRY_EFFECTS);
@@ -3322,7 +3322,7 @@ _prefsw *create_prefs_dialog (void) {
 		    (GtkAttachOptions) (0), 0, 0);
    
   icon = g_build_filename(prefs->prefix_dir, ICON_DIR, "pref_directory.png", NULL);
-  pixbuf_directories = gdk_pixbuf_new_from_file(icon, NULL);
+  pixbuf_directories = lives_pixbuf_new_from_file(icon, NULL);
   g_free(icon);
 
   prefs_add_to_list(prefsw->prefs_list, pixbuf_directories, _("Directories"), LIST_ENTRY_DIRECTORIES);
@@ -3636,7 +3636,7 @@ _prefsw *create_prefs_dialog (void) {
 
 
   icon = g_build_filename(prefs->prefix_dir, ICON_DIR, "pref_warning.png", NULL);
-  pixbuf_warnings = gdk_pixbuf_new_from_file(icon, NULL);
+  pixbuf_warnings = lives_pixbuf_new_from_file(icon, NULL);
   g_free(icon);
 
   prefs_add_to_list(prefsw->prefs_list, pixbuf_warnings, _("Warnings"), LIST_ENTRY_WARNINGS);
@@ -3708,7 +3708,7 @@ _prefsw *create_prefs_dialog (void) {
 
 
   icon = g_strdup_printf("%s%s/pref_misc.png", prefs->prefix_dir, ICON_DIR);
-  pixbuf_misc = gdk_pixbuf_new_from_file(icon, NULL);
+  pixbuf_misc = lives_pixbuf_new_from_file(icon, NULL);
   g_free(icon);
 
   prefs_add_to_list(prefsw->prefs_list, pixbuf_misc, _("Misc"), LIST_ENTRY_MISC);
@@ -3751,7 +3751,7 @@ _prefsw *create_prefs_dialog (void) {
   g_list_free (themes);
    
   icon = g_build_filename(prefs->prefix_dir, ICON_DIR, "pref_themes.png", NULL);
-  pixbuf_themes = gdk_pixbuf_new_from_file(icon, NULL);
+  pixbuf_themes = lives_pixbuf_new_from_file(icon, NULL);
   g_free(icon);
 
   prefs_add_to_list(prefsw->prefs_list, pixbuf_themes, _("Themes"), LIST_ENTRY_THEMES);
@@ -3821,7 +3821,7 @@ _prefsw *create_prefs_dialog (void) {
 #endif
    
   icon = g_build_filename(prefs->prefix_dir, ICON_DIR, "pref_net.png", NULL);
-  pixbuf_net = gdk_pixbuf_new_from_file(icon, NULL);
+  pixbuf_net = lives_pixbuf_new_from_file(icon, NULL);
   g_free(icon);
 
   prefs_add_to_list(prefsw->prefs_list, pixbuf_net, _("Streaming/Networking"), LIST_ENTRY_NET);
@@ -3972,7 +3972,7 @@ _prefsw *create_prefs_dialog (void) {
 #endif
 
   icon = g_build_filename(prefs->prefix_dir, ICON_DIR, "pref_jack.png", NULL);
-  pixbuf_jack = gdk_pixbuf_new_from_file(icon, NULL);
+  pixbuf_jack = lives_pixbuf_new_from_file(icon, NULL);
   g_free(icon);
 
   prefs_add_to_list(prefsw->prefs_list, pixbuf_jack, _("Jack Integration"), LIST_ENTRY_JACK);
@@ -4110,7 +4110,7 @@ _prefsw *create_prefs_dialog (void) {
 #endif
 
   icon = g_build_filename(prefs->prefix_dir, ICON_DIR, "pref_midi.png", NULL);
-  pixbuf_midi = gdk_pixbuf_new_from_file(icon, NULL);
+  pixbuf_midi = lives_pixbuf_new_from_file(icon, NULL);
   g_free(icon);
 
   prefs_add_to_list(prefsw->prefs_list, pixbuf_midi, _("MIDI/Joystick learner"), LIST_ENTRY_MIDI);

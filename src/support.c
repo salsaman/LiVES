@@ -112,7 +112,7 @@ create_pixbuf                          (const gchar     *filename)
       return NULL;
     }
 
-  pixbuf = gdk_pixbuf_new_from_file (pathname, &error);
+  pixbuf = lives_pixbuf_new_from_file (pathname, &error);
   if (!pixbuf)
     {
       fprintf (stderr, "Failed to load pixbuf file: %s: %s\n",

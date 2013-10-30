@@ -876,7 +876,7 @@ static void disp_fraction(int done, int start, int end, double timesofar, xproce
 
   est_time=timesofar/fraction_done-timesofar;
   prog_label=g_strdup_printf(_("\n%s%d%% done. Time remaining: %u sec%s\n"),stretch,(int)(fraction_done*100.),(guint)(est_time+.5),stretch);
-  if (GTK_IS_LABEL(proc->label3)) lives_label_set_text(LIVES_LABEL(proc->label3),prog_label);
+  if (LIVES_IS_LABEL(proc->label3)) lives_label_set_text(LIVES_LABEL(proc->label3),prog_label);
   g_free(prog_label);
 
   disp_frames_done=done;

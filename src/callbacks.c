@@ -7104,7 +7104,7 @@ void on_full_screen_activate (GtkMenuItem *menuitem, gpointer user_data) {
   if (!mainw->fs) {
     if (g_file_test(buff,G_FILE_TEST_EXISTS)) {
       GdkPixbuf *pixbuf=lives_image_get_pixbuf(LIVES_IMAGE(fs_img));
-      gdk_pixbuf_saturate_and_pixelate(pixbuf,pixbuf,0.2,FALSE);
+      lives_pixbuf_saturate_and_pixelate(pixbuf,pixbuf,0.2,FALSE);
     }
     lives_widget_set_tooltip_text(mainw->t_fullscreen,_("Fullscreen playback (f)"));
   }
@@ -7333,7 +7333,7 @@ on_double_size_activate               (GtkMenuItem     *menuitem,
     
     if (g_file_test(buff,G_FILE_TEST_EXISTS)) {
       GdkPixbuf *pixbuf=lives_image_get_pixbuf(LIVES_IMAGE(sngl_img));
-      if (pixbuf!=NULL) gdk_pixbuf_saturate_and_pixelate(pixbuf,pixbuf,0.2,FALSE);
+      if (pixbuf!=NULL) lives_pixbuf_saturate_and_pixelate(pixbuf,pixbuf,0.2,FALSE);
     }
     
     lives_widget_show(sngl_img);
@@ -7466,9 +7466,9 @@ void on_sepwin_activate (GtkMenuItem *menuitem, gpointer user_data) {
   else {
     if (g_file_test(buff,G_FILE_TEST_EXISTS)) {
       GdkPixbuf *pixbuf=lives_image_get_pixbuf(LIVES_IMAGE(sep_img));
-      if (pixbuf!=NULL) gdk_pixbuf_saturate_and_pixelate(pixbuf,pixbuf,0.2,FALSE);
+      if (pixbuf!=NULL) lives_pixbuf_saturate_and_pixelate(pixbuf,pixbuf,0.2,FALSE);
       pixbuf=lives_image_get_pixbuf(LIVES_IMAGE(sep_img2));
-      if (pixbuf!=NULL) gdk_pixbuf_saturate_and_pixelate(pixbuf,pixbuf,0.2,FALSE);
+      if (pixbuf!=NULL) lives_pixbuf_saturate_and_pixelate(pixbuf,pixbuf,0.2,FALSE);
     }
     lives_widget_set_tooltip_text(mainw->m_sepwinbutton,_("Show the play window (s)"));
     lives_widget_set_tooltip_text(mainw->t_sepwin,_("Play in separate window (s)"));
@@ -7810,7 +7810,7 @@ on_loop_cont_activate                (GtkMenuItem     *menuitem,
   else {
     if (g_file_test(buff,G_FILE_TEST_EXISTS)) {
       GdkPixbuf *pixbuf=lives_image_get_pixbuf(LIVES_IMAGE(loop_img));
-      if (pixbuf!=NULL) gdk_pixbuf_saturate_and_pixelate(pixbuf,pixbuf,0.2,FALSE);
+      if (pixbuf!=NULL) lives_pixbuf_saturate_and_pixelate(pixbuf,pixbuf,0.2,FALSE);
     }
     lives_widget_set_tooltip_text(mainw->m_loopbutton,_("Switch continuous looping on (o)"));
   }
@@ -7918,10 +7918,10 @@ on_mute_activate                (GtkMenuItem     *menuitem,
   else {
     if (g_file_test(buff,G_FILE_TEST_EXISTS)) {
       GdkPixbuf *pixbuf=lives_image_get_pixbuf(LIVES_IMAGE(mute_img));
-      if (pixbuf!=NULL) gdk_pixbuf_saturate_and_pixelate(pixbuf,pixbuf,0.2,FALSE);
+      if (pixbuf!=NULL) lives_pixbuf_saturate_and_pixelate(pixbuf,pixbuf,0.2,FALSE);
       if (mainw->preview_box!=NULL) {
 	pixbuf=lives_image_get_pixbuf(LIVES_IMAGE(mute_img2));
-	if (pixbuf!=NULL) gdk_pixbuf_saturate_and_pixelate(pixbuf,pixbuf,0.2,FALSE);
+	if (pixbuf!=NULL) lives_pixbuf_saturate_and_pixelate(pixbuf,pixbuf,0.2,FALSE);
       }
     }
     lives_widget_set_tooltip_text(mainw->m_mutebutton,_("Mute the audio (z)"));

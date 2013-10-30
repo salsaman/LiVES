@@ -306,7 +306,7 @@ void check_for_special (lives_rfx_t *rfx, lives_param_t *param, LiVESBox *pbox) 
       if (GTK_IS_ENTRY(param->widgets[0])) {
 	lives_entry_set_editable(LIVES_ENTRY(param->widgets[0]),FALSE);
 	if (param->widgets[1]!=NULL&&
-	    GTK_IS_LABEL(param->widgets[1])&&
+	    LIVES_IS_LABEL(param->widgets[1])&&
 	    gtk_label_get_mnemonic_widget(LIVES_LABEL(param->widgets[1]))!=NULL) 
 	  gtk_label_set_mnemonic_widget (LIVES_LABEL(param->widgets[1]),buttond);
 	gtk_entry_set_max_length(LIVES_ENTRY (param->widgets[0]),PATH_MAX);

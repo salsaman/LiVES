@@ -101,24 +101,14 @@ const char *plugin_version="LiVES mpegts decoder version 1.0";
 #define CODEC_ID_DVB_SUBTITLE AV_CODEC_ID_DVB_SUBTITLE
 #endif
 
-#ifndef FF_API_AVCODEC_OPEN
-#define FF_API_AVCODEC_OPEN     (LIBAVCODEC_VERSION_MAJOR < 55)
-#endif
-
-
-#if FF_API_AVCODEC_OPEN
+#if !HAVE_AVCODEC_OPEN2
 #define avcodec_open2(a, b, c) avcodec_open(a, b)
 #endif
 
-
-#ifndef FF_API_ALLOC_CONTEXT
-#define FF_API_ALLOC_CONTEXT    (LIBAVCODEC_VERSION_MAJOR < 55)
-#endif
-
-
-#if FF_API_ALLOC_CONTEXT
+#if !HAVE_AVCODEC_ALLOC_CONTEXT3
 #define avcodec_alloc_context3(a) avcodec_alloc_context()
 #endif
+
 
 /**
  * Read 1-25 bits.

@@ -70,18 +70,28 @@ if HAVE_AVFORMAT
 if HAVE_AVCODEC
 if HAVE_AVUTIL
 
+libav_cflags =
+
+if HAVE_AVCODEC_OPEN2
+libav_cflags += -DHAVE_AVCODEC_OPEN2=1
+endif
+
+if HAVE_AVCODEC_ALLOC_CONTEXT3
+libav_cflags += -DHAVE_AVCODEC_ALLOC_CONTEXT3=1
+endif
+
 flv_libs = flv_decoder.la
 FLVDEC_LIBS = @LIBAVCODEC_LIBS@ @LIBAVFORMAT_LIBS@
 FLVDEC_CFLAGS = @LIBAVFORMAT_CFLAGS@ @LIBAVCODEC_CFLAGS@ -Wno-deprecated-declarations
 flv_decoder_la_SOURCES = flv_decoder.c flv_decoder.h
-flv_decoder_la_CFLAGS = $(shared_cflags) $(weed_cflags) $(FLVDEC_CFLAGS)
+flv_decoder_la_CFLAGS = $(libav_cflags) $(shared_cflags) $(weed_cflags) $(FLVDEC_CFLAGS)
 flv_decoder_la_LDFLAGS = $(shared_ldflags) $(FLVDEC_LIBS)
 
 asf_libs = asf_decoder.la
 ASFDEC_LIBS = @LIBAVCODEC_LIBS@ @LIBAVFORMAT_LIBS@
 ASFDEC_CFLAGS = @LIBAVFORMAT_CFLAGS@ @LIBAVCODEC_CFLAGS@ -Wno-deprecated-declarations
 asf_decoder_la_SOURCES = asf_decoder.c asf_decoder.h
-asf_decoder_la_CFLAGS = $(shared_cflags) $(weed_cflags) $(ASFDEC_CFLAGS)
+asf_decoder_la_CFLAGS = $(libav_cflags) $(shared_cflags) $(weed_cflags) $(ASFDEC_CFLAGS)
 asf_decoder_la_LDFLAGS = $(shared_ldflags) $(ASFDEC_LIBS)
 
 
@@ -90,7 +100,7 @@ MKVDEC_LIBS = @LIBAVCODEC_LIBS@ @LIBAVFORMAT_LIBS@ @LIBAVUTIL_LIBS@ @LIBZ_LIBS@ 
 MKVDEC_CFLAGS = @LIBAVFORMAT_CFLAGS@ @LIBAVCODEC_CFLAGS@ @LIBAVUTIL_CFLAGS@ @LIBZ_CFLAGS@ @LIBBZ_CFLAGS@ \
 	-Wno-deprecated-declarations
 mkv_decoder_la_SOURCES = mkv_decoder.c mkv_decoder.h
-mkv_decoder_la_CFLAGS = $(shared_cflags) $(weed_cflags) $(MKVDEC_CFLAGS)
+mkv_decoder_la_CFLAGS = $(libav_cflags) $(shared_cflags) $(weed_cflags) $(MKVDEC_CFLAGS)
 mkv_decoder_la_LDFLAGS = $(shared_ldflags) $(MKVDEC_LIBS)
 
 
@@ -100,7 +110,7 @@ MPEGTSDEC_LIBS = @LIBAVCODEC_LIBS@ @LIBAVFORMAT_LIBS@ @LIBAVUTIL_LIBS@
 MPEGTSDEC_CFLAGS = @LIBAVFORMAT_CFLAGS@ @LIBAVCODEC_CFLAGS@ @LIBAVUTIL_CFLAGS@ \
 	-Wno-deprecated-declarations
 mpegts_decoder_la_SOURCES = mpegts_decoder.c mpegts_decoder.h
-mpegts_decoder_la_CFLAGS = $(shared_cflags) $(weed_cflags) $(MPEGTSDEC_CFLAGS)
+mpegts_decoder_la_CFLAGS = $(libav_cflags) $(shared_cflags) $(weed_cflags) $(MPEGTSDEC_CFLAGS)
 mpegts_decoder_la_LDFLAGS = $(shared_ldflags) $(MPEGTSDEC_LIBS)
 
 
@@ -109,7 +119,7 @@ zyavformat_libs = zyavformat_decoder.la
 AVIDEC_LIBS = @LIBAVCODEC_LIBS@ @LIBAVFORMAT_LIBS@
 AVIDEC_CFLAGS = @LIBAVFORMAT_CFLAGS@ @LIBAVCODEC_CFLAGS@ -Wno-deprecated-declarations
 zyavformat_decoder_la_SOURCES = avformat_decoder.c avformat_decoder.h
-zyavformat_decoder_la_CFLAGS = $(shared_cflags) $(weed_cflags) $(AVIDEC_CFLAGS)
+zyavformat_decoder_la_CFLAGS = $(libav_cflags) $(shared_cflags) $(weed_cflags) $(AVIDEC_CFLAGS)
 zyavformat_decoder_la_LDFLAGS = $(shared_ldflags) $(AVIDEC_LIBS)
 
 

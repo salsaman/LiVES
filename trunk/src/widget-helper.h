@@ -361,14 +361,19 @@ typedef gpointer                          livespointer;
 
 #define LIVES_IS_WIDGET(widget) GTK_IS_WIDGET(widget)
 #define LIVES_IS_WINDOW(widget) GTK_IS_WINDOW(widget)
+#define LIVES_IS_CONTAINER(widget) GTK_IS_CONTAINER(widget)
+
 #if GTK_CHECK_VERSION(3,0,0)
 #define LIVES_IS_HBOX(widget) (GTK_IS_BOX(widget)&&gtk_orientable_get_orientation(GTK_ORIENTABLE(widget))==GTK_ORIENTATION_HORIZONTAL)
 #define LIVES_IS_VBOX(widget) (GTK_IS_BOX(widget)&&gtk_orientable_get_orientation(GTK_ORIENTABLE(widget))==GTK_ORIENTATION_HORIZONTAL)
+#define LIVES_IS_SCROLLABLE(widget) GTK_IS_SCROLLABLE(widget)
 #else
 #define LIVES_IS_HBOX(widget) GTK_IS_HBOX(widget)
 #define LIVES_IS_VBOX(widget) GTK_IS_VBOX(widget)
 #endif
+
 #define LIVES_IS_COMBO(widget) GTK_IS_COMBO_BOX(widget)
+#define LIVES_IS_LABEL(widget) GTK_IS_LABEL(widget)
 #define LIVES_IS_BUTTON(widget) GTK_IS_BUTTON(widget)
 #define LIVES_IS_IMAGE(widget) GTK_IS_IMAGE(widget)
 #define LIVES_IS_ENTRY(widget) GTK_IS_ENTRY(widget)
@@ -673,6 +678,8 @@ LiVESPixbuf *lives_pixbuf_new_from_file_at_scale(const char *filename, int width
 LiVESPixbuf *lives_pixbuf_scale_simple(const LiVESPixbuf *src, int dest_width, int dest_height, 
 				       LiVESInterpType interp_type);
 
+boolean lives_pixbuf_saturate_and_pixelate(const LiVESPixbuf *src, LiVESPixbuf *dest, float saturation, boolean pixilate);
+
 // basic widget fns
 
 void lives_widget_set_sensitive(LiVESWidget *, boolean state);
@@ -859,7 +866,6 @@ boolean lives_color_button_set_title(LiVESColorButton *, const char *title);
 boolean lives_color_button_set_use_alpha(LiVESColorButton *, boolean use_alpha);
 
 LiVESToolItem *lives_tool_button_new(LiVESWidget *icon_widget, const char *label);
-boolean lives_tool_button_set_label(LiVESToolButton *, const char *label);
 boolean lives_tool_button_set_icon_widget(LiVESToolButton *, LiVESWidget *icon);
 boolean lives_tool_button_set_label_widget(LiVESToolButton *, LiVESWidget *label);
 boolean lives_tool_button_set_use_underline(LiVESToolButton *, boolean use_underline);

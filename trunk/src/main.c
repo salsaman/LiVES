@@ -3426,8 +3426,8 @@ void load_start_image(int frame) {
     if (mainw->camframe==NULL) {
       GError *error=NULL;
       gchar *tmp=g_build_filename(prefs->prefix_dir,THEME_DIR,"camera","frame.jpg",NULL);
-      mainw->camframe=gdk_pixbuf_new_from_file(tmp,&error);
-      if (mainw->camframe!=NULL) gdk_pixbuf_saturate_and_pixelate(mainw->camframe,mainw->camframe,0.0,FALSE);
+      mainw->camframe=lives_pixbuf_new_from_file(tmp,&error);
+      if (mainw->camframe!=NULL) lives_pixbuf_saturate_and_pixelate(mainw->camframe,mainw->camframe,0.0,FALSE);
       g_free(tmp);
     }
     set_ce_frame_from_pixbuf(GTK_IMAGE(mainw->image272),mainw->camframe,NULL);
@@ -3597,8 +3597,8 @@ void load_end_image(gint frame) {
     if (mainw->camframe==NULL) {
       GError *error=NULL;
       gchar *tmp=g_build_filename(prefs->prefix_dir,THEME_DIR,"camera","frame.jpg",NULL);
-      mainw->camframe=gdk_pixbuf_new_from_file(tmp,&error);
-      if (mainw->camframe!=NULL) gdk_pixbuf_saturate_and_pixelate(mainw->camframe,mainw->camframe,0.0,FALSE);
+      mainw->camframe=lives_pixbuf_new_from_file(tmp,&error);
+      if (mainw->camframe!=NULL) lives_pixbuf_saturate_and_pixelate(mainw->camframe,mainw->camframe,0.0,FALSE);
       g_free(tmp);
     }
     set_ce_frame_from_pixbuf(GTK_IMAGE(mainw->image273),mainw->camframe,NULL);
@@ -3767,8 +3767,8 @@ void load_preview_image(boolean update_always) {
     if (mainw->camframe==NULL) {
       GError *error=NULL;
       gchar *tmp=g_strdup_printf("%s/%s/camera/frame.jpg",prefs->prefix_dir,THEME_DIR);
-      mainw->camframe=gdk_pixbuf_new_from_file(tmp,&error);
-      if (mainw->camframe!=NULL) gdk_pixbuf_saturate_and_pixelate(mainw->camframe,mainw->camframe,0.0,FALSE);
+      mainw->camframe=lives_pixbuf_new_from_file(tmp,&error);
+      if (mainw->camframe!=NULL) lives_pixbuf_saturate_and_pixelate(mainw->camframe,mainw->camframe,0.0,FALSE);
       g_free(tmp);
     }
     pixbuf=lives_pixbuf_scale_simple(mainw->camframe,mainw->pwidth,mainw->pheight,LIVES_INTERP_BEST);

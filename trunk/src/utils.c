@@ -1542,7 +1542,7 @@ void d_print(const char *text) {
 
   if (mainw->suppress_dprint) return;
 
-  if (GTK_IS_TEXT_VIEW (mainw->textview1)) {
+  if (LIVES_IS_TEXT_VIEW (mainw->textview1)) {
     gtk_text_buffer_get_end_iter(tbuf,&end_iter);
     gtk_text_buffer_insert(tbuf,&end_iter,text,-1);
     if (mainw->current_file!=mainw->last_dprint_file&&mainw->current_file!=0&&mainw->multitrack==NULL&&

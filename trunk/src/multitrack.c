@@ -4008,7 +4008,7 @@ void mt_init_start_end_spins(lives_mt *mt) {
 
   lives_toolbar_set_show_arrow(LIVES_TOOLBAR(btoolbar),FALSE);
 
-  lives_toolbar_set_style (LIVES_TOOLBAR (btoolbar), GTK_TOOLBAR_TEXT);
+  lives_toolbar_set_style (LIVES_TOOLBAR (btoolbar), LIVES_TOOLBAR_TEXT);
 
 
   mt->amixer_button=LIVES_WIDGET(lives_tool_button_new(NULL,NULL));
@@ -4016,7 +4016,7 @@ void mt_init_start_end_spins(lives_mt *mt) {
   label=lives_standard_label_new(_ ("Audio mixer (ctrl-m)"));
   lives_tool_button_set_label_widget(LIVES_TOOL_BUTTON(mt->amixer_button),label);
 
-  lives_toolbar_insert(LIVES_TOOLBAR(btoolbar),GTK_TOOL_ITEM(mt->amixer_button),-1);
+  lives_toolbar_insert(LIVES_TOOLBAR(btoolbar),LIVES_TOOL_ITEM(mt->amixer_button),-1);
 
   if (palette->style&STYLE_1) {
     lives_widget_set_bg_color(btoolbar, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
@@ -4182,16 +4182,16 @@ static void on_grav_mode_changed (GtkMenuItem *menuitem, gpointer user_data) {
   lives_mt *mt=(lives_mt *)user_data;
 
   if (menuitem==(GtkMenuItem *)mt->grav_normal) {
-    lives_tool_button_set_label(LIVES_TOOL_BUTTON(mt->grav_menuitem),_("_Gravity: Normal"));
+    lives_label_set_text(LIVES_LABEL(mt->grav_label),_("Gravity: Normal"));
     mt->opts.grav_mode=GRAV_MODE_NORMAL;
   }
   else if (menuitem==(GtkMenuItem *)mt->grav_left) {
-    lives_tool_button_set_label(LIVES_TOOL_BUTTON(mt->grav_menuitem),_("_Gravity: Left"));
+    lives_label_set_text(LIVES_LABEL(mt->grav_label),_("Gravity: Left"));
     mt->opts.grav_mode=GRAV_MODE_LEFT;
   }
 
   if (menuitem==(GtkMenuItem *)mt->grav_right) {
-    lives_tool_button_set_label(LIVES_TOOL_BUTTON(mt->grav_menuitem),_("_Gravity: Right"));
+    lives_label_set_text(LIVES_LABEL(mt->grav_menuitem),_("Gravity: Right"));
     mt->opts.grav_mode=GRAV_MODE_RIGHT;
     set_menu_text(mt->remove_first_gaps,_("Close _last gap(s) in selected tracks/time"),TRUE);
   }
@@ -7532,32 +7532,32 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
     lives_widget_set_fg_color(btoolbar, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars_fore);
   }
 
-  lives_toolbar_set_style (LIVES_TOOLBAR (btoolbar), GTK_TOOLBAR_ICONS);
+  lives_toolbar_set_style (LIVES_TOOLBAR (btoolbar), LIVES_TOOLBAR_ICONS);
   lives_toolbar_set_icon_size (LIVES_TOOLBAR(btoolbar),LIVES_ICON_SIZE_SMALL_TOOLBAR);
 
   g_object_ref(mainw->m_sepwinbutton);
   lives_widget_unparent(mainw->m_sepwinbutton);
-  lives_toolbar_insert(LIVES_TOOLBAR(btoolbar),GTK_TOOL_ITEM(mainw->m_sepwinbutton),-1);
+  lives_toolbar_insert(LIVES_TOOLBAR(btoolbar),LIVES_TOOL_ITEM(mainw->m_sepwinbutton),-1);
   g_object_unref(mainw->m_sepwinbutton);
 
   g_object_ref(mainw->m_rewindbutton);
   lives_widget_unparent(mainw->m_rewindbutton);
-  lives_toolbar_insert(LIVES_TOOLBAR(btoolbar),GTK_TOOL_ITEM(mainw->m_rewindbutton),-1);
+  lives_toolbar_insert(LIVES_TOOLBAR(btoolbar),LIVES_TOOL_ITEM(mainw->m_rewindbutton),-1);
   g_object_unref(mainw->m_rewindbutton);
 
   g_object_ref(mainw->m_playbutton);
   lives_widget_unparent(mainw->m_playbutton);
-  lives_toolbar_insert(LIVES_TOOLBAR(btoolbar),GTK_TOOL_ITEM(mainw->m_playbutton),-1);
+  lives_toolbar_insert(LIVES_TOOLBAR(btoolbar),LIVES_TOOL_ITEM(mainw->m_playbutton),-1);
   g_object_unref(mainw->m_playbutton);
 
   g_object_ref(mainw->m_stopbutton);
   lives_widget_unparent(mainw->m_stopbutton);
-  lives_toolbar_insert(LIVES_TOOLBAR(btoolbar),GTK_TOOL_ITEM(mainw->m_stopbutton),-1);
+  lives_toolbar_insert(LIVES_TOOLBAR(btoolbar),LIVES_TOOL_ITEM(mainw->m_stopbutton),-1);
   g_object_unref(mainw->m_stopbutton);
 
   g_object_ref(mainw->m_loopbutton);
   lives_widget_unparent(mainw->m_loopbutton);
-  lives_toolbar_insert(LIVES_TOOLBAR(btoolbar),GTK_TOOL_ITEM(mainw->m_loopbutton),-1);
+  lives_toolbar_insert(LIVES_TOOLBAR(btoolbar),LIVES_TOOL_ITEM(mainw->m_loopbutton),-1);
   g_object_unref(mainw->m_loopbutton);
 
 
@@ -7643,7 +7643,7 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
   /*  volind=LIVES_WIDGET(gtk_tool_item_new());
   mainw->volind_hbox=lives_hbox_new(TRUE,0);
   lives_container_add(LIVES_CONTAINER(volind),mainw->volind_hbox);
-  lives_toolbar_insert(LIVES_TOOLBAR(mainw->btoolbar),GTK_TOOL_ITEM(mainw->vol_label),7);
+  lives_toolbar_insert(LIVES_TOOLBAR(mainw->btoolbar),LIVES_TOOL_ITEM(mainw->vol_label),7);
   */
 
 
@@ -7661,13 +7661,16 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
     lives_widget_set_fg_color(btoolbar, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars_fore);
   }
 
-  lives_toolbar_set_style (LIVES_TOOLBAR (btoolbar), GTK_TOOLBAR_TEXT);
+  lives_toolbar_set_style (LIVES_TOOLBAR (btoolbar), LIVES_TOOLBAR_TEXT);
 
-  mt->eview_button=LIVES_WIDGET(lives_tool_button_new(NULL,_ ("Expanded View (d)")));
+  mt->eview_button=lives_tool_button_new(NULL,NULL);
 
-  if (!mt->opts.show_ctx) lives_tool_button_set_label(LIVES_TOOL_BUTTON(mt->eview_button),_ ("Compact View (d)"));
+  mt->eview_label=lives_label_new(_ ("Expanded View (d)"));
+  lives_tool_button_set_label_widget(LIVES_TOOL_BUTTON(mt->eview_button),mt->eview_label);
 
-  lives_toolbar_insert(LIVES_TOOLBAR(btoolbar),GTK_TOOL_ITEM(mt->eview_button),-1);
+  if (!mt->opts.show_ctx) lives_label_set_text(LIVES_LABEL(mt->eview_label),_ ("Compact View (d)"));
+
+  lives_toolbar_insert(LIVES_TOOLBAR(btoolbar),LIVES_TOOL_ITEM(mt->eview_button),-1);
 
   g_signal_connect (GTK_OBJECT (mt->eview_button), "clicked",
 		    G_CALLBACK (on_comp_exp),
@@ -7684,19 +7687,26 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
   if (palette->style&STYLE_1) {
     lives_widget_set_bg_color(btoolbar, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
     lives_widget_set_fg_color(btoolbar, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars_fore);
+    lives_widget_set_bg_color(mt->eview_label, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
+    lives_widget_set_fg_color(mt->eview_label, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars_fore);
   }
 
-  lives_toolbar_set_style (LIVES_TOOLBAR (btoolbar), GTK_TOOLBAR_TEXT);
+  lives_toolbar_set_style (LIVES_TOOLBAR (btoolbar), LIVES_TOOLBAR_TEXT);
 
-  mt->grav_menuitem = gtk_menu_tool_button_new (NULL,_("_Gravity: Normal"));
+  mt->grav_menuitem = gtk_menu_tool_button_new (NULL,NULL);
   lives_tool_button_set_use_underline (LIVES_TOOL_BUTTON(mt->grav_menuitem),TRUE);
 
-  lives_toolbar_insert(LIVES_TOOLBAR(btoolbar),GTK_TOOL_ITEM(mt->grav_menuitem),-1);
+  mt->grav_label=lives_label_new(_("Gravity: Normal"));
+  lives_tool_button_set_label_widget(LIVES_TOOL_BUTTON(mt->grav_menuitem),mt->grav_label);
+
+  lives_toolbar_insert(LIVES_TOOLBAR(btoolbar),LIVES_TOOL_ITEM(mt->grav_menuitem),-1);
 
   submenu = lives_menu_new ();
   if (palette->style&STYLE_1) {
     lives_widget_set_bg_color(submenu, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
     lives_widget_set_fg_color(submenu, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars_fore);
+    lives_widget_set_bg_color(mt->grav_label, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
+    lives_widget_set_fg_color(mt->grav_label, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars_fore);
   }
   gtk_menu_tool_button_set_menu (GTK_MENU_TOOL_BUTTON (mt->grav_menuitem), submenu);
 
@@ -7747,28 +7757,28 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
     lives_widget_set_fg_color(btoolbar, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars_fore);
   }
 
-  lives_toolbar_set_style (LIVES_TOOLBAR (btoolbar), GTK_TOOLBAR_ICONS);
+  lives_toolbar_set_style (LIVES_TOOLBAR (btoolbar), LIVES_TOOLBAR_ICONS);
   lives_toolbar_set_icon_size (LIVES_TOOLBAR(btoolbar),LIVES_ICON_SIZE_SMALL_TOOLBAR);
 
 
 
   g_object_ref(mainw->m_mutebutton);
   lives_widget_unparent(mainw->m_mutebutton);
-  lives_toolbar_insert(LIVES_TOOLBAR(btoolbar),GTK_TOOL_ITEM(mainw->m_mutebutton),-1);
+  lives_toolbar_insert(LIVES_TOOLBAR(btoolbar),LIVES_TOOL_ITEM(mainw->m_mutebutton),-1);
   g_object_unref(mainw->m_mutebutton);
 
   if (!lives_scale_button_set_orientation (LIVES_SCALE_BUTTON(mainw->volume_scale),LIVES_ORIENTATION_VERTICAL)) {
     if (mainw->vol_label!=NULL) {
       g_object_ref(mainw->vol_label);
       lives_widget_unparent(mainw->vol_label);
-      lives_toolbar_insert(LIVES_TOOLBAR(btoolbar),GTK_TOOL_ITEM(mainw->vol_label),-1);
+      lives_toolbar_insert(LIVES_TOOLBAR(btoolbar),LIVES_TOOL_ITEM(mainw->vol_label),-1);
       g_object_unref(mainw->vol_label);
     }
   }
 
   g_object_ref(mainw->vol_toolitem);
   lives_widget_unparent(mainw->vol_toolitem);
-  lives_toolbar_insert(LIVES_TOOLBAR(btoolbar),GTK_TOOL_ITEM(mainw->vol_toolitem),-1);
+  lives_toolbar_insert(LIVES_TOOLBAR(btoolbar),LIVES_TOOL_ITEM(mainw->vol_toolitem),-1);
   g_object_unref(mainw->vol_toolitem);
 
 
@@ -8949,51 +8959,51 @@ boolean multitrack_delete (lives_mt *mt, boolean save_layout) {
 
   g_object_ref(mainw->m_sepwinbutton);
   lives_widget_unparent(mainw->m_sepwinbutton);
-  lives_toolbar_insert(LIVES_TOOLBAR(mainw->btoolbar),GTK_TOOL_ITEM(mainw->m_sepwinbutton),0);
+  lives_toolbar_insert(LIVES_TOOLBAR(mainw->btoolbar),LIVES_TOOL_ITEM(mainw->m_sepwinbutton),0);
   g_object_unref(mainw->m_sepwinbutton);
 
   g_object_ref(mainw->m_rewindbutton);
   lives_widget_unparent(mainw->m_rewindbutton);
-  lives_toolbar_insert(LIVES_TOOLBAR(mainw->btoolbar),GTK_TOOL_ITEM(mainw->m_rewindbutton),1);
+  lives_toolbar_insert(LIVES_TOOLBAR(mainw->btoolbar),LIVES_TOOL_ITEM(mainw->m_rewindbutton),1);
   g_object_unref(mainw->m_rewindbutton);
 
   g_object_ref(mainw->m_playbutton);
   lives_widget_unparent(mainw->m_playbutton);
-  lives_toolbar_insert(LIVES_TOOLBAR(mainw->btoolbar),GTK_TOOL_ITEM(mainw->m_playbutton),2);
+  lives_toolbar_insert(LIVES_TOOLBAR(mainw->btoolbar),LIVES_TOOL_ITEM(mainw->m_playbutton),2);
   g_object_unref(mainw->m_playbutton);
 
   g_object_ref(mainw->m_stopbutton);
   lives_widget_unparent(mainw->m_stopbutton);
-  lives_toolbar_insert(LIVES_TOOLBAR(mainw->btoolbar),GTK_TOOL_ITEM(mainw->m_stopbutton),3);
+  lives_toolbar_insert(LIVES_TOOLBAR(mainw->btoolbar),LIVES_TOOL_ITEM(mainw->m_stopbutton),3);
   g_object_unref(mainw->m_stopbutton);
 
   /*  g_object_ref(mainw->m_playselbutton);
   lives_widget_unparent(mainw->m_playselbutton);
-  lives_toolbar_insert(LIVES_TOOLBAR(mainw->btoolbar),GTK_TOOL_ITEM(mainw->m_playselbutton),4);
+  lives_toolbar_insert(LIVES_TOOLBAR(mainw->btoolbar),LIVES_TOOL_ITEM(mainw->m_playselbutton),4);
   g_object_unref(mainw->m_playselbutton);*/
 
   g_object_ref(mainw->m_loopbutton);
   lives_widget_unparent(mainw->m_loopbutton);
-  lives_toolbar_insert(LIVES_TOOLBAR(mainw->btoolbar),GTK_TOOL_ITEM(mainw->m_loopbutton),5);
+  lives_toolbar_insert(LIVES_TOOLBAR(mainw->btoolbar),LIVES_TOOL_ITEM(mainw->m_loopbutton),5);
   g_object_unref(mainw->m_loopbutton);
 
   g_object_ref(mainw->m_mutebutton);
   lives_widget_unparent(mainw->m_mutebutton);
-  lives_toolbar_insert(LIVES_TOOLBAR(mainw->btoolbar),GTK_TOOL_ITEM(mainw->m_mutebutton),6);
+  lives_toolbar_insert(LIVES_TOOLBAR(mainw->btoolbar),LIVES_TOOL_ITEM(mainw->m_mutebutton),6);
   g_object_unref(mainw->m_mutebutton);
 
   if (!lives_scale_button_set_orientation (LIVES_SCALE_BUTTON(mainw->volume_scale),LIVES_ORIENTATION_HORIZONTAL)) {
     if (mainw->vol_label!=NULL) {
       g_object_ref(mainw->vol_label);
       lives_widget_unparent(mainw->vol_label);
-      lives_toolbar_insert(LIVES_TOOLBAR(mainw->btoolbar),GTK_TOOL_ITEM(mainw->vol_label),7);
+      lives_toolbar_insert(LIVES_TOOLBAR(mainw->btoolbar),LIVES_TOOL_ITEM(mainw->vol_label),7);
       g_object_unref(mainw->vol_label);
     }
   }
 
   g_object_ref(mainw->vol_toolitem);
   lives_widget_unparent(mainw->vol_toolitem);
-  lives_toolbar_insert(LIVES_TOOLBAR(mainw->btoolbar),GTK_TOOL_ITEM(mainw->vol_toolitem),-1);
+  lives_toolbar_insert(LIVES_TOOLBAR(mainw->btoolbar),LIVES_TOOL_ITEM(mainw->vol_toolitem),-1);
   g_object_unref(mainw->vol_toolitem);
 
   g_object_ref(mainw->gens_menu);
@@ -13913,21 +13923,19 @@ mt_view_ctx_toggled                (GtkMenuItem     *menuitem,
 
   if (mt->opts.show_ctx) {
     // set text to expanded
-    lives_tool_button_set_label(LIVES_TOOL_BUTTON(mt->eview_button),_ ("Expanded View (d)"));
+    lives_label_set_text(LIVES_LABEL(mt->eview_label),_ ("Expanded View (d)"));
 
     lives_widget_show(mainw->scrolledwindow);
     lives_widget_show(mt->sep_image);
     lives_widget_show(mt->context_frame);
   }
   else {
-    lives_tool_button_set_label(LIVES_TOOL_BUTTON(mt->eview_button),_ ("Compact View (d)"));
+    lives_label_set_text(LIVES_LABEL(mt->eview_label),_ ("Compact View (d)"));
 
     lives_widget_hide(mainw->scrolledwindow);
     lives_widget_hide(mt->sep_image);
     lives_widget_hide(mt->context_frame);
   }
-
-  lives_widget_queue_draw(mt->eview_button);
 
   // disable auto-backup while we redraw the screen
   if (mt->idlefunc>0) {

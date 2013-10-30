@@ -890,7 +890,7 @@ LIVES_INLINE LiVESPixbuf *lives_pixbuf_new_from_file_at_scale(const char *filena
 							      LiVESError **error) {
 
 #ifdef GUI_GTK
-  return gdk_pixbuf_new_from_file_at_scale(filename, width, height, preserve_aspect_ratio, error);
+  return lives_pixbuf_new_from_file_at_scale(filename, width, height, preserve_aspect_ratio, error);
 #endif
 
 #ifdef GUI_QT
@@ -1017,6 +1017,17 @@ LIVES_INLINE LiVESPixbuf *lives_pixbuf_scale_simple(const LiVESPixbuf *src, int 
 #endif
 
 }
+
+LIVES_INLINE boolean lives_pixbuf_saturate_and_pixelate(const LiVESPixbuf *src, LiVESPixbuf *dest, float saturation, boolean pixilate) {
+
+#ifdef GUI_GTK
+  gdk_pixbuf_saturate_and_pixelate(src, dest, saturation, pixilate);
+  return TRUE;
+#endif
+  return FALSE;
+}
+
+
 
 
 LIVES_INLINE LiVESAdjustment *lives_adjustment_new(double value, double lower, double upper, 
@@ -1673,22 +1684,12 @@ LIVES_INLINE boolean lives_spin_button_update(LiVESSpinButton *button) {
 
 
 
-
 LIVES_INLINE LiVESToolItem *lives_tool_button_new(LiVESWidget *icon_widget, const char *label) {
   LiVESToolItem *button=NULL;
 #ifdef GUI_GTK
   button=gtk_tool_button_new(icon_widget,label);
 #endif
   return button;
-}
-
-
-LIVES_INLINE boolean lives_tool_button_set_label(LiVESToolButton *button, const char *label) {
-#ifdef GUI_GTK
-  gtk_tool_button_set_label(button,label);
-  return TRUE;
-#endif
-  return FALSE;
 }
 
 
@@ -1708,6 +1709,7 @@ LIVES_INLINE boolean lives_tool_button_set_label_widget(LiVESToolButton *button,
 #endif
   return FALSE;
 }
+
 
 
 LIVES_INLINE boolean lives_tool_button_set_use_underline(LiVESToolButton *button, boolean use_underline) {
@@ -2459,6 +2461,80 @@ LIVES_INLINE void lives_table_attach(LiVESTable *table, LiVESWidget *child, uint
 #endif
 }
 
+
+LIVES_INLINE LiVESWidget *lives_color_button_new_with_color(const LiVESWidgetColor *color) {
+  LiVESWidget *cbutton=NULL;
+#ifdef GUI_GTK
+#if GTK_CHECK_VERSION(3,0,0)
+  cbutton=gtk_color_button_new_with_rgba(color);
+#else
+  cbutton=gtk_color_button_new_with_color(color);
+#endif
+#endif
+  return cbutton;
+}
+
+
+LIVES_INLINE boolean lives_color_button_get_color(LiVESColorButton *button, LiVESWidgetColor *color) {
+#ifdef GUI_GTK
+#if GTK_CHECK_VERSION(3,4,0)
+  gtk_color_chooser_get_rgba((GtkColorChooser *)button,color);
+#else
+#if GTK_CHECK_VERSION(3,0,0)
+  gtk_color_button_get_rgba((GtkColorChooser *)button,color);
+#else
+  gtk_color_button_get_color(button,color);
+#endif
+#endif
+  return TRUE;
+#endif
+  return FALSE;
+}
+
+
+LIVES_INLINE boolean lives_color_button_set_color(LiVESColorButton *button, const LiVESWidgetColor *color) {
+#ifdef GUI_GTK
+#if GTK_CHECK_VERSION(3,4,0)
+  gtk_color_chooser_set_rgba((GtkColorChooser *)button,color);
+#else
+#if GTK_CHECK_VERSION(3,0,0)
+  gtk_color_button_set_rgba((GtkColorChooser *)button,color);
+#else
+  gtk_color_button_set_color(button,color);
+#endif
+#endif
+  return TRUE;
+#endif
+  return FALSE;
+}
+
+
+LIVES_INLINE boolean lives_color_button_set_title(LiVESColorButton *button, const char *title) {
+#ifdef GUI_GTK
+  gtk_color_button_set_title(button,title);
+  return TRUE;
+#endif
+  return FALSE;
+}
+
+
+
+
+LIVES_INLINE boolean lives_color_button_set_use_alpha(LiVESColorButton *button, boolean use_alpha) {
+#ifdef GUI_GTK
+#if GTK_CHECK_VERSION(3,4,0)
+  gtk_color_chooser_set_use_alpha((GtkColorChooser *)button,use_alpha);
+#else
+#if GTK_CHECK_VERSION(3,0,0)
+  gtk_color_button_set_use_alpha((GtkColorChooser *)button,use_alpha);
+#else
+  gtk_color_button_set_use_alpha(button,use_alpha);
+#endif
+#endif
+  return TRUE;
+#endif
+  return FALSE;
+}
 
 
 LIVES_INLINE LiVESAccelGroup *lives_accel_group_new(void) {
@@ -3269,9 +3345,9 @@ LiVESWidget *lives_standard_scrolled_window_new(int width, int height, LiVESWidg
 
   if (child!=NULL) {
 #if GTK_CHECK_VERSION(3,0,0)
-    if (!GTK_IS_SCROLLABLE(child))
+    if (!LIVES_IS_SCROLLABLE(child))
 #else
-    if (!GTK_IS_TEXT_VIEW(child))
+    if (!LIVES_IS_TEXT_VIEW(child))
 #endif 
       {
 	gtk_scrolled_window_add_with_viewport (GTK_SCROLLED_WINDOW (scrolledwindow), child);
@@ -3305,7 +3381,7 @@ LiVESWidget *lives_standard_scrolled_window_new(int width, int height, LiVESWidg
     lives_widget_apply_theme(swchild, LIVES_WIDGET_STATE_NORMAL);
     lives_widget_set_hexpand(swchild,TRUE);
     lives_widget_set_vexpand(swchild,TRUE);
-    if (GTK_IS_CONTAINER(child)) lives_container_set_border_width (LIVES_CONTAINER (child), widget_opts.border_width>>1);
+    if (LIVES_IS_CONTAINER(child)) lives_container_set_border_width (LIVES_CONTAINER (child), widget_opts.border_width>>1);
   }
 #endif
   return scrolledwindow;
@@ -3341,80 +3417,6 @@ LiVESWidget *lives_standard_expander_new(const char *ltext, boolean use_mnemonic
   return expander;
 }
 
-
-LIVES_INLINE LiVESWidget *lives_color_button_new_with_color(const LiVESWidgetColor *color) {
-  LiVESWidget *cbutton=NULL;
-#ifdef GUI_GTK
-#if GTK_CHECK_VERSION(3,0,0)
-  cbutton=gtk_color_button_new_with_rgba(color);
-#else
-  cbutton=gtk_color_button_new_with_color(color);
-#endif
-#endif
-  return cbutton;
-}
-
-
-LIVES_INLINE boolean lives_color_button_get_color(LiVESColorButton *button, LiVESWidgetColor *color) {
-#ifdef GUI_GTK
-#if GTK_CHECK_VERSION(3,4,0)
-  gtk_color_chooser_get_rgba((GtkColorChooser *)button,color);
-#else
-#if GTK_CHECK_VERSION(3,0,0)
-  gtk_color_button_get_rgba((GtkColorChooser *)button,color);
-#else
-  gtk_color_button_get_color(button,color);
-#endif
-#endif
-  return TRUE;
-#endif
-  return FALSE;
-}
-
-
-LIVES_INLINE boolean lives_color_button_set_color(LiVESColorButton *button, const LiVESWidgetColor *color) {
-#ifdef GUI_GTK
-#if GTK_CHECK_VERSION(3,4,0)
-  gtk_color_chooser_set_rgba((GtkColorChooser *)button,color);
-#else
-#if GTK_CHECK_VERSION(3,0,0)
-  gtk_color_button_set_rgba((GtkColorChooser *)button,color);
-#else
-  gtk_color_button_set_color(button,color);
-#endif
-#endif
-  return TRUE;
-#endif
-  return FALSE;
-}
-
-
-LIVES_INLINE boolean lives_color_button_set_title(LiVESColorButton *button, const char *title) {
-#ifdef GUI_GTK
-  gtk_color_button_set_title(button,title);
-  return TRUE;
-#endif
-  return FALSE;
-}
-
-
-
-
-LIVES_INLINE boolean lives_color_button_set_use_alpha(LiVESColorButton *button, boolean use_alpha) {
-#ifdef GUI_GTK
-#if GTK_CHECK_VERSION(3,4,0)
-  gtk_color_chooser_set_use_alpha((GtkColorChooser *)button,use_alpha);
-#else
-#if GTK_CHECK_VERSION(3,0,0)
-  gtk_color_button_set_use_alpha((GtkColorChooser *)button,use_alpha);
-#else
-  gtk_color_button_set_use_alpha(button,use_alpha);
-#endif
-#endif
-  return TRUE;
-#endif
-  return FALSE;
-}
 
 
 
@@ -3502,13 +3504,13 @@ LIVES_INLINE void toggle_button_toggle (LiVESToggleButton *tbutton) {
 void set_child_colour(LiVESWidget *widget, livespointer set_allx) {
   boolean set_all=GPOINTER_TO_INT(set_allx);
 
-  if (!set_all&&GTK_IS_BUTTON(widget)) return;
-  if (GTK_IS_CONTAINER(widget)) {
+  if (!set_all&&LIVES_IS_BUTTON(widget)) return;
+  if (LIVES_IS_CONTAINER(widget)) {
     gtk_container_forall(LIVES_CONTAINER(widget),set_child_colour,set_allx);
     return;
   }
 
-  if (set_all||GTK_IS_LABEL(widget)) {
+  if (set_all||LIVES_IS_LABEL(widget)) {
     lives_widget_apply_theme(widget, LIVES_WIDGET_STATE_NORMAL);
   }
 }

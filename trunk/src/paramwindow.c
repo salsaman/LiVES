@@ -99,7 +99,7 @@ GList *do_onchange_init(lives_rfx_t *rfx) {
 
 
 void on_paramwindow_ok_clicked (GtkButton *button, lives_rfx_t *rfx) {
-  int i;
+  register int i;
 
   if (rfx!=NULL&&rfx->status!=RFX_STATUS_SCRAP) mainw->keep_pre=mainw->did_rfx_preview;
 
@@ -326,7 +326,7 @@ static void gen_width_changed (GtkSpinButton *spin, gpointer user_data) {
 
   val=step_val(val,step);
   weed_set_int_value(ctmpl,"host_width",val);
-  lives_spin_button_set_value(spin,(gdouble)val);
+  lives_spin_button_set_value(spin,(double)val);
 }
 
 
@@ -344,7 +344,7 @@ static void gen_height_changed (GtkSpinButton *spin, gpointer user_data) {
 
   val=step_val(val,step);
   weed_set_int_value(ctmpl,"host_height",val);
-  lives_spin_button_set_value(spin,(gdouble)val);
+  lives_spin_button_set_value(spin,(double)val);
 }
 
 
@@ -427,6 +427,7 @@ void transition_add_in_out(GtkBox *vbox, lives_rfx_t *rfx, boolean add_audio_che
   GtkWidget *radiobutton_out;
   GtkWidget *hbox,*hbox2;
   GtkWidget *hseparator;
+
   GSList *radiobutton_group = NULL;
 
   gchar *tmp,*tmp2;
@@ -1828,15 +1829,16 @@ lives_widget_group_t *livesgrp_from_usrgrp (GSList *u2l, int usrgrp) {
 
 
 
-void
-after_boolean_param_toggled        (GtkToggleButton *togglebutton,
-				    lives_rfx_t *         rfx)
-{
+void after_boolean_param_toggled (GtkToggleButton *togglebutton, lives_rfx_t *rfx) {
   int param_number=GPOINTER_TO_INT (g_object_get_data (G_OBJECT (togglebutton),"param_number"));
+
   GList *retvals=NULL;
+
   lives_param_t *param=&rfx->params[param_number];
+
   boolean old_bool=get_bool_param(param->value),new_bool;
   boolean was_reinited=FALSE;
+
   int copyto=-1;
 
   if (mainw->block_param_updates) return; // updates are blocked until all params are ready
@@ -1913,15 +1915,17 @@ after_boolean_param_toggled        (GtkToggleButton *togglebutton,
 
 
 
-void
-after_param_value_changed           (GtkSpinButton   *spinbutton,
-				     lives_rfx_t *rfx) {
+void after_param_value_changed (GtkSpinButton *spinbutton, lives_rfx_t *rfx) {
   int param_number=GPOINTER_TO_INT (g_object_get_data (G_OBJECT (spinbutton),"param_number"));
   lives_param_t *param=&rfx->params[param_number];
+
   GList *retvals=NULL;
-  gdouble new_double=0.,old_double=0.;
-  int new_int=0,old_int=0;
+
+  double new_double=0.,old_double=0.;
+
   boolean was_reinited=FALSE;
+
+  int new_int=0,old_int=0;
   int copyto=-1;
 
   if (mainw->block_param_updates) return; // updates are blocked until all params are ready
@@ -2340,6 +2344,7 @@ void after_param_green_changed (GtkSpinButton *spinbutton, lives_rfx_t *rfx) {
   param->changed=TRUE;
 }
 
+
 void after_param_blue_changed (GtkSpinButton *spinbutton, lives_rfx_t *rfx) {
   GList *retvals=NULL;
 
@@ -2522,7 +2527,7 @@ void after_param_text_changed (GtkWidget *textwidget, lives_rfx_t *rfx) {
 
   if (mainw->block_param_updates) return; // updates are blocked until all params are ready
 
-  if (GTK_IS_TEXT_VIEW(textwidget)) {
+  if (LIVES_IS_TEXT_VIEW(textwidget)) {
     param->value=g_strdup(text_view_get_text (LIVES_TEXT_VIEW(textwidget)));
   }
   else {
@@ -2610,12 +2615,17 @@ static void after_param_text_buffer_changed (GtkTextBuffer *textbuffer, lives_rf
 
 void after_string_list_changed (GtkComboBox *combo, lives_rfx_t *rfx) {
   int param_number=GPOINTER_TO_INT (g_object_get_data (G_OBJECT (combo),"param_number"));
+
   GList *retvals=NULL;
+
   lives_param_t *param=&rfx->params[param_number];
-  int old_index=get_int_param(param->value);
+
   char *txt=lives_combo_get_active_text(combo);
-  int new_index=lives_list_index(param->list,txt);
+
   boolean was_reinited=FALSE;
+
+  int old_index=get_int_param(param->value);
+  int new_index=lives_list_index(param->list,txt);
   int copyto=-1;
 
   g_free(txt);
@@ -2701,11 +2711,13 @@ gchar **param_marshall_to_argv (lives_rfx_t *rfx) {
 
   // the returned **argv should be g_free()'ed after use
 
-  int i;
   lives_colRGB24_t rgb;
+
   gchar **argv=(gchar **)g_malloc((rfx->num_params+1)*(sizeof(gchar *)));
 
   gchar *tmp;
+
+  register int i;
  
   for (i=0;i<rfx->num_params;i++) {
     switch (rfx->params[i].type) {
@@ -2752,13 +2764,15 @@ gchar *param_marshall (lives_rfx_t *rfx, boolean with_min_max) {
   // quotes will be escaped \"
 
   // the returned string should be g_free()'ed after use
+  lives_colRGB24_t rgb;
+
   gchar *new_return=g_strdup ("");
   gchar *old_return=new_return;
   gchar *return_pattern;
-  lives_colRGB24_t rgb;
-  int i;
- 
   gchar *tmp,*mysubst,*mysubst2;
+
+  register int i;
+ 
 
   for (i=0;i<rfx->num_params;i++) {
     switch (rfx->params[i].type) {
@@ -2873,11 +2887,12 @@ gchar *reconstruct_string (GList *plist, int start, int *offs) {
   // replace \" with "
 
   gchar *word=NULL;
-  int i;
-  boolean lastword=FALSE;
   gchar *ret=g_strdup (""),*ret2;
-
   gchar *tmp;
+
+  boolean lastword=FALSE;
+
+  register int i;
 
   word=L2U8 ((gchar *)g_list_nth_data (plist,start));
 
@@ -2938,9 +2953,11 @@ void param_demarshall (lives_rfx_t *rfx, GList *plist, boolean with_min_max, boo
 
 
 GList *argv_to_marshalled_list (lives_rfx_t *rfx, int argc, char **argv) {
-  int i;
   GList *plist=NULL;
+
   gchar *tmp,*tmp2,*tmp3;
+
+  register int i;
 
   if (argc==0) return plist;
 
@@ -3099,7 +3116,7 @@ int set_param_from_list(GList *plist, lives_param_t *param, int pnum, boolean wi
     param->value=reconstruct_string (plist,pnum,&offs);
     if (upd) {
       if (param->widgets[0]!=NULL) {
-	if (GTK_IS_TEXT_VIEW(param->widgets[0])) {
+	if (LIVES_IS_TEXT_VIEW(param->widgets[0])) {
 	  gchar *string=g_strdup((gchar *)param->value); // work around bug in glib ???
 	  text_view_set_text (LIVES_TEXT_VIEW(param->widgets[0]), string, -1);
 	  g_free(string);
@@ -3134,13 +3151,15 @@ int set_param_from_list(GList *plist, lives_param_t *param, int pnum, boolean wi
 
 
 GList *do_onchange (GObject *object, lives_rfx_t *rfx) {
-  int which=GPOINTER_TO_INT (g_object_get_data (object,"param_number"));
-  gchar *com,*tmp;
   GList *retvals;
+
+  int which=GPOINTER_TO_INT (g_object_get_data (object,"param_number"));
   int width=0,height=0;
-  gchar *plugdir;
 
   const gchar *handle="";
+
+  gchar *plugdir;
+  gchar *com,*tmp;
 
   // weed plugins do not have triggers
   if (rfx->status==RFX_STATUS_WEED) return NULL;
@@ -3241,7 +3260,6 @@ void update_visual_params(lives_rfx_t *rfx, boolean update_hidden) {
   weed_plant_t **in_params,*in_param;
   weed_plant_t *inst=(weed_plant_t *)rfx->source;
   weed_plant_t *paramtmpl;
-
 
   int *colsi,*colsis,*valis;
   int *maxis=NULL,*minis=NULL;

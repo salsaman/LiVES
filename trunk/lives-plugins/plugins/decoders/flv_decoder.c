@@ -76,12 +76,7 @@ const char *plugin_version="LiVES flv decoder version 1.0";
 #define CODEC_ID_H264 AV_CODEC_ID_H264
 #endif
 
-#ifndef FF_API_AVCODEC_OPEN
-#define FF_API_AVCODEC_OPEN     (LIBAVCODEC_VERSION_MAJOR < 55)
-#endif
-
-
-#if FF_API_AVCODEC_OPEN
+#if !HAVE_AVCODEC_OPEN2
 #define avcodec_open2(a, b, c) avcodec_open(a, b)
 #endif
 

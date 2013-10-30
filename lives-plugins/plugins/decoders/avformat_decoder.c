@@ -39,13 +39,7 @@ const char *plugin_version="LiVES avformat decoder version 1.0";
 
 static pthread_mutex_t avcodec_mutex=PTHREAD_MUTEX_INITIALIZER;
 
-
-#ifndef FF_API_AVCODEC_OPEN
-#define FF_API_AVCODEC_OPEN     (LIBAVCODEC_VERSION_MAJOR < 55)
-#endif
-
-
-#if FF_API_AVCODEC_OPEN
+#if !HAVE_AVCODEC_OPEN2
 #define avcodec_open2(a, b, c) avcodec_open(a, b)
 #endif
 

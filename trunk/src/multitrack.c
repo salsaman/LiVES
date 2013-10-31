@@ -1869,6 +1869,18 @@ void scroll_tracks (lives_mt *mt, int top_track, boolean set_value) {
       lives_widget_set_state(arrow,LIVES_WIDGET_STATE_NORMAL);
 
       if (palette->style&STYLE_1) {
+	if (labelbox!=NULL) {
+	    lives_widget_set_bg_color (labelbox, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
+	    lives_widget_set_fg_color (labelbox, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
+	}
+	if (ahbox!=NULL) {
+	    lives_widget_set_bg_color (ahbox, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
+	    lives_widget_set_fg_color (ahbox, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
+	}
+	lives_widget_set_fg_color (label, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
+	lives_widget_set_fg_color (arrow, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
+	lives_widget_set_bg_color (label, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
+	lives_widget_set_bg_color (arrow, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
 	if (palette->style&STYLE_3) {
 	  if (labelbox!=NULL) {
 	    lives_widget_set_bg_color (labelbox, LIVES_WIDGET_STATE_PRELIGHT, &palette->menu_and_bars);
@@ -1878,14 +1890,24 @@ void scroll_tracks (lives_mt *mt, int top_track, boolean set_value) {
 	    lives_widget_set_bg_color (ahbox, LIVES_WIDGET_STATE_PRELIGHT, &palette->menu_and_bars);
 	    lives_widget_set_fg_color (ahbox, LIVES_WIDGET_STATE_PRELIGHT, &palette->menu_and_bars_fore);
 	  }
+	  lives_widget_set_bg_color (label, LIVES_WIDGET_STATE_PRELIGHT, &palette->menu_and_bars);
+	  lives_widget_set_bg_color (arrow, LIVES_WIDGET_STATE_PRELIGHT, &palette->menu_and_bars);
 	  lives_widget_set_fg_color (label, LIVES_WIDGET_STATE_PRELIGHT, &palette->menu_and_bars_fore);
 	  lives_widget_set_fg_color (arrow, LIVES_WIDGET_STATE_PRELIGHT, &palette->menu_and_bars_fore);
 	}
 	else {
-	  if (labelbox!=NULL) lives_widget_set_bg_color (labelbox, LIVES_WIDGET_STATE_PRELIGHT, &palette->normal_back);
-	  if (ahbox!=NULL) lives_widget_set_bg_color (ahbox, LIVES_WIDGET_STATE_PRELIGHT, &palette->normal_back);
+	  if (labelbox!=NULL) {
+	    lives_widget_set_bg_color (labelbox, LIVES_WIDGET_STATE_PRELIGHT, &palette->normal_back);
+	    lives_widget_set_fg_color (labelbox, LIVES_WIDGET_STATE_PRELIGHT, &palette->normal_fore);
+	  }
+	  if (ahbox!=NULL) {
+	    lives_widget_set_bg_color (ahbox, LIVES_WIDGET_STATE_PRELIGHT, &palette->normal_back);
+	    lives_widget_set_fg_color (ahbox, LIVES_WIDGET_STATE_PRELIGHT, &palette->normal_fore);
+	  }
 	  lives_widget_set_fg_color (label, LIVES_WIDGET_STATE_PRELIGHT, &palette->normal_fore);
 	  lives_widget_set_fg_color (arrow, LIVES_WIDGET_STATE_PRELIGHT, &palette->normal_fore);
+	  lives_widget_set_bg_color (label, LIVES_WIDGET_STATE_PRELIGHT, &palette->normal_back);
+	  lives_widget_set_bg_color (arrow, LIVES_WIDGET_STATE_PRELIGHT, &palette->normal_back);
 	}
       }
       lives_container_add (LIVES_CONTAINER (labelbox), hbox);
@@ -1987,6 +2009,16 @@ void scroll_tracks (lives_mt *mt, int top_track, boolean set_value) {
       lives_widget_set_bg_color(LIVES_WIDGET(eventbox), LIVES_WIDGET_STATE_NORMAL, &palette->white);
 
       if (palette->style&STYLE_1) {
+	lives_widget_set_bg_color (labelbox, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
+	lives_widget_set_fg_color (labelbox, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
+	lives_widget_set_bg_color (ahbox, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
+	lives_widget_set_fg_color (ahbox, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
+	lives_widget_set_bg_color (checkbutton, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
+	lives_widget_set_fg_color (checkbutton, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
+	lives_widget_set_bg_color (label, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
+	lives_widget_set_fg_color (label, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
+	lives_widget_set_bg_color (arrow, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
+	lives_widget_set_fg_color (arrow, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
 	if (palette->style&STYLE_3) {
 	  lives_widget_set_bg_color (labelbox, LIVES_WIDGET_STATE_PRELIGHT, &palette->menu_and_bars);
 	  lives_widget_set_bg_color (ahbox, LIVES_WIDGET_STATE_PRELIGHT, &palette->menu_and_bars);
@@ -2104,8 +2136,9 @@ void scroll_tracks (lives_mt *mt, int top_track, boolean set_value) {
 	  lives_widget_set_bg_color(LIVES_WIDGET(aeventbox), LIVES_WIDGET_STATE_NORMAL, &palette->white);
 	  
 	  if (palette->style&STYLE_1) {
+	      lives_widget_set_bg_color (labelbox, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
+	      lives_widget_set_fg_color (labelbox, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
 	    if (palette->style&STYLE_3) {
-	      lives_widget_set_bg_color (labelbox, LIVES_WIDGET_STATE_PRELIGHT, &palette->menu_and_bars);
 	      lives_widget_set_bg_color (ahbox, LIVES_WIDGET_STATE_PRELIGHT, &palette->menu_and_bars);
 	      lives_widget_set_fg_color (labelbox, LIVES_WIDGET_STATE_PRELIGHT, &palette->menu_and_bars_fore);
 	      lives_widget_set_fg_color (ahbox, LIVES_WIDGET_STATE_PRELIGHT, &palette->menu_and_bars_fore);
@@ -7861,7 +7894,7 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
   lives_container_add (LIVES_CONTAINER (mt->nb), hbox);
 
   tname=get_tab_name(POLY_CLIPS);
-  label=lives_label_new (tname);
+  label=lives_standard_label_new (tname);
   g_free(tname);
 
 
@@ -7876,27 +7909,25 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
   gtk_notebook_set_tab_label (GTK_NOTEBOOK (mt->nb), gtk_notebook_get_nth_page (GTK_NOTEBOOK (mt->nb), 0), label);
 
 
-    /*
-      if (palette->style&STYLE_1) {
+  // does not work...
+  /*
+  if (palette->style&STYLE_1) {
     GtkCssProvider *provider = gtk_css_provider_new ();
-    gtk_style_context_add_provider (GTK_STYLE_PROVIDER     
+    GtkStyleContext *ctx = gtk_widget_get_style_context(mt->nb);
+    gtk_style_context_add_provider (ctx, GTK_STYLE_PROVIDER     
 				    (provider), GTK_STYLE_PROVIDER_PRIORITY_APPLICATION);
     
     gtk_css_provider_load_from_data (GTK_CSS_PROVIDER (provider),
-				     " .notebook tab {\n"  // or  " * tab {\n"
+				     " GtkNotebook tab {\n"  // or  " * tab {\n"
 				     "   background-color: blue;\n"
-				     "}\n"
-				     " .notebook tab GtkLabel {\n"
-				     "   color: black;\n"
+				     " }\n"
+				     " GtkNotebook tab GtkLabel {\n"
 				     "   background-color: blue;\n"
 				     "}\n", -1, NULL);
 
     g_object_unref (provider);
-
-    gtk_widget_set_name (GTK_WIDGET(mt->nb), "notebook");
-    gtk_widget_set_name (GTK_WIDGET(label), "settings_tab");
-    }
-    */
+  }
+  */
     
 
   gtk_paned_pack1 (GTK_PANED (mt->hpaned), mt->nb, TRUE, FALSE);

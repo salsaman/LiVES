@@ -2911,7 +2911,9 @@ find_when_to_stop (void) {
   else if (cfile->opening_audio) mainw->whentostop=STOP_ON_VID_END;
   else if (!mainw->preview&&(mainw->loop_cont||(mainw->loop&&prefs->audio_src==AUDIO_SRC_EXT))) mainw->whentostop=NEVER_STOP;
   else if (cfile->frames==0||(mainw->loop&&cfile->achans>0&&!mainw->is_rendering&&(mainw->audio_end/cfile->fps)
-			      <MAX (cfile->laudio_time,cfile->raudio_time))) mainw->whentostop=STOP_ON_AUD_END;
+			      <MAX (cfile->laudio_time,cfile->raudio_time)&&
+			      calc_time_from_frame(mainw->current_file,mainw->play_start)<cfile->laudio_time)) 
+    mainw->whentostop=STOP_ON_AUD_END;
   else mainw->whentostop=STOP_ON_VID_END; // tada...
 }
 

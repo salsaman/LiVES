@@ -2220,50 +2220,28 @@ static boolean sanity_check_cdata(lives_clip_data_t *cdata) {
 }
 
 
+typedef struct {
+  GList *disabled;
+  lives_decoder_t *dplug;
+  file *sfile;
+} tdp_data;
 
 
-
-
-const lives_clip_data_t *get_decoder_cdata(file *sfile, GList *disabled) {
-  // pass file to each decoder (demuxer) plugin in turn, until we find one that can parse
-  // the file
-  // NULL is returned if no decoder plugin recognises the file - then we
-  // fall back to other methods
-
-  // otherwise we return data for the clip as supplied by the decoder plugin
-
-  // If the file does not exist, we set mainw->error=TRUE and return NULL
-
-  // If we find a plugin we also set sfile->ext_src to point to a newly created decoder_plugin_t
-
-
-  gchar *tmp=NULL;
+static void *try_decoder_plugins(void *in) {
+  tdp_data *data=(tdp_data *)in;
+  
   GList *decoder_plugin;
-  gchar *msg;
-  lives_decoder_t *dplug=NULL;
 
-  mainw->error=FALSE;
+  GList *disabled=data->disabled;
 
-  if (!g_file_test (sfile->file_name, G_FILE_TEST_EXISTS)) {
-    mainw->error=TRUE;
-    return NULL;
-  }
+  lives_decoder_t *dplug=data->dplug;
 
-  // check sfile->file_name against each decoder plugin, 
-  // until we get non-NULL cdata
+  gchar *tmp;
 
-  sfile->ext_src=NULL;
+  file *sfile=data->sfile;
 
-  lives_set_cursor_style(LIVES_CURSOR_BUSY,NULL);
-
-  if (!mainw->decoders_loaded) {
-    mainw->decoder_list=load_decoders();
-    mainw->decoders_loaded=TRUE;
-  }
 
   decoder_plugin=mainw->decoder_list;
-
-  dplug=(lives_decoder_t *)g_malloc(sizeof(lives_decoder_t));
 
   while (decoder_plugin!=NULL) {
     lives_decoder_sys_t *dpsys=(lives_decoder_sys_t *)decoder_plugin->data;
@@ -2298,9 +2276,69 @@ const lives_clip_data_t *get_decoder_cdata(file *sfile, GList *disabled) {
       }
       break;
     }
-    g_free(tmp);
     decoder_plugin=decoder_plugin->next;
   }
+  return NULL;
+}
+
+
+
+
+
+const lives_clip_data_t *get_decoder_cdata(file *sfile, GList *disabled) {
+  // pass file to each decoder (demuxer) plugin in turn, until we find one that can parse
+  // the file
+  // NULL is returned if no decoder plugin recognises the file - then we
+  // fall back to other methods
+
+  // otherwise we return data for the clip as supplied by the decoder plugin
+
+  // If the file does not exist, we set mainw->error=TRUE and return NULL
+
+  // If we find a plugin we also set sfile->ext_src to point to a newly created decoder_plugin_t
+
+  pthread_t cthread;
+
+  tdp_data data;
+
+  lives_decoder_t *dplug;
+
+  gchar *msg;
+
+  mainw->error=FALSE;
+
+  if (!g_file_test (sfile->file_name, G_FILE_TEST_EXISTS)) {
+    mainw->error=TRUE;
+    return NULL;
+  }
+
+  // check sfile->file_name against each decoder plugin, 
+  // until we get non-NULL cdata
+
+  sfile->ext_src=NULL;
+
+  lives_set_cursor_style(LIVES_CURSOR_BUSY,NULL);
+
+  if (!mainw->decoders_loaded) {
+    mainw->decoder_list=load_decoders();
+    mainw->decoders_loaded=TRUE;
+  }
+
+  dplug=(lives_decoder_t *)g_malloc(sizeof(lives_decoder_t));
+
+  data.disabled=disabled;
+  data.sfile=sfile;
+  data.dplug=dplug;
+
+  pthread_create(&cthread,NULL,try_decoder_plugins,&data);
+
+  // TODO - spin until done
+  /* do_threaded_dialog(_("Trying decoder plugins"),FALSE);
+  threaded_dialog_spin();
+  end_threaded_dialog();
+  */
+
+  pthread_join(cthread,NULL);
 
   lives_set_cursor_style(LIVES_CURSOR_NORMAL,NULL);
 

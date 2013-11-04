@@ -44,7 +44,8 @@ static pthread_mutex_t avcodec_mutex=PTHREAD_MUTEX_INITIALIZER;
 #endif
 
 
-#define FAST_SEEK_LIMIT 100000 // microseconds
+#define FAST_SEEK_LIMIT 100000 // microseconds (default 0.1 sec)
+#define NO_SEEK_LIMIT 1000000 // microseconds
 
 static void lives_avcodec_lock(void) {
   pthread_mutex_lock(&avcodec_mutex);
@@ -147,7 +148,8 @@ static int64_t get_real_last_frame(lives_clip_data_t *cdata) {
 
   while (1) {
     nseeks++;
-#ifdef DEBUG
+    //#define DEBUG_RLF
+#ifdef DEBUG_RLF
     fprintf(stderr,"will check frame %ld of %ld...",lframe+1,cdata->nframes);
 #endif
     
@@ -155,14 +157,21 @@ static int64_t get_real_last_frame(lives_clip_data_t *cdata) {
     if (!get_frame(cdata,lframe,NULL,0,NULL)) {
       timex=get_current_ticks()-timex;
       tottime+=timex;
-#ifdef DEBUG
+
+      if (timex>NO_SEEK_LIMIT) {
+	//#ifdef DEBUG_RLF
+	fprintf(stderr,"avcodec_decoder: seek was %ld, longer than limit of %d; giving up.\n",tottime,NO_SEEK_LIMIT);
+	//#endif
+	return -1;
+      }
+#ifdef DEBUG_RLF
       fprintf(stderr,"no (%ld)\n",timex);
 #endif
       if (diff==1) {
 	tottime/=nseeks;
-	//#ifdef DEBUG
+#ifdef DEBUG_RLF
 	fprintf(stderr,"av seek was %ld\n",tottime);
-	//#endif
+#endif
 	if (tottime<=FAST_SEEK_LIMIT)
 	  cdata->seek_flag=LIVES_SEEK_FAST;
 	return lframe-1;
@@ -175,14 +184,14 @@ static int64_t get_real_last_frame(lives_clip_data_t *cdata) {
     else {
       timex=get_current_ticks()-timex;
       tottime+=timex;
-#ifdef DEBUG
+#ifdef DEBUG_RLF
       fprintf(stderr,"yes ! (%ld)\n",timex);
 #endif
       if (diff<2&&diff>-4) {
 	tottime/=nseeks;
-	//#ifdef DEBUG
+#ifdef DEBUG_RLF
 	fprintf(stderr,"av seek was %ld\n",tottime);
-	//#endif
+#endif
 	if (tottime<=FAST_SEEK_LIMIT)
 	  cdata->seek_flag=LIVES_SEEK_FAST;
 	return lframe;
@@ -721,6 +730,14 @@ lives_clip_data_t *get_clip_data(const char *URI, lives_clip_data_t *cdata) {
   if (cdata->nframes>100&&real_frames<cdata->nframes*.75) {
     fprintf(stderr,"avformat_decoder: ERROR - could only seek to %ld frames out of %ld\navformat_decoder: I will pass on this file as it may be broken.\n",
 	    real_frames,cdata->nframes);
+    detach_stream(cdata);
+    free(cdata->URI);
+    cdata->URI=NULL;
+    clip_data_free(cdata);
+    return NULL;
+  }
+
+  if (real_frames<=0) {
     detach_stream(cdata);
     free(cdata->URI);
     cdata->URI=NULL;

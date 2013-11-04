@@ -135,7 +135,6 @@ typedef struct {
   lives_rfx_table_type_t table_type;
 
   int table_rows;
-  int ptable_rows;
 
   lives_rfx_code_type_t codetype;
 

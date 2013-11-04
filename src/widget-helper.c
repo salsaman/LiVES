@@ -2342,6 +2342,29 @@ LIVES_INLINE boolean lives_grid_set_column_spacing(LiVESGrid *grid, uint32_t spa
 }
 
 
+LIVES_INLINE boolean lives_grid_remove_row(LiVESGrid *grid, int posn) {
+#ifdef GUI_GTK
+#if GTK_CHECK_VERSION(3,10,0)
+  gtk_grid_remove_row(grid,posn);
+  return TRUE;
+#endif
+#endif
+  return FALSE;
+}
+
+
+
+LIVES_INLINE boolean lives_grid_insert_row(LiVESGrid *grid, int posn) {
+#ifdef GUI_GTK
+#if GTK_CHECK_VERSION(3,10,0)
+  gtk_grid_insert_row(grid,posn);
+  return TRUE;
+#endif
+#endif
+  return FALSE;
+}
+
+
 LIVES_INLINE boolean lives_grid_attach_next_to(LiVESGrid *grid, LiVESWidget *child, LiVESWidget *sibling, 
 					       lives_position_t side, int width, int height) {
 #ifdef GUI_GTK
@@ -2358,7 +2381,7 @@ LIVES_INLINE boolean lives_grid_attach_next_to(LiVESGrid *grid, LiVESWidget *chi
 LIVES_INLINE LiVESWidget *lives_table_new(uint32_t rows, uint32_t cols, boolean homogeneous) {
   LiVESWidget *table=NULL;
 #ifdef GUI_GTK
-#if GTK_CHECK_VERSION(3,10,0)  // required for grid remove row
+#if LIVES_TABLE_IS_GRID  // required for grid remove row
   register int i;
   GtkGrid *grid=(GtkGrid *)lives_grid_new();
   gtk_grid_set_row_homogeneous(grid,homogeneous);
@@ -2385,7 +2408,7 @@ LIVES_INLINE LiVESWidget *lives_table_new(uint32_t rows, uint32_t cols, boolean 
 
 LIVES_INLINE boolean lives_table_set_row_spacings(LiVESTable *table, uint32_t spacing) {
 #ifdef GUI_GTK
-#if GTK_CHECK_VERSION(3,10,0)  // required for grid remove row
+#if LIVES_TABLE_IS_GRID  // required for grid remove row
   lives_grid_set_row_spacing(table,spacing);
 #else
   gtk_table_set_row_spacings(table,spacing);
@@ -2398,7 +2421,7 @@ LIVES_INLINE boolean lives_table_set_row_spacings(LiVESTable *table, uint32_t sp
 
 LIVES_INLINE boolean lives_table_set_col_spacings(LiVESTable *table, uint32_t spacing) {
 #ifdef GUI_GTK
-#if GTK_CHECK_VERSION(3,10,0)  // required for grid remove row
+#if LIVES_TABLE_IS_GRID  // required for grid remove row
   lives_grid_set_column_spacing(table,spacing);
 #else
   gtk_table_set_col_spacings(table,spacing);
@@ -2411,7 +2434,7 @@ LIVES_INLINE boolean lives_table_set_col_spacings(LiVESTable *table, uint32_t sp
 
 LIVES_INLINE boolean lives_table_resize(LiVESTable *table, uint32_t rows, uint32_t cols) {
 #ifdef GUI_GTK
-#if GTK_CHECK_VERSION(3,10,0)  // required for grid remove row
+#if LIVES_TABLE_IS_GRID  // required for grid remove row
   register int i;
 
   for (i=LIVES_POINTER_TO_INT(g_object_get_data(G_OBJECT(table),"rows"));i<rows;i++) {
@@ -2439,7 +2462,7 @@ LIVES_INLINE void lives_table_attach(LiVESTable *table, LiVESWidget *child, uint
 				     uint32_t xpad, uint32_t ypad) {
 
 #ifdef GUI_GTK
-#if GTK_CHECK_VERSION(3,10,0)  // required for grid remove row
+#if LIVES_TABLE_IS_GRID  // required for grid remove row
   gtk_grid_attach(table,child,left,top,right-left,bottom-top);
   if (xoptions&LIVES_EXPAND) 
     lives_widget_set_hexpand(child,TRUE);

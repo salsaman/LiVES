@@ -5508,10 +5508,11 @@ void load_frame_image(gint frame) {
 	  calc_maxspect(mainw->vpp->fwidth,mainw->vpp->fheight,&lb_width,&lb_height);
 	}
 
+
 	letterbox_layer(frame_layer,lb_width/
-			weed_palette_get_pixels_per_macropixel(layer_palette),
+			weed_palette_get_pixels_per_macropixel(mainw->vpp->palette),
 			lb_height,mainw->vpp->fwidth/
-			weed_palette_get_pixels_per_macropixel(layer_palette),
+			weed_palette_get_pixels_per_macropixel(mainw->vpp->palette),
 			mainw->vpp->fheight);
 
       }

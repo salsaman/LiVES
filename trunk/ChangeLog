@@ -2,6 +2,8 @@ Version 2.0.7
 -------------
 Fix crash in swscale when frame width is not multiple of 4.
 Fix breakage in multiple image loading.
+Fix opening preview for quick opening clips.
+Fixes for letterbox mode playback.
 Compilation fixes for Debian Sid.
 Add new avformat_decoder.
 Various improvements to rte window.

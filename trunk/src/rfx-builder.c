@@ -571,7 +571,7 @@ void on_list_table_clicked (GtkButton *button, gpointer user_data) {
 
 
   // create table and add rows
-  rfxbuilder->ptable_rows=rfxbuilder->table_rows=0;
+  rfxbuilder->table_rows=0;
 
   if (rfxbuilder->table_type==RFX_TABLE_TYPE_REQUIREMENTS) {
     rfxbuilder->table=lives_table_new (rfxbuilder->num_reqs,1,FALSE);
@@ -1117,8 +1117,8 @@ void on_table_add_row (GtkButton *button, gpointer user_data) {
     lives_container_add(LIVES_CONTAINER(ebox),entry);
 
     lives_table_resize (LIVES_TABLE (rfxbuilder->table),++rfxbuilder->table_rows,1);
-    lives_table_attach (LIVES_TABLE (rfxbuilder->table), ebox, 0, 1, rfxbuilder->table_rows-1+rfxbuilder->ptable_rows, 
-		      rfxbuilder->table_rows+rfxbuilder->ptable_rows,
+    lives_table_attach (LIVES_TABLE (rfxbuilder->table), ebox, 0, 1, rfxbuilder->table_rows-1, 
+		      rfxbuilder->table_rows,
 		      (GtkAttachOptions) (GTK_FILL|GTK_EXPAND),
 		      (GtkAttachOptions) (0), 0, 0);
 
@@ -1174,8 +1174,8 @@ void on_table_add_row (GtkButton *button, gpointer user_data) {
 
     lives_table_resize (LIVES_TABLE (rfxbuilder->table),++rfxbuilder->table_rows,3);
 
-    lives_table_attach (LIVES_TABLE (rfxbuilder->table), ebox, 0, 1, rfxbuilder->table_rows-1+rfxbuilder->ptable_rows, 
-		      rfxbuilder->table_rows+rfxbuilder->ptable_rows,
+    lives_table_attach (LIVES_TABLE (rfxbuilder->table), ebox, 0, 1, rfxbuilder->table_rows-1, 
+		      rfxbuilder->table_rows,
 		      (GtkAttachOptions) (0),
 		      (GtkAttachOptions) (0), 0, 0);
 
@@ -1188,8 +1188,8 @@ void on_table_add_row (GtkButton *button, gpointer user_data) {
     gtk_widget_set_events (ebox2, GDK_BUTTON_PRESS_MASK);
     lives_container_add(LIVES_CONTAINER(ebox2),entry2);
 
-    lives_table_attach (LIVES_TABLE (rfxbuilder->table), ebox2, 1, 2, rfxbuilder->table_rows-1+rfxbuilder->ptable_rows, 
-		      rfxbuilder->table_rows+rfxbuilder->ptable_rows,
+    lives_table_attach (LIVES_TABLE (rfxbuilder->table), ebox2, 1, 2, rfxbuilder->table_rows-1, 
+		      rfxbuilder->table_rows,
 		      (GtkAttachOptions) (GTK_FILL|GTK_EXPAND),
 		      (GtkAttachOptions) (0), 0, 0);
 
@@ -1229,8 +1229,8 @@ void on_table_add_row (GtkButton *button, gpointer user_data) {
     gtk_widget_set_events (ebox3, GDK_BUTTON_PRESS_MASK);
     lives_container_add(LIVES_CONTAINER(ebox3),entry3);
 
-    lives_table_attach (LIVES_TABLE (rfxbuilder->table), ebox3, 2, 3, rfxbuilder->table_rows-1+rfxbuilder->ptable_rows, 
-		      rfxbuilder->table_rows+rfxbuilder->ptable_rows,
+    lives_table_attach (LIVES_TABLE (rfxbuilder->table), ebox3, 2, 3, rfxbuilder->table_rows-1, 
+		      rfxbuilder->table_rows,
 		      (GtkAttachOptions) (GTK_FILL),
 		      (GtkAttachOptions) (0), 0, 0);
 
@@ -1268,8 +1268,8 @@ void on_table_add_row (GtkButton *button, gpointer user_data) {
     lives_container_add(LIVES_CONTAINER(ebox),entry);
 
     lives_table_resize (LIVES_TABLE (rfxbuilder->table),++rfxbuilder->table_rows,2);
-    lives_table_attach (LIVES_TABLE (rfxbuilder->table), ebox, 0, 1, rfxbuilder->table_rows-1+rfxbuilder->ptable_rows, 
-		      rfxbuilder->table_rows+rfxbuilder->ptable_rows,
+    lives_table_attach (LIVES_TABLE (rfxbuilder->table), ebox, 0, 1, rfxbuilder->table_rows-1, 
+		      rfxbuilder->table_rows,
 		      (GtkAttachOptions) (GTK_FILL),
 		      (GtkAttachOptions) (0), 0, 0);
 
@@ -1309,8 +1309,8 @@ void on_table_add_row (GtkButton *button, gpointer user_data) {
     gtk_widget_set_events (ebox2, GDK_BUTTON_PRESS_MASK);
     lives_container_add(LIVES_CONTAINER(ebox2),entry2);
 
-    lives_table_attach (LIVES_TABLE (rfxbuilder->table), ebox2, 1, 2, rfxbuilder->table_rows-1+rfxbuilder->ptable_rows, 
-		      rfxbuilder->table_rows+rfxbuilder->ptable_rows,
+    lives_table_attach (LIVES_TABLE (rfxbuilder->table), ebox2, 1, 2, rfxbuilder->table_rows-1, 
+		      rfxbuilder->table_rows,
 		      (GtkAttachOptions) (GTK_FILL|GTK_EXPAND),
 		      (GtkAttachOptions) (0), 0, 0);
 
@@ -1348,8 +1348,8 @@ void on_table_add_row (GtkButton *button, gpointer user_data) {
     lives_container_add(LIVES_CONTAINER(ebox),entry);
 
     lives_table_resize (LIVES_TABLE (rfxbuilder->table),++rfxbuilder->table_rows,1);
-    lives_table_attach (LIVES_TABLE (rfxbuilder->table), ebox, 0, 1, rfxbuilder->table_rows-1+rfxbuilder->ptable_rows, 
-		      rfxbuilder->table_rows+rfxbuilder->ptable_rows,
+    lives_table_attach (LIVES_TABLE (rfxbuilder->table), ebox, 0, 1, rfxbuilder->table_rows-1, 
+		      rfxbuilder->table_rows,
 		      (GtkAttachOptions) (GTK_FILL|GTK_EXPAND),
 		      (GtkAttachOptions) (0), 0, 0);
 
@@ -1435,7 +1435,7 @@ void on_table_add_row (GtkButton *button, gpointer user_data) {
   }
 
   if (button!=NULL) {
-    table_select_row(rfxbuilder, rfxbuilder->table_rows-1+rfxbuilder->ptable_rows);
+    table_select_row(rfxbuilder, rfxbuilder->table_rows-1);
     
     if (rfxbuilder->table_type==RFX_TABLE_TYPE_REQUIREMENTS) {
       on_table_edit_row(NULL,user_data);
@@ -1696,33 +1696,46 @@ void on_table_swap_row (GtkButton *button, gpointer user_data) {
 
 void on_table_delete_row (GtkButton *button, gpointer user_data) {
   rfx_build_window_t *rfxbuilder=(rfx_build_window_t *)user_data;
-  int i;
+
+#if !LIVES_TABLE_IS_GRID
+  GtkWidget *ebox,*ebox2=NULL,*ebox3=NULL,*ebox4=NULL;
+#endif
+
   int move=0;
   boolean triggers_adjusted=FALSE;
+
+  register int i;
 
   switch (rfxbuilder->table_type) {
   case RFX_TABLE_TYPE_REQUIREMENTS:
     for (i=0;i<rfxbuilder->table_rows;i++) {
       if (move>0) {
-	rfxbuilder->entry[i-1]=rfxbuilder->entry[i];
-      }
-      else if (lives_widget_get_state(rfxbuilder->entry[i])&LIVES_WIDGET_STATE_INSENSITIVE) {
 
-	// TODO !!
-#if GTK_CHECK_VERSION(3,10,0)
+#if !LIVES_TABLE_IS_GRID
+	if (i<rfxbuilder->table_rows-1) ebox2=lives_widget_get_parent(rfxbuilder->entry[i]);
+	lives_widget_reparent(rfxbuilder->entry[i],ebox);
+	ebox=ebox2;
+#endif
+
+	rfxbuilder->entry[i-1]=rfxbuilder->entry[i];
+
+      }
+      else if (!(lives_widget_get_state(rfxbuilder->entry[i])&LIVES_WIDGET_STATE_INSENSITIVE)) {
+
+#if LIVES_TABLE_IS_GRID
 	if (rfxbuilder->table_rows>1) {
-	  gtk_grid_remove_row(LIVES_GRID(rfxbuilder->table),i);
+	  lives_grid_remove_row(LIVES_GRID(rfxbuilder->table),i);
+	  // does this unref child widget ?
 	}
-	else lives_widget_destroy (rfxbuilder->entry[i]);
 #else
-	lives_widget_destroy (rfxbuilder->entry[i]);
+	ebox=lives_widget_get_parent(rfxbuilder->entry[i]);
 	if (rfxbuilder->table_rows>1) {
 	  lives_table_resize (LIVES_TABLE (rfxbuilder->table),rfxbuilder->table_rows-1,1);
 	}
 #endif
+	lives_widget_destroy (rfxbuilder->entry[i]);
 
 	move=i+1;
-	rfxbuilder->ptable_rows++;
       }
 
 
@@ -1736,39 +1749,46 @@ void on_table_delete_row (GtkButton *button, gpointer user_data) {
     for (i=0;i<rfxbuilder->table_rows;i++) {
       if (move>0) {
 	// note - parameters become renumbered here
-	gchar *tmpx;
-	rfxbuilder->entry[i-1]=rfxbuilder->entry[i];
-	lives_entry_set_text (LIVES_ENTRY (rfxbuilder->entry[i-1]),(tmpx=g_strdup_printf ("p%d",i-1)));
-	g_free(tmpx);
+
+#if !LIVES_TABLE_IS_GRID
+	if (i<rfxbuilder->table_rows-1) {
+	  ebox3=lives_widget_get_parent(rfxbuilder->entry2[i]);
+	  ebox4=lives_widget_get_parent(rfxbuilder->entry3[i]);
+	}
+	lives_widget_reparent(rfxbuilder->entry2[i],ebox);
+	lives_widget_reparent(rfxbuilder->entry3[i],ebox2);
+	ebox=ebox3;
+	ebox2=ebox4;
+#endif
+
 	rfxbuilder->entry2[i-1]=rfxbuilder->entry2[i];
 	rfxbuilder->entry3[i-1]=rfxbuilder->entry3[i];
 	param_copy (&rfxbuilder->copy_params[i],&rfxbuilder->copy_params[i-1],FALSE);
 	g_free (rfxbuilder->copy_params[i].name);
 	g_free (rfxbuilder->copy_params[i].label);
 	g_free (rfxbuilder->copy_params[i].def);
+
       }
-      else if (lives_widget_get_state(rfxbuilder->entry[i])&LIVES_WIDGET_STATE_INSENSITIVE) {
+      else if (!(lives_widget_get_state(rfxbuilder->entry[i])&LIVES_WIDGET_STATE_INSENSITIVE)) {
 	if (rfxbuilder->copy_params[i].onchange) {
 	  do_blocking_error_dialog(_ ("\n\nCannot remove this parameter as it has a trigger.\nPlease remove the trigger first.\n\n"));
 	  return;
 	}
 
-	// TODO !!
-#if GTK_CHECK_VERSION(3,10,0)
+#if LIVES_TABLE_IS_GRID
 	if (rfxbuilder->table_rows>1) {
-	  gtk_grid_remove_row(LIVES_GRID(rfxbuilder->table),i);
-	}
-	else {
-	  lives_widget_destroy (rfxbuilder->entry[i]);
-	  lives_widget_destroy (rfxbuilder->entry2[i]);
-	  lives_widget_destroy (rfxbuilder->entry3[i]);
+	  lives_grid_remove_row(LIVES_GRID(rfxbuilder->table),i);
 	}
 #else
-	lives_widget_destroy (rfxbuilder->entry[i]);
+	ebox=lives_widget_get_parent(rfxbuilder->entry2[i]);
+	ebox2=lives_widget_get_parent(rfxbuilder->entry3[i]);
+
+	lives_widget_destroy (rfxbuilder->entry[rfxbuilder->table_rows-1]);
 	lives_widget_destroy (rfxbuilder->entry2[i]);
 	lives_widget_destroy (rfxbuilder->entry3[i]);
+
 	if (rfxbuilder->table_rows>1) {
-	lives_table_resize (LIVES_TABLE (rfxbuilder->table),rfxbuilder->table_rows-1,3);
+	  lives_table_resize (LIVES_TABLE (rfxbuilder->table),rfxbuilder->table_rows-1,3);
       }
 #endif
 	g_free (rfxbuilder->copy_params[i].name);
@@ -1776,7 +1796,6 @@ void on_table_delete_row (GtkButton *button, gpointer user_data) {
 	g_free (rfxbuilder->copy_params[i].def);
 
 	move=i+1;
-	rfxbuilder->ptable_rows++;
       }
     }
     if (move==0) return;
@@ -1797,21 +1816,31 @@ void on_table_delete_row (GtkButton *button, gpointer user_data) {
   case RFX_TABLE_TYPE_PARAM_WINDOW:
     for (i=0;i<rfxbuilder->table_rows;i++) {
       if (move>0) {
+
+#if !LIVES_TABLE_IS_GRID
+	if (i<rfxbuilder->table_rows-1) {
+	  ebox3=lives_widget_get_parent(rfxbuilder->entry[i]);
+	  ebox4=lives_widget_get_parent(rfxbuilder->entry2[i]);
+	}
+	lives_widget_reparent(rfxbuilder->entry[i],ebox);
+	lives_widget_reparent(rfxbuilder->entry2[i],ebox2);
+	ebox=ebox3;
+	ebox2=ebox4;
+#endif
+
 	rfxbuilder->entry[i-1]=rfxbuilder->entry[i];
 	rfxbuilder->entry2[i-1]=rfxbuilder->entry2[i];
       }
-      else if (lives_widget_get_state(rfxbuilder->entry[i])&LIVES_WIDGET_STATE_INSENSITIVE) {
+      else if (!(lives_widget_get_state(rfxbuilder->entry[i])&LIVES_WIDGET_STATE_INSENSITIVE)) {
 
-	// TODO !!
-#if GTK_CHECK_VERSION(3,10,0)
+#if LIVES_TABLE_IS_GRID
 	if (rfxbuilder->table_rows>1) {
-	  gtk_grid_remove_row(LIVES_GRID(rfxbuilder->table),i);
-	}
-	else {
-	  lives_widget_destroy (rfxbuilder->entry[i]);
-	  lives_widget_destroy (rfxbuilder->entry2[i]);
+	  lives_grid_remove_row(LIVES_GRID(rfxbuilder->table),i);
 	}
 #else
+	ebox=lives_widget_get_parent(rfxbuilder->entry[i]);
+	ebox2=lives_widget_get_parent(rfxbuilder->entry2[i]);
+
 	lives_widget_destroy (rfxbuilder->entry[i]);
 	lives_widget_destroy (rfxbuilder->entry2[i]);
 	if (rfxbuilder->table_rows>1) {
@@ -1819,7 +1848,6 @@ void on_table_delete_row (GtkButton *button, gpointer user_data) {
 	}
 #endif
 	move=i+1;
-	rfxbuilder->ptable_rows++;
       }
     }
     if (move==0) return;
@@ -1830,34 +1858,38 @@ void on_table_delete_row (GtkButton *button, gpointer user_data) {
   case RFX_TABLE_TYPE_TRIGGERS:
     for (i=0;i<rfxbuilder->table_rows;i++) {
       if (move>0) {
+
+#if !LIVES_TABLE_IS_GRID
+	if (i<rfxbuilder->table_rows-1) ebox2=lives_widget_get_parent(rfxbuilder->entry[i]);
+	lives_widget_reparent(rfxbuilder->entry[i],ebox);
+	ebox=ebox2;
+#endif
+
 	rfxbuilder->entry[i-1]=rfxbuilder->entry[i];
 	rfxbuilder->copy_triggers[i-1].when=rfxbuilder->copy_triggers[i].when;
 	rfxbuilder->copy_triggers[i-1].code=g_strdup (rfxbuilder->copy_triggers[i].code);
 	g_free (rfxbuilder->copy_triggers[i].code);
       }
-      else if (lives_widget_get_state(rfxbuilder->entry[i])&LIVES_WIDGET_STATE_INSENSITIVE) {
+      else if (!(lives_widget_get_state(rfxbuilder->entry[i])&LIVES_WIDGET_STATE_INSENSITIVE)) {
 	int when=atoi (lives_entry_get_text (LIVES_ENTRY (rfxbuilder->entry[i])))+1;
 
 	if (!strcmp(lives_entry_get_text (LIVES_ENTRY (rfxbuilder->entry[i])),"init")) rfxbuilder->has_init_trigger=FALSE;
 	else rfxbuilder->params[when-1].onchange=FALSE;
 
-	lives_widget_destroy (rfxbuilder->entry[i]);
 	g_free (rfxbuilder->copy_triggers[i].code);
 
-	// TODO !!
-#if GTK_CHECK_VERSION(3,10,0)
+#if LIVES_TABLE_IS_GRID
 	if (rfxbuilder->table_rows>1) {
-	  gtk_grid_remove_row(LIVES_GRID(rfxbuilder->table),i);
+	  lives_grid_remove_row(LIVES_GRID(rfxbuilder->table),i);
 	}
-	else lives_widget_destroy (rfxbuilder->entry[i]);
 #else
-	lives_widget_destroy (rfxbuilder->entry[i]);
+	ebox=lives_widget_get_parent(rfxbuilder->entry[i]);
 	if (rfxbuilder->table_rows>1) {
 	  lives_table_resize (LIVES_TABLE (rfxbuilder->table),rfxbuilder->table_rows-1,1);
 	}
 #endif
+	lives_widget_destroy (rfxbuilder->entry[i]);
 	move=i+1;
-	rfxbuilder->ptable_rows++;
       }
     }
     if (move==0) return;

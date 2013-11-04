@@ -62,6 +62,12 @@ typedef cairo_fill_rule_t lives_painter_fill_rule_t;
 
 #ifdef GUI_GTK
 
+// needs testing with gtk+ 3,10,0+
+//#if GTK_CHECK_VERSION(3,10,0)
+//#define LIVES_TABLE_IS_GRID 1
+//#endif
+
+
 #ifndef G_ENCODE_VERSION
 #define G_ENCODE_VERSION(major,minor) ((major) << 16 | (minor) << 8)
 #endif
@@ -141,7 +147,7 @@ typedef GtkGrid                           LiVESGrid;
 typedef GtkWidget                         LiVESGrid;
 #endif
 
-#if GTK_CHECK_VERSION(3,10,0)
+#ifdef LIVES_TABLE_IS_GRID
 typedef GtkGrid                           LiVESTable;
 #else
 typedef GtkTable                          LiVESTable;
@@ -349,7 +355,7 @@ typedef gpointer                          livespointer;
 #endif
 
 
-#if GTK_CHECK_VERSION(3,10,0)
+#if LIVES_TABLE_IS_GRID
 #define LIVES_TABLE(widget) GTK_GRID(widget)
 #else
 #define LIVES_TABLE(widget) GTK_TABLE(widget)
@@ -934,6 +940,9 @@ boolean lives_grid_set_row_spacing(LiVESGrid *, uint32_t spacing);
 boolean lives_grid_set_column_spacing(LiVESGrid *, uint32_t spacing);
 boolean lives_grid_attach_next_to(LiVESGrid *, LiVESWidget *child, LiVESWidget *sibling, 
 				  lives_position_t side, int width, int height);
+
+boolean lives_grid_insert_row(LiVESGrid *, int posn);
+boolean lives_grid_remove_row(LiVESGrid *, int posn);
 
 LiVESWidget *lives_menu_new(void);
 

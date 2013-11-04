@@ -5013,7 +5013,7 @@ void load_frame_image(gint frame) {
       }
       else {
 	// normal playback in the clip editor, or applying a non-realtime effect
-	if (!mainw->preview||g_file_test(fname_next,G_FILE_TEST_EXISTS)) {
+	if (!mainw->preview||cfile->clip_type==CLIP_TYPE_FILE||g_file_test(fname_next,G_FILE_TEST_EXISTS)) {
 	  mainw->frame_layer=weed_plant_new(WEED_PLANT_CHANNEL);
 	  weed_set_int_value(mainw->frame_layer,"clip",mainw->current_file);
 	  weed_set_int_value(mainw->frame_layer,"frame",mainw->actual_frame);

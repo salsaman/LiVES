@@ -48,12 +48,8 @@ struct _lives_pconnect_t {
 };
 
 
-
 /// add a new connection from out_param okey/omode/opnum to in_param ikey/imode/ipnum
 void pconx_add_connection(int okey, int omode, int opnum, int ikey, int imode, int ipnum, boolean autoscale);
-
-/// return if ikey/imode/ipnum is mapped to an out param
-weed_plant_t *pconx_get_out_param(boolean use_filter, int ikey, int imode, int ipnum, boolean *autoscale);
 
 // free all connections (and set mainw->pconx to NULL)
 void pconx_delete_all();
@@ -108,12 +104,8 @@ struct _lives_cconnect_t {
 };
 
 
-
 /// add a new connection from out_chan okey/omode/ocnum to in_chan ikey/imode/icnum
 void cconx_add_connection(int okey, int omode, int ocnum, int ikey, int imode, int icnum);
-
-/// return if ikey/imode/ichan is mapped to an out alpha
-weed_plant_t *cconx_get_out_chan(boolean use_filter, int ikey, int imode, int ipnum);
 
 // free all connections (and set mainw->cconx to NULL)
 void cconx_delete_all();
@@ -144,9 +136,15 @@ typedef struct {
   int num_alpha;
   int num_params;
   int ntabs;
-  GtkWidget *conx_dialog;
 
-  // per tab part
+  lives_cconnect_t *cconx;
+  lives_pconnect_t *pconx;
+
+  GtkWidget *conx_dialog;
+  GtkWidget *acbutton;
+  GtkWidget *apbutton;
+  GtkWidget *disconbutton;
+
   GtkWidget **cfxcombo;
   GtkWidget **pfxcombo;
   GtkWidget **pcombo;
@@ -156,13 +154,29 @@ typedef struct {
   GtkWidget **del_button;
   GtkWidget *allcheckc;
   GtkWidget *allcheck_label;
+
+  GtkWidget *tablec;
+  GtkWidget *tablep;
+
+  // table row counts
+  int trowsc;
+  int trowsp;
+
+  // # dislay rows for each param/channel
+  int *dispc;
+  int *dispp;
+
   int *ikeys;
   int *imodes;
   int *idx;
+
   gulong *dpc_func;
   gulong *dpp_func;
   gulong *acheck_func;
+
 } lives_conx_w;
+
+
 
 
 GtkWidget *make_datacon_window(int key, int mode);

@@ -1809,7 +1809,7 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const gchar *te
   return TRUE;
 }
 
-
+#define MIN_FLASH_TIME 100000000
 
 boolean do_auto_dialog (const gchar *text, int type) {
   // type 0 = normal auto_dialog
@@ -1817,12 +1817,17 @@ boolean do_auto_dialog (const gchar *text, int type) {
   // type 2 = normal with cancel
 
   FILE *infofile=NULL;
-  int count=0;
-  guint64 time=0,end_time=1;
-  gchar *label_text;
-  int time_rem,last_time_rem=10000000;
+
+  uint64_t time=0,end_time=1;
+
   xprocess *proc_ptr;
+
+  gchar *label_text;
   gchar *mytext=g_strdup(text);
+
+  int time_rem,last_time_rem=10000000;
+  int alarm_handle=0;
+
 
   mainw->error=FALSE;
 
@@ -1844,9 +1849,9 @@ boolean do_auto_dialog (const gchar *text, int type) {
   lives_set_cursor_style(LIVES_CURSOR_BUSY,proc_ptr->processing);
   lives_widget_context_update();
 
-  if (type==0) {
+  if (type==0||type==2) {
     clear_mainw_msg();
-    count=100000./prefs->sleep_time;  // don't want to flash too fast...
+    alarm_handle=lives_alarm_set(MIN_FLASH_TIME); // don't want to flash too fast...
   }
   else if (type==1) {
     lives_widget_show(proc_ptr->stop_button);
@@ -1860,7 +1865,8 @@ boolean do_auto_dialog (const gchar *text, int type) {
     }
   }
 
-  while (((type==1||type==2)&&mainw->cancelled==CANCEL_NONE)&&((type==0||type==2)&&!(infofile=fopen(cfile->info_file,"r")))) {
+  while ((type==0||((type==1||type==2)&&mainw->cancelled==CANCEL_NONE))
+	 &&((type==1||((type==0||type==2)&&!(infofile=fopen(cfile->info_file,"r")))))) {
     gtk_progress_bar_pulse(GTK_PROGRESS_BAR(proc_ptr->progressbar));
     lives_widget_context_update();
     g_usleep(prefs->sleep_time);
@@ -1878,18 +1884,18 @@ boolean do_auto_dialog (const gchar *text, int type) {
   }
   
 
-  if (type==0) {
+  if (type==0||type==2) {
     mainw->read_failed=FALSE;
     lives_fgets(mainw->msg,512,infofile);
     fclose(infofile);
     if (cfile->clip_type==CLIP_TYPE_DISK) unlink(cfile->info_file);
 
-    while (count>0) {
+    while (!lives_alarm_get(alarm_handle)) {
       gtk_progress_bar_pulse(GTK_PROGRESS_BAR(proc_ptr->progressbar));
       lives_widget_context_update();
       g_usleep(prefs->sleep_time);
-      count--;
     }
+    lives_alarm_clear(alarm_handle);
   }
 
   if (proc_ptr!=NULL) {

@@ -1227,18 +1227,6 @@ void set_param_gui_readonly (weed_plant_t *inst) {
     weed_free(params);
   }
 
-  num_params=weed_leaf_num_elements(inst,"out_parameters");
-  if (num_params>0) {
-    params=weed_get_plantptr_array(inst,"out_parameters",&error);
-    for (i=0;i<num_params;i++) {
-      ptmpl=weed_get_plantptr_value(params[i],"template",&error);
-      if (weed_plant_has_leaf(ptmpl,"gui")) {
-	gui=weed_get_plantptr_value(ptmpl,"gui",&error);
-	weed_add_plant_flags(gui,WEED_LEAF_READONLY_PLUGIN);
-      }
-    }
-    weed_free(params);
-  }
 }
 
 void set_param_gui_readwrite (weed_plant_t *inst) {
@@ -1258,18 +1246,6 @@ void set_param_gui_readwrite (weed_plant_t *inst) {
     weed_free(params);
   }
 
-  num_params=weed_leaf_num_elements(inst,"out_parameters");
-  if (num_params>0) {
-    params=weed_get_plantptr_array(inst,"out_parameters",&error);
-    for (i=0;i<num_params;i++) {
-      ptmpl=weed_get_plantptr_value(params[i],"template",&error);
-      if (weed_plant_has_leaf(ptmpl,"gui")) {
-	gui=weed_get_plantptr_value(ptmpl,"gui",&error);
-	weed_clear_plant_flags(gui,WEED_LEAF_READONLY_PLUGIN);
-      }
-    }
-    weed_free(params);
-  }
 }
 
 /// change directory to plugin installation dir so it can find any data files
@@ -1290,12 +1266,18 @@ gchar *cd_to_plugin_dir(weed_plant_t *filter) {
 
 lives_filter_error_t weed_reinit_effect (weed_plant_t *inst, boolean reinit_compound) {
   weed_plant_t *filter;
-  gchar *cwd;
-  boolean is_audio=FALSE,deinit_first=FALSE;
+
   lives_filter_error_t filter_error=FILTER_NO_ERROR;
-  int error,retval;
+
+  gchar *cwd;
+
+  boolean is_audio=FALSE,deinit_first=FALSE;
+
+  int error,retval,key=-1;
 
  reinit:
+
+  if (weed_plant_has_leaf(inst,"host_hotkey")) key=weed_get_int_value(inst,"host_hotkey",&error);
 
   filter=weed_instance_get_filter(inst,FALSE);
 
@@ -1303,7 +1285,7 @@ lives_filter_error_t weed_reinit_effect (weed_plant_t *inst, boolean reinit_comp
 
   if (deinit_first) {
     if (has_audio_chans_in(filter,FALSE)||has_audio_chans_out(filter,FALSE)) {
-      pthread_mutex_lock(&mainw->afilter_mutex);
+      if (key>=0) pthread_mutex_lock(&mainw->afilter_mutex[key]);
       is_audio=TRUE;
     }
     weed_call_deinit_func(inst);
@@ -1320,7 +1302,7 @@ lives_filter_error_t weed_reinit_effect (weed_plant_t *inst, boolean reinit_comp
       set_param_gui_readwrite(inst);
       update_host_info(inst);
       retval=(*init_func)(inst);
-      if (is_audio) pthread_mutex_unlock(&mainw->afilter_mutex);
+      if (is_audio&&key>=0) pthread_mutex_unlock(&mainw->afilter_mutex[key]);
       set_param_gui_readonly(inst);
       if (fx_dialog[1]!=NULL) {
 	// redraw GUI if necessary
@@ -1342,19 +1324,20 @@ lives_filter_error_t weed_reinit_effect (weed_plant_t *inst, boolean reinit_comp
 
 
     }
-    else if (is_audio) pthread_mutex_unlock(&mainw->afilter_mutex);
+    else if (is_audio&&key>=0) pthread_mutex_unlock(&mainw->afilter_mutex[key]);
 
     if (!deinit_first) {
-      if (is_audio) pthread_mutex_lock(&mainw->afilter_mutex);
+      if (is_audio&&key>=0) pthread_mutex_lock(&mainw->afilter_mutex[key]);
       weed_call_deinit_func(inst);
-      if (is_audio) pthread_mutex_unlock(&mainw->afilter_mutex);
+      if (is_audio&&key>=0) pthread_mutex_unlock(&mainw->afilter_mutex[key]);
     }
 
     lives_chdir(cwd,FALSE);
     g_free(cwd);
     filter_error=FILTER_INFO_REINITED;
   }
-  else if (is_audio) pthread_mutex_unlock(&mainw->afilter_mutex);
+  else if (is_audio&&key>=0) pthread_mutex_unlock(&mainw->afilter_mutex[key]);
+
 
   if (deinit_first) weed_set_boolean_value(inst,"host_inited",WEED_TRUE);
   else weed_set_boolean_value(inst,"host_inited",WEED_FALSE);
@@ -3605,21 +3588,21 @@ void weed_apply_audio_effects_rt(float **abuf, int nchans, int64_t nsamps, gdoub
 	mainw->osc_block=TRUE;
 
 	// filter must not be deinited until we have processed it
-	if (pthread_mutex_trylock(&mainw->afilter_mutex)) continue;
+	if (pthread_mutex_trylock(&mainw->afilter_mutex[i])) continue;
 
 	if ((instance=key_to_instance[i][key_modes[i]])==NULL) {
-	  pthread_mutex_unlock(&mainw->afilter_mutex);
+	  pthread_mutex_unlock(&mainw->afilter_mutex[i]);
 	  continue;
 	}
 	filter=weed_instance_get_filter(instance,FALSE);
 
 	if (!has_audio_chans_in(filter,FALSE)) {
-	  pthread_mutex_unlock(&mainw->afilter_mutex);
+	  pthread_mutex_unlock(&mainw->afilter_mutex[i]);
 	  continue; 
 	}
 
 	if (analysers_only&&has_audio_chans_out(filter,FALSE)) {
-	  pthread_mutex_unlock(&mainw->afilter_mutex);
+	  pthread_mutex_unlock(&mainw->afilter_mutex[i]);
 	  continue;
 	}
 
@@ -3633,7 +3616,7 @@ void weed_apply_audio_effects_rt(float **abuf, int nchans, int64_t nsamps, gdoub
 	  // chain any data pipelines
 
 	  if (!pthread_mutex_trylock(&mainw->data_mutex)) {
-	    pthread_mutex_unlock(&mainw->afilter_mutex);
+	    pthread_mutex_unlock(&mainw->afilter_mutex[i]);
 	    needs_reinit=pconx_chain_data(i,key_modes[i]);
 	    pthread_mutex_unlock(&mainw->data_mutex);
 
@@ -3646,7 +3629,7 @@ void weed_apply_audio_effects_rt(float **abuf, int nchans, int64_t nsamps, gdoub
 	      weed_reinit_effect(instance,FALSE);
 	    }
 
-	    pthread_mutex_lock(&mainw->afilter_mutex);
+	    pthread_mutex_lock(&mainw->afilter_mutex[i]);
 	  }
 	}
 
@@ -3658,9 +3641,9 @@ void weed_apply_audio_effects_rt(float **abuf, int nchans, int64_t nsamps, gdoub
 	    needs_reinit=pconx_chain_data_internal(instance);
 	    pthread_mutex_unlock(&mainw->data_mutex);
 	    if (needs_reinit) {
-	      pthread_mutex_unlock(&mainw->afilter_mutex);
+	      pthread_mutex_unlock(&mainw->afilter_mutex[i]);
 	      weed_reinit_effect(instance,FALSE);
-	      pthread_mutex_lock(&mainw->afilter_mutex);
+	      pthread_mutex_lock(&mainw->afilter_mutex[i]);
 	    }
 	  }
 	}
@@ -3674,7 +3657,7 @@ void weed_apply_audio_effects_rt(float **abuf, int nchans, int64_t nsamps, gdoub
 	  goto apply_audio_inst2;
 	}
 
-	pthread_mutex_unlock(&mainw->afilter_mutex);
+	pthread_mutex_unlock(&mainw->afilter_mutex[i]);
 
 	if (filter_error==FILTER_INFO_REINITED) redraw_pwindow(i,key_modes[i]); // redraw our paramwindow
 #ifdef DEBUG_RTE
@@ -5830,9 +5813,9 @@ void weed_generator_end (weed_plant_t *inst) {
 
 
   if (is_bg) {
-    pthread_mutex_lock(&mainw->afilter_mutex);
+    pthread_mutex_lock(&mainw->afilter_mutex[bg_generator_key]);
     key_to_instance[bg_generator_key][bg_generator_mode]=NULL;
-    pthread_mutex_unlock(&mainw->afilter_mutex);
+    pthread_mutex_unlock(&mainw->afilter_mutex[bg_generator_key]);
     if (mainw->rte&(GU641<<bg_generator_key)) mainw->rte^=(GU641<<bg_generator_key);
     bg_gen_to_start=bg_generator_key=bg_generator_mode=-1;
     pre_src_file=mainw->pre_src_file;
@@ -5840,9 +5823,9 @@ void weed_generator_end (weed_plant_t *inst) {
     mainw->current_file=mainw->blend_file;
   }
   else {
-    pthread_mutex_lock(&mainw->afilter_mutex);
+    pthread_mutex_lock(&mainw->afilter_mutex[fg_generator_key]);
     key_to_instance[fg_generator_key][fg_generator_mode]=NULL;
-    pthread_mutex_unlock(&mainw->afilter_mutex);
+    pthread_mutex_unlock(&mainw->afilter_mutex[fg_generator_key]);
     if (mainw->rte&(GU641<<fg_generator_key)) mainw->rte^=(GU641<<fg_generator_key);
     fg_gen_to_start=fg_generator_key=fg_generator_clip=fg_generator_mode=-1;
     if (mainw->blend_file==mainw->current_file) mainw->blend_file=-1;
@@ -6501,9 +6484,9 @@ boolean weed_init_effect(int hotkey) {
 	d_print ((tmp=g_strdup_printf (_ ("Failed to start instance %s, error code %d\n"),filter_name,error)));
 	g_free(tmp);
 	weed_free(filter_name);
-	pthread_mutex_lock(&mainw->afilter_mutex);
+	pthread_mutex_lock(&mainw->afilter_mutex[hotkey]);
 	key_to_instance[hotkey][key_modes[hotkey]]=NULL;
-	pthread_mutex_unlock(&mainw->afilter_mutex);
+	pthread_mutex_unlock(&mainw->afilter_mutex[hotkey]);
 
 	inst=new_instance;
 
@@ -6832,9 +6815,9 @@ void weed_deinit_effect(int hotkey) {
     }
   }
  
-  pthread_mutex_lock(&mainw->afilter_mutex); // deadlock 1
+  pthread_mutex_lock(&mainw->afilter_mutex[hotkey]);
   key_to_instance[hotkey][key_modes[hotkey]]=NULL;
-  pthread_mutex_unlock(&mainw->afilter_mutex);
+  pthread_mutex_unlock(&mainw->afilter_mutex[hotkey]);
 
   if (mainw->whentostop==STOP_ON_VID_END&&mainw->current_file>-1&&(cfile->frames==0
 								   ||(mainw->loop&&cfile->achans>0&&!mainw->is_rendering&&(mainw->audio_end/cfile->fps)

@@ -86,6 +86,15 @@ void lives_free_normal(void *ptr) {
 }
 
 
+void filter_mutex_lock(int key) {
+  // lock a filter before setting the "value" of in_parameter or reading the "value" of an out_parameter
+  if (key>=0&&key<FX_KEYS_MAX_VIRTUAL) pthread_mutex_lock(&mainw->data_mutex[key]);
+}
+
+void filter_mutex_unlock(int key) {
+  if (key>=0&&key<FX_KEYS_MAX_VIRTUAL) pthread_mutex_unlock(&mainw->data_mutex[key]);
+}
+
 // special de-allocators which avoid free()ing mainw->do_not_free...this is necessary to "hack" into gdk-pixbuf
 // do not use this directly in code (use g_free() or weed_free() as appropriate)
 void lives_free_with_check(gpointer ptr) {
@@ -1277,7 +1286,7 @@ lives_filter_error_t weed_reinit_effect (weed_plant_t *inst, boolean reinit_comp
 
  reinit:
 
-  if (weed_plant_has_leaf(inst,"host_hotkey")) key=weed_get_int_value(inst,"host_hotkey",&error);
+  if (weed_plant_has_leaf(inst,"host_key")) key=weed_get_int_value(inst,"host_key",&error);
 
   filter=weed_instance_get_filter(inst,FALSE);
 
@@ -1453,8 +1462,6 @@ static lives_filter_error_t process_func_threaded(weed_plant_t *inst, weed_plant
     weed_set_int_value(out_channels[i],"height",dheight);
   }
 
-  pthread_mutex_lock(&mainw->data_mutex);
-
   for (j=1;j<to_use;j++) {
     // each thread needs its own copy of the output channels, so it can have its own "offset" and "height"
     // therefore it also needs its own copy of inst
@@ -1520,8 +1527,6 @@ static lives_filter_error_t process_func_threaded(weed_plant_t *inst, weed_plant
     if (retval==WEED_ERROR_PLUGIN_INVALID) got_invalid=TRUE;
   }
 
-  pthread_mutex_unlock(&mainw->data_mutex);
-  
   if (got_invalid) return FILTER_ERROR_MUST_RELOAD;
 
   return FILTER_NO_ERROR;
@@ -1616,6 +1621,7 @@ lives_filter_error_t weed_apply_instance (weed_plant_t *inst, weed_plant_t *init
   boolean all_outs_alpha=TRUE;//,all_ins_alpha=FALSE;
 
   int lcount=0;
+  int key=-1;
 
   register int i,j,k;
 
@@ -1623,6 +1629,8 @@ lives_filter_error_t weed_apply_instance (weed_plant_t *inst, weed_plant_t *init
       &&(mainw->preview||mainw->is_rendering)&&(num_compound_fx(inst)==1)) return retval;
 
   if (weed_plant_has_leaf(filter,"flags")) filter_flags=weed_get_int_value(filter,"flags",&error);
+
+  if (weed_plant_has_leaf(inst,"host_key")) key=weed_get_int_value(inst,"host_key",&error);
 
   // here, in_tracks and out_tracks map our layers to in_channels and out_channels in the filter
   if (!weed_plant_has_leaf(inst,"in_channels")||(in_channels=weed_get_plantptr_array(inst,"in_channels",&error))==NULL) {
@@ -1634,7 +1642,9 @@ lives_filter_error_t weed_apply_instance (weed_plant_t *inst, weed_plant_t *init
       // see if we can multithread
       if ((prefs->nfx_threads=future_prefs->nfx_threads)>1 && 
 	  filter_flags&WEED_FILTER_HINT_MAY_THREAD) {
+	filter_mutex_lock(key);
 	retval=process_func_threaded(inst,out_channels,tc);
+	filter_mutex_unlock(key);
 	if (retval!=FILTER_ERROR_DONT_THREAD) did_thread=TRUE;
       }
       if (!did_thread) {
@@ -1642,9 +1652,9 @@ lives_filter_error_t weed_apply_instance (weed_plant_t *inst, weed_plant_t *init
 	int ret;
 	weed_leaf_get(filter,"process_func",0,(void *)&process_func_ptr_ptr);
 	process_func=process_func_ptr_ptr[0];
-	pthread_mutex_lock(&mainw->data_mutex);
+	filter_mutex_lock(key);
 	ret=(*process_func)(inst,tc);
-	pthread_mutex_unlock(&mainw->data_mutex);
+	filter_mutex_unlock(key);
 	if (ret==WEED_ERROR_PLUGIN_INVALID) retval=FILTER_ERROR_MUST_RELOAD;
       }
       return retval;
@@ -2470,7 +2480,9 @@ lives_filter_error_t weed_apply_instance (weed_plant_t *inst, weed_plant_t *init
   // see if we can multithread
   if ((prefs->nfx_threads=future_prefs->nfx_threads)>1 && 
       filter_flags&WEED_FILTER_HINT_MAY_THREAD) {
+    filter_mutex_lock(key);
     retval=process_func_threaded(inst,out_channels,tc);
+    filter_mutex_unlock(key);
     if (retval!=FILTER_ERROR_DONT_THREAD) did_thread=TRUE;
   }
   if (!did_thread) {
@@ -2478,9 +2490,9 @@ lives_filter_error_t weed_apply_instance (weed_plant_t *inst, weed_plant_t *init
     int ret;
     weed_leaf_get(filter,"process_func",0,(void *)&process_func_ptr_ptr);
     process_func=process_func_ptr_ptr[0];
-    pthread_mutex_lock(&mainw->data_mutex);
+    filter_mutex_lock(key);
     ret=(*process_func)(inst,tc);
-    pthread_mutex_unlock(&mainw->data_mutex);
+    filter_mutex_unlock(key);
     if (ret==WEED_ERROR_PLUGIN_INVALID) retval=FILTER_ERROR_MUST_RELOAD;
   }
   
@@ -2611,30 +2623,40 @@ lives_filter_error_t weed_apply_instance (weed_plant_t *inst, weed_plant_t *init
 
 static lives_filter_error_t weed_apply_audio_instance_inner (weed_plant_t *inst, weed_plant_t *init_event, 
 							     weed_plant_t **layers, weed_timecode_t tc, int nbtracks) {
-  int num_in_tracks,num_out_tracks;
   int *in_tracks,*out_tracks;
-  int error,i,j;
+  int *mand;
+
+  int error;
+
   weed_plant_t *filter=weed_instance_get_filter(inst,FALSE);
   weed_plant_t *layer;
   weed_plant_t **in_channels,**out_channels=NULL,*channel,*chantmpl;
+  weed_plant_t **in_ctmpls;
 
-  boolean inplace=FALSE;
   weed_process_f *process_func_ptr_ptr;
   weed_process_f process_func;
   lives_filter_error_t retval=FILTER_NO_ERROR;
-  int *mand;
+
+  void *adata=NULL,*adata0=NULL;
+
+  boolean inplace=FALSE;
+
   int channel_flags;
+  int num_in_tracks,num_out_tracks;
 
   int num_ctmpl,num_inc;
-  weed_plant_t **in_ctmpls;
+  int key=-1;
 
   int nchans=0;
   int nsamps=0;
-  void *adata=NULL,*adata0=NULL;
+
+  register int i,j;
 
   // TODO - handle the following:
   // input audio_channels are mono, but the plugin NEEDS stereo
   
+  if (weed_plant_has_leaf(inst,"host_key")) key=weed_get_int_value(inst,"host_key",&error);
+
   if (!weed_plant_has_leaf(inst,"in_channels")||(in_channels=weed_get_plantptr_array(inst,"in_channels",&error))==NULL) 
     return FILTER_ERROR_NO_IN_CHANNELS;
 
@@ -2817,10 +2839,10 @@ static lives_filter_error_t weed_apply_audio_instance_inner (weed_plant_t *inst,
   pthread_mutex_lock(&mainw->interp_mutex); // stop video thread from possibly interpolating our audio effects
   weed_leaf_get(filter,"process_func",0,(void *)&process_func_ptr_ptr);
   process_func=process_func_ptr_ptr[0];
-  pthread_mutex_lock(&mainw->data_mutex);
+  filter_mutex_lock(key);
 
   if ((*process_func)(inst,tc)==WEED_ERROR_PLUGIN_INVALID) {
-    pthread_mutex_unlock(&mainw->data_mutex); // deadlock 1
+    filter_mutex_unlock(key);
     pthread_mutex_unlock(&mainw->interp_mutex);
     weed_free(in_tracks);
     weed_free(out_tracks);
@@ -2830,7 +2852,7 @@ static lives_filter_error_t weed_apply_audio_instance_inner (weed_plant_t *inst,
   }
 
   pthread_mutex_unlock(&mainw->interp_mutex);
-  pthread_mutex_unlock(&mainw->data_mutex);
+  filter_mutex_unlock(key);
 
   // TODO - handle process errors (WEED_ERROR_PLUGIN_INVALID)
 
@@ -3141,9 +3163,9 @@ lives_filter_error_t weed_apply_audio_instance (weed_plant_t *init_event, float 
 	fvols[i]=fvols[i]*vis[in_tracks[i]+nbtracks];
 	if (vis[in_tracks[i]+nbtracks]<0.) fvols[i]=-fvols[i];
       }
-      pthread_mutex_lock(&mainw->data_mutex);
+      filter_mutex_lock(key);
       weed_set_double_array(in_params[vmaster],"value",nvals,fvols);
-      pthread_mutex_unlock(&mainw->data_mutex);
+      filter_mutex_unlock(key);
       set_copy_to(instance,vmaster,TRUE);
       weed_free(fvols);
       weed_free(in_params);
@@ -3285,9 +3307,7 @@ static void weed_apply_filter_map (weed_plant_t **layers, weed_plant_t *filter_m
 
 	    if (weed_plant_has_leaf(instance,"host_next_instance")) {
 	      // chain any internal data pipelines for compound fx
-	      pthread_mutex_lock(&mainw->data_mutex);
 	      needs_reinit=pconx_chain_data_internal(instance);
-	      pthread_mutex_unlock(&mainw->data_mutex);
 	      if (needs_reinit) {
 		weed_reinit_effect(instance,FALSE);
 	      }
@@ -3339,9 +3359,7 @@ static void weed_apply_filter_map (weed_plant_t **layers, weed_plant_t *filter_m
 
 	  if (weed_plant_has_leaf(instance,"host_next_instance")) {
 	    // chain any internal data pipelines for compound fx
-	    pthread_mutex_lock(&mainw->data_mutex);
 	    needs_reinit=pconx_chain_data_internal(instance);
-	    pthread_mutex_unlock(&mainw->data_mutex);
 	    if (needs_reinit) {
 	      weed_reinit_effect(instance,FALSE);
 	    }
@@ -3407,9 +3425,7 @@ weed_plant_t *weed_apply_effects (weed_plant_t **layers, weed_plant_t *filter_ma
       if (rte_key_valid(i+1,TRUE)) {
 	if (!(mainw->rte&(GU641<<i))) {
 	  // if anything is connected to ACTIVATE, the fx may be activated
-	  pthread_mutex_lock(&mainw->data_mutex);
 	  pconx_chain_data(i,key_modes[i]);
-	  pthread_mutex_unlock(&mainw->data_mutex);
 	}
 	if (mainw->rte&(GU641<<i)) {
 	  mainw->osc_block=TRUE;
@@ -3424,9 +3440,8 @@ weed_plant_t *weed_apply_effects (weed_plant_t **layers, weed_plant_t *filter_ma
 	  if (!is_pure_audio(filter,TRUE)) {
 	    if (mainw->pconx!=NULL&&!(mainw->preview||mainw->is_rendering)) {
 	      // chain any data pipelines
-	      pthread_mutex_lock(&mainw->data_mutex);
 	      needs_reinit=pconx_chain_data(i,key_modes[i]);
-	      pthread_mutex_unlock(&mainw->data_mutex);
+
 	      // if anything is connected to ACTIVATE, the fx may be activated
 	      if ((instance=key_to_instance[i][key_modes[i]])==NULL) continue;
 	      
@@ -3440,15 +3455,11 @@ weed_plant_t *weed_apply_effects (weed_plant_t **layers, weed_plant_t *filter_ma
 
 	  if (weed_plant_has_leaf(instance,"host_next_instance")) {
 	    // chain any internal data pipelines for compound fx
-	    pthread_mutex_lock(&mainw->data_mutex);
 	    needs_reinit=pconx_chain_data_internal(instance);
-	    pthread_mutex_unlock(&mainw->data_mutex);
 	    if (needs_reinit) {
 	      weed_reinit_effect(instance,FALSE);
 	    }
 	  }
-
-	  weed_set_int_value(instance,"host_key",i);
 
 	  filter_error=weed_apply_instance (instance,NULL,layers,opwidth,opheight,tc);
 
@@ -3580,9 +3591,7 @@ void weed_apply_audio_effects_rt(float **abuf, int nchans, int64_t nsamps, gdoub
     if (rte_key_valid(i+1,TRUE)) {
       if (!(mainw->rte&(GU641<<i))) {
 	// if anything is connected to ACTIVATE, the fx may be activated
-	pthread_mutex_lock(&mainw->data_mutex);
 	pconx_chain_data(i,key_modes[i]);
-	pthread_mutex_unlock(&mainw->data_mutex);
       }
       if (mainw->rte&(GU641<<i)) {
 	mainw->osc_block=TRUE;
@@ -3615,10 +3624,10 @@ void weed_apply_audio_effects_rt(float **abuf, int nchans, int64_t nsamps, gdoub
 	if (mainw->pconx!=NULL) {
 	  // chain any data pipelines
 
-	  if (!pthread_mutex_trylock(&mainw->data_mutex)) {
+	  if (!pthread_mutex_trylock(&mainw->data_mutex[i])) {
 	    pthread_mutex_unlock(&mainw->afilter_mutex[i]);
 	    needs_reinit=pconx_chain_data(i,key_modes[i]);
-	    pthread_mutex_unlock(&mainw->data_mutex);
+	    filter_mutex_unlock(i);
 
 	    // if anything is connected to ACTIVATE, the fx may be deactivated
 	    if ((instance=key_to_instance[i][key_modes[i]])==NULL) {
@@ -3637,9 +3646,9 @@ void weed_apply_audio_effects_rt(float **abuf, int nchans, int64_t nsamps, gdoub
 
 	if (weed_plant_has_leaf(instance,"host_next_instance")) {
 	  // chain any internal data pipelines for compound fx
-	  if (!pthread_mutex_trylock(&mainw->data_mutex)) {
+	  if (!pthread_mutex_trylock(&mainw->data_mutex[i])) {
 	    needs_reinit=pconx_chain_data_internal(instance);
-	    pthread_mutex_unlock(&mainw->data_mutex);
+	    filter_mutex_unlock(i);
 	    if (needs_reinit) {
 	      pthread_mutex_unlock(&mainw->afilter_mutex[i]);
 	      weed_reinit_effect(instance,FALSE);
@@ -6448,14 +6457,14 @@ boolean weed_init_effect(int hotkey) {
   update_host_info(new_instance);
 
   // record the key so we know whose parameters to record later
-  weed_set_int_value(new_instance,"host_hotkey",hotkey);
+  weed_set_int_value(new_instance,"host_key",hotkey);
 
   // handle compound fx
   inst=new_instance;
   while (weed_plant_has_leaf(inst,"host_next_instance")) {
     inst=weed_get_plantptr_value(inst,"host_next_instance",&error);
     update_host_info(inst);
-    weed_set_int_value(inst,"host_hotkey",hotkey);
+    weed_set_int_value(inst,"host_key",hotkey);
   }
 
 
@@ -6950,7 +6959,10 @@ weed_plant_t *weed_layer_new_from_generator (weed_plant_t *inst, weed_timecode_t
   int flags;
   int palette;
   int filter_flags=0;
+  int key=-1;
+
   boolean did_thread=FALSE;
+
   gchar *cwd;
 
   if (inst==NULL) return NULL;
@@ -6992,21 +7004,25 @@ weed_plant_t *weed_layer_new_from_generator (weed_plant_t *inst, weed_timecode_t
   filter=weed_instance_get_filter(inst,FALSE);
   cwd=cd_to_plugin_dir(filter);
 
+  if (weed_plant_has_leaf(inst,"host_key")) key=weed_get_int_value(inst,"host_key",&error);
+
   // see if we can multithread
   if ((prefs->nfx_threads=future_prefs->nfx_threads)>1 && weed_plant_has_leaf(filter,"flags")) 
     filter_flags=weed_get_int_value(filter,"flags",&error);
 
   if (filter_flags&WEED_FILTER_HINT_MAY_THREAD) {
+    filter_mutex_lock(key);
     retval=process_func_threaded(inst,out_channels,tc);
+    filter_mutex_unlock(key);
     if (retval!=FILTER_ERROR_DONT_THREAD) did_thread=TRUE;
   }
   if (!did_thread) {
     // normal single threaded version
     weed_leaf_get(filter,"process_func",0,(void *)&process_func_ptr_ptr);
     process_func=process_func_ptr_ptr[0];
-    pthread_mutex_lock(&mainw->data_mutex);
+    filter_mutex_lock(key);
     (*process_func)(inst,tc);
-    pthread_mutex_unlock(&mainw->data_mutex);
+    filter_mutex_unlock(key);
   }
 
   weed_free(out_channels);
@@ -7850,9 +7866,11 @@ int set_copy_to(weed_plant_t *inst, int pnum, boolean update) {
   if (!copy_ok) return -1;
 
   if (update) {
-    pthread_mutex_lock(&mainw->data_mutex);
+    int key=-1;
+    if (weed_plant_has_leaf(inst,"host_key")) key=weed_get_int_value(inst,"host_key",&error);
+    filter_mutex_lock(key);
     weed_leaf_copy(in_params[copyto],"value",in_param,"value");
-    pthread_mutex_unlock(&mainw->data_mutex);
+    filter_mutex_unlock(key);
   }
   return copyto;
 }
@@ -7868,7 +7886,7 @@ void rec_param_change(weed_plant_t *inst, int pnum) {
   if (enabled_in_channels(inst,FALSE)==0) return;
 
   tc=get_event_timecode(get_last_event(mainw->event_list));
-  key=weed_get_int_value(inst,"host_hotkey",&error);
+  key=weed_get_int_value(inst,"host_key",&error);
 
   in_param=weed_inst_in_param(inst,pnum,FALSE,FALSE);
 
@@ -7883,16 +7901,25 @@ void rec_param_change(weed_plant_t *inst, int pnum) {
 void weed_set_blend_factor(int hotkey) {
   // mainw->osc_block should be set to TRUE before calling this function !
   weed_plant_t *inst,*in_param,*in_param2=NULL,*paramtmpl;
+
+  GList *list=NULL;
+
+  weed_plant_t **in_params;
+
+  double vald,mind,maxd;
+
+  weed_timecode_t tc=0;
+
   int error;
   int vali,mini,maxi;
-  double vald,mind,maxd;
-  GList *list=NULL;
+
   int param_hint;
   int copyto=-1;
-  weed_plant_t **in_params;
+
   int pnum;
-  weed_timecode_t tc=0;
+
   int inc_count;
+  int key=-1;
 
   if (hotkey<0) return;
   inst=key_to_instance[hotkey][key_modes[hotkey]];
@@ -7933,15 +7960,16 @@ void weed_set_blend_factor(int hotkey) {
     else if (mainw->blend_factor>255.) mainw->blend_factor=255.;
   }
 
+  filter_mutex_lock(hotkey);
+
   switch (param_hint) {
   case WEED_HINT_INTEGER:
     vali=weed_get_int_value(in_param,"value",&error);
     mini=weed_get_int_value(paramtmpl,"min",&error);
     maxi=weed_get_int_value(paramtmpl,"max",&error);
 
-    pthread_mutex_lock(&mainw->data_mutex);
     weed_set_int_value (in_param,"value",(int)((gdouble)mini+(mainw->blend_factor/KEYSCALE*(gdouble)(maxi-mini))+.5));
-    pthread_mutex_unlock(&mainw->data_mutex);
+
     vali=weed_get_int_value (in_param,"value",&error);
 
     list=g_list_append(list,g_strdup_printf("%d",vali));
@@ -7958,9 +7986,7 @@ void weed_set_blend_factor(int hotkey) {
     mind=weed_get_double_value(paramtmpl,"min",&error);
     maxd=weed_get_double_value(paramtmpl,"max",&error);
 
-    pthread_mutex_lock(&mainw->data_mutex);
     weed_set_double_value (in_param,"value",mind+(mainw->blend_factor/KEYSCALE*(maxd-mind)));
-    pthread_mutex_unlock(&mainw->data_mutex);
     vald=weed_get_double_value (in_param,"value",&error);
 
     list=g_list_append(list,g_strdup_printf("%.4f",vald));
@@ -7974,9 +8000,7 @@ void weed_set_blend_factor(int hotkey) {
     break;
   case WEED_HINT_SWITCH:
     vali=!!(int)mainw->blend_factor;
-    pthread_mutex_lock(&mainw->data_mutex);
     weed_set_boolean_value (in_param,"value",vali);
-    pthread_mutex_unlock(&mainw->data_mutex);
     vali=weed_get_boolean_value (in_param,"value",&error);
     mainw->blend_factor=(gdouble)vali;
 
@@ -7988,6 +8012,8 @@ void weed_set_blend_factor(int hotkey) {
 
     break;
   }
+
+  filter_mutex_unlock(key);
 
   set_copy_to(inst,pnum,TRUE);
 

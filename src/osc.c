@@ -2664,15 +2664,19 @@ static boolean setfx (weed_plant_t *plant, weed_plant_t *tparam, int pnum, int n
   // set value of "value" leaf for tparam, or "host_default" for a template
   // set it to vargs (length nargs)
 
-  int valuei;
-  float valuef;
-  int error,i;
   weed_plant_t *ptmpl,*inst=NULL;
+
+
+  float valuef;
+
+  int valuei;
+  int error,i;
   int hint,cspace=-1;
   int x=0;
   int copyto=-1;
   int defargs;
   int maxi_r=255,maxi_g=255,maxi_b=255,maxi_a=255,mini_r=0,mini_g=0,mini_b=0,mini_a=0,mini,maxi;
+  int key=-1;
 
   double maxd_r=1.,maxd_g=1.,maxd_b=1.,maxd_a=1.,mind_r=0.,mind_g=0.,mind_b=0.,mind_a=0.,mind,maxd;
   char values[OSC_STRING_SIZE];
@@ -2686,6 +2690,7 @@ static boolean setfx (weed_plant_t *plant, weed_plant_t *tparam, int pnum, int n
   else {
     ptmpl=weed_get_plantptr_value(tparam,"template",&error);
     inst=plant;
+    if (weed_plant_has_leaf(inst,"host_key")) key=weed_get_int_value(inst,"host_key",&error);
   }
 
   hint=weed_get_int_value(ptmpl,"hint",&error);
@@ -2735,9 +2740,9 @@ static boolean setfx (weed_plant_t *plant, weed_plant_t *tparam, int pnum, int n
 	  rec_param_change(inst,pnum);
 	  if (copyto!=-1) rec_param_change(inst,copyto);
 	}
-	pthread_mutex_lock(&mainw->data_mutex);
+	filter_mutex_lock(key);
 	weed_set_int_array(tparam,"value",nargs,valuesi);
-	pthread_mutex_unlock(&mainw->data_mutex);
+	filter_mutex_unlock(key);
 
 	set_copy_to(inst,pnum,TRUE);
 
@@ -2779,9 +2784,9 @@ static boolean setfx (weed_plant_t *plant, weed_plant_t *tparam, int pnum, int n
       if (group!=0&&valuesb[0]==WEED_FALSE) goto grpinvalid;
 
       if (inst!=NULL) {
-	pthread_mutex_lock(&mainw->data_mutex);
+	filter_mutex_lock(key);
 	weed_set_boolean_array(tparam,"value",nargs,valuesb);
-	pthread_mutex_unlock(&mainw->data_mutex);
+	filter_mutex_unlock(key);
 
 	copyto=set_copy_to(inst,pnum,TRUE);
 
@@ -2809,9 +2814,9 @@ static boolean setfx (weed_plant_t *plant, weed_plant_t *tparam, int pnum, int n
 		  xgroup=weed_get_int_value(ptmpl,"group",&error);
 
 		if (xgroup==group) {
-		  pthread_mutex_lock(&mainw->data_mutex);
+		  filter_mutex_lock(key);
 		  weed_set_boolean_value(xtparam,"value",WEED_FALSE);
-		  pthread_mutex_unlock(&mainw->data_mutex);
+		  filter_mutex_unlock(key);
 		  
 		  copyto=set_copy_to(inst,pnum,TRUE);
 		  
@@ -2898,9 +2903,9 @@ static boolean setfx (weed_plant_t *plant, weed_plant_t *tparam, int pnum, int n
 	  rec_param_change(inst,pnum);
 	  if (copyto!=-1) rec_param_change(inst,copyto);
 	}
-	pthread_mutex_lock(&mainw->data_mutex);
+	filter_mutex_lock(key);
 	weed_set_double_array(tparam,"value",nargs,valuesd);
-	pthread_mutex_unlock(&mainw->data_mutex);
+	filter_mutex_unlock(key);
 
 	set_copy_to(inst,pnum,TRUE);
 
@@ -2953,9 +2958,9 @@ static boolean setfx (weed_plant_t *plant, weed_plant_t *tparam, int pnum, int n
 
 
       if (inst!=NULL) {
-	pthread_mutex_lock(&mainw->data_mutex);
+	filter_mutex_lock(key);
 	weed_set_string_array(tparam,"value",nargs,valuess);
-	pthread_mutex_unlock(&mainw->data_mutex);
+	filter_mutex_unlock(key);
 
 	copyto=set_copy_to(inst,pnum,TRUE);
 	
@@ -3067,9 +3072,9 @@ static boolean setfx (weed_plant_t *plant, weed_plant_t *tparam, int pnum, int n
 	    if (copyto!=-1) rec_param_change(inst,copyto);
 	  }
 	
-	  pthread_mutex_lock(&mainw->data_mutex);
+	  filter_mutex_lock(key);
 	  weed_set_int_array(tparam,"value",nargs,valuesi);
-	  pthread_mutex_unlock(&mainw->data_mutex);
+	  filter_mutex_unlock(key);
 	
 	  set_copy_to(inst,pnum,TRUE);
 
@@ -3171,9 +3176,9 @@ static boolean setfx (weed_plant_t *plant, weed_plant_t *tparam, int pnum, int n
 	    if (copyto!=-1) rec_param_change(inst,copyto);
 	  }
 
-	  pthread_mutex_lock(&mainw->data_mutex);
+	  filter_mutex_lock(key);
 	  weed_set_double_array(tparam,"value",nargs,valuesd);
-	  pthread_mutex_unlock(&mainw->data_mutex);
+	  filter_mutex_unlock(key);
 	
 	  set_copy_to(inst,pnum,TRUE);
 
@@ -3291,9 +3296,9 @@ static boolean setfx (weed_plant_t *plant, weed_plant_t *tparam, int pnum, int n
 	    if (copyto!=-1) rec_param_change(inst,copyto);
 	  }
 	
-	  pthread_mutex_lock(&mainw->data_mutex);
+	  filter_mutex_lock(key);
 	  weed_set_int_array(tparam,"value",nargs,valuesi);
-	  pthread_mutex_unlock(&mainw->data_mutex);
+	  filter_mutex_unlock(key);
 	  
 	  set_copy_to(inst,pnum,TRUE);
 	  
@@ -3403,9 +3408,9 @@ static boolean setfx (weed_plant_t *plant, weed_plant_t *tparam, int pnum, int n
 	    if (copyto!=-1) rec_param_change(inst,copyto);
 	  }
 	    
-	  pthread_mutex_lock(&mainw->data_mutex);
+	  filter_mutex_lock(key);
 	  weed_set_double_array(tparam,"value",nargs,valuesd);
-	  pthread_mutex_unlock(&mainw->data_mutex);
+	  filter_mutex_unlock(key);
 	    
 	  set_copy_to(inst,pnum,TRUE);
 

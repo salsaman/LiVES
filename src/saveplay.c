@@ -5490,6 +5490,7 @@ static boolean recover_files(gchar *recovery_file, boolean auto_recover) {
 	}
 	if (next) {
 	  g_free(cfile);
+	  cfile=NULL;
 	  mainw->first_free_file=mainw->current_file;
 	  continue;
 	}

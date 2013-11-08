@@ -2536,9 +2536,9 @@ boolean get_audio_from_plugin(float *fbuffer, int nchans, int arate, int nsamps)
 
   if (mainw->pconx!=NULL&&!(mainw->preview||mainw->is_rendering)) {
     // chain any data pipelines
-    if (!pthread_mutex_trylock(&mainw->data_mutex)) {
+    if (!pthread_mutex_trylock(&mainw->data_mutex[mainw->agen_key-1])) {
       mainw->agen_needs_reinit=pconx_chain_data(mainw->agen_key-1,rte_key_getmode(mainw->agen_key));
-      pthread_mutex_unlock(&mainw->data_mutex);
+      filter_mutex_unlock(mainw->agen_key-1);
       
       if (mainw->agen_needs_reinit) {
 	// allow main thread to complete the reinit so we do not delay; just return silence

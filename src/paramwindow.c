@@ -364,6 +364,7 @@ static void trans_in_out_pressed(lives_rfx_t *rfx, boolean in) {
   weed_plant_t *tparam;
   weed_plant_t *tparamtmpl;
 
+  int key=-1;
   int hint,error,nparams;
   int trans=get_transition_param(filter,FALSE);
 
@@ -381,7 +382,8 @@ static void trans_in_out_pressed(lives_rfx_t *rfx, boolean in) {
   tparamtmpl=weed_get_plantptr_value(tparam,"template",&error);
   hint=weed_get_int_value(tparamtmpl,"hint",&error);
 
-  pthread_mutex_lock(&mainw->data_mutex);
+  if (weed_plant_has_leaf(inst,"host_key")) key=weed_get_int_value(inst,"host_key",&error);
+  filter_mutex_lock(key);
   if (hint==WEED_HINT_INTEGER) {
     if (in) weed_set_int_value(tparam,"value",weed_get_int_value(tparamtmpl,"min",&error));
     else weed_set_int_value(tparam,"value",weed_get_int_value(tparamtmpl,"max",&error));
@@ -390,7 +392,7 @@ static void trans_in_out_pressed(lives_rfx_t *rfx, boolean in) {
     if (in) weed_set_double_value(tparam,"value",weed_get_double_value(tparamtmpl,"min",&error));
     else weed_set_double_value(tparam,"value",weed_get_double_value(tparamtmpl,"max",&error));
   }
-  pthread_mutex_unlock(&mainw->data_mutex);
+  filter_mutex_unlock(key);
   set_copy_to(inst,trans,TRUE);
   update_visual_params(rfx,FALSE);
   weed_free(in_params);
@@ -1854,6 +1856,7 @@ void after_boolean_param_toggled (GtkToggleButton *togglebutton, lives_rfx_t *rf
       char *disp_string;
       weed_plant_t *wparam=weed_inst_in_param(inst,param_number,FALSE,FALSE);
       int index=0,numvals;
+      int key=-1;
       int *valis;
 
       if (mainw->multitrack!=NULL&&is_perchannel_multi(rfx,param_number)) {
@@ -1869,9 +1872,10 @@ void after_boolean_param_toggled (GtkToggleButton *togglebutton, lives_rfx_t *rf
 
       valis=weed_get_boolean_array(wparam,"value",&error);
       valis[index]=new_bool;
-      pthread_mutex_lock(&mainw->data_mutex);
+      if (weed_plant_has_leaf(inst,"host_key")) key=weed_get_int_value(inst,"host_key",&error);
+      filter_mutex_lock(key);
       weed_set_boolean_array(wparam,"value",numvals,valis);
-      pthread_mutex_unlock(&mainw->data_mutex);
+      filter_mutex_unlock(key);
       copyto=set_copy_to(inst,param_number,TRUE);
 
       weed_free(valis);
@@ -1964,6 +1968,7 @@ void after_param_value_changed (GtkSpinButton *spinbutton, lives_rfx_t *rfx) {
 
       weed_plant_t *wparam=weed_inst_in_param(inst,param_number,FALSE,FALSE);
       int index=0,numvals;
+      int key=-1;
       double *valds;
       int *valis;
 
@@ -1977,22 +1982,24 @@ void after_param_value_changed (GtkSpinButton *spinbutton, lives_rfx_t *rfx) {
 	numvals=index+1;
       }
 
+      if (weed_plant_has_leaf(inst,"host_key")) key=weed_get_int_value(inst,"host_key",&error);
+
       if (weed_leaf_seed_type(wparam,"value")==WEED_SEED_DOUBLE) {
 	valds=weed_get_double_array(wparam,"value",&error);
 	if (param->dp>0) valds[index]=new_double;
 	else valds[index]=(double)new_int;
-	pthread_mutex_lock(&mainw->data_mutex);
+	filter_mutex_lock(key);
 	weed_set_double_array(wparam,"value",numvals,valds);
-	pthread_mutex_unlock(&mainw->data_mutex);
+	filter_mutex_unlock(key);
 	copyto=set_copy_to(inst,param_number,TRUE);
 	weed_free(valds);
       }
       else {
 	valis=weed_get_int_array(wparam,"value",&error);
 	valis[index]=new_int;
-	pthread_mutex_lock(&mainw->data_mutex);
+	filter_mutex_lock(key);
 	weed_set_int_array(wparam,"value",numvals,valis);
-	pthread_mutex_unlock(&mainw->data_mutex);
+	filter_mutex_unlock(key);
 	copyto=set_copy_to(inst,param_number,TRUE);
 	weed_free(valis);
       }
@@ -2543,6 +2550,7 @@ void after_param_text_changed (GtkWidget *textwidget, lives_rfx_t *rfx) {
       char *disp_string=get_weed_display_string(inst,param_number);
       weed_plant_t *wparam=weed_inst_in_param(inst,param_number,FALSE,FALSE);
       int index=0,numvals;
+      int key=-1;
       char **valss;
 
       if (mainw->multitrack!=NULL&&is_perchannel_multi(rfx,param_number)) {
@@ -2557,9 +2565,10 @@ void after_param_text_changed (GtkWidget *textwidget, lives_rfx_t *rfx) {
       
       valss=weed_get_string_array(wparam,"value",&error);
       valss[index]=g_strdup((gchar *)param->value);
-      pthread_mutex_lock(&mainw->data_mutex);
+      if (weed_plant_has_leaf(inst,"host_key")) key=weed_get_int_value(inst,"host_key",&error);
+      filter_mutex_lock(key);
       weed_set_string_array(wparam,"value",numvals,valss);
-      pthread_mutex_unlock(&mainw->data_mutex);
+      filter_mutex_unlock(key);
       copyto=set_copy_to(inst,param_number,TRUE);
       for (i=0;i<numvals;i++) weed_free(valss[i]);
       weed_free(valss);
@@ -2645,6 +2654,7 @@ void after_string_list_changed (GtkComboBox *combo, lives_rfx_t *rfx) {
       char *disp_string=get_weed_display_string(inst,param_number);
       weed_plant_t *wparam=weed_inst_in_param(inst,param_number,FALSE,FALSE);
       int index=0,numvals;
+      int key=-1;
       int *valis;
 
       if (mainw->multitrack!=NULL&&is_perchannel_multi(rfx,param_number)) {
@@ -2659,9 +2669,10 @@ void after_string_list_changed (GtkComboBox *combo, lives_rfx_t *rfx) {
       
       valis=weed_get_int_array(wparam,"value",&error);
       valis[index]=new_index;
-      pthread_mutex_lock(&mainw->data_mutex);
+      if (weed_plant_has_leaf(inst,"host_key")) key=weed_get_int_value(inst,"host_key",&error);
+      filter_mutex_lock(key);
       weed_set_int_array(wparam,"value",numvals,valis);
-      pthread_mutex_unlock(&mainw->data_mutex);
+      filter_mutex_unlock(key);
       copyto=set_copy_to(inst,param_number,TRUE);
       weed_free(valis);
 
@@ -3286,11 +3297,14 @@ void update_visual_params(lives_rfx_t *rfx, boolean update_hidden) {
   int red_min,green_min,blue_min;
 
   int index,numvals;
+  int key=-1;
 
   register int i,j;
     
   if (weed_plant_has_leaf(inst,"in_parameters")) num_params=weed_leaf_num_elements(inst,"in_parameters");
   if (num_params==0) return;
+
+  if (weed_plant_has_leaf(inst,"host_key")) key=weed_get_int_value(inst,"host_key",&error);
 
   in_params=weed_get_plantptr_array(inst,"in_parameters",&error);
   for (i=0;i<num_params;i++) {
@@ -3310,7 +3324,7 @@ void update_visual_params(lives_rfx_t *rfx, boolean update_hidden) {
 	index=mainw->multitrack->track_index;
       }
 
-      pthread_mutex_lock(&mainw->data_mutex);
+      filter_mutex_lock(key);
 
       numvals=weed_leaf_num_elements(in_param,"value");
 
@@ -3494,7 +3508,7 @@ void update_visual_params(lives_rfx_t *rfx, boolean update_hidden) {
 	break;
       } // hint
     }
-    pthread_mutex_unlock(&mainw->data_mutex);
+    filter_mutex_unlock(key);
   }
   weed_free(in_params);
 }

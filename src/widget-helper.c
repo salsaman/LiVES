@@ -3608,6 +3608,9 @@ void lives_spin_button_configure(LiVESSpinButton *spinbutton,
 
 ///// lives specific functions
 
+#include "rte_window.h"
+#include "ce_thumbs.h"
+
 void lives_widget_context_update(void) {
 #ifdef GUI_GTK
   boolean mt_needs_idlefunc=FALSE;
@@ -3619,7 +3622,13 @@ void lives_widget_context_update(void) {
   }
 
   if (pthread_mutex_trylock(&mainw->gtk_mutex)) return;
+
   while (!mainw->is_exiting&&g_main_context_iteration(NULL,FALSE));
+  if (!mainw->is_exiting) {
+    if (rte_window!=NULL) ret_set_key_check_state();
+    if (mainw->ce_thumbs) ce_thumbs_set_key_check_state();
+  }
+
   pthread_mutex_unlock(&mainw->gtk_mutex);
 
   if (!mainw->is_exiting&&mt_needs_idlefunc) mainw->multitrack->idlefunc=mt_idle_add(mainw->multitrack);

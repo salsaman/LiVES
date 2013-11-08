@@ -5899,10 +5899,11 @@ void lives_osc_cb_rte_getmodespk(void *context, int arglen, const void *vargs, O
 
 
 void lives_osc_cb_rte_addpconnection(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
+  weed_plant_t *ofilter,*ifilter;
+
   int key0,mode0,pnum0;
   int key1,mode1,pnum1;
   int autoscale;
-  weed_plant_t *filter;
 
   if (!lives_osc_check_arguments (arglen,vargs,"iiiiiii",TRUE)) return lives_osc_notify_failure();
   lives_osc_parse_int_argument(vargs,&key0);
@@ -5922,10 +5923,14 @@ void lives_osc_cb_rte_addpconnection(void *context, int arglen, const void *varg
 
   if (autoscale!=TRUE&&autoscale!=FALSE) lives_osc_notify_failure();
 
-  filter=rte_keymode_get_filter(key0,--mode0);
-  if (filter==NULL) return lives_osc_notify_failure();
+  mode0--;
+  mode1--;
 
-  if (pnum0>=num_out_params(filter)) return lives_osc_notify_failure();
+
+  ofilter=rte_keymode_get_filter(key0,mode0);
+  if (ofilter==NULL) return lives_osc_notify_failure();
+
+  if (pnum0>=num_out_params(ofilter)) return lives_osc_notify_failure();
 
   if (key1==-1) {
     // connecting to the playback plugin
@@ -5936,15 +5941,20 @@ void lives_osc_cb_rte_addpconnection(void *context, int arglen, const void *varg
     if (mode1>1||pnum1>0) return lives_osc_notify_failure();
   }
   else {
-    filter=rte_keymode_get_filter(key1,--mode1);
-    if (filter==NULL) return lives_osc_notify_failure();
+    ifilter=rte_keymode_get_filter(key1,mode1);
+    if (ifilter==NULL) return lives_osc_notify_failure();
     
-    if (pnum1>=num_in_params(filter,FALSE,TRUE)) return lives_osc_notify_failure();
+    if (pnum1>=num_in_params(ifilter,FALSE,TRUE)) return lives_osc_notify_failure();
   }
 
   if (pnum0<-EXTRA_PARAMS_OUT||pnum1<-EXTRA_PARAMS_IN) return lives_osc_notify_failure();
 
-  pconx_add_connection(--key0,mode0,pnum0,--key1,mode1,pnum1,autoscale);
+  if (pconx_check_connection(ofilter,pnum0,key1,mode1,pnum1,FALSE,NULL,NULL)) return lives_osc_notify_failure();
+
+  key0--;
+  key1--;
+
+  pconx_add_connection(key0,mode0,pnum0,key1,mode1,pnum1,autoscale);
   lives_osc_notify_success(NULL);
 }
 
@@ -6011,7 +6021,10 @@ void lives_osc_cb_rte_addcconnection(void *context, int arglen, const void *varg
 
   if (key0==key1) lives_osc_notify_failure();
 
-  filter=rte_keymode_get_filter(key0,--mode0);
+  mode0--;
+  mode1--;
+
+  filter=rte_keymode_get_filter(key0,mode0);
   if (filter==NULL) return lives_osc_notify_failure();
 
   if (cnum0>=enabled_out_channels(filter,FALSE)) return lives_osc_notify_failure();
@@ -6021,13 +6034,18 @@ void lives_osc_cb_rte_addcconnection(void *context, int arglen, const void *varg
     if (mode1>1||mainw->vpp==NULL||cnum1>=mainw->vpp->num_alpha_chans) return lives_osc_notify_failure();
   }
   else {
-    filter=rte_keymode_get_filter(key1,--mode1);
+    filter=rte_keymode_get_filter(key1,mode1);
     if (filter==NULL) return lives_osc_notify_failure();
 
     if (cnum1>=enabled_in_channels(filter,FALSE)) return lives_osc_notify_failure();
   }
 
-  cconx_add_connection(--key0,mode0,cnum0,--key1,mode1,cnum1);
+  if (cconx_check_connection(key1,mode1,cnum1,FALSE,NULL,NULL)) return lives_osc_notify_failure();
+
+  key0--;
+  key1--;
+
+  cconx_add_connection(key0,mode0,cnum0,key1,mode1,cnum1);
   lives_osc_notify_success(NULL);
 
 }

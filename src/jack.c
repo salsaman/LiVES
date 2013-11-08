@@ -1580,10 +1580,8 @@ uint64_t lives_jack_get_time(jack_driver_t *jackd, boolean absolute) {
   frames_written=jackd->frames_written;
   if (frames_written<0.) frames_written=0.;
 
-  pthread_mutex_lock(&mainw->afilter_mutex);
   if (jackd->is_output) xtime = jackd->audio_ticks*absolute+(uint64_t)(frames_written/(double)jackd->sample_out_rate*U_SEC);
   else xtime = jackd->audio_ticks*absolute+(uint64_t)(frames_written/(double)jackd->sample_in_rate*U_SEC);
-  pthread_mutex_unlock(&mainw->afilter_mutex);
   return xtime;
 }
 

@@ -1218,10 +1218,8 @@ int64_t lives_pulse_get_time(pulse_driver_t *pulsed, boolean absolute) {
     return pulsed->audio_ticks*absolute+(int64_t)((usec-pulsed->usec_start)*U_SEC_RATIO);
   }
 #else
-  pthread_mutex_lock(&mainw->afilter_mutex);
   if (pulsed->is_output) xtime = pulsed->audio_ticks*absolute+(int64_t)(frames_written/(double)pulsed->out_arate*U_SEC);
   else xtime = pulsed->audio_ticks*absolute+(int64_t)(frames_written/(double)afile->arate*U_SEC);
-  pthread_mutex_unlock(&mainw->afilter_mutex);
   return xtime;
 #endif
 

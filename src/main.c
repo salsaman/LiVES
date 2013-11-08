@@ -358,8 +358,12 @@ static boolean pre_init(void) {
   pthread_mutex_init(&mainw->interp_mutex,NULL);
 
   pthread_mutex_init(&mainw->abuf_mutex,NULL);
-  pthread_mutex_init(&mainw->afilter_mutex,&mattr); // mattr because audio filters can pull values from data connections
-  pthread_mutex_init(&mainw->data_mutex,&mattr); // mattr because audio filters can pull values from data connections
+  pthread_mutex_init(&mainw->data_mutex,&mattr); // because audio filters can pull values from video filters and vice-versa
+
+
+  for (i=0;i<FX_KEYS_MAX_VIRTUAL;i++) {
+    pthread_mutex_init(&mainw->afilter_mutex[i],&mattr); // because audio filters can enable/disable video filters and vice-versa
+  }
 
   mainw->vrfx_update=NULL;
 

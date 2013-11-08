@@ -67,15 +67,29 @@ static void ce_thumbs_fx_changed (GtkComboBox *combo, gpointer user_data) {
 #endif
 
 
+void ce_thumbs_set_key_check_state(void) {
+  // set (delayed) keycheck state
+  register int i;
+  for (i=0;i<prefs->rte_keys_virtual;i++) {
+    g_signal_handler_block(key_checks[i],ch_fns[i]);
+    lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(key_checks[i]),GPOINTER_TO_INT(g_object_get_data(G_OBJECT(key_checks[i]),"active")));
+    if (!lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(key_checks[i]))&&pscrolls[i]!=NULL) ce_thumbs_remove_param_box(i);
+    g_signal_handler_unblock(key_checks[i],ch_fns[i]);
+  }
+}
+
+
 void ce_thumbs_set_keych (int key, boolean on) {
   // set key check from other source
   if (key>=rte_keys_virtual) return;
   g_signal_handler_block(key_checks[key],ch_fns[key]);
-  pthread_mutex_lock(&mainw->gtk_mutex);
-  lives_toggle_button_set_active (LIVES_TOGGLE_BUTTON(key_checks[key]),on);
-  pthread_mutex_unlock(&mainw->gtk_mutex);
-  if (!on&&pscrolls[key]!=NULL) ce_thumbs_remove_param_box(key);
+  if (!pthread_mutex_trylock(&mainw->gtk_mutex)) {
+    lives_toggle_button_set_active (LIVES_TOGGLE_BUTTON(key_checks[key]),on);
+    if (!on&&pscrolls[key]!=NULL) ce_thumbs_remove_param_box(key);
+    pthread_mutex_unlock(&mainw->gtk_mutex);
+  }
   g_signal_handler_unblock(key_checks[key],ch_fns[key]);
+  g_object_set_data(G_OBJECT(key_checks[key]),"active",GINT_TO_POINTER(on));
 }
 
 
@@ -203,6 +217,7 @@ void start_ce_thumb_mode(void) {
     g_free(tmp);
 
     lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(key_checks[i]),mainw->rte&(GU641<<i));
+    g_object_set_data(G_OBJECT(key_checks[i]),"active",GINT_TO_POINTER(lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(key_checks[i]))));
 
     ch_fns[i]=g_signal_connect_after (GTK_OBJECT (key_checks[i]), "toggled",
 				      G_CALLBACK (rte_on_off_callback_hook),GINT_TO_POINTER (i+1));
@@ -500,7 +515,7 @@ void ce_thumbs_add_param_box(int key, boolean remove) {
   on_fx_pre_activate(rfx,1,vbox);
 
   // record the key so we know whose parameters to record later
-  weed_set_int_value((weed_plant_t *)rfx->source,"host_hotkey",key);
+  weed_set_int_value((weed_plant_t *)rfx->source,"host_key",key);
 
   g_object_set_data (G_OBJECT (pscrolls[key]),"pinned",LIVES_INT_TO_POINTER (FALSE));
   g_object_set_data (G_OBJECT (pscrolls[key]),"update",LIVES_INT_TO_POINTER (FALSE));

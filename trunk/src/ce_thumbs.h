@@ -16,6 +16,7 @@ void ce_thumbs_set_mode_combo (int key, int mode);
 
 void ce_thumbs_add_param_box(int key, boolean remove);
 
+void ce_thumbs_set_key_check_state(void);
 
 void ce_thumbs_register_rfx_change(int key, int mode);
 void ce_thumbs_apply_rfx_changes(void);

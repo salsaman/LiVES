@@ -55,17 +55,11 @@ static void switch_fx_state(int hotkey) {
   // switch effect state when a connection to ACTIVATE is present
   uint32_t last_grabable_effect=mainw->last_grabable_effect;
   // use -hotkey to indicate auto
-  pthread_mutex_unlock(&mainw->data_mutex);
+  filter_mutex_unlock(hotkey-1);
+
   rte_on_off_callback_hook(NULL,LIVES_INT_TO_POINTER(-hotkey));
-  pthread_mutex_lock(&mainw->data_mutex);
+
   mainw->last_grabable_effect=last_grabable_effect;
-
-  /*  weed_plant_t *rte_keymode_get_instance(hotkey,rte_key_getmode(hotkey));
-  boolean active=TRUE;
-  if (weed_plant_has_leaf(inst,"host_active")) active=weed_get_boolean_value(inst,"host_active",&error);
-  if (active) weed_set_boolean_value(inst,"host_active",WEED_FALSE);
-  else weed_set_boolean_value(inst,"host_active",WEED_TRUE);*/
-
 
 }
 
@@ -142,7 +136,9 @@ void end_override_if_activate_output(int hotkey) {
 void pconx_delete_all(void) {
   lives_pconnect_t *pconx=mainw->pconx,*pconx_next;
 
-  pthread_mutex_lock(&mainw->data_mutex);
+  register int i;
+
+  for (i=0;i<FX_KEYS_MAX_VIRTUAL;i++) pthread_mutex_lock(&mainw->data_mutex[i]);
 
   while (pconx!=NULL) {
     pconx_next=pconx->next;
@@ -157,7 +153,7 @@ void pconx_delete_all(void) {
   }
   mainw->pconx=NULL;
 
-  pthread_mutex_unlock(&mainw->data_mutex);
+  for (i=0;i<FX_KEYS_MAX_VIRTUAL;i++) pthread_mutex_unlock(&mainw->data_mutex[i]);
 
 }
 
@@ -262,7 +258,7 @@ void pconx_delete(int okey, int omode, int opnum, int ikey, int imode, int ipnum
 
   int totcons=0,maxcons=0;
 
-  pthread_mutex_lock(&mainw->data_mutex);
+  for (i=0;i<FX_KEYS_MAX_VIRTUAL;i++) pthread_mutex_lock(&mainw->data_mutex[i]);
 
   while (pconx!=NULL) {
     pconx_next=pconx->next;
@@ -280,7 +276,7 @@ void pconx_delete(int okey, int omode, int opnum, int ikey, int imode, int ipnum
 	g_free(pconx);
 	if (mainw->pconx==pconx) mainw->pconx=pconx_next;
 	else pconx_prev->next=pconx_next;
-	pthread_mutex_unlock(&mainw->data_mutex);
+	for (i=0;i<FX_KEYS_MAX_VIRTUAL;i++) pthread_mutex_unlock(&mainw->data_mutex[i]);
 	return;
       }
 
@@ -350,7 +346,7 @@ void pconx_delete(int okey, int omode, int opnum, int ikey, int imode, int ipnum
     pconx_prev=pconx;
     pconx=pconx_next;
   }
-  pthread_mutex_unlock(&mainw->data_mutex);
+  for (i=0;i<FX_KEYS_MAX_VIRTUAL;i++) pthread_mutex_unlock(&mainw->data_mutex[i]);
 }
 
 
@@ -448,7 +444,7 @@ static void pconx_add_connection_private(lives_pconnect_t *pconx, int okey, int 
   // delete any existing connection to the input param
   pconx_delete(FX_DATA_WILDCARD,0,0,ikey,imode,ipnum);
 
-  pthread_mutex_lock(&mainw->data_mutex);
+  for (i=0;i<FX_KEYS_MAX_VIRTUAL;i++) pthread_mutex_lock(&mainw->data_mutex[i]);
 
   if (pconx==NULL) {
     // add whole new node
@@ -476,7 +472,7 @@ static void pconx_add_connection_private(lives_pconnect_t *pconx, int okey, int 
 	for (j=posn;j<posn+pconx->nconns[i];j++) {
 	  if (pconx->ikey[j]==ikey&&pconx->imode[j]==imode&&pconx->ipnum[j]==ipnum) {
 	    pconx->autoscale[j]=autoscale;
-	    pthread_mutex_unlock(&mainw->data_mutex);
+	    for (i=0;i<FX_KEYS_MAX_VIRTUAL;i++) pthread_mutex_unlock(&mainw->data_mutex[i]);
 	    return;
 	  }
 
@@ -513,7 +509,7 @@ static void pconx_add_connection_private(lives_pconnect_t *pconx, int okey, int 
 	pconx->ipnum[posn]=ipnum;
 	pconx->autoscale[posn]=autoscale;
 
-	pthread_mutex_unlock(&mainw->data_mutex);
+	for (i=0;i<FX_KEYS_MAX_VIRTUAL;i++) pthread_mutex_unlock(&mainw->data_mutex[i]);
 
 	return;
       }
@@ -556,7 +552,7 @@ static void pconx_add_connection_private(lives_pconnect_t *pconx, int okey, int 
     g_print("added another pconx from %d %d %d to %d %d %d\n",okey,omode,opnum,ikey,imode,ipnum);
 #endif
 
-    pthread_mutex_unlock(&mainw->data_mutex);
+    for (i=0;i<FX_KEYS_MAX_VIRTUAL;i++) pthread_mutex_unlock(&mainw->data_mutex[i]);
 
     return;
 
@@ -589,7 +585,7 @@ static void pconx_add_connection_private(lives_pconnect_t *pconx, int okey, int 
   g_print("added new pconx from %d %d %d to %d %d %d (%d)\n",okey,omode,opnum,ikey,imode,ipnum,autoscale);
 #endif
 
-  pthread_mutex_unlock(&mainw->data_mutex);
+  for (i=0;i<FX_KEYS_MAX_VIRTUAL;i++) pthread_mutex_unlock(&mainw->data_mutex[i]);
 
 }
 
@@ -600,7 +596,7 @@ void pconx_add_connection(int okey, int omode, int opnum, int ikey, int imode, i
 }
 
 
-static weed_plant_t *pconx_get_out_param(boolean use_filt, int ikey, int imode, int ipnum, int *autoscale) {
+static weed_plant_t *pconx_get_out_param(boolean use_filt, int ikey, int imode, int ipnum, int *okey, int *autoscale) {
   // walk all pconx and find one which has ikey/imode/ipnum as destination
   // then all we need do is copy the "value" leaf
 
@@ -666,6 +662,7 @@ static weed_plant_t *pconx_get_out_param(boolean use_filt, int ikey, int imode, 
 	      param=weed_inst_out_param(inst,pconx->params[i]);
 	    }
 	  }
+	  if (okey!=NULL) *okey=pconx->okey;
 	  if (autoscale!=NULL) *autoscale=pconx->autoscale[j];
 	  return param;
         }
@@ -833,9 +830,7 @@ boolean pconx_convert_value_data(weed_plant_t *inst, int pnum, weed_plant_t *dpa
 	  return FALSE;
 	}
 
-	pthread_mutex_lock(&mainw->data_mutex);
 	weed_set_string_array(dparam,"value",ndvals,valss);
-	pthread_mutex_unlock(&mainw->data_mutex);
 
 	for (i=0;i<ndvals;i++) weed_free(valss[i]);
 	weed_free(valss);
@@ -897,9 +892,7 @@ boolean pconx_convert_value_data(weed_plant_t *inst, int pnum, weed_plant_t *dpa
 	    if (copyto!=-1) rec_param_change(inst,copyto);
 	  }
 
-	  pthread_mutex_lock(&mainw->data_mutex);
 	  weed_set_double_array(dparam,"value",ndvals,valsd);
-	  pthread_mutex_unlock(&mainw->data_mutex);
 	}
 	weed_free(maxd);
 	weed_free(mind);
@@ -928,9 +921,7 @@ boolean pconx_convert_value_data(weed_plant_t *inst, int pnum, weed_plant_t *dpa
 	    opstring=tmp;
 	  }
 	  if (strcmp(vals,opstring)) {
-	    pthread_mutex_lock(&mainw->data_mutex);
 	    weed_set_string_value(dparam,"value",opstring);
-	    pthread_mutex_unlock(&mainw->data_mutex);
 	    retval=TRUE;
 	  }
 	  weed_free(vals);
@@ -959,9 +950,7 @@ boolean pconx_convert_value_data(weed_plant_t *inst, int pnum, weed_plant_t *dpa
 	  return FALSE;
 	}
 
-	pthread_mutex_lock(&mainw->data_mutex);
 	weed_set_string_array(dparam,"value",ndvals,valss);
-	pthread_mutex_unlock(&mainw->data_mutex);
 
 	for (i=0;i<ndvals;i++) weed_free(valss[i]);
 	weed_free(valss);
@@ -997,9 +986,7 @@ boolean pconx_convert_value_data(weed_plant_t *inst, int pnum, weed_plant_t *dpa
 	    opstring=tmp;
 	  }
 	  if (strcmp(vals,opstring)) {
-	    pthread_mutex_lock(&mainw->data_mutex);
 	    weed_set_string_value(dparam,"value",opstring);
-	    pthread_mutex_unlock(&mainw->data_mutex);
 	    retval=TRUE;
 	  }
 	  weed_free(vals);
@@ -1028,9 +1015,7 @@ boolean pconx_convert_value_data(weed_plant_t *inst, int pnum, weed_plant_t *dpa
 	  return FALSE;
 	}
 
-	pthread_mutex_lock(&mainw->data_mutex);
 	weed_set_string_array(dparam,"value",ndvals,valss);
-	pthread_mutex_unlock(&mainw->data_mutex);
 
 	for (i=0;i<ndvals;i++) weed_free(valss[i]);
 	weed_free(valss);
@@ -1089,9 +1074,7 @@ boolean pconx_convert_value_data(weed_plant_t *inst, int pnum, weed_plant_t *dpa
 	    if (copyto!=-1) rec_param_change(inst,copyto);
 	  }
 
-	  pthread_mutex_lock(&mainw->data_mutex);
 	  weed_set_double_array(dparam,"value",ndvals,valsd);
-	  pthread_mutex_unlock(&mainw->data_mutex);
 	}
 	weed_free(maxd);
 	weed_free(mind);
@@ -1150,9 +1133,7 @@ boolean pconx_convert_value_data(weed_plant_t *inst, int pnum, weed_plant_t *dpa
 	    if (copyto!=-1) rec_param_change(inst,copyto);
 	  }
 
-	  pthread_mutex_lock(&mainw->data_mutex);
 	  weed_set_int_array(dparam,"value",ndvals,valsi);
-	  pthread_mutex_unlock(&mainw->data_mutex);
 	}
 	weed_free(maxi);
 	weed_free(mini);
@@ -1199,9 +1180,7 @@ boolean pconx_convert_value_data(weed_plant_t *inst, int pnum, weed_plant_t *dpa
 	      opstring=tmp;
 	    }
 	    if (strcmp(vals,opstring)) {
-	      pthread_mutex_lock(&mainw->data_mutex);
 	      weed_set_string_value(dparam,"value",opstring);
-	      pthread_mutex_unlock(&mainw->data_mutex);
 	      retval=TRUE;
 	    }
 	    weed_free(vals);
@@ -1229,9 +1208,7 @@ boolean pconx_convert_value_data(weed_plant_t *inst, int pnum, weed_plant_t *dpa
 	    return FALSE;
 	  }
 
-	  pthread_mutex_lock(&mainw->data_mutex);
 	  weed_set_string_array(dparam,"value",ndvals,valss);
-	  pthread_mutex_unlock(&mainw->data_mutex);
 
 	  for (i=0;i<ndvals;i++) weed_free(valss[i]);
 	  weed_free(valss);
@@ -1274,9 +1251,7 @@ boolean pconx_convert_value_data(weed_plant_t *inst, int pnum, weed_plant_t *dpa
 	      if (copyto!=-1) rec_param_change(inst,copyto);
 	    }
 
-	    pthread_mutex_lock(&mainw->data_mutex);
 	    weed_set_double_array(dparam,"value",ndvals,valsd);
-	    pthread_mutex_unlock(&mainw->data_mutex);
 	  }
 	  weed_free(maxd);
 	  weed_free(mind);
@@ -1318,9 +1293,7 @@ boolean pconx_convert_value_data(weed_plant_t *inst, int pnum, weed_plant_t *dpa
 	      if (copyto!=-1) rec_param_change(inst,copyto);
 	    }
 
-	    pthread_mutex_lock(&mainw->data_mutex);
 	    weed_set_int_array(dparam,"value",ndvals,valsi);
-	    pthread_mutex_unlock(&mainw->data_mutex);
 	  }
 	  weed_free(maxi);
 	  weed_free(mini);
@@ -1350,9 +1323,7 @@ boolean pconx_convert_value_data(weed_plant_t *inst, int pnum, weed_plant_t *dpa
 	      if (copyto!=-1) rec_param_change(inst,copyto);
 	    }
 
-	    pthread_mutex_lock(&mainw->data_mutex);
 	    weed_set_boolean_array(dparam,"value",ndvals,valsB);
-	    pthread_mutex_unlock(&mainw->data_mutex);
 	  }
 	  weed_free(valsb);
 	  weed_free(valsB);
@@ -1375,7 +1346,6 @@ boolean pconx_convert_value_data(weed_plant_t *inst, int pnum, weed_plant_t *dpa
 
 
 boolean pconx_chain_data(int key, int mode) {
-  // data_mutex should be locked before calling
 
   weed_plant_t **inparams;
   weed_plant_t *oparam,*inparam;
@@ -1387,6 +1357,7 @@ boolean pconx_chain_data(int key, int mode) {
   int nparams=0;
   int autoscale;
   int pflags;
+  int okey;
 
   int copyto=-1;
 
@@ -1418,9 +1389,8 @@ boolean pconx_chain_data(int key, int mode) {
     else inparams=weed_get_plantptr_array(inst,"in_parameters",&error);
 
     for (i=-EXTRA_PARAMS_IN;i<nparams;i++) {
-      //pthread_mutex_lock(&mainw->data_mutex);
 
-      if ((oparam=pconx_get_out_param(FALSE,key,mode,i,&autoscale))!=NULL) {
+      if ((oparam=pconx_get_out_param(FALSE,key,mode,i,&okey,&autoscale))!=NULL) {
 	//	#define DEBUG_PCONX
 	//#define DEBUG_PCONX
 #ifdef DEBUG_PCONX
@@ -1441,8 +1411,14 @@ boolean pconx_chain_data(int key, int mode) {
 	}
 	else inparam=inparams[i];
 
+	filter_mutex_lock(key);
+	filter_mutex_lock(okey);
+
 	changed=pconx_convert_value_data(inst,i,key==FX_DATA_KEY_PLAYBACK_PLUGIN?(weed_plant_t *)pp_get_param(mainw->vpp->play_params,i)
 					 :inparam,oparam,autoscale);
+
+	filter_mutex_unlock(key);
+	filter_mutex_unlock(okey);
 
 	if (changed&&inst!=NULL&&key>-1) {
 	  // only store value if it changed; for int, double or colour, store old value too
@@ -2251,7 +2227,7 @@ static void apbutton_clicked(GtkButton *button, gpointer user_data) {
       continue;
     }
 
-    if (pconx_get_out_param(TRUE,key,mode,j-1,NULL)!=NULL) continue;
+    if (pconx_get_out_param(TRUE,key,mode,j-1,NULL,NULL)!=NULL) continue;
 
     oparam=oparams[k];
 
@@ -2863,7 +2839,7 @@ int pconx_check_connection(weed_plant_t *ofilter, int opnum, int ikey, int imode
   if (idx_ret!=NULL) *idx_ret=idx;
 
   if (!setup) {
-    if (pconx_get_out_param(TRUE,ikey-1,imode,ipnum,NULL)!=NULL) {
+    if (pconx_get_out_param(TRUE,ikey-1,imode,ipnum,NULL,NULL)!=NULL) {
       // dest param already has a connection
       return -1;
     }

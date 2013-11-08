@@ -63,6 +63,17 @@ static boolean ca_canc;
 //////////////////////////////////////////////////////////////////////////////
 
 
+void ret_set_key_check_state(void) {
+  // set (delayed) keycheck state
+  register int i;
+  for (i=0;i<prefs->rte_keys_virtual;i++) {
+    g_signal_handler_block(key_checks[i],ch_fns[i]);
+    lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(key_checks[i]),GPOINTER_TO_INT(g_object_get_data(G_OBJECT(key_checks[i]),"active")));
+    g_signal_handler_unblock(key_checks[i],ch_fns[i]);
+  }
+}
+
+
 void type_label_set_text (int key, int mode) {
   int modes=rte_getmodespk();
   int idx=key*modes+mode;
@@ -106,7 +117,10 @@ boolean on_clear_all_clicked (GtkButton *button, gpointer user_data) {
   cconx_delete_all();
 
   for (i=0;i<prefs->rte_keys_virtual;i++) {
-    if (rte_window!=NULL) lives_toggle_button_set_active (LIVES_TOGGLE_BUTTON(key_checks[i]),FALSE);
+    if (rte_window!=NULL) {
+      lives_toggle_button_set_active (LIVES_TOGGLE_BUTTON(key_checks[i]),FALSE);
+      g_object_set_data(G_OBJECT(key_checks[i]),"active",GINT_TO_POINTER(FALSE));
+    }
     for (j=modes-1;j>=0;j--) {
       weed_delete_effectkey (i+1,j);
       if (rte_window!=NULL) {
@@ -1875,7 +1889,7 @@ static void on_params_clicked (GtkButton *button, gpointer user_data) {
   on_fx_pre_activate(rfx,1,NULL);
 
   // record the key so we know whose parameters to record later
-  weed_set_int_value((weed_plant_t *)rfx->source,"host_hotkey",key);
+  weed_set_int_value((weed_plant_t *)rfx->source,"host_key",key);
 
   g_object_set_data (G_OBJECT (fx_dialog[1]),"key",GINT_TO_POINTER (key));
   g_object_set_data (G_OBJECT (fx_dialog[1]),"mode",GINT_TO_POINTER (mode));
@@ -2239,6 +2253,7 @@ GtkWidget * create_rte_window (void) {
     lives_box_pack_start (LIVES_BOX (hbox), hbox2, FALSE, FALSE, widget_opts.packing_width);
 
     lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(key_checks[i]),mainw->rte&(GU641<<i));
+    g_object_set_data(G_OBJECT(key_checks[i]),"active",GINT_TO_POINTER(lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(key_checks[i]))));
 
     ch_fns[i]=g_signal_connect_after (GTK_OBJECT (key_checks[i]), "toggled",
                       G_CALLBACK (rte_on_off_callback_hook),GINT_TO_POINTER (i+1));
@@ -2455,10 +2470,12 @@ void on_assign_rte_keys_activate (GtkMenuItem *menuitem, gpointer user_data) {
 
 void rtew_set_keych (int key, boolean on) {
   g_signal_handler_block(key_checks[key],ch_fns[key]);
-  pthread_mutex_lock(&mainw->gtk_mutex);
-  lives_toggle_button_set_active (LIVES_TOGGLE_BUTTON(key_checks[key]),on);
-  pthread_mutex_unlock(&mainw->gtk_mutex);
+  if (!pthread_mutex_trylock(&mainw->gtk_mutex)) {
+    lives_toggle_button_set_active (LIVES_TOGGLE_BUTTON(key_checks[key]),on);
+    pthread_mutex_unlock(&mainw->gtk_mutex);
+  }
   g_signal_handler_unblock(key_checks[key],ch_fns[key]);
+  g_object_set_data(G_OBJECT(key_checks[key]),"active",GINT_TO_POINTER(on));
 }
 
 

@@ -563,6 +563,11 @@ static boolean attach_stream(lives_clip_data_t *cdata) {
     }
   }
 
+  if (priv->vstream==-1) {
+    fprintf(stderr,"avcodec_decoder: no video stream found");
+    return FALSE;
+  }
+
 
   if( priv->ic->start_time != (int64_t)AV_NOPTS_VALUE )
     i_start_time = priv->ic->start_time * 1000000 / AV_TIME_BASE;

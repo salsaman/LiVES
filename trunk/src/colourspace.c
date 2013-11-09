@@ -10350,7 +10350,6 @@ boolean resize_layer (weed_plant_t *layer, int width, int height, LiVESInterpTyp
     return FALSE;
   }
 
-
   // if in palette is a YUV palette which we cannot scale, convert to YUV888 (unclamped) or YUVA8888 (unclamped)
   // we can always scale these
   if (weed_palette_is_yuv_palette(palette)) {

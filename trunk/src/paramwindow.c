@@ -1999,9 +1999,9 @@ void after_param_value_changed (GtkSpinButton *spinbutton, lives_rfx_t *rfx) {
       else {
 	valis=weed_get_int_array(wparam,"value",&error);
 	valis[index]=new_int;
-	filter_mutex_lock(key);
+	//filter_mutex_lock(key);
 	weed_set_int_array(wparam,"value",numvals,valis);
-	filter_mutex_unlock(key);
+	//filter_mutex_unlock(key);
 	copyto=set_copy_to(inst,param_number,TRUE);
 	weed_free(valis);
       }
@@ -2212,7 +2212,7 @@ void after_param_red_changed (GtkSpinButton *spinbutton, lives_rfx_t *rfx) {
 
   get_colRGB24_param(param->value,&old_value);
   new_red=lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(spinbutton));
-  if (old_red==new_red) return;
+  if (old_value.red==new_red) return;
 
   if (rfx->status==RFX_STATUS_WEED&&mainw->record&&!mainw->record_paused&&mainw->playing_file>-1&&
       (prefs->rec_opts&REC_EFFECTS)) {
@@ -2526,12 +2526,19 @@ boolean after_param_text_focus_changed (GtkWidget *hbox, GtkWidget *child, lives
 
 void after_param_text_changed (GtkWidget *textwidget, lives_rfx_t *rfx) {
   GtkTextBuffer *textbuffer=NULL;
+
   GList *retvals=NULL;
-  int param_number;
+
   lives_param_t *param;
+
   gchar *old_text;
+  const gchar *new_text;
+
   boolean was_reinited=FALSE;
+
   int copyto=-1;
+  int param_number;
+
 
   if (rfx==NULL||rfx->params==NULL||textwidget==NULL) return;
 

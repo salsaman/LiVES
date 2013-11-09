@@ -1480,8 +1480,6 @@ static lives_filter_error_t process_func_threaded(weed_plant_t *inst, weed_plant
 	dheight=height-offset;
       }
       
-      g_print("ht %d/%d %d\n",j,to_use,dheight);
-
       weed_set_int_value(xchannels[i],"offset",offset);
       weed_set_int_value(xchannels[i],"height",dheight);
     }

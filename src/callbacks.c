@@ -6324,6 +6324,7 @@ void on_ok_file_open_clicked(GtkFileChooser *chooser, GSList *fnames) {
   g_slist_free(ofnames);
 
   mainw->opening_multi=FALSE;
+  mainw->img_concat_clip=-1;
 
   if (mainw->multitrack!=NULL) {
     polymorph(mainw->multitrack,POLY_NONE);

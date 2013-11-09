@@ -27,9 +27,9 @@
 
 // TODO:
 // - test disconall
-// - test multiple connections
-// - implement del buttons
 // - re-implement autoconnect
+// - pcombos sens/insens
+// - connected warning should show where connected FROM
 
 static lives_pconnect_t *spconx;
 static lives_cconnect_t *scconx;
@@ -43,6 +43,8 @@ static void ptable_row_add_variable_widgets(lives_conx_w *, int idx, int row, in
 
 static void ctable_row_add_standard_widgets(lives_conx_w *, int idx);
 static void ctable_row_add_variable_widgets(lives_conx_w *, int idx, int row, int cidx);
+
+static void dfxp_changed(GtkWidget *, gpointer conxwp);
 
 static weed_plant_t *active_dummy=NULL;
 
@@ -637,6 +639,7 @@ static weed_plant_t *pconx_get_out_param(boolean use_filt, int ikey, int imode, 
 
 	  // out param is "ACTIVATED"
 	  if (pconx->params[i]==FX_DATA_PARAM_ACTIVE) {
+	    pthread_mutex_lock(&mainw->fxd_active_mutex);
 	    if (active_dummy!=NULL&&!WEED_PLANT_IS_PARAMETER(active_dummy)) {
 	      weed_plant_free(active_dummy);
 	      active_dummy=NULL;
@@ -647,6 +650,7 @@ static weed_plant_t *pconx_get_out_param(boolean use_filt, int ikey, int imode, 
 	    }
 	    if (!use_filt) weed_set_boolean_value(active_dummy,"value",inst!=NULL);
 	    param=active_dummy;
+	    pthread_mutex_unlock(&mainw->fxd_active_mutex);
 	  }
 	  else {
 
@@ -1150,7 +1154,10 @@ boolean pconx_convert_value_data(weed_plant_t *inst, int pnum, weed_plant_t *dpa
       int *valsb=weed_get_boolean_array(sparam,"value",&error);
       if (dparam==active_dummy&&!autoscale) {
 	// ACTIVATE
-	int key=weed_get_int_value(dparam,"host_key",&error);
+	int key;
+	pthread_mutex_lock(&mainw->fxd_active_mutex);
+	key=weed_get_int_value(dparam,"host_key",&error);
+	pthread_mutex_unlock(&mainw->fxd_active_mutex);
 	if ((valsb[0]==WEED_TRUE&&!(mainw->rte&(GU641<<(key))))||
 	    (valsb[0]==WEED_FALSE&&(mainw->rte&(GU641<<(key))))) {
 	  switch_fx_state(key+1);
@@ -1397,6 +1404,7 @@ boolean pconx_chain_data(int key, int mode) {
 	g_print("got pconx to %d %d %d\n",key,mode,i);
 #endif
 	if (i==FX_DATA_PARAM_ACTIVE) {
+	  pthread_mutex_lock(&mainw->fxd_active_mutex);
 	  if (active_dummy!=NULL&&!WEED_PLANT_IS_PARAMETER(active_dummy)) {
 	    weed_plant_free(active_dummy);
 	    active_dummy=NULL;
@@ -1408,6 +1416,7 @@ boolean pconx_chain_data(int key, int mode) {
 	  }
 	  weed_set_int_value(active_dummy,"host_key",key);
 	  inparam=active_dummy;
+	  pthread_mutex_unlock(&mainw->fxd_active_mutex);
 	}
 	else inparam=inparams[i];
 
@@ -2362,6 +2371,7 @@ static void padd_clicked(GtkWidget *button, gpointer user_data) {
 
   conxwp->add_button=(GtkWidget **)g_realloc(conxwp->add_button,(totchans+totparams)*sizeof(GtkWidget *));
   conxwp->del_button=(GtkWidget **)g_realloc(conxwp->del_button,(totchans+totparams)*sizeof(GtkWidget *));
+  conxwp->clabel=(GtkWidget **)g_realloc(conxwp->clabel,(totchans+totparams)*sizeof(GtkWidget *));
 
   conxwp->ikeys=(int *)g_realloc(conxwp->ikeys,(totchans+totparams)*sizint);
   conxwp->imodes=(int *)g_realloc(conxwp->imodes,(totchans+totparams)*sizint);
@@ -2456,6 +2466,129 @@ static void padd_clicked(GtkWidget *button, gpointer user_data) {
 
 
 
+static void pdel_clicked(GtkWidget *button, gpointer user_data) {
+  //  remove the row at the del button
+  lives_conx_w *conxwp=(lives_conx_w *)user_data;
+
+  GtkWidget *hbox[4],*achbox,*comhbox,*achbox2,*comhbox2;
+
+  int totparams,totchans;
+  int ours=-1,pidx;
+
+  register int i;
+
+  totparams=pconx_get_numcons(conxwp,FX_DATA_WILDCARD);
+  totchans=cconx_get_numcons(conxwp,FX_DATA_WILDCARD);
+
+  for (i=0;i<totparams;i++) {
+    if (conxwp->del_button[i+totchans]==button) {
+      ours=i;
+      break;
+    }
+  }
+
+  if (conxwp->acheck[ours]!=NULL)
+    pidx=GPOINTER_TO_INT(g_object_get_data(G_OBJECT(conxwp->acheck[ours]),"pidx"));
+  else pidx=-EXTRA_PARAMS_OUT;
+
+  lives_combo_set_active_index (LIVES_COMBO(conxwp->pfxcombo[ours]),0);
+
+  if (conxwp->dispp[pidx+EXTRA_PARAMS_OUT]==1) {
+    // last one, dont delete, just clear
+    return;
+  }
+
+  // force callback for pfxcombo before destroying it
+  lives_widget_context_update();
+
+  conxwp->dispp[pidx+EXTRA_PARAMS_OUT]--;
+
+  totparams--;
+
+  lives_widget_destroy(conxwp->add_button[totchans+ours]);
+  lives_widget_destroy(conxwp->del_button[totchans+ours]);
+  lives_widget_destroy(conxwp->clabel[totchans+ours]);
+
+  conxwp->trowsp--;
+
+  lives_widget_destroy(conxwp->pclabel[ours]);
+  lives_widget_destroy(conxwp->pfxcombo[ours]);
+  lives_widget_destroy(conxwp->pcombo[ours]);
+  
+  if (conxwp->acheck[ours]!=NULL) {
+    lives_widget_destroy(conxwp->acheck[ours]);
+  }
+
+  // subtract 1 from trowsp because of title row
+  for (i=ours;i<conxwp->trowsp-1;i++) {
+#if !LIVES_TABLE_IS_GRID
+
+    // reparent widgets from row i to row i+1
+    hbox[0]=lives_widget_get_parent(conxwp->pclabel[i]);
+    lives_widget_reparent(conxwp->pclabel[i+1],hbox[0]);
+
+    hbox[1]=lives_widget_get_parent(conxwp->pfxcombo[i]);
+    lives_widget_reparent(conxwp->pfxcombo[i+1],hbox[1]);
+
+    comhbox=lives_widget_get_parent(conxwp->pcombo[i]);
+    hbox[2]=lives_widget_get_parent(comhbox);
+    comhbox2=lives_widget_get_parent(conxwp->pcombo[i+1]);
+    lives_widget_reparent(comhbox2,hbox[2]);
+
+    if (conxwp->acheck[i]!=NULL) {
+      achbox=lives_widget_get_parent(conxwp->acheck[i]);
+      hbox[3]=lives_widget_get_parent(achbox);
+      achbox2=lives_widget_get_parent(conxwp->acheck[i+1]);
+      lives_widget_reparent(achbox2,hbox[3]);
+    }
+
+#endif
+
+    conxwp->pclabel[i]=conxwp->pclabel[i+1];
+
+    conxwp->pfxcombo[i]=conxwp->pfxcombo[i+1];
+    conxwp->pcombo[i]=conxwp->pcombo[i+1];
+
+    conxwp->acheck[i]=conxwp->acheck[i+1];
+    conxwp->acheck_func[i]=conxwp->acheck_func[i+1];
+
+    conxwp->ikeys[i]=conxwp->ikeys[i+1];
+    conxwp->imodes[i]=conxwp->imodes[i+1];
+    conxwp->idx[i]=conxwp->idx[i+1];
+
+    conxwp->dpp_func[i]=conxwp->dpp_func[i+1];
+
+  }
+
+#if !LIVES_TABLE_IS_GRID
+  lives_table_resize(LIVES_TABLE(conxwp->tablep),conxwp->trowsp,7);
+#else
+  lives_grid_remove_row(LIVES_GRID(conxwp->tablep),ours+1);
+#endif
+
+
+  conxwp->pclabel=(GtkWidget **)g_realloc(conxwp->pclabel,(totchans+totparams)*sizeof(GtkWidget *));
+
+  conxwp->add_button=(GtkWidget **)g_realloc(conxwp->add_button,(totchans+totparams)*sizeof(GtkWidget *));
+  conxwp->del_button=(GtkWidget **)g_realloc(conxwp->del_button,(totchans+totparams)*sizeof(GtkWidget *));
+  conxwp->clabel=(GtkWidget **)g_realloc(conxwp->clabel,(totchans+totparams)*sizeof(GtkWidget *));
+
+  conxwp->ikeys=(int *)g_realloc(conxwp->ikeys,(totchans+totparams)*sizint);
+  conxwp->imodes=(int *)g_realloc(conxwp->imodes,(totchans+totparams)*sizint);
+  conxwp->idx=(int *)g_realloc(conxwp->idx,(totchans+totparams)*sizint);
+
+  conxwp->pfxcombo=(GtkWidget **)g_realloc(conxwp->pfxcombo,totparams*sizeof(GtkWidget *));
+  conxwp->pcombo=(GtkWidget **)g_realloc(conxwp->pcombo,totparams*sizeof(GtkWidget *));
+
+  conxwp->dpp_func=(gulong *)g_realloc(conxwp->dpp_func,totparams*sizeof(gulong));
+  conxwp->acheck_func=(gulong *)g_realloc(conxwp->acheck_func,totparams*sizeof(gulong));
+
+  conxwp->acheck=(GtkWidget **)g_realloc(conxwp->acheck,totparams*sizeof(GtkWidget *));
+
+}
+
+
+
 
 static void cadd_clicked(GtkWidget *button, gpointer user_data) {
   // add another row below the add button
@@ -2491,6 +2624,7 @@ static void cadd_clicked(GtkWidget *button, gpointer user_data) {
 
   conxwp->add_button=(GtkWidget **)g_realloc(conxwp->add_button,(totchans+totparams)*sizeof(GtkWidget *));
   conxwp->del_button=(GtkWidget **)g_realloc(conxwp->del_button,(totchans+totparams)*sizeof(GtkWidget *));
+  conxwp->clabel=(GtkWidget **)g_realloc(conxwp->clabel,(totchans+totparams)*sizeof(GtkWidget *));
 
   conxwp->ikeys=(int *)g_realloc(conxwp->ikeys,(totchans+totparams)*sizint);
   conxwp->imodes=(int *)g_realloc(conxwp->imodes,(totchans+totparams)*sizint);
@@ -2567,6 +2701,110 @@ static void cadd_clicked(GtkWidget *button, gpointer user_data) {
   conxwp->ikeys[ours+1]=conxwp->imodes[ours+1]=conxwp->idx[i+1]=0;
 
   lives_widget_show_all(conxwp->tablec);
+
+}
+
+
+
+
+static void cdel_clicked(GtkWidget *button, gpointer user_data) {
+  //  remove the row at the del button
+  lives_conx_w *conxwp=(lives_conx_w *)user_data;
+
+  GtkWidget *hbox[3],*comhbox,*comhbox2;
+
+  int totparams,totchans;
+  int ours=-1,cidx;
+
+  register int i;
+
+  totparams=pconx_get_numcons(conxwp,FX_DATA_WILDCARD);
+  totchans=cconx_get_numcons(conxwp,FX_DATA_WILDCARD);
+
+  for (i=0;i<totchans;i++) {
+    if (conxwp->del_button[i]==button) {
+      ours=i;
+      break;
+    }
+  }
+
+  cidx=GPOINTER_TO_INT(g_object_get_data(G_OBJECT(conxwp->cfxcombo[ours]),"cidx"));
+
+  lives_combo_set_active_index (LIVES_COMBO(conxwp->cfxcombo[ours]),0);
+
+  if (conxwp->dispc[cidx]==1) {
+    // last one, dont delete, just clear
+    return;
+  }
+
+  // force callback for pfxcombo before destroying it
+  lives_widget_context_update();
+
+  conxwp->dispc[cidx]--;
+
+  lives_widget_destroy(conxwp->add_button[ours]);
+  lives_widget_destroy(conxwp->del_button[ours]);
+  lives_widget_destroy(conxwp->clabel[ours]);
+
+  conxwp->trowsc--;
+
+  lives_widget_destroy(conxwp->pclabel[ours]);
+  lives_widget_destroy(conxwp->cfxcombo[ours]);
+  lives_widget_destroy(conxwp->ccombo[ours]);
+  
+
+  // subtract 1 from trowsp because of title row
+  for (i=ours;i<conxwp->trowsc-1;i++) {
+#if !LIVES_TABLE_IS_GRID
+
+    // reparent widgets from row i to row i+1
+    hbox[0]=lives_widget_get_parent(conxwp->pclabel[i]);
+    lives_widget_reparent(conxwp->pclabel[i+1],hbox[0]);
+
+    hbox[1]=lives_widget_get_parent(conxwp->cfxcombo[i]);
+    lives_widget_reparent(conxwp->cfxcombo[i+1],hbox[1]);
+
+    comhbox=lives_widget_get_parent(conxwp->ccombo[i]);
+    hbox[2]=lives_widget_get_parent(comhbox);
+    comhbox2=lives_widget_get_parent(conxwp->ccombo[i+1]);
+    lives_widget_reparent(comhbox2,hbox[2]);
+
+#endif
+
+    conxwp->pclabel[i]=conxwp->pclabel[i+1];
+
+    conxwp->cfxcombo[i]=conxwp->cfxcombo[i+1];
+    conxwp->ccombo[i]=conxwp->ccombo[i+1];
+
+    conxwp->ikeys[i]=conxwp->ikeys[i+1];
+    conxwp->imodes[i]=conxwp->imodes[i+1];
+    conxwp->idx[i]=conxwp->idx[i+1];
+
+    conxwp->dpc_func[i]=conxwp->dpc_func[i+1];
+
+  }
+
+#if !LIVES_TABLE_IS_GRID
+  lives_table_resize(LIVES_TABLE(conxwp->tablec),conxwp->trowsc,6);
+#else
+  lives_grid_remove_row(LIVES_GRID(conxwp->tablec),ours+1);
+#endif
+
+
+  conxwp->pclabel=(GtkWidget **)g_realloc(conxwp->pclabel,(totchans+totparams)*sizeof(GtkWidget *));
+
+  conxwp->add_button=(GtkWidget **)g_realloc(conxwp->add_button,(totchans+totparams)*sizeof(GtkWidget *));
+  conxwp->del_button=(GtkWidget **)g_realloc(conxwp->del_button,(totchans+totparams)*sizeof(GtkWidget *));
+  conxwp->clabel=(GtkWidget **)g_realloc(conxwp->clabel,(totchans+totparams)*sizeof(GtkWidget *));
+
+  conxwp->ikeys=(int *)g_realloc(conxwp->ikeys,(totchans+totparams)*sizint);
+  conxwp->imodes=(int *)g_realloc(conxwp->imodes,(totchans+totparams)*sizint);
+  conxwp->idx=(int *)g_realloc(conxwp->idx,(totchans+totparams)*sizint);
+
+  conxwp->cfxcombo=(GtkWidget **)g_realloc(conxwp->cfxcombo,totchans*sizeof(GtkWidget *));
+  conxwp->ccombo=(GtkWidget **)g_realloc(conxwp->ccombo,totchans*sizeof(GtkWidget *));
+
+  conxwp->dpc_func=(gulong *)g_realloc(conxwp->dpc_func,totchans*sizeof(gulong));
 
 }
 
@@ -2792,6 +3030,7 @@ int pconx_check_connection(weed_plant_t *ofilter, int opnum, int ikey, int imode
   } 
   else {
     // invent an "ACTIVATED" param
+    pthread_mutex_lock(&mainw->fxd_active_mutex);
     if (active_dummy!=NULL&&WEED_PLANT_IS_PARAMETER(active_dummy)) {
       weed_plant_free(active_dummy);
       active_dummy=NULL;
@@ -2801,10 +3040,12 @@ int pconx_check_connection(weed_plant_t *ofilter, int opnum, int ikey, int imode
       weed_set_boolean_value(active_dummy,"default",WEED_FALSE);
     }
     oparam=active_dummy;
+    pthread_mutex_unlock(&mainw->fxd_active_mutex);
   }
 
   if (ipnum==FX_DATA_PARAM_ACTIVE) {
     // invent an "ACTIVATE" param
+    pthread_mutex_lock(&mainw->fxd_active_mutex);
     if (active_dummy!=NULL&&WEED_PLANT_IS_PARAMETER(active_dummy)) {
       weed_plant_free(active_dummy);
       active_dummy=NULL;
@@ -2815,6 +3056,7 @@ int pconx_check_connection(weed_plant_t *ofilter, int opnum, int ikey, int imode
     }
     idx=ipnum;
     iparam=active_dummy;
+    pthread_mutex_unlock(&mainw->fxd_active_mutex);
   }
   else {
     // find the receiving filter/instance
@@ -2925,6 +3167,8 @@ static void dpp_changed(GtkWidget *combo, gpointer user_data) {
     conxwp->imodes[nchans+ours]=0;
     conxwp->idx[nchans+ours]=0;
 
+    lives_widget_set_sensitive(conxwp->del_button[nchans+ours], FALSE);
+
     g_object_set_data(G_OBJECT(combo),"idx",GINT_TO_POINTER(idx));
 
     return;
@@ -2991,6 +3235,9 @@ static void dpp_changed(GtkWidget *combo, gpointer user_data) {
   g_signal_handler_unblock(combo,conxwp->dpp_func[ours]);
 
   weed_free(paramname);
+
+
+  lives_widget_set_sensitive(conxwp->del_button[nchans+ours], TRUE);
 
   if (setup) return;
 
@@ -3121,6 +3368,8 @@ static void dpc_changed(GtkWidget *combo, gpointer user_data) {
     conxwp->imodes[ours]=0;
     conxwp->idx[ours]=0;
 
+    lives_widget_set_sensitive(conxwp->del_button[ours], FALSE);
+
     return;
   }
 
@@ -3150,6 +3399,8 @@ static void dpc_changed(GtkWidget *combo, gpointer user_data) {
   weed_free(channame);
 
   g_object_set_data(G_OBJECT(combo),"idx",GINT_TO_POINTER(idx));
+
+  lives_widget_set_sensitive(conxwp->del_button[ours], TRUE);
 
   if (setup) return;
 
@@ -3504,7 +3755,7 @@ static void ctable_row_add_variable_widgets(lives_conx_w *conxwp, int idx, int r
 
 
 static void ptable_row_add_standard_widgets(lives_conx_w *conxwp, int idx) {
-  GtkWidget *label,*hbox;
+  GtkWidget *hbox;
 
   hbox=lives_hbox_new (FALSE, 0);
 
@@ -3513,8 +3764,8 @@ static void ptable_row_add_standard_widgets(lives_conx_w *conxwp, int idx) {
 		      (GtkAttachOptions) (0), 0, 0);
 
 
-  label=lives_standard_label_new(lctext);
-  lives_box_pack_start (LIVES_BOX (hbox), label, FALSE, FALSE, widget_opts.packing_width);
+  conxwp->clabel[idx]=lives_standard_label_new(lctext);
+  lives_box_pack_start (LIVES_BOX (hbox), conxwp->clabel[idx], FALSE, FALSE, widget_opts.packing_width);
 
 
   conxwp->add_button[idx]=lives_button_new_from_stock(LIVES_STOCK_ADD);
@@ -3541,6 +3792,9 @@ static void ptable_row_add_standard_widgets(lives_conx_w *conxwp, int idx) {
 		      (GtkAttachOptions) (0),
 		      (GtkAttachOptions) (0), 0, 0);
 
+  g_signal_connect (GTK_OBJECT (conxwp->del_button[idx]), "clicked",
+		    G_CALLBACK (pdel_clicked),
+		    (gpointer)conxwp);
 
   lives_widget_set_sensitive(conxwp->del_button[idx], FALSE);
 
@@ -3550,7 +3804,7 @@ static void ptable_row_add_standard_widgets(lives_conx_w *conxwp, int idx) {
 
 
 static void ctable_row_add_standard_widgets(lives_conx_w *conxwp, int idx) {
-  GtkWidget *label,*hbox;
+  GtkWidget *hbox;
 
   hbox=lives_hbox_new (FALSE, 0);
 
@@ -3559,8 +3813,8 @@ static void ctable_row_add_standard_widgets(lives_conx_w *conxwp, int idx) {
 		      (GtkAttachOptions) (0), 0, 0);
 
 
-  label=lives_standard_label_new(lctext);
-  lives_box_pack_start (LIVES_BOX (hbox), label, FALSE, FALSE, widget_opts.packing_width);
+  conxwp->clabel[idx]=lives_standard_label_new(lctext);
+  lives_box_pack_start (LIVES_BOX (hbox), conxwp->clabel[idx], FALSE, FALSE, widget_opts.packing_width);
 
 
   conxwp->add_button[idx]=lives_button_new_from_stock(LIVES_STOCK_ADD);
@@ -3587,6 +3841,9 @@ static void ctable_row_add_standard_widgets(lives_conx_w *conxwp, int idx) {
 		      (GtkAttachOptions) (0),
 		      (GtkAttachOptions) (0), 0, 0);
 
+  g_signal_connect (GTK_OBJECT (conxwp->del_button[idx]), "clicked",
+		    G_CALLBACK (cdel_clicked),
+		    (gpointer)conxwp);
 
   lives_widget_set_sensitive(conxwp->del_button[idx], FALSE);
 
@@ -3634,7 +3891,7 @@ static GtkWidget *conx_scroll_new(lives_conx_w *conxwp) {
 
   conxwp->add_button=(GtkWidget **)g_malloc((totchans+totparams)*sizeof(GtkWidget *));
   conxwp->del_button=(GtkWidget **)g_malloc((totchans+totparams)*sizeof(GtkWidget *));
-
+  conxwp->clabel=(GtkWidget **)g_malloc((totchans+totparams)*sizeof(GtkWidget *));
   conxwp->pclabel=(GtkWidget **)g_malloc((totchans+totparams)*sizeof(GtkWidget *));
 
   conxwp->cfxcombo=conxwp->ccombo=conxwp->pcombo=conxwp->pfxcombo=conxwp->acheck=NULL;
@@ -3869,6 +4126,7 @@ static void conxw_cancel_clicked(GtkWidget *button, gpointer user_data) {
   lives_conx_w *conxwp=(lives_conx_w *)user_data;
 
   if (conxwp->pclabel!=NULL) g_free(conxwp->pclabel);
+  if (conxwp->clabel!=NULL) g_free(conxwp->clabel);
   if (conxwp->cfxcombo!=NULL) g_free(conxwp->cfxcombo);
   if (conxwp->ccombo!=NULL) g_free(conxwp->ccombo);
   if (conxwp->pfxcombo!=NULL) g_free(conxwp->pfxcombo);

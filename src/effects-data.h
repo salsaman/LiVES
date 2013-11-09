@@ -147,6 +147,7 @@ typedef struct {
   GtkWidget *apbutton;
   GtkWidget *disconbutton;
 
+  GtkWidget **clabel;
   GtkWidget **pclabel;
   GtkWidget **cfxcombo;
   GtkWidget **pfxcombo;

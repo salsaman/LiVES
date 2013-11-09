@@ -10326,9 +10326,13 @@ boolean resize_layer (weed_plant_t *layer, int width, int height, LiVESInterpTyp
 
   // return FALSE if we were unable to resize
 
-  int error;
   LiVESPixbuf *pixbuf=NULL;
   LiVESPixbuf *new_pixbuf=NULL;
+
+  boolean keep_in_pixel_data=FALSE;
+  boolean retval=TRUE;
+
+  int error;
   int palette=weed_get_int_value(layer,"current_palette",&error);
 
   // original width and height (in macropixels)
@@ -10336,8 +10340,6 @@ boolean resize_layer (weed_plant_t *layer, int width, int height, LiVESInterpTyp
   int iheight=weed_get_int_value(layer,"height",&error);
   int iclamped=WEED_YUV_CLAMPING_UNCLAMPED;
 
-  boolean keep_in_pixel_data=FALSE;
-  boolean retval=TRUE;
 
   if (iwidth==width&&iheight==height) return TRUE; // no resize needed
 

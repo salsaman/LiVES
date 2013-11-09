@@ -359,6 +359,8 @@ static boolean pre_init(void) {
 
   pthread_mutex_init(&mainw->abuf_mutex,NULL);
 
+  pthread_mutex_init(&mainw->fxd_active_mutex,NULL);
+
   for (i=0;i<FX_KEYS_MAX_VIRTUAL;i++) {
     pthread_mutex_init(&mainw->afilter_mutex[i],&mattr); // because audio filters can enable/disable video filters and vice-versa
   }
@@ -5038,7 +5040,6 @@ void load_frame_image(gint frame) {
 	    }
 	  }
 	}
-
 	if ((cfile->next_event==NULL&&mainw->is_rendering&&!mainw->switch_during_pb&&
 	     (mainw->multitrack==NULL||(!mainw->multitrack->is_rendering&&!mainw->is_generating)))||
 	    ((!mainw->is_rendering||(mainw->multitrack!=NULL&&mainw->multitrack->is_rendering))&&

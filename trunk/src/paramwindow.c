@@ -1844,8 +1844,11 @@ void after_boolean_param_toggled (GtkToggleButton *togglebutton, lives_rfx_t *rf
   int copyto=-1;
 
   if (mainw->block_param_updates) return; // updates are blocked until all params are ready
+  new_bool=lives_toggle_button_get_active (togglebutton);
 
-  set_bool_param(param->value,(new_bool=lives_toggle_button_get_active (togglebutton)));
+  if (old_bool==new_bool) return;
+
+  set_bool_param(param->value,new_bool);
 
   if (mainw->framedraw_preview!=NULL) lives_widget_set_sensitive(mainw->framedraw_preview,TRUE);
 
@@ -1947,16 +1950,15 @@ void after_param_value_changed (GtkSpinButton *spinbutton, lives_rfx_t *rfx) {
 
   if (param->dp>0) {
     old_double=get_double_param(param->value);
+    new_double=lives_spin_button_get_value(LIVES_SPIN_BUTTON(spinbutton));
+    if (old_double==new_double) return;
+    set_double_param(param->value,new_double);
   }
   else {
     old_int=get_int_param(param->value);
-  }
-
-  if (param->dp>0) {
-    set_double_param(param->value,(new_double=lives_spin_button_get_value(LIVES_SPIN_BUTTON(spinbutton))));
-  }
-  else {
-    set_int_param(param->value,(new_int=lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(spinbutton))));
+    new_int=lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(spinbutton));
+    if (old_int==new_int) return;
+    set_int_param(param->value,new_int);
   }
 
 
@@ -2208,6 +2210,10 @@ void after_param_red_changed (GtkSpinButton *spinbutton, lives_rfx_t *rfx) {
 
   if (mainw->block_param_updates) return; // updates are blocked until all params are ready
 
+  get_colRGB24_param(param->value,&old_value);
+  new_red=lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(spinbutton));
+  if (old_red==new_red) return;
+
   if (rfx->status==RFX_STATUS_WEED&&mainw->record&&!mainw->record_paused&&mainw->playing_file>-1&&
       (prefs->rec_opts&REC_EFFECTS)) {
     // if we are recording, add this change to our event_list
@@ -2216,8 +2222,7 @@ void after_param_red_changed (GtkSpinButton *spinbutton, lives_rfx_t *rfx) {
     if (copyto!=-1) rec_param_change((weed_plant_t *)rfx->source,copyto);
   }
 
-  get_colRGB24_param(param->value,&old_value);
-  new_red=lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(spinbutton));
+
   set_colRGB24_param(param->value,new_red,old_value.green,old_value.blue);
 
   colr.red=LIVES_WIDGET_COLOR_SCALE_255(new_red);
@@ -2291,6 +2296,10 @@ void after_param_green_changed (GtkSpinButton *spinbutton, lives_rfx_t *rfx) {
 
   if (mainw->block_param_updates) return; // updates are blocked until all params are ready
 
+  get_colRGB24_param(param->value,&old_value);
+  new_green=lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(spinbutton));
+  if (old_value.green==new_green) return;
+
   if (rfx->status==RFX_STATUS_WEED&&mainw->record&&!mainw->record_paused&&mainw->playing_file>-1&&
       (prefs->rec_opts&REC_EFFECTS)) {
     // if we are recording, add this change to our event_list
@@ -2299,8 +2308,6 @@ void after_param_green_changed (GtkSpinButton *spinbutton, lives_rfx_t *rfx) {
     if (copyto!=-1) rec_param_change((weed_plant_t *)rfx->source,copyto);
   }
 
-  get_colRGB24_param(param->value,&old_value);
-  new_green=lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(spinbutton));
   set_colRGB24_param(param->value,old_value.red,new_green,old_value.blue);
 
   colr.red=LIVES_WIDGET_COLOR_SCALE_255(old_value.red);
@@ -2371,6 +2378,10 @@ void after_param_blue_changed (GtkSpinButton *spinbutton, lives_rfx_t *rfx) {
 
   if (mainw->block_param_updates) return; // updates are blocked until all params are ready
 
+  get_colRGB24_param(param->value,&old_value);
+  new_blue=lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(spinbutton));
+  if (old_value.blue==new_blue) return;
+
   if (rfx->status==RFX_STATUS_WEED&&mainw->record&&!mainw->record_paused&&mainw->playing_file>-1&&
       (prefs->rec_opts&REC_EFFECTS)) {
     // if we are recording, add this change to our event_list
@@ -2379,8 +2390,6 @@ void after_param_blue_changed (GtkSpinButton *spinbutton, lives_rfx_t *rfx) {
     if (copyto!=-1) rec_param_change((weed_plant_t *)rfx->source,copyto);
   }
 
-  get_colRGB24_param(param->value,&old_value);
-  new_blue=lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(spinbutton));
   set_colRGB24_param(param->value,old_value.red,old_value.green,new_blue);
 
   colr.red=LIVES_WIDGET_COLOR_SCALE_255(old_value.red);
@@ -2535,10 +2544,14 @@ void after_param_text_changed (GtkWidget *textwidget, lives_rfx_t *rfx) {
   if (mainw->block_param_updates) return; // updates are blocked until all params are ready
 
   if (LIVES_IS_TEXT_VIEW(textwidget)) {
-    param->value=g_strdup(text_view_get_text (LIVES_TEXT_VIEW(textwidget)));
+    new_text=text_view_get_text (LIVES_TEXT_VIEW(textwidget));
+    if (!strcmp(new_text,old_text)) return;
+    param->value=g_strdup(new_text);
   }
   else {
-    param->value=g_strdup (lives_entry_get_text (LIVES_ENTRY (textwidget)));
+    new_text=lives_entry_get_text (LIVES_ENTRY(textwidget));
+    if (!strcmp(new_text,old_text)) return;
+    param->value=g_strdup(new_text);
   }
 
   if (mainw->framedraw_preview!=NULL) lives_widget_set_sensitive(mainw->framedraw_preview,TRUE);
@@ -2642,6 +2655,8 @@ void after_string_list_changed (GtkComboBox *combo, lives_rfx_t *rfx) {
   if (mainw->block_param_updates) return; // updates are blocked until all params are ready
 
   if (new_index==-1) return;
+
+  if (new_index==old_index) return;
 
   set_int_param(param->value,new_index);
 

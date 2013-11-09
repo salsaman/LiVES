@@ -1480,6 +1480,8 @@ static lives_filter_error_t process_func_threaded(weed_plant_t *inst, weed_plant
 	dheight=height-offset;
       }
       
+      g_print("ht %d/%d %d\n",j,to_use,dheight);
+
       weed_set_int_value(xchannels[i],"offset",offset);
       weed_set_int_value(xchannels[i],"height",dheight);
     }
@@ -1974,7 +1976,7 @@ lives_filter_error_t weed_apply_instance (weed_plant_t *inst, weed_plant_t *init
 
       inheight=weed_get_int_value(layer,"height",&error);
 
-      if ((inwidth!=width)||(inheight!=height)) {
+      if (0&&((inwidth!=width)||(inheight!=height))) {
 	weed_free(in_tracks);
 	weed_free(out_tracks);
 	weed_free(in_channels);
@@ -2085,7 +2087,6 @@ lives_filter_error_t weed_apply_instance (weed_plant_t *inst, weed_plant_t *init
 	  height=weed_get_int_value(channel,"height",&error);
 	  if (width != opwidth || height != opheight) {
 	    if (!resize_layer(channel,opwidth,opheight,LIVES_INTERP_BEST,WEED_PALETTE_END,0)) return FILTER_ERROR_UNABLE_TO_RESIZE;
-
 	  }
 	}
       }
@@ -3563,6 +3564,8 @@ void weed_apply_audio_effects (weed_plant_t *filter_map, float **abuf, int nbtra
 	filter_error=weed_apply_audio_instance(init_event,abuf,nbtracks,nchans,nsamps,arate,tc,vis);
 	filter_error=filter_error; // stop compiler complaining
       }
+      // TODO *** - also run any pure data processing filters which feed into audio filters
+
     }
     weed_free(init_events);
   }

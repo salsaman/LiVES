@@ -11263,6 +11263,7 @@ void weed_layer_pixel_data_free(weed_plant_t *layer) {
 	  }
 
 	  weed_free(pixel_data);
+	  weed_set_voidptr_value(layer,"pixel_data",NULL);
       }
     }
   }

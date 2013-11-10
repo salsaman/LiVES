@@ -864,7 +864,7 @@ boolean weed_parameter_has_variable_elements_strict(weed_plant_t *inst, weed_pla
 
 
 
-static void create_filter_map (void) {
+static void create_filter_map (uint64_t rteval) {
   /** here we create an effect map which defines the order in which effects are applied to a frame stack
    * this is done during recording, the keymap is from mainw->rte which is a bitmap of effect keys
    * keys are applied here from smallest (ctrl-1) to largest (virtual key ctrl-FX_KEYS_MAX_VIRTUAL)
@@ -891,8 +891,10 @@ static void create_filter_map (void) {
   weed_plant_t *inst;
 
   for (i=0;i<FX_KEYS_MAX_VIRTUAL;i++) 
-    if (mainw->rte&(GU641<<i)&&(inst=key_to_instance[i][key_modes[i]])!=NULL&&
-	enabled_in_channels (inst,FALSE)>0) filter_map[count++]=init_events[i];
+    if (rteval&(GU641<<i)&&(inst=key_to_instance[i][key_modes[i]])!=NULL&&
+	enabled_in_channels (inst,FALSE)>0) {
+      filter_map[count++]=init_events[i];
+    }
   filter_map[count]=NULL; // marks the end of the effect map
 }
 
@@ -915,7 +917,7 @@ weed_plant_t *add_filter_deinit_events (weed_plant_t *event_list) {
     }
   }
   // add an empty filter_map event (in case more frames are added)
-  create_filter_map(); // we create filter_map event_t * array with ordered effects
+  create_filter_map(mainw->rte); // we create filter_map event_t * array with ordered effects
 
   if (needs_filter_map) event_list=append_filter_map_event (mainw->event_list,last_tc,filter_map);
   return event_list;
@@ -939,7 +941,7 @@ weed_plant_t *add_filter_init_events (weed_plant_t *event_list, weed_timecode_t 
     }
   }
   // add an empty filter_map event (in case more frames are added)
-  create_filter_map(); // we create filter_map event_t * array with ordered effects
+  create_filter_map(mainw->rte); // we create filter_map event_t * array with ordered effects
   if (filter_map[0]!=NULL) event_list=append_filter_map_event (event_list,tc,filter_map);
   return event_list;
 }
@@ -3295,6 +3297,7 @@ static void weed_apply_filter_map (weed_plant_t **layers, weed_plant_t *filter_m
 
   if (filter_map==NULL||!weed_plant_has_leaf(filter_map,"init_events")||
       (weed_get_voidptr_value(filter_map,"init_events",&error)==NULL)) return;
+
   if ((num_inst=weed_leaf_num_elements(filter_map,"init_events"))>0) {
     init_events=weed_get_voidptr_array(filter_map,"init_events",&error);
     for (i=0;i<num_inst;i++) {
@@ -3333,7 +3336,6 @@ static void weed_apply_filter_map (weed_plant_t **layers, weed_plant_t *filter_m
 	    }
 
 	    filter_error=weed_apply_instance (instance,mainw->multitrack->init_event,layers,0,0,tc);
-
 	    if (filter_error==WEED_NO_ERROR&&weed_plant_has_leaf(instance,"host_next_instance")) {
 	      // handling for compound fx
 	      instance=weed_get_plantptr_value(instance,"host_next_instance",&error);
@@ -3432,7 +3434,7 @@ weed_plant_t *weed_apply_effects (weed_plant_t **layers, weed_plant_t *filter_ma
 
   if (mainw->is_rendering&&!(cfile->proc_ptr!=NULL&&mainw->preview)) {
     // rendering from multitrack
-    if (filter_map!=NULL&&layers[0]!=NULL) {
+    if (filter_map!=NULL&&layers[0]!=NULL) { 
       weed_apply_filter_map(layers, filter_map, tc, pchains);
     }
   }
@@ -6630,6 +6632,7 @@ boolean weed_init_effect(int hotkey) {
   key_to_instance[hotkey][key_modes[hotkey]]=new_instance;
 
   if (mainw->record&&!mainw->record_paused&&mainw->playing_file>-1&&(prefs->rec_opts&REC_EFFECTS)&&(inc_count>0||outc_count==0)) {
+    uint64_t rteval,new_rte;
     // place this synchronous with the preceding frame
     pthread_mutex_lock(&mainw->event_list_mutex);
     event_list=append_filter_init_event (mainw->event_list,mainw->currticks,
@@ -6638,7 +6641,10 @@ boolean weed_init_effect(int hotkey) {
     init_events[hotkey]=get_last_event(mainw->event_list);
     ntracks=weed_leaf_num_elements(init_events[hotkey],"in_tracks");
     pchains[hotkey]=filter_init_add_pchanges(mainw->event_list,new_instance,init_events[hotkey],ntracks,0);
-    create_filter_map(); // we create filter_map event_t * array with ordered effects
+    rteval=mainw->rte;
+    new_rte=GU641<<(hotkey);
+    if (!(rteval&new_rte)) rteval|=new_rte;
+    create_filter_map(rteval); // we create filter_map event_t * array with ordered effects
     mainw->event_list=append_filter_map_event (mainw->event_list,mainw->currticks,filter_map);
     pthread_mutex_unlock(&mainw->event_list_mutex);
   }
@@ -6900,12 +6906,16 @@ void weed_deinit_effect(int hotkey) {
   }
   if (mainw->record&&!mainw->record_paused&&mainw->playing_file>-1&&init_events[hotkey]!=NULL&&
       (prefs->rec_opts&REC_EFFECTS)&&num_in_chans>0) {
+    uint64_t rteval,new_rte;
     // place this synchronous with the preceding frame
     pthread_mutex_lock(&mainw->event_list_mutex);
     mainw->event_list=append_filter_deinit_event (mainw->event_list,mainw->currticks,init_events[hotkey],pchains[hotkey]);
     init_events[hotkey]=NULL;
     if (pchains[hotkey]!=NULL) g_free(pchains[hotkey]);
-    create_filter_map(); // we create filter_map event_t * array with ordered effects
+    rteval=mainw->rte;
+    new_rte=GU641<<(hotkey);
+    if (rteval&new_rte) rteval^=new_rte;
+    create_filter_map(rteval); // we create filter_map event_t * array with ordered effects
     mainw->event_list=append_filter_map_event (mainw->event_list,mainw->currticks,filter_map);
     pthread_mutex_unlock(&mainw->event_list_mutex);
   }

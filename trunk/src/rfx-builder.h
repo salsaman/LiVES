@@ -135,6 +135,7 @@ typedef struct {
   lives_rfx_table_type_t table_type;
 
   int table_rows;
+  int ptable_rows;
 
   lives_rfx_code_type_t codetype;
 
@@ -175,7 +176,7 @@ typedef struct {
   GtkWidget *move_up_button;
   GtkWidget *move_down_button;
 
-  uint32_t props;
+  guint32 props;
 
   gchar *pre_code;
   gchar *loop_code;
@@ -279,7 +280,7 @@ void add_rfx_effects(void);
 // utility functions
 gchar *prompt_for_script_name (const gchar *sname, lives_rfx_status_t status);
 boolean check_builder_programs (void);
-GList *get_script_list (short status);
+GList *get_script_list (gshort status);
 
 boolean perform_rfxbuilder_checks (rfx_build_window_t *);
 boolean perform_param_checks (rfx_build_window_t *, int index, int rows);

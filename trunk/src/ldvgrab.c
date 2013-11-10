@@ -213,7 +213,7 @@ void cameject (s_cam *cam) {
 
 
 gchar *find_free_camfile(int format) {
-  gchar *filename=g_strdup(lives_entry_get_text(LIVES_ENTRY(dvgrabw->filent)));
+  gchar *filename=g_strdup(lives_entry_get_text(GTK_ENTRY(dvgrabw->filent)));
   int i;
   gchar *fname,*tmp=NULL,*tmp2,*tmp3;
 

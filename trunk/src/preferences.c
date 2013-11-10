@@ -25,11 +25,9 @@
 #include "omc-learn.h"
 #endif
 
-static int nmons;
+static guint prefs_current_page;
 
-static uint32_t prefs_current_page;
-
-static void select_pref_list_row(uint32_t selected_idx);
+static void select_pref_list_row(guint selected_idx);
 
 #ifdef ENABLE_OSC
 static void on_osc_enable_toggled (GtkToggleButton *t1, gpointer t2) {
@@ -357,7 +355,7 @@ void set_vpp(boolean set_in_prefs) {
 	  if (!mainw->ext_playback) 
 	    do_error_dialog_with_check_transient 
 	      (_ ("\n\nVideo playback plugins are only activated in\nfull screen, separate window (fs) mode\n"),
-	       TRUE,0,prefsw!=NULL?LIVES_WINDOW(prefsw->prefs_dialog):GTK_WINDOW(mainw->LiVES));
+	       TRUE,0,prefsw!=NULL?GTK_WINDOW(prefsw->prefs_dialog):GTK_WINDOW(mainw->LiVES));
 	}
       }
     }
@@ -416,7 +414,7 @@ static void set_temp_label_text(GtkLabel *label) {
   tmpx1=g_strdup(_("The temp directory is LiVES working directory where opened clips and sets are stored.\nIt should be in a partition with plenty of free disk space.\n"));
 
   markup = g_markup_printf_escaped ("<span background=\"white\" foreground=\"red\"><b>%s</b></span>%s",tmpx1,tmpx2);
-  gtk_label_set_markup (LIVES_LABEL (label), markup);
+  gtk_label_set_markup (GTK_LABEL (label), markup);
   g_free (markup);
   g_free(tmpx1);
   g_free(tmpx2);
@@ -427,16 +425,16 @@ static void set_temp_label_text(GtkLabel *label) {
 
 boolean apply_prefs(boolean skip_warn) {
   // set current prefs from prefs dialog
-  const gchar *video_open_command=lives_entry_get_text(LIVES_ENTRY(prefsw->video_open_entry));
-  const gchar *audio_play_command=lives_entry_get_text(LIVES_ENTRY(prefsw->audio_command_entry));
-  const gchar *def_vid_load_dir=lives_entry_get_text(LIVES_ENTRY(prefsw->vid_load_dir_entry));
-  const gchar *def_vid_save_dir=lives_entry_get_text(LIVES_ENTRY(prefsw->vid_save_dir_entry));
-  const gchar *def_audio_dir=lives_entry_get_text(LIVES_ENTRY(prefsw->audio_dir_entry));
-  const gchar *def_image_dir=lives_entry_get_text(LIVES_ENTRY(prefsw->image_dir_entry));
-  const gchar *def_proj_dir=lives_entry_get_text(LIVES_ENTRY(prefsw->proj_dir_entry));
-  const gchar *wp_path=lives_entry_get_text(LIVES_ENTRY(prefsw->wpp_entry));
-  const gchar *frei0r_path=lives_entry_get_text(LIVES_ENTRY(prefsw->frei0r_entry));
-  const gchar *ladspa_path=lives_entry_get_text(LIVES_ENTRY(prefsw->ladspa_entry));
+  const gchar *video_open_command=lives_entry_get_text(GTK_ENTRY(prefsw->video_open_entry));
+  const gchar *audio_play_command=lives_entry_get_text(GTK_ENTRY(prefsw->audio_command_entry));
+  const gchar *def_vid_load_dir=lives_entry_get_text(GTK_ENTRY(prefsw->vid_load_dir_entry));
+  const gchar *def_vid_save_dir=lives_entry_get_text(GTK_ENTRY(prefsw->vid_save_dir_entry));
+  const gchar *def_audio_dir=lives_entry_get_text(GTK_ENTRY(prefsw->audio_dir_entry));
+  const gchar *def_image_dir=lives_entry_get_text(GTK_ENTRY(prefsw->image_dir_entry));
+  const gchar *def_proj_dir=lives_entry_get_text(GTK_ENTRY(prefsw->proj_dir_entry));
+  const gchar *wp_path=lives_entry_get_text(GTK_ENTRY(prefsw->wpp_entry));
+  const gchar *frei0r_path=lives_entry_get_text(GTK_ENTRY(prefsw->frei0r_entry));
+  const gchar *ladspa_path=lives_entry_get_text(GTK_ENTRY(prefsw->ladspa_entry));
 
   gchar tmpdir[PATH_MAX];
   gchar *theme = lives_combo_get_active_text( LIVES_COMBO(prefsw->theme_combo) );
@@ -449,12 +447,12 @@ boolean apply_prefs(boolean skip_warn) {
 
   boolean needs_restart=FALSE;
 
-  double default_fps=lives_spin_button_get_value(LIVES_SPIN_BUTTON(prefsw->spinbutton_def_fps));
+  double default_fps=lives_spin_button_get_value(GTK_SPIN_BUTTON(prefsw->spinbutton_def_fps));
 
   boolean antialias=lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_antialias));
   boolean fx_threads=lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_threads));
 
-  int nfx_threads=lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(prefsw->spinbutton_nfx_threads));
+  int nfx_threads=lives_spin_button_get_value_as_int(GTK_SPIN_BUTTON(prefsw->spinbutton_nfx_threads));
 
   boolean stop_screensaver=lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->stop_screensaver_check));
   boolean open_maximised=lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->open_maximised_check));
@@ -463,8 +461,8 @@ boolean apply_prefs(boolean skip_warn) {
   boolean stream_audio_out=lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_stream_audio));
   boolean rec_after_pb=lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_rec_after_pb));
 
-  uint64_t ds_warn_level=(uint64_t)lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(prefsw->spinbutton_warn_ds))*1000000;
-  uint64_t ds_crit_level=(uint64_t)lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(prefsw->spinbutton_crit_ds))*1000000;
+  guint64 ds_warn_level=lives_spin_button_get_value_as_int(GTK_SPIN_BUTTON(prefsw->spinbutton_warn_ds))*1000000;
+  guint64 ds_crit_level=lives_spin_button_get_value_as_int(GTK_SPIN_BUTTON(prefsw->spinbutton_crit_ds))*1000000;
 
   boolean warn_fps=lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_warn_fps));
   boolean warn_save_set=lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_warn_save_set));
@@ -505,7 +503,6 @@ lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_warn_yuv4
   boolean midisynch=lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->check_midi));
   boolean instant_open=lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_instant_open));
   boolean auto_deint=lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_auto_deint));
-  boolean auto_trim=lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_auto_trim));
   boolean auto_nobord=lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_nobord));
   boolean concat_images=lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_concat_images));
   boolean ins_speed=lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->ins_speed));
@@ -515,9 +512,9 @@ lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_warn_yuv4
   boolean mouse_scroll=lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->mouse_scroll));
   boolean ce_maxspect=lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_ce_maxspect));
 
-  int fsize_to_warn=lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(prefsw->spinbutton_warn_fsize));
-  int dl_bwidth=lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(prefsw->spinbutton_bwidth));
-  int ocp=lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(prefsw->spinbutton_ocp));
+  int fsize_to_warn=lives_spin_button_get_value_as_int(GTK_SPIN_BUTTON(prefsw->spinbutton_warn_fsize));
+  int dl_bwidth=lives_spin_button_get_value_as_int(GTK_SPIN_BUTTON(prefsw->spinbutton_bwidth));
+  int ocp=lives_spin_button_get_value_as_int(GTK_SPIN_BUTTON(prefsw->spinbutton_ocp));
 
   boolean rec_frames=lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->rframes));
   boolean rec_fps=lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->rfps));
@@ -532,15 +529,15 @@ lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_warn_yuv4
   boolean mt_enter_prompt=lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->mt_enter_prompt));
   boolean render_prompt=!lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_render_prompt));
 
-  int mt_def_width=lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(prefsw->spinbutton_mt_def_width));
-  int mt_def_height=lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(prefsw->spinbutton_mt_def_height));
-  int mt_def_fps=lives_spin_button_get_value(LIVES_SPIN_BUTTON(prefsw->spinbutton_mt_def_fps));
-  int mt_def_arate=atoi(lives_entry_get_text(LIVES_ENTRY(resaudw->entry_arate)));
-  int mt_def_achans=atoi(lives_entry_get_text(LIVES_ENTRY(resaudw->entry_achans)));
-  int mt_def_asamps=atoi(lives_entry_get_text(LIVES_ENTRY(resaudw->entry_asamps)));
+  int mt_def_width=lives_spin_button_get_value_as_int(GTK_SPIN_BUTTON(prefsw->spinbutton_mt_def_width));
+  int mt_def_height=lives_spin_button_get_value_as_int(GTK_SPIN_BUTTON(prefsw->spinbutton_mt_def_height));
+  int mt_def_fps=lives_spin_button_get_value(GTK_SPIN_BUTTON(prefsw->spinbutton_mt_def_fps));
+  int mt_def_arate=atoi(lives_entry_get_text(GTK_ENTRY(resaudw->entry_arate)));
+  int mt_def_achans=atoi(lives_entry_get_text(GTK_ENTRY(resaudw->entry_achans)));
+  int mt_def_asamps=atoi(lives_entry_get_text(GTK_ENTRY(resaudw->entry_asamps)));
   int mt_def_signed_endian=lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(resaudw->rb_unsigned))*
     AFORM_UNSIGNED+lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(resaudw->rb_bigend))*AFORM_BIG_ENDIAN;
-  int mt_undo_buf=lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(prefsw->spinbutton_mt_undo_buf));
+  int mt_undo_buf=lives_spin_button_get_value_as_int(GTK_SPIN_BUTTON(prefsw->spinbutton_mt_undo_buf));
 
   boolean mt_exit_render=lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_mt_exit_render));
   boolean mt_enable_audio=lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(resaudw->aud_checkbutton));
@@ -550,11 +547,9 @@ lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_warn_yuv4
   boolean mt_autoback_always=lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->mt_autoback_always));
   boolean mt_autoback_never=lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->mt_autoback_never));
 
-  int mt_autoback_time=lives_spin_button_get_value(LIVES_SPIN_BUTTON(prefsw->spinbutton_mt_ab_time));
-  int gui_monitor=lives_spin_button_get_value(LIVES_SPIN_BUTTON(prefsw->spinbutton_gmoni));
-  int play_monitor=lives_spin_button_get_value(LIVES_SPIN_BUTTON(prefsw->spinbutton_pmoni));
-
-  boolean ce_thumbs=lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->ce_thumbs));
+  int mt_autoback_time=lives_spin_button_get_value(GTK_SPIN_BUTTON(prefsw->spinbutton_mt_ab_time));
+  int gui_monitor=lives_spin_button_get_value(GTK_SPIN_BUTTON(prefsw->spinbutton_gmoni));
+  int play_monitor=lives_spin_button_get_value(GTK_SPIN_BUTTON(prefsw->spinbutton_pmoni));
 
   boolean forcesmon=lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->forcesmon));
   boolean startup_ce=lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->rb_startup_ce));
@@ -577,39 +572,38 @@ lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_warn_yuv4
 #ifdef ENABLE_JACK
   boolean jack_astart=lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_start_ajack));
   boolean jack_pwp=lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_jack_pwp));
-  boolean jack_read_autocon=lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_jack_read_autocon));
-  uint32_t jack_opts=(JACK_OPTS_TRANSPORT_CLIENT*jack_client+JACK_OPTS_TRANSPORT_MASTER*jack_master+
+  guint jack_opts=(JACK_OPTS_TRANSPORT_CLIENT*jack_client+JACK_OPTS_TRANSPORT_MASTER*jack_master+
 		   JACK_OPTS_START_TSERVER*jack_tstart+JACK_OPTS_START_ASERVER*jack_astart+
 		   JACK_OPTS_NOPLAY_WHEN_PAUSED*!jack_pwp+JACK_OPTS_TIMEBASE_START*jack_tb_start+
-		   JACK_OPTS_TIMEBASE_CLIENT*jack_tb_client+JACK_OPTS_NO_READ_AUTOCON*!jack_read_autocon);
+		   JACK_OPTS_TIMEBASE_CLIENT*jack_tb_client);
 #endif
 
 #ifdef RT_AUDIO
   boolean audio_follow_fps=lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_afollow));
   boolean audio_follow_clips=lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_aclips));
-  uint32_t audio_opts=(AUDIO_OPTS_FOLLOW_FPS*audio_follow_fps+AUDIO_OPTS_FOLLOW_CLIPS*audio_follow_clips);
+  guint audio_opts=(AUDIO_OPTS_FOLLOW_FPS*audio_follow_fps+AUDIO_OPTS_FOLLOW_CLIPS*audio_follow_clips);
 #endif
 
 #ifdef ENABLE_OSC
-  uint32_t osc_udp_port=lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(prefsw->spinbutton_osc_udp));
+  guint osc_udp_port=lives_spin_button_get_value_as_int(GTK_SPIN_BUTTON(prefsw->spinbutton_osc_udp));
   boolean osc_start=lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->enable_OSC_start));
   boolean osc_enable=lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->enable_OSC));
 #endif
 
-  int rte_keys_virtual=lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(prefsw->spinbutton_rte_keys));
+  int rte_keys_virtual=lives_spin_button_get_value_as_int(GTK_SPIN_BUTTON(prefsw->spinbutton_rte_keys));
 
 #ifdef ENABLE_OSC
 #ifdef OMC_JS_IMPL
   boolean omc_js_enable=lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_omc_js));
-  const gchar *omc_js_fname=lives_entry_get_text(LIVES_ENTRY(prefsw->omc_js_entry));
+  const gchar *omc_js_fname=lives_entry_get_text(GTK_ENTRY(prefsw->omc_js_entry));
 #endif
 
 
 #ifdef OMC_MIDI_IMPL
   boolean omc_midi_enable=lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_omc_midi));
-  const gchar *omc_midi_fname=lives_entry_get_text(LIVES_ENTRY(prefsw->omc_midi_entry));
-  int midicr=lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(prefsw->spinbutton_midicr));
-  int midirpt=lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(prefsw->spinbutton_midirpt));
+  const gchar *omc_midi_fname=lives_entry_get_text(GTK_ENTRY(prefsw->omc_midi_entry));
+  int midicr=lives_spin_button_get_value_as_int(GTK_SPIN_BUTTON(prefsw->spinbutton_midicr));
+  int midirpt=lives_spin_button_get_value_as_int(GTK_SPIN_BUTTON(prefsw->spinbutton_midirpt));
 
 #ifdef ALSA_MIDI
   boolean use_alsa_midi=lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->alsa_midi));
@@ -618,12 +612,12 @@ lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_warn_yuv4
 #endif
 #endif
 
-  int rec_gb=lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(prefsw->spinbutton_rec_gb));
+  int rec_gb=lives_spin_button_get_value_as_int(GTK_SPIN_BUTTON(prefsw->spinbutton_rec_gb));
 
   gchar audio_player[256];
   int listlen=g_list_length (prefs->acodec_list);
   int rec_opts=rec_frames*REC_FRAMES+rec_fps*REC_FPS+rec_effects*REC_EFFECTS+rec_clips*REC_CLIPS+rec_audio*REC_AUDIO+rec_after_pb*REC_AFTER_PB;
-  uint32_t warn_mask;
+  guint warn_mask;
 
   unsigned char *new_undo_buf;
   GList *ulist;
@@ -638,7 +632,7 @@ lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_warn_yuv4
 
   gchar *tmp;
 
-  gchar *cdplay_device=g_filename_from_utf8(lives_entry_get_text(LIVES_ENTRY(prefsw->cdplay_entry)),-1,NULL,NULL,NULL);
+  gchar *cdplay_device=g_filename_from_utf8(lives_entry_get_text(GTK_ENTRY(prefsw->cdplay_entry)),-1,NULL,NULL,NULL);
 
   if (capable->has_encoder_plugins) {
     audio_codec = lives_combo_get_active_text( LIVES_COMBO(prefsw->acodec_combo) );
@@ -651,7 +645,7 @@ lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_warn_yuv4
   }
   else future_prefs->encoder.audio_codec=0;
 
-  g_snprintf (tmpdir,PATH_MAX,"%s",(tmp=g_filename_from_utf8(lives_entry_get_text(LIVES_ENTRY(prefsw->tmpdir_entry)),
+  g_snprintf (tmpdir,PATH_MAX,"%s",(tmp=g_filename_from_utf8(lives_entry_get_text(GTK_ENTRY(prefsw->tmpdir_entry)),
 							     -1,NULL,NULL,NULL)));
   g_free(tmp);
 
@@ -773,7 +767,7 @@ lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_warn_yuv4
       }
       else {
 	g_snprintf(future_prefs->tmpdir,PATH_MAX,"%s",tmpdir);
-	set_temp_label_text(LIVES_LABEL(prefsw->temp_label));
+	set_temp_label_text(GTK_LABEL(prefsw->temp_label));
 	lives_widget_queue_draw(prefsw->temp_label);
 	lives_widget_context_update(); // update prefs window before showing confirmation box
 
@@ -784,7 +778,7 @@ lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_warn_yuv4
 	}
 	else {
 	  g_snprintf(future_prefs->tmpdir,PATH_MAX,"%s",prefs->tmpdir);
-          lives_entry_set_text(LIVES_ENTRY(prefsw->tmpdir_entry), prefs->tmpdir);
+          lives_entry_set_text(GTK_ENTRY(prefsw->tmpdir_entry), prefs->tmpdir);
 	}
       }
       g_free (msg);
@@ -841,7 +835,6 @@ lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_warn_yuv4
     prefs->force_single_monitor=forcesmon;
     set_boolean_pref("force_single_monitor",forcesmon);
     get_monitors();
-    if (capable->nmonitors==0) resize_widgets_for_monitor(TRUE);
   }
 
   if (capable->nmonitors>1) {
@@ -854,12 +847,6 @@ lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_warn_yuv4
       resize_widgets_for_monitor(TRUE);
     }
   }
-
-  if (ce_thumbs!=prefs->ce_thumb_mode) {
-    prefs->ce_thumb_mode=ce_thumbs;
-    set_boolean_pref("ce_thumb_mode",ce_thumbs);
-  }
-
 
   // fps stats
   if (prefs->show_player_stats!=show_player_stats) {
@@ -910,11 +897,6 @@ lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_warn_yuv4
   // auto deinterlace
   if (prefs->auto_deint!=auto_deint) {
     set_boolean_pref("auto_deinterlace",(prefs->auto_deint=auto_deint));
-  }
-
-  // auto deinterlace
-  if (prefs->auto_trim_audio!=auto_trim) {
-    set_boolean_pref("auto_trim_pad_audio",(prefs->auto_trim_audio=auto_trim));
   }
 
   // auto border cut
@@ -1149,13 +1131,13 @@ lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_warn_yuv4
   if (prefs->audio_player==AUD_PLAYER_JACK&&!capable->has_jackd) {
     do_error_dialog_with_check_transient
       (_("\nUnable to switch audio players to jack - jackd must be installed first.\nSee http://jackaudio.org\n"),
-       TRUE,0,prefsw!=NULL?LIVES_WINDOW(prefsw->prefs_dialog):GTK_WINDOW(mainw->LiVES));
+       TRUE,0,prefsw!=NULL?GTK_WINDOW(prefsw->prefs_dialog):GTK_WINDOW(mainw->LiVES));
   }
   else {
     if (prefs->audio_player==AUD_PLAYER_JACK&&strcmp(audio_player,"jack")) {
       do_error_dialog_with_check_transient
 	(_("\nSwitching audio players requires restart (jackd must not be running)\n"),
-	 TRUE,0,prefsw!=NULL?LIVES_WINDOW(prefsw->prefs_dialog):GTK_WINDOW(mainw->LiVES));
+	 TRUE,0,prefsw!=NULL?GTK_WINDOW(prefsw->prefs_dialog):GTK_WINDOW(mainw->LiVES));
     }
 
     // switch to sox
@@ -1182,7 +1164,7 @@ lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_warn_yuv4
       if (!capable->has_pulse_audio) {
 	do_error_dialog_with_check_transient
 	  (_("\nUnable to switch audio players to pulse audio\npulseaudio must be installed first.\nSee http://www.pulseaudio.org\n"),
-	   TRUE,0,prefsw!=NULL?LIVES_WINDOW(prefsw->prefs_dialog):GTK_WINDOW(mainw->LiVES));
+	   TRUE,0,prefsw!=NULL?GTK_WINDOW(prefsw->prefs_dialog):GTK_WINDOW(mainw->LiVES));
       }
       else {
 	if (!switch_aud_to_pulse()) {
@@ -1465,11 +1447,11 @@ void set_acodec_list_from_allowed (_prefsw *prefsw, render_details *rdet) {
 
     if (prefsw!=NULL) {
       lives_combo_populate(LIVES_COMBO(prefsw->acodec_combo), prefs->acodec_list);
-      lives_combo_set_active_index(LIVES_COMBO(prefsw->acodec_combo), 0);
+      lives_combo_set_active_index(GTK_COMBO_BOX(prefsw->acodec_combo), 0);
     }
     if (rdet!=NULL) {
       lives_combo_populate(LIVES_COMBO(rdet->acodec_combo), prefs->acodec_list);
-      lives_combo_set_active_index(LIVES_COMBO(rdet->acodec_combo), 0);
+      lives_combo_set_active_index(GTK_COMBO_BOX(rdet->acodec_combo), 0);
     }
     return;
   }
@@ -1496,10 +1478,10 @@ void set_acodec_list_from_allowed (_prefsw *prefsw, render_details *rdet) {
   for (idx=0; idx < g_list_length(prefs->acodec_list); idx++) {
     if (prefs->acodec_list_to_format[idx]==future_prefs->encoder.audio_codec) {
       if (prefsw!=NULL){
-        lives_combo_set_active_index(LIVES_COMBO(prefsw->acodec_combo), idx);
+        lives_combo_set_active_index(GTK_COMBO_BOX(prefsw->acodec_combo), idx);
       }
       if (rdet!=NULL){
-        lives_combo_set_active_index(LIVES_COMBO(rdet->acodec_combo), idx);
+        lives_combo_set_active_index(GTK_COMBO_BOX(rdet->acodec_combo), idx);
       }
       break;
     }
@@ -1512,10 +1494,10 @@ void after_vpp_changed (GtkWidget *vpp_combo, gpointer advbutton) {
   _vid_playback_plugin *tmpvpp;
 
   if (!g_ascii_strcasecmp(newvpp,mainw->string_constants[LIVES_STRING_CONSTANT_NONE])) {
-    lives_widget_set_sensitive (LIVES_WIDGET(advbutton), FALSE);
+    lives_widget_set_sensitive (GTK_WIDGET(advbutton), FALSE);
   }
   else {
-    lives_widget_set_sensitive (LIVES_WIDGET(advbutton), TRUE);
+    lives_widget_set_sensitive (GTK_WIDGET(advbutton), TRUE);
 
     // will call set_astream_settings
     if ((tmpvpp=open_vid_playback_plugin (newvpp, FALSE))==NULL) {
@@ -1543,22 +1525,10 @@ void after_vpp_changed (GtkWidget *vpp_combo, gpointer advbutton) {
 
 
 static void on_forcesmon_toggled (GtkToggleButton *tbutton, gpointer user_data) {
-  int gui_monitor=lives_spin_button_get_value(LIVES_SPIN_BUTTON(prefsw->spinbutton_gmoni));
-  int play_monitor=lives_spin_button_get_value(LIVES_SPIN_BUTTON(prefsw->spinbutton_pmoni));
   lives_widget_set_sensitive(prefsw->spinbutton_gmoni,!lives_toggle_button_get_active(tbutton));
   lives_widget_set_sensitive(prefsw->spinbutton_pmoni,!lives_toggle_button_get_active(tbutton));
-  lives_widget_set_sensitive(prefsw->ce_thumbs,!lives_toggle_button_get_active(tbutton)&&
-			     play_monitor!=gui_monitor&&
-			     play_monitor!=0&&capable->nmonitors>0);
 }
 
-static void pmoni_gmoni_changed (GtkWidget *sbut, gpointer advbutton) {
-  int gui_monitor=lives_spin_button_get_value(LIVES_SPIN_BUTTON(prefsw->spinbutton_gmoni));
-  int play_monitor=lives_spin_button_get_value(LIVES_SPIN_BUTTON(prefsw->spinbutton_pmoni));
-  lives_widget_set_sensitive(prefsw->ce_thumbs,play_monitor!=gui_monitor&&
-			     play_monitor!=0&&!lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->forcesmon))&&
-			     capable->nmonitors>0);
-}
 
 static void on_mtbackevery_toggled (GtkToggleButton *tbutton, gpointer user_data) {
   _prefsw *xprefsw;
@@ -1652,13 +1622,11 @@ static void on_audp_entry_changed (GtkWidget *audp_combo, gpointer ptr) {
   }
   if (!strncmp(audp,"jack",4)) {
     lives_widget_set_sensitive(prefsw->checkbutton_jack_pwp,TRUE);
-    lives_widget_set_sensitive(prefsw->checkbutton_jack_read_autocon,TRUE);
     lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_start_ajack),TRUE);
     lives_widget_show(prefsw->jack_int_label);
   }
   else {
     lives_widget_set_sensitive(prefsw->checkbutton_jack_pwp,FALSE);
-    lives_widget_set_sensitive(prefsw->checkbutton_jack_read_autocon,FALSE);
     lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_start_ajack),FALSE);
     lives_widget_hide(prefsw->jack_int_label);
   }
@@ -1678,7 +1646,7 @@ static void stream_audio_toggled(GtkToggleButton *togglebutton, gpointer user_da
   if (lives_toggle_button_get_active(togglebutton)) {
     // init vpp, get audio codec, check requisites
     _vid_playback_plugin *tmpvpp;
-    uint32_t orig_acodec=AUDIO_CODEC_NONE;
+    guint32 orig_acodec=AUDIO_CODEC_NONE;
 
     if (strlen(future_prefs->vpp_name)) {
       if ((tmpvpp=open_vid_playback_plugin (future_prefs->vpp_name, FALSE))==NULL) return;
@@ -1789,7 +1757,7 @@ static void pref_init_list(GtkWidget *list) {
 /*
  * Adds entry to preferences dialog list 
  */
-static void prefs_add_to_list(GtkWidget *list, GdkPixbuf *pix, const gchar *str, uint32_t idx) {
+static void prefs_add_to_list(GtkWidget *list, GdkPixbuf *pix, const gchar *str, guint idx) {
   GtkListStore *store;
   GtkTreeIter iter;
 
@@ -1893,11 +1861,8 @@ void on_prefDomainChanged(GtkTreeSelection *widget, gpointer dummy) {
 	lives_widget_show_all(prefsw->scrollw_right_gui);
 	prefsw->right_shown = prefsw->scrollw_right_gui;
 	lives_widget_show_all(prefsw->scrollw_right_gui);
-	if (nmons<=1) {
+	if (capable->nmonitors<=1) {
 	  lives_widget_hide (prefsw->forcesmon_hbox);
-#if !GTK_CHECK_VERSION(3,2,0)  // required for grid widget
-	  lives_widget_hide (prefsw->ce_thumbs);
-#endif
 	}
 	prefs_current_page=LIST_ENTRY_GUI;
       }
@@ -1911,26 +1876,26 @@ void on_prefDomainChanged(GtkTreeSelection *widget, gpointer dummy) {
  * Function makes apply button sensitive
  */
 void apply_button_set_enabled(GtkWidget *widget, gpointer func_data) {
-  lives_widget_set_sensitive(LIVES_WIDGET(prefsw->applybutton), TRUE);
-  lives_widget_set_sensitive(LIVES_WIDGET(prefsw->cancelbutton), TRUE);
-  lives_widget_set_sensitive(LIVES_WIDGET(prefsw->closebutton), FALSE);
+  lives_widget_set_sensitive(GTK_WIDGET(prefsw->applybutton), TRUE);
+  lives_widget_set_sensitive(GTK_WIDGET(prefsw->cancelbutton), TRUE);
+  lives_widget_set_sensitive(GTK_WIDGET(prefsw->closebutton), FALSE);
 }
 
 // toggle sets other widget sensitive/insensitive
 static void toggle_set_sensitive(GtkWidget *widget, gpointer func_data) {
-  lives_widget_set_sensitive(LIVES_WIDGET(func_data), lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(widget)));
+  lives_widget_set_sensitive(GTK_WIDGET(func_data), lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(widget)));
 }
 
 // toggle sets other widget insensitive/sensitive
 static void toggle_set_insensitive(GtkWidget *widget, gpointer func_data) {
-  lives_widget_set_sensitive(LIVES_WIDGET(func_data), !lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(widget)));
+  lives_widget_set_sensitive(GTK_WIDGET(func_data), !lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(widget)));
 }
 
 
 
 static void spinbutton_crit_ds_value_changed (GtkSpinButton *crit_ds, gpointer user_data) {
   double myval=lives_spin_button_get_value(crit_ds);
-  lives_spin_button_set_range (LIVES_SPIN_BUTTON (prefsw->spinbutton_warn_ds),myval,DS_WARN_CRIT_MAX);
+  lives_spin_button_set_range (GTK_SPIN_BUTTON (prefsw->spinbutton_warn_ds),myval,DS_WARN_CRIT_MAX);
   apply_button_set_enabled(NULL,NULL);
 }
 
@@ -2026,6 +1991,7 @@ _prefsw *create_prefs_dialog (void) {
   boolean pfsm;
   boolean has_ap_rec = FALSE;
 
+  int nmonitors = capable->nmonitors; ///< number of screen monitors
   int dph;
 
   register int i;
@@ -2038,18 +2004,18 @@ _prefsw *create_prefs_dialog (void) {
 
   // Create new modal dialog window and set some attributes
   prefsw->prefs_dialog = lives_standard_dialog_new (_("LiVES: - Preferences"),FALSE);
-  lives_window_add_accel_group (LIVES_WINDOW (prefsw->prefs_dialog), accel_group);
+  gtk_window_add_accel_group (GTK_WINDOW (prefsw->prefs_dialog), accel_group);
 
-  lives_window_set_default_size (LIVES_WINDOW (prefsw->prefs_dialog), PREF_WIN_WIDTH, PREF_WIN_HEIGHT);
+  gtk_window_set_default_size (GTK_WINDOW (prefsw->prefs_dialog), PREF_WIN_WIDTH, PREF_WIN_HEIGHT);
   lives_widget_set_size_request (prefsw->prefs_dialog, PREF_WIN_WIDTH, PREF_WIN_HEIGHT);
 
   if (prefs->show_gui) {
-    if (mainw->multitrack==NULL) lives_window_set_transient_for(LIVES_WINDOW(prefsw->prefs_dialog),GTK_WINDOW(mainw->LiVES));
-    else lives_window_set_transient_for(LIVES_WINDOW(prefsw->prefs_dialog),GTK_WINDOW(mainw->multitrack->window));
+    if (mainw->multitrack==NULL) gtk_window_set_transient_for(GTK_WINDOW(prefsw->prefs_dialog),GTK_WINDOW(mainw->LiVES));
+    else gtk_window_set_transient_for(GTK_WINDOW(prefsw->prefs_dialog),GTK_WINDOW(mainw->multitrack->window));
   }
 
   // Get dialog's vbox and show it
-  dialog_vbox_main = lives_dialog_get_content_area(LIVES_DIALOG(prefsw->prefs_dialog));
+  dialog_vbox_main = lives_dialog_get_content_area(GTK_DIALOG(prefsw->prefs_dialog));
   lives_widget_show (dialog_vbox_main);
 
   // Create dialog horizontal panels
@@ -2059,7 +2025,7 @@ _prefsw *create_prefs_dialog (void) {
 
 
   // Create dialog table for the right panel controls placement
-  dialog_table = lives_table_new(1, 1, FALSE);
+  dialog_table = gtk_table_new(1, 1, FALSE);
   lives_widget_show(dialog_table);
 
   if (palette->style&STYLE_1) {
@@ -2079,15 +2045,15 @@ _prefsw *create_prefs_dialog (void) {
   gtk_tree_view_set_headers_visible(GTK_TREE_VIEW(prefsw->prefs_list), FALSE);
 
   // Place panels into main vbox
-  lives_box_pack_start (LIVES_BOX (dialog_vbox_main), dialog_hpaned, TRUE, TRUE, 0);
+  lives_box_pack_start (GTK_BOX (dialog_vbox_main), dialog_hpaned, TRUE, TRUE, 0);
 
   // Place list on the left panel
   pref_init_list(prefsw->prefs_list);
   
   list_scroll = gtk_scrolled_window_new(lives_tree_view_get_hadjustment(LIVES_TREE_VIEW(prefsw->prefs_list)), NULL);
   lives_widget_show(list_scroll);
-  lives_scrolled_window_set_policy (LIVES_SCROLLED_WINDOW (list_scroll), LIVES_POLICY_AUTOMATIC, LIVES_POLICY_AUTOMATIC);
-  lives_container_add (LIVES_CONTAINER (list_scroll), prefsw->prefs_list);
+  gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW (list_scroll), GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
+  lives_container_add (GTK_CONTAINER (list_scroll), prefsw->prefs_list);
 
   if (palette->style&STYLE_1) {
     lives_widget_set_bg_color(prefsw->prefs_list, LIVES_WIDGET_STATE_NORMAL, &palette->info_base);
@@ -2108,11 +2074,11 @@ _prefsw *create_prefs_dialog (void) {
 
   lives_widget_show (prefsw->vbox_right_gui);
   prefsw->right_shown = prefsw->vbox_right_gui;
-  lives_container_set_border_width (LIVES_CONTAINER (prefsw->vbox_right_gui), widget_opts.packing_width*2);
+  lives_container_set_border_width (GTK_CONTAINER (prefsw->vbox_right_gui), widget_opts.packing_width*2);
 
   // ---
   hbox = lives_hbox_new (FALSE, 0);
-  lives_box_pack_start (LIVES_BOX (prefsw->vbox_right_gui), hbox, FALSE, FALSE, widget_opts.packing_height);
+  lives_box_pack_start (GTK_BOX (prefsw->vbox_right_gui), hbox, FALSE, FALSE, widget_opts.packing_height);
   // ---
 
   prefsw->fs_max_check = 
@@ -2129,7 +2095,7 @@ _prefsw *create_prefs_dialog (void) {
 
   // ---
   hbox = lives_hbox_new (FALSE, 0);
-  lives_box_pack_start (LIVES_BOX (prefsw->vbox_right_gui), hbox, FALSE, FALSE, widget_opts.packing_height);
+  lives_box_pack_start (GTK_BOX (prefsw->vbox_right_gui), hbox, FALSE, FALSE, widget_opts.packing_height);
 
   prefsw->stop_screensaver_check = 
     lives_standard_check_button_new(_("Stop screensaver on playback    "),TRUE,LIVES_BOX(hbox),NULL);
@@ -2144,7 +2110,7 @@ _prefsw *create_prefs_dialog (void) {
 
   // --
   hbox = lives_hbox_new(FALSE, 0);
-  lives_box_pack_start (LIVES_BOX (prefsw->vbox_right_gui), hbox, FALSE, FALSE, widget_opts.packing_height);
+  lives_box_pack_start (GTK_BOX (prefsw->vbox_right_gui), hbox, FALSE, FALSE, widget_opts.packing_height);
 
   prefsw->show_tool = 
     lives_standard_check_button_new(_("Show toolbar when background is blanked"),TRUE,LIVES_BOX(hbox),NULL);
@@ -2161,7 +2127,7 @@ _prefsw *create_prefs_dialog (void) {
 
   // ---
   hbox = lives_hbox_new(FALSE, 0);
-  lives_box_pack_start (LIVES_BOX (prefsw->vbox_right_gui), hbox, FALSE, FALSE, widget_opts.packing_height);
+  lives_box_pack_start (GTK_BOX (prefsw->vbox_right_gui), hbox, FALSE, FALSE, widget_opts.packing_height);
   // ---
 
 
@@ -2173,11 +2139,11 @@ _prefsw *create_prefs_dialog (void) {
 
   // ---
   hbox = lives_hbox_new (FALSE, 0);
-  lives_box_pack_start (LIVES_BOX (prefsw->vbox_right_gui), hbox, FALSE, FALSE, widget_opts.packing_height);
+  lives_box_pack_start (GTK_BOX (prefsw->vbox_right_gui), hbox, FALSE, FALSE, widget_opts.packing_height);
 
   // ---
   label = lives_standard_label_new (_("Startup mode:"));
-  lives_box_pack_start (LIVES_BOX (hbox), label, FALSE, TRUE, 0);
+  lives_box_pack_start (GTK_BOX (hbox), label, FALSE, TRUE, 0);
 
   // --- 
   prefsw->rb_startup_ce = lives_standard_radio_button_new(_("_Clip editor"),TRUE,st_interface_group,LIVES_BOX(hbox),NULL);
@@ -2194,55 +2160,76 @@ _prefsw *create_prefs_dialog (void) {
     lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(prefsw->rb_startup_ce),TRUE);
   }
 
-  add_fill_to_box(LIVES_BOX(hbox));
+  add_fill_to_box(GTK_BOX(hbox));
 
   // 
   // multihead support (inside Gui part)
   //
-
   pfsm=prefs->force_single_monitor;
   prefs->force_single_monitor=FALSE;
-  get_monitors();
-  nmons=capable->nmonitors;
 
+  get_monitors();
+
+  prefs->force_single_monitor=pfsm;
+
+  if (capable->nmonitors!=nmonitors) {
+
+    prefs->gui_monitor=0;
+    prefs->play_monitor=0;
+
+    if (capable->nmonitors>1) {
+      gchar buff[256];
+      get_pref("monitors",buff,256);
+      
+      if (strlen(buff)==0||get_token_count(buff,',')==1) {
+	prefs->gui_monitor=1;
+	prefs->play_monitor=2;
+      }
+      else {
+	gchar **array=g_strsplit(buff,",",2);
+	prefs->gui_monitor=atoi(array[0]);
+	prefs->play_monitor=atoi(array[1]);
+	g_strfreev(array);
+      }
+      
+      if (prefs->gui_monitor<1) prefs->gui_monitor=1;
+      if (prefs->play_monitor<0) prefs->play_monitor=0;
+      if (prefs->gui_monitor>capable->nmonitors) prefs->gui_monitor=capable->nmonitors;
+      if (prefs->play_monitor>capable->nmonitors) prefs->play_monitor=capable->nmonitors;
+    }
+  }
   // ---
   add_hsep_to_box (LIVES_BOX (prefsw->vbox_right_gui));
   // ---
   label = lives_standard_label_new (_("Multi-head support"));
-  lives_box_pack_start (LIVES_BOX (prefsw->vbox_right_gui), label, FALSE, FALSE, widget_opts.packing_height);
+  lives_box_pack_start (GTK_BOX (prefsw->vbox_right_gui), label, FALSE, FALSE, widget_opts.packing_height);
   // ---
   hbox = lives_hbox_new (FALSE, 0);
-  lives_box_pack_start (LIVES_BOX (prefsw->vbox_right_gui), hbox, FALSE, FALSE, widget_opts.packing_height*2);
+  lives_box_pack_start (GTK_BOX (prefsw->vbox_right_gui), hbox, FALSE, FALSE, widget_opts.packing_height*2);
   // ---
 
 
-  prefsw->spinbutton_gmoni = lives_standard_spin_button_new (_(" monitor number for LiVES interface"), TRUE, prefs->gui_monitor, 1, nmons, 
+  prefsw->spinbutton_gmoni = lives_standard_spin_button_new (_(" monitor number for LiVES interface"), TRUE, prefs->gui_monitor, 1, capable->nmonitors, 
 							     1., 1., 0, LIVES_BOX(hbox),NULL);
 
   hbox = lives_hbox_new (FALSE, 0);
-  lives_box_pack_start (LIVES_BOX (prefsw->vbox_right_gui), hbox, FALSE, FALSE, widget_opts.packing_height);
+  lives_box_pack_start (GTK_BOX (prefsw->vbox_right_gui), hbox, FALSE, FALSE, widget_opts.packing_height);
 
   prefsw->spinbutton_pmoni = lives_standard_spin_button_new (_(" monitor number for playback"), TRUE, prefs->play_monitor, 0, 
-							     nmons==1?0:nmons,
+							     capable->nmonitors==1?0:capable->nmonitors,
 							     1., 1., 0, LIVES_BOX(hbox),NULL);
-
-
-
-  prefs->force_single_monitor=pfsm;
-  get_monitors();
-
 
   // ---
 
   label = lives_standard_label_new (_("A setting of 0 means use all available monitors (only works with some playback plugins)."));
 
-  lives_box_pack_start (LIVES_BOX (hbox), label, TRUE, TRUE, 0);
+  lives_box_pack_start (GTK_BOX (hbox), label, TRUE, TRUE, 0);
   // ---
 
   // ---
 
   prefsw->forcesmon_hbox = lives_hbox_new (FALSE, 0);
-  lives_box_pack_start (LIVES_BOX (prefsw->vbox_right_gui), prefsw->forcesmon_hbox, FALSE, FALSE, widget_opts.packing_height*2);
+  lives_box_pack_start (GTK_BOX (prefsw->vbox_right_gui), prefsw->forcesmon_hbox, FALSE, FALSE, widget_opts.packing_height*2);
 
   prefsw->forcesmon = lives_standard_check_button_new((tmp=g_strdup(_("Force single monitor"))),FALSE,LIVES_BOX(prefsw->forcesmon_hbox),
 						      (tmp2=g_strdup(_("Ignore all except the first monitor."))));
@@ -2254,7 +2241,7 @@ _prefsw *create_prefs_dialog (void) {
   lives_toggle_button_set_active (LIVES_TOGGLE_BUTTON (prefsw->forcesmon), prefs->force_single_monitor);
 
   // ---
-  if (nmons<=1) {
+  if (capable->nmonitors<=1) {
     lives_widget_set_sensitive(prefsw->spinbutton_gmoni,FALSE);
     lives_widget_set_sensitive(prefsw->spinbutton_pmoni,FALSE);
   }
@@ -2263,45 +2250,32 @@ _prefsw *create_prefs_dialog (void) {
 		    G_CALLBACK (on_forcesmon_toggled),
 		    NULL);
 
-
-  hbox = lives_hbox_new (FALSE, 0);
-  lives_box_pack_start (LIVES_BOX (prefsw->vbox_right_gui), hbox, FALSE, FALSE, widget_opts.packing_height);
-
-  prefsw->ce_thumbs = lives_standard_check_button_new(_("Show clip thumbnails during playback"),TRUE,
-						      LIVES_BOX(hbox),NULL);
-
-  lives_widget_set_sensitive (prefsw->ce_thumbs, prefs->play_monitor!=prefs->gui_monitor&&
-			      prefs->play_monitor!=0&&!prefs->force_single_monitor&&
-			      capable->nmonitors>0);
-
-  lives_toggle_button_set_active (LIVES_TOGGLE_BUTTON (prefsw->ce_thumbs), prefs->ce_thumb_mode);
-
   icon = g_build_filename(prefs->prefix_dir, ICON_DIR, "pref_gui.png", NULL);
-  pixbuf_gui = lives_pixbuf_new_from_file(icon, NULL);
+  pixbuf_gui = gdk_pixbuf_new_from_file(icon, NULL);
   g_free(icon);
 
   prefs_add_to_list(prefsw->prefs_list, pixbuf_gui, _("GUI"), LIST_ENTRY_GUI);
-  lives_container_add (LIVES_CONTAINER (dialog_table), prefsw->scrollw_right_gui);
+  lives_container_add (GTK_CONTAINER (dialog_table), prefsw->scrollw_right_gui);
 
   // -----------------------,
   // multitrack controls    |
   // -----------------------'
 
   prefsw->vbox_right_multitrack = lives_vbox_new (FALSE, 0);
-  lives_container_set_border_width (LIVES_CONTAINER (prefsw->vbox_right_multitrack), widget_opts.border_width);
+  lives_container_set_border_width (GTK_CONTAINER (prefsw->vbox_right_multitrack), widget_opts.border_width);
 
   prefsw->scrollw_right_multitrack = lives_standard_scrolled_window_new (0,0,prefsw->vbox_right_multitrack);
 
   hbox = lives_hbox_new (FALSE, 0);
-  lives_box_pack_start (LIVES_BOX (prefsw->vbox_right_multitrack), hbox, FALSE, FALSE, widget_opts.packing_height);
+  lives_box_pack_start (GTK_BOX (prefsw->vbox_right_multitrack), hbox, FALSE, FALSE, widget_opts.packing_height);
 
   label = lives_standard_label_new (_("When entering Multitrack mode:"));
-  lives_box_pack_start (LIVES_BOX (hbox), label, FALSE, FALSE, widget_opts.packing_width);
+  lives_box_pack_start (GTK_BOX (hbox), label, FALSE, FALSE, widget_opts.packing_width);
   // ---
   add_fill_to_box(LIVES_BOX(hbox));
   // ---
   hbox = lives_hbox_new (FALSE, 0);
-  lives_box_pack_start (LIVES_BOX (prefsw->vbox_right_multitrack), hbox, FALSE, FALSE, widget_opts.packing_height);
+  lives_box_pack_start (GTK_BOX (prefsw->vbox_right_multitrack), hbox, FALSE, FALSE, widget_opts.packing_height);
   // ---
 
   prefsw->mt_enter_prompt = lives_standard_radio_button_new (_("_Prompt me for width, height, fps and audio settings"),TRUE,
@@ -2317,7 +2291,7 @@ _prefsw *create_prefs_dialog (void) {
 
 
   hbox = lives_hbox_new(FALSE, 0);
-  lives_box_pack_start (LIVES_BOX (prefsw->vbox_right_multitrack), hbox, FALSE, FALSE, 0);
+  lives_box_pack_start (GTK_BOX (prefsw->vbox_right_multitrack), hbox, FALSE, FALSE, 0);
 
   prefsw->checkbutton_render_prompt = lives_standard_check_button_new(_("Use these same _values for rendering a new clip"),TRUE,
 								      LIVES_BOX(hbox),NULL);
@@ -2327,9 +2301,9 @@ _prefsw *create_prefs_dialog (void) {
 
   // ---
   frame = gtk_frame_new (NULL);
-  lives_box_pack_start (LIVES_BOX (prefsw->vbox_right_multitrack), frame, FALSE, FALSE, widget_opts.packing_height);
+  lives_box_pack_start (GTK_BOX (prefsw->vbox_right_multitrack), frame, FALSE, FALSE, widget_opts.packing_height);
   vbox = lives_vbox_new (FALSE, 0);
-  lives_container_add (LIVES_CONTAINER (frame), vbox);
+  lives_container_add (GTK_CONTAINER (frame), vbox);
   
   label = lives_standard_label_new (_("Video"));
 
@@ -2341,7 +2315,7 @@ _prefsw *create_prefs_dialog (void) {
 
   // ---
   hbox = lives_hbox_new (FALSE, 0);
-  lives_box_pack_start (LIVES_BOX (vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
+  lives_box_pack_start (GTK_BOX (vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
 
   // ---
   prefsw->spinbutton_mt_def_width = lives_standard_spin_button_new (_("_Width           "),
@@ -2381,7 +2355,7 @@ _prefsw *create_prefs_dialog (void) {
 
 
   // must be done after resaudw
-  lives_box_pack_start (LIVES_BOX (prefsw->vbox_right_multitrack), hbox, FALSE, FALSE, widget_opts.packing_height);
+  lives_box_pack_start (GTK_BOX (prefsw->vbox_right_multitrack), hbox, FALSE, FALSE, widget_opts.packing_height);
 
 
   lives_widget_set_sensitive(prefsw->backaudio_checkbutton, 
@@ -2394,7 +2368,7 @@ _prefsw *create_prefs_dialog (void) {
   add_hsep_to_box (LIVES_BOX (prefsw->vbox_right_multitrack));
   // ---
   hbox = lives_hbox_new (FALSE, 0);
-  lives_box_pack_start (LIVES_BOX (prefsw->vbox_right_multitrack), hbox, FALSE, FALSE, widget_opts.packing_height);
+  lives_box_pack_start (GTK_BOX (prefsw->vbox_right_multitrack), hbox, FALSE, FALSE, widget_opts.packing_height);
 
   // ---
   prefsw->spinbutton_mt_undo_buf = lives_standard_spin_button_new (_("    _Undo buffer size (MB)    "),TRUE,
@@ -2403,7 +2377,7 @@ _prefsw *create_prefs_dialog (void) {
 
 
   hbox = lives_hbox_new(FALSE, 0);
-  lives_box_pack_start (LIVES_BOX (prefsw->vbox_right_multitrack), hbox, FALSE, FALSE, widget_opts.packing_height);
+  lives_box_pack_start (GTK_BOX (prefsw->vbox_right_multitrack), hbox, FALSE, FALSE, widget_opts.packing_height);
 
   // ---
   prefsw->checkbutton_mt_exit_render = lives_standard_check_button_new(_("_Exit multitrack mode after rendering"),TRUE,LIVES_BOX(hbox),NULL);
@@ -2412,16 +2386,16 @@ _prefsw *create_prefs_dialog (void) {
 
   hbox2 = lives_hbox_new (FALSE, 0);
 
-  lives_box_pack_start (LIVES_BOX (prefsw->vbox_right_multitrack), hbox2, FALSE, FALSE, widget_opts.packing_height);
+  lives_box_pack_start (GTK_BOX (prefsw->vbox_right_multitrack), hbox2, FALSE, FALSE, widget_opts.packing_height);
   // ---
   label = lives_standard_label_new (_("Auto backup layouts"));
-  lives_box_pack_start (LIVES_BOX (hbox2), label, FALSE, TRUE, 0);
+  lives_box_pack_start (GTK_BOX (hbox2), label, FALSE, TRUE, 0);
   // ---
 
   hbox = lives_hbox_new(FALSE, 0);
   prefsw->mt_autoback_every = lives_standard_radio_button_new(_("_Every"),TRUE,autoback_group,LIVES_BOX(hbox),NULL);
   autoback_group = lives_radio_button_get_group (LIVES_RADIO_BUTTON (prefsw->mt_autoback_every));
-  lives_box_pack_start (LIVES_BOX (hbox2), hbox, TRUE, TRUE, 0);
+  lives_box_pack_start (GTK_BOX (hbox2), hbox, TRUE, TRUE, 0);
 
   // ---
 
@@ -2429,21 +2403,21 @@ _prefsw *create_prefs_dialog (void) {
   widget_opts.swap_label=TRUE;
   prefsw->spinbutton_mt_ab_time = lives_standard_spin_button_new (_("seconds"),FALSE,120.,10.,1800.,1.,10.,0,LIVES_BOX(hbox),NULL);
   widget_opts.swap_label=FALSE;
-  lives_box_pack_start (LIVES_BOX (hbox2), hbox, TRUE, TRUE, 0);
+  lives_box_pack_start (GTK_BOX (hbox2), hbox, TRUE, TRUE, 0);
 
-  add_fill_to_box(LIVES_BOX(hbox2));
+  add_fill_to_box(GTK_BOX(hbox2));
   // ---
 
   hbox = lives_hbox_new(FALSE, 0);
   prefsw->mt_autoback_always = lives_standard_radio_button_new(_("After every _change"),TRUE,autoback_group,LIVES_BOX(hbox),NULL);
   autoback_group = lives_radio_button_get_group (LIVES_RADIO_BUTTON (prefsw->mt_autoback_always));
-  lives_box_pack_start (LIVES_BOX (hbox2), hbox, TRUE, TRUE, 0);
+  lives_box_pack_start (GTK_BOX (hbox2), hbox, TRUE, TRUE, 0);
   // ---
 
   hbox = lives_hbox_new(FALSE, 0);
   prefsw->mt_autoback_never = lives_standard_radio_button_new(_("_Never"),TRUE,autoback_group,LIVES_BOX(hbox),NULL);
   autoback_group = lives_radio_button_get_group (LIVES_RADIO_BUTTON (prefsw->mt_autoback_never));
-  lives_box_pack_start (LIVES_BOX (hbox2), hbox, TRUE, TRUE, 0);
+  lives_box_pack_start (GTK_BOX (hbox2), hbox, TRUE, TRUE, 0);
 
 
   // ---
@@ -2457,15 +2431,15 @@ _prefsw *create_prefs_dialog (void) {
   }
   else {
     lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(prefsw->mt_autoback_every),TRUE);
-    lives_spin_button_set_value(LIVES_SPIN_BUTTON(prefsw->spinbutton_mt_ab_time),prefs->mt_auto_back);
+    lives_spin_button_set_value(GTK_SPIN_BUTTON(prefsw->spinbutton_mt_ab_time),prefs->mt_auto_back);
   }
   // ---
   icon = g_build_filename(prefs->prefix_dir, ICON_DIR, "pref_multitrack.png", NULL);
-  pixbuf_multitrack = lives_pixbuf_new_from_file(icon, NULL);
+  pixbuf_multitrack = gdk_pixbuf_new_from_file(icon, NULL);
   g_free(icon);
 
   prefs_add_to_list(prefsw->prefs_list, pixbuf_multitrack, _("Multitrack/Render"), LIST_ENTRY_MULTITRACK);
-  lives_container_add (LIVES_CONTAINER (dialog_table), prefsw->scrollw_right_multitrack);
+  lives_container_add (GTK_CONTAINER (dialog_table), prefsw->scrollw_right_multitrack);
 
 
   // ---------------,
@@ -2473,12 +2447,12 @@ _prefsw *create_prefs_dialog (void) {
   // ---------------'
 
   prefsw->vbox_right_decoding = lives_vbox_new (FALSE, 0);
-  lives_container_set_border_width (LIVES_CONTAINER (prefsw->vbox_right_decoding), widget_opts.border_width*2);
+  lives_container_set_border_width (GTK_CONTAINER (prefsw->vbox_right_decoding), widget_opts.border_width*2);
 
   prefsw->scrollw_right_decoding = lives_standard_scrolled_window_new (0,0,prefsw->vbox_right_decoding);
 
   hbox = lives_hbox_new (FALSE, 0);
-  lives_box_pack_start (LIVES_BOX (prefsw->vbox_right_decoding), hbox, FALSE, FALSE, widget_opts.packing_height);
+  lives_box_pack_start (GTK_BOX (prefsw->vbox_right_decoding), hbox, FALSE, FALSE, widget_opts.packing_height);
   // ---
 
 
@@ -2490,7 +2464,7 @@ _prefsw *create_prefs_dialog (void) {
 
   // advanced instant opening
   advbutton = lives_button_new_with_mnemonic (_("_Advanced"));
-  lives_box_pack_start (LIVES_BOX (hbox), advbutton, FALSE, FALSE, widget_opts.packing_width*4);
+  lives_box_pack_start (GTK_BOX (hbox), advbutton, FALSE, FALSE, widget_opts.packing_width*4);
 
   g_signal_connect (GTK_OBJECT (advbutton), "clicked",
 		    G_CALLBACK (on_decplug_advanced_clicked),
@@ -2502,7 +2476,7 @@ _prefsw *create_prefs_dialog (void) {
 
 
   hbox = lives_hbox_new (FALSE, 0);
-  lives_box_pack_start (LIVES_BOX (prefsw->vbox_right_decoding), hbox, FALSE, FALSE, widget_opts.packing_height);
+  lives_box_pack_start (GTK_BOX (prefsw->vbox_right_decoding), hbox, FALSE, FALSE, widget_opts.packing_height);
 
   // ---
   prefsw->video_open_entry = lives_standard_entry_new (_("Video open command (fallback)"),FALSE,
@@ -2514,14 +2488,14 @@ _prefsw *create_prefs_dialog (void) {
 
   // ---
   hbox = lives_hbox_new (FALSE, 0);
-  lives_box_pack_start (LIVES_BOX (prefsw->vbox_right_decoding), hbox, FALSE, FALSE, widget_opts.packing_height);
+  lives_box_pack_start (GTK_BOX (prefsw->vbox_right_decoding), hbox, FALSE, FALSE, widget_opts.packing_height);
   // ---
 
   prefsw->spinbutton_ocp = lives_standard_spin_button_new (_("Open/render compression"), FALSE, prefs->ocp, 0., 100., 1., 5., 0,
 							   LIVES_BOX(hbox),NULL);
 
   label = lives_standard_label_new (_ (" %     ( lower = slower, larger files; for jpeg, higher quality )"));
-  lives_box_pack_start (LIVES_BOX (hbox), label, FALSE, FALSE, widget_opts.packing_width>>1);
+  lives_box_pack_start (GTK_BOX (hbox), label, FALSE, FALSE, widget_opts.packing_width>>1);
 
   add_hsep_to_box(LIVES_BOX(prefsw->vbox_right_decoding));
 
@@ -2529,12 +2503,12 @@ _prefsw *create_prefs_dialog (void) {
 
   // ---
   hbox = lives_hbox_new (FALSE, 0);
-  lives_box_pack_start (LIVES_BOX (prefsw->vbox_right_decoding), hbox, FALSE, FALSE, widget_opts.packing_height);
+  lives_box_pack_start (GTK_BOX (prefsw->vbox_right_decoding), hbox, FALSE, FALSE, widget_opts.packing_height);
   // ---
 
   label = lives_standard_label_new (_("Default image format"));
 
-  lives_box_pack_start (LIVES_BOX (hbox), label, FALSE, FALSE, widget_opts.packing_width);
+  lives_box_pack_start (GTK_BOX (hbox), label, FALSE, FALSE, widget_opts.packing_width);
   // ---
   prefsw->jpeg = lives_standard_radio_button_new(_("_jpeg"),TRUE,jpeg_png,LIVES_BOX(hbox),NULL);
   jpeg_png = lives_radio_button_get_group (LIVES_RADIO_BUTTON (prefsw->jpeg));
@@ -2544,14 +2518,14 @@ _prefsw *create_prefs_dialog (void) {
 
   // ---
   hbox = lives_hbox_new (FALSE, 0);
-  lives_box_pack_start (LIVES_BOX (prefsw->vbox_right_decoding), hbox, FALSE, FALSE, widget_opts.packing_height*2);
+  lives_box_pack_start (GTK_BOX (prefsw->vbox_right_decoding), hbox, FALSE, FALSE, widget_opts.packing_height*2);
   // ---
   label = lives_standard_label_new (_("(Check Help/Troubleshoot to see which image formats are supported)"));
-  lives_box_pack_start (LIVES_BOX (hbox), label, TRUE, TRUE, 0);
+  lives_box_pack_start (GTK_BOX (hbox), label, TRUE, TRUE, 0);
 
   // ---
   hbox = lives_hbox_new (FALSE, 0);
-  lives_box_pack_start (LIVES_BOX (prefsw->vbox_right_decoding), hbox, FALSE, FALSE, widget_opts.packing_height);
+  lives_box_pack_start (GTK_BOX (prefsw->vbox_right_decoding), hbox, FALSE, FALSE, widget_opts.packing_height);
   // ---
 
   prefsw->checkbutton_auto_deint = lives_standard_check_button_new((tmp=g_strdup(_("Enable automatic deinterlacing when possible"))),FALSE,
@@ -2564,20 +2538,7 @@ _prefsw *create_prefs_dialog (void) {
 
   // ---
   hbox = lives_hbox_new (FALSE, 0);
-  lives_box_pack_start (LIVES_BOX (prefsw->vbox_right_decoding), hbox, FALSE, FALSE, widget_opts.packing_height);
-  // ---
-
-  prefsw->checkbutton_auto_trim = lives_standard_check_button_new((tmp=g_strdup(_("Automatic trimming / padding of audio when possible"))),FALSE,
-								   LIVES_BOX(hbox),
-								    (tmp2=g_strdup(_("Automatically trim or pad audio when a plugin suggests it"))));
-  g_free(tmp); g_free(tmp2);
-
-  lives_toggle_button_set_active (LIVES_TOGGLE_BUTTON (prefsw->checkbutton_auto_trim),prefs->auto_trim_audio);
-
-
-  // ---
-  hbox = lives_hbox_new (FALSE, 0);
-  lives_box_pack_start (LIVES_BOX (prefsw->vbox_right_decoding), hbox, FALSE, FALSE, widget_opts.packing_height);
+  lives_box_pack_start (GTK_BOX (prefsw->vbox_right_decoding), hbox, FALSE, FALSE, widget_opts.packing_height);
   // ---
 
   prefsw->checkbutton_nobord = lives_standard_check_button_new((tmp=g_strdup(_("Ignore blank borders when possible"))),FALSE,
@@ -2591,7 +2552,7 @@ _prefsw *create_prefs_dialog (void) {
   add_hsep_to_box(LIVES_BOX(prefsw->vbox_right_decoding));
   // ---
   hbox = lives_hbox_new(FALSE, 0);
-  lives_box_pack_start (LIVES_BOX (prefsw->vbox_right_decoding), hbox, FALSE, FALSE, widget_opts.packing_height);
+  lives_box_pack_start (GTK_BOX (prefsw->vbox_right_decoding), hbox, FALSE, FALSE, widget_opts.packing_height);
 
   prefsw->checkbutton_concat_images = lives_standard_check_button_new(_("When opening multiple files, concatenate images into one clip"),
 								      FALSE,LIVES_BOX(hbox),NULL);
@@ -2599,30 +2560,30 @@ _prefsw *create_prefs_dialog (void) {
 
   // ---
   icon = g_build_filename(prefs->prefix_dir, ICON_DIR, "pref_decoding.png", NULL);
-  pixbuf_decoding = lives_pixbuf_new_from_file(icon, NULL);
+  pixbuf_decoding = gdk_pixbuf_new_from_file(icon, NULL);
   g_free(icon);
 
 
   prefs_add_to_list(prefsw->prefs_list, pixbuf_decoding, _("Decoding"), LIST_ENTRY_DECODING);
 
-  lives_container_add (LIVES_CONTAINER (dialog_table), prefsw->scrollw_right_decoding);
+  lives_container_add (GTK_CONTAINER (dialog_table), prefsw->scrollw_right_decoding);
 
   // ---------------,
   // playback       |
   // ---------------'
 
   prefsw->vbox_right_playback = lives_vbox_new (FALSE, widget_opts.packing_height);
-  lives_container_set_border_width (LIVES_CONTAINER (prefsw->vbox_right_playback), widget_opts.border_width*2);
+  lives_container_set_border_width (GTK_CONTAINER (prefsw->vbox_right_playback), widget_opts.border_width*2);
 
   prefsw->scrollw_right_playback = lives_standard_scrolled_window_new (0,0,prefsw->vbox_right_playback);
 
   frame = gtk_frame_new (NULL);
  
-  lives_box_pack_start (LIVES_BOX (prefsw->vbox_right_playback), frame, FALSE, FALSE, widget_opts.packing_height);
+  lives_box_pack_start (GTK_BOX (prefsw->vbox_right_playback), frame, FALSE, FALSE, widget_opts.packing_height);
 
   vbox=lives_vbox_new (FALSE, 0);
-  lives_container_add (LIVES_CONTAINER (frame), vbox);
-  lives_container_set_border_width (LIVES_CONTAINER (vbox), widget_opts.border_width);
+  lives_container_add (GTK_CONTAINER (frame), vbox);
+  lives_container_set_border_width (GTK_CONTAINER (vbox), widget_opts.border_width);
 
   prefsw->pbq_list=NULL;
   // TRANSLATORS: video quality, max len 50
@@ -2641,10 +2602,10 @@ _prefsw *create_prefs_dialog (void) {
 
   switch (prefs->pb_quality) {
   case PB_QUALITY_HIGH:
-    lives_combo_set_active_index(LIVES_COMBO(prefsw->pbq_combo), 2);
+    lives_combo_set_active_index(GTK_COMBO_BOX(prefsw->pbq_combo), 2);
     break;
   case PB_QUALITY_MED:
-    lives_combo_set_active_index(LIVES_COMBO(prefsw->pbq_combo), 1);
+    lives_combo_set_active_index(GTK_COMBO_BOX(prefsw->pbq_combo), 1);
   }
 
   // ---
@@ -2657,7 +2618,7 @@ _prefsw *create_prefs_dialog (void) {
 
   // ---
   hbox = lives_hbox_new (FALSE, 0);
-  lives_box_pack_start (LIVES_BOX (vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
+  lives_box_pack_start (GTK_BOX (vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
 
   // ---
 #ifndef IS_MINGW
@@ -2672,7 +2633,7 @@ _prefsw *create_prefs_dialog (void) {
   widget_opts.expand=LIVES_EXPAND_DEFAULT;
 
   advbutton = lives_button_new_with_mnemonic (_("_Advanced"));
-  lives_box_pack_start (LIVES_BOX (hbox), advbutton, FALSE, FALSE, 40);
+  lives_box_pack_start (GTK_BOX (hbox), advbutton, FALSE, FALSE, 40);
 
   g_signal_connect (GTK_OBJECT (advbutton), "clicked",
 		    G_CALLBACK (on_vpp_advanced_clicked),
@@ -2683,7 +2644,7 @@ _prefsw *create_prefs_dialog (void) {
     lives_combo_set_active_string(LIVES_COMBO(pp_combo), mainw->vpp->name);
   }
   else {
-    lives_combo_set_active_index(LIVES_COMBO(pp_combo), 0);
+    lives_combo_set_active_index(GTK_COMBO_BOX(pp_combo), 0);
     lives_widget_set_sensitive (advbutton, FALSE);
   }
   g_list_free_strings (vid_playback_plugins);
@@ -2731,10 +2692,10 @@ _prefsw *create_prefs_dialog (void) {
   //-
 
   frame = gtk_frame_new (NULL);
-  lives_box_pack_start (LIVES_BOX (prefsw->vbox_right_playback), frame, TRUE, TRUE, 0);
+  lives_box_pack_start (GTK_BOX (prefsw->vbox_right_playback), frame, TRUE, TRUE, 0);
 
   vbox = lives_vbox_new (FALSE, 0);
-  lives_container_add (LIVES_CONTAINER (frame), vbox);
+  lives_container_add (GTK_CONTAINER (frame), vbox);
 
 #ifdef HAVE_PULSE_AUDIO
   audp = g_list_append (audp, g_strdup_printf("pulse audio (%s)",mainw->string_constants[LIVES_STRING_CONSTANT_RECOMMENDED]));
@@ -2763,7 +2724,7 @@ _prefsw *create_prefs_dialog (void) {
   has_ap_rec=FALSE;
 
   prefsw->jack_int_label=lives_standard_label_new(_("(See also the Jack Integration tab for jack startup options)"));
-  lives_box_pack_start (LIVES_BOX (vbox), prefsw->jack_int_label, FALSE, FALSE, widget_opts.packing_height);
+  lives_box_pack_start (GTK_BOX (vbox), prefsw->jack_int_label, FALSE, FALSE, widget_opts.packing_height);
 
   prefsw->audp_name=NULL;
 
@@ -2804,15 +2765,15 @@ _prefsw *create_prefs_dialog (void) {
 
   // get from prefs
   if (prefs->audio_player!=AUD_PLAYER_JACK&&prefs->audio_player!=AUD_PLAYER_PULSE) 
-    lives_entry_set_text(LIVES_ENTRY(prefsw->audio_command_entry),prefs->audio_play_command);
+    lives_entry_set_text(GTK_ENTRY(prefsw->audio_command_entry),prefs->audio_play_command);
   else {
-    lives_entry_set_text(LIVES_ENTRY(prefsw->audio_command_entry),(_("- internal -")));
+    lives_entry_set_text(GTK_ENTRY(prefsw->audio_command_entry),(_("- internal -")));
     lives_widget_set_sensitive(prefsw->audio_command_entry,FALSE);
   }
 
 
   hbox = lives_hbox_new (FALSE, 0);
-  lives_box_pack_start (LIVES_BOX (vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
+  lives_box_pack_start (GTK_BOX (vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
   // ---
 
   prefsw->checkbutton_afollow = lives_standard_check_button_new(_("Audio follows video _rate/direction"),TRUE,LIVES_BOX(hbox),NULL);
@@ -2829,9 +2790,9 @@ _prefsw *create_prefs_dialog (void) {
   lives_widget_set_sensitive(prefsw->checkbutton_aclips,prefs->audio_player==AUD_PLAYER_JACK||prefs->audio_player==AUD_PLAYER_PULSE);
 
   hbox = lives_hbox_new(FALSE, 0);
-  lives_box_pack_start (LIVES_BOX (vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
+  lives_box_pack_start (GTK_BOX (vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
   label=lives_standard_label_new(_("Source:"));
-  lives_box_pack_start(LIVES_BOX(hbox),label,FALSE,FALSE,widget_opts.packing_width);
+  lives_box_pack_start(GTK_BOX(hbox),label,FALSE,FALSE,widget_opts.packing_width);
   add_fill_to_box(LIVES_BOX(hbox));
 
   rbutton=lives_standard_radio_button_new(_("_Internal"),TRUE,asrc_group,LIVES_BOX(hbox),NULL);
@@ -2865,11 +2826,11 @@ _prefsw *create_prefs_dialog (void) {
   gtk_frame_set_label_widget (GTK_FRAME (frame), label);
 
   icon = g_build_filename(prefs->prefix_dir, ICON_DIR, "pref_playback.png", NULL);
-  pixbuf_playback = lives_pixbuf_new_from_file(icon, NULL);
+  pixbuf_playback = gdk_pixbuf_new_from_file(icon, NULL);
   g_free(icon);
 
   prefs_add_to_list(prefsw->prefs_list, pixbuf_playback, _("Playback"), LIST_ENTRY_PLAYBACK);
-  lives_container_add (LIVES_CONTAINER (dialog_table), prefsw->scrollw_right_playback);
+  lives_container_add (GTK_CONTAINER (dialog_table), prefsw->scrollw_right_playback);
 
 
   lives_widget_hide(prefsw->jack_int_label);
@@ -2886,7 +2847,7 @@ _prefsw *create_prefs_dialog (void) {
   // ---------------'
 
   prefsw->vbox_right_recording = lives_vbox_new (FALSE, 0);
-  lives_container_set_border_width (LIVES_CONTAINER (prefsw->vbox_right_recording), widget_opts.border_width*2);
+  lives_container_set_border_width (GTK_CONTAINER (prefsw->vbox_right_recording), widget_opts.border_width*2);
 
   prefsw->scrollw_right_recording = lives_standard_scrolled_window_new (0,0,prefsw->vbox_right_recording);
 
@@ -2899,7 +2860,7 @@ _prefsw *create_prefs_dialog (void) {
   lives_widget_set_sensitive (prefsw->rdesk_audio,FALSE);
 #endif
 
-  lives_box_pack_start (LIVES_BOX (prefsw->vbox_right_recording), hbox, FALSE, FALSE, widget_opts.packing_height);
+  lives_box_pack_start (GTK_BOX (prefsw->vbox_right_recording), hbox, FALSE, FALSE, widget_opts.packing_height);
   lives_toggle_button_set_active (LIVES_TOGGLE_BUTTON (prefsw->rdesk_audio),prefs->rec_desktop_audio);
 
   // ---
@@ -2908,11 +2869,11 @@ _prefsw *create_prefs_dialog (void) {
   // ---
   label = lives_standard_label_new (_("      What to record when 'r' is pressed   "));
  
-  lives_box_pack_start (LIVES_BOX (prefsw->vbox_right_recording), label, FALSE, FALSE, widget_opts.packing_height);
+  lives_box_pack_start (GTK_BOX (prefsw->vbox_right_recording), label, FALSE, FALSE, widget_opts.packing_height);
 
   // ---
   hbox = lives_hbox_new (FALSE, 0);
-  lives_box_pack_start (LIVES_BOX (prefsw->vbox_right_recording), hbox, FALSE, FALSE, widget_opts.packing_height);
+  lives_box_pack_start (GTK_BOX (prefsw->vbox_right_recording), hbox, FALSE, FALSE, widget_opts.packing_height);
   // ---
 
   prefsw->rframes = lives_standard_check_button_new(_("_Frame changes"),TRUE,LIVES_BOX(hbox),NULL);
@@ -2945,7 +2906,7 @@ _prefsw *create_prefs_dialog (void) {
 
   // ---
   hbox = lives_hbox_new (FALSE, 0);
-  lives_box_pack_start (LIVES_BOX (prefsw->vbox_right_recording), hbox, FALSE, FALSE, widget_opts.packing_height);
+  lives_box_pack_start (GTK_BOX (prefsw->vbox_right_recording), hbox, FALSE, FALSE, widget_opts.packing_height);
   // ---
 
   prefsw->reffects = lives_standard_check_button_new(_("_Real time effects"),TRUE,LIVES_BOX(hbox),NULL);
@@ -2988,7 +2949,7 @@ _prefsw *create_prefs_dialog (void) {
   // ---
 
   hbox = lives_hbox_new (FALSE,0);
-  lives_box_pack_start (LIVES_BOX (prefsw->vbox_right_recording), hbox, FALSE, FALSE, widget_opts.packing_height*4);
+  lives_box_pack_start (GTK_BOX (prefsw->vbox_right_recording), hbox, FALSE, FALSE, widget_opts.packing_height*4);
   
   prefsw->spinbutton_rec_gb = lives_standard_spin_button_new (_("Pause recording if free disk space falls below"),FALSE,
 							      prefs->rec_stop_gb, 0., 1024., 1., 10., 0,
@@ -2997,21 +2958,21 @@ _prefsw *create_prefs_dialog (void) {
 
   // TRANSLATORS: gigabytes
   label = lives_standard_label_new (_("GB"));
-  lives_box_pack_start (LIVES_BOX (hbox), label, FALSE, FALSE, widget_opts.packing_width);
+  lives_box_pack_start (GTK_BOX (hbox), label, FALSE, FALSE, widget_opts.packing_width);
 
   icon = g_build_filename(prefs->prefix_dir, ICON_DIR, "pref_record.png", NULL);
-  pixbuf_recording = lives_pixbuf_new_from_file(icon, NULL);
+  pixbuf_recording = gdk_pixbuf_new_from_file(icon, NULL);
   g_free(icon);
 
   prefs_add_to_list(prefsw->prefs_list, pixbuf_recording, _("Recording"), LIST_ENTRY_RECORDING);
-  lives_container_add (LIVES_CONTAINER (dialog_table), prefsw->scrollw_right_recording);
+  lives_container_add (GTK_CONTAINER (dialog_table), prefsw->scrollw_right_recording);
 
   // ---------------,
   // encoding       |
   // ---------------'
 
   prefsw->vbox_right_encoding = lives_vbox_new (FALSE, widget_opts.packing_height*4);
-  lives_container_set_border_width (LIVES_CONTAINER (prefsw->vbox_right_encoding), widget_opts.border_width);
+  lives_container_set_border_width (GTK_CONTAINER (prefsw->vbox_right_encoding), widget_opts.border_width);
 
   prefsw->scrollw_right_encoding = lives_standard_scrolled_window_new (0,0,prefsw->vbox_right_encoding);
 
@@ -3082,23 +3043,23 @@ _prefsw *create_prefs_dialog (void) {
   else prefsw->acodec_combo=NULL;
 
   icon = g_build_filename(prefs->prefix_dir, ICON_DIR, "pref_encoding.png", NULL);
-  pixbuf_encoding = lives_pixbuf_new_from_file(icon, NULL);
+  pixbuf_encoding = gdk_pixbuf_new_from_file(icon, NULL);
   g_free(icon);
 
   prefs_add_to_list(prefsw->prefs_list, pixbuf_encoding, _("Encoding"), LIST_ENTRY_ENCODING);
-  lives_container_add (LIVES_CONTAINER (dialog_table), prefsw->scrollw_right_encoding);
+  lives_container_add (GTK_CONTAINER (dialog_table), prefsw->scrollw_right_encoding);
 
   // ---------------,
   // effects        |
   // ---------------'
 
   prefsw->vbox_right_effects = lives_vbox_new (FALSE, 0);
-  lives_container_set_border_width (LIVES_CONTAINER (prefsw->vbox_right_effects), widget_opts.border_width);
+  lives_container_set_border_width (GTK_CONTAINER (prefsw->vbox_right_effects), widget_opts.border_width);
   
   prefsw->scrollw_right_effects = lives_standard_scrolled_window_new (0,0,prefsw->vbox_right_effects);
 
   hbox = lives_hbox_new(FALSE, 0);
-  lives_box_pack_start (LIVES_BOX (prefsw->vbox_right_effects), hbox, FALSE, FALSE, widget_opts.packing_height);
+  lives_box_pack_start (GTK_BOX (prefsw->vbox_right_effects), hbox, FALSE, FALSE, widget_opts.packing_height);
 
   prefsw->checkbutton_antialias = lives_standard_check_button_new(_("Use _antialiasing when resizing"),TRUE,LIVES_BOX(hbox),NULL);
 
@@ -3106,7 +3067,7 @@ _prefsw *create_prefs_dialog (void) {
   //
 
   hbox = lives_hbox_new (FALSE,0);
-  lives_box_pack_start (LIVES_BOX (prefsw->vbox_right_effects), hbox, FALSE, FALSE, widget_opts.packing_height);
+  lives_box_pack_start (GTK_BOX (prefsw->vbox_right_effects), hbox, FALSE, FALSE, widget_opts.packing_height);
   
   prefsw->spinbutton_rte_keys = lives_standard_spin_button_new 
     ((tmp=g_strdup(_("Number of _real time effect keys"))),TRUE,prefs->rte_keys_virtual, FX_KEYS_PHYSICAL, 
@@ -3116,7 +3077,7 @@ _prefsw *create_prefs_dialog (void) {
   g_free(tmp2);
 
   hbox = lives_hbox_new(FALSE, 0);
-  lives_box_pack_start (LIVES_BOX (prefsw->vbox_right_effects), hbox, FALSE, FALSE, widget_opts.packing_height);
+  lives_box_pack_start (GTK_BOX (prefsw->vbox_right_effects), hbox, FALSE, FALSE, widget_opts.packing_height);
 
   prefsw->checkbutton_threads = lives_standard_check_button_new(_("Use _threads where possible when applying effects"),TRUE,LIVES_BOX(hbox),NULL);
   lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_threads), future_prefs->nfx_threads>1);
@@ -3136,11 +3097,11 @@ _prefsw *create_prefs_dialog (void) {
 
 
   hbox = lives_hbox_new (FALSE, 0);
-  lives_box_pack_start (LIVES_BOX (prefsw->vbox_right_effects), hbox, FALSE, FALSE, widget_opts.packing_height);
+  lives_box_pack_start (GTK_BOX (prefsw->vbox_right_effects), hbox, FALSE, FALSE, widget_opts.packing_height);
 
   label = lives_standard_label_new (_("Restart is required if any of the following paths are changed:"));
 
-  lives_box_pack_start (LIVES_BOX (hbox), label, TRUE, TRUE, 0);
+  lives_box_pack_start (GTK_BOX (hbox), label, TRUE, TRUE, 0);
   // ---
   add_fill_to_box(LIVES_BOX(hbox));
 
@@ -3158,63 +3119,63 @@ _prefsw *create_prefs_dialog (void) {
 
 
   icon = g_build_filename(prefs->prefix_dir, ICON_DIR, "pref_effects.png", NULL);
-  pixbuf_effects = lives_pixbuf_new_from_file(icon, NULL);
+  pixbuf_effects = gdk_pixbuf_new_from_file(icon, NULL);
   g_free(icon);
 
   prefs_add_to_list(prefsw->prefs_list, pixbuf_effects, _("Effects"), LIST_ENTRY_EFFECTS);
-  lives_container_add (LIVES_CONTAINER (dialog_table), prefsw->scrollw_right_effects);
+  lives_container_add (GTK_CONTAINER (dialog_table), prefsw->scrollw_right_effects);
 
   // -------------------,
   // Directories        |
   // -------------------'
 
-  prefsw->table_right_directories = lives_table_new (10, 3, FALSE);
-  lives_container_set_border_width (LIVES_CONTAINER (prefsw->table_right_directories), widget_opts.border_width*2);
-  lives_table_set_col_spacings (LIVES_TABLE (prefsw->table_right_directories), widget_opts.packing_width);
-  lives_table_set_row_spacings (LIVES_TABLE (prefsw->table_right_directories), widget_opts.packing_height*4);
+  prefsw->table_right_directories = gtk_table_new (10, 3, FALSE);
+  lives_container_set_border_width (GTK_CONTAINER (prefsw->table_right_directories), widget_opts.border_width*2);
+  gtk_table_set_col_spacings (GTK_TABLE (prefsw->table_right_directories), widget_opts.packing_width);
+  gtk_table_set_row_spacings (GTK_TABLE (prefsw->table_right_directories), widget_opts.packing_height);
 
   prefsw->scrollw_right_directories = lives_standard_scrolled_window_new (0,0,prefsw->table_right_directories);
 
   label = lives_standard_label_new (_("      Video load directory (default)      "));
-  lives_table_attach (LIVES_TABLE (prefsw->table_right_directories), label, 0, 1, 4, 5,
+  lives_table_attach (GTK_TABLE (prefsw->table_right_directories), label, 0, 1, 4, 5,
 		    (GtkAttachOptions) (GTK_FILL),
-		    (GtkAttachOptions) (0), 0, 0);
+		    (GtkAttachOptions) (GTK_EXPAND), 0, 0);
   gtk_misc_set_alignment (GTK_MISC (label), 0, 0.5);
   
   label = lives_standard_label_new (_("      Video save directory (default) "));
-  lives_table_attach (LIVES_TABLE (prefsw->table_right_directories), label, 0, 1, 5, 6,
+  lives_table_attach (GTK_TABLE (prefsw->table_right_directories), label, 0, 1, 5, 6,
 		    (GtkAttachOptions) (GTK_FILL),
-		    (GtkAttachOptions) (0), 0, 0);
+		    (GtkAttachOptions) (GTK_EXPAND), 0, 0);
   gtk_misc_set_alignment (GTK_MISC (label), 0, 0.5);
   
   label = lives_standard_label_new (_("      Audio load directory (default) "));
-  lives_table_attach (LIVES_TABLE (prefsw->table_right_directories), label, 0, 1, 6, 7,
+  lives_table_attach (GTK_TABLE (prefsw->table_right_directories), label, 0, 1, 6, 7,
                     (GtkAttachOptions) (GTK_FILL),
-                    (GtkAttachOptions) (0), 0, 0);
+                    (GtkAttachOptions) (GTK_EXPAND), 0, 0);
   gtk_misc_set_alignment (GTK_MISC (label), 0, 0.5);
   
   label = lives_standard_label_new (_("      Image directory (default) "));
-  lives_table_attach (LIVES_TABLE (prefsw->table_right_directories), label, 0, 1, 7, 8,
+  lives_table_attach (GTK_TABLE (prefsw->table_right_directories), label, 0, 1, 7, 8,
                     (GtkAttachOptions) (GTK_FILL),
-                    (GtkAttachOptions) (0), 0, 0);
+                    (GtkAttachOptions) (GTK_EXPAND), 0, 0);
   gtk_misc_set_alignment (GTK_MISC (label), 0, 0.5);
   
   label = lives_standard_label_new (_("      Backup/Restore directory (default) "));
-  lives_table_attach (LIVES_TABLE (prefsw->table_right_directories), label, 0, 1, 8, 9,
+  lives_table_attach (GTK_TABLE (prefsw->table_right_directories), label, 0, 1, 8, 9,
                     (GtkAttachOptions) (GTK_FILL),
-                    (GtkAttachOptions) (0), 0, 0);
+                    (GtkAttachOptions) (GTK_EXPAND), 0, 0);
   gtk_misc_set_alignment (GTK_MISC (label), 0, 0.5);
   
   label = lives_standard_label_new (_("      Temp directory (do not remove) "));
-  lives_table_attach (LIVES_TABLE (prefsw->table_right_directories), label, 0, 1, 3, 4,
+  lives_table_attach (GTK_TABLE (prefsw->table_right_directories), label, 0, 1, 3, 4,
 		    (GtkAttachOptions) (GTK_FILL),
-		    (GtkAttachOptions) (0), 0, 0);
+		    (GtkAttachOptions) (GTK_EXPAND), 0, 0);
   gtk_misc_set_alignment (GTK_MISC (label), 0, 0.5);
 
 
   prefsw->vid_load_dir_entry = gtk_entry_new ();
-  gtk_entry_set_max_length(LIVES_ENTRY(prefsw->vid_load_dir_entry),PATH_MAX);
-  lives_table_attach (LIVES_TABLE (prefsw->table_right_directories), prefsw->vid_load_dir_entry, 1, 2, 4, 5,
+  gtk_entry_set_max_length(GTK_ENTRY(prefsw->vid_load_dir_entry),PATH_MAX);
+  lives_table_attach (GTK_TABLE (prefsw->table_right_directories), prefsw->vid_load_dir_entry, 1, 2, 4, 5,
 		    (GtkAttachOptions) (GTK_EXPAND | GTK_FILL),
 		    (GtkAttachOptions) (0), 0, 0);
 
@@ -3228,8 +3189,8 @@ _prefsw *create_prefs_dialog (void) {
   widget_opts.justify=LIVES_JUSTIFY_CENTER;
   label = lives_standard_label_new ("");
   widget_opts.justify=LIVES_JUSTIFY_DEFAULT;
-  set_temp_label_text(LIVES_LABEL(label));
-  lives_table_attach (LIVES_TABLE (prefsw->table_right_directories), label, 0, 3, 0, 2,
+  set_temp_label_text(GTK_LABEL(label));
+  lives_table_attach (GTK_TABLE (prefsw->table_right_directories), label, 0, 3, 0, 2,
 		    (GtkAttachOptions) (GTK_EXPAND | GTK_FILL),
 		    (GtkAttachOptions) (0), 0, 0);
   gtk_misc_set_alignment (GTK_MISC (label), 0, 0.65);
@@ -3238,13 +3199,13 @@ _prefsw *create_prefs_dialog (void) {
 
  
   // get from prefs
-  lives_entry_set_text(LIVES_ENTRY(prefsw->vid_load_dir_entry),prefs->def_vid_load_dir);
+  lives_entry_set_text(GTK_ENTRY(prefsw->vid_load_dir_entry),prefs->def_vid_load_dir);
 
 
   
   prefsw->vid_save_dir_entry = lives_standard_entry_new (NULL,FALSE,prefs->def_vid_save_dir,-1,PATH_MAX,
 							 NULL,_("The default directory for saving encoded clips to"));
-  lives_table_attach (LIVES_TABLE (prefsw->table_right_directories), prefsw->vid_save_dir_entry, 1, 2, 5, 6,
+  lives_table_attach (GTK_TABLE (prefsw->table_right_directories), prefsw->vid_save_dir_entry, 1, 2, 5, 6,
 		    (GtkAttachOptions) (GTK_EXPAND | GTK_FILL),
 		    (GtkAttachOptions) (0), 0, 0);
 
@@ -3252,7 +3213,7 @@ _prefsw *create_prefs_dialog (void) {
   
   prefsw->audio_dir_entry = lives_standard_entry_new (NULL,FALSE,prefs->def_audio_dir,-1,PATH_MAX,
 						      NULL,_("The default directory for loading and saving audio"));
-  lives_table_attach (LIVES_TABLE (prefsw->table_right_directories), prefsw->audio_dir_entry, 1, 2, 6, 7,
+  lives_table_attach (GTK_TABLE (prefsw->table_right_directories), prefsw->audio_dir_entry, 1, 2, 6, 7,
 		    (GtkAttachOptions) (GTK_EXPAND | GTK_FILL),
 		    (GtkAttachOptions) (0), 0, 0);
 
@@ -3260,7 +3221,7 @@ _prefsw *create_prefs_dialog (void) {
    
   prefsw->image_dir_entry = lives_standard_entry_new (NULL,FALSE,prefs->def_image_dir,-1,PATH_MAX,
 						      NULL,_("The default directory for saving frameshots to"));
-  lives_table_attach (LIVES_TABLE (prefsw->table_right_directories), prefsw->image_dir_entry, 1, 2, 7, 8,
+  lives_table_attach (GTK_TABLE (prefsw->table_right_directories), prefsw->image_dir_entry, 1, 2, 7, 8,
 		    (GtkAttachOptions) (GTK_EXPAND | GTK_FILL),
 		    (GtkAttachOptions) (0), 0, 0);
 
@@ -3268,7 +3229,7 @@ _prefsw *create_prefs_dialog (void) {
    
   prefsw->proj_dir_entry = lives_standard_entry_new (NULL,FALSE,prefs->def_proj_dir,-1,PATH_MAX,
 						     NULL,_("The default directory for backing up/restoring single clips"));
-  lives_table_attach (LIVES_TABLE (prefsw->table_right_directories), prefsw->proj_dir_entry, 1, 2, 8, 9,
+  lives_table_attach (GTK_TABLE (prefsw->table_right_directories), prefsw->proj_dir_entry, 1, 2, 8, 9,
 		    (GtkAttachOptions) (GTK_EXPAND | GTK_FILL),
 		    (GtkAttachOptions) (0), 0, 0);
    
@@ -3277,7 +3238,7 @@ _prefsw *create_prefs_dialog (void) {
   prefsw->tmpdir_entry = lives_standard_entry_new (NULL,FALSE,(tmp=g_filename_to_utf8(future_prefs->tmpdir,-1,NULL,NULL,NULL)),-1,PATH_MAX,
 						   NULL,(tmp2=g_strdup(_("LiVES working directory."))));
 
-  lives_table_attach (LIVES_TABLE (prefsw->table_right_directories), prefsw->tmpdir_entry, 1, 2, 3, 4,
+  lives_table_attach (GTK_TABLE (prefsw->table_right_directories), prefsw->tmpdir_entry, 1, 2, 3, 4,
 		    (GtkAttachOptions) (GTK_EXPAND | GTK_FILL),
 		    (GtkAttachOptions) (0), 0, 0);
 
@@ -3287,46 +3248,46 @@ _prefsw *create_prefs_dialog (void) {
    
   dirbutton1 = lives_standard_file_button_new (TRUE,NULL);
    
-  lives_table_attach (LIVES_TABLE (prefsw->table_right_directories), dirbutton1, 2, 3, 4, 5,
+  lives_table_attach (GTK_TABLE (prefsw->table_right_directories), dirbutton1, 2, 3, 4, 5,
 		    (GtkAttachOptions) (0),
 		    (GtkAttachOptions) (0), 0, 0);
    
   dirbutton2 = lives_standard_file_button_new (TRUE,NULL);
    
-  lives_table_attach (LIVES_TABLE (prefsw->table_right_directories), dirbutton2, 2, 3, 5, 6,
+  lives_table_attach (GTK_TABLE (prefsw->table_right_directories), dirbutton2, 2, 3, 5, 6,
 		    (GtkAttachOptions) (0),
 		    (GtkAttachOptions) (0), 0, 0);
    
   dirbutton3 = lives_standard_file_button_new (TRUE,NULL);
    
-  lives_table_attach (LIVES_TABLE (prefsw->table_right_directories), dirbutton3, 2, 3, 6, 7,
+  lives_table_attach (GTK_TABLE (prefsw->table_right_directories), dirbutton3, 2, 3, 6, 7,
 		    (GtkAttachOptions) (0),
 		    (GtkAttachOptions) (0), 0, 0);
    
   dirbutton4 = lives_standard_file_button_new (TRUE,NULL);
    
-  lives_table_attach (LIVES_TABLE (prefsw->table_right_directories), dirbutton4, 2, 3, 7, 8,
+  lives_table_attach (GTK_TABLE (prefsw->table_right_directories), dirbutton4, 2, 3, 7, 8,
 		    (GtkAttachOptions) (0),
 		    (GtkAttachOptions) (0), 0, 0);
 
   dirbutton5 = lives_standard_file_button_new (TRUE,NULL);
   
-  lives_table_attach (LIVES_TABLE (prefsw->table_right_directories), dirbutton5, 2, 3, 8, 9,
+  lives_table_attach (GTK_TABLE (prefsw->table_right_directories), dirbutton5, 2, 3, 8, 9,
 		    (GtkAttachOptions) (0),
 		    (GtkAttachOptions) (0), 0, 0);
 
   dirbutton6 = lives_standard_file_button_new (TRUE,NULL);
    
-  lives_table_attach (LIVES_TABLE (prefsw->table_right_directories), dirbutton6, 2, 3, 3, 4,
+  lives_table_attach (GTK_TABLE (prefsw->table_right_directories), dirbutton6, 2, 3, 3, 4,
 		    (GtkAttachOptions) (0),
 		    (GtkAttachOptions) (0), 0, 0);
    
   icon = g_build_filename(prefs->prefix_dir, ICON_DIR, "pref_directory.png", NULL);
-  pixbuf_directories = lives_pixbuf_new_from_file(icon, NULL);
+  pixbuf_directories = gdk_pixbuf_new_from_file(icon, NULL);
   g_free(icon);
 
   prefs_add_to_list(prefsw->prefs_list, pixbuf_directories, _("Directories"), LIST_ENTRY_DIRECTORIES);
-  lives_container_add (LIVES_CONTAINER (dialog_table), prefsw->scrollw_right_directories);
+  lives_container_add (GTK_CONTAINER (dialog_table), prefsw->scrollw_right_directories);
 
   // ---------------,
   // Warnings       |
@@ -3337,7 +3298,7 @@ _prefsw *create_prefs_dialog (void) {
   prefsw->scrollw_right_warnings = lives_standard_scrolled_window_new (0,0,prefsw->vbox_right_warnings);
 
   hbox = lives_hbox_new(FALSE, 0);
-  lives_box_pack_start (LIVES_BOX (prefsw->vbox_right_warnings), hbox, FALSE, FALSE, widget_opts.packing_height);
+  lives_box_pack_start (GTK_BOX (prefsw->vbox_right_warnings), hbox, FALSE, FALSE, widget_opts.packing_height);
   // ---
    
   prefsw->spinbutton_warn_ds = lives_standard_spin_button_new (_("Warn if diskspace falls below: "),FALSE,
@@ -3347,12 +3308,12 @@ _prefsw *create_prefs_dialog (void) {
 							       LIVES_BOX(hbox),NULL);
    
   label = lives_standard_label_new (_ (" MB [set to 0 to disable]"));
-  lives_box_pack_start (LIVES_BOX (hbox), label, FALSE, FALSE, widget_opts.packing_width>>1);
+  lives_box_pack_start (GTK_BOX (hbox), label, FALSE, FALSE, widget_opts.packing_width>>1);
 
   // ---
 
   hbox = lives_hbox_new(FALSE, 0);
-  lives_box_pack_start (LIVES_BOX (prefsw->vbox_right_warnings), hbox, FALSE, FALSE, widget_opts.packing_height);
+  lives_box_pack_start (GTK_BOX (prefsw->vbox_right_warnings), hbox, FALSE, FALSE, widget_opts.packing_height);
   // ---
    
   prefsw->spinbutton_crit_ds = lives_standard_spin_button_new (_("Diskspace critical level: "),FALSE,
@@ -3361,7 +3322,7 @@ _prefsw *create_prefs_dialog (void) {
 							       LIVES_BOX(hbox),NULL);
 
   label = lives_standard_label_new (_ (" MB [set to 0 to disable]"));
-  lives_box_pack_start (LIVES_BOX (hbox), label, FALSE, FALSE, widget_opts.packing_width>>1);
+  lives_box_pack_start (GTK_BOX (hbox), label, FALSE, FALSE, widget_opts.packing_width>>1);
 
 
   // ---
@@ -3371,7 +3332,7 @@ _prefsw *create_prefs_dialog (void) {
 
 
   hbox = lives_hbox_new(FALSE, 0);
-  lives_box_pack_start (LIVES_BOX (prefsw->vbox_right_warnings), hbox, FALSE, FALSE, widget_opts.packing_height>>1);
+  lives_box_pack_start (GTK_BOX (prefsw->vbox_right_warnings), hbox, FALSE, FALSE, widget_opts.packing_height>>1);
 
   prefsw->checkbutton_warn_fps = lives_standard_check_button_new(_("Warn on Insert / Merge if _frame rate of clipboard does not match frame rate of selection"),
 								 TRUE,LIVES_BOX(hbox),NULL);
@@ -3380,7 +3341,7 @@ _prefsw *create_prefs_dialog (void) {
 
   // ---
   hbox = lives_hbox_new(FALSE, 0);
-  lives_box_pack_start (LIVES_BOX (prefsw->vbox_right_warnings), hbox, FALSE, FALSE, widget_opts.packing_height>>1);
+  lives_box_pack_start (GTK_BOX (prefsw->vbox_right_warnings), hbox, FALSE, FALSE, widget_opts.packing_height>>1);
 
   // ---
   prefsw->checkbutton_warn_fsize = lives_standard_check_button_new(_("Warn on Open if file _size exceeds "),TRUE,LIVES_BOX(hbox),NULL);
@@ -3392,11 +3353,11 @@ _prefsw *create_prefs_dialog (void) {
 
    
   label = lives_standard_label_new (_ (" MB"));
-  lives_box_pack_start (LIVES_BOX (hbox), label, FALSE, FALSE, widget_opts.packing_width>>1);
+  lives_box_pack_start (GTK_BOX (hbox), label, FALSE, FALSE, widget_opts.packing_width>>1);
 
   // ---
   hbox = lives_hbox_new(FALSE, 0);
-  lives_box_pack_start (LIVES_BOX (prefsw->vbox_right_warnings), hbox, FALSE, FALSE, widget_opts.packing_height>>1);
+  lives_box_pack_start (GTK_BOX (prefsw->vbox_right_warnings), hbox, FALSE, FALSE, widget_opts.packing_height>>1);
 
   prefsw->checkbutton_warn_save_set = lives_standard_check_button_new(_("Show a warning before saving a se_t"),
 								      TRUE,LIVES_BOX(hbox),NULL);
@@ -3405,7 +3366,7 @@ _prefsw *create_prefs_dialog (void) {
 
   // ---
   hbox = lives_hbox_new(FALSE, 0);
-  lives_box_pack_start (LIVES_BOX (prefsw->vbox_right_warnings), hbox, FALSE, FALSE, widget_opts.packing_height>>1);
+  lives_box_pack_start (GTK_BOX (prefsw->vbox_right_warnings), hbox, FALSE, FALSE, widget_opts.packing_height>>1);
 
   prefsw->checkbutton_warn_mplayer = lives_standard_check_button_new
     (_("Show a warning if _mplayer, sox, composite or convert is not found when LiVES is started."),
@@ -3415,7 +3376,7 @@ _prefsw *create_prefs_dialog (void) {
 
   // ---
   hbox = lives_hbox_new(FALSE, 0);
-  lives_box_pack_start (LIVES_BOX (prefsw->vbox_right_warnings), hbox, FALSE, FALSE, widget_opts.packing_height>>1);
+  lives_box_pack_start (GTK_BOX (prefsw->vbox_right_warnings), hbox, FALSE, FALSE, widget_opts.packing_height>>1);
 
   prefsw->checkbutton_warn_rendered_fx = lives_standard_check_button_new
     (_("Show a warning if no _rendered effects are found at startup."),
@@ -3426,7 +3387,7 @@ _prefsw *create_prefs_dialog (void) {
 
   // ---
   hbox = lives_hbox_new(FALSE, 0);
-  lives_box_pack_start (LIVES_BOX (prefsw->vbox_right_warnings), hbox, FALSE, FALSE, widget_opts.packing_height>>1);
+  lives_box_pack_start (GTK_BOX (prefsw->vbox_right_warnings), hbox, FALSE, FALSE, widget_opts.packing_height>>1);
 
 
   prefsw->checkbutton_warn_encoders = lives_standard_check_button_new
@@ -3437,7 +3398,7 @@ _prefsw *create_prefs_dialog (void) {
 
   // ---
   hbox = lives_hbox_new(FALSE, 0);
-  lives_box_pack_start (LIVES_BOX (prefsw->vbox_right_warnings), hbox, FALSE, FALSE, widget_opts.packing_height>>1);
+  lives_box_pack_start (GTK_BOX (prefsw->vbox_right_warnings), hbox, FALSE, FALSE, widget_opts.packing_height>>1);
 
   prefsw->checkbutton_warn_dup_set = lives_standard_check_button_new
     (_("Show a warning if a _duplicate set name is entered."),
@@ -3447,7 +3408,7 @@ _prefsw *create_prefs_dialog (void) {
 
   // ---
   hbox = lives_hbox_new(FALSE, 0);
-  lives_box_pack_start (LIVES_BOX (prefsw->vbox_right_warnings), hbox, FALSE, FALSE, widget_opts.packing_height>>1);
+  lives_box_pack_start (GTK_BOX (prefsw->vbox_right_warnings), hbox, FALSE, FALSE, widget_opts.packing_height>>1);
 
 
   prefsw->checkbutton_warn_layout_clips = lives_standard_check_button_new
@@ -3458,7 +3419,7 @@ _prefsw *create_prefs_dialog (void) {
 
   // ---
   hbox = lives_hbox_new(FALSE, 0);
-  lives_box_pack_start (LIVES_BOX (prefsw->vbox_right_warnings), hbox, FALSE, FALSE, widget_opts.packing_height>>1);
+  lives_box_pack_start (GTK_BOX (prefsw->vbox_right_warnings), hbox, FALSE, FALSE, widget_opts.packing_height>>1);
 
   prefsw->checkbutton_warn_layout_close = lives_standard_check_button_new
     (_("Warn if a clip used in a layout is about to be closed."),
@@ -3468,7 +3429,7 @@ _prefsw *create_prefs_dialog (void) {
 
   // ---
   hbox = lives_hbox_new(FALSE, 0);
-  lives_box_pack_start (LIVES_BOX (prefsw->vbox_right_warnings), hbox, FALSE, FALSE, widget_opts.packing_height>>1);
+  lives_box_pack_start (GTK_BOX (prefsw->vbox_right_warnings), hbox, FALSE, FALSE, widget_opts.packing_height>>1);
 
   prefsw->checkbutton_warn_layout_delete = lives_standard_check_button_new
     (_("Warn if frames used in a layout are about to be deleted."),
@@ -3478,7 +3439,7 @@ _prefsw *create_prefs_dialog (void) {
 
   // ---
   hbox = lives_hbox_new(FALSE, 0);
-  lives_box_pack_start (LIVES_BOX (prefsw->vbox_right_warnings), hbox, FALSE, FALSE, widget_opts.packing_height>>1);
+  lives_box_pack_start (GTK_BOX (prefsw->vbox_right_warnings), hbox, FALSE, FALSE, widget_opts.packing_height>>1);
 
   prefsw->checkbutton_warn_layout_shift = lives_standard_check_button_new
     (_("Warn if frames used in a layout are about to be shifted."),
@@ -3488,7 +3449,7 @@ _prefsw *create_prefs_dialog (void) {
 
   // ---
   hbox = lives_hbox_new(FALSE, 0);
-  lives_box_pack_start (LIVES_BOX (prefsw->vbox_right_warnings), hbox, FALSE, FALSE, widget_opts.packing_height>>1);
+  lives_box_pack_start (GTK_BOX (prefsw->vbox_right_warnings), hbox, FALSE, FALSE, widget_opts.packing_height>>1);
 
   prefsw->checkbutton_warn_layout_alter = lives_standard_check_button_new
     (_("Warn if frames used in a layout are about to be altered."),
@@ -3498,7 +3459,7 @@ _prefsw *create_prefs_dialog (void) {
 
   // ---
   hbox = lives_hbox_new(FALSE, 0);
-  lives_box_pack_start (LIVES_BOX (prefsw->vbox_right_warnings), hbox, FALSE, FALSE, widget_opts.packing_height>>1);
+  lives_box_pack_start (GTK_BOX (prefsw->vbox_right_warnings), hbox, FALSE, FALSE, widget_opts.packing_height>>1);
 
   prefsw->checkbutton_warn_layout_adel = lives_standard_check_button_new
     (_("Warn if audio used in a layout is about to be deleted."),
@@ -3509,7 +3470,7 @@ _prefsw *create_prefs_dialog (void) {
   // ---
 
   hbox = lives_hbox_new(FALSE, 0);
-  lives_box_pack_start (LIVES_BOX (prefsw->vbox_right_warnings), hbox, FALSE, FALSE, widget_opts.packing_height>>1);
+  lives_box_pack_start (GTK_BOX (prefsw->vbox_right_warnings), hbox, FALSE, FALSE, widget_opts.packing_height>>1);
 
   prefsw->checkbutton_warn_layout_ashift = lives_standard_check_button_new
     (_("Warn if audio used in a layout is about to be shifted."),
@@ -3519,7 +3480,7 @@ _prefsw *create_prefs_dialog (void) {
 
   // ---
   hbox = lives_hbox_new(FALSE, 0);
-  lives_box_pack_start (LIVES_BOX (prefsw->vbox_right_warnings), hbox, FALSE, FALSE, widget_opts.packing_height>>1);
+  lives_box_pack_start (GTK_BOX (prefsw->vbox_right_warnings), hbox, FALSE, FALSE, widget_opts.packing_height>>1);
 
   prefsw->checkbutton_warn_layout_aalt = lives_standard_check_button_new
     (_("Warn if audio used in a layout is about to be altered."),
@@ -3529,7 +3490,7 @@ _prefsw *create_prefs_dialog (void) {
 
   // ---
   hbox = lives_hbox_new(FALSE, 0);
-  lives_box_pack_start (LIVES_BOX (prefsw->vbox_right_warnings), hbox, FALSE, FALSE, widget_opts.packing_height>>1);
+  lives_box_pack_start (GTK_BOX (prefsw->vbox_right_warnings), hbox, FALSE, FALSE, widget_opts.packing_height>>1);
 
   prefsw->checkbutton_warn_layout_popup = lives_standard_check_button_new
     (_("Popup layout errors after clip changes."),
@@ -3540,7 +3501,7 @@ _prefsw *create_prefs_dialog (void) {
   // ---
 
   hbox = lives_hbox_new(FALSE, 0);
-  lives_box_pack_start (LIVES_BOX (prefsw->vbox_right_warnings), hbox, FALSE, FALSE, widget_opts.packing_height>>1);
+  lives_box_pack_start (GTK_BOX (prefsw->vbox_right_warnings), hbox, FALSE, FALSE, widget_opts.packing_height>>1);
 
   prefsw->checkbutton_warn_discard_layout = lives_standard_check_button_new
     (_("Warn if the layout has not been saved when leaving multitrack mode."),
@@ -3551,7 +3512,7 @@ _prefsw *create_prefs_dialog (void) {
   // ---
 
   hbox = lives_hbox_new(FALSE, 0);
-  lives_box_pack_start (LIVES_BOX (prefsw->vbox_right_warnings), hbox, FALSE, FALSE, widget_opts.packing_height>>1);
+  lives_box_pack_start (GTK_BOX (prefsw->vbox_right_warnings), hbox, FALSE, FALSE, widget_opts.packing_height>>1);
 
   prefsw->checkbutton_warn_mt_achans = lives_standard_check_button_new
     (_("Warn if multitrack has no audio channels, and a layout with audio is loaded."),
@@ -3561,7 +3522,7 @@ _prefsw *create_prefs_dialog (void) {
 
   // ---
   hbox = lives_hbox_new(FALSE, 0);
-  lives_box_pack_start (LIVES_BOX (prefsw->vbox_right_warnings), hbox, FALSE, FALSE, widget_opts.packing_height>>1);
+  lives_box_pack_start (GTK_BOX (prefsw->vbox_right_warnings), hbox, FALSE, FALSE, widget_opts.packing_height>>1);
 
   prefsw->checkbutton_warn_mt_no_jack = lives_standard_check_button_new
     (_("Warn if multitrack has audio channels, and your audio player is not \"jack\" or \"pulse audio\"."),
@@ -3573,7 +3534,7 @@ _prefsw *create_prefs_dialog (void) {
 
 #ifdef HAVE_LDVGRAB
   hbox = lives_hbox_new(FALSE, 0);
-  lives_box_pack_start (LIVES_BOX (prefsw->vbox_right_warnings), hbox, FALSE, FALSE, widget_opts.packing_height>>1);
+  lives_box_pack_start (GTK_BOX (prefsw->vbox_right_warnings), hbox, FALSE, FALSE, widget_opts.packing_height>>1);
 
   prefsw->checkbutton_warn_after_dvgrab = lives_standard_check_button_new
     (_("Show info message after importing from firewire device."),
@@ -3589,7 +3550,7 @@ _prefsw *create_prefs_dialog (void) {
 
 #ifdef HAVE_YUV4MPEG
   hbox = lives_hbox_new(FALSE, 0);
-  lives_box_pack_start (LIVES_BOX (prefsw->vbox_right_warnings), hbox, FALSE, FALSE, widget_opts.packing_height>>1);
+  lives_box_pack_start (GTK_BOX (prefsw->vbox_right_warnings), hbox, FALSE, FALSE, widget_opts.packing_height>>1);
 
   prefsw->checkbutton_warn_yuv4m_open = lives_standard_check_button_new
     (_("Show a warning before opening a yuv4mpeg stream (advanced)."),
@@ -3602,7 +3563,7 @@ _prefsw *create_prefs_dialog (void) {
 
   // ---
   hbox = lives_hbox_new(FALSE, 0);
-  lives_box_pack_start (LIVES_BOX (prefsw->vbox_right_warnings), hbox, FALSE, FALSE, widget_opts.packing_height>>1);
+  lives_box_pack_start (GTK_BOX (prefsw->vbox_right_warnings), hbox, FALSE, FALSE, widget_opts.packing_height>>1);
 
   prefsw->checkbutton_warn_mt_backup_space = lives_standard_check_button_new
     (_("Show a warning when multitrack is low on backup space."),
@@ -3613,7 +3574,7 @@ _prefsw *create_prefs_dialog (void) {
   // ---
 
   hbox = lives_hbox_new(FALSE, 0);
-  lives_box_pack_start (LIVES_BOX (prefsw->vbox_right_warnings), hbox, FALSE, FALSE, widget_opts.packing_height>>1);
+  lives_box_pack_start (GTK_BOX (prefsw->vbox_right_warnings), hbox, FALSE, FALSE, widget_opts.packing_height>>1);
 
   prefsw->checkbutton_warn_after_crash = lives_standard_check_button_new
     (_("Show a warning advising cleaning of disk space after a crash."),
@@ -3624,7 +3585,7 @@ _prefsw *create_prefs_dialog (void) {
   // ---
 
   hbox = lives_hbox_new(FALSE, 0);
-  lives_box_pack_start (LIVES_BOX (prefsw->vbox_right_warnings), hbox, FALSE, FALSE, widget_opts.packing_height>>1);
+  lives_box_pack_start (GTK_BOX (prefsw->vbox_right_warnings), hbox, FALSE, FALSE, widget_opts.packing_height>>1);
 
   prefsw->checkbutton_warn_no_pulse = lives_standard_check_button_new
     (_("Show a warning if unable to connect to pulseaudio player."),
@@ -3636,11 +3597,11 @@ _prefsw *create_prefs_dialog (void) {
 
 
   icon = g_build_filename(prefs->prefix_dir, ICON_DIR, "pref_warning.png", NULL);
-  pixbuf_warnings = lives_pixbuf_new_from_file(icon, NULL);
+  pixbuf_warnings = gdk_pixbuf_new_from_file(icon, NULL);
   g_free(icon);
 
   prefs_add_to_list(prefsw->prefs_list, pixbuf_warnings, _("Warnings"), LIST_ENTRY_WARNINGS);
-  lives_container_add (LIVES_CONTAINER (dialog_table), prefsw->scrollw_right_warnings);
+  lives_container_add (GTK_CONTAINER (dialog_table), prefsw->scrollw_right_warnings);
 
 
   // -----------,
@@ -3648,12 +3609,12 @@ _prefsw *create_prefs_dialog (void) {
   // -----------'
    
   prefsw->vbox_right_misc = lives_vbox_new (FALSE, widget_opts.packing_height*4);
-  lives_container_set_border_width (LIVES_CONTAINER (prefsw->vbox_right_misc), widget_opts.border_width*2);
+  lives_container_set_border_width (GTK_CONTAINER (prefsw->vbox_right_misc), widget_opts.border_width*2);
    
   prefsw->scrollw_right_misc = lives_standard_scrolled_window_new (0,0,prefsw->vbox_right_misc);
 
   hbox = lives_hbox_new(FALSE, 0);
-  lives_box_pack_start (LIVES_BOX (prefsw->vbox_right_misc), hbox, FALSE, FALSE, widget_opts.packing_height);
+  lives_box_pack_start (GTK_BOX (prefsw->vbox_right_misc), hbox, FALSE, FALSE, widget_opts.packing_height);
 
 
   prefsw->check_midi = lives_standard_check_button_new
@@ -3667,11 +3628,11 @@ _prefsw *create_prefs_dialog (void) {
 
    
   hbox = lives_hbox_new (FALSE, 0);
-  lives_box_pack_start (LIVES_BOX (prefsw->vbox_right_misc), hbox, FALSE, FALSE, widget_opts.packing_height);
+  lives_box_pack_start (GTK_BOX (prefsw->vbox_right_misc), hbox, FALSE, FALSE, widget_opts.packing_height);
    
   label = lives_standard_label_new (_("When inserting/merging frames:  "));
 
-  lives_box_pack_start (LIVES_BOX (hbox), label, FALSE, FALSE, widget_opts.packing_width*2);
+  lives_box_pack_start (GTK_BOX (hbox), label, FALSE, FALSE, widget_opts.packing_width*2);
    
   prefsw->ins_speed = lives_standard_radio_button_new(_("_Speed Up/Slow Down Insertion"),TRUE,rb_group2,LIVES_BOX(hbox),NULL);
   rb_group2 = lives_radio_button_get_group (LIVES_RADIO_BUTTON (prefsw->ins_speed));
@@ -3682,7 +3643,7 @@ _prefsw *create_prefs_dialog (void) {
   // ---
 
   prefsw->cdda_hbox = lives_hbox_new (FALSE, 0);
-  lives_box_pack_start (LIVES_BOX (prefsw->vbox_right_misc), prefsw->cdda_hbox, FALSE, FALSE, widget_opts.packing_height);
+  lives_box_pack_start (GTK_BOX (prefsw->vbox_right_misc), prefsw->cdda_hbox, FALSE, FALSE, widget_opts.packing_height);
    
   prefsw->cdplay_entry = lives_standard_entry_new ((tmp=g_strdup(_("CD device           "))),FALSE,
 						   (tmp2=g_filename_to_utf8(prefs->cdplay_device,-1,NULL,NULL,NULL)),
@@ -3691,28 +3652,27 @@ _prefsw *create_prefs_dialog (void) {
   g_free(tmp); g_free(tmp2); g_free(tmp3);
 
   buttond = lives_standard_file_button_new (FALSE,LIVES_DEVICE_DIR);
-  lives_box_pack_start(LIVES_BOX(prefsw->cdda_hbox),buttond,FALSE,FALSE,widget_opts.packing_width);
+  lives_box_pack_start(GTK_BOX(prefsw->cdda_hbox),buttond,FALSE,FALSE,widget_opts.packing_width);
   
   g_signal_connect(buttond, "clicked", G_CALLBACK (on_filesel_button_clicked), (gpointer)prefsw->cdplay_entry);
 
 
    
   hbox = lives_hbox_new (FALSE, 0);
-  lives_box_pack_start (LIVES_BOX (prefsw->vbox_right_misc), hbox, FALSE, FALSE, widget_opts.packing_height);
+  lives_box_pack_start (GTK_BOX (prefsw->vbox_right_misc), hbox, FALSE, FALSE, widget_opts.packing_height);
    
   prefsw->spinbutton_def_fps = lives_standard_spin_button_new ((tmp=g_strdup(_("Default FPS        "))),TRUE,
 							  prefs->default_fps, 1., FPS_MAX, 1., 1., 3,
 							  LIVES_BOX(hbox),
 							  (tmp2=g_strdup(_("Frames per second to use when none is specified"))));
-  g_free(tmp); g_free(tmp2);
 
 
   icon = g_strdup_printf("%s%s/pref_misc.png", prefs->prefix_dir, ICON_DIR);
-  pixbuf_misc = lives_pixbuf_new_from_file(icon, NULL);
+  pixbuf_misc = gdk_pixbuf_new_from_file(icon, NULL);
   g_free(icon);
 
   prefs_add_to_list(prefsw->prefs_list, pixbuf_misc, _("Misc"), LIST_ENTRY_MISC);
-  lives_container_add (LIVES_CONTAINER (dialog_table), prefsw->scrollw_right_misc);
+  lives_container_add (GTK_CONTAINER (dialog_table), prefsw->scrollw_right_misc);
 
 
   if (!capable->has_cdda2wav) {
@@ -3725,12 +3685,12 @@ _prefsw *create_prefs_dialog (void) {
   // -----------'
    
   prefsw->vbox_right_themes = lives_vbox_new (FALSE, widget_opts.packing_height);
-  lives_container_set_border_width (LIVES_CONTAINER (prefsw->vbox_right_themes), widget_opts.border_width*2);
+  lives_container_set_border_width (GTK_CONTAINER (prefsw->vbox_right_themes), widget_opts.border_width*2);
    
   prefsw->scrollw_right_themes = lives_standard_scrolled_window_new (0,0,prefsw->vbox_right_themes);
 
   hbox = lives_hbox_new (FALSE, 0);
-  lives_box_pack_start (LIVES_BOX (prefsw->vbox_right_themes), hbox, TRUE, FALSE, widget_opts.packing_height);
+  lives_box_pack_start (GTK_BOX (prefsw->vbox_right_themes), hbox, TRUE, FALSE, widget_opts.packing_height);
    
   // scan for themes
   themes = get_plugin_list(PLUGIN_THEMES, TRUE, NULL, NULL);
@@ -3751,23 +3711,23 @@ _prefsw *create_prefs_dialog (void) {
   g_list_free (themes);
    
   icon = g_build_filename(prefs->prefix_dir, ICON_DIR, "pref_themes.png", NULL);
-  pixbuf_themes = lives_pixbuf_new_from_file(icon, NULL);
+  pixbuf_themes = gdk_pixbuf_new_from_file(icon, NULL);
   g_free(icon);
 
   prefs_add_to_list(prefsw->prefs_list, pixbuf_themes, _("Themes"), LIST_ENTRY_THEMES);
-  lives_container_add (LIVES_CONTAINER (dialog_table), prefsw->scrollw_right_themes);
+  lives_container_add (GTK_CONTAINER (dialog_table), prefsw->scrollw_right_themes);
 
   // --------------------------,
   // streaming/networking      |
   // --------------------------'
 
   prefsw->vbox_right_net = lives_vbox_new (FALSE, widget_opts.packing_height*4);
-  lives_container_set_border_width (LIVES_CONTAINER (prefsw->vbox_right_net), widget_opts.border_width);
+  lives_container_set_border_width (GTK_CONTAINER (prefsw->vbox_right_net), widget_opts.border_width);
 
   prefsw->scrollw_right_net = lives_standard_scrolled_window_new (0,0,prefsw->vbox_right_net);
 
   hbox = lives_hbox_new (FALSE, 0);
-  lives_box_pack_start (LIVES_BOX (prefsw->vbox_right_net), hbox, FALSE, FALSE, widget_opts.packing_height);
+  lives_box_pack_start (GTK_BOX (prefsw->vbox_right_net), hbox, FALSE, FALSE, widget_opts.packing_height);
    
   prefsw->spinbutton_bwidth = lives_standard_spin_button_new (_("Download bandwidth (Kb/s)       "),FALSE,
 							      prefs->dl_bandwidth, 0, 100000, 1, 10, 0,
@@ -3778,14 +3738,14 @@ _prefsw *create_prefs_dialog (void) {
    
 #ifndef ENABLE_OSC
   label = lives_standard_label_new (_("LiVES must be compiled without \"configure --disable-OSC\" to use OMC"));
-  lives_box_pack_start (LIVES_BOX (prefsw->vbox_right_net), label, FALSE, FALSE, widget_opts->packing_height);
+  lives_box_pack_start (GTK_BOX (prefsw->vbox_right_net), label, FALSE, FALSE, widget_opts->packing_height);
 #endif
    
   hbox1 = lives_hbox_new (FALSE, 0);
-  lives_box_pack_start (LIVES_BOX (prefsw->vbox_right_net), hbox1, FALSE, FALSE, widget_opts.packing_height);
+  lives_box_pack_start (GTK_BOX (prefsw->vbox_right_net), hbox1, FALSE, FALSE, widget_opts.packing_height);
 
   hbox = lives_hbox_new (FALSE, 0);
-  lives_box_pack_start(LIVES_BOX (hbox1), hbox, FALSE, FALSE, 0);
+  lives_box_pack_start(GTK_BOX (hbox1), hbox, FALSE, FALSE, 0);
    
   prefsw->enable_OSC = lives_standard_check_button_new(_("OMC remote control enabled"),FALSE,LIVES_BOX(hbox),NULL);
 
@@ -3802,7 +3762,7 @@ _prefsw *create_prefs_dialog (void) {
 
   // ---
   hbox = lives_hbox_new(FALSE, 0);
-  lives_box_pack_start (LIVES_BOX (prefsw->vbox_right_net), hbox, FALSE, FALSE, widget_opts.packing_height);
+  lives_box_pack_start (GTK_BOX (prefsw->vbox_right_net), hbox, FALSE, FALSE, widget_opts.packing_height);
 
   prefsw->enable_OSC_start = lives_standard_check_button_new(_("Start OMC on startup"),FALSE,LIVES_BOX(hbox),NULL);
 
@@ -3821,30 +3781,30 @@ _prefsw *create_prefs_dialog (void) {
 #endif
    
   icon = g_build_filename(prefs->prefix_dir, ICON_DIR, "pref_net.png", NULL);
-  pixbuf_net = lives_pixbuf_new_from_file(icon, NULL);
+  pixbuf_net = gdk_pixbuf_new_from_file(icon, NULL);
   g_free(icon);
 
   prefs_add_to_list(prefsw->prefs_list, pixbuf_net, _("Streaming/Networking"), LIST_ENTRY_NET);
-  lives_container_add (LIVES_CONTAINER (dialog_table), prefsw->scrollw_right_net);
+  lives_container_add (GTK_CONTAINER (dialog_table), prefsw->scrollw_right_net);
    
   // ----------,
   // jack      |
   // ----------'
 
   prefsw->vbox_right_jack = lives_vbox_new (FALSE, 0);
-  lives_container_set_border_width (LIVES_CONTAINER (prefsw->vbox_right_jack), widget_opts.packing_width*2);
+  lives_container_set_border_width (GTK_CONTAINER (prefsw->vbox_right_jack), widget_opts.packing_width*2);
 
   prefsw->scrollw_right_jack = lives_standard_scrolled_window_new (0,0,prefsw->vbox_right_jack);
 
   label = lives_standard_label_new (_("Jack transport"));
-  lives_box_pack_start (LIVES_BOX (prefsw->vbox_right_jack), label, FALSE, FALSE, widget_opts.packing_height);
+  lives_box_pack_start (GTK_BOX (prefsw->vbox_right_jack), label, FALSE, FALSE, widget_opts.packing_height);
 
 #ifndef ENABLE_JACK_TRANSPORT
   label = lives_standard_label_new (_("LiVES must be compiled with jack/transport.h and jack/jack.h present to use jack transport"));
-  lives_box_pack_start (LIVES_BOX (prefsw->vbox_right_jack), label, FALSE, FALSE, widget_opts.packing_height);
+  lives_box_pack_start (GTK_BOX (prefsw->vbox_right_jack), label, FALSE, FALSE, widget_opts.packing_height);
 #else
   hbox = lives_hbox_new (FALSE,0);
-  lives_box_pack_start (LIVES_BOX (prefsw->vbox_right_jack), hbox, FALSE, FALSE, widget_opts.packing_height);
+  lives_box_pack_start (GTK_BOX (prefsw->vbox_right_jack), hbox, FALSE, FALSE, widget_opts.packing_height);
 
   prefsw->jack_tserver_entry = lives_standard_entry_new (_("Jack _transport config file"),TRUE,prefs->jack_tserver,-1,255,LIVES_BOX(hbox),NULL);
 
@@ -3862,7 +3822,7 @@ _prefsw *create_prefs_dialog (void) {
 
   // ---
   hbox = lives_hbox_new (FALSE,0);
-  lives_box_pack_start (LIVES_BOX (prefsw->vbox_right_jack), hbox, FALSE, FALSE, widget_opts.packing_height);
+  lives_box_pack_start (GTK_BOX (prefsw->vbox_right_jack), hbox, FALSE, FALSE, widget_opts.packing_height);
   // ---
 
   prefsw->checkbutton_jack_master=lives_standard_check_button_new(_("Jack transport _master (start and stop)"),TRUE,LIVES_BOX(hbox),NULL);
@@ -3873,7 +3833,7 @@ _prefsw *create_prefs_dialog (void) {
 
   // ---
   hbox = lives_hbox_new (FALSE,0);
-  lives_box_pack_start (LIVES_BOX (prefsw->vbox_right_jack), hbox, FALSE, FALSE, widget_opts.packing_height);
+  lives_box_pack_start (GTK_BOX (prefsw->vbox_right_jack), hbox, FALSE, FALSE, widget_opts.packing_height);
 
   prefsw->checkbutton_jack_client=lives_standard_check_button_new(_("Jack transport _client (start and stop)"),TRUE,LIVES_BOX(hbox),NULL);
 
@@ -3887,7 +3847,7 @@ _prefsw *create_prefs_dialog (void) {
   // ---
 
   hbox = lives_hbox_new (FALSE,0);
-  lives_box_pack_start (LIVES_BOX (prefsw->vbox_right_jack), hbox, FALSE, FALSE, widget_opts.packing_height);
+  lives_box_pack_start (GTK_BOX (prefsw->vbox_right_jack), hbox, FALSE, FALSE, widget_opts.packing_height);
 
   prefsw->checkbutton_jack_tb_start=lives_standard_check_button_new(_("Jack transport sets start position"),TRUE,LIVES_BOX(hbox),NULL);
 
@@ -3918,7 +3878,7 @@ _prefsw *create_prefs_dialog (void) {
 
   // ---
   label = lives_standard_label_new (_("(See also Playback -> Audio follows video rate/direction)"));
-  lives_box_pack_start (LIVES_BOX (prefsw->vbox_right_jack), label, FALSE, FALSE, widget_opts.packing_height);
+  lives_box_pack_start (GTK_BOX (prefsw->vbox_right_jack), label, FALSE, FALSE, widget_opts.packing_height);
 
 #endif
 
@@ -3926,17 +3886,17 @@ _prefsw *create_prefs_dialog (void) {
 
 
   label = lives_standard_label_new (_("Jack audio"));
-  lives_box_pack_start (LIVES_BOX (prefsw->vbox_right_jack), label, FALSE, FALSE, widget_opts.packing_height);
+  lives_box_pack_start (GTK_BOX (prefsw->vbox_right_jack), label, FALSE, FALSE, widget_opts.packing_height);
 
 #ifndef ENABLE_JACK
   label = lives_standard_label_new (_("LiVES must be compiled with jack/jack.h present to use jack audio"));
-  lives_box_pack_start (LIVES_BOX (prefsw->vbox_right_jack), label, FALSE, FALSE, widget_opts.packing_height);
+  lives_box_pack_start (GTK_BOX (prefsw->vbox_right_jack), label, FALSE, FALSE, widget_opts.packing_height);
 #else
   label = lives_standard_label_new (_("You MUST set the audio player to \"jack\" in the Playback tab to use jack audio"));
-  lives_box_pack_start (LIVES_BOX (prefsw->vbox_right_jack), label, FALSE, FALSE, widget_opts.packing_height);
+  lives_box_pack_start (GTK_BOX (prefsw->vbox_right_jack), label, FALSE, FALSE, widget_opts.packing_height);
 
   hbox = lives_hbox_new (FALSE,0);
-  lives_box_pack_start (LIVES_BOX (prefsw->vbox_right_jack), hbox, FALSE, FALSE, widget_opts.packing_height);
+  lives_box_pack_start (GTK_BOX (prefsw->vbox_right_jack), hbox, FALSE, FALSE, widget_opts.packing_height);
 
   prefsw->jack_aserver_entry = lives_standard_entry_new (_("Jack _audio server config file"),TRUE,prefs->jack_aserver,-1,255,LIVES_BOX(hbox),NULL);
 
@@ -3948,7 +3908,7 @@ _prefsw *create_prefs_dialog (void) {
 				(future_prefs->jack_opts&JACK_OPTS_START_ASERVER)?TRUE:FALSE);
   // ---
   hbox = lives_hbox_new (FALSE,0);
-  lives_box_pack_start (LIVES_BOX (prefsw->vbox_right_jack), hbox, FALSE, FALSE, widget_opts.packing_height);
+  lives_box_pack_start (GTK_BOX (prefsw->vbox_right_jack), hbox, FALSE, FALSE, widget_opts.packing_height);
 
   prefsw->checkbutton_jack_pwp = lives_standard_check_button_new(_("Play audio even when transport is _paused"),TRUE,LIVES_BOX(hbox),NULL);
    
@@ -3957,26 +3917,14 @@ _prefsw *create_prefs_dialog (void) {
 
   lives_widget_set_sensitive (prefsw->checkbutton_jack_pwp, prefs->audio_player==AUD_PLAYER_JACK);
 
-  // ---
-  hbox = lives_hbox_new (FALSE,0);
-  lives_box_pack_start (LIVES_BOX (prefsw->vbox_right_jack), hbox, FALSE, FALSE, widget_opts.packing_height);
-
-  prefsw->checkbutton_jack_read_autocon = lives_standard_check_button_new
-    (_("Automatically connect to System Out ports when 'playing' External Audio"),FALSE,LIVES_BOX(hbox),NULL);
-   
-  lives_toggle_button_set_active (LIVES_TOGGLE_BUTTON (prefsw->checkbutton_jack_read_autocon), 
-				(future_prefs->jack_opts&JACK_OPTS_NO_READ_AUTOCON)?FALSE:TRUE);
-
-  lives_widget_set_sensitive (prefsw->checkbutton_jack_read_autocon, prefs->audio_player==AUD_PLAYER_JACK);
-
 #endif
 
   icon = g_build_filename(prefs->prefix_dir, ICON_DIR, "pref_jack.png", NULL);
-  pixbuf_jack = lives_pixbuf_new_from_file(icon, NULL);
+  pixbuf_jack = gdk_pixbuf_new_from_file(icon, NULL);
   g_free(icon);
 
   prefs_add_to_list(prefsw->prefs_list, pixbuf_jack, _("Jack Integration"), LIST_ENTRY_JACK);
-  lives_container_add (LIVES_CONTAINER (dialog_table), prefsw->scrollw_right_jack);
+  lives_container_add (GTK_CONTAINER (dialog_table), prefsw->scrollw_right_jack);
 
   // ----------------------,
   // MIDI/js learner       |
@@ -3987,23 +3935,23 @@ _prefsw *create_prefs_dialog (void) {
 
   prefsw->scrollw_right_midi = lives_standard_scrolled_window_new (0,0,prefsw->vbox_right_midi);
 
-  lives_container_set_border_width (LIVES_CONTAINER (prefsw->vbox_right_midi), widget_opts.border_width*2);
+  lives_container_set_border_width (GTK_CONTAINER (prefsw->vbox_right_midi), widget_opts.border_width*2);
 
   label = lives_standard_label_new (_("Events to respond to:"));
-  lives_box_pack_start (LIVES_BOX (prefsw->vbox_right_midi), label, FALSE, FALSE, widget_opts.packing_height);
+  lives_box_pack_start (GTK_BOX (prefsw->vbox_right_midi), label, FALSE, FALSE, widget_opts.packing_height);
 
 #ifdef ENABLE_OSC
 #ifdef OMC_JS_IMPL
 
   hbox = lives_hbox_new(FALSE, 0);
-  lives_box_pack_start (LIVES_BOX (prefsw->vbox_right_midi), hbox, FALSE, FALSE, widget_opts.packing_height);
+  lives_box_pack_start (GTK_BOX (prefsw->vbox_right_midi), hbox, FALSE, FALSE, widget_opts.packing_height);
 
   prefsw->checkbutton_omc_js = lives_standard_check_button_new(_("_Joystick events"),TRUE,LIVES_BOX(hbox),NULL);
 
   lives_toggle_button_set_active (LIVES_TOGGLE_BUTTON (prefsw->checkbutton_omc_js), prefs->omc_dev_opts&OMC_DEV_JS);
 
   hbox = lives_hbox_new (FALSE, 0);
-  lives_box_pack_start (LIVES_BOX (prefsw->vbox_right_midi), hbox, FALSE, FALSE, widget_opts.packing_height);
+  lives_box_pack_start (GTK_BOX (prefsw->vbox_right_midi), hbox, FALSE, FALSE, widget_opts.packing_height);
 
   prefsw->omc_js_entry = lives_standard_entry_new ((tmp=g_strdup(_("_Joystick device")))
 						    ,TRUE,prefs->omc_js_fname,-1,PATH_MAX,LIVES_BOX(hbox),
@@ -4011,7 +3959,7 @@ _prefsw *create_prefs_dialog (void) {
   g_free(tmp); g_free(tmp2);
 
   buttond = lives_standard_file_button_new (FALSE,LIVES_DEVICE_DIR);
-  lives_box_pack_start(LIVES_BOX(hbox),buttond,FALSE,FALSE,widget_opts.packing_width);
+  lives_box_pack_start(GTK_BOX(hbox),buttond,FALSE,FALSE,widget_opts.packing_width);
 
   g_signal_connect(buttond, "clicked", G_CALLBACK (on_filesel_button_clicked), (gpointer)prefsw->omc_js_entry);
 
@@ -4023,7 +3971,7 @@ _prefsw *create_prefs_dialog (void) {
 
 #ifdef OMC_MIDI_IMPL
   hbox = lives_hbox_new (FALSE, 0);
-  lives_box_pack_start (LIVES_BOX (prefsw->vbox_right_midi), hbox, FALSE, FALSE, widget_opts.packing_height);
+  lives_box_pack_start (GTK_BOX (prefsw->vbox_right_midi), hbox, FALSE, FALSE, widget_opts.packing_height);
 
   prefsw->checkbutton_omc_midi = lives_standard_check_button_new(_("_MIDI events"),TRUE,LIVES_BOX(hbox),NULL);
 
@@ -4032,7 +3980,7 @@ _prefsw *create_prefs_dialog (void) {
   // ---
 
   prefsw->midi_hbox = lives_hbox_new (FALSE, 0);
-  lives_box_pack_start (LIVES_BOX (prefsw->vbox_right_midi), prefsw->midi_hbox, FALSE, FALSE, widget_opts.packing_height);
+  lives_box_pack_start (GTK_BOX (prefsw->vbox_right_midi), prefsw->midi_hbox, FALSE, FALSE, widget_opts.packing_height);
 
   prefsw->alsa_midi = lives_standard_radio_button_new((tmp=g_strdup(_("Use _ALSA MIDI (recommended)"))),TRUE,alsa_midi_group,
 						      LIVES_BOX(prefsw->midi_hbox),
@@ -4056,7 +4004,7 @@ _prefsw *create_prefs_dialog (void) {
 
 
   hbox = lives_hbox_new (FALSE, 0);
-  lives_box_pack_start (LIVES_BOX (prefsw->vbox_right_midi), hbox, FALSE, FALSE, widget_opts.packing_height);
+  lives_box_pack_start (GTK_BOX (prefsw->vbox_right_midi), hbox, FALSE, FALSE, widget_opts.packing_height);
    
   prefsw->omc_midi_entry = lives_standard_entry_new ((tmp=g_strdup(_("_MIDI device"))),TRUE,prefs->omc_midi_fname,
 						     -1,PATH_MAX,LIVES_BOX(hbox),
@@ -4065,7 +4013,7 @@ _prefsw *create_prefs_dialog (void) {
   g_free(tmp); g_free(tmp2);
 
   prefsw->button_midid = lives_standard_file_button_new (FALSE,LIVES_DEVICE_DIR);
-  lives_box_pack_start(LIVES_BOX(hbox),prefsw->button_midid,FALSE,FALSE,widget_opts.packing_width);
+  lives_box_pack_start(GTK_BOX(hbox),prefsw->button_midid,FALSE,FALSE,widget_opts.packing_width);
   lives_widget_show (prefsw->button_midid);
 
   g_signal_connect(prefsw->button_midid, "clicked", G_CALLBACK (on_filesel_button_clicked), (gpointer)prefsw->omc_midi_entry);
@@ -4073,10 +4021,10 @@ _prefsw *create_prefs_dialog (void) {
   add_hsep_to_box(LIVES_BOX(prefsw->vbox_right_midi));
    
   label = lives_standard_label_new (_("Advanced"));
-  lives_box_pack_start (LIVES_BOX (prefsw->vbox_right_midi), label, FALSE, FALSE, widget_opts.packing_height);
+  lives_box_pack_start (GTK_BOX (prefsw->vbox_right_midi), label, FALSE, FALSE, widget_opts.packing_height);
 
   hbox = lives_hbox_new (FALSE,0);
-  lives_box_pack_start (LIVES_BOX (prefsw->vbox_right_midi), hbox, FALSE, FALSE, widget_opts.packing_height);
+  lives_box_pack_start (GTK_BOX (prefsw->vbox_right_midi), hbox, FALSE, FALSE, widget_opts.packing_height);
 
   prefsw->spinbutton_midicr = lives_standard_spin_button_new ((tmp=g_strdup(_("MIDI check _rate"))),TRUE,
 							      prefs->midi_check_rate, 1., 2000., 10., 100., 0,
@@ -4096,7 +4044,7 @@ _prefsw *create_prefs_dialog (void) {
 
   label = lives_standard_label_new (_("(Warning: setting this value too high can slow down playback.)"));
 
-  lives_box_pack_start (LIVES_BOX (prefsw->vbox_right_midi), label, FALSE, FALSE, widget_opts.packing_height);
+  lives_box_pack_start (GTK_BOX (prefsw->vbox_right_midi), label, FALSE, FALSE, widget_opts.packing_height);
 
 #ifdef ALSA_MIDI
   g_signal_connect (GTK_OBJECT (prefsw->alsa_midi), "toggled",
@@ -4110,11 +4058,11 @@ _prefsw *create_prefs_dialog (void) {
 #endif
 
   icon = g_build_filename(prefs->prefix_dir, ICON_DIR, "pref_midi.png", NULL);
-  pixbuf_midi = lives_pixbuf_new_from_file(icon, NULL);
+  pixbuf_midi = gdk_pixbuf_new_from_file(icon, NULL);
   g_free(icon);
 
   prefs_add_to_list(prefsw->prefs_list, pixbuf_midi, _("MIDI/Joystick learner"), LIST_ENTRY_MIDI);
-  lives_container_add (LIVES_CONTAINER (dialog_table), prefsw->scrollw_right_midi);
+  lives_container_add (GTK_CONTAINER (dialog_table), prefsw->scrollw_right_midi);
 
 
 
@@ -4132,7 +4080,7 @@ _prefsw *create_prefs_dialog (void) {
   // Preferences 'Revert' button
   prefsw->cancelbutton = lives_button_new_from_stock ("gtk-revert-to-saved");
   lives_widget_show (prefsw->cancelbutton);
-  lives_dialog_add_action_widget (LIVES_DIALOG (prefsw->prefs_dialog), prefsw->cancelbutton, GTK_RESPONSE_CANCEL);
+  lives_dialog_add_action_widget (GTK_DIALOG (prefsw->prefs_dialog), prefsw->cancelbutton, GTK_RESPONSE_CANCEL);
 
   lives_widget_set_can_focus (prefsw->cancelbutton,TRUE);
 
@@ -4142,7 +4090,7 @@ _prefsw *create_prefs_dialog (void) {
   // Preferences 'Apply' button
   prefsw->applybutton = lives_button_new_from_stock ("gtk-apply");
   lives_widget_show (prefsw->applybutton);
-  lives_dialog_add_action_widget (LIVES_DIALOG (prefsw->prefs_dialog), prefsw->applybutton, 0);
+  lives_dialog_add_action_widget (GTK_DIALOG (prefsw->prefs_dialog), prefsw->applybutton, 0);
 
   lives_widget_set_can_focus_and_default (prefsw->applybutton);
   // Set 'Apply' button as inactive since there is no changes yet
@@ -4151,7 +4099,7 @@ _prefsw *create_prefs_dialog (void) {
   // Preferences 'Close' button
   prefsw->closebutton = lives_button_new_from_stock ("gtk-close");
   lives_widget_show(prefsw->closebutton);
-  lives_dialog_add_action_widget(LIVES_DIALOG(prefsw->prefs_dialog), prefsw->closebutton, GTK_RESPONSE_OK);
+  lives_dialog_add_action_widget(GTK_DIALOG(prefsw->prefs_dialog), prefsw->closebutton, GTK_RESPONSE_OK);
 
   lives_widget_set_can_focus_and_default (prefsw->closebutton);
 
@@ -4185,10 +4133,6 @@ _prefsw *create_prefs_dialog (void) {
 
   g_signal_connect(GTK_OBJECT(prefsw->spinbutton_gmoni), "changed", G_CALLBACK(apply_button_set_enabled), NULL);
   g_signal_connect(GTK_OBJECT(prefsw->spinbutton_pmoni), "changed", G_CALLBACK(apply_button_set_enabled), NULL);
-
-  g_signal_connect(GTK_OBJECT(prefsw->spinbutton_gmoni), "changed", G_CALLBACK(pmoni_gmoni_changed), NULL);
-  g_signal_connect(GTK_OBJECT(prefsw->spinbutton_pmoni), "changed", G_CALLBACK(pmoni_gmoni_changed), NULL);
-
   g_signal_connect(GTK_OBJECT(prefsw->forcesmon), "toggled", G_CALLBACK(apply_button_set_enabled), NULL);
   g_signal_connect(GTK_OBJECT(prefsw->checkbutton_stream_audio), "toggled", G_CALLBACK(apply_button_set_enabled), 
 		   NULL);
@@ -4224,7 +4168,6 @@ _prefsw *create_prefs_dialog (void) {
   g_signal_connect(GTK_OBJECT(prefsw->checkbutton_instant_open), "toggled", G_CALLBACK(apply_button_set_enabled), 
 		   NULL);
   g_signal_connect(GTK_OBJECT(prefsw->checkbutton_auto_deint), "toggled", G_CALLBACK(apply_button_set_enabled), NULL);
-  g_signal_connect(GTK_OBJECT(prefsw->checkbutton_auto_trim), "toggled", G_CALLBACK(apply_button_set_enabled), NULL);
   g_signal_connect(GTK_OBJECT(prefsw->checkbutton_nobord), "toggled", G_CALLBACK(apply_button_set_enabled), NULL);
   g_signal_connect(GTK_OBJECT(prefsw->checkbutton_concat_images), "toggled", G_CALLBACK(apply_button_set_enabled), 
 		   NULL);
@@ -4344,7 +4287,6 @@ _prefsw *create_prefs_dialog (void) {
   g_signal_connect(GTK_EDITABLE(prefsw->jack_aserver_entry), "changed", G_CALLBACK(apply_button_set_enabled), NULL);
   g_signal_connect(GTK_OBJECT(prefsw->checkbutton_start_ajack), "toggled", G_CALLBACK(apply_button_set_enabled), NULL);
   g_signal_connect(GTK_OBJECT(prefsw->checkbutton_jack_pwp), "toggled", G_CALLBACK(apply_button_set_enabled), NULL);
-  g_signal_connect(GTK_OBJECT(prefsw->checkbutton_jack_read_autocon), "toggled", G_CALLBACK(apply_button_set_enabled), NULL);
 #endif
 
 #ifdef ENABLE_OSC
@@ -4364,14 +4306,14 @@ _prefsw *create_prefs_dialog (void) {
 #endif
    
   if (capable->has_encoder_plugins) {
-    prefsw->encoder_name_fn = g_signal_connect(GTK_OBJECT(LIVES_COMBO(prefsw->encoder_combo)), "changed", 
+    prefsw->encoder_name_fn = g_signal_connect(GTK_OBJECT(GTK_COMBO_BOX(prefsw->encoder_combo)), "changed", 
 					       G_CALLBACK(on_encoder_entry_changed), NULL);
     // ---
-    prefsw->encoder_ofmt_fn = g_signal_connect(GTK_OBJECT(LIVES_COMBO(prefsw->ofmt_combo)), "changed", 
+    prefsw->encoder_ofmt_fn = g_signal_connect(GTK_OBJECT(GTK_COMBO_BOX(prefsw->ofmt_combo)), "changed", 
 					       G_CALLBACK(on_encoder_ofmt_changed), NULL);
   }
    
-  prefsw->audp_entry_func = g_signal_connect(GTK_OBJECT(LIVES_COMBO(prefsw->audp_combo)), "changed", 
+  prefsw->audp_entry_func = g_signal_connect(GTK_OBJECT(GTK_COMBO_BOX(prefsw->audp_combo)), "changed", 
 					     G_CALLBACK(on_audp_entry_changed), NULL);
 
 #ifdef ENABLE_OSC
@@ -4417,7 +4359,7 @@ void on_preferences_activate(GtkMenuItem *menuitem, gpointer user_data) {
   if (menuitem!=NULL) prefs_current_page=-1;
 
   if (prefsw != NULL && prefsw->prefs_dialog != NULL) {
-    lives_window_present(LIVES_WINDOW(prefsw->prefs_dialog));
+    lives_window_present(GTK_WINDOW(prefsw->prefs_dialog));
     gdk_window_raise(lives_widget_get_xwindow(prefsw->prefs_dialog));
     return;
   }
@@ -4469,9 +4411,9 @@ void on_prefs_apply_clicked(GtkButton *button, gpointer user_data) {
   needs_restart = apply_prefs(FALSE);
 
   // do this now in case anything was changed or reverted
-  lives_widget_set_sensitive(LIVES_WIDGET(prefsw->applybutton), FALSE);
-  lives_widget_set_sensitive(LIVES_WIDGET(prefsw->cancelbutton), FALSE);
-  lives_widget_set_sensitive(LIVES_WIDGET(prefsw->closebutton), TRUE);
+  lives_widget_set_sensitive(GTK_WIDGET(prefsw->applybutton), FALSE);
+  lives_widget_set_sensitive(GTK_WIDGET(prefsw->cancelbutton), FALSE);
+  lives_widget_set_sensitive(GTK_WIDGET(prefsw->closebutton), TRUE);
 
   if (FALSE == mainw->prefs_need_restart){
     mainw->prefs_need_restart = needs_restart;
@@ -4497,11 +4439,11 @@ void on_prefs_apply_clicked(GtkButton *button, gpointer user_data) {
  * Function is used to select particular row in preferences selection list
  * selection is performed according to provided index which is one of LIST_ENTRY_* constants
  */
-static void select_pref_list_row(uint32_t selected_idx) {
+static void select_pref_list_row(guint selected_idx) {
   GtkTreeIter iter;
   GtkTreeModel *model;
   boolean valid;
-  uint32_t idx;
+  guint idx;
 
   model = gtk_tree_view_get_model(GTK_TREE_VIEW(prefsw->prefs_list));
   valid = gtk_tree_model_get_iter_first(model, &iter);

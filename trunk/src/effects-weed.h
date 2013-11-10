@@ -37,21 +37,13 @@ typedef enum {
 } lives_filter_error_t;
 
 
-typedef enum {
-  FX_LIST_NAME,
-  FX_LIST_NAME_AND_TYPE,
-  FX_LIST_HASHNAME,
-} lives_fx_list_t;
-
-
 /// bootstrap function for weed plugins
 weed_plant_t *weed_bootstrap_func (weed_default_getter_f *value, int num_versions, int *plugin_versions);
 
 weed_plant_t *get_weed_filter(int filter_idx);
-char *weed_filter_idx_get_name(int filter_idx) WARN_UNUSED;
-char *weed_instance_get_filter_name(weed_plant_t *inst, boolean get_compound_parent) WARN_UNUSED;
-char *make_weed_hashname(int filter_idx, boolean fullname, boolean use_extra_authors) WARN_UNUSED;  ///< fullname includes author and version
-int weed_get_idx_for_hashname (const char *hashname, boolean fullname); ///< fullname includes author and version
+gchar *weed_filter_get_name(int filter_idx) WARN_UNUSED;
+gchar *make_weed_hashname(int filter_idx, boolean fullname, boolean use_extra_authors) WARN_UNUSED;  ///< fullname includes author and version
+int weed_get_idx_for_hashname (const gchar *hashname, boolean fullname); ///< fullname includes author and version
 int enabled_in_channels (weed_plant_t *plant, boolean count_repeats);
 int enabled_out_channels (weed_plant_t *plant, boolean count_repeats);
 weed_plant_t *get_enabled_channel (weed_plant_t *inst, int which, boolean is_in); ///< for FILTER_INST
@@ -129,9 +121,6 @@ boolean weed_parameter_has_variable_elements_strict(weed_plant_t *inst, weed_pla
 /// parameter interpolation
 boolean interpolate_param(weed_plant_t *inst, int i, void *pchain, weed_timecode_t tc);
 boolean interpolate_params(weed_plant_t *inst, void **pchains, weed_timecode_t tc);
-
-void filter_mutex_lock(int key);
-void filter_mutex_unlock(int key);
 
 boolean weed_plant_serialise(int fd, weed_plant_t *plant, unsigned char **mem);
 weed_plant_t *weed_plant_deserialise(int fd, unsigned char **mem);
@@ -217,7 +206,7 @@ int rte_switch_keymode (int key, int mode, const gchar *hashname);
 /////////////////////////////////////////////////////////////
 
 int rte_getmodespk (void);
-GList *weed_get_all_names (lives_fx_list_t list_type);
+GList *weed_get_all_names (gshort list_type);
 int rte_get_numfilters(boolean inc_dupes);
 
 /////////////////////////////////////////////////////////

@@ -21,9 +21,9 @@ void on_camgrab_clicked (GtkButton *button, gpointer user_data) {
   lives_set_cursor_style(LIVES_CURSOR_BUSY,dvgrabw->dialog);
   if (!dvgrabw->playing) on_camplay_clicked(NULL,user_data);
   msg=g_strdup_printf(_("Recording to %s/%s"),dvgrabw->dirname,dvgrabw->filename);
-  lives_entry_set_text(LIVES_ENTRY(dvgrabw->status_entry),msg);
+  lives_entry_set_text(GTK_ENTRY(dvgrabw->status_entry),msg);
   if (cam->format==CAM_FORMAT_DV) {
-    dvgrabw->filename=g_strdup(lives_entry_get_text(LIVES_ENTRY(dvgrabw->filent)));
+    dvgrabw->filename=g_strdup(lives_entry_get_text(GTK_ENTRY(dvgrabw->filent)));
   }
   rec(cam);
   cam->grabbed_clips=TRUE;
@@ -44,7 +44,7 @@ void on_camstop_clicked (GtkButton *button, gpointer user_data) {
   camstop(cam);
   lives_button_set_label(GTK_BUTTON(dvgrabw->play),"gtk-media-play");
   lives_widget_set_sensitive(dvgrabw->grab,TRUE);
-  lives_entry_set_text(LIVES_ENTRY(dvgrabw->status_entry),_("Status: Ready"));
+  lives_entry_set_text(GTK_ENTRY(dvgrabw->status_entry),_("Status: Ready"));
 }
 
 

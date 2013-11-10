@@ -105,7 +105,7 @@ static int font_cmp(const void *p1, const void *p2) {
 
 weed_plant_t *render_text_to_layer(weed_plant_t *layer, const char *text, const char *fontname,
   double size, lives_text_mode_t mode, lives_colRGBA32_t *fg_col, lives_colRGBA32_t *bg_col,
-  boolean center, boolean rising, double top) {
+  gboolean center, gboolean rising, double top) {
   // render text to layer and return a new layer, which may have a new "rowstrides", "width" and/or "current_palette"
   // original layer is freed in the process and should not be used
 
@@ -345,7 +345,7 @@ static void sub_get_last_time(lives_subtitles_t *subt) {
 }
 
 // read .srt files
-boolean get_srt_text(file *sfile, double xtime) {
+gboolean get_srt_text(file *sfile, double xtime) {
   lives_subtitle_t *index = NULL;
   lives_subtitle_t *index_ptr = NULL;
   lives_subtitle_t *index_prev = NULL;
@@ -495,7 +495,7 @@ boolean get_srt_text(file *sfile, double xtime) {
 
 
 // read .sub files
-boolean get_sub_text(file *sfile, double xtime) {
+gboolean get_sub_text(file *sfile, double xtime) {
   lives_subtitle_t *index = NULL;
   lives_subtitle_t *index_ptr = NULL;
   lives_subtitle_t *index_prev = NULL;
@@ -503,7 +503,7 @@ boolean get_sub_text(file *sfile, double xtime) {
   lives_subtitle_t *curr = NULL;
   FILE *pf = NULL;
   char data[32768];
-  boolean starttext;
+  gboolean starttext;
 
   if(!sfile)
     return (FALSE);
@@ -668,7 +668,7 @@ void subtitles_free(file *sfile) {
 }
 
 
-boolean subtitles_init(file *sfile, char * fname, lives_subtitle_type_t subtype) {
+gboolean subtitles_init(file *sfile, char * fname, lives_subtitle_type_t subtype) {
   // fname is the name of the subtitle file
   FILE *tfile;
 
@@ -716,7 +716,7 @@ static void parse_double_time(double tim, int *ph, int *pmin, int *psec, int *pm
     *pmsec = ms;
 }
 
-boolean save_srt_subtitles(file *sfile, double start_time, double end_time, double offset_time, const char *filename) {
+gboolean save_srt_subtitles(file *sfile, double start_time, double end_time, double offset_time, const char *filename) {
   lives_subtitles_t *subt=NULL;
   int64_t savepos = 0;
   FILE *pf;
@@ -783,7 +783,7 @@ boolean save_srt_subtitles(file *sfile, double start_time, double end_time, doub
   return(TRUE);
 }
 
-boolean save_sub_subtitles(file *sfile, double start_time, double end_time, double offset_time, const char *filename) {
+gboolean save_sub_subtitles(file *sfile, double start_time, double end_time, double offset_time, const char *filename) {
   lives_subtitles_t *subt=NULL;
   int64_t savepos = 0;
   FILE *pf;

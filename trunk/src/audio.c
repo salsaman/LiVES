@@ -31,7 +31,7 @@
 #define NSTOREDFDS 16
 static gchar *storedfnames[NSTOREDFDS];
 static int storedfds[NSTOREDFDS];
-static boolean storedfdsset=FALSE;
+static gboolean storedfdsset=FALSE;
 
 static void audio_reset_stored_fnames(void) {
   int i;
@@ -178,8 +178,7 @@ void sample_move_d16_d16(short *dst, short *src,
 	}
 	else {
 	  if (!swap_sign) *(dst++)=(((*ptr)&0x00FF)<<8)+((*ptr)>>8);
-	  else if (swap_sign==SWAP_S_TO_U) *((uint16_t *)dst++)=(uint16_t)(((((uint16_t)(*ptr+SAMPLE_MAX_16BITI))&0x00FF)<<8)+
-									   (((uint16_t)(*ptr+SAMPLE_MAX_16BITI))>>8));
+	  else if (swap_sign==SWAP_S_TO_U) *((uint16_t *)dst++)=(uint16_t)(((((uint16_t)(*ptr+SAMPLE_MAX_16BITI))&0x00FF)<<8)+(((uint16_t)(*ptr+SAMPLE_MAX_16BITI))>>8));
 	  else *(dst++)=((((int16_t)(*ptr-SAMPLE_MAX_16BITI))&0x00FF)<<8)+(((int16_t)(*ptr-SAMPLE_MAX_16BITI))>>8);
 	}
 
@@ -330,7 +329,7 @@ void sample_move_float_float (float *dst, float *src, uint64_t nsamples, uint64_
 
 
 int64_t sample_move_float_int(void *holding_buff, float **float_buffer, int nsamps, float scale, int chans, int asamps, 
-			      int usigned, boolean little_endian, boolean interleaved, float vol) {
+			      int usigned, gboolean little_endian, gboolean interleaved, float vol) {
   // convert float samples back to int
   // interleaved is for the float buffer; output int is always interleaved
   int64_t frames_out=0l;
@@ -376,7 +375,7 @@ int64_t sample_move_float_int(void *holding_buff, float **float_buffer, int nsam
       }
       offs++;
     }
-    coffs=(int)(coffs_f+=scale);
+    coffs=(gint)(coffs_f+=scale);
   }
   return frames_out;
 }
@@ -676,14 +675,14 @@ static size_t chunk_to_int16_abuf(lives_audio_buf_t *abuf, float **float_buffer,
 
 //#define DEBUG_ARENDER
 
-static boolean pad_with_silence(int out_fd, off64_t oins_size, int64_t ins_size, int asamps, int aunsigned, boolean big_endian) {
+static gboolean pad_with_silence(int out_fd, off64_t oins_size, int64_t ins_size, int asamps, int aunsigned, gboolean big_endian) {
   // fill to ins_pt with zeros (or 0x80.. for unsigned)
   uint8_t *zero_buff;
   size_t sblocksize=SILENCE_BLOCK_SIZE;
-  int sbytes=ins_size-oins_size;
+  gint sbytes=ins_size-oins_size;
   register int i;
 
-  boolean retval=TRUE;
+  gboolean retval=TRUE;
 
 #ifdef DEBUG_ARENDER
   g_print("sbytes is %d\n",sbytes);
@@ -775,9 +774,7 @@ static void audio_process_events_to(weed_timecode_t tc) {
 
 
 
-int64_t render_audio_segment(int nfiles, int *from_files, int to_file, double *avels, double *fromtime, 
-			     weed_timecode_t tc_start, weed_timecode_t tc_end, double *chvol, double opvol_start, 
-			     double opvol_end, lives_audio_buf_t *obuf) {
+int64_t render_audio_segment(gint nfiles, gint *from_files, gint to_file, gdouble *avels, gdouble *fromtime, weed_timecode_t tc_start, weed_timecode_t tc_end, gdouble *chvol, gdouble opvol_start, gdouble opvol_end, lives_audio_buf_t *obuf) {
   // called during multitrack rendering to create the actual audio file
   // (or in-memory buffer for preview playback in multitrack)
 
@@ -813,11 +810,11 @@ int64_t render_audio_segment(int nfiles, int *from_files, int to_file, double *a
   size_t tbytes;
   uint8_t *in_buff;
 
-  int out_asamps=to_file>-1?outfile->asampsize/8:0;
-  int out_achans=to_file>-1?outfile->achans:obuf->out_achans;
-  int out_arate=to_file>-1?outfile->arate:obuf->arate;
-  int out_unsigned=to_file>-1?outfile->signed_endian&AFORM_UNSIGNED:0;
-  int out_bendian=to_file>-1?outfile->signed_endian&AFORM_BIG_ENDIAN:0;
+  gint out_asamps=to_file>-1?outfile->asampsize/8:0;
+  gint out_achans=to_file>-1?outfile->achans:obuf->out_achans;
+  gint out_arate=to_file>-1?outfile->arate:obuf->arate;
+  gint out_unsigned=to_file>-1?outfile->signed_endian&AFORM_UNSIGNED:0;
+  gint out_bendian=to_file>-1?outfile->signed_endian&AFORM_BIG_ENDIAN:0;
 
   short *holding_buff;
   float *float_buffer[out_achans*nfiles];
@@ -832,31 +829,31 @@ int64_t render_audio_segment(int nfiles, int *from_files, int to_file, double *a
 
   uint64_t nframes;
 
-  boolean in_reverse_endian[nfiles],out_reverse_endian=FALSE;
+  gboolean in_reverse_endian[nfiles],out_reverse_endian=FALSE;
 
   off64_t seekstart[nfiles];
   gchar *infilename,*outfilename;
 
   weed_timecode_t tc=tc_start;
 
-  double ins_pt=tc/U_SEC;
-  double time=0.;
-  double opvol=opvol_start;
-  double *vis=NULL;
+  gdouble ins_pt=tc/U_SEC;
+  gdouble time=0.;
+  gdouble opvol=opvol_start;
+  gdouble *vis=NULL;
 
   int64_t frames_out=0;
   int64_t ins_size=0l,cur_size;
 
   int track;
 
-  int in_asamps[nfiles];
-  int in_achans[nfiles];
-  int in_arate[nfiles];
-  int in_unsigned[nfiles];
-  int in_bendian;
+  gint in_asamps[nfiles];
+  gint in_achans[nfiles];
+  gint in_arate[nfiles];
+  gint in_unsigned[nfiles];
+  gint in_bendian;
 
-  boolean is_silent[nfiles];
-  int first_nonsilent=-1;
+  gboolean is_silent[nfiles];
+  gint first_nonsilent=-1;
 
   int64_t tsamples=((tc_end-tc_start)/U_SEC*out_arate+.5);
 
@@ -867,8 +864,8 @@ int64_t render_audio_segment(int nfiles, int *from_files, int to_file, double *a
   weed_plant_t *shortcut=NULL;
 
   size_t max_aud_mem,bytes_to_read,aud_buffer;
-  int max_segments;
-  double zavel,zavel_max=0.;
+  gint max_segments;
+  gdouble zavel,zavel_max=0.;
 
   int64_t tot_frames=0l;
 
@@ -962,7 +959,7 @@ int64_t render_audio_segment(int nfiles, int *from_files, int to_file, double *a
       seekstart[track]=(off64_t)(fromtime[track]*in_arate[track])*in_achans[track]*in_asamps[track];
       seekstart[track]=((off64_t)(seekstart[track]/in_achans[track]/(in_asamps[track])))*in_achans[track]*in_asamps[track];
       
-      zavel=avels[track]*(double)in_arate[track]/(double)out_arate*in_asamps[track]*in_achans[track]/sizeof(float);
+      zavel=avels[track]*(gdouble)in_arate[track]/(gdouble)out_arate*in_asamps[track]*in_achans[track]/sizeof(float);
       if (ABS(zavel)>zavel_max) zavel_max=ABS(zavel);
       
       infilename=g_build_filename(prefs->tmpdir,infile->handle,"audio",NULL);
@@ -1051,7 +1048,7 @@ int64_t render_audio_segment(int nfiles, int *from_files, int to_file, double *a
   bytes_to_read=tsamples*(sizeof(float)); // eg. 120 (30 samples)
 
   // how many segments do we need to read all bytes ?
-  max_segments=(int)((double)bytes_to_read/(double)max_aud_mem+1.); // max segments (rounded up) [e.g ceil(120/45)==3]
+  max_segments=(int)((gdouble)bytes_to_read/(gdouble)max_aud_mem+1.); // max segments (rounded up) [e.g ceil(120/45)==3]
 
   // then, how many bytes per segment
   aud_buffer=bytes_to_read/max_segments;  // estimate of buffer size (e.g. 120/3 = 40)
@@ -1088,9 +1085,9 @@ int64_t render_audio_segment(int nfiles, int *from_files, int to_file, double *a
 
       // calculate tbytes for xsamples
 
-      zavel=avels[track]*(double)in_arate[track]/(double)out_arate;
+      zavel=avels[track]*(gdouble)in_arate[track]/(gdouble)out_arate;
 
-      tbytes=(int)((double)xsamples*ABS(zavel)+((double)fastrand()/(double)G_MAXUINT32))*
+      tbytes=(gint)((gdouble)xsamples*ABS(zavel)+((gdouble)fastrand()/(gdouble)G_MAXUINT32))*
 	in_asamps[track]*in_achans[track];
 
       in_buff=(uint8_t *)g_malloc(tbytes);
@@ -1185,8 +1182,8 @@ int64_t render_audio_segment(int nfiles, int *from_files, int to_file, double *a
       }
 
       if (mainw->multitrack==NULL&&opvol_end!=opvol_start) {
-	time+=(double)frames_out/(double)out_arate;
-	opvol=opvol_start+(opvol_end-opvol_start)*(time/(double)((tc_end-tc_start)/U_SEC));
+	time+=(gdouble)frames_out/(gdouble)out_arate;
+	opvol=opvol_start+(opvol_end-opvol_start)*(time/(gdouble)((tc_end-tc_start)/U_SEC));
       }
 
       if (to_file>-1&&mainw->multitrack==NULL&&opvol_start!=opvol_end) {
@@ -1201,7 +1198,7 @@ int64_t render_audio_segment(int nfiles, int *from_files, int to_file, double *a
 	g_print(".");
 #endif
       }
-      tc+=(double)blocksize/(double)out_arate*U_SEC;
+      tc+=(gdouble)blocksize/(gdouble)out_arate*U_SEC;
     }
 
     if (to_file>-1) {
@@ -1259,8 +1256,8 @@ int64_t render_audio_segment(int nfiles, int *from_files, int to_file, double *a
 }
 
 
-LIVES_INLINE void aud_fade(int fileno, double startt, double endt, double startv, double endv) {
-  double vel=1.,vol=1.;
+LIVES_INLINE void aud_fade(gint fileno, gdouble startt, gdouble endt, gdouble startv, gdouble endv) {
+  gdouble vel=1.,vol=1.;
 
   mainw->read_failed=mainw->write_failed=FALSE;
   render_audio_segment(1,&fileno,fileno,&vel,&startt,startt*U_SECL,endt*U_SECL,&vol,startv,endv,NULL);
@@ -1280,12 +1277,9 @@ LIVES_INLINE void aud_fade(int fileno, double startt, double endt, double startv
 
 
 #ifdef ENABLE_JACK
-void jack_rec_audio_to_clip(int fileno, int old_file, lives_rec_audio_type_t rec_type) {
+void jack_rec_audio_to_clip(gint fileno, gint old_file, lives_rec_audio_type_t rec_type) {
   // open audio file for writing
   file *outfile;
-
-  boolean jackd_read_started=(mainw->jackd_read!=NULL);
-
   int retval;
 
   if (fileno==-1) {
@@ -1298,7 +1292,7 @@ void jack_rec_audio_to_clip(int fileno, int old_file, lives_rec_audio_type_t rec
       
     // start jack "recording"
     jack_open_device_read(mainw->jackd_read);
-    jack_read_driver_activate(mainw->jackd_read,FALSE);
+    jack_read_driver_activate(mainw->jackd_read);
 
     return;
   }
@@ -1325,7 +1319,7 @@ void jack_rec_audio_to_clip(int fileno, int old_file, lives_rec_audio_type_t rec
     mainw->jackd->playing_file=fileno;
   }
   else {
-    if (!jackd_read_started) mainw->jackd_read=jack_get_driver(0,FALSE);
+    mainw->jackd_read=jack_get_driver(0,FALSE);
     mainw->jackd_read->playing_file=fileno;
     mainw->jackd_read->frames_written=0;
   }
@@ -1336,21 +1330,17 @@ void jack_rec_audio_to_clip(int fileno, int old_file, lives_rec_audio_type_t rec
 #endif
 
   if (rec_type==RECA_EXTERNAL||rec_type==RECA_GENERATED) {
-    int asigned;
-    int aendian;
+    gint asigned;
+    gint aendian;
     uint64_t fsize=get_file_size(mainw->aud_rec_fd);
     
     if (rec_type==RECA_EXTERNAL) {
       mainw->jackd_read->reverse_endian=FALSE;
       
       // start jack recording
-
-      // TODO - only if not active
-      if (!jackd_read_started) {
-	jack_open_device_read(mainw->jackd_read);
-	jack_read_driver_activate(mainw->jackd_read,FALSE);
-      }
-
+      jack_open_device_read(mainw->jackd_read);
+      jack_read_driver_activate(mainw->jackd_read);
+      
       outfile->arate=outfile->arps=mainw->jackd_read->sample_in_rate;
       outfile->achans=mainw->jackd_read->num_input_channels;
       
@@ -1383,8 +1373,7 @@ void jack_rec_audio_to_clip(int fileno, int old_file, lives_rec_audio_type_t rec
 
   }
   else {
-
-    int out_bendian=outfile->signed_endian&AFORM_BIG_ENDIAN;
+    gint out_bendian=outfile->signed_endian&AFORM_BIG_ENDIAN;
 
     if ((!out_bendian&&(capable->byte_order==LIVES_BIG_ENDIAN))||
 	(out_bendian&&(capable->byte_order==LIVES_LITTLE_ENDIAN))) 
@@ -1393,7 +1382,7 @@ void jack_rec_audio_to_clip(int fileno, int old_file, lives_rec_audio_type_t rec
     
     // start jack recording
     jack_open_device_read(mainw->jackd_read);
-    jack_read_driver_activate(mainw->jackd_read,TRUE);
+    jack_read_driver_activate(mainw->jackd_read);
   }
 
   // in grab window mode, just return, we will call rec_audio_end on playback end
@@ -1409,7 +1398,7 @@ void jack_rec_audio_to_clip(int fileno, int old_file, lives_rec_audio_type_t rec
     do_auto_dialog(_("Recording audio"),1);
   }
   else {
-    int current_file=mainw->current_file;
+    gint current_file=mainw->current_file;
     mainw->current_file=old_file;
     on_playsel_activate(NULL,NULL);
     mainw->current_file=current_file;
@@ -1439,7 +1428,7 @@ void jack_rec_audio_end(boolean close_fd) {
 
 
 #ifdef HAVE_PULSE_AUDIO
-void pulse_rec_audio_to_clip(int fileno, int old_file, lives_rec_audio_type_t rec_type) {
+void pulse_rec_audio_to_clip(gint fileno, gint old_file, lives_rec_audio_type_t rec_type) {
   // open audio file for writing
   file *outfile;
   int retval;
@@ -1490,8 +1479,8 @@ void pulse_rec_audio_to_clip(int fileno, int old_file, lives_rec_audio_type_t re
 #endif
 
   if (rec_type==RECA_EXTERNAL||rec_type==RECA_GENERATED) {
-    int asigned;
-    int aendian;
+    gint asigned;
+    gint aendian;
     uint64_t fsize=get_file_size(mainw->aud_rec_fd);
 
     if (rec_type==RECA_EXTERNAL) {
@@ -1531,7 +1520,7 @@ void pulse_rec_audio_to_clip(int fileno, int old_file, lives_rec_audio_type_t re
 
   }
   else {
-    int out_bendian=outfile->signed_endian&AFORM_BIG_ENDIAN;
+    gint out_bendian=outfile->signed_endian&AFORM_BIG_ENDIAN;
     
     if ((!out_bendian&&(capable->byte_order==LIVES_BIG_ENDIAN))||
 	(out_bendian&&(capable->byte_order==LIVES_LITTLE_ENDIAN))) 
@@ -1553,7 +1542,7 @@ void pulse_rec_audio_to_clip(int fileno, int old_file, lives_rec_audio_type_t re
   mainw->suppress_dprint=TRUE;
   if (rec_type==RECA_NEW_CLIP) do_auto_dialog(_("Recording audio"),1);
   else {
-    int current_file=mainw->current_file;
+    gint current_file=mainw->current_file;
     mainw->current_file=old_file;
     on_playsel_activate(NULL,NULL);
     mainw->current_file=current_file;
@@ -1670,7 +1659,7 @@ static lives_audio_track_state_t *aframe_to_atstate(weed_plant_t *event) {
 
 
 lives_audio_track_state_t *get_audio_and_effects_state_at(weed_plant_t *event_list, weed_plant_t *st_event, 
-							  boolean get_audstate, boolean exact) {
+							  gboolean get_audstate, gboolean exact) {
 
   // if exact is set, we must rewind back to first active stateful effect, 
   // and play forwards from there (not yet implemented - TODO)
@@ -1760,7 +1749,7 @@ lives_audio_track_state_t *get_audio_and_effects_state_at(weed_plant_t *event_li
 
 
 
-void fill_abuffer_from(lives_audio_buf_t *abuf, weed_plant_t *event_list, weed_plant_t *st_event, boolean exact) {
+void fill_abuffer_from(lives_audio_buf_t *abuf, weed_plant_t *event_list, weed_plant_t *st_event, gboolean exact) {
   // fill audio buffer with audio samples, using event_list as a guide
   // if st_event!=NULL, that is our start event, and we will calculate the audio state at that
   // point
@@ -1772,7 +1761,7 @@ void fill_abuffer_from(lives_audio_buf_t *abuf, weed_plant_t *event_list, weed_p
 
   lives_audio_track_state_t *atstate=NULL;
   int nnfiles,i;
-  double chvols[MAX_AUDIO_TRACKS]; // TODO - use list
+  gdouble chvols[MAX_AUDIO_TRACKS]; // TODO - use list
 
   static weed_timecode_t last_tc;
   static weed_timecode_t fill_tc;
@@ -1782,7 +1771,7 @@ void fill_abuffer_from(lives_audio_buf_t *abuf, weed_plant_t *event_list, weed_p
   static int *from_files=NULL;
   static double *aseeks=NULL,*avels=NULL;
 
-  boolean is_cont=FALSE;
+  gboolean is_cont=FALSE;
   if (abuf==NULL) return;
 
   abuf->samples_filled=0; // write fill level of buffer
@@ -1814,7 +1803,7 @@ void fill_abuffer_from(lives_audio_buf_t *abuf, weed_plant_t *event_list, weed_p
     // the *last* frame in the buffer and then adjust the seeks back to the
     // beginning of the buffer, in case an audio track starts during the
     // buffering period. The current way is fine for a preview, but when we 
-    // implement rendering of *partial* event lists we will need to do this
+    // implement rendering of partial event lists we will need to do this
 
     // a negative seek value would mean that we need to pad silence at the 
     // start of the track buffer
@@ -1851,13 +1840,13 @@ void fill_abuffer_from(lives_audio_buf_t *abuf, weed_plant_t *event_list, weed_p
     // get channel volumes from the mixer
     for (i=0;i<nfiles;i++) {
       if (mainw->multitrack!=NULL&&mainw->multitrack->audio_vols!=NULL) {
-	chvols[i]=(double)GPOINTER_TO_INT(g_list_nth_data(mainw->multitrack->audio_vols,i))/1000000.;
+	chvols[i]=(gdouble)GPOINTER_TO_INT(g_list_nth_data(mainw->multitrack->audio_vols,i))/1000000.;
       }
     }
   }
   else chvols[0]=1.;
 
-  fill_tc=last_tc+(double)(abuf->samp_space)/(double)abuf->arate*U_SEC;
+  fill_tc=last_tc+(gdouble)(abuf->samp_space)/(gdouble)abuf->arate*U_SEC;
 
   // continue until either we have a full buffer, or we reach next audio frame
   while (event!=NULL&&get_event_timecode(event)<=fill_tc) {
@@ -1939,7 +1928,7 @@ void fill_abuffer_from(lives_audio_buf_t *abuf, weed_plant_t *event_list, weed_p
 
 
 
-void init_jack_audio_buffers (int achans, int arate, boolean exact) {
+void init_jack_audio_buffers (gint achans, gint arate, gboolean exact) {
 #ifdef ENABLE_JACK
 
   int i,chan;
@@ -1961,7 +1950,7 @@ void init_jack_audio_buffers (int achans, int arate, boolean exact) {
 }
 
 
-void init_pulse_audio_buffers (int achans, int arate, boolean exact) {
+void init_pulse_audio_buffers (gint achans, gint arate, gboolean exact) {
 #ifdef HAVE_PULSE_AUDIO
 
   int i;
@@ -2028,7 +2017,7 @@ void free_pulse_audio_buffers(void) {
 
 
 
-boolean resync_audio(int frameno) {
+gboolean resync_audio(gint frameno) {
   // if we are using a realtime audio player, resync to frameno
   // and return TRUE
 
@@ -2051,14 +2040,14 @@ boolean resync_audio(int frameno) {
   if (prefs->audio_player==AUD_PLAYER_JACK&&mainw->jackd!=NULL) {
     if (!mainw->is_rendering) {
 
-      if (mainw->jackd->playing_file!=-1&&!jack_audio_seek_frame(mainw->jackd,frameno)) {
+      if (!jack_audio_seek_frame(mainw->jackd,frameno)) {
 	if (jack_try_reconnect()) jack_audio_seek_frame(mainw->jackd,frameno);
       }
 
       if (mainw->agen_key==0&&!mainw->agen_needs_reinit&&!has_audio_filters(FALSE)) {
 	mainw->rec_aclip=mainw->current_file;
 	mainw->rec_avel=cfile->pb_fps/cfile->fps;
-	mainw->rec_aseek=(double)mainw->jackd->seek_pos/(double)(cfile->arate*cfile->achans*cfile->asampsize/8);
+	mainw->rec_aseek=(gdouble)mainw->jackd->seek_pos/(gdouble)(cfile->arate*cfile->achans*cfile->asampsize/8);
       }
     }
 
@@ -2069,13 +2058,13 @@ boolean resync_audio(int frameno) {
 #ifdef HAVE_PULSE_AUDIO
   if (prefs->audio_player==AUD_PLAYER_PULSE&&mainw->pulsed!=NULL) {
     if (!mainw->is_rendering) {
-      if (mainw->pulsed->playing_file!=-1&&!pulse_audio_seek_frame(mainw->pulsed,frameno)) {
+      if (!pulse_audio_seek_frame(mainw->pulsed,frameno)) {
 	if (pulse_try_reconnect()) pulse_audio_seek_frame(mainw->pulsed,frameno);
       }
       if (mainw->agen_key==0&&!mainw->agen_needs_reinit&&!has_audio_filters(FALSE)) {
 	mainw->rec_aclip=mainw->current_file;
 	mainw->rec_avel=cfile->pb_fps/cfile->fps;
-	mainw->rec_aseek=(double)mainw->pulsed->seek_pos/(double)(cfile->arate*cfile->achans*cfile->asampsize/8);
+	mainw->rec_aseek=(gdouble)mainw->pulsed->seek_pos/(gdouble)(cfile->arate*cfile->achans*cfile->asampsize/8);
       }
     }
     return TRUE;
@@ -2464,7 +2453,7 @@ lives_audio_buf_t *audio_cache_get_buffer(void) {
 
 // plugin handling
 
-boolean get_audio_from_plugin(float *fbuffer, int nchans, int arate, int nsamps) {
+gboolean get_audio_from_plugin(float *fbuffer, int nchans, int arate, int nsamps) {
   // get audio from an audio generator; fbuffer is filled with non-interleaved float
 
   weed_timecode_t tc;
@@ -2536,9 +2525,9 @@ boolean get_audio_from_plugin(float *fbuffer, int nchans, int arate, int nsamps)
 
   if (mainw->pconx!=NULL&&!(mainw->preview||mainw->is_rendering)) {
     // chain any data pipelines
-    if (!pthread_mutex_trylock(&mainw->data_mutex[mainw->agen_key-1])) {
+    if (!pthread_mutex_trylock(&mainw->data_mutex)) {
       mainw->agen_needs_reinit=pconx_chain_data(mainw->agen_key-1,rte_key_getmode(mainw->agen_key));
-      filter_mutex_unlock(mainw->agen_key-1);
+      pthread_mutex_unlock(&mainw->data_mutex);
       
       if (mainw->agen_needs_reinit) {
 	// allow main thread to complete the reinit so we do not delay; just return silence
@@ -2815,7 +2804,7 @@ boolean apply_rte_audio(int nframes) {
 static int astream_pid=0;
 #endif
 
-boolean start_audio_stream(void) {
+gboolean start_audio_stream(void) {
 #ifdef IS_MINGW
   return FALSE;
 #else
@@ -2832,7 +2821,7 @@ boolean start_audio_stream(void) {
   int arate=0;
   int afd;
   int alarm_handle;
-  boolean timeout=FALSE;
+  gboolean timeout=FALSE;
 
   astream_name=g_build_filename(prefs->tmpdir,astname,NULL);
 

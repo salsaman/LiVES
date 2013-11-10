@@ -1999,9 +1999,9 @@ void after_param_value_changed (GtkSpinButton *spinbutton, lives_rfx_t *rfx) {
       else {
 	valis=weed_get_int_array(wparam,"value",&error);
 	valis[index]=new_int;
-	//filter_mutex_lock(key);
+	filter_mutex_lock(key);
 	weed_set_int_array(wparam,"value",numvals,valis);
-	//filter_mutex_unlock(key);
+	filter_mutex_unlock(key);
 	copyto=set_copy_to(inst,param_number,TRUE);
 	weed_free(valis);
       }

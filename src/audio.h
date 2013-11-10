@@ -57,7 +57,7 @@
 
 /* message passing structure */
 typedef struct _aserver_message_t {
-  volatile int command;
+  volatile gint command;
   volatile gchar *data;
   volatile struct _aserver_message_t *next;
 } aserver_message_t;
@@ -76,8 +76,8 @@ typedef enum {
 
 typedef struct {
   lives_operation_t operation; // read, write, or convert [readonly by server]
-  volatile boolean is_ready; // [readwrite all]
-  boolean eof; ///< did we read EOF ?  [readonly by client]
+  volatile gboolean is_ready; // [readwrite all]
+  gboolean eof; ///< did we read EOF ?  [readonly by client]
   int fileno; // [readonly by server]
 
   // readonly by server:
@@ -90,8 +90,8 @@ typedef struct {
 
   ssize_t bytesize; // file in/out length in bytes [write by server in case of eof]
 
-  boolean in_interleaf;
-  boolean out_interleaf;
+  gboolean in_interleaf;
+  gboolean out_interleaf;
 
   int in_achans; ///< channels for _filebuffer side
   int out_achans; ///< channels for buffer* side
@@ -129,7 +129,7 @@ typedef struct {
   int _cout_interleaf;
   int _casamps; ///< current out_asamps
 
-  volatile boolean die;  ///< set to TRUE to shut down thread
+  volatile gboolean die;  ///< set to TRUE to shut down thread
 
 } lives_audio_buf_t;
 
@@ -157,7 +157,7 @@ void sample_move_d16_d8(uint8_t *dst, short *src,
 
 void sample_move_d16_float (float *dst, short *src, uint64_t nsamples, uint64_t src_skip, int is_unsigned, boolean rev_endian, float vol);
 
-int64_t sample_move_float_int(void *holding_buff, float **float_buffer, int nsamps, float scale, int chans, int asamps, int usigned, boolean swap_endian, boolean float_interleaved, float vol); ///< returns frames output
+int64_t sample_move_float_int(void *holding_buff, float **float_buffer, int nsamps, float scale, int chans, int asamps, int usigned, gboolean swap_endian, gboolean float_interleaved, float vol); ///< returns frames output
 
 int64_t sample_move_abuf_float (float **obuf, int nchans, int nsamps, int out_arate, float vol);
 
@@ -168,9 +168,9 @@ void sample_move_float_float (float *dst, float *src, uint64_t nsamples, uint64_
 boolean float_deinterleave(float *fbuffer, int nsamps, int nchans);
 boolean float_interleave(float *fbuffer, int nsamps, int nchans);
 
-int64_t render_audio_segment(int nfiles, int *from_files, int to_file, double *avels, double *fromtime, weed_timecode_t tc_start, weed_timecode_t tc_end, double *chvol, double opvol_start, double opvol_end, lives_audio_buf_t *obuf);
+int64_t render_audio_segment(gint nfiles, gint *from_files, gint to_file, gdouble *avels, gdouble *fromtime, weed_timecode_t tc_start, weed_timecode_t tc_end, gdouble *chvol, gdouble opvol_start, gdouble opvol_end, lives_audio_buf_t *obuf);
 
-void aud_fade(int fileno, double startt, double endt, double startv, double endv); ///< fade in/fade out
+void aud_fade(gint fileno, gdouble startt, gdouble endt, gdouble startv, gdouble endv); ///< fade in/fade out
 
 typedef enum {
   RECA_WINDOW_GRAB,
@@ -181,30 +181,30 @@ typedef enum {
 } lives_rec_audio_type_t;
 
 #ifdef ENABLE_JACK
-void jack_rec_audio_to_clip(int fileno, int oldfileno, lives_rec_audio_type_t rec_type);  ///< record from external source to clip
+void jack_rec_audio_to_clip(gint fileno, gint oldfileno, lives_rec_audio_type_t rec_type);  ///< record from external source to clip
 void jack_rec_audio_end(boolean close_fd);
 #endif
 
 #ifdef HAVE_PULSE_AUDIO
-void pulse_rec_audio_to_clip(int fileno, int oldfileno, lives_rec_audio_type_t rec_type);  ///< record from external source to clip
+void pulse_rec_audio_to_clip(gint fileno, gint oldfileno, lives_rec_audio_type_t rec_type);  ///< record from external source to clip
 void pulse_rec_audio_end(boolean close_fd);
 #endif
 
-void fill_abuffer_from(lives_audio_buf_t *abuf, weed_plant_t *event_list, weed_plant_t *st_event, boolean exact);
+void fill_abuffer_from(lives_audio_buf_t *abuf, weed_plant_t *event_list, weed_plant_t *st_event, gboolean exact);
 
 
-boolean resync_audio(int frameno);
+gboolean resync_audio(gint frameno);
 
 
-lives_audio_track_state_t *get_audio_and_effects_state_at(weed_plant_t *event_list, weed_plant_t *st_event, boolean get_audstate, boolean exact);
+lives_audio_track_state_t *get_audio_and_effects_state_at(weed_plant_t *event_list, weed_plant_t *st_event, gboolean get_audstate, gboolean exact);
 
-boolean get_audio_from_plugin(float *fbuffer, int nchans, int arate, int nsamps);
+gboolean get_audio_from_plugin(float *fbuffer, int nchans, int arate, int nsamps);
 void reinit_audio_gen(void);
 
-void init_jack_audio_buffers (int achans, int arate, boolean exact);
+void init_jack_audio_buffers (gint achans, gint arate, gboolean exact);
 void free_jack_audio_buffers(void);
 
-void init_pulse_audio_buffers (int achans, int arate, boolean exact);
+void init_pulse_audio_buffers (gint achans, gint arate, gboolean exact);
 void free_pulse_audio_buffers(void);
 
 void audio_free_fnames(void);
@@ -217,7 +217,7 @@ boolean apply_rte_audio_init(void);
 void apply_rte_audio_end(boolean del);
 boolean apply_rte_audio(int nframes);
 
-boolean start_audio_stream(void);
+gboolean start_audio_stream(void);
 void stop_audio_stream(void);
 void clear_audio_stream(void);
 void audio_stream(void *buff, size_t nbytes, int fd);

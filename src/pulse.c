@@ -114,7 +114,7 @@ boolean lives_pulse_init (short startup_phase) {
 void pulse_get_rec_avals(pulse_driver_t *pulsed) {
   mainw->rec_aclip=pulsed->playing_file;
   if (mainw->rec_aclip!=-1) {
-    mainw->rec_aseek=pulsed->seek_pos/(double)(afile->arate*afile->achans*afile->asampsize/8);
+    mainw->rec_aseek=pulsed->seek_pos/(gdouble)(afile->arate*afile->achans*afile->asampsize/8);
     mainw->rec_avel=afile->pb_fps/afile->fps;
   }
 }
@@ -125,7 +125,7 @@ static void pulse_set_rec_avals(pulse_driver_t *pulsed, boolean is_forward) {
   if (mainw->rec_aclip!=-1) {
     mainw->rec_avel=ABS(afile->pb_fps/afile->fps);
     if (!is_forward) mainw->rec_avel=-mainw->rec_avel;
-    mainw->rec_aseek=(double)pulsed->seek_pos/(double)(afile->arate*afile->achans*afile->asampsize/8);
+    mainw->rec_aseek=(gdouble)pulsed->seek_pos/(gdouble)(afile->arate*afile->achans*afile->asampsize/8);
   }
 }
 
@@ -324,8 +324,8 @@ static void pulse_audio_write_process (pa_stream *pstream, size_t nbytes, void *
 	   }
 
 	   pulsed->aPlayPtr->size=0;
-	   in_bytes=ABS((in_frames=((double)pulsed->in_arate/(double)pulsed->out_arate*
-				    (double)pulseFramesAvailable+((double)fastrand()/(double)G_MAXUINT32))))
+	   in_bytes=ABS((in_frames=((gdouble)pulsed->in_arate/(gdouble)pulsed->out_arate*
+				    (gdouble)pulseFramesAvailable+((gdouble)fastrand()/(gdouble)G_MAXUINT32))))
 	     *pulsed->in_achans*(pulsed->in_asamps>>3);
 	   //g_print("in bytes=%ld %ld %ld %ld %d %d\n",in_bytes,pulsed->in_arate,pulsed->out_arate,pulseFramesAvailable,pulsed->in_achans,pulsed->in_asamps);
 	   if ((shrink_factor=(gfloat)in_frames/(gfloat)pulseFramesAvailable)<0.f) {
@@ -483,7 +483,7 @@ static void pulse_audio_write_process (pa_stream *pstream, size_t nbytes, void *
 	   numFramesToWrite = MIN(pulseFramesAvailable, (inputFramesAvailable/ABS(shrink_factor)+.001));
 
 #ifdef DEBUG_PULSE
-	   g_printerr("inputFramesAvailable after conversion %d\n",(uint64_t)((double)inputFramesAvailable/shrink_factor+.001));
+	   g_printerr("inputFramesAvailable after conversion %d\n",(uint64_t)((gdouble)inputFramesAvailable/shrink_factor+.001));
 	   g_printerr("nframes == %ld, pulseFramesAvailable == %ld,\n\tpulsed->num_input_channels == %ld, pulsed->out_achans == %ld\n",  nframes, pulseFramesAvailable, pulsed->in_achans, pulsed->out_achans);
 #endif
 
@@ -533,7 +533,7 @@ static void pulse_audio_write_process (pa_stream *pstream, size_t nbytes, void *
 	     }
 
 	     if (memok) {
-	       int64_t tc=pulsed->audio_ticks+(int64_t)(pulsed->frames_written/(double)pulsed->out_arate*U_SEC);
+	       int64_t tc=pulsed->audio_ticks+(int64_t)(pulsed->frames_written/(gdouble)pulsed->out_arate*U_SEC);
 	       // apply any audio effects with in_channels
 
 	       weed_apply_audio_effects_rt(fltbuf,pulsed->out_achans,numFramesToWrite,pulsed->out_arate,tc,FALSE);
@@ -611,7 +611,7 @@ static void pulse_audio_write_process (pa_stream *pstream, size_t nbytes, void *
 	       }
 	       
 	       if (memok) {
-		 int64_t tc=pulsed->audio_ticks+(int64_t)(pulsed->frames_written/(double)pulsed->out_arate*U_SEC);
+		 int64_t tc=pulsed->audio_ticks+(int64_t)(pulsed->frames_written/(gdouble)pulsed->out_arate*U_SEC);
 		 // apply any audio effects with in_channels
 		 
 		 weed_apply_audio_effects_rt(fp,pulsed->out_achans,numFramesToWrite,pulsed->out_arate,tc,FALSE);
@@ -774,7 +774,7 @@ size_t pulse_flush_read_data(pulse_driver_t *pulsed, int fileno, size_t rbytes, 
   out_scale=(float)pulsed->in_arate/(float)ofile->arate;
   swap_sign=ofile->signed_endian&AFORM_UNSIGNED;
 
-  frames_out=(size_t)((double)((prb/(ofile->asampsize>>3)/ofile->achans))/out_scale+.5);
+  frames_out=(size_t)((gdouble)((prb/(ofile->asampsize>>3)/ofile->achans))/out_scale+.5);
 
   if (mainw->agen_key==0&&!mainw->agen_needs_reinit) {
     if (frames_out != pulsed->chunk_size) pulsed->chunk_size = frames_out;
@@ -847,9 +847,9 @@ static void pulse_audio_read_process (pa_stream *pstream, size_t nbytes, void *a
 
   if (pulsed->playing_file==-1||(mainw->record&&mainw->record_paused)) prb=0;
 
-  frames_out=(size_t)((double)((prb/(pulsed->in_asamps>>3)/pulsed->in_achans))/out_scale+.5);
+  frames_out=(size_t)((gdouble)((prb/(pulsed->in_asamps>>3)/pulsed->in_achans))/out_scale+.5);
   
-  nframes=(size_t)((double)((rbytes/(pulsed->in_asamps>>3)/pulsed->in_achans))/out_scale+.5);
+  nframes=(size_t)((gdouble)((rbytes/(pulsed->in_asamps>>3)/pulsed->in_achans))/out_scale+.5);
 
   // should really be frames_read here
   pulsed->frames_written+=nframes;
@@ -884,7 +884,7 @@ static void pulse_audio_read_process (pa_stream *pstream, size_t nbytes, void *a
       }
       
       if (memok) {
-	int64_t tc=pulsed->audio_ticks+(int64_t)(pulsed->frames_written/(double)pulsed->in_arate*U_SEC);
+	int64_t tc=pulsed->audio_ticks+(int64_t)(pulsed->frames_written/(gdouble)pulsed->in_arate*U_SEC);
 	// apply any audio effects with in channels but no out channels
 	weed_apply_audio_effects_rt(fltbuf,pulsed->in_achans,xnframes,pulsed->in_arate,tc,TRUE);
 	
@@ -1194,7 +1194,7 @@ int64_t lives_pulse_get_time(pulse_driver_t *pulsed, boolean absolute) {
   // get the time in ticks since either playback started or since last seek
 
   volatile aserver_message_t *msg=pulsed->msgq;
-  double frames_written;
+  gdouble frames_written;
 
   int64_t xtime;
 
@@ -1218,21 +1218,23 @@ int64_t lives_pulse_get_time(pulse_driver_t *pulsed, boolean absolute) {
     return pulsed->audio_ticks*absolute+(int64_t)((usec-pulsed->usec_start)*U_SEC_RATIO);
   }
 #else
-  if (pulsed->is_output) xtime = pulsed->audio_ticks*absolute+(int64_t)(frames_written/(double)pulsed->out_arate*U_SEC);
-  else xtime = pulsed->audio_ticks*absolute+(int64_t)(frames_written/(double)afile->arate*U_SEC);
+  pthread_mutex_lock(&mainw->afilter_mutex);
+  if (pulsed->is_output) xtime = pulsed->audio_ticks*absolute+(int64_t)(frames_written/(gdouble)pulsed->out_arate*U_SEC);
+  else xtime = pulsed->audio_ticks*absolute+(int64_t)(frames_written/(gdouble)afile->arate*U_SEC);
+  pthread_mutex_unlock(&mainw->afilter_mutex);
   return xtime;
 #endif
 
 }
 
-double lives_pulse_get_pos(pulse_driver_t *pulsed) {
+gdouble lives_pulse_get_pos(pulse_driver_t *pulsed) {
   // get current time position (seconds) in audio file
-  return pulsed->seek_pos/(double)(afile->arate*afile->achans*afile->asampsize/8);
+  return pulsed->seek_pos/(gdouble)(afile->arate*afile->achans*afile->asampsize/8);
 }
 
 
 
-boolean pulse_audio_seek_frame (pulse_driver_t *pulsed, int frame) {
+boolean pulse_audio_seek_frame (pulse_driver_t *pulsed, gint frame) {
   // seek to frame "frame" in current audio file
   // position will be adjusted to (floor) nearest sample
   int64_t seekstart;
@@ -1257,7 +1259,7 @@ boolean pulse_audio_seek_frame (pulse_driver_t *pulsed, int frame) {
   }
   lives_alarm_clear(alarm_handle);
   if (frame>afile->frames) frame=afile->frames;
-  seekstart=(int64_t)((double)(frame-1.)/afile->fps*afile->arate)*afile->achans*(afile->asampsize/8);
+  seekstart=(int64_t)((gdouble)(frame-1.)/afile->fps*afile->arate)*afile->achans*(afile->asampsize/8);
   pulse_audio_seek_bytes(pulsed,seekstart);
   return TRUE;
 }
@@ -1324,7 +1326,7 @@ boolean pulse_try_reconnect(void) {
 
 
 
-void pulse_aud_pb_ready(int fileno) {
+void pulse_aud_pb_ready(gint fileno) {
   // TODO - can we merge with switch_audio_clip() ?
 
   // prepare to play file fileno
@@ -1333,8 +1335,8 @@ void pulse_aud_pb_ready(int fileno) {
   // - set vals
   gchar *tmpfilename=NULL;
   file *sfile=mainw->files[fileno];
-  int asigned=!(sfile->signed_endian&AFORM_UNSIGNED);
-  int aendian=!(sfile->signed_endian&AFORM_BIG_ENDIAN);
+  gint asigned=!(sfile->signed_endian&AFORM_UNSIGNED);
+  gint aendian=!(sfile->signed_endian&AFORM_BIG_ENDIAN);
 
 
   // called at pb start and rec stop (after rec_ext_audio)
@@ -1393,7 +1395,7 @@ void pulse_aud_pb_ready(int fileno) {
 	mainw->pulsed->in_use=TRUE;
 	mainw->rec_aclip=fileno;
 	mainw->rec_avel=sfile->pb_fps/sfile->fps;
-	mainw->rec_aseek=(double)sfile->aseek_pos/(double)(sfile->arate*sfile->achans*(sfile->asampsize/8));
+	mainw->rec_aseek=(gdouble)sfile->aseek_pos/(gdouble)(sfile->arate*sfile->achans*(sfile->asampsize/8));
       }
     }
     if (mainw->agen_key!=0&&mainw->multitrack==NULL) mainw->pulsed->in_use=TRUE; // audio generator is active

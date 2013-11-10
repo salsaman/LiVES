@@ -4,8 +4,8 @@
 // see file ../COPYING for licensing details
 
 // repeating keys
-uint16_t cached_key;
-uint16_t cached_mod;
+guint16 cached_key;
+guint16 cached_mod;
 
 // these keys should be cached on a key down and sent every time until a key up
 #define key_left 100
@@ -18,43 +18,43 @@ uint16_t cached_mod;
 #define key_down2 116
 
 
-boolean ext_triggers_poll(gpointer); ///< poll for external playback start
+gboolean ext_triggers_poll(gpointer); ///< poll for external playback start
 
 GdkFilterReturn filter_func(GdkXEvent *xevent, GdkEvent *event, gpointer data);
 
-boolean plugin_poll_keyboard (void);
+gboolean plugin_poll_keyboard (void);
 
-boolean pl_key_function (boolean down, uint16_t unicode, uint16_t keymod);
+gboolean pl_key_function (gboolean down, guint16 unicode, guint16 keymod);
 
-boolean faster_callback (GtkAccelGroup *, GObject *, uint32_t, GdkModifierType, gpointer user_data);
+gboolean faster_callback (GtkAccelGroup *, GObject *, guint, GdkModifierType, gpointer user_data);
 
-boolean slower_callback (GtkAccelGroup *, GObject *, uint32_t, GdkModifierType, gpointer user_data);
+gboolean slower_callback (GtkAccelGroup *, GObject *, guint, GdkModifierType, gpointer user_data);
 
-boolean skip_back_callback (GtkAccelGroup *, GObject *, uint32_t, GdkModifierType, gpointer user_data);
+gboolean skip_back_callback (GtkAccelGroup *, GObject *, guint, GdkModifierType, gpointer user_data);
 
-boolean skip_forward_callback (GtkAccelGroup *, GObject *, uint32_t, GdkModifierType, gpointer user_data);
+gboolean skip_forward_callback (GtkAccelGroup *, GObject *, guint, GdkModifierType, gpointer user_data);
 
-boolean stop_callback (GtkAccelGroup *, GObject *, uint32_t, GdkModifierType, gpointer user_data);
+gboolean stop_callback (GtkAccelGroup *, GObject *, guint, GdkModifierType, gpointer user_data);
 
-boolean rec_callback (GtkAccelGroup *, GObject *, uint32_t, GdkModifierType, gpointer user_data);
+gboolean rec_callback (GtkAccelGroup *, GObject *, guint, GdkModifierType, gpointer user_data);
 
-boolean loop_callback (GtkAccelGroup *, GObject *, uint32_t, GdkModifierType, gpointer user_data);
+gboolean loop_callback (GtkAccelGroup *, GObject *, guint, GdkModifierType, gpointer user_data);
 
-boolean loop_cont_callback (GtkAccelGroup *, GObject *, uint32_t, GdkModifierType, gpointer user_data);
+gboolean loop_cont_callback (GtkAccelGroup *, GObject *, guint, GdkModifierType, gpointer user_data);
 
-boolean ping_pong_callback (GtkAccelGroup *, GObject *, uint32_t, GdkModifierType, gpointer user_data);
+gboolean ping_pong_callback (GtkAccelGroup *, GObject *, guint, GdkModifierType, gpointer user_data);
 
-boolean dblsize_callback (GtkAccelGroup *, GObject *, uint32_t, GdkModifierType, gpointer user_data);
+gboolean dblsize_callback (GtkAccelGroup *, GObject *, guint, GdkModifierType, gpointer user_data);
 
-boolean showfct_callback (GtkAccelGroup *, GObject *, uint32_t, GdkModifierType, gpointer user_data);
+gboolean showfct_callback (GtkAccelGroup *, GObject *, guint, GdkModifierType, gpointer user_data);
 
-boolean showsubs_callback (GtkAccelGroup *, GObject *, uint32_t, GdkModifierType, gpointer user_data);
+gboolean showsubs_callback (GtkAccelGroup *, GObject *, guint, GdkModifierType, gpointer user_data);
 
-boolean fullscreen_callback (GtkAccelGroup *, GObject *, uint32_t, GdkModifierType, gpointer user_data);
+gboolean fullscreen_callback (GtkAccelGroup *, GObject *, guint, GdkModifierType, gpointer user_data);
 
-boolean sepwin_callback (GtkAccelGroup *, GObject *, uint32_t, GdkModifierType, gpointer user_data);
+gboolean sepwin_callback (GtkAccelGroup *, GObject *, guint, GdkModifierType, gpointer user_data);
 
-boolean fade_callback (GtkAccelGroup *, GObject *, uint32_t, GdkModifierType, gpointer user_data);
+gboolean fade_callback (GtkAccelGroup *, GObject *, guint, GdkModifierType, gpointer user_data);
 
 
 #define KEY_RPT_INTERVAL 4

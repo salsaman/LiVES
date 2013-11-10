@@ -5,15 +5,6 @@
 // see file ../COPYING for licensing details
 
 
-#define FX_DATA_WILDCARD -1000000
-
-#define FX_DATA_KEY_SUBTITLES -1
-#define FX_DATA_KEY_PLAYBACK_PLUGIN -2
-
-#define EXTRA_PARAMS_OUT 1
-#define EXTRA_PARAMS_IN 1
-
-#define FX_DATA_PARAM_ACTIVE -1
 
 // struct for connecting out params to in params
 
@@ -48,8 +39,12 @@ struct _lives_pconnect_t {
 };
 
 
+
 /// add a new connection from out_param okey/omode/opnum to in_param ikey/imode/ipnum
 void pconx_add_connection(int okey, int omode, int opnum, int ikey, int imode, int ipnum, boolean autoscale);
+
+/// return if ikey/imode/ipnum is mapped to an out param
+weed_plant_t *pconx_get_out_param(boolean use_filter, int ikey, int imode, int ipnum, boolean *autoscale);
 
 // free all connections (and set mainw->pconx to NULL)
 void pconx_delete_all();
@@ -104,8 +99,12 @@ struct _lives_cconnect_t {
 };
 
 
+
 /// add a new connection from out_chan okey/omode/ocnum to in_chan ikey/imode/icnum
 void cconx_add_connection(int okey, int omode, int ocnum, int ikey, int imode, int icnum);
+
+/// return if ikey/imode/ichan is mapped to an out alpha
+weed_plant_t *cconx_get_out_chan(boolean use_filter, int ikey, int imode, int ipnum);
 
 // free all connections (and set mainw->cconx to NULL)
 void cconx_delete_all();
@@ -125,65 +124,30 @@ boolean cconx_chain_data_internal(weed_plant_t *ichan);
 
 //////////////////////////////////////////////////////////
 
-void override_if_active_input(int hotkey);
-void end_override_if_activate_output(int hotkey);
-
-////////////////////////////////////////////////////////////
 
 typedef struct {
-  weed_plant_t *filter;
-
   int okey;
   int omode;
   int num_alpha;
   int num_params;
   int ntabs;
-
-  lives_cconnect_t *cconx;
-  lives_pconnect_t *pconx;
-
   GtkWidget *conx_dialog;
-  GtkWidget *acbutton;
-  GtkWidget *apbutton;
-  GtkWidget *disconbutton;
 
-  GtkWidget **clabel;
-  GtkWidget **pclabel;
+  // per tab part
   GtkWidget **cfxcombo;
   GtkWidget **pfxcombo;
   GtkWidget **pcombo;
   GtkWidget **ccombo;
   GtkWidget **acheck;
-  GtkWidget **add_button;
-  GtkWidget **del_button;
   GtkWidget *allcheckc;
-  GtkWidget *allcheck_label;
-
-  GtkWidget *tablec;
-  GtkWidget *tablep;
-
-  // table row counts
-  int trowsc;
-  int trowsp;
-
-  // # dislay rows for each param/channel
-  int *dispc;
-  int *dispp;
-
   int *ikeys;
   int *imodes;
   int *idx;
-
   gulong *dpc_func;
   gulong *dpp_func;
   gulong *acheck_func;
-
 } lives_conx_w;
-
-
 
 
 GtkWidget *make_datacon_window(int key, int mode);
 
-int pconx_check_connection(weed_plant_t *ofilter, int opnum, int ikey, int imode, int ipnum, boolean setup, weed_plant_t **iparam_ret, int *idx_ret);
-int cconx_check_connection(int ikey, int imode, int icnum, boolean setup, weed_plant_t **ichan_ret, int *idx_ret);

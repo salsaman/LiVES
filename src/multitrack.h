@@ -241,7 +241,6 @@ struct _mt {
   GtkWidget *ins_menuitem;
   GtkWidget *ins_normal;
   GtkToolItem *grav_menuitem;
-  GtkWidget *grav_label;
   GtkWidget *grav_normal;
   GtkWidget *grav_left;
   GtkWidget *grav_right;
@@ -316,8 +315,7 @@ struct _mt {
   GtkWidget *clear_marks;
   GtkWidget *fd_frame;
   GtkWidget *apply_fx_button;
-  GtkToolItem *eview_button;
-  GtkWidget *eview_label;
+  GtkWidget *eview_button;
   GtkWidget *follow_play;
   GtkWidget *change_max_disp;
   GtkWidget *add_vid_behind;

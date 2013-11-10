@@ -3988,6 +3988,7 @@ on_record_perf_activate                      (GtkMenuItem     *menuitem,
       
     if (mainw->event_list!=NULL) {
       // switch audio off at previous frame event
+      pthread_mutex_lock(&mainw->event_list_mutex);
 
 #ifdef RT_AUDIO
       if ((prefs->audio_player==AUD_PLAYER_JACK||prefs->audio_player==AUD_PLAYER_PULSE)&&(prefs->rec_opts&REC_AUDIO)) {
@@ -4004,6 +4005,7 @@ on_record_perf_activate                      (GtkMenuItem     *menuitem,
       // write a RECORD_END marker
       tc=get_event_timecode(get_last_event(mainw->event_list));
       mainw->event_list=append_marker_event(mainw->event_list, tc, EVENT_MARKER_RECORD_END); // mark record end
+      pthread_mutex_unlock(&mainw->event_list_mutex);
     }
 
     mainw->record_paused=TRUE; // pause recording of further events

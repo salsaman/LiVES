@@ -361,6 +361,8 @@ static boolean pre_init(void) {
 
   pthread_mutex_init(&mainw->fxd_active_mutex,NULL);
 
+  pthread_mutex_init(&mainw->event_list_mutex,NULL);
+
   for (i=0;i<FX_KEYS_MAX;i++) {
     pthread_mutex_init(&mainw->data_mutex[i],&mattr); // because audio filters can enable/disable video filters and vice-versa
   }
@@ -4787,6 +4789,7 @@ void load_frame_image(gint frame) {
 
 	if (mainw->record_starting) {
 	  // mark record start
+	  //pthread_mutex_lock(&mainw->event_list_mutex);
 	  event_list=append_marker_event(mainw->event_list, mainw->currticks, EVENT_MARKER_RECORD_START);
 	  if (mainw->event_list==NULL) mainw->event_list=event_list;
 	  
@@ -4794,6 +4797,7 @@ void load_frame_image(gint frame) {
 	    // add init events and pchanges for all active fx
 	    add_filter_init_events(mainw->event_list,mainw->currticks);
 	  }
+	  //pthread_mutex_unlock(&mainw->event_list_mutex);
 
 #ifdef ENABLE_JACK
 	  if (prefs->audio_player==AUD_PLAYER_JACK&&mainw->jackd!=NULL&&
@@ -4825,6 +4829,7 @@ void load_frame_image(gint frame) {
 	  frames[1]=bg_frame;
 	}
 	if (framecount!=NULL) g_free(framecount);
+	pthread_mutex_lock(&mainw->event_list_mutex);
 	if ((event_list=append_frame_event (mainw->event_list,mainw->currticks,numframes,clips,frames))!=NULL) {
 	  if (mainw->event_list==NULL) mainw->event_list=event_list;
 	  if (mainw->rec_aclip!=-1&&((prefs->rec_opts&REC_AUDIO))) {
@@ -4838,12 +4843,17 @@ void load_frame_image(gint frame) {
 	    insert_audio_event_at(mainw->event_list,event,-1,mainw->rec_aclip,mainw->rec_aseek,mainw->rec_avel);
 	    mainw->rec_aclip=-1;
 	  }
+	  pthread_mutex_unlock(&mainw->event_list_mutex);
+
 	  /* TRANSLATORS: rec(ord) */
 	  framecount=g_strdup_printf(_("rec %9d/%d"),mainw->actual_frame,
 				     cfile->frames>mainw->actual_frame?cfile->frames:mainw->actual_frame);
 	}
-	/* TRANSLATORS: out of memory (rec(ord)) */
-	else (framecount=g_strdup_printf(_("!rec %9d/%d"),mainw->actual_frame,cfile->frames));
+	else {
+	  pthread_mutex_unlock(&mainw->event_list_mutex);
+	  /* TRANSLATORS: out of memory (rec(ord)) */
+	  (framecount=g_strdup_printf(_("!rec %9d/%d"),mainw->actual_frame,cfile->frames));
+	}
 	g_free(clips);
 	g_free(frames);
       }

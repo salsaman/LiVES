@@ -7343,7 +7343,6 @@ void create_empty_pixel_data(weed_plant_t *layer, boolean black_fill, boolean ma
 
   register int i,j;
 
-
   weed_set_voidptr_value(layer,"pixel_data", NULL);
   if (weed_plant_has_leaf(layer,"host_pixel_data_contiguous")) 
     weed_leaf_delete(layer,"host_pixel_data_contiguous");

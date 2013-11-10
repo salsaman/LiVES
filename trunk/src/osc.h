@@ -75,7 +75,7 @@ void lives_osc_free(lives_osc *o);
 void lives_osc_dump();
 
 
-gboolean lives_osc_act(OSCbuf *msg);
+boolean lives_osc_act(OSCbuf *msg);
 
 
 #endif //HAS_LIVES_OSC_H

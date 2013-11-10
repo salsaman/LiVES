@@ -1,5 +1,5 @@
 // LiVES - videodev input
-// (c) G. Finch 2010 - 2012 <salsaman@gmail.com>
+// (c) G. Finch 2010 - 2013 <salsaman@gmail.com>
 // released under the GNU GPL 3 or later
 // see file COPYING or www.gnu.org for details
 
@@ -35,7 +35,7 @@
 
 
 
-static gboolean lives_wait_user_buffer(lives_vdev_t *ldev, unicap_data_buffer_t **buff, gdouble timeout) {
+static boolean lives_wait_user_buffer(lives_vdev_t *ldev, unicap_data_buffer_t **buff, double timeout) {
   // wait for USER type buffer
   int64_t stime,dtime,timer;
   struct timeval otv;
@@ -73,7 +73,7 @@ static gboolean lives_wait_user_buffer(lives_vdev_t *ldev, unicap_data_buffer_t 
 
 
 
-static gboolean lives_wait_system_buffer(lives_vdev_t *ldev, gdouble timeout) {
+static boolean lives_wait_system_buffer(lives_vdev_t *ldev, double timeout) {
   // wait for SYSTEM type buffer
   int64_t stime,dtime,timer;
   struct timeval otv;
@@ -121,7 +121,7 @@ static void new_frame_cb (unicap_event_t event, unicap_handle_t handle,
 
 
 
-gboolean weed_layer_set_from_lvdev (weed_plant_t *layer, file *sfile, gdouble timeoutsecs) {
+boolean weed_layer_set_from_lvdev (weed_plant_t *layer, file *sfile, double timeoutsecs) {
   lives_vdev_t *ldev=(lives_vdev_t *)sfile->ext_src;
   unicap_data_buffer_t *returned_buffer=NULL;
   void **pixel_data;
@@ -234,12 +234,15 @@ static unicap_format_t *lvdev_get_best_format(const unicap_format_t *formats,
 #ifdef DEBUG_UNICAP
       // set format to try and get more data
       unicap_set_format (ldev->handle, format);
-      g_printerr("Unusable palette with fourcc 0x%x  bpp=%d, size=%dx%d buf=%d\n",format->fourcc,format->bpp,format->size.width,format->size.height,(int)format->buffer_size);
+      g_printerr("Unusable palette with fourcc 0x%x  bpp=%d, size=%dx%d buf=%d\n",format->fourcc,format->bpp,format->size.width,
+		 format->size.height,(int)format->buffer_size);
 #endif
       continue;
     }
 
-    if (bestp==WEED_PALETTE_END||cpal==palette||weed_palette_is_alpha_palette(bestp)||weed_palette_is_lower_quality(bestp,cpal)||(weed_palette_is_yuv_palette(bestp)&&weed_palette_is_rgb_palette(cpal))) {
+    if (bestp==WEED_PALETTE_END||cpal==palette||weed_palette_is_alpha_palette(bestp)||
+	weed_palette_is_lower_quality(bestp,cpal)||
+	(weed_palette_is_yuv_palette(bestp)&&weed_palette_is_rgb_palette(cpal))) {
       // got better palette, or exact match
 
       // prefer exact match on target palette if we have it
@@ -254,7 +257,8 @@ static unicap_format_t *lvdev_get_best_format(const unicap_format_t *formats,
       if (width>=format->min_size.width && height>=format->min_size.height) {
 	if (format->h_stepping>0&&format->v_stepping>0) {
 #ifdef DEBUG_UNICAP
-	  g_printerr("Can set any size with step %d and %d; min %d x %d, max %d x %d\n",format->h_stepping,format->v_stepping,format->min_size.width,format->min_size.height,format->max_size.width,format->max_size.height);
+	  g_printerr("Can set any size with step %d and %d; min %d x %d, max %d x %d\n",format->h_stepping,format->v_stepping,
+		     format->min_size.width,format->min_size.height,format->max_size.width,format->max_size.height);
 #endif
 	  // can set exact size (within stepping limits)
 	  format->size.width=(int)(((double)width+(double)format->h_stepping/2.)
@@ -332,7 +336,7 @@ static unicap_format_t *lvdev_get_best_format(const unicap_format_t *formats,
 
 /// get devnumber from user and open it to a new clip
 
-static gboolean open_vdev_inner(unicap_device_t *device) {
+static boolean open_vdev_inner(unicap_device_t *device) {
   // create a virtual clip
   lives_vdev_t *ldev=(lives_vdev_t *)g_malloc(sizeof(lives_vdev_t));
   unicap_format_t formats[MAX_FORMATS];
@@ -391,7 +395,8 @@ static gboolean open_vdev_inner(unicap_device_t *device) {
   }
 
 
-  if (format->buffer_size!=format->size.width*format->size.height*weed_palette_get_bits_per_macropixel(ldev->current_palette)/weed_palette_get_pixels_per_macropixel(ldev->current_palette)/8) {
+  if (format->buffer_size!=format->size.width*format->size.height*weed_palette_get_bits_per_macropixel(ldev->current_palette)/
+      weed_palette_get_pixels_per_macropixel(ldev->current_palette)/8) {
     int wwidth=format->size.width,awidth;
     int wheight=format->size.height,aheight;
     // something went wrong setting the size - the buffer is wrongly sized
@@ -408,7 +413,8 @@ static gboolean open_vdev_inner(unicap_device_t *device) {
     g_printerr("Wanted frame size %d x %d, got %d x %d\n",wwidth,wheight,awidth,aheight);
 #endif
 
-    format->buffer_size=format->size.width*format->size.height*weed_palette_get_bits_per_macropixel(ldev->current_palette)/weed_palette_get_pixels_per_macropixel(ldev->current_palette)/8;
+    format->buffer_size=format->size.width*format->size.height*weed_palette_get_bits_per_macropixel(ldev->current_palette)/
+      weed_palette_get_pixels_per_macropixel(ldev->current_palette)/8;
   }
 
   cfile->hsize=format->size.width;
@@ -452,23 +458,25 @@ void lives_vdev_free(lives_vdev_t *ldev) {
 
 
 void on_open_vdev_activate (GtkMenuItem *menuitem, gpointer user_data) {
-  gint devno=0;
-
-  gint new_file=mainw->first_free_file;
-  gint old_file=mainw->current_file;
-
-  gint response;
-
-  gchar *tmp;
-  gchar *fname;
+  unicap_device_t devices[MAX_DEVICES];
 
   GList *devlist=NULL;
 
   GtkWidget *card_dialog;
 
+  gchar *tmp;
+  gchar *fname;
+
+  int devno=0;
+
+  int new_file=mainw->first_free_file;
+  int old_file=mainw->current_file;
+
+  int response;
+
   int i,dev_count;
   int status = STATUS_SUCCESS;
-  unicap_device_t devices[MAX_DEVICES];
+
 
   mainw->open_deint=FALSE;
 
@@ -502,7 +510,7 @@ void on_open_vdev_activate (GtkMenuItem *menuitem, gpointer user_data) {
   mainw->fx1_val=0;
   mainw->open_deint=FALSE;
   card_dialog=create_combo_dialog(1,(gpointer)devlist);
-  response=lives_dialog_run(GTK_DIALOG(card_dialog));
+  response=lives_dialog_run(LIVES_DIALOG(card_dialog));
   g_list_free(devlist);
 
   if (response==GTK_RESPONSE_CANCEL) {

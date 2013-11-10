@@ -17,6 +17,7 @@
 #include "audio.h" // for fill_abuffer_from
 #include "resample.h"
 #include "paramwindow.h"
+#include "ce_thumbs.h"
 
 extern void reset_frame_and_clip_index (void);
 
@@ -75,7 +76,7 @@ static void add_xlays_widget(GtkBox *box) {
   GtkTextBuffer *textbuffer = gtk_text_view_get_buffer (GTK_TEXT_VIEW (textview));
   
   gtk_text_view_set_editable (GTK_TEXT_VIEW (textview), FALSE);
-  lives_container_add (GTK_CONTAINER (expander), textview);
+  lives_container_add (LIVES_CONTAINER (expander), textview);
 
   if (palette->style&STYLE_1) {
     label=gtk_expander_get_label_widget(GTK_EXPANDER(expander));
@@ -139,7 +140,7 @@ static void add_clear_ds_adv(GtkBox *box) {
   GtkWidget *button = lives_button_new_with_mnemonic(_(" _Advanced Settings >>"));
   GtkWidget *hbox = lives_hbox_new (FALSE, 0);
 
-  lives_box_pack_start (GTK_BOX(hbox), button, FALSE, FALSE, widget_opts.packing_width*2);
+  lives_box_pack_start (LIVES_BOX(hbox), button, FALSE, FALSE, widget_opts.packing_width*2);
   lives_box_pack_start (box, hbox, FALSE, FALSE, widget_opts.packing_height);
 
   lives_widget_show_all(hbox);
@@ -173,82 +174,82 @@ static GtkWidget* create_warn_dialog (int warn_mask_number, GtkWindow *transient
 
     if (mainw->add_clear_ds_button) {
       mainw->add_clear_ds_button=FALSE;
-      add_clear_ds_button(GTK_DIALOG(dialog));
+      add_clear_ds_button(LIVES_DIALOG(dialog));
     }
 
-    lives_window_set_title (GTK_WINDOW (dialog), _("LiVES: - Warning !"));
+    lives_window_set_title (LIVES_WINDOW (dialog), _("LiVES: - Warning !"));
     widget_opts.justify=LIVES_JUSTIFY_CENTER;
     mainw->warning_label = lives_standard_label_new (_("warning"));
     widget_opts.justify=LIVES_JUSTIFY_DEFAULT;
     warning_cancelbutton = lives_button_new_from_stock ("gtk-cancel");
-    lives_dialog_add_action_widget (GTK_DIALOG (dialog), warning_cancelbutton, GTK_RESPONSE_CANCEL);
+    lives_dialog_add_action_widget (LIVES_DIALOG (dialog), warning_cancelbutton, GTK_RESPONSE_CANCEL);
     warning_okbutton = lives_button_new_from_stock ("gtk-ok");
-    lives_dialog_add_action_widget (GTK_DIALOG (dialog), warning_okbutton, GTK_RESPONSE_OK);
+    lives_dialog_add_action_widget (LIVES_DIALOG (dialog), warning_okbutton, GTK_RESPONSE_OK);
     break;
   case LIVES_DIALOG_YESNO:
     dialog = gtk_message_dialog_new (transient,(GtkDialogFlags)0,GTK_MESSAGE_QUESTION,GTK_BUTTONS_NONE,"%s","");
-    lives_window_set_title (GTK_WINDOW (dialog), _("LiVES: - Question"));
+    lives_window_set_title (LIVES_WINDOW (dialog), _("LiVES: - Question"));
     widget_opts.justify=LIVES_JUSTIFY_CENTER;
     mainw->warning_label = lives_standard_label_new (_("question"));
     widget_opts.justify=LIVES_JUSTIFY_DEFAULT;
     warning_cancelbutton = lives_button_new_from_stock ("gtk-no");
-    lives_dialog_add_action_widget (GTK_DIALOG (dialog), warning_cancelbutton, LIVES_NO);
+    lives_dialog_add_action_widget (LIVES_DIALOG (dialog), warning_cancelbutton, LIVES_NO);
     warning_okbutton = lives_button_new_from_stock ("gtk-yes");
-    lives_dialog_add_action_widget (GTK_DIALOG (dialog), warning_okbutton, LIVES_YES);
+    lives_dialog_add_action_widget (LIVES_DIALOG (dialog), warning_okbutton, LIVES_YES);
     break;
   case LIVES_DIALOG_ABORT_CANCEL_RETRY:
     dialog = gtk_message_dialog_new (transient,(GtkDialogFlags)0,GTK_MESSAGE_ERROR,GTK_BUTTONS_NONE,"%s","");
-    lives_window_set_title (GTK_WINDOW (dialog), _("LiVES: - File Error"));
+    lives_window_set_title (LIVES_WINDOW (dialog), _("LiVES: - File Error"));
     widget_opts.justify=LIVES_JUSTIFY_CENTER;
     mainw->warning_label = lives_standard_label_new (_("File Error"));
     widget_opts.justify=LIVES_JUSTIFY_DEFAULT;
     abortbutton = lives_button_new_from_stock ("gtk-quit");
     lives_button_set_label(GTK_BUTTON(abortbutton),_("_Abort"));
-    lives_dialog_add_action_widget (GTK_DIALOG (dialog), abortbutton, LIVES_ABORT);
+    lives_dialog_add_action_widget (LIVES_DIALOG (dialog), abortbutton, LIVES_ABORT);
     warning_cancelbutton = lives_button_new_from_stock ("gtk-cancel");
-    lives_dialog_add_action_widget (GTK_DIALOG (dialog), warning_cancelbutton, LIVES_CANCEL);
+    lives_dialog_add_action_widget (LIVES_DIALOG (dialog), warning_cancelbutton, LIVES_CANCEL);
     warning_okbutton = lives_button_new_from_stock ("gtk-refresh");
     lives_button_set_label(GTK_BUTTON(warning_okbutton),_("_Retry"));
-    lives_dialog_add_action_widget (GTK_DIALOG (dialog), warning_okbutton, LIVES_RETRY);
+    lives_dialog_add_action_widget (LIVES_DIALOG (dialog), warning_okbutton, LIVES_RETRY);
     break;
   default:
     return NULL;
     break;
   }
 
-  gtk_window_add_accel_group (GTK_WINDOW (dialog), accel_group);
+  lives_window_add_accel_group (LIVES_WINDOW (dialog), accel_group);
 
   if (widget_opts.apply_theme&&(palette->style&STYLE_1)) {
-    lives_dialog_set_has_separator(GTK_DIALOG(dialog),FALSE);
+    lives_dialog_set_has_separator(LIVES_DIALOG(dialog),FALSE);
     lives_widget_set_bg_color(dialog, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
   }
 
-  gtk_window_set_deletable(GTK_WINDOW(dialog), FALSE);
-  gtk_window_set_resizable (GTK_WINDOW (dialog), FALSE);
+  lives_window_set_deletable(LIVES_WINDOW(dialog), FALSE);
+  lives_window_set_resizable (LIVES_WINDOW (dialog), FALSE);
 
-  lives_container_set_border_width (GTK_CONTAINER (dialog), widget_opts.border_width*2);
+  lives_container_set_border_width (LIVES_CONTAINER (dialog), widget_opts.border_width*2);
 
   textx=insert_newlines(text,MAX_MSG_WIDTH_CHARS);
-  lives_label_set_text(GTK_LABEL(mainw->warning_label),textx);
+  lives_label_set_text(LIVES_LABEL(mainw->warning_label),textx);
 
   g_free(textx);
 
-  dialog_vbox = lives_dialog_get_content_area(GTK_DIALOG(dialog));
+  dialog_vbox = lives_dialog_get_content_area(LIVES_DIALOG(dialog));
 
-  lives_box_pack_start (GTK_BOX (dialog_vbox), mainw->warning_label, TRUE, TRUE, 0);
-  gtk_label_set_selectable (GTK_LABEL (mainw->warning_label), TRUE);
+  lives_box_pack_start (LIVES_BOX (dialog_vbox), mainw->warning_label, TRUE, TRUE, 0);
+  gtk_label_set_selectable (LIVES_LABEL (mainw->warning_label), TRUE);
 
   if (mainw->add_clear_ds_adv) {
     mainw->add_clear_ds_adv=FALSE;
-    add_clear_ds_adv(GTK_BOX(dialog_vbox));
+    add_clear_ds_adv(LIVES_BOX(dialog_vbox));
   }
 
   if (warn_mask_number>0) {
-    add_warn_check(GTK_BOX(dialog_vbox),warn_mask_number);
+    add_warn_check(LIVES_BOX(dialog_vbox),warn_mask_number);
   }
 
   if (mainw->xlays!=NULL) {
-    add_xlays_widget(GTK_BOX(dialog_vbox));
+    add_xlays_widget(LIVES_BOX(dialog_vbox));
   }
 
   dialog_action_area = lives_dialog_get_action_area(LIVES_DIALOG (dialog));
@@ -267,12 +268,16 @@ static GtkWidget* create_warn_dialog (int warn_mask_number, GtkWindow *transient
   lives_widget_grab_default (warning_okbutton);
 
   lives_widget_show_all(dialog);
-  gtk_window_set_modal (GTK_WINDOW (dialog), TRUE);
+
+  lives_window_center(LIVES_WINDOW(dialog));
+
+  lives_window_set_modal (LIVES_WINDOW (dialog), TRUE);
 
   if (prefs->present) {
-    lives_window_present (GTK_WINDOW (dialog));
+    lives_window_present (LIVES_WINDOW (dialog));
     gdk_window_raise (lives_widget_get_xwindow(dialog));
   }
+
 
   return dialog;
 }
@@ -288,9 +293,10 @@ boolean do_warning_dialog_with_check (const gchar *text, int warn_mask_number) {
   if (!prefs->show_gui) {
     return do_warning_dialog_with_check_transient(text,warn_mask_number,NULL);
   } else {
-    if (mainw->multitrack==NULL) 
-      return do_warning_dialog_with_check_transient(text,warn_mask_number,GTK_WINDOW(mainw->LiVES));
-    return do_warning_dialog_with_check_transient(text,warn_mask_number,GTK_WINDOW(mainw->multitrack->window));
+    if (mainw->multitrack==NULL) {
+      return do_warning_dialog_with_check_transient(text,warn_mask_number,LIVES_WINDOW(mainw->LiVES));
+    }
+    return do_warning_dialog_with_check_transient(text,warn_mask_number,LIVES_WINDOW(mainw->multitrack->window));
   }
 }
 
@@ -311,7 +317,7 @@ boolean do_warning_dialog_with_check_transient(const gchar *text, int warn_mask_
   do {
     warning=create_warn_dialog(warn_mask_number,transient,mytext,LIVES_DIALOG_WARN);
     lives_widget_show(warning);
-    response=lives_dialog_run (GTK_DIALOG (warning));
+    response=lives_dialog_run (LIVES_DIALOG (warning));
     lives_widget_destroy (warning);
   } while (response==LIVES_RETRY);
 
@@ -330,15 +336,15 @@ boolean do_yesno_dialog(const gchar *text) {
   GtkWindow *transient=NULL;
 
   if (prefs->show_gui) {
-    if (mainw->multitrack==NULL&&mainw->is_ready) transient=GTK_WINDOW(mainw->LiVES);
-    else if (mainw->multitrack!=NULL&&mainw->multitrack->is_ready) transient=GTK_WINDOW(mainw->multitrack->window);
+    if (mainw->multitrack==NULL&&mainw->is_ready) transient=LIVES_WINDOW(mainw->LiVES);
+    else if (mainw->multitrack!=NULL&&mainw->multitrack->is_ready) transient=LIVES_WINDOW(mainw->multitrack->window);
   }
 
   mytext=g_strdup(text); // translation issues
   warning=create_warn_dialog(0,transient,mytext,LIVES_DIALOG_YESNO);
   if (mytext!=NULL) g_free(mytext);
 
-  response=lives_dialog_run (GTK_DIALOG (warning));
+  response=lives_dialog_run (LIVES_DIALOG (warning));
   lives_widget_destroy (warning);
 
   lives_widget_context_update();
@@ -357,8 +363,8 @@ int do_abort_cancel_retry_dialog(const gchar *text, GtkWindow *transient) {
     transient=NULL;
   } else {
     if (transient==NULL) {
-      if (mainw->multitrack==NULL&&mainw->is_ready) transient=GTK_WINDOW(mainw->LiVES);
-      else if (mainw->multitrack!=NULL&&mainw->multitrack->is_ready) transient=GTK_WINDOW(mainw->multitrack->window);
+      if (mainw->multitrack==NULL&&mainw->is_ready) transient=LIVES_WINDOW(mainw->LiVES);
+      else if (mainw->multitrack!=NULL&&mainw->multitrack->is_ready) transient=LIVES_WINDOW(mainw->multitrack->window);
     }
   }
 
@@ -367,7 +373,7 @@ int do_abort_cancel_retry_dialog(const gchar *text, GtkWindow *transient) {
   do {
     warning=create_warn_dialog(0,transient,mytext,LIVES_DIALOG_ABORT_CANCEL_RETRY);
 
-    response=lives_dialog_run (GTK_DIALOG (warning));
+    response=lives_dialog_run (LIVES_DIALOG (warning));
     lives_widget_destroy (warning);
 
     lives_widget_context_update();
@@ -419,10 +425,10 @@ void do_error_dialog(const gchar *text) {
     do_error_dialog_with_check_transient(text,FALSE,0,NULL);
   } else {
     if (prefsw!=NULL&&prefsw->prefs_dialog!=NULL) do_error_dialog_with_check_transient(text,FALSE,0,
-										       GTK_WINDOW(prefsw->prefs_dialog));
+										       LIVES_WINDOW(prefsw->prefs_dialog));
     else {
-      if (mainw->multitrack==NULL) do_error_dialog_with_check_transient(text,FALSE,0,GTK_WINDOW(mainw->LiVES));
-      else do_error_dialog_with_check_transient(text,FALSE,0,GTK_WINDOW(mainw->multitrack->window));
+      if (mainw->multitrack==NULL) do_error_dialog_with_check_transient(text,FALSE,0,LIVES_WINDOW(mainw->LiVES));
+      else do_error_dialog_with_check_transient(text,FALSE,0,LIVES_WINDOW(mainw->multitrack->window));
     }
   }
 }
@@ -434,10 +440,10 @@ void do_info_dialog(const gchar *text) {
     do_info_dialog_with_transient(text,FALSE,NULL);
   } else {
     if (prefsw!=NULL&&prefsw->prefs_dialog!=NULL) do_info_dialog_with_transient(text,FALSE,
-										GTK_WINDOW(prefsw->prefs_dialog));
+										LIVES_WINDOW(prefsw->prefs_dialog));
     else {
-      if (mainw->multitrack==NULL) do_info_dialog_with_transient(text,FALSE,GTK_WINDOW(mainw->LiVES));
-      else do_info_dialog_with_transient(text,FALSE,GTK_WINDOW(mainw->multitrack->window));
+      if (mainw->multitrack==NULL) do_info_dialog_with_transient(text,FALSE,LIVES_WINDOW(mainw->LiVES));
+      else do_info_dialog_with_transient(text,FALSE,LIVES_WINDOW(mainw->multitrack->window));
     }
   }
 }
@@ -448,8 +454,8 @@ void do_error_dialog_with_check(const gchar *text, int warn_mask_number) {
   if (!prefs->show_gui) {
     do_error_dialog_with_check_transient(text,FALSE,warn_mask_number,NULL);
   } else {
-    if (mainw->multitrack==NULL) do_error_dialog_with_check_transient(text,FALSE,warn_mask_number,GTK_WINDOW(mainw->LiVES));
-    else do_error_dialog_with_check_transient(text,FALSE,warn_mask_number,GTK_WINDOW(mainw->multitrack->window));
+    if (mainw->multitrack==NULL) do_error_dialog_with_check_transient(text,FALSE,warn_mask_number,LIVES_WINDOW(mainw->LiVES));
+    else do_error_dialog_with_check_transient(text,FALSE,warn_mask_number,LIVES_WINDOW(mainw->multitrack->window));
   }
 }
 
@@ -459,8 +465,8 @@ void do_blocking_error_dialog(const gchar *text) {
   if (!prefs->show_gui) {
     do_error_dialog_with_check_transient(text,TRUE,0,NULL);
   } else {
-    if (mainw->multitrack==NULL) do_error_dialog_with_check_transient(text,TRUE,0,GTK_WINDOW(mainw->LiVES));
-    else do_error_dialog_with_check_transient(text,TRUE,0,GTK_WINDOW(mainw->multitrack->window));
+    if (mainw->multitrack==NULL) do_error_dialog_with_check_transient(text,TRUE,0,LIVES_WINDOW(mainw->LiVES));
+    else do_error_dialog_with_check_transient(text,TRUE,0,LIVES_WINDOW(mainw->multitrack->window));
   }
 }
 
@@ -470,8 +476,8 @@ void do_blocking_info_dialog(const gchar *text) {
   if (!prefs->show_gui) {
     do_info_dialog_with_transient(text,TRUE,NULL);
   } else {
-    if (mainw->multitrack==NULL) do_info_dialog_with_transient(text,TRUE,GTK_WINDOW(mainw->LiVES));
-    else do_info_dialog_with_transient(text,TRUE,GTK_WINDOW(mainw->multitrack->window));
+    if (mainw->multitrack==NULL) do_info_dialog_with_transient(text,TRUE,LIVES_WINDOW(mainw->LiVES));
+    else do_info_dialog_with_transient(text,TRUE,LIVES_WINDOW(mainw->multitrack->window));
   }
 }
 
@@ -486,12 +492,12 @@ void do_error_dialog_with_check_transient(const gchar *text, boolean is_blocking
   mytext=g_strdup(text);
   err_box=create_info_error_dialog(mytext,is_blocking,warn_mask_number,warn_mask_number==0?LIVES_INFO_TYPE_ERROR:LIVES_INFO_TYPE_WARNING);
   if (mytext!=NULL) g_free(mytext);
-  if (transient!=NULL) gtk_window_set_transient_for(GTK_WINDOW(err_box),transient);
+  if (transient!=NULL) lives_window_set_transient_for(LIVES_WINDOW(err_box),transient);
 
   if (is_blocking) {
-    lives_dialog_run(GTK_DIALOG (err_box));
+    lives_dialog_run(LIVES_DIALOG (err_box));
     if (mainw!=NULL&&mainw->is_ready&&transient!=NULL) {
-      lives_widget_queue_draw(GTK_WIDGET(transient));
+      lives_widget_queue_draw(LIVES_WIDGET(transient));
     }
   }
 }
@@ -506,12 +512,12 @@ void do_info_dialog_with_transient(const gchar *text, boolean is_blocking, GtkWi
   mytext=g_strdup(text);
   info_box=create_info_error_dialog(mytext,is_blocking,0,LIVES_INFO_TYPE_INFO);
   if (mytext!=NULL) g_free(mytext);
-  if (transient!=NULL) gtk_window_set_transient_for(GTK_WINDOW(info_box),transient);
+  if (transient!=NULL) lives_window_set_transient_for(LIVES_WINDOW(info_box),transient);
 
   if (is_blocking) {
-    lives_dialog_run(GTK_DIALOG (info_box));
+    lives_dialog_run(LIVES_DIALOG (info_box));
     if (mainw!=NULL&&mainw->is_ready&&transient!=NULL) {
-      lives_widget_queue_draw(GTK_WIDGET(transient));
+      lives_widget_queue_draw(LIVES_WIDGET(transient));
     }
   }
 }
@@ -555,7 +561,7 @@ gchar *ds_warning_msg(const gchar *dir, guint64 dsval, guint64 cwarn, guint64 nw
 
 void do_aud_during_play_error(void) {
   do_error_dialog_with_check_transient(_("Audio players cannot be switched during playback."),
-				       TRUE,0,GTK_WINDOW(prefsw->prefs_dialog));
+				       TRUE,0,LIVES_WINDOW(prefsw->prefs_dialog));
 }  
 
 void do_memory_error_dialog (void) {
@@ -822,7 +828,7 @@ static void cancel_process(boolean visible) {
   if (prefs->show_player_stats&&!visible&&mainw->fps_measure>0.) {
     // statistics
     gettimeofday(&tv, NULL);
-    mainw->fps_measure/=(gdouble)(U_SECL*(tv.tv_sec-mainw->origsecs)+tv.tv_usec*U_SEC_RATIO-mainw->origusecs*
+    mainw->fps_measure/=(double)(U_SECL*(tv.tv_sec-mainw->origsecs)+tv.tv_usec*U_SEC_RATIO-mainw->origusecs*
 				  U_SEC_RATIO-mainw->offsetticks)/U_SEC;
   }
   if (visible) {
@@ -834,7 +840,7 @@ static void cancel_process(boolean visible) {
 				  LIVES_ACCEL_VISIBLE);
     }
     if (cfile->proc_ptr!=NULL) {
-      lives_widget_destroy(GTK_WIDGET(cfile->proc_ptr->processing));
+      lives_widget_destroy(LIVES_WIDGET(cfile->proc_ptr->processing));
       g_free(cfile->proc_ptr);
       cfile->proc_ptr=NULL;
     }
@@ -869,8 +875,8 @@ static void disp_fraction(int done, int start, int end, double timesofar, xproce
   if (done>disp_frames_done) gtk_progress_bar_set_fraction(GTK_PROGRESS_BAR(proc->progressbar),fraction_done);
 
   est_time=timesofar/fraction_done-timesofar;
-  prog_label=g_strdup_printf(_("\n%s%d%% done. Time remaining: %u sec%s\n"),stretch,(gint)(fraction_done*100.),(guint)(est_time+.5),stretch);
-  if (GTK_IS_LABEL(proc->label3)) lives_label_set_text(GTK_LABEL(proc->label3),prog_label);
+  prog_label=g_strdup_printf(_("\n%s%d%% done. Time remaining: %u sec%s\n"),stretch,(int)(fraction_done*100.),(guint)(est_time+.5),stretch);
+  if (LIVES_IS_LABEL(proc->label3)) lives_label_set_text(LIVES_LABEL(proc->label3),prog_label);
   g_free(prog_label);
 
   disp_frames_done=done;
@@ -1058,7 +1064,7 @@ boolean process_one (boolean visible) {
 	  cfile->achans>0&&(!mainw->is_rendering||(mainw->multitrack!=NULL&&!mainw->multitrack->is_rendering))&&
 	  (mainw->currticks-mainw->offsetticks)>U_SECL*10&&(audio_ticks=lives_jack_get_time(mainw->jackd,TRUE))>
 	  mainw->offsetticks) {
-	if ((audio_stretch=(gdouble)(audio_ticks-mainw->offsetticks)/(gdouble)(mainw->currticks-mainw->offsetticks))<2.) {
+	if ((audio_stretch=(double)(audio_ticks-mainw->offsetticks)/(double)(mainw->currticks-mainw->offsetticks))<2.) {
 	  // if audio_stretch is > 1. it means that audio is playing too fast
 	  // < 1. it is playing too slow
 
@@ -1086,7 +1092,7 @@ boolean process_one (boolean visible) {
 	  (mainw->currticks-mainw->offsetticks)>U_SECL*10&&(audio_ticks=lives_pulse_get_time(mainw->pulsed,TRUE))>
 	  mainw->offsetticks) {
 	// fps is synched to external source, so we adjust the audio rate to fit
-	if ((audio_stretch=(gdouble)(audio_ticks-mainw->offsetticks)/(gdouble)(mainw->currticks-mainw->offsetticks))<2.) {
+	if ((audio_stretch=(double)(audio_ticks-mainw->offsetticks)/(double)(mainw->currticks-mainw->offsetticks))<2.) {
 	  // if audio_stretch is > 1. it means that audio is playing too fast
 	  // < 1. it is playing too slow
 
@@ -1169,7 +1175,7 @@ boolean process_one (boolean visible) {
       // calculate the audio 'frame' for no-realtime audio players
       // for realtime players, we did this in calc_new_playback_position()
       if (prefs->audio_player==AUD_PLAYER_SOX||prefs->audio_player==AUD_PLAYER_MPLAYER) {
-	mainw->aframeno=(gint64)(mainw->currticks-mainw->firstticks)*cfile->fps/U_SEC+audio_start;
+	mainw->aframeno=(int64_t)(mainw->currticks-mainw->firstticks)*cfile->fps/U_SEC+audio_start;
 	if (G_UNLIKELY(mainw->loop_cont&&(mainw->aframeno>(mainw->audio_end?mainw->audio_end:
 							   cfile->laudio_time*cfile->fps)))) {
 	  mainw->firstticks=mainw->startticks-mainw->deltaticks;
@@ -1239,11 +1245,11 @@ boolean process_one (boolean visible) {
       if (mainw->cancelled==CANCEL_NONE) mainw->cancelled=CANCEL_NO_PROPOGATE;
     }
     else {
-      gdouble fraction_done,timesofar;
+      double fraction_done,timesofar;
       gchar *prog_label;
 
       if (GTK_IS_SPIN_BUTTON(mainw->framedraw_spinbutton)) 
-	lives_spin_button_set_range(GTK_SPIN_BUTTON(mainw->framedraw_spinbutton),1,cfile->proc_ptr->frames_done);
+	lives_spin_button_set_range(LIVES_SPIN_BUTTON(mainw->framedraw_spinbutton),1,cfile->proc_ptr->frames_done);
       // set the progress bar %
 
       if (cfile->opening&&cfile->clip_type==CLIP_TYPE_DISK&&!cfile->opening_only_audio&&
@@ -1258,7 +1264,7 @@ boolean process_one (boolean visible) {
 	  last_open_check_ticks=mainw->currticks;
 	  if (mainw->opening_frames>1) {
 	    if (cfile->frames>0&&cfile->frames!=123456789) {
-	      fraction_done=(gdouble)(mainw->opening_frames-1)/(gdouble)cfile->frames;
+	      fraction_done=(double)(mainw->opening_frames-1)/(double)cfile->frames;
 	      if (fraction_done>1.) fraction_done=1.;
 	      if (!mainw->effects_paused) {
 		timesofar=(mainw->currticks-mainw->timeout_ticks)/U_SEC;
@@ -1273,7 +1279,7 @@ boolean process_one (boolean visible) {
 	      gtk_progress_bar_pulse(GTK_PROGRESS_BAR(cfile->proc_ptr->progressbar));
 	      prog_label=g_strdup_printf(_("\n%d frames opened.\n"),mainw->opening_frames-1);
 	    }
-	    lives_label_set_text(GTK_LABEL(cfile->proc_ptr->label3),prog_label);
+	    lives_label_set_text(LIVES_LABEL(cfile->proc_ptr->label3),prog_label);
 	    g_free(prog_label);
 	  }
 	}
@@ -1293,8 +1299,8 @@ boolean process_one (boolean visible) {
 
     if (cfile->clip_type==CLIP_TYPE_FILE&&cfile->fx_frame_pump>0&&
 	(cfile->progress_start+frames_done+FX_FRAME_PUMP_VAL>cfile->fx_frame_pump)) {
-      gint vend=cfile->fx_frame_pump;
-      gboolean retb=virtual_to_images(mainw->current_file,vend,vend,FALSE);
+      int vend=cfile->fx_frame_pump;
+      boolean retb=virtual_to_images(mainw->current_file,vend,vend,FALSE,NULL);
       if (retb) cfile->fx_frame_pump=vend+1;
       else mainw->cancelled=CANCEL_ERROR;
       if (vend==cfile->end) cfile->fx_frame_pump=0; // all frames were realised
@@ -1306,9 +1312,12 @@ boolean process_one (boolean visible) {
 
     if ((xrfx=(lives_rfx_t *)mainw->vrfx_update)!=NULL&&fx_dialog[1]!=NULL) {
       // the audio thread wants to update the parameter window
-      mainw->vrfx_update=FALSE;
+      mainw->vrfx_update=NULL;
       update_visual_params(xrfx,FALSE);
     }
+
+    // the audio thread wants to update the parameter scroll(s)
+    if (mainw->ce_thumbs) ce_thumbs_apply_rfx_changes();
 
     lives_widget_context_update();
     if (G_UNLIKELY(mainw->cancelled!=CANCEL_NONE)) {
@@ -1419,12 +1428,12 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const gchar *te
     // (encoding and copying have their own mechanism which realises all frames in the selection first) 
 
     if (cfile->clip_type==CLIP_TYPE_FILE&&cfile->fx_frame_pump>0) {
-      gint vend=cfile->fx_frame_pump+FX_FRAME_PUMP_VAL;
+      int vend=cfile->fx_frame_pump+FX_FRAME_PUMP_VAL;
       if (vend>cfile->progress_end) vend=cfile->progress_end;
       if (vend>=cfile->fx_frame_pump) {
 	register int i;
 	for (i=cfile->fx_frame_pump;i<=vend;i++) {
-	  gboolean retb=virtual_to_images(mainw->current_file,i,i,FALSE);
+	  boolean retb=virtual_to_images(mainw->current_file,i,i,FALSE,NULL);
 	  if (mainw->cancelled||!retb) {
 	    if (mainw->current_file>-1&&cfile!=NULL) lives_freep((void**)&cfile->op_dir);
 	    return FALSE;
@@ -1508,15 +1517,15 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const gchar *te
 
     // WARNING: origticks could be negative
 
-    gint64 origticks=mainw->origsecs*U_SEC+mainw->origusecs*U_SEC_RATIO-
+    int64_t origticks=mainw->origsecs*U_SEC+mainw->origusecs*U_SEC_RATIO-
       (mainw->offsetticks=get_event_timecode(mainw->multitrack->pb_start_event));
     mainw->origsecs=origticks/U_SEC;
-    mainw->origusecs=((gint64)(origticks/U_SEC_RATIO)-mainw->origsecs*1000000.);
+    mainw->origusecs=((int64_t)(origticks/U_SEC_RATIO)-mainw->origsecs*1000000.);
   }
 
 
   // set initial audio seek position for current file
-  if (cfile->achans) cfile->aseek_pos=(int64_t)((gdouble)(mainw->play_start-1.)/
+  if (cfile->achans) cfile->aseek_pos=(int64_t)((double)(mainw->play_start-1.)/
 					     cfile->fps*cfile->arate*cfile->achans*(cfile->asampsize/8));
 
 
@@ -1533,7 +1542,7 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const gchar *te
     mainw->rec_aclip=mainw->current_file;
     mainw->rec_avel=cfile->pb_fps/cfile->fps;
     if (!(mainw->record&&!mainw->record_paused&&(prefs->audio_src==AUDIO_SRC_EXT||mainw->agen_key!=0||mainw->agen_needs_reinit)))
-      mainw->rec_aseek=(gdouble)cfile->aseek_pos/(gdouble)(cfile->arate*cfile->achans*(cfile->asampsize/8));
+      mainw->rec_aseek=(double)cfile->aseek_pos/(double)(cfile->arate*cfile->achans*(cfile->asampsize/8));
     else {
       mainw->rec_aclip=mainw->ascrap_file;
       mainw->rec_avel=1.;
@@ -1564,7 +1573,7 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const gchar *te
     mainw->rec_aclip=mainw->current_file;
     mainw->rec_avel=cfile->pb_fps/cfile->fps;
     if (!(mainw->record&&!mainw->record_paused&&(prefs->audio_src==AUDIO_SRC_EXT||mainw->agen_key!=0||mainw->agen_needs_reinit)))
-      mainw->rec_aseek=(gdouble)cfile->aseek_pos/(gdouble)(cfile->arate*cfile->achans*(cfile->asampsize/8));
+      mainw->rec_aseek=(double)cfile->aseek_pos/(double)(cfile->arate*cfile->achans*(cfile->asampsize/8));
     else {
       mainw->rec_aclip=mainw->ascrap_file;
       mainw->rec_avel=1.;
@@ -1688,7 +1697,7 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const gchar *te
       // processing not yet completed...
       if (visible) {
 	// last frame processed ->> will go from cfile->start to cfile->end
-	gint numtok=get_token_count (mainw->msg,'|');
+	int numtok=get_token_count (mainw->msg,'|');
 	// get progress count from backend
 	if (numtok>1) {
 	  gchar **array=g_strsplit(mainw->msg,"|",numtok);
@@ -1773,7 +1782,7 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const gchar *te
     if (prefs->show_player_stats) {
       if (mainw->fps_measure>0.) {
 	gettimeofday(&tv, NULL);
-	mainw->fps_measure/=(gdouble)(U_SECL*(tv.tv_sec-mainw->origsecs)+tv.tv_usec*U_SEC_RATIO-
+	mainw->fps_measure/=(double)(U_SECL*(tv.tv_sec-mainw->origsecs)+tv.tv_usec*U_SEC_RATIO-
 				      mainw->origusecs*U_SEC_RATIO-mainw->offsetticks)/U_SEC;
       }
     }
@@ -1800,7 +1809,7 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const gchar *te
   return TRUE;
 }
 
-
+#define MIN_FLASH_TIME 100000000
 
 boolean do_auto_dialog (const gchar *text, int type) {
   // type 0 = normal auto_dialog
@@ -1808,19 +1817,24 @@ boolean do_auto_dialog (const gchar *text, int type) {
   // type 2 = normal with cancel
 
   FILE *infofile=NULL;
-  int count=0;
-  guint64 time=0,end_time=1;
-  gchar *label_text;
-  int time_rem,last_time_rem=10000000;
+
+  uint64_t time=0,end_time=1;
+
   xprocess *proc_ptr;
+
+  gchar *label_text;
   gchar *mytext=g_strdup(text);
+
+  int time_rem,last_time_rem=10000000;
+  int alarm_handle=0;
+
 
   mainw->error=FALSE;
 
   proc_ptr=create_processing (mytext);
   if (mytext!=NULL) g_free(mytext);
   lives_widget_hide (proc_ptr->stop_button);
-  gtk_window_set_modal (GTK_WINDOW (proc_ptr->processing), TRUE);
+  lives_window_set_modal (LIVES_WINDOW (proc_ptr->processing), TRUE);
      
   if (type==2) {
     lives_widget_show (proc_ptr->cancel_button);
@@ -1835,9 +1849,9 @@ boolean do_auto_dialog (const gchar *text, int type) {
   lives_set_cursor_style(LIVES_CURSOR_BUSY,proc_ptr->processing);
   lives_widget_context_update();
 
-  if (type==0) {
+  if (type==0||type==2) {
     clear_mainw_msg();
-    count=100000./prefs->sleep_time;  // don't want to flash too fast...
+    alarm_handle=lives_alarm_set(MIN_FLASH_TIME); // don't want to flash too fast...
   }
   else if (type==1) {
     lives_widget_show(proc_ptr->stop_button);
@@ -1851,17 +1865,18 @@ boolean do_auto_dialog (const gchar *text, int type) {
     }
   }
 
-  while ((type==1&&mainw->cancelled==CANCEL_NONE)||(type==0&&!(infofile=fopen(cfile->info_file,"r")))) {
+  while ((type==0||((type==1||type==2)&&mainw->cancelled==CANCEL_NONE))
+	 &&((type==1||((type==0||type==2)&&!(infofile=fopen(cfile->info_file,"r")))))) {
     gtk_progress_bar_pulse(GTK_PROGRESS_BAR(proc_ptr->progressbar));
     lives_widget_context_update();
     g_usleep(prefs->sleep_time);
     if (type==1&&mainw->rec_end_time!=-1.) {
       gettimeofday(&tv, NULL);
       time=tv.tv_sec*1000000.+tv.tv_usec; // time in microseconds
-      time_rem=(gint)((gdouble)(end_time-time)/1000000.+.5);
+      time_rem=(int)((double)(end_time-time)/1000000.+.5);
       if (time_rem>=0&&time_rem<last_time_rem) {
 	label_text=g_strdup_printf(_("\nTime remaining: %d sec"),time_rem);
-	lives_label_set_text(GTK_LABEL(proc_ptr->label2),label_text);
+	lives_label_set_text(LIVES_LABEL(proc_ptr->label2),label_text);
 	g_free(label_text);
 	last_time_rem=time_rem;
       }
@@ -1869,26 +1884,18 @@ boolean do_auto_dialog (const gchar *text, int type) {
   }
   
 
-  if (type==0) {
+  if (type==0||type==2) {
     mainw->read_failed=FALSE;
     lives_fgets(mainw->msg,512,infofile);
     fclose(infofile);
     if (cfile->clip_type==CLIP_TYPE_DISK) unlink(cfile->info_file);
 
-    while (count>0) {
-      gtk_progress_bar_pulse(GTK_PROGRESS_BAR(proc_ptr->progressbar));
-      lives_widget_context_update();
-      g_usleep(prefs->sleep_time);
-      count--;
-    }
-  }
-
-  if (type==2) {
-    while (!mainw->cancelled) {
+    while (!lives_alarm_get(alarm_handle)) {
       gtk_progress_bar_pulse(GTK_PROGRESS_BAR(proc_ptr->progressbar));
       lives_widget_context_update();
       g_usleep(prefs->sleep_time);
     }
+    lives_alarm_clear(alarm_handle);
   }
 
   if (proc_ptr!=NULL) {
@@ -2050,7 +2057,7 @@ boolean rdet_suggest_values (int width, int height, double fps, int fps_num, int
   g_free (msg8);
   prep_dialog=create_encoder_prep_dialog(msg_a,NULL,anr);
   g_free (msg_a);
-  ret=(lives_dialog_run(GTK_DIALOG (prep_dialog))==GTK_RESPONSE_OK);
+  ret=(lives_dialog_run(LIVES_DIALOG (prep_dialog))==GTK_RESPONSE_OK);
   lives_widget_destroy (prep_dialog);
   return ret;
 }
@@ -2154,7 +2161,7 @@ boolean do_encoder_restrict_dialog (int width, int height, double fps, int fps_n
   prep_dialog=create_encoder_prep_dialog(msg_a,msg_b,anr);
   g_free (msg_a);
   if (msg_b!=NULL) g_free (msg_b);
-  ret=(lives_dialog_run(GTK_DIALOG (prep_dialog))==GTK_RESPONSE_OK);
+  ret=(lives_dialog_run(LIVES_DIALOG (prep_dialog))==GTK_RESPONSE_OK);
   lives_widget_destroy (prep_dialog);
   return ret;
 }
@@ -2192,22 +2199,22 @@ boolean do_comments_dialog (file *sfile, gchar *filename) {
 
   while (!ok) {
     ok=TRUE;
-    if ((response=(lives_dialog_run(GTK_DIALOG (commentsw->comments_dialog))==GTK_RESPONSE_OK))) {
-      g_snprintf (sfile->title,256,"%s",lives_entry_get_text (GTK_ENTRY (commentsw->title_entry)));
-      g_snprintf (sfile->author,256,"%s",lives_entry_get_text (GTK_ENTRY (commentsw->author_entry)));
-      g_snprintf (sfile->comment,256,"%s",lives_entry_get_text (GTK_ENTRY (commentsw->comment_entry)));
+    if ((response=(lives_dialog_run(LIVES_DIALOG (commentsw->comments_dialog))==GTK_RESPONSE_OK))) {
+      g_snprintf (sfile->title,256,"%s",lives_entry_get_text (LIVES_ENTRY (commentsw->title_entry)));
+      g_snprintf (sfile->author,256,"%s",lives_entry_get_text (LIVES_ENTRY (commentsw->author_entry)));
+      g_snprintf (sfile->comment,256,"%s",lives_entry_get_text (LIVES_ENTRY (commentsw->comment_entry)));
       
       if (encoding&&sfile->subt!=NULL&&lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(commentsw->subt_checkbutton))) {
-	gchar *ext=get_extension(lives_entry_get_text(GTK_ENTRY(commentsw->subt_entry)));
+	gchar *ext=get_extension(lives_entry_get_text(LIVES_ENTRY(commentsw->subt_entry)));
 	if (strcmp(ext,"sub")&&strcmp(ext,"srt")) {
 	  if (!do_sub_type_warning(ext,sfile->subt->type==SUBTITLE_TYPE_SRT?"srt":"sub")) {
-	    lives_entry_set_text(GTK_ENTRY(commentsw->subt_entry),mainw->subt_save_file);
+	    lives_entry_set_text(LIVES_ENTRY(commentsw->subt_entry),mainw->subt_save_file);
 	    ok=FALSE;
 	    continue;
 	  }
 	}
 	if (mainw->subt_save_file!=NULL) g_free(mainw->subt_save_file);
-	mainw->subt_save_file=g_strdup(lives_entry_get_text(GTK_ENTRY(commentsw->subt_entry)));
+	mainw->subt_save_file=g_strdup(lives_entry_get_text(LIVES_ENTRY(commentsw->subt_entry)));
       }
       else {
 	if (mainw->subt_save_file!=NULL) g_free(mainw->subt_save_file);
@@ -2286,7 +2293,7 @@ void do_audio_import_error(void) {
 }
 
 
-gboolean prompt_remove_layout_files(void) {
+boolean prompt_remove_layout_files(void) {
   return (do_yesno_dialog(_("\nDo you wish to remove the layout files associated with this set ?\n(They will not be usable without the set).\n")));
 }
 
@@ -2351,9 +2358,9 @@ void do_jack_noopen_warn2(void) {
 }
 
 
-void do_mt_backup_space_error(lives_mt *mt, gint memreq_mb) {
+void do_mt_backup_space_error(lives_mt *mt, int memreq_mb) {
   gchar *msg=g_strdup_printf(_("\n\nLiVES needs more backup space for this layout.\nYou can increase the value in Preferences/Multitrack.\nIt is recommended to increase it to at least %d MB"),memreq_mb);
-    do_error_dialog_with_check_transient(msg,TRUE,WARN_MASK_MT_BACKUP_SPACE,GTK_WINDOW(mt->window));
+    do_error_dialog_with_check_transient(msg,TRUE,WARN_MASK_MT_BACKUP_SPACE,LIVES_WINDOW(mt->window));
     g_free(msg);
 }
 
@@ -2383,7 +2390,7 @@ void do_mt_set_mem_error(boolean has_mt, boolean trans) {
   msg=g_strdup_printf("%s%s%s",msg1,msg2,msg3);
 
   if (!trans) do_blocking_error_dialog(msg);
-  else do_error_dialog_with_check_transient(msg,TRUE,0,GTK_WINDOW(prefsw->prefs_dialog));
+  else do_error_dialog_with_check_transient(msg,TRUE,0,LIVES_WINDOW(prefsw->prefs_dialog));
   g_free(msg);
 }
 
@@ -2429,7 +2436,7 @@ void do_nojack_rec_error(void) {
 }
 
 void do_vpp_palette_error (void) {
-  do_error_dialog_with_check_transient(_("Video playback plugin failed to initialise palette !\n"),TRUE,0,prefsw!=NULL?GTK_WINDOW(prefsw->prefs_dialog):GTK_WINDOW(mainw->LiVES));
+  do_error_dialog_with_check_transient(_("Video playback plugin failed to initialise palette !\n"),TRUE,0,prefsw!=NULL?LIVES_WINDOW(prefsw->prefs_dialog):GTK_WINDOW(mainw->LiVES));
 }
 
 void do_decoder_palette_error (void) {
@@ -2438,7 +2445,7 @@ void do_decoder_palette_error (void) {
 
 
 void do_vpp_fps_error (void) {
-  do_error_dialog_with_check_transient(_("Unable to set framerate of video plugin\n"),TRUE,0,prefsw!=NULL?GTK_WINDOW(prefsw->prefs_dialog):GTK_WINDOW(mainw->LiVES));
+  do_error_dialog_with_check_transient(_("Unable to set framerate of video plugin\n"),TRUE,0,prefsw!=NULL?LIVES_WINDOW(prefsw->prefs_dialog):GTK_WINDOW(mainw->LiVES));
 }
 
 
@@ -2463,7 +2470,7 @@ void do_rmem_max_error (int size) {
 static xprocess *procw=NULL;
 
 
-static void create_threaded_dialog(gchar *text, gboolean has_cancel) {
+static void create_threaded_dialog(gchar *text, boolean has_cancel) {
 
   GtkWidget *dialog_vbox;
   GtkWidget *vbox;
@@ -2473,26 +2480,26 @@ static void create_threaded_dialog(gchar *text, gboolean has_cancel) {
 
   procw->processing = lives_standard_dialog_new (_("LiVES: - Processing..."),FALSE);
 
-  gtk_window_add_accel_group (GTK_WINDOW (procw->processing), mainw->accel_group);
+  lives_window_add_accel_group (LIVES_WINDOW (procw->processing), mainw->accel_group);
 
-  if (mainw->multitrack==NULL) gtk_window_set_transient_for(GTK_WINDOW(procw->processing),GTK_WINDOW(mainw->LiVES));
-  else gtk_window_set_transient_for(GTK_WINDOW(procw->processing),GTK_WINDOW(mainw->multitrack->window));
+  if (mainw->multitrack==NULL) lives_window_set_transient_for(LIVES_WINDOW(procw->processing),GTK_WINDOW(mainw->LiVES));
+  else lives_window_set_transient_for(LIVES_WINDOW(procw->processing),GTK_WINDOW(mainw->multitrack->window));
 
-  dialog_vbox = lives_dialog_get_content_area(GTK_DIALOG(procw->processing));
+  dialog_vbox = lives_dialog_get_content_area(LIVES_DIALOG(procw->processing));
 
   lives_widget_show (dialog_vbox);
 
   vbox = lives_vbox_new (FALSE, 0);
   lives_widget_show (vbox);
-  lives_box_pack_start (GTK_BOX (dialog_vbox), vbox, TRUE, TRUE, 0);
+  lives_box_pack_start (LIVES_BOX (dialog_vbox), vbox, TRUE, TRUE, 0);
 
   g_snprintf(tmp_label,256,"%s...\n",text);
   procw->label = lives_standard_label_new (tmp_label);
-  lives_box_pack_start (GTK_BOX (vbox), procw->label, FALSE, FALSE, 0);
+  lives_box_pack_start (LIVES_BOX (vbox), procw->label, FALSE, FALSE, 0);
 
   procw->progressbar = gtk_progress_bar_new ();
   gtk_progress_bar_set_pulse_step(GTK_PROGRESS_BAR(procw->progressbar),.01);
-  lives_box_pack_start (GTK_BOX (vbox), procw->progressbar, FALSE, FALSE, 0);
+  lives_box_pack_start (LIVES_BOX (vbox), procw->progressbar, FALSE, FALSE, 0);
 
   if (widget_opts.apply_theme&&(palette->style&STYLE_1)) {
     lives_widget_set_fg_color(procw->progressbar, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
@@ -2501,12 +2508,12 @@ static void create_threaded_dialog(gchar *text, gboolean has_cancel) {
   widget_opts.justify=LIVES_JUSTIFY_CENTER;
   procw->label2 = lives_standard_label_new (_("\nPlease Wait"));
   widget_opts.justify=LIVES_JUSTIFY_DEFAULT;
-  lives_box_pack_start (GTK_BOX (vbox), procw->label2, FALSE, FALSE, 0);
+  lives_box_pack_start (LIVES_BOX (vbox), procw->label2, FALSE, FALSE, 0);
 
   widget_opts.justify=LIVES_JUSTIFY_CENTER;
   procw->label3 = lives_standard_label_new (PROCW_STRETCHER);
   widget_opts.justify=LIVES_JUSTIFY_DEFAULT;
-  lives_box_pack_start (GTK_BOX (vbox), procw->label3, FALSE, FALSE, 0);
+  lives_box_pack_start (LIVES_BOX (vbox), procw->label3, FALSE, FALSE, 0);
 
   if (has_cancel) {
     GtkWidget *cancelbutton = lives_button_new_from_stock ("gtk-cancel");
@@ -2515,7 +2522,7 @@ static void create_threaded_dialog(gchar *text, gboolean has_cancel) {
     if (mainw->current_file>-1&&cfile!=NULL&&cfile->opening_only_audio) {
       GtkWidget *enoughbutton = lives_button_new_with_mnemonic (_ ("_Enough"));
       lives_widget_show (enoughbutton);
-      lives_dialog_add_action_widget (GTK_DIALOG (procw->processing), enoughbutton, GTK_RESPONSE_CANCEL);
+      lives_dialog_add_action_widget (LIVES_DIALOG (procw->processing), enoughbutton, GTK_RESPONSE_CANCEL);
       lives_widget_set_can_focus_and_default (enoughbutton);
 
       g_signal_connect (GTK_OBJECT (enoughbutton), "clicked",
@@ -2525,7 +2532,7 @@ static void create_threaded_dialog(gchar *text, gboolean has_cancel) {
       mainw->cancel_type=CANCEL_SOFT;
     }
 
-    lives_dialog_add_action_widget (GTK_DIALOG (procw->processing), cancelbutton, GTK_RESPONSE_CANCEL);
+    lives_dialog_add_action_widget (LIVES_DIALOG (procw->processing), cancelbutton, GTK_RESPONSE_CANCEL);
     lives_widget_set_can_focus_and_default (cancelbutton);
 
     g_signal_connect (GTK_OBJECT (cancelbutton), "clicked",
@@ -2541,12 +2548,12 @@ static void create_threaded_dialog(gchar *text, gboolean has_cancel) {
 }
 
 
-static gdouble sttime;
+static double sttime;
 
 
 void threaded_dialog_spin (void) {
-  gdouble timesofar;
-  gint progress;
+  double timesofar;
+  int progress;
 
   if (mainw->splash_window!=NULL) {
     do_splash_progress();
@@ -2563,7 +2570,7 @@ void threaded_dialog_spin (void) {
   else {
     // show fraction
     gettimeofday(&tv, NULL);
-    timesofar=(gdouble)(tv.tv_sec*1000000+tv.tv_usec-sttime)*U_SEC_RATIO/U_SEC;
+    timesofar=(double)(tv.tv_sec*1000000+tv.tv_usec-sttime)*U_SEC_RATIO/U_SEC;
     disp_fraction(progress,cfile->progress_start,cfile->progress_end,timesofar,procw);
   }
 
@@ -2638,7 +2645,7 @@ void do_splash_progress(void) {
 
 void 
 response_ok (GtkButton *button, gpointer user_data) {
-  gtk_dialog_response (GTK_DIALOG (lives_widget_get_toplevel(GTK_WIDGET(button))), GTK_RESPONSE_OK);
+  gtk_dialog_response (LIVES_DIALOG (lives_widget_get_toplevel(LIVES_WIDGET(button))), GTK_RESPONSE_OK);
 }
 
 
@@ -2978,7 +2985,7 @@ boolean do_abort_check(void) {
 void do_encoder_img_ftm_error(render_details *rdet) {
   gchar *msg=g_strdup_printf(_("\nThe %s cannot encode clips with image type %s.\nPlease select another encoder from the list.\n"),prefs->encoder.name,get_image_ext_for_type(cfile->img_type));
 
-  do_error_dialog_with_check_transient(msg,TRUE,0,GTK_WINDOW(rdet->dialog));
+  do_error_dialog_with_check_transient(msg,TRUE,0,LIVES_WINDOW(rdet->dialog));
 
   g_free(msg);
 }
@@ -3043,14 +3050,14 @@ void do_do_not_close_d (void) {
   g_free(msg);
 
   if (prefs->show_gui) {
-    if (mainw->multitrack==NULL&&mainw->is_ready) transient=GTK_WINDOW(mainw->LiVES);
-    else if (mainw->multitrack!=NULL&&mainw->multitrack->is_ready) transient=GTK_WINDOW(mainw->multitrack->window);
+    if (mainw->multitrack==NULL&&mainw->is_ready) transient=LIVES_WINDOW(mainw->LiVES);
+    else if (mainw->multitrack!=NULL&&mainw->multitrack->is_ready) transient=LIVES_WINDOW(mainw->multitrack->window);
   }
 
-  if (transient!=NULL) gtk_window_set_transient_for(GTK_WINDOW(err_box),transient);
+  if (transient!=NULL) lives_window_set_transient_for(LIVES_WINDOW(err_box),transient);
   lives_widget_show(err_box);
 
-  lives_window_present (GTK_WINDOW (err_box));
+  lives_window_present (LIVES_WINDOW (err_box));
   gdk_window_raise (lives_widget_get_xwindow(err_box));
 }
 

@@ -15,6 +15,7 @@ void on_assign_rte_keys_activate (GtkMenuItem *, gpointer);
 void on_rte_info_clicked (GtkButton *, gpointer data);
 void load_default_keymap(void);
 void rtew_set_keych (int key, boolean on);
+void ret_set_key_check_state(void);
 void rtew_set_keygr (int key);
 void rtew_set_mode_radio (int key, int mode);
 void rtew_set_grab_button (boolean on);

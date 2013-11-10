@@ -24,10 +24,15 @@
 #include "rte_window.h"
 #include "effects.h"
 #include "paramwindow.h"
+#include "ce_thumbs.h"
+
+static GtkWidget *rte_window_back=NULL;
+static int old_rte_keys_virtual=0;
 
 static GtkWidget **key_checks;
 static GtkWidget **key_grabs;
 static GtkWidget **mode_radios;
+static GtkWidget **combos;
 static GtkWidget **combo_entries;
 static GtkWidget *dummy_radio;
 static GtkWidget **nlabels;
@@ -48,14 +53,25 @@ static gulong *mode_ra_fns;
 
 static int keyw=-1,modew=-1;
 
-static GList *hash_list;
-static GList *name_list;
-static GList *name_type_list;
+static GList *hash_list=NULL;
+static GList *name_list=NULL;
+static GList *name_type_list=NULL;
 
 
 static boolean ca_canc;
 
 //////////////////////////////////////////////////////////////////////////////
+
+
+void ret_set_key_check_state(void) {
+  // set (delayed) keycheck state
+  register int i;
+  for (i=0;i<prefs->rte_keys_virtual;i++) {
+    g_signal_handler_block(key_checks[i],ch_fns[i]);
+    lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(key_checks[i]),GPOINTER_TO_INT(g_object_get_data(G_OBJECT(key_checks[i]),"active")));
+    g_signal_handler_unblock(key_checks[i],ch_fns[i]);
+  }
+}
 
 
 void type_label_set_text (int key, int mode) {
@@ -64,7 +80,7 @@ void type_label_set_text (int key, int mode) {
   gchar *type=rte_keymode_get_type(key+1,mode);
 
   if (strlen(type)) {
-    lives_label_set_text (GTK_LABEL(type_labels[idx]),g_strdup_printf(_("Type: %s"),type));
+    lives_label_set_text (LIVES_LABEL(type_labels[idx]),g_strdup_printf(_("Type: %s"),type));
     lives_widget_set_sensitive(info_buttons[idx],TRUE);
     lives_widget_set_sensitive(clear_buttons[idx],TRUE);
     lives_widget_set_sensitive(mode_radios[idx],TRUE);
@@ -85,14 +101,14 @@ void type_label_set_text (int key, int mode) {
 
 boolean on_clear_all_clicked (GtkButton *button, gpointer user_data) {
   int modes=rte_getmodespk();
-  int i,j;
+  register int i,j;
 
   ca_canc=FALSE;
 
   // prompt for "are you sure ?"
   if (user_data!=NULL) if (!do_warning_dialog_with_check_transient
 			   ((_("\n\nUnbind all effects from all keys/modes.\n\nAre you sure ?\n\n")),
-			    0,GTK_WINDOW(rte_window))) {
+			    0,LIVES_WINDOW(rte_window))) {
       ca_canc=TRUE;
       return FALSE;
     }
@@ -101,17 +117,21 @@ boolean on_clear_all_clicked (GtkButton *button, gpointer user_data) {
   cconx_delete_all();
 
   for (i=0;i<prefs->rte_keys_virtual;i++) {
-    if (rte_window!=NULL) lives_toggle_button_set_active (LIVES_TOGGLE_BUTTON(key_checks[i]),FALSE);
+    if (rte_window!=NULL) {
+      lives_toggle_button_set_active (LIVES_TOGGLE_BUTTON(key_checks[i]),FALSE);
+      g_object_set_data(G_OBJECT(key_checks[i]),"active",GINT_TO_POINTER(FALSE));
+    }
     for (j=modes-1;j>=0;j--) {
       weed_delete_effectkey (i+1,j);
       if (rte_window!=NULL) {
-	lives_entry_set_text (GTK_ENTRY(combo_entries[i*modes+j]),"");
+	lives_entry_set_text (LIVES_ENTRY(combo_entries[i*modes+j]),"");
 	type_label_set_text(i,j);
       }
     }
+    if (mainw->ce_thumbs) ce_thumbs_reset_combo(i);
   }
 
-  if (button!=NULL) lives_widget_set_sensitive (GTK_WIDGET(button), FALSE);
+  if (button!=NULL) lives_widget_set_sensitive (LIVES_WIDGET(button), FALSE);
 
   return FALSE;
 }
@@ -132,7 +152,7 @@ static boolean save_keymap2_file(gchar *kfname) {
     retval=0;
     kfd=creat(kfname,S_IRUSR|S_IWUSR);
     if (kfd==-1) {
-      retval=do_write_failed_error_s_with_retry (kfname,g_strerror(errno),GTK_WINDOW(rte_window));
+      retval=do_write_failed_error_s_with_retry (kfname,g_strerror(errno),LIVES_WINDOW(rte_window));
     }
     else {
       mainw->write_failed=FALSE;
@@ -158,7 +178,7 @@ static boolean save_keymap2_file(gchar *kfname) {
       close(kfd);
       
       if (mainw->write_failed) {
-	retval=do_write_failed_error_s_with_retry(kfname,NULL,GTK_WINDOW(rte_window));
+	retval=do_write_failed_error_s_with_retry(kfname,NULL,LIVES_WINDOW(rte_window));
 	mainw->write_failed=FALSE;
       }
     }
@@ -181,15 +201,15 @@ static boolean save_keymap3_file(gchar *kfname) {
   int slen;
   int kfd;
   int retval;
-  int count=0,totcons=0,nconns;
+  int count=0,totcons,nconns;
 
-  register int i,j=0;
+  register int i,j;
 
   do {
     retval=0;
     kfd=creat(kfname,S_IRUSR|S_IWUSR);
     if (kfd==-1) {
-      retval=do_write_failed_error_s_with_retry (kfname,g_strerror(errno),GTK_WINDOW(rte_window));
+      retval=do_write_failed_error_s_with_retry (kfname,g_strerror(errno),LIVES_WINDOW(rte_window));
     }
     else {
       mainw->write_failed=FALSE;
@@ -211,6 +231,9 @@ static boolean save_keymap3_file(gchar *kfname) {
 
 	cconx=mainw->cconx;
 	while (cconx!=NULL) {
+	  totcons=0;
+	  j=0;
+
 	  lives_write_le(kfd,&cconx->okey,4,TRUE);
 	  if (mainw->write_failed) goto write_failed1;
 
@@ -243,7 +266,7 @@ static boolean save_keymap3_file(gchar *kfname) {
 
 	      lives_write_le(kfd,&cconx->imode[j],4,TRUE);
 	      if (mainw->write_failed) goto write_failed1;
-	      
+
 	      hashname=make_weed_hashname(rte_keymode_get_filter_idx(cconx->ikey[j]+1,cconx->imode[j]),TRUE,FALSE);
 	      slen=strlen(hashname);
 	      lives_write_le(kfd,&slen,4,TRUE);
@@ -272,9 +295,7 @@ static boolean save_keymap3_file(gchar *kfname) {
 
 	int nparams;
 
-	totcons=0;
 	count=0;
-	j=0;
 
 	while (pconx!=NULL) {
 	  count++;
@@ -286,6 +307,9 @@ static boolean save_keymap3_file(gchar *kfname) {
 
 	pconx=mainw->pconx;
 	while (pconx!=NULL) {
+	  totcons=0;
+	  j=0;
+
 	  lives_write_le(kfd,&pconx->okey,4,TRUE);
 	  if (mainw->write_failed) goto write_failed1;
 
@@ -350,7 +374,7 @@ static boolean save_keymap3_file(gchar *kfname) {
       close(kfd);
       
       if (mainw->write_failed) {
-	retval=do_write_failed_error_s_with_retry(kfname,NULL,GTK_WINDOW(rte_window));
+	retval=do_write_failed_error_s_with_retry(kfname,NULL,LIVES_WINDOW(rte_window));
 	mainw->write_failed=FALSE;
       }
     }
@@ -397,7 +421,7 @@ static boolean on_save_keymap_clicked (GtkButton *button, gpointer user_data) {
  
   if (button!=NULL) {
     if (!do_warning_dialog_with_check_transient
-	((_("\n\nClick 'OK' to save this keymap as your default\n\n")),0,GTK_WINDOW(rte_window))) {
+	((_("\n\nClick 'OK' to save this keymap as your default\n\n")),0,LIVES_WINDOW(rte_window))) {
       g_free(keymap_file3);
       g_free(keymap_file2);
       g_free(keymap_file);
@@ -418,7 +442,7 @@ static boolean on_save_keymap_clicked (GtkButton *button, gpointer user_data) {
     retval=0;
     if (!(kfile=fopen(keymap_file,"w"))) {
       msg=g_strdup_printf (_("\n\nUnable to write keymap file\n%s\nError was %s\n"),keymap_file,g_strerror(errno));
-      retval=do_abort_cancel_retry_dialog (msg,GTK_WINDOW(rte_window));
+      retval=do_abort_cancel_retry_dialog (msg,LIVES_WINDOW(rte_window));
       g_free (msg);
     }
     else {
@@ -445,7 +469,7 @@ static boolean on_save_keymap_clicked (GtkButton *button, gpointer user_data) {
     }
 
     if (mainw->write_failed) {
-      retval=do_write_failed_error_s_with_retry(keymap_file,NULL,GTK_WINDOW(rte_window));
+      retval=do_write_failed_error_s_with_retry(keymap_file,NULL,LIVES_WINDOW(rte_window));
     }
   } while (retval==LIVES_RETRY);
 
@@ -507,7 +531,7 @@ void on_save_rte_defs_activate (GtkMenuItem *menuitem, gpointer user_data) {
     retval=0;
     if ((fd=open(prefs->fxdefsfile,O_WRONLY|O_CREAT|O_TRUNC,S_IRUSR|S_IWUSR))==-1) {
       msg=g_strdup_printf (_("\n\nUnable to write defaults file\n%s\nError code %d\n"),prefs->fxdefsfile,errno);
-      retval=do_abort_cancel_retry_dialog (msg,GTK_WINDOW(rte_window));
+      retval=do_abort_cancel_retry_dialog (msg,LIVES_WINDOW(rte_window));
       g_free (msg);
     }
     else {
@@ -520,13 +544,13 @@ void on_save_rte_defs_activate (GtkMenuItem *menuitem, gpointer user_data) {
       g_free(msg);
 
       if (mainw->write_failed) {
-	retval=do_write_failed_error_s_with_retry(prefs->fxdefsfile,NULL,GTK_WINDOW(rte_window));
+	retval=do_write_failed_error_s_with_retry(prefs->fxdefsfile,NULL,LIVES_WINDOW(rte_window));
       }
       else {
 	// break on file write error
 	for (i=0;i<numfx;i++) {
 	  if (!write_filter_defaults(fd,i)) {
-	    retval=do_write_failed_error_s_with_retry(prefs->fxdefsfile,NULL,GTK_WINDOW(rte_window));
+	    retval=do_write_failed_error_s_with_retry(prefs->fxdefsfile,NULL,LIVES_WINDOW(rte_window));
 	    break;
 	  }
 	}
@@ -541,7 +565,7 @@ void on_save_rte_defs_activate (GtkMenuItem *menuitem, gpointer user_data) {
   do {
     retval=0;
     if ((fd=open(prefs->fxsizesfile,O_WRONLY|O_CREAT|O_TRUNC,S_IRUSR|S_IWUSR))==-1) {
-      retval=do_write_failed_error_s_with_retry(prefs->fxsizesfile,g_strerror(errno),GTK_WINDOW(rte_window));
+      retval=do_write_failed_error_s_with_retry(prefs->fxsizesfile,g_strerror(errno),LIVES_WINDOW(rte_window));
       g_free (msg);
     }
     else {
@@ -553,12 +577,12 @@ void on_save_rte_defs_activate (GtkMenuItem *menuitem, gpointer user_data) {
       lives_write(fd,msg,strlen(msg),TRUE);
       g_free(msg);
       if (mainw->write_failed) {
-	retval=do_write_failed_error_s_with_retry(prefs->fxsizesfile,NULL,GTK_WINDOW(rte_window));
+	retval=do_write_failed_error_s_with_retry(prefs->fxsizesfile,NULL,LIVES_WINDOW(rte_window));
       }
       else {
 	for (i=0;i<numfx;i++) {
 	  if (!write_generator_sizes(fd,i)) {
-	    retval=do_write_failed_error_s_with_retry(prefs->fxsizesfile,NULL,GTK_WINDOW(rte_window));
+	    retval=do_write_failed_error_s_with_retry(prefs->fxsizesfile,NULL,LIVES_WINDOW(rte_window));
 	    break;
 	  }
 	}
@@ -697,7 +721,7 @@ static void check_clear_all_button (void) {
     }
   }
 
-  lives_widget_set_sensitive (GTK_WIDGET(clear_all_button), hasone);
+  lives_widget_set_sensitive (LIVES_WIDGET(clear_all_button), hasone);
 }
 
 
@@ -820,9 +844,12 @@ static boolean load_datacons(const gchar *fname, uint8_t **badkeymap) {
 	  
 	memset(hashname+hlen,0,1);
 	  
+	if (omode<0||omode>maxmodes) is_valid=FALSE;
 	  
-	// if we had bad/missing fx, adjust the omode value
-	for (i=0;i<omode;i++) omode-=badkeymap[okey][omode];
+	if (is_valid) {
+	  // if we had bad/missing fx, adjust the omode value
+	  for (i=0;i<omode;i++) omode-=badkeymap[okey][omode];
+	}
 
 	if (omode<0||omode>maxmodes) is_valid=FALSE;
 
@@ -910,12 +937,15 @@ static boolean load_datacons(const gchar *fname, uint8_t **badkeymap) {
 	      
 	    memset(hashname+hlen,0,1);
 	  
-	      
-	    // if we had bad/missing fx, adjust the omode value
-	    for (k=0;k<imode;k++) imode-=badkeymap[ikey][imode];
-
 	    if (imode<0||imode>maxmodes) is_valid2=FALSE;
 
+
+	    if (is_valid2) {
+	      // if we had bad/missing fx, adjust the omode value
+	      for (k=0;k<imode;k++) imode-=badkeymap[ikey][imode];
+	    }
+
+	    if (imode<0||imode>maxmodes) is_valid2=FALSE;
 
 	    if (is_valid2) {
 	      int fidx=rte_keymode_get_filter_idx(ikey+1,imode);
@@ -1020,9 +1050,13 @@ static boolean load_datacons(const gchar *fname, uint8_t **badkeymap) {
 	  
 	memset(hashname+hlen,0,1);
 	  
-	  
-	// if we had bad/missing fx, adjust the omode value
-	for (i=0;i<omode;i++) omode-=badkeymap[okey][omode];
+
+	if (omode<0||omode>maxmodes) is_valid=FALSE;
+
+	if (is_valid) {
+	  // if we had bad/missing fx, adjust the omode value
+	  for (i=0;i<omode;i++) omode-=badkeymap[okey][omode];
+	}
 
 	if (omode<0||omode>maxmodes) is_valid=FALSE;
 
@@ -1104,9 +1138,13 @@ static boolean load_datacons(const gchar *fname, uint8_t **badkeymap) {
 	    }
 	      
 	    memset(hashname+hlen,0,1);
-	  
-	    // if we had bad/missing fx, adjust the omode value
-	    for (k=0;k<imode;k++) imode-=badkeymap[ikey][imode];
+
+	    if (imode<0||imode>maxmodes) is_valid2=FALSE;
+
+	    if (is_valid2) {
+	      // if we had bad/missing fx, adjust the omode value
+	      for (k=0;k<imode;k++) imode-=badkeymap[ikey][imode];
+	    }
 
 	    if (imode<0||imode>maxmodes) is_valid2=FALSE;
 
@@ -1138,9 +1176,11 @@ static boolean load_datacons(const gchar *fname, uint8_t **badkeymap) {
 	    niparams=weed_leaf_num_elements(filter,"in_parameter_templates");
 	    if (ipnum>=niparams) is_valid2=FALSE;
 	    else {
-	      iparams=weed_get_plantptr_array(filter,"in_parameter_templates",&error);
-	      if (weed_plant_has_leaf(iparams[ipnum],"host_internal_connection")) is_valid2=FALSE;
-	      weed_free(iparams);
+	      if (ipnum>=0) {
+		iparams=weed_get_plantptr_array(filter,"in_parameter_templates",&error);
+		if (weed_plant_has_leaf(iparams[ipnum],"host_internal_connection")) is_valid2=FALSE;
+		weed_free(iparams);
+	      }
 	    }
 
 	    bytes=lives_read_le(kfd,&autoscale,4,TRUE);
@@ -1180,6 +1220,32 @@ static boolean load_datacons(const gchar *fname, uint8_t **badkeymap) {
   }
 
   return ret;
+}
+
+
+static void set_param_and_con_buttons(int key, int mode) {
+  weed_plant_t *filter=rte_keymode_get_filter(key+1,mode);
+
+  int modes=rte_getmodespk();
+  int idx=key*modes+mode;
+
+  if (filter!=NULL) {
+    lives_widget_set_sensitive(conx_buttons[idx],TRUE);
+    if (num_in_params(filter,TRUE,TRUE)>0) lives_widget_set_sensitive(param_buttons[idx],TRUE);
+    else lives_widget_set_sensitive(param_buttons[idx],FALSE);
+    lives_widget_set_sensitive(combos[idx],TRUE);
+    if (mode<modes-1) lives_widget_set_sensitive(combos[idx+1],TRUE);
+  }
+  else {
+    lives_widget_set_sensitive(conx_buttons[idx],FALSE);
+    lives_widget_set_sensitive(param_buttons[idx],FALSE);
+    if (mode==0||rte_keymode_get_filter(key+1,mode-1)!=NULL) 
+      lives_widget_set_sensitive(combos[idx],TRUE);
+    else 
+      lives_widget_set_sensitive(combos[idx],FALSE);
+  }
+
+  type_label_set_text(key,mode);
 }
 
 
@@ -1259,7 +1325,7 @@ boolean on_load_keymap_clicked (GtkButton *button, gpointer user_data) {
 
     if (has_error) {
       msg=g_strdup_printf (_("\n\nUnable to read from keymap file\n%s\nError code %d\n"),keymap_file,errno);
-      retval=do_abort_cancel_retry_dialog(msg,GTK_WINDOW(rte_window));
+      retval=do_abort_cancel_retry_dialog(msg,LIVES_WINDOW(rte_window));
       g_free (msg);
    
       if (retval==LIVES_CANCEL) {
@@ -1487,9 +1553,21 @@ boolean on_load_keymap_clicked (GtkButton *button, gpointer user_data) {
       continue;
     }
     if (rte_window!=NULL) {
-      lives_entry_set_text (GTK_ENTRY(combo_entries[(key-1)*modes+mode]),(tmp=rte_keymode_get_filter_name(key,mode)));
+      int idx=(key-1)*modes+mode;
+      int fx_idx=rte_keymode_get_filter_idx(key,mode);
+
+      lives_entry_set_text (LIVES_ENTRY(combo_entries[idx]),(tmp=rte_keymode_get_filter_name(key,mode)));
       g_free(tmp);
-      type_label_set_text(key-1,mode);
+
+      if (fx_idx!=-1) {
+	hashname=g_list_nth_data(hash_list,fx_idx);
+	g_object_set_data(G_OBJECT(combos[idx]),"hashname",hashname);
+      }
+      else g_object_set_data(G_OBJECT(combos[idx]),"hashname","");
+
+      // set parameters button sensitive/insensitive
+      set_param_and_con_buttons(key-1,mode);
+
     }
 
     if (keymap_file2!=NULL) {
@@ -1530,7 +1608,7 @@ boolean on_load_keymap_clicked (GtkButton *button, gpointer user_data) {
     if (mainw->is_ready) {
       check_clear_all_button();
       if (notfound) do_warning_dialog_with_check_transient(_("\n\nSome effects could not be located.\n\n"),
-							   0,GTK_WINDOW(rte_window));
+							   0,LIVES_WINDOW(rte_window));
     }
     else load_rte_defs(); // file errors shown inside
 
@@ -1547,6 +1625,10 @@ boolean on_load_keymap_clicked (GtkButton *button, gpointer user_data) {
   g_free(keymap_file3);
 
   g_free(def_modes);
+
+  if (mainw->ce_thumbs) ce_thumbs_reset_combos();
+
+  if (rte_window!=NULL) check_clear_all_button();
 
   return FALSE;
 }
@@ -1574,6 +1656,8 @@ void on_rte_info_clicked (GtkButton *button, gpointer user_data) {
   gchar *type;
   gchar *plugin_name;
 
+  boolean has_desc=FALSE;
+
   int filter_version;
   int weed_error;
 
@@ -1594,76 +1678,82 @@ void on_rte_info_clicked (GtkButton *button, gpointer user_data) {
   filter_name=weed_get_string_value(filter,"name",&weed_error);
   filter_author=weed_get_string_value(filter,"author",&weed_error);
   if (weed_plant_has_leaf(filter,"extra_authors")) filter_extra_authors=weed_get_string_value(filter,"extra_authors",&weed_error);
-  if (weed_plant_has_leaf(filter,"description")) filter_description=weed_get_string_value(filter,"description",&weed_error);
-  else filter_description=g_strdup(_("No Description"));
+  if (weed_plant_has_leaf(filter,"description")) {
+    filter_description=weed_get_string_value(filter,"description",&weed_error);
+    has_desc=TRUE;
+  }
 
   filter_version=weed_get_int_value(filter,"version",&weed_error);
 
-  rte_info_window = lives_window_new (GTK_WINDOW_TOPLEVEL);
-  lives_window_set_title (GTK_WINDOW (rte_info_window), g_strdup_printf(_("LiVES: Information for %s"),filter_name));
-  lives_widget_set_bg_color(rte_info_window, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
+  rte_info_window = lives_window_new (LIVES_WINDOW_TOPLEVEL);
+  lives_window_set_title (LIVES_WINDOW (rte_info_window), g_strdup_printf(_("LiVES: Information for %s"),filter_name));
+  if (palette->style&STYLE_1) {
+    lives_widget_set_bg_color(rte_info_window, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
+  }
 
-  lives_container_set_border_width (GTK_CONTAINER (rte_info_window), widget_opts.border_width);
-  gtk_window_set_transient_for(GTK_WINDOW(rte_info_window),GTK_WINDOW(lives_widget_get_toplevel(GTK_WIDGET(button))));
-  gtk_window_set_position (GTK_WINDOW (rte_info_window), GTK_WIN_POS_CENTER_ALWAYS);
-  gtk_window_set_default_size (GTK_WINDOW (rte_info_window), RTE_INFO_WIDTH, RTE_INFO_HEIGHT);
+  lives_container_set_border_width (LIVES_CONTAINER (rte_info_window), widget_opts.border_width);
+  lives_window_set_transient_for(LIVES_WINDOW(rte_info_window),GTK_WINDOW(lives_widget_get_toplevel(LIVES_WIDGET(button))));
+
+  lives_window_set_default_size (LIVES_WINDOW (rte_info_window), RTE_INFO_WIDTH, RTE_INFO_HEIGHT);
 
   vbox = lives_vbox_new (FALSE, widget_opts.packing_height*2);
-  lives_container_add (GTK_CONTAINER (rte_info_window), vbox);
+  lives_container_add (LIVES_CONTAINER (rte_info_window), vbox);
 
   label = lives_standard_label_new ((tmp=g_strdup_printf(_("Effect name: %s"),filter_name)));
   g_free(tmp);
-  lives_box_pack_start (GTK_BOX (vbox), label, TRUE, FALSE, 0);
+  lives_box_pack_start (LIVES_BOX (vbox), label, TRUE, FALSE, 0);
 
   label = lives_standard_label_new ((tmp=g_strdup_printf(_("Type: %s"),type)));
   g_free(tmp);
-  lives_box_pack_start (GTK_BOX (vbox), label, TRUE, FALSE, 0);
+  lives_box_pack_start (LIVES_BOX (vbox), label, TRUE, FALSE, 0);
 
   label = lives_standard_label_new ((tmp=g_strdup_printf(_("Plugin name: %s"),plugin_name)));
   g_free(tmp);
-  lives_box_pack_start (GTK_BOX (vbox), label, TRUE, FALSE, 0);
+  lives_box_pack_start (LIVES_BOX (vbox), label, TRUE, FALSE, 0);
 
   label = lives_standard_label_new ((tmp=g_strdup_printf(_("Author: %s"),filter_author)));
   g_free(tmp);
-  lives_box_pack_start (GTK_BOX (vbox), label, TRUE, FALSE, 0);
+  lives_box_pack_start (LIVES_BOX (vbox), label, TRUE, FALSE, 0);
 
   if (filter_extra_authors!=NULL) {
     label = lives_standard_label_new ((tmp=g_strdup_printf(_("and: %s"),filter_extra_authors)));
     g_free(tmp);
-    lives_box_pack_start (GTK_BOX (vbox), label, TRUE, FALSE, 0);
+    lives_box_pack_start (LIVES_BOX (vbox), label, TRUE, FALSE, 0);
   }
 
   label = lives_standard_label_new ((tmp=g_strdup_printf(_("Version: %d"),filter_version)));
   g_free(tmp);
-  lives_box_pack_start (GTK_BOX (vbox), label, TRUE, FALSE, 0);
+  lives_box_pack_start (LIVES_BOX (vbox), label, TRUE, FALSE, 0);
 
-  hbox = lives_hbox_new (FALSE, widget_opts.packing_width);
-  lives_box_pack_start (GTK_BOX (vbox), hbox, TRUE, FALSE, 0);
+  if (has_desc) {
+    hbox = lives_hbox_new (FALSE, widget_opts.packing_width);
+    lives_box_pack_start (LIVES_BOX (vbox), hbox, TRUE, FALSE, 0);
 
-  label = lives_standard_label_new (_("Description: "));
-  lives_box_pack_start (GTK_BOX (hbox), label, FALSE, FALSE, 0);
+    label = lives_standard_label_new (_("Description: "));
+    lives_box_pack_start (LIVES_BOX (hbox), label, FALSE, FALSE, 0);
 
-  textview = gtk_text_view_new ();
+    textview = gtk_text_view_new ();
 
-  if (palette->style&STYLE_1) {
-    lives_widget_set_text_color(textview, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
-    lives_widget_set_base_color(textview, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
+    if (palette->style&STYLE_1) {
+      lives_widget_set_text_color(textview, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
+      lives_widget_set_base_color(textview, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
+    }
+  
+    gtk_text_view_set_editable (GTK_TEXT_VIEW (textview), FALSE);
+    gtk_text_view_set_wrap_mode (GTK_TEXT_VIEW (textview), GTK_WRAP_WORD);
+    gtk_text_view_set_cursor_visible (GTK_TEXT_VIEW (textview), FALSE);
+  
+    text_view_set_text (LIVES_TEXT_VIEW(textview), filter_description,-1);
+    lives_box_pack_start (LIVES_BOX (hbox), textview, TRUE, TRUE, 0);
   }
-  
-  gtk_text_view_set_editable (GTK_TEXT_VIEW (textview), FALSE);
-  gtk_text_view_set_wrap_mode (GTK_TEXT_VIEW (textview), GTK_WRAP_WORD);
-  gtk_text_view_set_cursor_visible (GTK_TEXT_VIEW (textview), FALSE);
-  
-  text_view_set_text (LIVES_TEXT_VIEW(textview), filter_description,-1);
-  lives_box_pack_start (GTK_BOX (hbox), textview, TRUE, TRUE, 0);
-  
+
   hbuttonbox = lives_hbutton_box_new ();
-  lives_box_pack_start (GTK_BOX (vbox), hbuttonbox, TRUE, TRUE, 0);
+  lives_box_pack_start (LIVES_BOX (vbox), hbuttonbox, TRUE, TRUE, 0);
 
   ok_button = lives_button_new_from_stock ("gtk-ok");
   lives_widget_show (ok_button);
 
-  lives_container_add (GTK_CONTAINER (hbuttonbox), ok_button);
+  lives_container_add (LIVES_CONTAINER (hbuttonbox), ok_button);
   lives_widget_set_can_focus_and_default (ok_button);
   lives_widget_grab_default (ok_button);
 
@@ -1676,23 +1766,20 @@ void on_rte_info_clicked (GtkButton *button, gpointer user_data) {
   g_free(filter_name);
   g_free(filter_author);
   if (filter_extra_authors!=NULL) g_free(filter_extra_authors);
-  if (weed_plant_has_leaf(filter,"description")) g_free(filter_description);
-  else weed_free(filter_description);
+  if (has_desc) weed_free(filter_description);
   g_free(plugin_name);
   g_free(type);
 
   lives_widget_show_all(rte_info_window);
-
+  lives_window_center (LIVES_WINDOW (rte_info_window));
 }
-
-
 
 
 
 void on_clear_clicked (GtkButton *button, gpointer user_data) {
   // this is for the "delete" buttons, c.f. clear_all
 
-  gint idx=GPOINTER_TO_INT(user_data);
+  int idx=GPOINTER_TO_INT(user_data);
   int modes=rte_getmodespk();
   int key=(int)(idx/modes);
   int mode=idx-key*modes;
@@ -1703,38 +1790,57 @@ void on_clear_clicked (GtkButton *button, gpointer user_data) {
 
   weed_delete_effectkey (key+1,mode);
 
-  pconx_delete(-1,0,0,key,mode,-1);
-  pconx_delete(key,mode,-1,-1,0,0);
+  pconx_delete(FX_DATA_WILDCARD,0,0,key,mode,FX_DATA_WILDCARD);
+  pconx_delete(key,mode,FX_DATA_WILDCARD,-1,0,0);
 
-  cconx_delete(-1,0,0,key,mode,-1);
-  cconx_delete(key,mode,-1,-1,0,0);
+  cconx_delete(FX_DATA_WILDCARD,0,0,key,mode,FX_DATA_WILDCARD);
+  cconx_delete(key,mode,FX_DATA_WILDCARD,FX_DATA_WILDCARD,0,0);
 
 
   newmode=rte_key_getmode(key+1);
-  g_signal_handler_block(mode_radios[key*modes+newmode],mode_ra_fns[key*modes+newmode]);
+
   rtew_set_mode_radio(key,newmode);
-  g_signal_handler_unblock(mode_radios[key*modes+newmode],mode_ra_fns[key*modes+newmode]);
+  if (mainw->ce_thumbs) ce_thumbs_set_mode_combo(key,newmode);
     
   for (i=mode;i<rte_getmodespk()-1;i++) {
+    int fx_idx=rte_keymode_get_filter_idx(key,mode);
+
     idx=key*modes+i;
-    lives_entry_set_text (GTK_ENTRY(combo_entries[idx]),lives_entry_get_text(GTK_ENTRY(combo_entries[idx+1])));
+    lives_entry_set_text (LIVES_ENTRY(combo_entries[idx]),lives_entry_get_text(GTK_ENTRY(combo_entries[idx+1])));
     type_label_set_text(key,i);
     pconx_remap_mode(key,i+1,i);
     cconx_remap_mode(key,i+1,i);
+
+    if (fx_idx!=-1) {
+      gchar *hashname=g_list_nth_data(hash_list,fx_idx);
+      g_object_set_data(G_OBJECT(combos[idx]),"hashname",hashname);
+    }
+    else g_object_set_data(G_OBJECT(combos[idx]),"hashname","");
+
+    // set parameters button sensitive/insensitive
+    set_param_and_con_buttons(key,i);
+    
   }
   idx++;
-  lives_entry_set_text (GTK_ENTRY(combo_entries[idx]),"");
-  type_label_set_text(key,i);
+  lives_entry_set_text (LIVES_ENTRY(combo_entries[idx]),"");
 
-  if (!rte_keymode_valid(key+1,0,TRUE)) rtew_set_keych(key,FALSE);
+  g_object_set_data(G_OBJECT(combos[idx]),"hashname","");
 
+  // set parameters button sensitive/insensitive
+  set_param_and_con_buttons(key,i);
+
+  if (!rte_keymode_valid(key+1,0,TRUE)) {
+    rtew_set_keych(key,FALSE);
+    if (mainw->ce_thumbs) ce_thumbs_set_keych(key,FALSE);
+  }
   check_clear_all_button();
 
+  if (mainw->ce_thumbs) ce_thumbs_reset_combo(key);
 }
 
 
 static void on_datacon_clicked (GtkButton *button, gpointer user_data) {
-  gint idx=GPOINTER_TO_INT(user_data);
+  int idx=GPOINTER_TO_INT(user_data);
   int modes=rte_getmodespk();
   int key=(int)(idx/modes);
   int mode=idx-key*modes;
@@ -1747,7 +1853,7 @@ static void on_datacon_clicked (GtkButton *button, gpointer user_data) {
 
 
 static void on_params_clicked (GtkButton *button, gpointer user_data) {
-  gint idx=GPOINTER_TO_INT(user_data);
+  int idx=GPOINTER_TO_INT(user_data);
   int modes=rte_getmodespk();
   int key=(int)(idx/modes);
   int mode=idx-key*modes;
@@ -1780,10 +1886,10 @@ static void on_params_clicked (GtkButton *button, gpointer user_data) {
   rfx->min_frames=-1;
   keyw=key;
   modew=mode;
-  on_render_fx_pre_activate(NULL,rfx);
+  on_fx_pre_activate(rfx,1,NULL);
 
   // record the key so we know whose parameters to record later
-  weed_set_int_value((weed_plant_t *)rfx->source,"host_hotkey",key);
+  weed_set_int_value((weed_plant_t *)rfx->source,"host_key",key);
 
   g_object_set_data (G_OBJECT (fx_dialog[1]),"key",GINT_TO_POINTER (key));
   g_object_set_data (G_OBJECT (fx_dialog[1]),"mode",GINT_TO_POINTER (mode));
@@ -1792,47 +1898,52 @@ static void on_params_clicked (GtkButton *button, gpointer user_data) {
 
 
 static boolean on_rtew_delete_event (GtkWidget *widget, GdkEvent *event, gpointer user_data) {
-
-  if (hash_list!=NULL) {
-    g_list_free_strings(hash_list);
-    g_list_free(hash_list);
+  if (user_data==NULL) {
+    rte_window_back=rte_window;
+    old_rte_keys_virtual=prefs->rte_keys_virtual;
+    lives_widget_hide(rte_window);
   }
+  else {
+    if (hash_list!=NULL) {
+      g_list_free_strings(hash_list);
+      g_list_free(hash_list);
+      hash_list=NULL;
+    }
 
-  if (name_list!=NULL) {
-    g_list_free_strings(name_list);
-    g_list_free(name_list);
+    if (name_list!=NULL) {
+      g_list_free_strings(name_list);
+      g_list_free(name_list);
+      name_list=NULL;
+    }
+
+    if (name_type_list!=NULL) {
+      g_list_free_strings(name_type_list);
+      g_list_free(name_type_list);
+      name_type_list=NULL;
+    }
+
+    g_free(key_checks);
+    g_free(key_grabs);
+    g_free(mode_radios);
+    g_free(combo_entries);
+    g_free(combos);
+    g_free(ch_fns);
+    g_free(mode_ra_fns);
+    g_free(gr_fns);
+    g_free(nlabels);
+    g_free(type_labels);
+    g_free(info_buttons);
+    g_free(param_buttons);
+    g_free(conx_buttons);
+    g_free(clear_buttons);
   }
-
-  if (name_type_list!=NULL) {
-    g_list_free_strings(name_type_list);
-    g_list_free(name_type_list);
-  }
-
-  g_free(key_checks);
-  g_free(key_grabs);
-  g_free(mode_radios);
-  g_free(combo_entries);
-  g_free(ch_fns);
-  g_free(mode_ra_fns);
-  g_free(gr_fns);
-  g_free(nlabels);
-  g_free(type_labels);
-  g_free(info_buttons);
-  g_free(param_buttons);
-  g_free(conx_buttons);
-  g_free(clear_buttons);
   rte_window=NULL;
   return FALSE;
 }
 
 
 static void on_rtew_ok_clicked (GtkButton *button, gpointer user_data) {
-  lives_set_cursor_style(LIVES_CURSOR_BUSY,NULL);
-  lives_set_cursor_style(LIVES_CURSOR_BUSY,rte_window);
-  lives_widget_context_update();
-  lives_general_button_clicked(button,NULL);
   on_rtew_delete_event (NULL,NULL,NULL);
-  lives_set_cursor_style(LIVES_CURSOR_NORMAL,NULL);
 }
 
 
@@ -1841,7 +1952,7 @@ static void on_rtew_ok_clicked (GtkButton *button, gpointer user_data) {
 static void do_mix_error(void) {
   do_error_dialog_with_check_transient(
 				       _("\n\nThis version of LiVES does not allowing mixing of generators and non-generators on the same key.\n\n"),
-				       FALSE,0,GTK_WINDOW(rte_window));
+				       FALSE,0,LIVES_WINDOW(rte_window));
   return;
 }
 
@@ -1860,24 +1971,21 @@ void fx_changed (GtkComboBox *combo, gpointer user_data) {
   GtkTreeIter iter1;
   GtkTreeModel *model;
 
-  weed_plant_t *filter;
-
   gchar *txt;
   gchar *tmp;
   gchar *hashname1;
   gchar *hashname2=(gchar *)g_object_get_data(G_OBJECT(combo),"hashname");
 
-  gint key_mode=GPOINTER_TO_INT(user_data);
+  int key_mode=GPOINTER_TO_INT(user_data);
   int modes=rte_getmodespk();
   int key=(int)(key_mode/modes);
   int mode=key_mode-key*modes;
-  gint idx=GPOINTER_TO_INT(g_object_get_data(G_OBJECT(combo),"idx"));
 
   int error;
 
   register int i;
 
-  if (gtk_combo_box_get_active(combo)==-1) return; // -1 is returned after we set our own text (without the type)
+  if (lives_combo_get_active(combo)==-1) return; // -1 is returned after we set our own text (without the type)
 
   lives_combo_get_active_iter(combo,&iter1);
   model=lives_combo_get_model(combo);
@@ -1902,7 +2010,7 @@ void fx_changed (GtkComboBox *combo, gpointer user_data) {
   lives_widget_grab_focus (combo_entries[key_mode]);
 
   if ((error=rte_switch_keymode (key+1, mode, hashname1))<0) {
-    lives_entry_set_text (GTK_ENTRY (combo_entries[key_mode]),(tmp=rte_keymode_get_filter_name(key+1,mode)));
+    lives_entry_set_text (LIVES_ENTRY (combo_entries[key_mode]),(tmp=rte_keymode_get_filter_name(key+1,mode)));
     g_free(tmp);
 
     if (error==-2) do_mix_error();
@@ -1913,35 +2021,28 @@ void fx_changed (GtkComboBox *combo, gpointer user_data) {
     return;
   }
 
-  // set parameters button sensitive/insensitive
-  filter=rte_keymode_get_filter(key+1,mode);
-  if (num_in_params(filter,TRUE,TRUE)>0) lives_widget_set_sensitive(param_buttons[idx],TRUE);
-  else lives_widget_set_sensitive(param_buttons[idx],FALSE);
-
-  if ((weed_plant_has_leaf(filter,"out_parameter_templates")&&weed_get_plantptr_value(filter,"out_parameter_templates",&error)!=NULL)||num_alpha_channels(filter,TRUE)>1) lives_widget_set_sensitive(conx_buttons[idx],TRUE);
-  else lives_widget_set_sensitive(conx_buttons[idx],FALSE);
-
   // prevents a segfault
   lives_combo_get_active_iter(combo,&iter1);
   model=lives_combo_get_model(combo);
 
   gtk_tree_model_get(model,&iter1,NAME_COLUMN,&txt,-1);
-  lives_entry_set_text (GTK_ENTRY (combo_entries[key_mode]),txt);
+  lives_entry_set_text (LIVES_ENTRY (combo_entries[key_mode]),txt);
   g_free(txt);
-  g_free(hashname2);
 
-  // TODO - g_free on delete
   g_object_set_data(G_OBJECT(combo),"hashname",hashname1);
     
-  type_label_set_text(key,mode);
+  // set parameters button sensitive/insensitive
+  set_param_and_con_buttons(key,mode);
 
   check_clear_all_button();
 
-  pconx_delete(-1,0,0,key,mode,-1);
-  pconx_delete(key,mode,-1,-1,0,0);
+  pconx_delete(FX_DATA_WILDCARD,0,0,key,mode,FX_DATA_WILDCARD);
+  pconx_delete(key,mode,FX_DATA_WILDCARD,FX_DATA_WILDCARD,0,0);
 
-  cconx_delete(-1,0,0,key,mode,-1);
-  cconx_delete(key,mode,-1,-1,0,0);
+  cconx_delete(FX_DATA_WILDCARD,0,0,key,mode,FX_DATA_WILDCARD);
+  cconx_delete(key,mode,FX_DATA_WILDCARD,FX_DATA_WILDCARD,0,0);
+
+  if (mainw->ce_thumbs) ce_thumbs_reset_combos();
 
 }
 
@@ -2050,13 +2151,11 @@ GtkWidget * create_rte_window (void) {
 
   LiVESTreeModel *model;
 
-  weed_plant_t *filter;
-
   gchar *tmp,*tmp2;
 
   int modes=rte_getmodespk();
 
-  int idx,error;
+  int idx;
 
   int winsize_h;
   int winsize_v;
@@ -2066,6 +2165,7 @@ GtkWidget * create_rte_window (void) {
   register int i,j;
 
   ///////////////////////////////////////////////////////////////////////////
+
   lives_set_cursor_style(LIVES_CURSOR_BUSY,NULL);
   lives_widget_context_update();
 
@@ -2081,10 +2181,18 @@ GtkWidget * create_rte_window (void) {
   winsize_h=scr_width-100;
   winsize_v=scr_height-200;
 
+  if (rte_window_back!=NULL) {
+    rte_window=rte_window_back;
+    rte_window_back=NULL;
+    if (prefs->rte_keys_virtual!=old_rte_keys_virtual) return refresh_rte_window();
+    goto rte_window_ready;
+  }
+
   key_checks=(GtkWidget **)g_malloc((prefs->rte_keys_virtual)*sizeof(GtkWidget *));
   key_grabs=(GtkWidget **)g_malloc((prefs->rte_keys_virtual)*sizeof(GtkWidget *));
   mode_radios=(GtkWidget **)g_malloc((prefs->rte_keys_virtual)*modes*sizeof(GtkWidget *));
   combo_entries=(GtkWidget **)g_malloc((prefs->rte_keys_virtual)*modes*sizeof(GtkWidget *));
+  combos=(GtkWidget **)g_malloc((prefs->rte_keys_virtual)*modes*sizeof(GtkWidget *));
   info_buttons=(GtkWidget **)g_malloc((prefs->rte_keys_virtual)*modes*sizeof(GtkWidget *));
   param_buttons=(GtkWidget **)g_malloc((prefs->rte_keys_virtual)*modes*sizeof(GtkWidget *));
   conx_buttons=(GtkWidget **)g_malloc((prefs->rte_keys_virtual)*modes*sizeof(GtkWidget *));
@@ -2096,44 +2204,56 @@ GtkWidget * create_rte_window (void) {
   gr_fns=(gulong *)g_malloc((prefs->rte_keys_virtual)*sizeof(gulong));
   mode_ra_fns=(gulong *)g_malloc((prefs->rte_keys_virtual)*modes*sizeof(gulong));
 
-  rte_window = lives_window_new (GTK_WINDOW_TOPLEVEL);
-  lives_widget_set_bg_color(rte_window, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
-  lives_window_set_title (GTK_WINDOW (rte_window), _("LiVES: Real time effect mapping"));
-  gtk_window_add_accel_group (GTK_WINDOW (rte_window), mainw->accel_group);
+  rte_window = lives_window_new (LIVES_WINDOW_TOPLEVEL);
+  if (palette->style&STYLE_1) {
+    lives_widget_set_bg_color(rte_window, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
+    lives_widget_set_text_color(rte_window, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars_fore);
+  }
+  lives_window_set_title (LIVES_WINDOW (rte_window), _("LiVES: Real time effect mapping"));
+  lives_window_add_accel_group (LIVES_WINDOW (rte_window), mainw->accel_group);
 
-  table = gtk_table_new (prefs->rte_keys_virtual, modes+1, FALSE);
+  table = lives_table_new (prefs->rte_keys_virtual, modes+1, FALSE);
 
-  gtk_table_set_row_spacings (GTK_TABLE (table), 16*widget_opts.scale);
-  gtk_table_set_col_spacings (GTK_TABLE (table), 4*widget_opts.scale);
+  lives_table_set_row_spacings (LIVES_TABLE (table), 16*widget_opts.scale);
+  lives_table_set_col_spacings (LIVES_TABLE (table), 4*widget_opts.scale);
 
   // dummy button for "no grab", we dont show this...there is a button instead
   dummy_radio = gtk_radio_button_new (grab_group);
   grab_group = lives_radio_button_get_group (LIVES_RADIO_BUTTON (dummy_radio));
 
-  name_list=weed_get_all_names(1);
-  name_type_list=weed_get_all_names(2);
-  hash_list=weed_get_all_names(3);
+  name_list=weed_get_all_names(FX_LIST_NAME);
+  name_type_list=weed_get_all_names(FX_LIST_NAME_AND_TYPE);
+  if (hash_list==NULL) hash_list=weed_get_all_names(FX_LIST_HASHNAME);
+
+  model=rte_window_fx_model();
+
+  for (i=0;i<prefs->rte_keys_virtual*modes;i++) {
+      // create combo entry model
+    combos[i] = lives_combo_new_with_model (model);
+  }
+
 
   for (i=0;i<prefs->rte_keys_virtual;i++) {
 
     hbox = lives_hbox_new (FALSE, 0);
-    lives_table_attach (GTK_TABLE (table), hbox, i, i+1, 0, 1,
+    lives_table_attach (LIVES_TABLE (table), hbox, i, i+1, 0, 1,
 		      (GtkAttachOptions) (GTK_EXPAND | GTK_FILL),
 		      (GtkAttachOptions) (GTK_EXPAND | GTK_FILL), 0, 0);
-    lives_container_set_border_width (GTK_CONTAINER (hbox), widget_opts.border_width);
+    lives_container_set_border_width (LIVES_CONTAINER (hbox), widget_opts.border_width);
     
     label = lives_standard_label_new ((tmp=g_strdup_printf(_("Ctrl-%d"),i+1)));
     g_free(tmp);
 
-    lives_box_pack_start (GTK_BOX (hbox), label, TRUE, FALSE, widget_opts.packing_width);
+    lives_box_pack_start (LIVES_BOX (hbox), label, TRUE, FALSE, widget_opts.packing_width);
 
     hbox2 = lives_hbox_new (FALSE, 0);
 
     key_checks[i] = lives_standard_check_button_new (_("Key active"),FALSE,LIVES_BOX(hbox2),NULL);
     
-    lives_box_pack_start (GTK_BOX (hbox), hbox2, FALSE, FALSE, widget_opts.packing_width);
+    lives_box_pack_start (LIVES_BOX (hbox), hbox2, FALSE, FALSE, widget_opts.packing_width);
 
     lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(key_checks[i]),mainw->rte&(GU641<<i));
+    g_object_set_data(G_OBJECT(key_checks[i]),"active",GINT_TO_POINTER(lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(key_checks[i]))));
 
     ch_fns[i]=g_signal_connect_after (GTK_OBJECT (key_checks[i]), "toggled",
                       G_CALLBACK (rte_on_off_callback_hook),GINT_TO_POINTER (i+1));
@@ -2141,7 +2261,7 @@ GtkWidget * create_rte_window (void) {
 
 
     hbox2 = lives_hbox_new (FALSE, 0);
-    lives_box_pack_start (GTK_BOX (hbox), hbox2, FALSE, FALSE, widget_opts.packing_width);
+    lives_box_pack_start (LIVES_BOX (hbox), hbox2, FALSE, FALSE, widget_opts.packing_width);
 
     key_grabs[i]=lives_standard_radio_button_new((tmp=g_strdup(_ ("Key grab"))),FALSE,grab_group,LIVES_BOX(hbox2),
 						 (tmp2=g_strdup(_("Grab keyboard for this effect key"))));
@@ -2159,14 +2279,14 @@ GtkWidget * create_rte_window (void) {
     for (j=0;j<modes;j++) {
       idx=i*modes+j;
       hbox = lives_hbox_new (FALSE, 0);
-      lives_table_attach (GTK_TABLE (table), hbox, i, i+1, j+1, j+2,
+      lives_table_attach (LIVES_TABLE (table), hbox, i, i+1, j+1, j+2,
 			(GtkAttachOptions) (GTK_EXPAND | GTK_FILL),
 			(GtkAttachOptions) (GTK_EXPAND | GTK_FILL), 0, 0);
-      lives_container_set_border_width (GTK_CONTAINER (hbox), widget_opts.border_width);
+      lives_container_set_border_width (LIVES_CONTAINER (hbox), widget_opts.border_width);
 
 
       hbox2 = lives_hbox_new (FALSE, 0);
-      lives_box_pack_start (GTK_BOX (hbox), hbox2, FALSE, FALSE, widget_opts.packing_width);
+      lives_box_pack_start (LIVES_BOX (hbox), hbox2, FALSE, FALSE, widget_opts.packing_width);
       
       mode_radios[idx]=lives_standard_radio_button_new(_ ("Mode active"),FALSE,mode_group,LIVES_BOX(hbox2),NULL);
       mode_group = lives_radio_button_get_group (LIVES_RADIO_BUTTON (mode_radios[idx]));
@@ -2184,37 +2304,35 @@ GtkWidget * create_rte_window (void) {
       clear_buttons[idx] = lives_button_new_with_label (_("Clear"));
 
       vbox = lives_vbox_new (FALSE, 0);
-      lives_box_pack_start (GTK_BOX (hbox), vbox, FALSE, FALSE, widget_opts.packing_width);
-      lives_container_set_border_width (GTK_CONTAINER (vbox), widget_opts.border_width);
+      lives_box_pack_start (LIVES_BOX (hbox), vbox, FALSE, FALSE, widget_opts.packing_width);
+      lives_container_set_border_width (LIVES_CONTAINER (vbox), widget_opts.border_width);
 
       hbox = lives_hbox_new (FALSE, 0);
-      lives_box_pack_start (GTK_BOX (vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
+      lives_box_pack_start (LIVES_BOX (vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
 
       nlabels[idx] = lives_standard_label_new (_("Effect name:"));
 
-      lives_box_pack_start (GTK_BOX (hbox), nlabels[idx], FALSE, FALSE, widget_opts.packing_width);
+      lives_box_pack_start (LIVES_BOX (hbox), nlabels[idx], FALSE, FALSE, widget_opts.packing_width);
 
-      // create combo entry model
-      model=rte_window_fx_model();
-
-      combo = lives_combo_new_with_model (model);
-
+      combo=combos[idx];
+ 
       lives_combo_set_entry_text_column(LIVES_COMBO(combo),NAME_TYPE_COLUMN);
 
-      g_object_set_data (G_OBJECT(combo), "hashname", (gpointer)g_strdup(""));
-      g_object_set_data (G_OBJECT(combo), "idx", GINT_TO_POINTER(idx));
-      lives_box_pack_start (GTK_BOX (hbox), combo, TRUE, TRUE, widget_opts.packing_width);
+      g_object_set_data (G_OBJECT(combo), "hashname", "");
+      lives_box_pack_start (LIVES_BOX (hbox), combo, TRUE, TRUE, widget_opts.packing_width);
+      lives_box_pack_end (LIVES_BOX (hbox), clear_buttons[idx], FALSE, FALSE, widget_opts.packing_width);
+      lives_box_pack_end (LIVES_BOX (hbox), info_buttons[idx], FALSE, FALSE, widget_opts.packing_width);
 
 
       combo_entries[idx] = lives_combo_get_entry(LIVES_COMBO(combo));
       
-      lives_entry_set_text (GTK_ENTRY (combo_entries[idx]),(tmp=rte_keymode_get_filter_name(i+1,j)));
+      lives_entry_set_text (LIVES_ENTRY (combo_entries[idx]),(tmp=rte_keymode_get_filter_name(i+1,j)));
       g_free(tmp);
  
       lives_entry_set_editable (LIVES_ENTRY (combo_entries[idx]), FALSE);
       
       hbox = lives_hbox_new (FALSE, 0);
-      lives_box_pack_start (GTK_BOX (vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
+      lives_box_pack_start (LIVES_BOX (vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
 
       g_signal_connect(GTK_OBJECT (combo), "changed",
 		       G_CALLBACK (fx_changed),GINT_TO_POINTER(i*rte_getmodespk()+j));
@@ -2231,23 +2349,12 @@ GtkWidget * create_rte_window (void) {
       g_signal_connect (GTK_OBJECT (conx_buttons[idx]), "clicked",
 			G_CALLBACK (on_datacon_clicked),GINT_TO_POINTER (idx));
       
-      type_label_set_text(i,j);
+      lives_box_pack_start (LIVES_BOX (hbox), type_labels[idx], FALSE, FALSE, widget_opts.packing_width);
+      lives_box_pack_end (LIVES_BOX (hbox), conx_buttons[idx], FALSE, FALSE, widget_opts.packing_width);
+      lives_box_pack_end (LIVES_BOX (hbox), param_buttons[idx], FALSE, FALSE, widget_opts.packing_width);
 
-      lives_box_pack_start (GTK_BOX (hbox), type_labels[idx], FALSE, FALSE, widget_opts.packing_width);
-      lives_box_pack_end (GTK_BOX (hbox), info_buttons[idx], FALSE, FALSE, widget_opts.packing_width);
-      lives_box_pack_end (GTK_BOX (hbox), conx_buttons[idx], FALSE, FALSE, widget_opts.packing_width);
-      lives_box_pack_end (GTK_BOX (hbox), param_buttons[idx], FALSE, FALSE, widget_opts.packing_width);
-      lives_box_pack_end (GTK_BOX (hbox), clear_buttons[idx], FALSE, FALSE, widget_opts.packing_width);
-
-      filter=rte_keymode_get_filter(i+1,j);
-
-      if (num_in_params(filter,TRUE,TRUE)>0) lives_widget_set_sensitive(param_buttons[idx],TRUE);
-      else lives_widget_set_sensitive(param_buttons[idx],FALSE);
-
-      if ((weed_plant_has_leaf(filter,"out_parameter_templates")&&weed_get_plantptr_value(filter,"out_parameter_templates",&error)!=NULL)||num_alpha_channels(filter,TRUE)>1) lives_widget_set_sensitive(conx_buttons[idx],TRUE);
-      else lives_widget_set_sensitive(conx_buttons[idx],FALSE);
-
-
+      // set parameters button sensitive/insensitive
+      set_param_and_con_buttons(i,j);
 
       }
   }
@@ -2257,30 +2364,30 @@ GtkWidget * create_rte_window (void) {
 
   top_vbox = lives_vbox_new (FALSE, 0);
 
-  lives_box_pack_start (GTK_BOX (top_vbox), dummy_radio, FALSE, FALSE, 0);
-  lives_box_pack_start (GTK_BOX (top_vbox), scrolledwindow, TRUE, TRUE, widget_opts.packing_height);
+  lives_box_pack_start (LIVES_BOX (top_vbox), dummy_radio, FALSE, FALSE, 0);
+  lives_box_pack_start (LIVES_BOX (top_vbox), scrolledwindow, TRUE, TRUE, widget_opts.packing_height);
 
-  lives_container_add (GTK_CONTAINER (rte_window), top_vbox);
+  lives_container_add (LIVES_CONTAINER (rte_window), top_vbox);
 
   hbuttonbox = lives_hbutton_box_new ();
-  lives_box_pack_start (GTK_BOX (top_vbox), hbuttonbox, FALSE, TRUE, widget_opts.packing_height*2);
+  lives_box_pack_start (LIVES_BOX (top_vbox), hbuttonbox, FALSE, TRUE, widget_opts.packing_height*2);
 
-  lives_container_add (GTK_CONTAINER (hbuttonbox), clear_all_button);
+  lives_container_add (LIVES_CONTAINER (hbuttonbox), clear_all_button);
   lives_widget_set_can_focus_and_default (clear_all_button);
 
   save_keymap_button = lives_button_new_with_mnemonic (_("_Save as default keymap"));
 
-  lives_container_add (GTK_CONTAINER (hbuttonbox), save_keymap_button);
+  lives_container_add (LIVES_CONTAINER (hbuttonbox), save_keymap_button);
   lives_widget_set_can_focus_and_default (save_keymap_button);
 
   load_keymap_button = lives_button_new_with_mnemonic (_("_Load default keymap"));
 
-  lives_container_add (GTK_CONTAINER (hbuttonbox), load_keymap_button);
+  lives_container_add (LIVES_CONTAINER (hbuttonbox), load_keymap_button);
   lives_widget_set_can_focus_and_default (load_keymap_button);
 
   ok_button = lives_button_new_with_mnemonic (_("Close _window"));
 
-  lives_container_add (GTK_CONTAINER (hbuttonbox), ok_button);
+  lives_container_add (LIVES_CONTAINER (hbuttonbox), ok_button);
   lives_widget_set_can_focus_and_default (ok_button);
 
 #if !GTK_CHECK_VERSION(3,0,0)
@@ -2289,7 +2396,7 @@ GtkWidget * create_rte_window (void) {
 
 
   rtew_accel_group = GTK_ACCEL_GROUP(lives_accel_group_new ());
-  gtk_window_add_accel_group (GTK_WINDOW (rte_window), rtew_accel_group);
+  lives_window_add_accel_group (LIVES_WINDOW (rte_window), rtew_accel_group);
 
   lives_widget_add_accelerator (ok_button, "activate", rtew_accel_group,
                               LIVES_KEY_Escape, (GdkModifierType)0, (GtkAccelFlags)0);
@@ -2314,35 +2421,39 @@ GtkWidget * create_rte_window (void) {
 		    G_CALLBACK (on_clear_all_clicked),
 		    GINT_TO_POINTER(1));
 
+ rte_window_ready:
+
   lives_widget_show_all(rte_window);
   lives_widget_hide(dummy_radio);
 
   if (prefs->gui_monitor!=0) {
-    gint xcen=mainw->mgeom[prefs->gui_monitor-1].x+(mainw->mgeom[prefs->gui_monitor-1].width-
+    int xcen=mainw->mgeom[prefs->gui_monitor-1].x+(mainw->mgeom[prefs->gui_monitor-1].width-
 						    lives_widget_get_allocation_width(rte_window))/2;
-    gint ycen=mainw->mgeom[prefs->gui_monitor-1].y+(mainw->mgeom[prefs->gui_monitor-1].height-
+    int ycen=mainw->mgeom[prefs->gui_monitor-1].y+(mainw->mgeom[prefs->gui_monitor-1].height-
 						    lives_widget_get_allocation_height(rte_window))/2;
-    gtk_window_set_screen(GTK_WINDOW(rte_window),mainw->mgeom[prefs->gui_monitor-1].screen);
-    lives_window_move(GTK_WINDOW(rte_window),xcen,ycen);
+    lives_window_set_screen(LIVES_WINDOW(rte_window),mainw->mgeom[prefs->gui_monitor-1].screen);
+    lives_window_move(LIVES_WINDOW(rte_window),xcen,ycen);
   }
 
   if (prefs->open_maximised) {
-    lives_window_maximize (GTK_WINDOW(rte_window));
+    lives_window_maximize (LIVES_WINDOW(rte_window));
   }
   lives_set_cursor_style(LIVES_CURSOR_NORMAL,NULL);
   lives_set_cursor_style(LIVES_CURSOR_NORMAL,rte_window);
   return rte_window;
 }
 
-void refresh_rte_window (void) {
+
+GtkWidget *refresh_rte_window (void) {
   if (rte_window!=NULL) {
     lives_set_cursor_style(LIVES_CURSOR_BUSY,NULL);
     lives_set_cursor_style(LIVES_CURSOR_BUSY,rte_window);
     lives_widget_context_update();
-    on_rtew_delete_event(NULL,NULL,NULL);
+    on_rtew_delete_event(NULL,NULL,LIVES_INT_TO_POINTER(1));
+    lives_widget_destroy(rte_window);
     rte_window=create_rte_window();
-    lives_widget_show (rte_window);
   }
+  return rte_window;
 }
 
 
@@ -2359,8 +2470,12 @@ void on_assign_rte_keys_activate (GtkMenuItem *menuitem, gpointer user_data) {
 
 void rtew_set_keych (int key, boolean on) {
   g_signal_handler_block(key_checks[key],ch_fns[key]);
-  lives_toggle_button_set_active (LIVES_TOGGLE_BUTTON(key_checks[key]),on);
+  if (!pthread_mutex_trylock(&mainw->gtk_mutex)) {
+    lives_toggle_button_set_active (LIVES_TOGGLE_BUTTON(key_checks[key]),on);
+    pthread_mutex_unlock(&mainw->gtk_mutex);
+  }
   g_signal_handler_unblock(key_checks[key],ch_fns[key]);
+  g_object_set_data(G_OBJECT(key_checks[key]),"active",GINT_TO_POINTER(on));
 }
 
 
@@ -2377,7 +2492,9 @@ void rtew_set_keygr (int key) {
 
 void rtew_set_mode_radio (int key, int mode) {
   int modes=rte_getmodespk();
+  g_signal_handler_block(mode_radios[key*modes+mode],mode_ra_fns[key*modes+mode]);
   lives_toggle_button_set_active (LIVES_TOGGLE_BUTTON(mode_radios[key*modes+mode]),TRUE);
+  g_signal_handler_unblock(mode_radios[key*modes+mode],mode_ra_fns[key*modes+mode]);
 }
 
 
@@ -2400,9 +2517,9 @@ void redraw_pwindow (int key, int mode) {
     if (rfx->is_template||(key==keyw&&mode==modew)) {
       // rip out the contents
       if (mainw->invis==NULL) mainw->invis=lives_vbox_new(FALSE,0);
-      child_list=gtk_container_get_children(GTK_CONTAINER(lives_dialog_get_content_area(GTK_DIALOG(fx_dialog[1]))));
+      child_list=gtk_container_get_children(LIVES_CONTAINER(lives_dialog_get_content_area(LIVES_DIALOG(fx_dialog[1]))));
       action_area=lives_dialog_get_action_area(LIVES_DIALOG(fx_dialog[1]));
-      gtk_container_set_focus_child(GTK_CONTAINER(action_area),NULL);
+      gtk_container_set_focus_child(LIVES_CONTAINER(action_area),NULL);
       for (i=0;i<g_list_length(child_list);i++) {
 	GtkWidget *widget=(GtkWidget *)g_list_nth_data(child_list,i);
 	if (widget!=action_area) {
@@ -2423,14 +2540,16 @@ void redraw_pwindow (int key, int mode) {
 
 void restore_pwindow (lives_rfx_t *rfx) {
   if (fx_dialog[1]!=NULL) {
-    make_param_box(GTK_VBOX (lives_dialog_get_content_area(GTK_DIALOG(fx_dialog[1]))),rfx);
-    lives_widget_show_all (lives_dialog_get_content_area(GTK_DIALOG(fx_dialog[1])));
+    make_param_box(GTK_VBOX (lives_dialog_get_content_area(LIVES_DIALOG(fx_dialog[1]))),rfx);
+    lives_widget_show_all (lives_dialog_get_content_area(LIVES_DIALOG(fx_dialog[1])));
     lives_widget_queue_draw(fx_dialog[1]);
   }
 }
 
 
 void update_pwindow (int key, int i, GList *list) {
+  // called only from weed_set_blend_factor() and from setting param in ce_thumbs
+
   const weed_plant_t *inst;
   lives_rfx_t *rfx;
   int keyw,modew;
@@ -2441,13 +2560,15 @@ void update_pwindow (int key, int i, GList *list) {
     if (key==keyw) {
       if ((inst=rte_keymode_get_instance(key+1,modew))==NULL) return;
       rfx=(lives_rfx_t *)g_object_get_data(G_OBJECT(fx_dialog[1]),"rfx");
+      mainw->block_param_updates=TRUE;
       set_param_from_list(list,&rfx->params[i],0,TRUE,TRUE);
+      mainw->block_param_updates=FALSE;
     }
   }
 }
 
 void rte_set_defs_activate (GtkMenuItem *menuitem, gpointer user_data) {
-  gint idx=GPOINTER_TO_INT(user_data);
+  int idx=GPOINTER_TO_INT(user_data);
   weed_plant_t *filter=get_weed_filter(idx);
   lives_rfx_t *rfx;
 
@@ -2459,7 +2580,7 @@ void rte_set_defs_activate (GtkMenuItem *menuitem, gpointer user_data) {
 
   rfx=weed_to_rfx(filter,TRUE);
   rfx->min_frames=-1;
-  on_render_fx_pre_activate(NULL,rfx);
+  on_fx_pre_activate(rfx,1,NULL);
 
 }
 
@@ -2483,11 +2604,11 @@ void rte_set_key_defs (GtkButton *button, lives_rfx_t *rfx) {
 
 
 void rte_set_defs_ok (GtkButton *button, lives_rfx_t *rfx) {
-  weed_plant_t **ptmpls,*filter;
+  weed_plant_t *ptmpl,*filter;
+
   lives_colRGB24_t *rgbp;
 
-  int i;
-  int error;
+  register int i;
 
   if (mainw->textwidget_focus!=NULL) {
     GtkWidget *textwidget=(GtkWidget *)g_object_get_data (G_OBJECT (mainw->textwidget_focus),"textwidget");
@@ -2496,31 +2617,30 @@ void rte_set_defs_ok (GtkButton *button, lives_rfx_t *rfx) {
 
   if (rfx->num_params>0) {
     filter=weed_instance_get_filter((weed_plant_t *)rfx->source,TRUE);
-    ptmpls=weed_get_plantptr_array(filter,"in_parameter_templates",&error);
     for (i=0;i<rfx->num_params;i++) {
+      ptmpl=weed_filter_in_paramtmpl(filter,i,FALSE);
       switch (rfx->params[i].type) {
       case LIVES_PARAM_COLRGB24:
 	rgbp=(lives_colRGB24_t *)rfx->params[i].value;
-	update_weed_color_value(ptmpls[i],i,rgbp->red,rgbp->green,rgbp->blue,0);
+	update_weed_color_value(filter,i,rgbp->red,rgbp->green,rgbp->blue,0);
 	break;
       case LIVES_PARAM_STRING:
-	weed_set_string_value(ptmpls[i],"host_default",(gchar *)rfx->params[i].value);
+	weed_set_string_value(ptmpl,"host_default",(gchar *)rfx->params[i].value);
 	break;
       case LIVES_PARAM_STRING_LIST:
-	weed_set_int_array(ptmpls[i],"host_default",1,(int *)rfx->params[i].value);
+	weed_set_int_array(ptmpl,"host_default",1,(int *)rfx->params[i].value);
 	break;
       case LIVES_PARAM_NUM:
-	if (weed_leaf_seed_type(ptmpls[i],"default")==WEED_SEED_DOUBLE) weed_set_double_array(ptmpls[i],"host_default",1,(double *)rfx->params[i].value);
-	else weed_set_int_array(ptmpls[i],"host_default",1,(int *)rfx->params[i].value);
+	if (weed_leaf_seed_type(ptmpl,"default")==WEED_SEED_DOUBLE) weed_set_double_array(ptmpl,"host_default",1,(double *)rfx->params[i].value);
+	else weed_set_int_array(ptmpl,"host_default",1,(int *)rfx->params[i].value);
 	break;
       case LIVES_PARAM_BOOL:
-	weed_set_boolean_array(ptmpls[i],"host_default",1,(int *)rfx->params[i].value);
+	weed_set_boolean_array(ptmpl,"host_default",1,(int *)rfx->params[i].value);
 	break;
       default:
 	break;
       }
     }
-    weed_free(ptmpls);
   }
 
   on_paramwindow_cancel_clicked(button,rfx);
@@ -2632,19 +2752,19 @@ void rte_reset_defs_clicked (GtkButton *button, lives_rfx_t *rfx) {
     }
   }
   else {
-    gint key=GPOINTER_TO_INT (g_object_get_data (G_OBJECT (fx_dialog[1]),"key"));
-    gint mode=GPOINTER_TO_INT (g_object_get_data (G_OBJECT (fx_dialog[1]),"mode"));
+    int key=GPOINTER_TO_INT (g_object_get_data (G_OBJECT (fx_dialog[1]),"key"));
+    int mode=GPOINTER_TO_INT (g_object_get_data (G_OBJECT (fx_dialog[1]),"mode"));
     set_key_defaults(inst,key,mode);
   }
 
 
-  fxdialog=lives_widget_get_toplevel(GTK_WIDGET(button));
-  pbox=lives_dialog_get_content_area(GTK_DIALOG(fxdialog));
+  fxdialog=lives_widget_get_toplevel(LIVES_WIDGET(button));
+  pbox=lives_dialog_get_content_area(LIVES_DIALOG(fxdialog));
 
   // redraw the window
 
   if (mainw->invis==NULL) mainw->invis=lives_vbox_new(FALSE,0);
-  child_list=gtk_container_get_children(GTK_CONTAINER(lives_dialog_get_content_area(GTK_DIALOG(fxdialog))));
+  child_list=gtk_container_get_children(LIVES_CONTAINER(lives_dialog_get_content_area(LIVES_DIALOG(fxdialog))));
 
   action_area=lives_dialog_get_action_area(LIVES_DIALOG (fxdialog));
 
@@ -2677,6 +2797,8 @@ void load_default_keymap(void) {
   int retval;
 
   threaded_dialog_spin();
+
+  if (hash_list==NULL) hash_list=weed_get_all_names(FX_LIST_HASHNAME);
 
   do {
     retval=0;

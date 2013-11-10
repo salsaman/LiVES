@@ -25,9 +25,9 @@
 
 /// fraction of a second quantisation for event timing; must match U_SECL, and must be a multiple of 10>=1000000
 ///
-/// >10**8 is not recommended, since we sometimes store seconds in a gdouble
+/// >10**8 is not recommended, since we sometimes store seconds in a double
 #define U_SEC 100000000.
-#define U_SECL (gint64)100000000
+#define U_SECL (int64_t)100000000
 #define U_SEC_RATIO (U_SECL/1000000) ///< how many U_SECs (ticks) in a microsecond [default 100]
 
 
@@ -101,7 +101,7 @@
 #define FX_KEYS_MAX 65536
 
 #define EFFECT_NONE 0
-#define GU641 ((guint64)1)
+#define GU641 ((uint64_t)1)
 
 #define MAX_FX_THREADS 65536
 
@@ -190,7 +190,7 @@ typedef enum {
 
 /// set in set_palette_colours()
 typedef struct {
-  gint style;
+  int style;
 #define STYLE_PLAIN 0 ///< no theme (theme 'none')
 #define STYLE_1 1<<0 ///< turn on theming if set
 #define STYLE_2 1<<1 ///< colour the spinbuttons on the front page if set
@@ -217,6 +217,7 @@ typedef struct {
   LiVESWidgetColor normal_fore;
 
   LiVESWidgetColor menu_and_bars;
+  LiVESWidgetColor menu_and_bars_fore;
   LiVESWidgetColor banner_fade_text;
   LiVESWidgetColor info_text;
   LiVESWidgetColor info_base;
@@ -248,6 +249,20 @@ enum {
 };
 
 
+typedef struct {
+  double top;
+  double left;
+  double width;
+  double height;
+} lives_rect_t;
+
+
+typedef struct {
+  char *name;
+  lives_rect_t *rects; // for future use
+  int z_index; // for future use
+} lives_screen_area_t;
+
 
 /// where do we add the builtin tools in the tools menu
 #define RFX_TOOL_MENU_POSN 2
@@ -257,8 +272,8 @@ typedef struct {
   gchar msg[512];
 
   // files
-  gint current_file;
-  gint first_free_file;
+  int current_file;
+  int first_free_file;
   file *files[MAX_FILES+1]; ///< +1 for the clipboard
   gchar vid_load_dir[PATH_MAX];
   gchar vid_save_dir[PATH_MAX];
@@ -267,9 +282,9 @@ typedef struct {
   gchar image_dir[PATH_MAX];
   gchar proj_load_dir[PATH_MAX];
   gchar proj_save_dir[PATH_MAX];
-  gint untitled_number;
-  gint cap_number;
-  gint clips_available;
+  int untitled_number;
+  int cap_number;
+  int clips_available;
 
   /// hash table of clips in menu order
   GList *cliplist;
@@ -287,16 +302,16 @@ typedef struct {
   boolean ping_pong;
   boolean mute;
   boolean must_resize; ///< fixed playback size in gui; playback plugins have their own fwidth and fheight
-  gint audio_start;
-  gint audio_end;
+  int audio_start;
+  int audio_end;
 
   boolean ext_playback; ///< using external video playback plugin
   volatile boolean ext_keyboard; ///< keyboard codes must be polled from video playback plugin
 
-  gint ptr_x;
-  gint ptr_y;
+  int ptr_x;
+  int ptr_y;
 
-  gdouble fps_measure; ///< show fps stats after playback
+  double fps_measure; ///< show fps stats after playback
 
 
   // flags
@@ -328,19 +343,19 @@ typedef struct {
   GList *stored_layout_undos;
   size_t sl_undo_buffer_used;
   unsigned char *sl_undo_mem;
-  gint sl_undo_offset;
+  int sl_undo_offset;
 
-  gshort endian;
+  short endian;
 
-  gint pwidth; ///< playback width in RGB pixels
-  gint pheight; ///< playback height
+  int pwidth; ///< playback width in RGB pixels
+  int pheight; ///< playback height
 
   lives_whentostop_t whentostop;
 
   boolean noframedrop;
 
-  gint play_start;
-  gint play_end;
+  int play_start;
+  int play_end;
   boolean playing_sel;
   boolean preview;
 
@@ -353,7 +368,7 @@ typedef struct {
   boolean t_hidden;
 
   // recording from an external window
-  guint foreign_key;
+  uint32_t foreign_key;
 
 
 #if GTK_CHECK_VERSION(3,0,0)
@@ -364,46 +379,46 @@ typedef struct {
   GdkPixmap *foreign_map;
 #endif
   GdkWindow *foreign_window;
-  gint foreign_width;
-  gint foreign_height;
-  gint foreign_bpp;
+  int foreign_width;
+  int foreign_height;
+  int foreign_bpp;
   gchar *foreign_visual;
 
   /// some VJ effects
   boolean nervous;
 
   lives_rfx_t *rendered_fx;
-  gint num_rendered_effects_builtin;
-  gint num_rendered_effects_custom;
-  gint num_rendered_effects_test;
+  int num_rendered_effects_builtin;
+  int num_rendered_effects_custom;
+  int num_rendered_effects_test;
 
   // for the merge dialog
-  gint last_transition_idx;
-  gint last_transition_loops;
+  int last_transition_idx;
+  int last_transition_loops;
   boolean last_transition_loop_to_fit;
   boolean last_transition_align_start;
   boolean last_transition_ins_frames;
 
 
-  guint64 rte; ///< current max for VJ mode == 64 effects on fg clip
+  uint64_t rte; ///< current max for VJ mode == 64 effects on fg clip
 
-  guint last_grabable_effect;
-  gint rte_keys; ///< which effect is bound to keyboard
-  gint num_tr_applied; ///< number of transitions active
-  gdouble blend_factor; ///< keyboard control parameter
+  uint32_t last_grabable_effect;
+  int rte_keys; ///< which effect is bound to keyboard
+  int num_tr_applied; ///< number of transitions active
+  double blend_factor; ///< keyboard control parameter
   
-  gint blend_file;
-  gint last_blend_file;
+  int blend_file;
+  int last_blend_file;
 
-  gint scrap_file; ///< we throw odd sized frames here when recording in real time; used if a source is a generator or stream
+  int scrap_file; ///< we throw odd sized frames here when recording in real time; used if a source is a generator or stream
 
-  gint ascrap_file; ///< scrap file for recording audio scraps
+  int ascrap_file; ///< scrap file for recording audio scraps
 
   /// which number file we are playing (or -1)
-  gint playing_file;
+  int playing_file;
 
-  gint pre_src_file; ///< video file we were playing before any ext input started
-  gint pre_src_audio_file; ///< audio file we were playing before any ext input started
+  int pre_src_file; ///< video file we were playing before any ext input started
+  int pre_src_audio_file; ///< audio file we were playing before any ext input started
 
   int scr_width;
   int scr_height;
@@ -418,8 +433,8 @@ typedef struct {
   boolean with_sound;
 
   // selection
-  gint sel_start;
-  gshort sel_move;
+  int sel_start;
+  short sel_move;
 
   /// which bar should we move ?
 #define SEL_MOVE_START 1
@@ -428,18 +443,18 @@ typedef struct {
 #define SEL_MOVE_SINGLE 4
 
   // prefs (Save on exit)
-  gint prefs_changed;
+  int prefs_changed;
 #define PREFS_THEME_CHANGED (1<<0)
 #define PREFS_JACK_CHANGED (1<<1)
 #define PREFS_TEMPDIR_CHANGED (1<<2)
   boolean prefs_need_restart;
 
   /// default sizes for when no file is loaded
-  gint def_width;
-  gint def_height;
+  int def_width;
+  int def_height;
 
   /// for the framedraw preview - TODO use lives_framedraw_t array
-  gint framedraw_frame;
+  int framedraw_frame;
 
 
   /////////////////////////////////////////////////
@@ -453,38 +468,38 @@ typedef struct {
   gchar *file_open_params;
   boolean open_deint;
 
-  gint last_dprint_file;
+  int last_dprint_file;
   boolean no_switch_dprint;
 
   /// actual frame being displayed
-  gint actual_frame;
+  int actual_frame;
 
   /// and the audio 'frame' for when we are looping
-  gdouble aframeno;
+  double aframeno;
 
   // ticks are measured in 1/U_SEC of a second (by defalt a tick is 10 nano seconds)
 
   // for the internal player
-  gdouble period; ///< == 1./cfile->pb_fps (unless cfile->pb_fps is 0.)
-  gint64 startticks; ///< effective ticks when last frame was (should have been) displayed
-  gint64 timeout_ticks; ///< incremented if effect/rendering is paused/previewed
-  gint64 origsecs; ///< playback start seconds - subtracted from all other ticks to keep numbers smaller
-  gint64 origusecs; ///< usecs at start of playback - ditto
-  gint64 offsetticks; ///< offset for external transport
-  gint64 currticks; ///< current playback ticks (relative)
-  gint64 deltaticks; ///< deltaticks for scratching
-  gint64 firstticks; ///< ticks when audio started playing (for non-realtime audio plugins)
-  gint64 stream_ticks;  ///< ticks since first frame sent to playback plugin
-  gint64 last_display_ticks; /// currticks when last display was shown (used for fixed fps)
+  double period; ///< == 1./cfile->pb_fps (unless cfile->pb_fps is 0.)
+  uint64_t startticks; ///< effective ticks when last frame was (should have been) displayed
+  uint64_t timeout_ticks; ///< incremented if effect/rendering is paused/previewed
+  uint64_t origsecs; ///< playback start seconds - subtracted from all other ticks to keep numbers smaller
+  uint64_t origusecs; ///< usecs at start of playback - ditto
+  uint64_t offsetticks; ///< offset for external transport
+  uint64_t currticks; ///< current playback ticks (relative)
+  uint64_t deltaticks; ///< deltaticks for scratching
+  uint64_t firstticks; ///< ticks when audio started playing (for non-realtime audio plugins)
+  uint64_t stream_ticks;  ///< ticks since first frame sent to playback plugin
+  uint64_t last_display_ticks; /// currticks when last display was shown (used for fixed fps)
 
   boolean size_warn; ///< warn the user that incorrectly sized frames were found
 
   /// set to TRUE during frame load/display operation. If TRUE we should not switch clips, 
   /// close the current clip, or call load_frame_image()
   boolean noswitch; 
-  gint new_clip;
+  int new_clip;
 
-  gint aud_file_to_kill; ///< # of audio file to kill on crash
+  int aud_file_to_kill; ///< # of audio file to kill on crash
 
   boolean reverse_pb; ///< used in osc.c
 
@@ -494,20 +509,20 @@ typedef struct {
   boolean osc_auto; ///< bypass user choices automatically
 
   /// encode width, height and fps set externally
-  gint osc_enc_width;
-  gint osc_enc_height;
+  int osc_enc_width;
+  int osc_enc_height;
   float osc_enc_fps;
 
 
   /// fixed fps playback; usually fixed_fpsd==0.
-  gint fixed_fps_numer;
-  gint fixed_fps_denom;
-  gdouble fixed_fpsd; ///< <=0. means free playback
+  int fixed_fps_numer;
+  int fixed_fps_denom;
+  double fixed_fpsd; ///< <=0. means free playback
 
   /// video playback plugin was updated; write settings to a file
   boolean write_vpp_file;
 
-  volatile gshort scratch;
+  volatile short scratch;
 #define SCRATCH_NONE 0
 #define SCRATCH_BACK -1
 #define SCRATCH_FWD 1
@@ -520,27 +535,27 @@ typedef struct {
   volatile boolean threaded_dialog;
 
   // fx controls
-  gdouble fx1_val;
-  gdouble fx2_val;
-  gdouble fx3_val;
-  gdouble fx4_val;
-  gdouble fx5_val;
-  gdouble fx6_val;
+  double fx1_val;
+  double fx2_val;
+  double fx3_val;
+  double fx4_val;
+  double fx5_val;
+  double fx6_val;
 
-  gint fx1_start;
-  gint fx2_start;
-  gint fx3_start;
-  gint fx4_start;
+  int fx1_start;
+  int fx2_start;
+  int fx3_start;
+  int fx4_start;
 
-  gint fx1_step;
-  gint fx2_step;
-  gint fx3_step;
-  gint fx4_step;
+  int fx1_step;
+  int fx2_step;
+  int fx3_step;
+  int fx4_step;
 
-  gint fx1_end;
-  gint fx2_end;
-  gint fx3_end;
-  gint fx4_end;
+  int fx1_end;
+  int fx2_end;
+  int fx3_end;
+  int fx4_end;
 
   boolean fx1_bool;
   boolean fx2_bool;
@@ -553,7 +568,7 @@ typedef struct {
   boolean did_rfx_preview;
 
   //function pointers
-  guint kb_timer;
+  uint32_t kb_timer;
   gulong config_func;
   gulong pb_fps_func;
   gulong spin_start_func;
@@ -585,14 +600,14 @@ typedef struct {
   boolean hrule_blocked;
 
   /// stored clips
-  gint clipstore[FN_KEYS-1];
+  int clipstore[FN_KEYS-1];
 
   /// key function for autorepeat ctrl-arrows
-  guint ksnoop;
+  uint32_t ksnoop;
 
   lives_mt *multitrack;
 
-  gint new_blend_file;
+  int new_blend_file;
 
   GtkWidget *frame1;
   GtkWidget *frame2;
@@ -781,9 +796,9 @@ typedef struct {
   GtkWidget *preview_image;
   GtkWidget *preview_spinbutton;
   GtkWidget *preview_scale;
-  gint preview_frame;
+  int preview_frame;
   gulong preview_spin_func;
-  gint prv_link;
+  int prv_link;
 #define PRV_FREE 0
 #define PRV_START 1
 #define PRV_END 2
@@ -842,8 +857,8 @@ typedef struct {
   GtkWidget *menubar;
 
   // separate window
-  gint opwx;
-  gint opwy;
+  int opwx;
+  int opwy;
 
   // sepwin buttons
   GtkWidget *preview_controls;
@@ -896,9 +911,9 @@ typedef struct {
   GtkWidget *rte_separator;
   GtkWidget *invis;
 
-  gint num_tracks;
-  gint *clip_index;
-  gint *frame_index;
+  int num_tracks;
+  int *clip_index;
+  int *frame_index;
 
   GtkWidget *resize_menuitem;
 
@@ -946,9 +961,9 @@ typedef struct {
 
   mt_opts multi_opts; ///< some multitrack options that survive between mt calls
 
-  gint rec_aclip;
-  gdouble rec_avel;
-  gdouble rec_aseek;
+  int rec_aclip;
+  double rec_avel;
+  double rec_aseek;
 
   gpointer do_not_free; ///< mess with memory so that g_object_unref can be forced not to free() the pixel_data
   GMemVTable alt_vtable;
@@ -958,8 +973,8 @@ typedef struct {
   pthread_mutex_t interp_mutex;  ///< interpolation mutex - parameter interpolation must be single threaded
 
   pthread_mutex_t abuf_mutex;  ///< used to synch audio buffer request count - shared between audio and video threads
-  pthread_mutex_t afilter_mutex;  ///< used to prevent video/gui thread deiniting an audio filter while it may be active
-  pthread_mutex_t data_mutex;  ///< used to prevent data being connected while it is possibly being updated
+  pthread_mutex_t data_mutex[FX_KEYS_MAX_VIRTUAL];  ///< used to prevent data being connected while it is possibly being updated
+  pthread_mutex_t fxd_active_mutex;
 
   volatile lives_rfx_t *vrfx_update;
 
@@ -971,14 +986,14 @@ typedef struct {
   gfloat volume; ///< audio volume level (for jack)
 
   int aud_rec_fd; ///< fd of file we are recording audio to
-  gdouble rec_end_time;
+  double rec_end_time;
   int64_t rec_samples;
-  gdouble rec_fps;
-  gint rec_vid_frames;
-  gint rec_arate;
-  gint rec_achans;
-  gint rec_asamps;
-  gint rec_signed_endian;
+  double rec_fps;
+  int rec_vid_frames;
+  int rec_arate;
+  int rec_achans;
+  int rec_asamps;
+  int rec_signed_endian;
 
   boolean suppress_dprint; ///< tidy up, e.g. by blocking "switched to file..." and "closed file..." messages
 
@@ -989,7 +1004,7 @@ typedef struct {
   gchar *disabled_string;  ///< localised text saying "disabled !", for playback plugin name, etc.
   gchar *cl_string; ///< localised text saying "*The current layout*", for layout warnings
 
-  gint opening_frames; ///< count of frames so far opened, updated after preview (currently)
+  int opening_frames; ///< count of frames so far opened, updated after preview (currently)
 
   boolean show_procd; ///< override showing of "processing..." dialog
 
@@ -1004,7 +1019,7 @@ typedef struct {
 
   boolean record_starting; ///< start recording at next frame
 
-  gint img_concat_clip;  ///< when opening multiple, image files can get concatenated here (prefs->concat_images)
+  int img_concat_clip;  ///< when opening multiple, image files can get concatenated here (prefs->concat_images)
 
   /// rendered generators
   boolean gen_to_clipboard;
@@ -1030,8 +1045,8 @@ typedef struct {
 
   weed_plant_t *rte_textparm; ///< send keyboard input to this paramter (usually NULL)
 
-  gint write_abuf; ///< audio buffer number to write to (for multitrack)
-  volatile gint abufs_to_fill;
+  int write_abuf; ///< audio buffer number to write to (for multitrack)
+  volatile int abufs_to_fill;
 
   GtkWidget *splash_window;
   GtkWidget *splash_label;
@@ -1059,7 +1074,7 @@ typedef struct {
   gchar *subt_save_file; ///< name of file to save subtitles to
 
   gchar **fonts_array;
-  gint nfonts;
+  int nfonts;
 
   GtkTargetEntry *target_table; ///< drag and drop target table
 
@@ -1080,7 +1095,7 @@ typedef struct {
   // stuff specific to audio gens (will be extended to all rt audio fx)
   volatile int agen_key; ///< which fx key is generating audio [1 based] (or 0 for none)
   volatile boolean agen_needs_reinit;
-  gint64 agen_samps_count; ///< count of samples since init
+  uint64_t agen_samps_count; ///< count of samples since init
 
   boolean aplayer_broken;
 
@@ -1111,7 +1126,7 @@ typedef struct {
 
   lives_render_error_t render_error;
 
-  guint64 next_ds_warn_level; ///< current disk space warning level for the tempdir
+  uint64_t next_ds_warn_level; ///< current disk space warning level for the tempdir
 
   float sepwin_scale;
 
@@ -1126,8 +1141,19 @@ typedef struct {
   int sepwin_minwidth;
   int sepwin_minheight;
 
-  guint signal_caught;
+  uint32_t signal_caught;
   boolean signals_deferred;
+
+  boolean ce_thumbs;
+
+#define SCREEN_AREA_FOREGROUND 0
+#define SCREEN_AREA_BACKGROUND 1
+#define SCREEN_AREA_USER_DEFINED1 2
+
+  int n_screen_areas; // number of screen areas
+  int active_sa_fx; // active screen area for effects
+  int active_sa_clips; // active screen area for clips
+  lives_screen_area_t *screen_areas; // array of screen areas
 
 } mainwindow;
 
@@ -1145,6 +1171,7 @@ typedef struct {
   boolean loop_to_fit;
   boolean align_start;
   boolean ins_frames;
+
   int *list_to_rfx_index;
   GList *trans_list;
 

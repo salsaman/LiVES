@@ -3615,7 +3615,7 @@ void lives_widget_context_update(void) {
 #ifdef GUI_GTK
   boolean mt_needs_idlefunc=FALSE;
 
-  if (pthread_mutex_trylock(&mainw->gtk_mutex)) goto done;
+  if (pthread_mutex_trylock(&mainw->gtk_mutex)) return;
 
   if (mainw->multitrack!=NULL&&mainw->multitrack->idlefunc>0) {
     g_source_remove(mainw->multitrack->idlefunc);

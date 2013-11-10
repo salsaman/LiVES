@@ -973,7 +973,6 @@ typedef struct {
   pthread_mutex_t interp_mutex;  ///< interpolation mutex - parameter interpolation must be single threaded
 
   pthread_mutex_t abuf_mutex;  ///< used to synch audio buffer request count - shared between audio and video threads
-  pthread_mutex_t afilter_mutex[FX_KEYS_MAX_VIRTUAL];  ///< used to prevent video/gui thread deiniting an audio filter while it may be active
   pthread_mutex_t data_mutex[FX_KEYS_MAX_VIRTUAL];  ///< used to prevent data being connected while it is possibly being updated
   pthread_mutex_t fxd_active_mutex;
 

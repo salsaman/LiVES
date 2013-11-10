@@ -509,6 +509,7 @@ weed_plant_t *event_copy_and_insert (weed_plant_t *in_event, weed_plant_t *event
   hint=get_event_hint(in_event);
   switch (hint) {
   case WEED_EVENT_HINT_FILTER_INIT:
+    g_print("got fin\n");
     error=weed_set_voidptr_value (event,"event_id",(void *)in_event);
     if (error==WEED_ERROR_MEMORY_ALLOCATION) return NULL;
     filter_hash=weed_get_string_value(event,"filter",&error);

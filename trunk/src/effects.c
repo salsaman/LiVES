@@ -1057,7 +1057,9 @@ boolean rte_on_off_callback (GtkAccelGroup *group, GObject *obj, guint keyval, G
       // WARNING - if we start playing because a generator was started, we block here
       if (!(weed_init_effect(key-1))) {
 	// ran out of instance slots, no effect assigned, or some other error
+	pthread_mutex_lock(&mainw->event_list_mutex);
 	if (mainw->rte&new_rte) mainw->rte^=new_rte;
+	pthread_mutex_unlock(&mainw->event_list_mutex);
 	if (rte_window!=NULL) rtew_set_keych(key-1,FALSE);
 	if (mainw->ce_thumbs) ce_thumbs_set_keych(key-1,FALSE);
 	mainw->osc_block=FALSE;
@@ -1079,7 +1081,9 @@ boolean rte_on_off_callback (GtkAccelGroup *group, GObject *obj, guint keyval, G
     else {
       // effect is OFF
       weed_deinit_effect(key-1);
+      pthread_mutex_lock(&mainw->event_list_mutex);
       if (mainw->rte&new_rte) mainw->rte^=new_rte;
+      pthread_mutex_unlock(&mainw->event_list_mutex);
       if (rte_window!=NULL) rtew_set_keych(key-1,FALSE);
       if (mainw->ce_thumbs) ce_thumbs_set_keych(key-1,FALSE);
     }

@@ -6203,7 +6203,7 @@ weed_plant_t *weed_instance_from_filter(weed_plant_t *filter) {
     // create channels from channel_templates
     inc=weed_channels_create (filter,TRUE);
     outc=weed_channels_create (filter,FALSE);
-    
+
     set_default_channel_sizes (inc,outc); // we set the initial channel sizes to some reasonable defaults
     
     // create parameters from parameter_templates
@@ -6224,6 +6224,7 @@ weed_plant_t *weed_instance_from_filter(weed_plant_t *filter) {
     }
 
     inst=weed_create_instance(filter,inc,outc,xinp,outp);
+
     if (filters!=NULL) weed_set_plantptr_value(inst,"host_compound_class",ofilter);
 
     if (i>0) {
@@ -6448,7 +6449,6 @@ boolean weed_init_effect(int hotkey) {
   else {
     new_instance=weed_instance_from_filter(filter);
     // if it is a key effect, set key defaults
-
     if (hotkey<FX_KEYS_MAX_VIRTUAL&&key_defaults[hotkey][key_modes[hotkey]]!=NULL) {
       // TODO - handle compound fx
       apply_key_defaults(new_instance,hotkey,key_modes[hotkey]);
@@ -6683,7 +6683,6 @@ boolean weed_init_effect(int hotkey) {
 
     }
   }
-
 
   return TRUE;
 }

@@ -4438,7 +4438,6 @@ double *get_track_visibility_at_tc(weed_plant_t *event_list, int ntracks, int nb
 	      matrix[in_tracks[0]+nbtracks][j]*=(1.-trans);
 	      matrix[out_tracks[0]+nbtracks][j]=matrix[in_tracks[0]+nbtracks][j]+matrix[in_tracks[1]+nbtracks][j];
 	    }
-	    weed_free(pchains);
 	    weed_plant_free(inst);
 	  }
 	  weed_free(in_tracks);

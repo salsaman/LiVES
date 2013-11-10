@@ -2136,9 +2136,10 @@ void scroll_tracks (lives_mt *mt, int top_track, boolean set_value) {
 	  lives_widget_set_bg_color(LIVES_WIDGET(aeventbox), LIVES_WIDGET_STATE_NORMAL, &palette->white);
 	  
 	  if (palette->style&STYLE_1) {
-	      lives_widget_set_bg_color (labelbox, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
-	      lives_widget_set_fg_color (labelbox, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
+	    // lives_widget_set_bg_color (labelbox, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
+	    // lives_widget_set_fg_color (labelbox, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
 	    if (palette->style&STYLE_3) {
+	      lives_widget_set_bg_color (labelbox, LIVES_WIDGET_STATE_PRELIGHT, &palette->menu_and_bars);
 	      lives_widget_set_bg_color (ahbox, LIVES_WIDGET_STATE_PRELIGHT, &palette->menu_and_bars);
 	      lives_widget_set_fg_color (labelbox, LIVES_WIDGET_STATE_PRELIGHT, &palette->menu_and_bars_fore);
 	      lives_widget_set_fg_color (ahbox, LIVES_WIDGET_STATE_PRELIGHT, &palette->menu_and_bars_fore);

@@ -1294,7 +1294,7 @@ lives_filter_error_t weed_reinit_effect (weed_plant_t *inst, boolean reinit_comp
 
   if (deinit_first) {
     if (has_audio_chans_in(filter,FALSE)||has_audio_chans_out(filter,FALSE)) {
-      if (key>=0) pthread_mutex_lock(&mainw->afilter_mutex[key]);
+      filter_mutex_lock(key);
       is_audio=TRUE;
     }
     weed_call_deinit_func(inst);
@@ -1311,7 +1311,7 @@ lives_filter_error_t weed_reinit_effect (weed_plant_t *inst, boolean reinit_comp
       set_param_gui_readwrite(inst);
       update_host_info(inst);
       retval=(*init_func)(inst);
-      if (is_audio&&key>=0) pthread_mutex_unlock(&mainw->afilter_mutex[key]);
+      if (is_audio) filter_mutex_unlock(key);
       set_param_gui_readonly(inst);
       if (fx_dialog[1]!=NULL) {
 	// redraw GUI if necessary
@@ -1333,19 +1333,19 @@ lives_filter_error_t weed_reinit_effect (weed_plant_t *inst, boolean reinit_comp
 
 
     }
-    else if (is_audio&&key>=0) pthread_mutex_unlock(&mainw->afilter_mutex[key]);
+    else if (is_audio) filter_mutex_unlock(key);
 
     if (!deinit_first) {
-      if (is_audio&&key>=0) pthread_mutex_lock(&mainw->afilter_mutex[key]);
+      if (is_audio) filter_mutex_lock(key);
       weed_call_deinit_func(inst);
-      if (is_audio&&key>=0) pthread_mutex_unlock(&mainw->afilter_mutex[key]);
+      if (is_audio) filter_mutex_unlock(key);
     }
 
     lives_chdir(cwd,FALSE);
     g_free(cwd);
     filter_error=FILTER_INFO_REINITED;
   }
-  else if (is_audio&&key>=0) pthread_mutex_unlock(&mainw->afilter_mutex[key]);
+  else if (is_audio) filter_mutex_unlock(key);
 
 
   if (deinit_first) weed_set_boolean_value(inst,"host_inited",WEED_TRUE);
@@ -3598,21 +3598,21 @@ void weed_apply_audio_effects_rt(float **abuf, int nchans, int64_t nsamps, gdoub
 	mainw->osc_block=TRUE;
 
 	// filter must not be deinited until we have processed it
-	if (pthread_mutex_trylock(&mainw->afilter_mutex[i])) continue;
+	if (pthread_mutex_trylock(&mainw->data_mutex[i])) continue;
 
 	if ((instance=key_to_instance[i][key_modes[i]])==NULL) {
-	  pthread_mutex_unlock(&mainw->afilter_mutex[i]);
+	  filter_mutex_unlock(i);
 	  continue;
 	}
 	filter=weed_instance_get_filter(instance,FALSE);
 
 	if (!has_audio_chans_in(filter,FALSE)) {
-	  pthread_mutex_unlock(&mainw->afilter_mutex[i]);
+	  filter_mutex_unlock(i);
 	  continue; 
 	}
 
 	if (analysers_only&&has_audio_chans_out(filter,FALSE)) {
-	  pthread_mutex_unlock(&mainw->afilter_mutex[i]);
+	  filter_mutex_unlock(i);
 	  continue;
 	}
 
@@ -3626,12 +3626,11 @@ void weed_apply_audio_effects_rt(float **abuf, int nchans, int64_t nsamps, gdoub
 	  // chain any data pipelines
 
 	  if (!pthread_mutex_trylock(&mainw->data_mutex[i])) {
-	    pthread_mutex_unlock(&mainw->afilter_mutex[i]);
 	    needs_reinit=pconx_chain_data(i,key_modes[i]);
-	    filter_mutex_unlock(i);
 
 	    // if anything is connected to ACTIVATE, the fx may be deactivated
 	    if ((instance=key_to_instance[i][key_modes[i]])==NULL) {
+	      filter_mutex_unlock(i);
 	      continue;
 	    }
 
@@ -3639,7 +3638,7 @@ void weed_apply_audio_effects_rt(float **abuf, int nchans, int64_t nsamps, gdoub
 	      weed_reinit_effect(instance,FALSE);
 	    }
 
-	    pthread_mutex_lock(&mainw->afilter_mutex[i]);
+	    filter_mutex_lock(i);
 	  }
 	}
 
@@ -3651,9 +3650,9 @@ void weed_apply_audio_effects_rt(float **abuf, int nchans, int64_t nsamps, gdoub
 	    needs_reinit=pconx_chain_data_internal(instance);
 	    filter_mutex_unlock(i);
 	    if (needs_reinit) {
-	      pthread_mutex_unlock(&mainw->afilter_mutex[i]);
+	      filter_mutex_unlock(i);
 	      weed_reinit_effect(instance,FALSE);
-	      pthread_mutex_lock(&mainw->afilter_mutex[i]);
+	      filter_mutex_lock(i);
 	    }
 	  }
 	}
@@ -3667,7 +3666,7 @@ void weed_apply_audio_effects_rt(float **abuf, int nchans, int64_t nsamps, gdoub
 	  goto apply_audio_inst2;
 	}
 
-	pthread_mutex_unlock(&mainw->afilter_mutex[i]);
+	filter_mutex_unlock(i);
 
 	if (filter_error==FILTER_INFO_REINITED) redraw_pwindow(i,key_modes[i]); // redraw our paramwindow
 #ifdef DEBUG_RTE
@@ -3676,6 +3675,7 @@ void weed_apply_audio_effects_rt(float **abuf, int nchans, int64_t nsamps, gdoub
       }
     }
   }
+
 }
 
 
@@ -5823,9 +5823,9 @@ void weed_generator_end (weed_plant_t *inst) {
 
 
   if (is_bg) {
-    pthread_mutex_lock(&mainw->afilter_mutex[bg_generator_key]);
+    filter_mutex_lock(bg_generator_key);
     key_to_instance[bg_generator_key][bg_generator_mode]=NULL;
-    pthread_mutex_unlock(&mainw->afilter_mutex[bg_generator_key]);
+    filter_mutex_unlock(bg_generator_key);
     if (mainw->rte&(GU641<<bg_generator_key)) mainw->rte^=(GU641<<bg_generator_key);
     bg_gen_to_start=bg_generator_key=bg_generator_mode=-1;
     pre_src_file=mainw->pre_src_file;
@@ -5833,9 +5833,9 @@ void weed_generator_end (weed_plant_t *inst) {
     mainw->current_file=mainw->blend_file;
   }
   else {
-    pthread_mutex_lock(&mainw->afilter_mutex[fg_generator_key]);
+    filter_mutex_lock(fg_generator_key);
     key_to_instance[fg_generator_key][fg_generator_mode]=NULL;
-    pthread_mutex_unlock(&mainw->afilter_mutex[fg_generator_key]);
+    filter_mutex_unlock(fg_generator_key);
     if (mainw->rte&(GU641<<fg_generator_key)) mainw->rte^=(GU641<<fg_generator_key);
     fg_gen_to_start=fg_generator_key=fg_generator_clip=fg_generator_mode=-1;
     if (mainw->blend_file==mainw->current_file) mainw->blend_file=-1;
@@ -6494,9 +6494,9 @@ boolean weed_init_effect(int hotkey) {
 	d_print ((tmp=g_strdup_printf (_ ("Failed to start instance %s, error code %d\n"),filter_name,error)));
 	g_free(tmp);
 	weed_free(filter_name);
-	pthread_mutex_lock(&mainw->afilter_mutex[hotkey]);
+	filter_mutex_lock(hotkey);
 	key_to_instance[hotkey][key_modes[hotkey]]=NULL;
-	pthread_mutex_unlock(&mainw->afilter_mutex[hotkey]);
+	filter_mutex_unlock(hotkey);
 
 	inst=new_instance;
 
@@ -6825,9 +6825,9 @@ void weed_deinit_effect(int hotkey) {
     }
   }
  
-  pthread_mutex_lock(&mainw->afilter_mutex[hotkey]);
+  filter_mutex_lock(hotkey);
   key_to_instance[hotkey][key_modes[hotkey]]=NULL;
-  pthread_mutex_unlock(&mainw->afilter_mutex[hotkey]);
+  filter_mutex_unlock(hotkey);
 
   if (mainw->whentostop==STOP_ON_VID_END&&mainw->current_file>-1&&(cfile->frames==0
 								   ||(mainw->loop&&cfile->achans>0&&!mainw->is_rendering&&(mainw->audio_end/cfile->fps)
@@ -9086,6 +9086,7 @@ boolean interpolate_param(weed_plant_t *inst, int i, void *pchain, weed_timecode
       weed_free(in_params);
       for(i=0;param_array[i]!=NULL;i++) weed_plant_free(param_array[i]);
       g_free(param_array);
+      pthread_mutex_unlock(&mainw->interp_mutex);
       return TRUE;
     }
     // try to pass more values
@@ -9099,7 +9100,8 @@ boolean interpolate_param(weed_plant_t *inst, int i, void *pchain, weed_timecode
     weed_free(in_params);
     for(i=0;param_array[i]!=NULL;i++) weed_plant_free(param_array[i]);
     g_free(param_array);
-    return TRUE;
+    pthread_mutex_unlock(&mainw->interp_mutex);
+   return TRUE;
   }
 
   num_values=weed_leaf_num_elements(param,"value");

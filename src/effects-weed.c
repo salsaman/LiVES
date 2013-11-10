@@ -88,12 +88,12 @@ void lives_free_normal(void *ptr) {
 
 void filter_mutex_lock(int key) {
   // lock a filter before setting the "value" of in_parameter or reading the "value" of an out_parameter
-  if (key>=0&&key<FX_KEYS_MAX_VIRTUAL) pthread_mutex_lock(&mainw->data_mutex[key]);
+  if (key>=0&&key<FX_KEYS_MAX) pthread_mutex_lock(&mainw->data_mutex[key]);
   //g_print ("lock %d\n",key);
 }
 
 void filter_mutex_unlock(int key) {
-  if (key>=0&&key<FX_KEYS_MAX_VIRTUAL) pthread_mutex_unlock(&mainw->data_mutex[key]);
+  if (key>=0&&key<FX_KEYS_MAX) pthread_mutex_unlock(&mainw->data_mutex[key]);
   //g_print ("unlock %d\n",key);
 }
 
@@ -2655,7 +2655,7 @@ static lives_filter_error_t weed_apply_audio_instance_inner (weed_plant_t *inst,
 
   // TODO - handle the following:
   // input audio_channels are mono, but the plugin NEEDS stereo
-  
+
   if (weed_plant_has_leaf(inst,"host_key")) key=weed_get_int_value(inst,"host_key",&error);
 
   if (!weed_plant_has_leaf(inst,"in_channels")||(in_channels=weed_get_plantptr_array(inst,"in_channels",&error))==NULL) 

@@ -53,11 +53,12 @@ static LiVESTreeModel *cmodel;
 
 static gchar *lctext;
 
-static void switch_fx_state(int hotkey) {
+static void switch_fx_state(int okey, int hotkey) {
   // switch effect state when a connection to ACTIVATE is present
   uint32_t last_grabable_effect=mainw->last_grabable_effect;
   // use -hotkey to indicate auto
   filter_mutex_unlock(hotkey-1);
+  if (okey>-1) filter_mutex_unlock(okey);
 
   rte_on_off_callback_hook(NULL,LIVES_INT_TO_POINTER(-hotkey));
 
@@ -762,7 +763,7 @@ static boolean params_compatible(weed_plant_t *sparam, weed_plant_t *dparam) {
 
 
 
-boolean pconx_convert_value_data(weed_plant_t *inst, int pnum, weed_plant_t *dparam, weed_plant_t *sparam, boolean autoscale) {
+boolean pconx_convert_value_data(weed_plant_t *inst, int pnum, weed_plant_t *dparam, int okey, weed_plant_t *sparam, boolean autoscale) {
   // try to convert values of various type, if we succeed, copy the "value" and return TRUE (if changed)
   weed_plant_t *dptmpl,*sptmpl;
 
@@ -1160,7 +1161,7 @@ boolean pconx_convert_value_data(weed_plant_t *inst, int pnum, weed_plant_t *dpa
 	pthread_mutex_unlock(&mainw->fxd_active_mutex);
 	if ((valsb[0]==WEED_TRUE&&!(mainw->rte&(GU641<<(key))))||
 	    (valsb[0]==WEED_FALSE&&(mainw->rte&(GU641<<(key))))) {
-	  switch_fx_state(key+1);
+	  switch_fx_state(okey,key+1);
 	}
 	weed_free(valsb);
 	return retval;
@@ -1424,7 +1425,7 @@ boolean pconx_chain_data(int key, int mode) {
 	filter_mutex_lock(okey);
 
 	changed=pconx_convert_value_data(inst,i,key==FX_DATA_KEY_PLAYBACK_PLUGIN?(weed_plant_t *)pp_get_param(mainw->vpp->play_params,i)
-					 :inparam,oparam,autoscale);
+					 :inparam,okey,oparam,autoscale);
 
 	filter_mutex_unlock(key);
 	filter_mutex_unlock(okey);
@@ -1486,7 +1487,7 @@ boolean pconx_chain_data_internal(weed_plant_t *inst) {
       autoscale=FALSE;
       if (weed_plant_has_leaf(in_params[i],"host_internal_connection_autoscale")&&
 	  weed_get_boolean_value(in_params[i],"host_internal_connection_autoscale",&error)==WEED_TRUE) autoscale=TRUE;
-      if (pconx_convert_value_data(inst,i,in_params[i],weed_get_plantptr_value(in_params[i],"host_internal_connection",&error),autoscale)) {
+      if (pconx_convert_value_data(inst,i,in_params[i],-1,weed_get_plantptr_value(in_params[i],"host_internal_connection",&error),autoscale)) {
 
 	copyto=set_copy_to(inst,i,TRUE);
 

@@ -27,6 +27,7 @@
 #include "support.h"
 #include "cvirtual.h"
 #include "resample.h"
+#include "ce_thumbs.h"
 
 //////////// Effects ////////////////
 
@@ -765,7 +766,7 @@ boolean on_realfx_activate_inner(int type, lives_rfx_t *rfx) {
       lives_widget_context_update();
       gdk_window_raise(lives_widget_get_xwindow(resaudw->dialog));
 
-      if (lives_dialog_run(GTK_DIALOG(resaudw->dialog))!=GTK_RESPONSE_OK) return FALSE;
+      if (lives_dialog_run(LIVES_DIALOG(resaudw->dialog))!=GTK_RESPONSE_OK) return FALSE;
       if (mainw->error) {
 	mainw->error=FALSE;
 	return FALSE;
@@ -916,6 +917,7 @@ weed_plant_t *on_rte_apply (weed_plant_t *layer, int opwidth, int opheight, weed
     weed_set_int_value(init_event,"out_tracks",0);
 
     filter_error=weed_apply_instance(resize_instance,init_event,layers,0,0,tc);
+    filter_error=filter_error; // stop compiler complaining
     retlayer=layers[0];
     weed_plant_free(init_event);
   }
@@ -1032,37 +1034,54 @@ weed_plant_t *get_blend_layer(weed_timecode_t tc) {
 
 boolean rte_on_off_callback (GtkAccelGroup *group, GObject *obj, guint keyval, GdkModifierType mod, gpointer user_data) {
 // this is the callback which happens when a rte is keyed
-  gint key=GPOINTER_TO_INT(user_data);
-  guint new_rte=GU641<<(key-1);
+  int key=LIVES_POINTER_TO_INT(user_data);
+  uint64_t new_rte;
+  boolean is_auto=FALSE;
 
   mainw->osc_block=TRUE;
+
+  if (key<0) {
+    is_auto=TRUE;
+    key=-key;
+  }
+
+  new_rte=GU641<<(key-1);
 
   if (key==EFFECT_NONE) {
     // switch up/down keys to default (fps change)
     weed_deinit_all(FALSE);
   }
   else {
-    mainw->rte^=new_rte;
-    if (mainw->rte&new_rte) {
+    if (!(mainw->rte&new_rte)) {
       // switch is ON
-      mainw->last_grabable_effect=key-1;
-
-      if (rte_window!=NULL) rtew_set_keych(key-1,TRUE);
-
       // WARNING - if we start playing because a generator was started, we block here
       if (!(weed_init_effect(key-1))) {
 	// ran out of instance slots, no effect assigned, or some other error
-	mainw->rte^=new_rte;
-	if (rte_window!=NULL&&group!=NULL) rtew_set_keych(key-1,FALSE);
+	if (mainw->rte&new_rte) mainw->rte^=new_rte;
+	if (rte_window!=NULL) rtew_set_keych(key-1,FALSE);
+	if (mainw->ce_thumbs) ce_thumbs_set_keych(key-1,FALSE);
 	mainw->osc_block=FALSE;
 	return TRUE;
+      }
+
+      if (!(mainw->rte&new_rte)) mainw->rte|=new_rte;
+
+      mainw->last_grabable_effect=key-1;
+      if (rte_window!=NULL) rtew_set_keych(key-1,TRUE);
+      if (mainw->ce_thumbs) {
+	ce_thumbs_set_keych(key-1,TRUE);
+
+	// if effect was auto (from ACTIVATE data connection), leave all param boxes
+	// otherwise, remove any which are not "pinned"
+	if (!is_auto) ce_thumbs_add_param_box(key-1,!is_auto);
       }
     }
     else {
       // effect is OFF
       weed_deinit_effect(key-1);
-      if (mainw->rte&(GU641<<(key-1))) mainw->rte^=(GU641<<(key-1));
-      if (rte_window!=NULL&&group!=NULL) rtew_set_keych(key-1,FALSE);
+      if (mainw->rte&new_rte) mainw->rte^=new_rte;
+      if (rte_window!=NULL) rtew_set_keych(key-1,FALSE);
+      if (mainw->ce_thumbs) ce_thumbs_set_keych(key-1,FALSE);
     }
   }
 
@@ -1080,6 +1099,13 @@ boolean rte_on_off_callback (GtkAccelGroup *group, GObject *obj, guint keyval, G
   }
   else lives_widget_set_sensitive(mainw->rendered_fx[0].menuitem,FALSE);
 
+  if (key>0&&!is_auto) {
+    // user override any ACTIVATE data connection
+    override_if_active_input(key);
+
+    // if this is an outlet for ACTIVATE, disable the override now
+    end_override_if_activate_output(key);
+  }
 
   return TRUE;
 }
@@ -1157,6 +1183,8 @@ boolean swap_fg_bg_callback (GtkAccelGroup *group, GObject *obj, guint keyval, G
   mainw->blend_file=old_file;
 
   rte_swap_fg_bg();
+  if (mainw->ce_thumbs&&(mainw->active_sa_clips==SCREEN_AREA_BACKGROUND||mainw->active_sa_clips==SCREEN_AREA_FOREGROUND)) 
+    ce_thumbs_highlight_current_clip();
   return TRUE;
 
   // **TODO - for weed, invert all transition parameters for any active effects

@@ -85,19 +85,19 @@ void create_merge_dialog (void) {
   merge_opts->merge_dialog = lives_standard_dialog_new (_("LiVES: - Merge"),FALSE);
 
   accel_group = GTK_ACCEL_GROUP(lives_accel_group_new ());
-  gtk_window_add_accel_group (GTK_WINDOW (merge_opts->merge_dialog), accel_group);
+  lives_window_add_accel_group (LIVES_WINDOW (merge_opts->merge_dialog), accel_group);
 
   if (prefs->show_gui) {
-    gtk_window_set_transient_for(GTK_WINDOW(merge_opts->merge_dialog),GTK_WINDOW(mainw->LiVES));
+    lives_window_set_transient_for(LIVES_WINDOW(merge_opts->merge_dialog),GTK_WINDOW(mainw->LiVES));
   }
 
-  dialog_vbox = lives_dialog_get_content_area(GTK_DIALOG(merge_opts->merge_dialog));
+  dialog_vbox = lives_dialog_get_content_area(LIVES_DIALOG(merge_opts->merge_dialog));
 
   vbox = lives_vbox_new (FALSE, 0);
-  lives_box_pack_start (GTK_BOX (dialog_vbox), vbox, TRUE, TRUE, 0);
+  lives_box_pack_start (LIVES_BOX (dialog_vbox), vbox, TRUE, TRUE, 0);
 
   hbox = lives_hbox_new (FALSE, 0);
-  lives_box_pack_start (GTK_BOX (vbox), hbox, FALSE, FALSE, widget_opts.packing_height*2);
+  lives_box_pack_start (LIVES_BOX (vbox), hbox, FALSE, FALSE, widget_opts.packing_height*2);
 
   txt=g_strdup_printf(_ ("Merge Clipboard [ %d Frames ]       With Selection [ %d Frames ]"),clipboard->frames,cfile->end-cfile->start+1);
   if (prefs->ins_resample&&clipboard->fps!=cfile->fps) {
@@ -111,7 +111,7 @@ void create_merge_dialog (void) {
   label = lives_standard_label_new (txt);
   g_free(txt);
 
-  lives_box_pack_start (GTK_BOX (hbox), label, FALSE, FALSE, 0);
+  lives_box_pack_start (LIVES_BOX (hbox), label, FALSE, FALSE, 0);
 
   add_fill_to_box(LIVES_BOX(hbox));
 
@@ -127,12 +127,12 @@ void create_merge_dialog (void) {
 
 
   hbox = lives_hbox_new (FALSE, 0);
-  lives_box_pack_start (GTK_BOX (vbox), hbox, FALSE, TRUE, widget_opts.packing_height*2);
+  lives_box_pack_start (LIVES_BOX (vbox), hbox, FALSE, TRUE, widget_opts.packing_height*2);
 
   if ((cfile->end-cfile->start+1)<cb_frames) {
     // hide loop controls if selection is smaller than clipboard
     label = lives_standard_label_new (_("What to do with extra clipboard frames -"));
-    lives_box_pack_start (GTK_BOX (hbox), label, FALSE, FALSE, 0);
+    lives_box_pack_start (LIVES_BOX (hbox), label, FALSE, FALSE, 0);
 
     merge_opts->ins_frame_button=lives_standard_radio_button_new(_("_Insert Frames"),TRUE,radiobutton_insdrop_group,LIVES_BOX(hbox),NULL);
     radiobutton_insdrop_group = lives_radio_button_get_group (LIVES_RADIO_BUTTON (merge_opts->ins_frame_button));
@@ -150,7 +150,7 @@ void create_merge_dialog (void) {
        (int)((cfile->end-cfile->start+1)/cb_frames), 1., 10., 0, LIVES_BOX(hbox), NULL);
     
 
-    lives_spin_button_set_value (GTK_SPIN_BUTTON (merge_opts->spinbutton_loops),mainw->last_transition_loops);
+    lives_spin_button_set_value (LIVES_SPIN_BUTTON (merge_opts->spinbutton_loops),mainw->last_transition_loops);
     lives_widget_set_sensitive(merge_opts->spinbutton_loops,!mainw->last_transition_loop_to_fit);
 
     g_signal_connect_after (GTK_OBJECT (merge_opts->spinbutton_loops), "value_changed",
@@ -168,11 +168,11 @@ void create_merge_dialog (void) {
   add_hsep_to_box(LIVES_BOX(vbox));
   
   hbox = lives_hbox_new (TRUE, 0);
-  lives_box_pack_start (GTK_BOX (vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
+  lives_box_pack_start (LIVES_BOX (vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
 
   transition_combo = lives_standard_combo_new (_("_Transition Method:"),TRUE,merge_opts->trans_list,LIVES_BOX(hbox),NULL);
 
-  lives_combo_set_active_index(GTK_COMBO_BOX(transition_combo),defstart);
+  lives_combo_set_active_index(LIVES_COMBO(transition_combo),defstart);
 
   mainw->last_transition_idx=merge_opts->list_to_rfx_index[defstart];
 
@@ -181,9 +181,9 @@ void create_merge_dialog (void) {
 
   // now the dynamic part...
   merge_opts->param_vbox = lives_vbox_new (FALSE, 0);
-  lives_container_set_border_width (GTK_CONTAINER(merge_opts->param_vbox), widget_opts.border_width>>1);
+  lives_container_set_border_width (LIVES_CONTAINER(merge_opts->param_vbox), widget_opts.border_width>>1);
 
-  lives_box_pack_start (GTK_BOX (vbox), merge_opts->param_vbox, TRUE, TRUE, 0);
+  lives_box_pack_start (LIVES_BOX (vbox), merge_opts->param_vbox, TRUE, TRUE, 0);
 
   rfx=&mainw->rendered_fx[mainw->last_transition_idx];
   mainw->overflow_height=900;
@@ -207,11 +207,11 @@ void create_merge_dialog (void) {
   gtk_button_box_set_layout (GTK_BUTTON_BOX (dialog_action_area), GTK_BUTTONBOX_END);
 
   cancelbutton = lives_button_new_from_stock ("gtk-cancel");
-  lives_dialog_add_action_widget (GTK_DIALOG (merge_opts->merge_dialog), cancelbutton, GTK_RESPONSE_CANCEL);
+  lives_dialog_add_action_widget (LIVES_DIALOG (merge_opts->merge_dialog), cancelbutton, GTK_RESPONSE_CANCEL);
   lives_widget_set_can_focus (cancelbutton,TRUE);
 
   okbutton = lives_button_new_from_stock ("gtk-ok");
-  lives_dialog_add_action_widget (GTK_DIALOG (merge_opts->merge_dialog), okbutton, GTK_RESPONSE_OK);
+  lives_dialog_add_action_widget (LIVES_DIALOG (merge_opts->merge_dialog), okbutton, GTK_RESPONSE_OK);
   lives_widget_set_can_focus_and_default (okbutton);
   lives_widget_grab_default (okbutton);
 
@@ -262,7 +262,7 @@ void on_trans_method_changed (GtkComboBox *combo, gpointer user_data) {
 
   rfx=&mainw->rendered_fx[mainw->last_transition_idx];
 
-  gtk_container_foreach (GTK_CONTAINER(merge_opts->param_vbox),bang,NULL);
+  gtk_container_foreach (LIVES_CONTAINER(merge_opts->param_vbox),bang,NULL);
   on_paramwindow_cancel_clicked (NULL,rfx);
 
   idx=lives_list_index(merge_opts->trans_list,txt);
@@ -313,7 +313,7 @@ on_merge_cancel_clicked                   (GtkButton       *button,
   lives_rfx_t *rfx=(lives_rfx_t *)user_data;
   on_paramwindow_cancel_clicked (NULL,rfx);
   if (merge_opts->spinbutton_loops!=NULL) 
-    mainw->last_transition_loops=lives_spin_button_get_value_as_int (GTK_SPIN_BUTTON (merge_opts->spinbutton_loops));
+    mainw->last_transition_loops=lives_spin_button_get_value_as_int (LIVES_SPIN_BUTTON (merge_opts->spinbutton_loops));
   lives_widget_destroy(merge_opts->merge_dialog);
   lives_widget_context_update();
   mainw->last_transition_loop_to_fit=merge_opts->loop_to_fit;
@@ -334,23 +334,23 @@ on_merge_ok_clicked                   (GtkButton       *button,
 				       gpointer         user_data)
 {
   gchar *msg;
-  gint start,end;
+  int start,end;
 
-  gint cb_start=1;
+  int cb_start=1;
   boolean cb_video_change=FALSE;
-  gint current_file=mainw->current_file;
-  gint old_frames=clipboard->frames;
+  int current_file=mainw->current_file;
+  int old_frames=clipboard->frames;
 
   // save original values in case we cancel
-  gint oundo_start=cfile->undo_start;
-  gint oundo_end=cfile->undo_end;
-  gint cb_end,excess_frames;
-  gint times_to_loop=1;
+  int oundo_start=cfile->undo_start;
+  int oundo_end=cfile->undo_end;
+  int cb_end,excess_frames;
+  int times_to_loop=1;
 
   lives_rfx_t *rfx;
 
   if (merge_opts->spinbutton_loops!=NULL) 
-    mainw->last_transition_loops=lives_spin_button_get_value_as_int (GTK_SPIN_BUTTON (merge_opts->spinbutton_loops));
+    mainw->last_transition_loops=lives_spin_button_get_value_as_int (LIVES_SPIN_BUTTON (merge_opts->spinbutton_loops));
 
   mainw->last_transition_loop_to_fit=merge_opts->loop_to_fit;
   mainw->last_transition_ins_frames=merge_opts->ins_frames;
@@ -371,7 +371,7 @@ on_merge_ok_clicked                   (GtkButton       *button,
   }
 
   if (merge_opts->spinbutton_loops!=NULL) 
-    times_to_loop=lives_spin_button_get_value_as_int(GTK_SPIN_BUTTON(merge_opts->spinbutton_loops));
+    times_to_loop=lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(merge_opts->spinbutton_loops));
   else 
     times_to_loop=1;
 

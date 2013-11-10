@@ -47,6 +47,7 @@
 #include "stream.h"
 #include "startup.h"
 #include "cvirtual.h"
+#include "ce_thumbs.h"
 
 #ifdef ENABLE_OSC
 #include "omc-learn.h"
@@ -208,7 +209,9 @@ void get_monitors(void) {
   register int k;
 #endif
 
-  gint nscreens,nmonitors;
+  gchar buff[256];
+
+  int nscreens,nmonitors;
   register int i,j,idx=0;
 
   if (mainw->mgeom!=NULL) g_free(mainw->mgeom);
@@ -271,6 +274,7 @@ void get_monitors(void) {
 	mainw->mgeom[idx].disp=disp;
 	mainw->mgeom[idx].screen=screen;
 	idx++;
+	if (idx>=capable->nmonitors) break;
       }
     }
 #if GTK_CHECK_VERSION(3,0,0)
@@ -280,6 +284,34 @@ void get_monitors(void) {
   }
 
   g_slist_free(dislist);
+
+  prefs->gui_monitor=0;
+  prefs->play_monitor=1;
+
+  if (capable->nmonitors>1) {
+
+    get_pref("monitors",buff,256);
+
+    if (strlen(buff)==0||get_token_count(buff,',')==1) {
+      prefs->gui_monitor=1;
+      prefs->play_monitor=2;
+    }
+    else {
+      gchar **array=g_strsplit(buff,",",2);
+      prefs->gui_monitor=atoi(array[0]);
+      prefs->play_monitor=atoi(array[1]);
+      g_strfreev(array);
+    }
+
+    if (prefs->gui_monitor<1) prefs->gui_monitor=1;
+    if (prefs->play_monitor<0) prefs->play_monitor=0;
+    if (prefs->gui_monitor>capable->nmonitors) prefs->gui_monitor=capable->nmonitors;
+    if (prefs->play_monitor>capable->nmonitors) prefs->play_monitor=capable->nmonitors;
+  }
+
+  mainw->scr_width=mainw->mgeom[prefs->gui_monitor>0?prefs->gui_monitor-1:0].width;
+  mainw->scr_height=mainw->mgeom[prefs->gui_monitor>0?prefs->gui_monitor-1:0].height;
+
 }
 
 
@@ -294,8 +326,11 @@ static boolean pre_init(void) {
   pthread_mutexattr_t mattr;
 
   gchar buff[256];
-  int i;
+
   boolean needs_update=FALSE;
+
+  register int i;
+
 
   sizint=sizeof(gint);
   sizdbl=sizeof(gdouble);
@@ -320,11 +355,15 @@ static boolean pre_init(void) {
   pthread_mutexattr_settype(&mattr,PTHREAD_MUTEX_RECURSIVE); 
   pthread_mutex_init(&mainw->gtk_mutex,&mattr);
 
-  pthread_mutex_init(&mainw->interp_mutex,NULL);
+  pthread_mutex_init(&mainw->interp_mutex,&mattr);
 
   pthread_mutex_init(&mainw->abuf_mutex,NULL);
-  pthread_mutex_init(&mainw->afilter_mutex,&mattr); // mattr because audio filters can pull values from data connections
-  pthread_mutex_init(&mainw->data_mutex,&mattr); // mattr because audio filters can pull values from data connections
+
+  pthread_mutex_init(&mainw->fxd_active_mutex,NULL);
+
+  for (i=0;i<FX_KEYS_MAX_VIRTUAL;i++) {
+    pthread_mutex_init(&mainw->data_mutex[i],&mattr); // because audio filters can enable/disable video filters and vice-versa
+  }
 
   mainw->vrfx_update=NULL;
 
@@ -332,6 +371,8 @@ static boolean pre_init(void) {
 
   prefs=(_prefs *)g_malloc0(sizeof(_prefs));
   future_prefs=(_future_prefs *)g_malloc(sizeof(_future_prefs));
+
+  prefs->gui_monitor=-1;
 
   prefs->wm=NULL;
   prefs->sleep_time=1000;
@@ -361,7 +402,7 @@ static boolean pre_init(void) {
 
 
   prefs->show_gui=TRUE;
-  prefs->show_splash=TRUE;
+  prefs->show_splash=FALSE;
   prefs->show_playwin=TRUE;
   prefs->sepwin_type=1;
   prefs->show_framecount=TRUE;
@@ -385,17 +426,20 @@ static boolean pre_init(void) {
   memset(prefs->yuvin,0,1);
 #endif
 
-  if (!capable->smog_version_correct||!capable->can_write_to_tempdir) {
-    g_snprintf(prefs->theme,64,"none");
-    return FALSE;
-  }
-
-  // from here onwards we can use get_pref() and friends  //////
 #ifndef IS_MINGW
   capable->rcfile=g_strdup_printf("%s/.lives",capable->home_dir);
 #else
   capable->rcfile=g_strdup_printf("%s/LiVES.ini",capable->home_dir);
 #endif
+
+  if (!capable->smog_version_correct||!capable->can_write_to_tempdir) {
+    g_snprintf(prefs->theme,64,"none");
+    return FALSE;
+  }
+
+  prefs->show_splash=TRUE;
+
+  // from here onwards we can use get_pref() and friends  //////
   cache_file_contents(capable->rcfile);
 
   get_pref("gui_theme",prefs->theme,64);
@@ -483,39 +527,12 @@ static boolean pre_init(void) {
   future_prefs->jack_opts=get_int_pref("jack_opts");
   prefs->jack_opts=future_prefs->jack_opts;
 
-  prefs->gui_monitor=0;
-  prefs->play_monitor=0;
-
   mainw->mgeom=NULL;
   prefs->virt_height=1;
 
   prefs->force_single_monitor=get_boolean_pref("force_single_monitor");
 
   get_monitors();
-
-  if (capable->nmonitors>1) {
-
-    get_pref("monitors",buff,256);
-
-    if (strlen(buff)==0||get_token_count(buff,',')==1) {
-      prefs->gui_monitor=1;
-      prefs->play_monitor=2;
-    }
-    else {
-      gchar **array=g_strsplit(buff,",",2);
-      prefs->gui_monitor=atoi(array[0]);
-      prefs->play_monitor=atoi(array[1]);
-      g_strfreev(array);
-    }
-
-    if (prefs->gui_monitor<1) prefs->gui_monitor=1;
-    if (prefs->play_monitor<0) prefs->play_monitor=0;
-    if (prefs->gui_monitor>capable->nmonitors) prefs->gui_monitor=capable->nmonitors;
-    if (prefs->play_monitor>capable->nmonitors) prefs->play_monitor=capable->nmonitors;
-  }
-
-  mainw->scr_width=mainw->mgeom[prefs->gui_monitor>0?prefs->gui_monitor-1:0].width;
-  mainw->scr_height=mainw->mgeom[prefs->gui_monitor>0?prefs->gui_monitor-1:0].height;
 
   for (i=0;i<MAX_FX_CANDIDATE_TYPES;i++) {
     mainw->fx_candidates[i].delegate=-1;
@@ -1024,6 +1041,16 @@ static void lives_init(_ign_opts *ign_opts) {
 
   mainw->signal_caught=0;
   mainw->signals_deferred=FALSE;
+
+  mainw->ce_thumbs=FALSE;
+
+  mainw->n_screen_areas=SCREEN_AREA_USER_DEFINED1;
+  mainw->screen_areas=(lives_screen_area_t *)g_malloc(mainw->n_screen_areas*sizeof(lives_screen_area_t));
+  mainw->screen_areas[SCREEN_AREA_FOREGROUND].name=g_strdup(_("Foreground"));
+  mainw->screen_areas[SCREEN_AREA_BACKGROUND].name=g_strdup(_("Background"));
+
+  mainw->active_sa_clips=mainw->active_sa_fx=SCREEN_AREA_FOREGROUND;
+
   /////////////////////////////////////////////////// add new stuff just above here ^^
 
 
@@ -1068,12 +1095,14 @@ static void lives_init(_ign_opts *ign_opts) {
 						      lives_widget_get_allocation_width(mainw->LiVES))/2;
       gint ycen=mainw->mgeom[prefs->gui_monitor-1].y+(mainw->mgeom[prefs->gui_monitor-1].height-
 						      lives_widget_get_allocation_height(mainw->LiVES))/2;
-      gtk_window_set_screen(GTK_WINDOW(mainw->LiVES),mainw->mgeom[prefs->gui_monitor-1].screen);
-      lives_window_move(GTK_WINDOW(mainw->LiVES),xcen,ycen);
+      lives_window_set_screen(LIVES_WINDOW(mainw->LiVES),mainw->mgeom[prefs->gui_monitor-1].screen);
+      lives_window_move(LIVES_WINDOW(mainw->LiVES),xcen,ycen);
 
     }
+
+
     if (prefs->open_maximised&&prefs->show_gui) {
-      lives_window_maximize (GTK_WINDOW(mainw->LiVES));
+      lives_window_maximize (LIVES_WINDOW(mainw->LiVES));
     }
 
     prefs->default_fps=get_double_pref("default_fps");
@@ -1134,11 +1163,17 @@ static void lives_init(_ign_opts *ign_opts) {
 
     prefs->alpha_post=FALSE; ///< allow pre-multiplied alpha internally
 
-    prefs->auto_trim_audio=TRUE;
+    prefs->auto_trim_audio=get_boolean_pref("auto_trim_pad_audio");
 
     prefs->force64bit=FALSE;
 
     prefs->present=FALSE;
+
+#if GTK_CHECK_VERSION(3,2,0)  // required for grid widget
+    prefs->ce_thumb_mode=get_boolean_pref("ce_thumb_mode");
+#else
+    prefs->ce_thumb_mode=FALSE;
+#endif
 
     //////////////////////////////////////////////////////////////////
 
@@ -1586,8 +1621,7 @@ static void lives_init(_ign_opts *ign_opts) {
 	  if (mainw->jackd!=NULL) {
 	    if (jack_open_device(mainw->jackd)) mainw->jackd=NULL;
 
-	    if (((!(prefs->jack_opts&JACK_OPTS_START_TSERVER)&&!(prefs->jack_opts&JACK_OPTS_START_ASERVER))||
-		 mainw->jackd==NULL)&&prefs->startup_phase==0) {
+	    if (mainw->jackd==NULL&&prefs->startup_phase==0) {
 #ifdef HAVE_PULSE_AUDIO
 	      gchar *otherbit="\"lives -aplayer pulse\".";
 #else
@@ -1823,6 +1857,7 @@ void set_palette_colours (void) {
     lives_widget_color_copy(&palette->info_text,&palette->normal_fore);
     lives_widget_color_copy(&palette->info_base,&palette->normal_back);
     palette->style=STYLE_1|STYLE_2|STYLE_3|STYLE_4|STYLE_5;
+    lives_widget_color_copy(&palette->menu_and_bars_fore,&palette->normal_fore);
   }
   else {
     if (!(strcmp(prefs->theme,"cutting_room"))) {
@@ -1838,6 +1873,7 @@ void set_palette_colours (void) {
       lives_widget_color_copy(&palette->menu_and_bars,&palette->white);
       lives_widget_color_copy(&palette->info_text,&palette->normal_fore);
       lives_widget_color_copy(&palette->info_base,&palette->white);
+      lives_widget_color_copy(&palette->menu_and_bars_fore,&palette->normal_fore);
       palette->style=STYLE_1|STYLE_2|STYLE_3|STYLE_4;
     }
     else {
@@ -1854,6 +1890,7 @@ void set_palette_colours (void) {
 	lives_widget_color_copy(&palette->menu_and_bars,&palette->white);
 	lives_widget_color_copy(&palette->info_base,&palette->normal_back);
 	lives_widget_color_copy(&palette->info_text,&palette->normal_fore);
+	lives_widget_color_copy(&palette->menu_and_bars_fore,&palette->normal_fore);
 	palette->style=STYLE_1|STYLE_2|STYLE_3|STYLE_4;
       }
       else {
@@ -1863,6 +1900,7 @@ void set_palette_colours (void) {
 	  lives_widget_color_copy(&palette->menu_and_bars,&palette->grey60);
 	  lives_widget_color_copy(&palette->info_base,&palette->grey20);
 	  lives_widget_color_copy(&palette->info_text,&palette->white);
+	  lives_widget_color_copy(&palette->menu_and_bars_fore,&palette->normal_fore);
 	  palette->style=STYLE_1|STYLE_2|STYLE_3|STYLE_4|STYLE_5;
 	}
 	else {
@@ -1885,6 +1923,7 @@ void set_palette_colours (void) {
 #endif      
 	      
 	    lives_widget_color_copy(&palette->info_text,&palette->black);
+	    lives_widget_color_copy(&palette->menu_and_bars_fore,&palette->normal_fore);
 
 	    palette->style=STYLE_1|STYLE_2|STYLE_3|STYLE_4;
 	  }
@@ -1895,7 +1934,7 @@ void set_palette_colours (void) {
 	      lives_widget_color_copy(&palette->menu_and_bars,&palette->grey60);
 	      lives_widget_color_copy(&palette->info_base,&palette->grey20);
 	      lives_widget_color_copy(&palette->info_text,&palette->white);
-
+	      lives_widget_color_copy(&palette->menu_and_bars_fore,&palette->normal_fore);
 	      palette->style=STYLE_1|STYLE_2|STYLE_3|STYLE_4|STYLE_5;
 
 	    }
@@ -2543,7 +2582,6 @@ static boolean lives_startup(gpointer data) {
 
   gdk_window_add_filter(NULL, filter_func, NULL);
 
-
 #if GTK_CHECK_VERSION(3,0,0)
   if (!mainw->foreign&&prefs->show_gui) {
     calibrate_sepwin_size();
@@ -2650,7 +2688,7 @@ int main (int argc, char *argv[]) {
 
 #ifdef LIVES_NO_DEBUG
   // don't crash on GTK+ fatals
-  //g_log_set_always_fatal ((GLogLevelFlags)0);
+  g_log_set_always_fatal ((GLogLevelFlags)0);
 #endif
 
   g_log_set_default_handler(lives_log_handler,NULL);
@@ -2997,9 +3035,9 @@ void set_main_title(const gchar *file, gint untitled) {
     title=g_strdup_printf(_ ("LiVES-%s: <No File>"),LiVES_VERSION);
   }
 
-  lives_window_set_title (GTK_WINDOW (mainw->LiVES), title);
+  lives_window_set_title (LIVES_WINDOW (mainw->LiVES), title);
 
-  if (mainw->playing_file==-1&&mainw->play_window!=NULL) lives_window_set_title(GTK_WINDOW(mainw->play_window),title);
+  if (mainw->playing_file==-1&&mainw->play_window!=NULL) lives_window_set_title(LIVES_WINDOW(mainw->play_window),title);
 
   g_free(title);
 }
@@ -3136,13 +3174,13 @@ void sensitize(void) {
  
   if (mainw->current_file>0&&!(cfile->menuentry==NULL)) {
     g_signal_handler_block(mainw->spinbutton_end,mainw->spin_end_func);
-    lives_spin_button_set_range(GTK_SPIN_BUTTON(mainw->spinbutton_end),1,cfile->frames);
-    lives_spin_button_set_value(GTK_SPIN_BUTTON(mainw->spinbutton_end),cfile->end);
+    lives_spin_button_set_range(LIVES_SPIN_BUTTON(mainw->spinbutton_end),1,cfile->frames);
+    lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_end),cfile->end);
     g_signal_handler_unblock(mainw->spinbutton_end,mainw->spin_end_func);
     
     g_signal_handler_block(mainw->spinbutton_start,mainw->spin_start_func);
-    lives_spin_button_set_range(GTK_SPIN_BUTTON(mainw->spinbutton_start),1,cfile->frames);
-    lives_spin_button_set_value(GTK_SPIN_BUTTON(mainw->spinbutton_start),cfile->start);
+    lives_spin_button_set_range(LIVES_SPIN_BUTTON(mainw->spinbutton_start),1,cfile->frames);
+    lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_start),cfile->start);
     g_signal_handler_unblock(mainw->spinbutton_start,mainw->spin_start_func);
 
     lives_widget_set_sensitive(mainw->spinbutton_start,TRUE);
@@ -3292,12 +3330,12 @@ procw_desensitize(void) {
   // better to clamp the range than make insensitive, this way we stop
   // other widgets (like the video bar) updating it
   g_signal_handler_block(mainw->spinbutton_end,mainw->spin_end_func);
-  lives_spin_button_set_range(GTK_SPIN_BUTTON(mainw->spinbutton_end),cfile->end,cfile->end);
-  lives_spin_button_set_value(GTK_SPIN_BUTTON(mainw->spinbutton_end),cfile->end);
+  lives_spin_button_set_range(LIVES_SPIN_BUTTON(mainw->spinbutton_end),cfile->end,cfile->end);
+  lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_end),cfile->end);
   g_signal_handler_unblock(mainw->spinbutton_end,mainw->spin_end_func);
   g_signal_handler_block(mainw->spinbutton_start,mainw->spin_start_func);
-  lives_spin_button_set_range(GTK_SPIN_BUTTON(mainw->spinbutton_start),cfile->start,cfile->start);
-  lives_spin_button_set_value(GTK_SPIN_BUTTON(mainw->spinbutton_start),cfile->start);
+  lives_spin_button_set_range(LIVES_SPIN_BUTTON(mainw->spinbutton_start),cfile->start,cfile->start);
+  lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_start),cfile->start);
   g_signal_handler_unblock(mainw->spinbutton_start,mainw->spin_start_func);
 
   if (mainw->play_window!=NULL&&(mainw->prv_link==PRV_START||mainw->prv_link==PRV_END)) {
@@ -3337,14 +3375,6 @@ void set_ce_frame_from_pixbuf(GtkImage *image, GdkPixbuf *pixbuf, lives_painter_
   else cr=cairo;
 
   if (cr==NULL) return;
-
-  lives_painter_set_source_to_bg(cr,LIVES_WIDGET(image));
-
-  lives_painter_rectangle(cr,0,0,
-			  rwidth,
-			  rheight);
-  lives_painter_fill(cr);
-  
   if (pixbuf!=NULL) {
     int width=lives_pixbuf_get_width(pixbuf);
     int height=lives_pixbuf_get_height(pixbuf);
@@ -3355,6 +3385,14 @@ void set_ce_frame_from_pixbuf(GtkImage *image, GdkPixbuf *pixbuf, lives_painter_
     lives_painter_rectangle(cr,cx,cy,
 			    width,
 			    height);
+    lives_painter_fill(cr);
+  }
+  else {
+    lives_painter_set_source_to_bg(cr,LIVES_WIDGET(image));
+
+    lives_painter_rectangle(cr,0,0,
+			    rwidth,
+			    rheight);
     lives_painter_fill(cr);
   }
   if (cairo==NULL) lives_painter_destroy(cr);
@@ -3368,14 +3406,17 @@ void set_ce_frame_from_pixbuf(GtkImage *image, GdkPixbuf *pixbuf, lives_painter_
 
 
 
-void load_start_image(gint frame) {
+void load_start_image(int frame) {
   GdkPixbuf *start_pixbuf=NULL;
+
   weed_plant_t *layer;
+
   weed_timecode_t tc;
-  gint rwidth,rheight,width,height;
-  boolean noswitch=mainw->noswitch;
+
   LiVESInterpType interp;
 
+  boolean noswitch=mainw->noswitch;
+  int rwidth,rheight,width,height;
 
   if (!prefs->show_gui) return;
 
@@ -3385,12 +3426,12 @@ void load_start_image(gint frame) {
   g_signal_handlers_block_by_func(mainw->image272,(gpointer)expose_sim,NULL);
 #endif
 
-  if (mainw->current_file>-1&&(cfile->clip_type==CLIP_TYPE_YUV4MPEG||cfile->clip_type==CLIP_TYPE_VIDEODEV)) {
+  if (mainw->current_file>-1&&cfile!=NULL&&(cfile->clip_type==CLIP_TYPE_YUV4MPEG||cfile->clip_type==CLIP_TYPE_VIDEODEV)) {
     if (mainw->camframe==NULL) {
       GError *error=NULL;
       gchar *tmp=g_build_filename(prefs->prefix_dir,THEME_DIR,"camera","frame.jpg",NULL);
-      mainw->camframe=gdk_pixbuf_new_from_file(tmp,&error);
-      if (mainw->camframe!=NULL) gdk_pixbuf_saturate_and_pixelate(mainw->camframe,mainw->camframe,0.0,FALSE);
+      mainw->camframe=lives_pixbuf_new_from_file(tmp,&error);
+      if (mainw->camframe!=NULL) lives_pixbuf_saturate_and_pixelate(mainw->camframe,mainw->camframe,0.0,FALSE);
       g_free(tmp);
     }
     set_ce_frame_from_pixbuf(GTK_IMAGE(mainw->image272),mainw->camframe,NULL);
@@ -3422,6 +3463,16 @@ void load_start_image(gint frame) {
 
   if (!prefs->ce_maxspect||(mainw->double_size&&mainw->playing_file>-1)) {
     threaded_dialog_spin();
+
+    // if we are not playing, and it would be slow to seek to the frame, convert it to an image
+    if (mainw->playing_file==-1&&cfile->clip_type==CLIP_TYPE_FILE&&!check_if_non_virtual(mainw->current_file,frame,frame)&&cfile->ext_src!=NULL) {
+      lives_clip_data_t *cdata=((lives_decoder_t *)cfile->ext_src)->cdata;
+      if (cdata!=NULL&&!(cdata->seek_flag&LIVES_SEEK_FAST)) {
+	boolean resb=virtual_to_images(mainw->current_file,frame,frame,FALSE,NULL);
+	resb=resb; // dont care (much) if it fails
+      }
+    }
+
     layer=weed_plant_new(WEED_PLANT_CHANNEL);
     weed_set_int_value(layer,"clip",mainw->current_file);
     weed_set_int_value(layer,"frame",frame);
@@ -3433,7 +3484,7 @@ void load_start_image(gint frame) {
       start_pixbuf=layer_to_pixbuf(layer);
     }
     weed_plant_free(layer);
-  
+
     if (GDK_IS_PIXBUF(start_pixbuf)) {
       set_ce_frame_from_pixbuf(GTK_IMAGE(mainw->image272),start_pixbuf,NULL);
     }
@@ -3471,6 +3522,16 @@ void load_start_image(gint frame) {
 
     calc_maxspect(rwidth,rheight,&width,&height);
 
+    // if we are not playing, and it would be slow to seek to the frame, convert it to an image
+    if (mainw->playing_file==-1&&cfile->clip_type==CLIP_TYPE_FILE&&!check_if_non_virtual(mainw->current_file,frame,frame)&&cfile->ext_src!=NULL) {
+      lives_clip_data_t *cdata=((lives_decoder_t *)cfile->ext_src)->cdata;
+      if (cdata!=NULL&&!(cdata->seek_flag&LIVES_SEEK_FAST)) {
+	boolean resb=virtual_to_images(mainw->current_file,frame,frame,FALSE,NULL);
+	resb=resb; // dont care (much) if it fails
+	
+      }
+    }
+
     layer=weed_plant_new(WEED_PLANT_CHANNEL);
     weed_set_int_value(layer,"clip",mainw->current_file);
     weed_set_int_value(layer,"frame",frame);
@@ -3482,7 +3543,7 @@ void load_start_image(gint frame) {
       start_pixbuf=layer_to_pixbuf(layer);
     }
     weed_plant_free(layer);
-  
+
     if (GDK_IS_PIXBUF(start_pixbuf)) {
       set_ce_frame_from_pixbuf(GTK_IMAGE(mainw->image272),start_pixbuf,NULL);
     }
@@ -3536,12 +3597,12 @@ void load_end_image(gint frame) {
   g_signal_handlers_block_by_func(mainw->image273,(gpointer)expose_sim,NULL);
 #endif
 
-  if (mainw->current_file>-1&&(cfile->clip_type==CLIP_TYPE_YUV4MPEG||cfile->clip_type==CLIP_TYPE_VIDEODEV)) {
+  if (mainw->current_file>-1&&cfile!=NULL&&(cfile->clip_type==CLIP_TYPE_YUV4MPEG||cfile->clip_type==CLIP_TYPE_VIDEODEV)) {
     if (mainw->camframe==NULL) {
       GError *error=NULL;
       gchar *tmp=g_build_filename(prefs->prefix_dir,THEME_DIR,"camera","frame.jpg",NULL);
-      mainw->camframe=gdk_pixbuf_new_from_file(tmp,&error);
-      if (mainw->camframe!=NULL) gdk_pixbuf_saturate_and_pixelate(mainw->camframe,mainw->camframe,0.0,FALSE);
+      mainw->camframe=lives_pixbuf_new_from_file(tmp,&error);
+      if (mainw->camframe!=NULL) lives_pixbuf_saturate_and_pixelate(mainw->camframe,mainw->camframe,0.0,FALSE);
       g_free(tmp);
     }
     set_ce_frame_from_pixbuf(GTK_IMAGE(mainw->image273),mainw->camframe,NULL);
@@ -3570,6 +3631,16 @@ void load_end_image(gint frame) {
 
   if (!prefs->ce_maxspect||(mainw->double_size&&mainw->playing_file>-1)) {
     threaded_dialog_spin();
+
+    // if we are not playing, and it would be slow to seek to the frame, convert it to an image
+    if (mainw->playing_file==-1&&cfile->clip_type==CLIP_TYPE_FILE&&!check_if_non_virtual(mainw->current_file,frame,frame)&&cfile->ext_src!=NULL) {
+      lives_clip_data_t *cdata=((lives_decoder_t *)cfile->ext_src)->cdata;
+      if (cdata!=NULL&&!(cdata->seek_flag&LIVES_SEEK_FAST)) {
+	boolean resb=virtual_to_images(mainw->current_file,frame,frame,FALSE,NULL);
+	resb=resb; // dont care (much) if it fails
+      }
+    }
+
     layer=weed_plant_new(WEED_PLANT_CHANNEL);
     weed_set_int_value(layer,"clip",mainw->current_file);
     weed_set_int_value(layer,"frame",frame);
@@ -3582,7 +3653,7 @@ void load_end_image(gint frame) {
       end_pixbuf=layer_to_pixbuf(layer);
     }
     weed_plant_free(layer);
-  
+
     if (GDK_IS_PIXBUF(end_pixbuf)) {
       set_ce_frame_from_pixbuf(GTK_IMAGE(mainw->image273),end_pixbuf,NULL);
     }
@@ -3616,6 +3687,15 @@ void load_end_image(gint frame) {
 
     calc_maxspect(rwidth,rheight,&width,&height);
 
+    // if we are not playing, and it would be slow to seek to the frame, convert it to an image
+    if (mainw->playing_file==-1&&cfile->clip_type==CLIP_TYPE_FILE&&!check_if_non_virtual(mainw->current_file,frame,frame)&&cfile->ext_src!=NULL) {
+      lives_clip_data_t *cdata=((lives_decoder_t *)cfile->ext_src)->cdata;
+      if (cdata!=NULL&&!(cdata->seek_flag&LIVES_SEEK_FAST)) {
+	boolean resb=virtual_to_images(mainw->current_file,frame,frame,FALSE,NULL);
+	resb=resb; // dont care (much) if it fails
+      }
+    }
+
     layer=weed_plant_new(WEED_PLANT_CHANNEL);
     weed_set_int_value(layer,"clip",mainw->current_file);
     weed_set_int_value(layer,"frame",frame);
@@ -3628,7 +3708,7 @@ void load_end_image(gint frame) {
     }
 
     weed_plant_free(layer);
-  
+
     if (GDK_IS_PIXBUF(end_pixbuf)) {
       set_ce_frame_from_pixbuf(GTK_IMAGE(mainw->image273),end_pixbuf,NULL);
     }
@@ -3691,8 +3771,8 @@ void load_preview_image(boolean update_always) {
     if (mainw->camframe==NULL) {
       GError *error=NULL;
       gchar *tmp=g_strdup_printf("%s/%s/camera/frame.jpg",prefs->prefix_dir,THEME_DIR);
-      mainw->camframe=gdk_pixbuf_new_from_file(tmp,&error);
-      if (mainw->camframe!=NULL) gdk_pixbuf_saturate_and_pixelate(mainw->camframe,mainw->camframe,0.0,FALSE);
+      mainw->camframe=lives_pixbuf_new_from_file(tmp,&error);
+      if (mainw->camframe!=NULL) lives_pixbuf_saturate_and_pixelate(mainw->camframe,mainw->camframe,0.0,FALSE);
       g_free(tmp);
     }
     pixbuf=lives_pixbuf_scale_simple(mainw->camframe,mainw->pwidth,mainw->pheight,LIVES_INTERP_BEST);
@@ -3700,8 +3780,8 @@ void load_preview_image(boolean update_always) {
     lives_object_unref(pixbuf);
     mainw->preview_frame=1;
     g_signal_handler_block(mainw->preview_spinbutton,mainw->preview_spin_func);
-    lives_spin_button_set_range(GTK_SPIN_BUTTON(mainw->preview_spinbutton),1,1);
-    lives_spin_button_set_value(GTK_SPIN_BUTTON(mainw->preview_spinbutton),1);
+    lives_spin_button_set_range(LIVES_SPIN_BUTTON(mainw->preview_spinbutton),1,1);
+    lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->preview_spinbutton),1);
     g_signal_handler_unblock(mainw->preview_spinbutton,mainw->preview_spin_func);
     lives_widget_set_size_request(mainw->preview_image,mainw->pwidth,mainw->pheight);
 #if GTK_CHECK_VERSION(3,0,0)
@@ -3716,8 +3796,8 @@ void load_preview_image(boolean update_always) {
 
     mainw->preview_frame=0;
     g_signal_handler_block(mainw->preview_spinbutton,mainw->preview_spin_func);
-    lives_spin_button_set_range(GTK_SPIN_BUTTON(mainw->preview_spinbutton),0,0);
-    lives_spin_button_set_value(GTK_SPIN_BUTTON(mainw->preview_spinbutton),0);
+    lives_spin_button_set_range(LIVES_SPIN_BUTTON(mainw->preview_spinbutton),0,0);
+    lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->preview_spinbutton),0);
     g_signal_handler_unblock(mainw->preview_spinbutton,mainw->preview_spin_func);
     if (mainw->imframe!=NULL) {
       lives_widget_set_size_request(mainw->preview_image,lives_pixbuf_get_width(mainw->imframe),lives_pixbuf_get_height(mainw->imframe));
@@ -3751,8 +3831,8 @@ void load_preview_image(boolean update_always) {
       }
 
       g_signal_handler_block(mainw->preview_spinbutton,mainw->preview_spin_func);
-      lives_spin_button_set_range(GTK_SPIN_BUTTON(mainw->preview_spinbutton),1,cfile->frames);
-      lives_spin_button_set_value(GTK_SPIN_BUTTON(mainw->preview_spinbutton),preview_frame);
+      lives_spin_button_set_range(LIVES_SPIN_BUTTON(mainw->preview_spinbutton),1,cfile->frames);
+      lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->preview_spinbutton),preview_frame);
       g_signal_handler_unblock(mainw->preview_spinbutton,mainw->preview_spin_func);
 
       mainw->preview_frame=preview_frame;
@@ -3764,6 +3844,17 @@ void load_preview_image(boolean update_always) {
   else {
     weed_plant_t *layer=weed_plant_new(WEED_PLANT_CHANNEL);
     weed_timecode_t tc=((mainw->preview_frame-1.))/cfile->fps*U_SECL;
+
+    // if we are not playing, and it would be slow to seek to the frame, convert it to an image
+    if (mainw->playing_file==-1&&cfile->clip_type==CLIP_TYPE_FILE&&
+	!check_if_non_virtual(mainw->current_file,mainw->preview_frame,mainw->preview_frame)&&cfile->ext_src!=NULL) {
+      lives_clip_data_t *cdata=((lives_decoder_t *)cfile->ext_src)->cdata;
+      if (cdata!=NULL&&!(cdata->seek_flag&LIVES_SEEK_FAST)) {
+	boolean resb=virtual_to_images(mainw->current_file,mainw->preview_frame,mainw->preview_frame,FALSE,NULL);
+	resb=resb; // dont care (much) if it fails
+      }
+    }
+
     weed_set_int_value(layer,"clip",mainw->current_file);
     weed_set_int_value(layer,"frame",mainw->preview_frame);
     if (pull_frame_at_size(layer,get_image_ext_for_type(cfile->img_type),tc,mainw->pwidth,mainw->pheight,
@@ -3799,7 +3890,7 @@ void load_preview_image(boolean update_always) {
 	
     case PRV_START:
       if (cfile->start!=mainw->preview_frame) {
-	lives_spin_button_set_value(GTK_SPIN_BUTTON(mainw->spinbutton_start),mainw->preview_frame);
+	lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_start),mainw->preview_frame);
 	get_play_times();
       }
       break;
@@ -3807,7 +3898,7 @@ void load_preview_image(boolean update_always) {
 
     case PRV_END:
       if (cfile->end!=mainw->preview_frame) {
-	lives_spin_button_set_value(GTK_SPIN_BUTTON(mainw->spinbutton_end),mainw->preview_frame);
+	lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_end),mainw->preview_frame);
 	get_play_times();
       }
       break;
@@ -3871,7 +3962,7 @@ boolean layer_from_png(FILE *fp, weed_plant_t *layer, boolean prog) {
   size_t bsize=fread(buff,1,8,fp),framesize;
   boolean is_png = !png_sig_cmp(buff, 0, bsize);
 
-  float screen_gamma=2.2;
+  float screen_gamma=SCREEN_GAMMA;
   double file_gamma;
 
   if (!is_png) return FALSE;
@@ -3906,10 +3997,11 @@ boolean layer_from_png(FILE *fp, weed_plant_t *layer, boolean prog) {
 
 #if PNG_LIBPNG_VER >= 10504
   png_set_alpha_mode(png_ptr, PNG_ALPHA_STANDARD, PNG_DEFAULT_sRGB);
-  png_set_gamma(png_ptr, screen_gamma, 1.0/screen_gamma);
-#else
-  png_set_gamma(png_ptr, screen_gamma, 1.0/screen_gamma);
 #endif
+  if (png_get_gAMA(png_ptr, info_ptr, &file_gamma))
+    png_set_gamma(png_ptr, screen_gamma, file_gamma);
+  else
+    png_set_gamma(png_ptr, screen_gamma, 1.0/screen_gamma);
   
   // read header info
   png_read_info(png_ptr, info_ptr);
@@ -3954,7 +4046,6 @@ boolean layer_from_png(FILE *fp, weed_plant_t *layer, boolean prog) {
   height = png_get_image_height(png_ptr, info_ptr);
   *rowstrides = png_get_rowbytes(png_ptr, info_ptr);
   
-  png_get_gAMA(png_ptr, info_ptr, &file_gamma);
 
   weed_set_int_value(layer,"width",width);
   weed_set_int_value(layer,"height",height);
@@ -3968,7 +4059,7 @@ boolean layer_from_png(FILE *fp, weed_plant_t *layer, boolean prog) {
   // so here we round up
   framesize=CEIL(*rowstrides*height,32);
 
-  ptr=mem=(unsigned char *)g_malloc(framesize);
+  ptr=mem=(unsigned char *)g_malloc(framesize+64);
   weed_set_voidptr_value(layer, "pixel_data", mem);
   
   // libpng needs pointers to each row
@@ -3984,11 +4075,6 @@ boolean layer_from_png(FILE *fp, weed_plant_t *layer, boolean prog) {
   // end read
   png_read_end(png_ptr, (png_infop)NULL);
   
-  // do we need this ? maybe only when compositing
-  //if (file_gamma!=0.) {
-    //ungamma_layer(layer,file_gamma);
-  //}
-
   g_free(row_ptrs);
 
   png_destroy_read_struct(&png_ptr, &info_ptr,
@@ -4233,6 +4319,7 @@ boolean pull_frame_at_size (weed_plant_t *layer, const gchar *image_ext, weed_ti
       if (sfile->clip_type==CLIP_TYPE_FILE&&sfile->frame_index!=NULL&&frame>0&&
 	  frame<=sfile->frames&&sfile->frame_index[frame-1]>=0) {
 	lives_decoder_t *dplug=(lives_decoder_t *)sfile->ext_src;
+	if (dplug==NULL) return FALSE;
 	if (target_palette!=dplug->cdata->current_palette) {
 	  // try to switch palette
 	  if (decplugin_supports_palette(dplug,target_palette)) {
@@ -4266,8 +4353,13 @@ boolean pull_frame_at_size (weed_plant_t *layer, const gchar *image_ext, weed_ti
 	pixel_data=weed_get_voidptr_array(layer,"pixel_data",&error);
 	rowstrides=weed_get_int_array(layer,"rowstrides",&error);
 
-	(*dplug->decoder->get_frame)(dplug->cdata,(int64_t)(sfile->frame_index[frame-1]),
-				     rowstrides,sfile->vsize,pixel_data);
+	if (!(*dplug->decoder->get_frame)(dplug->cdata,(int64_t)(sfile->frame_index[frame-1]),
+					  rowstrides,sfile->vsize,pixel_data)) {
+
+	  // if get_frame fails, return a black frame
+	  weed_layer_pixel_data_free(layer);
+	  create_empty_pixel_data(layer,TRUE,TRUE);
+	}
 
 	weed_free(pixel_data);
 	weed_free(rowstrides);
@@ -4425,6 +4517,11 @@ static void get_max_opsize(int *opwidth, int *opheight) {
 	if (prefs->play_monitor==0) {
 	  *opwidth=mainw->scr_width;
 	  *opheight=mainw->scr_height;
+	  if (capable->nmonitors>1) {
+	    // spread over all monitors
+	    *opwidth=gdk_screen_get_width(mainw->mgeom[0].screen);
+	    *opheight=gdk_screen_get_height(mainw->mgeom[0].screen);
+	  }
 	}
 	else {
 	  if (mainw->play_window!=NULL) pmonitor=prefs->play_monitor;
@@ -4442,6 +4539,11 @@ static void get_max_opsize(int *opwidth, int *opheight) {
 	  if (prefs->play_monitor==0) {
 	    *opwidth=mainw->scr_width;
 	    *opheight=mainw->scr_height;
+	    if (capable->nmonitors>1) {
+	      // spread over all monitors
+	      *opwidth=gdk_screen_get_width(mainw->mgeom[0].screen);
+	      *opheight=gdk_screen_get_height(mainw->mgeom[0].screen);
+	    }
 	  }
 	  else {
 	    *opwidth=mainw->mgeom[prefs->play_monitor-1].width;
@@ -4476,8 +4578,15 @@ static void get_max_opsize(int *opwidth, int *opheight) {
       }
       else {
 	if (prefs->play_monitor==0) {
-	  if (mainw->scr_width>*opwidth) *opwidth=mainw->scr_width;
-	  if (mainw->scr_height>*opheight) *opheight=mainw->scr_height;
+	  if (capable->nmonitors==1) {
+	    if (mainw->scr_width>*opwidth) *opwidth=mainw->scr_width;
+	    if (mainw->scr_height>*opheight) *opheight=mainw->scr_height;
+	  }
+	  else {
+	    // spread over all monitors
+	    if (gdk_screen_get_width(mainw->mgeom[0].screen)>*opwidth) *opwidth=gdk_screen_get_width(mainw->mgeom[0].screen);
+	    if (gdk_screen_get_height(mainw->mgeom[0].screen)>*opheight) *opheight=gdk_screen_get_height(mainw->mgeom[0].screen);
+	  }
 	}
 	else {
 	  if (mainw->play_window!=NULL) pmonitor=prefs->play_monitor;
@@ -4607,7 +4716,7 @@ void load_frame_image(gint frame) {
 	  if (prefs->audio_player==AUD_PLAYER_JACK&&(prefs->audio_opts&AUDIO_OPTS_FOLLOW_FPS)&&
 	      mainw->jackd!=NULL&&cfile->achans>0 &&
 	      !(prefs->audio_src==AUDIO_SRC_EXT||mainw->agen_key!=0)) {
-	    if (!jack_audio_seek_frame(mainw->jackd,frame)) {
+	    if (mainw->jackd->playing_file!=-1&&!jack_audio_seek_frame(mainw->jackd,frame)) {
 	      if (jack_try_reconnect()) jack_audio_seek_frame(mainw->jackd,frame);
 	    }
 
@@ -4623,7 +4732,7 @@ void load_frame_image(gint frame) {
 	      mainw->pulsed!=NULL&&cfile->achans>0 &&
 	      !(prefs->audio_src==AUDIO_SRC_EXT||mainw->agen_key!=0)) {
 
-	    if (!pulse_audio_seek_frame(mainw->pulsed,mainw->play_start)) {
+	    if (mainw->pulsed->playing_file!=-1&&!pulse_audio_seek_frame(mainw->pulsed,mainw->play_start)) {
 	      if (pulse_try_reconnect()) pulse_audio_seek_frame(mainw->pulsed,mainw->play_start);
 	      else mainw->aplayer_broken=TRUE;
 	    }
@@ -4764,7 +4873,7 @@ void load_frame_image(gint frame) {
       if ((!mainw->fs||prefs->play_monitor!=prefs->gui_monitor||
 	   (mainw->ext_playback&&!(mainw->vpp->capabilities&VPP_LOCAL_DISPLAY)))
 	  &&prefs->show_framecount) {
-	lives_entry_set_text(GTK_ENTRY(mainw->framecounter),framecount);
+	lives_entry_set_text(LIVES_ENTRY(mainw->framecounter),framecount);
       }
       g_free(framecount);
       framecount=NULL;
@@ -4798,7 +4907,7 @@ void load_frame_image(gint frame) {
 	  else {
 	    framecount=g_strdup_printf("%9d",frame);
 	  }
-	  lives_entry_set_text(GTK_ENTRY(mainw->framecounter),framecount);
+	  lives_entry_set_text(LIVES_ENTRY(mainw->framecounter),framecount);
 	  g_free(framecount);
 	  framecount=NULL;
 	}
@@ -4908,7 +5017,7 @@ void load_frame_image(gint frame) {
       }
       else {
 	// normal playback in the clip editor, or applying a non-realtime effect
-	if (!mainw->preview||g_file_test(fname_next,G_FILE_TEST_EXISTS)) {
+	if (!mainw->preview||cfile->clip_type==CLIP_TYPE_FILE||g_file_test(fname_next,G_FILE_TEST_EXISTS)) {
 	  mainw->frame_layer=weed_plant_new(WEED_PLANT_CHANNEL);
 	  weed_set_int_value(mainw->frame_layer,"clip",mainw->current_file);
 	  weed_set_int_value(mainw->frame_layer,"frame",mainw->actual_frame);
@@ -4927,7 +5036,6 @@ void load_frame_image(gint frame) {
 	    }
 	  }
 	}
-
 	if ((cfile->next_event==NULL&&mainw->is_rendering&&!mainw->switch_during_pb&&
 	     (mainw->multitrack==NULL||(!mainw->multitrack->is_rendering&&!mainw->is_generating)))||
 	    ((!mainw->is_rendering||(mainw->multitrack!=NULL&&mainw->multitrack->is_rendering))&&
@@ -5181,9 +5289,7 @@ void load_frame_image(gint frame) {
       if (!(mainw->preview||mainw->is_rendering)) {
 	// chain any data pipelines
 	if (mainw->pconx!=NULL) {
-	  pthread_mutex_lock(&mainw->data_mutex);
 	  pconx_chain_data(-2,0);
-	  pthread_mutex_unlock(&mainw->data_mutex);
 	}
 	if (mainw->cconx!=NULL) cconx_chain_data(-2,0);
       }
@@ -5259,6 +5365,11 @@ void load_frame_image(gint frame) {
 	    if (prefs->play_monitor==0) {
 	      mainw->pwidth=mainw->scr_width;
 	      mainw->pheight=mainw->scr_height;
+	      if (capable->nmonitors>1) {
+		// spread over all monitors
+		mainw->pwidth=gdk_screen_get_width(mainw->mgeom[0].screen);
+		mainw->pheight=gdk_screen_get_height(mainw->mgeom[0].screen);
+	      }
 	    }
 	    else {
 	      if (mainw->play_window!=NULL) pmonitor=prefs->play_monitor;
@@ -5323,7 +5434,6 @@ void load_frame_image(gint frame) {
       }
 
     }
-
 
     if (mainw->ext_playback&&(!(mainw->vpp->capabilities&VPP_CAN_RESIZE)||lb_width!=0)) {
       // here we are playing through an external video playback plugin which cannot resize
@@ -5399,10 +5509,11 @@ void load_frame_image(gint frame) {
 	  calc_maxspect(mainw->vpp->fwidth,mainw->vpp->fheight,&lb_width,&lb_height);
 	}
 
+
 	letterbox_layer(frame_layer,lb_width/
-			weed_palette_get_pixels_per_macropixel(layer_palette),
+			weed_palette_get_pixels_per_macropixel(mainw->vpp->palette),
 			lb_height,mainw->vpp->fwidth/
-			weed_palette_get_pixels_per_macropixel(layer_palette),
+			weed_palette_get_pixels_per_macropixel(mainw->vpp->palette),
 			mainw->vpp->fheight);
 
       }
@@ -5437,9 +5548,7 @@ void load_frame_image(gint frame) {
       if (!(mainw->preview||mainw->is_rendering)) {
 	// chain any data pipelines
 	if (mainw->pconx!=NULL) {
-	  pthread_mutex_lock(&mainw->data_mutex);
 	  pconx_chain_data(-2,0);
-	  pthread_mutex_unlock(&mainw->data_mutex);
 	}
 	if (mainw->cconx!=NULL) cconx_chain_data(-2,0);
       }
@@ -5521,6 +5630,11 @@ void load_frame_image(gint frame) {
 	if (prefs->play_monitor==0) {
 	  mainw->pwidth=mainw->scr_width;
 	  mainw->pheight=mainw->scr_height;
+	  if (capable->nmonitors>1) {
+	    // spread over all monitors
+	    mainw->pwidth=gdk_screen_get_width(mainw->mgeom[0].screen);
+	    mainw->pheight=gdk_screen_get_height(mainw->mgeom[0].screen);
+	  }
 	}
 	else {
 	  if (mainw->play_window!=NULL) pmonitor=prefs->play_monitor;
@@ -5615,7 +5729,7 @@ void load_frame_image(gint frame) {
     lives_painter_t *cr = lives_painter_create_from_widget (mainw->playarea);
       
 
-    if (mainw->rec_vid_frames==-1) lives_entry_set_text(GTK_ENTRY(mainw->framecounter),(tmp=g_strdup_printf("%9d",frame)));
+    if (mainw->rec_vid_frames==-1) lives_entry_set_text(LIVES_ENTRY(mainw->framecounter),(tmp=g_strdup_printf("%9d",frame)));
     else {
       if (frame>mainw->rec_vid_frames) {
 	mainw->cancelled=CANCEL_KEEP;
@@ -5623,7 +5737,7 @@ void load_frame_image(gint frame) {
 	return;
       }
 
-      lives_entry_set_text(GTK_ENTRY(mainw->framecounter),(tmp=g_strdup_printf("%9d/%9d",frame,mainw->rec_vid_frames)));
+      lives_entry_set_text(LIVES_ENTRY(mainw->framecounter),(tmp=g_strdup_printf("%9d/%9d",frame,mainw->rec_vid_frames)));
       g_free(tmp);
     }
 
@@ -5823,7 +5937,7 @@ void close_current_file(gint file_to_switch_to) {
       lives_chdir(cwd,FALSE);
       g_free(cwd);
     }
-
+  
     if (cfile->frame_index!=NULL) g_free(cfile->frame_index);
     if (cfile->frame_index_back!=NULL) g_free(cfile->frame_index_back);
 
@@ -6003,7 +6117,7 @@ void close_current_file(gint file_to_switch_to) {
       // add it the play window...
       if (lives_widget_get_parent(mainw->preview_box)==NULL) {
 	lives_widget_queue_draw(mainw->play_window);
-	lives_container_add (GTK_CONTAINER (mainw->play_window), mainw->preview_box);
+	lives_container_add (LIVES_CONTAINER (mainw->play_window), mainw->preview_box);
 	lives_widget_grab_focus (mainw->preview_spinbutton);
       }
 
@@ -6029,9 +6143,9 @@ void close_current_file(gint file_to_switch_to) {
 
   set_sel_label(mainw->sel_label);
 
-  lives_label_set_text(GTK_LABEL(mainw->vidbar),_ ("Video"));
-  lives_label_set_text(GTK_LABEL(mainw->laudbar),_ ("Left Audio"));
-  lives_label_set_text(GTK_LABEL(mainw->raudbar),_ ("Right Audio"));
+  lives_label_set_text(LIVES_LABEL(mainw->vidbar),_ ("Video"));
+  lives_label_set_text(LIVES_LABEL(mainw->laudbar),_ ("Left Audio"));
+  lives_label_set_text(LIVES_LABEL(mainw->raudbar),_ ("Right Audio"));
     
   zero_spinbuttons();
   lives_widget_hide (mainw->hruler);
@@ -6094,8 +6208,8 @@ void switch_to_file(gint old_file, gint new_file) {
     mainw->play_end=cfile->frames;
 
     if (mainw->playing_file>-1) {
-      lives_spin_button_set_value(GTK_SPIN_BUTTON(mainw->spinbutton_pb_fps),cfile->pb_fps);
-      changed_fps_during_pb (GTK_SPIN_BUTTON(mainw->spinbutton_pb_fps), NULL);
+      lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_pb_fps),cfile->pb_fps);
+      changed_fps_during_pb (LIVES_SPIN_BUTTON(mainw->spinbutton_pb_fps), NULL);
     }
 
     if ((cfile->clip_type!=CLIP_TYPE_DISK&&cfile->clip_type!=CLIP_TYPE_FILE)||(mainw->event_list!=NULL&&!mainw->record)) 
@@ -6153,7 +6267,7 @@ void switch_to_file(gint old_file, gint new_file) {
     // add it the play window...
     if (lives_widget_get_parent(mainw->preview_box)==NULL) {
       lives_widget_queue_draw(mainw->play_window);
-      lives_container_add (GTK_CONTAINER (mainw->play_window), mainw->preview_box);
+      lives_container_add (LIVES_CONTAINER (mainw->play_window), mainw->preview_box);
       lives_widget_grab_focus (mainw->preview_spinbutton);
     }
 
@@ -6263,13 +6377,13 @@ void switch_to_file(gint old_file, gint new_file) {
       else {
 	if (!mainw->faded&&cfile->frames>0) {
 	  g_signal_handler_block(mainw->spinbutton_end,mainw->spin_end_func);
-	  lives_spin_button_set_range(GTK_SPIN_BUTTON(mainw->spinbutton_end),1,cfile->frames);
-	  lives_spin_button_set_value(GTK_SPIN_BUTTON(mainw->spinbutton_end),cfile->end);
+	  lives_spin_button_set_range(LIVES_SPIN_BUTTON(mainw->spinbutton_end),1,cfile->frames);
+	  lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_end),cfile->end);
 	  g_signal_handler_unblock(mainw->spinbutton_end,mainw->spin_end_func);
 	  
 	  g_signal_handler_block(mainw->spinbutton_start,mainw->spin_start_func);
-	  lives_spin_button_set_range(GTK_SPIN_BUTTON(mainw->spinbutton_start),1,cfile->frames);
-	  lives_spin_button_set_value(GTK_SPIN_BUTTON(mainw->spinbutton_start),cfile->start);
+	  lives_spin_button_set_range(LIVES_SPIN_BUTTON(mainw->spinbutton_start),1,cfile->frames);
+	  lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_start),cfile->start);
 	  g_signal_handler_unblock(mainw->spinbutton_start,mainw->spin_start_func);
           load_start_image(cfile->start);
           load_end_image(cfile->end);
@@ -6493,11 +6607,11 @@ void switch_audio_clip(gint new_file, boolean activate) {
 
 
 
-void do_quick_switch (gint new_file) {
+void do_quick_switch (int new_file) {
   // handle clip switching during playback
 
-  gint ovsize=mainw->pheight;
-  gint ohsize=mainw->pwidth;
+  int ovsize=mainw->pheight;
+  int ohsize=mainw->pwidth;
   boolean osc_block;
 
   if (mainw->current_file<1||mainw->files[new_file]==NULL) return;
@@ -6554,6 +6668,7 @@ void do_quick_switch (gint new_file) {
       mainw->pre_src_file=new_file;
 
     if (rte_window!=NULL) rtew_set_keych(rte_fg_gen_key(),FALSE);
+    if (mainw->ce_thumbs) ce_thumbs_set_keych(rte_fg_gen_key(),FALSE);
     if (mainw->current_file==mainw->blend_file) mainw->new_blend_file=new_file;
     weed_generator_end ((weed_plant_t *)cfile->ext_src);
     if (mainw->current_file==-1) {
@@ -6582,12 +6697,14 @@ void do_quick_switch (gint new_file) {
     switch_to_file (mainw->current_file, new_file);
   }
 
+  if (mainw->ce_thumbs&&mainw->active_sa_clips==SCREEN_AREA_FOREGROUND) ce_thumbs_highlight_current_clip();
+
   mainw->play_start=1;
   mainw->play_end=cfile->frames;
 
   if (mainw->play_window!=NULL) {
     gchar *title=g_strdup(_("LiVES: - Play Window"));
-    lives_window_set_title (GTK_WINDOW (mainw->play_window), title);
+    lives_window_set_title (LIVES_WINDOW (mainw->play_window), title);
     g_free(title);
     if (mainw->double_size&&!mainw->fs&&(ohsize!=cfile->hsize||ovsize!=cfile->vsize)) {
       // for single size sepwin, we resize frames to fit the window
@@ -6605,8 +6722,8 @@ void do_quick_switch (gint new_file) {
   // selection bounds)
   mainw->playing_sel=FALSE;
   
-  lives_spin_button_set_value(GTK_SPIN_BUTTON(mainw->spinbutton_pb_fps),cfile->pb_fps);
-  changed_fps_during_pb (GTK_SPIN_BUTTON(mainw->spinbutton_pb_fps), NULL);
+  lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_pb_fps),cfile->pb_fps);
+  changed_fps_during_pb (LIVES_SPIN_BUTTON(mainw->spinbutton_pb_fps), NULL);
 
   if (!cfile->frameno&&cfile->frames) cfile->frameno=1;
   cfile->last_frameno=cfile->frameno;
@@ -6632,17 +6749,22 @@ void do_quick_switch (gint new_file) {
 
 
 
-void resize (gdouble scale) {
+void resize (double scale) {
   // resize the frame widgets
   // set scale<0. to _force_ the playback frame to expand (for external capture)
-  gdouble oscale=scale;
-  gint xsize;
-  gint bx,by;
+
   GdkPixbuf *sepbuf;
-  gint hspace=((sepbuf=lives_image_get_pixbuf (GTK_IMAGE (mainw->sep_image)))!=NULL)?lives_pixbuf_get_height (sepbuf):0;
+
+  double oscale=scale;
+
+  int xsize;
+  int bx,by;
+
+  int hspace=((sepbuf=lives_image_get_pixbuf (GTK_IMAGE (mainw->sep_image)))!=NULL)?lives_pixbuf_get_height (sepbuf):0;
+
   // maximum values
-  gint hsize,vsize;
-  gint scr_width,scr_height;
+  int hsize,vsize;
+  int w,h,scr_width,scr_height;
 
   if (!prefs->show_gui||mainw->multitrack!=NULL) return;
   get_border_size (mainw->LiVES,&bx,&by);
@@ -6722,13 +6844,21 @@ void resize (gdouble scale) {
       lives_widget_hide(mainw->frame2);
       lives_widget_hide(mainw->eventbox3);
       lives_widget_hide(mainw->eventbox4);
-      lives_container_set_border_width (GTK_CONTAINER (mainw->playframe), 0);
+      lives_container_set_border_width (LIVES_CONTAINER (mainw->playframe), 0);
     }
   }
 
+  w=lives_widget_get_allocation_width(mainw->LiVES);
+  h=lives_widget_get_allocation_height(mainw->LiVES);
+
+  if (w>scr_width) w=scr_width;
+  if (h>scr_height) h=scr_height;
+
+  lives_widget_set_size_request(mainw->LiVES,w,h);
+
   if (!mainw->foreign&&mainw->playing_file==-1&&mainw->current_file>0&&(!cfile->opening||cfile->clip_type==CLIP_TYPE_FILE)) {
-      lives_spin_button_set_value(GTK_SPIN_BUTTON(mainw->spinbutton_start),cfile->start);
-      lives_spin_button_set_value(GTK_SPIN_BUTTON(mainw->spinbutton_end),cfile->end);
+      lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_start),cfile->start);
+      lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_end),cfile->end);
       load_start_image(cfile->start);
       load_end_image(cfile->end);
   }

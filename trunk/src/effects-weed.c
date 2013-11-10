@@ -89,10 +89,12 @@ void lives_free_normal(void *ptr) {
 void filter_mutex_lock(int key) {
   // lock a filter before setting the "value" of in_parameter or reading the "value" of an out_parameter
   if (key>=0&&key<FX_KEYS_MAX_VIRTUAL) pthread_mutex_lock(&mainw->data_mutex[key]);
+  //g_print ("lock %d\n",key);
 }
 
 void filter_mutex_unlock(int key) {
   if (key>=0&&key<FX_KEYS_MAX_VIRTUAL) pthread_mutex_unlock(&mainw->data_mutex[key]);
+  //g_print ("unlock %d\n",key);
 }
 
 // special de-allocators which avoid free()ing mainw->do_not_free...this is necessary to "hack" into gdk-pixbuf
@@ -3638,7 +3640,7 @@ void weed_apply_audio_effects_rt(float **abuf, int nchans, int64_t nsamps, gdoub
 	      weed_reinit_effect(instance,FALSE);
 	    }
 
-	    filter_mutex_lock(i);
+	    filter_mutex_unlock(i);
 	  }
 	}
 
@@ -3650,9 +3652,7 @@ void weed_apply_audio_effects_rt(float **abuf, int nchans, int64_t nsamps, gdoub
 	    needs_reinit=pconx_chain_data_internal(instance);
 	    filter_mutex_unlock(i);
 	    if (needs_reinit) {
-	      filter_mutex_unlock(i);
 	      weed_reinit_effect(instance,FALSE);
-	      filter_mutex_lock(i);
 	    }
 	  }
 	}

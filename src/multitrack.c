@@ -112,7 +112,56 @@ static boolean doubleclick=FALSE;
 
 static guint32 last_press_time=0;
 
+////////////////////////////
 
+// menuitem callbacks - TODO : make static
+void on_add_video_track_activate (GtkMenuItem *, gpointer mt);
+void multitrack_adj_start_end (GtkMenuItem *, gpointer mt);
+void multitrack_audio_insert (GtkMenuItem *, gpointer mt);
+void multitrack_view_events (GtkMenuItem *, gpointer mt);
+void multitrack_view_sel_events (GtkMenuItem *, gpointer mt);
+void on_render_activate (GtkMenuItem *, gpointer mt);
+void on_prerender_aud_activate (GtkMenuItem *, gpointer mt);
+void on_jumpnext_activate (GtkMenuItem *, gpointer mt);
+void on_jumpback_activate (GtkMenuItem *, gpointer mt);
+void on_delblock_activate (GtkMenuItem *, gpointer mt);
+void on_seltrack_activate (GtkMenuItem *, gpointer mt);
+void multitrack_view_details (GtkMenuItem *, gpointer mt);
+void mt_add_region_effect (GtkMenuItem *, gpointer mt);
+void mt_add_block_effect (GtkMenuItem *, gpointer mt);
+void on_save_event_list_activate (GtkMenuItem *, gpointer mt);
+void on_load_event_list_activate (GtkMenuItem *, gpointer mt);
+void on_clear_event_list_activate (GtkMenuItem *, gpointer mt);
+void show_frame_events_activate (GtkMenuItem *, gpointer);
+void mt_save_vals_toggled (GtkMenuItem *, gpointer mt);
+void mt_load_vals_toggled (GtkMenuItem *, gpointer mt);
+void mt_load_vals_toggled (GtkMenuItem *, gpointer mt);
+void mt_render_vid_toggled (GtkMenuItem *, gpointer mt);
+void mt_render_aud_toggled (GtkMenuItem *, gpointer mt);
+void mt_norm_aud_toggled (GtkMenuItem *, gpointer mt);
+void mt_fplay_toggled (GtkMenuItem *, gpointer mt);
+void mt_change_vals_activate (GtkMenuItem *, gpointer mt);
+void on_set_pvals_clicked  (GtkWidget *button, gpointer mt);
+void on_move_fx_changed (GtkMenuItem *, gpointer mt);
+void select_all_time (GtkMenuItem *, gpointer mt);
+void select_from_zero_time (GtkMenuItem *, gpointer mt);
+void select_to_end_time (GtkMenuItem *, gpointer mt);
+void select_all_vid (GtkMenuItem *, gpointer mt);
+void select_no_vid (GtkMenuItem *, gpointer mt);
+void on_split_sel_activate (GtkMenuItem *, gpointer mt);
+void on_split_curr_activate (GtkMenuItem *, gpointer mt);
+void multitrack_undo (GtkMenuItem *, gpointer mt);
+void multitrack_redo (GtkMenuItem *, gpointer mt);
+void on_mt_showkeys_activate (GtkMenuItem *, gpointer);
+void on_mt_list_fx_activate (GtkMenuItem *, gpointer mt);
+void on_mt_delfx_activate (GtkMenuItem *, gpointer mt);
+void on_mt_fx_edit_activate (GtkMenuItem *, gpointer mt);
+void mt_view_audio_toggled (GtkMenuItem *, gpointer mt);
+void mt_view_ctx_toggled (GtkMenuItem *, gpointer mt);
+void mt_ign_ins_sel_toggled (GtkMenuItem *, gpointer mt);
+void mt_change_max_disp_tracks (GtkMenuItem *, gpointer mt);
+
+static void mt_ac_audio_toggled (GtkMenuItem *, gpointer mt);
 
 ///////////////////////////////////////////////////////////////////
 
@@ -413,6 +462,21 @@ static void mt_set_cursor_style(lives_mt *mt, lives_cursor_t cstyle, int width, 
 	cpixels[0]=audcol.red;
 	cpixels[1]=audcol.green;
 	cpixels[2]=audcol.blue;
+	cpixels[3]=0xFF;
+	cpixels+=4;
+      }
+      cpixels+=(trow-width*4);
+    }
+    break;
+  case LIVES_CURSOR_VIDEO_BLOCK:
+    pixbuf=lives_pixbuf_new (TRUE, width, height);
+    trow=lives_pixbuf_get_rowstride(pixbuf);
+    cpixels=lives_pixbuf_get_pixels(pixbuf);
+    for (j=0;j<height;j++) {
+      for (k=0;k<width;k++) {
+	cpixels[0]=vidcol.red;
+	cpixels[1]=vidcol.green;
+	cpixels[2]=vidcol.blue;
 	cpixels[3]=0xFF;
 	cpixels+=4;
       }
@@ -922,12 +986,19 @@ static void draw_block (lives_mt *mt, lives_painter_t *cairo,
 
 
 	    if (framenum!=last_framenum) {
-	      if (mainw->files[filenum]->frames>0&&mainw->files[filenum]->clip_type==CLIP_TYPE_FILE&&
-		  !(((lives_clip_data_t *)mainw->files[filenum]->ext_src)->seek_flag*LIVES_SEEK_FAST)&&
-		  !check_if_non_virtual(filenum,framenum,framenum)) {
-		thumbnail=make_thumb_fast_between(mt,filenum,width,
-						  lives_widget_get_allocation_height(eventbox),
-						  framenum,last_framenum==-1?0:framenum-last_framenum);
+	      if (mainw->files[filenum]->frames>0&&mainw->files[filenum]->clip_type==CLIP_TYPE_FILE) {
+		lives_clip_data_t *cdata=((lives_decoder_t *)mainw->files[filenum]->ext_src)->cdata;
+		if (cdata!=NULL&&!(cdata->seek_flag&LIVES_SEEK_FAST)&&
+		    !check_if_non_virtual(filenum,framenum,framenum)) {
+		  thumbnail=make_thumb_fast_between(mt,filenum,width,
+						    lives_widget_get_allocation_height(eventbox),
+						    framenum,last_framenum==-1?0:framenum-last_framenum);
+		}
+		else {
+		  thumbnail=make_thumb(mt,filenum,width,
+				       lives_widget_get_allocation_height(eventbox),
+				       framenum,FALSE);
+		}
 	      }
 	      else {
 		thumbnail=make_thumb(mt,filenum,width,
@@ -1610,13 +1681,13 @@ void track_select (lives_mt *mt) {
 #endif
 	  {
 	    // set other widgets
-	    if (gtk_check_menu_item_get_active(GTK_CHECK_MENU_ITEM(mt->select_track))) {
+	    if (lives_check_menu_item_get_active(LIVES_CHECK_MENU_ITEM(mt->select_track))) {
  	      lives_check_menu_item_set_active(LIVES_CHECK_MENU_ITEM(mt->select_track),FALSE);
 	    }
 	  else on_seltrack_activate(LIVES_MENU_ITEM(mt->select_track),mt);
 	}
 	else {
-	  if (!gtk_check_menu_item_get_active(GTK_CHECK_MENU_ITEM(mt->select_track))) 
+	  if (!lives_check_menu_item_get_active(LIVES_CHECK_MENU_ITEM(mt->select_track))) 
 	    lives_check_menu_item_set_active(LIVES_CHECK_MENU_ITEM(mt->select_track),TRUE);
 	  else on_seltrack_activate(LIVES_MENU_ITEM(mt->select_track),mt);
 	}
@@ -4538,7 +4609,8 @@ void mt_aparam_view_toggled (GtkMenuItem *menuitem, gpointer user_data) {
   lives_mt *mt=(lives_mt *)user_data;
   int i;
 
-  if (gtk_check_menu_item_get_active(GTK_CHECK_MENU_ITEM(menuitem))) mt->aparam_view_list=g_list_append(mt->aparam_view_list,GINT_TO_POINTER(which));
+  if (lives_check_menu_item_get_active(LIVES_CHECK_MENU_ITEM(menuitem))) 
+    mt->aparam_view_list=g_list_append(mt->aparam_view_list,GINT_TO_POINTER(which));
   else mt->aparam_view_list=g_list_remove(mt->aparam_view_list,GINT_TO_POINTER(which));
   for (i=0;i<g_list_length(mt->audio_draws);i++) {
     lives_widget_queue_draw((GtkWidget *)g_list_nth_data(mt->audio_draws,i));
@@ -5215,7 +5287,7 @@ boolean check_for_layout_del (lives_mt *mt, boolean exiting) {
 static void
 on_comp_exp (GtkButton *button, gpointer user_data)
 {
-  lives_check_menu_item_set_active(LIVES_CHECK_MENU_ITEM(user_data),!gtk_check_menu_item_get_active(GTK_CHECK_MENU_ITEM(user_data)));
+  lives_check_menu_item_set_active(LIVES_CHECK_MENU_ITEM(user_data),!lives_check_menu_item_get_active(LIVES_CHECK_MENU_ITEM(user_data)));
 
 
 }
@@ -5328,7 +5400,7 @@ static void mt_set_atrans_effect (GtkMenuItem *menuitem, gpointer user_data) {
   lives_mt *mt=(lives_mt *)user_data;
   gchar *atrans_hash;
 
-  if (!gtk_check_menu_item_get_active(GTK_CHECK_MENU_ITEM(menuitem))) return;
+  if (!lives_check_menu_item_get_active(LIVES_CHECK_MENU_ITEM(menuitem))) return;
   gtk_container_foreach(LIVES_CONTAINER(mt->submenu_atransfx),cmi_set_inactive,menuitem);
   prefs->atrans_fx=GPOINTER_TO_INT(g_object_get_data(G_OBJECT(menuitem),"idx"));
 
@@ -5657,6 +5729,7 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
     mt->opts.show_ctx=mainw->multi_opts.show_ctx;
     mt->opts.ign_ins_sel=mainw->multi_opts.ign_ins_sel;
     mt->opts.follow_playback=mainw->multi_opts.follow_playback;
+    mt->opts.autocross_audio=mainw->multi_opts.autocross_audio;
   }
   else {
     mt->opts.move_effects=TRUE;
@@ -5669,6 +5742,7 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
     mt->opts.follow_playback=FALSE;
     mt->opts.grav_mode=GRAV_MODE_NORMAL;
     mt->opts.insert_mode=INSERT_MODE_NORMAL;
+    mt->opts.autocross_audio=TRUE;
   }
 
   mt->opts.insert_audio=TRUE;
@@ -6412,6 +6486,10 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
     lives_widget_set_bg_color(mt->submenu_atransfx, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
     lives_widget_set_fg_color(mt->submenu_atransfx, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars_fore);
   }
+
+  mt->ac_audio_check = lives_check_menu_item_new_with_mnemonic (_("Crossfade audio with autotransition"));
+  lives_container_add (LIVES_CONTAINER (menuitem_menu), mt->ac_audio_check);
+  lives_check_menu_item_set_active(LIVES_CHECK_MENU_ITEM(mt->ac_audio_check),mt->opts.autocross_audio);
 
   separator = lives_menu_item_new ();
   lives_container_add (LIVES_CONTAINER (menuitem_menu), separator);
@@ -7385,6 +7463,9 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
 		    (gpointer)mt);
   g_signal_connect (GTK_OBJECT (mt->load_vals), "activate",
 		    G_CALLBACK (mt_load_vals_toggled),
+		    (gpointer)mt);
+  g_signal_connect (GTK_OBJECT (mt->ac_audio_check), "activate",
+		    G_CALLBACK (mt_ac_audio_toggled),
 		    (gpointer)mt);
   g_signal_connect (GTK_OBJECT (mt->aload_subs), "activate",
 		    G_CALLBACK (on_boolean_toggled),
@@ -8986,6 +9067,7 @@ boolean multitrack_delete (lives_mt *mt, boolean save_layout) {
   mainw->multi_opts.show_ctx=mt->opts.show_ctx;
   mainw->multi_opts.ign_ins_sel=mt->opts.ign_ins_sel;
   mainw->multi_opts.follow_playback=mt->opts.follow_playback;
+  mainw->multi_opts.autocross_audio=mt->opts.autocross_audio;
 
   if (mt->poly_state==POLY_PARAMS) polymorph(mt,POLY_CLIPS);
 
@@ -13222,6 +13304,7 @@ boolean on_track_release (GtkWidget *eventbox, GdkEventButton *event, gpointer u
 				mt->display,&screen,&abs_x,&abs_y,NULL);
       lives_display_warp_pointer((LiVESXDevice *)mainw->mgeom[prefs->gui_monitor>0?prefs->gui_monitor-1:0].mouse_device, 
 				 mt->display,screen,abs_x+mt->hotspot_x,abs_y+mt->hotspot_y-height/2);
+      mt->hotspot_x=mt->hotspot_y=0;
       // we need to call this to warp the pointer
       lives_widget_context_update();
     }
@@ -13415,7 +13498,20 @@ boolean on_track_click (GtkWidget *eventbox, GdkEventButton *event, gpointer use
 				      mt->display,&screen,&abs_x,&abs_y,NULL);
 	    lives_display_warp_pointer((LiVESXDevice *)mainw->mgeom[prefs->gui_monitor>0?prefs->gui_monitor-1:0].mouse_device, 
 	      mt->display,screen,abs_x-mt->hotspot_x,abs_y-y+height/2);
-	    if (track>=0&&!mt->aud_track_selected) mt_set_cursor_style(mt,LIVES_CURSOR_BLOCK,width,height,filenum,0,height/2);
+	    if (track>=0&&!mt->aud_track_selected) {
+	      if (mainw->files[filenum]->clip_type==CLIP_TYPE_FILE) {
+		lives_clip_data_t *cdata=((lives_decoder_t *)mainw->files[filenum]->ext_src)->cdata;
+		if (cdata!=NULL&&!(cdata->seek_flag&LIVES_SEEK_FAST)) {
+		  mt_set_cursor_style(mt,LIVES_CURSOR_VIDEO_BLOCK,width,height,filenum,0,height/2);
+		}
+		else {
+		  mt_set_cursor_style(mt,LIVES_CURSOR_BLOCK,width,height,filenum,0,height/2);
+		}
+	      }
+	      else {
+		mt_set_cursor_style(mt,LIVES_CURSOR_BLOCK,width,height,filenum,0,height/2);
+	      }
+	    }
   	    else mt_set_cursor_style(mt,LIVES_CURSOR_AUDIO_BLOCK,width,height,filenum,0,height/2);
 	  }
 	}
@@ -13868,7 +13964,7 @@ void select_all_vid (GtkMenuItem *menuitem, gpointer user_data) {
   int i=0;
 
   g_signal_handler_block(mt->select_track,mt->seltrack_func);
-  if (!gtk_check_menu_item_get_active(GTK_CHECK_MENU_ITEM(mt->select_track))) 
+  if (!lives_check_menu_item_get_active(LIVES_CHECK_MENU_ITEM(mt->select_track))) 
     lives_check_menu_item_set_active(LIVES_CHECK_MENU_ITEM(mt->select_track),TRUE);
   g_signal_handler_unblock(mt->select_track,mt->seltrack_func);
 
@@ -13905,7 +14001,7 @@ void select_no_vid (GtkMenuItem *menuitem, gpointer user_data) {
   int i=0;
 
   g_signal_handler_block(mt->select_track,mt->seltrack_func);
-  if (gtk_check_menu_item_get_active(GTK_CHECK_MENU_ITEM(mt->select_track))) 
+  if (lives_check_menu_item_get_active(LIVES_CHECK_MENU_ITEM(mt->select_track))) 
     lives_check_menu_item_set_active(LIVES_CHECK_MENU_ITEM(mt->select_track),FALSE);
   g_signal_handler_unblock(mt->select_track,mt->seltrack_func);
 
@@ -13980,7 +14076,7 @@ mt_view_audio_toggled                (GtkMenuItem     *menuitem,
 				      gpointer         user_data)
 {
   lives_mt *mt=(lives_mt *)user_data;
-  mt->opts.show_audio=gtk_check_menu_item_get_active(GTK_CHECK_MENU_ITEM(menuitem));
+  mt->opts.show_audio=lives_check_menu_item_get_active(LIVES_CHECK_MENU_ITEM(menuitem));
 
   if (!mt->opts.show_audio) g_object_set_data(G_OBJECT(mt->audio_draws->data),"hidden",
 					      GINT_TO_POINTER(TRACK_I_HIDDEN_USER));
@@ -13999,7 +14095,7 @@ mt_view_ctx_toggled                (GtkMenuItem     *menuitem,
   lives_mt_poly_state_t poly_state=mt->poly_state;
   boolean needs_idlefunc=FALSE;
 
-  mt->opts.show_ctx=gtk_check_menu_item_get_active(GTK_CHECK_MENU_ITEM(menuitem));
+  mt->opts.show_ctx=lives_check_menu_item_get_active(LIVES_CHECK_MENU_ITEM(menuitem));
 
   set_mt_play_sizes(mt,cfile->hsize,cfile->vsize);
   mt_show_current_frame(mt, FALSE);
@@ -14060,7 +14156,7 @@ mt_ign_ins_sel_toggled                (GtkMenuItem     *menuitem,
 				       gpointer         user_data)
 {
   lives_mt *mt=(lives_mt *)user_data;
-  mt->opts.ign_ins_sel=gtk_check_menu_item_get_active(GTK_CHECK_MENU_ITEM(menuitem));
+  mt->opts.ign_ins_sel=lives_check_menu_item_get_active(LIVES_CHECK_MENU_ITEM(menuitem));
 }
 
 
@@ -16256,7 +16352,7 @@ void on_seltrack_activate (GtkMenuItem *menuitem, gpointer user_data) {
   eventbox=(GtkWidget *)g_list_nth_data(mt->video_draws,mt->current_track);
   checkbutton=(GtkWidget *)g_object_get_data(G_OBJECT(eventbox),"checkbutton");
 
-  mi_state=gtk_check_menu_item_get_active(GTK_CHECK_MENU_ITEM(menuitem));
+  mi_state=lives_check_menu_item_get_active(LIVES_CHECK_MENU_ITEM(menuitem));
 
   if (mi_state) {
     // selected
@@ -21331,6 +21427,12 @@ void mt_load_vals_toggled (GtkMenuItem *menuitem, gpointer user_data) {
   mt->ignore_load_vals=!mt->ignore_load_vals;
 }
 
+
+static void mt_ac_audio_toggled (GtkMenuItem *menuitem, gpointer user_data) {
+  lives_mt *mt=(lives_mt *)user_data;
+  mt->opts.autocross_audio=!mt->opts.autocross_audio;
+}
+
 void mt_change_vals_activate (GtkMenuItem *menuitem, gpointer user_data) {
   lives_mt *mt=(lives_mt *)user_data;
   boolean response;
@@ -22324,6 +22426,10 @@ void mt_do_autotransition(lives_mt *mt, track_rect *block) {
     insert_param_change_event_at(mt->event_list,block->end_event,enevent);
     weed_free(oparams);
   }
+
+  // crossfade audio
+  if (mt->opts.autocross_audio)
+    weed_set_boolean_value(mt->init_event,"host_audio_transition",WEED_TRUE);
 
   mt->is_atrans=FALSE;
   mt->region_start=region_start;

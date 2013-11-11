@@ -49,6 +49,7 @@
 #include "startup.h"
 #include "framedraw.h"
 #include "cvirtual.h"
+#include "pangotext.h"
 
 #ifdef ENABLE_GIW
 #include "giw/giwvslider.h"
@@ -919,14 +920,18 @@ static void draw_block (lives_mt *mt, lives_painter_t *cairo,
   double offset_startd=tc/U_SEC;
   double offset_endd;
 
+  boolean needs_text=FALSE;
+
   int offset_start;
   int offset_end;
-  int i,filenum,track;
+  int filenum,track;
 
   int framenum,last_framenum;
   int width=BLOCK_THUMB_WIDTH;
 
   int hidden=(int)GPOINTER_TO_INT(g_object_get_data (G_OBJECT(eventbox), "hidden"));
+
+  register int i;
 
   if (hidden) return;
 
@@ -1020,6 +1025,7 @@ static void draw_block (lives_mt *mt, lives_painter_t *cairo,
 	      lives_painter_paint (cr);
 	    }
 	    else {
+	      needs_text=TRUE;
 	      if (i+width>offset_end) width=offset_end-i;
 	      lives_painter_set_source_rgb(cr,(double)vidcol.red/65535.,(double)vidcol.green/65535.,(double)vidcol.blue/65535.);
 	      lives_painter_new_path(cr);
@@ -1044,6 +1050,26 @@ static void draw_block (lives_mt *mt, lives_painter_t *cairo,
       lives_painter_new_path(cr);
       lives_painter_rectangle(cr,offset_start, 0, offset_end-offset_start, lives_widget_get_allocation_height(eventbox));
       lives_painter_stroke(cr);
+
+      if (needs_text) {
+	const char *sfont="Sans";
+	gchar *fname=g_path_get_basename(mainw->files[filenum]->name);
+	lives_colRGBA32_t col_white,col_black;
+	PangoLayout *layout;
+	lives_painter_surface_t *surface;
+
+	col_white.red=col_white.green=col_white.blue=col_white.alpha=col_black.alpha=65535;
+	col_black.red=col_black.green=col_black.blue=0;
+	layout=render_text_to_cr(cr,fname,sfont,10.,
+				 LIVES_TEXT_MODE_FOREGROUND_ONLY,&col_black,NULL,FALSE,FALSE,2,
+				 offset_end-offset_start,lives_widget_get_allocation_height(eventbox));
+	if (layout) g_object_unref(layout);
+	g_free(fname);
+	lives_painter_stroke(cr);
+	surface=lives_painter_get_target(cr);
+	lives_painter_surface_flush (surface);
+
+      }
 
       if (mainw->playing_file>-1) unpaint_lines(mt);
       mt->redraw_block=TRUE; // stop drawing cursor during playback

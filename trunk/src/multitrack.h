@@ -171,6 +171,7 @@ struct _mt_opts {
   boolean pertrack_audio; ///< do we want pertrack audio ?
   boolean audio_bleedthru; ///< should we allow all audio to bleed thru ?
   boolean gang_audio; ///< gang layer audio volume levels
+  boolean autocross_audio; ///< crossfade audio with autotransitions
   int back_audio_tracks; ///< number of backing audio tracks (currently 0 or 1)
 };
 
@@ -286,6 +287,7 @@ struct _mt {
   GtkWidget *re_to_tc;
   GtkWidget *undo;
   GtkWidget *redo;
+  GtkWidget *ac_audio_check;
   GtkWidget *remove_gaps;
   GtkWidget *remove_first_gaps;
   GtkWidget *split_sel;
@@ -691,53 +693,7 @@ void edit_start_end_cb (GtkMenuItem *, gpointer mt);
 void close_clip_cb (GtkMenuItem *, gpointer mt);
 void show_clipinfo_cb (GtkMenuItem *, gpointer mt);
 
-// menuitem callbacks
-void on_add_video_track_activate (GtkMenuItem *, gpointer mt);
 void multitrack_insert (GtkMenuItem *, gpointer mt);
-void multitrack_adj_start_end (GtkMenuItem *, gpointer mt);
-void multitrack_audio_insert (GtkMenuItem *, gpointer mt);
-void multitrack_view_events (GtkMenuItem *, gpointer mt);
-void multitrack_view_sel_events (GtkMenuItem *, gpointer mt);
-void on_render_activate (GtkMenuItem *, gpointer mt);
-void on_prerender_aud_activate (GtkMenuItem *, gpointer mt);
-void on_jumpnext_activate (GtkMenuItem *, gpointer mt);
-void on_jumpback_activate (GtkMenuItem *, gpointer mt);
-void on_delblock_activate (GtkMenuItem *, gpointer mt);
-void on_seltrack_activate (GtkMenuItem *, gpointer mt);
-void multitrack_view_details (GtkMenuItem *, gpointer mt);
-void mt_add_region_effect (GtkMenuItem *, gpointer mt);
-void mt_add_block_effect (GtkMenuItem *, gpointer mt);
-void on_save_event_list_activate (GtkMenuItem *, gpointer mt);
-void on_load_event_list_activate (GtkMenuItem *, gpointer mt);
-void on_clear_event_list_activate (GtkMenuItem *, gpointer mt);
-void show_frame_events_activate (GtkMenuItem *, gpointer);
-void mt_save_vals_toggled (GtkMenuItem *, gpointer mt);
-void mt_load_vals_toggled (GtkMenuItem *, gpointer mt);
-void mt_load_vals_toggled (GtkMenuItem *, gpointer mt);
-void mt_render_vid_toggled (GtkMenuItem *, gpointer mt);
-void mt_render_aud_toggled (GtkMenuItem *, gpointer mt);
-void mt_norm_aud_toggled (GtkMenuItem *, gpointer mt);
-void mt_fplay_toggled (GtkMenuItem *, gpointer mt);
-void mt_change_vals_activate (GtkMenuItem *, gpointer mt);
-void on_set_pvals_clicked  (GtkWidget *button, gpointer mt);
-void on_move_fx_changed (GtkMenuItem *, gpointer mt);
-void select_all_time (GtkMenuItem *, gpointer mt);
-void select_from_zero_time (GtkMenuItem *, gpointer mt);
-void select_to_end_time (GtkMenuItem *, gpointer mt);
-void select_all_vid (GtkMenuItem *, gpointer mt);
-void select_no_vid (GtkMenuItem *, gpointer mt);
-void on_split_sel_activate (GtkMenuItem *, gpointer mt);
-void on_split_curr_activate (GtkMenuItem *, gpointer mt);
-void multitrack_undo (GtkMenuItem *, gpointer mt);
-void multitrack_redo (GtkMenuItem *, gpointer mt);
-void on_mt_showkeys_activate (GtkMenuItem *, gpointer);
-void on_mt_list_fx_activate (GtkMenuItem *, gpointer mt);
-void on_mt_delfx_activate (GtkMenuItem *, gpointer mt);
-void on_mt_fx_edit_activate (GtkMenuItem *, gpointer mt);
-void mt_view_audio_toggled (GtkMenuItem *, gpointer mt);
-void mt_view_ctx_toggled (GtkMenuItem *, gpointer mt);
-void mt_ign_ins_sel_toggled (GtkMenuItem *, gpointer mt);
-void mt_change_max_disp_tracks (GtkMenuItem *, gpointer mt);
 
 // event_list functions
 weed_plant_t *add_blank_frames_up_to (weed_plant_t *event_list, weed_plant_t *start_event, weed_timecode_t end_tc, double fps);

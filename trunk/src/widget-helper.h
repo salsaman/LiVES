@@ -962,6 +962,7 @@ void lives_image_menu_item_set_image(LiVESImageMenuItem *, LiVESWidget *image);
 void lives_menu_item_set_submenu(LiVESMenuItem *, LiVESWidget *);
 
 void lives_check_menu_item_set_active(LiVESCheckMenuItem *, boolean state);
+boolean lives_check_menu_item_get_active(LiVESCheckMenuItem *);
 
 void lives_menu_set_title(LiVESMenu *, const char *title);
 
@@ -1111,6 +1112,7 @@ typedef enum {
   /// non-standard cursors
   LIVES_CURSOR_BLOCK,
   LIVES_CURSOR_AUDIO_BLOCK,
+  LIVES_CURSOR_VIDEO_BLOCK,
   LIVES_CURSOR_FX_BLOCK
 } lives_cursor_t;
 

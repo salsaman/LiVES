@@ -2224,6 +2224,14 @@ LIVES_INLINE void lives_check_menu_item_set_active(LiVESCheckMenuItem *item, boo
 }
 
 
+LIVES_INLINE boolean lives_check_menu_item_get_active(LiVESCheckMenuItem *item) {
+#ifdef GUI_GTK
+  return gtk_check_menu_item_get_active(item);
+#endif
+  return FALSE;
+}
+
+
 
 LIVES_INLINE void lives_image_menu_item_set_image(LiVESImageMenuItem *item, LiVESWidget *image) {
 #ifdef GUI_GTK

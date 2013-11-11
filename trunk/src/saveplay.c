@@ -552,7 +552,6 @@ void open_file_sel(const gchar *file_name, double start, int frames) {
 	  }
 	}
 	get_mime_type(cfile->type,40,cdata);
-
       }
 
       save_frame_index(mainw->current_file);

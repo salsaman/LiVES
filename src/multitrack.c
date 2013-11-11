@@ -48,6 +48,7 @@
 #include "audio.h"
 #include "startup.h"
 #include "framedraw.h"
+#include "cvirtual.h"
 
 #ifdef ENABLE_GIW
 #include "giw/giwvslider.h"
@@ -81,6 +82,7 @@ static double lfps[MAX_FILES+1]; ///< table of layout fps
 static void **pchain; ///< param chain for currently being edited filter
 
 static lives_colRGB24_t audcol;
+static lives_colRGB24_t vidcol;
 static lives_colRGB24_t fxcol;
 
 static int xachans,xarate,xasamps,xse;
@@ -231,7 +233,7 @@ LiVESPixbuf *make_thumb (lives_mt *mt, int file, int width, int height, int fram
   int nframe,oframe=frame;
 
   if (file<1) {
-    LIVES_WARN("Warning - make thumb for file");
+    LIVES_WARN("Warning - make thumb for file -1");
     return NULL;
   }
 
@@ -295,6 +297,36 @@ LiVESPixbuf *make_thumb (lives_mt *mt, int file, int width, int height, int fram
   }
 
   return thumbnail;
+}
+
+
+LiVESPixbuf *make_thumb_fast_between (lives_mt *mt, int fileno, int width, int height, int tframe, int range) {
+  int nvframe=-1;
+  register int i;
+
+  if (fileno<1) {
+    LIVES_WARN("Warning - make thumb for file -1");
+    return NULL;
+  }
+
+  if (width<2||height<2) return NULL;
+
+  for (i=1;i<=range;i++) {
+    if (check_if_non_virtual(fileno,tframe-i,tframe-i)) {
+      nvframe=tframe-i;
+      break;
+    }
+    if (check_if_non_virtual(fileno,tframe+i,tframe+i)) {
+      nvframe=tframe+i;
+      break;
+    }
+  }
+
+  if (nvframe!=-1) {
+    return make_thumb(mt,fileno,width,height,nvframe,FALSE);
+  }
+
+  return NULL;
 }
 
 
@@ -887,9 +919,22 @@ static void draw_block (lives_mt *mt, lives_painter_t *cairo,
 	    
 	    if (thumbnail!=NULL) lives_object_unref(thumbnail);
 	    thumbnail=NULL;
-	    if (framenum!=last_framenum) thumbnail=make_thumb(mt,filenum,width,
-							      lives_widget_get_allocation_height(eventbox),
-							      framenum,FALSE);
+
+
+	    if (framenum!=last_framenum) {
+	      if (mainw->files[filenum]->frames>0&&mainw->files[filenum]->clip_type==CLIP_TYPE_FILE&&
+		  !(((lives_clip_data_t *)mainw->files[filenum]->ext_src)->seek_flag*LIVES_SEEK_FAST)&&
+		  !check_if_non_virtual(filenum,framenum,framenum)) {
+		thumbnail=make_thumb_fast_between(mt,filenum,width,
+						  lives_widget_get_allocation_height(eventbox),
+						  framenum,last_framenum==-1?0:framenum-last_framenum);
+	      }
+	      else {
+		thumbnail=make_thumb(mt,filenum,width,
+				     lives_widget_get_allocation_height(eventbox),
+				     framenum,FALSE);
+	      }
+	    }
 	    last_framenum=framenum;
 	    // render it in the eventbox
 	    if (thumbnail!=NULL) {
@@ -898,10 +943,17 @@ static void draw_block (lives_mt *mt, lives_painter_t *cairo,
 		width=offset_end-i;
 		// crop to width
 		lives_painter_new_path(cr);
-		lives_painter_rectangle(cr,0,0,i+width,lives_widget_get_allocation_height(eventbox));
+		lives_painter_rectangle(cr,i,0,width,lives_widget_get_allocation_height(eventbox));
 		lives_painter_clip(cr);
 	      }
 	      lives_painter_paint (cr);
+	    }
+	    else {
+	      if (i+width>offset_end) width=offset_end-i;
+	      lives_painter_set_source_rgb(cr,(double)vidcol.red/65535.,(double)vidcol.green/65535.,(double)vidcol.blue/65535.);
+	      lives_painter_new_path(cr);
+	      lives_painter_rectangle(cr,i,0,width,lives_widget_get_allocation_height(eventbox));
+	      lives_painter_fill(cr);
 	    }
 	    if (mainw->playing_file>-1) unpaint_lines(mt);
 	    mt->redraw_block=TRUE; // stop drawing cursor during playback
@@ -5557,6 +5609,9 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
 
   audcol.blue=audcol.red=16384;
   audcol.green=65535;
+
+  vidcol.green=audcol.red=16384;
+  vidcol.blue=65535;
 
   fxcol.red=65535;
   fxcol.green=fxcol.blue=0;
@@ -15067,18 +15122,24 @@ void multitrack_view_details (GtkMenuItem *menuitem, gpointer user_data) {
 
 static void add_effect_inner(lives_mt *mt, int num_in_tracks, int *in_tracks, int num_out_tracks, int *out_tracks, 
 			     weed_plant_t *start_event, weed_plant_t *end_event) {
-  int i;
-  weed_plant_t *event;
   void **init_events;
+
+  weed_plant_t *event,*init_event;
   weed_plant_t *filter=get_weed_filter(mt->current_fx);
+
+  double timesecs=lives_ruler_get_value(LIVES_RULER(mt->timeline));
+
   weed_timecode_t start_tc=get_event_timecode(start_event);
   weed_timecode_t end_tc=get_event_timecode(end_event);
-  boolean did_backup=mt->did_backup;
-  boolean has_params;
-  double timesecs=lives_ruler_get_value(LIVES_RULER(mt->timeline));
+
   weed_timecode_t tc=q_gint64(timesecs*U_SEC,mt->fps);
+
   lives_rfx_t *rfx;
 
+  boolean did_backup=mt->did_backup;
+  boolean has_params;
+
+  register int i;
 
   if (!did_backup&&mt->idlefunc>0) {
     g_source_remove(mt->idlefunc);
@@ -15159,7 +15220,9 @@ static void add_effect_inner(lives_mt *mt, int num_in_tracks, int *in_tracks, in
   rfx_free(rfx);
   g_free(rfx);
 
+  init_event=mt->init_event;
   mt_tl_move(mt,start_tc/U_SEC-lives_ruler_get_value(LIVES_RULER(mt->timeline)));
+  mt->init_event=init_event;
 
   if (has_params) {
     polymorph(mt,POLY_PARAMS);

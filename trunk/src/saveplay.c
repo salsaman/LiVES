@@ -5277,7 +5277,10 @@ static boolean recover_files(gchar *recovery_file, boolean auto_recover) {
     }
   } while (retval==LIVES_RETRY);
 
+  
+  mainw->is_ready=TRUE;
   do_threaded_dialog(_("Recovering files"),FALSE);
+  mainw->is_ready=FALSE;
 
   d_print(_("Recovering files..."));
   threaded_dialog_spin();
@@ -5472,6 +5475,7 @@ static boolean recover_files(gchar *recovery_file, boolean auto_recover) {
 	while (1) {
 	  threaded_dialog_spin();
 	  if ((cdata=get_decoder_cdata(cfile,NULL))==NULL) {
+
 	    if (mainw->error) {
 	      if (do_original_lost_warning(cfile->file_name)) {
 		

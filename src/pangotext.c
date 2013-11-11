@@ -103,105 +103,122 @@ static int font_cmp(const void *p1, const void *p2) {
   return ret;
 }
 
+
+
+
+
+  
+
+PangoLayout *render_text_to_cr (lives_painter_t *cr, const char *text, const char *fontname,
+				double size, lives_text_mode_t mode, lives_colRGBA32_t *fg, lives_colRGBA32_t *bg,
+				boolean center, boolean rising, double top, int width, int height) {
+
+  PangoFontDescription *font;
+
+  PangoLayout *layout;
+
+  double x_pos, y_pos;
+  double x_text, y_text;
+  double dwidth, dheight;
+
+  double b_alpha=1.;
+  double f_alpha=1.;
+
+
+  if (bg!=NULL) b_alpha=(double)bg->alpha/65535.;
+  if (fg!=NULL) f_alpha=(double)fg->alpha/65535.;
+
+  if (cr==NULL) return NULL;
+
+  layout = pango_cairo_create_layout(cr);
+  
+  if (layout==NULL) return NULL;
+
+  font = pango_font_description_new();
+  pango_font_description_set_family(font, fontname);
+  pango_font_description_set_absolute_size(font, size*PANGO_SCALE);
+    
+  pango_layout_set_font_description(layout, font);
+  pango_layout_set_text(layout, text, -1);
+
+  getxypos(layout, &x_pos, &y_pos, width, height, center, &dwidth, &dheight);
+    
+  if (!rising) y_pos = y_text = height*top;
+    
+  x_text = x_pos;
+  y_text = y_pos;
+    
+  if (center) pango_layout_set_alignment(layout, PANGO_ALIGN_CENTER);
+  else pango_layout_set_alignment(layout, PANGO_ALIGN_LEFT);
+    
+  lives_painter_move_to(cr, x_text, y_text);
+
+  switch(mode) {
+  case LIVES_TEXT_MODE_FOREGROUND_AND_BACKGROUND:
+    lives_painter_set_source_rgba(cr,bg->red/66535., bg->green/66535., bg->blue/66535., b_alpha);
+    fill_bckg(cr, x_pos, y_pos, dwidth, dheight);
+    lives_painter_move_to(cr, x_text, y_text);
+    lives_painter_set_source_rgba(cr,fg->red/66535., fg->green/66535., fg->blue/66535., f_alpha);
+    break;
+  case LIVES_TEXT_MODE_BACKGROUND_ONLY:
+    lives_painter_set_source_rgba(cr,bg->red/66535., bg->green/66535., bg->blue/66535., b_alpha);
+    fill_bckg(cr, x_pos, y_pos, dwidth, dheight);
+    lives_painter_move_to(cr, x_pos, y_pos);
+    lives_painter_set_source_rgba(cr,fg->red/66535., fg->green/66535., fg->blue/66535., f_alpha);
+    pango_layout_set_text(layout, "", -1);
+    break;
+  case LIVES_TEXT_MODE_FOREGROUND_ONLY:
+  default:
+    lives_painter_set_source_rgba(cr,fg->red/66535., fg->green/66535., fg->blue/66535., f_alpha);
+    break;
+  }
+
+  pango_cairo_show_layout(cr, layout);
+  pango_font_description_free(font);
+
+  return layout;
+}
+
+
+
+
+
 weed_plant_t *render_text_to_layer(weed_plant_t *layer, const char *text, const char *fontname,
   double size, lives_text_mode_t mode, lives_colRGBA32_t *fg_col, lives_colRGBA32_t *bg_col,
   boolean center, boolean rising, double top) {
   // render text to layer and return a new layer, which may have a new "rowstrides", "width" and/or "current_palette"
   // original layer is freed in the process and should not be used
 
-  int error;
+  lives_painter_t *cr;
 
-  int cent,rise;
-
-  int width, height;
-
-  double dwidth, dheight;
-  lives_colRGBA32_t *fg, *bg;
-
-  double b_alpha=(double)bg_col->alpha/255.;
-  double f_alpha=(double)fg_col->alpha/255.;
-
-  lives_painter_t *lives_painter;
   lives_painter_surface_t *surface;
+
   void *src;
 
   PangoLayout *layout;
 
+  int width, height, error;
+
   width=weed_get_int_value(layer,"width",&error);
   height=weed_get_int_value(layer,"height",&error);
  
-  fg = fg_col;
-  bg = bg_col;
+  // do cairo and pango things
 
-  // THINGS TO TO WITH TEXTS AND PANGO
-  cent = center ? 1 : 0;
-  rise = rising ? 1 : 0;
+  cr=layer_to_lives_painter(layer);
+  if (cr==NULL) return layer; ///< error occured
 
-  // do lives_painter and pango things
+  layout = render_text_to_cr(cr,text,fontname,size,mode,fg_col,bg_col,center,rising,top,width,height);
+  // do not !!
+  //lives_painter_paint(cr);
 
-  lives_painter=layer_to_lives_painter(layer);
-  if (lives_painter==NULL) return layer; ///< error occured
-  
-  layout = pango_cairo_create_layout(lives_painter);
-  
-  if (layout) { 
-    PangoFontDescription *font;
-    double x_pos, y_pos;
-    double x_text, y_text;
-    
-    font = pango_font_description_new();
-    pango_font_description_set_family(font, fontname);
-    pango_font_description_set_absolute_size(font, size*PANGO_SCALE);
-    
-    pango_layout_set_font_description(layout, font);
-    pango_layout_set_text(layout, text, -1);
-    getxypos(layout, &x_pos, &y_pos, width, height, cent, &dwidth, &dheight);
-    
-    if (!rise) y_pos = y_text = height*top;
-    
-    x_text = x_pos;
-    y_text = y_pos;
-    
-    if (cent) pango_layout_set_alignment(layout, PANGO_ALIGN_CENTER);
-    else pango_layout_set_alignment(layout, PANGO_ALIGN_LEFT);
-    
-    lives_painter_move_to(lives_painter, x_text, y_text);
+  lives_painter_to_layer(cr,layer);
 
-    switch(mode) {
-    case LIVES_TEXT_MODE_FOREGROUND_AND_BACKGROUND:
-      lives_painter_set_source_rgba(lives_painter,bg->red, bg->green, bg->blue, b_alpha);
-      fill_bckg(lives_painter, x_pos, y_pos, dwidth, dheight);
-      lives_painter_move_to(lives_painter, x_text, y_text);
-      lives_painter_set_source_rgba(lives_painter,fg->red, fg->green, fg->blue, f_alpha);
-      break;
-    case LIVES_TEXT_MODE_BACKGROUND_ONLY:
-      lives_painter_set_source_rgba(lives_painter,bg->red, bg->green, bg->blue, b_alpha);
-      fill_bckg(lives_painter, x_pos, y_pos, dwidth, dheight);
-      lives_painter_move_to(lives_painter, x_pos, y_pos);
-      lives_painter_set_source_rgba(lives_painter,fg->red, fg->green, fg->blue, f_alpha);
-      pango_layout_set_text(layout, "", -1);
-      break;
-    case LIVES_TEXT_MODE_FOREGROUND_ONLY:
-    default:
-      lives_painter_set_source_rgba(lives_painter,fg->red, fg->green, fg->blue, f_alpha);
-      break;
-    }
-    
-    pango_cairo_show_layout(lives_painter, layout);
-    
-    // do not !!
-    //lives_painter_paint(lives_painter);
-    
-    lives_painter_to_layer(lives_painter,layer);
+  if (layout) g_object_unref(layout);
 
-    g_object_unref(layout);
-    pango_font_description_free(font);
-  }
-
-  surface=lives_painter_get_target(lives_painter);
+  surface=lives_painter_get_target(cr);
   src=lives_painter_image_surface_get_data (surface);
   g_free(src);
-  lives_painter_destroy(lives_painter);
+  lives_painter_destroy(cr);
   return layer;
 }
 

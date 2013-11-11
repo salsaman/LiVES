@@ -5,6 +5,8 @@
 // released under the GNU GPL 3 or later
 // see file COPYING or www.gnu.org for details
 
+// (c) G. Finch 2002 - 2013
+
 #ifndef LIVES_PANGOTEXT_H
 #define LIVES_PANGOTEXT_H
 
@@ -56,13 +58,11 @@ char **get_font_list(void);
 
 weed_plant_t *render_text_to_layer(weed_plant_t *layer, const char *text, const char *fontname,
 				   double size, lives_text_mode_t mode, lives_colRGBA32_t *fg_col, 
-				   lives_colRGBA32_t *bg_col, gboolean center, gboolean rising, double top);
+				   lives_colRGBA32_t *bg_col, boolean center, boolean rising, double top);
 
-#if 0
-gboolean render_text_to_layer(weed_plant_t *layer, const char *text, const char *fontname,\
-  double size, lives_text_mode_t mode, lives_colRGBA32_t *fg_col, lives_colRGBA32_t *bg_col,\
-  gboolean center, gboolean rising, double top);
-#endif
+PangoLayout *render_text_to_cr (lives_painter_t *, const char *text, const char *fontname,
+				double size, lives_text_mode_t mode, lives_colRGBA32_t *fg_col, lives_colRGBA32_t *bg_col,
+				boolean center, boolean rising, double top, int width, int height);
 
 #endif
 

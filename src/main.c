@@ -4242,9 +4242,9 @@ static weed_plant_t *render_subs_from_file(file *sfile, double xtime, weed_plant
 
     size=weed_get_int_value(layer,"width",&error)/32;
 
-    col_white.red=col_white.green=col_white.blue=col_white.alpha=255;
+    col_white.red=col_white.green=col_white.blue=col_white.alpha=65535;
     col_black_a.red=col_black_a.green=col_black_a.blue=0;
-    col_black_a.alpha=80;
+    col_black_a.alpha=20480;
     
     if (sfile->subt->text!=NULL) {
       gchar *tmp;

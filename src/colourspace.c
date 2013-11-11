@@ -11047,8 +11047,8 @@ lives_painter_t *layer_to_lives_painter(weed_plant_t *layer) {
 
 
 
-boolean lives_painter_to_layer(lives_painter_t *lives_painter, weed_plant_t *layer) {
-  // updates a weed_layer from a lives_painter_t
+boolean lives_painter_to_layer(lives_painter_t *cr, weed_plant_t *layer) {
+  // updates a weed_layer from a cr
 
   // TODO *** - keep the surface around using lives_painter_surface_reference() and destroy it when the "pixel_data" is freed or changed
 
@@ -11056,7 +11056,7 @@ boolean lives_painter_to_layer(lives_painter_t *lives_painter, weed_plant_t *lay
 
   int width,height,rowstride;
 
-  lives_painter_surface_t *surface=lives_painter_get_target(lives_painter);
+  lives_painter_surface_t *surface=lives_painter_get_target(cr);
   lives_painter_format_t  cform;
 
   // flush to ensure all writing to the image was done

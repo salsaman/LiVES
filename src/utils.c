@@ -27,6 +27,14 @@
 static boolean  omute,  osepwin,  ofs,  ofaded,  odouble;
 
 
+typedef struct {
+  int fd;
+  size_t bytes;
+  boolean eof;
+  uint8_t *ptr;
+  uint8_t *buffer;
+} lives_file_buffer_t;
+
 
 char *filename_from_fd(char *val, int fd) {
   // return filename from an open fd, freeing val first
@@ -426,30 +434,57 @@ char *lives_fgets(char *s, int size, FILE *stream) {
 }
 
 
+static lives_file_buffer_t *find_in_file_buffers(int fd) {
+  lives_file_buffer_t *fbuff;
+  GList *fblist=mainw->file_buffers;
+
+  while (fblist!=NULL) {
+    fbuff=(lives_file_buffer_t *)fblist->data;
+    if (fbuff->fd==fd) return fbuff;
+    fblist=fblist->next;
+  }
+
+  return NULL;
+}
+
+
+static void do_file_read_error(int fd, ssize_t errval, size_t count) {
+  char *msg=NULL;
+  mainw->read_failed=TRUE;
+  mainw->read_failed_file=filename_from_fd(mainw->read_failed_file,fd);
+ 
+  if (errval>=0)
+    msg=g_strdup_printf("Read failed %"PRId64" of %"PRIu64" in: %s",(int64_t)errval,
+			(uint64_t)count,mainw->read_failed_file);
+  else 
+    msg=g_strdup_printf("Read failed with error %"PRId64" in: %s",(int64_t)errval,
+			mainw->read_failed_file);
+
+
+
+  LIVES_ERROR(msg);
+  g_free(msg);
+}
+
 
 ssize_t lives_read(int fd, void *buf, size_t count, boolean allow_less) {
   ssize_t retval=read(fd, buf, count);
 
   if (retval<count) {
-    char *msg=NULL;
     if (!allow_less||retval<0) {
-      mainw->read_failed=TRUE;
-      mainw->read_failed_file=filename_from_fd(mainw->read_failed_file,fd);
-      msg=g_strdup_printf("Read failed %"PRIu64" of %"PRIu64" in: %s",(uint64_t)retval,
-			  (uint64_t)count,mainw->read_failed_file);
-      LIVES_ERROR(msg);
-      close(fd);
+      do_file_read_error(fd,retval,count);
+      lives_close(fd);
     }
 #ifndef LIVES_NO_DEBUG
     else {
+      char *msg=NULL;
       char *ffile=filename_from_fd(NULL,fd);
       msg=g_strdup_printf("Read got %"PRIu64" of %"PRIu64" in: %s (not an error)",(uint64_t)retval,
 			  (uint64_t)count,ffile);
       LIVES_DEBUG(msg);
-      g_free(ffile);
+      g_free(ffile); g_free(msg);
     }
 #endif
-    if (msg!=NULL) g_free(msg);
   }
   return retval;
 }
@@ -471,6 +506,138 @@ ssize_t lives_read_le(int fd, void *buf, size_t count, boolean allow_less) {
 }
 
 
+
+
+//// buffered io ////
+
+#define BUFFER_FILL_BYTES 65536
+
+int lives_open(const char *pathname, int flags) {
+  lives_file_buffer_t *fbuff;
+  int fd=open(pathname,flags);
+  if (fd>=0) {
+    fbuff=(lives_file_buffer_t *)g_malloc(sizeof(lives_file_buffer_t));
+    fbuff->fd=fd;
+    fbuff->bytes=0;
+    fbuff->eof=FALSE;
+    fbuff->ptr=NULL;
+    fbuff->buffer=NULL;
+    mainw->file_buffers=g_list_append(mainw->file_buffers,(gpointer)fbuff);
+  }
+
+  return fd;
+}
+
+
+int lives_close(int fd) {
+  lives_file_buffer_t *fbuff;
+  boolean should_close=TRUE;
+  int ret=0;
+
+  if (fd<0) {
+    should_close=FALSE;
+    fd=-fd;
+  }
+
+  fbuff=find_in_file_buffers(fd);
+  if (fbuff==NULL) {
+    if (should_close) ret=close(fd);
+    return ret;
+  }
+
+  if (should_close && fbuff->fd>=0) ret=close(fbuff->fd);
+
+  mainw->file_buffers=g_list_remove(mainw->file_buffers,(gconstpointer)fbuff);
+  if (fbuff->buffer!=NULL) g_free(fbuff->buffer);
+  g_free(fbuff);
+  return ret;
+}
+
+
+
+static ssize_t file_buffer_fill(lives_file_buffer_t *fbuff) {
+  ssize_t res;
+
+  if (fbuff->buffer==NULL) fbuff->buffer=(uint8_t *)g_malloc(BUFFER_FILL_BYTES);
+
+  res=lives_read(fbuff->fd,fbuff->buffer,BUFFER_FILL_BYTES,TRUE);
+
+  if (res<0) {
+    lives_close(-fbuff->fd); // use -fd as lives_read will have closed
+    return res;
+  }
+
+  fbuff->bytes=res;
+  fbuff->ptr=fbuff->buffer;
+
+  if (res<BUFFER_FILL_BYTES) fbuff->eof=TRUE;
+  else fbuff->eof=FALSE;
+
+  return res;
+}
+
+
+ssize_t lives_read_buffered(int fd, void *buf, size_t count, boolean allow_less) {
+  lives_file_buffer_t *fbuff;
+  ssize_t retval=0,res;
+  size_t ocount=count;
+  uint8_t *ptr=(uint8_t *)buf;
+
+  if ((fbuff=find_in_file_buffers(fd))==NULL) {
+    LIVES_WARN("lives_read_le_buffered: no file buffer found");
+    return lives_read_le(fd,buf,count,allow_less);
+  }
+
+  // read bytes from fbuff 
+  while (1) {
+    if (fbuff->bytes==0&&!fbuff->eof) {
+      res=file_buffer_fill(fbuff);
+      if (res<0) return res;
+    }
+
+    if (fbuff->bytes<count) {
+      lives_memcpy(ptr,fbuff->ptr,fbuff->bytes);
+      retval+=fbuff->bytes;
+      count-=fbuff->bytes;
+      ptr+=fbuff->bytes;
+      fbuff->bytes=0;
+      if (fbuff->eof) {
+	break;
+      }
+    }
+    else {
+      lives_memcpy(ptr,fbuff->ptr,count);
+      retval+=count;
+      fbuff->ptr+=count;
+      fbuff->bytes-=count;
+      count=0;
+      break;
+    }
+  }
+
+  if (!allow_less && count>0) {
+    do_file_read_error(fd,retval,ocount);
+    lives_close(fd);
+  }
+
+  return retval;
+}
+
+
+ssize_t lives_read_le_buffered(int fd, void *buf, size_t count, boolean allow_less) {
+  if (capable->byte_order==LIVES_BIG_ENDIAN&&!prefs->bigendbug) {
+    uint8_t xbuf[count];
+    ssize_t retval=lives_read_buffered(fd,buf,count,allow_less);
+    if (retval<count) return retval;
+    reverse_bytes((uint8_t *)buf,(const uint8_t *)xbuf,count);
+    return retval;
+  }
+  else {
+    return lives_read_buffered(fd,buf,count,allow_less);
+  }
+}
+
+/////////////////////////////////////////////
 
 char *lives_format_storage_space_string(uint64_t space) {
   char *fmt;

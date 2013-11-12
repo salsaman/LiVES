@@ -3075,7 +3075,7 @@ void play_file (void) {
     // update screen for internal players
     lives_widget_hide(mainw->framebar);
     lives_entry_set_text(LIVES_ENTRY(mainw->framecounter),"");
-    lives_image_set_from_pixbuf(GTK_IMAGE(mainw->image274),NULL);
+    lives_image_set_from_pixbuf(GTK_IMAGE(mainw->play_image),NULL);
   }
 
   // kill the separate play window

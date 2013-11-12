@@ -786,7 +786,7 @@ typedef struct {
   void ***pchains; // parameter value chains for interpolation
 
   // for the internal player
-  GtkWidget *image274;
+  GtkWidget *play_image;
   GtkWidget *play_window;
   weed_plant_t *frame_layer;
   GtkWidget *plug;
@@ -804,8 +804,8 @@ typedef struct {
 #define PRV_END 2
 #define PRV_PTR 3
 
-  GtkWidget *image272;
-  GtkWidget *image273;
+  GtkWidget *start_image;
+  GtkWidget *end_image;
   GtkWidget *playarea;
   GtkWidget *hseparator;
   GtkWidget *scrolledwindow;

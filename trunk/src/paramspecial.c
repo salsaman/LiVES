@@ -236,7 +236,7 @@ void check_for_special (lives_rfx_t *rfx, lives_param_t *param, LiVESBox *pbox) 
 	    framedraw_add_reset(GTK_VBOX(LIVES_WIDGET(pbox)),&framedraw);
 	  }
 	  else {
-	    mainw->framedraw=mainw->image274;
+	    mainw->framedraw=mainw->play_image;
 	  }
 	  framedraw.added=TRUE;
 	}

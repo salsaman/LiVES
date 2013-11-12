@@ -2868,7 +2868,7 @@ void mt_show_current_frame(lives_mt *mt, boolean return_layer) {
       }
 
       if (mainw->plug!=NULL) {
-	lives_container_remove (LIVES_CONTAINER(mainw->plug),mainw->image274);
+	lives_container_remove (LIVES_CONTAINER(mainw->plug),mainw->play_image);
 	lives_widget_destroy (mainw->plug);
 	mainw->plug=NULL;
       }
@@ -2877,7 +2877,6 @@ void mt_show_current_frame(lives_mt *mt, boolean return_layer) {
       mainw->playarea = lives_hbox_new (FALSE,0);
       lives_widget_show(mainw->playarea);
       lives_container_add (LIVES_CONTAINER (mt->play_box), mainw->playarea);
-      //lives_widget_set_app_paintable(mainw->playarea,TRUE);
 
       if (mt->is_ready)
 	lives_widget_context_update();
@@ -2896,7 +2895,7 @@ void mt_show_current_frame(lives_mt *mt, boolean return_layer) {
 	mt->frame_pixbuf=mainw->imframe;
       }
 #else
-      set_ce_frame_from_pixbuf(LIVES_IMAGE(mainw->image274),mainw->imframe,NULL);
+      set_ce_frame_from_pixbuf(LIVES_IMAGE(mainw->play_image),mainw->imframe,NULL);
 #endif
     }
     else {
@@ -2906,7 +2905,7 @@ void mt_show_current_frame(lives_mt *mt, boolean return_layer) {
 	mt->frame_pixbuf=NULL;
       }
 #else
-      set_ce_frame_from_pixbuf(LIVES_IMAGE(mainw->image274),NULL,NULL);
+      set_ce_frame_from_pixbuf(LIVES_IMAGE(mainw->play_image),NULL,NULL);
 #endif
     }
     lives_widget_queue_draw_area(mt->play_box,0,0,
@@ -3013,7 +3012,7 @@ void mt_show_current_frame(lives_mt *mt, boolean return_layer) {
 #if GTK_CHECK_VERSION(3,0,0)
       mt->frame_pixbuf=pixbuf;
 #else
-      set_ce_frame_from_pixbuf(LIVES_IMAGE(mainw->image274),pixbuf,NULL);
+      set_ce_frame_from_pixbuf(LIVES_IMAGE(mainw->play_image),pixbuf,NULL);
 #endif
       lives_widget_queue_draw(mt->play_box);
 
@@ -3023,7 +3022,7 @@ void mt_show_current_frame(lives_mt *mt, boolean return_layer) {
 #if GTK_CHECK_VERSION(3,0,0)
     mt->frame_pixbuf=mainw->imframe;
 #else
-    set_ce_frame_from_pixbuf(LIVES_IMAGE(mainw->image274),mainw->imframe,NULL);
+    set_ce_frame_from_pixbuf(LIVES_IMAGE(mainw->play_image),mainw->imframe,NULL);
 #endif
     lives_widget_queue_draw(mt->play_box);
   }
@@ -5473,7 +5472,7 @@ static void after_timecode_changed(GtkWidget *entry, GtkDirectionType dir, gpoin
 static boolean expose_pb (GtkWidget *widget, lives_painter_t *cr, gpointer user_data) {
   lives_mt *mt=(lives_mt *)user_data;
   if (mainw->playing_file>-1) return TRUE;
-  set_ce_frame_from_pixbuf(LIVES_IMAGE(mainw->image274),mt->frame_pixbuf,cr);
+  set_ce_frame_from_pixbuf(LIVES_IMAGE(mainw->play_image),mt->frame_pixbuf,cr);
   return TRUE;
 }
 
@@ -8020,7 +8019,7 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
   eventbox=lives_event_box_new();
   lives_widget_set_size_request (eventbox, mt->play_window_width, mt->play_window_height);
   mt->play_box = lives_vbox_new (FALSE, widget_opts.border_width);
-  lives_widget_set_app_paintable(mt->play_box,TRUE);
+  lives_widget_set_app_paintable(eventbox,TRUE);
   lives_widget_set_size_request (mt->play_box, mt->play_window_width, mt->play_window_height);
 
   lives_widget_set_hexpand(mt->play_box,FALSE);
@@ -9229,7 +9228,7 @@ boolean multitrack_delete (lives_mt *mt, boolean save_layout) {
 
   if (mt->mt_frame_preview) {
     if (mainw->plug!=NULL) {
-      lives_container_remove (LIVES_CONTAINER(mainw->plug),mainw->image274);
+      lives_container_remove (LIVES_CONTAINER(mainw->plug),mainw->play_image);
       lives_widget_destroy (mainw->plug);
       mainw->plug=NULL;
     }
@@ -9239,7 +9238,6 @@ boolean multitrack_delete (lives_mt *mt, boolean save_layout) {
     lives_container_add (LIVES_CONTAINER (mainw->pl_eventbox), mainw->playarea);
     lives_widget_set_bg_color (mainw->playframe, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
     lives_widget_show(mainw->playarea);
-    lives_widget_set_app_paintable(mainw->playarea,TRUE);
   }
 
 

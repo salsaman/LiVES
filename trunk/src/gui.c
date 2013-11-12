@@ -254,12 +254,12 @@ void create_LiVES (void) {
   mainw->preview_image=NULL;
 
   mainw->sep_image = lives_image_new_from_pixbuf (NULL);
-  mainw->image272 = lives_image_new_from_pixbuf (NULL);
-  mainw->image273 = lives_image_new_from_pixbuf (NULL);
+  mainw->start_image = lives_image_new_from_pixbuf (NULL);
+  mainw->end_image = lives_image_new_from_pixbuf (NULL);
   mainw->imframe=mainw->imsep=NULL;
 
-  lives_widget_show(mainw->image272);
-  lives_widget_show(mainw->image273);
+  lives_widget_show(mainw->start_image);
+  lives_widget_show(mainw->end_image);
 
   if (palette->style&STYLE_1) {
     load_theme();
@@ -267,20 +267,18 @@ void create_LiVES (void) {
 
 
 #if GTK_CHECK_VERSION(3,0,0)
-  lives_widget_set_app_paintable(mainw->image272,TRUE);
-  g_signal_connect (GTK_OBJECT (mainw->image272), LIVES_WIDGET_EVENT_EXPOSE_EVENT,
+  g_signal_connect (GTK_OBJECT (mainw->start_image), LIVES_WIDGET_EVENT_EXPOSE_EVENT,
 		    G_CALLBACK (expose_sim),
 		    NULL);
 
-  lives_widget_set_app_paintable(mainw->image273,TRUE);
-  g_signal_connect (GTK_OBJECT (mainw->image273), LIVES_WIDGET_EVENT_EXPOSE_EVENT,
+  g_signal_connect (GTK_OBJECT (mainw->end_image), LIVES_WIDGET_EVENT_EXPOSE_EVENT,
 		    G_CALLBACK (expose_eim),
 		    NULL);
 #else
 
   if (mainw->imframe!=NULL) {
-    lives_image_set_from_pixbuf(LIVES_IMAGE(mainw->image272),mainw->imframe);
-    lives_image_set_from_pixbuf(LIVES_IMAGE(mainw->image273),mainw->imframe);
+    lives_image_set_from_pixbuf(LIVES_IMAGE(mainw->start_image),mainw->imframe);
+    lives_image_set_from_pixbuf(LIVES_IMAGE(mainw->end_image),mainw->imframe);
   }
 
 #endif
@@ -2124,13 +2122,14 @@ void create_LiVES (void) {
   lives_widget_set_vexpand(mainw->freventbox0,FALSE);
   lives_widget_set_hexpand(mainw->freventbox0,FALSE);
   lives_container_add (LIVES_CONTAINER (mainw->frame1), mainw->freventbox0);
+  lives_widget_set_app_paintable(mainw->freventbox0,TRUE);
 
-  lives_widget_show (mainw->image272);
-  lives_container_add (LIVES_CONTAINER (mainw->freventbox0), mainw->image272);
-  lives_widget_set_vexpand(mainw->image272,FALSE);
-  lives_widget_set_hexpand(mainw->image272,FALSE);
+  lives_widget_show (mainw->start_image);
+  lives_container_add (LIVES_CONTAINER (mainw->freventbox0), mainw->start_image);
+  lives_widget_set_vexpand(mainw->start_image,FALSE);
+  lives_widget_set_hexpand(mainw->start_image,FALSE);
   if (palette->style&STYLE_1) {
-    lives_widget_set_bg_color(mainw->image272, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
+    lives_widget_set_bg_color(mainw->start_image, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
   }
 
   label = lives_standard_label_new (_("First Frame"));
@@ -2167,7 +2166,7 @@ void create_LiVES (void) {
 
   lives_container_add (LIVES_CONTAINER (mainw->pl_eventbox), mainw->playarea);
 
-  lives_widget_set_app_paintable(mainw->playarea,TRUE);
+  lives_widget_set_app_paintable(mainw->pl_eventbox,TRUE);
 
   mainw->eventbox4 = lives_event_box_new ();
   lives_box_pack_start (LIVES_BOX (hbox1), mainw->eventbox4, TRUE, FALSE, 0);
@@ -2195,15 +2194,16 @@ void create_LiVES (void) {
   }
   lives_widget_set_vexpand(mainw->freventbox1,FALSE);
   lives_widget_set_hexpand(mainw->freventbox1,FALSE);
+  lives_widget_set_app_paintable(mainw->freventbox1,TRUE);
 
   lives_container_add (LIVES_CONTAINER (mainw->frame2), mainw->freventbox1);
   
-  lives_widget_show (mainw->image273);
-  lives_container_add (LIVES_CONTAINER (mainw->freventbox1), mainw->image273);
-  lives_widget_set_vexpand(mainw->image273,FALSE);
-  lives_widget_set_hexpand(mainw->image273,FALSE);
+  lives_widget_show (mainw->end_image);
+  lives_container_add (LIVES_CONTAINER (mainw->freventbox1), mainw->end_image);
+  lives_widget_set_vexpand(mainw->end_image,FALSE);
+  lives_widget_set_hexpand(mainw->end_image,FALSE);
   if (palette->style&STYLE_1) {
-    lives_widget_set_bg_color(mainw->image273, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
+    lives_widget_set_bg_color(mainw->end_image, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
   }
 
   // default frame sizes
@@ -2220,21 +2220,21 @@ void create_LiVES (void) {
   }
 
   // the actual playback image for the internal player
-  mainw->image274 = lives_image_new_from_pixbuf (NULL);
-  lives_widget_set_app_paintable(mainw->image274,TRUE);
-  lives_widget_show (mainw->image274);
-  g_object_ref(mainw->image274);
+  mainw->play_image = lives_image_new_from_pixbuf (NULL);
+
+  lives_widget_show (mainw->play_image);
+  g_object_ref(mainw->play_image);
   if (palette->style&STYLE_1) {
-    lives_widget_set_bg_color(mainw->image274, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
+    lives_widget_set_bg_color(mainw->play_image, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
   }
 
-  lives_widget_set_hexpand(mainw->image274,TRUE);
-  lives_widget_set_vexpand(mainw->image274,TRUE);
+  lives_widget_set_hexpand(mainw->play_image,TRUE);
+  lives_widget_set_vexpand(mainw->play_image,TRUE);
 
 #if GTK_CHECK_VERSION(3,0,0)
-  g_object_ref_sink (G_OBJECT (mainw->image274));
+  g_object_ref_sink (G_OBJECT (mainw->play_image));
 #else
-  gtk_object_sink (GTK_OBJECT (mainw->image274));
+  gtk_object_sink (GTK_OBJECT (mainw->play_image));
 #endif
 
   label = lives_standard_label_new (_("Last Frame"));
@@ -3131,7 +3131,7 @@ void fade_background(void) {
   lives_widget_set_bg_color (mainw->eventbox4, LIVES_WIDGET_STATE_NORMAL, &palette->fade_colour);
   lives_widget_set_bg_color (mainw->eventbox, LIVES_WIDGET_STATE_NORMAL, &palette->fade_colour);
   lives_widget_set_bg_color (mainw->pl_eventbox, LIVES_WIDGET_STATE_NORMAL, &palette->fade_colour);
-  lives_widget_set_bg_color (mainw->image274, LIVES_WIDGET_STATE_NORMAL, &palette->fade_colour);
+  lives_widget_set_bg_color (mainw->play_image, LIVES_WIDGET_STATE_NORMAL, &palette->fade_colour);
 
   lives_widget_set_bg_color (mainw->frame1, LIVES_WIDGET_STATE_NORMAL, &palette->fade_colour);
   lives_widget_set_bg_color (mainw->frame2, LIVES_WIDGET_STATE_NORMAL, &palette->fade_colour);
@@ -3143,8 +3143,8 @@ void fade_background(void) {
   gtk_frame_set_label (GTK_FRAME(mainw->frame2), "");
 
   if (mainw->toy_type!=LIVES_TOY_MAD_FRAMES||mainw->foreign) {
-    lives_widget_hide(mainw->image272);
-    lives_widget_hide(mainw->image273);
+    lives_widget_hide(mainw->start_image);
+    lives_widget_hide(mainw->end_image);
   }
   if (!mainw->foreign&&future_prefs->show_tool) {
     lives_widget_show(mainw->tb_hbox);
@@ -3277,7 +3277,7 @@ void unfade_background(void) {
   lives_widget_set_bg_color (mainw->frame2, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
   lives_widget_set_bg_color (mainw->freventbox0, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
   lives_widget_set_bg_color (mainw->freventbox1, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
-  lives_widget_set_bg_color (mainw->image274, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
+  lives_widget_set_bg_color (mainw->play_image, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
 
   lives_widget_set_bg_color (mainw->playframe, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
   lives_widget_show(mainw->menu_hbox);
@@ -3289,8 +3289,8 @@ void unfade_background(void) {
     }
     if (mainw->multitrack==NULL) lives_widget_show(mainw->scrolledwindow);
   }
-  lives_widget_show(mainw->image272);
-  lives_widget_show(mainw->image273);
+  lives_widget_show(mainw->start_image);
+  lives_widget_show(mainw->end_image);
   lives_widget_show(mainw->eventbox2);
   if (!cfile->opening) {
     lives_widget_show(mainw->hruler);
@@ -3420,7 +3420,7 @@ void fullscreen_internal(void) {
 
 
     if (mainw->playing_file==-1) {
-      lives_image_set_from_pixbuf(LIVES_IMAGE(mainw->image274),NULL);
+      lives_image_set_from_pixbuf(LIVES_IMAGE(mainw->play_image),NULL);
     }
 
     lives_widget_context_update();
@@ -3522,9 +3522,9 @@ void make_preview_box (void) {
 
 
   mainw->preview_image = lives_image_new_from_pixbuf (NULL);
-  lives_widget_set_app_paintable(mainw->preview_image,TRUE);
   lives_widget_show (mainw->preview_image);
   lives_container_add (LIVES_CONTAINER (eventbox), mainw->preview_image);
+  lives_widget_set_app_paintable(eventbox,TRUE);
 
   if (mainw->play_window!=NULL) {
     if (mainw->current_file<0||cfile->frames==0) {
@@ -3809,7 +3809,7 @@ void make_play_window(void) {
     unhide_cursor(lives_widget_get_xwindow(mainw->playarea));
   }
 
-  lives_image_set_from_pixbuf(LIVES_IMAGE(mainw->image274),NULL);
+  lives_image_set_from_pixbuf(LIVES_IMAGE(mainw->play_image),NULL);
 
   if (mainw->play_window!=NULL) {
     // this shouldn't ever happen
@@ -4282,7 +4282,7 @@ add_to_playframe (void) {
       lives_container_add(LIVES_CONTAINER(mainw->playarea),mainw->plug);
       lives_widget_set_bg_color (mainw->plug, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
       lives_widget_show (mainw->plug);
-      lives_container_add (LIVES_CONTAINER (mainw->plug), mainw->image274);
+      lives_container_add (LIVES_CONTAINER (mainw->plug), mainw->play_image);
     }
   }
 }

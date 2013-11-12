@@ -984,6 +984,8 @@ typedef struct {
   GList *cached_list;  ///< cache of preferences or file header file (or NULL)
   FILE *clip_header;
 
+  GList *file_buffers;
+
   gfloat volume; ///< audio volume level (for jack)
 
   int aud_rec_fd; ///< fd of file we are recording audio to

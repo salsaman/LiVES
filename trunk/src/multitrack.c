@@ -205,6 +205,8 @@ void set_mixer_track_vol(lives_mt *mt, int trackno, double vol) {
 
 static boolean save_event_list_inner(lives_mt *mt, int fd, weed_plant_t *event_list, unsigned char **mem) {
   weed_plant_t *event;
+  int count=0;
+  register int i;
 
   if (event_list==NULL) return TRUE;
 
@@ -228,7 +230,6 @@ static boolean save_event_list_inner(lives_mt *mt, int fd, weed_plant_t *event_l
   else weed_set_int_value(event_list,"audio_endian",0);
   
   if (mt!=NULL&&mt->audio_vols!=NULL&&mt->audio_draws!=NULL) {
-    int i;
     int natracks=g_list_length(mt->audio_draws);
     int *atracks=(int *)g_malloc(natracks*sizint);
     double *avols;
@@ -263,7 +264,10 @@ static boolean save_event_list_inner(lives_mt *mt, int fd, weed_plant_t *event_l
     }
     weed_plant_serialise(fd,event,mem);
     event=get_next_event(event);
-    threaded_dialog_spin();
+    if (++count==100) {
+      count=0;
+      threaded_dialog_spin();
+    }
   }
 
   if (mainw->write_failed) return FALSE;
@@ -19915,7 +19919,8 @@ boolean event_list_rectify(lives_mt *mt, weed_plant_t *event_list) {
 
     ev_count++;
     g_snprintf(mainw->msg,256,"%d|",ev_count);
-    threaded_dialog_spin();
+    if ((ev_count%100)==0) threaded_dialog_spin();
+
 
     if (!weed_get_plant_type(event)==WEED_PLANT_EVENT) {
       ebuf=rec_error_add(ebuf,"Invalid plant type",weed_get_plant_type(event),tc);
@@ -20856,7 +20861,7 @@ weed_plant_t *load_event_list(lives_mt *mt, gchar *eload_file) {
   if (!mainw->recoverable_layout) eload_name=g_strdup(eload_file);
   else eload_name=g_strdup(_("auto backup"));
 
-  if ((fd=open(eload_file,O_RDONLY))<0) {
+  if ((fd=lives_open(eload_file,O_RDONLY))<0) {
     msg=g_strdup_printf(_("\nUnable to load layout file %s\n"),eload_name);
     do_error_dialog_with_check_transient(msg,TRUE,0,LIVES_WINDOW(mt->window));
     g_free(msg);
@@ -20891,7 +20896,7 @@ weed_plant_t *load_event_list(lives_mt *mt, gchar *eload_file) {
   do {
     retval=0;
     if ((event_list=load_event_list_inner(mt,fd,TRUE,&num_events,NULL,NULL))==NULL) {
-      close(fd);
+      lives_close(fd);
       
       if (mainw->read_failed) {
 	retval=do_read_failed_error_s_with_retry(eload_name,NULL,NULL);
@@ -20905,7 +20910,7 @@ weed_plant_t *load_event_list(lives_mt *mt, gchar *eload_file) {
 	return NULL;
       }
     }
-    else close(fd);
+    else lives_close(fd);
   } while (retval==LIVES_RETRY);
 
   g_free(eload_name);

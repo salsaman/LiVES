@@ -1077,10 +1077,14 @@ boolean expose_eim (GtkWidget *widget, lives_painter_t *cr, gpointer user_data);
 // system calls in utils.c
 int lives_system(const char *com, boolean allow_error);
 lives_pid_t lives_fork(const char *com);
+int lives_open(const char *pathname, int flags);
+int lives_close(int fd);
 ssize_t lives_write(int fd, const void *buf, size_t count, boolean allow_fail);
 ssize_t lives_write_le(int fd, const void *buf, size_t count, boolean allow_fail);
 ssize_t lives_read(int fd, void *buf, size_t count, boolean allow_less);
+ssize_t lives_read_buffered(int fd, void *buf, size_t count, boolean allow_less);
 ssize_t lives_read_le(int fd, void *buf, size_t count, boolean allow_less);
+ssize_t lives_read_le_buffered(int fd, void *buf, size_t count, boolean allow_less);
 int lives_chdir(const char *path, boolean allow_fail);
 int lives_fputs(const char *s, FILE *stream);
 char *lives_fgets(char *s, int size, FILE *stream);

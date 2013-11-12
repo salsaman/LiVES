@@ -9633,10 +9633,10 @@ weed_plant_t *get_weed_filter(int idx) {
 
 static void weed_leaf_serialise (int fd, weed_plant_t *plant, const char *key, boolean write_all, unsigned char **mem) {
   void *value,*valuer;
-  guint32 vlen;
+  uint32_t vlen;
   int st,ne;
   int j;
-  guint32 i=(guint32)strlen(key);
+  uint32_t i=(uint32_t)strlen(key);
 
   // write errors will be checked for by the calling function
 
@@ -9674,7 +9674,7 @@ static void weed_leaf_serialise (int fd, weed_plant_t *plant, const char *key, b
 
   // for each element, write the data size followed by the data
   for (j=0;j<ne;j++) {
-    vlen=(guint32)weed_leaf_element_size(plant,key,j);
+    vlen=(uint32_t)weed_leaf_element_size(plant,key,j);
     if (st!=WEED_SEED_STRING) {
       value=g_malloc((size_t)vlen);
       weed_leaf_get(plant,key,j,value);
@@ -9758,20 +9758,21 @@ static int weed_leaf_deserialise(int fd, weed_plant_t *plant, const gchar *key, 
 
   int *ints;
   double *dubs;
-  gint64 *int64s;
+  int64_t *int64s;
 
-  guint32 len,vlen;
+  uint32_t len,vlen;
 
   gchar *mykey=NULL;
 
   int st; // seed type
   int ne; // num elems
-  int i,j;
   int type=0;
+
+  register int i,j;
 
   if (key==NULL || check_key) {
     if (mem==NULL) {
-      if (lives_read_le(fd,&len,4,TRUE)<4) {
+      if (lives_read_le_buffered(fd,&len,4,TRUE)<4) {
 	return -4;
       }
     }
@@ -9788,7 +9789,7 @@ static int weed_leaf_deserialise(int fd, weed_plant_t *plant, const gchar *key, 
     if (mykey==NULL) return -5;
 
     if (mem==NULL) {
-      if (lives_read(fd,mykey,(size_t)len,TRUE)<len) {
+      if (lives_read_buffered(fd,mykey,(size_t)len,TRUE)<len) {
 	g_free(mykey);
 	return -4;
       }
@@ -9813,7 +9814,7 @@ static int weed_leaf_deserialise(int fd, weed_plant_t *plant, const gchar *key, 
 
 
   if (mem==NULL) {
-    if (lives_read_le(fd,&st,4,TRUE)<4) {
+    if (lives_read_le_buffered(fd,&st,4,TRUE)<4) {
       if (mykey!=NULL) g_free(mykey);
       return -4;
     }
@@ -9837,7 +9838,7 @@ static int weed_leaf_deserialise(int fd, weed_plant_t *plant, const gchar *key, 
 
 
   if (mem==NULL) {
-    if (lives_read_le(fd,&ne,4,TRUE)<4) {
+    if (lives_read_le_buffered(fd,&ne,4,TRUE)<4) {
       if (mykey!=NULL) g_free(mykey);
       return -4;
     }
@@ -9860,7 +9861,7 @@ static int weed_leaf_deserialise(int fd, weed_plant_t *plant, const gchar *key, 
 
   for (i=0;i<ne;i++) {
     if (mem==NULL) {
-      bytes=lives_read_le(fd,&vlen,4,TRUE);
+      bytes=lives_read_le_buffered(fd,&vlen,4,TRUE);
       if (bytes<4) {
 	for (--i;i>=0;g_free(values[i--]));
 	g_free(values);
@@ -9885,9 +9886,9 @@ static int weed_leaf_deserialise(int fd, weed_plant_t *plant, const gchar *key, 
 
     if (mem==NULL) {
       if (st!=WEED_SEED_STRING)
-	bytes=lives_read_le(fd,values[i],vlen,TRUE);
+	bytes=lives_read_le_buffered(fd,values[i],vlen,TRUE);
       else 
-	bytes=lives_read(fd,values[i],vlen,TRUE);
+	bytes=lives_read_buffered(fd,values[i],vlen,TRUE);
       if (bytes<vlen) {
 	for (--i;i>=0;g_free(values[i--]));
 	g_free(values);
@@ -9975,7 +9976,7 @@ weed_plant_t *weed_plant_deserialise(int fd, unsigned char **mem) {
   // caller should clear and check mainw->read_failed
 
   if (mem==NULL) {
-    if ((bytes=lives_read_le(fd,&numleaves,4,TRUE))<4) {
+    if ((bytes=lives_read_le_buffered(fd,&numleaves,4,TRUE))<4) {
       mainw->read_failed=FALSE; // we are allowed to EOF here
       return NULL;
     }

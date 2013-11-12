@@ -2744,8 +2744,8 @@ static void set_time_scrollbar(lives_mt *mt) {
   g_object_freeze_notify (G_OBJECT(mt->hadjustment));
   gtk_range_set_range(GTK_RANGE(mt->time_scrollbar),0.,mt->end_secs);
   gtk_range_set_increments(GTK_RANGE(mt->time_scrollbar),page/4.,page);
-  gtk_adjustment_set_value(GTK_ADJUSTMENT(mt->hadjustment),(double)mt->tl_min);
   lives_adjustment_set_page_size(LIVES_ADJUSTMENT(mt->hadjustment),(double)page);
+  gtk_adjustment_set_value(GTK_ADJUSTMENT(mt->hadjustment),(double)mt->tl_min);
   g_object_thaw_notify (G_OBJECT(mt->hadjustment));
   lives_widget_queue_draw(mt->time_scrollbar);
 

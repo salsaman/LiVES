@@ -44,7 +44,7 @@ static pthread_mutex_t avcodec_mutex=PTHREAD_MUTEX_INITIALIZER;
 #endif
 
 
-#define FAST_SEEK_LIMIT 100000 // microseconds (default 0.1 sec)
+#define FAST_SEEK_LIMIT 50000 // microseconds (default 0.1 sec)
 #define NO_SEEK_LIMIT 1000000 // microseconds
 
 static void lives_avcodec_lock(void) {

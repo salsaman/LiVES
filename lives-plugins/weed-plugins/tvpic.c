@@ -65,7 +65,7 @@ int tvpic_process (weed_plant_t *inst, weed_timecode_t timestamp) {
     end=src+dheight*irowstride;
   }
 
-  for (;src<end;src+=irowstride) {
+  for (;src<end;src+=irowstride*2-width) {
     col=colrd=!colrd;
     if (!col) pc=0; // red
     else pc=1; // green
@@ -92,7 +92,7 @@ int tvpic_process (weed_plant_t *inst, weed_timecode_t timestamp) {
       src+=offs;
       dest+=offs;
     }
-    dest+=orowstride;
+    dest+=orowstride*2-width;
   } 
   return WEED_NO_ERROR;
 }

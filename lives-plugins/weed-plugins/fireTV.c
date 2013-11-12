@@ -24,6 +24,7 @@
 #include "../../libweed/weed-effects.h"
 #endif
 
+#include <stdio.h>
 ///////////////////////////////////////////////////////////////////
 
 static int num_versions=2; // number of different weed api versions supported
@@ -196,7 +197,7 @@ int fire_init (weed_plant_t *inst) {
   sdata->fastrand_val=0;
 
   weed_set_voidptr_value(inst,"plugin_internal",sdata);
-  
+  fprintf(stderr,"init fire\n");
   return WEED_NO_ERROR;
 }
 
@@ -213,6 +214,7 @@ int fire_deinit (weed_plant_t *inst) {
     weed_free(sdata);
     weed_set_voidptr_value(inst,"plugin_internal",NULL);
   }
+  fprintf(stderr,"deinit fire\n");
   return WEED_NO_ERROR;
 }
 
@@ -249,6 +251,8 @@ int fire_process (weed_plant_t *inst, weed_timecode_t timestamp) {
   sdata->fastrand_val=timestamp&0x0000FFFF;
 
   image_bgsubtract_y(src,video_width,video_height,irow,sdata);
+
+  fprintf(stderr,"process fire %d %d %d %p %p\n",irow,orow,video_width,out_channel,dest);
 
   for(i=0; i<video_area-video_width; i++) {
     sdata->buffer[i] |= sdata->diff[i];

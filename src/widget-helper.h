@@ -765,12 +765,14 @@ boolean lives_window_set_default_size(LiVESWindow *, int width, int height);
 boolean lives_window_set_screen(LiVESWindow *, LiVESXScreen *);
 
 boolean lives_window_move(LiVESWindow *, int x, int y);
+boolean lives_window_get_position(LiVESWindow *, int *x, int *y);
 boolean lives_window_resize(LiVESWindow *, int width, int height);
 boolean lives_window_present(LiVESWindow *);
 boolean lives_window_fullscreen(LiVESWindow *);
 boolean lives_window_unfullscreen(LiVESWindow *);
 boolean lives_window_maximize(LiVESWindow *);
 boolean lives_window_unmaximize(LiVESWindow *);
+boolean lives_window_set_hide_titlebar_when_maximized(LiVESWindow *, boolean setting);
 
 boolean lives_window_add_accel_group(LiVESWindow *, LiVESAccelGroup *group);
 boolean lives_window_remove_accel_group(LiVESWindow *, LiVESAccelGroup *group);

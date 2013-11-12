@@ -733,6 +733,26 @@ LIVES_INLINE boolean lives_window_move(LiVESWindow *window, int x, int y) {
 }
 
 
+LIVES_INLINE boolean lives_window_get_position(LiVESWindow *window, int *x, int *y) {
+#ifdef GUI_GTK
+  gtk_window_get_position(window,x,y);
+  return TRUE;
+#endif
+  return FALSE;
+}
+
+
+LIVES_INLINE boolean lives_window_set_hide_titlebar_when_maximized(LiVESWindow *window, boolean setting) {
+#ifdef GUI_GTK
+#if GTK_CHECK_VERSION(3,4,0)
+  gtk_window_set_hide_titlebar_when_maximized(window,setting);
+#endif
+  return TRUE;
+#endif
+  return FALSE;
+}
+
+
 LIVES_INLINE boolean lives_window_resize(LiVESWindow *window, int width, int height) {
 #ifdef GUI_GTK
   gtk_window_resize(window,width,height);

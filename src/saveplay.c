@@ -3031,13 +3031,16 @@ void play_file (void) {
     lives_widget_show(mainw->t_double);
   }
 
-  if (lives_widget_get_allocation_height(mainw->eventbox)+lives_widget_get_allocation_height(mainw->menubar)
-      >mainw->scr_height-2||lives_widget_get_allocation_width(mainw->LiVES)>mainw->scr_width-2) {
+  if (prefs->show_gui&&(lives_widget_get_allocation_height(mainw->eventbox)+lives_widget_get_allocation_height(mainw->menubar)
+			>mainw->scr_height-2||lives_widget_get_allocation_width(mainw->LiVES)>mainw->scr_width-2)) {
+    int wx,wy;
     // the screen grew too much...remaximise it
     lives_window_unmaximize (LIVES_WINDOW(mainw->LiVES));
     mainw->noswitch=TRUE;
     lives_widget_context_update();
     mainw->noswitch=FALSE;
+    lives_window_get_position (LIVES_WINDOW (mainw->LiVES),&wx,&wy);
+    if (prefs->gui_monitor==0) lives_window_move(LIVES_WINDOW(mainw->LiVES),0,0);
     lives_window_maximize (LIVES_WINDOW(mainw->LiVES));
   }
   

@@ -33,35 +33,45 @@ static int font_cmp(const void *p1, const void *p2);
 //
 // code things from scribbler.c
 //
-static void getxypos(PangoLayout *layout, double *px, double *py, int weight, int height, int cent, double *pw, double *ph)
+static void getxypos(PangoLayout *layout, double *px, double *py, int width, int height, int cent, double *pw, double *ph)
 {
   int w_, h_;
   double d;
+
+  // get size of layout
   pango_layout_get_size(layout, &w_, &h_);
+
+  // scale width, height to pixels
   if(pw)
     *pw = ((double)w_)/PANGO_SCALE;
   if(ph)
     *ph = ((double)h_)/PANGO_SCALE;
 
+  // xpos (left or centered)
+
   if(cent) {
     d = ((double)w_)/PANGO_SCALE;
     d /= 2.0;
-    d = (weight>>1) - d;
+    d = (width>>1) - d;
   }
-  else
-    d = 0.0;
-  if(px)
-    *px = d;
+  else d = 0.0;
+
+  if (px) *px = d;
   
+
+  // ypos (adjusted so text goes to bottom)
+
   d = ((double)h_)/PANGO_SCALE;
   d = height - d;
-  if(py)
-    *py = d;
+
+  if (py) *py = d;
 }
 
 static void fill_bckg(lives_painter_t *cr, double x, double y, double dx, double dy) {
+  lives_painter_new_path(cr);
   lives_painter_rectangle(cr, x, y, dx, dy);
   lives_painter_fill(cr);
+  lives_painter_new_path(cr);
 }
 
 
@@ -111,7 +121,17 @@ static int font_cmp(const void *p1, const void *p2) {
 
 PangoLayout *render_text_to_cr (lives_painter_t *cr, const char *text, const char *fontname,
 				double size, lives_text_mode_t mode, lives_colRGBA32_t *fg, lives_colRGBA32_t *bg,
-				boolean center, boolean rising, double top, int width, int height) {
+				boolean center, boolean rising, double top, int offs_x, int width, int height) {
+
+  // fontname may be eg. "Sans"
+
+  // ypos:
+  // if "rising" is TRUE, text will be aligned to fit to bottom
+  // if "rising" is FALSE,  "top" (0.0 -> 1.0) is used
+
+  // xpos:
+  // aligned to left, unless "center" is TRUE
+
 
   PangoFontDescription *font;
 
@@ -144,35 +164,33 @@ PangoLayout *render_text_to_cr (lives_painter_t *cr, const char *text, const cha
   getxypos(layout, &x_pos, &y_pos, width, height, center, &dwidth, &dheight);
     
   if (!rising) y_pos = y_text = height*top;
+
+  if (!center) x_pos+=offs_x;
     
   x_text = x_pos;
   y_text = y_pos;
     
   if (center) pango_layout_set_alignment(layout, PANGO_ALIGN_CENTER);
   else pango_layout_set_alignment(layout, PANGO_ALIGN_LEFT);
-    
-  lives_painter_move_to(cr, x_text, y_text);
 
+  lives_painter_new_path(cr);
+  lives_painter_rectangle(cr,offs_x,0,width,height);
+  lives_painter_clip(cr);
+    
   switch(mode) {
+  case LIVES_TEXT_MODE_BACKGROUND_ONLY:
+    pango_layout_set_text(layout, "", -1);
   case LIVES_TEXT_MODE_FOREGROUND_AND_BACKGROUND:
     lives_painter_set_source_rgba(cr,bg->red/66535., bg->green/66535., bg->blue/66535., b_alpha);
     fill_bckg(cr, x_pos, y_pos, dwidth, dheight);
-    lives_painter_move_to(cr, x_text, y_text);
-    lives_painter_set_source_rgba(cr,fg->red/66535., fg->green/66535., fg->blue/66535., f_alpha);
     break;
-  case LIVES_TEXT_MODE_BACKGROUND_ONLY:
-    lives_painter_set_source_rgba(cr,bg->red/66535., bg->green/66535., bg->blue/66535., b_alpha);
-    fill_bckg(cr, x_pos, y_pos, dwidth, dheight);
-    lives_painter_move_to(cr, x_pos, y_pos);
-    lives_painter_set_source_rgba(cr,fg->red/66535., fg->green/66535., fg->blue/66535., f_alpha);
-    pango_layout_set_text(layout, "", -1);
-    break;
-  case LIVES_TEXT_MODE_FOREGROUND_ONLY:
   default:
-    lives_painter_set_source_rgba(cr,fg->red/66535., fg->green/66535., fg->blue/66535., f_alpha);
     break;
   }
 
+  lives_painter_new_path(cr);
+  lives_painter_move_to(cr, x_text, y_text);
+  lives_painter_set_source_rgba(cr,fg->red/66535., fg->green/66535., fg->blue/66535., f_alpha);
   pango_cairo_show_layout(cr, layout);
   pango_font_description_free(font);
 
@@ -207,7 +225,7 @@ weed_plant_t *render_text_to_layer(weed_plant_t *layer, const char *text, const 
   cr=layer_to_lives_painter(layer);
   if (cr==NULL) return layer; ///< error occured
 
-  layout = render_text_to_cr(cr,text,fontname,size,mode,fg_col,bg_col,center,rising,top,width,height);
+  layout = render_text_to_cr(cr,text,fontname,size,mode,fg_col,bg_col,center,rising,top,0,width,height);
   // do not !!
   //lives_painter_paint(cr);
 

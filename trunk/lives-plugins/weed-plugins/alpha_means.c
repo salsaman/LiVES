@@ -86,6 +86,8 @@ int alpham_process (weed_plant_t *inst, weed_timecode_t timestamp) {
 
   for (i=0;i<height;i++) {
     for (j=0;j<width;j++) {
+      if (idx>n*m) continue;
+
       vals[idx]+=(double)*alpha;
 
       // check val of idx for next j
@@ -108,7 +110,8 @@ int alpham_process (weed_plant_t *inst, weed_timecode_t timestamp) {
 
     if (nidx>idx+1) {
       for (x=idx+1;x<nidx;x++) {
-	vals[x]=vals[x-m];
+	if (x<n*m)
+	  vals[x]=vals[x-m];
       }
     }
 

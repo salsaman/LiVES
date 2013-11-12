@@ -5237,8 +5237,6 @@ render_details *create_render_details (int type) {
 
   add_fill_to_box(LIVES_BOX (daa));
 
-  if (!specified) {
-  }
 
   cancelbutton = lives_button_new_from_stock ("gtk-cancel");
   if (!(prefs->startup_interface==STARTUP_MT&&!mainw->is_ready)) {

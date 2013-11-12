@@ -292,6 +292,8 @@ void create_LiVES (void) {
   mainw->affected_layouts_map=NULL;
 
   mainw->LiVES = lives_window_new (LIVES_WINDOW_TOPLEVEL);
+  lives_window_set_hide_titlebar_when_maximized(LIVES_WINDOW(mainw->LiVES),FALSE);
+
 
   if (prefs->present) 
     lives_window_present(LIVES_WINDOW(mainw->LiVES));
@@ -3815,6 +3817,7 @@ void make_play_window(void) {
   } 
   
   mainw->play_window = lives_window_new (LIVES_WINDOW_TOPLEVEL);
+  lives_window_set_hide_titlebar_when_maximized(LIVES_WINDOW(mainw->LiVES),TRUE);
 
   gtk_widget_set_events (mainw->play_window, GDK_SCROLL_MASK);
 
@@ -4021,7 +4024,7 @@ void resize_play_window (void) {
 
       if (lives_widget_is_visible (mainw->play_window)) {
 	// store old postion of window
-	gtk_window_get_position (LIVES_WINDOW (mainw->play_window),&opwx,&opwy);
+	lives_window_get_position (LIVES_WINDOW (mainw->play_window),&opwx,&opwy);
 	if (opwx*opwy) {
 	  mainw->opwx=opwx;
 	  mainw->opwy=opwy;

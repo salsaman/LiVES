@@ -267,12 +267,12 @@ boolean check_if_non_virtual(int fileno, int start, int end) {
   if (sfile->clip_type!=CLIP_TYPE_FILE) return TRUE;
 
   if (sfile->frame_index!=NULL) {
-    for (i=1;i<=sfile->frames;i++) {
+    for (i=start;i<=end;i++) {
       if (sfile->frame_index[i-1]!=-1) return FALSE;
     }
   }
 
-  if (start>1 || end<sfile->frames) return TRUE;
+  if (start>1||end<sfile->frames) return TRUE;
 
 
   // no virtual frames in entire clip - change to CLIP_TYPE_DISK

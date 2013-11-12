@@ -362,11 +362,11 @@ LiVESPixbuf *make_thumb_fast_between (lives_mt *mt, int fileno, int width, int h
   if (width<2||height<2) return NULL;
 
   for (i=1;i<=range;i++) {
-    if (check_if_non_virtual(fileno,tframe-i,tframe-i)) {
+    if (tframe-i>0&&check_if_non_virtual(fileno,tframe-i,tframe-i)) {
       nvframe=tframe-i;
       break;
     }
-    if (check_if_non_virtual(fileno,tframe+i,tframe+i)) {
+    if (tframe+i<=mainw->files[fileno]->frames&&check_if_non_virtual(fileno,tframe+i,tframe+i)) {
       nvframe=tframe+i;
       break;
     }
@@ -979,9 +979,10 @@ static void draw_block (lives_mt *mt, lives_painter_t *cairo,
 	filenum=get_frame_event_clip(block->start_event,track);
 	last_framenum=-1;
 	for (i=offset_start;i<offset_end;i+=BLOCK_THUMB_WIDTH) {
-	  if (i>x2) break;
-	  event=get_frame_event_at(mt->event_list,tc,event,FALSE);
+	  if (i>x2-x1) break;
 	  tc+=tl_span/lives_widget_get_allocation_width(eventbox)*width*U_SEC;
+	  if (i+BLOCK_THUMB_WIDTH<x1) continue;
+	  event=get_frame_event_at(mt->event_list,tc,event,FALSE);
 	  if (i+width>=0) {
 	    // create a small thumb
 	    framenum=get_frame_event_frame(event,track);
@@ -1057,18 +1058,25 @@ static void draw_block (lives_mt *mt, lives_painter_t *cairo,
 	lives_colRGBA32_t col_white,col_black;
 	PangoLayout *layout;
 	lives_painter_surface_t *surface;
+	
+	int text_start=offset_start,text_end=offset_end;
 
-	col_white.red=col_white.green=col_white.blue=col_white.alpha=col_black.alpha=65535;
-	col_black.red=col_black.green=col_black.blue=0;
-	layout=render_text_to_cr(cr,fname,sfont,10.,
-				 LIVES_TEXT_MODE_FOREGROUND_ONLY,&col_black,NULL,FALSE,FALSE,2,
-				 offset_end-offset_start,lives_widget_get_allocation_height(eventbox));
-	if (layout) g_object_unref(layout);
-	g_free(fname);
-	lives_painter_stroke(cr);
+	if (text_start<2) text_start=2;
+
 	surface=lives_painter_get_target(cr);
 	lives_painter_surface_flush (surface);
 
+	col_white.red=col_white.green=col_white.blue=col_white.alpha=col_black.alpha=65535;
+	col_black.red=col_black.green=col_black.blue=0;
+
+	layout=render_text_to_cr(cr,fname,sfont,10.,
+				 LIVES_TEXT_MODE_FOREGROUND_ONLY,&col_black,&col_black,FALSE,FALSE,0.2,text_start,
+				 text_end-text_start,lives_widget_get_allocation_height(eventbox));
+
+	if (layout) g_object_unref(layout);
+	g_free(fname);
+
+	lives_painter_fill(cr);
       }
 
       if (mainw->playing_file>-1) unpaint_lines(mt);
@@ -1672,7 +1680,12 @@ void track_select (lives_mt *mt) {
       if (i==mt->current_track) {
 	
 	if (!mt->aud_track_selected) {
-	  if (labelbox!=NULL) lives_widget_set_state(labelbox,LIVES_WIDGET_STATE_PRELIGHT);
+	  if (labelbox!=NULL) {
+	    lives_widget_set_state(labelbox,LIVES_WIDGET_STATE_NORMAL);
+	    lives_widget_queue_draw(labelbox);
+	    lives_widget_set_state(labelbox,LIVES_WIDGET_STATE_PRELIGHT);
+	    lives_widget_queue_draw(labelbox);
+	  }
 	  if (ahbox!=NULL) lives_widget_set_state(ahbox,LIVES_WIDGET_STATE_PRELIGHT);
 	  if (checkbutton!=NULL) {
 	    // gtk 3+ idiocy...
@@ -2728,11 +2741,14 @@ static void set_time_scrollbar(lives_mt *mt) {
 
   if (mt->tl_max>mt->end_secs) mt->end_secs=mt->tl_max;
 
+  g_object_freeze_notify (G_OBJECT(mt->hadjustment));
   gtk_range_set_range(GTK_RANGE(mt->time_scrollbar),0.,mt->end_secs);
   gtk_range_set_increments(GTK_RANGE(mt->time_scrollbar),page/4.,page);
   gtk_adjustment_set_value(GTK_ADJUSTMENT(mt->hadjustment),(double)mt->tl_min);
   lives_adjustment_set_page_size(LIVES_ADJUSTMENT(mt->hadjustment),(double)page);
+  g_object_thaw_notify (G_OBJECT(mt->hadjustment));
   lives_widget_queue_draw(mt->time_scrollbar);
+
 }
 
 void redraw_all_event_boxes(lives_mt *mt) {
@@ -3144,6 +3160,8 @@ void scroll_track_by_scrollbar (GtkScrollbar *sbar, gpointer user_data) {
 
 
 static void mt_zoom (lives_mt *mt, double scale) {
+  // scale < 1.0 == zoom in
+
   double tl_span=(mt->tl_max-mt->tl_min)/2.;
   double tl_cur;
 
@@ -3154,8 +3172,8 @@ static void mt_zoom (lives_mt *mt, double scale) {
     scale=-scale;
   }
 
-  mt->tl_min=tl_cur-tl_span*scale;
-  mt->tl_max=tl_cur+tl_span*scale;
+  mt->tl_min=tl_cur-tl_span*scale;  // new min
+  mt->tl_max=tl_cur+tl_span*scale; // new max
 
   if (mt->tl_min<0.) {
     mt->tl_max-=mt->tl_min;
@@ -3179,13 +3197,13 @@ static void mt_zoom (lives_mt *mt, double scale) {
 }
 
 
-static void
-scroll_time_by_scrollbar (GtkVScrollbar *sbar, gpointer user_data) {
+static void scroll_time_by_scrollbar (GtkHScrollbar *sbar, gpointer user_data) {
   lives_mt *mt=(lives_mt *)user_data;
   mt->tl_min=gtk_adjustment_get_value(gtk_range_get_adjustment(GTK_RANGE(sbar)));
   mt->tl_max=gtk_adjustment_get_value(gtk_range_get_adjustment(GTK_RANGE(sbar)))
     +lives_adjustment_get_page_size(gtk_range_get_adjustment(GTK_RANGE(sbar)));
   mt_zoom(mt,-1.);
+  paint_lines(mt,lives_ruler_get_value(LIVES_RULER (mt->timeline)),TRUE);
 }
 
 
@@ -3753,27 +3771,28 @@ static void mt_selblock(GtkMenuItem *menuitem, gpointer user_data) {
 void mt_center_on_cursor (GtkMenuItem *menuitem, gpointer user_data) {
   lives_mt *mt=(lives_mt *)user_data;
   mt_zoom(mt,1.);
+  paint_lines(mt,lives_ruler_get_value(LIVES_RULER (mt->timeline)),TRUE);
 }
 
 void mt_zoom_in (GtkMenuItem *menuitem, gpointer user_data) {
   lives_mt *mt=(lives_mt *)user_data;
   mt_zoom(mt,0.5);
+  paint_lines(mt,lives_ruler_get_value(LIVES_RULER (mt->timeline)),TRUE);
 }
 
 void mt_zoom_out (GtkMenuItem *menuitem, gpointer user_data) {
   lives_mt *mt=(lives_mt *)user_data;
   mt_zoom(mt,2.);
+  paint_lines(mt,lives_ruler_get_value(LIVES_RULER (mt->timeline)),TRUE);
 }
 
 
-static void
-paned_pos (GtkWidget *paned, gpointer user_data) {
+static void paned_pos (GtkWidget *paned, gpointer user_data) {
   lives_mt *mt=(lives_mt *)user_data;
   lives_widget_queue_draw (mt->timeline_table);
 }
 
-static void
-hpaned_pos (GtkWidget *paned, gpointer user_data) {
+static void hpaned_pos (GtkWidget *paned, gpointer user_data) {
   lives_mt *mt=(lives_mt *)user_data;
   lives_widget_queue_draw (mt->hbox);
 }
@@ -5896,6 +5915,8 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
   force_backing_tracks=0;
 
   mt->window = lives_window_new (LIVES_WINDOW_TOPLEVEL);
+  lives_window_set_hide_titlebar_when_maximized(LIVES_WINDOW(mainw->LiVES),FALSE);
+
   if (palette->style&STYLE_1) {
     if (palette->style&STYLE_3) {
       lives_widget_set_bg_color(mt->window, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
@@ -9271,6 +9292,9 @@ boolean multitrack_delete (lives_mt *mt, boolean save_layout) {
   lives_widget_context_update();
 
   if (prefs->show_gui&&prefs->open_maximised) {
+    int wx,wy;
+    lives_window_get_position (LIVES_WINDOW (mainw->LiVES),&wx,&wy);
+    if (prefs->gui_monitor==0&&(wx>0||wy>0)) lives_window_move(LIVES_WINDOW(mainw->LiVES),0,0);
     lives_window_maximize (LIVES_WINDOW(mainw->LiVES));
   }
 

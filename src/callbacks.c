@@ -413,8 +413,8 @@ void lives_exit (void) {
     if (mainw->preview_image!=NULL && LIVES_IS_IMAGE(mainw->preview_image)) 
       lives_image_set_from_pixbuf(LIVES_IMAGE(mainw->preview_image), NULL);
 
-    if (mainw->image272!=NULL) lives_image_set_from_pixbuf(LIVES_IMAGE(mainw->image272), NULL);
-    if (mainw->image273!=NULL) lives_image_set_from_pixbuf(LIVES_IMAGE(mainw->image273), NULL);
+    if (mainw->start_image!=NULL) lives_image_set_from_pixbuf(LIVES_IMAGE(mainw->image272), NULL);
+    if (mainw->end_image!=NULL) lives_image_set_from_pixbuf(LIVES_IMAGE(mainw->image273), NULL);
 #endif
 
     if (mainw->frame_layer!=NULL) weed_layer_free(mainw->frame_layer);
@@ -8734,8 +8734,8 @@ void on_toy_activate  (GtkMenuItem *menuitem, gpointer user_data) {
     g_signal_handler_unblock (mainw->toy_random_frames, mainw->toy_func_random_frames);
     if (mainw->playing_file>-1) {
       if (mainw->faded) {
-	lives_widget_hide(mainw->image272);
-	lives_widget_hide(mainw->image273);
+	lives_widget_hide(mainw->start_image);
+	lives_widget_hide(mainw->end_image);
       }
       load_start_image (cfile->start);
       load_end_image (cfile->end);
@@ -8859,8 +8859,8 @@ void on_toy_activate  (GtkMenuItem *menuitem, gpointer user_data) {
     break;
   default:
     if (mainw->faded&&!mainw->foreign) {
-      lives_widget_show(mainw->image272);
-      lives_widget_show(mainw->image273);
+      lives_widget_show(mainw->start_image);
+      lives_widget_show(mainw->end_image);
     }
   }
 }

@@ -3425,7 +3425,7 @@ void load_start_image(int frame) {
   if (mainw->multitrack!=NULL) return;
 
 #if GTK_CHECK_VERSION(3,0,0)
-  g_signal_handlers_block_by_func(mainw->image272,(gpointer)expose_sim,NULL);
+  g_signal_handlers_block_by_func(mainw->start_image,(gpointer)expose_sim,NULL);
 #endif
 
   if (mainw->current_file>-1&&cfile!=NULL&&(cfile->clip_type==CLIP_TYPE_YUV4MPEG||cfile->clip_type==CLIP_TYPE_VIDEODEV)) {
@@ -3436,10 +3436,10 @@ void load_start_image(int frame) {
       if (mainw->camframe!=NULL) lives_pixbuf_saturate_and_pixelate(mainw->camframe,mainw->camframe,0.0,FALSE);
       g_free(tmp);
     }
-    set_ce_frame_from_pixbuf(GTK_IMAGE(mainw->image272),mainw->camframe,NULL);
+    set_ce_frame_from_pixbuf(GTK_IMAGE(mainw->start_image),mainw->camframe,NULL);
 #if GTK_CHECK_VERSION(3,0,0)
-    g_signal_handlers_unblock_by_func(mainw->image272,(gpointer)expose_sim,NULL);
-    g_signal_stop_emission_by_name(mainw->image272,LIVES_WIDGET_EVENT_EXPOSE_EVENT);
+    g_signal_handlers_unblock_by_func(mainw->start_image,(gpointer)expose_sim,NULL);
+    g_signal_stop_emission_by_name(mainw->start_image,LIVES_WIDGET_EVENT_EXPOSE_EVENT);
 #endif
     return;
   }
@@ -3448,15 +3448,15 @@ void load_start_image(int frame) {
       (cfile->clip_type!=CLIP_TYPE_DISK&&cfile->clip_type!=CLIP_TYPE_FILE)) {
     threaded_dialog_spin();
     if (!(mainw->imframe==NULL)) {
-      set_ce_frame_from_pixbuf(GTK_IMAGE(mainw->image272),mainw->imframe,NULL);
+      set_ce_frame_from_pixbuf(GTK_IMAGE(mainw->start_image),mainw->imframe,NULL);
     }
     else {
-      set_ce_frame_from_pixbuf(GTK_IMAGE(mainw->image272),NULL,NULL);
+      set_ce_frame_from_pixbuf(GTK_IMAGE(mainw->start_image),NULL,NULL);
     }
     threaded_dialog_spin();
 #if GTK_CHECK_VERSION(3,0,0)
-  g_signal_handlers_unblock_by_func(mainw->image272,(gpointer)expose_sim,NULL);
-    g_signal_stop_emission_by_name(mainw->image272,LIVES_WIDGET_EVENT_EXPOSE_EVENT);
+  g_signal_handlers_unblock_by_func(mainw->start_image,(gpointer)expose_sim,NULL);
+    g_signal_stop_emission_by_name(mainw->start_image,LIVES_WIDGET_EVENT_EXPOSE_EVENT);
 #endif
     return;
   }
@@ -3488,7 +3488,7 @@ void load_start_image(int frame) {
     weed_plant_free(layer);
 
     if (GDK_IS_PIXBUF(start_pixbuf)) {
-      set_ce_frame_from_pixbuf(GTK_IMAGE(mainw->image272),start_pixbuf,NULL);
+      set_ce_frame_from_pixbuf(GTK_IMAGE(mainw->start_image),start_pixbuf,NULL);
     }
     if (start_pixbuf!=NULL) {
       if (G_IS_OBJECT(start_pixbuf)) {
@@ -3497,8 +3497,8 @@ void load_start_image(int frame) {
     }
     threaded_dialog_spin();
 #if GTK_CHECK_VERSION(3,0,0)
-    g_signal_handlers_unblock_by_func(mainw->image272,(gpointer)expose_sim,NULL);
-    g_signal_stop_emission_by_name(mainw->image272,LIVES_WIDGET_EVENT_EXPOSE_EVENT);
+    g_signal_handlers_unblock_by_func(mainw->start_image,(gpointer)expose_sim,NULL);
+    g_signal_stop_emission_by_name(mainw->start_image,LIVES_WIDGET_EVENT_EXPOSE_EVENT);
 #endif
     return;
   }
@@ -3518,8 +3518,8 @@ void load_start_image(int frame) {
     rwidth=mainw->ce_frame_width-H_RESIZE_ADJUST*2;
     rheight=mainw->ce_frame_height-V_RESIZE_ADJUST*2;
 #else
-    rwidth=lives_widget_get_allocation_width(mainw->image272);
-    rheight=lives_widget_get_allocation_height(mainw->image272);
+    rwidth=lives_widget_get_allocation_width(mainw->start_image);
+    rheight=lives_widget_get_allocation_height(mainw->start_image);
 #endif
 
     calc_maxspect(rwidth,rheight,&width,&height);
@@ -3547,7 +3547,7 @@ void load_start_image(int frame) {
     weed_plant_free(layer);
 
     if (GDK_IS_PIXBUF(start_pixbuf)) {
-      set_ce_frame_from_pixbuf(GTK_IMAGE(mainw->image272),start_pixbuf,NULL);
+      set_ce_frame_from_pixbuf(GTK_IMAGE(mainw->start_image),start_pixbuf,NULL);
     }
     if (start_pixbuf!=NULL) {
       if (G_IS_OBJECT(start_pixbuf)) {
@@ -3558,7 +3558,7 @@ void load_start_image(int frame) {
     start_pixbuf=NULL;
 
 #if !GTK_CHECK_VERSION(3,0,0)
-    lives_widget_queue_resize(mainw->image272);
+    lives_widget_queue_resize(mainw->start_image);
 
     lives_widget_context_update();
 
@@ -3567,7 +3567,7 @@ void load_start_image(int frame) {
       load_start_image(0);
       return;
     }
-  } while (rwidth!=lives_widget_get_allocation_width(mainw->image272)||rheight!=lives_widget_get_allocation_height(mainw->image272));
+  } while (rwidth!=lives_widget_get_allocation_width(mainw->start_image)||rheight!=lives_widget_get_allocation_height(mainw->image272));
 #else
   } while (FALSE);
 #endif
@@ -3575,8 +3575,8 @@ void load_start_image(int frame) {
   mainw->noswitch=noswitch;
 
 #if GTK_CHECK_VERSION(3,0,0)
-  g_signal_handlers_unblock_by_func(mainw->image272,(gpointer)expose_sim,NULL);
-  g_signal_stop_emission_by_name(mainw->image272,LIVES_WIDGET_EVENT_EXPOSE_EVENT);
+  g_signal_handlers_unblock_by_func(mainw->start_image,(gpointer)expose_sim,NULL);
+  g_signal_stop_emission_by_name(mainw->start_image,LIVES_WIDGET_EVENT_EXPOSE_EVENT);
 #endif
 
 }
@@ -3596,7 +3596,7 @@ void load_end_image(gint frame) {
   if (mainw->multitrack!=NULL) return;
 
 #if GTK_CHECK_VERSION(3,0,0)
-  g_signal_handlers_block_by_func(mainw->image273,(gpointer)expose_sim,NULL);
+  g_signal_handlers_block_by_func(mainw->end_image,(gpointer)expose_sim,NULL);
 #endif
 
   if (mainw->current_file>-1&&cfile!=NULL&&(cfile->clip_type==CLIP_TYPE_YUV4MPEG||cfile->clip_type==CLIP_TYPE_VIDEODEV)) {
@@ -3607,7 +3607,7 @@ void load_end_image(gint frame) {
       if (mainw->camframe!=NULL) lives_pixbuf_saturate_and_pixelate(mainw->camframe,mainw->camframe,0.0,FALSE);
       g_free(tmp);
     }
-    set_ce_frame_from_pixbuf(GTK_IMAGE(mainw->image273),mainw->camframe,NULL);
+    set_ce_frame_from_pixbuf(GTK_IMAGE(mainw->end_image),mainw->camframe,NULL);
     return;
   }
 
@@ -3615,15 +3615,15 @@ void load_end_image(gint frame) {
       (cfile->clip_type!=CLIP_TYPE_DISK&&cfile->clip_type!=CLIP_TYPE_FILE)) {
     threaded_dialog_spin();
     if (!(mainw->imframe==NULL)) {
-      set_ce_frame_from_pixbuf(GTK_IMAGE(mainw->image273),mainw->imframe,NULL);
+      set_ce_frame_from_pixbuf(GTK_IMAGE(mainw->end_image),mainw->imframe,NULL);
     }
     else {
-      set_ce_frame_from_pixbuf(GTK_IMAGE(mainw->image273),NULL,NULL);
+      set_ce_frame_from_pixbuf(GTK_IMAGE(mainw->end_image),NULL,NULL);
     }
     threaded_dialog_spin();
 #if GTK_CHECK_VERSION(3,0,0)
-    g_signal_handlers_unblock_by_func(mainw->image273,(gpointer)expose_sim,NULL);
-    g_signal_stop_emission_by_name(mainw->image273,LIVES_WIDGET_EVENT_EXPOSE_EVENT);
+    g_signal_handlers_unblock_by_func(mainw->end_image,(gpointer)expose_sim,NULL);
+    g_signal_stop_emission_by_name(mainw->end_image,LIVES_WIDGET_EVENT_EXPOSE_EVENT);
 #endif
     return;
   }
@@ -3657,7 +3657,7 @@ void load_end_image(gint frame) {
     weed_plant_free(layer);
 
     if (GDK_IS_PIXBUF(end_pixbuf)) {
-      set_ce_frame_from_pixbuf(GTK_IMAGE(mainw->image273),end_pixbuf,NULL);
+      set_ce_frame_from_pixbuf(GTK_IMAGE(mainw->end_image),end_pixbuf,NULL);
     }
     if (end_pixbuf!=NULL) {
       if (G_IS_OBJECT(end_pixbuf)) {
@@ -3666,8 +3666,8 @@ void load_end_image(gint frame) {
     }
     threaded_dialog_spin();
 #if GTK_CHECK_VERSION(3,0,0)
-    g_signal_handlers_unblock_by_func(mainw->image273,(gpointer)expose_sim,NULL);
-    g_signal_stop_emission_by_name(mainw->image273,LIVES_WIDGET_EVENT_EXPOSE_EVENT);
+    g_signal_handlers_unblock_by_func(mainw->end_image,(gpointer)expose_sim,NULL);
+    g_signal_stop_emission_by_name(mainw->end_image,LIVES_WIDGET_EVENT_EXPOSE_EVENT);
 #endif
     return;
   }
@@ -3683,8 +3683,8 @@ void load_end_image(gint frame) {
     rwidth=mainw->ce_frame_width-H_RESIZE_ADJUST*2;
     rheight=mainw->ce_frame_height-V_RESIZE_ADJUST*2;
 #else
-    rwidth=lives_widget_get_allocation_width(mainw->image273);
-    rheight=lives_widget_get_allocation_height(mainw->image273);
+    rwidth=lives_widget_get_allocation_width(mainw->end_image);
+    rheight=lives_widget_get_allocation_height(mainw->end_image);
 #endif
 
     calc_maxspect(rwidth,rheight,&width,&height);
@@ -3712,7 +3712,7 @@ void load_end_image(gint frame) {
     weed_plant_free(layer);
 
     if (GDK_IS_PIXBUF(end_pixbuf)) {
-      set_ce_frame_from_pixbuf(GTK_IMAGE(mainw->image273),end_pixbuf,NULL);
+      set_ce_frame_from_pixbuf(GTK_IMAGE(mainw->end_image),end_pixbuf,NULL);
     }
     if (end_pixbuf!=NULL) {
       if (G_IS_OBJECT(end_pixbuf)) {
@@ -3723,19 +3723,19 @@ void load_end_image(gint frame) {
     end_pixbuf=NULL;
 
 #if !GTK_CHECK_VERSION(3,0,0)
-    lives_widget_queue_resize(mainw->image273);
+    lives_widget_queue_resize(mainw->end_image);
 
     lives_widget_context_update();
     if (mainw->current_file==-1) {
       // user may close file
       load_end_image(0);
 #if GTK_CHECK_VERSION(3,0,0)
-      g_signal_handlers_unblock_by_func(mainw->image273,(gpointer)expose_sim,NULL);
-      g_signal_stop_emission_by_name(mainw->image273,LIVES_WIDGET_EVENT_EXPOSE_EVENT);
+      g_signal_handlers_unblock_by_func(mainw->end_image,(gpointer)expose_sim,NULL);
+      g_signal_stop_emission_by_name(mainw->end_image,LIVES_WIDGET_EVENT_EXPOSE_EVENT);
 #endif
       return;
     }
-  } while (rwidth!=lives_widget_get_allocation_width(mainw->image273)||rheight!=lives_widget_get_allocation_height(mainw->image273));
+  } while (rwidth!=lives_widget_get_allocation_width(mainw->end_image)||rheight!=lives_widget_get_allocation_height(mainw->image273));
 #else
   } while (FALSE);
 #endif
@@ -3743,8 +3743,8 @@ void load_end_image(gint frame) {
   mainw->noswitch=noswitch;
 
 #if GTK_CHECK_VERSION(3,0,0)
-  g_signal_handlers_unblock_by_func(mainw->image273,(gpointer)expose_sim,NULL);
-  g_signal_stop_emission_by_name(mainw->image273,LIVES_WIDGET_EVENT_EXPOSE_EVENT);
+  g_signal_handlers_unblock_by_func(mainw->end_image,(gpointer)expose_sim,NULL);
+  g_signal_stop_emission_by_name(mainw->end_image,LIVES_WIDGET_EVENT_EXPOSE_EVENT);
 #endif
 
 }
@@ -5431,8 +5431,8 @@ void load_frame_image(gint frame) {
 	  rheight*=4;
 	}
 #else
-	int rwidth=lives_widget_get_allocation_width(mainw->image274);
-	int rheight=lives_widget_get_allocation_height(mainw->image274);
+	int rwidth=lives_widget_get_allocation_width(mainw->play_image);
+	int rheight=lives_widget_get_allocation_height(mainw->play_image);
 #endif
 	if (mainw->double_size) {
 	  mainw->pwidth=(mainw->pwidth-H_RESIZE_ADJUST)*4+H_RESIZE_ADJUST;
@@ -5709,7 +5709,7 @@ void load_frame_image(gint frame) {
 
       unblock_expose();
     }
-    else set_ce_frame_from_pixbuf(GTK_IMAGE(mainw->image274),pixbuf,NULL);
+    else set_ce_frame_from_pixbuf(GTK_IMAGE(mainw->play_image),pixbuf,NULL);
 
     if (mainw->multitrack!=NULL&&!cfile->opening) animate_multitrack(mainw->multitrack);
 

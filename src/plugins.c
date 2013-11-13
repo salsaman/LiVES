@@ -2252,6 +2252,7 @@ static void *try_decoder_plugins(void *in) {
       continue;
     }
 
+#define DEBUG_DECPLUG
 #ifdef DEBUG_DECPLUG
     g_print("trying decoder %s\n",dpsys->name);
 #endif

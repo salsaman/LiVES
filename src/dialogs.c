@@ -1188,7 +1188,9 @@ boolean process_one (boolean visible) {
 #endif
 	}
       }
-      lives_widget_context_update(); // allow kb timer to run
+
+      lives_widget_context_update(); // animate GUI, allow kb timer to run
+
       if (cfile->next_event==NULL&&mainw->preview) mainw->cancelled=CANCEL_EVENT_LIST_END;
       if (mainw->cancelled==CANCEL_NONE) return TRUE;
       cancel_process(visible);
@@ -1358,7 +1360,8 @@ boolean process_one (boolean visible) {
     // the audio thread wants to update the parameter scroll(s)
     if (mainw->ce_thumbs) ce_thumbs_apply_rfx_changes();
 
-    lives_widget_context_update();
+    lives_widget_context_update();  // animate GUI, allow kb timer to run
+
     if (G_UNLIKELY(mainw->cancelled!=CANCEL_NONE)) {
       cancel_process(visible);
       return FALSE;

@@ -306,7 +306,7 @@ LiVESPixbuf *make_thumb (lives_mt *mt, int file, int width, int height, int fram
       if (mainw->files[file]->frames>0&&mainw->files[file]->clip_type==CLIP_TYPE_FILE) {
 	lives_clip_data_t *cdata=((lives_decoder_t *)mainw->files[file]->ext_src)->cdata;
 	if (cdata!=NULL&&!(cdata->seek_flag&LIVES_SEEK_FAST)&&
-	    !check_if_non_virtual(file,frame,frame)) {
+	    is_virtual_frame(file,frame)) {
 	  boolean resb=virtual_to_images(file,frame,frame,FALSE,NULL);
 	  resb=resb; // dont care (much) if it fails
 	}
@@ -374,11 +374,11 @@ LiVESPixbuf *make_thumb_fast_between (lives_mt *mt, int fileno, int width, int h
   if (width<2||height<2) return NULL;
 
   for (i=1;i<=range;i++) {
-    if (tframe-i>0&&check_if_non_virtual(fileno,tframe-i,tframe-i)) {
+    if (tframe-i>0&&!is_virtual_frame(fileno,tframe-i)) {
       nvframe=tframe-i;
       break;
     }
-    if (tframe+i<=mainw->files[fileno]->frames&&check_if_non_virtual(fileno,tframe+i,tframe+i)) {
+    if (tframe+i<=mainw->files[fileno]->frames&&!is_virtual_frame(fileno,tframe+i)) {
       nvframe=tframe+i;
       break;
     }
@@ -1007,7 +1007,7 @@ static void draw_block (lives_mt *mt, lives_painter_t *cairo,
 	      if (mainw->files[filenum]->frames>0&&mainw->files[filenum]->clip_type==CLIP_TYPE_FILE) {
 		lives_clip_data_t *cdata=((lives_decoder_t *)mainw->files[filenum]->ext_src)->cdata;
 		if (cdata!=NULL&&!(cdata->seek_flag&LIVES_SEEK_FAST)&&
-		    !check_if_non_virtual(filenum,framenum,framenum)) {
+		    is_virtual_frame(filenum,framenum)) {
 		  thumbnail=make_thumb_fast_between(mt,filenum,width,
 						    lives_widget_get_allocation_height(eventbox),
 						    framenum,last_framenum==-1?0:framenum-last_framenum);
@@ -1071,7 +1071,7 @@ static void draw_block (lives_mt *mt, lives_painter_t *cairo,
 	PangoLayout *layout;
 	lives_painter_surface_t *surface;
 	
-	int text_start=offset_start,text_end=offset_end;
+	int text_start=offset_start+2,text_end=offset_end;
 
 	if (text_start<2) text_start=2;
 

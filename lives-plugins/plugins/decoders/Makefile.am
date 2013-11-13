@@ -123,12 +123,12 @@ mpegts_decoder_la_LDFLAGS = $(shared_ldflags) $(MPEGTSDEC_LIBS)
 
 
 
-zyavformat_libs = zyavformat_decoder.la
+zzavformat_libs = zzavformat_decoder.la
 AVIDEC_LIBS = @LIBAVCODEC_LIBS@ @LIBAVFORMAT_LIBS@
 AVIDEC_CFLAGS = @LIBAVFORMAT_CFLAGS@ @LIBAVCODEC_CFLAGS@ -Wno-deprecated-declarations
-zyavformat_decoder_la_SOURCES = avformat_decoder.c avformat_decoder.h
-zyavformat_decoder_la_CFLAGS = $(libav_cflags) $(shared_cflags) $(weed_cflags) $(AVIDEC_CFLAGS)
-zyavformat_decoder_la_LDFLAGS = $(shared_ldflags) $(AVIDEC_LIBS)
+zzavformat_decoder_la_SOURCES = avformat_decoder.c avformat_decoder.h
+zzavformat_decoder_la_CFLAGS = $(libav_cflags) $(shared_cflags) $(weed_cflags) $(AVIDEC_CFLAGS)
+zzavformat_decoder_la_LDFLAGS = $(shared_ldflags) $(AVIDEC_LIBS)
 
 
 endif
@@ -137,6 +137,6 @@ endif
 
 
 
-decoderpluginslib_LTLIBRARIES = $(ogg_libs) $(dv_libs) $(flv_libs) $(asf_libs) $(mkv_libs) $(mpegts_libs) $(zyavformat_libs)
+decoderpluginslib_LTLIBRARIES = $(ogg_libs) $(dv_libs) $(flv_libs) $(asf_libs) $(mkv_libs) $(mpegts_libs) $(zzavformat_libs)
 
 EXTRA_DIST = decplugin.h

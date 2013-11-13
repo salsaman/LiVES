@@ -834,6 +834,8 @@ boolean do_warning_dialog(const gchar *text);
 boolean do_warning_dialog_with_check(const gchar *text, int warn_mask_number);
 boolean do_warning_dialog_with_check_transient(const gchar *text, int warn_mask_number, GtkWindow *transient);
 boolean do_yesno_dialog(const gchar *text) WARN_UNUSED;
+boolean do_yesno_dialog_with_check(const gchar *text, int warn_mask_number);
+boolean do_yesno_dialog_with_check_transient(const gchar *text, int warn_mask_number, GtkWindow *transient);
 int do_abort_cancel_retry_dialog(const gchar *text, GtkWindow *transient) WARN_UNUSED;
 void do_error_dialog(const gchar *text);
 void do_info_dialog(const gchar *text);

@@ -3639,7 +3639,7 @@ void lives_spin_button_configure(LiVESSpinButton *spinbutton,
 #include "rte_window.h"
 #include "ce_thumbs.h"
 
-void lives_widget_context_update(void) {
+static void lives_widget_context_update_real(boolean all) {
 #ifdef GUI_GTK
   boolean mt_needs_idlefunc=FALSE;
 
@@ -3651,7 +3651,8 @@ void lives_widget_context_update(void) {
     mt_needs_idlefunc=TRUE;
   }
 
-  while (!mainw->is_exiting&&g_main_context_iteration(NULL,FALSE));
+  if (all) while (!mainw->is_exiting&&g_main_context_iteration(NULL,FALSE));
+  else if (!mainw->is_exiting) g_main_context_iteration(NULL,FALSE);
   if (!mainw->is_exiting) {
     if (rte_window!=NULL) ret_set_key_check_state();
     if (mainw->ce_thumbs) ce_thumbs_set_key_check_state();
@@ -3662,6 +3663,15 @@ void lives_widget_context_update(void) {
   pthread_mutex_unlock(&mainw->gtk_mutex);
 
 #endif
+}
+
+void lives_widget_context_update(void) {
+  lives_widget_context_update_real(TRUE);
+}
+
+
+void lives_widget_context_update_one(void) {
+  lives_widget_context_update_real(FALSE);
 }
 
 

@@ -17,6 +17,8 @@ typedef struct  {
   int astream;
   int vstream;
 
+  int64_t found_pts;
+
   int last_frame;
 } lives_av_priv_t;
 

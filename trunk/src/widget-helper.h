@@ -1049,6 +1049,7 @@ void lives_widget_apply_theme(LiVESWidget *, LiVESWidgetState state);
 void lives_cursor_unref(LiVESXCursor *cursor);
 
 void lives_widget_context_update(void);
+void lives_widget_context_update_one(void);
 
 void lives_widget_get_fg_color(LiVESWidget *, LiVESWidgetColor *);
 void lives_widget_get_bg_color(LiVESWidget *, LiVESWidgetColor *);

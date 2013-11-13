@@ -2360,7 +2360,7 @@ static void acbutton_clicked(GtkButton *button, gpointer user_data) {
 
 
 static void padd_clicked(GtkWidget *button, gpointer user_data) {
-  // add another row below the add button
+  // add another param row below the add button
   lives_conx_w *conxwp=(lives_conx_w *)user_data;
 
   GtkWidget *hbox[5],*hboxb[5],*achbox,*comhbox;
@@ -2488,7 +2488,7 @@ static void padd_clicked(GtkWidget *button, gpointer user_data) {
 
 
 static void pdel_clicked(GtkWidget *button, gpointer user_data) {
-  //  remove the row at the del button
+  //  remove the param row at the del button
   lives_conx_w *conxwp=(lives_conx_w *)user_data;
 
   GtkWidget *hbox[4],*hboxb[4],*achbox,*comhbox;
@@ -2649,7 +2649,7 @@ static void pdel_clicked(GtkWidget *button, gpointer user_data) {
 
 
 static void cadd_clicked(GtkWidget *button, gpointer user_data) {
-  // add another row below the add button
+  // add another channel row below the add button
   lives_conx_w *conxwp=(lives_conx_w *)user_data;
 
   GtkWidget *hbox[4],*hboxb[4],*comhbox;
@@ -2766,7 +2766,7 @@ static void cadd_clicked(GtkWidget *button, gpointer user_data) {
 
 
 static void cdel_clicked(GtkWidget *button, gpointer user_data) {
-  //  remove the row at the del button
+  //  remove the channel  row at the del button
   lives_conx_w *conxwp=(lives_conx_w *)user_data;
 
   GtkWidget *hbox[3],*hboxb[3],*comhbox;
@@ -2796,7 +2796,7 @@ static void cdel_clicked(GtkWidget *button, gpointer user_data) {
     return;
   }
 
-  // force callback for pfxcombo before destroying it
+  // force callback for cfxcombo before destroying it
   lives_widget_context_update();
 
   conxwp->dispc[cidx]--;
@@ -2815,7 +2815,7 @@ static void cdel_clicked(GtkWidget *button, gpointer user_data) {
   
   conxwp->trowsc--;
 
-  // subtract 1 from trowsp because of title row
+  // subtract 1 from trowsc because of title row
   for (i=ours;i<conxwp->trowsc-1;i++) {
 #if !LIVES_TABLE_IS_GRID
 
@@ -2832,7 +2832,7 @@ static void cdel_clicked(GtkWidget *button, gpointer user_data) {
 	conxwp->pclabel[i]=conxwp->pclabel[i+1];
       }
       else {
-	// primary param
+	// primary chan
 	lives_widget_destroy(conxwp->pclabel[i+1]);
       }
     }

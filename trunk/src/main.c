@@ -3469,7 +3469,7 @@ void load_start_image(int frame) {
     threaded_dialog_spin();
 
     // if we are not playing, and it would be slow to seek to the frame, convert it to an image
-    if (mainw->playing_file==-1&&cfile->clip_type==CLIP_TYPE_FILE&&!check_if_non_virtual(mainw->current_file,frame,frame)&&cfile->ext_src!=NULL) {
+    if (mainw->playing_file==-1&&cfile->clip_type==CLIP_TYPE_FILE&&is_virtual_frame(mainw->current_file,frame)&&cfile->ext_src!=NULL) {
       lives_clip_data_t *cdata=((lives_decoder_t *)cfile->ext_src)->cdata;
       if (cdata!=NULL&&!(cdata->seek_flag&LIVES_SEEK_FAST)) {
 	boolean resb=virtual_to_images(mainw->current_file,frame,frame,FALSE,NULL);
@@ -3527,7 +3527,7 @@ void load_start_image(int frame) {
     calc_maxspect(rwidth,rheight,&width,&height);
 
     // if we are not playing, and it would be slow to seek to the frame, convert it to an image
-    if (mainw->playing_file==-1&&cfile->clip_type==CLIP_TYPE_FILE&&!check_if_non_virtual(mainw->current_file,frame,frame)&&cfile->ext_src!=NULL) {
+    if (mainw->playing_file==-1&&cfile->clip_type==CLIP_TYPE_FILE&&is_virtual_frame(mainw->current_file,frame)&&cfile->ext_src!=NULL) {
       lives_clip_data_t *cdata=((lives_decoder_t *)cfile->ext_src)->cdata;
       if (cdata!=NULL&&!(cdata->seek_flag&LIVES_SEEK_FAST)) {
 	boolean resb=virtual_to_images(mainw->current_file,frame,frame,FALSE,NULL);
@@ -3637,7 +3637,7 @@ void load_end_image(gint frame) {
     threaded_dialog_spin();
 
     // if we are not playing, and it would be slow to seek to the frame, convert it to an image
-    if (mainw->playing_file==-1&&cfile->clip_type==CLIP_TYPE_FILE&&!check_if_non_virtual(mainw->current_file,frame,frame)&&cfile->ext_src!=NULL) {
+    if (mainw->playing_file==-1&&cfile->clip_type==CLIP_TYPE_FILE&&is_virtual_frame(mainw->current_file,frame)&&cfile->ext_src!=NULL) {
       lives_clip_data_t *cdata=((lives_decoder_t *)cfile->ext_src)->cdata;
       if (cdata!=NULL&&!(cdata->seek_flag&LIVES_SEEK_FAST)) {
 	boolean resb=virtual_to_images(mainw->current_file,frame,frame,FALSE,NULL);
@@ -3692,7 +3692,7 @@ void load_end_image(gint frame) {
     calc_maxspect(rwidth,rheight,&width,&height);
 
     // if we are not playing, and it would be slow to seek to the frame, convert it to an image
-    if (mainw->playing_file==-1&&cfile->clip_type==CLIP_TYPE_FILE&&!check_if_non_virtual(mainw->current_file,frame,frame)&&cfile->ext_src!=NULL) {
+    if (mainw->playing_file==-1&&cfile->clip_type==CLIP_TYPE_FILE&&is_virtual_frame(mainw->current_file,frame)&&cfile->ext_src!=NULL) {
       lives_clip_data_t *cdata=((lives_decoder_t *)cfile->ext_src)->cdata;
       if (cdata!=NULL&&!(cdata->seek_flag&LIVES_SEEK_FAST)) {
 	boolean resb=virtual_to_images(mainw->current_file,frame,frame,FALSE,NULL);
@@ -3851,7 +3851,7 @@ void load_preview_image(boolean update_always) {
 
     // if we are not playing, and it would be slow to seek to the frame, convert it to an image
     if (mainw->playing_file==-1&&cfile->clip_type==CLIP_TYPE_FILE&&
-	!check_if_non_virtual(mainw->current_file,mainw->preview_frame,mainw->preview_frame)&&cfile->ext_src!=NULL) {
+	is_virtual_frame(mainw->current_file,mainw->preview_frame)&&cfile->ext_src!=NULL) {
       lives_clip_data_t *cdata=((lives_decoder_t *)cfile->ext_src)->cdata;
       if (cdata!=NULL&&!(cdata->seek_flag&LIVES_SEEK_FAST)) {
 	boolean resb=virtual_to_images(mainw->current_file,mainw->preview_frame,mainw->preview_frame,FALSE,NULL);
@@ -4886,6 +4886,7 @@ void load_frame_image(gint frame) {
 	   (mainw->ext_playback&&!(mainw->vpp->capabilities&VPP_LOCAL_DISPLAY)))
 	  &&prefs->show_framecount) {
 	lives_entry_set_text(LIVES_ENTRY(mainw->framecounter),framecount);
+	lives_widget_queue_draw(mainw->framecounter);
       }
       g_free(framecount);
       framecount=NULL;
@@ -4920,6 +4921,7 @@ void load_frame_image(gint frame) {
 	    framecount=g_strdup_printf("%9d",frame);
 	  }
 	  lives_entry_set_text(LIVES_ENTRY(mainw->framecounter),framecount);
+	  lives_widget_queue_draw(mainw->framecounter);
 	  g_free(framecount);
 	  framecount=NULL;
 	}
@@ -5039,7 +5041,7 @@ void load_frame_image(gint frame) {
 	    if (mainw->frame_layer!=NULL) weed_layer_free(mainw->frame_layer);
 	    mainw->frame_layer=NULL;
 
-	    if (cfile->opening && cfile->img_type==IMG_TYPE_PNG && sget_file_size(fname_next)==0) {
+	    if (cfile->clip_type==CLIP_TYPE_DISK && cfile->opening && cfile->img_type==IMG_TYPE_PNG && sget_file_size(fname_next)==0) {
 	      if (++bad_frame_count>BFC_LIMIT) {
 		mainw->cancelled=check_for_bad_ffmpeg();
 		bad_frame_count=0;
@@ -5741,7 +5743,10 @@ void load_frame_image(gint frame) {
     lives_painter_t *cr = lives_painter_create_from_widget (mainw->playarea);
       
 
-    if (mainw->rec_vid_frames==-1) lives_entry_set_text(LIVES_ENTRY(mainw->framecounter),(tmp=g_strdup_printf("%9d",frame)));
+    if (mainw->rec_vid_frames==-1) {
+      lives_entry_set_text(LIVES_ENTRY(mainw->framecounter),(tmp=g_strdup_printf("%9d",frame)));
+      lives_widget_queue_draw(mainw->framecounter);
+    }
     else {
       if (frame>mainw->rec_vid_frames) {
 	mainw->cancelled=CANCEL_KEEP;
@@ -5750,6 +5755,7 @@ void load_frame_image(gint frame) {
       }
 
       lives_entry_set_text(LIVES_ENTRY(mainw->framecounter),(tmp=g_strdup_printf("%9d/%9d",frame,mainw->rec_vid_frames)));
+      lives_widget_queue_draw(mainw->framecounter);
       g_free(tmp);
     }
 
@@ -6141,9 +6147,6 @@ void close_current_file(gint file_to_switch_to) {
       play_window_set_title();
 
       load_preview_image(FALSE);
-      //lives_widget_queue_draw(mainw->preview_box);
-
-      //lives_widget_context_update();
     }
       
     if (mainw->multitrack==NULL) {

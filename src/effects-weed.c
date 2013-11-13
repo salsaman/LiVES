@@ -9643,8 +9643,8 @@ static void weed_leaf_serialise (int fd, weed_plant_t *plant, const char *key, b
   if (write_all) {
     // write byte length of key, followed by key in utf-8
     if (mem==NULL) {
-      lives_write_le(fd,&i,4,TRUE);
-      lives_write(fd,key,(size_t)i,TRUE);
+      lives_write_le_buffered(fd,&i,4,TRUE);
+      lives_write_buffered(fd,key,(size_t)i,TRUE);
     }
     else {
       lives_memcpy(*mem,&i,4);
@@ -9657,13 +9657,13 @@ static void weed_leaf_serialise (int fd, weed_plant_t *plant, const char *key, b
   // write seed type and number of elements
   st=weed_leaf_seed_type(plant,key);
 
-  if (mem==NULL) lives_write_le(fd,&st,4,TRUE);
+  if (mem==NULL) lives_write_le_buffered(fd,&st,4,TRUE);
   else {
     lives_memcpy(*mem,&st,4);
     *mem+=4;
   }
   ne=weed_leaf_num_elements(plant,key);
-  if (mem==NULL) lives_write_le(fd,&ne,4,TRUE);
+  if (mem==NULL) lives_write_le_buffered(fd,&ne,4,TRUE);
   else {
     lives_memcpy(*mem,&ne,4);
     *mem+=4;
@@ -9693,11 +9693,11 @@ static void weed_leaf_serialise (int fd, weed_plant_t *plant, const char *key, b
     else valuer=value;
 
     if (mem==NULL) {
-      lives_write_le(fd,&vlen,4,TRUE);
+      lives_write_le_buffered(fd,&vlen,4,TRUE);
       if (st!=WEED_SEED_STRING) {
-	lives_write_le(fd,valuer,(size_t)vlen,TRUE);
+	lives_write_le_buffered(fd,valuer,(size_t)vlen,TRUE);
       }
-      else lives_write(fd,valuer,(size_t)vlen,TRUE);
+      else lives_write_buffered(fd,valuer,(size_t)vlen,TRUE);
     }
     else {
       lives_memcpy(*mem,&vlen,4);
@@ -9724,7 +9724,7 @@ boolean weed_plant_serialise(int fd, weed_plant_t *plant, unsigned char **mem) {
   char *prop;
   for (prop=proplist[0];(prop=proplist[i])!=NULL;i++);
 
-  if (mem==NULL) lives_write_le(fd,&i,4,TRUE); // write number of leaves
+  if (mem==NULL) lives_write_le_buffered(fd,&i,4,TRUE); // write number of leaves
   else {
     lives_memcpy(*mem,&i,4);
     *mem+=4;

@@ -111,7 +111,7 @@ static GtkWidget *dummy_menuitem;
 
 static boolean doubleclick=FALSE;
 
-static guint32 last_press_time=0;
+static uint32_t last_press_time=0;
 
 ////////////////////////////
 
@@ -655,7 +655,7 @@ static void save_mt_autoback(lives_mt *mt, int64_t stime) {
     retval2=0;
     mainw->write_failed=FALSE;
 
-    fd=creat(asave_file,DEF_FILE_PERMS);
+    fd=lives_creat(asave_file,DEF_FILE_PERMS);
     if (fd>=0) {
 #ifdef IS_MINGW
       setmode(fd,O_BINARY);
@@ -676,7 +676,7 @@ static void save_mt_autoback(lives_mt *mt, int64_t stime) {
       if (retval) retval=write_backup_layout_numbering(mt);
       
       remove_markers(mt->event_list);
-      close(fd);
+      lives_close(fd);
     }
     else mainw->write_failed=TRUE;
     
@@ -739,8 +739,8 @@ static boolean mt_auto_backup(gpointer user_data) {
 }
 
 
-guint mt_idle_add(lives_mt *mt) {
-  guint retval;
+uint32_t mt_idle_add(lives_mt *mt) {
+  uint32_t retval;
 
   if (prefs->mt_auto_back<0) return 0;
 
@@ -3276,11 +3276,11 @@ boolean mt_trup (GtkAccelGroup *group, GObject *obj, guint keyval, GdkModifierTy
 
 
 
-LIVES_INLINE int poly_page_to_tab(guint page) {
+LIVES_INLINE int poly_page_to_tab(uint32_t page) {
   return ++page;
 }
 
-LIVES_INLINE int poly_tab_to_page(guint tab) {
+LIVES_INLINE int poly_tab_to_page(uint32_t tab) {
   return --tab;
 }
 
@@ -3290,8 +3290,8 @@ LIVES_INLINE lives_mt_poly_state_t get_poly_state_from_page(lives_mt *mt) {
 }
 
 
-static void notebook_error(GtkNotebook *nb, guint tab, lives_mt_nb_error_t err, lives_mt *mt) {
-  guint page=poly_tab_to_page(tab);
+static void notebook_error(GtkNotebook *nb, uint32_t tab, lives_mt_nb_error_t err, lives_mt *mt) {
+  uint32_t page=poly_tab_to_page(tab);
 
   if (mt->nb_label!=NULL) lives_widget_destroy(mt->nb_label);
   mt->nb_label=NULL;
@@ -3363,8 +3363,8 @@ static void fubar(lives_mt *mt) {
  }
 
 
-static boolean notebook_page(GtkWidget *nb, GtkWidget *nbp, guint tab, gpointer user_data) {
-  guint page;
+static boolean notebook_page(GtkWidget *nb, GtkWidget *nbp, uint32_t tab, gpointer user_data) {
+  uint32_t page;
   lives_mt *mt=(lives_mt *)user_data;
 
   if (nbp!=NULL) {
@@ -3442,7 +3442,7 @@ static boolean notebook_page(GtkWidget *nb, GtkWidget *nbp, guint tab, gpointer 
 } 
 
 
-static void set_poly_tab(lives_mt *mt, guint tab) {
+static void set_poly_tab(lives_mt *mt, uint32_t tab) {
   int page=poly_tab_to_page(tab);
   lives_widget_show(gtk_notebook_get_nth_page(GTK_NOTEBOOK(mt->nb),page));
   gtk_notebook_set_current_page(GTK_NOTEBOOK(mt->nb),page);
@@ -5611,7 +5611,7 @@ static boolean draw_cool_toggle (GtkWidget *widget, lives_painter_t *cr, gpointe
 #endif
 
 
-static gchar *get_tab_name(guint tab) {
+static gchar *get_tab_name(uint32_t tab) {
   switch (tab) {
   case POLY_CLIPS:
     return g_strdup(_("Clips"));
@@ -13620,7 +13620,7 @@ boolean on_track_header_move (GtkWidget *widget, GdkEventMotion *event, gpointer
 }
 
 void unpaint_line(lives_mt *mt, GtkWidget *eventbox) {
-  guint64 bth,btl;
+  uint64_t bth,btl;
 
   double ocurrtime;
 
@@ -13632,8 +13632,8 @@ void unpaint_line(lives_mt *mt, GtkWidget *eventbox) {
 
   ebwidth=lives_widget_get_allocation_width(eventbox);
 
-  bth=((guint64)((guint)(GPOINTER_TO_INT(g_object_get_data(G_OBJECT(eventbox),"backup_timepos_h")))))<<32;
-  btl=(guint64)((guint)(GPOINTER_TO_INT(g_object_get_data(G_OBJECT(eventbox),"backup_timepos_l"))));
+  bth=((uint64_t)((uint32_t)(GPOINTER_TO_INT(g_object_get_data(G_OBJECT(eventbox),"backup_timepos_h")))))<<32;
+  btl=(uint64_t)((uint32_t)(GPOINTER_TO_INT(g_object_get_data(G_OBJECT(eventbox),"backup_timepos_l"))));
   ocurrtime=(bth+btl)/U_SEC;
   xoffset=(ocurrtime-mt->tl_min)/(mt->tl_max-mt->tl_min)*(double)ebwidth+.5;
   if (xoffset>=0&&xoffset<ebwidth) {
@@ -13714,9 +13714,9 @@ static void paint_lines(lives_mt *mt, double currtime, boolean unpaint) {
       if (offset>0&&offset<ebwidth) {
 
 	g_object_set_data(G_OBJECT(eventbox),"backup_timepos_h",
-			  GINT_TO_POINTER((int)(((guint64)(currtime*U_SEC))>>32))); // upper 4 bytes
+			  GINT_TO_POINTER((int)(((uint64_t)(currtime*U_SEC))>>32))); // upper 4 bytes
 	g_object_set_data(G_OBJECT(eventbox),"backup_timepos_l",
-			  GINT_TO_POINTER((guint)(((guint64)(currtime*U_SEC))&0XFFFFFFFF))); // lower 4 bytes
+			  GINT_TO_POINTER((uint32_t)(((uint64_t)(currtime*U_SEC))&0XFFFFFFFF))); // lower 4 bytes
 
 	cr = lives_painter_create_from_widget (eventbox);
 
@@ -13744,9 +13744,9 @@ static void paint_lines(lives_mt *mt, double currtime, boolean unpaint) {
 
 	  if (offset>0&&offset<ebwidth) {
 	    g_object_set_data(G_OBJECT(aeventbox),"backup_timepos_h",
-			      GINT_TO_POINTER((int)(((guint64)(currtime*U_SEC))>>32))); // upper 4 bytes
+			      GINT_TO_POINTER((int)(((uint64_t)(currtime*U_SEC))>>32))); // upper 4 bytes
 	    g_object_set_data(G_OBJECT(aeventbox),"backup_timepos_l",
-			      GINT_TO_POINTER((guint)(((guint64)(currtime*U_SEC))&0XFFFFFFFF))); // lower 4 bytes
+			      GINT_TO_POINTER((uint32_t)(((uint64_t)(currtime*U_SEC))&0XFFFFFFFF))); // lower 4 bytes
 
 	    cr = lives_painter_create_from_widget (aeventbox);
 
@@ -13770,9 +13770,9 @@ static void paint_lines(lives_mt *mt, double currtime, boolean unpaint) {
 
 	if (offset>0&&offset<ebwidth) {
 	  g_object_set_data(G_OBJECT(eventbox),"backup_timepos_h",
-			    GINT_TO_POINTER((int)(((guint64)(currtime*U_SEC))>>32))); // upper 4 bytes
+			    GINT_TO_POINTER((int)(((uint64_t)(currtime*U_SEC))>>32))); // upper 4 bytes
 	  g_object_set_data(G_OBJECT(eventbox),"backup_timepos_l",
-			    GINT_TO_POINTER((guint)(((guint64)(currtime*U_SEC))&0XFFFFFFFF))); // lower 4 bytes
+			    GINT_TO_POINTER((uint32_t)(((uint64_t)(currtime*U_SEC))&0XFFFFFFFF))); // lower 4 bytes
 
 	  cr = lives_painter_create_from_widget (eventbox);
 
@@ -13797,9 +13797,9 @@ static void paint_lines(lives_mt *mt, double currtime, boolean unpaint) {
 
 	if (offset>0&&offset<ebwidth) {
 	  g_object_set_data(G_OBJECT(eventbox),"backup_timepos_h",
-			    GINT_TO_POINTER((int)(((guint64)(currtime*U_SEC))>>32))); // upper 4 bytes
+			    GINT_TO_POINTER((int)(((uint64_t)(currtime*U_SEC))>>32))); // upper 4 bytes
 	  g_object_set_data(G_OBJECT(eventbox),"backup_timepos_l",
-			    GINT_TO_POINTER((guint)(((guint64)(currtime*U_SEC))&0XFFFFFFFF))); // lower 4 bytes
+			    GINT_TO_POINTER((uint32_t)(((uint64_t)(currtime*U_SEC))&0XFFFFFFFF))); // lower 4 bytes
 
 	  cr = lives_painter_create_from_widget (eventbox);
 
@@ -15221,7 +15221,7 @@ void multitrack_view_details (GtkMenuItem *menuitem, gpointer user_data) {
   lives_clipinfo_t *filew;
   lives_mt *mt=(lives_mt *)user_data;
   file *rfile=mainw->files[mt->render_file];
-  guint bsize=0;
+  uint32_t bsize=0;
   double time=0.;
   int num_events=0;
 
@@ -18766,7 +18766,7 @@ GList *load_layout_map(void) {
   gchar **array;
   GList *lmap=NULL;
   layout_map *lmap_entry;
-  guint64 unique_id;
+  uint64_t unique_id;
   ssize_t bytes;
 
   gchar *lmap_name=g_build_filename(prefs->tmpdir,mainw->set_name,"layouts","layout.map",NULL);
@@ -18911,7 +18911,7 @@ void save_layout_map (int *lmap, double *lmap_audio, const gchar *file, const gc
   int max_frame;
   boolean written=FALSE;
 
-  guint size=0;
+  uint32_t size=0;
 
   double max_atime;
 
@@ -19269,14 +19269,18 @@ void on_save_event_list_activate (GtkMenuItem *menuitem, gpointer user_data) {
     retval2=0;
     retval=TRUE;
 
-    fd=creat(esave_file,DEF_FILE_PERMS);
+    fd=lives_creat(esave_file,DEF_FILE_PERMS);
 
     if (fd>=0) {
 #ifdef IS_MINGW
       setmode(fd,O_BINARY);
 #endif
+      do_threaded_dialog(_("Saving layout"),FALSE);
+
       retval=save_event_list_inner(mt,fd,event_list,NULL);
-      close(fd);
+      lives_close(fd);
+
+      end_threaded_dialog();
     }
 
     if (!retval||fd<0) {
@@ -19319,7 +19323,7 @@ void on_save_event_list_activate (GtkMenuItem *menuitem, gpointer user_data) {
   if (layout_map!=NULL) g_free(layout_map);
   if (layout_map_audio!=NULL) g_free(layout_map_audio);
 
-  recover_layout_cancelled(NULL,NULL);
+  if (mainw->was_set) recover_layout_cancelled(NULL,NULL);
 
   if (mt!=NULL) {
     mt->auto_changed=FALSE;
@@ -20975,13 +20979,13 @@ weed_plant_t *load_event_list(lives_mt *mt, gchar *eload_file) {
 	  retval=TRUE;
 
 	  // resave with corrections/updates
-	  fd=creat(eload_file,DEF_FILE_PERMS);
+	  fd=lives_creat(eload_file,DEF_FILE_PERMS);
 	  if (fd>=0) {
 #ifdef IS_MINGW
 	    setmode(fd,O_BINARY);
 #endif
 	    retval=save_event_list_inner(NULL,fd,event_list,NULL);
-	    close(fd);
+	    lives_close(fd);
 	  }
 
 	  if (fd<0||!retval) {
@@ -21204,7 +21208,7 @@ void on_load_event_list_activate (GtkMenuItem *menuitem, gpointer user_data) {
   new_event_list=load_event_list(mt,eload_file);
   if (eload_file!=NULL) g_free(eload_file);
 
-  recover_layout_cancelled(NULL,NULL);
+  if (mainw->was_set) recover_layout_cancelled(NULL,NULL);
 
   if (new_event_list==NULL) {
     mt_sensitise(mt);
@@ -21308,7 +21312,7 @@ void migrate_layouts (const gchar *old_set_name, const gchar *new_set_name) {
 	    
 	    do {
 	      retval2=0;
-	      fd=creat((char *)map->data,DEF_FILE_PERMS);
+	      fd=lives_creat((char *)map->data,DEF_FILE_PERMS);
 	      if (fd>=0) {
 #ifdef IS_MINGW
 		setmode(fd,O_BINARY);
@@ -21316,14 +21320,14 @@ void migrate_layouts (const gchar *old_set_name, const gchar *new_set_name) {
 		retval=save_event_list_inner(NULL,fd,event_list,NULL);
 	      }
 	      if (fd<0||!retval) {
-		if (fd>0) close(fd);
+		if (fd>0) lives_close(fd);
 		retval2=do_write_failed_error_s_with_retry((char *)map->data,(fd<0)?g_strerror(errno):NULL,NULL);
 	      }
 	    } while (retval2==LIVES_RETRY);
 	    
 	    event_list_free(event_list);
 	  }
-	  close(fd);
+	  lives_close(fd);
 	}
 	else {
 	  retval2=do_read_failed_error_s_with_retry((char *)map->data,NULL,NULL);
@@ -21649,10 +21653,10 @@ void mt_change_vals_activate (GtkMenuItem *menuitem, gpointer user_data) {
 }
 
 
-guint event_list_get_byte_size(lives_mt *mt, weed_plant_t *event_list,int *num_events) {
+uint32_t event_list_get_byte_size(lives_mt *mt, weed_plant_t *event_list,int *num_events) {
   // return serialisation size
   int i,j;
-  guint tot=0;
+  uint32_t tot=0;
   weed_plant_t *event=get_first_event(event_list);
   gchar **leaves;
   int ne;

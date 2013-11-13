@@ -1209,6 +1209,7 @@ void on_close_activate (GtkMenuItem *menuitem, gpointer user_data) {
 	g_free(com);
 	g_free(laydir);
       }
+      recover_layout_cancelled(NULL,NULL);
     }
 
     cdir=g_build_filename(prefs->tmpdir,mainw->set_name,"clips",NULL);
@@ -1436,6 +1437,7 @@ on_export_proj_activate                      (GtkMenuItem     *menuitem,
     on_save_set_activate(NULL,mainw->set_name);
     mainw->no_exit=FALSE;
     mainw->was_set=TRUE;
+    if (mainw->multitrack!=NULL&&!mainw->multitrack->changed) recover_layout_cancelled(NULL,NULL);
   }
 
   def_file=g_strdup_printf("%s.lv2",mainw->set_name);
@@ -1701,6 +1703,8 @@ on_quit_activate                      (GtkMenuItem     *menuitem,
   else if (mainw->multitrack!=NULL) wipe_layout(mainw->multitrack);;
 
   mainw->was_set=mainw->leave_files=mainw->leave_recovery=FALSE;
+
+  recover_layout_cancelled(NULL,NULL);
 
   if (had_clips) {
     if (strlen(mainw->set_name))
@@ -4828,6 +4832,7 @@ on_save_set_activate            (GtkMenuItem     *menuitem,
     got_new_handle=FALSE;
     g_free(layout_map_dir);
     g_free(layout_map_file);
+    if (mainw->multitrack!=NULL&&!mainw->multitrack->changed) recover_layout_cancelled(NULL,NULL);
   }
 
   if (mainw->current_layouts_map!=NULL&&strcmp(old_set,mainw->set_name)&&!mainw->is_exiting) {

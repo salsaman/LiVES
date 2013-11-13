@@ -537,9 +537,9 @@ static ssize_t file_buffer_flush(lives_file_buffer_t *fbuff) {
 }
 
 
-int lives_open(const char *pathname, int flags) {
+static int lives_open_real(const char *pathname, int flags, int mode) {
   lives_file_buffer_t *fbuff;
-  int fd=open(pathname,flags);
+  int fd=open(pathname,flags,mode);
   if (fd>=0) {
     fbuff=(lives_file_buffer_t *)g_malloc(sizeof(lives_file_buffer_t));
     fbuff->fd=fd;
@@ -551,6 +551,15 @@ int lives_open(const char *pathname, int flags) {
   }
 
   return fd;
+}
+
+
+LIVES_INLINE int lives_open(const char *pathname, int flags) {
+  return lives_open_real(pathname,flags,0);
+}
+
+LIVES_INLINE int lives_creat(const char *pathname, int mode) {
+  return lives_open_real(pathname,O_CREAT|O_WRONLY|O_TRUNC,mode);
 }
 
 
@@ -619,7 +628,7 @@ ssize_t lives_read_buffered(int fd, void *buf, size_t count, boolean allow_less)
   uint8_t *ptr=(uint8_t *)buf;
 
   if ((fbuff=find_in_file_buffers(fd))==NULL) {
-    LIVES_WARN("lives_read_buffered: no file buffer found");
+    LIVES_DEBUG("lives_read_buffered: no file buffer found");
     return lives_read(fd,buf,count,allow_less);
   }
 
@@ -681,7 +690,7 @@ ssize_t lives_write_buffered(int fd, const void *buf, size_t count, boolean allo
   size_t space_left;
 
   if ((fbuff=find_in_file_buffers(fd))==NULL) {
-    LIVES_WARN("lives_write_buffered: no file buffer found");
+    LIVES_DEBUG("lives_write_buffered: no file buffer found");
     return lives_write(fd,buf,count,allow_fail);
   }
 
@@ -696,7 +705,7 @@ ssize_t lives_write_buffered(int fd, const void *buf, size_t count, boolean allo
   fbuff->allow_fail=allow_fail;
 
   // write bytes from fbuff 
-  while (1) {
+  while (count) {
     space_left=BUFFER_FILL_BYTES-fbuff->bytes;
 
     if (space_left<count) {
@@ -705,10 +714,10 @@ ssize_t lives_write_buffered(int fd, const void *buf, size_t count, boolean allo
       res=file_buffer_flush(fbuff);
       retval+=res;
       if (res<BUFFER_FILL_BYTES) return (res<0?res:retval);
-
       fbuff->bytes=0;
       fbuff->ptr=fbuff->buffer;
-      count-=res;
+      count-=space_left;
+      buf+=space_left;
     }
     else {
       lives_memcpy(fbuff->ptr,buf,count);
@@ -716,10 +725,8 @@ ssize_t lives_write_buffered(int fd, const void *buf, size_t count, boolean allo
       fbuff->ptr+=count;
       fbuff->bytes+=count;
       count=0;
-      break;
     }
   }
-
   return retval;
 }
 

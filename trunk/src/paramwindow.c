@@ -437,7 +437,9 @@ void transition_add_in_out(GtkBox *vbox, lives_rfx_t *rfx, boolean add_audio_che
   hbox = lives_hbox_new (FALSE, 0);
   lives_box_pack_start (LIVES_BOX (vbox), hbox, FALSE, FALSE, widget_opts.packing_width);
 
-  radiobutton_in=lives_standard_radio_button_new(_ ("Transition _In"),TRUE,radiobutton_group,LIVES_BOX(hbox),NULL);
+  radiobutton_in=lives_standard_radio_button_new((tmp=g_strdup(_ ("Transition _In"))),TRUE,radiobutton_group,LIVES_BOX(hbox),(tmp2=g_strdup(_("Click to set the transition parameter to show only the front frame"))));
+  g_free(tmp); g_free(tmp2);
+
   radiobutton_group = lives_radio_button_get_group (LIVES_RADIO_BUTTON (radiobutton_in));
 
   g_signal_connect_after (GTK_OBJECT (radiobutton_in), "toggled",
@@ -462,7 +464,7 @@ void transition_add_in_out(GtkBox *vbox, lives_rfx_t *rfx, boolean add_audio_che
 
     g_free(tmp); g_free(tmp2);
 
-    if (weed_plant_has_leaf(mainw->multitrack->init_event,"host_audio_transition")&&
+    if (!weed_plant_has_leaf(mainw->multitrack->init_event,"host_audio_transition")||
 	weed_get_boolean_value(mainw->multitrack->init_event,"host_audio_transition",&error)==WEED_FALSE) 
       lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(checkbutton),FALSE);
     else lives_toggle_button_set_active (LIVES_TOGGLE_BUTTON (checkbutton), TRUE);
@@ -476,7 +478,10 @@ void transition_add_in_out(GtkBox *vbox, lives_rfx_t *rfx, boolean add_audio_che
   }
 
   widget_opts.pack_end=TRUE;
-  radiobutton_out=lives_standard_radio_button_new(_ ("Transition _Out"),TRUE,radiobutton_group,LIVES_BOX(hbox),NULL);
+  radiobutton_out=lives_standard_radio_button_new((tmp=g_strdup(_ ("Transition _Out"))),TRUE,radiobutton_group,LIVES_BOX(hbox),(tmp2=g_strdup(_("Click to set the transition parameter to show only the rear frame"))));
+
+  g_free(tmp); g_free(tmp2);
+
   widget_opts.pack_end=FALSE;
   
   g_signal_connect_after (GTK_OBJECT (radiobutton_out), "toggled",

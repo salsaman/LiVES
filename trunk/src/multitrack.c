@@ -303,6 +303,14 @@ LiVESPixbuf *make_thumb (lives_mt *mt, int file, int width, int height, int fram
 
     if (mainw->files[file]->frames>0) {
       weed_timecode_t tc=(frame-1.)/mainw->files[file]->fps*U_SECL;
+      if (mainw->files[file]->frames>0&&mainw->files[file]->clip_type==CLIP_TYPE_FILE) {
+	lives_clip_data_t *cdata=((lives_decoder_t *)mainw->files[file]->ext_src)->cdata;
+	if (cdata!=NULL&&!(cdata->seek_flag&LIVES_SEEK_FAST)&&
+	    !check_if_non_virtual(file,frame,frame)) {
+	  boolean resb=virtual_to_images(file,frame,frame,FALSE,NULL);
+	  resb=resb; // dont care (much) if it fails
+	}
+      }
       thumbnail=pull_lives_pixbuf_at_size(file,frame,get_image_ext_for_type(mainw->files[file]->img_type),tc,
 					  width,height,LIVES_INTERP_BEST);
     }
@@ -21103,8 +21111,10 @@ void wipe_layout(lives_mt *mt) {
 void on_clear_event_list_activate (GtkMenuItem *menuitem, gpointer user_data) {
   lives_mt *mt=(lives_mt *)user_data;
   _entryw *cdsw;
+
   int resp=2;
-  boolean rev_resp=FALSE;
+  
+  boolean rev_resp=FALSE; // if TRUE, response values 1 and 2 are reversed; otherwise
 
   if (mt->idlefunc>0) {
     g_source_remove(mt->idlefunc);
@@ -21112,10 +21122,14 @@ void on_clear_event_list_activate (GtkMenuItem *menuitem, gpointer user_data) {
   }
 
   if (strlen(mt->layout_name)>0) {
+    // delete : 2
+    // wipe : 1
     cdsw=create_cds_dialog(2);
-    rev_resp=TRUE;
+    rev_resp=FALSE;
   }
   else {
+    // save: 2
+    // wipe: 1
     cdsw=create_cds_dialog(3);
     rev_resp=TRUE;
   }
@@ -21125,13 +21139,13 @@ void on_clear_event_list_activate (GtkMenuItem *menuitem, gpointer user_data) {
     mainw->cancelled=CANCEL_NONE;
     resp=lives_dialog_run(LIVES_DIALOG(cdsw->dialog));
 
-    if (((resp==1&&!rev_resp)||(resp==2&&rev_resp))&&strlen(mt->layout_name)==0) {
+    if (resp==2&&rev_resp) {
       // save
       on_save_event_list_activate(NULL,mt);
       if (mainw->cancelled==CANCEL_NONE) break;
     }
 
-  } while (((resp==1&&!rev_resp)||(resp==2&&rev_resp))&&strlen(mt->layout_name)==0);
+  } while (resp==2&&rev_resp);
 
   lives_widget_destroy(cdsw->dialog);
   g_free(cdsw);
@@ -21141,12 +21155,11 @@ void on_clear_event_list_activate (GtkMenuItem *menuitem, gpointer user_data) {
     return; // cancel
   }
 
-  if (((resp==1&&!rev_resp)||(resp==2&&rev_resp))&&strlen(mt->layout_name)>0) {
+  if (resp==2&&!rev_resp) {
     // delete from disk
     GList *layout_map=NULL;
     gchar *lmap_file;
-    if (!do_warning_dialog_with_check_transient("\nLayout will be deleted from the disk.\nAre you sure ?\n",0,
-						LIVES_WINDOW(mt->window))) {
+    if (!do_yesno_dialog("\nLayout will be deleted from the disk.\nAre you sure ?\n")) {
       mt->idlefunc=mt_idle_add(mt);
       return;
     }
@@ -21155,6 +21168,16 @@ void on_clear_event_list_activate (GtkMenuItem *menuitem, gpointer user_data) {
     layout_map=g_list_append(layout_map,lmap_file);
     remove_layout_files(layout_map);
     g_free(lmap_file);
+  }
+  else {
+    // wipe
+    if (mt->changed) {
+      if (!do_yesno_dialog_with_check(_("The current layout has changes which have not been saved.\nAre you sure you wish to wipe it ?\n"),
+				      WARN_MASK_LAYOUT_WIPE)) {
+	mt->idlefunc=mt_idle_add(mt);
+	return;
+      }
+    }
   }
 
   // wipe

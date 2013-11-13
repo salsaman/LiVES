@@ -2521,7 +2521,7 @@ _entryw* create_cds_dialog (int type) {
       label = lives_standard_label_new (_("The current layout has not been saved.\nWhat would you like to do ?\n"));
     }
     else {
-      label = lives_standard_label_new (_("The current layout has not been changed since it was last saved.\nWhat would you like to do ?\n"));
+      label = lives_standard_label_new (_("The current layout has *not* been changed since it was last saved.\nWhat would you like to do ?\n"));
     }
   }
   else if (type==4) {

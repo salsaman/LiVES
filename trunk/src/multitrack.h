@@ -580,7 +580,7 @@ struct _mt {
 
   boolean playing_sel; ///< are we playing just the time selection ?
 
-  guint idlefunc; ///< autobackup function 
+  uint32_t idlefunc; ///< autobackup function 
 
   GList *clip_labels;
 
@@ -811,7 +811,7 @@ void on_fx_insb_clicked  (GtkWidget *button, gpointer mt);
 void on_fx_insa_clicked  (GtkWidget *button, gpointer mt);
 
 // utils
-guint event_list_get_byte_size(lives_mt *, weed_plant_t *event_list, int *num_events);  ///< returns bytes and sets num_events
+uint32_t event_list_get_byte_size(lives_mt *, weed_plant_t *event_list, int *num_events);  ///< returns bytes and sets num_events
 boolean event_list_rectify(lives_mt *, weed_plant_t *event_listy);
 boolean make_backup_space (lives_mt *, size_t space_needed);
 void activate_mt_preview(lives_mt *); ///< sensitize Show Preview and Apply buttons
@@ -850,7 +850,7 @@ void remove_current_from_affected_layouts(lives_mt *);
 
 
 // auto backup
-guint mt_idle_add(lives_mt *);
+uint32_t mt_idle_add(lives_mt *);
 void recover_layout(GtkButton *, gpointer);
 void recover_layout_cancelled(GtkButton *, gpointer user_data);
 boolean write_backup_layout_numbering(lives_mt *);

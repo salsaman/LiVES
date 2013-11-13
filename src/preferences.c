@@ -501,6 +501,7 @@ lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_warn_yuv4
   boolean warn_mt_backup_space=lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_warn_mt_backup_space));
   boolean warn_after_crash=lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_warn_after_crash));
   boolean warn_no_pulse=lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_warn_no_pulse));
+  boolean warn_layout_wipe=lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_warn_layout_wipe));
 
   boolean midisynch=lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->check_midi));
   boolean instant_open=lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_instant_open));
@@ -692,7 +693,7 @@ lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_warn_yuv4
     WARN_MASK_MT_NO_JACK+!warn_layout_adel*WARN_MASK_LAYOUT_DELETE_AUDIO+!warn_layout_ashift*
     WARN_MASK_LAYOUT_SHIFT_AUDIO+!warn_layout_aalt*WARN_MASK_LAYOUT_ALTER_AUDIO+!warn_layout_popup*
     WARN_MASK_LAYOUT_POPUP+!warn_yuv4m_open*WARN_MASK_OPEN_YUV4M+!warn_mt_backup_space*
-    WARN_MASK_MT_BACKUP_SPACE+!warn_after_crash*WARN_MASK_CLEAN_AFTER_CRASH+!warn_no_pulse*WARN_MASK_NO_PULSE_CONNECT;
+    WARN_MASK_MT_BACKUP_SPACE+!warn_after_crash*WARN_MASK_CLEAN_AFTER_CRASH+!warn_no_pulse*WARN_MASK_NO_PULSE_CONNECT+!warn_layout_wipe*WARN_MASK_LAYOUT_WIPE;
 
   if (warn_mask!=prefs->warning_mask) {
     prefs->warning_mask=warn_mask;
@@ -3635,6 +3636,18 @@ _prefsw *create_prefs_dialog (void) {
   // ---
 
 
+  hbox = lives_hbox_new(FALSE, 0);
+  lives_box_pack_start (LIVES_BOX (prefsw->vbox_right_warnings), hbox, FALSE, FALSE, widget_opts.packing_height>>1);
+
+  prefsw->checkbutton_warn_layout_wipe = lives_standard_check_button_new
+    (_("Show a warning before wiping a layout which has unsaved changes."),
+     TRUE,LIVES_BOX(hbox),NULL);
+
+  lives_toggle_button_set_active (LIVES_TOGGLE_BUTTON (prefsw->checkbutton_warn_layout_wipe), !(prefs->warning_mask&WARN_MASK_LAYOUT_WIPE));
+
+  // ---
+
+
   icon = g_build_filename(prefs->prefix_dir, ICON_DIR, "pref_warning.png", NULL);
   pixbuf_warnings = lives_pixbuf_new_from_file(icon, NULL);
   g_free(icon);
@@ -4310,10 +4323,9 @@ _prefsw *create_prefs_dialog (void) {
 #endif
   g_signal_connect(GTK_OBJECT(prefsw->checkbutton_warn_mt_backup_space), "toggled", 
 		   G_CALLBACK(apply_button_set_enabled), NULL);
-  g_signal_connect(GTK_OBJECT(prefsw->checkbutton_warn_after_crash), "toggled", G_CALLBACK(apply_button_set_enabled), 
-		   NULL);
-  g_signal_connect(GTK_OBJECT(prefsw->checkbutton_warn_no_pulse), "toggled", G_CALLBACK(apply_button_set_enabled), 
-		   NULL);
+  g_signal_connect(GTK_OBJECT(prefsw->checkbutton_warn_after_crash), "toggled", G_CALLBACK(apply_button_set_enabled), NULL);
+  g_signal_connect(GTK_OBJECT(prefsw->checkbutton_warn_no_pulse), "toggled", G_CALLBACK(apply_button_set_enabled), NULL);
+  g_signal_connect(GTK_OBJECT(prefsw->checkbutton_warn_layout_wipe), "toggled", G_CALLBACK(apply_button_set_enabled), NULL);
   g_signal_connect(GTK_OBJECT(prefsw->check_midi), "toggled", G_CALLBACK(apply_button_set_enabled), NULL);
   g_signal_connect(GTK_OBJECT(prefsw->ins_speed), "toggled", G_CALLBACK(apply_button_set_enabled), NULL);
   g_signal_connect(GTK_OBJECT(ins_resample), "toggled", G_CALLBACK(apply_button_set_enabled), NULL);

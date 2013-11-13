@@ -820,7 +820,8 @@ static size_t write_black_pixel(unsigned char *idst, int pal, int npixels, int y
 
 
 // tune this so small jumps forward are efficient
-#define JUMP_FRAMES 64
+#define JUMP_FRAMES_SLOW 64
+#define JUMP_FRAMES_FAST 16
 
 boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstrides, int height, void **pixel_data) {
   // seek to frame, and return pixel_data
@@ -846,6 +847,8 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstride
   int btop=cdata->offs_y,bbot=xheight-1-btop;
   int bleft=cdata->offs_x,bright=cdata->frame_width-cdata->width-bleft;
   int y_black=(cdata->YUV_clamping==WEED_YUV_CLAMPING_CLAMPED)?16:0;
+
+  int jump_frames;
 
   if (tframe<0||tframe>cdata->nframes||cdata->fps==0.) return FALSE;
 
@@ -906,7 +909,10 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstride
   
     target_pts = time * (double)AV_TIME_BASE;
   
-    if (tframe < priv->last_frame || tframe-priv->last_frame > JUMP_FRAMES ) {
+    if (cdata->seek_flag&LIVES_SEEK_FAST) jump_frames=JUMP_FRAMES_FAST;
+    else jump_frames=JUMP_FRAMES_SLOW;
+
+    if (tframe < priv->last_frame || tframe-priv->last_frame > jump_frames ) {
       // seek to new frame
       seek_target=av_rescale_q(target_pts, AV_TIME_BASE_Q, s->time_base);
       av_seek_frame( priv->ic, priv->vstream, seek_target, AVSEEK_FLAG_BACKWARD);

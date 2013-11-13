@@ -301,6 +301,18 @@ boolean do_warning_dialog_with_check (const gchar *text, int warn_mask_number) {
 }
 
 
+boolean do_yesno_dialog_with_check (const gchar *text, int warn_mask_number) {
+  if (!prefs->show_gui) {
+    return do_yesno_dialog_with_check_transient(text,warn_mask_number,NULL);
+  } else {
+    if (mainw->multitrack==NULL) {
+      return do_yesno_dialog_with_check_transient(text,warn_mask_number,LIVES_WINDOW(mainw->LiVES));
+    }
+    return do_yesno_dialog_with_check_transient(text,warn_mask_number,LIVES_WINDOW(mainw->multitrack->window));
+  }
+}
+
+
 
 boolean do_warning_dialog_with_check_transient(const gchar *text, int warn_mask_number, GtkWindow *transient) {
   // show OK/CANCEL, returns FALSE if cancelled
@@ -325,6 +337,33 @@ boolean do_warning_dialog_with_check_transient(const gchar *text, int warn_mask_
   if (mytext!=NULL) g_free(mytext);
 
   return (response==GTK_RESPONSE_OK);
+}
+
+
+
+boolean do_yesno_dialog_with_check_transient(const gchar *text, int warn_mask_number, GtkWindow *transient) {
+  // show YES/NO, returns TRUE for YES
+  GtkWidget *warning;
+  int response=1;
+  gchar *mytext;
+
+  if (prefs->warning_mask&warn_mask_number) {
+    return TRUE;
+  }
+
+  mytext=g_strdup(text); // must copy this because of translation issues
+
+  do {
+    warning=create_warn_dialog(warn_mask_number,transient,mytext,LIVES_DIALOG_YESNO);
+    lives_widget_show(warning);
+    response=lives_dialog_run (LIVES_DIALOG (warning));
+    lives_widget_destroy (warning);
+  } while (response==LIVES_RETRY);
+
+  lives_widget_context_update();
+  if (mytext!=NULL) g_free(mytext);
+
+  return (response==LIVES_YES);
 }
 
 

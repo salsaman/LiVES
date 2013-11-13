@@ -100,6 +100,8 @@ typedef struct {
 
 #define WARN_MASK_NO_PULSE_CONNECT (1<<25)
 
+#define WARN_MASK_LAYOUT_WIPE (1<<26)
+
   gchar effect_command[256];
   gchar video_open_command[256];
   gchar audio_play_command[256];
@@ -457,6 +459,7 @@ typedef struct {
   GtkWidget *checkbutton_warn_discard_layout;
   GtkWidget *checkbutton_warn_after_dvgrab;
   GtkWidget *checkbutton_warn_no_pulse;
+  GtkWidget *checkbutton_warn_layout_wipe;
   GtkWidget *checkbutton_show_stats;
   GtkWidget *checkbutton_warn_fsize;
   GtkWidget *checkbutton_warn_mt_achans;

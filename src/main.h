@@ -225,7 +225,7 @@ typedef int lives_pgid_t;
 #endif
 #endif
 
-#define DEF_FILE_PERMS S_IRUSR|S_IWUSR
+#define DEF_FILE_PERMS S_IRUSR|S_IWUSR // must be at least S_IRUSR|S_IWUSR
 #define DEF_FILE_UMASK (S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH)^( DEF_FILE_PERMS )
 
 /// LiVES will show a warning if this (MBytes) is exceeded on load
@@ -833,7 +833,9 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const gchar *te
 boolean do_warning_dialog(const gchar *text);
 boolean do_warning_dialog_with_check(const gchar *text, int warn_mask_number);
 boolean do_warning_dialog_with_check_transient(const gchar *text, int warn_mask_number, GtkWindow *transient);
-boolean do_yesno_dialog(const gchar *text) WARN_UNUSED;
+boolean do_yesno_dialog(const gchar *text);
+boolean do_yesno_dialog_with_check (const gchar *text, int warn_mask_number);
+boolean do_yesno_dialog_with_check_transient(const gchar *text, int warn_mask_number, GtkWindow *transient);
 boolean do_yesno_dialog_with_check(const gchar *text, int warn_mask_number);
 boolean do_yesno_dialog_with_check_transient(const gchar *text, int warn_mask_number, GtkWindow *transient);
 int do_abort_cancel_retry_dialog(const gchar *text, GtkWindow *transient) WARN_UNUSED;
@@ -1079,9 +1081,11 @@ boolean expose_eim (GtkWidget *widget, lives_painter_t *cr, gpointer user_data);
 // system calls in utils.c
 int lives_system(const char *com, boolean allow_error);
 lives_pid_t lives_fork(const char *com);
-int lives_open(const char *pathname, int flags);
-int lives_creat(const char *pathname, int mode);
-int lives_close(int fd);
+int lives_open_buffered_rdonly(const char *pathname);
+int lives_creat_buffered(const char *pathname, int mode);
+int lives_close_buffered(int fd);
+void lives_close_all_file_buffers(void);
+off_t lives_lseek_buffered_rdonly(int fd, off_t offset);
 ssize_t lives_write(int fd, const void *buf, size_t count, boolean allow_fail);
 ssize_t lives_write_buffered(int fd, const void *buf, size_t count, boolean allow_fail);
 ssize_t lives_write_le(int fd, const void *buf, size_t count, boolean allow_fail);

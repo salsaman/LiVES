@@ -1055,6 +1055,8 @@ static void lives_init(_ign_opts *ign_opts) {
 
   mainw->file_buffers=NULL;
 
+  mainw->no_recurse=FALSE;
+
   /////////////////////////////////////////////////// add new stuff just above here ^^
 
 
@@ -2692,7 +2694,7 @@ int main (int argc, char *argv[]) {
 
 #ifdef LIVES_NO_DEBUG
   // don't crash on GTK+ fatals
-  g_log_set_always_fatal ((GLogLevelFlags)0);
+  //g_log_set_always_fatal ((GLogLevelFlags)0);
 #endif
 
   g_log_set_default_handler(lives_log_handler,NULL);
@@ -4273,14 +4275,34 @@ boolean pull_frame_at_size (weed_plant_t *layer, const gchar *image_ext, weed_ti
   // if we pull from a decoder plugin, then we may also deinterlace
 
   GError *gerror=NULL;
+
+  weed_plant_t *vlayer;
+  void **pixel_data;
+  file *sfile=NULL;
+
+  int *rowstrides;
+
   int error;
   int clip=weed_get_int_value(layer,"clip",&error);
   int frame=weed_get_int_value(layer,"frame",&error);
   int clip_type;
-  int *rowstrides;
-  weed_plant_t *vlayer;
-  void **pixel_data;
-  file *sfile=NULL;
+
+  /*
+  if (!mainw->no_recurse&&mainw->multitrack!=NULL&&mainw->playing_file!=-1&&
+      mainw->files[clip]->frames>0&&mainw->files[clip]->clip_type==CLIP_TYPE_FILE) {
+    // if playing in mt, and slow seek, realise this frame
+    lives_clip_data_t *cdata=((lives_decoder_t *)mainw->files[clip]->ext_src)->cdata;
+    if (cdata!=NULL&&!(cdata->seek_flag&LIVES_SEEK_FAST)&&
+	!check_if_non_virtual(clip,frame,frame)) {
+      boolean resb;
+      mainw->no_recurse=TRUE; // virtual_to_images calls this function
+      resb=virtual_to_images(clip,frame,frame,FALSE,NULL);
+      mainw->no_recurse=FALSE;
+      resb=resb; // dont care (much) if it fails
+     }
+  }
+  */
+
 
   weed_set_voidptr_value(layer,"pixel_data",NULL);
 

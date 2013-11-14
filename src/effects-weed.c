@@ -10041,17 +10041,17 @@ boolean write_filter_defaults (int fd, int idx) {
 	hashname=make_weed_hashname(idx,TRUE,FALSE);
 	vlen=strlen(hashname);
 	
-	lives_write_le(fd,&vlen,4,TRUE);
-	lives_write(fd,hashname,vlen,TRUE);
+	lives_write_le_buffered(fd,&vlen,4,TRUE);
+	lives_write_buffered(fd,hashname,vlen,TRUE);
 	g_free(hashname);
 	wrote_hashname=TRUE;
-	lives_write_le(fd,&ntowrite,4,TRUE);
+	lives_write_le_buffered(fd,&ntowrite,4,TRUE);
       }
-      lives_write_le(fd,&i,4,TRUE);
+      lives_write_le_buffered(fd,&i,4,TRUE);
       weed_leaf_serialise(fd,ptmpls[i],"host_default",FALSE,NULL);
     }
   }
-  if (wrote_hashname) lives_write(fd,"\n",1,TRUE);
+  if (wrote_hashname) lives_write_buffered(fd,"\n",1,TRUE);
 
   if (ptmpls!=NULL) weed_free(ptmpls);
 
@@ -10081,14 +10081,14 @@ boolean read_filter_defaults(int fd) {
   mainw->read_failed=FALSE;
 
   while (1) {
-    if (lives_read_le(fd,&vleni,4,TRUE)<4) {
+    if (lives_read_le_buffered(fd,&vleni,4,TRUE)<4) {
       // we are allowed to EOF here
       mainw->read_failed=FALSE;
       break;
     }
 
     // some files erroneously used a vlen of 8
-    if (lives_read_le(fd,&vlenz,4,TRUE)<4) {
+    if (lives_read_le_buffered(fd,&vlenz,4,TRUE)<4) {
       // we are allowed to EOF here
       mainw->read_failed=FALSE;
       break;
@@ -10101,14 +10101,14 @@ boolean read_filter_defaults(int fd) {
     }
     else {
       if (vlenz!=0) {
-	if (lseek(fd,-4,SEEK_CUR)<0) return FALSE;
+	if (lives_lseek_buffered_rdonly(fd,-4)<0) return FALSE;
       }
     }
 
     if (vlen>65535) return FALSE;
 
     buf=g_malloc(vlen+1);
-    if (lives_read(fd,buf,vlen,TRUE)<vlen) break;
+    if (lives_read_buffered(fd,buf,vlen,TRUE)<vlen) break;
 
     memset((char *)buf+vlen,0,1);
     for (i=0;i<num_weed_filters;i++) {
@@ -10140,13 +10140,13 @@ boolean read_filter_defaults(int fd) {
     }
     else num_params=0;
 
-    if (lives_read_le(fd,&ntoread,4,TRUE)<4) {
+    if (lives_read_le_buffered(fd,&ntoread,4,TRUE)<4) {
       if (ptmpls!=NULL) weed_free(ptmpls);
       break;
     }
 
     for (i=0;i<ntoread;i++) {
-      if (lives_read_le(fd,&pnum,4,TRUE)<4) {
+      if (lives_read_le_buffered(fd,&pnum,4,TRUE)<4) {
 	if (ptmpls!=NULL) weed_free(ptmpls);
 	break;
       }
@@ -10169,7 +10169,7 @@ boolean read_filter_defaults(int fd) {
     }
 
     buf=g_malloc(strlen("\n"));
-    lives_read(fd,buf,strlen("\n"),TRUE);
+    lives_read_buffered(fd,buf,strlen("\n"),TRUE);
     g_free(buf);
     if (ptmpls!=NULL) weed_free(ptmpls);
     if (mainw->read_failed) {
@@ -10213,25 +10213,25 @@ boolean write_generator_sizes (int fd, int idx) {
       if (!wrote_hashname) {
 	hashname=make_weed_hashname(idx,TRUE,FALSE);
 	vlen=strlen(hashname);
-	lives_write_le(fd,&vlen,4,TRUE);
-	lives_write(fd,hashname,vlen,TRUE);
+	lives_write_le_buffered(fd,&vlen,4,TRUE);
+	lives_write_buffered(fd,hashname,vlen,TRUE);
 	g_free(hashname);
 	wrote_hashname=TRUE;
 	if (weed_plant_has_leaf(filter,"host_fps")) {
 	  int j=-1;
-	  lives_write_le(fd,&j,4,TRUE);
+	  lives_write_le_buffered(fd,&j,4,TRUE);
 	  weed_leaf_serialise(fd,filter,"host_fps",FALSE,NULL);
 	}
       }
   
-      lives_write_le(fd,&i,4,TRUE);
+      lives_write_le_buffered(fd,&i,4,TRUE);
       if (weed_plant_has_leaf(ctmpls[i],"host_width")) weed_leaf_serialise(fd,ctmpls[i],"host_width",FALSE,NULL);
       else weed_leaf_serialise(fd,ctmpls[i],"width",FALSE,NULL);
       if (weed_plant_has_leaf(ctmpls[i],"host_height")) weed_leaf_serialise(fd,ctmpls[i],"host_height",FALSE,NULL);
       else weed_leaf_serialise(fd,ctmpls[i],"height",FALSE,NULL);
     }
   }
-  if (wrote_hashname) lives_write(fd,"\n",1,TRUE);
+  if (wrote_hashname) lives_write_buffered(fd,"\n",1,TRUE);
 
   if (mainw->write_failed) {
     return FALSE;
@@ -10260,14 +10260,14 @@ boolean read_generator_sizes(int fd) {
   mainw->read_failed=FALSE;
 
   while (1) {
-    if (lives_read_le(fd,&vleni,4,TRUE)<4) {
+    if (lives_read_le_buffered(fd,&vleni,4,TRUE)<4) {
       // we are allowed to EOF here
       mainw->read_failed=FALSE;
       break;
     }
 
     // some files erroneously used a vlen of 8
-    if (lives_read_le(fd,&vlenz,4,TRUE)<4) {
+    if (lives_read_le_buffered(fd,&vlenz,4,TRUE)<4) {
       // we are allowed to EOF here
       mainw->read_failed=FALSE;
       break;
@@ -10280,7 +10280,7 @@ boolean read_generator_sizes(int fd) {
     }
     else {
       if (vlenz!=0) {
-	if (lseek(fd,-4,SEEK_CUR)<0) {
+	if (lives_lseek_buffered_rdonly(fd,-4)<0) {
 	  return FALSE;
 	}
       }
@@ -10292,7 +10292,7 @@ boolean read_generator_sizes(int fd) {
 
     buf=(gchar *)g_malloc(vlen+1);
 
-    bytes=lives_read(fd,buf,vlen,TRUE);
+    bytes=lives_read_buffered(fd,buf,vlen,TRUE);
     if (bytes<vlen) {
       break;
     }
@@ -10328,7 +10328,7 @@ boolean read_generator_sizes(int fd) {
 
       while (!ready) {
 	ready=TRUE;
-	bytes=lives_read_le(fd,&cnum,4,TRUE);
+	bytes=lives_read_le_buffered(fd,&cnum,4,TRUE);
 	if (bytes<4) {
 	  break;
 	}
@@ -10353,7 +10353,7 @@ boolean read_generator_sizes(int fd) {
       break;
     }
     buf=(gchar *)g_malloc(strlen("\n"));
-    lives_read(fd,buf,strlen("\n"),TRUE);
+    lives_read_buffered(fd,buf,strlen("\n"),TRUE);
     g_free(buf);
 
     if (mainw->read_failed) {
@@ -10419,23 +10419,23 @@ boolean read_key_defaults(int fd, int nparams, int key, int mode, int ver) {
     }
     if (ver>1) {
       // for future - read nvals
-      bytes=lives_read_le(fd,&nvals,4,TRUE);
+      bytes=lives_read_le_buffered(fd,&nvals,4,TRUE);
       if (bytes<4) {
 	goto err123;
       }
-      bytes=lives_read_le(fd,&tc,8,TRUE);
+      bytes=lives_read_le_buffered(fd,&tc,8,TRUE);
       if (bytes<sizeof(weed_timecode_t)) {
 	goto err123;
       }
       // read n ints (booleans)
-      bytes=lives_read_le(fd,&nigns,4,TRUE);
+      bytes=lives_read_le_buffered(fd,&nigns,4,TRUE);
       if (bytes<4) {
 	goto err123;
       }
       if (nigns>0) {
 	int *igns=(int *)g_malloc(nigns*4);
 	for (j=0;j<nigns;j++) {
-	  bytes=lives_read_le(fd,&igns[j],4,TRUE);
+	  bytes=lives_read_le_buffered(fd,&igns[j],4,TRUE);
 	  if (bytes<4) {
 	    goto err123;
 	  }
@@ -10450,19 +10450,19 @@ boolean read_key_defaults(int fd, int nparams, int key, int mode, int ver) {
       for (j=0;j<nvals;j++) {
  	// for future - read timecodes
 	weed_plant_t *plant=weed_plant_new(WEED_PLANT_PARAMETER);
-	bytes=lives_read_le(fd,&tc,8,TRUE);
+	bytes=lives_read_le_buffered(fd,&tc,8,TRUE);
 	if (bytes<8) {
 	  goto err123;
 	}
 	// read n ints (booleans)
-	bytes=lives_read_le(fd,&nigns,4,TRUE);
+	bytes=lives_read_le_buffered(fd,&nigns,4,TRUE);
 	if (bytes<4) {
 	  goto err123;
 	}
 	if (nigns>0) {
 	  int *igns=(int *)g_malloc(nigns*4);
 	  for (j=0;j<nigns;j++) {
-	    bytes=lives_read_le(fd,&igns[j],4,TRUE);
+	    bytes=lives_read_le_buffered(fd,&igns[j],4,TRUE);
 	    if (bytes<4) {
 	      goto err123;
 	    }
@@ -10540,13 +10540,13 @@ void write_key_defaults(int fd, int key, int mode) {
   int i,nparams=0;
 
   if ((key_defs=key_defaults[key][mode])==NULL) {
-    lives_write_le (fd,&nparams,4,TRUE);
+    lives_write_le_buffered (fd,&nparams,4,TRUE);
     return;
   }
 
   filter=weed_filters[key_to_fx[key][mode]];
   nparams=num_in_params(filter,FALSE,FALSE);
-  lives_write_le (fd,&nparams,4,TRUE);
+  lives_write_le_buffered (fd,&nparams,4,TRUE);
 
   for (i=0;i<nparams;i++) {
     if (mainw->write_failed) break;

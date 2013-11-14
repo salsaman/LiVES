@@ -533,7 +533,7 @@ boolean write_backup_layout_numbering(lives_mt *mt) {
 				    lives_getpid());
   GList *clist=mainw->cliplist;
 
-  fd=creat(asave_file,DEF_FILE_PERMS);
+  fd=lives_creat_buffered(asave_file,DEF_FILE_PERMS);
   g_free(asave_file);
 
   mainw->write_failed=FALSE;
@@ -547,28 +547,28 @@ boolean write_backup_layout_numbering(lives_mt *mt) {
 
       }
       if (mt!=NULL) {
-	lives_write_le(fd,&i,4,TRUE);
+	lives_write_le_buffered(fd,&i,4,TRUE);
 	vald=mainw->files[i]->fps;
-	lives_write_le(fd,&vald,8,TRUE);
+	lives_write_le_buffered(fd,&vald,8,TRUE);
 	hdlsize=strlen(mainw->files[i]->handle);
-	lives_write_le (fd,&hdlsize,4,TRUE);
-	lives_write (fd,&mainw->files[i]->handle,hdlsize,TRUE);
+	lives_write_le_buffered (fd,&hdlsize,4,TRUE);
+	lives_write_buffered (fd,&mainw->files[i]->handle,hdlsize,TRUE);
       }
       else {
 	vali=mainw->files[i]->stored_layout_idx;
 	if (vali!=-1) {
-	  lives_write_le(fd,&vali,4,TRUE);
+	  lives_write_le_buffered(fd,&vali,4,TRUE);
 	  vald=mainw->files[i]->fps;
-	  lives_write_le(fd,&vald,8,TRUE);
+	  lives_write_le_buffered(fd,&vald,8,TRUE);
 	  hdlsize=strlen(mainw->files[i]->handle);
-	  lives_write_le (fd,&hdlsize,4,TRUE);
-	  lives_write (fd,&mainw->files[i]->handle,hdlsize,TRUE);
+	  lives_write_le_buffered (fd,&hdlsize,4,TRUE);
+	  lives_write_buffered (fd,&mainw->files[i]->handle,hdlsize,TRUE);
 	}
       }
       clist=clist->next;
     }
     
-    close(fd);
+    lives_close_buffered(fd);
   }
 
   if (mainw->write_failed) return FALSE;
@@ -592,19 +592,19 @@ static void renumber_from_backup_layout_numbering(lives_mt *mt) {
   boolean isfirst=TRUE;
   char buf[256];
 
-  fd=open(aload_file,O_RDONLY);
+  fd=lives_open_buffered_rdonly(aload_file);
 
   if (fd!=-1) {
     while (1) {
-      if (lives_read_le(fd,&clipn,4,TRUE)==4) {
+      if (lives_read_le_buffered(fd,&clipn,4,TRUE)==4) {
 	if (isfirst) offs=-clipn+1;
 	else isfirst=FALSE;
-	if (lives_read_le(fd,&vard,8,TRUE)==8) {
+	if (lives_read_le_buffered(fd,&vard,8,TRUE)==8) {
 
-	  if (lives_read_le(fd,&vari,4,TRUE)==4) {
+	  if (lives_read_le_buffered(fd,&vari,4,TRUE)==4) {
 	    // compare the handle - assume clip ordering has not changed
 	    if (vari>255) vari=255;
-	    if (read(fd,buf,vari)==vari) {
+	    if (lives_read_buffered(fd,buf,vari,TRUE)==vari) {
 	      memset(buf+vari,0,1);
 	      while (mainw->files[clipn+offs]!=NULL&&strcmp(mainw->files[clipn+offs]->handle,buf)) {
 		offs++;
@@ -623,7 +623,7 @@ static void renumber_from_backup_layout_numbering(lives_mt *mt) {
       }
       else break;
     }
-    close(fd);
+    lives_close_buffered(fd);
   }
 }
 
@@ -655,7 +655,7 @@ static void save_mt_autoback(lives_mt *mt, int64_t stime) {
     retval2=0;
     mainw->write_failed=FALSE;
 
-    fd=lives_creat(asave_file,DEF_FILE_PERMS);
+    fd=lives_creat_buffered(asave_file,DEF_FILE_PERMS);
     if (fd>=0) {
 #ifdef IS_MINGW
       setmode(fd,O_BINARY);
@@ -676,7 +676,7 @@ static void save_mt_autoback(lives_mt *mt, int64_t stime) {
       if (retval) retval=write_backup_layout_numbering(mt);
       
       remove_markers(mt->event_list);
-      lives_close(fd);
+      lives_close_buffered(fd);
     }
     else mainw->write_failed=TRUE;
     
@@ -17640,8 +17640,11 @@ static float get_float_audio_val_at_time(int fnum, double secs, int chnum, int c
 static void draw_soundwave(GtkWidget *ebox, lives_painter_surface_t *surf, int chnum, lives_mt *mt) {
   weed_plant_t *event;
   weed_timecode_t tc;
+
   lives_painter_t *cr = lives_painter_create(surf);
+
   GtkWidget *eventbox=(GtkWidget *)g_object_get_data(G_OBJECT(ebox),"owner");
+
   track_rect *block=(track_rect *)g_object_get_data (G_OBJECT(eventbox), "blocks");
 
   double offset_startd,offset_endd; // time values
@@ -17681,7 +17684,7 @@ static void draw_soundwave(GtkWidget *ebox, lives_painter_surface_t *surf, int c
     offset_endd=get_event_timecode(block->end_event)/U_SEC+1./cfile->fps;
     offset_end=(offset_endd-mt->tl_min)/tl_span*lives_widget_get_allocation_width(ebox);
 
-    if (offset_end<mt->tl_max) {
+    if (offset_end<mt->tl_min) {
       block=block->next;
       continue;
     }
@@ -17719,7 +17722,6 @@ static void draw_soundwave(GtkWidget *ebox, lives_painter_surface_t *surf, int c
   lives_painter_destroy(cr);
 
   if (afd!=-1) close(afd);
-
 
 }
 
@@ -18794,31 +18796,31 @@ GList *load_layout_map(void) {
     }
     else {
       while (1) {
-	bytes=lives_read_le(fd,&len,4,TRUE);
+	bytes=lives_read_le_buffered(fd,&len,4,TRUE);
 	if (bytes<4) {
 	  break;
 	}
 	handle=(gchar *)g_malloc(len+1);
-	bytes=read(fd,handle,len);
+	bytes=lives_read_buffered(fd,handle,len,TRUE);
 	if (bytes<len) {
 	  break;
 	}
 	memset(handle+len,0,1);
-	bytes=lives_read_le(fd,&unique_id,8,TRUE);
+	bytes=lives_read_le_buffered(fd,&unique_id,8,TRUE);
 	if (bytes<8) {
 	  break;
 	}
-	bytes=lives_read_le(fd,&len,4,TRUE);
+	bytes=lives_read_le_buffered(fd,&len,4,TRUE);
 	if (bytes<4) {
 	  break;
 	}
 	name=(gchar *)g_malloc(len+1);
-	bytes=read(fd,name,len);
+	bytes=lives_read_buffered(fd,name,len,TRUE);
 	if (bytes<len) {
 	  break;
 	}
 	memset(name+len,0,1);
-	bytes=lives_read_le(fd,&nm,4,TRUE);
+	bytes=lives_read_le_buffered(fd,&nm,4,TRUE);
 	if (bytes<4) {
 	  break;
 	}
@@ -18830,13 +18832,13 @@ GList *load_layout_map(void) {
 	lmap_entry->list=NULL;
 	
 	for (i=0;i<nm;i++) {
-	  bytes=lives_read_le(fd,&len,4,TRUE);
+	  bytes=lives_read_le_buffered(fd,&len,4,TRUE);
 	  if (bytes<sizint) {
 	    err=TRUE;
 	    break;
 	  }
 	  entry=(gchar *)g_malloc(len+1);
-	  bytes=read(fd,entry,len);
+	  bytes=lives_read_buffered(fd,entry,len,TRUE);
 	  if (bytes<len) {
 	    err=TRUE;
 	    break;
@@ -18855,7 +18857,7 @@ GList *load_layout_map(void) {
       }
     }
 
-    if (fd>=0) close(fd);
+    if (fd>=0) lives_close_buffered(fd);
 
     if (err) {
       retval=do_read_failed_error_s_with_retry(lmap_name,NULL,NULL);
@@ -18904,16 +18906,18 @@ void save_layout_map (int *lmap, double *lmap_audio, const gchar *file, const gc
   gchar *string;
   gchar *com;
 
-  int i;
+  uint32_t size=0;
+
+  double max_atime;
+
+  boolean written=FALSE;
+
   int fd;
   int len;
   int retval;
   int max_frame;
-  boolean written=FALSE;
 
-  uint32_t size=0;
-
-  double max_atime;
+  register int i;
 
   if (dir==NULL&&strlen(mainw->set_name)==0) return;
 
@@ -18929,7 +18933,7 @@ void save_layout_map (int *lmap, double *lmap_audio, const gchar *file, const gc
 
   do {
     retval=0;
-    fd=creat(map_name,DEF_FILE_PERMS);
+    fd=lives_creat_buffered(map_name,DEF_FILE_PERMS);
 
     if (fd==-1) {
       retval=do_write_failed_error_s_with_retry(map_name,g_strerror(errno),NULL);
@@ -18979,19 +18983,19 @@ void save_layout_map (int *lmap, double *lmap_audio, const gchar *file, const gc
 	  if ((map=mainw->files[i]->layout_map)!=NULL) {
 	    written=TRUE;
 	    len=strlen(mainw->files[i]->handle);
-	    lives_write_le(fd,&len,4,TRUE);
-	    lives_write(fd,mainw->files[i]->handle,len,TRUE);
-	    lives_write_le(fd,&mainw->files[i]->unique_id,8,TRUE);
+	    lives_write_le_buffered(fd,&len,4,TRUE);
+	    lives_write_buffered(fd,mainw->files[i]->handle,len,TRUE);
+	    lives_write_le_buffered(fd,&mainw->files[i]->unique_id,8,TRUE);
 	    len=strlen(mainw->files[i]->name);
-	    lives_write_le(fd,&len,4,TRUE);
-	    lives_write(fd,mainw->files[i]->name,len,TRUE);
+	    lives_write_le_buffered(fd,&len,4,TRUE);
+	    lives_write_buffered(fd,mainw->files[i]->name,len,TRUE);
 	    len=g_list_length(map);
-	    lives_write_le(fd,&len,4,TRUE);
+	    lives_write_le_buffered(fd,&len,4,TRUE);
 	    while (map!=NULL) {
 	      string=repl_tmpdir((char *)map->data,TRUE); // allow relocation of tmpdir
 	      len=strlen(string);
-	      lives_write_le(fd,&len,4,TRUE);
-	      lives_write(fd,string,len,TRUE);
+	      lives_write_le_buffered(fd,&len,4,TRUE);
+	      lives_write_buffered(fd,string,len,TRUE);
 	      g_free(string);
 	      map=map->next;
 	    }
@@ -19005,12 +19009,12 @@ void save_layout_map (int *lmap, double *lmap_audio, const gchar *file, const gc
       }
 
     }
-    if (retval==LIVES_RETRY && fd>=0) close(fd);
+    if (retval==LIVES_RETRY && fd>=0) lives_close_buffered(fd);
   } while (retval==LIVES_RETRY);
 
   if (retval!=LIVES_CANCEL) {
     size=get_file_size(fd);
-    close(fd);
+    lives_close_buffered(fd);
 
     if (size==0||!written) {
       LIVES_DEBUG("Removing layout map file: ");
@@ -19269,7 +19273,7 @@ void on_save_event_list_activate (GtkMenuItem *menuitem, gpointer user_data) {
     retval2=0;
     retval=TRUE;
 
-    fd=lives_creat(esave_file,DEF_FILE_PERMS);
+    fd=lives_creat_buffered(esave_file,DEF_FILE_PERMS);
 
     if (fd>=0) {
 #ifdef IS_MINGW
@@ -19278,7 +19282,7 @@ void on_save_event_list_activate (GtkMenuItem *menuitem, gpointer user_data) {
       do_threaded_dialog(_("Saving layout"),FALSE);
 
       retval=save_event_list_inner(mt,fd,event_list,NULL);
-      lives_close(fd);
+      lives_close_buffered(fd);
 
       end_threaded_dialog();
     }
@@ -20873,7 +20877,7 @@ weed_plant_t *load_event_list(lives_mt *mt, gchar *eload_file) {
   if (!mainw->recoverable_layout) eload_name=g_strdup(eload_file);
   else eload_name=g_strdup(_("auto backup"));
 
-  if ((fd=lives_open(eload_file,O_RDONLY))<0) {
+  if ((fd=lives_open_buffered_rdonly(eload_file))<0) {
     msg=g_strdup_printf(_("\nUnable to load layout file %s\n"),eload_name);
     do_error_dialog_with_check_transient(msg,TRUE,0,LIVES_WINDOW(mt->window));
     g_free(msg);
@@ -20908,7 +20912,7 @@ weed_plant_t *load_event_list(lives_mt *mt, gchar *eload_file) {
   do {
     retval=0;
     if ((event_list=load_event_list_inner(mt,fd,TRUE,&num_events,NULL,NULL))==NULL) {
-      lives_close(fd);
+      lives_close_buffered(fd);
       
       if (mainw->read_failed) {
 	retval=do_read_failed_error_s_with_retry(eload_name,NULL,NULL);
@@ -20922,7 +20926,7 @@ weed_plant_t *load_event_list(lives_mt *mt, gchar *eload_file) {
 	return NULL;
       }
     }
-    else lives_close(fd);
+    else lives_close_buffered(fd);
   } while (retval==LIVES_RETRY);
 
   g_free(eload_name);
@@ -20979,13 +20983,13 @@ weed_plant_t *load_event_list(lives_mt *mt, gchar *eload_file) {
 	  retval=TRUE;
 
 	  // resave with corrections/updates
-	  fd=lives_creat(eload_file,DEF_FILE_PERMS);
+	  fd=lives_creat_buffered(eload_file,DEF_FILE_PERMS);
 	  if (fd>=0) {
 #ifdef IS_MINGW
 	    setmode(fd,O_BINARY);
 #endif
 	    retval=save_event_list_inner(NULL,fd,event_list,NULL);
-	    lives_close(fd);
+	    lives_close_buffered(fd);
 	  }
 
 	  if (fd<0||!retval) {
@@ -21302,9 +21306,9 @@ void migrate_layouts (const gchar *old_set_name, const gchar *new_set_name) {
       // load and save each layout, updating the "needs_set" leaf
       do {
 	retval2=0;
-	if ((fd=open((gchar *)map->data,O_RDONLY))>-1) {
+	if ((fd=lives_open_buffered_rdonly((gchar *)map->data))>-1) {
 	  if ((event_list=load_event_list_inner(NULL,fd,FALSE,NULL,NULL,NULL))!=NULL) {
-	    close (fd);
+	    lives_close_buffered (fd);
 	    // adjust the value of "needs_set" to new_set_name
 	    weed_set_string_value(event_list,"needs_set",new_set_name);
 	    // save the event_list with the same name
@@ -21312,7 +21316,7 @@ void migrate_layouts (const gchar *old_set_name, const gchar *new_set_name) {
 	    
 	    do {
 	      retval2=0;
-	      fd=lives_creat((char *)map->data,DEF_FILE_PERMS);
+	      fd=lives_creat_buffered((char *)map->data,DEF_FILE_PERMS);
 	      if (fd>=0) {
 #ifdef IS_MINGW
 		setmode(fd,O_BINARY);
@@ -21320,14 +21324,14 @@ void migrate_layouts (const gchar *old_set_name, const gchar *new_set_name) {
 		retval=save_event_list_inner(NULL,fd,event_list,NULL);
 	      }
 	      if (fd<0||!retval) {
-		if (fd>0) lives_close(fd);
+		if (fd>0) lives_close_buffered(fd);
 		retval2=do_write_failed_error_s_with_retry((char *)map->data,(fd<0)?g_strerror(errno):NULL,NULL);
 	      }
 	    } while (retval2==LIVES_RETRY);
 	    
 	    event_list_free(event_list);
 	  }
-	  lives_close(fd);
+	  if (retval2==0) lives_close_buffered(fd);
 	}
 	else {
 	  retval2=do_read_failed_error_s_with_retry((char *)map->data,NULL,NULL);

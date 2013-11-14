@@ -2281,6 +2281,7 @@ static void *try_decoder_plugins(void *in) {
       }
       break;
     }
+    else g_free(tmp);
     decoder_plugin=decoder_plugin->next;
   }
   return NULL;

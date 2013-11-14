@@ -55,7 +55,7 @@ boolean save_frame_index(int fileno) {
 
   do {
     retval=0;
-    fd=open(fname,O_CREAT|O_WRONLY|O_TRUNC,S_IRUSR|S_IWUSR);
+    fd=lives_creat_buffered(fname,DEF_FILE_PERMS);
     if (fd<0) {
       retval=do_write_failed_error_s_with_retry(fname,g_strerror(errno),NULL);
     }
@@ -67,11 +67,11 @@ boolean save_frame_index(int fileno) {
 
       mainw->write_failed=FALSE;
       for (i=0;i<sfile->frames;i++) {
-	lives_write_le(fd,&sfile->frame_index[i],4,TRUE);
+	lives_write_le_buffered(fd,&sfile->frame_index[i],4,TRUE);
 	if (mainw->write_failed) break;
       }
       
-      close(fd);
+      lives_close_buffered(fd);
 
       if (mainw->write_failed) {
 	retval=do_write_failed_error_s_with_retry(fname,NULL,NULL);
@@ -111,7 +111,7 @@ boolean load_frame_index(int fileno) {
   do {
     retval=0;
 
-    fd=open(fname,O_RDONLY);
+    fd=lives_open_buffered_rdonly(fname);
 
     if (fd<0) {
       retval=do_read_failed_error_s_with_retry(fname,g_strerror(errno),NULL);
@@ -129,11 +129,11 @@ boolean load_frame_index(int fileno) {
 
       mainw->read_failed=FALSE;
       for (i=0;i<sfile->frames;i++) {
-	lives_read_le(fd,&sfile->frame_index[i],4,FALSE);
+	lives_read_le_buffered(fd,&sfile->frame_index[i],4,FALSE);
 	if (mainw->read_failed) break;
       }
 
-      close(fd);
+      lives_close_buffered(fd);
 
       if (mainw->read_failed) {
 	mainw->read_failed=FALSE;

@@ -481,6 +481,7 @@ void load_vpp_defaults(_vid_playback_plugin *vpp, gchar *vpp_file) {
 	if (strcmp(msg,buf)) {
 	  g_free(msg);
 	  d_print_file_error_failed();
+	  close(fd);
 	  return;
 	}
 	g_free(msg);
@@ -495,6 +496,7 @@ void load_vpp_defaults(_vid_playback_plugin *vpp, gchar *vpp_file) {
 
 	if (strcmp(buf,mainw->vpp->name)) {
 	  d_print_file_error_failed();
+	  close(fd);
 	  return;
 	}
 
@@ -515,6 +517,7 @@ void load_vpp_defaults(_vid_playback_plugin *vpp, gchar *vpp_file) {
 	  g_free(msg);
 	  unlink(vpp_file);
 	  d_print_failed();
+	  close(fd);
 	  return;
 	}
 
@@ -559,6 +562,7 @@ void load_vpp_defaults(_vid_playback_plugin *vpp, gchar *vpp_file) {
       } while (FALSE);
 
       if (mainw->read_failed) {
+	close(fd);
 	retval=do_read_failed_error_s_with_retry(vpp_file,NULL,NULL);
 	if (retval==LIVES_CANCEL) {
 	  mainw->read_failed=FALSE;
@@ -2252,7 +2256,7 @@ static void *try_decoder_plugins(void *in) {
       continue;
     }
 
-#define DEBUG_DECPLUG
+    //#define DEBUG_DECPLUG
 #ifdef DEBUG_DECPLUG
     g_print("trying decoder %s\n",dpsys->name);
 #endif

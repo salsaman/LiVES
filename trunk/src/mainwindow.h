@@ -1000,6 +1000,8 @@ typedef struct {
 
   boolean suppress_dprint; ///< tidy up, e.g. by blocking "switched to file..." and "closed file..." messages
 
+  boolean no_recurse; ///< flag to prevent recursive function calls
+
   gchar *string_constants[NUM_LIVES_STRING_CONSTANTS];
   gchar *any_string;  ///< localised text saying "Any", for encoder and output format
   gchar *none_string;  ///< localised text saying "None", for playback plugin name, etc.

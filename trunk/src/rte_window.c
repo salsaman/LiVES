@@ -150,32 +150,32 @@ static boolean save_keymap2_file(gchar *kfname) {
 
   do {
     retval=0;
-    kfd=creat(kfname,S_IRUSR|S_IWUSR);
+    kfd=lives_creat_buffered(kfname,DEF_FILE_PERMS);
     if (kfd==-1) {
       retval=do_write_failed_error_s_with_retry (kfname,g_strerror(errno),LIVES_WINDOW(rte_window));
     }
     else {
       mainw->write_failed=FALSE;
       
-      lives_write_le(kfd,&version,4,TRUE);
+      lives_write_le_buffered(kfd,&version,4,TRUE);
       
       for (i=1;i<=prefs->rte_keys_virtual;i++) {
 	if (mainw->write_failed) break;
 	for (j=0;j<modes;j++) {
 	  if (rte_keymode_valid(i,j,TRUE)) {
-	    lives_write_le(kfd,&i,4,TRUE);
+	    lives_write_le_buffered(kfd,&i,4,TRUE);
 	    if (mainw->write_failed) break;
 	    hashname=g_strdup_printf("Weed%s",(tmp=make_weed_hashname(rte_keymode_get_filter_idx(i,j),TRUE,FALSE)));
 	    g_free(tmp);
 	    slen=strlen(hashname);
-	    lives_write_le(kfd,&slen,4,TRUE);
-	    lives_write(kfd,hashname,slen,TRUE);
+	    lives_write_le_buffered(kfd,&slen,4,TRUE);
+	    lives_write_buffered(kfd,hashname,slen,TRUE);
 	    g_free(hashname);
 	    write_key_defaults(kfd,i-1,j);
 	  }
 	}
       }
-      close(kfd);
+      lives_close_buffered(kfd);
       
       if (mainw->write_failed) {
 	retval=do_write_failed_error_s_with_retry(kfname,NULL,LIVES_WINDOW(rte_window));
@@ -207,14 +207,14 @@ static boolean save_keymap3_file(gchar *kfname) {
 
   do {
     retval=0;
-    kfd=creat(kfname,S_IRUSR|S_IWUSR);
+    kfd=lives_creat_buffered(kfname,DEF_FILE_PERMS);
     if (kfd==-1) {
       retval=do_write_failed_error_s_with_retry (kfname,g_strerror(errno),LIVES_WINDOW(rte_window));
     }
     else {
       mainw->write_failed=FALSE;
       
-      lives_write_le(kfd,&version,4,TRUE);
+      lives_write_le_buffered(kfd,&version,4,TRUE);
 
 
       if (mainw->cconx!=NULL) {
@@ -226,7 +226,7 @@ static boolean save_keymap3_file(gchar *kfname) {
 	  cconx=cconx->next;
 	}
 
-	lives_write_le(kfd,&count,4,TRUE);
+	lives_write_le_buffered(kfd,&count,4,TRUE);
 	if (mainw->write_failed) goto write_failed1;
 
 	cconx=mainw->cconx;
@@ -234,46 +234,46 @@ static boolean save_keymap3_file(gchar *kfname) {
 	  totcons=0;
 	  j=0;
 
-	  lives_write_le(kfd,&cconx->okey,4,TRUE);
+	  lives_write_le_buffered(kfd,&cconx->okey,4,TRUE);
 	  if (mainw->write_failed) goto write_failed1;
 
-	  lives_write_le(kfd,&cconx->omode,4,TRUE);
+	  lives_write_le_buffered(kfd,&cconx->omode,4,TRUE);
 	  if (mainw->write_failed) goto write_failed1;
 
 	  hashname=make_weed_hashname(rte_keymode_get_filter_idx(cconx->okey+1,cconx->omode),TRUE,FALSE);
 	  slen=strlen(hashname);
-	  lives_write_le(kfd,&slen,4,TRUE);
-	  lives_write(kfd,hashname,slen,TRUE);
+	  lives_write_le_buffered(kfd,&slen,4,TRUE);
+	  lives_write_buffered(kfd,hashname,slen,TRUE);
 	  g_free(hashname);
 
 	  nchans=cconx->nchans;
-	  lives_write_le(kfd,&nchans,4,TRUE);
+	  lives_write_le_buffered(kfd,&nchans,4,TRUE);
 	  if (mainw->write_failed) goto write_failed1;
 
 	  for (i=0;i<nchans;i++) {
-	    lives_write_le(kfd,&cconx->chans[i],4,TRUE);
+	    lives_write_le_buffered(kfd,&cconx->chans[i],4,TRUE);
 	    if (mainw->write_failed) goto write_failed1;
 
 	    nconns=cconx->nconns[i];
-	    lives_write_le(kfd,&nconns,4,TRUE);
+	    lives_write_le_buffered(kfd,&nconns,4,TRUE);
 	    if (mainw->write_failed) goto write_failed1;
 
 	    totcons+=nconns;
 
 	    while (j<totcons) {
-	      lives_write_le(kfd,&cconx->ikey[j],4,TRUE);
+	      lives_write_le_buffered(kfd,&cconx->ikey[j],4,TRUE);
 	      if (mainw->write_failed) goto write_failed1;
 
-	      lives_write_le(kfd,&cconx->imode[j],4,TRUE);
+	      lives_write_le_buffered(kfd,&cconx->imode[j],4,TRUE);
 	      if (mainw->write_failed) goto write_failed1;
 
 	      hashname=make_weed_hashname(rte_keymode_get_filter_idx(cconx->ikey[j]+1,cconx->imode[j]),TRUE,FALSE);
 	      slen=strlen(hashname);
-	      lives_write_le(kfd,&slen,4,TRUE);
-	      lives_write(kfd,hashname,slen,TRUE);
+	      lives_write_le_buffered(kfd,&slen,4,TRUE);
+	      lives_write_buffered(kfd,hashname,slen,TRUE);
 	      g_free(hashname);
 
-	      lives_write_le(kfd,&cconx->icnum[j],4,TRUE);
+	      lives_write_le_buffered(kfd,&cconx->icnum[j],4,TRUE);
 	      if (mainw->write_failed) goto write_failed1;
 
 	      j++;
@@ -285,7 +285,7 @@ static boolean save_keymap3_file(gchar *kfname) {
 	}
       }
       else {
-	lives_write_le(kfd,&count,4,TRUE);
+	lives_write_le_buffered(kfd,&count,4,TRUE);
 	if (mainw->write_failed) goto write_failed1;
       }
 
@@ -302,7 +302,7 @@ static boolean save_keymap3_file(gchar *kfname) {
 	  pconx=pconx->next;
 	}
 
-	lives_write_le(kfd,&count,4,TRUE);
+	lives_write_le_buffered(kfd,&count,4,TRUE);
 	if (mainw->write_failed) goto write_failed1;
 
 	pconx=mainw->pconx;
@@ -310,49 +310,49 @@ static boolean save_keymap3_file(gchar *kfname) {
 	  totcons=0;
 	  j=0;
 
-	  lives_write_le(kfd,&pconx->okey,4,TRUE);
+	  lives_write_le_buffered(kfd,&pconx->okey,4,TRUE);
 	  if (mainw->write_failed) goto write_failed1;
 
-	  lives_write_le(kfd,&pconx->omode,4,TRUE);
+	  lives_write_le_buffered(kfd,&pconx->omode,4,TRUE);
 	  if (mainw->write_failed) goto write_failed1;
 
 	  hashname=make_weed_hashname(rte_keymode_get_filter_idx(pconx->okey+1,pconx->omode),TRUE,FALSE);
 	  slen=strlen(hashname);
-	  lives_write_le(kfd,&slen,4,TRUE);
-	  lives_write(kfd,hashname,slen,TRUE);
+	  lives_write_le_buffered(kfd,&slen,4,TRUE);
+	  lives_write_buffered(kfd,hashname,slen,TRUE);
 	  g_free(hashname);
 
 	  nparams=pconx->nparams;
-	  lives_write_le(kfd,&nparams,4,TRUE);
+	  lives_write_le_buffered(kfd,&nparams,4,TRUE);
 	  if (mainw->write_failed) goto write_failed1;
 
 	  for (i=0;i<nparams;i++) {
-	    lives_write_le(kfd,&pconx->params[i],4,TRUE);
+	    lives_write_le_buffered(kfd,&pconx->params[i],4,TRUE);
 	    if (mainw->write_failed) goto write_failed1;
 
 	    nconns=pconx->nconns[i];
-	    lives_write_le(kfd,&nconns,4,TRUE);
+	    lives_write_le_buffered(kfd,&nconns,4,TRUE);
 	    if (mainw->write_failed) goto write_failed1;
 
 	    totcons+=nconns;
 
 	    while (j<totcons) {
-	      lives_write_le(kfd,&pconx->ikey[j],4,TRUE);
+	      lives_write_le_buffered(kfd,&pconx->ikey[j],4,TRUE);
 	      if (mainw->write_failed) goto write_failed1;
 
-	      lives_write_le(kfd,&pconx->imode[j],4,TRUE);
+	      lives_write_le_buffered(kfd,&pconx->imode[j],4,TRUE);
 	      if (mainw->write_failed) goto write_failed1;
 
 	      hashname=make_weed_hashname(rte_keymode_get_filter_idx(pconx->ikey[j]+1,pconx->imode[j]),TRUE,FALSE);
 	      slen=strlen(hashname);
-	      lives_write_le(kfd,&slen,4,TRUE);
-	      lives_write(kfd,hashname,slen,TRUE);
+	      lives_write_le_buffered(kfd,&slen,4,TRUE);
+	      lives_write_buffered(kfd,hashname,slen,TRUE);
 	      g_free(hashname);
 
-	      lives_write_le(kfd,&pconx->ipnum[j],4,TRUE);
+	      lives_write_le_buffered(kfd,&pconx->ipnum[j],4,TRUE);
 	      if (mainw->write_failed) goto write_failed1;
 
-	      lives_write_le(kfd,&pconx->autoscale[j],4,TRUE);
+	      lives_write_le_buffered(kfd,&pconx->autoscale[j],4,TRUE);
 	      if (mainw->write_failed) goto write_failed1;
 
 	      j++;
@@ -365,13 +365,13 @@ static boolean save_keymap3_file(gchar *kfname) {
 
       }
       else {
-	lives_write_le(kfd,&count,4,TRUE);
+	lives_write_le_buffered(kfd,&count,4,TRUE);
 	if (mainw->write_failed) goto write_failed1;
       }
 
 
     write_failed1:
-      close(kfd);
+      lives_close_buffered(kfd);
       
       if (mainw->write_failed) {
 	retval=do_write_failed_error_s_with_retry(kfname,NULL,LIVES_WINDOW(rte_window));
@@ -529,7 +529,7 @@ void on_save_rte_defs_activate (GtkMenuItem *menuitem, gpointer user_data) {
 
   do {
     retval=0;
-    if ((fd=open(prefs->fxdefsfile,O_WRONLY|O_CREAT|O_TRUNC,S_IRUSR|S_IWUSR))==-1) {
+    if ((fd=lives_creat_buffered(prefs->fxdefsfile,DEF_FILE_PERMS))==-1) {
       msg=g_strdup_printf (_("\n\nUnable to write defaults file\n%s\nError code %d\n"),prefs->fxdefsfile,errno);
       retval=do_abort_cancel_retry_dialog (msg,LIVES_WINDOW(rte_window));
       g_free (msg);
@@ -540,7 +540,7 @@ void on_save_rte_defs_activate (GtkMenuItem *menuitem, gpointer user_data) {
 #endif
       msg=g_strdup("LiVES filter defaults file version 1.1\n");
       mainw->write_failed=FALSE;
-      lives_write(fd,msg,strlen(msg),TRUE);
+      lives_write_buffered(fd,msg,strlen(msg),TRUE);
       g_free(msg);
 
       if (mainw->write_failed) {
@@ -555,7 +555,7 @@ void on_save_rte_defs_activate (GtkMenuItem *menuitem, gpointer user_data) {
 	  }
 	}
       }
-      close (fd);
+      lives_close_buffered (fd);
     }
   } while (retval==LIVES_RETRY);
 
@@ -564,7 +564,7 @@ void on_save_rte_defs_activate (GtkMenuItem *menuitem, gpointer user_data) {
   
   do {
     retval=0;
-    if ((fd=open(prefs->fxsizesfile,O_WRONLY|O_CREAT|O_TRUNC,S_IRUSR|S_IWUSR))==-1) {
+    if ((fd=lives_creat_buffered(prefs->fxsizesfile,DEF_FILE_PERMS))==-1) {
       retval=do_write_failed_error_s_with_retry(prefs->fxsizesfile,g_strerror(errno),LIVES_WINDOW(rte_window));
       g_free (msg);
     }
@@ -574,7 +574,7 @@ void on_save_rte_defs_activate (GtkMenuItem *menuitem, gpointer user_data) {
 #endif
       msg=g_strdup("LiVES generator default sizes file version 2\n");
       mainw->write_failed=FALSE;
-      lives_write(fd,msg,strlen(msg),TRUE);
+      lives_write_buffered(fd,msg,strlen(msg),TRUE);
       g_free(msg);
       if (mainw->write_failed) {
 	retval=do_write_failed_error_s_with_retry(prefs->fxsizesfile,NULL,LIVES_WINDOW(rte_window));
@@ -587,7 +587,7 @@ void on_save_rte_defs_activate (GtkMenuItem *menuitem, gpointer user_data) {
 	  }
 	}
       }
-      close(fd);
+      lives_close_buffered(fd);
     }
   } while (retval==LIVES_RETRY);
 
@@ -619,7 +619,7 @@ void load_rte_defs (void) {
 
     do {
       retval=0;
-      if ((fd=open(prefs->fxdefsfile,O_RDONLY))==-1) {
+      if ((fd=lives_open_buffered_rdonly(prefs->fxdefsfile))==-1) {
 	retval=do_read_failed_error_s_with_retry(prefs->fxdefsfile,g_strerror(errno),NULL);
       }
       else {
@@ -633,7 +633,7 @@ void load_rte_defs (void) {
       
 	msg=g_strdup("LiVES filter defaults file version 1.1\n");
 	buf=g_malloc(strlen(msg));
-	bytes=read(fd,buf,strlen(msg));
+	bytes=lives_read_buffered(fd,buf,strlen(msg),TRUE);
       
 	if (bytes==strlen(msg)&&!strncmp((gchar *)buf,msg,strlen(msg))) {
 	  if (read_filter_defaults(fd)) {
@@ -651,7 +651,7 @@ void load_rte_defs (void) {
 	  }
 	}
 
-	close(fd);
+	lives_close_buffered(fd);
 	
 	g_free(buf);
 	g_free(msg);
@@ -668,7 +668,7 @@ void load_rte_defs (void) {
   if (g_file_test(prefs->fxsizesfile,G_FILE_TEST_EXISTS)) {
     do {
       retval=0;
-      if ((fd=open(prefs->fxsizesfile,O_RDONLY))==-1) {
+      if ((fd=lives_open_buffered_rdonly(prefs->fxsizesfile))==-1) {
 	retval=do_read_failed_error_s_with_retry(prefs->fxsizesfile,g_strerror(errno),NULL);
 	if (retval==LIVES_CANCEL) return;
       }
@@ -682,7 +682,7 @@ void load_rte_defs (void) {
 	
 	msg=g_strdup("LiVES generator default sizes file version 2\n");
 	buf=g_malloc(strlen(msg));
-	bytes=read(fd,buf,strlen(msg));
+	bytes=lives_read_buffered(fd,buf,strlen(msg),TRUE);
 	if (bytes==strlen(msg)&&!strncmp((gchar *)buf,msg,strlen(msg))) {
 	  if (read_generator_sizes(fd)) {
 	    d_print_done();
@@ -698,7 +698,7 @@ void load_rte_defs (void) {
 	    retval=do_read_failed_error_s_with_retry(prefs->fxsizesfile,NULL,NULL);
 	  }
 	}
-	close(fd);
+	lives_close_buffered(fd);
 	
 	g_free(buf);
 	g_free(msg);
@@ -730,7 +730,7 @@ static void check_clear_all_button (void) {
 static boolean read_perkey_defaults(int kfd, int key, int mode, int version) {
   boolean ret=TRUE;
   int nparams;
-  ssize_t bytes=lives_read_le(kfd,&nparams,4,TRUE);
+  ssize_t bytes=lives_read_le_buffered(kfd,&nparams,4,TRUE);
 
   if (nparams>65536) {
     g_printerr("Too many params, file is probably broken.\n");
@@ -783,7 +783,7 @@ static boolean load_datacons(const gchar *fname, uint8_t **badkeymap) {
   
   do {
     retval=0;
-    if ((kfd=open(fname,O_RDONLY))==-1) {
+    if ((kfd=lives_open_buffered_rdonly(fname))==-1) {
       retval=do_read_failed_error_s_with_retry(fname,g_strerror(errno),NULL);
     }
     else {
@@ -792,13 +792,13 @@ static boolean load_datacons(const gchar *fname, uint8_t **badkeymap) {
 #endif
       mainw->read_failed=FALSE;
 
-      bytes=lives_read_le(kfd,&version,4,TRUE);
+      bytes=lives_read_le_buffered(kfd,&version,4,TRUE);
       if (bytes<4) {
 	eof=TRUE;
 	break;
       }
 
-      bytes=lives_read_le(kfd,&ncconx,4,TRUE);
+      bytes=lives_read_le_buffered(kfd,&ncconx,4,TRUE);
       if (bytes<4) {
 	eof=TRUE;
 	break;
@@ -807,7 +807,7 @@ static boolean load_datacons(const gchar *fname, uint8_t **badkeymap) {
       for (count=0;count<ncconx;count++) {
 	is_valid=TRUE;
 
-	bytes=lives_read_le(kfd,&okey,4,TRUE);
+	bytes=lives_read_le_buffered(kfd,&okey,4,TRUE);
 	if (bytes<4) {
 	  eof=TRUE;
 	  break;
@@ -815,14 +815,14 @@ static boolean load_datacons(const gchar *fname, uint8_t **badkeymap) {
 
 	if (okey<0||okey>=prefs->rte_keys_virtual) is_valid=FALSE;
 
-	bytes=lives_read_le(kfd,&omode,4,TRUE);
+	bytes=lives_read_le_buffered(kfd,&omode,4,TRUE);
 	if (bytes<4) {
 	  eof=TRUE;
 	  break;
 	}
 
 	  
-	bytes=lives_read_le(kfd,&hlen,4,TRUE);
+	bytes=lives_read_le_buffered(kfd,&hlen,4,TRUE);
 	if (bytes<4) {
 	  eof=TRUE;
 	  break;
@@ -835,7 +835,7 @@ static boolean load_datacons(const gchar *fname, uint8_t **badkeymap) {
 	  break;
 	}
 
-	bytes=read(kfd,hashname,hlen);
+	bytes=lives_read_buffered(kfd,hashname,hlen,TRUE);
 	if (bytes<hlen) {
 	  eof=TRUE;
 	  g_free(hashname);
@@ -871,7 +871,7 @@ static boolean load_datacons(const gchar *fname, uint8_t **badkeymap) {
 
 	g_free(hashname);
 
-	bytes=lives_read_le(kfd,&nchans,4,TRUE);
+	bytes=lives_read_le_buffered(kfd,&nchans,4,TRUE);
 	if (bytes<4) {
 	  eof=TRUE;
 	  break;
@@ -880,7 +880,7 @@ static boolean load_datacons(const gchar *fname, uint8_t **badkeymap) {
 	for (i=0;i<nchans;i++) {
 	  is_valid2=is_valid;
 
-	  bytes=lives_read_le(kfd,&ocnum,4,TRUE);
+	  bytes=lives_read_le_buffered(kfd,&ocnum,4,TRUE);
 	  if (bytes<4) {
 	    eof=TRUE;
 	    break;
@@ -896,26 +896,26 @@ static boolean load_datacons(const gchar *fname, uint8_t **badkeymap) {
 	    weed_free(ochans);
 	  }
 
-	  bytes=lives_read_le(kfd,&nconns,4,TRUE);
+	  bytes=lives_read_le_buffered(kfd,&nconns,4,TRUE);
 	  if (bytes<4) {
 	    eof=TRUE;
 	    break;
 	  }
 
 	  for (j=0;j<nconns;j++) {
-	    bytes=lives_read_le(kfd,&ikey,4,TRUE);
+	    bytes=lives_read_le_buffered(kfd,&ikey,4,TRUE);
 	    if (bytes<4) {
 	      eof=TRUE;
 	      break;
 	    }
 
-	    bytes=lives_read_le(kfd,&imode,4,TRUE);
+	    bytes=lives_read_le_buffered(kfd,&imode,4,TRUE);
 	    if (bytes<4) {
 	      eof=TRUE;
 	      break;
 	    }
 
-	    bytes=lives_read_le(kfd,&hlen,4,TRUE);
+	    bytes=lives_read_le_buffered(kfd,&hlen,4,TRUE);
 	    if (bytes<4) {
 	      eof=TRUE;
 	      break;
@@ -928,7 +928,7 @@ static boolean load_datacons(const gchar *fname, uint8_t **badkeymap) {
 	      break;
 	    }
 
-	    bytes=read(kfd,hashname,hlen);
+	    bytes=lives_read_buffered(kfd,hashname,hlen,TRUE);
 	    if (bytes<hlen) {
 	      eof=TRUE;
 	      g_free(hashname);
@@ -964,7 +964,7 @@ static boolean load_datacons(const gchar *fname, uint8_t **badkeymap) {
 
 	    g_free(hashname);
 
-	    bytes=lives_read_le(kfd,&icnum,4,TRUE);
+	    bytes=lives_read_le_buffered(kfd,&icnum,4,TRUE);
 	    if (bytes<4) {
 	      eof=TRUE;
 	      break;
@@ -1004,7 +1004,7 @@ static boolean load_datacons(const gchar *fname, uint8_t **badkeymap) {
 
 
 
-      bytes=lives_read_le(kfd,&npconx,4,TRUE);
+      bytes=lives_read_le_buffered(kfd,&npconx,4,TRUE);
       if (bytes<4) {
 	eof=TRUE;
 	break;
@@ -1013,7 +1013,7 @@ static boolean load_datacons(const gchar *fname, uint8_t **badkeymap) {
       for (count=0;count<npconx;count++) {
 	is_valid=TRUE;
 
-	bytes=lives_read_le(kfd,&okey,4,TRUE);
+	bytes=lives_read_le_buffered(kfd,&okey,4,TRUE);
 	if (bytes<4) {
 	  eof=TRUE;
 	  break;
@@ -1021,14 +1021,14 @@ static boolean load_datacons(const gchar *fname, uint8_t **badkeymap) {
 
 	if (okey<0||okey>=prefs->rte_keys_virtual) is_valid=FALSE;
 
-	bytes=lives_read_le(kfd,&omode,4,TRUE);
+	bytes=lives_read_le_buffered(kfd,&omode,4,TRUE);
 	if (bytes<4) {
 	  eof=TRUE;
 	  break;
 	}
 
 	  
-	bytes=lives_read_le(kfd,&hlen,4,TRUE);
+	bytes=lives_read_le_buffered(kfd,&hlen,4,TRUE);
 	if (bytes<4) {
 	  eof=TRUE;
 	  break;
@@ -1041,7 +1041,7 @@ static boolean load_datacons(const gchar *fname, uint8_t **badkeymap) {
 	  break;
 	}
 
-	bytes=read(kfd,hashname,hlen);
+	bytes=lives_read_buffered(kfd,hashname,hlen,TRUE);
 	if (bytes<hlen) {
 	  eof=TRUE;
 	  g_free(hashname);
@@ -1078,7 +1078,7 @@ static boolean load_datacons(const gchar *fname, uint8_t **badkeymap) {
 
 	g_free(hashname);
 
-	bytes=lives_read_le(kfd,&nparams,4,TRUE);
+	bytes=lives_read_le_buffered(kfd,&nparams,4,TRUE);
 	if (bytes<4) {
 	  eof=TRUE;
 	  break;
@@ -1087,7 +1087,7 @@ static boolean load_datacons(const gchar *fname, uint8_t **badkeymap) {
 	for (i=0;i<nparams;i++) {
 	  is_valid2=is_valid;
 
-	  bytes=lives_read_le(kfd,&opnum,4,TRUE);
+	  bytes=lives_read_le_buffered(kfd,&opnum,4,TRUE);
 	  if (bytes<4) {
 	    eof=TRUE;
 	    break;
@@ -1098,26 +1098,26 @@ static boolean load_datacons(const gchar *fname, uint8_t **badkeymap) {
 	  noparams=weed_leaf_num_elements(filter,"out_parameter_templates");
 	  if (opnum>=noparams) is_valid2=FALSE;
 
-	  bytes=lives_read_le(kfd,&nconns,4,TRUE);
+	  bytes=lives_read_le_buffered(kfd,&nconns,4,TRUE);
 	  if (bytes<4) {
 	    eof=TRUE;
 	    break;
 	  }
 
 	  for (j=0;j<nconns;j++) {
-	    bytes=lives_read_le(kfd,&ikey,4,TRUE);
+	    bytes=lives_read_le_buffered(kfd,&ikey,4,TRUE);
 	    if (bytes<4) {
 	      eof=TRUE;
 	      break;
 	    }
 
-	    bytes=lives_read_le(kfd,&imode,4,TRUE);
+	    bytes=lives_read_le_buffered(kfd,&imode,4,TRUE);
 	    if (bytes<4) {
 	      eof=TRUE;
 	      break;
 	    }
 
-	    bytes=lives_read_le(kfd,&hlen,4,TRUE);
+	    bytes=lives_read_le_buffered(kfd,&hlen,4,TRUE);
 	    if (bytes<4) {
 	      eof=TRUE;
 	      break;
@@ -1130,7 +1130,7 @@ static boolean load_datacons(const gchar *fname, uint8_t **badkeymap) {
 	      break;
 	    }
 
-	    bytes=read(kfd,hashname,hlen);
+	    bytes=lives_read_buffered(kfd,hashname,hlen,TRUE);
 	    if (bytes<hlen) {
 	      eof=TRUE;
 	      g_free(hashname);
@@ -1165,7 +1165,7 @@ static boolean load_datacons(const gchar *fname, uint8_t **badkeymap) {
 
 	    g_free(hashname);
 
-	    bytes=lives_read_le(kfd,&ipnum,4,TRUE);
+	    bytes=lives_read_le_buffered(kfd,&ipnum,4,TRUE);
 	    if (bytes<4) {
 	      eof=TRUE;
 	      break;
@@ -1183,7 +1183,7 @@ static boolean load_datacons(const gchar *fname, uint8_t **badkeymap) {
 	      }
 	    }
 
-	    bytes=lives_read_le(kfd,&autoscale,4,TRUE);
+	    bytes=lives_read_le_buffered(kfd,&autoscale,4,TRUE);
 	    if (bytes<4) {
 	      eof=TRUE;
 	      break;
@@ -1209,7 +1209,7 @@ static boolean load_datacons(const gchar *fname, uint8_t **badkeymap) {
 
 
 
-      close(kfd);
+      lives_close_buffered(kfd);
 	
     }
   } while (retval==LIVES_RETRY);
@@ -1309,7 +1309,7 @@ boolean on_load_keymap_clicked (GtkButton *button, gpointer user_data) {
     retval=0;
 
     if (keymap_file2!=NULL) {
-      if ((kfd=open(keymap_file,O_RDONLY))==-1) has_error=TRUE;
+      if ((kfd=lives_open_buffered_rdonly(keymap_file))==-1) has_error=TRUE;
 #ifdef IS_MINGW
       else {
 	setmode(kfd, O_BINARY);
@@ -1381,7 +1381,7 @@ boolean on_load_keymap_clicked (GtkButton *button, gpointer user_data) {
     // newer style
 
     // read version
-    bytes=lives_read_le(kfd,&version,4,TRUE);
+    bytes=lives_read_le_buffered(kfd,&version,4,TRUE);
     if (bytes<sizint) {
       eof=TRUE;
     }
@@ -1442,13 +1442,13 @@ boolean on_load_keymap_clicked (GtkButton *button, gpointer user_data) {
       // file format is: (4 bytes int)key(4 bytes int)hlen(hlen bytes)hashname
 
       //read key and hashname
-      bytes=lives_read_le(kfd,&key,4,TRUE);
+      bytes=lives_read_le_buffered(kfd,&key,4,TRUE);
       if (bytes<4) {
 	eof=TRUE;
 	break;
       }
 
-      bytes=lives_read_le(kfd,&hlen,4,TRUE);
+      bytes=lives_read_le_buffered(kfd,&hlen,4,TRUE);
       if (bytes<4) {
 	eof=TRUE;
 	break;
@@ -1461,7 +1461,7 @@ boolean on_load_keymap_clicked (GtkButton *button, gpointer user_data) {
 	break;
       }
 
-      bytes=read(kfd,hashname,hlen);
+      bytes=lives_read_buffered(kfd,hashname,hlen,TRUE);
       if (bytes<hlen) {
 	eof=TRUE;
 	g_free(hashname);
@@ -1591,7 +1591,7 @@ boolean on_load_keymap_clicked (GtkButton *button, gpointer user_data) {
     else d_print_done();
   }
   else {
-    if (kfd!=-1) close(kfd);
+    if (kfd!=-1) lives_close_buffered(kfd);
     d_print_done();
   }
 

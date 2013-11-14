@@ -2576,12 +2576,14 @@ void on_midi_load_activate (GtkMenuItem *menuitem, gpointer user_data) {
   if (bytes<strlen(OMC_FILE_VSTRING)) {
     do_midi_load_error(load_file);
     g_free (load_file);
+    close(fd);
     return;
   }
 
   if (strncmp(tstring,OMC_FILE_VSTRING,strlen(OMC_FILE_VSTRING))) {
     do_midi_version_error(load_file);
     g_free (load_file);
+    close(fd);
     return;
   }
 
@@ -2589,6 +2591,7 @@ void on_midi_load_activate (GtkMenuItem *menuitem, gpointer user_data) {
   if (bytes<4) {
     do_midi_load_error(load_file);
     g_free (load_file);
+    close(fd);
     return;
   }
 
@@ -2603,6 +2606,7 @@ void on_midi_load_activate (GtkMenuItem *menuitem, gpointer user_data) {
     if (bytes<4) {
       do_midi_load_error(load_file);
       g_free (load_file);
+      close(fd);
       return;
     }
     
@@ -2612,6 +2616,7 @@ void on_midi_load_activate (GtkMenuItem *menuitem, gpointer user_data) {
     if (bytes<srchlen) {
       do_midi_load_error(load_file);
       g_free (load_file);
+      close(fd);
       return;
     }
 
@@ -2622,6 +2627,7 @@ void on_midi_load_activate (GtkMenuItem *menuitem, gpointer user_data) {
       do_midi_load_error(load_file);
       g_free (load_file);
       g_free(srch);
+      close(fd);
       return;
     }
     
@@ -2630,6 +2636,7 @@ void on_midi_load_activate (GtkMenuItem *menuitem, gpointer user_data) {
       do_midi_load_error(load_file);
       g_free (load_file);
       g_free(srch);
+      close(fd);
       return;
     }
     
@@ -2671,18 +2678,21 @@ void on_midi_load_activate (GtkMenuItem *menuitem, gpointer user_data) {
       if (bytes<4) {
 	do_midi_load_error(load_file);
 	g_free (load_file);
+	close(fd);
 	return;
       }
       bytes=lives_read_le(fd,&mnode->scale[j],8,TRUE);
       if (bytes<8) {
 	do_midi_load_error(load_file);
 	g_free (load_file);
+	close(fd);
 	return;
       }
       bytes=lives_read_le(fd,&mnode->offs1[j],4,TRUE);
       if (bytes<4) {
 	do_midi_load_error(load_file);
 	g_free (load_file);
+	close(fd);
 	return;
       }
       
@@ -2690,11 +2700,14 @@ void on_midi_load_activate (GtkMenuItem *menuitem, gpointer user_data) {
       if (bytes<4) {
 	do_midi_load_error(load_file);
 	g_free (load_file);
+	close(fd);
 	return;
       }
       bytes=lives_read_le(fd,&mnode->max[j],4,TRUE);
       if (bytes<4) {
 	do_midi_load_error(load_file);
+	g_free (load_file);
+	close(fd);
 	return;
       }
       
@@ -2702,12 +2715,14 @@ void on_midi_load_activate (GtkMenuItem *menuitem, gpointer user_data) {
       if (bytes<4) {
 	do_midi_load_error(load_file);
 	g_free (load_file);
+	close(fd);
 	return;
       }
       bytes=lives_read_le(fd,&mnode->matchi[j],4,TRUE);
       if (bytes<4) {
 	do_midi_load_error(load_file);
 	g_free (load_file);
+	close(fd);
 	return;
       }
     }
@@ -2723,18 +2738,21 @@ void on_midi_load_activate (GtkMenuItem *menuitem, gpointer user_data) {
       if (bytes<4) {
 	do_midi_load_error(load_file);
 	g_free (load_file);
+	close(fd);
 	return;
       }
       bytes=lives_read_le(fd,&mnode->fvali[j],4,TRUE);
       if (bytes<4) {
 	do_midi_load_error(load_file);
 	g_free (load_file);
+	close(fd);
 	return;
       }
       bytes=read(fd,&mnode->fvald[j],8);
       if (bytes<8) {
 	do_midi_load_error(load_file);
 	g_free (load_file);
+	close(fd);
 	return;
       }
     }

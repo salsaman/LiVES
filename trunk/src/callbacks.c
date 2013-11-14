@@ -57,6 +57,8 @@ void lives_exit (void) {
   if (mainw->is_ready) {
     gchar *com;
 
+    lives_close_all_file_buffers();
+
     if (mainw->multitrack!=NULL&&mainw->multitrack->idlefunc>0) {
       //g_source_remove(mainw->multitrack->idlefunc);
       mainw->multitrack->idlefunc=0;
@@ -516,7 +518,7 @@ void lives_exit (void) {
   if (trString!=NULL) g_free(trString);
 #endif
 
-  _exit(0);
+  exit(0);
 }
 
 
@@ -8611,7 +8613,9 @@ void popup_lmap_errors(GtkMenuItem *menuitem, gpointer user_data) {
 
   if (prefs->warning_mask&WARN_MASK_LAYOUT_POPUP) return;
 
+  widget_opts.expand=LIVES_EXPAND_NONE;
   textwindow=create_text_window(_("layout errors"),NULL,mainw->layout_textbuffer);
+  widget_opts.expand=LIVES_EXPAND_DEFAULT;
 
   dialog_action_area = lives_dialog_get_action_area(LIVES_DIALOG (textwindow->dialog));
 

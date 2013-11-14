@@ -458,6 +458,16 @@ static lives_file_buffer_t *find_in_file_buffers(int fd) {
   return NULL;
 }
 
+void lives_close_all_file_buffers(void) {
+  lives_file_buffer_t *fbuff;
+
+  while (mainw->file_buffers!=NULL) {
+    fbuff=(lives_file_buffer_t *)mainw->file_buffers->data;
+    lives_close_buffered(fbuff->fd);
+  }
+
+}
+
 
 static void do_file_read_error(int fd, ssize_t errval, size_t count) {
   char *msg=NULL;
@@ -484,7 +494,7 @@ ssize_t lives_read(int fd, void *buf, size_t count, boolean allow_less) {
   if (retval<count) {
     if (!allow_less||retval<0) {
       do_file_read_error(fd,retval,count);
-      lives_close(fd);
+      close(fd);
     }
 #ifndef LIVES_NO_DEBUG
     else {
@@ -530,14 +540,14 @@ static ssize_t file_buffer_flush(lives_file_buffer_t *fbuff) {
   res=lives_write(fbuff->fd,fbuff->buffer,fbuff->bytes,fbuff->allow_fail);
 
   if (!fbuff->allow_fail&&res<fbuff->bytes) {
-    lives_close(-fbuff->fd); // use -fd as lives_write will have closed
+    lives_close_buffered(-fbuff->fd); // use -fd as lives_write will have closed
   }
 
   return res;
 }
 
 
-static int lives_open_real(const char *pathname, int flags, int mode) {
+static int lives_open_real_buffered(const char *pathname, int flags, int mode, boolean isread) {
   lives_file_buffer_t *fbuff;
   int fd=open(pathname,flags,mode);
   if (fd>=0) {
@@ -547,6 +557,7 @@ static int lives_open_real(const char *pathname, int flags, int mode) {
     fbuff->eof=FALSE;
     fbuff->ptr=NULL;
     fbuff->buffer=NULL;
+    fbuff->read=isread;
     mainw->file_buffers=g_list_append(mainw->file_buffers,(gpointer)fbuff);
   }
 
@@ -554,16 +565,17 @@ static int lives_open_real(const char *pathname, int flags, int mode) {
 }
 
 
-LIVES_INLINE int lives_open(const char *pathname, int flags) {
-  return lives_open_real(pathname,flags,0);
-}
-
-LIVES_INLINE int lives_creat(const char *pathname, int mode) {
-  return lives_open_real(pathname,O_CREAT|O_WRONLY|O_TRUNC,mode);
+LIVES_INLINE int lives_open_buffered_rdonly(const char *pathname) {
+  return lives_open_real_buffered(pathname,O_RDONLY,0,TRUE);
 }
 
 
-int lives_close(int fd) {
+LIVES_INLINE int lives_creat_buffered(const char *pathname, int mode) {
+  return lives_open_real_buffered(pathname,O_CREAT|O_WRONLY|O_TRUNC,mode,FALSE);
+}
+
+
+int lives_close_buffered(int fd) {
   lives_file_buffer_t *fbuff;
   boolean should_close=TRUE;
   int ret=0;
@@ -574,8 +586,10 @@ int lives_close(int fd) {
   }
 
   fbuff=find_in_file_buffers(fd);
+
   if (fbuff==NULL) {
     // normal non-buffered file
+    LIVES_DEBUG("lives_close_buffered: no file buffer found");
     if (should_close) ret=close(fd);
     return ret;
   }
@@ -606,7 +620,7 @@ static ssize_t file_buffer_fill(lives_file_buffer_t *fbuff) {
   res=lives_read(fbuff->fd,fbuff->buffer,BUFFER_FILL_BYTES,TRUE);
 
   if (res<0) {
-    lives_close(-fbuff->fd); // use -fd as lives_read will have closed
+    lives_close_buffered(-fbuff->fd); // use -fd as lives_read will have closed
     return res;
   }
 
@@ -617,6 +631,27 @@ static ssize_t file_buffer_fill(lives_file_buffer_t *fbuff) {
   else fbuff->eof=FALSE;
 
   return res;
+}
+
+
+off_t lives_lseek_buffered_rdonly(int fd, off_t offset) {
+  // seek +/- offset from current
+
+  lives_file_buffer_t *fbuff;
+
+  if ((fbuff=find_in_file_buffers(fd))==NULL) {
+    LIVES_DEBUG("lives_lseek_buffered_rdonly: no file buffer found");
+    return lseek(fd,offset,SEEK_CUR);
+  }
+
+  fbuff->ptr+=offset;
+  fbuff->bytes-=offset;
+
+  if (fbuff->bytes<=0||fbuff->bytes>BUFFER_FILL_BYTES) {
+    fbuff->bytes=0;
+  }
+
+  return lseek(fd,offset,SEEK_CUR);
 }
 
 
@@ -632,7 +667,10 @@ ssize_t lives_read_buffered(int fd, void *buf, size_t count, boolean allow_less)
     return lives_read(fd,buf,count,allow_less);
   }
 
-  fbuff->read=TRUE;
+  if (!fbuff->read) {
+    LIVES_ERROR("lives_read_buffered: wrong buffer type");
+    return 0;
+  }
 
   // read bytes from fbuff 
   while (1) {
@@ -663,7 +701,7 @@ ssize_t lives_read_buffered(int fd, void *buf, size_t count, boolean allow_less)
 
   if (!allow_less && count>0) {
     do_file_read_error(fd,retval,ocount);
-    lives_close(fd);
+    lives_close_buffered(fd);
   }
 
   return retval;
@@ -694,7 +732,10 @@ ssize_t lives_write_buffered(int fd, const void *buf, size_t count, boolean allo
     return lives_write(fd,buf,count,allow_fail);
   }
 
-  fbuff->read=FALSE;
+  if (fbuff->read) {
+    LIVES_ERROR("lives_write_buffered: wrong buffer type");
+    return 0;
+  }
 
   if (fbuff->buffer==NULL) {
     fbuff->buffer=(uint8_t *)g_malloc(BUFFER_FILL_BYTES);
@@ -3809,7 +3850,7 @@ boolean check_file(const char *file_name, boolean check_existing) {
   }
   // if not, check if we can write to it
   else {
-    check=open(lfile_name,O_CREAT|O_EXCL|O_WRONLY,S_IRUSR|S_IWUSR);
+    check=open(lfile_name,O_CREAT|O_EXCL|O_WRONLY,DEF_FILE_PERMS);
   }
 
   if (check<0) {
@@ -4167,7 +4208,7 @@ verhash (char *version) {
 // disabled by default
 void lives_log(const char *what) {
   char *lives_log_file=g_build_filename(prefs->tmpdir,LIVES_LOG_FILE,NULL);
-  if (mainw->log_fd<0) mainw->log_fd=open(lives_log_file,O_WRONLY|O_CREAT,S_IRUSER|S_IWUSER);
+  if (mainw->log_fd<0) mainw->log_fd=open(lives_log_file,O_WRONLY|O_CREAT,DEF_FILE_PERMS);
   if (mainw->log_fd!=-1) {
     char *msg=g_strdup("%s|%d|",what,mainw->current_file);
     write (mainw->log_fd,msg,strlen(msg));

@@ -39,60 +39,58 @@ static int package_version=1; // version of this package
 
 int tvpic_process (weed_plant_t *inst, weed_timecode_t timestamp) {
   int error;
+
   weed_plant_t *in_channel=weed_get_plantptr_value(inst,"in_channels",&error),*out_channel=weed_get_plantptr_value(inst,"out_channels",&error);
+
   unsigned char *src=weed_get_voidptr_value(in_channel,"pixel_data",&error);
   unsigned char *dest=weed_get_voidptr_value(out_channel,"pixel_data",&error);
+
   int width=weed_get_int_value(in_channel,"width",&error);
   int pal=weed_get_int_value(in_channel,"current_palette",&error);
   int height=weed_get_int_value(in_channel,"height",&error);
   int irowstride=weed_get_int_value(in_channel,"rowstrides",&error);
   int orowstride=weed_get_int_value(out_channel,"rowstrides",&error);
   int offs=(pal==WEED_PALETTE_RGB24)?3:4;
-  unsigned char *end=src+height*irowstride;
-  register int i;
   int colrd=1,col;
   int pc=0;
+  int offset=0,dheight=height;
+
+  register int x,y,i,j;
 
   width*=offs;
 
   // new threading arch
   if (weed_plant_has_leaf(out_channel,"offset")) {
-    int offset=weed_get_int_value(out_channel,"offset",&error);
-    int dheight=weed_get_int_value(out_channel,"height",&error);
+    offset=weed_get_int_value(out_channel,"offset",&error);
+    dheight=weed_get_int_value(out_channel,"height",&error);
 
     src+=offset*irowstride;
     dest+=offset*orowstride;
-    end=src+dheight*irowstride;
   }
 
-  for (;src<end;src+=irowstride*2-width) {
-    col=colrd=!colrd;
-    if (!col) pc=0; // red
-    else pc=1; // green
-    for (i=0;i<width;i+=offs) {
-      if (!col) dest[i+2]=dest[i+1]=dest[i]=0;
-      else {
-	if (pc==0) {
-	  dest[i]=src[i];
-	  dest[i+1]=dest[i+2]=0;
-	}
-	else if (pc==1) {
-	  dest[i+1]=src[i+1];
-	  dest[i]=dest[i+2]=0;
-	}
-	else {
-	  dest[i+2]=src[i+2];
-	  dest[i]=dest[i+1]=0;
-	}
-      }
-      if (pal==WEED_PALETTE_RGBA32) dest[i+3]=src[i+3];
-      if (!(col=!col)) {
-	pc+=pc<2?1:-2;
-      }
-      src+=offs;
-      dest+=offs;
+  i=offset;
+
+  for (y=0;y<dheight;y++) {
+    if (i==0) {
+      // top row has 3 black, rgb from row/row+1, 3 black, etc
+ 
     }
-    dest+=orowstride*2-width;
+    else if (i==height-1) {
+      // bottom row, 2 possibilities
+      // if odd, rgb from row, rgb from row/row-1
+
+      // if even, rgb from row/row-1, 3 black
+
+    }
+    else {
+      // normal row, 2 possibilities
+      // if odd, rgb from row/row+1, rgb from row/row-1
+
+      // if even, rgb from row/row-1, rgb from row/row+1
+
+
+    }
+
   } 
   return WEED_NO_ERROR;
 }

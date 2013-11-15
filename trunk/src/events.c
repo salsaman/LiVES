@@ -3229,7 +3229,7 @@ lives_render_error_t render_events (boolean reset) {
 
   void *init_event;
 
-  GdkPixbuf *pixbuf=NULL;
+  LiVESPixbuf *pixbuf=NULL;
 
   weed_plant_t *filter;
   weed_plant_t **ctmpl;

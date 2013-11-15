@@ -37,8 +37,9 @@
 #endif
 #endif
 #include <sys/stat.h>
+#include <pthread.h>
 
-const char *plugin_version="LiVES asf/wmv decoder version 1.0";
+const char *plugin_version="LiVES asf/wmv decoder version 1.1";
 
 #ifdef HAVE_AV_CONFIG_H
 #undef HAVE_AV_CONFIG_H
@@ -106,6 +107,9 @@ static enum CodecID ff_codec_get_id(const AVCodecTag *tags, unsigned int tag)
   return CODEC_ID_NONE;
 }
 
+static index_container_t **indices;
+static int nidxc;
+static pthread_mutex_t indices_mutex;
 
 
 ////////////////////////////////////////////////////////////////////////////
@@ -389,7 +393,7 @@ static index_entry *add_keyframe(const lives_clip_data_t *cdata, int64_t offs, i
   lives_asf_priv_t *priv=cdata->priv;
   index_entry *idx,*lidx,*nidx;
 
-  lidx=idx=priv->idx;
+  lidx=idx=priv->idxc->idx;
 
   while (idx!=NULL) {
     if (idx->dts==dts) return idx; // already indexed
@@ -397,7 +401,7 @@ static index_entry *add_keyframe(const lives_clip_data_t *cdata, int64_t offs, i
       // insert before idx
       nidx=idx_alloc(offs,frag,dts);
       nidx->next=idx;
-      if (idx==priv->idx) priv->idx=nidx;
+      if (idx==priv->idxc->idx) priv->idxc->idx=nidx;
       else lidx->next=nidx;
       return nidx;
     }
@@ -410,7 +414,7 @@ static index_entry *add_keyframe(const lives_clip_data_t *cdata, int64_t offs, i
   nidx=idx_alloc(offs,frag,dts);
 
   if (lidx!=NULL) lidx->next=nidx;
-  else priv->idx=nidx;
+  else priv->idxc->idx=nidx;
 
   nidx->next=NULL;
 
@@ -692,7 +696,10 @@ static int get_next_video_packet(const lives_clip_data_t *cdata, int tfrag, int6
 #endif
 
 	if (asf->packet_key_frame&&asf->packet_frag_offset==0&&priv->have_start_dts) {
+	  pthread_mutex_lock(&priv->idxc->mutex);
 	  priv->kframe=add_keyframe(cdata,priv->hdr_start,priv->fragnum,asf->packet_frag_timestamp-priv->start_dts);
+	  pthread_mutex_unlock(&priv->idxc->mutex);
+
 #ifdef DEBUG
 	  printf("and is keyframe !\n");
 #endif
@@ -761,7 +768,7 @@ static int get_next_video_packet(const lives_clip_data_t *cdata, int tfrag, int6
     // no more fragments left, skip remainder of asf packet
 
 #ifdef DEBUG
-    printf("skipping %d %ld\n",asf->packet_size_left + asf->packet_padsize - 2, asf->packet_padsize);
+    //printf("skipping %d %ld\n",asf->packet_size_left + asf->packet_padsize - 2, asf->packet_padsize);
 #endif
 
     priv->input_position+=asf->packet_size_left + asf->packet_padsize - 2;
@@ -776,7 +783,7 @@ static int get_next_video_packet(const lives_clip_data_t *cdata, int tfrag, int6
 static index_entry *get_idx_for_pts(const lives_clip_data_t *cdata, int64_t pts) {
   lives_asf_priv_t *priv=cdata->priv;
   int64_t tdts=pts-priv->start_dts;
-  index_entry *idx=priv->idx,*lidx=idx;
+  index_entry *idx=priv->idxc->idx,*lidx=idx;
   int ret;
 
   while (idx!=NULL) {
@@ -800,7 +807,9 @@ static int get_last_video_dts(const lives_clip_data_t *cdata) {
   // get last vido frame dts (relative to start dts)
   lives_asf_priv_t *priv=cdata->priv;
 
+  pthread_mutex_lock(&priv->idxc->mutex);
   priv->kframe=get_idx_for_pts(cdata,frame_to_dts(cdata,0)-priv->start_dts);
+  pthread_mutex_unlock(&priv->idxc->mutex);
   // this will parse through the file, adding keyframes, until we reach EOF
 
   priv->input_position=priv->kframe->offs;
@@ -814,6 +823,107 @@ static int get_last_video_dts(const lives_clip_data_t *cdata) {
 
 //////////////////////////////////////////////
 
+static index_container_t *idxc_for(lives_clip_data_t *cdata) {
+  // check all idxc for string match with URI
+  index_container_t *idxc;
+  register int i;
+
+  pthread_mutex_lock(&indices_mutex);
+
+  for (i=0;i<nidxc;i++) {
+    if (indices[i]->clients[0]->current_clip==cdata->current_clip&&
+	!strcmp(indices[i]->clients[0]->URI,cdata->URI)) {
+      idxc=indices[i];
+      // append cdata to clients
+      idxc->clients=(lives_clip_data_t **)realloc(idxc->clients,(idxc->nclients+1)*sizeof(lives_clip_data_t *));
+      idxc->clients[idxc->nclients]=cdata;
+      idxc->nclients++;
+      //
+      pthread_mutex_unlock(&indices_mutex);
+      return idxc;
+    }
+  }
+
+  indices=(index_container_t **)realloc(indices,(nidxc+1)*sizeof(index_container_t *));
+
+  // match not found, create a new index container
+  idxc=(index_container_t *)malloc(sizeof(index_container_t));
+
+  idxc->idx=NULL;
+
+  idxc->nclients=1;
+  idxc->clients=(lives_clip_data_t **)malloc(sizeof(lives_clip_data_t *));
+  idxc->clients[0]=cdata;
+  pthread_mutex_init(&idxc->mutex,NULL);
+
+  indices[nidxc]=idxc;
+  pthread_mutex_unlock(&indices_mutex);
+
+  nidxc++;
+
+  return idxc;
+}
+
+
+static void idxc_release(lives_clip_data_t *cdata) {
+  lives_asf_priv_t *priv=cdata->priv;
+  index_container_t *idxc=priv->idxc;
+  register int i,j;
+
+  if (idxc==NULL) return;
+
+  pthread_mutex_lock(&indices_mutex);
+
+  if (idxc->nclients==1) {
+    // remove this index
+    index_free(idxc->idx);
+    free(idxc->clients);
+    for (i=0;i<nidxc;i++) {
+      if (indices[i]==idxc) {
+	nidxc--;
+	for (j=i;j<nidxc;j++) {
+	  indices[j]=indices[j+1];
+	}
+	free(idxc);
+	if (nidxc==0) {
+	  free(indices);
+	  indices=NULL;
+	}
+	else indices=(index_container_t **)realloc(indices,nidxc*sizeof(index_container_t *));
+      }
+    }
+  }
+  else {
+    // reduce client count by 1
+    for (i=0;i<idxc->nclients;i++) {
+      if (idxc->clients[i]==cdata) {
+	// remove this entry
+	idxc->nclients--;
+	for (j=i;j<idxc->nclients;j++) {
+	  idxc->clients[j]=idxc->clients[j+1];
+	}
+	idxc->clients=(lives_clip_data_t **)realloc(idxc->clients,idxc->nclients*sizeof(lives_clip_data_t *));
+	break;
+      }
+    }
+  }
+
+  pthread_mutex_unlock(&indices_mutex);
+
+}
+
+
+static void idxc_release_all(void) {
+  register int i;
+
+  for (i=0;i<nidxc;i++) {
+    index_free(indices[i]->idx);
+    free(indices[i]->clients);
+    free(indices[i]);
+  }
+
+}
+
 
 static void detach_stream (lives_clip_data_t *cdata) {
   // close the file, free the decoder
@@ -822,6 +932,8 @@ static void detach_stream (lives_clip_data_t *cdata) {
   cdata->seek_flag=0;
 
   if (priv->avpkt.data!=NULL) free(priv->avpkt.data);
+  priv->avpkt.data=NULL;
+  priv->avpkt.size=0;
 
   if (priv->ctx!=NULL) {
     avcodec_close(priv->ctx);
@@ -833,10 +945,10 @@ static void detach_stream (lives_clip_data_t *cdata) {
   priv->ctx=NULL;
   priv->picture=NULL;
   
-  if (priv->idx!=NULL) 
-    index_free(priv->idx);
+  if (priv->idxc!=NULL) 
+    idxc_release(cdata);
 
-  priv->idx=NULL;
+  priv->idxc=NULL;
 
   if (cdata->palettes!=NULL) free(cdata->palettes);
   cdata->palettes=NULL;
@@ -858,7 +970,7 @@ static void detach_stream (lives_clip_data_t *cdata) {
 
 
 
-static boolean attach_stream(lives_clip_data_t *cdata) {
+static boolean attach_stream(lives_clip_data_t *cdata, boolean isclone) {
   // open the file and get metadata
   lives_asf_priv_t *priv=cdata->priv;
   char header[16];
@@ -901,6 +1013,12 @@ static boolean attach_stream(lives_clip_data_t *cdata) {
   setmode(priv->fd,O_BINARY);
 #endif
 
+  if (isclone) {
+    lseek(priv->fd, ASF_PROBE_SIZE+14, SEEK_SET);
+    priv->input_position=ASF_PROBE_SIZE+14;
+    goto seek_skip;
+  }
+
   if (read (priv->fd, header, ASF_PROBE_SIZE) < ASF_PROBE_SIZE) {
     // for example, might be a directory
 #ifdef DEBUG
@@ -915,7 +1033,7 @@ static boolean attach_stream(lives_clip_data_t *cdata) {
   // test header
   if (guidcmp(header, &lives_asf_header)) {
 #ifdef DEBUG
-    fprintf(stderr, "asf_decoder: not asf header %32x and %32x for %s\n",*header,*lives_asf_header,cdata->URI);
+    fprintf(stderr, "asf_decoder: not asf header\n");
 #endif
     close(priv->fd);
     return FALSE;
@@ -936,12 +1054,17 @@ static boolean attach_stream(lives_clip_data_t *cdata) {
   cdata->asamps=0;
   sprintf(cdata->audio_name,"%s","");
 
-  priv->idx=NULL;
-
   cdata->seek_flag=LIVES_SEEK_FAST|LIVES_SEEK_NEEDS_CALCULATION;
 
   cdata->offs_x=0;
   cdata->offs_y=0;
+
+  fstat(priv->fd,&sb);
+  priv->filesize=sb.st_size;
+
+ seek_skip:
+
+  priv->idxc=idxc_for(cdata);
 
   priv->asf=(ASFContext *)malloc(sizeof(ASFContext));
   memset(&priv->asf->asfid2avid, -1, sizeof(priv->asf->asfid2avid));
@@ -949,15 +1072,13 @@ static boolean attach_stream(lives_clip_data_t *cdata) {
   priv->s->priv_data=priv->asf;
   av_init_packet(&priv->avpkt);
   priv->avpkt.data=NULL;
+  priv->avpkt.size=0;
   priv->st=NULL;
   priv->asf_st=NULL;
   priv->ctx=NULL;
 
   for (i=0;i<128;i++) dar[i].num=dar[i].den=0;
 
-  fstat(priv->fd,&sb);
-  priv->filesize=sb.st_size;
- 
   for(;;) {
     int64_t gpos=priv->input_position;
 
@@ -1992,6 +2113,15 @@ static boolean attach_stream(lives_clip_data_t *cdata) {
   priv->input_position=priv->data_start;
   lseek(priv->fd,priv->input_position,SEEK_SET);
 
+  priv->ctx=ctx=vidst->codec;
+
+  if (vidst->codec) codec = avcodec_find_decoder(vidst->codec->codec_id);
+
+  if (isclone) {
+    retval=avcodec_open2(vidst->codec, codec, NULL);
+    return TRUE;
+  }
+
   switch(vidst->codec->codec_id) {
   case CODEC_ID_WMV1:
     snprintf(cdata->video_name,16,"wmv1"); break;
@@ -2014,7 +2144,6 @@ static boolean attach_stream(lives_clip_data_t *cdata) {
     fprintf(stderr,"add video format %d\n",vidst->codec->codec_id); break;
   }
 
-  if (vidst->codec) codec = avcodec_find_decoder(vidst->codec->codec_id);
 
 #ifdef DEBUG
   fprintf(stderr,"video type is %s %d x %d (%d x %d +%d +%d)\n",cdata->video_name,
@@ -2041,7 +2170,9 @@ static boolean attach_stream(lives_clip_data_t *cdata) {
   priv->input_position=priv->data_start;
   asf_reset_header(priv->s);
 
+  pthread_mutex_lock(&priv->idxc->mutex);
   priv->kframe=add_keyframe(cdata,priv->data_start,0,0);
+  pthread_mutex_unlock(&priv->idxc->mutex);
   priv->def_packet_size=priv->asf->hdr.max_pktsize*10;
 
   do {
@@ -2081,10 +2212,12 @@ static boolean attach_stream(lives_clip_data_t *cdata) {
 
   pts=priv->start_dts=priv->frame_dts;
   priv->have_start_dts=TRUE;
+  cdata->video_start_time=(double)pts/10000.;
+  cdata->sync_hint=SYNC_HINT_VIDEO_START;
 
-#ifdef DEBUG
+  //#ifdef DEBUG
   printf("first pts is %ld\n",pts);
-#endif  
+  //#endif  
 
   if (pts==AV_NOPTS_VALUE) {
     fprintf(stderr, "asf_decoder: No timestamps for frames, not decoding.\n");
@@ -2140,11 +2273,9 @@ static boolean attach_stream(lives_clip_data_t *cdata) {
   cdata->YUV_subspace=WEED_YUV_SUBSPACE_YCBCR;
   if (ctx->colorspace==AVCOL_SPC_BT709) cdata->YUV_subspace=WEED_YUV_SUBSPACE_BT709;
 
-  cdata->palettes=(int *)malloc(2*sizeof(int));
 
   cdata->palettes[0]=avi_pix_fmt_to_weed_palette(ctx->pix_fmt,
 						 &cdata->YUV_clamping);
-  cdata->palettes[1]=WEED_PALETTE_END;
 
   if (cdata->palettes[0]==WEED_PALETTE_END) {
     fprintf(stderr, "asf_decoder: Could not find a usable palette for (%d) %s\n",ctx->pix_fmt,cdata->URI);
@@ -2251,6 +2382,9 @@ static boolean attach_stream(lives_clip_data_t *cdata) {
 
 const char *module_check_init(void) {
   avcodec_register_all();
+  indices=NULL;
+  nidxc=0;
+  pthread_mutex_init(&indices_mutex,NULL);
   return NULL;
 }
 
@@ -2274,15 +2408,79 @@ static lives_clip_data_t *init_cdata (void) {
   priv->ctx=NULL;
   priv->picture=NULL;
 
-  cdata->palettes=NULL;
+  cdata->palettes=(int *)malloc(2*sizeof(int));
+  cdata->palettes[1]=WEED_PALETTE_END;
+
+  priv->idxc=NULL;
   
   cdata->sync_hint=0;
+
+  cdata->video_start_time=0.;
 
   return cdata;
 }
 
 
+static lives_clip_data_t *asf_clone(lives_clip_data_t *cdata) {
+  lives_clip_data_t *clone=init_cdata();
+  lives_asf_priv_t *dpriv,*spriv;
 
+  // copy from cdata to clone, with a new context for clone
+  clone->URI=strdup(cdata->URI);
+  clone->nclips=cdata->nclips;
+  snprintf(clone->container_name,512,"%s",cdata->container_name);
+  clone->current_clip=cdata->current_clip;
+  clone->width=cdata->width;
+  clone->height=cdata->height;
+  clone->nframes=cdata->nframes;
+  clone->interlace=cdata->interlace;
+  clone->offs_x=cdata->offs_x;
+  clone->offs_y=cdata->offs_y;
+  clone->frame_width=cdata->frame_width;
+  clone->frame_height=cdata->frame_height;
+  clone->par=cdata->par;
+  clone->fps=cdata->fps;
+  clone->palettes[0]=cdata->palettes[0];
+  clone->current_palette=cdata->current_palette;
+  clone->YUV_sampling=cdata->YUV_sampling;
+  clone->YUV_clamping=cdata->YUV_clamping;
+  snprintf(clone->video_name,512,"%s",cdata->video_name);
+  clone->arate=cdata->arate;
+  clone->achans=cdata->achans;
+  clone->asamps=cdata->asamps;
+  clone->asigned=cdata->asigned;
+  clone->ainterleaf=cdata->ainterleaf;
+  snprintf(clone->audio_name,512,"%s",cdata->audio_name);
+  clone->seek_flag=cdata->seek_flag;
+  clone->sync_hint=cdata->sync_hint;
+
+  // create "priv" elements
+  dpriv=clone->priv;
+  spriv=cdata->priv;
+
+  dpriv->filesize=spriv->filesize;
+
+  if (!attach_stream(clone,TRUE)) {
+    free(clone->URI);
+    clone->URI=NULL;
+    clip_data_free(clone);
+    return NULL;
+  }
+
+  asf_reset_header(dpriv->s);
+
+  dpriv->def_packet_size=spriv->def_packet_size;
+  dpriv->start_dts=spriv->start_dts;
+  dpriv->have_start_dts=TRUE;
+  dpriv->last_frame=-1;
+  dpriv->black_fill=FALSE;
+
+  dpriv->st->duration=spriv->st->duration;
+
+  dpriv->picture=NULL;
+
+  return clone;
+}
 
 
 
@@ -2299,6 +2497,10 @@ lives_clip_data_t *get_clip_data(const char *URI, lives_clip_data_t *cdata) {
 
   lives_asf_priv_t *priv;
 
+  if (URI==NULL&&cdata!=NULL) {
+    // create a clone of cdata
+    return asf_clone(cdata);
+  }
 
   if (cdata!=NULL&&cdata->current_clip>0) {
     // currently we only support one clip per container
@@ -2317,7 +2519,7 @@ lives_clip_data_t *get_clip_data(const char *URI, lives_clip_data_t *cdata) {
       free(cdata->URI);
     }
     cdata->URI=strdup(URI);
-    if (!attach_stream(cdata)) {
+    if (!attach_stream(cdata,FALSE)) {
       free(cdata->URI);
       cdata->URI=NULL;
       clip_data_free(cdata);
@@ -2417,6 +2619,7 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstride
   unsigned char black[4]={0,0,0,255};
 
   boolean got_picture=FALSE;
+  boolean hit_target=FALSE;
 
   int tfrag=0;
   int xheight=cdata->frame_height,pal=cdata->current_palette,nplanes=1,dstwidth=cdata->width,psize=1;
@@ -2475,23 +2678,30 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstride
 
   if (tframe!=priv->last_frame) {
 
+    if (priv->picture!=NULL) av_free(priv->picture);
+    priv->picture=NULL;
+
     if (priv->last_frame==-1 || (tframe<priv->last_frame) || (tframe - priv->last_frame > rescan_limit)) {
+
       if (priv->avpkt.data!=NULL) free(priv->avpkt.data);
       priv->avpkt.data=NULL;
       priv->avpkt.size=0;
 
+      pthread_mutex_lock(&priv->idxc->mutex);
       if ((priv->kframe=get_idx_for_pts(cdata,target_pts-priv->start_dts))!=NULL) {
 	priv->input_position=priv->kframe->offs;
 	nextframe=dts_to_frame(cdata,priv->kframe->dts+priv->start_dts);
 	tfrag=priv->kframe->frag;
       }
       else priv->input_position=priv->data_start;
+      pthread_mutex_unlock(&priv->idxc->mutex);
 	
       // we are now at the kframe before or at target - parse packets until we hit target
       
 
 #ifdef DEBUG_KFRAMES
-      if (priv->kframe!=NULL) printf("got kframe %ld frag %d for frame %ld\n",dts_to_frame(cdata,priv->kframe->dts+priv->start_dts),priv->kframe->frag,tframe);
+      if (priv->kframe!=NULL) printf("got kframe %ld frag %d for frame %ld\n",
+				     dts_to_frame(cdata,priv->kframe->dts+priv->start_dts),priv->kframe->frag,tframe);
 #endif
 
       avcodec_flush_buffers (priv->ctx);
@@ -2506,15 +2716,12 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstride
     priv->ctx->skip_frame=AVDISCARD_NONREF;
 
     priv->last_frame=tframe;
-    if (priv->picture==NULL) priv->picture = avcodec_alloc_frame();
-
-
+ 
     // do this until we reach target frame //////////////
 
-    while (nextframe<=tframe) {
-      int len,ret;
 
-      if (nextframe==tframe) priv->ctx->skip_frame=AVDISCARD_DEFAULT;
+    while (1) {
+      int ret;
 
       if (priv->avpkt.size==0) {
 	ret = get_next_video_packet(cdata,tfrag,-1);
@@ -2533,29 +2740,34 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstride
 	}
       }
 
-#if LIBAVCODEC_VERSION_MAJOR >= 52
-      len=avcodec_decode_video2(priv->ctx, priv->picture, &got_picture, &priv->avpkt );
+
+      // decode any frames from this packet
+      if (priv->picture==NULL) priv->picture=avcodec_alloc_frame();
+
+#if LIBAVCODEC_VERSION_MAJOR >= 53
+      avcodec_decode_video2( priv->ctx, priv->picture, &got_picture, &priv->avpkt );
 #else 
-      len=avcodec_decode_video(priv->ctx, priv->picture, &got_picture, priv->avpkt.data, priv->avpkt.size );
+      avcodec_decode_video( priv->ctx, priv->picture, &got_picture, priv->avpkt.data, priv->avpkt.size );
 #endif
 
-      priv->avpkt.size-=len;
+      free(priv->avpkt.data);
+      priv->avpkt.data=NULL;
+      priv->avpkt.size=0;
 
-#ifdef DEBUG_FRAMES
-      fprintf(stderr,"vals here %ld %ld %d\n",nextframe,tframe,priv->avpkt.size);
-#endif
+      if (nextframe==tframe) hit_target=TRUE;
 
-      if (priv->avpkt.size==0) {
-	free(priv->avpkt.data);
-	priv->avpkt.data=NULL;
+      if (hit_target&&got_picture) break;
+
+      // otherwise discard this frame
+      if (got_picture) {
+	av_free(priv->picture);
+	priv->picture=NULL;
+	tfrag=-1;
+	nextframe++;
       }
-      tfrag=-1;
-      nextframe++;
     }
-
-    /////////////////////////////////////////////////////
-
   }
+
 
   if (priv->picture==NULL||pixel_data==NULL) return TRUE;
 
@@ -2631,7 +2843,7 @@ void clip_data_free(lives_clip_data_t *cdata) {
 
 
 void module_unload(void) {
-
+  idxc_release_all();
 }
 
 

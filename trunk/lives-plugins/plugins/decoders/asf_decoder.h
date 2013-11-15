@@ -299,6 +299,15 @@ struct _index_entry {
   uint8_t frag; ///< fragment number (counting only video fragments)
 };
 
+typedef struct {
+  index_entry *idx;  ///< linked list of index (keyframes)
+
+  int nclients;
+  lives_clip_data_t **clients;
+  pthread_mutex_t mutex;
+} index_container_t;
+
+
 
 typedef struct {
   int fd; ///< file handle 208 477373 22415 108fat32
@@ -319,7 +328,7 @@ typedef struct {
   AVFrame *picture;
   AVPacket avpkt;
   int64_t last_frame; ///< last frame decoded
-  index_entry *idx;  ///< linked list of index (keyframes)
+  index_container_t *idxc;
   index_entry *kframe; ///< current keyframe
   int fragnum; ///< current fragment number
 } lives_asf_priv_t;

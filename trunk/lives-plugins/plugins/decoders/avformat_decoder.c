@@ -43,9 +43,14 @@ static pthread_mutex_t avcodec_mutex=PTHREAD_MUTEX_INITIALIZER;
 #define avcodec_open2(a, b, c) avcodec_open(a, b)
 #endif
 
+#if !HAVE_AVFORMAT_FIND_STREAM_INFO
+#define avformat_find_stream_info(a, b) av_find_stream_info(a)
+#endif
 
 #define FAST_SEEK_LIMIT 50000 // microseconds (default 0.1 sec)
 #define NO_SEEK_LIMIT 1000000 // microseconds
+
+#define SEEK_SUCCESS_MIN_RATIO 0.5 // how many frames we can seek to vs. suggested duration
 
 static void lives_avcodec_lock(void) {
   pthread_mutex_lock(&avcodec_mutex);
@@ -150,7 +155,7 @@ static int64_t get_real_last_frame(lives_clip_data_t *cdata) {
 
   while (1) {
     nseeks++;
-    //#define DEBUG_RLF
+    //    #define DEBUG_RLF
 #ifdef DEBUG_RLF
     fprintf(stderr,"will check frame %ld of %ld...",lframe+1,cdata->nframes);
 #endif
@@ -180,6 +185,11 @@ static int64_t get_real_last_frame(lives_clip_data_t *cdata) {
       else if (diff==0) diff=-1;
       else diff/=2;
       lframe=olframe+diff;
+      if (lframe<0) {
+	diff=olframe;
+	lframe=0;
+	if (diff==0) diff=1;
+      }
     }
     else {
       timex=get_current_ticks()-timex;
@@ -216,7 +226,7 @@ static int64_t get_real_last_frame(lives_clip_data_t *cdata) {
 }
 
 
-static boolean attach_stream(lives_clip_data_t *cdata) {
+static boolean attach_stream(lives_clip_data_t *cdata, boolean isclone) {
   // open the file and get a handle
   lives_av_priv_t *priv=cdata->priv;
   AVProbeData   pd;
@@ -224,14 +234,20 @@ static boolean attach_stream(lives_clip_data_t *cdata) {
 
   AVCodec *vdecoder;
 
-  int i;
+  AVStream *s;
+  AVCodecContext *cc;
 
   int64_t i_start_time=0;
+
+  register int i;
+
 
   if ((priv->fd=open(cdata->URI,O_RDONLY))==-1) {
     fprintf(stderr, "avformat_decoder: unable to open %s\n",cdata->URI);
     return FALSE;
   }
+
+  if (isclone) goto skip_probe;
   
   pd.filename=cdata->URI;
 
@@ -242,7 +258,7 @@ static boolean attach_stream(lives_clip_data_t *cdata) {
     return FALSE;
   }
 
-  if( !( fmt = av_probe_input_format( &pd, 1 ) ) ) {
+  if( !( fmt = av_probe_input_format( &pd, TRUE ) ) ) {
     fprintf(stderr, "couldn't guess format\n" );
     return FALSE;
   }
@@ -270,9 +286,15 @@ static boolean attach_stream(lives_clip_data_t *cdata) {
   fprintf( stderr, "avformat detected format: %s\n", fmt->name );
 
   priv->fmt=fmt;
+
+ skip_probe:
+
   priv->ic=NULL;
 
   priv->found_pts=-1;
+
+  priv->last_frame=-1;
+  priv->black_fill=FALSE;
   
   /* Open it */
   if( avformat_open_input( &priv->ic, cdata->URI, priv->fmt, NULL ) ) {
@@ -284,19 +306,22 @@ static boolean attach_stream(lives_clip_data_t *cdata) {
     fprintf( stderr, "avformat stream non-seekable\n" );
     return FALSE;
   }
-  
+
   lives_avcodec_lock(); /* avformat calls avcodec behind our back!!! */
-  if( av_find_stream_info( priv->ic ) < 0 ) {
-    fprintf( stderr, "av_find_stream_info failed\n" );
+  if( avformat_find_stream_info( priv->ic, NULL ) < 0 ) {
+    fprintf( stderr, "avformat_find_stream_info failed\n" );
   }
   lives_avcodec_unlock();
 
+  if (isclone) {
+    i=priv->vstream;
+    goto skip_init;
+  }
 
   
   // fill cdata
 
   cdata->nclips=1;
-
 
   cdata->interlace=LIVES_INTERLACE_NONE;  // TODO - this is set per frame
 
@@ -319,8 +344,10 @@ static boolean attach_stream(lives_clip_data_t *cdata) {
   cdata->ainterleaf=TRUE;
 
   for (i = 0; i < priv->ic->nb_streams; i++ ) {
-    AVStream *s = priv->ic->streams[i];
-    AVCodecContext *cc = s->codec;
+
+  skip_init:
+    s = priv->ic->streams[i];
+    cc = s->codec;
  
     // vlc_fourcc_t fcc;
     //const char *psz_type = "unknown";
@@ -353,13 +380,16 @@ static boolean attach_stream(lives_clip_data_t *cdata) {
 
 
     case AVMEDIA_TYPE_VIDEO:
-      if (priv->vstream!=-1) {
+
+      if (!isclone && priv->vstream!=-1) {
 	fprintf(stderr, "Warning - got multiple video streams\n");
 	break;
       }
 
       vdecoder=avcodec_find_decoder(cc->codec_id);
       avcodec_open2(cc, vdecoder, NULL);
+
+      if (isclone) return TRUE;
 
       cdata->frame_width=cdata->width = cc->width;
       cdata->frame_height=cdata->height = cc->height;
@@ -614,8 +644,6 @@ static boolean attach_stream(lives_clip_data_t *cdata) {
 	}*/
 #endif
 
-  priv->last_frame=-1;
-  priv->black_fill=FALSE;
 
   return TRUE;
 }
@@ -690,11 +718,66 @@ static lives_clip_data_t *init_cdata (void) {
 
   cdata->sync_hint=SYNC_HINT_AUDIO_PAD_START;
 
+  cdata->video_start_time=0.;
+
   return cdata;
 }
 
 
 
+static lives_clip_data_t *avf_clone(lives_clip_data_t *cdata) {
+  lives_clip_data_t *clone=init_cdata();
+  lives_av_priv_t *dpriv,*spriv;
+
+  // copy from cdata to clone, with a new context for clone
+  clone->URI=strdup(cdata->URI);
+  clone->nclips=cdata->nclips;
+  snprintf(clone->container_name,512,"%s",cdata->container_name);
+  clone->current_clip=cdata->current_clip;
+  clone->width=cdata->width;
+  clone->height=cdata->height;
+  clone->nframes=cdata->nframes;
+  clone->interlace=cdata->interlace;
+  clone->offs_x=cdata->offs_x;
+  clone->offs_y=cdata->offs_y;
+  clone->frame_width=cdata->frame_width;
+  clone->frame_height=cdata->frame_height;
+  clone->par=cdata->par;
+  clone->fps=cdata->fps;
+  clone->palettes[0]=cdata->palettes[0];
+  clone->current_palette=cdata->current_palette;
+  clone->YUV_sampling=cdata->YUV_sampling;
+  clone->YUV_clamping=cdata->YUV_clamping;
+  snprintf(clone->video_name,512,"%s",cdata->video_name);
+  clone->arate=cdata->arate;
+  clone->achans=cdata->achans;
+  clone->asamps=cdata->asamps;
+  clone->asigned=cdata->asigned;
+  clone->ainterleaf=cdata->ainterleaf;
+  snprintf(clone->audio_name,512,"%s",cdata->audio_name);
+  clone->seek_flag=cdata->seek_flag;
+  clone->sync_hint=cdata->sync_hint;
+
+  // create "priv" elements
+  dpriv=clone->priv;
+  spriv=cdata->priv;
+
+  dpriv->vstream=spriv->vstream;
+  dpriv->astream=spriv->astream;
+
+  dpriv->fps_avg=spriv->fps_avg;
+
+  dpriv->fmt=spriv->fmt;
+
+  if (!attach_stream(clone,TRUE)) {
+    free(clone->URI);
+    clone->URI=NULL;
+    clip_data_free(clone);
+    return NULL;
+  }
+
+  return clone;
+}
 
 
 
@@ -707,6 +790,11 @@ lives_clip_data_t *get_clip_data(const char *URI, lives_clip_data_t *cdata) {
   int64_t real_frames;
 
   lives_av_priv_t *priv;
+
+  if (URI==NULL&&cdata!=NULL) {
+    // create a clone of cdata
+    return avf_clone(cdata);
+  }
 
   if (cdata!=NULL&&cdata->current_clip>0) {
     // currently we only support one clip per container
@@ -725,7 +813,7 @@ lives_clip_data_t *get_clip_data(const char *URI, lives_clip_data_t *cdata) {
       free(cdata->URI);
     }
     cdata->URI=strdup(URI);
-    if (!attach_stream(cdata)) {
+    if (!attach_stream(cdata,FALSE)) {
       free(cdata->URI);
       cdata->URI=NULL;
       clip_data_free(cdata);
@@ -740,7 +828,7 @@ lives_clip_data_t *get_clip_data(const char *URI, lives_clip_data_t *cdata) {
 
   real_frames=get_real_last_frame(cdata)+1;
 
-  if (cdata->nframes>100&&real_frames<cdata->nframes*.75) {
+  if (cdata->nframes>100&&real_frames<cdata->nframes*SEEK_SUCCESS_MIN_RATIO) {
     fprintf(stderr,"avformat_decoder: ERROR - could only seek to %ld frames out of %ld\navformat_decoder: I will pass on this file as it may be broken.\n",
 	    real_frames,cdata->nframes);
     detach_stream(cdata);
@@ -856,7 +944,7 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstride
 
   int jump_frames;
 
-  if (tframe<0||tframe>cdata->nframes||cdata->fps==0.) return FALSE;
+  if (tframe<0||tframe>=cdata->nframes||cdata->fps==0.) return FALSE;
 
   //cc->get_buffer = our_get_buffer;
   //cc->release_buffer = our_release_buffer;
@@ -1089,5 +1177,5 @@ void clip_data_free(lives_clip_data_t *cdata) {
 
 
 void module_unload(void) {
-  //fclose(nulfile);
+  // do nothing
 }

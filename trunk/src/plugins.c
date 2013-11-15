@@ -2231,6 +2231,13 @@ typedef struct {
 } tdp_data;
 
 
+LIVES_INLINE lives_clip_data_t *clone_cdata(int fileno) {
+  if (mainw->files[fileno]==NULL||mainw->files[fileno]->ext_src==NULL) return NULL;
+  return ((lives_decoder_sys_t *)((lives_decoder_t *)mainw->files[fileno]->ext_src)->decoder)->get_clip_data
+    (NULL,((lives_decoder_t *)mainw->files[fileno]->ext_src)->cdata);
+}
+
+
 static void *try_decoder_plugins(void *in) {
   tdp_data *data=(tdp_data *)in;
   
@@ -2261,6 +2268,7 @@ static void *try_decoder_plugins(void *in) {
     g_print("trying decoder %s\n",dpsys->name);
 #endif
 
+
     if ((dplug->cdata=(dpsys->get_clip_data)((tmp=(char *)g_filename_from_utf8 (sfile->file_name,-1,NULL,NULL,NULL)),
 					     NULL))!=NULL) {
       g_free(tmp);
@@ -2276,12 +2284,15 @@ static void *try_decoder_plugins(void *in) {
 
       dplug->decoder=dpsys;
       sfile->ext_src=dplug;
+
       if (strncmp(dpsys->name,"libzz",5)) {
 	mainw->decoder_list=g_list_move_to_first(mainw->decoder_list, decoder_plugin);
       }
       break;
     }
-    else g_free(tmp);
+    else {
+      g_free(tmp);
+    }
     decoder_plugin=decoder_plugin->next;
   }
   return NULL;
@@ -2443,7 +2454,7 @@ lives_decoder_sys_t *open_decoder_plugin(const gchar *plname) {
   if ((dplug->version=(const char* (*)())dlsym (dplug->handle,"version"))==NULL) {
     OK=FALSE;
   }
-  if ((dplug->get_clip_data=(lives_clip_data_t* (*)(char*, lives_clip_data_t*)) 
+  if ((dplug->get_clip_data=(lives_clip_data_t* (*)(char*, const lives_clip_data_t*)) 
        dlsym (dplug->handle,"get_clip_data"))==NULL) {
     OK=FALSE;
   }

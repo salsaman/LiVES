@@ -66,6 +66,7 @@
 
 #include "support.h"
 #include "main.h"
+#include "cvirtual.h"
 
 #ifdef USE_SWSCALE
 #define N_SWS_CTX 16
@@ -11285,3 +11286,57 @@ int weed_layer_get_palette(weed_plant_t *layer) {
 
 
 
+void insert_blank_frames(int sfileno, int nframes, int after) {
+  // insert blank frames in clip (only valid just after clip is opened)
+
+  // this is ugly, it should be moved to another file
+
+  file *sfile=mainw->files[sfileno];
+  LiVESPixbuf *blankp;
+  GError *error=NULL;
+  char oname[PATH_MAX];
+  char nname[PATH_MAX];
+  char *com;
+
+  register int i;
+
+  blankp=lives_pixbuf_new_blank(sfile->hsize,sfile->vsize,WEED_PALETTE_RGB24);
+
+  for (i=1;i<=sfile->frames;i++) {
+    g_snprintf(oname,PATH_MAX,"%s/%s/%08d.%s",prefs->tmpdir,sfile->handle,i,get_image_ext_for_type(sfile->img_type));
+    if (g_file_test(oname,G_FILE_TEST_EXISTS)) {
+      g_snprintf(nname,PATH_MAX,"%s/%s/%08d.%s",prefs->tmpdir,sfile->handle,i+nframes,get_image_ext_for_type(sfile->img_type));
+      mainw->com_failed=FALSE;
+#ifndef IS_MINGW
+      com=g_strdup_printf("/bin/mv \"%s\" \"%s\"",
+			  oname,nname);
+#else
+      com=g_strdup_printf("mv.exe \"%s\" \"%s\"",
+			  oname,nname);
+
+#endif
+      lives_system(com,FALSE);
+      g_free(com);
+      
+      if (mainw->com_failed) {
+	return;
+      }
+    }
+  }
+
+  for (i=after;i<after+nframes;i++) {
+    g_snprintf(oname,PATH_MAX,"%s/%s/%08d.%s",prefs->tmpdir,sfile->handle,i+1,get_image_ext_for_type(sfile->img_type));
+    lives_pixbuf_save (blankp, oname, sfile->img_type, 100-prefs->ocp, TRUE, &error);
+    if (error!=NULL) {
+      g_error_free(error);
+      break;
+    }
+  }
+
+
+  insert_images_in_virtual(sfileno,after,i);
+
+  sfile->frames+=nframes;
+
+  g_object_unref(blankp);
+}

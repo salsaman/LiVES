@@ -76,6 +76,7 @@ typedef struct {
 
   float par; ///< pixel aspect ratio (sample width / sample height)
 
+  float video_start_time;
 
   float fps;
 
@@ -101,6 +102,7 @@ typedef struct {
 
 #define SYNC_HINT_AUDIO_TRIM_START (1<<0)
 #define SYNC_HINT_AUDIO_PAD_START (1<<1)
+#define SYNC_HINT_VIDEO_START (1<<2)
 
   int sync_hint;
 

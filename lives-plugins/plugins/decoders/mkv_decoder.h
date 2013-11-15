@@ -1047,6 +1047,16 @@ struct _index_entry {
 
 
 typedef struct {
+  index_entry *idxhh;  ///< head of head list
+  index_entry *idxht; ///< tail of head list
+
+  int nclients;
+  lives_clip_data_t **clients;
+  pthread_mutex_t mutex;
+} index_container_t;
+
+
+typedef struct {
   int fd;
   boolean has_video;
   boolean has_audio;
@@ -1062,10 +1072,7 @@ typedef struct {
   AVFrame *picture;
   AVPacket avpkt;
   int64_t last_frame; ///< last frame displayed
-
-  index_entry *idxhh;  ///< head of head list
-  index_entry *idxht; ///< tail of head list
-
+  index_container_t *idxc;
   boolean expect_eof;
 } lives_mkv_priv_t;
 

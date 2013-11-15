@@ -222,6 +222,8 @@ typedef struct {
 
   float par; ///< pixel aspect ratio
 
+  float video_start_time;
+
   float fps;
 
   int *palettes;
@@ -246,6 +248,7 @@ typedef struct {
 
 #define SYNC_HINT_AUDIO_TRIM_START (1<<0)
 #define SYNC_HINT_AUDIO_PAD_START (1<<1)
+#define SYNC_HINT_VIDEO_START (1<<2)
 
   int sync_hint;
 
@@ -270,7 +273,10 @@ typedef struct {
   /// we can also set cdata->current_palette (must be in list cdata->palettes[])
   ///
   /// if URI changes, current_clip and current_palette are reset by plugin
-  lives_clip_data_t *(*get_clip_data)(char *URI, lives_clip_data_t *cdata);
+  ///
+  /// to get a clone of cdata, pass in NULL URI and cdata
+  ///
+  lives_clip_data_t *(*get_clip_data)(char *URI, const lives_clip_data_t *cdata);
 
   /// frame starts at 0 in these functions; height is height of primary plane
   boolean (*get_frame)(const lives_clip_data_t *, int64_t frame, int *rowstrides, int height, void **pixel_data);
@@ -308,6 +314,7 @@ void unload_decoder_plugins(void);
 
 boolean decplugin_supports_palette (const lives_decoder_t *dplug, int palette);
 
+lives_clip_data_t *clone_cdata(int fileno);
 
 
 // RFX plugins

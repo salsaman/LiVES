@@ -519,6 +519,12 @@ void open_file_sel(const gchar *file_name, double start, int frames) {
 	    get_total_time(cfile);
 
 	    if (prefs->auto_trim_audio) {
+	      if ((cdata->sync_hint&SYNC_HINT_VIDEO_START)&&cdata->video_start_time<=1.) {
+		// pad with blank frames
+		int extra_frames=cdata->video_start_time*cfile->fps+.5;
+		insert_blank_frames(mainw->current_file,extra_frames,0);
+		load_start_image(cfile->start);
+	      }
 	      if (cfile->total_time>cfile->video_time) {
 		if (cdata->sync_hint&SYNC_HINT_AUDIO_TRIM_START) {
 		  cfile->undo1_dbl=0.;
@@ -5503,8 +5509,10 @@ static boolean recover_files(gchar *recovery_file, boolean auto_recover) {
 	cfile->clip_type=CLIP_TYPE_FILE;
 	get_mime_type(cfile->type,40,cdata);
       }
-
+    
       if (cfile->ext_src!=NULL) {
+	//	cdata=clone_cdata(mainw->current_file);
+	//((lives_decoder_t *)cfile->ext_src)->cdata=cdata;
 	check_clip_integrity(mainw->current_file,cdata);
       }
       else {

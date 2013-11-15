@@ -2285,7 +2285,7 @@ static void *try_decoder_plugins(void *in) {
       dplug->decoder=dpsys;
       sfile->ext_src=dplug;
 
-      if (strncmp(dpsys->name,"libzz",5)) {
+      if (strncmp(dpsys->name,"zz",5)) {
 	mainw->decoder_list=g_list_move_to_first(mainw->decoder_list, decoder_plugin);
       }
       break;

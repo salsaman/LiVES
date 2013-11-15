@@ -5244,12 +5244,14 @@ static boolean recover_files(gchar *recovery_file, boolean auto_recover) {
 
   int retval;
   int new_file,clipnum=0;
+  int last_current_file=-1;
 
   boolean last_was_normal_file=FALSE;
   boolean is_scrap;
   boolean is_ascrap;
   boolean did_set_check=FALSE;
   boolean needs_update=FALSE;
+  boolean is_ready;
 
   const lives_clip_data_t *cdata=NULL;
 
@@ -5311,7 +5313,7 @@ static boolean recover_files(gchar *recovery_file, boolean auto_recover) {
     if (lives_fgets(buff,256,rfile)==NULL) {
       int current_file=mainw->current_file;
       if (last_was_normal_file&&mainw->multitrack==NULL) {
-	switch_to_file((mainw->current_file=0),current_file);
+	if (current_file!=-1) switch_to_file((mainw->current_file=0),current_file);
       }
       reset_clip_menu();
       lives_widget_context_update();
@@ -5418,6 +5420,8 @@ static boolean recover_files(gchar *recovery_file, boolean auto_recover) {
       create_cfile();
       threaded_dialog_spin();
 
+      last_current_file=mainw->current_file;
+
       if (!is_scrap) {
 	if (!is_ascrap) {
 	  // get file details
@@ -5483,27 +5487,24 @@ static boolean recover_files(gchar *recovery_file, boolean auto_recover) {
 	while (1) {
 	  threaded_dialog_spin();
 	  if ((cdata=get_decoder_cdata(cfile,NULL))==NULL) {
-
+	    next=FALSE;
 	    if (mainw->error) {
 	      if (do_original_lost_warning(cfile->file_name)) {
 		
 		// TODO ** - show layout errors
-		
-		continue;
+		next=TRUE;
 	      }
 	    }
 	    else {
 	      do_no_decoder_error(cfile->file_name);
+	      next=TRUE;
 	    }
-	    next=TRUE;
 	  }
 	  threaded_dialog_spin();
 	  break;
 	}
 	if (next) {
-	  g_free(cfile);
-	  cfile=NULL;
-	  mainw->first_free_file=mainw->current_file;
+	  close_current_file(last_current_file);
 	  continue;
 	}
 	cfile->clip_type=CLIP_TYPE_FILE;
@@ -5511,7 +5512,7 @@ static boolean recover_files(gchar *recovery_file, boolean auto_recover) {
       }
     
       if (cfile->ext_src!=NULL) {
-	//	cdata=clone_cdata(mainw->current_file);
+	//cdata=clone_cdata(mainw->current_file);
 	//((lives_decoder_t *)cfile->ext_src)->cdata=cdata;
 	check_clip_integrity(mainw->current_file,cdata);
       }
@@ -5598,7 +5599,8 @@ static boolean recover_files(gchar *recovery_file, boolean auto_recover) {
 
   fclose(rfile);
 
-  if (strlen(mainw->set_name)>0) recover_layout_map(mainw->current_file);
+  if (mainw->current_file!=-1) 
+    if (strlen(mainw->set_name)>0) recover_layout_map(mainw->current_file);
 
   if (mainw->multitrack!=NULL) {
     mainw->current_file=mainw->multitrack->render_file;
@@ -5625,6 +5627,10 @@ static boolean recover_files(gchar *recovery_file, boolean auto_recover) {
 
   mainw->suppress_dprint=FALSE;
   d_print_done();
+  is_ready=mainw->is_ready;
+  mainw->is_ready=TRUE;
+  lives_set_cursor_style(LIVES_CURSOR_NORMAL,NULL);
+  mainw->is_ready=is_ready;
   return TRUE;
 }
 

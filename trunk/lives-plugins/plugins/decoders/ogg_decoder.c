@@ -56,6 +56,7 @@
 #include <schroedinger/schro.h>
 #endif
 
+#include <pthread.h>
 
 #include "ogg_decoder.h"
 
@@ -64,8 +65,11 @@
 static boolean ogg_data_process(lives_clip_data_t *cdata, void *yuvbuffer, boolean cont);
 
 
-static const char *plugin_version="LiVES ogg decoder version 1.1";
+static const char *plugin_version="LiVES ogg decoder version 1.2";
 
+static index_container_t **indices;
+static int nidxc;
+static pthread_mutex_t indices_mutex;
 
 /////////////////////////////////////////
 // schroed stuff
@@ -156,13 +160,13 @@ static index_entry *theora_index_entry_add (lives_clip_data_t *cdata, int64_t gr
 
   if (tkframe<1) return NULL;
 
-  oidx=idx=priv->idx;
+  oidx=idx=priv->idxc->idx;
 
   if (idx==NULL) {
     index_entry *ie=index_entry_new();
     ie->value=granule;
     ie->pagepos=pagepos;
-    priv->idx=ie;
+    priv->idxc->idx=ie;
     return ie;
   }
 
@@ -234,7 +238,7 @@ static index_entry *dirac_index_entry_add (lives_clip_data_t *cdata, int64_t pag
   // add a new entry in order, and return a pointer to it
 
   lives_ogg_priv_t *priv=(lives_ogg_priv_t *)cdata->priv;
-  index_entry *new_idx=priv->idx,*last_idx=NULL;
+  index_entry *new_idx=priv->idxc->idx,*last_idx=NULL;
 
   //printf("ADDING IDX for frame %ld region %ld to %ld\n",frame,pagepos,pagepos_end);
 
@@ -278,7 +282,7 @@ static index_entry *get_bounds_for (lives_clip_data_t *cdata, int64_t tframe, in
   int64_t kframe,frame,gpos;
 
   lives_ogg_priv_t *priv=(lives_ogg_priv_t *)cdata->priv;
-  index_entry *idx=priv->idx;
+  index_entry *idx=priv->idxc->idx;
 
   *ppos_lower=*ppos_upper=-1;
 
@@ -390,7 +394,9 @@ static int64_t get_page(lives_clip_data_t *cdata, int64_t inpos) {
     if (priv->vstream->stpriv->fourcc_priv==FOURCC_THEORA) {
       if (ogg_page_serialno(&(opriv->current_page))==priv->vstream->stream_id) {
 	gpos=ogg_page_granulepos(&(opriv->current_page));
+	pthread_mutex_lock(&priv->idxc->mutex);
 	theora_index_entry_add (cdata, gpos, inpos);
+	pthread_mutex_unlock(&priv->idxc->mutex);
       }
     }
   }
@@ -494,6 +500,108 @@ static int dirac_bool( bs_t *p_bs )
     return bs_read( p_bs, 1 );
 }
 
+
+
+static index_container_t *idxc_for(lives_clip_data_t *cdata) {
+  // check all idxc for string match with URI
+  index_container_t *idxc;
+  register int i;
+
+  pthread_mutex_lock(&indices_mutex);
+
+  for (i=0;i<nidxc;i++) {
+    if (indices[i]->clients[0]->current_clip==cdata->current_clip&&
+	!strcmp(indices[i]->clients[0]->URI,cdata->URI)) {
+      idxc=indices[i];
+      // append cdata to clients
+      idxc->clients=(lives_clip_data_t **)realloc(idxc->clients,(idxc->nclients+1)*sizeof(lives_clip_data_t *));
+      idxc->clients[idxc->nclients]=cdata;
+      idxc->nclients++;
+      //
+      pthread_mutex_unlock(&indices_mutex);
+      return idxc;
+    }
+  }
+
+  indices=(index_container_t **)realloc(indices,(nidxc+1)*sizeof(index_container_t *));
+
+  // match not found, create a new index container
+  idxc=(index_container_t *)malloc(sizeof(index_container_t));
+
+  idxc->idx=NULL;
+
+  idxc->nclients=1;
+  idxc->clients=(lives_clip_data_t **)malloc(sizeof(lives_clip_data_t *));
+  idxc->clients[0]=cdata;
+  pthread_mutex_init(&idxc->mutex,NULL);
+
+  indices[nidxc]=idxc;
+  pthread_mutex_unlock(&indices_mutex);
+
+  nidxc++;
+
+  return idxc;
+}
+
+
+static void idxc_release(lives_clip_data_t *cdata) {
+  lives_ogg_priv_t *priv=cdata->priv;
+  index_container_t *idxc=priv->idxc;
+  register int i,j;
+
+  if (idxc==NULL) return;
+
+  pthread_mutex_lock(&indices_mutex);
+
+  if (idxc->nclients==1) {
+    // remove this index
+    index_entries_free(idxc->idx);
+    free(idxc->clients);
+    for (i=0;i<nidxc;i++) {
+      if (indices[i]==idxc) {
+	nidxc--;
+	for (j=i;j<nidxc;j++) {
+	  indices[j]=indices[j+1];
+	}
+	free(idxc);
+	if (nidxc==0) {
+	  free(indices);
+	  indices=NULL;
+	}
+	else indices=(index_container_t **)realloc(indices,nidxc*sizeof(index_container_t *));
+      }
+    }
+  }
+  else {
+    // reduce client count by 1
+    for (i=0;i<idxc->nclients;i++) {
+      if (idxc->clients[i]==cdata) {
+	// remove this entry
+	idxc->nclients--;
+	for (j=i;j<idxc->nclients;j++) {
+	  idxc->clients[j]=idxc->clients[j+1];
+	}
+	idxc->clients=(lives_clip_data_t **)realloc(idxc->clients,idxc->nclients*sizeof(lives_clip_data_t *));
+	break;
+      }
+    }
+  }
+
+  pthread_mutex_unlock(&indices_mutex);
+
+}
+
+
+static void idxc_release_all(void) {
+  register int i;
+
+  for (i=0;i<nidxc;i++) {
+    index_entries_free(indices[i]->idx);
+    free(indices[i]->clients);
+    free(indices[i]);
+  }
+
+}
 
 
 
@@ -1038,7 +1146,9 @@ static int64_t find_first_page (lives_clip_data_t *cdata, int64_t pos1, int64_t 
 
     if (page_packets_checked) {
       granulepos = ogg_page_granulepos(&(opriv->current_page));
+      pthread_mutex_lock(&priv->idxc->mutex);
       theora_index_entry_add(cdata,granulepos,pos1);
+      pthread_mutex_unlock(&priv->idxc->mutex);
     
       *kframe =
 	  granulepos >> priv->vstream->stpriv->keyframe_granule_shift;
@@ -1122,7 +1232,7 @@ static int64_t find_first_sync_frame (lives_clip_data_t *cdata, int64_t pos1, in
 
   lives_ogg_priv_t *priv=(lives_ogg_priv_t *)cdata->priv;
 
-  index_entry *idx=priv->idx;
+  index_entry *idx=priv->idxc->idx;
   index_entry *extend=NULL;
 
   int64_t bytes;
@@ -1235,7 +1345,9 @@ static int64_t find_first_sync_frame (lives_clip_data_t *cdata, int64_t pos1, in
     }
 
 
-    if ( (idx=find_pagepos_in_index(priv->idx,priv->input_position))!=NULL ) {
+    pthread_mutex_lock(&priv->idxc->mutex);
+
+    if ( (idx=find_pagepos_in_index(priv->idxc->idx,priv->input_position))!=NULL ) {
       // this part was already checked
       
       //printf("WE ALREADY CHECKED THIS\n");
@@ -1244,10 +1356,11 @@ static int64_t find_first_sync_frame (lives_clip_data_t *cdata, int64_t pos1, in
 	// we already found a sync frame here
 	if (extend!=NULL) {
 	  extend->pagepos_end=idx->pagepos-1;
-	  if (extend->pagepos_end<extend->pagepos) priv->idx=index_entry_delete(extend);
+	  if (extend->pagepos_end<extend->pagepos) priv->idxc->idx=index_entry_delete(extend);
 	}
 
 	*frame=idx->value;
+	pthread_mutex_unlock(&priv->idxc->mutex);
 	//printf("As I recall, the sync frame was %ld\n",*frame);
 	return idx->pagepos;
       }
@@ -1256,6 +1369,7 @@ static int64_t find_first_sync_frame (lives_clip_data_t *cdata, int64_t pos1, in
       if (pages_checked>=2&&idx->pagepos<pos1) idx->pagepos=pos1;
       
       pos1=priv->input_position=idx->pagepos_end+1;
+      pthread_mutex_unlock(&priv->idxc->mutex);
       
       //printf("no seq frames, skipping\n");
 
@@ -1325,28 +1439,30 @@ static int64_t find_first_sync_frame (lives_clip_data_t *cdata, int64_t pos1, in
 	
 	ogg_stream_reset(&priv->vstream->stpriv->os);
 	
+	pthread_mutex_lock(&priv->idxc->mutex);
 	if (priv->last_frame>-1) {
 	  // finish off the previous search area
 	  if (extend!=NULL) {
 	    extend->pagepos_end=pos1-1;
-	    if (extend->pagepos_end<extend->pagepos) priv->idx=index_entry_delete(extend);
+	    if (extend->pagepos_end<extend->pagepos) priv->idxc->idx=index_entry_delete(extend);
 	  }
 	  
 	  // and add this one
 	  extend=dirac_index_entry_add(cdata,pos1,priv->input_position+result-1,*frame);
 	  
-	  if (extend->pagepos_end<extend->pagepos) priv->idx=index_entry_delete(extend);
-	  else if (extend->prev==NULL) priv->idx=extend;
+	  if (extend->pagepos_end<extend->pagepos) priv->idxc->idx=index_entry_delete(extend);
+	  else if (extend->prev==NULL) priv->idxc->idx=extend;
 	  
 	}
 	else {
 	  // we got no frames, we must have reached EOF
 	  if (extend!=NULL) {
 	    extend->pagepos_end=priv->input_position-1;
-	    if (extend->pagepos_end<extend->pagepos) priv->idx=index_entry_delete(extend);
+	    if (extend->pagepos_end<extend->pagepos) priv->idxc->idx=index_entry_delete(extend);
 	  }
 	  pos1=-1;
 	}
+	pthread_mutex_unlock(&priv->idxc->mutex);
 	
 	return pos1; // return offset of start page
 	
@@ -1369,18 +1485,20 @@ static int64_t find_first_sync_frame (lives_clip_data_t *cdata, int64_t pos1, in
 	// if we checked from one packet to the next and found no seq header.
 	// We now know that the first pages had no seq header
 	// so we can start marking from pos1 up to start of this page - 1
+	pthread_mutex_lock(&priv->idxc->mutex);
 	if (extend==NULL) {
 	  extend=dirac_index_entry_add(cdata,pos1,priv->input_position-1,-1);
-	  if (extend->prev==NULL) priv->idx=extend;
+	  if (extend->prev==NULL) priv->idxc->idx=extend;
 	}
 	else {
 	  extend->pagepos_end=priv->input_position-1;
 	}
-	if (extend->pagepos_end<extend->pagepos) priv->idx=index_entry_delete(extend);
+	if (extend->pagepos_end<extend->pagepos) priv->idxc->idx=index_entry_delete(extend);
 	else if (extend->prev!=NULL&&extend->prev->pagepos_end==extend->pagepos-1&&extend->prev->value==-1) {
 	  extend->prev->pagepos_end=extend->pagepos_end;
 	  index_entry_delete(extend);
 	}
+	pthread_mutex_unlock(&priv->idxc->mutex);
       }
 
     }
@@ -1576,7 +1694,8 @@ static int open_ogg(lives_clip_data_t *cdata) {
 
 
 
-static boolean attach_stream(lives_clip_data_t *cdata) {
+
+static boolean attach_stream(lives_clip_data_t *cdata, boolean isclone) {
   // open the file and get a handle
 
   struct stat sb;
@@ -1595,11 +1714,15 @@ static boolean attach_stream(lives_clip_data_t *cdata) {
   setmode(opriv->fd,O_BINARY);
 #endif
 
-  stat(cdata->URI,&sb);
-
-  opriv->total_bytes=sb.st_size;
+  if (!isclone) {
+    stat(cdata->URI,&sb);
+    opriv->total_bytes=sb.st_size;
+  }
 
   opriv->page_valid=0;
+
+  // index init 
+  priv->idxc=idxc_for(cdata);
 
   /* get ogg info */
   if (!open_ogg(cdata)) {
@@ -1612,9 +1735,6 @@ static boolean attach_stream(lives_clip_data_t *cdata) {
 
   priv->last_kframe=10000000;
   priv->last_frame=100000000;
-
-  // index init 
-  priv->idx=NULL;
 
 
 #ifdef HAVE_THEORA
@@ -1748,9 +1868,12 @@ static void detach_stream (lives_clip_data_t *cdata) {
   }
 
 
+  if (cdata->palettes!=NULL) free(cdata->palettes);
+  cdata->palettes=NULL;
+
   // free index entries
-  if (priv->idx!=NULL) index_entries_free(priv->idx);
-  priv->idx=NULL;
+  if (priv->idxc!=NULL) idxc_release(cdata); 
+  priv->idxc=NULL;
 
 }
 
@@ -1900,7 +2023,9 @@ static int64_t ogg_seek(lives_clip_data_t *cdata, int64_t tframe, int64_t ppos_l
     priv->cpagepos=best_pagepos;
     // TODO - add to vlc
     if (priv->vstream->stpriv->fourcc_priv==FOURCC_THEORA) {
+      pthread_mutex_lock(&priv->idxc->mutex);
       theora_index_entry_add((lives_clip_data_t *)cdata,gpos,priv->cpagepos);
+      pthread_mutex_unlock(&priv->idxc->mutex);
     }
     gpos=frame_to_gpos(cdata,best_kframe,best_frame);
     return gpos;
@@ -1924,6 +2049,13 @@ const char *version(void) {
 }
 
 
+const char *module_check_init(void) {
+  indices=NULL;
+  nidxc=0;
+  pthread_mutex_init(&indices_mutex,NULL);
+  return NULL;
+}
+
 
 lives_clip_data_t *init_cdata(void) {
   lives_clip_data_t *cdata=(lives_clip_data_t *)malloc(sizeof(lives_clip_data_t));
@@ -1945,15 +2077,78 @@ lives_clip_data_t *init_cdata(void) {
   priv->dpriv=NULL;
 #endif
 
-  priv->idx=NULL;
+  priv->idxc=NULL;
 
+  cdata->video_start_time=0.;
   cdata->sync_hint=0;
 
   cdata->palettes=malloc(2*sizeof(int));
+  cdata->palettes[1]=WEED_PALETTE_END;
+
   cdata->URI=NULL;
 
   return cdata;
 }
+
+
+static lives_clip_data_t *ogg_clone(lives_clip_data_t *cdata) {
+  lives_clip_data_t *clone=init_cdata();
+  lives_ogg_priv_t *dpriv,*spriv;
+
+  ogg_t *dopriv;
+  ogg_t *sopriv;
+
+  // copy from cdata to clone, with a new context for clone
+  clone->URI=strdup(cdata->URI);
+  clone->nclips=cdata->nclips;
+  snprintf(clone->container_name,512,"%s",cdata->container_name);
+  clone->current_clip=cdata->current_clip;
+  clone->width=cdata->width;
+  clone->height=cdata->height;
+  clone->nframes=cdata->nframes;
+  clone->interlace=cdata->interlace;
+  clone->offs_x=cdata->offs_x;
+  clone->offs_y=cdata->offs_y;
+  clone->frame_width=cdata->frame_width;
+  clone->frame_height=cdata->frame_height;
+  clone->par=cdata->par;
+  clone->fps=cdata->fps;
+  clone->palettes[0]=cdata->palettes[0];
+  clone->current_palette=cdata->current_palette;
+  clone->YUV_sampling=cdata->YUV_sampling;
+  clone->YUV_clamping=cdata->YUV_clamping;
+  snprintf(clone->video_name,512,"%s",cdata->video_name);
+  clone->arate=cdata->arate;
+  clone->achans=cdata->achans;
+  clone->asamps=cdata->asamps;
+  clone->asigned=cdata->asigned;
+  clone->ainterleaf=cdata->ainterleaf;
+  snprintf(clone->audio_name,512,"%s",cdata->audio_name);
+  clone->seek_flag=cdata->seek_flag;
+  clone->sync_hint=cdata->sync_hint;
+  clone->video_start_time=cdata->video_start_time;
+
+  if (!attach_stream(clone,TRUE)) {
+    free(clone->URI);
+    clone->URI=NULL;
+    clip_data_free(clone);
+    return NULL;
+  }
+
+  // create "priv" elements
+  dpriv=clone->priv;
+  spriv=cdata->priv;
+
+  sopriv=spriv->opriv;
+  dopriv=dpriv->opriv;
+
+  dopriv->total_bytes=sopriv->total_bytes;
+
+  dpriv->last_frame=-1;
+
+  return clone;
+}
+
 
 
 
@@ -1970,6 +2165,11 @@ lives_clip_data_t *get_clip_data(const char *URI, lives_clip_data_t *cdata) {
 
   double stream_duration;
   int64_t gpos;
+
+  if (URI==NULL&&cdata!=NULL) {
+    // create a clone of cdata
+    return ogg_clone(cdata);
+  }
 
   if (cdata!=NULL&&cdata->current_clip>0) {
     // currently we only support one clip per container
@@ -1990,7 +2190,7 @@ lives_clip_data_t *get_clip_data(const char *URI, lives_clip_data_t *cdata) {
       free(cdata->URI);
     }
     cdata->URI=strdup(URI);
-    if (!attach_stream(cdata)) {
+    if (!attach_stream(cdata,FALSE)) {
       free(cdata->URI);
       cdata->URI=NULL;
       clip_data_free(cdata);
@@ -2106,7 +2306,6 @@ lives_clip_data_t *get_clip_data(const char *URI, lives_clip_data_t *cdata) {
       if (done) break;
     }
 
-    cdata->palettes[1]=WEED_PALETTE_END;
     cdata->current_palette=cdata->palettes[0];
 
     // reset and seek back to start
@@ -2200,7 +2399,56 @@ static boolean ogg_theora_read(lives_clip_data_t *cdata, ogg_packet *op, yuv_buf
 
 #endif
 
+#ifdef HAVE_THEORA
 
+static size_t write_black_pixel(unsigned char *idst, int pal, int npixels, int y_black) {
+  unsigned char *dst=idst;
+  register int i;
+
+  for (i=0;i<npixels;i++) {
+    switch (pal) {
+    case WEED_PALETTE_RGBA32:
+    case WEED_PALETTE_BGRA32:
+      dst[0]=dst[1]=dst[2]=0;
+      dst[3]=255;
+      dst+=4;
+      break;
+    case WEED_PALETTE_ARGB32:
+      dst[1]=dst[2]=dst[3]=0;
+      dst[0]=255;
+      dst+=4;
+      break;
+    case WEED_PALETTE_UYVY8888:
+      dst[1]=dst[3]=y_black;
+      dst[0]=dst[2]=128;
+      dst+=4;
+      break;
+    case WEED_PALETTE_YUYV8888:
+      dst[0]=dst[2]=y_black;
+      dst[1]=dst[3]=128;
+      dst+=4;
+      break;
+    case WEED_PALETTE_YUV888:
+      dst[0]=y_black;
+      dst[1]=dst[2]=128;
+      dst+=3;
+      break;
+    case WEED_PALETTE_YUVA8888:
+      dst[0]=y_black;
+      dst[1]=dst[2]=128;
+      dst[3]=255;
+      dst+=4;
+      break;
+    case WEED_PALETTE_YUV411:
+      dst[0]=dst[3]=128;
+      dst[1]=dst[2]=dst[4]=dst[5]=y_black;
+      dst+=6;
+    default: break;
+    }
+  }
+  return idst-dst;
+}
+#endif
 
 
 #ifdef HAVE_DIRAC
@@ -2236,8 +2484,6 @@ static void schroframe_to_pixel_data(SchroFrame *sframe, uint8_t **pixel_data) {
     crow=!crow;
     sched_yield();
   }
-
-
 }
 
 
@@ -2464,8 +2710,6 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int* rowstride
 
 #ifdef HAVE_THEORA
   yuv_buffer yuv;
-  boolean crow=FALSE;
-  void *y,*u,*v;
   register int i;
 #endif
 
@@ -2481,15 +2725,62 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int* rowstride
 
   static index_entry *fidx=NULL;
 
-  int mheight;
-
   ogg_t *opriv=priv->opriv;
 
-  if (priv->vstream==NULL) return FALSE;
+#ifdef HAVE_THEORA
+
+  register int p;
+
+  unsigned char *dst,*src;
+
+  int y_black=(cdata->YUV_clamping==WEED_YUV_CLAMPING_CLAMPED)?16:0;
+  unsigned char black[4]={0,0,0,255};
+
+  int xheight=(cdata->frame_height>>1)<<1,pal=cdata->current_palette,nplanes=1,dstwidth=cdata->width,psize=1;
+  int btop=cdata->offs_y,bbot=xheight-1-btop;
+  int bleft=cdata->offs_x,bright=cdata->frame_width-cdata->width-bleft;
+
+  if (pixel_data!=NULL) {
+    if (pal==WEED_PALETTE_YUV420P||pal==WEED_PALETTE_YVU420P||pal==WEED_PALETTE_YUV422P||pal==WEED_PALETTE_YUV444P) {
+      nplanes=3;
+      black[0]=y_black;
+      black[1]=black[2]=128;
+    }
+    else if (pal==WEED_PALETTE_YUVA4444P) {
+      nplanes=4;
+      black[0]=y_black;
+      black[1]=black[2]=128;
+      black[3]=255;
+    }
+    
+    if (pal==WEED_PALETTE_RGB24||pal==WEED_PALETTE_BGR24) psize=3;
+    
+    if (pal==WEED_PALETTE_RGBA32||pal==WEED_PALETTE_BGRA32||pal==WEED_PALETTE_ARGB32||pal==WEED_PALETTE_UYVY8888||
+	pal==WEED_PALETTE_YUYV8888||pal==WEED_PALETTE_YUV888||pal==WEED_PALETTE_YUVA8888) psize=4;
+    
+    if (pal==WEED_PALETTE_YUV411) psize=6;
+    
+    if (pal==WEED_PALETTE_A1) dstwidth>>=3;
+    
+    dstwidth*=psize;
+    
+    if (cdata->frame_height > cdata->height && height == cdata->height) {
+      // host ignores vertical border
+      btop=0;
+      xheight=(cdata->height>>1)<<1;
+      bbot=xheight-1;
+    }
+    
+    if (cdata->frame_width > cdata->width && rowstrides[0] < cdata->frame_width*psize) {
+      // host ignores horizontal border
+      bleft=bright=0;
+    }
+  }
+
+#endif
+
 
   priv->current_pos=priv->input_position;
-
-  mheight=(opriv->y_height>>1)<<1; // yes indeed, there is a file with a height of 601 pixels...
 
   max_frame_diff=2<<(priv->vstream->stpriv->keyframe_granule_shift-2);
 
@@ -2535,15 +2826,19 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int* rowstride
       }
 
       // need to find a new kframe
+      pthread_mutex_lock(&priv->idxc->mutex);
       fidx=get_bounds_for((lives_clip_data_t *)cdata,tframe,&ppos_lower,&ppos_upper);
       if (fidx==NULL) {
 	//printf("pt a\n");
 	int64_t last_ret_frame=priv->last_frame;
+	pthread_mutex_unlock(&priv->idxc->mutex);
 	granulepos=ogg_seek((lives_clip_data_t *)cdata,tframe,ppos_lower,ppos_upper,TRUE);
+	pthread_mutex_lock(&priv->idxc->mutex);
 	priv->last_frame=last_ret_frame;
 	if (granulepos==-1) return FALSE; // should never happen...
       }
       else granulepos=fidx->value;
+      pthread_mutex_unlock(&priv->idxc->mutex);
       //printf("pt a2\n");
 
       if (priv->vstream->stpriv->fourcc_priv==FOURCC_THEORA) {
@@ -2575,20 +2870,22 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int* rowstride
     else {
       if (fidx==NULL||priv->vstream->stpriv->fourcc_priv==FOURCC_THEORA) {
 	if (priv->vstream->stpriv->fourcc_priv==FOURCC_THEORA) {
+	  pthread_mutex_lock(&priv->idxc->mutex);
 	  get_bounds_for((lives_clip_data_t *)cdata,kframe-1,&ppos_lower,&ppos_upper);
+	  pthread_mutex_unlock(&priv->idxc->mutex);
 	  granulepos=ogg_seek((lives_clip_data_t *)cdata,kframe-1,ppos_lower,ppos_upper,FALSE);
 	  //fprintf(stderr,"starting from found gpos %ld\n",granulepos);
 	
 	  xkframe=granulepos >> priv->vstream->stpriv->keyframe_granule_shift;
 
 
+	  pthread_mutex_lock(&priv->idxc->mutex);
 	  get_bounds_for((lives_clip_data_t *)cdata,xkframe-1,&ppos_lower,&ppos_upper);
+	  pthread_mutex_unlock(&priv->idxc->mutex);
 	  granulepos=ogg_seek((lives_clip_data_t *)cdata,xkframe-1,ppos_lower,ppos_upper,FALSE);
 	  //fprintf(stderr,"starting from found gpos %ld\n",granulepos);
 	
 	  xkframe=granulepos >> priv->vstream->stpriv->keyframe_granule_shift;
-
-
 
 	  priv->cframe = xkframe + granulepos-(xkframe<<priv->vstream->stpriv->keyframe_granule_shift); // cframe will be the next frame we decode
 	  //printf("xkframe is %ld %ld\n",xkframe,priv->cframe);
@@ -2596,7 +2893,7 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int* rowstride
 	else {
 	  priv->cframe=kframe;
 	  priv->input_position=priv->cpagepos;
-	  printf("SEEK TO %ld\n",priv->cpagepos);
+	  //printf("SEEK TO %ld\n",priv->cpagepos);
 	}
 
 	if (priv->input_position==priv->vstream->data_start) {
@@ -2642,26 +2939,76 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int* rowstride
 
 #ifdef HAVE_THEORA
   if (priv->vstream->stpriv->fourcc_priv==FOURCC_THEORA) {
-    y=yuv.y;
-    u=yuv.u;
-    v=yuv.v;
-    
-    for (i=0;i<mheight;i++) {
-      memcpy(pixel_data[0],y,opriv->y_width);
-      pixel_data[0]+=rowstrides[0];
-      y+=yuv.y_stride;
-      if (yuv.y_height==yuv.uv_height||crow) {
-	memcpy(pixel_data[1],u,opriv->uv_width);
-	memcpy(pixel_data[2],v,opriv->uv_width);
-	pixel_data[1]+=rowstrides[1];
-	pixel_data[2]+=rowstrides[2];
-	u+=yuv.uv_stride;
-	v+=yuv.uv_stride;
+    size_t srcadd;
+
+    for (p=0;p<nplanes;p++) {
+      dst=pixel_data[p];
+
+      switch (p) {
+      case 0:
+	src=yuv.y;
+	srcadd=yuv.y_stride;
+	break;
+      case 1:
+	src=yuv.u;
+	srcadd=yuv.uv_stride;
+	break;
+      case 2:
+	src=yuv.v;
+	srcadd=yuv.uv_stride;
+	break;
+      default:
+	srcadd=0;
+	src=NULL;
+	break;
       }
-      crow=!crow;
-      sched_yield();
+
+      for (i=0;i<xheight;i++) {
+	if (i<btop||i>bbot) {
+	  // top or bottom border, copy black row
+	  if (pal==WEED_PALETTE_YUV420P||pal==WEED_PALETTE_YVU420P||pal==WEED_PALETTE_YUV422P||
+	      pal==WEED_PALETTE_YUV444P||pal==WEED_PALETTE_YUVA4444P||pal==WEED_PALETTE_RGB24||pal==WEED_PALETTE_BGR24) {
+	    memset(dst,black[p],dstwidth+(bleft+bright)*psize);
+	    dst+=dstwidth+(bleft+bright)*psize;
+	  }
+	  else dst+=write_black_pixel(dst,pal,dstwidth/psize+bleft+bright,y_black);
+	  continue;
+	}
+
+	if (bleft>0) {
+	  if (pal==WEED_PALETTE_YUV420P||pal==WEED_PALETTE_YVU420P||pal==WEED_PALETTE_YUV422P||pal==WEED_PALETTE_YUV444P||
+	      pal==WEED_PALETTE_YUVA4444P||pal==WEED_PALETTE_RGB24||pal==WEED_PALETTE_BGR24) {
+	    memset(dst,black[p],bleft*psize);
+	    dst+=bleft*psize;
+	  }
+	  else dst+=write_black_pixel(dst,pal,bleft,y_black);
+	}
+
+	memcpy(dst,src,srcadd);
+	dst+=dstwidth;
+
+	if (bright>0) {
+	  if (pal==WEED_PALETTE_YUV420P||pal==WEED_PALETTE_YVU420P||pal==WEED_PALETTE_YUV422P||pal==WEED_PALETTE_YUV444P||
+	      pal==WEED_PALETTE_YUVA4444P||pal==WEED_PALETTE_RGB24||pal==WEED_PALETTE_BGR24) {
+	    memset(dst,black[p],bright*psize);
+	    dst+=bright*psize;
+	  }
+	  else dst+=write_black_pixel(dst,pal,bright,y_black);
+	}
+
+	src+=srcadd;
+      }
+      if (p==0&&(pal==WEED_PALETTE_YUV420P||pal==WEED_PALETTE_YVU420P||pal==WEED_PALETTE_YUV422P)) {
+	dstwidth>>=1;
+	bleft>>=1;
+	bright>>=1;
+      }
+      if (p==0&&(pal==WEED_PALETTE_YUV420P||pal==WEED_PALETTE_YVU420P)) {
+	xheight>>=1;
+	btop>>=1;
+	bbot>>=1;
+      }
     }
-    
     return TRUE;
   }
 #endif
@@ -2675,6 +3022,9 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int* rowstride
 void clip_data_free(lives_clip_data_t *cdata) {
   lives_ogg_priv_t *priv=(lives_ogg_priv_t *)cdata->priv;
 
+  if (cdata->palettes!=NULL) free(cdata->palettes);
+  cdata->palettes=NULL;
+
   if (cdata->URI!=NULL) {
     detach_stream(cdata);
     free(cdata->URI);
@@ -2684,8 +3034,10 @@ void clip_data_free(lives_clip_data_t *cdata) {
 
   if (priv!=NULL) free(priv);
   
-  if (cdata->palettes!=NULL) free(cdata->palettes);
   free(cdata);
 }
 
 
+void module_unload(void) {
+  idxc_release_all();
+}

@@ -33,7 +33,7 @@
 #include <stdlib.h>
 #include <math.h>
 
-const char *plugin_version="LiVES flv decoder version 1.0";
+const char *plugin_version="LiVES flv decoder version 1.1";
 
 #ifdef HAVE_AV_CONFIG_H
 #undef HAVE_AV_CONFIG_H
@@ -61,6 +61,8 @@ const char *plugin_version="LiVES flv decoder version 1.0";
 #include <libavcodec/avcodec.h>
 #include <libavcodec/version.h>
 
+#include <pthread.h>
+
 #include "decplugin.h"
 #include "flv_decoder.h"
 
@@ -81,6 +83,9 @@ const char *plugin_version="LiVES flv decoder version 1.0";
 #endif
 
 
+static index_container_t **indices;
+static int nidxc;
+static pthread_mutex_t indices_mutex;
 
 ////////////////////////////////////////////////////////////////////////////
 
@@ -275,7 +280,7 @@ static index_entry *index_walk(index_entry *idx, int pts) {
 index_entry *index_upto(const lives_clip_data_t *cdata, int pts) {
   lives_flv_priv_t *priv=cdata->priv;
   lives_flv_pack_t pack;
-  index_entry *nidx=priv->idxht,*oldht=nidx;
+  index_entry *nidx=priv->idxc->idxht,*oldht=nidx;
   int mid_dts=frame_to_dts(cdata,cdata->nframes-1)>>1;
 
   if (nidx==NULL) priv->input_position=priv->data_start;
@@ -290,25 +295,25 @@ index_entry *index_upto(const lives_clip_data_t *cdata, int pts) {
     if (pack.type==FLV_TAG_TYPE_VIDEO&&pack.size>0) {
       if (is_keyframe(priv->fd)) {
 
-	if (pack.dts>mid_dts||(priv->idxth!=NULL&&pack.dts>=priv->idxth->dts)) {
+	if (pack.dts>mid_dts||(priv->idxc->idxth!=NULL&&pack.dts>=priv->idxc->idxth->dts)) {
 	  // handle case where we cross the mid point, or head and tail list have met
-	  if (priv->idxth!=NULL&&pack.dts>=priv->idxth->dts) {
+	  if (priv->idxc->idxth!=NULL&&pack.dts>=priv->idxc->idxth->dts) {
 	    // two lists are now contiguous; swap pointers to indicate this; update old head-tail and return it
 	    
 	    // we found no keyframes between idxht and idxth, so therefore extend idxht
-	    priv->idxht->dts_max=priv->idxth->dts-1;
-	    priv->idxht->next=priv->idxth;
-	    nidx=priv->idxht; // this is the value we will return
+	    priv->idxc->idxht->dts_max=priv->idxc->idxth->dts-1;
+	    priv->idxc->idxht->next=priv->idxc->idxth;
+	    nidx=priv->idxc->idxht; // this is the value we will return
 	    
 	    // cross the pointers
-	    priv->idxht=index_walk(priv->idxht,mid_dts*4/3);
-	    priv->idxth=index_walk(priv->idxhh,mid_dts*2/3);
+	    priv->idxc->idxht=index_walk(priv->idxc->idxht,mid_dts*4/3);
+	    priv->idxc->idxth=index_walk(priv->idxc->idxhh,mid_dts*2/3);
 	    
 	    return nidx;
 	  }
 	  
-	  priv->idxht->dts_max=pack.dts-1;
-	  if (pack.dts>pts) return priv->idxht;
+	  priv->idxc->idxht->dts_max=pack.dts-1;
+	  if (pack.dts>pts) return priv->idxc->idxht;
 
 	  // we crossed the mid point but head list is too short
 	  return index_downto(cdata,pts); // index from head of tail list down to pts
@@ -319,14 +324,14 @@ index_entry *index_upto(const lives_clip_data_t *cdata, int pts) {
 	nidx->offs=priv->input_position-11;
 	nidx->dts=nidx->dts_max=pack.dts;
 	nidx->next=NULL;
-	if (priv->idxht!=NULL) {
-	  oldht=priv->idxht;
+	if (priv->idxc->idxht!=NULL) {
+	  oldht=priv->idxc->idxht;
 	  oldht->dts_max=pack.dts-1;
 	  oldht->next=nidx;
 	}
-	else priv->idxhh=nidx;
+	else priv->idxc->idxhh=nidx;
     
-	priv->idxht=nidx;
+	priv->idxc->idxht=nidx;
       }
 
       if (pack.dts==pts) {
@@ -356,7 +361,7 @@ index_entry *index_downto(const lives_clip_data_t *cdata, int pts) {
   lives_flv_priv_t *priv=cdata->priv;
   lives_flv_pack_t pack;
   int delta;
-  index_entry *nidx=priv->idxth;
+  index_entry *nidx=priv->idxc->idxth;
   int mid_dts=frame_to_dts(cdata,cdata->nframes-1)>>1;
 
   if (nidx==NULL) priv->input_position=get_last_packet_pos(cdata);
@@ -380,22 +385,22 @@ index_entry *index_downto(const lives_clip_data_t *cdata, int pts) {
     }
 
 
-    if (pack.dts<=mid_dts||(priv->idxht!=NULL&&pack.dts<=priv->idxht->dts_max)) {
+    if (pack.dts<=mid_dts||(priv->idxc->idxht!=NULL&&pack.dts<=priv->idxc->idxht->dts_max)) {
       // handle case where we cross the mid point, or head and tail list have met
-      if (priv->idxht!=NULL&&pack.dts<=priv->idxht->dts_max) {
+      if (priv->idxc->idxht!=NULL&&pack.dts<=priv->idxc->idxht->dts_max) {
 	// two lists are now contiguous; swap pointers to indicate this; update old head-tail and return it
 
 	// we found no keyframes between idxth (or last_dts) and idxht, so therefore extend idxht
-	if (priv->idxth!=NULL) {
-	  priv->idxht->dts_max=priv->idxth->dts-1;
-	  priv->idxht->next=priv->idxth;
+	if (priv->idxc->idxth!=NULL) {
+	  priv->idxc->idxht->dts_max=priv->idxc->idxth->dts-1;
+	  priv->idxc->idxht->next=priv->idxc->idxth;
 	}
-	else priv->idxht->dts_max=frame_to_dts(cdata,cdata->nframes)-1;
-	nidx=priv->idxht; // this is the value we will return
+	else priv->idxc->idxht->dts_max=frame_to_dts(cdata,cdata->nframes)-1;
+	nidx=priv->idxc->idxht; // this is the value we will return
 
 	// cross the pointers
-	priv->idxht=index_walk(priv->idxht,mid_dts*4/3);
-	priv->idxth=index_walk(priv->idxhh,mid_dts*2/3);
+	priv->idxc->idxht=index_walk(priv->idxc->idxht,mid_dts*4/3);
+	priv->idxc->idxth=index_walk(priv->idxc->idxhh,mid_dts*2/3);
 
 	return nidx;
       }
@@ -410,16 +415,16 @@ index_entry *index_downto(const lives_clip_data_t *cdata, int pts) {
     nidx=(index_entry *)malloc(sizeof(index_entry));
     nidx->offs=priv->input_position-11;
     nidx->dts=pack.dts;
-    if (priv->idxth!=NULL) {
-      nidx->dts_max=priv->idxth->dts-1;
-      nidx->next=priv->idxth;
+    if (priv->idxc->idxth!=NULL) {
+      nidx->dts_max=priv->idxc->idxth->dts-1;
+      nidx->next=priv->idxc->idxth;
     }
     else {
       nidx->dts_max=frame_to_dts(cdata,cdata->nframes)-1;
       nidx->next=NULL;
     }
     
-    priv->idxth=nidx;
+    priv->idxc->idxth=nidx;
     if (nidx->dts<=pts) break; // found what we were looking for
 
     lseek(priv->fd,-17,SEEK_CUR);
@@ -437,9 +442,9 @@ index_entry *index_downto(const lives_clip_data_t *cdata, int pts) {
 static index_entry *get_idx_for_pts(const lives_clip_data_t *cdata, int64_t pts) {
   lives_flv_priv_t *priv=cdata->priv;
   int ldts;
-  index_entry *idxhh=priv->idxhh;
-  index_entry *idxth=priv->idxth;
-  index_entry *idxht=priv->idxht;
+  index_entry *idxhh=priv->idxc->idxhh;
+  index_entry *idxth=priv->idxc->idxth;
+  index_entry *idxht=priv->idxc->idxht;
 
   if (idxht!=NULL&&pts>=idxht->dts&&pts<=idxht->dts_max) return idxht;
   if (idxth!=NULL&&pts>=idxth->dts&&pts<=idxth->dts_max) return idxth;
@@ -498,6 +503,112 @@ static int amf_get_string(unsigned char *inp, char *buf, size_t size) {
   return len+2;
 }
 
+static index_container_t *idxc_for(lives_clip_data_t *cdata) {
+  // check all idxc for string match with URI
+  index_container_t *idxc;
+  register int i;
+
+  pthread_mutex_lock(&indices_mutex);
+
+  for (i=0;i<nidxc;i++) {
+    if (indices[i]->clients[0]->current_clip==cdata->current_clip&&
+	!strcmp(indices[i]->clients[0]->URI,cdata->URI)) {
+      idxc=indices[i];
+      // append cdata to clients
+      idxc->clients=(lives_clip_data_t **)realloc(idxc->clients,(idxc->nclients+1)*sizeof(lives_clip_data_t *));
+      idxc->clients[idxc->nclients]=cdata;
+      idxc->nclients++;
+      //
+      pthread_mutex_unlock(&indices_mutex);
+      return idxc;
+    }
+  }
+
+  indices=(index_container_t **)realloc(indices,(nidxc+1)*sizeof(index_container_t *));
+
+  // match not found, create a new index container
+  idxc=(index_container_t *)malloc(sizeof(index_container_t));
+
+  idxc->idxhh=NULL;
+  idxc->idxht=NULL;
+  idxc->idxth=NULL;
+
+  idxc->nclients=1;
+  idxc->clients=(lives_clip_data_t **)malloc(sizeof(lives_clip_data_t *));
+  idxc->clients[0]=cdata;
+  pthread_mutex_init(&idxc->mutex,NULL);
+
+  indices[nidxc]=idxc;
+  pthread_mutex_unlock(&indices_mutex);
+
+  nidxc++;
+
+  return idxc;
+}
+
+
+static void idxc_release(lives_clip_data_t *cdata) {
+  lives_flv_priv_t *priv=cdata->priv;
+  index_container_t *idxc=priv->idxc;
+  register int i,j;
+
+  if (idxc==NULL) return;
+
+  pthread_mutex_lock(&indices_mutex);
+
+  if (idxc->nclients==1) {
+    // remove this index
+    if (idxc->idxth!=NULL&&(idxc->idxht==NULL||(idxc->idxth->dts>idxc->idxht->dts))) 
+      index_free(priv->idxc->idxth);
+    if (idxc->idxhh!=NULL) index_free(idxc->idxhh);
+    free(idxc->clients);
+    for (i=0;i<nidxc;i++) {
+      if (indices[i]==idxc) {
+	nidxc--;
+	for (j=i;j<nidxc;j++) {
+	  indices[j]=indices[j+1];
+	}
+	free(idxc);
+	if (nidxc==0) {
+	  free(indices);
+	  indices=NULL;
+	}
+	else indices=(index_container_t **)realloc(indices,nidxc*sizeof(index_container_t *));
+      }
+    }
+  }
+  else {
+    // reduce client count by 1
+    for (i=0;i<idxc->nclients;i++) {
+      if (idxc->clients[i]==cdata) {
+	// remove this entry
+	idxc->nclients--;
+	for (j=i;j<idxc->nclients;j++) {
+	  idxc->clients[j]=idxc->clients[j+1];
+	}
+	idxc->clients=(lives_clip_data_t **)realloc(idxc->clients,idxc->nclients*sizeof(lives_clip_data_t *));
+	break;
+      }
+    }
+  }
+
+  pthread_mutex_unlock(&indices_mutex);
+
+}
+
+
+static void idxc_release_all(void) {
+  register int i;
+
+  for (i=0;i<nidxc;i++) {
+    if (indices[i]->idxth!=NULL&&(indices[i]->idxht==NULL||(indices[i]->idxth->dts>indices[i]->idxht->dts))) 
+      index_free(indices[i]->idxth);
+    if (indices[i]->idxhh!=NULL) index_free(indices[i]->idxhh);
+    free(indices[i]->clients);
+    free(indices[i]);
+  }
+
+}
 
 static void detach_stream (lives_clip_data_t *cdata) {
   // close the file, free the decoder
@@ -510,28 +621,24 @@ static void detach_stream (lives_clip_data_t *cdata) {
     av_free(priv->ctx);
   }
 
+  if (priv->idxc!=NULL) idxc_release(cdata);
+  priv->idxc=NULL;
+
   if (priv->picture!=NULL) av_free(priv->picture);
 
   priv->ctx=NULL;
   priv->codec=NULL;
   priv->picture=NULL;
 
-  if (priv->idxth!=NULL&&(priv->idxht==NULL||(priv->idxth->dts>priv->idxht->dts))) 
-    index_free(priv->idxth);
-  if (priv->idxhh!=NULL) index_free(priv->idxhh);
-
-  priv->idxhh=NULL;
-  priv->idxht=NULL;
-  priv->idxth=NULL;
-
   if (cdata->palettes!=NULL) free(cdata->palettes);
+  cdata->palettes=NULL;
 
   close(priv->fd);
 }
 
 
 
-static boolean attach_stream(lives_clip_data_t *cdata) {
+static boolean attach_stream(lives_clip_data_t *cdata, boolean isclone) {
   // open the file and get a handle
   lives_flv_priv_t *priv=cdata->priv;
   lives_flv_pack_t pack;
@@ -551,7 +658,7 @@ static boolean attach_stream(lives_clip_data_t *cdata) {
 
   boolean got_picture=FALSE,got_avcextradata=FALSE;
 
-  //#define DEBUG
+  #define DEBUG
 #ifdef DEBUG
   fprintf(stderr,"\n");
 #endif
@@ -598,9 +705,7 @@ static boolean attach_stream(lives_clip_data_t *cdata) {
   cdata->achans=0;
   cdata->asamps=16;
 
-  priv->idxhh=NULL;
-  priv->idxht=NULL;
-  priv->idxth=NULL;
+  priv->idxc=idxc_for(cdata);
 
   if (!lives_flv_parse_pack_header(cdata,&pack)) {
     close(priv->fd);
@@ -745,6 +850,9 @@ static boolean attach_stream(lives_clip_data_t *cdata) {
       }
 
     }
+
+    if (key!=NULL) free(key);
+    key=NULL;
 
     free(pack.data);
 
@@ -1025,6 +1133,9 @@ static boolean attach_stream(lives_clip_data_t *cdata) {
   }
   else if (priv->pack_offset!=0) lseek(priv->fd,priv->pack_offset,SEEK_CUR);
 
+  if (isclone) return TRUE;
+
+
   pack.data=malloc(pack.size-priv->pack_offset+FF_INPUT_BUFFER_PADDING_SIZE);
 
   av_init_packet(&priv->avpkt);
@@ -1117,11 +1228,8 @@ static boolean attach_stream(lives_clip_data_t *cdata) {
   cdata->YUV_subspace=WEED_YUV_SUBSPACE_YCBCR;
   if (ctx->colorspace==AVCOL_SPC_BT709) cdata->YUV_subspace=WEED_YUV_SUBSPACE_BT709;
 
-  cdata->palettes=(int *)malloc(2*sizeof(int));
-
   cdata->palettes[0]=avi_pix_fmt_to_weed_palette(ctx->pix_fmt,
 						 &cdata->YUV_clamping);
-  cdata->palettes[1]=WEED_PALETTE_END;
 
   if (cdata->palettes[0]==WEED_PALETTE_END) {
     fprintf(stderr, "flv_decoder: Could not find a usable palette for (%d) %s\n",ctx->pix_fmt,cdata->URI);
@@ -1237,6 +1345,9 @@ static boolean attach_stream(lives_clip_data_t *cdata) {
 
 const char *module_check_init(void) {
   avcodec_register_all();
+  indices=NULL;
+  nidxc=0;
+  pthread_mutex_init(&indices_mutex,NULL);
   return NULL;
 }
 
@@ -1261,11 +1372,70 @@ static lives_clip_data_t *init_cdata (void) {
   priv->codec=NULL;
   priv->picture=NULL;
 
-  cdata->palettes=NULL;
-  
+  cdata->palettes=(int *)malloc(2*sizeof(int));
+  cdata->palettes[1]=WEED_PALETTE_END;
+
+  cdata->video_start_time=0.;
+
+  cdata->sync_hint=0;
+
   return cdata;
 }
 
+
+static lives_clip_data_t *flv_clone(lives_clip_data_t *cdata) {
+  lives_clip_data_t *clone=init_cdata();
+  lives_flv_priv_t *dpriv,*spriv;
+
+  // copy from cdata to clone, with a new context for clone
+  clone->URI=strdup(cdata->URI);
+  clone->nclips=cdata->nclips;
+  snprintf(clone->container_name,512,"%s",cdata->container_name);
+  clone->current_clip=cdata->current_clip;
+
+  // create "priv" elements
+  dpriv=clone->priv;
+  spriv=cdata->priv;
+
+  if (!attach_stream(clone,TRUE)) {
+    free(clone->URI);
+    clone->URI=NULL;
+    clip_data_free(clone);
+    return NULL;
+  }
+
+  clone->width=cdata->width;
+  clone->height=cdata->height;
+  clone->nframes=cdata->nframes;
+  clone->interlace=cdata->interlace;
+  clone->offs_x=cdata->offs_x;
+  clone->offs_y=cdata->offs_y;
+  clone->frame_width=cdata->frame_width;
+  clone->frame_height=cdata->frame_height;
+  clone->par=cdata->par;
+  clone->fps=cdata->fps;
+  clone->palettes[0]=cdata->palettes[0];
+  clone->current_palette=cdata->current_palette;
+  clone->YUV_sampling=cdata->YUV_sampling;
+  clone->YUV_clamping=cdata->YUV_clamping;
+  snprintf(clone->video_name,512,"%s",cdata->video_name);
+  clone->arate=cdata->arate;
+  clone->achans=cdata->achans;
+  clone->asamps=cdata->asamps;
+  clone->asigned=cdata->asigned;
+  clone->ainterleaf=cdata->ainterleaf;
+  snprintf(clone->audio_name,512,"%s",cdata->audio_name);
+  clone->seek_flag=cdata->seek_flag;
+  clone->sync_hint=cdata->sync_hint;
+
+  dpriv->last_frame=-1;
+  dpriv->data_start=spriv->data_start;
+  dpriv->picture=NULL;
+  dpriv->avpkt.data=NULL;
+  dpriv->avpkt.size=0;
+
+  return clone;
+}
 
 
 
@@ -1284,6 +1454,10 @@ lives_clip_data_t *get_clip_data(const char *URI, lives_clip_data_t *cdata) {
 
   lives_flv_priv_t *priv;
 
+  if (URI==NULL&&cdata!=NULL) {
+    // create a clone of cdata
+    return flv_clone(cdata);
+  }
 
   if (cdata!=NULL&&cdata->current_clip>0) {
     // currently we only support one clip per container
@@ -1302,7 +1476,7 @@ lives_clip_data_t *get_clip_data(const char *URI, lives_clip_data_t *cdata) {
       free(cdata->URI);
     }
     cdata->URI=strdup(URI);
-    if (!attach_stream(cdata)) {
+    if (!attach_stream(cdata,FALSE)) {
       free(cdata->URI);
       cdata->URI=NULL;
       clip_data_free(cdata);
@@ -1456,12 +1630,14 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstride
   if (tframe!=priv->last_frame) {
 
     if (priv->last_frame==-1 || (tframe<priv->last_frame) || (tframe - priv->last_frame > rescan_limit)) {
-
+      
+      pthread_mutex_lock(&priv->idxc->mutex);
       if ((idx=get_idx_for_pts(cdata,target_pts))!=NULL) {
 	priv->input_position=idx->offs;
 	nextframe=dts_to_frame(cdata,idx->dts);
       }
       else priv->input_position=priv->data_start;
+      pthread_mutex_unlock(&priv->idxc->mutex);
       
       // we are now at the kframe before or at target - parse packets until we hit target
       
@@ -1607,6 +1783,8 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstride
 
 
 void clip_data_free(lives_clip_data_t *cdata) {
+  if (cdata->palettes!=NULL) free(cdata->palettes);
+  cdata->palettes=NULL;
 
   if (cdata->URI!=NULL) {
     detach_stream(cdata);
@@ -1619,7 +1797,7 @@ void clip_data_free(lives_clip_data_t *cdata) {
 
 
 void module_unload(void) {
-
+  idxc_release_all();
 }
 
 int main(void) {

@@ -658,6 +658,9 @@ static void detach_stream (lives_clip_data_t *cdata) {
   // will close and free the context
   if (priv->ic !=NULL) av_close_input_file(priv->ic);
 
+  if (cdata->palettes!=NULL) free(cdata->palettes);
+  cdata->palettes=NULL;
+
   priv->ctx=NULL;
 
   if (priv->pFrame!=NULL) {
@@ -1164,6 +1167,9 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstride
 
 void clip_data_free(lives_clip_data_t *cdata) {
 
+  if (cdata->palettes!=NULL) free(cdata->palettes);
+  cdata->palettes=NULL;
+
   if (cdata->URI!=NULL) {
     detach_stream(cdata);
     free(cdata->URI);
@@ -1171,7 +1177,7 @@ void clip_data_free(lives_clip_data_t *cdata) {
 
   free(cdata->priv);
 
-  free(cdata->palettes);
+
   free(cdata);
 }
 

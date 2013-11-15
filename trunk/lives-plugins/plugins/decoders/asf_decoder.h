@@ -299,6 +299,7 @@ struct _index_entry {
   uint8_t frag; ///< fragment number (counting only video fragments)
 };
 
+
 typedef struct {
   index_entry *idx;  ///< linked list of index (keyframes)
 

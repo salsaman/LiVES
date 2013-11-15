@@ -1786,6 +1786,7 @@ static void detach_stream (lives_clip_data_t *cdata) {
   priv->idxc=NULL;
 
   if (cdata->palettes!=NULL) free(cdata->palettes);
+  cdata->palettes=NULL;
 
   if (priv->avpkt.data!=NULL) {
     free(priv->avpkt.data);
@@ -2781,7 +2782,7 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstride
   int rescan_limit=16;  // pick some arbitrary value
   int y_black=(cdata->YUV_clamping==WEED_YUV_CLAMPING_CLAMPED)?16:0;
   boolean got_picture=FALSE;
-  unsigned char *dst,*src;//,flags;
+  unsigned char *dst,*src;
   unsigned char black[4]={0,0,0,255};
   index_entry *idx;
   register int i,p;
@@ -2948,6 +2949,9 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstride
 
 
 void clip_data_free(lives_clip_data_t *cdata) {
+
+  if (cdata->palettes!=NULL) free(cdata->palettes);
+  cdata->palettes=NULL;
 
   if (cdata->URI!=NULL) {
     detach_stream(cdata);

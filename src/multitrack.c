@@ -9301,6 +9301,14 @@ boolean multitrack_delete (lives_mt *mt, boolean save_layout) {
 
   lives_widget_context_update();
 
+  d_print (_ ("\n==============================\nSwitched to Clip Edit mode\n"));
+
+  if (mt->file_selected!=-1) {
+    switch_to_file ((mainw->current_file=0),mt->file_selected);
+  }
+
+  lives_widget_context_update();
+
   if (prefs->show_gui&&prefs->open_maximised) {
     int wx,wy;
     lives_window_get_position (LIVES_WINDOW (mainw->LiVES),&wx,&wy);
@@ -9310,11 +9318,6 @@ boolean multitrack_delete (lives_mt *mt, boolean save_layout) {
 
 
   lives_widget_context_update();
-  d_print (_ ("\n==============================\nSwitched to Clip Edit mode\n"));
-
-  if (mt->file_selected!=-1) {
-    switch_to_file ((mainw->current_file=0),mt->file_selected);
-  }
 
   g_free (mt);
 

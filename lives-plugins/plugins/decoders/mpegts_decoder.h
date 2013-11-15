@@ -334,6 +334,15 @@ struct _index_entry {
   uint64_t offs;  ///< offset in file
 };
 
+typedef struct {
+  index_entry *idxhh;  ///< head of head list
+  index_entry *idxht; ///< tail of head list
+
+  int nclients;
+  lives_clip_data_t **clients;
+  pthread_mutex_t mutex;
+} index_container_t;
+
 
 typedef struct {
   int fd;
@@ -355,10 +364,7 @@ typedef struct {
   AVFrame *picture;
   AVPacket avpkt;
   int64_t last_frame; ///< last frame displayed
-
-  index_entry *idxhh;  ///< head of head list
-  index_entry *idxht; ///< tail of head list
-
+  index_container_t *idxc;
   boolean got_eof;
   boolean expect_eof;
 } lives_mpegts_priv_t;

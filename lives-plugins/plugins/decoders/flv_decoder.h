@@ -110,6 +110,17 @@ struct _index_entry {
 };
 
 
+typedef struct {
+  index_entry *idxhh;  ///< head of head list
+  index_entry *idxht; ///< tail of head list
+  index_entry *idxth; ///< head of tail list
+
+  int nclients;
+  lives_clip_data_t **clients;
+  pthread_mutex_t mutex;
+} index_container_t;
+
+
 
 typedef struct {
   int fd;
@@ -121,9 +132,7 @@ typedef struct {
   AVFrame *picture;
   AVPacket avpkt;
   int64_t last_frame; ///< last frame displayed
-  index_entry *idxhh;  ///< head of head list (always first frame)
-  index_entry *idxht; ///< tail of head list
-  index_entry *idxth; ///< head of tail list
+  index_container_t *idxc;
 } lives_flv_priv_t;
 
 index_entry *index_upto(const lives_clip_data_t *, int pts);

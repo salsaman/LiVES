@@ -118,6 +118,14 @@ struct _index_entry {
 };
 
 
+typedef struct {
+  index_entry *idx;
+
+  int nclients;
+  lives_clip_data_t **clients;
+  pthread_mutex_t mutex;
+} index_container_t;
+
 
 
 typedef struct {
@@ -146,7 +154,7 @@ typedef struct {
   boolean frame_out;
 
 // indexing
-  index_entry *idx;
+  index_container_t *idxc;
 } lives_ogg_priv_t;
 
 

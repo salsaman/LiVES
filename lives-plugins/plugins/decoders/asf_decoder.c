@@ -2215,9 +2215,9 @@ static boolean attach_stream(lives_clip_data_t *cdata, boolean isclone) {
   cdata->video_start_time=(double)pts/10000.;
   cdata->sync_hint=SYNC_HINT_VIDEO_START;
 
-  //#ifdef DEBUG
+#ifdef DEBUG
   printf("first pts is %ld\n",pts);
-  //#endif  
+#endif  
 
   if (pts==AV_NOPTS_VALUE) {
     fprintf(stderr, "asf_decoder: No timestamps for frames, not decoding.\n");
@@ -2831,6 +2831,9 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstride
 
 
 void clip_data_free(lives_clip_data_t *cdata) {
+
+  if (cdata->palettes!=NULL) free(cdata->palettes);
+  cdata->palettes=NULL;
 
   if (cdata->URI!=NULL) {
     detach_stream(cdata);

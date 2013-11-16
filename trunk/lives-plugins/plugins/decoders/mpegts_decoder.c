@@ -2813,7 +2813,9 @@ static lives_clip_data_t *init_cdata (void) {
 
   cdata->video_start_time=0.;
 
-  //errval=0;
+  memset(cdata->author,0,1);
+  memset(cdata->title,0,1);
+  memset(cdata->comment,0,1);
   
   return cdata;
 }
@@ -3512,6 +3514,10 @@ static lives_clip_data_t *mpegts_clone(lives_clip_data_t *cdata) {
   clone->current_palette=cdata->current_palette;
   clone->YUV_sampling=cdata->YUV_sampling;
   clone->YUV_clamping=cdata->YUV_clamping;
+
+  snprintf(clone->author,256,"%s",cdata->author);
+  snprintf(clone->title,256,"%s",cdata->title);
+  snprintf(clone->comment,256,"%s",cdata->comment);
 
   if (!attach_stream(clone,TRUE)) {
     free(clone->URI);

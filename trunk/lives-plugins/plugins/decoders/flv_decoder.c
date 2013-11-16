@@ -658,7 +658,7 @@ static boolean attach_stream(lives_clip_data_t *cdata, boolean isclone) {
 
   boolean got_picture=FALSE,got_avcextradata=FALSE;
 
-  #define DEBUG
+  //  #define DEBUG
 #ifdef DEBUG
   fprintf(stderr,"\n");
 #endif
@@ -759,11 +759,18 @@ static boolean attach_stream(lives_clip_data_t *cdata, boolean isclone) {
 
 	// deal with string
 	if (key!=NULL) {
+	  fprintf(stderr,"dealing with %s = %s\n",key,buffer);
+	  if (!strcmp(key,"comment")) snprintf(cdata->comment,256,"%s",buffer);
+	  if (!strcmp(key,"author")) snprintf(cdata->author,256,"%s",buffer);
+	  if (!strcmp(key,"title")) snprintf(cdata->title,256,"%s",buffer);
 	  free(key);
 	  key=NULL;
 #ifdef DEBUG
 	  fprintf(stderr,"%s\n",buffer);
 #endif
+
+
+
 
 	  // read eoo
 	  if (!in_array) offs++;
@@ -1379,6 +1386,10 @@ static lives_clip_data_t *init_cdata (void) {
 
   cdata->sync_hint=0;
 
+  memset(cdata->author,0,1);
+  memset(cdata->title,0,1);
+  memset(cdata->comment,0,1);
+
   return cdata;
 }
 
@@ -1427,6 +1438,10 @@ static lives_clip_data_t *flv_clone(lives_clip_data_t *cdata) {
   snprintf(clone->audio_name,512,"%s",cdata->audio_name);
   clone->seek_flag=cdata->seek_flag;
   clone->sync_hint=cdata->sync_hint;
+
+  snprintf(clone->author,256,"%s",cdata->author);
+  snprintf(clone->title,256,"%s",cdata->title);
+  snprintf(clone->comment,256,"%s",cdata->comment);
 
   dpriv->last_frame=-1;
   dpriv->data_start=spriv->data_start;
@@ -1511,6 +1526,9 @@ lives_clip_data_t *get_clip_data(const char *URI, lives_clip_data_t *cdata) {
 
   av_free(priv->picture);
   priv->picture=NULL;
+
+  if (cdata->width!=cdata->frame_width||cdata->height!=cdata->frame_height)
+    fprintf(stderr,"flv_decoder: info - frame size=%d x %d, pixel size=%d x %d\n",cdata->frame_width,cdata->frame_height,cdata->width,cdata->height);
 
   return cdata;
 }

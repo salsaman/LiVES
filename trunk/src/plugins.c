@@ -2477,6 +2477,7 @@ lives_decoder_sys_t *open_decoder_plugin(const gchar *plname) {
 
   // optional
   dplug->module_check_init=(const char* (*)())dlsym (dplug->handle,"module_check_init");
+  dplug->set_palette=(boolean (*)(lives_clip_data_t *))dlsym (dplug->handle,"set_palette");
   dplug->module_unload=(void (*)())dlsym (dplug->handle,"module_unload");
   dplug->rip_audio=(int64_t (*)(const lives_clip_data_t*, const char*, int64_t, int64_t, unsigned char**))
     dlsym (dplug->handle,"rip_audio");

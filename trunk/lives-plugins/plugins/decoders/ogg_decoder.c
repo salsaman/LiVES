@@ -2087,6 +2087,10 @@ lives_clip_data_t *init_cdata(void) {
 
   cdata->URI=NULL;
 
+  memset(cdata->author,0,1);
+  memset(cdata->title,0,1);
+  memset(cdata->comment,0,1);
+
   return cdata;
 }
 
@@ -2128,6 +2132,10 @@ static lives_clip_data_t *ogg_clone(lives_clip_data_t *cdata) {
   clone->sync_hint=cdata->sync_hint;
   clone->video_start_time=cdata->video_start_time;
 
+  snprintf(clone->author,256,"%s",cdata->author);
+  snprintf(clone->title,256,"%s",cdata->title);
+  snprintf(clone->comment,256,"%s",cdata->comment);
+
   if (!attach_stream(clone,TRUE)) {
     free(clone->URI);
     clone->URI=NULL;
@@ -2165,6 +2173,8 @@ lives_clip_data_t *get_clip_data(const char *URI, lives_clip_data_t *cdata) {
 
   double stream_duration;
   int64_t gpos;
+
+  register int i;
 
   if (URI==NULL&&cdata!=NULL) {
     // create a clone of cdata
@@ -2256,6 +2266,26 @@ lives_clip_data_t *get_clip_data(const char *URI, lives_clip_data_t *cdata) {
     cdata->palettes[1]=WEED_PALETTE_END;
     cdata->current_palette=cdata->palettes[0];
     sprintf(cdata->video_name,"%s","theora");
+
+    if (tpriv->tc.comments>0) {
+      size_t lenleft=256,csize;
+      char *cbuf=cdata->comment;
+      for (i=0;i<=tpriv->tc.comments;i++) {
+	csize=tpriv->tc.comment_lengths[i];
+	if (csize>lenleft) csize=lenleft;
+	snprintf(cbuf,csize,"%s",tpriv->tc.user_comments[i]);
+	cbuf+=csize;
+	lenleft-=csize;
+	if (lenleft==0) break;
+	if (i+1<=tpriv->tc.comments) {
+	  if (lenleft<strlen("\n")+1) break;
+	  sprintf(cbuf,"\n");
+	  cbuf+=strlen("\n");
+	  lenleft-=strlen("\n");
+	}
+      }
+    }
+
   }
 #endif
   
@@ -2373,6 +2403,10 @@ lives_clip_data_t *get_clip_data(const char *URI, lives_clip_data_t *cdata) {
 
 
   cdata->nframes=priv->vstream->nframes;
+
+  if (cdata->width!=cdata->frame_width||cdata->height!=cdata->frame_height)
+    fprintf(stderr,"ogg_decoder: info - frame size=%d x %d, pixel size=%d x %d\n",cdata->frame_width,cdata->frame_height,cdata->width,cdata->height);
+
 
   return cdata;
 }

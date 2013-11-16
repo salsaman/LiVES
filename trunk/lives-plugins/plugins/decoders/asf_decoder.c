@@ -2371,6 +2371,10 @@ static boolean attach_stream(lives_clip_data_t *cdata, boolean isclone) {
     cdata->nframes--;
   }
 
+  if (cdata->width!=cdata->frame_width||cdata->height!=cdata->frame_height)
+    fprintf(stderr,"asf_decoder: info frame size=%d x %d, pixel size=%d x %d\n",cdata->frame_width,cdata->frame_height,cdata->width,cdata->height);
+
+
   return TRUE;
 }
 
@@ -2417,6 +2421,10 @@ static lives_clip_data_t *init_cdata (void) {
 
   cdata->video_start_time=0.;
 
+  memset(cdata->author,0,1);
+  memset(cdata->title,0,1);
+  memset(cdata->comment,0,1);
+
   return cdata;
 }
 
@@ -2453,6 +2461,10 @@ static lives_clip_data_t *asf_clone(lives_clip_data_t *cdata) {
   snprintf(clone->audio_name,512,"%s",cdata->audio_name);
   clone->seek_flag=cdata->seek_flag;
   clone->sync_hint=cdata->sync_hint;
+
+  snprintf(clone->author,256,"%s",cdata->author);
+  snprintf(clone->title,256,"%s",cdata->title);
+  snprintf(clone->comment,256,"%s",cdata->comment);
 
   // create "priv" elements
   dpriv=clone->priv;

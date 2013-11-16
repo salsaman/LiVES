@@ -428,141 +428,149 @@ void open_file_sel(const gchar *file_name, double start, int frames) {
 	cfile->fps=cfile->pb_fps=cdata->fps;
 	d_print("\n");
 
-	if (cfile->achans==0&&capable->has_mplayer&&withsound==1) {
+	if (cfile->achans==0&&withsound==1) {
+	  if (0) {
+	  /*if (!capable->has_mplayer) {
+	    do_mplayer_audio_warning();
+	    }*/
+	  }
+	  else {
 
-	  mainw->com_failed=FALSE;
+	    mainw->com_failed=FALSE;
 
-	  // check if we have audio
-	  read_file_details(file_name,FALSE);
-	  unlink (cfile->info_file);
-	  
-	  if (mainw->com_failed) return;
-
-	  if (strlen(mainw->msg)>0) add_file_info (cfile->handle,TRUE);
-
-	  if (cfile->achans>0) {
-	    // plugin returned no audio, try with mplayer
-	    if (mainw->file_open_params==NULL) mainw->file_open_params=g_strdup("");
-	    com=g_strdup_printf("%s open \"%s\" \"%s\" %d \"%s\" %.2f %d \"%s\"",prefs->backend,cfile->handle,
-				(tmp=g_filename_from_utf8 (file_name,-1,NULL,NULL,NULL)),-1,
-				prefs->image_ext,start,frames,mainw->file_open_params);
-
-	    g_free(tmp);
-
-
-	    cfile->op_dir=g_filename_from_utf8((tmp=get_dir(file_name)),-1,NULL,NULL,NULL);
-	    g_free(tmp);
-
+	    // check if we have audio
+	    read_file_details(file_name,FALSE);
 	    unlink (cfile->info_file);
-	    lives_system(com,FALSE);
-	    g_free(com);
-	    tmp=NULL;
+	  
+	    if (mainw->com_failed) return;
+
+	    if (strlen(mainw->msg)>0) add_file_info (cfile->handle,TRUE);
+
+	    if (cfile->achans>0) {
+	      // plugin returned no audio, try with mplayer
+	      if (mainw->file_open_params==NULL) mainw->file_open_params=g_strdup("");
+	      com=g_strdup_printf("%s open \"%s\" \"%s\" %d \"%s\" %.2f %d \"%s\"",prefs->backend,cfile->handle,
+				  (tmp=g_filename_from_utf8 (file_name,-1,NULL,NULL,NULL)),-1,
+				  prefs->image_ext,start,frames,mainw->file_open_params);
+
+	      g_free(tmp);
+
+
+	      cfile->op_dir=g_filename_from_utf8((tmp=get_dir(file_name)),-1,NULL,NULL,NULL);
+	      g_free(tmp);
+
+	      unlink (cfile->info_file);
+	      lives_system(com,FALSE);
+	      g_free(com);
+	      tmp=NULL;
 	    
-	    // if we have a quick-opening file, display the first and last frames now
-	    // for some codecs this can be helpful since we can locate the last frame while audio is loading
-	    if (cfile->clip_type==CLIP_TYPE_FILE&&mainw->playing_file==-1) resize(1);
+	      // if we have a quick-opening file, display the first and last frames now
+	      // for some codecs this can be helpful since we can locate the last frame while audio is loading
+	      if (cfile->clip_type==CLIP_TYPE_FILE&&mainw->playing_file==-1) resize(1);
 
-	    mainw->effects_paused=FALSE; // set to TRUE if user clicks "Enough"
+	      mainw->effects_paused=FALSE; // set to TRUE if user clicks "Enough"
 
-	    msgstr=g_strdup_printf(_("Opening audio"),file_name);
-	    if (!do_progress_dialog(TRUE,TRUE,msgstr)) {
-	      // user cancelled or switched to another clip
+	      msgstr=g_strdup_printf(_("Opening audio"),file_name);
+	      if (!do_progress_dialog(TRUE,TRUE,msgstr)) {
+		// user cancelled or switched to another clip
 	      
-	      g_free(msgstr);
+		g_free(msgstr);
 	      
-	      mainw->opening_frames=-1;
+		mainw->opening_frames=-1;
 	      
-	      if (mainw->multitrack!=NULL) {
-		mainw->multitrack->pb_start_event=mt_pb_start_event;
-		mainw->multitrack->has_audio_file=mt_has_audio_file;
-	      }
+		if (mainw->multitrack!=NULL) {
+		  mainw->multitrack->pb_start_event=mt_pb_start_event;
+		  mainw->multitrack->has_audio_file=mt_has_audio_file;
+		}
 
-	      if (mainw->cancelled==CANCEL_NO_PROPOGATE) {
+		if (mainw->cancelled==CANCEL_NO_PROPOGATE) {
+		  lives_set_cursor_style(LIVES_CURSOR_NORMAL,NULL);
+		  mainw->cancelled=CANCEL_NONE;
+		  return;
+		}
+	      
+		// cancelled
+
+		if (mainw->cancelled!=CANCEL_ERROR) {
+#ifndef IS_MINGW
+		  // clean up our temp files
+		  com=g_strdup_printf("%s stopsubsub \"%s\" 2>/dev/null",prefs->backend_sync,cfile->handle);
+		  lives_system(com,TRUE);
+#else
+		  // get pid from backend
+		  FILE *rfile;
+		  ssize_t rlen;
+		  char val[16];
+		  int pid;
+		  com=g_strdup_printf("%s get_pid_for_handle \"%s\"",prefs->backend_sync,cfile->handle);
+		  rfile=popen(com,"r");
+		  rlen=fread(val,1,16,rfile);
+		  pclose(rfile);
+		  memset(val+rlen,0,1);
+		  pid=atoi(val);
+    
+		  lives_win32_kill_subprocesses(pid,TRUE);
+#endif
+		  g_free(com);
+		}
+
+		if (mainw->file_open_params!=NULL) g_free (mainw->file_open_params);
+		mainw->file_open_params=NULL;
+		close_current_file(old_file);
 		lives_set_cursor_style(LIVES_CURSOR_NORMAL,NULL);
-		mainw->cancelled=CANCEL_NONE;
 		return;
 	      }
-	      
-	      // cancelled
+	      if (mainw->error==0) add_file_info (cfile->handle,TRUE);
+	      mainw->error=0;
+	      g_free(msgstr);
 
-	      if (mainw->cancelled!=CANCEL_ERROR) {
-#ifndef IS_MINGW
-		// clean up our temp files
-		com=g_strdup_printf("%s stopsubsub \"%s\" 2>/dev/null",prefs->backend_sync,cfile->handle);
-		lives_system(com,TRUE);
-#else
-		// get pid from backend
-		FILE *rfile;
-		ssize_t rlen;
-		char val[16];
-		int pid;
-		com=g_strdup_printf("%s get_pid_for_handle \"%s\"",prefs->backend_sync,cfile->handle);
-		rfile=popen(com,"r");
-		rlen=fread(val,1,16,rfile);
-		pclose(rfile);
-		memset(val+rlen,0,1);
-		pid=atoi(val);
-    
-		lives_win32_kill_subprocesses(pid,TRUE);
-#endif
-		g_free(com);
-	      }
+	      cfile->opening=FALSE;
+	      reget_afilesize(mainw->current_file);
+	      get_total_time(cfile);
 
-	      if (mainw->file_open_params!=NULL) g_free (mainw->file_open_params);
-	      mainw->file_open_params=NULL;
-	      close_current_file(old_file);
-	      lives_set_cursor_style(LIVES_CURSOR_NORMAL,NULL);
-	      return;
-	    }
-	    if (mainw->error==0) add_file_info (cfile->handle,TRUE);
-	    mainw->error=0;
-	    g_free(msgstr);
-
-	    cfile->opening=FALSE;
-	    reget_afilesize(mainw->current_file);
-	    get_total_time(cfile);
-
-	    if (prefs->auto_trim_audio) {
-	      if ((cdata->sync_hint&SYNC_HINT_VIDEO_START)&&cdata->video_start_time<=1.) {
-		// pad with blank frames
-		int extra_frames=cdata->video_start_time*cfile->fps+.5;
-		insert_blank_frames(mainw->current_file,extra_frames,0);
-		load_start_image(cfile->start);
-	      }
-	      if (cfile->total_time>cfile->video_time) {
-		if (cdata->sync_hint&SYNC_HINT_AUDIO_TRIM_START) {
-		  cfile->undo1_dbl=0.;
-		  cfile->undo2_dbl=cfile->total_time-cfile->video_time;
-		  msgstr=g_strdup_printf(_ ("Auto trimming %.2f seconds of audio at start..."),cfile->undo2_dbl);
-		  d_print(msgstr);
-		  g_free(msgstr);
-		  if (on_del_audio_activate(NULL,NULL)) d_print_done();
-		  else d_print("\n");
-		  cfile->changed=FALSE;
+	      if (prefs->auto_trim_audio) {
+		if ((cdata->sync_hint&SYNC_HINT_VIDEO_START)&&cdata->video_start_time<=1.) {
+		  // pad with blank frames
+		  int extra_frames=cdata->video_start_time*cfile->fps+.5;
+		  insert_blank_frames(mainw->current_file,extra_frames,0);
+		  load_start_image(cfile->start);
 		}
-	      }
-	      if (!mainw->effects_paused&&cfile->afilesize>0&&cfile->total_time>cfile->laudio_time) {
-		if (cdata->sync_hint&SYNC_HINT_AUDIO_PAD_START) {
-		  cfile->undo1_dbl=0.;
-		  cfile->undo2_dbl=cfile->total_time-cfile->laudio_time;
-		  cfile->undo_arate=cfile->arate;
-		  cfile->undo_signed_endian=cfile->signed_endian;
-		  cfile->undo_achans=cfile->achans;
-		  cfile->undo_asampsize=cfile->asampsize;
-		  cfile->undo_arps=cfile->arps;
-		  msgstr=g_strdup_printf(_ ("Auto padding with %.2f seconds of silence at start..."),cfile->undo2_dbl);
-		  d_print(msgstr);
-		  g_free(msgstr);
-		  if (on_ins_silence_activate(NULL,NULL)) d_print_done();
-		  else d_print("\n");
-		  cfile->changed=FALSE;
+		if (cfile->total_time>cfile->video_time) {
+		  if (cdata->sync_hint&SYNC_HINT_AUDIO_TRIM_START) {
+		    cfile->undo1_dbl=0.;
+		    cfile->undo2_dbl=cfile->total_time-cfile->video_time;
+		    msgstr=g_strdup_printf(_ ("Auto trimming %.2f seconds of audio at start..."),cfile->undo2_dbl);
+		    d_print(msgstr);
+		    g_free(msgstr);
+		    if (on_del_audio_activate(NULL,NULL)) d_print_done();
+		    else d_print("\n");
+		    cfile->changed=FALSE;
+		  }
+		}
+		if (!mainw->effects_paused&&cfile->afilesize>0&&cfile->total_time>cfile->laudio_time) {
+		  if (cdata->sync_hint&SYNC_HINT_AUDIO_PAD_START) {
+		    cfile->undo1_dbl=0.;
+		    cfile->undo2_dbl=cfile->total_time-cfile->laudio_time;
+		    cfile->undo_arate=cfile->arate;
+		    cfile->undo_signed_endian=cfile->signed_endian;
+		    cfile->undo_achans=cfile->achans;
+		    cfile->undo_asampsize=cfile->asampsize;
+		    cfile->undo_arps=cfile->arps;
+		    msgstr=g_strdup_printf(_ ("Auto padding with %.2f seconds of silence at start..."),cfile->undo2_dbl);
+		    d_print(msgstr);
+		    g_free(msgstr);
+		    if (on_ins_silence_activate(NULL,NULL)) d_print_done();
+		    else d_print("\n");
+		    cfile->changed=FALSE;
+		  }
 		}
 	      }
 	    }
 	  }
 	}
-	get_mime_type(cfile->type,40,cdata);
       }
+
+      get_mime_type(cfile->type,40,cdata);
 
       save_frame_index(mainw->current_file);
 

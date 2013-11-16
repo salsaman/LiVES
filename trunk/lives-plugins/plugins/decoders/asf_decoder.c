@@ -921,7 +921,7 @@ static void idxc_release_all(void) {
     free(indices[i]->clients);
     free(indices[i]);
   }
-
+  nidxc=0;
 }
 
 

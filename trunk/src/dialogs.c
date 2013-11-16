@@ -1989,6 +1989,10 @@ void do_no_mplayer_sox_error(void) {
 }
 
 
+void do_audio_warning(void) {
+  do_error_dialog (_ ("Audio was not loaded; please install mplayer if you expected audio for this clip.\n"));
+}
+
 void do_encoder_sox_error(void) {
   do_error_dialog (_ ("Audio resampling is required for this format.\nPlease install 'sox'\nOr switch to another encoder format in Tools | Preferences | Encoding\n"));
 }

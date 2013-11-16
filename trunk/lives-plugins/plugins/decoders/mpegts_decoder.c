@@ -4043,5 +4043,6 @@ void clip_data_free(lives_clip_data_t *cdata) {
 
 void module_unload(void) {
   idxc_release_all();
+  nidxc=0;
 }
 

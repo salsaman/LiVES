@@ -607,7 +607,7 @@ static void idxc_release_all(void) {
     free(indices[i]->clients);
     free(indices[i]);
   }
-
+  nidxc=0;
 }
 
 static void detach_stream (lives_clip_data_t *cdata) {

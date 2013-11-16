@@ -1403,7 +1403,9 @@ static int lives_mkv_read_header(lives_clip_data_t *cdata) {
     if (track->type == MATROSKA_TRACK_TYPE_VIDEO) {
 
       if (priv->has_video) {
+#ifdef DEBUG
 	fprintf(stderr,"mkv_decoder: duplicate video streams found\n");
+#endif
 	//continue;
       }
 
@@ -1431,6 +1433,9 @@ static int lives_mkv_read_header(lives_clip_data_t *cdata) {
 
       cdata->frame_width=track->video.display_width;
       cdata->frame_height=track->video.display_height;
+
+      if (cdata->width!=cdata->frame_width||cdata->height!=cdata->frame_height)
+	fprintf(stderr,"mkv_decoder: info frame size=%d x %d, pixel size=%d x %d\n",cdata->frame_width,cdata->frame_height,cdata->width,cdata->height);
 
       if (track->video.flag_interlaced) cdata->interlace=LIVES_INTERLACE_BOTTOM_FIRST;
 
@@ -2177,6 +2182,10 @@ static lives_clip_data_t *init_cdata (void) {
   got_eof=FALSE;
   errval=0;
   
+  memset(cdata->author,0,1);
+  memset(cdata->title,0,1);
+  memset(cdata->comment,0,1);
+
   return cdata;
 }
 
@@ -2213,6 +2222,10 @@ static lives_clip_data_t *mkv_clone(lives_clip_data_t *cdata) {
   snprintf(clone->audio_name,512,"%s",cdata->audio_name);
   clone->seek_flag=cdata->seek_flag;
   clone->sync_hint=cdata->sync_hint;
+
+  snprintf(clone->author,256,"%s",cdata->author);
+  snprintf(clone->title,256,"%s",cdata->title);
+  snprintf(clone->comment,256,"%s",cdata->comment);
 
   // create "priv" elements
   dpriv=clone->priv;

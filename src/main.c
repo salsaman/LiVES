@@ -2694,7 +2694,7 @@ int main (int argc, char *argv[]) {
 
 #ifdef LIVES_NO_DEBUG
   // don't crash on GTK+ fatals
-  //g_log_set_always_fatal ((GLogLevelFlags)0);
+  g_log_set_always_fatal ((GLogLevelFlags)0);
 #endif
 
   g_log_set_default_handler(lives_log_handler,NULL);
@@ -4350,8 +4350,14 @@ boolean pull_frame_at_size (weed_plant_t *layer, const gchar *image_ext, weed_ti
 	  // try to switch palette
 	  if (decplugin_supports_palette(dplug,target_palette)) {
 	    // switch palettes and re-read clip_data
+	    int oldpal=dplug->cdata->current_palette;
 	    dplug->cdata->current_palette=target_palette;
-	    dplug->cdata=(*dplug->decoder->get_clip_data)(dplug->cdata->URI,dplug->cdata);
+	    if (dplug->decoder->set_palette!=NULL) {
+	      if (!(*dplug->decoder->set_palette)(dplug->cdata)) {
+		dplug->cdata->current_palette=oldpal;
+		(*dplug->decoder->set_palette)(dplug->cdata);
+	      }
+	    }
 	  }
 	  else {
 	    if (dplug->cdata->current_palette!=dplug->cdata->palettes[0]&&
@@ -4359,13 +4365,27 @@ boolean pull_frame_at_size (weed_plant_t *layer, const gchar *image_ext, weed_ti
 		  weed_palette_is_rgb_palette(dplug->cdata->palettes[0]))||
 		 (weed_palette_is_yuv_palette(target_palette)&&
 		  weed_palette_is_yuv_palette(dplug->cdata->palettes[0])))) {
+	      int oldpal=dplug->cdata->current_palette;
 	      dplug->cdata->current_palette=dplug->cdata->palettes[0];
-	      dplug->cdata=(*dplug->decoder->get_clip_data)(dplug->cdata->URI,dplug->cdata);
+	      if (dplug->decoder->set_palette!=NULL) {
+		if (!(*dplug->decoder->set_palette)(dplug->cdata)) {
+		  dplug->cdata->current_palette=oldpal;
+		  (*dplug->decoder->set_palette)(dplug->cdata);
+		}
+	      }
 	    }
 	  }
 	}
-	width=dplug->cdata->frame_width/weed_palette_get_pixels_per_macropixel(dplug->cdata->current_palette);
-	height=dplug->cdata->frame_height;
+	// TODO *** - check for auto-border : we might use width,height instead of frame_width,frame_height, and handle this in the plugin
+	if (!prefs->auto_nobord) {
+	  width=dplug->cdata->frame_width/weed_palette_get_pixels_per_macropixel(dplug->cdata->current_palette);
+	  height=dplug->cdata->frame_height;
+	}
+	else {
+	  width=dplug->cdata->width/weed_palette_get_pixels_per_macropixel(dplug->cdata->current_palette);
+	  height=dplug->cdata->height;
+	}
+
 	weed_set_int_value(layer,"width",width);
 	weed_set_int_value(layer,"height",height);
 	weed_set_int_value(layer,"current_palette",dplug->cdata->current_palette);

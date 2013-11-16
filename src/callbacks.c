@@ -500,8 +500,6 @@ void lives_exit (void) {
   mainw->multitrack=NULL;
   mainw->is_ready=FALSE;
 
-  //end_threaded_dialog();
-
   if (mainw->mgeom!=NULL) g_free(mainw->mgeom);
 
   if (prefs->disabled_decoders!=NULL) {

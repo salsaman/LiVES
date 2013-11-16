@@ -350,17 +350,21 @@ void open_file_sel(const gchar *file_name, double start, int frames) {
 	cfile->opening=TRUE;
 	cfile->clip_type=CLIP_TYPE_FILE;
 	
-	if (!prefs->auto_nobord) {
-	  cfile->hsize=cdata->frame_width*weed_palette_get_pixels_per_macropixel(cdata->current_palette);
+	if (cdata->frame_width>0) {
+	  cfile->hsize=cdata->frame_width;
 	  cfile->vsize=cdata->frame_height;
 	}
 	else {
-	  cfile->hsize=cdata->width*weed_palette_get_pixels_per_macropixel(cdata->current_palette);
+	  cfile->hsize=cdata->width;
 	  cfile->vsize=cdata->height;
 	}
 
 	cfile->frames=cdata->nframes;
 	
+	snprintf(cfile->author,256,"%s",cdata->author);
+	snprintf(cfile->title,256,"%s",cdata->title);
+	snprintf(cfile->comment,256,"%s",cdata->comment);
+
 	if (frames>0&&cfile->frames>frames) cfile->frames=frames;
 	
 	cfile->start=1;
@@ -3536,13 +3540,13 @@ boolean add_file_info(const gchar *check_handle, boolean aud_only) {
     
       pieces=get_token_count (mainw->msg,'|');
     
-      if (pieces>14&&array[15]!=NULL) {
+      if (!strlen(cfile->title)&&pieces>14&&array[15]!=NULL) {
 	g_snprintf (cfile->title,256,"%s",g_strstrip(array[15]));
       }
-      if (pieces>15&&array[16]!=NULL) {
+      if (!strlen(cfile->author)&&pieces>15&&array[16]!=NULL) {
 	g_snprintf (cfile->author,256,"%s",g_strstrip(array[16]));
       }
-      if (pieces>16&&array[17]!=NULL) {
+      if (!strlen(cfile->comment)&&pieces>16&&array[17]!=NULL) {
 	g_snprintf (cfile->comment,256,"%s",g_strstrip(array[17]));
       }
     
@@ -3648,12 +3652,23 @@ boolean add_file_info(const gchar *check_handle, boolean aud_only) {
   g_free(mesg1);
   g_free(mesg);
 
-  // get the comments
+  // get the author,title,comments
+  if (strlen (cfile->author)) {
+    mesg=g_strdup_printf(_ (" - Author: %s\n"),cfile->comment);
+    d_print(mesg);
+    g_free(mesg);
+  }
+  if (strlen (cfile->title)) {
+    mesg=g_strdup_printf(_ (" - Title: %s\n"),cfile->comment);
+    d_print(mesg);
+    g_free(mesg);
+  }
   if (strlen (cfile->comment)) {
     mesg=g_strdup_printf(_ (" - Comment: %s\n"),cfile->comment);
     d_print(mesg);
     g_free(mesg);
   }
+
   return TRUE;
 }
 
@@ -5512,7 +5527,7 @@ static boolean recover_files(gchar *recovery_file, boolean auto_recover) {
       }
     
       if (cfile->ext_src!=NULL) {
-	//cdata=clone_cdata(mainw->current_file);
+	//cdata=clone_cdata(mainw->current_file); // testing only
 	//((lives_decoder_t *)cfile->ext_src)->cdata=cdata;
 	check_clip_integrity(mainw->current_file,cdata);
       }

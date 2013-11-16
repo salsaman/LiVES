@@ -58,6 +58,10 @@ typedef struct {
   int nclips; ///< number of clips (titles) in container
   char container_name[512]; ///< name of container, e.g. "ogg" or NULL
 
+  char title[256];
+  char author[256];
+  char comment[256];
+
   /// plugin should init this to 0 if URI changes
   int current_clip; ///< current clip number in container (starts at 0, MUST be <= nclips) [rw host]
 
@@ -124,10 +128,10 @@ const char *version(void);
 
 // should be threadsafe, and clip_data should be freed with clip_data_free() when no longer required
 
-lives_clip_data_t *get_clip_data(const char *URI, lives_clip_data_t *clip_data);
+lives_clip_data_t *get_clip_data(const char *URI, lives_clip_data_t *);
 
 /// frame starts at 0
-boolean get_frame(const lives_clip_data_t *cdata, int64_t frame, int *rowstrides, int height, void **pixel_data);
+boolean get_frame(const lives_clip_data_t *, int64_t frame, int *rowstrides, int height, void **pixel_data);
 
 /// free clip data - this should be called for each instance before unloading the module
 void clip_data_free(lives_clip_data_t *);
@@ -137,6 +141,8 @@ void clip_data_free(lives_clip_data_t *);
 
 // opt fns
 const char *module_check_init(void);
+
+boolean set_palette(lives_clip_data_t *);
 
 int64_t rip_audio (const lives_clip_data_t *, const char *fname, int64_t stframe, int64_t nframes, unsigned char **abuff);
 void rip_audio_cleanup(const lives_clip_data_t *);

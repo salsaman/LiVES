@@ -1,5 +1,5 @@
 // LiVES - dv decoder plugin
-// (c) G. Finch 2008 - 2010 <salsaman@xs4all.nl,salsaman@gmail.com>
+// (c) G. Finch 2008 - 2013 <salsaman@gmail.com>
 // released under the GNU GPL 3 or later
 // see file COPYING or www.gnu.org for details
 
@@ -20,7 +20,7 @@
 
 #include "dv_decoder.h"
 
-const char *plugin_version="LiVES dv decoder version 1.2";
+const char *plugin_version="LiVES dv decoder version 1.3";
 
 static FILE *nulfile;
 
@@ -49,21 +49,27 @@ static void dv_dec_set_header(lives_clip_data_t *cdata, uint8_t *data) {
 }
 
 
-static boolean attach_stream(lives_clip_data_t *cdata) {
+static boolean attach_stream(lives_clip_data_t *cdata, boolean isclone) {
   // open the file and get a handle
   struct stat sb;
   uint8_t header[DV_HEADER_SIZE];
   uint8_t *fbuffer;
   lives_dv_priv_t *priv=cdata->priv;
 
-  char *ext=rindex(cdata->URI,'.');
+  char *ext;
 
-  if (ext==NULL||(strncmp(ext,".dv",3)&&strncmp(ext,".avi",4))) return FALSE;
+  if (!isclone) {
 
-  if (!strncmp(ext,".avi",4)) {
-    //needs further analysis
-    return FALSE;
+    ext=rindex(cdata->URI,'.');
+
+    if (ext==NULL||(strncmp(ext,".dv",3)&&strncmp(ext,".avi",4))) return FALSE;
+
+    if (!strncmp(ext,".avi",4)) {
+      //needs further analysis
+      return FALSE;
+    }
   }
+
 
   if ((priv->fd=open(cdata->URI,O_RDONLY))==-1) {
     fprintf(stderr, "dv_decoder: unable to open %s\n",cdata->URI);
@@ -101,10 +107,11 @@ static boolean attach_stream(lives_clip_data_t *cdata) {
   dv_parse_audio_header(priv->dv_dec,fbuffer);
   free(fbuffer);
 
-  fstat(priv->fd,&sb);
+  if (!isclone) {
+    fstat(priv->fd,&sb);
+    if (sb.st_size) cdata->nframes = (int)(sb.st_size / priv->frame_size);
+  }
 
-  if (sb.st_size) cdata->nframes = (int)(sb.st_size / priv->frame_size);
-  
   priv->dv_dec->quality=DV_QUALITY_BEST;
   //priv.dv_dec->add_ntsc_setup=TRUE;
     
@@ -148,7 +155,6 @@ static lives_clip_data_t *init_cdata (void) {
   cdata->palettes=malloc(4*sizeof(int));
   
   // plugin allows a choice of palettes; we set these in order of preference
-  // and implement a set_palette() function
   cdata->palettes[0]=WEED_PALETTE_YUYV8888;
   cdata->palettes[1]=WEED_PALETTE_RGB24;
   cdata->palettes[2]=WEED_PALETTE_BGR24;
@@ -169,7 +175,58 @@ static lives_clip_data_t *init_cdata (void) {
   
   cdata->sync_hint=0;
 
+  memset(cdata->author,0,1);
+  memset(cdata->title,0,1);
+  memset(cdata->comment,0,1);
+
   return cdata;
+}
+
+
+static lives_clip_data_t *dv_clone(lives_clip_data_t *cdata) {
+  lives_clip_data_t *clone=init_cdata();
+
+  // copy from cdata to clone, with a new context for clone
+  clone->URI=strdup(cdata->URI);
+  clone->nclips=cdata->nclips;
+  snprintf(clone->container_name,512,"%s",cdata->container_name);
+  clone->current_clip=cdata->current_clip;
+  clone->width=cdata->width;
+  clone->height=cdata->height;
+  clone->nframes=cdata->nframes;
+  clone->interlace=cdata->interlace;
+  clone->offs_x=cdata->offs_x;
+  clone->offs_y=cdata->offs_y;
+  clone->frame_width=cdata->frame_width;
+  clone->frame_height=cdata->frame_height;
+  clone->par=cdata->par;
+  clone->fps=cdata->fps;
+  clone->current_palette=cdata->current_palette;
+  clone->YUV_sampling=cdata->YUV_sampling;
+  clone->YUV_clamping=cdata->YUV_clamping;
+  snprintf(clone->video_name,512,"%s",cdata->video_name);
+  clone->arate=cdata->arate;
+  clone->achans=cdata->achans;
+  clone->asamps=cdata->asamps;
+  clone->asigned=cdata->asigned;
+  clone->ainterleaf=cdata->ainterleaf;
+  snprintf(clone->audio_name,512,"%s",cdata->audio_name);
+  clone->seek_flag=cdata->seek_flag;
+  clone->sync_hint=cdata->sync_hint;
+  clone->video_start_time=cdata->video_start_time;
+
+  snprintf(clone->author,256,"%s",cdata->author);
+  snprintf(clone->title,256,"%s",cdata->title);
+  snprintf(clone->comment,256,"%s",cdata->comment);
+
+  if (!attach_stream(clone,TRUE)) {
+    free(clone->URI);
+    clone->URI=NULL;
+    clip_data_free(clone);
+    return NULL;
+  }
+
+  return clone;
 }
 
 
@@ -185,6 +242,11 @@ lives_clip_data_t *get_clip_data(const char *URI, lives_clip_data_t *cdata) {
   // cdata as the second parameter
 
   lives_dv_priv_t *priv;
+
+    if (URI==NULL&&cdata!=NULL) {
+    // create a clone of cdata
+    return dv_clone(cdata);
+  }
 
   if (cdata!=NULL&&cdata->current_clip>0) {
     // currently we only support one clip per container
@@ -203,7 +265,7 @@ lives_clip_data_t *get_clip_data(const char *URI, lives_clip_data_t *cdata) {
       free(cdata->URI);
     }
     cdata->URI=strdup(URI);
-    if (!attach_stream(cdata)) {
+    if (!attach_stream(cdata,FALSE)) {
       free(cdata->URI);
       cdata->URI=NULL;
       clip_data_free(cdata);
@@ -221,23 +283,11 @@ lives_clip_data_t *get_clip_data(const char *URI, lives_clip_data_t *cdata) {
 
   sprintf(cdata->audio_name,"%s","pcm");
 
-  // video part
-  switch (cdata->current_palette) {
-  case WEED_PALETTE_YUYV8888:
-    cdata->width=360;
-    cdata->YUV_clamping=WEED_YUV_CLAMPING_UNCLAMPED;
-    cdata->YUV_subspace=WEED_YUV_SUBSPACE_YCBCR;
-    cdata->YUV_sampling=WEED_YUV_SAMPLING_DEFAULT;
-    break;
-  case WEED_PALETTE_RGB24:
-    cdata->width=720;
-    break;
-  case WEED_PALETTE_BGR24:
-    cdata->width=720;
-    break;
-  default:
-    fprintf(stderr,"Error - invalid palette set in dv decoder !\n");
-  }
+  cdata->YUV_clamping=WEED_YUV_CLAMPING_UNCLAMPED;
+  cdata->YUV_subspace=WEED_YUV_SUBSPACE_YCBCR;
+  cdata->YUV_sampling=WEED_YUV_SAMPLING_DEFAULT;
+
+  cdata->width=720;
 
   // cdata->height was set when we attached the stream
 
@@ -257,6 +307,11 @@ lives_clip_data_t *get_clip_data(const char *URI, lives_clip_data_t *cdata) {
 
   cdata->asigned=TRUE;
   cdata->ainterleaf=FALSE;
+
+  // misc
+  cdata->video_start_time=0.;
+
+  
 
   return cdata;
 }

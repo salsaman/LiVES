@@ -204,6 +204,10 @@ typedef struct {
   int nclips; ///< number of clips (titles) in container
   gchar container_name[512]; ///< name of container, e.g. "ogg" or NULL
 
+  char title[256];
+  char author[256];
+  char comment[256];
+
   /// plugin should init this to 0 if URI changes
   int current_clip; ///< current clip number in container (starts at 0, MUST be <= nclips) [rw host]
 
@@ -286,6 +290,7 @@ typedef struct {
 
   // optional
   const char *(*module_check_init)(void);
+  boolean (*set_palette)(lives_clip_data_t *);
   int64_t (*rip_audio) (const lives_clip_data_t *, const char *fname, int64_t stframe, int64_t nframes, 
 			unsigned char **abuff);
   void (*rip_audio_cleanup) (const lives_clip_data_t *cdata);

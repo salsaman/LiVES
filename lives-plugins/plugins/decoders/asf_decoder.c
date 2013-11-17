@@ -2217,7 +2217,7 @@ static boolean attach_stream(lives_clip_data_t *cdata, boolean isclone) {
   priv->have_start_dts=TRUE;
   cdata->video_start_time=(double)pts/10000.;
 
-  cdata->sync_hint=SYNC_HINT_AUDIO_PAD_START;
+  cdata->sync_hint=0;
   //#define DEBUG
 #ifdef DEBUG
   printf("first pts is %ld\n",pts);

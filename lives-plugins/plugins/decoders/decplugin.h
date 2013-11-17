@@ -106,7 +106,11 @@ typedef struct {
 
 #define SYNC_HINT_AUDIO_TRIM_START (1<<0)
 #define SYNC_HINT_AUDIO_PAD_START (1<<1)
-#define SYNC_HINT_VIDEO_START (1<<2)
+#define SYNC_HINT_AUDIO_TRIM_END (1<<2)
+#define SYNC_HINT_AUDIO_PAD_END (1<<3)
+
+#define SYNC_HINT_VIDEO_PAD_START (1<<4)
+#define SYNC_HINT_VIDEO_PAD_END (1<<5)
 
   int sync_hint;
 

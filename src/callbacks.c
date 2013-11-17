@@ -5145,6 +5145,8 @@ boolean on_load_set_ok (GtkButton *button, gpointer user_data) {
       boolean next=FALSE;
       gchar *orig_file_name=g_strdup(cfile->file_name);
 
+      lives_clip_data_t *fake_cdata=lives_calloc(sizeof(lives_clip_data_t),1);
+
       // cd to clip directory - so decoder plugins can read temp files
       gchar *ppath=g_build_filename(prefs->tmpdir,cfile->handle,NULL);
 
@@ -5156,8 +5158,18 @@ boolean on_load_set_ok (GtkButton *button, gpointer user_data) {
       while (1) {
 	threaded_dialog_spin();
 
-	if ((cdata=get_decoder_cdata(cfile,NULL))==NULL) {
+	fake_cdata->fps=0.;
+
+	if (cfile->fps>0.&&cfile->frames>0) {
+	  fake_cdata->URI=g_strdup(cfile->file_name);
+	  fake_cdata->fps=cfile->fps;
+	  fake_cdata->nframes=cfile->frames;
+	}
+
+	if ((cdata=get_decoder_cdata(cfile,NULL,fake_cdata->fps!=0.?fake_cdata:NULL))==NULL) {
 	  if (mainw->error) {
+	    g_free(fake_cdata->URI);
+	    g_free(fake_cdata);
 	    if (do_original_lost_warning(orig_file_name)) {
 	      gchar *new_file_name=choose_file(vid_open_dir,NULL,NULL,LIVES_FILE_CHOOSER_ACTION_OPEN,NULL,NULL);
 	      if (new_file_name!=NULL) {
@@ -5185,6 +5197,8 @@ boolean on_load_set_ok (GtkButton *button, gpointer user_data) {
 	    needs_update=TRUE;
 	  }
 	}
+	g_free(fake_cdata->URI);
+	g_free(fake_cdata);
 	break;
       }
       g_free(orig_file_name);

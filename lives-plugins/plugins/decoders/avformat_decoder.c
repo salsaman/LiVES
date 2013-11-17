@@ -239,8 +239,15 @@ static boolean attach_stream(lives_clip_data_t *cdata, boolean isclone) {
 
   int64_t i_start_time=0;
 
+  boolean is_partial_clone=FALSE;
+
   register int i;
 
+
+  if (isclone&&!priv->inited) {
+    isclone=FALSE;
+    is_partial_clone=TRUE;
+  }
 
   if ((priv->fd=open(cdata->URI,O_RDONLY))==-1) {
     fprintf(stderr, "avformat_decoder: unable to open %s\n",cdata->URI);
@@ -286,6 +293,7 @@ static boolean attach_stream(lives_clip_data_t *cdata, boolean isclone) {
   fprintf( stderr, "avformat detected format: %s\n", fmt->name );
 
   priv->fmt=fmt;
+  priv->inited=TRUE;
 
  skip_probe:
 
@@ -414,13 +422,16 @@ static boolean attach_stream(lives_clip_data_t *cdata, boolean isclone) {
       if (cdata->par==0) cdata->par=1;
 
       priv->fps_avg=FALSE;
-      cdata->fps=s->time_base.den/s->time_base.num;
-      if (cdata->fps>=1000.||cdata->fps==0.) {
-	cdata->fps=(float)s->avg_frame_rate.num/(float)s->avg_frame_rate.den;
-	priv->fps_avg=TRUE;
-	if (isnan(cdata->fps)) {
-	  cdata->fps=s->time_base.den/s->time_base.num;
-	  priv->fps_avg=FALSE;
+
+      if (!is_partial_clone) {
+	cdata->fps=s->time_base.den/s->time_base.num;
+	if (cdata->fps>=1000.||cdata->fps==0.) {
+	  cdata->fps=(float)s->avg_frame_rate.num/(float)s->avg_frame_rate.den;
+	  priv->fps_avg=TRUE;
+	  if (isnan(cdata->fps)) {
+	    cdata->fps=s->time_base.den/s->time_base.num;
+	    priv->fps_avg=FALSE;
+	  }
 	}
       }
 
@@ -435,9 +446,11 @@ static boolean attach_stream(lives_clip_data_t *cdata, boolean isclone) {
       fprintf(stderr,"fps is %.4f %d %d %d %d %d\n",cdata->fps,s->time_base.den,s->time_base.num,cc->time_base.den,cc->time_base.num,priv->ctx->ticks_per_frame);
 #endif
 
-      if (priv->ic->duration!=(int64_t)AV_NOPTS_VALUE)
-	cdata->nframes=((double)priv->ic->duration/(double)AV_TIME_BASE * cdata->fps -  .5);
-      if ((cdata->nframes==0||cdata->fps==1000.)&&s->nb_frames>1) cdata->nframes=s->nb_frames;
+      if (!is_partial_clone) {
+	if (priv->ic->duration!=(int64_t)AV_NOPTS_VALUE)
+	  cdata->nframes=((double)priv->ic->duration/(double)AV_TIME_BASE * cdata->fps -  .5);
+	if ((cdata->nframes==0||cdata->fps==1000.)&&s->nb_frames>1) cdata->nframes=s->nb_frames;
+      }
 
       priv->vstream=i;
 
@@ -714,6 +727,8 @@ static lives_clip_data_t *init_cdata (void) {
   priv->astream=-1;
   priv->vstream=-1;
 
+  priv->inited=FALSE;
+
   cdata->seek_flag=0;
 
   priv->ctx=NULL;
@@ -765,18 +780,27 @@ static lives_clip_data_t *avf_clone(lives_clip_data_t *cdata) {
   dpriv=clone->priv;
   spriv=cdata->priv;
 
-  dpriv->vstream=spriv->vstream;
-  dpriv->astream=spriv->astream;
+  if (spriv!=NULL) {
+    dpriv->vstream=spriv->vstream;
+    dpriv->astream=spriv->astream;
 
-  dpriv->fps_avg=spriv->fps_avg;
+    dpriv->fps_avg=spriv->fps_avg;
 
-  dpriv->fmt=spriv->fmt;
+    dpriv->fmt=spriv->fmt;
+    dpriv->inited=TRUE;
+  }
 
   if (!attach_stream(clone,TRUE)) {
     free(clone->URI);
     clone->URI=NULL;
     clip_data_free(clone);
     return NULL;
+  }
+
+  if (spriv==NULL) {
+    clone->current_palette=clone->palettes[0];
+    clone->current_clip=0;
+    dpriv->last_frame=1000000000;
   }
 
   return clone;
@@ -795,7 +819,7 @@ lives_clip_data_t *get_clip_data(const char *URI, lives_clip_data_t *cdata) {
   lives_av_priv_t *priv;
 
   if (URI==NULL&&cdata!=NULL) {
-    // create a clone of cdata
+    // create a clone of cdata - we also need to be able to handle a "fake" clone with only URI, nframes and fps set (priv == NULL)
     return avf_clone(cdata);
   }
 
@@ -857,7 +881,7 @@ lives_clip_data_t *get_clip_data(const char *URI, lives_clip_data_t *cdata) {
 
   cdata->nframes=real_frames;
 
-  av_free(priv->pFrame);
+  if (priv->pFrame!=NULL) av_free(priv->pFrame);
   priv->pFrame=NULL;
 
   return cdata;

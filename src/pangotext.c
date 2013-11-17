@@ -191,7 +191,6 @@ PangoLayout *render_text_to_cr (lives_painter_t *cr, const char *text, const cha
   lives_painter_new_path(cr);
   lives_painter_move_to(cr, x_text, y_text);
   lives_painter_set_source_rgba(cr,fg->red/66535., fg->green/66535., fg->blue/66535., f_alpha);
-  pango_cairo_show_layout(cr, layout);
   pango_font_description_free(font);
 
   return layout;
@@ -226,6 +225,7 @@ weed_plant_t *render_text_to_layer(weed_plant_t *layer, const char *text, const 
   if (cr==NULL) return layer; ///< error occured
 
   layout = render_text_to_cr(cr,text,fontname,size,mode,fg_col,bg_col,center,rising,top,0,width,height);
+  pango_cairo_show_layout(cr, layout);
   // do not !!
   //lives_painter_paint(cr);
 

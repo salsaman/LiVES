@@ -13,6 +13,7 @@ typedef struct  {
   AVPacket packet;
   boolean fps_avg;
   boolean black_fill;
+  boolean inited;
 
   int astream;
   int vstream;

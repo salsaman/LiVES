@@ -978,11 +978,14 @@ static boolean attach_stream(lives_clip_data_t *cdata, boolean isclone) {
   char header[16];
   unsigned char buffer[4096];
   unsigned char flags;
+
   int i,len,retval;
   int size;
+
   boolean got_vidst=FALSE;
   boolean got_picture=FALSE;
   boolean gotframe2=FALSE;
+  boolean is_partial_clone=FALSE;
 
   double fps;
 
@@ -1006,6 +1009,12 @@ static boolean attach_stream(lives_clip_data_t *cdata, boolean isclone) {
 #ifdef DEBUG
   fprintf(stderr,"\n");
 #endif
+
+  if (isclone&&!priv->inited) {
+    isclone=FALSE;
+    is_partial_clone=TRUE;
+  }
+
 
   if ((priv->fd=open(cdata->URI,O_RDONLY))==-1) {
     fprintf(stderr, "asf_decoder: unable to open %s\n",cdata->URI);
@@ -2107,6 +2116,8 @@ static boolean attach_stream(lives_clip_data_t *cdata, boolean isclone) {
   }
 
 
+  priv->inited=TRUE;
+
   priv->data_start=priv->input_position;
 
   priv->start_dts=0; // will reset this later
@@ -2168,7 +2179,6 @@ static boolean attach_stream(lives_clip_data_t *cdata, boolean isclone) {
     return FALSE;
   }
 
-  priv->picture = avcodec_alloc_frame();
 
   priv->input_position=priv->data_start;
   asf_reset_header(priv->s);
@@ -2177,6 +2187,8 @@ static boolean attach_stream(lives_clip_data_t *cdata, boolean isclone) {
   priv->kframe=add_keyframe(cdata,priv->data_start,0,0);
   pthread_mutex_unlock(&priv->idxc->mutex);
   priv->def_packet_size=priv->asf->hdr.max_pktsize*10;
+
+  priv->picture = avcodec_alloc_frame();
 
   do {
     if (priv->avpkt.data!=NULL) free(priv->avpkt.data);
@@ -2404,6 +2416,8 @@ static boolean attach_stream(lives_clip_data_t *cdata, boolean isclone) {
   priv->last_frame=-1;
   priv->black_fill=FALSE;
 
+  if (is_partial_clone) return TRUE;
+
   vidst->duration = get_last_video_dts(cdata);
 
   cdata->nframes = dts_to_frame(cdata,vidst->duration+priv->start_dts)+2;
@@ -2464,6 +2478,8 @@ static lives_clip_data_t *init_cdata (void) {
 
   priv->idxc=NULL;
   
+  priv->inited=FALSE;
+
   cdata->sync_hint=0;
 
   cdata->video_start_time=0.;
@@ -2517,7 +2533,10 @@ static lives_clip_data_t *asf_clone(lives_clip_data_t *cdata) {
   dpriv=clone->priv;
   spriv=cdata->priv;
 
-  dpriv->filesize=spriv->filesize;
+  if (spriv!=NULL) {
+    dpriv->filesize=spriv->filesize;
+    dpriv->inited=TRUE;
+  }
 
   if (!attach_stream(clone,TRUE)) {
     free(clone->URI);
@@ -2528,14 +2547,40 @@ static lives_clip_data_t *asf_clone(lives_clip_data_t *cdata) {
 
   asf_reset_header(dpriv->s);
 
-  dpriv->def_packet_size=spriv->def_packet_size;
-  dpriv->start_dts=spriv->start_dts;
-  dpriv->have_start_dts=TRUE;
-  dpriv->last_frame=-1;
-  dpriv->black_fill=FALSE;
+  if (spriv!=NULL) {
+    dpriv->def_packet_size=spriv->def_packet_size;
+    dpriv->start_dts=spriv->start_dts;
+    dpriv->have_start_dts=TRUE;
+    dpriv->st->duration=spriv->st->duration;
 
-  dpriv->st->duration=spriv->st->duration;
+    dpriv->last_frame=-1;
+    dpriv->black_fill=FALSE;
+  }
+  else {  
+    clone->nclips=1;
 
+    ///////////////////////////////////////////////////////////
+
+    sprintf(clone->container_name,"%s","asf");
+
+    // clone->height was set when we attached the stream
+
+    clone->interlace=LIVES_INTERLACE_NONE;
+
+    clone->frame_width=clone->width+clone->offs_x*2;
+    clone->frame_height=clone->height+clone->offs_y*2;
+
+    if (dpriv->ctx->width==clone->frame_width) clone->offs_x=0;
+    if (dpriv->ctx->height==clone->frame_height) clone->offs_y=0;
+
+    ////////////////////////////////////////////////////////////////////
+
+    clone->asigned=TRUE;
+    clone->ainterleaf=TRUE;
+
+  }
+
+  if (dpriv->picture!=NULL) av_free(dpriv->picture);
   dpriv->picture=NULL;
 
   return clone;
@@ -2557,7 +2602,7 @@ lives_clip_data_t *get_clip_data(const char *URI, lives_clip_data_t *cdata) {
   lives_asf_priv_t *priv;
 
   if (URI==NULL&&cdata!=NULL) {
-    // create a clone of cdata
+    // create a clone of cdata - we also need to be able to handle a "fake" clone with only URI, nframes and fps set (priv == NULL)
     return asf_clone(cdata);
   }
 
@@ -2611,7 +2656,7 @@ lives_clip_data_t *get_clip_data(const char *URI, lives_clip_data_t *cdata) {
   cdata->asigned=TRUE;
   cdata->ainterleaf=TRUE;
 
-  av_free(priv->picture);
+  if (priv->picture!=NULL) av_free(priv->picture);
   priv->picture=NULL;
 
   return cdata;

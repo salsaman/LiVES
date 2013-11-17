@@ -125,6 +125,7 @@ typedef struct {
 typedef struct {
   int fd;
   int pack_offset;
+  boolean inited;
   int64_t input_position;
   int64_t data_start;
   AVCodec *codec;

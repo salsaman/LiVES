@@ -340,7 +340,7 @@ void open_file_sel(const gchar *file_name, double start, int frames) {
       lives_chdir(ppath,FALSE);
       g_free(ppath);
 	
-      cdata=get_decoder_cdata(cfile,prefs->disabled_decoders);
+      cdata=get_decoder_cdata(cfile,prefs->disabled_decoders,NULL);
 
       lives_chdir(cwd,FALSE);
       g_free(cwd);
@@ -5536,13 +5536,25 @@ static boolean recover_files(gchar *recovery_file, boolean auto_recover) {
 	// cd to clip directory - so decoder plugins can write temp files
 	gchar *ppath=g_build_filename(prefs->tmpdir,cfile->handle,NULL);
 	boolean next=FALSE;
+	lives_clip_data_t *fake_cdata=lives_calloc(sizeof(lives_clip_data_t),1);
 
 	lives_chdir(ppath,FALSE);
 	g_free(ppath);
 
 	while (1) {
 	  threaded_dialog_spin();
-	  if ((cdata=get_decoder_cdata(cfile,NULL))==NULL) {
+
+	  fake_cdata->fps=0.;
+
+	  if (cfile->fps>0.&&cfile->frames>0) {
+	    fake_cdata->URI=g_strdup(cfile->file_name);
+	    fake_cdata->fps=cfile->fps;
+	    fake_cdata->nframes=cfile->frames;
+	  }
+
+	  if ((cdata=get_decoder_cdata(cfile,NULL,fake_cdata->fps!=0.?fake_cdata:NULL))==NULL) {
+	    g_free(fake_cdata->URI);
+	    g_free(fake_cdata);
 	    next=FALSE;
 	    if (mainw->error) {
 	      if (do_original_lost_warning(cfile->file_name)) {
@@ -5559,6 +5571,8 @@ static boolean recover_files(gchar *recovery_file, boolean auto_recover) {
 	  threaded_dialog_spin();
 	  break;
 	}
+	g_free(fake_cdata->URI);
+	g_free(fake_cdata);
 	if (next) {
 	  close_current_file(last_current_file);
 	  continue;

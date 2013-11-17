@@ -2238,10 +2238,9 @@ LIVES_INLINE lives_clip_data_t *clone_cdata(int fileno) {
 }
 
 
-static lives_decoder_t *try_decoder_plugins(char *file_name, GList *disabled) {
+static lives_decoder_t *try_decoder_plugins(char *file_name, GList *disabled, const lives_clip_data_t *fake_cdata) {
   lives_decoder_t *dplug=(lives_decoder_t *)g_malloc(sizeof(lives_decoder_t));
   GList *decoder_plugin=mainw->decoder_list;
-  gchar *tmp;
 
   while (decoder_plugin!=NULL) {
     lives_decoder_sys_t *dpsys=(lives_decoder_sys_t *)decoder_plugin->data;
@@ -2257,11 +2256,9 @@ static lives_decoder_t *try_decoder_plugins(char *file_name, GList *disabled) {
     g_print("trying decoder %s\n",dpsys->name);
 #endif
 
+    dplug->cdata=(dpsys->get_clip_data)(file_name!=NULL?file_name:fake_cdata->URI,NULL);
 
-    if ((dplug->cdata=(dpsys->get_clip_data)((tmp=(char *)g_filename_from_utf8 (file_name,-1,NULL,NULL,NULL)),
-					     NULL))!=NULL) {
-      g_free(tmp);
-
+    if (dplug->cdata!=NULL) {
       // check for sanity
 
       if (!sanity_check_cdata(dplug->cdata)) {
@@ -2278,9 +2275,6 @@ static lives_decoder_t *try_decoder_plugins(char *file_name, GList *disabled) {
       }
       break;
     }
-    else {
-      g_free(tmp);
-    }
     decoder_plugin=decoder_plugin->next;
   }
   return dplug;
@@ -2290,7 +2284,7 @@ static lives_decoder_t *try_decoder_plugins(char *file_name, GList *disabled) {
 
 
 
-const lives_clip_data_t *get_decoder_cdata(file *sfile, GList *disabled) {
+const lives_clip_data_t *get_decoder_cdata(file *sfile, GList *disabled, const lives_clip_data_t *fake_cdata) {
   // pass file to each decoder (demuxer) plugin in turn, until we find one that can parse
   // the file
   // NULL is returned if no decoder plugin recognises the file - then we
@@ -2325,7 +2319,7 @@ const lives_clip_data_t *get_decoder_cdata(file *sfile, GList *disabled) {
     mainw->decoders_loaded=TRUE;
   }
 
-  dplug=try_decoder_plugins(sfile->name,disabled);
+  dplug=try_decoder_plugins(fake_cdata==NULL?sfile->file_name:NULL,disabled,fake_cdata);
 
   lives_set_cursor_style(LIVES_CURSOR_NORMAL,NULL);
 

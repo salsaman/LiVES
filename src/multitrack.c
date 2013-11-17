@@ -1082,9 +1082,10 @@ static void draw_block (lives_mt *mt, lives_painter_t *cairo,
 	col_black.red=col_black.green=col_black.blue=0;
 
 	layout=render_text_to_cr(cr,fname,sfont,10.,
-				 LIVES_TEXT_MODE_FOREGROUND_ONLY,&col_black,&col_black,FALSE,FALSE,0.2,text_start,
+				 LIVES_TEXT_MODE_FOREGROUND_ONLY,&col_white,&col_white,FALSE,FALSE,0.2,text_start,
 				 text_end-text_start,lives_widget_get_allocation_height(eventbox));
 
+	pango_cairo_show_layout(cr, layout);
 	if (layout) g_object_unref(layout);
 	g_free(fname);
 
@@ -17695,6 +17696,10 @@ static void draw_soundwave(GtkWidget *ebox, lives_painter_surface_t *surf, int c
     fnum=get_audio_frame_clip(block->start_event,track);
     seek=get_audio_frame_seek(block->start_event,track);
     vel=get_audio_frame_vel(block->start_event,track);
+
+    lives_painter_set_source_rgb(cr,1.,1.,1.);
+    lives_painter_rectangle(cr,offset_start,0,offset_end-offset_start,lives_widget_get_allocation_height(ebox)-1);
+    lives_painter_fill(cr);
 
     lives_painter_set_source_rgb(cr,0.,0.,0.);
     lives_painter_set_line_width(cr,1.);

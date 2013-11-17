@@ -346,6 +346,7 @@ typedef struct {
 
 typedef struct {
   int fd;
+  boolean inited;
   boolean has_video;
   boolean has_audio;
   int vididx;

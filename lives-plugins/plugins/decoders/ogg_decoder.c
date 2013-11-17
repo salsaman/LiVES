@@ -1700,8 +1700,16 @@ static boolean attach_stream(lives_clip_data_t *cdata, boolean isclone) {
 
   struct stat sb;
 
+  int64_t gpos;
+
+  double stream_duration;
+
+  boolean is_partial_clone=FALSE;
+
   lives_ogg_priv_t *priv=(lives_ogg_priv_t *)cdata->priv;
   ogg_t *opriv=priv->opriv=(ogg_t *)malloc(sizeof(ogg_t));
+
+  register int i;
 
   if ((opriv->fd=open(cdata->URI,O_RDONLY))==-1) {
     fprintf(stderr, "ogg_theora_decoder: unable to open %s\n",cdata->URI);
@@ -1713,6 +1721,11 @@ static boolean attach_stream(lives_clip_data_t *cdata, boolean isclone) {
 #ifdef IS_MINGW
   setmode(opriv->fd,O_BINARY);
 #endif
+
+  if (isclone&&!priv->inited) {
+    isclone=FALSE;
+    is_partial_clone=TRUE;
+  }
 
   if (!isclone) {
     stat(cdata->URI,&sb);
@@ -1735,6 +1748,7 @@ static boolean attach_stream(lives_clip_data_t *cdata, boolean isclone) {
 
   priv->last_kframe=10000000;
   priv->last_frame=100000000;
+  priv->inited=TRUE;
 
 
 #ifdef HAVE_THEORA
@@ -1801,6 +1815,201 @@ static boolean attach_stream(lives_clip_data_t *cdata, boolean isclone) {
   }
 #endif
 
+  if (isclone) return TRUE;
+
+  cdata->nclips=1;
+
+  // video part
+  cdata->interlace=LIVES_INTERLACE_NONE;
+
+  cdata->par=1.;
+
+  // TODO
+  cdata->offs_x=0;
+  cdata->offs_y=0;
+  cdata->frame_width=cdata->width;
+  cdata->frame_height=cdata->height;
+
+  cdata->YUV_clamping=WEED_YUV_CLAMPING_CLAMPED;
+  cdata->YUV_subspace=WEED_YUV_SUBSPACE_YCBCR;
+  cdata->YUV_sampling=WEED_YUV_SAMPLING_DEFAULT;
+
+
+
+  /* Get format */
+  
+#ifdef HAVE_THEORA
+  if (priv->vstream->stpriv->fourcc_priv==FOURCC_THEORA) {
+    theora_priv_t *tpriv=priv->tpriv;
+    cdata->width  = cdata->frame_width = opriv->y_width = tpriv->ti.frame_width;
+    cdata->height = cdata->frame_height = opriv->y_height = tpriv->ti.frame_height;
+    
+    if (cdata->fps==0.) cdata->fps  = (float)tpriv->ti.fps_numerator/(float)tpriv->ti.fps_denominator;
+    
+    switch(tpriv->ti.pixelformat) {
+    case OC_PF_420:
+      cdata->palettes[0] = WEED_PALETTE_YUV420P;
+      opriv->uv_width = opriv->y_width>>1;
+      break;
+    case OC_PF_422:
+      cdata->palettes[0] = WEED_PALETTE_YUV422P;
+      opriv->uv_width = opriv->y_width>>1;
+      break;
+    case OC_PF_444:
+      cdata->palettes[0] = WEED_PALETTE_YUV444P;
+      opriv->uv_width = opriv->y_width;
+      break;
+    default:
+      fprintf(stderr, "Unknown pixelformat %d", tpriv->ti.pixelformat);
+      return FALSE;
+    }
+
+    cdata->palettes[1]=WEED_PALETTE_END;
+    cdata->current_palette=cdata->palettes[0];
+    sprintf(cdata->video_name,"%s","theora");
+
+    if (tpriv->tc.comments>0) {
+      size_t lenleft=256,csize;
+      char *cbuf=cdata->comment;
+      for (i=0;i<=tpriv->tc.comments;i++) {
+	csize=tpriv->tc.comment_lengths[i];
+	if (csize>lenleft) csize=lenleft;
+	snprintf(cbuf,csize,"%s",tpriv->tc.user_comments[i]);
+	cbuf+=csize;
+	lenleft-=csize;
+	if (lenleft==0) break;
+	if (i+1<=tpriv->tc.comments) {
+	  if (lenleft<strlen("\n")+1) break;
+	  sprintf(cbuf,"\n");
+	  cbuf+=strlen("\n");
+	  lenleft-=strlen("\n");
+	}
+      }
+    }
+
+  }
+#endif
+  
+
+#ifdef HAVE_DIRAC
+  if (priv->vstream->stpriv->fourcc_priv==FOURCC_DIRAC) {
+    // feed some pages to the decoder so it gets the idea
+    dirac_priv_t *dpriv=priv->dpriv;
+    int64_t start_pos=priv->input_position;
+
+    seek_byte(cdata,priv->vstream->data_start);
+
+    while (1) {
+      int64_t input_pos;
+      boolean done=FALSE;
+
+      opriv->page_valid=0;
+
+      if (!(input_pos=get_page(cdata,priv->input_position))) {
+	// should never reach here
+	fprintf(stderr, "EOF1 while decoding\n");
+	return FALSE;
+      }
+      
+      priv->input_position+=input_pos;
+
+      if (ogg_page_serialno(&(opriv->current_page))!=priv->vstream->stream_id) continue;
+      ogg_stream_pagein(&priv->vstream->stpriv->os, &(opriv->current_page));
+      
+      while (ogg_stream_packetout(&priv->vstream->stpriv->os, &opriv->op) > 0) {
+	// feed packets to decoder
+        SchroBuffer *schrobuffer;
+	int state;
+
+        schrobuffer = schro_buffer_new_with_data( opriv->op.packet, opriv->op.bytes );
+	schro_decoder_autoparse_push( dpriv->schrodec, schrobuffer );
+
+	state = schro_decoder_autoparse_wait( dpriv->schrodec );
+	
+	if (state==SCHRO_DECODER_FIRST_ACCESS_UNIT) {
+	  // should have our cdata now
+	  get_dirac_cdata(cdata,dpriv->schrodec);
+	  done=TRUE;
+	  break;
+	}
+	if (done) break;
+      }
+      if (done) break;
+    }
+
+    cdata->current_palette=cdata->palettes[0];
+
+    // reset and seek back to start
+    //fprintf(stderr,"got dirac fps=%.4f %d x %d\n",cdata->fps,cdata->width,cdata->height);
+
+
+    schro_decoder_reset( dpriv->schrodec );
+    seek_byte(cdata,start_pos);
+    ogg_stream_reset(&priv->vstream->stpriv->os);
+
+    // find first keyframe
+    find_first_sync_frame(cdata, priv->vstream->data_start, opriv->total_bytes, &priv->kframe_offset); 
+
+    sprintf(cdata->video_name,"%s","dirac");
+
+ }
+
+#endif
+
+
+  sprintf(cdata->container_name,"%s","ogg");
+
+
+  // audio part
+  cdata->asigned=FALSE;
+  cdata->achans=0;
+  cdata->ainterleaf=TRUE;
+  cdata->asamps=0;
+
+  if (priv->astream!=NULL) {
+    sprintf(cdata->audio_name,"%s","vorbis");
+  }
+  else memset(cdata->audio_name,0,1);
+  
+
+  if (isclone) return TRUE;
+
+  // get duration
+
+
+  if (priv->astream!=NULL) {
+    ogg_stream_reset(&priv->astream->stpriv->os);
+    gpos=get_last_granulepos(cdata,priv->astream->stream_id);
+    stream_duration =
+      granulepos_2_time(priv->astream,gpos);
+    priv->astream->duration=stream_duration;
+    priv->astream->stpriv->last_granulepos=gpos;
+    //printf("priv->astream duration is %.4f\n",stream_duration);
+  }
+
+  if (priv->vstream!=NULL) {
+    ogg_stream_reset(&priv->vstream->stpriv->os);
+    gpos=get_last_granulepos(cdata,priv->vstream->stream_id);
+
+    /*  kframe=gpos >> priv->vstream->priv->keyframe_granule_shift;
+	priv->vstream->nframes = kframe + gpos-(kframe<<priv->vstream->priv->keyframe_granule_shift);*/
+
+    priv->vstream->nframes=gpos;
+
+    stream_duration = 
+      granulepos_2_time(priv->vstream,gpos);
+    priv->vstream->duration=stream_duration;
+    priv->vstream->stpriv->last_granulepos=gpos;
+    //printf("priv->vstream duration is %.4f %ld\n",stream_duration,priv->vstream->nframes);
+  }
+
+  if (is_partial_clone) return TRUE;
+
+
+  cdata->nframes=priv->vstream->nframes;
+
+  if (cdata->width!=cdata->frame_width||cdata->height!=cdata->frame_height)
+    fprintf(stderr,"ogg_decoder: info - frame size=%d x %d, pixel size=%d x %d\n",cdata->frame_width,cdata->frame_height,cdata->width,cdata->height);
 
 
   return TRUE;
@@ -2066,6 +2275,7 @@ lives_clip_data_t *init_cdata(void) {
 
   priv->vstream=NULL;
   priv->astream=NULL;
+  priv->inited=FALSE;
 
   priv->opriv=NULL;
 
@@ -2081,6 +2291,8 @@ lives_clip_data_t *init_cdata(void) {
 
   cdata->video_start_time=0.;
   cdata->sync_hint=0;
+
+  cdata->fps=0.;
 
   cdata->palettes=malloc(2*sizeof(int));
   cdata->palettes[1]=WEED_PALETTE_END;
@@ -2136,6 +2348,17 @@ static lives_clip_data_t *ogg_clone(lives_clip_data_t *cdata) {
   snprintf(clone->title,256,"%s",cdata->title);
   snprintf(clone->comment,256,"%s",cdata->comment);
 
+  // create "priv" elements
+  dpriv=clone->priv;
+  spriv=cdata->priv;
+
+  if (spriv!=NULL) {
+    sopriv=spriv->opriv;
+    dopriv=dpriv->opriv;
+    dpriv->inited=TRUE;
+    dopriv->total_bytes=sopriv->total_bytes;
+  }
+
   if (!attach_stream(clone,TRUE)) {
     free(clone->URI);
     clone->URI=NULL;
@@ -2143,14 +2366,17 @@ static lives_clip_data_t *ogg_clone(lives_clip_data_t *cdata) {
     return NULL;
   }
 
-  // create "priv" elements
-  dpriv=clone->priv;
-  spriv=cdata->priv;
+  if (spriv!=NULL) {
+    ogg_stream_reset(&dpriv->astream->stpriv->os);
+    dpriv->astream->duration=spriv->astream->duration;
+    dpriv->astream->stpriv->last_granulepos=spriv->astream->stpriv->last_granulepos;
 
-  sopriv=spriv->opriv;
-  dopriv=dpriv->opriv;
+    ogg_stream_reset(&dpriv->vstream->stpriv->os);
+    dpriv->vstream->nframes=spriv->vstream->nframes;
+    dpriv->vstream->duration=spriv->vstream->duration;
+    dpriv->vstream->stpriv->last_granulepos=spriv->vstream->stpriv->last_granulepos;
 
-  dopriv->total_bytes=sopriv->total_bytes;
+  }
 
   dpriv->last_frame=-1;
 
@@ -2162,22 +2388,16 @@ static lives_clip_data_t *ogg_clone(lives_clip_data_t *cdata) {
 
 
 lives_clip_data_t *get_clip_data(const char *URI, lives_clip_data_t *cdata) {
-  // the first time this is called, caller should pass NULL as the cdata
+  // the first time this is called, caller should pass NULL as the clone
   // subsequent calls to this should re-use the same cdata
 
   // if the host wants a different URI, a different current_clip, or a different current_palette, 
   // this must be called again with the same
   // cdata as the second parameter
   lives_ogg_priv_t *priv;
-  ogg_t *opriv;
-
-  double stream_duration;
-  int64_t gpos;
-
-  register int i;
 
   if (URI==NULL&&cdata!=NULL) {
-    // create a clone of cdata
+    // create a clone of cdata - we also need to be able to handle a "fake" clone with only URI, nframes and fps set (priv == NULL)
     return ogg_clone(cdata);
   }
 
@@ -2213,199 +2433,6 @@ lives_clip_data_t *get_clip_data(const char *URI, lives_clip_data_t *cdata) {
     clip_data_free(cdata);
     return NULL;
   }
-
-  opriv=priv->opriv;
-
-  cdata->nclips=1;
-
-  // video part
-  cdata->interlace=LIVES_INTERLACE_NONE;
-
-  cdata->par=1.;
-
-  // TODO
-  cdata->offs_x=0;
-  cdata->offs_y=0;
-  cdata->frame_width=cdata->width;
-  cdata->frame_height=cdata->height;
-
-  cdata->YUV_clamping=WEED_YUV_CLAMPING_CLAMPED;
-  cdata->YUV_subspace=WEED_YUV_SUBSPACE_YCBCR;
-  cdata->YUV_sampling=WEED_YUV_SAMPLING_DEFAULT;
-
-
-
-  /* Get format */
-  
-#ifdef HAVE_THEORA
-  if (priv->vstream->stpriv->fourcc_priv==FOURCC_THEORA) {
-    theora_priv_t *tpriv=priv->tpriv;
-    cdata->width  = cdata->frame_width = opriv->y_width = tpriv->ti.frame_width;
-    cdata->height = cdata->frame_height = opriv->y_height = tpriv->ti.frame_height;
-    
-    cdata->fps  = (float)tpriv->ti.fps_numerator/(float)tpriv->ti.fps_denominator;
-    
-    switch(tpriv->ti.pixelformat) {
-    case OC_PF_420:
-      cdata->palettes[0] = WEED_PALETTE_YUV420P;
-      opriv->uv_width = opriv->y_width>>1;
-      break;
-    case OC_PF_422:
-      cdata->palettes[0] = WEED_PALETTE_YUV422P;
-      opriv->uv_width = opriv->y_width>>1;
-      break;
-    case OC_PF_444:
-      cdata->palettes[0] = WEED_PALETTE_YUV444P;
-      opriv->uv_width = opriv->y_width;
-      break;
-    default:
-      fprintf(stderr, "Unknown pixelformat %d", tpriv->ti.pixelformat);
-      return NULL;
-    }
-
-    cdata->palettes[1]=WEED_PALETTE_END;
-    cdata->current_palette=cdata->palettes[0];
-    sprintf(cdata->video_name,"%s","theora");
-
-    if (tpriv->tc.comments>0) {
-      size_t lenleft=256,csize;
-      char *cbuf=cdata->comment;
-      for (i=0;i<=tpriv->tc.comments;i++) {
-	csize=tpriv->tc.comment_lengths[i];
-	if (csize>lenleft) csize=lenleft;
-	snprintf(cbuf,csize,"%s",tpriv->tc.user_comments[i]);
-	cbuf+=csize;
-	lenleft-=csize;
-	if (lenleft==0) break;
-	if (i+1<=tpriv->tc.comments) {
-	  if (lenleft<strlen("\n")+1) break;
-	  sprintf(cbuf,"\n");
-	  cbuf+=strlen("\n");
-	  lenleft-=strlen("\n");
-	}
-      }
-    }
-
-  }
-#endif
-  
-
-#ifdef HAVE_DIRAC
-  if (priv->vstream->stpriv->fourcc_priv==FOURCC_DIRAC) {
-    // feed some pages to the decoder so it gets the idea
-    dirac_priv_t *dpriv=priv->dpriv;
-    int64_t start_pos=priv->input_position;
-
-    seek_byte(cdata,priv->vstream->data_start);
-
-    while (1) {
-      int64_t input_pos;
-      boolean done=FALSE;
-
-      opriv->page_valid=0;
-
-      if (!(input_pos=get_page(cdata,priv->input_position))) {
-	// should never reach here
-	fprintf(stderr, "EOF1 while decoding\n");
-	return FALSE;
-      }
-      
-      priv->input_position+=input_pos;
-
-      if (ogg_page_serialno(&(opriv->current_page))!=priv->vstream->stream_id) continue;
-      ogg_stream_pagein(&priv->vstream->stpriv->os, &(opriv->current_page));
-      
-      while (ogg_stream_packetout(&priv->vstream->stpriv->os, &opriv->op) > 0) {
-	// feed packets to decoder
-        SchroBuffer *schrobuffer;
-	int state;
-
-        schrobuffer = schro_buffer_new_with_data( opriv->op.packet, opriv->op.bytes );
-	schro_decoder_autoparse_push( dpriv->schrodec, schrobuffer );
-
-	state = schro_decoder_autoparse_wait( dpriv->schrodec );
-	
-	if (state==SCHRO_DECODER_FIRST_ACCESS_UNIT) {
-	  // should have our cdata now
-	  get_dirac_cdata(cdata,dpriv->schrodec);
-	  done=TRUE;
-	  break;
-	}
-	if (done) break;
-      }
-      if (done) break;
-    }
-
-    cdata->current_palette=cdata->palettes[0];
-
-    // reset and seek back to start
-    //fprintf(stderr,"got dirac fps=%.4f %d x %d\n",cdata->fps,cdata->width,cdata->height);
-
-
-    schro_decoder_reset( dpriv->schrodec );
-    seek_byte(cdata,start_pos);
-    ogg_stream_reset(&priv->vstream->stpriv->os);
-
-    // find first keyframe
-    find_first_sync_frame(cdata, priv->vstream->data_start, opriv->total_bytes, &priv->kframe_offset); 
-
-    sprintf(cdata->video_name,"%s","dirac");
-
- }
-
-#endif
-
-
-  sprintf(cdata->container_name,"%s","ogg");
-
-
-  // audio part
-  cdata->asigned=FALSE;
-  cdata->achans=0;
-  cdata->ainterleaf=TRUE;
-  cdata->asamps=0;
-
-  if (priv->astream!=NULL) {
-    sprintf(cdata->audio_name,"%s","vorbis");
-  }
-  else memset(cdata->audio_name,0,1);
-  
-
-
-  // get duration
-
-
-  if (priv->astream!=NULL) {
-    ogg_stream_reset(&priv->astream->stpriv->os);
-    gpos=get_last_granulepos(cdata,priv->astream->stream_id);
-    stream_duration =
-      granulepos_2_time(priv->astream,gpos);
-    priv->astream->duration=stream_duration;
-    priv->astream->stpriv->last_granulepos=gpos;
-    //printf("priv->astream duration is %.4f\n",stream_duration);
-  }
-
-  if (priv->vstream!=NULL) {
-    ogg_stream_reset(&priv->vstream->stpriv->os);
-    gpos=get_last_granulepos(cdata,priv->vstream->stream_id);
-
-    /*  kframe=gpos >> priv->vstream->priv->keyframe_granule_shift;
-	priv->vstream->nframes = kframe + gpos-(kframe<<priv->vstream->priv->keyframe_granule_shift);*/
-
-    priv->vstream->nframes=gpos;
-
-    stream_duration = 
-      granulepos_2_time(priv->vstream,gpos);
-    priv->vstream->duration=stream_duration;
-    priv->vstream->stpriv->last_granulepos=gpos;
-    //printf("priv->vstream duration is %.4f %ld\n",stream_duration,priv->vstream->nframes);
-  }
-
-
-  cdata->nframes=priv->vstream->nframes;
-
-  if (cdata->width!=cdata->frame_width||cdata->height!=cdata->frame_height)
-    fprintf(stderr,"ogg_decoder: info - frame size=%d x %d, pixel size=%d x %d\n",cdata->frame_width,cdata->frame_height,cdata->width,cdata->height);
 
 
   return cdata;

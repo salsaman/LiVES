@@ -2799,6 +2799,7 @@ static lives_clip_data_t *init_cdata (void) {
   priv->ctx=NULL;
   priv->codec=NULL;
   priv->picture=NULL;
+  priv->inited=FALSE;
 
   priv->expect_eof=FALSE;
 
@@ -3108,10 +3109,12 @@ static boolean attach_stream(lives_clip_data_t *cdata, boolean isclone) {
 
   int len;
 
+
   AVCodec *codec=NULL;
   AVCodecContext *ctx;
 
   boolean got_picture=FALSE;
+  boolean is_partial_clone=FALSE;
 
   struct stat sb;
 
@@ -3119,6 +3122,11 @@ static boolean attach_stream(lives_clip_data_t *cdata, boolean isclone) {
 #ifdef DEBUG
   fprintf(stderr,"\n");
 #endif
+
+  if (isclone&&!priv->inited) {
+    isclone=FALSE;
+    is_partial_clone=TRUE;
+  }
 
   priv->has_audio=priv->has_video=FALSE;
   priv->vidst=NULL;
@@ -3162,7 +3170,7 @@ static boolean attach_stream(lives_clip_data_t *cdata, boolean isclone) {
   priv->input_position=0;
   lseek(priv->fd,priv->input_position,SEEK_SET);
 
-  cdata->fps=0.;
+  if (!is_partial_clone) cdata->fps=0.;
   cdata->width=cdata->frame_width=cdata->height=cdata->frame_height=0;
   cdata->offs_x=cdata->offs_y=0;
 
@@ -3174,10 +3182,10 @@ static boolean attach_stream(lives_clip_data_t *cdata, boolean isclone) {
 
   sprintf(cdata->audio_name,"%s","");
 
-  priv->idxc=idxc_for(cdata);
-
 
  seek_skip:
+  priv->idxc=idxc_for(cdata);
+  priv->inited=TRUE;
 
   priv->s = avformat_alloc_context();
 
@@ -3192,6 +3200,7 @@ static boolean attach_stream(lives_clip_data_t *cdata, boolean isclone) {
   av_init_packet(&priv->avpkt);
   priv->avpkt.data=NULL;
   priv->ctx=NULL;
+  priv->inited=TRUE;
 
   if (lives_mpegts_read_header(cdata)) {
     close(priv->fd);
@@ -3291,7 +3300,7 @@ static boolean attach_stream(lives_clip_data_t *cdata, boolean isclone) {
   if (isclone) {
     priv->last_frame=-1;
     priv->idxc=idxc_for(cdata);
-    av_free(priv->picture);
+    if (priv->picture!=NULL) av_free(priv->picture);
     priv->picture=NULL;
     return TRUE;
   }
@@ -3388,7 +3397,7 @@ static boolean attach_stream(lives_clip_data_t *cdata, boolean isclone) {
   cdata->par=(double)ctx->sample_aspect_ratio.num/(double)ctx->sample_aspect_ratio.den;
   if (cdata->par==0.) cdata->par=1.;
 
-  if (ctx->time_base.den>0&&ctx->time_base.num>0) {
+  if (cdata->fps==0.&&ctx->time_base.den>0&&ctx->time_base.num>0) {
     fps=(double)ctx->time_base.den/(double)ctx->time_base.num;
     if (fps!=1000.) cdata->fps=fps;
   }
@@ -3450,6 +3459,8 @@ static boolean attach_stream(lives_clip_data_t *cdata, boolean isclone) {
     cdata->interlace=LIVES_INTERLACE_BOTTOM_FIRST;
   }
 
+  if (is_partial_clone) return TRUE;
+
   ldts=get_last_video_dts(cdata);
 
 
@@ -3478,7 +3489,7 @@ static boolean attach_stream(lives_clip_data_t *cdata, boolean isclone) {
   fprintf(stderr,"fps is %.4f %ld %ld %ld\n",cdata->fps,cdata->nframes,ldts,priv->start_dts);
 #endif
 
-  av_free(priv->picture);
+  if (priv->picture!=NULL) av_free(priv->picture);
   priv->picture=NULL;
 
   return TRUE;
@@ -3496,7 +3507,7 @@ static lives_clip_data_t *mpegts_clone(lives_clip_data_t *cdata) {
   dpriv=clone->priv;
   spriv=cdata->priv;
 
-  dpriv->filesize=spriv->filesize;
+  if (spriv!=NULL) dpriv->filesize=spriv->filesize;
 
   clone->current_clip=cdata->current_clip;
 
@@ -3519,6 +3530,8 @@ static lives_clip_data_t *mpegts_clone(lives_clip_data_t *cdata) {
   snprintf(clone->title,256,"%s",cdata->title);
   snprintf(clone->comment,256,"%s",cdata->comment);
 
+  if (spriv!=NULL) dpriv->inited=TRUE;
+
   if (!attach_stream(clone,TRUE)) {
     free(clone->URI);
     clone->URI=NULL;
@@ -3526,23 +3539,59 @@ static lives_clip_data_t *mpegts_clone(lives_clip_data_t *cdata) {
     return NULL;
   }
 
-  clone->nclips=cdata->nclips;
-  snprintf(clone->container_name,512,"%s",cdata->container_name);
-  snprintf(clone->video_name,512,"%s",cdata->video_name);
-  clone->arate=cdata->arate;
-  clone->achans=cdata->achans;
-  clone->asamps=cdata->asamps;
-  clone->asigned=cdata->asigned;
-  clone->ainterleaf=cdata->ainterleaf;
-  snprintf(clone->audio_name,512,"%s",cdata->audio_name);
-  clone->seek_flag=cdata->seek_flag;
-  clone->sync_hint=cdata->sync_hint;
+  if (spriv!=NULL) {
+    clone->nclips=cdata->nclips;
+    snprintf(clone->container_name,512,"%s",cdata->container_name);
+    snprintf(clone->video_name,512,"%s",cdata->video_name);
+    clone->arate=cdata->arate;
+    clone->achans=cdata->achans;
+    clone->asamps=cdata->asamps;
+    clone->asigned=cdata->asigned;
+    clone->ainterleaf=cdata->ainterleaf;
+    snprintf(clone->audio_name,512,"%s",cdata->audio_name);
+    clone->seek_flag=cdata->seek_flag;
+    clone->sync_hint=cdata->sync_hint;
 
-  dpriv->data_start=spriv->data_start;
+    dpriv->data_start=spriv->data_start;
+    dpriv->start_dts=spriv->start_dts;
+  }
+
+  else {
+    clone->nclips=1;
+
+    ///////////////////////////////////////////////////////////
+
+    sprintf(clone->container_name,"%s","mpegts");
+
+    // clone->height was set when we attached the stream
+
+    if (clone->frame_width==0||clone->frame_width<clone->width) clone->frame_width=clone->width;
+    else {
+      clone->offs_x=(clone->frame_width-clone->width)/2;
+    }
+
+    if (clone->frame_height==0||clone->frame_height<clone->height) clone->frame_height=clone->height;
+    else {
+      clone->offs_y=(clone->frame_height-clone->height)/2;
+    }
+
+    clone->frame_width=clone->width+clone->offs_x*2;
+    clone->frame_height=clone->height+clone->offs_y*2;
+
+    if (dpriv->ctx->width==clone->frame_width) clone->offs_x=0;
+    if (dpriv->ctx->height==clone->frame_height) clone->offs_y=0;
+
+    ////////////////////////////////////////////////////////////////////
+
+    clone->asigned=TRUE;
+    clone->ainterleaf=TRUE;
+  }
+
   dpriv->last_frame=-1;
   dpriv->expect_eof=FALSE;
   dpriv->got_eof=FALSE;
-  dpriv->start_dts=spriv->start_dts;
+
+  if (dpriv->picture!=NULL) av_free(dpriv->picture);
   dpriv->picture=NULL;
 
   return clone;
@@ -3568,7 +3617,7 @@ lives_clip_data_t *get_clip_data(const char *URI, lives_clip_data_t *cdata) {
   //errval=0;
 
     if (URI==NULL&&cdata!=NULL) {
-    // create a clone of cdata
+    // create a clone of cdata - we also need to be able to handle a "fake" clone with only URI, nframes and fps set (priv == NULL)
     return mpegts_clone(cdata);
   }
 

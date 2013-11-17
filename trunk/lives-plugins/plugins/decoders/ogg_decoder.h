@@ -133,6 +133,8 @@ typedef struct {
   lives_in_stream *astream;
   lives_in_stream *vstream;
 
+  boolean inited;
+
 #ifdef HAVE_THEORA
   theora_priv_t *tpriv;
 #endif

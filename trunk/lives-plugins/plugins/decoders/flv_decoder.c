@@ -646,9 +646,12 @@ static boolean attach_stream(lives_clip_data_t *cdata, boolean isclone) {
   char buffer[FLV_META_SIZE];
   unsigned char flags,avctype;
   int type,size,vcodec=0,ldts;
+
   boolean gotmeta=FALSE,in_array=FALSE;
   boolean hasaudio;
   boolean got_astream=FALSE,got_vstream=FALSE;
+  boolean is_partial_clone=FALSE;
+
   char *key=NULL;
   size_t offs=0;
   double num_val,fps;
@@ -662,6 +665,11 @@ static boolean attach_stream(lives_clip_data_t *cdata, boolean isclone) {
 #ifdef DEBUG
   fprintf(stderr,"\n");
 #endif
+
+  if (isclone&&!priv->inited) {
+    isclone=FALSE;
+    is_partial_clone=TRUE;
+  }
 
   if ((priv->fd=open(cdata->URI,O_RDONLY))==-1) {
     fprintf(stderr, "flv_decoder: unable to open %s\n",cdata->URI);
@@ -697,7 +705,7 @@ static boolean attach_stream(lives_clip_data_t *cdata, boolean isclone) {
 
   priv->input_position=4+((header[5]&0xFF)<<24)+((header[6]&0xFF)<<16)+((header[7]&0xFF)<<8)+((header[8]&0xFF));
 
-  cdata->fps=0.;
+  if (!is_partial_clone) cdata->fps=0.;
   cdata->width=cdata->frame_width=cdata->height=cdata->frame_height=0;
   cdata->offs_x=cdata->offs_y=0;
 
@@ -706,6 +714,7 @@ static boolean attach_stream(lives_clip_data_t *cdata, boolean isclone) {
   cdata->asamps=16;
 
   priv->idxc=idxc_for(cdata);
+  priv->inited=TRUE;
 
   if (!lives_flv_parse_pack_header(cdata,&pack)) {
     close(priv->fd);
@@ -809,8 +818,8 @@ static boolean attach_stream(lives_clip_data_t *cdata, boolean isclone) {
 
 	offs+=8;
 
-	if (!strcmp(key,"framerate")) cdata->fps=num_val;
-	if (!strcmp(key,"videoframerate")) cdata->fps=num_val;
+	if (!is_partial_clone&&!strcmp(key,"framerate")) cdata->fps=num_val;
+	if (!is_partial_clone&&!strcmp(key,"videoframerate")) cdata->fps=num_val;
 	if (!strcmp(key,"audiosamplerate")) cdata->arate=num_val;
 	if (!strcmp(key,"audiosamplesize")) cdata->asamps=num_val;
 	//if (!strcmp(key,"lasttimestamp")) lasttimestamp=num_val;
@@ -1141,7 +1150,6 @@ static boolean attach_stream(lives_clip_data_t *cdata, boolean isclone) {
 
   if (isclone) return TRUE;
 
-
   pack.data=malloc(pack.size-priv->pack_offset+FF_INPUT_BUFFER_PADDING_SIZE);
 
   av_init_packet(&priv->avpkt);
@@ -1265,9 +1273,11 @@ static boolean attach_stream(lives_clip_data_t *cdata, boolean isclone) {
   cdata->par=(double)ctx->sample_aspect_ratio.num/(double)ctx->sample_aspect_ratio.den;
   if (cdata->par==0.) cdata->par=1.;
 
-  if (ctx->time_base.den>0&&ctx->time_base.num>0) {
-    fps=(double)ctx->time_base.den/(double)ctx->time_base.num;
-    if (fps!=1000.) cdata->fps=fps;
+  if (!is_partial_clone) {
+    if (ctx->time_base.den>0&&ctx->time_base.num>0) {
+      fps=(double)ctx->time_base.den/(double)ctx->time_base.num;
+      if (fps!=1000.) cdata->fps=fps;
+    }
   }
 
 #ifndef IS_MINGW
@@ -1317,6 +1327,8 @@ static boolean attach_stream(lives_clip_data_t *cdata, boolean isclone) {
   }
 
   priv->last_frame=-1;
+
+  if (is_partial_clone) return TRUE;
 
   ldts=get_last_video_dts(cdata);
 
@@ -1377,6 +1389,7 @@ static lives_clip_data_t *init_cdata (void) {
   priv->ctx=NULL;
   priv->codec=NULL;
   priv->picture=NULL;
+  priv->inited=FALSE;
 
   cdata->palettes=(int *)malloc(2*sizeof(int));
   cdata->palettes[1]=WEED_PALETTE_END;
@@ -1402,17 +1415,6 @@ static lives_clip_data_t *flv_clone(lives_clip_data_t *cdata) {
   clone->nclips=cdata->nclips;
   snprintf(clone->container_name,512,"%s",cdata->container_name);
   clone->current_clip=cdata->current_clip;
-
-  // create "priv" elements
-  dpriv=clone->priv;
-  spriv=cdata->priv;
-
-  if (!attach_stream(clone,TRUE)) {
-    free(clone->URI);
-    clone->URI=NULL;
-    clip_data_free(clone);
-    return NULL;
-  }
 
   clone->width=cdata->width;
   clone->height=cdata->height;
@@ -1442,8 +1444,53 @@ static lives_clip_data_t *flv_clone(lives_clip_data_t *cdata) {
   snprintf(clone->title,256,"%s",cdata->title);
   snprintf(clone->comment,256,"%s",cdata->comment);
 
+  // create "priv" elements
+  dpriv=clone->priv;
+  spriv=cdata->priv;
+
+  if (spriv!=NULL) {
+    dpriv->inited=TRUE;
+  }
+
+  if (!attach_stream(clone,TRUE)) {
+    free(clone->URI);
+    clone->URI=NULL;
+    clip_data_free(clone);
+    return NULL;
+  }
+
+  if (spriv!=NULL) {
+    dpriv->data_start=spriv->data_start;
+  }
+  else {
+    clone->nclips=1;
+
+    ///////////////////////////////////////////////////////////
+
+    sprintf(clone->container_name,"%s","flv");
+
+    // cdata->height was set when we attached the stream
+
+    clone->interlace=LIVES_INTERLACE_NONE;
+
+    clone->frame_width=clone->width+clone->offs_x*2;
+    clone->frame_height=clone->height+clone->offs_y*2;
+
+    // TODO - check this = spec suggests we should cut right and bottom
+    if (dpriv->ctx->width==clone->frame_width) clone->offs_x=0;
+    if (dpriv->ctx->height==clone->frame_height) clone->offs_y=0;
+
+    ////////////////////////////////////////////////////////////////////
+
+    clone->asigned=TRUE;
+    clone->ainterleaf=TRUE;
+
+  }
+
+  if (dpriv->picture!=NULL) av_free(dpriv->picture);
+  dpriv->picture=NULL;
+
   dpriv->last_frame=-1;
-  dpriv->data_start=spriv->data_start;
   dpriv->picture=NULL;
   dpriv->avpkt.data=NULL;
   dpriv->avpkt.size=0;
@@ -1469,7 +1516,7 @@ lives_clip_data_t *get_clip_data(const char *URI, lives_clip_data_t *cdata) {
   lives_flv_priv_t *priv;
 
   if (URI==NULL&&cdata!=NULL) {
-    // create a clone of cdata
+    // create a clone of cdata - we also need to be able to handle a "fake" clone with only URI, nframes and fps set (priv == NULL)
     return flv_clone(cdata);
   }
 
@@ -1523,7 +1570,7 @@ lives_clip_data_t *get_clip_data(const char *URI, lives_clip_data_t *cdata) {
   cdata->asigned=TRUE;
   cdata->ainterleaf=TRUE;
 
-  av_free(priv->picture);
+  if (priv->picture!=NULL) av_free(priv->picture);
   priv->picture=NULL;
 
   if (cdata->width!=cdata->frame_width||cdata->height!=cdata->frame_height)

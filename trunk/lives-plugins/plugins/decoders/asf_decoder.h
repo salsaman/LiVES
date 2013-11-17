@@ -319,6 +319,7 @@ typedef struct {
   int64_t frame_dts;
   boolean have_start_dts;
   boolean black_fill;
+  boolean inited;
   size_t def_packet_size;
   off_t filesize;
   ASFContext *asf;

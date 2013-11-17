@@ -23,6 +23,17 @@
 #include <sys/stat.h>
 #include <errno.h>
 
+
+typedef struct y4data {
+  const gchar *filename;
+  lives_yuv4m_t *yuv4mpeg;
+
+  int fd;
+  int i;
+
+} y4data;
+
+
 static int yuvout,hsize_out,vsize_out;
 
 
@@ -46,16 +57,18 @@ static lives_yuv4m_t *lives_yuv4mpeg_alloc (void) {
 
 
 static void *y4open_thread (void *arg) {
-  char *filename=(char *)arg;
-  int fd=open (filename,O_RDONLY);
-  pthread_exit(GINT_TO_POINTER(fd));
+  y4data *thread_data=(y4data *)arg;
+  int fd=open(thread_data->filename,O_RDONLY);
+  thread_data->fd=fd;
+  pthread_exit(NULL);
 }
 
 
 static void *y4header_thread (void *arg) {
-  lives_yuv4m_t *yuv4mpeg=(lives_yuv4m_t *)arg;
-  int i = y4m_read_stream_header (yuv4mpeg->fd, &(yuv4mpeg->streaminfo));
-  pthread_exit(GINT_TO_POINTER(i));
+  y4data *thread_data=(y4data *)arg;
+  lives_yuv4m_t *yuv4mpeg=thread_data->yuv4mpeg;
+  thread_data->i = y4m_read_stream_header (yuv4mpeg->fd, &(yuv4mpeg->streaminfo));
+  pthread_exit(NULL);
 }
 
 
@@ -73,16 +86,18 @@ static void fill_read(int fd, char *buf, size_t count) {
 
 
 static void *y4frame_thread (void *arg) {
-  lives_yuv4m_t *yuv4mpeg=(lives_yuv4m_t *)arg;
+  y4data *thread_data=(y4data *)arg;
+  lives_yuv4m_t *yuv4mpeg=thread_data->yuv4mpeg;
   char buff[5],bchar;
-  int i=Y4M_OK;
+
+  thread_data->i=Y4M_OK;
 
   // read 5 bytes FRAME
   fill_read(yuv4mpeg->fd,buff,5);
 
   if (strncmp(buff,"FRAME",5)) {
-    i=Y4M_ERR_MAGIC;
-    pthread_exit(GINT_TO_POINTER(i));
+    thread_data->i=Y4M_ERR_MAGIC;
+    pthread_exit(NULL);
   }
 
   do {
@@ -94,7 +109,7 @@ static void *y4frame_thread (void *arg) {
   fill_read(yuv4mpeg->fd,(char *)yuv4mpeg->pixel_data[1],yuv4mpeg->hsize*yuv4mpeg->vsize/4);
   fill_read(yuv4mpeg->fd,(char *)yuv4mpeg->pixel_data[2],yuv4mpeg->hsize*yuv4mpeg->vsize/4);
 
-  pthread_exit(GINT_TO_POINTER(i));
+  pthread_exit(NULL);
 }
 
 
@@ -114,20 +129,23 @@ static gboolean lives_yuv_stream_start_read (file *sfile) {
 
   int64_t ntime=0,stime;
 
-  void *retval;
-
   gchar *filename=yuv4mpeg->filename,*tmp;
 
-  int i;
+  register int i;
 
   int ohsize=sfile->hsize;
   int ovsize=sfile->vsize;
+
+  y4data thread_data;
 
   if (filename==NULL) return FALSE;
 
   if (yuv4mpeg->fd==-1) {
     // create a thread to open the fifo
-    pthread_create(&y4thread,NULL,y4open_thread,(void *)filename);
+
+    thread_data.filename=filename;
+
+    pthread_create(&y4thread,NULL,y4open_thread,(void *)&thread_data);
     gettimeofday(&otv,NULL);
     stime=otv.tv_sec*1000000+otv.tv_usec;
     
@@ -144,11 +162,12 @@ static gboolean lives_yuv_stream_start_read (file *sfile) {
     if (ntime>=YUV4_O_TIME) {
       // timeout - kill thread and wait for it to terminate
       pthread_cancel(y4thread);
-      pthread_join(y4thread,&retval);
+      pthread_join(y4thread,NULL);
       d_print(_("Unable to open the incoming video stream\n"));
 
-      yuv4mpeg->fd=GPOINTER_TO_INT(retval);
-      if (yuv4mpeg->fd!=-1) {
+      yuv4mpeg->fd=thread_data.fd;
+
+      if (yuv4mpeg->fd>=0) {
 	close(yuv4mpeg->fd);
 	yuv4mpeg->fd=-1;
       }
@@ -156,17 +175,18 @@ static gboolean lives_yuv_stream_start_read (file *sfile) {
       return FALSE;
     }
 
-    pthread_join(y4thread,&retval);
+    pthread_join(y4thread,NULL);
 
-    yuv4mpeg->fd=GPOINTER_TO_INT(retval);
+    yuv4mpeg->fd=thread_data.fd;
 
-    if (yuv4mpeg->fd==-1) {
+    if (yuv4mpeg->fd<0) {
       return FALSE;
     }
   }
 
   // create a thread to open the stream header
-  pthread_create(&y4thread,NULL,y4header_thread,yuv4mpeg);
+  thread_data.yuv4mpeg=yuv4mpeg;
+  pthread_create(&y4thread,NULL,y4header_thread,&thread_data);
   gettimeofday(&otv,NULL);
   stime=otv.tv_sec*1000000+otv.tv_usec;
 
@@ -188,9 +208,9 @@ static gboolean lives_yuv_stream_start_read (file *sfile) {
     return FALSE;
   }
 
-  pthread_join(y4thread,&retval);
+  pthread_join(y4thread,NULL);
 
-  i=GPOINTER_TO_INT(retval);
+  i=thread_data.i;
 
   if (i != Y4M_OK) {
     gchar *tmp;
@@ -252,10 +272,15 @@ void lives_yuv_stream_stop_read (lives_yuv4m_t *yuv4mpeg) {
 
 void weed_layer_set_from_yuv4m (weed_plant_t *layer, file *sfile) {
   lives_yuv4m_t *yuv4mpeg=(lives_yuv4m_t *)(sfile->ext_src);
+
+  y4data thread_data;
+
   int error;
 
   pthread_t y4thread;
+
   struct timeval otv;
+
   int64_t ntime=0,stime;
 
   if (!yuv4mpeg->ready) lives_yuv_stream_start_read(sfile);
@@ -274,7 +299,9 @@ void weed_layer_set_from_yuv4m (weed_plant_t *layer, file *sfile) {
   yuv4mpeg->pixel_data=weed_get_voidptr_array(layer,"pixel_data",&error);
 
   // create a thread to open the stream header
-  pthread_create(&y4thread,NULL,y4frame_thread,yuv4mpeg);
+
+  thread_data.yuv4mpeg=yuv4mpeg;
+  pthread_create(&y4thread,NULL,y4frame_thread,&thread_data);
   gettimeofday(&otv,NULL);
   stime=otv.tv_sec*1000000+otv.tv_usec;
 

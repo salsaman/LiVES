@@ -1388,7 +1388,6 @@ void weed_reinit_all(void) {
 
 
 static void *thread_process_func(void *arg) {
-  int retval;
   struct _procvals *procvals=(struct _procvals *)arg;
   weed_process_f *process_func_ptr_ptr;
   weed_process_f process_func;
@@ -1398,12 +1397,14 @@ static void *thread_process_func(void *arg) {
 
   weed_plant_t *filter=weed_instance_get_filter(inst,FALSE);
 
+  int *retval=(int *)g_malloc(sizint);
+
   weed_leaf_get(filter,"process_func",0,(void *)&process_func_ptr_ptr);
   process_func=process_func_ptr_ptr[0];
 
-  retval = (*process_func)(inst,tc);
+  *retval = (*process_func)(inst,tc);
 
-  return (void *)GINT_TO_POINTER(retval);
+  return (void *)retval;
 }
 
 
@@ -1428,7 +1429,7 @@ static lives_filter_error_t process_func_threaded(weed_plant_t *inst, weed_plant
   weed_plant_t **xchannels;
   weed_plant_t *ctmpl;
 
-  void *tretval;
+  int *tretval;
 
   register int i,j;
 
@@ -1504,8 +1505,10 @@ static lives_filter_error_t process_func_threaded(weed_plant_t *inst, weed_plant
   procvals[0].tc=tc;
 
   // use main thread for first slices
-  tretval=thread_process_func(&procvals[0]);
-  retval=GPOINTER_TO_INT((gpointer)tretval);
+  tretval=(int *)thread_process_func(&procvals[0]);
+  retval=*tretval;
+  g_free(tretval);
+
   if (retval==WEED_ERROR_PLUGIN_INVALID) got_invalid=TRUE;
 
   for (i=0;i<nchannels;i++) {
@@ -1518,8 +1521,7 @@ static lives_filter_error_t process_func_threaded(weed_plant_t *inst, weed_plant
   for (j=0;j<nthreads;j++) {
     retval=WEED_NO_ERROR;
     
-    pthread_join(dthreads[j],&tretval);
-    retval=GPOINTER_TO_INT((gpointer)tretval);
+    pthread_join(dthreads[j],(void **)&tretval);
     
     xchannels=weed_get_plantptr_array(xinst[j],"out_channels",&error);
     for (i=0;i<nchannels;i++) {
@@ -1527,6 +1529,8 @@ static lives_filter_error_t process_func_threaded(weed_plant_t *inst, weed_plant
     }
     weed_free(xchannels);
     weed_plant_free(xinst[j]);
+    retval=*tretval;
+    g_free(tretval);
     
     if (retval==WEED_ERROR_PLUGIN_INVALID) got_invalid=TRUE;
   }
@@ -1740,6 +1744,7 @@ lives_filter_error_t weed_apply_instance (weed_plant_t *inst, weed_plant_t *init
 
 
   for (k=i=0;i<num_in_tracks;i++) {
+
     if (in_tracks[i]<0) {
       weed_free(in_tracks);
       weed_free(out_tracks);
@@ -1772,6 +1777,9 @@ lives_filter_error_t weed_apply_instance (weed_plant_t *inst, weed_plant_t *init
       break;
     }
     layer=layers[in_tracks[i]];
+
+    check_layer_ready(layer);
+
     if (weed_get_voidptr_value(layer,"pixel_data",&error)==NULL) {
       frame=weed_get_int_value(layer,"frame",&error);
       if (frame==0) {
@@ -1889,7 +1897,7 @@ lives_filter_error_t weed_apply_instance (weed_plant_t *inst, weed_plant_t *init
       if (!pull_frame(layer,get_image_ext_for_type(mainw->files[clip]->img_type),tc)) return FILTER_ERROR_MISSING_FRAME;
     }
 
-    // we only apply transitions and compositors to the scrap file
+    // we apply only transitions and compositors to the scrap file
     if (clip==mainw->scrap_file&&num_in_tracks==1&&num_out_tracks==1) return FILTER_ERROR_IS_SCRAP_FILE;
 
     // use comparative widths - in RGB(A) pixels
@@ -2562,6 +2570,8 @@ lives_filter_error_t weed_apply_instance (weed_plant_t *inst, weed_plant_t *init
     palette=weed_get_int_value(channel,"current_palette",&error);
 
     layer=layers[out_tracks[i]];
+
+    check_layer_ready(layer);
 
     rowstrides=weed_get_int_array(channel,"rowstrides",&error);
     weed_set_int_array(layer,"rowstrides",numplanes,rowstrides);
@@ -3512,6 +3522,9 @@ weed_plant_t *weed_apply_effects (weed_plant_t **layers, weed_plant_t *filter_ma
   // caller should free all layers, but here we will free all other pixel_data
 
   for (i=0;layers[i]!=NULL;i++) {
+
+    check_layer_ready(layers[i]);
+
     if ((pdata=weed_get_voidptr_value(layers[i],"pixel_data",&error))!=NULL||
 	(weed_get_int_value(layers[i],"frame",&error)!=0&&
 	 (mainw->playing_file>-1||mainw->multitrack==NULL||mainw->multitrack->current_rfx==NULL||

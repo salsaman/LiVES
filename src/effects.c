@@ -1017,9 +1017,14 @@ weed_plant_t *get_blend_layer(weed_timecode_t tc) {
   layer=weed_plant_new(WEED_PLANT_CHANNEL);
   weed_set_int_value(layer,"clip",mainw->blend_file);
   weed_set_int_value(layer,"frame",blend_file->frameno);
-  if (!pull_frame(layer,get_image_ext_for_type(blend_file->img_type),tc)) {
-    weed_plant_free(layer);
-    layer=NULL;
+  if (blend_file->clip_type==CLIP_TYPE_FILE&&is_virtual_frame(mainw->blend_file,blend_file->frameno)) {
+    pull_frame_threaded(layer,tc);
+  }
+  else {
+    if (!pull_frame(layer,get_image_ext_for_type(blend_file->img_type),tc)) {
+      weed_plant_free(layer);
+      layer=NULL;
+    }
   }
   return layer;
 }

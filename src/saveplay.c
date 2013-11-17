@@ -4271,7 +4271,7 @@ boolean read_headers(const gchar *file_name) {
 	get_clip_value(mainw->current_file,CLIP_DETAILS_TITLE,cfile->title,256);
 	get_clip_value(mainw->current_file,CLIP_DETAILS_AUTHOR,cfile->author,256);
 	get_clip_value(mainw->current_file,CLIP_DETAILS_COMMENT,cfile->comment,256);
-	get_clip_value(mainw->current_file,CLIP_DETAILS_KEYWORDS,cfile->comment,1024);
+	get_clip_value(mainw->current_file,CLIP_DETAILS_KEYWORDS,cfile->keywords,1024);
 	get_clip_value(mainw->current_file,CLIP_DETAILS_INTERLACE,&cfile->interlace,0);
 	if (cfile->interlace!=LIVES_INTERLACE_NONE) cfile->deinterlace=TRUE; // user must have forced this
 

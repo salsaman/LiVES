@@ -3158,6 +3158,7 @@ void fade_background(void) {
   lives_widget_hide(mainw->spinbutton_start);
   lives_widget_hide(mainw->hruler);
   lives_widget_hide(mainw->eventbox5);
+  lives_widget_hide(mainw->message_box);
 
   if (!mainw->foreign) {
     lives_widget_show(mainw->t_forward);
@@ -3305,6 +3306,7 @@ void unfade_background(void) {
   lives_widget_show(mainw->arrow1);
   lives_widget_show(mainw->arrow2);
   lives_widget_show(mainw->spinbutton_pb_fps);
+  lives_widget_show(mainw->message_box);
   lives_widget_set_fg_color (mainw->vps_label, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
   lives_widget_set_fg_color (mainw->curf_label, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
 

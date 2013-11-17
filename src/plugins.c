@@ -2238,21 +2238,10 @@ LIVES_INLINE lives_clip_data_t *clone_cdata(int fileno) {
 }
 
 
-static void *try_decoder_plugins(void *in) {
-  tdp_data *data=(tdp_data *)in;
-  
-  GList *decoder_plugin;
-
-  GList *disabled=data->disabled;
-
-  lives_decoder_t *dplug=data->dplug;
-
+static lives_decoder_t *try_decoder_plugins(char *file_name, GList *disabled) {
+  lives_decoder_t *dplug=(lives_decoder_t *)g_malloc(sizeof(lives_decoder_t));
+  GList *decoder_plugin=mainw->decoder_list;
   gchar *tmp;
-
-  file *sfile=data->sfile;
-
-
-  decoder_plugin=mainw->decoder_list;
 
   while (decoder_plugin!=NULL) {
     lives_decoder_sys_t *dpsys=(lives_decoder_sys_t *)decoder_plugin->data;
@@ -2269,7 +2258,7 @@ static void *try_decoder_plugins(void *in) {
 #endif
 
 
-    if ((dplug->cdata=(dpsys->get_clip_data)((tmp=(char *)g_filename_from_utf8 (sfile->file_name,-1,NULL,NULL,NULL)),
+    if ((dplug->cdata=(dpsys->get_clip_data)((tmp=(char *)g_filename_from_utf8 (file_name,-1,NULL,NULL,NULL)),
 					     NULL))!=NULL) {
       g_free(tmp);
 
@@ -2283,9 +2272,8 @@ static void *try_decoder_plugins(void *in) {
       //////////////////////
 
       dplug->decoder=dpsys;
-      sfile->ext_src=dplug;
 
-      if (strncmp(dpsys->name,"zz",5)) {
+      if (strncmp(dpsys->name,"zz",2)) {
 	mainw->decoder_list=g_list_move_to_first(mainw->decoder_list, decoder_plugin);
       }
       break;
@@ -2295,7 +2283,7 @@ static void *try_decoder_plugins(void *in) {
     }
     decoder_plugin=decoder_plugin->next;
   }
-  return NULL;
+  return dplug;
 }
 
 
@@ -2313,10 +2301,6 @@ const lives_clip_data_t *get_decoder_cdata(file *sfile, GList *disabled) {
   // If the file does not exist, we set mainw->error=TRUE and return NULL
 
   // If we find a plugin we also set sfile->ext_src to point to a newly created decoder_plugin_t
-
-  pthread_t cthread;
-
-  tdp_data data;
 
   lives_decoder_t *dplug;
 
@@ -2341,34 +2325,19 @@ const lives_clip_data_t *get_decoder_cdata(file *sfile, GList *disabled) {
     mainw->decoders_loaded=TRUE;
   }
 
-  dplug=(lives_decoder_t *)g_malloc(sizeof(lives_decoder_t));
-
-  data.disabled=disabled;
-  data.sfile=sfile;
-  data.dplug=dplug;
-
-  pthread_create(&cthread,NULL,try_decoder_plugins,&data);
-
-  // TODO - spin until done
-  /* do_threaded_dialog(_("Trying decoder plugins"),FALSE);
-  threaded_dialog_spin();
-  end_threaded_dialog();
-  */
-
-  pthread_join(cthread,NULL);
+  dplug=try_decoder_plugins(sfile->name,disabled);
 
   lives_set_cursor_style(LIVES_CURSOR_NORMAL,NULL);
 
-  if (sfile->ext_src!=NULL) {
-    dplug=(lives_decoder_t *)sfile->ext_src;
+  if (dplug!=NULL) {
     msg=g_strdup_printf(_(" using %s"),dplug->decoder->version());
     d_print(msg);
     g_free(msg);
-
+    sfile->ext_src=dplug;
     return dplug->cdata;
   }
 
-  return NULL;
+  return dplug->cdata;
 }
 
 

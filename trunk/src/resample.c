@@ -2108,7 +2108,10 @@ int deorder_frames(int old_frames, boolean leave_bak) {
   // check for EOF
 
   if (cfile->frame_index_back!=NULL) {
+    int current_frames=cfile->frames;
+    cfile->frames=old_frames;
     restore_frame_index_back(mainw->current_file);
+    cfile->frames=current_frames;
   }
 
   return old_frames;

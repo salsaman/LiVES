@@ -4,6 +4,7 @@ Fix crash in swscale when frame width is not multiple of 4.
 Fix crash (regression) setting parameters in multitrack.
 Fix breakage in multiple image loading.
 Fix opening preview for quick opening clips.
+Fix bug in "delete frames" for virtual clips.
 Fixes for letterbox mode playback.
 Use threading for pulling frames from video clips.
 Compilation fixes for Debian Sid.

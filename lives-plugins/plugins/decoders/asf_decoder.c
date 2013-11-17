@@ -110,6 +110,7 @@ static enum CodecID ff_codec_get_id(const AVCodecTag *tags, unsigned int tag)
 static index_container_t **indices;
 static int nidxc;
 static pthread_mutex_t indices_mutex;
+static pthread_mutexattr_t mattr;
 
 
 ////////////////////////////////////////////////////////////////////////////
@@ -782,7 +783,7 @@ static int get_next_video_packet(const lives_clip_data_t *cdata, int tfrag, int6
 
 static index_entry *get_idx_for_pts(const lives_clip_data_t *cdata, int64_t pts) {
   lives_asf_priv_t *priv=cdata->priv;
-  int64_t tdts=pts-priv->start_dts;
+  int64_t tdts=pts;
   index_entry *idx=priv->idxc->idx,*lidx=idx;
   int ret;
 
@@ -854,7 +855,8 @@ static index_container_t *idxc_for(lives_clip_data_t *cdata) {
   idxc->nclients=1;
   idxc->clients=(lives_clip_data_t **)malloc(sizeof(lives_clip_data_t *));
   idxc->clients[0]=cdata;
-  pthread_mutex_init(&idxc->mutex,NULL);
+
+  pthread_mutex_init(&idxc->mutex,&mattr);
 
   indices[nidxc]=idxc;
   pthread_mutex_unlock(&indices_mutex);
@@ -980,6 +982,7 @@ static boolean attach_stream(lives_clip_data_t *cdata, boolean isclone) {
   int size;
   boolean got_vidst=FALSE;
   boolean got_picture=FALSE;
+  boolean gotframe2=FALSE;
 
   double fps;
 
@@ -987,7 +990,7 @@ static boolean attach_stream(lives_clip_data_t *cdata, boolean isclone) {
   AVCodecContext *ctx;
   AVStream *vidst=NULL;
 
-  int64_t pts=AV_NOPTS_VALUE;
+  int64_t pts=AV_NOPTS_VALUE,pts2=pts;
   int64_t gsize;
   int64_t ftime;
 
@@ -2213,8 +2216,9 @@ static boolean attach_stream(lives_clip_data_t *cdata, boolean isclone) {
   pts=priv->start_dts=priv->frame_dts;
   priv->have_start_dts=TRUE;
   cdata->video_start_time=(double)pts/10000.;
-  cdata->sync_hint=SYNC_HINT_VIDEO_START;
 
+  cdata->sync_hint=SYNC_HINT_AUDIO_PAD_START;
+  //#define DEBUG
 #ifdef DEBUG
   printf("first pts is %ld\n",pts);
 #endif  
@@ -2224,7 +2228,6 @@ static boolean attach_stream(lives_clip_data_t *cdata, boolean isclone) {
     detach_stream(cdata);
     return FALSE;
   }
-
 
 
   do {
@@ -2248,15 +2251,55 @@ static boolean attach_stream(lives_clip_data_t *cdata, boolean isclone) {
 	}
 
 	pts=priv->frame_dts-pts;
+	pts2=priv->frame_dts;
 
 #ifdef DEBUG
-	printf("delta pts is %ld\n",pts);
+	printf("delta pts is %ld %ld\n",pts,priv->frame_dts);
 #endif
       
 	if (pts>0) cdata->fps=1000./(double)pts;
+	gotframe2=TRUE;
       }
     }
   } while (retval<0&&retval!=-2);
+
+
+  if (gotframe2) {
+    do {
+      free(priv->avpkt.data);
+      retval = get_next_video_packet(cdata,-1,-1);
+      
+      // try to get dts of second frame
+      if (retval!=-2) { // eof
+	if (retval==0) {
+
+	  if (priv->frame_dts==AV_NOPTS_VALUE) {
+	    break;
+	  }
+
+	  if (priv->asf->packet_time_delta!=0) {
+	    fprintf(stderr, "asf_decoder: packet time delta of (%d) not understood\n",priv->asf->packet_time_delta);
+	    detach_stream(cdata);
+	    return FALSE;
+	  }
+
+	  if (priv->frame_dts-pts2!=pts) {
+	    // 2->3 delta can be more accurate than 1 - 2 delta
+	    pts=priv->frame_dts-pts2;
+	    if (pts>0) cdata->fps=1000./(double)pts;
+	    priv->start_dts=pts2-pts;
+	    priv->have_start_dts=TRUE;
+	    cdata->video_start_time=(double)priv->start_dts/10000.;
+	  }
+
+#ifdef DEBUG
+	  printf("3delta pts is %ld %ld\n",pts,priv->frame_dts);
+#endif
+      
+	}
+      }
+    } while (retval<0&&retval!=-2);
+  }
 
   free(priv->avpkt.data);
   priv->avpkt.data=NULL;
@@ -2388,6 +2431,10 @@ const char *module_check_init(void) {
   avcodec_register_all();
   indices=NULL;
   nidxc=0;
+
+  pthread_mutexattr_init(&mattr);
+  pthread_mutexattr_settype(&mattr,PTHREAD_MUTEX_RECURSIVE); 
+
   pthread_mutex_init(&indices_mutex,NULL);
   return NULL;
 }
@@ -2710,7 +2757,7 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstride
 	
       // we are now at the kframe before or at target - parse packets until we hit target
       
-
+      //#define DEBUG_KFRAMES
 #ifdef DEBUG_KFRAMES
       if (priv->kframe!=NULL) printf("got kframe %ld frag %d for frame %ld\n",
 				     dts_to_frame(cdata,priv->kframe->dts+priv->start_dts),priv->kframe->frag,tframe);
@@ -2725,7 +2772,7 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstride
       tfrag=-1;
     }
 
-    priv->ctx->skip_frame=AVDISCARD_NONREF;
+    //priv->ctx->skip_frame=AVDISCARD_NONREF;
 
     priv->last_frame=tframe;
  

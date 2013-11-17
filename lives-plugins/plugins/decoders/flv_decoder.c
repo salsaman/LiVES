@@ -759,7 +759,6 @@ static boolean attach_stream(lives_clip_data_t *cdata, boolean isclone) {
 
 	// deal with string
 	if (key!=NULL) {
-	  fprintf(stderr,"dealing with %s = %s\n",key,buffer);
 	  if (!strcmp(key,"comment")) snprintf(cdata->comment,256,"%s",buffer);
 	  if (!strcmp(key,"author")) snprintf(cdata->author,256,"%s",buffer);
 	  if (!strcmp(key,"title")) snprintf(cdata->title,256,"%s",buffer);

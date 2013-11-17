@@ -5,10 +5,12 @@ Fix crash (regression) setting parameters in multitrack.
 Fix breakage in multiple image loading.
 Fix opening preview for quick opening clips.
 Fixes for letterbox mode playback.
+Use threading for pulling frames from video clips.
 Compilation fixes for Debian Sid.
 Add new avformat_decoder.
 Various improvements to rte window.
 Add "randomiser" data processing plugin.
+Improvements to colour correction and tvpic effects.
 Fix jack transport during playback (regression).
 Fix for saving data connection mappings.
 Implement multiple inputs per output in the data connector.
@@ -17,6 +19,7 @@ Faster loading/saving of layouts in multitrack.
 Optimisations for handling larger clips.
 Fix problems with setting defaults for colour values.
 Decoder plugin fixes for ffmpeg 2.2 (needs further testing).
+Preserve clip comments between restarts (bugfix).
 Small fixes for rfx_builder window.
 Minor GUI improvements.
 

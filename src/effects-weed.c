@@ -46,6 +46,7 @@ using namespace cv;
 struct _procvals {
   weed_plant_t *inst;
   weed_timecode_t tc;
+  int ret;
 };
 
 
@@ -1397,14 +1398,12 @@ static void *thread_process_func(void *arg) {
 
   weed_plant_t *filter=weed_instance_get_filter(inst,FALSE);
 
-  int *retval=(int *)g_malloc(sizint);
-
   weed_leaf_get(filter,"process_func",0,(void *)&process_func_ptr_ptr);
   process_func=process_func_ptr_ptr[0];
 
-  *retval = (*process_func)(inst,tc);
+  procvals->ret = (*process_func)(inst,tc);
 
-  return (void *)retval;
+  return NULL;
 }
 
 
@@ -1428,8 +1427,6 @@ static lives_filter_error_t process_func_threaded(weed_plant_t *inst, weed_plant
   weed_plant_t *xinst[MAX_FX_THREADS];
   weed_plant_t **xchannels;
   weed_plant_t *ctmpl;
-
-  int *tretval;
 
   register int i,j;
 
@@ -1505,9 +1502,8 @@ static lives_filter_error_t process_func_threaded(weed_plant_t *inst, weed_plant
   procvals[0].tc=tc;
 
   // use main thread for first slices
-  tretval=(int *)thread_process_func(&procvals[0]);
-  retval=*tretval;
-  g_free(tretval);
+  thread_process_func(&procvals[0]);
+  retval=procvals[0].ret;
 
   if (retval==WEED_ERROR_PLUGIN_INVALID) got_invalid=TRUE;
 
@@ -1521,7 +1517,8 @@ static lives_filter_error_t process_func_threaded(weed_plant_t *inst, weed_plant
   for (j=0;j<nthreads;j++) {
     retval=WEED_NO_ERROR;
     
-    pthread_join(dthreads[j],(void **)&tretval);
+    pthread_join(dthreads[j],NULL);
+    retval=procvals[j].ret;
     
     xchannels=weed_get_plantptr_array(xinst[j],"out_channels",&error);
     for (i=0;i<nchannels;i++) {
@@ -1529,8 +1526,6 @@ static lives_filter_error_t process_func_threaded(weed_plant_t *inst, weed_plant
     }
     weed_free(xchannels);
     weed_plant_free(xinst[j]);
-    retval=*tretval;
-    g_free(tretval);
     
     if (retval==WEED_ERROR_PLUGIN_INVALID) got_invalid=TRUE;
   }

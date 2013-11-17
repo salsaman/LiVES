@@ -403,17 +403,18 @@ void insert_images_in_virtual (int sfileno, int where, int frames) {
 
   create_frame_index(sfileno,FALSE,0,nframes+frames);
 
-  for (i=nframes-1;i>=where;i--) {
-    sfile->frame_index[i+frames]=sfile->frame_index_back[i];
+  for (i=0;i<where;i++) {
+    sfile->frame_index[i]=sfile->frame_index_back[i];
   }
 
   for (i=where;i<where+frames;i++) {
     sfile->frame_index[i]=-1;
   }
 
-  for (i=0;i<where;i++) {
-    sfile->frame_index[i]=sfile->frame_index_back[i];
+  for (i=where+frames;i<nframes+frames;i++) {
+    sfile->frame_index[i]=sfile->frame_index_back[i-frames];
   }
+
   save_frame_index(sfileno);
 }
 

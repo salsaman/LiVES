@@ -4534,6 +4534,12 @@ void pull_frame_threaded (weed_plant_t *layer, weed_timecode_t tc) {
   // done in a threaded fashion
 
   // may only be used on "virtual" frames
+  //#define NO_FRAME_THREAD
+#ifdef NO_FRAME_THREAD
+  pull_frame(layer,NULL,tc);
+  return;
+#else
+
   pft_priv_data *in=g_malloc(sizeof(pft_priv_data));
   pthread_t *frame_thread=(pthread_t *)calloc(sizeof(pthread_t),1);
 
@@ -4542,6 +4548,7 @@ void pull_frame_threaded (weed_plant_t *layer, weed_timecode_t tc) {
   in->tc=tc;
 
   pthread_create(frame_thread,NULL,pft_thread,(void *)in);
+#endif
 }
 
 

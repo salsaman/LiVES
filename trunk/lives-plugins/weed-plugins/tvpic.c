@@ -36,8 +36,20 @@ static int package_version=1; // version of this package
 #include "weed-plugin-utils.c" // optional
 
 /////////////////////////////////////////////////////////////
+static void set_black(unsigned char *dst, unsigned char *src, size_t alpha, int psize) {
+  weed_memcpy(dst,src,psize);
+  if (alpha!=-1) dst[alpha]=src[alpha];
+}
 
-int tvpic_process (weed_plant_t *inst, weed_timecode_t timestamp) {
+static void set_avg(unsigned char *dst, unsigned char *src1, unsigned char *src2, size_t col, size_t alpha, int psize) {
+  unsigned char avg=(src1[col]+src2[col])/2;
+  weed_memset(dst,0,psize);
+  dst[col]=avg;
+  if (alpha!=-1) dst[alpha]=src1[alpha];
+}
+
+
+static int tvpic_process (weed_plant_t *inst, weed_timecode_t timestamp) {
   int error;
 
   weed_plant_t *in_channel=weed_get_plantptr_value(inst,"in_channels",&error),*out_channel=weed_get_plantptr_value(inst,"out_channels",&error);
@@ -50,14 +62,20 @@ int tvpic_process (weed_plant_t *inst, weed_timecode_t timestamp) {
   int height=weed_get_int_value(in_channel,"height",&error);
   int irowstride=weed_get_int_value(in_channel,"rowstrides",&error);
   int orowstride=weed_get_int_value(out_channel,"rowstrides",&error);
-  int offs=(pal==WEED_PALETTE_RGB24)?3:4;
-  int colrd=1,col;
-  int pc=0;
+  int psize=(pal==WEED_PALETTE_RGB24||pal==WEED_PALETTE_BGR24)?3:4;
   int offset=0,dheight=height;
+  int odd=0;
+  int rem=width%6; // modulo 6
+  int lbord,rbord;
 
-  register int x,y,i,j;
+  size_t red,green,blue,alpha;
 
-  width*=offs;
+  register int x,y;
+
+  lbord=rem>>1;
+  rbord=rem-lbord;
+
+  width*=psize;
 
   // new threading arch
   if (weed_plant_has_leaf(out_channel,"offset")) {
@@ -66,31 +84,135 @@ int tvpic_process (weed_plant_t *inst, weed_timecode_t timestamp) {
 
     src+=offset*irowstride;
     dest+=offset*orowstride;
+    odd=offset%2;
   }
 
-  i=offset;
+  switch (pal) {
+  case WEED_PALETTE_RGB24:
+    red=0;
+    green=1;
+    blue=2;
+    alpha=-1;
+    break;
+  case WEED_PALETTE_RGBA32:
+    red=0;
+    green=1;
+    blue=2;
+    alpha=3;
+    break;
+  case WEED_PALETTE_BGR24:
+    blue=0;
+    green=1;
+    red=2;
+    alpha=-1;
+    break;
+  case WEED_PALETTE_BGRA32:
+    blue=0;
+    green=1;
+    red=2;
+    alpha=4;
+    break;
+  default:
+    // ARGB32
+    alpha=0;
+    red=1;
+    green=2;
+    blue=3;
+  }
+
 
   for (y=0;y<dheight;y++) {
-    if (i==0) {
-      // top row has 3 black, rgb from row/row+1, 3 black, etc
- 
+    x=0;
+    while (x<width) {
+      if (x<lbord||x>rbord) {
+	set_black(&dest[x],&src[x],alpha,psize);
+	x+=psize;
+      }
+      else if (y==height-1) {
+	// bottom row, 2 possibilities
+	// if odd, rgb from row, rgb from row/row-1
+	if (odd) {
+	  weed_memcpy(&dest[x],&src[x],psize);
+	  x+=psize;
+	  weed_memcpy(&dest[x],&src[x],psize);
+	  x+=psize;
+	  weed_memcpy(&dest[x],&src[x],psize);
+	  x+=psize;
+	  set_avg(&dest[x],&src[x],&src[x-irowstride],red,alpha,psize);
+	  x+=psize;
+	  set_avg(&dest[x],&src[x],&src[x-irowstride],green,alpha,psize);
+	  x+=psize;
+	  set_avg(&dest[x],&src[x],&src[x-irowstride],blue,alpha,psize);
+	  x+=psize;
+	}
+	else {
+	  // if even, rgb from row/row-1, 3 black
+	  set_avg(&dest[x],&src[x],&src[x-irowstride],red,alpha,psize);
+	  x+=psize;
+	  set_avg(&dest[x],&src[x],&src[x-irowstride],green,alpha,psize);
+	  x+=psize;
+	  set_avg(&dest[x],&src[x],&src[x-irowstride],blue,alpha,psize);
+	  x+=psize;
+	  set_black(&dest[x],&src[x],alpha,psize);
+	  x+=psize;
+	  set_black(&dest[x],&src[x],alpha,psize);
+	  x+=psize;
+	  set_black(&dest[x],&src[x],alpha,psize);
+	  x+=psize;
+	}
+      }
+      else if (y==0) {
+	// top row has 3 black, rgb from row/row+1, 3 black, etc
+	set_black(&dest[x],&src[x],alpha,psize);
+	x+=psize;
+	set_black(&dest[x],&src[x],alpha,psize);
+	x+=psize;
+	set_black(&dest[x],&src[x],alpha,psize);
+	x+=psize;
+	set_avg(&dest[x],&src[x],&src[x+irowstride],red,alpha,psize);
+	x+=psize;
+	set_avg(&dest[x],&src[x],&src[x+irowstride],green,alpha,psize);
+	x+=psize;
+	set_avg(&dest[x],&src[x],&src[x+irowstride],blue,alpha,psize);
+	x+=psize;
+      }
+      else {
+	// normal row, 2 possibilities
+	if (odd) {
+	  // if odd, rgb from row/row+1, rgb from row/row-1
+	  set_avg(&dest[x],&src[x],&src[x+irowstride],red,alpha,psize);
+	  x+=psize;
+	  set_avg(&dest[x],&src[x],&src[x+irowstride],green,alpha,psize);
+	  x+=psize;
+	  set_avg(&dest[x],&src[x],&src[x+irowstride],blue,alpha,psize);
+	  x+=psize;
+	  set_avg(&dest[x],&src[x],&src[x-irowstride],red,alpha,psize);
+	  x+=psize;
+	  set_avg(&dest[x],&src[x],&src[x-irowstride],green,alpha,psize);
+	  x+=psize;
+	  set_avg(&dest[x],&src[x],&src[x-irowstride],blue,alpha,psize);
+	  x+=psize;
+	}
+	else {
+	  // if even, rgb from row/row-1, rgb from row/row+1
+	  set_avg(&dest[x],&src[x],&src[x-irowstride],red,alpha,psize);
+	  x+=psize;
+	  set_avg(&dest[x],&src[x],&src[x-irowstride],green,alpha,psize);
+	  x+=psize;
+	  set_avg(&dest[x],&src[x],&src[x-irowstride],blue,alpha,psize);
+	  x+=psize;
+	  set_avg(&dest[x],&src[x],&src[x+irowstride],red,alpha,psize);
+	  x+=psize;
+	  set_avg(&dest[x],&src[x],&src[x+irowstride],green,alpha,psize);
+	  x+=psize;
+	  set_avg(&dest[x],&src[x],&src[x+irowstride],blue,alpha,psize);
+	  x+=psize;
+	}
+      }
     }
-    else if (i==height-1) {
-      // bottom row, 2 possibilities
-      // if odd, rgb from row, rgb from row/row-1
-
-      // if even, rgb from row/row-1, 3 black
-
-    }
-    else {
-      // normal row, 2 possibilities
-      // if odd, rgb from row/row+1, rgb from row/row-1
-
-      // if even, rgb from row/row-1, rgb from row/row+1
-
-
-    }
-
+    dest+=orowstride;
+    src+=irowstride;
+    odd=!odd;
   } 
   return WEED_NO_ERROR;
 }
@@ -101,10 +223,10 @@ int tvpic_process (weed_plant_t *inst, weed_timecode_t timestamp) {
 weed_plant_t *weed_setup (weed_bootstrap_f weed_boot) {
   weed_plant_t *plugin_info=weed_plugin_info_init(weed_boot,num_versions,api_versions);
   if (plugin_info!=NULL) {
-    int palette_list[]={WEED_PALETTE_RGB24,WEED_PALETTE_RGBA32,WEED_PALETTE_END};
+    int palette_list[]={WEED_PALETTE_BGR24,WEED_PALETTE_RGB24,WEED_PALETTE_RGBA32,WEED_PALETTE_BGRA32,WEED_PALETTE_ARGB32,WEED_PALETTE_END};
 
     weed_plant_t *in_chantmpls[]={weed_channel_template_init("in channel 0",0,palette_list),NULL};
-    weed_plant_t *out_chantmpls[]={weed_channel_template_init("out channel 0",WEED_CHANNEL_CAN_DO_INPLACE,palette_list),NULL};
+    weed_plant_t *out_chantmpls[]={weed_channel_template_init("out channel 0",0,palette_list),NULL};
     weed_plant_t *filter_class=weed_filter_class_init("tvpic","salsaman",1,WEED_FILTER_HINT_MAY_THREAD,NULL,&tvpic_process,NULL,in_chantmpls,out_chantmpls,NULL,NULL);
 
     weed_plugin_info_add_filter_class (plugin_info,filter_class);

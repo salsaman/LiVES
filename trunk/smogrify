@@ -4352,14 +4352,18 @@ sub cut {
 
     for ($i=$start;$i<=$end;$i++) {
 	$name=&mkname($i);
-	smog_rename( "$name$img_ext","$name.bak");
+	if (-f "$name$img_ext") {
+	    smog_rename( "$name$img_ext","$name.bak");
+	}
 	&sig_progress($i);
     }
 
     for ($i=$end+1;$i<=$frames;$i++) {
 	$from=&mkname($i);
 	$to=&mkname($i-$frames_cut);
-	smog_rename( "$curtmpdir/$from$img_ext","$curtmpdir/$to$img_ext");
+	if (-f "$curtmpdir/$from$img_ext") {
+	    smog_rename( "$curtmpdir/$from$img_ext","$curtmpdir/$to$img_ext");
+	}
 	&sig_progress($i);
     }
 }
@@ -4540,7 +4544,9 @@ sub insert {
 	    smog_copy("$curtmpdir/$from$img_ext", "$curtmpdir/$from.bak");
 	    return if $panic;
 	}
-	smog_rename( "$curtmpdir/$from$img_ext","$curtmpdir/$to$img_ext");
+	if (-f "$curtmpdir/$from$img_ext") {
+	    smog_rename( "$curtmpdir/$from$img_ext","$curtmpdir/$to$img_ext");
+	}
 	&sig_progress($new_frames-$i);
     }
 
@@ -4559,8 +4565,10 @@ sub insert {
 	    $to=&mkname($nwhere+$i-$nstart+1);
 
 	    if ($undo_cut==1) {
-		smog_rename( "$fromdir/$from.bak","$curtmpdir/$to$img_ext");
-		return if $panic;
+		if (-f "$fromdir/$from.bak") {
+		    smog_rename( "$fromdir/$from.bak","$curtmpdir/$to$img_ext");
+		    return if $panic;
+		}
 	    }
 	    else {
 		while (! -f "$fromdir/$from$img_ext2") {

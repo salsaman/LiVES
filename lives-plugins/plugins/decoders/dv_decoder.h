@@ -8,6 +8,7 @@
 typedef struct  {
   // input
   int fd;
+  boolean inited;
   dv_decoder_t *dv_dec;
   int frame_size;
   boolean is_pal;

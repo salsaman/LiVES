@@ -89,6 +89,7 @@ static boolean attach_stream(lives_clip_data_t *cdata, boolean isclone) {
   }
 
   priv->dv_dec=dv_decoder_new(0,0,0); // ignored, unclamp_luma, unclamp_chroma
+  priv->inited=TRUE;
 
   dv_set_error_log(priv->dv_dec,nulfile);
 
@@ -170,6 +171,7 @@ static lives_clip_data_t *init_cdata (void) {
   
   priv->audio=NULL;
   priv->audio_fd=-1;
+  priv->inited=FALSE;
 
   cdata->seek_flag=LIVES_SEEK_FAST;
   
@@ -185,6 +187,8 @@ static lives_clip_data_t *init_cdata (void) {
 
 static lives_clip_data_t *dv_clone(lives_clip_data_t *cdata) {
   lives_clip_data_t *clone=init_cdata();
+
+  lives_dv_priv_t *dpriv,*spriv;
 
   // copy from cdata to clone, with a new context for clone
   clone->URI=strdup(cdata->URI);
@@ -218,6 +222,12 @@ static lives_clip_data_t *dv_clone(lives_clip_data_t *cdata) {
   snprintf(clone->author,256,"%s",cdata->author);
   snprintf(clone->title,256,"%s",cdata->title);
   snprintf(clone->comment,256,"%s",cdata->comment);
+
+    // create "priv" elements
+  dpriv=clone->priv;
+  spriv=cdata->priv;
+
+  if (spriv!=NULL) dpriv->inited=TRUE;
 
   if (!attach_stream(clone,TRUE)) {
     free(clone->URI);

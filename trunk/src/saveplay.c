@@ -529,17 +529,35 @@ void open_file_sel(const gchar *file_name, double start, int frames) {
 	      get_total_time(cfile);
 
 	      if (prefs->auto_trim_audio) {
-		if ((cdata->sync_hint&SYNC_HINT_VIDEO_START)&&cdata->video_start_time<=1.) {
-		  // pad with blank frames
+		if ((cdata->sync_hint&SYNC_HINT_VIDEO_PAD_START)&&cdata->video_start_time<=1.) {
+		  // pad with blank frames at start
 		  int extra_frames=cdata->video_start_time*cfile->fps+.5;
 		  insert_blank_frames(mainw->current_file,extra_frames,0);
 		  load_start_image(cfile->start);
+		  load_end_image(cfile->end);
+		}
+		if ((cdata->sync_hint&SYNC_HINT_VIDEO_PAD_END)&&(double)cfile->frames/cfile->fps<cfile->laudio_time) {
+		  // pad with blank frames at end
+		  int extra_frames=(cfile->laudio_time-(double)cfile->frames/cfile->fps)*cfile->fps+.5;
+		  insert_blank_frames(mainw->current_file,extra_frames,cfile->frames);
+		  cfile->end=cfile->frames;
+		  load_end_image(cfile->end);
 		}
 		if (cfile->total_time>cfile->video_time) {
 		  if (cdata->sync_hint&SYNC_HINT_AUDIO_TRIM_START) {
 		    cfile->undo1_dbl=0.;
 		    cfile->undo2_dbl=cfile->total_time-cfile->video_time;
 		    msgstr=g_strdup_printf(_ ("Auto trimming %.2f seconds of audio at start..."),cfile->undo2_dbl);
+		    d_print(msgstr);
+		    g_free(msgstr);
+		    if (on_del_audio_activate(NULL,NULL)) d_print_done();
+		    else d_print("\n");
+		    cfile->changed=FALSE;
+		  }
+		  if (cdata->sync_hint&SYNC_HINT_AUDIO_TRIM_END) {
+		    cfile->undo1_dbl=cfile->laudio_time;
+		    cfile->undo2_dbl=cfile->total_time-cfile->video_time;
+		    msgstr=g_strdup_printf(_ ("Auto trimming %.2f seconds of audio at end..."),cfile->undo2_dbl);
 		    d_print(msgstr);
 		    g_free(msgstr);
 		    if (on_del_audio_activate(NULL,NULL)) d_print_done();
@@ -557,6 +575,21 @@ void open_file_sel(const gchar *file_name, double start, int frames) {
 		    cfile->undo_asampsize=cfile->asampsize;
 		    cfile->undo_arps=cfile->arps;
 		    msgstr=g_strdup_printf(_ ("Auto padding with %.2f seconds of silence at start..."),cfile->undo2_dbl);
+		    d_print(msgstr);
+		    g_free(msgstr);
+		    if (on_ins_silence_activate(NULL,NULL)) d_print_done();
+		    else d_print("\n");
+		    cfile->changed=FALSE;
+		  }
+		  if (cdata->sync_hint&SYNC_HINT_AUDIO_PAD_END) {
+		    cfile->undo1_dbl=cfile->laudio_time;
+		    cfile->undo2_dbl=cfile->total_time-cfile->laudio_time;
+		    cfile->undo_arate=cfile->arate;
+		    cfile->undo_signed_endian=cfile->signed_endian;
+		    cfile->undo_achans=cfile->achans;
+		    cfile->undo_asampsize=cfile->asampsize;
+		    cfile->undo_arps=cfile->arps;
+		    msgstr=g_strdup_printf(_ ("Auto padding with %.2f seconds of silence at end..."),cfile->undo2_dbl);
 		    d_print(msgstr);
 		    g_free(msgstr);
 		    if (on_ins_silence_activate(NULL,NULL)) d_print_done();

@@ -1816,9 +1816,6 @@ on_undo_activate                      (GtkMenuItem     *menuitem,
 			  cfile->arps, cfile->achans, cfile->asampsize, !(cfile->signed_endian&AFORM_UNSIGNED),
 			  !(cfile->signed_endian&AFORM_BIG_ENDIAN));
 
-      if (cfile->clip_type==CLIP_TYPE_FILE) {
-	restore_frame_index_back(mainw->current_file);
-      }
     }
 
     mainw->com_failed=FALSE;
@@ -1856,6 +1853,9 @@ on_undo_activate                      (GtkMenuItem     *menuitem,
 	if (cfile->end==0) {
 	  cfile->end=cfile->frames;
 	}
+      }
+      if (cfile->clip_type==CLIP_TYPE_FILE) {
+	restore_frame_index_back(mainw->current_file);
       }
       save_clip_value(mainw->current_file,CLIP_DETAILS_FRAMES,&cfile->frames);
       if (mainw->com_failed||mainw->write_failed) bad_header=TRUE;

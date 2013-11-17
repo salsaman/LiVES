@@ -4052,9 +4052,7 @@ static int64_t mpegts_load_index(lives_clip_data_t *cdata) {
     if (offs<last_offs) goto failrd;
     if (offs>=priv->filesize) goto failrd;
 
-    pthread_mutex_lock(&priv->idxc->mutex);
     lives_add_idx(cdata,offs,dts);
-    pthread_mutex_unlock(&priv->idxc->mutex);
 
     last_dts=dts;
     last_offs=offs;

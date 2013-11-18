@@ -55,8 +55,14 @@ static boolean attach_stream(lives_clip_data_t *cdata, boolean isclone) {
   uint8_t header[DV_HEADER_SIZE];
   uint8_t *fbuffer;
   lives_dv_priv_t *priv=cdata->priv;
+  boolean is_partial_clone=FALSE;
 
   char *ext;
+
+  if (isclone&&!priv->inited) {
+    isclone=FALSE;
+    is_partial_clone=TRUE;
+  }
 
   if (!isclone) {
 
@@ -108,7 +114,7 @@ static boolean attach_stream(lives_clip_data_t *cdata, boolean isclone) {
   dv_parse_audio_header(priv->dv_dec,fbuffer);
   free(fbuffer);
 
-  if (!isclone) {
+  if (!isclone&&!is_partial_clone) {
     fstat(priv->fd,&sb);
     if (sb.st_size) cdata->nframes = (int)(sb.st_size / priv->frame_size);
   }

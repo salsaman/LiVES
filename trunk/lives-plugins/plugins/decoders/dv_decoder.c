@@ -114,12 +114,53 @@ static boolean attach_stream(lives_clip_data_t *cdata, boolean isclone) {
   dv_parse_audio_header(priv->dv_dec,fbuffer);
   free(fbuffer);
 
+  cdata->current_palette=cdata->palettes[0];
+  cdata->current_clip=0;
+
+  cdata->nclips=1;
+
+  sprintf(cdata->container_name,"%s","dv");
+
+  sprintf(cdata->video_name,"%s","dv");
+
+  sprintf(cdata->audio_name,"%s","pcm");
+
+  cdata->YUV_clamping=WEED_YUV_CLAMPING_UNCLAMPED;
+  cdata->YUV_subspace=WEED_YUV_SUBSPACE_YCBCR;
+  cdata->YUV_sampling=WEED_YUV_SAMPLING_DEFAULT;
+
+  cdata->width=720;
+
+  // cdata->height was set when we attached the stream
+
+  cdata->interlace=LIVES_INTERLACE_BOTTOM_FIRST;
+
+  cdata->par=1.;
+  cdata->offs_x=0;
+  cdata->offs_y=0;
+  cdata->frame_width=cdata->width;
+  cdata->frame_height=cdata->height;
+
+  // audio part
+  priv=cdata->priv;
+  cdata->arate=dv_get_frequency(priv->dv_dec);
+  cdata->achans=dv_get_num_channels(priv->dv_dec);
+  cdata->asamps=16;
+
+  cdata->asigned=TRUE;
+  cdata->ainterleaf=FALSE;
+
+  // misc
+  cdata->video_start_time=0.;
+
+  priv->dv_dec->quality=DV_QUALITY_BEST;
+  
+
   if (!isclone&&!is_partial_clone) {
     fstat(priv->fd,&sb);
     if (sb.st_size) cdata->nframes = (int)(sb.st_size / priv->frame_size);
   }
 
-  priv->dv_dec->quality=DV_QUALITY_BEST;
   //priv.dv_dec->add_ntsc_setup=TRUE;
     
   return TRUE;
@@ -287,47 +328,8 @@ lives_clip_data_t *get_clip_data(const char *URI, lives_clip_data_t *cdata) {
       clip_data_free(cdata);
       return NULL;
     }
-    cdata->current_palette=cdata->palettes[0];
-    cdata->current_clip=0;
-  }
+   }
 
-  cdata->nclips=1;
-
-  sprintf(cdata->container_name,"%s","dv");
-
-  sprintf(cdata->video_name,"%s","dv");
-
-  sprintf(cdata->audio_name,"%s","pcm");
-
-  cdata->YUV_clamping=WEED_YUV_CLAMPING_UNCLAMPED;
-  cdata->YUV_subspace=WEED_YUV_SUBSPACE_YCBCR;
-  cdata->YUV_sampling=WEED_YUV_SAMPLING_DEFAULT;
-
-  cdata->width=720;
-
-  // cdata->height was set when we attached the stream
-
-  cdata->interlace=LIVES_INTERLACE_BOTTOM_FIRST;
-
-  cdata->par=1.;
-  cdata->offs_x=0;
-  cdata->offs_y=0;
-  cdata->frame_width=cdata->width;
-  cdata->frame_height=cdata->height;
-
-  // audio part
-  priv=cdata->priv;
-  cdata->arate=dv_get_frequency(priv->dv_dec);
-  cdata->achans=dv_get_num_channels(priv->dv_dec);
-  cdata->asamps=16;
-
-  cdata->asigned=TRUE;
-  cdata->ainterleaf=FALSE;
-
-  // misc
-  cdata->video_start_time=0.;
-
-  
 
   return cdata;
 }

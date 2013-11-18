@@ -1035,7 +1035,7 @@ boolean pull_frame(weed_plant_t *layer, const gchar *image_ext, weed_timecode_t 
 void pull_frame_threaded (weed_plant_t *layer, const char *img_ext, weed_timecode_t tc);
 void check_layer_ready(weed_plant_t *layer);
 boolean pull_frame_at_size (weed_plant_t *layer, const gchar *image_ext, weed_timecode_t tc, 
-			     int width, int height, int target_palette);
+			    int width, int height, int target_palette);
 LiVESPixbuf *pull_lives_pixbuf_at_size(int clip, int frame, const char *image_ext, weed_timecode_t tc, 
 				       int width, int height, LiVESInterpType interp);
 LiVESPixbuf *pull_lives_pixbuf(int clip, int frame, const char *image_ext, weed_timecode_t tc);

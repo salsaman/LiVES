@@ -116,6 +116,13 @@ boolean save_clip_values(int which) {
 	save_clip_value(which,CLIP_DETAILS_FILENAME,mainw->files[which]->file_name);
 	if (mainw->com_failed||mainw->write_failed) break;
 	save_clip_value(which,CLIP_DETAILS_KEYWORDS,mainw->files[which]->keywords);
+	if (mainw->com_failed||mainw->write_failed) break;
+	if (cfile->ext_src) {
+	  lives_decoder_t *dplug=(lives_decoder_t *)cfile->ext_src;
+	  save_clip_value(which,CLIP_DETAILS_DECODER_NAME,dplug->decoder->name);
+	  if (mainw->com_failed||mainw->write_failed) break;
+	}
+
       } while (FALSE);
 
       if (mainw->signal_caught) catch_sigint(mainw->signal_caught);
@@ -340,7 +347,7 @@ void open_file_sel(const gchar *file_name, double start, int frames) {
       lives_chdir(ppath,FALSE);
       g_free(ppath);
 	
-      cdata=get_decoder_cdata(cfile,prefs->disabled_decoders,NULL);
+      cdata=get_decoder_cdata(mainw->current_file,prefs->disabled_decoders,NULL);
 
       lives_chdir(cwd,FALSE);
       g_free(cwd);
@@ -601,14 +608,9 @@ void open_file_sel(const gchar *file_name, double start, int frames) {
 	    }
 	  }
 	}
+	get_mime_type(cfile->type,40,cdata);
+	save_frame_index(mainw->current_file);
       }
-
-      get_mime_type(cfile->type,40,cdata);
-
-      save_frame_index(mainw->current_file);
-
-      if (tmp!=NULL) g_free(tmp);
-      tmp=NULL;
     }
 
     
@@ -5289,18 +5291,149 @@ void recover_layout_map(int numclips) {
 
 
 
+ boolean reload_clip(int fileno) {
+   // cd to clip directory - so decoder plugins can write temp files
 
+   file *sfile=mainw->files[fileno];
+
+   gchar *ppath=g_build_filename(prefs->tmpdir,sfile->handle,NULL);
+
+   const lives_clip_data_t *cdata=NULL;
+
+   lives_clip_data_t *fake_cdata=lives_calloc(sizeof(lives_clip_data_t),1);
+
+   boolean was_renamed=FALSE;
+
+   lives_chdir(ppath,FALSE);
+   g_free(ppath);
+
+   while (1) {
+     threaded_dialog_spin();
+
+     fake_cdata->URI=g_strdup(sfile->file_name);
+     fake_cdata->fps=sfile->fps;
+     fake_cdata->nframes=sfile->frames;
+
+     if ((cdata=get_decoder_cdata(fileno,prefs->disabled_decoders,fake_cdata->fps!=0.?fake_cdata:NULL))==NULL) {
+       if (mainw->error) {
+	 if (do_original_lost_warning(sfile->file_name)) {
+	   int resp;
+	   gchar fname[PATH_MAX],dirname[PATH_MAX],*newname;
+	   GtkWidget *chooser;
+
+	   g_snprintf(dirname,PATH_MAX,"%s",sfile->file_name);
+	   g_snprintf(fname,PATH_MAX,"%s",sfile->file_name);
+
+	   get_dirname(dirname);
+	   get_basename(fname);
+
+	   chooser=choose_file_with_preview(dirname,fname,128);
+
+	   resp=lives_dialog_run(LIVES_DIALOG(chooser));
+
+	   if (resp==GTK_RESPONSE_ACCEPT) {
+	     newname=lives_file_chooser_get_filename (LIVES_FILE_CHOOSER(chooser));
+	     lives_widget_destroy(LIVES_WIDGET(chooser));
+
+	     if (newname!=NULL) {
+	       if (strlen(newname)) {
+		 gchar *tmp;
+		 g_snprintf(sfile->file_name,PATH_MAX,"%s",(tmp=g_filename_to_utf8(newname,-1,NULL,NULL,NULL)));
+		 g_free(tmp);
+	       }
+	       g_free(newname);
+	     }
+
+	     if (fake_cdata->URI!=NULL) g_free(fake_cdata->URI);
+	     fake_cdata->URI=NULL;
+
+	     //re-scan for these
+	     sfile->fps=0.;
+	     sfile->frames=0;
+
+	     was_renamed=TRUE;
+	     continue;
+	   }
+	 }
+	 else {
+	   // deleted : TODO ** - show layout errors
+
+	 }
+	      
+       }
+       else {
+	 do_no_decoder_error(sfile->file_name);
+       }
+
+       // NOT found, switch to another clip (if any)
+
+       // index stuff
+       sfile=NULL;
+	    
+       if (fileno==mainw->current_file) {
+	 if (mainw->cliplist!=NULL) {
+	   GList *list_index;
+	   int index=-1;
+
+	   list_index=g_list_last (mainw->cliplist);
+	   do {
+	     if ((list_index=g_list_previous(list_index))==NULL) list_index=g_list_last (mainw->cliplist);
+	     index=GPOINTER_TO_INT (list_index->data);
+	   } while ((mainw->files[index]==NULL||
+		     ((index==mainw->scrap_file||index==mainw->ascrap_file)&&index>-1))&&index!=fileno);
+	   if (index==fileno) index=-1;
+
+	   mainw->current_file=index;
+	 }
+	 else mainw->current_file=-1;
+       }
+       if (fake_cdata->URI!=NULL) g_free(fake_cdata->URI);
+       g_free(fake_cdata);
+       return FALSE;
+     }
+     // got cdata
+     threaded_dialog_spin();
+     if (fake_cdata->URI!=NULL) g_free(fake_cdata->URI);
+     g_free(fake_cdata);
+     break;
+   }
+
+   sfile->clip_type=CLIP_TYPE_FILE;
+   get_mime_type(sfile->type,40,cdata);
+
+   if (sfile->ext_src!=NULL) {
+     //cdata=clone_cdata(fileno); // testing only
+     //((lives_decoder_t *)sfile->ext_src)->cdata=cdata;
+     boolean bad_header=FALSE;
+     boolean correct=check_clip_integrity(fileno,cdata);
+     if (!correct||was_renamed) {
+       save_clip_values(fileno);
+       if (mainw->com_failed||mainw->write_failed) bad_header=TRUE;
+     }
+     else {
+       lives_decoder_t *dplug=(lives_decoder_t *)sfile->ext_src;
+       lives_decoder_sys_t *dpsys=(lives_decoder_sys_t *)dplug->decoder;
+       save_clip_value(fileno,CLIP_DETAILS_DECODER_NAME,dpsys->name);
+       if (mainw->com_failed||mainw->write_failed) bad_header=TRUE;
+     }
+	
+     if (bad_header) do_header_write_error(fileno);
+   }
+
+   return TRUE;
+
+ }
 
 
 static boolean recover_files(gchar *recovery_file, boolean auto_recover) {
   FILE *rfile;
+
   gchar buff[256],*buffptr;
   gchar *clipdir;
   gchar *cwd=g_get_current_dir();
 
   int retval;
   int new_file,clipnum=0;
-  int last_current_file=-1;
 
   boolean last_was_normal_file=FALSE;
   boolean is_scrap;
@@ -5308,8 +5441,6 @@ static boolean recover_files(gchar *recovery_file, boolean auto_recover) {
   boolean did_set_check=FALSE;
   boolean needs_update=FALSE;
   boolean is_ready;
-
-  const lives_clip_data_t *cdata=NULL;
 
   splash_end();
 
@@ -5354,6 +5485,7 @@ static boolean recover_files(gchar *recovery_file, boolean auto_recover) {
   mainw->suppress_dprint=TRUE;
   
   while (1) {
+
     threaded_dialog_spin();
     is_scrap=FALSE;
     is_ascrap=FALSE;
@@ -5476,8 +5608,6 @@ static boolean recover_files(gchar *recovery_file, boolean auto_recover) {
       create_cfile();
       threaded_dialog_spin();
 
-      last_current_file=mainw->current_file;
-
       if (!is_scrap) {
 	if (!is_ascrap) {
 	  // get file details
@@ -5533,60 +5663,11 @@ static boolean recover_files(gchar *recovery_file, boolean auto_recover) {
       if (mainw->current_file<1) continue;
 
       if (load_frame_index(mainw->current_file)) {
-	// cd to clip directory - so decoder plugins can write temp files
-	gchar *ppath=g_build_filename(prefs->tmpdir,cfile->handle,NULL);
-	boolean next=FALSE;
-	lives_clip_data_t *fake_cdata=lives_calloc(sizeof(lives_clip_data_t),1);
-
-	lives_chdir(ppath,FALSE);
-	g_free(ppath);
-
-	while (1) {
-	  threaded_dialog_spin();
-
-	  fake_cdata->fps=0.;
-
-	  if (cfile->fps>0.&&cfile->frames>0) {
-	    fake_cdata->URI=g_strdup(cfile->file_name);
-	    fake_cdata->fps=cfile->fps;
-	    fake_cdata->nframes=cfile->frames;
-	  }
-
-	  if ((cdata=get_decoder_cdata(cfile,NULL,fake_cdata->fps!=0.?fake_cdata:NULL))==NULL) {
-	    g_free(fake_cdata->URI);
-	    g_free(fake_cdata);
-	    next=FALSE;
-	    if (mainw->error) {
-	      if (do_original_lost_warning(cfile->file_name)) {
-		
-		// TODO ** - show layout errors
-		next=TRUE;
-	      }
-	    }
-	    else {
-	      do_no_decoder_error(cfile->file_name);
-	      next=TRUE;
-	    }
-	  }
-	  threaded_dialog_spin();
-	  break;
-	}
-	g_free(fake_cdata->URI);
-	g_free(fake_cdata);
-	if (next) {
-	  close_current_file(last_current_file);
-	  continue;
-	}
-	cfile->clip_type=CLIP_TYPE_FILE;
-	get_mime_type(cfile->type,40,cdata);
-      }
-    
-      if (cfile->ext_src!=NULL) {
-	//cdata=clone_cdata(mainw->current_file); // testing only
-	//((lives_decoder_t *)cfile->ext_src)->cdata=cdata;
-	check_clip_integrity(mainw->current_file,cdata);
+	// CLIP_TYPE_FILE
+	if (!reload_clip(mainw->current_file)) continue;
       }
       else {
+	// CLIP_TYPE_DISK
 	if (is_scrap||!check_frame_count(mainw->current_file)) {
 	  get_frame_count(mainw->current_file);
 	  needs_update=TRUE;

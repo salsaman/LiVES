@@ -4469,6 +4469,9 @@ char *clip_detail_to_string(lives_clip_details_t what, size_t *maxlenp) {
   case CLIP_DETAILS_INTERLACE:
     key=g_strdup("interlace");
     break;
+  case CLIP_DETAILS_DECODER_NAME:
+    key=g_strdup("decoder");
+    break;
   default:
     break;
   }
@@ -4652,6 +4655,7 @@ boolean get_clip_value(int which, lives_clip_details_t what, void *retval, size_
     g_snprintf((char *)retval,maxlen,"%s",val);
     break;
   case CLIP_DETAILS_FILENAME:
+  case CLIP_DETAILS_DECODER_NAME:
     g_snprintf((char *)retval,maxlen,"%s",(tmp=g_filename_to_utf8(val,-1,NULL,NULL,NULL)));
     g_free(tmp);
     break;
@@ -4739,10 +4743,10 @@ void save_clip_value(int which, lives_clip_details_t what, void *val) {
     myval=g_strdup((char *)val);
     break;
   case CLIP_DETAILS_COMMENT:
-    myval=g_strdup((char *)val);
+    myval=g_strdup((const char *)val);
     break;
   case CLIP_DETAILS_KEYWORDS:
-    myval=g_strdup((char *)val);
+    myval=g_strdup((const char *)val);
     break;
   case CLIP_DETAILS_PB_FRAMENO:
     myval=g_strdup_printf("%d",*(int *)val);
@@ -4751,7 +4755,10 @@ void save_clip_value(int which, lives_clip_details_t what, void *val) {
     myval=g_strdup((char *)val);
     break;
   case CLIP_DETAILS_FILENAME:
-    myval=g_filename_from_utf8((char *)val,-1,NULL,NULL,NULL);
+    myval=g_filename_from_utf8((const char *)val,-1,NULL,NULL,NULL);
+    break;
+  case CLIP_DETAILS_DECODER_NAME:
+    myval=g_filename_from_utf8((const char *)val,-1,NULL,NULL,NULL);
     break;
   case CLIP_DETAILS_HEADER_VERSION:
     myval=g_strdup_printf("%d",*(int *)val);
@@ -5176,7 +5183,7 @@ LIVES_INLINE LiVESInterpType get_interp_value(gshort quality) {
 
 
 
-LIVES_INLINE GList *g_list_move_to_first(GList *list, GList *item) {
+LIVES_INLINE GList *lives_list_move_to_first(GList *list, GList *item) {
   // move item to first in list
   GList *xlist=g_list_remove_link(list,item); // item becomes standalone list
   return g_list_concat(item,xlist); // concat rest of list after item

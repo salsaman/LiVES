@@ -6898,7 +6898,7 @@ sub rc_get {
     }
 
     unless (defined(open IN,"$rcfile")) {
-	print STDERR "Smogrify: Unable to read values from rc file, $rcfile\n";
+	print STDERR "Smogrify: Unable to read value $key from rc file, $rcfile\n";
 	exit 2;
     }
     $part=0;

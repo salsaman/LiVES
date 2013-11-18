@@ -2196,18 +2196,45 @@ static GList *load_decoders(void) {
   GList *decoder_plugins_o=get_plugin_list (PLUGIN_DECODERS,TRUE,decplugdir,"-dll");
 #endif
   GList *decoder_plugins=decoder_plugins_o;
-  g_free(decplugdir);
 
+  char *blacklist[2]={
+    "zyavformat_decoder",
+    NULL
+  };
+
+  char *dplugname;
+  boolean skip;
+
+  register int i;
 
   while (decoder_plugins!=NULL) {
-    dplug=open_decoder_plugin((gchar *)decoder_plugins->data);
+    skip=FALSE;
+    dplugname=(char *)decoder_plugins->data;
+    for (i=0;blacklist[i]!=NULL;i++) {
+      if (!strcmp(dplugname,blacklist[i])) {
+	// skip blacklisted decoders
+	skip=TRUE;
+	break;
+      }
+    }
+    if (!skip) {
+      dplug=open_decoder_plugin((gchar *)decoder_plugins->data);
+      if (dplug!=NULL) dlist=g_list_append(dlist,(gpointer)dplug);
+    }
     g_free(decoder_plugins->data);
-    if (dplug!=NULL) dlist=g_list_append(dlist,(gpointer)dplug);
     decoder_plugins=decoder_plugins->next;
   }
 
   g_list_free(decoder_plugins_o);
 
+  if (dlist==NULL) {
+    gchar *msg=g_strdup_printf(_("\n\nNo decoders found in %s !\n"),decplugdir);
+    LIVES_WARN(msg);
+    d_print(msg);
+    g_free(msg);
+  }
+
+  g_free(decplugdir);
   return dlist;
 }
 
@@ -2271,12 +2298,17 @@ static lives_decoder_t *try_decoder_plugins(char *file_name, GList *disabled, co
       dplug->decoder=dpsys;
 
       if (strncmp(dpsys->name,"zz",2)) {
-	mainw->decoder_list=g_list_move_to_first(mainw->decoder_list, decoder_plugin);
+	mainw->decoder_list=lives_list_move_to_first(mainw->decoder_list, decoder_plugin);
       }
       break;
     }
     decoder_plugin=decoder_plugin->next;
   }
+  if (decoder_plugin==NULL) {
+    g_free(dplug);
+    dplug=NULL;
+  }
+  
   return dplug;
 }
 
@@ -2284,7 +2316,7 @@ static lives_decoder_t *try_decoder_plugins(char *file_name, GList *disabled, co
 
 
 
-const lives_clip_data_t *get_decoder_cdata(file *sfile, GList *disabled, const lives_clip_data_t *fake_cdata) {
+const lives_clip_data_t *get_decoder_cdata(int fileno, GList *disabled, const lives_clip_data_t *fake_cdata) {
   // pass file to each decoder (demuxer) plugin in turn, until we find one that can parse
   // the file
   // NULL is returned if no decoder plugin recognises the file - then we
@@ -2298,7 +2330,12 @@ const lives_clip_data_t *get_decoder_cdata(file *sfile, GList *disabled, const l
 
   lives_decoder_t *dplug;
 
-  gchar *msg;
+  GList *dlist=NULL,*xdisabled;
+
+  file *sfile=mainw->files[fileno];
+
+  char decplugname[PATH_MAX];
+  char *msg;
 
   mainw->error=FALSE;
 
@@ -2306,6 +2343,8 @@ const lives_clip_data_t *get_decoder_cdata(file *sfile, GList *disabled, const l
     mainw->error=TRUE;
     return NULL;
   }
+
+  memset(decplugname,0,1);
 
   // check sfile->file_name against each decoder plugin, 
   // until we get non-NULL cdata
@@ -2319,7 +2358,40 @@ const lives_clip_data_t *get_decoder_cdata(file *sfile, GList *disabled, const l
     mainw->decoders_loaded=TRUE;
   }
 
-  dplug=try_decoder_plugins(fake_cdata==NULL?sfile->file_name:NULL,disabled,fake_cdata);
+  xdisabled=g_list_copy(disabled);
+
+  if (fake_cdata!=NULL) {
+    get_clip_value(fileno,CLIP_DETAILS_DECODER_NAME,decplugname,PATH_MAX);
+
+    if (strlen(decplugname)) {
+      GList *decoder_plugin=mainw->decoder_list;
+      if (!strncmp(decplugname,"zz",2)) {
+	dlist=g_list_copy(mainw->decoder_list);
+      }
+      
+      while (decoder_plugin!=NULL) {
+	lives_decoder_sys_t *dpsys=(lives_decoder_sys_t *)decoder_plugin->data;
+	if (!strcmp(dpsys->name,decplugname)) {
+	  mainw->decoder_list=lives_list_move_to_first(mainw->decoder_list, decoder_plugin);
+	  break;
+	}
+	decoder_plugin=decoder_plugin->next;
+      }
+
+      xdisabled=g_list_remove(disabled,decplugname);
+    }
+  }
+
+  dplug=try_decoder_plugins(fake_cdata==NULL?sfile->file_name:NULL,xdisabled,fake_cdata);
+
+  if (strlen(decplugname)) {
+    if (!strncmp(decplugname,"zz",2)) {
+      if (mainw->decoder_list!=NULL) g_list_free(mainw->decoder_list);
+      mainw->decoder_list=dlist;
+    }
+  }
+
+  if (xdisabled!=NULL) g_list_free(xdisabled);
 
   lives_set_cursor_style(LIVES_CURSOR_NORMAL,NULL);
 
@@ -2331,7 +2403,8 @@ const lives_clip_data_t *get_decoder_cdata(file *sfile, GList *disabled, const l
     return dplug->cdata;
   }
 
-  return dplug->cdata;
+  if (dplug!=NULL) return dplug->cdata;
+  return NULL;
 }
 
 

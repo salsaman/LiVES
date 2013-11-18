@@ -805,7 +805,8 @@ typedef enum {
   CLIP_DETAILS_CLIPNAME,
   CLIP_DETAILS_HEADER_VERSION,
   CLIP_DETAILS_KEYWORDS,
-  CLIP_DETAILS_INTERLACE
+  CLIP_DETAILS_INTERLACE,
+  CLIP_DETAILS_DECODER_NAME
 } lives_clip_details_t;
 
 
@@ -824,7 +825,7 @@ void add_to_playframe (void);
 GtkWidget* create_cdtrack_dialog (int type, gpointer user_data);
 GtkTextView *create_output_textview(void);
 gchar *choose_file(gchar *dir, gchar *fname, gchar **filt, lives_file_chooser_action_t act, const char *title, GtkWidget *extra);
-void choose_file_with_preview (gchar *dir, const gchar *title, int preview_type);
+GtkWidget *choose_file_with_preview (gchar *dir, const gchar *title, int preview_type);
 void add_suffix_check(GtkBox *box, const gchar *ext);
 
 
@@ -971,6 +972,7 @@ void do_text_window (const gchar *title, const gchar *text);
 boolean read_file_details(const gchar *file_name, boolean only_check_for_audio);
 boolean add_file_info(const gchar *check_handle, boolean aud_only);
 boolean save_file_comments (int fileno);
+boolean reload_clip(int fileno);
 void reget_afilesize (int fileno);
 void deduce_file(const gchar *filename, double start_time, int end);
 void open_file (const gchar *filename);
@@ -1225,7 +1227,7 @@ void calc_aframeno(int fileno);
 void minimise_aspect_delta (double allowed_aspect,int hblock,int vblock,int hsize,int vsize,int *width,int *height);
 LiVESInterpType get_interp_value(short quality);
 
-GList *g_list_move_to_first(GList *list, GList *item) WARN_UNUSED;
+GList *lives_list_move_to_first(GList *list, GList *item) WARN_UNUSED;
 GList *g_list_delete_string(GList *, char *string) WARN_UNUSED;
 GList *g_list_copy_strings(GList *list);
 boolean string_lists_differ(GList *, GList *);
@@ -1352,6 +1354,8 @@ void on_open_fw_activate (GtkMenuItem *menuitem, gpointer format);
 
 gchar *dummychar;
 
+void break_me(void);
+
 #define LIVES_NO_DEBUG
 #ifndef LIVES_DEBUG
 #ifndef LIVES_NO_DEBUG
@@ -1379,7 +1383,7 @@ gchar *dummychar;
 
 #ifndef LIVES_ERROR
 #ifndef LIVES_NO_ERROR
-#define LIVES_ERROR(x)      fprintf(stderr, "LiVES error: %s\n", x)
+#define LIVES_ERROR(x)      {fprintf(stderr, "LiVES error: %s\n", x); break_me();}
 #else // LIVES_NO_ERROR
 #define LIVES_ERROR(x)      dummychar = x
 #endif // LIVES_NO_ERROR

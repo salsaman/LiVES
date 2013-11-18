@@ -3127,7 +3127,6 @@ static boolean attach_stream(lives_clip_data_t *cdata, boolean isclone) {
   if (isclone&&!priv->inited) {
     isclone=FALSE;
     is_partial_clone=TRUE;
-    fprintf(stderr,"is pclone\n");
   }
 
   priv->has_audio=priv->has_video=FALSE;
@@ -3515,9 +3514,6 @@ static lives_clip_data_t *mpegts_clone(lives_clip_data_t *cdata) {
   if (spriv!=NULL) dpriv->filesize=spriv->filesize;
 
   clone->current_clip=cdata->current_clip;
-
-  fprintf(stderr,"told %ld frames\n",cdata->nframes);
-
   clone->width=cdata->width;
   clone->height=cdata->height;
   clone->nframes=cdata->nframes;
@@ -3622,11 +3618,9 @@ lives_clip_data_t *get_clip_data(const char *URI, lives_clip_data_t *cdata) {
   lives_mpegts_priv_t *priv;
 
   if (URI==NULL&&cdata!=NULL) {
-    fprintf(stderr,"clone\n");
     // create a clone of cdata - we also need to be able to handle a "fake" clone with only URI, nframes and fps set (priv == NULL)
     return mpegts_clone(cdata);
   }
-  fprintf(stderr,"xclone\n");
 
   if (cdata!=NULL&&cdata->current_clip>0) {
     // currently we only support one clip per container

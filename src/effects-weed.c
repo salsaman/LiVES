@@ -1595,20 +1595,20 @@ lives_filter_error_t weed_apply_instance (weed_plant_t *inst, weed_plant_t *init
   weed_plant_t **in_channels,**out_channels=NULL,*channel,*chantmpl;
   weed_plant_t **in_ctmpls;
 
+  lives_filter_error_t retval=FILTER_NO_ERROR;
+
   int frame;
   int inwidth,inheight,inpalette,outpalette,channel_flags,filter_flags=0;
   int palette,cpalette;
   int outwidth,outheight;
-  boolean needs_reinit=FALSE,inplace=FALSE;
   int incwidth,incheight,numplanes=0,width,height;
 
   boolean rowstrides_changed;
   boolean ignore_palette;
   boolean did_thread=FALSE;
+  boolean needs_reinit=FALSE,inplace=FALSE;
 
   int nchr;
-
-  lives_filter_error_t retval=FILTER_NO_ERROR;
 
   int maxinwidth=4,maxinheight=4;
   int iclamping,isampling,isubspace;
@@ -1736,7 +1736,6 @@ lives_filter_error_t weed_apply_instance (weed_plant_t *inst, weed_plant_t *init
   }
 
   while (layers[lcount++]!=NULL);
-
 
   for (k=i=0;i<num_in_tracks;i++) {
 

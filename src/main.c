@@ -4267,8 +4267,8 @@ static weed_plant_t *render_subs_from_file(file *sfile, double xtime, weed_plant
 
 
 
-boolean pull_frame_at_size (weed_plant_t *layer, const gchar *image_ext, weed_timecode_t tc, int width, int height, 
-			     int target_palette) {
+static boolean pull_frame_at_size_real (weed_plant_t *layer, const gchar *image_ext, weed_timecode_t tc, int width, int height, 
+				 int target_palette, boolean is_threaded) {
   // pull a frame from an external source into a layer
   // the "clip" and "frame" leaves must be set in layer
   // tc is used instead of "frame" for some sources (e.g. generator plugins)
@@ -4417,15 +4417,12 @@ boolean pull_frame_at_size (weed_plant_t *layer, const gchar *image_ext, weed_ti
 	weed_free(rowstrides);
 
         // deinterlace
-	if (sfile->deinterlace||(prefs->auto_deint&&dplug->cdata->interlace!=LIVES_INTERLACE_NONE)) 
-	  deinterlace_frame(layer,tc);
-
-        // render subtitles from file
-	if (prefs->show_subtitles&&sfile->subt!=NULL&&sfile->subt->tfile!=NULL) {
-	  double xtime=(double)(frame-1)/sfile->fps;
-	  layer=render_subs_from_file(sfile,xtime,layer);
+	if (sfile->deinterlace||(prefs->auto_deint&&dplug->cdata->interlace!=LIVES_INTERLACE_NONE)) {
+	  if (!is_threaded) {
+	    
+	  }
+ 	  else weed_set_boolean_value(layer,"host_deinterlace",WEED_TRUE);
 	}
-
 	mainw->osc_block=FALSE;
 	return res;
       }
@@ -4451,14 +4448,24 @@ boolean pull_frame_at_size (weed_plant_t *layer, const gchar *image_ext, weed_ti
 #ifdef HAVE_YUV4MPEG
   case CLIP_TYPE_YUV4MPEG:
     weed_layer_set_from_yuv4m(layer,sfile);
-    if (sfile->deinterlace) deinterlace_frame(layer,tc);
+    if (sfile->deinterlace) {
+      if (!is_threaded) {
+	deinterlace_frame(layer,tc);
+      }
+      else weed_set_boolean_value(layer,"host_deinterlace",WEED_TRUE);
+    }
     mainw->osc_block=FALSE;
     return TRUE;
 #endif
 #ifdef HAVE_UNICAP
   case CLIP_TYPE_VIDEODEV:
     weed_layer_set_from_lvdev(layer,sfile,4./cfile->pb_fps);
-    if (sfile->deinterlace) deinterlace_frame(layer,tc);
+    if (sfile->deinterlace) {
+      if (!is_threaded) {
+	deinterlace_frame(layer,tc);
+      }
+      else weed_set_boolean_value(layer,"host_deinterlace",WEED_TRUE);
+    }
     mainw->osc_block=FALSE;
     return TRUE;
 #endif
@@ -4481,16 +4488,23 @@ boolean pull_frame_at_size (weed_plant_t *layer, const gchar *image_ext, weed_ti
   }
   mainw->osc_block=FALSE;
 
-
-  // render subtitles from file
-  if (prefs->show_subtitles&&sfile->subt!=NULL&&sfile->subt->tfile!=NULL) {
-    double xtime=(double)(frame-1)/sfile->fps;
-    layer=render_subs_from_file(sfile,xtime,layer);
+  if (!is_threaded) {
+    // render subtitles from file
+    if (prefs->show_subtitles&&sfile->subt!=NULL&&sfile->subt->tfile!=NULL) {
+      double xtime=(double)(frame-1)/sfile->fps;
+      layer=render_subs_from_file(sfile,xtime,layer);
+    }
   }
 
   return TRUE;
 }
 
+
+LIVES_INLINE boolean pull_frame_at_size (weed_plant_t *layer, const gchar *image_ext, weed_timecode_t tc, int width, int height, 
+					 int target_palette) {
+  return pull_frame_at_size_real(layer,image_ext,tc,width,height,target_palette,FALSE);
+
+}
 
 boolean pull_frame (weed_plant_t *layer, const gchar *image_ext, weed_timecode_t tc) {
   // pull a frame from an external source into a layer
@@ -4503,14 +4517,38 @@ boolean pull_frame (weed_plant_t *layer, const gchar *image_ext, weed_timecode_t
 
 
 void check_layer_ready(weed_plant_t *layer) {
+  // block until layer pixel_data is ready. We may also deinterlace and overlay subs here
+
+  int clip;
+  int frame;
+  int error;
+  file *sfile;
+
   if (layer==NULL) return;
   if (weed_plant_has_leaf(layer,"host_pthread")) {
-    int weed_error;
-    pthread_t *frame_thread=(pthread_t *)weed_get_voidptr_value(layer,"host_pthread",&weed_error);
+    pthread_t *frame_thread=(pthread_t *)weed_get_voidptr_value(layer,"host_pthread",&error);
     weed_leaf_delete(layer,"host_pthread");
     pthread_join(*frame_thread,NULL);
     free(frame_thread);
+ 
+    if (weed_plant_has_leaf(layer,"host_deinterlace")) {
+      int error;
+      weed_timecode_t tc=weed_get_int64_value(layer,"host_tc",&error);
+      deinterlace_frame(layer,tc);
+      weed_set_boolean_value(layer,"host_deinterlace",WEED_FALSE);
+    }
+
+    clip=weed_get_int_value(layer,"clip",&error);
+    frame=weed_get_int_value(layer,"frame",&error);
+    sfile=mainw->files[clip];
+
+    // render subtitles from file
+    if (prefs->show_subtitles&&sfile->subt!=NULL&&sfile->subt->tfile!=NULL) {
+      double xtime=(double)(frame-1)/sfile->fps;
+      layer=render_subs_from_file(sfile,xtime,layer);
+    }
   }
+
 }
 
 
@@ -4527,7 +4565,7 @@ static void *pft_thread(void *in) {
   weed_timecode_t tc=data->tc;
   const char *img_ext=data->img_ext;
   g_free(in);
-  pull_frame_at_size(layer,img_ext,tc,0,0,WEED_PALETTE_END);
+  pull_frame_at_size_real(layer,img_ext,tc,0,0,WEED_PALETTE_END,TRUE);
   return NULL;
 }
 
@@ -4549,6 +4587,8 @@ void pull_frame_threaded (weed_plant_t *layer, const char *img_ext, weed_timecod
   pft_priv_data *in=g_malloc(sizeof(pft_priv_data));
   pthread_t *frame_thread=(pthread_t *)calloc(sizeof(pthread_t),1);
 
+  weed_set_int64_value(layer,"host_tc",tc);
+  weed_set_boolean_value(layer,"host_deinterlace",WEED_FALSE);
   weed_set_voidptr_value(layer,"host_pthread",(void *)frame_thread);
   in->img_ext=img_ext;
   in->layer=layer;

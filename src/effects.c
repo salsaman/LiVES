@@ -965,7 +965,7 @@ void deinterlace_frame(weed_plant_t *layer, weed_timecode_t tc) {
   weed_set_int_value(init_event,"out_tracks",0);
  
  deint1:
- 
+
   weed_apply_instance(deint_instance,init_event,layers,0,0,tc);
   
   if (weed_plant_has_leaf(deint_instance,"host_next_instance")) next_inst=weed_get_plantptr_value(deint_instance,"host_next_instance",&error);

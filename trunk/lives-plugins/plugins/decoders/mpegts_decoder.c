@@ -34,7 +34,7 @@
 #include <endian.h>
 #endif
 
-const char *plugin_version="LiVES mpegts decoder version 1.1";
+const char *plugin_version="LiVES mpegts decoder version 1.2";
 
 #ifdef HAVE_AV_CONFIG_H
 #undef HAVE_AV_CONFIG_H
@@ -1016,8 +1016,8 @@ static int mpegts_set_stream_info(lives_clip_data_t *cdata, AVStream *st, PESCon
   pes->stream_type = stream_type;
   
   /*  fprintf(stderr,
-	  "stream=%d stream_type=%x pid=%x prog_reg_desc=%.4s\n",
-	  st->index, pes->stream_type, pes->pid, (char*)&prog_reg_desc);*/
+      "stream=%d stream_type=%x pid=%x prog_reg_desc=%.4s\n",
+      st->index, pes->stream_type, pes->pid, (char*)&prog_reg_desc);*/
   
   st->codec->codec_tag = pes->stream_type;
   
@@ -2395,7 +2395,6 @@ static int read_packet(lives_clip_data_t *cdata, uint8_t *buf, int raw_packet_si
     }
     priv->input_position+=len;
 
-
     /* check packet sync byte */
     if (buf[0] != 0x47) {
       /* find a new packet start */
@@ -2812,6 +2811,8 @@ static lives_clip_data_t *init_cdata (void) {
 
   cdata->sync_hint=0;
 
+  cdata->fps=0.;
+
   cdata->video_start_time=0.;
 
   memset(cdata->author,0,1);
@@ -2954,7 +2955,7 @@ static void idxc_release_all(void) {
     free(indices[i]->clients);
     free(indices[i]);
   }
-
+  nidxc=0;
 }
 
 
@@ -3200,7 +3201,6 @@ static boolean attach_stream(lives_clip_data_t *cdata, boolean isclone) {
   av_init_packet(&priv->avpkt);
   priv->avpkt.data=NULL;
   priv->ctx=NULL;
-  priv->inited=TRUE;
 
   if (lives_mpegts_read_header(cdata)) {
     close(priv->fd);
@@ -3297,9 +3297,9 @@ static boolean attach_stream(lives_clip_data_t *cdata, boolean isclone) {
 
   }
 
+  priv->last_frame=-1;
+
   if (isclone) {
-    priv->last_frame=-1;
-    priv->idxc=idxc_for(cdata);
     if (priv->picture!=NULL) av_free(priv->picture);
     priv->picture=NULL;
     return TRUE;
@@ -3474,12 +3474,15 @@ static boolean attach_stream(lives_clip_data_t *cdata, boolean isclone) {
   
   cdata->nframes=dts_to_frame(cdata,ldts)+2;
 
+  fprintf(stderr,"check for %ld frames\n",cdata->nframes);
+
   // double check, sometimes we can be out by one or two frames
   while (1) {
     priv->expect_eof=TRUE;
     priv->got_eof=FALSE;
-    get_frame(cdata,cdata->nframes-1,NULL,0,NULL);
-    if (!priv->got_eof) break;
+    if (get_frame(cdata,cdata->nframes-1,NULL,0,NULL)) {
+      if (!priv->got_eof) break;
+    }
     cdata->nframes--;
   }
   priv->expect_eof=FALSE;
@@ -3616,7 +3619,7 @@ lives_clip_data_t *get_clip_data(const char *URI, lives_clip_data_t *cdata) {
 
   //errval=0;
 
-    if (URI==NULL&&cdata!=NULL) {
+  if (URI==NULL&&cdata!=NULL) {
     // create a clone of cdata - we also need to be able to handle a "fake" clone with only URI, nframes and fps set (priv == NULL)
     return mpegts_clone(cdata);
   }
@@ -3733,6 +3736,210 @@ static size_t write_black_pixel(unsigned char *idst, int pal, int npixels, int y
 
 
 
+/*
+  boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstrides, int height, void **pixel_data) {
+  // seek to frame,
+  int len;
+  int64_t target_pts=frame_to_dts(cdata,tframe);
+  int64_t nextframe=0;
+  lives_mpegts_priv_t *priv=cdata->priv;
+  int xheight=cdata->frame_height,pal=cdata->current_palette,nplanes=1,dstwidth=cdata->width,psize=1;
+  int btop=cdata->offs_y,bbot=xheight-1-btop;
+  int bleft=cdata->offs_x,bright=cdata->frame_width-cdata->width-bleft;
+  int rescan_limit=16;  // pick some arbitrary value
+  int y_black=(cdata->YUV_clamping==WEED_YUV_CLAMPING_CLAMPED)?16:0;
+  boolean got_picture=FALSE;
+  boolean hit_target=FALSE;
+  unsigned char *dst,*src;//,flags;
+  unsigned char black[4]={0,0,0,255};
+  index_entry *idx;
+  register int i,p;
+
+
+  //#define DEBUG_KFRAMES
+  #ifdef DEBUG_KFRAMES
+  fprintf(stderr,"vals %ld %ld\n",tframe,priv->last_frame);
+  #endif
+
+  priv->got_eof=FALSE;
+
+  priv->black_fill=FALSE;
+
+  // calc frame width and height, including any border
+
+  if (pixel_data!=NULL) {
+  if (pal==WEED_PALETTE_YUV420P||pal==WEED_PALETTE_YVU420P||pal==WEED_PALETTE_YUV422P||pal==WEED_PALETTE_YUV444P) {
+  nplanes=3;
+  black[0]=y_black;
+  black[1]=black[2]=128;
+  }
+  else if (pal==WEED_PALETTE_YUVA4444P) {
+  nplanes=4;
+  black[0]=y_black;
+  black[1]=black[2]=128;
+  black[3]=255;
+  }
+    
+  if (pal==WEED_PALETTE_RGB24||pal==WEED_PALETTE_BGR24) psize=3;
+    
+  if (pal==WEED_PALETTE_RGBA32||pal==WEED_PALETTE_BGRA32||pal==WEED_PALETTE_ARGB32||
+  pal==WEED_PALETTE_UYVY8888||pal==WEED_PALETTE_YUYV8888||pal==WEED_PALETTE_YUV888||
+  pal==WEED_PALETTE_YUVA8888) psize=4;
+    
+  if (pal==WEED_PALETTE_YUV411) psize=6;
+    
+  if (pal==WEED_PALETTE_A1) dstwidth>>=3;
+    
+  dstwidth*=psize;
+    
+  if (cdata->frame_height > cdata->height && height == cdata->height) {
+  // host ignores vertical border
+  btop=0;
+  xheight=cdata->height;
+  bbot=xheight-1;
+  }
+    
+  if (cdata->frame_width > cdata->width && rowstrides[0] < cdata->frame_width*psize) {
+  // host ignores horizontal border
+  bleft=bright=0;
+  }
+  }
+  ////////////////////////////////////////////////////////////////////
+
+  if (tframe!=priv->last_frame) {
+
+  if (priv->last_frame==-1 || (tframe<priv->last_frame) || (tframe - priv->last_frame > rescan_limit)) {
+  idx=mpegts_read_seek(cdata,target_pts);
+
+  nextframe=dts_to_frame(cdata,idx->dts);
+
+  if (priv->input_position>=priv->filesize) return FALSE;
+
+  #define DEBUG_KFRAMES
+  #ifdef DEBUG_KFRAMES
+  if (idx!=NULL) printf("got kframe %ld for frame %ld\n",nextframe,tframe);
+  #endif
+  }
+  else {
+  nextframe=priv->last_frame+1;
+  }
+
+  //priv->ctx->skip_frame=AVDISCARD_NONREF;
+
+  priv->last_frame=tframe;
+  if (priv->picture==NULL) priv->picture = avcodec_alloc_frame();
+
+  do {
+ 
+  mpegts_read_packet((lives_clip_data_t *)cdata,&priv->avpkt);
+
+  if (priv->got_eof) {
+  fprintf(stderr,"got EOF\n");
+  if (priv->avpkt.data!=NULL) free(priv->avpkt.data);
+  priv->avpkt.data=NULL;
+  priv->avpkt.size=0;
+  priv->last_frame=tframe;
+  if (pixel_data==NULL) return FALSE;
+  priv->black_fill=TRUE;
+  goto framedone;
+  }
+
+  // decode any frames from this packet
+  if (priv->picture==NULL) priv->picture=avcodec_alloc_frame();
+
+  #if LIBAVCODEC_VERSION_MAJOR >= 53
+  avcodec_decode_video2( priv->ctx, priv->picture, &got_picture, &priv->avpkt );
+  #else 
+  avcodec_decode_video( priv->ctx, priv->picture, &got_picture, priv->avpkt.data, priv->avpkt.size );
+  #endif
+  #ifdef DEBUG
+  fprintf(stderr,"pt 1 %ld %d %ld\n",tframe,got_picture,MyPts);
+  #endif
+
+  free(priv->avpkt.data);
+  priv->avpkt.data=NULL;
+  priv->avpkt.size=0;
+
+  // otherwise discard this frame
+  if (got_picture) {
+  fprintf(stderr,"GOT PIC\n");
+  av_free(priv->picture);
+  priv->picture=NULL;
+  if (nextframe>=tframe) hit_target=TRUE;
+  nextframe++;
+  }
+
+
+  } while (!hit_target);
+  }
+
+  framedone:
+
+  if (priv->picture==NULL||pixel_data==NULL) {
+  return !priv->got_eof;
+  }
+
+  if (priv->black_fill) btop=cdata->frame_height;
+
+
+  for (p=0;p<nplanes;p++) {
+  dst=pixel_data[p];
+  src=priv->picture->data[p];
+
+  for (i=0;i<xheight;i++) {
+  if (i<btop||i>bbot) {
+  // top or bottom border, copy black row
+  if (pal==WEED_PALETTE_YUV420P||pal==WEED_PALETTE_YVU420P||pal==WEED_PALETTE_YUV422P
+  ||pal==WEED_PALETTE_YUV444P||pal==WEED_PALETTE_YUVA4444P||pal==WEED_PALETTE_RGB24
+  ||pal==WEED_PALETTE_BGR24) {
+  memset(dst,black[p],dstwidth+(bleft+bright)*psize);
+  dst+=dstwidth+(bleft+bright)*psize;
+  }
+  else dst+=write_black_pixel(dst,pal,dstwidth/psize+bleft+bright,y_black);
+  continue;
+  }
+
+  if (bleft>0) {
+  if (pal==WEED_PALETTE_YUV420P||pal==WEED_PALETTE_YVU420P||pal==WEED_PALETTE_YUV422P||
+  pal==WEED_PALETTE_YUV444P||pal==WEED_PALETTE_YUVA4444P||pal==WEED_PALETTE_RGB24
+  ||pal==WEED_PALETTE_BGR24) {
+  memset(dst,black[p],bleft*psize);
+  dst+=bleft*psize;
+  }
+  else dst+=write_black_pixel(dst,pal,bleft,y_black);
+  }
+
+  memcpy(dst,src,dstwidth);
+  dst+=dstwidth;
+
+  if (bright>0) {
+  if (pal==WEED_PALETTE_YUV420P||pal==WEED_PALETTE_YVU420P||pal==WEED_PALETTE_YUV422P
+  ||pal==WEED_PALETTE_YUV444P||pal==WEED_PALETTE_YUVA4444P||
+  pal==WEED_PALETTE_RGB24||pal==WEED_PALETTE_BGR24) {
+  memset(dst,black[p],bright*psize);
+  dst+=bright*psize;
+  }
+  else dst+=write_black_pixel(dst,pal,bright,y_black);
+  }
+
+  src+=priv->picture->linesize[p];
+  }
+  if (p==0&&(pal==WEED_PALETTE_YUV420P||pal==WEED_PALETTE_YVU420P||pal==WEED_PALETTE_YUV422P)) {
+  dstwidth>>=1;
+  bleft>>=1;
+  bright>>=1;
+  }
+  if (p==0&&(pal==WEED_PALETTE_YUV420P||pal==WEED_PALETTE_YVU420P)) {
+  xheight>>=1;
+  btop>>=1;
+  bbot>>=1;
+  }
+  }
+  
+  return TRUE;
+  }
+*/
+
 
 boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstrides, int height, void **pixel_data) {
   // seek to frame,
@@ -3754,172 +3961,171 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstride
 
   //#define DEBUG_KFRAMES
 #ifdef DEBUG_KFRAMES
-    fprintf(stderr,"vals %ld %ld\n",tframe,priv->last_frame);
+  fprintf(stderr,"vals %ld %ld\n",tframe,priv->last_frame);
 #endif
 
-    priv->got_eof=FALSE;
+  priv->got_eof=FALSE;
 
-    // calc frame width and height, including any border
+  // calc frame width and height, including any border
 
-    if (pixel_data!=NULL) {
-      if (pal==WEED_PALETTE_YUV420P||pal==WEED_PALETTE_YVU420P||pal==WEED_PALETTE_YUV422P||pal==WEED_PALETTE_YUV444P) {
-	nplanes=3;
-	black[0]=y_black;
-	black[1]=black[2]=128;
-      }
-      else if (pal==WEED_PALETTE_YUVA4444P) {
-	nplanes=4;
-	black[0]=y_black;
-	black[1]=black[2]=128;
-	black[3]=255;
-      }
-    
-      if (pal==WEED_PALETTE_RGB24||pal==WEED_PALETTE_BGR24) psize=3;
-    
-      if (pal==WEED_PALETTE_RGBA32||pal==WEED_PALETTE_BGRA32||pal==WEED_PALETTE_ARGB32||
-	  pal==WEED_PALETTE_UYVY8888||pal==WEED_PALETTE_YUYV8888||pal==WEED_PALETTE_YUV888||
-	  pal==WEED_PALETTE_YUVA8888) psize=4;
-    
-      if (pal==WEED_PALETTE_YUV411) psize=6;
-    
-      if (pal==WEED_PALETTE_A1) dstwidth>>=3;
-    
-      dstwidth*=psize;
-    
-      if (cdata->frame_height > cdata->height && height == cdata->height) {
-	// host ignores vertical border
-	btop=0;
-	xheight=cdata->height;
-	bbot=xheight-1;
-      }
-    
-      if (cdata->frame_width > cdata->width && rowstrides[0] < cdata->frame_width*psize) {
-	// host ignores horizontal border
-	bleft=bright=0;
-      }
+  if (pixel_data!=NULL) {
+    if (pal==WEED_PALETTE_YUV420P||pal==WEED_PALETTE_YVU420P||pal==WEED_PALETTE_YUV422P||pal==WEED_PALETTE_YUV444P) {
+      nplanes=3;
+      black[0]=y_black;
+      black[1]=black[2]=128;
     }
-    ////////////////////////////////////////////////////////////////////
+    else if (pal==WEED_PALETTE_YUVA4444P) {
+      nplanes=4;
+      black[0]=y_black;
+      black[1]=black[2]=128;
+      black[3]=255;
+    }
+    
+    if (pal==WEED_PALETTE_RGB24||pal==WEED_PALETTE_BGR24) psize=3;
+    
+    if (pal==WEED_PALETTE_RGBA32||pal==WEED_PALETTE_BGRA32||pal==WEED_PALETTE_ARGB32||
+	pal==WEED_PALETTE_UYVY8888||pal==WEED_PALETTE_YUYV8888||pal==WEED_PALETTE_YUV888||
+	pal==WEED_PALETTE_YUVA8888) psize=4;
+    
+    if (pal==WEED_PALETTE_YUV411) psize=6;
+    
+    if (pal==WEED_PALETTE_A1) dstwidth>>=3;
+    
+    dstwidth*=psize;
+    
+    if (cdata->frame_height > cdata->height && height == cdata->height) {
+      // host ignores vertical border
+      btop=0;
+      xheight=cdata->height;
+      bbot=xheight-1;
+    }
+    
+    if (cdata->frame_width > cdata->width && rowstrides[0] < cdata->frame_width*psize) {
+      // host ignores horizontal border
+      bleft=bright=0;
+    }
+  }
+  ////////////////////////////////////////////////////////////////////
 
-    if (tframe!=priv->last_frame) {
+  if (tframe!=priv->last_frame) {
 
-      if (priv->last_frame==-1 || (tframe<priv->last_frame) || (tframe - priv->last_frame > rescan_limit)) {
-	idx=mpegts_read_seek(cdata,target_pts);
+    if (priv->last_frame==-1 || (tframe<priv->last_frame) || (tframe - priv->last_frame > rescan_limit)) {
+      idx=mpegts_read_seek(cdata,target_pts);
 
-	nextframe=dts_to_frame(cdata,idx->dts);
+      nextframe=dts_to_frame(cdata,idx->dts);
 
-	if (priv->input_position==priv->filesize) return FALSE;
-	mpegts_read_packet((lives_clip_data_t *)cdata,&priv->avpkt);
-	if (priv->got_eof) return FALSE;
+      if (priv->input_position==priv->filesize) return FALSE;
+      mpegts_read_packet((lives_clip_data_t *)cdata,&priv->avpkt);
+      if (priv->got_eof) return FALSE;
 
-	//#define DEBUG_KFRAMES
+      //#define DEBUG_KFRAMES
 #ifdef DEBUG_KFRAMES
-	  if (idx!=NULL) printf("got kframe %ld for frame %ld\n",nextframe,tframe);
+      if (idx!=NULL) printf("got kframe %ld for frame %ld\n",nextframe,tframe);
 #endif
-      }
-      else {
-	nextframe=priv->last_frame+1;
-      }
+    }
+    else {
+      nextframe=priv->last_frame+1;
+    }
 
-      //priv->ctx->skip_frame=AVDISCARD_NONREF;
+    //priv->ctx->skip_frame=AVDISCARD_NONREF;
 
-      priv->last_frame=tframe;
-      if (priv->picture==NULL) priv->picture = avcodec_alloc_frame();
+    priv->last_frame=tframe;
+    if (priv->picture==NULL) priv->picture = avcodec_alloc_frame();
 
-      // do this until we reach target frame //////////////
+    // do this until we reach target frame //////////////
 
-      do {
+    do {
 
-	got_picture=FALSE;
+      got_picture=FALSE;
 
-	while (!got_picture) {
+      while (!got_picture) {
 
 #if LIBAVCODEC_VERSION_MAJOR >= 52
-	  len=avcodec_decode_video2(priv->ctx, priv->picture, &got_picture, &priv->avpkt );
+	len=avcodec_decode_video2(priv->ctx, priv->picture, &got_picture, &priv->avpkt );
 #else 
-	  len=avcodec_decode_video(priv->ctx, priv->picture, &got_picture, priv->avpkt.data, priv->avpkt.size );
+	len=avcodec_decode_video(priv->ctx, priv->picture, &got_picture, priv->avpkt.data, priv->avpkt.size );
 #endif
 
-	  if (len==priv->avpkt.size) {
-	    if (priv->avpkt.data!=NULL) {
-	      free(priv->avpkt.data);
-	      priv->avpkt.data=NULL;
-	      priv->avpkt.size=0;
-	    }
+	if (len==priv->avpkt.size) {
+	  if (priv->avpkt.data!=NULL) {
+	    free(priv->avpkt.data);
+	    priv->avpkt.data=NULL;
+	    priv->avpkt.size=0;
+	  }
 
-	    if (priv->input_position==priv->filesize) return FALSE;
-	    mpegts_read_packet((lives_clip_data_t *)cdata,&priv->avpkt);
-	    if (priv->got_eof) return FALSE;
+	  if (priv->input_position==priv->filesize) return FALSE;
+	  mpegts_read_packet((lives_clip_data_t *)cdata,&priv->avpkt);
+	  if (priv->got_eof) return FALSE;
 	
-	  }
 	}
+      }
 
-	nextframe++;
-	if (nextframe>cdata->nframes) return FALSE;
-      } while (nextframe<=tframe);
+      nextframe++;
+      if (nextframe>cdata->nframes) return FALSE;
+    } while (nextframe<=tframe);
 
-      /////////////////////////////////////////////////////
+    /////////////////////////////////////////////////////
 
+  }
+
+  if (pixel_data==NULL||priv->picture==NULL) return TRUE;
+
+  for (p=0;p<nplanes;p++) {
+    dst=pixel_data[p];
+    src=priv->picture->data[p];
+
+    for (i=0;i<xheight;i++) {
+      if (i<btop||i>bbot) {
+	// top or bottom border, copy black row
+	if (pal==WEED_PALETTE_YUV420P||pal==WEED_PALETTE_YVU420P||pal==WEED_PALETTE_YUV422P
+	    ||pal==WEED_PALETTE_YUV444P||pal==WEED_PALETTE_YUVA4444P||pal==WEED_PALETTE_RGB24
+	    ||pal==WEED_PALETTE_BGR24) {
+	  memset(dst,black[p],dstwidth+(bleft+bright)*psize);
+	  dst+=dstwidth+(bleft+bright)*psize;
+	}
+	else dst+=write_black_pixel(dst,pal,dstwidth/psize+bleft+bright,y_black);
+	continue;
+      }
+
+      if (bleft>0) {
+	if (pal==WEED_PALETTE_YUV420P||pal==WEED_PALETTE_YVU420P||pal==WEED_PALETTE_YUV422P||
+	    pal==WEED_PALETTE_YUV444P||pal==WEED_PALETTE_YUVA4444P||pal==WEED_PALETTE_RGB24
+	    ||pal==WEED_PALETTE_BGR24) {
+	  memset(dst,black[p],bleft*psize);
+	  dst+=bleft*psize;
+	}
+	else dst+=write_black_pixel(dst,pal,bleft,y_black);
+      }
+
+      memcpy(dst,src,dstwidth);
+      dst+=dstwidth;
+
+      if (bright>0) {
+	if (pal==WEED_PALETTE_YUV420P||pal==WEED_PALETTE_YVU420P||pal==WEED_PALETTE_YUV422P
+	    ||pal==WEED_PALETTE_YUV444P||pal==WEED_PALETTE_YUVA4444P||
+	    pal==WEED_PALETTE_RGB24||pal==WEED_PALETTE_BGR24) {
+	  memset(dst,black[p],bright*psize);
+	  dst+=bright*psize;
+	}
+	else dst+=write_black_pixel(dst,pal,bright,y_black);
+      }
+
+      src+=priv->picture->linesize[p];
     }
-
-    if (priv->picture==NULL||pixel_data==NULL) return TRUE;
-
-    for (p=0;p<nplanes;p++) {
-      dst=pixel_data[p];
-      src=priv->picture->data[p];
-
-      for (i=0;i<xheight;i++) {
-	if (i<btop||i>bbot) {
-	  // top or bottom border, copy black row
-	  if (pal==WEED_PALETTE_YUV420P||pal==WEED_PALETTE_YVU420P||pal==WEED_PALETTE_YUV422P
-	      ||pal==WEED_PALETTE_YUV444P||pal==WEED_PALETTE_YUVA4444P||pal==WEED_PALETTE_RGB24
-	      ||pal==WEED_PALETTE_BGR24) {
-	    memset(dst,black[p],dstwidth+(bleft+bright)*psize);
-	    dst+=dstwidth+(bleft+bright)*psize;
-	  }
-	  else dst+=write_black_pixel(dst,pal,dstwidth/psize+bleft+bright,y_black);
-	  continue;
-	}
-
-	if (bleft>0) {
-	  if (pal==WEED_PALETTE_YUV420P||pal==WEED_PALETTE_YVU420P||pal==WEED_PALETTE_YUV422P||
-	      pal==WEED_PALETTE_YUV444P||pal==WEED_PALETTE_YUVA4444P||pal==WEED_PALETTE_RGB24
-	      ||pal==WEED_PALETTE_BGR24) {
-	    memset(dst,black[p],bleft*psize);
-	    dst+=bleft*psize;
-	  }
-	  else dst+=write_black_pixel(dst,pal,bleft,y_black);
-	}
-
-	memcpy(dst,src,dstwidth);
-	dst+=dstwidth;
-
-	if (bright>0) {
-	  if (pal==WEED_PALETTE_YUV420P||pal==WEED_PALETTE_YVU420P||pal==WEED_PALETTE_YUV422P
-	      ||pal==WEED_PALETTE_YUV444P||pal==WEED_PALETTE_YUVA4444P||
-	      pal==WEED_PALETTE_RGB24||pal==WEED_PALETTE_BGR24) {
-	    memset(dst,black[p],bright*psize);
-	    dst+=bright*psize;
-	  }
-	  else dst+=write_black_pixel(dst,pal,bright,y_black);
-	}
-
-	src+=priv->picture->linesize[p];
-      }
-      if (p==0&&(pal==WEED_PALETTE_YUV420P||pal==WEED_PALETTE_YVU420P||pal==WEED_PALETTE_YUV422P)) {
-	dstwidth>>=1;
-	bleft>>=1;
-	bright>>=1;
-      }
-      if (p==0&&(pal==WEED_PALETTE_YUV420P||pal==WEED_PALETTE_YVU420P)) {
-	xheight>>=1;
-	btop>>=1;
-	bbot>>=1;
-      }
+    if (p==0&&(pal==WEED_PALETTE_YUV420P||pal==WEED_PALETTE_YVU420P||pal==WEED_PALETTE_YUV422P)) {
+      dstwidth>>=1;
+      bleft>>=1;
+      bright>>=1;
     }
+    if (p==0&&(pal==WEED_PALETTE_YUV420P||pal==WEED_PALETTE_YVU420P)) {
+      xheight>>=1;
+      btop>>=1;
+      bbot>>=1;
+    }
+  }
   
-    return TRUE;
+  return TRUE;
 }
-
 #ifndef IS_MINGW
 
 # if __BYTE_ORDER == __BIG_ENDIAN
@@ -3938,14 +4144,14 @@ static void reverse_bytes(uint8_t *out, const uint8_t *in, size_t count) {
 static ssize_t lives_write_le(int fd, const void *buf, size_t count) {
 #ifndef IS_MINGW
 # if __BYTE_ORDER == __BIG_ENDIAN
-    uint8_t xbuf[count];
-    reverse_bytes(xbuf,(const uint8_t *)buf,count);
-    return write(fd,xbuf,count);
+  uint8_t xbuf[count];
+  reverse_bytes(xbuf,(const uint8_t *)buf,count);
+  return write(fd,xbuf,count);
 # else
-    return write(fd,buf,count);
+  return write(fd,buf,count);
 # endif
 #else
-    return write(fd,buf,count);
+  return write(fd,buf,count);
 #endif
 
 }
@@ -3954,16 +4160,16 @@ static ssize_t lives_write_le(int fd, const void *buf, size_t count) {
 ssize_t lives_read_le(int fd, void *buf, size_t count) {
 #ifndef IS_MINGW
 # if __BYTE_ORDER == __BIG_ENDIAN
-    uint8_t xbuf[count];
-    ssize_t retval=read(fd,buf,count);
-    if (retval<count) return retval;
-    reverse_bytes((uint8_t *)buf,(const uint8_t *)xbuf,count);
-    return retval;
+  uint8_t xbuf[count];
+  ssize_t retval=read(fd,buf,count);
+  if (retval<count) return retval;
+  reverse_bytes((uint8_t *)buf,(const uint8_t *)xbuf,count);
+  return retval;
 #else
-    return read(fd,buf,count);
+  return read(fd,buf,count);
 #endif
 #else
-    return read(fd,buf,count);
+  return read(fd,buf,count);
 #endif
 }
 
@@ -4028,7 +4234,7 @@ static int64_t mpegts_load_index(lives_clip_data_t *cdata) {
 
   ssize_t bytes;
 
-  if ((fd=open("sync_index",O_RDONLY))==-1) return 0;
+  if ((fd=open("sync_index",O_RDONLY))<0) return 0;
 
   if (read(fd,hdr,4)<4) goto donerd;
 
@@ -4090,6 +4296,5 @@ void clip_data_free(lives_clip_data_t *cdata) {
 
 void module_unload(void) {
   idxc_release_all();
-  nidxc=0;
 }
 

@@ -349,6 +349,7 @@ typedef struct {
   boolean inited;
   boolean has_video;
   boolean has_audio;
+  boolean black_fill;
   int vididx;
   AVStream *vidst;
   int64_t input_position;

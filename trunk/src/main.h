@@ -1032,7 +1032,7 @@ void load_end_image(int frame);
 void load_preview_image(boolean update_always);
 
 boolean pull_frame(weed_plant_t *layer, const gchar *image_ext, weed_timecode_t tc);
-void pull_frame_threaded (weed_plant_t *layer, weed_timecode_t tc);
+void pull_frame_threaded (weed_plant_t *layer, const char *img_ext, weed_timecode_t tc);
 void check_layer_ready(weed_plant_t *layer);
 boolean pull_frame_at_size (weed_plant_t *layer, const gchar *image_ext, weed_timecode_t tc, 
 			     int width, int height, int target_palette);

@@ -668,6 +668,11 @@ void ce_thumbs_set_fx_area(int area) {
 }
 
 
+void ce_thumbs_update_current_clip(void) {
+  mainw->ce_upd_clip=TRUE;
+}
+
+
 void ce_thumbs_highlight_current_clip(void) {
   // unprelight all clip boxes, prelight current clip (fg or bg)
   boolean match=FALSE;

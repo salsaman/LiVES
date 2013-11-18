@@ -31,6 +31,7 @@ void ce_thumbs_reset_combo(int key);
 void ce_thumbs_set_clip_area(void);
 void ce_thumbs_set_fx_area(int area);
 
+void ce_thumbs_update_current_clip(void);
 void ce_thumbs_highlight_current_clip(void);
 
 void ce_thumbs_liberate_bg_clip_area(boolean liberate);

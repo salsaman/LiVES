@@ -1057,6 +1057,10 @@ static void lives_init(_ign_opts *ign_opts) {
 
   mainw->no_recurse=FALSE;
 
+  mainw->blend_layer=NULL;
+
+  mainw->ce_upd_clip=FALSE;
+
   /////////////////////////////////////////////////// add new stuff just above here ^^
 
 
@@ -4503,8 +4507,8 @@ void check_layer_ready(weed_plant_t *layer) {
   if (weed_plant_has_leaf(layer,"host_pthread")) {
     int weed_error;
     pthread_t *frame_thread=(pthread_t *)weed_get_voidptr_value(layer,"host_pthread",&weed_error);
-    pthread_join(*frame_thread,NULL);
     weed_leaf_delete(layer,"host_pthread");
+    pthread_join(*frame_thread,NULL);
     free(frame_thread);
   }
 }
@@ -4513,6 +4517,7 @@ void check_layer_ready(weed_plant_t *layer) {
 typedef struct {
   weed_plant_t *layer;
   weed_timecode_t tc;
+  const char *img_ext;
 } pft_priv_data;
 
 
@@ -4520,14 +4525,15 @@ static void *pft_thread(void *in) {
   pft_priv_data *data=(pft_priv_data *)in;
   weed_plant_t *layer=data->layer;
   weed_timecode_t tc=data->tc;
+  const char *img_ext=data->img_ext;
   g_free(in);
-  pull_frame_at_size(layer,NULL,tc,0,0,WEED_PALETTE_END);
+  pull_frame_at_size(layer,img_ext,tc,0,0,WEED_PALETTE_END);
   return NULL;
 }
 
 
 
-void pull_frame_threaded (weed_plant_t *layer, weed_timecode_t tc) {
+void pull_frame_threaded (weed_plant_t *layer, const char *img_ext, weed_timecode_t tc) {
   // pull a frame from an external source into a layer
   // the "clip" and "frame" leaves must be set in layer
 
@@ -4544,6 +4550,7 @@ void pull_frame_threaded (weed_plant_t *layer, weed_timecode_t tc) {
   pthread_t *frame_thread=(pthread_t *)calloc(sizeof(pthread_t),1);
 
   weed_set_voidptr_value(layer,"host_pthread",(void *)frame_thread);
+  in->img_ext=img_ext;
   in->layer=layer;
   in->tc=tc;
 
@@ -5084,6 +5091,7 @@ void load_frame_image(int frame) {
 
     do {
       if (mainw->frame_layer!=NULL) {
+	check_layer_ready(mainw->frame_layer);
 	weed_layer_free(mainw->frame_layer);
 	mainw->frame_layer=NULL;
       }
@@ -5119,7 +5127,10 @@ void load_frame_image(int frame) {
 	  
 	  mainw->frame_layer=weed_apply_effects(layers,mainw->filter_map,tc,opwidth,opheight,mainw->pchains);
 	  
-	  for (i=0;layers[i]!=NULL;i++) if (layers[i]!=mainw->frame_layer) weed_plant_free(layers[i]);
+	  for (i=0;layers[i]!=NULL;i++) if (layers[i]!=mainw->frame_layer) {
+	      check_layer_ready(layers[i]);
+	      weed_plant_free(layers[i]);
+	    }
 	  g_free(layers);
 	}
 
@@ -5137,18 +5148,14 @@ void load_frame_image(int frame) {
 	  weed_set_int_value(mainw->frame_layer,"clip",mainw->current_file);
 	  weed_set_int_value(mainw->frame_layer,"frame",mainw->actual_frame);
 	  if (img_ext==NULL) img_ext=get_image_ext_for_type(cfile->img_type);
-	  if (cfile->clip_type==CLIP_TYPE_FILE&&is_virtual_frame(mainw->current_file,mainw->actual_frame)) {
-	    pull_frame_threaded(mainw->frame_layer,(weed_timecode_t)mainw->currticks);
-	  }
-	  else {
+
+	  if (mainw->preview&&mainw->frame_layer==NULL&&(mainw->event_list==NULL||cfile->opening)) {
 	    if (!pull_frame_at_size(mainw->frame_layer,img_ext,(weed_timecode_t)mainw->currticks,
 				    cfile->hsize,cfile->vsize,WEED_PALETTE_END)) {
 	      if (mainw->frame_layer!=NULL) weed_layer_free(mainw->frame_layer);
-
-	      
 	      mainw->frame_layer=NULL;
-	      
-	      if (cfile->clip_type==CLIP_TYPE_DISK && cfile->opening && cfile->img_type==IMG_TYPE_PNG && sget_file_size(fname_next)==0) {
+
+	      if (cfile->opening && cfile->img_type==IMG_TYPE_PNG && sget_file_size(fname_next)==0) {
 		if (++bad_frame_count>BFC_LIMIT) {
 		  mainw->cancelled=check_for_bad_ffmpeg();
 		  bad_frame_count=0;
@@ -5156,6 +5163,9 @@ void load_frame_image(int frame) {
 		else g_usleep(prefs->sleep_time);
 	      }
 	    }
+	  }
+	  else {
+	    pull_frame_threaded(mainw->frame_layer,img_ext,(weed_timecode_t)mainw->currticks);
 	  }
 	}
 	if ((cfile->next_event==NULL&&mainw->is_rendering&&!mainw->switch_during_pb&&
@@ -5269,7 +5279,8 @@ void load_frame_image(int frame) {
       mainw->fps_measure++;
     }
 
-    // OK. Here is the deal now. We have a layer from the current file, current frame. 
+    // OK. Here is the deal now. We have a layer from the current file, current frame.
+    // (or at least we sent out a thread to fetch it).
     // We will pass this into the effects, and we will get back a layer.
     // The palette of the effected layer could be any Weed palette. 
     // We will pass the layer to all playback plugins.
@@ -5278,10 +5289,19 @@ void load_frame_image(int frame) {
 
     if ((mainw->current_file!=mainw->scrap_file||mainw->multitrack!=NULL)&&
 	!(mainw->is_rendering&&!(cfile->proc_ptr!=NULL&&mainw->preview))&&!(mainw->multitrack!=NULL&&cfile->opening)) {
-      if (is_virtual_frame(mainw->current_file,mainw->actual_frame)||
-	  ((weed_get_int_value(mainw->frame_layer,"height",&weed_error)==cfile->vsize)&&
-	   (weed_get_int_value(mainw->frame_layer,"width",&weed_error)*
-	    weed_palette_get_pixels_per_macropixel(weed_layer_get_palette(mainw->frame_layer)))==cfile->hsize)) {
+      boolean size_ok=FALSE;
+      if (is_virtual_frame(mainw->current_file,mainw->actual_frame)||(cfile->clip_type!=CLIP_TYPE_DISK&&cfile->clip_type!=CLIP_TYPE_FILE)) {
+	size_ok=TRUE;
+      }
+      else {
+	check_layer_ready(mainw->frame_layer);
+	if ((weed_get_int_value(mainw->frame_layer,"height",&weed_error)==cfile->vsize)&&
+	    (weed_get_int_value(mainw->frame_layer,"width",&weed_error)*
+	     weed_palette_get_pixels_per_macropixel(weed_layer_get_palette(mainw->frame_layer)))==cfile->hsize) {
+	  size_ok=TRUE;
+	}
+      }
+      if (size_ok) {
 	if ((mainw->rte!=0||mainw->is_rendering)&&(mainw->current_file!=mainw->scrap_file||mainw->multitrack!=NULL)) {
 
 	  mainw->frame_layer=on_rte_apply (mainw->frame_layer, opwidth, opheight, (weed_timecode_t)mainw->currticks);

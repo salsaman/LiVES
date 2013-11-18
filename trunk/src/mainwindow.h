@@ -789,6 +789,7 @@ typedef struct {
   GtkWidget *play_image;
   GtkWidget *play_window;
   weed_plant_t *frame_layer;
+  weed_plant_t *blend_layer;
   GtkWidget *plug;
 
   // frame preview in the separate window
@@ -1150,6 +1151,7 @@ typedef struct {
   boolean signals_deferred;
 
   boolean ce_thumbs;
+  boolean ce_upd_clip;
 
 #define SCREEN_AREA_FOREGROUND 0
 #define SCREEN_AREA_BACKGROUND 1

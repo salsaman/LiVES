@@ -2256,7 +2256,7 @@ static lives_decoder_t *try_decoder_plugins(char *file_name, GList *disabled, co
     g_print("trying decoder %s\n",dpsys->name);
 #endif
 
-    dplug->cdata=(dpsys->get_clip_data)(file_name!=NULL?file_name:fake_cdata->URI,NULL);
+    dplug->cdata=(dpsys->get_clip_data)(file_name,fake_cdata);
 
     if (dplug->cdata!=NULL) {
       // check for sanity

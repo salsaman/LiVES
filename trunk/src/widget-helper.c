@@ -3656,6 +3656,11 @@ static void lives_widget_context_update_real(boolean all) {
   if (!mainw->is_exiting) {
     if (rte_window!=NULL) ret_set_key_check_state();
     if (mainw->ce_thumbs) ce_thumbs_set_key_check_state();
+    if (mainw->ce_upd_clip) {
+      ce_thumbs_highlight_current_clip();
+      mainw->ce_upd_clip=FALSE;
+    }
+
   }
 
   if (!mainw->is_exiting&&mt_needs_idlefunc) mainw->multitrack->idlefunc=mt_idle_add(mainw->multitrack);

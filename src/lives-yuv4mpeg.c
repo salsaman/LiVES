@@ -114,8 +114,8 @@ static void *y4frame_thread (void *arg) {
 
 
 
-#define YUV4_O_TIME 2000000 // micro-seconds to wait to open fifo
-#define YUV4_H_TIME 5000000 // micro-seconds to wait to get stream header
+#define YUV4_O_TIME 200000000 // ticks to wait to open fifo
+#define YUV4_H_TIME 500000000 // ticks to wait to get stream header
 
 
 static gboolean lives_yuv_stream_start_read (file *sfile) {
@@ -125,18 +125,17 @@ static gboolean lives_yuv_stream_start_read (file *sfile) {
 
   pthread_t y4thread;
 
-  struct timeval otv;
-
-  int64_t ntime=0,stime;
-
   gchar *filename=yuv4mpeg->filename,*tmp;
 
-  register int i;
+  int alarm_handle=0;
 
   int ohsize=sfile->hsize;
   int ovsize=sfile->vsize;
 
   y4data thread_data;
+
+  register int i;
+
 
   if (filename==NULL) return FALSE;
 
@@ -146,23 +145,25 @@ static gboolean lives_yuv_stream_start_read (file *sfile) {
     thread_data.filename=filename;
 
     pthread_create(&y4thread,NULL,y4open_thread,(void *)&thread_data);
-    gettimeofday(&otv,NULL);
-    stime=otv.tv_sec*1000000+otv.tv_usec;
-    
 
-    while (ntime<YUV4_O_TIME&&!pthread_kill(y4thread,0)) {
+    alarm_handle=lives_alarm_set(YUV4_O_TIME);
+
+    d_print("");
+    d_print(_("Waiting for yuv4mpeg frames..."));
+
+    while (!lives_alarm_get(alarm_handle)&&!pthread_kill(y4thread,0)) {
       // wait for thread to complete or timeout
       g_usleep(prefs->sleep_time);
       lives_widget_context_update();
-      
-      gettimeofday(&otv, NULL);
-      ntime=(otv.tv_sec*1000000+otv.tv_usec-stime);
     }
     
-    if (ntime>=YUV4_O_TIME) {
+    if (lives_alarm_get(alarm_handle)) {
       // timeout - kill thread and wait for it to terminate
       pthread_cancel(y4thread);
       pthread_join(y4thread,NULL);
+      lives_alarm_clear(alarm_handle);
+
+      d_print_failed();
       d_print(_("Unable to open the incoming video stream\n"));
 
       yuv4mpeg->fd=thread_data.fd;
@@ -176,6 +177,7 @@ static gboolean lives_yuv_stream_start_read (file *sfile) {
     }
 
     pthread_join(y4thread,NULL);
+    lives_alarm_clear(alarm_handle);
 
     yuv4mpeg->fd=thread_data.fd;
 
@@ -187,28 +189,25 @@ static gboolean lives_yuv_stream_start_read (file *sfile) {
   // create a thread to open the stream header
   thread_data.yuv4mpeg=yuv4mpeg;
   pthread_create(&y4thread,NULL,y4header_thread,&thread_data);
-  gettimeofday(&otv,NULL);
-  stime=otv.tv_sec*1000000+otv.tv_usec;
+  alarm_handle=lives_alarm_set(YUV4_H_TIME);
 
-  while (ntime<YUV4_H_TIME&&!pthread_kill(y4thread,0)) {
+  while (!lives_alarm_get(alarm_handle)&&!pthread_kill(y4thread,0)) {
     // wait for thread to complete or timeout
     g_usleep(prefs->sleep_time);
     lives_widget_context_update();
-
-    gettimeofday(&otv, NULL);
-    ntime=(otv.tv_sec*1000000+otv.tv_usec-stime);
-    
   }
 
-  if (ntime>=YUV4_H_TIME) {
+  if (lives_alarm_get(alarm_handle)) {
     // timeout - kill thread and wait for it to terminate
     pthread_cancel(y4thread);
     pthread_join(y4thread,NULL);
-    d_print(_("Unable to read the incoming video stream\n"));
+    lives_alarm_clear(alarm_handle);
+    d_print(_("Unable to read the stream header\n"));
     return FALSE;
   }
 
   pthread_join(y4thread,NULL);
+  lives_alarm_clear(alarm_handle);
 
   i=thread_data.i;
 
@@ -218,6 +217,8 @@ static gboolean lives_yuv_stream_start_read (file *sfile) {
     g_free(tmp);
     return FALSE;
   }
+
+  d_print(_("got header\n"));
 
   sfile->hsize = yuv4mpeg->hsize = y4m_si_get_width (&(yuv4mpeg->streaminfo));
   sfile->vsize = yuv4mpeg->vsize = y4m_si_get_height (&(yuv4mpeg->streaminfo));
@@ -267,7 +268,7 @@ void lives_yuv_stream_stop_read (lives_yuv4m_t *yuv4mpeg) {
 
 }
 
-#define YUV4_F_TIME 2000000 // micro-seconds to wait to get stream header
+#define YUV4_F_TIME 200000000 // ticks to wait to get stream header
 
 
 void weed_layer_set_from_yuv4m (weed_plant_t *layer, file *sfile) {
@@ -279,9 +280,7 @@ void weed_layer_set_from_yuv4m (weed_plant_t *layer, file *sfile) {
 
   pthread_t y4thread;
 
-  struct timeval otv;
-
-  int64_t ntime=0,stime;
+  int alarm_handle;
 
   if (!yuv4mpeg->ready) lives_yuv_stream_start_read(sfile);
 
@@ -290,7 +289,7 @@ void weed_layer_set_from_yuv4m (weed_plant_t *layer, file *sfile) {
   weed_set_int_value(layer,"current_palette",WEED_PALETTE_YUV420P);
   weed_set_int_value(layer,"YUV_subspace",WEED_YUV_SUBSPACE_YCBCR);
 
-  create_empty_pixel_data(layer,FALSE,TRUE);
+  create_empty_pixel_data(layer,TRUE,TRUE);
 
   if (!yuv4mpeg->ready) {
     return;
@@ -302,23 +301,23 @@ void weed_layer_set_from_yuv4m (weed_plant_t *layer, file *sfile) {
 
   thread_data.yuv4mpeg=yuv4mpeg;
   pthread_create(&y4thread,NULL,y4frame_thread,&thread_data);
-  gettimeofday(&otv,NULL);
-  stime=otv.tv_sec*1000000+otv.tv_usec;
 
-  while (ntime<YUV4_F_TIME&&!pthread_kill(y4thread,0)) {
+  alarm_handle=lives_alarm_set(YUV4_F_TIME);
+
+  while (!lives_alarm_get(alarm_handle)&&!pthread_kill(y4thread,0)) {
     // wait for thread to complete or timeout
     g_usleep(prefs->sleep_time);
-    gettimeofday(&otv, NULL);
-    ntime=(otv.tv_sec*1000000+otv.tv_usec-stime);
   }
 
-  if (ntime>=YUV4_F_TIME) {
+  if (lives_alarm_get(alarm_handle)) {
+    // timeout - kill thread and wait for it to terminate
     // timeout - kill thread and wait for it to terminate
     pthread_cancel(y4thread);
     d_print(_("Unable to read the incoming video frame\n"));
   }
 
   pthread_join(y4thread,NULL);
+  lives_alarm_clear(alarm_handle);
 
   weed_free(yuv4mpeg->pixel_data);
   yuv4mpeg->pixel_data=NULL;

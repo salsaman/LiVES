@@ -995,7 +995,6 @@ void deinterlace_frame(weed_plant_t *layer, weed_timecode_t tc) {
 
 weed_plant_t *get_blend_layer(weed_timecode_t tc) {
   file *blend_file;
-  weed_plant_t *layer;
   static weed_timecode_t blend_tc=0;
   weed_timecode_t ntc=tc;
 
@@ -1014,19 +1013,13 @@ weed_plant_t *get_blend_layer(weed_timecode_t tc) {
 
   blend_tc=ntc;
 
-  layer=weed_plant_new(WEED_PLANT_CHANNEL);
-  weed_set_int_value(layer,"clip",mainw->blend_file);
-  weed_set_int_value(layer,"frame",blend_file->frameno);
-  if (blend_file->clip_type==CLIP_TYPE_FILE&&is_virtual_frame(mainw->blend_file,blend_file->frameno)) {
-    pull_frame_threaded(layer,tc);
-  }
-  else {
-    if (!pull_frame(layer,get_image_ext_for_type(blend_file->img_type),tc)) {
-      weed_plant_free(layer);
-      layer=NULL;
-    }
-  }
-  return layer;
+  mainw->blend_layer=weed_plant_new(WEED_PLANT_CHANNEL);
+  weed_set_int_value(mainw->blend_layer,"clip",mainw->blend_file);
+  weed_set_int_value(mainw->blend_layer,"frame",blend_file->frameno);
+
+  pull_frame_threaded(mainw->blend_layer,get_image_ext_for_type(blend_file->img_type),tc);
+
+  return mainw->blend_layer;
 }
 
 
@@ -1192,8 +1185,10 @@ boolean swap_fg_bg_callback (GtkAccelGroup *group, GObject *obj, guint keyval, G
   mainw->blend_file=old_file;
 
   rte_swap_fg_bg();
+
   if (mainw->ce_thumbs&&(mainw->active_sa_clips==SCREEN_AREA_BACKGROUND||mainw->active_sa_clips==SCREEN_AREA_FOREGROUND)) 
     ce_thumbs_highlight_current_clip();
+
   return TRUE;
 
   // **TODO - for weed, invert all transition parameters for any active effects

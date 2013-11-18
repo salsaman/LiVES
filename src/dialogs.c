@@ -2228,10 +2228,15 @@ boolean do_clipboard_fps_warning(void) {
 }
 
 boolean do_yuv4m_open_warning(void) {
+  gchar *msg;
+  boolean resp;
   if (prefs->warning_mask&WARN_MASK_OPEN_YUV4M) {
     return TRUE;
   }
-  return do_warning_dialog_with_check(_ ("When opening a yuvmpeg stream, you should first create a fifo file and then write yuv4mpeg frames to it.\nLiVES WILL HANG until frames are received.\nYou should only click OK if you understand what you are doing, otherwise, click Cancel."),WARN_MASK_OPEN_YUV4M);
+  msg=g_strdup_printf(_ ("When opening a yuvmpeg stream, you should first create a fifo file in:\n\n%sstream.yuv\n\n and then write yuv4mpeg frames to it.\nLiVES will pause briefly until frames are received.\nYou should only click OK if you understand what you are doing, otherwise, click Cancel."),prefs->tmpdir);
+  resp=do_warning_dialog_with_check(msg,WARN_MASK_OPEN_YUV4M);
+  g_free(msg);
+  return resp;
 }
 
 

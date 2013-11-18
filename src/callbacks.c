@@ -419,7 +419,10 @@ void lives_exit (void) {
     if (mainw->end_image!=NULL) lives_image_set_from_pixbuf(LIVES_IMAGE(mainw->image273), NULL);
 #endif
 
-    if (mainw->frame_layer!=NULL) weed_layer_free(mainw->frame_layer);
+    if (mainw->frame_layer!=NULL) {
+      check_layer_ready(mainw->frame_layer);
+      weed_layer_free(mainw->frame_layer);
+    }
 
     if (mainw->sep_win&&(mainw->playing_file>-1||prefs->sepwin_type==1)) {
       threaded_dialog_spin();
@@ -5182,7 +5185,7 @@ boolean on_load_set_ok (GtkButton *button, gpointer user_data) {
 	      continue;
 	    }
 	    else {
-
+	      
 	      // TODO ** - show layout errors
 
 	    }

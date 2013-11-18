@@ -3520,6 +3520,8 @@ weed_plant_t *weed_apply_effects (weed_plant_t **layers, weed_plant_t *filter_ma
 
     check_layer_ready(layers[i]);
 
+    if (layers[i]==mainw->blend_layer) mainw->blend_layer=NULL;
+
     if ((pdata=weed_get_voidptr_value(layers[i],"pixel_data",&error))!=NULL||
 	(weed_get_int_value(layers[i],"frame",&error)!=0&&
 	 (mainw->playing_file>-1||mainw->multitrack==NULL||mainw->multitrack->current_rfx==NULL||
@@ -5851,6 +5853,7 @@ void weed_generator_end (weed_plant_t *inst) {
 
 
   if (is_bg) {
+    if (mainw->blend_layer!=NULL) check_layer_ready(mainw->blend_layer);
     filter_mutex_lock(bg_generator_key);
     key_to_instance[bg_generator_key][bg_generator_mode]=NULL;
     filter_mutex_unlock(bg_generator_key);
@@ -5861,6 +5864,7 @@ void weed_generator_end (weed_plant_t *inst) {
     mainw->current_file=mainw->blend_file;
   }
   else {
+    if (mainw->frame_layer!=NULL) check_layer_ready(mainw->frame_layer);
     filter_mutex_lock(fg_generator_key);
     key_to_instance[fg_generator_key][fg_generator_mode]=NULL;
     filter_mutex_unlock(fg_generator_key);
@@ -5903,12 +5907,22 @@ void weed_generator_end (weed_plant_t *inst) {
     mainw->blend_file=mainw->new_blend_file;
     mainw->new_blend_file=-1;
     // close generator file and switch to original file if possible
-    close_current_file(mainw->pre_src_file);
-    if (mainw->ce_thumbs&&mainw->active_sa_clips==SCREEN_AREA_BACKGROUND) ce_thumbs_highlight_current_clip();
+    if (cfile==NULL||cfile->clip_type!=CLIP_TYPE_GENERATOR) {
+      LIVES_WARN("Close non-generator file");
+    }
+    else {
+      close_current_file(mainw->pre_src_file);
+    }
+    if (mainw->ce_thumbs&&mainw->active_sa_clips==SCREEN_AREA_BACKGROUND) ce_thumbs_update_current_clip();
   }
   else {
     // close generator file and switch to original file if possible
-    close_current_file(mainw->pre_src_file);
+    if (cfile==NULL||cfile->clip_type!=CLIP_TYPE_GENERATOR) {
+      LIVES_WARN("Close non-generator file");
+    }
+    else {
+      close_current_file(mainw->pre_src_file);
+    }
     if (mainw->current_file==current_file) mainw->clip_switched=clip_switched;
   }
 

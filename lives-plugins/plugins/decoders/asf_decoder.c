@@ -2511,7 +2511,7 @@ static lives_clip_data_t *asf_clone(lives_clip_data_t *cdata) {
   clone->frame_height=cdata->frame_height;
   clone->par=cdata->par;
   clone->fps=cdata->fps;
-  clone->palettes[0]=cdata->palettes[0];
+  if (cdata->palettes!=NULL) clone->palettes[0]=cdata->palettes[0];
   clone->current_palette=cdata->current_palette;
   clone->YUV_sampling=cdata->YUV_sampling;
   clone->YUV_clamping=cdata->YUV_clamping;

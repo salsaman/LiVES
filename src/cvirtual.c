@@ -277,6 +277,8 @@ boolean check_if_non_virtual(int fileno, int start, int end) {
 
   // no virtual frames in entire clip - change to CLIP_TYPE_DISK
 
+  // TODO *** - check this; we could have performed an undoable operation !
+
   sfile->clip_type=CLIP_TYPE_DISK;
   del_frame_index(sfile);
 
@@ -285,7 +287,6 @@ boolean check_if_non_virtual(int fileno, int start, int end) {
     sfile->deinterlace=FALSE;
     save_clip_value(fileno,CLIP_DETAILS_INTERLACE,&sfile->interlace);
     if (mainw->com_failed||mainw->write_failed) bad_header=TRUE;
-
     if (bad_header) do_header_write_error(fileno);
   }
 

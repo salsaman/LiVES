@@ -119,6 +119,9 @@ void tr_msg(void) {
 #endif
 
 
+void break_me(void) {
+  // breakpoint for gdb
+}
 
 static void lives_log_handler (const char *domain, LiVESLogLevelFlags level, const char *message,  gpointer data) {
   gchar *msg;
@@ -6039,9 +6042,9 @@ GError *lives_pixbuf_save(GdkPixbuf *pixbuf, gchar *fname, lives_image_type_t im
 void close_current_file(int file_to_switch_to) {
   // close the current file, and free the file struct and all sub storage
   gchar *com;
+  GList *list_index;
   int index=-1;
   int old_file=mainw->current_file;
-  GList *list_index;
   boolean need_new_blend_file=FALSE;
 
   if (mainw->playing_file==-1) {

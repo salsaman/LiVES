@@ -2434,6 +2434,7 @@ static void chooser_response(GtkDialog *dialog, int response, gpointer user_data
       on_ok_append_audio_clicked(GTK_FILE_CHOOSER(dialog),NULL);
       break;
     default:
+      end_fs_preview();
       break;
     }
   }
@@ -2443,12 +2444,15 @@ static void chooser_response(GtkDialog *dialog, int response, gpointer user_data
 
 
 
-void choose_file_with_preview (gchar *dir, const gchar *title, int preview_type) {
+GtkWidget *choose_file_with_preview (gchar *dir, const gchar *title, int preview_type) {
   // preview_type 1 - video and audio open (single - opensel)
   // preview type 2 - import audio
   // preview_type 3 - video and audio open (multiple)
   // type 4 xmms (deprecated)
   // type 5 append audio
+  
+  // type 128 - locate missing clip
+
 
   GtkWidget *chooser;
 
@@ -2459,7 +2463,7 @@ void choose_file_with_preview (gchar *dir, const gchar *title, int preview_type)
   widget_add_preview(chooser,LIVES_BOX(lives_dialog_get_content_area(LIVES_DIALOG(chooser))),
 		     LIVES_BOX(lives_dialog_get_content_area(LIVES_DIALOG(chooser))),
 		     LIVES_BOX(lives_dialog_get_action_area(LIVES_DIALOG(chooser))),
-		     preview_type==3?1:preview_type>3?2:preview_type);
+		     (preview_type==3||preview_type==128)?1:preview_type>3?2:preview_type);
 
   if (prefs->fileselmax) {
     lives_window_set_resizable (LIVES_WINDOW(chooser),TRUE);
@@ -2469,6 +2473,8 @@ void choose_file_with_preview (gchar *dir, const gchar *title, int preview_type)
   }
 
   g_signal_connect (chooser, "response", G_CALLBACK (chooser_response), GINT_TO_POINTER(preview_type));
+
+  return chooser;
 }
 
 

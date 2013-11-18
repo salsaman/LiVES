@@ -4894,9 +4894,6 @@ boolean on_load_set_ok (GtkButton *button, gpointer user_data) {
 
   FILE *orderfile;
 
-  const lives_clip_data_t *cdata=NULL;
-  lives_image_type_t img_type;
-
   gchar *msg;
   gchar *com;
   gchar *ordfile;
@@ -5135,7 +5132,6 @@ boolean on_load_set_ok (GtkButton *button, gpointer user_data) {
     //create a new cfile and fill in the details
     create_cfile();
     threaded_dialog_spin();
-    img_type=cfile->img_type;
 
     // get file details
     read_headers(".");
@@ -5145,81 +5141,11 @@ boolean on_load_set_ok (GtkButton *button, gpointer user_data) {
     // and we must load the frame_index and locate a suitable decoder plugin
 
     if (load_frame_index(mainw->current_file)) {
-      boolean next=FALSE;
-      gchar *orig_file_name=g_strdup(cfile->file_name);
-
-      lives_clip_data_t *fake_cdata=lives_calloc(sizeof(lives_clip_data_t),1);
-
-      // cd to clip directory - so decoder plugins can read temp files
-      gchar *ppath=g_build_filename(prefs->tmpdir,cfile->handle,NULL);
-
-      lives_chdir(ppath,FALSE);
-      g_free(ppath);
-
-      cfile->img_type=img_type; // ignore value from read_headers
-
-      while (1) {
-	threaded_dialog_spin();
-
-	fake_cdata->fps=0.;
-
-	if (cfile->fps>0.&&cfile->frames>0) {
-	  fake_cdata->URI=g_strdup(cfile->file_name);
-	  fake_cdata->fps=cfile->fps;
-	  fake_cdata->nframes=cfile->frames;
-	}
-
-	if ((cdata=get_decoder_cdata(cfile,NULL,fake_cdata->fps!=0.?fake_cdata:NULL))==NULL) {
-	  if (mainw->error) {
-	    g_free(fake_cdata->URI);
-	    g_free(fake_cdata);
-	    if (do_original_lost_warning(orig_file_name)) {
-	      gchar *new_file_name=choose_file(vid_open_dir,NULL,NULL,LIVES_FILE_CHOOSER_ACTION_OPEN,NULL,NULL);
-	      if (new_file_name!=NULL) {
-		g_snprintf(cfile->file_name,PATH_MAX,"%s",new_file_name);
-		g_snprintf(vid_open_dir,PATH_MAX,"%s",cfile->file_name);
-		get_dirname(vid_open_dir);
-		needs_update=TRUE;
-		g_free(new_file_name);
-	      }
-	      continue;
-	    }
-	    else {
-	      
-	      // TODO ** - show layout errors
-
-	    }
-	  }
-	  else {
-	    do_no_decoder_error(cfile->file_name);
-	  }
-	  next=TRUE;
-	}
-	else {
-	  if (!check_clip_integrity(mainw->current_file,cdata)) {
-	    needs_update=TRUE;
-	  }
-	}
-	g_free(fake_cdata->URI);
-	g_free(fake_cdata);
-	break;
-      }
-      g_free(orig_file_name);
-
-      if (next) {
-	g_free(cfile);
-	mainw->first_free_file=mainw->current_file;
-	if (mainw->current_file>1) mainw->current_file--;
-	else mainw->current_file=-1;
-	continue;
-      }
-      cfile->clip_type=CLIP_TYPE_FILE;
-      get_mime_type(cfile->type,40,cdata);
-	
-      lives_chdir(cwd,FALSE);
-      
+      // CLIP_TYPE_FILE
+      if (!reload_clip(mainw->current_file)) continue;
     }
     else {
+      // CLIP_TYPE_DISK
       if (!check_frame_count(mainw->current_file)) {
 	get_frame_count(mainw->current_file);
 	needs_update=TRUE;
@@ -8712,7 +8638,7 @@ on_rename_set_name                   (GtkButton       *button,
     set_main_title(title,0);
   }
 
-  save_clip_value(mainw->current_file,CLIP_DETAILS_CLIPNAME,&cfile->name);
+  save_clip_value(mainw->current_file,CLIP_DETAILS_CLIPNAME,cfile->name);
   if (mainw->com_failed||mainw->write_failed) bad_header=TRUE;
 
   if (bad_header) do_header_write_error(mainw->current_file);

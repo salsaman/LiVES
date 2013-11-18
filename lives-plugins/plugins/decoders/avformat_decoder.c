@@ -338,8 +338,11 @@ static boolean attach_stream(lives_clip_data_t *cdata, boolean isclone) {
   cdata->offs_y=0;
   cdata->frame_width=cdata->width=0;
   cdata->frame_height=cdata->height=0;
-  cdata->nframes=0;
-  cdata->fps=0.;
+
+  if (!is_partial_clone) {
+    cdata->nframes=0;
+    cdata->fps=0.;
+  }
 
   sprintf(cdata->container_name,"%s",priv->ic->iformat->name);
 
@@ -423,7 +426,7 @@ static boolean attach_stream(lives_clip_data_t *cdata, boolean isclone) {
 
       priv->fps_avg=FALSE;
 
-      if (!is_partial_clone) {
+      if (cdata->fps==0.) {
 	cdata->fps=s->time_base.den/s->time_base.num;
 	if (cdata->fps>=1000.||cdata->fps==0.) {
 	  cdata->fps=(float)s->avg_frame_rate.num/(float)s->avg_frame_rate.den;
@@ -446,7 +449,7 @@ static boolean attach_stream(lives_clip_data_t *cdata, boolean isclone) {
       fprintf(stderr,"fps is %.4f %d %d %d %d %d\n",cdata->fps,s->time_base.den,s->time_base.num,cc->time_base.den,cc->time_base.num,priv->ctx->ticks_per_frame);
 #endif
 
-      if (!is_partial_clone) {
+      if (cdata->nframes==0) {
 	if (priv->ic->duration!=(int64_t)AV_NOPTS_VALUE)
 	  cdata->nframes=((double)priv->ic->duration/(double)AV_TIME_BASE * cdata->fps -  .5);
 	if ((cdata->nframes==0||cdata->fps==1000.)&&s->nb_frames>1) cdata->nframes=s->nb_frames;

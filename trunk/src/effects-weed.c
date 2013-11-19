@@ -6444,12 +6444,12 @@ boolean weed_init_effect(int hotkey) {
 
   if (inc_count==2) {
     mainw->num_tr_applied++; // increase trans count
+    if (mainw->active_sa_clips==SCREEN_AREA_FOREGROUND) {
+      mainw->active_sa_clips=SCREEN_AREA_BACKGROUND;
+    }
     if (mainw->ce_thumbs) ce_thumbs_liberate_clip_area_register(SCREEN_AREA_BACKGROUND);
     if (mainw->num_tr_applied==1&&!is_modeswitch) {
       mainw->blend_file=mainw->current_file;
-      if (mainw->active_sa_clips==SCREEN_AREA_FOREGROUND) {
-	mainw->active_sa_clips=SCREEN_AREA_BACKGROUND;
-      }
     }
   }
   else if (inc_count==0&&outc_count>0&&!is_audio_gen) {

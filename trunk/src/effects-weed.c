@@ -6444,12 +6444,11 @@ boolean weed_init_effect(int hotkey) {
 
   if (inc_count==2) {
     mainw->num_tr_applied++; // increase trans count
-    if (mainw->ce_thumbs) ce_thumbs_liberate_bg_clip_area(TRUE);
+    if (mainw->ce_thumbs) ce_thumbs_liberate_clip_area_register(SCREEN_AREA_BACKGROUND);
     if (mainw->num_tr_applied==1&&!is_modeswitch) {
       mainw->blend_file=mainw->current_file;
       if (mainw->active_sa_clips==SCREEN_AREA_FOREGROUND) {
 	mainw->active_sa_clips=SCREEN_AREA_BACKGROUND;
-	if (mainw->ce_thumbs) ce_thumbs_set_clip_area();
       }
     }
   }
@@ -6558,10 +6557,9 @@ boolean weed_init_effect(int hotkey) {
 	if (is_trans) {
 	  mainw->num_tr_applied--;
 	  if (mainw->num_tr_applied==0) {
-	    if (mainw->ce_thumbs) ce_thumbs_liberate_bg_clip_area(FALSE);
+	    if (mainw->ce_thumbs) ce_thumbs_liberate_clip_area_register(SCREEN_AREA_FOREGROUND);
 	    if (mainw->active_sa_clips==SCREEN_AREA_BACKGROUND) {
 	      mainw->active_sa_clips=SCREEN_AREA_FOREGROUND;
-	      if (mainw->ce_thumbs) ce_thumbs_set_clip_area();
 	    }
 	  }
 	}
@@ -6882,10 +6880,9 @@ void weed_deinit_effect(int hotkey) {
     was_transition=TRUE;
     mainw->num_tr_applied--;
     if (mainw->num_tr_applied==0) {
-      if (mainw->ce_thumbs) ce_thumbs_liberate_bg_clip_area(FALSE);
+      if (mainw->ce_thumbs) ce_thumbs_liberate_clip_area_register(SCREEN_AREA_FOREGROUND);
       if (mainw->active_sa_clips==SCREEN_AREA_BACKGROUND) {
 	mainw->active_sa_clips=SCREEN_AREA_FOREGROUND;
-	if (mainw->ce_thumbs) ce_thumbs_set_clip_area();
       }
     }
   }

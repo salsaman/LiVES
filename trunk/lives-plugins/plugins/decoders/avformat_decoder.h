@@ -6,14 +6,17 @@
 
 typedef struct  {
   int fd;
+
   AVInputFormat *fmt;
   AVFormatContext *ic;
   AVCodecContext *ctx;
   AVFrame *pFrame;
   AVPacket packet;
+
   boolean fps_avg;
   boolean black_fill;
   boolean inited;
+  boolean longer_seek;
 
   int astream;
   int vstream;

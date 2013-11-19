@@ -38,6 +38,8 @@ static int rte_keys_virtual;
 static int n_screen_areas;
 static int n_clip_boxes;
 
+static int next_screen_area;
+
 static void ce_thumbs_remove_param_boxes(boolean remove_pinned);
 static void ce_thumbs_remove_param_box(int key);
 
@@ -158,6 +160,8 @@ void start_ce_thumb_mode(void) {
   rte_keys_virtual=prefs->rte_keys_virtual;
   n_screen_areas=mainw->n_screen_areas;
   n_clip_boxes=g_list_length(mainw->cliplist)+SPARE_CLIP_BOXES;
+
+  next_screen_area=SCREEN_AREA_NONE;
 
   lives_grid_set_row_spacing (LIVES_GRID(tgrid),0);
   lives_grid_set_column_spacing (LIVES_GRID(tgrid),0);
@@ -413,7 +417,7 @@ void start_ce_thumb_mode(void) {
 
   lives_widget_show_all(top_hbox);
 
-  ce_thumbs_liberate_bg_clip_area(mainw->num_tr_applied>0);
+  ce_thumbs_liberate_clip_area(mainw->num_tr_applied>0?SCREEN_AREA_BACKGROUND:SCREEN_AREA_FOREGROUND);
   ce_thumbs_set_clip_area();
 
   mainw->ce_thumbs=TRUE;
@@ -705,6 +709,18 @@ void ce_thumbs_highlight_current_clip(void) {
 }
 
 
-void ce_thumbs_liberate_bg_clip_area(boolean liberate) {
-  lives_widget_set_sensitive(rb_clip_areas[SCREEN_AREA_BACKGROUND],liberate);
+void ce_thumbs_liberate_clip_area(int area) {
+  lives_widget_set_sensitive(rb_clip_areas[area],TRUE);
+  ce_thumbs_set_clip_area();
 }
+
+void ce_thumbs_liberate_clip_area_register(int area) {
+  next_screen_area=area;
+}
+
+void ce_thumbs_apply_liberation(void) {
+  if (next_screen_area!=SCREEN_AREA_NONE)
+    ce_thumbs_liberate_clip_area(next_screen_area);
+  next_screen_area=SCREEN_AREA_NONE;
+}
+

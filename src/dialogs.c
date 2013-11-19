@@ -1646,7 +1646,7 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const gchar *te
 
   //try to open info file - or if internal_messaging is TRUE, we get mainw->msg
   // from the mainw->progress_fn function
-
+    g_print("dpdx %d\n",cfile->arate);
   while (1) {
     while (!mainw->internal_messaging&&(((!visible&&(mainw->whentostop!=STOP_ON_AUD_END||
 						    prefs->audio_player==AUD_PLAYER_JACK||
@@ -1716,6 +1716,7 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const gchar *te
 #endif
 
     // we got a message from the backend...
+    g_print("dpdxy %d\n",cfile->arate);
 
     if (visible&&(!accelerators_swapped||cfile->opening)&&cancellable&&(!cfile->nopreview||cfile->keep_without_preview)) {
       if (!cfile->nopreview&&!(cfile->opening&&mainw->multitrack!=NULL)) 
@@ -1784,12 +1785,12 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const gchar *te
     else break;
   }
 
-
 #ifdef DEBUG
   g_print ("exit pt 3 %s\n",mainw->msg);
 #endif
 
  finish:
+    g_print("dpdxzzzzzzz %d\n",cfile->arate);
 
   //play/operation ended
   if (visible) {

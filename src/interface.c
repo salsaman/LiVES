@@ -1566,9 +1566,6 @@ _entryw* create_rename_dialog (int type) {
   lives_widget_set_can_focus_and_default (okbutton);
   lives_widget_grab_default (okbutton);
 
-  lives_widget_grab_focus (renamew->entry);
-
-
   if (type!=4&&type!=2&&type!=5) {
     g_signal_connect (GTK_OBJECT (cancelbutton), "clicked",
 		      G_CALLBACK (lives_general_button_clicked),
@@ -1591,6 +1588,8 @@ _entryw* create_rename_dialog (int type) {
                               LIVES_KEY_Escape, (GdkModifierType)0, (GtkAccelFlags)0);
 
   lives_widget_show_all(renamew->dialog);
+
+  lives_widget_grab_focus (renamew->entry);
 
   return renamew;
 }
@@ -2606,6 +2605,10 @@ _entryw* create_cds_dialog (int type) {
   if (type==1||type==2)lives_widget_grab_default(savebutton);
 
   lives_widget_show_all(cdsw->dialog);
+
+  if (type==1) {
+    lives_widget_grab_focus(cdsw->entry);
+  }
 
   return cdsw;
 }

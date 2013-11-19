@@ -714,9 +714,11 @@ void ce_thumbs_liberate_clip_area(int area) {
   ce_thumbs_set_clip_area();
 }
 
+
 void ce_thumbs_liberate_clip_area_register(int area) {
   next_screen_area=area;
 }
+
 
 void ce_thumbs_apply_liberation(void) {
   if (next_screen_area!=SCREEN_AREA_NONE)

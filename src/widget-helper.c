@@ -3651,15 +3651,18 @@ static void lives_widget_context_update_real(boolean all) {
     mt_needs_idlefunc=TRUE;
   }
 
-  if (all) while (!mainw->is_exiting&&g_main_context_iteration(NULL,FALSE));
-  else if (!mainw->is_exiting) g_main_context_iteration(NULL,FALSE);
   if (!mainw->is_exiting) {
     if (rte_window!=NULL) ret_set_key_check_state();
-    if (mainw->ce_thumbs) ce_thumbs_set_key_check_state();
-    if (mainw->ce_upd_clip) {
-      ce_thumbs_highlight_current_clip();
-      mainw->ce_upd_clip=FALSE;
+    if (mainw->ce_thumbs) {
+      ce_thumbs_set_key_check_state();
+      ce_thumbs_apply_liberation();
+      if (mainw->ce_upd_clip) {
+	ce_thumbs_highlight_current_clip();
+	mainw->ce_upd_clip=FALSE;
+      }
     }
+    if (all) while (!mainw->is_exiting&&g_main_context_iteration(NULL,FALSE));
+    else g_main_context_iteration(NULL,FALSE);
 
   }
 

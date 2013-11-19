@@ -1153,6 +1153,7 @@ typedef struct {
   boolean ce_thumbs;
   boolean ce_upd_clip;
 
+#define SCREEN_AREA_NONE -1
 #define SCREEN_AREA_FOREGROUND 0
 #define SCREEN_AREA_BACKGROUND 1
 #define SCREEN_AREA_USER_DEFINED1 2

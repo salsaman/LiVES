@@ -49,6 +49,7 @@ static pthread_mutex_t avcodec_mutex=PTHREAD_MUTEX_INITIALIZER;
 
 #define FAST_SEEK_LIMIT 50000 // microseconds (default 0.1 sec)
 #define NO_SEEK_LIMIT 1000000 // microseconds
+#define LNO_SEEK_LIMIT 10000000 // microseconds
 
 #define SEEK_SUCCESS_MIN_RATIO 0.5 // how many frames we can seek to vs. suggested duration
 
@@ -144,12 +145,16 @@ static int64_t get_current_ticks(void) {
 }
 
 
-static int64_t get_real_last_frame(lives_clip_data_t *cdata) {
+static int64_t get_real_last_frame(lives_clip_data_t *cdata, boolean allow_longer_seek) {
   int64_t diff=0;
   int64_t olframe=(cdata->nframes==0?0:cdata->nframes-1),lframe=olframe;
   int64_t timex,tottime=0;
 
   int nseeks=0;
+
+  long no_seek_limit=NO_SEEK_LIMIT;
+
+  if (allow_longer_seek) no_seek_limit=LNO_SEEK_LIMIT;
 
   cdata->seek_flag=LIVES_SEEK_FAST;
 
@@ -164,7 +169,7 @@ static int64_t get_real_last_frame(lives_clip_data_t *cdata) {
     if (!get_frame(cdata,lframe,NULL,0,NULL)) {
       timex=get_current_ticks()-timex;
 
-      if (timex>NO_SEEK_LIMIT) {
+      if (timex>no_seek_limit) {
 	//#ifdef DEBUG_RLF
 	fprintf(stderr,"avcodec_decoder: seek was %ld, longer than limit of %d; giving up.\n",timex,NO_SEEK_LIMIT);
 	//#endif
@@ -246,7 +251,9 @@ static boolean attach_stream(lives_clip_data_t *cdata, boolean isclone) {
 
   if (isclone&&!priv->inited) {
     isclone=FALSE;
-    is_partial_clone=TRUE;
+    if (cdata->fps>0.&&cdata->nframes>0)
+      is_partial_clone=TRUE;
+    else priv->longer_seek=TRUE;
   }
 
   if ((priv->fd=open(cdata->URI,O_RDONLY))==-1) {
@@ -731,6 +738,7 @@ static lives_clip_data_t *init_cdata (void) {
   priv->vstream=-1;
 
   priv->inited=FALSE;
+  priv->longer_seek=FALSE;
 
   cdata->seek_flag=0;
 
@@ -856,7 +864,7 @@ lives_clip_data_t *get_clip_data(const char *URI, lives_clip_data_t *cdata) {
     priv->pFrame=NULL;
   }
 
-  real_frames=get_real_last_frame(cdata)+1;
+  real_frames=get_real_last_frame(cdata,priv->longer_seek)+1;
 
   if (cdata->nframes>100&&real_frames<cdata->nframes*SEEK_SUCCESS_MIN_RATIO) {
     fprintf(stderr,"avformat_decoder: ERROR - could only seek to %ld frames out of %ld\navformat_decoder: I will pass on this file as it may be broken.\n",

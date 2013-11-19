@@ -1012,7 +1012,8 @@ static boolean attach_stream(lives_clip_data_t *cdata, boolean isclone) {
 
   if (isclone&&!priv->inited) {
     isclone=FALSE;
-    is_partial_clone=TRUE;
+    if (cdata->fps>0.&&cdata->nframes>0)
+      is_partial_clone=TRUE;
   }
 
 

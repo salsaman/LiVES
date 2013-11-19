@@ -1594,6 +1594,17 @@ void save_file (int clip, int start, int end, const char *filename) {
       return;
     }
 
+    // cfile->arate, etc., would have been reset by calls to do_progress_dialog() which calls get_total_time() [since cfile->afilesize==0]
+    // so we need to set these again now that link_frames has provided an actual audio clip
+
+    nfile->arps=sfile->arps;
+    nfile->arate=sfile->arate;
+    nfile->achans=sfile->achans;
+    nfile->asampsize=sfile->asampsize;
+    nfile->signed_endian=sfile->signed_endian;
+
+    reget_afilesize(new_file);
+
     aud_start=calc_time_from_frame (new_file,1)*nfile->arps/nfile->arate;
     aud_end=calc_time_from_frame (new_file,nfile->frames+1)*nfile->arps/nfile->arate;
     cfile->nopreview=FALSE;
@@ -1637,6 +1648,7 @@ void save_file (int clip, int start, int end, const char *filename) {
 
 
   if (!save_all&&safe_symlinks) {
+    int xarps,xarate,xachans,xasamps,xasigned_endian;
     // we are saving a selection - make symlinks in /tmp
 
     startframe=-1;
@@ -1670,6 +1682,12 @@ void save_file (int clip, int start, int end, const char *filename) {
 
     mainw->current_file=clip;
 
+    xarps=sfile->arps;
+    xarate=sfile->arate;
+    xachans=sfile->achans;
+    xasamps=sfile->asampsize;
+    xasigned_endian=sfile->signed_endian;
+
     if (mainw->com_failed) {
       com=g_strdup_printf("%s clear_symlinks \"%s\"",prefs->backend_sync,cfile->handle);
       lives_system (com,TRUE);
@@ -1696,6 +1714,17 @@ void save_file (int clip, int start, int end, const char *filename) {
       mainw->subt_save_file=NULL;
       return;
     }
+
+    // cfile->arate, etc., would have been reset by calls to do_progress_dialog() which calls get_total_time() [since cfile->afilesize==0]
+    // so we need to set these again now that link_frames has provided an actual audio clip
+
+    sfile->arps=xarps;
+    sfile->arate=xarate;
+    sfile->achans=xachans;
+    sfile->asampsize=xasamps;
+    sfile->signed_endian=xasigned_endian;
+
+    reget_afilesize(clip);
 
     aud_start=calc_time_from_frame (clip,1)*sfile->arps/sfile->arate;
     aud_end=calc_time_from_frame (clip,end-start+1)*sfile->arps/sfile->arate;

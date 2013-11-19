@@ -1857,7 +1857,7 @@ on_undo_activate                      (GtkMenuItem     *menuitem,
 	  cfile->end=cfile->frames;
 	}
       }
-      if (cfile->clip_type==CLIP_TYPE_FILE) {
+      if (cfile->frame_index_back!=NULL) {
 	restore_frame_index_back(mainw->current_file);
       }
       save_clip_value(mainw->current_file,CLIP_DETAILS_FRAMES,&cfile->frames);

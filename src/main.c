@@ -6995,7 +6995,7 @@ void resize (double scale) {
     vsize=(scr_height-V_RESIZE_ADJUST-by)/scale;
   }
 
-  if (mainw->current_file==-1||cfile->hsize==0) {
+  if (mainw->current_file==-1||cfile==NULL||cfile->hsize==0) {
     hsize=mainw->def_width-H_RESIZE_ADJUST;
   }
   else {
@@ -7004,7 +7004,7 @@ void resize (double scale) {
     }
   }
 
-  if (mainw->current_file==-1||cfile->vsize==0) {
+  if (mainw->current_file==-1||cfile==NULL||cfile->vsize==0) {
     vsize=mainw->def_height-V_RESIZE_ADJUST;
   }
   else {
@@ -7063,7 +7063,7 @@ void resize (double scale) {
 
   lives_widget_set_size_request(mainw->LiVES,w,h);
 
-  if (!mainw->foreign&&mainw->playing_file==-1&&mainw->current_file>0&&(!cfile->opening||cfile->clip_type==CLIP_TYPE_FILE)) {
+  if (!mainw->foreign&&mainw->playing_file==-1&&mainw->current_file>0&&cfile!=NULL&&(!cfile->opening||cfile->clip_type==CLIP_TYPE_FILE)) {
       lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_start),cfile->start);
       lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_end),cfile->end);
       load_start_image(cfile->start);

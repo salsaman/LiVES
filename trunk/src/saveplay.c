@@ -3391,7 +3391,7 @@ boolean get_temp_handle(int index, boolean create) {
 
     is_unique=TRUE;
 
-    com=g_strdup_printf("%s new %d",prefs->backend_sync,getpid());
+    com=g_strdup_printf("%s new %d",prefs->backend_sync,capable->mainpid);
 
     lives_system(com,TRUE);
 
@@ -5898,7 +5898,7 @@ boolean check_for_recovery_files (boolean auto_recover) {
   ssize_t bytes;
 
   gchar *recovery_file,*recovery_numbering_file;
-  gchar *info_file=g_strdup_printf("%s/.recovery.%d",prefs->tmpdir,getpid());
+  gchar *info_file=g_strdup_printf("%s/.recovery.%d",prefs->tmpdir,capable->mainpid);
   gchar *com;
 
   boolean retval=FALSE;
@@ -5907,7 +5907,7 @@ boolean check_for_recovery_files (boolean auto_recover) {
   int lgid=lives_getgid();
   int luid=lives_getuid();
 
-  pid_t lpid=lives_getpid();
+  lives_pgid_t lpid=capable->mainpid;
 
   com=g_strdup_printf("%s get_recovery_file %d %d %s recovery> \"%s\"",prefs->backend_sync,luid,lgid,
 			     capable->myname,info_file);

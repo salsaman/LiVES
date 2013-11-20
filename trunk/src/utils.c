@@ -331,8 +331,8 @@ int lives_system(const char *com, boolean allow_error) {
 
 
 
-lives_pid_t lives_fork(const char *com) {
-  // returns a negative number which is the pgid to lives_kill
+lives_pgid_t lives_fork(const char *com) {
+  // returns a number which is the pgid to use for lives_killpg
 
   // mingw - return PROCESS_INFORMATION * to use in GenerateConsoleCtrlEvent (?)
 
@@ -345,7 +345,7 @@ lives_pid_t lives_fork(const char *com) {
   if (!(ret=fork())) {
     int dummy;
     setsid(); // create new session id
-    setpgid(getpid(),0); // create new pgid
+    setpgid(capable->mainpid,0); // create new pgid
     dummy=system(com);
     dummy=dummy;
     _exit(0);
@@ -2098,9 +2098,9 @@ boolean check_for_lock_file(const char *set_name, int type) {
   char *msg=NULL;
   ssize_t bytes;
 
-  char *info_file=g_strdup_printf("%s/.locks.%d",prefs->tmpdir,getpid());
+  char *info_file=g_strdup_printf("%s/.locks.%d",prefs->tmpdir,capable->mainpid);
   char *com=g_strdup_printf("%s check_for_lock \"%s\" \"%s\" %d >\"%s\"",prefs->backend_sync,set_name,capable->myname,
-			     getpid(),info_file);
+			    capable->mainpid,info_file);
 
   unlink(info_file);
   threaded_dialog_spin();
@@ -2262,7 +2262,7 @@ void get_frame_count(int idx) {
   int info_fd;
   int retval;
   ssize_t bytes;
-  char *info_file=g_strdup_printf("%s/.check.%d",prefs->tmpdir,getpid());
+  char *info_file=g_strdup_printf("%s/.check.%d",prefs->tmpdir,capable->mainpid);
   char *com=g_strdup_printf("%s count_frames \"%s\" \"%s\" > \"%s\"",prefs->backend_sync,mainw->files[idx]->handle,
 			     get_image_ext_for_type(mainw->files[idx]->img_type),info_file);
 
@@ -3651,7 +3651,7 @@ boolean prepare_to_play_foreign(void) {
 boolean after_foreign_play(void) {
   // read details from capture file
   int capture_fd;
-  char *capfile=g_strdup_printf("%s/.capture.%d",prefs->tmpdir,getpid());
+  char *capfile=g_strdup_printf("%s/.capture.%d",prefs->tmpdir,capable->mainpid);
   char capbuf[256];
   ssize_t length;
   int new_file=-1;
@@ -4533,7 +4533,7 @@ boolean get_clip_value(int which, lives_clip_details_t what, void *retval, size_
   }
   else {
     com=g_strdup_printf("%s get_clip_value \"%s\" %d %d \"%s\"",prefs->backend_sync,key,
-			lives_getuid(),lives_getpid(),lives_header);
+			lives_getuid(),capable->mainpid,lives_header);
     g_free(lives_header);
     g_free(key);
     
@@ -4550,9 +4550,9 @@ boolean get_clip_value(int which, lives_clip_details_t what, void *retval, size_
     }
     
 #ifndef IS_MINGW
-    vfile=g_strdup_printf("%s/.smogval.%d.%d",prefs->tmpdir,lives_getuid(),lives_getpid());
+    vfile=g_strdup_printf("%s/.smogval.%d.%d",prefs->tmpdir,lives_getuid(),capable->mainpid);
 #else
-    vfile=g_strdup_printf("%s/smogval.%d.%d",prefs->tmpdir,lives_getuid(),lives_getpid());
+    vfile=g_strdup_printf("%s/smogval.%d.%d",prefs->tmpdir,lives_getuid(),capable->mainpid);
 #endif
 
     do {

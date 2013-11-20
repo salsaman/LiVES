@@ -59,9 +59,9 @@ static GList *get_plugin_result (const gchar *command, const gchar *delim, boole
   threaded_dialog_spin();
 
 #ifndef IS_MINGW
-  outfile=g_strdup_printf ("%s/.smogplugin.%d",prefs->tmpdir,getpid());
+  outfile=g_strdup_printf ("%s/.smogplugin.%d",prefs->tmpdir,capable->mainpid);
 #else
-  outfile=g_strdup_printf ("%s/smogplugin.%d",prefs->tmpdir,getpid());
+  outfile=g_strdup_printf ("%s/smogplugin.%d",prefs->tmpdir,capable->mainpid);
 #endif
 
   unlink(outfile);
@@ -3728,7 +3728,7 @@ gchar *plugin_run_param_window(const gchar *get_com, GtkVBox *vbox, lives_rfx_t 
   FILE *sfile;
   lives_rfx_t *rfx=(lives_rfx_t *)g_malloc(sizeof(lives_rfx_t));
   gchar *string;
-  gchar *rfx_scrapname=g_strdup_printf("rfx.%d",getpid());
+  gchar *rfx_scrapname=g_strdup_printf("rfx.%d",capable->mainpid);
   gchar *rfxfile=g_strdup_printf ("%s/.%s.script",prefs->tmpdir,rfx_scrapname);
   int res;
   gchar *com;
@@ -3799,7 +3799,7 @@ gchar *plugin_run_param_window(const gchar *get_com, GtkVBox *vbox, lives_rfx_t 
     rfx->min_frames=-1;
 
     // get the delimiter
-    rfxfile=g_strdup_printf("%ssmdef.%d",prefs->tmpdir,getpid());
+    rfxfile=g_strdup_printf("%ssmdef.%d",prefs->tmpdir,capable->mainpid);
     fnamex=g_build_filename(prefs->tmpdir,rfx_scrapname,NULL);
     com=g_strdup_printf("\"%s\" get_define > \"%s\"",fnamex,rfxfile);
     g_free(fnamex);

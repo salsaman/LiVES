@@ -722,6 +722,8 @@ typedef struct {
 
   int byte_order;
 
+  pid_t mainpid;
+
 } capability;
 
 

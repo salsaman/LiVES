@@ -118,7 +118,7 @@ static void *y4frame_thread (void *arg) {
 #define YUV4_H_TIME 500000000 // ticks to wait to get stream header
 
 
-static gboolean lives_yuv_stream_start_read (file *sfile) {
+static boolean lives_yuv_stream_start_read (file *sfile) {
   double ofps=sfile->fps;
 
   lives_yuv4m_t *yuv4mpeg=(lives_yuv4m_t *)sfile->ext_src;
@@ -330,7 +330,7 @@ void weed_layer_set_from_yuv4m (weed_plant_t *layer, file *sfile) {
 
 
 
-static gboolean open_yuv4m_inner(const gchar *filename, const gchar *fname, int new_file, int type, int cardno) {
+static boolean open_yuv4m_inner(const gchar *filename, const gchar *fname, int new_file, int type, int cardno) {
   // create a virtual clip
   int old_file=mainw->current_file;
 
@@ -429,7 +429,8 @@ void on_open_yuv4m_activate (GtkMenuItem *menuitem, gpointer user_data) {
     d_print (_ ("none\n"));
   }
   else {
-    d_print ((tmp=g_strdup_printf(P_("%d Hz %d channel %d bps\n","%d Hz %d channels %d bps\n",cfile->achans),cfile->arate,cfile->achans,cfile->asampsize)));
+    d_print ((tmp=g_strdup_printf(P_("%d Hz %d channel %d bps\n","%d Hz %d channels %d bps\n",cfile->achans),
+				  cfile->arate,cfile->achans,cfile->asampsize)));
     g_free(tmp);
   }
 
@@ -486,8 +487,7 @@ void on_open_yuv4m_activate (GtkMenuItem *menuitem, gpointer user_data) {
 // write functions - not used currently
 
 
-gboolean 
-lives_yuv_stream_start_write (lives_yuv4m_t * yuv4mpeg, const gchar *filename, int hsize, int vsize, double fps) {
+boolean lives_yuv_stream_start_write (lives_yuv4m_t * yuv4mpeg, const gchar *filename, int hsize, int vsize, double fps) {
   int i;
 
   if (mainw->fixed_fpsd>-1.&&mainw->fixed_fpsd!=fps) {
@@ -522,13 +522,12 @@ lives_yuv_stream_start_write (lives_yuv4m_t * yuv4mpeg, const gchar *filename, i
 }
 
 
-gboolean 
-lives_yuv_stream_write_frame (lives_yuv4m_t *yuv4mpeg, void *pixel_data) {
+boolean lives_yuv_stream_write_frame (lives_yuv4m_t *yuv4mpeg, void *pixel_data) {
   // pixel_data is planar yuv420 data
   int i;
 
   guchar *planes[3];
-  uint8_t *pixels=(guchar *)pixel_data;
+  uint8_t *pixels=(uint8_t *)pixel_data;
 
   planes[0]=&(pixels[0]);
   planes[1]=&(pixels[hsize_out*vsize_out]);
@@ -541,8 +540,7 @@ lives_yuv_stream_write_frame (lives_yuv4m_t *yuv4mpeg, void *pixel_data) {
 }
 
 
-void 
-lives_yuv_stream_stop_write (lives_yuv4m_t *yuv4mpeg) {
+void lives_yuv_stream_stop_write (lives_yuv4m_t *yuv4mpeg) {
   y4m_fini_stream_info(&(yuv4mpeg->streaminfo));
   y4m_fini_frame_info(&(yuv4mpeg->frameinfo));
   close (yuvout);
@@ -581,10 +579,7 @@ lives_yuv_stream_stop_write (lives_yuv4m_t *yuv4mpeg) {
 
 
 
-void
-on_live_tvcard_activate                      (GtkMenuItem     *menuitem,
-					      gpointer         user_data)
-{
+void on_live_tvcard_activate (GtkMenuItem *menuitem, gpointer user_data) {
   int cardno=0;
 
   int new_file=mainw->first_free_file;
@@ -592,7 +587,7 @@ on_live_tvcard_activate                      (GtkMenuItem     *menuitem,
   int response;
 
   gchar *com,*tmp;
-  gchar *fifofile=g_strdup_printf("%s/tvpic.%d",prefs->tmpdir,getpid());
+  gchar *fifofile=g_strdup_printf("%s/tvpic.%d",prefs->tmpdir,capable->mainpid);
 
   gchar *chanstr;
   gchar *devstr;
@@ -727,10 +722,7 @@ on_live_tvcard_activate                      (GtkMenuItem     *menuitem,
 
 
 
-void
-on_live_fw_activate                      (GtkMenuItem     *menuitem,
-					  gpointer         user_data)
-{
+void on_live_fw_activate (GtkMenuItem *menuitem, gpointer user_data) {
 
   gchar *com,*tmp;
   int cardno;
@@ -740,7 +732,7 @@ on_live_fw_activate                      (GtkMenuItem     *menuitem,
 
   int response;
 
-  gchar *fifofile=g_strdup_printf("%s/firew.%d",prefs->tmpdir,getpid());
+  gchar *fifofile=g_strdup_printf("%s/firew.%d",prefs->tmpdir,capable->mainpid);
   gchar *fname;
 
   GtkWidget *card_dialog;

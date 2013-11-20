@@ -1063,7 +1063,7 @@ int pulse_driver_activate(pulse_driver_t *pdriver) {
     pa_clientname="LiVES_audio_in";
   }
 
-  mypid=g_strdup_printf("%d",getpid());
+  mypid=g_strdup_printf("%d",capable->mainpid);
 
   pdriver->pa_props=pa_proplist_new();
 

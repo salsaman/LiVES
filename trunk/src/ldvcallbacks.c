@@ -36,7 +36,7 @@ void on_camstop_clicked (GtkButton *button, gpointer user_data) {
   dvgrabw->playing=FALSE;
 
   if (cam->format==CAM_FORMAT_DV) {
-    if (cam->pgid!=0) lives_kill(cam->pgid, LIVES_SIGTERM);
+    if (cam->pgid!=0) lives_killpg(cam->pgid, LIVES_SIGTERM);
     cam->pgid=0;
   }
 

@@ -63,7 +63,7 @@ void get_pref(const gchar *key, gchar *val, int maxlen) {
     return;
   }
 
-  com=g_strdup_printf("%s get_pref \"%s\" %d %d",prefs->backend_sync,key,lives_getuid(),lives_getpid());
+  com=g_strdup_printf("%s get_pref \"%s\" %d %d",prefs->backend_sync,key,lives_getuid(),capable->mainpid);
 
   if (system(com)) {
     tempdir_warning();
@@ -72,9 +72,9 @@ void get_pref(const gchar *key, gchar *val, int maxlen) {
   }
 
 #ifndef IS_MINGW
-  vfile=g_strdup_printf("%s/.smogval.%d.%d",prefs->tmpdir,lives_getuid(),lives_getpid());
+  vfile=g_strdup_printf("%s/.smogval.%d.%d",prefs->tmpdir,lives_getuid(),capable->mainpid);
 #else
-  vfile=g_strdup_printf("%s/smogval.%d.%d",prefs->tmpdir,lives_getuid(),lives_getpid());
+  vfile=g_strdup_printf("%s/smogval.%d.%d",prefs->tmpdir,lives_getuid(),capable->mainpid);
 #endif
 
   do {
@@ -177,9 +177,9 @@ void get_pref_default(const gchar *key, gchar *val, int maxlen) {
   }
 
 #ifndef IS_MINGW
-  vfile=g_strdup_printf("%s/.smogval.%d.%d",prefs->tmpdir,lives_getuid(),lives_getpid());
+  vfile=g_strdup_printf("%s/.smogval.%d.%d",prefs->tmpdir,lives_getuid(),capable->mainpid);
 #else
-  vfile=g_strdup_printf("%s/smogval.%d.%d",prefs->tmpdir,lives_getuid(),lives_getpid());
+  vfile=g_strdup_printf("%s/smogval.%d.%d",prefs->tmpdir,lives_getuid(),capable->mainpid);
 #endif
 
   do {

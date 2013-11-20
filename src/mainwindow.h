@@ -423,7 +423,7 @@ typedef struct {
   int scr_width;
   int scr_height;
   lives_toy_t toy_type;
-  lives_pid_t toy_alives_pid; // 0, or thread for autolives toy
+  lives_pgid_t toy_alives_pgid; // 0, or thread for autolives toy
   boolean autolives_reset_fx;
 
   boolean toy_go_wild;

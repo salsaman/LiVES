@@ -2811,27 +2811,23 @@ boolean apply_rte_audio(int nframes) {
 ////////////////////////////////////////
 // audio streaming
 
-#ifndef IS_MINGW
-static int astream_pid=0;
-#endif
+lives_pgid_t astream_pgid=0;
 
 boolean start_audio_stream(void) {
-#ifdef IS_MINGW
-  return FALSE;
-#else
-
   const gchar *playername="audiostreamer.pl";
   gchar *astream_name=NULL;
   gchar *astream_name_out=NULL;
 
   // playback plugin wants an audio stream - so fork and run the stream
   // player
-  gchar *astname=g_strdup_printf("livesaudio-%d.pcm",getpid());
-  gchar *astname_out=g_strdup_printf("livesaudio-%d.stream",getpid());
+  gchar *astname=g_strdup_printf("livesaudio-%d.pcm",capable->mainpid);
+  gchar *astname_out=g_strdup_printf("livesaudio-%d.stream",capable->mainpid);
+  gchar *astreamer,*com;
 
   int arate=0;
   int afd;
   int alarm_handle;
+
   boolean timeout=FALSE;
 
   astream_name=g_build_filename(prefs->tmpdir,astname,NULL);
@@ -2858,24 +2854,11 @@ boolean start_audio_stream(void) {
 #endif
   }
 
+  astreamer=g_build_filename(prefs->lib_dir,PLUGIN_EXEC_DIR,PLUGIN_AUDIO_STREAM,playername,NULL);
+  com=g_strdup_printf("%s play %d \"%s\" \"%s\" %d",astreamer,mainw->vpp->audio_codec,astream_name,astream_name_out,arate);
+  g_free(astreamer);
 
-  astream_pid=fork();
-
-  if (!astream_pid) {
-    // mkfifo and play until killed
-    gchar *astreamer=g_build_filename(prefs->lib_dir,PLUGIN_EXEC_DIR,PLUGIN_AUDIO_STREAM,playername,NULL);
-    gchar *com=g_strdup_printf("%s play %d \"%s\" \"%s\" %d",astreamer,mainw->vpp->audio_codec,astream_name,astream_name_out,arate);
-
-    setsid(); // create new session id
-
-    g_free(astreamer);
-    
-    // block here until killed
-
-    lives_system(com,TRUE);
-
-    _exit(0);                    
-  }
+  astream_pgid=lives_fork(com);
 
   alarm_handle=lives_alarm_set(LIVES_ACONNECT_TIMEOUT);
 
@@ -2912,26 +2895,22 @@ boolean start_audio_stream(void) {
   g_free(astream_name_out);
 
   return TRUE;
-#endif
 }
 
 
 
 void stop_audio_stream(void) {
-#ifndef IS_MINGW
-  if (astream_pid>0) {
+  if (astream_pgid>0) {
     // if we were streaming audio, kill it
     const gchar *playername="audiostreamer.pl";
-    gchar *astname=g_strdup_printf("livesaudio-%d.pcm",getpid());
-    gchar *astname_out=g_strdup_printf("livesaudio-%d.stream",getpid());
+    gchar *astname=g_strdup_printf("livesaudio-%d.pcm",capable->mainpid);
+    gchar *astname_out=g_strdup_printf("livesaudio-%d.stream",capable->mainpid);
     gchar *astreamer=g_build_filename(prefs->lib_dir,PLUGIN_EXEC_DIR,PLUGIN_AUDIO_STREAM,playername,NULL);
 
     gchar *astream_name=g_build_filename(prefs->tmpdir,astname,NULL);
     gchar *astream_name_out=g_build_filename(prefs->tmpdir,astname_out,NULL);
 
     gchar *com;
-
-    pid_t pgid=getpgid(astream_pid);
 
     g_free(astname);
     g_free(astname_out);
@@ -2949,7 +2928,7 @@ void stop_audio_stream(void) {
 #endif
     }
 
-    lives_kill(-pgid,LIVES_SIGKILL);
+    lives_killpg(astream_pgid,LIVES_SIGKILL);
     unlink(astream_name);
     g_free(astream_name);
 
@@ -2962,15 +2941,14 @@ void stop_audio_stream(void) {
 
   }
 
-#endif
 }
 
 
 void clear_audio_stream(void) {
   // remove raw and cooked streams
-  gchar *astname=g_strdup_printf("livesaudio-%d.pcm",getpid());
+  gchar *astname=g_strdup_printf("livesaudio-%d.pcm",capable->mainpid);
   gchar *astream_name=g_build_filename(prefs->tmpdir,astname,NULL);
-  gchar *astname_out=g_strdup_printf("livesaudio-%d.stream",getpid());
+  gchar *astname_out=g_strdup_printf("livesaudio-%d.stream",capable->mainpid);
   gchar *astream_name_out=g_build_filename(prefs->tmpdir,astname_out,NULL);
   unlink(astream_name);
   unlink(astream_name_out);

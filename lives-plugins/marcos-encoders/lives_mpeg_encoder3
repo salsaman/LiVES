@@ -520,7 +520,7 @@ def do_encode():
             wav = sndf
             
         if vtype in ['sdvd', 'spdvd']:
-            command = ' '.join([sox, wav, pcmsox_opts, tmpsndf, 'resample'])            
+            command = ' '.join([sox, wav, pcmsox_opts, tmpsndf, 'rate -v'])            
         else:
             files = ' '.join(['-o', tmpsndf, '<', wav])
             command = ' '.join([mp2enc, mp2enc_opts, files])

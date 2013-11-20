@@ -17,7 +17,7 @@ typedef struct {
   int device;
   int format;
   boolean grabbed_clips;
-  pid_t pgid;
+  lives_pgid_t pgid;
 } s_cam;
 
 /////////////////////////

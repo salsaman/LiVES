@@ -3740,10 +3740,10 @@ GList *get_script_section (const gchar *section, const gchar *file, boolean stri
   gchar *whole=g_strdup (""),*whole2;
 
 #ifndef IS_MINGW
-  gchar *outfile=g_strdup_printf ("%s/rfxsec.%d",g_get_tmp_dir(),getpid());
+  gchar *outfile=g_strdup_printf ("%s/rfxsec.%d",g_get_tmp_dir(),capable->mainpid);
   gchar *com=g_strdup_printf ("\"%s\" -get \"%s\" \"%s\" > \"%s\"",RFX_BUILDER,section,file,outfile);
 #else
-  gchar *outfile=g_strdup_printf ("%s\\rfxsec.%d",g_get_tmp_dir(),getpid());
+  gchar *outfile=g_strdup_printf ("%s\\rfxsec.%d",g_get_tmp_dir(),capable->mainpid);
   gchar *com=g_strdup_printf ("perl \"%s\\%s\" -get \"%s\" \"%s\" > \"%s\"",prefs->prefix_dir,RFX_BUILDER,
 			      section,file,outfile);
 #endif

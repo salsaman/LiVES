@@ -366,7 +366,7 @@ void lives_exit (void) {
     }
 
     if (strlen(mainw->set_name)) {
-      gchar *set_lock_file=g_strdup_printf("%s/%s/lock.%d",prefs->tmpdir,mainw->set_name,getpid());
+      gchar *set_lock_file=g_strdup_printf("%s/%s/lock.%d",prefs->tmpdir,mainw->set_name,capable->mainpid);
       unlink(set_lock_file);
       g_free(set_lock_file);
       threaded_dialog_spin();
@@ -1304,7 +1304,7 @@ on_import_proj_activate                      (GtkMenuItem     *menuitem,
   gchar *msg;
 
   if (proj_file==NULL) return;
-  info_file=g_strdup_printf("%s/.impname.%d",prefs->tmpdir,getpid());
+  info_file=g_strdup_printf("%s/.impname.%d",prefs->tmpdir,capable->mainpid);
   unlink(info_file);
   mainw->com_failed=FALSE;
   com=g_strdup_printf("%s get_proj_set \"%s\">\"%s\"",prefs->backend_sync,proj_file,info_file);
@@ -4984,7 +4984,7 @@ boolean on_load_set_ok (GtkButton *button, gpointer user_data) {
     if (orderfile==NULL) {
       // old style (pre 0.9.6)
       com=g_strdup_printf ("%s get_next_in_set \"%s\" \"%s\" %d",prefs->backend_sync,mainw->msg,
-			   mainw->set_name,getpid());
+			   mainw->set_name,capable->mainpid);
       lives_system (com,FALSE);
       g_free (com);
 
@@ -5121,9 +5121,9 @@ boolean on_load_set_ok (GtkButton *button, gpointer user_data) {
 
       // lock the set
 #ifndef IS_MINGW
-      com=g_strdup_printf("/bin/touch \"%s/%s/lock.%d\"",prefs->tmpdir,mainw->set_name,getpid());
+      com=g_strdup_printf("/bin/touch \"%s/%s/lock.%d\"",prefs->tmpdir,mainw->set_name,capable->mainpid);
 #else
-      com=g_strdup_printf("touch.exe \"%s\\%s\\lock.%d\"",prefs->tmpdir,mainw->set_name,getpid());
+      com=g_strdup_printf("touch.exe \"%s\\%s\\lock.%d\"",prefs->tmpdir,mainw->set_name,capable->mainpid);
 #endif
       lives_system(com,FALSE);
       g_free(com);
@@ -5804,7 +5804,7 @@ void on_fs_preview_clicked (GtkWidget *widget, gpointer user_data) {
   int fwidth,fheight,owidth,oheight;
 
   int offs_x,offs_y;
-  pid_t pid=lives_getpid();
+  pid_t pid=capable->mainpid;
   int alarm_handle;
   int retval;
   boolean timeout;
@@ -5857,9 +5857,9 @@ void on_fs_preview_clicked (GtkWidget *widget, gpointer user_data) {
 
 
 #ifndef IS_MINGW
-  info_file=g_strdup_printf ("%s/thm%d/.status",prefs->tmpdir,lives_getpid());
+  info_file=g_strdup_printf ("%s/thm%d/.status",prefs->tmpdir,capable->mainpid);
 #else
-  info_file=g_strdup_printf ("%s/thm%d/status",prefs->tmpdir,lives_getpid());
+  info_file=g_strdup_printf ("%s/thm%d/status",prefs->tmpdir,capable->mainpid);
 #endif
   unlink (info_file);
 
@@ -5982,7 +5982,7 @@ void on_fs_preview_clicked (GtkWidget *widget, gpointer user_data) {
     }
     g_free(info_file);
 
-    thm_dir=g_strdup_printf ("%s/thm%d",prefs->tmpdir,getpid());
+    thm_dir=g_strdup_printf ("%s/thm%d",prefs->tmpdir,capable->mainpid);
 #ifndef IS_MINGW
     com=g_strdup_printf("/bin/rm -rf \"%s\"",thm_dir);
 #else
@@ -6013,9 +6013,9 @@ void on_fs_preview_clicked (GtkWidget *widget, gpointer user_data) {
     }
 
 #ifndef IS_MINGW
-    dfile=g_strdup_printf("%s/fsp%d/",prefs->tmpdir,getpid());
+    dfile=g_strdup_printf("%s/fsp%d/",prefs->tmpdir,capable->mainpid);
 #else
-    dfile=g_strdup_printf("%s\\fsp%d\\",prefs->tmpdir,getpid());
+    dfile=g_strdup_printf("%s\\fsp%d\\",prefs->tmpdir,capable->mainpid);
 #endif
 
     g_mkdir_with_parents(dfile,S_IRWXU);
@@ -6036,7 +6036,7 @@ void on_fs_preview_clicked (GtkWidget *widget, gpointer user_data) {
     mainw->in_fs_preview=TRUE;
 
     // get width and height of clip
-    com=g_strdup_printf("%s get_details fsp%d \"%s\" \"%s\" %d %d",prefs->backend,getpid(),
+    com=g_strdup_printf("%s get_details fsp%d \"%s\" \"%s\" %d %d",prefs->backend,capable->mainpid,
 			(tmp=g_filename_from_utf8(file_name,-1,NULL,NULL,NULL)),
 			prefs->image_ext,FALSE,FALSE);
 
@@ -6165,13 +6165,13 @@ void on_fs_preview_clicked (GtkWidget *widget, gpointer user_data) {
 
 
     if (file_open_params!=NULL) {
-      com=g_strdup_printf("%s fs_preview fsp%d %"PRIu64" %d %d %.2f %d \"%s\" \"%s\"",prefs->backend,getpid(),
+      com=g_strdup_printf("%s fs_preview fsp%d %"PRIu64" %d %d %.2f %d \"%s\" \"%s\"",prefs->backend,capable->mainpid,
 			  xwin, width, height, start_time, preview_frames,
 			  (tmp=g_filename_from_utf8(file_name,-1,NULL,NULL,NULL)),file_open_params);
 
     }
     else {
-      com=g_strdup_printf("%s fs_preview fsp%d %"PRIu64" %d %d %.2f %d \"%s\"",prefs->backend,getpid(),
+      com=g_strdup_printf("%s fs_preview fsp%d %"PRIu64" %d %d %.2f %d \"%s\"",prefs->backend,capable->mainpid,
 			  xwin, width, height, start_time, preview_frames,
 			  (tmp=g_filename_from_utf8(file_name,-1,NULL,NULL,NULL)));
     }
@@ -6668,11 +6668,10 @@ void end_fs_preview(void) {
   // clean up if we were playing a preview - should be called from all callbacks 
   // where there is a possibility of fs preview still playing
   gchar *com;
-  pid_t mypid;
 
   if (mainw->in_fs_preview) {
 #ifndef IS_MINGW
-    com=g_strdup_printf ("%s stopsubsub fsp%d 2>/dev/null",prefs->backend_sync,(mypid=lives_getpid()));
+    com=g_strdup_printf ("%s stopsubsub fsp%d 2>/dev/null",prefs->backend_sync,capable->mainpid);
     lives_system (com,TRUE);
 #else
     // get pid from backend
@@ -6680,7 +6679,7 @@ void end_fs_preview(void) {
     ssize_t rlen;
     char val[16];
     int pid;
-    com=g_strdup_printf("%s get_pid_for_handle fsp%d",prefs->backend_sync,(mypid=lives_getpid()));
+    com=g_strdup_printf("%s get_pid_for_handle fsp%d",prefs->backend_sync,capable->mainpid);
     rfile=popen(com,"r");
     rlen=fread(val,1,16,rfile);
     pclose(rfile);
@@ -6690,7 +6689,7 @@ void end_fs_preview(void) {
     lives_win32_kill_subprocesses(pid,TRUE);
 #endif
     g_free (com);
-    com=g_strdup_printf ("%s close fsp%d",prefs->backend,mypid);
+    com=g_strdup_printf ("%s close fsp%d",prefs->backend,capable->mainpid);
     lives_system (com,TRUE);
     g_free (com);
 
@@ -8669,11 +8668,9 @@ void on_toy_activate  (GtkMenuItem *menuitem, gpointer user_data) {
     lives_check_menu_item_set_active(LIVES_CHECK_MENU_ITEM(mainw->toy_autolives),FALSE);
     g_signal_handler_unblock (mainw->toy_autolives, mainw->toy_func_autolives);
 
-#ifndef IS_MINGW
-    if (mainw->toy_alives_pid>1) {
-      lives_killpg(mainw->toy_alives_pid,LIVES_SIGHUP);
+    if (mainw->toy_alives_pgid>1) {
+      lives_killpg(mainw->toy_alives_pgid,LIVES_SIGHUP);
     }
-#endif    
 
     // switch off rte so as not to cause alarm
     if (mainw->autolives_reset_fx) 
@@ -8777,7 +8774,7 @@ void on_toy_activate  (GtkMenuItem *menuitem, gpointer user_data) {
 			prefs->prefix_dir,prefs->osc_udp_port,prefs->osc_udp_port-1);
 #endif
 
-    mainw->toy_alives_pid=lives_fork(com);
+    mainw->toy_alives_pgid=lives_fork(com);
 
     g_free(com);
 
@@ -10501,7 +10498,7 @@ void on_capture_activate (GtkMenuItem *menuitem, gpointer user_data) {
   g_free (msg);
 
   // start another copy of LiVES and wait for it to return values
-  com=g_strdup_printf("%s -capture %d %u %d %d %s %d %d %.4f %d %d %d %d \"%s\"",capable->myname_full,getpid(),
+  com=g_strdup_printf("%s -capture %d %u %d %d %s %d %d %.4f %d %d %d %d \"%s\"",capable->myname_full,capable->mainpid,
 		      (unsigned int)mainw->foreign_id,mainw->foreign_width,mainw->foreign_height,prefs->image_ext,
 		      mainw->foreign_bpp,mainw->rec_vid_frames,mainw->rec_fps,mainw->rec_arate,
 		      mainw->rec_asamps,mainw->rec_achans,mainw->rec_signed_endian,mainw->foreign_visual);

@@ -866,7 +866,7 @@ static void lives_init(_ign_opts *ign_opts) {
 
   mainw->affected_layouts_map=mainw->current_layouts_map=NULL;
 
-  mainw->recovery_file=g_strdup_printf("%s/recovery.%d.%d.%d",prefs->tmpdir,lives_getuid(),lives_getgid(),lives_getpid());
+  mainw->recovery_file=g_strdup_printf("%s/recovery.%d.%d.%d",prefs->tmpdir,lives_getuid(),lives_getgid(),capable->mainpid);
   mainw->leave_recovery=TRUE;
 
   mainw->pchains=NULL;
@@ -1001,7 +1001,7 @@ static void lives_init(_ign_opts *ign_opts) {
 
   mainw->jack_trans_poll=FALSE;
 
-  mainw->toy_alives_pid=0;
+  mainw->toy_alives_pgid=0;
   mainw->autolives_reset_fx=FALSE;
 
   mainw->aplayer_broken=FALSE;
@@ -2006,6 +2006,8 @@ capability *get_capabilities (void) {
   capable->has_smogrify=FALSE;
   capable->smog_version_correct=FALSE;
 
+  capable->mainpid=lives_getpid();
+
   // required
   capable->can_write_to_tmp=FALSE;
   capable->can_write_to_tempdir=FALSE;
@@ -2714,9 +2716,9 @@ int main (int argc, char *argv[]) {
   mainw->has_session_tmpdir=FALSE;
 
 #ifndef IS_MINGW
-  g_snprintf(mainw->first_info_file,PATH_MAX,"%s"G_DIR_SEPARATOR_S".info.%d",prefs->tmpdir,getpid());
+  g_snprintf(mainw->first_info_file,PATH_MAX,"%s"G_DIR_SEPARATOR_S".info.%d",prefs->tmpdir,capable->mainpid);
 #else
-  g_snprintf(mainw->first_info_file,PATH_MAX,"%s"G_DIR_SEPARATOR_S"info.%d",prefs->tmpdir,getpid());
+  g_snprintf(mainw->first_info_file,PATH_MAX,"%s"G_DIR_SEPARATOR_S"info.%d",prefs->tmpdir,capable->mainpid);
 #endif
 
   // what's my name ?

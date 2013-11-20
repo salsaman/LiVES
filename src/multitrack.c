@@ -530,7 +530,7 @@ boolean write_backup_layout_numbering(lives_mt *mt) {
   int fd,i,vali,hdlsize;
   double vald;
   gchar *asave_file=g_strdup_printf("%s/layout_numbering.%d.%d.%d",prefs->tmpdir,lives_getuid(),lives_getgid(),
-				    lives_getpid());
+				    capable->mainpid);
   GList *clist=mainw->cliplist;
 
   fd=lives_creat_buffered(asave_file,DEF_FILE_PERMS);
@@ -588,7 +588,7 @@ static void renumber_from_backup_layout_numbering(lives_mt *mt) {
   int fd,vari,clipn,offs;
   double vard;
   gchar *aload_file=g_strdup_printf("%s/layout_numbering.%d.%d.%d",prefs->tmpdir,lives_getuid(),lives_getgid(),
-				    lives_getpid());
+				    capable->mainpid);
   boolean isfirst=TRUE;
   char buf[256];
 
@@ -640,7 +640,7 @@ static void save_mt_autoback(lives_mt *mt, int64_t stime) {
   struct timeval otv;
 
   int fd;
-  gchar *asave_file=g_strdup_printf("%s/layout.%d.%d.%d",prefs->tmpdir,lives_getuid(),lives_getgid(),lives_getpid());
+  gchar *asave_file=g_strdup_printf("%s/layout.%d.%d.%d",prefs->tmpdir,lives_getuid(),lives_getgid(),capable->mainpid);
   lives_mt_poly_state_t poly_state;
 
   boolean retval=TRUE;
@@ -766,7 +766,7 @@ uint32_t mt_idle_add(lives_mt *mt) {
 
 
 void recover_layout_cancelled(GtkButton *button, gpointer user_data) {
-  gchar *eload_file=g_strdup_printf("%s/layout.%d.%d.%d",prefs->tmpdir,lives_getuid(),lives_getgid(),lives_getpid());
+  gchar *eload_file=g_strdup_printf("%s/layout.%d.%d.%d",prefs->tmpdir,lives_getuid(),lives_getgid(),capable->mainpid);
 
   if (button!=NULL) {
     lives_general_button_clicked(button,NULL);
@@ -776,7 +776,7 @@ void recover_layout_cancelled(GtkButton *button, gpointer user_data) {
   unlink(eload_file);
   g_free(eload_file);
   
-  eload_file=g_strdup_printf("%s/layout_numbering.%d.%d.%d",prefs->tmpdir,lives_getuid(),lives_getgid(),lives_getpid());
+  eload_file=g_strdup_printf("%s/layout_numbering.%d.%d.%d",prefs->tmpdir,lives_getuid(),lives_getgid(),capable->mainpid);
   unlink(eload_file);
   g_free(eload_file);
 
@@ -788,8 +788,8 @@ void recover_layout_cancelled(GtkButton *button, gpointer user_data) {
 
 static void mt_load_recovery_layout(lives_mt *mt) {
     gchar *aload_file=g_strdup_printf("%s/layout_numbering.%d.%d.%d",prefs->tmpdir,lives_getuid(),lives_getgid(),
-				      lives_getpid());
-    gchar *eload_file=g_strdup_printf("%s/layout.%d.%d.%d",prefs->tmpdir,lives_getuid(),lives_getgid(),lives_getpid());
+				      capable->mainpid);
+    gchar *eload_file=g_strdup_printf("%s/layout.%d.%d.%d",prefs->tmpdir,lives_getuid(),lives_getgid(),capable->mainpid);
 
     mt->auto_reloading=TRUE;
     mainw->event_list=mt->event_list=load_event_list(mt,eload_file);

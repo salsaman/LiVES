@@ -163,9 +163,9 @@ boolean do_tempdir_query(void) {
   set_pref("session_tempdir",prefs->tmpdir);
 
 #ifndef IS_MINGW
-  g_snprintf(mainw->first_info_file,PATH_MAX,"%s"G_DIR_SEPARATOR_S".info.%d",prefs->tmpdir,getpid());
+  g_snprintf(mainw->first_info_file,PATH_MAX,"%s"G_DIR_SEPARATOR_S".info.%d",prefs->tmpdir,capable->mainpid);
 #else
-  g_snprintf(mainw->first_info_file,PATH_MAX,"%s"G_DIR_SEPARATOR_S"info.%d",prefs->tmpdir,getpid());
+  g_snprintf(mainw->first_info_file,PATH_MAX,"%s"G_DIR_SEPARATOR_S"info.%d",prefs->tmpdir,capable->mainpid);
 #endif
 
   g_free(dirname);

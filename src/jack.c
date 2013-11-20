@@ -40,7 +40,7 @@ static boolean check_zero_buff(size_t check_size) {
 }
 
 boolean lives_jack_init (void) {
-  gchar *jt_client=g_strdup_printf("LiVES-%d",getpid());
+  gchar *jt_client=g_strdup_printf("LiVES-%d",capable->mainpid);
   const char *server_name="default";
   jack_options_t options=JackServerName;
   jack_status_t status;

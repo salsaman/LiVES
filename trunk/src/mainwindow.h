@@ -35,10 +35,14 @@
 /////// GUI related constants /////////////////////////////////////////////////////////
 
 // parameters for resizing the image frames, and for capture
-#define V_RESIZE_ADJUST 36
-#define H_RESIZE_ADJUST 24
+#define V_RESIZE_ADJUST ((W_PACKING_WIDTH+2)*3)
+#define H_RESIZE_ADJUST ((W_PACKING_HEIGHT+2)*2)
 
+#if GTK_CHECK_VERSION(3,0,0)
 #define CE_FRAME_HSPACE ((int)(320.*widget_opts.scale))
+#else
+#define CE_FRAME_HSPACE ((int)(420.*widget_opts.scale))
+#endif
 
 #define MIN_SEPWIN_WIDTH 600
 #define MIN_SEPWIN_HEIGHT 36
@@ -1162,6 +1166,8 @@ typedef struct {
   int active_sa_fx; // active screen area for effects
   int active_sa_clips; // active screen area for clips
   lives_screen_area_t *screen_areas; // array of screen areas
+
+  int *active_track_list;
 
 } mainwindow;
 

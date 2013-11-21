@@ -5942,6 +5942,16 @@ boolean check_for_recovery_files (boolean auto_recover) {
   unlink(recovery_file);
   g_free(recovery_file);
   
+#if !GTK_CHECK_VERSION(3,0,0)
+  if (mainw->current_file>-1&&cfile!=NULL) {
+    load_start_image(cfile->start);
+    load_end_image(cfile->end);
+    lives_widget_queue_resize(mainw->video_draw);
+    lives_widget_queue_resize(mainw->laudio_draw);
+    lives_widget_queue_resize(mainw->raudio_draw);
+  }
+#endif
+
   mainw->com_failed=FALSE;
 
   // check for layout recovery file

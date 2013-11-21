@@ -102,6 +102,12 @@ static char **zargv;
 
 static int xxwidth=0,xxheight=0;
 
+////////////////////
+static boolean ext_src_used[MAX_TRACKS];
+static lives_decoder_t *track_decoders[MAX_TRACKS];
+////////////////////
+
+
 /* not static */
 GtkTargetEntry target_table[]  = {
   { "STRING",                     GTK_TARGET_OTHER_APP, 0 },
@@ -3449,6 +3455,7 @@ void load_start_image(int frame) {
       if (mainw->camframe!=NULL) lives_pixbuf_saturate_and_pixelate(mainw->camframe,mainw->camframe,0.0,FALSE);
       g_free(tmp);
     }
+
     set_ce_frame_from_pixbuf(GTK_IMAGE(mainw->start_image),mainw->camframe,NULL);
 #if GTK_CHECK_VERSION(3,0,0)
     g_signal_handlers_unblock_by_func(mainw->start_image,(gpointer)expose_sim,NULL);
@@ -3468,7 +3475,7 @@ void load_start_image(int frame) {
     }
     threaded_dialog_spin();
 #if GTK_CHECK_VERSION(3,0,0)
-  g_signal_handlers_unblock_by_func(mainw->start_image,(gpointer)expose_sim,NULL);
+    g_signal_handlers_unblock_by_func(mainw->start_image,(gpointer)expose_sim,NULL);
     g_signal_stop_emission_by_name(mainw->start_image,LIVES_WIDGET_EVENT_EXPOSE_EVENT);
 #endif
     return;
@@ -3574,13 +3581,12 @@ void load_start_image(int frame) {
     lives_widget_queue_resize(mainw->start_image);
 
     lives_widget_context_update();
-
     if (mainw->current_file==-1) {
       // user may close file
       load_start_image(0);
       return;
     }
-  } while (rwidth!=lives_widget_get_allocation_width(mainw->start_image)||rheight!=lives_widget_get_allocation_height(mainw->image272));
+  } while (rwidth!=lives_widget_get_allocation_width(mainw->start_image)||rheight!=lives_widget_get_allocation_height(mainw->start_image));
 #else
   } while (FALSE);
 #endif
@@ -3609,7 +3615,7 @@ void load_end_image(int frame) {
   if (mainw->multitrack!=NULL) return;
 
 #if GTK_CHECK_VERSION(3,0,0)
-  g_signal_handlers_block_by_func(mainw->end_image,(gpointer)expose_sim,NULL);
+  g_signal_handlers_block_by_func(mainw->end_image,(gpointer)expose_eim,NULL);
 #endif
 
   if (mainw->current_file>-1&&cfile!=NULL&&(cfile->clip_type==CLIP_TYPE_YUV4MPEG||cfile->clip_type==CLIP_TYPE_VIDEODEV)) {
@@ -3620,7 +3626,12 @@ void load_end_image(int frame) {
       if (mainw->camframe!=NULL) lives_pixbuf_saturate_and_pixelate(mainw->camframe,mainw->camframe,0.0,FALSE);
       g_free(tmp);
     }
+
     set_ce_frame_from_pixbuf(GTK_IMAGE(mainw->end_image),mainw->camframe,NULL);
+#if GTK_CHECK_VERSION(3,0,0)
+    g_signal_handlers_unblock_by_func(mainw->end_image,(gpointer)expose_eim,NULL);
+    g_signal_stop_emission_by_name(mainw->end_image,LIVES_WIDGET_EVENT_EXPOSE_EVENT);
+#endif
     return;
   }
 
@@ -3635,7 +3646,7 @@ void load_end_image(int frame) {
     }
     threaded_dialog_spin();
 #if GTK_CHECK_VERSION(3,0,0)
-    g_signal_handlers_unblock_by_func(mainw->end_image,(gpointer)expose_sim,NULL);
+    g_signal_handlers_unblock_by_func(mainw->end_image,(gpointer)expose_eim,NULL);
     g_signal_stop_emission_by_name(mainw->end_image,LIVES_WIDGET_EVENT_EXPOSE_EVENT);
 #endif
     return;
@@ -3679,7 +3690,7 @@ void load_end_image(int frame) {
     }
     threaded_dialog_spin();
 #if GTK_CHECK_VERSION(3,0,0)
-    g_signal_handlers_unblock_by_func(mainw->end_image,(gpointer)expose_sim,NULL);
+    g_signal_handlers_unblock_by_func(mainw->end_image,(gpointer)expose_eim,NULL);
     g_signal_stop_emission_by_name(mainw->end_image,LIVES_WIDGET_EVENT_EXPOSE_EVENT);
 #endif
     return;
@@ -3742,21 +3753,18 @@ void load_end_image(int frame) {
     if (mainw->current_file==-1) {
       // user may close file
       load_end_image(0);
-#if GTK_CHECK_VERSION(3,0,0)
-      g_signal_handlers_unblock_by_func(mainw->end_image,(gpointer)expose_sim,NULL);
-      g_signal_stop_emission_by_name(mainw->end_image,LIVES_WIDGET_EVENT_EXPOSE_EVENT);
-#endif
       return;
     }
-  } while (rwidth!=lives_widget_get_allocation_width(mainw->end_image)||rheight!=lives_widget_get_allocation_height(mainw->image273));
+  } while (rwidth!=lives_widget_get_allocation_width(mainw->end_image)||rheight!=lives_widget_get_allocation_height(mainw->end_image));
 #else
   } while (FALSE);
 #endif
+
   threaded_dialog_spin();
   mainw->noswitch=noswitch;
 
 #if GTK_CHECK_VERSION(3,0,0)
-  g_signal_handlers_unblock_by_func(mainw->end_image,(gpointer)expose_sim,NULL);
+  g_signal_handlers_unblock_by_func(mainw->end_image,(gpointer)expose_eim,NULL);
   g_signal_stop_emission_by_name(mainw->end_image,LIVES_WIDGET_EVENT_EXPOSE_EVENT);
 #endif
 
@@ -4272,8 +4280,8 @@ static weed_plant_t *render_subs_from_file(file *sfile, double xtime, weed_plant
 
 
 
-static boolean pull_frame_at_size_real (weed_plant_t *layer, const gchar *image_ext, weed_timecode_t tc, int width, int height, 
-				 int target_palette, boolean is_threaded) {
+boolean pull_frame_at_size (weed_plant_t *layer, const gchar *image_ext, weed_timecode_t tc, int width, int height, 
+			    int target_palette) {
   // pull a frame from an external source into a layer
   // the "clip" and "frame" leaves must be set in layer
   // tc is used instead of "frame" for some sources (e.g. generator plugins)
@@ -4423,8 +4431,8 @@ static boolean pull_frame_at_size_real (weed_plant_t *layer, const gchar *image_
 
         // deinterlace
 	if (sfile->deinterlace||(prefs->auto_deint&&dplug->cdata->interlace!=LIVES_INTERLACE_NONE)) {
-	  if (!is_threaded) {
-	    
+	  if (!is_thread) {
+	    deinterlace_frame(layer,tc);
 	  }
  	  else weed_set_boolean_value(layer,"host_deinterlace",WEED_TRUE);
 	}
@@ -4454,7 +4462,7 @@ static boolean pull_frame_at_size_real (weed_plant_t *layer, const gchar *image_
   case CLIP_TYPE_YUV4MPEG:
     weed_layer_set_from_yuv4m(layer,sfile);
     if (sfile->deinterlace) {
-      if (!is_threaded) {
+      if (!is_thread) {
 	deinterlace_frame(layer,tc);
       }
       else weed_set_boolean_value(layer,"host_deinterlace",WEED_TRUE);
@@ -4466,7 +4474,7 @@ static boolean pull_frame_at_size_real (weed_plant_t *layer, const gchar *image_
   case CLIP_TYPE_VIDEODEV:
     weed_layer_set_from_lvdev(layer,sfile,4./cfile->pb_fps);
     if (sfile->deinterlace) {
-      if (!is_threaded) {
+      if (!is_thread) {
 	deinterlace_frame(layer,tc);
       }
       else weed_set_boolean_value(layer,"host_deinterlace",WEED_TRUE);
@@ -4493,7 +4501,7 @@ static boolean pull_frame_at_size_real (weed_plant_t *layer, const gchar *image_
   }
   mainw->osc_block=FALSE;
 
-  if (!is_threaded) {
+  if (!is_thread) {
     // render subtitles from file
     if (prefs->show_subtitles&&sfile->subt!=NULL&&sfile->subt->tfile!=NULL) {
       double xtime=(double)(frame-1)/sfile->fps;
@@ -4504,12 +4512,6 @@ static boolean pull_frame_at_size_real (weed_plant_t *layer, const gchar *image_
   return TRUE;
 }
 
-
-LIVES_INLINE boolean pull_frame_at_size (weed_plant_t *layer, const gchar *image_ext, weed_timecode_t tc, int width, int height, 
-					 int target_palette) {
-  return pull_frame_at_size_real(layer,image_ext,tc,width,height,target_palette,FALSE);
-
-}
 
 boolean pull_frame (weed_plant_t *layer, const gchar *image_ext, weed_timecode_t tc) {
   // pull a frame from an external source into a layer
@@ -4570,7 +4572,7 @@ static void *pft_thread(void *in) {
   weed_timecode_t tc=data->tc;
   const char *img_ext=data->img_ext;
   g_free(in);
-  pull_frame_at_size_real(layer,img_ext,tc,0,0,WEED_PALETTE_END,TRUE);
+  pull_frame_at_size(layer,img_ext,tc,0,0,WEED_PALETTE_END);
   return NULL;
 }
 
@@ -4789,6 +4791,25 @@ static void get_max_opsize(int *opwidth, int *opheight) {
 }
 
 
+void init_track_decoders(void) {
+  register int i;
+
+  for (i=0;i<MAX_TRACKS;i++) {
+    track_decoders[i]=NULL;
+    mainw->active_track_list[i]=0;
+  }
+}
+
+
+void free_track_decoders(void) {
+  register int i;
+
+  for (i=0;i<MAX_TRACKS;i++) {
+    if (track_decoders[i]!=NULL && track_decoders[i]!=mainw->files[mainw->active_track_list[i]]->ext_src)
+      close_decoder_plugin(track_decoders[i]);
+  }
+
+}
 
 
 
@@ -5159,6 +5180,18 @@ void load_frame_image(int frame) {
 	  int i;
 	  weed_plant_t **layers;
 	  layers=(weed_plant_t **)g_malloc((mainw->num_tracks+1)*sizeof(weed_plant_t *));
+
+#ifdef TEST_THREADING_MT
+	  // get list of active tracks from mainw->filter map
+	  mainw->active_track_list=get_active_track_list(mainw->clip_index,mainw->num_tracks,mainw->filter_map);
+	  for (i=0;i<mainw->num_tracks;i++) {
+	    if ((oclip=mainw->old_active_track_list[i])==(nclip=mainw->active_track_list[i])) {
+	      if (oclip!=0&&track_decoders[i]==mainw->files[oclip]->ext_src) ext_src_used[oclip]=TRUE;
+	      else (ext_src_used[oclip]=FALSE);
+	    }
+	  }
+#endif
+
 	  for (i=0;i<mainw->num_tracks;i++) {
 	    layers[i]=weed_plant_new(WEED_PLANT_CHANNEL);
 	    weed_set_int_value(layers[i],"clip",mainw->clip_index[i]);
@@ -5166,7 +5199,56 @@ void load_frame_image(int frame) {
 	    weed_set_int_value(layers[i],"current_palette",(mainw->clip_index[i]==-1||
 							    mainw->files[mainw->clip_index[i]]->img_type==
 							    IMG_TYPE_JPEG)?WEED_PALETTE_RGB24:WEED_PALETTE_RGBA32);
-	    weed_set_voidptr_value(layers[i],"pixel_data",NULL);
+
+#ifdef TEST_THREADING_MT
+	    if ((oclip=mainw->old_active_track_list[i])!=(nclip=mainw->active_track_list[i])) {
+	      // now using threading, we want to start pulling all pixel_data for all active layers here
+	      // however, we may have more than one copy of the same clip - in this case we want to create clones of the decoder plugin
+	      // this is to prevent constant seeking between different frames in the clip
+
+	      // check if ext_src survives old->new
+
+
+	      ////
+	      if (oclip!=0) {
+		if (mainw->files[oclip]->clip_type==CLIP_TYPE_FILE) {
+		  if (track_decoders[i]!=(lives_decoder_t *)mainw->files[oclip]->ext_src) {
+		    // remove the clone for oclip
+		    close_decoder_plugin(track_decoders[i]);
+		    track_decoders[i]=NULL;
+		  }
+		}
+	      }
+
+	      if (nclip!=0) {
+		if (mainw->files[nclip]->clip_type==CLIP_TYPE_FILE) {
+		  if (!ext_src_used[nclip]) {
+		    track_decoders[i]=mainw->files[nclip]->ext_src;
+		    ext_src_used[nclip]=TRUE;
+		  }
+		  else {
+		    // add new clone for nclip
+		    track_decoders[i]=clone_cdata(nclip);
+		  }
+		}
+	      }
+	    }
+
+	    mainw->old_active_track_list[i]=mainw->active_track_list[i];
+
+	    if (active_track_list[nclip]!=0) {
+	      img_ext=get_image_ext_for_type(mainw->files[nclip]->img_type);
+	      // set alt src in layer
+	      weed_set_voidptr_value(layers[i],"host_track_decoder",(void *)track_decoders[i]);
+	      pull_frame_threaded(layers[i],img_ext,(weed_timecode_t)mainw->currticks);
+	    }
+	    else {
+#else
+	      weed_set_voidptr_value(layers[i],"pixel_data",NULL);
+#endif
+#ifdef TEST_THREADING_MT
+	    }
+#endif
 	  }
 	  layers[i]=NULL;
 	  
@@ -5630,6 +5712,10 @@ void load_frame_image(int frame) {
 	if (mainw->double_size) {
 	  mainw->pwidth=(mainw->pwidth-H_RESIZE_ADJUST)*4+H_RESIZE_ADJUST;
 	  mainw->pheight=(mainw->pheight-V_RESIZE_ADJUST)*4+H_RESIZE_ADJUST;
+
+	  if (mainw->pwidth<2) mainw->pwidth=weed_get_int_value(mainw->frame_layer,"width",&weed_error);
+	  if (mainw->pheight<2) mainw->pheight=weed_get_int_value(mainw->frame_layer,"height",&weed_error);
+
 	}
 	calc_maxspect(rwidth,rheight,&mainw->pwidth,&mainw->pheight);
 
@@ -6987,7 +7073,7 @@ void resize (double scale) {
     scr_height=mainw->mgeom[prefs->gui_monitor-1].height;
   }
 
-  hsize=(scr_width-(V_RESIZE_ADJUST*2+bx))/3;
+  hsize=(scr_width-(V_RESIZE_ADJUST*2+bx))/3;    // yes this is correct (V_RESIZE_ADJUST)
   vsize=(scr_height-(CE_FRAME_HSPACE+hspace+by));
 
   if (scale<0.) {
@@ -7029,12 +7115,34 @@ void resize (double scale) {
   }
 
   if (oscale>0.) {
+    mainw->ce_frame_width=(int)hsize/scale+H_RESIZE_ADJUST;
+    mainw->ce_frame_height=vsize/scale+V_RESIZE_ADJUST;
+
+    if (mainw->current_file>-1&&cfile!=NULL) {
+      if (cfile->clip_type==CLIP_TYPE_YUV4MPEG||cfile->clip_type==CLIP_TYPE_VIDEODEV) {
+	if (mainw->camframe==NULL) {
+	  GError *error=NULL;
+	  gchar *tmp=g_build_filename(prefs->prefix_dir,THEME_DIR,"camera","frame.jpg",NULL);
+	  mainw->camframe=lives_pixbuf_new_from_file(tmp,&error);
+	  if (mainw->camframe!=NULL) lives_pixbuf_saturate_and_pixelate(mainw->camframe,mainw->camframe,0.0,FALSE);
+	  g_free(tmp);
+	}
+	if (mainw->camframe==NULL) {
+	  hsize=mainw->def_width-H_RESIZE_ADJUST;
+	  vsize=mainw->def_height-V_RESIZE_ADJUST;
+	}
+	else {
+	  hsize=lives_pixbuf_get_width(mainw->camframe);
+	  vsize=lives_pixbuf_get_height(mainw->camframe);
+	}
+      }
+    }
+
     lives_widget_set_size_request (mainw->frame1, (int)hsize/scale+H_RESIZE_ADJUST, vsize/scale+V_RESIZE_ADJUST);
     lives_widget_set_size_request (mainw->eventbox3, (int)hsize/scale+H_RESIZE_ADJUST, vsize+V_RESIZE_ADJUST);
     lives_widget_set_size_request (mainw->frame2, (int)hsize/scale+H_RESIZE_ADJUST, vsize/scale+V_RESIZE_ADJUST);
     lives_widget_set_size_request (mainw->eventbox4, (int)hsize/scale+H_RESIZE_ADJUST, vsize+V_RESIZE_ADJUST);
-    mainw->ce_frame_width=(int)hsize/scale+H_RESIZE_ADJUST;
-    mainw->ce_frame_height=vsize/scale+V_RESIZE_ADJUST;
+
   }
 
   else {
@@ -7060,10 +7168,14 @@ void resize (double scale) {
   w=lives_widget_get_allocation_width(mainw->LiVES);
   h=lives_widget_get_allocation_height(mainw->LiVES);
 
-  if (w>scr_width) w=scr_width;
-  if (h>scr_height) h=scr_height;
-
-  lives_widget_set_size_request(mainw->LiVES,w,h);
+  if (w>scr_width-bx||h>scr_height-by) {
+    int wx,wy;
+    lives_window_get_position (LIVES_WINDOW (mainw->LiVES),&wx,&wy);
+    if (prefs->gui_monitor==0&&(wx>0||wy>0)) lives_window_move(LIVES_WINDOW(mainw->LiVES),0,0);
+    lives_window_resize(LIVES_WINDOW(mainw->LiVES),scr_width-bx,scr_height-by);
+    lives_window_maximize (LIVES_WINDOW(mainw->LiVES));
+    lives_widget_queue_resize(mainw->LiVES);
+  }
 
   if (!mainw->foreign&&mainw->playing_file==-1&&mainw->current_file>0&&cfile!=NULL&&(!cfile->opening||cfile->clip_type==CLIP_TYPE_FILE)) {
       lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_start),cfile->start);

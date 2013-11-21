@@ -3421,8 +3421,6 @@ weed_plant_t *weed_apply_effects (weed_plant_t **layers, weed_plant_t *filter_ma
   // returned layer can be of any width,height,palette
   // caller should free all input layers, "pixel_data" of all non-returned layers is free()d here
 
-  // TODO - update the param window with any out_param values which changed.
-
   void *pdata;
 
   weed_plant_t *filter,*instance,*layer;

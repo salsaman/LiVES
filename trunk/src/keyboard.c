@@ -210,7 +210,7 @@ boolean pl_key_function (boolean down, uint16_t unicode, uint16_t keymod) {
   // mask for ctrl and alt
   LiVESModifierType state=(LiVESModifierType)(keymod&(LIVES_CONTROL_MASK|LIVES_ALT_MASK));
 
-  g_print("here !\n");
+  // hmmm...only works with GTK+2.x
 
   if (!down) {
     // up...
@@ -281,12 +281,8 @@ boolean pl_key_function (boolean down, uint16_t unicode, uint16_t keymod) {
     }
   }
 
-  
-  g_print("unic %d mod %d\n",unicode,keymod);
-
   if ((unicode==LIVES_KEY_Left||unicode==LIVES_KEY_Right||unicode==LIVES_KEY_Up||unicode==LIVES_KEY_Down)&&
       (keymod&LIVES_CONTROL_MASK)) {
-    g_print("caching key !\n");
     cached_key=unicode;
     cached_mod=LIVES_CONTROL_MASK;
   }

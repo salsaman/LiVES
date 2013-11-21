@@ -509,7 +509,6 @@ weed_plant_t *event_copy_and_insert (weed_plant_t *in_event, weed_plant_t *event
   hint=get_event_hint(in_event);
   switch (hint) {
   case WEED_EVENT_HINT_FILTER_INIT:
-    g_print("got fin\n");
     error=weed_set_voidptr_value (event,"event_id",(void *)in_event);
     if (error==WEED_ERROR_MEMORY_ALLOCATION) return NULL;
     filter_hash=weed_get_string_value(event,"filter",&error);
@@ -2846,6 +2845,66 @@ weed_plant_t *append_filter_map_event (weed_plant_t *event_list, weed_timecode_t
 }
 
 
+int *get_active_track_list(int *clip_index, int num_tracks, weed_plant_t *filter_map) {
+  // replace entries in mainw->clip_index with 0 if the track is not either the front track or an input to a filter
+
+  // TODO *** we should ignore any filter which does not eventually output to the front track, 
+  // this involves examining the filter map in reverse order and mapping out_tracks back to in_tracks
+  // marking those which we cover
+  
+  weed_plant_t **init_events;
+  weed_plant_t *filter;
+
+  char *filter_hash;
+
+  int *in_tracks;
+
+  int *actracks;
+
+  int ninits,nintracks;
+  int idx,error;
+  int front=-1;
+
+  register int i,j;
+
+  actracks=(int *)g_malloc(num_tracks*sizint);
+
+  for (i=0;i<num_tracks;i++) {
+    if (front==-1&&clip_index[i]>0) {
+      actracks[i]=clip_index[i];
+      front=i;
+    }
+    else actracks[i]=0;
+  }
+
+  if (filter_map==NULL||!weed_plant_has_leaf(filter_map,"init_events")) return actracks;
+  ninits=weed_leaf_num_elements(filter_map,"init_events");
+
+  init_events=(weed_plant_t **)weed_get_voidptr_array(filter_map,"init_events",&error);
+  if (init_events==NULL) return actracks;
+
+  for (i=0;i<ninits;i++) {
+    // get the filter and make sure it has video chans in
+    if (!weed_plant_has_leaf(init_events[i],"in_tracks")) continue;
+    filter_hash=weed_get_string_value(init_events[i],"filter",&error);
+    if ((idx=weed_get_idx_for_hashname(filter_hash,TRUE))!=-1) {
+      filter=get_weed_filter(idx);
+      if (has_video_chans_in(filter,FALSE)) {
+	nintracks=weed_leaf_num_elements(init_events[i],"in_tracks");
+	in_tracks=weed_get_int_array(init_events[i],"in_tracks",&error);
+	for (j=0;j<nintracks;j++) {
+	  actracks[in_tracks[j]]=clip_index[in_tracks[j]];
+	}
+	weed_free(in_tracks);
+      }
+    }
+  }
+
+  weed_free(init_events);
+
+  return actracks;
+}
+
 
 weed_plant_t *process_events (weed_plant_t *next_event, boolean process_audio, weed_timecode_t curr_tc) {
   // here we play back (preview) with an event_list
@@ -3018,9 +3077,6 @@ weed_plant_t *process_events (weed_plant_t *next_event, boolean process_audio, w
 	if (mainw->playing_file>-1) lives_widget_context_update();
 	mainw->current_file=current_file;
       }
-      //weed_free(mainw->clip_index);
-      //weed_free(mainw->frame_index);
-      //mainw->clip_index=mainw->frame_index=NULL;
       break;
     }
     else {
@@ -3034,9 +3090,6 @@ weed_plant_t *process_events (weed_plant_t *next_event, boolean process_audio, w
       mainw->pchains=NULL;
     }
   }
-  //weed_free(mainw->clip_index);
-  //weed_free(mainw->frame_index);
-  //mainw->clip_index=mainw->frame_index=NULL;
   if (mainw->playing_file>-1) lives_widget_context_update();
   cfile->next_event=get_next_event(next_event);
   break;

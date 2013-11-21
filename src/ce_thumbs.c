@@ -112,6 +112,8 @@ static void pin_toggled (LiVESToggleButton *t, livespointer pkey) {
   g_object_set_data (G_OBJECT (pscrolls[key]),"pinned",LIVES_INT_TO_POINTER (!state));
 }
 
+#if GTK_CHECK_VERSION(3,2,0)  // required for grid widget
+
 static void clip_area_toggled (LiVESToggleButton *t, livespointer parea) {
   int area=LIVES_POINTER_TO_INT(parea);
   if (lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(rb_clip_areas[area]))) {
@@ -120,6 +122,7 @@ static void clip_area_toggled (LiVESToggleButton *t, livespointer parea) {
   }
 }
 
+#endif
 
 #define SPARE_CLIP_BOXES 100
 

@@ -1711,7 +1711,7 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const gchar *te
 
     //#define DEBUG
 #ifdef DEBUG
-    if (strlen(mainw->msg)) g_print("msg %s\n",mainw->msg);
+    if (strlen(mainw->msg)) g_print("%s msg %s\n",cfile->info_file,mainw->msg);
 #endif
 
     // we got a message from the backend...

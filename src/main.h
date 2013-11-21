@@ -1047,6 +1047,10 @@ LiVESPixbuf *pull_lives_pixbuf(int clip, int frame, const char *image_ext, weed_
 GError * lives_pixbuf_save(GdkPixbuf *pixbuf, gchar *fname, lives_image_type_t imgtype, 
 			   int quality, boolean do_chmod, GError **gerrorptr);
 
+void init_track_decoders(void);
+void free_track_decoders(void);
+
+
 void load_frame_image(int frame);
 void sensitize(void);
 void desensitize(void);

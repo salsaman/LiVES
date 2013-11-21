@@ -4208,7 +4208,6 @@ void mt_init_start_end_spins(lives_mt *mt) {
   
   lives_box_pack_start (LIVES_BOX (mt->top_vbox), hbox, FALSE, FALSE, 6);
 
-
   eventbox = lives_event_box_new ();
   lives_box_pack_start (LIVES_BOX (hbox), eventbox, FALSE, FALSE, widget_opts.packing_width*2);
 
@@ -7745,6 +7744,8 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
   if (palette->style&STYLE_1) {
     lives_widget_set_bg_color(lives_widget_get_parent(widget_opts.last_label), LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
     lives_widget_set_fg_color(lives_widget_get_parent(widget_opts.last_label), LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars_fore);
+    lives_widget_set_bg_color(widget_opts.last_label, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
+    lives_widget_set_fg_color(widget_opts.last_label, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars_fore);
   }
 
 
@@ -7841,6 +7842,8 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
   if (palette->style&STYLE_1) {
     lives_widget_set_bg_color(lives_widget_get_parent(widget_opts.last_label), LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
     lives_widget_set_fg_color(lives_widget_get_parent(widget_opts.last_label), LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars_fore);
+    lives_widget_set_bg_color(widget_opts.last_label, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
+    lives_widget_set_fg_color(widget_opts.last_label, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars_fore);
   }
 
   lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(mt->snapo_checkbutton),mt->opts.snap_over);
@@ -7947,7 +7950,10 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
   mt->grav_normal_func=g_signal_connect (GTK_OBJECT (mt->grav_normal), "toggled",
 					 G_CALLBACK (on_grav_mode_changed),
 					 (gpointer)mt);
-
+  if (palette->style&STYLE_1) {
+    lives_widget_set_bg_color(lives_bin_get_child(LIVES_BIN(mt->grav_normal)), LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
+    lives_widget_set_fg_color(lives_bin_get_child(LIVES_BIN(mt->grav_normal)), LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars_fore);
+  }
 
   mt->grav_left = lives_check_menu_item_new_with_mnemonic (_("Gravity: _Left"));
   lives_container_add (LIVES_CONTAINER(submenu), mt->grav_left);
@@ -7959,11 +7965,20 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
 				       (gpointer)mt);
 
 
+  if (palette->style&STYLE_1) {
+    lives_widget_set_bg_color(lives_bin_get_child(LIVES_BIN(mt->grav_left)), LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
+    lives_widget_set_fg_color(lives_bin_get_child(LIVES_BIN(mt->grav_left)), LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars_fore);
+  }
 
   mt->grav_right = lives_check_menu_item_new_with_mnemonic (_("Gravity: _Right"));
   lives_container_add (LIVES_CONTAINER(submenu), mt->grav_right);
 
   lives_check_menu_item_set_active(LIVES_CHECK_MENU_ITEM(mt->grav_right),mt->opts.grav_mode==GRAV_MODE_RIGHT);
+
+  if (palette->style&STYLE_1) {
+    lives_widget_set_bg_color(lives_bin_get_child(LIVES_BIN(mt->grav_right)), LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
+    lives_widget_set_fg_color(lives_bin_get_child(LIVES_BIN(mt->grav_right)), LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars_fore);
+  }
 
   mt->grav_right_func=g_signal_connect (GTK_OBJECT (mt->grav_right), "toggled",
 					G_CALLBACK (on_grav_mode_changed),
@@ -8093,6 +8108,11 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
   label=lives_standard_label_new (tname);
   g_free(tname);
 
+#if !GTK_CHECK_VERSION(3,0,0)
+  if (palette->style&STYLE_1) {
+    lives_widget_set_fg_color (label, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
+  }
+#endif
 
   // prepare polymorph box
   mt->poly_box = lives_vbox_new (FALSE, 0);

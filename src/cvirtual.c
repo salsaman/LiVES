@@ -277,8 +277,6 @@ boolean check_if_non_virtual(int fileno, int start, int end) {
 
   // no virtual frames in entire clip - change to CLIP_TYPE_DISK
 
-  // TODO *** - check this; we could have performed an undoable operation !
-
   sfile->clip_type=CLIP_TYPE_DISK;
   del_frame_index(sfile);
 

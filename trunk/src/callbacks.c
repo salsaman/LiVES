@@ -1018,6 +1018,7 @@ void on_stop_clicked (GtkMenuItem *menuitem, gpointer user_data) {
 
   if (mainw->current_file>-1&&cfile!=NULL&&cfile->proc_ptr!=NULL) {
     lives_widget_set_sensitive(cfile->proc_ptr->stop_button, FALSE);
+    lives_widget_set_sensitive(cfile->proc_ptr->pause_button,FALSE);
     lives_widget_set_sensitive(cfile->proc_ptr->preview_button, FALSE);
     lives_widget_set_sensitive(cfile->proc_ptr->cancel_button, FALSE);
   }
@@ -1212,7 +1213,7 @@ void on_close_activate (GtkMenuItem *menuitem, gpointer user_data) {
 	g_free(com);
 	g_free(laydir);
       }
-      recover_layout_cancelled(NULL,NULL);
+      recover_layout_cancelled(FALSE);
     }
 
     cdir=g_build_filename(prefs->tmpdir,mainw->set_name,"clips",NULL);
@@ -1440,7 +1441,7 @@ on_export_proj_activate                      (GtkMenuItem     *menuitem,
     on_save_set_activate(NULL,mainw->set_name);
     mainw->no_exit=FALSE;
     mainw->was_set=TRUE;
-    if (mainw->multitrack!=NULL&&!mainw->multitrack->changed) recover_layout_cancelled(NULL,NULL);
+    if (mainw->multitrack!=NULL&&!mainw->multitrack->changed) recover_layout_cancelled(FALSE);
   }
 
   def_file=g_strdup_printf("%s.lv2",mainw->set_name);
@@ -1549,7 +1550,7 @@ void mt_memory_free(void) {
 
   if (mainw->multitrack->undo_mem!=NULL) event_list_free_undos(mainw->multitrack);
 
-  recover_layout_cancelled(NULL,NULL);
+  recover_layout_cancelled(FALSE);
 
   threaded_dialog_spin();
 }
@@ -1707,7 +1708,7 @@ on_quit_activate                      (GtkMenuItem     *menuitem,
 
   mainw->was_set=mainw->leave_files=mainw->leave_recovery=FALSE;
 
-  recover_layout_cancelled(NULL,NULL);
+  recover_layout_cancelled(FALSE);
 
   if (had_clips) {
     if (strlen(mainw->set_name))
@@ -3024,7 +3025,7 @@ void on_insert_activate (GtkButton *button, gpointer user_data) {
 	    clipboard->arps=ocarps;
 	    reget_afilesize(0);
 	  
-	    if (!do_warning_dialog 
+	    if (!do_yesno_dialog 
 		(_("\n\nLiVES was unable to resample the clipboard audio.\nDo you wish to continue with the insert \nusing unchanged audio ?\n"))) {
 	      mainw->error=TRUE;
 	      return;
@@ -4835,7 +4836,7 @@ on_save_set_activate            (GtkMenuItem     *menuitem,
     got_new_handle=FALSE;
     g_free(layout_map_dir);
     g_free(layout_map_file);
-    if (mainw->multitrack!=NULL&&!mainw->multitrack->changed) recover_layout_cancelled(NULL,NULL);
+    if (mainw->multitrack!=NULL&&!mainw->multitrack->changed) recover_layout_cancelled(FALSE);
   }
 
   if (mainw->current_layouts_map!=NULL&&strcmp(old_set,mainw->set_name)&&!mainw->is_exiting) {

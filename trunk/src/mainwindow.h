@@ -1167,7 +1167,7 @@ typedef struct {
   int active_sa_clips; // active screen area for clips
   lives_screen_area_t *screen_areas; // array of screen areas
 
-  int *active_track_list;
+  int active_track_list[MAX_TRACKS];
 #define TEST_THREADING_MT
 #ifdef TEST_THREADING_MT
 

@@ -1366,7 +1366,7 @@ void save_file (int clip, int start, int end, const char *filename) {
   }
   else if (!mainw->osc_auto&&sfile->orig_file_name) {
     gchar *warn=g_strdup(_("Saving your video could lead to a loss of quality !\nYou are strongly advised to 'Save As' to a new file.\n\nDo you still wish to continue ?"));
-    if (!do_warning_dialog_with_check(warn,WARN_MASK_SAVE_QUALITY)) {
+    if (!do_yesno_dialog_with_check(warn,WARN_MASK_SAVE_QUALITY)) {
 	g_free(warn);
 	g_free(full_file_name);
 	if (rdet!=NULL) {
@@ -5486,7 +5486,7 @@ static boolean recover_files(gchar *recovery_file, boolean auto_recover) {
   }
 
   if (!auto_recover) {
-    if (!do_warning_dialog
+    if (!do_yesno_dialog
 	(_("\nFiles from a previous run of LiVES were found.\nDo you want to attempt to recover them ?\n"))) {
       unlink(recovery_file);
 

@@ -2851,7 +2851,7 @@ weed_plant_t *append_filter_map_event (weed_plant_t *event_list, weed_timecode_t
 }
 
 
-int *get_active_track_list(int *clip_index, int num_tracks, weed_plant_t *filter_map) {
+void get_active_track_list(int *clip_index, int num_tracks, weed_plant_t *filter_map) {
   // replace entries in mainw->clip_index with 0 if the track is not either the front track or an input to a filter
 
   // TODO *** we should ignore any filter which does not eventually output to the front track, 
@@ -2865,29 +2865,25 @@ int *get_active_track_list(int *clip_index, int num_tracks, weed_plant_t *filter
 
   int *in_tracks;
 
-  int *actracks;
-
   int ninits,nintracks;
   int idx,error;
   int front=-1;
 
   register int i,j;
 
-  actracks=(int *)g_malloc(num_tracks*sizint);
-
   for (i=0;i<num_tracks;i++) {
     if (front==-1&&clip_index[i]>0) {
-      actracks[i]=clip_index[i];
+      mainw->active_track_list[i]=clip_index[i];
       front=i;
     }
-    else actracks[i]=0;
+    else mainw->active_track_list[i]=0;
   }
 
-  if (filter_map==NULL||!weed_plant_has_leaf(filter_map,"init_events")) return actracks;
+  if (filter_map==NULL||!weed_plant_has_leaf(filter_map,"init_events")) return;
   ninits=weed_leaf_num_elements(filter_map,"init_events");
 
   init_events=(weed_plant_t **)weed_get_voidptr_array(filter_map,"init_events",&error);
-  if (init_events==NULL) return actracks;
+  if (init_events==NULL) return;
 
   for (i=0;i<ninits;i++) {
     // get the filter and make sure it has video chans in
@@ -2899,7 +2895,7 @@ int *get_active_track_list(int *clip_index, int num_tracks, weed_plant_t *filter
 	nintracks=weed_leaf_num_elements(init_events[i],"in_tracks");
 	in_tracks=weed_get_int_array(init_events[i],"in_tracks",&error);
 	for (j=0;j<nintracks;j++) {
-	  actracks[in_tracks[j]]=clip_index[in_tracks[j]];
+	  mainw->active_track_list[in_tracks[j]]=clip_index[in_tracks[j]];
 	}
 	weed_free(in_tracks);
       }
@@ -2908,7 +2904,6 @@ int *get_active_track_list(int *clip_index, int num_tracks, weed_plant_t *filter
 
   weed_free(init_events);
 
-  return actracks;
 }
 
 
@@ -3418,7 +3413,7 @@ lives_render_error_t render_events (boolean reset) {
 	  break_me();
 
 	  // get list of active tracks from mainw->filter map
-	  mainw->active_track_list=get_active_track_list(mainw->clip_index,mainw->num_tracks,mainw->filter_map);
+	  get_active_track_list(mainw->clip_index,mainw->num_tracks,mainw->filter_map);
 	  for (i=0;i<mainw->num_tracks;i++) {
 	    oclip=mainw->old_active_track_list[i];
 	    mainw->ext_src_used[oclip]=FALSE;
@@ -4431,7 +4426,7 @@ boolean deal_with_render_choice (boolean add_deinit) {
 	}
       }
       if (mainw->stored_event_list!=NULL||mainw->sl_undo_mem!=NULL) {
-	recover_layout_cancelled(NULL,NULL);
+	recover_layout_cancelled(FALSE);
 	stored_event_list_free_all(TRUE);
       }
       mainw->unordered_blocks=TRUE;

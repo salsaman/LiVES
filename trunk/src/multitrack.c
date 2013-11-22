@@ -765,13 +765,10 @@ uint32_t mt_idle_add(lives_mt *mt) {
 }
 
 
-void recover_layout_cancelled(GtkButton *button, gpointer user_data) {
+void recover_layout_cancelled(boolean is_startup) {
   gchar *eload_file=g_strdup_printf("%s/layout.%d.%d.%d",prefs->tmpdir,lives_getuid(),lives_getgid(),capable->mainpid);
 
-  if (button!=NULL) {
-    lives_general_button_clicked(button,NULL);
-    mainw->recoverable_layout=FALSE;
-  }
+  if (is_startup) mainw->recoverable_layout=FALSE;
 
   unlink(eload_file);
   g_free(eload_file);
@@ -780,7 +777,7 @@ void recover_layout_cancelled(GtkButton *button, gpointer user_data) {
   unlink(eload_file);
   g_free(eload_file);
 
-  if (button!=NULL) do_after_crash_warning();
+  if (is_startup) do_after_crash_warning();
 
 }
 
@@ -835,8 +832,7 @@ static void mt_load_recovery_layout(lives_mt *mt) {
 }
 
 
-void recover_layout(GtkButton *button, gpointer user_data) {
-  lives_general_button_clicked(button,NULL);
+void recover_layout(void) {
   if (prefs->startup_interface==STARTUP_CE) {
     if (!on_multitrack_activate(NULL,NULL)) {
       multitrack_delete(mainw->multitrack,FALSE);
@@ -5216,7 +5212,7 @@ void remove_current_from_affected_layouts(lives_mt *mt) {
     if (mt!=NULL) lives_widget_set_sensitive (mt->show_layout_errors, FALSE);
   }
 
-  recover_layout_cancelled(NULL,NULL);
+  recover_layout_cancelled(FALSE);
 
   if (mt!=NULL) {
     if (mt->event_list!=NULL) {
@@ -5311,7 +5307,7 @@ boolean check_for_layout_del (lives_mt *mt, boolean exiting) {
       return FALSE;
     }
 
-    recover_layout_cancelled(NULL,NULL);
+    recover_layout_cancelled(FALSE);
 
     if (resp==1&&!exiting) {
       // wipe
@@ -19356,7 +19352,7 @@ void on_save_event_list_activate (GtkMenuItem *menuitem, gpointer user_data) {
   if (layout_map!=NULL) g_free(layout_map);
   if (layout_map_audio!=NULL) g_free(layout_map_audio);
 
-  if (mainw->was_set) recover_layout_cancelled(NULL,NULL);
+  if (mainw->was_set) recover_layout_cancelled(FALSE);
 
   if (mt!=NULL) {
     mt->auto_changed=FALSE;
@@ -21123,7 +21119,7 @@ void wipe_layout(lives_mt *mt) {
   close_scrap_file();
   close_ascrap_file();
 
-  recover_layout_cancelled(NULL,NULL);
+  recover_layout_cancelled(FALSE);
 
   if (strlen(mt->layout_name)>0&&!strcmp(mt->layout_name,prefs->ar_layout_name)) {
     set_pref("ar_layout","");
@@ -21242,7 +21238,7 @@ void on_load_event_list_activate (GtkMenuItem *menuitem, gpointer user_data) {
   new_event_list=load_event_list(mt,eload_file);
   if (eload_file!=NULL) g_free(eload_file);
 
-  if (mainw->was_set) recover_layout_cancelled(NULL,NULL);
+  if (mainw->was_set) recover_layout_cancelled(FALSE);
 
   if (new_event_list==NULL) {
     mt_sensitise(mt);

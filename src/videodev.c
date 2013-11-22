@@ -557,7 +557,7 @@ void on_open_vdev_activate (GtkMenuItem *menuitem, gpointer user_data) {
 
   cfile->start=cfile->end=cfile->frames=1;
   cfile->is_loaded=TRUE;
-  add_to_winmenu();
+  add_to_clipmenu();
 
   g_snprintf(cfile->type,40,"%s",fname);
 

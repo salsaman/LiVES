@@ -4217,7 +4217,7 @@ boolean render_to_clip (boolean new_clip) {
       cfile->start=1;
       cfile->end=cfile->frames;
       set_undoable (NULL,FALSE);
-      add_to_winmenu();
+      add_to_clipmenu();
       current_file=mainw->current_file;
       if (!save_clip_values(current_file)) {
 	close_current_file(old_file);

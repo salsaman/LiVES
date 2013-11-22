@@ -1067,6 +1067,8 @@ static void lives_init(_ign_opts *ign_opts) {
 
   mainw->ce_upd_clip=FALSE;
 
+  mainw->clips_group=NULL;
+
   /////////////////////////////////////////////////// add new stuff just above here ^^
 
 
@@ -6218,7 +6220,7 @@ void close_current_file(int file_to_switch_to) {
 		(index==mainw->scrap_file&&index>-1)||(!mainw->files[index]->frames&&mainw->playing_file>-1))&&
 	       index!=mainw->current_file);
       if (index==mainw->current_file) index=-1;
-      if (mainw->current_file!=mainw->scrap_file) remove_from_winmenu();
+      if (mainw->current_file!=mainw->scrap_file) remove_from_clipmenu();
     }
 
     if (cfile->clip_type==CLIP_TYPE_FILE&&cfile->ext_src!=NULL) {
@@ -6470,7 +6472,6 @@ void close_current_file(int file_to_switch_to) {
 void switch_to_file(int old_file, int new_file) {
   // this function is used for full clip switching (during non-playback or non fs)
   gchar title[256];
-  GtkWidget *active_image;
   int orig_file=mainw->current_file;
 
   // should use close_current_file
@@ -6511,21 +6512,15 @@ void switch_to_file(int old_file, int new_file) {
   if (old_file!=new_file) {
     if (old_file*new_file) mainw->preview_frame=0;
     if (old_file!=-1) {
-      if (old_file>0&&mainw->files[old_file]!=NULL&&mainw->files[old_file]->menuentry!=NULL&&
-	  (mainw->files[old_file]->clip_type==CLIP_TYPE_DISK||mainw->files[old_file]->clip_type==CLIP_TYPE_FILE)) {
-	gchar menutext[32768];
-	get_menu_text_long(mainw->files[old_file]->menuentry,menutext);
+      // TODO - indicate "opening" in clipmenu
 
-	if (!mainw->files[old_file]->opening) {
-	  lives_image_menu_item_set_image (GTK_IMAGE_MENU_ITEM (mainw->files[old_file]->menuentry), NULL);
-	}
-	else {
-	  active_image = lives_image_new_from_stock ("gtk-no", LIVES_ICON_SIZE_MENU);
-	  lives_widget_show (active_image);
-	  lives_image_menu_item_set_image (GTK_IMAGE_MENU_ITEM (mainw->files[old_file]->menuentry), active_image);
-	}
-	set_menu_text(mainw->files[old_file]->menuentry,menutext,FALSE);
-      }
+      //      if (old_file>0&&mainw->files[old_file]!=NULL&&mainw->files[old_file]->menuentry!=NULL&&
+      //  (mainw->files[old_file]->clip_type==CLIP_TYPE_DISK||mainw->files[old_file]->clip_type==CLIP_TYPE_FILE)) {
+	//gchar menutext[32768];
+	//get_menu_text_long(mainw->files[old_file]->menuentry,menutext);
+
+	//set_menu_text(mainw->files[old_file]->menuentry,menutext,FALSE);
+      //}
       lives_widget_set_sensitive (mainw->select_new, (cfile->insert_start>0));
       lives_widget_set_sensitive (mainw->select_last, (cfile->undo_start>0));
       if ((cfile->start==1||cfile->end==cfile->frames)&&!(cfile->start==1&&cfile->end==cfile->frames)) {
@@ -6576,26 +6571,30 @@ void switch_to_file(int old_file, int new_file) {
   
   if (new_file>0) {
     lives_ruler_set_value (LIVES_RULER(mainw->hruler),cfile->pointer_time);
-    if (!cfile->opening&&(cfile->clip_type==CLIP_TYPE_DISK||cfile->clip_type==CLIP_TYPE_FILE)) {
-      active_image = lives_image_new_from_stock ("gtk-close", LIVES_ICON_SIZE_MENU);
-    }
-    else {
-      active_image = lives_image_new_from_stock ("gtk-yes", LIVES_ICON_SIZE_MENU);
-      load_start_image(0);
-      load_end_image(0);
-      lives_widget_set_sensitive (mainw->rename, FALSE);
-    }
-    lives_widget_show (active_image);
-    if (cfile->menuentry!=NULL) {
-      gchar menutext[32768];
-      get_menu_text_long(cfile->menuentry,menutext);
-      lives_image_menu_item_set_image (GTK_IMAGE_MENU_ITEM (cfile->menuentry), active_image);
-      set_menu_text(cfile->menuentry,menutext,FALSE);
-    }
-    if (cfile->clip_type==CLIP_TYPE_DISK||cfile->clip_type==CLIP_TYPE_FILE) {
-     reget_afilesize (mainw->current_file);
-    }
   }
+
+  if (cfile->opening||!(cfile->clip_type==CLIP_TYPE_DISK||cfile->clip_type==CLIP_TYPE_FILE)) {
+    load_start_image(0);
+    load_end_image(0);
+    lives_widget_set_sensitive (mainw->rename, FALSE);
+  }
+
+
+  if (cfile->menuentry!=NULL) {
+    // TODO - indicate "opening"
+    //gchar menutext[32768];
+    //get_menu_text_long(cfile->menuentry,menutext);
+    g_signal_handler_block (cfile->menuentry, cfile->menuentry_func);
+    lives_check_menu_item_set_active(LIVES_CHECK_MENU_ITEM(cfile->menuentry),TRUE);
+    g_signal_handler_unblock (cfile->menuentry, cfile->menuentry_func);
+    //set_menu_text(cfile->menuentry,menutext,FALSE);
+  }
+
+
+  if (cfile->clip_type==CLIP_TYPE_DISK||cfile->clip_type==CLIP_TYPE_FILE) {
+    reget_afilesize (mainw->current_file);
+  }
+
 
   if (!mainw->switch_during_pb) {
     // switch on/off loop video if we have/don't have audio
@@ -7165,7 +7164,7 @@ void resize (double scale) {
   w=lives_widget_get_allocation_width(mainw->LiVES);
   h=lives_widget_get_allocation_height(mainw->LiVES);
 
-  if (w>scr_width-bx||h>scr_height-by) {
+  if (prefs->open_maximised||w>scr_width-bx||h>scr_height-by) {
     int wx,wy;
     lives_window_get_position (LIVES_WINDOW (mainw->LiVES),&wx,&wy);
     if (prefs->gui_monitor==0&&(wx>0||wy>0)) lives_window_move(LIVES_WINDOW(mainw->LiVES),0,0);

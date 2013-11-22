@@ -608,7 +608,7 @@ void lives2lives_read_stream(const gchar *host, int port) {
 
   switch_to_file((mainw->current_file=old_file),new_file);
   set_main_title(cfile->file_name,0);
-  add_to_winmenu();
+  add_to_clipmenu();
 
   cfile->achans=0;
   cfile->asampsize=0;

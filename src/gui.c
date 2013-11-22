@@ -1396,22 +1396,22 @@ void create_LiVES (void) {
   lives_widget_show (win);
   lives_container_add (LIVES_CONTAINER(mainw->menubar), win);
 
-  mainw->winmenu = lives_menu_new ();
-  lives_menu_item_set_submenu (LIVES_MENU_ITEM (win), mainw->winmenu);
+  mainw->clipsmenu = lives_menu_new ();
+  lives_menu_item_set_submenu (LIVES_MENU_ITEM (win), mainw->clipsmenu);
 
   if (palette->style&STYLE_1) {
-    lives_widget_set_bg_color(mainw->winmenu, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
-    lives_widget_set_fg_color(mainw->winmenu, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars_fore);
+    lives_widget_set_bg_color(mainw->clipsmenu, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
+    lives_widget_set_fg_color(mainw->clipsmenu, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars_fore);
   }
 
   mainw->rename = lives_image_menu_item_new_with_mnemonic (_("_Rename Current Clip in Menu..."));
   lives_widget_show (mainw->rename);
-  lives_container_add (LIVES_CONTAINER (mainw->winmenu), mainw->rename);
+  lives_container_add (LIVES_CONTAINER (mainw->clipsmenu), mainw->rename);
   lives_widget_set_sensitive (mainw->rename, FALSE);
 
   separatormenuitem = lives_menu_item_new ();
   lives_widget_show (separatormenuitem);
-  lives_container_add (LIVES_CONTAINER (mainw->winmenu), separatormenuitem);
+  lives_container_add (LIVES_CONTAINER (mainw->clipsmenu), separatormenuitem);
   lives_widget_set_sensitive (separatormenuitem, FALSE);
 
   menuitemsep = lives_menu_item_new_with_label ("|");
@@ -2357,6 +2357,8 @@ void create_LiVES (void) {
   lives_box_pack_start (LIVES_BOX (vbox4), mainw->eventbox2, TRUE, TRUE, 0);
   gtk_widget_add_events (mainw->eventbox2, GDK_BUTTON1_MOTION_MASK | GDK_BUTTON_RELEASE_MASK | GDK_BUTTON_PRESS_MASK);
 
+  lives_widget_set_vexpand(mainw->eventbox2,TRUE);
+
   if (palette->style&STYLE_1) {
     lives_widget_set_bg_color (mainw->eventbox2, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
     lives_widget_set_bg_color (mainw->hruler, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
@@ -2442,6 +2444,8 @@ void create_LiVES (void) {
 
   mainw->message_box=lives_vbox_new(FALSE, 0);
   lives_widget_show (mainw->message_box);
+
+  lives_widget_set_vexpand(mainw->message_box,TRUE);
 
   lives_box_pack_start (LIVES_BOX (mainw->vbox1), mainw->message_box, TRUE, TRUE, 0);
 
@@ -4271,8 +4275,7 @@ void kill_play_window (void) {
 
 
 
-void 
-add_to_playframe (void) {
+void add_to_playframe (void) {
   // plug the playback image into its frame in the main window
 
   lives_widget_show(mainw->playarea);
@@ -4295,6 +4298,47 @@ LIVES_INLINE void frame_size_update(void) {
   on_double_size_activate(NULL,GINT_TO_POINTER(1));
 }
 
+
+
+void add_to_clipmenu(void) {
+  // TODO - indicate "opening"
+  gchar *tmp;
+
+  cfile->menuentry = lives_radio_menu_item_new_with_label(mainw->clips_group, cfile->clip_type!=CLIP_TYPE_VIDEODEV?
+							  (tmp=g_path_get_basename(cfile->name)):
+							  (tmp=g_strdup(cfile->name)));
+  g_free(tmp);
+
+  mainw->clips_group=lives_radio_menu_item_get_group(LIVES_RADIO_MENU_ITEM(cfile->menuentry));
+
+  lives_widget_show (cfile->menuentry);
+  lives_container_add (LIVES_CONTAINER (mainw->clipsmenu), cfile->menuentry);
+
+  lives_widget_set_sensitive (cfile->menuentry, TRUE);
+  cfile->menuentry_func=g_signal_connect (GTK_OBJECT (cfile->menuentry), "toggled",
+					  G_CALLBACK (switch_clip_activate),
+					  NULL);
+
+  if (cfile->clip_type==CLIP_TYPE_DISK||cfile->clip_type==CLIP_TYPE_FILE) mainw->clips_available++;
+  mainw->cliplist = g_list_append (mainw->cliplist, GINT_TO_POINTER (mainw->current_file));
+  cfile->old_frames=cfile->frames;
+  cfile->ratio_fps=check_for_ratio_fps(cfile->fps);
+}
+
+
+
+
+void remove_from_clipmenu(void) {
+  lives_container_remove(LIVES_CONTAINER(mainw->clipsmenu), cfile->menuentry);
+  if (LIVES_IS_WIDGET(cfile->menuentry))
+    lives_widget_destroy(cfile->menuentry);
+  mainw->cliplist=g_list_remove (mainw->cliplist, GINT_TO_POINTER (mainw->current_file));
+  if (cfile->clip_type==CLIP_TYPE_DISK||cfile->clip_type==CLIP_TYPE_FILE) {
+    mainw->clips_available--;
+    if (prefs->crash_recovery) rewrite_recovery_file();
+  }
+
+}
 
 
 

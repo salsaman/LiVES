@@ -322,7 +322,7 @@ void unload_decoder_plugins(void);
 
 boolean decplugin_supports_palette (const lives_decoder_t *dplug, int palette);
 
-lives_clip_data_t *clone_cdata(int fileno);
+lives_decoder_t *clone_decoder(int fileno);
 
 
 // RFX plugins

@@ -65,6 +65,7 @@ weed_plant_t *get_prev_frame_event (weed_plant_t *event);
 
 weed_plant_t *get_frame_event_at (weed_plant_t *event_list, weed_timecode_t tc, weed_plant_t *shortcut, gboolean exact);
 weed_plant_t *get_frame_event_at_or_before (weed_plant_t *event_list, weed_timecode_t tc, weed_plant_t *shortcut);
+
 gboolean filter_map_after_frame(weed_plant_t *fmap);
 gboolean init_event_is_relevant(weed_plant_t *init_event, int ctrack);
 

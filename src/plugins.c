@@ -2258,10 +2258,26 @@ typedef struct {
 } tdp_data;
 
 
-LIVES_INLINE lives_clip_data_t *clone_cdata(int fileno) {
+lives_decoder_t *clone_decoder(int fileno) {
+  lives_decoder_t *dplug;
+  const lives_decoder_sys_t *dpsys;
+  lives_clip_data_t *cdata;
+
   if (mainw->files[fileno]==NULL||mainw->files[fileno]->ext_src==NULL) return NULL;
-  return ((lives_decoder_sys_t *)((lives_decoder_t *)mainw->files[fileno]->ext_src)->decoder)->get_clip_data
+
+  cdata=((lives_decoder_sys_t *)((lives_decoder_t *)mainw->files[fileno]->ext_src)->decoder)->get_clip_data
     (NULL,((lives_decoder_t *)mainw->files[fileno]->ext_src)->cdata);
+
+  if (cdata==NULL) return NULL;
+
+  dplug=(lives_decoder_t *)g_malloc(sizeof(lives_decoder_t));
+
+  dpsys=((lives_decoder_t *)mainw->files[fileno]->ext_src)->decoder;
+
+  dplug->decoder=dpsys;
+  dplug->cdata=cdata;
+
+  return dplug;
 }
 
 

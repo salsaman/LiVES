@@ -3526,7 +3526,7 @@ weed_plant_t *weed_apply_effects (weed_plant_t **layers, weed_plant_t *filter_ma
 	   (mainw->multitrack->init_event==mainw->multitrack->avol_init_event)||
 	   tc>get_event_timecode((weed_plant_t *)weed_get_voidptr_value
 				 (mainw->multitrack->init_event,"deinit_event",&error)))))) {
-      if (output!=-1) {
+      if (output!=-1||weed_get_int_value(layers[i],"clip",&error)==-1) {
 	if (!weed_plant_has_leaf(layers[i],"pixel_data")) continue;
 	weed_layer_pixel_data_free(layers[i]);
       }

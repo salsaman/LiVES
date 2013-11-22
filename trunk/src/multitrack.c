@@ -928,7 +928,7 @@ static void draw_block (lives_mt *mt, lives_painter_t *cairo,
   double offset_startd=tc/U_SEC;
   double offset_endd;
 
-  boolean needs_text=FALSE;
+  boolean needs_text=TRUE;
 
   int offset_start;
   int offset_end;
@@ -965,12 +965,14 @@ static void draw_block (lives_mt *mt, lives_painter_t *cairo,
 
   lives_widget_get_bg_color(mt->window,&bgcolor);
 
+  track=GPOINTER_TO_INT(g_object_get_data(G_OBJECT(eventbox),"layer_number"));
+  filenum=get_frame_event_clip(block->start_event,track);
+
   switch (block->state) {
   case BLOCK_UNSELECTED:
 
-    track=GPOINTER_TO_INT(g_object_get_data(G_OBJECT(eventbox),"layer_number"));
     if (BLOCK_DRAW_TYPE==BLOCK_DRAW_SIMPLE) {
-      lives_painter_set_source_rgb(cr, 0., 0., 0.); ///< opaque black
+      lives_painter_set_source_rgb(cr,(double)vidcol.red/65535.,(double)vidcol.green/65535.,(double)vidcol.blue/65535.);
       lives_painter_new_path(cr);
       lives_painter_rectangle(cr,offset_start, 0, offset_end-offset_start, lives_widget_get_allocation_height(eventbox));
 
@@ -984,7 +986,6 @@ static void draw_block (lives_mt *mt, lives_painter_t *cairo,
     }
     else {
       if ((!is_audio_eventbox(mt,eventbox))&&track>-1) {
-	filenum=get_frame_event_clip(block->start_event,track);
 	last_framenum=-1;
 	for (i=offset_start;i<offset_end;i+=BLOCK_THUMB_WIDTH) {
 	  if (i>x2-x1) break;
@@ -1034,7 +1035,6 @@ static void draw_block (lives_mt *mt, lives_painter_t *cairo,
 	      lives_painter_paint (cr);
 	    }
 	    else {
-	      needs_text=TRUE;
 	      if (i+width>offset_end) width=offset_end-i;
 	      lives_painter_set_source_rgb(cr,(double)vidcol.red/65535.,(double)vidcol.green/65535.,(double)vidcol.blue/65535.);
 	      lives_painter_new_path(cr);
@@ -12374,7 +12374,7 @@ void polymorph (lives_mt *mt, lives_mt_poly_state_t poly) {
   int width=cfile->hsize;
   int height=cfile->vsize;
   int error;
-  int track;
+  int track,fromtrack;
   int frame_start,frame_end=0;
   int filenum;
   
@@ -12749,8 +12749,8 @@ void polymorph (lives_mt *mt, lives_mt_poly_state_t poly) {
 		for (j=0;j<num_in_tracks;j++) {
 		  if (in_tracks[j]==mt->current_track) {
 		    is_input=TRUE;
-		    break;
 		  }
+		  else if (num_in_tracks==2) fromtrack=in_tracks[j];
 		}
 		weed_free(in_tracks);
 	      }
@@ -12794,6 +12794,16 @@ void polymorph (lives_mt *mt, lives_mt_poly_state_t poly) {
 	      }
 	      else otrackname=g_strdup(_("audio track"));
 	      txt=g_strdup_printf(_("%s to %s"),fname,otrackname);
+	      g_free(otrackname);
+	    }
+	    else if (num_in_tracks==2&&num_out_tracks>0) {
+	      if (fromtrack>-1) {
+		yeventbox=(GtkWidget *)g_list_nth_data(mt->video_draws,fromtrack);
+		olayer=GPOINTER_TO_INT(g_object_get_data(G_OBJECT(yeventbox),"layer_number"));
+		otrackname=g_strdup_printf(_("layer %d"),olayer);
+	      }
+	      else otrackname=g_strdup(_("audio track"));
+	      txt=g_strdup_printf(_("%s from %s"),fname,otrackname);
 	      g_free(otrackname);
 	    }
 	    else {
@@ -16766,6 +16776,8 @@ void mt_prepare_for_playback(lives_mt *mt) {
     mainw->pheight=cfile->vsize;
   }
 
+  if (mainw->sep_win) on_sepwin_activate(NULL,NULL);
+
 }
 
 
@@ -16775,6 +16787,10 @@ void mt_post_playback(lives_mt *mt) {
 
   unhide_cursor(lives_widget_get_xwindow(mainw->playarea));
   mainw->must_resize=FALSE;
+
+  if (mainw->sep_win) on_sepwin_activate(NULL,NULL);
+
+  lives_widget_show(mainw->playarea);
 
   if (mainw->cancelled!=CANCEL_USER_PAUSED&&!((mainw->cancelled==CANCEL_NONE||mainw->cancelled==CANCEL_NO_MORE_PREVIEW)&&
 					      mt->is_paused)) {
@@ -16787,12 +16803,11 @@ void mt_post_playback(lives_mt *mt) {
     if ((curtime=lives_ruler_get_value(LIVES_RULER(mt->timeline)))>0.) {
       lives_widget_set_sensitive (mt->rewind,TRUE);
       lives_widget_set_sensitive (mainw->m_rewindbutton, TRUE);
-      //lives_ruler_set_value(LIVES_RULER (mt->timeline),curtime+2./cfile->fps);
     }
+    mt_show_current_frame(mt, FALSE);
   }
 
   mainw->cancelled=CANCEL_NONE;
-  lives_widget_show(mainw->playarea);
 
   if (!mt->is_rendering) {
     if (mt->poly_state==POLY_PARAMS) {
@@ -16817,7 +16832,6 @@ void mt_post_playback(lives_mt *mt) {
 
   if (mt->is_paused) mt->pb_loop_event=pb_loop_event;
   lives_widget_set_sensitive (mainw->m_playbutton, TRUE);
-  mt_show_current_frame(mt, FALSE);
 
 
 }
@@ -17045,7 +17059,7 @@ void multitrack_insert (GtkMenuItem *menuitem, gpointer user_data) {
   }
 
   mt_tl_move(mt,0.);
-  mt_show_current_frame(mt, FALSE);
+  //mt_show_current_frame(mt, FALSE);
 
   if (!did_backup) mt->idlefunc=mt_idle_add(mt);
 
@@ -22357,7 +22371,8 @@ void mt_do_autotransition(lives_mt *mt, track_rect *block) {
   double region_start=mt->region_start;
   double region_end=mt->region_end;
 
-  boolean did_backup=mt->did_backup;
+  boolean did_backup=FALSE;
+  boolean needs_idle=FALSE;
 
   int nvids=g_list_length(mt->video_draws);
   int current_fx=mt->current_fx;
@@ -22411,10 +22426,11 @@ void mt_do_autotransition(lives_mt *mt, track_rect *block) {
     }
   }
 
-  if (!did_backup&&mt->idlefunc>0) {
+  if (!mt->did_backup&&mt->idlefunc>0) {
     // freeze auto backups
     g_source_remove(mt->idlefunc);
     mt->idlefunc=0;
+    needs_idle=TRUE;
   }
 
   mt->is_atrans=TRUE; ///< force some visual changes
@@ -22423,7 +22439,8 @@ void mt_do_autotransition(lives_mt *mt, track_rect *block) {
     mt->selected_tracks=g_list_append(mt->selected_tracks,GINT_TO_POINTER(track));
     mt->selected_tracks=g_list_append(mt->selected_tracks,GINT_TO_POINTER(i));
 
-    mt->did_backup=TRUE;
+    mt_backup(mt,MT_UNDO_APPLY_FILTER,0);
+    did_backup=mt->did_backup=TRUE;
     mt->region_start=sttc/U_SEC;
     mt->region_end=endtc/U_SEC;
     mt_add_region_effect(NULL, mt);
@@ -22494,7 +22511,8 @@ void mt_do_autotransition(lives_mt *mt, track_rect *block) {
     mt->selected_tracks=g_list_append(mt->selected_tracks,GINT_TO_POINTER(track));
     mt->selected_tracks=g_list_append(mt->selected_tracks,GINT_TO_POINTER(i));
 
-    mt->did_backup=TRUE;
+    if (!did_backup) mt_backup(mt,MT_UNDO_APPLY_FILTER,0);
+    did_backup=mt->did_backup=TRUE;
     mt->region_start=sttc/U_SEC;
     mt->region_end=endtc/U_SEC;
     mt_add_region_effect(NULL, mt);
@@ -22552,8 +22570,7 @@ void mt_do_autotransition(lives_mt *mt, track_rect *block) {
 
   weed_free(ptmpls);
 
-  mt->did_backup=did_backup;
-  if (!did_backup) mt->idlefunc=mt_idle_add(mt);
+  if (needs_idle) mt->idlefunc=mt_idle_add(mt);
 
 }
 

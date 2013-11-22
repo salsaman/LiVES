@@ -1033,7 +1033,7 @@ void create_LiVES (void) {
   lives_widget_show (mainw->sticky);
 
   lives_container_add (LIVES_CONTAINER (menuitem_menu), mainw->sticky);
-  if (capable->smog_version_correct&&prefs->sepwin_type==1) {
+  if (capable->smog_version_correct&&prefs->sepwin_type==SEPWIN_TYPE_STICKY) {
     lives_check_menu_item_set_active(LIVES_CHECK_MENU_ITEM(mainw->sticky),TRUE);
   }
 
@@ -3301,7 +3301,7 @@ void unfade_background(void) {
     lives_widget_show(mainw->hruler);
     lives_widget_show(mainw->eventbox5);
   }
-  if (cfile->frames>0&&!(prefs->sepwin_type==1&&mainw->sep_win)) {
+  if (cfile->frames>0&&!(prefs->sepwin_type==SEPWIN_TYPE_STICKY&&mainw->sep_win)) {
     lives_widget_show(mainw->playframe);
   }
   lives_widget_show(mainw->spinbutton_start);
@@ -4201,7 +4201,7 @@ void resize_play_window (void) {
   }
   else {
     // not playing
-    if (mainw->fs&&mainw->playing_file==-2&&mainw->sep_win&&prefs->sepwin_type==1) {
+    if (mainw->fs&&mainw->playing_file==-2&&mainw->sep_win&&prefs->sepwin_type==SEPWIN_TYPE_STICKY) {
 
       if (mainw->ce_thumbs) {
 	end_ce_thumb_mode();
@@ -4282,7 +4282,7 @@ void add_to_playframe (void) {
 
   ///////////////////////////////////////////////////
   if (mainw->plug==NULL) {
-    if (!mainw->foreign&&(!mainw->sep_win||prefs->sepwin_type==0)) {
+    if (!mainw->foreign&&(!mainw->sep_win||prefs->sepwin_type==SEPWIN_TYPE_NON_STICKY)) {
       mainw->plug = lives_hbox_new (FALSE,0);
       lives_container_add(LIVES_CONTAINER(mainw->playarea),mainw->plug);
       lives_widget_set_bg_color (mainw->plug, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
@@ -4329,6 +4329,9 @@ void add_to_clipmenu(void) {
 
 
 void remove_from_clipmenu(void) {
+  GList *list;
+  int fileno;
+
   lives_container_remove(LIVES_CONTAINER(mainw->clipsmenu), cfile->menuentry);
   if (LIVES_IS_WIDGET(cfile->menuentry))
     lives_widget_destroy(cfile->menuentry);
@@ -4336,6 +4339,16 @@ void remove_from_clipmenu(void) {
   if (cfile->clip_type==CLIP_TYPE_DISK||cfile->clip_type==CLIP_TYPE_FILE) {
     mainw->clips_available--;
     if (prefs->crash_recovery) rewrite_recovery_file();
+  }
+
+  list=mainw->cliplist;
+  mainw->clips_group=NULL;
+  while (list!=NULL) {
+    fileno=GPOINTER_TO_INT(list->data);
+    if (mainw->files[fileno]!=NULL&&mainw->files[fileno]->menuentry!=NULL) {
+      mainw->clips_group=lives_radio_menu_item_get_group(LIVES_RADIO_MENU_ITEM(mainw->files[fileno]->menuentry));
+      break;
+    }
   }
 
 }

@@ -1151,6 +1151,7 @@ boolean grabkeys_callback_hook (GtkToggleButton *button, gpointer user_data) {
 
 
 boolean rtemode_callback (GtkAccelGroup *group, GObject *obj, guint keyval, GdkModifierType mod, gpointer user_data) {
+  // "m" mode key
   if (mainw->rte_keys==-1) return TRUE;
   rte_key_setmode(0,-1);
   mainw->blend_factor=weed_get_blend_factor(mainw->rte_keys);

@@ -528,6 +528,7 @@ typedef struct {
   int progress_end;
   boolean changed;
   GtkWidget *menuentry;
+  gulong menuentry_func;
   boolean orig_file_name;
   boolean was_renamed;
   boolean is_untitled;
@@ -816,8 +817,8 @@ typedef enum {
 
 // interface.c
 xprocess* create_processing (const gchar *text);
-void add_to_winmenu(void);
-void remove_from_winmenu(void);
+void add_to_clipmenu(void);
+void remove_from_clipmenu(void);
 void make_play_window(void);
 void resize_play_window (void);
 void kill_play_window (void);
@@ -1159,7 +1160,7 @@ void get_location(const char *exe, char *val, int maxlen);
 void set_menu_text(GtkWidget *menu, const char *text, boolean use_mnemonic);
 void get_menu_text(GtkWidget *menu, char *text);
 void get_menu_text_long(GtkWidget *menuitem, char *text);
-void reset_clip_menu (void);
+void reset_clipmenu (void);
 void get_play_times(void);
 void get_total_time (file *file);
 uint32_t get_signed_endian (boolean is_signed, boolean little_endian);

@@ -569,6 +569,7 @@ static void idxc_release(lives_clip_data_t *cdata) {
 	  indices=NULL;
 	}
 	else indices=(index_container_t **)realloc(indices,nidxc*sizeof(index_container_t *));
+	break;
       }
     }
   }
@@ -601,6 +602,7 @@ static void idxc_release_all(void) {
     free(indices[i]);
   }
   nidxc=0;
+
 }
 
 
@@ -2081,9 +2083,6 @@ static void detach_stream (lives_clip_data_t *cdata) {
   if (cdata->palettes!=NULL) free(cdata->palettes);
   cdata->palettes=NULL;
 
-  // free index entries
-  if (priv->idxc!=NULL) idxc_release(cdata); 
-  priv->idxc=NULL;
 
 }
 
@@ -2777,6 +2776,7 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int* rowstride
 
 #ifdef HAVE_DIRAC
   dirac_priv_t *dpriv=priv->dpriv;
+  ogg_t *opriv=priv->opriv;
 #endif
 
   int64_t kframe=-1,xkframe;
@@ -2786,8 +2786,6 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int* rowstride
   int64_t ppos_lower=-1,ppos_upper=-1;
 
   static index_entry *fidx=NULL;
-
-  ogg_t *opriv=priv->opriv;
 
 #ifdef HAVE_THEORA
 
@@ -3086,6 +3084,10 @@ void clip_data_free(lives_clip_data_t *cdata) {
 
   if (cdata->palettes!=NULL) free(cdata->palettes);
   cdata->palettes=NULL;
+
+  // free index entries
+  if (priv->idxc!=NULL) idxc_release(cdata); 
+  priv->idxc=NULL;
 
   if (cdata->URI!=NULL) {
     detach_stream(cdata);

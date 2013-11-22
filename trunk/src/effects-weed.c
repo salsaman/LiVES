@@ -1421,10 +1421,10 @@ static lives_filter_error_t process_func_threaded(weed_plant_t *inst, weed_plant
 
   int slices,slices_per_thread,to_use;
 
-  struct _procvals procvals[MAX_FX_THREADS];
-  pthread_t dthreads[MAX_FX_THREADS];
+  struct _procvals *procvals;
+  pthread_t *dthreads=NULL;
+  weed_plant_t **xinst=NULL;
 
-  weed_plant_t *xinst[MAX_FX_THREADS];
   weed_plant_t **xchannels;
   weed_plant_t *ctmpl;
 
@@ -1462,6 +1462,12 @@ static lives_filter_error_t process_func_threaded(weed_plant_t *inst, weed_plant
     weed_set_int_value(out_channels[i],"offset",0);
     weed_set_int_value(out_channels[i],"host_height",height);
     weed_set_int_value(out_channels[i],"height",dheight);
+  }
+
+  procvals=(struct _procvals *)g_malloc(sizeof(struct _procvals)*to_use);
+  if (to_use>1) {
+    xinst=(weed_plant_t **)g_malloc(sizeof(weed_plant_t *)*(to_use-1));
+    dthreads=(pthread_t *)calloc(sizeof(pthread_t)*(to_use-1),1);
   }
 
   for (j=1;j<to_use;j++) {
@@ -1529,6 +1535,10 @@ static lives_filter_error_t process_func_threaded(weed_plant_t *inst, weed_plant
     
     if (retval==WEED_ERROR_PLUGIN_INVALID) got_invalid=TRUE;
   }
+
+  g_free(procvals);
+  if (xinst!=NULL) g_free(xinst);
+  if (dthreads!=NULL) g_free(dthreads);
 
   if (got_invalid) return FILTER_ERROR_MUST_RELOAD;
 

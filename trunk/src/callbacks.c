@@ -424,7 +424,7 @@ void lives_exit (void) {
       weed_layer_free(mainw->frame_layer);
     }
 
-    if (mainw->sep_win&&(mainw->playing_file>-1||prefs->sepwin_type==1)) {
+    if (mainw->sep_win&&(mainw->playing_file>-1||prefs->sepwin_type==SEPWIN_TYPE_STICKY)) {
       threaded_dialog_spin();
       kill_play_window();
       threaded_dialog_spin();
@@ -4095,18 +4095,14 @@ on_stop_activate (GtkMenuItem *menuitem, gpointer user_data) {
 
 
 
-boolean
-on_stop_activate_by_del                  (GtkWidget       *widget,
-					  GdkEvent        *event,
-					  gpointer         user_data)
-{
+boolean on_stop_activate_by_del (GtkWidget *widget, GdkEvent *event, gpointer user_data) {
   // called if the user closes the separate play window
   if (mainw->playing_file>-1) {
     mainw->cancelled=CANCEL_USER;
     if (mainw->jack_can_stop) mainw->jack_can_start=FALSE;
     mainw->jack_can_stop=FALSE;
   }
-  if (prefs->sepwin_type==1) {
+  if (prefs->sepwin_type==SEPWIN_TYPE_STICKY) {
     on_sepwin_pressed(NULL,NULL);
   }
   return TRUE;
@@ -7080,7 +7076,7 @@ void on_full_screen_activate (GtkMenuItem *menuitem, gpointer user_data) {
       }
     
       if (mainw->sep_win) {
-	if (prefs->sepwin_type==1) {
+	if (prefs->sepwin_type==SEPWIN_TYPE_STICKY) {
 	  resize_play_window();
 	}
 	else {
@@ -7305,7 +7301,7 @@ on_double_size_activate               (GtkMenuItem     *menuitem,
     unblock_expose();
 
     if (mainw->sep_win) {
-      if (prefs->sepwin_type==1) {
+      if (prefs->sepwin_type==SEPWIN_TYPE_STICKY) {
 	gchar *title,*xtrabit;
 	resize_play_window();
 
@@ -7401,6 +7397,7 @@ void on_sepwin_activate (GtkMenuItem *menuitem, gpointer user_data) {
   mainw->sep_win=!mainw->sep_win;
 
   if (mainw->multitrack!=NULL) {
+    if (mainw->playing_file==-1) return;
     unpaint_lines(mainw->multitrack);
     mainw->multitrack->redraw_block=TRUE; // stop pb cursor from updating
     mt_show_current_frame(mainw->multitrack, FALSE);
@@ -7433,7 +7430,7 @@ void on_sepwin_activate (GtkMenuItem *menuitem, gpointer user_data) {
   lives_tool_button_set_icon_widget(LIVES_TOOL_BUTTON(mainw->m_sepwinbutton),sep_img);
   lives_tool_button_set_icon_widget(LIVES_TOOL_BUTTON(mainw->t_sepwin),sep_img2);
 
-  if (prefs->sepwin_type==1&&mainw->playing_file==-1) {
+  if (prefs->sepwin_type==SEPWIN_TYPE_STICKY&&mainw->playing_file==-1) {
     if (mainw->sep_win) {
       make_play_window();
     }
@@ -7586,7 +7583,7 @@ void on_sepwin_activate (GtkMenuItem *menuitem, gpointer user_data) {
       }
     }
   }
-  if (mainw->multitrack!=NULL) {
+  /*  if (mainw->multitrack!=NULL) {
     mainw->multitrack->redraw_block=FALSE;
     if (mainw->sep_win&&prefs->play_monitor!=prefs->gui_monitor&&prefs->play_monitor!=0) {
       lives_widget_hide(mainw->multitrack->play_box);
@@ -7601,14 +7598,11 @@ void on_sepwin_activate (GtkMenuItem *menuitem, gpointer user_data) {
     }
 
 
-  }
+    }*/
 }
 
 
-void
-on_showfct_activate               (GtkMenuItem     *menuitem,
-				   gpointer         user_data)
-{
+void on_showfct_activate (GtkMenuItem *menuitem, gpointer user_data) {
   prefs->show_framecount=!prefs->show_framecount;
   if (mainw->playing_file>-1) {
     if (!mainw->fs||(prefs->play_monitor!=prefs->gui_monitor&&mainw->play_window!=NULL)) {
@@ -7624,17 +7618,14 @@ on_showfct_activate               (GtkMenuItem     *menuitem,
 
 
 
-void
-on_sticky_activate               (GtkMenuItem     *menuitem,
-				  gpointer         user_data)
-{
-  // type 1 is sticky (shown even when not playing)
-  // type 0 is non-sticky (shown only when playing)
+void on_sticky_activate (GtkMenuItem *menuitem, gpointer user_data) {
+  // type is SEPWIN_TYPE_STICKY (shown even when not playing)
+  // or SEPWIN_TYPE_NON_STICKY (shown only when playing)
   
   gchar *title,*xtrabit;
 
-  if (prefs->sepwin_type==0) {
-    prefs->sepwin_type=1;
+  if (prefs->sepwin_type==SEPWIN_TYPE_NON_STICKY) {
+    prefs->sepwin_type=SEPWIN_TYPE_STICKY;
     if (mainw->sep_win) {
       if (mainw->playing_file==-1) {
 	make_play_window();
@@ -7652,8 +7643,8 @@ on_sticky_activate               (GtkMenuItem     *menuitem,
     }
   }
   else {
-    if (prefs->sepwin_type==1) {
-      prefs->sepwin_type=0;
+    if (prefs->sepwin_type==SEPWIN_TYPE_STICKY) {
+      prefs->sepwin_type=SEPWIN_TYPE_NON_STICKY;
       if (mainw->sep_win) {
 	if (mainw->playing_file==-1) {
 	  kill_play_window();
@@ -7742,10 +7733,7 @@ on_loop_button_activate                (GtkMenuItem     *menuitem,
 }
 
 
-void
-on_loop_cont_activate                (GtkMenuItem     *menuitem,
-				      gpointer         user_data)
-{
+void on_loop_cont_activate (GtkMenuItem *menuitem, gpointer user_data) {
   gchar buff[PATH_MAX];
   GtkWidget *loop_img;
   gchar *fnamex;
@@ -7798,10 +7786,7 @@ on_loop_cont_activate                (GtkMenuItem     *menuitem,
 }
 
 
-void
-on_ping_pong_activate                (GtkMenuItem     *menuitem,
-				      gpointer         user_data)
-{
+void on_ping_pong_activate (GtkMenuItem *menuitem, gpointer user_data) {
   mainw->ping_pong=!mainw->ping_pong;
 #ifdef ENABLE_JACK
   if (prefs->audio_player==AUD_PLAYER_JACK&&mainw->jackd!=NULL&&mainw->jackd->loop!=AUDIO_LOOP_NONE) {
@@ -7828,10 +7813,7 @@ void on_volume_slider_value_changed (LiVESScaleButton *sbutton, gpointer user_da
 
 
 
-void
-on_mute_button_activate                (GtkMenuItem     *menuitem,
-					gpointer         user_data)
-{
+void on_mute_button_activate (GtkMenuItem *menuitem, gpointer user_data) {
   if (mainw->multitrack!=NULL) {
     g_signal_handler_block (mainw->multitrack->mute_audio, mainw->multitrack->mute_audio_func);
     lives_check_menu_item_set_active(LIVES_CHECK_MENU_ITEM(mainw->multitrack->mute_audio),!mainw->mute);
@@ -7840,17 +7822,14 @@ on_mute_button_activate                (GtkMenuItem     *menuitem,
   lives_check_menu_item_set_active(LIVES_CHECK_MENU_ITEM(mainw->mute_audio), !mainw->mute);
 }
 
-boolean mute_audio_callback (GtkAccelGroup *group, GObject *obj, guint keyval, GdkModifierType mod, gpointer user_data)
-{
+
+boolean mute_audio_callback (GtkAccelGroup *group, GObject *obj, guint keyval, GdkModifierType mod, gpointer user_data) {
   lives_check_menu_item_set_active(LIVES_CHECK_MENU_ITEM(mainw->mute_audio), !mainw->mute);
   return TRUE;
 }
 
 
-void
-on_mute_activate                (GtkMenuItem     *menuitem,
-				 gpointer         user_data)
-{
+void on_mute_activate (GtkMenuItem *menuitem, gpointer user_data) {
   gchar buff[PATH_MAX];
   GtkWidget *mute_img;
   GtkWidget *mute_img2=NULL;
@@ -7917,10 +7896,7 @@ on_mute_activate                (GtkMenuItem     *menuitem,
 }
 
 
-void
-on_spin_value_changed           (GtkSpinButton   *spinbutton,
-				 gpointer         user_data)
-{
+void on_spin_value_changed (GtkSpinButton *spinbutton, gpointer user_data) {
   // TODO - use array
   switch (GPOINTER_TO_INT (user_data)) {
   case 1 :
@@ -8006,10 +7982,7 @@ on_spin_end_value_changed           (GtkSpinButton   *spinbutton,
 
 
 
-void
-on_rev_clipboard_activate                (GtkMenuItem     *menuitem,
-                                        gpointer         user_data)
-{
+void on_rev_clipboard_activate (GtkMenuItem *menuitem, gpointer user_data) {
   // reverse the clipboard
   gchar *com;
   

@@ -113,6 +113,8 @@ static boolean doubleclick=FALSE;
 
 static uint32_t last_press_time=0;
 
+static int ce_sepwin_type;
+
 ////////////////////////////
 
 // menuitem callbacks - TODO : make static
@@ -5645,7 +5647,6 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
   GtkWidget *image;
   GtkWidget *separator;
   GtkWidget *full_screen;
-  GtkWidget *sticky;
   GtkWidget *about;
   GtkWidget *show_mt_keys;
   GtkWidget *view_mt_details;
@@ -6487,22 +6488,6 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
                               LIVES_KEY_z, (GdkModifierType)0,
                               LIVES_ACCEL_VISIBLE);
 
-
-  separator = lives_menu_item_new ();
-  lives_container_add (LIVES_CONTAINER (menuitem_menu), separator);
-  lives_widget_set_sensitive (separator, FALSE);
-
-  sticky = lives_check_menu_item_new_with_mnemonic (_("Separate Window 'S_ticky' Mode"));
-
-  lives_widget_add_accelerator (sticky, "activate", mt->accel_group,
-                              LIVES_KEY_t, (GdkModifierType)0,
-                              LIVES_ACCEL_VISIBLE);
-
-  lives_container_add (LIVES_CONTAINER (menuitem_menu), sticky);
-
-  if (capable->smog_version_correct&&prefs->sepwin_type==1) {
-    lives_check_menu_item_set_active(LIVES_CHECK_MENU_ITEM(sticky),TRUE);
-  }
 
 
   // Effects
@@ -7585,9 +7570,6 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
   mt->mute_audio_func=g_signal_connect (GTK_OBJECT (mt->mute_audio), "activate",
 					G_CALLBACK (on_mute_activate),
 					NULL);
-  g_signal_connect (GTK_OBJECT (sticky), "activate",
-		    G_CALLBACK (on_sticky_activate),
-		    NULL);
   g_signal_connect (GTK_OBJECT (mt->rename_track), "activate",
 		    G_CALLBACK (on_rename_track_activate),
 		    (gpointer)mt);
@@ -9179,11 +9161,8 @@ boolean multitrack_delete (lives_mt *mt, boolean save_layout) {
   g_signal_handler_block(mainw->sepwin,mainw->sepwin_cb_func);
   lives_check_menu_item_set_active (LIVES_CHECK_MENU_ITEM (mainw->full_screen),mainw->fs);
   lives_check_menu_item_set_active (LIVES_CHECK_MENU_ITEM (mainw->sepwin),mainw->sep_win);
-  lives_check_menu_item_set_active(LIVES_CHECK_MENU_ITEM(mainw->sticky),TRUE);
   g_signal_handler_unblock(mainw->full_screen,mainw->fullscreen_cb_func);
   g_signal_handler_unblock(mainw->sepwin,mainw->sepwin_cb_func);
-
-  if (mainw->sep_win&&prefs->sepwin_type==1&&mainw->play_window==NULL) make_play_window();
 
   if (mainw->play_window!=NULL) {
     lives_window_remove_accel_group (LIVES_WINDOW (mainw->play_window), mt->accel_group);
@@ -9334,6 +9313,7 @@ boolean multitrack_delete (lives_mt *mt, boolean save_layout) {
     lives_window_maximize (LIVES_WINDOW(mainw->LiVES));
   }
 
+  if (ce_sepwin_type==SEPWIN_TYPE_STICKY) on_sticky_activate(NULL,NULL);
 
   lives_widget_context_update();
 
@@ -10963,6 +10943,9 @@ boolean on_multitrack_activate (GtkMenuItem *menuitem, weed_plant_t *event_list)
 
   if (prefs->show_gui) block_expose();
 
+  ce_sepwin_type=prefs->sepwin_type;
+  if (ce_sepwin_type==SEPWIN_TYPE_STICKY) on_sticky_activate(NULL,NULL);
+
   if (palette->style&STYLE_1) widget_opts.apply_theme=TRUE;
   multi=multitrack(event_list,orig_file,cfile->fps);
 
@@ -11008,7 +10991,6 @@ boolean on_multitrack_activate (GtkMenuItem *menuitem, weed_plant_t *event_list)
   }
 
   lives_widget_hide(multi->aparam_separator); // no longer used
-  lives_check_menu_item_set_active(LIVES_CHECK_MENU_ITEM(mainw->sticky),FALSE);
 
   if (cfile->achans==0) {
     lives_widget_hide(multi->render_sep);
@@ -13667,6 +13649,7 @@ void unpaint_line(lives_mt *mt, GtkWidget *eventbox) {
   btl=(uint64_t)((uint32_t)(GPOINTER_TO_INT(g_object_get_data(G_OBJECT(eventbox),"backup_timepos_l"))));
   ocurrtime=(bth+btl)/U_SEC;
   xoffset=(ocurrtime-mt->tl_min)/(mt->tl_max-mt->tl_min)*(double)ebwidth+.5;
+
   if (xoffset>=0&&xoffset<ebwidth) {
 #if GTK_CHECK_VERSION(3,0,0)
     lives_widget_queue_draw_area(eventbox,xoffset-4,0,9,lives_widget_get_allocation_height(eventbox));
@@ -16776,7 +16759,6 @@ void mt_prepare_for_playback(lives_mt *mt) {
     mainw->pheight=cfile->vsize;
   }
 
-  if (mainw->sep_win) on_sepwin_activate(NULL,NULL);
 
 }
 
@@ -16787,8 +16769,6 @@ void mt_post_playback(lives_mt *mt) {
 
   unhide_cursor(lives_widget_get_xwindow(mainw->playarea));
   mainw->must_resize=FALSE;
-
-  if (mainw->sep_win) on_sepwin_activate(NULL,NULL);
 
   lives_widget_show(mainw->playarea);
 

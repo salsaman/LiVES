@@ -3799,7 +3799,7 @@ void load_preview_image(boolean update_always) {
     }
     pixbuf=lives_pixbuf_scale_simple(mainw->camframe,mainw->pwidth,mainw->pheight,LIVES_INTERP_BEST);
     set_ce_frame_from_pixbuf(GTK_IMAGE(mainw->preview_image),pixbuf,NULL);
-    lives_object_unref(pixbuf);
+    if (pixbuf!=NULL) lives_object_unref(pixbuf);
     mainw->preview_frame=1;
     g_signal_handler_block(mainw->preview_spinbutton,mainw->preview_spin_func);
     lives_spin_button_set_range(LIVES_SPIN_BUTTON(mainw->preview_spinbutton),1,1);
@@ -4177,7 +4177,7 @@ static boolean weed_layer_new_from_file_progressive(weed_plant_t *layer,
   if (!gdk_pixbuf_loader_close(pbload,gerror)) return FALSE;
 
   pixbuf=(GdkPixbuf *)g_object_ref(gdk_pixbuf_loader_get_pixbuf(pbload));
-  g_object_unref(pbload);
+  if (pbload!=NULL) g_object_unref(pbload);
 
 # else
 
@@ -4217,7 +4217,7 @@ static boolean weed_layer_new_from_file_progressive(weed_plant_t *layer,
     mainw->do_not_free=(gpointer)lives_pixbuf_get_pixels_readonly(pixbuf);
     mainw->free_fn=lives_free_with_check;
   }
-  g_object_unref(pixbuf);
+  if (pixbuf!=NULL) g_object_unref(pixbuf);
   mainw->do_not_free=NULL;
   mainw->free_fn=lives_free_normal;
 
@@ -4593,7 +4593,7 @@ void pull_frame_threaded (weed_plant_t *layer, const char *img_ext, weed_timecod
   // may only be used on "virtual" frames
   //#define NO_FRAME_THREAD
 #ifdef NO_FRAME_THREAD
-  pull_frame(layer,NULL,tc);
+  pull_frame(layer,img_ext,tc);
   return;
 #else
 
@@ -4640,7 +4640,7 @@ LiVESPixbuf *pull_lives_pixbuf_at_size(int clip, int frame, const char *image_ex
     threaded_dialog_spin();
     // TODO - could use resize plugin here
     pixbuf2=lives_pixbuf_scale_simple(pixbuf,width,height,interp);
-    lives_object_unref(pixbuf);
+    if (pixbuf!=NULL) lives_object_unref(pixbuf);
     threaded_dialog_spin();
     pixbuf=pixbuf2;
   }
@@ -5242,7 +5242,6 @@ void load_frame_image(int frame) {
 	      // set alt src in layer
 	      weed_set_voidptr_value(layers[i],"host_decoder",(void *)mainw->track_decoders[i]);
 	      pull_frame_threaded(layers[i],img_ext,(weed_timecode_t)mainw->currticks);
-	      g_print("pft.");
 	    }
 	    else {
 	      weed_set_voidptr_value(layers[i],"pixel_data",NULL);
@@ -6002,7 +6001,7 @@ void load_frame_image(int frame) {
 			     mainw->current_file!=mainw->scrap_file) 
       get_play_times();
     
-    lives_object_unref(pixbuf);
+    if (pixbuf!=NULL) lives_object_unref(pixbuf);
     
 #ifdef ENABLE_OSC
     // format is now msg|timecode|fgclip|fgframe|fgfps|
@@ -6068,7 +6067,7 @@ void load_frame_image(int frame) {
       lives_painter_paint (cr);
       lives_painter_destroy (cr);
 
-      lives_object_unref(pixbuf);
+      if (pixbuf!=NULL) lives_object_unref(pixbuf);
       cfile->frames=frame;
     }
     else {
@@ -7165,9 +7164,6 @@ void resize (double scale) {
   h=lives_widget_get_allocation_height(mainw->LiVES);
 
   if (prefs->open_maximised||w>scr_width-bx||h>scr_height-by) {
-    int wx,wy;
-    lives_window_get_position (LIVES_WINDOW (mainw->LiVES),&wx,&wy);
-    if (prefs->gui_monitor==0&&(wx>0||wy>0)) lives_window_move(LIVES_WINDOW(mainw->LiVES),0,0);
     lives_window_resize(LIVES_WINDOW(mainw->LiVES),scr_width-bx,scr_height-by);
     lives_window_maximize (LIVES_WINDOW(mainw->LiVES));
     lives_widget_queue_resize(mainw->LiVES);

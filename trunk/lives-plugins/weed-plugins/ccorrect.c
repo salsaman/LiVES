@@ -33,7 +33,7 @@ static int package_version=1; // version of this package
 #include "weed-utils-code.c" // optional
 #include "weed-plugin-utils.c" // optional
 
-typedef struct {
+typedef struct _sdata {
   double ored;
   double ogreen;
   double oblue;

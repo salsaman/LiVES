@@ -293,6 +293,8 @@ typedef struct {
   /// hash table of clips in menu order
   GList *cliplist;
 
+  GSList *clips_group;
+
   /// sets
   gchar set_name[256];   // actually 128 is the limit now
 
@@ -818,7 +820,7 @@ typedef struct {
   GtkWidget *warning_label;
 
   GtkWidget *textview1;
-  GtkWidget *winmenu;
+  GtkWidget *clipsmenu;
   GtkWidget *eventbox;
   GtkWidget *eventbox2;
   GtkWidget *eventbox3;
@@ -1168,14 +1170,10 @@ typedef struct {
   lives_screen_area_t *screen_areas; // array of screen areas
 
   int active_track_list[MAX_TRACKS];
-#define TEST_THREADING_MT
-#ifdef TEST_THREADING_MT
-
   boolean ext_src_used[MAX_FILES];
   lives_decoder_t *track_decoders[MAX_TRACKS];
   int old_active_track_list[MAX_TRACKS];
 
-#endif
 ////////////////////
 
 } mainwindow;

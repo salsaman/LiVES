@@ -749,6 +749,10 @@ static lives_clip_data_t *init_cdata (void) {
 
   cdata->video_start_time=0.;
 
+  memset(cdata->author,0,1);
+  memset(cdata->title,0,1);
+  memset(cdata->comment,0,1);
+
   return cdata;
 }
 
@@ -787,6 +791,10 @@ static lives_clip_data_t *avf_clone(lives_clip_data_t *cdata) {
   clone->seek_flag=cdata->seek_flag;
   clone->sync_hint=cdata->sync_hint;
 
+  snprintf(clone->author,256,"%s",cdata->author);
+  snprintf(clone->title,256,"%s",cdata->title);
+  snprintf(clone->comment,256,"%s",cdata->comment);
+
   // create "priv" elements
   dpriv=clone->priv;
   spriv=cdata->priv;
@@ -814,6 +822,8 @@ static lives_clip_data_t *avf_clone(lives_clip_data_t *cdata) {
     dpriv->last_frame=1000000000;
   }
 
+ dpriv->pFrame=NULL;
+
   return clone;
 }
 
@@ -831,7 +841,10 @@ lives_clip_data_t *get_clip_data(const char *URI, lives_clip_data_t *cdata) {
 
   if (URI==NULL&&cdata!=NULL) {
     // create a clone of cdata - we also need to be able to handle a "fake" clone with only URI, nframes and fps set (priv == NULL)
-    return avf_clone(cdata);
+    cdata=avf_clone(cdata);
+    priv=cdata->priv;
+    if (priv->longer_seek) goto rescan;
+    return cdata;
   }
 
   if (cdata!=NULL&&cdata->current_clip>0) {
@@ -863,6 +876,9 @@ lives_clip_data_t *get_clip_data(const char *URI, lives_clip_data_t *cdata) {
     priv->last_frame=1000000000;
     priv->pFrame=NULL;
   }
+
+ rescan:
+  priv=cdata->priv;
 
   real_frames=get_real_last_frame(cdata,priv->longer_seek)+1;
 

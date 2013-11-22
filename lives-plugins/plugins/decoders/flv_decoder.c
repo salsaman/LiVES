@@ -574,6 +574,7 @@ static void idxc_release(lives_clip_data_t *cdata) {
 	  indices=NULL;
 	}
 	else indices=(index_container_t **)realloc(indices,nidxc*sizeof(index_container_t *));
+	break;
       }
     }
   }

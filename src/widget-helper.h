@@ -130,6 +130,7 @@ typedef GtkMenu                           LiVESMenu;
 typedef GtkMenuItem                       LiVESMenuItem;
 typedef GtkCheckMenuItem                  LiVESCheckMenuItem;
 typedef GtkImageMenuItem                  LiVESImageMenuItem;
+typedef GtkRadioMenuItem                  LiVESRadioMenuItem;
 typedef GtkTreeView                       LiVESTreeView;
 typedef GtkTreeModel                      LiVESTreeModel;
 typedef GtkTreeIter                       LiVESTreeIter;
@@ -328,6 +329,7 @@ typedef gpointer                          livespointer;
 #define LIVES_IMAGE(widget) GTK_IMAGE(widget)
 #define LIVES_IMAGE_MENU_ITEM(widget) GTK_IMAGE_MENU_ITEM(widget)
 #define LIVES_CHECK_MENU_ITEM(widget) GTK_CHECK_MENU_ITEM(widget)
+#define LIVES_RADIO_MENU_ITEM(widget) GTK_RADIO_MENU_ITEM(widget)
 #define LIVES_FILE_CHOOSER(widget) GTK_FILE_CHOOSER(widget)
 #define LIVES_SCROLLED_WINDOW(widget) GTK_SCROLLED_WINDOW(widget)
 #define LIVES_TOOLBAR(widget) GTK_TOOLBAR(widget)
@@ -707,8 +709,6 @@ void lives_widget_reparent(LiVESWidget *, LiVESWidget *new_parent);
 
 void lives_widget_set_app_paintable(LiVESWidget *widget, boolean paintable);
 
-void lives_widget_grab_default(LiVESWidget *);
-
 LiVESWidget *lives_event_box_new(void);
 LiVESWidget *lives_label_new(const char *text);
 LiVESWidget *lives_label_new_with_mnemonic(const char *text);
@@ -842,18 +842,20 @@ void lives_toggle_button_set_active(LiVESToggleButton *, boolean active);
 void lives_tooltips_set (LiVESWidget *, const char *tip_text);
 
 LiVESSList *lives_radio_button_get_group(LiVESRadioButton *);
+LiVESSList *lives_radio_menu_item_get_group(LiVESRadioMenuItem *);
 
 LiVESWidget *lives_widget_get_parent(LiVESWidget *);
 LiVESWidget *lives_widget_get_toplevel(LiVESWidget *);
 
 LiVESXWindow *lives_widget_get_xwindow(LiVESWidget *);
 
-void lives_widget_set_can_focus(LiVESWidget *, boolean state);
-void lives_widget_set_can_default(LiVESWidget *, boolean state);
+boolean lives_widget_set_can_focus(LiVESWidget *, boolean state);
+boolean lives_widget_set_can_default(LiVESWidget *, boolean state);
+boolean lives_widget_set_can_focus_and_default(LiVESWidget *);
 
-void lives_container_remove(LiVESContainer *, LiVESWidget *);
-void lives_container_add(LiVESContainer *, LiVESWidget *);
-void lives_container_set_border_width(LiVESContainer *, uint32_t width);
+boolean lives_container_remove(LiVESContainer *, LiVESWidget *);
+boolean lives_container_add(LiVESContainer *, LiVESWidget *);
+boolean lives_container_set_border_width(LiVESContainer *, uint32_t width);
 
 double lives_spin_button_get_value(LiVESSpinButton *);
 int lives_spin_button_get_value_as_int(LiVESSpinButton *);
@@ -957,6 +959,7 @@ LiVESWidget *lives_menu_item_new_with_mnemonic(const char *label);
 LiVESWidget *lives_menu_item_new_with_label(const char *label);
 LiVESWidget *lives_check_menu_item_new_with_mnemonic(const char *label);
 LiVESWidget *lives_check_menu_item_new_with_label(const char *label);
+LiVESWidget *lives_radio_menu_item_new_with_label(LiVESSList *group, const char *label);
 LiVESWidget *lives_image_menu_item_new_with_label(const char *label);
 LiVESWidget *lives_image_menu_item_new_with_mnemonic(const char *label);
 LiVESWidget *lives_image_menu_item_new_from_stock(const char *stock_id, LiVESAccelGroup *accel_group);
@@ -973,8 +976,8 @@ void lives_menu_set_title(LiVESMenu *, const char *title);
 char *lives_file_chooser_get_filename(LiVESFileChooser *);
 LiVESSList *lives_file_chooser_get_filenames(LiVESFileChooser *);
 
-void lives_widget_grab_focus(LiVESWidget *);
-void lives_widget_grab_default(LiVESWidget *);
+boolean lives_widget_grab_focus(LiVESWidget *);
+boolean lives_widget_grab_default(LiVESWidget *);
 
 void lives_widget_set_tooltip_text(LiVESWidget *, const char *text);
 
@@ -1087,9 +1090,6 @@ void unhide_cursor(LiVESXWindow *);
 void hide_cursor(LiVESXWindow *);
 
 void get_border_size (LiVESWidget *win, int *bx, int *by);
-
-void lives_widget_set_can_focus(LiVESWidget *, boolean state);
-void lives_widget_set_can_focus_and_default(LiVESWidget *);
 
 void lives_general_button_clicked (LiVESButton *, livespointer data_to_free);
 

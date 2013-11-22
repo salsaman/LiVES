@@ -120,7 +120,10 @@ typedef struct {
   boolean conserve_space;
   boolean ins_resample;
   boolean show_tool;
-  short sepwin_type;   ///< 0 == non-sticky (show only when playing), 1 == sticky (show always)
+  short sepwin_type;
+#define SEPWIN_TYPE_NON_STICKY 0
+#define SEPWIN_TYPE_STICKY 1
+
   boolean show_player_stats;
   boolean show_framecount;
   boolean show_subtitles;

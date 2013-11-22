@@ -1583,9 +1583,9 @@ LIVES_INLINE boolean lives_widget_set_can_focus(LiVESWidget *widget, boolean sta
   gtk_widget_set_can_focus(widget,state);
 #else
   if (state)
-    LIVES_WIDGET_SET_FLAGS (widget, GTK_CAN_FOCUS);
+    GTK_WIDGET_SET_FLAGS (widget, GTK_CAN_FOCUS);
   else
-    LIVES_WIDGET_UNSET_FLAGS (widget, GTK_CAN_FOCUS);
+    GTK_WIDGET_UNSET_FLAGS (widget, GTK_CAN_FOCUS);
 #endif
   return TRUE;
 #endif
@@ -1599,9 +1599,9 @@ LIVES_INLINE boolean lives_widget_set_can_default(LiVESWidget *widget, boolean s
   gtk_widget_set_can_default(widget,state);
 #else
   if (state)
-    LIVES_WIDGET_SET_FLAGS (widget, GTK_CAN_DEFAULT);
+    GTK_WIDGET_SET_FLAGS (widget, GTK_CAN_DEFAULT);
   else
-    LIVES_WIDGET_UNSET_FLAGS (widget, GTK_CAN_DEFAULT);
+    GTK_WIDGET_UNSET_FLAGS (widget, GTK_CAN_DEFAULT);
 #endif
   return TRUE;
 #endif
@@ -1614,7 +1614,7 @@ LIVES_INLINE boolean lives_widget_is_sensitive(LiVESWidget *widget) {
 #if GTK_CHECK_VERSION(2,18,0)
   return gtk_widget_is_sensitive(widget);
 #else
-  return LIVES_WIDGET_IS_SENSITIVE (widget);
+  return GTK_WIDGET_IS_SENSITIVE (widget);
 #endif
 #endif
   return FALSE;
@@ -1626,7 +1626,7 @@ LIVES_INLINE boolean lives_widget_is_visible(LiVESWidget *widget) {
 #if GTK_CHECK_VERSION(2,18,0)
   return gtk_widget_get_visible(widget);
 #else
-  return LIVES_WIDGET_VISIBLE (widget);
+  return GTK_WIDGET_VISIBLE (widget);
 #endif
 #endif
   return FALSE;
@@ -1638,7 +1638,7 @@ LIVES_INLINE boolean lives_widget_is_realized(LiVESWidget *widget) {
 #if GTK_CHECK_VERSION(2,18,0)
   return gtk_widget_get_realized(widget);
 #else
-  return LIVES_WIDGET_REALIZED (widget);
+  return GTK_WIDGET_REALIZED (widget);
 #endif
 #endif
   return FALSE;
@@ -1970,7 +1970,7 @@ LIVES_INLINE LiVESWidgetState lives_widget_get_state(LiVESWidget *widget) {
 #if GTK_CHECK_VERSION(2,18,0)
   return gtk_widget_get_state(widget);
 #else
-  return LIVES_WIDGET_STATE(widget);
+  return GTK_WIDGET_STATE(widget);
 #endif
 #endif
 #endif

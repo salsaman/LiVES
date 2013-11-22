@@ -3464,7 +3464,6 @@ lives_render_error_t render_events (boolean reset) {
 	      // set alt src in layer
 	      weed_set_voidptr_value(layers[i],"host_decoder",(void *)mainw->track_decoders[i]);
 	      pull_frame_threaded(layers[i],img_ext,(weed_timecode_t)mainw->currticks);
-	      g_print("pft.");
 	    }
 	    else {
 	      weed_set_voidptr_value(layers[i],"pixel_data",NULL);

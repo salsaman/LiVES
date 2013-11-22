@@ -233,6 +233,7 @@ static short min_Y,max_Y,min_UV,max_UV;
 static uint8_t *cavg;
 static uint8_t cavgc[256][256];
 static uint8_t cavgu[256][256];
+static uint8_t cavgrgb[256][256];
 static int avg_inited = 0;
 
 
@@ -571,6 +572,7 @@ static void init_average(void) {
       cavgc[x][y]=(uint8_t)(c>16?c:16);         // this is fine because headroom==footroom==16
       if ((c=(a+b-((a*b)>>8)+128))>255) c=255;
       cavgu[x][y]=(uint8_t)(c>0?c:0);
+      cavgrgb[x][y]=(x+y)/2;
     }
   }
   avg_inited=1;
@@ -1743,32 +1745,32 @@ static void convert_yuv420p_to_rgb_frame(uint8_t **src, int width, int height, i
 
       yuv2rgb(y,u,v,&dest[j],&dest[j+1],&dest[j+2]);
       
-      dest[j-opsize]=(dest[j-opsize]+dest[j])/2;
-      dest[j-opsize+1]=(dest[j-opsize+1]+dest[j+1])/2;
-      dest[j-opsize+2]=(dest[j-opsize+2]+dest[j+2])/2;
+      dest[j-opsize]=cavgrgb[dest[j-opsize]][dest[j]];
+      dest[j-opsize+1]=cavgrgb[dest[j-opsize+1]][dest[j+1]];
+      dest[j-opsize+2]=cavgrgb[dest[j-opsize+2]][dest[j+2]];
 
       y=*(s_y++);
       yuv2rgb(y,u,v,&dest[j+opsize],&dest[j+opsize+1],&dest[j+opsize+2]);
 
       if (add_alpha) dest[j+3]=dest[j+7]=255;
 
-      if (!is_422&&!chroma&&i>0) {
+      if (!is_422&&chroma&&i>0) {
 	// pass 2
 	// average two src rows
-	dest[j-widthx]=(dest[j-widthx]+dest[j])/2;
-	dest[j+1-widthx]=(dest[j+1-widthx]+dest[j+1])/2;
-	dest[j+2-widthx]=(dest[j+2-widthx]+dest[j+2])/2;
-	dest[j-opsize-widthx]=(dest[j-opsize-widthx]+dest[j-opsize])/2;
-	dest[j-opsize+1-widthx]=(dest[j-opsize+1-widthx]+dest[j-opsize+1])/2;
-	dest[j-opsize+2-widthx]=(dest[j-opsize+2-widthx]+dest[j-opsize+2])/2;
+	dest[j-widthx]=cavgrgb[dest[j-widthx]][dest[j]];
+	dest[j+1-widthx]=cavgrgb[dest[j+1-widthx]][dest[j+1]];
+	dest[j+2-widthx]=cavgrgb[dest[j+2-widthx]][dest[j+2]];
+	dest[j-opsize-widthx]=cavgrgb[dest[j-opsize-widthx]][dest[j-opsize]];
+	dest[j-opsize+1-widthx]=cavgrgb[dest[j-opsize+1-widthx]][dest[j-opsize+1]];
+	dest[j-opsize+2-widthx]=cavgrgb[dest[j-opsize+2-widthx]][dest[j-opsize+2]];
       }
     }
-    if (!is_422&&chroma) {
+    if (!is_422&&!chroma) {
       if (i>0) {
 	// TODO
-	dest[j-opsize-widthx]=(dest[j-opsize-widthx]+dest[j-opsize])/2;
-	dest[j-opsize+1-widthx]=(dest[j-opsize+1-widthx]+dest[j-opsize+1])/2;
-	dest[j-opsize+2-widthx]=(dest[j-opsize+2-widthx]+dest[j-opsize+2])/2;
+	dest[j-opsize-widthx]=cavgrgb[dest[j-opsize-widthx]][dest[j-opsize]];
+	dest[j-opsize+1-widthx]=cavgrgb[dest[j-opsize+1-widthx]][dest[j-opsize+1]];
+	dest[j-opsize+2-widthx]=cavgrgb[dest[j-opsize+2-widthx]][dest[j-opsize+2]];
       }
       s_u+=hwidth;
       s_v+=hwidth;
@@ -1826,9 +1828,9 @@ static void convert_yuv420p_to_bgr_frame(uint8_t **src, int width, int height, i
 
       yuv2rgb(y,u,v,&dest[j+2],&dest[j+1],&dest[j]);
       
-      dest[j-opsize]=(dest[j-opsize]+dest[j])/2;
-      dest[j-opsize+1]=(dest[j-opsize+1]+dest[j+1])/2;
-      dest[j-opsize+2]=(dest[j-opsize+2]+dest[j+2])/2;
+      dest[j-opsize]=cavgrgb[dest[j-opsize]][dest[j]];
+      dest[j-opsize+1]=cavgrgb[dest[j-opsize+1]][dest[j+1]];
+      dest[j-opsize+2]=cavgrgb[dest[j-opsize+2]][dest[j+2]];
 
       y=*(s_y++);
       yuv2rgb(y,u,v,&dest[j+opsize+2],&dest[j+opsize+1],&dest[j+opsize]);
@@ -1838,20 +1840,20 @@ static void convert_yuv420p_to_bgr_frame(uint8_t **src, int width, int height, i
       if (!is_422&&!chroma&&i>0) {
 	// pass 2
 	// average two src rows
-	dest[j-widthx]=(dest[j-widthx]+dest[j])/2;
-	dest[j+1-widthx]=(dest[j+1-widthx]+dest[j+1])/2;
-	dest[j+2-widthx]=(dest[j+2-widthx]+dest[j+2])/2;
-	dest[j-opsize-widthx]=(dest[j-opsize-widthx]+dest[j-opsize])/2;
-	dest[j-opsize+1-widthx]=(dest[j-opsize+1-widthx]+dest[j-opsize+1])/2;
-	dest[j-opsize+2-widthx]=(dest[j-opsize+2-widthx]+dest[j-opsize+2])/2;
+	dest[j-widthx]=cavgrgb[dest[j-widthx]][dest[j]];
+	dest[j+1-widthx]=cavgrgb[dest[j+1-widthx]][dest[j+1]];
+	dest[j+2-widthx]=cavgrgb[dest[j+2-widthx]][dest[j+2]];
+	dest[j-opsize-widthx]=cavgrgb[dest[j-opsize-widthx]][dest[j-opsize]];
+	dest[j-opsize+1-widthx]=cavgrgb[dest[j-opsize+1-widthx]][dest[j-opsize+1]];
+	dest[j-opsize+2-widthx]=cavgrgb[dest[j-opsize+2-widthx]][dest[j-opsize+2]];
       }
     }
     if (!is_422&&chroma) {
       if (i>0) {
 	// TODO
-	dest[j-opsize-widthx]=(dest[j-opsize-widthx]+dest[j-opsize])/2;
-	dest[j-opsize+1-widthx]=(dest[j-opsize+1-widthx]+dest[j-opsize+1])/2;
-	dest[j-opsize+2-widthx]=(dest[j-opsize+2-widthx]+dest[j-opsize+2])/2;
+	dest[j-opsize-widthx]=cavgrgb[dest[j-opsize-widthx]][dest[j-opsize]];
+	dest[j-opsize+1-widthx]=cavgrgb[dest[j-opsize+1-widthx]][dest[j-opsize+1]];
+	dest[j-opsize+2-widthx]=cavgrgb[dest[j-opsize+2-widthx]][dest[j-opsize+2]];
       }
       s_u+=hwidth;
       s_v+=hwidth;
@@ -1907,9 +1909,9 @@ static void convert_yuv420p_to_argb_frame(uint8_t **src, int width, int height, 
 
       yuv2rgb(y,u,v,&dest[j+1],&dest[j+2],&dest[j+3]);
       
-      dest[j-opsize+1]=(dest[j-opsize+1]+dest[j+1])/2;
-      dest[j-opsize+2]=(dest[j-opsize+2]+dest[j+2])/2;
-      dest[j-opsize+3]=(dest[j-opsize+3]+dest[j+3])/2;
+      dest[j-opsize+1]=cavgrgb[dest[j-opsize+1]][dest[j+1]];
+      dest[j-opsize+2]=cavgrgb[dest[j-opsize+2]][dest[j+2]];
+      dest[j-opsize+3]=cavgrgb[dest[j-opsize+3]][dest[j+3]];
 
       y=*(s_y++);
       yuv2rgb(y,u,v,&dest[j+opsize+1],&dest[j+opsize+2],&dest[j+opsize+3]);
@@ -1919,20 +1921,20 @@ static void convert_yuv420p_to_argb_frame(uint8_t **src, int width, int height, 
       if (!is_422&&!chroma&&i>0) {
 	// pass 2
 	// average two src rows
-	dest[j+1-widthx]=(dest[j+1-widthx]+dest[j+1])/2;
-	dest[j+2-widthx]=(dest[j+2-widthx]+dest[j+2])/2;
-	dest[j+3-widthx]=(dest[j+3-widthx]+dest[j+3])/2;
-	dest[j-opsize+1-widthx]=(dest[j-opsize+1-widthx]+dest[j-opsize+1])/2;
-	dest[j-opsize+2-widthx]=(dest[j-opsize+2-widthx]+dest[j-opsize+2])/2;
-	dest[j-opsize+3-widthx]=(dest[j-opsize+3-widthx]+dest[j-opsize+3])/2;
+	dest[j+1-widthx]=cavgrgb[dest[j+1-widthx]][dest[j+1]];
+	dest[j+2-widthx]=cavgrgb[dest[j+2-widthx]][dest[j+2]];
+	dest[j+3-widthx]=cavgrgb[dest[j+3-widthx]][dest[j+3]];
+	dest[j-opsize+1-widthx]=cavgrgb[dest[j-opsize+1-widthx]][dest[j-opsize+1]];
+	dest[j-opsize+2-widthx]=cavgrgb[dest[j-opsize+2-widthx]][dest[j-opsize+2]];
+	dest[j-opsize+3-widthx]=cavgrgb[dest[j-opsize+3-widthx]][dest[j-opsize+3]];
       }
     }
     if (!is_422&&chroma) {
       if (i>0) {
 	// TODO
-	dest[j-opsize+1-widthx]=(dest[j-opsize+1-widthx]+dest[j-opsize+1])/2;
-	dest[j-opsize+2-widthx]=(dest[j-opsize+2-widthx]+dest[j-opsize+2])/2;
-	dest[j-opsize+3-widthx]=(dest[j-opsize+3-widthx]+dest[j-opsize+3])/2;
+	dest[j-opsize+1-widthx]=cavgrgb[dest[j-opsize+1-widthx]][dest[j-opsize+1]];
+	dest[j-opsize+2-widthx]=cavgrgb[dest[j-opsize+2-widthx]][dest[j-opsize+2]];
+	dest[j-opsize+3-widthx]=cavgrgb[dest[j-opsize+3-widthx]][dest[j-opsize+3]];
       }
       s_u+=hwidth;
       s_v+=hwidth;
@@ -10542,6 +10544,7 @@ boolean resize_layer (weed_plant_t *layer, int width, int height, LiVESInterpTyp
     break;
   default:
     g_printerr("Warning: resizing unknown palette %d\n",palette);
+    break_me();
     retval=FALSE;
   }
 

@@ -2924,6 +2924,7 @@ static void idxc_release(lives_clip_data_t *cdata) {
 	  indices=NULL;
 	}
 	else indices=(index_container_t **)realloc(indices,nidxc*sizeof(index_container_t *));
+	break;
       }
     }
   }
@@ -2982,8 +2983,6 @@ static void detach_stream (lives_clip_data_t *cdata) {
   priv->ctx=NULL;
   priv->codec=NULL;
   priv->picture=NULL;
-
-  if (priv->idxc!=NULL) idxc_release(cdata);
 
   if (cdata->palettes!=NULL) free(cdata->palettes);
   cdata->palettes=NULL;
@@ -4279,9 +4278,13 @@ static int64_t mpegts_load_index(lives_clip_data_t *cdata) {
 
 
 void clip_data_free(lives_clip_data_t *cdata) {
-  
+  lives_mpegts_priv_t *priv=cdata->priv;
+
   if (cdata->palettes!=NULL) free(cdata->palettes);
   cdata->palettes=NULL;
+
+  if (priv->idxc!=NULL) idxc_release(cdata);
+  priv->idxc=NULL;
 
   if (cdata->URI!=NULL) {
     detach_stream(cdata);

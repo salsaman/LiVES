@@ -2337,7 +2337,7 @@ void play_file (void) {
       fade_background();
     }
 
-    if ((!mainw->sep_win||(!mainw->faded&&(prefs->sepwin_type!=1)))&&(cfile->frames>0||mainw->foreign)) {
+    if ((!mainw->sep_win||(!mainw->faded&&(prefs->sepwin_type!=SEPWIN_TYPE_STICKY)))&&(cfile->frames>0||mainw->foreign)) {
       // show the frame in the main window
       lives_widget_show(mainw->playframe);
       lives_widget_context_update();
@@ -2432,7 +2432,7 @@ void play_file (void) {
   else {
     if (mainw->sep_win) {
       // create a separate window for the internal player if requested
-      if (prefs->sepwin_type==0) {
+      if (prefs->sepwin_type==SEPWIN_TYPE_NON_STICKY) {
 	// needed
 	block_expose();
 	make_play_window();
@@ -3169,7 +3169,7 @@ void play_file (void) {
   // kill the separate play window
   if (mainw->play_window!=NULL) {
     lives_window_unfullscreen(LIVES_WINDOW(mainw->play_window));
-    if (prefs->sepwin_type==0) {
+    if (prefs->sepwin_type==SEPWIN_TYPE_NON_STICKY) {
       kill_play_window();
     }
     else {
@@ -3732,12 +3732,12 @@ boolean add_file_info(const gchar *check_handle, boolean aud_only) {
 
   // get the author,title,comments
   if (strlen (cfile->author)) {
-    mesg=g_strdup_printf(_ (" - Author: %s\n"),cfile->comment);
+    mesg=g_strdup_printf(_ (" - Author: %s\n"),cfile->author);
     d_print(mesg);
     g_free(mesg);
   }
   if (strlen (cfile->title)) {
-    mesg=g_strdup_printf(_ (" - Title: %s\n"),cfile->comment);
+    mesg=g_strdup_printf(_ (" - Title: %s\n"),cfile->title);
     d_print(mesg);
     g_free(mesg);
   }

@@ -888,57 +888,6 @@ text_window *create_text_window (const gchar *title, const gchar *text, GtkTextB
 
 
 
-
-void add_to_winmenu(void) {
-  // TODO - change to add_to_clipmenu, move to gui.c
-  GtkWidget *active_image;
-  gchar *tmp;
-
-  cfile->menuentry = lives_image_menu_item_new_with_label(cfile->clip_type!=CLIP_TYPE_VIDEODEV?
-							(tmp=g_path_get_basename(cfile->name)):
-							(tmp=g_strdup(cfile->name)));
-  g_free(tmp);
-
-  lives_image_menu_item_set_always_show_image(LIVES_IMAGE_MENU_ITEM(cfile->menuentry),TRUE);
-
-  lives_widget_show (cfile->menuentry);
-  lives_container_add (LIVES_CONTAINER (mainw->winmenu), cfile->menuentry);
-
-  lives_widget_set_sensitive (cfile->menuentry, TRUE);
-  g_signal_connect (GTK_OBJECT (cfile->menuentry), "activate",
-                      G_CALLBACK (switch_clip_activate),
-                      NULL);
-
-  if (!cfile->opening&&(cfile->clip_type==CLIP_TYPE_DISK||cfile->clip_type==CLIP_TYPE_FILE)) {
-    active_image = lives_image_new_from_stock ("gtk-cancel", LIVES_ICON_SIZE_MENU);
-  }
-  else {
-    active_image = lives_image_new_from_stock ("gtk-yes", LIVES_ICON_SIZE_MENU);
-  }
-  lives_widget_show (active_image);
-  lives_image_menu_item_set_image (GTK_IMAGE_MENU_ITEM (cfile->menuentry), active_image);
-  if (cfile->clip_type==CLIP_TYPE_DISK||cfile->clip_type==CLIP_TYPE_FILE) mainw->clips_available++;
-  mainw->cliplist = g_list_append (mainw->cliplist, GINT_TO_POINTER (mainw->current_file));
-  cfile->old_frames=cfile->frames;
-  cfile->ratio_fps=check_for_ratio_fps(cfile->fps);
-}
-
-
-
-
-void remove_from_winmenu(void) {
-  lives_container_remove(LIVES_CONTAINER(mainw->winmenu), cfile->menuentry);
-  if (LIVES_IS_WIDGET(cfile->menuentry))
-    lives_widget_destroy(cfile->menuentry);
-  mainw->cliplist=g_list_remove (mainw->cliplist, GINT_TO_POINTER (mainw->current_file));
-  if (cfile->clip_type==CLIP_TYPE_DISK||cfile->clip_type==CLIP_TYPE_FILE) {
-    mainw->clips_available--;
-    if (prefs->crash_recovery) rewrite_recovery_file();
-  }
-
-}
-
-
 _insertw* create_insert_dialog (void) {
   GtkWidget *dialog_vbox;
   GtkWidget *hbox1;

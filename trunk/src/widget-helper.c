@@ -1490,6 +1490,7 @@ LIVES_INLINE boolean lives_toggle_button_get_active(LiVESToggleButton *button) {
 #ifdef GUI_GTK
   return gtk_toggle_button_get_active(button);
 #endif
+  return FALSE;
 }
 
 
@@ -1514,17 +1515,21 @@ LIVES_INLINE void lives_widget_set_tooltip_text(LiVESWidget *widget, const char 
 }
 
 
-LIVES_INLINE void lives_widget_grab_focus(LiVESWidget *widget) {
+LIVES_INLINE boolean lives_widget_grab_focus(LiVESWidget *widget) {
 #ifdef GUI_GTK
   gtk_widget_grab_focus(widget);
+  return TRUE;
 #endif
+  return FALSE;
 }
 
 
-LIVES_INLINE void lives_widget_grab_default(LiVESWidget *widget) {
+LIVES_INLINE boolean lives_widget_grab_default(LiVESWidget *widget) {
 #ifdef GUI_GTK
   gtk_widget_grab_default(widget);
+  return TRUE;
 #endif
+  return FALSE;
 }
 
 
@@ -1532,6 +1537,15 @@ LIVES_INLINE LiVESSList *lives_radio_button_get_group(LiVESRadioButton *rbutton)
 #ifdef GUI_GTK
   return gtk_radio_button_get_group(rbutton);
 #endif
+  return NULL;
+}
+
+
+LIVES_INLINE LiVESSList *lives_radio_menu_item_get_group(LiVESRadioMenuItem *rmenuitem) {
+#ifdef GUI_GTK
+  return gtk_radio_menu_item_get_group(rmenuitem);
+#endif
+  return NULL;
 }
 
 
@@ -1539,6 +1553,7 @@ LIVES_INLINE LiVESWidget *lives_widget_get_parent(LiVESWidget *widget) {
 #ifdef GUI_GTK
   return gtk_widget_get_parent(widget);
 #endif
+  return NULL;
 }
 
 
@@ -1547,6 +1562,7 @@ LIVES_INLINE LiVESWidget *lives_widget_get_toplevel(LiVESWidget *widget) {
 #ifdef GUI_GTK
   return gtk_widget_get_toplevel(widget);
 #endif
+  return NULL;
 }
 
 
@@ -1558,9 +1574,10 @@ LIVES_INLINE LiVESXWindow *lives_widget_get_xwindow(LiVESWidget *widget) {
   return GDK_WINDOW(widget->window);
 #endif
 #endif
+  return NULL;
 }
 
-LIVES_INLINE void lives_widget_set_can_focus(LiVESWidget *widget, boolean state) {
+LIVES_INLINE boolean lives_widget_set_can_focus(LiVESWidget *widget, boolean state) {
 #ifdef GUI_GTK
 #if GTK_CHECK_VERSION(2,18,0)
   gtk_widget_set_can_focus(widget,state);
@@ -1570,11 +1587,13 @@ LIVES_INLINE void lives_widget_set_can_focus(LiVESWidget *widget, boolean state)
   else
     LIVES_WIDGET_UNSET_FLAGS (widget, GTK_CAN_FOCUS);
 #endif
+  return TRUE;
 #endif
+  return FALSE;
 }
 
 
-LIVES_INLINE void lives_widget_set_can_default(LiVESWidget *widget, boolean state) {
+LIVES_INLINE boolean lives_widget_set_can_default(LiVESWidget *widget, boolean state) {
 #ifdef GUI_GTK
 #if GTK_CHECK_VERSION(2,18,0)
   gtk_widget_set_can_default(widget,state);
@@ -1584,7 +1603,9 @@ LIVES_INLINE void lives_widget_set_can_default(LiVESWidget *widget, boolean stat
   else
     LIVES_WIDGET_UNSET_FLAGS (widget, GTK_CAN_DEFAULT);
 #endif
+  return TRUE;
 #endif
+  return FALSE;
 }
 
 
@@ -1596,6 +1617,7 @@ LIVES_INLINE boolean lives_widget_is_sensitive(LiVESWidget *widget) {
   return LIVES_WIDGET_IS_SENSITIVE (widget);
 #endif
 #endif
+  return FALSE;
 }
 
 
@@ -1607,6 +1629,7 @@ LIVES_INLINE boolean lives_widget_is_visible(LiVESWidget *widget) {
   return LIVES_WIDGET_VISIBLE (widget);
 #endif
 #endif
+  return FALSE;
 }
 
 
@@ -1618,28 +1641,35 @@ LIVES_INLINE boolean lives_widget_is_realized(LiVESWidget *widget) {
   return LIVES_WIDGET_REALIZED (widget);
 #endif
 #endif
+  return FALSE;
 }
 
 
-LIVES_INLINE void lives_container_add(LiVESContainer *container, LiVESWidget *widget) {
+LIVES_INLINE boolean lives_container_add(LiVESContainer *container, LiVESWidget *widget) {
 #ifdef GUI_GTK
   gtk_container_add(container,widget);
+  return TRUE;
 #endif
+  return FALSE;
 }
 
 
-LIVES_INLINE void lives_container_remove(LiVESContainer *container, LiVESWidget *widget) {
+LIVES_INLINE boolean lives_container_remove(LiVESContainer *container, LiVESWidget *widget) {
 #ifdef GUI_GTK
   gtk_container_remove(container,widget);
+  return TRUE;
 #endif
+  return FALSE;
 }
 
 
-LIVES_INLINE void lives_container_set_border_width(LiVESContainer *container, uint32_t width) {
+LIVES_INLINE boolean lives_container_set_border_width(LiVESContainer *container, uint32_t width) {
   // sets border OUTSIDE container
 #ifdef GUI_GTK
   gtk_container_set_border_width(container,width);
+  return TRUE;
 #endif
+  return FALSE;
 }
 
 
@@ -1648,6 +1678,7 @@ LIVES_INLINE double lives_spin_button_get_value(LiVESSpinButton *button) {
 #ifdef GUI_GTK
   return gtk_spin_button_get_value(button);
 #endif
+  return 0.;
 }
 
 
@@ -1655,6 +1686,7 @@ LIVES_INLINE int lives_spin_button_get_value_as_int(LiVESSpinButton *button) {
 #ifdef GUI_GTK
   return gtk_spin_button_get_value_as_int(button);
 #endif
+  return 0.;
 }
 
 
@@ -2147,7 +2179,7 @@ LIVES_INLINE boolean lives_widget_set_vexpand(LiVESWidget *widget, boolean state
 
 
 LIVES_INLINE LiVESWidget *lives_menu_new(void) {
-  LiVESWidget *menu;
+  LiVESWidget *menu=NULL;
 #ifdef GUI_GTK
   menu=gtk_menu_new();
 #endif
@@ -2156,7 +2188,7 @@ LIVES_INLINE LiVESWidget *lives_menu_new(void) {
 
 
 LIVES_INLINE LiVESWidget *lives_menu_item_new(void) {
-  LiVESWidget *menuitem;
+  LiVESWidget *menuitem=NULL;
 #ifdef GUI_GTK
   menuitem=gtk_menu_item_new();
 #endif
@@ -2165,7 +2197,7 @@ LIVES_INLINE LiVESWidget *lives_menu_item_new(void) {
 
 
 LIVES_INLINE LiVESWidget *lives_menu_item_new_with_mnemonic(const char *label) {
-  LiVESWidget *menuitem;
+  LiVESWidget *menuitem=NULL;
 #ifdef GUI_GTK
   menuitem=gtk_menu_item_new_with_mnemonic(label);
 #endif
@@ -2174,7 +2206,7 @@ LIVES_INLINE LiVESWidget *lives_menu_item_new_with_mnemonic(const char *label) {
 
 
 LIVES_INLINE LiVESWidget *lives_menu_item_new_with_label(const char *label) {
-  LiVESWidget *menuitem;
+  LiVESWidget *menuitem=NULL;
 #ifdef GUI_GTK
   menuitem=gtk_menu_item_new_with_label(label);
 #endif
@@ -2183,7 +2215,7 @@ LIVES_INLINE LiVESWidget *lives_menu_item_new_with_label(const char *label) {
 
 
 LIVES_INLINE LiVESWidget *lives_image_menu_item_new_with_label(const char *label) {
-  LiVESWidget *menuitem;
+  LiVESWidget *menuitem=NULL;
 #ifdef GUI_GTK
   // TODO - deprecated
   menuitem=gtk_image_menu_item_new_with_label(label);
@@ -2193,7 +2225,7 @@ LIVES_INLINE LiVESWidget *lives_image_menu_item_new_with_label(const char *label
 
 
 LIVES_INLINE LiVESWidget *lives_image_menu_item_new_with_mnemonic(const char *label) {
-  LiVESWidget *menuitem;
+  LiVESWidget *menuitem=NULL;
 #ifdef GUI_GTK
   menuitem=gtk_image_menu_item_new_with_mnemonic(label);
 #endif
@@ -2201,8 +2233,17 @@ LIVES_INLINE LiVESWidget *lives_image_menu_item_new_with_mnemonic(const char *la
 }
 
 
+LIVES_INLINE LiVESWidget *lives_radio_menu_item_new_with_label(LiVESSList *group, const char *label) {
+  LiVESWidget *menuitem=NULL;
+#ifdef GUI_GTK
+  menuitem=gtk_radio_menu_item_new_with_label(group,label);
+#endif
+  return menuitem;
+}
+
+
 LIVES_INLINE LiVESWidget *lives_check_menu_item_new_with_label(const char *label) {
-  LiVESWidget *menuitem;
+  LiVESWidget *menuitem=NULL;
 #ifdef GUI_GTK
   menuitem=gtk_check_menu_item_new_with_label(label);
 #endif
@@ -2211,7 +2252,7 @@ LIVES_INLINE LiVESWidget *lives_check_menu_item_new_with_label(const char *label
 
 
 LIVES_INLINE LiVESWidget *lives_check_menu_item_new_with_mnemonic(const char *label) {
-  LiVESWidget *menuitem;
+  LiVESWidget *menuitem=NULL;
 #ifdef GUI_GTK
   // TODO - deprecated
   menuitem=gtk_check_menu_item_new_with_mnemonic(label);
@@ -2221,7 +2262,7 @@ LIVES_INLINE LiVESWidget *lives_check_menu_item_new_with_mnemonic(const char *la
 
 
 LIVES_INLINE LiVESWidget *lives_image_menu_item_new_from_stock(const char *stock_id, LiVESAccelGroup *accel_group) {
-  LiVESWidget *menuitem;
+  LiVESWidget *menuitem=NULL;
 #ifdef GUI_GTK
   // TODO - deprecated
   menuitem=gtk_image_menu_item_new_from_stock(stock_id,accel_group);
@@ -3814,9 +3855,9 @@ LiVESWidget *lives_combo_get_entry(LiVESCombo *widget) {
 }
 
 
-void lives_widget_set_can_focus_and_default(LiVESWidget *widget) {
-  lives_widget_set_can_focus(widget,TRUE);
-  lives_widget_set_can_default(widget,TRUE);
+boolean lives_widget_set_can_focus_and_default(LiVESWidget *widget) {
+  if (!lives_widget_set_can_focus(widget,TRUE)) return FALSE;
+  return lives_widget_set_can_default(widget,TRUE);
 }
 
 

@@ -9310,7 +9310,7 @@ boolean multitrack_delete (lives_mt *mt, boolean save_layout) {
   mainw->is_rendering=FALSE;
   if (transfer_focus) lives_window_present(LIVES_WINDOW(mainw->LiVES));
 
-  reset_clip_menu();
+  reset_clipmenu();
   mainw->last_dprint_file=-1;
 
   if (prefs->gui_monitor>0) {
@@ -15932,7 +15932,7 @@ void on_render_activate (GtkMenuItem *menuitem, gpointer user_data) {
     }
     set_undoable (NULL,FALSE);
     cfile->changed=TRUE;
-    add_to_winmenu();
+    add_to_clipmenu();
     mt->file_selected=orig_file=mainw->current_file;
     d_print ((tmp=g_strdup_printf (_ ("rendered %d frames to new clip.\n"),cfile->frames)));
     g_free(tmp);
@@ -15943,7 +15943,7 @@ void on_render_activate (GtkMenuItem *menuitem, gpointer user_data) {
     save_clip_values(orig_file);
 
     if (prefs->crash_recovery) add_to_recovery_file(cfile->handle);
-    reset_clip_menu();
+    reset_clipmenu();
 
     if (post_reset_ba) {
       // reset after normalising backing audio

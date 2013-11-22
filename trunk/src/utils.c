@@ -3737,7 +3737,7 @@ boolean after_foreign_play(void) {
   cfile->nopreview=FALSE;
   g_free(capfile);
 
-  add_to_winmenu();
+  add_to_clipmenu();
   if (mainw->multitrack==NULL) switch_to_file(old_file,mainw->current_file);
   
   else {
@@ -3792,38 +3792,14 @@ LIVES_INLINE boolean int_array_contains_value(int *array, int num_elems, int val
 }
 
 
-void 
-reset_clip_menu (void) {
+void reset_clipmenu (void) {
   // sometimes the clip menu gets messed up, e.g. after reloading a set.
   // This function will clean up the 'x's and so on.
 
-  int i;
-  GtkWidget *active_image=NULL;
-  char menutext[32768];
-
-  for (i=1;i<=MAX_FILES;i++) {
-    if (!(mainw->files[i]==NULL)) {
-      if (!(active_image==NULL)) {
-	active_image=NULL;
-      }
-      if (mainw->files[i]->opening) {
-	active_image = lives_image_new_from_stock ("gtk-no", LIVES_ICON_SIZE_MENU);
-      }
-      else {
-	if (i==mainw->current_file) {
-	  active_image = lives_image_new_from_stock ("gtk-close", LIVES_ICON_SIZE_MENU);
-	}
-      }
-      if (!(active_image==NULL)) {
-	lives_widget_show (active_image);
-      }
-      if (mainw->files[i]->menuentry!=NULL) {
-	get_menu_text_long(mainw->files[i]->menuentry,menutext);
-	lives_image_menu_item_set_image (GTK_IMAGE_MENU_ITEM (mainw->files[i]->menuentry), active_image);
-	set_menu_text(mainw->files[i]->menuentry,menutext,FALSE);
-	lives_widget_queue_draw(mainw->files[i]->menuentry);
-      }
-    }
+  if (mainw->current_file>0&&cfile!=NULL&&cfile->menuentry!=NULL) {
+    g_signal_handler_block (cfile->menuentry, cfile->menuentry_func);
+    lives_check_menu_item_set_active(LIVES_CHECK_MENU_ITEM(cfile->menuentry), TRUE);
+    g_signal_handler_unblock (cfile->menuentry, cfile->menuentry_func);
   }
 }
 

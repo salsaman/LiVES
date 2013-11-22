@@ -736,7 +736,7 @@ void open_file_sel(const gchar *file_name, double start, int frames) {
 
     if (mainw->multitrack==NULL) get_play_times();
 
-    add_to_winmenu();
+    add_to_clipmenu();
     set_main_title(cfile->file_name,0);
 
     mainw->effects_paused=FALSE;
@@ -3356,7 +3356,7 @@ void play_file (void) {
 
   if (mainw->multitrack==NULL) mainw->osc_block=FALSE;
 
-  reset_clip_menu();
+  reset_clipmenu();
 
   disable_record();
 
@@ -4680,7 +4680,7 @@ void restore_file(const gchar *file_name) {
   
   // add entry to window menu
   // TODO - do this earlier and allow switching during restore
-  add_to_winmenu();
+  add_to_clipmenu();
 
   if (prefs->show_recent) {
     add_to_recent(file_name,0.,0,NULL);
@@ -5538,7 +5538,7 @@ static boolean recover_files(gchar *recovery_file, boolean auto_recover) {
       if (last_was_normal_file&&mainw->multitrack==NULL) {
 	if (current_file!=-1) switch_to_file((mainw->current_file=0),current_file);
       }
-      reset_clip_menu();
+      reset_clipmenu();
       lives_widget_context_update();
       threaded_dialog_spin();
 
@@ -5741,7 +5741,7 @@ static boolean recover_files(gchar *recovery_file, boolean auto_recover) {
 	
 	// add to clip menu
 	threaded_dialog_spin();
-	add_to_winmenu();
+	add_to_clipmenu();
 	get_next_free_file();
 	cfile->start=cfile->frames>0?1:0;
 	cfile->end=cfile->frames;

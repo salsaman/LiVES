@@ -360,7 +360,7 @@ static boolean open_yuv4m_inner(const gchar *filename, const gchar *fname, int n
 
   cfile->is_loaded=TRUE;
 
-  add_to_winmenu();
+  add_to_clipmenu();
 
   switch_to_file((mainw->current_file=old_file),new_file);
 

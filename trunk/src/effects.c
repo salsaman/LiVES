@@ -560,7 +560,7 @@ boolean do_effect(lives_rfx_t *rfx, boolean is_preview) {
       if (!(rfx->props&RFX_PROPS_BATCHG)) {
 	// gen to new file
 	cfile->is_loaded=TRUE;
-	add_to_winmenu();
+	add_to_clipmenu();
 	if (!save_clip_values(new_file)) {
 	  close_current_file(current_file);
 	  return FALSE;

@@ -2676,7 +2676,7 @@ void on_paste_as_new_activate                       (GtkMenuItem     *menuitem,
   }
 
   // add entry to window menu
-  add_to_winmenu();
+  add_to_clipmenu();
   current_file=mainw->current_file;
   if (!save_clip_values(current_file)) {
     close_current_file(old_file);
@@ -5036,7 +5036,7 @@ boolean on_load_set_ok (GtkButton *button, gpointer user_data) {
 	memset (mainw->set_name,0,1);
       }
       else {
-	reset_clip_menu();
+	reset_clipmenu();
 	lives_widget_set_sensitive (mainw->vj_load_set, FALSE);
 
 	
@@ -5196,7 +5196,7 @@ boolean on_load_set_ok (GtkButton *button, gpointer user_data) {
 
     // add to clip menu
     threaded_dialog_spin();
-    add_to_winmenu();
+    add_to_clipmenu();
     get_next_free_file();
     cfile->start=cfile->frames>0?1:0;
     cfile->end=cfile->frames;
@@ -5218,7 +5218,7 @@ boolean on_load_set_ok (GtkButton *button, gpointer user_data) {
   }
   
   threaded_dialog_spin();
-  reset_clip_menu();
+  reset_clipmenu();
   threaded_dialog_spin();
 
   if (mainw->multitrack!=NULL&&mainw->multitrack->is_ready) {
@@ -5654,7 +5654,7 @@ void switch_clip_activate (GtkMenuItem *menuitem, gpointer user_data) {
 
   for (i=1;i<MAX_FILES;i++) {
     if (!(mainw->files[i]==NULL)) {
-      if (LIVES_MENU_ITEM(menuitem)==LIVES_MENU_ITEM(mainw->files[i]->menuentry)) {
+      if (LIVES_MENU_ITEM(menuitem)==LIVES_MENU_ITEM(mainw->files[i]->menuentry)&&lives_check_menu_item_get_active(LIVES_CHECK_MENU_ITEM(mainw->files[i]->menuentry))) {
 	if (!(i==mainw->current_file)) {
 	  switch_clip(0,i);
 	}
@@ -8307,7 +8307,7 @@ on_load_cdtrack_ok_clicked                (GtkButton     *button,
     mainw->current_file=new_file;
     g_snprintf(cfile->type,40,"CD track %d on %s",(int)mainw->fx1_val,prefs->cdplay_device);
     get_play_times();
-    add_to_winmenu();
+    add_to_clipmenu();
     was_new=TRUE;
     cfile->opening=cfile->opening_audio=cfile->opening_only_audio=TRUE;
     cfile->hsize=DEFAULT_FRAME_HSIZE;
@@ -11472,7 +11472,7 @@ on_recaudclip_ok_clicked                      (GtkButton *button,
 
   if (type==0) {
     g_snprintf(cfile->type,40,"Audio");
-    add_to_winmenu();
+    add_to_clipmenu();
 
 #ifdef ENABLE_OSC
     lives_osc_notify(LIVES_OSC_NOTIFY_CLIP_OPENED,"");

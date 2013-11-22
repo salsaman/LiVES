@@ -1168,6 +1168,15 @@ typedef struct {
   lives_screen_area_t *screen_areas; // array of screen areas
 
   int *active_track_list;
+#define TEST_THREADING_MT
+#ifdef TEST_THREADING_MT
+
+  boolean ext_src_used[MAX_FILES];
+  lives_decoder_t *track_decoders[MAX_TRACKS];
+  int old_active_track_list[MAX_TRACKS];
+
+#endif
+////////////////////
 
 } mainwindow;
 

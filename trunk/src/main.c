@@ -103,9 +103,6 @@ static char **zargv;
 static int xxwidth=0,xxheight=0;
 
 ////////////////////
-static boolean ext_src_used[MAX_TRACKS];
-static lives_decoder_t *track_decoders[MAX_TRACKS];
-////////////////////
 
 
 /* not static */
@@ -4355,7 +4352,11 @@ boolean pull_frame_at_size (weed_plant_t *layer, const gchar *image_ext, weed_ti
 
 	boolean res=TRUE;
 
-	lives_decoder_t *dplug=(lives_decoder_t *)sfile->ext_src;
+	lives_decoder_t *dplug;
+	if (weed_plant_has_leaf(layer,"host_decoder")) {
+	  dplug=(lives_decoder_t *)weed_get_voidptr_value(layer,"host_decoder",&error);
+	}
+	else dplug=(lives_decoder_t *)sfile->ext_src;
 	if (dplug==NULL) return FALSE;
 	if (target_palette!=dplug->cdata->current_palette) {
 	  // try to switch palette
@@ -4547,12 +4548,15 @@ void check_layer_ready(weed_plant_t *layer) {
 
     clip=weed_get_int_value(layer,"clip",&error);
     frame=weed_get_int_value(layer,"frame",&error);
-    sfile=mainw->files[clip];
 
-    // render subtitles from file
-    if (prefs->show_subtitles&&sfile->subt!=NULL&&sfile->subt->tfile!=NULL) {
-      double xtime=(double)(frame-1)/sfile->fps;
-      layer=render_subs_from_file(sfile,xtime,layer);
+    if (clip!=-1) {
+      sfile=mainw->files[clip];
+
+      // render subtitles from file
+      if (prefs->show_subtitles&&sfile->subt!=NULL&&sfile->subt->tfile!=NULL) {
+	double xtime=(double)(frame-1)/sfile->fps;
+	layer=render_subs_from_file(sfile,xtime,layer);
+      }
     }
   }
 
@@ -4792,23 +4796,34 @@ static void get_max_opsize(int *opwidth, int *opheight) {
 
 
 void init_track_decoders(void) {
+#define TEST_THREADING_MT
+#ifdef TEST_THREADING_MT
   register int i;
 
   for (i=0;i<MAX_TRACKS;i++) {
-    track_decoders[i]=NULL;
-    mainw->active_track_list[i]=0;
+    mainw->track_decoders[i]=NULL;
+    mainw->old_active_track_list[i]=0;
   }
+  for (i=0;i<MAX_FILES;i++) mainw->ext_src_used[i]=FALSE;
+
+  g_print("itd\n");
+
+#endif
 }
 
 
 void free_track_decoders(void) {
+#ifdef TEST_THREADING_MT
   register int i;
 
   for (i=0;i<MAX_TRACKS;i++) {
-    if (track_decoders[i]!=NULL && track_decoders[i]!=mainw->files[mainw->active_track_list[i]]->ext_src)
-      close_decoder_plugin(track_decoders[i]);
+    if (mainw->track_decoders[i]!=NULL && 
+	(mainw->active_track_list[i]<=0||mainw->track_decoders[i]!=mainw->files[mainw->active_track_list[i]]->ext_src))
+      close_decoder_plugin(mainw->track_decoders[i]);
   }
 
+  g_print("ftd\n");
+#endif
 }
 
 
@@ -5177,17 +5192,22 @@ void load_frame_image(int frame) {
 	  }
 	}
 	else {
-	  int i;
-	  weed_plant_t **layers;
-	  layers=(weed_plant_t **)g_malloc((mainw->num_tracks+1)*sizeof(weed_plant_t *));
+#ifdef TEST_THREADING_MT
+	  int oclip,nclip;
+#endif
+	  register int i;
+	  weed_plant_t **layers=(weed_plant_t **)g_malloc((mainw->num_tracks+1)*sizeof(weed_plant_t *));
 
 #ifdef TEST_THREADING_MT
+	  break_me();
+
 	  // get list of active tracks from mainw->filter map
 	  mainw->active_track_list=get_active_track_list(mainw->clip_index,mainw->num_tracks,mainw->filter_map);
 	  for (i=0;i<mainw->num_tracks;i++) {
-	    if ((oclip=mainw->old_active_track_list[i])==(nclip=mainw->active_track_list[i])) {
-	      if (oclip!=0&&track_decoders[i]==mainw->files[oclip]->ext_src) ext_src_used[oclip]=TRUE;
-	      else (ext_src_used[oclip]=FALSE);
+	    oclip=mainw->old_active_track_list[i];
+	    mainw->ext_src_used[oclip]=FALSE;
+	    if (oclip>0&&oclip==(nclip=mainw->active_track_list[i])) {
+	      if (mainw->track_decoders[i]==mainw->files[oclip]->ext_src) mainw->ext_src_used[oclip]=TRUE;
 	    }
 	  }
 #endif
@@ -5210,25 +5230,25 @@ void load_frame_image(int frame) {
 
 
 	      ////
-	      if (oclip!=0) {
+	      if (oclip>0) {
 		if (mainw->files[oclip]->clip_type==CLIP_TYPE_FILE) {
-		  if (track_decoders[i]!=(lives_decoder_t *)mainw->files[oclip]->ext_src) {
+		  if (mainw->track_decoders[i]!=(lives_decoder_t *)mainw->files[oclip]->ext_src) {
 		    // remove the clone for oclip
-		    close_decoder_plugin(track_decoders[i]);
-		    track_decoders[i]=NULL;
+		    close_decoder_plugin(mainw->track_decoders[i]);
+		    mainw->track_decoders[i]=NULL;
 		  }
 		}
 	      }
 
-	      if (nclip!=0) {
+	      if (nclip>0) {
 		if (mainw->files[nclip]->clip_type==CLIP_TYPE_FILE) {
-		  if (!ext_src_used[nclip]) {
-		    track_decoders[i]=mainw->files[nclip]->ext_src;
-		    ext_src_used[nclip]=TRUE;
+		  if (!mainw->ext_src_used[nclip]) {
+		    mainw->track_decoders[i]=mainw->files[nclip]->ext_src;
+		    mainw->ext_src_used[nclip]=TRUE;
 		  }
 		  else {
 		    // add new clone for nclip
-		    track_decoders[i]=clone_cdata(nclip);
+		    mainw->track_decoders[i]=clone_decoder(nclip);
 		  }
 		}
 	      }
@@ -5236,11 +5256,12 @@ void load_frame_image(int frame) {
 
 	    mainw->old_active_track_list[i]=mainw->active_track_list[i];
 
-	    if (active_track_list[nclip]!=0) {
+	    if (nclip>0) {
 	      img_ext=get_image_ext_for_type(mainw->files[nclip]->img_type);
 	      // set alt src in layer
-	      weed_set_voidptr_value(layers[i],"host_track_decoder",(void *)track_decoders[i]);
+	      weed_set_voidptr_value(layers[i],"host_decoder",(void *)mainw->track_decoders[i]);
 	      pull_frame_threaded(layers[i],img_ext,(weed_timecode_t)mainw->currticks);
+	      g_print("pft.");
 	    }
 	    else {
 #else
@@ -5252,6 +5273,7 @@ void load_frame_image(int frame) {
 	  }
 	  layers[i]=NULL;
 	  
+
 	  mainw->frame_layer=weed_apply_effects(layers,mainw->filter_map,tc,opwidth,opheight,mainw->pchains);
 	  
 	  for (i=0;layers[i]!=NULL;i++) if (layers[i]!=mainw->frame_layer) {
@@ -5259,6 +5281,7 @@ void load_frame_image(int frame) {
 	      weed_plant_free(layers[i]);
 	    }
 	  g_free(layers);
+
 	}
 
 	if (mainw->internal_messaging) {

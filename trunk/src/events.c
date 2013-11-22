@@ -1025,8 +1025,14 @@ weed_plant_t *insert_frame_event_at (weed_plant_t *event_list, weed_timecode_t t
     }
 
     // we passed all events in event_list; there was one or more at tc, but none were deinits or frames
-    if (event==NULL) event=get_last_event(event_list);
-
+    if (event==NULL) {
+      event=get_last_event(event_list);
+      // event is after last event, append it
+      if ((xevent_list=append_frame_event (event_list,tc,numframes,clips,frames))==NULL) return NULL;
+      event_list=xevent_list;
+      if (shortcut!=NULL) *shortcut=get_last_event(event_list);
+      return event_list;
+    }
   }
   else {
     // event is after last event, append it
@@ -3402,19 +3408,99 @@ lives_render_error_t render_events (boolean reset) {
 	  }
 	}
 	else {
+#define TEST_THREADING_MT
+#ifdef TEST_THREADING_MT
+	  int oclip,nclip;
+#endif
 	  layers=(weed_plant_t **)g_malloc((num_tracks+1)*sizeof(weed_plant_t *));
+
+#ifdef TEST_THREADING_MT
+	  break_me();
+
+	  // get list of active tracks from mainw->filter map
+	  mainw->active_track_list=get_active_track_list(mainw->clip_index,mainw->num_tracks,mainw->filter_map);
+	  for (i=0;i<mainw->num_tracks;i++) {
+	    oclip=mainw->old_active_track_list[i];
+	    mainw->ext_src_used[oclip]=FALSE;
+	    if (oclip>0&&oclip==(nclip=mainw->active_track_list[i])) {
+	      if (mainw->track_decoders[i]==mainw->files[oclip]->ext_src) mainw->ext_src_used[oclip]=TRUE;
+	    }
+	  }
+#endif
+
 	  for (i=0;i<num_tracks;i++) {
 	    if (clip_index[i]>0&&frame_index[i]>0&&mainw->multitrack!=NULL) is_blank=FALSE;
 	    layers[i]=weed_plant_new(WEED_PLANT_CHANNEL);
 	    weed_set_int_value(layers[i],"clip",clip_index[i]);
 	    weed_set_int_value(layers[i],"frame",frame_index[i]);
 	    weed_set_voidptr_value(layers[i],"pixel_data",NULL);
+
+
+#ifdef TEST_THREADING_MT
+	    if ((oclip=mainw->old_active_track_list[i])!=(nclip=mainw->active_track_list[i])) {
+	      // now using threading, we want to start pulling all pixel_data for all active layers here
+	      // however, we may have more than one copy of the same clip - in this case we want to create clones of the decoder plugin
+	      // this is to prevent constant seeking between different frames in the clip
+
+	      // check if ext_src survives old->new
+
+
+	      ////
+	      if (oclip>0) {
+		if (mainw->files[oclip]->clip_type==CLIP_TYPE_FILE) {
+		  if (mainw->track_decoders[i]!=(lives_decoder_t *)mainw->files[oclip]->ext_src) {
+		    // remove the clone for oclip
+		    close_decoder_plugin(mainw->track_decoders[i]);
+		    mainw->track_decoders[i]=NULL;
+		  }
+		}
+	      }
+
+	      if (nclip>0) {
+		g_print("\nhere !!!\n");
+		if (mainw->files[nclip]->clip_type==CLIP_TYPE_FILE) {
+		  g_print("\nhere2 !!!\n");
+		  if (!mainw->ext_src_used[nclip]) {
+		    g_print("\nhere3 !!!\n");
+		    mainw->track_decoders[i]=mainw->files[nclip]->ext_src;
+		    mainw->ext_src_used[nclip]=TRUE;
+		  }
+		  else {
+		    // add new clone for nclip
+		    g_print("creating clone for track %d\n",i);
+		    mainw->track_decoders[i]=clone_decoder(nclip);
+		  }
+		}
+	      }
+	    }
+
+	    mainw->old_active_track_list[i]=mainw->active_track_list[i];
+
+	    if (nclip>0) {
+	      const char *img_ext=get_image_ext_for_type(mainw->files[nclip]->img_type);
+	      // set alt src in layer
+	      weed_set_voidptr_value(layers[i],"host_decoder",(void *)mainw->track_decoders[i]);
+	      pull_frame_threaded(layers[i],img_ext,(weed_timecode_t)mainw->currticks);
+	      g_print("pft.");
+	    }
+	    else {
+#else
+	      weed_set_voidptr_value(layers[i],"pixel_data",NULL);
+#endif
+#ifdef TEST_THREADING_MT
+	    }
+#endif
 	  }
 	  layers[i]=NULL;
 	  
 	  layer=weed_apply_effects(layers,mainw->filter_map,tc,0,0,pchains);
 	  
-	  for (i=0;layers[i]!=NULL;i++) if (layer!=layers[i]) weed_plant_free(layers[i]);
+	  for (i=0;layers[i]!=NULL;i++) {
+	    if (layer!=layers[i]) {
+	      check_layer_ready(layers[i]);
+	      weed_plant_free(layers[i]);
+	    }
+	  }
 	  g_free(layers);
 	}
 
@@ -4131,6 +4217,8 @@ boolean render_to_clip (boolean new_clip) {
   mainw->effects_paused=FALSE;
   prefs->render_audio=rendaud;
 
+  init_track_decoders();
+
   if (start_render_effect_events(mainw->event_list)) { // re-render, applying effects 
     // and reordering/resampling/resizing if necessary
 
@@ -4198,7 +4286,6 @@ boolean render_to_clip (boolean new_clip) {
 	save_frame_index(mainw->current_file);
       }
     }
-
   }
   else {
     retval=FALSE; // cancelled or error, so show the dialog again
@@ -4208,6 +4295,7 @@ boolean render_to_clip (boolean new_clip) {
   }
 
   mainw->effects_paused=FALSE;
+  free_track_decoders();
   deinit_render_effects();
   audio_free_fnames();
   return retval;
@@ -4283,7 +4371,9 @@ boolean deal_with_render_choice (boolean add_deinit) {
       // preview
       cfile->next_event=get_first_event(mainw->event_list);
       mainw->is_rendering=TRUE;
+      init_track_decoders();
       on_preview_clicked (NULL,NULL);
+      free_track_decoders();
       deinit_render_effects();
       mainw->is_processing=mainw->is_rendering=FALSE;
       cfile->next_event=NULL;

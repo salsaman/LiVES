@@ -2966,7 +2966,9 @@ void mt_show_current_frame(lives_mt *mt, boolean return_layer) {
       }
 
       mainw->last_display_ticks=0;
+      init_track_decoders();
       process_events(mt->pb_start_event,FALSE,0);
+      free_track_decoders();
       mainw->internal_messaging=internal_messaging;
       mainw->current_file=current_file;
       deinit_render_effects();
@@ -5068,7 +5070,6 @@ static weed_plant_t *load_event_list_inner (lives_mt *mt, int fd, boolean show_e
       if (eventprev!=NULL) weed_set_voidptr_value(eventprev,"next",event);
       weed_set_voidptr_value(event,"previous",eventprev);
       weed_set_voidptr_value(event,"next",NULL);
-
       if (get_first_event(event_list)==NULL) {
 	weed_set_voidptr_value(event_list,"first",event);
       }
@@ -17027,7 +17028,7 @@ void multitrack_insert (GtkMenuItem *menuitem, gpointer user_data) {
 
   mt->did_backup=did_backup;
 
-  if (!resize_timeline(mt)&&!did_backup) {
+  if (block!=NULL&&!resize_timeline(mt)&&!did_backup) {
     lives_painter_surface_t *bgimage=(lives_painter_surface_t *)g_object_get_data (G_OBJECT(eventbox), "bgimg");
     draw_block(mt,NULL,bgimage,block,0,lives_widget_get_allocation_width(eventbox));
     lives_widget_queue_draw(eventbox);
@@ -20377,6 +20378,7 @@ boolean event_list_rectify(lives_mt *mt, weed_plant_t *event_list) {
 			host_tag=atoi(host_tag_s);
 			weed_free(host_tag_s);
 			idx=host_tag-FX_KEYS_MAX_VIRTUAL-1;
+
 			if (pchains[idx][pnum]==init_event) {
 			  if (weed_leaf_seed_type((weed_plant_t *)init_event,"in_parameters")==WEED_SEED_INT64) {
 			    // leave as int64_t and we will change afterwards
@@ -20722,7 +20724,7 @@ boolean event_list_rectify(lives_mt *mt, weed_plant_t *event_list) {
 	  filter=get_weed_filter(filter_idx);
 	  // fill in any newly added params
 	  num_tracks=weed_leaf_num_elements(event,"in_tracks");
-	  pchain=filter_init_add_pchanges(event_list,filter,event,num_tracks,num_params-1);
+	  pchain=filter_init_add_pchanges(event_list,filter,event,num_tracks,num_params);
 	  g_free(pchain);
 	}
       }

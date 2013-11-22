@@ -3403,14 +3403,9 @@ lives_render_error_t render_events (boolean reset) {
 	  }
 	}
 	else {
-#define TEST_THREADING_MT
-#ifdef TEST_THREADING_MT
 	  int oclip,nclip;
-#endif
-	  layers=(weed_plant_t **)g_malloc((num_tracks+1)*sizeof(weed_plant_t *));
 
-#ifdef TEST_THREADING_MT
-	  break_me();
+	  layers=(weed_plant_t **)g_malloc((num_tracks+1)*sizeof(weed_plant_t *));
 
 	  // get list of active tracks from mainw->filter map
 	  get_active_track_list(mainw->clip_index,mainw->num_tracks,mainw->filter_map);
@@ -3421,7 +3416,6 @@ lives_render_error_t render_events (boolean reset) {
 	      if (mainw->track_decoders[i]==mainw->files[oclip]->ext_src) mainw->ext_src_used[oclip]=TRUE;
 	    }
 	  }
-#endif
 
 	  for (i=0;i<num_tracks;i++) {
 	    if (clip_index[i]>0&&frame_index[i]>0&&mainw->multitrack!=NULL) is_blank=FALSE;
@@ -3430,8 +3424,6 @@ lives_render_error_t render_events (boolean reset) {
 	    weed_set_int_value(layers[i],"frame",frame_index[i]);
 	    weed_set_voidptr_value(layers[i],"pixel_data",NULL);
 
-
-#ifdef TEST_THREADING_MT
 	    if ((oclip=mainw->old_active_track_list[i])!=(nclip=mainw->active_track_list[i])) {
 	      // now using threading, we want to start pulling all pixel_data for all active layers here
 	      // however, we may have more than one copy of the same clip - in this case we want to create clones of the decoder plugin
@@ -3452,17 +3444,13 @@ lives_render_error_t render_events (boolean reset) {
 	      }
 
 	      if (nclip>0) {
-		g_print("\nhere !!!\n");
 		if (mainw->files[nclip]->clip_type==CLIP_TYPE_FILE) {
-		  g_print("\nhere2 !!!\n");
 		  if (!mainw->ext_src_used[nclip]) {
-		    g_print("\nhere3 !!!\n");
 		    mainw->track_decoders[i]=mainw->files[nclip]->ext_src;
 		    mainw->ext_src_used[nclip]=TRUE;
 		  }
 		  else {
 		    // add new clone for nclip
-		    g_print("creating clone for track %d\n",i);
 		    mainw->track_decoders[i]=clone_decoder(nclip);
 		  }
 		}
@@ -3479,12 +3467,8 @@ lives_render_error_t render_events (boolean reset) {
 	      g_print("pft.");
 	    }
 	    else {
-#else
 	      weed_set_voidptr_value(layers[i],"pixel_data",NULL);
-#endif
-#ifdef TEST_THREADING_MT
 	    }
-#endif
 	  }
 	  layers[i]=NULL;
 	  
@@ -4366,7 +4350,6 @@ boolean deal_with_render_choice (boolean add_deinit) {
       // preview
       cfile->next_event=get_first_event(mainw->event_list);
       mainw->is_rendering=TRUE;
-      init_track_decoders();
       on_preview_clicked (NULL,NULL);
       free_track_decoders();
       deinit_render_effects();

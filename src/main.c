@@ -4796,8 +4796,6 @@ static void get_max_opsize(int *opwidth, int *opheight) {
 
 
 void init_track_decoders(void) {
-#define TEST_THREADING_MT
-#ifdef TEST_THREADING_MT
   register int i;
 
   for (i=0;i<MAX_TRACKS;i++) {
@@ -4805,15 +4803,10 @@ void init_track_decoders(void) {
     mainw->old_active_track_list[i]=mainw->active_track_list[i]=0;
   }
   for (i=0;i<MAX_FILES;i++) mainw->ext_src_used[i]=FALSE;
-
-  g_print("itd\n");
-
-#endif
 }
 
 
 void free_track_decoders(void) {
-#ifdef TEST_THREADING_MT
   register int i;
 
   for (i=0;i<MAX_TRACKS;i++) {
@@ -4821,9 +4814,6 @@ void free_track_decoders(void) {
 	(mainw->active_track_list[i]<=0||mainw->track_decoders[i]!=mainw->files[mainw->active_track_list[i]]->ext_src))
       close_decoder_plugin(mainw->track_decoders[i]);
   }
-
-  g_print("ftd\n");
-#endif
 }
 
 
@@ -5192,14 +5182,9 @@ void load_frame_image(int frame) {
 	  }
 	}
 	else {
-#ifdef TEST_THREADING_MT
 	  int oclip,nclip;
-#endif
 	  register int i;
 	  weed_plant_t **layers=(weed_plant_t **)g_malloc((mainw->num_tracks+1)*sizeof(weed_plant_t *));
-
-#ifdef TEST_THREADING_MT
-	  break_me();
 
 	  // get list of active tracks from mainw->filter map
 	  get_active_track_list(mainw->clip_index,mainw->num_tracks,mainw->filter_map);
@@ -5207,10 +5192,10 @@ void load_frame_image(int frame) {
 	    oclip=mainw->old_active_track_list[i];
 	    mainw->ext_src_used[oclip]=FALSE;
 	    if (oclip>0&&oclip==(nclip=mainw->active_track_list[i])) {
+	      // check if ext_src survives old->new
 	      if (mainw->track_decoders[i]==mainw->files[oclip]->ext_src) mainw->ext_src_used[oclip]=TRUE;
 	    }
 	  }
-#endif
 
 	  for (i=0;i<mainw->num_tracks;i++) {
 	    layers[i]=weed_plant_new(WEED_PLANT_CHANNEL);
@@ -5220,16 +5205,10 @@ void load_frame_image(int frame) {
 							    mainw->files[mainw->clip_index[i]]->img_type==
 							    IMG_TYPE_JPEG)?WEED_PALETTE_RGB24:WEED_PALETTE_RGBA32);
 
-#ifdef TEST_THREADING_MT
 	    if ((oclip=mainw->old_active_track_list[i])!=(nclip=mainw->active_track_list[i])) {
 	      // now using threading, we want to start pulling all pixel_data for all active layers here
 	      // however, we may have more than one copy of the same clip - in this case we want to create clones of the decoder plugin
 	      // this is to prevent constant seeking between different frames in the clip
-
-	      // check if ext_src survives old->new
-
-
-	      ////
 	      if (oclip>0) {
 		if (mainw->files[oclip]->clip_type==CLIP_TYPE_FILE) {
 		  if (mainw->track_decoders[i]!=(lives_decoder_t *)mainw->files[oclip]->ext_src) {
@@ -5264,15 +5243,10 @@ void load_frame_image(int frame) {
 	      g_print("pft.");
 	    }
 	    else {
-#else
 	      weed_set_voidptr_value(layers[i],"pixel_data",NULL);
-#endif
-#ifdef TEST_THREADING_MT
 	    }
-#endif
 	  }
 	  layers[i]=NULL;
-	  
 
 	  mainw->frame_layer=weed_apply_effects(layers,mainw->filter_map,tc,opwidth,opheight,mainw->pchains);
 	  

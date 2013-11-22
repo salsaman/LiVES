@@ -2778,7 +2778,8 @@ void play_file (void) {
       if (mainw->event_list!=NULL&&!mainw->record) {
 	if (pb_start_event==NULL) pb_start_event=get_first_event(mainw->event_list);
 
-	init_track_decoders();
+	if (!(mainw->preview&&mainw->multitrack!=NULL&&mainw->multitrack->is_rendering))
+	  init_track_decoders();
 
 	if (has_audio_buffers) {
 
@@ -2890,7 +2891,8 @@ void play_file (void) {
 
 	cfile->next_event=NULL;
 
-	free_track_decoders();
+	if (!(mainw->preview&&mainw->multitrack!=NULL&&mainw->multitrack->is_rendering))
+	  free_track_decoders();
 
 	// multitrack loop - go back to loop start position unless external transport moved us
 	if (mainw->scratch==SCRATCH_NONE) {

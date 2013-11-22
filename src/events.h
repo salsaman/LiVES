@@ -95,7 +95,7 @@ int get_frame_event_frame (weed_plant_t *, int layer);
 gboolean frame_event_has_frame_for_track (weed_plant_t *event, int track);
 double *get_track_visibility_at_tc(weed_plant_t *event_list, int ntracks, int n_back_tracks, 
 				    weed_timecode_t tc, weed_plant_t **shortcut, gboolean bleedthru);
-int *get_active_track_list(int *clip_index, int num_tracks, weed_plant_t *filter_map);
+void get_active_track_list(int *clip_index, int num_tracks, weed_plant_t *filter_map);
 
 //////////////////////////////////////////////////////////
 ///// render details //////////

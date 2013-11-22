@@ -4802,7 +4802,7 @@ void init_track_decoders(void) {
 
   for (i=0;i<MAX_TRACKS;i++) {
     mainw->track_decoders[i]=NULL;
-    mainw->old_active_track_list[i]=0;
+    mainw->old_active_track_list[i]=mainw->active_track_list[i]=0;
   }
   for (i=0;i<MAX_FILES;i++) mainw->ext_src_used[i]=FALSE;
 
@@ -5202,7 +5202,7 @@ void load_frame_image(int frame) {
 	  break_me();
 
 	  // get list of active tracks from mainw->filter map
-	  mainw->active_track_list=get_active_track_list(mainw->clip_index,mainw->num_tracks,mainw->filter_map);
+	  get_active_track_list(mainw->clip_index,mainw->num_tracks,mainw->filter_map);
 	  for (i=0;i<mainw->num_tracks;i++) {
 	    oclip=mainw->old_active_track_list[i];
 	    mainw->ext_src_used[oclip]=FALSE;

@@ -929,7 +929,7 @@ static void disp_fraction(int done, int start, int end, double timesofar, xproce
 
 static int progress_count;
 
-#define PROG_LOOP_VAL 50
+#define PROG_LOOP_VAL 200
 
 static void progbar_pulse_or_fraction(file *sfile, int frames_done) {
   double timesofar;

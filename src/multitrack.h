@@ -851,8 +851,8 @@ void remove_current_from_affected_layouts(lives_mt *);
 
 // auto backup
 uint32_t mt_idle_add(lives_mt *);
-void recover_layout(GtkButton *, gpointer);
-void recover_layout_cancelled(GtkButton *, gpointer user_data);
+void recover_layout(void);
+void recover_layout_cancelled(boolean is_startup);
 boolean write_backup_layout_numbering(lives_mt *);
 
 

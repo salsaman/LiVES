@@ -2617,52 +2617,9 @@ _entryw* create_cds_dialog (int type) {
 
 
 void do_layout_recover_dialog(void) {
-  GtkWidget *label;
-  GtkWidget *dialog_vbox;
-  GtkWidget *okbutton;
-  GtkWidget *cancelbutton;
-
-  GtkAccelGroup *accel_group=GTK_ACCEL_GROUP(lives_accel_group_new ());
-
-  GtkWidget *mdialog=lives_standard_dialog_new (_("LiVES: recover layout ?"),FALSE);
-
-  lives_window_add_accel_group (LIVES_WINDOW (mdialog), accel_group);
-
-  if (prefs->show_gui) {
-    lives_window_set_transient_for(LIVES_WINDOW(mdialog),GTK_WINDOW(mainw->LiVES));
-  }
-
-  dialog_vbox = lives_dialog_get_content_area(LIVES_DIALOG(mdialog));
-  
-  widget_opts.justify=LIVES_JUSTIFY_CENTER;
-  label = lives_standard_label_new 
-    (_("\nLiVES has detected a multitrack layout from a previous session.\nWould you like to try and recover it ?\n"));
-  widget_opts.justify=LIVES_JUSTIFY_DEFAULT;
-
-
-  lives_container_add (LIVES_CONTAINER (dialog_vbox), label);
-
-
-  cancelbutton = lives_button_new_from_stock ("gtk-cancel");
-  lives_widget_show (cancelbutton);
-  lives_dialog_add_action_widget (LIVES_DIALOG (mdialog), cancelbutton, GTK_RESPONSE_CANCEL);
-  lives_widget_set_can_focus_and_default (cancelbutton);
-
-  okbutton = lives_button_new_from_stock ("gtk-ok");
-  lives_widget_show (okbutton);
-  lives_dialog_add_action_widget (LIVES_DIALOG (mdialog), okbutton, GTK_RESPONSE_OK);
-  lives_widget_set_can_focus_and_default (okbutton);
-  lives_widget_grab_default(okbutton);
-  lives_widget_grab_focus(okbutton);
-
-  g_signal_connect (cancelbutton, "clicked",G_CALLBACK (recover_layout_cancelled),NULL);
-
-  g_signal_connect (okbutton, "clicked",G_CALLBACK (recover_layout),NULL);
-
-  lives_widget_add_accelerator (cancelbutton, "activate", accel_group,
-                              LIVES_KEY_Escape, (GdkModifierType)0, (GtkAccelFlags)0);
-
-  lives_widget_show_all(mdialog);
+  if (!do_yesno_dialog(_("\nLiVES has detected a multitrack layout from a previous session.\nWould you like to try and recover it ?\n")))
+    recover_layout_cancelled(TRUE);
+  else recover_layout();
 }
 
 

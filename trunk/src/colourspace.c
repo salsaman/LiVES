@@ -1701,7 +1701,6 @@ void *convert_yuva8888_to_argb_frame_thread(void *data) {
 static void convert_yuv420p_to_rgb_frame(uint8_t **src, int width, int height, int orowstride, 
 					 uint8_t *dest, boolean add_alpha, boolean is_422, int sample_type, 
 					 boolean clamped) {
-  // TODO - handle dvpal in sampling type
   register int i,j;
   uint8_t *s_y=src[0],*s_u=src[1],*s_v=src[2];
   boolean chroma=FALSE;
@@ -1754,7 +1753,7 @@ static void convert_yuv420p_to_rgb_frame(uint8_t **src, int width, int height, i
 
       if (add_alpha) dest[j+3]=dest[j+7]=255;
 
-      if (!is_422&&chroma&&i>0) {
+      if (!is_422&&!chroma&&i>0) {
 	// pass 2
 	// average two src rows
 	dest[j-widthx]=cavgrgb[dest[j-widthx]][dest[j]];
@@ -1765,9 +1764,8 @@ static void convert_yuv420p_to_rgb_frame(uint8_t **src, int width, int height, i
 	dest[j-opsize+2-widthx]=cavgrgb[dest[j-opsize+2-widthx]][dest[j-opsize+2]];
       }
     }
-    if (!is_422&&!chroma) {
+    if (!is_422&&chroma) {
       if (i>0) {
-	// TODO
 	dest[j-opsize-widthx]=cavgrgb[dest[j-opsize-widthx]][dest[j-opsize]];
 	dest[j-opsize+1-widthx]=cavgrgb[dest[j-opsize+1-widthx]][dest[j-opsize+1]];
 	dest[j-opsize+2-widthx]=cavgrgb[dest[j-opsize+2-widthx]][dest[j-opsize+2]];
@@ -1778,6 +1776,7 @@ static void convert_yuv420p_to_rgb_frame(uint8_t **src, int width, int height, i
     chroma=!chroma;
     dest+=orowstride;
   }
+
 }
 
 
@@ -8280,10 +8279,7 @@ boolean convert_layer_palette_full(weed_plant_t *layer, int outpl, int osamtype,
       isamtype=osamtype;
       iclamped=oclamping;
 #ifdef DEBUG_PCONV
-      gchar *tmp2,*tmp3;
       g_print("subspace conversion via palette %s\n",weed_palette_get_name(inpl));
-      g_free(tmp2);
-      g_free(tmp3);
 #endif
     }
   }

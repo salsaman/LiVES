@@ -240,15 +240,15 @@ boolean check_clip_integrity(int fileno, const lives_clip_data_t *cdata) {
 
   if (sfile->fps!=cdata->fps) goto mismatch;
 
-  if (sfile->img_type!=empirical_img_type) goto mismatch;
-
+  if (sfile->img_type!=empirical_img_type) sfile->img_type=empirical_img_type;
+  
   // and all else are equal
   return TRUE;
 
  mismatch:
+  // something mismatched - trust the disk version
   ((lives_clip_data_t *)cdata)->fps=sfile->pb_fps=sfile->fps;
 
-  // something mismatched - trust the disk version
   sfile->img_type=empirical_img_type;
 
   return FALSE;

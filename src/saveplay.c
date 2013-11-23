@@ -4231,8 +4231,6 @@ boolean read_headers(const gchar *file_name) {
 	  return FALSE;
 	}
 
-	g_print("Val buf %s\n",buff);
-
 	pieces=get_token_count (buff,'|');
 
 	if (pieces>3) {
@@ -4248,7 +4246,7 @@ boolean read_headers(const gchar *file_name) {
 	}
 
 	threaded_dialog_spin();
-	g_print("Vals %d %d %d\n",mainw->current_file,cfile->img_type,cfile->clip_type);
+
 	do {
 	  retval2=0;
 	  if (!cache_file_contents(lives_header)) {
@@ -5650,15 +5648,12 @@ static boolean recover_files(gchar *recovery_file, boolean auto_recover) {
 
       //create a new cfile and fill in the details
       create_cfile();
-      g_print("Vals %d and %d\n",mainw->current_file,cfile->img_type);
       threaded_dialog_spin();
 
       if (!is_scrap) {
 	if (!is_ascrap) {
 	  // get file details
 	  read_headers(".");
-	  g_print("Vals2dyyy %d and %d\n",mainw->current_file,cfile->img_type);
-      
 	}
 	else {
 	  lives_clip_details_t detail;
@@ -5711,9 +5706,7 @@ static boolean recover_files(gchar *recovery_file, boolean auto_recover) {
 
       if (load_frame_index(mainw->current_file)) {
 	// CLIP_TYPE_FILE
-	g_print("Vals2dxx %d and %d\n",mainw->current_file,cfile->img_type);
 	if (!reload_clip(mainw->current_file)) continue;
-	g_print("Vals2drrr %d and %d\n",mainw->current_file,cfile->img_type);
       }
       else {
 	// CLIP_TYPE_DISK
@@ -5727,14 +5720,12 @@ static boolean recover_files(gchar *recovery_file, boolean auto_recover) {
 	}
 	if (is_ascrap&&cfile->afilesize==0) reget_afilesize(mainw->current_file);
       }
-      g_print("Vals2d %d and %d\n",mainw->current_file,cfile->img_type);
 
       if (!is_scrap&&!is_ascrap) {
 	// read the playback fps, play frame, and name
 	threaded_dialog_spin();
 	open_set_file (mainw->set_name,++clipnum);
 	threaded_dialog_spin();
-	g_print("Vals2e %d and %d\n",mainw->current_file,cfile->img_type);
 
 	if (mainw->cached_list!=NULL) {
 	  threaded_dialog_spin();
@@ -5765,7 +5756,6 @@ static boolean recover_files(gchar *recovery_file, boolean auto_recover) {
 	cfile->changed=TRUE;
 	unlink (cfile->info_file);
 	set_main_title(cfile->name,0);
-	g_print("Vals2 %d and %d\n",mainw->current_file,cfile->img_type);
 
 	if (mainw->multitrack!=NULL) {
 	  int current_file=mainw->current_file;

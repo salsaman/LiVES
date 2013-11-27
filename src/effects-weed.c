@@ -1650,6 +1650,9 @@ lives_filter_error_t weed_apply_instance (weed_plant_t *inst, weed_plant_t *init
   if (!weed_plant_has_leaf(inst,"in_channels")||(in_channels=weed_get_plantptr_array(inst,"in_channels",&error))==NULL) {
     if (out_channels==NULL&&weed_plant_has_leaf(inst,"out_parameters")) {
 
+      // run it only if it outputs into effects which have video chans
+      if (!feeds_to_video_filters(key,rte_key_getmode(key+1))) return FILTER_ERROR_NO_IN_CHANNELS;
+
       // data processing effect; just call the process_func
       weed_set_double_value(inst,"fps",cfile->pb_fps);
 
@@ -2675,8 +2678,9 @@ static lives_filter_error_t weed_apply_audio_instance_inner (weed_plant_t *inst,
   void *adata=NULL,*adata0=NULL;
 
   boolean inplace=FALSE;
+  boolean did_thread=FALSE;
 
-  int channel_flags;
+  int channel_flags,filter_flags=0;
   int num_in_tracks,num_out_tracks;
 
   int num_ctmpl,num_inc;
@@ -2690,10 +2694,43 @@ static lives_filter_error_t weed_apply_audio_instance_inner (weed_plant_t *inst,
   // TODO - handle the following:
   // input audio_channels are mono, but the plugin NEEDS stereo
 
+  if (weed_plant_has_leaf(filter,"flags")) filter_flags=weed_get_int_value(filter,"flags",&error);
+
   if (weed_plant_has_leaf(inst,"host_key")) key=weed_get_int_value(inst,"host_key",&error);
 
-  if (!weed_plant_has_leaf(inst,"in_channels")||(in_channels=weed_get_plantptr_array(inst,"in_channels",&error))==NULL) 
+  // here, in_tracks and out_tracks map our layers to in_channels and out_channels in the filter
+  if (!weed_plant_has_leaf(inst,"in_channels")||(in_channels=weed_get_plantptr_array(inst,"in_channels",&error))==NULL) {
+    if (out_channels==NULL&&weed_plant_has_leaf(inst,"out_parameters")) {
+
+      // run it only if it outputs into effects which have video chans
+      if (!feeds_to_audio_filters(key,rte_key_getmode(key+1))) return FILTER_ERROR_NO_IN_CHANNELS;
+
+      // data processing effect; just call the process_func
+      weed_set_double_value(inst,"fps",cfile->pb_fps);
+
+      // see if we can multithread
+      if ((prefs->nfx_threads=future_prefs->nfx_threads)>1 && 
+	  filter_flags&WEED_FILTER_HINT_MAY_THREAD) {
+	filter_mutex_lock(key);
+	retval=process_func_threaded(inst,out_channels,tc);
+	filter_mutex_unlock(key);
+	if (retval!=FILTER_ERROR_DONT_THREAD) did_thread=TRUE;
+      }
+      if (!did_thread) {
+	// normal single threaded version
+	int ret;
+	weed_leaf_get(filter,"process_func",0,(void *)&process_func_ptr_ptr);
+	process_func=process_func_ptr_ptr[0];
+	filter_mutex_lock(key);
+	ret=(*process_func)(inst,tc);
+	filter_mutex_unlock(key);
+	if (ret==WEED_ERROR_PLUGIN_INVALID) retval=FILTER_ERROR_MUST_RELOAD;
+      }
+      return retval;
+    }
+
     return FILTER_ERROR_NO_IN_CHANNELS;
+  }
 
   if (get_enabled_channel(inst,0,TRUE)==NULL) {
     // we process generators elsewhere

@@ -2158,6 +2158,116 @@ boolean cconx_chain_data_internal(weed_plant_t *ichan) {
 
 
 
+boolean feeds_to_video_filters(int okey, int omode) {
+  weed_plant_t *filter;
+  gchar **array;
+  gchar *chlist;
+  int nparams,niparams;
+  int ikey,imode;
+
+  register int i,j;
+
+  filter=rte_keymode_get_filter(okey+1,omode);
+
+  nparams=num_out_params(filter);
+
+  for (i=0;i<nparams;i++) {
+    chlist=pconx_list(okey,omode,i);
+    niparams=get_token_count(chlist,' ')/4;
+    array=g_strsplit(chlist," ",-1);
+    for (j=0;j<niparams;j+=4) {
+      ikey=atoi(array[j]);
+      imode=atoi(array[j+1]);
+      if (imode!=rte_key_getmode(ikey+1)) continue;
+      filter=rte_keymode_get_filter(ikey+1,imode);
+      if (has_video_chans_in(filter,TRUE)||has_video_chans_out(filter,TRUE)) {
+	g_strfreev(array);
+	g_free(chlist);
+	return TRUE;
+      }
+    }
+    g_strfreev(array);
+    g_free(chlist);
+  }
+
+  for (i=0;i<nparams;i++) {
+    chlist=cconx_list(okey,omode,i);
+    niparams=get_token_count(chlist,' ')/3;
+    array=g_strsplit(chlist," ",-1);
+    for (j=0;j<niparams;j+=3) {
+      ikey=atoi(array[j]);
+      imode=atoi(array[j+1]);
+      if (imode!=rte_key_getmode(ikey+1)) continue;
+      g_strfreev(array);
+      g_free(chlist);
+      return TRUE;
+    }
+    g_strfreev(array);
+    g_free(chlist);
+  }
+
+  return FALSE;
+}
+
+
+
+boolean feeds_to_audio_filters(int okey, int omode) {
+  weed_plant_t *filter;
+  gchar **array;
+  gchar *chlist;
+  int nparams,niparams;
+  int ikey,imode;
+
+  register int i,j;
+
+  filter=rte_keymode_get_filter(okey+1,omode);
+
+  nparams=num_out_params(filter);
+
+  for (i=0;i<nparams;i++) {
+    chlist=pconx_list(okey,omode,i);
+    niparams=get_token_count(chlist,' ')/4;
+    array=g_strsplit(chlist," ",-1);
+    for (j=0;j<niparams;j+=4) {
+      ikey=atoi(array[j]);
+      imode=atoi(array[j+1]);
+      if (imode!=rte_key_getmode(ikey+1)) continue;
+      filter=rte_keymode_get_filter(ikey+1,imode);
+      if (has_audio_chans_in(filter,TRUE)||has_audio_chans_out(filter,TRUE)) {
+	g_strfreev(array);
+	g_free(chlist);
+	return TRUE;
+      }
+    }
+    g_strfreev(array);
+    g_free(chlist);
+  }
+
+  for (i=0;i<nparams;i++) {
+    chlist=cconx_list(okey,omode,i);
+    niparams=get_token_count(chlist,' ')/3;
+    array=g_strsplit(chlist," ",-1);
+    for (j=0;j<niparams;j+=3) {
+      ikey=atoi(array[j]);
+      imode=atoi(array[j+1]);
+      if (imode!=rte_key_getmode(ikey+1)) continue;
+      filter=rte_keymode_get_filter(ikey+1,imode);
+      if (has_audio_chans_in(filter,TRUE)||has_audio_chans_out(filter,TRUE)) {
+	g_strfreev(array);
+	g_free(chlist);
+	return TRUE;
+      }
+    }
+    g_strfreev(array);
+    g_free(chlist);
+  }
+
+  return FALSE;
+}
+
+
+
+
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 

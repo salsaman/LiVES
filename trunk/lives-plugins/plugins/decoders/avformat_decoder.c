@@ -1084,14 +1084,10 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstride
     //
 
     while (1) {
-      boolean got_packet=FALSE;
       do {
 	int ret;
 
-	if (got_packet) av_free_packet(&priv->packet);
- 
 	ret=av_read_frame( priv->ic, &priv->packet );
-	got_packet=TRUE;
 
 #ifdef DEBUG
 	fprintf(stderr,"ret was %d for tframe %ld\n",ret,tframe);

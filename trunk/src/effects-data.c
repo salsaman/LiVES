@@ -25,11 +25,7 @@
 #include "support.h"
 #include "ce_thumbs.h"
 
-// TODO:
-//del: - del button sens, pclabels
-
-
-// - re-implement autoconnect
+// TODO
 // - pcombos sens/insens
 // - connected warning should show where connected FROM
 
@@ -45,6 +41,9 @@ static void ptable_row_add_variable_widgets(lives_conx_w *, int idx, int row, in
 
 static void ctable_row_add_standard_widgets(lives_conx_w *, int idx);
 static void ctable_row_add_variable_widgets(lives_conx_w *, int idx, int row, int cidx);
+
+static void padd_clicked(GtkWidget *button, gpointer user_data);
+static void cadd_clicked(GtkWidget *button, gpointer user_data);
 
 static void dfxp_changed(GtkWidget *, gpointer conxwp);
 
@@ -2325,7 +2324,7 @@ static void apbutton_clicked(GtkButton *button, gpointer user_data) {
   // autoconnect each param with a compatible one in the target
   lives_conx_w *conxwp=(lives_conx_w *)user_data;
 
-  GtkWidget *combo=(GtkWidget *)conxwp->pfxcombo[EXTRA_PARAMS_OUT];
+  GtkWidget *combo;
 
   GtkTreeIter iter;
   GtkTreeModel *model;
@@ -2334,13 +2333,17 @@ static void apbutton_clicked(GtkButton *button, gpointer user_data) {
   weed_plant_t **iparams,**oparams;
   weed_plant_t *filter,*param,*oparam;
 
-  int fidx,key,mode;
-  int niparams;
+  int fidx,key,mode,totchans;
+  int niparams,ours,addn;
   int error;
 
-  register int i,j=0,k=0;
+  register int i,k=1;
 
-  // TODO !!!
+  // get filter from last connection from first parameter
+
+  ours=pconx_get_numcons(conxwp,-EXTRA_PARAMS_OUT)+pconx_get_numcons(conxwp,0)-1;
+
+  combo=(GtkWidget *)conxwp->pfxcombo[ours];
 
   if (!lives_combo_get_active_iter(LIVES_COMBO(combo),&iter)) return;
   model=lives_combo_get_model(LIVES_COMBO(combo));
@@ -2361,36 +2364,43 @@ static void apbutton_clicked(GtkButton *button, gpointer user_data) {
 
   oparams=weed_get_plantptr_array(rte_keymode_get_filter(conxwp->okey+1,conxwp->omode),"out_parameter_templates",&error);
 
+  totchans=cconx_get_numcons(conxwp,FX_DATA_WILDCARD);
+
   // set all pcombo with params
-  for (i=0;i<niparams;i++) {
+  for (i=1;i<niparams;i++) {
 
-    param=iparams[j++];
+    param=iparams[i];
 
-    if (weed_plant_has_leaf(param,"host_internal_connection")) {
-      i--;
-      continue;
-    }
+    if (weed_plant_has_leaf(param,"host_internal_connection")) continue;
 
-    if (pconx_get_out_param(TRUE,key,mode,j-1,NULL,NULL)!=NULL) continue;
+    if (pconx_get_out_param(TRUE,key-1,mode,i,NULL,NULL)!=NULL) continue;
 
     oparam=oparams[k];
 
     if (!params_compatible(oparam,param)) continue;
+    
+    addn=pconx_get_numcons(conxwp,k);
 
-    if (k>0) {
-      model=lives_combo_get_model(LIVES_COMBO(conxwp->pfxcombo[k+EXTRA_PARAMS_OUT]));
-      gtk_tree_model_get_iter(model,&iter,tpath);
-      lives_combo_set_active_iter(LIVES_COMBO(conxwp->pfxcombo[k+EXTRA_PARAMS_OUT]),&iter);
-      lives_widget_context_update();
+    ours+=addn;
+
+    combo=conxwp->pcombo[ours];
+
+    if (conxwp->ikeys[ours+totchans]!=0) {
+      // add another if needed
+      padd_clicked(conxwp->add_button[ours+totchans],(gpointer)conxwp);
+      ours++;
     }
 
-    lives_combo_set_active_index(LIVES_COMBO(conxwp->pcombo[k+EXTRA_PARAMS_OUT]),i+EXTRA_PARAMS_IN);
+    combo=conxwp->pfxcombo[ours];
+    model=lives_combo_get_model(LIVES_COMBO(combo));
+    gtk_tree_model_get_iter(model,&iter,tpath);
+    lives_combo_set_active_iter(LIVES_COMBO(combo),&iter);
+    lives_widget_context_update();
 
-    if (++k>=conxwp->num_params) break;
+    lives_combo_set_active_index(LIVES_COMBO(conxwp->pcombo[ours]),i+EXTRA_PARAMS_IN);
+
+    if (++k>=conxwp->num_params-EXTRA_PARAMS_OUT) break;
   }
-
-  // TODO - set others to blank ??
-
 
   gtk_tree_path_free(tpath);
 
@@ -2404,22 +2414,26 @@ static void acbutton_clicked(GtkButton *button, gpointer user_data) {
   // autoconnect each channel with a compatible one in the target
   lives_conx_w *conxwp=(lives_conx_w *)user_data;
 
-  GtkWidget *combo=(GtkWidget *)conxwp->cfxcombo[0];
+  GtkWidget *combo;
 
   GtkTreeIter iter;
   GtkTreeModel *model;
   GtkTreePath *tpath;
 
-  weed_plant_t **ichans;
-  weed_plant_t *filter,*chan;
+  weed_plant_t **ichans,**ochans;
+  weed_plant_t *filter,*chan,*ochan;
 
   int fidx,key,mode;
-  int nichans;
+  int nichans,nochans,ours,addn;
   int error;
 
-  register int i,j=0,k=0;
+  register int i,k=1;
 
-  /// TODO
+  // get filter from last connection from first parameter
+
+  ours=cconx_get_numcons(conxwp,0)-1;
+
+  combo=(GtkWidget *)conxwp->cfxcombo[ours];
 
   if (!lives_combo_get_active_iter(LIVES_COMBO(combo),&iter)) return;
   model=lives_combo_get_model(LIVES_COMBO(combo));
@@ -2427,10 +2441,10 @@ static void acbutton_clicked(GtkButton *button, gpointer user_data) {
   gtk_tree_model_get(model,&iter,KEYVAL_COLUMN,&key,MODEVAL_COLUMN,&mode,-1);
   fidx=rte_keymode_get_filter_idx(key,mode);
 
-
   if (fidx==-1) return;
 
   tpath=gtk_tree_model_get_path(model,&iter);
+  gtk_tree_model_get_iter(model,&iter,tpath);
 
   // find the receiving filter/instance
   filter=get_weed_filter(fidx);
@@ -2438,34 +2452,53 @@ static void acbutton_clicked(GtkButton *button, gpointer user_data) {
   ichans=weed_get_plantptr_array(filter,"in_channel_templates",&error);
   nichans=weed_leaf_num_elements(filter,"in_channel_templates");
 
+  ochans=weed_get_plantptr_array(rte_keymode_get_filter(conxwp->okey+1,conxwp->omode),"out_channel_templates",&error);
+  nochans=weed_leaf_num_elements(rte_keymode_get_filter(conxwp->okey+1,conxwp->omode),"out_channel_templates");
+
+
   // set all ccombo with chans
-  for (i=0;i<nichans;i++) {
+  for (i=1;i<nichans;i++) {
 
-    chan=ichans[j++];
+    chan=ichans[i];
 
-    if (!has_alpha_palette(chan)) {
-      i--;
+    if (!has_alpha_palette(chan)) continue;
+
+    if (cconx_get_out_alpha(TRUE,key-1,mode,i)!=NULL) continue;
+
+    ochan=ochans[k];
+
+    if (!has_alpha_palette(ochan)) {
+      if (++k>=nochans) break;
       continue;
     }
 
-    if (cconx_get_out_alpha(TRUE,key,mode,j-1)!=NULL) continue;
+    addn=cconx_get_numcons(conxwp,k);
 
-    if (k>0) {
-      model=lives_combo_get_model(LIVES_COMBO(conxwp->cfxcombo[k]));
-      gtk_tree_model_get_iter(model,&iter,tpath);
-      lives_combo_set_active_iter(LIVES_COMBO(conxwp->cfxcombo[k]),&iter);
-      lives_widget_context_update();
+    ours+=addn;
+
+    combo=conxwp->ccombo[ours];
+
+    if (conxwp->ikeys[ours]!=0) {
+      // add another if needed
+      cadd_clicked(conxwp->add_button[ours],(gpointer)conxwp);
+      ours++;
     }
-    lives_combo_set_active_index(LIVES_COMBO(conxwp->ccombo[k++]),i);
-    if (k>=conxwp->num_alpha) break;
+
+    combo=conxwp->cfxcombo[ours];
+    model=lives_combo_get_model(LIVES_COMBO(combo));
+    gtk_tree_model_get_iter(model,&iter,tpath);
+    lives_combo_set_active_iter(LIVES_COMBO(combo),&iter);
+    lives_widget_context_update();
+
+    lives_combo_set_active_index(LIVES_COMBO(conxwp->ccombo[ours]),i);
+
+    if (++k>=nochans) break;
   }
-
-  // TODO - set others to blank
-
 
   gtk_tree_path_free(tpath);
 
   weed_free(ichans);
+  weed_free(ochans);
 }
 
 
@@ -2584,12 +2617,13 @@ static void padd_clicked(GtkWidget *button, gpointer user_data) {
 
     conxwp->dpp_func[i+1]=conxwp->dpp_func[i];
 
-
   }
 
   ptable_row_add_variable_widgets(conxwp,ours+1,ours+2,pidx);
 
   conxwp->ikeys[ours+1]=conxwp->imodes[ours+1]=conxwp->idx[i+1]=0;
+
+  conxwp->dispp[pidx+EXTRA_PARAMS_OUT]++;
 
   lives_widget_show_all(conxwp->tablep);
 
@@ -2867,6 +2901,8 @@ static void cadd_clicked(GtkWidget *button, gpointer user_data) {
   ctable_row_add_variable_widgets(conxwp,ours+1,ours+2,cidx);
 
   conxwp->ikeys[ours+1]=conxwp->imodes[ours+1]=conxwp->idx[i+1]=0;
+
+  conxwp->dispc[cidx]++;
 
   lives_widget_show_all(conxwp->tablec);
 

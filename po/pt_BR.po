@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: LiVES\n"
 "Report-Msgid-Bugs-To: https://sourceforge.net/p/lives/bugs/\n"
-"POT-Creation-Date: 2013-11-22 19:54-0300\n"
+"POT-Creation-Date: 2013-11-28 00:42-0300\n"
 "PO-Revision-Date: 2013-03-14 12:31+0000\n"
 "Last-Translator: Launchpad Translations Administrators <Unknown>\n"
 "Language-Team: pixel <vjpixel@gmail.com>\n"
@@ -713,12 +713,12 @@ msgid "Closed file %s\n"
 msgstr "Arquivo %s fechado\n"
 
 #: src/main.c:6398 src/gui.c:651 src/utils.c:4217 src/utils.c:4249
-#: src/saveplay.c:3510 src/multitrack.c:4503 src/multitrack.c:6267
+#: src/saveplay.c:3511 src/multitrack.c:4503 src/multitrack.c:6267
 msgid "_Undo"
 msgstr "Desfazer [_U]"
 
 #: src/main.c:6399 src/gui.c:664 src/utils.c:4218 src/utils.c:4250
-#: src/saveplay.c:3511 src/multitrack.c:4524 src/multitrack.c:6290
+#: src/saveplay.c:3512 src/multitrack.c:4524 src/multitrack.c:6290
 msgid "_Redo"
 msgstr "_Refazer"
 
@@ -1986,7 +1986,7 @@ msgid "Copying frames %d to %d%s to the clipboard..."
 msgstr "Copiando frames %d até %d%s para a área de transferência..."
 
 #: src/callbacks.c:2482 src/saveplay.c:1495 src/saveplay.c:1661
-#: src/saveplay.c:1740 src/saveplay.c:3975
+#: src/saveplay.c:1740 src/saveplay.c:3976
 msgid "Pulling frames from clip"
 msgstr "Pegando frames do clipe"
 
@@ -2478,7 +2478,7 @@ msgid ""
 "%s\n"
 msgstr ""
 
-#: src/callbacks.c:6916 src/saveplay.c:3579
+#: src/callbacks.c:6916 src/saveplay.c:3580
 #, c-format
 msgid "%d frames are enough !\n"
 msgstr "%d frames são suficientes!\n"
@@ -4128,7 +4128,7 @@ msgstr "Abrindo %s"
 msgid "Opening %s start time %.2f sec. frames %d"
 msgstr "Abrindo %s tempo inicial %.2f seg. frames %d"
 
-#: src/saveplay.c:326 src/saveplay.c:3962
+#: src/saveplay.c:326 src/saveplay.c:3963
 msgid " without sound"
 msgstr " sem som"
 
@@ -4296,12 +4296,12 @@ msgstr "gravação cancelada pela visualização.\n"
 msgid "Recording performance..."
 msgstr "Gravando performance..."
 
-#: src/saveplay.c:3269
+#: src/saveplay.c:3270
 #, c-format
 msgid "Average FPS was %.4f\n"
 msgstr "FPS médio era %.4f\n"
 
-#: src/saveplay.c:3275
+#: src/saveplay.c:3276
 msgid ""
 "\n"
 "\n"
@@ -4315,16 +4315,16 @@ msgstr ""
 "Vá em 'Ferramentas | Redimensionar Todos'\n"
 "e redimensione todos frames para o tamanho atual.\n"
 
-#: src/saveplay.c:3440
+#: src/saveplay.c:3441
 msgid "Unknown"
 msgstr "Desconhecido"
 
-#: src/saveplay.c:3549 src/saveplay.c:4542
+#: src/saveplay.c:3550 src/saveplay.c:4547
 #, c-format
 msgid "Untitled%d"
 msgstr "Untitled%d"
 
-#: src/saveplay.c:3594
+#: src/saveplay.c:3595
 #, c-format
 msgid ""
 "\n"
@@ -4332,7 +4332,7 @@ msgid ""
 "Bad things may happen with this clip.\n"
 msgstr ""
 
-#: src/saveplay.c:3684
+#: src/saveplay.c:3685
 #, c-format
 msgid ""
 "\n"
@@ -4344,13 +4344,13 @@ msgstr ""
 "FPS.\n"
 "O padrão pode ser ajustado em 'Ferramentas | Preferências | Misc'.\n"
 
-#: src/saveplay.c:3696
+#: src/saveplay.c:3697
 #, c-format
 msgid "Playback speed was adjusted to %.3f frames per second to fit audio.\n"
 msgstr ""
 "Velocidade de execução ajustada para %.3f fps para se encaixar no áudio.\n"
 
-#: src/saveplay.c:3715
+#: src/saveplay.c:3716
 #, c-format
 msgid ""
 "Frames=%d type=%s size=%dx%d *bpp=Greyscale* fps=%.3f\n"
@@ -4359,7 +4359,7 @@ msgstr ""
 "Frames=%d tipo=%s tamanho=%dx%d *bpp=Greyscale* fps=%.3f\n"
 "Áudio:"
 
-#: src/saveplay.c:3719 src/saveplay.c:4719
+#: src/saveplay.c:3720 src/saveplay.c:4724
 #, c-format
 msgid ""
 "Frames=%d type=%s size=%dx%d bpp=%d fps=%.3f\n"
@@ -4368,54 +4368,54 @@ msgstr ""
 "Frames=%d tipo=%s tamanho=%dx%d bpp=%d fps=%.3f\n"
 "Áudio:"
 
-#: src/saveplay.c:3723 src/saveplay.c:4723
+#: src/saveplay.c:3724 src/saveplay.c:4728
 #, c-format
 msgid "%s none\n"
 msgstr "%s nenhum\n"
 
-#: src/saveplay.c:3735
+#: src/saveplay.c:3736
 #, fuzzy, c-format
 msgid " - Author: %s\n"
 msgstr "Autor: %s"
 
-#: src/saveplay.c:3740
+#: src/saveplay.c:3741
 #, fuzzy, c-format
 msgid " - Title: %s\n"
 msgstr " - Comentário: %s\n"
 
-#: src/saveplay.c:3745
+#: src/saveplay.c:3746
 #, c-format
 msgid " - Comment: %s\n"
 msgstr " - Comentário: %s\n"
 
-#: src/saveplay.c:3858
+#: src/saveplay.c:3859
 #, c-format
 msgid "Saving frame %d as %s..."
 msgstr "Salvando frame %d de %s..."
 
-#: src/saveplay.c:3957
+#: src/saveplay.c:3958
 #, c-format
 msgid "Backing up %s to %s"
 msgstr "Fazendo backup de %s até %s"
 
-#: src/saveplay.c:4010
+#: src/saveplay.c:4011
 msgid "Backing up"
 msgstr "Fazendo backup"
 
-#: src/saveplay.c:4044
+#: src/saveplay.c:4045
 msgid "performance data was backed up..."
 msgstr "backup concluído dos dados da performance..."
 
-#: src/saveplay.c:4618
+#: src/saveplay.c:4623
 #, c-format
 msgid "Restoring %s..."
 msgstr "Restaurando %s..."
 
-#: src/saveplay.c:4649
+#: src/saveplay.c:4654
 msgid "Restoring"
 msgstr "Restaurando"
 
-#: src/saveplay.c:4671
+#: src/saveplay.c:4676
 #, c-format
 msgid ""
 "\n"
@@ -4429,22 +4429,22 @@ msgstr ""
 "LiVES não pode restaurá-lo.\n"
 
 #. TRANSLATORS: rec(ord) %.2f M(ega)B(ytes)
-#: src/saveplay.c:5164
+#: src/saveplay.c:5169
 #, c-format
 msgid "rec %.2f MB"
 msgstr "grv %.2f MB"
 
-#: src/saveplay.c:5170
+#: src/saveplay.c:5175
 #, c-format
 msgid "!rec %.2f MB"
 msgstr "!grv %.2f MB"
 
 #. TRANSLATORS: rec(ord) ?? M(ega)B(ytes)
-#: src/saveplay.c:5173
+#: src/saveplay.c:5178
 msgid "rec ?? MB"
 msgstr ""
 
-#: src/saveplay.c:5198
+#: src/saveplay.c:5203
 #, c-format
 msgid ""
 "\n"
@@ -4452,7 +4452,7 @@ msgid ""
 "Record stop level can be set in Preferences.\n"
 msgstr ""
 
-#: src/saveplay.c:5492
+#: src/saveplay.c:5499
 msgid ""
 "\n"
 "Files from a previous run of LiVES were found.\n"
@@ -4462,11 +4462,11 @@ msgstr ""
 "Arquivos de uma execução anterior do LiVES foram encontrados.\n"
 "Quer tentar recuperá-los?\n"
 
-#: src/saveplay.c:5514
+#: src/saveplay.c:5521
 msgid "Recovering files"
 msgstr "Recuperando arquivos"
 
-#: src/saveplay.c:5517
+#: src/saveplay.c:5524
 msgid "Recovering files..."
 msgstr "Recuperando arquivos..."
 
@@ -5871,22 +5871,22 @@ msgstr ""
 msgid "pointer"
 msgstr ""
 
-#: src/effects-weed.c:4424
+#: src/effects-weed.c:4461
 #, c-format
 msgid "Error: plugin %s has no weed_setup() function.\n"
 msgstr "Erro: plugin %s não tem a função weed_setup().\n"
 
-#: src/effects-weed.c:4439
+#: src/effects-weed.c:4476
 #, c-format
 msgid "No usable filters found in plugin %s\n"
 msgstr ""
 
-#: src/effects-weed.c:4513
+#: src/effects-weed.c:4550
 #, c-format
 msgid "Found duplicate plugin %s"
 msgstr ""
 
-#: src/effects-weed.c:4567
+#: src/effects-weed.c:4604
 #, c-format
 msgid ""
 "Info: Unable to load plugin %s\n"
@@ -5895,257 +5895,257 @@ msgstr ""
 "Info: Impossível carregar plugin %s\n"
 "Erro: %s\n"
 
-#: src/effects-weed.c:4570 src/effects-weed.c:5685
+#: src/effects-weed.c:4607 src/effects-weed.c:5722
 msgid "Some plugin directories"
 msgstr ""
 
 #. TRANSLATORS: example " - LADSPA plugins -"
-#: src/effects-weed.c:4639 src/rte_window.c:2092
+#: src/effects-weed.c:4676 src/rte_window.c:2092
 #, c-format
 msgid " - %s plugins -"
 msgstr ""
 
-#: src/effects-weed.c:4839
+#: src/effects-weed.c:4876
 #, c-format
 msgid "Successfully loaded %d Weed filters\n"
 msgstr ""
 
-#: src/effects-weed.c:5004
+#: src/effects-weed.c:5041
 #, c-format
 msgid "Invalid compound effect %s - has conflicting target_fps\n"
 msgstr ""
 
-#: src/effects-weed.c:5024
+#: src/effects-weed.c:5061
 #, c-format
 msgid "Invalid compound effect %s - has multiple transition parameters\n"
 msgstr ""
 
-#: src/effects-weed.c:5038
+#: src/effects-weed.c:5075
 #, c-format
 msgid "Invalid compound effect %s - has multiple master volume parameters\n"
 msgstr ""
 
-#: src/effects-weed.c:5173
+#: src/effects-weed.c:5210
 #, c-format
 msgid "Invalid compound effect %s - must have >1 sub filters\n"
 msgstr ""
 
-#: src/effects-weed.c:5193
+#: src/effects-weed.c:5230
 #, c-format
 msgid "Invalid effect %s found in compound effect %s, line %d\n"
 msgstr ""
 
-#: src/effects-weed.c:5208
+#: src/effects-weed.c:5245
 #, c-format
 msgid "Invalid default found in compound effect %s, line %d\n"
 msgstr ""
 
-#: src/effects-weed.c:5219
+#: src/effects-weed.c:5256
 #, c-format
 msgid "Invalid filter %d for defaults found in compound effect %s, line %d\n"
 msgstr ""
 
-#: src/effects-weed.c:5233
+#: src/effects-weed.c:5270
 #, c-format
 msgid "Invalid param %d for defaults found in compound effect %s, line %d\n"
 msgstr ""
 
-#: src/effects-weed.c:5260
+#: src/effects-weed.c:5297
 #, c-format
 msgid ""
 "Invalid number of values for defaults found in compound effect %s, line %d\n"
 msgstr ""
 
-#: src/effects-weed.c:5294
+#: src/effects-weed.c:5331
 #, c-format
 msgid ""
 "Invalid non-boolean value for defaults found in compound effect %s, line %d\n"
 msgstr ""
 
-#: src/effects-weed.c:5327
+#: src/effects-weed.c:5364
 #, c-format
 msgid "Invalid param link found in compound effect %s, line %d\n"
 msgstr ""
 
-#: src/effects-weed.c:5338
+#: src/effects-weed.c:5375
 #, c-format
 msgid ""
 "Invalid out filter %d for link params found in compound effect %s, line %d\n"
 msgstr ""
 
-#: src/effects-weed.c:5356
+#: src/effects-weed.c:5393
 #, c-format
 msgid ""
 "Invalid out param %d for link params found in compound effect %s, line %d\n"
 msgstr ""
 
-#: src/effects-weed.c:5368
+#: src/effects-weed.c:5405
 #, c-format
 msgid ""
 "Invalid non-boolean value for autoscale found in compound effect %s, line "
 "%d\n"
 msgstr ""
 
-#: src/effects-weed.c:5379
+#: src/effects-weed.c:5416
 #, c-format
 msgid ""
 "Invalid in filter %d for link params found in compound effect %s, line %d\n"
 msgstr ""
 
-#: src/effects-weed.c:5393
+#: src/effects-weed.c:5430
 #, c-format
 msgid ""
 "Invalid in param %d for link params found in compound effect %s, line %d\n"
 msgstr ""
 
-#: src/effects-weed.c:5421
+#: src/effects-weed.c:5458
 #, c-format
 msgid "Invalid channel link found in compound effect %s, line %d\n"
 msgstr ""
 
-#: src/effects-weed.c:5432
+#: src/effects-weed.c:5469
 #, c-format
 msgid ""
 "Invalid out filter %d for link channels found in compound effect %s, line "
 "%d\n"
 msgstr ""
 
-#: src/effects-weed.c:5450
+#: src/effects-weed.c:5487
 #, c-format
 msgid ""
 "Invalid out channel %d for link params found in compound effect %s, line %d\n"
 msgstr ""
 
-#: src/effects-weed.c:5460
+#: src/effects-weed.c:5497
 #, c-format
 msgid ""
 "Invalid in filter %d for link channels found in compound effect %s, line %d\n"
 msgstr ""
 
-#: src/effects-weed.c:5478
+#: src/effects-weed.c:5515
 #, c-format
 msgid ""
 "Invalid in channel %d for link params found in compound effect %s, line %d\n"
 msgstr ""
 
-#: src/effects-weed.c:5514
+#: src/effects-weed.c:5551
 #, c-format
 msgid "Compound:%s"
 msgstr ""
 
-#: src/effects-weed.c:5585
+#: src/effects-weed.c:5622
 #, c-format
 msgid "Successfully loaded %d compound filters\n"
 msgstr ""
 
-#: src/effects-weed.c:6398
+#: src/effects-weed.c:6435
 #, c-format
 msgid "Effect %s cannot be used with this audio player.\n"
 msgstr ""
 
-#: src/effects-weed.c:6542
+#: src/effects-weed.c:6579
 #, c-format
 msgid "Failed to start instance %s, error code %d\n"
 msgstr "Falha ao iniciar instância %s, erro %d\n"
 
-#: src/effects-weed.c:6618
+#: src/effects-weed.c:6655
 #, c-format
 msgid "Unable to start generator %s\n"
 msgstr "Impossível iniciar gerador %s\n"
 
-#: src/effects-weed.c:7368
+#: src/effects-weed.c:7405
 #, c-format
 msgid "Failed to start generator %s\n"
 msgstr "Falha ao iniciar gerador %s\n"
 
-#: src/effects-weed.c:7465
+#: src/effects-weed.c:7502
 #, c-format
 msgid "Failed to start generator %s, error %d\n"
 msgstr "Falha ao iniciar gerador %s, erro %d\n"
 
-#: src/effects-weed.c:8739
+#: src/effects-weed.c:8776
 #, c-format
 msgid "%s [unstable] (%s)"
 msgstr ""
 
-#: src/effects-data.c:3061
+#: src/effects-data.c:3207
 #, c-format
 msgid "ACTIVATE (%s)"
 msgstr ""
 
-#: src/effects-data.c:3326
+#: src/effects-data.c:3472
 msgid "ACTIVATE"
 msgstr ""
 
-#: src/effects-data.c:3656
+#: src/effects-data.c:3802
 #, c-format
 msgid "Key slot %d"
 msgstr ""
 
-#: src/effects-data.c:3777
+#: src/effects-data.c:3923
 msgid "Autoscale"
 msgstr ""
 
-#: src/effects-data.c:3868
+#: src/effects-data.c:4014
 msgid "Add another connection for this output parameter"
 msgstr ""
 
-#: src/effects-data.c:3881 src/effects-data.c:3930
+#: src/effects-data.c:4027 src/effects-data.c:4076
 #, fuzzy
 msgid "Delete this connection"
 msgstr "_Deletar este efeito"
 
-#: src/effects-data.c:3917
+#: src/effects-data.c:4063
 msgid "Add another connection for this output channel"
 msgstr ""
 
-#: src/effects-data.c:4002
+#: src/effects-data.c:4148
 msgid "Connected to -->"
 msgstr ""
 
-#: src/effects-data.c:4022
+#: src/effects-data.c:4168
 #, c-format
 msgid "%s - Alpha Channel Connections"
 msgstr ""
 
-#: src/effects-data.c:4095
+#: src/effects-data.c:4241
 #, c-format
 msgid "%s - Parameter Data Connections"
 msgstr ""
 
-#: src/effects-data.c:4115
+#: src/effects-data.c:4261
 msgid "Autoscale All"
 msgstr ""
 
-#: src/effects-data.c:4140
+#: src/effects-data.c:4286
 msgid "ACTIVATED"
 msgstr ""
 
-#: src/effects-data.c:4551
+#: src/effects-data.c:4697
 msgid "LiVES: - Parameter and Alpha Channel Connections"
 msgstr ""
 
-#: src/effects-data.c:4562
+#: src/effects-data.c:4708
 msgid "Auto Connect Channels"
 msgstr ""
 
-#: src/effects-data.c:4574
+#: src/effects-data.c:4720
 msgid "Auto Connect Parameters"
 msgstr ""
 
-#: src/effects-data.c:4584
+#: src/effects-data.c:4730
 msgid "Disconnect All"
 msgstr ""
 
-#: src/effects-data.c:4638
+#: src/effects-data.c:4784
 msgid "Input channel is already connected"
 msgstr ""
 
-#: src/effects-data.c:4645
+#: src/effects-data.c:4791
 msgid "Input parameter is already connected"
 msgstr ""
 
-#: src/effects-data.c:4652
+#: src/effects-data.c:4798
 msgid "Input and output parameters are not compatible"
 msgstr ""
 

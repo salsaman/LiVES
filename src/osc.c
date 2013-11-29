@@ -5954,7 +5954,7 @@ void lives_osc_cb_rte_addpconnection(void *context, int arglen, const void *varg
 
   if (pnum0<-EXTRA_PARAMS_OUT||pnum1<-EXTRA_PARAMS_IN) return lives_osc_notify_failure();
 
-  if (pconx_check_connection(ofilter,pnum0,key1,mode1,pnum1,FALSE,NULL,NULL)) return lives_osc_notify_failure();
+  if (pconx_check_connection(ofilter,pnum0,key1,mode1,pnum1,FALSE,NULL,NULL,NULL,NULL,NULL)) return lives_osc_notify_failure();
 
   key0--;
   key1--;
@@ -6045,7 +6045,7 @@ void lives_osc_cb_rte_addcconnection(void *context, int arglen, const void *varg
     if (cnum1>=enabled_in_channels(filter,FALSE)) return lives_osc_notify_failure();
   }
 
-  if (cconx_check_connection(key1,mode1,cnum1,FALSE,NULL,NULL)) return lives_osc_notify_failure();
+  if (cconx_check_connection(key1,mode1,cnum1,FALSE,NULL,NULL,NULL,NULL,NULL)) return lives_osc_notify_failure();
 
   key0--;
   key1--;

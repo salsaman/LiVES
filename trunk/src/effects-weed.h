@@ -115,6 +115,7 @@ int num_out_params(weed_plant_t *);
 weed_plant_t *weed_inst_in_param (weed_plant_t *inst, int param_num, boolean skip_hidden, boolean skip_internal);
 weed_plant_t *weed_inst_out_param (weed_plant_t *inst, int param_num);
 weed_plant_t *weed_filter_in_paramtmpl (weed_plant_t *filter, int param_num, boolean skip_internal);
+weed_plant_t *weed_filter_out_paramtmpl (weed_plant_t *filter, int param_num);
 boolean is_hidden_param(weed_plant_t *, int i);
 int get_nth_simple_param(weed_plant_t *, int pnum);
 int count_simple_params(weed_plant_t *);

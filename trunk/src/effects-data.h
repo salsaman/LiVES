@@ -185,8 +185,11 @@ typedef struct {
 
 GtkWidget *make_datacon_window(int key, int mode);
 
-int pconx_check_connection(weed_plant_t *ofilter, int opnum, int ikey, int imode, int ipnum, boolean setup, weed_plant_t **iparam_ret, int *idx_ret);
-int cconx_check_connection(int ikey, int imode, int icnum, boolean setup, weed_plant_t **ichan_ret, int *idx_ret);
+int pconx_check_connection(weed_plant_t *ofilter, int opnum, int ikey, int imode, int ipnum, boolean setup, weed_plant_t **iparam_ret, int *idx_ret,
+			   int *okey, int *omode, int *oopnum);
+
+int cconx_check_connection(int ikey, int imode, int icnum, boolean setup, weed_plant_t **ichan_ret, int *idx_ret, int *okey, int *omode, int *ocnum);
+
 
 
 boolean feeds_to_video_filters(int okey, int omode);

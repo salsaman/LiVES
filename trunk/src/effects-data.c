@@ -32,8 +32,8 @@
 static lives_pconnect_t *spconx;
 static lives_cconnect_t *scconx;
 
-static void do_chan_connected_error(lives_conx_w *);
-static void do_param_connected_error(lives_conx_w *);
+static void do_chan_connected_error(lives_conx_w *, int okey, int omode, int ocnum);
+static void do_param_connected_error(lives_conx_w *, int okey, int omode, int opnum);
 static void do_param_incompatible_error(lives_conx_w *);
 
 static void ptable_row_add_standard_widgets(lives_conx_w *, int idx);
@@ -58,6 +58,7 @@ static void switch_fx_state(int okey, int hotkey) {
   // switch effect state when a connection to ACTIVATE is present
   uint32_t last_grabable_effect=mainw->last_grabable_effect;
   // use -hotkey to indicate auto
+
   filter_mutex_unlock(hotkey-1);
   if (okey>-1) filter_mutex_unlock(okey);
 
@@ -604,7 +605,7 @@ void pconx_add_connection(int okey, int omode, int opnum, int ikey, int imode, i
 }
 
 
-static weed_plant_t *pconx_get_out_param(boolean use_filt, int ikey, int imode, int ipnum, int *okey, int *autoscale) {
+static weed_plant_t *pconx_get_out_param(boolean use_filt, int ikey, int imode, int ipnum, int *okey, int *omode, int *opnum, int *autoscale) {
   // walk all pconx and find one which has ikey/imode/ipnum as destination
   // then all we need do is copy the "value" leaf
 
@@ -673,6 +674,8 @@ static weed_plant_t *pconx_get_out_param(boolean use_filt, int ikey, int imode, 
 	    }
 	  }
 	  if (okey!=NULL) *okey=pconx->okey;
+	  if (omode!=NULL) *omode=pconx->omode;
+	  if (opnum!=NULL) *opnum=pconx->params[i];
 	  if (autoscale!=NULL) *autoscale=pconx->autoscale[j];
 	  return param;
         }
@@ -1403,7 +1406,7 @@ boolean pconx_chain_data(int key, int mode) {
 
     for (i=-EXTRA_PARAMS_IN;i<nparams;i++) {
 
-      if ((oparam=pconx_get_out_param(FALSE,key,mode,i,&okey,&autoscale))!=NULL) {
+      if ((oparam=pconx_get_out_param(FALSE,key,mode,i,&okey,NULL,NULL,&autoscale))!=NULL) {
 	//	#define DEBUG_PCONX
 	//#define DEBUG_PCONX
 #ifdef DEBUG_PCONX
@@ -1937,7 +1940,7 @@ void cconx_add_connection(int okey, int omode, int ocnum, int ikey, int imode, i
 
 
 
-static weed_plant_t *cconx_get_out_alpha(boolean use_filt, int ikey, int imode, int icnum) {
+static weed_plant_t *cconx_get_out_alpha(boolean use_filt, int ikey, int imode, int icnum, int *okey, int *omode, int *ocnum) {
   // walk all cconx and find one which has ikey/imode/icnum as destination
   // then all we need do is convert the pixel_data
 
@@ -1996,6 +1999,9 @@ static weed_plant_t *cconx_get_out_alpha(boolean use_filt, int ikey, int imode, 
 	    }
 	  }
 	  weed_free(outchans);
+	  if (okey!=NULL) *okey=cconx->okey;
+	  if (omode!=NULL) *omode=cconx->omode;
+	  if (ocnum!=NULL) *ocnum=cconx->chans[i];
 	  return channel;
 	}
       }
@@ -2133,7 +2139,7 @@ boolean cconx_chain_data(int key, int mode) {
   }
 
   while ((ichan=(key==FX_DATA_KEY_PLAYBACK_PLUGIN?(weed_plant_t *)pp_get_chan(mainw->vpp->play_params,i):get_enabled_channel(inst,i,TRUE)))!=NULL) {
-    if ((ochan=cconx_get_out_alpha(FALSE,key,mode,i++))!=NULL) {
+    if ((ochan=cconx_get_out_alpha(FALSE,key,mode,i++,NULL,NULL,NULL))!=NULL) {
       if (cconx_convert_pixel_data(ichan,ochan)) needs_reinit=TRUE;
     }
   }
@@ -2334,7 +2340,7 @@ static void apbutton_clicked(GtkButton *button, gpointer user_data) {
   weed_plant_t *filter,*param,*oparam;
 
   int fidx,key,mode,totchans;
-  int niparams,ours,addn;
+  int niparams,ours,addn,stparam;
   int error;
 
   register int i,k=1;
@@ -2366,14 +2372,24 @@ static void apbutton_clicked(GtkButton *button, gpointer user_data) {
 
   totchans=cconx_get_numcons(conxwp,FX_DATA_WILDCARD);
 
+  // get first param connected
+  stparam=conxwp->idx[totchans+ours];
+
+  if (conxwp->ikeys[totchans+ours]==0) {
+    // first out not connected, we will add this back in
+    ours-=pconx_get_numcons(conxwp,0);
+    k=0;
+  }
+  else stparam++;
+
   // set all pcombo with params
-  for (i=1;i<niparams;i++) {
+  for (i=stparam;i<niparams;i++) {
 
     param=iparams[i];
 
     if (weed_plant_has_leaf(param,"host_internal_connection")) continue;
 
-    if (pconx_get_out_param(TRUE,key-1,mode,i,NULL,NULL)!=NULL) continue;
+    if (pconx_get_out_param(TRUE,key-1,mode,i,NULL,NULL,NULL,NULL)!=NULL) continue;
 
     oparam=oparams[k];
 
@@ -2424,10 +2440,10 @@ static void acbutton_clicked(GtkButton *button, gpointer user_data) {
   weed_plant_t *filter,*chan,*ochan;
 
   int fidx,key,mode;
-  int nichans,nochans,ours,addn;
+  int nichans,nochans,ours,addn,stchan;
   int error;
 
-  register int i,k=1;
+  register int i,j=0,k=1;
 
   // get filter from last connection from first parameter
 
@@ -2455,15 +2471,34 @@ static void acbutton_clicked(GtkButton *button, gpointer user_data) {
   ochans=weed_get_plantptr_array(rte_keymode_get_filter(conxwp->okey+1,conxwp->omode),"out_channel_templates",&error);
   nochans=weed_leaf_num_elements(rte_keymode_get_filter(conxwp->okey+1,conxwp->omode),"out_channel_templates");
 
+  // get first param connected
+  stchan=conxwp->idx[ours];
+
+  if (conxwp->ikeys[ours]==0) {
+    // first out not connected, we will add this back in
+    ours-=cconx_get_numcons(conxwp,0);
+    k=0;
+  }
+  else {
+    stchan++;
+
+    for (i=0;i<nichans;i++) {
+      j++;
+      chan=ichans[i];
+      if (!has_alpha_palette(chan)) continue;
+      if (i==conxwp->idx[ours]) break;
+    }
+
+  }
 
   // set all ccombo with chans
-  for (i=1;i<nichans;i++) {
+  for (i=stchan;i<nichans;i++) {
 
     chan=ichans[i];
 
     if (!has_alpha_palette(chan)) continue;
 
-    if (cconx_get_out_alpha(TRUE,key-1,mode,i)!=NULL) continue;
+    if (cconx_get_out_alpha(TRUE,key-1,mode,i,NULL,NULL,NULL)!=NULL) continue;
 
     ochan=ochans[k];
 
@@ -2490,7 +2525,7 @@ static void acbutton_clicked(GtkButton *button, gpointer user_data) {
     lives_combo_set_active_iter(LIVES_COMBO(combo),&iter);
     lives_widget_context_update();
 
-    lives_combo_set_active_index(LIVES_COMBO(conxwp->ccombo[ours]),i);
+    lives_combo_set_active_index(LIVES_COMBO(conxwp->ccombo[ours]),j++);
 
     if (++k>=nochans) break;
   }
@@ -3093,7 +3128,7 @@ static void dfxc_changed(GtkWidget *combo, gpointer user_data) {
     lives_combo_set_active_index (LIVES_COMBO(combo),0);
     lives_combo_populate(LIVES_COMBO(conxwp->ccombo[ours]),NULL);
     lives_combo_set_active_string (LIVES_COMBO(conxwp->ccombo[ours]),"");
-    if (cidx==0) lives_widget_set_sensitive(conxwp->acbutton,FALSE);
+    if (cconx_get_nconns(conxwp->cconx,0)==0&&cidx==0) lives_widget_set_sensitive(conxwp->acbutton,FALSE);
     return;
   }
 
@@ -3148,7 +3183,7 @@ static void dfxp_changed(GtkWidget *combo, gpointer user_data) {
 
   int defelems,pflags,stype;
 
-  int fidx,key,mode;
+  int fidx,key,mode,pidx;
   int niparams=0,nparams;
   int error;
   int ours=-1;
@@ -3173,6 +3208,8 @@ static void dfxp_changed(GtkWidget *combo, gpointer user_data) {
   gtk_tree_model_get(model,&iter,KEYVAL_COLUMN,&key,MODEVAL_COLUMN,&mode,-1);
   fidx=rte_keymode_get_filter_idx(key,mode);
 
+  pidx=GPOINTER_TO_INT(g_object_get_data(G_OBJECT(combo),"pidx"));
+
   if (fidx==-1) {
     GtkWidget *acheck=conxwp->acheck[ours];
     if (acheck!=NULL) {
@@ -3187,7 +3224,7 @@ static void dfxp_changed(GtkWidget *combo, gpointer user_data) {
     lives_combo_populate(LIVES_COMBO(conxwp->pcombo[ours]),NULL);
     lives_combo_set_active_string (LIVES_COMBO(conxwp->pcombo[ours]),"");
 
-    if (pconx_get_nconns(conxwp->pconx,0)==0) lives_widget_set_sensitive(conxwp->apbutton,FALSE);
+    if (pconx_get_nconns(conxwp->pconx,0)==0&&pidx==0) lives_widget_set_sensitive(conxwp->apbutton,FALSE);
 
     return;
   }
@@ -3248,7 +3285,7 @@ static void dfxp_changed(GtkWidget *combo, gpointer user_data) {
   lives_combo_populate(LIVES_COMBO(conxwp->pcombo[ours]),plist);
   lives_combo_set_active_string (LIVES_COMBO(conxwp->pcombo[ours]),"");
 
-  if (pconx_get_nconns(conxwp->pconx,0)>0) lives_widget_set_sensitive(conxwp->apbutton,TRUE);
+  if (pidx==0) lives_widget_set_sensitive(conxwp->apbutton,TRUE);
 
   g_list_free_strings(plist);
   g_list_free(plist);
@@ -3257,7 +3294,8 @@ static void dfxp_changed(GtkWidget *combo, gpointer user_data) {
 }
 
 
-int pconx_check_connection(weed_plant_t *ofilter, int opnum, int ikey, int imode, int ipnum, boolean setup, weed_plant_t **iparam_ret, int *idx_ret) {
+int pconx_check_connection(weed_plant_t *ofilter, int opnum, int ikey, int imode, int ipnum, boolean setup, weed_plant_t **iparam_ret, int *idx_ret,
+			   int *okey, int *omode, int *oopnum) {
   weed_plant_t **oparams=NULL,**iparams;
   weed_plant_t *oparam,*iparam=NULL;
 
@@ -3323,7 +3361,7 @@ int pconx_check_connection(weed_plant_t *ofilter, int opnum, int ikey, int imode
   if (idx_ret!=NULL) *idx_ret=idx;
 
   if (!setup) {
-    if (pconx_get_out_param(TRUE,ikey-1,imode,ipnum,NULL,NULL)!=NULL) {
+    if (pconx_get_out_param(TRUE,ikey-1,imode,ipnum,okey,omode,oopnum,NULL)!=NULL) {
       // dest param already has a connection
       return -1;
     }
@@ -3363,6 +3401,7 @@ static void dpp_changed(GtkWidget *combo, gpointer user_data) {
   boolean setup=GPOINTER_TO_INT(g_object_get_data(G_OBJECT(combo),"setup"));
 
   int nparams,nchans;
+  int okey,omode,opnum;
 
   int pidx,key,mode,ours=-1,error,ret;
   int idx=lives_combo_get_active(LIVES_COMBO(combo));
@@ -3430,11 +3469,12 @@ static void dpp_changed(GtkWidget *combo, gpointer user_data) {
 
   //// check if connection may be made
 
-  ret=pconx_check_connection(conxwp->filter,pidx,key,mode,idx,setup,&iparam,&j);
+  ret=pconx_check_connection(conxwp->filter,pidx,key,mode,idx,setup,&iparam,&j,&okey,&omode,&opnum);
 
   if (ret==-1) {
-    do_param_connected_error(conxwp);
+    do_param_connected_error(conxwp,okey,omode,opnum);
     lives_combo_set_active_string (LIVES_COMBO(combo),"");
+    return;
   }
 
   if (ret==-2) {
@@ -3500,15 +3540,14 @@ static void dpp_changed(GtkWidget *combo, gpointer user_data) {
   conxwp->imodes[nchans+ours]=mode;
   conxwp->idx[nchans+ours]=j;
 
-  // TODO - add a new slot for this oparam
-
   lives_widget_set_sensitive(conxwp->disconbutton,TRUE);
 
 }
 
 
 
-int cconx_check_connection(int ikey, int imode, int icnum, boolean setup, weed_plant_t **ichan_ret, int *idx_ret) {
+int cconx_check_connection(int ikey, int imode, int icnum, boolean setup, weed_plant_t **ichan_ret, int *idx_ret,
+			   int *okey, int *omode, int *ocnum) {
   weed_plant_t **ichans;
   weed_plant_t *filter,*ichan=NULL;
 
@@ -3539,7 +3578,7 @@ int cconx_check_connection(int ikey, int imode, int icnum, boolean setup, weed_p
   if (idx_ret!=NULL) *idx_ret=idx;
 
   if (!setup) {
-    if (cconx_get_out_alpha(TRUE,ikey-1,imode,i)!=NULL) {
+    if (cconx_get_out_alpha(TRUE,ikey-1,imode,i,okey,omode,ocnum)!=NULL) {
       // dest chan already has a connection
       return -1;
     }
@@ -3570,6 +3609,7 @@ static void dpc_changed(GtkWidget *combo, gpointer user_data) {
   int nchans,nparams;
 
   int key,mode,cidx,ours=-1,error,ret,j;
+  int okey,omode,ocnum;
 
   int idx=lives_combo_get_active(LIVES_COMBO(combo));
 
@@ -3624,11 +3664,11 @@ static void dpc_changed(GtkWidget *combo, gpointer user_data) {
   gtk_tree_model_get(model,&iter,KEYVAL_COLUMN,&key,MODEVAL_COLUMN,&mode,-1);
 
   // check if connection can be made
-  ret=cconx_check_connection(key,mode,idx,setup,&ichan,&j);
+  ret=cconx_check_connection(key,mode,idx,setup,&ichan,&j,&okey,&omode,&ocnum);
 
   if (ret==-1) {
     // dest chan already has a connection
-    do_chan_connected_error(conxwp);
+    do_chan_connected_error(conxwp,okey,omode,ocnum);
     lives_combo_set_active_string (LIVES_COMBO(combo),"");
     return;
   }
@@ -3659,8 +3699,6 @@ static void dpc_changed(GtkWidget *combo, gpointer user_data) {
   conxwp->ikeys[ours]=key;
   conxwp->imodes[ours]=mode;
   conxwp->idx[ours]=j;
-
-  // TODO - add a new slot for this ochan
 
   lives_widget_set_sensitive(conxwp->disconbutton,TRUE);
 
@@ -4742,8 +4780,15 @@ GtkWidget *make_datacon_window(int key, int mode) {
   scrolledwindow = conx_scroll_new(&conxw);
   show_existing(&conxw);
 
+
   lives_box_pack_start (LIVES_BOX (cbox), scrolledwindow, TRUE, TRUE, 0);
 
+  if (conxw.num_params>EXTRA_PARAMS_OUT) {
+    if (pconx_get_nconns(conxw.pconx,0)>0) lives_widget_set_sensitive(conxw.apbutton,TRUE);
+  }
+  if (conxw.num_alpha>0) {
+    if (cconx_get_nconns(conxw.cconx,0)>0) lives_widget_set_sensitive(conxw.acbutton,TRUE);
+  }
 
   cancelbutton = lives_button_new_from_stock ("gtk-cancel");
   lives_dialog_add_action_widget (LIVES_DIALOG (conxw.conx_dialog), cancelbutton, GTK_RESPONSE_CANCEL);
@@ -4779,17 +4824,31 @@ GtkWidget *make_datacon_window(int key, int mode) {
 }
 
 
-static void do_chan_connected_error( lives_conx_w *conxwp) {
-
-  do_error_dialog_with_check_transient(_("Input channel is already connected"),TRUE,0,LIVES_WINDOW(conxwp->conx_dialog));
-
+static void do_chan_connected_error( lives_conx_w *conxwp, int key, int mode, int cnum) {
+  weed_plant_t *filter,*ctmpl,**ochans;
+  char *msg,*cname;
+  int error;
+  filter=rte_keymode_get_filter(key+1,mode);
+  ochans=weed_get_plantptr_array(filter,"out_channel_templates",&error);
+  ctmpl=ochans[cnum];
+  weed_free(ochans);
+  cname=weed_get_string_value(ctmpl,"name",&error);
+  msg=g_strdup_printf(_("Input channel is already connected from (%d,%d) %s"),key+1,mode+1,cname);
+  do_error_dialog_with_check_transient(msg,TRUE,0,LIVES_WINDOW(conxwp->conx_dialog));
+  g_free(msg); weed_free(cname);
 }
 
 
-static void do_param_connected_error( lives_conx_w *conxwp) {
-
-  do_error_dialog_with_check_transient(_("Input parameter is already connected"),TRUE,0,LIVES_WINDOW(conxwp->conx_dialog));
-
+static void do_param_connected_error( lives_conx_w *conxwp, int key, int mode, int pnum) {
+  weed_plant_t *filter,*ptmpl;
+  char *msg,*pname;
+  int error;
+  filter=rte_keymode_get_filter(key+1,mode);
+  ptmpl=weed_filter_out_paramtmpl(filter,pnum);
+  pname=weed_get_string_value(ptmpl,"name",&error);
+  msg=g_strdup_printf(_("Input parameter is already connected from (%d,%d) %s"),key+1,mode+1,pname);
+  do_error_dialog_with_check_transient(msg,TRUE,0,LIVES_WINDOW(conxwp->conx_dialog));
+  g_free(msg); weed_free(pname);
 }
 
 

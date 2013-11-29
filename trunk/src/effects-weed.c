@@ -7805,6 +7805,26 @@ weed_plant_t *weed_filter_in_paramtmpl (weed_plant_t *filter, int param_num, boo
 
 
 
+weed_plant_t *weed_filter_out_paramtmpl (weed_plant_t *filter, int param_num) {
+  weed_plant_t **out_params;
+  weed_plant_t *ptmpl;
+  int error,num_params;
+
+  if (!weed_plant_has_leaf(filter,"out_parameter_templates")) return NULL; // has no out_parameters
+  
+  num_params=weed_leaf_num_elements(filter,"out_parameter_templates");
+
+  if (num_params<=param_num) return NULL; // invalid parameter number
+
+  out_params=weed_get_plantptr_array(filter,"out_parameter_templates",&error);
+
+  ptmpl=out_params[param_num];
+  weed_free(out_params);
+  return ptmpl;
+}
+
+
+
 
 int get_nth_simple_param(weed_plant_t *plant, int pnum) {
   // return the number of the nth "simple" parameter

@@ -2294,7 +2294,7 @@ static lives_decoder_t *try_decoder_plugins(char *file_name, GList *disabled, co
       continue;
     }
 
-#define DEBUG_DECPLUG
+    //#define DEBUG_DECPLUG
 #ifdef DEBUG_DECPLUG
     g_print("trying decoder %s\n",dpsys->name);
 #endif

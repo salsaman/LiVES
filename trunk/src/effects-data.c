@@ -25,10 +25,6 @@
 #include "support.h"
 #include "ce_thumbs.h"
 
-// TODO
-// - pcombos sens/insens
-// - connected warning should show where connected FROM
-
 static lives_pconnect_t *spconx;
 static lives_cconnect_t *scconx;
 
@@ -3129,6 +3125,7 @@ static void dfxc_changed(GtkWidget *combo, gpointer user_data) {
     lives_combo_populate(LIVES_COMBO(conxwp->ccombo[ours]),NULL);
     lives_combo_set_active_string (LIVES_COMBO(conxwp->ccombo[ours]),"");
     if (cconx_get_nconns(conxwp->cconx,0)==0&&cidx==0) lives_widget_set_sensitive(conxwp->acbutton,FALSE);
+    lives_widget_set_sensitive(conxwp->ccombo[ours],FALSE);
     return;
   }
 
@@ -3154,6 +3151,7 @@ static void dfxc_changed(GtkWidget *combo, gpointer user_data) {
   lives_combo_set_active_string (LIVES_COMBO(conxwp->ccombo[ours]),"");
   
   if (cidx==0) lives_widget_set_sensitive(conxwp->acbutton,TRUE);
+  lives_widget_set_sensitive(conxwp->ccombo[ours],TRUE);
 
   g_list_free_strings(clist);
   g_list_free(clist);
@@ -3226,6 +3224,8 @@ static void dfxp_changed(GtkWidget *combo, gpointer user_data) {
 
     if (pconx_get_nconns(conxwp->pconx,0)==0&&pidx==0) lives_widget_set_sensitive(conxwp->apbutton,FALSE);
 
+    lives_widget_set_sensitive(conxwp->pcombo[ours],FALSE);
+
     return;
   }
 
@@ -3286,6 +3286,8 @@ static void dfxp_changed(GtkWidget *combo, gpointer user_data) {
   lives_combo_set_active_string (LIVES_COMBO(conxwp->pcombo[ours]),"");
 
   if (pidx==0) lives_widget_set_sensitive(conxwp->apbutton,TRUE);
+
+  lives_widget_set_sensitive(conxwp->pcombo[ours],TRUE);
 
   g_list_free_strings(plist);
   g_list_free(plist);
@@ -3915,6 +3917,7 @@ static void ptable_row_add_variable_widgets(lives_conx_w *conxwp, int idx, int r
 
   conxwp->pcombo[idx]=lives_standard_combo_new("",FALSE,NULL,LIVES_BOX(hbox2),NULL);
   g_object_set_data(G_OBJECT(conxwp->pcombo[idx]),"idx",GINT_TO_POINTER(-1));
+  lives_widget_set_sensitive(conxwp->pcombo[idx],FALSE);
 
 
   lives_table_attach (LIVES_TABLE (conxwp->tablep), hbox, 3, 4, row, row+1,
@@ -4011,6 +4014,7 @@ static void ctable_row_add_variable_widgets(lives_conx_w *conxwp, int idx, int r
 
   conxwp->ccombo[idx]=lives_standard_combo_new("",FALSE,NULL,LIVES_BOX(hbox2),NULL);
   g_object_set_data(G_OBJECT(conxwp->ccombo[idx]),"idx",GINT_TO_POINTER(-1));
+  lives_widget_set_sensitive(conxwp->ccombo[idx],FALSE);
 
 
   lives_table_attach (LIVES_TABLE (conxwp->tablec), hbox, 3, 4, row, row+1,
@@ -4570,6 +4574,7 @@ static boolean show_existing(lives_conx_w *conxwp) {
 
       g_object_set_data(G_OBJECT(ccombo),"setup",GINT_TO_POINTER(FALSE));
       lives_widget_set_sensitive(conxwp->disconbutton,TRUE);
+      lives_widget_set_sensitive(ccombo,TRUE);
 
       l++;
     }
@@ -4660,6 +4665,7 @@ static boolean show_existing(lives_conx_w *conxwp) {
       g_object_set_data(G_OBJECT(pcombo),"setup",GINT_TO_POINTER(FALSE));
 
       lives_widget_set_sensitive(conxwp->disconbutton,TRUE);
+      lives_widget_set_sensitive(pcombo,TRUE);
 
       l++;
     }
@@ -4844,8 +4850,11 @@ static void do_param_connected_error( lives_conx_w *conxwp, int key, int mode, i
   char *msg,*pname;
   int error;
   filter=rte_keymode_get_filter(key+1,mode);
-  ptmpl=weed_filter_out_paramtmpl(filter,pnum);
-  pname=weed_get_string_value(ptmpl,"name",&error);
+  if (pnum>=0) {
+    ptmpl=weed_filter_out_paramtmpl(filter,pnum);
+    pname=weed_get_string_value(ptmpl,"name",&error);
+  }
+  else pname=g_strdup(_("ACTIVATED"));
   msg=g_strdup_printf(_("Input parameter is already connected from (%d,%d) %s"),key+1,mode+1,pname);
   do_error_dialog_with_check_transient(msg,TRUE,0,LIVES_WINDOW(conxwp->conx_dialog));
   g_free(msg); weed_free(pname);

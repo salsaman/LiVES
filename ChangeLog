@@ -1,5 +1,5 @@
-Version 2.0.7
--------------
+Version 2.2.0 (30 Nov 2013)
+---------------------------
 Add new avformat_decoder.
 Optimisations for handling larger clips.
 Use threading for pulling frames from video clips.
@@ -24,6 +24,9 @@ Decoder plugin fixes for ffmpeg 2.2 (needs further testing).
 Preserve clip comments and renamed clip names between restarts (bugfix).
 Small fixes for rfx_builder window.
 Minor GUI improvements.
+Add initial translation to Piemontese. (Simon Uslengh).
+Updated translations to UK English, German, Russian and Ukranian.
+
 
 
 

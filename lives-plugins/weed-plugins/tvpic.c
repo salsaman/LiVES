@@ -37,7 +37,7 @@ static int package_version=1; // version of this package
 
 /////////////////////////////////////////////////////////////
 static void set_black(unsigned char *dst, unsigned char *src, size_t alpha, int psize) {
-  weed_memcpy(dst,src,psize);
+  weed_memset(dst,0,psize);
   if (alpha!=-1) dst[alpha]=src[alpha];
 }
 
@@ -72,15 +72,18 @@ static int tvpic_process (weed_plant_t *inst, weed_timecode_t timestamp) {
 
   register int x,y;
 
-  lbord=rem>>1;
-  rbord=rem-lbord;
+  if (height<2) return WEED_NO_ERROR;
 
   width*=psize;
+
+  lbord=(rem>>1)*psize;
+  rbord=width-lbord;
 
   // new threading arch
   if (weed_plant_has_leaf(out_channel,"offset")) {
     offset=weed_get_int_value(out_channel,"offset",&error);
     dheight=weed_get_int_value(out_channel,"height",&error);
+    dheight+=offset;
 
     src+=offset*irowstride;
     dest+=offset*orowstride;
@@ -121,7 +124,7 @@ static int tvpic_process (weed_plant_t *inst, weed_timecode_t timestamp) {
   }
 
 
-  for (y=0;y<dheight;y++) {
+  for (y=offset;y<dheight;y++) {
     x=0;
     while (x<width) {
       if (x<lbord||x>rbord) {

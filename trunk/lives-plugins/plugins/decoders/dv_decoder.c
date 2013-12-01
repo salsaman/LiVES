@@ -299,9 +299,7 @@ lives_clip_data_t *get_clip_data(const char *URI, lives_clip_data_t *cdata) {
   // if the host wants a different URI or a different current_clip, this must be called again with the same
   // cdata as the second parameter
 
-  lives_dv_priv_t *priv;
-
-    if (URI==NULL&&cdata!=NULL) {
+  if (URI==NULL&&cdata!=NULL) {
     // create a clone of cdata
     return dv_clone(cdata);
   }

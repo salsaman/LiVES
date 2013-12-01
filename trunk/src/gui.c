@@ -204,6 +204,7 @@ void create_LiVES (void) {
   GtkWidget *label;
   GtkWidget *hbox3;
   GtkWidget *t_label;
+  GtkWidget *eventbox;
 
 #if defined (HAVE_YUV4MPEG) || defined (HAVE_UNICAP)
   GtkWidget *submenu;
@@ -2442,12 +2443,17 @@ void create_LiVES (void) {
     lives_widget_set_bg_color (mainw->raudio_draw, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
   }
 
+  eventbox=lives_event_box_new();
+  lives_widget_set_vexpand(eventbox,TRUE);
+  lives_widget_show (eventbox);
+
   mainw->message_box=lives_vbox_new(FALSE, 0);
   lives_widget_show (mainw->message_box);
 
   lives_widget_set_vexpand(mainw->message_box,TRUE);
 
-  lives_box_pack_start (LIVES_BOX (mainw->vbox1), mainw->message_box, TRUE, TRUE, 0);
+  lives_box_pack_start (LIVES_BOX (mainw->vbox1), eventbox, TRUE, TRUE, 0);
+  lives_container_add (LIVES_CONTAINER (eventbox), mainw->message_box);
 
   mainw->textview1=NULL;
   mainw->scrolledwindow=NULL;

@@ -1556,7 +1556,7 @@ int calc_new_playback_position(int fileno, uint64_t otc, uint64_t *ntc) {
 
 
   int64_t dtc=*ntc-otc;
-  file *sfile=mainw->files[fileno];
+  lives_clip_t *sfile=mainw->files[fileno];
 
   int dir=0;
   int cframe,nframe;
@@ -1814,6 +1814,15 @@ void init_clipboard(void) {
     // clear old clipboard
     // need to set current file to 0 before monitoring progress
     mainw->current_file=0;
+
+    if (cfile->clip_type==CLIP_TYPE_FILE) {
+      if (cfile->frame_index!=NULL) g_free(cfile->frame_index);
+      cfile->frame_index=NULL;
+      close_decoder_plugin((lives_decoder_t *)cfile->ext_src);
+      cfile->ext_src=NULL;
+      cfile->clip_type=CLIP_TYPE_DISK;
+    }
+
     mainw->com_failed=FALSE;
     com=g_strdup_printf("%s delete_all \"%s\"",prefs->backend,clipboard->handle);
     unlink(clipboard->info_file);
@@ -2301,7 +2310,7 @@ void get_frame_count(int idx) {
 
 
 void get_frames_sizes(int fileno, int frame) {
-  file *sfile=mainw->files[fileno];
+  lives_clip_t *sfile=mainw->files[fileno];
   LiVESPixbuf *pixbuf;
   
   if ((pixbuf=pull_lives_pixbuf(fileno,frame,get_image_ext_for_type(mainw->files[fileno]->img_type),0))) {
@@ -3177,7 +3186,7 @@ void draw_little_bars (double ptrtime) {
 
 
 
-void get_total_time (file *file) {
+void get_total_time (lives_clip_t *file) {
   // get times (video, left and right audio)
 
   file->laudio_time=file->raudio_time=file->video_time=file->total_time=0.;
@@ -3673,7 +3682,7 @@ boolean after_foreign_play(void) {
 	if (new_frames>0) {
 	  new_file=mainw->first_free_file;
 	  mainw->current_file=new_file;
-	  cfile=(file *)(g_malloc(sizeof(file)));
+	  cfile=(lives_clip_t *)(g_malloc(sizeof(lives_clip_t)));
 	  g_snprintf(cfile->handle,255,"%s",array[0]);
 	  g_strfreev(array);
 	  create_cfile();
@@ -3978,7 +3987,7 @@ sget_file_size(const char *name) {
 void reget_afilesize (int fileno) {
   // re-get the audio file size
   char *afile;
-  file *sfile=mainw->files[fileno];
+  lives_clip_t *sfile=mainw->files[fileno];
   boolean bad_header=FALSE;
 
   if (mainw->multitrack!=NULL) return; // otherwise achans gets set to 0...

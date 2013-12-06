@@ -380,7 +380,7 @@ static void sub_get_last_time(lives_subtitles_t *subt) {
 }
 
 // read .srt files
-boolean get_srt_text(file *sfile, double xtime) {
+boolean get_srt_text(lives_clip_t *sfile, double xtime) {
   lives_subtitle_t *index = NULL;
   lives_subtitle_t *index_ptr = NULL;
   lives_subtitle_t *index_prev = NULL;
@@ -530,7 +530,7 @@ boolean get_srt_text(file *sfile, double xtime) {
 
 
 // read .sub files
-boolean get_sub_text(file *sfile, double xtime) {
+boolean get_sub_text(lives_clip_t *sfile, double xtime) {
   lives_subtitle_t *index = NULL;
   lives_subtitle_t *index_ptr = NULL;
   lives_subtitle_t *index_prev = NULL;
@@ -680,7 +680,7 @@ boolean get_sub_text(file *sfile, double xtime) {
 
 ///
 
-void subtitles_free(file *sfile) {
+void subtitles_free(lives_clip_t *sfile) {
   if (sfile==NULL) return;
   if (sfile->subt==NULL) return;
 
@@ -703,7 +703,7 @@ void subtitles_free(file *sfile) {
 }
 
 
-boolean subtitles_init(file *sfile, char * fname, lives_subtitle_type_t subtype) {
+boolean subtitles_init(lives_clip_t *sfile, char * fname, lives_subtitle_type_t subtype) {
   // fname is the name of the subtitle file
   FILE *tfile;
 
@@ -751,7 +751,7 @@ static void parse_double_time(double tim, int *ph, int *pmin, int *psec, int *pm
     *pmsec = ms;
 }
 
-boolean save_srt_subtitles(file *sfile, double start_time, double end_time, double offset_time, const char *filename) {
+boolean save_srt_subtitles(lives_clip_t *sfile, double start_time, double end_time, double offset_time, const char *filename) {
   lives_subtitles_t *subt=NULL;
   int64_t savepos = 0;
   FILE *pf;
@@ -818,7 +818,7 @@ boolean save_srt_subtitles(file *sfile, double start_time, double end_time, doub
   return(TRUE);
 }
 
-boolean save_sub_subtitles(file *sfile, double start_time, double end_time, double offset_time, const char *filename) {
+boolean save_sub_subtitles(lives_clip_t *sfile, double start_time, double end_time, double offset_time, const char *filename) {
   lives_subtitles_t *subt=NULL;
   int64_t savepos = 0;
   FILE *pf;

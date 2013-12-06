@@ -807,7 +807,7 @@ int64_t render_audio_segment(int nfiles, int *from_files, int to_file, double *a
 
   // return (audio) frames rendered
 
-  file *outfile=to_file>-1?mainw->files[to_file]:NULL;
+  lives_clip_t *outfile=to_file>-1?mainw->files[to_file]:NULL;
 
 
   size_t tbytes;
@@ -931,7 +931,7 @@ int64_t render_audio_segment(int nfiles, int *from_files, int to_file, double *a
 
   for (track=0;track<nfiles;track++) {
     // prepare infile stuff
-    file *infile;
+    lives_clip_t *infile;
 
 #ifdef DEBUG_ARENDER
     g_print(" track %d %d %.4f %.4f\n",track,from_files[track],fromtime[track],avels[track]);
@@ -1282,7 +1282,7 @@ LIVES_INLINE void aud_fade(int fileno, double startt, double endt, double startv
 #ifdef ENABLE_JACK
 void jack_rec_audio_to_clip(int fileno, int old_file, lives_rec_audio_type_t rec_type) {
   // open audio file for writing
-  file *outfile;
+  lives_clip_t *outfile;
 
   boolean jackd_read_started=(mainw->jackd_read!=NULL);
 
@@ -1441,7 +1441,7 @@ void jack_rec_audio_end(boolean close_fd) {
 #ifdef HAVE_PULSE_AUDIO
 void pulse_rec_audio_to_clip(int fileno, int old_file, lives_rec_audio_type_t rec_type) {
   // open audio file for writing
-  file *outfile;
+  lives_clip_t *outfile;
   int retval;
 
   if (fileno==-1) {
@@ -2292,7 +2292,7 @@ static void *cache_my_audio(void *arg) {
     // open new file if necessary
 
     if (cbuffer->fileno!=cbuffer->_cfileno) {
-      file *afile=mainw->files[cbuffer->fileno];
+      lives_clip_t *afile=mainw->files[cbuffer->fileno];
 
       if (cbuffer->_fd!=-1) close(cbuffer->_fd);
 

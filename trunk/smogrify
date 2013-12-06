@@ -3616,6 +3616,8 @@ if (defined($ARGV[0])) {
 	# with -ve arate means insert silence [with_audio should be 1 or 2]
 	# with -ve times means undo cut/delete [source is same clip dir]
 
+	# with -ve end means "allow missing frames" (used for copying to clipboard)
+
 	unlink "$curtmpdir/pause";
 	$img_ext=".".$ARGV[2];
 	$img_prefix=&get_img_prefix($img_ext);
@@ -3634,6 +3636,14 @@ if (defined($ARGV[0])) {
         $new_frames=$num_frames;
 
 	smog_chdir("$curtmpdir");
+
+
+	$allow_missing=0;
+	if ($end<0) {
+	    # insert (copy) from (virtual) clip into clipboard
+	    $allow_missing=1;
+	    $end=-$end;
+	}
 
 	if (defined ($ARGV[17])) {
 	    $times=$ARGV[17];
@@ -3657,8 +3667,14 @@ if (defined($ARGV[0])) {
 
 	if ($with_audio<2) {
 	    if (!$undo_cut) {
-		$img_ext2=&get_img_ext("$tmpdir/$from_handle",$start);
-		$img_prefix2=&get_img_prefix($img_ext2);
+		if (!$allow_missing) {
+		    $img_ext2=&get_img_ext("$tmpdir/$from_handle",$start);
+		    $img_prefix2=&get_img_prefix($img_ext2);
+		}
+		else {
+		    $img_ext2=$img_ext;
+		    $img_prefix2=$img_prefix;
+		}
 	    }
 
 	    &insert;
@@ -4571,12 +4587,14 @@ sub insert {
 		}
 	    }
 	    else {
-		while (! -f "$fromdir/$from$img_ext2") {
-		    print STDERR "waiting on image $fromdir/$from$img_ext2\n";
-		    sleep 1;
-		    smog_system_sync();
+		if (! -f "$fromdir/$from$img_ext2") {
+		    next if ($allow_missing);
+		    while (! -f "$fromdir/$from$img_ext2") {
+			print STDERR "waiting on image $fromdir/$from$img_ext2\n";
+			sleep 1;
+			smog_system_sync();
+		    }
 		}
-
 		if ($quick_copy==-1) {
 		    $quick_copy=0;
 		    if ($img_ext eq $img_ext2) {

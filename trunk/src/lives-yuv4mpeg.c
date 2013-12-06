@@ -118,7 +118,7 @@ static void *y4frame_thread (void *arg) {
 #define YUV4_H_TIME 500000000 // ticks to wait to get stream header
 
 
-static boolean lives_yuv_stream_start_read (file *sfile) {
+static boolean lives_yuv_stream_start_read (lives_clip_t *sfile) {
   double ofps=sfile->fps;
 
   lives_yuv4m_t *yuv4mpeg=(lives_yuv4m_t *)sfile->ext_src;
@@ -271,7 +271,7 @@ void lives_yuv_stream_stop_read (lives_yuv4m_t *yuv4mpeg) {
 #define YUV4_F_TIME 200000000 // ticks to wait to get stream header
 
 
-void weed_layer_set_from_yuv4m (weed_plant_t *layer, file *sfile) {
+void weed_layer_set_from_yuv4m (weed_plant_t *layer, lives_clip_t *sfile) {
   lives_yuv4m_t *yuv4mpeg=(lives_yuv4m_t *)(sfile->ext_src);
 
   y4data thread_data;

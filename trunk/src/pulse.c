@@ -275,7 +275,7 @@ static void pulse_audio_write_process (pa_stream *pstream, size_t nbytes, void *
      gfloat shrink_factor=1.f;
      int swap_sign;
 
-     file *xfile=afile;
+     lives_clip_t *xfile=afile;
 
  #ifdef DEBUG_PULSE
      g_printerr("playing... pulseFramesAvailable = %ld\n", pulseFramesAvailable);
@@ -747,7 +747,7 @@ size_t pulse_flush_read_data(pulse_driver_t *pulsed, int fileno, size_t rbytes, 
   float out_scale;
   int swap_sign;
 
-  file *ofile;
+  lives_clip_t *ofile;
 
 
   if (mainw->agen_key==0&&!mainw->agen_needs_reinit) {
@@ -1332,7 +1332,7 @@ void pulse_aud_pb_ready(int fileno) {
   // - check if we need to reconnect
   // - set vals
   gchar *tmpfilename=NULL;
-  file *sfile=mainw->files[fileno];
+  lives_clip_t *sfile=mainw->files[fileno];
   int asigned=!(sfile->signed_endian&AFORM_UNSIGNED);
   int aendian=!(sfile->signed_endian&AFORM_BIG_ENDIAN);
 

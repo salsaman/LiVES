@@ -70,7 +70,7 @@ typedef struct __commentsw {
   GtkWidget *subt_entry;
 } _commentsw;
 
-_commentsw* create_comments_dialog (file *sfile, gchar *filename);
+_commentsw* create_comments_dialog (lives_clip_t *sfile, gchar *filename);
 
 
 typedef struct {

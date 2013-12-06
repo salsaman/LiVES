@@ -656,8 +656,8 @@ typedef struct {
   lives_painter_surface_t *laudio_drawable;
   lives_painter_surface_t *raudio_drawable;
 
-  // TODO - change to lives_clip_t
-} file;
+  int cb_src; ///< source clip for clipboard
+} lives_clip_t;
 
 
 
@@ -863,12 +863,12 @@ int do_header_read_error_with_retry(int clip) WARN_UNUSED;
 int do_header_missing_detail_error(int clip, lives_clip_details_t detail) WARN_UNUSED;
 void do_chdir_failed_error(const char *dir);
 void handle_backend_errors(void);
-boolean check_backend_return(file *sfile);
+boolean check_backend_return(lives_clip_t *sfile);
 
 /** warn about disk space */
 gchar *ds_critical_msg(const gchar *dir, uint64_t dsval);
 gchar *ds_warning_msg(const gchar *dir, uint64_t dsval, uint64_t cwarn, uint64_t nwarn);
-boolean check_storage_space(file *sfile, boolean is_processing);
+boolean check_storage_space(lives_clip_t *sfile, boolean is_processing);
 
 gchar *get_upd_msg(void);
 gchar *get_new_install_msg(void);
@@ -885,7 +885,7 @@ void do_mt_backup_space_error(lives_mt *, int memreq_mb);
 boolean do_clipboard_fps_warning(void);
 void perf_mem_warning(void);
 void do_dvgrab_error(void);
-boolean do_comments_dialog (file *sfile, gchar *filename);
+boolean do_comments_dialog (lives_clip_t *sfile, gchar *filename);
 boolean do_auto_dialog(const gchar *text, int type);
 void do_encoder_acodec_error (void);
 void do_encoder_sox_error(void);
@@ -1000,7 +1000,7 @@ const gchar *get_deinterlace_string(void);
 // saveplay.c backup
 void backup_file(int clip, int start, int end, const gchar *filename);
 int save_event_frames(void);
-boolean write_headers (file *file);
+boolean write_headers (lives_clip_t *file);
 
 // saveplay.c restore
 void restore_file(const gchar *filename);
@@ -1162,7 +1162,7 @@ void get_menu_text(GtkWidget *menu, char *text);
 void get_menu_text_long(GtkWidget *menuitem, char *text);
 void reset_clipmenu (void);
 void get_play_times(void);
-void get_total_time (file *file);
+void get_total_time (lives_clip_t *file);
 uint32_t get_signed_endian (boolean is_signed, boolean little_endian);
 void fullscreen_internal(void);
 void switch_to_int_player(void);
@@ -1314,12 +1314,12 @@ void lives_free_normal(void *ptr);
 void lives_free_with_check(gpointer ptr); ///< checks if ptr is mainw->do_not_free, otherwise calls lives_free_normal()
 
 // pangotext.c
-boolean subtitles_init(file *sfile, char * fname, lives_subtitle_type_t);
-void subtitles_free(file *sfile);
-boolean get_srt_text(file *sfile, double xtime);
-boolean get_sub_text(file *sfile, double xtime);
-boolean save_sub_subtitles(file *sfile, double start_time, double end_time, double offset_time, const char *filename);
-boolean save_srt_subtitles(file *sfile, double start_time, double end_time, double offset_time, const char *filename);
+boolean subtitles_init(lives_clip_t *sfile, char * fname, lives_subtitle_type_t);
+void subtitles_free(lives_clip_t *sfile);
+boolean get_srt_text(lives_clip_t *sfile, double xtime);
+boolean get_sub_text(lives_clip_t *sfile, double xtime);
+boolean save_sub_subtitles(lives_clip_t *sfile, double start_time, double end_time, double offset_time, const char *filename);
+boolean save_srt_subtitles(lives_clip_t *sfile, double start_time, double end_time, double offset_time, const char *filename);
 
 // osc.c
 #ifdef ENABLE_OSC

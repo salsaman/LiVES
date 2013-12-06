@@ -394,7 +394,7 @@ static int audio_process (nframes_t nframes, void *arg) {
     gfloat shrink_factor=1.f;
     double vol;
 
-    file *xfile=afile;
+    lives_clip_t *xfile=afile;
 
 #ifdef DEBUG_AJACK
     g_printerr("playing... jackFramesAvailable = %ld\n", jackFramesAvailable);
@@ -914,7 +914,7 @@ static size_t audio_read_inner(jack_driver_t *jackd, float **in_buffer, int ofil
 
   void *holding_buff=g_try_malloc(rbytes);
 
-  file *ofile=mainw->files[ofileno];
+  lives_clip_t *ofile=mainw->files[ofileno];
 
   size_t bytes=0;
 
@@ -1696,7 +1696,7 @@ void jack_aud_pb_ready(int fileno) {
 
   // called at pb start and rec stop (after rec_ext_audio)
   gchar *tmpfilename=NULL;
-  file *sfile=mainw->files[fileno];
+  lives_clip_t *sfile=mainw->files[fileno];
   int asigned=!(sfile->signed_endian&AFORM_UNSIGNED);
   int aendian=!(sfile->signed_endian&AFORM_BIG_ENDIAN);
 

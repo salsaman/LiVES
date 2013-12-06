@@ -79,7 +79,7 @@ typedef struct {
 
   volatile gint64 audio_ticks; ///< ticks when we did the last seek, used to calculate current ticks from audio
 
-  int fd; /**< if >0 we are playing from a file */
+  int fd; /**< if >0 we are playing from a lives_clip_t */
   boolean is_opening; ///< TRUE if file is opening (audiodump.pcm)
   volatile off_t seek_pos;
   off_t seek_end;

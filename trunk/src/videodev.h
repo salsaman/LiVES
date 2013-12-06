@@ -26,7 +26,7 @@ typedef struct {
 #define MAX_FORMATS 1024
 
 void on_open_vdev_activate (GtkMenuItem *, gpointer);
-boolean weed_layer_set_from_lvdev (weed_plant_t *layer, file *sfile, double timeoutsecs);
+boolean weed_layer_set_from_lvdev (weed_plant_t *layer, lives_clip_t *sfile, double timeoutsecs);
 void lives_vdev_free(lives_vdev_t *);
 
 

@@ -2254,7 +2254,7 @@ static boolean sanity_check_cdata(lives_clip_data_t *cdata) {
 typedef struct {
   GList *disabled;
   lives_decoder_t *dplug;
-  file *sfile;
+  lives_clip_t *sfile;
 } tdp_data;
 
 
@@ -2348,7 +2348,7 @@ const lives_clip_data_t *get_decoder_cdata(int fileno, GList *disabled, const li
 
   GList *dlist=NULL,*xdisabled;
 
-  file *sfile=mainw->files[fileno];
+  lives_clip_t *sfile=mainw->files[fileno];
 
   char decplugname[PATH_MAX];
   char *msg;

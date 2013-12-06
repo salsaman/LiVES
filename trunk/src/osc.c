@@ -1783,7 +1783,7 @@ void lives_osc_cb_clip_getfps(void *context, int arglen, const void *vargs, OSCT
 
 void lives_osc_cb_clip_get_ifps(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
   char *tmp;
-  file *sfile;
+  lives_clip_t *sfile;
   int clip=mainw->current_file;
 
   if (lives_osc_check_arguments (arglen,vargs,"i",FALSE)) { 
@@ -2126,7 +2126,7 @@ void lives_osc_cb_clip_set_start(void *context, int arglen, const void *vargs, O
   int clip=current_file;
   int frame;
 
-  file *sfile;
+  lives_clip_t *sfile;
 
   if (mainw->current_file<1||mainw->preview||mainw->is_processing) return lives_osc_notify_failure();
   if (mainw->multitrack!=NULL) return lives_osc_notify_failure();
@@ -2166,7 +2166,7 @@ void lives_osc_cb_clip_get_start(void *context, int arglen, const void *vargs, O
   int clip=current_file;
   char *tmp;
 
-  file *sfile;
+  lives_clip_t *sfile;
 
   if (mainw->current_file<1) return lives_osc_notify_failure();
   if (mainw->multitrack!=NULL) return lives_osc_notify_failure();
@@ -2190,7 +2190,7 @@ void lives_osc_cb_clip_set_end(void *context, int arglen, const void *vargs, OSC
   int clip=current_file;
   int frame;
 
-  file *sfile;
+  lives_clip_t *sfile;
 
   if (mainw->current_file<1||mainw->preview||mainw->is_processing) return lives_osc_notify_failure();
   if (mainw->multitrack!=NULL) return lives_osc_notify_failure();
@@ -2228,7 +2228,7 @@ void lives_osc_cb_clip_get_end(void *context, int arglen, const void *vargs, OSC
   int clip=current_file;
   char *tmp;
 
-  file *sfile;
+  lives_clip_t *sfile;
 
   if (mainw->current_file<1) return lives_osc_notify_failure();
   if (mainw->multitrack!=NULL) return lives_osc_notify_failure();
@@ -2251,7 +2251,7 @@ void lives_osc_cb_clip_get_size(void *context, int arglen, const void *vargs, OS
   int clip=current_file;
   char *tmp;
 
-  file *sfile;
+  lives_clip_t *sfile;
 
   if (mainw->current_file<1) return lives_osc_notify_failure();
 
@@ -2272,7 +2272,7 @@ void lives_osc_cb_clip_get_name(void *context, int arglen, const void *vargs, OS
   int current_file=mainw->current_file;
   int clip=current_file;
 
-  file *sfile;
+  lives_clip_t *sfile;
 
   if (mainw->current_file<1) return lives_osc_notify_failure();
 
@@ -2331,7 +2331,7 @@ void lives_osc_cb_clip_get_frames(void *context, int arglen, const void *vargs, 
   int clip=current_file;
   char *tmp;
 
-  file *sfile;
+  lives_clip_t *sfile;
 
   if (mainw->current_file<1) return lives_osc_notify_failure();
 
@@ -2358,7 +2358,7 @@ void lives_osc_cb_clip_save_frame(void *context, int arglen, const void *vargs, 
   char fname[OSC_STRING_SIZE];
   boolean retval;
 
-  file *sfile;
+  lives_clip_t *sfile;
 
   if (mainw->current_file<1) return lives_osc_notify_failure();
   if (mainw->multitrack!=NULL) return lives_osc_notify_failure();

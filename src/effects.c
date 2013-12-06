@@ -541,7 +541,7 @@ boolean do_effect(lives_rfx_t *rfx, boolean is_preview) {
       
       init_clipboard();
       
-      lives_memcpy(clipboard,cfile,sizeof(file));
+      lives_memcpy(clipboard,cfile,sizeof(lives_clip_t));
       cfile->is_loaded=TRUE;
       mainw->suppress_dprint=TRUE;
       mainw->only_close=TRUE;
@@ -630,7 +630,7 @@ lives_render_error_t realfx_progress (boolean reset) {
 
     if (cfile->clip_type==CLIP_TYPE_FILE) {
       if (cfile->frame_index_back!=NULL) g_free(cfile->frame_index_back);
-      cfile->frame_index_back=frame_index_copy(cfile->frame_index,cfile->frames);
+      cfile->frame_index_back=frame_index_copy(cfile->frame_index,cfile->frames,0);
     }
     write_error=LIVES_RENDER_ERROR_NONE;
     return LIVES_RENDER_READY;
@@ -994,7 +994,7 @@ void deinterlace_frame(weed_plant_t *layer, weed_timecode_t tc) {
 
 
 weed_plant_t *get_blend_layer(weed_timecode_t tc) {
-  file *blend_file;
+  lives_clip_t *blend_file;
   static weed_timecode_t blend_tc=0;
   weed_timecode_t ntc=tc;
 

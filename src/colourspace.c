@@ -11290,7 +11290,7 @@ void insert_blank_frames(int sfileno, int nframes, int after) {
 
   // this is ugly, it should be moved to another file
 
-  file *sfile=mainw->files[sfileno];
+  lives_clip_t *sfile=mainw->files[sfileno];
   LiVESPixbuf *blankp;
   GError *error=NULL;
   char oname[PATH_MAX];

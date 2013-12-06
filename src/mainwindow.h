@@ -278,7 +278,7 @@ typedef struct {
   // files
   int current_file;
   int first_free_file;
-  file *files[MAX_FILES+1]; ///< +1 for the clipboard
+  lives_clip_t *files[MAX_FILES+1]; ///< +1 for the clipboard
   gchar vid_load_dir[PATH_MAX];
   gchar vid_save_dir[PATH_MAX];
   gchar vid_dl_dir[PATH_MAX];

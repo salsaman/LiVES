@@ -2083,7 +2083,7 @@ aud_dialog_t *create_audfade_dialog (int type) {
 
 
 
-_commentsw* create_comments_dialog (file *sfile, gchar *filename) {
+_commentsw* create_comments_dialog (lives_clip_t *sfile, gchar *filename) {
   GtkWidget *dialog_vbox;
   GtkWidget *table;
   GtkWidget *label;

@@ -677,7 +677,7 @@ void handle_backend_errors(void) {
 
 
 
-boolean check_backend_return(file *sfile) {
+boolean check_backend_return(lives_clip_t *sfile) {
   // check return code after synchronous (foreground) backend commands
 
   FILE *infofile;
@@ -722,7 +722,7 @@ void pump_io_chan(GIOChannel *iochan) {
 }
 
 
-boolean check_storage_space(file *sfile, boolean is_processing) {
+boolean check_storage_space(lives_clip_t *sfile, boolean is_processing) {
   // check storage space in prefs->tmpdir, and if sfile!=NULL, in sfile->op_dir
   guint64 dsval;
 
@@ -931,7 +931,7 @@ static int progress_count;
 
 #define PROG_LOOP_VAL 200
 
-static void progbar_pulse_or_fraction(file *sfile, int frames_done) {
+static void progbar_pulse_or_fraction(lives_clip_t *sfile, int frames_done) {
   double timesofar;
 
   if (progress_count++>=PROG_LOOP_VAL) {
@@ -2239,7 +2239,7 @@ boolean do_yuv4m_open_warning(void) {
 
 
 
-boolean do_comments_dialog (file *sfile, gchar *filename) {
+boolean do_comments_dialog (lives_clip_t *sfile, gchar *filename) {
   boolean response;
   boolean ok=FALSE;
   boolean encoding=FALSE;

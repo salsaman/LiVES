@@ -7199,7 +7199,7 @@ boolean weed_generator_start (weed_plant_t *inst) {
   if (new_file!=mainw->current_file) {
     mainw->current_file=new_file;
 
-    cfile=(file *)(g_malloc(sizeof(file)));
+    cfile=(lives_clip_t *)(g_malloc(sizeof(lives_clip_t)));
     g_snprintf (cfile->handle,256,"ephemeral%d",mainw->current_file);
     create_cfile();
     cfile->clip_type=CLIP_TYPE_GENERATOR;

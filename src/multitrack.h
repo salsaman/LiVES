@@ -650,7 +650,7 @@ typedef struct {
 } ttable;
 
 
-/* clip->layout use mapping, from layout.map file */
+/* clip->layout use mapping, from layout.map lives_clip_t */
 typedef struct {
   gchar *handle;
   int64_t unique_id;

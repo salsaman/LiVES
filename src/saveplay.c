@@ -1069,7 +1069,7 @@ load_done:
 
 
 
-static void save_subs_to_file(file *sfile, gchar *fname) {
+static void save_subs_to_file(lives_clip_t *sfile, gchar *fname) {
   gchar *msg,*ext;
   lives_subtitle_type_t otype,itype;
 
@@ -1161,7 +1161,7 @@ boolean get_handle_from_info_file(int index) {
   }
 
   if (mainw->files[index]==NULL) {
-    mainw->files[index]=(file *)(g_malloc(sizeof(file)));
+    mainw->files[index]=(lives_clip_t *)(g_malloc(sizeof(lives_clip_t)));
     mainw->files[index]->clip_type=CLIP_TYPE_DISK; // the default
   }
   g_snprintf(mainw->files[index]->handle,256,"%s",mainw->msg);
@@ -1218,7 +1218,7 @@ void save_frame (GtkMenuItem *menuitem, gpointer user_data) {
 
 void save_file (int clip, int start, int end, const char *filename) {
   // save clip from frame start to frame end
-  file *sfile=mainw->files[clip],*nfile=NULL;
+  lives_clip_t *sfile=mainw->files[clip],*nfile=NULL;
 
   double aud_start=0.,aud_end=0.;
 
@@ -3757,7 +3757,7 @@ boolean save_file_comments (int fileno) {
   int retval;
   int comment_fd;
   gchar *comment_file=g_strdup_printf ("%s/%s/.comment",prefs->tmpdir,cfile->handle);
-  file *sfile=mainw->files[fileno];
+  lives_clip_t *sfile=mainw->files[fileno];
 
   unlink (comment_file);
 
@@ -3833,7 +3833,7 @@ boolean save_frame_inner(int clip, int frame, const gchar *file_name, int width,
   // save 1 frame as an image (uses imagemagick to convert)
   // width==-1, height==-1 to use "natural" values
 
-  file *sfile=mainw->files[clip];
+  lives_clip_t *sfile=mainw->files[clip];
   gchar full_file_name[PATH_MAX];
   gchar *com,*tmp;
 
@@ -3921,7 +3921,7 @@ boolean save_frame_inner(int clip, int frame, const gchar *file_name, int width,
 
 
 void backup_file(int clip, int start, int end, const gchar *file_name) {
-  file *sfile=mainw->files[clip];
+  lives_clip_t *sfile=mainw->files[clip];
   gchar **array;
 
   gchar title[256];
@@ -4064,7 +4064,7 @@ void backup_file(int clip, int start, int end, const gchar *file_name) {
 }
 
 
-boolean write_headers (file *file) {
+boolean write_headers (lives_clip_t *file) {
   // this function is included only for backwards compatibility with ancient builds of LiVES
   //
 
@@ -5334,7 +5334,7 @@ void recover_layout_map(int numclips) {
  boolean reload_clip(int fileno) {
    // cd to clip directory - so decoder plugins can write temp files
 
-   file *sfile=mainw->files[fileno];
+   lives_clip_t *sfile=mainw->files[fileno];
 
    gchar *ppath=g_build_filename(prefs->tmpdir,sfile->handle,NULL);
 
@@ -5444,8 +5444,6 @@ void recover_layout_map(int numclips) {
    // we will set correct value in check_clip_integrity() if there are any real images
 
    if (sfile->ext_src!=NULL) {
-     //cdata=clone_cdata(fileno); // testing only
-     //((lives_decoder_t *)sfile->ext_src)->cdata=cdata;
      boolean bad_header=FALSE;
      boolean correct=check_clip_integrity(fileno,cdata); // get correct img_type, fps, etc.
      if (!correct||was_renamed) {
@@ -5642,7 +5640,7 @@ static boolean recover_files(gchar *recovery_file, boolean auto_recover) {
       last_was_normal_file=TRUE;
       mainw->current_file=new_file;
       threaded_dialog_spin();
-      cfile=(file *)(g_malloc(sizeof(file)));
+      cfile=(lives_clip_t *)(g_malloc(sizeof(lives_clip_t)));
       g_snprintf(cfile->handle,256,"%s",buffptr);
       cfile->clip_type=CLIP_TYPE_DISK; // the default
 

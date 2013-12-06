@@ -225,7 +225,7 @@ void lives_exit (void) {
 	}
 
 
-	if (mainw->files[i]->clip_type==CLIP_TYPE_FILE&&mainw->files[i]->ext_src!=NULL) {
+	if ((mainw->files[i]->clip_type==CLIP_TYPE_FILE||mainw->files[i]->clip_type==CLIP_TYPE_DISK)&&mainw->files[i]->ext_src!=NULL) {
 	  // must do this before we move it
 	  gchar *ppath=g_build_filename(prefs->tmpdir,cfile->handle,NULL);
 	  lives_chdir(ppath,FALSE);
@@ -308,7 +308,7 @@ void lives_exit (void) {
 	  }
 	  lives_freep((void**)&mainw->files[i]->op_dir);
 	  if (!mainw->only_close) {
-	    if (mainw->files[i]->clip_type==CLIP_TYPE_FILE&&mainw->files[i]->ext_src!=NULL) {
+	    if ((mainw->files[i]->clip_type==CLIP_TYPE_FILE||mainw->files[i]->clip_type==CLIP_TYPE_DISK)&&mainw->files[i]->ext_src!=NULL) {
 	      gchar *ppath=g_build_filename(prefs->tmpdir,mainw->files[i]->handle,NULL);
 	      cwd=g_get_current_dir();
 	      lives_chdir(ppath,FALSE);
@@ -415,8 +415,8 @@ void lives_exit (void) {
     if (mainw->preview_image!=NULL && LIVES_IS_IMAGE(mainw->preview_image)) 
       lives_image_set_from_pixbuf(LIVES_IMAGE(mainw->preview_image), NULL);
 
-    if (mainw->start_image!=NULL) lives_image_set_from_pixbuf(LIVES_IMAGE(mainw->image272), NULL);
-    if (mainw->end_image!=NULL) lives_image_set_from_pixbuf(LIVES_IMAGE(mainw->image273), NULL);
+    if (mainw->start_image!=NULL) lives_image_set_from_pixbuf(LIVES_IMAGE(mainw->start_image), NULL);
+    if (mainw->end_image!=NULL) lives_image_set_from_pixbuf(LIVES_IMAGE(mainw->end_image), NULL);
 #endif
 
     if (mainw->frame_layer!=NULL) {
@@ -2474,6 +2474,8 @@ void on_copy_activate (GtkMenuItem *menuitem, gpointer user_data) {
   start=cfile->start;
   end=cfile->end;
 
+  //#define TEST_VCB
+#ifndef TEST_VCB
   if (!check_if_non_virtual(mainw->current_file,start,end)) {
     boolean retb;
     mainw->cancelled=CANCEL_NONE;
@@ -2489,6 +2491,21 @@ void on_copy_activate (GtkMenuItem *menuitem, gpointer user_data) {
       return;
     }
   }
+#else
+  clipboard->cb_src=mainw->current_file;
+  if (cfile->clip_type==CLIP_TYPE_FILE) {
+    clipboard->clip_type=CLIP_TYPE_FILE;
+    clipboard->interlace=cfile->interlace;
+    clipboard->deinterlace=cfile->deinterlace;
+    clipboard->frame_index=frame_index_copy(cfile->frame_index,end-start+1,start-1);
+    clipboard->frames=end-start+1;
+    check_if_non_virtual(0,1,clipboard->frames);
+    if (clipboard->clip_type==CLIP_TYPE_FILE) {
+      clipboard->ext_src=clone_decoder(mainw->current_file);
+      end=-end;
+    }
+  }
+#endif
 
   mainw->fx1_val=1;
   mainw->fx1_bool=FALSE;
@@ -2500,6 +2517,10 @@ void on_copy_activate (GtkMenuItem *menuitem, gpointer user_data) {
 		      start, end, cfile->handle, mainw->ccpd_with_sound, cfile->fps, cfile->arate, 
 		      cfile->achans, cfile->asampsize, !(cfile->signed_endian&AFORM_UNSIGNED),
 		      !(cfile->signed_endian&AFORM_BIG_ENDIAN));
+
+#ifdef TEST_VCB
+    if (clipboard->clip_type==CLIP_TYPE_FILE) end=-end;
+#endif
 
   mainw->com_failed=FALSE;
   lives_system(com,FALSE);
@@ -2630,6 +2651,31 @@ void on_paste_as_new_activate                       (GtkMenuItem     *menuitem,
 
   mainw->fx1_val=1;
   mainw->fx1_bool=FALSE;
+
+
+#ifdef TEST_VCB
+  if (!check_if_non_virtual(0,1,clipboard->frames)) {
+    int current_file=mainw->current_file;
+    boolean retb;
+    mainw->cancelled=CANCEL_NONE;
+    mainw->current_file=0;
+    cfile->progress_start=1;
+    cfile->progress_end=count_virtual_frames(cfile->frame_index,1,cfile->frames);
+    do_threaded_dialog(_("Pulling frames from clipboard"),TRUE);
+    retb=virtual_to_images(mainw->current_file,1,cfile->frames,TRUE,NULL);
+    end_threaded_dialog();
+    mainw->current_file=current_file;
+
+    if (mainw->cancelled!=CANCEL_NONE||!retb) {
+      sensitize();
+      mainw->cancelled=CANCEL_USER;
+      return;
+    }
+  }
+#endif
+
+
+
 
   mainw->no_switch_dprint=TRUE;
   msg=g_strdup_printf (_ ("Pasting %d frames to new clip %s..."),cfile->frames,cfile->name);
@@ -5112,7 +5158,7 @@ boolean on_load_set_ok (GtkButton *button, gpointer user_data) {
 	return !skip_threaded_dialog;
       }
       mainw->current_file=new_file;
-      cfile=(file *)(g_malloc(sizeof(file)));
+      cfile=(lives_clip_t *)(g_malloc(sizeof(lives_clip_t)));
       g_snprintf(cfile->handle,256,"%s",mainw->msg);
       cfile->clip_type=CLIP_TYPE_DISK; // the default
 
@@ -5577,19 +5623,14 @@ void on_show_file_info_activate (GtkMenuItem *menuitem, gpointer user_data) {
 
 }
 
-void
-on_show_file_comments_activate            (GtkMenuItem     *menuitem,
-					   gpointer         user_data)
-{
+
+void on_show_file_comments_activate (GtkMenuItem *menuitem, gpointer user_data) {
   do_comments_dialog(NULL,NULL);
 }
 
 
 
-void
-on_show_clipboard_info_activate            (GtkMenuItem     *menuitem,
-					    gpointer         user_data)
-{
+void on_show_clipboard_info_activate (GtkMenuItem *menuitem, gpointer user_data) {
   int current_file=mainw->current_file;
   mainw->current_file=0;
   on_show_file_info_activate(menuitem,user_data);
@@ -10036,7 +10077,7 @@ on_slower_pressed (GtkButton *button,
 
   int type=0;
 
-  file *sfile=cfile;
+  lives_clip_t *sfile=cfile;
 
   if (user_data!=NULL) {
     type=GPOINTER_TO_INT(user_data);
@@ -10083,7 +10124,7 @@ on_faster_pressed (GtkButton *button,
   double change=1.;
   int type=0;
 
-  file *sfile=cfile;
+  lives_clip_t *sfile=cfile;
 
   if (user_data!=NULL) {
     type=GPOINTER_TO_INT(user_data);

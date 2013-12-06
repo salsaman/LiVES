@@ -403,7 +403,7 @@ static void mt_set_cursor_style(lives_mt *mt, lives_cursor_t cstyle, int width, 
 
   guchar *cpixels,*tpixels;
 
-  file *sfile=mainw->files[clip];
+  lives_clip_t *sfile=mainw->files[clip];
 
   double frames_width;
 
@@ -3923,7 +3923,7 @@ static boolean in_out_ebox_pressed (GtkWidget *eventbox, GdkEventButton *event, 
   int height;
   double width;
   int ebwidth;
-  file *sfile;
+  lives_clip_t *sfile;
   int file;
   lives_mt *mt=(lives_mt *)user_data;
 
@@ -3967,7 +3967,7 @@ static boolean in_out_ebox_pressed (GtkWidget *eventbox, GdkEventButton *event, 
 
 
 
-static void do_clip_context (lives_mt *mt, GdkEventButton *event, file *sfile) {
+static void do_clip_context (lives_mt *mt, GdkEventButton *event, lives_clip_t *sfile) {
   // pop up a context menu when clip is right clicked on
 
   // unfinished...
@@ -4025,7 +4025,7 @@ static boolean clip_ebox_pressed (GtkWidget *eventbox, GdkEventButton *event, gp
   int height;
   double width;
   int ebwidth;
-  file *sfile;
+  lives_clip_t *sfile;
   int file;
   lives_mt *mt=(lives_mt *)user_data;
 
@@ -10469,7 +10469,7 @@ fx_ebox_pressed (GtkWidget *eventbox, GdkEventButton *event, gpointer user_data)
 static void set_clip_labels_variable(lives_mt *mt, int i) {
   gchar *tmp;
   GtkLabel *label1,*label2;
-  file *sfile=mainw->files[i];
+  lives_clip_t *sfile=mainw->files[i];
 
   if (mt->clip_labels==NULL) return;
 
@@ -11534,7 +11534,7 @@ void in_out_start_changed (GtkWidget *widget, gpointer user_data) {
   boolean start_anchored;
 
   if (block==NULL) {
-    file *sfile=mainw->files[mt->file_selected];
+    lives_clip_t *sfile=mainw->files[mt->file_selected];
     sfile->start=lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(widget));
     set_clip_labels_variable(mt,mt->file_selected);
     update_in_image(mt);
@@ -11766,7 +11766,7 @@ void in_out_end_changed (GtkWidget *widget, gpointer user_data) {
   boolean end_anchored;
 
   if (block==NULL) {
-    file *sfile=mainw->files[mt->file_selected];
+    lives_clip_t *sfile=mainw->files[mt->file_selected];
     sfile->end=(int)new_end;
     set_clip_labels_variable(mt,mt->file_selected);
     update_out_image(mt,0);
@@ -15234,7 +15234,7 @@ void multitrack_view_details (GtkMenuItem *menuitem, gpointer user_data) {
   char buff[512];
   lives_clipinfo_t *filew;
   lives_mt *mt=(lives_mt *)user_data;
-  file *rfile=mainw->files[mt->render_file];
+  lives_clip_t *rfile=mainw->files[mt->render_file];
   uint32_t bsize=0;
   double time=0.;
   int num_events=0;
@@ -16934,7 +16934,7 @@ void multitrack_adj_start_end (GtkMenuItem *menuitem, gpointer user_data) {
 
 void multitrack_insert (GtkMenuItem *menuitem, gpointer user_data) {
   lives_mt *mt=(lives_mt *)user_data;
-  file *sfile=mainw->files[mt->file_selected];
+  lives_clip_t *sfile=mainw->files[mt->file_selected];
   double secs=lives_ruler_get_value(LIVES_RULER(mt->timeline));
   GtkWidget *eventbox;
   weed_timecode_t ins_start=(sfile->start-1.)/sfile->fps*U_SEC;
@@ -17048,7 +17048,7 @@ void multitrack_insert (GtkMenuItem *menuitem, gpointer user_data) {
 
 void multitrack_audio_insert (GtkMenuItem *menuitem, gpointer user_data) {
   lives_mt *mt=(lives_mt *)user_data;
-  file *sfile=mainw->files[mt->file_selected];
+  lives_clip_t *sfile=mainw->files[mt->file_selected];
   double secs=lives_ruler_get_value(LIVES_RULER(mt->timeline));
   GtkWidget *eventbox=(GtkWidget *)mt->audio_draws->data;
   weed_timecode_t ins_start=q_gint64((sfile->start-1.)/sfile->fps*U_SEC,mt->fps);
@@ -17196,7 +17196,7 @@ void insert_frames (int filenum, weed_timecode_t offset_start, weed_timecode_t o
   int numframes,i;
   int render_file=mainw->current_file;
   boolean isfirst=TRUE;
-  file *sfile=mainw->files[filenum];
+  lives_clip_t *sfile=mainw->files[filenum];
   int track=GPOINTER_TO_INT(g_object_get_data(G_OBJECT(eventbox),"layer_number"));
   weed_timecode_t last_tc=0,offset_start_tc,start_tc,last_offset;
   int *clips=NULL,*frames=NULL,*rep_clips,*rep_frames,error;
@@ -17591,7 +17591,7 @@ static boolean expose_timeline_reg_event (GtkWidget *timeline, GdkEventExpose *e
 
 
 static float get_float_audio_val_at_time(int fnum, double secs, int chnum, int chans) {
-  file *afile=mainw->files[fnum];
+  lives_clip_t *afile=mainw->files[fnum];
   int64_t bytes;
   int64_t apos;
 

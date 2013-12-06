@@ -29,7 +29,7 @@ LIVES_INLINE int count_virtual_frames(int *findex, int start, int end) {
 
 void create_frame_index(int fileno, boolean init, int start_offset, int nframes) {
   register int i;
-  file *sfile=mainw->files[fileno];
+  lives_clip_t *sfile=mainw->files[fileno];
   if (sfile==NULL||sfile->frame_index!=NULL) return;
 
   sfile->frame_index=(int *)g_malloc(nframes*sizint);
@@ -47,7 +47,9 @@ boolean save_frame_index(int fileno) {
   int fd,i;
   int retval;
   gchar *fname;
-  file *sfile=mainw->files[fileno];
+  lives_clip_t *sfile=mainw->files[fileno];
+
+  if (fileno==0) return TRUE;
 
   if (sfile==NULL||sfile->frame_index==NULL) return FALSE;
 
@@ -93,7 +95,7 @@ boolean load_frame_index(int fileno) {
   int fd,i;
   int retval;
   gchar *fname;
-  file *sfile=mainw->files[fileno];
+  lives_clip_t *sfile=mainw->files[fileno];
 
   if (sfile==NULL||sfile->frame_index!=NULL) return FALSE;
 
@@ -149,20 +151,14 @@ boolean load_frame_index(int fileno) {
 }
 
 
-void del_frame_index(file *sfile) {
+void del_frame_index(lives_clip_t *sfile) {
   // physically delete the frame_index for a clip
   // only done once all
 
-  gchar *idxfile=g_build_filename(prefs->tmpdir,sfile->handle,"file_index",NULL);
+  gchar *idxfile;
   gchar *com;
 
   register int i;
-
-#ifndef IS_MINGW
-  com=g_strdup_printf("/bin/rm -f \"%s\"",idxfile);
-#else
-  com=g_strdup_printf("rm.exe -f \"%s\"",idxfile);
-#endif
 
   // cannot call check_if_non_virtual() else we end up recursing
 
@@ -170,16 +166,26 @@ void del_frame_index(file *sfile) {
     for (i=1;i<=sfile->frames;i++) {
       if (sfile->frame_index[i-1]!=-1) {
 	LIVES_ERROR("deleting frame_index with virtual frames in it !");
-	g_free(com);
-	g_free(idxfile);
 	return;
       }
     }
   }
 
-  lives_system(com,FALSE);
-  g_free(com);
-  g_free(idxfile);
+  if (sfile!=clipboard) {
+    idxfile=g_build_filename(prefs->tmpdir,sfile->handle,"file_index",NULL);
+  
+#ifndef IS_MINGW
+    com=g_strdup_printf("/bin/rm -f \"%s\"",idxfile);
+#else
+    com=g_strdup_printf("rm.exe -f \"%s\"",idxfile);
+#endif
+
+    lives_system(com,FALSE);
+    g_free(com);
+
+    g_free(idxfile);
+  }
+
   if (sfile->frame_index!=NULL) g_free(sfile->frame_index);
   sfile->frame_index=NULL;
 }
@@ -188,7 +194,7 @@ void del_frame_index(file *sfile) {
 
 
 boolean check_clip_integrity(int fileno, const lives_clip_data_t *cdata) {
-  file *sfile=mainw->files[fileno];
+  lives_clip_t *sfile=mainw->files[fileno];
 
   lives_image_type_t empirical_img_type=sfile->img_type;
 
@@ -261,7 +267,7 @@ boolean check_if_non_virtual(int fileno, int start, int end) {
   // check if there are no virtual frames from start to end inclusive in clip fileno
 
   register int i;
-  file *sfile=mainw->files[fileno];
+  lives_clip_t *sfile=mainw->files[fileno];
   boolean bad_header=FALSE;
 
   if (sfile->clip_type!=CLIP_TYPE_FILE) return TRUE;
@@ -283,9 +289,11 @@ boolean check_if_non_virtual(int fileno, int start, int end) {
   if (sfile->interlace!=LIVES_INTERLACE_NONE) {
     sfile->interlace=LIVES_INTERLACE_NONE; // all frames should have been deinterlaced
     sfile->deinterlace=FALSE;
-    save_clip_value(fileno,CLIP_DETAILS_INTERLACE,&sfile->interlace);
-    if (mainw->com_failed||mainw->write_failed) bad_header=TRUE;
-    if (bad_header) do_header_write_error(fileno);
+    if (fileno>0) {
+      save_clip_value(fileno,CLIP_DETAILS_INTERLACE,&sfile->interlace);
+      if (mainw->com_failed||mainw->write_failed) bad_header=TRUE;
+      if (bad_header) do_header_write_error(fileno);
+    }
   }
 
   return TRUE;
@@ -306,7 +314,7 @@ boolean virtual_to_images(int sfileno, int sframe, int eframe, boolean update_pr
   // return FALSE on write error
 
   register int i;
-  file *sfile=mainw->files[sfileno];
+  lives_clip_t *sfile=mainw->files[sfileno];
   LiVESPixbuf *pixbuf=NULL;
   GError *error=NULL;
   char *oname;
@@ -392,7 +400,7 @@ void insert_images_in_virtual (int sfileno, int where, int frames) {
   // this is for clip type CLIP_TYPE_FILE only
 
   register int i;
-  file *sfile=mainw->files[sfileno];
+  lives_clip_t *sfile=mainw->files[sfileno];
   int nframes=sfile->frames;
 
   if (sfile->frame_index_back!=NULL) g_free(sfile->frame_index_back);
@@ -429,7 +437,7 @@ void delete_frames_from_virtual (int sfileno, int start, int end) {
   // this is for clip type CLIP_TYPE_FILE only
 
   register int i;
-  file *sfile=mainw->files[sfileno];
+  lives_clip_t *sfile=mainw->files[sfileno];
   int nframes=sfile->frames,frames=end-start+1;
 
   if (sfile->frame_index_back!=NULL) g_free(sfile->frame_index_back);
@@ -465,7 +473,7 @@ void restore_frame_index_back (int sfileno) {
 
   // this is for clip type CLIP_TYPE_FILE only
 
-  file *sfile=mainw->files[sfileno];
+  lives_clip_t *sfile=mainw->files[sfileno];
 
   if (sfile->frame_index!=NULL) g_free(sfile->frame_index);
 
@@ -485,7 +493,7 @@ void restore_frame_index_back (int sfileno) {
 
 
 
-void clean_images_from_virtual (file *sfile, int oldframes) {
+void clean_images_from_virtual (lives_clip_t *sfile, int oldframes) {
   // remove images on disk where the frame_index points to a frame in
   // the original clip
 
@@ -523,15 +531,17 @@ void clean_images_from_virtual (file *sfile, int oldframes) {
 }
 
 
-int *frame_index_copy(int *findex, int nframes) {
+int *frame_index_copy(int *findex, int nframes, int offset) {
   // like it says on the label
   // copy first nframes from findex and return them
   // no checking is done to make sure nframes is in range
 
+  // start at frame offset
+
   int *findexc=(int *)g_malloc(sizint*nframes);
   register int i;
 
-  for (i=0;i<nframes;i++) findexc[i]=findex[i];
+  for (i=0;i<nframes;i++) findexc[i]=findex[i+offset];
 
   return findexc;
 }
@@ -545,7 +555,7 @@ boolean is_virtual_frame(int sfileno, int frame) {
 
   // a CLIP_TYPE_FILE with no virtual frames becomes a CLIP_TYPE_DISK
 
-  file *sfile=mainw->files[sfileno];
+  lives_clip_t *sfile=mainw->files[sfileno];
   if (sfile->frame_index==NULL) return FALSE;
   if (sfile->frame_index[frame-1]!=-1) return TRUE;
   return FALSE;

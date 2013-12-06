@@ -4228,7 +4228,7 @@ static boolean weed_layer_new_from_file_progressive(weed_plant_t *layer,
 
 
 
-static weed_plant_t *render_subs_from_file(file *sfile, double xtime, weed_plant_t *layer) {
+static weed_plant_t *render_subs_from_file(lives_clip_t *sfile, double xtime, weed_plant_t *layer) {
     // render subtitles from whatever (.srt or .sub) file
     // uses default values for colours, fonts, size, etc.
 
@@ -4294,7 +4294,7 @@ boolean pull_frame_at_size (weed_plant_t *layer, const gchar *image_ext, weed_ti
 
   weed_plant_t *vlayer;
   void **pixel_data;
-  file *sfile=NULL;
+  lives_clip_t *sfile=NULL;
 
   int *rowstrides;
 
@@ -4532,7 +4532,7 @@ void check_layer_ready(weed_plant_t *layer) {
   int clip;
   int frame;
   int error;
-  file *sfile;
+  lives_clip_t *sfile;
 
   if (layer==NULL) return;
   if (weed_plant_has_leaf(layer,"host_pthread")) {
@@ -6222,7 +6222,7 @@ void close_current_file(int file_to_switch_to) {
       if (mainw->current_file!=mainw->scrap_file) remove_from_clipmenu();
     }
 
-    if (cfile->clip_type==CLIP_TYPE_FILE&&cfile->ext_src!=NULL) {
+    if ((cfile->clip_type==CLIP_TYPE_FILE||cfile->clip_type==CLIP_TYPE_DISK)&&cfile->ext_src!=NULL) {
       gchar *cwd=g_get_current_dir();
       gchar *ppath=g_build_filename(prefs->tmpdir,cfile->handle,NULL);
       lives_chdir(ppath,FALSE);

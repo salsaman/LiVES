@@ -5456,6 +5456,9 @@ sub clip_audio {
     }
 
     my ($size)=($epos-$spos);
+    if ($size>$fsize) {
+	$size=$fsize;
+    }
 
     if ($size>0) {
 	unlink "$audio_out";
@@ -6983,11 +6986,12 @@ sub fast_dd {
 
     my $sizecheck = -s $fdd_in;
 
-    if ($fdd_in ne "/dev/zero" && $size > $sizecheck) {
+    if ($fdd_in ne "/dev/zero" && $size + $skip > $sizecheck) {
 	if ($DEBUG_SMOGRIFY) {
-	    print STDERR "smogrify debug - fast_dd was asked to read $size bytes from a $sizecheck byte file\n$fdd_in\n";
+	    print STDERR "smogrify debug - fast_dd was asked to read $size bytes at offset $skip from a $sizecheck byte file\n$fdd_in\n";
 	}
-	$size=$sizecheck;
+	$size=$sizecheck-$skip;
+	if ($skip>=$sizecheck) return;
     }
 
     if (! open FFIN,"<","$fdd_in") {

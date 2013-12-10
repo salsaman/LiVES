@@ -2474,25 +2474,6 @@ void on_copy_activate (GtkMenuItem *menuitem, gpointer user_data) {
   start=cfile->start;
   end=cfile->end;
 
-  //#define TEST_VCB
-#ifndef TEST_VCB
-  if (!check_if_non_virtual(mainw->current_file,start,end)) {
-    boolean retb;
-    mainw->cancelled=CANCEL_NONE;
-    cfile->progress_start=1;
-    cfile->progress_end=count_virtual_frames(cfile->frame_index,start,end);
-    do_threaded_dialog(_("Pulling frames from clip"),TRUE);
-    retb=virtual_to_images(mainw->current_file,start,end,TRUE,NULL);
-    end_threaded_dialog();
-
-    if (mainw->cancelled!=CANCEL_NONE||!retb) {
-      sensitize();
-      mainw->cancelled=CANCEL_USER;
-      return;
-    }
-  }
-#else
-  clipboard->cb_src=mainw->current_file;
   if (cfile->clip_type==CLIP_TYPE_FILE) {
     clipboard->clip_type=CLIP_TYPE_FILE;
     clipboard->interlace=cfile->interlace;
@@ -2505,7 +2486,6 @@ void on_copy_activate (GtkMenuItem *menuitem, gpointer user_data) {
       end=-end;
     }
   }
-#endif
 
   mainw->fx1_val=1;
   mainw->fx1_bool=FALSE;
@@ -2518,9 +2498,7 @@ void on_copy_activate (GtkMenuItem *menuitem, gpointer user_data) {
 		      cfile->achans, cfile->asampsize, !(cfile->signed_endian&AFORM_UNSIGNED),
 		      !(cfile->signed_endian&AFORM_BIG_ENDIAN));
 
-#ifdef TEST_VCB
-    if (clipboard->clip_type==CLIP_TYPE_FILE) end=-end;
-#endif
+  if (clipboard->clip_type==CLIP_TYPE_FILE) end=-end;
 
   mainw->com_failed=FALSE;
   lives_system(com,FALSE);
@@ -2652,8 +2630,6 @@ void on_paste_as_new_activate                       (GtkMenuItem     *menuitem,
   mainw->fx1_val=1;
   mainw->fx1_bool=FALSE;
 
-
-#ifdef TEST_VCB
   if (!check_if_non_virtual(0,1,clipboard->frames)) {
     int current_file=mainw->current_file;
     boolean retb;
@@ -2672,10 +2648,6 @@ void on_paste_as_new_activate                       (GtkMenuItem     *menuitem,
       return;
     }
   }
-#endif
-
-
-
 
   mainw->no_switch_dprint=TRUE;
   msg=g_strdup_printf (_ ("Pasting %d frames to new clip %s..."),cfile->frames,cfile->name);
@@ -2742,10 +2714,7 @@ void on_paste_as_new_activate                       (GtkMenuItem     *menuitem,
 }
 
 
-void
-on_insert_pre_activate                    (GtkMenuItem     *menuitem,
-					   gpointer         user_data)
-{
+void on_insert_pre_activate (GtkMenuItem *menuitem, gpointer user_data) {
   insertw = create_insert_dialog ();
 
   lives_widget_show (insertw->insert_dialog);
@@ -2758,6 +2727,23 @@ on_insert_pre_activate                    (GtkMenuItem     *menuitem,
 
 
 void on_insert_activate (GtkButton *button, gpointer user_data) {
+  double times_to_insert=mainw->fx1_val;
+  double audio_stretch;
+
+  gchar *msg,*com;
+
+  boolean with_sound=mainw->fx2_bool;
+  boolean has_lmap_error=FALSE;
+  boolean bad_header=FALSE;
+  boolean insert_silence=FALSE;
+
+  // have we resampled ?
+  boolean cb_audio_change=FALSE;
+  boolean cb_video_change=FALSE;
+
+  boolean virtual_ins=FALSE;
+  boolean all_virtual=FALSE;
+
   int where=cfile->start-1;
   int start=cfile->start;
   int end=cfile->end;
@@ -2768,31 +2754,24 @@ void on_insert_activate (GtkButton *button, gpointer user_data) {
   int cfile_signed=0,cfile_endian=0,clipboard_signed=0,clipboard_endian=0;
   int current_file=mainw->current_file;
 
-  double times_to_insert=mainw->fx1_val;
-  double audio_stretch;
-
-  // have we resampled ?
-  boolean cb_audio_change=FALSE;
-  boolean cb_video_change=FALSE;
-
-  int remainder_frames;
-  int cb_start=1,cb_end=clipboard->frames;
-  
-  gchar *msg,*com;
-  boolean with_sound=mainw->fx2_bool;
+  int orig_frames=cfile->frames;
   int ocarps=clipboard->arps;
   int leave_backup=1;
-  boolean has_lmap_error=FALSE;
+  int remainder_frames;
+  int cb_start=1,cb_end=clipboard->frames;
 
-  boolean insert_silence=FALSE;
-
-  int orig_frames=cfile->frames;
-
-  boolean bad_header=FALSE;
+  // if it is an insert into the original file, and we can do fast seek, we can insert virtual frames
+  if (button!=NULL&&mainw->current_file==clipboard->cb_src&&!check_if_non_virtual(0,1,clipboard->frames)) {
+    lives_clip_data_t *cdata=((lives_decoder_t *)cfile->ext_src)->cdata;
+    if (cdata->seek_flag&LIVES_SEEK_FAST) {
+      virtual_ins=TRUE;
+      if (count_virtual_frames(clipboard->frame_index,1,clipboard->frames)==clipboard->frames) all_virtual=TRUE;
+    }
+  }
 
   // don't ask smogrify to resize if frames are the same size and type
-  if (((cfile->hsize==clipboard->hsize && cfile->vsize==clipboard->vsize)||orig_frames==0)&&
-      (cfile->img_type==clipboard->img_type)) hsize=vsize=0;
+  if (all_virtual||(((cfile->hsize==clipboard->hsize && cfile->vsize==clipboard->vsize)||orig_frames==0)&&
+		    (cfile->img_type==clipboard->img_type))) hsize=vsize=0;
   else {
     if (!capable->has_convert) {
       do_error_dialog(_ ("This operation requires resizing or converting of frames.\nPlease install 'convert' from the Image-magick package, and then restart LiVES.\n"));
@@ -3078,6 +3057,25 @@ void on_insert_activate (GtkButton *button, gpointer user_data) {
 	    }}}}}}
 
   
+  if (!virtual_ins) {
+    int current_file=mainw->current_file;
+    boolean retb;
+    mainw->cancelled=CANCEL_NONE;
+    mainw->current_file=0;
+    cfile->progress_start=1;
+    cfile->progress_end=count_virtual_frames(cfile->frame_index,start,end);
+    do_threaded_dialog(_("Pulling frames from clipboard"),TRUE);
+    retb=virtual_to_images(mainw->current_file,start,end,TRUE,NULL);
+    end_threaded_dialog();
+    mainw->current_file=current_file;
+
+    if (mainw->cancelled!=CANCEL_NONE||!retb) {
+      sensitize();
+      mainw->cancelled=CANCEL_USER;
+      return;
+    }
+  }
+
   // if pref is set, resample clipboard video
   if (prefs->ins_resample&&cfile->fps!=clipboard->fps&&orig_frames>0) {
     cb_video_change=TRUE;
@@ -3123,6 +3121,9 @@ void on_insert_activate (GtkButton *button, gpointer user_data) {
   // first remainder frames
   remainder_frames=(int)(times_to_insert-(double)(int)times_to_insert)*clipboard->frames;
 
+  end=clipboard->frames;
+  if (virtual_ins) end=-end;
+
   if (!mainw->insert_after&&remainder_frames>0) {
     msg=g_strdup_printf(_ ("Inserting %d%s frames from the clipboard..."),remainder_frames,
 			times_to_insert>1.?" remainder":"");
@@ -3132,7 +3133,7 @@ void on_insert_activate (GtkButton *button, gpointer user_data) {
     com=g_strdup_printf("%s insert \"%s\" \"%s\" %d %d %d \"%s\" %d %d %d %d %.3f %d %d %d %d %d",
 			prefs->backend,cfile->handle, 
 			get_image_ext_for_type(cfile->img_type), where, clipboard->frames-remainder_frames+1, 
-			clipboard->frames, clipboard->handle, with_sound, cfile->frames, hsize, vsize, cfile->fps, 
+			end, clipboard->handle, with_sound, cfile->frames, hsize, vsize, cfile->fps, 
 			cfile->arate, cfile->achans, cfile->asampsize, !(cfile->signed_endian&AFORM_UNSIGNED), 
 			!(cfile->signed_endian&AFORM_BIG_ENDIAN));
 
@@ -3156,8 +3157,8 @@ void on_insert_activate (GtkButton *button, gpointer user_data) {
       return;
     }
 
-    if (cfile->clip_type==CLIP_TYPE_FILE) {
-      insert_images_in_virtual(mainw->current_file,where,remainder_frames);
+    if (cfile->clip_type==CLIP_TYPE_FILE||virtual_ins) {
+      insert_images_in_virtual(mainw->current_file,where,remainder_frames,clipboard->frame_index,clipboard->frames-remainder_frames+1);
     }
 
     cfile->frames+=remainder_frames;
@@ -3194,16 +3195,20 @@ void on_insert_activate (GtkButton *button, gpointer user_data) {
     g_free(msg);
   }
   
+  if (virtual_ins) cb_end=-cb_end;
+
   // for an insert after a merge we set our start posn. -ve
   // this should indicate to the back end to leave our
   // backup frames alone
 
   com=g_strdup_printf("%s insert \"%s\" \"%s\" %d %d %d \"%s\" %d %d %d %d %.3f %d %d %d %d %d %d",
 		      prefs->backend,cfile->handle, 
-		      get_image_ext_for_type(cfile->img_type),where, cb_start*leave_backup, cb_end, 
+		      get_image_ext_for_type(cfile->img_type), where, cb_start*leave_backup, cb_end, 
 		      clipboard->handle, with_sound, cfile->frames, hsize, vsize, cfile->fps, cfile->arate, 
 		      cfile->achans, cfile->asampsize, !(cfile->signed_endian&AFORM_UNSIGNED), 
 		      !(cfile->signed_endian&AFORM_BIG_ENDIAN), (int)times_to_insert);
+
+  if (virtual_ins) cb_end=-cb_end;
 
   cfile->progress_start=1;
   cfile->progress_end=(cb_end-cb_start+1)*(int)times_to_insert+cfile->frames-where;
@@ -3272,8 +3277,8 @@ void on_insert_activate (GtkButton *button, gpointer user_data) {
   mainw->cancelled=CANCEL_NONE;
   cfile->nopreview=FALSE;
   
-  if (cfile->clip_type==CLIP_TYPE_FILE) {
-    insert_images_in_virtual(mainw->current_file,where,(cb_end-cb_start+1)*(int)times_to_insert);
+  if (cfile->clip_type==CLIP_TYPE_FILE||virtual_ins) {
+    insert_images_in_virtual(mainw->current_file,where,(cb_end-cb_start+1)*(int)times_to_insert,clipboard->frame_index,cb_start*leave_backup);
   }
 
   cfile->frames+=(cb_end-cb_start+1)*(int)times_to_insert;
@@ -3299,6 +3304,8 @@ void on_insert_activate (GtkButton *button, gpointer user_data) {
     d_print(msg);
     g_free(msg);
 
+    if (virtual_ins) remainder_frames=-remainder_frames;
+
     com=g_strdup_printf("%s insert \"%s\" \"%s\" %d %d %d \"%s\" %d %d %d %d %3f %d %d %d %d %d",
 			prefs->backend,cfile->handle, 
 			get_image_ext_for_type(cfile->img_type), where, 1, remainder_frames, clipboard->handle, 
@@ -3315,6 +3322,8 @@ void on_insert_activate (GtkButton *button, gpointer user_data) {
       return;
     }
 
+    if (virtual_ins) remainder_frames=-remainder_frames;
+
     cfile->progress_start=1;
     cfile->progress_end=remainder_frames;
 
@@ -3325,8 +3334,8 @@ void on_insert_activate (GtkButton *button, gpointer user_data) {
       return;
     }
 
-    if (cfile->clip_type==CLIP_TYPE_FILE) {
-      insert_images_in_virtual(mainw->current_file,where,remainder_frames);
+    if (cfile->clip_type==CLIP_TYPE_FILE||virtual_ins) {
+      insert_images_in_virtual(mainw->current_file,where,remainder_frames,clipboard->frame_index,1);
     }
 
     cfile->frames+=remainder_frames;
@@ -3745,7 +3754,7 @@ on_select_start_only_activate                (GtkMenuItem     *menuitem,
 
 void
 on_select_end_only_activate                (GtkMenuItem     *menuitem,
-                                        gpointer         user_data)
+					    gpointer         user_data)
 {
   if (mainw->current_file==-1) return;
   lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_start),cfile->end);
@@ -3846,6 +3855,7 @@ on_menubar_activate_menuitem                    (GtkMenuItem     *menuitem,
   gtk_menu_item_activate(menuitem);
   //gtk_menu_shell_set_take_focus(GTK_MENU_SHELL(mainw->menubar),TRUE);
 }
+
 
 void on_playall_activate (GtkMenuItem *menuitem, gpointer user_data) {
   if (mainw->current_file<=0) return;
@@ -4123,8 +4133,8 @@ on_rewind_activate                    (GtkMenuItem     *menuitem,
   get_play_times();
 }
 
-void
-on_stop_activate (GtkMenuItem *menuitem, gpointer user_data) {
+
+void on_stop_activate (GtkMenuItem *menuitem, gpointer user_data) {
   if (mainw->multitrack!=NULL&&mainw->multitrack->is_paused&&mainw->playing_file==-1) {
     mainw->multitrack->is_paused=FALSE;
     mainw->multitrack->playing_sel=FALSE;
@@ -4517,10 +4527,7 @@ boolean nextclip_callback (GtkAccelGroup *group, GObject *obj, guint keyval, Gdk
 }
 
 
-void
-on_save_set_activate            (GtkMenuItem     *menuitem,
-				 gpointer         user_data)
-{
+void on_save_set_activate (GtkMenuItem *menuitem, gpointer user_data) {
 
   // here is where we save clipsets
 
@@ -4531,29 +4538,29 @@ on_save_set_activate            (GtkMenuItem     *menuitem,
 
   // TODO - caller to do end_threaded_dialog()
 
-  int i;
+  GList *cliplist;
+
   gchar *old_set=g_strdup(mainw->set_name);
   gchar *layout_map_file,*layout_map_dir,*new_clips_dir,*current_clips_dir;
   gchar *com,*tmp;
   gchar new_handle[256];
-  boolean is_append=FALSE; // we will overwrite the target layout.map file
   gchar *text;
   gchar *new_dir;
   gchar *cwd;
-
-  int ord_fd;
-  int retval;
   gchar *ordfile;
   gchar *ord_entry;
   gchar new_set_name[128];
-  boolean response;
   gchar *msg,*extra;
   gchar *dfile,*osetn,*nsetn;
 
+  boolean is_append=FALSE; // we will overwrite the target layout.map file
+  boolean response;
   boolean got_new_handle=FALSE;
 
-  GList *cliplist;
+  int ord_fd;
+  int retval;
 
+  register int i;
 
   // warn the user what will happen
   if (!mainw->no_exit&&!mainw->only_close) extra=g_strdup(", and LiVES will exit");
@@ -4905,10 +4912,7 @@ on_save_set_activate            (GtkMenuItem     *menuitem,
 }
 
 
-void
-on_load_set_activate            (GtkMenuItem     *menuitem,
-				 gpointer         user_data)
-{
+void on_load_set_activate (GtkMenuItem *menuitem, gpointer user_data) {
   // get set name (use a modified rename window)
 
   if (mainw->multitrack!=NULL) {
@@ -5284,6 +5288,7 @@ void on_cleardisk_activate (GtkWidget *widget, gpointer user_data) {
   // recover disk space
 
   int64_t bytes=0,fspace;
+  int64_t ds_warn_level=mainw->next_ds_warn_level;
 
   gchar *markerfile;
   gchar **array;
@@ -5291,10 +5296,9 @@ void on_cleardisk_activate (GtkWidget *widget, gpointer user_data) {
 
   int current_file=mainw->current_file;
   int marker_fd;
-  int i;
   int retval=0;
 
-  int64_t ds_warn_level=mainw->next_ds_warn_level;
+  register int i;
 
   mainw->next_ds_warn_level=0; /// < avoid nested warnings
 
@@ -5313,9 +5317,11 @@ void on_cleardisk_activate (GtkWidget *widget, gpointer user_data) {
   // get a temporary clip for receiving data from backend
   if (!get_temp_handle(mainw->first_free_file,TRUE)) {
     d_print_failed();
-    mainw->next_ds_warn_level=ds_warn_level;;
+    mainw->next_ds_warn_level=ds_warn_level;
     return;
   }
+
+  cfile->cb_src=current_file;
 
   if (mainw->multitrack!=NULL) {
     if (mainw->multitrack->idlefunc>0) {
@@ -5439,9 +5445,6 @@ void on_cleardisk_activate (GtkWidget *widget, gpointer user_data) {
 }
 
 
-
-
-
 void on_cleardisk_advanced_clicked (GtkWidget *widget, gpointer user_data) {
   // make cleardisk adv window
 
@@ -5462,25 +5465,15 @@ void on_cleardisk_advanced_clicked (GtkWidget *widget, gpointer user_data) {
 }
 
 
-
-
-
-
-
-
-void
-on_show_keys_activate            (GtkMenuItem     *menuitem,
-				  gpointer         user_data)
-{
+void on_show_keys_activate (GtkMenuItem *menuitem, gpointer user_data) {
   do_keys_window();
 }
 
-void
-on_vj_reset_activate            (GtkMenuItem     *menuitem,
-				 gpointer         user_data)
-{
-  int i;
+
+void on_vj_reset_activate (GtkMenuItem *menuitem, gpointer user_data) {
   boolean bad_header=FALSE;
+
+  register int i;
 
   //mainw->soft_debug=TRUE;
 
@@ -5507,10 +5500,8 @@ on_vj_reset_activate            (GtkMenuItem     *menuitem,
 
 }
 
-void
-on_show_messages_activate            (GtkMenuItem     *menuitem,
-				      gpointer         user_data)
-{
+
+void on_show_messages_activate (GtkMenuItem *menuitem, gpointer user_data) {
   do_messages_window();
 }
 
@@ -5761,7 +5752,8 @@ on_about_activate                     (GtkMenuItem     *menuitem,
 #endif
 #endif
 
-  gchar *mesg=g_strdup_printf(_ ("LiVES Version %s\n(c) G. Finch (salsaman) %s\n\nReleased under the GPL 3 or later (http://www.gnu.org/licenses/gpl.txt)\nLiVES is distributed WITHOUT WARRANTY\n\nContact the author at:\nsalsaman@gmail.com\nHomepage: http://lives.sourceforge.net"),LiVES_VERSION,"2002-2013");
+  gchar *mesg;
+  mesg=g_strdup_printf(_ ("LiVES Version %s\n(c) G. Finch (salsaman) %s\n\nReleased under the GPL 3 or later (http://www.gnu.org/licenses/gpl.txt)\nLiVES is distributed WITHOUT WARRANTY\n\nContact the author at:\nsalsaman@gmail.com\nHomepage: http://lives.sourceforge.net"),LiVES_VERSION,"2002-2013");
   do_error_dialog(mesg);
   g_free(mesg);
   
@@ -8026,9 +8018,27 @@ on_spin_end_value_changed           (GtkSpinButton   *spinbutton,
 void on_rev_clipboard_activate (GtkMenuItem *menuitem, gpointer user_data) {
   // reverse the clipboard
   gchar *com;
-  
   int current_file=mainw->current_file;
   mainw->current_file=0;
+
+  if (!check_if_non_virtual(0,1,cfile->frames)) {
+    lives_clip_data_t *cdata=((lives_decoder_t *)cfile->ext_src)->cdata;
+    if (!(cdata->seek_flag&LIVES_SEEK_FAST)) {
+      boolean retb;
+      mainw->cancelled=CANCEL_NONE;
+      cfile->progress_start=1;
+      cfile->progress_end=cfile->frames;
+      do_threaded_dialog(_("Pulling frames from clipboard"),TRUE);
+      retb=virtual_to_images(mainw->current_file,1,cfile->frames,TRUE,NULL);
+      end_threaded_dialog();
+      
+      if (mainw->cancelled!=CANCEL_NONE||!retb) {
+	sensitize();
+	mainw->cancelled=CANCEL_USER;
+	return;
+      }
+    }
+  }
 
   d_print(_ ("Reversing clipboard..."));
   com=g_strdup_printf("%s reverse \"%s\" %d %d \"%s\"",prefs->backend,clipboard->handle,1,clipboard->frames,
@@ -8047,11 +8057,15 @@ void on_rev_clipboard_activate (GtkMenuItem *menuitem, gpointer user_data) {
     do_progress_dialog(TRUE,FALSE,_ ("Reversing clipboard"));
   }
 
+  if (mainw->com_failed||mainw->error) d_print_failed();
+  else {
+    if (clipboard->frame_index!=NULL) reverse_frame_index(0);
+    d_print_done();
+  }
+
   mainw->current_file=current_file;
   sensitize();
 
-  if (mainw->com_failed||mainw->error) d_print_failed();
-  else d_print_done();
 
 }
 

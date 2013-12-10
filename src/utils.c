@@ -1814,6 +1814,7 @@ void init_clipboard(void) {
     // clear old clipboard
     // need to set current file to 0 before monitoring progress
     mainw->current_file=0;
+    cfile->cb_src=current_file;
 
     if (cfile->clip_type==CLIP_TYPE_FILE) {
       if (cfile->frame_index!=NULL) g_free(cfile->frame_index);
@@ -1840,6 +1841,7 @@ void init_clipboard(void) {
     do_progress_dialog(TRUE,FALSE,_ ("Clearing the clipboard"));
   }
 
+  clipboard->cb_src=current_file;
   mainw->current_file=current_file;
 }
 
@@ -2661,21 +2663,35 @@ void get_play_times(void) {
   // and if we are not playing,
   // get play times for video, audio channels, and total (longest) time
   char *tmpstr;
+
   double offset=0;
   double offset_left=0;
   double offset_right=0;
   double allocwidth;
   double allocheight;
 
-  if (mainw->current_file==-1||mainw->foreign||cfile==NULL||mainw->multitrack!=NULL||mainw->recoverable_layout) return;
+  int current_file=mainw->current_file;
+
+  if (current_file>-1&&cfile!=NULL&&cfile->cb_src!=-1) mainw->current_file=cfile->cb_src;
+
+  if (mainw->current_file==-1||mainw->foreign||cfile==NULL||mainw->multitrack!=NULL||mainw->recoverable_layout) {
+    mainw->current_file=current_file;
+    return;
+  }
 
   if (mainw->playing_file==-1) {
     get_total_time (cfile);
   }
 
-  if (!mainw->is_ready) return;
+  if (!mainw->is_ready) {
+    mainw->current_file=current_file;
+    return;
+  }
 
-  if (mainw->laudio_drawable==NULL||mainw->raudio_drawable==NULL) return;
+  if (mainw->laudio_drawable==NULL||mainw->raudio_drawable==NULL) {
+    mainw->current_file=current_file;
+    return;
+  }
 
   // draw timer bars
   allocwidth=lives_widget_get_allocation_width(mainw->video_draw);
@@ -3057,6 +3073,9 @@ void get_play_times(void) {
   }
   lives_widget_queue_draw(mainw->vidbar);
   lives_widget_queue_draw(mainw->hruler);
+
+  mainw->current_file=current_file;
+
 }
     
 

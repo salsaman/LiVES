@@ -3484,6 +3484,7 @@ void create_cfile(void) {
   cfile->op_ds_warn_level=0;
   cfile->no_proc_sys_errors=cfile->no_proc_read_errors=cfile->no_proc_write_errors=FALSE;
   cfile->keep_without_preview=FALSE;
+  cfile->cb_src=-1;
 
   if (!strcmp(prefs->image_ext,"jpg")) cfile->img_type=IMG_TYPE_JPEG;
   else cfile->img_type=IMG_TYPE_PNG;
@@ -3527,8 +3528,7 @@ void create_cfile(void) {
 }
 
 
-boolean
-get_new_handle (int index, const gchar *name) {
+boolean get_new_handle (int index, const gchar *name) {
   // here is where we first initialize for the clipboard
   // and for paste_as_new, and restore
   // pass in name as NULL or "" and it will be set with an untitled number

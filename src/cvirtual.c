@@ -391,17 +391,18 @@ boolean virtual_to_images(int sfileno, int sframe, int eframe, boolean update_pr
 
 
 
-void insert_images_in_virtual (int sfileno, int where, int frames) {
-  // insert physical (frames) images into sfile at position where [0 = before first frame]
+void insert_images_in_virtual (int sfileno, int where, int frames, int *frame_index, int start) {
+  // insert physical (frames) images (or virtual possibly) into sfile at position where [0 = before first frame]
   // this is the virtual (book-keeping) part
 
   // need to update the frame_index
 
   // this is for clip type CLIP_TYPE_FILE only
 
-  register int i;
   lives_clip_t *sfile=mainw->files[sfileno];
   int nframes=sfile->frames;
+
+  register int i,j=start-1;
 
   if (sfile->frame_index_back!=NULL) g_free(sfile->frame_index_back);
 
@@ -415,14 +416,18 @@ void insert_images_in_virtual (int sfileno, int where, int frames) {
   }
 
   for (i=where;i<where+frames;i++) {
-    sfile->frame_index[i]=-1;
+    if (frame_index!=NULL&&frame_index[j]!=-1) sfile->frame_index[i]=frame_index[j];
+    else sfile->frame_index[i]=-1;
+    if (++j>=clipboard->frames) j=0;
   }
 
   for (i=where+frames;i<nframes+frames;i++) {
     sfile->frame_index[i]=sfile->frame_index_back[i-frames];
   }
 
+  sfile->frames+=frames;
   save_frame_index(sfileno);
+  sfile->frames-=frames;
 }
 
 
@@ -462,6 +467,21 @@ void delete_frames_from_virtual (int sfileno, int start, int end) {
   save_frame_index(sfileno);
 }
 
+
+void reverse_frame_index(int sfileno) {
+  // reverse order of (virtual) frames in clip (only used fro clipboard)
+  lives_clip_t *sfile=mainw->files[sfileno];
+  int bck;
+  register int i;
+
+  if (sfile==NULL||sfile->frame_index==NULL) return;
+
+  for (i=0;i<sfile->frames>>1;i++) {
+    bck=sfile->frame_index[i];
+    sfile->frame_index[i]=sfile->frame_index[sfile->frames-1-i];
+    sfile->frame_index[sfile->frames-1-i]=bck;
+  }
+}
 
 
 

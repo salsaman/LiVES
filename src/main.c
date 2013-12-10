@@ -3317,9 +3317,10 @@ void desensitize(void) {
 }
 
 
-void 
-procw_desensitize(void) {
+void procw_desensitize(void) {
   // switch on/off a few extra widgets in the processing dialog
+
+  int current_file;
 
   if (mainw->multitrack!=NULL) return;
 
@@ -3346,6 +3347,10 @@ procw_desensitize(void) {
       }
     }
   }
+
+  current_file=mainw->current_file;
+  if (current_file>-1&&cfile!=NULL&&cfile->cb_src!=-1) mainw->current_file=cfile->cb_src;
+
   // stop the start and end from being changed
   // better to clamp the range than make insensitive, this way we stop
   // other widgets (like the video bar) updating it
@@ -3357,6 +3362,8 @@ procw_desensitize(void) {
   lives_spin_button_set_range(LIVES_SPIN_BUTTON(mainw->spinbutton_start),cfile->start,cfile->start);
   lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_start),cfile->start);
   g_signal_handler_unblock(mainw->spinbutton_start,mainw->spin_start_func);
+
+  mainw->current_file=current_file;
 
   if (mainw->play_window!=NULL&&(mainw->prv_link==PRV_START||mainw->prv_link==PRV_END)) {
     // block spinbutton in play window

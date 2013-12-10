@@ -11333,7 +11333,7 @@ void insert_blank_frames(int sfileno, int nframes, int after) {
   }
 
 
-  insert_images_in_virtual(sfileno,after,nframes);
+  insert_images_in_virtual(sfileno,after,nframes,NULL,0);
 
   sfile->frames+=nframes;
 

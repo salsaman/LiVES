@@ -1,3 +1,12 @@
+Version 2.2.1 (10 December 2013)
+--------------------------------
+Fix major error introduced in 2.2.0 which can break files when inserting frames.
+Fix audio insert/encode problems for some non-standard frame rates.
+Optimisations for copy/insert.
+
+
+
+
 Version 2.2.0 (30 Nov 2013)
 ---------------------------
 Add new avformat_decoder.

@@ -817,7 +817,6 @@ typedef struct {
   GtkWidget *hseparator;
   GtkWidget *scrolledwindow;
   GtkWidget *message_box;
-  GtkWidget *warning_label;
 
   GtkWidget *textview1;
   GtkWidget *clipsmenu;

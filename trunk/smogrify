@@ -3637,7 +3637,6 @@ if (defined($ARGV[0])) {
 
 	smog_chdir("$curtmpdir");
 
-
 	$allow_missing=0;
 	if ($end<0) {
 	    # insert (copy) from (virtual) clip into clipboard
@@ -4391,10 +4390,27 @@ sub reverse {
     for ($i=$start;$i<int(($start+$end)/2+.5);$i++) {
 	$from=&mkname($i);
 	$to=&mkname($end-$i+1);
-	smog_rename( "$curtmpdir/$from$img_ext","$curtmpdir/$from.revtemp");
-	smog_rename( "$curtmpdir/$to$img_ext","$curtmpdir/$from$img_ext");
-	&sig_progress($start+($i-$start)*2);
-	smog_rename( "$curtmpdir/$from.revtemp","$curtmpdir/$to$img_ext");
+	$hasfrom=-f "$curtmpdir/$from$img_ext";
+	$hasto=-f "$curtmpdir/$to$img_ext";
+	if ($hasfrom) {
+	    if ($hasto) {
+		smog_rename( "$curtmpdir/$from$img_ext","$curtmpdir/$from.revtemp");
+		smog_rename( "$curtmpdir/$to$img_ext","$curtmpdir/$from$img_ext");
+	    }
+	    &sig_progress($start+($i-$start)*2);
+	    if ($hasto) {
+		smog_rename( "$curtmpdir/$from.revtemp","$curtmpdir/$to$img_ext");
+	    }
+	    else {
+		smog_rename( "$curtmpdir/$from$img_ext","$curtmpdir/$to$img_ext");
+	    }
+	}
+	else {
+	    &sig_progress($start+($i-$start)*2);
+	    if ($hasto) {
+		smog_rename( "$curtmpdir/$to$img_ext","$curtmpdir/$from$img_ext");
+	    }
+	}
 	&sig_progress($start+($i-$start)*2+1);
     }
 }
@@ -5648,6 +5664,7 @@ sub insert_audio {
     $silence_remembered=0;
 
     my ($xaudio_from)=$audio_from;
+    my $afsize=-s $audio_from;
 
     while ($times_inserted<$times) {
 	$size=$nepos-$nspos;
@@ -5661,7 +5678,9 @@ sub insert_audio {
 	    else {
 		$fdd_in=$xaudio_from;
 		$fdd_out=$audio_to;
-
+		if ($size+$nspos>$afsize) {
+		    $size=$afsize-$nspos;
+		}
 		&fast_dd($size,$nspos,$nwpos);
 		return if ($panic);
 	    }

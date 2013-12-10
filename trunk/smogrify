@@ -5667,7 +5667,6 @@ sub insert_audio {
     $silence_remembered=0;
 
     my ($xaudio_from)=$audio_from;
-    my $afsize=-s $audio_from;
 
     while ($times_inserted<$times) {
 	$size=$nepos-$nspos;
@@ -5681,6 +5680,7 @@ sub insert_audio {
 	    else {
 		$fdd_in=$xaudio_from;
 		$fdd_out=$audio_to;
+		$afsize=-s $fdd_in;
 		if ($size+$nspos>$afsize) {
 		    $size=$afsize-$nspos;
 		}

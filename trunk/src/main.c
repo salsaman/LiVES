@@ -4366,7 +4366,7 @@ boolean pull_frame_at_size (weed_plant_t *layer, const gchar *image_ext, weed_ti
 	  dplug=(lives_decoder_t *)weed_get_voidptr_value(layer,"host_decoder",&error);
 	}
 	else dplug=(lives_decoder_t *)sfile->ext_src;
-	if (dplug==NULL) return FALSE;
+	if (dplug==NULL||dplug->cdata==NULL) return FALSE;
 	if (target_palette!=dplug->cdata->current_palette) {
 	  // try to switch palette
 	  if (decplugin_supports_palette(dplug,target_palette)) {
@@ -5223,8 +5223,8 @@ void load_frame_image(int frame) {
 		  if (mainw->track_decoders[i]!=(lives_decoder_t *)mainw->files[oclip]->ext_src) {
 		    // remove the clone for oclip
 		    close_decoder_plugin(mainw->track_decoders[i]);
-		    mainw->track_decoders[i]=NULL;
 		  }
+		  mainw->track_decoders[i]=NULL;
 		}
 	      }
 

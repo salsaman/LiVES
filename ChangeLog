@@ -1,3 +1,10 @@
+Version 2.2.2 (10 December 2013)
+--------------------------------
+Fix crash in new multithreaded renderer.
+
+
+
+
 Version 2.2.1 (10 December 2013)
 --------------------------------
 Fix major error introduced in 2.2.0 which can break files when inserting frames.

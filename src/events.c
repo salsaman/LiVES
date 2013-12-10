@@ -3438,8 +3438,8 @@ lives_render_error_t render_events (boolean reset) {
 		  if (mainw->track_decoders[i]!=(lives_decoder_t *)mainw->files[oclip]->ext_src) {
 		    // remove the clone for oclip
 		    close_decoder_plugin(mainw->track_decoders[i]);
-		    mainw->track_decoders[i]=NULL;
 		  }
+		  mainw->track_decoders[i]=NULL;
 		}
 	      }
 

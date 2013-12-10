@@ -6991,7 +6991,9 @@ sub fast_dd {
 	    print STDERR "smogrify debug - fast_dd was asked to read $size bytes at offset $skip from a $sizecheck byte file\n$fdd_in\n";
 	}
 	$size=$sizecheck-$skip;
-	if ($skip>=$sizecheck) return;
+	if ($skip>=$sizecheck) {
+	    return;
+	}
     }
 
     if (! open FFIN,"<","$fdd_in") {

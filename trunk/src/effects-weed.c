@@ -1650,8 +1650,10 @@ lives_filter_error_t weed_apply_instance (weed_plant_t *inst, weed_plant_t *init
   if (!weed_plant_has_leaf(inst,"in_channels")||(in_channels=weed_get_plantptr_array(inst,"in_channels",&error))==NULL) {
     if (out_channels==NULL&&weed_plant_has_leaf(inst,"out_parameters")) {
 
+      // TODO - this is more complex, as we have to check the entire chain of fx
+
       // run it only if it outputs into effects which have video chans
-      if (!feeds_to_video_filters(key,rte_key_getmode(key+1))) return FILTER_ERROR_NO_IN_CHANNELS;
+      //if (!feeds_to_video_filters(key,rte_key_getmode(key+1))) return FILTER_ERROR_NO_IN_CHANNELS;
 
       // data processing effect; just call the process_func
       weed_set_double_value(inst,"fps",cfile->pb_fps);
@@ -2702,7 +2704,9 @@ static lives_filter_error_t weed_apply_audio_instance_inner (weed_plant_t *inst,
   if (!weed_plant_has_leaf(inst,"in_channels")||(in_channels=weed_get_plantptr_array(inst,"in_channels",&error))==NULL) {
     if (out_channels==NULL&&weed_plant_has_leaf(inst,"out_parameters")) {
 
-      // run it only if it outputs into effects which have video chans
+      // TODO - need to check the entire chain of effects
+
+      // run it only if it outputs into effects which have audio chans
       if (!feeds_to_audio_filters(key,rte_key_getmode(key+1))) return FILTER_ERROR_NO_IN_CHANNELS;
 
       // data processing effect; just call the process_func

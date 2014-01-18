@@ -2420,16 +2420,26 @@ OSCbuf *omc_learner_decode(gint type, gint idx, const gchar *string) {
 
 
 void on_midi_save_activate (GtkMenuItem *menuitem, gpointer user_data) {
-  gchar *save_file=choose_file(NULL,NULL,NULL,LIVES_FILE_CHOOSER_ACTION_SAVE,NULL,NULL);
-  int fd;
   GSList *slist=omc_node_list;
+
   size_t srchlen;
+
   lives_omc_match_node_t *mnode;
   lives_omc_macro_t omacro;
-  int nnodes;
-  int i;
-  int retval;
+
   gchar *msg;
+  gchar *save_file;
+
+  int nnodes;
+  int retval;
+
+  int fd;
+
+  register int i;
+
+  save_file=choose_file(NULL,NULL,NULL,LIVES_FILE_CHOOSER_ACTION_SAVE,NULL,NULL);
+
+  if (save_file==NULL||!strlen(save_file)) return;
 
   msg=g_strdup_printf(_("Saving device mapping to file %s..."),save_file);
   d_print(msg);
@@ -2532,16 +2542,22 @@ static void do_midi_version_error(const gchar *fname) {
 
 
 void on_midi_load_activate (GtkMenuItem *menuitem, gpointer user_data) {
-  gchar *load_file=NULL;
-  int fd;
-  ssize_t bytes;
-  ssize_t srchlen;
   lives_omc_match_node_t *mnode;
   lives_omc_macro_t omacro;
+
+  ssize_t bytes;
+
   gchar tstring[512];
-  int nnodes,i,macro,nvars,supertype,j,idx=-1;
+
+  gchar *load_file=NULL;
   gchar *srch;
   gchar *msg;
+
+  uint32_t srchlen,nnodes,macro,nvars,supertype;
+  int idx=-1;
+  int fd;
+
+  register int i,j;
 
 #ifdef OMC_MIDI_IMPL
   size_t blen;
@@ -2551,7 +2567,7 @@ void on_midi_load_activate (GtkMenuItem *menuitem, gpointer user_data) {
   if (user_data==NULL) load_file=choose_file(NULL,NULL,NULL,LIVES_FILE_CHOOSER_ACTION_OPEN,NULL,NULL);
   else load_file=g_strdup((gchar *)user_data);
 
-  if (load_file==NULL) return;
+  if (load_file==NULL||!strlen(load_file)) return;
 
   msg=g_strdup_printf(_("Loading device mapping from file %s..."),load_file);
   d_print(msg);

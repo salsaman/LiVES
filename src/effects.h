@@ -43,6 +43,14 @@ typedef enum {
 } lives_fx_cat_t;
 
 
+/// audio filter type (any, analyser only, non analyser only)
+typedef enum {
+  AF_TYPE_ANY,
+  AF_TYPE_A,
+  AF_TYPE_NONA
+} lives_af_t;
+
+
 gchar *lives_fx_cat_to_text(lives_fx_cat_t cat, boolean plural) WARN_UNUSED;
 
 

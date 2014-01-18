@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: lives\n"
 "Report-Msgid-Bugs-To: https://sourceforge.net/p/lives/bugs/\n"
-"POT-Creation-Date: 2013-12-10 18:31-0300\n"
+"POT-Creation-Date: 2013-12-19 16:58-0300\n"
 "PO-Revision-Date: 2013-11-23 12:06+0000\n"
 "Last-Translator: Yuri Chornoivan <yurchor@gmail.com>\n"
 "Language-Team: Ukrainian <translation@linux.org.ua>\n"
@@ -6549,85 +6549,85 @@ msgstr "Не вдалося запустити породжувач %s, поми
 msgid "%s [unstable] (%s)"
 msgstr "%s [нестабільний] (%s)"
 
-#: src/effects-data.c:3244
+#: src/effects-data.c:3246
 #, c-format
 msgid "ACTIVATE (%s)"
 msgstr "ЗАДІЯТИ (%s)"
 
-#: src/effects-data.c:3514
+#: src/effects-data.c:3516
 msgid "ACTIVATE"
 msgstr "ЗАДІЯТИ"
 
-#: src/effects-data.c:3842
+#: src/effects-data.c:3844
 #, c-format
 msgid "Key slot %d"
 msgstr "Слот ключа %d"
 
-#: src/effects-data.c:3964
+#: src/effects-data.c:3966
 msgid "Autoscale"
 msgstr "Автомасштаб"
 
-#: src/effects-data.c:4056
+#: src/effects-data.c:4058
 msgid "Add another connection for this output parameter"
 msgstr "Додати інше з’єднання для цього параметра виведення"
 
-#: src/effects-data.c:4069 src/effects-data.c:4118
+#: src/effects-data.c:4071 src/effects-data.c:4120
 msgid "Delete this connection"
 msgstr "Вилучити це з’єднання"
 
-#: src/effects-data.c:4105
+#: src/effects-data.c:4107
 msgid "Add another connection for this output channel"
 msgstr "Додати інше з’єднання для цього каналу виведення"
 
-#: src/effects-data.c:4190
+#: src/effects-data.c:4192
 msgid "Connected to -->"
 msgstr "З’єднано з →"
 
-#: src/effects-data.c:4210
+#: src/effects-data.c:4212
 #, c-format
 msgid "%s - Alpha Channel Connections"
 msgstr "%s — з’єднання каналу прозорості"
 
-#: src/effects-data.c:4283
+#: src/effects-data.c:4285
 #, c-format
 msgid "%s - Parameter Data Connections"
 msgstr "%s — з’єднання параметрів даних"
 
-#: src/effects-data.c:4303
+#: src/effects-data.c:4305
 msgid "Autoscale All"
 msgstr "Автомасштаб для всього"
 
-#: src/effects-data.c:4328 src/effects-data.c:4857
+#: src/effects-data.c:4330 src/effects-data.c:4859
 msgid "ACTIVATED"
 msgstr "ЗАДІЯНО"
 
-#: src/effects-data.c:4741
+#: src/effects-data.c:4743
 msgid "LiVES: - Parameter and Alpha Channel Connections"
 msgstr "LiVES: З’єднання параметрів та каналів прозорості"
 
-#: src/effects-data.c:4752
+#: src/effects-data.c:4754
 msgid "Auto Connect Channels"
 msgstr "Автоз’єднання каналів"
 
-#: src/effects-data.c:4764
+#: src/effects-data.c:4766
 msgid "Auto Connect Parameters"
 msgstr "Автоз’єднання параметрів"
 
-#: src/effects-data.c:4774
+#: src/effects-data.c:4776
 msgid "Disconnect All"
 msgstr "Від’єднати все"
 
-#: src/effects-data.c:4842
+#: src/effects-data.c:4844
 #, fuzzy, c-format
 msgid "Input channel is already connected from (%d,%d) %s"
 msgstr "Канал вхідних даних вже з’єднано"
 
-#: src/effects-data.c:4858
+#: src/effects-data.c:4860
 #, fuzzy, c-format
 msgid "Input parameter is already connected from (%d,%d) %s"
 msgstr "Параметр вхідних даних вже з’єднано"
 
-#: src/effects-data.c:4866
+#: src/effects-data.c:4868
 msgid "Input and output parameters are not compatible"
 msgstr "Вхідні і вихідні параметри є несумісними"
 

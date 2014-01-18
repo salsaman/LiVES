@@ -1,3 +1,13 @@
+Version 2.2.3
+-------------
+Run data processing plugins in both video and audio threads.
+Fix crash when loading device map (regression).
+Fix bug which prevented audio changes from being recorded when audio analysers are running.
+
+
+
+
+
 Version 2.2.2 (10 December 2013)
 --------------------------------
 Fix crash in new multithreaded renderer.

@@ -11,6 +11,7 @@
 #ifdef ENABLE_JACK
 #include "callbacks.h"
 #include "support.h"
+#include "effects.h"
 #include "effects-weed.h"
 
 #define afile mainw->files[jackd->playing_file]
@@ -621,7 +622,7 @@ static int audio_process (nframes_t nframes, void *arg) {
 		}
 	      }
 
-	      if (!pl_error&&has_audio_filters(FALSE)) {
+	      if (!pl_error&&has_audio_filters(AF_TYPE_ANY)) {
 		uint64_t tc=jackd->audio_ticks+(uint64_t)(jackd->frames_written/(double)jackd->sample_out_rate*U_SEC);
 	       // apply any audio effects with in_channels
 		weed_apply_audio_effects_rt(out_buffer,jackd->num_output_channels,numFramesToWrite,jackd->sample_out_rate,tc,FALSE);
@@ -644,7 +645,7 @@ static int audio_process (nframes_t nframes, void *arg) {
 				      jackd->num_output_channels, afile->signed_endian&AFORM_UNSIGNED, FALSE, vol);
 	      }
 
-	      if (has_audio_filters(FALSE)&&jackd->playing_file!=mainw->ascrap_file) {
+	      if (has_audio_filters(AF_TYPE_ANY)&&jackd->playing_file!=mainw->ascrap_file) {
 		uint64_t tc=jackd->audio_ticks+(uint64_t)(jackd->frames_written/(double)jackd->sample_out_rate*U_SEC);
 	       // apply any audio effects with in_channels
 		weed_apply_audio_effects_rt(out_buffer,jackd->num_output_channels,numFramesToWrite,jackd->sample_out_rate,tc,FALSE);
@@ -975,7 +976,7 @@ static int audio_read (nframes_t nframes, void *arg) {
     // in this case we read external audio, but maybe not record it
     // we may wish to analyse the audio for example
 
-    if (has_audio_filters(TRUE)) {
+    if (has_audio_filters(AF_TYPE_A)) {
 	uint64_t tc=jackd->audio_ticks+(uint64_t)(jackd->frames_written/(double)jackd->sample_in_rate*U_SEC);
 	// apply any audio effects with in_channels and no out_channels
 	weed_apply_audio_effects_rt(in_buffer,jackd->num_input_channels,nframes,jackd->sample_in_rate,tc,TRUE);

@@ -814,6 +814,7 @@ boolean pconx_convert_value_data(weed_plant_t *inst, int pnum, weed_plant_t *dpa
     nmin=weed_leaf_num_elements(dptmpl,"min");
   }
 
+
   switch (stype) {
   case WEED_SEED_STRING:
     switch (dtype) {
@@ -1403,7 +1404,6 @@ boolean pconx_chain_data(int key, int mode) {
     for (i=-EXTRA_PARAMS_IN;i<nparams;i++) {
 
       if ((oparam=pconx_get_out_param(FALSE,key,mode,i,&okey,NULL,NULL,&autoscale))!=NULL) {
-	//	#define DEBUG_PCONX
 	//#define DEBUG_PCONX
 #ifdef DEBUG_PCONX
 	g_print("got pconx to %d %d %d\n",key,mode,i);

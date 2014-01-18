@@ -3124,7 +3124,7 @@ void sensitize(void) {
 	lives_widget_set_sensitive(mainw->rendered_fx[i].menuitem,mainw->current_file>0&&cfile->frames>0);
 
     if (mainw->current_file>0&&((has_video_filters(FALSE)&&!has_video_filters(TRUE))||
-				(cfile->achans>0&&prefs->audio_src==AUDIO_SRC_INT&&has_audio_filters(FALSE))||
+				(cfile->achans>0&&prefs->audio_src==AUDIO_SRC_INT&&has_audio_filters(AF_TYPE_ANY))||
 				mainw->agen_key!=0)) {
       
       lives_widget_set_sensitive(mainw->rendered_fx[0].menuitem,TRUE);
@@ -4873,7 +4873,7 @@ void load_frame_image(int frame) {
       // add blank frame
       weed_plant_t *event=get_last_event(mainw->event_list);
       weed_plant_t *event_list=insert_blank_frame_event_at(mainw->event_list,mainw->currticks,&event);
-      if (mainw->rec_aclip!=-1&&(prefs->rec_opts&REC_AUDIO)&&!mainw->record_starting&&prefs->audio_src==AUDIO_SRC_INT&&!(has_audio_filters(FALSE))) {
+      if (mainw->rec_aclip!=-1&&(prefs->rec_opts&REC_AUDIO)&&!mainw->record_starting&&prefs->audio_src==AUDIO_SRC_INT&&!(has_audio_filters(AF_TYPE_NONA))) {
 	// we are recording, and the audio clip changed; add audio
 	if (mainw->event_list==NULL) mainw->event_list=event_list;
 	insert_audio_event_at(mainw->event_list,event,-1,mainw->rec_aclip,mainw->rec_aseek,mainw->rec_avel);
@@ -4912,7 +4912,7 @@ void load_frame_image(int frame) {
 	      if (jack_try_reconnect()) jack_audio_seek_frame(mainw->jackd,frame);
 	    }
 
-	    if (!(mainw->record&&!mainw->record_paused&&has_audio_filters(FALSE))) {
+	    if (!(mainw->record&&!mainw->record_paused)&&has_audio_filters(AF_TYPE_NONA)) {
 	      mainw->rec_aclip=mainw->current_file;
 	      mainw->rec_avel=cfile->pb_fps/cfile->fps;
 	      mainw->rec_aseek=cfile->aseek_pos/(cfile->arate*cfile->achans*cfile->asampsize/8);
@@ -4929,7 +4929,7 @@ void load_frame_image(int frame) {
 	      else mainw->aplayer_broken=TRUE;
 	    }
 
-	    if (!(mainw->record&&!mainw->record_paused&&has_audio_filters(FALSE))) {
+	    if (!(mainw->record&&!mainw->record_paused)&&has_audio_filters(AF_TYPE_NONA)) {
 	      mainw->rec_aclip=mainw->current_file;
 	      mainw->rec_avel=cfile->pb_fps/cfile->fps;
 	      mainw->rec_aseek=cfile->aseek_pos/(cfile->arate*cfile->achans*cfile->asampsize/8);

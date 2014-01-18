@@ -3892,10 +3892,8 @@ void on_playall_activate (GtkMenuItem *menuitem, gpointer user_data) {
 
 }
 
-void
-on_playsel_activate                      (GtkMenuItem     *menuitem,
-					  gpointer         user_data)
-{
+
+void on_playsel_activate (GtkMenuItem *menuitem, gpointer user_data) {
   // play part of a clip (in clip editor)
 
   if (mainw->current_file<=0) return;
@@ -3934,10 +3932,7 @@ on_playsel_activate                      (GtkMenuItem     *menuitem,
 }
 
 
-void
-on_playclip_activate                      (GtkMenuItem     *menuitem,
-					   gpointer         user_data)
-{
+void on_playclip_activate (GtkMenuItem *menuitem, gpointer user_data) {
   // play the clipboard
   int current_file=mainw->current_file;
   boolean oloop=mainw->loop;
@@ -3972,10 +3967,7 @@ on_playclip_activate                      (GtkMenuItem     *menuitem,
 
 
 
-void
-on_record_perf_activate                      (GtkMenuItem     *menuitem,
-					      gpointer         user_data)
-{
+void on_record_perf_activate (GtkMenuItem *menuitem, gpointer user_data) {
   // real time recording
 
   if (mainw->multitrack!=NULL) return;
@@ -9687,10 +9679,7 @@ on_preview_clicked                     (GtkButton       *button,
 }
 
 
-void
-changed_fps_during_pb           (GtkSpinButton   *spinbutton,
-				 gpointer         user_data)
-{
+void changed_fps_during_pb (GtkSpinButton   *spinbutton, gpointer user_data) {
   double new_fps=(double)((int)(lives_spin_button_get_value(LIVES_SPIN_BUTTON(spinbutton))*1000)/1000.);
 
   if ((!cfile->play_paused&&cfile->pb_fps==new_fps)||(cfile->play_paused&&new_fps==0.)) {
@@ -9708,7 +9697,7 @@ changed_fps_during_pb           (GtkSpinButton   *spinbutton,
 	!(mainw->record&&!mainw->record_paused&&prefs->audio_src==AUDIO_SRC_EXT)) {
       
       mainw->jackd->sample_in_rate=cfile->arate*cfile->pb_fps/cfile->fps;
-      if (mainw->agen_key==0&&!mainw->agen_needs_reinit&&!has_audio_filters(FALSE)) {
+      if (mainw->agen_key==0&&!mainw->agen_needs_reinit&&!has_audio_filters(AF_TYPE_NONA)) {
 	mainw->rec_aclip=mainw->current_file;
 	mainw->rec_avel=cfile->pb_fps/cfile->fps;
 	mainw->rec_aseek=(double)mainw->jackd->seek_pos/(double)(cfile->arate*cfile->achans*cfile->asampsize/8);
@@ -9721,7 +9710,7 @@ changed_fps_during_pb           (GtkSpinButton   *spinbutton,
       !(mainw->record&&!mainw->record_paused&&prefs->audio_src==AUDIO_SRC_EXT)) {
 
       mainw->pulsed->in_arate=cfile->arate*cfile->pb_fps/cfile->fps;
-      if (mainw->agen_key==0&&!mainw->agen_needs_reinit&&!has_audio_filters(FALSE)) {
+      if (mainw->agen_key==0&&!mainw->agen_needs_reinit&&!has_audio_filters(AF_TYPE_NONA)) {
 	mainw->rec_aclip=mainw->current_file;
 	mainw->rec_avel=cfile->pb_fps/cfile->fps;
 	mainw->rec_aseek=(double)mainw->pulsed->seek_pos/(double)(cfile->arate*cfile->achans*cfile->asampsize/8);
@@ -10083,10 +10072,7 @@ boolean frame_context (GtkWidget *widget, GdkEventButton *event, gpointer which)
 
 
 
-void
-on_slower_pressed (GtkButton *button,
-		   gpointer user_data)
-{
+void on_slower_pressed (GtkButton *button, gpointer user_data) {
   double change=1.,new_fps;
 
   int type=0;
@@ -10131,10 +10117,8 @@ on_slower_pressed (GtkButton *button,
 
 }
 
-void
-on_faster_pressed (GtkButton *button,
-		   gpointer user_data)
-{
+
+void on_faster_pressed (GtkButton *button, gpointer user_data) {
   double change=1.;
   int type=0;
 

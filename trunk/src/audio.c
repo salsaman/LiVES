@@ -2055,7 +2055,7 @@ boolean resync_audio(int frameno) {
 	if (jack_try_reconnect()) jack_audio_seek_frame(mainw->jackd,frameno);
       }
 
-      if (mainw->agen_key==0&&!mainw->agen_needs_reinit&&!has_audio_filters(FALSE)) {
+      if (mainw->agen_key==0&&!mainw->agen_needs_reinit&&!has_audio_filters(AF_TYPE_NONA)) {
 	mainw->rec_aclip=mainw->current_file;
 	mainw->rec_avel=cfile->pb_fps/cfile->fps;
 	mainw->rec_aseek=(double)mainw->jackd->seek_pos/(double)(cfile->arate*cfile->achans*cfile->asampsize/8);
@@ -2072,7 +2072,7 @@ boolean resync_audio(int frameno) {
       if (mainw->pulsed->playing_file!=-1&&!pulse_audio_seek_frame(mainw->pulsed,frameno)) {
 	if (pulse_try_reconnect()) pulse_audio_seek_frame(mainw->pulsed,frameno);
       }
-      if (mainw->agen_key==0&&!mainw->agen_needs_reinit&&!has_audio_filters(FALSE)) {
+      if (mainw->agen_key==0&&!mainw->agen_needs_reinit&&!has_audio_filters(AF_TYPE_NONA)) {
 	mainw->rec_aclip=mainw->current_file;
 	mainw->rec_avel=cfile->pb_fps/cfile->fps;
 	mainw->rec_aseek=(double)mainw->pulsed->seek_pos/(double)(cfile->arate*cfile->achans*cfile->asampsize/8);
@@ -2756,7 +2756,7 @@ boolean apply_rte_audio(int nframes) {
     
   weed_apply_audio_effects_rt(fltbuf,cfile->achans,onframes,cfile->arate,aud_tc,FALSE);
 
-  if (!((has_audio_filters(FALSE)&&!has_audio_filters(TRUE))||mainw->agen_key!=0)) {
+  if (!(has_audio_filters(AF_TYPE_NONA)||mainw->agen_key!=0)) {
     // analysers only - no need to save
     audio_pos+=tbytes;
 
@@ -2771,6 +2771,8 @@ boolean apply_rte_audio(int nframes) {
   
     if (shortbuf!=(short *)in_buff) g_free(shortbuf);
     g_free(in_buff);
+
+    return TRUE;
   }
     
   // convert float audio back to int

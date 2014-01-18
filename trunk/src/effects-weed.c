@@ -3759,7 +3759,7 @@ void weed_apply_audio_effects_rt(float **abuf, int nchans, int64_t nsamps, gdoub
 
 
 
-boolean has_audio_filters(boolean analysers_only) {
+boolean has_audio_filters(lives_af_t af_type) {
   // do we have any active audio filters (excluding audio generators) ?
   weed_plant_t *instance,*filter;
 
@@ -3771,7 +3771,9 @@ boolean has_audio_filters(boolean analysers_only) {
 	if ((instance=key_to_instance[i][key_modes[i]])==NULL) continue;
 	filter=weed_instance_get_filter(instance,FALSE);
 	if (has_audio_chans_in(filter,FALSE)) {
-	  if (analysers_only&&has_audio_chans_out(filter,FALSE)) continue;
+	  if ((af_type==AF_TYPE_A&&has_audio_chans_out(filter,FALSE))||  // check for analysers only
+	      (af_type==AF_TYPE_NONA&&!has_audio_chans_out(filter,FALSE))) // check for non-analysers only
+	    continue;
 	  return TRUE;
 	}
       }

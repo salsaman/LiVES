@@ -77,12 +77,12 @@ boolean has_video_chans_out(weed_plant_t *filter, boolean count_opt);
 boolean has_audio_chans_out(weed_plant_t *filter, boolean count_opt);
 boolean is_pure_audio(weed_plant_t *filter_or_instance, boolean count_opt); ///< TRUE if audio in or out and no vid in/out
 
-boolean has_audio_filters(boolean analysers_only);
 boolean has_video_filters(boolean analysers_only);
 
 #ifdef HAS_LIVES_EFFECTS_H
 lives_fx_cat_t weed_filter_categorise (weed_plant_t *pl, int in_channels, int out_channels);
 lives_fx_cat_t weed_filter_subcategorise (weed_plant_t *pl, lives_fx_cat_t category, boolean count_opt);
+boolean has_audio_filters(lives_af_t af_type);
 #endif
 
 gchar* weed_seed_type_to_text(int seed_type);

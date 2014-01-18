@@ -9,6 +9,7 @@
 #include "main.h"
 #include "callbacks.h"
 #include "support.h"
+#include "effects.h"
 #include "effects-weed.h"
 
 #define afile mainw->files[pulsed->playing_file]
@@ -512,7 +513,7 @@ static void pulse_audio_write_process (pa_stream *pstream, size_t nbytes, void *
 	     }
 	   }
 
-	   if (has_audio_filters(FALSE)&&(pulsed->playing_file!=mainw->ascrap_file)) {
+	   if (has_audio_filters(AF_TYPE_ANY)&&(pulsed->playing_file!=mainw->ascrap_file)) {
 	     boolean memok=TRUE;
 	     float **fltbuf=(float **)g_malloc(pulsed->out_achans*sizeof(float *));
 	     register int i;
@@ -589,7 +590,7 @@ static void pulse_audio_write_process (pa_stream *pstream, size_t nbytes, void *
 	     pulsed->sound_buffer=(guchar *)pulsed->aPlayPtr->data;
 	     buf=(void *)pulsed->sound_buffer;
 
-	     if (has_audio_filters(FALSE)) {
+	     if (has_audio_filters(AF_TYPE_ANY)) {
 	       register int i;
 
 	       memok=TRUE;
@@ -861,7 +862,7 @@ static void pulse_audio_read_process (pa_stream *pstream, size_t nbytes, void *a
     // in this case we read external audio, but maybe not record it
     // we may wish to analyse the audio for example
 
-    if (has_audio_filters(TRUE)) {
+    if (has_audio_filters(AF_TYPE_A)) {
       // convert to float, apply any analysers
       boolean memok=TRUE;
       float **fltbuf=(float **)g_malloc(pulsed->in_achans*sizeof(float *));

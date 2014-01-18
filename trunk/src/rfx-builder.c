@@ -4715,7 +4715,7 @@ void add_rfx_effects(void) {
   
   if (mainw->is_ready&&mainw->playing_file==-1&&mainw->current_file>0&&
       ((has_video_filters(TRUE)&&!has_video_filters(FALSE))||
-       (cfile->achans>0&&prefs->audio_src==AUDIO_SRC_INT&&has_audio_filters(FALSE))||
+       (cfile->achans>0&&prefs->audio_src==AUDIO_SRC_INT&&has_audio_filters(AF_TYPE_ANY))||
        mainw->agen_key!=0)) {
     
     lives_widget_set_sensitive(mainw->rendered_fx[0].menuitem,TRUE);

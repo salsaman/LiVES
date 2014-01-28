@@ -1,7 +1,6 @@
-
 // multitrack.c
 // LiVES
-// (c) G. Finch 2005 - 2013 <salsaman@gmail.com>
+// (c) G. Finch 2005 - 2014 <salsaman@gmail.com>
 // released under the GNU GPL 3 or later
 // see file ../COPYING for licensing details
 
@@ -7419,10 +7418,8 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
   lives_widget_show (help_translate);
   lives_container_add (LIVES_CONTAINER (menuitem_menu), help_translate);
 
-  separator = gtk_separator_menu_item_new ();
+  separator = lives_menu_add_separator(LIVES_MENU(menuitem_menu));
   lives_widget_show (separator);
-  lives_container_add (LIVES_CONTAINER (menuitem_menu), separator);
-  lives_widget_set_sensitive (separator, FALSE);
 
   mt->troubleshoot=lives_menu_item_new_with_mnemonic (_("_Troubleshoot"));
   lives_widget_show (mt->troubleshoot);
@@ -7437,7 +7434,10 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
   lives_widget_set_sensitive(menuitemsep,FALSE);
   lives_container_add (LIVES_CONTAINER(menubar), menuitemsep);
 
-
+  if (palette->style&STYLE_1) {
+    lives_widget_set_bg_color(menuitemsep, LIVES_WIDGET_STATE_INSENSITIVE, &palette->menu_and_bars);
+    lives_widget_set_fg_color(menuitemsep, LIVES_WIDGET_STATE_INSENSITIVE, &palette->menu_and_bars_fore);
+  }
 
   mt->mm_menuitem = lives_menu_item_new_with_label ("");
 
@@ -7467,14 +7467,14 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
 				       (gpointer)mt);
 
 
-
-
-
-
   menuitemsep = lives_menu_item_new_with_label("|");
   lives_widget_set_sensitive(menuitemsep,FALSE);
   lives_container_add (LIVES_CONTAINER(menubar), menuitemsep);
 
+  if (palette->style&STYLE_1) {
+    lives_widget_set_bg_color(menuitemsep, LIVES_WIDGET_STATE_INSENSITIVE, &palette->menu_and_bars);
+    lives_widget_set_fg_color(menuitemsep, LIVES_WIDGET_STATE_INSENSITIVE, &palette->menu_and_bars_fore);
+  }
 
   mt->ins_menuitem = lives_menu_item_new_with_label ("");
 
@@ -8143,7 +8143,7 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
 
   mt->clip_inner_box = lives_hbox_new (FALSE, widget_opts.packing_width);
 
-  gtk_scrolled_window_add_with_viewport (GTK_SCROLLED_WINDOW (mt->clip_scroll), mt->clip_inner_box);
+  lives_scrolled_window_add_with_viewport (LIVES_SCROLLED_WINDOW (mt->clip_scroll), mt->clip_inner_box);
 
   if (palette->style&STYLE_4) {
     lives_widget_set_bg_color(lives_bin_get_child(LIVES_BIN(mt->clip_scroll)), LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
@@ -11352,7 +11352,7 @@ void clear_context (lives_mt *mt) {
     lives_widget_set_bg_color(mt->context_box, LIVES_WIDGET_STATE_NORMAL, &palette->info_base);
   }
 
-  gtk_scrolled_window_add_with_viewport (GTK_SCROLLED_WINDOW (mt->context_scroll), mt->context_box);
+  lives_scrolled_window_add_with_viewport (LIVES_SCROLLED_WINDOW (mt->context_scroll), mt->context_box);
 
   // Apply theme background to scrolled window
   if (palette->style&STYLE_1) {
@@ -12712,7 +12712,7 @@ void polymorph (lives_mt *mt, lives_mt_poly_state_t poly) {
 
     mt->fx_list_vbox=lives_vbox_new(FALSE,widget_opts.packing_height);
     lives_container_set_border_width (LIVES_CONTAINER (mt->fx_list_vbox), widget_opts.border_width);
-    gtk_scrolled_window_add_with_viewport (GTK_SCROLLED_WINDOW (mt->fx_list_scroll), mt->fx_list_vbox);
+    lives_scrolled_window_add_with_viewport (LIVES_SCROLLED_WINDOW (mt->fx_list_scroll), mt->fx_list_vbox);
 
     if (filter_map!=NULL) {
       if (weed_plant_has_leaf(filter_map,"init_events")) num_fx=weed_leaf_num_elements(filter_map,"init_events");
@@ -12933,7 +12933,7 @@ void polymorph (lives_mt *mt, lives_mt_poly_state_t poly) {
 
     mt->fx_list_vbox=lives_vbox_new(FALSE,widget_opts.packing_height);
     lives_container_set_border_width (LIVES_CONTAINER (mt->fx_list_vbox), widget_opts.border_width);
-    gtk_scrolled_window_add_with_viewport (GTK_SCROLLED_WINDOW (mt->fx_list_scroll), mt->fx_list_vbox);
+    lives_scrolled_window_add_with_viewport (LIVES_SCROLLED_WINDOW (mt->fx_list_scroll), mt->fx_list_vbox);
 
     if (mt->poly_state==POLY_COMP) nins=1000000;
     populate_filter_box(mt->fx_list_vbox,nins,mt);

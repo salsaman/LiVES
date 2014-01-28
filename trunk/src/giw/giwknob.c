@@ -20,7 +20,7 @@ Alexandre Pereira Bueno - alpebu@yahoo.com.br
 James Scott Jr <skoona@users.sourceforge.net>
 */
 
-// additional code G. Finch (salsaman@gmail.com) 2010 - 2013
+// additional code G. Finch (salsaman@gmail.com) 2010 - 2014
 
 
 #include <math.h>
@@ -1285,6 +1285,10 @@ knob_calculate_legends_sizes(GiwKnob *knob)
 {
   GtkWidget *widget;
     
+#if GTK_CHECK_VERSION(3,8,0)
+  PangoFontDescription *fontdesc;
+#endif
+
   g_return_if_fail (knob != NULL);
   
   widget=GTK_WIDGET(knob);
@@ -1292,8 +1296,20 @@ knob_calculate_legends_sizes(GiwKnob *knob)
   if (knob->legends!=NULL){
 
 #if GTK_CHECK_VERSION(3,0,0)
+#if GTK_CHECK_VERSION(3,8,0)
+    fontdesc=pango_font_description_new();
+    gtk_style_context_get(gtk_widget_get_style_context(widget),
+			  gtk_widget_get_state_flags(widget),
+			  GTK_STYLE_PROPERTY_FONT,
+			  &fontdesc,
+			  NULL
+			  );
+    pango_layout_set_font_description (knob->legends[0],fontdesc);
+    pango_font_description_free(fontdesc);
+#else
     pango_layout_set_font_description (knob->legends[0], 
 				       gtk_style_context_get_font(gtk_widget_get_style_context(widget),gtk_widget_get_state_flags(widget)));
+#endif
 #else
     pango_layout_set_font_description (knob->legends[0], widget->style->font_desc);  
 #endif
@@ -1308,6 +1324,10 @@ knob_calculate_title_sizes(GiwKnob *knob)
 {
   GtkWidget *widget;
 
+#if GTK_CHECK_VERSION(3,8,0)
+  PangoFontDescription *fontdesc;
+#endif
+
   g_return_if_fail (knob != NULL);
   
   if (knob->title == NULL) return;
@@ -1315,8 +1335,20 @@ knob_calculate_title_sizes(GiwKnob *knob)
   widget=GTK_WIDGET(knob);
 
 #if GTK_CHECK_VERSION(3,0,0)
+#if GTK_CHECK_VERSION(3,8,0)
+  fontdesc=pango_font_description_new();
+  gtk_style_context_get(gtk_widget_get_style_context(widget),
+			gtk_widget_get_state_flags(widget),
+			GTK_STYLE_PROPERTY_FONT,
+			&fontdesc,
+			NULL
+			);
+  pango_layout_set_font_description (knob->legends[0],fontdesc);
+  pango_font_description_free(fontdesc);
+#else
   pango_layout_set_font_description (knob->legends[0], 
 				     gtk_style_context_get_font(gtk_widget_get_style_context(widget),gtk_widget_get_state_flags(widget)));
+#endif
 #else
   pango_layout_set_font_description (knob->legends[0], widget->style->font_desc);  
 #endif

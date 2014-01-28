@@ -1,6 +1,6 @@
 // widget-helper.c
 // LiVES
-// (c) G. Finch 2012 - 2013 <salsaman@gmail.com>
+// (c) G. Finch 2012 - 2014 <salsaman@gmail.com>
 // released under the GNU GPL 3 or later
 // see file ../COPYING or www.gnu.org for licensing details
 
@@ -2132,13 +2132,29 @@ LIVES_INLINE boolean lives_entry_set_width_chars(LiVESEntry *entry, int nchars) 
 
 
 
-LIVES_INLINE void lives_scrolled_window_set_policy(LiVESScrolledWindow *scrolledwindow, lives_policy_t hpolicy, 
+LIVES_INLINE boolean lives_scrolled_window_set_policy(LiVESScrolledWindow *scrolledwindow, lives_policy_t hpolicy, 
 						   lives_policy_t vpolicy) {
 #ifdef GUI_GTK
   gtk_scrolled_window_set_policy (scrolledwindow, hpolicy, vpolicy);
+  return TRUE;
 #endif
-
+  return FALSE;
 }
+
+
+
+LIVES_INLINE boolean lives_scrolled_window_add_with_viewport(LiVESScrolledWindow *scrolledwindow, LiVESWidget *child) {
+#ifdef GUI_GTK
+#if !GTK_CHECK_VERSION(3,0,0)
+  gtk_scrolled_window_add_with_viewport(scrolledwindow, child);
+#else
+  lives_container_add(LIVES_CONTAINER(scrolledwindow),child);
+#endif
+  return TRUE;
+#endif
+  return FALSE;
+}
+
 
 LIVES_INLINE boolean lives_dialog_set_has_separator(LiVESDialog *dialog, boolean has) {
   // return TRUE if implemented
@@ -2191,6 +2207,9 @@ LIVES_INLINE LiVESWidget *lives_menu_item_new(void) {
   LiVESWidget *menuitem=NULL;
 #ifdef GUI_GTK
   menuitem=gtk_menu_item_new();
+  if (widget_opts.apply_theme) {
+    lives_widget_apply_theme2(menuitem, LIVES_WIDGET_STATE_INSENSITIVE);
+  }
 #endif
   return menuitem;
 }
@@ -2200,6 +2219,9 @@ LIVES_INLINE LiVESWidget *lives_menu_item_new_with_mnemonic(const char *label) {
   LiVESWidget *menuitem=NULL;
 #ifdef GUI_GTK
   menuitem=gtk_menu_item_new_with_mnemonic(label);
+  if (widget_opts.apply_theme) {
+    lives_widget_apply_theme2(menuitem, LIVES_WIDGET_STATE_INSENSITIVE);
+  }
 #endif
   return menuitem;
 }
@@ -2209,6 +2231,9 @@ LIVES_INLINE LiVESWidget *lives_menu_item_new_with_label(const char *label) {
   LiVESWidget *menuitem=NULL;
 #ifdef GUI_GTK
   menuitem=gtk_menu_item_new_with_label(label);
+  if (widget_opts.apply_theme) {
+    lives_widget_apply_theme2(menuitem, LIVES_WIDGET_STATE_INSENSITIVE);
+  }
 #endif
   return menuitem;
 }
@@ -2219,6 +2244,9 @@ LIVES_INLINE LiVESWidget *lives_image_menu_item_new_with_label(const char *label
 #ifdef GUI_GTK
   // TODO - deprecated
   menuitem=gtk_image_menu_item_new_with_label(label);
+  if (widget_opts.apply_theme) {
+    lives_widget_apply_theme2(menuitem, LIVES_WIDGET_STATE_INSENSITIVE);
+  }
 #endif
   return menuitem;
 }
@@ -2228,6 +2256,9 @@ LIVES_INLINE LiVESWidget *lives_image_menu_item_new_with_mnemonic(const char *la
   LiVESWidget *menuitem=NULL;
 #ifdef GUI_GTK
   menuitem=gtk_image_menu_item_new_with_mnemonic(label);
+  if (widget_opts.apply_theme) {
+    lives_widget_apply_theme2(menuitem, LIVES_WIDGET_STATE_INSENSITIVE);
+  }
 #endif
   return menuitem;
 }
@@ -2237,6 +2268,9 @@ LIVES_INLINE LiVESWidget *lives_radio_menu_item_new_with_label(LiVESSList *group
   LiVESWidget *menuitem=NULL;
 #ifdef GUI_GTK
   menuitem=gtk_radio_menu_item_new_with_label(group,label);
+  if (widget_opts.apply_theme) {
+    lives_widget_apply_theme2(menuitem, LIVES_WIDGET_STATE_INSENSITIVE);
+  }
 #endif
   return menuitem;
 }
@@ -2246,6 +2280,9 @@ LIVES_INLINE LiVESWidget *lives_check_menu_item_new_with_label(const char *label
   LiVESWidget *menuitem=NULL;
 #ifdef GUI_GTK
   menuitem=gtk_check_menu_item_new_with_label(label);
+  if (widget_opts.apply_theme) {
+    lives_widget_apply_theme2(menuitem, LIVES_WIDGET_STATE_INSENSITIVE);
+  }
 #endif
   return menuitem;
 }
@@ -2256,6 +2293,9 @@ LIVES_INLINE LiVESWidget *lives_check_menu_item_new_with_mnemonic(const char *la
 #ifdef GUI_GTK
   // TODO - deprecated
   menuitem=gtk_check_menu_item_new_with_mnemonic(label);
+  if (widget_opts.apply_theme) {
+    lives_widget_apply_theme2(menuitem, LIVES_WIDGET_STATE_INSENSITIVE);
+  }
 #endif
   return menuitem;
 }
@@ -2266,6 +2306,9 @@ LIVES_INLINE LiVESWidget *lives_image_menu_item_new_from_stock(const char *stock
 #ifdef GUI_GTK
   // TODO - deprecated
   menuitem=gtk_image_menu_item_new_from_stock(stock_id,accel_group);
+  if (widget_opts.apply_theme) {
+    lives_widget_apply_theme2(menuitem, LIVES_WIDGET_STATE_INSENSITIVE);
+  }
 #endif
   return menuitem;
 }
@@ -3442,17 +3485,17 @@ LiVESWidget *lives_standard_scrolled_window_new(int width, int height, LiVESWidg
     if (!LIVES_IS_TEXT_VIEW(child))
 #endif 
       {
-	gtk_scrolled_window_add_with_viewport (GTK_SCROLLED_WINDOW (scrolledwindow), child);
+	lives_scrolled_window_add_with_viewport (LIVES_SCROLLED_WINDOW (scrolledwindow), child);
       }
     else {
       if (widget_opts.expand!=LIVES_EXPAND_NONE) {
 	LiVESWidget *align;
 	align=lives_alignment_new(.5,0.,0.,0.);
 	lives_container_add (LIVES_CONTAINER (align), child);
-	gtk_scrolled_window_add_with_viewport (GTK_SCROLLED_WINDOW (scrolledwindow), align);
+	lives_scrolled_window_add_with_viewport (LIVES_SCROLLED_WINDOW (scrolledwindow), align);
       }
       else {
-	gtk_scrolled_window_add_with_viewport (GTK_SCROLLED_WINDOW (scrolledwindow), child);
+	lives_scrolled_window_add_with_viewport (LIVES_SCROLLED_WINDOW (scrolledwindow), child);
       }
     }
     gtk_viewport_set_shadow_type (GTK_VIEWPORT (lives_bin_get_child (LIVES_BIN (scrolledwindow))),LIVES_SHADOW_IN);
@@ -3542,6 +3585,12 @@ LIVES_INLINE void lives_cursor_unref(LiVESXCursor *cursor) {
 void lives_widget_apply_theme(LiVESWidget *widget, LiVESWidgetState state) {
   lives_widget_set_fg_color(widget, state, &palette->normal_fore);
   lives_widget_set_bg_color(widget, state, &palette->normal_back);
+}
+
+
+void lives_widget_apply_theme2(LiVESWidget *widget, LiVESWidgetState state) {
+  //lives_widget_set_fg_color(widget, state, &palette->normal_fore);
+  lives_widget_set_bg_color(widget, state, &palette->menu_and_bars);
 }
 
 
@@ -3674,7 +3723,6 @@ void lives_spin_button_configure(LiVESSpinButton *spinbutton,
 
 
 
-
 ///// lives specific functions
 
 #include "rte_window.h"
@@ -3723,6 +3771,16 @@ void lives_widget_context_update_one(void) {
   lives_widget_context_update_real(FALSE);
 }
 
+
+
+LiVESWidget *lives_menu_add_separator(LiVESMenu *menu) {
+  LiVESWidget *separatormenuitem = lives_menu_item_new ();
+  if (separatormenuitem!=NULL) {
+    lives_container_add (LIVES_CONTAINER (menu), separatormenuitem);
+    lives_widget_set_sensitive (separatormenuitem, FALSE);
+  }
+  return separatormenuitem;
+}
 
 
 void lives_set_cursor_style(lives_cursor_t cstyle, LiVESWidget *widget) {

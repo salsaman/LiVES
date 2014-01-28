@@ -1,6 +1,6 @@
 // callbacks.c
 // LiVES
-// (c) G. Finch 2003 - 2013 <salsaman@gmail.com>
+// (c) G. Finch 2003 - 2014 <salsaman@gmail.com>
 // released under the GNU GPL 3 or later
 // see file ../COPYING for licensing details
 
@@ -5725,7 +5725,7 @@ on_about_activate                     (GtkMenuItem     *menuitem,
 			 "name", "LiVES",
 			 "version", LiVES_VERSION,
 			 "comments",comments,
-			 "copyright", "(C) 2002-2013 salsaman <salsaman@gmail.com> and others",
+			 "copyright", "(C) 2002-2014 salsaman <salsaman@gmail.com> and others",
 			 "website", "http://lives.sourceforge.net",
 			 "license", license,
 			 "title", title,
@@ -5745,7 +5745,7 @@ on_about_activate                     (GtkMenuItem     *menuitem,
 #endif
 
   gchar *mesg;
-  mesg=g_strdup_printf(_ ("LiVES Version %s\n(c) G. Finch (salsaman) %s\n\nReleased under the GPL 3 or later (http://www.gnu.org/licenses/gpl.txt)\nLiVES is distributed WITHOUT WARRANTY\n\nContact the author at:\nsalsaman@gmail.com\nHomepage: http://lives.sourceforge.net"),LiVES_VERSION,"2002-2013");
+  mesg=g_strdup_printf(_ ("LiVES Version %s\n(c) G. Finch (salsaman) %s\n\nReleased under the GPL 3 or later (http://www.gnu.org/licenses/gpl.txt)\nLiVES is distributed WITHOUT WARRANTY\n\nContact the author at:\nsalsaman@gmail.com\nHomepage: http://lives.sourceforge.net"),LiVES_VERSION,"2002-2014");
   do_error_dialog(mesg);
   g_free(mesg);
   

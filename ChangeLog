@@ -3,7 +3,7 @@ Version 2.2.3
 Run data processing plugins in both video and audio threads.
 Fix crash when loading device map (regression).
 Fix bug which prevented audio changes from being recorded when audio analysers are running.
-
+Updates for gtk+ >= 3.8 (in progress).
 
 
 

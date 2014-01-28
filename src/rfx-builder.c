@@ -1,6 +1,6 @@
 // rfx-builder.c
 // LiVES
-// (c) G. Finch 2004 - 2013 <salsaman@gmail.com>
+// (c) G. Finch 2004 - 2014 <salsaman@gmail.com>
 // released under the GNU GPL 3 or later
 // see file ../COPYING or www.gnu.org for licensing details
 
@@ -4688,11 +4688,8 @@ void add_rfx_effects(void) {
   g_free (rendered_fx);
 
   if (mainw->rte_separator==NULL) {
-    mainw->rte_separator=lives_menu_item_new();
-    lives_widget_set_sensitive (mainw->rte_separator, FALSE);
+    mainw->rte_separator=lives_menu_add_separator(LIVES_MENU(mainw->effects_menu));
     lives_widget_show (mainw->rte_separator);
-    
-    lives_container_add (LIVES_CONTAINER (mainw->effects_menu), mainw->rte_separator);
   }
 
   menuitem = lives_menu_item_new_with_mnemonic (mainw->rendered_fx[0].menu_text);
@@ -4724,10 +4721,8 @@ void add_rfx_effects(void) {
 
   lives_container_add (LIVES_CONTAINER (mainw->effects_menu), mainw->custom_effects_submenu);
   
-  mainw->custom_effects_separator = lives_menu_item_new ();
-  lives_widget_set_sensitive (mainw->custom_effects_separator, FALSE);
-  
-  lives_container_add (LIVES_CONTAINER (mainw->effects_menu), mainw->custom_effects_separator);
+  mainw->custom_effects_separator=lives_menu_add_separator(LIVES_MENU(mainw->effects_menu));
+
   threaded_dialog_spin();
 
   // now we need to add to the effects menu and set a callback
@@ -4840,18 +4835,15 @@ void add_rfx_effects(void) {
 
   lives_container_add (LIVES_CONTAINER (mainw->gens_menu), mainw->custom_gens_submenu);
 
-
-  mainw->custom_utilities_separator=lives_menu_item_new();
-  lives_widget_set_sensitive (mainw->custom_utilities_separator, FALSE);
-
   mainw->custom_utilities_menu=lives_menu_new();
-  lives_menu_item_set_submenu (GTK_MENU_ITEM (mainw->custom_utilities_submenu), mainw->custom_utilities_menu);
+
   if (palette->style&STYLE_1) {
     lives_widget_set_bg_color(mainw->custom_utilities_menu, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
     lives_widget_set_fg_color(mainw->custom_utilities_menu, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars_fore);
   }
 
-  lives_container_add (LIVES_CONTAINER (mainw->custom_tools_menu), mainw->custom_utilities_separator);
+  mainw->custom_utilities_separator=lives_menu_add_separator(LIVES_MENU(mainw->custom_utilities_menu));
+
   lives_container_add (LIVES_CONTAINER (mainw->custom_tools_menu), mainw->custom_utilities_submenu);
 
   threaded_dialog_spin();

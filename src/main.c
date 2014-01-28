@@ -2266,7 +2266,7 @@ capability *get_capabilities (void) {
 
 void print_notice() {
   g_printerr("\nLiVES %s\n",LiVES_VERSION);
-  g_printerr("Copyright 2002-2013 Gabriel Finch (salsaman@gmail.com) and others.\n");
+  g_printerr("Copyright 2002-2014 Gabriel Finch (salsaman@gmail.com) and others.\n");
   g_printerr("LiVES comes with ABSOLUTELY NO WARRANTY\nThis is free software, and you are welcome to redistribute it\nunder certain conditions; see the file COPYING for details.\n\n");
 }
 
@@ -2339,7 +2339,9 @@ static boolean lives_startup(gpointer data) {
 
   splash_msg(_("Starting GUI..."),0.);
 
+  if (palette->style&STYLE_1) widget_opts.apply_theme=TRUE;
   create_LiVES ();
+  widget_opts.apply_theme=FALSE;
 
   icon=g_build_filename(prefs->prefix_dir,DESKTOP_ICON_DIR,"lives.png",NULL);
   gtk_window_set_default_icon_from_file(icon,&gerr);

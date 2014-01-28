@@ -20,7 +20,7 @@ Alexandre Pereira Bueno - alpebu@yahoo.com.br
 James Scott Jr <skoona@users.sourceforge.net>
 */
 
-// additional code G. Finch (salsaman@gmail.com) 2010 - 2013
+// additional code G. Finch (salsaman@gmail.com) 2010 - 2014
 
 
 #include <stdio.h>
@@ -1006,6 +1006,10 @@ vslider_build_legends(GiwVSlider *vslider)
   gint loop;
   gchar *str;
 
+#if GTK_CHECK_VERSION(3,8,0)
+  PangoFontDescription *fontdesc;
+#endif
+
   g_return_if_fail (vslider != NULL);
   
   widget=GTK_WIDGET(vslider);
@@ -1025,9 +1029,21 @@ vslider_build_legends(GiwVSlider *vslider)
       vslider->legends[loop]=gtk_widget_create_pango_layout (widget, str); 
 
 #if GTK_CHECK_VERSION(3,0,0)
-      pango_layout_set_font_description (vslider->legends[loop], 
-					 gtk_style_context_get_font(gtk_widget_get_style_context(widget),
-								    gtk_widget_get_state_flags(widget)));
+#if GTK_CHECK_VERSION(3,8,0)
+      fontdesc=pango_font_description_new();
+      gtk_style_context_get(gtk_widget_get_style_context(widget),
+			    gtk_widget_get_state_flags(widget),
+			    GTK_STYLE_PROPERTY_FONT,
+			    &fontdesc,
+			    NULL
+			    );
+      pango_layout_set_font_description (vslider->legends[loop],fontdesc);
+      pango_font_description_free(fontdesc);
+#else
+    pango_layout_set_font_description (vslider->legends[loop], 
+				       gtk_style_context_get_font(gtk_widget_get_style_context(widget),
+								  gtk_widget_get_state_flags(widget)));
+#endif
 #else
       pango_layout_set_font_description(vslider->legends[loop], widget->style->font_desc); // Setting te correct font  
 #endif
@@ -1065,15 +1081,31 @@ vslider_calculate_legends_sizes(GiwVSlider *vslider)
 {
   GtkWidget *widget;
     
+#if GTK_CHECK_VERSION(3,8,0)
+  PangoFontDescription *fontdesc;
+#endif
+
   g_return_if_fail (vslider != NULL);
 
   widget=GTK_WIDGET(vslider);
 
   if (vslider->legends!=NULL){
 #if GTK_CHECK_VERSION(3,0,0)
+#if GTK_CHECK_VERSION(3,8,0)
+    fontdesc=pango_font_description_new();
+    gtk_style_context_get(gtk_widget_get_style_context(widget),
+			  gtk_widget_get_state_flags(widget),
+			  GTK_STYLE_PROPERTY_FONT,
+			  &fontdesc,
+			  NULL
+			  );
+    pango_layout_set_font_description (vslider->legends[0],fontdesc);
+    pango_font_description_free(fontdesc);
+#else
     pango_layout_set_font_description (vslider->legends[0], 
 				       gtk_style_context_get_font(gtk_widget_get_style_context(widget),
 								  gtk_widget_get_state_flags(widget)));
+#endif
 #else
     pango_layout_set_font_description (vslider->legends[0], widget->style->font_desc);  
 #endif

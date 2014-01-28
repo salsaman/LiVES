@@ -1,6 +1,6 @@
 // effects-weed.c
 // LiVES (lives-exe)
-// (c) G. Finch 2005 - 2013 (salsaman@gmail.com)
+// (c) G. Finch 2005 - 2014 (salsaman@gmail.com)
 // Released under the GPL 3 or later
 // see file ../COPYING for licensing details
 
@@ -6419,6 +6419,8 @@ boolean weed_init_effect(int hotkey) {
     fg_modeswitch=TRUE;
   }
 
+  if (hotkey>=FX_KEYS_MAX) return FALSE;
+
   if (!rte_key_valid (hotkey+1,FALSE)) {
     return FALSE;
   }
@@ -6853,7 +6855,7 @@ void weed_deinit_effect(int hotkey) {
     hotkey=-hotkey-1;
   }
 
-  if (hotkey>FX_KEYS_MAX) return;
+  if (hotkey>=FX_KEYS_MAX) return;
 
   if ((instance=key_to_instance[hotkey][key_modes[hotkey]])==NULL) return;
 

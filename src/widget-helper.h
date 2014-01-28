@@ -1,6 +1,6 @@
 // widget-helper.h
 // LiVES
-// (c) G. Finch 2012 - 2013 <salsaman@gmail.com>
+// (c) G. Finch 2012 - 2014 <salsaman@gmail.com>
 // released under the GNU GPL 3 or later
 // see file ../COPYING or www.gnu.org for licensing details
 
@@ -1000,7 +1000,8 @@ lives_display_t lives_widget_get_display_type(LiVESWidget *);
 
 uint64_t lives_widget_get_xwinid(LiVESWidget *, const char *failure_msg);
 
-void lives_scrolled_window_set_policy(LiVESScrolledWindow *, lives_policy_t hpolicy, lives_policy_t vpolicy);
+boolean lives_scrolled_window_set_policy(LiVESScrolledWindow *, lives_policy_t hpolicy, lives_policy_t vpolicy);
+boolean lives_scrolled_window_add_with_viewport(LiVESScrolledWindow *, LiVESWidget *child);
 
 // optional (return TRUE if implemented)
 
@@ -1049,12 +1050,15 @@ LiVESWidget *lives_standard_file_button_new(boolean is_dir, const char *def_dir)
 
 // util functions
 
-void lives_widget_apply_theme(LiVESWidget *, LiVESWidgetState state);
+void lives_widget_apply_theme(LiVESWidget *, LiVESWidgetState state); // normal theme colours
+void lives_widget_apply_theme2(LiVESWidget *, LiVESWidgetState state); // menu and bars colours (bg only...)
 
 void lives_cursor_unref(LiVESXCursor *cursor);
 
 void lives_widget_context_update(void);
 void lives_widget_context_update_one(void);
+
+LiVESWidget *lives_menu_add_separator(LiVESMenu *menu);
 
 void lives_widget_get_fg_color(LiVESWidget *, LiVESWidgetColor *);
 void lives_widget_get_bg_color(LiVESWidget *, LiVESWidgetColor *);

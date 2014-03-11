@@ -113,9 +113,12 @@ const char *plugin_version="LiVES mpegts decoder version 1.2";
 #endif
 
 #if HAVE_AVPRIV_SET_PTS_INFO
+#if !HAVE_AVFORMAT_INTERNAL_H
+extern void avpriv_set_pts_info(AVStream *s, int pts_wrap_bits,
+                         unsigned int pts_num, unsigned int pts_den);
+#endif
 #define av_set_pts_info(a,b,c,d) avpriv_set_pts_info(a,b,c,d)
 #endif
-
 
 
 static index_container_t **indices;

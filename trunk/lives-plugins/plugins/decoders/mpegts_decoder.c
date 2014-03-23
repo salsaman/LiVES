@@ -69,57 +69,7 @@ const char *plugin_version="LiVES mpegts decoder version 1.2";
 
 #include "mpegts_decoder.h"
 
-
-#if ((LIBAVUTIL_VERSION_MAJOR < 51) || (LIBAVUTIL_VERSION_MAJOR == 51) && (LIBAVUTIL_VERSION_MINOR < 22))
-#define AV_OPT_TYPE_INT FF_OPT_TYPE_INT
-#endif
-
-#ifndef offsetof
-#define offsetof(T, F) ((unsigned int)((char *)&((T *)0)->F))
-#endif
-
-
-#if (LIBAVCODEC_VERSION_MAJOR > 54)
-#define CodecID AVCodecID
-#define CODEC_ID_NONE AV_CODEC_ID_NONE
-#define CODEC_ID_MPEG1VIDEO AV_CODEC_ID_MPEG1VIDEO
-#define CODEC_ID_MPEG2VIDEO AV_CODEC_ID_MPEG2VIDEO
-#define CODEC_ID_MPEG4 AV_CODEC_ID_MPEG4
-#define CODEC_ID_H264 AV_CODEC_ID_H264
-#define CODEC_ID_DIRAC AV_CODEC_ID_DIRAC
-#define CODEC_ID_MP3 AV_CODEC_ID_MP3
-#define CODEC_ID_AAC AV_CODEC_ID_AAC
-#define CODEC_ID_VC1 AV_CODEC_ID_VC1
-#define CODEC_ID_PCM_BLURAY AV_CODEC_ID_PCM_BLURAY
-#define CODEC_ID_AC3 AV_CODEC_ID_AC3
-#define CODEC_ID_EAC3 AV_CODEC_ID_EAC3
-#define CODEC_ID_DTS AV_CODEC_ID_DTS
-#define CODEC_ID_TRUEHD AV_CODEC_ID_TRUEHD
-#define CODEC_ID_S302M AV_CODEC_ID_S302M
-#define CODEC_ID_DVB_TELETEXT AV_CODEC_ID_DVB_TELETEXT
-#define CODEC_ID_DVB_SUBTITLE AV_CODEC_ID_DVB_SUBTITLE
-#endif
-
-#if !HAVE_AVCODEC_OPEN2
-#define avcodec_open2(a, b, c) avcodec_open(a, b)
-#endif
-
-#if !HAVE_AVCODEC_ALLOC_CONTEXT3
-#define avcodec_alloc_context3(a) avcodec_alloc_context()
-#endif
-
-#if HAVE_AVFORMAT_NEW_STREAM
-#define av_new_stream(a, b) avformat_new_stream(a, NULL)
-#endif
-
-#if HAVE_AVPRIV_SET_PTS_INFO
-#if !HAVE_AVFORMAT_INTERNAL_H
-extern void avpriv_set_pts_info(AVStream *s, int pts_wrap_bits,
-                         unsigned int pts_num, unsigned int pts_den);
-#endif
-#define av_set_pts_info(a,b,c,d) avpriv_set_pts_info(a,b,c,d)
-#endif
-
+#include "libav_helper.h"
 
 static index_container_t **indices;
 static int nidxc;

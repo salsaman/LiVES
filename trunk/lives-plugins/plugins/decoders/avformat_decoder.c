@@ -35,17 +35,11 @@
 
 #include "avformat_decoder.h"
 
+#include "libav_helper.h"
+
 const char *plugin_version="LiVES avformat decoder version 1.0";
 
 static pthread_mutex_t avcodec_mutex=PTHREAD_MUTEX_INITIALIZER;
-
-#if !HAVE_AVCODEC_OPEN2
-#define avcodec_open2(a, b, c) avcodec_open(a, b)
-#endif
-
-#if !HAVE_AVFORMAT_FIND_STREAM_INFO
-#define avformat_find_stream_info(a, b) av_find_stream_info(a)
-#endif
 
 #define FAST_SEEK_LIMIT 50000 // microseconds (default 0.1 sec)
 #define NO_SEEK_LIMIT 1000000 // microseconds

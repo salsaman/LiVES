@@ -76,52 +76,9 @@ const char *plugin_version="LiVES mkv decoder version 1.2";
 #include <libavutil/dict.h>
 
 
-#if (LIBAVCODEC_VERSION_MAJOR > 54)
-#define CodecID AVCodecID
-#define CODEC_ID_NONE AV_CODEC_ID_NONE
-#define CODEC_ID_TEXT AV_CODEC_ID_TEXT
-#define CODEC_ID_SSA AV_CODEC_ID_SSA
-#define CODEC_ID_VP8 AV_CODEC_ID_VP8
-#define CODEC_ID_THEORA AV_CODEC_ID_THEORA
-#define CODEC_ID_SNOW AV_CODEC_ID_SNOW
-#define CODEC_ID_DIRAC AV_CODEC_ID_DIRAC
-#define CODEC_ID_MJPEG AV_CODEC_ID_MJPEG
-#define CODEC_ID_MPEG1VIDEO AV_CODEC_ID_MPEG1VIDEO
-#define CODEC_ID_MPEG2VIDEO AV_CODEC_ID_MPEG2VIDEO
-#define CODEC_ID_MPEG4 AV_CODEC_ID_MPEG4
-#define CODEC_ID_H264 AV_CODEC_ID_H264
-#define CODEC_ID_MSMPEG4V3 AV_CODEC_ID_MSMPEG4V3
-#define CODEC_ID_RV10 AV_CODEC_ID_RV10
-#define CODEC_ID_RV20 AV_CODEC_ID_RV20
-#define CODEC_ID_RV30 AV_CODEC_ID_RV30
-#define CODEC_ID_RV40 AV_CODEC_ID_RV40
-#define CODEC_ID_RAWVIDEO AV_CODEC_ID_RAWVIDEO
-#endif
-
-
-#if !HAVE_AVCODEC_OPEN2
-#define avcodec_open2(a, b, c) avcodec_open(a, b)
-#endif
-
-#if !HAVE_AVCODEC_ALLOC_CONTEXT3
-#define avcodec_alloc_context3(a) avcodec_alloc_context()
-#endif
-
-#if HAVE_AVFORMAT_NEW_STREAM
-#define av_new_stream(a, b) avformat_new_stream(a, NULL)
-#endif
-
-#if HAVE_AVPRIV_SET_PTS_INFO
-#if !HAVE_AVFORMAT_INTERNAL_H
-extern void avpriv_set_pts_info(AVStream *s, int pts_wrap_bits,
-                         unsigned int pts_num, unsigned int pts_den);
-#endif
-#define av_set_pts_info(a,b,c,d) avpriv_set_pts_info(a,b,c,d)
-#endif
-
-
 #include "mkv_decoder.h"
 
+#include "libav_helper.h"
 
 #if CONFIG_ZLIB
 #include <zlib.h>

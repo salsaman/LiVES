@@ -66,22 +66,7 @@ const char *plugin_version="LiVES flv decoder version 1.1";
 #include "decplugin.h"
 #include "flv_decoder.h"
 
-
-#if (LIBAVCODEC_VERSION_MAJOR > 54)
-#define CodecID AVCodecID
-#define CODEC_ID_NONE AV_CODEC_ID_NONE
-#define CODEC_ID_FLV1 AV_CODEC_ID_FLV1
-#define CODEC_ID_FLASHSV AV_CODEC_ID_FLASHSV
-#define CODEC_ID_FLASHSV2 AV_CODEC_ID_FLASHSV2
-#define CODEC_ID_VP6A AV_CODEC_ID_VP6A
-#define CODEC_ID_VP6F AV_CODEC_ID_VP6F
-#define CODEC_ID_H264 AV_CODEC_ID_H264
-#endif
-
-#if !HAVE_AVCODEC_OPEN2
-#define avcodec_open2(a, b, c) avcodec_open(a, b)
-#endif
-
+#include "libav_helper.h"
 
 static index_container_t **indices;
 static int nidxc;

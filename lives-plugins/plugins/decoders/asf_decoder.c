@@ -1,5 +1,5 @@
 // LiVES - asf decoder plugin
-// (c) G. Finch 2011 <salsaman@xs4all.nl,salsaman@gmail.com>
+// (c) G. Finch 2011 - 2014 <salsaman@gmail.com>
 
 /*
  * This file is free software; you can redistribute it and/or
@@ -65,35 +65,7 @@ const char *plugin_version="LiVES asf/wmv decoder version 1.1";
 #include "decplugin.h"
 #include "asf_decoder.h"
 
-#if (LIBAVCODEC_VERSION_MAJOR > 54)
-#define CodecID AVCodecID
-#define CODEC_ID_NONE AV_CODEC_ID_NONE
-#define CODEC_ID_WMV1 AV_CODEC_ID_WMV1
-#define CODEC_ID_WMV2 AV_CODEC_ID_WMV2
-#define CODEC_ID_WMV3 AV_CODEC_ID_WMV3
-#define CODEC_ID_DVVIDEO AV_CODEC_ID_DVVIDEO
-#define CODEC_ID_MPEG4 AV_CODEC_ID_MPEG4
-#define CODEC_ID_H264 AV_CODEC_ID_H264
-#define CODEC_ID_MPEG1VIDEO AV_CODEC_ID_MPEG1VIDEO
-#define CODEC_ID_MPEG2VIDEO AV_CODEC_ID_MPEG2VIDEO
-#endif
-
-#if !HAVE_AVCODEC_OPEN2
-#define avcodec_open2(a, b, c) avcodec_open(a, b)
-#endif
-
-#if HAVE_AVFORMAT_NEW_STREAM
-#define av_new_stream(a, b) avformat_new_stream(a, NULL)
-#endif
-
-#if HAVE_AVPRIV_SET_PTS_INFO
-#if !HAVE_AVFORMAT_INTERNAL_H
-extern void avpriv_set_pts_info(AVStream *s, int pts_wrap_bits,
-                         unsigned int pts_num, unsigned int pts_den);
-#endif
-#define av_set_pts_info(a,b,c,d) avpriv_set_pts_info(a,b,c,d)
-#endif
-
+#include "libav_helper.h"
 
 static enum CodecID ff_codec_get_id(const AVCodecTag *tags, unsigned int tag)
 {

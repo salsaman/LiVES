@@ -92,8 +92,8 @@ if HAVE_AVFORMAT_INTERNAL_H
 libav_cflags += -DHAVE_AVFORMAT_INTERNAL_H=1
 endif
 
-if HAVE_AVPRIV_SET_PTS_INFO
-libav_cflags += -DHAVE_AVPRIV_SET_PTS_INFO=1
+if HAVE_AV_SET_PTS_INFO
+libav_cflags += -DHAVE_AV_SET_PTS_INFO=1
 endif
 
 flv_libs = flv_decoder.la
@@ -103,8 +103,6 @@ flv_decoder_la_SOURCES = flv_decoder.c flv_decoder.h
 flv_decoder_la_CFLAGS = $(libav_cflags) $(shared_cflags) $(weed_cflags) $(FLVDEC_CFLAGS)
 flv_decoder_la_LDFLAGS = $(shared_ldflags) $(FLVDEC_LIBS)
 
-
-if X_PTS_INFO
 
 asf_libs = asf_decoder.la
 ASFDEC_LIBS = @LIBAVCODEC_LIBS@ @LIBAVFORMAT_LIBS@
@@ -132,14 +130,6 @@ MPEGTSDEC_CFLAGS = @LIBAVFORMAT_CFLAGS@ @LIBAVCODEC_CFLAGS@ @LIBAVUTIL_CFLAGS@ \
 mpegts_decoder_la_SOURCES = mpegts_decoder.c mpegts_decoder.h
 mpegts_decoder_la_CFLAGS = $(libav_cflags) $(shared_cflags) $(weed_cflags) $(MPEGTSDEC_CFLAGS)
 mpegts_decoder_la_LDFLAGS = $(shared_ldflags) $(MPEGTSDEC_LIBS)
-
-else
-
-asf_libs =
-mkv_libs =
-mpegts_libs =
-
-endif
 
 
 zzavformat_libs = zzavformat_decoder.la

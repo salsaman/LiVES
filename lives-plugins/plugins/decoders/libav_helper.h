@@ -23,7 +23,8 @@
 // "If you libav developers could just stop breaking backwards compatibility..."
 // "THAT'D BE GREAT"
 
-
+#ifndef HAVE_LIBAV_HELPER_H
+#define HAVE_LIBAV_HELPER_H
 
 #if (LIBAVCODEC_VERSION_MAJOR > 54)
 #define CodecID AVCodecID
@@ -92,10 +93,15 @@
 #define av_new_stream(a, b) avformat_new_stream(a, NULL)
 #endif
 
-#if HAVE_AVPRIV_SET_PTS_INFO
-#if !HAVE_AVFORMAT_INTERNAL_H
-static void avpriv_set_pts_info(AVStream *s, int pts_wrap_bits,
-				unsigned int pts_num, unsigned int pts_den)
+#if !HAVE_AV_SET_PTS_INFO
+#if HAVE_AVFORMAT_INTERNAL_H
+
+#include <avformat/internal.h>
+#define av_set_pts_info(a,b,c,d) avpriv_set_pts_info(a,b,c,d)
+
+#else
+static void av_set_pts_info(AVStream *s, int pts_wrap_bits,
+			      unsigned int pts_num, unsigned int pts_den)
 {
     AVRational new_tb;
     if(av_reduce(&new_tb.num, &new_tb.den, pts_num, pts_den, INT_MAX)){
@@ -112,10 +118,9 @@ static void avpriv_set_pts_info(AVStream *s, int pts_wrap_bits,
     av_codec_set_pkt_timebase(s->codec, new_tb);
     s->pts_wrap_bits = pts_wrap_bits;
 }
-#endif
-
-#define av_set_pts_info(a,b,c,d) avpriv_set_pts_info(a,b,c,d)
 
 #endif
+#endif
 
 
+#endif // HAVE_LIBAV_HELPER_H

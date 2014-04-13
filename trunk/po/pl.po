@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: lives\n"
 "Report-Msgid-Bugs-To: https://sourceforge.net/p/lives/bugs/\n"
-"POT-Creation-Date: 2014-01-28 02:30-0300\n"
+"POT-Creation-Date: 2014-04-13 10:57-0300\n"
 "PO-Revision-Date: 2013-03-14 12:31+0000\n"
 "Last-Translator: Launchpad Translations Administrators <Unknown>\n"
 "Language-Team: Polish <pl@li.org>\n"
@@ -294,11 +294,11 @@ msgstr "liczba wykrytych monitorów: %d\n"
 msgid "Number of CPUs detected: %d "
 msgstr ""
 
-#: src/main.c:1782 src/multitrack.c:4893
+#: src/main.c:1782 src/multitrack.c:4892
 msgid "little endian"
 msgstr ""
 
-#: src/main.c:1783 src/multitrack.c:4892
+#: src/main.c:1783 src/multitrack.c:4891
 msgid "big endian"
 msgstr ""
 
@@ -473,11 +473,11 @@ msgstr ""
 msgid "-debug            : try to debug crashes (requires 'gdb' installed)\n"
 msgstr ""
 
-#: src/main.c:2340 src/gui.c:1153
+#: src/main.c:2340 src/gui.c:1132
 msgid "Starting GUI..."
 msgstr ""
 
-#: src/main.c:2359
+#: src/main.c:2361
 #, c-format
 msgid ""
 "\n"
@@ -488,7 +488,7 @@ msgid ""
 "(Maybe you need to change the value of <prefix_dir> in your %s file)\n"
 msgstr ""
 
-#: src/main.c:2373
+#: src/main.c:2375
 #, c-format
 msgid ""
 "\n"
@@ -496,7 +496,7 @@ msgid ""
 "Please make sure you have write access to %s and try again.\n"
 msgstr ""
 
-#: src/main.c:2378
+#: src/main.c:2380
 msgid ""
 "\n"
 "`smogrify` must be in your path, and be executable\n"
@@ -505,7 +505,7 @@ msgid ""
 "before running LiVES.\n"
 msgstr ""
 
-#: src/main.c:2384
+#: src/main.c:2386
 #, c-format
 msgid ""
 "\n"
@@ -515,7 +515,7 @@ msgid ""
 "Please check the file permissions for this file and try again.\n"
 msgstr ""
 
-#: src/main.c:2391
+#: src/main.c:2393
 #, c-format
 msgid ""
 "\n"
@@ -526,7 +526,7 @@ msgid ""
 "and try again.\n"
 msgstr ""
 
-#: src/main.c:2401
+#: src/main.c:2403
 #, c-format
 msgid ""
 "Please check the <tempdir> setting in \n"
@@ -534,7 +534,7 @@ msgid ""
 "and try again.\n"
 msgstr ""
 
-#: src/main.c:2408
+#: src/main.c:2410
 #, c-format
 msgid ""
 "\n"
@@ -544,7 +544,7 @@ msgid ""
 "%s"
 msgstr ""
 
-#: src/main.c:2416
+#: src/main.c:2418
 msgid ""
 "\n"
 "An incorrect version of smogrify was found in your path.\n"
@@ -555,49 +555,49 @@ msgid ""
 "Thankyou.\n"
 msgstr ""
 
-#: src/main.c:2421 src/dialogs.c:1984
+#: src/main.c:2423 src/dialogs.c:1984
 msgid ""
 "\n"
 "LiVES currently requires either 'mplayer' or 'sox' to function. Please "
 "install one or other of these, and try again.\n"
 msgstr ""
 
-#: src/main.c:2425
+#: src/main.c:2427
 msgid ""
 "\n"
 "LiVES currently requires both 'mplayer' and 'sox' to function. Please "
 "install these, and try again.\n"
 msgstr ""
 
-#: src/main.c:2435
+#: src/main.c:2437
 msgid ""
 "\n"
 "LiVES was unable to locate 'mplayer'. You may wish to install mplayer to use "
 "LiVES more fully.\n"
 msgstr ""
 
-#: src/main.c:2438
+#: src/main.c:2440
 msgid ""
 "\n"
 "LiVES was unable to locate 'convert'. You should install convert and image-"
 "magick if you want to use rendered effects.\n"
 msgstr ""
 
-#: src/main.c:2441
+#: src/main.c:2443
 msgid ""
 "\n"
 "LiVES was unable to locate 'composite'. You should install composite and "
 "image-magick if you want to use the merge function.\n"
 msgstr ""
 
-#: src/main.c:2444
+#: src/main.c:2446
 msgid ""
 "\n"
 "LiVES was unable to locate 'sox'. Some audio features may not work. You "
 "should install 'sox'.\n"
 msgstr ""
 
-#: src/main.c:2447
+#: src/main.c:2449
 #, c-format
 msgid ""
 "\n"
@@ -608,93 +608,93 @@ msgid ""
 "You may need to change the value of <lib_dir> in %s\n"
 msgstr ""
 
-#: src/main.c:2572
+#: src/main.c:2574
 #, c-format
 msgid "Autoloading set %s..."
 msgstr ""
 
 #. TRANSLATORS: localised name may be used here
-#: src/main.c:2746 src/interface.c:715
+#: src/main.c:2748 src/interface.c:715
 msgid "LiVES"
 msgstr ""
 
-#: src/main.c:2909
+#: src/main.c:2911
 #, c-format
 msgid "Invalid audio player %s\n"
 msgstr ""
 
-#: src/main.c:3038
+#: src/main.c:3040
 #, c-format
 msgid "LiVES-%s: <Untitled%d> %dx%d : %d frames %d bpp %.3f fps"
 msgstr ""
 
-#: src/main.c:3043
+#: src/main.c:3045
 #, c-format
 msgid "LiVES-%s: <%s> %dx%d : ??? frames ??? bpp %.3f fps"
 msgstr ""
 
-#: src/main.c:3047
+#: src/main.c:3049
 #, c-format
 msgid "LiVES-%s: <%s> %dx%d : %d frames %d bpp %.3f fps"
 msgstr ""
 
-#: src/main.c:3055
+#: src/main.c:3057
 #, c-format
 msgid "LiVES-%s: <No File>"
 msgstr ""
 
 #. TRANSLATORS: rec(ord)
-#: src/main.c:5039
+#: src/main.c:5041
 #, c-format
 msgid "rec %9d/%d"
 msgstr ""
 
 #. TRANSLATORS: out of memory (rec(ord))
-#: src/main.c:5045
+#: src/main.c:5047
 #, c-format
 msgid "!rec %9d/%d"
 msgstr ""
 
-#: src/main.c:5352 src/main.c:5353 src/gui.c:2163 src/gui.c:3276
+#: src/main.c:5354 src/main.c:5355 src/gui.c:2108 src/gui.c:3221
 #: src/saveplay.c:2324
 msgid "Play"
 msgstr "Odtwarzaj"
 
-#: src/main.c:6081
+#: src/main.c:6083
 msgid ""
 "LiVES was unable to capture this image\n"
 "\n"
 msgstr ""
 
-#: src/main.c:6203
+#: src/main.c:6205
 #, c-format
 msgid "Closed file %s\n"
 msgstr ""
 
-#: src/main.c:6405 src/gui.c:661 src/utils.c:4245 src/utils.c:4277
-#: src/saveplay.c:3512 src/multitrack.c:4503 src/multitrack.c:6267
+#: src/main.c:6407 src/gui.c:652 src/utils.c:4245 src/utils.c:4277
+#: src/saveplay.c:3512 src/multitrack.c:4502 src/multitrack.c:6266
 msgid "_Undo"
 msgstr "_Cofnij"
 
-#: src/main.c:6406 src/gui.c:674 src/utils.c:4246 src/utils.c:4278
-#: src/saveplay.c:3513 src/multitrack.c:4524 src/multitrack.c:6290
+#: src/main.c:6408 src/gui.c:667 src/utils.c:4246 src/utils.c:4278
+#: src/saveplay.c:3513 src/multitrack.c:4523 src/multitrack.c:6289
 msgid "_Redo"
 msgstr "_Powtórz"
 
-#: src/main.c:6446 src/interface.c:468 src/gui.c:2382 src/preferences.c:2335
+#: src/main.c:6448 src/interface.c:468 src/gui.c:2327 src/preferences.c:2335
 #: src/resample.c:1516
 msgid "Video"
 msgstr "Wideo"
 
-#: src/main.c:6447 src/interface.c:482 src/gui.c:2407
+#: src/main.c:6449 src/interface.c:482 src/gui.c:2352
 msgid "Left Audio"
 msgstr ""
 
-#: src/main.c:6448 src/gui.c:2431
+#: src/main.c:6450 src/gui.c:2376
 msgid "Right Audio"
 msgstr ""
 
-#: src/main.c:6493
+#: src/main.c:6495
 msgid ""
 "\n"
 "\n"
@@ -703,7 +703,7 @@ msgid ""
 "Please adjust the playback options in Preferences and try again.\n"
 msgstr ""
 
-#: src/main.c:7003 src/plugins.c:1502
+#: src/main.c:7005 src/plugins.c:1502
 msgid "LiVES: - Play Window"
 msgstr ""
 
@@ -1043,7 +1043,7 @@ msgid "If this is set, frames will be deinterlaced as they are imported."
 msgstr ""
 
 #: src/interface.c:112 src/callbacks.c:9618 src/callbacks.c:9641
-#: src/callbacks.c:9642 src/gui.c:3279 src/gui.c:3877 src/saveplay.c:2327
+#: src/callbacks.c:9642 src/gui.c:3224 src/gui.c:3822 src/saveplay.c:2327
 #: src/saveplay.c:3115 src/dialogs.c:1493 src/dialogs.c:1494
 #: src/dialogs.c:1725 src/dialogs.c:1726 src/framedraw.c:238
 #: src/multitrack.c:8016
@@ -2292,7 +2292,7 @@ msgstr ""
 msgid "LiVES: - Encoder debug output"
 msgstr ""
 
-#: src/callbacks.c:7084 src/gui.c:1975
+#: src/callbacks.c:7084 src/gui.c:1920
 msgid "Fullscreen playback (f)"
 msgstr ""
 
@@ -2301,7 +2301,7 @@ msgid "Fullscreen playback off (f)"
 msgstr ""
 
 #: src/callbacks.c:7185 src/callbacks.c:7333 src/callbacks.c:7661
-#: src/callbacks.c:7678 src/gui.c:3768 src/saveplay.c:2455 src/saveplay.c:2489
+#: src/callbacks.c:7678 src/gui.c:3713 src/saveplay.c:2455 src/saveplay.c:2489
 #: src/saveplay.c:3092 src/saveplay.c:3197 src/saveplay.c:3216
 #: src/multitrack.c:9325 src/multitrack.c:11041
 #, c-format
@@ -2309,12 +2309,12 @@ msgid " (%d %% scale)"
 msgstr ""
 
 #: src/callbacks.c:7187 src/callbacks.c:7335 src/callbacks.c:7663
-#: src/gui.c:3772 src/saveplay.c:2457 src/saveplay.c:2491
+#: src/gui.c:3717 src/saveplay.c:2457 src/saveplay.c:2491
 #, c-format
 msgid "LiVES: - Play Window%s"
 msgstr ""
 
-#: src/callbacks.c:7299 src/gui.c:1960
+#: src/callbacks.c:7299 src/gui.c:1905
 msgid "Double size (d)"
 msgstr ""
 
@@ -2326,15 +2326,15 @@ msgstr ""
 msgid "Hide the play window (s)"
 msgstr ""
 
-#: src/callbacks.c:7449 src/gui.c:1799
+#: src/callbacks.c:7449 src/gui.c:1744
 msgid "Show the play window (s)"
 msgstr ""
 
-#: src/callbacks.c:7450 src/gui.c:1949
+#: src/callbacks.c:7450 src/gui.c:1894
 msgid "Play in separate window (s)"
 msgstr ""
 
-#: src/callbacks.c:7532 src/gui.c:4116 src/saveplay.c:2486
+#: src/callbacks.c:7532 src/gui.c:4061 src/saveplay.c:2486
 msgid "LiVES: - Streaming"
 msgstr ""
 
@@ -2342,7 +2342,7 @@ msgstr ""
 msgid "Switch continuous looping off (o)"
 msgstr ""
 
-#: src/callbacks.c:7782 src/gui.c:1848
+#: src/callbacks.c:7782 src/gui.c:1793
 msgid "Switch continuous looping on (o)"
 msgstr ""
 
@@ -2351,11 +2351,11 @@ msgstr ""
 msgid "Audio volume (%.2f)"
 msgstr ""
 
-#: src/callbacks.c:7873 src/callbacks.c:7874 src/gui.c:3696
+#: src/callbacks.c:7873 src/callbacks.c:7874 src/gui.c:3641
 msgid "Unmute the audio (z)"
 msgstr ""
 
-#: src/callbacks.c:7885 src/callbacks.c:7886 src/gui.c:1861 src/gui.c:3695
+#: src/callbacks.c:7885 src/callbacks.c:7886 src/gui.c:1806 src/gui.c:3640
 msgid "Mute the audio (z)"
 msgstr ""
 
@@ -2739,784 +2739,784 @@ msgstr ""
 msgid "Custom _Utilities"
 msgstr ""
 
-#: src/gui.c:358 src/multitrack.c:5963
+#: src/gui.c:358 src/multitrack.c:5962
 msgid "_File"
 msgstr "_Plik"
 
-#: src/gui.c:370 src/multitrack.c:5988
+#: src/gui.c:371 src/multitrack.c:5987
 msgid "_Open File/Directory"
 msgstr ""
 
-#: src/gui.c:376
+#: src/gui.c:377
 msgid "O_pen Part of File..."
 msgstr ""
 
-#: src/gui.c:382 src/gui.c:386 src/multitrack.c:6005 src/multitrack.c:6022
-#: src/multitrack.c:6027
+#: src/gui.c:383 src/gui.c:387 src/multitrack.c:6004 src/multitrack.c:6021
+#: src/multitrack.c:6026
 msgid "Open _Location/Stream..."
 msgstr ""
 
-#: src/gui.c:396 src/multitrack.c:6015
+#: src/gui.c:397 src/multitrack.c:6014
 msgid "Open _Youtube Clip..."
 msgstr ""
 
-#: src/gui.c:407
+#: src/gui.c:408
 msgid "Import from _dvd/vcd..."
 msgstr ""
 
-#: src/gui.c:416
+#: src/gui.c:417
 msgid "Import from _dvd"
 msgstr ""
 
-#: src/gui.c:419
+#: src/gui.c:420
 msgid "Import from _vcd"
 msgstr ""
 
-#: src/gui.c:422
+#: src/gui.c:423
 msgid "_Import from Firewire"
 msgstr ""
 
-#: src/gui.c:431 src/multitrack.c:6085
+#: src/gui.c:432 src/multitrack.c:6084
 msgid "Import from _Firewire Device (dv)"
 msgstr ""
 
-#: src/gui.c:432 src/multitrack.c:6093
+#: src/gui.c:433 src/multitrack.c:6092
 msgid "Import from _Firewire Device (hdv)"
 msgstr ""
 
-#: src/gui.c:460
+#: src/gui.c:461
 msgid "_Add Webcam/TV card..."
 msgstr ""
 
-#: src/gui.c:479
+#: src/gui.c:480
 msgid "Add _Unicap Device"
 msgstr ""
 
-#: src/gui.c:489
+#: src/gui.c:490
 msgid "Add Live _Firewire Device"
 msgstr ""
 
-#: src/gui.c:498
+#: src/gui.c:499
 msgid "Add _TV Device"
 msgstr ""
 
-#: src/gui.c:513 src/multitrack.c:6116
+#: src/gui.c:514 src/multitrack.c:6115
 msgid "_Recent Files..."
 msgstr ""
 
-#: src/gui.c:565 src/multitrack.c:6176
+#: src/gui.c:564 src/multitrack.c:6175
 msgid "_Reload Clip Set..."
 msgstr ""
 
-#: src/gui.c:569 src/multitrack.c:6184
+#: src/gui.c:568 src/multitrack.c:6183
 msgid "Close/Sa_ve All Clips"
 msgstr ""
 
-#: src/gui.c:582
+#: src/gui.c:579
 msgid "_Encode Clip As..."
 msgstr ""
 
-#: src/gui.c:584
+#: src/gui.c:581
 msgid "Encode _Selection As..."
 msgstr ""
 
-#: src/gui.c:591
+#: src/gui.c:588
 msgid "_Close This Clip"
 msgstr ""
 
-#: src/gui.c:604
+#: src/gui.c:599
 msgid "_Backup Clip as .lv1..."
 msgstr ""
 
-#: src/gui.c:613
+#: src/gui.c:608
 msgid "_Restore Clip from .lv1..."
 msgstr ""
 
-#: src/gui.c:626
+#: src/gui.c:619
 msgid "Encode/Load/Backup _with Sound"
 msgstr ""
 
-#: src/gui.c:631
+#: src/gui.c:624
 msgid "Auto load subtitles"
 msgstr ""
 
-#: src/gui.c:641 src/multitrack.c:6223
+#: src/gui.c:632 src/multitrack.c:6222
 msgid "Clean _up Diskspace"
 msgstr ""
 
-#: src/gui.c:649 src/multitrack.c:6256
+#: src/gui.c:640 src/multitrack.c:6255
 msgid "_Edit"
 msgstr "_Edycja"
 
-#: src/gui.c:692
+#: src/gui.c:683
 msgid "_MULTITRACK mode"
 msgstr ""
 
-#: src/gui.c:705
+#: src/gui.c:694
 msgid "_Copy Selection"
 msgstr ""
 
-#: src/gui.c:714
+#: src/gui.c:703
 msgid "Cu_t Selection"
 msgstr ""
 
-#: src/gui.c:723
+#: src/gui.c:712
 msgid "_Insert from Clipboard..."
 msgstr ""
 
-#: src/gui.c:736
+#: src/gui.c:725
 msgid "Paste as _New"
 msgstr "Wklej jako _nowy"
 
-#: src/gui.c:745
+#: src/gui.c:734
 msgid "_Merge Clipboard with Selection..."
 msgstr ""
 
-#: src/gui.c:752
+#: src/gui.c:741
 msgid "_Delete Selection"
 msgstr "_Usuń zaznaczenie"
 
-#: src/gui.c:770
+#: src/gui.c:757
 msgid "Decouple _Video from Audio"
 msgstr ""
 
-#: src/gui.c:780
+#: src/gui.c:765
 msgid "_Select..."
 msgstr "_Wybierz..."
 
-#: src/gui.c:794
+#: src/gui.c:779
 msgid "Select _All Frames"
 msgstr ""
 
-#: src/gui.c:802
+#: src/gui.c:787
 msgid "_Start Frame Only"
 msgstr ""
 
-#: src/gui.c:810
+#: src/gui.c:795
 msgid "_End Frame Only"
 msgstr ""
 
-#: src/gui.c:823
+#: src/gui.c:806
 msgid "Select from _First Frame"
 msgstr ""
 
-#: src/gui.c:827
+#: src/gui.c:810
 msgid "Select to _Last Frame"
 msgstr ""
 
-#: src/gui.c:831
+#: src/gui.c:814
 msgid "Select Last Insertion/_Merge"
 msgstr ""
 
-#: src/gui.c:835
+#: src/gui.c:818
 msgid "Select Last _Effect"
 msgstr ""
 
-#: src/gui.c:839
+#: src/gui.c:822
 msgid "_Invert Selection"
 msgstr "_Odwróć zaznaczenie"
 
-#: src/gui.c:847
+#: src/gui.c:830
 msgid "_Lock Selection Width"
 msgstr ""
 
-#: src/gui.c:852 src/multitrack.c:6404
+#: src/gui.c:835 src/multitrack.c:6403
 msgid "_Play"
 msgstr "_Odtwarzanie"
 
-#: src/gui.c:864
+#: src/gui.c:847
 msgid "_Play All"
 msgstr ""
 
-#: src/gui.c:876
+#: src/gui.c:859
 msgid "Pla_y Selection"
 msgstr ""
 
-#: src/gui.c:884
+#: src/gui.c:867
 msgid "Play _Clipboard"
 msgstr ""
 
-#: src/gui.c:909 src/multitrack.c:6434
+#: src/gui.c:892 src/multitrack.c:6433
 msgid "_Stop"
 msgstr "_Zatrzymaj"
 
-#: src/gui.c:927 src/multitrack.c:6444
+#: src/gui.c:910 src/multitrack.c:6443
 msgid "Re_wind"
 msgstr ""
 
-#: src/gui.c:969 src/multitrack.c:6459
+#: src/gui.c:950 src/multitrack.c:6458
 msgid "_Full Screen"
 msgstr "_Pełny ekran"
 
-#: src/gui.c:978
+#: src/gui.c:959
 msgid "_Double Size"
 msgstr ""
 
-#: src/gui.c:986 src/multitrack.c:6467
+#: src/gui.c:967 src/multitrack.c:6466
 msgid "Play in _Separate Window"
 msgstr ""
 
-#: src/gui.c:995
+#: src/gui.c:976
 msgid "_Blank Background"
 msgstr ""
 
-#: src/gui.c:1002
+#: src/gui.c:983
 msgid "(Auto)_loop Video (to fit audio track)"
 msgstr ""
 
-#: src/gui.c:1011 src/multitrack.c:6475
+#: src/gui.c:992 src/multitrack.c:6474
 msgid "L_oop Continuously"
 msgstr ""
 
-#: src/gui.c:1020
+#: src/gui.c:1001
 msgid "Pin_g Pong Loops"
 msgstr ""
 
-#: src/gui.c:1028 src/multitrack.c:6483
+#: src/gui.c:1009 src/multitrack.c:6482
 msgid "_Mute"
 msgstr "_Wyciszenie"
 
-#: src/gui.c:1042
+#: src/gui.c:1021
 msgid "Separate Window 'S_ticky' Mode"
 msgstr ""
 
-#: src/gui.c:1050
+#: src/gui.c:1029
 msgid "S_how Frame Counter"
 msgstr ""
 
-#: src/gui.c:1060
+#: src/gui.c:1039
 msgid "Show Subtitles"
 msgstr ""
 
-#: src/gui.c:1070
+#: src/gui.c:1049
 msgid "Letterbox mode"
 msgstr ""
 
-#: src/gui.c:1076 src/multitrack.c:6495
+#: src/gui.c:1055 src/multitrack.c:6494
 msgid "Effect_s"
 msgstr ""
 
-#: src/gui.c:1079
+#: src/gui.c:1058
 msgid "Effects are applied to the current selection."
 msgstr ""
 
-#: src/gui.c:1092
+#: src/gui.c:1071
 msgid "_Run Test Rendered Effect/Tool/Generator..."
 msgstr ""
 
-#: src/gui.c:1097 src/multitrack.c:7111
+#: src/gui.c:1076 src/multitrack.c:7110
 msgid "_Tools"
 msgstr "_Narzędzia"
 
-#: src/gui.c:1100
+#: src/gui.c:1079
 msgid "Tools are applied to complete clips."
 msgstr ""
 
-#: src/gui.c:1110
+#: src/gui.c:1089
 msgid "_Reverse Clipboard"
 msgstr ""
 
-#: src/gui.c:1119
+#: src/gui.c:1098
 msgid "_Change Playback/Save Speed..."
 msgstr ""
 
-#: src/gui.c:1124
+#: src/gui.c:1103
 msgid "Resample _Video to New Frame Rate..."
 msgstr ""
 
-#: src/gui.c:1130
+#: src/gui.c:1109
 msgid "_Utilities"
 msgstr "_Narzędzia"
 
-#: src/gui.c:1135
+#: src/gui.c:1114
 msgid "Custom _Tools"
 msgstr ""
 
-#: src/gui.c:1141 src/multitrack.c:7137
+#: src/gui.c:1120 src/multitrack.c:7136
 msgid "_Generate"
 msgstr "_Generuj"
 
-#: src/gui.c:1151
+#: src/gui.c:1130
 msgid "Loading rendered effect plugins..."
 msgstr ""
 
-#: src/gui.c:1166
+#: src/gui.c:1143
 msgid "Load _Subtitles from File..."
 msgstr ""
 
-#: src/gui.c:1171
+#: src/gui.c:1148
 msgid "Erase subtitles"
 msgstr ""
 
-#: src/gui.c:1181 src/multitrack.c:7146
+#: src/gui.c:1156 src/multitrack.c:7145
 msgid "Capture _External Window... "
 msgstr ""
 
-#: src/gui.c:1190 src/multitrack.c:7161
+#: src/gui.c:1163 src/multitrack.c:7160
 msgid "_Preferences..."
 msgstr "_Preferencje..."
 
-#: src/gui.c:1201
+#: src/gui.c:1174
 msgid "_Audio"
 msgstr "_Dźwięk"
 
-#: src/gui.c:1213
+#: src/gui.c:1186
 msgid "Load _New Audio for Clip..."
 msgstr ""
 
-#: src/gui.c:1219
+#: src/gui.c:1192
 msgid "Load _CD Track..."
 msgstr ""
 
-#: src/gui.c:1220
+#: src/gui.c:1193
 msgid "E_ject CD"
 msgstr ""
 
-#: src/gui.c:1234
+#: src/gui.c:1207
 msgid "Record E_xternal Audio..."
 msgstr ""
 
-#: src/gui.c:1247
+#: src/gui.c:1220
 msgid "to New _Clip..."
 msgstr ""
 
-#: src/gui.c:1251
+#: src/gui.c:1224
 msgid "to _Selection"
 msgstr ""
 
-#: src/gui.c:1261
+#: src/gui.c:1232
 msgid "Fade Audio _In..."
 msgstr ""
 
-#: src/gui.c:1265
+#: src/gui.c:1236
 msgid "Fade Audio _Out..."
 msgstr ""
 
-#: src/gui.c:1277
+#: src/gui.c:1246
 msgid "_Export Audio..."
 msgstr ""
 
-#: src/gui.c:1290
+#: src/gui.c:1259
 msgid "Export _Selected Audio..."
 msgstr ""
 
-#: src/gui.c:1294
+#: src/gui.c:1263
 msgid "Export _All Audio..."
 msgstr ""
 
-#: src/gui.c:1298
+#: src/gui.c:1267
 msgid "_Append Audio..."
 msgstr ""
 
-#: src/gui.c:1303
+#: src/gui.c:1272
 msgid "_Trim/Pad Audio..."
 msgstr ""
 
-#: src/gui.c:1316
+#: src/gui.c:1285
 msgid "Trim/Pad Audio to _Selection"
 msgstr ""
 
-#: src/gui.c:1321
+#: src/gui.c:1290
 msgid "Trim/Pad Audio from Beginning to _Play Start"
 msgstr ""
 
-#: src/gui.c:1326
+#: src/gui.c:1295
 msgid "_Delete Audio..."
 msgstr ""
 
-#: src/gui.c:1339
+#: src/gui.c:1308
 msgid "Delete _Selected Audio"
 msgstr ""
 
-#: src/gui.c:1343
+#: src/gui.c:1312
 msgid "Delete _All Audio"
 msgstr ""
 
-#: src/gui.c:1347
+#: src/gui.c:1316
 msgid "Insert _Silence in Selection"
 msgstr ""
 
-#: src/gui.c:1352
+#: src/gui.c:1321
 msgid "_Resample Audio..."
 msgstr ""
 
-#: src/gui.c:1362
+#: src/gui.c:1326
 msgid "_Info"
 msgstr "_Informacje"
 
-#: src/gui.c:1374
+#: src/gui.c:1338
 msgid "Show Clip _Info"
 msgstr ""
 
-#: src/gui.c:1382
+#: src/gui.c:1346
 msgid "Show/_Edit File Comments"
 msgstr ""
 
-#: src/gui.c:1387
+#: src/gui.c:1351
 msgid "Show _Clipboard Info"
 msgstr ""
 
-#: src/gui.c:1396 src/multitrack.c:7272
+#: src/gui.c:1360 src/multitrack.c:7271
 msgid "Show _Messages"
 msgstr ""
 
-#: src/gui.c:1400 src/multitrack.c:7351
+#: src/gui.c:1364 src/multitrack.c:7350
 msgid "Show _Layout Errors"
 msgstr ""
 
-#: src/gui.c:1405 src/multitrack.c:7249
+#: src/gui.c:1369 src/multitrack.c:7248
 msgid "_Clips"
 msgstr ""
 
-#: src/gui.c:1417
+#: src/gui.c:1381
 msgid "_Rename Current Clip in Menu..."
 msgstr ""
 
-#: src/gui.c:1432
+#: src/gui.c:1399
 msgid "A_dvanced"
 msgstr "_Zaawansowane"
 
-#: src/gui.c:1445
+#: src/gui.c:1412
 msgid "_RFX Effects/Tools/Utilities"
 msgstr ""
 
-#: src/gui.c:1457
+#: src/gui.c:1424
 msgid "_New Test RFX Script..."
 msgstr ""
 
-#: src/gui.c:1461
+#: src/gui.c:1428
 msgid "_Copy RFX Script to Test..."
 msgstr ""
 
-#: src/gui.c:1465
+#: src/gui.c:1432
 msgid "_Edit Test RFX Script..."
 msgstr ""
 
-#: src/gui.c:1469
+#: src/gui.c:1436
 msgid "Rena_me Test RFX Script..."
 msgstr ""
 
-#: src/gui.c:1473
+#: src/gui.c:1440
 msgid "_Delete Test RFX Script..."
 msgstr ""
 
-#: src/gui.c:1485
+#: src/gui.c:1450
 msgid "_Promote Test Rendered Effect/Tool/Generator..."
 msgstr ""
 
-#: src/gui.c:1494
+#: src/gui.c:1457
 msgid "_Import Custom RFX script..."
 msgstr ""
 
-#: src/gui.c:1498
+#: src/gui.c:1461
 msgid "E_xport Custom RFX script..."
 msgstr ""
 
-#: src/gui.c:1502
+#: src/gui.c:1465
 msgid "De_lete Custom RFX Script..."
 msgstr ""
 
-#: src/gui.c:1511
+#: src/gui.c:1472
 msgid "Re_build all RFX plugins"
 msgstr ""
 
-#: src/gui.c:1540
+#: src/gui.c:1501
 msgid "Receive _LiVES stream from..."
 msgstr ""
 
-#: src/gui.c:1548
+#: src/gui.c:1506
 msgid "_Send LiVES stream to..."
 msgstr ""
 
-#: src/gui.c:1555
+#: src/gui.c:1513
 #, c-format
 msgid "Open _yuv4mpeg stream on %sstream.yuv..."
 msgstr ""
 
-#: src/gui.c:1579
+#: src/gui.c:1534
 msgid "_Import Project (.lv2)..."
 msgstr ""
 
-#: src/gui.c:1583
+#: src/gui.c:1538
 msgid "E_xport Project (.lv2)..."
 msgstr ""
 
-#: src/gui.c:1588
+#: src/gui.c:1543
 msgid "_VJ"
 msgstr "_VJ"
 
-#: src/gui.c:1600
+#: src/gui.c:1555
 msgid "Real Time _Effect Mapping"
 msgstr ""
 
-#: src/gui.c:1606
+#: src/gui.c:1561
 msgid "Bind real time effects to ctrl-number keys."
 msgstr ""
 
-#: src/gui.c:1608
+#: src/gui.c:1563
 msgid "Set Real Time Effect _Defaults"
 msgstr ""
 
-#: src/gui.c:1610
+#: src/gui.c:1565
 msgid "Set default parameter values for real time effects."
 msgstr ""
 
-#: src/gui.c:1623
+#: src/gui.c:1578
 msgid "Save Real Time Effect _Defaults"
 msgstr ""
 
-#: src/gui.c:1626
+#: src/gui.c:1581
 msgid ""
 "Save real time effect defaults so they will be restored each time you use "
 "LiVES."
 msgstr ""
 
-#: src/gui.c:1633
+#: src/gui.c:1587
 msgid "_Reset all playback speeds and positions"
 msgstr ""
 
-#: src/gui.c:1636
+#: src/gui.c:1590
 msgid ""
 "Reset all playback positions to frame 1, and reset all playback frame rates."
 msgstr ""
 
-#: src/gui.c:1638
+#: src/gui.c:1592
 msgid "_MIDI/joystick interface"
 msgstr ""
 
-#: src/gui.c:1653
+#: src/gui.c:1607
 msgid "_MIDI/joystick learner..."
 msgstr ""
 
-#: src/gui.c:1658
+#: src/gui.c:1612
 msgid "_Save device mapping..."
 msgstr ""
 
-#: src/gui.c:1664
+#: src/gui.c:1618
 msgid "_Load device mapping..."
 msgstr ""
 
-#: src/gui.c:1675
+#: src/gui.c:1626
 msgid "Show VJ _Keys"
 msgstr ""
 
-#: src/gui.c:1679
+#: src/gui.c:1630
 msgid "To_ys"
 msgstr "Za_bawki"
 
-#: src/gui.c:1691
+#: src/gui.c:1642
 msgid "_None"
 msgstr "_Brak"
 
-#: src/gui.c:1701
+#: src/gui.c:1650
 msgid "_Autolives"
 msgstr ""
 
-#: src/gui.c:1706
+#: src/gui.c:1655
 msgid "_Mad Frames"
 msgstr ""
 
-#: src/gui.c:1711
+#: src/gui.c:1660
 msgid "_LiVES TV (broadband)"
 msgstr ""
 
-#: src/gui.c:1721 src/multitrack.c:7373
+#: src/gui.c:1670 src/multitrack.c:7372
 msgid "_Help"
 msgstr "_Pomoc"
 
-#: src/gui.c:1733 src/multitrack.c:7393
+#: src/gui.c:1682 src/multitrack.c:7392
 msgid "_Manual (opens in browser)"
 msgstr ""
 
-#: src/gui.c:1742 src/multitrack.c:7402
+#: src/gui.c:1689 src/multitrack.c:7401
 msgid "_Donate to the project !"
 msgstr ""
 
-#: src/gui.c:1746 src/multitrack.c:7406
+#: src/gui.c:1693 src/multitrack.c:7405
 msgid "_Email the author"
 msgstr ""
 
-#: src/gui.c:1750 src/multitrack.c:7410
+#: src/gui.c:1697 src/multitrack.c:7409
 msgid "Report a _bug"
 msgstr ""
 
-#: src/gui.c:1754 src/multitrack.c:7414
+#: src/gui.c:1701 src/multitrack.c:7413
 msgid "Suggest a _feature"
 msgstr ""
 
-#: src/gui.c:1758 src/multitrack.c:7418
+#: src/gui.c:1705 src/multitrack.c:7417
 msgid "Assist with _translating"
 msgstr ""
 
-#: src/gui.c:1767 src/multitrack.c:7427
+#: src/gui.c:1712 src/multitrack.c:7424
 msgid "_Troubleshoot"
 msgstr ""
 
-#: src/gui.c:1771 src/multitrack.c:7431
+#: src/gui.c:1716 src/multitrack.c:7428
 msgid "_About"
 msgstr "_Adnotacje o programie"
 
-#: src/gui.c:1805
+#: src/gui.c:1750
 msgid "Rewind to start (w)"
 msgstr ""
 
-#: src/gui.c:1813 src/multitrack.c:16703
+#: src/gui.c:1758 src/multitrack.c:16703
 msgid "Play all (p)"
 msgstr ""
 
-#: src/gui.c:1821 src/gui.c:1930
+#: src/gui.c:1766 src/gui.c:1875
 msgid "Stop playback (q)"
 msgstr ""
 
-#: src/gui.c:1832
+#: src/gui.c:1777
 msgid "Play selection (y)"
 msgstr ""
 
-#: src/gui.c:1885
+#: src/gui.c:1830
 msgid "Volume"
 msgstr "Głośność"
 
-#: src/gui.c:1907
+#: src/gui.c:1852
 msgid "Audio volume (1.00)"
 msgstr ""
 
-#: src/gui.c:1936
+#: src/gui.c:1881
 msgid "Unblank background (b)"
 msgstr ""
 
-#: src/gui.c:1982
+#: src/gui.c:1927
 msgid "Play slower (ctrl-down)"
 msgstr ""
 
-#: src/gui.c:1988
+#: src/gui.c:1933
 msgid "Play faster (ctrl-up)"
 msgstr ""
 
-#: src/gui.c:1995
+#: src/gui.c:1940
 msgid "Skip back (ctrl-left)"
 msgstr ""
 
-#: src/gui.c:2001
+#: src/gui.c:1946
 msgid "Skip forward (ctrl-right)"
 msgstr ""
 
-#: src/gui.c:2007
+#: src/gui.c:1952
 msgid "Show clip info (i)"
 msgstr ""
 
-#: src/gui.c:2013
+#: src/gui.c:1958
 msgid "Hide this toolbar"
 msgstr ""
 
-#: src/gui.c:2015
+#: src/gui.c:1960
 msgid ""
 "Press \"s\" to toggle separate play window for improved performance, \"q\" "
 "to stop."
 msgstr ""
 
 #. TRANSLATORS: please keep the translated string the same length
-#: src/gui.c:2048
+#: src/gui.c:1993
 msgid "     Video playback speed (frames per second)        "
 msgstr ""
 
-#: src/gui.c:2062
+#: src/gui.c:2007
 msgid "Vary the video speed"
 msgstr ""
 
-#: src/gui.c:2145 src/gui.c:3274
+#: src/gui.c:2090 src/gui.c:3219
 msgid "First Frame"
 msgstr "Pierwsza klatka"
 
-#: src/gui.c:2250 src/gui.c:3282
+#: src/gui.c:2195 src/gui.c:3227
 msgid "Last Frame"
 msgstr "Ostatnia klatka"
 
-#: src/gui.c:2267
+#: src/gui.c:2212
 msgid "The first selected frame in this clip"
 msgstr ""
 
-#: src/gui.c:2305
+#: src/gui.c:2250
 msgid "The last selected frame in this clip"
 msgstr ""
 
-#: src/gui.c:2588
+#: src/gui.c:2533
 msgid "Starting...\n"
 msgstr ""
 
-#: src/gui.c:3130
+#: src/gui.c:3075
 msgid "    Press 'q' to stop recording.  DO NOT COVER THE PLAY WINDOW !   "
 msgstr ""
 
-#: src/gui.c:3577
+#: src/gui.c:3522
 msgid "Frame number to preview"
 msgstr ""
 
-#: src/gui.c:3594
+#: src/gui.c:3539
 msgid "_Free"
 msgstr "_Darmowe"
 
-#: src/gui.c:3595
+#: src/gui.c:3540
 msgid "Free choice of frame number"
 msgstr ""
 
-#: src/gui.c:3599
+#: src/gui.c:3544
 msgid "_Start"
 msgstr "_Uruchom"
 
-#: src/gui.c:3600
+#: src/gui.c:3545
 msgid "Frame number is linked to start frame"
 msgstr ""
 
-#: src/gui.c:3607
+#: src/gui.c:3552
 msgid "_End"
 msgstr ""
 
-#: src/gui.c:3608
+#: src/gui.c:3553
 msgid "Frame number is linked to end frame"
 msgstr ""
 
-#: src/gui.c:3615
+#: src/gui.c:3560
 msgid "_Pointer"
 msgstr ""
 
-#: src/gui.c:3616
+#: src/gui.c:3561
 msgid "Frame number is linked to playback pointer"
 msgstr ""
 
-#: src/gui.c:3637
+#: src/gui.c:3582
 msgid "Rewind"
 msgstr "Przewiń"
 
-#: src/gui.c:3648 src/dialogs.c:875 src/dialogs.c:877 src/dialogs.c:1796
+#: src/gui.c:3593 src/dialogs.c:875 src/dialogs.c:877 src/dialogs.c:1796
 #: src/dialogs.c:1798
 msgid "Play all"
 msgstr "Odtwórz wszystko"
 
-#: src/gui.c:3661
+#: src/gui.c:3606
 msgid "Play Selection"
 msgstr ""
 
-#: src/gui.c:3675
+#: src/gui.c:3620
 msgid "Loop On/Off"
 msgstr ""
 
-#: src/gui.c:3749
+#: src/gui.c:3694
 msgid "Start _recording"
 msgstr ""
 
-#: src/gui.c:3754
+#: src/gui.c:3699
 msgid "Stop _recording"
 msgstr ""
 
-#: src/gui.c:3759
+#: src/gui.c:3704
 msgid "_Record Performance"
 msgstr ""
 
-#: src/gui.c:3907
+#: src/gui.c:3852
 msgid "Hide Play Window"
 msgstr ""
 
-#: src/gui.c:4288
+#: src/gui.c:4233
 msgid "Show Play Window"
 msgstr ""
 
@@ -3529,7 +3529,7 @@ msgstr ""
 msgid "Effects"
 msgstr "Efekty"
 
-#: src/ce_thumbs.c:279 src/multitrack.c:5616
+#: src/ce_thumbs.c:279 src/multitrack.c:5615
 msgid "Clips"
 msgstr ""
 
@@ -3798,12 +3798,12 @@ msgid ""
 "Overwrite ?\n"
 msgstr ""
 
-#: src/utils.c:4238 src/utils.c:4270 src/multitrack.c:4496
+#: src/utils.c:4238 src/utils.c:4270 src/multitrack.c:4495
 #, c-format
 msgid "_Undo %s"
 msgstr "_Cofnij %s"
 
-#: src/utils.c:4239 src/utils.c:4271 src/multitrack.c:4518
+#: src/utils.c:4239 src/utils.c:4271 src/multitrack.c:4517
 #, c-format
 msgid "_Redo %s"
 msgstr "_Ponów %s"
@@ -6648,7 +6648,7 @@ msgstr ""
 msgid "Loading rendered effect %s..."
 msgstr ""
 
-#: src/rfx-builder.c:4703
+#: src/rfx-builder.c:4700
 msgid ""
 "See: VJ - show VJ keys. Set the realtime effects, and then apply them here."
 msgstr ""
@@ -8185,54 +8185,54 @@ msgstr ""
 msgid "Opened firewire card %d"
 msgstr ""
 
-#: src/multitrack.c:666
+#: src/multitrack.c:665
 msgid "Auto backup"
 msgstr ""
 
-#: src/multitrack.c:868
+#: src/multitrack.c:867
 msgid "Backing audio"
 msgstr ""
 
-#: src/multitrack.c:1431
+#: src/multitrack.c:1430
 #, c-format
 msgid "%s : parameters for %s"
 msgstr ""
 
-#: src/multitrack.c:1801 src/multitrack.c:3475
+#: src/multitrack.c:1800 src/multitrack.c:3474
 #, c-format
 msgid "Current track: %s (layer %d)\n"
 msgstr ""
 
-#: src/multitrack.c:1805 src/multitrack.c:3476
+#: src/multitrack.c:1804 src/multitrack.c:3475
 msgid "Current track: Backing audio\n"
 msgstr ""
 
-#: src/multitrack.c:1806
+#: src/multitrack.c:1805
 #, c-format
 msgid "Current track: Layer %d audio\n"
 msgstr ""
 
-#: src/multitrack.c:1809
+#: src/multitrack.c:1808
 #, c-format
 msgid "%.2f sec.\n"
 msgstr ""
 
-#: src/multitrack.c:1814 src/multitrack.c:3482
+#: src/multitrack.c:1813 src/multitrack.c:3481
 #, c-format
 msgid "Source: %s"
 msgstr "Źródło: %s"
 
-#: src/multitrack.c:1817 src/multitrack.c:3484
+#: src/multitrack.c:1816 src/multitrack.c:3483
 msgid "Right click for context menu.\n"
 msgstr ""
 
-#: src/multitrack.c:1819
+#: src/multitrack.c:1818
 msgid ""
 "Double click on a block\n"
 "to select it."
 msgstr ""
 
-#: src/multitrack.c:3304
+#: src/multitrack.c:3303
 msgid ""
 "\n"
 "\n"
@@ -8241,7 +8241,7 @@ msgid ""
 "right or double clicking on it.\n"
 msgstr ""
 
-#: src/multitrack.c:3307
+#: src/multitrack.c:3306
 msgid ""
 "\n"
 "\n"
@@ -8249,14 +8249,14 @@ msgid ""
 "Select an effect in FX stack first to view its parameters.\n"
 msgstr ""
 
-#: src/multitrack.c:3310
+#: src/multitrack.c:3309
 msgid ""
 "\n"
 "\n"
 "No clips loaded.\n"
 msgstr ""
 
-#: src/multitrack.c:3313
+#: src/multitrack.c:3312
 msgid ""
 "You must select two video tracks\n"
 "and a time region\n"
@@ -8266,7 +8266,7 @@ msgid ""
 "before inserting clips into the timeline."
 msgstr ""
 
-#: src/multitrack.c:3316
+#: src/multitrack.c:3315
 msgid ""
 "\n"
 "\n"
@@ -8275,210 +8275,210 @@ msgid ""
 "to apply compositors.\n"
 msgstr ""
 
-#: src/multitrack.c:3479
+#: src/multitrack.c:3478
 #, c-format
 msgid "%.2f sec. to %.2f sec.\n"
 msgstr ""
 
-#: src/multitrack.c:3485
+#: src/multitrack.c:3484
 msgid ""
 "Single click on timeline\n"
 "to select a frame.\n"
 msgstr ""
 
-#: src/multitrack.c:3704 src/multitrack.c:6778
+#: src/multitrack.c:3703 src/multitrack.c:6777
 #, c-format
 msgid "%s [unstable]"
 msgstr ""
 
-#: src/multitrack.c:3815
+#: src/multitrack.c:3814
 msgid ""
 "You can click and drag\n"
 "below the timeline"
 msgstr ""
 
-#: src/multitrack.c:3816
+#: src/multitrack.c:3815
 msgid "to select a time region.\n"
 msgstr ""
 
-#: src/multitrack.c:3978
+#: src/multitrack.c:3977
 msgid "LiVES: Selected clip"
 msgstr ""
 
-#: src/multitrack.c:3986
+#: src/multitrack.c:3985
 msgid "_Adjust start and end points"
 msgstr ""
 
-#: src/multitrack.c:3995
+#: src/multitrack.c:3994
 msgid "_Edit/encode in clip editor"
 msgstr ""
 
-#: src/multitrack.c:4002
+#: src/multitrack.c:4001
 msgid "_Show clip information"
 msgstr ""
 
-#: src/multitrack.c:4009
+#: src/multitrack.c:4008
 msgid "_Close this clip"
 msgstr ""
 
-#: src/multitrack.c:4229
+#: src/multitrack.c:4228
 msgid "Audio mixer (ctrl-m)"
 msgstr ""
 
-#: src/multitrack.c:4329
+#: src/multitrack.c:4328
 msgid "Single click on timeline"
 msgstr ""
 
-#: src/multitrack.c:4330
+#: src/multitrack.c:4329
 msgid "to select a frame."
 msgstr ""
 
-#: src/multitrack.c:4331
+#: src/multitrack.c:4330
 msgid "Double click or right click on timeline"
 msgstr ""
 
-#: src/multitrack.c:4332
+#: src/multitrack.c:4331
 msgid "to select a block."
 msgstr ""
 
-#: src/multitrack.c:4333
+#: src/multitrack.c:4332
 msgid "Clips can be dragged"
 msgstr ""
 
-#: src/multitrack.c:4334
+#: src/multitrack.c:4333
 msgid "onto the timeline."
 msgstr ""
 
-#: src/multitrack.c:4336
+#: src/multitrack.c:4335
 msgid "Mouse mode is: Move"
 msgstr ""
 
-#: src/multitrack.c:4337
+#: src/multitrack.c:4336
 msgid "clips can be moved around."
 msgstr ""
 
-#: src/multitrack.c:4342
+#: src/multitrack.c:4341
 msgid "Mouse mode is: Select."
 msgstr ""
 
-#: src/multitrack.c:4343
+#: src/multitrack.c:4342
 msgid "Drag with mouse on timeline"
 msgstr ""
 
-#: src/multitrack.c:4344
+#: src/multitrack.c:4343
 msgid "to select tracks and time."
 msgstr ""
 
-#: src/multitrack.c:4355
+#: src/multitrack.c:4354
 msgid "_Insert mode: Normal"
 msgstr ""
 
-#: src/multitrack.c:4371
+#: src/multitrack.c:4370
 msgid "_Mouse mode: Move"
 msgstr ""
 
-#: src/multitrack.c:4375
+#: src/multitrack.c:4374
 msgid "_Mouse mode: Select"
 msgstr ""
 
-#: src/multitrack.c:4398 src/multitrack.c:7910
+#: src/multitrack.c:4397 src/multitrack.c:7910
 msgid "Gravity: Normal"
 msgstr ""
 
-#: src/multitrack.c:4402
+#: src/multitrack.c:4401
 msgid "Gravity: Left"
 msgstr ""
 
-#: src/multitrack.c:4407
+#: src/multitrack.c:4406
 msgid "Gravity: Right"
 msgstr ""
 
-#: src/multitrack.c:4409
+#: src/multitrack.c:4408
 msgid "Close _last gap(s) in selected tracks/time"
 msgstr ""
 
-#: src/multitrack.c:4412
+#: src/multitrack.c:4411
 msgid "Close _first gap(s) in selected tracks/time"
 msgstr ""
 
-#: src/multitrack.c:4451
+#: src/multitrack.c:4450
 msgid "Close gaps"
 msgstr "Zamykanie przerw"
 
-#: src/multitrack.c:4453
+#: src/multitrack.c:4452
 msgid "Move block"
 msgstr ""
 
-#: src/multitrack.c:4455
+#: src/multitrack.c:4454
 msgid "Move audio block"
 msgstr ""
 
-#: src/multitrack.c:4457
+#: src/multitrack.c:4456
 msgid "Delete block"
 msgstr "Usuń blok"
 
-#: src/multitrack.c:4459
+#: src/multitrack.c:4458
 msgid "Delete audio block"
 msgstr ""
 
-#: src/multitrack.c:4461
+#: src/multitrack.c:4460
 msgid "Split tracks"
 msgstr ""
 
-#: src/multitrack.c:4463
+#: src/multitrack.c:4462
 msgid "Split block"
 msgstr ""
 
-#: src/multitrack.c:4466
+#: src/multitrack.c:4465
 #, c-format
 msgid "Apply %s"
 msgstr ""
 
-#: src/multitrack.c:4471
+#: src/multitrack.c:4470
 #, c-format
 msgid "Delete %s"
 msgstr "Usuń %s"
 
-#: src/multitrack.c:4475
+#: src/multitrack.c:4474
 msgid "Insert block"
 msgstr ""
 
-#: src/multitrack.c:4477
+#: src/multitrack.c:4476
 msgid "Insert gap"
 msgstr ""
 
-#: src/multitrack.c:4479
+#: src/multitrack.c:4478
 msgid "Insert audio block"
 msgstr ""
 
-#: src/multitrack.c:4481
+#: src/multitrack.c:4480
 msgid "Effect order change"
 msgstr ""
 
-#: src/multitrack.c:4889
+#: src/multitrack.c:4888
 msgid "unsigned "
 msgstr ""
 
-#: src/multitrack.c:4890
+#: src/multitrack.c:4889
 msgid "signed "
 msgstr ""
 
-#: src/multitrack.c:4895
+#: src/multitrack.c:4894
 #, c-format
 msgid ""
 "Multitrack values set to %.3f fps, frame size %d x %d, audio channels %d, "
 "audio rate %d, audio sample size %d, %s.\n"
 msgstr ""
 
-#: src/multitrack.c:4929
+#: src/multitrack.c:4928
 msgid "invalid event list. Failed.\n"
 msgstr ""
 
-#: src/multitrack.c:4935
+#: src/multitrack.c:4934
 msgid "event list has invalid fps. Failed.\n"
 msgstr ""
 
-#: src/multitrack.c:4944
+#: src/multitrack.c:4943
 #, c-format
 msgid ""
 "\n"
@@ -8488,7 +8488,7 @@ msgid ""
 "then load in the new set from the File menu.\n"
 msgstr ""
 
-#: src/multitrack.c:4984
+#: src/multitrack.c:4983
 #, c-format
 msgid ""
 "\n"
@@ -8496,328 +8496,328 @@ msgid ""
 "It cannot be loaded.\n"
 msgstr ""
 
-#: src/multitrack.c:5326 src/multitrack.c:5335 src/multitrack.c:21111
+#: src/multitrack.c:5325 src/multitrack.c:5334 src/multitrack.c:21111
 msgid "Layout was wiped.\n"
 msgstr ""
 
-#: src/multitrack.c:5375
+#: src/multitrack.c:5374
 #, c-format
 msgid "LiVES-%s: Multitrack %dx%d : %d bpp %.3f fps"
 msgstr ""
 
-#: src/multitrack.c:5618
+#: src/multitrack.c:5617
 msgid "In/out"
 msgstr ""
 
-#: src/multitrack.c:5620
+#: src/multitrack.c:5619
 msgid "FX stack"
 msgstr ""
 
-#: src/multitrack.c:5628 src/omc-learn.c:673
+#: src/multitrack.c:5627 src/omc-learn.c:673
 msgid "Params."
 msgstr ""
 
-#: src/multitrack.c:5977
+#: src/multitrack.c:5976
 msgid "_Open..."
 msgstr ""
 
-#: src/multitrack.c:5995
+#: src/multitrack.c:5994
 msgid "O_pen File Selection..."
 msgstr ""
 
-#: src/multitrack.c:6039
+#: src/multitrack.c:6038
 msgid "Import Selection from _dvd/vcd..."
 msgstr ""
 
-#: src/multitrack.c:6049
+#: src/multitrack.c:6048
 msgid "Import Selection from _dvd"
 msgstr ""
 
-#: src/multitrack.c:6059
+#: src/multitrack.c:6058
 msgid "Import Selection from _vcd"
 msgstr ""
 
-#: src/multitrack.c:6075
+#: src/multitrack.c:6074
 msgid "_Import from Device"
 msgstr ""
 
-#: src/multitrack.c:6102
+#: src/multitrack.c:6101
 msgid "_Close the selected clip"
 msgstr ""
 
-#: src/multitrack.c:6197
+#: src/multitrack.c:6196
 msgid "_Save layout as..."
 msgstr ""
 
-#: src/multitrack.c:6205
+#: src/multitrack.c:6204
 msgid "_Load layout..."
 msgstr ""
 
-#: src/multitrack.c:6209
+#: src/multitrack.c:6208
 msgid "_Wipe/Delete layout..."
 msgstr ""
 
-#: src/multitrack.c:6235
+#: src/multitrack.c:6234
 msgid "_Ignore width, height and audio values from loaded layouts"
 msgstr ""
 
-#: src/multitrack.c:6239
+#: src/multitrack.c:6238
 msgid "Auto load _subtitles with clips"
 msgstr ""
 
-#: src/multitrack.c:6317
+#: src/multitrack.c:6316
 msgid "_CLIP EDITOR"
 msgstr ""
 
-#: src/multitrack.c:6329
+#: src/multitrack.c:6328
 msgid "_Adjust selected clip start/end points"
 msgstr ""
 
-#: src/multitrack.c:6338
+#: src/multitrack.c:6337
 msgid "_Insert selected clip"
 msgstr ""
 
-#: src/multitrack.c:6350
+#: src/multitrack.c:6349
 msgid "_Insert selected clip audio"
 msgstr ""
 
-#: src/multitrack.c:6359
+#: src/multitrack.c:6358
 msgid "_Delete selected block"
 msgstr ""
 
-#: src/multitrack.c:6368
+#: src/multitrack.c:6367
 msgid "_Jump to previous block boundary"
 msgstr ""
 
-#: src/multitrack.c:6377
+#: src/multitrack.c:6376
 msgid "_Jump to next block boundary"
 msgstr ""
 
-#: src/multitrack.c:6390
+#: src/multitrack.c:6389
 msgid "Clear _marks from timeline"
 msgstr ""
 
-#: src/multitrack.c:6398
+#: src/multitrack.c:6397
 msgid "Ignore selection limits when inserting"
 msgstr ""
 
-#: src/multitrack.c:6415 src/multitrack.c:16702
+#: src/multitrack.c:6414 src/multitrack.c:16702
 msgid "_Play from Timeline Position"
 msgstr ""
 
-#: src/multitrack.c:6427
+#: src/multitrack.c:6426
 msgid "Pla_y selected time only"
 msgstr ""
 
-#: src/multitrack.c:6506
+#: src/multitrack.c:6505
 msgid "_Move effects with blocks"
 msgstr ""
 
-#: src/multitrack.c:6519
+#: src/multitrack.c:6518
 msgid "Select _autotransition effect..."
 msgstr ""
 
-#: src/multitrack.c:6530
+#: src/multitrack.c:6529
 msgid "Crossfade audio with autotransition"
 msgstr ""
 
-#: src/multitrack.c:6538
+#: src/multitrack.c:6537
 msgid "View/_Edit selected effect"
 msgstr ""
 
-#: src/multitrack.c:6542
+#: src/multitrack.c:6541
 msgid "_Delete selected effect"
 msgstr ""
 
-#: src/multitrack.c:6550
+#: src/multitrack.c:6549
 msgid "Apply effect to _block..."
 msgstr ""
 
-#: src/multitrack.c:6607
+#: src/multitrack.c:6606
 msgid "Apply effect to _region..."
 msgstr ""
 
-#: src/multitrack.c:6873
+#: src/multitrack.c:6872
 msgid "_Tracks"
 msgstr ""
 
-#: src/multitrack.c:6884
+#: src/multitrack.c:6883
 msgid "Rename current track"
 msgstr ""
 
-#: src/multitrack.c:6892
+#: src/multitrack.c:6891
 msgid "Make _Backing Audio current track"
 msgstr ""
 
-#: src/multitrack.c:6903
+#: src/multitrack.c:6902
 msgid "Add Video Track at _Rear"
 msgstr ""
 
-#: src/multitrack.c:6911
+#: src/multitrack.c:6910
 msgid "Add Video Track at _Front"
 msgstr ""
 
-#: src/multitrack.c:6924
+#: src/multitrack.c:6923
 msgid "_Split current track at cursor"
 msgstr ""
 
-#: src/multitrack.c:6936
+#: src/multitrack.c:6935
 msgid "_Split selected video tracks"
 msgstr ""
 
-#: src/multitrack.c:6949
+#: src/multitrack.c:6948
 msgid "Insert gap in selected tracks/time"
 msgstr ""
 
-#: src/multitrack.c:6957
+#: src/multitrack.c:6956
 msgid "Insert gap in current track/selected time"
 msgstr ""
 
-#: src/multitrack.c:6969
+#: src/multitrack.c:6968
 msgid "Close all _gaps in selected tracks/time"
 msgstr ""
 
-#: src/multitrack.c:6995
+#: src/multitrack.c:6994
 msgid "Se_lection"
 msgstr "_Wybór"
 
-#: src/multitrack.c:7006
+#: src/multitrack.c:7005
 msgid "_Select Current Track"
 msgstr ""
 
-#: src/multitrack.c:7013
+#: src/multitrack.c:7012
 msgid "Select _all video tracks"
 msgstr ""
 
-#: src/multitrack.c:7020
+#: src/multitrack.c:7019
 msgid "Select _no video tracks"
 msgstr ""
 
-#: src/multitrack.c:7027
+#: src/multitrack.c:7026
 msgid "Select all _time"
 msgstr ""
 
-#: src/multitrack.c:7038
+#: src/multitrack.c:7037
 msgid "Select from _zero time"
 msgstr ""
 
-#: src/multitrack.c:7045
+#: src/multitrack.c:7044
 msgid "Select to _end time"
 msgstr ""
 
-#: src/multitrack.c:7052
+#: src/multitrack.c:7051
 msgid "_Copy..."
 msgstr "_Kopiuj..."
 
-#: src/multitrack.c:7063
+#: src/multitrack.c:7062
 msgid "_Timecode to region start"
 msgstr ""
 
-#: src/multitrack.c:7070
+#: src/multitrack.c:7069
 msgid "_Timecode to region end"
 msgstr ""
 
-#: src/multitrack.c:7077
+#: src/multitrack.c:7076
 msgid "_Region start to timecode"
 msgstr ""
 
-#: src/multitrack.c:7084
+#: src/multitrack.c:7083
 msgid "_Region end to timecode"
 msgstr ""
 
-#: src/multitrack.c:7098
+#: src/multitrack.c:7097
 msgid "Select/deselect block at current track/time"
 msgstr ""
 
-#: src/multitrack.c:7123
+#: src/multitrack.c:7122
 msgid "_Change width, height and audio values..."
 msgstr ""
 
-#: src/multitrack.c:7180
+#: src/multitrack.c:7179
 msgid "_Render"
 msgstr "_Renderuj"
 
-#: src/multitrack.c:7191
+#: src/multitrack.c:7190
 msgid "_Render all to new clip"
 msgstr ""
 
-#: src/multitrack.c:7206
+#: src/multitrack.c:7205
 msgid "Render _video"
 msgstr ""
 
-#: src/multitrack.c:7211
+#: src/multitrack.c:7210
 msgid "Render _audio"
 msgstr ""
 
-#: src/multitrack.c:7221
+#: src/multitrack.c:7220
 msgid "_Normalise rendered audio"
 msgstr ""
 
-#: src/multitrack.c:7228
+#: src/multitrack.c:7227
 msgid "_Pre-render audio"
 msgstr ""
 
-#: src/multitrack.c:7237
+#: src/multitrack.c:7236
 msgid "_View"
 msgstr "_Widok"
 
-#: src/multitrack.c:7256
+#: src/multitrack.c:7255
 msgid "Block _In/out points"
 msgstr ""
 
-#: src/multitrack.c:7265
+#: src/multitrack.c:7264
 msgid "_Effects at current"
 msgstr ""
 
-#: src/multitrack.c:7283
+#: src/multitrack.c:7282
 msgid "Audio parameters"
 msgstr ""
 
-#: src/multitrack.c:7294
+#: src/multitrack.c:7293
 msgid "Show backing _audio track"
 msgstr ""
 
-#: src/multitrack.c:7298
+#: src/multitrack.c:7297
 msgid "Compact view"
 msgstr "Widok oszczędny"
 
-#: src/multitrack.c:7306
+#: src/multitrack.c:7305
 msgid "Maximum tracks to display..."
 msgstr ""
 
-#: src/multitrack.c:7313
+#: src/multitrack.c:7312
 msgid "Scroll to follow playback"
 msgstr ""
 
-#: src/multitrack.c:7317
+#: src/multitrack.c:7316
 msgid "_Center on cursor"
 msgstr ""
 
-#: src/multitrack.c:7324
+#: src/multitrack.c:7323
 msgid "_Zoom in"
 msgstr ""
 
-#: src/multitrack.c:7335
+#: src/multitrack.c:7334
 msgid "_Zoom out"
 msgstr ""
 
-#: src/multitrack.c:7347
+#: src/multitrack.c:7346
 msgid "Multitrack _details"
 msgstr ""
 
-#: src/multitrack.c:7360
+#: src/multitrack.c:7359
 msgid "_Event Window"
 msgstr ""
 
-#: src/multitrack.c:7364
+#: src/multitrack.c:7363
 msgid "_Event Window (selected time only)"
 msgstr ""
 
-#: src/multitrack.c:7368
+#: src/multitrack.c:7367
 msgid "_Show FRAME events"
 msgstr ""
 
-#: src/multitrack.c:7385
+#: src/multitrack.c:7384
 msgid "_Show multitrack keys"
 msgstr ""
 

@@ -26,6 +26,8 @@
 #ifndef HAVE_LIBAV_HELPER_H
 #define HAVE_LIBAV_HELPER_H
 
+#ifdef HAVE_LIBAV_LIBS
+
 #if (LIBAVCODEC_VERSION_MAJOR > 54)
 #define CodecID AVCodecID
 #define CODEC_ID_NONE AV_CODEC_ID_NONE
@@ -122,5 +124,6 @@ static void av_set_pts_info(AVStream *s, int pts_wrap_bits,
 #endif
 #endif
 
+#endif // HAVE_LIBAV_LIBS
 
 #endif // HAVE_LIBAV_HELPER_H

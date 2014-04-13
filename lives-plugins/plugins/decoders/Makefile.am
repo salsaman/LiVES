@@ -70,7 +70,7 @@ if HAVE_AVFORMAT
 if HAVE_AVCODEC
 if HAVE_AVUTIL
 
-libav_cflags =
+libav_cflags = -DHAVE_LIBAV_LIBS=1
 
 if HAVE_AVCODEC_OPEN2
 libav_cflags += -DHAVE_AVCODEC_OPEN2=1
@@ -147,4 +147,4 @@ endif
 
 decoderpluginslib_LTLIBRARIES = $(ogg_libs) $(dv_libs) $(flv_libs) $(asf_libs) $(mkv_libs) $(mpegts_libs) $(zzavformat_libs)
 
-EXTRA_DIST = decplugin.h
+EXTRA_DIST = decplugin.h libav_helper.h

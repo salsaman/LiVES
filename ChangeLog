@@ -1,12 +1,13 @@
-Version 2.2.3
--------------
+Version 2.2.3 (13 April 2014)
+-----------------------------
 Run data processing plugins in both video and audio threads.
 Fix crash when loading device map (regression).
 Fix bug which prevented audio changes from being recorded when audio analysers are running.
 Updates for gtk+ >= 3.8.
 Define HAVE_AVFORMAT_FIND_STREAM_INFO in decplugin/Makefile.am
-Fix for missing avpriv_set_pts_info() in libav.
+Workaround for missing av_set_pts_info() in libav.
 Fix to handle changed option order in ffmpeg.
+Updated translations to Russian, Piemontese, Uk English, Spanish and Ukranian.
 
 
 

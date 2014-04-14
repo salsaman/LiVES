@@ -64,9 +64,9 @@ const char *plugin_version="LiVES flv decoder version 1.1";
 #include <pthread.h>
 
 #include "decplugin.h"
-#include "flv_decoder.h"
-
 #include "libav_helper.h"
+
+#include "flv_decoder.h"
 
 static index_container_t **indices;
 static int nidxc;

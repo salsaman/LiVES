@@ -33,9 +33,9 @@
 #include <libavutil/samplefmt.h>
 #include <libavutil/mathematics.h>
 
-#include "avformat_decoder.h"
-
 #include "libav_helper.h"
+
+#include "avformat_decoder.h"
 
 const char *plugin_version="LiVES avformat decoder version 1.0";
 

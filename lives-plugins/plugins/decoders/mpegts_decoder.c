@@ -67,9 +67,9 @@ const char *plugin_version="LiVES mpegts decoder version 1.2";
 
 #include <pthread.h>
 
-#include "mpegts_decoder.h"
-
 #include "libav_helper.h"
+
+#include "mpegts_decoder.h"
 
 static index_container_t **indices;
 static int nidxc;
@@ -2630,73 +2630,6 @@ static int mpegts_read_close(lives_clip_data_t *cdata) {
   
   return 0;
 }
-
-
-
-/* XXX: suppress the packet queue */
-static void flush_packet_queue(AVFormatContext *s)
-{
-  AVPacketList *pktl;
-
-  for(;;) {
-    pktl = s->packet_buffer;
-    if (!pktl)
-      break;
-    s->packet_buffer = pktl->next;
-    av_free_packet(&pktl->pkt);
-    av_free(pktl);
-  }
-  while(s->raw_packet_buffer){
-    pktl = s->raw_packet_buffer;
-    s->raw_packet_buffer = pktl->next;
-    av_free_packet(&pktl->pkt);
-    av_free(pktl);
-  }
-  s->packet_buffer_end=
-    s->raw_packet_buffer_end= NULL;
-  s->raw_packet_buffer_remaining_size = RAW_PACKET_BUFFER_SIZE;
-}
-
-
-
-
-
-/**
- * Flush the frame reader.
- */
-void ff_read_frame_flush(AVFormatContext *s)
-{
-  AVStream *st;
-  int i, j;
-
-  flush_packet_queue(s);
-
-  /* for each stream, reset read state */
-  for(i = 0; i < s->nb_streams; i++) {
-    st = s->streams[i];
-
-    if (st->parser) {
-      av_parser_close(st->parser);
-      st->parser = NULL;
-      //av_free_packet(&st->cur_pkt);
-    }
-    st->last_IP_pts = AV_NOPTS_VALUE;
-    if(st->first_dts == AV_NOPTS_VALUE) st->cur_dts = 0;
-    else                                st->cur_dts = AV_NOPTS_VALUE; /* we set the current DTS to an unspecified origin */
-    st->reference_dts = AV_NOPTS_VALUE;
-    /* fail safe */
-    //st->cur_ptr = NULL;
-    //st->cur_len = 0;
-
-    st->probe_packets = MAX_PROBE_PACKETS;
-
-    for(j=0; j<MAX_REORDER_DELAY+1; j++)
-      st->pts_buffer[j]= AV_NOPTS_VALUE;
-  }
-}
-
-
-
 
 
 

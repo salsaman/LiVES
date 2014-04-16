@@ -2145,7 +2145,7 @@ LIVES_INLINE boolean lives_scrolled_window_set_policy(LiVESScrolledWindow *scrol
 
 LIVES_INLINE boolean lives_scrolled_window_add_with_viewport(LiVESScrolledWindow *scrolledwindow, LiVESWidget *child) {
 #ifdef GUI_GTK
-#if !GTK_CHECK_VERSION(3,0,0)
+#if !GTK_CHECK_VERSION(3,8,0)
   gtk_scrolled_window_add_with_viewport(scrolledwindow, child);
 #else
   lives_container_add(LIVES_CONTAINER(scrolledwindow),child);

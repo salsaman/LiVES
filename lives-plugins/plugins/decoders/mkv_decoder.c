@@ -70,14 +70,14 @@ const char *plugin_version="LiVES mkv decoder version 1.2";
 
 #include "decplugin.h"
 
-#include <libavutil/intfloat_readwrite.h>
 #include <libavutil/intreadwrite.h>
 #include <libavutil/lzo.h>
 #include <libavutil/dict.h>
 
-#include "libav_helper.h"
 
 #include "mkv_decoder.h"
+
+#include "libav_helper.h"
 
 #if CONFIG_ZLIB
 #include <zlib.h>
@@ -93,6 +93,17 @@ static pthread_mutex_t indices_mutex;
 
 ////////////////////////////////////////////////////////////////////////////
 
+static double lives_int2dbl(int64_t v) {
+    if((uint64_t)v+v > 0xFFEULL<<52)
+        return NAN;
+    return ldexp(((v&((1LL<<52)-1)) + (1LL<<52)) * (v>>63|1), (v>>52&0x7FF)-1075);
+}
+
+static float lives_int2flt(int32_t v) {
+    if((uint32_t)v+v > 0xFF000000U)
+        return NAN;
+    return ldexp(((v&0x7FFFFF) + (1<<23)) * (v>>31|1), (v>>23&0xFF)-150);
+}
 
 const uint8_t ff_log2_tab[256]={
   0,0,1,1,2,2,2,2,3,3,3,3,3,3,3,3,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,
@@ -328,7 +339,7 @@ static int ebml_read_float(const lives_clip_data_t *cdata, int size, double *num
 
     val32 = AV_RB32(buffer);
 
-    *num= av_int2flt(val32);
+    *num= lives_int2flt(val32);
 
   } else if(size==8){
 
@@ -343,7 +354,7 @@ static int ebml_read_float(const lives_clip_data_t *cdata, int size, double *num
 
     val64 = AV_RB64(buffer);
 
-    *num= av_int2dbl(val64);
+    *num= lives_int2dbl(val64);
   } else {
     errval=ERR_INVALID_DATA;
     return -errval;

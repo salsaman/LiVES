@@ -6,7 +6,7 @@ ifdef([m4_pattern_allow],
       [m4_pattern_allow([^AC_.*])])
 
 dnl IMPORTANT !! $version must also be set to exactly the same string in smogrify
-AC_INIT(LiVES,2.2.4-svn,https://sourceforge.net/p/lives/bugs/)
+AC_INIT(LiVES,2.2.3,https://sourceforge.net/p/lives/bugs/)
 AC_CANONICAL_HOST
 AC_CANONICAL_TARGET
 
@@ -837,7 +837,7 @@ AC_SUBST(WEED_UTILS_LIBS)
 AM_CONDITIONAL(HAVE_SYSTEM_WEED_UTILS,$HAVE_SYSTEM_WEED_UTILS)
 
 
-PKG_CHECK_MODULES(WEED_COMPAT, libweed-compat >= 0.7.0, HAVE_SYSTEM_WEED_COMPAT=true, HAVE_SYSTEM_WEED_COMPAT=false)
+PKG_CHECK_MODULES(WEED_COMPAT, libweed-compat >= 0.8.0, HAVE_SYSTEM_WEED_COMPAT=true, HAVE_SYSTEM_WEED_COMPAT=false)
 
 AC_SUBST(WEED_COMPAT_CFLAGS)
 AC_SUBST(WEED_COMPAT_LIBS)

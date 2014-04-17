@@ -1506,6 +1506,8 @@ void create_LiVES (void) {
   mainw->send_lives2lives = lives_menu_item_new_with_mnemonic (_("_Send LiVES stream to..."));
 
   lives_widget_show (mainw->send_lives2lives);
+  lives_widget_show (mainw->open_lives2lives);
+
   lives_container_add (LIVES_CONTAINER (advanced_menu), mainw->send_lives2lives);
   lives_container_add (LIVES_CONTAINER (advanced_menu), mainw->open_lives2lives);
 

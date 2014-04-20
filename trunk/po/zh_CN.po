@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: lives\n"
 "Report-Msgid-Bugs-To: https://sourceforge.net/p/lives/bugs/\n"
-"POT-Creation-Date: 2014-04-13 10:57-0300\n"
+"POT-Creation-Date: 2014-04-19 12:35-0300\n"
 "PO-Revision-Date: 2013-03-14 12:31+0000\n"
 "Last-Translator: Launchpad Translations Administrators <Unknown>\n"
 "Language-Team: Simplified Chinese <zh_CN@li.org>\n"
@@ -685,7 +685,7 @@ msgstr ""
 msgid "!rec %9d/%d"
 msgstr ""
 
-#: src/main.c:5354 src/main.c:5355 src/gui.c:2108 src/gui.c:3221
+#: src/main.c:5354 src/main.c:5355 src/gui.c:2110 src/gui.c:3223
 #: src/saveplay.c:2324
 msgid "Play"
 msgstr "播放"
@@ -713,16 +713,16 @@ msgstr "撤消(_U)"
 msgid "_Redo"
 msgstr "重做(_R)"
 
-#: src/main.c:6448 src/interface.c:468 src/gui.c:2327 src/preferences.c:2335
+#: src/main.c:6448 src/interface.c:468 src/gui.c:2329 src/preferences.c:2335
 #: src/resample.c:1516
 msgid "Video"
 msgstr "视频"
 
-#: src/main.c:6449 src/interface.c:482 src/gui.c:2352
+#: src/main.c:6449 src/interface.c:482 src/gui.c:2354
 msgid "Left Audio"
 msgstr "左声道"
 
-#: src/main.c:6450 src/gui.c:2376
+#: src/main.c:6450 src/gui.c:2378
 msgid "Right Audio"
 msgstr "右声道"
 
@@ -1103,7 +1103,7 @@ msgid "If this is set, frames will be deinterlaced as they are imported."
 msgstr "如果设置此项，视频在导入时将被反交错化。"
 
 #: src/interface.c:112 src/callbacks.c:9618 src/callbacks.c:9641
-#: src/callbacks.c:9642 src/gui.c:3224 src/gui.c:3822 src/saveplay.c:2327
+#: src/callbacks.c:9642 src/gui.c:3226 src/gui.c:3824 src/saveplay.c:2327
 #: src/saveplay.c:3115 src/dialogs.c:1493 src/dialogs.c:1494
 #: src/dialogs.c:1725 src/dialogs.c:1726 src/framedraw.c:238
 #: src/multitrack.c:8016
@@ -2461,7 +2461,7 @@ msgstr "%d个帧够了！\n"
 msgid "LiVES: - Encoder debug output"
 msgstr ""
 
-#: src/callbacks.c:7084 src/gui.c:1920
+#: src/callbacks.c:7084 src/gui.c:1922
 msgid "Fullscreen playback (f)"
 msgstr "全屏播放 (f)"
 
@@ -2470,7 +2470,7 @@ msgid "Fullscreen playback off (f)"
 msgstr "全屏播放关 (f)"
 
 #: src/callbacks.c:7185 src/callbacks.c:7333 src/callbacks.c:7661
-#: src/callbacks.c:7678 src/gui.c:3713 src/saveplay.c:2455 src/saveplay.c:2489
+#: src/callbacks.c:7678 src/gui.c:3715 src/saveplay.c:2455 src/saveplay.c:2489
 #: src/saveplay.c:3092 src/saveplay.c:3197 src/saveplay.c:3216
 #: src/multitrack.c:9325 src/multitrack.c:11041
 #, c-format
@@ -2478,12 +2478,12 @@ msgid " (%d %% scale)"
 msgstr ""
 
 #: src/callbacks.c:7187 src/callbacks.c:7335 src/callbacks.c:7663
-#: src/gui.c:3717 src/saveplay.c:2457 src/saveplay.c:2491
+#: src/gui.c:3719 src/saveplay.c:2457 src/saveplay.c:2491
 #, c-format
 msgid "LiVES: - Play Window%s"
 msgstr ""
 
-#: src/callbacks.c:7299 src/gui.c:1905
+#: src/callbacks.c:7299 src/gui.c:1907
 msgid "Double size (d)"
 msgstr "双倍尺寸 (d)"
 
@@ -2495,15 +2495,15 @@ msgstr "单倍尺寸 (d)"
 msgid "Hide the play window (s)"
 msgstr "隐藏播放窗口 (s)"
 
-#: src/callbacks.c:7449 src/gui.c:1744
+#: src/callbacks.c:7449 src/gui.c:1746
 msgid "Show the play window (s)"
 msgstr "显示播放窗口 (s)"
 
-#: src/callbacks.c:7450 src/gui.c:1894
+#: src/callbacks.c:7450 src/gui.c:1896
 msgid "Play in separate window (s)"
 msgstr "在单独的窗口中播放 (s)"
 
-#: src/callbacks.c:7532 src/gui.c:4061 src/saveplay.c:2486
+#: src/callbacks.c:7532 src/gui.c:4063 src/saveplay.c:2486
 msgid "LiVES: - Streaming"
 msgstr ""
 
@@ -2511,7 +2511,7 @@ msgstr ""
 msgid "Switch continuous looping off (o)"
 msgstr "连续循环开关关闭（海外）"
 
-#: src/callbacks.c:7782 src/gui.c:1793
+#: src/callbacks.c:7782 src/gui.c:1795
 msgid "Switch continuous looping on (o)"
 msgstr "开关连续循环的（海外）"
 
@@ -2520,11 +2520,11 @@ msgstr "开关连续循环的（海外）"
 msgid "Audio volume (%.2f)"
 msgstr "音量 (%.2f)"
 
-#: src/callbacks.c:7873 src/callbacks.c:7874 src/gui.c:3641
+#: src/callbacks.c:7873 src/callbacks.c:7874 src/gui.c:3643
 msgid "Unmute the audio (z)"
 msgstr "取消静音 (z)"
 
-#: src/callbacks.c:7885 src/callbacks.c:7886 src/gui.c:1806 src/gui.c:3640
+#: src/callbacks.c:7885 src/callbacks.c:7886 src/gui.c:1808 src/gui.c:3642
 msgid "Mute the audio (z)"
 msgstr "静音 (z)"
 
@@ -3417,295 +3417,295 @@ msgstr ""
 msgid "_Send LiVES stream to..."
 msgstr ""
 
-#: src/gui.c:1513
+#: src/gui.c:1515
 #, c-format
 msgid "Open _yuv4mpeg stream on %sstream.yuv..."
 msgstr ""
 
-#: src/gui.c:1534
+#: src/gui.c:1536
 msgid "_Import Project (.lv2)..."
 msgstr ""
 
-#: src/gui.c:1538
+#: src/gui.c:1540
 msgid "E_xport Project (.lv2)..."
 msgstr ""
 
-#: src/gui.c:1543
+#: src/gui.c:1545
 msgid "_VJ"
 msgstr "_VJ"
 
-#: src/gui.c:1555
+#: src/gui.c:1557
 msgid "Real Time _Effect Mapping"
 msgstr ""
 
-#: src/gui.c:1561
+#: src/gui.c:1563
 msgid "Bind real time effects to ctrl-number keys."
 msgstr ""
 
-#: src/gui.c:1563
+#: src/gui.c:1565
 msgid "Set Real Time Effect _Defaults"
 msgstr ""
 
-#: src/gui.c:1565
+#: src/gui.c:1567
 msgid "Set default parameter values for real time effects."
 msgstr ""
 
-#: src/gui.c:1578
+#: src/gui.c:1580
 msgid "Save Real Time Effect _Defaults"
 msgstr ""
 
-#: src/gui.c:1581
+#: src/gui.c:1583
 msgid ""
 "Save real time effect defaults so they will be restored each time you use "
 "LiVES."
 msgstr ""
 
-#: src/gui.c:1587
+#: src/gui.c:1589
 msgid "_Reset all playback speeds and positions"
 msgstr ""
 
-#: src/gui.c:1590
+#: src/gui.c:1592
 msgid ""
 "Reset all playback positions to frame 1, and reset all playback frame rates."
 msgstr ""
 
-#: src/gui.c:1592
+#: src/gui.c:1594
 msgid "_MIDI/joystick interface"
 msgstr "_MIDI/游戏杆接口"
 
-#: src/gui.c:1607
+#: src/gui.c:1609
 msgid "_MIDI/joystick learner..."
 msgstr "_MIDI/游戏杆学习者..."
 
-#: src/gui.c:1612
+#: src/gui.c:1614
 msgid "_Save device mapping..."
 msgstr "保存设备映射(_S)..."
 
-#: src/gui.c:1618
+#: src/gui.c:1620
 msgid "_Load device mapping..."
 msgstr "加载设备映射(_L)..."
 
-#: src/gui.c:1626
+#: src/gui.c:1628
 msgid "Show VJ _Keys"
 msgstr "显示 VJ 键(_K)"
 
-#: src/gui.c:1630
+#: src/gui.c:1632
 msgid "To_ys"
 msgstr "玩具(_Y)"
 
-#: src/gui.c:1642
+#: src/gui.c:1644
 msgid "_None"
 msgstr "无(_N)"
 
-#: src/gui.c:1650
+#: src/gui.c:1652
 msgid "_Autolives"
 msgstr ""
 
-#: src/gui.c:1655
+#: src/gui.c:1657
 msgid "_Mad Frames"
 msgstr "_疯狂框架"
 
-#: src/gui.c:1660
+#: src/gui.c:1662
 msgid "_LiVES TV (broadband)"
 msgstr "_LiVES 电视(宽带)"
 
-#: src/gui.c:1670 src/multitrack.c:7372
+#: src/gui.c:1672 src/multitrack.c:7372
 msgid "_Help"
 msgstr "帮助(_H)"
 
-#: src/gui.c:1682 src/multitrack.c:7392
+#: src/gui.c:1684 src/multitrack.c:7392
 msgid "_Manual (opens in browser)"
 msgstr "手动(打开浏览器)(_M)"
 
-#: src/gui.c:1689 src/multitrack.c:7401
+#: src/gui.c:1691 src/multitrack.c:7401
 msgid "_Donate to the project !"
 msgstr "向项目捐款(_D)！"
 
-#: src/gui.c:1693 src/multitrack.c:7405
+#: src/gui.c:1695 src/multitrack.c:7405
 msgid "_Email the author"
 msgstr "给作者发邮件(_E)"
 
-#: src/gui.c:1697 src/multitrack.c:7409
+#: src/gui.c:1699 src/multitrack.c:7409
 msgid "Report a _bug"
 msgstr "报告错误(_B)"
 
-#: src/gui.c:1701 src/multitrack.c:7413
+#: src/gui.c:1703 src/multitrack.c:7413
 msgid "Suggest a _feature"
 msgstr "功能建议(_F)"
 
-#: src/gui.c:1705 src/multitrack.c:7417
+#: src/gui.c:1707 src/multitrack.c:7417
 msgid "Assist with _translating"
 msgstr "帮助翻译(_T)"
 
-#: src/gui.c:1712 src/multitrack.c:7424
+#: src/gui.c:1714 src/multitrack.c:7424
 msgid "_Troubleshoot"
 msgstr "故障诊断(_T)"
 
-#: src/gui.c:1716 src/multitrack.c:7428
+#: src/gui.c:1718 src/multitrack.c:7428
 msgid "_About"
 msgstr "关于(_A)"
 
-#: src/gui.c:1750
+#: src/gui.c:1752
 msgid "Rewind to start (w)"
 msgstr "倒带启动 (w)"
 
-#: src/gui.c:1758 src/multitrack.c:16703
+#: src/gui.c:1760 src/multitrack.c:16703
 msgid "Play all (p)"
 msgstr "播放所有 (p)"
 
-#: src/gui.c:1766 src/gui.c:1875
+#: src/gui.c:1768 src/gui.c:1877
 msgid "Stop playback (q)"
 msgstr "停止播放 (q)"
 
-#: src/gui.c:1777
+#: src/gui.c:1779
 msgid "Play selection (y)"
 msgstr "播放选区 (y)"
 
-#: src/gui.c:1830
+#: src/gui.c:1832
 msgid "Volume"
 msgstr "音量"
 
-#: src/gui.c:1852
+#: src/gui.c:1854
 msgid "Audio volume (1.00)"
 msgstr ""
 
-#: src/gui.c:1881
+#: src/gui.c:1883
 msgid "Unblank background (b)"
 msgstr ""
 
-#: src/gui.c:1927
+#: src/gui.c:1929
 msgid "Play slower (ctrl-down)"
 msgstr ""
 
-#: src/gui.c:1933
+#: src/gui.c:1935
 msgid "Play faster (ctrl-up)"
 msgstr ""
 
-#: src/gui.c:1940
+#: src/gui.c:1942
 msgid "Skip back (ctrl-left)"
 msgstr ""
 
-#: src/gui.c:1946
+#: src/gui.c:1948
 msgid "Skip forward (ctrl-right)"
 msgstr ""
 
-#: src/gui.c:1952
+#: src/gui.c:1954
 msgid "Show clip info (i)"
 msgstr "显示剪辑信息 (i)"
 
-#: src/gui.c:1958
+#: src/gui.c:1960
 msgid "Hide this toolbar"
 msgstr "隐藏此工具栏"
 
-#: src/gui.c:1960
+#: src/gui.c:1962
 msgid ""
 "Press \"s\" to toggle separate play window for improved performance, \"q\" "
 "to stop."
 msgstr ""
 
 #. TRANSLATORS: please keep the translated string the same length
-#: src/gui.c:1993
+#: src/gui.c:1995
 msgid "     Video playback speed (frames per second)        "
 msgstr ""
 
-#: src/gui.c:2007
+#: src/gui.c:2009
 msgid "Vary the video speed"
 msgstr "不同的视频播放速度"
 
-#: src/gui.c:2090 src/gui.c:3219
+#: src/gui.c:2092 src/gui.c:3221
 msgid "First Frame"
 msgstr "首帧"
 
-#: src/gui.c:2195 src/gui.c:3227
+#: src/gui.c:2197 src/gui.c:3229
 msgid "Last Frame"
 msgstr "末帧"
 
-#: src/gui.c:2212
+#: src/gui.c:2214
 msgid "The first selected frame in this clip"
 msgstr "此剪辑中所选择的第一帧"
 
-#: src/gui.c:2250
+#: src/gui.c:2252
 msgid "The last selected frame in this clip"
 msgstr "此剪辑中所选择的最后一帧"
 
-#: src/gui.c:2533
+#: src/gui.c:2535
 msgid "Starting...\n"
 msgstr "正在启动...\n"
 
-#: src/gui.c:3075
+#: src/gui.c:3077
 msgid "    Press 'q' to stop recording.  DO NOT COVER THE PLAY WINDOW !   "
 msgstr ""
 
-#: src/gui.c:3522
+#: src/gui.c:3524
 msgid "Frame number to preview"
 msgstr ""
 
-#: src/gui.c:3539
+#: src/gui.c:3541
 msgid "_Free"
 msgstr "空闲(_F)"
 
-#: src/gui.c:3540
+#: src/gui.c:3542
 msgid "Free choice of frame number"
 msgstr "自由选择的帧号"
 
-#: src/gui.c:3544
+#: src/gui.c:3546
 msgid "_Start"
 msgstr "起始(_S)"
 
-#: src/gui.c:3545
+#: src/gui.c:3547
 msgid "Frame number is linked to start frame"
 msgstr ""
 
-#: src/gui.c:3552
+#: src/gui.c:3554
 msgid "_End"
 msgstr "_结尾"
 
-#: src/gui.c:3553
+#: src/gui.c:3555
 msgid "Frame number is linked to end frame"
 msgstr ""
 
-#: src/gui.c:3560
+#: src/gui.c:3562
 msgid "_Pointer"
 msgstr "指针(_P)"
 
-#: src/gui.c:3561
+#: src/gui.c:3563
 msgid "Frame number is linked to playback pointer"
 msgstr ""
 
-#: src/gui.c:3582
+#: src/gui.c:3584
 msgid "Rewind"
 msgstr "倒回"
 
-#: src/gui.c:3593 src/dialogs.c:875 src/dialogs.c:877 src/dialogs.c:1796
+#: src/gui.c:3595 src/dialogs.c:875 src/dialogs.c:877 src/dialogs.c:1796
 #: src/dialogs.c:1798
 msgid "Play all"
 msgstr "播放所有"
 
-#: src/gui.c:3606
+#: src/gui.c:3608
 msgid "Play Selection"
 msgstr "播放选择"
 
-#: src/gui.c:3620
+#: src/gui.c:3622
 msgid "Loop On/Off"
 msgstr "循环开/关"
 
-#: src/gui.c:3694
+#: src/gui.c:3696
 msgid "Start _recording"
 msgstr ""
 
-#: src/gui.c:3699
+#: src/gui.c:3701
 msgid "Stop _recording"
 msgstr ""
 
-#: src/gui.c:3704
+#: src/gui.c:3706
 msgid "_Record Performance"
 msgstr "记录性能(_R)"
 
-#: src/gui.c:3852
+#: src/gui.c:3854
 msgid "Hide Play Window"
 msgstr "隐藏播放窗口"
 
-#: src/gui.c:4233
+#: src/gui.c:4235
 msgid "Show Play Window"
 msgstr "显示播放窗口"
 

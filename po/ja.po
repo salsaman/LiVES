@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ja\n"
 "Report-Msgid-Bugs-To: https://sourceforge.net/p/lives/bugs/\n"
-"POT-Creation-Date: 2014-04-13 10:57-0300\n"
+"POT-Creation-Date: 2014-04-19 12:35-0300\n"
 "PO-Revision-Date: 2013-03-14 12:31+0000\n"
 "Last-Translator: Launchpad Translations Administrators <Unknown>\n"
 "Language-Team: Japanese <ja@li.org>\n"
@@ -701,7 +701,7 @@ msgstr "記録 %9d/%d"
 msgid "!rec %9d/%d"
 msgstr "!記録 %9d/%d"
 
-#: src/main.c:5354 src/main.c:5355 src/gui.c:2108 src/gui.c:3221
+#: src/main.c:5354 src/main.c:5355 src/gui.c:2110 src/gui.c:3223
 #: src/saveplay.c:2324
 msgid "Play"
 msgstr "再生"
@@ -729,16 +729,16 @@ msgstr "元に戻す(_U)"
 msgid "_Redo"
 msgstr "やり直す(_R)"
 
-#: src/main.c:6448 src/interface.c:468 src/gui.c:2327 src/preferences.c:2335
+#: src/main.c:6448 src/interface.c:468 src/gui.c:2329 src/preferences.c:2335
 #: src/resample.c:1516
 msgid "Video"
 msgstr "ビデオ"
 
-#: src/main.c:6449 src/interface.c:482 src/gui.c:2352
+#: src/main.c:6449 src/interface.c:482 src/gui.c:2354
 msgid "Left Audio"
 msgstr "左音声"
 
-#: src/main.c:6450 src/gui.c:2376
+#: src/main.c:6450 src/gui.c:2378
 msgid "Right Audio"
 msgstr "右音声"
 
@@ -1151,7 +1151,7 @@ msgstr ""
 "す。"
 
 #: src/interface.c:112 src/callbacks.c:9618 src/callbacks.c:9641
-#: src/callbacks.c:9642 src/gui.c:3224 src/gui.c:3822 src/saveplay.c:2327
+#: src/callbacks.c:9642 src/gui.c:3226 src/gui.c:3824 src/saveplay.c:2327
 #: src/saveplay.c:3115 src/dialogs.c:1493 src/dialogs.c:1494
 #: src/dialogs.c:1725 src/dialogs.c:1726 src/framedraw.c:238
 #: src/multitrack.c:8016
@@ -2573,7 +2573,7 @@ msgstr "%d フレームで十分です !\n"
 msgid "LiVES: - Encoder debug output"
 msgstr "LiVES: - エンコーダのデバッグ出力"
 
-#: src/callbacks.c:7084 src/gui.c:1920
+#: src/callbacks.c:7084 src/gui.c:1922
 msgid "Fullscreen playback (f)"
 msgstr "フルスクリーン再生 (f)"
 
@@ -2582,7 +2582,7 @@ msgid "Fullscreen playback off (f)"
 msgstr "フルスクリーン再生オフ (f)"
 
 #: src/callbacks.c:7185 src/callbacks.c:7333 src/callbacks.c:7661
-#: src/callbacks.c:7678 src/gui.c:3713 src/saveplay.c:2455 src/saveplay.c:2489
+#: src/callbacks.c:7678 src/gui.c:3715 src/saveplay.c:2455 src/saveplay.c:2489
 #: src/saveplay.c:3092 src/saveplay.c:3197 src/saveplay.c:3216
 #: src/multitrack.c:9325 src/multitrack.c:11041
 #, c-format
@@ -2590,12 +2590,12 @@ msgid " (%d %% scale)"
 msgstr ""
 
 #: src/callbacks.c:7187 src/callbacks.c:7335 src/callbacks.c:7663
-#: src/gui.c:3717 src/saveplay.c:2457 src/saveplay.c:2491
+#: src/gui.c:3719 src/saveplay.c:2457 src/saveplay.c:2491
 #, c-format
 msgid "LiVES: - Play Window%s"
 msgstr ""
 
-#: src/callbacks.c:7299 src/gui.c:1905
+#: src/callbacks.c:7299 src/gui.c:1907
 msgid "Double size (d)"
 msgstr "ダブルサイズ (d)"
 
@@ -2607,15 +2607,15 @@ msgstr "シングルサイズ (d)"
 msgid "Hide the play window (s)"
 msgstr "再生ウィンドウを隠す (s)"
 
-#: src/callbacks.c:7449 src/gui.c:1744
+#: src/callbacks.c:7449 src/gui.c:1746
 msgid "Show the play window (s)"
 msgstr "再生ウィンドウを表示する (s)"
 
-#: src/callbacks.c:7450 src/gui.c:1894
+#: src/callbacks.c:7450 src/gui.c:1896
 msgid "Play in separate window (s)"
 msgstr "独立したウィンドウで再生 (s)"
 
-#: src/callbacks.c:7532 src/gui.c:4061 src/saveplay.c:2486
+#: src/callbacks.c:7532 src/gui.c:4063 src/saveplay.c:2486
 msgid "LiVES: - Streaming"
 msgstr "LiVES: - ストリーミング"
 
@@ -2623,7 +2623,7 @@ msgstr "LiVES: - ストリーミング"
 msgid "Switch continuous looping off (o)"
 msgstr "連続ループをオフ (o)"
 
-#: src/callbacks.c:7782 src/gui.c:1793
+#: src/callbacks.c:7782 src/gui.c:1795
 msgid "Switch continuous looping on (o)"
 msgstr "連続ループをオン (o)"
 
@@ -2632,11 +2632,11 @@ msgstr "連続ループをオン (o)"
 msgid "Audio volume (%.2f)"
 msgstr "音声ボリューム (%.2f)"
 
-#: src/callbacks.c:7873 src/callbacks.c:7874 src/gui.c:3641
+#: src/callbacks.c:7873 src/callbacks.c:7874 src/gui.c:3643
 msgid "Unmute the audio (z)"
 msgstr "音声ミュートをオフ (z)"
 
-#: src/callbacks.c:7885 src/callbacks.c:7886 src/gui.c:1806 src/gui.c:3640
+#: src/callbacks.c:7885 src/callbacks.c:7886 src/gui.c:1808 src/gui.c:3642
 msgid "Mute the audio (z)"
 msgstr "音声ミュートをオン (z)"
 
@@ -3550,44 +3550,44 @@ msgstr "LiVESストリームを受信する(_L)..."
 msgid "_Send LiVES stream to..."
 msgstr "LiVESストリームを送信する(_S)..."
 
-#: src/gui.c:1513
+#: src/gui.c:1515
 #, c-format
 msgid "Open _yuv4mpeg stream on %sstream.yuv..."
 msgstr "%sstream.yuvのyuv4mpegストリームを開く(_Y)..."
 
-#: src/gui.c:1534
+#: src/gui.c:1536
 msgid "_Import Project (.lv2)..."
 msgstr "プロジェクトのインポート (.lv2) (_I)..."
 
-#: src/gui.c:1538
+#: src/gui.c:1540
 msgid "E_xport Project (.lv2)..."
 msgstr "プロジェクトのエクスポート(.lv2)(_X)..."
 
-#: src/gui.c:1543
+#: src/gui.c:1545
 msgid "_VJ"
 msgstr "VJ(_V)"
 
-#: src/gui.c:1555
+#: src/gui.c:1557
 msgid "Real Time _Effect Mapping"
 msgstr "リアルタイムエフェクトマップ(_E)"
 
-#: src/gui.c:1561
+#: src/gui.c:1563
 msgid "Bind real time effects to ctrl-number keys."
 msgstr "リアルタイムエフェクトをコントロール-数字キーに設定します"
 
-#: src/gui.c:1563
+#: src/gui.c:1565
 msgid "Set Real Time Effect _Defaults"
 msgstr "リアルタイムエフェクトのデフォルト値を設定(_D)"
 
-#: src/gui.c:1565
+#: src/gui.c:1567
 msgid "Set default parameter values for real time effects."
 msgstr "リアルタイムエフェクトのデフォルト値を設定します"
 
-#: src/gui.c:1578
+#: src/gui.c:1580
 msgid "Save Real Time Effect _Defaults"
 msgstr "リアルタイムエフェクトをデフォルトとして保存(_D)"
 
-#: src/gui.c:1581
+#: src/gui.c:1583
 msgid ""
 "Save real time effect defaults so they will be restored each time you use "
 "LiVES."
@@ -3595,146 +3595,146 @@ msgstr ""
 "リアルタイムエフェクトをデフォルトとして保存します。毎回、LiVESの起動時に復元"
 "されます。"
 
-#: src/gui.c:1587
+#: src/gui.c:1589
 msgid "_Reset all playback speeds and positions"
 msgstr "すべての再生スピードと位置をリセット(_R)"
 
-#: src/gui.c:1590
+#: src/gui.c:1592
 msgid ""
 "Reset all playback positions to frame 1, and reset all playback frame rates."
 msgstr ""
 "すべての再生位置をフレーム1にリセットし、すべてのフレーム再生レートをリセット"
 "する"
 
-#: src/gui.c:1592
+#: src/gui.c:1594
 msgid "_MIDI/joystick interface"
 msgstr "MIDI/ジョイスティックインタフェース(_M)"
 
-#: src/gui.c:1607
+#: src/gui.c:1609
 msgid "_MIDI/joystick learner..."
 msgstr "MIDI/ジョイスティックの登録(_M)..."
 
-#: src/gui.c:1612
+#: src/gui.c:1614
 msgid "_Save device mapping..."
 msgstr "デバイスマップの保存(_S)..."
 
-#: src/gui.c:1618
+#: src/gui.c:1620
 msgid "_Load device mapping..."
 msgstr "デバイスマップの読み込み(_L)..."
 
-#: src/gui.c:1626
+#: src/gui.c:1628
 msgid "Show VJ _Keys"
 msgstr "VJキーの表示(_K)"
 
-#: src/gui.c:1630
+#: src/gui.c:1632
 msgid "To_ys"
 msgstr "トイ(_Y)"
 
-#: src/gui.c:1642
+#: src/gui.c:1644
 msgid "_None"
 msgstr "なし(_N)"
 
-#: src/gui.c:1650
+#: src/gui.c:1652
 msgid "_Autolives"
 msgstr "Autolives(_A)"
 
-#: src/gui.c:1655
+#: src/gui.c:1657
 msgid "_Mad Frames"
 msgstr "熱狂フレーム(_M)"
 
-#: src/gui.c:1660
+#: src/gui.c:1662
 msgid "_LiVES TV (broadband)"
 msgstr "LiVES TV (ブロードバンド)(_L)"
 
-#: src/gui.c:1670 src/multitrack.c:7372
+#: src/gui.c:1672 src/multitrack.c:7372
 msgid "_Help"
 msgstr "ヘルプ(_H)"
 
-#: src/gui.c:1682 src/multitrack.c:7392
+#: src/gui.c:1684 src/multitrack.c:7392
 msgid "_Manual (opens in browser)"
 msgstr "マニュアル (ブラウザで開く)(_M)"
 
-#: src/gui.c:1689 src/multitrack.c:7401
+#: src/gui.c:1691 src/multitrack.c:7401
 msgid "_Donate to the project !"
 msgstr "プロジェクトに寄付する!(_D)"
 
-#: src/gui.c:1693 src/multitrack.c:7405
+#: src/gui.c:1695 src/multitrack.c:7405
 msgid "_Email the author"
 msgstr "作者にメールを送る(_E)"
 
-#: src/gui.c:1697 src/multitrack.c:7409
+#: src/gui.c:1699 src/multitrack.c:7409
 msgid "Report a _bug"
 msgstr "バグを報告する(_B)"
 
-#: src/gui.c:1701 src/multitrack.c:7413
+#: src/gui.c:1703 src/multitrack.c:7413
 msgid "Suggest a _feature"
 msgstr "機能を提案する(_F)"
 
-#: src/gui.c:1705 src/multitrack.c:7417
+#: src/gui.c:1707 src/multitrack.c:7417
 msgid "Assist with _translating"
 msgstr "翻訳を手伝う(_T)"
 
-#: src/gui.c:1712 src/multitrack.c:7424
+#: src/gui.c:1714 src/multitrack.c:7424
 msgid "_Troubleshoot"
 msgstr "トラブルシューティング(_T)"
 
-#: src/gui.c:1716 src/multitrack.c:7428
+#: src/gui.c:1718 src/multitrack.c:7428
 msgid "_About"
 msgstr "LiVESについて(_A)"
 
-#: src/gui.c:1750
+#: src/gui.c:1752
 msgid "Rewind to start (w)"
 msgstr "開始まで巻き戻す (w)"
 
-#: src/gui.c:1758 src/multitrack.c:16703
+#: src/gui.c:1760 src/multitrack.c:16703
 msgid "Play all (p)"
 msgstr "すべて再生 (p)"
 
-#: src/gui.c:1766 src/gui.c:1875
+#: src/gui.c:1768 src/gui.c:1877
 msgid "Stop playback (q)"
 msgstr "再生を停止 (q)"
 
-#: src/gui.c:1777
+#: src/gui.c:1779
 msgid "Play selection (y)"
 msgstr "選択範囲を再生 (y)"
 
-#: src/gui.c:1830
+#: src/gui.c:1832
 msgid "Volume"
 msgstr "ボリューム"
 
-#: src/gui.c:1852
+#: src/gui.c:1854
 msgid "Audio volume (1.00)"
 msgstr "音声ボリューム (1.00)"
 
-#: src/gui.c:1881
+#: src/gui.c:1883
 msgid "Unblank background (b)"
 msgstr "空白でないバックグラウンド"
 
-#: src/gui.c:1927
+#: src/gui.c:1929
 msgid "Play slower (ctrl-down)"
 msgstr "遅く再生 (ctrl-down)"
 
-#: src/gui.c:1933
+#: src/gui.c:1935
 msgid "Play faster (ctrl-up)"
 msgstr "早く再生 (ctrl-up)"
 
-#: src/gui.c:1940
+#: src/gui.c:1942
 msgid "Skip back (ctrl-left)"
 msgstr "前へスキップ (ctrl+left)"
 
-#: src/gui.c:1946
+#: src/gui.c:1948
 msgid "Skip forward (ctrl-right)"
 msgstr "前にスキップ (ctrl-right)"
 
-#: src/gui.c:1952
+#: src/gui.c:1954
 msgid "Show clip info (i)"
 msgstr "クリップ情報を表示 (i)"
 
-#: src/gui.c:1958
+#: src/gui.c:1960
 msgid "Hide this toolbar"
 msgstr "ツールバーを隠す"
 
-#: src/gui.c:1960
+#: src/gui.c:1962
 msgid ""
 "Press \"s\" to toggle separate play window for improved performance, \"q\" "
 "to stop."
@@ -3743,110 +3743,110 @@ msgstr ""
 "てください。停止するには\"q\"を押してください。"
 
 #. TRANSLATORS: please keep the translated string the same length
-#: src/gui.c:1993
+#: src/gui.c:1995
 msgid "     Video playback speed (frames per second)        "
 msgstr "     ビデオ再生スピード (フレーム/秒)        "
 
-#: src/gui.c:2007
+#: src/gui.c:2009
 msgid "Vary the video speed"
 msgstr "映像の再生スピードの変更"
 
-#: src/gui.c:2090 src/gui.c:3219
+#: src/gui.c:2092 src/gui.c:3221
 msgid "First Frame"
 msgstr "先頭フレーム"
 
-#: src/gui.c:2195 src/gui.c:3227
+#: src/gui.c:2197 src/gui.c:3229
 msgid "Last Frame"
 msgstr "最終フレーム"
 
-#: src/gui.c:2212
+#: src/gui.c:2214
 msgid "The first selected frame in this clip"
 msgstr "このクリップで選択した最初のフレーム"
 
-#: src/gui.c:2250
+#: src/gui.c:2252
 msgid "The last selected frame in this clip"
 msgstr "このクリップで選択した最後のフレーム"
 
-#: src/gui.c:2533
+#: src/gui.c:2535
 msgid "Starting...\n"
 msgstr "開始しています...\n"
 
-#: src/gui.c:3075
+#: src/gui.c:3077
 msgid "    Press 'q' to stop recording.  DO NOT COVER THE PLAY WINDOW !   "
 msgstr ""
 "    記録を停止するには'q'を押してください。「再生ウィンドウを覆ってはいけませ"
 "ん！」   "
 
-#: src/gui.c:3522
+#: src/gui.c:3524
 msgid "Frame number to preview"
 msgstr "プレビューするフレーム数"
 
-#: src/gui.c:3539
+#: src/gui.c:3541
 msgid "_Free"
 msgstr "解放(_F)"
 
-#: src/gui.c:3540
+#: src/gui.c:3542
 msgid "Free choice of frame number"
 msgstr "解放するフレーム数"
 
-#: src/gui.c:3544
+#: src/gui.c:3546
 msgid "_Start"
 msgstr "開始(_S)"
 
-#: src/gui.c:3545
+#: src/gui.c:3547
 msgid "Frame number is linked to start frame"
 msgstr "開始フレームのフレーム番号"
 
-#: src/gui.c:3552
+#: src/gui.c:3554
 msgid "_End"
 msgstr "終了(_E)"
 
-#: src/gui.c:3553
+#: src/gui.c:3555
 msgid "Frame number is linked to end frame"
 msgstr "終了フレームのフレーム番号"
 
-#: src/gui.c:3560
+#: src/gui.c:3562
 msgid "_Pointer"
 msgstr "ポインター(_P)"
 
-#: src/gui.c:3561
+#: src/gui.c:3563
 msgid "Frame number is linked to playback pointer"
 msgstr "再生ポインターのフレーム番号"
 
-#: src/gui.c:3582
+#: src/gui.c:3584
 msgid "Rewind"
 msgstr "巻き戻し"
 
-#: src/gui.c:3593 src/dialogs.c:875 src/dialogs.c:877 src/dialogs.c:1796
+#: src/gui.c:3595 src/dialogs.c:875 src/dialogs.c:877 src/dialogs.c:1796
 #: src/dialogs.c:1798
 msgid "Play all"
 msgstr "すべて再生"
 
-#: src/gui.c:3606
+#: src/gui.c:3608
 msgid "Play Selection"
 msgstr "選択範囲を再生"
 
-#: src/gui.c:3620
+#: src/gui.c:3622
 msgid "Loop On/Off"
 msgstr "ループ On/Off"
 
-#: src/gui.c:3694
+#: src/gui.c:3696
 msgid "Start _recording"
 msgstr "記録の開始(_R)"
 
-#: src/gui.c:3699
+#: src/gui.c:3701
 msgid "Stop _recording"
 msgstr "記録の停止(_R)"
 
-#: src/gui.c:3704
+#: src/gui.c:3706
 msgid "_Record Performance"
 msgstr "動作を記録(_R)"
 
-#: src/gui.c:3852
+#: src/gui.c:3854
 msgid "Hide Play Window"
 msgstr "再生ウィンドウを隠す"
 
-#: src/gui.c:4233
+#: src/gui.c:4235
 msgid "Show Play Window"
 msgstr "再生ウィンドウの表示"
 

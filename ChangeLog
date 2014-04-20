@@ -1,8 +1,7 @@
-Version 2.2.4
--------------
+Version 2.2.4 (19 April 2014)
+-----------------------------
 Fix compiler errors from 2.2.3
-
-
+Fix GUI regression with gtk+ 3.0 < 3.8.0
 
 
 

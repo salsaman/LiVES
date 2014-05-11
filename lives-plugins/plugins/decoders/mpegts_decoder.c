@@ -1,5 +1,5 @@
 // LiVES - mpegts decoder plugin
-// (c) G. Finch 2012 <salsaman@gmail.com>
+// (c) G. Finch 2012 - 2014 <salsaman@gmail.com>
 
 /*
  * This file is free software; you can redistribute it and/or
@@ -34,7 +34,7 @@
 #include <endian.h>
 #endif
 
-const char *plugin_version="LiVES mpegts decoder version 1.2";
+const char *plugin_version="LiVES mpegts decoder version 1.2a";
 
 #ifdef HAVE_AV_CONFIG_H
 #undef HAVE_AV_CONFIG_H
@@ -3208,7 +3208,6 @@ static boolean attach_stream(lives_clip_data_t *cdata, boolean isclone) {
 
   got_picture=0;
 
-
   while (!got_picture&&!priv->got_eof) {
 
 #if LIBAVCODEC_VERSION_MAJOR >= 52
@@ -3345,11 +3344,15 @@ static boolean attach_stream(lives_clip_data_t *cdata, boolean isclone) {
     cdata->interlace=LIVES_INTERLACE_BOTTOM_FIRST;
   }
 
-  if (is_partial_clone) return TRUE;
-    fprintf(stderr,"is !!!pclone\n");
+  if (is_partial_clone) {
+    // see if we have a file from previous open
+    pthread_mutex_lock(&priv->idxc->mutex);
+    mpegts_load_index(cdata);
+    pthread_mutex_unlock(&priv->idxc->mutex);
+    return TRUE;
+  }
 
   ldts=get_last_video_dts(cdata);
-
 
   if (ldts==-1) {
     fprintf(stderr, "mpegts_decoder: could not read last dts\n");
@@ -3361,7 +3364,7 @@ static boolean attach_stream(lives_clip_data_t *cdata, boolean isclone) {
   
   cdata->nframes=dts_to_frame(cdata,ldts)+2;
 
-  fprintf(stderr,"check for %ld frames\n",cdata->nframes);
+  //fprintf(stderr,"check for %ld frames\n",cdata->nframes);
 
   // double check, sometimes we can be out by one or two frames
   while (1) {
@@ -3620,225 +3623,23 @@ static size_t write_black_pixel(unsigned char *idst, int pal, int npixels, int y
 
 
 
-/*
-  boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstrides, int height, void **pixel_data) {
-  // seek to frame,
-  int len;
-  int64_t target_pts=frame_to_dts(cdata,tframe);
-  int64_t nextframe=0;
-  lives_mpegts_priv_t *priv=cdata->priv;
-  int xheight=cdata->frame_height,pal=cdata->current_palette,nplanes=1,dstwidth=cdata->width,psize=1;
-  int btop=cdata->offs_y,bbot=xheight-1-btop;
-  int bleft=cdata->offs_x,bright=cdata->frame_width-cdata->width-bleft;
-  int rescan_limit=16;  // pick some arbitrary value
-  int y_black=(cdata->YUV_clamping==WEED_YUV_CLAMPING_CLAMPED)?16:0;
-  boolean got_picture=FALSE;
-  boolean hit_target=FALSE;
-  unsigned char *dst,*src;//,flags;
-  unsigned char black[4]={0,0,0,255};
-  index_entry *idx;
-  register int i,p;
-
-
-  //#define DEBUG_KFRAMES
-  #ifdef DEBUG_KFRAMES
-  fprintf(stderr,"vals %ld %ld\n",tframe,priv->last_frame);
-  #endif
-
-  priv->got_eof=FALSE;
-
-  priv->black_fill=FALSE;
-
-  // calc frame width and height, including any border
-
-  if (pixel_data!=NULL) {
-  if (pal==WEED_PALETTE_YUV420P||pal==WEED_PALETTE_YVU420P||pal==WEED_PALETTE_YUV422P||pal==WEED_PALETTE_YUV444P) {
-  nplanes=3;
-  black[0]=y_black;
-  black[1]=black[2]=128;
-  }
-  else if (pal==WEED_PALETTE_YUVA4444P) {
-  nplanes=4;
-  black[0]=y_black;
-  black[1]=black[2]=128;
-  black[3]=255;
-  }
-    
-  if (pal==WEED_PALETTE_RGB24||pal==WEED_PALETTE_BGR24) psize=3;
-    
-  if (pal==WEED_PALETTE_RGBA32||pal==WEED_PALETTE_BGRA32||pal==WEED_PALETTE_ARGB32||
-  pal==WEED_PALETTE_UYVY8888||pal==WEED_PALETTE_YUYV8888||pal==WEED_PALETTE_YUV888||
-  pal==WEED_PALETTE_YUVA8888) psize=4;
-    
-  if (pal==WEED_PALETTE_YUV411) psize=6;
-    
-  if (pal==WEED_PALETTE_A1) dstwidth>>=3;
-    
-  dstwidth*=psize;
-    
-  if (cdata->frame_height > cdata->height && height == cdata->height) {
-  // host ignores vertical border
-  btop=0;
-  xheight=cdata->height;
-  bbot=xheight-1;
-  }
-    
-  if (cdata->frame_width > cdata->width && rowstrides[0] < cdata->frame_width*psize) {
-  // host ignores horizontal border
-  bleft=bright=0;
-  }
-  }
-  ////////////////////////////////////////////////////////////////////
-
-  if (tframe!=priv->last_frame) {
-
-  if (priv->last_frame==-1 || (tframe<priv->last_frame) || (tframe - priv->last_frame > rescan_limit)) {
-  idx=mpegts_read_seek(cdata,target_pts);
-
-  nextframe=dts_to_frame(cdata,idx->dts);
-
-  if (priv->input_position>=priv->filesize) return FALSE;
-
-  #define DEBUG_KFRAMES
-  #ifdef DEBUG_KFRAMES
-  if (idx!=NULL) printf("got kframe %ld for frame %ld\n",nextframe,tframe);
-  #endif
-  }
-  else {
-  nextframe=priv->last_frame+1;
-  }
-
-  //priv->ctx->skip_frame=AVDISCARD_NONREF;
-
-  priv->last_frame=tframe;
-  if (priv->picture==NULL) priv->picture = avcodec_alloc_frame();
-
-  do {
- 
-  mpegts_read_packet((lives_clip_data_t *)cdata,&priv->avpkt);
-
-  if (priv->got_eof) {
-  fprintf(stderr,"got EOF\n");
-  if (priv->avpkt.data!=NULL) free(priv->avpkt.data);
-  priv->avpkt.data=NULL;
-  priv->avpkt.size=0;
-  priv->last_frame=tframe;
-  if (pixel_data==NULL) return FALSE;
-  priv->black_fill=TRUE;
-  goto framedone;
-  }
-
-  // decode any frames from this packet
-  if (priv->picture==NULL) priv->picture=avcodec_alloc_frame();
-
-  #if LIBAVCODEC_VERSION_MAJOR >= 53
-  avcodec_decode_video2( priv->ctx, priv->picture, &got_picture, &priv->avpkt );
-  #else 
-  avcodec_decode_video( priv->ctx, priv->picture, &got_picture, priv->avpkt.data, priv->avpkt.size );
-  #endif
-  #ifdef DEBUG
-  fprintf(stderr,"pt 1 %ld %d %ld\n",tframe,got_picture,MyPts);
-  #endif
-
-  free(priv->avpkt.data);
-  priv->avpkt.data=NULL;
-  priv->avpkt.size=0;
-
-  // otherwise discard this frame
-  if (got_picture) {
-  fprintf(stderr,"GOT PIC\n");
-  av_free(priv->picture);
-  priv->picture=NULL;
-  if (nextframe>=tframe) hit_target=TRUE;
-  nextframe++;
-  }
-
-
-  } while (!hit_target);
-  }
-
-  framedone:
-
-  if (priv->picture==NULL||pixel_data==NULL) {
-  return !priv->got_eof;
-  }
-
-  if (priv->black_fill) btop=cdata->frame_height;
-
-
-  for (p=0;p<nplanes;p++) {
-  dst=pixel_data[p];
-  src=priv->picture->data[p];
-
-  for (i=0;i<xheight;i++) {
-  if (i<btop||i>bbot) {
-  // top or bottom border, copy black row
-  if (pal==WEED_PALETTE_YUV420P||pal==WEED_PALETTE_YVU420P||pal==WEED_PALETTE_YUV422P
-  ||pal==WEED_PALETTE_YUV444P||pal==WEED_PALETTE_YUVA4444P||pal==WEED_PALETTE_RGB24
-  ||pal==WEED_PALETTE_BGR24) {
-  memset(dst,black[p],dstwidth+(bleft+bright)*psize);
-  dst+=dstwidth+(bleft+bright)*psize;
-  }
-  else dst+=write_black_pixel(dst,pal,dstwidth/psize+bleft+bright,y_black);
-  continue;
-  }
-
-  if (bleft>0) {
-  if (pal==WEED_PALETTE_YUV420P||pal==WEED_PALETTE_YVU420P||pal==WEED_PALETTE_YUV422P||
-  pal==WEED_PALETTE_YUV444P||pal==WEED_PALETTE_YUVA4444P||pal==WEED_PALETTE_RGB24
-  ||pal==WEED_PALETTE_BGR24) {
-  memset(dst,black[p],bleft*psize);
-  dst+=bleft*psize;
-  }
-  else dst+=write_black_pixel(dst,pal,bleft,y_black);
-  }
-
-  memcpy(dst,src,dstwidth);
-  dst+=dstwidth;
-
-  if (bright>0) {
-  if (pal==WEED_PALETTE_YUV420P||pal==WEED_PALETTE_YVU420P||pal==WEED_PALETTE_YUV422P
-  ||pal==WEED_PALETTE_YUV444P||pal==WEED_PALETTE_YUVA4444P||
-  pal==WEED_PALETTE_RGB24||pal==WEED_PALETTE_BGR24) {
-  memset(dst,black[p],bright*psize);
-  dst+=bright*psize;
-  }
-  else dst+=write_black_pixel(dst,pal,bright,y_black);
-  }
-
-  src+=priv->picture->linesize[p];
-  }
-  if (p==0&&(pal==WEED_PALETTE_YUV420P||pal==WEED_PALETTE_YVU420P||pal==WEED_PALETTE_YUV422P)) {
-  dstwidth>>=1;
-  bleft>>=1;
-  bright>>=1;
-  }
-  if (p==0&&(pal==WEED_PALETTE_YUV420P||pal==WEED_PALETTE_YVU420P)) {
-  xheight>>=1;
-  btop>>=1;
-  bbot>>=1;
-  }
-  }
-  
-  return TRUE;
-  }
-*/
-
-
 boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstrides, int height, void **pixel_data) {
   // seek to frame,
   int len;
   int64_t target_pts=frame_to_dts(cdata,tframe);
   int64_t nextframe=0;
   lives_mpegts_priv_t *priv=cdata->priv;
+
   int xheight=cdata->frame_height,pal=cdata->current_palette,nplanes=1,dstwidth=cdata->width,psize=1;
   int btop=cdata->offs_y,bbot=xheight-1-btop;
   int bleft=cdata->offs_x,bright=cdata->frame_width-cdata->width-bleft;
   int rescan_limit=16;  // pick some arbitrary value
   int y_black=(cdata->YUV_clamping==WEED_YUV_CLAMPING_CLAMPED)?16:0;
+
   boolean got_picture=FALSE;
   unsigned char *dst,*src;//,flags;
   unsigned char black[4]={0,0,0,255};
+
   index_entry *idx;
   register int i,p;
 

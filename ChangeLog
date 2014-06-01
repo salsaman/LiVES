@@ -1,3 +1,10 @@
+Version 2.2.5
+-------------
+Fix crash (regression) in mpegts decoder.
+
+
+
+
 Version 2.2.4 (19 April 2014)
 -----------------------------
 Fix compiler errors from 2.2.3

@@ -196,6 +196,9 @@ static void on_init_aplayer_toggled (GtkToggleButton *tbutton, gpointer user_dat
   case AUD_PLAYER_MPLAYER:
     set_pref("audio_player","mplayer");
     break;
+  case AUD_PLAYER_MPLAYER2:
+    set_pref("audio_player","mplayer2");
+    break;
   }
 
 }
@@ -204,7 +207,7 @@ static void on_init_aplayer_toggled (GtkToggleButton *tbutton, gpointer user_dat
 
 
 boolean do_audio_choice_dialog(short startup_phase) {
-  GtkWidget *dialog,*dialog_vbox,*radiobutton0,*radiobutton1,*radiobutton2,*radiobutton3,*label;
+  GtkWidget *dialog,*dialog_vbox,*radiobutton0,*radiobutton1,*radiobutton2,*radiobutton3,*radiobutton4,*label;
   GtkWidget *okbutton,*cancelbutton;
   GtkWidget *hbox;
 
@@ -257,8 +260,8 @@ boolean do_audio_choice_dialog(short startup_phase) {
     txt6=g_strdup(_("but you do not have sox installed.\nYou are advised to install it before running LiVES.\n\n"));
   }
 
-  if (capable->has_mplayer) {
-    txt7=g_strdup(_("The MPLAYER audio player is only recommended for testing purposes.\n\n"));
+  if (capable->has_mplayer||capable->has_mplayer2) {
+    txt7=g_strdup(_("The MPLAYER/MPLAYER2 audio player is only recommended for testing purposes.\n\n"));
   }
   else {
     txt7=g_strdup("");
@@ -371,6 +374,25 @@ boolean do_audio_choice_dialog(short startup_phase) {
 
   }
 
+  if (capable->has_mplayer2) {
+    hbox = lives_hbox_new (FALSE, 0);
+    lives_box_pack_start (LIVES_BOX (dialog_vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
+
+    radiobutton4 = lives_standard_radio_button_new (_("Use _mplayer2 audio player"),TRUE,radiobutton_group,LIVES_BOX(hbox),NULL);
+
+    if (prefs->audio_player==-1) prefs->audio_player=AUD_PLAYER_MPLAYER2;
+
+    if (prefs->audio_player==AUD_PLAYER_MPLAYER2) {
+      lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(radiobutton4),TRUE); 
+      set_pref("audio_player","mplayer2");
+    }
+						    
+    g_signal_connect (GTK_OBJECT (radiobutton4), "toggled",
+		      G_CALLBACK (on_init_aplayer_toggled),
+                      GINT_TO_POINTER(AUD_PLAYER_MPLAYER2));
+
+
+  }
 
   cancelbutton = lives_button_new_from_stock ("gtk-cancel");
   lives_widget_show (cancelbutton);
@@ -399,7 +421,7 @@ boolean do_audio_choice_dialog(short startup_phase) {
 
   lives_widget_destroy(dialog);
 
-  if (prefs->audio_player==AUD_PLAYER_SOX||prefs->audio_player==AUD_PLAYER_MPLAYER) {
+  if (prefs->audio_player==AUD_PLAYER_SOX||prefs->audio_player==AUD_PLAYER_MPLAYER||prefs->audio_player==AUD_PLAYER_MPLAYER2) {
     lives_widget_hide(mainw->vol_toolitem);
     if (mainw->vol_label!=NULL) lives_widget_hide(mainw->vol_label);
     lives_widget_hide (mainw->recaudio_submenu);
@@ -686,8 +708,8 @@ boolean do_startup_tests(boolean tshoot) {
   add_test(table,2,_("Checking for \"mplayer\" presence"),TRUE);
 
 
-  if (!capable->has_mplayer) {
-    success2=fail_test(table,2,_("You should install mplayer to be able to use all the decoding features in LiVES"));
+  if (!capable->has_mplayer&&!capable->has_mplayer2) {
+    success2=fail_test(table,2,_("You should install mplayer or mplayer2 to be able to use all the decoding features in LiVES"));
 
     if (!success) {
       lives_widget_destroy(dialog);
@@ -716,17 +738,25 @@ boolean do_startup_tests(boolean tshoot) {
   add_test(table,3,_("Checking if mplayer can convert audio"),success2);
 
   if (success2) {
-
+    if (capable->has_mplayer) {
 #ifndef IS_MINGW
-    res=system("LANG=en LANGUAGE=en mplayer -ao help | grep pcm >/dev/null 2>&1");
+      res=system("LANG=en LANGUAGE=en mplayer -ao help | grep pcm >/dev/null 2>&1");
 #else    
-    res=system("mplayer -ao help | grep pcm >NUL 2>&1");
+      res=system("mplayer -ao help | grep pcm >NUL 2>&1");
 #endif
+    }
+    else {
+#ifndef IS_MINGW
+      res=system("LANG=en LANGUAGE=en mplayer2 -ao help | grep pcm >/dev/null 2>&1");
+#else    
+      res=system("mplayer2 -ao help | grep pcm >NUL 2>&1");
+#endif
+    }
     if (res==0) {
       pass_test(table,3);
     }
     else {
-      fail_test(table,3,_("You should install mplayer with pcm/wav support"));
+      fail_test(table,3,_("You should install mplayer or mplayer2 with pcm/wav support"));
     }
   }
 
@@ -816,12 +846,21 @@ boolean do_startup_tests(boolean tshoot) {
 
 
   if (success2) {
+    if (capable->has_mplayer) {
 #ifndef IS_MINGW
-    res=system("LANG=en LANGUAGE=en mplayer -vo help | grep -i \"jpeg file\" >/dev/null 2>&1");
+      res=system("LANG=en LANGUAGE=en mplayer -vo help | grep -i \"jpeg file\" >/dev/null 2>&1");
 #else    
-    res=system("mplayer -vo help | grep -i \"jpeg file\" >NUL 2>&1");
+      res=system("mplayer -vo help | grep -i \"jpeg file\" >NUL 2>&1");
 #endif
-    
+    }
+    else {
+#ifndef IS_MINGW
+      res=system("LANG=en LANGUAGE=en mplayer2 -vo help | grep -i \"jpeg file\" >/dev/null 2>&1");
+#else    
+      res=system("mplayer2 -vo help | grep -i \"jpeg file\" >NUL 2>&1");
+#endif
+    }
+
     if (res==0) {
       pass_test(table,5);
       if (!success3) {

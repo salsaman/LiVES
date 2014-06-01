@@ -1279,9 +1279,13 @@ static boolean attach_stream(lives_clip_data_t *cdata, boolean isclone) {
     if (ofd!=-1) {
       int res;
       snprintf(cmd,1024,"LANGUAGE=en LANG=en mplayer \"%s\" -identify -frames 0 2>/dev/null | grep ID_VIDEO_FPS > %s",cdata->URI,tmpfname);
-      
       res=system(cmd);
-      
+
+      if (res) {
+	snprintf(cmd,1024,"LANGUAGE=en LANG=en mplayer2 \"%s\" -identify -frames 0 2>/dev/null | grep ID_VIDEO_FPS > %s",cdata->URI,tmpfname);
+	res=system(cmd);
+      }
+
       if (!res) {
 	char buffer[1024];
 	ssize_t bytes=read(ofd,buffer,1024);

@@ -3536,6 +3536,57 @@ void switch_aud_to_mplayer(boolean set_in_prefs) {
 }
 
 
+void switch_aud_to_mplayer2(boolean set_in_prefs) {
+  int i;
+  for (i=1;i<MAX_FILES;i++) {
+    if (mainw->files[i]!=NULL) {
+      if (i!=mainw->current_file&&mainw->files[i]->opening) {
+	do_error_dialog(_ ("LiVES cannot switch to mplayer2 whilst clips are loading."));
+	return;
+      }
+    }
+  }
+  
+  prefs->audio_player=AUD_PLAYER_MPLAYER2;
+  get_pref_default("mplayer2_audio_command",prefs->audio_play_command,256); // TODO
+  if (set_in_prefs) set_pref("audio_player","mplayer2"); // TODO
+  g_snprintf(prefs->aplayer,512,"%s","mplayer2");
+  set_pref("audio_play_command",prefs->audio_play_command);
+  if (mainw->is_ready) {
+    lives_widget_hide(mainw->vol_toolitem);
+    if (mainw->vol_label!=NULL) lives_widget_hide(mainw->vol_label);
+    lives_widget_hide (mainw->recaudio_submenu);
+
+    if (mainw->vpp!=NULL&&mainw->vpp->get_audio_fmts!=NULL) 
+      mainw->vpp->audio_codec=get_best_audio(mainw->vpp);
+  }
+
+#ifdef ENABLE_JACK
+  if (mainw->jackd_read!=NULL) {
+    jack_close_device(mainw->jackd_read);
+    mainw->jackd_read=NULL;
+  }
+
+  if (mainw->jackd!=NULL) {
+    jack_close_device(mainw->jackd);
+    mainw->jackd=NULL;
+  }
+#endif
+
+#ifdef HAVE_PULSE_AUDIO
+  if (mainw->pulsed_read!=NULL) {
+    pulse_close_client(mainw->pulsed_read);
+    mainw->pulsed_read=NULL;
+  }
+
+  if (mainw->pulsed!=NULL) {
+    pulse_close_client(mainw->pulsed);
+    mainw->pulsed=NULL;
+    pulse_shutdown();
+  }
+#endif
+
+}
 
 boolean prepare_to_play_foreign(void) {
   // here we are going to 'play' a captured external window

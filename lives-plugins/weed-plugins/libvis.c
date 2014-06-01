@@ -103,7 +103,7 @@ int libvis_init (weed_plant_t *inst) {
     hinfo=weed_get_plantptr_value(pinfo,"host_info",&error);
     if (weed_plant_has_leaf(hinfo,"host_audio_player")) {
       hap=weed_get_string_value(hinfo,"host_audio_player",&error);
-      if (!strcmp(hap,"sox")||!strcmp(hap,"mplayer")) {
+      if (!strcmp(hap,"sox")||!strcmp(hap,"mplayer")||!strcmp(hap,"mplayer2")) {
 	ainput="alsa";
       }
       else {

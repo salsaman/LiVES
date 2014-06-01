@@ -503,6 +503,8 @@ static boolean pre_init(void) {
 
   if (!strcmp(buff,"mplayer"))
     prefs->audio_player=AUD_PLAYER_MPLAYER;
+  if (!strcmp(buff,"mplayer2"))
+    prefs->audio_player=AUD_PLAYER_MPLAYER2;
   if (!strcmp(buff,"jack"))
     prefs->audio_player=AUD_PLAYER_JACK;
   if (!strcmp(buff,"pulse"))
@@ -1259,6 +1261,11 @@ static void lives_init(_ign_opts *ign_opts) {
 	set_pref("video_open_command",prefs->video_open_command);
       }
       
+      if (!strlen(prefs->video_open_command)&&capable->has_mplayer2) {
+	get_location("mplayer2",prefs->video_open_command,256);
+	set_pref("video_open_command",prefs->video_open_command);
+      }
+      
       prefs->warn_file_size=get_int_pref("warn_file_size");
       if (prefs->warn_file_size==0) {
 	prefs->warn_file_size=WARN_FILE_SIZE;
@@ -1597,6 +1604,7 @@ static void lives_init(_ign_opts *ign_opts) {
       if (capable->has_pulse_audio) naudp++;
       if (capable->has_sox_play) naudp++;
       if (capable->has_mplayer) naudp++;
+      if (capable->has_mplayer2) naudp++;
 
       if (naudp>1) {
 	if (prefs->startup_phase>0&&prefs->startup_phase<=4) {
@@ -1741,6 +1749,8 @@ void do_start_messages(void) {
   d_print(_("Checking optional dependencies:"));
   if (capable->has_mplayer) d_print(_ ("mplayer...detected..."));
   else d_print(_ ("mplayer...NOT DETECTED..."));
+  if (capable->has_mplayer2) d_print(_ ("mplayer2...detected..."));
+  else d_print(_ ("mplayer2...NOT DETECTED..."));
   if (capable->has_convert) d_print(_ ("convert...detected..."));
   else d_print(_ ("convert...NOT DETECTED..."));
   if (capable->has_composite) d_print(_ ("composite...detected..."));
@@ -2033,6 +2043,7 @@ capability *get_capabilities (void) {
 
   // optional
   capable->has_mplayer=FALSE;
+  capable->has_mplayer2=FALSE;
   capable->has_convert=FALSE;
   capable->has_composite=FALSE;
   capable->has_identify=FALSE;
@@ -2175,6 +2186,9 @@ capability *get_capabilities (void) {
   get_location("mplayer",string,256);
   if (strlen(string)) capable->has_mplayer=TRUE;
 
+  get_location("mplayer2",string,256);
+  if (strlen(string)) capable->has_mplayer2=TRUE;
+
 #ifndef IS_MINGW
   get_location("convert",string,256);
 #else
@@ -2296,7 +2310,7 @@ void print_opthelp(void) {
   g_printerr("%s",_("-oscstart <port> : start OSC listener on UDP port <port>\n"));
   g_printerr("%s",_("-nooscstart      : do not start OSC listener\n"));
 #endif
-  g_printerr("%s",_("-aplayer <ap>    : start with selected audio player. <ap> can be mplayer"));
+  g_printerr("%s",_("-aplayer <ap>    : start with selected audio player. <ap> can be mplayer, mplayer2"));
 #ifdef HAVE_PULSE_AUDIO
   // TRANSLATORS: pulse (audio)
   g_printerr("%s",_(", pulse"));
@@ -2419,12 +2433,12 @@ static boolean lives_startup(gpointer data) {
 	      }
 	      else {
 		#ifndef IS_MINGW
-		if ((!capable->has_sox_sox||!capable->has_sox_play)&&!capable->has_mplayer){
-		  startup_message_fatal(_ ("\nLiVES currently requires either 'mplayer' or 'sox' to function. Please install one or other of these, and try again.\n"));
+		if ((!capable->has_sox_sox||!capable->has_sox_play)&&!capable->has_mplayer&&!capable->has_mplayer2){
+		  startup_message_fatal(_ ("\nLiVES currently requires 'mplayer', 'mplayer2' or 'sox' to function. Please install one or other of these, and try again.\n"));
 		}
 		#else
-		if (!capable->has_sox_sox||!capable->has_mplayer){
-		  startup_message_fatal(_ ("\nLiVES currently requires both 'mplayer' and 'sox' to function. Please install these, and try again.\n"));
+		if (!capable->has_sox_sox||(!capable->has_mplayer&&!capable->has_mplayer2)){
+		  startup_message_fatal(_ ("\nLiVES currently requires both 'mplayer' or 'mplayer2' and 'sox' to function. Please install these, and try again.\n"));
 		}
 		#endif
 		else {
@@ -2433,8 +2447,8 @@ static boolean lives_startup(gpointer data) {
 		  }
 		  else {
 		    // non-fatal errors
-		    if (!capable->has_mplayer&&!(prefs->warning_mask&WARN_MASK_NO_MPLAYER)) {
-		      startup_message_nonfatal_dismissable (_ ("\nLiVES was unable to locate 'mplayer'. You may wish to install mplayer to use LiVES more fully.\n"),WARN_MASK_NO_MPLAYER);
+		    if (!capable->has_mplayer&&!capable->has_mplayer2&&!(prefs->warning_mask&WARN_MASK_NO_MPLAYER)) {
+		      startup_message_nonfatal_dismissable (_ ("\nLiVES was unable to locate 'mplayer' or 'mplayer2'. You may wish to install either one to use LiVES more fully.\n"),WARN_MASK_NO_MPLAYER);
 		    }
 		    if (!capable->has_convert) {
 		      startup_message_nonfatal_dismissable (_ ("\nLiVES was unable to locate 'convert'. You should install convert and image-magick if you want to use rendered effects.\n"),WARN_MASK_NO_MPLAYER);
@@ -2889,6 +2903,10 @@ int main (int argc, char *argv[]) {
 	  }
 	  if (!strcmp(buff,"mplayer")) {
 	    switch_aud_to_mplayer(TRUE);
+	    apl_valid=TRUE;
+	  }
+	  if (!strcmp(buff,"mplayer2")) {
+	    switch_aud_to_mplayer2(TRUE);
 	    apl_valid=TRUE;
 	  }
 	  if (!strcmp(buff,"jack")) {
@@ -6491,8 +6509,8 @@ void switch_to_file(int old_file, int new_file) {
   if (mainw->files[new_file]==NULL) return;
 
   if (cfile!=NULL&&old_file*new_file>0&&cfile->opening) {
-    if (prefs->audio_player==AUD_PLAYER_MPLAYER) {
-      do_error_dialog(_ ("\n\nLiVES cannot switch clips whilst opening if the audio player is set to mplayer.\nPlease adjust the playback options in Preferences and try again.\n"));
+    if (prefs->audio_player==AUD_PLAYER_MPLAYER||prefs->audio_player==AUD_PLAYER_MPLAYER2) {
+      do_error_dialog(_ ("\n\nLiVES cannot switch clips whilst opening if the audio player is set to mplayer or mplayer2.\nPlease adjust the playback options in Preferences and try again.\n"));
       return;
     }
   }

@@ -55,7 +55,8 @@ if ($command eq "init") {
     }
 
     if (&location("mplayer") eq "") {
-	print "mplayer was not found. Please install it and try again.";
+	if (&location("mplayer2") eq "") {
+	print "mplayer or mplayer2 was not found. Please install it and try again.";
 	exit 1;
     }
 
@@ -145,11 +146,15 @@ if ($command eq "encode") {
 	}
     }
     else {
+	$mplayer_com="mplayer";
+	if (&location("mplayer") eq "") {
+	    $mplayer_com="mplayer2";
+	}
 	if ($img_ext eq ".png") {
-	    $syscom="mplayer -frames $end -mf fps=$fps:type=png mf://*.png -nosound -benchmark -fps $fps -ao null -vo yuv4mpeg:file=$queuefile </dev/null";
+	    $syscom="$mplayer_com -frames $end -mf fps=$fps:type=png mf://*.png -nosound -benchmark -fps $fps -ao null -vo yuv4mpeg:file=$queuefile </dev/null";
 	}
 	else {
-	    $syscom="mplayer -frames $end -mf fps=$fps:type=jpg mf://*".$img_ext." -nosound -benchmark -fps $fps -ao null -vo yuv4mpeg:file=$queuefile </dev/null";
+	    $syscom="$mplayer_com -frames $end -mf fps=$fps:type=jpg mf://*".$img_ext." -nosound -benchmark -fps $fps -ao null -vo yuv4mpeg:file=$queuefile </dev/null";
 	}
 
     }

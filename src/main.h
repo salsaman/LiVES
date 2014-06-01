@@ -676,6 +676,7 @@ typedef struct {
   boolean has_sox_sox;
   boolean has_autolives;
   boolean has_mplayer;
+  boolean has_mplayer2;
   boolean has_convert;
   boolean has_composite;
   boolean has_identify;
@@ -1171,6 +1172,7 @@ void switch_aud_to_sox(boolean set_pref);
 boolean switch_aud_to_jack(void);
 boolean switch_aud_to_pulse(void);
 void switch_aud_to_mplayer(boolean set_pref);
+void switch_aud_to_mplayer2(boolean set_pref);
 boolean prepare_to_play_foreign(void);
 boolean after_foreign_play(void);
 boolean check_file(const char *file_name, boolean check_exists);  ///< check if file exists

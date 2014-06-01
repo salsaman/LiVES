@@ -6021,13 +6021,13 @@ void on_fs_preview_clicked (GtkWidget *widget, gpointer user_data) {
 
   if (!(height*width)) {
     // media preview
-    if (!capable->has_mplayer) {
+    if (!capable->has_mplayer&&!capable->has_mplayer2) {
       gchar *msg;
       if (capable->has_identify) {
-	msg=g_strdup(_ ("\n\nYou need to install mplayer to be able to preview this file.\n"));
+	msg=g_strdup(_ ("\n\nYou need to install mplayer or mplayer2 to be able to preview this file.\n"));
       }
       else {
-	msg=g_strdup(_ ("\n\nYou need to install mplayer or imageMagick to be able to preview this file.\n"));
+	msg=g_strdup(_ ("\n\nYou need to install mplayer, mplayer2 or imageMagick to be able to preview this file.\n"));
       }
       do_blocking_error_dialog(msg);
       g_free(msg);
@@ -6487,7 +6487,7 @@ void on_open_new_audio_clicked (GtkFileChooser *chooser, gpointer user_data) {
 
   if (!g_ascii_strncasecmp(a_type,"wav",3)) israw=0;
 
-  if (capable->has_mplayer) {
+  if (capable->has_mplayer||capable->has_mplayer2) {
     if (read_file_details (file_name,TRUE)) {
       array=g_strsplit(mainw->msg,"|",15);
       cfile->arate=atoi(array[9]);
@@ -9604,6 +9604,10 @@ on_preview_clicked                     (GtkButton       *button,
 
     if (oaudp==AUD_PLAYER_MPLAYER&&prefs->audio_player!=oaudp) {
       switch_aud_to_mplayer(FALSE);
+    }
+
+    if (oaudp==AUD_PLAYER_MPLAYER2&&prefs->audio_player!=oaudp) {
+      switch_aud_to_mplayer2(FALSE);
     }
 
     cfile->start=ostart;

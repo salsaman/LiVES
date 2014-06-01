@@ -16,6 +16,8 @@
  * <http://www.gnu.org/licenses/>.
  */
 
+// giwtimeline.h (c) 2013 - 2014 G. Finch salsaman@gmail.com
+
 #ifndef __GIW_TIMELINE_H__
 #define __GIW_TIMELINE_H__
 

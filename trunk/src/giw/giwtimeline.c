@@ -16,6 +16,7 @@
  * <http://www.gnu.org/licenses/>.
  */
 
+// giwtimeline.c (c) 2013 - 2014 G. Finch salsaman@gmail.com
 
 #include <gtk/gtk.h>
 

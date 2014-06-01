@@ -1216,7 +1216,7 @@ boolean process_one (boolean visible) {
 
       // calculate the audio 'frame' for no-realtime audio players
       // for realtime players, we did this in calc_new_playback_position()
-      if (prefs->audio_player==AUD_PLAYER_SOX||prefs->audio_player==AUD_PLAYER_MPLAYER) {
+      if (prefs->audio_player==AUD_PLAYER_SOX||prefs->audio_player==AUD_PLAYER_MPLAYER||prefs->audio_player==AUD_PLAYER_MPLAYER2) {
 	mainw->aframeno=(int64_t)(mainw->currticks-mainw->firstticks)*cfile->fps/U_SEC+audio_start;
 	if (G_UNLIKELY(mainw->loop_cont&&(mainw->aframeno>(mainw->audio_end?mainw->audio_end:
 							   cfile->laudio_time*cfile->fps)))) {
@@ -1981,12 +1981,12 @@ void tempdir_warning (void) {
 
 
 void do_no_mplayer_sox_error(void) {
-  do_blocking_error_dialog(_ ("\nLiVES currently requires either 'mplayer' or 'sox' to function. Please install one or other of these, and try again.\n"));
+  do_blocking_error_dialog(_ ("\nLiVES currently requires either 'mplayer', 'mplayer2', or 'sox' to function. Please install one or other of these, and try again.\n"));
 }
 
 
 void do_audio_warning(void) {
-  do_error_dialog (_ ("Audio was not loaded; please install mplayer if you expected audio for this clip.\n"));
+  do_error_dialog (_ ("Audio was not loaded; please install mplayer or mplayer2 if you expected audio for this clip.\n"));
 }
 
 void do_encoder_sox_error(void) {

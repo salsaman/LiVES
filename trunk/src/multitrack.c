@@ -5998,7 +5998,7 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
 		    G_CALLBACK (on_open_sel_activate),
 		    NULL);
 
-  if (capable->has_mplayer) {
+  if (capable->has_mplayer||capable->has_mplayer2) {
 
 #ifdef HAVE_WEBM
     open_loc_menu = lives_menu_item_new_with_mnemonic (_("Open _Location/Stream..."));

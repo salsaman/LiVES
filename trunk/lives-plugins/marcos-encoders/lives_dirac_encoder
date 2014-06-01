@@ -14,7 +14,7 @@ ImageMagick. Meant as a companion to LiVES (to possibly call
 from within a plugin, see http://www.xs4all.nl/~salsaman/lives/ )
 but can also be used as a stand-alone program.
 
-Requires MPlayer, ImageMagick (GraphicsMagick might also
+Requires ImageMagick (GraphicsMagick might also
 work), Dirac, and Python 2.3.0 or greater. Note that audio
 support is not yet implemented, only video encoding. Also
 note that Dirac is still at a very early stage of development,

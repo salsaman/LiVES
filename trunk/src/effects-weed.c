@@ -596,6 +596,9 @@ void update_host_info (weed_plant_t *inst) {
   case AUD_PLAYER_MPLAYER:
     weed_set_string_value(hinfo,"host_audio_player","mplayer");
     break;
+  case AUD_PLAYER_MPLAYER2:
+    weed_set_string_value(hinfo,"host_audio_player","mplayer2");
+    break;
   case AUD_PLAYER_SOX:
     weed_set_string_value(hinfo,"host_audio_player","sox");
     break;

@@ -658,6 +658,7 @@ lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_warn_yuv4
 
   if (audp==NULL) memset(audio_player,0,1);
   else if (!strncmp(audp,"mplayer",7)) g_snprintf(audio_player,256,"mplayer");
+  else if (!strncmp(audp,"mplayer2",8)) g_snprintf(audio_player,256,"mplayer2");
   else if (!strncmp(audp,"jack",4)) g_snprintf(audio_player,256,"jack");
   else if (!strncmp(audp,"sox",3)) g_snprintf(audio_player,256,"sox");
   else if (!strncmp(audp,"pulse audio",11)) g_snprintf(audio_player,256,"pulse");
@@ -1192,7 +1193,12 @@ lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_warn_yuv4
 	}
       }
     }
-
+    
+    // switch to mplayer2 audio
+    else if (!(strcmp (audio_player,"mplayer2"))&&prefs->audio_player!=AUD_PLAYER_MPLAYER2) {
+      switch_aud_to_mplayer2(TRUE);
+    }
+    //
 
   }
 
@@ -2757,6 +2763,10 @@ _prefsw *create_prefs_dialog (void) {
     audp = g_list_append (audp, g_strdup("mplayer"));
   }
 
+  if (capable->has_mplayer2) {
+    audp = g_list_append (audp, g_strdup("mplayer2"));
+  }
+
   widget_opts.expand=LIVES_EXPAND_EXTRA;
   prefsw->audp_combo = lives_standard_combo_new(_("_Player"),TRUE,audp,LIVES_BOX(vbox),NULL);
   widget_opts.expand=LIVES_EXPAND_DEFAULT;
@@ -2800,6 +2810,10 @@ _prefsw *create_prefs_dialog (void) {
 
   //---
 
+  if (prefs->audio_player==AUD_PLAYER_MPLAYER2) {
+    prefsw->audp_name=g_strdup(_ ("mplayer2"));
+  }
+  // ---
   prefsw->audio_command_entry = lives_standard_entry_new (_("Audio play _command"),TRUE,"",-1,255,LIVES_BOX(vbox),NULL);
 
 
@@ -3409,7 +3423,7 @@ _prefsw *create_prefs_dialog (void) {
   lives_box_pack_start (LIVES_BOX (prefsw->vbox_right_warnings), hbox, FALSE, FALSE, widget_opts.packing_height>>1);
 
   prefsw->checkbutton_warn_mplayer = lives_standard_check_button_new
-    (_("Show a warning if _mplayer, sox, composite or convert is not found when LiVES is started."),
+    (_("Show a warning if _mplayer/mplayer2, sox, composite or convert is not found when LiVES is started."),
      TRUE,LIVES_BOX(hbox),NULL);
   lives_toggle_button_set_active (LIVES_TOGGLE_BUTTON (prefsw->checkbutton_warn_mplayer), !(prefs->warning_mask&WARN_MASK_NO_MPLAYER));
 

@@ -443,7 +443,7 @@ void create_LiVES (void) {
 
   lives_widget_show (mainw->open);
 
-  if (capable->has_mplayer) {
+  if (capable->has_mplayer||capable->has_mplayer2) {
     lives_widget_show (mainw->open_sel);
 #ifdef ENABLE_DVD_GRAB
     lives_widget_show (mainw->open_vcd_menu);
@@ -465,7 +465,7 @@ void create_LiVES (void) {
   lives_widget_show (mainw->add_live_menu);
 
 #ifndef HAVE_UNICAP
-  if (capable->has_mplayer) {
+  if (capable->has_mplayer||capable->has_mplayer2) {
 #endif
 
     submenu=lives_menu_new();

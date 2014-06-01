@@ -27,6 +27,7 @@ import os
 if os.name == 'nt':
     convert = 'convert.exe'
     mplayer = 'mplayer.exe'
+    mplayer2 = 'mplayer2.exe'
     theora_encoder  = 'encoder_example.exe'
     theora_encoder2 = 'theora_encoder_example.exe'
     theora_encoder3 = 'theora_encode.exe'
@@ -36,6 +37,7 @@ if os.name == 'nt':
 else:
     convert = 'convert'
     mplayer = 'mplayer'
+    mplayer2 = 'mplayer2'
     theora_encoder  = 'encoder_example'
     theora_encoder2 = 'theora_encoder_example'
     theora_encoder3 = 'theora_encode'
@@ -395,6 +397,9 @@ def do_encode():
     if which(theora_encoder3) != '':
         theora_encoder = theora_encoder3
 
+    if which(mplayer2) != '':
+        mplayer = mplayer2
+
     fpsnum = fps.split('/')[0]
     fpsden = fps.split('/')[1]
     mplayer_opts = '-mf type=%s:fps=%s ' % (ext[1:],
@@ -465,11 +470,11 @@ def do_encode():
     if os.name == 'nt':
         command = """cd %(source_dir)s ; \\
 mkfifo.exe /m 0600 stream.yuv ; \\
-%(mplayer.exe)s mf://%(syml)s%(img_pre)s*%(ext)s %(mplayer_opts)s %(std)s &
+%(mplayer)s mf://%(syml)s%(img_pre)s*%(ext)s %(mplayer_opts)s %(std)s &
 """ % all_vars
         run(command)
         command = """cd %(source_dir)s ; \\
-%(theora_encoder.exe)s %(theora_opts)s -o "%(vidname)s" %(wav)s stream.yuv %(std)s
+%(theora_encoder)s %(theora_opts)s -o "%(vidname)s" %(wav)s stream.yuv %(std)s
 """ % all_vars
         run(command)
     else:
@@ -553,9 +558,15 @@ def is_installed(prog):
                     print theora_encoder + ' or ' + theora_encoder2 + ' or ' + theora_encoder3 + ': command not found'
                     raise SystemExit, 1
         else:
-            if prog != theora_encoder2 and prog != theora_encoder3:
-                print prog + ': command not found'
-                raise SystemExit, 1
+            if prog == mplayer:
+                if which(mplayer2) == '':
+                    print mplayer + ' or ' + mplayer2 + ': command not found'
+                    raise SystemExit, 1
+
+            else:
+                if prog != theora_encoder2 and prog != theora_encoder3 and prog != mplayer2:
+                    print prog + ': command not found'
+                    raise SystemExit, 1
         
     else:
         if verbose:
@@ -611,7 +622,7 @@ if __name__ == '__main__':
     else:
         quiet = False
 
-    for i in [mplayer, theora_encoder, theora_encoder2, theora_encoder3, sox, convert, identify]:
+    for i in [mplayer, mplayer2, theora_encoder, theora_encoder2, theora_encoder3, sox, convert, identify]:
         is_installed(i)
     if '-C' in opts: raise SystemExit
 

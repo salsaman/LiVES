@@ -1,6 +1,7 @@
-Version 2.2.5
--------------
+Version 2.2.5 (try 2 - 01 July 2014)
+----------------------------
 Fix crash (regression) in mpegts decoder.
+Add support for mplayer2.
 
 
 

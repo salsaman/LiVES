@@ -440,7 +440,7 @@ static void add_test(GtkWidget *table, int row, gchar *ttext, boolean noskip) {
   lives_widget_show(label);
 
   if (!noskip) {
-    GtkWidget *image=lives_image_new_from_stock(GTK_STOCK_REMOVE,LIVES_ICON_SIZE_LARGE_TOOLBAR);
+    GtkWidget *image=lives_image_new_from_stock(LIVES_STOCK_REMOVE,LIVES_ICON_SIZE_LARGE_TOOLBAR);
     // TRANSLATORS - as in "skipped test"
     label=lives_standard_label_new(_("Skipped"));
 
@@ -458,7 +458,12 @@ static void add_test(GtkWidget *table, int row, gchar *ttext, boolean noskip) {
 static boolean pass_test(GtkWidget *table, int row) {
   // TRANSLATORS - as in "passed test"
   GtkWidget *label=lives_standard_label_new(_("Passed"));
+
+#if GTK_CHECK_VERSION(3,10,0)
+  GtkWidget *image=lives_image_new_from_stock(LIVES_STOCK_ADD,LIVES_ICON_SIZE_LARGE_TOOLBAR);
+#else
   GtkWidget *image=lives_image_new_from_stock(GTK_STOCK_APPLY,LIVES_ICON_SIZE_LARGE_TOOLBAR);
+#endif
 
   lives_table_attach (LIVES_TABLE (table), label, 1, 2, row, row+1, (GtkAttachOptions)0, (GtkAttachOptions)0, 10, 10);
   lives_widget_show(label);
@@ -473,7 +478,11 @@ static boolean pass_test(GtkWidget *table, int row) {
 
 static boolean fail_test(GtkWidget *table, int row, gchar *ftext) {
   GtkWidget *label;
+#if GTK_CHECK_VERSION(3,10,0)
+  GtkWidget *image=lives_image_new_from_stock(LIVES_STOCK_REMOVE,LIVES_ICON_SIZE_LARGE_TOOLBAR);
+#else
   GtkWidget *image=lives_image_new_from_stock(GTK_STOCK_CANCEL,LIVES_ICON_SIZE_LARGE_TOOLBAR);
+#endif
 
   label=lives_standard_label_new(ftext);
 

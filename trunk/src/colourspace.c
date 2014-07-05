@@ -10883,14 +10883,27 @@ boolean pixbuf_to_layer(weed_plant_t *layer, LiVESPixbuf *pixbuf) {
   }
   */
 
-  int rowstride=lives_pixbuf_get_rowstride(pixbuf);
-  int width=lives_pixbuf_get_width(pixbuf);
-  int height=lives_pixbuf_get_height(pixbuf);
-  int nchannels=lives_pixbuf_get_n_channels(pixbuf);
+  int rowstride;
+  int width;
+  int height;
+  int nchannels;
   void *pixel_data;
   void *in_pixel_data;
 
   size_t framesize;
+
+  if (!GDK_IS_PIXBUF(pixbuf)) {
+    weed_set_int_value(layer,"width",0);
+    weed_set_int_value(layer,"height",0);
+    weed_set_int_value(layer,"rowstrides",0);
+    weed_set_voidptr_value(layer,"pixel_data",NULL);
+    return FALSE;
+  }
+
+  rowstride=lives_pixbuf_get_rowstride(pixbuf);
+  width=lives_pixbuf_get_width(pixbuf);
+  height=lives_pixbuf_get_height(pixbuf);
+  nchannels=lives_pixbuf_get_n_channels(pixbuf);
 
   weed_set_int_value(layer,"width",width);
   weed_set_int_value(layer,"height",height);

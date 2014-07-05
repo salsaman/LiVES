@@ -187,7 +187,7 @@ void create_merge_dialog (void) {
 
   rfx=&mainw->rendered_fx[mainw->last_transition_idx];
   mainw->overflow_height=900;
-  make_param_box(GTK_VBOX (merge_opts->param_vbox), rfx);
+  make_param_box(LIVES_VBOX (merge_opts->param_vbox), rfx);
   mainw->overflow_height=0;
   lives_widget_show_all (merge_opts->param_vbox);
 
@@ -272,7 +272,7 @@ void on_trans_method_changed (GtkComboBox *combo, gpointer user_data) {
   mainw->last_transition_idx=merge_opts->list_to_rfx_index[idx];
   rfx=&mainw->rendered_fx[mainw->last_transition_idx];
 
-  make_param_box(GTK_VBOX (merge_opts->param_vbox), rfx);
+  make_param_box(LIVES_VBOX (merge_opts->param_vbox), rfx);
   lives_widget_show_all (merge_opts->param_vbox);
 
   retvals=do_onchange_init(rfx);

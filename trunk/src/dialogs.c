@@ -123,7 +123,7 @@ void add_warn_check (GtkBox *box, int warn_mask_number) {
 
 
 static void add_clear_ds_button(GtkDialog* dialog) {
-  GtkWidget *button = lives_button_new_from_stock ("gtk-clear");
+  GtkWidget *button = lives_button_new_from_stock (LIVES_STOCK_CLEAR);
 
   lives_button_set_label(GTK_BUTTON(button),_("_Recover disk space"));
   if (mainw->tried_ds_recover) lives_widget_set_sensitive(button,FALSE);
@@ -184,9 +184,9 @@ static GtkWidget* create_warn_dialog (int warn_mask_number, GtkWindow *transient
     lives_window_set_title (LIVES_WINDOW (dialog), _("LiVES: - Warning !"));
     widget_opts.justify=LIVES_JUSTIFY_CENTER;
     widget_opts.justify=LIVES_JUSTIFY_DEFAULT;
-    warning_cancelbutton = lives_button_new_from_stock ("gtk-cancel");
+    warning_cancelbutton = lives_button_new_from_stock (LIVES_STOCK_LABEL_CANCEL);
     lives_dialog_add_action_widget (LIVES_DIALOG (dialog), warning_cancelbutton, GTK_RESPONSE_CANCEL);
-    warning_okbutton = lives_button_new_from_stock ("gtk-ok");
+    warning_okbutton = lives_button_new_from_stock (LIVES_STOCK_LABEL_OK);
     lives_dialog_add_action_widget (LIVES_DIALOG (dialog), warning_okbutton, GTK_RESPONSE_OK);
     break;
   case LIVES_DIALOG_YESNO:

@@ -182,7 +182,9 @@ void create_LiVES (void) {
   GtkWidget *trimaudio_submenu_menu;
   GtkWidget *delaudio_submenu_menu;
   GtkWidget *menuitemsep;
+#if !GTK_CHECK_VERSION(3,10,0)
   GtkWidget *image;
+#endif
   GtkWidget *effects;
   GtkWidget *tools;
   GtkWidget *audio;
@@ -360,6 +362,8 @@ void create_LiVES (void) {
   lives_container_add (LIVES_CONTAINER (mainw->menubar), menuitem);
 
   menuitem_menu = lives_menu_new ();
+  lives_menu_set_accel_group(LIVES_MENU(menuitem_menu),mainw->accel_group);
+
   lives_menu_item_set_submenu (LIVES_MENU_ITEM (menuitem), menuitem_menu);
 
   if (palette->style&STYLE_1) {
@@ -573,7 +577,7 @@ void create_LiVES (void) {
   separatormenuitem=lives_menu_add_separator(LIVES_MENU(menuitem_menu));
   lives_widget_show (separatormenuitem);
 
-  mainw->save_as = lives_image_menu_item_new_from_stock ("gtk-save", mainw->accel_group);
+  mainw->save_as = lives_image_menu_item_new_from_stock (LIVES_STOCK_LABEL_SAVE, mainw->accel_group);
   lives_container_add (LIVES_CONTAINER(menuitem_menu), mainw->save_as);
   lives_widget_set_sensitive (mainw->save_as, FALSE);
   set_menu_text(mainw->save_as,_("_Encode Clip As..."),TRUE);
@@ -633,7 +637,7 @@ void create_LiVES (void) {
   lives_widget_show (mainw->clear_ds);
   lives_container_add (LIVES_CONTAINER (menuitem_menu), mainw->clear_ds);
 
-  mainw->quit = lives_image_menu_item_new_from_stock ("gtk-quit", mainw->accel_group);
+  mainw->quit = lives_image_menu_item_new_from_stock (LIVES_STOCK_LABEL_QUIT, mainw->accel_group);
   lives_widget_show (mainw->quit);
   lives_container_add (LIVES_CONTAINER (menuitem_menu), mainw->quit);
 
@@ -660,9 +664,12 @@ void create_LiVES (void) {
                               LIVES_KEY_u, LIVES_CONTROL_MASK,
                               LIVES_ACCEL_VISIBLE);
 
-  image = lives_image_new_from_stock ("gtk-undo", LIVES_ICON_SIZE_MENU);
+#if !GTK_CHECK_VERSION(3,10,0)
+  image = lives_image_new_from_stock (LIVES_STOCK_UNDO, LIVES_ICON_SIZE_MENU);
   lives_widget_show (image);
+
   lives_image_menu_item_set_image (LIVES_IMAGE_MENU_ITEM (mainw->undo), image);
+#endif
 
   mainw->redo = lives_image_menu_item_new_with_mnemonic (_("_Redo"));
   lives_widget_hide (mainw->redo);
@@ -673,9 +680,12 @@ void create_LiVES (void) {
                               LIVES_KEY_z, LIVES_CONTROL_MASK,
                               LIVES_ACCEL_VISIBLE);
 
-  image = lives_image_new_from_stock ("gtk-redo", LIVES_ICON_SIZE_MENU);
+#if !GTK_CHECK_VERSION(3,10,0)
+  image = lives_image_new_from_stock (LIVES_STOCK_REDO, LIVES_ICON_SIZE_MENU);
   lives_widget_show (image);
+
   lives_image_menu_item_set_image (LIVES_IMAGE_MENU_ITEM (mainw->redo), image);
+#endif
 
   separatormenuitem=lives_menu_add_separator(LIVES_MENU(menuitem_menu));
   lives_widget_show (separatormenuitem);
@@ -718,9 +728,12 @@ void create_LiVES (void) {
                               LIVES_KEY_i, LIVES_CONTROL_MASK,
                               LIVES_ACCEL_VISIBLE);
 
-  image = lives_image_new_from_stock ("gtk-add", LIVES_ICON_SIZE_MENU);
+#if !GTK_CHECK_VERSION(3,10,0)
+  image = lives_image_new_from_stock (LIVES_STOCK_ADD, LIVES_ICON_SIZE_MENU);
   lives_widget_show (image);
+
   lives_image_menu_item_set_image (LIVES_IMAGE_MENU_ITEM (mainw->insert), image);
+#endif
 
   mainw->paste_as_new = lives_image_menu_item_new_with_mnemonic (_("Paste as _New"));
   lives_widget_show (mainw->paste_as_new);
@@ -743,9 +756,11 @@ void create_LiVES (void) {
   lives_container_add (LIVES_CONTAINER (menuitem_menu), mainw->xdelete);
   lives_widget_set_sensitive (mainw->xdelete, FALSE);
 
+#if !GTK_CHECK_VERSION(3,10,0)
   image = lives_image_new_from_stock ("gtk-delete", LIVES_ICON_SIZE_MENU);
   lives_widget_show (image);
   lives_image_menu_item_set_image (LIVES_IMAGE_MENU_ITEM (mainw->xdelete), image);
+#endif
 
   lives_widget_add_accelerator (mainw->xdelete, "activate", mainw->accel_group,
                               LIVES_KEY_d, LIVES_CONTROL_MASK,
@@ -852,9 +867,12 @@ void create_LiVES (void) {
   lives_container_add (LIVES_CONTAINER (menuitem_menu), mainw->playall);
   lives_widget_set_sensitive (mainw->playall, FALSE);
 
-  image = lives_image_new_from_stock ("gtk-refresh", LIVES_ICON_SIZE_MENU);
+#if !GTK_CHECK_VERSION(3,10,0)
+  image = lives_image_new_from_stock (LIVES_STOCK_REFRESH, LIVES_ICON_SIZE_MENU);
   lives_widget_show (image);
+
   lives_image_menu_item_set_image (LIVES_IMAGE_MENU_ITEM (mainw->playall), image);
+#endif
 
   mainw->playsel = lives_image_menu_item_new_with_mnemonic (_("Pla_y Selection"));
   lives_widget_add_accelerator (mainw->playsel, "activate", mainw->accel_group,
@@ -873,21 +891,18 @@ void create_LiVES (void) {
                               LIVES_KEY_c, (GdkModifierType)0,
                               LIVES_ACCEL_VISIBLE);
 
-#if GTK_CHECK_VERSION(2,6,0)
-  image = lives_image_new_from_stock (GTK_STOCK_MEDIA_PLAY, LIVES_ICON_SIZE_MENU);
-#else
-  image = lives_image_new_from_stock (GTK_STOCK_GO_FORWARD, LIVES_ICON_SIZE_MENU);
-#endif
-  lives_widget_show (image);
-  lives_image_menu_item_set_image (LIVES_IMAGE_MENU_ITEM (mainw->playsel), image);
+#if !GTK_CHECK_VERSION(3,10,0)
+  image = lives_image_new_from_stock (LIVES_STOCK_MEDIA_PLAY, LIVES_ICON_SIZE_MENU);
 
-#if GTK_CHECK_VERSION(2,6,0)
-  image = lives_image_new_from_stock (GTK_STOCK_MEDIA_PLAY, LIVES_ICON_SIZE_MENU);
-#else
-  image = lives_image_new_from_stock (GTK_STOCK_GO_FORWARD, LIVES_ICON_SIZE_MENU);
+  lives_image_menu_item_set_image (LIVES_IMAGE_MENU_ITEM (mainw->playsel), image);
 #endif
+
+#if !GTK_CHECK_VERSION(3,10,0)
+  image = lives_image_new_from_stock (LIVES_STOCK_MEDIA_PLAY, LIVES_ICON_SIZE_MENU);
   lives_widget_show (image);
+
   lives_image_menu_item_set_image (LIVES_IMAGE_MENU_ITEM (mainw->playclip), image);
+#endif
 
   mainw->stop = lives_image_menu_item_new_with_mnemonic (_("_Stop"));
   lives_widget_show (mainw->stop);
@@ -898,28 +913,23 @@ void create_LiVES (void) {
                               LIVES_ACCEL_VISIBLE);
 
 
-#if GTK_CHECK_VERSION(2,6,0)
-  image = lives_image_new_from_stock (GTK_STOCK_MEDIA_STOP, LIVES_ICON_SIZE_MENU);
-#else
-  image = lives_image_new_from_stock (GTK_STOCK_STOP, LIVES_ICON_SIZE_MENU);
-#endif
-
+#if !GTK_CHECK_VERSION(3,10,0)
+  image = lives_image_new_from_stock (LIVES_STOCK_MEDIA_STOP, LIVES_ICON_SIZE_MENU);
   lives_widget_show (image);
   lives_image_menu_item_set_image (LIVES_IMAGE_MENU_ITEM (mainw->stop), image);
+#endif
 
   mainw->rewind = lives_image_menu_item_new_with_mnemonic (_("Re_wind"));
   lives_widget_show (mainw->rewind);
   lives_container_add (LIVES_CONTAINER (menuitem_menu), mainw->rewind);
   lives_widget_set_sensitive (mainw->rewind, FALSE);
 
-#if GTK_CHECK_VERSION(2,6,0)
-  image = lives_image_new_from_stock (GTK_STOCK_MEDIA_REWIND, LIVES_ICON_SIZE_MENU);
-#else
-  image = lives_image_new_from_stock (GTK_STOCK_GO_BACK, LIVES_ICON_SIZE_MENU);
-#endif
+#if !GTK_CHECK_VERSION(3,10,0)
+  image = lives_image_new_from_stock (LIVES_STOCK_MEDIA_REWIND, LIVES_ICON_SIZE_MENU);
 
   lives_widget_show (image);
   lives_image_menu_item_set_image (LIVES_IMAGE_MENU_ITEM (mainw->rewind), image);
+#endif
 
   lives_widget_add_accelerator (mainw->rewind, "activate", mainw->accel_group,
                               LIVES_KEY_w, (GdkModifierType)0,
@@ -928,12 +938,6 @@ void create_LiVES (void) {
   mainw->record_perf = lives_check_menu_item_new_with_mnemonic("");
 
   disable_record();
-
-#if GTK_CHECK_VERSION(2,6,0)
-  image = lives_image_new_from_stock (GTK_STOCK_MEDIA_RECORD, LIVES_ICON_SIZE_MENU);
-#else
-  image = lives_image_new_from_stock (GTK_STOCK_NO, LIVES_ICON_SIZE_MENU);
-#endif
 
   lives_widget_add_accelerator (mainw->record_perf, "activate", mainw->accel_group,
 			      LIVES_KEY_r, (GdkModifierType)0,
@@ -1167,9 +1171,11 @@ void create_LiVES (void) {
                               LIVES_KEY_p, LIVES_CONTROL_MASK,
                               LIVES_ACCEL_VISIBLE);
 
-  image = lives_image_new_from_stock ("gtk-preferences", LIVES_ICON_SIZE_MENU);
+#if !GTK_CHECK_VERSION(3,10,0)
+  image = lives_image_new_from_stock (LIVES_STOCK_PREFERENCES, LIVES_ICON_SIZE_MENU);
   lives_widget_show (image);
   lives_image_menu_item_set_image (LIVES_IMAGE_MENU_ITEM (mainw->preferences), image);
+#endif
 
   audio = lives_menu_item_new_with_mnemonic (_("_Audio"));
   lives_widget_show (audio);
@@ -1353,9 +1359,11 @@ void create_LiVES (void) {
   lives_container_add (LIVES_CONTAINER (info_menu), mainw->show_clipboard_info);
   lives_widget_set_sensitive (mainw->show_clipboard_info, FALSE);
 
-  image = lives_image_new_from_stock ("gtk-dialog-info", LIVES_ICON_SIZE_MENU);
+#if !GTK_CHECK_VERSION(3,10,0)
+  image = lives_image_new_from_stock (LIVES_STOCK_DIALOG_INFO, LIVES_ICON_SIZE_MENU);
   lives_widget_show (image);
   lives_image_menu_item_set_image (LIVES_IMAGE_MENU_ITEM (mainw->show_file_info), image);
+#endif
 
   mainw->show_messages = lives_image_menu_item_new_with_mnemonic (_("Show _Messages"));
   lives_widget_show (mainw->show_messages);
@@ -1745,7 +1753,7 @@ void create_LiVES (void) {
     lives_toolbar_insert(LIVES_TOOLBAR(mainw->btoolbar),LIVES_TOOL_ITEM(mainw->m_sepwinbutton),0);
     lives_widget_set_tooltip_text(mainw->m_sepwinbutton,_("Show the play window (s)"));
     
-    tmp_toolbar_icon = lives_image_new_from_stock ("gtk-media-rewind", lives_toolbar_get_icon_size (LIVES_TOOLBAR (mainw->btoolbar)));
+    tmp_toolbar_icon = lives_image_new_from_stock (LIVES_STOCK_MEDIA_REWIND, lives_toolbar_get_icon_size (LIVES_TOOLBAR (mainw->btoolbar)));
     
     mainw->m_rewindbutton=LIVES_WIDGET(lives_tool_button_new(GTK_WIDGET(tmp_toolbar_icon),""));
     lives_toolbar_insert(LIVES_TOOLBAR(mainw->btoolbar),LIVES_TOOL_ITEM(mainw->m_rewindbutton),-1);
@@ -1753,7 +1761,7 @@ void create_LiVES (void) {
     
     lives_widget_set_sensitive(mainw->m_rewindbutton,FALSE);
     
-    tmp_toolbar_icon = lives_image_new_from_stock ("gtk-media-play", lives_toolbar_get_icon_size (LIVES_TOOLBAR (mainw->btoolbar)));
+    tmp_toolbar_icon = lives_image_new_from_stock (LIVES_STOCK_MEDIA_PLAY, lives_toolbar_get_icon_size (LIVES_TOOLBAR (mainw->btoolbar)));
     
     mainw->m_playbutton=LIVES_WIDGET(lives_tool_button_new(GTK_WIDGET(tmp_toolbar_icon),""));
     lives_toolbar_insert(LIVES_TOOLBAR(mainw->btoolbar),LIVES_TOOL_ITEM(mainw->m_playbutton),-1);
@@ -1761,7 +1769,7 @@ void create_LiVES (void) {
     lives_widget_set_sensitive(mainw->m_playbutton,FALSE);
 
 
-    tmp_toolbar_icon = lives_image_new_from_stock ("gtk-media-stop", lives_toolbar_get_icon_size (LIVES_TOOLBAR (mainw->btoolbar)));
+    tmp_toolbar_icon = lives_image_new_from_stock (LIVES_STOCK_MEDIA_STOP, lives_toolbar_get_icon_size (LIVES_TOOLBAR (mainw->btoolbar)));
     
     mainw->m_stopbutton=LIVES_WIDGET(lives_tool_button_new(GTK_WIDGET(tmp_toolbar_icon),""));
     lives_toolbar_insert(LIVES_TOOLBAR(mainw->btoolbar),LIVES_TOOL_ITEM(mainw->m_stopbutton),-1);
@@ -1870,13 +1878,13 @@ void create_LiVES (void) {
 
   lives_toolbar_set_style (LIVES_TOOLBAR (mainw->toolbar), LIVES_TOOLBAR_ICONS);
   lives_toolbar_set_icon_size (LIVES_TOOLBAR(mainw->toolbar),LIVES_ICON_SIZE_SMALL_TOOLBAR);
-  tmp_toolbar_icon = lives_image_new_from_stock ("gtk-stop", lives_toolbar_get_icon_size (LIVES_TOOLBAR (mainw->toolbar)));
+  tmp_toolbar_icon = lives_image_new_from_stock (LIVES_STOCK_MEDIA_STOP, lives_toolbar_get_icon_size (LIVES_TOOLBAR (mainw->toolbar)));
   
   mainw->t_stopbutton=LIVES_WIDGET(lives_tool_button_new(GTK_WIDGET(tmp_toolbar_icon),""));
   lives_toolbar_insert(LIVES_TOOLBAR(mainw->toolbar),LIVES_TOOL_ITEM(mainw->t_stopbutton),0);
   lives_widget_set_tooltip_text(mainw->t_stopbutton,_("Stop playback (q)"));
 
-  tmp_toolbar_icon = lives_image_new_from_stock ("gtk-undo", lives_toolbar_get_icon_size (LIVES_TOOLBAR (mainw->toolbar)));
+  tmp_toolbar_icon = lives_image_new_from_stock (LIVES_STOCK_UNDO, lives_toolbar_get_icon_size (LIVES_TOOLBAR (mainw->toolbar)));
 
   mainw->t_bckground=LIVES_WIDGET(lives_tool_button_new(GTK_WIDGET(tmp_toolbar_icon),""));
   lives_toolbar_insert(LIVES_TOOLBAR(mainw->toolbar),LIVES_TOOL_ITEM(mainw->t_bckground),1);
@@ -1921,39 +1929,39 @@ void create_LiVES (void) {
   lives_toolbar_insert(LIVES_TOOLBAR(mainw->toolbar),LIVES_TOOL_ITEM(mainw->t_fullscreen),4);
   lives_widget_set_tooltip_text(mainw->t_fullscreen,_("Fullscreen playback (f)"));
 
-  tmp_toolbar_icon = lives_image_new_from_stock ("gtk-remove", lives_toolbar_get_icon_size (LIVES_TOOLBAR (mainw->toolbar)));
+  tmp_toolbar_icon = lives_image_new_from_stock (LIVES_STOCK_REMOVE, lives_toolbar_get_icon_size (LIVES_TOOLBAR (mainw->toolbar)));
 
 
   mainw->t_slower=LIVES_WIDGET(lives_tool_button_new(GTK_WIDGET(tmp_toolbar_icon),""));
   lives_toolbar_insert(LIVES_TOOLBAR(mainw->toolbar),LIVES_TOOL_ITEM(mainw->t_slower),5);
   lives_widget_set_tooltip_text(mainw->t_slower,_("Play slower (ctrl-down)"));
 
-  tmp_toolbar_icon = lives_image_new_from_stock ("gtk-add", lives_toolbar_get_icon_size (LIVES_TOOLBAR (mainw->toolbar)));
+  tmp_toolbar_icon = lives_image_new_from_stock (LIVES_STOCK_ADD, lives_toolbar_get_icon_size (LIVES_TOOLBAR (mainw->toolbar)));
 
   mainw->t_faster=LIVES_WIDGET(lives_tool_button_new(GTK_WIDGET(tmp_toolbar_icon),""));
   lives_toolbar_insert(LIVES_TOOLBAR(mainw->toolbar),LIVES_TOOL_ITEM(mainw->t_faster),6);
   lives_widget_set_tooltip_text(mainw->t_faster,_("Play faster (ctrl-up)"));
 
 
-  tmp_toolbar_icon = lives_image_new_from_stock ("gtk-go-back", lives_toolbar_get_icon_size (LIVES_TOOLBAR (mainw->toolbar)));
+  tmp_toolbar_icon = lives_image_new_from_stock (LIVES_STOCK_GO_BACK, lives_toolbar_get_icon_size (LIVES_TOOLBAR (mainw->toolbar)));
 
   mainw->t_back=LIVES_WIDGET(lives_tool_button_new(GTK_WIDGET(tmp_toolbar_icon),""));
   lives_toolbar_insert(LIVES_TOOLBAR(mainw->toolbar),LIVES_TOOL_ITEM(mainw->t_back),7);
   lives_widget_set_tooltip_text(mainw->t_back,_("Skip back (ctrl-left)"));
 
-  tmp_toolbar_icon = lives_image_new_from_stock ("gtk-go-forward", lives_toolbar_get_icon_size (LIVES_TOOLBAR (mainw->toolbar)));
+  tmp_toolbar_icon = lives_image_new_from_stock (LIVES_STOCK_GO_FORWARD, lives_toolbar_get_icon_size (LIVES_TOOLBAR (mainw->toolbar)));
 
   mainw->t_forward=LIVES_WIDGET(lives_tool_button_new(GTK_WIDGET(tmp_toolbar_icon),""));
   lives_toolbar_insert(LIVES_TOOLBAR(mainw->toolbar),LIVES_TOOL_ITEM(mainw->t_forward),8);
   lives_widget_set_tooltip_text(mainw->t_forward,_("Skip forward (ctrl-right)"));
 
-  tmp_toolbar_icon = lives_image_new_from_stock ("gtk-dialog-info", lives_toolbar_get_icon_size (LIVES_TOOLBAR (mainw->toolbar)));
+  tmp_toolbar_icon = lives_image_new_from_stock (LIVES_STOCK_DIALOG_INFO, lives_toolbar_get_icon_size (LIVES_TOOLBAR (mainw->toolbar)));
 
   mainw->t_infobutton=LIVES_WIDGET(lives_tool_button_new(GTK_WIDGET(tmp_toolbar_icon),""));
   lives_toolbar_insert(LIVES_TOOLBAR(mainw->toolbar),LIVES_TOOL_ITEM(mainw->t_infobutton),9);
   lives_widget_set_tooltip_text(mainw->t_infobutton,_("Show clip info (i)"));
 
-  tmp_toolbar_icon = lives_image_new_from_stock ("gtk-cancel", lives_toolbar_get_icon_size (LIVES_TOOLBAR (mainw->toolbar)));
+  tmp_toolbar_icon = lives_image_new_from_stock (LIVES_STOCK_CLOSE, lives_toolbar_get_icon_size (LIVES_TOOLBAR (mainw->toolbar)));
 
   mainw->t_hide=LIVES_WIDGET(lives_tool_button_new(GTK_WIDGET(tmp_toolbar_icon),""));
   lives_toolbar_insert(LIVES_TOOLBAR(mainw->toolbar),LIVES_TOOL_ITEM(mainw->t_hide),10);
@@ -3573,7 +3581,7 @@ void make_preview_box (void) {
   hbox_buttons = lives_hbox_new (FALSE, 0);
   lives_box_pack_start (LIVES_BOX (mainw->preview_controls), hbox_buttons, TRUE, TRUE, 0);
 
-  rewind_img=lives_image_new_from_stock ("gtk-media-rewind", lives_toolbar_get_icon_size (LIVES_TOOLBAR (mainw->btoolbar)));
+  rewind_img=lives_image_new_from_stock (LIVES_STOCK_MEDIA_REWIND, lives_toolbar_get_icon_size (LIVES_TOOLBAR (mainw->btoolbar)));
   mainw->p_rewindbutton=gtk_button_new();
   lives_widget_set_bg_color (mainw->p_rewindbutton, LIVES_WIDGET_STATE_ACTIVE, &palette->menu_and_bars);
   gtk_button_set_relief (GTK_BUTTON (mainw->p_rewindbutton), GTK_RELIEF_NONE);
@@ -3584,7 +3592,7 @@ void make_preview_box (void) {
   lives_widget_set_tooltip_text( mainw->p_rewindbutton,_ ("Rewind"));
   lives_widget_set_sensitive (mainw->p_rewindbutton, mainw->current_file>-1&&cfile->pointer_time>0.);
 
-  play_img=lives_image_new_from_stock ("gtk-media-play", lives_toolbar_get_icon_size (LIVES_TOOLBAR (mainw->btoolbar)));
+  play_img=lives_image_new_from_stock (LIVES_STOCK_MEDIA_PLAY, lives_toolbar_get_icon_size (LIVES_TOOLBAR (mainw->btoolbar)));
   mainw->p_playbutton=gtk_button_new();
   lives_widget_set_bg_color (mainw->p_playbutton, LIVES_WIDGET_STATE_ACTIVE, &palette->menu_and_bars);
   gtk_button_set_relief (GTK_BUTTON (mainw->p_playbutton), GTK_RELIEF_NONE);

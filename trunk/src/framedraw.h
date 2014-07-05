@@ -18,7 +18,7 @@
 
 
 /// call this to add framedraw widget to an hbox
-void widget_add_framedraw (GtkVBox *, int start, int end, boolean add_preview_button, int width, int height);
+void widget_add_framedraw (LiVESVBox *, int start, int end, boolean add_preview_button, int width, int height);
 
 /// redraw when exposed/frame number changes
 void framedraw_redraw (lives_special_framedraw_rect_t *, boolean reload_image, GdkPixbuf *);
@@ -34,10 +34,10 @@ void framedraw_connect(lives_special_framedraw_rect_t *, int width, int height, 
 void framedraw_connect_spinbutton(lives_special_framedraw_rect_t *, lives_rfx_t *);
 
 /// add "reset values" button
-void framedraw_add_reset(GtkVBox *, lives_special_framedraw_rect_t *);
+void framedraw_add_reset(LiVESVBox *, lives_special_framedraw_rect_t *);
 
 /// add explanatory label
-void framedraw_add_label(GtkVBox *box);
+void framedraw_add_label(LiVESVBox *box);
 
 
 /// reload and redraw the frame

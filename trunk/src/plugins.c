@@ -1060,7 +1060,7 @@ _vppaw *on_vpp_advanced_clicked (GtkButton *button, gpointer user_data) {
 #else
     com=g_strdup_printf("echo.exe -e \"%s\"",(*tmpvpp->get_init_rfx)());
 #endif
-    plugin_run_param_window(com,GTK_VBOX(vbox),&(vppa->rfx));
+    plugin_run_param_window(com,LIVES_VBOX(vbox),&(vppa->rfx));
     g_free(com);
     if (tmpvpp->extra_argv!=NULL&&tmpvpp->extra_argc>0) {
       // update with defaults
@@ -3720,7 +3720,7 @@ GList *get_external_window_hints(lives_rfx_t *rfx) {
 
 
 
-gchar *plugin_run_param_window(const gchar *get_com, GtkVBox *vbox, lives_rfx_t **ret_rfx) {
+gchar *plugin_run_param_window(const gchar *get_com, LiVESVBox *vbox, lives_rfx_t **ret_rfx) {
 
   // here we create an rfx script from some fixed values and values from the plugin; 
   // we will then compile the script to an rfx scrap and use the scrap to get info

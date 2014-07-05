@@ -1,5 +1,6 @@
 # List of source files containing translatable strings.
 
+src/widget-helper.h
 src/main.c
 src/startup.c
 src/interface.c

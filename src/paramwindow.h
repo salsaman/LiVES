@@ -18,34 +18,34 @@ typedef struct {
 #define RFX_DEF_NUM_MAX 1000000. ///< default param max when not defined
 
 
-void on_paramwindow_ok_clicked (GtkButton *, lives_rfx_t *);
-void on_paramwindow_cancel_clicked (GtkButton *, lives_rfx_t *);
-void on_paramwindow_cancel_clicked2 (GtkButton *, lives_rfx_t *);
+void on_paramwindow_ok_clicked (LiVESButton *, lives_rfx_t *);
+void on_paramwindow_cancel_clicked (LiVESButton *, lives_rfx_t *);
+void on_paramwindow_cancel_clicked2 (LiVESButton *, lives_rfx_t *);
 
-void on_render_fx_pre_activate (GtkMenuItem *, lives_rfx_t *);
-void on_render_fx_activate (GtkMenuItem *, lives_rfx_t *);
+void on_render_fx_pre_activate (LiVESMenuItem *, lives_rfx_t *);
+void on_render_fx_activate (LiVESMenuItem *, lives_rfx_t *);
 
 void on_fx_pre_activate (lives_rfx_t *, int didx, LiVESWidget *pbox);
 
-boolean make_param_box(GtkVBox *, lives_rfx_t *);
+boolean make_param_box(LiVESVBox *, lives_rfx_t *);
 
-boolean add_param_to_box (GtkBox *, lives_rfx_t *, int param_number, boolean add_slider);
-void add_param_label_to_box (GtkBox *, boolean do_trans, const gchar *text);
+boolean add_param_to_box (LiVESBox *, lives_rfx_t *, int param_number, boolean add_slider);
+void add_param_label_to_box (LiVESBox *, boolean do_trans, const gchar *text);
 
 GSList *add_usrgrp_to_livesgrp (GSList *u2l, GSList *rbgroup, int usr_number);
 lives_widget_group_t *livesgrp_from_usrgrp (GSList *u2l, int usrgrp);
 
-void after_boolean_param_toggled (GtkToggleButton *, lives_rfx_t *);
-void after_param_value_changed (GtkSpinButton *, lives_rfx_t *);
-void after_param_red_changed (GtkSpinButton *, lives_rfx_t *);
-void after_param_green_changed (GtkSpinButton *, lives_rfx_t *);
-void after_param_blue_changed (GtkSpinButton *, lives_rfx_t *);
-void after_param_alpha_changed (GtkSpinButton *, lives_rfx_t *);
-boolean after_param_text_focus_changed (GtkWidget *, GtkWidget *, lives_rfx_t *);
-void after_param_text_changed (GtkWidget *, lives_rfx_t *);
-void after_string_list_changed (GtkComboBox *, lives_rfx_t *);
+void after_boolean_param_toggled (LiVESToggleButton *, lives_rfx_t *);
+void after_param_value_changed (LiVESSpinButton *, lives_rfx_t *);
+void after_param_red_changed (LiVESSpinButton *, lives_rfx_t *);
+void after_param_green_changed (LiVESSpinButton *, lives_rfx_t *);
+void after_param_blue_changed (LiVESSpinButton *, lives_rfx_t *);
+void after_param_alpha_changed (LiVESSpinButton *, lives_rfx_t *);
+boolean after_param_text_focus_changed (LiVESWidget *, LiVESWidget *, lives_rfx_t *);
+void after_param_text_changed (LiVESWidget *, lives_rfx_t *);
+void after_string_list_changed (LiVESCombo *, lives_rfx_t *);
 
-void on_pwcolsel (GtkButton *, lives_rfx_t *);
+void on_pwcolsel (LiVESButton *, lives_rfx_t *);
 
 char *param_marshall (lives_rfx_t *, boolean with_min_max);
 char **param_marshall_to_argv (lives_rfx_t *);

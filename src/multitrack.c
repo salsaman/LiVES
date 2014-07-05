@@ -1487,7 +1487,7 @@ boolean add_mt_param_box(lives_mt *mt) {
 
   widget_opts.packing_height=2.*widget_opts.scale;
   widget_opts.border_width=2.*widget_opts.scale;
-  res=make_param_box(GTK_VBOX (mt->fx_box), mt->current_rfx);
+  res=make_param_box(LIVES_VBOX (mt->fx_box), mt->current_rfx);
   widget_opts.packing_height=dph;
   widget_opts.border_width=dbw;
 
@@ -1691,10 +1691,7 @@ void track_select (lives_mt *mt) {
 	
 	if (!mt->aud_track_selected) {
 	  if (labelbox!=NULL) {
-	    lives_widget_set_state(labelbox,LIVES_WIDGET_STATE_NORMAL);
-	    lives_widget_queue_draw(labelbox);
 	    lives_widget_set_state(labelbox,LIVES_WIDGET_STATE_PRELIGHT);
-	    lives_widget_queue_draw(labelbox);
 	  }
 	  if (ahbox!=NULL) lives_widget_set_state(ahbox,LIVES_WIDGET_STATE_PRELIGHT);
 	  if (checkbutton!=NULL) {
@@ -5643,7 +5640,9 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
   GtkWidget *menuitem_menu;
   GtkWidget *menuitem_menu2;
   GtkWidget *selcopy_menu;
+#if !GTK_CHECK_VERSION(3,10,0)
   GtkWidget *image;
+#endif
   GtkWidget *separator;
   GtkWidget *full_screen;
   GtkWidget *about;
@@ -6243,7 +6242,7 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
   lives_container_add (LIVES_CONTAINER (menuitem_menu), separator);
   lives_widget_set_sensitive (separator, FALSE);
 
-  mt->quit = lives_image_menu_item_new_from_stock ("gtk-quit", mt->accel_group);
+  mt->quit = lives_image_menu_item_new_from_stock (LIVES_STOCK_LABEL_QUIT, mt->accel_group);
   lives_container_add (LIVES_CONTAINER (menuitem_menu), mt->quit);
 
   lives_widget_add_accelerator (mt->quit, "activate", mt->accel_group,
@@ -6272,9 +6271,11 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
                               LIVES_KEY_u, LIVES_CONTROL_MASK,
                               LIVES_ACCEL_VISIBLE);
   
-  image = lives_image_new_from_stock ("gtk-undo", LIVES_ICON_SIZE_MENU);
+#if !GTK_CHECK_VERSION(3,10,0)
+  image = lives_image_new_from_stock (LIVES_STOCK_UNDO, LIVES_ICON_SIZE_MENU);
   lives_widget_show (image);
   lives_image_menu_item_set_image (LIVES_IMAGE_MENU_ITEM (mt->undo), image);
+#endif
 
   if (mt->undo_offset==g_list_length(mt->undos)) mt_set_undoable(mt,MT_UNDO_NONE,NULL,FALSE);
   else {
@@ -6294,9 +6295,11 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
                               LIVES_KEY_z, LIVES_CONTROL_MASK,
                               LIVES_ACCEL_VISIBLE);
 
-  image = lives_image_new_from_stock ("gtk-redo", LIVES_ICON_SIZE_MENU);
+#if !GTK_CHECK_VERSION(3,10,0)
+  image = lives_image_new_from_stock (LIVES_STOCK_REDO, LIVES_ICON_SIZE_MENU);
   lives_widget_show (image);
   lives_image_menu_item_set_image (LIVES_IMAGE_MENU_ITEM (mt->redo), image);
+#endif
 
   if (mt->undo_offset<=1) mt_set_redoable(mt,MT_UNDO_NONE,NULL,FALSE);
   else {
@@ -6420,8 +6423,10 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
 
   lives_container_add (LIVES_CONTAINER (menuitem_menu), mt->playall);
 
-  image = lives_image_new_from_stock ("gtk-refresh", LIVES_ICON_SIZE_MENU);
+#if !GTK_CHECK_VERSION(3,10,0)
+  image = lives_image_new_from_stock (LIVES_STOCK_REFRESH, LIVES_ICON_SIZE_MENU);
   lives_image_menu_item_set_image (LIVES_IMAGE_MENU_ITEM (mt->playall), image);
+#endif
 
   mt->playsel = lives_image_menu_item_new_with_mnemonic (_("Pla_y selected time only"));
   lives_widget_add_accelerator (mt->playsel, "activate", mt->accel_group,
@@ -6437,14 +6442,19 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
                               LIVES_KEY_q, (GdkModifierType)0,
                               LIVES_ACCEL_VISIBLE);
 
-  image = lives_image_new_from_stock ("gtk-stop", LIVES_ICON_SIZE_MENU);
+#if !GTK_CHECK_VERSION(3,10,0)
+  image = lives_image_new_from_stock (LIVES_STOCK_MEDIA_STOP, LIVES_ICON_SIZE_MENU);
   lives_image_menu_item_set_image (LIVES_IMAGE_MENU_ITEM (mt->stop), image);
+#endif
 
   mt->rewind = lives_image_menu_item_new_with_mnemonic (_("Re_wind"));
   lives_container_add (LIVES_CONTAINER (menuitem_menu), mt->rewind);
 
-  image = lives_image_new_from_stock ("gtk-back", LIVES_ICON_SIZE_MENU);
+#if !GTK_CHECK_VERSION(3,10,0)
+  image = lives_image_new_from_stock (LIVES_STOCK_MEDIA_REWIND, LIVES_ICON_SIZE_MENU);
   lives_image_menu_item_set_image (LIVES_IMAGE_MENU_ITEM (mt->rewind), image);
+#endif
+
   lives_widget_set_sensitive (mt->rewind, FALSE);
 
   lives_widget_add_accelerator (mt->rewind, "activate", mt->accel_group,
@@ -7164,9 +7174,11 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
                               LIVES_KEY_p, LIVES_CONTROL_MASK,
                               LIVES_ACCEL_VISIBLE);
 
-  image = lives_image_new_from_stock ("gtk-preferences", LIVES_ICON_SIZE_MENU);
+#if !GTK_CHECK_VERSION(3,10,0)
+  image = lives_image_new_from_stock (LIVES_STOCK_PREFERENCES, LIVES_ICON_SIZE_MENU);
   lives_widget_show (image);
   lives_image_menu_item_set_image (LIVES_IMAGE_MENU_ITEM (menuitem), image);
+#endif
 
   g_signal_connect (GTK_OBJECT (menuitem), "activate",
                       G_CALLBACK (on_preferences_activate),
@@ -16688,22 +16700,26 @@ void mt_sensitise (lives_mt *mt) {
 
 
 void mt_swap_play_pause (lives_mt *mt, boolean put_pause) {
-  GtkWidget *tmp_img;
+  GtkWidget *tmp_img=NULL;
 
   if (put_pause) {
-    tmp_img = lives_image_new_from_stock ("gtk-media-pause", lives_toolbar_get_icon_size (LIVES_TOOLBAR (mainw->btoolbar)));
+#if GTK_CHECK_VERSION(2,6,0)
+    tmp_img = lives_image_new_from_stock (LIVES_STOCK_MEDIA_PAUSE, lives_toolbar_get_icon_size (LIVES_TOOLBAR (mainw->btoolbar)));
+#endif
     set_menu_text(mt->playall,_("_Pause"),TRUE);
     lives_widget_set_tooltip_text(mainw->m_playbutton,_("Pause (p)"));
     lives_widget_set_sensitive(mt->playall,TRUE);
     lives_widget_set_sensitive(mainw->m_playbutton,TRUE);
   }
   else {
-    tmp_img = lives_image_new_from_stock ("gtk-media-play", lives_toolbar_get_icon_size (LIVES_TOOLBAR (mainw->btoolbar)));
+    tmp_img = lives_image_new_from_stock (LIVES_STOCK_MEDIA_PLAY, lives_toolbar_get_icon_size (LIVES_TOOLBAR (mainw->btoolbar)));
     set_menu_text(mt->playall,_("_Play from Timeline Position"),TRUE);
     lives_widget_set_tooltip_text(mainw->m_playbutton,_("Play all (p)"));
   }
+
   lives_widget_show(tmp_img);
   lives_tool_button_set_icon_widget(LIVES_TOOL_BUTTON(mainw->m_playbutton),tmp_img);
+
 }
 
 

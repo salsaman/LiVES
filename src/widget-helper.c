@@ -515,16 +515,22 @@ LIVES_INLINE LiVESWidget *lives_image_new(void) {
 LIVES_INLINE LiVESWidget *lives_image_new_from_stock(const char *stock_id, lives_icon_size_t size) {
   LiVESWidget *image=NULL;
 #ifdef GUI_GTK
-  GtkIconSet *iset=gtk_icon_factory_lookup_default(stock_id);
-  if (iset!=NULL) {
-    // TODO - deprecated
-    image=gtk_image_new_from_stock(stock_id,size);
+    if (lives_has_icon(stock_id,size)) {
+#if GTK_CHECK_VERSION(3,10,0)
+      image=gtk_image_new_from_icon_name(stock_id, size);
+#else
+      image=gtk_image_new_from_stock(stock_id,size);
+#endif
   }
   else {
-    image=gtk_image_new_from_stock(GTK_STOCK_MISSING_IMAGE,size);
-    // TODO - deprecated
+#if GTK_CHECK_VERSION(3,10,0)
+    image=gtk_image_new_from_icon_name(LIVES_STOCK_MISSING_IMAGE, size);
+    if (image==NULL) image=gtk_image_new_from_icon_name(LIVES_STOCK_CLOSE,size);
+#else
+    image=gtk_image_new_from_stock(LIVES_STOCK_MISSING_IMAGE,size);
     if (image==NULL) image=gtk_image_new_from_stock(GTK_STOCK_NO,size);
-    if (image==NULL) image=gtk_image_new_from_stock(GTK_STOCK_CLOSE,size);
+    if (image==NULL) image=gtk_image_new_from_stock(LIVES_STOCK_CLOSE,size);
+#endif
   }
 #endif
   return image;
@@ -823,6 +829,16 @@ LIVES_INLINE boolean lives_window_remove_accel_group(LiVESWindow *window, LiVESA
 #endif
   return FALSE;
 }
+
+
+LIVES_INLINE boolean lives_menu_set_accel_group(LiVESMenu *menu, LiVESAccelGroup *group) {
+#ifdef GUI_GTK
+  gtk_menu_set_accel_group(menu,group);
+  return TRUE;
+#endif
+  return FALSE;
+}
+
 
 
 LIVES_INLINE boolean lives_window_has_toplevel_focus(LiVESWindow *window) {
@@ -1449,10 +1465,19 @@ LIVES_INLINE LiVESWidget *lives_button_new_with_label(const char *label) {
 LIVES_INLINE LiVESWidget *lives_button_new_from_stock(const char *stock_id) {
   LiVESWidget *button=NULL;
 #ifdef GUI_GTK
+
 #if GTK_CHECK_VERSION(2,6,0)
+#if GTK_CHECK_VERSION(3,10,0)
+  if (!strcmp(stock_id,LIVES_STOCK_LABEL_CANCEL)||!strcmp(stock_id,LIVES_STOCK_LABEL_OK)) {
+    button=gtk_button_new_with_mnemonic(stock_id);
+    return button;
+  }
+  {
+#else
   if (!strcmp(stock_id,LIVES_STOCK_ADD) || 
       !strcmp(stock_id,LIVES_STOCK_REMOVE)
       ) {
+#endif
     LiVESWidget *image=gtk_image_new_from_icon_name(stock_id,GTK_ICON_SIZE_BUTTON);
     button=gtk_button_new();
     gtk_button_set_image(GTK_BUTTON(button),image);
@@ -1460,10 +1485,12 @@ LIVES_INLINE LiVESWidget *lives_button_new_from_stock(const char *stock_id) {
     gtk_button_set_always_show_image(GTK_BUTTON(button),TRUE);
 #endif
   }
+#if !GTK_CHECK_VERSION(3,10,0)
   else {
     // TODO - deprecated
     button=gtk_button_new_from_stock(stock_id);
   }
+#endif
 
 #else
   button=gtk_button_new_from_stock(stock_id);
@@ -1772,6 +1799,16 @@ LIVES_INLINE boolean lives_tool_button_set_use_underline(LiVESToolButton *button
   return FALSE;
 }
 
+
+LIVES_INLINE boolean lives_button_set_use_stock(LiVESButton *button, boolean use_stock) {
+#ifdef GUI_GTK
+#if !GTK_CHECK_VERSION(3,10,0)
+  gtk_button_set_use_stock(button,use_stock);
+  return TRUE;
+#endif
+#endif
+  return FALSE;
+}
 
 
 LIVES_INLINE void lives_ruler_set_range(LiVESRuler *ruler, double lower, double upper, double position, double max_size) {
@@ -2242,8 +2279,11 @@ LIVES_INLINE LiVESWidget *lives_menu_item_new_with_label(const char *label) {
 LIVES_INLINE LiVESWidget *lives_image_menu_item_new_with_label(const char *label) {
   LiVESWidget *menuitem=NULL;
 #ifdef GUI_GTK
-  // TODO - deprecated
+#if GTK_CHECK_VERSION(3,10,0)
+  menuitem=gtk_menu_item_new_with_label(label);
+#else
   menuitem=gtk_image_menu_item_new_with_label(label);
+#endif
   if (widget_opts.apply_theme) {
     lives_widget_apply_theme2(menuitem, LIVES_WIDGET_STATE_INSENSITIVE);
   }
@@ -2255,7 +2295,11 @@ LIVES_INLINE LiVESWidget *lives_image_menu_item_new_with_label(const char *label
 LIVES_INLINE LiVESWidget *lives_image_menu_item_new_with_mnemonic(const char *label) {
   LiVESWidget *menuitem=NULL;
 #ifdef GUI_GTK
+#if GTK_CHECK_VERSION(3,10,0)
+  menuitem=gtk_menu_item_new_with_mnemonic(label);
+#else
   menuitem=gtk_image_menu_item_new_with_mnemonic(label);
+#endif
   if (widget_opts.apply_theme) {
     lives_widget_apply_theme2(menuitem, LIVES_WIDGET_STATE_INSENSITIVE);
   }
@@ -2304,8 +2348,20 @@ LIVES_INLINE LiVESWidget *lives_check_menu_item_new_with_mnemonic(const char *la
 LIVES_INLINE LiVESWidget *lives_image_menu_item_new_from_stock(const char *stock_id, LiVESAccelGroup *accel_group) {
   LiVESWidget *menuitem=NULL;
 #ifdef GUI_GTK
-  // TODO - deprecated
+#if GTK_CHECK_VERSION(3,10,0)
+  menuitem=gtk_menu_item_new_with_mnemonic(stock_id);
+  
+  if (!strcmp(stock_id,LIVES_STOCK_LABEL_SAVE)) {
+    gtk_menu_item_set_accel_path(LIVES_MENU_ITEM(menuitem),"<LiVES>/save");
+  }
+
+  if (!strcmp(stock_id,LIVES_STOCK_LABEL_QUIT)) {
+    gtk_menu_item_set_accel_path(LIVES_MENU_ITEM(menuitem),"<LiVES>/quit");
+  }
+
+#else
   menuitem=gtk_image_menu_item_new_from_stock(stock_id,accel_group);
+#endif
   if (widget_opts.apply_theme) {
     lives_widget_apply_theme2(menuitem, LIVES_WIDGET_STATE_INSENSITIVE);
   }
@@ -2336,6 +2392,7 @@ LIVES_INLINE boolean lives_check_menu_item_get_active(LiVESCheckMenuItem *item) 
 }
 
 
+#if !GTK_CHECK_VERSION(3,10,0)
 
 LIVES_INLINE void lives_image_menu_item_set_image(LiVESImageMenuItem *item, LiVESWidget *image) {
 #ifdef GUI_GTK
@@ -2343,11 +2400,15 @@ LIVES_INLINE void lives_image_menu_item_set_image(LiVESImageMenuItem *item, LiVE
 #endif
 }
 
+#endif
 
-
-LIVES_INLINE void lives_menu_set_title(LiVESMenu *menu, const char *title) {
+LIVES_INLINE boolean lives_menu_set_title(LiVESMenu *menu, const char *title) {
 #ifdef GUI_GTK
+#if !GTK_CHECK_VERSION(3,10,0)
   gtk_menu_set_title(menu,title);
+  return TRUE;
+#endif
+  return FALSE;
 #endif
 }
 
@@ -2365,7 +2426,9 @@ LIVES_INLINE boolean lives_image_menu_item_set_always_show_image(LiVESImageMenuI
   // return TRUE if implemented
 #ifdef GUI_GTK
 #if GTK_CHECK_VERSION(2,16,0)
+#if !GTK_CHECK_VERSION(3,10,0)
   gtk_image_menu_item_set_always_show_image(item,show);
+#endif
   return TRUE;
 #endif
 #endif
@@ -3570,6 +3633,33 @@ LIVES_INLINE LiVESWidget *lives_standard_file_button_new(boolean is_dir, const c
 
 // utils
 
+void widget_helper_init(void) {
+  widget_opts = def_widget_opts;
+  widget_opts.border_width*=widget_opts.scale;
+  widget_opts.packing_width*=widget_opts.scale;
+  widget_opts.packing_height*=widget_opts.scale;
+  widget_opts.filler_len*=widget_opts.scale;
+
+  gtk_accel_map_add_entry("<LiVES>/save",LIVES_KEY_s,LIVES_CONTROL_MASK);
+  gtk_accel_map_add_entry("<LiVES>/quit",LIVES_KEY_q,LIVES_CONTROL_MASK);
+}
+
+
+boolean lives_has_icon(const char *stock_id, lives_icon_size_t size)  {
+  boolean has_icon=FALSE;
+#ifdef GUI_GTK
+#if GTK_CHECK_VERSION(3,0,0)
+  GtkIconInfo *iset=gtk_icon_theme_lookup_icon(gtk_icon_theme_get_default(), stock_id, size, GTK_ICON_LOOKUP_USE_BUILTIN);
+#else
+  GtkIconSet *iset=gtk_icon_factory_lookup_default(stock_id);
+#endif
+  has_icon=(iset!=NULL);
+#endif
+  return has_icon;
+}
+
+
+
 
 LIVES_INLINE void lives_cursor_unref(LiVESXCursor *cursor) {
 #ifdef GUI_GTK
@@ -3780,6 +3870,15 @@ LiVESWidget *lives_menu_add_separator(LiVESMenu *menu) {
     lives_widget_set_sensitive (separatormenuitem, FALSE);
   }
   return separatormenuitem;
+}
+
+
+LIVES_INLINE int lives_display_get_n_screens(LiVESXDisplay *disp) {
+#if GTK_CHECK_VERSION(3,10,0)
+  return 1;
+#else
+  return gdk_display_get_n_screens(disp);
+#endif
 }
 
 

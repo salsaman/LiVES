@@ -860,13 +860,13 @@ void on_fx_pre_activate (lives_rfx_t *rfx, int didx, LiVESWidget *pbox) {
     // add preview window
     if (rfx->num_in_channels>0) {
       mainw->framedraw_frame=cfile->start;
-      widget_add_framedraw(GTK_VBOX(pbox),cfile->start,cfile->end,!(rfx->props&RFX_PROPS_MAY_RESIZE),
+      widget_add_framedraw(LIVES_VBOX(pbox),cfile->start,cfile->end,!(rfx->props&RFX_PROPS_MAY_RESIZE),
 			   cfile->hsize,cfile->vsize);
     }
     else {
       if (!(rfx->props&RFX_PROPS_BATCHG)) {
 	mainw->framedraw_frame=0;
-	widget_add_framedraw(GTK_VBOX(pbox),1,1,TRUE,MAX_PRE_X,MAX_PRE_Y);
+	widget_add_framedraw(LIVES_VBOX(pbox),1,1,TRUE,MAX_PRE_X,MAX_PRE_Y);
       }
     }
 
@@ -876,7 +876,7 @@ void on_fx_pre_activate (lives_rfx_t *rfx, int didx, LiVESWidget *pbox) {
     }
   }
 
-  has_param=make_param_box(GTK_VBOX (pbox), rfx);
+  has_param=make_param_box(LIVES_VBOX (pbox), rfx);
 
   // update widgets from onchange_init here
 
@@ -1053,7 +1053,7 @@ static int num_in_params_for_nth_instance(weed_plant_t *inst, int idx) {
 
 
 
-boolean make_param_box(GtkVBox *top_vbox, lives_rfx_t *rfx) {
+boolean make_param_box(LiVESVBox *top_vbox, lives_rfx_t *rfx) {
   // make a dynamic parameter window
 
   // returns TRUE if we added any parameters
@@ -2647,7 +2647,7 @@ static void after_param_text_buffer_changed (GtkTextBuffer *textbuffer, lives_rf
 }
 
 
-void after_string_list_changed (GtkComboBox *combo, lives_rfx_t *rfx) {
+void after_string_list_changed (LiVESCombo *combo, lives_rfx_t *rfx) {
   int param_number=GPOINTER_TO_INT (g_object_get_data (G_OBJECT (combo),"param_number"));
 
   GList *retvals=NULL;

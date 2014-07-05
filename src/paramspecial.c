@@ -233,7 +233,7 @@ void check_for_special (lives_rfx_t *rfx, lives_param_t *param, LiVESBox *pbox) 
 			    framedraw.yend_param!=NULL&&framedraw.yend_param->widgets[0]!=NULL)) {
 	  if (mainw->multitrack==NULL) {
 	    framedraw_connect(&framedraw,cfile->hsize,cfile->vsize,rfx); // turn passive preview->active
-	    framedraw_add_reset(GTK_VBOX(LIVES_WIDGET(pbox)),&framedraw);
+	    framedraw_add_reset(LIVES_VBOX(LIVES_WIDGET(pbox)),&framedraw);
 	  }
 	  else {
 	    mainw->framedraw=mainw->play_image;

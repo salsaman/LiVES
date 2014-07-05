@@ -2540,7 +2540,7 @@ void redraw_pwindow (int key, int mode) {
 
 void restore_pwindow (lives_rfx_t *rfx) {
   if (fx_dialog[1]!=NULL) {
-    make_param_box(GTK_VBOX (lives_dialog_get_content_area(LIVES_DIALOG(fx_dialog[1]))),rfx);
+    make_param_box(LIVES_VBOX (lives_dialog_get_content_area(LIVES_DIALOG(fx_dialog[1]))),rfx);
     lives_widget_show_all (lives_dialog_get_content_area(LIVES_DIALOG(fx_dialog[1])));
     lives_widget_queue_draw(fx_dialog[1]);
   }
@@ -2779,7 +2779,7 @@ void rte_reset_defs_clicked (GtkButton *button, lives_rfx_t *rfx) {
   
   if (cancelbutton!=NULL) lives_widget_set_sensitive(cancelbutton,FALSE);
 
-  make_param_box(GTK_VBOX (pbox), rfx);
+  make_param_box(LIVES_VBOX (pbox), rfx);
   lives_widget_show_all(pbox);
 
   lives_widget_queue_draw(fxdialog);

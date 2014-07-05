@@ -149,7 +149,7 @@ void framedraw_connect(lives_special_framedraw_rect_t *framedraw, int width, int
 }
 
 
-void framedraw_add_label(GtkVBox *box) {
+void framedraw_add_label(LiVESVBox *box) {
   GtkWidget *label;
 
   // TRANSLATORS - Preview refers to preview window; keep this phrase short
@@ -158,7 +158,7 @@ void framedraw_add_label(GtkVBox *box) {
 }
 
 
-void framedraw_add_reset(GtkVBox *box, lives_special_framedraw_rect_t *framedraw) {
+void framedraw_add_reset(LiVESVBox *box, lives_special_framedraw_rect_t *framedraw) {
   GtkWidget *hbox_rst;
  
   framedraw_add_label(box);
@@ -181,7 +181,7 @@ static boolean expose_fd_event (GtkWidget *widget, GdkEventExpose ev) {
   return TRUE;
 }
 
-void widget_add_framedraw (GtkVBox *box, int start, int end, boolean add_preview_button, int width, int height) {
+void widget_add_framedraw (LiVESVBox *box, int start, int end, boolean add_preview_button, int width, int height) {
   // adds the frame draw widget to box
   // the redraw button should be connected to an appropriate redraw function
   // after calling this function

@@ -567,7 +567,7 @@ GList *array_to_string_list (gchar **array, int offset, int len);
 lives_rfx_t *weed_to_rfx (weed_plant_t *plant, boolean show_reinits);
 lives_param_t *weed_params_to_rfx(int npar, weed_plant_t *instance, boolean show_reinits);
 
-gchar *plugin_run_param_window(const gchar *get_com, GtkVBox *vbox, lives_rfx_t **ret_rfx);
+gchar *plugin_run_param_window(const gchar *get_com, LiVESVBox *vbox, lives_rfx_t **ret_rfx);
 
 //////////////////////////////////////////////////////////////////////////////////////////
 /// video playback plugin window - fixed part

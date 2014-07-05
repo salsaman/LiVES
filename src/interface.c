@@ -1480,7 +1480,7 @@ _entryw* create_rename_dialog (int type) {
   if (type==6) {
     dirbutton1 = gtk_button_new ();
     
-    dirimage1 = lives_image_new_from_stock ("gtk-open", LIVES_ICON_SIZE_BUTTON);
+    dirimage1 = lives_image_new_from_stock (LIVES_STOCK_OPEN, LIVES_ICON_SIZE_BUTTON);
 
     lives_container_add (LIVES_CONTAINER (dirbutton1), dirimage1);
 
@@ -2269,13 +2269,15 @@ gchar *choose_file(gchar *dir, gchar *fname, gchar **filt, lives_file_chooser_ac
   else mytitle=g_strdup(title);
 
   if (act!=LIVES_FILE_CHOOSER_ACTION_SAVE) 
-    chooser=gtk_file_chooser_dialog_new(mytitle,LIVES_WINDOW(mainw->LiVES),(GtkFileChooserAction)act,GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
-					GTK_STOCK_OPEN, GTK_RESPONSE_ACCEPT,
+    chooser=gtk_file_chooser_dialog_new(mytitle,LIVES_WINDOW(mainw->LiVES),(GtkFileChooserAction)act, 
+					LIVES_STOCK_LABEL_CANCEL, GTK_RESPONSE_CANCEL,
+					LIVES_STOCK_LABEL_OPEN, GTK_RESPONSE_ACCEPT,
 					NULL);
 
   else {
-    chooser=gtk_file_chooser_dialog_new(mytitle,LIVES_WINDOW(mainw->LiVES),(GtkFileChooserAction)act,GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
-					GTK_STOCK_SAVE, GTK_RESPONSE_ACCEPT,
+    chooser=gtk_file_chooser_dialog_new(mytitle,LIVES_WINDOW(mainw->LiVES),(GtkFileChooserAction)act, 
+					LIVES_STOCK_LABEL_CANCEL, GTK_RESPONSE_CANCEL,
+					LIVES_STOCK_LABEL_SAVE, GTK_RESPONSE_ACCEPT,
 					NULL);
   }
 
@@ -2536,7 +2538,7 @@ _entryw* create_cds_dialog (int type) {
 
   discardbutton = lives_button_new_from_stock ("gtk-delete");
   lives_dialog_add_action_widget (LIVES_DIALOG (cdsw->dialog), discardbutton, 1+(type==2));
-  gtk_button_set_use_stock(GTK_BUTTON(discardbutton),FALSE);
+  lives_button_set_use_stock(GTK_BUTTON(discardbutton),FALSE);
   gtk_button_set_use_underline(GTK_BUTTON(discardbutton),TRUE);
   if ((type==0&&strlen(mainw->multitrack->layout_name)==0)||type==3||type==4) lives_button_set_label(GTK_BUTTON(discardbutton),_("_Wipe layout"));
   else if (type==0) lives_button_set_label(GTK_BUTTON(discardbutton),_("_Ignore changes"));
@@ -2544,7 +2546,7 @@ _entryw* create_cds_dialog (int type) {
   else if (type==2) lives_button_set_label(GTK_BUTTON(discardbutton),_("_Delete layout"));
 
   savebutton = lives_button_new_from_stock ("gtk-save");
-  gtk_button_set_use_stock(GTK_BUTTON(savebutton),FALSE);
+  lives_button_set_use_stock(GTK_BUTTON(savebutton),FALSE);
   gtk_button_set_use_underline(GTK_BUTTON(savebutton),TRUE);
   if (type==0||type==3) lives_button_set_label(GTK_BUTTON(savebutton),_("_Save layout"));
   else if (type==1) lives_button_set_label(GTK_BUTTON(savebutton),_("_Save clip set"));

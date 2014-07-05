@@ -4419,7 +4419,9 @@ void add_rfx_effects(void) {
 
   gchar txt[64]; // menu text
 
+#if !GTK_CHECK_VERSION(3,10,0)
   GtkWidget *rfx_image;
+#endif
   GtkWidget *menuitem;
 
   int i,plugin_idx,rfx_slot_count=1;
@@ -4773,15 +4775,20 @@ void add_rfx_effects(void) {
 	break;
       }
 
+
+#if !GTK_CHECK_VERSION(3,10,0)
+      rfx_image=NULL;
       if (rfx->props&RFX_PROPS_SLOW) {
-	rfx_image = lives_image_new_from_stock ("gtk-no", LIVES_ICON_SIZE_MENU);
+	rfx_image = lives_image_new_from_stock (LIVES_STOCK_NO, LIVES_ICON_SIZE_MENU);
       }
       else {
-	rfx_image = lives_image_new_from_stock ("gtk-yes", LIVES_ICON_SIZE_MENU);
+	rfx_image = lives_image_new_from_stock (LIVES_STOCK_YES, LIVES_ICON_SIZE_MENU);
       }
       lives_image_menu_item_set_image (GTK_IMAGE_MENU_ITEM (menuitem), rfx_image);
       
       lives_widget_show(rfx_image);
+#endif
+
       if (rfx->params==NULL) {
 	g_signal_connect (GTK_OBJECT (menuitem), "activate",
 			  G_CALLBACK (on_render_fx_activate),

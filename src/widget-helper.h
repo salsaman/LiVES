@@ -64,6 +64,8 @@ typedef cairo_fill_rule_t lives_painter_fill_rule_t;
 
 #ifdef GUI_GTK
 
+#include "support.h"
+
 // needs testing with gtk+ 3,10,0+
 //#if GTK_CHECK_VERSION(3,10,0)
 //#define LIVES_TABLE_IS_GRID 1
@@ -270,8 +272,12 @@ typedef enum {
 
 #if GTK_CHECK_VERSION(3,0,0)
 typedef GtkScale                          LiVESRuler;
+typedef GtkBox                            LiVESVBox;
+typedef GtkBox                            LiVESHBox;
 #else
 typedef GtkRuler                          LiVESRuler;
+typedef GtkVBox                           LiVESVBox;
+typedef GtkHBox                           LiVESHBox;
 #endif
 
 typedef GtkRange                          LiVESRange;
@@ -327,7 +333,6 @@ typedef gpointer                          livespointer;
 #define LIVES_MENU(widget) GTK_MENU(widget)
 #define LIVES_MENU_ITEM(widget) GTK_MENU_ITEM(widget)
 #define LIVES_IMAGE(widget) GTK_IMAGE(widget)
-#define LIVES_IMAGE_MENU_ITEM(widget) GTK_IMAGE_MENU_ITEM(widget)
 #define LIVES_CHECK_MENU_ITEM(widget) GTK_CHECK_MENU_ITEM(widget)
 #define LIVES_RADIO_MENU_ITEM(widget) GTK_RADIO_MENU_ITEM(widget)
 #define LIVES_FILE_CHOOSER(widget) GTK_FILE_CHOOSER(widget)
@@ -348,8 +353,12 @@ typedef gpointer                          livespointer;
 #if GTK_CHECK_VERSION(3,0,0)
 #define LIVES_RULER(widget) GTK_SCALE(widget)
 #define LIVES_ORIENTABLE(widget) GTK_ORIENTABLE(widget)
+#define LIVES_VBOX(widget) GTK_BOX(widget)
+#define LIVES_HBOX(widget) GTK_BOX(widget)
 #else
 #define LIVES_RULER(widget) GTK_RULER(widget)
+#define LIVES_VBOX(widget) GTK_VBOX(widget)
+#define LIVES_HBOX(widget) GTK_HBOX(widget)
 #endif
 
 #if GTK_CHECK_VERSION(3,2,0)
@@ -358,6 +367,11 @@ typedef gpointer                          livespointer;
 #define LIVES_GRID(widget) GTK_WIDGET(widget)
 #endif
 
+#if GTK_CHECK_VERSION(3,10,0)
+#define LIVES_IMAGE_MENU_ITEM(widget) GTK_MENU_ITEM(widget)
+#else
+#define LIVES_IMAGE_MENU_ITEM(widget) GTK_IMAGE_MENU_ITEM(widget)
+#endif
 
 #if LIVES_TABLE_IS_GRID
 #define LIVES_TABLE(widget) GTK_GRID(widget)
@@ -403,9 +417,65 @@ typedef GLogLevelFlags LiVESLogLevelFlags;
 #define LIVES_LOG_FATAL_MASK G_LOG_FATAL_MASK
 
 
-// stock images for buttons etc.
+#if GTK_CHECK_VERSION(3,10,0)
+#define LIVES_STOCK_UNDO "edit-undo"
+#define LIVES_STOCK_REDO "edit-redo"
+#define LIVES_STOCK_ADD "list-add"
+#define LIVES_STOCK_REMOVE "list-remove"
+#define LIVES_STOCK_NO "media-record"
+#define LIVES_STOCK_OPEN "document-open"
+#define LIVES_STOCK_CLOSE "window-close"
+#define LIVES_STOCK_CLEAR "edit-clear"
+#define LIVES_STOCK_GO_BACK "go-previous"
+#define LIVES_STOCK_GO_FORWARD "go-next"
+#define LIVES_STOCK_REFRESH "view-refresh"
+#define LIVES_STOCK_MEDIA_PLAY "media-playback-start"
+#define LIVES_STOCK_MEDIA_STOP "media-playback-stop"
+#define LIVES_STOCK_MEDIA_REWIND "media-seek-backward"
+#define LIVES_STOCK_MEDIA_RECORD "media-record"
+#define LIVES_STOCK_MEDIA_PAUSE "media-pause"
+#define LIVES_STOCK_PREFERENCES "preferences-system"
+#define LIVES_STOCK_DIALOG_INFO "dialog-information"
+#define LIVES_STOCK_MISSING_IMAGE "image-missing"
+
+// be careful with these - labels only
+#define LIVES_STOCK_LABEL_CANCEL (_("_Cancel"))
+#define LIVES_STOCK_LABEL_OK (_("_OK"))
+#define LIVES_STOCK_LABEL_SAVE (_("_Save"))
+#define LIVES_STOCK_LABEL_OPEN (_("_Open"))
+#define LIVES_STOCK_LABEL_QUIT (_("_Quit"))
+
+#else
+#define LIVES_STOCK_UNDO GTK_STOCK_UNDO
+#define LIVES_STOCK_REDO GTK_STOCK_REDO
 #define LIVES_STOCK_ADD GTK_STOCK_ADD
 #define LIVES_STOCK_REMOVE GTK_STOCK_REMOVE
+#define LIVES_STOCK_NO GTK_STOCK_NO
+#define LIVES_STOCK_YES GTK_STOCK_YES
+#define LIVES_STOCK_OPEN GTK_STOCK_OPEN
+#define LIVES_STOCK_CLOSE GTK_STOCK_CLOSE
+#define LIVES_STOCK_CLEAR GTK_STOCK_CLEAR
+#define LIVES_STOCK_GO_BACK GTK_STOCK_GO_BACK
+#define LIVES_STOCK_GO_FORWARD GTK_STOCK_GO_FORWARD
+#define LIVES_STOCK_REFRESH GTK_STOCK_REFRESH
+#define LIVES_STOCK_PREFERENCES GTK_STOCK_PREFERENCES
+#define LIVES_STOCK_DIALOG_INFO GTK_STOCK_DIALOG_INFO
+#define LIVES_STOCK_MISSING_IMAGE GTK_STOCK_MISSING_IMAGE
+
+#define LIVES_STOCK_LABEL_CANCEL GTK_STOCK_CANCEL
+#define LIVES_STOCK_LABEL_OK GTK_STOCK_OK
+#define LIVES_STOCK_LABEL_OPEN GTK_STOCK_OPEN
+#define LIVES_STOCK_LABEL_SAVE GTK_STOCK_SAVE
+#define LIVES_STOCK_LABEL_QUIT GTK_STOCK_QUIT
+
+#define LIVES_STOCK_MEDIA_PAUSE GTK_STOCK_MEDIA_PAUSE
+#define LIVES_STOCK_MEDIA_PLAY GTK_STOCK_MEDIA_PLAY
+#define LIVES_STOCK_MEDIA_STOP GTK_STOCK_MEDIA_STOP
+#define LIVES_STOCK_MEDIA_REWIND GTK_STOCK_MEDIA_REWIND
+#define LIVES_STOCK_MEDIA_RECORD GTK_STOCK_MEDIA_RECORD
+
+#endif
+
 
 
 typedef GdkModifierType LiVESModifierType;
@@ -659,6 +729,7 @@ lives_painter_format_t lives_painter_image_surface_get_format(lives_painter_surf
 
 // utils
 
+void widget_helper_init(void);
 
 // object funcs.
 
@@ -778,6 +849,7 @@ boolean lives_window_set_hide_titlebar_when_maximized(LiVESWindow *, boolean set
 
 boolean lives_window_add_accel_group(LiVESWindow *, LiVESAccelGroup *group);
 boolean lives_window_remove_accel_group(LiVESWindow *, LiVESAccelGroup *group);
+boolean lives_menu_set_accel_group(LiVESMenu *, LiVESAccelGroup *group);
 
 boolean lives_window_has_toplevel_focus(LiVESWindow *);
 
@@ -838,6 +910,7 @@ void lives_combo_populate(LiVESCombo *, LiVESList *list);
 boolean lives_toggle_button_get_active(LiVESToggleButton *);
 void lives_toggle_button_set_active(LiVESToggleButton *, boolean active);
 
+boolean lives_has_icon(const char *stock_id, lives_icon_size_t size);
 
 void lives_tooltips_set (LiVESWidget *, const char *tip_text);
 
@@ -881,6 +954,8 @@ LiVESToolItem *lives_tool_button_new(LiVESWidget *icon_widget, const char *label
 boolean lives_tool_button_set_icon_widget(LiVESToolButton *, LiVESWidget *icon);
 boolean lives_tool_button_set_label_widget(LiVESToolButton *, LiVESWidget *label);
 boolean lives_tool_button_set_use_underline(LiVESToolButton *, boolean use_underline);
+
+boolean lives_button_set_use_stock(LiVESButton *, boolean use_stock);
 
 double lives_ruler_get_value(LiVESRuler *);
 double lives_ruler_set_value(LiVESRuler *, double value);
@@ -964,14 +1039,22 @@ LiVESWidget *lives_image_menu_item_new_with_label(const char *label);
 LiVESWidget *lives_image_menu_item_new_with_mnemonic(const char *label);
 LiVESWidget *lives_image_menu_item_new_from_stock(const char *stock_id, LiVESAccelGroup *accel_group);
 
+#if !GTK_CHECK_VERSION(3,10,0)
+
 void lives_image_menu_item_set_image(LiVESImageMenuItem *, LiVESWidget *image);
+
+#endif
 
 void lives_menu_item_set_submenu(LiVESMenuItem *, LiVESWidget *);
 
 void lives_check_menu_item_set_active(LiVESCheckMenuItem *, boolean state);
 boolean lives_check_menu_item_get_active(LiVESCheckMenuItem *);
 
-void lives_menu_set_title(LiVESMenu *, const char *title);
+boolean lives_menu_set_title(LiVESMenu *, const char *title);
+
+
+int lives_display_get_n_screens(LiVESXDisplay *);
+
 
 char *lives_file_chooser_get_filename(LiVESFileChooser *);
 LiVESSList *lives_file_chooser_get_filenames(LiVESFileChooser *);

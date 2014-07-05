@@ -233,7 +233,7 @@ void get_monitors(void) {
     disp=(GdkDisplay *)dlist->data;
 
     // get screens
-    nscreens=gdk_display_get_n_screens(disp);
+    nscreens=lives_display_get_n_screens(disp);
     for (i=0;i<nscreens;i++) {
       screen=gdk_display_get_screen(disp,i);
       capable->nmonitors+=gdk_screen_get_n_monitors(screen);
@@ -254,7 +254,7 @@ void get_monitors(void) {
     devlist=gdk_device_manager_list_devices(devman,GDK_DEVICE_TYPE_MASTER);
 #endif
     // get screens
-    nscreens=gdk_display_get_n_screens(disp);
+    nscreens=lives_display_get_n_screens(disp);
     for (i=0;i<nscreens;i++) {
       screen=gdk_display_get_screen(disp,i);
       nmonitors=gdk_screen_get_n_monitors(screen);
@@ -402,12 +402,7 @@ static boolean pre_init(void) {
 
   palette=(_palette*)(g_malloc(sizeof(_palette)));
 
-  widget_opts = def_widget_opts;
-  widget_opts.border_width*=widget_opts.scale;
-  widget_opts.packing_width*=widget_opts.scale;
-  widget_opts.packing_height*=widget_opts.scale;
-  widget_opts.filler_len*=widget_opts.scale;
-
+  widget_helper_init();
 
   prefs->show_gui=TRUE;
   prefs->show_splash=FALSE;

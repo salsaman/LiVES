@@ -9048,8 +9048,6 @@ boolean expose_vid_event (GtkWidget *widget, GdkEventExpose *event) {
   lives_painter_rectangle (cr,ex,ey,ew,eh);
   lives_painter_paint(cr);
 
-  unblock_expose();
-
   if (dest_cr) lives_painter_destroy(cr);
 
   return TRUE;
@@ -9060,7 +9058,6 @@ boolean expose_vid_event (GtkWidget *widget, GdkEventExpose *event) {
 static void redraw_laudio(lives_painter_t *cr, int ex, int ey, int ew, int eh) {
   int width;
 
-  block_expose();
 
   if (mainw->laudio_drawable!=NULL) {
     // check if a resize happened
@@ -9103,7 +9100,6 @@ static void redraw_laudio(lives_painter_t *cr, int ex, int ey, int ew, int eh) {
   lives_painter_rectangle (cr,ex,ey,ew,eh);
   lives_painter_paint(cr);
 
-  unblock_expose();
 }
 
 
@@ -9112,8 +9108,6 @@ static void redraw_laudio(lives_painter_t *cr, int ex, int ey, int ew, int eh) {
 static void redraw_raudio(lives_painter_t *cr, int ex, int ey, int ew, int eh) {
 
   int width;
-
-  block_expose();
 
   if (mainw->raudio_drawable!=NULL) {
     // check if a resize happened
@@ -9159,7 +9153,6 @@ static void redraw_raudio(lives_painter_t *cr, int ex, int ey, int ew, int eh) {
   if (1||mainw->current_file==-1) mainw->blank_raudio_drawable=mainw->raudio_drawable;
   else cfile->raudio_drawable=mainw->raudio_drawable;
 
-  unblock_expose();
 }
 
 

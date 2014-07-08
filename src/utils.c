@@ -2861,12 +2861,12 @@ void get_play_times(void) {
 	if (palette->style&STYLE_3||palette->style==STYLE_PLAIN) { // light style
 	  lives_painter_set_source_rgb(cr, 0., 0., 0.); ///< opaque black
 	  lives_painter_move_to(cr, offset, prefs->bar_height);
-	  lives_painter_line_to(cr, offset, allocheight-prefs->bar_height);
+	  lives_painter_line_to(cr, offset, allocheight);
 	}
 	else {
 	  lives_painter_set_source_rgb(cr, 1., 1., 1.); ///< opaque white
 	  lives_painter_move_to(cr, offset, prefs->bar_height);
-	  lives_painter_line_to(cr, offset, allocheight-prefs->bar_height);
+	  lives_painter_line_to(cr, offset, allocheight);
 	}
 
 	lives_painter_stroke(cr);
@@ -2914,12 +2914,12 @@ void get_play_times(void) {
 	if (palette->style&STYLE_3||palette->style==STYLE_PLAIN) { // light style
 	  lives_painter_set_source_rgb(cr, 0., 0., 0.); ///< opaque black
 	  lives_painter_move_to(cr, offset, prefs->bar_height);
-	  lives_painter_line_to(cr, offset, allocheight-prefs->bar_height);
+	  lives_painter_line_to(cr, offset, allocheight);
 	}
 	else {
 	  lives_painter_set_source_rgb(cr, 1., 1., 1.); ///< opaque white
 	  lives_painter_move_to(cr, offset, prefs->bar_height);
-	  lives_painter_line_to(cr, offset, allocheight-prefs->bar_height);
+	  lives_painter_line_to(cr, offset, allocheight);
 	}
 	lives_painter_stroke(cr);
 
@@ -2947,12 +2947,12 @@ void get_play_times(void) {
 	  if (palette->style&STYLE_3||palette->style==STYLE_PLAIN) { // light style
 	    lives_painter_set_source_rgb(cr, 0., 0., 0.); ///< opaque black
 	    lives_painter_move_to(cr, offset, prefs->bar_height);
-	    lives_painter_line_to(cr, offset, allocheight-prefs->bar_height);
+	    lives_painter_line_to(cr, offset, allocheight);
 	  }
 	  else {
 	    lives_painter_set_source_rgb(cr, 1., 1., 1.); ///< opaque white
 	    lives_painter_move_to(cr, offset, prefs->bar_height);
-	    lives_painter_line_to(cr, offset, allocheight-prefs->bar_height);
+	    lives_painter_line_to(cr, offset, allocheight);
 	  }
 	  lives_painter_stroke(cr);
 	  
@@ -2971,12 +2971,17 @@ void get_play_times(void) {
     if (cfile->total_time>0.) {
       // set the range of the timeline
       if (!cfile->opening_loc) {
-	lives_widget_show (mainw->hruler);
+	if (!lives_widget_is_visible(mainw->hruler)) {
+	  lives_widget_show (mainw->hruler);
+	}
       }
-      lives_widget_show (mainw->eventbox5);
-      lives_widget_show (mainw->video_draw);
-      lives_widget_show (mainw->laudio_draw);
-      lives_widget_show (mainw->raudio_draw);
+
+      if (!lives_widget_is_visible(mainw->video_draw)) {
+	lives_widget_show (mainw->eventbox5);
+	lives_widget_show (mainw->video_draw);
+	lives_widget_show (mainw->laudio_draw);
+	lives_widget_show (mainw->raudio_draw);
+      }
 
       lives_ruler_set_upper(LIVES_RULER (mainw->hruler),cfile->total_time);
       lives_widget_queue_draw(mainw->hruler);
@@ -3111,12 +3116,12 @@ void draw_little_bars (double ptrtime) {
       if (palette->style&STYLE_3||palette->style==STYLE_PLAIN) { // light style
 	lives_painter_set_source_rgb(cr, 0., 0., 0.); ///< opaque black
 	lives_painter_move_to(cr, offset, prefs->bar_height);
-	lives_painter_line_to(cr, offset, allocheight-prefs->bar_height);
+	lives_painter_line_to(cr, offset, allocheight);
       }
       else {
 	lives_painter_set_source_rgb(cr, 1., 1., 1.); ///< opaque white
 	lives_painter_move_to(cr, offset, prefs->bar_height);
-	lives_painter_line_to(cr, offset, allocheight-prefs->bar_height);
+	lives_painter_line_to(cr, offset, allocheight);
       }
       lives_painter_stroke(cr);
 
@@ -3149,12 +3154,12 @@ void draw_little_bars (double ptrtime) {
       if (palette->style&STYLE_3||palette->style==STYLE_PLAIN) { // light style
 	lives_painter_set_source_rgb(cr, 0., 0., 0.); ///< opaque black
 	lives_painter_move_to(cr, offset, prefs->bar_height);
-	lives_painter_line_to(cr, offset, allocheight-prefs->bar_height);
+	lives_painter_line_to(cr, offset, allocheight);
       }
       else {
 	lives_painter_set_source_rgb(cr, 1., 1., 1.); ///< opaque white
 	lives_painter_move_to(cr, offset, prefs->bar_height);
-	lives_painter_line_to(cr, offset, allocheight-prefs->bar_height);
+	lives_painter_line_to(cr, offset, allocheight);
       }
       lives_painter_stroke(cr);
 
@@ -3184,12 +3189,12 @@ void draw_little_bars (double ptrtime) {
 	if (palette->style&STYLE_3||palette->style==STYLE_PLAIN) { // light style
 	  lives_painter_set_source_rgb(cr, 0., 0., 0.); ///< opaque black
 	  lives_painter_move_to(cr, offset, prefs->bar_height);
-	  lives_painter_line_to(cr, offset, allocheight-prefs->bar_height);
+	  lives_painter_line_to(cr, offset, allocheight);
 	}
 	else {
 	  lives_painter_set_source_rgb(cr, 1., 1., 1.); ///< opaque white
 	  lives_painter_move_to(cr, offset, prefs->bar_height);
-	  lives_painter_line_to(cr, offset, allocheight-prefs->bar_height);
+	  lives_painter_line_to(cr, offset, allocheight);
 	}
 	lives_painter_stroke(cr);
 

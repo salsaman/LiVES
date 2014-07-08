@@ -2299,6 +2299,7 @@ void create_LiVES (void) {
 
   mainw->eventbox5 = lives_event_box_new ();
   lives_box_pack_start (LIVES_BOX (vbox4), mainw->eventbox5, FALSE, FALSE, 0);
+  lives_widget_show(mainw->eventbox5);
 
   if (palette->style&STYLE_1) {
     lives_widget_set_bg_color (mainw->eventbox5, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);

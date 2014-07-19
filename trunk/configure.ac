@@ -239,6 +239,7 @@ AC_SUBST(XRENDER_LIBS)
 AM_CONDITIONAL(HAVE_XRENDER,$HAVE_XRENDER)
 
 HAVE_GTK_VERSION3=false
+GTK310_WARN=false
 
 AC_ARG_ENABLE( gtk3, [  --disable-gtk3     Disable gtk+ 3.x and compile with gtk+ 2.x] , disable_gtk3=yes)
 
@@ -273,11 +274,24 @@ PKG_CHECK_EXISTS([gtk+-2.0 >= 2.6.0],[HAVE_GTK_VERSION206=true],[HAVE_GTK_VERSIO
 echo "- Compiling with gtk+ 2.x -"
 
 else
+GTK3_VERSION=`$PKG_CONFIG --modversion gtk+-3.0`
 
-echo "- Compiling with gtk+ 3.x -"
+echo "- Compiling with gtk+ version " $GTK3_VERSION " -"
+
+
+PKG_CHECK_EXISTS([gtk+-3.0 >= 3.10.0],[HAVE_GTK_VERSION310=true],[HAVE_GTK_VERSION310=false])
+
+PKG_CHECK_EXISTS([gtk+-3.0 >= 3.11.0],[HAVE_GTK_VERSION311=true],[HAVE_GTK_VERSION311=false])
 
 HAVE_GTK_VERSION216=true
 HAVE_GTK_VERSION206=true
+
+if test "$HAVE_GTK_VERSION310" = "true"; then
+if test "$HAVE_GTK_VERSION311" = "false"; then
+GTK310_WARN=true
+fi
+fi
+
 
 fi
 
@@ -316,6 +330,11 @@ echo "LiVES runs best with gtk+-2.0 version 2.16.0 or higher"
 echo "***********************************************"
 fi
 
+if test "$GTK310_WARN" = "true"; then
+echo "***********************************************"
+echo "GTK+ 3.10.x is known to buggy with LiVES. This version of gtk+ should be avoided."
+echo "***********************************************"
+fi
 
 PKG_CHECK_MODULES(GLIB,glib-2.0 >= 2.14.0)
 else

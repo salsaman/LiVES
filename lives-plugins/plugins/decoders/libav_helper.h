@@ -212,7 +212,9 @@ static void av_set_pts_info(AVStream *s, int pts_wrap_bits,
         return;
     }
     s->time_base = new_tb;
+#ifdef HAVE_AV_CODEC_SET_PKT_TIMEBASE
     av_codec_set_pkt_timebase(s->codec, new_tb);
+#endif
     s->pts_wrap_bits = pts_wrap_bits;
 }
 

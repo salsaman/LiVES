@@ -6802,6 +6802,7 @@ sub get_mplayer_location {
     if ($mpc eq "") {
 	$mpc=&location("mplayer2");
     }
+    return $mpc;
 }
 
 sub rc_set_if_not_set {

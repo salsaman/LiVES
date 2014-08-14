@@ -1619,7 +1619,7 @@ int calc_new_playback_position(int fileno, uint64_t otc, uint64_t *ntc) {
     }
 
     // check if video stopped playback
-    if (nframe<first_frame||nframe>last_frame) {
+    if ((sfile->clip_type==CLIP_TYPE_DISK||sfile->clip_type==CLIP_TYPE_FILE)&&(nframe<first_frame||nframe>last_frame)) {
       if (mainw->whentostop==STOP_ON_VID_END) {
 	mainw->cancelled=CANCEL_VID_END;
 	return 0;

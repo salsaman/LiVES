@@ -330,12 +330,6 @@ echo "LiVES runs best with gtk+-2.0 version 2.16.0 or higher"
 echo "***********************************************"
 fi
 
-if test "$GTK310_WARN" = "true"; then
-echo "***********************************************"
-echo "GTK+ 3.10.x is known to buggy with LiVES. This version of gtk+ should be avoided."
-echo "***********************************************"
-fi
-
 PKG_CHECK_MODULES(GLIB,glib-2.0 >= 2.14.0)
 else
 PKG_CHECK_MODULES(GLIB,glib-2.0 >= 2.4.0)
@@ -473,6 +467,7 @@ AM_CONDITIONAL(HAVE_SWSCALE,$HAVE_SWSCALE)
 
 HAVE_AVCODEC_OPEN2=false
 HAVE_AVCODEC_ALLOC_CONTEXT3=false
+HAVE_AV_CODEC_SET_PKT_TIMEBASE=false
 HAVE_AVFORMAT_NEW_STREAM=false
 HAVE_AVFORMAT_FIND_STREAM_INFO=false
 HAVE_AVFORMAT_INTERNAL_H=false
@@ -482,6 +477,7 @@ HAVE_AVPRIV_SET_PTS_INFO=false
 if test "$HAVE_AVCODEC" = "true" ; then
 AC_CHECK_LIB(avcodec,avcodec_open2,HAVE_AVCODEC_OPEN2=true,HAVE_AVCODEC_OPEN2=false)
 AC_CHECK_LIB(avcodec,avcodec_alloc_context3,HAVE_AVCODEC_ALLOC_CONTEXT3=true,HAVE_AVCODEC_ALLOC_COBTEXT3=false)
+AC_CHECK_LIB(avcodec,av_codec_set_pkt_timebase,HAVE_AV_CODEC_SET_PKT_TIMEBASE=true,HAVE_AV_CODEC_SET_PKT_TIMEBASE=false)
 fi
 
 if test "$HAVE_AVFORMAT" = "true" ; then
@@ -504,6 +500,7 @@ fi
 
 AM_CONDITIONAL(HAVE_AVCODEC_OPEN2,$HAVE_AVCODEC_OPEN2)
 AM_CONDITIONAL(HAVE_AVCODEC_ALLOC_CONTEXT3,$HAVE_AVCODEC_ALLOC_CONTEXT3)
+AM_CONDITIONAL(HAVE_AV_CODEC_SET_PKT_TIMEBASE,$HAVE_AV_CODEC_SET_PKT_TIMEBASE)
 AM_CONDITIONAL(HAVE_AVFORMAT_NEW_STREAM,$HAVE_AVFORMAT_NEW_STREAM)
 AM_CONDITIONAL(HAVE_AVFORMAT_FIND_STREAM_INFO,$HAVE_AVFORMAT_FIND_STREAM_INFO)
 AM_CONDITIONAL(HAVE_AVFORMAT_INTERNAL_H,$HAVE_AVFORMAT_INTERNAL_H)
@@ -967,4 +964,10 @@ echo "If you are building for MULTILIBS on a 64 bit system, "
 echo "you may wish to re-run this, e.g.: ./configure --libdir=/usr/lib64"
 echo "In this case you MUST first manually update the library paths in libweed/*.pc files."
 echo  "*******************************************************************"
+
+if test "$GTK310_WARN" = "true"; then
+echo "*********************************************************************************"
+echo "GTK+ 3.10.x is known to buggy with LiVES. This version of gtk+ should be avoided."
+echo "*********************************************************************************"
+fi
 

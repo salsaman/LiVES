@@ -167,7 +167,7 @@ void weed_apply_audio_effects_rt(float **abuf, int nchans, int64_t nsamps, gdoub
 lives_filter_error_t weed_apply_audio_instance (weed_plant_t *init_event, float **abuf, int nbtracks, int nchans, int64_t nsamps, 
 						gdouble arate, weed_timecode_t tc, double *vis);
 
-boolean weed_generator_start (weed_plant_t *inst);
+boolean weed_generator_start (weed_plant_t *inst, int key); // key starts at 0
 weed_plant_t *weed_layer_new_from_generator (weed_plant_t *inst, weed_timecode_t tc);
 void weed_generator_end (weed_plant_t *inst);
 boolean weed_playback_gen_start (void);

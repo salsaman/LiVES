@@ -6659,7 +6659,7 @@ boolean weed_init_effect(int hotkey) {
 
     key_to_instance[hotkey][key_modes[hotkey]]=new_instance;
 
-    if (!weed_generator_start(new_instance)) {
+    if (!weed_generator_start(new_instance,hotkey)) {
       // TODO - be more descriptive with error
       int weed_error;
       gchar *filter_name=weed_get_string_value(filter,"name",&weed_error),*tmp;
@@ -7146,7 +7146,7 @@ weed_plant_t *weed_layer_new_from_generator (weed_plant_t *inst, weed_timecode_t
 }
 
 
-boolean weed_generator_start (weed_plant_t *inst) {
+boolean weed_generator_start (weed_plant_t *inst, int key) {
   // make an "ephemeral clip"
 
   // cf. yuv4mpeg.c
@@ -7282,6 +7282,8 @@ boolean weed_generator_start (weed_plant_t *inst) {
 
   // if not playing, start playing
   if (mainw->playing_file==-1) {
+    uint64_t new_rte;
+
     if (!is_bg||old_file==-1||old_file==new_file) {
       switch_to_file((mainw->current_file=old_file),new_file);
       set_main_title(cfile->file_name,0);
@@ -7298,6 +7300,21 @@ boolean weed_generator_start (weed_plant_t *inst) {
       mainw->play_start=cfile->start;
       mainw->play_end=cfile->end;
       mainw->playing_sel=FALSE;
+    }
+
+    mainw->gen_started_play=TRUE;
+
+    new_rte=GU641<<key;
+    if (!(mainw->rte&new_rte)) mainw->rte|=new_rte;
+
+    mainw->last_grabable_effect=key;
+    if (rte_window!=NULL) rtew_set_keych(key,TRUE);
+    if (mainw->ce_thumbs) {
+      ce_thumbs_set_keych(key,TRUE);
+      
+      // if effect was auto (from ACTIVATE data connection), leave all param boxes
+      // otherwise, remove any which are not "pinned"
+      if (!mainw->fx_is_auto) ce_thumbs_add_param_box(key,!mainw->fx_is_auto);
     }
 
     play_file();

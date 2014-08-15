@@ -1173,6 +1173,8 @@ typedef struct {
   lives_decoder_t *track_decoders[MAX_TRACKS];
   int old_active_track_list[MAX_TRACKS];
 
+  boolean gen_started_play;
+  boolean fx_is_auto;
 ////////////////////
 
 } mainwindow;

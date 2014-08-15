@@ -1034,12 +1034,13 @@ boolean rte_on_off_callback (GtkAccelGroup *group, GObject *obj, guint keyval, G
 // this is the callback which happens when a rte is keyed
   int key=LIVES_POINTER_TO_INT(user_data);
   uint64_t new_rte;
-  boolean is_auto=FALSE;
+
+  mainw->fx_is_auto=FALSE;
 
   mainw->osc_block=TRUE;
 
   if (key<0) {
-    is_auto=TRUE;
+    mainw->fx_is_auto=TRUE;
     key=-key;
   }
 
@@ -1050,6 +1051,8 @@ boolean rte_on_off_callback (GtkAccelGroup *group, GObject *obj, guint keyval, G
     weed_deinit_all(FALSE);
   }
   else {
+    mainw->gen_started_play=FALSE;
+
     if (!(mainw->rte&new_rte)) {
       // switch is ON
       // WARNING - if we start playing because a generator was started, we block here
@@ -1064,16 +1067,19 @@ boolean rte_on_off_callback (GtkAccelGroup *group, GObject *obj, guint keyval, G
 	return TRUE;
       }
 
-      if (!(mainw->rte&new_rte)) mainw->rte|=new_rte;
 
-      mainw->last_grabable_effect=key-1;
-      if (rte_window!=NULL) rtew_set_keych(key-1,TRUE);
-      if (mainw->ce_thumbs) {
-	ce_thumbs_set_keych(key-1,TRUE);
+      if (!mainw->gen_started_play) {
+	if (!(mainw->rte&new_rte)) mainw->rte|=new_rte;
 
-	// if effect was auto (from ACTIVATE data connection), leave all param boxes
-	// otherwise, remove any which are not "pinned"
-	if (!is_auto) ce_thumbs_add_param_box(key-1,!is_auto);
+	mainw->last_grabable_effect=key-1;
+	if (rte_window!=NULL) rtew_set_keych(key-1,TRUE);
+	if (mainw->ce_thumbs) {
+	  ce_thumbs_set_keych(key-1,TRUE);
+	  
+	  // if effect was auto (from ACTIVATE data connection), leave all param boxes
+	  // otherwise, remove any which are not "pinned"
+	  if (!mainw->fx_is_auto) ce_thumbs_add_param_box(key-1,!mainw->fx_is_auto);
+	}
       }
     }
     else {
@@ -1088,6 +1094,7 @@ boolean rte_on_off_callback (GtkAccelGroup *group, GObject *obj, guint keyval, G
   }
 
   mainw->osc_block=FALSE;
+  mainw->fx_is_auto=FALSE;
 
   if (mainw->current_file>0&&cfile->play_paused&&!mainw->noswitch) {
     load_frame_image (cfile->frameno);
@@ -1101,7 +1108,7 @@ boolean rte_on_off_callback (GtkAccelGroup *group, GObject *obj, guint keyval, G
   }
   else lives_widget_set_sensitive(mainw->rendered_fx[0].menuitem,FALSE);
 
-  if (key>0&&!is_auto) {
+  if (key>0&&!mainw->fx_is_auto) {
     // user override any ACTIVATE data connection
     override_if_active_input(key);
 

@@ -2,8 +2,9 @@ Version 2.2.6
 -------------
 Fix startup bug creating config file incorrectly.
 Libav compatibility fixes.
-Updates for gtk+ > 3.10.0
+Updates for gtk+ >= 3.10.0
 Show warning when configured with gtk+ 3.10.x
+Add support for freenect camera.
 Minor code cleanups.
 
 

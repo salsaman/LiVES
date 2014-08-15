@@ -22,7 +22,7 @@ sendOSC_PROGRAMS = sendOSC
 install:
 	if ! test -f "$(bindir)/$(sendOSC)"; then \
 		if ! test -z $(bindir); then \
-			mkdir -p -- . "$(DESTDIR)$(bindir)"; \
+			$(MKDIR_P) -- . "$(DESTDIR)$(bindir)"; \
 		fi; \
 		$(INSTALL_PROGRAM) $(sendOSC) "$(DESTDIR)$(bindir)"; \
 	fi

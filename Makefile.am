@@ -72,20 +72,20 @@ EXTRA_DIST = \
 installdirs: 
 	mkinstalldirs
 	"$(srcdir)/mkinstalldirs" \
-	mkdir -p "$(DESTDIR)$(bindir)" \
-	mkdir -p "$(DESTDIR)$(datadir)" \
-	mkdir -p "$(DESTDIR)$(docdir)" \
-	mkdir -p "$(DESTDIR)$(sharedir)/applications/" \
-	mkdir -p "$(DESTDIR)$(sharedir)/pixmaps/" \
-	mkdir -p "$(DESTDIR)$(sharedir)/resources/"
+	$(MKDIR_P) "$(DESTDIR)$(bindir)" \
+	$(MKDIR_P) "$(DESTDIR)$(datadir)" \
+	$(MKDIR_P) "$(DESTDIR)$(docdir)" \
+	$(MKDIR_P) "$(DESTDIR)$(sharedir)/applications/" \
+	$(MKDIR_P) "$(DESTDIR)$(sharedir)/pixmaps/" \
+	$(MKDIR_P) "$(DESTDIR)$(sharedir)/resources/"
 
 install-data-local:
 	make docs-doxygen
 if HAVE_DOXYGEN
-	mkdir -p "$(DESTDIR)$(docdir)/html/LiVES"
+	$(MKDIR_P) "$(DESTDIR)$(docdir)/html/LiVES"
 	cp -rf "$(srcdir)/docs/doxygen/html/"* "$(DESTDIR)$(docdir)/html/LiVES"
 #NOTE - if packaging libweed separately, this should go in libweed/Makefile.am
-	mkdir -p "$(DESTDIR)$(docdir)/html/libweed"
+	$(MKDIR_P) "$(DESTDIR)$(docdir)/html/libweed"
 
 
 if HAVE_SYSTEM_WEED
@@ -95,11 +95,11 @@ else
 endif
 
 endif
-	mkdir -p "$(DESTDIR)$(sharedir)/applications/"
+	$(MKDIR_P) "$(DESTDIR)$(sharedir)/applications/"
 	cp -f "$(srcdir)/menu-entries/LiVES.desktop" "$(DESTDIR)$(sharedir)/applications/"
-	mkdir -p "$(DESTDIR)$(sharedir)/pixmaps/"
+	$(MKDIR_P) "$(DESTDIR)$(sharedir)/pixmaps/"
 	cp -f "$(srcdir)/menu-entries/lives.xpm" "$(DESTDIR)$(sharedir)/pixmaps/"
-	mkdir -p "$(DESTDIR)$(sharedir)/app-install/icons/"
+	$(MKDIR_P) "$(DESTDIR)$(sharedir)/app-install/icons/"
 	cp -f "$(srcdir)/menu-entries/lives.png" "$(DESTDIR)$(sharedir)/app-install/icons/"
 
 install-exec-local:

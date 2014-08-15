@@ -1465,11 +1465,12 @@ LIVES_INLINE LiVESWidget *lives_button_new_with_label(const char *label) {
 LIVES_INLINE LiVESWidget *lives_button_new_from_stock(const char *stock_id) {
   LiVESWidget *button=NULL;
 #ifdef GUI_GTK
-
 #if GTK_CHECK_VERSION(2,6,0)
 #if GTK_CHECK_VERSION(3,10,0)
-  if (!strcmp(stock_id,LIVES_STOCK_LABEL_CANCEL)||!strcmp(stock_id,LIVES_STOCK_LABEL_OK)) {
-    button=gtk_button_new_with_mnemonic(stock_id);
+  char *xstock_id=g_strdup(stock_id); // need to back this up as we will use translation functions
+  if (!strcmp(xstock_id,LIVES_STOCK_LABEL_CANCEL)||!strcmp(xstock_id,LIVES_STOCK_LABEL_OK)) {
+    button=gtk_button_new_with_mnemonic(xstock_id);
+    g_free(xstock_id);
     return button;
   }
   {
@@ -2349,16 +2350,17 @@ LIVES_INLINE LiVESWidget *lives_image_menu_item_new_from_stock(const char *stock
   LiVESWidget *menuitem=NULL;
 #ifdef GUI_GTK
 #if GTK_CHECK_VERSION(3,10,0)
-  menuitem=gtk_menu_item_new_with_mnemonic(stock_id);
+  char *xstock_id=g_strdup(stock_id); // need to back this up as we will use translation functions
+  menuitem=gtk_menu_item_new_with_mnemonic(xstock_id);
   
-  if (!strcmp(stock_id,LIVES_STOCK_LABEL_SAVE)) {
+  if (!strcmp(xstock_id,LIVES_STOCK_LABEL_SAVE)) {
     gtk_menu_item_set_accel_path(LIVES_MENU_ITEM(menuitem),"<LiVES>/save");
   }
 
-  if (!strcmp(stock_id,LIVES_STOCK_LABEL_QUIT)) {
+  if (!strcmp(xstock_id,LIVES_STOCK_LABEL_QUIT)) {
     gtk_menu_item_set_accel_path(LIVES_MENU_ITEM(menuitem),"<LiVES>/quit");
   }
-
+  g_free(xstock_id);
 #else
   menuitem=gtk_image_menu_item_new_from_stock(stock_id,accel_group);
 #endif

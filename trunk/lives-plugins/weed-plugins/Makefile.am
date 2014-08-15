@@ -38,10 +38,10 @@ endif
 AM_CFLAGS = $(shared_cflags) $(weed_CFLAGS) -ffast-math
 AM_CPPFLAGS = $(shared_cflags) $(weed_CFLAGS) -ffast-math
 
-if HAVE_VISUAL
+if HAVE_LIBVISUAL
 libvis_libs = libvis.la
-libvis_la_LDFLAGS = @VISUAL_LIBS@ $(AM_LDFLAGS)
-libvis_la_CFLAGS =  @VISUAL_CFLAGS@ $(AM_CFLAGS)
+libvis_la_LDFLAGS = @LIBVISUAL_LIBS@ $(AM_LDFLAGS)
+libvis_la_CFLAGS =  @LIBVISUAL_CFLAGS@ $(AM_CFLAGS)
 libvispluginslibdir = "$(libdir)/$(PACKAGE)/plugins/effects/realtime/weed/libvisual"
 libvispluginslib_LTLIBRARIES = $(libvis_libs)
 endif
@@ -82,6 +82,14 @@ ladspa_la_LDFLAGS = $(AM_LDFLAGS)
 ladspa_la_CFLAGS = $(AM_CFLAGS)
 ladspadir = "$(libdir)/$(PACKAGE)/plugins/effects/realtime/weed"
 ladspa_LTLIBRARIES = $(ladspa_libs)
+endif
+
+if HAVE_LIBFREENECT
+freenect_libs = freenect.la
+freenect_la_LDFLAGS = $(LIBFREENECT_LIBS) $(AM_LDFLAGS)
+freenect_la_CFLAGS = $(LIBFREENECT_CFLAGS) $(AM_CFLAGS)
+freenectdir = "$(libdir)/$(PACKAGE)/plugins/effects/realtime/weed"
+freenect_LTLIBRARIES = $(freenect_libs)
 endif
 
 fxpluginslib_LTLIBRARIES = RGBdelay.la \
@@ -138,7 +146,7 @@ fxpluginslib_LTLIBRARIES = RGBdelay.la \
 EXTRA_DIST=data icons syna.h weed-utils-code.c weed-plugin-utils.c
 
 install-data-local:
-	mkdir -p "$(DESTDIR)$(fxpluginslibdir)"
+	$(MKDIR_P) "$(DESTDIR)$(fxpluginslibdir)"
 	cp -rf data/ "$(DESTDIR)$(fxpluginslibdir)" && chmod -Rf a+r "$(DESTDIR)$(fxpluginslibdir)/data/"
 	cp -rf icons/ "$(DESTDIR)$(fxpluginslibdir)" && chmod -Rf a+r "$(DESTDIR)$(fxpluginslibdir)/icons/"
 	$(MAKE) -i install-data-local-remove-vcs-files

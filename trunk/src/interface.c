@@ -2248,7 +2248,7 @@ gchar *choose_file(gchar *dir, gchar *fname, gchar **filt, lives_file_chooser_ac
   GtkFileFilter *filter;
 
   gchar *filename=NULL;
-  gchar *mytitle;
+  gchar *mytitle,*tmp,*tmp2;
 
   int response;
 
@@ -2270,17 +2270,18 @@ gchar *choose_file(gchar *dir, gchar *fname, gchar **filt, lives_file_chooser_ac
 
   if (act!=LIVES_FILE_CHOOSER_ACTION_SAVE) 
     chooser=gtk_file_chooser_dialog_new(mytitle,LIVES_WINDOW(mainw->LiVES),(GtkFileChooserAction)act, 
-					LIVES_STOCK_LABEL_CANCEL, GTK_RESPONSE_CANCEL,
-					LIVES_STOCK_LABEL_OPEN, GTK_RESPONSE_ACCEPT,
+					(tmp=g_strdup(LIVES_STOCK_LABEL_CANCEL)), GTK_RESPONSE_CANCEL,
+					(tmp2=g_strdup(LIVES_STOCK_LABEL_OPEN)), GTK_RESPONSE_ACCEPT,
 					NULL);
 
   else {
     chooser=gtk_file_chooser_dialog_new(mytitle,LIVES_WINDOW(mainw->LiVES),(GtkFileChooserAction)act, 
-					LIVES_STOCK_LABEL_CANCEL, GTK_RESPONSE_CANCEL,
-					LIVES_STOCK_LABEL_SAVE, GTK_RESPONSE_ACCEPT,
+					(tmp=g_strdup(LIVES_STOCK_LABEL_CANCEL)), GTK_RESPONSE_CANCEL,
+					(tmp2=g_strdup(LIVES_STOCK_LABEL_SAVE)), GTK_RESPONSE_ACCEPT,
 					NULL);
   }
 
+  g_free(tmp); g_free(tmp2);
 
   g_free(mytitle);
 

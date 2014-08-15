@@ -1066,6 +1066,8 @@ static void lives_init(_ign_opts *ign_opts) {
 
   mainw->clips_group=NULL;
 
+  mainw->fx_is_auto=FALSE;
+  mainw->gen_started_play=FALSE;
   /////////////////////////////////////////////////// add new stuff just above here ^^
 
 

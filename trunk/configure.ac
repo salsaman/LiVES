@@ -99,6 +99,8 @@ ALL_LINGUAS="ar fr ca cs da ja nl_NL de_DE pt pt_BR hu es it pl tr ru zh_CN sk h
 AM_GNU_GETTEXT
 AM_GNU_GETTEXT_VERSION(0.17)
 
+AC_PROG_MKDIR_P
+
 
 dnl Use -Wall if we have gcc.
 changequote(,)dnl
@@ -534,8 +536,29 @@ AC_SUBST(FFTW3F_LIBS)
 AM_CONDITIONAL(HAVE_FFTW3F,$HAVE_FFTW3F)
 
 
+dnl check for libfreenect
+
+HAVE_LIBFREENECT=false
+AC_ARG_ENABLE( libfreenect, [  --disable-libfreenect     Disable libfreenect support.] , disable_libfreenect=yes)
+if test "x$disable_libfreenect" != "xyes" ; then
+
+PKG_CHECK_MODULES(LIBFREENECT, libfreenect, HAVE_LIBFREENECT=true, HAVE_LIBFREENECT=false)
+fi
+
+AC_SUBST(LIBFREENECT_CFLAGS)
+AC_SUBST(LIBFREENECT_LIBS)
+
+AM_CONDITIONAL(HAVE_LIBFREENECT,$HAVE_LIBFREENECT)
+
+
 dnl check for openGL
+HAVE_OPENGL=false
+AC_ARG_ENABLE( opengl, [  --disable-opengl     Disable openGL support.] , disable_opengl=yes)
+if test "x$disable_opengl" != "xyes" ; then
+
 PKG_CHECK_MODULES(GL,gl,HAVE_OPENGL=true,HAVE_OPENGL=false)
+fi
+
 AC_SUBST(GL_CFLAGS)
 AC_SUBST(GL_LIBS)
 
@@ -753,20 +776,20 @@ AC_SUBST(PULSE_LIBS)
 AM_CONDITIONAL(HAVE_PULSE_AUDIO,$HAVE_PULSE_AUDIO)
 
 
-HAVE_VISUAL=false
+HAVE_LIBVISUAL=false
 AC_ARG_ENABLE( libvisual, [  --disable-libvisual     Disable libvisual support.] , disable_libvisual=yes)
 if test "x$disable_libvisual" != "xyes" ; then
 
 dnl check for libvisual
-PKG_CHECK_MODULES(VISUAL,libvisual-0.4 >= 0.4.0,HAVE_VISUAL=true,HAVE_VISUAL=false)
-if test "x$HAVE_VISUAL" = "xfalse"; then
-PKG_CHECK_MODULES(VISUAL,libvisual = 0.2.0,HAVE_VISUAL=true,HAVE_VISUAL=false)
+PKG_CHECK_MODULES(LIBVISUAL,libvisual-0.4 >= 0.4.0,HAVE_LIBVISUAL=true,HAVE_LIBVISUAL=false)
+if test "x$HAVE_LIBVISUAL" = "xfalse"; then
+PKG_CHECK_MODULES(LIBVISUAL,libvisual = 0.2.0,HAVE_LIBVISUAL=true,HAVE_LIBVISUAL=false)
 fi
-AC_SUBST(VISUAL_CFLAGS)
-AC_SUBST(VISUAL_LIBS)
+AC_SUBST(LIBVISUAL_CFLAGS)
+AC_SUBST(LIBVISUAL_LIBS)
 fi
 
-AM_CONDITIONAL(HAVE_VISUAL,$HAVE_VISUAL)
+AM_CONDITIONAL(HAVE_LIBVISUAL,$HAVE_LIBVISUAL)
 
 
 
@@ -963,11 +986,14 @@ echo "LiVES is now configured and ready for building."
 echo "If you are building for MULTILIBS on a 64 bit system, "
 echo "you may wish to re-run this, e.g.: ./configure --libdir=/usr/lib64"
 echo "In this case you MUST first manually update the library paths in libweed/*.pc files."
+echo ""
+echo "Remember to do \"sudo ldconfig\" or equivalent after installing."
 echo  "*******************************************************************"
 
 if test "$GTK310_WARN" = "true"; then
-echo "*********************************************************************************"
-echo "GTK+ 3.10.x is known to buggy with LiVES. This version of gtk+ should be avoided."
-echo "*********************************************************************************"
+echo
+echo "******************************************************************************************"
+echo "WARNING: GTK+ 3.10.x is known to buggy with LiVES. This version of gtk+ should be avoided."
+echo "******************************************************************************************"
 fi
 

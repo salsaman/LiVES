@@ -7250,6 +7250,10 @@ sub version_check_and_upgrade {
 	    &rc_set("osc_port",49999);
 	    $msg="Default OSC port has been changed to 49999.";
 	}
+	if ($version_hash==2002005) {
+	    $video_open_command="\"".&get_mplayer_location."\"";
+	    &rc_set("video_open_command","$video_open_command");
+	}
 	unless ($old_version eq $version) {
 	    $current_keymap=smog_system_direct("grep \"keymap file version 4\" \"$lives_home_dir/$default_keymap\" 2>$nulfile");
 	    if ($current_keymap eq "") {

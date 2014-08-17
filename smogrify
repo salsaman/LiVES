@@ -7250,7 +7250,7 @@ sub version_check_and_upgrade {
 	    &rc_set("osc_port",49999);
 	    $msg="Default OSC port has been changed to 49999.";
 	}
-	if ($version_hash==2002005) {
+	if ($version_hash==2002005 && &rc_get("video_open_command") eq "") {
 	    $video_open_command="\"".&get_mplayer_location."\"";
 	    &rc_set("video_open_command","$video_open_command");
 	}

@@ -5224,15 +5224,15 @@ void remove_current_from_affected_layouts(lives_mt *mt) {
   // remove some text
   
   if (mainw->layout_textbuffer!=NULL) {
-    GtkTextIter iter1,iter2;
+    LiVESTextIter iter1,iter2;
     GList *markmap=mainw->affected_layout_marks;
     while (markmap!=NULL) {
-      gtk_text_buffer_get_iter_at_mark(GTK_TEXT_BUFFER(mainw->layout_textbuffer),&iter1,(GtkTextMark *)markmap->data);
-      gtk_text_buffer_get_iter_at_mark(GTK_TEXT_BUFFER(mainw->layout_textbuffer),&iter2,(GtkTextMark *)markmap->next->data);
-      gtk_text_buffer_delete(GTK_TEXT_BUFFER(mainw->layout_textbuffer),&iter1,&iter2);
+      lives_text_buffer_get_iter_at_mark(LIVES_TEXT_BUFFER(mainw->layout_textbuffer),&iter1,(LiVESTextMark *)markmap->data);
+      lives_text_buffer_get_iter_at_mark(LIVES_TEXT_BUFFER(mainw->layout_textbuffer),&iter2,(LiVESTextMark *)markmap->next->data);
+      lives_text_buffer_delete(LIVES_TEXT_BUFFER(mainw->layout_textbuffer),&iter1,&iter2);
       
-      gtk_text_buffer_delete_mark(GTK_TEXT_BUFFER(mainw->layout_textbuffer),(GtkTextMark *)markmap->data);
-      gtk_text_buffer_delete_mark(GTK_TEXT_BUFFER(mainw->layout_textbuffer),(GtkTextMark *)markmap->next->data);
+      lives_text_buffer_delete_mark(LIVES_TEXT_BUFFER(mainw->layout_textbuffer),(LiVESTextMark *)markmap->data);
+      lives_text_buffer_delete_mark(LIVES_TEXT_BUFFER(mainw->layout_textbuffer),(LiVESTextMark *)markmap->next->data);
       markmap=markmap->next->next;
     }
     mainw->affected_layout_marks=NULL;
@@ -15255,7 +15255,7 @@ void multitrack_view_details (GtkMenuItem *menuitem, gpointer user_data) {
 
   // type
   g_snprintf(buff,512,"\n  Event List");
-  text_view_set_text (LIVES_TEXT_VIEW (filew->textview24),buff, -1);
+  lives_text_view_set_text (LIVES_TEXT_VIEW (filew->textview24),buff, -1);
 
   // fps
   if (mt->fps>0) {
@@ -15265,11 +15265,11 @@ void multitrack_view_details (GtkMenuItem *menuitem, gpointer user_data) {
     g_snprintf(buff,512,"%s",_ ("\n (variable)"));
   }
 
-  text_view_set_text (LIVES_TEXT_VIEW (filew->textview25),buff, -1);
+  lives_text_view_set_text (LIVES_TEXT_VIEW (filew->textview25),buff, -1);
 
   // image size
   g_snprintf(buff,512,"\n  %dx%d",rfile->hsize,rfile->vsize);
-  text_view_set_text (LIVES_TEXT_VIEW (filew->textview26),buff, -1);
+  lives_text_view_set_text (LIVES_TEXT_VIEW (filew->textview26),buff, -1);
 
   // elist time
   if (mt->event_list!=NULL) {
@@ -15279,23 +15279,23 @@ void multitrack_view_details (GtkMenuItem *menuitem, gpointer user_data) {
 
   // events
   g_snprintf(buff,512,"\n  %d",num_events);
-  text_view_set_text (LIVES_TEXT_VIEW (filew->textview27),buff, -1);
+  lives_text_view_set_text (LIVES_TEXT_VIEW (filew->textview27),buff, -1);
 
   g_snprintf(buff,512,"\n  %.3f sec",time);
-  text_view_set_text (LIVES_TEXT_VIEW (filew->textview28),buff, -1);
+  lives_text_view_set_text (LIVES_TEXT_VIEW (filew->textview28),buff, -1);
 
   // byte size
   g_snprintf(buff,512,"\n  %d bytes",bsize);
-  text_view_set_text (LIVES_TEXT_VIEW (filew->textview29),buff, -1);
+  lives_text_view_set_text (LIVES_TEXT_VIEW (filew->textview29),buff, -1);
 
   if (cfile->achans>0) {
     g_snprintf(buff,512,"\n  %d Hz %d bit",cfile->arate,cfile->asampsize);
-    text_view_set_text (LIVES_TEXT_VIEW (filew->textview_lrate),buff, -1);
+    lives_text_view_set_text (LIVES_TEXT_VIEW (filew->textview_lrate),buff, -1);
   }
   
   if (cfile->achans>1) {
     g_snprintf(buff,512,"\n  %d Hz %d bit",cfile->arate,cfile->asampsize);
-    text_view_set_text (LIVES_TEXT_VIEW (filew->textview_rrate),buff, -1);
+    lives_text_view_set_text (LIVES_TEXT_VIEW (filew->textview_rrate),buff, -1);
   }
 
 }

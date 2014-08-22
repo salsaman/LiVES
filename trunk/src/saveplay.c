@@ -2153,7 +2153,7 @@ void save_file (int clip, int start, int end, const char *filename) {
     gchar *logfile=g_strdup_printf("%s\\encoder_log_%d_%d.txt",prefs->tmpdir,lives_getuid(),lives_getgid());
     if ((logfd=creat(logfile,S_IRUSR|S_IWUSR))!=-1) {
 #endif
-      gchar *btext=text_view_get_text(mainw->optextview);
+      gchar *btext=lives_text_view_get_text(mainw->optextview);
       lives_write(logfd,btext,strlen(btext),TRUE);  // not really important if it fails
       g_free(btext);
       close (logfd);

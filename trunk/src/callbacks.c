@@ -526,7 +526,7 @@ void lives_exit (void) {
 
 
 void on_filesel_button_clicked (GtkButton *button, gpointer user_data) {
-  GtkWidget *tentry=LIVES_WIDGET(user_data);
+  LiVESWidget *tentry=LIVES_WIDGET(user_data);
   gchar *dirname;
   gchar *fname;
   gchar *tmp;
@@ -535,7 +535,7 @@ void on_filesel_button_clicked (GtkButton *button, gpointer user_data) {
 
   boolean is_dir=LIVES_POINTER_TO_INT(g_object_get_data(G_OBJECT(button),"is_dir"));
 
-  if (LIVES_IS_TEXT_VIEW(tentry)) fname=text_view_get_text(LIVES_TEXT_VIEW(tentry));
+  if (LIVES_IS_TEXT_VIEW(tentry)) fname=lives_text_view_get_text(LIVES_TEXT_VIEW(tentry));
   else fname=g_strdup(lives_entry_get_text(LIVES_ENTRY(tentry)));
 
   if (!strlen(fname)) {
@@ -560,7 +560,7 @@ void on_filesel_button_clicked (GtkButton *button, gpointer user_data) {
 
   if (button!=NULL) {
     if (LIVES_IS_ENTRY(tentry)) lives_entry_set_text(LIVES_ENTRY(tentry),(tmp=g_filename_to_utf8(file_name,-1,NULL,NULL,NULL)));
-    else text_view_set_text (LIVES_TEXT_VIEW(tentry), (tmp=g_filename_to_utf8(file_name,-1,NULL,NULL,NULL)), -1);
+    else lives_text_view_set_text (LIVES_TEXT_VIEW(tentry), (tmp=g_filename_to_utf8(file_name,-1,NULL,NULL,NULL)), -1);
     g_free(tmp);
   }
 
@@ -5515,14 +5515,14 @@ void on_show_file_info_activate (GtkMenuItem *menuitem, gpointer user_data) {
 			      cfile->clip_type==CLIP_TYPE_VIDEODEV)?(_("buffered")):
 			     (cfile->img_type==IMG_TYPE_JPEG?"jpeg":"png"))),cfile->bpp,"pcm");
     g_free(tmp);
-    text_view_set_text (LIVES_TEXT_VIEW (filew->textview24),buff, -1);
+    lives_text_view_set_text (LIVES_TEXT_VIEW (filew->textview24),buff, -1);
     // fps
     g_snprintf(buff,512,"\n  %.3f%s",cfile->fps,cfile->ratio_fps?"...":"");
 
-    text_view_set_text (LIVES_TEXT_VIEW (filew->textview25),buff, -1);
+    lives_text_view_set_text (LIVES_TEXT_VIEW (filew->textview25),buff, -1);
     // image size
     g_snprintf(buff,512,"\n  %dx%d",cfile->hsize,cfile->vsize);
-    text_view_set_text (LIVES_TEXT_VIEW (filew->textview26),buff, -1);
+    lives_text_view_set_text (LIVES_TEXT_VIEW (filew->textview26),buff, -1);
     // frames
     if ((cfile->opening&&!cfile->opening_audio&&cfile->frames==0)||cfile->frames==123456789) {
       g_snprintf(buff,512,"%s",_ ("\n  Opening..."));
@@ -5541,7 +5541,7 @@ void on_show_file_info_activate (GtkMenuItem *menuitem, gpointer user_data) {
       }
 
     }
-    text_view_set_text (LIVES_TEXT_VIEW (filew->textview27),buff, -1);
+    lives_text_view_set_text (LIVES_TEXT_VIEW (filew->textview27),buff, -1);
     // video time
     if ((cfile->opening&&!cfile->opening_audio&&cfile->frames==0)||cfile->frames==123456789) {
       g_snprintf(buff,512,"%s",_ ("\n  Opening..."));
@@ -5549,7 +5549,7 @@ void on_show_file_info_activate (GtkMenuItem *menuitem, gpointer user_data) {
     else {
       g_snprintf(buff,512,_("\n  %.2f sec."),cfile->video_time);
     }
-    text_view_set_text (LIVES_TEXT_VIEW (filew->textview28),buff, -1);
+    lives_text_view_set_text (LIVES_TEXT_VIEW (filew->textview28),buff, -1);
     // file size
     if (cfile->f_size>=0l) {
       gchar *file_ds=lives_format_storage_space_string((uint64_t)cfile->f_size);
@@ -5557,7 +5557,7 @@ void on_show_file_info_activate (GtkMenuItem *menuitem, gpointer user_data) {
       g_free(file_ds);
     }
     else g_snprintf(buff,512,"%s",_ ("\n  Unknown"));
-    text_view_set_text (LIVES_TEXT_VIEW (filew->textview29),buff, -1);
+    lives_text_view_set_text (LIVES_TEXT_VIEW (filew->textview29),buff, -1);
   }
 
   if (cfile->achans>0) {
@@ -5567,7 +5567,7 @@ void on_show_file_info_activate (GtkMenuItem *menuitem, gpointer user_data) {
     else {
       g_snprintf(buff,512,_("\n  %.2f sec."),cfile->laudio_time);
     }
-    text_view_set_text (LIVES_TEXT_VIEW (filew->textview_ltime),buff, -1);
+    lives_text_view_set_text (LIVES_TEXT_VIEW (filew->textview_ltime),buff, -1);
 
     if (cfile->signed_endian&AFORM_UNSIGNED) sigs=g_strdup(_("unsigned"));
     else sigs=g_strdup(_("signed"));
@@ -5576,7 +5576,7 @@ void on_show_file_info_activate (GtkMenuItem *menuitem, gpointer user_data) {
     else ends=g_strdup(_("little-endian"));
 
     g_snprintf(buff,512,_("  %d Hz %d bit\n%s %s"),cfile->arate,cfile->asampsize,sigs,ends);
-    text_view_set_text (LIVES_TEXT_VIEW (filew->textview_lrate),buff, -1);
+    lives_text_view_set_text (LIVES_TEXT_VIEW (filew->textview_lrate),buff, -1);
 
     g_free(sigs);
     g_free(ends);
@@ -5590,7 +5590,7 @@ void on_show_file_info_activate (GtkMenuItem *menuitem, gpointer user_data) {
     else ends=g_strdup(_("little-endian"));
 
     g_snprintf(buff,512,_("  %d Hz %d bit\n%s %s"),cfile->arate,cfile->asampsize,sigs,ends);
-    text_view_set_text (LIVES_TEXT_VIEW (filew->textview_rrate),buff, -1);
+    lives_text_view_set_text (LIVES_TEXT_VIEW (filew->textview_rrate),buff, -1);
 
     g_free(sigs);
     g_free(ends);
@@ -5601,7 +5601,7 @@ void on_show_file_info_activate (GtkMenuItem *menuitem, gpointer user_data) {
     else {
       g_snprintf(buff,512,_("\n  %.2f sec."),cfile->raudio_time);
     }
-    text_view_set_text (LIVES_TEXT_VIEW (filew->textview_rtime),buff, -1);
+    lives_text_view_set_text (LIVES_TEXT_VIEW (filew->textview_rtime),buff, -1);
   }
 
 }
@@ -6725,7 +6725,7 @@ void end_fs_preview(void) {
 
 
 void on_save_textview_clicked (GtkButton *button, gpointer user_data) {
-  GtkTextView *textview=(GtkTextView *)user_data;
+  LiVESTextView *textview=(LiVESTextView *)user_data;
   gchar *filt[]={"*.txt",NULL};
   int fd;
   gchar *btext;
@@ -6752,7 +6752,7 @@ void on_save_textview_clicked (GtkButton *button, gpointer user_data) {
     return;
   }
 
-  btext=text_view_get_text(textview);
+  btext=lives_text_view_get_text(textview);
   
   lives_general_button_clicked(button,NULL);
 

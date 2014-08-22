@@ -1069,7 +1069,7 @@ typedef struct {
 
   /// encoder text output
   GIOChannel *iochan;
-  GtkTextView *optextview;
+  LiVESTextView *optextview;
 
   boolean has_custom_tools;
   boolean has_custom_gens;

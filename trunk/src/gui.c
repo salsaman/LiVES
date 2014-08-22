@@ -77,16 +77,11 @@ void load_theme (void) {
 
 
 void add_message_scroller(GtkWidget *conter) {
-  GtkTextBuffer *tbuff=NULL;
+  LiVESTextBuffer *tbuff=NULL;
   gchar *all_text=NULL;
-  GtkTextIter start_iter;
-  GtkTextIter end_iter;
 
   if (mainw->textview1!=NULL) {
-    tbuff=gtk_text_view_get_buffer(GTK_TEXT_VIEW(mainw->textview1));
-    gtk_text_buffer_get_start_iter(tbuff,&start_iter);
-    gtk_text_buffer_get_end_iter(tbuff,&end_iter);
-    all_text=gtk_text_buffer_get_text(tbuff,&start_iter,&end_iter,TRUE);
+    all_text=lives_text_view_get_text(LIVES_TEXT_VIEW(mainw->textview1));
     lives_widget_destroy(mainw->textview1);
   }
 
@@ -101,26 +96,21 @@ void add_message_scroller(GtkWidget *conter) {
 
   lives_container_add (LIVES_CONTAINER(conter), mainw->scrolledwindow);
 
-  mainw->textview1 = gtk_text_view_new ();
+  mainw->textview1 = lives_text_view_new ();
   lives_widget_show (mainw->textview1);
   lives_container_add (LIVES_CONTAINER (mainw->scrolledwindow), mainw->textview1);
 
-  tbuff=gtk_text_view_get_buffer(GTK_TEXT_VIEW(mainw->textview1));
+  tbuff=lives_text_view_get_buffer(LIVES_TEXT_VIEW(mainw->textview1));
   if (tbuff!=NULL && all_text!=NULL) {
-    GtkTextIter end_iter;
-    GtkTextMark *mark;
-    gtk_text_buffer_set_text(tbuff,all_text,-1);
+    lives_text_buffer_set_text(tbuff,all_text,-1);
     g_free(all_text);
-    gtk_text_buffer_get_end_iter(tbuff,&end_iter);
-    mark=gtk_text_buffer_create_mark(tbuff,NULL,&end_iter,FALSE);
-    gtk_text_view_scroll_mark_onscreen(GTK_TEXT_VIEW (mainw->textview1),mark);
-    gtk_text_buffer_delete_mark (tbuff,mark);
+    lives_text_view_scroll_onscreen(LIVES_TEXT_VIEW (mainw->textview1));
   }
 
   lives_widget_set_size_request (mainw->textview1, -1, MSG_AREA_HEIGHT);
-  gtk_text_view_set_editable (GTK_TEXT_VIEW (mainw->textview1), FALSE);
-  gtk_text_view_set_wrap_mode (GTK_TEXT_VIEW (mainw->textview1), GTK_WRAP_WORD);
-  gtk_text_view_set_cursor_visible (GTK_TEXT_VIEW (mainw->textview1), FALSE);
+  lives_text_view_set_editable (LIVES_TEXT_VIEW (mainw->textview1), FALSE);
+  lives_text_view_set_wrap_mode (LIVES_TEXT_VIEW (mainw->textview1), LIVES_WRAP_WORD);
+  lives_text_view_set_cursor_visible (LIVES_TEXT_VIEW (mainw->textview1), FALSE);
 
   if (palette->style&STYLE_1) {
     lives_widget_set_base_color(mainw->textview1, LIVES_WIDGET_STATE_NORMAL, &palette->info_base);
@@ -297,7 +287,7 @@ void create_LiVES (void) {
 
   mainw->accel_group = GTK_ACCEL_GROUP(lives_accel_group_new ());
 
-  mainw->layout_textbuffer=gtk_text_buffer_new(NULL);
+  mainw->layout_textbuffer=lives_text_buffer_new();
   g_object_ref(mainw->layout_textbuffer);
   mainw->affected_layouts_map=NULL;
 
@@ -2540,8 +2530,8 @@ void create_LiVES (void) {
 
 
 
-  text_view_set_text (LIVES_TEXT_VIEW (mainw->textview1),
-		      _("Starting...\n"), -1);
+  lives_text_view_set_text (LIVES_TEXT_VIEW (mainw->textview1),
+			    _("Starting...\n"), -1);
   
   g_signal_connect (GTK_OBJECT (mainw->LiVES), "delete_event",
 		    G_CALLBACK (on_LiVES_delete_event),

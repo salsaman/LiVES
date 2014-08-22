@@ -1,6 +1,6 @@
 // interface.c
 // LiVES
-// (c) G. Finch 2003 - 2013 <salsaman@gmail.com>
+// (c) G. Finch 2003 - 2014 <salsaman@gmail.com>
 // Released under the GNU GPL 3 or later
 // see file ../COPYING for licensing details
 
@@ -321,7 +321,7 @@ xprocess * create_processing (const gchar *text) {
 #define TB_HEIGHT_AUD 50
 
 static GtkWidget *vid_text_view_new(void) {
-  GtkWidget *textview=gtk_text_view_new();
+  GtkWidget *textview=lives_text_view_new();
 
   if (palette->style&STYLE_1) {
     lives_widget_set_base_color(textview, LIVES_WIDGET_STATE_NORMAL, &palette->info_base);
@@ -329,15 +329,15 @@ static GtkWidget *vid_text_view_new(void) {
   }
 
   lives_widget_set_size_request (textview, TB_WIDTH, TB_HEIGHT_VID);
-  gtk_text_view_set_editable (GTK_TEXT_VIEW (textview), FALSE);
-  gtk_text_view_set_justification (GTK_TEXT_VIEW (textview), GTK_JUSTIFY_CENTER);
-  gtk_text_view_set_cursor_visible (GTK_TEXT_VIEW (textview), FALSE);
+  lives_text_view_set_editable (LIVES_TEXT_VIEW (textview), FALSE);
+  lives_text_view_set_justification (LIVES_TEXT_VIEW (textview), LIVES_JUSTIFY_CENTER);
+  lives_text_view_set_cursor_visible (LIVES_TEXT_VIEW (textview), FALSE);
 
   return textview;
 }
 
 static GtkWidget *aud_text_view_new(void) {
-  GtkWidget *textview=gtk_text_view_new();
+  GtkWidget *textview=lives_text_view_new();
 
   if (palette->style&STYLE_1) {
     lives_widget_set_base_color(textview, LIVES_WIDGET_STATE_NORMAL, &palette->info_base);
@@ -345,9 +345,9 @@ static GtkWidget *aud_text_view_new(void) {
   }
 
   lives_widget_set_size_request (textview, TB_WIDTH, TB_HEIGHT_AUD);
-  gtk_text_view_set_editable (GTK_TEXT_VIEW (textview), FALSE);
-  gtk_text_view_set_justification (GTK_TEXT_VIEW (textview), GTK_JUSTIFY_CENTER);
-  gtk_text_view_set_cursor_visible (GTK_TEXT_VIEW (textview), FALSE);
+  lives_text_view_set_editable (LIVES_TEXT_VIEW (textview), FALSE);
+  lives_text_view_set_justification (LIVES_TEXT_VIEW (textview), LIVES_JUSTIFY_CENTER);
+  lives_text_view_set_cursor_visible (LIVES_TEXT_VIEW (textview), FALSE);
 
   return textview;
 }
@@ -832,9 +832,9 @@ text_window *create_text_window (const gchar *title, const gchar *text, GtkTextB
     textwindow->textview=LIVES_WIDGET(mainw->optextview);
   }
   else {
-    if (textbuffer!=NULL) textwindow->textview = gtk_text_view_new_with_buffer(textbuffer);
-    else textwindow->textview = gtk_text_view_new ();
-    gtk_text_view_set_wrap_mode (GTK_TEXT_VIEW (textwindow->textview), GTK_WRAP_WORD);
+    if (textbuffer!=NULL) textwindow->textview = lives_text_view_new_with_buffer(textbuffer);
+    else textwindow->textview = lives_text_view_new ();
+    lives_text_view_set_wrap_mode (LIVES_TEXT_VIEW (textwindow->textview), LIVES_WRAP_WORD);
   }
 
   woat=widget_opts.apply_theme;
@@ -844,8 +844,8 @@ text_window *create_text_window (const gchar *title, const gchar *text, GtkTextB
 
   lives_box_pack_start (LIVES_BOX (dialog_vbox), scrolledwindow, TRUE, TRUE, 0);
 
-  gtk_text_view_set_editable (GTK_TEXT_VIEW (textwindow->textview), FALSE);
-  gtk_text_view_set_cursor_visible (GTK_TEXT_VIEW (textwindow->textview), FALSE);
+  lives_text_view_set_editable (LIVES_TEXT_VIEW (textwindow->textview), FALSE);
+  lives_text_view_set_cursor_visible (LIVES_TEXT_VIEW (textwindow->textview), FALSE);
 
   if (palette->style&STYLE_1) {
     lives_widget_set_base_color(textwindow->textview, LIVES_WIDGET_STATE_NORMAL, &palette->info_base);
@@ -854,7 +854,7 @@ text_window *create_text_window (const gchar *title, const gchar *text, GtkTextB
   }
 
   if (mytext!=NULL) {
-    text_view_set_text (LIVES_TEXT_VIEW (textwindow->textview), mytext, -1);
+    lives_text_view_set_text (LIVES_TEXT_VIEW (textwindow->textview), mytext, -1);
   }
 
   if (mytext!=NULL||mainw->iochan!=NULL) {
@@ -2662,9 +2662,9 @@ GtkWidget *create_cleardisk_advanced_dialog(void) {
 }
 
 
-GtkTextView *create_output_textview(void) {
-  GtkWidget *textview=gtk_text_view_new();
-  gtk_text_view_set_editable (GTK_TEXT_VIEW (textview), FALSE);
+LiVESTextView *create_output_textview(void) {
+  LiVESWidget *textview=lives_text_view_new();
+  lives_text_view_set_editable (LIVES_TEXT_VIEW (textview), FALSE);
 
   if (palette->style&STYLE_1) {
     lives_widget_set_base_color(textview, LIVES_WIDGET_STATE_NORMAL, &palette->info_base);
@@ -2673,6 +2673,6 @@ GtkTextView *create_output_textview(void) {
 
   g_object_ref(textview);
   lives_widget_show(textview);
-  return GTK_TEXT_VIEW(textview);
+  return LIVES_TEXT_VIEW(textview);
 }
 

@@ -1860,18 +1860,14 @@ void d_print(const char *text) {
   // mainw->last_dprint_file :: clip number of last mainw->current_file;
   char *switchtext,*tmp;
 
-  GtkTextIter end_iter;
-  GtkTextMark *mark;
-
-  GtkTextBuffer *tbuf=gtk_text_view_get_buffer(GTK_TEXT_VIEW(mainw->textview1));
+  LiVESTextBuffer *tbuf=lives_text_view_get_buffer(LIVES_TEXT_VIEW(mainw->textview1));
 
   if (!capable->smog_version_correct) return;
 
   if (mainw->suppress_dprint) return;
 
   if (LIVES_IS_TEXT_VIEW (mainw->textview1)) {
-    gtk_text_buffer_get_end_iter(tbuf,&end_iter);
-    gtk_text_buffer_insert(tbuf,&end_iter,text,-1);
+    lives_text_buffer_insert_at_end(tbuf,text);
     if (mainw->current_file!=mainw->last_dprint_file&&mainw->current_file!=0&&mainw->multitrack==NULL&&
 	(mainw->current_file==-1||cfile->clip_type!=CLIP_TYPE_GENERATOR)&&!mainw->no_switch_dprint) {
       if (mainw->current_file>0) {
@@ -1883,16 +1879,12 @@ void d_print(const char *text) {
       else {
 	switchtext=g_strdup (_ ("\n==============================\nSwitched to empty clip\n"));
       }
-      gtk_text_buffer_get_end_iter(tbuf,&end_iter);
-      gtk_text_buffer_insert(tbuf,&end_iter,switchtext,-1);
+      lives_text_buffer_insert_at_end(tbuf,switchtext);
       g_free (switchtext);
     }
     if ((mainw->current_file==-1||cfile->clip_type!=CLIP_TYPE_GENERATOR)&&
 	(!mainw->no_switch_dprint||mainw->current_file!=0)) mainw->last_dprint_file=mainw->current_file;
-    gtk_text_buffer_get_end_iter(tbuf,&end_iter);
-    mark=gtk_text_buffer_create_mark(tbuf,NULL,&end_iter,FALSE);
-    gtk_text_view_scroll_mark_onscreen(GTK_TEXT_VIEW (mainw->textview1),mark);
-    gtk_text_buffer_delete_mark (tbuf,mark);
+    lives_text_view_scroll_onscreen(LIVES_TEXT_VIEW (mainw->textview1));
   }
 }
 
@@ -1901,20 +1893,23 @@ void d_print(const char *text) {
 boolean add_lmap_error(lives_lmap_error_t lerror, const char *name, livespointer user_data, int clipno, 
 			int frameno, double atime, boolean affects_current) {
   // potentially add a layout map error to the layout textbuffer
-  GtkTextIter end_iter;
+  LiVESTextIter end_iter;
+  GList *lmap;
+
   char *text,*name2;
   char **array;
-  GList *lmap;
+
   double orig_fps;
-  int resampled_frame;
   double max_time;
 
-  gtk_text_buffer_get_end_iter(GTK_TEXT_BUFFER(mainw->layout_textbuffer),&end_iter);
+  int resampled_frame;
+
+  lives_text_buffer_get_end_iter(LIVES_TEXT_BUFFER(mainw->layout_textbuffer),&end_iter);
 
   if (affects_current&&user_data==NULL) {
     mainw->affected_layout_marks=g_list_append(mainw->affected_layout_marks,
-					       (gpointer)gtk_text_buffer_create_mark
-					       (GTK_TEXT_BUFFER(mainw->layout_textbuffer),NULL,&end_iter,TRUE));
+					       (gpointer)lives_text_buffer_create_mark
+					       (LIVES_TEXT_BUFFER(mainw->layout_textbuffer),NULL,&end_iter,TRUE));
   }
 
   switch (lerror) {
@@ -1924,56 +1919,56 @@ boolean add_lmap_error(lives_lmap_error_t lerror, const char *name, livespointer
     text=g_strdup_printf
       (_("The set name has been changed from %s to %s. Affected layouts have been updated accordingly\n"),
        name2,(char *)user_data);
-    gtk_text_buffer_insert(GTK_TEXT_BUFFER(mainw->layout_textbuffer),&end_iter,text,-1);
+    lives_text_buffer_insert(LIVES_TEXT_BUFFER(mainw->layout_textbuffer),&end_iter,text,-1);
     g_free(name2);
     g_free(text);
     break;
   case LMAP_ERROR_MISSING_CLIP:
     if (prefs->warning_mask&WARN_MASK_LAYOUT_MISSING_CLIPS) return FALSE;
     text=g_strdup_printf(_("The clip %s is missing from this set.\nIt is required by the following layouts:\n"),name);
-    gtk_text_buffer_insert(GTK_TEXT_BUFFER(mainw->layout_textbuffer),&end_iter,text,-1);
+    lives_text_buffer_insert(LIVES_TEXT_BUFFER(mainw->layout_textbuffer),&end_iter,text,-1);
     g_free(text);
   case LMAP_ERROR_CLOSE_FILE:
     text=g_strdup_printf(_("The clip %s has been closed.\nIt is required by the following layouts:\n"),name);
-    gtk_text_buffer_insert(GTK_TEXT_BUFFER(mainw->layout_textbuffer),&end_iter,text,-1);
+    lives_text_buffer_insert(LIVES_TEXT_BUFFER(mainw->layout_textbuffer),&end_iter,text,-1);
     g_free(text);
     break;
   case LMAP_ERROR_SHIFT_FRAMES:
     text=g_strdup_printf(_("Frames have been shifted in the clip %s.\nThe following layouts are affected:\n"),name);
-    gtk_text_buffer_insert(GTK_TEXT_BUFFER(mainw->layout_textbuffer),&end_iter,text,-1);
+    lives_text_buffer_insert(LIVES_TEXT_BUFFER(mainw->layout_textbuffer),&end_iter,text,-1);
     g_free(text);
     break;
   case LMAP_ERROR_DELETE_FRAMES:
     text=g_strdup_printf(_("Frames have been deleted from the clip %s.\nThe following layouts are affected:\n"),name);
-    gtk_text_buffer_insert(GTK_TEXT_BUFFER(mainw->layout_textbuffer),&end_iter,text,-1);
+    lives_text_buffer_insert(LIVES_TEXT_BUFFER(mainw->layout_textbuffer),&end_iter,text,-1);
     g_free(text);
     break;
   case LMAP_ERROR_DELETE_AUDIO:
     text=g_strdup_printf(_("Audio has been deleted from the clip %s.\nThe following layouts are affected:\n"),name);
-    gtk_text_buffer_insert(GTK_TEXT_BUFFER(mainw->layout_textbuffer),&end_iter,text,-1);
+    lives_text_buffer_insert(LIVES_TEXT_BUFFER(mainw->layout_textbuffer),&end_iter,text,-1);
     g_free(text);
     break;
   case LMAP_ERROR_SHIFT_AUDIO:
     text=g_strdup_printf(_("Audio has been shifted in clip %s.\nThe following layouts are affected:\n"),name);
-    gtk_text_buffer_insert(GTK_TEXT_BUFFER(mainw->layout_textbuffer),&end_iter,text,-1);
+    lives_text_buffer_insert(LIVES_TEXT_BUFFER(mainw->layout_textbuffer),&end_iter,text,-1);
     g_free(text);
     break;
   case LMAP_ERROR_ALTER_AUDIO:
     text=g_strdup_printf(_("Audio has been altered in the clip %s.\nThe following layouts are affected:\n"),name);
-    gtk_text_buffer_insert(GTK_TEXT_BUFFER(mainw->layout_textbuffer),&end_iter,text,-1);
+    lives_text_buffer_insert(LIVES_TEXT_BUFFER(mainw->layout_textbuffer),&end_iter,text,-1);
     g_free(text);
     break;
   case LMAP_ERROR_ALTER_FRAMES:
     text=g_strdup_printf(_("Frames have been altered in the clip %s.\nThe following layouts are affected:\n"),name);
-    gtk_text_buffer_insert(GTK_TEXT_BUFFER(mainw->layout_textbuffer),&end_iter,text,-1);
+    lives_text_buffer_insert(LIVES_TEXT_BUFFER(mainw->layout_textbuffer),&end_iter,text,-1);
     g_free(text);
     break;
   }
 
   if (affects_current&&user_data!=NULL) {
     mainw->affected_layout_marks=g_list_append(mainw->affected_layout_marks,
-					       (gpointer)gtk_text_buffer_create_mark
-					       (GTK_TEXT_BUFFER(mainw->layout_textbuffer),NULL,&end_iter,TRUE));
+					       (gpointer)lives_text_buffer_create_mark
+					       (LIVES_TEXT_BUFFER(mainw->layout_textbuffer),NULL,&end_iter,TRUE));
   }
 
   switch (lerror) {
@@ -1982,7 +1977,7 @@ boolean add_lmap_error(lives_lmap_error_t lerror, const char *name, livespointer
     while (lmap!=NULL) {
       array=g_strsplit((char *)lmap->data,"|",-1);
       text=g_strdup_printf("%s\n",array[0]);
-      gtk_text_buffer_insert(GTK_TEXT_BUFFER(mainw->layout_textbuffer),&end_iter,text,-1);
+      lives_text_buffer_insert(LIVES_TEXT_BUFFER(mainw->layout_textbuffer),&end_iter,text,-1);
       g_free(text);
       //mainw->affected_layouts_map=g_list_append_unique(mainw->affected_layouts_map,array[0]);
       g_strfreev(array);
@@ -1993,18 +1988,20 @@ boolean add_lmap_error(lives_lmap_error_t lerror, const char *name, livespointer
   case LMAP_ERROR_CLOSE_FILE:
     if (affects_current) {
       text=g_strdup_printf("%s\n",mainw->string_constants[LIVES_STRING_CONSTANT_CL]);
-      gtk_text_buffer_insert(GTK_TEXT_BUFFER(mainw->layout_textbuffer),&end_iter,text,-1);
+      lives_text_buffer_insert(LIVES_TEXT_BUFFER(mainw->layout_textbuffer),&end_iter,text,-1);
       g_free(text);
       mainw->affected_layouts_map=g_list_append_unique(mainw->affected_layouts_map,mainw->string_constants[LIVES_STRING_CONSTANT_CL]);
 
-      mainw->affected_layout_marks=g_list_append(mainw->affected_layout_marks,(gpointer)gtk_text_buffer_create_mark(GTK_TEXT_BUFFER(mainw->layout_textbuffer),NULL,&end_iter,TRUE));
+      mainw->affected_layout_marks=g_list_append(mainw->affected_layout_marks,
+						 (gpointer)lives_text_buffer_create_mark(LIVES_TEXT_BUFFER(mainw->layout_textbuffer),
+											 NULL,&end_iter,TRUE));
 
     }
     lmap=(GList *)user_data;
     while (lmap!=NULL) {
       array=g_strsplit((char *)lmap->data,"|",-1);
       text=g_strdup_printf("%s\n",array[0]);
-      gtk_text_buffer_insert(GTK_TEXT_BUFFER(mainw->layout_textbuffer),&end_iter,text,-1);
+      lives_text_buffer_insert(LIVES_TEXT_BUFFER(mainw->layout_textbuffer),&end_iter,text,-1);
       g_free(text);
       mainw->affected_layouts_map=g_list_append_unique(mainw->affected_layouts_map,array[0]);
       g_strfreev(array);
@@ -2016,11 +2013,13 @@ boolean add_lmap_error(lives_lmap_error_t lerror, const char *name, livespointer
   case LMAP_ERROR_ALTER_FRAMES:
     if (affects_current) {
       text=g_strdup_printf("%s\n",mainw->string_constants[LIVES_STRING_CONSTANT_CL]);
-      gtk_text_buffer_insert(GTK_TEXT_BUFFER(mainw->layout_textbuffer),&end_iter,text,-1);
+      lives_text_buffer_insert(LIVES_TEXT_BUFFER(mainw->layout_textbuffer),&end_iter,text,-1);
       g_free(text);
       mainw->affected_layouts_map=g_list_append_unique(mainw->affected_layouts_map,mainw->string_constants[LIVES_STRING_CONSTANT_CL]);
 
-      mainw->affected_layout_marks=g_list_append(mainw->affected_layout_marks,(gpointer)gtk_text_buffer_create_mark(GTK_TEXT_BUFFER(mainw->layout_textbuffer),NULL,&end_iter,TRUE));
+      mainw->affected_layout_marks=g_list_append(mainw->affected_layout_marks,
+						 (gpointer)lives_text_buffer_create_mark(LIVES_TEXT_BUFFER(mainw->layout_textbuffer),
+											 NULL,&end_iter,TRUE));
     }
     lmap=(GList *)user_data;
     while (lmap!=NULL) {
@@ -2029,7 +2028,7 @@ boolean add_lmap_error(lives_lmap_error_t lerror, const char *name, livespointer
       resampled_frame=count_resampled_frames(frameno,orig_fps,mainw->files[clipno]->fps);
       if (resampled_frame<=atoi(array[2])) {
 	text=g_strdup_printf("%s\n",array[0]);
-	gtk_text_buffer_insert(GTK_TEXT_BUFFER(mainw->layout_textbuffer),&end_iter,text,-1);
+	lives_text_buffer_insert(LIVES_TEXT_BUFFER(mainw->layout_textbuffer),&end_iter,text,-1);
 	g_free(text);
 	mainw->affected_layouts_map=g_list_append_unique(mainw->affected_layouts_map,array[0]);
       }
@@ -2042,11 +2041,13 @@ boolean add_lmap_error(lives_lmap_error_t lerror, const char *name, livespointer
   case LMAP_ERROR_ALTER_AUDIO:
     if (affects_current) {
       text=g_strdup_printf("%s\n",mainw->string_constants[LIVES_STRING_CONSTANT_CL]);
-      gtk_text_buffer_insert(GTK_TEXT_BUFFER(mainw->layout_textbuffer),&end_iter,text,-1);
+      lives_text_buffer_insert(LIVES_TEXT_BUFFER(mainw->layout_textbuffer),&end_iter,text,-1);
       g_free(text);
       mainw->affected_layouts_map=g_list_append_unique(mainw->affected_layouts_map,mainw->string_constants[LIVES_STRING_CONSTANT_CL]);
 
-      mainw->affected_layout_marks=g_list_append(mainw->affected_layout_marks,(gpointer)gtk_text_buffer_create_mark(GTK_TEXT_BUFFER(mainw->layout_textbuffer),NULL,&end_iter,TRUE));
+      mainw->affected_layout_marks=g_list_append(mainw->affected_layout_marks,
+						 (gpointer)lives_text_buffer_create_mark(LIVES_TEXT_BUFFER(mainw->layout_textbuffer),
+											 NULL,&end_iter,TRUE));
     }
     lmap=(GList *)user_data;
     while (lmap!=NULL) {
@@ -2054,7 +2055,7 @@ boolean add_lmap_error(lives_lmap_error_t lerror, const char *name, livespointer
       max_time=strtod(array[4],NULL);
       if (max_time>0.&&atime<=max_time) {
 	text=g_strdup_printf("%s\n",array[0]);
-	gtk_text_buffer_insert(GTK_TEXT_BUFFER(mainw->layout_textbuffer),&end_iter,text,-1);
+	lives_text_buffer_insert(LIVES_TEXT_BUFFER(mainw->layout_textbuffer),&end_iter,text,-1);
 	g_free(text);
 	mainw->affected_layouts_map=g_list_append_unique(mainw->affected_layouts_map,array[0]);
       }
@@ -2071,12 +2072,12 @@ boolean add_lmap_error(lives_lmap_error_t lerror, const char *name, livespointer
 
 
 void clear_lmap_errors(void) {
-  GtkTextIter start_iter,end_iter;
+  LiVESTextIter start_iter,end_iter;
   GList *lmap;
 
-  gtk_text_buffer_get_start_iter(GTK_TEXT_BUFFER(mainw->layout_textbuffer),&start_iter);
-  gtk_text_buffer_get_end_iter(GTK_TEXT_BUFFER(mainw->layout_textbuffer),&end_iter);
-  gtk_text_buffer_delete(GTK_TEXT_BUFFER(mainw->layout_textbuffer),&start_iter,&end_iter);
+  lives_text_buffer_get_start_iter(LIVES_TEXT_BUFFER(mainw->layout_textbuffer),&start_iter);
+  lives_text_buffer_get_end_iter(LIVES_TEXT_BUFFER(mainw->layout_textbuffer),&end_iter);
+  lives_text_buffer_delete(LIVES_TEXT_BUFFER(mainw->layout_textbuffer),&start_iter,&end_iter);
 
   lmap=mainw->affected_layouts_map;
 
@@ -3243,8 +3244,7 @@ void get_total_time (lives_clip_t *file) {
 
 
 
-void 
-find_when_to_stop (void) {
+void find_when_to_stop (void) {
   // work out when to stop playing
   //
   // ---------------
@@ -3270,8 +3270,7 @@ find_when_to_stop (void) {
 #define ASPECT_ALLOWANCE 0.005
 
 
-void 
-minimise_aspect_delta (double aspect,int hblock,int vblock,int hsize,int vsize,int *width,int *height) {
+void minimise_aspect_delta (double aspect,int hblock,int vblock,int hsize,int vsize,int *width,int *height) {
   // we will use trigonometry to calculate the smallest difference between a given
   // aspect ratio and the actual frame size. If the delta is smaller than current 
   // we set the height and width

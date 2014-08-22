@@ -1685,18 +1685,18 @@ boolean add_param_to_box (GtkBox *box, lives_rfx_t *rfx, int pnum, boolean add_s
       hbox=lives_hbox_new(FALSE,0);
       lives_box_pack_start (LIVES_BOX (vbox), hbox, FALSE, FALSE, widget_opts.packing_height>>1);
 
-      param->widgets[0] = textview = gtk_text_view_new ();
+      param->widgets[0] = textview = lives_text_view_new ();
       if (param->desc!=NULL) lives_widget_set_tooltip_text( textview, param->desc);
-      textbuffer=gtk_text_view_get_buffer (GTK_TEXT_VIEW (textview));
+      textbuffer=lives_text_view_get_buffer (LIVES_TEXT_VIEW (textview));
 
       g_signal_connect_after (G_OBJECT (textbuffer), "changed", G_CALLBACK (after_param_text_buffer_changed), 
 			      (gpointer) rfx);
 
-      gtk_text_view_set_editable (GTK_TEXT_VIEW (textview), TRUE);
-      gtk_text_view_set_wrap_mode (GTK_TEXT_VIEW (textview), GTK_WRAP_WORD);
-      gtk_text_view_set_cursor_visible (GTK_TEXT_VIEW (textview), TRUE);
+      lives_text_view_set_editable (LIVES_TEXT_VIEW (textview), TRUE);
+      lives_text_view_set_wrap_mode (LIVES_TEXT_VIEW (textview), GTK_WRAP_WORD);
+      lives_text_view_set_cursor_visible (LIVES_TEXT_VIEW (textview), TRUE);
 
-      gtk_text_buffer_set_text (textbuffer, txt, -1);
+      lives_text_buffer_set_text (textbuffer, txt, -1);
 
       woat=widget_opts.apply_theme;
       widget_opts.apply_theme=FALSE;
@@ -2556,7 +2556,7 @@ void after_param_text_changed (GtkWidget *textwidget, lives_rfx_t *rfx) {
   if (mainw->block_param_updates) return; // updates are blocked until all params are ready
 
   if (LIVES_IS_TEXT_VIEW(textwidget)) {
-    new_text=text_view_get_text (LIVES_TEXT_VIEW(textwidget));
+    new_text=lives_text_view_get_text (LIVES_TEXT_VIEW(textwidget));
     if (!strcmp(new_text,old_text)) return;
     param->value=g_strdup(new_text);
   }
@@ -2606,7 +2606,7 @@ void after_param_text_changed (GtkWidget *textwidget, lives_rfx_t *rfx) {
 
       if (disp_string!=NULL) {
 	if ((int)param->max>RFX_TEXT_MAGIC||param->max==0.) {
-	  gtk_text_buffer_set_text (GTK_TEXT_BUFFER (textbuffer), (gchar *)param->value, -1);
+	  lives_text_buffer_set_text (GTK_TEXT_BUFFER (textbuffer), (gchar *)param->value, -1);
 	}
 	else {
 	  lives_entry_set_text(LIVES_ENTRY(textwidget),disp_string);
@@ -3156,7 +3156,7 @@ int set_param_from_list(GList *plist, lives_param_t *param, int pnum, boolean wi
       if (param->widgets[0]!=NULL) {
 	if (LIVES_IS_TEXT_VIEW(param->widgets[0])) {
 	  gchar *string=g_strdup((gchar *)param->value); // work around bug in glib ???
-	  text_view_set_text (LIVES_TEXT_VIEW(param->widgets[0]), string, -1);
+	  lives_text_view_set_text (LIVES_TEXT_VIEW(param->widgets[0]), string, -1);
 	  g_free(string);
 	}
 	else {

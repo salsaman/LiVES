@@ -119,6 +119,9 @@ typedef GtkComboBox                       LiVESComboBox;
 typedef GtkButton                         LiVESButton;
 typedef GtkToggleButton                   LiVESToggleButton;
 typedef GtkTextView                       LiVESTextView;
+typedef GtkTextBuffer                     LiVESTextBuffer;
+typedef GtkTextMark                       LiVESTextMark;
+typedef GtkTextIter                       LiVESTextIter;
 typedef GtkEntry                          LiVESEntry;
 typedef GtkRadioButton                    LiVESRadioButton;
 typedef GtkSpinButton                     LiVESSpinButton;
@@ -263,6 +266,13 @@ typedef enum {
 } lives_arrow_t;
 
 
+typedef GtkWrapMode LiVESWrapMode;
+#define LIVES_WRAP_NONE GTK_WRAP_NONE
+#define LIVES_WRAP_CHAR GTK_WRAP_CHAR
+#define LIVES_WRAP_WORD GTK_WRAP_WORD
+#define LIVES_WRAP_WORD_CHAR GTK_WRAP_WORD_CHAR
+
+
 #define LIVES_ACCEL_VISIBLE GTK_ACCEL_VISIBLE
   
 #define lives_toolbar_style_t GtkToolbarStyle
@@ -349,6 +359,7 @@ typedef gpointer                          livespointer;
 #define LIVES_TOGGLE_BUTTON(widget) GTK_TOGGLE_BUTTON(widget)
 #define LIVES_TREE_VIEW(widget) GTK_TREE_VIEW(widget)
 #define LIVES_TEXT_VIEW(widget) GTK_TEXT_VIEW(widget)
+#define LIVES_TEXT_BUFFER(widget) GTK_TEXT_BUFFER(widget)
 
 #if GTK_CHECK_VERSION(3,0,0)
 #define LIVES_RULER(widget) GTK_SCALE(widget)
@@ -907,6 +918,41 @@ LiVESWidget *lives_combo_get_entry(LiVESCombo *);
 
 void lives_combo_populate(LiVESCombo *, LiVESList *list);
 
+LiVESWidget *lives_text_view_new(void);
+LiVESWidget *lives_text_view_new_with_buffer(LiVESTextBuffer *);
+LiVESTextBuffer *lives_text_view_get_buffer(LiVESTextView *);
+boolean lives_text_view_set_editable(LiVESTextView *, boolean setting);
+boolean lives_text_view_set_accepts_tab(LiVESTextView *, boolean setting);
+boolean lives_text_view_set_cursor_visible(LiVESTextView *, boolean setting);
+boolean lives_text_view_set_wrap_mode(LiVESTextView *, LiVESWrapMode wrapmode);
+boolean lives_text_view_set_justification(LiVESTextView *, LiVESJustification justify);
+
+
+boolean lives_text_view_scroll_mark_onscreen(LiVESTextView *, LiVESTextMark *mark);
+
+
+LiVESTextBuffer *lives_text_buffer_new(void);
+char *lives_text_buffer_get_text(LiVESTextBuffer *tbuff, LiVESTextIter *start, LiVESTextIter *end, boolean inc_hidden_chars);
+boolean lives_text_buffer_set_text(LiVESTextBuffer *, const char *, int len);
+
+boolean lives_text_buffer_insert(LiVESTextBuffer *, LiVESTextIter *, const char *, int len);
+boolean lives_text_buffer_insert_at_cursor(LiVESTextBuffer *, const char *, int len);
+
+boolean lives_text_buffer_get_start_iter(LiVESTextBuffer *, LiVESTextIter *);
+boolean lives_text_buffer_get_end_iter(LiVESTextBuffer *, LiVESTextIter *);
+
+boolean lives_text_buffer_place_cursor(LiVESTextBuffer *, LiVESTextIter *);
+
+LiVESTextMark *lives_text_buffer_create_mark(LiVESTextBuffer *, const char *mark_name, 
+					     const LiVESTextIter *where, boolean left_gravity);
+boolean lives_text_buffer_delete_mark(LiVESTextBuffer *, LiVESTextMark *);
+
+boolean lives_text_buffer_delete(LiVESTextBuffer *, LiVESTextIter *start, LiVESTextIter *end);
+
+boolean lives_text_buffer_get_iter_at_mark(LiVESTextBuffer *, LiVESTextIter *, LiVESTextMark *);
+
+
+
 boolean lives_toggle_button_get_active(LiVESToggleButton *);
 void lives_toggle_button_set_active(LiVESToggleButton *, boolean active);
 
@@ -1154,6 +1200,23 @@ void lives_widget_unparent(LiVESWidget *);
 
 void lives_tooltips_copy(LiVESWidget *dest, LiVESWidget *source);
 
+char *lives_text_view_get_text(LiVESTextView *);
+boolean lives_text_view_set_text(LiVESTextView *, const char *text, int len);
+
+
+boolean lives_text_buffer_insert_at_end(LiVESTextBuffer *, const char *text);
+boolean lives_text_view_scroll_onscreen(LiVESTextView *);
+
+ 
+
+
+void lives_general_button_clicked (LiVESButton *, livespointer data_to_free);
+
+void lives_spin_button_configure(LiVESSpinButton *, double value, double lower, double upper, 
+				 double step_increment, double page_increment);
+
+
+
 size_t calc_spin_button_width(double min, double max, int dp);
 
 int get_box_child_index (LiVESBox *, LiVESWidget *child);
@@ -1161,13 +1224,7 @@ int get_box_child_index (LiVESBox *, LiVESWidget *child);
 boolean label_act_toggle (LiVESWidget *, LiVESXEventButton *, LiVESToggleButton *);
 boolean widget_act_toggle (LiVESWidget *, LiVESToggleButton *);
 
-void lives_spin_button_configure(LiVESSpinButton *, double value, double lower, double upper, 
-				 double step_increment, double page_increment);
-
 void set_button_width(LiVESWidget *buttonbox, LiVESWidget *button, int width);
-
-char *text_view_get_text(LiVESTextView *);
-void text_view_set_text(LiVESTextView *, const char *text, int len);
 
 void toggle_button_toggle (LiVESToggleButton *);
 
@@ -1177,8 +1234,6 @@ void unhide_cursor(LiVESXWindow *);
 void hide_cursor(LiVESXWindow *);
 
 void get_border_size (LiVESWidget *win, int *bx, int *by);
-
-void lives_general_button_clicked (LiVESButton *, livespointer data_to_free);
 
 LiVESWidget *add_hsep_to_box (LiVESBox *);
 LiVESWidget *add_vsep_to_box (LiVESBox *);

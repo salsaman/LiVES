@@ -70,12 +70,12 @@ static void add_xlays_widget(GtkBox *box) {
   // add widget to preview affected layouts
 
   GtkWidget *expander=gtk_expander_new_with_mnemonic(_("Show affected _layouts"));
-  GtkWidget *textview=gtk_text_view_new();
+  LiVESWidget *textview=lives_text_view_new();
   GtkWidget *label;
   GList *xlist=mainw->xlays;
-  GtkTextBuffer *textbuffer = gtk_text_view_get_buffer (GTK_TEXT_VIEW (textview));
+  GtkTextBuffer *textbuffer = lives_text_view_get_buffer (GTK_TEXT_VIEW (textview));
   
-  gtk_text_view_set_editable (GTK_TEXT_VIEW (textview), FALSE);
+  lives_text_view_set_editable (LIVES_TEXT_VIEW (textview), FALSE);
   lives_container_add (LIVES_CONTAINER (expander), textview);
 
   if (palette->style&STYLE_1) {
@@ -89,11 +89,11 @@ static void add_xlays_widget(GtkBox *box) {
     lives_widget_set_text_color(textview, LIVES_WIDGET_STATE_NORMAL, &palette->info_text);
   }
 
-  gtk_text_buffer_insert_at_cursor(textbuffer,"\n",strlen("\n"));
+  lives_text_buffer_insert_at_cursor(textbuffer,"\n",strlen("\n"));
   
   while (xlist!=NULL) {
-    gtk_text_buffer_insert_at_cursor(textbuffer,(const gchar *)xlist->data,strlen((char *)xlist->data));
-    gtk_text_buffer_insert_at_cursor(textbuffer,"\n",strlen("\n"));
+    lives_text_buffer_insert_at_cursor(textbuffer,(const gchar *)xlist->data,strlen((char *)xlist->data));
+    lives_text_buffer_insert_at_cursor(textbuffer,"\n",strlen("\n"));
     xlist=xlist->next;
   }
 
@@ -694,13 +694,10 @@ boolean check_backend_return(lives_clip_t *sfile) {
 
 void pump_io_chan(GIOChannel *iochan) {
   // pump data from stdout to textbuffer
+  GError *gerr=NULL;
   gchar *str_return=NULL;
   gsize retlen;
-  GError *gerr=NULL;
-
-  GtkTextIter iter;
-  GtkTextMark *mark;
-  GtkTextBuffer *optextbuf=gtk_text_view_get_buffer(mainw->optextview);
+  LiVESTextBuffer *optextbuf=lives_text_view_get_buffer(mainw->optextview);
 
   if (!iochan->is_readable) return;
 
@@ -709,12 +706,10 @@ void pump_io_chan(GIOChannel *iochan) {
   if (gerr!=NULL) g_error_free(gerr);
 
   if (retlen>0) {
-    gtk_text_buffer_get_end_iter(optextbuf,&iter);
-    gtk_text_buffer_insert(optextbuf,&iter,str_return,retlen);
-    mark=gtk_text_buffer_create_mark(optextbuf,NULL,&iter,FALSE);
-    gtk_text_view_scroll_mark_onscreen(GTK_TEXT_VIEW (mainw->optextview),mark);
-    gtk_text_buffer_delete_mark (optextbuf,mark);
+    lives_text_buffer_insert_at_end(optextbuf,str_return);
+    lives_text_view_scroll_onscreen(LIVES_TEXT_VIEW (mainw->optextview));
   }
+
   if (str_return!=NULL) g_free(str_return);
 
 }
@@ -1803,12 +1798,12 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const gchar *te
     }
     if (cfile->proc_ptr!=NULL) {
       const gchar *btext=NULL;
-      if (mainw->iochan!=NULL) btext=text_view_get_text(mainw->optextview); 
+      if (mainw->iochan!=NULL) btext=lives_text_view_get_text(mainw->optextview); 
       if (cfile->proc_ptr->processing!=NULL) lives_widget_destroy(cfile->proc_ptr->processing);
       g_free(cfile->proc_ptr);
       cfile->proc_ptr=NULL;
       if (btext!=NULL) {
-	text_view_set_text(mainw->optextview,btext,-1);
+	lives_text_view_set_text(mainw->optextview,btext,-1);
 	g_free((gchar *)btext);
       }
     }
@@ -2280,8 +2275,7 @@ boolean do_comments_dialog (lives_clip_t *sfile, gchar *filename) {
 }
 
 
-void 
-do_keys_window (void) {
+void do_keys_window (void) {
   gchar *tmp=g_strdup(_ ("Show Keys"));
   do_text_window (tmp,_ ("You can use the following keys during playback to control LiVES:-\n\nRecordable keys (press 'r' before playback to make a recording)\n-----------------------\nctrl-left                     skip back\nctrl-right                   skip forwards\nctrl-up                      faster/increase effect\nctrl-down                 slower/decrease effect\nctrl-enter                    reset frame rate\nctrl-space                reverse direction\nctrl-backspace         freeze frame\nn                             nervous\nctrl-page up            previous clip\nctrl-page down        next clip\n\nctrl-1                       toggle real-time effect 1\nctrl-2                       toggle real-time effect 2\n                                          ...etc...\nctrl-0                       real-time effects off\n\nk           grab keyboard for last activated effect\nm         switch effect mode (when effect has keyboard grab)\nx                     swap background/foreground\nf1                           store/switch to clip mnemonic 1\nf2                           store/switch to clip mnemonic 2\n                                          ...etc...\nf12                          clear function keys\n\n\n Other playback keys\n-----------------------------\np                             play all\ny                             play selection\nq                             stop\nf                               fullscreen\ns                              separate window\nd                             double size\ng                             ping pong loops\n"));
   g_free(tmp);
@@ -2289,8 +2283,7 @@ do_keys_window (void) {
 
 
 
-void 
-do_mt_keys_window (void) {
+void do_mt_keys_window (void) {
   gchar *tmp=g_strdup(_ ("Multitrack Keys"));
   do_text_window (tmp,_ ("You can use the following keys to control the multitrack window:-\n\nctrl-left-arrow              move timeline cursor left 1 second\nctrl-right-arrow            move timeline cursor right 1 second\nshift-left-arrow            move timeline cursor left 1 frame\nshift-right-arrow          move timeline cursor right 1 frame\nctrl-up-arrow               move current track up\nctrl-down-arrow           move current track down\nctrl-page-up                select previous clip\nctrl-page-down            select next clip\nctrl-space                    select/deselect current track\nctrl-plus                       zoom in\nctrl-minus                    zoom out\nm                                 make a mark on the timeline (during playback)\nw                                 rewind to play start.\n\nFor other keys, see the menus.\n"));
   g_free(tmp);
@@ -2298,22 +2291,14 @@ do_mt_keys_window (void) {
 
 
 
-
-
-
-
-
-void 
-do_messages_window (void) {
-  GtkTextIter start_iter,end_iter;
-  gtk_text_buffer_get_start_iter(gtk_text_view_get_buffer(GTK_TEXT_VIEW(mainw->textview1)),&start_iter);
-  gtk_text_buffer_get_end_iter(gtk_text_view_get_buffer(GTK_TEXT_VIEW(mainw->textview1)),&end_iter);
-  do_text_window (_ ("Message History"),gtk_text_iter_get_text (&start_iter,&end_iter));
+void do_messages_window (void) {
+  gchar *text=lives_text_view_get_text(LIVES_TEXT_VIEW(mainw->textview1));
+  do_text_window (_ ("Message History"),text);
+  g_free(text);
 }
 
 
-void 
-do_text_window (const gchar *title, const gchar *text) {
+void do_text_window (const gchar *title, const gchar *text) {
   create_text_window (title,text,NULL);
 }
 

@@ -1435,6 +1435,209 @@ LIVES_INLINE int lives_combo_get_active(LiVESCombo *combo) {
 }
 
 
+
+LIVES_INLINE LiVESWidget *lives_text_view_new(void) {
+  LiVESWidget *tview=NULL;
+#ifdef GUI_GTK
+  tview=gtk_text_view_new();
+#endif
+  return tview;
+}
+
+
+
+LIVES_INLINE LiVESWidget *lives_text_view_new_with_buffer(LiVESTextBuffer *tbuff) {
+  LiVESWidget *tview=NULL;
+#ifdef GUI_GTK
+  tview=gtk_text_view_new_with_buffer(tbuff);
+#endif
+  return tview;
+}
+
+
+LIVES_INLINE LiVESTextBuffer *lives_text_view_get_buffer(LiVESTextView *tview) {
+  LiVESTextBuffer *tbuff=NULL;
+#ifdef GUI_GTK
+  tbuff=gtk_text_view_get_buffer(tview);
+#endif
+  return tbuff;
+}
+
+
+LIVES_INLINE boolean lives_text_view_set_editable(LiVESTextView *tview, boolean setting) {
+#ifdef GUI_GTK
+  gtk_text_view_set_editable(tview, setting);
+  return TRUE;
+#endif
+  return FALSE;
+}
+
+
+
+LIVES_INLINE boolean lives_text_view_set_accepts_tab(LiVESTextView *tview, boolean setting) {
+#ifdef GUI_GTK
+  gtk_text_view_set_accepts_tab(tview, setting);
+  return TRUE;
+#endif
+  return FALSE;
+}
+
+
+LIVES_INLINE boolean lives_text_view_set_cursor_visible(LiVESTextView *tview, boolean setting) {
+#ifdef GUI_GTK
+  gtk_text_view_set_cursor_visible(tview, setting);
+  return TRUE;
+#endif
+  return FALSE;
+}
+
+
+
+LIVES_INLINE boolean lives_text_view_set_wrap_mode(LiVESTextView *tview, LiVESWrapMode wrapmode) {
+#ifdef GUI_GTK
+  gtk_text_view_set_wrap_mode(tview, wrapmode);
+  return TRUE;
+#endif
+  return FALSE;
+}
+
+
+
+LIVES_INLINE boolean lives_text_view_set_justification(LiVESTextView *tview, LiVESJustification justify) {
+#ifdef GUI_GTK
+  gtk_text_view_set_justification(tview, justify);
+  return TRUE;
+#endif
+  return FALSE;
+}
+
+
+LIVES_INLINE boolean lives_text_view_scroll_mark_onscreen(LiVESTextView *tview, LiVESTextMark *mark) {
+#ifdef GUI_GTK
+  gtk_text_view_scroll_mark_onscreen(tview, mark);
+  return TRUE;
+#endif
+  return FALSE;
+}
+
+
+
+LIVES_INLINE LiVESTextBuffer *lives_text_buffer_new(void) {
+  LiVESTextBuffer *tbuff=NULL;
+#ifdef GUI_GTK
+  tbuff=gtk_text_buffer_new(NULL);
+#endif
+  return tbuff;
+}
+
+
+
+LIVES_INLINE boolean lives_text_buffer_insert(LiVESTextBuffer *tbuff, LiVESTextIter *iter, const char *text, int len) {
+#ifdef GUI_GTK
+  gtk_text_buffer_insert(tbuff, iter, text, len);
+  return TRUE;
+#endif
+  return FALSE;
+}
+
+
+LIVES_INLINE boolean lives_text_buffer_insert_at_cursor(LiVESTextBuffer *tbuff, const char *text, int len) {
+#ifdef GUI_GTK
+  gtk_text_buffer_insert_at_cursor(tbuff, text, len);
+  return TRUE;
+#endif
+  return FALSE;
+}
+
+
+
+LIVES_INLINE boolean lives_text_buffer_set_text(LiVESTextBuffer *tbuff, const char *text, int len) {
+#ifdef GUI_GTK
+  gtk_text_buffer_set_text(tbuff, text, len);
+  return TRUE;
+#endif
+  return FALSE;
+}
+
+
+LIVES_INLINE char *lives_text_buffer_get_text(LiVESTextBuffer *tbuff, LiVESTextIter *start, LiVESTextIter *end, boolean inc_hidden_chars) {
+#ifdef GUI_GTK
+  return gtk_text_buffer_get_text(tbuff,start,end,inc_hidden_chars);
+#endif
+  return NULL;
+}
+
+
+LIVES_INLINE boolean lives_text_buffer_get_start_iter(LiVESTextBuffer *tbuff, LiVESTextIter *iter) {
+#ifdef GUI_GTK
+  gtk_text_buffer_get_start_iter(tbuff, iter);
+  return TRUE;
+#endif
+  return FALSE;
+}
+
+
+LIVES_INLINE boolean lives_text_buffer_get_end_iter(LiVESTextBuffer *tbuff, LiVESTextIter *iter) {
+#ifdef GUI_GTK
+  gtk_text_buffer_get_start_iter(tbuff, iter);
+  return TRUE;
+#endif
+  return FALSE;
+}
+
+
+
+LIVES_INLINE boolean lives_text_buffer_place_cursor(LiVESTextBuffer *tbuff, LiVESTextIter *iter) {
+#ifdef GUI_GTK
+  gtk_text_buffer_place_cursor(tbuff, iter);
+  return TRUE;
+#endif
+  return FALSE;
+}
+
+
+
+
+LIVES_INLINE LiVESTextMark *lives_text_buffer_create_mark(LiVESTextBuffer *tbuff, const char *mark_name, 
+							  const LiVESTextIter *where, boolean left_gravity) {
+  LiVESTextMark *tmark;
+#ifdef GUI_GTK
+  tmark=gtk_text_buffer_create_mark(tbuff, mark_name, where, left_gravity);
+#endif
+  return tmark;
+}
+
+
+
+LIVES_INLINE boolean lives_text_buffer_delete_mark(LiVESTextBuffer *tbuff, LiVESTextMark *mark) {
+#ifdef GUI_GTK
+  lives_text_buffer_delete_mark(tbuff, mark);
+  return TRUE;
+#endif
+  return FALSE;
+}
+
+
+
+LIVES_INLINE boolean lives_text_buffer_delete(LiVESTextBuffer *tbuff, LiVESTextIter *start, LiVESTextIter *end) {
+#ifdef GUI_GTK
+  gtk_text_buffer_delete(tbuff, start, end);
+  return TRUE;
+#endif
+  return FALSE;
+}
+
+
+
+LIVES_INLINE boolean lives_text_buffer_get_iter_at_mark(LiVESTextBuffer *tbuff, LiVESTextIter *iter, LiVESTextMark *mark) {
+#ifdef GUI_GTK
+  gtk_text_buffer_get_iter_at_mark(tbuff, iter, mark);
+  return TRUE;
+#endif
+  return FALSE;
+}
+
+
 LIVES_INLINE LiVESWidget *lives_button_new(void) {
   LiVESWidget *button=NULL;
 #ifdef GUI_GTK
@@ -3759,20 +3962,51 @@ void set_button_width(LiVESWidget *buttonbox, LiVESWidget *button, int width) {
 }
 
 
-char *text_view_get_text(LiVESTextView *textview) {
+char *lives_text_view_get_text(LiVESTextView *textview) {
   GtkTextIter siter,eiter;
-  GtkTextBuffer *textbuf=gtk_text_view_get_buffer (textview);
-  gtk_text_buffer_get_start_iter(textbuf,&siter);
-  gtk_text_buffer_get_end_iter(textbuf,&eiter);
+  LiVESTextBuffer *textbuf=lives_text_view_get_buffer (textview);
+  lives_text_buffer_get_start_iter(textbuf,&siter);
+  lives_text_buffer_get_end_iter(textbuf,&eiter);
 
-  return gtk_text_buffer_get_text(textbuf,&siter,&eiter,FALSE);
+  return lives_text_buffer_get_text(textbuf,&siter,&eiter,FALSE);
 }
 
 
-void text_view_set_text(LiVESTextView *textview, const gchar *text, int len) {
-  GtkTextBuffer *textbuf=gtk_text_view_get_buffer (textview);
-  gtk_text_buffer_set_text(textbuf,text,len);
+boolean lives_text_view_set_text(LiVESTextView *textview, const gchar *text, int len) {
+  LiVESTextBuffer *textbuf=lives_text_view_get_buffer (textview);
+  if (textbuf!=NULL)
+    return lives_text_buffer_set_text(textbuf,text,len);
+  return FALSE;
 }
+
+
+ 
+boolean lives_text_buffer_insert_at_end(LiVESTextBuffer *tbuff, const char *text) {
+ LiVESTextIter xiter;
+ if (lives_text_buffer_get_end_iter(tbuff,&xiter))
+   return lives_text_buffer_insert(tbuff,&xiter,text,-1);
+ return FALSE;
+}
+
+
+
+boolean lives_text_view_scroll_onscreen(LiVESTextView *tview) {
+  LiVESTextIter iter;
+  LiVESTextMark *mark;
+  LiVESTextBuffer *tbuf;
+
+  tbuf=lives_text_view_get_buffer (tview);
+  if (tbuf!=NULL) {
+    mark=lives_text_buffer_create_mark(tbuf,NULL,&iter,FALSE);
+    if (mark!=NULL) {
+      if (lives_text_view_scroll_mark_onscreen(tview,mark)) 
+	return lives_text_buffer_delete_mark (tbuf,mark);
+    }
+  }
+  return FALSE;
+}
+
+
 
 
 int get_box_child_index (LiVESBox *box, LiVESWidget *tchild) {

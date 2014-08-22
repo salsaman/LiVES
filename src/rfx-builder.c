@@ -851,17 +851,17 @@ void on_code_ok (GtkButton *button, gpointer user_data) {
   switch (rfxbuilder->codetype) {
   case RFX_CODE_TYPE_PRE:
     g_free (rfxbuilder->pre_code);
-    rfxbuilder->pre_code=text_view_get_text (LIVES_TEXT_VIEW (rfxbuilder->code_textview));
+    rfxbuilder->pre_code=lives_text_view_get_text (LIVES_TEXT_VIEW (rfxbuilder->code_textview));
     break;
 
   case RFX_CODE_TYPE_LOOP:
     g_free (rfxbuilder->loop_code);
-    rfxbuilder->loop_code=text_view_get_text (LIVES_TEXT_VIEW (rfxbuilder->code_textview));
+    rfxbuilder->loop_code=lives_text_view_get_text (LIVES_TEXT_VIEW (rfxbuilder->code_textview));
     break;
 
   case RFX_CODE_TYPE_POST:
     g_free (rfxbuilder->post_code);
-    rfxbuilder->post_code=text_view_get_text (LIVES_TEXT_VIEW (rfxbuilder->code_textview));
+    rfxbuilder->post_code=lives_text_view_get_text (LIVES_TEXT_VIEW (rfxbuilder->code_textview));
     break;
 
   case RFX_CODE_TYPE_STRDEF:
@@ -870,14 +870,14 @@ void on_code_ok (GtkButton *button, gpointer user_data) {
       gchar buf[++maxlen];
       
       if (rfxbuilder->copy_params[rfxbuilder->edit_param].def!=NULL) g_free (rfxbuilder->copy_params[rfxbuilder->edit_param].def);
-      g_snprintf (buf,maxlen,"%s",text_view_get_text (LIVES_TEXT_VIEW (rfxbuilder->code_textview)));
+      g_snprintf (buf,maxlen,"%s",lives_text_view_get_text (LIVES_TEXT_VIEW (rfxbuilder->code_textview)));
 
       rfxbuilder->copy_params[rfxbuilder->edit_param].def=subst (buf,rfxbuilder->field_delim,"");
       break;
     }
   case RFX_CODE_TYPE_STRING_LIST:
     {
-      gchar *values=text_view_get_text (LIVES_TEXT_VIEW (rfxbuilder->code_textview));
+      gchar *values=lives_text_view_get_text (LIVES_TEXT_VIEW (rfxbuilder->code_textview));
       gchar **lines=g_strsplit (values,"\n",-1);
       int numlines=get_token_count (values,'\n');
       int i;
@@ -1355,7 +1355,7 @@ void on_table_add_row (GtkButton *button, gpointer user_data) {
 
     if (button==NULL) goto add_row_done;
 
-    rfxbuilder->copy_triggers[rfxbuilder->table_rows-1].code=text_view_get_text(LIVES_TEXT_VIEW (rfxbuilder->code_textview));
+    rfxbuilder->copy_triggers[rfxbuilder->table_rows-1].code=lives_text_view_get_text(LIVES_TEXT_VIEW (rfxbuilder->code_textview));
     
     rfxbuilder->copy_triggers[rfxbuilder->table_rows-1].when=atoi (lives_entry_get_text (LIVES_ENTRY (rfxbuilder->trigger_when_entry)))+1;
     if (!strcmp(lives_entry_get_text (LIVES_ENTRY (rfxbuilder->trigger_when_entry)),"init")) rfxbuilder->copy_triggers[rfxbuilder->table_rows-1].when=0;
@@ -1638,7 +1638,7 @@ void on_table_edit_row (GtkButton *button, gpointer user_data) {
     }
 
     g_free (rfxbuilder->copy_triggers[found].code);
-    rfxbuilder->copy_triggers[found].code=text_view_get_text (LIVES_TEXT_VIEW (rfxbuilder->code_textview));
+    rfxbuilder->copy_triggers[found].code=lives_text_view_get_text (LIVES_TEXT_VIEW (rfxbuilder->code_textview));
 
     lives_widget_destroy (trigger_dialog);
     break;
@@ -2748,10 +2748,10 @@ GtkWidget * make_trigger_dialog (int tnum, rfx_build_window_t *rfxbuilder) {
 
 
   // code area
-  rfxbuilder->code_textview = gtk_text_view_new ();
-  gtk_text_view_set_editable (GTK_TEXT_VIEW (rfxbuilder->code_textview), TRUE);
-  gtk_text_view_set_wrap_mode (GTK_TEXT_VIEW (rfxbuilder->code_textview), GTK_WRAP_WORD);
-  gtk_text_view_set_cursor_visible (GTK_TEXT_VIEW (rfxbuilder->code_textview), TRUE);
+  rfxbuilder->code_textview = lives_text_view_new ();
+  lives_text_view_set_editable (LIVES_TEXT_VIEW (rfxbuilder->code_textview), TRUE);
+  lives_text_view_set_wrap_mode (LIVES_TEXT_VIEW (rfxbuilder->code_textview), LIVES_WRAP_WORD);
+  lives_text_view_set_cursor_visible (LIVES_TEXT_VIEW (rfxbuilder->code_textview), TRUE);
 
   woat=widget_opts.apply_theme;
   widget_opts.apply_theme=FALSE;
@@ -2768,7 +2768,7 @@ GtkWidget * make_trigger_dialog (int tnum, rfx_build_window_t *rfxbuilder) {
   lives_box_pack_start (LIVES_BOX (dialog_vbox), scrolledwindow, TRUE, TRUE, 0);
 
   if (tnum>=0) {
-    text_view_set_text (LIVES_TEXT_VIEW (rfxbuilder->code_textview), 
+    lives_text_view_set_text (LIVES_TEXT_VIEW (rfxbuilder->code_textview), 
 			rfxbuilder->copy_triggers[tnum].code,-1);
   }
 
@@ -2805,7 +2805,7 @@ void on_code_clicked (GtkButton *button, gpointer user_data) {
   dialog_vbox = lives_dialog_get_content_area(LIVES_DIALOG(dialog));
 
   // code area
-  rfxbuilder->code_textview = gtk_text_view_new ();
+  rfxbuilder->code_textview = lives_text_view_new ();
 
   woat=widget_opts.apply_theme;
   widget_opts.apply_theme=FALSE;
@@ -2824,35 +2824,35 @@ void on_code_clicked (GtkButton *button, gpointer user_data) {
   g_object_ref (gtk_scrolled_window_get_hadjustment (GTK_SCROLLED_WINDOW (scrolledwindow)));
   g_object_ref (gtk_scrolled_window_get_vadjustment (GTK_SCROLLED_WINDOW (scrolledwindow)));
 
-  gtk_text_view_set_editable (GTK_TEXT_VIEW (rfxbuilder->code_textview), TRUE);
-  gtk_text_view_set_wrap_mode (GTK_TEXT_VIEW (rfxbuilder->code_textview), GTK_WRAP_WORD);
-  gtk_text_view_set_cursor_visible (GTK_TEXT_VIEW (rfxbuilder->code_textview), TRUE);
+  lives_text_view_set_editable (LIVES_TEXT_VIEW (rfxbuilder->code_textview), TRUE);
+  lives_text_view_set_wrap_mode (LIVES_TEXT_VIEW (rfxbuilder->code_textview), LIVES_WRAP_WORD);
+  lives_text_view_set_cursor_visible (LIVES_TEXT_VIEW (rfxbuilder->code_textview), TRUE);
 
   lives_widget_grab_focus (rfxbuilder->code_textview);
 
   // TODO !!
   /*  if (glib_major_version>=2&&glib_minor_version>=4) {
-      gtk_text_view_set_accepts_tab (GTK_TEXT_VIEW (rfxbuilder->code_textview),TRUE);
+      lives_text_view_set_accepts_tab (GTK_TEXT_VIEW (rfxbuilder->code_textview),TRUE);
     } */
 
   if (button==GTK_BUTTON (rfxbuilder->pre_button)) {
     rfxbuilder->codetype=RFX_CODE_TYPE_PRE;
     lives_window_set_title (LIVES_WINDOW (dialog), _("LiVES: - Pre Loop Code"));
-    text_view_set_text (LIVES_TEXT_VIEW (rfxbuilder->code_textview), 
+    lives_text_view_set_text (LIVES_TEXT_VIEW (rfxbuilder->code_textview), 
 			rfxbuilder->pre_code,-1);
   }
 
   else if (button==GTK_BUTTON (rfxbuilder->loop_button)) {
     rfxbuilder->codetype=RFX_CODE_TYPE_LOOP;
     lives_window_set_title (LIVES_WINDOW (dialog), _("LiVES: - Loop Code"));
-    text_view_set_text (LIVES_TEXT_VIEW (rfxbuilder->code_textview), 
+    lives_text_view_set_text (LIVES_TEXT_VIEW (rfxbuilder->code_textview), 
 			rfxbuilder->loop_code,-1);
   }
 
   else if (button==GTK_BUTTON (rfxbuilder->post_button)) {
     rfxbuilder->codetype=RFX_CODE_TYPE_POST;
     lives_window_set_title (LIVES_WINDOW (dialog), _("LiVES: - Post Loop Code"));
-    text_view_set_text (LIVES_TEXT_VIEW (rfxbuilder->code_textview), 
+    lives_text_view_set_text (LIVES_TEXT_VIEW (rfxbuilder->code_textview), 
 			rfxbuilder->post_code,-1);
   }
 
@@ -2866,15 +2866,15 @@ void on_code_clicked (GtkButton *button, gpointer user_data) {
       lives_window_set_title (LIVES_WINDOW (dialog), (tmpx=g_strdup_printf 
 						  (_("LiVES: - Default text (max length %d)"),maxlen)));
       g_free(tmpx);
-      gtk_text_view_set_wrap_mode (GTK_TEXT_VIEW (rfxbuilder->code_textview),GTK_WRAP_WORD);
+      lives_text_view_set_wrap_mode (LIVES_TEXT_VIEW (rfxbuilder->code_textview),LIVES_WRAP_WORD);
 
-      text_view_set_text (LIVES_TEXT_VIEW (rfxbuilder->code_textview), 
+      lives_text_view_set_text (LIVES_TEXT_VIEW (rfxbuilder->code_textview), 
 			  (gchar *)rfxbuilder->copy_params[rfxbuilder->edit_param].def,len);
     }
     else {
-      int i;
+      LiVESTextIter start_iter;
       gchar *string=g_strdup (""),*string_new;
-      GtkTextIter start_iter;
+      register int i;
 
       rfxbuilder->codetype=RFX_CODE_TYPE_STRING_LIST;
       lives_window_set_title (LIVES_WINDOW (dialog), (tmpx=g_strdup (_("LiVES: - Enter values, one per line"))));
@@ -2886,10 +2886,10 @@ void on_code_clicked (GtkButton *button, gpointer user_data) {
 	  if (string!=string_new) g_free (string);
 	  string=string_new;
 	}
-	text_view_set_text (LIVES_TEXT_VIEW (rfxbuilder->code_textview), string, strlen(string)-1);
+	lives_text_view_set_text (LIVES_TEXT_VIEW (rfxbuilder->code_textview), string, strlen(string)-1);
 	g_free (string);
-	gtk_text_buffer_get_start_iter (gtk_text_view_get_buffer(GTK_TEXT_VIEW(rfxbuilder->code_textview)),&start_iter);
-	gtk_text_buffer_place_cursor (gtk_text_view_get_buffer (GTK_TEXT_VIEW (rfxbuilder->code_textview)), &start_iter);
+	lives_text_buffer_get_start_iter (lives_text_view_get_buffer(LIVES_TEXT_VIEW(rfxbuilder->code_textview)),&start_iter);
+	lives_text_buffer_place_cursor (lives_text_view_get_buffer (LIVES_TEXT_VIEW (rfxbuilder->code_textview)), &start_iter);
       }
     }
   }

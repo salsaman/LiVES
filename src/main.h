@@ -827,7 +827,7 @@ void make_preview_box (void);
 void play_window_set_title(void);
 void add_to_playframe (void);
 GtkWidget* create_cdtrack_dialog (int type, gpointer user_data);
-GtkTextView *create_output_textview(void);
+LiVESTextView *create_output_textview(void);
 gchar *choose_file(gchar *dir, gchar *fname, gchar **filt, lives_file_chooser_action_t act, const char *title, GtkWidget *extra);
 GtkWidget *choose_file_with_preview (gchar *dir, const gchar *title, int preview_type);
 void add_suffix_check(GtkBox *box, const gchar *ext);

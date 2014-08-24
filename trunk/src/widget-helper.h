@@ -118,10 +118,12 @@ typedef GtkComboBox                       LiVESCombo;
 typedef GtkComboBox                       LiVESComboBox;
 typedef GtkButton                         LiVESButton;
 typedef GtkToggleButton                   LiVESToggleButton;
+
 typedef GtkTextView                       LiVESTextView;
 typedef GtkTextBuffer                     LiVESTextBuffer;
 typedef GtkTextMark                       LiVESTextMark;
 typedef GtkTextIter                       LiVESTextIter;
+
 typedef GtkEntry                          LiVESEntry;
 typedef GtkRadioButton                    LiVESRadioButton;
 typedef GtkSpinButton                     LiVESSpinButton;
@@ -136,9 +138,24 @@ typedef GtkMenuItem                       LiVESMenuItem;
 typedef GtkCheckMenuItem                  LiVESCheckMenuItem;
 typedef GtkImageMenuItem                  LiVESImageMenuItem;
 typedef GtkRadioMenuItem                  LiVESRadioMenuItem;
+
 typedef GtkTreeView                       LiVESTreeView;
+typedef GtkTreeViewColumn                 LiVESTreeViewColumn;
+
+typedef GtkTreeViewColumnSizing LiVESTreeViewColumnSizing;
+#define LIVES_TREE_VIEW_COLUMN_GROW_ONLY GTK_TREE_VIEW_COLUMN_GROW_ONLY
+#define LIVES_TREE_VIEW_COLUMN_AUTOSIZE GTK_TREE_VIEW_COLUMN_AUTOSIZE
+#define LIVES_TREE_VIEW_COLUMN_FIXED GTK_TREE_VIEW_COLUMN_FIXED
+
+
+typedef GtkCellRenderer                   LiVESCellRenderer;
 typedef GtkTreeModel                      LiVESTreeModel;
 typedef GtkTreeIter                       LiVESTreeIter;
+typedef GtkTreePath                       LiVESTreePath;
+typedef GtkTreeStore                      LiVESTreeStore;
+typedef GtkTreeSelection                  LiVESTreeSelection;
+
+
 typedef GtkScrolledWindow                 LiVESScrolledWindow;
 typedef GtkToolbar                        LiVESToolbar;
 typedef GtkToolItem                       LiVESToolItem;
@@ -275,9 +292,16 @@ typedef GtkWrapMode LiVESWrapMode;
 
 #define LIVES_ACCEL_VISIBLE GTK_ACCEL_VISIBLE
   
-#define lives_toolbar_style_t GtkToolbarStyle
+typedef GtkToolbarStyle LiVESToolbarStyle;
 #define LIVES_TOOLBAR_ICONS GTK_TOOLBAR_ICONS
 #define LIVES_TOOLBAR_TEXT  GTK_TOOLBAR_TEXT
+
+
+typedef GtkSelectionMode LiVESSelectionMode;
+#define LIVES_SELECTION_NONE GTK_SELECTION_NONE
+#define LIVES_SELECTION_SINGLE GTK_SELECTION_SINGLE
+#define LIVES_SELECTION_BROWSE GTK_SELECTION_BROWSE
+#define LIVES_SELECTION_MULTIPLE GTK_SELECTION_MULTIPLE
 
 
 #if GTK_CHECK_VERSION(3,0,0)
@@ -311,6 +335,8 @@ typedef GSList                            LiVESSList;
 
 typedef GtkAccelGroup                     LiVESAccelGroup;
 typedef GtkAccelFlags                     LiVESAccelFlags;
+
+typedef GtkRequisition                    LiVESRequisition;
 
 typedef GdkPixbufDestroyNotify            LiVESPixbufDestroyNotify;
 
@@ -357,9 +383,12 @@ typedef gpointer                          livespointer;
 #endif
 
 #define LIVES_TOGGLE_BUTTON(widget) GTK_TOGGLE_BUTTON(widget)
-#define LIVES_TREE_VIEW(widget) GTK_TREE_VIEW(widget)
 #define LIVES_TEXT_VIEW(widget) GTK_TEXT_VIEW(widget)
 #define LIVES_TEXT_BUFFER(widget) GTK_TEXT_BUFFER(widget)
+
+#define LIVES_TREE_VIEW(widget) GTK_TREE_VIEW(widget)
+#define LIVES_TREE_MODEL(object) GTK_TREE_MODEL(object)
+
 
 #if GTK_CHECK_VERSION(3,0,0)
 #define LIVES_RULER(widget) GTK_SCALE(widget)
@@ -952,6 +981,41 @@ boolean lives_text_buffer_delete(LiVESTextBuffer *, LiVESTextIter *start, LiVEST
 boolean lives_text_buffer_get_iter_at_mark(LiVESTextBuffer *, LiVESTextIter *, LiVESTextMark *);
 
 
+boolean lives_tree_model_get(LiVESTreeModel *, LiVESTreeIter *, ...);
+boolean lives_tree_model_get_iter(LiVESTreeModel *, LiVESTreeIter *, LiVESTreePath *);
+boolean lives_tree_model_get_iter_first(LiVESTreeModel *, LiVESTreeIter *);
+LiVESTreePath *lives_tree_model_get_path(LiVESTreeModel *, LiVESTreeIter *);
+boolean lives_tree_model_iter_children(LiVESTreeModel *, LiVESTreeIter *, LiVESTreeIter *parent);
+int lives_tree_model_iter_n_children(LiVESTreeModel *, LiVESTreeIter *);
+boolean lives_tree_model_iter_next(LiVESTreeModel *, LiVESTreeIter *);
+
+boolean lives_tree_path_free(LiVESTreePath *);
+LiVESTreePath *lives_tree_path_new_from_string(const char *path);
+int lives_tree_path_get_depth(LiVESTreePath *);
+int *lives_tree_path_get_indices(LiVESTreePath *);
+
+LiVESTreeStore *lives_tree_store_new(int ncols, ...);
+boolean lives_tree_store_append(LiVESTreeStore *, LiVESTreeIter *, LiVESTreeIter *parent);
+boolean lives_tree_store_set(LiVESTreeStore *, LiVESTreeIter *, ...);
+
+LiVESWidget *lives_tree_view_new(void);
+LiVESWidget *lives_tree_view_new_with_model(LiVESTreeModel *);
+boolean lives_tree_view_set_model(LiVESTreeView *, LiVESTreeModel *);
+LiVESTreeModel *lives_tree_view_get_model(LiVESTreeView *);
+int lives_tree_view_append_column(LiVESTreeView *, LiVESTreeViewColumn *);
+boolean lives_tree_view_set_headers_visible(LiVESTreeView *, boolean vis);
+LiVESAdjustment *lives_tree_view_get_hadjustment(LiVESTreeView *);
+LiVESTreeSelection *lives_tree_view_get_selection(LiVESTreeView *);
+
+
+LiVESTreeViewColumn *lives_tree_view_column_new_with_attributes(const char *title, LiVESCellRenderer *, ...);
+boolean lives_tree_view_column_set_sizing(LiVESTreeViewColumn *, LiVESTreeViewColumnSizing type);
+boolean lives_tree_view_column_set_fixed_width(LiVESTreeViewColumn *, int fwidth);
+
+boolean lives_tree_selection_get_selected(LiVESTreeSelection *, LiVESTreeModel **, LiVESTreeIter *);
+boolean lives_tree_selection_set_mode(LiVESTreeSelection *, LiVESSelectionMode);
+boolean lives_tree_selection_select_iter(LiVESTreeSelection *, LiVESTreeIter *);
+
 
 boolean lives_toggle_button_get_active(LiVESToggleButton *);
 void lives_toggle_button_set_active(LiVESToggleButton *, boolean active);
@@ -971,6 +1035,11 @@ LiVESXWindow *lives_widget_get_xwindow(LiVESWidget *);
 boolean lives_widget_set_can_focus(LiVESWidget *, boolean state);
 boolean lives_widget_set_can_default(LiVESWidget *, boolean state);
 boolean lives_widget_set_can_focus_and_default(LiVESWidget *);
+
+boolean lives_widget_add_events(LiVESWidget *, int events);
+boolean lives_widget_set_events(LiVESWidget *, int events);
+boolean lives_widget_remove_accelerator(LiVESWidget *, LiVESAccelGroup *, uint32_t accel_key, LiVESModifierType accel_mods);
+boolean lives_widget_get_preferred_size(LiVESWidget *, LiVESRequisition *min_size, LiVESRequisition *nat_size);
 
 boolean lives_container_remove(LiVESContainer *, LiVESWidget *);
 boolean lives_container_add(LiVESContainer *, LiVESWidget *);
@@ -1015,7 +1084,7 @@ boolean lives_toolbar_insert(LiVESToolbar *, LiVESToolItem *, int pos);
 boolean lives_toolbar_set_show_arrow(LiVESToolbar *, boolean show);
 lives_icon_size_t lives_toolbar_get_icon_size(LiVESToolbar *);
 boolean lives_toolbar_set_icon_size(LiVESToolbar *, lives_icon_size_t icon_size);
-boolean lives_toolbar_set_style(LiVESToolbar *, lives_toolbar_style_t style);
+boolean lives_toolbar_set_style(LiVESToolbar *, LiVESToolbarStyle style);
 
 int lives_widget_get_allocation_x(LiVESWidget *);
 int lives_widget_get_allocation_y(LiVESWidget *);
@@ -1039,8 +1108,6 @@ double lives_adjustment_get_page_size(LiVESAdjustment *);
 void lives_adjustment_set_upper(LiVESAdjustment *, double upper);
 void lives_adjustment_set_lower(LiVESAdjustment *, double lower);
 void lives_adjustment_set_page_size(LiVESAdjustment *, double page_size);
-
-LiVESAdjustment *lives_tree_view_get_hadjustment(LiVESTreeView *);
 
 const char *lives_label_get_text(LiVESLabel *);
 void lives_label_set_text(LiVESLabel *, const char *text);
@@ -1194,7 +1261,7 @@ void lives_widget_get_bg_color(LiVESWidget *, LiVESWidgetColor *);
 
 void lives_window_center(LiVESWindow *);
 
-LiVESWidget *lives_entry_new_with_max_length(int max);
+boolean lives_entry_set_completion_from_list(LiVESEntry *, LiVESList *);
 
 void lives_widget_unparent(LiVESWidget *);
 

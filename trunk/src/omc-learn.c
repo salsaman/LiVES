@@ -121,7 +121,7 @@ static void remove_all_nodes(boolean every, omclearn_w *omclw) {
 static LIVES_INLINE int js_index(const gchar *string) {
   // js index, or midi channel number
   gchar **array=g_strsplit(string," ",-1);
-  gint res=atoi(array[1]);
+  int res=atoi(array[1]);
   g_strfreev(array);
   return res;
 }
@@ -130,7 +130,7 @@ static LIVES_INLINE int js_index(const gchar *string) {
 static LIVES_INLINE int midi_index(const gchar *string) {
   // midi controller number
   gchar **array;
-  gint res;
+  int res;
   if (get_token_count(string,' ')<3) return -1;
 
   array=g_strsplit(string," ",-1);
@@ -378,8 +378,8 @@ static int get_midi_len(int msgtype) {
 }
 
 
-static gint midi_msg_type(const gchar *string) {
-  gint type=atoi(string);
+static int midi_msg_type(const gchar *string) {
+  int type=atoi(string);
 
   if ((type&0XF0)==0X90) return OMC_MIDI_NOTE;
   if ((type&0XF0)==0x80) return OMC_MIDI_NOTE_OFF;
@@ -409,7 +409,7 @@ gchar *midi_mangle(void) {
 
   ssize_t bytes,tot=0,allowed=prefs->midi_rpt;
   unsigned char midbuf[4],xbuf[4];
-  gint target=1,mtype=0,idx;
+  int target=1,mtype=0,idx;
   boolean got_target=FALSE;
   gchar *str;
 
@@ -534,7 +534,7 @@ gchar *midi_mangle(void) {
 
 
 
-static LIVES_INLINE gchar *cut_string_elems(const gchar *string, gint nelems) {
+static LIVES_INLINE gchar *cut_string_elems(const gchar *string, int nelems) {
   // remove elements after nelems
 
   gchar *retval=g_strdup(string);
@@ -560,7 +560,7 @@ static LIVES_INLINE gchar *cut_string_elems(const gchar *string, gint nelems) {
 
 
 
-static gchar *omc_learn_get_pname(gint type, gint idx) {
+static gchar *omc_learn_get_pname(int type, int idx) {
   switch (type) {
   case OMC_MIDI_CONTROLLER:
   case OMC_MIDI_PITCH_BEND:
@@ -579,9 +579,9 @@ static gchar *omc_learn_get_pname(gint type, gint idx) {
 
 
 
-static gint omc_learn_get_pvalue(gint type, gint idx, const gchar *string) {
+static int omc_learn_get_pvalue(int type, int idx, const gchar *string) {
   gchar **array=g_strsplit(string," ",-1);
-  gint res;
+  int res;
 
   switch (type) {
   case OMC_MIDI_CONTROLLER:
@@ -603,28 +603,28 @@ static void cell1_edited_callback (GtkCellRendererSpin *spinbutton, const gchar 
 
   lives_omc_macro_t omacro=omc_macros[mnode->macro];
 
-  gint vali;
-  gdouble vald;
+  int vali;
+  double vald;
 
-  GtkTreeIter iter;
+  LiVESTreeIter iter;
 
-  gint row;
+  int row;
 
-  gint *indices;
+  int *indices;
 
-  GtkTreePath *tpath=gtk_tree_path_new_from_string(path_string);
+  LiVESTreePath *tpath=lives_tree_path_new_from_string(path_string);
 
-  if (gtk_tree_path_get_depth(tpath)!=2) {
-    gtk_tree_path_free(tpath);
+  if (lives_tree_path_get_depth(tpath)!=2) {
+    lives_tree_path_free(tpath);
     return;
   }
 
-  indices=gtk_tree_path_get_indices(tpath);
+  indices=lives_tree_path_get_indices(tpath);
   row=indices[1];
 
-  gtk_tree_model_get_iter(GTK_TREE_MODEL(mnode->gtkstore2),&iter,tpath);
+  lives_tree_model_get_iter(LIVES_TREE_MODEL(mnode->gtkstore2),&iter,tpath);
 
-  gtk_tree_path_free(tpath);
+  lives_tree_path_free(tpath);
 
   if (row>(omacro.nparams-mnode->nvars)) {
     // text, so dont alter
@@ -642,38 +642,38 @@ static void cell1_edited_callback (GtkCellRendererSpin *spinbutton, const gchar 
     break;
   }
   
-  gtk_tree_store_set(mnode->gtkstore2,&iter,VALUE2_COLUMN,new_text,-1);
+  lives_tree_store_set(mnode->gtkstore2,&iter,VALUE2_COLUMN,new_text,-1);
   
 }
 
 
 
-static void omc_macro_row_add_params(lives_omc_match_node_t *mnode, gint row, omclearn_w *omclw) {
+static void omc_macro_row_add_params(lives_omc_match_node_t *mnode, int row, omclearn_w *omclw) {
   lives_omc_macro_t macro=omc_macros[mnode->macro];
 
-  GtkCellRenderer *renderer;
-  GtkTreeViewColumn *column;
+  LiVESCellRenderer *renderer;
+  LiVESTreeViewColumn *column;
   
-  int i;
-  gchar *strval=NULL,*vname;
-
-  gchar *oldval=NULL,*final=NULL;
-
-  gint mfrom;
-  
-  GtkTreeIter iter1,iter2;
+  LiVESTreeIter iter1,iter2;
 
   GObject *spinadj;
 
-  mnode->gtkstore2 = gtk_tree_store_new (NUM2_COLUMNS, G_TYPE_STRING, G_TYPE_STRING, G_TYPE_STRING);
+  gchar *strval=NULL,*vname;
+  gchar *oldval=NULL,*final=NULL;
+
+  int mfrom;
+  register int i;
+  
+
+  mnode->gtkstore2 = lives_tree_store_new (NUM2_COLUMNS, G_TYPE_STRING, G_TYPE_STRING, G_TYPE_STRING);
 
   if (macro.nparams==0) return;
 
-  gtk_tree_store_append (mnode->gtkstore2, &iter1, NULL);  /* Acquire an iterator */
-  gtk_tree_store_set (mnode->gtkstore2, &iter1, TITLE2_COLUMN, (_("Params.")), -1);
+  lives_tree_store_append (mnode->gtkstore2, &iter1, NULL);  /* Acquire an iterator */
+  lives_tree_store_set (mnode->gtkstore2, &iter1, TITLE2_COLUMN, (_("Params.")), -1);
 
   for (i=0;i<macro.nparams;i++) {
-    gtk_tree_store_append (mnode->gtkstore2, &iter2, &iter1);  /* Acquire a child iterator */
+    lives_tree_store_append (mnode->gtkstore2, &iter2, &iter1);  /* Acquire a child iterator */
        
     if (oldval!=NULL) {
       g_free(oldval);
@@ -700,12 +700,12 @@ static void omc_macro_row_add_params(lives_omc_match_node_t *mnode, gint row, om
 
     vname=macro.pname[i];
 
-    gtk_tree_store_set (mnode->gtkstore2, &iter2, TITLE2_COLUMN, vname, VALUE2_COLUMN, strval, -1);
+    lives_tree_store_set (mnode->gtkstore2, &iter2, TITLE2_COLUMN, vname, VALUE2_COLUMN, strval, -1);
   }
 
   g_free (strval);
 
-  mnode->treev2 = gtk_tree_view_new_with_model (GTK_TREE_MODEL (mnode->gtkstore2));
+  mnode->treev2 = lives_tree_view_new_with_model (LIVES_TREE_MODEL (mnode->gtkstore2));
 
   if (palette->style&STYLE_1) {
     lives_widget_set_base_color(mnode->treev2, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
@@ -713,12 +713,12 @@ static void omc_macro_row_add_params(lives_omc_match_node_t *mnode, gint row, om
   }
 
   renderer = gtk_cell_renderer_text_new ();
-  column = gtk_tree_view_column_new_with_attributes (NULL,
+  column = lives_tree_view_column_new_with_attributes (NULL,
 						     renderer,
 						     "text", TITLE2_COLUMN,
 						     NULL);
   
-  gtk_tree_view_append_column (GTK_TREE_VIEW (mnode->treev2), column);
+  lives_tree_view_append_column (LIVES_TREE_VIEW (mnode->treev2), column);
   
   renderer = gtk_cell_renderer_spin_new ();
   
@@ -731,11 +731,11 @@ static void omc_macro_row_add_params(lives_omc_match_node_t *mnode, gint row, om
   
   
   //  renderer = gtk_cell_renderer_text_new ();
-  column = gtk_tree_view_column_new_with_attributes (_("value"),
+  column = lives_tree_view_column_new_with_attributes (_("value"),
 						     renderer,
 						     "text", VALUE2_COLUMN,
 						     NULL);
-  gtk_tree_view_append_column (GTK_TREE_VIEW (mnode->treev2), column);
+  lives_tree_view_append_column (LIVES_TREE_VIEW (mnode->treev2), column);
 
 
 
@@ -765,9 +765,9 @@ static void omc_learn_link_params(lives_omc_match_node_t *mnode) {
   if (mnode->fvali!=NULL) g_free(mnode->fvali);
   if (mnode->fvald!=NULL) g_free(mnode->fvald);
 
-  mnode->map=(gint *)g_malloc(omc_macro.nparams*sizint);
-  mnode->fvali=(gint *)g_malloc(omc_macro.nparams*sizint);
-  mnode->fvald=(gdouble *)g_malloc(omc_macro.nparams*sizdbl);
+  mnode->map=(int *)g_malloc(omc_macro.nparams*sizint);
+  mnode->fvali=(int *)g_malloc(omc_macro.nparams*sizint);
+  mnode->fvald=(double *)g_malloc(omc_macro.nparams*sizdbl);
 
   if (lps>mps) lps=mps;
 
@@ -807,7 +807,7 @@ static void on_omc_combo_entry_changed (GtkComboBox *combo, gpointer ptr) {
     
   lives_omc_match_node_t *mnode=(lives_omc_match_node_t *)ptr;
 
-  gint row=GPOINTER_TO_INT(g_object_get_data(G_OBJECT(combo),"row"));
+  int row=GPOINTER_TO_INT(g_object_get_data(G_OBJECT(combo),"row"));
   omclearn_w *omclw=(omclearn_w *)g_object_get_data(G_OBJECT(combo),"omclw");
 
   macro_text=lives_combo_get_active_text(LIVES_COMBO(combo));
@@ -850,29 +850,29 @@ static void on_omc_combo_entry_changed (GtkComboBox *combo, gpointer ptr) {
 
 static void cell_toggled_callback (GtkCellRendererToggle *toggle, const gchar *path_string, gpointer user_data) {
   lives_omc_match_node_t *mnode=(lives_omc_match_node_t *)user_data;
-  gint row;
+  int row;
 
   gchar *txt;
 
-  gint *indices;
+  int *indices;
 
-  GtkTreePath *tpath=gtk_tree_path_new_from_string(path_string);
+  LiVESTreePath *tpath=lives_tree_path_new_from_string(path_string);
 
-  GtkTreeIter iter;
+  LiVESTreeIter iter;
 
-  if (gtk_tree_path_get_depth(tpath)!=2) {
-    gtk_tree_path_free(tpath);
+  if (lives_tree_path_get_depth(tpath)!=2) {
+    lives_tree_path_free(tpath);
     return;
   }
 
-  indices=gtk_tree_path_get_indices(tpath);
+  indices=lives_tree_path_get_indices(tpath);
   row=indices[1];
 
-  gtk_tree_model_get_iter(GTK_TREE_MODEL(mnode->gtkstore),&iter,tpath);
+  lives_tree_model_get_iter(LIVES_TREE_MODEL(mnode->gtkstore),&iter,tpath);
 
-  gtk_tree_path_free(tpath);
+  lives_tree_path_free(tpath);
 
-  gtk_tree_model_get(GTK_TREE_MODEL(mnode->gtkstore),&iter,VALUE_COLUMN,&txt,-1);
+  lives_tree_model_get(LIVES_TREE_MODEL(mnode->gtkstore),&iter,VALUE_COLUMN,&txt,-1);
 
   if (!strcmp(txt,"-")) {
     g_free(txt);
@@ -883,7 +883,7 @@ static void cell_toggled_callback (GtkCellRendererToggle *toggle, const gchar *p
 
   mnode->matchp[row]=!(mnode->matchp[row]);
 
-  gtk_tree_store_set(mnode->gtkstore,&iter,FILTER_COLUMN,mnode->matchp[row],-1);
+  lives_tree_store_set(mnode->gtkstore,&iter,FILTER_COLUMN,mnode->matchp[row],-1);
 
   omc_learn_link_params(mnode);
 
@@ -894,30 +894,30 @@ static void cell_toggled_callback (GtkCellRendererToggle *toggle, const gchar *p
 static void cell_edited_callback (GtkCellRendererSpin *spinbutton, const gchar *path_string, const gchar *new_text, gpointer user_data) {
   lives_omc_match_node_t *mnode=(lives_omc_match_node_t *)user_data;
 
-  gint col=GPOINTER_TO_INT(g_object_get_data(G_OBJECT(spinbutton),"colnum"));
+  int col=GPOINTER_TO_INT(g_object_get_data(G_OBJECT(spinbutton),"colnum"));
 
-  gint vali;
-  gdouble vald;
+  int vali;
+  double vald;
 
-  GtkTreeIter iter;
+  LiVESTreeIter iter;
 
-  gint row;
+  int row;
 
-  gint *indices;
+  int *indices;
 
-  GtkTreePath *tpath=gtk_tree_path_new_from_string(path_string);
+  LiVESTreePath *tpath=lives_tree_path_new_from_string(path_string);
 
-  if (gtk_tree_path_get_depth(tpath)!=2) {
-    gtk_tree_path_free(tpath);
+  if (lives_tree_path_get_depth(tpath)!=2) {
+    lives_tree_path_free(tpath);
     return;
   }
 
-  indices=gtk_tree_path_get_indices(tpath);
+  indices=lives_tree_path_get_indices(tpath);
   row=indices[1];
 
-  gtk_tree_model_get_iter(GTK_TREE_MODEL(mnode->gtkstore),&iter,tpath);
+  lives_tree_model_get_iter(LIVES_TREE_MODEL(mnode->gtkstore),&iter,tpath);
 
-  gtk_tree_path_free(tpath);
+  lives_tree_path_free(tpath);
 
   switch (col) {
   case OFFS1_COLUMN:
@@ -934,7 +934,7 @@ static void cell_edited_callback (GtkCellRendererSpin *spinbutton, const gchar *
     break;
   }
 
-  gtk_tree_store_set(mnode->gtkstore,&iter,col,new_text,-1);
+  lives_tree_store_set(mnode->gtkstore,&iter,col,new_text,-1);
  
 }
 
@@ -945,7 +945,7 @@ static void cell_edited_callback (GtkCellRendererSpin *spinbutton, const gchar *
 
 
 
-static GtkWidget *create_omc_macro_combo(lives_omc_match_node_t *mnode, gint row, omclearn_w *omclw) {
+static GtkWidget *create_omc_macro_combo(lives_omc_match_node_t *mnode, int row, omclearn_w *omclw) {
   int i;
 
   GtkWidget *combo;
@@ -973,35 +973,33 @@ static GtkWidget *create_omc_macro_combo(lives_omc_match_node_t *mnode, gint row
 
 
 
-static void omc_learner_add_row(gint type, gint detail, lives_omc_match_node_t *mnode, const gchar *string, omclearn_w *omclw) {
+static void omc_learner_add_row(int type, int detail, lives_omc_match_node_t *mnode, const gchar *string, omclearn_w *omclw) {
    GtkWidget *label,*combo;
-   GtkCellRenderer *renderer;
-   GtkTreeViewColumn *column;
-  
-   int i,val;
-   gchar *strval,*strval2,*strval3,*strval4,*vname,*valstr;
-
-   gchar *oldval=NULL,*final=NULL;
-
-   gchar *labelt=NULL;
-
-   GtkTreeIter iter1,iter2;
-
    GObject *spinadj;
 
-   gint chan;
+   LiVESCellRenderer *renderer;
+   LiVESTreeViewColumn *column;
+  
+   LiVESTreeIter iter1,iter2;
+
+   gchar *strval,*strval2,*strval3,*strval4,*vname,*valstr;
+   gchar *oldval=NULL,*final=NULL;
+   gchar *labelt=NULL;
+
+   int chan,val;
+   register int i;
 
    omclw->tbl_rows++;
    lives_table_resize(LIVES_TABLE(omclw->table),omclw->tbl_rows,6);
 			
-   mnode->gtkstore = gtk_tree_store_new (NUM_COLUMNS, G_TYPE_STRING, G_TYPE_STRING, G_TYPE_BOOLEAN, G_TYPE_STRING, 
+   mnode->gtkstore = lives_tree_store_new (NUM_COLUMNS, G_TYPE_STRING, G_TYPE_STRING, G_TYPE_BOOLEAN, G_TYPE_STRING, 
 					 G_TYPE_STRING, G_TYPE_STRING, G_TYPE_STRING);
 
-   gtk_tree_store_append (mnode->gtkstore, &iter1, NULL);  /* Acquire an iterator */
-   gtk_tree_store_set (mnode->gtkstore, &iter1, TITLE_COLUMN, (_("Vars.")), -1);
+   lives_tree_store_append (mnode->gtkstore, &iter1, NULL);  /* Acquire an iterator */
+   lives_tree_store_set (mnode->gtkstore, &iter1, TITLE_COLUMN, (_("Vars.")), -1);
 
    for (i=0;i<mnode->nvars;i++) {
-     gtk_tree_store_append (mnode->gtkstore, &iter2, &iter1);  /* Acquire a child iterator */
+     lives_tree_store_append (mnode->gtkstore, &iter2, &iter1);  /* Acquire a child iterator */
        
      if (oldval!=NULL) {
        g_free(oldval);
@@ -1033,7 +1031,7 @@ static void omc_learner_add_row(gint type, gint detail, lives_omc_match_node_t *
        else valstr=g_strdup("-");
      }
 
-     gtk_tree_store_set (mnode->gtkstore, &iter2, TITLE_COLUMN, vname, VALUE_COLUMN, valstr, FILTER_COLUMN, mnode->matchp[i], 
+     lives_tree_store_set (mnode->gtkstore, &iter2, TITLE_COLUMN, vname, VALUE_COLUMN, valstr, FILTER_COLUMN, mnode->matchp[i], 
 			 RANGE_COLUMN, strval, OFFS1_COLUMN, strval2, SCALE_COLUMN, strval3, OFFS2_COLUMN, strval4, -1);
 
      g_free (strval);
@@ -1044,7 +1042,7 @@ static void omc_learner_add_row(gint type, gint detail, lives_omc_match_node_t *
      g_free(vname);
    }
 
-   mnode->treev1 = gtk_tree_view_new_with_model (GTK_TREE_MODEL (mnode->gtkstore));
+   mnode->treev1 = lives_tree_view_new_with_model (LIVES_TREE_MODEL (mnode->gtkstore));
 
    if (type<0) type=-type;
 
@@ -1094,36 +1092,36 @@ static void omc_learner_add_row(gint type, gint detail, lives_omc_match_node_t *
   }
 
    renderer = gtk_cell_renderer_text_new ();
-   column = gtk_tree_view_column_new_with_attributes (NULL,
+   column = lives_tree_view_column_new_with_attributes (NULL,
 						      renderer,
 						      "text", TITLE_COLUMN,
 						      NULL);
   
-   gtk_tree_view_append_column (GTK_TREE_VIEW (mnode->treev1), column);
+   lives_tree_view_append_column (LIVES_TREE_VIEW (mnode->treev1), column);
   
    renderer = gtk_cell_renderer_text_new ();
-   column = gtk_tree_view_column_new_with_attributes (_("value"),
+   column = lives_tree_view_column_new_with_attributes (_("value"),
 						      renderer,
 						      "text", VALUE_COLUMN,
 						      NULL);
-   gtk_tree_view_append_column (GTK_TREE_VIEW (mnode->treev1), column);
+   lives_tree_view_append_column (LIVES_TREE_VIEW (mnode->treev1), column);
   
   
    renderer = gtk_cell_renderer_toggle_new ();
-   column = gtk_tree_view_column_new_with_attributes (_("x"),
+   column = lives_tree_view_column_new_with_attributes (_("x"),
 						      renderer,
 						      "active", FILTER_COLUMN,
 						      NULL);
-   gtk_tree_view_append_column (GTK_TREE_VIEW (mnode->treev1), column);
+   lives_tree_view_append_column (LIVES_TREE_VIEW (mnode->treev1), column);
 
    g_signal_connect(renderer, "toggled", (GCallback) cell_toggled_callback, mnode);
 
    renderer = gtk_cell_renderer_text_new ();
-   column = gtk_tree_view_column_new_with_attributes (_("range"),
+   column = lives_tree_view_column_new_with_attributes (_("range"),
 						      renderer,
 						      "text", RANGE_COLUMN,
 						      NULL);
-   gtk_tree_view_append_column (GTK_TREE_VIEW (mnode->treev1), column);
+   lives_tree_view_append_column (LIVES_TREE_VIEW (mnode->treev1), column);
 
 
    renderer = gtk_cell_renderer_spin_new ();
@@ -1138,11 +1136,11 @@ static void omc_learner_add_row(gint type, gint detail, lives_omc_match_node_t *
 
 
 
-   column = gtk_tree_view_column_new_with_attributes (_("+ offset1"),
+   column = lives_tree_view_column_new_with_attributes (_("+ offset1"),
 						      renderer,
 						       "text", OFFS1_COLUMN,
 						      NULL);
-   gtk_tree_view_append_column (GTK_TREE_VIEW (mnode->treev1), column);
+   lives_tree_view_append_column (LIVES_TREE_VIEW (mnode->treev1), column);
 
    renderer = gtk_cell_renderer_spin_new ();
 
@@ -1156,11 +1154,11 @@ static void omc_learner_add_row(gint type, gint detail, lives_omc_match_node_t *
    g_signal_connect(renderer, "edited", (GCallback) cell_edited_callback, mnode);
 
 
-   column = gtk_tree_view_column_new_with_attributes (_("* scale"),
+   column = lives_tree_view_column_new_with_attributes (_("* scale"),
 						      renderer,
 						      "text", SCALE_COLUMN,
 						      NULL);
-   gtk_tree_view_append_column (GTK_TREE_VIEW (mnode->treev1), column);
+   lives_tree_view_append_column (LIVES_TREE_VIEW (mnode->treev1), column);
 
    renderer = gtk_cell_renderer_spin_new ();
 
@@ -1174,11 +1172,11 @@ static void omc_learner_add_row(gint type, gint detail, lives_omc_match_node_t *
    g_signal_connect(renderer, "edited", (GCallback) cell_edited_callback, mnode);
 
 
-   column = gtk_tree_view_column_new_with_attributes (_("+ offset2"),
+   column = lives_tree_view_column_new_with_attributes (_("+ offset2"),
 						      renderer,
 						      "text", OFFS2_COLUMN,
 						      NULL);
-   gtk_tree_view_append_column (GTK_TREE_VIEW (mnode->treev1), column);
+   lives_tree_view_append_column (LIVES_TREE_VIEW (mnode->treev1), column);
 
    lives_widget_show (mnode->treev1);
   
@@ -1212,9 +1210,9 @@ static void killit(GtkWidget *widget, gpointer user_data) {
 static void show_existing(omclearn_w *omclw) {
   GSList *slist=omc_node_list;
   lives_omc_match_node_t *mnode;
-  gint type,supertype;
+  int type,supertype;
   gchar **array,*srch;
-  gint idx;
+  int idx;
 
   while (slist!=NULL) {
     mnode=(lives_omc_match_node_t *)slist->data;
@@ -1297,8 +1295,8 @@ static omclearn_w *create_omclearn_dialog(void) {
   GtkWidget *ok_button;
   GtkWidget *hbuttonbox;
   GtkWidget *scrolledwindow;
-  gint winsize_h,scr_width=mainw->scr_width;
-  gint winsize_v,scr_height=mainw->scr_height;
+  int winsize_h,scr_width=mainw->scr_width;
+  int winsize_v,scr_height=mainw->scr_height;
   
   omclearn_w *omclw=(omclearn_w *)g_malloc(sizeof(omclearn_w));
 
@@ -1375,9 +1373,9 @@ static omclearn_w *create_omclearn_dialog(void) {
 		    NULL);
   
   if (prefs->gui_monitor!=0) {
-    gint xcen=mainw->mgeom[prefs->gui_monitor-1].x+(mainw->mgeom[prefs->gui_monitor-1].width
+    int xcen=mainw->mgeom[prefs->gui_monitor-1].x+(mainw->mgeom[prefs->gui_monitor-1].width
 						    -lives_widget_get_allocation_width(omclw->dialog))/2;
-    gint ycen=mainw->mgeom[prefs->gui_monitor-1].y+(mainw->mgeom[prefs->gui_monitor-1].height
+    int ycen=mainw->mgeom[prefs->gui_monitor-1].y+(mainw->mgeom[prefs->gui_monitor-1].height
 						    -lives_widget_get_allocation_height(omclw->dialog))/2;
     lives_window_set_screen(LIVES_WINDOW(omclw->dialog),mainw->mgeom[prefs->gui_monitor-1].screen);
     lives_window_move(LIVES_WINDOW(omclw->dialog),xcen,ycen);
@@ -1514,14 +1512,14 @@ static void init_omc_macros(void) {
   for (i=0;i<N_OMC_MACROS;i++) {
     if (omc_macros[i].msg!=NULL) {
       if (omc_macros[i].nparams>0) {
-	omc_macros[i].ptypes=(gint *)g_malloc(omc_macros[i].nparams*sizint);
-	omc_macros[i].mini=(gint *)g_malloc(omc_macros[i].nparams*sizint);
-	omc_macros[i].maxi=(gint *)g_malloc(omc_macros[i].nparams*sizint);
-	omc_macros[i].vali=(gint *)g_malloc(omc_macros[i].nparams*sizint);
+	omc_macros[i].ptypes=(int *)g_malloc(omc_macros[i].nparams*sizint);
+	omc_macros[i].mini=(int *)g_malloc(omc_macros[i].nparams*sizint);
+	omc_macros[i].maxi=(int *)g_malloc(omc_macros[i].nparams*sizint);
+	omc_macros[i].vali=(int *)g_malloc(omc_macros[i].nparams*sizint);
 
-	omc_macros[i].mind=(gdouble *)g_malloc(omc_macros[i].nparams*sizdbl);
-	omc_macros[i].maxd=(gdouble *)g_malloc(omc_macros[i].nparams*sizdbl);
-	omc_macros[i].vald=(gdouble *)g_malloc(omc_macros[i].nparams*sizdbl);
+	omc_macros[i].mind=(double *)g_malloc(omc_macros[i].nparams*sizdbl);
+	omc_macros[i].maxd=(double *)g_malloc(omc_macros[i].nparams*sizdbl);
+	omc_macros[i].vald=(double *)g_malloc(omc_macros[i].nparams*sizdbl);
 	omc_macros[i].pname=(gchar **)g_malloc(omc_macros[i].nparams*sizeof(gchar *));
 
       }
@@ -1643,7 +1641,7 @@ static void init_omc_macros(void) {
 }
 
 
-static int get_nfixed(gint type, const gchar *string) {
+static int get_nfixed(int type, const gchar *string) {
   int nfixed=0;
 
   switch (type) {
@@ -1694,7 +1692,7 @@ static boolean match_filtered_params(lives_omc_match_node_t *mnode, const gchar 
 
 
 
-static lives_omc_match_node_t *omc_match_sig(gint type, gint index, const gchar *sig) {
+static lives_omc_match_node_t *omc_match_sig(int type, int index, const gchar *sig) {
   GSList *nlist=omc_node_list;
   gchar *srch,*cnodex;
   lives_omc_match_node_t *cnode;
@@ -1730,7 +1728,7 @@ static lives_omc_match_node_t *omc_match_sig(gint type, gint index, const gchar 
 
 
 /* not used yet */
-/*static gchar *omclearn_request_min(gint type) {
+/*static gchar *omclearn_request_min(int type) {
   gchar *msg=NULL;
 
   switch (type) {
@@ -1754,7 +1752,7 @@ static lives_omc_match_node_t *omc_match_sig(gint type, gint index, const gchar 
 
 
 
-static LIVES_INLINE gint omclearn_get_fixed_elems(const gchar *string1, const gchar *string2) {
+static LIVES_INLINE int omclearn_get_fixed_elems(const gchar *string1, const gchar *string2) {
   // count how many (non-space) elements match
   // e.g "a b c" and "a b d" returns 2
 
@@ -1762,8 +1760,8 @@ static LIVES_INLINE gint omclearn_get_fixed_elems(const gchar *string1, const gc
 
   register int i;
 
-  gint match=0;
-  gint stlen=MIN(strlen(string1),strlen(string2));
+  int match=0;
+  int stlen=MIN(strlen(string1),strlen(string2));
 
   for (i=0;i<stlen;i++) {
     if (strcmp((string1+i),(string2+i))) return match;
@@ -1776,9 +1774,9 @@ static LIVES_INLINE gint omclearn_get_fixed_elems(const gchar *string1, const gc
 
 
 
-static LIVES_INLINE gint get_nth_elem(const gchar *string, gint idx) {
+static LIVES_INLINE int get_nth_elem(const gchar *string, int idx) {
   gchar **array=g_strsplit(string," ",-1);
-  gint retval=atoi(array[idx]);
+  int retval=atoi(array[idx]);
   g_strfreev(array);
   return retval;
 }
@@ -1787,7 +1785,7 @@ static LIVES_INLINE gint get_nth_elem(const gchar *string, gint idx) {
 
 
 
-static lives_omc_match_node_t *lives_omc_match_node_new(gint str_type, gint index, const gchar *string, gint nfixed) {
+static lives_omc_match_node_t *lives_omc_match_node_new(int str_type, int index, const gchar *string, int nfixed) {
   int i;
   gchar *tmp;
   gchar *srch_str;
@@ -1808,13 +1806,13 @@ static lives_omc_match_node_t *lives_omc_match_node_new(gint str_type, gint inde
   else mnode->nvars=get_token_count(string,' ')-nfixed;
 
   if (mnode->nvars>0) {
-    mnode->offs0=(gint *)g_malloc(mnode->nvars*sizint);
-    mnode->scale=(gdouble *)g_malloc(mnode->nvars*sizdbl);
-    mnode->offs1=(gint *)g_malloc(mnode->nvars*sizint);
-    mnode->min=(gint *)g_malloc(mnode->nvars*sizint);
-    mnode->max=(gint *)g_malloc(mnode->nvars*sizint);
+    mnode->offs0=(int *)g_malloc(mnode->nvars*sizint);
+    mnode->scale=(double *)g_malloc(mnode->nvars*sizdbl);
+    mnode->offs1=(int *)g_malloc(mnode->nvars*sizint);
+    mnode->min=(int *)g_malloc(mnode->nvars*sizint);
+    mnode->max=(int *)g_malloc(mnode->nvars*sizint);
     mnode->matchp=(boolean *)g_malloc(mnode->nvars*sizeof(boolean));
-    mnode->matchi=(gint *)g_malloc(mnode->nvars*sizint);
+    mnode->matchi=(int *)g_malloc(mnode->nvars*sizint);
   }
 
   for (i=0;i<mnode->nvars;i++) {
@@ -1835,16 +1833,16 @@ static lives_omc_match_node_t *lives_omc_match_node_new(gint str_type, gint inde
 
 
 
-static gint *omclearn_get_values(const gchar *string, gint nfixed) {
+static int *omclearn_get_values(const gchar *string, int nfixed) {
   register int i,j;
   size_t slen,tslen;
-  gint *retvals,count=0,nvars;
+  int *retvals,count=0,nvars;
 
   slen=strlen(string);
 
   nvars=get_token_count(string,' ')-nfixed;
 
-  retvals=(gint *)g_malloc(nvars*sizint);
+  retvals=(int *)g_malloc(nvars*sizint);
 
   for (i=0;i<slen;i++) {
     if (!strncmp((string+i)," ",1)) {
@@ -1876,7 +1874,7 @@ static gint *omclearn_get_values(const gchar *string, gint nfixed) {
 
 
 
-void omclearn_match_control (lives_omc_match_node_t *mnode, gint str_type, gint index, const gchar *string, gint nfixed, omclearn_w *omclw) {
+void omclearn_match_control (lives_omc_match_node_t *mnode, int str_type, int index, const gchar *string, int nfixed, omclearn_w *omclw) {
 
   if (nfixed==-1) {
     // already there : allow user to update
@@ -1899,7 +1897,7 @@ void omclearn_match_control (lives_omc_match_node_t *mnode, gint str_type, gint 
 
 
 
-lives_omc_match_node_t *omc_learn(const gchar *string, gint str_type, gint idx, omclearn_w *omclw) {
+lives_omc_match_node_t *omc_learn(const gchar *string, int str_type, int idx, omclearn_w *omclw) {
   // here we come with a string, which must be a sequence of integers
   // separated by single spaces
 
@@ -1917,7 +1915,7 @@ lives_omc_match_node_t *omc_learn(const gchar *string, gint str_type, gint idx, 
 
   lives_omc_match_node_t *mnode;
 
-  gint nfixed=get_nfixed(str_type,string);
+  int nfixed=get_nfixed(str_type,string);
 
 
   switch (str_type) {
@@ -2029,7 +2027,7 @@ lives_omc_match_node_t *omc_learn(const gchar *string, gint str_type, gint idx, 
 
 // in playback mode, we match the string with our database, and then convert/append the variables
 
-boolean omc_process_string(gint supertype, const gchar *string, boolean learn, omclearn_w *omclw) {
+boolean omc_process_string(int supertype, const gchar *string, boolean learn, omclearn_w *omclw) {
   // only need to set omclw if learn is TRUE
   
   // returns TRUE if we learn new, or if we carry out an action
@@ -2186,7 +2184,7 @@ static void write_fx_tag(const gchar *string, int nfixed, lives_omc_match_node_t
       if (i==2) {
 	// auto scale for fx param
 	int error,ntmpls,hint,flags;
-	gint mode=rte_key_getmode(oval0);
+	int mode=rte_key_getmode(oval0);
 	weed_plant_t *filter;
 	weed_plant_t **ptmpls;
 	weed_plant_t *ptmpl;
@@ -2248,8 +2246,8 @@ static void write_fx_tag(const gchar *string, int nfixed, lives_omc_match_node_t
 
 
 
-OSCbuf *omc_learner_decode(gint type, gint idx, const gchar *string) {
-  gint macro,nfixed;
+OSCbuf *omc_learner_decode(int type, int idx, const gchar *string) {
+  int macro,nfixed;
   lives_omc_match_node_t *mnode;
   lives_omc_macro_t omacro;
   int oval0=1,oval1=0;
@@ -2333,7 +2331,7 @@ OSCbuf *omc_learner_decode(gint type, gint idx, const gchar *string) {
 	else { 
 	  if (macro==18&&i==2) {
 	    // auto scale for fx param
-	    gint mode=rte_key_getmode(oval0);
+	    int mode=rte_key_getmode(oval0);
 	    weed_plant_t *filter;
 	    weed_plant_t **ptmpls;
 	    weed_plant_t *ptmpl;
@@ -2745,9 +2743,9 @@ void on_midi_load_activate (GtkMenuItem *menuitem, gpointer user_data) {
 
     omacro=omc_macros[macro];
 
-    mnode->map=(gint *)g_malloc(omacro.nparams*sizint);
-    mnode->fvali=(gint *)g_malloc(omacro.nparams*sizint);
-    mnode->fvald=(gdouble *)g_malloc(omacro.nparams*sizdbl);
+    mnode->map=(int *)g_malloc(omacro.nparams*sizint);
+    mnode->fvali=(int *)g_malloc(omacro.nparams*sizint);
+    mnode->fvald=(double *)g_malloc(omacro.nparams*sizdbl);
 
     for (j=0;j<omacro.nparams;j++) {
       bytes=lives_read_le(fd,&mnode->map[j],4,TRUE);

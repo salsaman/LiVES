@@ -4336,10 +4336,12 @@ void splash_init(void) {
 
   mainw->splash_window = lives_window_new (LIVES_WINDOW_TOPLEVEL);
 
-  if (gtk_widget_get_direction(LIVES_WIDGET(mainw->splash_window))==GTK_TEXT_DIR_LTR) 
-    widget_opts.default_justify=LIVES_JUSTIFY_LEFT;
-  else 
+  widget_opts.default_justify=LIVES_JUSTIFY_LEFT;
+
+#ifdef GUI_GTK
+  if (gtk_widget_get_direction(LIVES_WIDGET(mainw->splash_window))==GTK_TEXT_DIR_RTL) 
     widget_opts.default_justify=LIVES_JUSTIFY_RIGHT;
+#endif
 
   if (prefs->show_splash) {
 

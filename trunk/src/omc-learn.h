@@ -47,19 +47,19 @@ typedef struct {
   gchar *info_text;  ///< descriptive text
   gchar *stype_tags;   ///< setter type tags
 
-  gint nparams;
+  int nparams;
 
   gchar **pname;
 
-  gint *ptypes;
+  int *ptypes;
 
-  gint *mini;
-  gint *maxi;
-  gint *vali;
+  int *mini;
+  int *maxi;
+  int *vali;
 
-  gdouble *mind;
-  gdouble *maxd;
-  gdouble *vald;
+  double *mind;
+  double *maxd;
+  double *vald;
 
 
 } lives_omc_macro_t;
@@ -69,23 +69,23 @@ typedef struct {
 
 typedef struct {
   gchar *srch; ///< string to match
-  gint macro; ///< macro number this is linked to (or -1)
+  int macro; ///< macro number this is linked to (or -1)
 
-  gint nvars; ///< number of params
-  gint *offs0; ///< offs to add to params before scale
-  gdouble *scale; ///< scale for params
-  gint *offs1; ///< offs to add to params after scale
+  int nvars; ///< number of params
+  int *offs0; ///< offs to add to params before scale
+  double *scale; ///< scale for params
+  int *offs1; ///< offs to add to params after scale
 
-  gint *min; ///< min values of params
-  gint *max; ///< max values of params
+  int *min; ///< min values of params
+  int *max; ///< max values of params
 
   boolean *matchp; ///< do we need to match this pval ?
-  gint *matchi; ///< match value
+  int *matchi; ///< match value
 
   // enumerated by number of params in target macro
-  gint *map; ///< reverse mapping to params of OSC message
-  gint *fvali; ///< mapping to fixed ints
-  gdouble *fvald; ///< mapping to fixed doubles
+  int *map; ///< reverse mapping to params of OSC message
+  int *fvali; ///< mapping to fixed ints
+  double *fvald; ///< mapping to fixed doubles
 
 
   ///////////////////////// following this is not saved/loaded
@@ -107,8 +107,8 @@ typedef struct {
   GtkWidget *clear_button;
   GtkWidget *del_all_button;
 
-  gint tbl_rows;
-  gint tbl_currow;
+  int tbl_rows;
+  int tbl_currow;
   GtkWidget *table;
   GtkWidget *top_vbox;
 } omclearn_w;
@@ -151,7 +151,7 @@ void on_midi_learn_activate (GtkMenuItem *, gpointer);
 
 /// process a string (i.e. convert to an OSC message and pass to OSC subsys)
 /// only need to set omclw if learn is TRUE
-boolean omc_process_string(gint supertype, const gchar *string, boolean learn, omclearn_w *omclw);
+boolean omc_process_string(int supertype, const gchar *string, boolean learn, omclearn_w *omclw);
 
 
 
@@ -168,7 +168,7 @@ void on_midi_load_activate (GtkMenuItem *, gpointer);
 #define OSC_MAX_TYPETAGS 64 
 
 /// decode learnt behaviours
-OSCbuf *omc_learner_decode(gint type, gint index, const gchar *string);
+OSCbuf *omc_learner_decode(int type, int index, const gchar *string);
 
 
 #endif // HAS_LIVES_OMC_LEARN_H

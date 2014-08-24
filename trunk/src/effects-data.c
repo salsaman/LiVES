@@ -2328,9 +2328,9 @@ static void apbutton_clicked(GtkButton *button, gpointer user_data) {
 
   GtkWidget *combo;
 
-  GtkTreeIter iter;
-  GtkTreeModel *model;
-  GtkTreePath *tpath;
+  LiVESTreeIter iter;
+  LiVESTreeModel *model;
+  LiVESTreePath *tpath;
 
   weed_plant_t **iparams,**oparams;
   weed_plant_t *filter,*param,*oparam;
@@ -2350,13 +2350,13 @@ static void apbutton_clicked(GtkButton *button, gpointer user_data) {
   if (!lives_combo_get_active_iter(LIVES_COMBO(combo),&iter)) return;
   model=lives_combo_get_model(LIVES_COMBO(combo));
 
-  gtk_tree_model_get(model,&iter,KEYVAL_COLUMN,&key,MODEVAL_COLUMN,&mode,-1);
+  lives_tree_model_get(model,&iter,KEYVAL_COLUMN,&key,MODEVAL_COLUMN,&mode,-1);
   fidx=rte_keymode_get_filter_idx(key,mode);
 
   if (fidx==-1) return;
 
-  tpath=gtk_tree_model_get_path(model,&iter);
-  gtk_tree_model_get_iter(model,&iter,tpath);
+  tpath=lives_tree_model_get_path(model,&iter);
+  lives_tree_model_get_iter(model,&iter,tpath);
 
   // find the receiving filter/instance
   filter=get_weed_filter(fidx);
@@ -2405,7 +2405,7 @@ static void apbutton_clicked(GtkButton *button, gpointer user_data) {
 
     combo=conxwp->pfxcombo[ours];
     model=lives_combo_get_model(LIVES_COMBO(combo));
-    gtk_tree_model_get_iter(model,&iter,tpath);
+    lives_tree_model_get_iter(model,&iter,tpath);
     lives_combo_set_active_iter(LIVES_COMBO(combo),&iter);
     lives_widget_context_update();
 
@@ -2414,7 +2414,7 @@ static void apbutton_clicked(GtkButton *button, gpointer user_data) {
     if (++k>=conxwp->num_params-EXTRA_PARAMS_OUT) break;
   }
 
-  gtk_tree_path_free(tpath);
+  lives_tree_path_free(tpath);
 
   weed_free(iparams);
   weed_free(oparams);
@@ -2428,9 +2428,9 @@ static void acbutton_clicked(GtkButton *button, gpointer user_data) {
 
   GtkWidget *combo;
 
-  GtkTreeIter iter;
-  GtkTreeModel *model;
-  GtkTreePath *tpath;
+  LiVESTreeIter iter;
+  LiVESTreeModel *model;
+  LiVESTreePath *tpath;
 
   weed_plant_t **ichans,**ochans;
   weed_plant_t *filter,*chan,*ochan;
@@ -2450,13 +2450,13 @@ static void acbutton_clicked(GtkButton *button, gpointer user_data) {
   if (!lives_combo_get_active_iter(LIVES_COMBO(combo),&iter)) return;
   model=lives_combo_get_model(LIVES_COMBO(combo));
 
-  gtk_tree_model_get(model,&iter,KEYVAL_COLUMN,&key,MODEVAL_COLUMN,&mode,-1);
+  lives_tree_model_get(model,&iter,KEYVAL_COLUMN,&key,MODEVAL_COLUMN,&mode,-1);
   fidx=rte_keymode_get_filter_idx(key,mode);
 
   if (fidx==-1) return;
 
-  tpath=gtk_tree_model_get_path(model,&iter);
-  gtk_tree_model_get_iter(model,&iter,tpath);
+  tpath=lives_tree_model_get_path(model,&iter);
+  lives_tree_model_get_iter(model,&iter,tpath);
 
   // find the receiving filter/instance
   filter=get_weed_filter(fidx);
@@ -2517,7 +2517,7 @@ static void acbutton_clicked(GtkButton *button, gpointer user_data) {
 
     combo=conxwp->cfxcombo[ours];
     model=lives_combo_get_model(LIVES_COMBO(combo));
-    gtk_tree_model_get_iter(model,&iter,tpath);
+    lives_tree_model_get_iter(model,&iter,tpath);
     lives_combo_set_active_iter(LIVES_COMBO(combo),&iter);
     lives_widget_context_update();
 
@@ -2526,7 +2526,7 @@ static void acbutton_clicked(GtkButton *button, gpointer user_data) {
     if (++k>=nochans) break;
   }
 
-  gtk_tree_path_free(tpath);
+  lives_tree_path_free(tpath);
 
   weed_free(ichans);
   weed_free(ochans);
@@ -3086,8 +3086,8 @@ static void cdel_clicked(GtkWidget *button, gpointer user_data) {
 static void dfxc_changed(GtkWidget *combo, gpointer user_data) {
   lives_conx_w *conxwp=(lives_conx_w *)user_data;
 
-  GtkTreeIter iter;
-  GtkTreeModel *model;
+  LiVESTreeIter iter;
+  LiVESTreeModel *model;
 
   weed_plant_t **ichans;
   weed_plant_t *filter,*chan;
@@ -3106,7 +3106,7 @@ static void dfxc_changed(GtkWidget *combo, gpointer user_data) {
   if (!lives_combo_get_active_iter(LIVES_COMBO(combo),&iter)) return;
   model=lives_combo_get_model(LIVES_COMBO(combo));
 
-  gtk_tree_model_get(model,&iter,KEYVAL_COLUMN,&key,MODEVAL_COLUMN,&mode,-1);
+  lives_tree_model_get(model,&iter,KEYVAL_COLUMN,&key,MODEVAL_COLUMN,&mode,-1);
   fidx=rte_keymode_get_filter_idx(key,mode);
 
   nchans=cconx_get_numcons(conxwp,FX_DATA_WILDCARD);
@@ -3166,8 +3166,8 @@ static void dfxp_changed(GtkWidget *combo, gpointer user_data) {
 
   lives_conx_w *conxwp=(lives_conx_w *)user_data;
 
-  GtkTreeIter iter;
-  GtkTreeModel *model;
+  LiVESTreeIter iter;
+  LiVESTreeModel *model;
 
   weed_plant_t **iparams=NULL;
   weed_plant_t *filter,*param;
@@ -3203,7 +3203,7 @@ static void dfxp_changed(GtkWidget *combo, gpointer user_data) {
 
   model=lives_combo_get_model(LIVES_COMBO(combo));
 
-  gtk_tree_model_get(model,&iter,KEYVAL_COLUMN,&key,MODEVAL_COLUMN,&mode,-1);
+  lives_tree_model_get(model,&iter,KEYVAL_COLUMN,&key,MODEVAL_COLUMN,&mode,-1);
   fidx=rte_keymode_get_filter_idx(key,mode);
 
   pidx=GPOINTER_TO_INT(g_object_get_data(G_OBJECT(combo),"pidx"));
@@ -3393,9 +3393,9 @@ static void dpp_changed(GtkWidget *combo, gpointer user_data) {
   GtkWidget *acheck=NULL;
   GtkWidget *fxcombo;
 
-  GtkTreeModel *model;
+  LiVESTreeModel *model;
 
-  GtkTreeIter iter;
+  LiVESTreeIter iter;
 
   gchar *paramname;
 
@@ -3465,7 +3465,7 @@ static void dpp_changed(GtkWidget *combo, gpointer user_data) {
 
   model=lives_combo_get_model(LIVES_COMBO(fxcombo));
 
-  gtk_tree_model_get(model,&iter,KEYVAL_COLUMN,&key,MODEVAL_COLUMN,&mode,-1);
+  lives_tree_model_get(model,&iter,KEYVAL_COLUMN,&key,MODEVAL_COLUMN,&mode,-1);
 
   idx-=EXTRA_PARAMS_IN;
 
@@ -3597,9 +3597,9 @@ static void dpc_changed(GtkWidget *combo, gpointer user_data) {
 
   weed_plant_t *ichan;
 
-  GtkTreeModel *model;
+  LiVESTreeModel *model;
 
-  GtkTreeIter iter;
+  LiVESTreeIter iter;
 
   GtkWidget *fxcombo;
 
@@ -3663,7 +3663,7 @@ static void dpc_changed(GtkWidget *combo, gpointer user_data) {
   if (!lives_combo_get_active_iter(LIVES_COMBO(fxcombo),&iter)) return;
 
   model=lives_combo_get_model(LIVES_COMBO(fxcombo));
-  gtk_tree_model_get(model,&iter,KEYVAL_COLUMN,&key,MODEVAL_COLUMN,&mode,-1);
+  lives_tree_model_get(model,&iter,KEYVAL_COLUMN,&key,MODEVAL_COLUMN,&mode,-1);
 
   // check if connection can be made
   ret=cconx_check_connection(key,mode,idx,setup,&ichan,&j,&okey,&omode,&ocnum);
@@ -3729,9 +3729,9 @@ static void on_acheck_toggled(GtkToggleButton *acheck, gpointer user_data) {
   weed_plant_t **iparams;
   weed_plant_t *param,*filter;
 
-  GtkTreeModel *model;
+  LiVESTreeModel *model;
 
-  GtkTreeIter iter;
+  LiVESTreeIter iter;
 
   GtkWidget *fxcombo;
 
@@ -3761,7 +3761,7 @@ static void on_acheck_toggled(GtkToggleButton *acheck, gpointer user_data) {
   model=lives_combo_get_model(LIVES_COMBO(fxcombo));
   lives_combo_get_active_iter(LIVES_COMBO(fxcombo),&iter);
 
-  gtk_tree_model_get(model,&iter,KEYVAL_COLUMN,&key,MODEVAL_COLUMN,&mode,-1);
+  lives_tree_model_get(model,&iter,KEYVAL_COLUMN,&key,MODEVAL_COLUMN,&mode,-1);
 
   if (key==0) return;
 
@@ -3805,9 +3805,9 @@ static void on_acheck_toggled(GtkToggleButton *acheck, gpointer user_data) {
 
 
 static LiVESTreeModel *inparam_fx_model (boolean is_chans, int key) {
-  GtkTreeStore *tstore;
+  LiVESTreeStore *tstore;
 
-  GtkTreeIter iter1,iter2;
+  LiVESTreeIter iter1,iter2;
 
   weed_plant_t *filter;
 
@@ -3823,10 +3823,10 @@ static LiVESTreeModel *inparam_fx_model (boolean is_chans, int key) {
 
   register int i,j;
 
-  tstore=gtk_tree_store_new (NUM_COLUMNS, G_TYPE_STRING, G_TYPE_STRING, G_TYPE_INT, G_TYPE_INT);
+  tstore=lives_tree_store_new (NUM_COLUMNS, G_TYPE_STRING, G_TYPE_STRING, G_TYPE_INT, G_TYPE_INT);
 
-  gtk_tree_store_append (tstore, &iter1, NULL);  /* Acquire an iterator */
-  gtk_tree_store_set(tstore,&iter1,
+  lives_tree_store_append (tstore, &iter1, NULL);  /* Acquire an iterator */
+  lives_tree_store_set(tstore,&iter1,
 		     KEY_COLUMN,mainw->string_constants[LIVES_STRING_CONSTANT_NONE],
 		     NAME_COLUMN,mainw->string_constants[LIVES_STRING_CONSTANT_NONE],
 		     KEYVAL_COLUMN,0,
@@ -3855,12 +3855,12 @@ static LiVESTreeModel *inparam_fx_model (boolean is_chans, int key) {
 
       if (!key_added) {
 	// add key
-	gtk_tree_store_append (tstore, &iter1, NULL);  /* Acquire an iterator */
-	gtk_tree_store_set(tstore,&iter1,KEY_COLUMN,keystr,NAME_COLUMN,keystr,KEYVAL_COLUMN,0,MODEVAL_COLUMN,0,-1);
+	lives_tree_store_append (tstore, &iter1, NULL);  /* Acquire an iterator */
+	lives_tree_store_set(tstore,&iter1,KEY_COLUMN,keystr,NAME_COLUMN,keystr,KEYVAL_COLUMN,0,MODEVAL_COLUMN,0,-1);
 	key_added=TRUE;
       }
-      gtk_tree_store_append (tstore, &iter2, &iter1);
-      gtk_tree_store_set(tstore,&iter2,KEY_COLUMN,text,NAME_COLUMN,text,KEYVAL_COLUMN,i,MODEVAL_COLUMN,j,-1);
+      lives_tree_store_append (tstore, &iter2, &iter1);
+      lives_tree_store_set(tstore,&iter2,KEY_COLUMN,text,NAME_COLUMN,text,KEYVAL_COLUMN,i,MODEVAL_COLUMN,j,-1);
 
       weed_free(fxname); weed_free(text);
     }
@@ -4463,22 +4463,22 @@ static void conxw_ok_clicked(GtkWidget *button, gpointer user_data) {
 
 
 static void set_to_keymode_vals(LiVESCombo *combo, int xkey, int xmode) {
-  GtkTreeIter iter,piter;
-  GtkTreeModel *model;
+  LiVESTreeIter iter,piter;
+  LiVESTreeModel *model;
 
   int key,mode;
 
   model=lives_combo_get_model(combo);
-  if (!gtk_tree_model_get_iter_first(model,&piter)) return;
+  if (!lives_tree_model_get_iter_first(model,&piter)) return;
 
   do {
-    if (gtk_tree_model_iter_children(model,&iter,&piter)) {
+    if (lives_tree_model_iter_children(model,&iter,&piter)) {
       do {
-	gtk_tree_model_get(model,&iter,KEYVAL_COLUMN,&key,MODEVAL_COLUMN,&mode,-1);
+	lives_tree_model_get(model,&iter,KEYVAL_COLUMN,&key,MODEVAL_COLUMN,&mode,-1);
 	if (key==xkey+1&&mode==xmode) goto iter_found;
-      } while (gtk_tree_model_iter_next(model,&iter));
+      } while (lives_tree_model_iter_next(model,&iter));
     }
-  } while (gtk_tree_model_iter_next(model,&piter));
+  } while (lives_tree_model_iter_next(model,&piter));
 
 
  iter_found:

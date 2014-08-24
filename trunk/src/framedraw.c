@@ -244,7 +244,7 @@ void widget_add_framedraw (LiVESVBox *box, int start, int end, boolean add_previ
   lives_widget_set_size_request (mainw->framedraw, width, height);
   lives_container_set_border_width(LIVES_CONTAINER(mainw->framedraw),1);
 
-  gtk_widget_set_events (mainw->framedraw, GDK_BUTTON1_MOTION_MASK | GDK_BUTTON_RELEASE_MASK | 
+  lives_widget_set_events (mainw->framedraw, GDK_BUTTON1_MOTION_MASK | GDK_BUTTON_RELEASE_MASK | 
 			 GDK_BUTTON_PRESS_MASK| GDK_ENTER_NOTIFY_MASK | GDK_LEAVE_NOTIFY_MASK);
 
   mainw->framedraw_frame=start;

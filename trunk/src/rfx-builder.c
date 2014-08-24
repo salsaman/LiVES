@@ -1112,7 +1112,7 @@ void on_table_add_row (GtkButton *button, gpointer user_data) {
       lives_entry_set_editable (LIVES_ENTRY (entry), FALSE);
 
     ebox=lives_event_box_new();
-    gtk_widget_set_events (ebox, GDK_BUTTON_PRESS_MASK);
+    lives_widget_set_events (ebox, GDK_BUTTON_PRESS_MASK);
 
     lives_container_add(LIVES_CONTAINER(ebox),entry);
 
@@ -1168,7 +1168,7 @@ void on_table_add_row (GtkButton *button, gpointer user_data) {
     lives_entry_set_editable (LIVES_ENTRY (entry), FALSE);
      
     ebox=lives_event_box_new();
-    gtk_widget_set_events (ebox, GDK_BUTTON_PRESS_MASK);
+    lives_widget_set_events (ebox, GDK_BUTTON_PRESS_MASK);
 
     lives_container_add(LIVES_CONTAINER(ebox),entry);
 
@@ -1185,7 +1185,7 @@ void on_table_add_row (GtkButton *button, gpointer user_data) {
 
 
     ebox2=lives_event_box_new();
-    gtk_widget_set_events (ebox2, GDK_BUTTON_PRESS_MASK);
+    lives_widget_set_events (ebox2, GDK_BUTTON_PRESS_MASK);
     lives_container_add(LIVES_CONTAINER(ebox2),entry2);
 
     lives_table_attach (LIVES_TABLE (rfxbuilder->table), ebox2, 1, 2, rfxbuilder->table_rows-1, 
@@ -1226,7 +1226,7 @@ void on_table_add_row (GtkButton *button, gpointer user_data) {
     lives_entry_set_editable (LIVES_ENTRY (entry3), FALSE);
 
     ebox3=lives_event_box_new();
-    gtk_widget_set_events (ebox3, GDK_BUTTON_PRESS_MASK);
+    lives_widget_set_events (ebox3, GDK_BUTTON_PRESS_MASK);
     lives_container_add(LIVES_CONTAINER(ebox3),entry3);
 
     lives_table_attach (LIVES_TABLE (rfxbuilder->table), ebox3, 2, 3, rfxbuilder->table_rows-1, 
@@ -1264,7 +1264,7 @@ void on_table_add_row (GtkButton *button, gpointer user_data) {
     lives_entry_set_editable (LIVES_ENTRY (entry), FALSE);
 
     ebox=lives_event_box_new();
-    gtk_widget_set_events (ebox, GDK_BUTTON_PRESS_MASK);
+    lives_widget_set_events (ebox, GDK_BUTTON_PRESS_MASK);
     lives_container_add(LIVES_CONTAINER(ebox),entry);
 
     lives_table_resize (LIVES_TABLE (rfxbuilder->table),++rfxbuilder->table_rows,2);
@@ -1306,7 +1306,7 @@ void on_table_add_row (GtkButton *button, gpointer user_data) {
     lives_entry_set_editable (LIVES_ENTRY (entry2), FALSE);
 
     ebox2=lives_event_box_new();
-    gtk_widget_set_events (ebox2, GDK_BUTTON_PRESS_MASK);
+    lives_widget_set_events (ebox2, GDK_BUTTON_PRESS_MASK);
     lives_container_add(LIVES_CONTAINER(ebox2),entry2);
 
     lives_table_attach (LIVES_TABLE (rfxbuilder->table), ebox2, 1, 2, rfxbuilder->table_rows-1, 
@@ -1344,7 +1344,7 @@ void on_table_add_row (GtkButton *button, gpointer user_data) {
     lives_entry_set_editable (LIVES_ENTRY (entry), FALSE);
 
     ebox=lives_event_box_new();
-    gtk_widget_set_events (ebox, GDK_BUTTON_PRESS_MASK);
+    lives_widget_set_events (ebox, GDK_BUTTON_PRESS_MASK);
     lives_container_add(LIVES_CONTAINER(ebox),entry);
 
     lives_table_resize (LIVES_TABLE (rfxbuilder->table),++rfxbuilder->table_rows,1);
@@ -1541,7 +1541,7 @@ void on_table_edit_row (GtkButton *button, gpointer user_data) {
   gchar *ctext;
 
   for (i=0;i<rfxbuilder->table_rows&&found==-1;i++) {
-    if (gtk_widget_is_sensitive(rfxbuilder->entry[i])) {
+    if (lives_widget_is_sensitive(rfxbuilder->entry[i])) {
       found=i;
       break;
     }

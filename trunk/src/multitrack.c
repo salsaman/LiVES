@@ -3712,7 +3712,7 @@ static void populate_filter_box(GtkWidget *box, int ninchans, lives_mt *mt) {
 	xeventbox=lives_event_box_new();
 	g_object_set_data(G_OBJECT(xeventbox),"fxid",GINT_TO_POINTER(i));
 
-	gtk_widget_add_events (xeventbox, GDK_BUTTON_RELEASE_MASK | GDK_BUTTON_PRESS_MASK);
+	lives_widget_add_events (xeventbox, GDK_BUTTON_RELEASE_MASK | GDK_BUTTON_PRESS_MASK);
 	if (palette->style&STYLE_1) {
 	  if (palette->style&STYLE_3) {
 	    lives_widget_set_bg_color(xeventbox, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
@@ -7785,7 +7785,7 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
 
   time_to_string (mt,0.,TIMECODE_LENGTH);
 
-  gtk_widget_add_events(mt->timecode,GDK_FOCUS_CHANGE_MASK);
+  lives_widget_add_events(mt->timecode,GDK_FOCUS_CHANGE_MASK);
   lives_widget_set_sensitive(mt->timecode,FALSE);
 
   mt->tc_func=g_signal_connect_after (G_OBJECT (mt->timecode),"focus_out_event", G_CALLBACK (after_timecode_changed), (gpointer) mt);
@@ -8059,7 +8059,7 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
   lives_container_add (LIVES_CONTAINER (mt->play_box), mt->play_blank);
 
 
-  gtk_widget_add_events (eventbox, GDK_BUTTON1_MOTION_MASK | GDK_BUTTON_RELEASE_MASK | GDK_BUTTON_PRESS_MASK | GDK_ENTER_NOTIFY);
+  lives_widget_add_events (eventbox, GDK_BUTTON1_MOTION_MASK | GDK_BUTTON_RELEASE_MASK | GDK_BUTTON_PRESS_MASK | GDK_ENTER_NOTIFY);
 
   g_signal_connect (GTK_OBJECT (eventbox), "motion_notify_event",
 		    G_CALLBACK (on_framedraw_mouse_update),
@@ -8120,7 +8120,7 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
   /*
   if (palette->style&STYLE_1) {
     GtkCssProvider *provider = gtk_css_provider_new ();
-    GtkStyleContext *ctx = gtk_widget_get_style_context(mt->nb);
+    GtkStyleContext *ctx = lives_widget_get_style_context(mt->nb);
     gtk_style_context_add_provider (ctx, GTK_STYLE_PROVIDER     
 				    (provider), GTK_STYLE_PROVIDER_PRIORITY_APPLICATION);
     
@@ -8144,7 +8144,7 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
   // poly clip scroll
   mt->clip_scroll = gtk_scrolled_window_new (NULL, NULL);
   g_object_ref (mt->clip_scroll);
-  gtk_widget_set_events (mt->clip_scroll, GDK_SCROLL_MASK);
+  lives_widget_set_events (mt->clip_scroll, GDK_SCROLL_MASK);
   g_signal_connect (GTK_OBJECT (mt->clip_scroll), "scroll_event",
                       G_CALLBACK (on_mouse_scroll),
                       mt);
@@ -8650,7 +8650,7 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
 		    G_CALLBACK (on_track_header_release),
 		    (gpointer)mt);
 
-  gtk_widget_add_events (eventbox, GDK_BUTTON1_MOTION_MASK | GDK_BUTTON_RELEASE_MASK | GDK_BUTTON_PRESS_MASK);
+  lives_widget_add_events (eventbox, GDK_BUTTON1_MOTION_MASK | GDK_BUTTON_RELEASE_MASK | GDK_BUTTON_PRESS_MASK);
   mt->mouse_mot1=g_signal_connect (GTK_OBJECT (eventbox), "motion_notify_event",
 				   G_CALLBACK (on_track_header_move),
 				   (gpointer)mt);
@@ -8701,7 +8701,7 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
 		    (gpointer)mt);
 
 
-  gtk_widget_add_events (mt->tl_eventbox, GDK_BUTTON1_MOTION_MASK | GDK_BUTTON_RELEASE_MASK | GDK_BUTTON_PRESS_MASK| GDK_SCROLL_MASK);
+  lives_widget_add_events (mt->tl_eventbox, GDK_BUTTON1_MOTION_MASK | GDK_BUTTON_RELEASE_MASK | GDK_BUTTON_PRESS_MASK| GDK_SCROLL_MASK);
   mt->mouse_mot2=g_signal_connect (GTK_OBJECT (mt->tl_eventbox), "motion_notify_event",
 				  G_CALLBACK (on_track_move),
 				  (gpointer)mt);
@@ -9546,9 +9546,9 @@ void mt_init_tracks (lives_mt *mt, boolean set_min_max) {
       }
     }
 
-    gtk_widget_add_events (mt->timeline_eb, GDK_POINTER_MOTION_MASK | GDK_BUTTON1_MOTION_MASK | 
+    lives_widget_add_events (mt->timeline_eb, GDK_POINTER_MOTION_MASK | GDK_BUTTON1_MOTION_MASK | 
 			   GDK_BUTTON_RELEASE_MASK | GDK_BUTTON_PRESS_MASK | GDK_ENTER_NOTIFY);
-    gtk_widget_add_events (mt->timeline_reg, GDK_POINTER_MOTION_MASK | GDK_BUTTON1_MOTION_MASK | 
+    lives_widget_add_events (mt->timeline_reg, GDK_POINTER_MOTION_MASK | GDK_BUTTON1_MOTION_MASK | 
 			   GDK_BUTTON_RELEASE_MASK | GDK_BUTTON_PRESS_MASK | GDK_ENTER_NOTIFY);
     g_signal_connect (GTK_OBJECT(mt->timeline_eb), "enter-notify-event",G_CALLBACK (on_tleb_enter),(gpointer)mt);
     g_signal_connect (GTK_OBJECT(mt->timeline_reg), "enter-notify-event",G_CALLBACK (on_tlreg_enter),(gpointer)mt);
@@ -10679,7 +10679,7 @@ void mt_init_clips (lives_mt *mt, int orig_file, boolean add) {
 	  lives_widget_set_fg_color (eventbox, LIVES_WIDGET_STATE_PRELIGHT, &palette->normal_fore);
 	}
       }
-      gtk_widget_add_events (eventbox, GDK_BUTTON_RELEASE_MASK | GDK_BUTTON_PRESS_MASK | GDK_ENTER_NOTIFY);
+      lives_widget_add_events (eventbox, GDK_BUTTON_RELEASE_MASK | GDK_BUTTON_PRESS_MASK | GDK_ENTER_NOTIFY);
       g_signal_connect (GTK_OBJECT(eventbox), "enter-notify-event",G_CALLBACK (on_clipbox_enter),(gpointer)mt);
 
       clips_to_files[count]=i;
@@ -12806,7 +12806,7 @@ void polymorph (lives_mt *mt, lives_mt_poly_state_t poly) {
 	    xeventbox=lives_event_box_new();
 	    g_object_set_data(G_OBJECT(xeventbox),"init_event",(gpointer)init_event);
 
-	    gtk_widget_add_events (xeventbox, GDK_BUTTON_RELEASE_MASK | GDK_BUTTON_PRESS_MASK);
+	    lives_widget_add_events (xeventbox, GDK_BUTTON_RELEASE_MASK | GDK_BUTTON_PRESS_MASK);
 	    if (palette->style&STYLE_1) {
 	      if (palette->style&STYLE_3) {
 		lives_widget_set_bg_color(xeventbox, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);

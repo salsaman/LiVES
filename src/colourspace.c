@@ -10892,7 +10892,7 @@ boolean pixbuf_to_layer(weed_plant_t *layer, LiVESPixbuf *pixbuf) {
 
   size_t framesize;
 
-  if (!GDK_IS_PIXBUF(pixbuf)) {
+  if (!LIVES_IS_PIXBUF(pixbuf)) {
     weed_set_int_value(layer,"width",0);
     weed_set_int_value(layer,"height",0);
     weed_set_int_value(layer,"rowstrides",0);

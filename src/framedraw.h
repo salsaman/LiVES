@@ -21,10 +21,10 @@
 void widget_add_framedraw (LiVESVBox *, int start, int end, boolean add_preview_button, int width, int height);
 
 /// redraw when exposed/frame number changes
-void framedraw_redraw (lives_special_framedraw_rect_t *, boolean reload_image, GdkPixbuf *);
+void framedraw_redraw (lives_special_framedraw_rect_t *, boolean reload_image, LiVESPixbuf *);
 
 /// callback for widgets
-void after_framedraw_widget_changed (GtkWidget *, lives_special_framedraw_rect_t *);
+void after_framedraw_widget_changed (LiVESWidget *, lives_special_framedraw_rect_t *);
 
 
 /// activate the image for clicks and draws
@@ -54,13 +54,13 @@ void after_framedraw_frame_spinbutton_changed (GtkSpinButton *, lives_special_fr
 void on_framedraw_reset_clicked (GtkButton *, lives_special_framedraw_rect_t *);
 
 
-boolean on_framedraw_mouse_start (GtkWidget *, GdkEventButton *, lives_special_framedraw_rect_t *);
-boolean on_framedraw_mouse_update (GtkWidget *, GdkEventMotion *, lives_special_framedraw_rect_t *);
-boolean on_framedraw_mouse_reset (GtkWidget *, GdkEventButton *, lives_special_framedraw_rect_t *);
+boolean on_framedraw_mouse_start (LiVESWidget *, GdkEventButton *, lives_special_framedraw_rect_t *);
+boolean on_framedraw_mouse_update (LiVESWidget *, GdkEventMotion *, lives_special_framedraw_rect_t *);
+boolean on_framedraw_mouse_reset (LiVESWidget *, GdkEventButton *, lives_special_framedraw_rect_t *);
 
 
-boolean on_framedraw_leave (GtkWidget *, GdkEventCrossing *, lives_special_framedraw_rect_t *);
-boolean on_framedraw_enter (GtkWidget *, GdkEventCrossing *, lives_special_framedraw_rect_t *);
+boolean on_framedraw_leave (LiVESWidget *, GdkEventCrossing *, lives_special_framedraw_rect_t *);
+boolean on_framedraw_enter (LiVESWidget *, GdkEventCrossing *, lives_special_framedraw_rect_t *);
 
 // graphics routines
 

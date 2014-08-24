@@ -23,17 +23,17 @@ _merge_opts* merge_opts;
 void create_merge_dialog (void) {
   lives_rfx_t *rfx;
 
-  GtkWidget *dialog_vbox;
-  GtkWidget *vbox;
-  GtkWidget *align_start_button;
-  GtkWidget *align_end_button;
-  GtkWidget *hbox;
-  GtkWidget *label;
-  GtkWidget *fit_button;
-  GtkWidget *transition_combo;
-  GtkWidget *dialog_action_area;
-  GtkWidget *cancelbutton;
-  GtkWidget *okbutton;
+  LiVESWidget *dialog_vbox;
+  LiVESWidget *vbox;
+  LiVESWidget *align_start_button;
+  LiVESWidget *align_end_button;
+  LiVESWidget *hbox;
+  LiVESWidget *label;
+  LiVESWidget *fit_button;
+  LiVESWidget *transition_combo;
+  LiVESWidget *dialog_action_area;
+  LiVESWidget *cancelbutton;
+  LiVESWidget *okbutton;
 
   GSList *radiobutton_align_group = NULL;
   GSList *radiobutton_insdrop_group = NULL;
@@ -241,7 +241,7 @@ void create_merge_dialog (void) {
   }
 }
 
-static void bang (GtkWidget *widget, gpointer null) {
+static void bang (LiVESWidget *widget, gpointer null) {
   lives_widget_destroy (widget);
 }
 

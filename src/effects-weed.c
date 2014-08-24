@@ -4653,9 +4653,9 @@ static void merge_dupes(void) {
 static void make_fx_defs_menu(void) {
   weed_plant_t *filter;
 
-  GtkWidget *menuitem,*menu;
-  GtkWidget *pkg_menu;
-  GtkWidget *pkg_submenu=NULL;
+  LiVESWidget *menuitem,*menu;
+  LiVESWidget *pkg_menu;
+  LiVESWidget *pkg_submenu=NULL;
 
   gchar *string,*filter_type,*filter_name;
   gchar *pkg=NULL,*pkgstring;

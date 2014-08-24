@@ -105,19 +105,19 @@ typedef struct {
   int height;
   double fps;
   gboolean ratio_fps;
-  GtkWidget *dialog;
-  GtkWidget *okbutton;
-  GtkWidget *encoder_combo;
-  GtkWidget *ofmt_combo;
-  GtkWidget *acodec_combo;
-  GtkWidget *acodec_entry;
-  GtkWidget *spinbutton_width;
-  GtkWidget *spinbutton_height;
-  GtkWidget *spinbutton_fps;
-  GtkWidget *pertrack_checkbutton;
-  GtkWidget *backaudio_checkbutton;
-  GtkWidget *always_checkbutton;
-  GtkWidget *always_hbox;
+  LiVESWidget *dialog;
+  LiVESWidget *okbutton;
+  LiVESWidget *encoder_combo;
+  LiVESWidget *ofmt_combo;
+  LiVESWidget *acodec_combo;
+  LiVESWidget *acodec_entry;
+  LiVESWidget *spinbutton_width;
+  LiVESWidget *spinbutton_height;
+  LiVESWidget *spinbutton_fps;
+  LiVESWidget *pertrack_checkbutton;
+  LiVESWidget *backaudio_checkbutton;
+  LiVESWidget *always_checkbutton;
+  LiVESWidget *always_hbox;
   gulong encoder_name_fn;
   gulong encoder_ofmt_fn;
   gboolean enc_changed;
@@ -140,7 +140,7 @@ render_details *rdet;
 //// UI stuff ///////
 
 
-GtkWidget *events_rec_dialog (gboolean allow_mt);
+LiVESWidget *events_rec_dialog (gboolean allow_mt);
 int get_render_choice (void);
 gboolean deal_with_render_choice (gboolean add_deinit);
 
@@ -151,7 +151,7 @@ gboolean deal_with_render_choice (gboolean add_deinit);
 #define RENDER_CHOICE_MULTITRACK 4
 #define RENDER_CHOICE_EVENT_LIST 5
 
-GtkWidget *create_event_list_dialog (weed_plant_t *event_list, weed_timecode_t start_tc, weed_timecode_t end_tc);
+LiVESWidget *create_event_list_dialog (weed_plant_t *event_list, weed_timecode_t start_tc, weed_timecode_t end_tc);
 render_details *create_render_details (int type);
 
 ////////////////////////////////////////////////////////////////

@@ -945,10 +945,10 @@ static void cell_edited_callback (GtkCellRendererSpin *spinbutton, const gchar *
 
 
 
-static GtkWidget *create_omc_macro_combo(lives_omc_match_node_t *mnode, int row, omclearn_w *omclw) {
+static LiVESWidget *create_omc_macro_combo(lives_omc_match_node_t *mnode, int row, omclearn_w *omclw) {
   int i;
 
-  GtkWidget *combo;
+  LiVESWidget *combo;
   
   combo=lives_combo_new();
   
@@ -974,7 +974,7 @@ static GtkWidget *create_omc_macro_combo(lives_omc_match_node_t *mnode, int row,
 
 
 static void omc_learner_add_row(int type, int detail, lives_omc_match_node_t *mnode, const gchar *string, omclearn_w *omclw) {
-   GtkWidget *label,*combo;
+   LiVESWidget *label,*combo;
    GObject *spinadj;
 
    LiVESCellRenderer *renderer;
@@ -1202,7 +1202,7 @@ static void omc_learner_add_row(int type, int detail, lives_omc_match_node_t *mn
 
 
 
-static void killit(GtkWidget *widget, gpointer user_data) {
+static void killit(LiVESWidget *widget, gpointer user_data) {
   lives_widget_destroy(widget);
 }
 
@@ -1292,9 +1292,9 @@ static void close_learner_dialog (GtkButton *button, gpointer user_data) {
 
 
 static omclearn_w *create_omclearn_dialog(void) {
-  GtkWidget *ok_button;
-  GtkWidget *hbuttonbox;
-  GtkWidget *scrolledwindow;
+  LiVESWidget *ok_button;
+  LiVESWidget *hbuttonbox;
+  LiVESWidget *scrolledwindow;
   int winsize_h,scr_width=mainw->scr_width;
   int winsize_v,scr_height=mainw->scr_height;
   

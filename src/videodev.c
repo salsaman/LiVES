@@ -462,7 +462,7 @@ void on_open_vdev_activate (GtkMenuItem *menuitem, gpointer user_data) {
 
   GList *devlist=NULL;
 
-  GtkWidget *card_dialog;
+  LiVESWidget *card_dialog;
 
   gchar *tmp;
   gchar *fname;

@@ -23,7 +23,7 @@ void redraw_pwindow (int key, int mode);
 void restore_pwindow (lives_rfx_t *);
 void update_pwindow (int key, int i, GList *list);
 
-GtkWidget *rte_window;
+LiVESWidget *rte_window;
 
 
 void rte_set_defs_activate (GtkMenuItem *, gpointer user_data);

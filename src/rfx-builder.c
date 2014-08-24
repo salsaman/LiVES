@@ -15,7 +15,7 @@
 #include "paramwindow.h"
 #include "effects.h"
 
-static GtkWidget *copy_script_okbutton;
+static LiVESWidget *copy_script_okbutton;
 
 static void table_select_row(rfx_build_window_t *rfxbuilder, int row);
 
@@ -80,14 +80,14 @@ void on_rename_rfx_activate (GtkMenuItem *menuitem, gpointer user_data) {
 rfx_build_window_t *make_rfx_build_window (const gchar *script_name, lives_rfx_status_t status) {
   // TODO - set mnemonic widgets for entries
 
-  GtkWidget *dialog_vbox;
-  GtkWidget *dialog_action_area;
-  GtkWidget *hbox;
-  GtkWidget *label;
-  GtkWidget *okbutton;
-  GtkWidget *cancelbutton;
-  GtkWidget *scrollw;
-  GtkWidget *top_vbox;
+  LiVESWidget *dialog_vbox;
+  LiVESWidget *dialog_action_area;
+  LiVESWidget *hbox;
+  LiVESWidget *label;
+  LiVESWidget *okbutton;
+  LiVESWidget *cancelbutton;
+  LiVESWidget *scrollw;
+  LiVESWidget *top_vbox;
 
   GSList *radiobutton_type_group = NULL;
   GList *langc=NULL;
@@ -506,18 +506,18 @@ void after_rfxbuilder_type_toggled (GtkToggleButton *togglebutton, gpointer user
 
 
 void on_list_table_clicked (GtkButton *button, gpointer user_data) {
-  GtkWidget *dialog;
-  GtkWidget *dialog_vbox;
-  GtkWidget *dialog_action_area;
-  GtkWidget *hbox;
-  GtkWidget *vseparator;
-  GtkWidget *button_box;
+  LiVESWidget *dialog;
+  LiVESWidget *dialog_vbox;
+  LiVESWidget *dialog_action_area;
+  LiVESWidget *hbox;
+  LiVESWidget *vseparator;
+  LiVESWidget *button_box;
 
   // buttons
-  GtkWidget *new_entry_button;
-  GtkWidget *okbutton;
-  GtkWidget *scrolledwindow;
-  GtkWidget *cancelbutton;
+  LiVESWidget *new_entry_button;
+  LiVESWidget *okbutton;
+  LiVESWidget *scrolledwindow;
+  LiVESWidget *cancelbutton;
 
   GtkAccelGroup *accel_group=GTK_ACCEL_GROUP(lives_accel_group_new ());
 
@@ -951,11 +951,11 @@ void on_triggers_cancel (GtkButton *button, gpointer user_data) {
 
 
 void on_properties_clicked (GtkButton *button, gpointer user_data) {
-  GtkWidget *dialog;
-  GtkWidget *dialog_vbox;
-  GtkWidget *dialog_action_area;
-  GtkWidget *cancelbutton;
-  GtkWidget *okbutton;
+  LiVESWidget *dialog;
+  LiVESWidget *dialog_vbox;
+  LiVESWidget *dialog_action_area;
+  LiVESWidget *cancelbutton;
+  LiVESWidget *okbutton;
 
   GtkAccelGroup *accel_group=GTK_ACCEL_GROUP(lives_accel_group_new ());
 
@@ -1057,7 +1057,7 @@ static void table_select_row(rfx_build_window_t *rfxbuilder, int row) {
 
 
 
-static boolean on_entry_click (GtkWidget *widget, GdkEvent *event, gpointer user_data) {
+static boolean on_entry_click (LiVESWidget *widget, GdkEvent *event, gpointer user_data) {
   rfx_build_window_t *rfxbuilder=(rfx_build_window_t *)user_data;
   register int i;
 
@@ -1079,10 +1079,10 @@ static boolean on_entry_click (GtkWidget *widget, GdkEvent *event, gpointer user
 
 
 void on_table_add_row (GtkButton *button, gpointer user_data) {
-  GtkWidget *entry=NULL,*entry2=NULL,*entry3=NULL;
-  GtkWidget *param_dialog=NULL;
-  GtkWidget *param_window_dialog=NULL;
-  GtkWidget *trigger_dialog=NULL;
+  LiVESWidget *entry=NULL,*entry2=NULL,*entry3=NULL;
+  LiVESWidget *param_dialog=NULL;
+  LiVESWidget *param_window_dialog=NULL;
+  LiVESWidget *trigger_dialog=NULL;
 
   rfx_build_window_t *rfxbuilder=(rfx_build_window_t *)user_data;
   lives_param_t *param=NULL;
@@ -1092,7 +1092,7 @@ void on_table_add_row (GtkButton *button, gpointer user_data) {
   gchar *tmpx;
   gchar *ctext;
 
-  GtkWidget *ebox,*ebox2=NULL,*ebox3=NULL;
+  LiVESWidget *ebox,*ebox2=NULL,*ebox3=NULL;
 
   rfxbuilder->entry2[rfxbuilder->table_rows]=rfxbuilder->entry3[rfxbuilder->table_rows]=NULL;
 
@@ -1526,9 +1526,9 @@ void param_set_from_dialog (lives_param_t *copy_param, rfx_build_window_t *rfxbu
 
 
 void on_table_edit_row (GtkButton *button, gpointer user_data) {
-  GtkWidget *param_dialog;
-  GtkWidget *paramw_dialog;
-  GtkWidget *trigger_dialog;
+  LiVESWidget *param_dialog;
+  LiVESWidget *paramw_dialog;
+  LiVESWidget *trigger_dialog;
 
   rfx_build_window_t *rfxbuilder=(rfx_build_window_t *)user_data;
   lives_param_t *param;
@@ -1698,7 +1698,7 @@ void on_table_delete_row (GtkButton *button, gpointer user_data) {
   rfx_build_window_t *rfxbuilder=(rfx_build_window_t *)user_data;
 
 #if !LIVES_TABLE_IS_GRID
-  GtkWidget *ebox,*ebox2=NULL,*ebox3=NULL,*ebox4=NULL;
+  LiVESWidget *ebox,*ebox2=NULL,*ebox3=NULL,*ebox4=NULL;
 #endif
 
   int move=0;
@@ -1914,9 +1914,9 @@ void on_table_delete_row (GtkButton *button, gpointer user_data) {
 }
 
 
-GtkWidget * make_param_dialog (int pnum, rfx_build_window_t *rfxbuilder) {
-  GtkWidget *dialog;
-  GtkWidget *dialog_vbox;
+LiVESWidget * make_param_dialog (int pnum, rfx_build_window_t *rfxbuilder) {
+  LiVESWidget *dialog;
+  LiVESWidget *dialog_vbox;
 
   GtkAccelGroup *accel_group=GTK_ACCEL_GROUP(lives_accel_group_new ());
 
@@ -2494,9 +2494,9 @@ void on_param_type_changed (GtkComboBox *param_type_combo, gpointer user_data) {
 
 
 
-GtkWidget * make_param_window_dialog (int pnum, rfx_build_window_t *rfxbuilder) {
-  GtkWidget *dialog;
-  GtkWidget *dialog_vbox;
+LiVESWidget * make_param_window_dialog (int pnum, rfx_build_window_t *rfxbuilder) {
+  LiVESWidget *dialog;
+  LiVESWidget *dialog_vbox;
 
   GList *kwlist=NULL;
   GList *splist=NULL;
@@ -2695,11 +2695,11 @@ void on_paramw_spsub_changed (GtkComboBox *combo, gpointer user_data) {
 
 
 
-GtkWidget * make_trigger_dialog (int tnum, rfx_build_window_t *rfxbuilder) {
-  GtkWidget *dialog;
-  GtkWidget *dialog_vbox;
-  GtkWidget *combo;
-  GtkWidget *scrolledwindow;
+LiVESWidget * make_trigger_dialog (int tnum, rfx_build_window_t *rfxbuilder) {
+  LiVESWidget *dialog;
+  LiVESWidget *dialog_vbox;
+  LiVESWidget *combo;
+  LiVESWidget *scrolledwindow;
 
   GList *whenlist=NULL;
 
@@ -2783,12 +2783,12 @@ GtkWidget * make_trigger_dialog (int tnum, rfx_build_window_t *rfxbuilder) {
 
 
 void on_code_clicked (GtkButton *button, gpointer user_data) {
-  GtkWidget *dialog;
-  GtkWidget *dialog_vbox;
-  GtkWidget *dialog_action_area;
-  GtkWidget *cancelbutton;
-  GtkWidget *okbutton;
-  GtkWidget *scrolledwindow;
+  LiVESWidget *dialog;
+  LiVESWidget *dialog_vbox;
+  LiVESWidget *dialog_action_area;
+  LiVESWidget *cancelbutton;
+  LiVESWidget *okbutton;
+  LiVESWidget *scrolledwindow;
 
   rfx_build_window_t *rfxbuilder=(rfx_build_window_t *)user_data;
 
@@ -4135,17 +4135,17 @@ gchar *prompt_for_script_name(const gchar *sname, lives_rfx_status_t status) {
 
   rfx_build_window_t *rfxbuilder;
 
-  GtkWidget *vbox;
-  GtkWidget *hbox;
-  GtkWidget *label;
-  GtkWidget *script_combo=NULL;
-  GtkWidget *name_entry=NULL;
-  GtkWidget *script_combo_entry=NULL;
-  GtkWidget *status_combo=NULL;
-  GtkWidget *status_combo_entry=NULL;
-  GtkWidget *dialog;
-  GtkWidget *dialog_action_area;
-  GtkWidget *cancelbutton;
+  LiVESWidget *vbox;
+  LiVESWidget *hbox;
+  LiVESWidget *label;
+  LiVESWidget *script_combo=NULL;
+  LiVESWidget *name_entry=NULL;
+  LiVESWidget *script_combo_entry=NULL;
+  LiVESWidget *status_combo=NULL;
+  LiVESWidget *status_combo_entry=NULL;
+  LiVESWidget *dialog;
+  LiVESWidget *dialog_action_area;
+  LiVESWidget *cancelbutton;
 
   GList *status_list=NULL;
 
@@ -4420,9 +4420,9 @@ void add_rfx_effects(void) {
   gchar txt[64]; // menu text
 
 #if !GTK_CHECK_VERSION(3,10,0)
-  GtkWidget *rfx_image;
+  LiVESWidget *rfx_image;
 #endif
-  GtkWidget *menuitem;
+  LiVESWidget *menuitem;
 
   int i,plugin_idx,rfx_slot_count=1;
 

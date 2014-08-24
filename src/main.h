@@ -289,16 +289,16 @@ typedef struct {
 } event;
 
 typedef struct {
-  GtkWidget *processing;
-  GtkWidget *progressbar;
-  GtkWidget *label;
-  GtkWidget *label2;
-  GtkWidget *label3;
-  GtkWidget *stop_button;
-  GtkWidget *pause_button;
-  GtkWidget *preview_button;
-  GtkWidget *cancel_button;
-  GtkWidget *scrolledwindow;
+  LiVESWidget *processing;
+  LiVESWidget *progressbar;
+  LiVESWidget *label;
+  LiVESWidget *label2;
+  LiVESWidget *label3;
+  LiVESWidget *stop_button;
+  LiVESWidget *pause_button;
+  LiVESWidget *preview_button;
+  LiVESWidget *cancel_button;
+  LiVESWidget *scrolledwindow;
   uint32_t frames_done;
 } xprocess;
 
@@ -527,7 +527,7 @@ typedef struct {
   int progress_start;
   int progress_end;
   boolean changed;
-  GtkWidget *menuentry;
+  LiVESWidget *menuentry;
   gulong menuentry_func;
   boolean orig_file_name;
   boolean was_renamed;
@@ -826,10 +826,10 @@ void kill_play_window (void);
 void make_preview_box (void);
 void play_window_set_title(void);
 void add_to_playframe (void);
-GtkWidget* create_cdtrack_dialog (int type, gpointer user_data);
+LiVESWidget* create_cdtrack_dialog (int type, gpointer user_data);
 LiVESTextView *create_output_textview(void);
-gchar *choose_file(gchar *dir, gchar *fname, gchar **filt, lives_file_chooser_action_t act, const char *title, GtkWidget *extra);
-GtkWidget *choose_file_with_preview (gchar *dir, const gchar *title, int preview_type);
+gchar *choose_file(gchar *dir, gchar *fname, gchar **filt, lives_file_chooser_action_t act, const char *title, LiVESWidget *extra);
+LiVESWidget *choose_file_with_preview (gchar *dir, const gchar *title, int preview_type);
 void add_suffix_check(GtkBox *box, const gchar *ext);
 
 
@@ -1032,7 +1032,7 @@ boolean startup_message_info(const gchar *msg);
 boolean startup_message_nonfatal_dismissable(const gchar *msg, int warning_mask);
 capability *get_capabilities(void);
 void get_monitors(void);
-void set_ce_frame_from_pixbuf(GtkImage *image, GdkPixbuf *pixbuf, lives_painter_t *);
+void set_ce_frame_from_pixbuf(GtkImage *image, LiVESPixbuf *pixbuf, lives_painter_t *);
 void load_start_image(int frame);
 void load_end_image(int frame);
 void load_preview_image(boolean update_always);
@@ -1046,7 +1046,7 @@ LiVESPixbuf *pull_lives_pixbuf_at_size(int clip, int frame, const char *image_ex
 				       int width, int height, LiVESInterpType interp);
 LiVESPixbuf *pull_lives_pixbuf(int clip, int frame, const char *image_ext, weed_timecode_t tc);
 
-GError * lives_pixbuf_save(GdkPixbuf *pixbuf, gchar *fname, lives_image_type_t imgtype, 
+GError * lives_pixbuf_save(LiVESPixbuf *pixbuf, gchar *fname, lives_image_type_t imgtype, 
 			   int quality, boolean do_chmod, GError **gerrorptr);
 
 void init_track_decoders(void);
@@ -1082,13 +1082,13 @@ void frame_size_update(void);
 void splash_init(void);
 void splash_end(void);
 void splash_msg(const gchar *msg, double pct);
-void add_message_scroller(GtkWidget *conter);
+void add_message_scroller(LiVESWidget *conter);
 void resize_widgets_for_monitor(boolean get_play_times);
 #if GTK_CHECK_VERSION(3,0,0)
 void calibrate_sepwin_size(void);
-boolean expose_pim (GtkWidget *widget, lives_painter_t *cr, gpointer user_data);
-boolean expose_sim (GtkWidget *widget, lives_painter_t *cr, gpointer user_data);
-boolean expose_eim (GtkWidget *widget, lives_painter_t *cr, gpointer user_data);
+boolean expose_pim (LiVESWidget *widget, lives_painter_t *cr, gpointer user_data);
+boolean expose_sim (LiVESWidget *widget, lives_painter_t *cr, gpointer user_data);
+boolean expose_eim (LiVESWidget *widget, lives_painter_t *cr, gpointer user_data);
 #endif
 // system calls in utils.c
 int lives_system(const char *com, boolean allow_error);
@@ -1158,9 +1158,9 @@ char *get_val_from_cached_list(const char *key, size_t maxlen);
 
 void get_location(const char *exe, char *val, int maxlen);
 
-void set_menu_text(GtkWidget *menu, const char *text, boolean use_mnemonic);
-void get_menu_text(GtkWidget *menu, char *text);
-void get_menu_text_long(GtkWidget *menuitem, char *text);
+void set_menu_text(LiVESWidget *menu, const char *text, boolean use_mnemonic);
+void get_menu_text(LiVESWidget *menu, char *text);
+void get_menu_text_long(LiVESWidget *menuitem, char *text);
 void reset_clipmenu (void);
 void get_play_times(void);
 void get_total_time (lives_clip_t *file);
@@ -1224,7 +1224,7 @@ void set_undoable (const char *what, boolean sensitive);
 void set_redoable (const char *what, boolean sensitive);
 void zero_spinbuttons (void);
 void draw_little_bars (double ptrtime);
-void set_sel_label (GtkWidget *label);
+void set_sel_label (LiVESWidget *label);
 void clear_mainw_msg (void);
 int get_token_count (const char *string, int delim);
 LiVESPixbuf *lives_pixbuf_new_blank(int width, int height, int palette);
@@ -1270,8 +1270,8 @@ void on_fileread_clicked (GtkFileChooser *, gpointer widget);
 boolean dirchange_callback (GtkAccelGroup *, GObject *, uint32_t, GdkModifierType, gpointer user_data);
 void on_effects_paused (GtkButton *, gpointer user_data);
 void on_cancel_keep_button_clicked (GtkButton *, gpointer user_data);
-void on_cleardisk_activate (GtkWidget *, gpointer user_data);
-void on_cleardisk_advanced_clicked (GtkWidget *, gpointer user_data);
+void on_cleardisk_activate (LiVESWidget *, gpointer user_data);
+void on_cleardisk_advanced_clicked (LiVESWidget *, gpointer user_data);
 void popup_lmap_errors(GtkMenuItem *, gpointer);
 void on_filesel_button_clicked (GtkButton *, gpointer user_data);
 void switch_clip(int type, int newclip);
@@ -1302,7 +1302,7 @@ LiVESPixbuf *make_thumb (lives_mt *, int file, int width, int height, int frame,
 LiVESPixbuf *mt_framedraw(lives_mt *, LiVESPixbuf *);
 
 // rte_window.c
-GtkWidget *refresh_rte_window (void);
+LiVESWidget *refresh_rte_window (void);
 
 // effects-weed.c
 void * lives_malloc(size_t size);

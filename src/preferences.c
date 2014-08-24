@@ -39,7 +39,7 @@ static void on_osc_enable_toggled (GtkToggleButton *t1, gpointer t2) {
 }
 #endif
 
-static void instopen_toggled (GtkToggleButton *t1, GtkWidget *button) {
+static void instopen_toggled (GtkToggleButton *t1, LiVESWidget *button) {
   lives_widget_set_sensitive (button,lives_toggle_button_get_active (t1));
 }
 
@@ -1514,7 +1514,7 @@ void set_acodec_list_from_allowed (_prefsw *prefsw, render_details *rdet) {
 }
 
 
-void after_vpp_changed (GtkWidget *vpp_combo, gpointer advbutton) {
+void after_vpp_changed (LiVESWidget *vpp_combo, gpointer advbutton) {
   gchar *newvpp=lives_combo_get_active_text(LIVES_COMBO(vpp_combo));
   _vid_playback_plugin *tmpvpp;
 
@@ -1559,7 +1559,7 @@ static void on_forcesmon_toggled (GtkToggleButton *tbutton, gpointer user_data) 
 			     play_monitor!=0&&capable->nmonitors>0);
 }
 
-static void pmoni_gmoni_changed (GtkWidget *sbut, gpointer advbutton) {
+static void pmoni_gmoni_changed (LiVESWidget *sbut, gpointer advbutton) {
   int gui_monitor=lives_spin_button_get_value(LIVES_SPIN_BUTTON(prefsw->spinbutton_gmoni));
   int play_monitor=lives_spin_button_get_value(LIVES_SPIN_BUTTON(prefsw->spinbutton_pmoni));
   lives_widget_set_sensitive(prefsw->ce_thumbs,play_monitor!=gui_monitor&&
@@ -1625,7 +1625,7 @@ static void on_alsa_midi_toggled (GtkToggleButton *tbutton, gpointer user_data) 
 #endif
 
 
-static void on_audp_entry_changed (GtkWidget *audp_combo, gpointer ptr) {
+static void on_audp_entry_changed (LiVESWidget *audp_combo, gpointer ptr) {
   gchar *audp = lives_combo_get_active_text(LIVES_COMBO(audp_combo));
 
   if (!strlen(audp)||!strcmp(audp,prefsw->audp_name)) {
@@ -1771,7 +1771,7 @@ void prefsw_set_rec_after_settings(_vid_playback_plugin *vpp) {
 /*
  * Initialize preferences dialog list
  */
-static void pref_init_list(GtkWidget *list) {
+static void pref_init_list(LiVESWidget *list) {
   LiVESCellRenderer *renderer, *pixbufRenderer;
   LiVESTreeViewColumn *column1, *column2;
   GtkListStore *store;
@@ -1796,7 +1796,7 @@ static void pref_init_list(GtkWidget *list) {
 /*
  * Adds entry to preferences dialog list 
  */
-static void prefs_add_to_list(GtkWidget *list, GdkPixbuf *pix, const gchar *str, uint32_t idx) {
+static void prefs_add_to_list(LiVESWidget *list, LiVESPixbuf *pix, const gchar *str, uint32_t idx) {
   GtkListStore *store;
   LiVESTreeIter iter;
 
@@ -1917,19 +1917,19 @@ void on_prefDomainChanged(LiVESTreeSelection *widget, gpointer dummy) {
 /*
  * Function makes apply button sensitive
  */
-void apply_button_set_enabled(GtkWidget *widget, gpointer func_data) {
+void apply_button_set_enabled(LiVESWidget *widget, gpointer func_data) {
   lives_widget_set_sensitive(LIVES_WIDGET(prefsw->applybutton), TRUE);
   lives_widget_set_sensitive(LIVES_WIDGET(prefsw->cancelbutton), TRUE);
   lives_widget_set_sensitive(LIVES_WIDGET(prefsw->closebutton), FALSE);
 }
 
 // toggle sets other widget sensitive/insensitive
-static void toggle_set_sensitive(GtkWidget *widget, gpointer func_data) {
+static void toggle_set_sensitive(LiVESWidget *widget, gpointer func_data) {
   lives_widget_set_sensitive(LIVES_WIDGET(func_data), lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(widget)));
 }
 
 // toggle sets other widget insensitive/sensitive
-static void toggle_set_insensitive(GtkWidget *widget, gpointer func_data) {
+static void toggle_set_insensitive(LiVESWidget *widget, gpointer func_data) {
   lives_widget_set_sensitive(LIVES_WIDGET(func_data), !lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(widget)));
 }
 
@@ -1946,58 +1946,58 @@ static void spinbutton_crit_ds_value_changed (GtkSpinButton *crit_ds, gpointer u
  * Function creates preferences dialog 
  */
 _prefsw *create_prefs_dialog (void) {
-  GtkWidget *dialog_vbox_main;
-  GtkWidget *dialog_table;
-  GtkWidget *dialog_hpaned;
-  GtkWidget *list_scroll;
+  LiVESWidget *dialog_vbox_main;
+  LiVESWidget *dialog_table;
+  LiVESWidget *dialog_hpaned;
+  LiVESWidget *list_scroll;
 
-  GdkPixbuf *pixbuf_multitrack;
-  GdkPixbuf *pixbuf_gui;
-  GdkPixbuf *pixbuf_decoding;
-  GdkPixbuf *pixbuf_playback;
-  GdkPixbuf *pixbuf_recording;
-  GdkPixbuf *pixbuf_encoding;
-  GdkPixbuf *pixbuf_effects;
-  GdkPixbuf *pixbuf_directories;
-  GdkPixbuf *pixbuf_warnings;
-  GdkPixbuf *pixbuf_misc;
-  GdkPixbuf *pixbuf_themes;
-  GdkPixbuf *pixbuf_net;
-  GdkPixbuf *pixbuf_jack;
-  GdkPixbuf *pixbuf_midi;
+  LiVESPixbuf *pixbuf_multitrack;
+  LiVESPixbuf *pixbuf_gui;
+  LiVESPixbuf *pixbuf_decoding;
+  LiVESPixbuf *pixbuf_playback;
+  LiVESPixbuf *pixbuf_recording;
+  LiVESPixbuf *pixbuf_encoding;
+  LiVESPixbuf *pixbuf_effects;
+  LiVESPixbuf *pixbuf_directories;
+  LiVESPixbuf *pixbuf_warnings;
+  LiVESPixbuf *pixbuf_misc;
+  LiVESPixbuf *pixbuf_themes;
+  LiVESPixbuf *pixbuf_net;
+  LiVESPixbuf *pixbuf_jack;
+  LiVESPixbuf *pixbuf_midi;
   gchar *icon;
 
-  GtkWidget *ins_resample;
-  GtkWidget *hbox;
+  LiVESWidget *ins_resample;
+  LiVESWidget *hbox;
 
-  GtkWidget *hbox1;
-  GtkWidget *hbox2;
-  GtkWidget *vbox;
+  LiVESWidget *hbox1;
+  LiVESWidget *hbox2;
+  LiVESWidget *vbox;
 
-  GtkWidget *dialog_action_area;
-  GtkWidget *dirbutton1;
-  GtkWidget *dirbutton2;
-  GtkWidget *dirbutton3;
-  GtkWidget *dirbutton4;
-  GtkWidget *dirbutton5;
-  GtkWidget *dirbutton6;
+  LiVESWidget *dialog_action_area;
+  LiVESWidget *dirbutton1;
+  LiVESWidget *dirbutton2;
+  LiVESWidget *dirbutton3;
+  LiVESWidget *dirbutton4;
+  LiVESWidget *dirbutton5;
+  LiVESWidget *dirbutton6;
 
-  GtkWidget *pp_combo;
-  GtkWidget *png;
-  GtkWidget *frame;
-  GtkWidget *mt_enter_defs;
+  LiVESWidget *pp_combo;
+  LiVESWidget *png;
+  LiVESWidget *frame;
+  LiVESWidget *mt_enter_defs;
 
-  GtkWidget *advbutton;
-  GtkWidget *rbutton;
+  LiVESWidget *advbutton;
+  LiVESWidget *rbutton;
 
 #ifdef ENABLE_OSC
 #ifdef OMC_MIDI_IMPL
-  GtkWidget *raw_midi_button;
+  LiVESWidget *raw_midi_button;
 #endif
 #endif
 
-  GtkWidget *label;
-  GtkWidget *buttond;
+  LiVESWidget *label;
+  LiVESWidget *buttond;
 
   // radio button groups
   //GSList *rb_group = NULL;
@@ -4585,7 +4585,7 @@ void on_prefs_revert_clicked(GtkButton *button, gpointer user_data) {
 }
 
 
-boolean on_prefs_delete_event(GtkWidget *widget, GdkEvent *event, gpointer user_data) {
+boolean on_prefs_delete_event(LiVESWidget *widget, GdkEvent *event, gpointer user_data) {
   on_prefs_close_clicked(GTK_BUTTON (((_prefsw *)user_data)->closebutton), user_data);
   return FALSE;
 }

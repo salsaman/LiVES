@@ -38,10 +38,10 @@ static void ptable_row_add_variable_widgets(lives_conx_w *, int idx, int row, in
 static void ctable_row_add_standard_widgets(lives_conx_w *, int idx);
 static void ctable_row_add_variable_widgets(lives_conx_w *, int idx, int row, int cidx);
 
-static void padd_clicked(GtkWidget *button, gpointer user_data);
-static void cadd_clicked(GtkWidget *button, gpointer user_data);
+static void padd_clicked(LiVESWidget *button, gpointer user_data);
+static void cadd_clicked(LiVESWidget *button, gpointer user_data);
 
-static void dfxp_changed(GtkWidget *, gpointer conxwp);
+static void dfxp_changed(LiVESWidget *, gpointer conxwp);
 
 static weed_plant_t *active_dummy=NULL;
 
@@ -2326,7 +2326,7 @@ static void apbutton_clicked(GtkButton *button, gpointer user_data) {
   // autoconnect each param with a compatible one in the target
   lives_conx_w *conxwp=(lives_conx_w *)user_data;
 
-  GtkWidget *combo;
+  LiVESWidget *combo;
 
   LiVESTreeIter iter;
   LiVESTreeModel *model;
@@ -2345,7 +2345,7 @@ static void apbutton_clicked(GtkButton *button, gpointer user_data) {
 
   ours=pconx_get_numcons(conxwp,-EXTRA_PARAMS_OUT)+pconx_get_numcons(conxwp,0)-1;
 
-  combo=(GtkWidget *)conxwp->pfxcombo[ours];
+  combo=(LiVESWidget *)conxwp->pfxcombo[ours];
 
   if (!lives_combo_get_active_iter(LIVES_COMBO(combo),&iter)) return;
   model=lives_combo_get_model(LIVES_COMBO(combo));
@@ -2426,7 +2426,7 @@ static void acbutton_clicked(GtkButton *button, gpointer user_data) {
   // autoconnect each channel with a compatible one in the target
   lives_conx_w *conxwp=(lives_conx_w *)user_data;
 
-  GtkWidget *combo;
+  LiVESWidget *combo;
 
   LiVESTreeIter iter;
   LiVESTreeModel *model;
@@ -2445,7 +2445,7 @@ static void acbutton_clicked(GtkButton *button, gpointer user_data) {
 
   ours=cconx_get_numcons(conxwp,0)-1;
 
-  combo=(GtkWidget *)conxwp->cfxcombo[ours];
+  combo=(LiVESWidget *)conxwp->cfxcombo[ours];
 
   if (!lives_combo_get_active_iter(LIVES_COMBO(combo),&iter)) return;
   model=lives_combo_get_model(LIVES_COMBO(combo));
@@ -2533,11 +2533,11 @@ static void acbutton_clicked(GtkButton *button, gpointer user_data) {
 }
 
 
-static void padd_clicked(GtkWidget *button, gpointer user_data) {
+static void padd_clicked(LiVESWidget *button, gpointer user_data) {
   // add another param row below the add button
   lives_conx_w *conxwp=(lives_conx_w *)user_data;
 
-  GtkWidget *hbox[5],*hboxb[5],*achbox,*comhbox;
+  LiVESWidget *hbox[5],*hboxb[5],*achbox,*comhbox;
 
   int totparams,totchans;
   int ours=-1,pidx;
@@ -2562,23 +2562,23 @@ static void padd_clicked(GtkWidget *button, gpointer user_data) {
 
   totparams++;
 
-  conxwp->pclabel=(GtkWidget **)g_realloc(conxwp->pclabel,(totchans+totparams)*sizeof(GtkWidget *));
+  conxwp->pclabel=(LiVESWidget **)g_realloc(conxwp->pclabel,(totchans+totparams)*sizeof(LiVESWidget *));
 
-  conxwp->add_button=(GtkWidget **)g_realloc(conxwp->add_button,(totchans+totparams)*sizeof(GtkWidget *));
-  conxwp->del_button=(GtkWidget **)g_realloc(conxwp->del_button,(totchans+totparams)*sizeof(GtkWidget *));
-  conxwp->clabel=(GtkWidget **)g_realloc(conxwp->clabel,(totchans+totparams)*sizeof(GtkWidget *));
+  conxwp->add_button=(LiVESWidget **)g_realloc(conxwp->add_button,(totchans+totparams)*sizeof(LiVESWidget *));
+  conxwp->del_button=(LiVESWidget **)g_realloc(conxwp->del_button,(totchans+totparams)*sizeof(LiVESWidget *));
+  conxwp->clabel=(LiVESWidget **)g_realloc(conxwp->clabel,(totchans+totparams)*sizeof(LiVESWidget *));
 
   conxwp->ikeys=(int *)g_realloc(conxwp->ikeys,(totchans+totparams)*sizint);
   conxwp->imodes=(int *)g_realloc(conxwp->imodes,(totchans+totparams)*sizint);
   conxwp->idx=(int *)g_realloc(conxwp->idx,(totchans+totparams)*sizint);
 
-  conxwp->pfxcombo=(GtkWidget **)g_realloc(conxwp->pfxcombo,totparams*sizeof(GtkWidget *));
-  conxwp->pcombo=(GtkWidget **)g_realloc(conxwp->pcombo,totparams*sizeof(GtkWidget *));
+  conxwp->pfxcombo=(LiVESWidget **)g_realloc(conxwp->pfxcombo,totparams*sizeof(LiVESWidget *));
+  conxwp->pcombo=(LiVESWidget **)g_realloc(conxwp->pcombo,totparams*sizeof(LiVESWidget *));
 
   conxwp->dpp_func=(gulong *)g_realloc(conxwp->dpp_func,totparams*sizeof(gulong));
   conxwp->acheck_func=(gulong *)g_realloc(conxwp->acheck_func,totparams*sizeof(gulong));
 
-  conxwp->acheck=(GtkWidget **)g_realloc(conxwp->acheck,totparams*sizeof(GtkWidget *));
+  conxwp->acheck=(LiVESWidget **)g_realloc(conxwp->acheck,totparams*sizeof(LiVESWidget *));
 
   conxwp->trowsp++;
 
@@ -2662,11 +2662,11 @@ static void padd_clicked(GtkWidget *button, gpointer user_data) {
 
 
 
-static void pdel_clicked(GtkWidget *button, gpointer user_data) {
+static void pdel_clicked(LiVESWidget *button, gpointer user_data) {
   //  remove the param row at the del button
   lives_conx_w *conxwp=(lives_conx_w *)user_data;
 
-  GtkWidget *hbox[4],*hboxb[4],*achbox,*comhbox;
+  LiVESWidget *hbox[4],*hboxb[4],*achbox,*comhbox;
 
   int totparams,totchans;
   int ours=-1,pidx,pidx_next;
@@ -2800,34 +2800,34 @@ static void pdel_clicked(GtkWidget *button, gpointer user_data) {
 #endif
 
 
-  conxwp->pclabel=(GtkWidget **)g_realloc(conxwp->pclabel,(totchans+totparams)*sizeof(GtkWidget *));
+  conxwp->pclabel=(LiVESWidget **)g_realloc(conxwp->pclabel,(totchans+totparams)*sizeof(LiVESWidget *));
 
-  conxwp->add_button=(GtkWidget **)g_realloc(conxwp->add_button,(totchans+totparams)*sizeof(GtkWidget *));
-  conxwp->del_button=(GtkWidget **)g_realloc(conxwp->del_button,(totchans+totparams)*sizeof(GtkWidget *));
-  conxwp->clabel=(GtkWidget **)g_realloc(conxwp->clabel,(totchans+totparams)*sizeof(GtkWidget *));
+  conxwp->add_button=(LiVESWidget **)g_realloc(conxwp->add_button,(totchans+totparams)*sizeof(LiVESWidget *));
+  conxwp->del_button=(LiVESWidget **)g_realloc(conxwp->del_button,(totchans+totparams)*sizeof(LiVESWidget *));
+  conxwp->clabel=(LiVESWidget **)g_realloc(conxwp->clabel,(totchans+totparams)*sizeof(LiVESWidget *));
 
   conxwp->ikeys=(int *)g_realloc(conxwp->ikeys,(totchans+totparams)*sizint);
   conxwp->imodes=(int *)g_realloc(conxwp->imodes,(totchans+totparams)*sizint);
   conxwp->idx=(int *)g_realloc(conxwp->idx,(totchans+totparams)*sizint);
 
-  conxwp->pfxcombo=(GtkWidget **)g_realloc(conxwp->pfxcombo,totparams*sizeof(GtkWidget *));
-  conxwp->pcombo=(GtkWidget **)g_realloc(conxwp->pcombo,totparams*sizeof(GtkWidget *));
+  conxwp->pfxcombo=(LiVESWidget **)g_realloc(conxwp->pfxcombo,totparams*sizeof(LiVESWidget *));
+  conxwp->pcombo=(LiVESWidget **)g_realloc(conxwp->pcombo,totparams*sizeof(LiVESWidget *));
 
   conxwp->dpp_func=(gulong *)g_realloc(conxwp->dpp_func,totparams*sizeof(gulong));
   conxwp->acheck_func=(gulong *)g_realloc(conxwp->acheck_func,totparams*sizeof(gulong));
 
-  conxwp->acheck=(GtkWidget **)g_realloc(conxwp->acheck,totparams*sizeof(GtkWidget *));
+  conxwp->acheck=(LiVESWidget **)g_realloc(conxwp->acheck,totparams*sizeof(LiVESWidget *));
 
 }
 
 
 
 
-static void cadd_clicked(GtkWidget *button, gpointer user_data) {
+static void cadd_clicked(LiVESWidget *button, gpointer user_data) {
   // add another channel row below the add button
   lives_conx_w *conxwp=(lives_conx_w *)user_data;
 
-  GtkWidget *hbox[4],*hboxb[4],*comhbox;
+  LiVESWidget *hbox[4],*hboxb[4],*comhbox;
 
   int totparams,totchans;
   int ours=-1,cidx;
@@ -2853,18 +2853,18 @@ static void cadd_clicked(GtkWidget *button, gpointer user_data) {
 
   totchans++;
 
-  conxwp->pclabel=(GtkWidget **)g_realloc(conxwp->pclabel,(totchans+totparams)*sizeof(GtkWidget *));
+  conxwp->pclabel=(LiVESWidget **)g_realloc(conxwp->pclabel,(totchans+totparams)*sizeof(LiVESWidget *));
 
-  conxwp->add_button=(GtkWidget **)g_realloc(conxwp->add_button,(totchans+totparams)*sizeof(GtkWidget *));
-  conxwp->del_button=(GtkWidget **)g_realloc(conxwp->del_button,(totchans+totparams)*sizeof(GtkWidget *));
-  conxwp->clabel=(GtkWidget **)g_realloc(conxwp->clabel,(totchans+totparams)*sizeof(GtkWidget *));
+  conxwp->add_button=(LiVESWidget **)g_realloc(conxwp->add_button,(totchans+totparams)*sizeof(LiVESWidget *));
+  conxwp->del_button=(LiVESWidget **)g_realloc(conxwp->del_button,(totchans+totparams)*sizeof(LiVESWidget *));
+  conxwp->clabel=(LiVESWidget **)g_realloc(conxwp->clabel,(totchans+totparams)*sizeof(LiVESWidget *));
 
   conxwp->ikeys=(int *)g_realloc(conxwp->ikeys,(totchans+totparams)*sizint);
   conxwp->imodes=(int *)g_realloc(conxwp->imodes,(totchans+totparams)*sizint);
   conxwp->idx=(int *)g_realloc(conxwp->idx,(totchans+totparams)*sizint);
 
-  conxwp->cfxcombo=(GtkWidget **)g_realloc(conxwp->cfxcombo,totchans*sizeof(GtkWidget *));
-  conxwp->ccombo=(GtkWidget **)g_realloc(conxwp->ccombo,totchans*sizeof(GtkWidget *));
+  conxwp->cfxcombo=(LiVESWidget **)g_realloc(conxwp->cfxcombo,totchans*sizeof(LiVESWidget *));
+  conxwp->ccombo=(LiVESWidget **)g_realloc(conxwp->ccombo,totchans*sizeof(LiVESWidget *));
 
   conxwp->dpc_func=(gulong *)g_realloc(conxwp->dpc_func,totchans*sizeof(gulong));
 
@@ -2942,11 +2942,11 @@ static void cadd_clicked(GtkWidget *button, gpointer user_data) {
 
 
 
-static void cdel_clicked(GtkWidget *button, gpointer user_data) {
+static void cdel_clicked(LiVESWidget *button, gpointer user_data) {
   //  remove the channel  row at the del button
   lives_conx_w *conxwp=(lives_conx_w *)user_data;
 
-  GtkWidget *hbox[3],*hboxb[3],*comhbox;
+  LiVESWidget *hbox[3],*hboxb[3],*comhbox;
 
   int totparams,totchans;
   int ours=-1,cidx,cidx_next;
@@ -3062,18 +3062,18 @@ static void cdel_clicked(GtkWidget *button, gpointer user_data) {
 #endif
 
 
-  conxwp->pclabel=(GtkWidget **)g_realloc(conxwp->pclabel,(totchans+totparams)*sizeof(GtkWidget *));
+  conxwp->pclabel=(LiVESWidget **)g_realloc(conxwp->pclabel,(totchans+totparams)*sizeof(LiVESWidget *));
 
-  conxwp->add_button=(GtkWidget **)g_realloc(conxwp->add_button,(totchans+totparams)*sizeof(GtkWidget *));
-  conxwp->del_button=(GtkWidget **)g_realloc(conxwp->del_button,(totchans+totparams)*sizeof(GtkWidget *));
-  conxwp->clabel=(GtkWidget **)g_realloc(conxwp->clabel,(totchans+totparams)*sizeof(GtkWidget *));
+  conxwp->add_button=(LiVESWidget **)g_realloc(conxwp->add_button,(totchans+totparams)*sizeof(LiVESWidget *));
+  conxwp->del_button=(LiVESWidget **)g_realloc(conxwp->del_button,(totchans+totparams)*sizeof(LiVESWidget *));
+  conxwp->clabel=(LiVESWidget **)g_realloc(conxwp->clabel,(totchans+totparams)*sizeof(LiVESWidget *));
 
   conxwp->ikeys=(int *)g_realloc(conxwp->ikeys,(totchans+totparams)*sizint);
   conxwp->imodes=(int *)g_realloc(conxwp->imodes,(totchans+totparams)*sizint);
   conxwp->idx=(int *)g_realloc(conxwp->idx,(totchans+totparams)*sizint);
 
-  conxwp->cfxcombo=(GtkWidget **)g_realloc(conxwp->cfxcombo,totchans*sizeof(GtkWidget *));
-  conxwp->ccombo=(GtkWidget **)g_realloc(conxwp->ccombo,totchans*sizeof(GtkWidget *));
+  conxwp->cfxcombo=(LiVESWidget **)g_realloc(conxwp->cfxcombo,totchans*sizeof(LiVESWidget *));
+  conxwp->ccombo=(LiVESWidget **)g_realloc(conxwp->ccombo,totchans*sizeof(LiVESWidget *));
 
   conxwp->dpc_func=(gulong *)g_realloc(conxwp->dpc_func,totchans*sizeof(gulong));
 
@@ -3083,7 +3083,7 @@ static void cdel_clicked(GtkWidget *button, gpointer user_data) {
 
 
 
-static void dfxc_changed(GtkWidget *combo, gpointer user_data) {
+static void dfxc_changed(LiVESWidget *combo, gpointer user_data) {
   lives_conx_w *conxwp=(lives_conx_w *)user_data;
 
   LiVESTreeIter iter;
@@ -3161,7 +3161,7 @@ static void dfxc_changed(GtkWidget *combo, gpointer user_data) {
 
 
 
-static void dfxp_changed(GtkWidget *combo, gpointer user_data) {
+static void dfxp_changed(LiVESWidget *combo, gpointer user_data) {
   // filter was changed
 
   lives_conx_w *conxwp=(lives_conx_w *)user_data;
@@ -3209,7 +3209,7 @@ static void dfxp_changed(GtkWidget *combo, gpointer user_data) {
   pidx=GPOINTER_TO_INT(g_object_get_data(G_OBJECT(combo),"pidx"));
 
   if (fidx==-1) {
-    GtkWidget *acheck=conxwp->acheck[ours];
+    LiVESWidget *acheck=conxwp->acheck[ours];
     if (acheck!=NULL) {
       g_signal_handler_block(acheck,conxwp->acheck_func[ours]);
       lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(acheck),FALSE);
@@ -3378,7 +3378,7 @@ int pconx_check_connection(weed_plant_t *ofilter, int opnum, int ikey, int imode
 
 
 
-static void dpp_changed(GtkWidget *combo, gpointer user_data) {
+static void dpp_changed(LiVESWidget *combo, gpointer user_data) {
   // receiver param was set
 
   // 1) check if compatible
@@ -3390,8 +3390,8 @@ static void dpp_changed(GtkWidget *combo, gpointer user_data) {
  
   lives_conx_w *conxwp=(lives_conx_w *)user_data;
 
-  GtkWidget *acheck=NULL;
-  GtkWidget *fxcombo;
+  LiVESWidget *acheck=NULL;
+  LiVESWidget *fxcombo;
 
   LiVESTreeModel *model;
 
@@ -3592,7 +3592,7 @@ int cconx_check_connection(int ikey, int imode, int icnum, boolean setup, weed_p
 
 
 
-static void dpc_changed(GtkWidget *combo, gpointer user_data) {
+static void dpc_changed(LiVESWidget *combo, gpointer user_data) {
   lives_conx_w *conxwp=(lives_conx_w *)user_data;
 
   weed_plant_t *ichan;
@@ -3601,7 +3601,7 @@ static void dpc_changed(GtkWidget *combo, gpointer user_data) {
 
   LiVESTreeIter iter;
 
-  GtkWidget *fxcombo;
+  LiVESWidget *fxcombo;
 
   gchar *channame;
 
@@ -3733,7 +3733,7 @@ static void on_acheck_toggled(GtkToggleButton *acheck, gpointer user_data) {
 
   LiVESTreeIter iter;
 
-  GtkWidget *fxcombo;
+  LiVESWidget *fxcombo;
 
   boolean on=lives_toggle_button_get_active(acheck);
 
@@ -3748,7 +3748,7 @@ static void on_acheck_toggled(GtkToggleButton *acheck, gpointer user_data) {
   nchans=cconx_get_numcons(conxwp,FX_DATA_WILDCARD);
 
   for (i=nx;i<nparams;i++) {
-    if (conxwp->acheck[i]==(GtkWidget *)acheck) {
+    if (conxwp->acheck[i]==(LiVESWidget *)acheck) {
       ours=i;
       break;
     }
@@ -3876,8 +3876,8 @@ static LiVESTreeModel *inparam_fx_model (boolean is_chans, int key) {
 static void ptable_row_add_variable_widgets(lives_conx_w *conxwp, int idx, int row, int pidx) {
   weed_plant_t **oparams,*param;
 
-  GtkWidget *hbox,*hbox2;
-  GtkWidget *fx_entry;
+  LiVESWidget *hbox,*hbox2;
+  LiVESWidget *fx_entry;
 
   boolean hasrange=FALSE;
 
@@ -3979,8 +3979,8 @@ static void ptable_row_add_variable_widgets(lives_conx_w *conxwp, int idx, int r
 
 
 static void ctable_row_add_variable_widgets(lives_conx_w *conxwp, int idx, int row, int cidx) {
-  GtkWidget *hbox,*hbox2;
-  GtkWidget *fx_entry;
+  LiVESWidget *hbox,*hbox2;
+  LiVESWidget *fx_entry;
 
   hbox=lives_hbox_new (FALSE, 0);
 
@@ -4039,7 +4039,7 @@ static void ctable_row_add_variable_widgets(lives_conx_w *conxwp, int idx, int r
 
 
 static void ptable_row_add_standard_widgets(lives_conx_w *conxwp, int idx) {
-  GtkWidget *hbox;
+  LiVESWidget *hbox;
 
   hbox=lives_hbox_new (FALSE, 0);
 
@@ -4088,7 +4088,7 @@ static void ptable_row_add_standard_widgets(lives_conx_w *conxwp, int idx) {
 
 
 static void ctable_row_add_standard_widgets(lives_conx_w *conxwp, int idx) {
-  GtkWidget *hbox;
+  LiVESWidget *hbox;
 
   hbox=lives_hbox_new (FALSE, 0);
 
@@ -4136,13 +4136,13 @@ static void ctable_row_add_standard_widgets(lives_conx_w *conxwp, int idx) {
 
 
 
-static GtkWidget *conx_scroll_new(lives_conx_w *conxwp) {
+static LiVESWidget *conx_scroll_new(lives_conx_w *conxwp) {
   weed_plant_t *chan,*param;
 
-  GtkWidget *label;
-  GtkWidget *top_vbox;
-  GtkWidget *hbox;
-  GtkWidget *scrolledwindow;
+  LiVESWidget *label;
+  LiVESWidget *top_vbox;
+  LiVESWidget *hbox;
+  LiVESWidget *scrolledwindow;
 
   gchar *channame,*pname,*fname;
   gchar *ptype,*range;
@@ -4173,10 +4173,10 @@ static GtkWidget *conx_scroll_new(lives_conx_w *conxwp) {
   totchans=cconx_get_numcons(conxwp,FX_DATA_WILDCARD);
   totparams=pconx_get_numcons(conxwp,FX_DATA_WILDCARD);
 
-  conxwp->add_button=(GtkWidget **)g_malloc((totchans+totparams)*sizeof(GtkWidget *));
-  conxwp->del_button=(GtkWidget **)g_malloc((totchans+totparams)*sizeof(GtkWidget *));
-  conxwp->clabel=(GtkWidget **)g_malloc((totchans+totparams)*sizeof(GtkWidget *));
-  conxwp->pclabel=(GtkWidget **)g_malloc((totchans+totparams)*sizeof(GtkWidget *));
+  conxwp->add_button=(LiVESWidget **)g_malloc((totchans+totparams)*sizeof(LiVESWidget *));
+  conxwp->del_button=(LiVESWidget **)g_malloc((totchans+totparams)*sizeof(LiVESWidget *));
+  conxwp->clabel=(LiVESWidget **)g_malloc((totchans+totparams)*sizeof(LiVESWidget *));
+  conxwp->pclabel=(LiVESWidget **)g_malloc((totchans+totparams)*sizeof(LiVESWidget *));
 
   conxwp->cfxcombo=conxwp->ccombo=conxwp->pcombo=conxwp->pfxcombo=conxwp->acheck=NULL;
   conxwp->dpp_func=conxwp->dpc_func=conxwp->acheck_func=NULL;
@@ -4203,9 +4203,9 @@ static GtkWidget *conx_scroll_new(lives_conx_w *conxwp) {
 
     conxwp->dpc_func=(gulong *)g_malloc(totchans*sizeof(gulong));
 
-    conxwp->cfxcombo=(GtkWidget **)g_malloc(totchans*sizeof(GtkWidget *));
+    conxwp->cfxcombo=(LiVESWidget **)g_malloc(totchans*sizeof(LiVESWidget *));
 
-    conxwp->ccombo=(GtkWidget **)g_malloc(totchans*sizeof(GtkWidget *));
+    conxwp->ccombo=(LiVESWidget **)g_malloc(totchans*sizeof(LiVESWidget *));
 
     label=lives_standard_label_new((tmp=g_strdup_printf(_("%s - Alpha Channel Connections"),fname)));
     lives_box_pack_start (LIVES_BOX (top_vbox), label, FALSE, FALSE, widget_opts.packing_height);
@@ -4272,13 +4272,13 @@ static GtkWidget *conx_scroll_new(lives_conx_w *conxwp) {
     if (weed_plant_has_leaf(conxwp->filter,"out_parameter_templates")) 
       oparams=weed_get_plantptr_array(conxwp->filter,"out_parameter_templates",&error);
 
-    conxwp->pfxcombo=(GtkWidget **)g_malloc(totparams*sizeof(GtkWidget *));
-    conxwp->pcombo=(GtkWidget **)g_malloc(totparams*sizeof(GtkWidget *));
+    conxwp->pfxcombo=(LiVESWidget **)g_malloc(totparams*sizeof(LiVESWidget *));
+    conxwp->pcombo=(LiVESWidget **)g_malloc(totparams*sizeof(LiVESWidget *));
 
     conxwp->dpp_func=(gulong *)g_malloc(totparams*sizeof(gulong));
     conxwp->acheck_func=(gulong *)g_malloc(totparams*sizeof(gulong));
 
-    conxwp->acheck=(GtkWidget **)g_malloc(totparams*sizeof(GtkWidget *));
+    conxwp->acheck=(LiVESWidget **)g_malloc(totparams*sizeof(LiVESWidget *));
 
     label=lives_standard_label_new((tmp=g_strdup_printf(_("%s - Parameter Data Connections"),fname)));
     g_free(tmp);
@@ -4406,7 +4406,7 @@ static GtkWidget *conx_scroll_new(lives_conx_w *conxwp) {
 }
 
 
-static void conxw_cancel_clicked(GtkWidget *button, gpointer user_data) {
+static void conxw_cancel_clicked(LiVESWidget *button, gpointer user_data) {
   lives_conx_w *conxwp=(lives_conx_w *)user_data;
 
   if (conxwp->pclabel!=NULL) g_free(conxwp->pclabel);
@@ -4445,7 +4445,7 @@ static void conxw_cancel_clicked(GtkWidget *button, gpointer user_data) {
 
 
 
-static void conxw_ok_clicked(GtkWidget *button, gpointer user_data) {
+static void conxw_ok_clicked(LiVESWidget *button, gpointer user_data) {
   lives_cconnect_t *cconx_bak=mainw->cconx;
   lives_pconnect_t *pconx_bak=mainw->pconx;
 
@@ -4493,9 +4493,9 @@ static boolean show_existing(lives_conx_w *conxwp) {
   lives_cconnect_t *cconx=conxwp->cconx;
   lives_pconnect_t *pconx=conxwp->pconx;
 
-  GtkWidget *cfxcombo,*ccombo;
-  GtkWidget *pfxcombo,*pcombo;
-  GtkWidget *acheck;
+  LiVESWidget *cfxcombo,*ccombo;
+  LiVESWidget *pfxcombo,*pcombo;
+  LiVESWidget *acheck;
 
   weed_plant_t **ochans,**ichans;
   weed_plant_t **iparams;
@@ -4682,14 +4682,14 @@ static boolean show_existing(lives_conx_w *conxwp) {
 
 
 
-GtkWidget *make_datacon_window(int key, int mode) {
+LiVESWidget *make_datacon_window(int key, int mode) {
   static lives_conx_w conxw;
 
-  GtkWidget *cbox,*abox;
-  GtkWidget *scrolledwindow;
+  LiVESWidget *cbox,*abox;
+  LiVESWidget *scrolledwindow;
 
-  GtkWidget *cancelbutton;
-  GtkWidget *okbutton;
+  LiVESWidget *cancelbutton;
+  LiVESWidget *okbutton;
 
   GtkAccelGroup *accel_group;
 

@@ -12,16 +12,16 @@
 
 struct _dvgrabw *create_camwindow (s_cam *cam, int type)
 {
-  GtkWidget *hbuttonbox1;
-  GtkWidget *hbuttonbox2;
-  GtkWidget *button3;
-  GtkWidget *button4;
-  GtkWidget *buttond;
-  GtkWidget *image;
-  GtkWidget *vbox;
-  GtkWidget *hbox;
-  GtkWidget *label;
-  GtkWidget *direntry;
+  LiVESWidget *hbuttonbox1;
+  LiVESWidget *hbuttonbox2;
+  LiVESWidget *button3;
+  LiVESWidget *button4;
+  LiVESWidget *buttond;
+  LiVESWidget *image;
+  LiVESWidget *vbox;
+  LiVESWidget *hbox;
+  LiVESWidget *label;
+  LiVESWidget *direntry;
 
   gchar *tmp;
 

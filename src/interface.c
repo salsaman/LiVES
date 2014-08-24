@@ -29,7 +29,7 @@ extern void mt_change_disp_tracks_ok (GtkButton *, gpointer user_data);
 void add_suffix_check(GtkBox *box, const gchar *ext) {
   gchar *ltext;
 
-  GtkWidget *checkbutton;
+  LiVESWidget *checkbutton;
 
   if (ext==NULL) ltext=g_strdup (_ ("Let LiVES set the _file extension"));
   else ltext=g_strdup_printf(_ ("Let LiVES set the _file extension (.%s)"),ext);
@@ -44,12 +44,12 @@ void add_suffix_check(GtkBox *box, const gchar *ext) {
 
 
 
-static GtkWidget *add_deinterlace_checkbox(GtkBox *for_deint) {
-  GtkWidget *hbox=lives_hbox_new (FALSE, 0);
-  GtkWidget *checkbutton = lives_standard_check_button_new (_ ("Apply _Deinterlace"),TRUE,LIVES_BOX(hbox),NULL);
+static LiVESWidget *add_deinterlace_checkbox(GtkBox *for_deint) {
+  LiVESWidget *hbox=lives_hbox_new (FALSE, 0);
+  LiVESWidget *checkbutton = lives_standard_check_button_new (_ ("Apply _Deinterlace"),TRUE,LIVES_BOX(hbox),NULL);
 
   if (LIVES_IS_HBOX(for_deint)) {
-    GtkWidget *filler;
+    LiVESWidget *filler;
     lives_box_pack_start (for_deint, hbox, FALSE, FALSE, widget_opts.packing_width);
     lives_box_reorder_child(for_deint, hbox, 0);
     filler=add_fill_to_box(LIVES_BOX(for_deint));
@@ -72,7 +72,7 @@ static GtkWidget *add_deinterlace_checkbox(GtkBox *for_deint) {
 
 static void pv_sel_changed(GtkFileChooser *chooser, gpointer user_data) {
   GSList *slist=lives_file_chooser_get_filenames (chooser);
-  GtkWidget *pbutton=(GtkWidget *)user_data;
+  LiVESWidget *pbutton=(LiVESWidget *)user_data;
 
   if (slist==NULL||slist->data==NULL||g_slist_length(slist)>1||!(g_file_test((gchar *)slist->data,G_FILE_TEST_IS_REGULAR))) {
     lives_widget_set_sensitive(pbutton,FALSE);
@@ -89,13 +89,13 @@ static void pv_sel_changed(GtkFileChooser *chooser, gpointer user_data) {
 
 
 
-void widget_add_preview(GtkWidget *widget, LiVESBox *for_preview, LiVESBox *for_button, LiVESBox *for_deint, int preview_type) {
+void widget_add_preview(LiVESWidget *widget, LiVESBox *for_preview, LiVESBox *for_button, LiVESBox *for_deint, int preview_type) {
   // preview type 1 - video and audio, fileselector
   // preview type 2 - audio only, fileselector
   // preview type 3 - range preview
 
-  GtkWidget *preview_button=NULL;
-  GtkWidget *fs_label;
+  LiVESWidget *preview_button=NULL;
+  LiVESWidget *fs_label;
 
   mainw->fs_playframe = gtk_frame_new (NULL);
   mainw->fs_playalign = gtk_alignment_new (0.,0.,1.,1.);
@@ -164,11 +164,11 @@ void widget_add_preview(GtkWidget *widget, LiVESBox *for_preview, LiVESBox *for_
 
 xprocess * create_processing (const gchar *text) {
 
-  GtkWidget *dialog_vbox;
-  GtkWidget *vbox2;
-  GtkWidget *vbox3;
-  GtkWidget *dialog_action_area;
-  GtkWidget *details_arrow;
+  LiVESWidget *dialog_vbox;
+  LiVESWidget *vbox2;
+  LiVESWidget *vbox3;
+  LiVESWidget *dialog_action_area;
+  LiVESWidget *details_arrow;
 
   GtkAccelGroup *accel_group=GTK_ACCEL_GROUP(lives_accel_group_new ());
 
@@ -320,8 +320,8 @@ xprocess * create_processing (const gchar *text) {
 #define TB_HEIGHT_VID 80
 #define TB_HEIGHT_AUD 50
 
-static GtkWidget *vid_text_view_new(void) {
-  GtkWidget *textview=lives_text_view_new();
+static LiVESWidget *vid_text_view_new(void) {
+  LiVESWidget *textview=lives_text_view_new();
 
   if (palette->style&STYLE_1) {
     lives_widget_set_base_color(textview, LIVES_WIDGET_STATE_NORMAL, &palette->info_base);
@@ -336,8 +336,8 @@ static GtkWidget *vid_text_view_new(void) {
   return textview;
 }
 
-static GtkWidget *aud_text_view_new(void) {
-  GtkWidget *textview=lives_text_view_new();
+static LiVESWidget *aud_text_view_new(void) {
+  LiVESWidget *textview=lives_text_view_new();
 
   if (palette->style&STYLE_1) {
     lives_widget_set_base_color(textview, LIVES_WIDGET_STATE_NORMAL, &palette->info_base);
@@ -356,28 +356,28 @@ static GtkWidget *aud_text_view_new(void) {
 lives_clipinfo_t *create_clip_info_window (int audio_channels, boolean is_mt) {
   // TODO : rewrite this horrible code
 
-  GtkWidget *dialog_vbox;
-  GtkWidget *dialog_action_area;
-  GtkWidget *frame4;
-  GtkWidget *fixed3;
-  GtkWidget *fixed5;
-  GtkWidget *fixed6;
-  GtkWidget *label45;
-  GtkWidget *label46;
-  GtkWidget *label47;
-  GtkWidget *label48;
-  GtkWidget *label44;
-  GtkWidget *label43;
-  GtkWidget *label40;
-  GtkWidget *label50;
-  GtkWidget *label51;
-  GtkWidget *label52;
-  GtkWidget *label53;
-  GtkWidget *frame5;
-  GtkWidget *left;
-  GtkWidget *frame6;
-  GtkWidget *right;
-  GtkWidget *okbutton;
+  LiVESWidget *dialog_vbox;
+  LiVESWidget *dialog_action_area;
+  LiVESWidget *frame4;
+  LiVESWidget *fixed3;
+  LiVESWidget *fixed5;
+  LiVESWidget *fixed6;
+  LiVESWidget *label45;
+  LiVESWidget *label46;
+  LiVESWidget *label47;
+  LiVESWidget *label48;
+  LiVESWidget *label44;
+  LiVESWidget *label43;
+  LiVESWidget *label40;
+  LiVESWidget *label50;
+  LiVESWidget *label51;
+  LiVESWidget *label52;
+  LiVESWidget *label53;
+  LiVESWidget *frame5;
+  LiVESWidget *left;
+  LiVESWidget *frame6;
+  LiVESWidget *right;
+  LiVESWidget *okbutton;
 
   GtkAccelGroup *accel_group;
 
@@ -570,7 +570,7 @@ lives_clipinfo_t *create_clip_info_window (int audio_channels, boolean is_mt) {
 
 
 static void on_resizecb_toggled (GtkToggleButton *t, gpointer user_data) {
-  GtkWidget *cb=(GtkWidget *)user_data;
+  LiVESWidget *cb=(LiVESWidget *)user_data;
 
   if (!lives_toggle_button_get_active(t)) {
     lives_widget_set_sensitive(cb,FALSE);
@@ -585,16 +585,16 @@ static void on_resizecb_toggled (GtkToggleButton *t, gpointer user_data) {
 
 
 
-GtkWidget* create_encoder_prep_dialog (const gchar *text1, const gchar *text2, boolean opt_resize) {
-  GtkWidget *dialog;
-  GtkWidget *dialog_vbox;
-  GtkWidget *dialog_action_area;
-  GtkWidget *cancelbutton;
-  GtkWidget *okbutton;
-  GtkWidget *checkbutton=NULL;
-  GtkWidget *checkbutton2;
-  GtkWidget *label;
-  GtkWidget *hbox;
+LiVESWidget* create_encoder_prep_dialog (const gchar *text1, const gchar *text2, boolean opt_resize) {
+  LiVESWidget *dialog;
+  LiVESWidget *dialog_vbox;
+  LiVESWidget *dialog_action_area;
+  LiVESWidget *cancelbutton;
+  LiVESWidget *okbutton;
+  LiVESWidget *checkbutton=NULL;
+  LiVESWidget *checkbutton2;
+  LiVESWidget *label;
+  LiVESWidget *hbox;
 
   gchar *labeltext,*tmp,*tmp2;
 
@@ -688,15 +688,15 @@ GtkWidget* create_encoder_prep_dialog (const gchar *text1, const gchar *text2, b
 
 
 // Information/error dialog
-GtkWidget* create_info_error_dialog (const gchar *text, boolean is_blocking, int mask, lives_info_t info_type) {
-  GtkWidget *dialog;
-  GtkWidget *dialog_vbox;
-  GtkWidget *info_text;
-  GtkWidget *dialog_action_area;
-  GtkWidget *info_ok_button;
-  GtkWidget *details_button;
-  GtkWidget *checkbutton;
-  GtkWidget *hbox;
+LiVESWidget* create_info_error_dialog (const gchar *text, boolean is_blocking, int mask, lives_info_t info_type) {
+  LiVESWidget *dialog;
+  LiVESWidget *dialog_vbox;
+  LiVESWidget *info_text;
+  LiVESWidget *dialog_action_area;
+  LiVESWidget *info_ok_button;
+  LiVESWidget *details_button;
+  LiVESWidget *checkbutton;
+  LiVESWidget *hbox;
   gchar *form_text;
   gchar *textx;
 
@@ -802,10 +802,10 @@ GtkWidget* create_info_error_dialog (const gchar *text, boolean is_blocking, int
 
 text_window *create_text_window (const gchar *title, const gchar *text, GtkTextBuffer *textbuffer) {
   // general text window
-  GtkWidget *dialog_vbox;
-  GtkWidget *scrolledwindow;
-  GtkWidget *dialog_action_area;
-  GtkWidget *okbutton;
+  LiVESWidget *dialog_vbox;
+  LiVESWidget *scrolledwindow;
+  LiVESWidget *dialog_action_area;
+  LiVESWidget *okbutton;
 
   gchar *mytitle=g_strdup(title);
   gchar *mytext=NULL;
@@ -863,7 +863,7 @@ text_window *create_text_window (const gchar *title, const gchar *text, GtkTextB
 
     okbutton = lives_button_new_with_mnemonic (_("_Close Window"));
 
-    GtkWidget *savebutton = lives_button_new_with_mnemonic (_("_Save to file"));
+    LiVESWidget *savebutton = lives_button_new_with_mnemonic (_("_Save to file"));
     lives_dialog_add_action_widget (LIVES_DIALOG (textwindow->dialog), savebutton, GTK_RESPONSE_YES);
     lives_dialog_add_action_widget (LIVES_DIALOG (textwindow->dialog), okbutton, GTK_RESPONSE_OK);
     
@@ -889,15 +889,15 @@ text_window *create_text_window (const gchar *title, const gchar *text, GtkTextB
 
 
 _insertw* create_insert_dialog (void) {
-  GtkWidget *dialog_vbox;
-  GtkWidget *hbox1;
-  GtkWidget *hbox;
-  GtkWidget *table;
-  GtkWidget *radiobutton;
-  GtkWidget *vseparator;
-  GtkWidget *dialog_action_area;
-  GtkWidget *cancelbutton;
-  GtkWidget *okbutton;
+  LiVESWidget *dialog_vbox;
+  LiVESWidget *hbox1;
+  LiVESWidget *hbox;
+  LiVESWidget *table;
+  LiVESWidget *radiobutton;
+  LiVESWidget *vseparator;
+  LiVESWidget *dialog_action_area;
+  LiVESWidget *cancelbutton;
+  LiVESWidget *okbutton;
 
   GSList *radiobutton1_group = NULL;
   GSList *radiobutton2_group = NULL;
@@ -1062,16 +1062,16 @@ _insertw* create_insert_dialog (void) {
 
 
 
-GtkWidget *create_opensel_dialog (void) {
-  GtkWidget *opensel_dialog;
-  GtkWidget *dialog_vbox;
-  GtkWidget *vbox;
-  GtkWidget *table;
-  GtkWidget *label;
-  GtkWidget *spinbutton;
-  GtkWidget *dialog_action_area;
-  GtkWidget *cancelbutton;
-  GtkWidget *okbutton;
+LiVESWidget *create_opensel_dialog (void) {
+  LiVESWidget *opensel_dialog;
+  LiVESWidget *dialog_vbox;
+  LiVESWidget *vbox;
+  LiVESWidget *table;
+  LiVESWidget *label;
+  LiVESWidget *spinbutton;
+  LiVESWidget *dialog_action_area;
+  LiVESWidget *cancelbutton;
+  LiVESWidget *okbutton;
 
   opensel_dialog = lives_standard_dialog_new (_("LiVES: - Open Selection"),FALSE);
 
@@ -1157,14 +1157,14 @@ _entryw* create_location_dialog (int type) {
   // type 1 is open location
   // type 2 is open youtube: - 3 fields:= URL, directory, file name
 
-  GtkWidget *dialog_vbox;
-  GtkWidget *dialog_action_area;
-  GtkWidget *cancelbutton;
-  GtkWidget *okbutton;
-  GtkWidget *label;
-  GtkWidget *checkbutton;
-  GtkWidget *hbox;
-  GtkWidget *buttond;
+  LiVESWidget *dialog_vbox;
+  LiVESWidget *dialog_action_area;
+  LiVESWidget *cancelbutton;
+  LiVESWidget *okbutton;
+  LiVESWidget *label;
+  LiVESWidget *checkbutton;
+  LiVESWidget *hbox;
+  LiVESWidget *buttond;
 
   _entryw *locw=(_entryw*)(g_malloc(sizeof(_entryw)));
 
@@ -1320,15 +1320,15 @@ _entryw* create_rename_dialog (int type) {
 
   // type 7 = rename track in mt
 
-  GtkWidget *dialog_vbox;
-  GtkWidget *hbox;
-  GtkWidget *label;
-  GtkWidget *dialog_action_area;
-  GtkWidget *cancelbutton;
-  GtkWidget *okbutton;
-  GtkWidget *set_combo;
-  GtkWidget *dirbutton1;
-  GtkWidget *dirimage1;
+  LiVESWidget *dialog_vbox;
+  LiVESWidget *hbox;
+  LiVESWidget *label;
+  LiVESWidget *dialog_action_area;
+  LiVESWidget *cancelbutton;
+  LiVESWidget *okbutton;
+  LiVESWidget *set_combo;
+  LiVESWidget *dirbutton1;
+  LiVESWidget *dirimage1;
 
   GtkAccelGroup *accel_group=GTK_ACCEL_GROUP(lives_accel_group_new ());
 
@@ -1561,7 +1561,7 @@ static void rb_tvcarddef_toggled(GtkToggleButton *tbut, gpointer user_data) {
 }
 
 
-static void after_dialog_combo_changed (GtkWidget *combo, gpointer user_data) {
+static void after_dialog_combo_changed (LiVESWidget *combo, gpointer user_data) {
   GList *list=(GList *)user_data;
   gchar *etext=lives_combo_get_active_text(LIVES_COMBO(combo));
   mainw->fx1_val=lives_list_index(list,etext);
@@ -1569,15 +1569,15 @@ static void after_dialog_combo_changed (GtkWidget *combo, gpointer user_data) {
 }
 
 
-GtkWidget *create_combo_dialog (int type, gpointer user_data) {
+LiVESWidget *create_combo_dialog (int type, gpointer user_data) {
   // create a dialog with combo box selector
 
   // type 1 == 1 combo box
 
-  GtkWidget *combo_dialog;
-  GtkWidget *dialog_vbox;
-  GtkWidget *label;
-  GtkWidget *combo;
+  LiVESWidget *combo_dialog;
+  LiVESWidget *dialog_vbox;
+  LiVESWidget *label;
+  LiVESWidget *combo;
 
   gchar *label_text=NULL,*title=NULL;
 
@@ -1633,7 +1633,7 @@ GtkWidget *create_combo_dialog (int type, gpointer user_data) {
 }
 
 
-GtkWidget* create_cdtrack_dialog (int type, gpointer user_data) {
+LiVESWidget* create_cdtrack_dialog (int type, gpointer user_data) {
   // general purpose dialog with label and up to 2 spinbuttons
 
   // type 0 = cd track
@@ -1650,13 +1650,13 @@ GtkWidget* create_cdtrack_dialog (int type, gpointer user_data) {
   // TODO - for CD make this nicer - get track names
   lives_tvcardw_t *tvcardw=NULL;
 
-  GtkWidget *cd_dialog;
-  GtkWidget *dialog_vbox;
-  GtkWidget *hbox;
-  GtkWidget *spinbutton;
-  GtkWidget *dialog_action_area;
-  GtkWidget *cancelbutton;
-  GtkWidget *okbutton;
+  LiVESWidget *cd_dialog;
+  LiVESWidget *dialog_vbox;
+  LiVESWidget *hbox;
+  LiVESWidget *spinbutton;
+  LiVESWidget *dialog_action_area;
+  LiVESWidget *cancelbutton;
+  LiVESWidget *okbutton;
 
   GtkAccelGroup *accel_group=GTK_ACCEL_GROUP(lives_accel_group_new ());
   
@@ -1963,11 +1963,11 @@ aud_dialog_t *create_audfade_dialog (int type) {
   // type 0 = fade in
   // type 1 = fade out
 
-  GtkWidget *dialog_vbox;
-  GtkWidget *hbox;
-  GtkWidget *rb_time;
-  GtkWidget *rb_sel;
-  GtkWidget *label;
+  LiVESWidget *dialog_vbox;
+  LiVESWidget *hbox;
+  LiVESWidget *rb_time;
+  LiVESWidget *rb_sel;
+  LiVESWidget *label;
 
   gchar *label_text=NULL,*label_text2=NULL,*title;
 
@@ -2063,12 +2063,12 @@ aud_dialog_t *create_audfade_dialog (int type) {
 
 
 _commentsw* create_comments_dialog (lives_clip_t *sfile, gchar *filename) {
-  GtkWidget *dialog_vbox;
-  GtkWidget *table;
-  GtkWidget *label;
-  GtkWidget *vbox;
-  GtkWidget *hbox;
-  GtkWidget *buttond;
+  LiVESWidget *dialog_vbox;
+  LiVESWidget *table;
+  LiVESWidget *label;
+  LiVESWidget *vbox;
+  LiVESWidget *hbox;
+  LiVESWidget *buttond;
 
   _commentsw *commentsw=(_commentsw*)(g_malloc(sizeof(_commentsw)));
 
@@ -2218,12 +2218,12 @@ static void chooser_check_dir(GtkFileChooser *chooser, gpointer user_data) {
 
 
 
-gchar *choose_file(gchar *dir, gchar *fname, gchar **filt, lives_file_chooser_action_t act, const char *title, GtkWidget *extra_widget) {
+gchar *choose_file(gchar *dir, gchar *fname, gchar **filt, lives_file_chooser_action_t act, const char *title, LiVESWidget *extra_widget) {
   // new style file chooser
 
   // in/out values are in utf8 encoding
 
-  GtkWidget *chooser;
+  LiVESWidget *chooser;
   GtkFileFilter *filter;
 
   gchar *filename=NULL;
@@ -2374,7 +2374,7 @@ static void chooser_response(GtkDialog *dialog, int response, gpointer user_data
 
 
 
-GtkWidget *choose_file_with_preview (gchar *dir, const gchar *title, int preview_type) {
+LiVESWidget *choose_file_with_preview (gchar *dir, const gchar *title, int preview_type) {
   // preview_type 1 - video and audio open (single - opensel)
   // preview type 2 - import audio
   // preview_type 3 - video and audio open (multiple)
@@ -2384,9 +2384,9 @@ GtkWidget *choose_file_with_preview (gchar *dir, const gchar *title, int preview
   // type 128 - locate missing clip
 
 
-  GtkWidget *chooser;
+  LiVESWidget *chooser;
 
-  chooser=(GtkWidget *)choose_file(dir,NULL,NULL,LIVES_FILE_CHOOSER_ACTION_OPEN,title,mainw->LiVES);
+  chooser=(LiVESWidget *)choose_file(dir,NULL,NULL,LIVES_FILE_CHOOSER_ACTION_OPEN,title,mainw->LiVES);
   
   if (preview_type==3) gtk_file_chooser_set_select_multiple(GTK_FILE_CHOOSER(chooser),TRUE);
 
@@ -2414,13 +2414,13 @@ GtkWidget *choose_file_with_preview (gchar *dir, const gchar *title, int preview
 
 //cancel/discard/save dialog
 _entryw* create_cds_dialog (int type) {
-  GtkWidget *dialog_vbox;
-  GtkWidget *dialog_action_area;
-  GtkWidget *cancelbutton;
-  GtkWidget *discardbutton;
-  GtkWidget *savebutton;
-  GtkWidget *label=NULL;
-  GtkWidget *hbox;
+  LiVESWidget *dialog_vbox;
+  LiVESWidget *dialog_action_area;
+  LiVESWidget *cancelbutton;
+  LiVESWidget *discardbutton;
+  LiVESWidget *savebutton;
+  LiVESWidget *label=NULL;
+  LiVESWidget *hbox;
   GtkAccelGroup *accel_group;
 
   _entryw *cdsw=(_entryw*)(g_malloc(sizeof(_entryw)));
@@ -2473,7 +2473,7 @@ _entryw* create_cds_dialog (int type) {
   lives_box_pack_start (LIVES_BOX (dialog_vbox), label, TRUE, TRUE, 0);
 
   if (type==1) {
-    GtkWidget *checkbutton;
+    LiVESWidget *checkbutton;
 
     hbox = lives_hbox_new (FALSE, 0);
     lives_box_pack_start (LIVES_BOX (dialog_vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
@@ -2560,15 +2560,15 @@ static void flip_cdisk_bit (GtkToggleButton *t, gpointer user_data) {
 }
 
 
-GtkWidget *create_cleardisk_advanced_dialog(void) {
-  GtkWidget *dialog;
-  GtkWidget *dialog_vbox;
-  GtkWidget *scrollw;
-  GtkWidget *vbox;
-  GtkWidget *hbox;
-  GtkWidget *checkbutton;
-  GtkWidget *okbutton;
-  GtkWidget *resetbutton;
+LiVESWidget *create_cleardisk_advanced_dialog(void) {
+  LiVESWidget *dialog;
+  LiVESWidget *dialog_vbox;
+  LiVESWidget *scrollw;
+  LiVESWidget *vbox;
+  LiVESWidget *hbox;
+  LiVESWidget *checkbutton;
+  LiVESWidget *okbutton;
+  LiVESWidget *resetbutton;
 
   gchar *tmp,*tmp2;
 

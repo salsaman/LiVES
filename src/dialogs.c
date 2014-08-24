@@ -45,13 +45,13 @@ static double est_time;
 static volatile boolean dlg_thread_ready=FALSE;
 
 void on_warn_mask_toggled (GtkToggleButton *togglebutton, gpointer user_data) {
-  GtkWidget *tbutton;
+  LiVESWidget *tbutton;
 
   if (lives_toggle_button_get_active(togglebutton)) prefs->warning_mask|=GPOINTER_TO_INT(user_data);
   else prefs->warning_mask^=GPOINTER_TO_INT(user_data);
   set_int_pref("lives_warning_mask",prefs->warning_mask);
 
-  if ((tbutton=(GtkWidget *)g_object_get_data(G_OBJECT(togglebutton),"auto"))!=NULL) {
+  if ((tbutton=(LiVESWidget *)g_object_get_data(G_OBJECT(togglebutton),"auto"))!=NULL) {
     // this is for the cds window - disable autoreload if we are not gonna show this window
     if (lives_toggle_button_get_active(togglebutton)) {
       lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(tbutton),FALSE);
@@ -69,9 +69,9 @@ void on_warn_mask_toggled (GtkToggleButton *togglebutton, gpointer user_data) {
 static void add_xlays_widget(GtkBox *box) {
   // add widget to preview affected layouts
 
-  GtkWidget *expander=gtk_expander_new_with_mnemonic(_("Show affected _layouts"));
+  LiVESWidget *expander=gtk_expander_new_with_mnemonic(_("Show affected _layouts"));
   LiVESWidget *textview=lives_text_view_new();
-  GtkWidget *label;
+  LiVESWidget *label;
   GList *xlist=mainw->xlays;
   GtkTextBuffer *textbuffer = lives_text_view_get_buffer (GTK_TEXT_VIEW (textview));
   
@@ -107,8 +107,8 @@ static void add_xlays_widget(GtkBox *box) {
 
 
 void add_warn_check (GtkBox *box, int warn_mask_number) {
-  GtkWidget *checkbutton;
-  GtkWidget *hbox=lives_hbox_new (FALSE, 0);
+  LiVESWidget *checkbutton;
+  LiVESWidget *hbox=lives_hbox_new (FALSE, 0);
 
   checkbutton=lives_standard_check_button_new (
 					       _("Do _not show this warning any more\n(can be turned back on from Preferences/Warnings)"),
@@ -123,7 +123,7 @@ void add_warn_check (GtkBox *box, int warn_mask_number) {
 
 
 static void add_clear_ds_button(GtkDialog* dialog) {
-  GtkWidget *button = lives_button_new_from_stock (LIVES_STOCK_CLEAR);
+  LiVESWidget *button = lives_button_new_from_stock (LIVES_STOCK_CLEAR);
 
   lives_button_set_label(GTK_BUTTON(button),_("_Recover disk space"));
   if (mainw->tried_ds_recover) lives_widget_set_sensitive(button,FALSE);
@@ -140,8 +140,8 @@ static void add_clear_ds_button(GtkDialog* dialog) {
 
 static void add_clear_ds_adv(GtkBox *box) {
   // add a button which opens up  Recover/Repair widget
-  GtkWidget *button = lives_button_new_with_mnemonic(_(" _Advanced Settings >>"));
-  GtkWidget *hbox = lives_hbox_new (FALSE, 0);
+  LiVESWidget *button = lives_button_new_with_mnemonic(_(" _Advanced Settings >>"));
+  LiVESWidget *hbox = lives_hbox_new (FALSE, 0);
 
   lives_box_pack_start (LIVES_BOX(hbox), button, FALSE, FALSE, widget_opts.packing_width*2);
   lives_box_pack_start (box, hbox, FALSE, FALSE, widget_opts.packing_height);
@@ -159,14 +159,14 @@ static void add_clear_ds_adv(GtkBox *box) {
 
 
 //Warning or yes/no dialog
-static GtkWidget* create_warn_dialog (int warn_mask_number, GtkWindow *transient, const gchar *text, lives_dialog_t diat) {
-  GtkWidget *dialog;
-  GtkWidget *dialog_vbox;
-  GtkWidget *dialog_action_area;
-  GtkWidget *warning_label;
-  GtkWidget *warning_cancelbutton=NULL;
-  GtkWidget *warning_okbutton=NULL;
-  GtkWidget *abortbutton=NULL;
+static LiVESWidget* create_warn_dialog (int warn_mask_number, GtkWindow *transient, const gchar *text, lives_dialog_t diat) {
+  LiVESWidget *dialog;
+  LiVESWidget *dialog_vbox;
+  LiVESWidget *dialog_action_area;
+  LiVESWidget *warning_label;
+  LiVESWidget *warning_cancelbutton=NULL;
+  LiVESWidget *warning_okbutton=NULL;
+  LiVESWidget *abortbutton=NULL;
 
   GtkAccelGroup *accel_group=GTK_ACCEL_GROUP(lives_accel_group_new ());
 
@@ -317,7 +317,7 @@ boolean do_yesno_dialog_with_check (const gchar *text, int warn_mask_number) {
 
 boolean do_warning_dialog_with_check_transient(const gchar *text, int warn_mask_number, GtkWindow *transient) {
   // show OK/CANCEL, returns FALSE if cancelled
-  GtkWidget *warning;
+  LiVESWidget *warning;
   int response=1;
   gchar *mytext;
 
@@ -344,7 +344,7 @@ boolean do_warning_dialog_with_check_transient(const gchar *text, int warn_mask_
 
 boolean do_yesno_dialog_with_check_transient(const gchar *text, int warn_mask_number, GtkWindow *transient) {
   // show YES/NO, returns TRUE for YES
-  GtkWidget *warning;
+  LiVESWidget *warning;
   int response=1;
   gchar *mytext;
 
@@ -370,7 +370,7 @@ boolean do_yesno_dialog_with_check_transient(const gchar *text, int warn_mask_nu
 
 boolean do_yesno_dialog(const gchar *text) {
   // show Yes/No, returns TRUE if Yes
-  GtkWidget *warning;
+  LiVESWidget *warning;
   int response;
   gchar *mytext;
   GtkWindow *transient=NULL;
@@ -397,7 +397,7 @@ boolean do_yesno_dialog(const gchar *text) {
 int do_abort_cancel_retry_dialog(const gchar *text, GtkWindow *transient) {
   int response;
   gchar *mytext;
-  GtkWidget *warning;
+  LiVESWidget *warning;
 
   if (!prefs->show_gui) {
     transient=NULL;
@@ -526,7 +526,7 @@ void do_blocking_info_dialog(const gchar *text) {
 void do_error_dialog_with_check_transient(const gchar *text, boolean is_blocking, int warn_mask_number, GtkWindow *transient) {
   // show error box
 
-  GtkWidget *err_box;
+  LiVESWidget *err_box;
   gchar *mytext;
   if (prefs->warning_mask&warn_mask_number) return;
   mytext=g_strdup(text);
@@ -547,7 +547,7 @@ void do_error_dialog_with_check_transient(const gchar *text, boolean is_blocking
 void do_info_dialog_with_transient(const gchar *text, boolean is_blocking, GtkWindow *transient) {
   // info box
 
-  GtkWidget *info_box;
+  LiVESWidget *info_box;
   gchar *mytext;
   mytext=g_strdup(text);
   info_box=create_info_error_dialog(mytext,is_blocking,0,LIVES_INFO_TYPE_INFO);
@@ -2008,7 +2008,7 @@ void do_layout_ascrap_file_error(void) {
 
 boolean rdet_suggest_values (int width, int height, double fps, int fps_num, int fps_denom, int arate, int asigned, 
 			     boolean swap_endian, boolean anr, boolean ignore_fps) {
-  GtkWidget *prep_dialog;
+  LiVESWidget *prep_dialog;
 
   gchar *msg1=g_strdup_printf (_ ("\n\nDue to restrictions in the %s format\n"),prefs->encoder.of_desc);
   gchar *msg2=g_strdup ("");
@@ -2106,7 +2106,7 @@ boolean rdet_suggest_values (int width, int height, double fps, int fps_num, int
 
 boolean do_encoder_restrict_dialog (int width, int height, double fps, int fps_num, int fps_denom, int arate, int asigned, 
 				    boolean swap_endian, boolean anr, boolean save_all) {
-  GtkWidget *prep_dialog;
+  LiVESWidget *prep_dialog;
 
   gchar *msg1=g_strdup_printf (_ ("\n\nDue to restrictions in the %s format\n"),prefs->encoder.of_desc);
   gchar *msg2=g_strdup ("");
@@ -2507,8 +2507,8 @@ static xprocess *procw=NULL;
 
 static void create_threaded_dialog(gchar *text, boolean has_cancel) {
 
-  GtkWidget *dialog_vbox;
-  GtkWidget *vbox;
+  LiVESWidget *dialog_vbox;
+  LiVESWidget *vbox;
   gchar tmp_label[256];
  
   procw=(xprocess*)(g_malloc(sizeof(xprocess)));
@@ -2551,11 +2551,11 @@ static void create_threaded_dialog(gchar *text, boolean has_cancel) {
   lives_box_pack_start (LIVES_BOX (vbox), procw->label3, FALSE, FALSE, 0);
 
   if (has_cancel) {
-    GtkWidget *cancelbutton = lives_button_new_from_stock ("gtk-cancel");
+    LiVESWidget *cancelbutton = lives_button_new_from_stock ("gtk-cancel");
     lives_widget_show (cancelbutton);
 
     if (mainw->current_file>-1&&cfile!=NULL&&cfile->opening_only_audio) {
-      GtkWidget *enoughbutton = lives_button_new_with_mnemonic (_ ("_Enough"));
+      LiVESWidget *enoughbutton = lives_button_new_with_mnemonic (_ ("_Enough"));
       lives_widget_show (enoughbutton);
       lives_dialog_add_action_widget (LIVES_DIALOG (procw->processing), enoughbutton, GTK_RESPONSE_CANCEL);
       lives_widget_set_can_focus_and_default (enoughbutton);
@@ -3079,7 +3079,7 @@ void do_locked_in_vdevs_error(void) {
 
 void do_do_not_close_d (void) {
   gchar *msg=g_strdup(_("\n\nCLEANING AND COPYING FILES. THIS MAY TAKE SOME TIME.\nDO NOT SHUT DOWN OR CLOSE LIVES !\n"));
-  GtkWidget *err_box=create_info_error_dialog(msg,FALSE,0,LIVES_INFO_TYPE_WARNING);
+  LiVESWidget *err_box=create_info_error_dialog(msg,FALSE,0,LIVES_INFO_TYPE_WARNING);
   GtkWindow *transient=NULL;
 
   g_free(msg);

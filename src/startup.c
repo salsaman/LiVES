@@ -207,9 +207,9 @@ static void on_init_aplayer_toggled (GtkToggleButton *tbutton, gpointer user_dat
 
 
 boolean do_audio_choice_dialog(short startup_phase) {
-  GtkWidget *dialog,*dialog_vbox,*radiobutton0,*radiobutton1,*radiobutton2,*radiobutton3,*radiobutton4,*label;
-  GtkWidget *okbutton,*cancelbutton;
-  GtkWidget *hbox;
+  LiVESWidget *dialog,*dialog_vbox,*radiobutton0,*radiobutton1,*radiobutton2,*radiobutton3,*radiobutton4,*label;
+  LiVESWidget *okbutton,*cancelbutton;
+  LiVESWidget *hbox;
 
   GtkAccelGroup *accel_group;
 
@@ -433,14 +433,14 @@ boolean do_audio_choice_dialog(short startup_phase) {
 }
 
 
-static void add_test(GtkWidget *table, int row, gchar *ttext, boolean noskip) {
-  GtkWidget *label=lives_standard_label_new(ttext);
+static void add_test(LiVESWidget *table, int row, gchar *ttext, boolean noskip) {
+  LiVESWidget *label=lives_standard_label_new(ttext);
 
   lives_table_attach (LIVES_TABLE (table), label, 0, 1, row, row+1, (GtkAttachOptions)0, (GtkAttachOptions)0, 10, 10);
   lives_widget_show(label);
 
   if (!noskip) {
-    GtkWidget *image=lives_image_new_from_stock(LIVES_STOCK_REMOVE,LIVES_ICON_SIZE_LARGE_TOOLBAR);
+    LiVESWidget *image=lives_image_new_from_stock(LIVES_STOCK_REMOVE,LIVES_ICON_SIZE_LARGE_TOOLBAR);
     // TRANSLATORS - as in "skipped test"
     label=lives_standard_label_new(_("Skipped"));
 
@@ -455,14 +455,14 @@ static void add_test(GtkWidget *table, int row, gchar *ttext, boolean noskip) {
 }
 
 
-static boolean pass_test(GtkWidget *table, int row) {
+static boolean pass_test(LiVESWidget *table, int row) {
   // TRANSLATORS - as in "passed test"
-  GtkWidget *label=lives_standard_label_new(_("Passed"));
+  LiVESWidget *label=lives_standard_label_new(_("Passed"));
 
 #if GTK_CHECK_VERSION(3,10,0)
-  GtkWidget *image=lives_image_new_from_stock(LIVES_STOCK_ADD,LIVES_ICON_SIZE_LARGE_TOOLBAR);
+  LiVESWidget *image=lives_image_new_from_stock(LIVES_STOCK_ADD,LIVES_ICON_SIZE_LARGE_TOOLBAR);
 #else
-  GtkWidget *image=lives_image_new_from_stock(GTK_STOCK_APPLY,LIVES_ICON_SIZE_LARGE_TOOLBAR);
+  LiVESWidget *image=lives_image_new_from_stock(GTK_STOCK_APPLY,LIVES_ICON_SIZE_LARGE_TOOLBAR);
 #endif
 
   lives_table_attach (LIVES_TABLE (table), label, 1, 2, row, row+1, (GtkAttachOptions)0, (GtkAttachOptions)0, 10, 10);
@@ -476,12 +476,12 @@ static boolean pass_test(GtkWidget *table, int row) {
 }
 
 
-static boolean fail_test(GtkWidget *table, int row, gchar *ftext) {
-  GtkWidget *label;
+static boolean fail_test(LiVESWidget *table, int row, gchar *ftext) {
+  LiVESWidget *label;
 #if GTK_CHECK_VERSION(3,10,0)
-  GtkWidget *image=lives_image_new_from_stock(LIVES_STOCK_REMOVE,LIVES_ICON_SIZE_LARGE_TOOLBAR);
+  LiVESWidget *image=lives_image_new_from_stock(LIVES_STOCK_REMOVE,LIVES_ICON_SIZE_LARGE_TOOLBAR);
 #else
-  GtkWidget *image=lives_image_new_from_stock(GTK_STOCK_CANCEL,LIVES_ICON_SIZE_LARGE_TOOLBAR);
+  LiVESWidget *image=lives_image_new_from_stock(GTK_STOCK_CANCEL,LIVES_ICON_SIZE_LARGE_TOOLBAR);
 #endif
 
   label=lives_standard_label_new(ftext);
@@ -511,13 +511,13 @@ LIVES_INLINE gchar *get_resource(gchar *fname) {
 
 
 boolean do_startup_tests(boolean tshoot) {
-  GtkWidget *dialog;
-  GtkWidget *dialog_vbox;
+  LiVESWidget *dialog;
+  LiVESWidget *dialog_vbox;
 
-  GtkWidget *label;
-  GtkWidget *table;
-  GtkWidget *okbutton;
-  GtkWidget *cancelbutton;
+  LiVESWidget *label;
+  LiVESWidget *table;
+  LiVESWidget *okbutton;
+  LiVESWidget *cancelbutton;
 
   GtkAccelGroup *accel_group;
 
@@ -940,9 +940,9 @@ void do_startup_interface_query(void) {
   // prompt for startup ce or startup mt
 
 
-  GtkWidget *dialog,*dialog_vbox,*radiobutton0,*radiobutton1,*label;
-  GtkWidget *okbutton;
-  GtkWidget *hbox;
+  LiVESWidget *dialog,*dialog_vbox,*radiobutton0,*radiobutton1,*label;
+  LiVESWidget *okbutton;
+  LiVESWidget *hbox;
   GSList *radiobutton_group = NULL;
   gchar *txt1,*txt2,*txt3,*msg;
 

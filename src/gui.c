@@ -76,7 +76,7 @@ void load_theme (void) {
 }
 
 
-void add_message_scroller(GtkWidget *conter) {
+void add_message_scroller(LiVESWidget *conter) {
   LiVESTextBuffer *tbuff=NULL;
   gchar *all_text=NULL;
 
@@ -127,7 +127,7 @@ void make_custom_submenus(void) {
 }
 
 #if GTK_CHECK_VERSION(3,0,0)
-boolean expose_sim (GtkWidget *widget, lives_painter_t *cr, gpointer user_data) {
+boolean expose_sim (LiVESWidget *widget, lives_painter_t *cr, gpointer user_data) {
   int current_file=mainw->current_file;
   if (current_file>-1&&cfile!=NULL&&cfile->cb_src!=-1) mainw->current_file=cfile->cb_src;
   if (mainw->current_file>0&&cfile!=NULL) {
@@ -138,7 +138,7 @@ boolean expose_sim (GtkWidget *widget, lives_painter_t *cr, gpointer user_data) 
   return TRUE;
 }
 
-boolean expose_eim (GtkWidget *widget, lives_painter_t *cr, gpointer user_data) {
+boolean expose_eim (LiVESWidget *widget, lives_painter_t *cr, gpointer user_data) {
   int current_file=mainw->current_file;
   if (current_file>-1&&cfile!=NULL&&cfile->cb_src!=-1) mainw->current_file=cfile->cb_src;
   if (mainw->current_file>0&&cfile!=NULL) {
@@ -149,7 +149,7 @@ boolean expose_eim (GtkWidget *widget, lives_painter_t *cr, gpointer user_data) 
   return TRUE;
 }
 
-boolean expose_pim (GtkWidget *widget, lives_painter_t *cr, gpointer user_data) {
+boolean expose_pim (LiVESWidget *widget, lives_painter_t *cr, gpointer user_data) {
   int current_file=mainw->current_file;
   if (current_file>-1&&cfile!=NULL&&cfile->cb_src!=-1) mainw->current_file=cfile->cb_src;
   if (!mainw->draw_blocked) {
@@ -161,63 +161,63 @@ boolean expose_pim (GtkWidget *widget, lives_painter_t *cr, gpointer user_data) 
 #endif
 
 void create_LiVES (void) {
-  GtkWidget *hbox1;
-  GtkWidget *vbox2;
-  GtkWidget *menuitem;
-  GtkWidget *menuitem_menu;
-  GtkWidget *separatormenuitem;
-  GtkWidget *select_submenu_menu;
-  GtkWidget *submenu_menu;
-  GtkWidget *export_submenu_menu;
-  GtkWidget *trimaudio_submenu_menu;
-  GtkWidget *delaudio_submenu_menu;
-  GtkWidget *menuitemsep;
+  LiVESWidget *hbox1;
+  LiVESWidget *vbox2;
+  LiVESWidget *menuitem;
+  LiVESWidget *menuitem_menu;
+  LiVESWidget *separatormenuitem;
+  LiVESWidget *select_submenu_menu;
+  LiVESWidget *submenu_menu;
+  LiVESWidget *export_submenu_menu;
+  LiVESWidget *trimaudio_submenu_menu;
+  LiVESWidget *delaudio_submenu_menu;
+  LiVESWidget *menuitemsep;
 #if !GTK_CHECK_VERSION(3,10,0)
-  GtkWidget *image;
+  LiVESWidget *image;
 #endif
-  GtkWidget *effects;
-  GtkWidget *tools;
-  GtkWidget *audio;
-  GtkWidget *audio_menu;
-  GtkWidget *info;
-  GtkWidget *info_menu;
-  GtkWidget *advanced;
-  GtkWidget *advanced_menu;
-  GtkWidget *rfx_menu;
-  GtkWidget *rfx_submenu;
-  GtkWidget *midi_menu;
-  GtkWidget *midi_submenu;
-  GtkWidget *midi_learn;
-  GtkWidget *midi_load;
-  GtkWidget *midi_save;
-  GtkWidget *vj_menu;
-  GtkWidget *toys_menu;
-  GtkWidget *win;
-  GtkWidget *about;
-  GtkWidget *show_manual;
-  GtkWidget *email_author;
-  GtkWidget *donate;
-  GtkWidget *report_bug;
-  GtkWidget *suggest_feature;
-  GtkWidget *help_translate;
-  GtkWidget *vbox4;
-  GtkWidget *pf_label;
-  GtkWidget *label;
-  GtkWidget *hbox3;
-  GtkWidget *t_label;
-  GtkWidget *eventbox;
+  LiVESWidget *effects;
+  LiVESWidget *tools;
+  LiVESWidget *audio;
+  LiVESWidget *audio_menu;
+  LiVESWidget *info;
+  LiVESWidget *info_menu;
+  LiVESWidget *advanced;
+  LiVESWidget *advanced_menu;
+  LiVESWidget *rfx_menu;
+  LiVESWidget *rfx_submenu;
+  LiVESWidget *midi_menu;
+  LiVESWidget *midi_submenu;
+  LiVESWidget *midi_learn;
+  LiVESWidget *midi_load;
+  LiVESWidget *midi_save;
+  LiVESWidget *vj_menu;
+  LiVESWidget *toys_menu;
+  LiVESWidget *win;
+  LiVESWidget *about;
+  LiVESWidget *show_manual;
+  LiVESWidget *email_author;
+  LiVESWidget *donate;
+  LiVESWidget *report_bug;
+  LiVESWidget *suggest_feature;
+  LiVESWidget *help_translate;
+  LiVESWidget *vbox4;
+  LiVESWidget *pf_label;
+  LiVESWidget *label;
+  LiVESWidget *hbox3;
+  LiVESWidget *t_label;
+  LiVESWidget *eventbox;
 
 #if defined (HAVE_YUV4MPEG) || defined (HAVE_UNICAP)
-  GtkWidget *submenu;
+  LiVESWidget *submenu;
 #endif 
 
-  GtkWidget *new_test_rfx;
-  GtkWidget *copy_rfx;
-  GtkWidget *import_custom_rfx;
-  GtkWidget *rebuild_rfx;
-  GtkWidget *assign_rte_keys;
+  LiVESWidget *new_test_rfx;
+  LiVESWidget *copy_rfx;
+  LiVESWidget *import_custom_rfx;
+  LiVESWidget *rebuild_rfx;
+  LiVESWidget *assign_rte_keys;
 
-  GtkWidget *tmp_toolbar_icon;
+  LiVESWidget *tmp_toolbar_icon;
 
   LiVESAdjustment *adj;
 
@@ -1739,13 +1739,13 @@ void create_LiVES (void) {
       lives_pixbuf_saturate_and_pixelate(pixbuf,pixbuf,0.2,FALSE);
     }
 
-    mainw->m_sepwinbutton=LIVES_WIDGET(lives_tool_button_new(GTK_WIDGET(tmp_toolbar_icon),""));
+    mainw->m_sepwinbutton=LIVES_WIDGET(lives_tool_button_new(LIVES_WIDGET(tmp_toolbar_icon),""));
     lives_toolbar_insert(LIVES_TOOLBAR(mainw->btoolbar),LIVES_TOOL_ITEM(mainw->m_sepwinbutton),0);
     lives_widget_set_tooltip_text(mainw->m_sepwinbutton,_("Show the play window (s)"));
     
     tmp_toolbar_icon = lives_image_new_from_stock (LIVES_STOCK_MEDIA_REWIND, lives_toolbar_get_icon_size (LIVES_TOOLBAR (mainw->btoolbar)));
     
-    mainw->m_rewindbutton=LIVES_WIDGET(lives_tool_button_new(GTK_WIDGET(tmp_toolbar_icon),""));
+    mainw->m_rewindbutton=LIVES_WIDGET(lives_tool_button_new(LIVES_WIDGET(tmp_toolbar_icon),""));
     lives_toolbar_insert(LIVES_TOOLBAR(mainw->btoolbar),LIVES_TOOL_ITEM(mainw->m_rewindbutton),-1);
     lives_widget_set_tooltip_text(mainw->m_rewindbutton,_("Rewind to start (w)"));
     
@@ -1753,7 +1753,7 @@ void create_LiVES (void) {
     
     tmp_toolbar_icon = lives_image_new_from_stock (LIVES_STOCK_MEDIA_PLAY, lives_toolbar_get_icon_size (LIVES_TOOLBAR (mainw->btoolbar)));
     
-    mainw->m_playbutton=LIVES_WIDGET(lives_tool_button_new(GTK_WIDGET(tmp_toolbar_icon),""));
+    mainw->m_playbutton=LIVES_WIDGET(lives_tool_button_new(LIVES_WIDGET(tmp_toolbar_icon),""));
     lives_toolbar_insert(LIVES_TOOLBAR(mainw->btoolbar),LIVES_TOOL_ITEM(mainw->m_playbutton),-1);
     lives_widget_set_tooltip_text(mainw->m_playbutton,_("Play all (p)"));
     lives_widget_set_sensitive(mainw->m_playbutton,FALSE);
@@ -1761,7 +1761,7 @@ void create_LiVES (void) {
 
     tmp_toolbar_icon = lives_image_new_from_stock (LIVES_STOCK_MEDIA_STOP, lives_toolbar_get_icon_size (LIVES_TOOLBAR (mainw->btoolbar)));
     
-    mainw->m_stopbutton=LIVES_WIDGET(lives_tool_button_new(GTK_WIDGET(tmp_toolbar_icon),""));
+    mainw->m_stopbutton=LIVES_WIDGET(lives_tool_button_new(LIVES_WIDGET(tmp_toolbar_icon),""));
     lives_toolbar_insert(LIVES_TOOLBAR(mainw->btoolbar),LIVES_TOOL_ITEM(mainw->m_stopbutton),-1);
     lives_widget_set_tooltip_text(mainw->m_stopbutton,_("Stop playback (q)"));
     
@@ -1772,7 +1772,7 @@ void create_LiVES (void) {
     g_free(fnamex);
     tmp_toolbar_icon=lives_image_new_from_file (buff);
     
-    mainw->m_playselbutton=LIVES_WIDGET(lives_tool_button_new(GTK_WIDGET(tmp_toolbar_icon),""));
+    mainw->m_playselbutton=LIVES_WIDGET(lives_tool_button_new(LIVES_WIDGET(tmp_toolbar_icon),""));
     lives_toolbar_insert(LIVES_TOOLBAR(mainw->btoolbar),LIVES_TOOL_ITEM(mainw->m_playselbutton),-1);
     lives_widget_set_tooltip_text(mainw->m_playselbutton,_("Play selection (y)"));
     
@@ -1788,7 +1788,7 @@ void create_LiVES (void) {
       lives_pixbuf_saturate_and_pixelate(pixbuf,pixbuf,0.2,FALSE);
     }
     
-    mainw->m_loopbutton=LIVES_WIDGET(lives_tool_button_new(GTK_WIDGET(tmp_toolbar_icon),""));
+    mainw->m_loopbutton=LIVES_WIDGET(lives_tool_button_new(LIVES_WIDGET(tmp_toolbar_icon),""));
     lives_toolbar_insert(LIVES_TOOLBAR(mainw->btoolbar),LIVES_TOOL_ITEM(mainw->m_loopbutton),-1);
     lives_widget_set_tooltip_text(mainw->m_loopbutton,_("Switch continuous looping on (o)"));
     
@@ -1801,7 +1801,7 @@ void create_LiVES (void) {
       lives_pixbuf_saturate_and_pixelate(pixbuf,pixbuf,0.2,FALSE);
     }
     
-    mainw->m_mutebutton=LIVES_WIDGET(lives_tool_button_new(GTK_WIDGET(tmp_toolbar_icon),""));
+    mainw->m_mutebutton=LIVES_WIDGET(lives_tool_button_new(LIVES_WIDGET(tmp_toolbar_icon),""));
     lives_toolbar_insert(LIVES_TOOLBAR(mainw->btoolbar),LIVES_TOOL_ITEM(mainw->m_mutebutton),-1);
     lives_widget_set_tooltip_text(mainw->m_mutebutton,_("Mute the audio (z)"));
 
@@ -1870,13 +1870,13 @@ void create_LiVES (void) {
   lives_toolbar_set_icon_size (LIVES_TOOLBAR(mainw->toolbar),LIVES_ICON_SIZE_SMALL_TOOLBAR);
   tmp_toolbar_icon = lives_image_new_from_stock (LIVES_STOCK_MEDIA_STOP, lives_toolbar_get_icon_size (LIVES_TOOLBAR (mainw->toolbar)));
   
-  mainw->t_stopbutton=LIVES_WIDGET(lives_tool_button_new(GTK_WIDGET(tmp_toolbar_icon),""));
+  mainw->t_stopbutton=LIVES_WIDGET(lives_tool_button_new(LIVES_WIDGET(tmp_toolbar_icon),""));
   lives_toolbar_insert(LIVES_TOOLBAR(mainw->toolbar),LIVES_TOOL_ITEM(mainw->t_stopbutton),0);
   lives_widget_set_tooltip_text(mainw->t_stopbutton,_("Stop playback (q)"));
 
   tmp_toolbar_icon = lives_image_new_from_stock (LIVES_STOCK_UNDO, lives_toolbar_get_icon_size (LIVES_TOOLBAR (mainw->toolbar)));
 
-  mainw->t_bckground=LIVES_WIDGET(lives_tool_button_new(GTK_WIDGET(tmp_toolbar_icon),""));
+  mainw->t_bckground=LIVES_WIDGET(lives_tool_button_new(LIVES_WIDGET(tmp_toolbar_icon),""));
   lives_toolbar_insert(LIVES_TOOLBAR(mainw->toolbar),LIVES_TOOL_ITEM(mainw->t_bckground),1);
   lives_widget_set_tooltip_text(mainw->t_bckground,_("Unblank background (b)"));
 
@@ -1889,7 +1889,7 @@ void create_LiVES (void) {
     lives_pixbuf_saturate_and_pixelate(pixbuf,pixbuf,0.2,FALSE);
   }
 
-  mainw->t_sepwin=LIVES_WIDGET(lives_tool_button_new(GTK_WIDGET(tmp_toolbar_icon),""));
+  mainw->t_sepwin=LIVES_WIDGET(lives_tool_button_new(LIVES_WIDGET(tmp_toolbar_icon),""));
   lives_toolbar_insert(LIVES_TOOLBAR(mainw->toolbar),LIVES_TOOL_ITEM(mainw->t_sepwin),2);
   lives_widget_set_tooltip_text(mainw->t_sepwin,_("Play in separate window (s)"));
 
@@ -1901,7 +1901,7 @@ void create_LiVES (void) {
     pixbuf=lives_image_get_pixbuf(LIVES_IMAGE(tmp_toolbar_icon));
     lives_pixbuf_saturate_and_pixelate(pixbuf,pixbuf,0.2,FALSE);
   }
-  mainw->t_double=LIVES_WIDGET(lives_tool_button_new(GTK_WIDGET(tmp_toolbar_icon),""));
+  mainw->t_double=LIVES_WIDGET(lives_tool_button_new(LIVES_WIDGET(tmp_toolbar_icon),""));
   lives_widget_set_tooltip_text(mainw->t_double,_("Double size (d)"));
 
   lives_toolbar_insert(LIVES_TOOLBAR(mainw->toolbar),LIVES_TOOL_ITEM(mainw->t_double),3);
@@ -1915,45 +1915,45 @@ void create_LiVES (void) {
     lives_pixbuf_saturate_and_pixelate(pixbuf,pixbuf,0.2,FALSE);
   }
 
-  mainw->t_fullscreen=LIVES_WIDGET(lives_tool_button_new(GTK_WIDGET(tmp_toolbar_icon),""));
+  mainw->t_fullscreen=LIVES_WIDGET(lives_tool_button_new(LIVES_WIDGET(tmp_toolbar_icon),""));
   lives_toolbar_insert(LIVES_TOOLBAR(mainw->toolbar),LIVES_TOOL_ITEM(mainw->t_fullscreen),4);
   lives_widget_set_tooltip_text(mainw->t_fullscreen,_("Fullscreen playback (f)"));
 
   tmp_toolbar_icon = lives_image_new_from_stock (LIVES_STOCK_REMOVE, lives_toolbar_get_icon_size (LIVES_TOOLBAR (mainw->toolbar)));
 
 
-  mainw->t_slower=LIVES_WIDGET(lives_tool_button_new(GTK_WIDGET(tmp_toolbar_icon),""));
+  mainw->t_slower=LIVES_WIDGET(lives_tool_button_new(LIVES_WIDGET(tmp_toolbar_icon),""));
   lives_toolbar_insert(LIVES_TOOLBAR(mainw->toolbar),LIVES_TOOL_ITEM(mainw->t_slower),5);
   lives_widget_set_tooltip_text(mainw->t_slower,_("Play slower (ctrl-down)"));
 
   tmp_toolbar_icon = lives_image_new_from_stock (LIVES_STOCK_ADD, lives_toolbar_get_icon_size (LIVES_TOOLBAR (mainw->toolbar)));
 
-  mainw->t_faster=LIVES_WIDGET(lives_tool_button_new(GTK_WIDGET(tmp_toolbar_icon),""));
+  mainw->t_faster=LIVES_WIDGET(lives_tool_button_new(LIVES_WIDGET(tmp_toolbar_icon),""));
   lives_toolbar_insert(LIVES_TOOLBAR(mainw->toolbar),LIVES_TOOL_ITEM(mainw->t_faster),6);
   lives_widget_set_tooltip_text(mainw->t_faster,_("Play faster (ctrl-up)"));
 
 
   tmp_toolbar_icon = lives_image_new_from_stock (LIVES_STOCK_GO_BACK, lives_toolbar_get_icon_size (LIVES_TOOLBAR (mainw->toolbar)));
 
-  mainw->t_back=LIVES_WIDGET(lives_tool_button_new(GTK_WIDGET(tmp_toolbar_icon),""));
+  mainw->t_back=LIVES_WIDGET(lives_tool_button_new(LIVES_WIDGET(tmp_toolbar_icon),""));
   lives_toolbar_insert(LIVES_TOOLBAR(mainw->toolbar),LIVES_TOOL_ITEM(mainw->t_back),7);
   lives_widget_set_tooltip_text(mainw->t_back,_("Skip back (ctrl-left)"));
 
   tmp_toolbar_icon = lives_image_new_from_stock (LIVES_STOCK_GO_FORWARD, lives_toolbar_get_icon_size (LIVES_TOOLBAR (mainw->toolbar)));
 
-  mainw->t_forward=LIVES_WIDGET(lives_tool_button_new(GTK_WIDGET(tmp_toolbar_icon),""));
+  mainw->t_forward=LIVES_WIDGET(lives_tool_button_new(LIVES_WIDGET(tmp_toolbar_icon),""));
   lives_toolbar_insert(LIVES_TOOLBAR(mainw->toolbar),LIVES_TOOL_ITEM(mainw->t_forward),8);
   lives_widget_set_tooltip_text(mainw->t_forward,_("Skip forward (ctrl-right)"));
 
   tmp_toolbar_icon = lives_image_new_from_stock (LIVES_STOCK_DIALOG_INFO, lives_toolbar_get_icon_size (LIVES_TOOLBAR (mainw->toolbar)));
 
-  mainw->t_infobutton=LIVES_WIDGET(lives_tool_button_new(GTK_WIDGET(tmp_toolbar_icon),""));
+  mainw->t_infobutton=LIVES_WIDGET(lives_tool_button_new(LIVES_WIDGET(tmp_toolbar_icon),""));
   lives_toolbar_insert(LIVES_TOOLBAR(mainw->toolbar),LIVES_TOOL_ITEM(mainw->t_infobutton),9);
   lives_widget_set_tooltip_text(mainw->t_infobutton,_("Show clip info (i)"));
 
   tmp_toolbar_icon = lives_image_new_from_stock (LIVES_STOCK_CLOSE, lives_toolbar_get_icon_size (LIVES_TOOLBAR (mainw->toolbar)));
 
-  mainw->t_hide=LIVES_WIDGET(lives_tool_button_new(GTK_WIDGET(tmp_toolbar_icon),""));
+  mainw->t_hide=LIVES_WIDGET(lives_tool_button_new(LIVES_WIDGET(tmp_toolbar_icon),""));
   lives_toolbar_insert(LIVES_TOOLBAR(mainw->toolbar),LIVES_TOOL_ITEM(mainw->t_hide),10);
   lives_widget_set_tooltip_text(mainw->t_hide,_("Hide this toolbar"));
 
@@ -3447,17 +3447,17 @@ void unblock_expose (void) {
 
 void make_preview_box (void) {
   // create a box to show frames in, this will go in the sepwin when we are not playing
-  GtkWidget *hbox;
-  GtkWidget *hbox_buttons;
-  GtkWidget *radiobutton_free;
-  GtkWidget *radiobutton_start;
-  GtkWidget *radiobutton_end;
-  GtkWidget *radiobutton_ptr;
-  GtkWidget *rewind_img;
-  GtkWidget *playsel_img;
-  GtkWidget *play_img;
-  GtkWidget *loop_img;
-  GtkWidget *eventbox;
+  LiVESWidget *hbox;
+  LiVESWidget *hbox_buttons;
+  LiVESWidget *radiobutton_free;
+  LiVESWidget *radiobutton_start;
+  LiVESWidget *radiobutton_end;
+  LiVESWidget *radiobutton_ptr;
+  LiVESWidget *rewind_img;
+  LiVESWidget *playsel_img;
+  LiVESWidget *play_img;
+  LiVESWidget *loop_img;
+  LiVESWidget *eventbox;
 
   GSList *radiobutton_group = NULL;
 
@@ -3626,7 +3626,7 @@ void make_preview_box (void) {
   g_free(fnamex);
   mainw->p_mute_img=lives_image_new_from_file (buff);
   if (g_file_test(buff,G_FILE_TEST_EXISTS)&&!mainw->mute) {
-    GdkPixbuf *pixbuf=lives_image_get_pixbuf(GTK_IMAGE(mainw->p_mute_img));
+    LiVESPixbuf *pixbuf=lives_image_get_pixbuf(GTK_IMAGE(mainw->p_mute_img));
     lives_pixbuf_saturate_and_pixelate(pixbuf,pixbuf,0.2,FALSE);
   }
 
@@ -4325,9 +4325,9 @@ void remove_from_clipmenu(void) {
 
 
 void splash_init(void) {
-  GtkWidget *vbox,*hbox;
-  GtkWidget *splash_img;
-  GdkPixbuf *splash_pix;
+  LiVESWidget *vbox,*hbox;
+  LiVESWidget *splash_img;
+  LiVESPixbuf *splash_pix;
 
   GError *error=NULL;
   gchar *tmp=g_strdup_printf("%s/%s/lives-splash.png",prefs->prefix_dir,THEME_DIR);

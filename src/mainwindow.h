@@ -615,174 +615,174 @@ typedef struct {
 
   int new_blend_file;
 
-  GtkWidget *frame1;
-  GtkWidget *frame2;
-  GtkWidget *freventbox0;
-  GtkWidget *freventbox1;
-  GtkWidget *playframe;
-  GtkWidget *pl_eventbox;
-  GdkPixbuf *imframe;
-  GdkPixbuf *camframe;
-  GdkPixbuf *imsep;
-  GtkWidget *LiVES;
-  GtkWidget *open;
-  GtkWidget *open_sel;
-  GtkWidget *open_vcd_menu;
-  GtkWidget *open_vcd_submenu;
-  GtkWidget *open_vcd;
-  GtkWidget *open_dvd;
-  GtkWidget *open_loc;
-  GtkWidget *open_utube;
-  GtkWidget *open_loc_menu;
-  GtkWidget *open_loc_submenu;
-  GtkWidget *open_yuv4m;
-  GtkWidget *open_lives2lives;
-  GtkWidget *send_lives2lives;
-  GtkWidget *open_device_menu;
-  GtkWidget *open_device_submenu;
-  GtkWidget *open_firewire;
-  GtkWidget *open_hfirewire;
-  GtkWidget *add_live_menu;
-  GtkWidget *recent_menu;
-  GtkWidget *recent_submenu;
-  GtkWidget *recent1;
-  GtkWidget *recent2;
-  GtkWidget *recent3;
-  GtkWidget *recent4;
-  GtkWidget *save_as;
-  GtkWidget *backup;
-  GtkWidget *restore;
-  GtkWidget *save_selection;
-  GtkWidget *close;
-  GtkWidget *import_proj;
-  GtkWidget *export_proj;
-  GtkWidget *sw_sound;
-  GtkWidget *clear_ds;
-  GtkWidget *ccpd_sound;
-  GtkWidget *quit;
-  GtkWidget *undo;
-  GtkWidget *redo;
-  GtkWidget *copy;
-  GtkWidget *cut;
-  GtkWidget *insert;
-  GtkWidget *paste_as_new;
-  GtkWidget *merge;
-  GtkWidget *xdelete;
-  GtkWidget *select_submenu;
-  GtkWidget *select_all;
-  GtkWidget *select_new;
-  GtkWidget *select_to_end;
-  GtkWidget *select_from_start;
-  GtkWidget *select_start_only;
-  GtkWidget *select_end_only;
-  GtkWidget *select_last;
-  GtkWidget *select_invert;
-  GtkWidget *lock_selwidth;
-  GtkWidget *record_perf;
-  GtkWidget *playall;
-  GtkWidget *playsel;
-  GtkWidget *playclip;
-  GtkWidget *rev_clipboard;
-  GtkWidget *stop;
-  GtkWidget *rewind;
-  GtkWidget *full_screen;
-  GtkWidget *loop_video;
-  GtkWidget *loop_continue;
-  GtkWidget *loop_ping_pong;
-  GtkWidget *sepwin;
-  GtkWidget *mute_audio;
-  GtkWidget *sticky;
-  GtkWidget *showfct;
-  GtkWidget *showsubs;
-  GtkWidget *letter;
-  GtkWidget *aload_subs;
-  GtkWidget *load_subs;
-  GtkWidget *erase_subs;
-  GtkWidget *fade;
-  GtkWidget *dsize;
+  LiVESWidget *frame1;
+  LiVESWidget *frame2;
+  LiVESWidget *freventbox0;
+  LiVESWidget *freventbox1;
+  LiVESWidget *playframe;
+  LiVESWidget *pl_eventbox;
+  LiVESPixbuf *imframe;
+  LiVESPixbuf *camframe;
+  LiVESPixbuf *imsep;
+  LiVESWidget *LiVES;
+  LiVESWidget *open;
+  LiVESWidget *open_sel;
+  LiVESWidget *open_vcd_menu;
+  LiVESWidget *open_vcd_submenu;
+  LiVESWidget *open_vcd;
+  LiVESWidget *open_dvd;
+  LiVESWidget *open_loc;
+  LiVESWidget *open_utube;
+  LiVESWidget *open_loc_menu;
+  LiVESWidget *open_loc_submenu;
+  LiVESWidget *open_yuv4m;
+  LiVESWidget *open_lives2lives;
+  LiVESWidget *send_lives2lives;
+  LiVESWidget *open_device_menu;
+  LiVESWidget *open_device_submenu;
+  LiVESWidget *open_firewire;
+  LiVESWidget *open_hfirewire;
+  LiVESWidget *add_live_menu;
+  LiVESWidget *recent_menu;
+  LiVESWidget *recent_submenu;
+  LiVESWidget *recent1;
+  LiVESWidget *recent2;
+  LiVESWidget *recent3;
+  LiVESWidget *recent4;
+  LiVESWidget *save_as;
+  LiVESWidget *backup;
+  LiVESWidget *restore;
+  LiVESWidget *save_selection;
+  LiVESWidget *close;
+  LiVESWidget *import_proj;
+  LiVESWidget *export_proj;
+  LiVESWidget *sw_sound;
+  LiVESWidget *clear_ds;
+  LiVESWidget *ccpd_sound;
+  LiVESWidget *quit;
+  LiVESWidget *undo;
+  LiVESWidget *redo;
+  LiVESWidget *copy;
+  LiVESWidget *cut;
+  LiVESWidget *insert;
+  LiVESWidget *paste_as_new;
+  LiVESWidget *merge;
+  LiVESWidget *xdelete;
+  LiVESWidget *select_submenu;
+  LiVESWidget *select_all;
+  LiVESWidget *select_new;
+  LiVESWidget *select_to_end;
+  LiVESWidget *select_from_start;
+  LiVESWidget *select_start_only;
+  LiVESWidget *select_end_only;
+  LiVESWidget *select_last;
+  LiVESWidget *select_invert;
+  LiVESWidget *lock_selwidth;
+  LiVESWidget *record_perf;
+  LiVESWidget *playall;
+  LiVESWidget *playsel;
+  LiVESWidget *playclip;
+  LiVESWidget *rev_clipboard;
+  LiVESWidget *stop;
+  LiVESWidget *rewind;
+  LiVESWidget *full_screen;
+  LiVESWidget *loop_video;
+  LiVESWidget *loop_continue;
+  LiVESWidget *loop_ping_pong;
+  LiVESWidget *sepwin;
+  LiVESWidget *mute_audio;
+  LiVESWidget *sticky;
+  LiVESWidget *showfct;
+  LiVESWidget *showsubs;
+  LiVESWidget *letter;
+  LiVESWidget *aload_subs;
+  LiVESWidget *load_subs;
+  LiVESWidget *erase_subs;
+  LiVESWidget *fade;
+  LiVESWidget *dsize;
 
-  GtkWidget *change_speed;
-  GtkWidget *capture;
-  GtkWidget *load_audio;
-  GtkWidget *load_cdtrack;
-  GtkWidget *eject_cd;
-  GtkWidget *recaudio_submenu;
-  GtkWidget *recaudio_clip;
-  GtkWidget *recaudio_sel;
-  GtkWidget *export_submenu;
-  GtkWidget *export_allaudio;
-  GtkWidget *export_selaudio;
-  GtkWidget *append_audio;
-  GtkWidget *trim_submenu;
-  GtkWidget *trim_audio;
-  GtkWidget *trim_to_pstart;
-  GtkWidget *delaudio_submenu;
-  GtkWidget *delsel_audio;
-  GtkWidget *delall_audio;
-  GtkWidget *ins_silence;
-  GtkWidget *fade_aud_in;
-  GtkWidget *fade_aud_out;
-  GtkWidget *resample_audio;
-  GtkWidget *resample_video;
-  GtkWidget *preferences;
-  GtkWidget *rename;
-  GtkWidget *toys;
-  GtkWidget *toy_none;
-  GtkWidget *toy_random_frames;
-  GtkWidget *toy_tv;
-  GtkWidget *toy_autolives;
-  GtkWidget *show_file_info;
-  GtkWidget *show_file_comments;
-  GtkWidget *show_clipboard_info;
-  GtkWidget *show_messages;
-  GtkWidget *show_layout_errors;
-  GtkWidget *sel_label;
+  LiVESWidget *change_speed;
+  LiVESWidget *capture;
+  LiVESWidget *load_audio;
+  LiVESWidget *load_cdtrack;
+  LiVESWidget *eject_cd;
+  LiVESWidget *recaudio_submenu;
+  LiVESWidget *recaudio_clip;
+  LiVESWidget *recaudio_sel;
+  LiVESWidget *export_submenu;
+  LiVESWidget *export_allaudio;
+  LiVESWidget *export_selaudio;
+  LiVESWidget *append_audio;
+  LiVESWidget *trim_submenu;
+  LiVESWidget *trim_audio;
+  LiVESWidget *trim_to_pstart;
+  LiVESWidget *delaudio_submenu;
+  LiVESWidget *delsel_audio;
+  LiVESWidget *delall_audio;
+  LiVESWidget *ins_silence;
+  LiVESWidget *fade_aud_in;
+  LiVESWidget *fade_aud_out;
+  LiVESWidget *resample_audio;
+  LiVESWidget *resample_video;
+  LiVESWidget *preferences;
+  LiVESWidget *rename;
+  LiVESWidget *toys;
+  LiVESWidget *toy_none;
+  LiVESWidget *toy_random_frames;
+  LiVESWidget *toy_tv;
+  LiVESWidget *toy_autolives;
+  LiVESWidget *show_file_info;
+  LiVESWidget *show_file_comments;
+  LiVESWidget *show_clipboard_info;
+  LiVESWidget *show_messages;
+  LiVESWidget *show_layout_errors;
+  LiVESWidget *sel_label;
   GtkAccelGroup *accel_group;
-  GtkWidget *sep_image;
-  GtkWidget *hruler;
-  GtkWidget *vj_menu;
-  GtkWidget *vj_save_set;
-  GtkWidget *vj_load_set;
-  GtkWidget *vj_show_keys;
-  GtkWidget *rte_defs_menu;
-  GtkWidget *rte_defs;
-  GtkWidget *save_rte_defs;
-  GtkWidget *vj_reset;
-  GtkWidget *mt_menu;
-  GtkWidget *troubleshoot;
-  GtkWidget *export_custom_rfx;
-  GtkWidget *delete_custom_rfx;
-  GtkWidget *edit_test_rfx;
-  GtkWidget *rename_test_rfx;
-  GtkWidget *delete_test_rfx;
-  GtkWidget *promote_test_rfx;
+  LiVESWidget *sep_image;
+  LiVESWidget *hruler;
+  LiVESWidget *vj_menu;
+  LiVESWidget *vj_save_set;
+  LiVESWidget *vj_load_set;
+  LiVESWidget *vj_show_keys;
+  LiVESWidget *rte_defs_menu;
+  LiVESWidget *rte_defs;
+  LiVESWidget *save_rte_defs;
+  LiVESWidget *vj_reset;
+  LiVESWidget *mt_menu;
+  LiVESWidget *troubleshoot;
+  LiVESWidget *export_custom_rfx;
+  LiVESWidget *delete_custom_rfx;
+  LiVESWidget *edit_test_rfx;
+  LiVESWidget *rename_test_rfx;
+  LiVESWidget *delete_test_rfx;
+  LiVESWidget *promote_test_rfx;
 
   /// for the fileselection preview
-  GtkWidget *fs_playarea;
-  GtkWidget *fs_playalign;
-  GtkWidget *fs_playframe;
+  LiVESWidget *fs_playarea;
+  LiVESWidget *fs_playalign;
+  LiVESWidget *fs_playframe;
 
   /// for the framedraw special widget - TODO - use a sub-struct
-  GtkWidget *framedraw; ///< the eventbox
-  GtkWidget *framedraw_reset; ///< the 'redraw' button
-  GtkWidget *framedraw_preview; ///< the 'redraw' button
-  GtkWidget *framedraw_spinbutton; ///< the frame number button
-  GtkWidget *framedraw_scale; ///< the slider
-  GtkWidget *fd_frame; ///< surrounding frame widget
+  LiVESWidget *framedraw; ///< the eventbox
+  LiVESWidget *framedraw_reset; ///< the 'redraw' button
+  LiVESWidget *framedraw_preview; ///< the 'redraw' button
+  LiVESWidget *framedraw_spinbutton; ///< the frame number button
+  LiVESWidget *framedraw_scale; ///< the slider
+  LiVESWidget *fd_frame; ///< surrounding frame widget
 
   weed_plant_t *fd_layer_orig; ///< original layer uneffected
   weed_plant_t *fd_layer; ///< framedraw preview layer
 
   // bars here -> actually text above bars
-  GtkWidget *vidbar;
-  GtkWidget *laudbar;
-  GtkWidget *raudbar;
+  LiVESWidget *vidbar;
+  LiVESWidget *laudbar;
+  LiVESWidget *raudbar;
 
-  GtkWidget *spinbutton_end;
-  GtkWidget *spinbutton_start;
+  LiVESWidget *spinbutton_end;
+  LiVESWidget *spinbutton_start;
 
-  GtkWidget *arrow1;
-  GtkWidget *arrow2;
+  LiVESWidget *arrow1;
+  LiVESWidget *arrow2;
 
   lives_cursor_t cursor_style;
 
@@ -792,17 +792,17 @@ typedef struct {
   void ***pchains; // parameter value chains for interpolation
 
   // for the internal player
-  GtkWidget *play_image;
-  GtkWidget *play_window;
+  LiVESWidget *play_image;
+  LiVESWidget *play_window;
   weed_plant_t *frame_layer;
   weed_plant_t *blend_layer;
-  GtkWidget *plug;
+  LiVESWidget *plug;
 
   // frame preview in the separate window
-  GtkWidget *preview_box;
-  GtkWidget *preview_image;
-  GtkWidget *preview_spinbutton;
-  GtkWidget *preview_scale;
+  LiVESWidget *preview_box;
+  LiVESWidget *preview_image;
+  LiVESWidget *preview_spinbutton;
+  LiVESWidget *preview_scale;
   int preview_frame;
   gulong preview_spin_func;
   int prv_link;
@@ -811,74 +811,74 @@ typedef struct {
 #define PRV_END 2
 #define PRV_PTR 3
 
-  GtkWidget *start_image;
-  GtkWidget *end_image;
-  GtkWidget *playarea;
-  GtkWidget *hseparator;
-  GtkWidget *scrolledwindow;
-  GtkWidget *message_box;
+  LiVESWidget *start_image;
+  LiVESWidget *end_image;
+  LiVESWidget *playarea;
+  LiVESWidget *hseparator;
+  LiVESWidget *scrolledwindow;
+  LiVESWidget *message_box;
 
-  GtkWidget *textview1;
-  GtkWidget *clipsmenu;
-  GtkWidget *eventbox;
-  GtkWidget *eventbox2;
-  GtkWidget *eventbox3;
-  GtkWidget *eventbox4;
-  GtkWidget *eventbox5;
+  LiVESWidget *textview1;
+  LiVESWidget *clipsmenu;
+  LiVESWidget *eventbox;
+  LiVESWidget *eventbox2;
+  LiVESWidget *eventbox3;
+  LiVESWidget *eventbox4;
+  LiVESWidget *eventbox5;
 
   // toolbar buttons
-  GtkWidget *t_stopbutton;
-  GtkWidget *t_bckground;
-  GtkWidget *t_fullscreen;
-  GtkWidget *t_sepwin;
-  GtkWidget *t_double;
-  GtkWidget *t_infobutton;
+  LiVESWidget *t_stopbutton;
+  LiVESWidget *t_bckground;
+  LiVESWidget *t_fullscreen;
+  LiVESWidget *t_sepwin;
+  LiVESWidget *t_double;
+  LiVESWidget *t_infobutton;
 
-  GtkWidget *t_slower;
-  GtkWidget *t_faster;
-  GtkWidget *t_forward;
-  GtkWidget *t_back;
+  LiVESWidget *t_slower;
+  LiVESWidget *t_faster;
+  LiVESWidget *t_forward;
+  LiVESWidget *t_back;
 
-  GtkWidget *t_hide;
+  LiVESWidget *t_hide;
 
-  GtkWidget *toolbar;
-  GtkWidget *tb_hbox;
-  GtkWidget *fs1;
-  GtkWidget *vbox1;
+  LiVESWidget *toolbar;
+  LiVESWidget *tb_hbox;
+  LiVESWidget *fs1;
+  LiVESWidget *vbox1;
 
-  GtkWidget *volume_scale;
-  GtkWidget *vol_toolitem;
-  GtkWidget *vol_label;
+  LiVESWidget *volume_scale;
+  LiVESWidget *vol_toolitem;
+  LiVESWidget *vol_label;
 
   // menubar buttons
-  GtkWidget *btoolbar; ///< button toolbar - clip editor
-  GtkWidget *m_sepwinbutton;
-  GtkWidget *m_playbutton;
-  GtkWidget *m_stopbutton;
-  GtkWidget *m_playselbutton;
-  GtkWidget *m_rewindbutton;
-  GtkWidget *m_loopbutton;
-  GtkWidget *m_mutebutton;
-  GtkWidget *menu_hbox;
-  GtkWidget *menubar;
+  LiVESWidget *btoolbar; ///< button toolbar - clip editor
+  LiVESWidget *m_sepwinbutton;
+  LiVESWidget *m_playbutton;
+  LiVESWidget *m_stopbutton;
+  LiVESWidget *m_playselbutton;
+  LiVESWidget *m_rewindbutton;
+  LiVESWidget *m_loopbutton;
+  LiVESWidget *m_mutebutton;
+  LiVESWidget *menu_hbox;
+  LiVESWidget *menubar;
 
   // separate window
   int opwx;
   int opwy;
 
   // sepwin buttons
-  GtkWidget *preview_controls;
-  GtkWidget *p_playbutton;
-  GtkWidget *p_playselbutton;
-  GtkWidget *p_rewindbutton;
-  GtkWidget *p_loopbutton;
-  GtkWidget *p_mutebutton;
-  GtkWidget *p_mute_img;
+  LiVESWidget *preview_controls;
+  LiVESWidget *p_playbutton;
+  LiVESWidget *p_playselbutton;
+  LiVESWidget *p_rewindbutton;
+  LiVESWidget *p_loopbutton;
+  LiVESWidget *p_mutebutton;
+  LiVESWidget *p_mute_img;
 
   // timer bars
-  GtkWidget *video_draw;
-  GtkWidget *laudio_draw;
-  GtkWidget *raudio_draw;
+  LiVESWidget *video_draw;
+  LiVESWidget *laudio_draw;
+  LiVESWidget *raudio_draw;
 
   lives_painter_surface_t *video_drawable;
   lives_painter_surface_t *laudio_drawable;
@@ -887,41 +887,41 @@ typedef struct {
   lives_painter_surface_t *blank_raudio_drawable;
 
   // framecounter
-  GtkWidget *framebar;
-  GtkWidget *framecounter;
-  GtkWidget *spinbutton_pb_fps;
-  GtkWidget *vps_label;
-  GtkWidget *curf_label;
-  GtkWidget *banner;
+  LiVESWidget *framebar;
+  LiVESWidget *framecounter;
+  LiVESWidget *spinbutton_pb_fps;
+  LiVESWidget *vps_label;
+  LiVESWidget *curf_label;
+  LiVESWidget *banner;
 
   // rendered effects
-  GtkWidget *effects_menu;
-  GtkWidget *tools_menu;
-  GtkWidget *utilities_menu;
-  GtkWidget *utilities_submenu;
-  GtkWidget *gens_menu;
-  GtkWidget *gens_submenu;
-  GtkWidget *run_test_rfx_submenu;
-  GtkWidget *run_test_rfx_menu;
-  GtkWidget *custom_effects_menu;
-  GtkWidget *custom_effects_submenu;
-  GtkWidget *custom_effects_separator;
-  GtkWidget *custom_tools_menu;
-  GtkWidget *custom_tools_submenu;
-  GtkWidget *custom_tools_separator;
-  GtkWidget *custom_gens_menu;
-  GtkWidget *custom_gens_submenu;
-  GtkWidget *custom_utilities_menu;
-  GtkWidget *custom_utilities_submenu;
-  GtkWidget *custom_utilities_separator;
-  GtkWidget *rte_separator;
-  GtkWidget *invis;
+  LiVESWidget *effects_menu;
+  LiVESWidget *tools_menu;
+  LiVESWidget *utilities_menu;
+  LiVESWidget *utilities_submenu;
+  LiVESWidget *gens_menu;
+  LiVESWidget *gens_submenu;
+  LiVESWidget *run_test_rfx_submenu;
+  LiVESWidget *run_test_rfx_menu;
+  LiVESWidget *custom_effects_menu;
+  LiVESWidget *custom_effects_submenu;
+  LiVESWidget *custom_effects_separator;
+  LiVESWidget *custom_tools_menu;
+  LiVESWidget *custom_tools_submenu;
+  LiVESWidget *custom_tools_separator;
+  LiVESWidget *custom_gens_menu;
+  LiVESWidget *custom_gens_submenu;
+  LiVESWidget *custom_utilities_menu;
+  LiVESWidget *custom_utilities_submenu;
+  LiVESWidget *custom_utilities_separator;
+  LiVESWidget *rte_separator;
+  LiVESWidget *invis;
 
   int num_tracks;
   int *clip_index;
   int *frame_index;
 
-  GtkWidget *resize_menuitem;
+  LiVESWidget *resize_menuitem;
 
   boolean only_close; ///< only close clips - do not exit
   volatile boolean is_exiting; ///< set during shutdown (inverse of only_close then)
@@ -1038,7 +1038,7 @@ typedef struct {
 
   boolean keep_pre;
 
-  GtkWidget *textwidget_focus;
+  LiVESWidget *textwidget_focus;
 
   _vid_playback_plugin *vpp;
 
@@ -1059,9 +1059,9 @@ typedef struct {
   int write_abuf; ///< audio buffer number to write to (for multitrack)
   volatile int abufs_to_fill;
 
-  GtkWidget *splash_window;
-  GtkWidget *splash_label;
-  GtkWidget *splash_progress;
+  LiVESWidget *splash_window;
+  LiVESWidget *splash_label;
+  LiVESWidget *splash_progress;
 
   boolean recoverable_layout;
 
@@ -1184,11 +1184,11 @@ extern _palette *palette;
 typedef struct {
   gulong ins_frame_function;
 
-  GtkWidget *merge_dialog;
-  GtkWidget *ins_frame_button;
-  GtkWidget *drop_frame_button;
-  GtkWidget *param_vbox;
-  GtkWidget *spinbutton_loops;
+  LiVESWidget *merge_dialog;
+  LiVESWidget *ins_frame_button;
+  LiVESWidget *drop_frame_button;
+  LiVESWidget *param_vbox;
+  LiVESWidget *spinbutton_loops;
 
   boolean loop_to_fit;
   boolean align_start;
@@ -1203,7 +1203,7 @@ extern _merge_opts* merge_opts;
 
 /// note, we can only have two of these currently, one for rendered effects, one for real time effects
 /// 0 for rfx, 1 for rte
-extern GtkWidget *fx_dialog[2];
+extern LiVESWidget *fx_dialog[2];
 
 
 #define LIVES_SIGKILL SIGKILL

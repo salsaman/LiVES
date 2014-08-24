@@ -90,8 +90,8 @@ typedef struct {
 
   ///////////////////////// following this is not saved/loaded
 
-  GtkWidget *treev1;
-  GtkWidget *treev2;
+  LiVESWidget *treev1;
+  LiVESWidget *treev2;
 
   GtkTreeStore *gtkstore;
   GtkTreeStore *gtkstore2;
@@ -103,14 +103,14 @@ typedef struct {
 
 
 typedef struct {
-  GtkWidget *dialog;
-  GtkWidget *clear_button;
-  GtkWidget *del_all_button;
+  LiVESWidget *dialog;
+  LiVESWidget *clear_button;
+  LiVESWidget *del_all_button;
 
   int tbl_rows;
   int tbl_currow;
-  GtkWidget *table;
-  GtkWidget *top_vbox;
+  LiVESWidget *table;
+  LiVESWidget *top_vbox;
 } omclearn_w;
 
 

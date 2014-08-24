@@ -594,7 +594,7 @@ void on_live_tvcard_activate (GtkMenuItem *menuitem, gpointer user_data) {
 
   gchar *fname;
 
-  GtkWidget *card_dialog;
+  LiVESWidget *card_dialog;
 
   lives_tvcardw_t *tvcardw;
 
@@ -735,7 +735,7 @@ void on_live_fw_activate (GtkMenuItem *menuitem, gpointer user_data) {
   gchar *fifofile=g_strdup_printf("%s/firew.%d",prefs->tmpdir,capable->mainpid);
   gchar *fname;
 
-  GtkWidget *card_dialog;
+  LiVESWidget *card_dialog;
 
   mainw->open_deint=FALSE;
 

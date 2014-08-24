@@ -36,14 +36,14 @@ gchar *find_free_camfile(gint format);
 
 
 struct _dvgrabw {
-  GtkWidget *dialog;
-  GtkWidget *filent;
-  GtkWidget *stop;
-  GtkWidget *grab;
-  GtkWidget *play;
-  GtkWidget *quit;
-  GtkWidget *status_entry;
-  GtkWidget *split;
+  LiVESWidget *dialog;
+  LiVESWidget *filent;
+  LiVESWidget *stop;
+  LiVESWidget *grab;
+  LiVESWidget *play;
+  LiVESWidget *quit;
+  LiVESWidget *status_entry;
+  LiVESWidget *split;
   GdkCursor *cursor;
   boolean playing;
   gchar *dirname;

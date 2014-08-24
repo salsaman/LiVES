@@ -874,7 +874,7 @@ on_resaudio_ok_clicked                      (GtkButton *button,
 
 
 
-static void on_resaudw_achans_changed (GtkWidget *widg, gpointer user_data) {
+static void on_resaudw_achans_changed (LiVESWidget *widg, gpointer user_data) {
   _resaudw *resaudw=(_resaudw *)user_data;
   gchar *tmp;
 
@@ -927,7 +927,7 @@ static void on_resaudw_achans_changed (GtkWidget *widg, gpointer user_data) {
 
 
 void 
-on_resaudw_asamps_changed (GtkWidget *irrelevant, gpointer rubbish) {
+on_resaudw_asamps_changed (LiVESWidget *irrelevant, gpointer rubbish) {
   if (atoi (lives_entry_get_text (LIVES_ENTRY (resaudw->entry_asamps)))==8) {
     lives_widget_set_sensitive (resaudw->rb_bigend,FALSE);
     lives_widget_set_sensitive (resaudw->rb_littleend,FALSE);
@@ -1094,7 +1094,7 @@ void on_resample_vid_ok (GtkButton *button, GtkEntry *entry) {
 
 
 
-_resaudw *create_resaudw (gshort type, render_details *rdet, GtkWidget *top_vbox) {
+_resaudw *create_resaudw (gshort type, render_details *rdet, LiVESWidget *top_vbox) {
   // type 1 == resample
   // type 2 == insert silence
   // type 3 == enter multitrack or encode or render to clip
@@ -1107,31 +1107,31 @@ _resaudw *create_resaudw (gshort type, render_details *rdet, GtkWidget *top_vbox
   // type 10 == change inside multitrack
   // type 11 == rte audio gen as rfx
 
-  GtkWidget *dialog_vbox=NULL;
-  GtkWidget *vboxx;
-  GtkWidget *vbox2;
-  GtkWidget *frame;
-  GtkWidget *label_aud=NULL;
-  GtkWidget *combo_entry2;
-  GtkWidget *combo_entry3;
-  GtkWidget *combo_entry1;
-  GtkWidget *vseparator;
-  GtkWidget *radiobutton_u1;
-  GtkWidget *radiobutton_s1;
-  GtkWidget *vbox;
-  GtkWidget *radiobutton_b1;
-  GtkWidget *radiobutton_l1;
-  GtkWidget *combo4;
-  GtkWidget *combo5;
-  GtkWidget *combo6;
-  GtkWidget *dialog_action_area;
-  GtkWidget *cancelbutton;
-  GtkWidget *okbutton;
-  GtkWidget *label;
-  GtkWidget *hseparator;
-  GtkWidget *radiobutton;
-  GtkWidget *hbox;
-  GtkWidget *hbox2;
+  LiVESWidget *dialog_vbox=NULL;
+  LiVESWidget *vboxx;
+  LiVESWidget *vbox2;
+  LiVESWidget *frame;
+  LiVESWidget *label_aud=NULL;
+  LiVESWidget *combo_entry2;
+  LiVESWidget *combo_entry3;
+  LiVESWidget *combo_entry1;
+  LiVESWidget *vseparator;
+  LiVESWidget *radiobutton_u1;
+  LiVESWidget *radiobutton_s1;
+  LiVESWidget *vbox;
+  LiVESWidget *radiobutton_b1;
+  LiVESWidget *radiobutton_l1;
+  LiVESWidget *combo4;
+  LiVESWidget *combo5;
+  LiVESWidget *combo6;
+  LiVESWidget *dialog_action_area;
+  LiVESWidget *cancelbutton;
+  LiVESWidget *okbutton;
+  LiVESWidget *label;
+  LiVESWidget *hseparator;
+  LiVESWidget *radiobutton;
+  LiVESWidget *hbox;
+  LiVESWidget *hbox2;
 
   GtkAccelGroup *accel_group=NULL;
 
@@ -1642,21 +1642,21 @@ void create_new_pb_speed (short type) {
   // type 1 = change speed
   // type 2 = resample
 
-  GtkWidget *new_pb_speed;
-  GtkWidget *dialog_vbox;
-  GtkWidget *vbox;
-  GtkWidget *hbox;
-  GtkWidget *ca_hbox;
-  GtkWidget *label;
-  GtkWidget *label2;
-  GtkWidget *radiobutton1=NULL;
-  GtkWidget *radiobutton2=NULL;
-  GtkWidget *spinbutton_pb_speed;
-  GtkWidget *spinbutton_pb_time=NULL;
-  GtkWidget *dialog_action_area;
-  GtkWidget *cancelbutton;
-  GtkWidget *change_pb_ok;
-  GtkWidget *change_audio_speed;
+  LiVESWidget *new_pb_speed;
+  LiVESWidget *dialog_vbox;
+  LiVESWidget *vbox;
+  LiVESWidget *hbox;
+  LiVESWidget *ca_hbox;
+  LiVESWidget *label;
+  LiVESWidget *label2;
+  LiVESWidget *radiobutton1=NULL;
+  LiVESWidget *radiobutton2=NULL;
+  LiVESWidget *spinbutton_pb_speed;
+  LiVESWidget *spinbutton_pb_time=NULL;
+  LiVESWidget *dialog_action_area;
+  LiVESWidget *cancelbutton;
+  LiVESWidget *change_pb_ok;
+  LiVESWidget *change_audio_speed;
 
   GtkAccelGroup *accel_group;
 

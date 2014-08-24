@@ -836,7 +836,8 @@ text_window *create_text_window (const gchar *title, const gchar *text, GtkTextB
   else {
     if (textbuffer!=NULL) textwindow->textview = lives_text_view_new_with_buffer(textbuffer);
     else textwindow->textview = lives_text_view_new ();
-    lives_text_view_set_wrap_mode (LIVES_TEXT_VIEW (textwindow->textview), LIVES_WRAP_WORD);
+    // - removed: causes test to be in too narrow, e.g show_vj_keys
+    //lives_text_view_set_wrap_mode (LIVES_TEXT_VIEW (textwindow->textview), LIVES_WRAP_WORD);
   }
 
   woat=widget_opts.apply_theme;

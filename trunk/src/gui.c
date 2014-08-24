@@ -310,10 +310,10 @@ void create_LiVES (void) {
   if (capable->smog_version_correct) lives_window_set_decorated(LIVES_WINDOW(mainw->LiVES),prefs->open_decorated);
 
   if (palette->style==STYLE_PLAIN) {
-    // if gtk_widget_ensure_style is used, we can't grab external frames...
+    // if lives_widget_ensure_style is used, we can't grab external frames...
 #if !GTK_CHECK_VERSION(3,0,0)
     if (!mainw->foreign) {
-      gtk_widget_ensure_style(mainw->LiVES);
+      lives_widget_ensure_style(mainw->LiVES);
     }
 #endif
     lives_widget_get_bg_color(mainw->LiVES,&normal);
@@ -1978,7 +1978,7 @@ void create_LiVES (void) {
     lives_widget_set_bg_color (mainw->vbox1, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
   }
 
-  gtk_widget_set_events (mainw->eventbox, GDK_SCROLL_MASK);
+  lives_widget_set_events (mainw->eventbox, GDK_SCROLL_MASK);
 
   g_signal_connect (GTK_OBJECT (mainw->eventbox), "scroll_event",
                       G_CALLBACK (on_mouse_scroll),
@@ -2305,13 +2305,13 @@ void create_LiVES (void) {
   lives_widget_set_size_request (mainw->hruler, -1, CE_HRULE_HEIGHT);
   lives_container_add (LIVES_CONTAINER (mainw->eventbox5), mainw->hruler);
 
-  gtk_widget_add_events (mainw->eventbox5, GDK_POINTER_MOTION_MASK | GDK_BUTTON1_MOTION_MASK | GDK_BUTTON_RELEASE_MASK | 
+  lives_widget_add_events (mainw->eventbox5, GDK_POINTER_MOTION_MASK | GDK_BUTTON1_MOTION_MASK | GDK_BUTTON_RELEASE_MASK | 
 			 GDK_BUTTON_PRESS_MASK | GDK_ENTER_NOTIFY);
 
   mainw->eventbox2 = lives_event_box_new ();
   lives_widget_show (mainw->eventbox2);
   lives_box_pack_start (LIVES_BOX (vbox4), mainw->eventbox2, TRUE, TRUE, 0);
-  gtk_widget_add_events (mainw->eventbox2, GDK_BUTTON1_MOTION_MASK | GDK_BUTTON_RELEASE_MASK | GDK_BUTTON_PRESS_MASK);
+  lives_widget_add_events (mainw->eventbox2, GDK_BUTTON1_MOTION_MASK | GDK_BUTTON_RELEASE_MASK | GDK_BUTTON_PRESS_MASK);
 
   lives_widget_set_vexpand(mainw->eventbox2,TRUE);
 
@@ -3144,53 +3144,53 @@ void fade_background(void) {
   // we need to remove the accelerators and add accelerator keys instead
 
   if (stop_closure==NULL) {
-    gtk_widget_remove_accelerator (mainw->stop, mainw->accel_group, LIVES_KEY_q, (GdkModifierType)0);
+    lives_widget_remove_accelerator (mainw->stop, mainw->accel_group, LIVES_KEY_q, (GdkModifierType)0);
     lives_accel_group_connect (GTK_ACCEL_GROUP (mainw->accel_group), LIVES_KEY_q, (GdkModifierType)0, (GtkAccelFlags)0, 
 			     (stop_closure=g_cclosure_new (G_CALLBACK (stop_callback),NULL,NULL)));
 
     if (!mainw->foreign) {
       // TODO - do these checks in the end functions
-      gtk_widget_remove_accelerator (mainw->record_perf, mainw->accel_group, LIVES_KEY_r, (GdkModifierType)0);
+      lives_widget_remove_accelerator (mainw->record_perf, mainw->accel_group, LIVES_KEY_r, (GdkModifierType)0);
       lives_accel_group_connect (GTK_ACCEL_GROUP (mainw->accel_group), LIVES_KEY_r, (GdkModifierType)0, (GtkAccelFlags)0, 
 			       (rec_closure=g_cclosure_new (G_CALLBACK (rec_callback),NULL,NULL)));
       
-      gtk_widget_remove_accelerator (mainw->full_screen, mainw->accel_group, LIVES_KEY_f, (GdkModifierType)0);
+      lives_widget_remove_accelerator (mainw->full_screen, mainw->accel_group, LIVES_KEY_f, (GdkModifierType)0);
       lives_accel_group_connect (GTK_ACCEL_GROUP (mainw->accel_group), LIVES_KEY_f, (GdkModifierType)0, (GtkAccelFlags)0, 
 			       (fullscreen_closure=g_cclosure_new (G_CALLBACK (fullscreen_callback),NULL,NULL)));
       
-      gtk_widget_remove_accelerator (mainw->showfct, mainw->accel_group, LIVES_KEY_h, (GdkModifierType)0);
+      lives_widget_remove_accelerator (mainw->showfct, mainw->accel_group, LIVES_KEY_h, (GdkModifierType)0);
       lives_accel_group_connect (GTK_ACCEL_GROUP (mainw->accel_group), LIVES_KEY_h, (GdkModifierType)0, (GtkAccelFlags)0, 
 			       (showfct_closure=g_cclosure_new (G_CALLBACK (showfct_callback),NULL,NULL)));
       
-      gtk_widget_remove_accelerator (mainw->showsubs, mainw->accel_group, LIVES_KEY_v, (GdkModifierType)0);
+      lives_widget_remove_accelerator (mainw->showsubs, mainw->accel_group, LIVES_KEY_v, (GdkModifierType)0);
       lives_accel_group_connect (GTK_ACCEL_GROUP (mainw->accel_group), LIVES_KEY_v, (GdkModifierType)0, (GtkAccelFlags)0, 
 			       (showsubs_closure=g_cclosure_new (G_CALLBACK (showsubs_callback),NULL,NULL)));
       
-      gtk_widget_remove_accelerator (mainw->sepwin, mainw->accel_group, LIVES_KEY_s, (GdkModifierType)0);
+      lives_widget_remove_accelerator (mainw->sepwin, mainw->accel_group, LIVES_KEY_s, (GdkModifierType)0);
       lives_accel_group_connect (GTK_ACCEL_GROUP (mainw->accel_group), LIVES_KEY_s, (GdkModifierType)0, (GtkAccelFlags)0, 
 			       (sepwin_closure=g_cclosure_new (G_CALLBACK (sepwin_callback),NULL,NULL)));
 
       if (!cfile->achans||mainw->mute||mainw->loop_cont||prefs->audio_player==AUD_PLAYER_JACK||
 	  prefs->audio_player==AUD_PLAYER_PULSE) {
-	gtk_widget_remove_accelerator (mainw->loop_video, mainw->accel_group, LIVES_KEY_l, (GdkModifierType)0);
+	lives_widget_remove_accelerator (mainw->loop_video, mainw->accel_group, LIVES_KEY_l, (GdkModifierType)0);
 	lives_accel_group_connect (GTK_ACCEL_GROUP (mainw->accel_group), LIVES_KEY_l, (GdkModifierType)0, (GtkAccelFlags)0, 
 				 (loop_closure=g_cclosure_new (G_CALLBACK (loop_callback),NULL,NULL)));
 	
-	gtk_widget_remove_accelerator (mainw->loop_continue, mainw->accel_group, LIVES_KEY_o, (GdkModifierType)0);
+	lives_widget_remove_accelerator (mainw->loop_continue, mainw->accel_group, LIVES_KEY_o, (GdkModifierType)0);
 	lives_accel_group_connect (GTK_ACCEL_GROUP (mainw->accel_group), LIVES_KEY_o, (GdkModifierType)0, (GtkAccelFlags)0, 
 				 (loop_cont_closure=g_cclosure_new (G_CALLBACK (loop_cont_callback),NULL,NULL)));
 	
       }
-      gtk_widget_remove_accelerator (mainw->loop_ping_pong, mainw->accel_group, LIVES_KEY_g, (GdkModifierType)0);
+      lives_widget_remove_accelerator (mainw->loop_ping_pong, mainw->accel_group, LIVES_KEY_g, (GdkModifierType)0);
       lives_accel_group_connect (GTK_ACCEL_GROUP (mainw->accel_group), LIVES_KEY_g, (GdkModifierType)0, (GtkAccelFlags)0, 
 			       (ping_pong_closure=g_cclosure_new (G_CALLBACK (ping_pong_callback),NULL,NULL)));
-      gtk_widget_remove_accelerator (mainw->mute_audio, mainw->accel_group, LIVES_KEY_z, (GdkModifierType)0);
+      lives_widget_remove_accelerator (mainw->mute_audio, mainw->accel_group, LIVES_KEY_z, (GdkModifierType)0);
       lives_accel_group_connect (GTK_ACCEL_GROUP (mainw->accel_group), LIVES_KEY_z, (GdkModifierType)0, (GtkAccelFlags)0, 
 			       (mute_audio_closure=g_cclosure_new (G_CALLBACK (mute_audio_callback),NULL,NULL)));
-      gtk_widget_remove_accelerator (mainw->dsize, mainw->accel_group, LIVES_KEY_d, (GdkModifierType)0);
+      lives_widget_remove_accelerator (mainw->dsize, mainw->accel_group, LIVES_KEY_d, (GdkModifierType)0);
       lives_accel_group_connect (GTK_ACCEL_GROUP (mainw->accel_group), LIVES_KEY_d, (GdkModifierType)0, (GtkAccelFlags)0, 
 			       (dblsize_closure=g_cclosure_new (G_CALLBACK (dblsize_callback),NULL,NULL)));
-      gtk_widget_remove_accelerator (mainw->fade, mainw->accel_group, LIVES_KEY_b, (GdkModifierType)0);
+      lives_widget_remove_accelerator (mainw->fade, mainw->accel_group, LIVES_KEY_b, (GdkModifierType)0);
       lives_accel_group_connect (GTK_ACCEL_GROUP (mainw->accel_group), LIVES_KEY_b, (GdkModifierType)0, (GtkAccelFlags)0, 
 			       (fade_closure=g_cclosure_new (G_CALLBACK (fade_callback),NULL,NULL)));
     }
@@ -3469,7 +3469,7 @@ void make_preview_box (void) {
   g_object_ref(mainw->preview_box);
 
   eventbox=lives_event_box_new();
-  gtk_widget_set_events (eventbox, GDK_SCROLL_MASK);
+  lives_widget_set_events (eventbox, GDK_SCROLL_MASK);
 
   g_signal_connect (GTK_OBJECT (eventbox), "scroll_event",
 		    G_CALLBACK (on_mouse_scroll),
@@ -3684,7 +3684,7 @@ void calibrate_sepwin_size(void) {
   // get size of preview box in sepwin
   GtkRequisition req;
   make_preview_box();
-  gtk_widget_get_preferred_size(mainw->preview_controls,NULL,&req);
+  lives_widget_get_preferred_size(mainw->preview_controls,NULL,&req);
   mainw->sepwin_minwidth=req.width;
   mainw->sepwin_minheight=req.height;
 }
@@ -3786,7 +3786,7 @@ void make_play_window(void) {
   mainw->play_window = lives_window_new (LIVES_WINDOW_TOPLEVEL);
   lives_window_set_hide_titlebar_when_maximized(LIVES_WINDOW(mainw->LiVES),TRUE);
 
-  gtk_widget_set_events (mainw->play_window, GDK_SCROLL_MASK);
+  lives_widget_set_events (mainw->play_window, GDK_SCROLL_MASK);
 
   // cannot do this or it forces showing on the GUI monitor
   //gtk_window_set_position(LIVES_WINDOW(mainw->play_window),GTK_WIN_POS_CENTER_ALWAYS);
@@ -4339,7 +4339,7 @@ void splash_init(void) {
   widget_opts.default_justify=LIVES_JUSTIFY_LEFT;
 
 #ifdef GUI_GTK
-  if (gtk_widget_get_direction(LIVES_WIDGET(mainw->splash_window))==GTK_TEXT_DIR_RTL) 
+  if (lives_widget_get_direction(LIVES_WIDGET(mainw->splash_window))==GTK_TEXT_DIR_RTL) 
     widget_opts.default_justify=LIVES_JUSTIFY_RIGHT;
 #endif
 

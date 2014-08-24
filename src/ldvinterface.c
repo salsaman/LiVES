@@ -82,7 +82,7 @@ struct _dvgrabw *create_camwindow (s_cam *cam, int type)
 
 
   // TODO - widget_opts.editable
-  dvgrabw->status_entry=gtk_entry_new();
+  dvgrabw->status_entry=lives_entry_new();
 
   lives_box_pack_start(LIVES_BOX(vbox),dvgrabw->status_entry,FALSE,FALSE,widget_opts.packing_height);
   lives_entry_set_text(LIVES_ENTRY(dvgrabw->status_entry),_("Status: Ready"));

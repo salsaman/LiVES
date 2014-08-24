@@ -126,6 +126,7 @@ typedef GtkTextMark                       LiVESTextMark;
 typedef GtkTextIter                       LiVESTextIter;
 
 typedef GtkEntry                          LiVESEntry;
+typedef GtkEntryCompletion                LiVESEntryCompletion;
 typedef GtkRadioButton                    LiVESRadioButton;
 typedef GtkSpinButton                     LiVESSpinButton;
 typedef GtkColorButton                    LiVESColorButton;
@@ -333,6 +334,8 @@ typedef GtkShadowType LiVESShadowType;
 #define LIVES_SHADOW_ETCHED_IN GTK_SHADOW_ETCHED_IN
 #define LIVES_SHADOW_ETCHED_OUT GTK_SHADOW_ETCHED_OUT
 
+typedef GtkWindowPosition LiVESWindowPosition;
+#define LIVES_WIN_POS_CENTER_ALWAYS GTK_WIN_POS_CENTER_ALWAYS
 
 
 #if GTK_CHECK_VERSION(3,0,0)
@@ -837,7 +840,7 @@ LiVESPixbuf *lives_pixbuf_scale_simple(const LiVESPixbuf *src, int dest_width, i
 
 boolean lives_pixbuf_saturate_and_pixelate(const LiVESPixbuf *src, LiVESPixbuf *dest, float saturation, boolean pixilate);
 
-// basic widget fns
+// basic widget fns (TODO - amend all void to return boolean)
 
 void lives_widget_set_sensitive(LiVESWidget *, boolean state);
 boolean lives_widget_get_sensitive(LiVESWidget *);
@@ -915,6 +918,7 @@ boolean lives_window_set_screen(LiVESWindow *, LiVESXScreen *);
 
 boolean lives_window_move(LiVESWindow *, int x, int y);
 boolean lives_window_get_position(LiVESWindow *, int *x, int *y);
+boolean lives_window_set_position(LiVESWindow *, LiVESWindowPosition pos);
 boolean lives_window_resize(LiVESWindow *, int width, int height);
 boolean lives_window_present(LiVESWindow *);
 boolean lives_window_fullscreen(LiVESWindow *);
@@ -1146,13 +1150,18 @@ void lives_adjustment_set_lower(LiVESAdjustment *, double lower);
 void lives_adjustment_set_page_size(LiVESAdjustment *, double page_size);
 
 const char *lives_label_get_text(LiVESLabel *);
-void lives_label_set_text(LiVESLabel *, const char *text);
-void lives_label_set_text_with_mnemonic(LiVESLabel *, const char *text);
+boolean lives_label_set_text(LiVESLabel *, const char *text);
+boolean lives_label_set_text_with_mnemonic(LiVESLabel *, const char *text);
 
+LiVESWidget *lives_entry_new(void);
 boolean lives_entry_set_editable(LiVESEntry *, boolean editable);
 const char *lives_entry_get_text(LiVESEntry *);
 boolean lives_entry_set_text(LiVESEntry *, const char *text);
 boolean lives_entry_set_width_chars(LiVESEntry *, int nchars);
+boolean lives_entry_set_max_length(LiVESEntry *, int len);
+boolean lives_entry_set_activates_default(LiVESEntry *, boolean act);
+boolean lives_entry_set_visibility(LiVESEntry *, boolean vis);
+boolean lives_entry_set_has_frame(LiVESEntry *, boolean has);
 
 double lives_scale_button_get_value(LiVESScaleButton *);
 
@@ -1243,6 +1252,7 @@ boolean lives_scrolled_window_set_policy(LiVESScrolledWindow *, lives_policy_t h
 boolean lives_scrolled_window_add_with_viewport(LiVESScrolledWindow *, LiVESWidget *child);
 
 boolean lives_xwindow_raise(LiVESXWindow *);
+boolean lives_xwindow_set_cursor(LiVESXWindow *, LiVESXCursor *);
 
 // optional (return TRUE if implemented)
 

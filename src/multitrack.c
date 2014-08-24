@@ -400,7 +400,7 @@ static void mt_set_cursor_style(lives_mt *mt, lives_cursor_t cstyle, int width, 
   LiVESPixbuf *pixbuf=NULL;
   LiVESPixbuf *thumbnail=NULL;
 
-  guchar *cpixels,*tpixels;
+  uint8_t *cpixels,*tpixels;
 
   lives_clip_t *sfile=mainw->files[clip];
 
@@ -517,7 +517,7 @@ static void mt_set_cursor_style(lives_mt *mt, lives_cursor_t cstyle, int width, 
   }
 
   cursor = gdk_cursor_new_from_pixbuf (disp, pixbuf, hsx, hsy);
-  gdk_window_set_cursor (lives_widget_get_xwindow(mt->window), cursor);
+  lives_xwindow_set_cursor (lives_widget_get_xwindow(mt->window), cursor);
 
   if (pixbuf!=NULL) lives_object_unref (pixbuf);
   if (cursor!=NULL) lives_cursor_unref(cursor);
@@ -1530,8 +1530,10 @@ static int track_to_channel(weed_plant_t *ievent, int track) {
   // note that a track could be mapped to multiple channels; we return only the first instance we find
 
 
-  int i,error,ntracks=weed_leaf_num_elements(ievent,"in_tracks");
+  int error,ntracks=weed_leaf_num_elements(ievent,"in_tracks");
   int *in_tracks;
+
+  register int i;
 
   if (ntracks==0) return -1;
 
@@ -1555,16 +1557,20 @@ static boolean get_track_index(lives_mt *mt, weed_timecode_t tc) {
 
   // return TRUE if mt->fx_box is redrawn
 
-  int i,error;
-  int num_in_tracks;
   int *clips,*in_tracks,numtracks;
   weed_plant_t *event=get_frame_event_at(mt->event_list,tc,NULL,TRUE);
+
+  boolean retval=FALSE;
+
+  int error;
+  int num_in_tracks;
   int opwidth,opheight;
 
   int track_index=mt->track_index;
 
   int chindx;
-  boolean retval=FALSE;
+
+  register int i;
 
   mt->track_index=-1;
   mt->inwidth=mt->inheight=0;
@@ -1622,10 +1628,12 @@ static boolean get_track_index(lives_mt *mt, weed_timecode_t tc) {
 
 
 void track_select (lives_mt *mt) {
-  int i;
   LiVESWidget *labelbox,*ahbox,*eventbox,*oeventbox,*checkbutton=NULL;
-  int hidden=0;
   weed_timecode_t tc;
+
+  int hidden=0;
+
+  register int i;
 
   if (mt->current_track<0) {
     // back aud sel
@@ -1635,7 +1643,6 @@ void track_select (lives_mt *mt) {
     lives_widget_set_sensitive(mt->insert, FALSE);
 
     lives_check_menu_item_set_active(LIVES_CHECK_MENU_ITEM(mt->select_track),FALSE);
-
 
     lives_widget_set_sensitive(mt->cback_audio,FALSE);
     lives_widget_set_sensitive (mt->audio_insert, mt->file_selected>0&&
@@ -1816,8 +1823,7 @@ static void show_track_info(lives_mt *mt, LiVESWidget *eventbox, int track, doub
 }
 
 
-static boolean
-atrack_ebox_pressed (LiVESWidget *labelbox, GdkEventButton *event, gpointer user_data) {
+static boolean atrack_ebox_pressed (LiVESWidget *labelbox, GdkEventButton *event, gpointer user_data) {
   lives_mt *mt=(lives_mt *)user_data;
   int current_track=mt->current_track;
   mt->current_track=GPOINTER_TO_INT(g_object_get_data (G_OBJECT(labelbox),"layer_number"));
@@ -1832,8 +1838,7 @@ atrack_ebox_pressed (LiVESWidget *labelbox, GdkEventButton *event, gpointer user
 
 
 
-static boolean
-track_ebox_pressed (LiVESWidget *labelbox, GdkEventButton *event, gpointer user_data) {
+static boolean track_ebox_pressed (LiVESWidget *labelbox, GdkEventButton *event, gpointer user_data) {
   lives_mt *mt=(lives_mt *)user_data;
   int current_track=mt->current_track;
   mt->current_track=GPOINTER_TO_INT(g_object_get_data (G_OBJECT(labelbox),"layer_number"));
@@ -1846,8 +1851,7 @@ track_ebox_pressed (LiVESWidget *labelbox, GdkEventButton *event, gpointer user_
 
 
 
-static boolean
-on_mt_timeline_scroll           (LiVESWidget       *widget,
+static boolean on_mt_timeline_scroll           (LiVESWidget       *widget,
 				 GdkEventScroll  *event,
 				 gpointer         user_data) {
   // scroll timeline up/down with mouse wheel
@@ -5373,7 +5377,7 @@ static void set_mt_title (lives_mt *mt) {
 }
 
 
-static boolean timecode_string_validate(GtkEntry *entry, lives_mt *mt) {
+static boolean timecode_string_validate(LiVESEntry *entry, lives_mt *mt) {
   const gchar *etext=lives_entry_get_text(entry);
   gchar **array;
 

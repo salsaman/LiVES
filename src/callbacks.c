@@ -571,7 +571,7 @@ void on_filesel_button_clicked (GtkButton *button, gpointer user_data) {
 
 
 
-void on_filesel_complex_clicked (GtkButton *button, GtkEntry *entry) {
+void on_filesel_complex_clicked (GtkButton *button, LiVESEntry *entry) {
   // append /livestmp
   size_t chklen=strlen(LIVES_TMP_NAME);
 
@@ -8161,7 +8161,7 @@ void on_save_subs_activate (GtkMenuItem *menuitem, gpointer user_data) {
   gchar xfname[512];
   gchar xfname2[512];
 
-  GtkEntry *entry=(GtkEntry *)user_data;
+  LiVESEntry *entry=(GtkEntry *)user_data;
 
   // try to repaint the screen, as it may take a few seconds to get a directory listing
   lives_widget_context_update();

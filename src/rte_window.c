@@ -1806,7 +1806,7 @@ void on_clear_clicked (GtkButton *button, gpointer user_data) {
     int fx_idx=rte_keymode_get_filter_idx(key,mode);
 
     idx=key*modes+i;
-    lives_entry_set_text (LIVES_ENTRY(combo_entries[idx]),lives_entry_get_text(GTK_ENTRY(combo_entries[idx+1])));
+    lives_entry_set_text (LIVES_ENTRY(combo_entries[idx]),lives_entry_get_text(LIVES_ENTRY(combo_entries[idx+1])));
     type_label_set_text(key,i);
     pconx_remap_mode(key,i+1,i);
     cconx_remap_mode(key,i+1,i);

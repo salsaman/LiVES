@@ -715,7 +715,7 @@ on_resample_audio_activate (GtkMenuItem     *menuitem,
 
 void
 on_resaudio_ok_clicked                      (GtkButton *button,
-					     GtkEntry *entry)
+					     LiVESEntry *entry)
 {
   gchar *com,*msg;  
   int arate,achans,asampsize,arps;
@@ -959,7 +959,7 @@ on_resample_video_activate (GtkMenuItem     *menuitem,
 
 
 
-void on_resample_vid_ok (GtkButton *button, GtkEntry *entry) {
+void on_resample_vid_ok (GtkButton *button, LiVESEntry *entry) {
   int i;
   int old_frames;
   int ostart=cfile->start;
@@ -1397,7 +1397,7 @@ _resaudw *create_resaudw (gshort type, render_details *rdet, LiVESWidget *top_vb
     if (type==7) lives_widget_set_sensitive(combo6,FALSE);
 
     resaudw->entry_asamps = lives_combo_get_entry(LIVES_COMBO(combo6));
-    gtk_entry_set_max_length (LIVES_ENTRY (resaudw->entry_asamps), 2);
+    lives_entry_set_max_length (LIVES_ENTRY (resaudw->entry_asamps), 2);
     gtk_editable_set_editable (GTK_EDITABLE (resaudw->entry_asamps), FALSE);
     lives_entry_set_width_chars (LIVES_ENTRY (resaudw->entry_asamps), 2);
     

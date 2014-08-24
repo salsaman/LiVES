@@ -1104,7 +1104,7 @@ void on_table_add_row (GtkButton *button, gpointer user_data) {
       lives_entry_set_editable (LIVES_ENTRY (rfxbuilder->entry[i]), FALSE);
     }
 
-    entry = rfxbuilder->entry[rfxbuilder->table_rows] = gtk_entry_new ();
+    entry = rfxbuilder->entry[rfxbuilder->table_rows] = lives_entry_new ();
 
     if (button!=NULL)
       lives_entry_set_editable (LIVES_ENTRY (entry), TRUE);
@@ -1131,8 +1131,8 @@ void on_table_add_row (GtkButton *button, gpointer user_data) {
     break;
 
   case RFX_TABLE_TYPE_PARAMS:
-    entry = rfxbuilder->entry[rfxbuilder->table_rows] = gtk_entry_new ();
-    entry2 = rfxbuilder->entry2[rfxbuilder->table_rows] = gtk_entry_new ();
+    entry = rfxbuilder->entry[rfxbuilder->table_rows] = lives_entry_new ();
+    entry2 = rfxbuilder->entry2[rfxbuilder->table_rows] = lives_entry_new ();
 
     if (button!=NULL) {
       boolean param_ok=FALSE;
@@ -1156,7 +1156,7 @@ void on_table_add_row (GtkButton *button, gpointer user_data) {
       
       rfxbuilder->num_params++;
 
-      lives_entry_set_text (LIVES_ENTRY (entry2),lives_entry_get_text (GTK_ENTRY (rfxbuilder->param_name_entry)));
+      lives_entry_set_text (LIVES_ENTRY (entry2),lives_entry_get_text (LIVES_ENTRY (rfxbuilder->param_name_entry)));
     }
     else {
       lives_entry_set_text (LIVES_ENTRY (entry2),rfxbuilder->params[rfxbuilder->table_rows].name);
@@ -1193,7 +1193,7 @@ void on_table_add_row (GtkButton *button, gpointer user_data) {
 		      (GtkAttachOptions) (GTK_FILL|GTK_EXPAND),
 		      (GtkAttachOptions) (0), 0, 0);
 
-    entry3 = rfxbuilder->entry3[rfxbuilder->table_rows-1] = gtk_entry_new ();
+    entry3 = rfxbuilder->entry3[rfxbuilder->table_rows-1] = lives_entry_new ();
 
     if (button==NULL) {
       param=&rfxbuilder->params[rfxbuilder->table_rows-1];
@@ -1248,7 +1248,7 @@ void on_table_add_row (GtkButton *button, gpointer user_data) {
 	lives_widget_destroy (param_window_dialog);
 	return;
       }
-      entry = rfxbuilder->entry[rfxbuilder->table_rows] = gtk_entry_new ();
+      entry = rfxbuilder->entry[rfxbuilder->table_rows] = lives_entry_new ();
       ctext=lives_combo_get_active_text(LIVES_COMBO(rfxbuilder->paramw_kw_combo));
       lives_entry_set_text (LIVES_ENTRY (entry),ctext);
       g_free(ctext);
@@ -1256,7 +1256,7 @@ void on_table_add_row (GtkButton *button, gpointer user_data) {
     }
     else {
       gchar **array=g_strsplit(rfxbuilder->paramw_hints[rfxbuilder->table_rows],rfxbuilder->field_delim,2);
-      entry = rfxbuilder->entry[rfxbuilder->table_rows] = gtk_entry_new ();
+      entry = rfxbuilder->entry[rfxbuilder->table_rows] = lives_entry_new ();
       lives_entry_set_text (LIVES_ENTRY (entry),array[0]);
       g_strfreev (array);
     }
@@ -1273,11 +1273,11 @@ void on_table_add_row (GtkButton *button, gpointer user_data) {
 		      (GtkAttachOptions) (GTK_FILL),
 		      (GtkAttachOptions) (0), 0, 0);
 
-    entry2 = rfxbuilder->entry2[rfxbuilder->table_rows-1] = gtk_entry_new ();
+    entry2 = rfxbuilder->entry2[rfxbuilder->table_rows-1] = lives_entry_new ();
 
     if (button!=NULL) {
       if (!strcmp (lives_entry_get_text (LIVES_ENTRY (entry)),"layout")) {
-	lives_entry_set_text (LIVES_ENTRY (entry2),lives_entry_get_text (GTK_ENTRY (rfxbuilder->paramw_rest_entry)));
+	lives_entry_set_text (LIVES_ENTRY (entry2),lives_entry_get_text (LIVES_ENTRY (rfxbuilder->paramw_rest_entry)));
       }
       else {
 	// TODO - use lives_rfx_special_t->has_subtype,name,num_params
@@ -1323,7 +1323,7 @@ void on_table_add_row (GtkButton *button, gpointer user_data) {
 
 
   case RFX_TABLE_TYPE_TRIGGERS:
-    entry = rfxbuilder->entry[rfxbuilder->table_rows] = gtk_entry_new ();
+    entry = rfxbuilder->entry[rfxbuilder->table_rows] = lives_entry_new ();
 
     if (button!=NULL) {
       trigger_dialog=make_trigger_dialog(-1,rfxbuilder);
@@ -1331,7 +1331,7 @@ void on_table_add_row (GtkButton *button, gpointer user_data) {
 	lives_widget_destroy (trigger_dialog);
 	return;
       }
-      lives_entry_set_text (LIVES_ENTRY (entry),lives_entry_get_text (GTK_ENTRY (rfxbuilder->trigger_when_entry)));
+      lives_entry_set_text (LIVES_ENTRY (entry),lives_entry_get_text (LIVES_ENTRY (rfxbuilder->trigger_when_entry)));
       rfxbuilder->num_triggers++;
     }
     else {
@@ -1607,7 +1607,7 @@ void on_table_edit_row (GtkButton *button, gpointer user_data) {
     lives_entry_set_text (LIVES_ENTRY (rfxbuilder->entry[found]),ctext);
     g_free(ctext);
     if (!strcmp (lives_entry_get_text (LIVES_ENTRY (rfxbuilder->entry[found])),"layout")) {
-      lives_entry_set_text (LIVES_ENTRY (rfxbuilder->entry2[found]),lives_entry_get_text (GTK_ENTRY (rfxbuilder->paramw_rest_entry)));
+      lives_entry_set_text (LIVES_ENTRY (rfxbuilder->entry2[found]),lives_entry_get_text (LIVES_ENTRY (rfxbuilder->paramw_rest_entry)));
     }
     else {
       // TODO - use lives_rfx_special_t->has_subtype,name,num_params
@@ -1675,12 +1675,12 @@ void on_table_swap_row (GtkButton *button, gpointer user_data) {
     if (rfxbuilder->table_swap_row2<0||rfxbuilder->table_swap_row2>=rfxbuilder->table_rows) return;
 
     entry_text=g_strdup(lives_entry_get_text(LIVES_ENTRY(rfxbuilder->entry[found])));
-    lives_entry_set_text (LIVES_ENTRY (rfxbuilder->entry[found]),lives_entry_get_text (GTK_ENTRY (rfxbuilder->entry[rfxbuilder->table_swap_row2])));
+    lives_entry_set_text (LIVES_ENTRY (rfxbuilder->entry[found]),lives_entry_get_text (LIVES_ENTRY (rfxbuilder->entry[rfxbuilder->table_swap_row2])));
     lives_entry_set_text (LIVES_ENTRY (rfxbuilder->entry[rfxbuilder->table_swap_row2]),entry_text);
     g_free (entry_text);
 
     entry_text=g_strdup(lives_entry_get_text(LIVES_ENTRY(rfxbuilder->entry2[found])));
-    lives_entry_set_text (LIVES_ENTRY (rfxbuilder->entry2[found]),lives_entry_get_text (GTK_ENTRY (rfxbuilder->entry2[rfxbuilder->table_swap_row2])));
+    lives_entry_set_text (LIVES_ENTRY (rfxbuilder->entry2[found]),lives_entry_get_text (LIVES_ENTRY (rfxbuilder->entry2[rfxbuilder->table_swap_row2])));
     lives_entry_set_text (LIVES_ENTRY (rfxbuilder->entry2[rfxbuilder->table_swap_row2]),entry_text);
     g_free (entry_text);
 
@@ -4221,8 +4221,8 @@ gchar *prompt_for_script_name(const gchar *sname, lives_rfx_status_t status) {
     lives_box_pack_start (LIVES_BOX (hbox), script_combo, TRUE, TRUE, widget_opts.packing_width);
   }
   if (sname!=NULL||copy_mode||rename_mode) {
-    // name_entry becomes a normal gtk_entry
-    name_entry=gtk_entry_new();
+    // name_entry becomes a normal lives_entry
+    name_entry=lives_entry_new();
 
     if (copy_mode) {
       g_signal_connect (GTK_OBJECT(status_combo),"changed",G_CALLBACK (on_script_status_changed),
@@ -4243,7 +4243,7 @@ gchar *prompt_for_script_name(const gchar *sname, lives_rfx_status_t status) {
     lives_box_pack_start (LIVES_BOX (hbox), name_entry, TRUE, TRUE, widget_opts.packing_width);
   }
   lives_widget_grab_focus (name_entry);
-  gtk_entry_set_activates_default (LIVES_ENTRY (name_entry), TRUE);
+  lives_entry_set_activates_default (LIVES_ENTRY (name_entry), TRUE);
 
 
   dialog_action_area = lives_dialog_get_action_area(LIVES_DIALOG (dialog));

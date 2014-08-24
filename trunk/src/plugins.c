@@ -866,13 +866,13 @@ void on_vppa_save_clicked (GtkButton *button, gpointer user_data) {
 
 
 _vppaw *on_vpp_advanced_clicked (GtkButton *button, gpointer user_data) {
-  GtkWidget *dialog_vbox;
-  GtkWidget *hbox;
-  GtkWidget *label;
-  GtkWidget *combo;
-  GtkWidget *cancelbutton;
-  GtkWidget *okbutton;
-  GtkWidget *savebutton;
+  LiVESWidget *dialog_vbox;
+  LiVESWidget *hbox;
+  LiVESWidget *label;
+  LiVESWidget *combo;
+  LiVESWidget *cancelbutton;
+  LiVESWidget *okbutton;
+  LiVESWidget *savebutton;
 
   GtkAccelGroup *accel_group;
 
@@ -1051,8 +1051,8 @@ _vppaw *on_vpp_advanced_clicked (GtkButton *button, gpointer user_data) {
   // extra params
 
   if (tmpvpp->get_init_rfx!=NULL) {
-    GtkWidget *vbox=lives_vbox_new (FALSE, 0);
-    GtkWidget *scrolledwindow = lives_standard_scrolled_window_new (RFX_WINSIZE_H, RFX_WINSIZE_V/2, vbox);
+    LiVESWidget *vbox=lives_vbox_new (FALSE, 0);
+    LiVESWidget *scrolledwindow = lives_standard_scrolled_window_new (RFX_WINSIZE_H, RFX_WINSIZE_V/2, vbox);
     lives_box_pack_start (LIVES_BOX (dialog_vbox), scrolledwindow, TRUE, TRUE, 0);
 
 #ifndef IS_MINGW
@@ -2628,15 +2628,15 @@ static void on_dpa_cb_toggled(GtkToggleButton *button, gchar *decname) {
 void on_decplug_advanced_clicked (GtkButton *button, gpointer user_data) {
   GList *decoder_plugin;
 
-  GtkWidget *hbox;
-  GtkWidget *vbox;
-  GtkWidget *checkbutton;
-  GtkWidget *scrolledwindow;
-  GtkWidget *label;
-  GtkWidget *dialog;
-  GtkWidget *dialog_vbox;
-  GtkWidget *cancelbutton;
-  GtkWidget *okbutton;
+  LiVESWidget *hbox;
+  LiVESWidget *vbox;
+  LiVESWidget *checkbutton;
+  LiVESWidget *scrolledwindow;
+  LiVESWidget *label;
+  LiVESWidget *dialog;
+  LiVESWidget *dialog_vbox;
+  LiVESWidget *cancelbutton;
+  LiVESWidget *okbutton;
 
   gchar *ltext;
   gchar *decplugdir=g_strdup_printf("%s%s%s",prefs->lib_dir,PLUGIN_EXEC_DIR,PLUGIN_DECODERS);

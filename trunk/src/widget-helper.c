@@ -3853,7 +3853,7 @@ LiVESWidget *lives_standard_combo_new (const char *labeltext, boolean use_mnemon
     lives_box_set_homogeneous(LIVES_BOX(hbox),FALSE);
 
     if (widget_opts.expand==LIVES_EXPAND_DEFAULT) {
-      GtkWidget *label=lives_standard_label_new("");
+      LiVESWidget *label=lives_standard_label_new("");
       lives_box_pack_start (LIVES_BOX (hbox), label, TRUE, FALSE, 0);
     }
     
@@ -4006,8 +4006,8 @@ LiVESWidget *lives_standard_dialog_new(const char *title, boolean add_std_button
 
   if (add_std_buttons) {
     GtkAccelGroup *accel_group=GTK_ACCEL_GROUP(lives_accel_group_new ());
-    GtkWidget *cancelbutton = lives_button_new_from_stock ("gtk-cancel");
-    GtkWidget *okbutton = lives_button_new_from_stock ("gtk-ok");
+    LiVESWidget *cancelbutton = lives_button_new_from_stock ("gtk-cancel");
+    LiVESWidget *okbutton = lives_button_new_from_stock ("gtk-ok");
 
     lives_window_add_accel_group (LIVES_WINDOW (dialog), accel_group);
 
@@ -4139,7 +4139,7 @@ LiVESWidget *lives_standard_expander_new(const char *ltext, boolean use_mnemonic
     expander=gtk_expander_new(ltext);
 
   if (widget_opts.apply_theme) {
-    GtkWidget *label=gtk_expander_get_label_widget(GTK_EXPANDER(expander));
+    LiVESWidget *label=gtk_expander_get_label_widget(GTK_EXPANDER(expander));
     lives_widget_apply_theme(label, LIVES_WIDGET_STATE_NORMAL);
     lives_widget_apply_theme(label, LIVES_WIDGET_STATE_PRELIGHT);
     lives_widget_apply_theme(expander, LIVES_WIDGET_STATE_PRELIGHT);
@@ -4162,7 +4162,7 @@ LiVESWidget *lives_standard_expander_new(const char *ltext, boolean use_mnemonic
 LIVES_INLINE LiVESWidget *lives_standard_file_button_new(boolean is_dir, const char *def_dir) {
   LiVESWidget *fbutton=NULL;
 #ifdef GUI_GTK
-  GtkWidget *image = lives_image_new_from_stock ("gtk-open", LIVES_ICON_SIZE_BUTTON);
+  LiVESWidget *image = lives_image_new_from_stock ("gtk-open", LIVES_ICON_SIZE_BUTTON);
   fbutton = lives_button_new ();
   g_object_set_data(G_OBJECT(fbutton),"is_dir",GINT_TO_POINTER(is_dir));
   if (def_dir!=NULL) g_object_set_data(G_OBJECT(fbutton),"def_dir",(livespointer)def_dir);
@@ -4375,11 +4375,11 @@ boolean lives_text_view_scroll_onscreen(LiVESTextView *tview) {
 
 int get_box_child_index (LiVESBox *box, LiVESWidget *tchild) {
   GList *list=gtk_container_get_children(LIVES_CONTAINER(box));
-  GtkWidget *child;
+  LiVESWidget *child;
   register int i=0;
 
   while (list!=NULL) {
-    child=(GtkWidget *)list->data;
+    child=(LiVESWidget *)list->data;
     if (child==tchild) return i;
     list=list->next;
     i++;

@@ -26,7 +26,7 @@ static volatile boolean b1_held;
 
 static volatile boolean noupdate=FALSE;
 
-static GtkWidget *fbord_eventbox;
+static LiVESWidget *fbord_eventbox;
 
 
 static double calc_fd_scale(int width, int height) {
@@ -150,7 +150,7 @@ void framedraw_connect(lives_special_framedraw_rect_t *framedraw, int width, int
 
 
 void framedraw_add_label(LiVESVBox *box) {
-  GtkWidget *label;
+  LiVESWidget *label;
 
   // TRANSLATORS - Preview refers to preview window; keep this phrase short
   label=lives_standard_label_new(_("You can click in Preview to change these values"));
@@ -159,7 +159,7 @@ void framedraw_add_label(LiVESVBox *box) {
 
 
 void framedraw_add_reset(LiVESVBox *box, lives_special_framedraw_rect_t *framedraw) {
-  GtkWidget *hbox_rst;
+  LiVESWidget *hbox_rst;
  
   framedraw_add_label(box);
 
@@ -176,7 +176,7 @@ void framedraw_add_reset(LiVESVBox *box, lives_special_framedraw_rect_t *framedr
 }
 
 
-static boolean expose_fd_event (GtkWidget *widget, GdkEventExpose ev) {
+static boolean expose_fd_event (LiVESWidget *widget, GdkEventExpose ev) {
   redraw_framedraw_image();
   return TRUE;
 }
@@ -188,12 +188,12 @@ void widget_add_framedraw (LiVESVBox *box, int start, int end, boolean add_previ
 
   // an example of this is in 'trim frames'
 
-  GtkWidget *vseparator;
-  GtkWidget *vbox;
-  GtkWidget *hbox;
-  GtkWidget *label;
+  LiVESWidget *vseparator;
+  LiVESWidget *vbox;
+  LiVESWidget *hbox;
+  LiVESWidget *label;
   GtkAdjustment *spinbutton_adj;
-  GtkWidget *frame;
+  LiVESWidget *frame;
  
   lives_rfx_t *rfx;
 
@@ -292,7 +292,7 @@ void widget_add_framedraw (LiVESVBox *box, int start, int end, boolean add_previ
 
 
 
-void framedraw_redraw (lives_special_framedraw_rect_t * framedraw, boolean reload, GdkPixbuf *pixbuf) {
+void framedraw_redraw (lives_special_framedraw_rect_t * framedraw, boolean reload, LiVESPixbuf *pixbuf) {
   // this will draw the mask (framedraw_bitmap) and optionally reload the image
   // and then combine them
 
@@ -756,7 +756,7 @@ void redraw_framedraw_image(void) {
 
 // change cursor maybe when we enter or leave the framedraw window
 
-boolean on_framedraw_enter (GtkWidget *widget, GdkEventCrossing *event, lives_special_framedraw_rect_t *framedraw) {
+boolean on_framedraw_enter (LiVESWidget *widget, GdkEventCrossing *event, lives_special_framedraw_rect_t *framedraw) {
 
   if (framedraw==NULL&&mainw->multitrack!=NULL) {
     framedraw=mainw->multitrack->framedraw;
@@ -795,7 +795,7 @@ boolean on_framedraw_enter (GtkWidget *widget, GdkEventCrossing *event, lives_sp
 }
 
 
-boolean on_framedraw_leave (GtkWidget *widget, GdkEventCrossing *event, lives_special_framedraw_rect_t *framedraw) {
+boolean on_framedraw_leave (LiVESWidget *widget, GdkEventCrossing *event, lives_special_framedraw_rect_t *framedraw) {
   if (framedraw==NULL) return FALSE;
   lives_set_cursor_style (LIVES_CURSOR_NORMAL,mainw->framedraw);
   return FALSE;
@@ -804,7 +804,7 @@ boolean on_framedraw_leave (GtkWidget *widget, GdkEventCrossing *event, lives_sp
 
 // using these 3 functions, the user can draw on frames
 
-boolean on_framedraw_mouse_start (GtkWidget *widget, GdkEventButton *event, lives_special_framedraw_rect_t *framedraw) {
+boolean on_framedraw_mouse_start (LiVESWidget *widget, GdkEventButton *event, lives_special_framedraw_rect_t *framedraw) {
   // user clicked in the framedraw widget (or multitrack playback widget)
 
   int fd_height;
@@ -924,7 +924,7 @@ boolean on_framedraw_mouse_start (GtkWidget *widget, GdkEventButton *event, live
   return FALSE;
 }
 
-boolean on_framedraw_mouse_update (GtkWidget *widget, GdkEventMotion *event, lives_special_framedraw_rect_t *framedraw) {
+boolean on_framedraw_mouse_update (LiVESWidget *widget, GdkEventMotion *event, lives_special_framedraw_rect_t *framedraw) {
   // pointer moved in the framedraw widget
   int xcurrenti,ycurrenti;
 
@@ -1062,7 +1062,7 @@ boolean on_framedraw_mouse_update (GtkWidget *widget, GdkEventMotion *event, liv
 }
 
 
-boolean on_framedraw_mouse_reset (GtkWidget *widget, GdkEventButton *event, lives_special_framedraw_rect_t *framedraw) {
+boolean on_framedraw_mouse_reset (LiVESWidget *widget, GdkEventButton *event, lives_special_framedraw_rect_t *framedraw) {
   // user released the mouse button in framedraw widget
   if (event->button!=1||!b1_held) return FALSE;
 
@@ -1089,7 +1089,7 @@ boolean on_framedraw_mouse_reset (GtkWidget *widget, GdkEventButton *event, live
 }
 
 
-void after_framedraw_widget_changed (GtkWidget *widget, lives_special_framedraw_rect_t *framedraw) {
+void after_framedraw_widget_changed (LiVESWidget *widget, lives_special_framedraw_rect_t *framedraw) {
   if (mainw->block_param_updates||noupdate) return;
 
   // redraw mask when spin values change

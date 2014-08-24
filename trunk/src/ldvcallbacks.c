@@ -80,7 +80,7 @@ void on_cameject_clicked (GtkButton *button, gpointer user_data) {
 }
 
 
-boolean on_camdelete_event (GtkWidget *widget, GdkEvent *event, gpointer user_data) {
+boolean on_camdelete_event (LiVESWidget *widget, GdkEvent *event, gpointer user_data) {
   on_camquit_clicked(NULL,user_data);
   return FALSE;
 }

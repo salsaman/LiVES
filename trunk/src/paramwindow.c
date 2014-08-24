@@ -46,7 +46,7 @@ extern void on_realfx_activate (GtkMenuItem *, gpointer rfx); // effects.c in Li
 static void after_param_text_buffer_changed (GtkTextBuffer *textbuffer, lives_rfx_t *rfx);
 
 
-GtkWidget *fx_dialog[2];
+LiVESWidget *fx_dialog[2];
 
 // TODO -
 // use list of these in case we have multiple windows open
@@ -80,7 +80,7 @@ GList *do_onchange_init(lives_rfx_t *rfx) {
       if (!strcmp (array[0],"init")) {
 	// onchange is init
 	// create dummy object with data
-	GtkWidget *dummy_widget=lives_label_new(NULL);
+	LiVESWidget *dummy_widget=lives_label_new(NULL);
 	g_object_set_data (G_OBJECT (dummy_widget),"param_number",LIVES_INT_TO_POINTER (-1));
 	retvals=do_onchange (G_OBJECT (dummy_widget),rfx);
 	lives_widget_destroy (dummy_widget);
@@ -104,7 +104,7 @@ void on_paramwindow_ok_clicked (GtkButton *button, lives_rfx_t *rfx) {
   if (rfx!=NULL&&rfx->status!=RFX_STATUS_SCRAP) mainw->keep_pre=mainw->did_rfx_preview;
 
   if (mainw->textwidget_focus!=NULL) {
-    GtkWidget *textwidget=(GtkWidget *)g_object_get_data (G_OBJECT (mainw->textwidget_focus),"textwidget");
+    LiVESWidget *textwidget=(LiVESWidget *)g_object_get_data (G_OBJECT (mainw->textwidget_focus),"textwidget");
     after_param_text_changed(textwidget,rfx);
   }
 
@@ -425,10 +425,10 @@ static void gen_cb_toggled(GtkToggleButton *tbut, gpointer rfx) {
 
 void transition_add_in_out(GtkBox *vbox, lives_rfx_t *rfx, boolean add_audio_check) {
   // add in/out radios for multitrack transitions
-  GtkWidget *radiobutton_in;
-  GtkWidget *radiobutton_out;
-  GtkWidget *hbox,*hbox2;
-  GtkWidget *hseparator;
+  LiVESWidget *radiobutton_in;
+  LiVESWidget *radiobutton_out;
+  LiVESWidget *hbox,*hbox2;
+  LiVESWidget *hseparator;
 
   GSList *radiobutton_group = NULL;
 
@@ -452,7 +452,7 @@ void transition_add_in_out(GtkBox *vbox, lives_rfx_t *rfx, boolean add_audio_che
     int error;
     weed_plant_t *filter=weed_instance_get_filter((weed_plant_t *)rfx->source,FALSE);
 
-    GtkWidget *checkbutton;
+    LiVESWidget *checkbutton;
 
     hbox2 = lives_hbox_new (FALSE, 0);
 
@@ -506,9 +506,9 @@ static boolean add_sizes(GtkBox *vbox, boolean add_fps, lives_rfx_t *rfx) {
   // add size settings for generators and resize effects
   static lives_param_t aspect_width,aspect_height;
 
-  GtkWidget *label,*hbox;
-  GtkWidget *spinbuttonh=NULL,*spinbuttonw=NULL;
-  GtkWidget *spinbuttonf;
+  LiVESWidget *label,*hbox;
+  LiVESWidget *spinbuttonh=NULL,*spinbuttonw=NULL;
+  LiVESWidget *spinbuttonf;
 
   int error;
 
@@ -651,10 +651,10 @@ static void add_gen_to(GtkBox *vbox, lives_rfx_t *rfx) {
   // add "generate to clipboard/new clip" for rendered generators
   LiVESSList *radiobutton_group = NULL;
 
-  GtkWidget *radiobutton;
-  GtkWidget *hseparator;
+  LiVESWidget *radiobutton;
+  LiVESWidget *hseparator;
 
-  GtkWidget *hbox = lives_hbox_new (FALSE, 0);
+  LiVESWidget *hbox = lives_hbox_new (FALSE, 0);
 
   gchar *tmp,*tmp2;
 
@@ -701,11 +701,11 @@ void on_fx_pre_activate (lives_rfx_t *rfx, int didx, LiVESWidget *pbox) {
   // 1 == pbox==NULL : standalone window for mapper
   // pbox != NULL: put params in box
 
-  GtkWidget *top_dialog_vbox=NULL;
-  GtkWidget *dialog_action_area;
-  GtkWidget *cancelbutton;
-  GtkWidget *okbutton;
-  GtkWidget *resetbutton=NULL;
+  LiVESWidget *top_dialog_vbox=NULL;
+  LiVESWidget *dialog_action_area;
+  LiVESWidget *cancelbutton;
+  LiVESWidget *okbutton;
+  LiVESWidget *resetbutton=NULL;
 
   GtkAccelGroup *fxw_accel_group;
 
@@ -844,7 +844,7 @@ void on_fx_pre_activate (lives_rfx_t *rfx, int didx, LiVESWidget *pbox) {
   if (rfx->status!=RFX_STATUS_WEED&&!no_process) {
     // rendered fx preview
 
-    GtkWidget *hbox = lives_hbox_new (FALSE, 0);
+    LiVESWidget *hbox = lives_hbox_new (FALSE, 0);
     lives_box_pack_start (LIVES_BOX (top_dialog_vbox), hbox, FALSE, FALSE, 0);
 
     lives_widget_set_hexpand(hbox,TRUE);
@@ -1059,12 +1059,12 @@ boolean make_param_box(LiVESVBox *top_vbox, lives_rfx_t *rfx) {
   // returns TRUE if we added any parameters
   lives_param_t *param=NULL;
 
-  GtkWidget *param_vbox=NULL;
-  GtkWidget *top_hbox=NULL;
-  GtkWidget *hbox=NULL;
+  LiVESWidget *param_vbox=NULL;
+  LiVESWidget *top_hbox=NULL;
+  LiVESWidget *hbox=NULL;
 
   // put whole thing in scrolled window
-  GtkWidget *scrolledwindow;
+  LiVESWidget *scrolledwindow;
 
   GList *hints=NULL;
   GList *onchange=NULL;
@@ -1351,22 +1351,22 @@ boolean add_param_to_box (GtkBox *box, lives_rfx_t *rfx, int pnum, boolean add_s
 
   // add paramter pnum for rfx to box
 
-  GtkWidget *label;
-  GtkWidget *labelcname;
-  GtkWidget *checkbutton;
-  GtkWidget *radiobutton;
-  GtkWidget *spinbutton;
-  GtkWidget *scale=NULL,*scale2;
-  GtkWidget *spinbutton_red;
-  GtkWidget *spinbutton_green;
-  GtkWidget *spinbutton_blue;
-  GtkWidget *cbutton;
-  GtkWidget *entry=NULL;
-  GtkWidget *hbox;
-  GtkWidget *combo;
-  GtkWidget *dlabel=NULL;
-  GtkWidget *textview=NULL;
-  GtkWidget *scrolledwindow;
+  LiVESWidget *label;
+  LiVESWidget *labelcname;
+  LiVESWidget *checkbutton;
+  LiVESWidget *radiobutton;
+  LiVESWidget *spinbutton;
+  LiVESWidget *scale=NULL,*scale2;
+  LiVESWidget *spinbutton_red;
+  LiVESWidget *spinbutton_green;
+  LiVESWidget *spinbutton_blue;
+  LiVESWidget *cbutton;
+  LiVESWidget *entry=NULL;
+  LiVESWidget *hbox;
+  LiVESWidget *combo;
+  LiVESWidget *dlabel=NULL;
+  LiVESWidget *textview=NULL;
+  LiVESWidget *scrolledwindow;
 
   GtkAdjustment *spinbutton_adj;
 
@@ -1669,7 +1669,7 @@ boolean add_param_to_box (GtkBox *box, lives_rfx_t *rfx, int pnum, boolean add_s
 
     if (((int)param->max>RFX_TEXT_MAGIC||param->max==0.)&&
 	param->special_type!=LIVES_PARAM_SPECIAL_TYPE_FILEREAD) {
-      GtkWidget *vbox;
+      LiVESWidget *vbox;
 
       boolean woat;
 
@@ -1786,7 +1786,7 @@ boolean add_param_to_box (GtkBox *box, lives_rfx_t *rfx, int pnum, boolean add_s
 
 
 void add_param_label_to_box (GtkBox *box, boolean do_trans, const gchar *text) {
-  GtkWidget *label;
+  LiVESWidget *label;
 
   lives_box_set_homogeneous(LIVES_BOX(box),FALSE);
 
@@ -2203,7 +2203,7 @@ void after_param_red_changed (GtkSpinButton *spinbutton, lives_rfx_t *rfx) {
 
   LiVESWidgetColor colr;
 
-  GtkWidget *cbutton;
+  LiVESWidget *cbutton;
 
   int param_number=GPOINTER_TO_INT (g_object_get_data (G_OBJECT (spinbutton),"param_number"));
   int new_red;
@@ -2287,7 +2287,7 @@ void after_param_green_changed (GtkSpinButton *spinbutton, lives_rfx_t *rfx) {
 
   LiVESWidgetColor colr;
 
-  GtkWidget *cbutton;
+  LiVESWidget *cbutton;
 
   int new_green;
   int copyto=-1;
@@ -2371,7 +2371,7 @@ void after_param_blue_changed (GtkSpinButton *spinbutton, lives_rfx_t *rfx) {
 
   LiVESWidgetColor colr;
 
-  GtkWidget *cbutton;
+  LiVESWidget *cbutton;
 
   int new_blue;
   int copyto=-1;
@@ -2500,12 +2500,12 @@ after_param_alpha_changed           (GtkSpinButton   *spinbutton,
 }
 
 
-boolean after_param_text_focus_changed (GtkWidget *hbox, GtkWidget *child, lives_rfx_t *rfx) {
+boolean after_param_text_focus_changed (LiVESWidget *hbox, LiVESWidget *child, lives_rfx_t *rfx) {
   // for non realtime effects
   // we don't usually want to run the trigger every single time the user presses a key in a text widget
   // so we only update when the user clicks OK or focusses out of the widget
 
-  GtkWidget *textwidget;
+  LiVESWidget *textwidget;
 
   if (rfx==NULL) return FALSE;
 
@@ -2518,7 +2518,7 @@ boolean after_param_text_focus_changed (GtkWidget *hbox, GtkWidget *child, lives
   }
   
   if (mainw->textwidget_focus!=NULL) {
-    textwidget=(GtkWidget *)g_object_get_data (G_OBJECT (mainw->textwidget_focus),"textwidget");
+    textwidget=(LiVESWidget *)g_object_get_data (G_OBJECT (mainw->textwidget_focus),"textwidget");
     after_param_text_changed(textwidget,rfx);
   }
 
@@ -2529,7 +2529,7 @@ boolean after_param_text_focus_changed (GtkWidget *hbox, GtkWidget *child, lives
   return FALSE;
 }
 
-void after_param_text_changed (GtkWidget *textwidget, lives_rfx_t *rfx) {
+void after_param_text_changed (LiVESWidget *textwidget, lives_rfx_t *rfx) {
   GtkTextBuffer *textbuffer=NULL;
 
   GList *retvals=NULL;
@@ -2642,7 +2642,7 @@ void after_param_text_changed (GtkWidget *textwidget, lives_rfx_t *rfx) {
 }
 
 static void after_param_text_buffer_changed (GtkTextBuffer *textbuffer, lives_rfx_t *rfx) {
-  GtkWidget *textview=(GtkWidget *)g_object_get_data(G_OBJECT(textbuffer),"textview");
+  LiVESWidget *textview=(LiVESWidget *)g_object_get_data(G_OBJECT(textbuffer),"textview");
   after_param_text_changed(textview,rfx);
 }
 

@@ -169,7 +169,7 @@ typedef GtkRange                          LiVESScaleButton;
 #if GTK_CHECK_VERSION(3,2,0)
 typedef GtkGrid                           LiVESGrid;
 #else
-typedef GtkWidget                         LiVESGrid;
+typedef LiVESWidget                         LiVESGrid;
 #endif
 
 #ifdef LIVES_TABLE_IS_GRID
@@ -425,6 +425,8 @@ typedef gpointer                          livespointer;
 
 #define LIVES_IS_WIDGET(widget) GTK_IS_WIDGET(widget)
 #define LIVES_IS_WINDOW(widget) GTK_IS_WINDOW(widget)
+#define LIVES_IS_XWINDOW(widget) GDK_IS_WINDOW(widget)
+#define LIVES_IS_PIXBUF(widget) GDK_IS_PIXBUF(widget)
 #define LIVES_IS_CONTAINER(widget) GTK_IS_CONTAINER(widget)
 
 #if GTK_CHECK_VERSION(3,0,0)
@@ -1295,7 +1297,7 @@ void set_button_width(LiVESWidget *buttonbox, LiVESWidget *button, int width);
 
 void toggle_button_toggle (LiVESToggleButton *);
 
-void set_child_colour(GtkWidget *widget, gpointer set_all);
+void set_child_colour(LiVESWidget *widget, gpointer set_all);
 
 void unhide_cursor(LiVESXWindow *);
 void hide_cursor(LiVESXWindow *);

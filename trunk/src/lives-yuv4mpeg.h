@@ -48,9 +48,9 @@ void lives_yuv_stream_stop_write (lives_yuv4m_t *);
 
 
 typedef struct {
-  GtkWidget *dialog;
-  GtkWidget *card_spin;
-  GtkWidget * channel_spin;
+  LiVESWidget *dialog;
+  LiVESWidget *card_spin;
+  LiVESWidget * channel_spin;
 } lives_card_w;
 
 

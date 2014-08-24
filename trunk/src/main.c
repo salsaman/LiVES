@@ -3407,7 +3407,7 @@ void procw_desensitize(void) {
 
 
 
-void set_ce_frame_from_pixbuf(GtkImage *image, GdkPixbuf *pixbuf, lives_painter_t *cairo) {
+void set_ce_frame_from_pixbuf(GtkImage *image, LiVESPixbuf *pixbuf, lives_painter_t *cairo) {
 #if GTK_CHECK_VERSION(3,0,0)
   
   int rwidth=lives_widget_get_allocation_width(LIVES_WIDGET(image));
@@ -3451,7 +3451,7 @@ void set_ce_frame_from_pixbuf(GtkImage *image, GdkPixbuf *pixbuf, lives_painter_
 
 
 void load_start_image(int frame) {
-  GdkPixbuf *start_pixbuf=NULL;
+  LiVESPixbuf *start_pixbuf=NULL;
 
   weed_plant_t *layer;
 
@@ -3530,7 +3530,7 @@ void load_start_image(int frame) {
     }
     weed_plant_free(layer);
 
-    if (GDK_IS_PIXBUF(start_pixbuf)) {
+    if (LIVES_IS_PIXBUF(start_pixbuf)) {
       set_ce_frame_from_pixbuf(GTK_IMAGE(mainw->start_image),start_pixbuf,NULL);
     }
     if (start_pixbuf!=NULL) {
@@ -3589,7 +3589,7 @@ void load_start_image(int frame) {
     }
     weed_plant_free(layer);
 
-    if (GDK_IS_PIXBUF(start_pixbuf)) {
+    if (LIVES_IS_PIXBUF(start_pixbuf)) {
       set_ce_frame_from_pixbuf(GTK_IMAGE(mainw->start_image),start_pixbuf,NULL);
     }
     if (start_pixbuf!=NULL) {
@@ -3626,7 +3626,7 @@ void load_start_image(int frame) {
 
 
 void load_end_image(int frame) {
-  GdkPixbuf *end_pixbuf=NULL;
+  LiVESPixbuf *end_pixbuf=NULL;
   weed_plant_t *layer;
   weed_timecode_t tc;
   int rwidth,rheight,width,height;
@@ -3703,7 +3703,7 @@ void load_end_image(int frame) {
     }
     weed_plant_free(layer);
 
-    if (GDK_IS_PIXBUF(end_pixbuf)) {
+    if (LIVES_IS_PIXBUF(end_pixbuf)) {
       set_ce_frame_from_pixbuf(GTK_IMAGE(mainw->end_image),end_pixbuf,NULL);
     }
     if (end_pixbuf!=NULL) {
@@ -3758,7 +3758,7 @@ void load_end_image(int frame) {
 
     weed_plant_free(layer);
 
-    if (GDK_IS_PIXBUF(end_pixbuf)) {
+    if (LIVES_IS_PIXBUF(end_pixbuf)) {
       set_ce_frame_from_pixbuf(GTK_IMAGE(mainw->end_image),end_pixbuf,NULL);
     }
     if (end_pixbuf!=NULL) {
@@ -3801,7 +3801,7 @@ void load_end_image(int frame) {
 void load_preview_image(boolean update_always) {
   // this is for the sepwin preview
   // update_always==TRUE = update widgets from mainw->preview_frame
-  GdkPixbuf *pixbuf=NULL;
+  LiVESPixbuf *pixbuf=NULL;
 
   int preview_frame;
 
@@ -4158,8 +4158,10 @@ static boolean weed_layer_new_from_file_progressive(weed_plant_t *layer,
   boolean do_not_free=TRUE;
 
 #ifndef NO_PROG_LOAD
+#ifdef GUI_GTK
   GdkPixbufLoader *pbload;
-  guchar buff[IMG_BUFF_SIZE];
+#endif
+  uint8_t buff[IMG_BUFF_SIZE];
   size_t bsize;
   FILE *fp=fopen(fname,"rb");
   if (!fp) return FALSE;
@@ -4174,14 +4176,18 @@ static boolean weed_layer_new_from_file_progressive(weed_plant_t *layer,
     return ret;
 #endif
 
+#ifdef GUI_GTK
     pbload=gdk_pixbuf_loader_new_with_type("png",gerror);
+#endif
   }
+#ifdef GUI_GTK
   else if (!strcmp(img_ext,"jpg")) pbload=gdk_pixbuf_loader_new_with_type("jpeg",gerror);
   else pbload=gdk_pixbuf_loader_new();
 
   g_signal_connect (G_OBJECT (pbload), "size_prepared",
                       G_CALLBACK (pbsize_set),
                       NULL);
+
 
   while (1) {
     if (!(bsize=fread(buff,1,IMG_BUFF_SIZE,fp))) break;
@@ -4200,10 +4206,11 @@ static boolean weed_layer_new_from_file_progressive(weed_plant_t *layer,
 
   if (!gdk_pixbuf_loader_close(pbload,gerror)) return FALSE;
 
-  pixbuf=(GdkPixbuf *)g_object_ref(gdk_pixbuf_loader_get_pixbuf(pbload));
+  pixbuf=(LiVESPixbuf *)g_object_ref(gdk_pixbuf_loader_get_pixbuf(pbload));
   if (pbload!=NULL) g_object_unref(pbload);
+#endif
 
-# else
+# else //PROG_LOAD
 
 #ifdef USE_LIBPNG
   {
@@ -4660,7 +4667,7 @@ LiVESPixbuf *pull_lives_pixbuf_at_size(int clip, int frame, const char *image_ex
   weed_plant_free(layer);
   if (pixbuf!=NULL&&((width!=0&&lives_pixbuf_get_width(pixbuf)!=width)
 		     ||(height!=0&&lives_pixbuf_get_height(pixbuf)!=height))) {
-    GdkPixbuf *pixbuf2;
+    LiVESPixbuf *pixbuf2;
     threaded_dialog_spin();
     // TODO - could use resize plugin here
     pixbuf2=lives_pixbuf_scale_simple(pixbuf,width,height,interp);
@@ -5990,7 +5997,7 @@ void load_frame_image(int frame) {
       }
     }
     else {
-      if (mainw->play_window!=NULL&&GDK_IS_WINDOW (lives_widget_get_xwindow(mainw->play_window))) {
+      if (mainw->play_window!=NULL&&LIVES_IS_XWINDOW (lives_widget_get_xwindow(mainw->play_window))) {
 	interp=get_interp_value(prefs->pb_quality);
 	resize_layer(mainw->frame_layer,mainw->pwidth/weed_palette_get_pixels_per_macropixel(layer_palette),
 		     mainw->pheight,interp,cpal,0);
@@ -6006,7 +6013,7 @@ void load_frame_image(int frame) {
 
     // internal player, double size or fullscreen, or multitrack
 
-    if (mainw->play_window!=NULL&&GDK_IS_WINDOW (lives_widget_get_xwindow(mainw->play_window))) {
+    if (mainw->play_window!=NULL&&LIVES_IS_XWINDOW (lives_widget_get_xwindow(mainw->play_window))) {
       lives_painter_t *cr = lives_painter_create_from_widget(mainw->play_window);
       block_expose();
 
@@ -6061,7 +6068,7 @@ void load_frame_image(int frame) {
       g_free(tmp);
     }
 
-
+#ifdef GUI_GTK
 #if GTK_CHECK_VERSION(3,0,0)
     xwidth=gdk_window_get_width(mainw->foreign_window);
     xheight=gdk_window_get_height(mainw->foreign_window);
@@ -6077,6 +6084,7 @@ void load_frame_image(int frame) {
 					      xwidth,
 					      xheight
 					      ))!=NULL) {
+#endif
 #endif
       g_snprintf(fname,PATH_MAX,"%s/%s/%08d.%s",prefs->tmpdir,cfile->handle,frame,prefs->image_ext);
       do {
@@ -6108,7 +6116,7 @@ void load_frame_image(int frame) {
 
 /** Save a pixbuf to a file using the specified imgtype and the specified quality/compression value */
 
-GError *lives_pixbuf_save(GdkPixbuf *pixbuf, gchar *fname, lives_image_type_t imgtype, int quality, boolean do_chmod, 
+GError *lives_pixbuf_save(LiVESPixbuf *pixbuf, gchar *fname, lives_image_type_t imgtype, int quality, boolean do_chmod, 
 			  GError **gerrorptr) {
   // CALLER should check for errors
 
@@ -7067,7 +7075,7 @@ void resize (double scale) {
   // resize the frame widgets
   // set scale<0. to _force_ the playback frame to expand (for external capture)
 
-  GdkPixbuf *sepbuf;
+  LiVESPixbuf *sepbuf;
 
   double oscale=scale;
 

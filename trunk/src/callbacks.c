@@ -41,7 +41,7 @@
 
 static gchar file_name[PATH_MAX];
 
-boolean on_LiVES_delete_event (GtkWidget *widget, GdkEvent *event, gpointer user_data) {
+boolean on_LiVES_delete_event (LiVESWidget *widget, GdkEvent *event, gpointer user_data) {
   on_quit_activate(NULL,NULL);
   return TRUE;
 }
@@ -650,7 +650,7 @@ void on_ok_filesel_open_clicked (GtkFileChooser *chooser, gpointer user_data) {
 
 
 void on_open_vcd_activate (GtkMenuItem *menuitem, gpointer user_data) {
-  GtkWidget *vcdtrack_dialog;
+  LiVESWidget *vcdtrack_dialog;
   
   if (mainw->multitrack!=NULL) {
     if (mainw->multitrack->idlefunc>0) {
@@ -4143,7 +4143,7 @@ void on_stop_activate (GtkMenuItem *menuitem, gpointer user_data) {
 
 
 
-boolean on_stop_activate_by_del (GtkWidget *widget, GdkEvent *event, gpointer user_data) {
+boolean on_stop_activate_by_del (LiVESWidget *widget, GdkEvent *event, gpointer user_data) {
   // called if the user closes the separate play window
   if (mainw->playing_file>-1) {
     mainw->cancelled=CANCEL_USER;
@@ -5276,7 +5276,7 @@ boolean on_load_set_ok (GtkButton *button, gpointer user_data) {
 
 
 
-void on_cleardisk_activate (GtkWidget *widget, gpointer user_data) {
+void on_cleardisk_activate (LiVESWidget *widget, gpointer user_data) {
   // recover disk space
 
   int64_t bytes=0,fspace;
@@ -5437,14 +5437,14 @@ void on_cleardisk_activate (GtkWidget *widget, gpointer user_data) {
 }
 
 
-void on_cleardisk_advanced_clicked (GtkWidget *widget, gpointer user_data) {
+void on_cleardisk_advanced_clicked (LiVESWidget *widget, gpointer user_data) {
   // make cleardisk adv window
 
   // show various options and OK/Cancel button
 
   // on OK set clear_disk opts
   int response;
-  GtkWidget *dialog;
+  LiVESWidget *dialog;
   do {
     dialog=create_cleardisk_advanced_dialog();
     lives_widget_show_all(dialog);
@@ -5805,7 +5805,7 @@ donate_activate                     (GtkMenuItem     *menuitem,
 
 
 
-void on_fs_preview_clicked (GtkWidget *widget, gpointer user_data) {
+void on_fs_preview_clicked (LiVESWidget *widget, gpointer user_data) {
   // file selector preview
   double start_time=0.;
 
@@ -6313,7 +6313,7 @@ void on_ok_file_open_clicked(GtkFileChooser *chooser, GSList *fnames) {
 
 
 // files dragged onto target from outside - try to open them
-void drag_from_outside(GtkWidget *widget, GdkDragContext *dcon, int x, int y, 
+void drag_from_outside(LiVESWidget *widget, GdkDragContext *dcon, int x, int y, 
 		       GtkSelectionData *data, guint info, guint time, gpointer user_data) {
   GSList *fnames=NULL;
 #if GTK_CHECK_VERSION(3,0,0)
@@ -6385,7 +6385,7 @@ void on_opensel_range_ok_clicked (GtkButton *button, gpointer user_data) {
 void open_sel_range_activate(void) {
   // open selection range dialog
 
-  GtkWidget *opensel_dialog = create_opensel_dialog ();
+  LiVESWidget *opensel_dialog = create_opensel_dialog ();
   lives_widget_show(opensel_dialog);
   mainw->fx1_val=0.;
   mainw->fx2_val=1000;
@@ -6778,7 +6778,7 @@ void on_save_textview_clicked (GtkButton *button, gpointer user_data) {
 
 
 
-void on_cancel_button1_clicked (GtkWidget *widget, gpointer user_data) {
+void on_cancel_button1_clicked (LiVESWidget *widget, gpointer user_data) {
   // generic cancel callback
 
   end_fs_preview();
@@ -7058,7 +7058,7 @@ void on_full_screen_pressed (GtkButton *button,
 
 void on_full_screen_activate (GtkMenuItem *menuitem, gpointer user_data) {
   gchar buff[PATH_MAX];
-  GtkWidget *fs_img;
+  LiVESWidget *fs_img;
   gchar *fnamex;
   gchar *title,*xtrabit;
 
@@ -7078,7 +7078,7 @@ void on_full_screen_activate (GtkMenuItem *menuitem, gpointer user_data) {
   lives_widget_show(fs_img);
   if (!mainw->fs) {
     if (g_file_test(buff,G_FILE_TEST_EXISTS)) {
-      GdkPixbuf *pixbuf=lives_image_get_pixbuf(LIVES_IMAGE(fs_img));
+      LiVESPixbuf *pixbuf=lives_image_get_pixbuf(LIVES_IMAGE(fs_img));
       lives_pixbuf_saturate_and_pixelate(pixbuf,pixbuf,0.2,FALSE);
     }
     lives_widget_set_tooltip_text(mainw->t_fullscreen,_("Fullscreen playback (f)"));
@@ -7278,7 +7278,7 @@ on_double_size_activate               (GtkMenuItem     *menuitem,
 				       gpointer         user_data)
 {
   gchar buff[PATH_MAX];
-  GtkWidget *sngl_img;
+  LiVESWidget *sngl_img;
   gchar *fnamex;
 
   if (mainw->multitrack!=NULL||(mainw->current_file>-1&&cfile->frames==0&&user_data==NULL)) return;
@@ -7307,7 +7307,7 @@ on_double_size_activate               (GtkMenuItem     *menuitem,
     }
     
     if (g_file_test(buff,G_FILE_TEST_EXISTS)) {
-      GdkPixbuf *pixbuf=lives_image_get_pixbuf(LIVES_IMAGE(sngl_img));
+      LiVESPixbuf *pixbuf=lives_image_get_pixbuf(LIVES_IMAGE(sngl_img));
       if (pixbuf!=NULL) lives_pixbuf_saturate_and_pixelate(pixbuf,pixbuf,0.2,FALSE);
     }
     
@@ -7411,8 +7411,8 @@ void on_sepwin_pressed (GtkButton *button, gpointer user_data) {
 
 
 void on_sepwin_activate (GtkMenuItem *menuitem, gpointer user_data) {
-  GtkWidget *sep_img;
-  GtkWidget *sep_img2;
+  LiVESWidget *sep_img;
+  LiVESWidget *sep_img2;
 
   gchar buff[PATH_MAX];
   gchar *fnamex;
@@ -7441,7 +7441,7 @@ void on_sepwin_activate (GtkMenuItem *menuitem, gpointer user_data) {
   }
   else {
     if (g_file_test(buff,G_FILE_TEST_EXISTS)) {
-      GdkPixbuf *pixbuf=lives_image_get_pixbuf(LIVES_IMAGE(sep_img));
+      LiVESPixbuf *pixbuf=lives_image_get_pixbuf(LIVES_IMAGE(sep_img));
       if (pixbuf!=NULL) lives_pixbuf_saturate_and_pixelate(pixbuf,pixbuf,0.2,FALSE);
       pixbuf=lives_image_get_pixbuf(LIVES_IMAGE(sep_img2));
       if (pixbuf!=NULL) lives_pixbuf_saturate_and_pixelate(pixbuf,pixbuf,0.2,FALSE);
@@ -7537,13 +7537,13 @@ void on_sepwin_activate (GtkMenuItem *menuitem, gpointer user_data) {
 	  resize_play_window();
 	}
 	
-	if (mainw->play_window!=NULL&&GDK_IS_WINDOW(lives_widget_get_xwindow(mainw->play_window))) {
+	if (mainw->play_window!=NULL&&LIVES_IS_XWINDOW(lives_widget_get_xwindow(mainw->play_window))) {
 	  hide_cursor(lives_widget_get_xwindow(mainw->play_window));
 	  lives_widget_set_app_paintable(mainw->play_window,TRUE);
 	}
 	if (cfile->frames==1||cfile->play_paused) {
 	  lives_widget_context_update();
-	  if (mainw->play_window!=NULL&&GDK_IS_WINDOW(lives_widget_get_xwindow(mainw->play_window))&&
+	  if (mainw->play_window!=NULL&&LIVES_IS_XWINDOW(lives_widget_get_xwindow(mainw->play_window))&&
 	      !mainw->noswitch&&mainw->multitrack==NULL&&(cfile->clip_type==CLIP_TYPE_DISK||
 							  cfile->clip_type==CLIP_TYPE_FILE)) {
 	    weed_plant_t *frame_layer=mainw->frame_layer;
@@ -7760,7 +7760,7 @@ on_loop_button_activate                (GtkMenuItem     *menuitem,
 
 void on_loop_cont_activate (GtkMenuItem *menuitem, gpointer user_data) {
   gchar buff[PATH_MAX];
-  GtkWidget *loop_img;
+  LiVESWidget *loop_img;
   gchar *fnamex;
 
   mainw->loop_cont=!mainw->loop_cont;
@@ -7776,7 +7776,7 @@ void on_loop_cont_activate (GtkMenuItem *menuitem, gpointer user_data) {
   }
   else {
     if (g_file_test(buff,G_FILE_TEST_EXISTS)) {
-      GdkPixbuf *pixbuf=lives_image_get_pixbuf(LIVES_IMAGE(loop_img));
+      LiVESPixbuf *pixbuf=lives_image_get_pixbuf(LIVES_IMAGE(loop_img));
       if (pixbuf!=NULL) lives_pixbuf_saturate_and_pixelate(pixbuf,pixbuf,0.2,FALSE);
     }
     lives_widget_set_tooltip_text(mainw->m_loopbutton,_("Switch continuous looping on (o)"));
@@ -7856,8 +7856,8 @@ boolean mute_audio_callback (GtkAccelGroup *group, GObject *obj, guint keyval, G
 
 void on_mute_activate (GtkMenuItem *menuitem, gpointer user_data) {
   gchar buff[PATH_MAX];
-  GtkWidget *mute_img;
-  GtkWidget *mute_img2=NULL;
+  LiVESWidget *mute_img;
+  LiVESWidget *mute_img2=NULL;
   gchar *fnamex;
 
   mainw->mute=!mainw->mute;
@@ -7875,7 +7875,7 @@ void on_mute_activate (GtkMenuItem *menuitem, gpointer user_data) {
   }
   else {
     if (g_file_test(buff,G_FILE_TEST_EXISTS)) {
-      GdkPixbuf *pixbuf=lives_image_get_pixbuf(LIVES_IMAGE(mute_img));
+      LiVESPixbuf *pixbuf=lives_image_get_pixbuf(LIVES_IMAGE(mute_img));
       if (pixbuf!=NULL) lives_pixbuf_saturate_and_pixelate(pixbuf,pixbuf,0.2,FALSE);
       if (mainw->preview_box!=NULL) {
 	pixbuf=lives_image_get_pixbuf(LIVES_IMAGE(mute_img2));
@@ -8241,7 +8241,7 @@ void
 on_load_cdtrack_activate                (GtkMenuItem     *menuitem,
 					 gpointer         user_data)
 {
-  GtkWidget *cdtrack_dialog;
+  LiVESWidget *cdtrack_dialog;
   
   if (!strlen(prefs->cdplay_device)) {
     do_error_dialog(_ ("Please set your CD play device in Tools | Preferences | Misc\n"));
@@ -8571,8 +8571,8 @@ void on_load_vcd_ok_clicked (GtkButton *button, gpointer         user_data)
 
 void popup_lmap_errors(GtkMenuItem *menuitem, gpointer user_data) {
   // popup layout map errors dialog
-  GtkWidget *dialog_action_area,*vbox;
-  GtkWidget *button;
+  LiVESWidget *dialog_action_area,*vbox;
+  LiVESWidget *button;
   text_window *textwindow;
 
   if (prefs->warning_mask&WARN_MASK_LAYOUT_POPUP) return;
@@ -8970,11 +8970,11 @@ on_spinbutton_end_value_changed          (GtkSpinButton   *spinbutton,
 // for the timer bars
 
 #if GTK_CHECK_VERSION(3,0,0)
-boolean expose_vid_event (GtkWidget *widget, lives_painter_t *cr, gpointer user_data) {
+boolean expose_vid_event (LiVESWidget *widget, lives_painter_t *cr, gpointer user_data) {
   GdkEventExpose *event=NULL;
   boolean dest_cr=FALSE;
 #else
-boolean expose_vid_event (GtkWidget *widget, GdkEventExpose *event) {
+boolean expose_vid_event (LiVESWidget *widget, GdkEventExpose *event) {
   lives_painter_t *cr=lives_painter_create_from_widget(mainw->video_draw);
   boolean dest_cr=TRUE;
 #endif
@@ -9160,11 +9160,11 @@ static void redraw_raudio(lives_painter_t *cr, int ex, int ey, int ew, int eh) {
 
 
 #if GTK_CHECK_VERSION(3,0,0)
-boolean expose_laud_event (GtkWidget *widget, lives_painter_t *cr, gpointer user_data) {
+boolean expose_laud_event (LiVESWidget *widget, lives_painter_t *cr, gpointer user_data) {
   GdkEventExpose *event=NULL;
   boolean need_cr=TRUE;
 #else
-boolean expose_laud_event (GtkWidget *widget, GdkEventExpose *event) {
+boolean expose_laud_event (LiVESWidget *widget, GdkEventExpose *event) {
   lives_painter_t *cr;
   boolean need_cr=TRUE;
 #endif
@@ -9209,11 +9209,11 @@ boolean expose_laud_event (GtkWidget *widget, GdkEventExpose *event) {
 
 
 #if GTK_CHECK_VERSION(3,0,0)
-boolean expose_raud_event (GtkWidget *widget, lives_painter_t *cr, gpointer user_data) {
+boolean expose_raud_event (LiVESWidget *widget, lives_painter_t *cr, gpointer user_data) {
   GdkEventExpose *event=NULL;
   boolean need_cr=FALSE;
 #else
-boolean expose_raud_event (GtkWidget *widget, GdkEventExpose *event) {
+boolean expose_raud_event (LiVESWidget *widget, GdkEventExpose *event) {
   lives_painter_t *cr;
   boolean need_cr=TRUE;
 #endif
@@ -9257,7 +9257,7 @@ boolean expose_raud_event (GtkWidget *widget, GdkEventExpose *event) {
 
 
 
-boolean config_event (GtkWidget *widget, GdkEventConfigure *event, gpointer user_data) {
+boolean config_event (LiVESWidget *widget, GdkEventConfigure *event, gpointer user_data) {
   int scr_width=mainw->mgeom[prefs->gui_monitor>0?prefs->gui_monitor-1:0].width;
   int scr_height=mainw->mgeom[prefs->gui_monitor>0?prefs->gui_monitor-1:0].height;
 
@@ -9730,7 +9730,7 @@ void changed_fps_during_pb (GtkSpinButton   *spinbutton, gpointer user_data) {
 }
 
 
-boolean on_mouse_scroll (GtkWidget *widget, GdkEventScroll  *event, gpointer user_data) {
+boolean on_mouse_scroll (LiVESWidget *widget, GdkEventScroll  *event, gpointer user_data) {
   uint32_t kstate;
   uint32_t type=1;
 
@@ -9756,7 +9756,7 @@ boolean on_mouse_scroll (GtkWidget *widget, GdkEventScroll  *event, gpointer use
 
 // next few functions are for the timer bars
 boolean
-on_mouse_sel_update           (GtkWidget       *widget,
+on_mouse_sel_update           (LiVESWidget       *widget,
 			       GdkEventMotion  *event,
 			       gpointer         user_data)
 {
@@ -9797,7 +9797,7 @@ on_mouse_sel_update           (GtkWidget       *widget,
 
 
 boolean
-on_mouse_sel_reset           (GtkWidget       *widget,
+on_mouse_sel_reset           (LiVESWidget       *widget,
 			      GdkEventButton  *event,
 			      gpointer         user_data)
 {
@@ -9812,7 +9812,7 @@ on_mouse_sel_reset           (GtkWidget       *widget,
 
 
 boolean
-on_mouse_sel_start           (GtkWidget       *widget,
+on_mouse_sel_start           (LiVESWidget       *widget,
 			      GdkEventButton  *event,
 			      gpointer         user_data)
 {
@@ -9894,7 +9894,7 @@ on_mouse_sel_start           (GtkWidget       *widget,
 }
 
 
-boolean on_hrule_enter (GtkWidget *widget, GdkEventCrossing *event, gpointer user_data) {
+boolean on_hrule_enter (LiVESWidget *widget, GdkEventCrossing *event, gpointer user_data) {
   if (mainw->cursor_style!=LIVES_CURSOR_NORMAL) return FALSE;
   lives_set_cursor_style(LIVES_CURSOR_CENTER_PTR,widget);
   return FALSE;
@@ -9902,7 +9902,7 @@ boolean on_hrule_enter (GtkWidget *widget, GdkEventCrossing *event, gpointer use
 
 
 boolean
-on_hrule_update           (GtkWidget       *widget,
+on_hrule_update           (LiVESWidget       *widget,
 			   GdkEventMotion  *event,
 			   gpointer         user_data) {
   int x;
@@ -9926,7 +9926,7 @@ on_hrule_update           (GtkWidget       *widget,
 
 
 boolean
-on_hrule_reset           (GtkWidget       *widget,
+on_hrule_reset           (LiVESWidget       *widget,
 			  GdkEventButton  *event,
 			  gpointer         user_data)
 {
@@ -9971,7 +9971,7 @@ on_hrule_reset           (GtkWidget       *widget,
 
 
 boolean
-on_hrule_set           (GtkWidget       *widget,
+on_hrule_set           (LiVESWidget       *widget,
 			GdkEventButton  *event,
 			gpointer         user_data)
 {
@@ -10008,12 +10008,12 @@ on_hrule_set           (GtkWidget       *widget,
 
 
 
-boolean frame_context (GtkWidget *widget, GdkEventButton *event, gpointer which) {
+boolean frame_context (LiVESWidget *widget, GdkEventButton *event, gpointer which) {
   //popup a context menu when we right click on a frame
   int frame=0;
 
-  GtkWidget *save_frame_as;
-  GtkWidget *menu;
+  LiVESWidget *save_frame_as;
+  LiVESWidget *menu;
 
   // check if a file is loaded
   if (mainw->current_file<=0) return FALSE;

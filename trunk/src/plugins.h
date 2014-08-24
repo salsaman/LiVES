@@ -439,8 +439,8 @@ typedef struct {
   //--------------------------------------------------
   // extras for LiVES
 
-  /// TODO - change to GtkWidget **widgets, terminated with a NULL
-  GtkWidget *widgets[MAX_PARAM_WIDGETS]; ///< widgets which hold value/RGBA settings
+  /// TODO - change to LiVESWidget **widgets, terminated with a NULL
+  LiVESWidget *widgets[MAX_PARAM_WIDGETS]; ///< widgets which hold value/RGBA settings
   boolean onchange; ///< is there a trigger ?
 
   boolean changed;
@@ -494,7 +494,7 @@ typedef struct {
 #define RFX_PROPS_RESERVED3   0x4000
 #define RFX_PROPS_AUTO_BUILT  0x8000
 
-  GtkWidget *menuitem;  ///< the menu item which activates this effect
+  LiVESWidget *menuitem;  ///< the menu item which activates this effect
   int num_params;
   lives_param_t *params;
   lives_rfx_source_t source_type;
@@ -573,11 +573,11 @@ gchar *plugin_run_param_window(const gchar *get_com, LiVESVBox *vbox, lives_rfx_
 /// video playback plugin window - fixed part
 typedef struct {
   _vid_playback_plugin *plugin;
-  GtkWidget *dialog;
-  GtkWidget *spinbuttonh;
-  GtkWidget *spinbuttonw;
-  GtkWidget *fps_entry;
-  GtkWidget *pal_entry;
+  LiVESWidget *dialog;
+  LiVESWidget *spinbuttonh;
+  LiVESWidget *spinbuttonw;
+  LiVESWidget *fps_entry;
+  LiVESWidget *pal_entry;
   lives_rfx_t *rfx;
 } _vppaw;
 

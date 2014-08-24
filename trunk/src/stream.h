@@ -48,13 +48,13 @@ void on_open_lives2lives_activate (GtkMenuItem *, gpointer);
 void on_send_lives2lives_activate (GtkMenuItem *, gpointer);
 
 typedef struct {
-  GtkWidget *dialog;
-  GtkWidget *entry1;
-  GtkWidget *entry2;
-  GtkWidget *entry3;
-  GtkWidget *entry4;
-  GtkWidget *port_spin;
-  GtkWidget *rb_anyhost;
+  LiVESWidget *dialog;
+  LiVESWidget *entry1;
+  LiVESWidget *entry2;
+  LiVESWidget *entry3;
+  LiVESWidget *entry4;
+  LiVESWidget *port_spin;
+  LiVESWidget *rb_anyhost;
 } lives_pandh_w;
 
 lives_pandh_w* create_pandh_dialog (gint type);

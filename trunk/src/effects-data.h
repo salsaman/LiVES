@@ -142,25 +142,25 @@ typedef struct {
   lives_cconnect_t *cconx;
   lives_pconnect_t *pconx;
 
-  GtkWidget *conx_dialog;
-  GtkWidget *acbutton;
-  GtkWidget *apbutton;
-  GtkWidget *disconbutton;
+  LiVESWidget *conx_dialog;
+  LiVESWidget *acbutton;
+  LiVESWidget *apbutton;
+  LiVESWidget *disconbutton;
 
-  GtkWidget **clabel;
-  GtkWidget **pclabel;
-  GtkWidget **cfxcombo;
-  GtkWidget **pfxcombo;
-  GtkWidget **pcombo;
-  GtkWidget **ccombo;
-  GtkWidget **acheck;
-  GtkWidget **add_button;
-  GtkWidget **del_button;
-  GtkWidget *allcheckc;
-  GtkWidget *allcheck_label;
+  LiVESWidget **clabel;
+  LiVESWidget **pclabel;
+  LiVESWidget **cfxcombo;
+  LiVESWidget **pfxcombo;
+  LiVESWidget **pcombo;
+  LiVESWidget **ccombo;
+  LiVESWidget **acheck;
+  LiVESWidget **add_button;
+  LiVESWidget **del_button;
+  LiVESWidget *allcheckc;
+  LiVESWidget *allcheck_label;
 
-  GtkWidget *tablec;
-  GtkWidget *tablep;
+  LiVESWidget *tablec;
+  LiVESWidget *tablep;
 
   // table row counts
   int trowsc;
@@ -183,7 +183,7 @@ typedef struct {
 
 
 
-GtkWidget *make_datacon_window(int key, int mode);
+LiVESWidget *make_datacon_window(int key, int mode);
 
 int pconx_check_connection(weed_plant_t *ofilter, int opnum, int ikey, int imode, int ipnum, boolean setup, weed_plant_t **iparam_ret, int *idx_ret,
 			   int *okey, int *omode, int *oopnum);

@@ -183,10 +183,10 @@ static void passwd_toggle_vis(GtkToggleButton *b, gpointer entry) {
 
 
 void check_for_special (lives_rfx_t *rfx, lives_param_t *param, LiVESBox *pbox) {
-  GtkWidget *checkbutton;
-  GtkWidget *hbox;
-  GtkWidget *box;
-  GtkWidget *buttond;
+  LiVESWidget *checkbutton;
+  LiVESWidget *hbox;
+  LiVESWidget *box;
+  LiVESWidget *buttond;
   GList *slist;
 
 

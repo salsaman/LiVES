@@ -3840,8 +3840,8 @@ boolean after_foreign_play(void) {
 }
 
 
-void set_menu_text(GtkWidget *menuitem, const char *text, boolean use_mnemonic) {
-  GtkWidget *label;
+void set_menu_text(LiVESWidget *menuitem, const char *text, boolean use_mnemonic) {
+  LiVESWidget *label;
   if (GTK_IS_MENU_ITEM (menuitem)) {
     label=lives_bin_get_child(GTK_BIN(menuitem));
     if (use_mnemonic) {
@@ -3854,14 +3854,14 @@ void set_menu_text(GtkWidget *menuitem, const char *text, boolean use_mnemonic) 
 }
 
 
-void get_menu_text(GtkWidget *menuitem, char *text) {
-  GtkWidget *label=lives_bin_get_child(GTK_BIN(menuitem));
+void get_menu_text(LiVESWidget *menuitem, char *text) {
+  LiVESWidget *label=lives_bin_get_child(GTK_BIN(menuitem));
   g_snprintf(text,255,"%s",gtk_label_get_text(LIVES_LABEL(label)));
 }
 
 void
-get_menu_text_long(GtkWidget *menuitem, char *text) {
-  GtkWidget *label=lives_bin_get_child(GTK_BIN(menuitem));
+get_menu_text_long(LiVESWidget *menuitem, char *text) {
+  LiVESWidget *label=lives_bin_get_child(GTK_BIN(menuitem));
   g_snprintf(text,32768,"%s",gtk_label_get_text(LIVES_LABEL(label)));
 }
 
@@ -4343,7 +4343,7 @@ set_redoable (const char *what, boolean sensitive) {
 
 
 void 
-set_sel_label (GtkWidget *sel_label) {
+set_sel_label (LiVESWidget *sel_label) {
   char *tstr,*frstr,*tmp;
   char *sy,*sz;
 

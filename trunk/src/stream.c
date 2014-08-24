@@ -1094,9 +1094,9 @@ static void pandhw_anyhost_toggled(GtkToggleButton *tbut, gpointer user_data) {
 lives_pandh_w* create_pandh_dialog (int type) {
   // type = 0 lives2lives stream input
 
-  GtkWidget *dialog_vbox;
-  GtkWidget *hbox;
-  GtkWidget *label;
+  LiVESWidget *dialog_vbox;
+  LiVESWidget *hbox;
+  LiVESWidget *label;
 
   LiVESSList *radiobutton_group = NULL;
 

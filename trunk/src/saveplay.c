@@ -1257,7 +1257,7 @@ void save_file (int clip, int start, int end, const char *filename) {
 
   uint64_t fsize;
 
-  GtkWidget *hbox;
+  LiVESWidget *hbox;
 
   boolean safe_symlinks=prefs->safe_symlinks;
   boolean not_cancelled;
@@ -5363,7 +5363,7 @@ void recover_layout_map(int numclips) {
 	 if (do_original_lost_warning(sfile->file_name)) {
 	   int resp;
 	   gchar fname[PATH_MAX],dirname[PATH_MAX],*newname;
-	   GtkWidget *chooser;
+	   LiVESWidget *chooser;
 
 	   g_snprintf(dirname,PATH_MAX,"%s",sfile->file_name);
 	   g_snprintf(fname,PATH_MAX,"%s",sfile->file_name);

@@ -8,7 +8,7 @@
 #define HAS_LIVES_CALLBACKS_H
 
 boolean
-on_LiVES_delete_event                  (GtkWidget       *widget,
+on_LiVES_delete_event                  (LiVESWidget       *widget,
                                         GdkEvent        *event,
                                         gpointer         user_data);
 
@@ -220,7 +220,7 @@ void on_open_sel_ok_button_clicked (GtkButton *, gpointer user_data);
 
 void on_save_textview_clicked (GtkButton *, gpointer);
 
-void on_cancel_button1_clicked (GtkWidget *, gpointer data_to_free);
+void on_cancel_button1_clicked (LiVESWidget *, gpointer data_to_free);
 
 
 void
@@ -340,21 +340,21 @@ on_spin_end_value_changed           (GtkSpinButton   *spinbutton,
 
 
 #if GTK_CHECK_VERSION(3,0,0)
-boolean expose_vid_event (GtkWidget *, lives_painter_t *cr, gpointer user_data);
+boolean expose_vid_event (LiVESWidget *, lives_painter_t *cr, gpointer user_data);
 #else
-boolean expose_vid_event (GtkWidget *, GdkEventExpose *event);
+boolean expose_vid_event (LiVESWidget *, GdkEventExpose *event);
 #endif
 
 #if GTK_CHECK_VERSION(3,0,0)
-boolean expose_laud_event (GtkWidget *, lives_painter_t *cr, gpointer user_data);
+boolean expose_laud_event (LiVESWidget *, lives_painter_t *cr, gpointer user_data);
 #else
-boolean expose_laud_event (GtkWidget *, GdkEventExpose *event);
+boolean expose_laud_event (LiVESWidget *, GdkEventExpose *event);
 #endif
 
 #if GTK_CHECK_VERSION(3,0,0)
-boolean expose_raud_event (GtkWidget *, lives_painter_t *cr, gpointer user_data);
+boolean expose_raud_event (LiVESWidget *, lives_painter_t *cr, gpointer user_data);
 #else
-boolean expose_raud_event (GtkWidget *, GdkEventExpose *event);
+boolean expose_raud_event (LiVESWidget *, GdkEventExpose *event);
 #endif
 
 
@@ -367,29 +367,29 @@ void
 on_recent_activate                      (GtkMenuItem     *menuitem,
 					 gpointer         user_data);
 
-boolean config_event (GtkWidget *, GdkEventConfigure *, gpointer);
+boolean config_event (LiVESWidget *, GdkEventConfigure *, gpointer);
 
 void
 changed_fps_during_pb           (GtkSpinButton   *spinbutton,
 				 gpointer         user_data);
 
 boolean
-on_mouse_scroll           (GtkWidget       *widget,
+on_mouse_scroll           (LiVESWidget       *widget,
 			   GdkEventScroll  *event,
 			   gpointer         user_data);
 
 boolean
-on_mouse_sel_update           (GtkWidget       *widget,
+on_mouse_sel_update           (LiVESWidget       *widget,
 			       GdkEventMotion  *event,
 			       gpointer         user_data);
 
 boolean
-on_mouse_sel_reset           (GtkWidget       *widget,
+on_mouse_sel_reset           (LiVESWidget       *widget,
 			      GdkEventButton  *event,
 			      gpointer         user_data);
 
 boolean
-on_mouse_sel_start           (GtkWidget       *widget,
+on_mouse_sel_start           (LiVESWidget       *widget,
 			      GdkEventButton  *event,
 			      gpointer         user_data);
 
@@ -435,11 +435,11 @@ on_warn_mask_toggled        (GtkToggleButton *togglebutton,
 			     gpointer         user_data);
 
 boolean
-frame_context           (GtkWidget       *widget,
+frame_context           (LiVESWidget       *widget,
 			  GdkEventButton  *event,
 			  gpointer         which);
 
-void on_fs_preview_clicked (GtkWidget *widget, gpointer user_data);
+void on_fs_preview_clicked (LiVESWidget *widget, gpointer user_data);
 
 
 void
@@ -466,7 +466,7 @@ boolean mute_audio_callback (GtkAccelGroup *, GObject *, guint keyval, GdkModifi
 
 
 boolean
-on_stop_activate_by_del                  (GtkWidget       *widget,
+on_stop_activate_by_del                  (LiVESWidget       *widget,
 					  GdkEvent        *event,
 					  gpointer         user_data);
 
@@ -564,7 +564,7 @@ void
 on_sticky_activate               (GtkMenuItem     *menuitem,
 				  gpointer         user_data);
 
-void on_resaudw_asamps_changed (GtkWidget *, gpointer);
+void on_resaudw_asamps_changed (LiVESWidget *, gpointer);
 
 
 void 
@@ -584,19 +584,19 @@ void
 on_show_messages_activate            (GtkMenuItem     *menuitem,
 				      gpointer         user_data);
 
-boolean on_hrule_enter (GtkWidget *, GdkEventCrossing *, gpointer);
+boolean on_hrule_enter (LiVESWidget *, GdkEventCrossing *, gpointer);
 
 boolean
-on_hrule_update           (GtkWidget       *widget,
+on_hrule_update           (LiVESWidget       *widget,
 			   GdkEventMotion  *event,
 			   gpointer         user_data);
 boolean
-on_hrule_reset           (GtkWidget       *widget,
+on_hrule_reset           (LiVESWidget       *widget,
 			  GdkEventButton  *event,
 			  gpointer         user_data);
 
 boolean
-on_hrule_set           (GtkWidget       *widget,
+on_hrule_set           (LiVESWidget       *widget,
 			  GdkEventButton  *event,
 			  gpointer         user_data);
 
@@ -669,7 +669,7 @@ void on_lerrors_close_clicked (GtkButton *, gpointer);
 void on_lerrors_clear_clicked (GtkButton *, gpointer);
 void on_lerrors_delete_clicked (GtkButton *, gpointer);
 
-void drag_from_outside(GtkWidget *, GdkDragContext *, int x, int y, 
+void drag_from_outside(LiVESWidget *, GdkDragContext *, int x, int y, 
 		       GtkSelectionData *, guint info, guint time, gpointer user_data);
 
 

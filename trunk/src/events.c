@@ -2051,15 +2051,15 @@ int get_render_choice (void) {
 
 
 
-GtkWidget *events_rec_dialog (boolean allow_mt) {
-  GtkWidget *e_rec_dialog;
-  GtkWidget *dialog_vbox;
-  GtkWidget *vbox;
-  GtkWidget *hbox;
-  GtkWidget *label;
-  GtkWidget *radiobutton;
-  GtkWidget *okbutton;
-  GtkWidget *cancelbutton;
+LiVESWidget *events_rec_dialog (boolean allow_mt) {
+  LiVESWidget *e_rec_dialog;
+  LiVESWidget *dialog_vbox;
+  LiVESWidget *vbox;
+  LiVESWidget *hbox;
+  LiVESWidget *label;
+  LiVESWidget *radiobutton;
+  LiVESWidget *okbutton;
+  LiVESWidget *cancelbutton;
   GSList *radiobutton_group = NULL;
   GtkAccelGroup *accel_group;
 
@@ -4302,8 +4302,8 @@ boolean deal_with_render_choice (boolean add_deinit) {
 
   // return TRUE if we rendered to a new clip
 
-  GtkWidget *e_rec_dialog;
-  GtkWidget *elist_dialog;
+  LiVESWidget *e_rec_dialog;
+  LiVESWidget *elist_dialog;
 
   double df;
 
@@ -4629,7 +4629,7 @@ enum {
 
 
 
-GtkWidget *create_event_list_dialog (weed_plant_t *event_list, weed_timecode_t start_tc, weed_timecode_t end_tc) {
+LiVESWidget *create_event_list_dialog (weed_plant_t *event_list, weed_timecode_t start_tc, weed_timecode_t end_tc) {
   // TODO - some event properties should be editable, e.g. parameter values
   weed_timecode_t tc,tc_secs;
 
@@ -4644,14 +4644,14 @@ GtkWidget *create_event_list_dialog (weed_plant_t *event_list, weed_timecode_t s
 
   weed_plant_t *event;
 
-  GtkWidget *event_dialog;
-  GtkWidget *tree;
-  GtkWidget *table;
-  GtkWidget *top_vbox;
-  GtkWidget *label;
-  GtkWidget *ok_button;
-  GtkWidget *hbuttonbox;
-  GtkWidget *scrolledwindow;
+  LiVESWidget *event_dialog;
+  LiVESWidget *tree;
+  LiVESWidget *table;
+  LiVESWidget *top_vbox;
+  LiVESWidget *label;
+  LiVESWidget *ok_button;
+  LiVESWidget *hbuttonbox;
+  LiVESWidget *scrolledwindow;
 
   LiVESCellRenderer *renderer;
   LiVESTreeViewColumn *column;
@@ -5023,16 +5023,16 @@ render_details *create_render_details (int type) {
 
   static lives_param_t aspect_width,aspect_height;
 
-  GtkWidget *label;
-  GtkWidget *top_vbox;
-  GtkWidget *dialog_vbox;
-  GtkWidget *scrollw;
-  GtkWidget *hbox;
-  GtkWidget *vbox;
-  GtkWidget *frame;
-  GtkWidget *cancelbutton;
-  GtkWidget *alabel;
-  GtkWidget *daa;
+  LiVESWidget *label;
+  LiVESWidget *top_vbox;
+  LiVESWidget *dialog_vbox;
+  LiVESWidget *scrollw;
+  LiVESWidget *hbox;
+  LiVESWidget *vbox;
+  LiVESWidget *frame;
+  LiVESWidget *cancelbutton;
+  LiVESWidget *alabel;
+  LiVESWidget *daa;
 
   GtkAccelGroup *rdet_accel_group;
 

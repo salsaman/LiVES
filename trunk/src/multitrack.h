@@ -178,186 +178,186 @@ struct _mt_opts {
 
 struct _mt {
   // widgets
-  GtkWidget *window;
-  GtkWidget *top_vbox;
-  GtkWidget *hbox;
-  GtkWidget *play_blank;
-  GtkWidget *play_box;
-  GtkWidget *poly_box;
-  GtkWidget *clip_scroll;
-  GtkWidget *clip_inner_box;
-  GtkWidget *in_out_box;
-  GtkWidget *in_hbox;
-  GtkWidget *out_hbox;
-  GtkWidget *in_image;
-  GtkWidget *out_image;
-  GtkWidget *context_box;
-  GtkWidget *context_scroll;
-  GtkWidget *sep_image;
-  GtkWidget *timeline_table_header;
-  GtkWidget *tl_eventbox;
-  GtkWidget *timeline_table;
-  GtkWidget *timeline;
-  GtkWidget *timeline_eb;
-  GtkWidget *timeline_reg;
-  GtkWidget *infobar;
-  GtkWidget *stop;
-  GtkWidget *rewind;
-  GtkWidget *sepwin;
-  GtkWidget *mute_audio;
-  GtkWidget *loop_continue;
-  GtkWidget *insert;
-  GtkWidget *audio_insert;
-  GtkWidget *delblock;
-  GtkWidget *clipedit;
-  GtkWidget *vpaned;
-  GtkWidget *hpaned;
-  GtkWidget *scrollbar;
-  GtkWidget *playall;
-  GtkWidget *playsel;
-  GtkWidget *jumpnext;
-  GtkWidget *jumpback;
-  GtkWidget *render;
-  GtkWidget *prerender_aud;
-  GtkWidget *fx_block;
-  GtkWidget *fx_blockv;
-  GtkWidget *fx_blocka;
-  GtkWidget *fx_delete;
-  GtkWidget *fx_edit;
-  GtkWidget *fx_region;
-  GtkWidget *fx_region_1;
-  GtkWidget *fx_region_1v;
-  GtkWidget *fx_region_1a;
-  GtkWidget *fx_region_2;
-  GtkWidget *fx_region_2av;
-  GtkWidget *fx_region_2v;
-  GtkWidget *fx_region_2a;
-  GtkWidget *fx_region_3;
-  GtkWidget *atrans_menuitem;
-  GtkWidget *submenu_atransfx;
-  GtkWidget *move_fx;
-  GtkWidget *mm_menuitem;
-  GtkWidget *mm_move;
-  GtkWidget *mm_select;
-  GtkWidget *ins_menuitem;
-  GtkWidget *ins_normal;
+  LiVESWidget *window;
+  LiVESWidget *top_vbox;
+  LiVESWidget *hbox;
+  LiVESWidget *play_blank;
+  LiVESWidget *play_box;
+  LiVESWidget *poly_box;
+  LiVESWidget *clip_scroll;
+  LiVESWidget *clip_inner_box;
+  LiVESWidget *in_out_box;
+  LiVESWidget *in_hbox;
+  LiVESWidget *out_hbox;
+  LiVESWidget *in_image;
+  LiVESWidget *out_image;
+  LiVESWidget *context_box;
+  LiVESWidget *context_scroll;
+  LiVESWidget *sep_image;
+  LiVESWidget *timeline_table_header;
+  LiVESWidget *tl_eventbox;
+  LiVESWidget *timeline_table;
+  LiVESWidget *timeline;
+  LiVESWidget *timeline_eb;
+  LiVESWidget *timeline_reg;
+  LiVESWidget *infobar;
+  LiVESWidget *stop;
+  LiVESWidget *rewind;
+  LiVESWidget *sepwin;
+  LiVESWidget *mute_audio;
+  LiVESWidget *loop_continue;
+  LiVESWidget *insert;
+  LiVESWidget *audio_insert;
+  LiVESWidget *delblock;
+  LiVESWidget *clipedit;
+  LiVESWidget *vpaned;
+  LiVESWidget *hpaned;
+  LiVESWidget *scrollbar;
+  LiVESWidget *playall;
+  LiVESWidget *playsel;
+  LiVESWidget *jumpnext;
+  LiVESWidget *jumpback;
+  LiVESWidget *render;
+  LiVESWidget *prerender_aud;
+  LiVESWidget *fx_block;
+  LiVESWidget *fx_blockv;
+  LiVESWidget *fx_blocka;
+  LiVESWidget *fx_delete;
+  LiVESWidget *fx_edit;
+  LiVESWidget *fx_region;
+  LiVESWidget *fx_region_1;
+  LiVESWidget *fx_region_1v;
+  LiVESWidget *fx_region_1a;
+  LiVESWidget *fx_region_2;
+  LiVESWidget *fx_region_2av;
+  LiVESWidget *fx_region_2v;
+  LiVESWidget *fx_region_2a;
+  LiVESWidget *fx_region_3;
+  LiVESWidget *atrans_menuitem;
+  LiVESWidget *submenu_atransfx;
+  LiVESWidget *move_fx;
+  LiVESWidget *mm_menuitem;
+  LiVESWidget *mm_move;
+  LiVESWidget *mm_select;
+  LiVESWidget *ins_menuitem;
+  LiVESWidget *ins_normal;
   GtkToolItem *grav_menuitem;
-  GtkWidget *grav_label;
-  GtkWidget *grav_normal;
-  GtkWidget *grav_left;
-  GtkWidget *grav_right;
-  GtkWidget *select_track;
-  GtkWidget *seldesel_menuitem;
-  GtkWidget *view_events;
-  GtkWidget *view_clips;
-  GtkWidget *view_in_out;
-  GtkWidget *view_effects;
-  GtkWidget *avel_box;
-  GtkWidget *checkbutton_avel_reverse;
-  GtkWidget *spinbutton_avel;
-  GtkWidget *avel_scale;
-  GtkWidget *spinbutton_in;
-  GtkWidget *spinbutton_out;
-  GtkWidget *checkbutton_start_anchored;
-  GtkWidget *checkbutton_end_anchored;
-  GtkWidget *timecode;
-  GtkWidget *spinbutton_start;
-  GtkWidget *spinbutton_end;
-  GtkWidget *tl_hbox;
-  GtkWidget *fx_base_box;
-  GtkWidget *fx_contents_box;
-  GtkWidget *fx_box;
-  GtkWidget *fx_label;
-  GtkWidget *param_inner_box;
-  GtkWidget *param_box;
-  GtkWidget *next_node_button;
-  GtkWidget *prev_node_button;
-  GtkWidget *del_node_button;
-  GtkWidget *node_spinbutton;
-  GtkWidget *node_scale;
-  GtkWidget *sel_label;
-  GtkWidget *l_sel_arrow;
-  GtkWidget *r_sel_arrow;
-  GtkWidget *save_event_list; ///< menuitem
-  GtkWidget *load_event_list; ///< menuitem
-  GtkWidget *clear_event_list; ///< menuitem
-  GtkWidget *tc_to_rs;
-  GtkWidget *tc_to_re;
-  GtkWidget *rs_to_tc;
-  GtkWidget *re_to_tc;
-  GtkWidget *undo;
-  GtkWidget *redo;
-  GtkWidget *ac_audio_check;
-  GtkWidget *remove_gaps;
-  GtkWidget *remove_first_gaps;
-  GtkWidget *split_sel;
-  GtkWidget *ins_gap_sel;
-  GtkWidget *ins_gap_cur;
-  GtkWidget *last_filter_map;
-  GtkWidget *next_filter_map;
-  GtkWidget *fx_list_box;
-  GtkWidget *fx_list_scroll;
-  GtkWidget *fx_list_vbox;
-  GtkWidget *next_fm_button;
-  GtkWidget *prev_fm_button;
-  GtkWidget *fx_ibefore_button;
-  GtkWidget *fx_iafter_button;
-  GtkWidget *rename_track;
-  GtkWidget *cback_audio;
-  GtkWidget *aload_subs;
-  GtkWidget *load_vals;
-  GtkWidget *change_vals;
-  GtkWidget *aparam_separator;
-  GtkWidget *aparam_menuitem;
-  GtkWidget *aparam_submenu;
-  GtkWidget *render_sep;
-  GtkWidget *render_vid;
-  GtkWidget *render_aud;
-  GtkWidget *normalise_aud;
-  GtkWidget *view_audio;
-  GtkWidget *clear_marks;
-  GtkWidget *fd_frame;
-  GtkWidget *apply_fx_button;
+  LiVESWidget *grav_label;
+  LiVESWidget *grav_normal;
+  LiVESWidget *grav_left;
+  LiVESWidget *grav_right;
+  LiVESWidget *select_track;
+  LiVESWidget *seldesel_menuitem;
+  LiVESWidget *view_events;
+  LiVESWidget *view_clips;
+  LiVESWidget *view_in_out;
+  LiVESWidget *view_effects;
+  LiVESWidget *avel_box;
+  LiVESWidget *checkbutton_avel_reverse;
+  LiVESWidget *spinbutton_avel;
+  LiVESWidget *avel_scale;
+  LiVESWidget *spinbutton_in;
+  LiVESWidget *spinbutton_out;
+  LiVESWidget *checkbutton_start_anchored;
+  LiVESWidget *checkbutton_end_anchored;
+  LiVESWidget *timecode;
+  LiVESWidget *spinbutton_start;
+  LiVESWidget *spinbutton_end;
+  LiVESWidget *tl_hbox;
+  LiVESWidget *fx_base_box;
+  LiVESWidget *fx_contents_box;
+  LiVESWidget *fx_box;
+  LiVESWidget *fx_label;
+  LiVESWidget *param_inner_box;
+  LiVESWidget *param_box;
+  LiVESWidget *next_node_button;
+  LiVESWidget *prev_node_button;
+  LiVESWidget *del_node_button;
+  LiVESWidget *node_spinbutton;
+  LiVESWidget *node_scale;
+  LiVESWidget *sel_label;
+  LiVESWidget *l_sel_arrow;
+  LiVESWidget *r_sel_arrow;
+  LiVESWidget *save_event_list; ///< menuitem
+  LiVESWidget *load_event_list; ///< menuitem
+  LiVESWidget *clear_event_list; ///< menuitem
+  LiVESWidget *tc_to_rs;
+  LiVESWidget *tc_to_re;
+  LiVESWidget *rs_to_tc;
+  LiVESWidget *re_to_tc;
+  LiVESWidget *undo;
+  LiVESWidget *redo;
+  LiVESWidget *ac_audio_check;
+  LiVESWidget *remove_gaps;
+  LiVESWidget *remove_first_gaps;
+  LiVESWidget *split_sel;
+  LiVESWidget *ins_gap_sel;
+  LiVESWidget *ins_gap_cur;
+  LiVESWidget *last_filter_map;
+  LiVESWidget *next_filter_map;
+  LiVESWidget *fx_list_box;
+  LiVESWidget *fx_list_scroll;
+  LiVESWidget *fx_list_vbox;
+  LiVESWidget *next_fm_button;
+  LiVESWidget *prev_fm_button;
+  LiVESWidget *fx_ibefore_button;
+  LiVESWidget *fx_iafter_button;
+  LiVESWidget *rename_track;
+  LiVESWidget *cback_audio;
+  LiVESWidget *aload_subs;
+  LiVESWidget *load_vals;
+  LiVESWidget *change_vals;
+  LiVESWidget *aparam_separator;
+  LiVESWidget *aparam_menuitem;
+  LiVESWidget *aparam_submenu;
+  LiVESWidget *render_sep;
+  LiVESWidget *render_vid;
+  LiVESWidget *render_aud;
+  LiVESWidget *normalise_aud;
+  LiVESWidget *view_audio;
+  LiVESWidget *clear_marks;
+  LiVESWidget *fd_frame;
+  LiVESWidget *apply_fx_button;
   GtkToolItem *eview_button;
-  GtkWidget *eview_label;
-  GtkWidget *follow_play;
-  GtkWidget *change_max_disp;
-  GtkWidget *add_vid_behind;
-  GtkWidget *add_vid_front;
-  GtkWidget *quit;
-  GtkWidget *troubleshoot;
-  GtkWidget *fx_params_label;
-  GtkWidget *amixer_button;
-  GtkWidget *view_sel_events;
-  GtkWidget *adjust_start_end;
-  GtkWidget *start_in_label;
-  GtkWidget *end_out_label;
-  GtkWidget *context_frame;
-  GtkWidget *nb;
-  GtkWidget *nb_label;
+  LiVESWidget *eview_label;
+  LiVESWidget *follow_play;
+  LiVESWidget *change_max_disp;
+  LiVESWidget *add_vid_behind;
+  LiVESWidget *add_vid_front;
+  LiVESWidget *quit;
+  LiVESWidget *troubleshoot;
+  LiVESWidget *fx_params_label;
+  LiVESWidget *amixer_button;
+  LiVESWidget *view_sel_events;
+  LiVESWidget *adjust_start_end;
+  LiVESWidget *start_in_label;
+  LiVESWidget *end_out_label;
+  LiVESWidget *context_frame;
+  LiVESWidget *nb;
+  LiVESWidget *nb_label;
 
-  GtkWidget *open_menu;
-  GtkWidget *recent_menu;
-  GtkWidget *recent1;
-  GtkWidget *recent2;
-  GtkWidget *recent3;
-  GtkWidget *recent4;
+  LiVESWidget *open_menu;
+  LiVESWidget *recent_menu;
+  LiVESWidget *recent1;
+  LiVESWidget *recent2;
+  LiVESWidget *recent3;
+  LiVESWidget *recent4;
 
-  GtkWidget *time_scrollbar;
-  GtkWidget *show_layout_errors;
+  LiVESWidget *time_scrollbar;
+  LiVESWidget *show_layout_errors;
 
-  GtkWidget *load_set;
-  GtkWidget *save_set;
+  LiVESWidget *load_set;
+  LiVESWidget *save_set;
 
-  GtkWidget *close;
+  LiVESWidget *close;
 
-  GtkWidget *clear_ds;
+  LiVESWidget *clear_ds;
 
-  GtkWidget *gens_submenu;
-  GtkWidget *capture;
+  LiVESWidget *gens_submenu;
+  LiVESWidget *capture;
 
-  GtkWidget *insa_checkbutton;
-  GtkWidget *snapo_checkbutton;
+  LiVESWidget *insa_checkbutton;
+  LiVESWidget *snapo_checkbutton;
 
   GObject *spinbutton_in_adj;
   GObject *spinbutton_out_adj;
@@ -378,7 +378,7 @@ struct _mt {
 
   GList *aparam_view_list;
 
-  GdkPixbuf *frame_pixbuf;
+  LiVESPixbuf *frame_pixbuf;
 
   gulong spin_in_func;
   gulong spin_out_func;
@@ -607,10 +607,10 @@ typedef struct {
 
 
 struct _lives_amixer_t {
-  GtkWidget *main_hbox;
-  GtkWidget **ch_sliders;
-  GtkWidget *gang_checkbutton;
-  GtkWidget *inv_checkbutton;
+  LiVESWidget *main_hbox;
+  LiVESWidget **ch_sliders;
+  LiVESWidget *gang_checkbutton;
+  LiVESWidget *inv_checkbutton;
   gulong *ch_slider_fns;
   int nchans;
   lives_mt *mt;
@@ -638,7 +638,7 @@ struct _track_rect {
   boolean end_anchored;
   boolean ordered; ///< are frames in sequential order ?
   
-  GtkWidget *eventbox; ///< pointer to eventbox widget which contains this block; we can use its "layer_number" to get the track/layer number
+  LiVESWidget *eventbox; ///< pointer to eventbox widget which contains this block; we can use its "layer_number" to get the track/layer number
 
 };
 
@@ -700,11 +700,11 @@ weed_plant_t *add_blank_frames_up_to (weed_plant_t *event_list, weed_plant_t *st
 
 // track functions
 void on_cback_audio_activate (GtkMenuItem *, gpointer mt);
-GtkWidget *add_audio_track (lives_mt *, int trackno, boolean behind);
+LiVESWidget *add_audio_track (lives_mt *, int trackno, boolean behind);
 void add_video_track_behind (GtkMenuItem *, gpointer mt);
 void add_video_track_front (GtkMenuItem *, gpointer mt);
 void delete_video_track(lives_mt *, int layer, boolean full);
-void delete_audio_track(lives_mt *, GtkWidget *eventbox, boolean full);
+void delete_audio_track(lives_mt *, LiVESWidget *eventbox, boolean full);
 void delete_audio_tracks(lives_mt *, GList *list, boolean full);
 void remove_gaps (GtkMenuItem *, gpointer mt);
 void remove_first_gaps (GtkMenuItem *, gpointer mt);
@@ -712,7 +712,7 @@ void on_insgap_sel_activate (GtkMenuItem *, gpointer mt);
 void on_insgap_cur_activate (GtkMenuItem *, gpointer mt);
 void on_split_activate (GtkMenuItem *, gpointer mt);
 void scroll_tracks (lives_mt *, int top_track, boolean set_value);
-boolean track_arrow_pressed (GtkWidget *ahbox, GdkEventButton *, gpointer mt);
+boolean track_arrow_pressed (LiVESWidget *ahbox, GdkEventButton *, gpointer mt);
 void track_select (lives_mt *); ///< must call after setting mt->current_track
 boolean mt_track_is_audio(lives_mt *, int ntrack); ///< return TRUE if ntrack is a valid backing audio track
 boolean mt_track_is_video(lives_mt *, int ntrack); ///< return TRUE if ntrack is a valid video track
@@ -721,26 +721,26 @@ void mt_do_autotransition(lives_mt *, track_rect *block); ///< call this on a bl
 
 
 // track mouse movement
-boolean on_track_click (GtkWidget *eventbox, GdkEventButton *, gpointer mt);
-boolean on_atrack_click (GtkWidget *eventbox, GdkEventButton *, gpointer mt);
-boolean on_track_header_click (GtkWidget *eventbox, GdkEventButton *, gpointer mt);
-boolean on_track_between_click (GtkWidget *eventbox, GdkEventButton *, gpointer mt);
-boolean on_track_release (GtkWidget *eventbox, GdkEventButton *event, gpointer mt);
-boolean on_atrack_release (GtkWidget *eventbox, GdkEventButton *event, gpointer mt);
-boolean on_track_header_release (GtkWidget *eventbox, GdkEventButton *, gpointer mt);
-boolean on_track_between_release (GtkWidget *eventbox, GdkEventButton *, gpointer mt);
-boolean on_track_move (GtkWidget *widget, GdkEventMotion *event, gpointer mt);
-boolean on_track_header_move (GtkWidget *widget, GdkEventMotion *event, gpointer mt);
+boolean on_track_click (LiVESWidget *eventbox, GdkEventButton *, gpointer mt);
+boolean on_atrack_click (LiVESWidget *eventbox, GdkEventButton *, gpointer mt);
+boolean on_track_header_click (LiVESWidget *eventbox, GdkEventButton *, gpointer mt);
+boolean on_track_between_click (LiVESWidget *eventbox, GdkEventButton *, gpointer mt);
+boolean on_track_release (LiVESWidget *eventbox, GdkEventButton *event, gpointer mt);
+boolean on_atrack_release (LiVESWidget *eventbox, GdkEventButton *event, gpointer mt);
+boolean on_track_header_release (LiVESWidget *eventbox, GdkEventButton *, gpointer mt);
+boolean on_track_between_release (LiVESWidget *eventbox, GdkEventButton *, gpointer mt);
+boolean on_track_move (LiVESWidget *widget, GdkEventMotion *event, gpointer mt);
+boolean on_track_header_move (LiVESWidget *widget, GdkEventMotion *event, gpointer mt);
 
 void unselect_all (lives_mt *); ///< unselect all blocks
-void insert_frames (int filenum, weed_timecode_t offset_start, weed_timecode_t offset_end, weed_timecode_t tc, lives_direction_t direction, GtkWidget *eventbox, lives_mt *, track_rect *in_block);
-void insert_audio (int filenum, weed_timecode_t offset_start, weed_timecode_t offset_end, weed_timecode_t tc, double avel, lives_direction_t direction, GtkWidget *eventbox, lives_mt *, track_rect *in_block);
-void on_seltrack_toggled (GtkWidget *, gpointer mt);
+void insert_frames (int filenum, weed_timecode_t offset_start, weed_timecode_t offset_end, weed_timecode_t tc, lives_direction_t direction, LiVESWidget *eventbox, lives_mt *, track_rect *in_block);
+void insert_audio (int filenum, weed_timecode_t offset_start, weed_timecode_t offset_end, weed_timecode_t tc, double avel, lives_direction_t direction, LiVESWidget *eventbox, lives_mt *, track_rect *in_block);
+void on_seltrack_toggled (LiVESWidget *, gpointer mt);
 void scroll_track_by_scrollbar (GtkScrollbar *sbar, gpointer mt);
 
 // block functions
-void in_out_start_changed (GtkWidget *, gpointer mt);
-void in_out_end_changed (GtkWidget *, gpointer mt);
+void in_out_start_changed (LiVESWidget *, gpointer mt);
+void in_out_end_changed (LiVESWidget *, gpointer mt);
 void in_anchor_toggled (GtkToggleButton *, gpointer mt);
 void out_anchor_toggled (GtkToggleButton *, gpointer mt);
 void avel_reverse_toggled (GtkToggleButton *, gpointer mt);
@@ -756,9 +756,9 @@ double mt_get_block_entime(lives_mt *, int ntrack, int iblock); /// get timeline
 // timeline functions
 void mt_tl_move(lives_mt *, double pos_rel);
 void set_timeline_end_secs (lives_mt *, double secs);
-boolean on_timeline_press (GtkWidget *, GdkEventButton *, gpointer mt);
-boolean on_timeline_release (GtkWidget *, GdkEventButton *, gpointer mt);
-boolean on_timeline_update (GtkWidget *, GdkEventMotion *, gpointer mt);
+boolean on_timeline_press (LiVESWidget *, GdkEventButton *, gpointer mt);
+boolean on_timeline_release (LiVESWidget *, GdkEventButton *, gpointer mt);
+boolean on_timeline_update (LiVESWidget *, GdkEventMotion *, gpointer mt);
 void draw_region (lives_mt *mt);
 void tc_to_rs (GtkMenuItem *, gpointer mt);
 void tc_to_re (GtkMenuItem *, gpointer mt);
@@ -782,7 +782,7 @@ void do_fx_move_context(lives_mt *mt);
 void multitrack_playall (lives_mt *);
 void multitrack_play_sel (GtkMenuItem *, gpointer mt);
 void animate_multitrack (lives_mt *);
-void unpaint_line(lives_mt *, GtkWidget *eventbox);
+void unpaint_line(lives_mt *, LiVESWidget *eventbox);
 void unpaint_lines(lives_mt *);
 
 void mt_prepare_for_playback(lives_mt *);
@@ -790,9 +790,9 @@ void mt_post_playback(lives_mt *);
 
 
 // effect node controls
-void on_next_node_clicked  (GtkWidget *, gpointer mt);
-void on_prev_node_clicked  (GtkWidget *, gpointer mt);
-void on_del_node_clicked  (GtkWidget *, gpointer mt);
+void on_next_node_clicked  (LiVESWidget *, gpointer mt);
+void on_prev_node_clicked  (LiVESWidget *, gpointer mt);
+void on_del_node_clicked  (LiVESWidget *, gpointer mt);
 void on_node_spin_value_changed (GtkSpinButton *, gpointer mt);
 double mt_get_effect_time(lives_mt *);
 
@@ -805,10 +805,10 @@ boolean add_mt_param_box(lives_mt *);
 weed_plant_t *get_prev_fm (lives_mt *, int current_track, weed_plant_t *frame);
 weed_plant_t *get_next_fm (lives_mt *, int current_track, weed_plant_t *frame);
 
-void on_prev_fm_clicked  (GtkWidget *button, gpointer mt);
-void on_next_fm_clicked  (GtkWidget *button, gpointer mt);
-void on_fx_insb_clicked  (GtkWidget *button, gpointer mt);
-void on_fx_insa_clicked  (GtkWidget *button, gpointer mt);
+void on_prev_fm_clicked  (LiVESWidget *button, gpointer mt);
+void on_next_fm_clicked  (LiVESWidget *button, gpointer mt);
+void on_fx_insb_clicked  (LiVESWidget *button, gpointer mt);
+void on_fx_insa_clicked  (LiVESWidget *button, gpointer mt);
 
 // utils
 uint32_t event_list_get_byte_size(lives_mt *, weed_plant_t *event_list, int *num_events);  ///< returns bytes and sets num_events
@@ -859,7 +859,7 @@ boolean write_backup_layout_numbering(lives_mt *);
 // amixer funcs
 void amixer_show (GtkButton *, gpointer mt);
 void on_amixer_close_clicked (GtkButton *, lives_mt *mt);
-GtkWidget * amixer_add_channel_slider (lives_mt *, int i);
+LiVESWidget * amixer_add_channel_slider (lives_mt *, int i);
 
 
 // misc

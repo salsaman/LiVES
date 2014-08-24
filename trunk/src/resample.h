@@ -18,21 +18,21 @@
 
 /// resample audio window
 typedef struct __resaudw {
-  GtkWidget *dialog;
-  GtkWidget *entry_arate;
-  GtkWidget *entry_achans;
-  GtkWidget *entry_asamps;
-  GtkWidget *rb_signed;
-  GtkWidget *rb_unsigned;
-  GtkWidget *rb_bigend;
-  GtkWidget *rb_littleend;
-  GtkWidget *unlim_radiobutton;
-  GtkWidget *hour_spinbutton;
-  GtkWidget *minute_spinbutton;
-  GtkWidget *second_spinbutton;
-  GtkWidget *fps_spinbutton;
-  GtkWidget *aud_checkbutton;
-  GtkWidget *aud_hbox;
+  LiVESWidget *dialog;
+  LiVESWidget *entry_arate;
+  LiVESWidget *entry_achans;
+  LiVESWidget *entry_asamps;
+  LiVESWidget *rb_signed;
+  LiVESWidget *rb_unsigned;
+  LiVESWidget *rb_bigend;
+  LiVESWidget *rb_littleend;
+  LiVESWidget *unlim_radiobutton;
+  LiVESWidget *hour_spinbutton;
+  LiVESWidget *minute_spinbutton;
+  LiVESWidget *second_spinbutton;
+  LiVESWidget *fps_spinbutton;
+  LiVESWidget *aud_checkbutton;
+  LiVESWidget *aud_hbox;
 } _resaudw;
 
 
@@ -58,7 +58,7 @@ void create_new_pb_speed (gshort type);
 ///
 /// type 1 : show current and new, 
 /// type 2 : show new
-_resaudw* create_resaudw (gshort type, render_details *rdet, GtkWidget *top_vbox);
+_resaudw* create_resaudw (gshort type, render_details *rdet, LiVESWidget *top_vbox);
 
 void on_change_speed_activate (GtkMenuItem *, gpointer);
 void on_change_speed_ok_clicked (GtkButton *, gpointer);

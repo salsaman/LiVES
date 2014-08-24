@@ -26,26 +26,26 @@
 #include "paramwindow.h"
 #include "ce_thumbs.h"
 
-static GtkWidget *rte_window_back=NULL;
+static LiVESWidget *rte_window_back=NULL;
 static int old_rte_keys_virtual=0;
 
-static GtkWidget **key_checks;
-static GtkWidget **key_grabs;
-static GtkWidget **mode_radios;
-static GtkWidget **combos;
-static GtkWidget **combo_entries;
-static GtkWidget *dummy_radio;
-static GtkWidget **nlabels;
-static GtkWidget **type_labels;
-static GtkWidget **param_buttons;
-static GtkWidget **conx_buttons;
-static GtkWidget **clear_buttons;
-static GtkWidget **info_buttons;
-static GtkWidget *clear_all_button;
-static GtkWidget *save_keymap_button;
-static GtkWidget *load_keymap_button;
+static LiVESWidget **key_checks;
+static LiVESWidget **key_grabs;
+static LiVESWidget **mode_radios;
+static LiVESWidget **combos;
+static LiVESWidget **combo_entries;
+static LiVESWidget *dummy_radio;
+static LiVESWidget **nlabels;
+static LiVESWidget **type_labels;
+static LiVESWidget **param_buttons;
+static LiVESWidget **conx_buttons;
+static LiVESWidget **clear_buttons;
+static LiVESWidget **info_buttons;
+static LiVESWidget *clear_all_button;
+static LiVESWidget *save_keymap_button;
+static LiVESWidget *load_keymap_button;
 
-static GtkWidget *datacon_dialog=NULL;
+static LiVESWidget *datacon_dialog=NULL;
 
 static gulong *ch_fns;
 static gulong *gr_fns;
@@ -1639,14 +1639,14 @@ boolean on_load_keymap_clicked (GtkButton *button, gpointer user_data) {
 void on_rte_info_clicked (GtkButton *button, gpointer user_data) {
   weed_plant_t *filter;
 
-  GtkWidget *rte_info_window;
-  GtkWidget *vbox;
-  GtkWidget *hbox;
-  GtkWidget *label;
-  GtkWidget *textview;
+  LiVESWidget *rte_info_window;
+  LiVESWidget *vbox;
+  LiVESWidget *hbox;
+  LiVESWidget *label;
+  LiVESWidget *textview;
 
-  GtkWidget *hbuttonbox;
-  GtkWidget *ok_button;
+  LiVESWidget *hbuttonbox;
+  LiVESWidget *ok_button;
 
   gchar *filter_name;
   gchar *filter_author;
@@ -1897,7 +1897,7 @@ static void on_params_clicked (GtkButton *button, gpointer user_data) {
 }
 
 
-static boolean on_rtew_delete_event (GtkWidget *widget, GdkEvent *event, gpointer user_data) {
+static boolean on_rtew_delete_event (LiVESWidget *widget, GdkEvent *event, gpointer user_data) {
   if (user_data==NULL) {
     rte_window_back=rte_window;
     old_rte_keys_virtual=prefs->rte_keys_virtual;
@@ -2129,20 +2129,20 @@ static LiVESTreeModel *rte_window_fx_model (void) {
 
 
 
-GtkWidget * create_rte_window (void) {
-  GtkWidget *rte_window;
-  GtkWidget *table;
-  GtkWidget *hbox;
-  GtkWidget *hbox2;
+LiVESWidget * create_rte_window (void) {
+  LiVESWidget *rte_window;
+  LiVESWidget *table;
+  LiVESWidget *hbox;
+  LiVESWidget *hbox2;
 
-  GtkWidget *vbox;
-  GtkWidget *label;
-  GtkWidget *combo;
-  GtkWidget *ok_button;
-  GtkWidget *top_vbox;
-  GtkWidget *hbuttonbox;
+  LiVESWidget *vbox;
+  LiVESWidget *label;
+  LiVESWidget *combo;
+  LiVESWidget *ok_button;
+  LiVESWidget *top_vbox;
+  LiVESWidget *hbuttonbox;
 
-  GtkWidget *scrolledwindow;
+  LiVESWidget *scrolledwindow;
 
   GSList *mode_group = NULL;
   GSList *grab_group = NULL;
@@ -2188,17 +2188,17 @@ GtkWidget * create_rte_window (void) {
     goto rte_window_ready;
   }
 
-  key_checks=(GtkWidget **)g_malloc((prefs->rte_keys_virtual)*sizeof(GtkWidget *));
-  key_grabs=(GtkWidget **)g_malloc((prefs->rte_keys_virtual)*sizeof(GtkWidget *));
-  mode_radios=(GtkWidget **)g_malloc((prefs->rte_keys_virtual)*modes*sizeof(GtkWidget *));
-  combo_entries=(GtkWidget **)g_malloc((prefs->rte_keys_virtual)*modes*sizeof(GtkWidget *));
-  combos=(GtkWidget **)g_malloc((prefs->rte_keys_virtual)*modes*sizeof(GtkWidget *));
-  info_buttons=(GtkWidget **)g_malloc((prefs->rte_keys_virtual)*modes*sizeof(GtkWidget *));
-  param_buttons=(GtkWidget **)g_malloc((prefs->rte_keys_virtual)*modes*sizeof(GtkWidget *));
-  conx_buttons=(GtkWidget **)g_malloc((prefs->rte_keys_virtual)*modes*sizeof(GtkWidget *));
-  clear_buttons=(GtkWidget **)g_malloc((prefs->rte_keys_virtual)*modes*sizeof(GtkWidget *));
-  nlabels=(GtkWidget **)g_malloc((prefs->rte_keys_virtual)*modes*sizeof(GtkWidget *));
-  type_labels=(GtkWidget **)g_malloc((prefs->rte_keys_virtual)*modes*sizeof(GtkWidget *));
+  key_checks=(LiVESWidget **)g_malloc((prefs->rte_keys_virtual)*sizeof(LiVESWidget *));
+  key_grabs=(LiVESWidget **)g_malloc((prefs->rte_keys_virtual)*sizeof(LiVESWidget *));
+  mode_radios=(LiVESWidget **)g_malloc((prefs->rte_keys_virtual)*modes*sizeof(LiVESWidget *));
+  combo_entries=(LiVESWidget **)g_malloc((prefs->rte_keys_virtual)*modes*sizeof(LiVESWidget *));
+  combos=(LiVESWidget **)g_malloc((prefs->rte_keys_virtual)*modes*sizeof(LiVESWidget *));
+  info_buttons=(LiVESWidget **)g_malloc((prefs->rte_keys_virtual)*modes*sizeof(LiVESWidget *));
+  param_buttons=(LiVESWidget **)g_malloc((prefs->rte_keys_virtual)*modes*sizeof(LiVESWidget *));
+  conx_buttons=(LiVESWidget **)g_malloc((prefs->rte_keys_virtual)*modes*sizeof(LiVESWidget *));
+  clear_buttons=(LiVESWidget **)g_malloc((prefs->rte_keys_virtual)*modes*sizeof(LiVESWidget *));
+  nlabels=(LiVESWidget **)g_malloc((prefs->rte_keys_virtual)*modes*sizeof(LiVESWidget *));
+  type_labels=(LiVESWidget **)g_malloc((prefs->rte_keys_virtual)*modes*sizeof(LiVESWidget *));
 
   ch_fns=(gulong *)g_malloc((prefs->rte_keys_virtual)*sizeof(gulong));
   gr_fns=(gulong *)g_malloc((prefs->rte_keys_virtual)*sizeof(gulong));
@@ -2444,7 +2444,7 @@ GtkWidget * create_rte_window (void) {
 }
 
 
-GtkWidget *refresh_rte_window (void) {
+LiVESWidget *refresh_rte_window (void) {
   if (rte_window!=NULL) {
     lives_set_cursor_style(LIVES_CURSOR_BUSY,NULL);
     lives_set_cursor_style(LIVES_CURSOR_BUSY,rte_window);
@@ -2503,7 +2503,7 @@ void redraw_pwindow (int key, int mode) {
   GList *child_list;
   lives_rfx_t *rfx;
 
-  GtkWidget *action_area;
+  LiVESWidget *action_area;
 
   int keyw=0,modew=0;
   int i;
@@ -2521,7 +2521,7 @@ void redraw_pwindow (int key, int mode) {
       action_area=lives_dialog_get_action_area(LIVES_DIALOG(fx_dialog[1]));
       gtk_container_set_focus_child(LIVES_CONTAINER(action_area),NULL);
       for (i=0;i<g_list_length(child_list);i++) {
-	GtkWidget *widget=(GtkWidget *)g_list_nth_data(child_list,i);
+	LiVESWidget *widget=(LiVESWidget *)g_list_nth_data(child_list,i);
 	if (widget!=action_area) {
 	  // we have to do this, because using lives_widget_destroy() here 
 	  // can causes a crash [bug in gtk+ ???]
@@ -2589,7 +2589,7 @@ void rte_set_defs_activate (GtkMenuItem *menuitem, gpointer user_data) {
 void rte_set_key_defs (GtkButton *button, lives_rfx_t *rfx) {
   int key,mode;
   if (mainw->textwidget_focus!=NULL) {
-    GtkWidget *textwidget=(GtkWidget *)g_object_get_data (G_OBJECT (mainw->textwidget_focus),"textwidget");
+    LiVESWidget *textwidget=(LiVESWidget *)g_object_get_data (G_OBJECT (mainw->textwidget_focus),"textwidget");
     after_param_text_changed(textwidget,rfx);
   }
 
@@ -2611,7 +2611,7 @@ void rte_set_defs_ok (GtkButton *button, lives_rfx_t *rfx) {
   register int i;
 
   if (mainw->textwidget_focus!=NULL) {
-    GtkWidget *textwidget=(GtkWidget *)g_object_get_data (G_OBJECT (mainw->textwidget_focus),"textwidget");
+    LiVESWidget *textwidget=(LiVESWidget *)g_object_get_data (G_OBJECT (mainw->textwidget_focus),"textwidget");
     after_param_text_changed(textwidget,rfx);
   }
 
@@ -2666,7 +2666,7 @@ void rte_reset_defs_clicked (GtkButton *button, lives_rfx_t *rfx) {
 
   GList *child_list;
 
-  GtkWidget *pbox,*fxdialog,*cancelbutton,*action_area;
+  LiVESWidget *pbox,*fxdialog,*cancelbutton,*action_area;
 
   int error;
   int nchans;
@@ -2678,7 +2678,7 @@ void rte_reset_defs_clicked (GtkButton *button, lives_rfx_t *rfx) {
 
   register int i;
 
-  cancelbutton=(GtkWidget *)g_object_get_data(G_OBJECT(button),"cancelbutton");
+  cancelbutton=(LiVESWidget *)g_object_get_data(G_OBJECT(button),"cancelbutton");
 
   if (cancelbutton!=NULL) is_generic_defs=TRUE;
 
@@ -2769,7 +2769,7 @@ void rte_reset_defs_clicked (GtkButton *button, lives_rfx_t *rfx) {
   action_area=lives_dialog_get_action_area(LIVES_DIALOG (fxdialog));
 
   for (i=0;i<g_list_length(child_list);i++) {
-    GtkWidget *widget=(GtkWidget *)g_list_nth_data(child_list,i);
+    LiVESWidget *widget=(LiVESWidget *)g_list_nth_data(child_list,i);
     if (widget!=action_area) {
       // we have to do this, because using lives_widget_destroy() here 
       // can causes a crash [bug in gtk+ ???]

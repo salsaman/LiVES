@@ -167,8 +167,8 @@ void framedraw_add_reset(LiVESVBox *box, lives_special_framedraw_rect_t *framedr
   hbox_rst = lives_hbox_new (FALSE, 0);
   lives_box_pack_start (LIVES_BOX (box), hbox_rst, FALSE, FALSE, 0);
   
-  lives_button_set_label (GTK_BUTTON (mainw->framedraw_reset),_ ("_Reset Values"));
-  gtk_button_set_use_underline (GTK_BUTTON (mainw->framedraw_reset), TRUE);
+  lives_button_set_label (LIVES_BUTTON (mainw->framedraw_reset),_ ("_Reset Values"));
+  gtk_button_set_use_underline (LIVES_BUTTON (mainw->framedraw_reset), TRUE);
   lives_box_pack_start (LIVES_BOX (hbox_rst), mainw->framedraw_reset, TRUE, FALSE, 0);
   lives_widget_set_sensitive (mainw->framedraw_reset,FALSE);
   
@@ -222,7 +222,7 @@ void widget_add_framedraw (LiVESVBox *box, int start, int end, boolean add_previ
   fbord_eventbox=lives_event_box_new();
   lives_container_set_border_width(LIVES_CONTAINER(fbord_eventbox),widget_opts.border_width);
 
-  frame = gtk_frame_new (NULL);
+  frame = lives_frame_new (NULL);
 
   add_fill_to_box(LIVES_BOX(hbox));
   lives_box_pack_start (LIVES_BOX (hbox), frame, FALSE, FALSE, 0);
@@ -236,16 +236,16 @@ void widget_add_framedraw (LiVESVBox *box, int start, int end, boolean add_previ
   mainw->fd_frame=frame;
 
   label = lives_standard_label_new (_("Preview"));
-  gtk_frame_set_label_widget (GTK_FRAME (frame), label);
+  lives_frame_set_label_widget (LIVES_FRAME (frame), label);
 
-  gtk_frame_set_shadow_type (GTK_FRAME(frame), LIVES_SHADOW_NONE);
+  lives_frame_set_shadow_type (LIVES_FRAME(frame), LIVES_SHADOW_NONE);
 
   mainw->framedraw=lives_event_box_new();
   lives_widget_set_size_request (mainw->framedraw, width, height);
   lives_container_set_border_width(LIVES_CONTAINER(mainw->framedraw),1);
 
-  lives_widget_set_events (mainw->framedraw, GDK_BUTTON1_MOTION_MASK | GDK_BUTTON_RELEASE_MASK | 
-			 GDK_BUTTON_PRESS_MASK| GDK_ENTER_NOTIFY_MASK | GDK_LEAVE_NOTIFY_MASK);
+  lives_widget_set_events (mainw->framedraw, LIVES_BUTTON1_MOTION_MASK | LIVES_BUTTON_RELEASE_MASK | 
+			 LIVES_BUTTON_PRESS_MASK| LIVES_ENTER_NOTIFY_MASK | LIVES_LEAVE_NOTIFY_MASK);
 
   mainw->framedraw_frame=start;
 
@@ -275,8 +275,8 @@ void widget_add_framedraw (LiVESVBox *box, int start, int end, boolean add_previ
 
   rfx=(lives_rfx_t *)g_object_get_data(G_OBJECT(lives_widget_get_toplevel(LIVES_WIDGET(box))),"rfx");
   mainw->framedraw_preview = lives_button_new_from_stock ("gtk-refresh");
-  lives_button_set_label (GTK_BUTTON (mainw->framedraw_preview),_ ("_Preview"));
-  gtk_button_set_use_underline (GTK_BUTTON (mainw->framedraw_preview), TRUE);
+  lives_button_set_label (LIVES_BUTTON (mainw->framedraw_preview),_ ("_Preview"));
+  gtk_button_set_use_underline (LIVES_BUTTON (mainw->framedraw_preview), TRUE);
   lives_box_pack_start (LIVES_BOX (hbox), mainw->framedraw_preview, TRUE, FALSE, 0);
   lives_widget_set_sensitive(mainw->framedraw_spinbutton,FALSE);
   lives_widget_set_sensitive(mainw->framedraw_scale,FALSE);

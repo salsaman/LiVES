@@ -2259,7 +2259,7 @@ void play_file (void) {
   mainw->pre_src_audio_file=mainw->current_file;
 
   // enable the freeze button
-  lives_accel_group_connect (GTK_ACCEL_GROUP (mainw->accel_group), LIVES_KEY_BackSpace, (GdkModifierType)LIVES_CONTROL_MASK, 
+  lives_accel_group_connect (LIVES_ACCEL_GROUP (mainw->accel_group), LIVES_KEY_BackSpace, (GdkModifierType)LIVES_CONTROL_MASK, 
 			   (GtkAccelFlags)0, (freeze_closure=g_cclosure_new (G_CALLBACK (freeze_callback),NULL,NULL)));
 
   if (mainw->multitrack!=NULL) {
@@ -2325,14 +2325,14 @@ void play_file (void) {
 
   if (mainw->multitrack==NULL) {
     if (!mainw->preview) {
-      gtk_frame_set_label(GTK_FRAME(mainw->playframe),_ ("Play"));
+      lives_frame_set_label(LIVES_FRAME(mainw->playframe),_ ("Play"));
     }
     else {
-      gtk_frame_set_label(GTK_FRAME(mainw->playframe),_ ("Preview"));
+      lives_frame_set_label(LIVES_FRAME(mainw->playframe),_ ("Preview"));
     }
     
     if (palette->style&STYLE_1) {
-      lives_widget_set_fg_color(gtk_frame_get_label_widget(GTK_FRAME(mainw->playframe)), 
+      lives_widget_set_fg_color(lives_frame_get_label_widget(LIVES_FRAME(mainw->playframe)), 
 			   LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
     }
     
@@ -2477,7 +2477,7 @@ void play_file (void) {
 	  // this doesn't get called if we don't call resize_play_window()
 	  if (mainw->play_window!=NULL) {
 	    lives_window_present (LIVES_WINDOW (mainw->play_window));
-	    gdk_window_raise(lives_widget_get_xwindow(mainw->play_window));
+	    lives_xwindow_raise(lives_widget_get_xwindow(mainw->play_window));
 	  }
 	}
       }
@@ -3116,7 +3116,7 @@ void play_file (void) {
     lives_widget_show(mainw->eventbox3);
     lives_widget_show(mainw->eventbox4);
     lives_widget_show(mainw->sep_image);
-    gtk_frame_set_label(GTK_FRAME(mainw->playframe),_ ("Preview"));
+    lives_frame_set_label(LIVES_FRAME(mainw->playframe),_ ("Preview"));
     lives_container_set_border_width (LIVES_CONTAINER (mainw->playframe), widget_opts.border_width);
     resize(1);
     lives_widget_show(mainw->t_bckground);
@@ -3227,7 +3227,7 @@ void play_file (void) {
 	    g_free(xtrabit);
 
 	    lives_window_present (LIVES_WINDOW (mainw->play_window));
-	    gdk_window_raise(lives_widget_get_xwindow(mainw->play_window));
+	    lives_xwindow_raise(lives_widget_get_xwindow(mainw->play_window));
 	    unhide_cursor (lives_widget_get_xwindow(mainw->play_window));
 	  }
 	}
@@ -3259,7 +3259,7 @@ void play_file (void) {
   mainw->audio_event=NULL;
 
   // disable the freeze key
-  lives_accel_group_disconnect (GTK_ACCEL_GROUP (mainw->accel_group), freeze_closure);
+  lives_accel_group_disconnect (LIVES_ACCEL_GROUP (mainw->accel_group), freeze_closure);
   
   if (mainw->multitrack==NULL) lives_widget_show(mainw->scrolledwindow);
 

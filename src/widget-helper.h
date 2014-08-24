@@ -114,6 +114,7 @@ typedef GtkContainer                      LiVESContainer;
 typedef GtkBin                            LiVESBin;
 typedef GtkDialog                         LiVESDialog;
 typedef GtkBox                            LiVESBox;
+typedef GtkFrame                          LiVESFrame;
 typedef GtkComboBox                       LiVESCombo;
 typedef GtkComboBox                       LiVESComboBox;
 typedef GtkButton                         LiVESButton;
@@ -265,22 +266,12 @@ typedef enum {
 } lives_position_t;
 
 
-typedef enum {
-  LIVES_SHADOW_NONE=GTK_SHADOW_NONE,
-  LIVES_SHADOW_IN=GTK_SHADOW_IN,
-  LIVES_SHADOW_OUT=GTK_SHADOW_OUT,
-  LIVES_SHADOW_ETCHED_IN=GTK_SHADOW_ETCHED_IN,
-  LIVES_SHADOW_ETCHED_OUT=GTK_SHADOW_ETCHED_OUT
-} lives_shadow_t;
-
-
-typedef enum {
-  LIVES_ARROW_UP=GTK_ARROW_UP,
-  LIVES_ARROW_DOWN=GTK_ARROW_DOWN,
-  LIVES_ARROW_LEFT=GTK_ARROW_LEFT,
-  LIVES_ARROW_RIGHT=GTK_ARROW_RIGHT,
-  LIVES_ARROW_NONE=GTK_ARROW_NONE
-} lives_arrow_t;
+typedef GtkArrowType LiVESArrowType;
+#define LIVES_ARROW_UP GTK_ARROW_UP
+#define LIVES_ARROW_DOWN GTK_ARROW_DOWN
+#define LIVES_ARROW_LEFT GTK_ARROW_LEFT
+#define LIVES_ARROW_RIGHT GTK_ARROW_RIGHT
+#define LIVES_ARROW_NONE GTK_ARROW_NONE
 
 
 typedef GtkWrapMode LiVESWrapMode;
@@ -302,6 +293,46 @@ typedef GtkSelectionMode LiVESSelectionMode;
 #define LIVES_SELECTION_SINGLE GTK_SELECTION_SINGLE
 #define LIVES_SELECTION_BROWSE GTK_SELECTION_BROWSE
 #define LIVES_SELECTION_MULTIPLE GTK_SELECTION_MULTIPLE
+
+
+typedef GdkEventMask LiVESEventMask;
+#define LIVES_EXPOSURE_MASK GDK_EXPOSURE_MASK
+#define LIVES_POINTER_MOTION_MASK GDK_POINTER_MOTION_MASK
+#define LIVES_POINTER_MOTION_HINT_MASK GDK_POINTER_MOTION_HINT_MASK
+#define LIVES_BUTTON_MOTION_MASK GDK_BUTTON_MOTION_MASK
+#define LIVES_BUTTON1_MOTION_MASK GDK_BUTTON1_MOTION_MASK
+#define LIVES_BUTTON2_MOTION_MASK GDK_BUTTON2_MOTION_MASK
+#define LIVES_BUTTON3_MOTION_MASK GDK_BUTTON3_MOTION_MASK
+#define LIVES_BUTTON_PRESS_MASK GDK_BUTTON_PRESS_MASK
+#define LIVES_BUTTON_RELEASE_MASK GDK_BUTTON_RELEASE_MASK
+#define LIVES_KEY_PRESS_MASK GDK_KEY_PRESS_MASK
+#define LIVES_KEY_RELEASE_MASK GDK_KEY_RELEASE_MASK
+#define LIVES_ENTER_NOTIFY_MASK GDK_ENTER_NOTIFY_MASK
+#define LIVES_LEAVE_NOTIFY_MASK GDK_LEAVE_NOTIFY_MASK
+#define LIVES_FOCUS_CHANGE_MASK GDK_FOCUS_CHANGE_MASK
+#define LIVES_STRUCTURE_MASK GDK_STRUCTURE_MASK
+#define LIVES_PROPERTY_CHANGE_MASK GDK_PROPERTY_CHANGE_MASK
+#define LIVES_VISIBILITY_NOTIFY_MASK GDK_VISIBILITY_NOTIFY_MASK
+#define LIVES_PROXIMITY_IN_MASK GDK_PROXIMITY_IN_MASK
+#define LIVES_PROXIMITY_OUT_MASK GDK_PROXIMITY_OUT_MASK
+#define LIVES_SUBSTRUCTURE_MASK GDK_SUBSTRUCTURE_MASK
+#define LIVES_SCROLL_MASK GDK_SCROLL_MASK
+
+#if GTK_CHECK_VERSION(3,4,0)
+#define LIVES_TOUCH_MASK GDK_TOUCH_MASK
+#define LIVES_SMOOTH_SCROLL_MASK GDK_SMOOTH_SCROLL_MASK
+#endif
+
+#define LIVES_ALL_EVENTS_MASK GDK_ALL_EVENTS_MASK
+
+
+typedef GtkShadowType LiVESShadowType;
+#define LIVES_SHADOW_NONE GTK_SHADOW_NONE
+#define LIVES_SHADOW_IN GTK_SHADOW_IN
+#define LIVES_SHADOW_OUT GTK_SHADOW_OUT
+#define LIVES_SHADOW_ETCHED_IN GTK_SHADOW_ETCHED_IN
+#define LIVES_SHADOW_ETCHED_OUT GTK_SHADOW_ETCHED_OUT
+
 
 
 #if GTK_CHECK_VERSION(3,0,0)
@@ -351,6 +382,7 @@ typedef gpointer                          livespointer;
 #define LIVES_BOX(widget) GTK_BOX(widget)
 #define LIVES_EVENT_BOX(widget) GTK_EVENT_BOX(widget)
 #define LIVES_ENTRY(widget) GTK_ENTRY(widget)
+#define LIVES_FRAME(widget) GTK_FRAME(widget)
 #define LIVES_CONTAINER(widget) GTK_CONTAINER(widget)
 #define LIVES_BIN(widget) GTK_BIN(widget)
 #define LIVES_ADJUSTMENT(widget) GTK_ADJUSTMENT(widget)
@@ -388,6 +420,8 @@ typedef gpointer                          livespointer;
 
 #define LIVES_TREE_VIEW(widget) GTK_TREE_VIEW(widget)
 #define LIVES_TREE_MODEL(object) GTK_TREE_MODEL(object)
+
+#define LIVES_ACCEL_GROUP(object) GTK_ACCEL_GROUP(object)
 
 
 #if GTK_CHECK_VERSION(3,0,0)
@@ -923,9 +957,9 @@ LiVESWidget *lives_vpaned_new(void);
 LiVESWidget *lives_hscrollbar_new(LiVESAdjustment *);
 LiVESWidget *lives_vscrollbar_new(LiVESAdjustment *);
 
-LiVESWidget *lives_label_new(const char *text);
+LiVESWidget *lives_label_new(const char *);
 
-LiVESWidget *lives_arrow_new(lives_arrow_t arrow_type, lives_shadow_t shadow_type);
+LiVESWidget *lives_arrow_new(LiVESArrowType, LiVESShadowType);
 
 LiVESWidget *lives_alignment_new(float xalign, float yalign, float xscale, float yscale);
 void lives_alignment_set(LiVESAlignment *, float xalign, float yalign, float xscale, float yscale);
@@ -1140,6 +1174,13 @@ boolean lives_grid_attach_next_to(LiVESGrid *, LiVESWidget *child, LiVESWidget *
 boolean lives_grid_insert_row(LiVESGrid *, int posn);
 boolean lives_grid_remove_row(LiVESGrid *, int posn);
 
+LiVESWidget *lives_frame_new(const char *label);
+boolean lives_frame_set_label(LiVESFrame *, const char *label);
+boolean lives_frame_set_label_widget(LiVESFrame *, LiVESWidget *);
+LiVESWidget *lives_frame_get_label_widget(LiVESFrame *);
+boolean lives_frame_set_shadow_type(LiVESFrame *, LiVESShadowType);
+
+
 LiVESWidget *lives_menu_new(void);
 
 void lives_menu_popup(LiVESMenu *, LiVESXEventButton *);
@@ -1200,6 +1241,8 @@ uint64_t lives_widget_get_xwinid(LiVESWidget *, const char *failure_msg);
 
 boolean lives_scrolled_window_set_policy(LiVESScrolledWindow *, lives_policy_t hpolicy, lives_policy_t vpolicy);
 boolean lives_scrolled_window_add_with_viewport(LiVESScrolledWindow *, LiVESWidget *child);
+
+boolean lives_xwindow_raise(LiVESXWindow *);
 
 // optional (return TRUE if implemented)
 

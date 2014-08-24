@@ -2067,7 +2067,7 @@ LiVESWidget *events_rec_dialog (boolean allow_mt) {
 
   e_rec_dialog = lives_standard_dialog_new (_("LiVES: - Events recorded"),FALSE);
 
-  if (prefs->show_gui) lives_window_set_transient_for(LIVES_WINDOW(e_rec_dialog),GTK_WINDOW(mainw->LiVES));
+  if (prefs->show_gui) lives_window_set_transient_for(LIVES_WINDOW(e_rec_dialog),LIVES_WINDOW(mainw->LiVES));
 
   dialog_vbox = lives_dialog_get_content_area(LIVES_DIALOG(e_rec_dialog));
 
@@ -2151,7 +2151,7 @@ LiVESWidget *events_rec_dialog (boolean allow_mt) {
 		    G_CALLBACK (set_render_choice_button),
 		    GINT_TO_POINTER (RENDER_CHOICE_DISCARD));
 
-  accel_group = GTK_ACCEL_GROUP(lives_accel_group_new ());
+  accel_group = LIVES_ACCEL_GROUP(lives_accel_group_new ());
   lives_widget_add_accelerator (cancelbutton, "activate", accel_group,
                               LIVES_KEY_Escape, (GdkModifierType)0, (GtkAccelFlags)0);
 
@@ -4687,7 +4687,7 @@ LiVESWidget *create_event_list_dialog (weed_plant_t *event_list, weed_timecode_t
  
   event_dialog = lives_standard_dialog_new (_("LiVES: Event list"),FALSE);
 
-  accel_group = GTK_ACCEL_GROUP(lives_accel_group_new ());
+  accel_group = LIVES_ACCEL_GROUP(lives_accel_group_new ());
   lives_window_add_accel_group (LIVES_WINDOW (event_dialog), accel_group);
 
   top_vbox=lives_dialog_get_content_area(LIVES_DIALOG(event_dialog));
@@ -5092,9 +5092,9 @@ render_details *create_render_details (int type) {
 
   g_free(title);
 
-  if (prefs->show_gui&&mainw->is_ready) lives_window_set_transient_for(LIVES_WINDOW(rdet->dialog),GTK_WINDOW(mainw->LiVES));
+  if (prefs->show_gui&&mainw->is_ready) lives_window_set_transient_for(LIVES_WINDOW(rdet->dialog),LIVES_WINDOW(mainw->LiVES));
 
-  rdet_accel_group = GTK_ACCEL_GROUP(lives_accel_group_new ());
+  rdet_accel_group = LIVES_ACCEL_GROUP(lives_accel_group_new ());
   lives_window_add_accel_group (LIVES_WINDOW (rdet->dialog), rdet_accel_group);
 
   dialog_vbox = lives_dialog_get_content_area(LIVES_DIALOG(rdet->dialog));
@@ -5124,7 +5124,7 @@ render_details *create_render_details (int type) {
 
   lives_container_set_border_width (LIVES_CONTAINER (top_vbox), 0);
 
-  frame = gtk_frame_new (NULL);
+  frame = lives_frame_new (NULL);
 
   if (type!=1) lives_box_pack_start (LIVES_BOX (top_vbox), frame, TRUE, TRUE, 0);
   vbox = lives_vbox_new (FALSE, 0);
@@ -5135,7 +5135,7 @@ render_details *create_render_details (int type) {
   }
   
   label = lives_standard_label_new (_("Video"));
-  gtk_frame_set_label_widget (GTK_FRAME (frame), label);
+  lives_frame_set_label_widget (LIVES_FRAME (frame), label);
   
   hbox = lives_hbox_new (FALSE, widget_opts.packing_width*5);
   lives_box_pack_start (LIVES_BOX (vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
@@ -5384,7 +5384,7 @@ render_details *create_render_details (int type) {
   }
   else  {
     rdet->okbutton = lives_button_new_from_stock ("gtk-go-forward");
-    lives_button_set_label(GTK_BUTTON(rdet->okbutton),_("_Next"));
+    lives_button_set_label(LIVES_BUTTON(rdet->okbutton),_("_Next"));
   }
 
   lives_dialog_add_action_widget (LIVES_DIALOG (rdet->dialog), rdet->okbutton, GTK_RESPONSE_OK);

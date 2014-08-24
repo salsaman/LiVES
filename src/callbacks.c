@@ -7237,7 +7237,7 @@ void on_full_screen_activate (GtkMenuItem *menuitem, gpointer user_data) {
 	  unfade_background();
 	}
 	else {
-	  gtk_frame_set_label(GTK_FRAME(mainw->playframe), "");
+	  lives_frame_set_label(LIVES_FRAME(mainw->playframe), "");
 	}
       }
       if ((cfile->frames==1||cfile->play_paused)&&!mainw->noswitch&&mainw->multitrack==NULL&&
@@ -7892,7 +7892,7 @@ void on_mute_activate (GtkMenuItem *menuitem, gpointer user_data) {
 
   if (mainw->preview_box!=NULL) {
     lives_widget_show(mute_img2);
-    //gtk_button_set_image(GTK_BUTTON(mainw->p_mutebutton),mute_img2); // doesn't work (gtk+ bug ?)
+    //gtk_button_set_image(LIVES_BUTTON(mainw->p_mutebutton),mute_img2); // doesn't work (gtk+ bug ?)
     lives_widget_queue_draw(mainw->p_mutebutton);
     lives_widget_queue_draw(mute_img2);
   }

@@ -707,7 +707,7 @@ void on_fx_pre_activate (lives_rfx_t *rfx, int didx, LiVESWidget *pbox) {
   LiVESWidget *okbutton;
   LiVESWidget *resetbutton=NULL;
 
-  GtkAccelGroup *fxw_accel_group;
+  LiVESAccelGroup *fxw_accel_group;
 
   GList *retvals=NULL;
 
@@ -827,8 +827,8 @@ void on_fx_pre_activate (lives_rfx_t *rfx, int didx, LiVESWidget *pbox) {
   if (didx==0) {
     // activated from the menu for a rendered effect
     if (prefs->show_gui) {
-      if (mainw->multitrack==NULL) lives_window_set_transient_for(LIVES_WINDOW(fx_dialog[0]),GTK_WINDOW(mainw->LiVES));
-      else lives_window_set_transient_for(LIVES_WINDOW(fx_dialog[0]),GTK_WINDOW(mainw->multitrack->window));
+      if (mainw->multitrack==NULL) lives_window_set_transient_for(LIVES_WINDOW(fx_dialog[0]),LIVES_WINDOW(mainw->LiVES));
+      else lives_window_set_transient_for(LIVES_WINDOW(fx_dialog[0]),LIVES_WINDOW(mainw->multitrack->window));
     }
   }
 
@@ -884,7 +884,7 @@ void on_fx_pre_activate (lives_rfx_t *rfx, int didx, LiVESWidget *pbox) {
 
     cancelbutton = lives_button_new_from_stock ("gtk-cancel");
     
-    fxw_accel_group = GTK_ACCEL_GROUP(lives_accel_group_new ());
+    fxw_accel_group = LIVES_ACCEL_GROUP(lives_accel_group_new ());
     lives_window_add_accel_group (LIVES_WINDOW (fx_dialog[didx]), fxw_accel_group);
 
     dialog_action_area = lives_dialog_get_action_area(LIVES_DIALOG (fx_dialog[didx]));

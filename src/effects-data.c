@@ -4691,7 +4691,7 @@ LiVESWidget *make_datacon_window(int key, int mode) {
   LiVESWidget *cancelbutton;
   LiVESWidget *okbutton;
 
-  GtkAccelGroup *accel_group;
+  LiVESAccelGroup *accel_group;
 
   int scr_width,scr_height;
 
@@ -4741,8 +4741,8 @@ LiVESWidget *make_datacon_window(int key, int mode) {
   conxw.conx_dialog=lives_standard_dialog_new(_("LiVES: - Parameter and Alpha Channel Connections"),FALSE);
   lives_widget_set_size_request (conxw.conx_dialog, winsize_h, winsize_v);
 
-  accel_group = GTK_ACCEL_GROUP(lives_accel_group_new ());
-  gtk_window_add_accel_group (LIVES_WINDOW (conxw.conx_dialog), accel_group);
+  accel_group = LIVES_ACCEL_GROUP(lives_accel_group_new ());
+  lives_window_add_accel_group (LIVES_WINDOW (conxw.conx_dialog), accel_group);
 
   abox = lives_dialog_get_action_area(LIVES_DIALOG(conxw.conx_dialog));
 

@@ -1107,7 +1107,7 @@ lives_pandh_w* create_pandh_dialog (int type) {
   pandhw->dialog = lives_standard_dialog_new (_("LiVES: - Receive LiVES stream"),TRUE);
 
   if (prefs->show_gui) {
-    lives_window_set_transient_for(LIVES_WINDOW(pandhw->dialog),GTK_WINDOW(mainw->LiVES));
+    lives_window_set_transient_for(LIVES_WINDOW(pandhw->dialog),LIVES_WINDOW(mainw->LiVES));
   }
 
   dialog_vbox = lives_dialog_get_content_area(LIVES_DIALOG(pandhw->dialog));

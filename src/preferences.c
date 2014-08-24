@@ -357,7 +357,7 @@ void set_vpp(boolean set_in_prefs) {
 	  if (!mainw->ext_playback) 
 	    do_error_dialog_with_check_transient 
 	      (_ ("\n\nVideo playback plugins are only activated in\nfull screen, separate window (fs) mode\n"),
-	       TRUE,0,prefsw!=NULL?LIVES_WINDOW(prefsw->prefs_dialog):GTK_WINDOW(mainw->LiVES));
+	       TRUE,0,prefsw!=NULL?LIVES_WINDOW(prefsw->prefs_dialog):LIVES_WINDOW(mainw->LiVES));
 	}
       }
     }
@@ -1151,13 +1151,13 @@ lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_warn_yuv4
   if (prefs->audio_player==AUD_PLAYER_JACK&&!capable->has_jackd) {
     do_error_dialog_with_check_transient
       (_("\nUnable to switch audio players to jack - jackd must be installed first.\nSee http://jackaudio.org\n"),
-       TRUE,0,prefsw!=NULL?LIVES_WINDOW(prefsw->prefs_dialog):GTK_WINDOW(mainw->LiVES));
+       TRUE,0,prefsw!=NULL?LIVES_WINDOW(prefsw->prefs_dialog):LIVES_WINDOW(mainw->LiVES));
   }
   else {
     if (prefs->audio_player==AUD_PLAYER_JACK&&strcmp(audio_player,"jack")) {
       do_error_dialog_with_check_transient
 	(_("\nSwitching audio players requires restart (jackd must not be running)\n"),
-	 TRUE,0,prefsw!=NULL?LIVES_WINDOW(prefsw->prefs_dialog):GTK_WINDOW(mainw->LiVES));
+	 TRUE,0,prefsw!=NULL?LIVES_WINDOW(prefsw->prefs_dialog):LIVES_WINDOW(mainw->LiVES));
     }
 
     // switch to sox
@@ -1184,7 +1184,7 @@ lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_warn_yuv4
       if (!capable->has_pulse_audio) {
 	do_error_dialog_with_check_transient
 	  (_("\nUnable to switch audio players to pulse audio\npulseaudio must be installed first.\nSee http://www.pulseaudio.org\n"),
-	   TRUE,0,prefsw!=NULL?LIVES_WINDOW(prefsw->prefs_dialog):GTK_WINDOW(mainw->LiVES));
+	   TRUE,0,prefsw!=NULL?LIVES_WINDOW(prefsw->prefs_dialog):LIVES_WINDOW(mainw->LiVES));
       }
       else {
 	if (!switch_aud_to_pulse()) {
@@ -2016,7 +2016,7 @@ _prefsw *create_prefs_dialog (void) {
 
   LiVESSList *asrc_group=NULL;
 
-  GtkAccelGroup *accel_group=GTK_ACCEL_GROUP(lives_accel_group_new ());
+  LiVESAccelGroup *accel_group=LIVES_ACCEL_GROUP(lives_accel_group_new ());
 
   // drop down lists
   GList *themes = NULL;
@@ -2051,8 +2051,8 @@ _prefsw *create_prefs_dialog (void) {
   lives_widget_set_size_request (prefsw->prefs_dialog, PREF_WIN_WIDTH, PREF_WIN_HEIGHT);
 
   if (prefs->show_gui) {
-    if (mainw->multitrack==NULL) lives_window_set_transient_for(LIVES_WINDOW(prefsw->prefs_dialog),GTK_WINDOW(mainw->LiVES));
-    else lives_window_set_transient_for(LIVES_WINDOW(prefsw->prefs_dialog),GTK_WINDOW(mainw->multitrack->window));
+    if (mainw->multitrack==NULL) lives_window_set_transient_for(LIVES_WINDOW(prefsw->prefs_dialog),LIVES_WINDOW(mainw->LiVES));
+    else lives_window_set_transient_for(LIVES_WINDOW(prefsw->prefs_dialog),LIVES_WINDOW(mainw->multitrack->window));
   }
 
   // Get dialog's vbox and show it
@@ -2333,7 +2333,7 @@ _prefsw *create_prefs_dialog (void) {
 
 
   // ---
-  frame = gtk_frame_new (NULL);
+  frame = lives_frame_new (NULL);
   lives_box_pack_start (LIVES_BOX (prefsw->vbox_right_multitrack), frame, FALSE, FALSE, widget_opts.packing_height);
   vbox = lives_vbox_new (FALSE, 0);
   lives_container_add (LIVES_CONTAINER (frame), vbox);
@@ -2343,7 +2343,7 @@ _prefsw *create_prefs_dialog (void) {
   if (palette->style&STYLE_1) {
     lives_widget_set_bg_color(frame, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
   }
-  gtk_frame_set_label_widget (GTK_FRAME (frame), label);
+  lives_frame_set_label_widget (LIVES_FRAME (frame), label);
 
 
   // ---
@@ -2623,7 +2623,7 @@ _prefsw *create_prefs_dialog (void) {
 
   prefsw->scrollw_right_playback = lives_standard_scrolled_window_new (0,0,prefsw->vbox_right_playback);
 
-  frame = gtk_frame_new (NULL);
+  frame = lives_frame_new (NULL);
  
   lives_box_pack_start (LIVES_BOX (prefsw->vbox_right_playback), frame, FALSE, FALSE, widget_opts.packing_height);
 
@@ -2732,12 +2732,12 @@ _prefsw *create_prefs_dialog (void) {
     lives_widget_set_fg_color(frame, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
   }
 
-  gtk_frame_set_label_widget (GTK_FRAME (frame), label);
+  lives_frame_set_label_widget (LIVES_FRAME (frame), label);
 
 
   //-
 
-  frame = gtk_frame_new (NULL);
+  frame = lives_frame_new (NULL);
   lives_box_pack_start (LIVES_BOX (prefsw->vbox_right_playback), frame, TRUE, TRUE, 0);
 
   vbox = lives_vbox_new (FALSE, 0);
@@ -2877,7 +2877,7 @@ _prefsw *create_prefs_dialog (void) {
   if (palette->style&STYLE_1) {
     lives_widget_set_bg_color(frame, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
   }
-  gtk_frame_set_label_widget (GTK_FRAME (frame), label);
+  lives_frame_set_label_widget (LIVES_FRAME (frame), label);
 
   icon = g_build_filename(prefs->prefix_dir, ICON_DIR, "pref_playback.png", NULL);
   pixbuf_playback = lives_pixbuf_new_from_file(icon, NULL);
@@ -4444,7 +4444,7 @@ void on_preferences_activate(GtkMenuItem *menuitem, gpointer user_data) {
 
   if (prefsw != NULL && prefsw->prefs_dialog != NULL) {
     lives_window_present(LIVES_WINDOW(prefsw->prefs_dialog));
-    gdk_window_raise(lives_widget_get_xwindow(prefsw->prefs_dialog));
+    lives_xwindow_raise(lives_widget_get_xwindow(prefsw->prefs_dialog));
     return;
   }
 
@@ -4586,7 +4586,7 @@ void on_prefs_revert_clicked(GtkButton *button, gpointer user_data) {
 
 
 boolean on_prefs_delete_event(LiVESWidget *widget, GdkEvent *event, gpointer user_data) {
-  on_prefs_close_clicked(GTK_BUTTON (((_prefsw *)user_data)->closebutton), user_data);
+  on_prefs_close_clicked(LIVES_BUTTON (((_prefsw *)user_data)->closebutton), user_data);
   return FALSE;
 }
 

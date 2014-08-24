@@ -42,7 +42,7 @@ void on_camstop_clicked (GtkButton *button, gpointer user_data) {
 
   lives_set_cursor_style(LIVES_CURSOR_NORMAL,dvgrabw->dialog);
   camstop(cam);
-  lives_button_set_label(GTK_BUTTON(dvgrabw->play),"gtk-media-play");
+  lives_button_set_label(LIVES_BUTTON(dvgrabw->play),"gtk-media-play");
   lives_widget_set_sensitive(dvgrabw->grab,TRUE);
   lives_entry_set_text(LIVES_ENTRY(dvgrabw->status_entry),_("Status: Ready"));
 }
@@ -53,10 +53,10 @@ void on_camplay_clicked (GtkButton *button, gpointer user_data) {
   camplay(cam);
   dvgrabw->playing=!dvgrabw->playing;
   if (dvgrabw->playing) {
-    lives_button_set_label(GTK_BUTTON(dvgrabw->play),"gtk-media-pause");
+    lives_button_set_label(LIVES_BUTTON(dvgrabw->play),"gtk-media-pause");
   }
   else {
-    lives_button_set_label(GTK_BUTTON(dvgrabw->play),"gtk-media-play");
+    lives_button_set_label(LIVES_BUTTON(dvgrabw->play),"gtk-media-play");
   }
   lives_widget_set_sensitive(dvgrabw->stop,TRUE);
 }

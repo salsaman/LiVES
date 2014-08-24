@@ -35,8 +35,8 @@ struct _dvgrabw *create_camwindow (s_cam *cam, int type)
   lives_container_set_border_width (LIVES_CONTAINER (dvgrabw->dialog), widget_opts.border_width*2);
 
   if (prefs->show_gui) {
-    if (mainw->multitrack==NULL) lives_window_set_transient_for(LIVES_WINDOW(dvgrabw->dialog),GTK_WINDOW(mainw->LiVES));
-    else lives_window_set_transient_for(LIVES_WINDOW(dvgrabw->dialog),GTK_WINDOW(mainw->multitrack->window));
+    if (mainw->multitrack==NULL) lives_window_set_transient_for(LIVES_WINDOW(dvgrabw->dialog),LIVES_WINDOW(mainw->LiVES));
+    else lives_window_set_transient_for(LIVES_WINDOW(dvgrabw->dialog),LIVES_WINDOW(mainw->multitrack->window));
   }
 
   vbox=lives_dialog_get_content_area(LIVES_DIALOG(dvgrabw->dialog));
@@ -127,7 +127,7 @@ struct _dvgrabw *create_camwindow (s_cam *cam, int type)
 #endif
   lives_container_add (LIVES_CONTAINER (hbuttonbox1), dvgrabw->play);
   lives_widget_set_can_focus_and_default (dvgrabw->play);
-  gtk_button_set_use_stock(GTK_BUTTON(dvgrabw->play),TRUE);
+  gtk_button_set_use_stock(LIVES_BUTTON(dvgrabw->play),TRUE);
 
 #if GTK_CHECK_VERSION(2,6,0)
   dvgrabw->grab = lives_button_new_from_stock (GTK_STOCK_MEDIA_RECORD);
@@ -142,8 +142,8 @@ struct _dvgrabw *create_camwindow (s_cam *cam, int type)
 #else
   image = lives_image_new_from_stock (GTK_STOCK_NO,LIVES_ICON_SIZE_BUTTON);
 #endif
-  lives_button_set_label(GTK_BUTTON(dvgrabw->grab),_("_Grab"));
-  gtk_button_set_image(GTK_BUTTON(dvgrabw->grab),image);
+  lives_button_set_label(LIVES_BUTTON(dvgrabw->grab),_("_Grab"));
+  gtk_button_set_image(LIVES_BUTTON(dvgrabw->grab),image);
 
   label=lives_standard_label_new(_("\nUse this tool to control your camera and grab clips.\nAfter grabbing your clips, you can close this window \nand then load them into LiVES.\n"));
   lives_box_pack_start(LIVES_BOX(vbox),label,FALSE,FALSE,widget_opts.packing_height*4);
@@ -157,8 +157,8 @@ struct _dvgrabw *create_camwindow (s_cam *cam, int type)
   lives_widget_set_can_focus_and_default (dvgrabw->quit);
 
   image=lives_image_new_from_stock(LIVES_STOCK_CLOSE,LIVES_ICON_SIZE_BUTTON);
-  lives_button_set_label(GTK_BUTTON(dvgrabw->quit),_("_Close Window"));
-  gtk_button_set_image(GTK_BUTTON(dvgrabw->quit),image);
+  lives_button_set_label(LIVES_BUTTON(dvgrabw->quit),_("_Close Window"));
+  gtk_button_set_image(LIVES_BUTTON(dvgrabw->quit),image);
 
   //////////////////////////////////////////////////////////////////////////////////////////
 

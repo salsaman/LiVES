@@ -599,7 +599,7 @@ void on_vppa_cancel_clicked (GtkButton *button, gpointer user_data) {
 
   if (prefsw!=NULL) {
     lives_window_present(LIVES_WINDOW(prefsw->prefs_dialog));
-    gdk_window_raise(lives_widget_get_xwindow(prefsw->prefs_dialog));
+    lives_xwindow_raise(lives_widget_get_xwindow(prefsw->prefs_dialog));
   }
 }
 
@@ -874,7 +874,7 @@ _vppaw *on_vpp_advanced_clicked (GtkButton *button, gpointer user_data) {
   LiVESWidget *okbutton;
   LiVESWidget *savebutton;
 
-  GtkAccelGroup *accel_group;
+  LiVESAccelGroup *accel_group;
 
   _vppaw *vppa;
 
@@ -921,14 +921,14 @@ _vppaw *on_vpp_advanced_clicked (GtkButton *button, gpointer user_data) {
   vppa->dialog = lives_standard_dialog_new (title,FALSE);
   g_free(title);
 
-  accel_group = GTK_ACCEL_GROUP(lives_accel_group_new ());
+  accel_group = LIVES_ACCEL_GROUP(lives_accel_group_new ());
   lives_window_add_accel_group (LIVES_WINDOW (vppa->dialog), accel_group);
 
   if (prefs->show_gui) {
-    if (prefsw!=NULL) lives_window_set_transient_for(LIVES_WINDOW(vppa->dialog),GTK_WINDOW(prefsw->prefs_dialog));
+    if (prefsw!=NULL) lives_window_set_transient_for(LIVES_WINDOW(vppa->dialog),LIVES_WINDOW(prefsw->prefs_dialog));
     else {
-      if (mainw->multitrack==NULL) lives_window_set_transient_for(LIVES_WINDOW(vppa->dialog),GTK_WINDOW(mainw->LiVES));
-      else lives_window_set_transient_for(LIVES_WINDOW(vppa->dialog),GTK_WINDOW(mainw->multitrack->window));
+      if (mainw->multitrack==NULL) lives_window_set_transient_for(LIVES_WINDOW(vppa->dialog),LIVES_WINDOW(mainw->LiVES));
+      else lives_window_set_transient_for(LIVES_WINDOW(vppa->dialog),LIVES_WINDOW(mainw->multitrack->window));
     }
   }
 
@@ -1108,7 +1108,7 @@ _vppaw *on_vpp_advanced_clicked (GtkButton *button, gpointer user_data) {
 
   lives_widget_show_all(vppa->dialog);
   lives_window_present (LIVES_WINDOW (vppa->dialog));
-  gdk_window_raise(lives_widget_get_xwindow(vppa->dialog));
+  lives_xwindow_raise(lives_widget_get_xwindow(vppa->dialog));
 
   return vppa;
 }
@@ -2585,7 +2585,7 @@ static void dpa_ok_clicked (GtkButton *button, gpointer user_data) {
 
   if (prefsw!=NULL) {
     lives_window_present(LIVES_WINDOW(prefsw->prefs_dialog));
-    gdk_window_raise(lives_widget_get_xwindow(prefsw->prefs_dialog));
+    lives_xwindow_raise(lives_widget_get_xwindow(prefsw->prefs_dialog));
     if (string_lists_differ(future_prefs->disabled_decoders,future_prefs->disabled_decoders_new))
       apply_button_set_enabled(NULL,NULL);
   }
@@ -2605,7 +2605,7 @@ static void dpa_cancel_clicked (GtkButton *button, gpointer user_data) {
 
   if (prefsw!=NULL) {
     lives_window_present(LIVES_WINDOW(prefsw->prefs_dialog));
-    gdk_window_raise(lives_widget_get_xwindow(prefsw->prefs_dialog));
+    lives_xwindow_raise(lives_widget_get_xwindow(prefsw->prefs_dialog));
   }
 
   if (future_prefs->disabled_decoders_new!=NULL) {
@@ -2651,10 +2651,10 @@ void on_decplug_advanced_clicked (GtkButton *button, gpointer user_data) {
   dialog = lives_standard_dialog_new (_("LiVES: - Decoder Plugins"),FALSE);
 
   if (prefs->show_gui) {
-    if (prefsw!=NULL) lives_window_set_transient_for(LIVES_WINDOW(dialog),GTK_WINDOW(prefsw->prefs_dialog));
+    if (prefsw!=NULL) lives_window_set_transient_for(LIVES_WINDOW(dialog),LIVES_WINDOW(prefsw->prefs_dialog));
     else {
-      if (mainw->multitrack==NULL) lives_window_set_transient_for(LIVES_WINDOW(dialog),GTK_WINDOW(mainw->LiVES));
-      else lives_window_set_transient_for(LIVES_WINDOW(dialog),GTK_WINDOW(mainw->multitrack->window));
+      if (mainw->multitrack==NULL) lives_window_set_transient_for(LIVES_WINDOW(dialog),LIVES_WINDOW(mainw->LiVES));
+      else lives_window_set_transient_for(LIVES_WINDOW(dialog),LIVES_WINDOW(mainw->multitrack->window));
     }
   }
 
@@ -2707,7 +2707,7 @@ void on_decplug_advanced_clicked (GtkButton *button, gpointer user_data) {
 
   lives_widget_show_all(dialog);
   lives_window_present (LIVES_WINDOW (dialog));
-  gdk_window_raise(lives_widget_get_xwindow(dialog));
+  lives_xwindow_raise(lives_widget_get_xwindow(dialog));
 
   future_prefs->disabled_decoders_new=g_list_copy_strings(future_prefs->disabled_decoders);
 
@@ -3863,8 +3863,8 @@ gchar *plugin_run_param_window(const gchar *get_com, LiVESVBox *vbox, lives_rfx_
       on_fx_pre_activate(rfx,1,NULL);
 
       if (prefs->show_gui) {
-	if (mainw->multitrack==NULL) lives_window_set_transient_for(LIVES_WINDOW(fx_dialog[1]),GTK_WINDOW(mainw->LiVES));
-	else lives_window_set_transient_for(LIVES_WINDOW(fx_dialog[1]),GTK_WINDOW(mainw->multitrack->window));
+	if (mainw->multitrack==NULL) lives_window_set_transient_for(LIVES_WINDOW(fx_dialog[1]),LIVES_WINDOW(mainw->LiVES));
+	else lives_window_set_transient_for(LIVES_WINDOW(fx_dialog[1]),LIVES_WINDOW(mainw->multitrack->window));
       }
       lives_window_set_modal (LIVES_WINDOW (fx_dialog[1]), TRUE);
       

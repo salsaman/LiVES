@@ -1692,7 +1692,7 @@ void on_rte_info_clicked (GtkButton *button, gpointer user_data) {
   }
 
   lives_container_set_border_width (LIVES_CONTAINER (rte_info_window), widget_opts.border_width);
-  lives_window_set_transient_for(LIVES_WINDOW(rte_info_window),GTK_WINDOW(lives_widget_get_toplevel(LIVES_WIDGET(button))));
+  lives_window_set_transient_for(LIVES_WINDOW(rte_info_window),LIVES_WINDOW(lives_widget_get_toplevel(LIVES_WIDGET(button))));
 
   lives_window_set_default_size (LIVES_WINDOW (rte_info_window), RTE_INFO_WIDTH, RTE_INFO_HEIGHT);
 
@@ -2147,7 +2147,7 @@ LiVESWidget * create_rte_window (void) {
   GSList *mode_group = NULL;
   GSList *grab_group = NULL;
 
-  GtkAccelGroup *rtew_accel_group;
+  LiVESAccelGroup *rtew_accel_group;
 
   LiVESTreeModel *model;
 
@@ -2395,7 +2395,7 @@ LiVESWidget * create_rte_window (void) {
 #endif
 
 
-  rtew_accel_group = GTK_ACCEL_GROUP(lives_accel_group_new ());
+  rtew_accel_group = LIVES_ACCEL_GROUP(lives_accel_group_new ());
   lives_window_add_accel_group (LIVES_WINDOW (rte_window), rtew_accel_group);
 
   lives_widget_add_accelerator (ok_button, "activate", rtew_accel_group,
@@ -2459,7 +2459,7 @@ LiVESWidget *refresh_rte_window (void) {
 
 void on_assign_rte_keys_activate (GtkMenuItem *menuitem, gpointer user_data) {
   if (rte_window!=NULL) {
-    on_rtew_ok_clicked(GTK_BUTTON(dummy_radio), user_data);
+    on_rtew_ok_clicked(LIVES_BUTTON(dummy_radio), user_data);
     return;
   }
   

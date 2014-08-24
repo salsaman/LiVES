@@ -4339,7 +4339,7 @@ void splash_init(void) {
   widget_opts.default_justify=LIVES_JUSTIFY_LEFT;
 
 #ifdef GUI_GTK
-  if (lives_widget_get_direction(LIVES_WIDGET(mainw->splash_window))==GTK_TEXT_DIR_RTL) 
+  if (gtk_widget_get_direction(GTK_WIDGET(mainw->splash_window))==GTK_TEXT_DIR_RTL) 
     widget_opts.default_justify=LIVES_JUSTIFY_RIGHT;
 #endif
 

@@ -1,6 +1,6 @@
 // multitrack.h
 // LiVES
-// (c) G. Finch 2005 - 2013 <salsaman@gmail.com>
+// (c) G. Finch 2005 - 2014 <salsaman@gmail.com>
 // released under the GNU GPL 3 or later
 // see file ../COPYING for licensing details
 
@@ -370,7 +370,7 @@ struct _mt {
   GList *audio_vols; ///< layer volume levels (coarse control) - set in mixer
   GList *audio_vols_back; ///< layer volume levels (coarse control) - reset levels
 
-  GtkAccelGroup *accel_group;
+  LiVESAccelGroup *accel_group;
   GList *video_draws; ///< list of video timeline eventboxes, in layer order
   GObject *vadjustment;
 
@@ -479,7 +479,7 @@ struct _mt {
 
   GList *undos;
   size_t undo_buffer_used;
-  unsigned char *undo_mem;
+  uint8_t *undo_mem;
   int undo_offset;
   boolean did_backup;
 
@@ -764,7 +764,9 @@ void tc_to_rs (GtkMenuItem *, gpointer mt);
 void tc_to_re (GtkMenuItem *, gpointer mt);
 void rs_to_tc (GtkMenuItem *, gpointer mt);
 void re_to_tc (GtkMenuItem *, gpointer mt);
+
 boolean mt_mark_callback (GtkAccelGroup *group, GObject *obj, guint keyval, GdkModifierType mod, gpointer user_data);
+
 void multitrack_clear_marks (GtkMenuItem *, gpointer mt);
 void mt_show_current_frame(lives_mt *, boolean return_layer);  ///< preview the current frame
 void mt_clear_timeline(lives_mt *mt);
@@ -874,8 +876,8 @@ void mt_delete_clips(lives_mt *, int file);
 void mt_init_clips (lives_mt *, int orig_file, boolean add);
 
 // key shortcuts
-boolean mt_prevclip (GtkAccelGroup *, GObject *, guint keyval, GdkModifierType mod, gpointer);
-boolean mt_nextclip (GtkAccelGroup *, GObject *, guint keyval, GdkModifierType mod, gpointer);
+boolean mt_prevclip (LiVESAccelGroup *, GObject *, guint keyval, GdkModifierType mod, gpointer);
+boolean mt_nextclip (LiVESAccelGroup *, GObject *, guint keyval, GdkModifierType mod, gpointer);
 
 typedef enum {
   /* default to warn about */

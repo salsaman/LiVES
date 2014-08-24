@@ -1133,7 +1133,7 @@ _resaudw *create_resaudw (gshort type, render_details *rdet, LiVESWidget *top_vb
   LiVESWidget *hbox;
   LiVESWidget *hbox2;
 
-  GtkAccelGroup *accel_group=NULL;
+  LiVESAccelGroup *accel_group=NULL;
 
   GSList *s1_group=NULL;
   GSList *e1_group=NULL;
@@ -1204,11 +1204,11 @@ _resaudw *create_resaudw (gshort type, render_details *rdet, LiVESWidget *top_vb
     resaudw->dialog = lives_standard_dialog_new (title,FALSE);
     g_free(title);
 
-    accel_group = GTK_ACCEL_GROUP(lives_accel_group_new ());
+    accel_group = LIVES_ACCEL_GROUP(lives_accel_group_new ());
     lives_window_add_accel_group (LIVES_WINDOW (resaudw->dialog), accel_group);
 
     if (prefs->show_gui) {
-      lives_window_set_transient_for(LIVES_WINDOW(resaudw->dialog),GTK_WINDOW(mainw->LiVES));
+      lives_window_set_transient_for(LIVES_WINDOW(resaudw->dialog),LIVES_WINDOW(mainw->LiVES));
     }
 
     dialog_vbox = lives_dialog_get_content_area(LIVES_DIALOG(resaudw->dialog));
@@ -1220,7 +1220,7 @@ _resaudw *create_resaudw (gshort type, render_details *rdet, LiVESWidget *top_vb
   else vboxx=top_vbox;
 
   if (type==1) {
-    frame = gtk_frame_new (NULL);
+    frame = lives_frame_new (NULL);
  
     lives_box_pack_start (LIVES_BOX (vboxx), frame, TRUE, TRUE, 0);
     
@@ -1314,14 +1314,14 @@ _resaudw *create_resaudw (gshort type, render_details *rdet, LiVESWidget *top_vb
 
     label = lives_standard_label_new (_("Current"));
 
-    gtk_frame_set_label_widget (GTK_FRAME (frame), label);
+    lives_frame_set_label_widget (LIVES_FRAME (frame), label);
 
   }
 
   resaudw->aud_checkbutton = NULL;
 
   if (type<9||type==11) {
-    frame = gtk_frame_new (NULL);
+    frame = lives_frame_new (NULL);
 
     if (type==4) lives_box_pack_start (LIVES_BOX (vboxx), frame, FALSE, FALSE, widget_opts.packing_height);
     else lives_box_pack_start (LIVES_BOX (vboxx), frame, TRUE, TRUE, 0);
@@ -1490,12 +1490,12 @@ _resaudw *create_resaudw (gshort type, render_details *rdet, LiVESWidget *top_vb
 
     if (type==3&&type!=11&&palette->style&STYLE_1) lives_widget_set_bg_color(frame, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
 
-    gtk_frame_set_label_widget (GTK_FRAME (frame), label_aud);
+    lives_frame_set_label_widget (LIVES_FRAME (frame), label_aud);
 
   }
 
   if (type>7&&type!=11) {
-    frame = gtk_frame_new (NULL);
+    frame = lives_frame_new (NULL);
     lives_widget_show (frame);
     lives_box_pack_start (LIVES_BOX (vboxx), frame, TRUE, TRUE, 0);
 
@@ -1515,7 +1515,7 @@ _resaudw *create_resaudw (gshort type, render_details *rdet, LiVESWidget *top_vb
 
     label = lives_standard_label_new (_("Video"));
 
-    gtk_frame_set_label_widget (GTK_FRAME (frame), label);
+    lives_frame_set_label_widget (LIVES_FRAME (frame), label);
   }
 
   if (type>4&&type!=11) {
@@ -1658,7 +1658,7 @@ void create_new_pb_speed (short type) {
   LiVESWidget *change_pb_ok;
   LiVESWidget *change_audio_speed;
 
-  GtkAccelGroup *accel_group;
+  LiVESAccelGroup *accel_group;
 
   GSList *rbgroup = NULL;
 
@@ -1678,11 +1678,11 @@ void create_new_pb_speed (short type) {
 
   lives_container_set_border_width (LIVES_CONTAINER (new_pb_speed), widget_opts.border_width*2);
 
-  accel_group = GTK_ACCEL_GROUP(lives_accel_group_new ());
+  accel_group = LIVES_ACCEL_GROUP(lives_accel_group_new ());
   lives_window_add_accel_group (LIVES_WINDOW (new_pb_speed), accel_group);
 
   if (prefs->show_gui) {
-    lives_window_set_transient_for(LIVES_WINDOW(new_pb_speed),GTK_WINDOW(mainw->LiVES));
+    lives_window_set_transient_for(LIVES_WINDOW(new_pb_speed),LIVES_WINDOW(mainw->LiVES));
   }
 
   dialog_vbox = lives_dialog_get_content_area(LIVES_DIALOG(new_pb_speed));

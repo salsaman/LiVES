@@ -2338,10 +2338,13 @@ static boolean open_yuv4m_startup(gpointer data) {
 
 
 static boolean lives_startup(gpointer data) {
+#ifdef GUI_GTK
   GError *gerr=NULL;
+  gchar *icon;
+#endif
+
   boolean got_files=FALSE;
   gchar *tmp;
-  gchar *icon;
 
   if (!mainw->foreign) {
     if (prefs->show_splash) splash_init();
@@ -2354,11 +2357,13 @@ static boolean lives_startup(gpointer data) {
   create_LiVES ();
   widget_opts.apply_theme=FALSE;
 
+#ifdef GUI_GTK
   icon=g_build_filename(prefs->prefix_dir,DESKTOP_ICON_DIR,"lives.png",NULL);
   gtk_window_set_default_icon_from_file(icon,&gerr);
   g_free(icon);
 
   if (gerr!=NULL) g_error_free(gerr);
+#endif
 
   lives_widget_queue_draw(mainw->LiVES);
   lives_widget_context_update();

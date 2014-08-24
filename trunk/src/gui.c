@@ -285,7 +285,7 @@ void create_LiVES (void) {
 
 #endif
 
-  mainw->accel_group = GTK_ACCEL_GROUP(lives_accel_group_new ());
+  mainw->accel_group = LIVES_ACCEL_GROUP(lives_accel_group_new ());
 
   mainw->layout_textbuffer=lives_text_buffer_new();
   g_object_ref(mainw->layout_textbuffer);
@@ -1978,7 +1978,7 @@ void create_LiVES (void) {
     lives_widget_set_bg_color (mainw->vbox1, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
   }
 
-  lives_widget_set_events (mainw->eventbox, GDK_SCROLL_MASK);
+  lives_widget_set_events (mainw->eventbox, LIVES_SCROLL_MASK);
 
   g_signal_connect (GTK_OBJECT (mainw->eventbox), "scroll_event",
                       G_CALLBACK (on_mouse_scroll),
@@ -2055,7 +2055,7 @@ void create_LiVES (void) {
     lives_widget_set_bg_color (mainw->eventbox3, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
   }
 
-  mainw->frame1 = gtk_frame_new (NULL);
+  mainw->frame1 = lives_frame_new (NULL);
   lives_widget_show (mainw->frame1);
   lives_container_set_border_width (LIVES_CONTAINER (mainw->frame1), widget_opts.border_width);
   lives_container_add (LIVES_CONTAINER (mainw->eventbox3), mainw->frame1);
@@ -2067,7 +2067,7 @@ void create_LiVES (void) {
   lives_widget_set_vexpand(mainw->frame1,FALSE);
   lives_widget_set_hexpand(mainw->frame1,FALSE);
 
-  gtk_frame_set_shadow_type (GTK_FRAME(mainw->frame1), LIVES_SHADOW_NONE);
+  lives_frame_set_shadow_type (LIVES_FRAME(mainw->frame1), LIVES_SHADOW_NONE);
 
   mainw->freventbox0=lives_event_box_new();
   lives_widget_show(mainw->freventbox0);
@@ -2092,15 +2092,15 @@ void create_LiVES (void) {
     lives_widget_set_fg_color(label, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
   }
   lives_widget_show (label);
-  gtk_frame_set_label_widget (GTK_FRAME (mainw->frame1), label);
+  lives_frame_set_label_widget (LIVES_FRAME (mainw->frame1), label);
 
-  mainw->playframe = gtk_frame_new (NULL);
+  mainw->playframe = lives_frame_new (NULL);
   lives_widget_hide (mainw->playframe);
   lives_box_pack_start (LIVES_BOX (hbox1), mainw->playframe, TRUE, FALSE, 0);
   lives_widget_set_size_request (mainw->playframe, DEFAULT_FRAME_HSIZE, DEFAULT_FRAME_VSIZE);
   lives_container_set_border_width (LIVES_CONTAINER (mainw->playframe), widget_opts.border_width);
 
-  gtk_frame_set_shadow_type (GTK_FRAME(mainw->playframe), LIVES_SHADOW_NONE);
+  lives_frame_set_shadow_type (LIVES_FRAME(mainw->playframe), LIVES_SHADOW_NONE);
   if (palette->style&STYLE_1) {
     lives_widget_set_bg_color (mainw->playframe, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
   }
@@ -2110,7 +2110,7 @@ void create_LiVES (void) {
     lives_widget_set_fg_color(pf_label, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
   }
   lives_widget_show (pf_label);
-  gtk_frame_set_label_widget (GTK_FRAME (mainw->playframe), pf_label);
+  lives_frame_set_label_widget (LIVES_FRAME (mainw->playframe), pf_label);
 
   mainw->pl_eventbox = lives_event_box_new ();
   lives_widget_set_bg_color (mainw->pl_eventbox, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
@@ -2130,7 +2130,7 @@ void create_LiVES (void) {
   lives_widget_set_hexpand(mainw->eventbox4,FALSE);
   lives_widget_show (mainw->eventbox4);
 
-  mainw->frame2 = gtk_frame_new (NULL);
+  mainw->frame2 = lives_frame_new (NULL);
   lives_widget_show (mainw->frame2);
   lives_container_set_border_width (LIVES_CONTAINER (mainw->frame2), widget_opts.border_width);
   lives_container_add (LIVES_CONTAINER (mainw->eventbox4), mainw->frame2);
@@ -2140,7 +2140,7 @@ void create_LiVES (void) {
   lives_widget_set_vexpand(mainw->frame2,FALSE);
   lives_widget_set_hexpand(mainw->frame2,FALSE);
 
-  gtk_frame_set_shadow_type (GTK_FRAME(mainw->frame2), LIVES_SHADOW_NONE);
+  lives_frame_set_shadow_type (LIVES_FRAME(mainw->frame2), LIVES_SHADOW_NONE);
 
   mainw->freventbox1=lives_event_box_new();
   lives_widget_show(mainw->freventbox1);
@@ -2194,7 +2194,7 @@ void create_LiVES (void) {
 
   label = lives_standard_label_new (_("Last Frame"));
   lives_widget_show (label);
-  gtk_frame_set_label_widget (GTK_FRAME (mainw->frame2), label);
+  lives_frame_set_label_widget (LIVES_FRAME (mainw->frame2), label);
   if (palette->style&STYLE_1) {
     lives_widget_set_fg_color(label, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
   }
@@ -2305,13 +2305,13 @@ void create_LiVES (void) {
   lives_widget_set_size_request (mainw->hruler, -1, CE_HRULE_HEIGHT);
   lives_container_add (LIVES_CONTAINER (mainw->eventbox5), mainw->hruler);
 
-  lives_widget_add_events (mainw->eventbox5, GDK_POINTER_MOTION_MASK | GDK_BUTTON1_MOTION_MASK | GDK_BUTTON_RELEASE_MASK | 
-			 GDK_BUTTON_PRESS_MASK | GDK_ENTER_NOTIFY);
+  lives_widget_add_events (mainw->eventbox5, LIVES_POINTER_MOTION_MASK | LIVES_BUTTON1_MOTION_MASK | LIVES_BUTTON_RELEASE_MASK | 
+			 LIVES_BUTTON_PRESS_MASK | LIVES_ENTER_NOTIFY_MASK);
 
   mainw->eventbox2 = lives_event_box_new ();
   lives_widget_show (mainw->eventbox2);
   lives_box_pack_start (LIVES_BOX (vbox4), mainw->eventbox2, TRUE, TRUE, 0);
-  lives_widget_add_events (mainw->eventbox2, GDK_BUTTON1_MOTION_MASK | GDK_BUTTON_RELEASE_MASK | GDK_BUTTON_PRESS_MASK);
+  lives_widget_add_events (mainw->eventbox2, LIVES_BUTTON1_MOTION_MASK | LIVES_BUTTON_RELEASE_MASK | LIVES_BUTTON_PRESS_MASK);
 
   lives_widget_set_vexpand(mainw->eventbox2,TRUE);
 
@@ -2415,115 +2415,115 @@ void create_LiVES (void) {
   add_message_scroller(mainw->message_box);
 
   // accel keys
-  lives_accel_group_connect (GTK_ACCEL_GROUP (mainw->accel_group), LIVES_KEY_Page_Up, LIVES_CONTROL_MASK, (GtkAccelFlags)0, 
+  lives_accel_group_connect (LIVES_ACCEL_GROUP (mainw->accel_group), LIVES_KEY_Page_Up, LIVES_CONTROL_MASK, (GtkAccelFlags)0, 
 			   g_cclosure_new (G_CALLBACK (prevclip_callback),NULL,NULL));
 
-  lives_accel_group_connect (GTK_ACCEL_GROUP (mainw->accel_group), LIVES_KEY_Page_Down, LIVES_CONTROL_MASK, (GtkAccelFlags)0, 
+  lives_accel_group_connect (LIVES_ACCEL_GROUP (mainw->accel_group), LIVES_KEY_Page_Down, LIVES_CONTROL_MASK, (GtkAccelFlags)0, 
 			   g_cclosure_new (G_CALLBACK (nextclip_callback),NULL,NULL));
 
-  lives_accel_group_connect (GTK_ACCEL_GROUP (mainw->accel_group), LIVES_KEY_Down, LIVES_CONTROL_MASK, (GtkAccelFlags)0, 
+  lives_accel_group_connect (LIVES_ACCEL_GROUP (mainw->accel_group), LIVES_KEY_Down, LIVES_CONTROL_MASK, (GtkAccelFlags)0, 
 			   g_cclosure_new (G_CALLBACK (slower_callback),NULL,NULL));
 
-  lives_accel_group_connect (GTK_ACCEL_GROUP (mainw->accel_group), LIVES_KEY_Up, LIVES_CONTROL_MASK, (GtkAccelFlags)0, 
+  lives_accel_group_connect (LIVES_ACCEL_GROUP (mainw->accel_group), LIVES_KEY_Up, LIVES_CONTROL_MASK, (GtkAccelFlags)0, 
 			   g_cclosure_new (G_CALLBACK (faster_callback),NULL,NULL));
 
-  lives_accel_group_connect (GTK_ACCEL_GROUP (mainw->accel_group), LIVES_KEY_Left, LIVES_CONTROL_MASK, (GtkAccelFlags)0, 
+  lives_accel_group_connect (LIVES_ACCEL_GROUP (mainw->accel_group), LIVES_KEY_Left, LIVES_CONTROL_MASK, (GtkAccelFlags)0, 
 			   g_cclosure_new (G_CALLBACK (skip_back_callback),NULL,NULL));
 
-  lives_accel_group_connect (GTK_ACCEL_GROUP (mainw->accel_group), LIVES_KEY_Right, LIVES_CONTROL_MASK, (GtkAccelFlags)0, 
+  lives_accel_group_connect (LIVES_ACCEL_GROUP (mainw->accel_group), LIVES_KEY_Right, LIVES_CONTROL_MASK, (GtkAccelFlags)0, 
 			   g_cclosure_new (G_CALLBACK (skip_forward_callback),NULL,NULL));
 
-  lives_accel_group_connect (GTK_ACCEL_GROUP (mainw->accel_group), LIVES_KEY_Space, LIVES_CONTROL_MASK, (GtkAccelFlags)0, 
+  lives_accel_group_connect (LIVES_ACCEL_GROUP (mainw->accel_group), LIVES_KEY_Space, LIVES_CONTROL_MASK, (GtkAccelFlags)0, 
 			   g_cclosure_new (G_CALLBACK (dirchange_callback),GINT_TO_POINTER(TRUE),NULL));
 
-  lives_accel_group_connect (GTK_ACCEL_GROUP (mainw->accel_group), LIVES_KEY_Return, LIVES_CONTROL_MASK, (GtkAccelFlags)0, 
+  lives_accel_group_connect (LIVES_ACCEL_GROUP (mainw->accel_group), LIVES_KEY_Return, LIVES_CONTROL_MASK, (GtkAccelFlags)0, 
 			   g_cclosure_new (G_CALLBACK (fps_reset_callback),GINT_TO_POINTER(TRUE),NULL));
 
-  lives_accel_group_connect (GTK_ACCEL_GROUP (mainw->accel_group), LIVES_KEY_k, (GdkModifierType)0, (GtkAccelFlags)0, 
+  lives_accel_group_connect (LIVES_ACCEL_GROUP (mainw->accel_group), LIVES_KEY_k, (GdkModifierType)0, (GtkAccelFlags)0, 
 			   g_cclosure_new (G_CALLBACK (grabkeys_callback),NULL,NULL));
 
-  lives_accel_group_connect (GTK_ACCEL_GROUP (mainw->accel_group), LIVES_KEY_t, (GdkModifierType)0, (GtkAccelFlags)0, 
+  lives_accel_group_connect (LIVES_ACCEL_GROUP (mainw->accel_group), LIVES_KEY_t, (GdkModifierType)0, (GtkAccelFlags)0, 
 			   g_cclosure_new (G_CALLBACK (textparm_callback),NULL,NULL));
 
-  lives_accel_group_connect (GTK_ACCEL_GROUP (mainw->accel_group), LIVES_KEY_m, (GdkModifierType)0, (GtkAccelFlags)0, 
+  lives_accel_group_connect (LIVES_ACCEL_GROUP (mainw->accel_group), LIVES_KEY_m, (GdkModifierType)0, (GtkAccelFlags)0, 
 			   g_cclosure_new (G_CALLBACK (rtemode_callback),NULL,NULL));
 
-  lives_accel_group_connect (GTK_ACCEL_GROUP (mainw->accel_group), LIVES_KEY_x, (GdkModifierType)0, (GtkAccelFlags)0, 
+  lives_accel_group_connect (LIVES_ACCEL_GROUP (mainw->accel_group), LIVES_KEY_x, (GdkModifierType)0, (GtkAccelFlags)0, 
 			   g_cclosure_new (G_CALLBACK (swap_fg_bg_callback),NULL,NULL));
 
-  lives_accel_group_connect (GTK_ACCEL_GROUP (mainw->accel_group), LIVES_KEY_n, (GdkModifierType)0, (GtkAccelFlags)0, 
+  lives_accel_group_connect (LIVES_ACCEL_GROUP (mainw->accel_group), LIVES_KEY_n, (GdkModifierType)0, (GtkAccelFlags)0, 
 			   g_cclosure_new (G_CALLBACK (nervous_callback),NULL,NULL));
 
-  lives_accel_group_connect (GTK_ACCEL_GROUP (mainw->accel_group), LIVES_KEY_w, (GdkModifierType)0, (GtkAccelFlags)0, 
+  lives_accel_group_connect (LIVES_ACCEL_GROUP (mainw->accel_group), LIVES_KEY_w, (GdkModifierType)0, (GtkAccelFlags)0, 
 			   g_cclosure_new (G_CALLBACK (show_sync_callback),NULL,NULL));
 
   if (FN_KEYS>0) {
-    lives_accel_group_connect (GTK_ACCEL_GROUP (mainw->accel_group), LIVES_KEY_F1, (GdkModifierType)0, (GtkAccelFlags)0, 
+    lives_accel_group_connect (LIVES_ACCEL_GROUP (mainw->accel_group), LIVES_KEY_F1, (GdkModifierType)0, (GtkAccelFlags)0, 
 			     g_cclosure_new (G_CALLBACK (storeclip_callback),GINT_TO_POINTER (1),NULL));
     if (FN_KEYS>1) {
-      lives_accel_group_connect (GTK_ACCEL_GROUP (mainw->accel_group), LIVES_KEY_F2, (GdkModifierType)0, (GtkAccelFlags)0, 
+      lives_accel_group_connect (LIVES_ACCEL_GROUP (mainw->accel_group), LIVES_KEY_F2, (GdkModifierType)0, (GtkAccelFlags)0, 
 			       g_cclosure_new (G_CALLBACK (storeclip_callback),GINT_TO_POINTER (2),NULL));
       if (FN_KEYS>2) {
-	lives_accel_group_connect (GTK_ACCEL_GROUP (mainw->accel_group), LIVES_KEY_F3, (GdkModifierType)0, (GtkAccelFlags)0, 
+	lives_accel_group_connect (LIVES_ACCEL_GROUP (mainw->accel_group), LIVES_KEY_F3, (GdkModifierType)0, (GtkAccelFlags)0, 
 				 g_cclosure_new (G_CALLBACK (storeclip_callback),GINT_TO_POINTER (3),NULL));
 	if (FN_KEYS>3) {
-	  lives_accel_group_connect (GTK_ACCEL_GROUP (mainw->accel_group), LIVES_KEY_F4, (GdkModifierType)0, (GtkAccelFlags)0, 
+	  lives_accel_group_connect (LIVES_ACCEL_GROUP (mainw->accel_group), LIVES_KEY_F4, (GdkModifierType)0, (GtkAccelFlags)0, 
 				   g_cclosure_new (G_CALLBACK (storeclip_callback),GINT_TO_POINTER (4),NULL));
 	  if (FN_KEYS>4) {
-	    lives_accel_group_connect (GTK_ACCEL_GROUP (mainw->accel_group), LIVES_KEY_F5, (GdkModifierType)0, (GtkAccelFlags)0, 
+	    lives_accel_group_connect (LIVES_ACCEL_GROUP (mainw->accel_group), LIVES_KEY_F5, (GdkModifierType)0, (GtkAccelFlags)0, 
 				     g_cclosure_new (G_CALLBACK (storeclip_callback),GINT_TO_POINTER (5),NULL));
 	    if (FN_KEYS>5) {
-	      lives_accel_group_connect (GTK_ACCEL_GROUP (mainw->accel_group), LIVES_KEY_F6, (GdkModifierType)0, (GtkAccelFlags)0, 
+	      lives_accel_group_connect (LIVES_ACCEL_GROUP (mainw->accel_group), LIVES_KEY_F6, (GdkModifierType)0, (GtkAccelFlags)0, 
 				       g_cclosure_new (G_CALLBACK (storeclip_callback),GINT_TO_POINTER (6),NULL));
 	      if (FN_KEYS>6) {
-		lives_accel_group_connect (GTK_ACCEL_GROUP (mainw->accel_group), LIVES_KEY_F7, (GdkModifierType)0, (GtkAccelFlags)0, 
+		lives_accel_group_connect (LIVES_ACCEL_GROUP (mainw->accel_group), LIVES_KEY_F7, (GdkModifierType)0, (GtkAccelFlags)0, 
 					 g_cclosure_new (G_CALLBACK (storeclip_callback),GINT_TO_POINTER (7),NULL));
 		if (FN_KEYS>7) {
-		  lives_accel_group_connect (GTK_ACCEL_GROUP (mainw->accel_group), LIVES_KEY_F8, (GdkModifierType)0, (GtkAccelFlags)0, 
+		  lives_accel_group_connect (LIVES_ACCEL_GROUP (mainw->accel_group), LIVES_KEY_F8, (GdkModifierType)0, (GtkAccelFlags)0, 
 					   g_cclosure_new (G_CALLBACK (storeclip_callback),GINT_TO_POINTER (8),NULL));
 		  if (FN_KEYS>8) {
-		    lives_accel_group_connect (GTK_ACCEL_GROUP (mainw->accel_group), LIVES_KEY_F9, (GdkModifierType)0, (GtkAccelFlags)0, 
+		    lives_accel_group_connect (LIVES_ACCEL_GROUP (mainw->accel_group), LIVES_KEY_F9, (GdkModifierType)0, (GtkAccelFlags)0, 
 					     g_cclosure_new (G_CALLBACK (storeclip_callback),GINT_TO_POINTER (9),NULL));
 		    if (FN_KEYS>9) {
-		      lives_accel_group_connect (GTK_ACCEL_GROUP (mainw->accel_group), LIVES_KEY_F10, (GdkModifierType)0, (GtkAccelFlags)0, 
+		      lives_accel_group_connect (LIVES_ACCEL_GROUP (mainw->accel_group), LIVES_KEY_F10, (GdkModifierType)0, (GtkAccelFlags)0, 
 					       g_cclosure_new (G_CALLBACK (storeclip_callback),GINT_TO_POINTER (10),NULL));
 		      if (FN_KEYS>10) {
-		      lives_accel_group_connect (GTK_ACCEL_GROUP (mainw->accel_group), LIVES_KEY_F11, (GdkModifierType)0, (GtkAccelFlags)0, 
+		      lives_accel_group_connect (LIVES_ACCEL_GROUP (mainw->accel_group), LIVES_KEY_F11, (GdkModifierType)0, (GtkAccelFlags)0, 
 					       g_cclosure_new (G_CALLBACK (storeclip_callback),GINT_TO_POINTER (11),NULL));
 		      if (FN_KEYS>11) {
-		      lives_accel_group_connect (GTK_ACCEL_GROUP (mainw->accel_group), LIVES_KEY_F12, (GdkModifierType)0, (GtkAccelFlags)0, 
+		      lives_accel_group_connect (LIVES_ACCEL_GROUP (mainw->accel_group), LIVES_KEY_F12, (GdkModifierType)0, (GtkAccelFlags)0, 
 					       g_cclosure_new (G_CALLBACK (storeclip_callback),GINT_TO_POINTER (12),NULL));
 		      // ad nauseum...
 		      }}}}}}}}}}}}
 
-  lives_accel_group_connect (GTK_ACCEL_GROUP (mainw->accel_group), LIVES_KEY_0, LIVES_CONTROL_MASK, (GtkAccelFlags)0, 
+  lives_accel_group_connect (LIVES_ACCEL_GROUP (mainw->accel_group), LIVES_KEY_0, LIVES_CONTROL_MASK, (GtkAccelFlags)0, 
 			   g_cclosure_new (G_CALLBACK (rte_on_off_callback),GINT_TO_POINTER (0),NULL));
   if (FX_KEYS_PHYSICAL>0) {
-    lives_accel_group_connect (GTK_ACCEL_GROUP (mainw->accel_group), LIVES_KEY_1, LIVES_CONTROL_MASK, (GtkAccelFlags)0, 
+    lives_accel_group_connect (LIVES_ACCEL_GROUP (mainw->accel_group), LIVES_KEY_1, LIVES_CONTROL_MASK, (GtkAccelFlags)0, 
 			     g_cclosure_new (G_CALLBACK (rte_on_off_callback),GINT_TO_POINTER (1),NULL));
     if (FX_KEYS_PHYSICAL>1) {
-      lives_accel_group_connect (GTK_ACCEL_GROUP (mainw->accel_group), LIVES_KEY_2, LIVES_CONTROL_MASK, (GtkAccelFlags)0, 
+      lives_accel_group_connect (LIVES_ACCEL_GROUP (mainw->accel_group), LIVES_KEY_2, LIVES_CONTROL_MASK, (GtkAccelFlags)0, 
 			       g_cclosure_new (G_CALLBACK (rte_on_off_callback),GINT_TO_POINTER (2),NULL));
       if (FX_KEYS_PHYSICAL>2) {
-	lives_accel_group_connect (GTK_ACCEL_GROUP (mainw->accel_group), LIVES_KEY_3, LIVES_CONTROL_MASK, (GtkAccelFlags)0, 
+	lives_accel_group_connect (LIVES_ACCEL_GROUP (mainw->accel_group), LIVES_KEY_3, LIVES_CONTROL_MASK, (GtkAccelFlags)0, 
 				 g_cclosure_new (G_CALLBACK (rte_on_off_callback),GINT_TO_POINTER (3),NULL));
 	if (FX_KEYS_PHYSICAL>3) {
-	  lives_accel_group_connect (GTK_ACCEL_GROUP (mainw->accel_group), LIVES_KEY_4, LIVES_CONTROL_MASK, (GtkAccelFlags)0, 
+	  lives_accel_group_connect (LIVES_ACCEL_GROUP (mainw->accel_group), LIVES_KEY_4, LIVES_CONTROL_MASK, (GtkAccelFlags)0, 
 				   g_cclosure_new (G_CALLBACK (rte_on_off_callback),GINT_TO_POINTER (4),NULL));
 	  if (FX_KEYS_PHYSICAL>4) {
-	    lives_accel_group_connect (GTK_ACCEL_GROUP (mainw->accel_group), LIVES_KEY_5, LIVES_CONTROL_MASK, (GtkAccelFlags)0, 
+	    lives_accel_group_connect (LIVES_ACCEL_GROUP (mainw->accel_group), LIVES_KEY_5, LIVES_CONTROL_MASK, (GtkAccelFlags)0, 
 				     g_cclosure_new (G_CALLBACK (rte_on_off_callback),GINT_TO_POINTER (5),NULL));
 	    if (FX_KEYS_PHYSICAL>5) {
-	      lives_accel_group_connect (GTK_ACCEL_GROUP (mainw->accel_group), LIVES_KEY_6, LIVES_CONTROL_MASK, (GtkAccelFlags)0, 
+	      lives_accel_group_connect (LIVES_ACCEL_GROUP (mainw->accel_group), LIVES_KEY_6, LIVES_CONTROL_MASK, (GtkAccelFlags)0, 
 				       g_cclosure_new (G_CALLBACK (rte_on_off_callback),GINT_TO_POINTER (6),NULL));
 	      if (FX_KEYS_PHYSICAL>6) {
-		lives_accel_group_connect (GTK_ACCEL_GROUP (mainw->accel_group), LIVES_KEY_7, LIVES_CONTROL_MASK, (GtkAccelFlags)0, 
+		lives_accel_group_connect (LIVES_ACCEL_GROUP (mainw->accel_group), LIVES_KEY_7, LIVES_CONTROL_MASK, (GtkAccelFlags)0, 
 					 g_cclosure_new (G_CALLBACK (rte_on_off_callback),GINT_TO_POINTER (7),NULL));
 		if (FX_KEYS_PHYSICAL>7) {
-		  lives_accel_group_connect (GTK_ACCEL_GROUP (mainw->accel_group), LIVES_KEY_8, LIVES_CONTROL_MASK, (GtkAccelFlags)0, 
+		  lives_accel_group_connect (LIVES_ACCEL_GROUP (mainw->accel_group), LIVES_KEY_8, LIVES_CONTROL_MASK, (GtkAccelFlags)0, 
 					   g_cclosure_new (G_CALLBACK (rte_on_off_callback),GINT_TO_POINTER (8),NULL));
 		  if (FX_KEYS_PHYSICAL>8) {
-		    lives_accel_group_connect (GTK_ACCEL_GROUP (mainw->accel_group), LIVES_KEY_9, LIVES_CONTROL_MASK, (GtkAccelFlags)0, 
+		    lives_accel_group_connect (LIVES_ACCEL_GROUP (mainw->accel_group), LIVES_KEY_9, LIVES_CONTROL_MASK, (GtkAccelFlags)0, 
 					     g_cclosure_new (G_CALLBACK (rte_on_off_callback),GINT_TO_POINTER (9),NULL));
 		  }}}}}}}}}
 
@@ -3082,10 +3082,10 @@ void fade_background(void) {
     if (mainw->sep_win) {
       lives_widget_hide (mainw->playframe);
     }
-    gtk_frame_set_shadow_type (GTK_FRAME(mainw->playframe), LIVES_SHADOW_NONE);
+    lives_frame_set_shadow_type (LIVES_FRAME(mainw->playframe), LIVES_SHADOW_NONE);
   }
 
-  gtk_frame_set_label(GTK_FRAME(mainw->playframe), "");
+  lives_frame_set_label(LIVES_FRAME(mainw->playframe), "");
 
   lives_widget_set_fg_color (mainw->curf_label, LIVES_WIDGET_STATE_NORMAL, &palette->fade_colour);
   lives_widget_set_fg_color (mainw->vps_label, LIVES_WIDGET_STATE_NORMAL, &palette->fade_colour);
@@ -3102,10 +3102,10 @@ void fade_background(void) {
   lives_widget_set_bg_color (mainw->frame2, LIVES_WIDGET_STATE_NORMAL, &palette->fade_colour);
   lives_widget_set_bg_color (mainw->freventbox0, LIVES_WIDGET_STATE_NORMAL, &palette->fade_colour);
   lives_widget_set_bg_color (mainw->freventbox1, LIVES_WIDGET_STATE_NORMAL, &palette->fade_colour);
-  gtk_frame_set_shadow_type (GTK_FRAME(mainw->frame1), LIVES_SHADOW_NONE);
-  gtk_frame_set_label (GTK_FRAME(mainw->frame1), "");
-  gtk_frame_set_shadow_type (GTK_FRAME(mainw->frame2), LIVES_SHADOW_NONE);
-  gtk_frame_set_label (GTK_FRAME(mainw->frame2), "");
+  lives_frame_set_shadow_type (LIVES_FRAME(mainw->frame1), LIVES_SHADOW_NONE);
+  lives_frame_set_label (LIVES_FRAME(mainw->frame1), "");
+  lives_frame_set_shadow_type (LIVES_FRAME(mainw->frame2), LIVES_SHADOW_NONE);
+  lives_frame_set_label (LIVES_FRAME(mainw->frame2), "");
 
   if (mainw->toy_type!=LIVES_TOY_MAD_FRAMES||mainw->foreign) {
     lives_widget_hide(mainw->start_image);
@@ -3145,53 +3145,53 @@ void fade_background(void) {
 
   if (stop_closure==NULL) {
     lives_widget_remove_accelerator (mainw->stop, mainw->accel_group, LIVES_KEY_q, (GdkModifierType)0);
-    lives_accel_group_connect (GTK_ACCEL_GROUP (mainw->accel_group), LIVES_KEY_q, (GdkModifierType)0, (GtkAccelFlags)0, 
+    lives_accel_group_connect (LIVES_ACCEL_GROUP (mainw->accel_group), LIVES_KEY_q, (GdkModifierType)0, (GtkAccelFlags)0, 
 			     (stop_closure=g_cclosure_new (G_CALLBACK (stop_callback),NULL,NULL)));
 
     if (!mainw->foreign) {
       // TODO - do these checks in the end functions
       lives_widget_remove_accelerator (mainw->record_perf, mainw->accel_group, LIVES_KEY_r, (GdkModifierType)0);
-      lives_accel_group_connect (GTK_ACCEL_GROUP (mainw->accel_group), LIVES_KEY_r, (GdkModifierType)0, (GtkAccelFlags)0, 
+      lives_accel_group_connect (LIVES_ACCEL_GROUP (mainw->accel_group), LIVES_KEY_r, (GdkModifierType)0, (GtkAccelFlags)0, 
 			       (rec_closure=g_cclosure_new (G_CALLBACK (rec_callback),NULL,NULL)));
       
       lives_widget_remove_accelerator (mainw->full_screen, mainw->accel_group, LIVES_KEY_f, (GdkModifierType)0);
-      lives_accel_group_connect (GTK_ACCEL_GROUP (mainw->accel_group), LIVES_KEY_f, (GdkModifierType)0, (GtkAccelFlags)0, 
+      lives_accel_group_connect (LIVES_ACCEL_GROUP (mainw->accel_group), LIVES_KEY_f, (GdkModifierType)0, (GtkAccelFlags)0, 
 			       (fullscreen_closure=g_cclosure_new (G_CALLBACK (fullscreen_callback),NULL,NULL)));
       
       lives_widget_remove_accelerator (mainw->showfct, mainw->accel_group, LIVES_KEY_h, (GdkModifierType)0);
-      lives_accel_group_connect (GTK_ACCEL_GROUP (mainw->accel_group), LIVES_KEY_h, (GdkModifierType)0, (GtkAccelFlags)0, 
+      lives_accel_group_connect (LIVES_ACCEL_GROUP (mainw->accel_group), LIVES_KEY_h, (GdkModifierType)0, (GtkAccelFlags)0, 
 			       (showfct_closure=g_cclosure_new (G_CALLBACK (showfct_callback),NULL,NULL)));
       
       lives_widget_remove_accelerator (mainw->showsubs, mainw->accel_group, LIVES_KEY_v, (GdkModifierType)0);
-      lives_accel_group_connect (GTK_ACCEL_GROUP (mainw->accel_group), LIVES_KEY_v, (GdkModifierType)0, (GtkAccelFlags)0, 
+      lives_accel_group_connect (LIVES_ACCEL_GROUP (mainw->accel_group), LIVES_KEY_v, (GdkModifierType)0, (GtkAccelFlags)0, 
 			       (showsubs_closure=g_cclosure_new (G_CALLBACK (showsubs_callback),NULL,NULL)));
       
       lives_widget_remove_accelerator (mainw->sepwin, mainw->accel_group, LIVES_KEY_s, (GdkModifierType)0);
-      lives_accel_group_connect (GTK_ACCEL_GROUP (mainw->accel_group), LIVES_KEY_s, (GdkModifierType)0, (GtkAccelFlags)0, 
+      lives_accel_group_connect (LIVES_ACCEL_GROUP (mainw->accel_group), LIVES_KEY_s, (GdkModifierType)0, (GtkAccelFlags)0, 
 			       (sepwin_closure=g_cclosure_new (G_CALLBACK (sepwin_callback),NULL,NULL)));
 
       if (!cfile->achans||mainw->mute||mainw->loop_cont||prefs->audio_player==AUD_PLAYER_JACK||
 	  prefs->audio_player==AUD_PLAYER_PULSE) {
 	lives_widget_remove_accelerator (mainw->loop_video, mainw->accel_group, LIVES_KEY_l, (GdkModifierType)0);
-	lives_accel_group_connect (GTK_ACCEL_GROUP (mainw->accel_group), LIVES_KEY_l, (GdkModifierType)0, (GtkAccelFlags)0, 
+	lives_accel_group_connect (LIVES_ACCEL_GROUP (mainw->accel_group), LIVES_KEY_l, (GdkModifierType)0, (GtkAccelFlags)0, 
 				 (loop_closure=g_cclosure_new (G_CALLBACK (loop_callback),NULL,NULL)));
 	
 	lives_widget_remove_accelerator (mainw->loop_continue, mainw->accel_group, LIVES_KEY_o, (GdkModifierType)0);
-	lives_accel_group_connect (GTK_ACCEL_GROUP (mainw->accel_group), LIVES_KEY_o, (GdkModifierType)0, (GtkAccelFlags)0, 
+	lives_accel_group_connect (LIVES_ACCEL_GROUP (mainw->accel_group), LIVES_KEY_o, (GdkModifierType)0, (GtkAccelFlags)0, 
 				 (loop_cont_closure=g_cclosure_new (G_CALLBACK (loop_cont_callback),NULL,NULL)));
 	
       }
       lives_widget_remove_accelerator (mainw->loop_ping_pong, mainw->accel_group, LIVES_KEY_g, (GdkModifierType)0);
-      lives_accel_group_connect (GTK_ACCEL_GROUP (mainw->accel_group), LIVES_KEY_g, (GdkModifierType)0, (GtkAccelFlags)0, 
+      lives_accel_group_connect (LIVES_ACCEL_GROUP (mainw->accel_group), LIVES_KEY_g, (GdkModifierType)0, (GtkAccelFlags)0, 
 			       (ping_pong_closure=g_cclosure_new (G_CALLBACK (ping_pong_callback),NULL,NULL)));
       lives_widget_remove_accelerator (mainw->mute_audio, mainw->accel_group, LIVES_KEY_z, (GdkModifierType)0);
-      lives_accel_group_connect (GTK_ACCEL_GROUP (mainw->accel_group), LIVES_KEY_z, (GdkModifierType)0, (GtkAccelFlags)0, 
+      lives_accel_group_connect (LIVES_ACCEL_GROUP (mainw->accel_group), LIVES_KEY_z, (GdkModifierType)0, (GtkAccelFlags)0, 
 			       (mute_audio_closure=g_cclosure_new (G_CALLBACK (mute_audio_callback),NULL,NULL)));
       lives_widget_remove_accelerator (mainw->dsize, mainw->accel_group, LIVES_KEY_d, (GdkModifierType)0);
-      lives_accel_group_connect (GTK_ACCEL_GROUP (mainw->accel_group), LIVES_KEY_d, (GdkModifierType)0, (GtkAccelFlags)0, 
+      lives_accel_group_connect (LIVES_ACCEL_GROUP (mainw->accel_group), LIVES_KEY_d, (GdkModifierType)0, (GtkAccelFlags)0, 
 			       (dblsize_closure=g_cclosure_new (G_CALLBACK (dblsize_callback),NULL,NULL)));
       lives_widget_remove_accelerator (mainw->fade, mainw->accel_group, LIVES_KEY_b, (GdkModifierType)0);
-      lives_accel_group_connect (GTK_ACCEL_GROUP (mainw->accel_group), LIVES_KEY_b, (GdkModifierType)0, (GtkAccelFlags)0, 
+      lives_accel_group_connect (LIVES_ACCEL_GROUP (mainw->accel_group), LIVES_KEY_b, (GdkModifierType)0, (GtkAccelFlags)0, 
 			       (fade_closure=g_cclosure_new (G_CALLBACK (fade_callback),NULL,NULL)));
     }
   }
@@ -3217,15 +3217,15 @@ void unfade_background(void) {
   lives_widget_set_bg_color (mainw->eventbox, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
   lives_widget_set_bg_color (mainw->vbox1, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
   lives_widget_set_bg_color (mainw->eventbox3, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
-  gtk_frame_set_label (GTK_FRAME(mainw->frame1), _("First Frame"));
+  lives_frame_set_label (LIVES_FRAME(mainw->frame1), _("First Frame"));
   if (!mainw->preview) {
-    gtk_frame_set_label(GTK_FRAME(mainw->playframe),_("Play"));
+    lives_frame_set_label(LIVES_FRAME(mainw->playframe),_("Play"));
   }
   else {
-    gtk_frame_set_label(GTK_FRAME(mainw->playframe),_("Preview"));
+    lives_frame_set_label(LIVES_FRAME(mainw->playframe),_("Preview"));
   }
 
-  gtk_frame_set_label (GTK_FRAME(mainw->frame2), _("Last Frame"));
+  lives_frame_set_label (LIVES_FRAME(mainw->frame2), _("Last Frame"));
   lives_widget_set_fg_color (mainw->curf_label, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
   lives_widget_set_fg_color (mainw->vps_label, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
   lives_widget_set_bg_color (mainw->LiVES, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
@@ -3233,9 +3233,9 @@ void unfade_background(void) {
   lives_widget_set_bg_color (mainw->pl_eventbox, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
 
   if (palette->style&STYLE_1) {
-    lives_widget_set_fg_color(gtk_frame_get_label_widget(GTK_FRAME(mainw->playframe)), LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
-    lives_widget_set_fg_color(gtk_frame_get_label_widget(GTK_FRAME(mainw->frame1)), LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
-    lives_widget_set_fg_color(gtk_frame_get_label_widget(GTK_FRAME(mainw->frame2)), LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
+    lives_widget_set_fg_color(lives_frame_get_label_widget(LIVES_FRAME(mainw->playframe)), LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
+    lives_widget_set_fg_color(lives_frame_get_label_widget(LIVES_FRAME(mainw->frame1)), LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
+    lives_widget_set_fg_color(lives_frame_get_label_widget(LIVES_FRAME(mainw->frame2)), LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
   }
 
   lives_widget_set_bg_color (mainw->eventbox4, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
@@ -3276,67 +3276,67 @@ void unfade_background(void) {
   lives_widget_set_fg_color (mainw->curf_label, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
 
   if (stop_closure!=NULL) {
-    lives_accel_group_disconnect (GTK_ACCEL_GROUP (mainw->accel_group), stop_closure);
+    lives_accel_group_disconnect (LIVES_ACCEL_GROUP (mainw->accel_group), stop_closure);
     lives_widget_add_accelerator (mainw->stop, "activate", mainw->accel_group,
 				LIVES_KEY_q, (GdkModifierType)0,
 				LIVES_ACCEL_VISIBLE);
     
-    lives_accel_group_disconnect (GTK_ACCEL_GROUP (mainw->accel_group), rec_closure);
+    lives_accel_group_disconnect (LIVES_ACCEL_GROUP (mainw->accel_group), rec_closure);
     lives_widget_add_accelerator (mainw->record_perf, "activate", mainw->accel_group,
 				LIVES_KEY_r, (GdkModifierType)0,
 				LIVES_ACCEL_VISIBLE);
     
-    lives_accel_group_disconnect (GTK_ACCEL_GROUP (mainw->accel_group), fullscreen_closure);
+    lives_accel_group_disconnect (LIVES_ACCEL_GROUP (mainw->accel_group), fullscreen_closure);
     lives_widget_add_accelerator (mainw->full_screen, "activate", mainw->accel_group,
 				  LIVES_KEY_f, (GdkModifierType)0,
 				LIVES_ACCEL_VISIBLE);
-    lives_accel_group_disconnect (GTK_ACCEL_GROUP (mainw->accel_group), sepwin_closure);
+    lives_accel_group_disconnect (LIVES_ACCEL_GROUP (mainw->accel_group), sepwin_closure);
     lives_widget_add_accelerator (mainw->sepwin, "activate", mainw->accel_group,
 				LIVES_KEY_s, (GdkModifierType)0,
 				LIVES_ACCEL_VISIBLE);
 
-    lives_accel_group_disconnect (GTK_ACCEL_GROUP (mainw->accel_group), mute_audio_closure);
+    lives_accel_group_disconnect (LIVES_ACCEL_GROUP (mainw->accel_group), mute_audio_closure);
     lives_widget_add_accelerator (mainw->mute_audio, "activate", mainw->accel_group,
 				LIVES_KEY_z, (GdkModifierType)0,
 				LIVES_ACCEL_VISIBLE);
 
-    lives_accel_group_disconnect (GTK_ACCEL_GROUP (mainw->accel_group), ping_pong_closure);
+    lives_accel_group_disconnect (LIVES_ACCEL_GROUP (mainw->accel_group), ping_pong_closure);
     lives_widget_add_accelerator (mainw->loop_ping_pong, "activate", mainw->accel_group,
 				LIVES_KEY_g, (GdkModifierType)0,
 				LIVES_ACCEL_VISIBLE);
 
     if (!cfile->achans||mainw->mute||mainw->loop_cont||prefs->audio_player==AUD_PLAYER_JACK||
 	prefs->audio_player==AUD_PLAYER_PULSE) {
-      lives_accel_group_disconnect (GTK_ACCEL_GROUP (mainw->accel_group), loop_closure);
+      lives_accel_group_disconnect (LIVES_ACCEL_GROUP (mainw->accel_group), loop_closure);
       lives_widget_add_accelerator (mainw->loop_video, "activate", mainw->accel_group,
 				  LIVES_KEY_l, (GdkModifierType)0,
 				  LIVES_ACCEL_VISIBLE);
-      lives_accel_group_disconnect (GTK_ACCEL_GROUP (mainw->accel_group), loop_cont_closure);
+      lives_accel_group_disconnect (LIVES_ACCEL_GROUP (mainw->accel_group), loop_cont_closure);
       lives_widget_add_accelerator (mainw->loop_continue, "activate", mainw->accel_group,
 				  LIVES_KEY_o, (GdkModifierType)0,
 				  LIVES_ACCEL_VISIBLE);
-      lives_accel_group_disconnect (GTK_ACCEL_GROUP (mainw->accel_group), showfct_closure);
+      lives_accel_group_disconnect (LIVES_ACCEL_GROUP (mainw->accel_group), showfct_closure);
     }
     lives_widget_add_accelerator (mainw->showfct, "activate", mainw->accel_group,
 				LIVES_KEY_h, (GdkModifierType)0,
 				LIVES_ACCEL_VISIBLE);
 
-    lives_accel_group_disconnect (GTK_ACCEL_GROUP (mainw->accel_group), showsubs_closure);
+    lives_accel_group_disconnect (LIVES_ACCEL_GROUP (mainw->accel_group), showsubs_closure);
     lives_widget_add_accelerator (mainw->showsubs, "activate", mainw->accel_group,
 				LIVES_KEY_v, (GdkModifierType)0,
 				LIVES_ACCEL_VISIBLE);
 
-    lives_accel_group_disconnect (GTK_ACCEL_GROUP (mainw->accel_group), sepwin_closure);
+    lives_accel_group_disconnect (LIVES_ACCEL_GROUP (mainw->accel_group), sepwin_closure);
     lives_widget_add_accelerator (mainw->sepwin, "activate", mainw->accel_group,
 				LIVES_KEY_s, (GdkModifierType)0,
 				LIVES_ACCEL_VISIBLE);
 
-    lives_accel_group_disconnect (GTK_ACCEL_GROUP (mainw->accel_group), dblsize_closure);
+    lives_accel_group_disconnect (LIVES_ACCEL_GROUP (mainw->accel_group), dblsize_closure);
     lives_widget_add_accelerator (mainw->dsize, "activate", mainw->accel_group,
 				LIVES_KEY_d, (GdkModifierType)0,
 				LIVES_ACCEL_VISIBLE);
 
-    lives_accel_group_disconnect (GTK_ACCEL_GROUP (mainw->accel_group), fade_closure);
+    lives_accel_group_disconnect (LIVES_ACCEL_GROUP (mainw->accel_group), fade_closure);
     lives_widget_add_accelerator (mainw->fade, "activate", mainw->accel_group,
 				LIVES_KEY_b, (GdkModifierType)0,
 				LIVES_ACCEL_VISIBLE);
@@ -3377,7 +3377,7 @@ void fullscreen_internal(void) {
     lives_widget_hide(mainw->eventbox3);
     lives_widget_hide(mainw->eventbox4);
 
-    gtk_frame_set_label(GTK_FRAME(mainw->playframe),NULL);
+    lives_frame_set_label(LIVES_FRAME(mainw->playframe),NULL);
     lives_container_set_border_width (LIVES_CONTAINER (mainw->playframe), 0);
 
     lives_widget_hide(mainw->t_bckground);
@@ -3469,7 +3469,7 @@ void make_preview_box (void) {
   g_object_ref(mainw->preview_box);
 
   eventbox=lives_event_box_new();
-  lives_widget_set_events (eventbox, GDK_SCROLL_MASK);
+  lives_widget_set_events (eventbox, LIVES_SCROLL_MASK);
 
   g_signal_connect (GTK_OBJECT (eventbox), "scroll_event",
 		    G_CALLBACK (on_mouse_scroll),
@@ -3575,7 +3575,7 @@ void make_preview_box (void) {
   rewind_img=lives_image_new_from_stock (LIVES_STOCK_MEDIA_REWIND, lives_toolbar_get_icon_size (LIVES_TOOLBAR (mainw->btoolbar)));
   mainw->p_rewindbutton=gtk_button_new();
   lives_widget_set_bg_color (mainw->p_rewindbutton, LIVES_WIDGET_STATE_ACTIVE, &palette->menu_and_bars);
-  gtk_button_set_relief (GTK_BUTTON (mainw->p_rewindbutton), GTK_RELIEF_NONE);
+  gtk_button_set_relief (LIVES_BUTTON (mainw->p_rewindbutton), GTK_RELIEF_NONE);
   lives_container_add (LIVES_CONTAINER(mainw->p_rewindbutton), rewind_img);
   lives_box_pack_start (LIVES_BOX (hbox_buttons), mainw->p_rewindbutton, TRUE, TRUE, 0);
   lives_widget_show (mainw->p_rewindbutton);
@@ -3586,7 +3586,7 @@ void make_preview_box (void) {
   play_img=lives_image_new_from_stock (LIVES_STOCK_MEDIA_PLAY, lives_toolbar_get_icon_size (LIVES_TOOLBAR (mainw->btoolbar)));
   mainw->p_playbutton=gtk_button_new();
   lives_widget_set_bg_color (mainw->p_playbutton, LIVES_WIDGET_STATE_ACTIVE, &palette->menu_and_bars);
-  gtk_button_set_relief (GTK_BUTTON (mainw->p_playbutton), GTK_RELIEF_NONE);
+  gtk_button_set_relief (LIVES_BUTTON (mainw->p_playbutton), GTK_RELIEF_NONE);
   lives_container_add (LIVES_CONTAINER(mainw->p_playbutton), play_img);
   lives_box_pack_start (LIVES_BOX (hbox_buttons), mainw->p_playbutton, TRUE, TRUE, 0);
   lives_widget_show (mainw->p_playbutton);
@@ -3599,7 +3599,7 @@ void make_preview_box (void) {
   playsel_img=lives_image_new_from_file (buff);
   mainw->p_playselbutton=gtk_button_new();
   lives_widget_set_bg_color (mainw->p_playselbutton, LIVES_WIDGET_STATE_ACTIVE, &palette->menu_and_bars);
-  gtk_button_set_relief (GTK_BUTTON (mainw->p_playselbutton), GTK_RELIEF_NONE);
+  gtk_button_set_relief (LIVES_BUTTON (mainw->p_playselbutton), GTK_RELIEF_NONE);
   lives_container_add (LIVES_CONTAINER(mainw->p_playselbutton), playsel_img);
   lives_box_pack_start (LIVES_BOX (hbox_buttons), mainw->p_playselbutton, TRUE, TRUE, 0);
   lives_widget_show (mainw->p_playselbutton);
@@ -3613,7 +3613,7 @@ void make_preview_box (void) {
   loop_img=lives_image_new_from_file (buff);
   mainw->p_loopbutton=gtk_button_new();
   lives_widget_set_bg_color (mainw->p_loopbutton, LIVES_WIDGET_STATE_ACTIVE, &palette->menu_and_bars);
-  gtk_button_set_relief (GTK_BUTTON (mainw->p_loopbutton), GTK_RELIEF_NONE);
+  gtk_button_set_relief (LIVES_BUTTON (mainw->p_loopbutton), GTK_RELIEF_NONE);
   lives_container_add (LIVES_CONTAINER(mainw->p_loopbutton), loop_img);
   lives_box_pack_start (LIVES_BOX (hbox_buttons), mainw->p_loopbutton, TRUE, TRUE, 0);
   lives_widget_show (mainw->p_loopbutton);
@@ -3632,7 +3632,7 @@ void make_preview_box (void) {
 
   mainw->p_mutebutton=gtk_button_new();
   lives_widget_set_bg_color (mainw->p_mutebutton, LIVES_WIDGET_STATE_ACTIVE, &palette->menu_and_bars);
-  gtk_button_set_relief (GTK_BUTTON (mainw->p_mutebutton), GTK_RELIEF_NONE);
+  gtk_button_set_relief (LIVES_BUTTON (mainw->p_mutebutton), GTK_RELIEF_NONE);
   lives_container_add (LIVES_CONTAINER(mainw->p_mutebutton), mainw->p_mute_img);
   lives_box_pack_start (LIVES_BOX (hbox_buttons), mainw->p_mutebutton, TRUE, TRUE, 0);
   lives_widget_show (mainw->p_mutebutton);
@@ -3786,7 +3786,7 @@ void make_play_window(void) {
   mainw->play_window = lives_window_new (LIVES_WINDOW_TOPLEVEL);
   lives_window_set_hide_titlebar_when_maximized(LIVES_WINDOW(mainw->LiVES),TRUE);
 
-  lives_widget_set_events (mainw->play_window, GDK_SCROLL_MASK);
+  lives_widget_set_events (mainw->play_window, LIVES_SCROLL_MASK);
 
   // cannot do this or it forces showing on the GUI monitor
   //gtk_window_set_position(LIVES_WINDOW(mainw->play_window),GTK_WIN_POS_CENTER_ALWAYS);
@@ -4158,7 +4158,7 @@ void resize_play_window (void) {
       }
     }
     lives_window_present (LIVES_WINDOW (mainw->play_window));
-    gdk_window_raise(lives_widget_get_xwindow(mainw->play_window));
+    lives_xwindow_raise(lives_widget_get_xwindow(mainw->play_window));
   }
   else {
     // not playing
@@ -4345,8 +4345,10 @@ void splash_init(void) {
 
   if (prefs->show_splash) {
 
+#ifdef GUI_GTK
     gtk_window_set_type_hint(LIVES_WINDOW(mainw->splash_window),GDK_WINDOW_TYPE_HINT_SPLASHSCREEN);
-  
+#endif
+
     if (palette->style&STYLE_1) {
       lives_widget_set_bg_color(mainw->splash_window, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
     }

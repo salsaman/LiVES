@@ -1292,7 +1292,7 @@ LIVES_INLINE LiVESWidget *lives_label_new(const char *text) {
 }
 
 
-LIVES_INLINE LiVESWidget *lives_arrow_new(lives_arrow_t arrow_type, lives_shadow_t shadow_type) {
+LIVES_INLINE LiVESWidget *lives_arrow_new(LiVESArrowType arrow_type, LiVESShadowType shadow_type) {
   LiVESWidget *arrow=NULL;
 #ifdef GUI_GTK
   arrow=gtk_arrow_new(arrow_type,shadow_type);
@@ -1690,7 +1690,6 @@ LIVES_INLINE LiVESWidget *lives_button_new_from_stock(const char *stock_id) {
   }
 #if !GTK_CHECK_VERSION(3,10,0)
   else {
-    // TODO - deprecated
     button=gtk_button_new_from_stock(stock_id);
   }
 #endif
@@ -1857,7 +1856,8 @@ LIVES_INLINE boolean lives_widget_set_events(LiVESWidget *widget, int events) {
 }
 
 
-LIVES_INLINE boolean lives_widget_remove_accelerator(LiVESWidget *widget, LiVESAccelGroup *acgroup, uint32_t accel_key, LiVESModifierType accel_mods) {
+LIVES_INLINE boolean lives_widget_remove_accelerator(LiVESWidget *widget, LiVESAccelGroup *acgroup, 
+						     uint32_t accel_key, LiVESModifierType accel_mods) {
 #ifdef GUI_GTK
   return gtk_widget_remove_accelerator(widget,acgroup,accel_key,accel_mods);
 #endif
@@ -2731,6 +2731,16 @@ LIVES_INLINE boolean lives_scrolled_window_add_with_viewport(LiVESScrolledWindow
 }
 
 
+
+LIVES_INLINE boolean lives_xwindow_raise(LiVESXWindow *xwin) {
+#ifdef GUI_GTK
+  gdk_window_raise(xwin);
+  return TRUE;
+#endif
+  return FALSE;
+}
+
+
 LIVES_INLINE boolean lives_dialog_set_has_separator(LiVESDialog *dialog, boolean has) {
   // return TRUE if implemented
 
@@ -3091,6 +3101,57 @@ LIVES_INLINE boolean lives_grid_attach_next_to(LiVESGrid *grid, LiVESWidget *chi
 #endif
   return FALSE;
 }
+
+
+
+LIVES_INLINE LiVESWidget *lives_frame_new(const char *label) {
+  LiVESWidget *frame=NULL;
+#ifdef GUI_GTK
+  frame=gtk_frame_new(label);
+#endif
+  return frame;
+}
+
+
+
+LIVES_INLINE boolean lives_frame_set_label(LiVESFrame *frame, const char *label) {
+#ifdef GUI_GTK
+  gtk_frame_set_label(frame,label);
+  return TRUE;
+#endif
+  return FALSE;
+}
+
+
+
+LIVES_INLINE boolean lives_frame_set_label_widget(LiVESFrame *frame, LiVESWidget *widget) {
+#ifdef GUI_GTK
+  gtk_frame_set_label_widget(frame,widget);
+  return TRUE;
+#endif
+  return FALSE;
+}
+
+
+
+LIVES_INLINE LiVESWidget *lives_frame_get_label_widget(LiVESFrame *frame) {
+  LiVESWidget *widget=NULL;
+#ifdef GUI_GTK
+  widget=gtk_frame_get_label_widget(frame);
+#endif
+  return widget;
+}
+
+
+
+LIVES_INLINE boolean lives_frame_set_shadow_type(LiVESFrame *frame, LiVESShadowType stype) {
+#ifdef GUI_GTK
+  gtk_frame_set_shadow_type(frame,stype);
+  return TRUE;
+#endif
+  return FALSE;
+}
+
 
 
 
@@ -4005,7 +4066,7 @@ LiVESWidget *lives_standard_dialog_new(const char *title, boolean add_std_button
   gtk_window_set_position(LIVES_WINDOW(dialog),GTK_WIN_POS_CENTER_ALWAYS);
 
   if (add_std_buttons) {
-    GtkAccelGroup *accel_group=GTK_ACCEL_GROUP(lives_accel_group_new ());
+    LiVESAccelGroup *accel_group=LIVES_ACCEL_GROUP(lives_accel_group_new ());
     LiVESWidget *cancelbutton = lives_button_new_from_stock ("gtk-cancel");
     LiVESWidget *okbutton = lives_button_new_from_stock ("gtk-ok");
 
@@ -4317,12 +4378,14 @@ void set_child_colour(LiVESWidget *widget, livespointer set_allx) {
 
 
 void set_button_width(LiVESWidget *buttonbox, LiVESWidget *button, int width) {
+#ifdef GUI_GTK
 #if !GTK_CHECK_VERSION(3,0,0)
   gtk_button_box_set_child_size (GTK_BUTTON_BOX(buttonbox), width, -1);
 #else
   lives_widget_set_size_request(button,width*4,-1);
 #endif
   gtk_button_box_set_layout (GTK_BUTTON_BOX(buttonbox), GTK_BUTTONBOX_SPREAD);
+#endif
 }
 
 
@@ -4474,15 +4537,18 @@ LiVESWidget *lives_menu_add_separator(LiVESMenu *menu) {
 
 
 LIVES_INLINE int lives_display_get_n_screens(LiVESXDisplay *disp) {
+#ifdef GUI_GTK
 #if GTK_CHECK_VERSION(3,10,0)
   return 1;
 #else
   return gdk_display_get_n_screens(disp);
 #endif
+#endif
 }
 
 
 void lives_set_cursor_style(lives_cursor_t cstyle, LiVESWidget *widget) {
+#ifdef GUI_GTK
   LiVESXWindow *window;
   GdkCursor *cursor=NULL;
   GdkDisplay *disp;
@@ -4546,6 +4612,7 @@ void lives_set_cursor_style(lives_cursor_t cstyle, LiVESWidget *widget) {
   }
   else gdk_window_set_cursor(window,NULL);
   if (cursor!=NULL) lives_cursor_unref(cursor);
+#endif
 }
 
 
@@ -4553,6 +4620,7 @@ void lives_set_cursor_style(lives_cursor_t cstyle, LiVESWidget *widget) {
 
 void hide_cursor(LiVESXWindow *window) {
   //make the cursor invisible in playback windows
+#ifdef GUI_GTK
 
 #if GTK_CHECK_VERSION(2,16,0)
   if (GDK_IS_WINDOW(window)) {
@@ -4580,6 +4648,7 @@ void hide_cursor(LiVESXWindow *window) {
   }
   if (GDK_IS_WINDOW(window)) gdk_window_set_cursor (window, hidden_cursor);
 #endif 
+#endif
 }
 
 

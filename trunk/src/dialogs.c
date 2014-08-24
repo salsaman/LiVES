@@ -125,7 +125,7 @@ void add_warn_check (GtkBox *box, int warn_mask_number) {
 static void add_clear_ds_button(GtkDialog* dialog) {
   LiVESWidget *button = lives_button_new_from_stock (LIVES_STOCK_CLEAR);
 
-  lives_button_set_label(GTK_BUTTON(button),_("_Recover disk space"));
+  lives_button_set_label(LIVES_BUTTON(button),_("_Recover disk space"));
   if (mainw->tried_ds_recover) lives_widget_set_sensitive(button,FALSE);
 
   g_signal_connect (GTK_OBJECT (button), "clicked",
@@ -168,7 +168,7 @@ static LiVESWidget* create_warn_dialog (int warn_mask_number, GtkWindow *transie
   LiVESWidget *warning_okbutton=NULL;
   LiVESWidget *abortbutton=NULL;
 
-  GtkAccelGroup *accel_group=GTK_ACCEL_GROUP(lives_accel_group_new ());
+  LiVESAccelGroup *accel_group=LIVES_ACCEL_GROUP(lives_accel_group_new ());
 
   gchar *textx;
 
@@ -205,12 +205,12 @@ static LiVESWidget* create_warn_dialog (int warn_mask_number, GtkWindow *transie
     widget_opts.justify=LIVES_JUSTIFY_CENTER;
     widget_opts.justify=LIVES_JUSTIFY_DEFAULT;
     abortbutton = lives_button_new_from_stock ("gtk-quit");
-    lives_button_set_label(GTK_BUTTON(abortbutton),_("_Abort"));
+    lives_button_set_label(LIVES_BUTTON(abortbutton),_("_Abort"));
     lives_dialog_add_action_widget (LIVES_DIALOG (dialog), abortbutton, LIVES_ABORT);
     warning_cancelbutton = lives_button_new_from_stock ("gtk-cancel");
     lives_dialog_add_action_widget (LIVES_DIALOG (dialog), warning_cancelbutton, LIVES_CANCEL);
     warning_okbutton = lives_button_new_from_stock ("gtk-refresh");
-    lives_button_set_label(GTK_BUTTON(warning_okbutton),_("_Retry"));
+    lives_button_set_label(LIVES_BUTTON(warning_okbutton),_("_Retry"));
     lives_dialog_add_action_widget (LIVES_DIALOG (dialog), warning_okbutton, LIVES_RETRY);
     break;
   default:
@@ -276,7 +276,7 @@ static LiVESWidget* create_warn_dialog (int warn_mask_number, GtkWindow *transie
 
   if (prefs->present) {
     lives_window_present (LIVES_WINDOW (dialog));
-    gdk_window_raise (lives_widget_get_xwindow(dialog));
+    lives_xwindow_raise (lives_widget_get_xwindow(dialog));
   }
 
 
@@ -736,7 +736,7 @@ boolean check_storage_space(lives_clip_t *sfile, boolean is_processing) {
       if (mainw->next_ds_warn_level<prefs->ds_crit_level) mainw->next_ds_warn_level=prefs->ds_crit_level;
       if (is_processing&&sfile!=NULL&&sfile->proc_ptr!=NULL&&!mainw->effects_paused&&
 	  lives_widget_is_visible(sfile->proc_ptr->pause_button)) {
-	on_effects_paused(GTK_BUTTON(sfile->proc_ptr->pause_button),NULL);
+	on_effects_paused(LIVES_BUTTON(sfile->proc_ptr->pause_button),NULL);
 	did_pause=TRUE;
       }
 
@@ -762,7 +762,7 @@ boolean check_storage_space(lives_clip_t *sfile, boolean is_processing) {
     else if (ds==LIVES_STORAGE_STATUS_CRITICAL) {
       if (is_processing&&sfile!=NULL&&sfile->proc_ptr!=NULL&&!mainw->effects_paused&&
 	  lives_widget_is_visible(sfile->proc_ptr->pause_button)) {
-	on_effects_paused(GTK_BUTTON(sfile->proc_ptr->pause_button),NULL);
+	on_effects_paused(LIVES_BUTTON(sfile->proc_ptr->pause_button),NULL);
 	did_pause=TRUE;
       }
       tmp=ds_critical_msg(prefs->tmpdir,dsval);
@@ -796,7 +796,7 @@ boolean check_storage_space(lives_clip_t *sfile, boolean is_processing) {
 	if (sfile->op_ds_warn_level<prefs->ds_crit_level) sfile->op_ds_warn_level=prefs->ds_crit_level;
 	if (is_processing&&sfile!=NULL&&sfile->proc_ptr!=NULL&&!mainw->effects_paused&&
 	    lives_widget_is_visible(sfile->proc_ptr->pause_button)) {
-	  on_effects_paused(GTK_BUTTON(sfile->proc_ptr->pause_button),NULL);
+	  on_effects_paused(LIVES_BUTTON(sfile->proc_ptr->pause_button),NULL);
 	  did_pause=TRUE;
 	}
 	tmp=ds_warning_msg(sfile->op_dir,dsval,curr_ds_warn,sfile->op_ds_warn_level);
@@ -822,7 +822,7 @@ boolean check_storage_space(lives_clip_t *sfile, boolean is_processing) {
       else if (ds==LIVES_STORAGE_STATUS_CRITICAL) {
 	if (is_processing&&sfile!=NULL&&sfile->proc_ptr!=NULL&&!mainw->effects_paused&&
 	    lives_widget_is_visible(sfile->proc_ptr->pause_button)) {
-	  on_effects_paused(GTK_BUTTON(sfile->proc_ptr->pause_button),NULL);
+	  on_effects_paused(LIVES_BUTTON(sfile->proc_ptr->pause_button),NULL);
 	  did_pause=TRUE;
 	}
 	tmp=ds_critical_msg(sfile->op_dir,dsval);
@@ -848,7 +848,7 @@ boolean check_storage_space(lives_clip_t *sfile, boolean is_processing) {
   }
 
   if (did_pause&&mainw->effects_paused) {
-    on_effects_paused(GTK_BUTTON(sfile->proc_ptr->pause_button),NULL);
+    on_effects_paused(LIVES_BUTTON(sfile->proc_ptr->pause_button),NULL);
   }
 
   g_free(pausstr);
@@ -2471,7 +2471,7 @@ void do_nojack_rec_error(void) {
 }
 
 void do_vpp_palette_error (void) {
-  do_error_dialog_with_check_transient(_("Video playback plugin failed to initialise palette !\n"),TRUE,0,prefsw!=NULL?LIVES_WINDOW(prefsw->prefs_dialog):GTK_WINDOW(mainw->LiVES));
+  do_error_dialog_with_check_transient(_("Video playback plugin failed to initialise palette !\n"),TRUE,0,prefsw!=NULL?LIVES_WINDOW(prefsw->prefs_dialog):LIVES_WINDOW(mainw->LiVES));
 }
 
 void do_decoder_palette_error (void) {
@@ -2480,7 +2480,7 @@ void do_decoder_palette_error (void) {
 
 
 void do_vpp_fps_error (void) {
-  do_error_dialog_with_check_transient(_("Unable to set framerate of video plugin\n"),TRUE,0,prefsw!=NULL?LIVES_WINDOW(prefsw->prefs_dialog):GTK_WINDOW(mainw->LiVES));
+  do_error_dialog_with_check_transient(_("Unable to set framerate of video plugin\n"),TRUE,0,prefsw!=NULL?LIVES_WINDOW(prefsw->prefs_dialog):LIVES_WINDOW(mainw->LiVES));
 }
 
 
@@ -2517,8 +2517,8 @@ static void create_threaded_dialog(gchar *text, boolean has_cancel) {
 
   lives_window_add_accel_group (LIVES_WINDOW (procw->processing), mainw->accel_group);
 
-  if (mainw->multitrack==NULL) lives_window_set_transient_for(LIVES_WINDOW(procw->processing),GTK_WINDOW(mainw->LiVES));
-  else lives_window_set_transient_for(LIVES_WINDOW(procw->processing),GTK_WINDOW(mainw->multitrack->window));
+  if (mainw->multitrack==NULL) lives_window_set_transient_for(LIVES_WINDOW(procw->processing),LIVES_WINDOW(mainw->LiVES));
+  else lives_window_set_transient_for(LIVES_WINDOW(procw->processing),LIVES_WINDOW(mainw->multitrack->window));
 
   dialog_vbox = lives_dialog_get_content_area(LIVES_DIALOG(procw->processing));
 
@@ -3093,7 +3093,7 @@ void do_do_not_close_d (void) {
   lives_widget_show(err_box);
 
   lives_window_present (LIVES_WINDOW (err_box));
-  gdk_window_raise (lives_widget_get_xwindow(err_box));
+  lives_xwindow_raise (lives_widget_get_xwindow(err_box));
 }
 
 

@@ -338,7 +338,7 @@ void check_for_special (lives_rfx_t *rfx, lives_param_t *param, LiVESBox *pbox) 
       
       checkbutton = lives_standard_check_button_new (_("Display Password"),FALSE,LIVES_BOX(hbox),NULL);
 
-      gtk_button_set_focus_on_click (GTK_BUTTON(checkbutton),FALSE);
+      gtk_button_set_focus_on_click (LIVES_BUTTON(checkbutton),FALSE);
 
       if (!lives_widget_is_sensitive(param->widgets[0])) lives_widget_set_sensitive(checkbutton,FALSE);
       lives_widget_show_all(hbox);

@@ -2021,11 +2021,11 @@ void create_LiVES (void) {
 
   lives_box_pack_start (LIVES_BOX (mainw->framebar), mainw->banner, TRUE, TRUE, 0);
 
-  mainw->framecounter = gtk_entry_new ();
+  mainw->framecounter = lives_entry_new ();
   lives_widget_show (mainw->framecounter);
   lives_box_pack_start (LIVES_BOX (mainw->framebar), mainw->framecounter, FALSE, TRUE, 0);
   lives_entry_set_editable (LIVES_ENTRY (mainw->framecounter), FALSE);
-  gtk_entry_set_has_frame (LIVES_ENTRY (mainw->framecounter), FALSE);
+  lives_entry_set_has_frame (LIVES_ENTRY (mainw->framecounter), FALSE);
   lives_entry_set_width_chars (LIVES_ENTRY (mainw->framecounter), 18);
 
   lives_widget_set_can_focus (mainw->framecounter, FALSE);

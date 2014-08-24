@@ -1244,7 +1244,7 @@ _entryw* create_location_dialog (int type) {
 						72.*widget_opts.scale,PATH_MAX,LIVES_BOX(hbox),NULL);
 
     lives_entry_set_editable(LIVES_ENTRY(locw->dir_entry),FALSE);
-    gtk_entry_set_max_length(LIVES_ENTRY (locw->dir_entry),PATH_MAX);
+    lives_entry_set_max_length(LIVES_ENTRY (locw->dir_entry),PATH_MAX);
 
     // add dir, with filechooser button
     buttond = lives_standard_file_button_new (TRUE,NULL);
@@ -1442,8 +1442,8 @@ _entryw* create_rename_dialog (int type) {
 
   }
   else {
-    renamew->entry = gtk_entry_new();
-    gtk_entry_set_max_length (LIVES_ENTRY(renamew->entry),type==6?PATH_MAX:type==7?16:128);
+    renamew->entry = lives_entry_new();
+    lives_entry_set_max_length (LIVES_ENTRY(renamew->entry),type==6?PATH_MAX:type==7?16:128);
     if (type==2&&strlen (mainw->set_name)) {
       lives_entry_set_text (LIVES_ENTRY (renamew->entry),mainw->set_name);
     }
@@ -1471,7 +1471,7 @@ _entryw* create_rename_dialog (int type) {
   }
 
 
-  gtk_entry_set_activates_default (LIVES_ENTRY (renamew->entry), TRUE);
+  lives_entry_set_activates_default (LIVES_ENTRY (renamew->entry), TRUE);
   lives_entry_set_width_chars (LIVES_ENTRY (renamew->entry),RW_ENTRY_DISPWIDTH);
 
   dialog_action_area = lives_dialog_get_action_area(LIVES_DIALOG (renamew->dialog));

@@ -178,7 +178,7 @@ void fd_connect_spinbutton(lives_rfx_t *rfx) {
 
 
 static void passwd_toggle_vis(GtkToggleButton *b, gpointer entry) {
-  gtk_entry_set_visibility(LIVES_ENTRY(entry),lives_toggle_button_get_active(b));
+  lives_entry_set_visibility(LIVES_ENTRY(entry),lives_toggle_button_get_active(b));
 }
 
 
@@ -309,7 +309,7 @@ void check_for_special (lives_rfx_t *rfx, lives_param_t *param, LiVESBox *pbox) 
 	    LIVES_IS_LABEL(param->widgets[1])&&
 	    gtk_label_get_mnemonic_widget(LIVES_LABEL(param->widgets[1]))!=NULL) 
 	  gtk_label_set_mnemonic_widget (LIVES_LABEL(param->widgets[1]),buttond);
-	gtk_entry_set_max_length(LIVES_ENTRY (param->widgets[0]),PATH_MAX);
+	lives_entry_set_max_length(LIVES_ENTRY (param->widgets[0]),PATH_MAX);
       }
     }
 
@@ -349,7 +349,7 @@ void check_for_special (lives_rfx_t *rfx, lives_param_t *param, LiVESBox *pbox) 
 
 
 
-      gtk_entry_set_visibility(LIVES_ENTRY(param->widgets[0]),FALSE);
+      lives_entry_set_visibility(LIVES_ENTRY(param->widgets[0]),FALSE);
 
     }
     slist=slist->next;

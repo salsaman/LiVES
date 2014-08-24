@@ -1790,7 +1790,7 @@ static void pref_init_list(LiVESWidget *list) {
 
   lives_tree_view_set_model(LIVES_TREE_VIEW(list), LIVES_TREE_MODEL(store));
 
-  g_object_unref(store);
+  //g_object_unref(store);
 }
 
 /*
@@ -3227,8 +3227,8 @@ _prefsw *create_prefs_dialog (void) {
   gtk_misc_set_alignment (GTK_MISC (label), 0, 0.5);
 
 
-  prefsw->vid_load_dir_entry = gtk_entry_new ();
-  gtk_entry_set_max_length(LIVES_ENTRY(prefsw->vid_load_dir_entry),PATH_MAX);
+  prefsw->vid_load_dir_entry = lives_entry_new ();
+  lives_entry_set_max_length(LIVES_ENTRY(prefsw->vid_load_dir_entry),PATH_MAX);
   lives_table_attach (LIVES_TABLE (prefsw->table_right_directories), prefsw->vid_load_dir_entry, 1, 2, 4, 5,
 		    (GtkAttachOptions) (GTK_EXPAND | GTK_FILL),
 		    (GtkAttachOptions) (0), 0, 0);

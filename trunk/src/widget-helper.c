@@ -748,6 +748,15 @@ LIVES_INLINE boolean lives_window_get_position(LiVESWindow *window, int *x, int 
 }
 
 
+LIVES_INLINE boolean lives_window_set_position(LiVESWindow *window, LiVESWindowPosition pos) {
+#ifdef GUI_GTK
+  gtk_window_set_position(window,pos);
+  return TRUE;
+#endif
+  return FALSE;
+}
+
+
 LIVES_INLINE boolean lives_window_set_hide_titlebar_when_maximized(LiVESWindow *window, boolean setting) {
 #ifdef GUI_GTK
 #if GTK_CHECK_VERSION(3,4,0)
@@ -1578,7 +1587,7 @@ LIVES_INLINE boolean lives_text_buffer_get_start_iter(LiVESTextBuffer *tbuff, Li
 
 LIVES_INLINE boolean lives_text_buffer_get_end_iter(LiVESTextBuffer *tbuff, LiVESTextIter *iter) {
 #ifdef GUI_GTK
-  gtk_text_buffer_get_start_iter(tbuff, iter);
+  gtk_text_buffer_get_end_iter(tbuff, iter);
   return TRUE;
 #endif
   return FALSE;
@@ -1610,7 +1619,7 @@ LIVES_INLINE LiVESTextMark *lives_text_buffer_create_mark(LiVESTextBuffer *tbuff
 
 LIVES_INLINE boolean lives_text_buffer_delete_mark(LiVESTextBuffer *tbuff, LiVESTextMark *mark) {
 #ifdef GUI_GTK
-  lives_text_buffer_delete_mark(tbuff, mark);
+  gtk_text_buffer_delete_mark(tbuff, mark);
   return TRUE;
 #endif
   return FALSE;
@@ -2657,18 +2666,73 @@ LIVES_INLINE const char *lives_label_get_text(LiVESLabel *label) {
 }
 
 
-LIVES_INLINE void lives_label_set_text(LiVESLabel *label, const char *text) {
+LIVES_INLINE boolean lives_label_set_text(LiVESLabel *label, const char *text) {
 #ifdef GUI_GTK
   gtk_label_set_text(label,text);
+  return TRUE;
 #endif
+  return FALSE;
 }
 
 
-LIVES_INLINE void lives_label_set_text_with_mnemonic(LiVESLabel *label, const char *text) {
+LIVES_INLINE boolean lives_label_set_text_with_mnemonic(LiVESLabel *label, const char *text) {
 #ifdef GUI_GTK
   gtk_label_set_text_with_mnemonic(label,text);
+  return TRUE;
 #endif
+  return FALSE;
 }
+
+
+LIVES_INLINE LiVESWidget *lives_entry_new(void) {
+  LiVESWidget *entry=NULL;
+#ifdef GUI_GTK
+  entry=gtk_entry_new();
+#endif
+  return entry;
+}
+
+
+
+
+LIVES_INLINE boolean lives_entry_set_max_length(LiVESEntry *entry, int len) {
+#ifdef GUI_GTK
+  gtk_entry_set_max_length(entry,len);
+  return TRUE;
+#endif
+  return FALSE;
+}
+
+
+
+LIVES_INLINE boolean lives_entry_set_activates_default(LiVESEntry *entry, boolean act) {
+#ifdef GUI_GTK
+  gtk_entry_set_activates_default(entry,act);
+  return TRUE;
+#endif
+  return FALSE;
+}
+
+
+
+LIVES_INLINE boolean lives_entry_set_visibility(LiVESEntry *entry, boolean vis) {
+#ifdef GUI_GTK
+  gtk_entry_set_visibility(entry,vis);
+  return TRUE;
+#endif
+  return FALSE;
+}
+
+
+
+LIVES_INLINE boolean lives_entry_set_has_frame(LiVESEntry *entry, boolean has) {
+#ifdef GUI_GTK
+  gtk_entry_set_has_frame(entry,has);
+  return TRUE;
+#endif
+  return FALSE;
+}
+
 
 
 LIVES_INLINE boolean lives_entry_set_editable(LiVESEntry *entry, boolean editable) {
@@ -2684,6 +2748,7 @@ LIVES_INLINE const char *lives_entry_get_text(LiVESEntry *entry) {
 #ifdef GUI_GTK
   return gtk_entry_get_text(entry);
 #endif
+  return NULL;
 }
 
 
@@ -2735,6 +2800,15 @@ LIVES_INLINE boolean lives_scrolled_window_add_with_viewport(LiVESScrolledWindow
 LIVES_INLINE boolean lives_xwindow_raise(LiVESXWindow *xwin) {
 #ifdef GUI_GTK
   gdk_window_raise(xwin);
+  return TRUE;
+#endif
+  return FALSE;
+}
+
+
+ LIVES_INLINE boolean lives_xwindow_set_cursor(LiVESXWindow *xwin, LiVESXCursor *cursor) {
+#ifdef GUI_GTK
+   gdk_window_set_cursor(xwin,cursor);
   return TRUE;
 #endif
   return FALSE;
@@ -3378,7 +3452,6 @@ LIVES_INLINE void lives_widget_add_accelerator(LiVESWidget *widget, const char *
 
 
 LIVES_INLINE void lives_accel_groups_activate(LiVESObject *object, uint32_t key, LiVESModifierType mod) {
-
 #ifdef GUI_GTK
   gtk_accel_groups_activate(object,key,mod);
 #endif
@@ -3796,7 +3869,7 @@ LiVESWidget *lives_standard_spin_button_new(const char *labeltext, boolean use_m
   maxlen=calc_spin_button_width(min,max,dp);
   lives_entry_set_width_chars (LIVES_ENTRY (spinbutton),maxlen);
 
-  gtk_entry_set_activates_default (LIVES_ENTRY (spinbutton), TRUE);
+  lives_entry_set_activates_default (LIVES_ENTRY (spinbutton), TRUE);
   gtk_spin_button_set_update_policy (LIVES_SPIN_BUTTON (spinbutton),GTK_UPDATE_ALWAYS);
   gtk_spin_button_set_numeric (LIVES_SPIN_BUTTON (spinbutton),TRUE);
 
@@ -3873,8 +3946,6 @@ LiVESWidget *lives_standard_combo_new (const char *labeltext, boolean use_mnemon
 
   // pack a themed combo box into box
 
-
-#ifdef GUI_GTK
   LiVESWidget *eventbox=NULL;
   LiVESWidget *label=NULL;
   LiVESWidget *hbox;
@@ -3935,7 +4006,7 @@ LiVESWidget *lives_standard_combo_new (const char *labeltext, boolean use_mnemon
   }
 
   lives_entry_set_editable (LIVES_ENTRY(entry),FALSE);
-  gtk_entry_set_activates_default(entry,TRUE);
+  lives_entry_set_activates_default(entry,TRUE);
 
   if (list!=NULL) {
     lives_combo_populate(LIVES_COMBO(combo),list);
@@ -3954,7 +4025,6 @@ LiVESWidget *lives_standard_combo_new (const char *labeltext, boolean use_mnemon
 #endif
   }
 
-#endif
 
   return combo;
 }
@@ -3965,12 +4035,11 @@ LiVESWidget *lives_standard_entry_new(const char *labeltext, boolean use_mnemoni
 
   LiVESWidget *entry=NULL;
 
-#ifdef GUI_GTK
   LiVESWidget *label=NULL;
 
   LiVESWidget *hbox=NULL;
 
-  entry=gtk_entry_new();
+  entry=lives_entry_new();
 
   if (tooltip!=NULL) lives_widget_set_tooltip_text(entry, tooltip);
 
@@ -3978,9 +4047,9 @@ LiVESWidget *lives_standard_entry_new(const char *labeltext, boolean use_mnemoni
     lives_entry_set_text (LIVES_ENTRY (entry),txt);
 
   if (dispwidth!=-1) lives_entry_set_width_chars (LIVES_ENTRY (entry),dispwidth);
-  if (maxchars!=-1) gtk_entry_set_max_length(LIVES_ENTRY (entry),maxchars);
+  if (maxchars!=-1) lives_entry_set_max_length(LIVES_ENTRY (entry),maxchars);
 
-  gtk_entry_set_activates_default (LIVES_ENTRY (entry), TRUE);
+  lives_entry_set_activates_default (LIVES_ENTRY (entry), TRUE);
 
   widget_opts.last_label=NULL;
 
@@ -4029,7 +4098,6 @@ LiVESWidget *lives_standard_entry_new(const char *labeltext, boolean use_mnemoni
 #endif
   }
 
-#endif
 
   return entry;
 }
@@ -4063,7 +4131,7 @@ LiVESWidget *lives_standard_dialog_new(const char *title, boolean add_std_button
   }
 
   // do this before widget_show(), then call lives_window_center() afterwards
-  gtk_window_set_position(LIVES_WINDOW(dialog),GTK_WIN_POS_CENTER_ALWAYS);
+  lives_window_set_position(LIVES_WINDOW(dialog),LIVES_WIN_POS_CENTER_ALWAYS);
 
   if (add_std_buttons) {
     LiVESAccelGroup *accel_group=LIVES_ACCEL_GROUP(lives_accel_group_new ());
@@ -4131,9 +4199,9 @@ LiVESWidget *lives_standard_hruler_new(void) {
 LiVESWidget *lives_standard_scrolled_window_new(int width, int height, LiVESWidget *child) {
   LiVESWidget *scrolledwindow=NULL;
 
-#ifdef GUI_GTK
   LiVESWidget *swchild;
 
+#ifdef GUI_GTK
   scrolledwindow = gtk_scrolled_window_new (NULL, NULL);
   lives_scrolled_window_set_policy (LIVES_SCROLLED_WINDOW (scrolledwindow), LIVES_POLICY_AUTOMATIC, LIVES_POLICY_AUTOMATIC);
 
@@ -4184,6 +4252,7 @@ LiVESWidget *lives_standard_scrolled_window_new(int width, int height, LiVESWidg
     if (LIVES_IS_CONTAINER(child)) lives_container_set_border_width (LIVES_CONTAINER (child), widget_opts.border_width>>1);
   }
 #endif
+
   return scrolledwindow;
 }
 
@@ -4242,8 +4311,10 @@ void widget_helper_init(void) {
   widget_opts.packing_height*=widget_opts.scale;
   widget_opts.filler_len*=widget_opts.scale;
 
+#ifdef GUI_GTK
   gtk_accel_map_add_entry("<LiVES>/save",LIVES_KEY_s,LIVES_CONTROL_MASK);
   gtk_accel_map_add_entry("<LiVES>/quit",LIVES_KEY_q,LIVES_CONTROL_MASK);
+#endif
 }
 
 
@@ -4290,11 +4361,11 @@ void lives_widget_apply_theme2(LiVESWidget *widget, LiVESWidgetState state) {
 boolean lives_entry_set_completion_from_list(LiVESEntry *entry, LiVESList *xlist) {
 #ifdef GUI_GTK
   GtkListStore *store;
-  GtkEntryCompletion *completion;
+  LiVESEntryCompletion *completion;
   store = gtk_list_store_new (1, G_TYPE_STRING);
 
   while (xlist != NULL) {
-    GtkTreeIter iter;
+    LiVESTreeIter iter;
     gtk_list_store_append (store, &iter);
     gtk_list_store_set (store, &iter, 0, (gchar *)xlist->data, -1);
     xlist=xlist->next;
@@ -4326,7 +4397,7 @@ void lives_window_center(LiVESWindow *window) {
 						 lives_widget_get_allocation_height(LIVES_WIDGET(window)))/2;
       lives_window_move(LIVES_WINDOW(window),xcen,ycen);
     }
-    else gtk_window_set_position(LIVES_WINDOW(window),GTK_WIN_POS_CENTER_ALWAYS);
+    else lives_window_set_position(LIVES_WINDOW(window),LIVES_WIN_POS_CENTER_ALWAYS);
   }
 }
 
@@ -4363,7 +4434,7 @@ LIVES_INLINE void toggle_button_toggle (LiVESToggleButton *tbutton) {
 
 
 void set_child_colour(LiVESWidget *widget, livespointer set_allx) {
-  boolean set_all=GPOINTER_TO_INT(set_allx);
+  boolean set_all=LIVES_POINTER_TO_INT(set_allx);
 
   if (!set_all&&LIVES_IS_BUTTON(widget)) return;
   if (LIVES_IS_CONTAINER(widget)) {
@@ -4390,7 +4461,7 @@ void set_button_width(LiVESWidget *buttonbox, LiVESWidget *button, int width) {
 
 
 char *lives_text_view_get_text(LiVESTextView *textview) {
-  GtkTextIter siter,eiter;
+  LiVESTextIter siter,eiter;
   LiVESTextBuffer *textbuf=lives_text_view_get_buffer (textview);
   lives_text_buffer_get_start_iter(textbuf,&siter);
   lives_text_buffer_get_end_iter(textbuf,&eiter);
@@ -4424,6 +4495,7 @@ boolean lives_text_view_scroll_onscreen(LiVESTextView *tview) {
 
   tbuf=lives_text_view_get_buffer (tview);
   if (tbuf!=NULL) {
+    lives_text_buffer_get_end_iter(tbuf,&iter);
     mark=lives_text_buffer_create_mark(tbuf,NULL,&iter,FALSE);
     if (mark!=NULL) {
       if (lives_text_view_scroll_mark_onscreen(tview,mark)) 
@@ -4437,6 +4509,7 @@ boolean lives_text_view_scroll_onscreen(LiVESTextView *tview) {
 
 
 int get_box_child_index (LiVESBox *box, LiVESWidget *tchild) {
+#ifdef GUI_GTK
   GList *list=gtk_container_get_children(LIVES_CONTAINER(box));
   LiVESWidget *child;
   register int i=0;
@@ -4447,6 +4520,7 @@ int get_box_child_index (LiVESBox *box, LiVESWidget *tchild) {
     list=list->next;
     i++;
   }
+  #endif
   return -1;
 }
 
@@ -4544,6 +4618,7 @@ LIVES_INLINE int lives_display_get_n_screens(LiVESXDisplay *disp) {
   return gdk_display_get_n_screens(disp);
 #endif
 #endif
+  return 1;
 }
 
 
@@ -4653,17 +4728,19 @@ void hide_cursor(LiVESXWindow *window) {
 
 
 void unhide_cursor(LiVESXWindow *window) {
-  if (GDK_IS_WINDOW(window)) gdk_window_set_cursor(window,NULL);
+  if (LIVES_IS_XWINDOW(window)) lives_xwindow_set_cursor(window,NULL);
 }
 
 
 void get_border_size (LiVESWidget *win, int *bx, int *by) {
+#ifdef GUI_GTK
   GdkRectangle rect;
   gint wx,wy;
   gdk_window_get_frame_extents (lives_widget_get_xwindow (win),&rect);
   gdk_window_get_origin (lives_widget_get_xwindow (win), &wx, &wy);
   *bx=wx-rect.x;
   *by=wy-rect.y;
+#endif
 }
 
 

@@ -1,6 +1,6 @@
 // rte_window.c
 // LiVES (lives-exe)
-// (c) G. Finch 2005 - 2013
+// (c) G. Finch 2005 - 2014
 // released under the GNU GPL 3 or later
 // see file ../COPYING or www.gnu.org for licensing details
 
@@ -1968,8 +1968,8 @@ enum {
 
 
 void fx_changed (GtkComboBox *combo, gpointer user_data) {
-  GtkTreeIter iter1;
-  GtkTreeModel *model;
+  LiVESTreeIter iter1;
+  LiVESTreeModel *model;
 
   gchar *txt;
   gchar *tmp;
@@ -1990,7 +1990,7 @@ void fx_changed (GtkComboBox *combo, gpointer user_data) {
   lives_combo_get_active_iter(combo,&iter1);
   model=lives_combo_get_model(combo);
 
-  gtk_tree_model_get(model,&iter1,HASH_COLUMN,&hashname1,-1);
+  lives_tree_model_get(model,&iter1,HASH_COLUMN,&hashname1,-1);
 
   if (!strcmp(hashname1,hashname2)) {
     g_free(hashname1);
@@ -2025,7 +2025,7 @@ void fx_changed (GtkComboBox *combo, gpointer user_data) {
   lives_combo_get_active_iter(combo,&iter1);
   model=lives_combo_get_model(combo);
 
-  gtk_tree_model_get(model,&iter1,NAME_COLUMN,&txt,-1);
+  lives_tree_model_get(model,&iter1,NAME_COLUMN,&txt,-1);
   lives_entry_set_text (LIVES_ENTRY (combo_entries[key_mode]),txt);
   g_free(txt);
 
@@ -2050,9 +2050,9 @@ void fx_changed (GtkComboBox *combo, gpointer user_data) {
 
 
 static LiVESTreeModel *rte_window_fx_model (void) {
-  GtkTreeStore *tstore;
+  LiVESTreeStore *tstore;
 
-  GtkTreeIter iter1,iter2;
+  LiVESTreeIter iter1,iter2;
 
   // fill names of our effects
   int fx_idx=0;
@@ -2063,7 +2063,7 @@ static LiVESTreeModel *rte_window_fx_model (void) {
 
   gchar *pkg=NULL,*pkgstring,*fxname;
 
-  tstore=gtk_tree_store_new (NUM_COLUMNS, G_TYPE_STRING, G_TYPE_STRING, G_TYPE_STRING);
+  tstore=lives_tree_store_new (NUM_COLUMNS, G_TYPE_STRING, G_TYPE_STRING, G_TYPE_STRING);
 
   while (list!=NULL) {
     weed_plant_t *filter=get_weed_filter(weed_get_idx_for_hashname((gchar *)g_list_nth_data(hash_list,fx_idx),TRUE));
@@ -2090,20 +2090,20 @@ static LiVESTreeModel *rte_window_fx_model (void) {
 	memset(pkgstring,0,1);
 	/* TRANSLATORS: example " - LADSPA plugins -" */
 	pkgstring=g_strdup_printf(_(" - %s plugins -"),pkg);
-	gtk_tree_store_append (tstore, &iter1, NULL);
-	gtk_tree_store_set(tstore,&iter1,NAME_TYPE_COLUMN,pkgstring,NAME_COLUMN,fxname,
+	lives_tree_store_append (tstore, &iter1, NULL);
+	lives_tree_store_set(tstore,&iter1,NAME_TYPE_COLUMN,pkgstring,NAME_COLUMN,fxname,
 			 HASH_COLUMN,g_list_nth_data(hash_list,fx_idx),-1);
 	g_free(pkgstring);
       }
-      gtk_tree_store_append (tstore, &iter2, &iter1);
-      gtk_tree_store_set(tstore,&iter2,NAME_TYPE_COLUMN,list->data,NAME_COLUMN,fxname,
+      lives_tree_store_append (tstore, &iter2, &iter1);
+      lives_tree_store_set(tstore,&iter2,NAME_TYPE_COLUMN,list->data,NAME_COLUMN,fxname,
 			 HASH_COLUMN,g_list_nth_data(hash_list,fx_idx),-1);
     }
     else {
       if (pkg!=NULL) g_free(pkg);
       pkg=NULL;
-      gtk_tree_store_append (tstore, &iter1, NULL);  /* Acquire an iterator */
-      gtk_tree_store_set(tstore,&iter1,NAME_TYPE_COLUMN,list->data,NAME_COLUMN,fxname,
+      lives_tree_store_append (tstore, &iter1, NULL);  /* Acquire an iterator */
+      lives_tree_store_set(tstore,&iter1,NAME_TYPE_COLUMN,list->data,NAME_COLUMN,fxname,
 			 HASH_COLUMN,g_list_nth_data(hash_list,fx_idx),-1);
       }
 

@@ -1,6 +1,6 @@
 // events.c
 // LiVES
-// (c) G. Finch 2005 - 2013 <salsaman@gmail.com>
+// (c) G. Finch 2005 - 2014 <salsaman@gmail.com>
 // released under the GNU GPL 3 or later
 // see file ../COPYING or www.gnu.org for licensing details
 
@@ -1967,14 +1967,17 @@ boolean move_event_left(weed_plant_t *event_list, weed_plant_t *event, boolean c
   // move a filter_deinit to the left
   // this can happen for two reasons: - we are rectifying an event_list, or a block was deleted or moved
 
-  int *owners;
-  int error;
-  int num_owners=0,num_clips;
   weed_timecode_t tc=get_event_timecode(event),new_tc=tc;
   weed_plant_t *xevent=event;
   weed_plant_t *init_event;
+
+  int *owners;
+
   boolean all_ok=FALSE;
-  int i;
+
+  int error;
+  int num_owners=0,num_clips;
+  register int i;
 
   if (WEED_EVENT_IS_FILTER_DEINIT(event)) init_event=(weed_plant_t *)weed_get_voidptr_value(event,"init_event",&error);
   else return TRUE;
@@ -2032,13 +2035,11 @@ boolean move_event_left(weed_plant_t *event_list, weed_plant_t *event, boolean c
 //////////////////////////////////////////////////////
 // rendering
 
-void
-set_render_choice (GtkToggleButton *togglebutton, gpointer choice) {
+void set_render_choice (GtkToggleButton *togglebutton, gpointer choice) {
   if (lives_toggle_button_get_active(togglebutton)) render_choice=GPOINTER_TO_INT (choice);
 }
 
-void
-set_render_choice_button (GtkButton *button, gpointer choice) {
+void set_render_choice_button (GtkButton *button, gpointer choice) {
   render_choice=GPOINTER_TO_INT (choice);
 }
 
@@ -2218,7 +2219,7 @@ boolean event_list_to_block (weed_plant_t *event_list, int num_events) {
 
   while (event!=NULL) {
     if (get_event_hint(event)==WEED_EVENT_HINT_FRAME) {
-      (cfile->events[0]+i++)->value=weed_get_int_value (event,"frames",&error);
+      (cfile->events[i++])->value=weed_get_int_value (event,"frames",&error);
     }
     event=get_next_event(event);
   }
@@ -2263,6 +2264,7 @@ void event_list_close_gaps (weed_plant_t *event_list) {
 void add_track_to_avol_init(weed_plant_t *filter, weed_plant_t *event, int nbtracks, boolean behind) {
   // added a new video track - now we need to update our audio volume and pan effect
   weed_plant_t **in_ptmpls;
+  void **pchainx,*pchange;
 
   int *new_in_tracks;
   int *igns,*nigns;
@@ -2271,8 +2273,6 @@ void add_track_to_avol_init(weed_plant_t *filter, weed_plant_t *event, int nbtra
   int error,nparams,numigns;
 
   int bval;
-
-  void **pchainx,*pchange;
 
   register int i,j;
 
@@ -2333,10 +2333,12 @@ void event_list_add_track (weed_plant_t *event_list, int layer) {
   // in this function we insert a new track before existing tracks
   // TODO - memcheck
   weed_plant_t *event;
-  int numframes;
+
   int *clips,*frames,*newclips,*newframes,i,error;
-  int num_in_tracks,num_out_tracks;
   int *in_tracks,*out_tracks;
+
+  int num_in_tracks,num_out_tracks;
+  int numframes;
 
   if (event_list==NULL) return;
 
@@ -2561,14 +2563,18 @@ void **filter_init_add_pchanges (weed_plant_t *event_list, weed_plant_t *plant, 
 
 weed_plant_t *append_filter_init_event (weed_plant_t *event_list, weed_timecode_t tc, int filter_idx, 
 					int num_in_tracks, int key, weed_plant_t *inst) {
+  weed_plant_t **ctmpl;
   weed_plant_t *event,*prev,*filter,*chan;
+
+  gchar *tmp;
+
   int e_in_channels,e_out_channels,e_ins,e_outs;
   int total_in_channels=0;
   int total_out_channels=0;
-  int i,error;
-  weed_plant_t **ctmpl;
+  int error;
   int my_in_tracks=0;
-  gchar *tmp;
+
+  register int i;
 
   if (event_list==NULL) {
     event_list=weed_plant_new(WEED_PLANT_EVENT_LIST);
@@ -2939,7 +2945,6 @@ weed_plant_t *process_events (weed_plant_t *next_event, boolean process_audio, w
   int new_file;
   int hint;
   int key,idx;
-
 
   register int i;
 
@@ -4059,12 +4064,14 @@ boolean has_audio_frame(weed_plant_t *event_list) {
 
 boolean render_to_clip (boolean new_clip) {
   // this function is called to actually start rendering mainw->event_list to a new/current clip
-  boolean retval=TRUE;
-  int current_file=mainw->current_file;
-  boolean response;
-  int xachans=0,xarate=0,xasamps=0,xse=0;
-  boolean rendaud=TRUE;
   gchar *com;
+
+  boolean retval=TRUE;
+  boolean rendaud=TRUE;
+  boolean response;
+
+  int xachans=0,xarate=0,xasamps=0,xse=0;
+  int current_file=mainw->current_file;
 
   if (mainw->multitrack!=NULL&&mainw->multitrack->pr_audio) d_print(_("Pre-rendering audio..."));
   else d_print(_("Rendering..."));
@@ -4298,12 +4305,13 @@ boolean deal_with_render_choice (boolean add_deinit) {
   GtkWidget *e_rec_dialog;
   GtkWidget *elist_dialog;
 
-  int dh,dw,dar,das,dac,dse;
-  int oplay_start;
   double df;
 
   boolean new_clip=FALSE;
   boolean was_paused=mainw->record_paused;
+
+  int dh,dw,dar,das,dac,dse;
+  int oplay_start;
 
   // record end
   mainw->record=FALSE;
@@ -4625,8 +4633,8 @@ GtkWidget *create_event_list_dialog (weed_plant_t *event_list, weed_timecode_t s
   // TODO - some event properties should be editable, e.g. parameter values
   weed_timecode_t tc,tc_secs;
 
-  GtkTreeStore *gtkstore;
-  GtkTreeIter iter1,iter2,iter3;
+  LiVESTreeStore *gtkstore;
+  LiVESTreeIter iter1,iter2,iter3;
 
   gchar **string=NULL;
   int *intval=NULL;
@@ -4645,8 +4653,8 @@ GtkWidget *create_event_list_dialog (weed_plant_t *event_list, weed_timecode_t s
   GtkWidget *hbuttonbox;
   GtkWidget *scrolledwindow;
 
-  GtkCellRenderer *renderer;
-  GtkTreeViewColumn *column;
+  LiVESCellRenderer *renderer;
+  LiVESTreeViewColumn *column;
 
   GtkAccelGroup *accel_group;
 
@@ -4706,10 +4714,10 @@ GtkWidget *create_event_list_dialog (weed_plant_t *event_list, weed_timecode_t s
 	lives_table_resize(LIVES_TABLE(table),rows,6);
       }
 			
-      gtkstore = gtk_tree_store_new (NUM_COLUMNS, G_TYPE_STRING, G_TYPE_STRING, G_TYPE_STRING);
+      gtkstore = lives_tree_store_new (NUM_COLUMNS, G_TYPE_STRING, G_TYPE_STRING, G_TYPE_STRING);
 
-      gtk_tree_store_append (gtkstore, &iter1, NULL);  /* Acquire an iterator */
-      gtk_tree_store_set (gtkstore, &iter1, TITLE_COLUMN, "Properties", -1);
+      lives_tree_store_append (gtkstore, &iter1, NULL);  /* Acquire an iterator */
+      lives_tree_store_set (gtkstore, &iter1, TITLE_COLUMN, "Properties", -1);
 
       propnames=weed_plant_list_leaves (event);
    
@@ -4718,7 +4726,7 @@ GtkWidget *create_event_list_dialog (weed_plant_t *event_list, weed_timecode_t s
 	  weed_free(propnames[i]);
 	  continue;
 	}
-	gtk_tree_store_append (gtkstore, &iter2, &iter1);  /* Acquire a child iterator */
+	lives_tree_store_append (gtkstore, &iter2, &iter1);  /* Acquire a child iterator */
        
 	if (oldval!=NULL) {
 	  g_free(oldval);
@@ -4801,17 +4809,17 @@ GtkWidget *create_event_list_dialog (weed_plant_t *event_list, weed_timecode_t s
 	  }
 	  if (j==0) {
 	    if (num_elems==1) {
-	      gtk_tree_store_set (gtkstore, &iter2, KEY_COLUMN, propnames[i], VALUE_COLUMN, strval, -1);
+	      lives_tree_store_set (gtkstore, &iter2, KEY_COLUMN, propnames[i], VALUE_COLUMN, strval, -1);
 	    }
 	    else {
-	      gtk_tree_store_set (gtkstore, &iter2, KEY_COLUMN, propnames[i], VALUE_COLUMN, "", -1);
-	      gtk_tree_store_append (gtkstore, &iter3, &iter2);
-	      gtk_tree_store_set (gtkstore, &iter3, VALUE_COLUMN, strval, -1);
+	      lives_tree_store_set (gtkstore, &iter2, KEY_COLUMN, propnames[i], VALUE_COLUMN, "", -1);
+	      lives_tree_store_append (gtkstore, &iter3, &iter2);
+	      lives_tree_store_set (gtkstore, &iter3, VALUE_COLUMN, strval, -1);
 	    }
 	  }
 	  else {
-	    gtk_tree_store_append (gtkstore, &iter3, &iter2);
-	    gtk_tree_store_set (gtkstore, &iter3, VALUE_COLUMN, strval, -1);
+	    lives_tree_store_append (gtkstore, &iter3, &iter2);
+	    lives_tree_store_set (gtkstore, &iter3, VALUE_COLUMN, strval, -1);
 	  }
 	  if (strval!=NULL) g_free (strval);
 	  strval=NULL;
@@ -4899,34 +4907,34 @@ GtkWidget *create_event_list_dialog (weed_plant_t *event_list, weed_timecode_t s
 			(GtkAttachOptions) (0), 0, 0);
      
       // properties
-      tree = gtk_tree_view_new_with_model (GTK_TREE_MODEL (gtkstore));
+      tree = lives_tree_view_new_with_model (LIVES_TREE_MODEL (gtkstore));
       if (palette->style&STYLE_1) {
 	lives_widget_set_base_color(tree, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
 	lives_widget_set_text_color(tree, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars_fore);
       }
 
       renderer = gtk_cell_renderer_text_new ();
-      column = gtk_tree_view_column_new_with_attributes (NULL,
+      column = lives_tree_view_column_new_with_attributes (NULL,
 							 renderer,
 							 "text", TITLE_COLUMN,
 							 NULL);
 
-      gtk_tree_view_append_column (GTK_TREE_VIEW (tree), column);
+      lives_tree_view_append_column (LIVES_TREE_VIEW (tree), column);
      
       renderer = gtk_cell_renderer_text_new ();
-      column = gtk_tree_view_column_new_with_attributes ("Keys",
+      column = lives_tree_view_column_new_with_attributes ("Keys",
 							 renderer,
 							 "text", KEY_COLUMN,
 							 NULL);
-      gtk_tree_view_append_column (GTK_TREE_VIEW (tree), column);
+      lives_tree_view_append_column (LIVES_TREE_VIEW (tree), column);
      
      
       renderer = gtk_cell_renderer_text_new ();
-      column = gtk_tree_view_column_new_with_attributes ("Values",
+      column = lives_tree_view_column_new_with_attributes ("Values",
 							 renderer,
 							 "text", VALUE_COLUMN,
 							 NULL);
-      gtk_tree_view_append_column (GTK_TREE_VIEW (tree), column);
+      lives_tree_view_append_column (LIVES_TREE_VIEW (tree), column);
      
       lives_table_attach (LIVES_TABLE (table), tree, 3, 6, currow, currow+1,
 			(GtkAttachOptions) (GTK_FILL|GTK_EXPAND),
@@ -5032,19 +5040,18 @@ render_details *create_render_details (int type) {
   GList *ofmt=NULL;
   GList *encoders=NULL;
 
+  gchar **array;
+
+  gchar *tmp,*tmp2;
+  gchar *title;
+
   boolean specified=FALSE;
   boolean needs_new_encoder=FALSE;
-
-  register int i;
 
   int scrw,scrh;
   int dbw;
 
-  gchar **array;
-
-  gchar *tmp,*tmp2;
-
-  gchar *title;
+  register int i;
 
   if (type==1) specified=TRUE;
 

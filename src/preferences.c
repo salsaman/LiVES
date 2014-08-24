@@ -1772,23 +1772,23 @@ void prefsw_set_rec_after_settings(_vid_playback_plugin *vpp) {
  * Initialize preferences dialog list
  */
 static void pref_init_list(GtkWidget *list) {
-  GtkCellRenderer *renderer, *pixbufRenderer;
-  GtkTreeViewColumn *column1, *column2;
+  LiVESCellRenderer *renderer, *pixbufRenderer;
+  LiVESTreeViewColumn *column1, *column2;
   GtkListStore *store;
 
   renderer = gtk_cell_renderer_text_new();
   pixbufRenderer = gtk_cell_renderer_pixbuf_new();
 
-  column1 = gtk_tree_view_column_new_with_attributes("List Icons", pixbufRenderer, "pixbuf", LIST_ICON, NULL);
-  column2 = gtk_tree_view_column_new_with_attributes("List Items", renderer, "text", LIST_ITEM, NULL);
-  gtk_tree_view_append_column(GTK_TREE_VIEW(list), column1);
-  gtk_tree_view_append_column(GTK_TREE_VIEW(list), column2);
-  gtk_tree_view_column_set_sizing(column2, GTK_TREE_VIEW_COLUMN_FIXED);
-  gtk_tree_view_column_set_fixed_width(column2, 150.*widget_opts.scale);
+  column1 = lives_tree_view_column_new_with_attributes("List Icons", pixbufRenderer, "pixbuf", LIST_ICON, NULL);
+  column2 = lives_tree_view_column_new_with_attributes("List Items", renderer, "text", LIST_ITEM, NULL);
+  lives_tree_view_append_column(LIVES_TREE_VIEW(list), column1);
+  lives_tree_view_append_column(LIVES_TREE_VIEW(list), column2);
+  lives_tree_view_column_set_sizing(column2, LIVES_TREE_VIEW_COLUMN_FIXED);
+  lives_tree_view_column_set_fixed_width(column2, 150.*widget_opts.scale);
 
   store = gtk_list_store_new(N_COLUMNS, GDK_TYPE_PIXBUF, G_TYPE_STRING, G_TYPE_UINT);
 
-  gtk_tree_view_set_model(GTK_TREE_VIEW(list), GTK_TREE_MODEL(store));
+  lives_tree_view_set_model(LIVES_TREE_VIEW(list), LIVES_TREE_MODEL(store));
 
   g_object_unref(store);
 }
@@ -1798,9 +1798,9 @@ static void pref_init_list(GtkWidget *list) {
  */
 static void prefs_add_to_list(GtkWidget *list, GdkPixbuf *pix, const gchar *str, uint32_t idx) {
   GtkListStore *store;
-  GtkTreeIter iter;
+  LiVESTreeIter iter;
 
-  store = GTK_LIST_STORE(gtk_tree_view_get_model (GTK_TREE_VIEW(list)));
+  store = GTK_LIST_STORE(lives_tree_view_get_model (LIVES_TREE_VIEW(list)));
 
   gtk_list_store_insert(store, &iter, idx);
   gtk_list_store_set(store, &iter, LIST_ICON, pix, LIST_ITEM, str, LIST_NUM, idx, -1);
@@ -1809,16 +1809,16 @@ static void prefs_add_to_list(GtkWidget *list, GdkPixbuf *pix, const gchar *str,
 /*
  * Callback function called when preferences list row changed
  */
-void on_prefDomainChanged(GtkTreeSelection *widget, gpointer dummy) {
-  GtkTreeIter iter;
-  GtkTreeModel *model;
+void on_prefDomainChanged(LiVESTreeSelection *widget, gpointer dummy) {
+  LiVESTreeIter iter;
+  LiVESTreeModel *model;
 
   register int i;
 
   for (i=0;i<2;i++) {
     // for some reason gtk+ needs us to do this twice..
-    if (gtk_tree_selection_get_selected( widget, &model, &iter)) {
-      gtk_tree_model_get(model, &iter, LIST_NUM, &prefs_current_page, -1);
+    if (lives_tree_selection_get_selected( widget, &model, &iter)) {
+      lives_tree_model_get(model, &iter, LIST_NUM, &prefs_current_page, -1);
       //
       // Hide currently shown widget
       if (prefsw->right_shown){
@@ -2075,7 +2075,7 @@ _prefsw *create_prefs_dialog (void) {
 
 
   // Create preferences list with invisible headers
-  prefsw->prefs_list = gtk_tree_view_new();
+  prefsw->prefs_list = lives_tree_view_new();
   lives_widget_show(prefsw->prefs_list);
 
   if (palette->style&STYLE_1) {
@@ -2083,7 +2083,7 @@ _prefsw *create_prefs_dialog (void) {
     lives_widget_set_fg_color(prefsw->prefs_list, LIVES_WIDGET_STATE_SELECTED, &palette->normal_fore);
   }
 
-  gtk_tree_view_set_headers_visible(GTK_TREE_VIEW(prefsw->prefs_list), FALSE);
+  lives_tree_view_set_headers_visible(LIVES_TREE_VIEW(prefsw->prefs_list), FALSE);
 
   // Place panels into main vbox
   lives_box_pack_start (LIVES_BOX (dialog_vbox_main), dialog_hpaned, TRUE, TRUE, 0);
@@ -4146,8 +4146,8 @@ _prefsw *create_prefs_dialog (void) {
 
 
 
-  prefsw->selection = gtk_tree_view_get_selection(GTK_TREE_VIEW(prefsw->prefs_list));
-  gtk_tree_selection_set_mode(prefsw->selection, GTK_SELECTION_SINGLE);
+  prefsw->selection = lives_tree_view_get_selection(LIVES_TREE_VIEW(prefsw->prefs_list));
+  lives_tree_selection_set_mode(prefsw->selection, GTK_SELECTION_SINGLE);
 
   g_signal_connect(prefsw->selection, "changed", G_CALLBACK(on_prefDomainChanged), NULL);
   //
@@ -4524,22 +4524,22 @@ void on_prefs_apply_clicked(GtkButton *button, gpointer user_data) {
  * selection is performed according to provided index which is one of LIST_ENTRY_* constants
  */
 static void select_pref_list_row(uint32_t selected_idx) {
-  GtkTreeIter iter;
-  GtkTreeModel *model;
+  LiVESTreeIter iter;
+  LiVESTreeModel *model;
   boolean valid;
   uint32_t idx;
 
-  model = gtk_tree_view_get_model(GTK_TREE_VIEW(prefsw->prefs_list));
-  valid = gtk_tree_model_get_iter_first(model, &iter);
+  model = lives_tree_view_get_model(LIVES_TREE_VIEW(prefsw->prefs_list));
+  valid = lives_tree_model_get_iter_first(model, &iter);
   while(valid){
-    gtk_tree_model_get(model, &iter, LIST_NUM, &idx, -1);
+    lives_tree_model_get(model, &iter, LIST_NUM, &idx, -1);
     //
     if (idx == selected_idx){
-      gtk_tree_selection_select_iter(prefsw->selection, &iter);
+      lives_tree_selection_select_iter(prefsw->selection, &iter);
       break;
     }
     //
-    valid = gtk_tree_model_iter_next(model, &iter);
+    valid = lives_tree_model_iter_next(model, &iter);
   }
 }
 

@@ -373,7 +373,7 @@ void start_ce_thumb_mode(void) {
       lives_widget_set_bg_color (clip_boxes[count], LIVES_WIDGET_STATE_PRELIGHT, &palette->menu_and_bars);
     }
 
-    gtk_widget_add_events (clip_boxes[count], GDK_BUTTON_PRESS_MASK);
+    lives_widget_add_events (clip_boxes[count], GDK_BUTTON_PRESS_MASK);
 
     align=lives_alignment_new(.5,.5,0.,0.);
 

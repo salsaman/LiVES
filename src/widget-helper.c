@@ -1371,8 +1371,7 @@ static void lives_combo_remove_all_text(LiVESCombo *combo) {
 #if GTK_CHECK_VERSION(3,0,0)
   gtk_combo_box_text_remove_all(GTK_COMBO_BOX_TEXT(combo));
 #else
-  register int count = gtk_tree_model_iter_n_children(lives_combo_get_model(combo),
-						      NULL);
+  register int count = lives_tree_model_iter_n_children(lives_combo_get_model(combo),NULL);
   while (count-- > 0) gtk_combo_box_remove_text(combo,0);
 #endif
 }
@@ -1840,6 +1839,41 @@ LIVES_INLINE boolean lives_widget_set_can_default(LiVESWidget *widget, boolean s
 }
 
 
+LIVES_INLINE boolean lives_widget_add_events(LiVESWidget *widget, int events) {
+#ifdef GUI_GTK
+  gtk_widget_add_events(widget,events);
+  return TRUE;
+#endif
+  return FALSE;
+}
+
+
+LIVES_INLINE boolean lives_widget_set_events(LiVESWidget *widget, int events) {
+#ifdef GUI_GTK
+  gtk_widget_set_events(widget,events);
+  return TRUE;
+#endif
+  return FALSE;
+}
+
+
+LIVES_INLINE boolean lives_widget_remove_accelerator(LiVESWidget *widget, LiVESAccelGroup *acgroup, uint32_t accel_key, LiVESModifierType accel_mods) {
+#ifdef GUI_GTK
+  return gtk_widget_remove_accelerator(widget,acgroup,accel_key,accel_mods);
+#endif
+  return FALSE;
+}
+
+
+boolean lives_widget_get_preferred_size(LiVESWidget *widget, LiVESRequisition *min_size, LiVESRequisition *nat_size) {
+#ifdef GUI_GTK
+  gtk_widget_get_preferred_size(widget,min_size,nat_size);
+  return TRUE;
+#endif
+  return FALSE;
+}
+
+
 LIVES_INLINE boolean lives_widget_is_sensitive(LiVESWidget *widget) {
 #ifdef GUI_GTK
 #if GTK_CHECK_VERSION(2,18,0)
@@ -2120,7 +2154,7 @@ LIVES_INLINE boolean lives_toolbar_set_icon_size(LiVESToolbar *toolbar, lives_ic
 }
 
 
-LIVES_INLINE boolean lives_toolbar_set_style(LiVESToolbar *toolbar, lives_toolbar_style_t style) {
+LIVES_INLINE boolean lives_toolbar_set_style(LiVESToolbar *toolbar, LiVESToolbarStyle style) {
 #ifdef GUI_GTK
   gtk_toolbar_set_style(toolbar,style);
   return TRUE;
@@ -2302,6 +2336,226 @@ LIVES_INLINE void lives_adjustment_set_page_size(LiVESAdjustment *adj, double pa
 }
 
 
+
+LIVES_INLINE boolean lives_tree_model_get(LiVESTreeModel *tmod, LiVESTreeIter *titer, ...) {
+  boolean res=FALSE;
+  va_list argList;
+  va_start(argList, titer);
+#ifdef GUI_GTK
+  gtk_tree_model_get_valist(tmod,titer,argList);
+  res=TRUE;
+#endif
+  va_end(argList);
+  return res;
+}
+
+
+LIVES_INLINE boolean lives_tree_model_get_iter(LiVESTreeModel *tmod, LiVESTreeIter *titer, LiVESTreePath *tpath) {
+#ifdef GUI_GTK
+  return gtk_tree_model_get_iter(tmod,titer,tpath);
+#endif
+  return FALSE;
+}
+
+
+LIVES_INLINE boolean lives_tree_model_get_iter_first(LiVESTreeModel *tmod, LiVESTreeIter *titer) {
+#ifdef GUI_GTK
+  return gtk_tree_model_get_iter_first(tmod,titer);
+#endif
+  return FALSE;
+}
+
+
+LIVES_INLINE LiVESTreePath *lives_tree_model_get_path(LiVESTreeModel *tmod, LiVESTreeIter *titer) {
+  LiVESTreePath *tpath=NULL;
+#ifdef GUI_GTK
+  tpath=gtk_tree_model_get_path(tmod,titer);
+#endif
+  return tpath;
+}
+
+
+ LIVES_INLINE boolean lives_tree_model_iter_children(LiVESTreeModel *tmod, LiVESTreeIter *titer, LiVESTreeIter *parent) {
+#ifdef GUI_GTK
+  return gtk_tree_model_iter_children(tmod,titer,parent);
+#endif
+  return FALSE;
+}
+
+
+LIVES_INLINE boolean lives_tree_model_iter_n_children(LiVESTreeModel *tmod, LiVESTreeIter *titer) {
+#ifdef GUI_GTK
+  return gtk_tree_model_iter_n_children(tmod,titer);
+#endif
+  return FALSE;
+}
+
+
+LIVES_INLINE boolean lives_tree_model_iter_next(LiVESTreeModel *tmod, LiVESTreeIter *titer) {
+#ifdef GUI_GTK
+  return gtk_tree_model_iter_next(tmod,titer);
+#endif
+  return FALSE;
+}
+
+
+LIVES_INLINE boolean lives_tree_path_free(LiVESTreePath *tpath) {
+#ifdef GUI_GTK
+  gtk_tree_path_free(tpath);
+  return TRUE;
+#endif
+  return FALSE;
+}
+
+
+LIVES_INLINE LiVESTreePath *lives_tree_path_new_from_string(const char *path) {
+  LiVESTreePath *tpath=NULL;
+#ifdef GUI_GTK
+  tpath=gtk_tree_path_new_from_string(path);
+#endif
+  return tpath;
+}
+
+
+
+LIVES_INLINE int lives_tree_path_get_depth(LiVESTreePath *tpath) {
+  int depth=-1;
+#ifdef GUI_GTK
+  depth=gtk_tree_path_get_depth(tpath);
+#endif
+  return depth;
+}
+
+
+
+LIVES_INLINE int *lives_tree_path_get_indices(LiVESTreePath *tpath) {
+  int *indices=NULL;
+#ifdef GUI_GTK
+  indices=gtk_tree_path_get_indices(tpath);
+#endif
+  return indices;
+}
+
+
+
+LIVES_INLINE LiVESTreeStore *lives_tree_store_new(int ncols, ...) {
+  LiVESTreeStore *tstore=NULL;
+  va_list argList;
+  va_start(argList, ncols);
+#ifdef GUI_GTK
+  if (ncols>0) {
+    GType *types = (GType *)g_malloc(ncols*sizeof(GType));
+    register int i;
+    for (i=0;i<ncols;i++) {
+      types[i]=va_arg(argList,int);
+    }
+    tstore=gtk_tree_store_newv(ncols,types);
+    g_free(types);
+  }
+#endif
+  va_end(argList);
+  return tstore;
+}
+
+
+
+LIVES_INLINE boolean lives_tree_store_append(LiVESTreeStore *tstore, LiVESTreeIter *titer, LiVESTreeIter *parent) {
+#ifdef GUI_GTK
+  gtk_tree_store_append(tstore,titer,parent);
+  return TRUE;
+#endif
+  return FALSE;
+}
+
+
+
+LIVES_INLINE boolean lives_tree_store_set(LiVESTreeStore *tstore, LiVESTreeIter *titer, ...) {
+  boolean res=FALSE;
+  va_list argList;
+  va_start(argList, titer);
+#ifdef GUI_GTK
+  gtk_tree_store_set_valist(tstore,titer,argList);
+  res=TRUE;
+#endif
+  va_end(argList);
+  return res;
+}
+
+
+
+LIVES_INLINE LiVESWidget *lives_tree_view_new_with_model(LiVESTreeModel *tmod) {
+  LiVESWidget *tview=NULL;
+#ifdef GUI_GTK
+  tview=gtk_tree_view_new_with_model(tmod);
+#endif
+  return tview;
+}
+
+
+
+LIVES_INLINE LiVESWidget *lives_tree_view_new(void) {
+  LiVESWidget *tview=NULL;
+#ifdef GUI_GTK
+  tview=gtk_tree_view_new();
+#endif
+  return tview;
+}
+
+
+
+
+
+LIVES_INLINE boolean lives_tree_view_set_model(LiVESTreeView *tview, LiVESTreeModel *tmod) {
+#ifdef GUI_GTK
+  gtk_tree_view_set_model(tview,tmod);
+  return TRUE;
+#endif
+  return FALSE;
+}
+
+
+
+LIVES_INLINE LiVESTreeModel *lives_tree_view_get_model(LiVESTreeView *tview) {
+  LiVESTreeModel *tmod=NULL;
+#ifdef GUI_GTK
+  tmod=gtk_tree_view_get_model(tview);
+#endif
+  return tmod;
+}
+
+
+
+LIVES_INLINE LiVESTreeSelection *lives_tree_view_get_selection(LiVESTreeView *tview) {
+  LiVESTreeSelection *tsel=NULL;
+#ifdef GUI_GTK
+  tsel=gtk_tree_view_get_selection(tview);
+#endif
+  return tsel;
+}
+
+
+
+LIVES_INLINE int lives_tree_view_append_column(LiVESTreeView *tview, LiVESTreeViewColumn *tvcol) {
+#ifdef GUI_GTK
+  gtk_tree_view_append_column(tview,tvcol);
+  return TRUE;
+#endif
+  return FALSE;
+}
+
+
+
+LIVES_INLINE boolean lives_tree_view_set_headers_visible(LiVESTreeView *tview, boolean vis) {
+#ifdef GUI_GTK
+  gtk_tree_view_set_headers_visible(tview,vis);
+  return TRUE;
+#endif
+  return FALSE;
+}
+
+
+
+
 LIVES_INLINE LiVESAdjustment *lives_tree_view_get_hadjustment(LiVESTreeView *tview) {
   LiVESAdjustment *adj=NULL;
 #ifdef GUI_GTK
@@ -2313,6 +2567,86 @@ LIVES_INLINE LiVESAdjustment *lives_tree_view_get_hadjustment(LiVESTreeView *tvi
 #endif
   return adj;
 }
+
+
+
+
+LIVES_INLINE LiVESTreeViewColumn *lives_tree_view_column_new_with_attributes(const char *title, LiVESCellRenderer *crend, ...) {
+  LiVESTreeViewColumn *tvcol=NULL;
+  va_list args;
+  va_start(args, crend);
+#ifdef GUI_GTK
+  int column;
+  char *attribute;
+  boolean expand=FALSE;
+
+  tvcol=gtk_tree_view_column_new();
+  gtk_tree_view_column_set_title(tvcol,title);
+  gtk_tree_view_column_pack_start(tvcol,crend,expand);
+
+  attribute=va_arg(args, char *);
+
+  while (attribute != NULL) {
+    column = va_arg (args, int);
+    gtk_tree_view_column_add_attribute (tvcol, crend, attribute, column);
+    attribute = va_arg (args, char *);
+  }
+
+#endif
+  va_end(args);
+  return tvcol;
+}
+
+
+
+
+LIVES_INLINE boolean lives_tree_view_column_set_sizing(LiVESTreeViewColumn *tvcol, LiVESTreeViewColumnSizing type) {
+#ifdef GUI_GTK
+  gtk_tree_view_column_set_sizing(tvcol,type);
+  return TRUE;
+#endif
+  return FALSE;
+}
+
+
+
+LIVES_INLINE boolean lives_tree_view_column_set_fixed_width(LiVESTreeViewColumn *tvcol, int fwidth) {
+#ifdef GUI_GTK
+  gtk_tree_view_column_set_fixed_width(tvcol,fwidth);
+  return TRUE;
+#endif
+  return FALSE;
+}
+
+
+
+LIVES_INLINE boolean lives_tree_selection_get_selected(LiVESTreeSelection *tsel, LiVESTreeModel **tmod, LiVESTreeIter *titer) {
+#ifdef GUI_GTK
+  return gtk_tree_selection_get_selected(tsel,tmod,titer);
+#endif
+  return FALSE;
+}
+
+
+
+LIVES_INLINE boolean lives_tree_selection_set_mode(LiVESTreeSelection *tsel, LiVESSelectionMode tselmod) {
+#ifdef GUI_GTK
+  gtk_tree_selection_set_mode(tsel,tselmod);
+  return TRUE;
+#endif
+  return FALSE;
+}
+
+
+
+LIVES_INLINE boolean lives_tree_selection_select_iter(LiVESTreeSelection *tsel, LiVESTreeIter *titer) {
+#ifdef GUI_GTK
+  gtk_tree_selection_select_iter(tsel,titer);
+  return TRUE;
+#endif
+  return FALSE;
+}
+
 
 
 LIVES_INLINE const char *lives_label_get_text(LiVESLabel *label) {
@@ -2456,6 +2790,7 @@ LIVES_INLINE LiVESWidget *lives_menu_item_new(void) {
 }
 
 
+
 LIVES_INLINE LiVESWidget *lives_menu_item_new_with_mnemonic(const char *label) {
   LiVESWidget *menuitem=NULL;
 #ifdef GUI_GTK
@@ -2466,6 +2801,7 @@ LIVES_INLINE LiVESWidget *lives_menu_item_new_with_mnemonic(const char *label) {
 #endif
   return menuitem;
 }
+
 
 
 LIVES_INLINE LiVESWidget *lives_menu_item_new_with_label(const char *label) {
@@ -3886,6 +4222,34 @@ void lives_widget_apply_theme(LiVESWidget *widget, LiVESWidgetState state) {
 void lives_widget_apply_theme2(LiVESWidget *widget, LiVESWidgetState state) {
   //lives_widget_set_fg_color(widget, state, &palette->normal_fore);
   lives_widget_set_bg_color(widget, state, &palette->menu_and_bars);
+}
+
+
+
+boolean lives_entry_set_completion_from_list(LiVESEntry *entry, LiVESList *xlist) {
+#ifdef GUI_GTK
+  GtkListStore *store;
+  GtkEntryCompletion *completion;
+  store = gtk_list_store_new (1, G_TYPE_STRING);
+
+  while (xlist != NULL) {
+    GtkTreeIter iter;
+    gtk_list_store_append (store, &iter);
+    gtk_list_store_set (store, &iter, 0, (gchar *)xlist->data, -1);
+    xlist=xlist->next;
+  }
+    
+  completion = gtk_entry_completion_new ();
+  gtk_entry_completion_set_model (completion, (GtkTreeModel *)store);
+  gtk_entry_completion_set_text_column (completion, 0);
+  gtk_entry_completion_set_inline_completion (completion, TRUE);
+  gtk_entry_completion_set_popup_set_width (completion, TRUE);
+  gtk_entry_completion_set_popup_completion (completion, TRUE);
+  gtk_entry_completion_set_popup_single_match(completion,FALSE);
+  gtk_entry_set_completion (entry, completion);
+  return TRUE;
+#endif
+
 }
 
 

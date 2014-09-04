@@ -512,7 +512,7 @@ LIVES_INLINE LiVESWidget *lives_image_new(void) {
 
 
 
-LIVES_INLINE LiVESWidget *lives_image_new_from_stock(const char *stock_id, lives_icon_size_t size) {
+LIVES_INLINE LiVESWidget *lives_image_new_from_stock(const char *stock_id, LiVESIconSize size) {
   LiVESWidget *image=NULL;
 #ifdef GUI_GTK
     if (lives_has_icon(stock_id,size)) {
@@ -622,7 +622,7 @@ LIVES_INLINE void lives_dialog_add_action_widget(LiVESDialog *dialog, LiVESWidge
 }
 
 
-LIVES_INLINE LiVESWidget *lives_window_new(lives_window_type_t wintype) {
+LIVES_INLINE LiVESWidget *lives_window_new(LiVESWindowType wintype) {
   LiVESWidget *window=NULL;
 #ifdef GUI_GTK
   window=gtk_window_new(wintype);
@@ -2145,7 +2145,7 @@ LIVES_INLINE boolean lives_toolbar_set_show_arrow(LiVESToolbar *toolbar, boolean
 }
 
 
-LIVES_INLINE lives_icon_size_t lives_toolbar_get_icon_size(LiVESToolbar *toolbar) {
+LIVES_INLINE LiVESIconSize lives_toolbar_get_icon_size(LiVESToolbar *toolbar) {
 #ifdef GUI_GTK
   return gtk_toolbar_get_icon_size(toolbar);
 #endif
@@ -2154,7 +2154,7 @@ LIVES_INLINE lives_icon_size_t lives_toolbar_get_icon_size(LiVESToolbar *toolbar
 
 
 
-LIVES_INLINE boolean lives_toolbar_set_icon_size(LiVESToolbar *toolbar, lives_icon_size_t icon_size) {
+LIVES_INLINE boolean lives_toolbar_set_icon_size(LiVESToolbar *toolbar, LiVESIconSize icon_size) {
 #ifdef GUI_GTK
   gtk_toolbar_set_icon_size(toolbar,icon_size);
   return TRUE;
@@ -2772,8 +2772,8 @@ LIVES_INLINE boolean lives_entry_set_width_chars(LiVESEntry *entry, int nchars) 
 
 
 
-LIVES_INLINE boolean lives_scrolled_window_set_policy(LiVESScrolledWindow *scrolledwindow, lives_policy_t hpolicy, 
-						   lives_policy_t vpolicy) {
+LIVES_INLINE boolean lives_scrolled_window_set_policy(LiVESScrolledWindow *scrolledwindow, LiVESPolicyType hpolicy, 
+						      LiVESPolicyType vpolicy) {
 #ifdef GUI_GTK
   gtk_scrolled_window_set_policy (scrolledwindow, hpolicy, vpolicy);
   return TRUE;
@@ -3166,7 +3166,7 @@ LIVES_INLINE boolean lives_grid_insert_row(LiVESGrid *grid, int posn) {
 
 
 LIVES_INLINE boolean lives_grid_attach_next_to(LiVESGrid *grid, LiVESWidget *child, LiVESWidget *sibling, 
-					       lives_position_t side, int width, int height) {
+					       LiVESPositionType side, int width, int height) {
 #ifdef GUI_GTK
 #if GTK_CHECK_VERSION(3,2,0)  // required for grid widget
   gtk_grid_attach_next_to(grid,child,sibling,side,width,height);
@@ -3309,7 +3309,7 @@ LIVES_INLINE boolean lives_table_resize(LiVESTable *table, uint32_t rows, uint32
 
 
 LIVES_INLINE void lives_table_attach(LiVESTable *table, LiVESWidget *child, uint32_t left, uint32_t right, 
-				     uint32_t top, uint32_t bottom, lives_attach_options_t xoptions, lives_attach_options_t yoptions,
+				     uint32_t top, uint32_t bottom, LiVESAttachOptions xoptions, LiVESAttachOptions yoptions,
 				     uint32_t xpad, uint32_t ypad) {
 
 #ifdef GUI_GTK
@@ -4318,7 +4318,7 @@ void widget_helper_init(void) {
 }
 
 
-boolean lives_has_icon(const char *stock_id, lives_icon_size_t size)  {
+boolean lives_has_icon(const char *stock_id, LiVESIconSize size)  {
   boolean has_icon=FALSE;
 #ifdef GUI_GTK
 #if GTK_CHECK_VERSION(3,0,0)

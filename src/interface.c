@@ -2221,7 +2221,7 @@ static void chooser_check_dir(GtkFileChooser *chooser, gpointer user_data) {
 
 
 
-gchar *choose_file(gchar *dir, gchar *fname, gchar **filt, lives_file_chooser_action_t act, const char *title, LiVESWidget *extra_widget) {
+gchar *choose_file(gchar *dir, gchar *fname, gchar **filt, LiVESFileChooserAction act, const char *title, LiVESWidget *extra_widget) {
   // new style file chooser
 
   // in/out values are in utf8 encoding

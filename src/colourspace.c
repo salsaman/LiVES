@@ -31,6 +31,10 @@
 //      - convert yuv subspace and sampling type
 
 #include <math.h>
+
+#include "support.h"
+#include "main.h"
+
 #ifdef USE_SWSCALE
 
 #include <libswscale/swscale.h>
@@ -64,8 +68,6 @@
 
 #endif // USE_SWSCALE
 
-#include "support.h"
-#include "main.h"
 #include "cvirtual.h"
 
 #ifdef USE_SWSCALE

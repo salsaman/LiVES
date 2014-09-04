@@ -3451,7 +3451,7 @@ lives_render_error_t render_events (boolean reset) {
 	      if (nclip>0) {
 		if (mainw->files[nclip]->clip_type==CLIP_TYPE_FILE) {
 		  if (!mainw->ext_src_used[nclip]) {
-		    mainw->track_decoders[i]=mainw->files[nclip]->ext_src;
+		    mainw->track_decoders[i]=(lives_decoder_t *)mainw->files[nclip]->ext_src;
 		    mainw->ext_src_used[nclip]=TRUE;
 		  }
 		  else {

@@ -151,7 +151,13 @@ typedef int lives_pgid_t;
 #include <assert.h>
 #include <errno.h>
 
-#define  __STDC_CONSTANT_MACROS
+#ifdef __cplusplus
+#define __STDC_CONSTANT_MACROS
+#ifdef _STDINT_H
+#undef _STDINT_H
+#endif
+#endif
+
 #include <stdint.h>
 
 
@@ -828,7 +834,7 @@ void play_window_set_title(void);
 void add_to_playframe (void);
 LiVESWidget* create_cdtrack_dialog (int type, gpointer user_data);
 LiVESTextView *create_output_textview(void);
-gchar *choose_file(gchar *dir, gchar *fname, gchar **filt, lives_file_chooser_action_t act, const char *title, LiVESWidget *extra);
+gchar *choose_file(gchar *dir, gchar *fname, gchar **filt, LiVESFileChooserAction act, const char *title, LiVESWidget *extra);
 LiVESWidget *choose_file_with_preview (gchar *dir, const gchar *title, int preview_type);
 void add_suffix_check(GtkBox *box, const gchar *ext);
 

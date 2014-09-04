@@ -4633,7 +4633,7 @@ void pull_frame_threaded (weed_plant_t *layer, const char *img_ext, weed_timecod
   return;
 #else
 
-  pft_priv_data *in=g_malloc(sizeof(pft_priv_data));
+  pft_priv_data *in=(pft_priv_data *)g_malloc(sizeof(pft_priv_data));
   pthread_t *frame_thread=(pthread_t *)calloc(sizeof(pthread_t),1);
 
   weed_set_int64_value(layer,"host_tc",tc);
@@ -5260,7 +5260,7 @@ void load_frame_image(int frame) {
 	      if (nclip>0) {
 		if (mainw->files[nclip]->clip_type==CLIP_TYPE_FILE) {
 		  if (!mainw->ext_src_used[nclip]) {
-		    mainw->track_decoders[i]=mainw->files[nclip]->ext_src;
+		    mainw->track_decoders[i]=(lives_decoder_t *)mainw->files[nclip]->ext_src;
 		    mainw->ext_src_used[nclip]=TRUE;
 		  }
 		  else {

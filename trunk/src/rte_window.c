@@ -60,6 +60,8 @@ static GList *name_type_list=NULL;
 
 static boolean ca_canc;
 
+static char *empty_string="";
+
 //////////////////////////////////////////////////////////////////////////////
 
 
@@ -1560,10 +1562,10 @@ boolean on_load_keymap_clicked (GtkButton *button, gpointer user_data) {
       g_free(tmp);
 
       if (fx_idx!=-1) {
-	hashname=g_list_nth_data(hash_list,fx_idx);
+	hashname=(gchar *)g_list_nth_data(hash_list,fx_idx);
 	g_object_set_data(G_OBJECT(combos[idx]),"hashname",hashname);
       }
-      else g_object_set_data(G_OBJECT(combos[idx]),"hashname","");
+      else g_object_set_data(G_OBJECT(combos[idx]),"hashname",empty_string);
 
       // set parameters button sensitive/insensitive
       set_param_and_con_buttons(key-1,mode);
@@ -1812,10 +1814,10 @@ void on_clear_clicked (GtkButton *button, gpointer user_data) {
     cconx_remap_mode(key,i+1,i);
 
     if (fx_idx!=-1) {
-      gchar *hashname=g_list_nth_data(hash_list,fx_idx);
+      gchar *hashname=(gchar *)g_list_nth_data(hash_list,fx_idx);
       g_object_set_data(G_OBJECT(combos[idx]),"hashname",hashname);
     }
-    else g_object_set_data(G_OBJECT(combos[idx]),"hashname","");
+    else g_object_set_data(G_OBJECT(combos[idx]),"hashname",empty_string);
 
     // set parameters button sensitive/insensitive
     set_param_and_con_buttons(key,i);
@@ -1824,7 +1826,7 @@ void on_clear_clicked (GtkButton *button, gpointer user_data) {
   idx++;
   lives_entry_set_text (LIVES_ENTRY(combo_entries[idx]),"");
 
-  g_object_set_data(G_OBJECT(combos[idx]),"hashname","");
+  g_object_set_data(G_OBJECT(combos[idx]),"hashname",empty_string);
 
   // set parameters button sensitive/insensitive
   set_param_and_con_buttons(key,i);
@@ -2318,7 +2320,7 @@ LiVESWidget * create_rte_window (void) {
  
       lives_combo_set_entry_text_column(LIVES_COMBO(combo),NAME_TYPE_COLUMN);
 
-      g_object_set_data (G_OBJECT(combo), "hashname", "");
+      g_object_set_data (G_OBJECT(combo), "hashname", empty_string);
       lives_box_pack_start (LIVES_BOX (hbox), combo, TRUE, TRUE, widget_opts.packing_width);
       lives_box_pack_end (LIVES_BOX (hbox), clear_buttons[idx], FALSE, FALSE, widget_opts.packing_width);
       lives_box_pack_end (LIVES_BOX (hbox), info_buttons[idx], FALSE, FALSE, widget_opts.packing_width);

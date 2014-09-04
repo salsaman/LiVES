@@ -5344,7 +5344,7 @@ void recover_layout_map(int numclips) {
 
    const lives_clip_data_t *cdata=NULL;
 
-   lives_clip_data_t *fake_cdata=lives_calloc(sizeof(lives_clip_data_t),1);
+   lives_clip_data_t *fake_cdata=(lives_clip_data_t *)lives_calloc(sizeof(lives_clip_data_t),1);
 
    boolean was_renamed=FALSE;
 

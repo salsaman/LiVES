@@ -11,7 +11,7 @@
 
 
 
-void on_camgrab_clicked (GtkButton *button, gpointer user_data) {
+void on_camgrab_clicked (LiVESButton *button, gpointer user_data) {
   gchar *msg;
   s_cam *cam=(s_cam *)user_data;
   if (dvgrabw->filename!=NULL) g_free(dvgrabw->filename);
@@ -30,7 +30,7 @@ void on_camgrab_clicked (GtkButton *button, gpointer user_data) {
 }
 
 
-void on_camstop_clicked (GtkButton *button, gpointer user_data) {
+void on_camstop_clicked (LiVESButton *button, gpointer user_data) {
   s_cam *cam=(s_cam *)user_data;
   lives_widget_set_sensitive(dvgrabw->stop,FALSE);
   dvgrabw->playing=FALSE;
@@ -48,7 +48,7 @@ void on_camstop_clicked (GtkButton *button, gpointer user_data) {
 }
 
 
-void on_camplay_clicked (GtkButton *button, gpointer user_data) {
+void on_camplay_clicked (LiVESButton *button, gpointer user_data) {
   s_cam *cam=(s_cam *)user_data;
   camplay(cam);
   dvgrabw->playing=!dvgrabw->playing;
@@ -61,20 +61,20 @@ void on_camplay_clicked (GtkButton *button, gpointer user_data) {
   lives_widget_set_sensitive(dvgrabw->stop,TRUE);
 }
 
-void on_camrew_clicked (GtkButton *button, gpointer user_data) {
+void on_camrew_clicked (LiVESButton *button, gpointer user_data) {
   s_cam *cam=(s_cam *)user_data;
   camrew(cam);
   lives_widget_set_sensitive(dvgrabw->stop,TRUE);
 }
 
 
-void on_camff_clicked (GtkButton *button, gpointer user_data) {
+void on_camff_clicked (LiVESButton *button, gpointer user_data) {
   s_cam *cam=(s_cam *)user_data;
   camff(cam);
   lives_widget_set_sensitive(dvgrabw->stop,TRUE);
 }
 
-void on_cameject_clicked (GtkButton *button, gpointer user_data) {
+void on_cameject_clicked (LiVESButton *button, gpointer user_data) {
   s_cam *cam=(s_cam *)user_data;
   cameject(cam);
 }
@@ -86,7 +86,7 @@ boolean on_camdelete_event (LiVESWidget *widget, GdkEvent *event, gpointer user_
 }
 
 
-void on_camquit_clicked (GtkButton *button, gpointer user_data) {
+void on_camquit_clicked (LiVESButton *button, gpointer user_data) {
   s_cam *cam=(s_cam *)user_data;
   on_camstop_clicked(button,user_data);
   //if (cam->format==CAM_FORMAT_HDV) close_raw1394(cam->rec_handle);

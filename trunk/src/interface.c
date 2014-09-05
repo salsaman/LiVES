@@ -22,8 +22,8 @@
 #include "support.h"
 
 // functions called in multitrack.c
-extern void multitrack_preview_clicked  (GtkButton *, gpointer user_data);
-extern void mt_change_disp_tracks_ok (GtkButton *, gpointer user_data);
+extern void multitrack_preview_clicked  (LiVESButton *, gpointer user_data);
+extern void mt_change_disp_tracks_ok (LiVESButton *, gpointer user_data);
 
 
 void add_suffix_check(GtkBox *box, const gchar *ext) {
@@ -248,7 +248,7 @@ xprocess * create_processing (const gchar *text) {
   lives_widget_show_all(vbox3);
 
   dialog_action_area = lives_dialog_get_action_area(LIVES_DIALOG (procw->processing));
-  gtk_button_box_set_layout (GTK_BUTTON_BOX (dialog_action_area), GTK_BUTTONBOX_END);
+  lives_button_box_set_layout (LIVES_BUTTON_BOX (dialog_action_area), LIVES_BUTTONBOX_END);
 
   procw->stop_button = lives_button_new_with_mnemonic (_ ("_Enough"));
   procw->preview_button = lives_button_new_with_mnemonic (_ ("_Preview"));
@@ -543,7 +543,7 @@ lives_clipinfo_t *create_clip_info_window (int audio_channels, boolean is_mt) {
   }
 
   dialog_action_area = lives_dialog_get_action_area(LIVES_DIALOG (filew->dialog));
-  gtk_button_box_set_layout (GTK_BUTTON_BOX (dialog_action_area), GTK_BUTTONBOX_SPREAD);
+  lives_button_box_set_layout (LIVES_BUTTON_BOX (dialog_action_area), LIVES_BUTTONBOX_SPREAD);
 
   okbutton = lives_button_new_from_stock ("gtk-ok");
   lives_dialog_add_action_widget (LIVES_DIALOG (filew->dialog), okbutton, GTK_RESPONSE_OK);
@@ -661,7 +661,7 @@ LiVESWidget* create_encoder_prep_dialog (const gchar *text1, const gchar *text2,
   }
 
   dialog_action_area = lives_dialog_get_action_area(LIVES_DIALOG (dialog));
-  gtk_button_box_set_layout (GTK_BUTTON_BOX (dialog_action_area), GTK_BUTTONBOX_END);
+  lives_button_box_set_layout (LIVES_BUTTON_BOX (dialog_action_area), LIVES_BUTTONBOX_END);
 
   if (text2!=NULL) {
     label = lives_standard_label_new (text2);
@@ -760,7 +760,7 @@ LiVESWidget* create_info_error_dialog (const gchar *text, boolean is_blocking, i
   }
 
   dialog_action_area = lives_dialog_get_action_area(LIVES_DIALOG (dialog));
-  gtk_button_box_set_layout (GTK_BUTTON_BOX (dialog_action_area), GTK_BUTTONBOX_END);
+  lives_button_box_set_layout (LIVES_BUTTON_BOX (dialog_action_area), LIVES_BUTTONBOX_END);
 
   if (mainw->iochan!=NULL) {
     details_button = lives_button_new_with_mnemonic(_("Show _Details"));
@@ -862,7 +862,7 @@ text_window *create_text_window (const gchar *title, const gchar *text, GtkTextB
 
   if (mytext!=NULL||mainw->iochan!=NULL) {
     dialog_action_area = lives_dialog_get_action_area(LIVES_DIALOG (textwindow->dialog));
-    gtk_button_box_set_layout (GTK_BUTTON_BOX (dialog_action_area), GTK_BUTTONBOX_END);
+    lives_button_box_set_layout (LIVES_BUTTON_BOX (dialog_action_area), LIVES_BUTTONBOX_END);
 
     okbutton = lives_button_new_with_mnemonic (_("_Close Window"));
 
@@ -1020,7 +1020,7 @@ _insertw* create_insert_dialog (void) {
 
   dialog_action_area = lives_dialog_get_action_area(LIVES_DIALOG (insertw->insert_dialog));
 
-  gtk_button_box_set_layout (GTK_BUTTON_BOX (dialog_action_area), GTK_BUTTONBOX_END);
+  lives_button_box_set_layout (LIVES_BUTTON_BOX (dialog_action_area), LIVES_BUTTONBOX_END);
 
   cancelbutton = lives_button_new_from_stock ("gtk-cancel");
   lives_dialog_add_action_widget (LIVES_DIALOG (insertw->insert_dialog), cancelbutton, GTK_RESPONSE_CANCEL);
@@ -1128,7 +1128,7 @@ LiVESWidget *create_opensel_dialog (void) {
                     (GtkAttachOptions) (GTK_EXPAND), widget_opts.packing_height*4+2, 0);
 
   dialog_action_area = lives_dialog_get_action_area(LIVES_DIALOG (opensel_dialog));
-  gtk_button_box_set_layout (GTK_BUTTON_BOX (dialog_action_area), GTK_BUTTONBOX_END);
+  lives_button_box_set_layout (LIVES_BUTTON_BOX (dialog_action_area), LIVES_BUTTONBOX_END);
 
   cancelbutton = lives_button_new_from_stock ("gtk-cancel");
   lives_dialog_add_action_widget (LIVES_DIALOG (opensel_dialog), cancelbutton, GTK_RESPONSE_CANCEL);
@@ -1273,7 +1273,7 @@ _entryw* create_location_dialog (int type) {
 
   dialog_action_area = lives_dialog_get_action_area(LIVES_DIALOG (locw->dialog));
   lives_widget_show (dialog_action_area);
-  gtk_button_box_set_layout (GTK_BUTTON_BOX (dialog_action_area), GTK_BUTTONBOX_END);
+  lives_button_box_set_layout (LIVES_BUTTON_BOX (dialog_action_area), LIVES_BUTTONBOX_END);
 
   cancelbutton = lives_button_new_from_stock ("gtk-cancel");
   lives_widget_show (cancelbutton);
@@ -1460,7 +1460,7 @@ _entryw* create_rename_dialog (int type) {
 
 
   if (type==6) {
-    dirbutton1 = gtk_button_new ();
+    dirbutton1 = lives_button_new ();
     
     dirimage1 = lives_image_new_from_stock (LIVES_STOCK_OPEN, LIVES_ICON_SIZE_BUTTON);
 
@@ -1477,7 +1477,7 @@ _entryw* create_rename_dialog (int type) {
 
   dialog_action_area = lives_dialog_get_action_area(LIVES_DIALOG (renamew->dialog));
 
-  gtk_button_box_set_layout (GTK_BUTTON_BOX (dialog_action_area), GTK_BUTTONBOX_END);
+  lives_button_box_set_layout (LIVES_BUTTON_BOX (dialog_action_area), LIVES_BUTTONBOX_END);
 
   cancelbutton = lives_button_new_from_stock ("gtk-cancel");
 
@@ -1526,7 +1526,7 @@ _entryw* create_rename_dialog (int type) {
 }
 
 
-void on_liveinp_advanced_clicked (GtkButton *button, gpointer user_data) {
+void on_liveinp_advanced_clicked (LiVESButton *button, gpointer user_data) {
   lives_tvcardw_t *tvcardw=(lives_tvcardw_t *)(user_data);
 
   tvcardw->use_advanced=!tvcardw->use_advanced;
@@ -1902,7 +1902,7 @@ LiVESWidget* create_cdtrack_dialog (int type, gpointer user_data) {
   }
 
   dialog_action_area = lives_dialog_get_action_area(LIVES_DIALOG (cd_dialog));
-  gtk_button_box_set_layout (GTK_BUTTON_BOX (dialog_action_area), GTK_BUTTONBOX_END);
+  lives_button_box_set_layout (LIVES_BUTTON_BOX (dialog_action_area), LIVES_BUTTONBOX_END);
 
   cancelbutton = lives_button_new_from_stock ("gtk-cancel");
   lives_dialog_add_action_widget (LIVES_DIALOG (cd_dialog), cancelbutton, GTK_RESPONSE_CANCEL);
@@ -1953,7 +1953,7 @@ LiVESWidget* create_cdtrack_dialog (int type, gpointer user_data) {
 
 
 
-static void rb_aud_sel_pressed (GtkButton *button, gpointer user_data) {
+static void rb_aud_sel_pressed (LiVESButton *button, gpointer user_data) {
   aud_dialog_t *audd=(aud_dialog_t *)user_data;
   audd->is_sel=!audd->is_sel;
   lives_widget_set_sensitive(audd->time_spin,!audd->is_sel);
@@ -2512,7 +2512,7 @@ _entryw* create_cds_dialog (int type) {
   }
 
   dialog_action_area = lives_dialog_get_action_area(LIVES_DIALOG (cdsw->dialog));
-  gtk_button_box_set_layout (GTK_BUTTON_BOX (dialog_action_area), GTK_BUTTONBOX_END);
+  lives_button_box_set_layout (LIVES_BUTTON_BOX (dialog_action_area), LIVES_BUTTONBOX_END);
 
   cancelbutton = lives_button_new_from_stock ("gtk-cancel");
   lives_dialog_add_action_widget (LIVES_DIALOG (cdsw->dialog), cancelbutton, 0);
@@ -2521,16 +2521,14 @@ _entryw* create_cds_dialog (int type) {
 
   discardbutton = lives_button_new_from_stock ("gtk-delete");
   lives_dialog_add_action_widget (LIVES_DIALOG (cdsw->dialog), discardbutton, 1+(type==2));
-  lives_button_set_use_stock(LIVES_BUTTON(discardbutton),FALSE);
-  gtk_button_set_use_underline(LIVES_BUTTON(discardbutton),TRUE);
+  lives_button_set_use_underline(LIVES_BUTTON(discardbutton),TRUE);
   if ((type==0&&strlen(mainw->multitrack->layout_name)==0)||type==3||type==4) lives_button_set_label(LIVES_BUTTON(discardbutton),_("_Wipe layout"));
   else if (type==0) lives_button_set_label(LIVES_BUTTON(discardbutton),_("_Ignore changes"));
   else if (type==1) lives_button_set_label(LIVES_BUTTON(discardbutton),_("_Delete clip set"));
   else if (type==2) lives_button_set_label(LIVES_BUTTON(discardbutton),_("_Delete layout"));
 
   savebutton = lives_button_new_from_stock ("gtk-save");
-  lives_button_set_use_stock(LIVES_BUTTON(savebutton),FALSE);
-  gtk_button_set_use_underline(LIVES_BUTTON(savebutton),TRUE);
+  lives_button_set_use_underline(LIVES_BUTTON(savebutton),TRUE);
   if (type==0||type==3) lives_button_set_label(LIVES_BUTTON(savebutton),_("_Save layout"));
   else if (type==1) lives_button_set_label(LIVES_BUTTON(savebutton),_("_Save clip set"));
   else if (type==2) lives_button_set_label(LIVES_BUTTON(savebutton),_("_Wipe layout"));

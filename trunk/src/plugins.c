@@ -579,7 +579,7 @@ void load_vpp_defaults(_vid_playback_plugin *vpp, gchar *vpp_file) {
 }
 
 
-void on_vppa_cancel_clicked (GtkButton *button, gpointer user_data) {
+void on_vppa_cancel_clicked (LiVESButton *button, gpointer user_data) {
   _vppaw *vppw=(_vppaw *)user_data;
   _vid_playback_plugin *vpp=vppw->plugin;
 
@@ -604,7 +604,7 @@ void on_vppa_cancel_clicked (GtkButton *button, gpointer user_data) {
 }
 
 
-void on_vppa_ok_clicked (GtkButton *button, gpointer user_data) {
+void on_vppa_ok_clicked (LiVESButton *button, gpointer user_data) {
   _vppaw *vppw=(_vppaw *)user_data;
   const gchar *fixed_fps=NULL;
   gchar *cur_pal=NULL;
@@ -833,7 +833,7 @@ void on_vppa_ok_clicked (GtkButton *button, gpointer user_data) {
 }
 
 
-void on_vppa_save_clicked (GtkButton *button, gpointer user_data) {
+void on_vppa_save_clicked (LiVESButton *button, gpointer user_data) {
   _vppaw *vppw=(_vppaw *)user_data;
   _vid_playback_plugin *vpp=vppw->plugin;
   gchar *save_file;
@@ -865,7 +865,7 @@ void on_vppa_save_clicked (GtkButton *button, gpointer user_data) {
 
 
 
-_vppaw *on_vpp_advanced_clicked (GtkButton *button, gpointer user_data) {
+_vppaw *on_vpp_advanced_clicked (LiVESButton *button, gpointer user_data) {
   LiVESWidget *dialog_vbox;
   LiVESWidget *hbox;
   LiVESWidget *label;
@@ -2580,7 +2580,7 @@ void get_mime_type(gchar *text, int maxlen, const lives_clip_data_t *cdata) {
 
 
 
-static void dpa_ok_clicked (GtkButton *button, gpointer user_data) {
+static void dpa_ok_clicked (LiVESButton *button, gpointer user_data) {
   lives_general_button_clicked(button,NULL);
 
   if (prefsw!=NULL) {
@@ -2600,7 +2600,7 @@ static void dpa_ok_clicked (GtkButton *button, gpointer user_data) {
 }
 
 
-static void dpa_cancel_clicked (GtkButton *button, gpointer user_data) {
+static void dpa_cancel_clicked (LiVESButton *button, gpointer user_data) {
   lives_general_button_clicked(button,NULL);
 
   if (prefsw!=NULL) {
@@ -2625,7 +2625,7 @@ static void on_dpa_cb_toggled(GtkToggleButton *button, gchar *decname) {
 }
 
 
-void on_decplug_advanced_clicked (GtkButton *button, gpointer user_data) {
+void on_decplug_advanced_clicked (LiVESButton *button, gpointer user_data) {
   GList *decoder_plugin;
 
   LiVESWidget *hbox;

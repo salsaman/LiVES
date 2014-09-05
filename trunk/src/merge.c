@@ -204,7 +204,7 @@ void create_merge_dialog (void) {
 
 
   dialog_action_area = lives_dialog_get_action_area(LIVES_DIALOG (merge_opts->merge_dialog));
-  gtk_button_box_set_layout (GTK_BUTTON_BOX (dialog_action_area), GTK_BUTTONBOX_END);
+  lives_button_box_set_layout (LIVES_BUTTON_BOX (dialog_action_area), LIVES_BUTTONBOX_END);
 
   cancelbutton = lives_button_new_from_stock ("gtk-cancel");
   lives_dialog_add_action_widget (LIVES_DIALOG (merge_opts->merge_dialog), cancelbutton, GTK_RESPONSE_CANCEL);
@@ -307,7 +307,7 @@ on_merge_activate                     (GtkMenuItem     *menuitem,
 
 
 void
-on_merge_cancel_clicked                   (GtkButton       *button,
+on_merge_cancel_clicked                   (LiVESButton       *button,
 					   gpointer         user_data)
 {
   lives_rfx_t *rfx=(lives_rfx_t *)user_data;
@@ -330,7 +330,7 @@ on_merge_cancel_clicked                   (GtkButton       *button,
 
 
 void
-on_merge_ok_clicked                   (GtkButton       *button,
+on_merge_ok_clicked                   (LiVESButton       *button,
 				       gpointer         user_data)
 {
   gchar *msg;

@@ -127,7 +127,7 @@ struct _dvgrabw *create_camwindow (s_cam *cam, int type)
 #endif
   lives_container_add (LIVES_CONTAINER (hbuttonbox1), dvgrabw->play);
   lives_widget_set_can_focus_and_default (dvgrabw->play);
-  gtk_button_set_use_stock(LIVES_BUTTON(dvgrabw->play),TRUE);
+
 
 #if GTK_CHECK_VERSION(2,6,0)
   dvgrabw->grab = lives_button_new_from_stock (GTK_STOCK_MEDIA_RECORD);
@@ -143,7 +143,7 @@ struct _dvgrabw *create_camwindow (s_cam *cam, int type)
   image = lives_image_new_from_stock (GTK_STOCK_NO,LIVES_ICON_SIZE_BUTTON);
 #endif
   lives_button_set_label(LIVES_BUTTON(dvgrabw->grab),_("_Grab"));
-  gtk_button_set_image(LIVES_BUTTON(dvgrabw->grab),image);
+  lives_button_set_image(LIVES_BUTTON(dvgrabw->grab),image);
 
   label=lives_standard_label_new(_("\nUse this tool to control your camera and grab clips.\nAfter grabbing your clips, you can close this window \nand then load them into LiVES.\n"));
   lives_box_pack_start(LIVES_BOX(vbox),label,FALSE,FALSE,widget_opts.packing_height*4);
@@ -158,7 +158,7 @@ struct _dvgrabw *create_camwindow (s_cam *cam, int type)
 
   image=lives_image_new_from_stock(LIVES_STOCK_CLOSE,LIVES_ICON_SIZE_BUTTON);
   lives_button_set_label(LIVES_BUTTON(dvgrabw->quit),_("_Close Window"));
-  gtk_button_set_image(LIVES_BUTTON(dvgrabw->quit),image);
+  lives_button_set_image(LIVES_BUTTON(dvgrabw->quit),image);
 
   //////////////////////////////////////////////////////////////////////////////////////////
 

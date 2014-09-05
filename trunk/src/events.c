@@ -2039,7 +2039,7 @@ void set_render_choice (GtkToggleButton *togglebutton, gpointer choice) {
   if (lives_toggle_button_get_active(togglebutton)) render_choice=GPOINTER_TO_INT (choice);
 }
 
-void set_render_choice_button (GtkButton *button, gpointer choice) {
+void set_render_choice_button (LiVESButton *button, gpointer choice) {
   render_choice=GPOINTER_TO_INT (choice);
 }
 
@@ -4953,17 +4953,13 @@ LiVESWidget *create_event_list_dialog (weed_plant_t *event_list, weed_timecode_t
 
   lives_box_pack_start (LIVES_BOX (top_vbox), hbuttonbox, TRUE, TRUE, 0);
 
-  gtk_button_box_set_layout (GTK_BUTTON_BOX (hbuttonbox), GTK_BUTTONBOX_SPREAD);
+  lives_button_box_set_layout (LIVES_BUTTON_BOX (hbuttonbox), LIVES_BUTTONBOX_SPREAD);
 
   ok_button = lives_button_new_with_mnemonic (_("Close _window"));
   lives_widget_show (ok_button);
   lives_container_add (LIVES_CONTAINER (hbuttonbox), ok_button);
 
-#if !GTK_CHECK_VERSION(3,0,0)
-  gtk_button_box_set_child_size (GTK_BUTTON_BOX (hbuttonbox), DEF_BUTTON_WIDTH, -1);
-#else
-  lives_widget_set_size_request(ok_button,DEF_BUTTON_WIDTH*4,-1);
-#endif
+  lives_button_box_set_button_width (LIVES_BUTTON_BOX (hbuttonbox), ok_button, DEF_BUTTON_WIDTH*4);
 
   lives_widget_set_can_focus_and_default (ok_button);
   lives_widget_grab_default (ok_button);
@@ -5377,10 +5373,7 @@ render_details *create_render_details (int type) {
 
   if (!specified) {
     rdet->okbutton = lives_button_new_from_stock ("gtk-ok");
-
-#if !GTK_CHECK_VERSION(3,0,0)
-    gtk_button_box_set_child_size (GTK_BUTTON_BOX (daa), DEF_BUTTON_WIDTH, -1);
-#endif
+    lives_button_box_set_button_width (LIVES_BUTTON_BOX (daa), rdet->okbutton, DEF_BUTTON_WIDTH*4);
   }
   else  {
     rdet->okbutton = lives_button_new_from_stock ("gtk-go-forward");

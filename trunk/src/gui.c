@@ -3573,9 +3573,9 @@ void make_preview_box (void) {
   lives_box_pack_start (LIVES_BOX (mainw->preview_controls), hbox_buttons, TRUE, TRUE, 0);
 
   rewind_img=lives_image_new_from_stock (LIVES_STOCK_MEDIA_REWIND, lives_toolbar_get_icon_size (LIVES_TOOLBAR (mainw->btoolbar)));
-  mainw->p_rewindbutton=gtk_button_new();
+  mainw->p_rewindbutton=lives_button_new();
   lives_widget_set_bg_color (mainw->p_rewindbutton, LIVES_WIDGET_STATE_ACTIVE, &palette->menu_and_bars);
-  gtk_button_set_relief (LIVES_BUTTON (mainw->p_rewindbutton), GTK_RELIEF_NONE);
+  lives_button_set_relief (LIVES_BUTTON (mainw->p_rewindbutton), GTK_RELIEF_NONE);
   lives_container_add (LIVES_CONTAINER(mainw->p_rewindbutton), rewind_img);
   lives_box_pack_start (LIVES_BOX (hbox_buttons), mainw->p_rewindbutton, TRUE, TRUE, 0);
   lives_widget_show (mainw->p_rewindbutton);
@@ -3584,9 +3584,9 @@ void make_preview_box (void) {
   lives_widget_set_sensitive (mainw->p_rewindbutton, mainw->current_file>-1&&cfile->pointer_time>0.);
 
   play_img=lives_image_new_from_stock (LIVES_STOCK_MEDIA_PLAY, lives_toolbar_get_icon_size (LIVES_TOOLBAR (mainw->btoolbar)));
-  mainw->p_playbutton=gtk_button_new();
+  mainw->p_playbutton=lives_button_new();
   lives_widget_set_bg_color (mainw->p_playbutton, LIVES_WIDGET_STATE_ACTIVE, &palette->menu_and_bars);
-  gtk_button_set_relief (LIVES_BUTTON (mainw->p_playbutton), GTK_RELIEF_NONE);
+  lives_button_set_relief (LIVES_BUTTON (mainw->p_playbutton), GTK_RELIEF_NONE);
   lives_container_add (LIVES_CONTAINER(mainw->p_playbutton), play_img);
   lives_box_pack_start (LIVES_BOX (hbox_buttons), mainw->p_playbutton, TRUE, TRUE, 0);
   lives_widget_show (mainw->p_playbutton);
@@ -3597,9 +3597,9 @@ void make_preview_box (void) {
   g_snprintf (buff,PATH_MAX,"%s",fnamex);
   g_free(fnamex);
   playsel_img=lives_image_new_from_file (buff);
-  mainw->p_playselbutton=gtk_button_new();
+  mainw->p_playselbutton=lives_button_new();
   lives_widget_set_bg_color (mainw->p_playselbutton, LIVES_WIDGET_STATE_ACTIVE, &palette->menu_and_bars);
-  gtk_button_set_relief (LIVES_BUTTON (mainw->p_playselbutton), GTK_RELIEF_NONE);
+  lives_button_set_relief (LIVES_BUTTON (mainw->p_playselbutton), GTK_RELIEF_NONE);
   lives_container_add (LIVES_CONTAINER(mainw->p_playselbutton), playsel_img);
   lives_box_pack_start (LIVES_BOX (hbox_buttons), mainw->p_playselbutton, TRUE, TRUE, 0);
   lives_widget_show (mainw->p_playselbutton);
@@ -3611,9 +3611,9 @@ void make_preview_box (void) {
   g_snprintf (buff,PATH_MAX,"%s",fnamex);
   g_free(fnamex);
   loop_img=lives_image_new_from_file (buff);
-  mainw->p_loopbutton=gtk_button_new();
+  mainw->p_loopbutton=lives_button_new();
   lives_widget_set_bg_color (mainw->p_loopbutton, LIVES_WIDGET_STATE_ACTIVE, &palette->menu_and_bars);
-  gtk_button_set_relief (LIVES_BUTTON (mainw->p_loopbutton), GTK_RELIEF_NONE);
+  lives_button_set_relief (LIVES_BUTTON (mainw->p_loopbutton), GTK_RELIEF_NONE);
   lives_container_add (LIVES_CONTAINER(mainw->p_loopbutton), loop_img);
   lives_box_pack_start (LIVES_BOX (hbox_buttons), mainw->p_loopbutton, TRUE, TRUE, 0);
   lives_widget_show (mainw->p_loopbutton);
@@ -3630,9 +3630,9 @@ void make_preview_box (void) {
     lives_pixbuf_saturate_and_pixelate(pixbuf,pixbuf,0.2,FALSE);
   }
 
-  mainw->p_mutebutton=gtk_button_new();
+  mainw->p_mutebutton=lives_button_new();
   lives_widget_set_bg_color (mainw->p_mutebutton, LIVES_WIDGET_STATE_ACTIVE, &palette->menu_and_bars);
-  gtk_button_set_relief (LIVES_BUTTON (mainw->p_mutebutton), GTK_RELIEF_NONE);
+  lives_button_set_relief (LIVES_BUTTON (mainw->p_mutebutton), GTK_RELIEF_NONE);
   lives_container_add (LIVES_CONTAINER(mainw->p_mutebutton), mainw->p_mute_img);
   lives_box_pack_start (LIVES_BOX (hbox_buttons), mainw->p_mutebutton, TRUE, TRUE, 0);
   lives_widget_show (mainw->p_mutebutton);

@@ -525,7 +525,7 @@ void lives_exit (void) {
 
 
 
-void on_filesel_button_clicked (GtkButton *button, gpointer user_data) {
+void on_filesel_button_clicked (LiVESButton *button, gpointer user_data) {
   LiVESWidget *tentry=LIVES_WIDGET(user_data);
   gchar *dirname;
   gchar *fname;
@@ -571,7 +571,7 @@ void on_filesel_button_clicked (GtkButton *button, gpointer user_data) {
 
 
 
-void on_filesel_complex_clicked (GtkButton *button, LiVESEntry *entry) {
+void on_filesel_complex_clicked (LiVESButton *button, LiVESEntry *entry) {
   // append /livestmp
   size_t chklen=strlen(LIVES_TMP_NAME);
 
@@ -781,7 +781,7 @@ void on_recent_activate (GtkMenuItem *menuitem, gpointer user_data) {
 
 
 
-void on_location_select (GtkButton *button, gpointer user_data) {
+void on_location_select (LiVESButton *button, gpointer user_data) {
   g_snprintf(file_name,PATH_MAX,"%s",lives_entry_get_text(LIVES_ENTRY(locw->entry)));
   lives_widget_destroy(locw->dialog);
   lives_widget_context_update();
@@ -808,7 +808,7 @@ void on_location_select (GtkButton *button, gpointer user_data) {
 
 
 
-void on_utube_select (GtkButton *button, gpointer user_data) {
+void on_utube_select (LiVESButton *button, gpointer user_data) {
   gchar *fname=ensure_extension(lives_entry_get_text(LIVES_ENTRY(locw->name_entry)),".webm");
   gchar *url;
   gchar *dirname;
@@ -2726,7 +2726,7 @@ void on_insert_pre_activate (GtkMenuItem *menuitem, gpointer user_data) {
 
 
 
-void on_insert_activate (GtkButton *button, gpointer user_data) {
+void on_insert_activate (LiVESButton *button, gpointer user_data) {
   double times_to_insert=mainw->fx1_val;
   double audio_stretch;
 
@@ -4921,7 +4921,7 @@ void on_load_set_activate (GtkMenuItem *menuitem, gpointer user_data) {
 
 
 
-boolean on_load_set_ok (GtkButton *button, gpointer user_data) {
+boolean on_load_set_ok (LiVESButton *button, gpointer user_data) {
   // this is the main clip set loader
 
 
@@ -6364,7 +6364,7 @@ void drag_from_outside(LiVESWidget *widget, GdkDragContext *dcon, int x, int y,
 
 
 
-void on_opensel_range_ok_clicked (GtkButton *button, gpointer user_data) {
+void on_opensel_range_ok_clicked (LiVESButton *button, gpointer user_data) {
   // open file selection
   end_fs_preview();
   lives_general_button_clicked(button,NULL);
@@ -6724,7 +6724,7 @@ void end_fs_preview(void) {
 }
 
 
-void on_save_textview_clicked (GtkButton *button, gpointer user_data) {
+void on_save_textview_clicked (LiVESButton *button, gpointer user_data) {
   LiVESTextView *textview=(LiVESTextView *)user_data;
   gchar *filt[]={"*.txt",NULL};
   int fd;
@@ -6808,7 +6808,7 @@ void on_cancel_button1_clicked (LiVESWidget *widget, gpointer user_data) {
 
 
 
-void on_cancel_opensel_clicked (GtkButton  *button, gpointer user_data) {
+void on_cancel_opensel_clicked (LiVESButton  *button, gpointer user_data) {
   end_fs_preview();
   lives_general_button_clicked(button,NULL);
   mainw->fs_playarea=NULL;
@@ -6822,7 +6822,7 @@ void on_cancel_opensel_clicked (GtkButton  *button, gpointer user_data) {
 
 
 
-void on_cancel_keep_button_clicked (GtkButton *button, gpointer user_data) {
+void on_cancel_keep_button_clicked (LiVESButton *button, gpointer user_data) {
   // Cancel/Keep from progress dialog
   gchar *com=NULL;
   guint keep_frames=0;
@@ -7036,7 +7036,7 @@ void on_cancel_keep_button_clicked (GtkButton *button, gpointer user_data) {
 
 
 void
-on_details_button_clicked            (GtkButton       *button,
+on_details_button_clicked            (LiVESButton       *button,
 				      gpointer         user_data)
 {
   text_window *textwindow;
@@ -7049,7 +7049,7 @@ on_details_button_clicked            (GtkButton       *button,
 }
 
 
-void on_full_screen_pressed (GtkButton *button,
+void on_full_screen_pressed (LiVESButton *button,
 			     gpointer user_data) {
   // toolbar button (full screen)
   lives_check_menu_item_set_active(LIVES_CHECK_MENU_ITEM(mainw->full_screen),!mainw->fs);
@@ -7265,7 +7265,7 @@ void on_full_screen_activate (GtkMenuItem *menuitem, gpointer user_data) {
 }
 
 
-void on_double_size_pressed (GtkButton *button,
+void on_double_size_pressed (LiVESButton *button,
 			     gpointer user_data) {
   // toolbar button (separate window)
   lives_check_menu_item_set_active(LIVES_CHECK_MENU_ITEM(mainw->dsize),!mainw->double_size);
@@ -7397,7 +7397,7 @@ on_double_size_activate               (GtkMenuItem     *menuitem,
 
 
 
-void on_sepwin_pressed (GtkButton *button, gpointer user_data) {
+void on_sepwin_pressed (LiVESButton *button, gpointer user_data) {
   if (mainw->go_away) return;
 
   // toolbar button (separate window)
@@ -7692,7 +7692,7 @@ void on_sticky_activate (GtkMenuItem *menuitem, gpointer user_data) {
 
 
 
-void on_fade_pressed (GtkButton *button,
+void on_fade_pressed (LiVESButton *button,
 		      gpointer user_data) 
 {
   // toolbar button (unblank background)
@@ -7892,7 +7892,7 @@ void on_mute_activate (GtkMenuItem *menuitem, gpointer user_data) {
 
   if (mainw->preview_box!=NULL) {
     lives_widget_show(mute_img2);
-    //gtk_button_set_image(LIVES_BUTTON(mainw->p_mutebutton),mute_img2); // doesn't work (gtk+ bug ?)
+    //lives_button_set_image(LIVES_BUTTON(mainw->p_mutebutton),mute_img2); // doesn't work (gtk+ bug ?)
     lives_widget_queue_draw(mainw->p_mutebutton);
     lives_widget_queue_draw(mute_img2);
   }
@@ -8267,7 +8267,7 @@ on_eject_cd_activate                (GtkMenuItem     *menuitem,
 
 
 void 
-on_load_cdtrack_ok_clicked                (GtkButton     *button,
+on_load_cdtrack_ok_clicked                (LiVESButton     *button,
 					   gpointer         user_data)
 {
   gchar *com,*mesg;
@@ -8553,7 +8553,7 @@ on_load_cdtrack_ok_clicked                (GtkButton     *button,
 
 }
 
-void on_load_vcd_ok_clicked (GtkButton *button, gpointer         user_data)
+void on_load_vcd_ok_clicked (LiVESButton *button, gpointer         user_data)
 {
   lives_general_button_clicked(button,NULL);
   if (GPOINTER_TO_INT (user_data)==1) {
@@ -8583,7 +8583,7 @@ void popup_lmap_errors(GtkMenuItem *menuitem, gpointer user_data) {
 
   dialog_action_area = lives_dialog_get_action_area(LIVES_DIALOG (textwindow->dialog));
 
-  gtk_button_box_set_layout (GTK_BUTTON_BOX (dialog_action_area), GTK_BUTTONBOX_SPREAD);
+  lives_button_box_set_layout (LIVES_BUTTON_BOX (dialog_action_area), LIVES_BUTTONBOX_SPREAD);
 
   vbox = lives_dialog_get_content_area(LIVES_DIALOG(textwindow->dialog));
 
@@ -8639,7 +8639,7 @@ on_rename_activate                    (GtkMenuItem     *menuitem,
 
 
 void
-on_rename_set_name                   (GtkButton       *button,
+on_rename_set_name                   (LiVESButton       *button,
 				      gpointer         user_data)
 {
   gchar title[256];
@@ -9303,7 +9303,7 @@ boolean config_event (LiVESWidget *widget, GdkEventConfigure *event, gpointer us
 
 
 
-void on_effects_paused (GtkButton *button, gpointer user_data) {
+void on_effects_paused (LiVESButton *button, gpointer user_data) {
   gchar *com=NULL;
   int64_t xticks;
 #ifdef IS_MINGW
@@ -9438,7 +9438,7 @@ void on_effects_paused (GtkButton *button, gpointer user_data) {
 
 
 void
-on_preview_clicked                     (GtkButton       *button,
+on_preview_clicked                     (LiVESButton       *button,
 					gpointer         user_data)
 {
   // play an effect/tool preview
@@ -10069,7 +10069,7 @@ boolean frame_context (LiVESWidget *widget, GdkEventButton *event, gpointer whic
 
 
 
-void on_slower_pressed (GtkButton *button, gpointer user_data) {
+void on_slower_pressed (LiVESButton *button, gpointer user_data) {
   double change=1.,new_fps;
 
   int type=0;
@@ -10115,7 +10115,7 @@ void on_slower_pressed (GtkButton *button, gpointer user_data) {
 }
 
 
-void on_faster_pressed (GtkButton *button, gpointer user_data) {
+void on_faster_pressed (LiVESButton *button, gpointer user_data) {
   double change=1.;
   int type=0;
 
@@ -10164,7 +10164,7 @@ void on_faster_pressed (GtkButton *button, gpointer user_data) {
 
 //TODO - make pref
 #define CHANGE_SPEED (cfile->pb_fps*(double)KEY_RPT_INTERVAL/100.)
-void on_back_pressed (GtkButton *button, gpointer user_data) {
+void on_back_pressed (LiVESButton *button, gpointer user_data) {
   if (mainw->playing_file==-1||mainw->internal_messaging||(mainw->is_processing&&cfile->is_loaded)) return;
   if (mainw->record&&!(prefs->rec_opts&REC_FRAMES)) return;
   if (cfile->next_event!=NULL) return;
@@ -10174,7 +10174,7 @@ void on_back_pressed (GtkButton *button, gpointer user_data) {
 
 }
 
-void on_forward_pressed (GtkButton *button, gpointer user_data) {
+void on_forward_pressed (LiVESButton *button, gpointer user_data) {
   if (mainw->playing_file==-1||mainw->internal_messaging||(mainw->is_processing&&cfile->is_loaded)) return;
   if (mainw->record&&!(prefs->rec_opts&REC_FRAMES)) return;
   if (cfile->next_event!=NULL) return;
@@ -10316,7 +10316,7 @@ boolean storeclip_callback (GtkAccelGroup *group, GObject *obj, guint keyval, Gd
 
 
 
-void on_toolbar_hide (GtkButton *button, gpointer user_data) {
+void on_toolbar_hide (LiVESButton *button, gpointer user_data) {
   lives_widget_hide (mainw->tb_hbox);
   fullscreen_internal();
   future_prefs->show_tool=FALSE;
@@ -11404,7 +11404,7 @@ on_recaudsel_activate (GtkMenuItem     *menuitem,
 
 
 void
-on_recaudclip_ok_clicked                      (GtkButton *button,
+on_recaudclip_ok_clicked                      (LiVESButton *button,
 					       gpointer user_data)
 {
 #ifdef RT_AUDIO
@@ -11779,7 +11779,7 @@ boolean on_ins_silence_activate (GtkMenuItem *menuitem, gpointer user_data) {
 
 
 
-void on_ins_silence_details_clicked (GtkButton *button, gpointer user_data) {
+void on_ins_silence_details_clicked (LiVESButton *button, gpointer user_data) {
   int asigned=1,aendian=1;
   boolean bad_header=FALSE;
   
@@ -11817,7 +11817,7 @@ void on_ins_silence_details_clicked (GtkButton *button, gpointer user_data) {
 }
 
 
-void on_lerrors_clear_clicked (GtkButton *button, gpointer user_data) {
+void on_lerrors_clear_clicked (LiVESButton *button, gpointer user_data) {
   boolean close=GPOINTER_TO_INT(user_data);
 
   if (mainw->multitrack!=NULL) {
@@ -11844,7 +11844,7 @@ void on_lerrors_clear_clicked (GtkButton *button, gpointer user_data) {
 }
 
 
-void on_lerrors_delete_clicked (GtkButton *button, gpointer user_data) {
+void on_lerrors_delete_clicked (LiVESButton *button, gpointer user_data) {
   int num_maps=g_list_length(mainw->affected_layouts_map);
   gchar *msg=g_strdup_printf(P_("\nDelete %d layout...are you sure ?\n","\nDelete %d layouts...are you sure ?\n",num_maps),num_maps);
 

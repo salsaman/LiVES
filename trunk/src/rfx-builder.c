@@ -325,7 +325,7 @@ rfx_build_window_t *make_rfx_build_window (const gchar *script_name, lives_rfx_s
 
 
   dialog_action_area = lives_dialog_get_action_area(LIVES_DIALOG (rfxbuilder->dialog));
-  gtk_button_box_set_layout (GTK_BUTTON_BOX (dialog_action_area), GTK_BUTTONBOX_END);
+  lives_button_box_set_layout (LIVES_BUTTON_BOX (dialog_action_area), LIVES_BUTTONBOX_END);
 
   cancelbutton = lives_button_new_from_stock ("gtk-cancel");
   lives_dialog_add_action_widget (LIVES_DIALOG (rfxbuilder->dialog), cancelbutton, GTK_RESPONSE_CANCEL);
@@ -505,7 +505,7 @@ void after_rfxbuilder_type_toggled (GtkToggleButton *togglebutton, gpointer user
 
 
 
-void on_list_table_clicked (GtkButton *button, gpointer user_data) {
+void on_list_table_clicked (LiVESButton *button, gpointer user_data) {
   LiVESWidget *dialog;
   LiVESWidget *dialog_vbox;
   LiVESWidget *dialog_action_area;
@@ -648,7 +648,7 @@ void on_list_table_clicked (GtkButton *button, gpointer user_data) {
   lives_widget_set_sensitive(rfxbuilder->remove_entry_button,FALSE);
 
   dialog_action_area = lives_dialog_get_action_area(LIVES_DIALOG (dialog));
-  gtk_button_box_set_layout (GTK_BUTTON_BOX (dialog_action_area), GTK_BUTTONBOX_END);
+  lives_button_box_set_layout (LIVES_BUTTON_BOX (dialog_action_area), LIVES_BUTTONBOX_END);
 
   cancelbutton = lives_button_new_from_stock ("gtk-cancel");
   lives_dialog_add_action_widget (LIVES_DIALOG (dialog), cancelbutton, GTK_RESPONSE_CANCEL);
@@ -726,7 +726,7 @@ void on_list_table_clicked (GtkButton *button, gpointer user_data) {
   table_select_row(rfxbuilder,-1);
 }
 
-void on_requirements_ok (GtkButton *button, gpointer user_data) {
+void on_requirements_ok (LiVESButton *button, gpointer user_data) {
   rfx_build_window_t *rfxbuilder=(rfx_build_window_t *)user_data;
 
   int i;
@@ -739,14 +739,14 @@ void on_requirements_ok (GtkButton *button, gpointer user_data) {
   lives_general_button_clicked(button,NULL);
 }
 
-void on_requirements_cancel (GtkButton *button, gpointer user_data) {
+void on_requirements_cancel (LiVESButton *button, gpointer user_data) {
   rfx_build_window_t *rfxbuilder=(rfx_build_window_t *)user_data;
 
   rfxbuilder->num_reqs=rfxbuilder->onum_reqs;
   lives_general_button_clicked(button,NULL);
 }
 
-void on_properties_ok (GtkButton *button, gpointer user_data) {
+void on_properties_ok (LiVESButton *button, gpointer user_data) {
   rfx_build_window_t *rfxbuilder=(rfx_build_window_t *)user_data;
 
   if (rfxbuilder->type!=RFX_BUILD_TYPE_EFFECT0) {
@@ -769,7 +769,7 @@ void on_properties_ok (GtkButton *button, gpointer user_data) {
 }
 
 
-void on_params_ok (GtkButton *button, gpointer user_data) { 
+void on_params_ok (LiVESButton *button, gpointer user_data) { 
   rfx_build_window_t *rfxbuilder=(rfx_build_window_t *)user_data;
 
   int i;
@@ -803,7 +803,7 @@ void on_params_ok (GtkButton *button, gpointer user_data) {
 }
 
 
-void on_params_cancel (GtkButton *button, gpointer user_data) {
+void on_params_cancel (LiVESButton *button, gpointer user_data) {
   rfx_build_window_t *rfxbuilder=(rfx_build_window_t *)user_data;
 
   int i;
@@ -823,7 +823,7 @@ void on_params_cancel (GtkButton *button, gpointer user_data) {
   lives_general_button_clicked(button,NULL);
 }
 
-void on_param_window_ok (GtkButton *button, gpointer user_data) {
+void on_param_window_ok (LiVESButton *button, gpointer user_data) {
   rfx_build_window_t *rfxbuilder=(rfx_build_window_t *)user_data;
 
   int i;
@@ -838,14 +838,14 @@ void on_param_window_ok (GtkButton *button, gpointer user_data) {
   lives_general_button_clicked(button,NULL);
 }
 
-void on_param_window_cancel (GtkButton *button, gpointer user_data) {
+void on_param_window_cancel (LiVESButton *button, gpointer user_data) {
   rfx_build_window_t *rfxbuilder=(rfx_build_window_t *)user_data;
 
   rfxbuilder->num_paramw_hints=rfxbuilder->onum_paramw_hints;
   lives_general_button_clicked(button,NULL);
 }
 
-void on_code_ok (GtkButton *button, gpointer user_data) {
+void on_code_ok (LiVESButton *button, gpointer user_data) {
   rfx_build_window_t *rfxbuilder=(rfx_build_window_t *)user_data;
 
   switch (rfxbuilder->codetype) {
@@ -913,7 +913,7 @@ void on_code_ok (GtkButton *button, gpointer user_data) {
 }
 
 
-void on_triggers_ok (GtkButton *button, gpointer user_data) {
+void on_triggers_ok (LiVESButton *button, gpointer user_data) {
   rfx_build_window_t *rfxbuilder=(rfx_build_window_t *)user_data;
 
   int i;
@@ -935,7 +935,7 @@ void on_triggers_ok (GtkButton *button, gpointer user_data) {
   lives_general_button_clicked(button,NULL);
 }
 
-void on_triggers_cancel (GtkButton *button, gpointer user_data) {
+void on_triggers_cancel (LiVESButton *button, gpointer user_data) {
   rfx_build_window_t *rfxbuilder=(rfx_build_window_t *)user_data;
 
   int i;
@@ -950,7 +950,7 @@ void on_triggers_cancel (GtkButton *button, gpointer user_data) {
 }
 
 
-void on_properties_clicked (GtkButton *button, gpointer user_data) {
+void on_properties_clicked (LiVESButton *button, gpointer user_data) {
   LiVESWidget *dialog;
   LiVESWidget *dialog_vbox;
   LiVESWidget *dialog_action_area;
@@ -988,7 +988,7 @@ void on_properties_clicked (GtkButton *button, gpointer user_data) {
   }
 
   dialog_action_area = lives_dialog_get_action_area(LIVES_DIALOG (dialog));
-  gtk_button_box_set_layout (GTK_BUTTON_BOX (dialog_action_area), GTK_BUTTONBOX_END);
+  lives_button_box_set_layout (LIVES_BUTTON_BOX (dialog_action_area), LIVES_BUTTONBOX_END);
 
   cancelbutton = lives_button_new_from_stock ("gtk-cancel");
   lives_dialog_add_action_widget (LIVES_DIALOG (dialog), cancelbutton, GTK_RESPONSE_CANCEL);
@@ -1078,7 +1078,7 @@ static boolean on_entry_click (LiVESWidget *widget, GdkEvent *event, gpointer us
 
 
 
-void on_table_add_row (GtkButton *button, gpointer user_data) {
+void on_table_add_row (LiVESButton *button, gpointer user_data) {
   LiVESWidget *entry=NULL,*entry2=NULL,*entry3=NULL;
   LiVESWidget *param_dialog=NULL;
   LiVESWidget *param_window_dialog=NULL;
@@ -1525,7 +1525,7 @@ void param_set_from_dialog (lives_param_t *copy_param, rfx_build_window_t *rfxbu
 
 
 
-void on_table_edit_row (GtkButton *button, gpointer user_data) {
+void on_table_edit_row (LiVESButton *button, gpointer user_data) {
   LiVESWidget *param_dialog;
   LiVESWidget *paramw_dialog;
   LiVESWidget *trigger_dialog;
@@ -1647,7 +1647,7 @@ void on_table_edit_row (GtkButton *button, gpointer user_data) {
 
 
 
-void on_table_swap_row (GtkButton *button, gpointer user_data) {
+void on_table_swap_row (LiVESButton *button, gpointer user_data) {
   gchar *entry_text;
   rfx_build_window_t *rfxbuilder=(rfx_build_window_t *)user_data;
 
@@ -1694,7 +1694,7 @@ void on_table_swap_row (GtkButton *button, gpointer user_data) {
 }
 
 
-void on_table_delete_row (GtkButton *button, gpointer user_data) {
+void on_table_delete_row (LiVESButton *button, gpointer user_data) {
   rfx_build_window_t *rfxbuilder=(rfx_build_window_t *)user_data;
 
 #if !LIVES_TABLE_IS_GRID
@@ -2024,8 +2024,8 @@ LiVESWidget * make_param_dialog (int pnum, rfx_build_window_t *rfxbuilder) {
   rfxbuilder->param_strdef_hbox = lives_hbox_new (FALSE, 0);
   lives_box_pack_start (LIVES_BOX (dialog_vbox), rfxbuilder->param_strdef_hbox, TRUE, TRUE, widget_opts.packing_height);
 
-  rfxbuilder->param_strdef_button = gtk_button_new();
-  gtk_button_set_use_underline (LIVES_BUTTON (rfxbuilder->param_strdef_button),TRUE);
+  rfxbuilder->param_strdef_button = lives_button_new();
+  lives_button_set_use_underline (LIVES_BUTTON (rfxbuilder->param_strdef_button),TRUE);
   lives_box_pack_start (LIVES_BOX (rfxbuilder->param_strdef_hbox), rfxbuilder->param_strdef_button, TRUE, TRUE, widget_opts.packing_width);
 
   rfxbuilder->param_strlist_hbox = lives_hbox_new (FALSE, 0);
@@ -2782,7 +2782,7 @@ LiVESWidget * make_trigger_dialog (int tnum, rfx_build_window_t *rfxbuilder) {
 
 
 
-void on_code_clicked (GtkButton *button, gpointer user_data) {
+void on_code_clicked (LiVESButton *button, gpointer user_data) {
   LiVESWidget *dialog;
   LiVESWidget *dialog_vbox;
   LiVESWidget *dialog_action_area;
@@ -2895,7 +2895,7 @@ void on_code_clicked (GtkButton *button, gpointer user_data) {
   }
 
   dialog_action_area = lives_dialog_get_action_area(LIVES_DIALOG (dialog));
-  gtk_button_box_set_layout (GTK_BUTTON_BOX (dialog_action_area), GTK_BUTTONBOX_END);
+  lives_button_box_set_layout (LIVES_BUTTON_BOX (dialog_action_area), LIVES_BUTTONBOX_END);
 
   cancelbutton = lives_button_new_from_stock ("gtk-cancel");
   lives_dialog_add_action_widget (LIVES_DIALOG (dialog), cancelbutton, GTK_RESPONSE_CANCEL);
@@ -2920,7 +2920,7 @@ void on_code_clicked (GtkButton *button, gpointer user_data) {
 }
 
 
-void on_rfxbuilder_ok (GtkButton *button, gpointer user_data) {
+void on_rfxbuilder_ok (LiVESButton *button, gpointer user_data) {
   rfx_build_window_t *rfxbuilder=(rfx_build_window_t *)user_data;
 
   if (!perform_rfxbuilder_checks (rfxbuilder)) return;
@@ -2930,7 +2930,7 @@ void on_rfxbuilder_ok (GtkButton *button, gpointer user_data) {
   rfxbuilder_destroy (rfxbuilder);
 }
 
-void on_rfxbuilder_cancel (GtkButton *button, gpointer user_data) {
+void on_rfxbuilder_cancel (LiVESButton *button, gpointer user_data) {
   rfx_build_window_t *rfxbuilder=(rfx_build_window_t *)user_data;
 
   lives_general_button_clicked(button,NULL);
@@ -4248,7 +4248,7 @@ gchar *prompt_for_script_name(const gchar *sname, lives_rfx_status_t status) {
 
   dialog_action_area = lives_dialog_get_action_area(LIVES_DIALOG (dialog));
   lives_widget_show (dialog_action_area);
-  gtk_button_box_set_layout (GTK_BUTTON_BOX (dialog_action_area), GTK_BUTTONBOX_END);
+  lives_button_box_set_layout (LIVES_BUTTON_BOX (dialog_action_area), LIVES_BUTTONBOX_END);
 
   cancelbutton = lives_button_new_from_stock ("gtk-cancel");
   lives_dialog_add_action_widget (LIVES_DIALOG (dialog), cancelbutton, GTK_RESPONSE_CANCEL);

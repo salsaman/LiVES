@@ -255,7 +255,7 @@ static LiVESWidget* create_warn_dialog (int warn_mask_number, GtkWindow *transie
 
   dialog_action_area = lives_dialog_get_action_area(LIVES_DIALOG (dialog));
 
-  gtk_button_box_set_layout (GTK_BUTTON_BOX (dialog_action_area), GTK_BUTTONBOX_END);
+  lives_button_box_set_layout (LIVES_BUTTON_BOX (dialog_action_area), LIVES_BUTTONBOX_END);
 
   lives_widget_set_can_focus_and_default (warning_cancelbutton);
 
@@ -2490,7 +2490,7 @@ void do_after_crash_warning (void) {
 
 
 
-static void on_dth_cancel_clicked (GtkButton *button, gpointer user_data) {
+static void on_dth_cancel_clicked (LiVESButton *button, gpointer user_data) {
   if (GPOINTER_TO_INT(user_data)==1) mainw->cancelled=CANCEL_KEEP;
   else mainw->cancelled=CANCEL_USER;
 }
@@ -2679,7 +2679,7 @@ void do_splash_progress(void) {
 
 
 void 
-response_ok (GtkButton *button, gpointer user_data) {
+response_ok (LiVESButton *button, gpointer user_data) {
   gtk_dialog_response (LIVES_DIALOG (lives_widget_get_toplevel(LIVES_WIDGET(button))), GTK_RESPONSE_OK);
 }
 

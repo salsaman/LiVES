@@ -98,7 +98,7 @@ GList *do_onchange_init(lives_rfx_t *rfx) {
 }
 
 
-void on_paramwindow_ok_clicked (GtkButton *button, lives_rfx_t *rfx) {
+void on_paramwindow_ok_clicked (LiVESButton *button, lives_rfx_t *rfx) {
   register int i;
 
   if (rfx!=NULL&&rfx->status!=RFX_STATUS_SCRAP) mainw->keep_pre=mainw->did_rfx_preview;
@@ -180,7 +180,7 @@ void on_paramwindow_ok_clicked (GtkButton *button, lives_rfx_t *rfx) {
 
 
 
-void on_paramwindow_cancel_clicked2 (GtkButton *button, lives_rfx_t *rfx) {
+void on_paramwindow_cancel_clicked2 (LiVESButton *button, lives_rfx_t *rfx) {
   // close from rte window
 
   on_paramwindow_cancel_clicked(button,rfx);
@@ -191,7 +191,7 @@ void on_paramwindow_cancel_clicked2 (GtkButton *button, lives_rfx_t *rfx) {
   }
 }
 
-void on_paramwindow_cancel_clicked (GtkButton *button, lives_rfx_t *rfx) {
+void on_paramwindow_cancel_clicked (LiVESButton *button, lives_rfx_t *rfx) {
   mainw->block_param_updates=TRUE;
   if (mainw->did_rfx_preview) {
     gchar *com;
@@ -890,7 +890,7 @@ void on_fx_pre_activate (lives_rfx_t *rfx, int didx, LiVESWidget *pbox) {
     dialog_action_area = lives_dialog_get_action_area(LIVES_DIALOG (fx_dialog[didx]));
 
     if (!no_process||is_defaults||rfx->status==RFX_STATUS_SCRAP) {
-      gtk_button_box_set_layout (GTK_BUTTON_BOX (dialog_action_area), GTK_BUTTONBOX_END);
+      lives_button_box_set_layout (LIVES_BUTTON_BOX (dialog_action_area), LIVES_BUTTONBOX_END);
       lives_dialog_add_action_widget (LIVES_DIALOG (fx_dialog[didx]), cancelbutton, GTK_RESPONSE_CANCEL);
       lives_widget_add_accelerator (cancelbutton, "activate", fxw_accel_group,
 				    LIVES_KEY_Escape, (GdkModifierType)0, (GtkAccelFlags)0);
@@ -910,7 +910,8 @@ void on_fx_pre_activate (lives_rfx_t *rfx, int didx, LiVESWidget *pbox) {
       if (!has_param) lives_widget_set_sensitive(okbutton,FALSE);
       cancelbutton = lives_button_new_with_mnemonic (_("Close _window"));
       if (no_process) {
-	set_button_width(dialog_action_area,okbutton,DEF_BUTTON_WIDTH);
+	LiVESWidget *dialog_action_area = lives_dialog_get_action_area(LIVES_DIALOG (fx_dialog[didx]));
+	lives_button_box_set_button_width (LIVES_BUTTON_BOX (dialog_action_area), okbutton, DEF_BUTTON_WIDTH*4);
       }
       if (rfx->status==RFX_STATUS_WEED) {
 	resetbutton = lives_button_new_with_mnemonic (_("Reset"));
@@ -3265,7 +3266,7 @@ GList *do_onchange (GObject *object, lives_rfx_t *rfx) {
 
 
 
-void on_pwcolsel (GtkButton *button, lives_rfx_t *rfx) {
+void on_pwcolsel (LiVESButton *button, lives_rfx_t *rfx) {
   LiVESWidgetColor selected;
 
   int pnum=GPOINTER_TO_INT (g_object_get_data (G_OBJECT (button),"param_number"));

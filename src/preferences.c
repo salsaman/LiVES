@@ -4154,7 +4154,7 @@ _prefsw *create_prefs_dialog (void) {
 
   dialog_action_area = lives_dialog_get_action_area(LIVES_DIALOG (prefsw->prefs_dialog));
   lives_widget_show (dialog_action_area);
-  gtk_button_box_set_layout (GTK_BUTTON_BOX (dialog_action_area), GTK_BUTTONBOX_END);
+  lives_button_box_set_layout (LIVES_BUTTON_BOX (dialog_action_area), LIVES_BUTTONBOX_END);
    
   // Preferences 'Revert' button
   prefsw->cancelbutton = lives_button_new_from_stock ("gtk-revert-to-saved");
@@ -4458,7 +4458,7 @@ void on_preferences_activate(GtkMenuItem *menuitem, gpointer user_data) {
 /*!
  * Closes preferences dialog window
  */
-void on_prefs_close_clicked(GtkButton *button, gpointer user_data) {
+void on_prefs_close_clicked(LiVESButton *button, gpointer user_data) {
   if (prefs->acodec_list!=NULL) {
     g_list_free_strings (prefs->acodec_list);
     g_list_free (prefs->acodec_list);
@@ -4488,7 +4488,7 @@ void on_prefs_close_clicked(GtkButton *button, gpointer user_data) {
 /*!
  *
  */
-void on_prefs_apply_clicked(GtkButton *button, gpointer user_data) {
+void on_prefs_apply_clicked(LiVESButton *button, gpointer user_data) {
   boolean needs_restart;
 
   // Apply preferences
@@ -4544,7 +4544,7 @@ static void select_pref_list_row(uint32_t selected_idx) {
 }
 
 
-void on_prefs_revert_clicked(GtkButton *button, gpointer user_data) {
+void on_prefs_revert_clicked(LiVESButton *button, gpointer user_data) {
   register int i;
 
   if (future_prefs->vpp_argv != NULL) {

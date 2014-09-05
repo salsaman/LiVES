@@ -1089,24 +1089,30 @@ LIVES_INLINE LiVESAdjustment *lives_adjustment_new(double value, double lower, d
 }
 
 
-LIVES_INLINE void lives_box_set_homogeneous(LiVESBox *box, boolean homogenous) {
+LIVES_INLINE boolean lives_box_set_homogeneous(LiVESBox *box, boolean homogenous) {
 #ifdef GUI_GTK
   gtk_box_set_homogeneous(box,homogenous);
+  return TRUE;
 #endif
+  return FALSE;
 }
 
 
-LIVES_INLINE void lives_box_reorder_child(LiVESBox *box, LiVESWidget *child, int pos) {
+LIVES_INLINE boolean lives_box_reorder_child(LiVESBox *box, LiVESWidget *child, int pos) {
 #ifdef GUI_GTK
   gtk_box_reorder_child(box,child,pos);
+  return TRUE;
 #endif
+  return FALSE;
 }
 
 
-LIVES_INLINE void lives_box_set_spacing(LiVESBox *box, int spacing) {
+LIVES_INLINE boolean lives_box_set_spacing(LiVESBox *box, int spacing) {
 #ifdef GUI_GTK
   gtk_box_set_spacing(box,spacing);
+  return TRUE;
 #endif
+  return FALSE;
 }
 
 
@@ -1139,18 +1145,22 @@ LIVES_INLINE LiVESWidget *lives_vbox_new(boolean homogeneous, int spacing) {
 
 
 
-LIVES_INLINE void lives_box_pack_start(LiVESBox *box, LiVESWidget *child, boolean expand, boolean fill, uint32_t padding) {
+LIVES_INLINE boolean lives_box_pack_start(LiVESBox *box, LiVESWidget *child, boolean expand, boolean fill, uint32_t padding) {
 #ifdef GUI_GTK
   gtk_box_pack_start(box,child,expand,fill,padding);
+  return TRUE;
 #endif
+  return FALSE;
 }
 
 
 
-LIVES_INLINE void lives_box_pack_end(LiVESBox *box, LiVESWidget *child, boolean expand, boolean fill, uint32_t padding) {
+LIVES_INLINE boolean lives_box_pack_end(LiVESBox *box, LiVESWidget *child, boolean expand, boolean fill, uint32_t padding) {
 #ifdef GUI_GTK
   gtk_box_pack_end(box,child,expand,fill,padding);
+  return TRUE;
 #endif
+  return FALSE;
 }
 
 
@@ -1206,6 +1216,18 @@ LIVES_INLINE LiVESWidget *lives_vbutton_box_new(void) {
 #endif
   return bbox;
 }
+
+
+
+LIVES_INLINE boolean lives_button_box_set_layout(LiVESButtonBox *bbox, LiVESButtonBoxStyle bstyle) {
+#ifdef GUI_GTK
+  gtk_button_box_set_layout(bbox,bstyle);
+  return TRUE;
+#endif
+  return FALSE;
+}
+
+
 
 
 LIVES_INLINE LiVESWidget *lives_hscale_new(LiVESAdjustment *adj) {
@@ -1691,7 +1713,7 @@ LIVES_INLINE LiVESWidget *lives_button_new_from_stock(const char *stock_id) {
       ) {
 #endif
     LiVESWidget *image=gtk_image_new_from_icon_name(stock_id,GTK_ICON_SIZE_BUTTON);
-    button=gtk_button_new();
+    button=lives_button_new();
     gtk_button_set_image(GTK_BUTTON(button),image);
 #if GTK_CHECK_VERSION(3,6,0)
     gtk_button_set_always_show_image(GTK_BUTTON(button),TRUE);
@@ -1721,6 +1743,43 @@ LIVES_INLINE boolean lives_button_set_label(LiVESButton *button, const char *lab
   return FALSE;
 }
 
+
+
+LIVES_INLINE boolean lives_button_set_use_underline(LiVESButton *button, boolean use){
+#ifdef GUI_GTK
+  gtk_button_set_use_underline(button,use);
+  return TRUE;
+#endif
+  return FALSE;
+}
+
+
+LIVES_INLINE boolean lives_button_set_relief(LiVESButton *button, LiVESReliefStyle rstyle) {
+#ifdef GUI_GTK
+  gtk_button_set_relief(button,rstyle);
+  return TRUE;
+#endif
+  return FALSE;
+}
+
+
+LIVES_INLINE boolean lives_button_set_image(LiVESButton *button, LiVESWidget *image) {
+#ifdef GUI_GTK
+  gtk_button_set_image(button,image);
+  return TRUE;
+#endif
+  return FALSE;
+}
+
+
+
+LIVES_INLINE boolean lives_button_set_focus_on_click(LiVESButton *button, boolean focus) {
+#ifdef GUI_GTK
+  gtk_button_set_focus_on_click(button,focus);
+  return TRUE;
+#endif
+  return FALSE;
+}
 
 
 
@@ -1814,6 +1873,7 @@ LIVES_INLINE LiVESXWindow *lives_widget_get_xwindow(LiVESWidget *widget) {
 #endif
   return NULL;
 }
+
 
 LIVES_INLINE boolean lives_widget_set_can_focus(LiVESWidget *widget, boolean state) {
 #ifdef GUI_GTK
@@ -2046,16 +2106,6 @@ LIVES_INLINE boolean lives_tool_button_set_use_underline(LiVESToolButton *button
   return FALSE;
 }
 
-
-LIVES_INLINE boolean lives_button_set_use_stock(LiVESButton *button, boolean use_stock) {
-#ifdef GUI_GTK
-#if !GTK_CHECK_VERSION(3,10,0)
-  gtk_button_set_use_stock(button,use_stock);
-  return TRUE;
-#endif
-#endif
-  return FALSE;
-}
 
 
 LIVES_INLINE void lives_ruler_set_range(LiVESRuler *ruler, double lower, double upper, double position, double max_size) {
@@ -4448,17 +4498,6 @@ void set_child_colour(LiVESWidget *widget, livespointer set_allx) {
 }
 
 
-void set_button_width(LiVESWidget *buttonbox, LiVESWidget *button, int width) {
-#ifdef GUI_GTK
-#if !GTK_CHECK_VERSION(3,0,0)
-  gtk_button_box_set_child_size (GTK_BUTTON_BOX(buttonbox), width, -1);
-#else
-  lives_widget_set_size_request(button,width*4,-1);
-#endif
-  gtk_button_box_set_layout (GTK_BUTTON_BOX(buttonbox), GTK_BUTTONBOX_SPREAD);
-#endif
-}
-
 
 char *lives_text_view_get_text(LiVESTextView *textview) {
   LiVESTextIter siter,eiter;
@@ -4836,6 +4875,18 @@ LiVESWidget *add_fill_to_box (LiVESBox *box) {
   return widget;
 }
 
+
+LIVES_INLINE boolean lives_button_box_set_button_width(LiVESButtonBox *bbox, LiVESWidget *button, int min_width) {
+  lives_button_box_set_layout (bbox, LIVES_BUTTONBOX_SPREAD);
+#ifdef GUI_GTK
+#if !GTK_CHECK_VERSION(3,0,0)
+  gtk_button_box_set_child_size(bbox,min_width/4,-1);
+  return TRUE;
+#endif
+#endif
+  lives_widget_set_size_request(button,min_width,-1);
+  return TRUE;
+}
 
 
 

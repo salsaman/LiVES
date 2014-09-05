@@ -101,7 +101,7 @@ void type_label_set_text (int key, int mode) {
 
 
 
-boolean on_clear_all_clicked (GtkButton *button, gpointer user_data) {
+boolean on_clear_all_clicked (LiVESButton *button, gpointer user_data) {
   int modes=rte_getmodespk();
   register int i,j;
 
@@ -389,7 +389,7 @@ static boolean save_keymap3_file(gchar *kfname) {
 
 
 
-static boolean on_save_keymap_clicked (GtkButton *button, gpointer user_data) {
+static boolean on_save_keymap_clicked (LiVESButton *button, gpointer user_data) {
   // save as keymap type 1 file - to allow backwards compatibility with older versions of LiVES
   // default.keymap
 
@@ -1252,7 +1252,7 @@ static void set_param_and_con_buttons(int key, int mode) {
 
 
 
-boolean on_load_keymap_clicked (GtkButton *button, gpointer user_data) {
+boolean on_load_keymap_clicked (LiVESButton *button, gpointer user_data) {
   // show file errors at this level
   FILE *kfile=NULL;
 
@@ -1638,7 +1638,7 @@ boolean on_load_keymap_clicked (GtkButton *button, gpointer user_data) {
 
 
 
-void on_rte_info_clicked (GtkButton *button, gpointer user_data) {
+void on_rte_info_clicked (LiVESButton *button, gpointer user_data) {
   weed_plant_t *filter;
 
   LiVESWidget *rte_info_window;
@@ -1759,7 +1759,7 @@ void on_rte_info_clicked (GtkButton *button, gpointer user_data) {
   lives_widget_set_can_focus_and_default (ok_button);
   lives_widget_grab_default (ok_button);
 
-  set_button_width(hbuttonbox,ok_button,DEF_BUTTON_WIDTH);
+  lives_button_box_set_button_width (LIVES_BUTTON_BOX (hbuttonbox), ok_button, DEF_BUTTON_WIDTH);
 
   g_signal_connect (GTK_OBJECT (ok_button), "clicked",
 		    G_CALLBACK (lives_general_button_clicked),
@@ -1778,7 +1778,7 @@ void on_rte_info_clicked (GtkButton *button, gpointer user_data) {
 
 
 
-void on_clear_clicked (GtkButton *button, gpointer user_data) {
+void on_clear_clicked (LiVESButton *button, gpointer user_data) {
   // this is for the "delete" buttons, c.f. clear_all
 
   int idx=GPOINTER_TO_INT(user_data);
@@ -1841,7 +1841,7 @@ void on_clear_clicked (GtkButton *button, gpointer user_data) {
 }
 
 
-static void on_datacon_clicked (GtkButton *button, gpointer user_data) {
+static void on_datacon_clicked (LiVESButton *button, gpointer user_data) {
   int idx=GPOINTER_TO_INT(user_data);
   int modes=rte_getmodespk();
   int key=(int)(idx/modes);
@@ -1854,7 +1854,7 @@ static void on_datacon_clicked (GtkButton *button, gpointer user_data) {
 }
 
 
-static void on_params_clicked (GtkButton *button, gpointer user_data) {
+static void on_params_clicked (LiVESButton *button, gpointer user_data) {
   int idx=GPOINTER_TO_INT(user_data);
   int modes=rte_getmodespk();
   int key=(int)(idx/modes);
@@ -1944,7 +1944,7 @@ static boolean on_rtew_delete_event (LiVESWidget *widget, GdkEvent *event, gpoin
 }
 
 
-static void on_rtew_ok_clicked (GtkButton *button, gpointer user_data) {
+static void on_rtew_ok_clicked (LiVESButton *button, gpointer user_data) {
   on_rtew_delete_event (NULL,NULL,NULL);
 }
 
@@ -2392,10 +2392,10 @@ LiVESWidget * create_rte_window (void) {
   lives_container_add (LIVES_CONTAINER (hbuttonbox), ok_button);
   lives_widget_set_can_focus_and_default (ok_button);
 
-#if !GTK_CHECK_VERSION(3,0,0)
-  gtk_button_box_set_child_size (GTK_BUTTON_BOX (hbuttonbox), DEF_BUTTON_WIDTH, -1);
-#endif
-
+  lives_button_box_set_button_width (LIVES_BUTTON_BOX (hbuttonbox), clear_all_button, DEF_BUTTON_WIDTH);
+  lives_button_box_set_button_width (LIVES_BUTTON_BOX (hbuttonbox), save_keymap_button, DEF_BUTTON_WIDTH);
+  lives_button_box_set_button_width (LIVES_BUTTON_BOX (hbuttonbox), load_keymap_button, DEF_BUTTON_WIDTH);
+  lives_button_box_set_button_width (LIVES_BUTTON_BOX (hbuttonbox), ok_button, DEF_BUTTON_WIDTH);
 
   rtew_accel_group = LIVES_ACCEL_GROUP(lives_accel_group_new ());
   lives_window_add_accel_group (LIVES_WINDOW (rte_window), rtew_accel_group);
@@ -2588,7 +2588,7 @@ void rte_set_defs_activate (GtkMenuItem *menuitem, gpointer user_data) {
 
 
 
-void rte_set_key_defs (GtkButton *button, lives_rfx_t *rfx) {
+void rte_set_key_defs (LiVESButton *button, lives_rfx_t *rfx) {
   int key,mode;
   if (mainw->textwidget_focus!=NULL) {
     LiVESWidget *textwidget=(LiVESWidget *)g_object_get_data (G_OBJECT (mainw->textwidget_focus),"textwidget");
@@ -2605,7 +2605,7 @@ void rte_set_key_defs (GtkButton *button, lives_rfx_t *rfx) {
 
 
 
-void rte_set_defs_ok (GtkButton *button, lives_rfx_t *rfx) {
+void rte_set_defs_ok (LiVESButton *button, lives_rfx_t *rfx) {
   weed_plant_t *ptmpl,*filter;
 
   lives_colRGB24_t *rgbp;
@@ -2652,7 +2652,7 @@ void rte_set_defs_ok (GtkButton *button, lives_rfx_t *rfx) {
 
 
 
-void rte_set_defs_cancel (GtkButton *button, lives_rfx_t *rfx) {
+void rte_set_defs_cancel (LiVESButton *button, lives_rfx_t *rfx) {
   on_paramwindow_cancel_clicked(button,rfx);
   fx_dialog[1]=NULL;
 }
@@ -2660,7 +2660,7 @@ void rte_set_defs_cancel (GtkButton *button, lives_rfx_t *rfx) {
 
 
 
-void rte_reset_defs_clicked (GtkButton *button, lives_rfx_t *rfx) {
+void rte_reset_defs_clicked (LiVESButton *button, lives_rfx_t *rfx) {
   weed_plant_t **ptmpls,**inp,**xinp;
   weed_plant_t **ctmpls;
 

@@ -45,7 +45,7 @@ static double calc_fd_scale(int width, int height) {
 
 }
 
-static void start_preview (GtkButton *button, lives_rfx_t *rfx) {
+static void start_preview (LiVESButton *button, lives_rfx_t *rfx) {
   int i;
   gchar *com;
 
@@ -168,7 +168,7 @@ void framedraw_add_reset(LiVESVBox *box, lives_special_framedraw_rect_t *framedr
   lives_box_pack_start (LIVES_BOX (box), hbox_rst, FALSE, FALSE, 0);
   
   lives_button_set_label (LIVES_BUTTON (mainw->framedraw_reset),_ ("_Reset Values"));
-  gtk_button_set_use_underline (LIVES_BUTTON (mainw->framedraw_reset), TRUE);
+  lives_button_set_use_underline (LIVES_BUTTON (mainw->framedraw_reset), TRUE);
   lives_box_pack_start (LIVES_BOX (hbox_rst), mainw->framedraw_reset, TRUE, FALSE, 0);
   lives_widget_set_sensitive (mainw->framedraw_reset,FALSE);
   
@@ -276,7 +276,7 @@ void widget_add_framedraw (LiVESVBox *box, int start, int end, boolean add_previ
   rfx=(lives_rfx_t *)g_object_get_data(G_OBJECT(lives_widget_get_toplevel(LIVES_WIDGET(box))),"rfx");
   mainw->framedraw_preview = lives_button_new_from_stock ("gtk-refresh");
   lives_button_set_label (LIVES_BUTTON (mainw->framedraw_preview),_ ("_Preview"));
-  gtk_button_set_use_underline (LIVES_BUTTON (mainw->framedraw_preview), TRUE);
+  lives_button_set_use_underline (LIVES_BUTTON (mainw->framedraw_preview), TRUE);
   lives_box_pack_start (LIVES_BOX (hbox), mainw->framedraw_preview, TRUE, FALSE, 0);
   lives_widget_set_sensitive(mainw->framedraw_spinbutton,FALSE);
   lives_widget_set_sensitive(mainw->framedraw_scale,FALSE);
@@ -1104,7 +1104,7 @@ void after_framedraw_widget_changed (LiVESWidget *widget, lives_special_framedra
 
 
 
-void on_framedraw_reset_clicked (GtkButton *button, lives_special_framedraw_rect_t *framedraw) {
+void on_framedraw_reset_clicked (LiVESButton *button, lives_special_framedraw_rect_t *framedraw) {
   // reset to defaults
 
   noupdate=TRUE;

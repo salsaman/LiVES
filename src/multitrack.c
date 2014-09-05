@@ -5339,7 +5339,7 @@ boolean check_for_layout_del (lives_mt *mt, boolean exiting) {
 
 
 static void
-on_comp_exp (GtkButton *button, gpointer user_data)
+on_comp_exp (LiVESButton *button, gpointer user_data)
 {
   lives_check_menu_item_set_active(LIVES_CHECK_MENU_ITEM(user_data),!lives_check_menu_item_get_active(LIVES_CHECK_MENU_ITEM(user_data)));
 
@@ -12850,7 +12850,7 @@ void polymorph (lives_mt *mt, lives_mt_poly_state_t poly) {
     }
 
     bbox=lives_hbutton_box_new();
-    gtk_button_box_set_layout (GTK_BUTTON_BOX (bbox), GTK_BUTTONBOX_SPREAD);
+    lives_button_box_set_layout (LIVES_BUTTON_BOX (bbox), LIVES_BUTTONBOX_SPREAD);
     lives_box_pack_end (LIVES_BOX (mt->fx_list_box), bbox, FALSE, FALSE, 0);
 
     mt->prev_fm_button = lives_button_new_with_mnemonic (_("_Prev filter map")); // Note to translators: previous filter map
@@ -21520,7 +21520,7 @@ GList *layout_audio_is_affected(int clipno, double time) {
 }
 
 
-void mt_change_disp_tracks_ok (GtkButton *button, gpointer user_data) {
+void mt_change_disp_tracks_ok (LiVESButton *button, gpointer user_data) {
   lives_mt *mt=(lives_mt *)user_data;
   lives_general_button_clicked(button,NULL);
   mt->max_disp_vtracks=mainw->fx1_val;
@@ -21741,7 +21741,7 @@ uint32_t event_list_get_byte_size(lives_mt *mt, weed_plant_t *event_list,int *nu
 }
 
 
-void on_amixer_close_clicked (GtkButton *button, lives_mt *mt) {
+void on_amixer_close_clicked (LiVESButton *button, lives_mt *mt) {
   lives_amixer_t *amixer=mt->amixer;
   int i;
   double val;
@@ -21775,7 +21775,7 @@ void on_amixer_close_clicked (GtkButton *button, lives_mt *mt) {
 }
 
 
-static void on_amixer_reset_clicked (GtkButton *button, lives_mt *mt) {
+static void on_amixer_reset_clicked (LiVESButton *button, lives_mt *mt) {
   lives_amixer_t *amixer=mt->amixer;
   int i;
 
@@ -21994,7 +21994,7 @@ LiVESWidget * amixer_add_channel_slider (lives_mt *mt, int i) {
 
 
 
-void amixer_show (GtkButton *button, gpointer user_data) {
+void amixer_show (LiVESButton *button, gpointer user_data) {
   lives_mt *mt=(lives_mt *)user_data;
   LiVESWidget *amixerw;
   LiVESWidget *top_vbox;
@@ -22069,7 +22069,7 @@ void amixer_show (GtkButton *button, gpointer user_data) {
   hbuttonbox = lives_hbutton_box_new ();
   lives_box_pack_start (LIVES_BOX (top_vbox), hbuttonbox, FALSE, TRUE, widget_opts.packing_height*2);
 
-  gtk_button_box_set_layout (GTK_BUTTON_BOX (hbuttonbox), GTK_BUTTONBOX_SPREAD);
+  lives_button_box_set_layout (LIVES_BUTTON_BOX (hbuttonbox), LIVES_BUTTONBOX_SPREAD);
 
   reset_button = lives_button_new_with_mnemonic (_("_Reset values"));
   lives_container_add (LIVES_CONTAINER (hbuttonbox), reset_button);
@@ -22079,13 +22079,8 @@ void amixer_show (GtkButton *button, gpointer user_data) {
   lives_container_add (LIVES_CONTAINER (hbuttonbox), close_button);
   lives_widget_set_can_focus_and_default (close_button);
 
-#if !GTK_CHECK_VERSION(3,0,0)
-  gtk_button_box_set_child_size (GTK_BUTTON_BOX (hbuttonbox), DEF_BUTTON_WIDTH, -1);
-#else
-  lives_widget_set_size_request(reset_button,DEF_BUTTON_WIDTH*4,-1);
-  lives_widget_set_size_request(close_button,DEF_BUTTON_WIDTH*4,-1);
-#endif
-
+  lives_button_box_set_button_width (LIVES_BUTTON_BOX (hbuttonbox), reset_button, DEF_BUTTON_WIDTH*4);
+  lives_button_box_set_button_width (LIVES_BUTTON_BOX (hbuttonbox), close_button, DEF_BUTTON_WIDTH*4);
 
   lives_widget_add_accelerator (close_button, "clicked", accel_group,
                               LIVES_KEY_m, LIVES_CONTROL_MASK,

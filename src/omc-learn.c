@@ -722,7 +722,7 @@ static void omc_macro_row_add_params(lives_omc_match_node_t *mnode, int row, omc
   
   renderer = gtk_cell_renderer_spin_new ();
   
-  spinadj=(GObject *)gtk_adjustment_new (0., -100000., 100000., 1., 10., 0);
+  spinadj=(GObject *)lives_adjustment_new (0., -100000., 100000., 1., 10., 0);
   
   g_object_set (renderer, "width-chars", 7, "mode", GTK_CELL_RENDERER_MODE_EDITABLE,
 		"editable", TRUE, "xalign", 1.0, "adjustment", spinadj, NULL);
@@ -1127,7 +1127,7 @@ static void omc_learner_add_row(int type, int detail, lives_omc_match_node_t *mn
    renderer = gtk_cell_renderer_spin_new ();
    g_object_set_data(G_OBJECT(renderer), "colnum", GUINT_TO_POINTER(OFFS1_COLUMN));
 
-   spinadj=(GObject *)gtk_adjustment_new (0., -100000., 100000., 1., 10., 0);
+   spinadj=(GObject *)lives_adjustment_new (0., -100000., 100000., 1., 10., 0);
 
    g_object_set (renderer, "width-chars", 7, "mode", GTK_CELL_RENDERER_MODE_EDITABLE,
 		 "editable", TRUE, "xalign", 1.0, "adjustment", spinadj, NULL);
@@ -1144,7 +1144,7 @@ static void omc_learner_add_row(int type, int detail, lives_omc_match_node_t *mn
 
    renderer = gtk_cell_renderer_spin_new ();
 
-   spinadj=(GObject *)gtk_adjustment_new (1., -100000., 100000., 1., 10., 0);
+   spinadj=(GObject *)lives_adjustment_new (1., -100000., 100000., 1., 10., 0);
 
    g_object_set (renderer, "width-chars", 12, "mode", GTK_CELL_RENDERER_MODE_EDITABLE,
 		 "editable", TRUE, "xalign", 1.0, "adjustment", spinadj, 
@@ -1163,7 +1163,7 @@ static void omc_learner_add_row(int type, int detail, lives_omc_match_node_t *mn
    renderer = gtk_cell_renderer_spin_new ();
 
 
-   spinadj=(GObject *)gtk_adjustment_new (0., -100000., 100000., 1., 10., 0);
+   spinadj=(GObject *)lives_adjustment_new (0., -100000., 100000., 1., 10., 0);
 
    g_object_set (renderer, "width-chars", 7, "mode", GTK_CELL_RENDERER_MODE_EDITABLE,
 		 "editable", TRUE, "xalign", 1.0, "adjustment", spinadj, NULL);
@@ -1256,7 +1256,7 @@ static void show_existing(omclearn_w *omclw) {
 
 
 
-static void clear_unmatched (GtkButton *button, gpointer user_data) {
+static void clear_unmatched (LiVESButton *button, gpointer user_data) {
   omclearn_w *omclw=(omclearn_w *)user_data;
 
   // destroy everything in table
@@ -1270,7 +1270,7 @@ static void clear_unmatched (GtkButton *button, gpointer user_data) {
 }
 
 
-static void del_all (GtkButton *button, gpointer user_data) {
+static void del_all (LiVESButton *button, gpointer user_data) {
   omclearn_w *omclw=(omclearn_w *)user_data;
 
   if (!do_warning_dialog(_("\nClick OK to delete all entries\n"))) return;
@@ -1285,7 +1285,7 @@ static void del_all (GtkButton *button, gpointer user_data) {
 
 
 
-static void close_learner_dialog (GtkButton *button, gpointer user_data) {
+static void close_learner_dialog (LiVESButton *button, gpointer user_data) {
   mainw->cancelled=CANCEL_USER;
 }
 
@@ -1358,14 +1358,11 @@ static omclearn_w *create_omclearn_dialog(void) {
 
   lives_widget_grab_default (ok_button);
 
-#if !GTK_CHECK_VERSION(3,0,0)
-  gtk_button_box_set_child_size (GTK_BUTTON_BOX (hbuttonbox), DEF_BUTTON_WIDTH, -1);
-#else
-  lives_widget_set_size_request(ok_button,DEF_BUTTON_WIDTH*4,-1);
-  lives_widget_set_size_request(omclw->clear_button,DEF_BUTTON_WIDTH*4,-1);
-  lives_widget_set_size_request(omclw->del_all_button,DEF_BUTTON_WIDTH*4,-1);
-#endif
-  gtk_button_box_set_layout (GTK_BUTTON_BOX (hbuttonbox), GTK_BUTTONBOX_SPREAD);
+  lives_button_box_set_button_width (LIVES_BUTTON_BOX (hbuttonbox), ok_button, DEF_BUTTON_WIDTH*4);
+  lives_button_box_set_button_width (LIVES_BUTTON_BOX (hbuttonbox), omclw->clear_button, DEF_BUTTON_WIDTH*4);
+  lives_button_box_set_button_width (LIVES_BUTTON_BOX (hbuttonbox), omclw->del_all_button, DEF_BUTTON_WIDTH*4);
+
+  lives_button_box_set_layout (LIVES_BUTTON_BOX (hbuttonbox), LIVES_BUTTONBOX_SPREAD);
   
   
   g_signal_connect (GTK_OBJECT (ok_button), "clicked",

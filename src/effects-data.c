@@ -2285,7 +2285,7 @@ enum {
 
 
 
-static void disconbutton_clicked(GtkButton *button, gpointer user_data) {
+static void disconbutton_clicked(LiVESButton *button, gpointer user_data) {
   // disconnect all channels/params
   lives_conx_w *conxwp=(lives_conx_w *)user_data;
 
@@ -2322,7 +2322,7 @@ static void disconbutton_clicked(GtkButton *button, gpointer user_data) {
 }
 
 
-static void apbutton_clicked(GtkButton *button, gpointer user_data) {
+static void apbutton_clicked(LiVESButton *button, gpointer user_data) {
   // autoconnect each param with a compatible one in the target
   lives_conx_w *conxwp=(lives_conx_w *)user_data;
 
@@ -2422,7 +2422,7 @@ static void apbutton_clicked(GtkButton *button, gpointer user_data) {
 }
 
 
-static void acbutton_clicked(GtkButton *button, gpointer user_data) {
+static void acbutton_clicked(LiVESButton *button, gpointer user_data) {
   // autoconnect each channel with a compatible one in the target
   lives_conx_w *conxwp=(lives_conx_w *)user_data;
 

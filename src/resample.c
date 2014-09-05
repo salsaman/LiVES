@@ -714,7 +714,7 @@ on_resample_audio_activate (GtkMenuItem     *menuitem,
 }
 
 void
-on_resaudio_ok_clicked                      (GtkButton *button,
+on_resaudio_ok_clicked                      (LiVESButton *button,
 					     LiVESEntry *entry)
 {
   gchar *com,*msg;  
@@ -959,7 +959,7 @@ on_resample_video_activate (GtkMenuItem     *menuitem,
 
 
 
-void on_resample_vid_ok (GtkButton *button, LiVESEntry *entry) {
+void on_resample_vid_ok (LiVESButton *button, LiVESEntry *entry) {
   int i;
   int old_frames;
   int ostart=cfile->start;
@@ -1568,7 +1568,7 @@ _resaudw *create_resaudw (gshort type, render_details *rdet, LiVESWidget *top_vb
   if (type<3||type>4) {
     dialog_action_area = lives_dialog_get_action_area(LIVES_DIALOG (resaudw->dialog));
     lives_widget_show (dialog_action_area);
-    gtk_button_box_set_layout (GTK_BUTTON_BOX (dialog_action_area), GTK_BUTTONBOX_END);
+    lives_button_box_set_layout (LIVES_BUTTON_BOX (dialog_action_area), LIVES_BUTTONBOX_END);
     
     cancelbutton = lives_button_new_from_stock ("gtk-cancel");
  
@@ -1748,7 +1748,7 @@ void create_new_pb_speed (short type) {
 
 
   dialog_action_area = lives_dialog_get_action_area(LIVES_DIALOG (new_pb_speed));
-  gtk_button_box_set_layout (GTK_BUTTON_BOX (dialog_action_area), GTK_BUTTONBOX_END);
+  lives_button_box_set_layout (LIVES_BUTTON_BOX (dialog_action_area), LIVES_BUTTONBOX_END);
 
   cancelbutton = lives_button_new_from_stock ("gtk-cancel");
   lives_dialog_add_action_widget (LIVES_DIALOG (new_pb_speed), cancelbutton, GTK_RESPONSE_CANCEL);
@@ -1823,7 +1823,7 @@ on_change_speed_activate                (GtkMenuItem     *menuitem,
 
 
 
-void on_change_speed_ok_clicked (GtkButton *button, gpointer user_data) {
+void on_change_speed_ok_clicked (LiVESButton *button, gpointer user_data) {
   double arate=cfile->arate/cfile->fps;
   gchar *msg;
   boolean has_lmap_error=FALSE;

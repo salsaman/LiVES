@@ -118,6 +118,7 @@ typedef GtkFrame                          LiVESFrame;
 typedef GtkComboBox                       LiVESCombo;
 typedef GtkComboBox                       LiVESComboBox;
 typedef GtkButton                         LiVESButton;
+typedef GtkButtonBox                      LiVESButtonBox;
 typedef GtkToggleButton                   LiVESToggleButton;
 
 typedef GtkTextView                       LiVESTextView;
@@ -171,7 +172,7 @@ typedef GtkRange                          LiVESScaleButton;
 #if GTK_CHECK_VERSION(3,2,0)
 typedef GtkGrid                           LiVESGrid;
 #else
-typedef LiVESWidget                         LiVESGrid;
+typedef LiVESWidget                       LiVESGrid;
 #endif
 
 #ifdef LIVES_TABLE_IS_GRID
@@ -211,9 +212,9 @@ typedef GtkStateType LiVESWidgetState;
 #define LIVES_WIDGET_STATE_PRELIGHT       GTK_STATE_PRELIGHT
 #define LIVES_WIDGET_STATE_SELECTED       GTK_STATE_SELECTED
 #define LIVES_WIDGET_STATE_INSENSITIVE    GTK_STATE_INSENSITIVE
-#define LIVES_WIDGET_STATE_INCONSISTENT   GTK_STATE_INSENSITIVE+1
-#define LIVES_WIDGET_STATE_FOCUSED        GTK_STATE_INSENSITIVE+2
-#define LIVES_WIDGET_STATE_BACKDROP       GTK_STATE_INSENSITIVE+3
+#define LIVES_WIDGET_STATE_INCONSISTENT   (GTK_STATE_INSENSITIVE+1)
+#define LIVES_WIDGET_STATE_FOCUSED        (GTK_STATE_INSENSITIVE+2)
+#define LIVES_WIDGET_STATE_BACKDROP       (GTK_STATE_INSENSITIVE+3)
 #endif
 
 
@@ -275,6 +276,10 @@ typedef GtkWrapMode LiVESWrapMode;
 #define LIVES_WRAP_WORD GTK_WRAP_WORD
 #define LIVES_WRAP_WORD_CHAR GTK_WRAP_WORD_CHAR
 
+typedef GtkReliefStyle LiVESReliefStyle;
+#define LIVES_RELIEF_NORMAL GTK_RELIEF_NORMAL
+#define LIVES_RELIEF_HALF GTK_RELIEF_HALF
+#define LIVES_RELIEF_NONE GTK_RELIEF_NONE
 
 #define LIVES_ACCEL_VISIBLE GTK_ACCEL_VISIBLE
   
@@ -288,6 +293,14 @@ typedef GtkSelectionMode LiVESSelectionMode;
 #define LIVES_SELECTION_SINGLE GTK_SELECTION_SINGLE
 #define LIVES_SELECTION_BROWSE GTK_SELECTION_BROWSE
 #define LIVES_SELECTION_MULTIPLE GTK_SELECTION_MULTIPLE
+
+typedef GtkButtonBoxStyle LiVESButtonBoxStyle;
+#define LIVES_BUTTONBOX_DEFAULT_STYLE GTK_BUTTONBOX_DEFAULT_STYLE
+#define LIVES_BUTTONBOX_SPREAD GTK_BUTTONBOX_SPREAD
+#define LIVES_BUTTONBOX_EDGE GTK_BUTTONBOX_EDGE
+#define LIVES_BUTTONBOX_START GTK_BUTTONBOX_START
+#define LIVES_BUTTONBOX_END GTK_BUTTONBOX_END
+#define LIVES_BUTTONBOX_CENTER GTK_BUTTONBOX_CENTER
 
 
 typedef GdkEventMask LiVESEventMask;
@@ -387,6 +400,7 @@ typedef gpointer                          livespointer;
 #define LIVES_COMBO(widget) GTK_COMBO_BOX(widget)
 #define LIVES_COMBO_BOX(widget) GTK_COMBO_BOX(widget)
 #define LIVES_BUTTON(widget) GTK_BUTTON(widget)
+#define LIVES_BUTTON_BOX(widget) GTK_BUTTON_BOX(widget)
 #define LIVES_LABEL(widget) GTK_LABEL(widget)
 #define LIVES_ALIGNMENT(widget) GTK_ALIGNMENT(widget)
 #define LIVES_FILES_CHOOSER(widget) GTK_FILE_CHOOSER(widget)
@@ -863,6 +877,12 @@ LiVESWidget *lives_button_new_with_mnemonic(const char *label);
 
 boolean lives_button_set_label(LiVESButton *, const char *label);
 
+boolean lives_button_set_use_underline(LiVESButton *, boolean use);
+boolean lives_button_set_relief(LiVESButton *, LiVESReliefStyle);
+boolean lives_button_set_image(LiVESButton *, LiVESWidget *image);
+boolean lives_button_set_focus_on_click(LiVESButton *, boolean focus);
+
+
 LiVESWidget *lives_check_button_new(void);
 LiVESWidget *lives_check_button_new_with_label(const char *label);
 LiVESWidget *lives_spin_button_new(LiVESAdjustment *, double climb_rate, uint32_t digits);
@@ -930,12 +950,12 @@ boolean lives_window_has_toplevel_focus(LiVESWindow *);
 LiVESAdjustment *lives_adjustment_new(double value, double lower, double upper, 
 						   double step_increment, double page_increment, double page_size);
 
-void lives_box_reorder_child(LiVESBox *, LiVESWidget *child, int pos);
-void lives_box_set_homogeneous(LiVESBox *, boolean homogeneous);
-void lives_box_set_spacing(LiVESBox *, int spacing);
+boolean lives_box_reorder_child(LiVESBox *, LiVESWidget *child, int pos);
+boolean lives_box_set_homogeneous(LiVESBox *, boolean homogeneous);
+boolean lives_box_set_spacing(LiVESBox *, int spacing);
 
-void lives_box_pack_start(LiVESBox *, LiVESWidget *child, boolean expand, boolean fill, uint32_t padding);
-void lives_box_pack_end(LiVESBox *, LiVESWidget *child, boolean expand, boolean fill, uint32_t padding);
+boolean lives_box_pack_start(LiVESBox *, LiVESWidget *child, boolean expand, boolean fill, uint32_t padding);
+boolean lives_box_pack_end(LiVESBox *, LiVESWidget *child, boolean expand, boolean fill, uint32_t padding);
 
 LiVESWidget *lives_hbox_new(boolean homogeneous, int spacing);
 LiVESWidget *lives_vbox_new(boolean homogeneous, int spacing);
@@ -945,6 +965,9 @@ LiVESWidget *lives_vseparator_new(void);
 
 LiVESWidget *lives_hbutton_box_new(void);
 LiVESWidget *lives_vbutton_box_new(void);
+
+boolean lives_button_box_set_layout(LiVESButtonBox *, LiVESButtonBoxStyle bstyle);
+boolean lives_button_box_set_button_width(LiVESButtonBox *, LiVESWidget *button, int min_width);
 
 LiVESWidget *lives_hscale_new(LiVESAdjustment *);
 LiVESWidget *lives_vscale_new(LiVESAdjustment *);
@@ -1103,8 +1126,6 @@ LiVESToolItem *lives_tool_button_new(LiVESWidget *icon_widget, const char *label
 boolean lives_tool_button_set_icon_widget(LiVESToolButton *, LiVESWidget *icon);
 boolean lives_tool_button_set_label_widget(LiVESToolButton *, LiVESWidget *label);
 boolean lives_tool_button_set_use_underline(LiVESToolButton *, boolean use_underline);
-
-boolean lives_button_set_use_stock(LiVESButton *, boolean use_stock);
 
 double lives_ruler_get_value(LiVESRuler *);
 double lives_ruler_set_value(LiVESRuler *, double value);
@@ -1339,8 +1360,6 @@ int get_box_child_index (LiVESBox *, LiVESWidget *child);
 
 boolean label_act_toggle (LiVESWidget *, LiVESXEventButton *, LiVESToggleButton *);
 boolean widget_act_toggle (LiVESWidget *, LiVESToggleButton *);
-
-void set_button_width(LiVESWidget *buttonbox, LiVESWidget *button, int width);
 
 void toggle_button_toggle (LiVESToggleButton *);
 

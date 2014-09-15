@@ -1738,20 +1738,18 @@ on_quit_activate                      (GtkMenuItem     *menuitem,
 
 
 // TODO - split into undo.c
-void
-on_undo_activate                      (GtkMenuItem     *menuitem,
-				       gpointer         user_data)
-{
+void on_undo_activate (GtkMenuItem *menuitem, gpointer user_data) {
   gchar *com;
-  int ostart=cfile->start;
-  int oend=cfile->end;
   gchar msg[256];
-  int current_file=mainw->current_file;
-  int switch_file=current_file;
-  int asigned,aendian;
 
   boolean bad_header=FALSE;
   boolean retvalb;
+
+  int ostart=cfile->start;
+  int oend=cfile->end;
+  int current_file=mainw->current_file;
+  int switch_file=current_file;
+  int asigned,aendian;
 
   lives_widget_set_sensitive (mainw->undo, FALSE);
   lives_widget_set_sensitive (mainw->redo, TRUE);
@@ -9437,29 +9435,31 @@ void on_effects_paused (LiVESButton *button, gpointer user_data) {
 
 
 
-void
-on_preview_clicked                     (LiVESButton       *button,
-					gpointer         user_data)
-{
+void on_preview_clicked (LiVESButton *button, gpointer user_data) {
   // play an effect/tool preview
   // IMPORTANT: cfile->undo_start and cfile->undo_end determine which frames
   // should be played
 
-  static boolean in_preview_func=FALSE;
-
-  boolean resume_after;
-  int ostart=cfile->start;
-  int oend=cfile->end;
-  gshort oaudp=prefs->audio_player;
-  int toy_type=mainw->toy_type;
-  boolean ointernal_messaging=mainw->internal_messaging;
-  //int i;
-  uint64_t old_rte; //TODO - block better
-  int64_t xticks;
-  int current_file=mainw->current_file;
   weed_plant_t *filter_map=mainw->filter_map; // back this up in case we are rendering
   weed_plant_t *afilter_map=mainw->afilter_map; // back this up in case we are rendering
   weed_plant_t *audio_event=mainw->audio_event;
+
+  short oaudp=prefs->audio_player;
+
+  uint64_t old_rte; //TODO - block better
+  int64_t xticks;
+
+  static boolean in_preview_func=FALSE;
+
+  boolean resume_after;
+  boolean ointernal_messaging=mainw->internal_messaging;
+
+  int ostart=cfile->start;
+  int oend=cfile->end;
+
+  int toy_type=mainw->toy_type;
+
+  int current_file=mainw->current_file;
 
   if (in_preview_func) {
     // this is a special value of cancel - don't propogate it to "open"

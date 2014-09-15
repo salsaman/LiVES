@@ -142,6 +142,8 @@ typedef GtkCheckMenuItem                  LiVESCheckMenuItem;
 typedef GtkImageMenuItem                  LiVESImageMenuItem;
 typedef GtkRadioMenuItem                  LiVESRadioMenuItem;
 
+typedef GtkNotebook                       LiVESNotebook;
+
 typedef GtkTreeView                       LiVESTreeView;
 typedef GtkTreeViewColumn                 LiVESTreeViewColumn;
 
@@ -418,6 +420,8 @@ typedef gpointer                          livespointer;
 #define LIVES_SCROLLED_WINDOW(widget) GTK_SCROLLED_WINDOW(widget)
 #define LIVES_TOOLBAR(widget) GTK_TOOLBAR(widget)
 #define LIVES_TOOL_ITEM(widget) GTK_TOOL_ITEM(widget)
+
+#define LIVES_NOTEBOOK(widget) GTK_NOTEBOOK(widget)
 
 #if GTK_CHECK_VERSION(2,14,0)
 #define LIVES_SCALE_BUTTON(widget) GTK_SCALE_BUTTON(widget)
@@ -1159,10 +1163,23 @@ boolean lives_widget_is_realized(LiVESWidget *);
 double lives_adjustment_get_upper(LiVESAdjustment *);
 double lives_adjustment_get_lower(LiVESAdjustment *);
 double lives_adjustment_get_page_size(LiVESAdjustment *);
+double lives_adjustment_get_value(LiVESAdjustment *);
 
-void lives_adjustment_set_upper(LiVESAdjustment *, double upper);
-void lives_adjustment_set_lower(LiVESAdjustment *, double lower);
-void lives_adjustment_set_page_size(LiVESAdjustment *, double page_size);
+boolean lives_adjustment_set_upper(LiVESAdjustment *, double upper);
+boolean lives_adjustment_set_lower(LiVESAdjustment *, double lower);
+boolean lives_adjustment_set_page_size(LiVESAdjustment *, double page_size);
+boolean lives_adjustment_set_value(LiVESAdjustment *, double value);
+
+boolean lives_adjustment_clamp_page(LiVESAdjustment *, double lower, double upper);
+
+LiVESAdjustment *lives_range_get_adjustment(LiVESRange *);
+boolean lives_range_set_value(LiVESRange *, double value);
+boolean lives_range_set_range(LiVESRange *, double min, double max);
+boolean lives_range_set_increments(LiVESRange *, double step, double page);
+boolean lives_range_set_inverted(LiVESRange *, boolean invert);
+
+double lives_range_get_value(LiVESRange *);
+
 
 const char *lives_label_get_text(LiVESLabel *);
 boolean lives_label_set_text(LiVESLabel *, const char *text);
@@ -1204,6 +1221,11 @@ boolean lives_frame_set_label_widget(LiVESFrame *, LiVESWidget *);
 LiVESWidget *lives_frame_get_label_widget(LiVESFrame *);
 boolean lives_frame_set_shadow_type(LiVESFrame *, LiVESShadowType);
 
+LiVESWidget *lives_notebook_new(void);
+LiVESWidget *lives_notebook_get_nth_page(LiVESNotebook *, int pagenum);
+int lives_notebook_get_current_page(LiVESNotebook *);
+boolean lives_notebook_set_current_page(LiVESNotebook *, int pagenum);
+boolean lives_notebook_set_tab_label(LiVESNotebook *, LiVESWidget *child, LiVESWidget *tablabel);
 
 LiVESWidget *lives_menu_new(void);
 

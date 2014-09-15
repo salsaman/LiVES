@@ -2323,7 +2323,7 @@ LIVES_INLINE LiVESWidget *lives_bin_get_child(LiVESBin *bin) {
 
 
 LIVES_INLINE double lives_adjustment_get_upper(LiVESAdjustment *adj) {
-  double upper=0;
+  double upper=0.;
 #ifdef GUI_GTK
 #if GTK_CHECK_VERSION(2,14,0)
   upper=gtk_adjustment_get_upper(adj);
@@ -2336,7 +2336,7 @@ LIVES_INLINE double lives_adjustment_get_upper(LiVESAdjustment *adj) {
 
 
 LIVES_INLINE double lives_adjustment_get_lower(LiVESAdjustment *adj) {
-  double lower=0;
+  double lower=0.;
 #ifdef GUI_GTK
 #if GTK_CHECK_VERSION(2,14,0)
   lower=gtk_adjustment_get_lower(adj);
@@ -2349,7 +2349,7 @@ LIVES_INLINE double lives_adjustment_get_lower(LiVESAdjustment *adj) {
 
 
 LIVES_INLINE double lives_adjustment_get_page_size(LiVESAdjustment *adj) {
-  double page_size=0;
+  double page_size=0.;
 #ifdef GUI_GTK
 #if GTK_CHECK_VERSION(2,14,0)
   page_size=gtk_adjustment_get_page_size(adj);
@@ -2361,39 +2361,125 @@ LIVES_INLINE double lives_adjustment_get_page_size(LiVESAdjustment *adj) {
 }
 
 
+LIVES_INLINE double lives_adjustment_get_value(LiVESAdjustment *adj) {
+  double value=0.;
+#ifdef GUI_GTK
+  value=gtk_adjustment_get_value(adj);
+#endif
+  return value;
+}
 
-LIVES_INLINE void lives_adjustment_set_upper(LiVESAdjustment *adj, double upper) {
+
+LIVES_INLINE boolean lives_adjustment_set_upper(LiVESAdjustment *adj, double upper) {
 #ifdef GUI_GTK
 #if GTK_CHECK_VERSION(2,14,0)
   gtk_adjustment_set_upper(adj,upper);
 #else
   adj->upper=upper;
 #endif
+  return TRUE;
 #endif
+  return FALSE;
 }
 
 
-LIVES_INLINE void lives_adjustment_set_lower(LiVESAdjustment *adj, double lower) {
+LIVES_INLINE boolean lives_adjustment_set_lower(LiVESAdjustment *adj, double lower) {
 #ifdef GUI_GTK
 #if GTK_CHECK_VERSION(2,14,0)
   gtk_adjustment_set_lower(adj,lower);
 #else
   adj->lower=lower;
 #endif
+  return TRUE;
 #endif
+  return FALSE;
 }
 
 
-LIVES_INLINE void lives_adjustment_set_page_size(LiVESAdjustment *adj, double page_size) {
+LIVES_INLINE boolean lives_adjustment_set_page_size(LiVESAdjustment *adj, double page_size) {
 #ifdef GUI_GTK
 #if GTK_CHECK_VERSION(2,14,0)
   gtk_adjustment_set_page_size(adj,page_size);
 #else
   adj->page_size=page_size;
 #endif
+  return TRUE;
 #endif
+  return FALSE;
 }
 
+
+LIVES_INLINE boolean lives_adjustment_set_value(LiVESAdjustment *adj, double value) {
+#ifdef GUI_GTK
+  gtk_adjustment_set_value(adj,value);
+  return TRUE;
+#endif
+  return FALSE;
+}
+
+
+LIVES_INLINE boolean lives_adjustment_clamp_page(LiVESAdjustment *adj, double lower, double upper) {
+#ifdef GUI_GTK
+  gtk_adjustment_clamp_page(adj,lower,upper);
+  return TRUE;
+#endif
+  return FALSE;
+}
+
+
+
+LIVES_INLINE LiVESAdjustment *lives_range_get_adjustment(LiVESRange *range) {
+  LiVESAdjustment *adj=NULL;
+#ifdef GUI_GTK
+  adj=gtk_range_get_adjustment(range);
+#endif
+  return adj;
+}
+
+
+LIVES_INLINE boolean lives_range_set_value(LiVESRange *range, double value) {
+#ifdef GUI_GTK
+  gtk_range_set_value(range,value);
+  return TRUE;
+#endif
+  return FALSE;
+}
+
+
+LIVES_INLINE boolean lives_range_set_range(LiVESRange *range, double min, double max) {
+#ifdef GUI_GTK
+  gtk_range_set_range(range,min,max);
+  return TRUE;
+#endif
+  return FALSE;
+}
+
+
+LIVES_INLINE boolean lives_range_set_increments(LiVESRange *range, double step, double page) {
+#ifdef GUI_GTK
+  gtk_range_set_increments(range,step,page);
+  return TRUE;
+#endif
+  return FALSE;
+}
+
+
+LIVES_INLINE boolean lives_range_set_inverted(LiVESRange *range, boolean invert){
+#ifdef GUI_GTK
+  gtk_range_set_inverted(range,invert);
+  return TRUE;
+#endif
+  return FALSE;
+}
+
+
+LIVES_INLINE double lives_range_get_value(LiVESRange *range) {
+  double value=0.;
+#ifdef GUI_GTK
+  value=gtk_range_get_value(range);
+#endif
+  return value;
+}
 
 
 LIVES_INLINE boolean lives_tree_model_get(LiVESTreeModel *tmod, LiVESTreeIter *titer, ...) {
@@ -3276,6 +3362,55 @@ LIVES_INLINE boolean lives_frame_set_shadow_type(LiVESFrame *frame, LiVESShadowT
   return FALSE;
 }
 
+
+
+LIVES_INLINE LiVESWidget *lives_notebook_new(void) {
+  LiVESWidget *nbook=NULL;
+#ifdef GUI_GTK
+  nbook=gtk_notebook_new();
+#endif
+  return nbook;
+}
+
+
+
+LIVES_INLINE LiVESWidget *lives_notebook_get_nth_page(LiVESNotebook *nbook, int pagenum) {
+  LiVESWidget *page=NULL;
+#ifdef GUI_GTK
+  page=gtk_notebook_get_nth_page(nbook,pagenum);
+#endif
+  return page;
+}
+
+
+
+LIVES_INLINE int lives_notebook_get_current_page(LiVESNotebook *nbook) {
+  int pagenum=-1;
+#ifdef GUI_GTK
+  pagenum=gtk_notebook_get_current_page(nbook);
+#endif
+  return pagenum;
+}
+
+
+
+LIVES_INLINE boolean lives_notebook_set_current_page(LiVESNotebook *nbook, int pagenum) {
+#ifdef GUI_GTK
+  gtk_notebook_set_current_page(nbook,pagenum);
+  return TRUE;
+#endif
+  return FALSE;
+}
+
+
+
+LIVES_INLINE boolean lives_notebook_set_tab_label(LiVESNotebook *nbook, LiVESWidget *child, LiVESWidget *tablabel) {
+#ifdef GUI_GTK
+  gtk_notebook_set_tab_label(nbook,child,tablabel);
+  return TRUE;
+#endif
+  return FALSE;
+}
 
 
 

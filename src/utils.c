@@ -2172,11 +2172,11 @@ boolean is_legal_set_name(const char *set_name, boolean allow_dupes) {
 
   // iff allow_dupes is FALSE then we disallow the name of any existing set (has a subdirectory in the working directory)
 
-  int i;
-
   char *msg;
   char *reject=" /\\*\"";
   size_t slen=strlen(set_name);
+
+  register int i;
 
   if (slen==0) {
     if (!mainw->osc_auto) do_blocking_error_dialog(_("\nSet names may not be blank.\n"));

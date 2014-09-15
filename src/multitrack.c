@@ -1,3 +1,4 @@
+
 // multitrack.c
 // LiVES
 // (c) G. Finch 2005 - 2014 <salsaman@gmail.com>
@@ -1861,7 +1862,7 @@ static boolean on_mt_timeline_scroll           (LiVESWidget       *widget,
 
   if (!lives_window_has_toplevel_focus(LIVES_WINDOW(mainw->multitrack->window))) return FALSE;
 
-  cval=gtk_adjustment_get_value(gtk_range_get_adjustment(GTK_RANGE(mt->scrollbar)));
+  cval=lives_adjustment_get_value(lives_range_get_adjustment(LIVES_RANGE(mt->scrollbar)));
 
   if (event->direction==GDK_SCROLL_UP) {
     if (--cval<0) return FALSE;;
@@ -1870,7 +1871,7 @@ static boolean on_mt_timeline_scroll           (LiVESWidget       *widget,
     if (++cval>=g_list_length(mt->video_draws)) return FALSE;
   }
 
-  gtk_range_set_value(GTK_RANGE(mt->scrollbar),cval);
+  lives_range_set_value(LIVES_RANGE(mt->scrollbar),cval);
 
   return FALSE;
 }
@@ -1967,7 +1968,7 @@ void scroll_tracks (lives_mt *mt, int top_track, boolean set_value) {
   lives_adjustment_set_upper(LIVES_ADJUSTMENT(mt->vadjustment),(double)(mt->num_video_tracks*2-1));
 
   if (set_value)
-    gtk_adjustment_set_value(GTK_ADJUSTMENT(mt->vadjustment),(double)top_track);
+    lives_adjustment_set_value(LIVES_ADJUSTMENT(mt->vadjustment),(double)top_track);
 
   if (top_track<0) top_track=0;
   if (top_track>=g_list_length(mt->video_draws)) top_track=g_list_length(mt->video_draws)-1;
@@ -2436,9 +2437,9 @@ void scroll_tracks (lives_mt *mt, int top_track, boolean set_value) {
 				      (int)lives_adjustment_get_page_size(LIVES_ADJUSTMENT(mt->vadjustment))));
 
 
-  if (gtk_adjustment_get_value(GTK_ADJUSTMENT(mt->vadjustment))+lives_adjustment_get_page_size(LIVES_ADJUSTMENT(mt->vadjustment))>
+  if (lives_adjustment_get_value(LIVES_ADJUSTMENT(mt->vadjustment))+lives_adjustment_get_page_size(LIVES_ADJUSTMENT(mt->vadjustment))>
       lives_adjustment_get_upper(LIVES_ADJUSTMENT(mt->vadjustment)))
-    lives_adjustment_set_upper(LIVES_ADJUSTMENT(mt->vadjustment),gtk_adjustment_get_value(GTK_ADJUSTMENT(mt->vadjustment))+
+    lives_adjustment_set_upper(LIVES_ADJUSTMENT(mt->vadjustment),lives_adjustment_get_value(LIVES_ADJUSTMENT(mt->vadjustment))+
 			       lives_adjustment_get_page_size(LIVES_ADJUSTMENT(mt->vadjustment)));
 
   table_children=gtk_container_get_children(LIVES_CONTAINER(mt->timeline_table));
@@ -2711,8 +2712,8 @@ void mt_clip_select (lives_mt *mt, boolean scroll) {
       GtkAdjustment *adj;
       int value=lives_adjustment_get_upper((adj=gtk_scrolled_window_get_hadjustment(GTK_SCROLLED_WINDOW(mt->clip_scroll))))
 	*(mt->clip_selected+.5)/len;
-      if (scroll) gtk_adjustment_clamp_page(adj,value-lives_adjustment_get_page_size(adj)/2,
-					    value+lives_adjustment_get_page_size(adj)/2);
+      if (scroll) lives_adjustment_clamp_page(adj,value-lives_adjustment_get_page_size(adj)/2,
+					      value+lives_adjustment_get_page_size(adj)/2);
       lives_widget_set_state(clipbox,LIVES_WIDGET_STATE_PRELIGHT);
       lives_widget_set_sensitive (mt->adjust_start_end, mainw->files[mt->file_selected]->frames>0);
       if (mt->current_track>-1) {
@@ -2753,10 +2754,10 @@ static void set_time_scrollbar(lives_mt *mt) {
   if (mt->tl_max>mt->end_secs) mt->end_secs=mt->tl_max;
 
   g_object_freeze_notify (G_OBJECT(mt->hadjustment));
-  gtk_range_set_range(GTK_RANGE(mt->time_scrollbar),0.,mt->end_secs);
-  gtk_range_set_increments(GTK_RANGE(mt->time_scrollbar),page/4.,page);
+  lives_range_set_range(LIVES_RANGE(mt->time_scrollbar),0.,mt->end_secs);
+  lives_range_set_increments(LIVES_RANGE(mt->time_scrollbar),page/4.,page);
   lives_adjustment_set_page_size(LIVES_ADJUSTMENT(mt->hadjustment),(double)page);
-  gtk_adjustment_set_value(GTK_ADJUSTMENT(mt->hadjustment),(double)mt->tl_min);
+  lives_adjustment_set_value(LIVES_ADJUSTMENT(mt->hadjustment),(double)mt->tl_min);
   g_object_thaw_notify (G_OBJECT(mt->hadjustment));
   lives_widget_queue_draw(mt->time_scrollbar);
 
@@ -3164,7 +3165,7 @@ static void scroll_track_on_screen(lives_mt *mt, int track) {
 
 void scroll_track_by_scrollbar (GtkScrollbar *sbar, gpointer user_data) {
   lives_mt *mt=(lives_mt *)user_data;
-  scroll_tracks(mt,gtk_adjustment_get_value(gtk_range_get_adjustment(GTK_RANGE(sbar))),FALSE);
+  scroll_tracks(mt,lives_adjustment_get_value(lives_range_get_adjustment(LIVES_RANGE(sbar))),FALSE);
   track_select(mt);
 }
 
@@ -3211,9 +3212,9 @@ static void mt_zoom (lives_mt *mt, double scale) {
 
 static void scroll_time_by_scrollbar (GtkHScrollbar *sbar, gpointer user_data) {
   lives_mt *mt=(lives_mt *)user_data;
-  mt->tl_min=gtk_adjustment_get_value(gtk_range_get_adjustment(GTK_RANGE(sbar)));
-  mt->tl_max=gtk_adjustment_get_value(gtk_range_get_adjustment(GTK_RANGE(sbar)))
-    +lives_adjustment_get_page_size(gtk_range_get_adjustment(GTK_RANGE(sbar)));
+  mt->tl_min=lives_adjustment_get_value(lives_range_get_adjustment(LIVES_RANGE(sbar)));
+  mt->tl_max=lives_adjustment_get_value(lives_range_get_adjustment(LIVES_RANGE(sbar)))
+    +lives_adjustment_get_page_size(lives_range_get_adjustment(LIVES_RANGE(sbar)));
   mt_zoom(mt,-1.);
   paint_lines(mt,lives_ruler_get_value(LIVES_RULER (mt->timeline)),TRUE);
 }
@@ -3287,7 +3288,7 @@ LIVES_INLINE int poly_tab_to_page(uint32_t tab) {
 
 
 LIVES_INLINE lives_mt_poly_state_t get_poly_state_from_page(lives_mt *mt) {
-  return (lives_mt_poly_state_t)poly_page_to_tab(gtk_notebook_get_current_page(GTK_NOTEBOOK(mt->nb)));
+  return (lives_mt_poly_state_t)poly_page_to_tab(lives_notebook_get_current_page(LIVES_NOTEBOOK(mt->nb)));
 }
 
 
@@ -3321,7 +3322,7 @@ static void notebook_error(GtkNotebook *nb, uint32_t tab, lives_mt_nb_error_t er
 
   lives_widget_set_hexpand(mt->nb_label,TRUE);
 
-  lives_container_add(LIVES_CONTAINER(gtk_notebook_get_nth_page(GTK_NOTEBOOK(nb),page)),mt->nb_label);
+  lives_container_add(LIVES_CONTAINER(lives_notebook_get_nth_page(LIVES_NOTEBOOK(nb),page)),mt->nb_label);
   lives_widget_show(mt->nb_label);
   lives_widget_hide(mt->poly_box);
 
@@ -3384,54 +3385,54 @@ static boolean notebook_page(LiVESWidget *nb, LiVESWidget *nbp, uint32_t tab, gp
   switch (tab) {
   case POLY_CLIPS:
     if (mt->clip_labels==NULL) {
-      notebook_error(GTK_NOTEBOOK(mt->nb),tab,NB_ERROR_NOCLIP,mt);
+      notebook_error(LIVES_NOTEBOOK(mt->nb),tab,NB_ERROR_NOCLIP,mt);
       return FALSE;
     }
     if (mt->poly_state!=POLY_CLIPS&&nb!=NULL) polymorph(mt,POLY_CLIPS);
-    else lives_widget_reparent(mt->poly_box,gtk_notebook_get_nth_page(GTK_NOTEBOOK(mt->nb),page));
+    else lives_widget_reparent(mt->poly_box,lives_notebook_get_nth_page(LIVES_NOTEBOOK(mt->nb),page));
     break;
   case POLY_IN_OUT:
     if (mt->block_selected==NULL&&mt->poly_state!=POLY_IN_OUT) {
-      notebook_error(GTK_NOTEBOOK(mt->nb),tab,NB_ERROR_SEL,mt);
+      notebook_error(LIVES_NOTEBOOK(mt->nb),tab,NB_ERROR_SEL,mt);
       return FALSE;
     }
     if (mt->poly_state!=POLY_IN_OUT) polymorph(mt,POLY_IN_OUT);
-    else lives_widget_reparent(mt->poly_box,gtk_notebook_get_nth_page(GTK_NOTEBOOK(mt->nb),page));
+    else lives_widget_reparent(mt->poly_box,lives_notebook_get_nth_page(LIVES_NOTEBOOK(mt->nb),page));
     break;
   case POLY_FX_STACK:
     if (mt->poly_state!=POLY_FX_STACK) polymorph(mt,POLY_FX_STACK);
-    else lives_widget_reparent(mt->poly_box,gtk_notebook_get_nth_page(GTK_NOTEBOOK(mt->nb),page));
+    else lives_widget_reparent(mt->poly_box,lives_notebook_get_nth_page(LIVES_NOTEBOOK(mt->nb),page));
     break;
   case POLY_EFFECTS:
     if (mt->block_selected==NULL&&mt->poly_state!=POLY_EFFECTS) {
-      notebook_error(GTK_NOTEBOOK(mt->nb),tab,NB_ERROR_SEL,mt);
+      notebook_error(LIVES_NOTEBOOK(mt->nb),tab,NB_ERROR_SEL,mt);
       return FALSE;
     }
     if (mt->poly_state!=POLY_EFFECTS) polymorph(mt,POLY_EFFECTS);
-    else lives_widget_reparent(mt->poly_box,gtk_notebook_get_nth_page(GTK_NOTEBOOK(mt->nb),page));
+    else lives_widget_reparent(mt->poly_box,lives_notebook_get_nth_page(LIVES_NOTEBOOK(mt->nb),page));
     break;
   case POLY_TRANS:
     if (g_list_length(mt->selected_tracks)!=2||mt->region_start==mt->region_end) {
-      notebook_error(GTK_NOTEBOOK(mt->nb),tab,NB_ERROR_NOTRANS,mt);
+      notebook_error(LIVES_NOTEBOOK(mt->nb),tab,NB_ERROR_NOTRANS,mt);
       return FALSE;
     }
     if (mt->poly_state!=POLY_TRANS) polymorph(mt,POLY_TRANS);
-    else lives_widget_reparent(mt->poly_box,gtk_notebook_get_nth_page(GTK_NOTEBOOK(mt->nb),page));
+    else lives_widget_reparent(mt->poly_box,lives_notebook_get_nth_page(LIVES_NOTEBOOK(mt->nb),page));
     break;
   case POLY_COMP:
     if (mt->selected_tracks==NULL||mt->region_start==mt->region_end) {
-      notebook_error(GTK_NOTEBOOK(mt->nb),tab,NB_ERROR_NOCOMP,mt);
+      notebook_error(LIVES_NOTEBOOK(mt->nb),tab,NB_ERROR_NOCOMP,mt);
       return FALSE;
     }
     if (mt->poly_state!=POLY_COMP) polymorph(mt,POLY_COMP);
-    else lives_widget_reparent(mt->poly_box,gtk_notebook_get_nth_page(GTK_NOTEBOOK(mt->nb),page));
+    else lives_widget_reparent(mt->poly_box,lives_notebook_get_nth_page(LIVES_NOTEBOOK(mt->nb),page));
     break;
   case POLY_PARAMS:
     if (mt->poly_state!=POLY_PARAMS&&mt->selected_init_event==NULL) {
-      notebook_error(GTK_NOTEBOOK(mt->nb),tab,NB_ERROR_NOEFFECT,mt);
+      notebook_error(LIVES_NOTEBOOK(mt->nb),tab,NB_ERROR_NOEFFECT,mt);
       return FALSE;
     }
-    lives_widget_reparent(mt->poly_box,gtk_notebook_get_nth_page(GTK_NOTEBOOK(mt->nb),page));
+    lives_widget_reparent(mt->poly_box,lives_notebook_get_nth_page(LIVES_NOTEBOOK(mt->nb),page));
     if (mt->selected_init_event!=NULL&&mt->poly_state!=POLY_PARAMS) {
       fubar(mt);
       polymorph(mt,POLY_PARAMS);
@@ -3445,8 +3446,8 @@ static boolean notebook_page(LiVESWidget *nb, LiVESWidget *nbp, uint32_t tab, gp
 
 static void set_poly_tab(lives_mt *mt, uint32_t tab) {
   int page=poly_tab_to_page(tab);
-  lives_widget_show(gtk_notebook_get_nth_page(GTK_NOTEBOOK(mt->nb),page));
-  gtk_notebook_set_current_page(GTK_NOTEBOOK(mt->nb),page);
+  lives_widget_show(lives_notebook_get_nth_page(LIVES_NOTEBOOK(mt->nb),page));
+  lives_notebook_set_current_page(LIVES_NOTEBOOK(mt->nb),page);
 }
 
 
@@ -8084,7 +8085,7 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
 		    (gpointer)mt);
 
 
-  mt->nb = gtk_notebook_new ();
+  mt->nb = lives_notebook_new ();
   if (palette->style&STYLE_1) {
     lives_widget_set_bg_color (mt->hpaned, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
     lives_widget_set_bg_color (mt->nb, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
@@ -8116,7 +8117,7 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
 
   lives_container_add (LIVES_CONTAINER (hbox), mt->poly_box);
 
-  gtk_notebook_set_tab_label (GTK_NOTEBOOK (mt->nb), gtk_notebook_get_nth_page (GTK_NOTEBOOK (mt->nb), 0), label);
+  lives_notebook_set_tab_label (LIVES_NOTEBOOK(mt->nb), lives_notebook_get_nth_page (LIVES_NOTEBOOK (mt->nb), 0), label);
 
 
   // does not work...
@@ -8175,7 +8176,7 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
   lives_widget_set_vexpand(hbox,TRUE);
 
   lives_container_add (LIVES_CONTAINER (mt->nb), hbox);
-  gtk_notebook_set_tab_label (GTK_NOTEBOOK (mt->nb), gtk_notebook_get_nth_page (GTK_NOTEBOOK (mt->nb), 1), label);
+  lives_notebook_set_tab_label (LIVES_NOTEBOOK(mt->nb), lives_notebook_get_nth_page (LIVES_NOTEBOOK (mt->nb), 1), label);
 #if !GTK_CHECK_VERSION(3,0,0)
   if (palette->style&STYLE_1) {
     lives_widget_set_fg_color (label, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
@@ -8193,7 +8194,7 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
   lives_widget_set_vexpand(hbox,TRUE);
 
   lives_container_add (LIVES_CONTAINER (mt->nb), hbox);
-  gtk_notebook_set_tab_label (GTK_NOTEBOOK (mt->nb), gtk_notebook_get_nth_page (GTK_NOTEBOOK (mt->nb), 2), label);
+  lives_notebook_set_tab_label (LIVES_NOTEBOOK(mt->nb), lives_notebook_get_nth_page (LIVES_NOTEBOOK (mt->nb), 2), label);
 #if !GTK_CHECK_VERSION(3,0,0)
   if (palette->style&STYLE_1) {
     lives_widget_set_fg_color (label, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
@@ -8210,7 +8211,7 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
   lives_widget_set_vexpand(hbox,TRUE);
 
   lives_container_add (LIVES_CONTAINER (mt->nb), hbox);
-  gtk_notebook_set_tab_label (GTK_NOTEBOOK (mt->nb), gtk_notebook_get_nth_page (GTK_NOTEBOOK (mt->nb), 3), label);
+  lives_notebook_set_tab_label (LIVES_NOTEBOOK(mt->nb), lives_notebook_get_nth_page (LIVES_NOTEBOOK (mt->nb), 3), label);
 #if !GTK_CHECK_VERSION(3,0,0)
   if (palette->style&STYLE_1) {
     lives_widget_set_fg_color (label, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
@@ -8228,7 +8229,7 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
   lives_widget_set_vexpand(hbox,TRUE);
 
   lives_container_add (LIVES_CONTAINER (mt->nb), hbox);
-  gtk_notebook_set_tab_label (GTK_NOTEBOOK (mt->nb), gtk_notebook_get_nth_page (GTK_NOTEBOOK (mt->nb), 4), label);
+  lives_notebook_set_tab_label (LIVES_NOTEBOOK(mt->nb), lives_notebook_get_nth_page (LIVES_NOTEBOOK (mt->nb), 4), label);
 #if !GTK_CHECK_VERSION(3,0,0)
   if (palette->style&STYLE_1) {
     lives_widget_set_fg_color (label, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
@@ -8245,7 +8246,7 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
   lives_widget_set_vexpand(hbox,TRUE);
 
   lives_container_add (LIVES_CONTAINER (mt->nb), hbox);
-  gtk_notebook_set_tab_label (GTK_NOTEBOOK (mt->nb), gtk_notebook_get_nth_page (GTK_NOTEBOOK (mt->nb), 5), label);
+  lives_notebook_set_tab_label (LIVES_NOTEBOOK(mt->nb), lives_notebook_get_nth_page (LIVES_NOTEBOOK (mt->nb), 5), label);
 #if !GTK_CHECK_VERSION(3,0,0)
   if (palette->style&STYLE_1) {
     lives_widget_set_fg_color (label, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
@@ -8263,7 +8264,7 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
 
 
   lives_container_add (LIVES_CONTAINER (mt->nb), hbox);
-  gtk_notebook_set_tab_label (GTK_NOTEBOOK (mt->nb), gtk_notebook_get_nth_page (GTK_NOTEBOOK (mt->nb), 6), label);
+  lives_notebook_set_tab_label (LIVES_NOTEBOOK(mt->nb), lives_notebook_get_nth_page (LIVES_NOTEBOOK (mt->nb), 6), label);
 #if !GTK_CHECK_VERSION(3,0,0)
   if (palette->style&STYLE_1) {
     lives_widget_set_fg_color (label, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
@@ -8306,7 +8307,7 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
 
   mt->node_scale=lives_hscale_new(LIVES_ADJUSTMENT(mt->node_adj));
   gtk_scale_set_draw_value(GTK_SCALE(mt->node_scale),FALSE);
-  mt->node_spinbutton = gtk_spin_button_new (GTK_ADJUSTMENT (mt->node_adj), 0, 3);
+  mt->node_spinbutton = gtk_spin_button_new (LIVES_ADJUSTMENT (mt->node_adj), 0, 3);
 
   g_signal_connect_after (GTK_OBJECT (mt->node_spinbutton), "value_changed",
 			  G_CALLBACK (on_node_spin_value_changed),
@@ -21757,7 +21758,7 @@ void on_amixer_close_clicked (LiVESButton *button, lives_mt *mt) {
     }
     else {
 #endif
-      val=gtk_range_get_value(GTK_RANGE(amixer->ch_sliders[i]));
+      val=lives_range_get_value(LIVES_RANGE(amixer->ch_sliders[i]));
 #if ENABLE_GIW
     }
 #endif
@@ -21795,10 +21796,10 @@ static void on_amixer_reset_clicked (LiVESButton *button, lives_mt *mt) {
     }
     else {
 #endif
-      g_signal_handler_block(gtk_range_get_adjustment(GTK_RANGE(amixer->ch_sliders[i])),amixer->ch_slider_fns[i]);
-      gtk_range_set_value(GTK_RANGE(amixer->ch_sliders[i]),(double)GPOINTER_TO_INT
+      g_signal_handler_block(lives_range_get_adjustment(LIVES_RANGE(amixer->ch_sliders[i])),amixer->ch_slider_fns[i]);
+      lives_range_set_value(LIVES_RANGE(amixer->ch_sliders[i]),(double)GPOINTER_TO_INT
 			  (g_list_nth_data(mt->audio_vols_back,i))/LIVES_AVOL_SCALE);
-      g_signal_handler_unblock(gtk_range_get_adjustment(GTK_RANGE(amixer->ch_sliders[i])),amixer->ch_slider_fns[i]);
+      g_signal_handler_unblock(lives_range_get_adjustment(LIVES_RANGE(amixer->ch_sliders[i])),amixer->ch_slider_fns[i]);
 #if ENABLE_GIW
     }
 #endif
@@ -21840,8 +21841,8 @@ void on_amixer_slider_changed (GtkAdjustment *adj, lives_mt *mt) {
   else {
 #endif
     if (TRUE) {
-      GtkRange *range=GTK_RANGE(amixer->ch_sliders[layer]);
-      val=gtk_range_get_value(range);
+      GtkRange *range=LIVES_RANGE(amixer->ch_sliders[layer]);
+      val=lives_range_get_value(range);
     }
 #if ENABLE_GIW
   }
@@ -21858,9 +21859,9 @@ void on_amixer_slider_changed (GtkAdjustment *adj, lives_mt *mt) {
 	}
 	else {
 #endif
-	  g_signal_handler_block(gtk_range_get_adjustment(GTK_RANGE(amixer->ch_sliders[i])),amixer->ch_slider_fns[i]);
-	  gtk_range_set_value(GTK_RANGE(amixer->ch_sliders[i]),val);
-	  g_signal_handler_unblock(gtk_range_get_adjustment(GTK_RANGE(amixer->ch_sliders[i])),amixer->ch_slider_fns[i]);
+	  g_signal_handler_block(lives_range_get_adjustment(LIVES_RANGE(amixer->ch_sliders[i])),amixer->ch_slider_fns[i]);
+	  lives_range_set_value(LIVES_RANGE(amixer->ch_sliders[i]),val);
+	  g_signal_handler_unblock(lives_range_get_adjustment(LIVES_RANGE(amixer->ch_sliders[i])),amixer->ch_slider_fns[i]);
 #if ENABLE_GIW
 	}
 #endif
@@ -21874,9 +21875,9 @@ void on_amixer_slider_changed (GtkAdjustment *adj, lives_mt *mt) {
 	}
 	else {
 #endif
-	  g_signal_handler_block(gtk_range_get_adjustment(GTK_RANGE(amixer->ch_sliders[0])),amixer->ch_slider_fns[0]);
-	  gtk_range_set_value(GTK_RANGE(amixer->ch_sliders[0]),1.-val);
-	  g_signal_handler_unblock(gtk_range_get_adjustment(GTK_RANGE(amixer->ch_sliders[0])),amixer->ch_slider_fns[0]);
+	  g_signal_handler_block(lives_range_get_adjustment(LIVES_RANGE(amixer->ch_sliders[0])),amixer->ch_slider_fns[0]);
+	  lives_range_set_value(LIVES_RANGE(amixer->ch_sliders[0]),1.-val);
+	  g_signal_handler_unblock(lives_range_get_adjustment(LIVES_RANGE(amixer->ch_sliders[0])),amixer->ch_slider_fns[0]);
 #if ENABLE_GIW
 	}
 #endif
@@ -21893,9 +21894,9 @@ void on_amixer_slider_changed (GtkAdjustment *adj, lives_mt *mt) {
 	  }
 	  else {
 #endif
-	    g_signal_handler_block(gtk_range_get_adjustment(GTK_RANGE(amixer->ch_sliders[i])),amixer->ch_slider_fns[i]);
-	    gtk_range_set_value(GTK_RANGE(amixer->ch_sliders[i]),1.-val);
-	    g_signal_handler_unblock(gtk_range_get_adjustment(GTK_RANGE(amixer->ch_sliders[i])),amixer->ch_slider_fns[i]);
+	    g_signal_handler_block(lives_range_get_adjustment(LIVES_RANGE(amixer->ch_sliders[i])),amixer->ch_slider_fns[i]);
+	    lives_range_set_value(LIVES_RANGE(amixer->ch_sliders[i]),1.-val);
+	    g_signal_handler_unblock(lives_range_get_adjustment(LIVES_RANGE(amixer->ch_sliders[i])),amixer->ch_slider_fns[i]);
 #if ENABLE_GIW
 	  }
 #endif
@@ -21931,11 +21932,11 @@ LiVESWidget * amixer_add_channel_slider (lives_mt *mt, int i) {
 
   adj = (GObject *)lives_adjustment_new (0.5, 0., 4., 0.01, 0.1, 0.);
     
-  spinbutton = gtk_spin_button_new (GTK_ADJUSTMENT (adj), 0.1, 3);
+  spinbutton = gtk_spin_button_new (LIVES_ADJUSTMENT (adj), 0.1, 3);
 
 #if ENABLE_GIW
   if (prefs->lamp_buttons) {
-    amixer->ch_sliders[i]=giw_vslider_new(GTK_ADJUSTMENT(adj));
+    amixer->ch_sliders[i]=giw_vslider_new(LIVES_ADJUSTMENT(adj));
     giw_vslider_set_legends_digits(GIW_VSLIDER(amixer->ch_sliders[i]),1);
     giw_vslider_set_major_ticks_number(GIW_VSLIDER(amixer->ch_sliders[i]),5);
     giw_vslider_set_minor_ticks_number(GIW_VSLIDER(amixer->ch_sliders[i]),4);
@@ -21946,7 +21947,7 @@ LiVESWidget * amixer_add_channel_slider (lives_mt *mt, int i) {
   else {
 #endif
     amixer->ch_sliders[i]=lives_vscale_new(LIVES_ADJUSTMENT(adj));
-    gtk_range_set_inverted(GTK_RANGE(amixer->ch_sliders[i]),TRUE);
+    lives_range_set_inverted(LIVES_RANGE(amixer->ch_sliders[i]),TRUE);
     gtk_scale_set_digits(GTK_SCALE(amixer->ch_sliders[i]),2);
     gtk_scale_set_value_pos(GTK_SCALE(amixer->ch_sliders[i]),GTK_POS_BOTTOM);
 #if ENABLE_GIW

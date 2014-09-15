@@ -1,3 +1,4 @@
+
 // osc.c
 // LiVES (lives-exe)
 // (c) G. Finch 2004 - 2013 <salsaman@gmail.com>
@@ -1085,7 +1086,7 @@ void lives_osc_cb_clip_resample(void *context, int arglen, const void *vargs, OS
 
   if (mainw->playing_file>-1) return lives_osc_notify_failure();
 
-  if (mainw->current_file<1||mainw->preview||mainw->is_processing) return lives_osc_notify_failure();
+  if (mainw->current_file<1||mainw->preview||mainw->is_processing||mainw->multitrack!=NULL) return lives_osc_notify_failure();
 
   if (!lives_osc_check_arguments (arglen,vargs,"f",FALSE)) {
     if (!lives_osc_check_arguments (arglen,vargs,"i",TRUE)) return lives_osc_notify_failure();
@@ -1126,13 +1127,78 @@ void lives_osc_cb_clip_close(void *context, int arglen, const void *vargs, OSCTi
     return lives_osc_notify_failure();
   }
 
-  if (clipno<1||clipno>MAX_FILES||mainw->files[clipno]==NULL||(mainw->multitrack!=NULL&&clipno==mainw->multitrack->render_file)) return lives_osc_notify_failure();
+  if (clipno<1||clipno>MAX_FILES||mainw->files[clipno]==NULL||(mainw->multitrack!=NULL&&clipno==mainw->multitrack->render_file)) 
+    return lives_osc_notify_failure();
 
   if (clipno==current_file) current_file=-1;
 
   mainw->current_file=clipno;
 
   close_current_file(current_file);
+  return lives_osc_notify_success(NULL);
+}
+
+
+
+void lives_osc_cb_clip_undo(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
+  int clipno=mainw->current_file;
+  int current_file=clipno;
+
+  if (mainw->playing_file>-1) return lives_osc_notify_failure();
+
+  if (mainw->current_file<1||mainw->preview||mainw->is_processing||mainw->multitrack!=NULL) return lives_osc_notify_failure();
+
+  if (lives_osc_check_arguments (arglen,vargs,"i",FALSE)) { 
+    lives_osc_check_arguments (arglen,vargs,"i",TRUE);
+    lives_osc_parse_int_argument(vargs,&clipno);
+  }
+  else if (!lives_osc_check_arguments (arglen,vargs,"",TRUE)) {
+    return lives_osc_notify_failure();
+  }
+
+  if (clipno<1||clipno>MAX_FILES||mainw->files[clipno]==NULL)
+    return lives_osc_notify_failure();
+
+  if (!mainw->files[clipno]->undoable) return lives_osc_notify_failure(); 
+
+  mainw->current_file=clipno;
+
+  on_undo_activate(NULL,NULL);
+
+  switch_to_file(mainw->current_file=0,current_file);
+
+  return lives_osc_notify_success(NULL);
+}
+
+
+
+void lives_osc_cb_clip_redo(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
+  int clipno=mainw->current_file;
+  int current_file=clipno;
+
+  if (mainw->playing_file>-1) return lives_osc_notify_failure();
+
+  if (mainw->current_file<1||mainw->preview||mainw->is_processing||mainw->multitrack!=NULL) return lives_osc_notify_failure();
+
+  if (lives_osc_check_arguments (arglen,vargs,"i",FALSE)) { 
+    lives_osc_check_arguments (arglen,vargs,"i",TRUE);
+    lives_osc_parse_int_argument(vargs,&clipno);
+  }
+  else if (!lives_osc_check_arguments (arglen,vargs,"",TRUE)) {
+    return lives_osc_notify_failure();
+  }
+
+  if (clipno<1||clipno>MAX_FILES||mainw->files[clipno]==NULL)
+    return lives_osc_notify_failure();
+
+  if (!mainw->files[clipno]->redoable) return lives_osc_notify_failure(); 
+
+  mainw->current_file=clipno;
+
+  on_redo_activate(NULL,NULL);
+
+  switch_to_file(mainw->current_file=0,current_file);
+
   return lives_osc_notify_success(NULL);
 }
 
@@ -1163,7 +1229,8 @@ void lives_osc_cb_fgclip_copy(void *context, int arglen, const void *vargs, OSCT
     return lives_osc_notify_failure();
   }
 
-  if (clipno<1||clipno>MAX_FILES||mainw->files[clipno]==NULL||(mainw->files[clipno]->clip_type!=CLIP_TYPE_DISK&&mainw->files[clipno]->clip_type!=CLIP_TYPE_FILE)) return lives_osc_notify_failure();
+  if (clipno<1||clipno>MAX_FILES||mainw->files[clipno]==NULL||(mainw->files[clipno]->clip_type!=CLIP_TYPE_DISK&&
+							       mainw->files[clipno]->clip_type!=CLIP_TYPE_FILE)) return lives_osc_notify_failure();
 
   mainw->current_file=clipno;
   start=cfile->start;
@@ -1191,7 +1258,38 @@ void lives_osc_cb_fgclip_copy(void *context, int arglen, const void *vargs, OSCT
 
 
 
-void lives_osc_cb_fgclipsel_copy(void *context, int arglen, const void *vargs, OSCTimeTag when,	NetworkReturnAddressPtr ra) {
+void lives_osc_cb_fgclipsel_rteapply(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
+  int clipno=mainw->current_file;
+  int current_file=clipno;
+
+  if (mainw->playing_file>-1||mainw->multitrack!=NULL) return lives_osc_notify_failure();
+
+  if (mainw->current_file<1||mainw->preview||mainw->is_processing) return lives_osc_notify_failure();
+
+  if (lives_osc_check_arguments (arglen,vargs,"i",FALSE)) { 
+    lives_osc_check_arguments (arglen,vargs,"i",TRUE);
+    lives_osc_parse_int_argument(vargs,&clipno);
+  }
+  else if (!lives_osc_check_arguments (arglen,vargs,"",TRUE)) {
+    return lives_osc_notify_failure();
+  }
+
+  if (clipno<1||clipno>MAX_FILES||mainw->files[clipno]==NULL||(mainw->files[clipno]->clip_type!=CLIP_TYPE_DISK&&
+							       mainw->files[clipno]->clip_type!=CLIP_TYPE_FILE)) return lives_osc_notify_failure();
+
+  mainw->current_file=clipno;
+
+  on_realfx_activate(NULL,&mainw->rendered_fx[0]);
+
+  mainw->current_file=current_file;
+
+  lives_osc_notify_success(NULL);
+}
+
+
+
+
+void lives_osc_cb_fgclipsel_copy(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
 
   int noaudio=0;
   int clipno=mainw->current_file;
@@ -1215,7 +1313,8 @@ void lives_osc_cb_fgclipsel_copy(void *context, int arglen, const void *vargs, O
     return lives_osc_notify_failure();
   }
 
-  if (clipno<1||clipno>MAX_FILES||mainw->files[clipno]==NULL||(mainw->files[clipno]->clip_type!=CLIP_TYPE_DISK&&mainw->files[clipno]->clip_type!=CLIP_TYPE_FILE)) return lives_osc_notify_failure();
+  if (clipno<1||clipno>MAX_FILES||mainw->files[clipno]==NULL||(mainw->files[clipno]->clip_type!=CLIP_TYPE_DISK&&
+							       mainw->files[clipno]->clip_type!=CLIP_TYPE_FILE)) return lives_osc_notify_failure();
 
   mainw->current_file=clipno;
 
@@ -1231,7 +1330,6 @@ void lives_osc_cb_fgclipsel_copy(void *context, int arglen, const void *vargs, O
 
   lives_osc_notify_success(NULL);
 }
-
 
 
 
@@ -1261,7 +1359,8 @@ void lives_osc_cb_fgclipsel_cut(void *context, int arglen, const void *vargs, OS
     return lives_osc_notify_failure();
   }
 
-  if (clipno<1||clipno>MAX_FILES||mainw->files[clipno]==NULL||(mainw->files[clipno]->clip_type!=CLIP_TYPE_DISK&&mainw->files[clipno]->clip_type!=CLIP_TYPE_FILE)) return lives_osc_notify_failure();
+  if (clipno<1||clipno>MAX_FILES||mainw->files[clipno]==NULL||(mainw->files[clipno]->clip_type!=CLIP_TYPE_DISK&&
+							       mainw->files[clipno]->clip_type!=CLIP_TYPE_FILE)) return lives_osc_notify_failure();
 
   mainw->current_file=clipno;
 
@@ -1310,7 +1409,8 @@ void lives_osc_cb_fgclipsel_delete(void *context, int arglen, const void *vargs,
     return lives_osc_notify_failure();
   }
 
-  if (clipno<1||clipno>MAX_FILES||mainw->files[clipno]==NULL||(mainw->files[clipno]->clip_type!=CLIP_TYPE_DISK&&mainw->files[clipno]->clip_type!=CLIP_TYPE_FILE)) return lives_osc_notify_failure();
+  if (clipno<1||clipno>MAX_FILES||mainw->files[clipno]==NULL||(mainw->files[clipno]->clip_type!=CLIP_TYPE_DISK&&
+							       mainw->files[clipno]->clip_type!=CLIP_TYPE_FILE)) return lives_osc_notify_failure();
 
   mainw->current_file=clipno;
 
@@ -1402,7 +1502,8 @@ void lives_osc_cb_clipbd_insertb(void *context, int arglen, const void *vargs, O
     return lives_osc_notify_failure();
   }
 
-  if (clipno<1||clipno>MAX_FILES||mainw->files[clipno]==NULL||(mainw->files[clipno]->clip_type!=CLIP_TYPE_DISK&&mainw->files[clipno]->clip_type!=CLIP_TYPE_FILE)) return lives_osc_notify_failure();
+  if (clipno<1||clipno>MAX_FILES||mainw->files[clipno]==NULL||(mainw->files[clipno]->clip_type!=CLIP_TYPE_DISK&&
+							       mainw->files[clipno]->clip_type!=CLIP_TYPE_FILE)) return lives_osc_notify_failure();
 
   if (times==0||times<-1) return lives_osc_notify_failure();
 
@@ -1461,7 +1562,8 @@ void lives_osc_cb_clipbd_inserta(void *context, int arglen, const void *vargs, O
     return lives_osc_notify_failure();
   }
 
-  if (clipno<1||clipno>MAX_FILES||mainw->files[clipno]==NULL||(mainw->files[clipno]->clip_type!=CLIP_TYPE_DISK&&mainw->files[clipno]->clip_type!=CLIP_TYPE_FILE)) return lives_osc_notify_failure();
+  if (clipno<1||clipno>MAX_FILES||mainw->files[clipno]==NULL||(mainw->files[clipno]->clip_type!=CLIP_TYPE_DISK&&
+							       mainw->files[clipno]->clip_type!=CLIP_TYPE_FILE)) return lives_osc_notify_failure();
 
   if (times==0||times<-1) return lives_osc_notify_failure();
 
@@ -1522,7 +1624,8 @@ void lives_osc_cb_bgclip_retrigger (void *context, int arglen, const void *vargs
 
   if (mainw->blend_file<1||mainw->files[mainw->blend_file]==NULL||mainw->blend_file==mainw->current_file) return lives_osc_notify_failure();
 
-  if (mainw->files[mainw->blend_file]->pb_fps>0.||(mainw->files[mainw->blend_file]->play_paused&&mainw->files[mainw->blend_file]->freeze_fps>0.)) mainw->files[mainw->blend_file]->frameno=mainw->files[mainw->blend_file]->last_frameno=1;
+  if (mainw->files[mainw->blend_file]->pb_fps>0.||(mainw->files[mainw->blend_file]->play_paused&&mainw->files[mainw->blend_file]->freeze_fps>0.)) 
+    mainw->files[mainw->blend_file]->frameno=mainw->files[mainw->blend_file]->last_frameno=1;
   else mainw->files[mainw->blend_file]->frameno=mainw->files[mainw->blend_file]->last_frameno=mainw->files[mainw->blend_file]->frames;
   lives_osc_notify_success(NULL);
 }
@@ -6359,9 +6462,12 @@ static struct
     { "/clip/select",		"select",	lives_osc_cb_fgclip_select,			1	},
     { "/clip/close",		"close",	lives_osc_cb_clip_close,	  		        1	},
     { "/clip/copy",		"copy",	lives_osc_cb_fgclip_copy,	  		        1	},
+    { "/clip/undo",		"undo",	lives_osc_cb_clip_undo,	  		        1	},
+    { "/clip/redo",		"redo",	lives_osc_cb_clip_redo,	  		        1	},
     { "/clip/selection/copy",		"copy",	lives_osc_cb_fgclipsel_copy,	  		        55	},
     { "/clip/selection/cut",		"cut",	lives_osc_cb_fgclipsel_cut,	  		        55	},
     { "/clip/selection/delete",		"delete",	lives_osc_cb_fgclipsel_delete,	  		        55	},
+    { "/clip/selection/rte_apply",		"rte_apply",	lives_osc_cb_fgclipsel_rteapply,	  		        55	},
     { "/clipboard/paste",		"paste",	lives_osc_cb_clipbd_paste,			70	},
     { "/clipboard/insert_before",		"insert_before",	lives_osc_cb_clipbd_insertb,			70	},
     { "/clipboard/insert_after",		"insert_after",	lives_osc_cb_clipbd_inserta,			70	},

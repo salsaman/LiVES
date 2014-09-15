@@ -354,29 +354,13 @@ static LiVESWidget *aud_text_view_new(void) {
 
 
 lives_clipinfo_t *create_clip_info_window (int audio_channels, boolean is_mt) {
-  // TODO : rewrite this horrible code
-
   LiVESWidget *dialog_vbox;
   LiVESWidget *dialog_action_area;
-  LiVESWidget *frame4;
-  LiVESWidget *fixed3;
-  LiVESWidget *fixed5;
-  LiVESWidget *fixed6;
-  LiVESWidget *label45;
-  LiVESWidget *label46;
-  LiVESWidget *label47;
-  LiVESWidget *label48;
-  LiVESWidget *label44;
-  LiVESWidget *label43;
-  LiVESWidget *label40;
-  LiVESWidget *label50;
-  LiVESWidget *label51;
-  LiVESWidget *label52;
-  LiVESWidget *label53;
-  LiVESWidget *frame5;
-  LiVESWidget *left;
-  LiVESWidget *frame6;
-  LiVESWidget *right;
+  LiVESWidget *table;
+  LiVESWidget *label;
+  LiVESWidget *vidframe;
+  LiVESWidget *laudframe;
+  LiVESWidget *raudframe;
   LiVESWidget *okbutton;
 
   LiVESAccelGroup *accel_group;
@@ -404,141 +388,177 @@ lives_clipinfo_t *create_clip_info_window (int audio_channels, boolean is_mt) {
   dialog_vbox = lives_dialog_get_content_area(LIVES_DIALOG(filew->dialog));
 
   if (cfile->frames>0||is_mt) {
-    frame4 = lives_frame_new (NULL);
+    vidframe = lives_frame_new (NULL);
 
-    lives_box_pack_start (LIVES_BOX (dialog_vbox), frame4, TRUE, TRUE, 0);
+    lives_box_pack_start (LIVES_BOX (dialog_vbox), vidframe, TRUE, TRUE, 0);
     if (palette->style&STYLE_1) {
-      lives_widget_set_bg_color(frame4, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
+      lives_widget_set_bg_color(vidframe, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
     }
 
-    fixed3 = gtk_fixed_new ();
-    lives_container_add (LIVES_CONTAINER (frame4), fixed3);
-    lives_container_set_border_width (LIVES_CONTAINER (fixed3), widget_opts.border_width);
-    
+    table=lives_table_new(3,4,TRUE);
+
+    lives_table_set_col_spacings (LIVES_TABLE (table), widget_opts.packing_width*4);
+    lives_table_set_row_spacings (LIVES_TABLE (table), widget_opts.packing_height);
+    lives_container_set_border_width (LIVES_CONTAINER (table), widget_opts.border_width);
+
+    lives_container_add (LIVES_CONTAINER (vidframe), table);
+
+    label = lives_standard_label_new (_("Format"));
+    lives_table_attach (LIVES_TABLE (table), label, 0, 1, 0, 1,
+			(GtkAttachOptions) (LIVES_FILL|LIVES_EXPAND),
+			(GtkAttachOptions) (0), 0, 0);
+
+    label = lives_standard_label_new (_("Frame size"));
+    lives_table_attach (LIVES_TABLE (table), label, 0, 1, 1, 2,
+			(GtkAttachOptions) (LIVES_FILL|LIVES_EXPAND),
+			(GtkAttachOptions) (0), 0, 0);
+
+    if (!is_mt) label = lives_standard_label_new (_("File size"));
+    else label = lives_standard_label_new (_("Byte size"));
+    lives_table_attach (LIVES_TABLE (table), label, 0, 1, 2, 3,
+			(GtkAttachOptions) (LIVES_FILL|LIVES_EXPAND),
+			(GtkAttachOptions) (0), 0, 0);
+
+    label = lives_standard_label_new (_("FPS"));
+    lives_table_attach (LIVES_TABLE (table), label, 2, 3, 0, 1,
+			(GtkAttachOptions) (LIVES_FILL|LIVES_EXPAND),
+			(GtkAttachOptions) (0), 0, 0);
+
+    if (!is_mt) label = lives_standard_label_new (_("Frames"));
+    else label = lives_standard_label_new (_("Events"));
+    lives_table_attach (LIVES_TABLE (table), label, 2, 3, 1, 2,
+			(GtkAttachOptions) (LIVES_FILL|LIVES_EXPAND),
+			(GtkAttachOptions) (0), 0, 0);
+
+    label = lives_standard_label_new (_("Total time"));
+    lives_table_attach (LIVES_TABLE (table), label, 2, 3, 2, 3,
+			(GtkAttachOptions) (LIVES_FILL|LIVES_EXPAND),
+			(GtkAttachOptions) (0), 0, 0);
+
     filew->textview24 = vid_text_view_new ();
-    gtk_fixed_put (GTK_FIXED (fixed3), filew->textview24, TB_WIDTH, 48);
-    
+    lives_table_attach (LIVES_TABLE (table), filew->textview24, 1, 2, 0, 1,
+			(GtkAttachOptions) (LIVES_FILL|LIVES_EXPAND),
+			(GtkAttachOptions) (0), 0, 0);
+
     filew->textview25 = vid_text_view_new ();
-    gtk_fixed_put (GTK_FIXED (fixed3), filew->textview25, TB_WIDTH+400, 48);
-  
+    lives_table_attach (LIVES_TABLE (table), filew->textview25, 3, 4, 0, 1,
+			(GtkAttachOptions) (LIVES_FILL|LIVES_EXPAND),
+			(GtkAttachOptions) (0), 0, 0);
+
     filew->textview26 = vid_text_view_new ();
-    gtk_fixed_put (GTK_FIXED (fixed3), filew->textview26, TB_WIDTH, 136);
-    
+    lives_table_attach (LIVES_TABLE (table), filew->textview26, 1, 2, 1, 2,
+			(GtkAttachOptions) (LIVES_FILL|LIVES_EXPAND),
+			(GtkAttachOptions) (0), 0, 0);
+
     filew->textview27 = vid_text_view_new ();
-    gtk_fixed_put (GTK_FIXED (fixed3), filew->textview27, TB_WIDTH+400, 136);
-    
+    lives_table_attach (LIVES_TABLE (table), filew->textview27, 3, 4, 1, 2,
+			(GtkAttachOptions) (LIVES_FILL|LIVES_EXPAND),
+			(GtkAttachOptions) (0), 0, 0);
+
     filew->textview28 = vid_text_view_new ();
-    gtk_fixed_put (GTK_FIXED (fixed3), filew->textview28, TB_WIDTH+400, 224);
-    
+    lives_table_attach (LIVES_TABLE (table), filew->textview28, 3, 4, 2, 3,
+			(GtkAttachOptions) (LIVES_FILL|LIVES_EXPAND),
+			(GtkAttachOptions) (0), 0, 0);
+
     filew->textview29 = vid_text_view_new ();
-    gtk_fixed_put (GTK_FIXED (fixed3), filew->textview29, TB_WIDTH, 224);
-    
-    label45 = lives_standard_label_new (_("Format"));
+    lives_table_attach (LIVES_TABLE (table), filew->textview29, 1, 2, 2, 3,
+			(GtkAttachOptions) (LIVES_FILL|LIVES_EXPAND),
+			(GtkAttachOptions) (0), 0, 0);
 
-    gtk_fixed_put (GTK_FIXED (fixed3), label45, 44, 64);
-    lives_widget_set_size_request (label45, 125, 20);
 
-    label46 = lives_standard_label_new (_("Frame size"));
-
-    gtk_fixed_put (GTK_FIXED (fixed3), label46, 18, 152);
-    lives_widget_set_size_request (label46, 145, 20);
-
-    if (!is_mt) label47 = lives_standard_label_new (_("File size"));
-    else label47 = lives_standard_label_new (_("Byte size"));
-
-    gtk_fixed_put (GTK_FIXED (fixed3), label47, 18, 240);
-    lives_widget_set_size_request (label47, 145, 20);
-
-    label48 = lives_standard_label_new (_("Total time"));
-
-    gtk_fixed_put (GTK_FIXED (fixed3), label48, 450, 240);
-    lives_widget_set_size_request (label48, 145, 20);
-
-    label44 = lives_standard_label_new (_("FPS"));
-
-    gtk_fixed_put (GTK_FIXED (fixed3), label44, 476, 64);
-    lives_widget_set_size_request (label44, 120, 20);
-
-    if (!is_mt) label43 = lives_standard_label_new (_("Frames"));
-    else label43 = lives_standard_label_new (_("Events"));
-
-    gtk_fixed_put (GTK_FIXED (fixed3), label43, 476, 152);
-    lives_widget_set_size_request (label43, 125, 20);
-
-    label40 = lives_standard_label_new (_("Video"));
-
-    lives_frame_set_label_widget (LIVES_FRAME (frame4), label40);
+    label = lives_standard_label_new (_("Video"));
+    lives_frame_set_label_widget (LIVES_FRAME (vidframe), label);
   }
 
   if (audio_channels>0) {
-    frame5 = lives_frame_new (NULL);
+    laudframe = lives_frame_new (NULL);
 
-    lives_box_pack_start (LIVES_BOX (dialog_vbox), frame5, TRUE, TRUE, 0);
+    lives_box_pack_start (LIVES_BOX (dialog_vbox), laudframe, TRUE, TRUE, 0);
     if (palette->style&STYLE_1) {
-      lives_widget_set_bg_color(frame5, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
+      lives_widget_set_bg_color(laudframe, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
     }
 
     if (audio_channels>1) {
-      left = lives_standard_label_new (_("Left Audio"));
+      label = lives_standard_label_new (_("Left Audio"));
     }
     else {
-      left = lives_standard_label_new (_("Audio"));
+      label = lives_standard_label_new (_("Audio"));
     }
 
-    lives_frame_set_label_widget (LIVES_FRAME (frame5), left);
+    lives_frame_set_label_widget (LIVES_FRAME (laudframe), label);
 
-    fixed5 = gtk_fixed_new ();
-    lives_container_add (LIVES_CONTAINER (frame5), fixed5);
-    lives_container_set_border_width (LIVES_CONTAINER (fixed5), widget_opts.border_width);
+    table=lives_table_new(1,4,TRUE);
+
+    lives_table_set_col_spacings (LIVES_TABLE (table), widget_opts.packing_width*4);
+    lives_table_set_row_spacings (LIVES_TABLE (table), widget_opts.packing_height);
+    lives_container_set_border_width (LIVES_CONTAINER (table), widget_opts.border_width);
+
+    lives_container_add (LIVES_CONTAINER (laudframe), table);
 
     if (!is_mt) {
-      filew->textview_ltime = aud_text_view_new ();
-      gtk_fixed_put (GTK_FIXED (fixed5), filew->textview_ltime, TB_WIDTH+400, 16);
-      
-      label50 = lives_standard_label_new (_("Total time"));
+      label = lives_standard_label_new (_("Total time"));
+      lives_table_attach (LIVES_TABLE (table), label, 0, 1, 0, 1,
+			  (GtkAttachOptions) (LIVES_FILL|LIVES_EXPAND),
+			  (GtkAttachOptions) (0), 0, 0);
 
-      gtk_fixed_put (GTK_FIXED (fixed5), label50, 450, 32);
-      lives_widget_set_size_request (label50, 145, 16);
+      filew->textview_ltime = aud_text_view_new ();
+      lives_table_attach (LIVES_TABLE (table), filew->textview_ltime, 1, 2, 0, 1,
+			  (GtkAttachOptions) (LIVES_FILL|LIVES_EXPAND),
+			  (GtkAttachOptions) (0), 0, 0);
     }
 
+    label = lives_standard_label_new (_("Rate/size"));
+    lives_table_attach (LIVES_TABLE (table), label, 2, 3, 0, 1,
+			(GtkAttachOptions) (LIVES_FILL|LIVES_EXPAND),
+			(GtkAttachOptions) (0), 0, 0);
+
     filew->textview_lrate = aud_text_view_new ();
-    gtk_fixed_put (GTK_FIXED (fixed5), filew->textview_lrate, TB_WIDTH, 16);
-    
-    label52 = lives_standard_label_new (_("Rate/size"));
-    gtk_fixed_put (GTK_FIXED (fixed5), label52, 30, 32);
-    lives_widget_set_size_request (label52, 130, 16);
+    lives_table_attach (LIVES_TABLE (table), filew->textview_lrate, 3, 4, 0, 1,
+			(GtkAttachOptions) (LIVES_FILL|LIVES_EXPAND),
+			(GtkAttachOptions) (0), 0, 0);
+
 
     if (audio_channels>1) {
-      frame6 = lives_frame_new (NULL);
+      raudframe = lives_frame_new (NULL);
 
-      lives_box_pack_start (LIVES_BOX (dialog_vbox), frame6, TRUE, TRUE, 0);
+      lives_box_pack_start (LIVES_BOX (dialog_vbox), raudframe, TRUE, TRUE, 0);
       if (palette->style&STYLE_1) {
-	lives_widget_set_bg_color(frame6, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
+	lives_widget_set_bg_color(raudframe, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
       }
 
-      fixed6 = gtk_fixed_new ();
-      lives_container_add (LIVES_CONTAINER (frame6), fixed6);
-      lives_container_set_border_width (LIVES_CONTAINER (fixed6), widget_opts.border_width);
-      
+      label = lives_standard_label_new (_("Right audio"));
+      lives_frame_set_label_widget (LIVES_FRAME (raudframe), label);
+
+      table=lives_table_new(1,4,TRUE);
+
+      lives_table_set_col_spacings (LIVES_TABLE (table), widget_opts.packing_width*4);
+      lives_table_set_row_spacings (LIVES_TABLE (table), widget_opts.packing_height);
+      lives_container_set_border_width (LIVES_CONTAINER (table), widget_opts.border_width);
+
+      lives_container_add (LIVES_CONTAINER (raudframe), table);
+
       if (!is_mt) {
+	label = lives_standard_label_new (_("Total time"));
+	lives_table_attach (LIVES_TABLE (table), label, 0, 1, 0, 1,
+			    (GtkAttachOptions) (LIVES_FILL|LIVES_EXPAND),
+			    (GtkAttachOptions) (0), 0, 0);
+
 	filew->textview_rtime = aud_text_view_new ();
-	gtk_fixed_put (GTK_FIXED (fixed6), filew->textview_rtime, TB_WIDTH+400, 16);
-	
-	label51 = lives_standard_label_new (_("Total time"));
-	gtk_fixed_put (GTK_FIXED (fixed6), label51, 450, 32);
-	lives_widget_set_size_request (label51, 145, 16);
+	lives_table_attach (LIVES_TABLE (table), filew->textview_rtime, 1, 2, 0, 1,
+			    (GtkAttachOptions) (LIVES_FILL|LIVES_EXPAND),
+			    (GtkAttachOptions) (0), 0, 0);
       }
+
+      label = lives_standard_label_new (_("Rate/size"));
+      lives_table_attach (LIVES_TABLE (table), label, 2, 3, 0, 1,
+			  (GtkAttachOptions) (LIVES_FILL|LIVES_EXPAND),
+			  (GtkAttachOptions) (0), 0, 0);
 
       filew->textview_rrate = aud_text_view_new ();
-      gtk_fixed_put (GTK_FIXED (fixed6), filew->textview_rrate, TB_WIDTH, 16);
-      
-      label53 = lives_standard_label_new (_("Rate/size"));
-      gtk_fixed_put (GTK_FIXED (fixed6), label53, 30, 32);
-      lives_widget_set_size_request (label53, 130, 16);
-      
-      right = lives_standard_label_new (_("Right audio"));
+      lives_table_attach (LIVES_TABLE (table), filew->textview_rrate, 3, 4, 0, 1,
+			  (GtkAttachOptions) (LIVES_FILL|LIVES_EXPAND),
+			  (GtkAttachOptions) (0), 0, 0);
 
-      lives_frame_set_label_widget (LIVES_FRAME (frame6), right);
     }
   }
 

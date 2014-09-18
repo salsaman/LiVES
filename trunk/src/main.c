@@ -2726,7 +2726,7 @@ int main (int argc, char *argv[]) {
 
 #ifdef LIVES_NO_DEBUG
   // don't crash on GTK+ fatals
-  g_log_set_always_fatal ((GLogLevelFlags)0);
+  //g_log_set_always_fatal ((GLogLevelFlags)0);
 #endif
 
   g_log_set_default_handler(lives_log_handler,NULL);
@@ -4577,7 +4577,7 @@ void check_layer_ready(weed_plant_t *layer) {
     pthread_join(*frame_thread,NULL);
     free(frame_thread);
  
-    if (weed_plant_has_leaf(layer,"host_deinterlace")) {
+    if (weed_plant_has_leaf(layer,"host_deinterlace")&&weed_get_boolean_value(layer,"host_deinterlace",&error)==WEED_TRUE) {
       int error;
       weed_timecode_t tc=weed_get_int64_value(layer,"host_tc",&error);
       deinterlace_frame(layer,tc);

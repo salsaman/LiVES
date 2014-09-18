@@ -19,7 +19,35 @@ shared_ldflags = -shared -fPIC -DPIC -module -no-undefined -avoid-version --tag=
 shared_cflags = -fPIC -DPIC -Wno-unused-function
 endif
 
+
+if IS_MINGW
+shared_cflags += -DIS_MINGW=1
+shared_ldflags += -no-undefined -Wl,/usr/i686-pc-mingw32/sys-root/mingw/lib/libSDL.dll.a -Wl,/usr/i686-pc-mingw32/sys-root/mingw/lib/libSDLmain.a \
+	-mwindows -Wl,/usr/i686-pc-mingw32/sys-root/mingw/lib/libmingw32.a
+SDL_libs = SDL.la
+CFLAGS_SDL = @SDL_CFLAGS@
+
+else
+
+if HAVE_SDL
+SDL_libs = SDL.la
+CFLAGS_SDL = @SDL_CFLAGS@
+LDFLAGS_SDL = @SDL_LIBS@
+
+else
+if FORCE_SDL
+SDL_libs = SDL.la
+CFLAGS_SDL = -I $(SDL_PREFIX)
+LDFLAGS_SDL = -lSDL
+endif
+endif
+
+endif
+
+
 AM_LDFLAGS = $(shared_ldflags)
+
+
 weed_CFLAGS =
 
 if HAVE_SYSTEM_WEED
@@ -58,7 +86,7 @@ endif
 if HAVE_OPENCV
 farneback_analyser_libs = farneback_analyser.la
 farneback_analyser_la_LDFLAGS = $(AM_LDFLAGS) $(OPENCV_LIBS_ONLY_L) -lopencv_core -lopencv_video
-farneback_analyser_la_CFLAGS = $(AM_CFLAGS)
+farneback_analyser_la_CPPFLAGS = $(AM_CPPFLAGS)
 farneback_analyser_la_SOURCES = farneback_analyser.cpp
 
 opencvlibdir = "$(libdir)/$(PACKAGE)/plugins/effects/realtime/weed"
@@ -86,10 +114,21 @@ endif
 
 if HAVE_LIBFREENECT
 freenect_libs = freenect.la
-freenect_la_LDFLAGS = $(LIBFREENECT_LIBS) $(AM_LDFLAGS)
+freenect_la_LDFLAGS = $(LIBFREENECT_LIBS) -lpthread $(AM_LDFLAGS)
 freenect_la_CFLAGS = $(LIBFREENECT_CFLAGS) $(AM_CFLAGS)
 freenectdir = "$(libdir)/$(PACKAGE)/plugins/effects/realtime/weed"
 freenect_LTLIBRARIES = $(freenect_libs)
+endif
+
+if HAVE_X11
+if HAVE_PROJECTM
+projectM_libs = projectM.la
+projectM_la_LDFLAGS = $(AM_LDFLAGS) $(LDFLAGS_SDL) $(PROJECTM_LIBS) -lpthread @X11_LIBS@ @GL_LIBS@
+projectM_la_CPPFLAGS = $(PROJECTM_CFLAGS) $(CFLAGS_SDL) \
+	-DPROJECTM_PREFIX=\"`pkg-config --variable=libdir libprojectM`/libprojectM\" $(AM_CPPFLAGS) \
+	 @X11_CFLAGS@ @GL_CFLAGS
+projectM_la_SOURCES = projectM.cpp projectM-getConfigFilename.cpp projectM-getConfigFilename.h projectM-ConfigFile.h
+endif
 endif
 
 fxpluginslib_LTLIBRARIES = RGBdelay.la \
@@ -127,6 +166,7 @@ fxpluginslib_LTLIBRARIES = RGBdelay.la \
 	palette_test.la\
 	plasma.la \
 	posterise.la \
+	projectM.la \
 	randomiser.la \
 	revTV.la \
 	rippleTV.la \

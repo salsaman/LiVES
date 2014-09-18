@@ -48,7 +48,7 @@ static int package_version=1; // version of this package
 
 #include <pthread.h>
 
-static int
+static int copies=0;
 
 typedef struct {
   projectM *globalPM;
@@ -242,14 +242,7 @@ static void *worker(void *data) {
 
 
 
-
-
-
-
-
 static int projectM_init (weed_plant_t *inst) {
-
-
   int error;
   weed_plant_t *out_channel=weed_get_plantptr_value(inst,"out_channels",&error);
 
@@ -258,7 +251,12 @@ static int projectM_init (weed_plant_t *inst) {
 
   int palette=weed_get_int_value(out_channel,"current_palette",&error);
 
-  _sdata *sd=(_sdata *)weed_malloc(sizeof(_sdata));
+  _sdata *sd;
+
+  if (copies==1) return WEED_ERROR_TOO_MANY_INSTANCES;
+  copies++;
+
+  sd=(_sdata *)weed_malloc(sizeof(_sdata));
   if (sd==NULL) return WEED_ERROR_MEMORY_ALLOCATION;
 
   sd->fbuffer = (GLubyte *)weed_malloc( sizeof( GLubyte ) * width * height * 3 );
@@ -298,6 +296,8 @@ static int projectM_deinit (weed_plant_t *inst) {
   if (sd->fbuffer!=NULL) weed_free(sd->fbuffer);
 
   weed_free(sd);
+
+  copies--;
 
   return WEED_NO_ERROR;
 }

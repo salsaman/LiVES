@@ -6950,6 +6950,7 @@ void do_quick_switch (int new_file) {
     lives_widget_show(mainw->playframe);
   }
 
+
   if (new_file==mainw->current_file) {
     if (!((mainw->fs&&prefs->gui_monitor==prefs->play_monitor)||(mainw->faded&&mainw->double_size)||
 	  mainw->multitrack!=NULL)) {
@@ -7066,6 +7067,11 @@ void do_quick_switch (int new_file) {
     mainw->frame_layer=NULL;
     load_frame_image (cfile->frameno);
     mainw->frame_layer=frame_layer;
+  }
+
+  if (mainw->play_window!=NULL) {
+    lives_window_present (LIVES_WINDOW (mainw->play_window));
+    lives_xwindow_raise(lives_widget_get_xwindow(mainw->play_window));
   }
 
   mainw->switch_during_pb=FALSE;

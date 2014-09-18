@@ -791,6 +791,19 @@ fi
 AM_CONDITIONAL(HAVE_LIBVISUAL,$HAVE_LIBVISUAL)
 
 
+HAVE_PROJECTM=false
+AC_ARG_ENABLE( projectM, [  --disable-projectM     Disable projectM support.] , disable_projectM=yes)
+if test "x$disable_projectM" != "xyes" ; then
+
+dnl check for projectM
+PKG_CHECK_MODULES(PROJECTM,libprojectM,HAVE_PROJECTM=true,HAVE_PROJECTM=false)
+AC_SUBST(PROJECTM_CFLAGS)
+AC_SUBST(PROJECTM_LIBS)
+fi
+
+AM_CONDITIONAL(HAVE_PROJECTM,$HAVE_PROJECTM)
+
+
 
 HAVE_LIBOIL=false
 AC_ARG_ENABLE( liboil, [  --disable-liboil     Disable liboil support.] , disable_liboil=yes)

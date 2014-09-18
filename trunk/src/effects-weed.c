@@ -1097,7 +1097,6 @@ static void set_channel_size (weed_plant_t *channel, int width, int height, int 
   weed_plant_t *chantmpl=weed_get_plantptr_value(channel,"template",&error);
   // note: rowstrides is just a guess, we will set the actual value when we come to process the effect
 
-
   if (weed_plant_has_leaf(chantmpl,"width")&&weed_get_int_value(chantmpl,"width",&error)!=0) 
     width=weed_get_int_value(chantmpl,"width",&error);
   else if (weed_plant_has_leaf(chantmpl,"host_width")) width=weed_get_int_value(chantmpl,"host_width",&error);
@@ -1106,6 +1105,7 @@ static void set_channel_size (weed_plant_t *channel, int width, int height, int 
     max=weed_get_int_value(chantmpl,"maxwidth",&error);
     if (width>max) width=max;
   }
+
   weed_set_int_value(channel,"width",width);
 
   if (weed_plant_has_leaf(chantmpl,"height")&&weed_get_int_value(chantmpl,"height",&error)!=0) 
@@ -6160,7 +6160,7 @@ static void set_default_channel_sizes (weed_plant_t **in_channels, weed_plant_t 
       def_rowstride=width*3;
       // try to set channel size first
       set_channel_size(channel,width,height,1,&def_rowstride);
-      
+
       // create empty data for the palette and get the actual sizes
       create_empty_pixel_data(channel,FALSE,TRUE);
       width=weed_get_int_value(channel,"width",&error);
@@ -6170,6 +6170,7 @@ static void set_default_channel_sizes (weed_plant_t **in_channels, weed_plant_t 
       set_channel_size(channel,width,height,numplanes,rowstrides);
       weed_free(rowstrides);
       weed_layer_pixel_data_free(channel);
+
     }
     else {
       if (mainw->current_file==-1||!has_aud_in_chans) {
@@ -7268,7 +7269,7 @@ boolean weed_generator_start (weed_plant_t *inst, int key) {
   cfile->hsize=weed_get_int_value(channel,"width",&error);
   cfile->vsize=weed_get_int_value(channel,"height",&error);
 
-  //if (mainw->play_window!=NULL&&!is_bg&&!mainw->fs) resize_play_window();
+  g_print("set to %d x %d\n",cfile->hsize,cfile->vsize);
 
   palette=weed_get_int_value(channel,"current_palette",&error);
   if (palette==WEED_PALETTE_RGBA32||palette==WEED_PALETTE_ARGB32||palette==WEED_PALETTE_BGRA32) cfile->bpp=32;

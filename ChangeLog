@@ -1,3 +1,14 @@
+Version 2.2.7
+-------------
+Further code cleanup.
+Fix text width for "show VJ keys" window.
+Remove unnecessary deinterlacing from threaded player.
+Added OSC commands /clip/selection/rte_apply, /clip/undo and /clip/redo.
+
+
+
+
+
 Version 2.2.6 (16 Aug 2014)
 ---------------------------
 Fix startup bug (regression) creating config file incorrectly.

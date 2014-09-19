@@ -85,7 +85,6 @@ endif
 
 
 endif
-
 endif
 endif
 endif
@@ -125,6 +124,6 @@ endif
 
 videopluginslib_LTLIBRARIES = $(SDL_libs) $(YUV4MPEG_libs) $(oggstream_libs) $(icecast_output_libs) \
 	$(vjack_output_libs) $(lives2lives_stream_libs) $(vloopback_libs) $(vloopback2_libs) \
-	$(openGL_libs) $(openGL_libs)
+	$(openGL_libs)
 
 EXTRA_DIST = videoplugin.h

@@ -1,3 +1,4 @@
+
 // effects-weed.c
 // LiVES (lives-exe)
 // (c) G. Finch 2005 - 2014 (salsaman@gmail.com)
@@ -1301,7 +1302,7 @@ lives_filter_error_t weed_reinit_effect (weed_plant_t *inst, boolean reinit_comp
   if (weed_plant_has_leaf(inst,"host_inited")&&weed_get_boolean_value(inst,"host_inited",&error)==WEED_TRUE) deinit_first=TRUE;
 
   if (deinit_first) {
-    if (has_audio_chans_in(filter,FALSE)||has_audio_chans_out(filter,FALSE)) {
+    if (is_pure_audio(filter,FALSE)) {
       filter_mutex_lock(key);
       is_audio=TRUE;
     }
@@ -3641,7 +3642,7 @@ void weed_apply_audio_effects (weed_plant_t *filter_map, float **abuf, int nbtra
       fhash=weed_get_string_value(init_event,"filter",&error);
       filter=get_weed_filter(weed_get_idx_for_hashname(fhash,TRUE));
       weed_free(fhash);
-      if (has_audio_chans_in(filter,FALSE)) {
+      if (has_audio_chans_in(filter,FALSE)&&!has_video_chans_in(filter,FALSE)&&!has_video_chans_out(filter,FALSE)) {
 	filter_error=weed_apply_audio_instance(init_event,abuf,nbtracks,nchans,nsamps,arate,tc,vis);
 	filter_error=filter_error; // stop compiler complaining
       }
@@ -3689,7 +3690,7 @@ void weed_apply_audio_effects_rt(float **abuf, int nchans, int64_t nsamps, gdoub
 	}
 	filter=weed_instance_get_filter(instance,FALSE);
 
-	if (!has_audio_chans_in(filter,FALSE)) {
+	if (!has_audio_chans_in(filter,FALSE)||has_video_chans_in(filter,FALSE)||has_video_chans_out(filter,FALSE)) {
 	  filter_mutex_unlock(i);
 	  continue; 
 	}
@@ -3773,7 +3774,7 @@ boolean has_audio_filters(lives_af_t af_type) {
       if (mainw->rte&(GU641<<i)) {
 	if ((instance=key_to_instance[i][key_modes[i]])==NULL) continue;
 	filter=weed_instance_get_filter(instance,FALSE);
-	if (has_audio_chans_in(filter,FALSE)) {
+	if (has_audio_chans_in(filter,FALSE)&&!has_video_chans_in(filter,FALSE)&&!has_video_chans_out(filter,FALSE)) {
 	  if ((af_type==AF_TYPE_A&&has_audio_chans_out(filter,FALSE))||  // check for analysers only
 	      (af_type==AF_TYPE_NONA&&!has_audio_chans_out(filter,FALSE))) // check for non-analysers only
 	    continue;

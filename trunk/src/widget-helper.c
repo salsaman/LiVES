@@ -4384,7 +4384,6 @@ LiVESWidget *lives_standard_hruler_new(void) {
 
 LiVESWidget *lives_standard_scrolled_window_new(int width, int height, LiVESWidget *child) {
   LiVESWidget *scrolledwindow=NULL;
-
   LiVESWidget *swchild;
 
 #ifdef GUI_GTK
@@ -4417,10 +4416,11 @@ LiVESWidget *lives_standard_scrolled_window_new(int width, int height, LiVESWidg
 	lives_scrolled_window_add_with_viewport (LIVES_SCROLLED_WINDOW (scrolledwindow), child);
       }
     }
-    gtk_viewport_set_shadow_type (GTK_VIEWPORT (lives_bin_get_child (LIVES_BIN (scrolledwindow))),LIVES_SHADOW_IN);
   }
 
   swchild=lives_bin_get_child(LIVES_BIN(scrolledwindow));
+  if (GTK_IS_VIEWPORT(swchild)) 
+    gtk_viewport_set_shadow_type (GTK_VIEWPORT (swchild),LIVES_SHADOW_IN);
 
   if (width!=0&&height!=0) {
 #if !GTK_CHECK_VERSION(3,0,0)

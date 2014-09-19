@@ -37,6 +37,8 @@ static int package_version=1; // version of this package
 
 /////////////////////////////////////////////////////////////
 
+#define USE_DBLBUF 1
+
 #include <libprojectM/projectM.hpp>
 
 #include <GL/gl.h>
@@ -59,7 +61,10 @@ typedef struct {
   int width;
   int height;
   pthread_mutex_t mutex;
+  pthread_mutex_t pcm_mutex;
   pthread_t thread;
+  int audio_frames;
+  float *audio;
   volatile int die;
   volatile int failed;
 } _sdata;
@@ -140,7 +145,7 @@ static int init_display(void) {
 
   SDL_GL_SetAttribute(SDL_GL_ALPHA_SIZE, 8);
   SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 16);
-  SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 0);
+  SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, USE_DBLBUF);
 	
   if (resize_display(defwidth,defheight)) return 3;
 
@@ -188,13 +193,13 @@ static int render_frame(_sdata *sdata) {
 
   glBegin(GL_QUADS);
   glTexCoord2d(0, 1);
-  glVertex3d(-1, 1, 0);
-  glTexCoord2d(0, 0);
   glVertex3d(-1, -1, 0);
+  glTexCoord2d(0, 0);
+  glVertex3d(-1, 1, 0);
   glTexCoord2d(1, 0);
-  glVertex3d(1, -1, 0);
-  glTexCoord2d(1, 1);
   glVertex3d(1, 1, 0);
+  glTexCoord2d(1, 1);
+  glVertex3d(1, -1, 0);
   glEnd();
 
   glDisable(GL_TEXTURE_2D);
@@ -202,10 +207,16 @@ static int render_frame(_sdata *sdata) {
   glMatrixMode(GL_MODELVIEW);
   glDisable(GL_DEPTH_TEST);
 
-  // fbuffer is (BGR ?) upside down
+#if USE_DBLBUF
+  glReadPixels(0, 0, sdata->width, sdata->height, GL_RGB, GL_UNSIGNED_BYTE, sdata->fbuffer);
+  pthread_mutex_lock(&sdata->mutex);
+  SDL_GL_SwapBuffers();
+  pthread_mutex_unlock(&sdata->mutex);
+#else
   pthread_mutex_lock(&sdata->mutex);
   glReadPixels(0, 0, sdata->width, sdata->height, GL_RGB, GL_UNSIGNED_BYTE, sdata->fbuffer);
   pthread_mutex_unlock(&sdata->mutex);
+#endif
 
 }
 
@@ -228,6 +239,13 @@ static void *worker(void *data) {
   sd->textureHandle = sd->globalPM->initRenderToTexture();
 
   while (!sd->die) {
+    pthread_mutex_lock(&sd->pcm_mutex);
+    if (sd->audio_frames>0) {
+      // sd->audio should contain data for 1 channel only
+      sd->globalPM->pcm()->addPCMfloat(sd->audio,sd->audio_frames);
+      sd->audio_frames=0;
+    }
+    pthread_mutex_unlock(&sd->pcm_mutex);
     render_frame(sd);
   }
 
@@ -274,7 +292,11 @@ static int projectM_init (weed_plant_t *inst) {
   sd->die=0;
   sd->failed=0;
 
+  sd->audio=NULL;
+  sd->audio_frames=0;
+
   pthread_mutex_init(&sd->mutex,NULL);
+  pthread_mutex_init(&sd->pcm_mutex,NULL);
 
   // kick off a thread to init screean and render
   pthread_create(&sd->thread,NULL,worker,sd);
@@ -297,6 +319,8 @@ static int projectM_deinit (weed_plant_t *inst) {
 
   if (sd->fbuffer!=NULL) weed_free(sd->fbuffer);
 
+  if (sd->audio!=NULL) weed_free(sd->audio);
+
   weed_free(sd);
 
   copies--;
@@ -312,10 +336,10 @@ static int projectM_process (weed_plant_t *inst, weed_timecode_t timestamp) {
 
   _sdata *sd=(_sdata *)weed_get_voidptr_value(inst,"plugin_internal",&error);
 
-  SDL_SysWMinfo info;
-
   weed_plant_t *out_channel=weed_get_plantptr_value(inst,"out_channels",&error);
   unsigned char *dst=(unsigned char *)weed_get_voidptr_value(out_channel,"pixel_data",&error);
+
+  unsigned char *ptrd,*ptrs;
 
   int width=weed_get_int_value(out_channel,"width",&error);
   int height=weed_get_int_value(out_channel,"height",&error);
@@ -325,8 +349,6 @@ static int projectM_process (weed_plant_t *inst, weed_timecode_t timestamp) {
   int rowstride=weed_get_int_value(out_channel,"rowstrides",&error);
 
   int widthx=width*3;
-
-  unsigned char *end,*ptrd,*ptrs;
 
   register int j;
 
@@ -357,17 +379,21 @@ static int projectM_process (weed_plant_t *inst, weed_timecode_t timestamp) {
 
   //if (palette==WEED_PALETTE_RGBA32) widthx=width*4;
 
-  end=dst+height*widthx;
-  ptrd=end-widthx;
+  ptrd=dst;
   ptrs=sd->fbuffer;
 
   pthread_mutex_lock(&sd->mutex);
 
   // copy sd->fbuffer -> dst
-  for (j=0;j<sd->height;j++) {
+  if (rowstride==widthx&&width==sd->width&&height==sd->height) {
+    weed_memcpy(ptrd,ptrs,widthx*height);
+  }
+  else {
+    for (j=0;j<sd->height;j++) {
     weed_memcpy(ptrd,ptrs,widthx);
-    ptrd-=widthx;
+    ptrd+=rowstride;
     ptrs+=sd->width*3;
+    }
   }
 
   pthread_mutex_unlock(&sd->mutex);
@@ -384,10 +410,18 @@ weed_plant_t *weed_setup (weed_bootstrap_f weed_boot) {
 
     int palette_list[]={WEED_PALETTE_RGB24,WEED_PALETTE_END};
 
+    weed_plant_t *in_chantmpls[]={weed_audio_channel_template_init("In audio",0),NULL};
+
     weed_plant_t *out_chantmpls[]={weed_channel_template_init("out channel 0",WEED_CHANNEL_REINIT_ON_SIZE_CHANGE|
 							      WEED_CHANNEL_REINIT_ON_PALETTE_CHANGE,palette_list),NULL};
     weed_plant_t *filter_class=weed_filter_class_init("projectM","salsaman/projectM authors",1,0,&projectM_init,
 						      &projectM_process,&projectM_deinit,NULL,out_chantmpls,NULL,NULL);
+
+
+    weed_set_int_value(in_chantmpls[0],"audio_channels",1);
+    weed_set_boolean_value(in_chantmpls[0],"audio_interleaf",WEED_TRUE);
+    weed_set_boolean_value(in_chantmpls[0],"optional",WEED_TRUE);
+
     weed_set_double_value(filter_class,"target_fps",50.); // set reasonable default fps
 
     weed_plugin_info_add_filter_class (plugin_info,filter_class);

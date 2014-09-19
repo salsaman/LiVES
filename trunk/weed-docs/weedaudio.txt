@@ -22,10 +22,7 @@ WEED_PLANT_CHANNEL_TEMPLATE and WEED_PLANT_CHANNEL.
 
 Generally, the following rules should apply:
 - audio and video channels should not be mixed in a single filter: - the only time this should be done is 
-  for generators which are sources of both video and audio
-
-- generating video from audio or vice versa is best done by using two plugins - one to analyse the input and produce 
-  output parameters, the second to convert the parameters into audio or video data
+  for generators which are sources of both video and audio or for video generators which react to audio
 
 - plugins which deal with audio MUST be able to process small chunks of audio extremely fast 
   (ideally sub millisecond processing time - they may be called much more frequently than video effects, which is why mixing 

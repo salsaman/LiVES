@@ -1706,6 +1706,7 @@ LIVES_INLINE LiVESWidget *lives_button_new_from_stock(const char *stock_id) {
     g_free(xstock_id);
     return button;
   }
+  g_free(xstock_id);
   {
 #else
   if (!strcmp(stock_id,LIVES_STOCK_ADD) || 

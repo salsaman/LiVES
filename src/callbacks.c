@@ -438,7 +438,13 @@ void lives_exit (void) {
   }
 
   if (capable->smog_version_correct&&!mainw->startup_error) {
-    if (capable->has_encoder_plugins) plugin_request("encoders",prefs->encoder.name,"finalise");
+    if (capable->has_encoder_plugins) {
+      GList *dummy_list=plugin_request("encoders",prefs->encoder.name,"finalise");
+      if (dummy_list!=NULL) {
+	g_list_free_strings(dummy_list);
+	g_list_free(dummy_list);
+      }
+    }
 
     weed_unload_all();
 

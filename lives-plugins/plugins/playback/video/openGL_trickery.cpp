@@ -1,5 +1,5 @@
 // LiVES - openGL playback engine
-// (c) G. Finch 2012 <salsaman@gmail.com>
+// (c) G. Finch 2012 - 2014 <salsaman@gmail.com>
 // (c) OpenGL effects by Antti Silvast, 2012 <antti.silvast@iki.fi>
 // released under the GNU GPL 3 or later
 // see file COPYING or www.gnu.org for details
@@ -223,7 +223,7 @@ const char *module_check_init(void) {
 
   if (GL_ARB_pixel_buffer_object) {
     pbo_available=TRUE;
-    use_pbo=TRUE;
+    //use_pbo=TRUE;
   }
 
   render_fn=&render_frame_unknown;
@@ -424,9 +424,7 @@ static void alwaysOnTop() {
 
 
 
-static boolean
-isWindowMapped(void)
-{
+static boolean isWindowMapped(void) {
   XWindowAttributes attr;
 
   XGetWindowAttributes(dpy, xWin, &attr);
@@ -509,13 +507,14 @@ static int get_size_for_type(int type) {
   }
 }
 
+static GLint binding;
 
 static volatile uint8_t *buffer_free(volatile uint8_t *retbuf) {
   if (retbuf==NULL) return NULL;
   if (use_pbo) {
-    GLint binding;
-    glGetIntegerv(GL_PIXEL_PACK_BUFFER_BINDING_ARB, &binding);
-    glBindBuffer(GL_PIXEL_PACK_BUFFER_ARB, video_pbo);
+    //GLint binding;
+    //glGetIntegerv(GL_PIXEL_PACK_BUFFER_BINDING_ARB, &binding);
+    //glBindBuffer(GL_PIXEL_PACK_BUFFER_ARB, video_pbo);
     glUnmapBuffer(GL_PIXEL_PACK_BUFFER_ARB);
     glBindBuffer(GL_PIXEL_PACK_BUFFER_ARB, binding);
   }
@@ -528,8 +527,14 @@ static volatile uint8_t *buffer_free(volatile uint8_t *retbuf) {
 
 static uint8_t *render_to_mainmem(int type) {
   // copy GL drawing buffer to main mem
+  XWindowAttributes attr;
 
   uint8_t *xretbuf;
+
+  XGetWindowAttributes(dpy, xWin, &attr);
+
+  window_width=attr.width;
+  window_height=attr.height;
 
   glFlush();
 
@@ -550,7 +555,6 @@ static uint8_t *render_to_mainmem(int type) {
     glReadPixels(0, 0, window_width, window_height, type, GL_UNSIGNED_BYTE, xretbuf);
   }
   else {
-    GLint binding;
 
     glGetIntegerv(GL_PIXEL_PACK_BUFFER_BINDING_ARB, &binding);
     glBindBuffer(GL_PIXEL_PACK_BUFFER_ARB, video_pbo);
@@ -561,7 +565,8 @@ static uint8_t *render_to_mainmem(int type) {
     // map pbo to main memory
     xretbuf = (uint8_t *)glMapBuffer(GL_PIXEL_PACK_BUFFER_ARB, GL_READ_ONLY);
 
-    glBindBuffer(GL_PIXEL_PACK_BUFFER_ARB, binding);
+    //glUnmapBuffer(GL_PIXEL_PACK_BUFFER_ARB);
+    //glBindBuffer(GL_PIXEL_PACK_BUFFER_ARB, binding);
   }
 
   return xretbuf;
@@ -760,7 +765,9 @@ static boolean init_screen_inner (int width, int height, boolean fullscreen, uin
 
     width=window_width=attr.width;
     height=window_height=attr.height;
+
     glXGetConfig(dpy, xvis, GLX_DOUBLEBUFFER, &swapFlag);
+    XFree(xvis);
     is_ext=TRUE;
   }
   else {
@@ -799,6 +806,7 @@ static boolean init_screen_inner (int width, int height, boolean fullscreen, uin
     
     if (!swa.colormap) {
       fprintf(stderr,"openGL plugin error: No colormap could be set !\n");
+      XFree (vInfo);
       return FALSE;
     }
     
@@ -810,6 +818,8 @@ static boolean init_screen_inner (int width, int height, boolean fullscreen, uin
 			  width,height,
 			  0, vInfo->depth, InputOutput, vInfo->visual,
 			  swaMask, &swa );
+
+    XFreeColormap(dpy,swa.colormap);
 
     if (fullscreen) setFullScreen();
 
@@ -964,10 +974,14 @@ static void resize_buffer(uint8_t *out, int owidth, int oheight, uint8_t *in, in
 
 
 static boolean Upload(int width, int height) {
+  XWindowAttributes attr;
+
   int imgWidth=width;
   int imgHeight=height;
 
   int texID;
+
+  texID=get_texture_texID(0);
 
   if (zmode!=-1) mode=zmode;
 
@@ -993,67 +1007,93 @@ static boolean Upload(int width, int height) {
   texID=get_texture_texID(0);
 
 
-
   ////////////////////////////////////////////////////////////
   // modes
 
+  XGetWindowAttributes(dpy, xWin, &attr);
+
+  window_width=attr.width;
+  window_height=attr.height;
 
   switch (mode) {
   case 0:
     {
       // flat:
-      glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-      
-      glMatrixMode (GL_PROJECTION); // use the projection mode
-      glLoadIdentity ();
+      glClear(GL_COLOR_BUFFER_BIT);
+      glClear(GL_DEPTH_BUFFER_BIT);
 
-      glMatrixMode (GL_MODELVIEW);
-      glLoadIdentity ();
-      glTranslatef(0.0,0.0,-1.);
-      
-      glEnable( m_TexTarget );
-      
-      glTexParameteri( m_TexTarget, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE );
-      glTexParameteri( m_TexTarget, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE );
-      
-      glTexParameteri( m_TexTarget, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
-      glTexParameteri( m_TexTarget, GL_TEXTURE_MIN_FILTER, GL_LINEAR );
-      
-      glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
+      glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-      glBindTexture( m_TexTarget, texID );
-      
-      glBegin (GL_QUADS);
-      
-      glTexCoord2f (0.0, 0.0);
-      glVertex3f (-1.0, 1.0, 0.0);
-      
-      glTexCoord2f (1.0, 0.0);
-      glVertex3f (1.0, 1.0, 0.0);
-      
-      glTexCoord2f (1.0, 1.0);
-      glVertex3f (1.0, -1.0, 0.0);
-      
-      glTexCoord2f (0.0, 1.0);
-      glVertex3f (-1.0, -1.0, 0.0);
-      
-      glEnd ();
-      
-      glDisable( m_TexTarget );
+      glViewport(0, 0, window_width, window_height);
+
+      glMatrixMode(GL_PROJECTION);
+      glLoadIdentity();
+      glFrustum(-1, 1, -1, 1, 2, 10);
+
+      glEnable(GL_DEPTH_TEST);
+
+      glMatrixMode(GL_MODELVIEW);
+      glLoadIdentity();
+
+      glTranslatef(.0, .0, -2);
+
+      glEnable(m_TexTarget);
+      glMatrixMode(GL_TEXTURE);
+      glLoadIdentity();
+
+      /*	glTexParameteri( m_TexTarget, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE );
+		glTexParameteri( m_TexTarget, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE );
+    
+		glTexParameteri( m_TexTarget, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
+		glTexParameteri( m_TexTarget, GL_TEXTURE_MIN_FILTER, GL_LINEAR );
+    
+		glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);*/
+
+      glBindTexture(m_TexTarget, texID);
+      glColor4d(1.0, 1.0, 1.0, 1.0);
+
+      glBegin(GL_QUADS);
+      glTexCoord2d(0, 1);
+      glVertex3d(-1, -1, 0);
+      glTexCoord2d(0, 0);
+      glVertex3d(-1, 1, 0);
+      glTexCoord2d(1, 0);
+      glVertex3d(1, 1, 0);
+      glTexCoord2d(1, 1);
+      glVertex3d(1, -1, 0);
+      glEnd();
+
+      glDisable(m_TexTarget);
+
+      glMatrixMode(GL_MODELVIEW);
+      glDisable(GL_DEPTH_TEST);
+
+
     }
     break;
 
   case 1:
     {
-      glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+      glClear(GL_COLOR_BUFFER_BIT);
+      glClear(GL_DEPTH_BUFFER_BIT);
 
-      glMatrixMode (GL_PROJECTION); // use the projection mode
-      glLoadIdentity ();
-      //gluPerspective(60.0f,(GLfloat)window_width/(GLfloat)window_height,0.1f,100.0f);
+      glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-      glMatrixMode (GL_MODELVIEW);
-      glLoadIdentity ();
-      glTranslatef(0.0,0.0,-1.0);
+      glViewport(0, 0, window_width, window_height);
+
+      glMatrixMode(GL_PROJECTION);
+      glLoadIdentity();
+
+      glEnable(GL_DEPTH_TEST);
+
+      glMatrixMode(GL_MODELVIEW);
+      glLoadIdentity();
+
+      glTranslatef(.0, .0, -1);
+
+      glEnable(m_TexTarget);
+      glMatrixMode(GL_TEXTURE);
+      glLoadIdentity();
 
       glTexParameteri( m_TexTarget, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE );
       glTexParameteri( m_TexTarget, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE );
@@ -1062,11 +1102,11 @@ static boolean Upload(int width, int height) {
       glTexParameteri( m_TexTarget, GL_TEXTURE_MIN_FILTER, GL_LINEAR );
     
       glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
-      
-      glBindTexture( m_TexTarget, texID );
-      
-      glEnable( m_TexTarget );
-      
+
+      glBindTexture(m_TexTarget, texID);
+      glColor4d(1.0, 1.0, 1.0, 1.0);
+
+
       glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
       glBegin(GL_TRIANGLES);                      // Drawing Using Triangles
@@ -1084,13 +1124,22 @@ static boolean Upload(int width, int height) {
       glTranslatef(-1.5f,0.0f,-6.0f);
       glEnd();
 
-      glDisable( m_TexTarget );
+      glDisable(m_TexTarget);
+
+      glMatrixMode(GL_MODELVIEW);
+      glDisable(GL_DEPTH_TEST);
+
+
     }
     break;
 
   case 2:
     {
       glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+      glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+      glViewport(0, 0, window_width, window_height);
 
       glMatrixMode (GL_MODELVIEW);
       glLoadIdentity ();
@@ -1145,10 +1194,20 @@ static boolean Upload(int width, int height) {
 
       // sync to the clock with the clock_gettime function
       struct timespec now;
+      int ticks;
+
+      float vx=-1.0,vy=1.0;
+      float tx=0.0,ty;
+
+      float vz;
+
       clock_gettime(CLOCK_MONOTONIC,&now);
-      int ticks=now.tv_sec*1000+now.tv_nsec/1000000;
+      ticks=now.tv_sec*1000+now.tv_nsec/1000000;
+      ty=sin(ticks*0.001)*0.2;
 
       glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+      glViewport(0, 0, window_width, window_height);
 
       glMatrixMode (GL_PROJECTION); // use the projection mode
       glLoadIdentity ();
@@ -1193,17 +1252,14 @@ static boolean Upload(int width, int height) {
 #define YSPD2 0.03	// speed (along grid Y)
 #define A2 0.04		// amplitude
 
-      float vx=-1.0,vy=1.0;
-      float tx=0.0,ty=sin(ticks*0.001)*0.2;
-
-      float vz;
 
       for (int j=0; j<WY; j++) {
 	vx=-1.0; tx=0.0;
 	for (int i=0; i<WX; i++) {
+	  float col=1.0-sin(i*0.05+j*0.06)*1.0;
+
 	  glBegin (GL_QUADS);
       
-	  float col=1.0-sin(i*0.05+j*0.06)*1.0;
 	  glColor3f(col,col,col);
 
 	  vz=sin(ticks*TSPD1+i*XSPD1+j*YSPD1)*A1+cos(ticks*TSPD2+i*XSPD2+j*YSPD2)*A2;
@@ -1255,6 +1311,7 @@ static boolean Upload(int width, int height) {
       int ticks=now.tv_sec*1000+now.tv_nsec/1000000;
 
       glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+      glViewport(0, 0, window_width, window_height);
 
       glMatrixMode (GL_PROJECTION); // use the projection mode
       glLoadIdentity ();
@@ -1314,9 +1371,10 @@ static boolean Upload(int width, int height) {
       for (int j=0; j<WY; j++) {
 	vx=-1.0; tx=0.0;
 	for (int i=0; i<WX; i++) {
+	  float col=1.0-sin(i*0.05+j*0.06)*1.0;
+
 	  glBegin (GL_QUADS);
       
-	  float col=1.0-sin(i*0.05+j*0.06)*1.0;
 	  glColor3f(col,col,col);
 
 	  vz=sin(ticks*TSPD1+i*XSPD1+j*YSPD1)*A12+cos(ticks*TSPD2+i*XSPD2+j*YSPD2)*A22;
@@ -1365,10 +1423,13 @@ static boolean Upload(int width, int height) {
 
       // time sync
       struct timespec now;
+      int ticks;
+
       clock_gettime(CLOCK_MONOTONIC,&now);
-      int ticks=now.tv_sec*1000+now.tv_nsec/1000000;
+      ticks=now.tv_sec*1000+now.tv_nsec/1000000;
 
       glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+      glViewport(0, 0, window_width, window_height);
 
       glMatrixMode (GL_PROJECTION); // use the projection mode
       glLoadIdentity ();
@@ -1430,10 +1491,13 @@ static boolean Upload(int width, int height) {
 
       // time sync
       struct timespec now;
+      int ticks;
+
       clock_gettime(CLOCK_MONOTONIC,&now);
-      int ticks=now.tv_sec*1000+now.tv_nsec/1000000;
+      ticks=now.tv_sec*1000+now.tv_nsec/1000000;
 
       glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+      glViewport(0, 0, window_width, window_height);
 
       glMatrixMode (GL_PROJECTION); // use the projection mode
       glLoadIdentity ();
@@ -1504,10 +1568,12 @@ static boolean Upload(int width, int height) {
 
       // time sync
       struct timespec now;
+      int ticks;
       clock_gettime(CLOCK_MONOTONIC,&now);
-      int ticks=now.tv_sec*1000+now.tv_nsec/1000000;
+      ticks=now.tv_sec*1000+now.tv_nsec/1000000;
 
       glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+      glViewport(0, 0, window_width, window_height);
 
       glMatrixMode (GL_PROJECTION); // use the projection mode
       glLoadIdentity ();
@@ -1567,10 +1633,15 @@ static boolean Upload(int width, int height) {
 
       // sync to the clock
       struct timespec now;
+      int ticks;
+      float tx=0.0,ty;
+
       clock_gettime(CLOCK_MONOTONIC,&now);
-      int ticks=now.tv_sec*1000+now.tv_nsec/1000000;
+      ticks=now.tv_sec*1000+now.tv_nsec/1000000;
+      ty=(ticks % 2000)*0.0005;
 
       glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+      glViewport(0, 0, window_width, window_height);
 
       glMatrixMode (GL_PROJECTION); // use the projection mode
       glLoadIdentity ();
@@ -1611,7 +1682,6 @@ static boolean Upload(int width, int height) {
 #define TY_PLUS2 (1.0/160)
 
 
-      float tx=0.0,ty=(ticks % 2000)*0.0005;
 
       for (int j=0; j<TD; j++) {
 	tx=0.0;
@@ -1619,7 +1689,6 @@ static boolean Upload(int width, int height) {
 	  float vx=cos(i*2*M_PI/TR)*SR;
 	  float vy=sin(i*2*M_PI/TR)*SR;
 	  float vz=-j*SD;
-
 
 	  float col=2.0-2.0*(float)j/TD;
 
@@ -1685,10 +1754,13 @@ static boolean Upload(int width, int height) {
       }	
       // time sync
       struct timespec now;
+      int ticks;
+
       clock_gettime(CLOCK_MONOTONIC,&now);
-      int ticks=now.tv_sec*1000+now.tv_nsec/1000000;
+      ticks=now.tv_sec*1000+now.tv_nsec/1000000;
 
       glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+      glViewport(0, 0, window_width, window_height);
 
       glMatrixMode (GL_PROJECTION); // use the projection mode
       glLoadIdentity ();
@@ -1817,10 +1889,13 @@ static boolean Upload(int width, int height) {
       }	
       // time sync
       struct timespec now;
+      float rotx,roty,rotz;
+      int ticks;
       clock_gettime(CLOCK_MONOTONIC,&now);
-      int ticks=now.tv_sec*1000+now.tv_nsec/1000000;
+      ticks=now.tv_sec*1000+now.tv_nsec/1000000;
 
       glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+      glViewport(0, 0, window_width, window_height);
 
       glMatrixMode (GL_PROJECTION); // use the projection mode
       glLoadIdentity ();
@@ -1831,9 +1906,9 @@ static boolean Upload(int width, int height) {
       glTranslatef(0.0,0.0,-2.3);
 
       // turn the place
-      float rotx=sin(ticks*M_PI/5000.0)*5+15;
-      float roty=sin(ticks*M_PI/5000.0)*15+15;
-      float rotz=sin(ticks*M_PI/5000.0)*5;
+      rotx=sin(ticks*M_PI/5000.0)*5+15;
+      roty=sin(ticks*M_PI/5000.0)*15+15;
+      rotz=sin(ticks*M_PI/5000.0)*5;
 
       glRotatef(rotx,1,0,0);
       glRotatef(roty,0,1,0);
@@ -1986,7 +2061,7 @@ boolean render_frame_rgba (int hsize, int vsize, void **pixel_data, void **retur
 
   if (return_data!=NULL) {
     size_t twidth=window_width*typesize;
-    void *dst,*src;
+    uint8_t *dst,*src;
     register int i;
 
     if (texturebuf!=NULL) {
@@ -2005,12 +2080,12 @@ boolean render_frame_rgba (int hsize, int vsize, void **pixel_data, void **retur
     while (!return_ready) usleep(1000); // wait for return data
     pthread_mutex_lock(&rthread_mutex); // lock render thread while we grab data
 
-    dst=(void *)retdata;
+    dst=(uint8_t *)retdata;
     retdata=NULL;
 
     texturebuf=NULL;
 
-    src=(void *)retbuf+(window_height-1)*twidth;
+    src=(uint8_t *)retbuf+(window_height-1)*twidth;
 
     // texture is upside-down compared to image
     for (i=0;i<window_height;i++) {

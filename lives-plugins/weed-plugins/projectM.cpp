@@ -38,15 +38,17 @@ static int package_version=1; // version of this package
 /////////////////////////////////////////////////////////////
 
 #include <libprojectM/projectM.hpp>
-#include "projectM-ConfigFile.h"
-#include "projectM-getConfigFilename.h"
 
 #include <GL/gl.h>
 
 #include <SDL/SDL.h>
-#include "SDL_syswm.h"
+#include <SDL_syswm.h>
 
 #include <pthread.h>
+
+#include "projectM-ConfigFile.h"
+#include "projectM-getConfigFilename.h"
+
 
 static int copies=0;
 

@@ -4780,11 +4780,11 @@ void save_clip_value(int which, lives_clip_details_t what, void *val) {
     myval=g_strdup_printf("%d",*(int *)val);
     break;
   case CLIP_DETAILS_ASIGNED:
-    if (*(int *)val==1) myval=g_strdup("true");
+    if ((*(int *)val)==1) myval=g_strdup("true");
     else myval=g_strdup("false");
     break;
   case CLIP_DETAILS_AENDIAN:
-    myval=g_strdup_printf("%d",*(int *)val/2);
+    myval=g_strdup_printf("%d",(*(int *)val)/2);
     break;
   case CLIP_DETAILS_ASAMPS:
     myval=g_strdup_printf("%d",*(int *)val);

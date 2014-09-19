@@ -7269,8 +7269,6 @@ boolean weed_generator_start (weed_plant_t *inst, int key) {
   cfile->hsize=weed_get_int_value(channel,"width",&error);
   cfile->vsize=weed_get_int_value(channel,"height",&error);
 
-  g_print("set to %d x %d\n",cfile->hsize,cfile->vsize);
-
   palette=weed_get_int_value(channel,"current_palette",&error);
   if (palette==WEED_PALETTE_RGBA32||palette==WEED_PALETTE_ARGB32||palette==WEED_PALETTE_BGRA32) cfile->bpp=32;
   else cfile->bpp=24;

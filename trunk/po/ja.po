@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ja\n"
 "Report-Msgid-Bugs-To: https://sourceforge.net/p/lives/bugs/\n"
-"POT-Creation-Date: 2014-08-24 15:36-0300\n"
+"POT-Creation-Date: 2014-09-18 21:21-0300\n"
 "PO-Revision-Date: 2013-03-14 12:31+0000\n"
 "Last-Translator: Launchpad Translations Administrators <Unknown>\n"
 "Language-Team: Japanese <ja@li.org>\n"
@@ -18,24 +18,24 @@ msgstr ""
 "X-Launchpad-Export-Date: 2013-03-28 10:43+0000\n"
 "X-Generator: Launchpad (build 16546)\n"
 
-#: src/widget-helper.h:518 src/interface.c:284
+#: src/widget-helper.h:533 src/interface.c:284
 msgid "_Cancel"
 msgstr "キャンセル(_C)"
 
-#: src/widget-helper.h:519
+#: src/widget-helper.h:534
 msgid "_OK"
 msgstr ""
 
-#: src/widget-helper.h:520
+#: src/widget-helper.h:535
 msgid "_Save"
 msgstr ""
 
-#: src/widget-helper.h:521
+#: src/widget-helper.h:536
 #, fuzzy
 msgid "_Open"
 msgstr "開く(_O)..."
 
-#: src/widget-helper.h:522
+#: src/widget-helper.h:537
 msgid "_Quit"
 msgstr ""
 
@@ -325,11 +325,11 @@ msgstr "検出されたモニタ数: %d\n"
 msgid "Number of CPUs detected: %d "
 msgstr ""
 
-#: src/main.c:1789 src/multitrack.c:4888
+#: src/main.c:1789 src/multitrack.c:4893
 msgid "little endian"
 msgstr "リトルエンディアン"
 
-#: src/main.c:1790 src/multitrack.c:4887
+#: src/main.c:1790 src/multitrack.c:4892
 msgid "big endian"
 msgstr "ビッグエンディアン"
 
@@ -699,7 +699,7 @@ msgid "Autoloading set %s..."
 msgstr "セット %s を自動読み込み中..."
 
 #. TRANSLATORS: localised name may be used here
-#: src/main.c:2764 src/interface.c:717
+#: src/main.c:2764 src/interface.c:737
 msgid "LiVES"
 msgstr "LiVES"
 
@@ -759,16 +759,16 @@ msgid "Closed file %s\n"
 msgstr "ファイル %s を閉じました\n"
 
 #: src/main.c:6435 src/gui.c:646 src/utils.c:4300 src/utils.c:4332
-#: src/saveplay.c:3516 src/multitrack.c:4498 src/multitrack.c:6264
+#: src/saveplay.c:3516 src/multitrack.c:4503 src/multitrack.c:6269
 msgid "_Undo"
 msgstr "元に戻す(_U)"
 
 #: src/main.c:6436 src/gui.c:664 src/utils.c:4301 src/utils.c:4333
-#: src/saveplay.c:3517 src/multitrack.c:4519 src/multitrack.c:6289
+#: src/saveplay.c:3517 src/multitrack.c:4524 src/multitrack.c:6294
 msgid "_Redo"
 msgstr "やり直す(_R)"
 
-#: src/main.c:6476 src/interface.c:468 src/gui.c:2328 src/preferences.c:2341
+#: src/main.c:6476 src/interface.c:469 src/gui.c:2328 src/preferences.c:2341
 #: src/resample.c:1516
 msgid "Video"
 msgstr "ビデオ"
@@ -796,7 +796,7 @@ msgstr ""
 "きません。\n"
 "「設定」の再生オプションを調整して、再度試してください。\n"
 
-#: src/main.c:7033 src/plugins.c:1502
+#: src/main.c:7034 src/plugins.c:1502
 msgid "LiVES: - Play Window"
 msgstr "LiVES: - 再生ウィンドウ"
 
@@ -991,7 +991,7 @@ msgstr "mplayerを使用する(_M)"
 msgid "Use _mplayer2 audio player"
 msgstr "mplayerを使用する(_M)"
 
-#: src/startup.c:405 src/startup.c:580 src/interface.c:1491
+#: src/startup.c:405 src/startup.c:580 src/interface.c:1512
 msgid "_Next"
 msgstr "次へ(_N)"
 
@@ -1198,11 +1198,11 @@ msgstr ""
 "これを設定すると、フレームがインポートされたときにインターレースを解除しま"
 "す。"
 
-#: src/interface.c:112 src/callbacks.c:9615 src/callbacks.c:9638
-#: src/callbacks.c:9639 src/gui.c:3225 src/gui.c:3823 src/saveplay.c:2331
+#: src/interface.c:112 src/callbacks.c:9621 src/callbacks.c:9644
+#: src/callbacks.c:9645 src/gui.c:3225 src/gui.c:3823 src/saveplay.c:2331
 #: src/saveplay.c:3119 src/dialogs.c:1488 src/dialogs.c:1489
 #: src/dialogs.c:1720 src/dialogs.c:1721 src/framedraw.c:238
-#: src/multitrack.c:8027
+#: src/multitrack.c:8032
 msgid "Preview"
 msgstr "プレビュー"
 
@@ -1236,7 +1236,7 @@ msgstr ""
 "\n"
 "忘れないよう後でエフェクトを停止(ctrl-0)させてください!"
 
-#: src/interface.c:221 src/callbacks.c:9370 src/callbacks.c:9416
+#: src/interface.c:221 src/callbacks.c:9374 src/callbacks.c:9420
 #: src/dialogs.c:2544
 msgid ""
 "\n"
@@ -1261,94 +1261,94 @@ msgstr "プレビュー(_P)"
 msgid "Paus_e"
 msgstr "一時停止(_E)"
 
-#: src/interface.c:257 src/callbacks.c:9413
+#: src/interface.c:257 src/callbacks.c:9417
 msgid "Pause/_Enough"
 msgstr "一時停止（_E）"
 
-#: src/interface.c:389
+#: src/interface.c:373
 #, c-format
 msgid "LiVES: - %s"
 msgstr ""
 
-#: src/interface.c:391
+#: src/interface.c:375
 msgid "LiVES: - Multitrack details"
 msgstr ""
 
-#: src/interface.c:436
+#: src/interface.c:406
 msgid "Format"
 msgstr "フォーマット"
 
-#: src/interface.c:441
+#: src/interface.c:411
 msgid "Frame size"
 msgstr "フレームサイズ"
 
-#: src/interface.c:446
+#: src/interface.c:416
 msgid "File size"
 msgstr "ファイルサイズ"
 
-#: src/interface.c:447
+#: src/interface.c:417
 msgid "Byte size"
 msgstr "バイトサイズ"
 
-#: src/interface.c:452 src/interface.c:498 src/interface.c:527
-msgid "Total time"
-msgstr "全時間"
-
-#: src/interface.c:457 src/interface.c:1876
+#: src/interface.c:422 src/interface.c:1897
 msgid "FPS"
 msgstr "FPS"
 
-#: src/interface.c:462
+#: src/interface.c:427
 msgid "Frames"
 msgstr "フレーム"
 
-#: src/interface.c:463
+#: src/interface.c:428
 msgid "Events"
 msgstr "イベント"
+
+#: src/interface.c:433 src/interface.c:499 src/interface.c:541
+msgid "Total time"
+msgstr "全時間"
 
 #: src/interface.c:485 src/resample.c:1488
 msgid "Audio"
 msgstr "音声"
 
-#: src/interface.c:507 src/interface.c:535
+#: src/interface.c:510 src/interface.c:552
 msgid "Rate/size"
 msgstr "レート/サイズ"
 
-#: src/interface.c:539
+#: src/interface.c:529
 msgid "Right audio"
 msgstr "右音声"
 
-#: src/interface.c:601
+#: src/interface.c:621
 msgid "LiVES: - Encoding options"
 msgstr "LiVES: - エンコーディングオプション"
 
-#: src/interface.c:615
+#: src/interface.c:635
 msgid "<------------- (Check the box to re_size as suggested)"
 msgstr "<------------- (推奨サイズを適用する場合はチェックを入れて下さい(_S))"
 
-#: src/interface.c:616
+#: src/interface.c:636
 msgid "<------------- (Check the box to use the _size recommendation)"
 msgstr "<------------- (推奨サイズを計算する場合はチェックを入れて下さい(_S))"
 
-#: src/interface.c:641
+#: src/interface.c:661
 msgid "Use _letterboxing to maintain aspect ratio (optional)"
 msgstr "アスペクト比を維持するためレターボックスを使用する(オプション)(_L)"
 
-#: src/interface.c:642
+#: src/interface.c:662
 msgid ""
 "Draw black rectangles either above or to the sides of the image, to prevent "
 "it from stretching."
 msgstr "画面が伸縮されないよう、画像の上部あるいは左右に黒い四角を配置します。"
 
-#: src/interface.c:673
+#: src/interface.c:693
 msgid "Keep _my settings"
 msgstr "設定を保存(_M)"
 
-#: src/interface.c:674
+#: src/interface.c:694
 msgid "Use _recommended settings"
 msgstr "推奨される設定を使用(_R)"
 
-#: src/interface.c:754 src/dialogs.c:114
+#: src/interface.c:774 src/dialogs.c:114
 msgid ""
 "Do _not show this warning any more\n"
 "(can be turned back on from Preferences/Warnings)"
@@ -1356,75 +1356,75 @@ msgstr ""
 "これ以上の警告を表示しない(_N)\n"
 "(「設定 | 警告」から変更可能です)"
 
-#: src/interface.c:766
+#: src/interface.c:786
 msgid "Show _Details"
 msgstr "詳細を表示(_D)"
 
-#: src/interface.c:866
+#: src/interface.c:887
 msgid "_Close Window"
 msgstr "ウィンドウを閉じる(_C)"
 
-#: src/interface.c:868
+#: src/interface.c:889
 msgid "_Save to file"
 msgstr "ファイルに保存(_S)"
 
-#: src/interface.c:913
+#: src/interface.c:934
 msgid "LiVES: - Insert"
 msgstr "LiVES: - 挿入"
 
-#: src/interface.c:930
+#: src/interface.c:951
 msgid "_Number of times to insert"
 msgstr "挿入する回数(_N)"
 
-#: src/interface.c:939
+#: src/interface.c:960
 msgid "_Insert to fit audio"
 msgstr "音声に合わせて挿入(_I)"
 
-#: src/interface.c:953
+#: src/interface.c:974
 msgid "Insert _before selection"
 msgstr "選択範囲の前に挿入(_B)"
 
-#: src/interface.c:955
+#: src/interface.c:976
 msgid "Insert clipboard before selected frames"
 msgstr "選択したフレームの前にクリップボードを挿入"
 
-#: src/interface.c:971
+#: src/interface.c:992
 msgid "Insert _after selection"
 msgstr "選択範囲の後に挿入(_A)"
 
-#: src/interface.c:973
+#: src/interface.c:994
 msgid "Insert clipboard after selected frames"
 msgstr "選択したフレームの後にクリップボードを挿入"
 
-#: src/interface.c:984
+#: src/interface.c:1005
 msgid "Insert _with sound"
 msgstr "音声と共に挿入(_W)"
 
-#: src/interface.c:997
+#: src/interface.c:1018
 msgid "Insert with_out sound"
 msgstr "音声なしで挿入(_O)"
 
-#: src/interface.c:1078
+#: src/interface.c:1099
 msgid "LiVES: - Open Selection"
 msgstr "LiVES: - 選択を開く"
 
-#: src/interface.c:1096
+#: src/interface.c:1117
 msgid "Selection start time (sec)"
 msgstr ""
 
-#: src/interface.c:1102
+#: src/interface.c:1123
 msgid "Number of frames to open"
 msgstr ""
 
-#: src/interface.c:1178
+#: src/interface.c:1199
 msgid "LiVES: - Open Location"
 msgstr "LiVES: - 場所を開く"
 
-#: src/interface.c:1180
+#: src/interface.c:1201
 msgid "LiVES: - Open Youtube Clip"
 msgstr "LiVES: - Youtube クリップを開く"
 
-#: src/interface.c:1198
+#: src/interface.c:1219
 msgid ""
 "\n"
 "\n"
@@ -1440,7 +1440,7 @@ msgstr ""
 "また、「設定 | ストリーミング」でバンド幅の設定も確認してください。\n"
 "\n"
 
-#: src/interface.c:1201
+#: src/interface.c:1222
 msgid ""
 "\n"
 "\n"
@@ -1455,7 +1455,7 @@ msgstr ""
 "このツールの最新バージョンをインストールしているか確認してください。\n"
 "\n"
 
-#: src/interface.c:1205
+#: src/interface.c:1226
 msgid ""
 "Enter the URL of the clip below.\n"
 "E.g: http://www.youtube.com/watch?v=WCR6f6WzjP8\n"
@@ -1465,55 +1465,55 @@ msgstr ""
 "例: http://www.youtube.com/watch?v=WCR6f6WzjP8\n"
 "\n"
 
-#: src/interface.c:1216
+#: src/interface.c:1237
 msgid "URL : "
 msgstr "URL : "
 
-#: src/interface.c:1216
+#: src/interface.c:1237
 msgid "Youtube URL : "
 msgstr "Youtube URL : "
 
-#: src/interface.c:1220
+#: src/interface.c:1241
 msgid "Do not send bandwidth information"
 msgstr "バンド幅情報を送らない"
 
-#: src/interface.c:1222
+#: src/interface.c:1243
 msgid "Try this setting if you are having problems getting a stream"
 msgstr "ストリームの取得に問題がある場合はこの設定を試してください"
 
-#: src/interface.c:1243
+#: src/interface.c:1264
 msgid "Download to _Directory : "
 msgstr "ダウンロード先ディレクトリ(_D): "
 
-#: src/interface.c:1261
+#: src/interface.c:1282
 msgid "Download _File Name : "
 msgstr "ダウンロードファイル名(_F): "
 
-#: src/interface.c:1266
+#: src/interface.c:1287
 msgid ".webm"
 msgstr ".webm"
 
-#: src/interface.c:1344
+#: src/interface.c:1365
 msgid "LiVES: - Rename Clip"
 msgstr "LiVES: - クリップの名称変更"
 
-#: src/interface.c:1347
+#: src/interface.c:1368
 msgid "LiVES: - Enter Set Name"
 msgstr "LiVES: - セット名の入力"
 
-#: src/interface.c:1350
+#: src/interface.c:1371
 msgid "LiVES: - Enter a Set Name to Reload"
 msgstr "LiVES: - 再読み込みするセット名を入力"
 
-#: src/interface.c:1353
+#: src/interface.c:1374
 msgid "LiVES: - Choose a Working Directory"
 msgstr "LiVES: - 作業ディレクトリの選択"
 
-#: src/interface.c:1356
+#: src/interface.c:1377
 msgid "LiVES: - Rename Current Track"
 msgstr ""
 
-#: src/interface.c:1376
+#: src/interface.c:1397
 msgid ""
 "You need to enter a name for the current clip set.\n"
 "This will allow you reload the layout with the same clips later.\n"
@@ -1525,7 +1525,7 @@ msgstr ""
 "使いたい名前を入力してください。\n"
 "なお終了しようとするときに、LiVESは再度クリップセットの保存を促します。\n"
 
-#: src/interface.c:1382
+#: src/interface.c:1403
 msgid ""
 "In order to export this project, you must enter a name for this clip set.\n"
 "This will also be used for the project name.\n"
@@ -1534,7 +1534,7 @@ msgstr ""
 "あります。\n"
 "また、これはプロジェクト名としても利用されます。\n"
 
-#: src/interface.c:1389
+#: src/interface.c:1410
 msgid ""
 "Welcome to LiVES !\n"
 "This startup wizard will guide you through the\n"
@@ -1544,200 +1544,200 @@ msgstr ""
 "このスタートアップウィザードでは、このアプリケーションをより活用できるよう\n"
 "初期インストールの案内をいたします。\n"
 
-#: src/interface.c:1393
+#: src/interface.c:1414
 msgid ""
 "\n"
 "First of all you need to choose a working directory for LiVES.\n"
 "This should be a directory with plenty of disk space available.\n"
 msgstr ""
 
-#: src/interface.c:1412
+#: src/interface.c:1433
 msgid "New name "
 msgstr "新しい名前 "
 
-#: src/interface.c:1415
+#: src/interface.c:1436
 msgid "Set name "
 msgstr "セットの名前 "
 
-#: src/interface.c:1535
+#: src/interface.c:1556
 msgid "Use def_aults"
 msgstr "デフォルトを使用(_A)"
 
-#: src/interface.c:1538 src/interface.c:1825 src/preferences.c:2499
+#: src/interface.c:1559 src/interface.c:1846 src/preferences.c:2499
 #: src/preferences.c:2681
 msgid "_Advanced"
 msgstr "詳細(_A)"
 
-#: src/interface.c:1589
+#: src/interface.c:1610
 msgid "LiVES:- Select input device"
 msgstr "LiVES:- 入力デバイスの選択"
 
-#: src/interface.c:1607
+#: src/interface.c:1628
 msgid "Select input device:"
 msgstr "入力デバイスの選択:"
 
-#: src/interface.c:1671
+#: src/interface.c:1692
 msgid "LiVES:- Load CD Track"
 msgstr "LiVES:- CDトラックの読み込み"
 
-#: src/interface.c:1674
+#: src/interface.c:1695
 msgid "LiVES:- Select DVD Title/Chapter"
 msgstr "LiVES:- DVDタイトル/チャプターの選択"
 
-#: src/interface.c:1677
+#: src/interface.c:1698
 msgid "LiVES:- Select VCD Title"
 msgstr "LiVES:- VCDタイトルの選択"
 
-#: src/interface.c:1680
+#: src/interface.c:1701
 msgid "LiVES:- Change Maximum Visible Tracks"
 msgstr "LiVES:- 表示するトラックの最大値変更"
 
-#: src/interface.c:1683
+#: src/interface.c:1704
 msgid "LiVES:- Device details"
 msgstr "LiVES:- デバイスの詳細"
 
-#: src/interface.c:1706
+#: src/interface.c:1727
 #, c-format
 msgid "Track to load (from %s)"
 msgstr "(%sから)読み込みするトラック"
 
-#: src/interface.c:1709
+#: src/interface.c:1730
 msgid "DVD Title"
 msgstr "DVDタイトル"
 
-#: src/interface.c:1712
+#: src/interface.c:1733
 msgid "VCD Title"
 msgstr "VCDタイトル"
 
-#: src/interface.c:1715
+#: src/interface.c:1736
 msgid "Maximum number of tracks to display"
 msgstr "表示するトラック数の最大値"
 
-#: src/interface.c:1718
+#: src/interface.c:1739
 msgid "Device:        /dev/video"
 msgstr "デバイス:        /dev/video"
 
-#: src/interface.c:1721
+#: src/interface.c:1742
 msgid "Device:        fw:"
 msgstr "デバイス:        fw:"
 
-#: src/interface.c:1756
+#: src/interface.c:1777
 msgid "Chapter  "
 msgstr "チャプター  "
 
-#: src/interface.c:1761
+#: src/interface.c:1782
 msgid "Channel  "
 msgstr "キャンセル  "
 
-#: src/interface.c:1776
+#: src/interface.c:1797
 msgid "Audio ID  "
 msgstr "オーディオ ID  "
 
-#: src/interface.c:1842
+#: src/interface.c:1863
 msgid "Input number"
 msgstr "入力ポート数"
 
-#: src/interface.c:1850
+#: src/interface.c:1871
 msgid "Use default width, height and FPS"
 msgstr "デフォルトの幅、高さ、FPSを使用します"
 
-#: src/interface.c:1864
+#: src/interface.c:1885
 msgid "Width"
 msgstr "幅"
 
-#: src/interface.c:1870
+#: src/interface.c:1891
 msgid "Height"
 msgstr "高さ"
 
-#: src/interface.c:1884
+#: src/interface.c:1905
 msgid "_Driver"
 msgstr ""
 
-#: src/interface.c:1887
+#: src/interface.c:1908
 msgid "_Output format"
 msgstr ""
 
-#: src/interface.c:1983
+#: src/interface.c:2004
 msgid "LiVES:- Fade Audio In"
 msgstr "LiVES:- 音声のフェードイン"
 
-#: src/interface.c:1986
+#: src/interface.c:2007
 msgid "LiVES:- Fade Audio Out"
 msgstr "LiVES:- 音声のフェードアウト"
 
-#: src/interface.c:2002
+#: src/interface.c:2023
 msgid "Fade in over  "
 msgstr "フェードイン  "
 
-#: src/interface.c:2003
+#: src/interface.c:2024
 msgid "first"
 msgstr "最初"
 
-#: src/interface.c:2006
+#: src/interface.c:2027
 msgid "Fade out over  "
 msgstr "フェードアウト  "
 
-#: src/interface.c:2007
+#: src/interface.c:2028
 msgid "last"
 msgstr "最後"
 
-#: src/interface.c:2029
+#: src/interface.c:2050
 msgid "seconds."
 msgstr "秒"
 
-#: src/interface.c:2037 src/saveplay.c:1489
+#: src/interface.c:2058 src/saveplay.c:1489
 msgid "selection"
 msgstr "選択"
 
-#: src/interface.c:2077
+#: src/interface.c:2098
 msgid "LiVES: - File Comments (optional)"
 msgstr "LiVES: - ファイルコメント (オプション)"
 
-#: src/interface.c:2092
+#: src/interface.c:2113
 msgid "Title/Name : "
 msgstr "タイトル/名前 : "
 
-#: src/interface.c:2099
+#: src/interface.c:2120
 msgid "Author/Artist : "
 msgstr "作者/アーティスト : "
 
-#: src/interface.c:2106
+#: src/interface.c:2127
 msgid "Comments : "
 msgstr "コメント : "
 
-#: src/interface.c:2136
+#: src/interface.c:2157
 msgid "_Options"
 msgstr "オプション(_O)"
 
-#: src/interface.c:2143
+#: src/interface.c:2164
 msgid "Save _subtitles to file"
 msgstr "字幕をファイルに保存(_S)"
 
-#: src/interface.c:2155
+#: src/interface.c:2176
 msgid "Subtitle file"
 msgstr "字幕ファイル"
 
-#: src/interface.c:2157
+#: src/interface.c:2178
 msgid "Browse..."
 msgstr "参照..."
 
-#: src/interface.c:2240
+#: src/interface.c:2261
 msgid "LiVES: - choose a device"
 msgstr ""
 
-#: src/interface.c:2244
+#: src/interface.c:2265
 msgid "LiVES: - choose a directory"
 msgstr ""
 
-#: src/interface.c:2247
+#: src/interface.c:2268
 msgid "LiVES: - choose a file"
 msgstr ""
 
-#: src/interface.c:2432
+#: src/interface.c:2453
 msgid "LiVES: - Cancel/Discard/Save"
 msgstr "LiVES: - キャンセル/破棄/保存"
 
-#: src/interface.c:2447
+#: src/interface.c:2468
 msgid ""
 "You are about to leave multitrack mode.\n"
 "The current layout has not been saved.\n"
@@ -1747,7 +1747,7 @@ msgstr ""
 "現在のレイアウトは保存されていません。\n"
 "どうしますか?\n"
 
-#: src/interface.c:2450
+#: src/interface.c:2471
 msgid ""
 "You are about to leave multitrack mode.\n"
 "The current layout has been changed since the last save.\n"
@@ -1757,7 +1757,7 @@ msgstr ""
 "現在のレイアウトは最後の保存から変更されています。\n"
 "どうしますか?\n"
 
-#: src/interface.c:2454
+#: src/interface.c:2475
 msgid ""
 "You are about to exit LiVES.\n"
 "The current clip set can be saved.\n"
@@ -1767,7 +1767,7 @@ msgstr ""
 "現在のクリップセットを保存することができます。\n"
 "どうしますか?\n"
 
-#: src/interface.c:2455
+#: src/interface.c:2476
 msgid ""
 "The current clip set has not been saved.\n"
 "What would you like to do ?\n"
@@ -1775,7 +1775,7 @@ msgstr ""
 "現在のクリップセットは保存されていません。\n"
 "どうしますか?\n"
 
-#: src/interface.c:2459
+#: src/interface.c:2480
 msgid ""
 "The current layout has not been saved.\n"
 "What would you like to do ?\n"
@@ -1783,7 +1783,7 @@ msgstr ""
 "現在のレイアウトは保存されていません。\n"
 "どうしますか?\n"
 
-#: src/interface.c:2462
+#: src/interface.c:2483
 #, fuzzy
 msgid ""
 "The current layout has *not* been changed since it was last saved.\n"
@@ -1792,7 +1792,7 @@ msgstr ""
 "最後に保存され、現在のレイアウトが変更されていません。\n"
 "を行うにはどのような希望ですか？\n"
 
-#: src/interface.c:2467
+#: src/interface.c:2488
 msgid ""
 "The current layout contains generated frames and cannot be retained.\n"
 "You may wish to render it before exiting multitrack mode.\n"
@@ -1800,7 +1800,7 @@ msgstr ""
 "作成したフレームを含んだ現在のレイアウトは保存できません。\n"
 "マルチトラックモードを終了する前にレンダリングしておくのが良いでしょう。\n"
 
-#: src/interface.c:2470
+#: src/interface.c:2491
 msgid ""
 "You are about to leave multitrack mode.\n"
 "The current layout contains generated frames and cannot be retained.\n"
@@ -1810,39 +1810,39 @@ msgstr ""
 "作成したフレームを含む現在のレイアウトは保存されません。\n"
 "どうしますか？"
 
-#: src/interface.c:2483
+#: src/interface.c:2504
 msgid "Clip set _name"
 msgstr "クリップセット名(_N)"
 
-#: src/interface.c:2489
+#: src/interface.c:2510
 msgid "_Auto reload next time"
 msgstr "次回、自動で再読み込みする(_A)"
 
-#: src/interface.c:2525 src/interface.c:2535
+#: src/interface.c:2545 src/interface.c:2554
 msgid "_Wipe layout"
 msgstr "レイアウトの除去(_W)"
 
-#: src/interface.c:2526
+#: src/interface.c:2546
 msgid "_Ignore changes"
 msgstr "変更を無視(_I)"
 
-#: src/interface.c:2527
+#: src/interface.c:2547
 msgid "_Delete clip set"
 msgstr "クリップセットを削除(_D)"
 
-#: src/interface.c:2528
+#: src/interface.c:2548
 msgid "_Delete layout"
 msgstr "レイアウトを削除(_D)"
 
-#: src/interface.c:2533
+#: src/interface.c:2552
 msgid "_Save layout"
 msgstr "レイアウトを保存(_S)"
 
-#: src/interface.c:2534
+#: src/interface.c:2553
 msgid "_Save clip set"
 msgstr "クリップセットを保存(_S)"
 
-#: src/interface.c:2553
+#: src/interface.c:2572
 msgid ""
 "\n"
 "LiVES has detected a multitrack layout from a previous session.\n"
@@ -1852,31 +1852,31 @@ msgstr ""
 "LiVESは、前回のセッションのマルチトラックモードのレイアウトを検出しました。\n"
 "再度このレイアウトを開き、復元しますか？\n"
 
-#: src/interface.c:2577
+#: src/interface.c:2596
 msgid "LiVES: - Disk Recovery Options"
 msgstr "LiVES: - ディスク回復オプション"
 
-#: src/interface.c:2596
+#: src/interface.c:2615
 msgid "Delete _Orphaned Clips"
 msgstr "孤立したクリップを削除(_O)"
 
-#: src/interface.c:2597
+#: src/interface.c:2616
 msgid "Delete any clips which are not currently loaded or part of a set"
 msgstr ""
 
-#: src/interface.c:2610
+#: src/interface.c:2629
 msgid "Clear _Backup Files from Closed Clips"
 msgstr "閉じたクリップのバックアップファイルを消去(_B)"
 
-#: src/interface.c:2621
+#: src/interface.c:2640
 msgid "Remove Sets which have _Layouts but no Clips"
 msgstr "レイアウトのみでクリップがないセットを削除(_L)"
 
-#: src/interface.c:2632
+#: src/interface.c:2651
 msgid "_Reset to Defaults"
 msgstr "デフォルトに戻す(_R)"
 
-#: src/interface.c:2639
+#: src/interface.c:2658
 msgid "_Accept"
 msgstr "承認(_A)"
 
@@ -1885,24 +1885,24 @@ msgstr "承認(_A)"
 msgid "Saving as set %s..."
 msgstr "セット %s として保存しています..."
 
-#: src/callbacks.c:821
+#: src/callbacks.c:827
 msgid "Please enter the name of the file to save the clip as.\n"
 msgstr "クリップを保存するファイル名を入力してください。\n"
 
-#: src/callbacks.c:829
+#: src/callbacks.c:835
 msgid "Please enter a valid URL for the download.\n"
 msgstr "ダウンロードするには有効な URL を入力してください。\n"
 
-#: src/callbacks.c:855
+#: src/callbacks.c:861
 #, c-format
 msgid "Downloading %s to %s..."
 msgstr "%s を %s にダウンロード中..."
 
-#: src/callbacks.c:883
+#: src/callbacks.c:889
 msgid "Downloading clip"
 msgstr "クリップをダウンロード中"
 
-#: src/callbacks.c:921
+#: src/callbacks.c:927
 msgid ""
 "\n"
 "LiVES was unable to download the clip.\n"
@@ -1914,11 +1914,11 @@ msgstr ""
 "クリップの URL を確認した上で、最新の youtube-dl が\n"
 "インストールされているか確認してください。\n"
 
-#: src/callbacks.c:1103 src/callbacks.c:1138
+#: src/callbacks.c:1109 src/callbacks.c:1144
 msgid "This file"
 msgstr "このファイル"
 
-#: src/callbacks.c:1104
+#: src/callbacks.c:1110
 msgid ""
 ",\n"
 " - including the current layout - "
@@ -1926,7 +1926,7 @@ msgstr ""
 ",\n"
 " - 現在のレイアウトを含む - "
 
-#: src/callbacks.c:1106
+#: src/callbacks.c:1112
 #, c-format
 msgid ""
 "\n"
@@ -1941,7 +1941,7 @@ msgstr ""
 "\n"
 "本当に閉じますか？"
 
-#: src/callbacks.c:1108
+#: src/callbacks.c:1114
 #, c-format
 msgid ""
 "\n"
@@ -1956,7 +1956,7 @@ msgstr ""
 "\n"
 "本当に閉じますか？"
 
-#: src/callbacks.c:1139
+#: src/callbacks.c:1145
 msgid ""
 "Changes made to this clip have not been saved or backed up.\n"
 "\n"
@@ -1966,7 +1966,7 @@ msgstr ""
 "\n"
 "本当に閉じますか？"
 
-#: src/callbacks.c:1332
+#: src/callbacks.c:1338
 msgid ""
 "\n"
 "Invalid project file.\n"
@@ -1974,7 +1974,7 @@ msgstr ""
 "\n"
 "無効なプロジェクトファイルです。\n"
 
-#: src/callbacks.c:1345
+#: src/callbacks.c:1351
 #, c-format
 msgid ""
 "\n"
@@ -1997,33 +1997,33 @@ msgstr ""
 "いったんこの作業を行えば、新しいプロジェクトをインポートできるようになりま"
 "す。\n"
 
-#: src/callbacks.c:1355
+#: src/callbacks.c:1361
 #, c-format
 msgid "Importing the project %s as set %s..."
 msgstr "プロジェクト %s をセット %s としてインポート..."
 
-#: src/callbacks.c:1375
+#: src/callbacks.c:1381
 msgid "Importing project"
 msgstr "プロジェクトのインポート"
 
-#: src/callbacks.c:1461
+#: src/callbacks.c:1467
 #, c-format
 msgid "Exporting project %s..."
 msgstr "プロジェクト %s をエクスポート..."
 
-#: src/callbacks.c:1479
+#: src/callbacks.c:1485
 msgid "Exporting project"
 msgstr "プロジェクトのエクスポート"
 
-#: src/callbacks.c:1495
+#: src/callbacks.c:1501
 msgid "Backup as .lv1 file"
 msgstr ".lv1ファイルとしてバックアップ"
 
-#: src/callbacks.c:1511
+#: src/callbacks.c:1517
 msgid "Restore .lv1 file"
 msgstr ".lv1ファイルからリストア"
 
-#: src/callbacks.c:1654
+#: src/callbacks.c:1660
 msgid ""
 "\n"
 "\n"
@@ -2035,90 +2035,90 @@ msgstr ""
 "セットはディスクから消去されます。\n"
 "よろしいでしょうか?\n"
 
-#: src/callbacks.c:1715
+#: src/callbacks.c:1721
 #, c-format
 msgid "Deleting set %s..."
 msgstr "セット %s を削除しています..."
 
-#: src/callbacks.c:1717
+#: src/callbacks.c:1723
 msgid "Deleting set..."
 msgstr "セットの削除..."
 
-#: src/callbacks.c:1721
+#: src/callbacks.c:1727
 msgid "Deleting set"
 msgstr "セットの削除"
 
-#: src/callbacks.c:1729
+#: src/callbacks.c:1735
 #, c-format
 msgid "Set %s was permanently deleted from the disk.\n"
 msgstr "セット %s はディスクから完全に削除されました。\n"
 
-#: src/callbacks.c:1779 src/callbacks.c:11757
+#: src/callbacks.c:1783 src/callbacks.c:11763
 msgid "Insert Silence"
 msgstr "無音部分の挿入"
 
-#: src/callbacks.c:1832 src/callbacks.c:1915 src/callbacks.c:2078
+#: src/callbacks.c:1836 src/callbacks.c:1919 src/callbacks.c:2082
 msgid "Undoing"
 msgstr "アンドゥします"
 
-#: src/callbacks.c:1928 src/callbacks.c:2139
+#: src/callbacks.c:1932 src/callbacks.c:2143
 msgid "Restoring audio..."
 msgstr "音声のリストア..."
 
-#: src/callbacks.c:1944
+#: src/callbacks.c:1948
 msgid "Clearing frame images"
 msgstr "フレームイメージの消去"
 
-#: src/callbacks.c:1977
+#: src/callbacks.c:1981
 msgid "Deleting excess frames"
 msgstr "オーバーしたフレームを削除"
 
-#: src/callbacks.c:2221
+#: src/callbacks.c:2225
 #, c-format
 msgid "Length of video is now %d frames at %.3f frames per second.\n"
 msgstr "ビデオの長さは現在%dフレームです(%.3fフレーム/秒)。\n"
 
-#: src/callbacks.c:2225 src/resample.c:683 src/resample.c:2166
+#: src/callbacks.c:2229 src/resample.c:683 src/resample.c:2166
 #, c-format
 msgid "Clipboard was resampled to %d frames.\n"
 msgstr "クリップボードは%dフレームにリサンプリングされました。\n"
 
-#: src/callbacks.c:2388 src/callbacks.c:2417
+#: src/callbacks.c:2392 src/callbacks.c:2421
 msgid "Redoing"
 msgstr "リドゥします"
 
-#: src/callbacks.c:2456
+#: src/callbacks.c:2460
 #, c-format
 msgid "Copying frames %d to %d%s to the clipboard..."
 msgstr "%dから%d%sフレームをクリップボードにコピーします..."
 
-#: src/callbacks.c:2519
+#: src/callbacks.c:2523
 msgid "Copying to the clipboard"
 msgstr "クリップボードにコピー"
 
-#: src/callbacks.c:2597
+#: src/callbacks.c:2601
 msgid "Cut"
 msgstr "カット"
 
-#: src/callbacks.c:2640 src/callbacks.c:3067 src/callbacks.c:8023
+#: src/callbacks.c:2644 src/callbacks.c:3071 src/callbacks.c:8027
 #, fuzzy
 msgid "Pulling frames from clipboard"
 msgstr "クリップからフレームを抽出"
 
-#: src/callbacks.c:2653
+#: src/callbacks.c:2657
 #, c-format
 msgid "Pasting %d frames to new clip %s..."
 msgstr "%d フレームを 新しいクリップ %s に貼り付けます..."
 
-#: src/callbacks.c:2677
+#: src/callbacks.c:2681
 msgid "Pasting"
 msgstr "貼り付けます"
 
-#: src/callbacks.c:2693
+#: src/callbacks.c:2697
 msgid "...added audio..."
 msgstr "...音声を追加..."
 
-#: src/callbacks.c:2777
+#: src/callbacks.c:2781
 msgid ""
 "This operation requires resizing or converting of frames.\n"
 "Please install 'convert' from the Image-magick package, and then restart "
@@ -2128,7 +2128,7 @@ msgstr ""
 "Image-magickパッケージの'convert'コマンドをインストールして、LiVESを再起動し"
 "てください。\n"
 
-#: src/callbacks.c:2794
+#: src/callbacks.c:2798
 msgid ""
 "\n"
 "\n"
@@ -2142,7 +2142,7 @@ msgstr ""
 "すべてのフレームを選択して、音声メニューから\n"
 "「音声のトリミング」機能を選択しましょう。"
 
-#: src/callbacks.c:2818
+#: src/callbacks.c:2822
 msgid ""
 "LiVES cannot insert because the audio rates do not match.\n"
 "Please install 'sox', and try again."
@@ -2150,7 +2150,7 @@ msgstr ""
 "音声レートが適合しなかったため、LiVESは挿入できませんでした。\n"
 "'sox'をインストールして再試行してください。"
 
-#: src/callbacks.c:2837
+#: src/callbacks.c:2841
 msgid ""
 "\n"
 "Insertion will cause frames to shift in some multitrack layouts.\n"
@@ -2161,7 +2161,7 @@ msgstr ""
 "う。\n"
 "続けても構いませんか?\n"
 
-#: src/callbacks.c:2887 src/callbacks.c:11685
+#: src/callbacks.c:2891 src/callbacks.c:11691
 msgid ""
 "\n"
 "Insertion will cause audio to shift in some multitrack layouts.\n"
@@ -2172,11 +2172,11 @@ msgstr ""
 "う。\n"
 "続けても構いませんか?\n"
 
-#: src/callbacks.c:2995 src/callbacks.c:3024
+#: src/callbacks.c:2999 src/callbacks.c:3028
 msgid "Resampling clipboard audio"
 msgstr "クリップボードの音声をリサンプリング"
 
-#: src/callbacks.c:3040
+#: src/callbacks.c:3044
 msgid ""
 "\n"
 "\n"
@@ -2188,7 +2188,7 @@ msgstr ""
 "LiVESはクリップボードの音声をリサンプリングできませんでした。\n"
 "クリップボードの音声は消去されました。\n"
 
-#: src/callbacks.c:3054
+#: src/callbacks.c:3058
 msgid ""
 "\n"
 "\n"
@@ -2201,30 +2201,30 @@ msgstr ""
 "LiVESはクリップボードの音声をリサンプリングできませんでした。 \n"
 "変更前の音声を用いて、挿入を続けますか?\n"
 
-#: src/callbacks.c:3128 src/callbacks.c:3302
+#: src/callbacks.c:3132 src/callbacks.c:3306
 #, c-format
 msgid "Inserting %d%s frames from the clipboard..."
 msgstr "クリップボードから%d%sフレームを挿入..."
 
-#: src/callbacks.c:3153 src/callbacks.c:3227 src/callbacks.c:3330
+#: src/callbacks.c:3157 src/callbacks.c:3231 src/callbacks.c:3334
 msgid "Inserting"
 msgstr "挿入します"
 
-#: src/callbacks.c:3184
+#: src/callbacks.c:3188
 #, c-format
 msgid "Inserting %d times from the clipboard%s..."
 msgstr "%d時間挿入します (クリップボード%sから)..."
 
-#: src/callbacks.c:3191
+#: src/callbacks.c:3195
 #, c-format
 msgid "Inserting %d frames from the clipboard%s..."
 msgstr "%dフレーム挿入します (クリップボード%sから)..."
 
-#: src/callbacks.c:3409
+#: src/callbacks.c:3413
 msgid "Insert"
 msgstr "挿入"
 
-#: src/callbacks.c:3478
+#: src/callbacks.c:3482
 msgid ""
 "\n"
 "Deleting all frames will close this file.\n"
@@ -2234,7 +2234,7 @@ msgstr ""
 "全フレームを削除すると、このファイルを閉じます。\n"
 "構いませんか ?"
 
-#: src/callbacks.c:3487
+#: src/callbacks.c:3491
 msgid ""
 "\n"
 "Deletion will cause missing frames in some multitrack layouts.\n"
@@ -2244,8 +2244,8 @@ msgstr ""
 "削除によってマルチトラックレイアウトからフレームが失われます。\n"
 "続けても構いませんか?\n"
 
-#: src/callbacks.c:3507 src/callbacks.c:10912 src/callbacks.c:11154
-#: src/callbacks.c:11220
+#: src/callbacks.c:3511 src/callbacks.c:10918 src/callbacks.c:11160
+#: src/callbacks.c:11226
 msgid ""
 "\n"
 "Deletion will cause missing audio in some multitrack layouts.\n"
@@ -2255,7 +2255,7 @@ msgstr ""
 "削除することによって、マルチトラックレイアウトで音声が削除されるでしょう。\n"
 "続けても構いませんか?\n"
 
-#: src/callbacks.c:3526
+#: src/callbacks.c:3530
 msgid ""
 "\n"
 "Deletion will cause frames to shift in some multitrack layouts.\n"
@@ -2265,7 +2265,7 @@ msgstr ""
 "消去することによってフレームはマルチトラックレイアウト中で移動します。\n"
 "続けますか?\n"
 
-#: src/callbacks.c:3545 src/callbacks.c:11202
+#: src/callbacks.c:3549 src/callbacks.c:11208
 msgid ""
 "\n"
 "Deletion will cause audio to shift in some multitrack layouts.\n"
@@ -2275,20 +2275,20 @@ msgstr ""
 "消去することによって音声はマルチトラックレイアウト中で移動します。\n"
 "続けますか?\n"
 
-#: src/callbacks.c:3603
+#: src/callbacks.c:3607
 #, c-format
 msgid "Deleting frames %d to %d%s..."
 msgstr "%dから%d%sフレームを削除..."
 
-#: src/callbacks.c:3628
+#: src/callbacks.c:3632
 msgid "Deleting"
 msgstr "削除します"
 
-#: src/callbacks.c:3709
+#: src/callbacks.c:3713
 msgid "Delete"
 msgstr "消去"
 
-#: src/callbacks.c:3730
+#: src/callbacks.c:3734
 msgid ""
 "\n"
 "\n"
@@ -2298,7 +2298,7 @@ msgstr ""
 "\n"
 "選択範囲をロックします。\n"
 
-#: src/callbacks.c:4081
+#: src/callbacks.c:4085
 msgid ""
 "Ready to record. Use 'control' and cursor keys during playback to record "
 "your performance.\n"
@@ -2310,11 +2310,11 @@ msgstr ""
 "(キャンセルするには、'r'キーを押すか、再生を始める前に 再生|動作を記録 を再度"
 "クリックしてください。\n"
 
-#: src/callbacks.c:4087
+#: src/callbacks.c:4091
 msgid "Record cancelled.\n"
 msgstr "記録はキャンセルされました。\n"
 
-#: src/callbacks.c:4227
+#: src/callbacks.c:4231
 #, c-format
 msgid ""
 "\n"
@@ -2327,7 +2327,7 @@ msgstr ""
 "プラグイン'%s'の報告:\n"
 "%s\n"
 
-#: src/callbacks.c:4231
+#: src/callbacks.c:4235
 #, c-format
 msgid ""
 "\n"
@@ -2340,7 +2340,7 @@ msgstr ""
 "プラグイン%sの中に'init'メソッドが見つかりません。\n"
 "このプラグインは壊れているか、正しくインストールされていないようです。"
 
-#: src/callbacks.c:4561
+#: src/callbacks.c:4565
 #, c-format
 msgid ""
 "Saving the set will cause copies of all loaded clips to remain on the disk"
@@ -2353,23 +2353,23 @@ msgstr ""
 "\n"
 "コピーしたくない場合は、'キャンセル'を押してください。\n"
 
-#: src/callbacks.c:4644
+#: src/callbacks.c:4648
 #, c-format
 msgid "Saving set %s"
 msgstr "セット %s の保存"
 
-#: src/callbacks.c:4995
+#: src/callbacks.c:4999
 #, c-format
 msgid "Loading clips from set %s"
 msgstr "セット %s からクリップを読み込み"
 
-#: src/callbacks.c:5083
+#: src/callbacks.c:5087
 #, c-format
 msgid "%d clips and %d layouts were recovered from set (%s).\n"
 msgstr ""
 "セット (%3$s) から %1$d 個のクリップと %2$d 個のレイアウトを回復しました。\n"
 
-#: src/callbacks.c:5302
+#: src/callbacks.c:5306
 msgid ""
 "LiVES will attempt to recover some disk space.\n"
 "You should ONLY run this if you have no other copies of LiVES running on "
@@ -2381,24 +2381,24 @@ msgstr ""
 "動作させるようにしてください。\n"
 "OKをクリックすると先に進みます。\n"
 
-#: src/callbacks.c:5307
+#: src/callbacks.c:5311
 msgid "Cleaning up disk space..."
 msgstr "ディスクスペースの消去..."
 
-#: src/callbacks.c:5377
+#: src/callbacks.c:5381
 msgid "Recovering disk space"
 msgstr "ディスク容量を回復"
 
-#: src/callbacks.c:5429
+#: src/callbacks.c:5433
 #, c-format
 msgid "%s of disk space was recovered.\n"
 msgstr "%s のディスク容量を回復しました。\n"
 
-#: src/callbacks.c:5472
+#: src/callbacks.c:5476
 msgid "Resetting frame rates and frame values..."
 msgstr "フレームレートとフレーム値のリストア..."
 
-#: src/callbacks.c:5513
+#: src/callbacks.c:5517
 #, c-format
 msgid ""
 "\n"
@@ -2406,12 +2406,12 @@ msgid ""
 "Internal: %s (%d bpp) / %s\n"
 msgstr ""
 
-#: src/callbacks.c:5515
+#: src/callbacks.c:5519
 msgid "buffered"
 msgstr "バッファー内"
 
-#: src/callbacks.c:5528 src/callbacks.c:5547 src/callbacks.c:5565
-#: src/callbacks.c:5599
+#: src/callbacks.c:5532 src/callbacks.c:5551 src/callbacks.c:5569
+#: src/callbacks.c:5603
 msgid ""
 "\n"
 "  Opening..."
@@ -2419,7 +2419,7 @@ msgstr ""
 "\n"
 "  開いています..."
 
-#: src/callbacks.c:5535
+#: src/callbacks.c:5539
 #, c-format
 msgid ""
 "\n"
@@ -2428,7 +2428,7 @@ msgstr ""
 "\n"
 "(%d バーチャル)"
 
-#: src/callbacks.c:5538
+#: src/callbacks.c:5542
 #, c-format
 msgid ""
 "\n"
@@ -2437,7 +2437,7 @@ msgstr ""
 "\n"
 "(%d デコード済み)"
 
-#: src/callbacks.c:5550 src/callbacks.c:5568 src/callbacks.c:5602
+#: src/callbacks.c:5554 src/callbacks.c:5572 src/callbacks.c:5606
 #, c-format
 msgid ""
 "\n"
@@ -2446,7 +2446,7 @@ msgstr ""
 "\n"
 "  %.2f 秒."
 
-#: src/callbacks.c:5559
+#: src/callbacks.c:5563
 msgid ""
 "\n"
 "  Unknown"
@@ -2454,23 +2454,23 @@ msgstr ""
 "\n"
 "  不明"
 
-#: src/callbacks.c:5572 src/callbacks.c:5586
+#: src/callbacks.c:5576 src/callbacks.c:5590
 msgid "unsigned"
 msgstr "符号なし"
 
-#: src/callbacks.c:5573 src/callbacks.c:5587
+#: src/callbacks.c:5577 src/callbacks.c:5591
 msgid "signed"
 msgstr "符号付き"
 
-#: src/callbacks.c:5575 src/callbacks.c:5589
+#: src/callbacks.c:5579 src/callbacks.c:5593
 msgid "big-endian"
 msgstr "ビッグエンディアン"
 
-#: src/callbacks.c:5576 src/callbacks.c:5590
+#: src/callbacks.c:5580 src/callbacks.c:5594
 msgid "little-endian"
 msgstr "リトルエンディアン"
 
-#: src/callbacks.c:5578 src/callbacks.c:5592
+#: src/callbacks.c:5582 src/callbacks.c:5596
 #, c-format
 msgid ""
 "  %d Hz %d bit\n"
@@ -2479,7 +2479,7 @@ msgstr ""
 "  %d Hz %d ビット\n"
 "%s %s"
 
-#: src/callbacks.c:5697
+#: src/callbacks.c:5701
 msgid ""
 "This program is free software; you can redistribute it and/or modify\n"
 "it under the terms of the GNU General Public License as published by\n"
@@ -2509,15 +2509,15 @@ msgstr ""
 "along with this program; if not, write to the Free Software\n"
 "Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA.\n"
 
-#: src/callbacks.c:5711
+#: src/callbacks.c:5715
 msgid "A video editor and VJ program."
 msgstr "映像エディターとVJプログラム"
 
-#: src/callbacks.c:5712
+#: src/callbacks.c:5716
 msgid "About LiVES"
 msgstr ""
 
-#: src/callbacks.c:5714
+#: src/callbacks.c:5718
 msgid "translator_credits"
 msgstr ""
 "Launchpad Contributions:\n"
@@ -2526,7 +2526,7 @@ msgstr ""
 "  Shushi Kurose https://launchpad.net/~kuromabo\n"
 "  Takashi Sakamoto https://launchpad.net/~mocchi"
 
-#: src/callbacks.c:5748
+#: src/callbacks.c:5752
 #, c-format
 msgid ""
 "LiVES Version %s\n"
@@ -2549,7 +2549,7 @@ msgstr ""
 "salsaman@gmail.com\n"
 "ホームページ: http://lives.sourceforge.net"
 
-#: src/callbacks.c:6027
+#: src/callbacks.c:6031
 #, fuzzy
 msgid ""
 "\n"
@@ -2560,7 +2560,7 @@ msgstr ""
 "\n"
 "このファイルをプレビューするにはmplayerをインストールする必要があります。\n"
 
-#: src/callbacks.c:6030
+#: src/callbacks.c:6034
 #, fuzzy
 msgid ""
 "\n"
@@ -2572,7 +2572,7 @@ msgstr ""
 "\n"
 "このファイルをプレビューするにはmplayerをインストールする必要があります。\n"
 
-#: src/callbacks.c:6413 src/callbacks.c:8286
+#: src/callbacks.c:6417 src/callbacks.c:8290
 msgid ""
 "\n"
 "Loading new audio may cause missing audio in some multitrack layouts.\n"
@@ -2584,180 +2584,180 @@ msgstr ""
 "す。\n"
 "続けても構いませんか?"
 
-#: src/callbacks.c:6513
+#: src/callbacks.c:6517
 #, c-format
 msgid "Opening audio %s, type %s..."
 msgstr "音声%s, タイプ%sを開きます..."
 
-#: src/callbacks.c:6546 src/saveplay.c:480
+#: src/callbacks.c:6550 src/saveplay.c:480
 msgid "Opening audio"
 msgstr "音声を開きます"
 
-#: src/callbacks.c:6555 src/callbacks.c:6602 src/callbacks.c:8384
-#: src/callbacks.c:8426 src/callbacks.c:8469 src/callbacks.c:10838
+#: src/callbacks.c:6559 src/callbacks.c:6606 src/callbacks.c:8388
+#: src/callbacks.c:8430 src/callbacks.c:8473 src/callbacks.c:10844
 msgid "Cancelling"
 msgstr "キャンセルします"
 
-#: src/callbacks.c:6650 src/callbacks.c:8511 src/callbacks.c:10868
-#: src/callbacks.c:11556
+#: src/callbacks.c:6654 src/callbacks.c:8515 src/callbacks.c:10874
+#: src/callbacks.c:11562
 msgid "Committing audio"
 msgstr "音声を収容します"
 
-#: src/callbacks.c:6662 src/callbacks.c:8543
+#: src/callbacks.c:6666 src/callbacks.c:8547
 msgid "New Audio"
 msgstr "新しい音声"
 
-#: src/callbacks.c:6769
+#: src/callbacks.c:6773
 #, c-format
 msgid ""
 "Text was saved as\n"
 "%s\n"
 msgstr ""
 
-#: src/callbacks.c:6941 src/saveplay.c:3584
+#: src/callbacks.c:6945 src/saveplay.c:3584
 #, c-format
 msgid "%d frames are enough !\n"
 msgstr "%d フレームで十分です !\n"
 
-#: src/callbacks.c:7047
+#: src/callbacks.c:7051
 msgid "LiVES: - Encoder debug output"
 msgstr "LiVES: - エンコーダのデバッグ出力"
 
-#: src/callbacks.c:7084 src/gui.c:1920
+#: src/callbacks.c:7088 src/gui.c:1920
 msgid "Fullscreen playback (f)"
 msgstr "フルスクリーン再生 (f)"
 
-#: src/callbacks.c:7086
+#: src/callbacks.c:7090
 msgid "Fullscreen playback off (f)"
 msgstr "フルスクリーン再生オフ (f)"
 
-#: src/callbacks.c:7185 src/callbacks.c:7333 src/callbacks.c:7661
-#: src/callbacks.c:7678 src/gui.c:3714 src/saveplay.c:2459 src/saveplay.c:2493
+#: src/callbacks.c:7189 src/callbacks.c:7337 src/callbacks.c:7665
+#: src/callbacks.c:7682 src/gui.c:3714 src/saveplay.c:2459 src/saveplay.c:2493
 #: src/saveplay.c:3096 src/saveplay.c:3201 src/saveplay.c:3220
-#: src/multitrack.c:9336 src/multitrack.c:11052
+#: src/multitrack.c:9341 src/multitrack.c:11057
 #, c-format
 msgid " (%d %% scale)"
 msgstr ""
 
-#: src/callbacks.c:7187 src/callbacks.c:7335 src/callbacks.c:7663
+#: src/callbacks.c:7191 src/callbacks.c:7339 src/callbacks.c:7667
 #: src/gui.c:3718 src/saveplay.c:2461 src/saveplay.c:2495
 #, c-format
 msgid "LiVES: - Play Window%s"
 msgstr ""
 
-#: src/callbacks.c:7299 src/gui.c:1905
+#: src/callbacks.c:7303 src/gui.c:1905
 msgid "Double size (d)"
 msgstr "ダブルサイズ (d)"
 
-#: src/callbacks.c:7306
+#: src/callbacks.c:7310
 msgid "Single size (d)"
 msgstr "シングルサイズ (d)"
 
-#: src/callbacks.c:7439 src/callbacks.c:7440
+#: src/callbacks.c:7443 src/callbacks.c:7444
 msgid "Hide the play window (s)"
 msgstr "再生ウィンドウを隠す (s)"
 
-#: src/callbacks.c:7449 src/gui.c:1744
+#: src/callbacks.c:7453 src/gui.c:1744
 msgid "Show the play window (s)"
 msgstr "再生ウィンドウを表示する (s)"
 
-#: src/callbacks.c:7450 src/gui.c:1894
+#: src/callbacks.c:7454 src/gui.c:1894
 msgid "Play in separate window (s)"
 msgstr "独立したウィンドウで再生 (s)"
 
-#: src/callbacks.c:7532 src/gui.c:4062 src/saveplay.c:2490
+#: src/callbacks.c:7536 src/gui.c:4062 src/saveplay.c:2490
 msgid "LiVES: - Streaming"
 msgstr "LiVES: - ストリーミング"
 
-#: src/callbacks.c:7775
+#: src/callbacks.c:7779
 msgid "Switch continuous looping off (o)"
 msgstr "連続ループをオフ (o)"
 
-#: src/callbacks.c:7782 src/gui.c:1793
+#: src/callbacks.c:7786 src/gui.c:1793
 msgid "Switch continuous looping on (o)"
 msgstr "連続ループをオン (o)"
 
-#: src/callbacks.c:7834
+#: src/callbacks.c:7838
 #, c-format
 msgid "Audio volume (%.2f)"
 msgstr "音声ボリューム (%.2f)"
 
-#: src/callbacks.c:7873 src/callbacks.c:7874 src/gui.c:3642
+#: src/callbacks.c:7877 src/callbacks.c:7878 src/gui.c:3642
 msgid "Unmute the audio (z)"
 msgstr "音声ミュートをオフ (z)"
 
-#: src/callbacks.c:7885 src/callbacks.c:7886 src/gui.c:1806 src/gui.c:3641
+#: src/callbacks.c:7889 src/callbacks.c:7890 src/gui.c:1806 src/gui.c:3641
 msgid "Mute the audio (z)"
 msgstr "音声ミュートをオン (z)"
 
-#: src/callbacks.c:8035
+#: src/callbacks.c:8039
 msgid "Reversing clipboard..."
 msgstr "クリップボードを反転します..."
 
-#: src/callbacks.c:8049
+#: src/callbacks.c:8053
 msgid "Reversing clipboard"
 msgstr "クリップボードを反転"
 
-#: src/callbacks.c:8081
+#: src/callbacks.c:8085
 msgid "LiVES: Load subtitles from..."
 msgstr "LiVES: 字幕の読み込み先..."
 
-#: src/callbacks.c:8148 src/saveplay.c:970
+#: src/callbacks.c:8152 src/saveplay.c:970
 #, c-format
 msgid "Loaded subtitle file: %s\n"
 msgstr "字幕ファイルを読み込みます: %s\n"
 
-#: src/callbacks.c:8217
+#: src/callbacks.c:8221
 msgid "Subtitles were erased.\n"
 msgstr "字幕を削除しました。\n"
 
-#: src/callbacks.c:8236
+#: src/callbacks.c:8240
 msgid "LiVES: - Select Audio File"
 msgstr ""
 
-#: src/callbacks.c:8247
+#: src/callbacks.c:8251
 msgid "Please set your CD play device in Tools | Preferences | Misc\n"
 msgstr "「ツール|設定|その他」で、CD再生デバイスを設定してください。\n"
 
-#: src/callbacks.c:8318
+#: src/callbacks.c:8322
 #, c-format
 msgid "Opening CD track %d from %s..."
 msgstr "CDトラック%dから%sを開きます..."
 
-#: src/callbacks.c:8323
+#: src/callbacks.c:8327
 #, c-format
 msgid "CD track %d"
 msgstr "CDトラック%d"
 
-#: src/callbacks.c:8370
+#: src/callbacks.c:8374
 msgid "Opening CD track..."
 msgstr "CDトラックを開く..."
 
-#: src/callbacks.c:8412 src/callbacks.c:8458
+#: src/callbacks.c:8416 src/callbacks.c:8462
 msgid "Error loading CD track\n"
 msgstr "CDトラックの読み込みエラー\n"
 
-#: src/callbacks.c:8581
+#: src/callbacks.c:8585
 msgid "layout errors"
 msgstr "レイアウトエラー"
 
-#: src/callbacks.c:8592
+#: src/callbacks.c:8596
 msgid "Close _Window"
 msgstr "ウィンドウを閉じる(_W)"
 
-#: src/callbacks.c:8603
+#: src/callbacks.c:8607
 msgid "Clear _Errors"
 msgstr "エラーを消去(_E)"
 
-#: src/callbacks.c:8614
+#: src/callbacks.c:8618
 msgid "_Delete affected layouts"
 msgstr "レイアウトを消去(_D)"
 
-#: src/callbacks.c:9340 src/callbacks.c:9385
+#: src/callbacks.c:9344 src/callbacks.c:9389
 msgid "Resume"
 msgstr "再開"
 
-#: src/callbacks.c:9341
+#: src/callbacks.c:9345
 msgid ""
 "\n"
 "Paused\n"
@@ -2767,27 +2767,27 @@ msgstr ""
 "一時停止\n"
 "(クリックすると処理を再開します)"
 
-#: src/callbacks.c:9342 src/callbacks.c:9403
+#: src/callbacks.c:9346 src/callbacks.c:9407
 msgid "paused..."
 msgstr "一時停止しています..."
 
-#: src/callbacks.c:9369 src/callbacks.c:9414
+#: src/callbacks.c:9373 src/callbacks.c:9418
 msgid "Pause"
 msgstr "一時停止"
 
-#: src/callbacks.c:9371 src/callbacks.c:9417
+#: src/callbacks.c:9375 src/callbacks.c:9421
 msgid "resumed..."
 msgstr "再開..."
 
-#: src/callbacks.c:9390
+#: src/callbacks.c:9394
 msgid "Keep"
 msgstr "維持"
 
-#: src/callbacks.c:9393
+#: src/callbacks.c:9397
 msgid "Enough"
 msgstr "停止"
 
-#: src/callbacks.c:9398
+#: src/callbacks.c:9402
 #, fuzzy, c-format
 msgid ""
 "\n"
@@ -2800,28 +2800,28 @@ msgstr ""
 "(現状を保つには「維持」をクリック)\n"
 "(処理を続ける場合は「再開」をクリック)"
 
-#: src/callbacks.c:9415
+#: src/callbacks.c:9419
 msgid "Cancel"
 msgstr "キャンセル"
 
-#: src/callbacks.c:9550
+#: src/callbacks.c:9556
 msgid "Stop"
 msgstr "停止"
 
-#: src/callbacks.c:10045 src/multitrack.c:13239
+#: src/callbacks.c:10051 src/multitrack.c:13244
 msgid "LiVES: Selected frame"
 msgstr "LiVES: 選択したフレーム"
 
-#: src/callbacks.c:10053
+#: src/callbacks.c:10059
 msgid "_Save frame as..."
 msgstr "フレームに名前を付けて保存(_S)..."
 
-#: src/callbacks.c:10282
+#: src/callbacks.c:10288
 #, c-format
 msgid "Audio is ahead of video by %.4f secs. at frame %d, with fps %.4f\n"
 msgstr "音声が映像を%.4f秒上回っています。%dフレーム、%.4f fps\n"
 
-#: src/callbacks.c:10339
+#: src/callbacks.c:10345
 msgid ""
 "\n"
 "\n"
@@ -2835,7 +2835,7 @@ msgstr ""
 "他のプラットフォームで動作させるにはパッチを送ってください。\n"
 "\n"
 
-#: src/callbacks.c:10345
+#: src/callbacks.c:10351
 msgid ""
 "\n"
 "\n"
@@ -2847,7 +2847,7 @@ msgstr ""
 "この機能を利用するには xwininfo をインストールしなければなりません。\n"
 "\n"
 
-#: src/callbacks.c:10421 src/callbacks.c:11474
+#: src/callbacks.c:10427 src/callbacks.c:11480
 msgid ""
 "\n"
 "Record time must be greater than 0.\n"
@@ -2855,7 +2855,7 @@ msgstr ""
 "\n"
 "記録時間は0より大きくなければなりません。\n"
 
-#: src/callbacks.c:10432
+#: src/callbacks.c:10438
 msgid ""
 "Capture an External Window:\n"
 "\n"
@@ -2869,11 +2869,11 @@ msgstr ""
 "キャンセルするには'キャンセル'をクリックしてください。\n"
 "\n"
 
-#: src/callbacks.c:10437
+#: src/callbacks.c:10443
 msgid "External window was released.\n"
 msgstr "外部ウィンドウを解放しました。\n"
 
-#: src/callbacks.c:10471
+#: src/callbacks.c:10477
 msgid ""
 "Click on a Window to Capture it\n"
 "Press 'q' to stop recording"
@@ -2881,7 +2881,7 @@ msgstr ""
 "キャプチャーしたいウィンドウをクリックしてください\n"
 "記録を終える場合は 'q' を押してください"
 
-#: src/callbacks.c:10505
+#: src/callbacks.c:10511
 #, c-format
 msgid ""
 "\n"
@@ -2897,19 +2897,19 @@ msgstr ""
 "'q'キーで終了。\n"
 "(標準設定の%.3fフレーム/秒を使います)\n"
 
-#: src/callbacks.c:10531
+#: src/callbacks.c:10537
 msgid "LiVES was unable to capture this window. Sorry.\n"
 msgstr "LiVESはこのウィンドウをキャプチャできませんでした。ごめんなさい。\n"
 
-#: src/callbacks.c:10687
+#: src/callbacks.c:10693
 msgid "Export Selected Audio as..."
 msgstr "選択した音声をエクスポート..."
 
-#: src/callbacks.c:10691
+#: src/callbacks.c:10697
 msgid "Export Audio as..."
 msgstr "音声をエクスポート..."
 
-#: src/callbacks.c:10706
+#: src/callbacks.c:10712
 msgid ""
 "\n"
 "\n"
@@ -2923,86 +2923,86 @@ msgstr ""
 "新しい速度でエクスポートするには'OK'をクリック。元の速度でエクスポートするに"
 "は'キャンセル'をクリックしてください。\n"
 
-#: src/callbacks.c:10712
+#: src/callbacks.c:10718
 #, c-format
 msgid "Exporting audio frames %d to %d as %s..."
 msgstr "%dから%dまでの音声フレームを%sとしてエクスポート..."
 
-#: src/callbacks.c:10717
+#: src/callbacks.c:10723
 #, c-format
 msgid "Exporting audio as %s..."
 msgstr "音声を%sとしてエクスポート..."
 
-#: src/callbacks.c:10743
+#: src/callbacks.c:10749
 msgid "Exporting audio"
 msgstr "音声をエクスポートします"
 
-#: src/callbacks.c:10774
+#: src/callbacks.c:10780
 msgid "LiVES: - Append Audio File"
 msgstr ""
 
-#: src/callbacks.c:10817
+#: src/callbacks.c:10823
 #, c-format
 msgid "Appending audio file %s..."
 msgstr "音声ファイル%sを追加します..."
 
-#: src/callbacks.c:10828
+#: src/callbacks.c:10834
 msgid "Appending audio"
 msgstr "音声を追加します"
 
-#: src/callbacks.c:10884
+#: src/callbacks.c:10890
 msgid "Append Audio"
 msgstr "音声の追加"
 
-#: src/callbacks.c:10944
+#: src/callbacks.c:10950
 #, c-format
 msgid "Padding audio to %.2f seconds..."
 msgstr ""
 
-#: src/callbacks.c:10946
+#: src/callbacks.c:10952
 #, c-format
 msgid "Trimming audio from %.2f to %.2f seconds..."
 msgstr "音声を%.2fから%.2f秒までトリミングします..."
 
-#: src/callbacks.c:10965
+#: src/callbacks.c:10971
 msgid "Trimming/Padding audio"
 msgstr "音声をトリミング/パディングします"
 
-#: src/callbacks.c:10973
+#: src/callbacks.c:10979
 msgid "Trim/Pad Audio"
 msgstr "音声のトリミング"
 
-#: src/callbacks.c:11047
+#: src/callbacks.c:11053
 msgid "Fading audio in"
 msgstr "音声をフェードイン"
 
-#: src/callbacks.c:11048
+#: src/callbacks.c:11054
 msgid "Fade audio in"
 msgstr "音声をフェードイン"
 
-#: src/callbacks.c:11053
+#: src/callbacks.c:11059
 msgid "Fading audio out"
 msgstr "音声をフェードアウト"
 
-#: src/callbacks.c:11054
+#: src/callbacks.c:11060
 msgid "Fade audio out"
 msgstr "音声をフェードアウト"
 
-#: src/callbacks.c:11077
+#: src/callbacks.c:11083
 #, c-format
 msgid "%s over %.1f seconds..."
 msgstr "%s が %.1f 秒オーバー..."
 
-#: src/callbacks.c:11079
+#: src/callbacks.c:11085
 #, c-format
 msgid "%s from time %.2f seconds to %.2f seconds..."
 msgstr "%s は %.2f秒から%.2f秒まで..."
 
-#: src/callbacks.c:11086
+#: src/callbacks.c:11092
 msgid "Fading audio..."
 msgstr "音声のフェード..."
 
-#: src/callbacks.c:11186
+#: src/callbacks.c:11192
 msgid ""
 "\n"
 "Deleting all audio will close this file.\n"
@@ -3012,33 +3012,33 @@ msgstr ""
 "全音声を削除すると、このファイルを閉じます。\n"
 "構いませんか ?"
 
-#: src/callbacks.c:11189
+#: src/callbacks.c:11195
 msgid "Deleting all audio..."
 msgstr "全音声の削除..."
 
-#: src/callbacks.c:11195
+#: src/callbacks.c:11201
 #, c-format
 msgid "Deleting audio from %.2f to %.2f seconds..."
 msgstr "音声を%.2fから%.2f秒まで削除します..."
 
-#: src/callbacks.c:11282
+#: src/callbacks.c:11288
 msgid "Deleting Audio"
 msgstr "音声を削除します"
 
-#: src/callbacks.c:11289
+#: src/callbacks.c:11295
 msgid "Delete Audio"
 msgstr "音声の削除"
 
-#: src/callbacks.c:11629
+#: src/callbacks.c:11635
 msgid "Record new audio"
 msgstr "新しい音声の記録"
 
-#: src/callbacks.c:11718
+#: src/callbacks.c:11724
 #, c-format
 msgid "Inserting silence from %.2f to %.2f seconds..."
 msgstr "%.2fから%.2f秒まで無音部分を挿入します..."
 
-#: src/callbacks.c:11747
+#: src/callbacks.c:11753
 msgid "Inserting Silence"
 msgstr "無音部分を挿入します"
 
@@ -3111,11 +3111,11 @@ msgstr "カスタムエフェクト(_C)"
 msgid "Custom _Utilities"
 msgstr "カスタムユーティリティ(_U)"
 
-#: src/gui.c:350 src/multitrack.c:5960
+#: src/gui.c:350 src/multitrack.c:5965
 msgid "_File"
 msgstr "ファイル(_F)"
 
-#: src/gui.c:365 src/multitrack.c:5985
+#: src/gui.c:365 src/multitrack.c:5990
 msgid "_Open File/Directory"
 msgstr "ファイル/ディレクトリを開く(_O)"
 
@@ -3123,12 +3123,12 @@ msgstr "ファイル/ディレクトリを開く(_O)"
 msgid "O_pen Part of File..."
 msgstr "ファイルの一部を開く(_P)..."
 
-#: src/gui.c:377 src/gui.c:381 src/multitrack.c:6002 src/multitrack.c:6019
-#: src/multitrack.c:6024
+#: src/gui.c:377 src/gui.c:381 src/multitrack.c:6007 src/multitrack.c:6024
+#: src/multitrack.c:6029
 msgid "Open _Location/Stream..."
 msgstr "場所/ストリームを開く(_L)..."
 
-#: src/gui.c:391 src/multitrack.c:6012
+#: src/gui.c:391 src/multitrack.c:6017
 msgid "Open _Youtube Clip..."
 msgstr "Youtube クリップを開く(_Y)..."
 
@@ -3148,11 +3148,11 @@ msgstr "ビデオCDからインポート(_V)"
 msgid "_Import from Firewire"
 msgstr "Firewireデバイスからインポート(_I)"
 
-#: src/gui.c:426 src/multitrack.c:6082
+#: src/gui.c:426 src/multitrack.c:6087
 msgid "Import from _Firewire Device (dv)"
 msgstr "Firewireデバイスからインポート (dv)(_F)"
 
-#: src/gui.c:427 src/multitrack.c:6090
+#: src/gui.c:427 src/multitrack.c:6095
 msgid "Import from _Firewire Device (hdv)"
 msgstr "Firewireデバイスからインポート (hdv)(_F)"
 
@@ -3172,15 +3172,15 @@ msgstr "Firewireのライブデバイスを追加する(_F)"
 msgid "Add _TV Device"
 msgstr "TVデバイスの追加(_T)"
 
-#: src/gui.c:508 src/multitrack.c:6113
+#: src/gui.c:508 src/multitrack.c:6118
 msgid "_Recent Files..."
 msgstr "最近開いたファイル(_R)..."
 
-#: src/gui.c:558 src/multitrack.c:6173
+#: src/gui.c:558 src/multitrack.c:6178
 msgid "_Reload Clip Set..."
 msgstr "クリップセットの再読み込み(_R)..."
 
-#: src/gui.c:562 src/multitrack.c:6181
+#: src/gui.c:562 src/multitrack.c:6186
 msgid "Close/Sa_ve All Clips"
 msgstr "全クリップを保存して閉じる(_V)"
 
@@ -3212,11 +3212,11 @@ msgstr "音声付きでエンコード/読み込み/バックアップする(_W)
 msgid "Auto load subtitles"
 msgstr "字幕の自動読み込み"
 
-#: src/gui.c:626 src/multitrack.c:6220
+#: src/gui.c:626 src/multitrack.c:6225
 msgid "Clean _up Diskspace"
 msgstr "ディスク領域のクリーンアップ(_U)"
 
-#: src/gui.c:634 src/multitrack.c:6253
+#: src/gui.c:634 src/multitrack.c:6258
 msgid "_Edit"
 msgstr "編集(_E)"
 
@@ -3292,7 +3292,7 @@ msgstr "選択範囲を反転(_I)"
 msgid "_Lock Selection Width"
 msgstr "選択範囲の幅を固定(_L)"
 
-#: src/gui.c:840 src/multitrack.c:6405
+#: src/gui.c:840 src/multitrack.c:6410
 msgid "_Play"
 msgstr "再生(_P)"
 
@@ -3308,15 +3308,15 @@ msgstr "選択範囲を再生(_Y)"
 msgid "Play _Clipboard"
 msgstr "クリップボードを再生(_C)"
 
-#: src/gui.c:897 src/multitrack.c:6437
+#: src/gui.c:897 src/multitrack.c:6442
 msgid "_Stop"
 msgstr "停止(_S)"
 
-#: src/gui.c:912 src/multitrack.c:6449
+#: src/gui.c:912 src/multitrack.c:6454
 msgid "Re_wind"
 msgstr "巻き戻し(_W)"
 
-#: src/gui.c:944 src/multitrack.c:6467
+#: src/gui.c:944 src/multitrack.c:6472
 msgid "_Full Screen"
 msgstr "全画面表示(_F)"
 
@@ -3324,7 +3324,7 @@ msgstr "全画面表示(_F)"
 msgid "_Double Size"
 msgstr "二倍サイズ(_D)"
 
-#: src/gui.c:961 src/multitrack.c:6475
+#: src/gui.c:961 src/multitrack.c:6480
 msgid "Play in _Separate Window"
 msgstr "独立ウィンドウで再生(_S)"
 
@@ -3336,7 +3336,7 @@ msgstr "空白のバックグラウンド(_B)"
 msgid "(Auto)_loop Video (to fit audio track)"
 msgstr "音声トラックに合わせてループ(_L)"
 
-#: src/gui.c:986 src/multitrack.c:6483
+#: src/gui.c:986 src/multitrack.c:6488
 msgid "L_oop Continuously"
 msgstr "連続ループ(_O)"
 
@@ -3344,7 +3344,7 @@ msgstr "連続ループ(_O)"
 msgid "Pin_g Pong Loops"
 msgstr "ピンポンループ(_G)"
 
-#: src/gui.c:1003 src/multitrack.c:6491
+#: src/gui.c:1003 src/multitrack.c:6496
 msgid "_Mute"
 msgstr "ミュート(_M)"
 
@@ -3364,7 +3364,7 @@ msgstr "字幕の表示"
 msgid "Letterbox mode"
 msgstr "レターボックスモード"
 
-#: src/gui.c:1049 src/multitrack.c:6503
+#: src/gui.c:1049 src/multitrack.c:6508
 msgid "Effect_s"
 msgstr "エフェクト(_S)"
 
@@ -3376,7 +3376,7 @@ msgstr "エフェクトは現在の選択範囲に適用されます。"
 msgid "_Run Test Rendered Effect/Tool/Generator..."
 msgstr "レンダリングエフェクト/ツール/ジェネレーターをテスト(_R)..."
 
-#: src/gui.c:1070 src/multitrack.c:7119
+#: src/gui.c:1070 src/multitrack.c:7124
 msgid "_Tools"
 msgstr "ツール(_T)"
 
@@ -3404,7 +3404,7 @@ msgstr "ユーティリティ(_U)"
 msgid "Custom _Tools"
 msgstr "カスタムツール(_T)"
 
-#: src/gui.c:1114 src/multitrack.c:7145
+#: src/gui.c:1114 src/multitrack.c:7150
 msgid "_Generate"
 msgstr "生成(_G)"
 
@@ -3420,11 +3420,11 @@ msgstr "字幕をファイルから読み込む(_S)..."
 msgid "Erase subtitles"
 msgstr "字幕の削除"
 
-#: src/gui.c:1150 src/multitrack.c:7154
+#: src/gui.c:1150 src/multitrack.c:7159
 msgid "Capture _External Window... "
 msgstr "外部ウィンドウのキャプチャ(_E)... "
 
-#: src/gui.c:1157 src/multitrack.c:7169
+#: src/gui.c:1157 src/multitrack.c:7174
 msgid "_Preferences..."
 msgstr "設定(_P)..."
 
@@ -3528,15 +3528,15 @@ msgstr "ファイルコメントの表示/編集(_E)"
 msgid "Show _Clipboard Info"
 msgstr "クリップボード情報の表示(_C)"
 
-#: src/gui.c:1358 src/multitrack.c:7282
+#: src/gui.c:1358 src/multitrack.c:7287
 msgid "Show _Messages"
 msgstr "メッセージの表示(_M)"
 
-#: src/gui.c:1362 src/multitrack.c:7361
+#: src/gui.c:1362 src/multitrack.c:7366
 msgid "Show _Layout Errors"
 msgstr "レイアウトエラーを表示(_L)"
 
-#: src/gui.c:1367 src/multitrack.c:7259
+#: src/gui.c:1367 src/multitrack.c:7264
 msgid "_Clips"
 msgstr "クリップ(_C)"
 
@@ -3696,39 +3696,39 @@ msgstr "熱狂フレーム(_M)"
 msgid "_LiVES TV (broadband)"
 msgstr "LiVES TV (ブロードバンド)(_L)"
 
-#: src/gui.c:1670 src/multitrack.c:7383
+#: src/gui.c:1670 src/multitrack.c:7388
 msgid "_Help"
 msgstr "ヘルプ(_H)"
 
-#: src/gui.c:1682 src/multitrack.c:7403
+#: src/gui.c:1682 src/multitrack.c:7408
 msgid "_Manual (opens in browser)"
 msgstr "マニュアル (ブラウザで開く)(_M)"
 
-#: src/gui.c:1689 src/multitrack.c:7412
+#: src/gui.c:1689 src/multitrack.c:7417
 msgid "_Donate to the project !"
 msgstr "プロジェクトに寄付する!(_D)"
 
-#: src/gui.c:1693 src/multitrack.c:7416
+#: src/gui.c:1693 src/multitrack.c:7421
 msgid "_Email the author"
 msgstr "作者にメールを送る(_E)"
 
-#: src/gui.c:1697 src/multitrack.c:7420
+#: src/gui.c:1697 src/multitrack.c:7425
 msgid "Report a _bug"
 msgstr "バグを報告する(_B)"
 
-#: src/gui.c:1701 src/multitrack.c:7424
+#: src/gui.c:1701 src/multitrack.c:7429
 msgid "Suggest a _feature"
 msgstr "機能を提案する(_F)"
 
-#: src/gui.c:1705 src/multitrack.c:7428
+#: src/gui.c:1705 src/multitrack.c:7433
 msgid "Assist with _translating"
 msgstr "翻訳を手伝う(_T)"
 
-#: src/gui.c:1712 src/multitrack.c:7435
+#: src/gui.c:1712 src/multitrack.c:7440
 msgid "_Troubleshoot"
 msgstr "トラブルシューティング(_T)"
 
-#: src/gui.c:1716 src/multitrack.c:7439
+#: src/gui.c:1716 src/multitrack.c:7444
 msgid "_About"
 msgstr "LiVESについて(_A)"
 
@@ -3736,7 +3736,7 @@ msgstr "LiVESについて(_A)"
 msgid "Rewind to start (w)"
 msgstr "開始まで巻き戻す (w)"
 
-#: src/gui.c:1758 src/multitrack.c:16716
+#: src/gui.c:1758 src/multitrack.c:16721
 msgid "Play all (p)"
 msgstr "すべて再生 (p)"
 
@@ -3909,7 +3909,7 @@ msgstr ""
 msgid "Effects"
 msgstr "エフェクト"
 
-#: src/ce_thumbs.c:279 src/multitrack.c:5611
+#: src/ce_thumbs.c:279 src/multitrack.c:5616
 msgid "Clips"
 msgstr "クリップ"
 
@@ -4229,12 +4229,12 @@ msgstr ""
 "\n"
 "上書きしますか ?\n"
 
-#: src/utils.c:4293 src/utils.c:4325 src/multitrack.c:4491
+#: src/utils.c:4293 src/utils.c:4325 src/multitrack.c:4496
 #, c-format
 msgid "_Undo %s"
 msgstr "%sを元に戻す(_U)"
 
-#: src/utils.c:4294 src/utils.c:4326 src/multitrack.c:4513
+#: src/utils.c:4294 src/utils.c:4326 src/multitrack.c:4518
 #, c-format
 msgid "_Redo %s"
 msgstr "%sをやり直す(_R)"
@@ -6073,7 +6073,7 @@ msgstr "映像のみ"
 msgid "Video only Transitions"
 msgstr "映像のみのトランジション"
 
-#: src/effects.c:114 src/multitrack.c:10732
+#: src/effects.c:114 src/multitrack.c:10737
 msgid "audio only"
 msgstr "音声のみ"
 
@@ -6081,7 +6081,7 @@ msgstr "音声のみ"
 msgid "Audio only Transitions"
 msgstr "音声のみのトランジション"
 
-#: src/effects.c:117 src/effects.c:120 src/multitrack.c:18753
+#: src/effects.c:117 src/effects.c:120 src/multitrack.c:18758
 msgid "audio"
 msgstr "音声"
 
@@ -6235,7 +6235,7 @@ msgid "Some plugin directories"
 msgstr "プラグインディレクトリ"
 
 #. TRANSLATORS: example " - LADSPA plugins -"
-#: src/effects-weed.c:4685 src/rte_window.c:2092
+#: src/effects-weed.c:4685 src/rte_window.c:2094
 #, c-format
 msgid " - %s plugins -"
 msgstr ""
@@ -6373,32 +6373,32 @@ msgstr ""
 msgid "Successfully loaded %d compound filters\n"
 msgstr ""
 
-#: src/effects-weed.c:6446
+#: src/effects-weed.c:6447
 #, c-format
 msgid "Effect %s cannot be used with this audio player.\n"
 msgstr ""
 
-#: src/effects-weed.c:6590
+#: src/effects-weed.c:6591
 #, c-format
 msgid "Failed to start instance %s, error code %d\n"
 msgstr "インスタンス %s を開始できません。エラーコード %d\n"
 
-#: src/effects-weed.c:6666
+#: src/effects-weed.c:6667
 #, c-format
 msgid "Unable to start generator %s\n"
 msgstr "ジェネレーター%sを開始できません。\n"
 
-#: src/effects-weed.c:7433
+#: src/effects-weed.c:7432
 #, c-format
 msgid "Failed to start generator %s\n"
 msgstr "ジェネレーター %s を開始できません。\n"
 
-#: src/effects-weed.c:7530
+#: src/effects-weed.c:7529
 #, c-format
 msgid "Failed to start generator %s, error %d\n"
 msgstr "ジェネレーター %s を開始できません。エラーコード %d\n"
 
-#: src/effects-weed.c:8824
+#: src/effects-weed.c:8823
 #, c-format
 msgid "%s [unstable] (%s)"
 msgstr "%s [不安定] (%s)"
@@ -6586,51 +6586,51 @@ msgstr ""
 msgid "Set as default"
 msgstr "デフォルトに設定"
 
-#: src/paramwindow.c:901 src/paramwindow.c:916
+#: src/paramwindow.c:901 src/paramwindow.c:917
 msgid "Reset"
 msgstr "リセット"
 
-#: src/paramwindow.c:911 src/rte_window.c:2388 src/omc-learn.c:1353
+#: src/paramwindow.c:911 src/rte_window.c:2390 src/omc-learn.c:1353
 msgid "Close _window"
 msgstr "ウィンドウを閉じる(_W)"
 
-#: src/paramwindow.c:1315
+#: src/paramwindow.c:1316
 msgid "No parameters"
 msgstr "パラメータなし"
 
-#: src/paramwindow.c:1394
+#: src/paramwindow.c:1395
 msgid "Invalid parameter"
 msgstr "無効なパラメータ"
 
-#: src/paramwindow.c:1586
+#: src/paramwindow.c:1587
 msgid "LiVES: - Select Colour"
 msgstr "LiVES:- 色の選択"
 
-#: src/paramwindow.c:1591
+#: src/paramwindow.c:1592
 msgid "Click to set the colour"
 msgstr "クリックでカラーを設定"
 
-#: src/paramwindow.c:1603
+#: src/paramwindow.c:1604
 msgid "_Red"
 msgstr "赤(_R)"
 
-#: src/paramwindow.c:1604
+#: src/paramwindow.c:1605
 msgid "The red value (0 - 255)"
 msgstr "赤の値 (0 - 255)"
 
-#: src/paramwindow.c:1607
+#: src/paramwindow.c:1608
 msgid "_Green"
 msgstr "緑(_G)"
 
-#: src/paramwindow.c:1608
+#: src/paramwindow.c:1609
 msgid "The green value (0 - 255)"
 msgstr "緑の値 (0 - 255)"
 
-#: src/paramwindow.c:1611
+#: src/paramwindow.c:1612
 msgid "_Blue"
 msgstr "青(_B)"
 
-#: src/paramwindow.c:1612
+#: src/paramwindow.c:1613
 msgid "The blue value (0 - 255)"
 msgstr "青の値 (0 - 255)"
 
@@ -8657,26 +8657,26 @@ msgstr ""
 "JACKサーバに関するオプションは、次にLiVESを開始するときまで変更が反映されませ"
 "ん"
 
-#: src/osc.c:2507
+#: src/osc.c:2610
 #, c-format
 msgid "Syncing to external framerate of %.8f frames per second.\n"
 msgstr "外部フレームレート(%.8fフレーム/秒)に合わせる\n"
 
-#: src/osc.c:6673
+#: src/osc.c:6779
 msgid "Cannot initialize OSC receiver\n"
 msgstr "OSCレシーバーを初期化できません。\n"
 
-#: src/osc.c:6697
+#: src/osc.c:6803
 #, c-format
 msgid "WARNING: Cannot start OSC server at UDP port %d\n"
 msgstr "警告: OSCサーバーをUDPポート %d で開始できません。\n"
 
-#: src/osc.c:6702
+#: src/osc.c:6808
 #, c-format
 msgid "Started OSC server at UDP port %d\n"
 msgstr "OSCサーバーをUDPポート %d で開始しました。\n"
 
-#: src/osc.c:6819
+#: src/osc.c:6925
 #, c-format
 msgid "Cannot start OSC/UDP server at port %d \n"
 msgstr "ポート%d番のOSC/UDPサーバーを起動できません。 \n"
@@ -8979,12 +8979,12 @@ msgstr "フレームを再び並べ換えます"
 msgid "resampling error..."
 msgstr "リサンプリングエラー..."
 
-#: src/rte_window.c:83 src/rte_window.c:1706
+#: src/rte_window.c:85 src/rte_window.c:1708
 #, c-format
 msgid "Type: %s"
 msgstr "タイプ: %s"
 
-#: src/rte_window.c:110
+#: src/rte_window.c:112
 msgid ""
 "\n"
 "\n"
@@ -9000,7 +9000,7 @@ msgstr ""
 "よろしいですか?\n"
 "\n"
 
-#: src/rte_window.c:424
+#: src/rte_window.c:426
 msgid ""
 "\n"
 "\n"
@@ -9012,12 +9012,12 @@ msgstr ""
 "このキーマップをデフォルトとして保存するには'OK'をクリック\n"
 "\n"
 
-#: src/rte_window.c:430
+#: src/rte_window.c:432
 #, c-format
 msgid "Saving keymap to %s\n"
 msgstr "キーマップを %s に保存\n"
 
-#: src/rte_window.c:437
+#: src/rte_window.c:439
 #, c-format
 msgid ""
 "\n"
@@ -9026,7 +9026,7 @@ msgstr ""
 "\n"
 "キーマップファイル %s をアップデート..."
 
-#: src/rte_window.c:444
+#: src/rte_window.c:446
 #, c-format
 msgid ""
 "\n"
@@ -9041,12 +9041,12 @@ msgstr ""
 "%s\n"
 "エラーは %s です。\n"
 
-#: src/rte_window.c:524
+#: src/rte_window.c:526
 #, c-format
 msgid "Saving real time effect defaults to %s..."
 msgstr "リアルタイムエフェクトのデフォルトを %s に保存..."
 
-#: src/rte_window.c:533
+#: src/rte_window.c:535
 #, c-format
 msgid ""
 "\n"
@@ -9061,22 +9061,22 @@ msgstr ""
 "\n"
 "エラーコード %d\n"
 
-#: src/rte_window.c:630
+#: src/rte_window.c:632
 #, c-format
 msgid "Loading real time effect defaults from %s..."
 msgstr "リアルタイムエフェクトのデフォルトを %s から読み込み中..."
 
-#: src/rte_window.c:679
+#: src/rte_window.c:681
 #, c-format
 msgid "Loading generator default sizes from %s..."
 msgstr "ジェネレーターのデフォルトサイズを %s から読み込み中..."
 
-#: src/rte_window.c:1304
+#: src/rte_window.c:1306
 #, c-format
 msgid "Loading default keymap from %s..."
 msgstr "デフォルトキーマップを %s から読み込み中..."
 
-#: src/rte_window.c:1327
+#: src/rte_window.c:1329
 #, c-format
 msgid ""
 "\n"
@@ -9091,27 +9091,27 @@ msgstr ""
 "\n"
 "エラーコード %d\n"
 
-#: src/rte_window.c:1401
+#: src/rte_window.c:1403
 #, c-format
 msgid "Invalid line %d in %s\n"
 msgstr "無効な行 %d : %s\n"
 
-#: src/rte_window.c:1481
+#: src/rte_window.c:1483
 #, c-format
 msgid "Invalid key %d in %s\n"
 msgstr "無効なキー %d : %s\n"
 
-#: src/rte_window.c:1496
+#: src/rte_window.c:1498
 #, c-format
 msgid "Invalid effect %s in %s\n"
 msgstr "無効なエフェクト %s : %s\n"
 
-#: src/rte_window.c:1515
+#: src/rte_window.c:1517
 #, c-format
 msgid "Unknown effect %s in %s\n"
 msgstr "不明なエフェクト %s が %sにあります\n"
 
-#: src/rte_window.c:1533
+#: src/rte_window.c:1535
 #, c-format
 msgid ""
 "This version of LiVES cannot mix generators/non-generators on the same key "
@@ -9120,21 +9120,21 @@ msgstr ""
 "このバージョンのLiVESは、同じキー(%d)でジェネレーターと非ジェネレーターを混ぜ"
 "ることができません！\n"
 
-#: src/rte_window.c:1545
+#: src/rte_window.c:1547
 #, c-format
 msgid "Too many effects bound to key %d.\n"
 msgstr "キー %d に結びつけられたエフェクトが多すぎます。\n"
 
-#: src/rte_window.c:1585
+#: src/rte_window.c:1587
 msgid "update required.\n"
 msgstr "アップデートが必要です。\n"
 
-#: src/rte_window.c:1601
+#: src/rte_window.c:1603
 #, c-format
 msgid "Loading data connection map from %s..."
 msgstr ""
 
-#: src/rte_window.c:1610
+#: src/rte_window.c:1612
 msgid ""
 "\n"
 "\n"
@@ -9146,41 +9146,41 @@ msgstr ""
 "いくつかのエフェクトが指定できません。\n"
 "\n"
 
-#: src/rte_window.c:1689
+#: src/rte_window.c:1691
 #, c-format
 msgid "LiVES: Information for %s"
 msgstr "LiVES: %s の情報"
 
-#: src/rte_window.c:1702
+#: src/rte_window.c:1704
 #, c-format
 msgid "Effect name: %s"
 msgstr "エフェクト名: %s"
 
-#: src/rte_window.c:1710
+#: src/rte_window.c:1712
 #, c-format
 msgid "Plugin name: %s"
 msgstr "プラグイン名: %s"
 
-#: src/rte_window.c:1714
+#: src/rte_window.c:1716
 #, c-format
 msgid "Author: %s"
 msgstr "作者: %s"
 
-#: src/rte_window.c:1719
+#: src/rte_window.c:1721
 #, c-format
 msgid "and: %s"
 msgstr ""
 
-#: src/rte_window.c:1724
+#: src/rte_window.c:1726
 #, c-format
 msgid "Version: %d"
 msgstr "バージョン: %d"
 
-#: src/rte_window.c:1732
+#: src/rte_window.c:1734
 msgid "Description: "
 msgstr "説明: "
 
-#: src/rte_window.c:1954
+#: src/rte_window.c:1956
 msgid ""
 "\n"
 "\n"
@@ -9194,69 +9194,69 @@ msgstr ""
 "とができません。\n"
 "\n"
 
-#: src/rte_window.c:2018
+#: src/rte_window.c:2020
 #, c-format
 msgid "LiVES could not locate the effect %s.\n"
 msgstr "LiVESはエフェクト %s を指定できません。\n"
 
-#: src/rte_window.c:2212
+#: src/rte_window.c:2214
 msgid "LiVES: Real time effect mapping"
 msgstr "LiVES: リアルタイムエフェクトマッピング"
 
-#: src/rte_window.c:2244
+#: src/rte_window.c:2246
 #, c-format
 msgid "Ctrl-%d"
 msgstr "Ctrl-%d"
 
-#: src/rte_window.c:2251
+#: src/rte_window.c:2253
 msgid "Key active"
 msgstr "キーアクティブ"
 
-#: src/rte_window.c:2266
+#: src/rte_window.c:2268
 msgid "Key grab"
 msgstr "キーの割り当て"
 
-#: src/rte_window.c:2267
+#: src/rte_window.c:2269
 msgid "Grab keyboard for this effect key"
 msgstr "キーボードをこのエフェクトキーに割り当て"
 
-#: src/rte_window.c:2277
+#: src/rte_window.c:2279
 msgid "_Clear all effects"
 msgstr "全エフェクトのクリア(_C)"
 
-#: src/rte_window.c:2291
+#: src/rte_window.c:2293
 msgid "Mode active"
 msgstr "モードアクティブ"
 
-#: src/rte_window.c:2301 src/multitrack.c:8564
+#: src/rte_window.c:2303 src/multitrack.c:8569
 msgid "Info"
 msgstr "情報"
 
-#: src/rte_window.c:2302
+#: src/rte_window.c:2304
 msgid "Set Parameters"
 msgstr "パラメータセット"
 
-#: src/rte_window.c:2303
+#: src/rte_window.c:2305
 msgid "Set Connections"
 msgstr ""
 
-#: src/rte_window.c:2304
+#: src/rte_window.c:2306
 msgid "Clear"
 msgstr "クリア"
 
-#: src/rte_window.c:2313
+#: src/rte_window.c:2315
 msgid "Effect name:"
 msgstr "エフェクト名:"
 
-#: src/rte_window.c:2378
+#: src/rte_window.c:2380
 msgid "_Save as default keymap"
 msgstr "デフォルトキーマップとして保存(_S)"
 
-#: src/rte_window.c:2383
+#: src/rte_window.c:2385
 msgid "_Load default keymap"
 msgstr "デフォルトキーマップの読み込み(_L)"
 
-#: src/rte_window.c:2823
+#: src/rte_window.c:2825
 #, c-format
 msgid ""
 "Unable to create default keymap file: %s\n"
@@ -9351,48 +9351,48 @@ msgstr "Firewireカード %d"
 msgid "Opened firewire card %d"
 msgstr "開かれたFirewireカード %d"
 
-#: src/multitrack.c:665
+#: src/multitrack.c:666
 msgid "Auto backup"
 msgstr "自動バックアップ"
 
-#: src/multitrack.c:867
+#: src/multitrack.c:868
 msgid "Backing audio"
 msgstr "バックグラウンド音声"
 
-#: src/multitrack.c:1430
+#: src/multitrack.c:1431
 #, fuzzy, c-format
 msgid "%s : parameters for %s"
 msgstr "パラメータなし"
 
-#: src/multitrack.c:1797 src/multitrack.c:3471
+#: src/multitrack.c:1805 src/multitrack.c:3476
 #, c-format
 msgid "Current track: %s (layer %d)\n"
 msgstr "現在のトラック: %s (レイヤー %d)\n"
 
-#: src/multitrack.c:1801 src/multitrack.c:3472
+#: src/multitrack.c:1809 src/multitrack.c:3477
 msgid "Current track: Backing audio\n"
 msgstr "現在のトラック: バックグラウンド音声\n"
 
-#: src/multitrack.c:1802
+#: src/multitrack.c:1810
 #, c-format
 msgid "Current track: Layer %d audio\n"
 msgstr "現在のトラック: レイヤー %d 音声\n"
 
-#: src/multitrack.c:1805
+#: src/multitrack.c:1813
 #, c-format
 msgid "%.2f sec.\n"
 msgstr "%.2f 秒\n"
 
-#: src/multitrack.c:1810 src/multitrack.c:3478
+#: src/multitrack.c:1818 src/multitrack.c:3483
 #, c-format
 msgid "Source: %s"
 msgstr "ソース: %s"
 
-#: src/multitrack.c:1813 src/multitrack.c:3480
+#: src/multitrack.c:1821 src/multitrack.c:3485
 msgid "Right click for context menu.\n"
 msgstr "右クリックでコンテキストメニュー\n"
 
-#: src/multitrack.c:1815
+#: src/multitrack.c:1823
 msgid ""
 "Double click on a block\n"
 "to select it."
@@ -9400,7 +9400,7 @@ msgstr ""
 "ブロックをダブルクリックして\n"
 "選択します。"
 
-#: src/multitrack.c:3300
+#: src/multitrack.c:3305
 msgid ""
 "\n"
 "\n"
@@ -9414,7 +9414,7 @@ msgstr ""
 "ダブルクリックして\n"
 "ブロックを選択してください。\n"
 
-#: src/multitrack.c:3303
+#: src/multitrack.c:3308
 msgid ""
 "\n"
 "\n"
@@ -9426,7 +9426,7 @@ msgstr ""
 "エフェクトが選択されていません。\n"
 "パラメーターを確認するには、まずFXスタックでエフェクトを選択してください。\n"
 
-#: src/multitrack.c:3306
+#: src/multitrack.c:3311
 msgid ""
 "\n"
 "\n"
@@ -9436,7 +9436,7 @@ msgstr ""
 "\n"
 "読み込まれたクリップはありません。\n"
 
-#: src/multitrack.c:3309
+#: src/multitrack.c:3314
 msgid ""
 "You must select two video tracks\n"
 "and a time region\n"
@@ -9452,7 +9452,7 @@ msgstr ""
 "代わりに、クリップをタイムラインに挿入する前にあらかじめ\n"
 "メニューのエフェクトから、自動トランジションを有効にしてください。"
 
-#: src/multitrack.c:3312
+#: src/multitrack.c:3317
 msgid ""
 "\n"
 "\n"
@@ -9465,12 +9465,12 @@ msgstr ""
 "コンポジットを利用するには\n"
 "少なくともひとつのトラックと時間帯を選択してください。\n"
 
-#: src/multitrack.c:3475
+#: src/multitrack.c:3480
 #, c-format
 msgid "%.2f sec. to %.2f sec.\n"
 msgstr "%.2f 秒を %.2f 秒に\n"
 
-#: src/multitrack.c:3481
+#: src/multitrack.c:3486
 msgid ""
 "Single click on timeline\n"
 "to select a frame.\n"
@@ -9478,12 +9478,12 @@ msgstr ""
 "タイムライン上をクリックすると\n"
 "フレームを選択します。\n"
 
-#: src/multitrack.c:3699 src/multitrack.c:6786
+#: src/multitrack.c:3704 src/multitrack.c:6791
 #, c-format
 msgid "%s [unstable]"
 msgstr "%s [不安定]"
 
-#: src/multitrack.c:3810
+#: src/multitrack.c:3815
 msgid ""
 "You can click and drag\n"
 "below the timeline"
@@ -9491,176 +9491,176 @@ msgstr ""
 "タイムライン上で\n"
 "クリックとドラッグをして"
 
-#: src/multitrack.c:3811
+#: src/multitrack.c:3816
 msgid "to select a time region.\n"
 msgstr "時間帯を選択します。\n"
 
-#: src/multitrack.c:3973
+#: src/multitrack.c:3978
 msgid "LiVES: Selected clip"
 msgstr "LiVES: 選択したクリップ"
 
-#: src/multitrack.c:3981
+#: src/multitrack.c:3986
 msgid "_Adjust start and end points"
 msgstr "開始/終了地点の調整(_A)"
 
-#: src/multitrack.c:3990
+#: src/multitrack.c:3995
 msgid "_Edit/encode in clip editor"
 msgstr "クリップエディターで編集/エンコード(_E)"
 
-#: src/multitrack.c:3997
+#: src/multitrack.c:4002
 msgid "_Show clip information"
 msgstr "クリップ情報の表示(_S)"
 
-#: src/multitrack.c:4004
+#: src/multitrack.c:4009
 msgid "_Close this clip"
 msgstr "選択されたクリップを閉じます(_C)"
 
-#: src/multitrack.c:4224
+#: src/multitrack.c:4229
 msgid "Audio mixer (ctrl-m)"
 msgstr "音声ミキサー(ctrl + M)"
 
-#: src/multitrack.c:4324
+#: src/multitrack.c:4329
 msgid "Single click on timeline"
 msgstr "タイムライン上でクリックすると"
 
-#: src/multitrack.c:4325
+#: src/multitrack.c:4330
 msgid "to select a frame."
 msgstr "フレームを選択します。"
 
-#: src/multitrack.c:4326
+#: src/multitrack.c:4331
 msgid "Double click or right click on timeline"
 msgstr "タイムライン上でダブルクリックまたは右クリックしてください。"
 
-#: src/multitrack.c:4327
+#: src/multitrack.c:4332
 msgid "to select a block."
 msgstr "ブロックを選択します。"
 
-#: src/multitrack.c:4328
+#: src/multitrack.c:4333
 msgid "Clips can be dragged"
 msgstr "タイムライン上にクリップをドラッグして"
 
-#: src/multitrack.c:4329
+#: src/multitrack.c:4334
 msgid "onto the timeline."
 msgstr "配置します。"
 
-#: src/multitrack.c:4331
+#: src/multitrack.c:4336
 msgid "Mouse mode is: Move"
 msgstr "\"移動\" マウスモードでは"
 
-#: src/multitrack.c:4332
+#: src/multitrack.c:4337
 msgid "clips can be moved around."
 msgstr "クリックでクリップを移動します。"
 
-#: src/multitrack.c:4337
+#: src/multitrack.c:4342
 msgid "Mouse mode is: Select."
 msgstr "\"選択\" マウスモードでは"
 
-#: src/multitrack.c:4338
+#: src/multitrack.c:4343
 msgid "Drag with mouse on timeline"
 msgstr "タイムライン上でマウスをドラックすることで"
 
-#: src/multitrack.c:4339
+#: src/multitrack.c:4344
 msgid "to select tracks and time."
 msgstr "複数のトラックと時間帯を選択します。"
 
-#: src/multitrack.c:4350
+#: src/multitrack.c:4355
 msgid "_Insert mode: Normal"
 msgstr "挿入モード: 標準(_I)"
 
-#: src/multitrack.c:4366
+#: src/multitrack.c:4371
 msgid "_Mouse mode: Move"
 msgstr "マウスモード: 移動(_M)"
 
-#: src/multitrack.c:4370
+#: src/multitrack.c:4375
 msgid "_Mouse mode: Select"
 msgstr "マウスモード: 選択(_M)"
 
-#: src/multitrack.c:4393 src/multitrack.c:7921
+#: src/multitrack.c:4398 src/multitrack.c:7926
 #, fuzzy
 msgid "Gravity: Normal"
 msgstr "Gravity: 標準(_G)"
 
-#: src/multitrack.c:4397
+#: src/multitrack.c:4402
 #, fuzzy
 msgid "Gravity: Left"
 msgstr "Gravity: 左詰め(_G)"
 
-#: src/multitrack.c:4402
+#: src/multitrack.c:4407
 #, fuzzy
 msgid "Gravity: Right"
 msgstr "Gravity: 右詰め(_G)"
 
-#: src/multitrack.c:4404
+#: src/multitrack.c:4409
 msgid "Close _last gap(s) in selected tracks/time"
 msgstr "選択したトラックと時間の最後のギャップを詰める(_L)"
 
-#: src/multitrack.c:4407
+#: src/multitrack.c:4412
 msgid "Close _first gap(s) in selected tracks/time"
 msgstr "選択したトラックと時間の最初のギャップを詰める(_F)"
 
-#: src/multitrack.c:4446
+#: src/multitrack.c:4451
 msgid "Close gaps"
 msgstr "ギャップ詰める"
 
-#: src/multitrack.c:4448
+#: src/multitrack.c:4453
 msgid "Move block"
 msgstr "ブロックの移動"
 
-#: src/multitrack.c:4450
+#: src/multitrack.c:4455
 msgid "Move audio block"
 msgstr "音声ブロックの移動"
 
-#: src/multitrack.c:4452
+#: src/multitrack.c:4457
 msgid "Delete block"
 msgstr "ブロックの消去"
 
-#: src/multitrack.c:4454
+#: src/multitrack.c:4459
 msgid "Delete audio block"
 msgstr "音声ブロックの消去"
 
-#: src/multitrack.c:4456
+#: src/multitrack.c:4461
 msgid "Split tracks"
 msgstr "トラックの分割"
 
-#: src/multitrack.c:4458
+#: src/multitrack.c:4463
 msgid "Split block"
 msgstr "ブロックの分割"
 
-#: src/multitrack.c:4461
+#: src/multitrack.c:4466
 #, c-format
 msgid "Apply %s"
 msgstr "%s を適用"
 
-#: src/multitrack.c:4466
+#: src/multitrack.c:4471
 #, c-format
 msgid "Delete %s"
 msgstr "%s を消去"
 
-#: src/multitrack.c:4470
+#: src/multitrack.c:4475
 msgid "Insert block"
 msgstr "ブロックの挿入"
 
-#: src/multitrack.c:4472
+#: src/multitrack.c:4477
 msgid "Insert gap"
 msgstr "ギャップの挿入"
 
-#: src/multitrack.c:4474
+#: src/multitrack.c:4479
 msgid "Insert audio block"
 msgstr "音声ブロックの挿入"
 
-#: src/multitrack.c:4476
+#: src/multitrack.c:4481
 msgid "Effect order change"
 msgstr "エフェクト順序の変更"
 
-#: src/multitrack.c:4884
+#: src/multitrack.c:4889
 msgid "unsigned "
 msgstr "符号なし "
 
-#: src/multitrack.c:4885
+#: src/multitrack.c:4890
 msgid "signed "
 msgstr "符号付き "
 
-#: src/multitrack.c:4890
+#: src/multitrack.c:4895
 #, c-format
 msgid ""
 "Multitrack values set to %.3f fps, frame size %d x %d, audio channels %d, "
@@ -9669,15 +9669,15 @@ msgstr ""
 "マルチトラックの値を %.3f fps、フレームサイズ %d x %d 、音声チャネル %d 、音"
 "声レート %d, 音声のサンプルサイズ %d, %s に設定\n"
 
-#: src/multitrack.c:4924
+#: src/multitrack.c:4929
 msgid "invalid event list. Failed.\n"
 msgstr "無効なイベントリスト。失敗しました。\n"
 
-#: src/multitrack.c:4930
+#: src/multitrack.c:4935
 msgid "event list has invalid fps. Failed.\n"
 msgstr "イベントリストには無効なfpsが含まれています。失敗しました。\n"
 
-#: src/multitrack.c:4939
+#: src/multitrack.c:4944
 #, c-format
 msgid ""
 "\n"
@@ -9692,7 +9692,7 @@ msgstr ""
 "現在のセットを閉じた後で、\n"
 "ファイルメニューから新しいセットを読み込んでください。\n"
 
-#: src/multitrack.c:4979
+#: src/multitrack.c:4984
 #, c-format
 msgid ""
 "\n"
@@ -9703,440 +9703,440 @@ msgstr ""
 "無効な数の音声チャネル(%d)を含んでいます。\n"
 "読み込みできません。\n"
 
-#: src/multitrack.c:5321 src/multitrack.c:5330 src/multitrack.c:21126
+#: src/multitrack.c:5326 src/multitrack.c:5335 src/multitrack.c:21131
 msgid "Layout was wiped.\n"
 msgstr "レイアウトは除去されました。\n"
 
-#: src/multitrack.c:5370
+#: src/multitrack.c:5375
 #, c-format
 msgid "LiVES-%s: Multitrack %dx%d : %d bpp %.3f fps"
 msgstr "LiVES-%s: マルチトラック %dx%d : %d bpp %.3f fps"
 
-#: src/multitrack.c:5613
+#: src/multitrack.c:5618
 msgid "In/out"
 msgstr "イン/アウト"
 
-#: src/multitrack.c:5615
+#: src/multitrack.c:5620
 msgid "FX stack"
 msgstr "適用済エフェクト"
 
-#: src/multitrack.c:5623 src/omc-learn.c:673
+#: src/multitrack.c:5628 src/omc-learn.c:673
 msgid "Params."
 msgstr "パラメータ"
 
-#: src/multitrack.c:5974
+#: src/multitrack.c:5979
 msgid "_Open..."
 msgstr "開く(_O)..."
 
-#: src/multitrack.c:5992
+#: src/multitrack.c:5997
 msgid "O_pen File Selection..."
 msgstr "ファイルを選択して開く(_P)..."
 
-#: src/multitrack.c:6036
+#: src/multitrack.c:6041
 msgid "Import Selection from _dvd/vcd..."
 msgstr "DVD/VCDから選択範囲をインポート(_D)..."
 
-#: src/multitrack.c:6046
+#: src/multitrack.c:6051
 msgid "Import Selection from _dvd"
 msgstr "DVDから選択範囲をインポート(_D)"
 
-#: src/multitrack.c:6056
+#: src/multitrack.c:6061
 msgid "Import Selection from _vcd"
 msgstr "VCDから選択範囲をインポート(_V)"
 
-#: src/multitrack.c:6072
+#: src/multitrack.c:6077
 msgid "_Import from Device"
 msgstr "デバイスからインポート(_I)"
 
-#: src/multitrack.c:6099
+#: src/multitrack.c:6104
 msgid "_Close the selected clip"
 msgstr "選択されたクリップを閉じる(_C)"
 
-#: src/multitrack.c:6194
+#: src/multitrack.c:6199
 msgid "_Save layout as..."
 msgstr "レイアウトを別名で保存(_S)..."
 
-#: src/multitrack.c:6202
+#: src/multitrack.c:6207
 msgid "_Load layout..."
 msgstr "レイアウトの読み込み(_L)..."
 
-#: src/multitrack.c:6206
+#: src/multitrack.c:6211
 msgid "_Wipe/Delete layout..."
 msgstr "レイアウトの除去(_W)..."
 
-#: src/multitrack.c:6232
+#: src/multitrack.c:6237
 msgid "_Ignore width, height and audio values from loaded layouts"
 msgstr "読み込んだレイアウトにおける幅、高さ、音声の値を無視(_I)"
 
-#: src/multitrack.c:6236
+#: src/multitrack.c:6241
 msgid "Auto load _subtitles with clips"
 msgstr ""
 
-#: src/multitrack.c:6318
+#: src/multitrack.c:6323
 msgid "_CLIP EDITOR"
 msgstr "クリップエディター(_C)"
 
-#: src/multitrack.c:6330
+#: src/multitrack.c:6335
 msgid "_Adjust selected clip start/end points"
 msgstr "選択されたクリップの開始/終了点を調整(_A)"
 
-#: src/multitrack.c:6339
+#: src/multitrack.c:6344
 msgid "_Insert selected clip"
 msgstr "選択したクリップの挿入(_I)"
 
-#: src/multitrack.c:6351
+#: src/multitrack.c:6356
 msgid "_Insert selected clip audio"
 msgstr "選択したクリップ音声の挿入(_I)"
 
-#: src/multitrack.c:6360
+#: src/multitrack.c:6365
 msgid "_Delete selected block"
 msgstr "選択したブロックの消去(_D)"
 
-#: src/multitrack.c:6369
+#: src/multitrack.c:6374
 msgid "_Jump to previous block boundary"
 msgstr "前のブロック境界にジャンプ(_J)"
 
-#: src/multitrack.c:6378
+#: src/multitrack.c:6383
 msgid "_Jump to next block boundary"
 msgstr "次のブロック境界にジャンプ(_J)"
 
-#: src/multitrack.c:6391
+#: src/multitrack.c:6396
 msgid "Clear _marks from timeline"
 msgstr "タイムラインからマークをクリア(_M)"
 
-#: src/multitrack.c:6399
+#: src/multitrack.c:6404
 msgid "Ignore selection limits when inserting"
 msgstr "挿入時に選択の制限を無視"
 
-#: src/multitrack.c:6416 src/multitrack.c:16715
+#: src/multitrack.c:6421 src/multitrack.c:16720
 msgid "_Play from Timeline Position"
 msgstr "タイムラインの位置から再生(_P)"
 
-#: src/multitrack.c:6430
+#: src/multitrack.c:6435
 msgid "Pla_y selected time only"
 msgstr "選択した時間帯のみ再生(_Y)"
 
-#: src/multitrack.c:6514
+#: src/multitrack.c:6519
 msgid "_Move effects with blocks"
 msgstr "ブロックと共にエフェクトを移動(_M)"
 
-#: src/multitrack.c:6527
+#: src/multitrack.c:6532
 msgid "Select _autotransition effect..."
 msgstr "自動トランジションエフェクトを選択(_A)..."
 
-#: src/multitrack.c:6538
+#: src/multitrack.c:6543
 #, fuzzy
 msgid "Crossfade audio with autotransition"
 msgstr "音声のクロスフェード"
 
-#: src/multitrack.c:6546
+#: src/multitrack.c:6551
 msgid "View/_Edit selected effect"
 msgstr "選択したエフェクトのビュー/編集(_E)"
 
-#: src/multitrack.c:6550
+#: src/multitrack.c:6555
 msgid "_Delete selected effect"
 msgstr "選択したエフェクトを削除(_D)"
 
-#: src/multitrack.c:6558
+#: src/multitrack.c:6563
 msgid "Apply effect to _block..."
 msgstr "ブロックにエフェクトを適用(_B)..."
 
-#: src/multitrack.c:6615
+#: src/multitrack.c:6620
 msgid "Apply effect to _region..."
 msgstr "領域にエフェクトを適用(_R)..."
 
-#: src/multitrack.c:6881
+#: src/multitrack.c:6886
 msgid "_Tracks"
 msgstr "トラック(_T)"
 
-#: src/multitrack.c:6892
+#: src/multitrack.c:6897
 msgid "Rename current track"
 msgstr ""
 
-#: src/multitrack.c:6900
+#: src/multitrack.c:6905
 msgid "Make _Backing Audio current track"
 msgstr "現在のトラックにバックグラウンド音声を作成(_B)"
 
-#: src/multitrack.c:6911
+#: src/multitrack.c:6916
 msgid "Add Video Track at _Rear"
 msgstr "下にビデオトラックを追加(_R)"
 
-#: src/multitrack.c:6919
+#: src/multitrack.c:6924
 msgid "Add Video Track at _Front"
 msgstr "上にビデオトラックを追加(_F)"
 
-#: src/multitrack.c:6932
+#: src/multitrack.c:6937
 msgid "_Split current track at cursor"
 msgstr "カーソルの場所で現在のトラックを分割(_S)"
 
-#: src/multitrack.c:6944
+#: src/multitrack.c:6949
 msgid "_Split selected video tracks"
 msgstr "選択したビデオトラックを分割(_S)"
 
-#: src/multitrack.c:6957
+#: src/multitrack.c:6962
 msgid "Insert gap in selected tracks/time"
 msgstr "選択したトラックと時間にギャップを挿入"
 
-#: src/multitrack.c:6965
+#: src/multitrack.c:6970
 msgid "Insert gap in current track/selected time"
 msgstr "現在のトラックと時間にギャップを挿入"
 
-#: src/multitrack.c:6977
+#: src/multitrack.c:6982
 msgid "Close all _gaps in selected tracks/time"
 msgstr "選択したトラックと時間のすべてのギャップを詰める(_G)"
 
-#: src/multitrack.c:7003
+#: src/multitrack.c:7008
 msgid "Se_lection"
 msgstr "選択(_L)"
 
-#: src/multitrack.c:7014
+#: src/multitrack.c:7019
 msgid "_Select Current Track"
 msgstr "現在のトラックを選択(_S)"
 
-#: src/multitrack.c:7021
+#: src/multitrack.c:7026
 msgid "Select _all video tracks"
 msgstr "すべてのビデオトラックを選択(_A)"
 
-#: src/multitrack.c:7028
+#: src/multitrack.c:7033
 msgid "Select _no video tracks"
 msgstr "ビデオトラックを非選択(_N)"
 
-#: src/multitrack.c:7035
+#: src/multitrack.c:7040
 msgid "Select all _time"
 msgstr "すべての時間を選択(_T)"
 
-#: src/multitrack.c:7046
+#: src/multitrack.c:7051
 msgid "Select from _zero time"
 msgstr "ゼロ時刻から選択(_Z)"
 
-#: src/multitrack.c:7053
+#: src/multitrack.c:7058
 msgid "Select to _end time"
 msgstr "最終時刻まで選択(_E)"
 
-#: src/multitrack.c:7060
+#: src/multitrack.c:7065
 msgid "_Copy..."
 msgstr "コピー(_C)..."
 
-#: src/multitrack.c:7071
+#: src/multitrack.c:7076
 msgid "_Timecode to region start"
 msgstr "タイムコードから領域の最初へ(_T)"
 
-#: src/multitrack.c:7078
+#: src/multitrack.c:7083
 msgid "_Timecode to region end"
 msgstr "タイムコードから領域の最後へ(_T)"
 
-#: src/multitrack.c:7085
+#: src/multitrack.c:7090
 msgid "_Region start to timecode"
 msgstr "領域の最初からタイムコードへ(_R)"
 
-#: src/multitrack.c:7092
+#: src/multitrack.c:7097
 msgid "_Region end to timecode"
 msgstr "領域の最後からタイムコードへ(_R)"
 
-#: src/multitrack.c:7106
+#: src/multitrack.c:7111
 msgid "Select/deselect block at current track/time"
 msgstr ""
 
-#: src/multitrack.c:7131
+#: src/multitrack.c:7136
 msgid "_Change width, height and audio values..."
 msgstr "幅、高さ、音声値の変更(_C)..."
 
-#: src/multitrack.c:7190
+#: src/multitrack.c:7195
 msgid "_Render"
 msgstr "レンダリング(_R)"
 
-#: src/multitrack.c:7201
+#: src/multitrack.c:7206
 msgid "_Render all to new clip"
 msgstr "新しいクリップへすべてレンダリング(_R)"
 
-#: src/multitrack.c:7216
+#: src/multitrack.c:7221
 msgid "Render _video"
 msgstr "ビデオのレンダリング(_V)"
 
-#: src/multitrack.c:7221
+#: src/multitrack.c:7226
 msgid "Render _audio"
 msgstr "音声のレンダリング(_A)"
 
-#: src/multitrack.c:7231
+#: src/multitrack.c:7236
 msgid "_Normalise rendered audio"
 msgstr "レンダリングした音声のノーマライズ(_N)"
 
-#: src/multitrack.c:7238
+#: src/multitrack.c:7243
 msgid "_Pre-render audio"
 msgstr "音声のプリレンダリング(_P)"
 
-#: src/multitrack.c:7247
+#: src/multitrack.c:7252
 msgid "_View"
 msgstr "ビュー(_V)"
 
-#: src/multitrack.c:7266
+#: src/multitrack.c:7271
 msgid "Block _In/out points"
 msgstr "ブロックの開始/終了点(_I)"
 
-#: src/multitrack.c:7275
+#: src/multitrack.c:7280
 msgid "_Effects at current"
 msgstr "現在のエフェクト(_E)"
 
-#: src/multitrack.c:7293
+#: src/multitrack.c:7298
 msgid "Audio parameters"
 msgstr "音声パラメータ"
 
-#: src/multitrack.c:7304
+#: src/multitrack.c:7309
 msgid "Show backing _audio track"
 msgstr "バックグラウンド音声トラックの表示(_A)"
 
-#: src/multitrack.c:7308
+#: src/multitrack.c:7313
 msgid "Compact view"
 msgstr "コンパクトビュー"
 
-#: src/multitrack.c:7316
+#: src/multitrack.c:7321
 msgid "Maximum tracks to display..."
 msgstr "表示する最大トラック..."
 
-#: src/multitrack.c:7323
+#: src/multitrack.c:7328
 msgid "Scroll to follow playback"
 msgstr "再生に合わせてスクロール表示"
 
-#: src/multitrack.c:7327
+#: src/multitrack.c:7332
 msgid "_Center on cursor"
 msgstr "カーソルを中心に再表示(_C)"
 
-#: src/multitrack.c:7334
+#: src/multitrack.c:7339
 msgid "_Zoom in"
 msgstr "拡大表示(_Z)"
 
-#: src/multitrack.c:7345
+#: src/multitrack.c:7350
 msgid "_Zoom out"
 msgstr "縮小表示(_Z)"
 
-#: src/multitrack.c:7357
+#: src/multitrack.c:7362
 msgid "Multitrack _details"
 msgstr "マルチトラックの詳細(_D)"
 
-#: src/multitrack.c:7370
+#: src/multitrack.c:7375
 msgid "_Event Window"
 msgstr "イベントウィンドウ(_E)"
 
-#: src/multitrack.c:7374
+#: src/multitrack.c:7379
 msgid "_Event Window (selected time only)"
 msgstr "選択した時間帯のイベントウィンドウ(_E)"
 
-#: src/multitrack.c:7378
+#: src/multitrack.c:7383
 msgid "_Show FRAME events"
 msgstr "フレームイベントを表示(_S)"
 
-#: src/multitrack.c:7395
+#: src/multitrack.c:7400
 msgid "_Show multitrack keys"
 msgstr "マルチトラックキーを表示(_S)"
 
-#: src/multitrack.c:7464
+#: src/multitrack.c:7469
 msgid "Mouse mode: _Move"
 msgstr "マウスモード: 移動(_M)"
 
-#: src/multitrack.c:7472
+#: src/multitrack.c:7477
 msgid "Mouse mode: _Select"
 msgstr "マウスモード: 選択(_S)"
 
-#: src/multitrack.c:7501
+#: src/multitrack.c:7506
 msgid "Insert mode: _Normal"
 msgstr "挿入モード: 標準(_N)"
 
-#: src/multitrack.c:7729
+#: src/multitrack.c:7734
 msgid "Insert with _audio"
 msgstr "音声ごと挿入(_A)"
 
-#: src/multitrack.c:7730
+#: src/multitrack.c:7735
 msgid ""
 "Select whether video clips are inserted and moved with their audio or not"
 msgstr "挿入する/挿入したビデオクリップを音声とセットで扱うかどうかを選択"
 
-#: src/multitrack.c:7825
+#: src/multitrack.c:7830
 msgid "Select _overlap"
 msgstr "重複を選択(_O)"
 
-#: src/multitrack.c:7826
+#: src/multitrack.c:7831
 msgid ""
 "Select whether timeline selection snaps to overlap between selected tracks "
 "or not"
 msgstr "タイムライン上の選択範囲をクリップの重複に合わせるかどうかを選択"
 
-#: src/multitrack.c:7890 src/multitrack.c:14194
+#: src/multitrack.c:7895 src/multitrack.c:14199
 msgid "Expanded View (d)"
 msgstr "拡大ビュー (d)"
 
-#: src/multitrack.c:7893 src/multitrack.c:14201
+#: src/multitrack.c:7898 src/multitrack.c:14206
 msgid "Compact View (d)"
 msgstr "コンパクトビュー (d)"
 
-#: src/multitrack.c:7935
+#: src/multitrack.c:7940
 msgid "Gravity: _Normal"
 msgstr "Gravity: 標準(_N)"
 
-#: src/multitrack.c:7948
+#: src/multitrack.c:7953
 msgid "Gravity: _Left"
 msgstr "Gravity: 左詰め(_L)"
 
-#: src/multitrack.c:7963
+#: src/multitrack.c:7968
 msgid "Gravity: _Right"
 msgstr "Gravity: 右詰め(_R)"
 
-#: src/multitrack.c:8293
+#: src/multitrack.c:8298
 msgid "_Apply"
 msgstr "適用(_A)"
 
-#: src/multitrack.c:8315
+#: src/multitrack.c:8320
 msgid "Time"
 msgstr "時間"
 
-#: src/multitrack.c:8329
+#: src/multitrack.c:8334
 msgid "_Del. node"
 msgstr "ノードの消去(_D)"
 
-#: src/multitrack.c:8337
+#: src/multitrack.c:8342
 msgid "_Next node"
 msgstr "次のモード(_N)"
 
-#: src/multitrack.c:8345
+#: src/multitrack.c:8350
 msgid "_Prev node"
 msgstr "前のモード(_P)"
 
-#: src/multitrack.c:8369
+#: src/multitrack.c:8374
 msgid "_Reverse playback  "
 msgstr "逆再生(_R)  "
 
-#: src/multitrack.c:8391
+#: src/multitrack.c:8396
 msgid "_Velocity  "
 msgstr "速度(_V)  "
 
-#: src/multitrack.c:8460
+#: src/multitrack.c:8465
 msgid "Anchor _start"
 msgstr "アンカー始点(_S)"
 
-#: src/multitrack.c:8461
+#: src/multitrack.c:8466
 msgid "Anchor the start point to the timeline"
 msgstr "タイムラインの始点をアンカー"
 
-#: src/multitrack.c:8477
+#: src/multitrack.c:8482
 msgid "Start frame"
 msgstr "フレームの開始"
 
-#: src/multitrack.c:8529
+#: src/multitrack.c:8534
 msgid "Anchor _end"
 msgstr "アンカー終端(_E)"
 
-#: src/multitrack.c:8530
+#: src/multitrack.c:8535
 msgid "Anchor the end point to the timeline"
 msgstr "タイムラインの終点をアンカー"
 
-#: src/multitrack.c:8542
+#: src/multitrack.c:8547
 msgid "End frame"
 msgstr "フレームの終了"
 
-#: src/multitrack.c:8735
+#: src/multitrack.c:8740
 msgid "Scroll"
 msgstr "スクロール"
 
-#: src/multitrack.c:9312
+#: src/multitrack.c:9317
 msgid ""
 "\n"
 "==============================\n"
@@ -10146,91 +10146,91 @@ msgstr ""
 "==============================\n"
 "クリップ編集モードに変更\n"
 
-#: src/multitrack.c:9498
+#: src/multitrack.c:9503
 msgid "Timeline (seconds)"
 msgstr "タイムライン(秒)"
 
-#: src/multitrack.c:9980
+#: src/multitrack.c:9985
 msgid " Backing audio"
 msgstr " バックグラウンド音声"
 
-#: src/multitrack.c:9983
+#: src/multitrack.c:9988
 #, c-format
 msgid " Layer %d audio"
 msgstr " レイヤー %d 音声"
 
-#: src/multitrack.c:9991
+#: src/multitrack.c:9996
 msgid "Show/hide audio details"
 msgstr "音声の詳細表示の切り替え"
 
-#: src/multitrack.c:10006 src/multitrack.c:10228
+#: src/multitrack.c:10011 src/multitrack.c:10233
 #, c-format
 msgid "Layer %d audio"
 msgstr "レイヤー %d 音声"
 
-#: src/multitrack.c:10140 src/multitrack.c:10257
+#: src/multitrack.c:10145 src/multitrack.c:10262
 #, c-format
 msgid "%s (layer %d)"
 msgstr "%s (レイヤー %d)"
 
-#: src/multitrack.c:10180
+#: src/multitrack.c:10185
 msgid "Select track"
 msgstr "トラックの選択"
 
-#: src/multitrack.c:10184
+#: src/multitrack.c:10189
 msgid "Show/hide audio"
 msgstr "オーディオ表示の切り替え"
 
-#: src/multitrack.c:10190
+#: src/multitrack.c:10195
 #, c-format
 msgid "Video %d"
 msgstr "映像 %d"
 
-#: src/multitrack.c:10229
+#: src/multitrack.c:10234
 #, c-format
 msgid " %s"
 msgstr " %s"
 
-#: src/multitrack.c:10342
+#: src/multitrack.c:10347
 msgid "LiVES: Selected effect"
 msgstr "LiVES: 選択したエフェクト"
 
-#: src/multitrack.c:10354
+#: src/multitrack.c:10359
 msgid "_View/Edit this effect"
 msgstr "パラメータを表示(_V)"
 
-#: src/multitrack.c:10357
+#: src/multitrack.c:10362
 msgid "_View this effect"
 msgstr "このエフェクトを表示(_V)"
 
-#: src/multitrack.c:10365
+#: src/multitrack.c:10370
 msgid "_Delete this effect"
 msgstr "このエフェクトを消去(_D)"
 
-#: src/multitrack.c:10418
+#: src/multitrack.c:10423
 msgid "Cannot insert after this effect"
 msgstr "このエフェクトの下に挿入できませんでした。"
 
-#: src/multitrack.c:10447
+#: src/multitrack.c:10452
 msgid "This effect cannot be moved"
 msgstr "このエフェクトは移動することができません。"
 
-#: src/multitrack.c:10493
+#: src/multitrack.c:10498
 #, c-format
 msgid "  %d to %d selected  "
 msgstr "  %d から %d を選択  "
 
-#: src/multitrack.c:10496 src/multitrack.c:10738
+#: src/multitrack.c:10501 src/multitrack.c:10743
 #, c-format
 msgid "%.2f sec."
 msgstr "%.2f 秒"
 
-#: src/multitrack.c:10709
+#: src/multitrack.c:10714
 #, c-format
 msgid "%d frames"
 msgstr "%d フレーム"
 
-#: src/multitrack.c:11062
+#: src/multitrack.c:11067
 msgid ""
 "\n"
 "==============================\n"
@@ -10240,19 +10240,19 @@ msgstr ""
 "==============================\n"
 "マルチトラックモードに変更\n"
 
-#: src/multitrack.c:12683
+#: src/multitrack.c:12688
 msgid "Drag the time slider to where you"
 msgstr "パラメータを設定したい箇所に"
 
-#: src/multitrack.c:12684
+#: src/multitrack.c:12689
 msgid "want to set effect parameters"
 msgstr "スライダーを移動してください。"
 
-#: src/multitrack.c:12685
+#: src/multitrack.c:12690
 msgid "Set parameters, then click \"Apply\"\n"
 msgstr "パラメータ設定を反映するには、\"適用\"をクリックしてください。\n"
 
-#: src/multitrack.c:12686
+#: src/multitrack.c:12691
 msgid ""
 "NODES are points where parameters\n"
 "have been set.\n"
@@ -10262,51 +10262,51 @@ msgstr ""
 "ノードとなります。\n"
 "ノードは削除することができます。"
 
-#: src/multitrack.c:12689
+#: src/multitrack.c:12694
 msgid "Effect has no parameters.\n"
 msgstr "エフェクトパラメータがありません。\n"
 
-#: src/multitrack.c:12780
+#: src/multitrack.c:12785
 #, c-format
 msgid "%s output"
 msgstr "%s 出力"
 
-#: src/multitrack.c:12786 src/multitrack.c:12796
+#: src/multitrack.c:12791 src/multitrack.c:12801
 #, c-format
 msgid "layer %d"
 msgstr "レイヤー %d"
 
-#: src/multitrack.c:12788 src/multitrack.c:12798
+#: src/multitrack.c:12793 src/multitrack.c:12803
 msgid "audio track"
 msgstr "音声トラック"
 
-#: src/multitrack.c:12789
+#: src/multitrack.c:12794
 #, c-format
 msgid "%s to %s"
 msgstr "%s から %s"
 
-#: src/multitrack.c:12799
+#: src/multitrack.c:12804
 #, c-format
 msgid "%s from %s"
 msgstr ""
 
-#: src/multitrack.c:12852
+#: src/multitrack.c:12857
 msgid "_Prev filter map"
 msgstr "前のフィルターマップ(_P)"
 
-#: src/multitrack.c:12863
+#: src/multitrack.c:12868
 msgid "Insert _before"
 msgstr "上に挿入(_B)"
 
-#: src/multitrack.c:12873
+#: src/multitrack.c:12878
 msgid "Insert _after"
 msgstr "下に挿入(_A)"
 
-#: src/multitrack.c:12888
+#: src/multitrack.c:12893
 msgid "_Next filter map"
 msgstr "次のフィルターマップ(_N)"
 
-#: src/multitrack.c:12903
+#: src/multitrack.c:12908
 msgid ""
 "\n"
 "\n"
@@ -10318,7 +10318,7 @@ msgstr ""
 "現在のトラックには\n"
 "このタイミングで有効なエフェクトはありません。\n"
 
-#: src/multitrack.c:12921
+#: src/multitrack.c:12926
 msgid ""
 "Drag a compositor anywhere\n"
 "on the timeline\n"
@@ -10328,7 +10328,7 @@ msgstr ""
 "タイムライン上の選択した領域まで\n"
 "ドラッグしてください。"
 
-#: src/multitrack.c:12928
+#: src/multitrack.c:12933
 msgid ""
 "Drag a transition anywhere\n"
 "on the timeline\n"
@@ -10338,7 +10338,7 @@ msgstr ""
 "タイムライン上の選択した領域まで\n"
 "ドラッグしてください。"
 
-#: src/multitrack.c:12936
+#: src/multitrack.c:12941
 msgid ""
 "Effects can be dragged\n"
 "onto blocks on the timeline."
@@ -10346,60 +10346,60 @@ msgstr ""
 "エフェクトを適用するには\n"
 "タイムライン上のブロックまでドラッグしてください。"
 
-#: src/multitrack.c:13158
+#: src/multitrack.c:13163
 msgid "LiVES: Selected block/frame"
 msgstr "LiVES: 選択したブロック/フレーム"
 
-#: src/multitrack.c:13165
+#: src/multitrack.c:13170
 msgid "_Select this block"
 msgstr "このブロックを選択(_S)"
 
-#: src/multitrack.c:13175
+#: src/multitrack.c:13180
 msgid "_Split block here"
 msgstr "ここでブロックを分割(_S)"
 
-#: src/multitrack.c:13183
+#: src/multitrack.c:13188
 msgid "List _effects here"
 msgstr "適用可能なエフェクト(_E)"
 
-#: src/multitrack.c:13192 src/multitrack.c:13269
+#: src/multitrack.c:13197 src/multitrack.c:13274
 #, c-format
 msgid "_Adjust %s"
 msgstr "%s の調整(_A)"
 
-#: src/multitrack.c:13207
+#: src/multitrack.c:13212
 msgid "_Delete this block"
 msgstr "このブロックを削除(_D)"
 
-#: src/multitrack.c:13250
+#: src/multitrack.c:13255
 msgid "_Insert here"
 msgstr "ここに挿入(_I)"
 
-#: src/multitrack.c:13256
+#: src/multitrack.c:13261
 msgid "_Insert audio here"
 msgstr "ここに音声を挿入(_I)"
 
-#: src/multitrack.c:14797
+#: src/multitrack.c:14802
 #, c-format
 msgid "Inserted gap in selected tracks from time %.4f to %.4f\n"
 msgstr "選択したトラックにギャップを挿入(時間は %.4f から %.4f まで)\n"
 
-#: src/multitrack.c:14831
+#: src/multitrack.c:14836
 #, c-format
 msgid "Inserted gap in track %s from time %.4f to %.4f\n"
 msgstr "トラック %s にギャップを挿入(時間は %.4f から %.4f まで)\n"
 
-#: src/multitrack.c:15032
+#: src/multitrack.c:15037
 #, c-format
 msgid "Undid %s\n"
 msgstr "%s の取り消し\n"
 
-#: src/multitrack.c:15231
+#: src/multitrack.c:15236
 #, c-format
 msgid "Redid %s\n"
 msgstr "%s のやり直し\n"
 
-#: src/multitrack.c:15264
+#: src/multitrack.c:15269
 msgid ""
 "\n"
 " (variable)"
@@ -10407,62 +10407,62 @@ msgstr ""
 "\n"
 " (変数)"
 
-#: src/multitrack.c:15498 src/multitrack.c:15610 src/multitrack.c:18732
-#: src/multitrack.c:18744
+#: src/multitrack.c:15503 src/multitrack.c:15615 src/multitrack.c:18737
+#: src/multitrack.c:18749
 #, c-format
 msgid "track %s"
 msgstr "トラック %s"
 
-#: src/multitrack.c:15503 src/multitrack.c:15615 src/multitrack.c:18737
+#: src/multitrack.c:15508 src/multitrack.c:15620 src/multitrack.c:18742
 #, c-format
 msgid "tracks %s and %s"
 msgstr "トラック %s および %s"
 
-#: src/multitrack.c:15509 src/multitrack.c:15621 src/multitrack.c:18747
+#: src/multitrack.c:15514 src/multitrack.c:15626 src/multitrack.c:18752
 msgid "selected tracks"
 msgstr "選択したトラック"
 
-#: src/multitrack.c:15512
+#: src/multitrack.c:15517
 #, c-format
 msgid "Added %s %s to %s from %.4f to %.4f\n"
 msgstr "%s %s を %s に追加( %.4f から %.4f まで)\n"
 
-#: src/multitrack.c:15546
+#: src/multitrack.c:15551
 #, c-format
 msgid "Added effect %s to track %s from %.4f to %.4f\n"
 msgstr "エフェクト %s をトラック %s に追加( %.4f から %.4f まで)\n"
 
-#: src/multitrack.c:15627
+#: src/multitrack.c:15632
 #, c-format
 msgid "Deleted %s %s from %s from %.4f to %.4f\n"
 msgstr ""
 
-#: src/multitrack.c:15931
+#: src/multitrack.c:15936
 #, c-format
 msgid "rendered %d frames to new clip.\n"
 msgstr "新しいクリップに %d フレームをレンダリング\n"
 
-#: src/multitrack.c:16021
+#: src/multitrack.c:16026
 msgid "Cleaning up..."
 msgstr "クリーンアップ..."
 
-#: src/multitrack.c:16708
+#: src/multitrack.c:16713
 msgid "_Pause"
 msgstr "一時停止(_P)"
 
-#: src/multitrack.c:16709
+#: src/multitrack.c:16714
 msgid "Pause (p)"
 msgstr "一時停止(p)"
 
-#: src/multitrack.c:16852
+#: src/multitrack.c:16857
 msgid "Press 'm' during playback"
 msgstr "再生中に'm'を押すと"
 
-#: src/multitrack.c:16853
+#: src/multitrack.c:16858
 msgid "to make a mark on the timeline"
 msgstr "タイムラインにマークできます"
 
-#: src/multitrack.c:17150
+#: src/multitrack.c:17155
 #, c-format
 msgid ""
 "Inserted audio %.4f to %.4f from clip %s into backing audio from time %.4f "
@@ -10471,7 +10471,7 @@ msgstr ""
 "音声 %.4f から %.4f を挿入(クリップ %s の時間 %.4f から %.4f までを、バックグ"
 "ラウンド音声に挿入)\n"
 
-#: src/multitrack.c:17410
+#: src/multitrack.c:17415
 #, c-format
 msgid ""
 "Inserted frames %d to %d from clip %s into track %s from time %.4f to %.4f\n"
@@ -10479,14 +10479,14 @@ msgstr ""
 "フレーム %d から %d を挿入(クリップ %s からトラック %s に挿入。時間は %.4f か"
 "ら %.4f まで)\n"
 
-#: src/multitrack.c:17994
+#: src/multitrack.c:17999
 #, c-format
 msgid ""
 "Time region %.3f to %.3f\n"
 "selected.\n"
 msgstr "%.3f から %.3f までの時間帯が選択されています。\n"
 
-#: src/multitrack.c:17998
+#: src/multitrack.c:18003
 msgid ""
 "select one or more tracks\n"
 "to create a region.\n"
@@ -10494,12 +10494,12 @@ msgstr ""
 "時間帯を作成するために\n"
 "少なくともひとつのトラックを選択してください。\n"
 
-#: src/multitrack.c:18000
+#: src/multitrack.c:18005
 #, c-format
 msgid "%d video tracks selected.\n"
 msgstr "%d トラックが選択されています。\n"
 
-#: src/multitrack.c:18002
+#: src/multitrack.c:18007
 msgid ""
 "Double click on timeline\n"
 "to deselect time region."
@@ -10507,7 +10507,7 @@ msgstr ""
 "タイムライン上でダブルクリックすると\n"
 "時間帯の選択を解除します。"
 
-#: src/multitrack.c:18009
+#: src/multitrack.c:18014
 msgid ""
 "Single click on an effect\n"
 "to select it."
@@ -10515,7 +10515,7 @@ msgstr ""
 "エフェクトをクリックして\n"
 "選択します。"
 
-#: src/multitrack.c:18010
+#: src/multitrack.c:18015
 msgid ""
 "Double click on an effect\n"
 "to edit it."
@@ -10523,7 +10523,7 @@ msgstr ""
 "エフェクト上でダブルクリックして\n"
 "編集を行います。"
 
-#: src/multitrack.c:18011
+#: src/multitrack.c:18016
 msgid ""
 "Right click on an effect\n"
 "for context menu.\n"
@@ -10531,7 +10531,7 @@ msgstr ""
 "エフェクト上で右クリックをすると\n"
 "編集メニューが開きます。\n"
 
-#: src/multitrack.c:18013
+#: src/multitrack.c:18018
 msgid ""
 "Effect order can be changed at\n"
 "FILTER MAPS"
@@ -10539,7 +10539,7 @@ msgstr ""
 "このフィルターマップのエフェクトの順番は\n"
 "変更することができます。"
 
-#: src/multitrack.c:18020
+#: src/multitrack.c:18025
 msgid ""
 "You can select an effect,\n"
 "then use the INSERT BEFORE"
@@ -10547,15 +10547,15 @@ msgstr ""
 "エフェクトを移動するには、選択した後に\n"
 "上に挿入 ボタンをクリックするか"
 
-#: src/multitrack.c:18021
+#: src/multitrack.c:18026
 msgid "or INSERT AFTER buttons to move it."
 msgstr "下に挿入 ボタンをクリックします。"
 
-#: src/multitrack.c:18303 src/multitrack.c:18316
+#: src/multitrack.c:18308 src/multitrack.c:18321
 msgid "Click on another effect,"
 msgstr "選択したエフェクトは"
 
-#: src/multitrack.c:18304 src/multitrack.c:18317
+#: src/multitrack.c:18309 src/multitrack.c:18322
 msgid ""
 "and the selected one\n"
 "will be inserted"
@@ -10563,51 +10563,51 @@ msgstr ""
 "移動先にあるエフェクトを\n"
 "クリックすると"
 
-#: src/multitrack.c:18305
+#: src/multitrack.c:18310
 msgid "after it.\n"
 msgstr "その下に移動します。\n"
 
-#: src/multitrack.c:18318
+#: src/multitrack.c:18323
 msgid "before it.\n"
 msgstr "その上に移動します。\n"
 
-#: src/multitrack.c:18547
+#: src/multitrack.c:18552
 #, c-format
 msgid "Removed parameter values for effect %s at time %.4f\n"
 msgstr "エフェクト %s からパラメータ値を消去 (時間 %.4f )\n"
 
-#: src/multitrack.c:18755
+#: src/multitrack.c:18760
 #, c-format
 msgid "Set parameter values for %s %s on %s at time %.4f\n"
 msgstr "パラメータ値を設定: %s %s, %s (時間 %.4f )\n"
 
-#: src/multitrack.c:19244 src/multitrack.c:20866
+#: src/multitrack.c:19249 src/multitrack.c:20871
 msgid "_Autoreload each time"
 msgstr "常に自動読み込み(_A)"
 
-#: src/multitrack.c:19316
+#: src/multitrack.c:19321
 #, fuzzy
 msgid "Saving layout"
 msgstr "レイアウトを保存(_S)"
 
-#: src/multitrack.c:19338
+#: src/multitrack.c:19343
 #, c-format
 msgid "Saved layout to %s\n"
 msgstr "%s へレイアウトを保存\n"
 
-#: src/multitrack.c:20776
+#: src/multitrack.c:20781
 msgid "clips and frames"
 msgstr "クリップとフレーム"
 
-#: src/multitrack.c:20780
+#: src/multitrack.c:20785
 msgid "clips"
 msgstr "クリップ"
 
-#: src/multitrack.c:20783
+#: src/multitrack.c:20788
 msgid "frames"
 msgstr "フレーム"
 
-#: src/multitrack.c:20793
+#: src/multitrack.c:20798
 msgid ""
 "\n"
 "Auto reload layout.\n"
@@ -10615,7 +10615,7 @@ msgstr ""
 "\n"
 "レイアウトの自動読み込み\n"
 
-#: src/multitrack.c:20796
+#: src/multitrack.c:20801
 #, c-format
 msgid ""
 "%s\n"
@@ -10626,11 +10626,11 @@ msgstr ""
 "いくつかの %s がレイアウト %s から失われています。\n"
 "そのため正しく読み込まれないかもしれません。\n"
 
-#: src/multitrack.c:20913
+#: src/multitrack.c:20918
 msgid "auto backup"
 msgstr "自動バックアップ"
 
-#: src/multitrack.c:20916
+#: src/multitrack.c:20921
 #, c-format
 msgid ""
 "\n"
@@ -10639,31 +10639,31 @@ msgstr ""
 "\n"
 "ファイル %s からレイアウトを読み込みできません。\n"
 
-#: src/multitrack.c:20937
+#: src/multitrack.c:20942
 #, c-format
 msgid "Loading layout from %s..."
 msgstr "レイアウトを %s から読み込み中..."
 
-#: src/multitrack.c:20971
+#: src/multitrack.c:20976
 #, c-format
 msgid "Got %d events...processing..."
 msgstr "%d イベントを取得...処理中..."
 
-#: src/multitrack.c:20984
+#: src/multitrack.c:20989
 msgid "Checking and rebuilding event list"
 msgstr "イベントリストのチェックとリビルド"
 
-#: src/multitrack.c:21010
+#: src/multitrack.c:21015
 #, c-format
 msgid "%d errors detected.\n"
 msgstr "%d エラーを検出しました。\n"
 
-#: src/multitrack.c:21061
+#: src/multitrack.c:21066
 #, c-format
 msgid "Multitrack fps set to %.3f\n"
 msgstr "マルチトラックfpsを %.3f に設定\n"
 
-#: src/multitrack.c:21218
+#: src/multitrack.c:21223
 #, fuzzy
 msgid ""
 "The current layout has changes which have not been saved.\n"
@@ -10672,15 +10672,15 @@ msgstr ""
 "現在のレイアウトは保存されていません。\n"
 "どうしますか?\n"
 
-#: src/multitrack.c:22040
+#: src/multitrack.c:22045
 msgid "LiVES: Multitrack audio mixer"
 msgstr "LiVES: マルチトラック音声ミキサー"
 
-#: src/multitrack.c:22070
+#: src/multitrack.c:22075
 msgid "_Reset values"
 msgstr "値のリセット(_R)"
 
-#: src/multitrack.c:22074
+#: src/multitrack.c:22079
 msgid "_Close mixer"
 msgstr "ミキサーを閉じる(_C)"
 
@@ -10785,11 +10785,11 @@ msgstr ""
 "\n"
 "PulseAudio サーバーへの接続がリセットされました。\n"
 
-#: src/colourspace.c:1098
+#: src/colourspace.c:1100
 msgid "unclamped"
 msgstr "非固定"
 
-#: src/colourspace.c:1099
+#: src/colourspace.c:1101
 msgid "clamped"
 msgstr "固定"
 
@@ -10820,7 +10820,7 @@ msgid "note"
 msgstr "ノート"
 
 #: src/omc-learn.c:574 src/omc-learn.c:734 src/omc-learn.c:1103
-#: src/omc-learn.c:1590 src/omc-learn.c:1639
+#: src/omc-learn.c:1587 src/omc-learn.c:1636
 msgid "value"
 msgstr "値"
 
@@ -10911,196 +10911,196 @@ msgstr "アンマッチのクリア(_U)"
 msgid "_Delete all"
 msgstr "すべて削除(_D)"
 
-#: src/omc-learn.c:1410
+#: src/omc-learn.c:1407
 msgid "Start video playback"
 msgstr "ビデオ再生の開始"
 
-#: src/omc-learn.c:1413
+#: src/omc-learn.c:1410
 msgid "Stop video playback"
 msgstr "ビデオ再生の停止"
 
-#: src/omc-learn.c:1417
+#: src/omc-learn.c:1414
 msgid "Clip select <clipnum>"
 msgstr "クリップ選択 <clipnum>"
 
-#: src/omc-learn.c:1418
+#: src/omc-learn.c:1415
 msgid "Switch foreground clip to the nth valid clip"
 msgstr "前景クリップを n番目の有効なクリップと変更"
 
-#: src/omc-learn.c:1422
+#: src/omc-learn.c:1419
 msgid "Play forwards"
 msgstr "前に再生"
 
-#: src/omc-learn.c:1423
+#: src/omc-learn.c:1420
 msgid "Play video in a forwards direction"
 msgstr "ビデオを前方向に再生"
 
-#: src/omc-learn.c:1426
+#: src/omc-learn.c:1423
 msgid "Play backwards"
 msgstr "後ろに再生"
 
-#: src/omc-learn.c:1427
+#: src/omc-learn.c:1424
 msgid "Play video in a backwards direction"
 msgstr "ビデオを後方向に再生"
 
-#: src/omc-learn.c:1430
+#: src/omc-learn.c:1427
 msgid "Reverse playback direction"
 msgstr "再生方向のリバース"
 
-#: src/omc-learn.c:1431
+#: src/omc-learn.c:1428
 msgid "Reverse direction of video playback"
 msgstr "ビデオ再生方向のリバース"
 
-#: src/omc-learn.c:1434
+#: src/omc-learn.c:1431
 msgid "Play video faster"
 msgstr "さらに速くビデオを再生"
 
-#: src/omc-learn.c:1435
+#: src/omc-learn.c:1432
 msgid "Play video at a slightly faster rate"
 msgstr "少し速いレートでビデオを再生"
 
-#: src/omc-learn.c:1438
+#: src/omc-learn.c:1435
 msgid "Play video slower"
 msgstr "さらに遅くビデオを再生"
 
-#: src/omc-learn.c:1439
+#: src/omc-learn.c:1436
 msgid "Play video at a slightly slower rate"
 msgstr "少し遅いレートでビデオを再生"
 
-#: src/omc-learn.c:1442
+#: src/omc-learn.c:1439
 msgid "Toggle video freeze"
 msgstr "ビデオ一時停止/再開"
 
-#: src/omc-learn.c:1443
+#: src/omc-learn.c:1440
 msgid "Freeze video, or if already frozen, unfreeze it"
 msgstr "ビデオを一時停止、もしくは停止しているならば再開します。"
 
-#: src/omc-learn.c:1446
+#: src/omc-learn.c:1443
 msgid "Set video framerate to <fps>"
 msgstr "映像のフレームレートを <fps> に設定"
 
-#: src/omc-learn.c:1447
+#: src/omc-learn.c:1444
 msgid "Set framerate of foreground clip to <float fps>"
 msgstr "前景クリップのフレームレートを <float fps> に設定"
 
-#: src/omc-learn.c:1451
+#: src/omc-learn.c:1448
 msgid "Start recording"
 msgstr "記録の開始"
 
-#: src/omc-learn.c:1454
+#: src/omc-learn.c:1451
 msgid "Stop recording"
 msgstr "記録の停止"
 
-#: src/omc-learn.c:1457
+#: src/omc-learn.c:1454
 msgid "Toggle recording state"
 msgstr "記録状態のトグル"
 
-#: src/omc-learn.c:1460
+#: src/omc-learn.c:1457
 msgid "Swap foreground and background clips"
 msgstr "前景と背景クリップの交換"
 
-#: src/omc-learn.c:1462
+#: src/omc-learn.c:1459
 msgid "Reset effect keys"
 msgstr "エフェクトキーのリセット"
 
-#: src/omc-learn.c:1463
+#: src/omc-learn.c:1460
 msgid "Switch all effects off."
 msgstr "すべてのエフェクトをオフ"
 
-#: src/omc-learn.c:1466
+#: src/omc-learn.c:1463
 msgid "Enable effect key <key>"
 msgstr "エフェクトキー <key> を有効にする"
 
-#: src/omc-learn.c:1470
+#: src/omc-learn.c:1467
 msgid "Disable effect key <key>"
 msgstr "エフェクトキー <key> を無効にする"
 
-#: src/omc-learn.c:1474
+#: src/omc-learn.c:1471
 msgid "Toggle effect key <key>"
 msgstr "エフェクトキー <key> のトグル"
 
-#: src/omc-learn.c:1478
+#: src/omc-learn.c:1475
 msgid "Set parameter value <key> <pnum> = <value>"
 msgstr "パラメータ値のセット　<key> <pnum> = <value>"
 
-#: src/omc-learn.c:1479
+#: src/omc-learn.c:1476
 msgid "Set <value> of pth (numerical) parameter for effect key <key>."
 msgstr ""
 "エフェクトキー <key>　に対するp番目の(数値)パラメータを <value> にセット"
 
-#: src/omc-learn.c:1483
+#: src/omc-learn.c:1480
 msgid "Switch foreground to next clip"
 msgstr "前景を次のクリップに変更"
 
-#: src/omc-learn.c:1486
+#: src/omc-learn.c:1483
 msgid "Switch foreground to previous clip"
 msgstr "前景を前のクリップに変更"
 
-#: src/omc-learn.c:1489
+#: src/omc-learn.c:1486
 msgid "Set video framerate to ratio <fps_ratio>"
 msgstr "映像のフレームレートを <fps_ratio> に設定"
 
-#: src/omc-learn.c:1490
+#: src/omc-learn.c:1487
 msgid "Set framerate ratio of foreground clip to <float fps_ratio>"
 msgstr "前景クリップのフレームレート比を <float fps_ratio> にセット"
 
-#: src/omc-learn.c:1494
+#: src/omc-learn.c:1491
 msgid "Retrigger clip <clipnum>"
 msgstr "クリップ<clipnum>のリトリガー"
 
-#: src/omc-learn.c:1495
+#: src/omc-learn.c:1492
 msgid ""
 "Switch foreground clip to the nth valid clip, and reset the frame number"
 msgstr "前景のクリップをn番目の有効なクリップと交換し、フレーム番号をリセット"
 
-#: src/omc-learn.c:1499
+#: src/omc-learn.c:1496
 msgid "Cycle to next mode for effect key <key>"
 msgstr "エフェクトキー <key> を次のモードに切り替え"
 
-#: src/omc-learn.c:1503
+#: src/omc-learn.c:1500
 msgid "Cycle to previous mode for effect key <key>"
 msgstr "エフェクトキー <key> を前のモードに切り替え"
 
-#: src/omc-learn.c:1507
+#: src/omc-learn.c:1504
 msgid "Set playback plugin parameter value <pnum> = <value>"
 msgstr ""
 
-#: src/omc-learn.c:1508
+#: src/omc-learn.c:1505
 msgid "Set <value> of pth parameter for the playback plugin."
 msgstr ""
 
 #. TRANSLATORS: short form of "clip number"
-#: src/omc-learn.c:1535 src/omc-learn.c:1606
+#: src/omc-learn.c:1532 src/omc-learn.c:1603
 msgid "clipnum"
 msgstr "クリップ番号"
 
 #. TRANSLATORS: short form of "frames per second"
-#: src/omc-learn.c:1544
+#: src/omc-learn.c:1541
 msgid "fps"
 msgstr "fps"
 
 #. TRANSLATORS: as in keyboard key
-#: src/omc-learn.c:1552 src/omc-learn.c:1559 src/omc-learn.c:1566
-#: src/omc-learn.c:1574 src/omc-learn.c:1614 src/omc-learn.c:1622
+#: src/omc-learn.c:1549 src/omc-learn.c:1556 src/omc-learn.c:1563
+#: src/omc-learn.c:1571 src/omc-learn.c:1611 src/omc-learn.c:1619
 msgid "key"
 msgstr "キー"
 
 #. TRANSLATORS: short form of "parameter number"
-#: src/omc-learn.c:1582 src/omc-learn.c:1631
+#: src/omc-learn.c:1579 src/omc-learn.c:1628
 msgid "pnum"
 msgstr "p番号"
 
 #. TRANSLATORS: short form of "frames per second"
-#: src/omc-learn.c:1598
+#: src/omc-learn.c:1595
 msgid "fps_ratio"
 msgstr "fps比率(_R)"
 
-#: src/omc-learn.c:2442
+#: src/omc-learn.c:2439
 #, c-format
 msgid "Saving device mapping to file %s..."
 msgstr "デバイスマップをファイル %s に保存..."
 
-#: src/omc-learn.c:2526
+#: src/omc-learn.c:2523
 #, c-format
 msgid ""
 "\n"
@@ -11113,7 +11113,7 @@ msgstr ""
 "ファイルのパースエラー\n"
 "%s\n"
 
-#: src/omc-learn.c:2533
+#: src/omc-learn.c:2530
 #, c-format
 msgid ""
 "\n"
@@ -11126,12 +11126,12 @@ msgstr ""
 "無効なバージョンのファイル\n"
 "%s\n"
 
-#: src/omc-learn.c:2570
+#: src/omc-learn.c:2567
 #, c-format
 msgid "Loading device mapping from file %s..."
 msgstr "デバイスマップをファイル %s から読み込み中..."
 
-#: src/omc-learn.c:2575
+#: src/omc-learn.c:2572
 #, c-format
 msgid ""
 "\n"

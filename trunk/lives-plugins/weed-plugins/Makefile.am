@@ -126,7 +126,7 @@ projectM_libs = projectM.la
 projectM_la_LDFLAGS = $(AM_LDFLAGS) $(LDFLAGS_SDL) $(PROJECTM_LIBS) -lpthread @X11_LIBS@ @GL_LIBS@
 projectM_la_CPPFLAGS = $(PROJECTM_CFLAGS) $(CFLAGS_SDL) \
 	-DPROJECTM_PREFIX=\"`pkg-config --variable=libdir libprojectM`/libprojectM\" $(AM_CPPFLAGS) \
-	 @X11_CFLAGS@ @GL_CFLAGS
+	 @X11_CFLAGS@ @GL_CFLAGS@
 projectM_la_SOURCES = projectM.cpp projectM-getConfigFilename.cpp projectM-getConfigFilename.h projectM-ConfigFile.h
 endif
 endif

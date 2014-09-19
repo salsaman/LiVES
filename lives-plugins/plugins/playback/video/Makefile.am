@@ -62,28 +62,23 @@ if HAVE_X11
 if HAVE_XRENDER
 if HAVE_OPENGL
 if HAVE_GLEE
+if HAVE_GLU
 openGL_libs = openGL.la
 openGL_la_SOURCES = openGL.cpp
-openGL_la_CPPFLAGS = $(shared_cflags) $(weed_cflags) @X11_CFLAGS@ @XRENDER_CFLAGS@ @GL_CFLAGS@ @GLEE_CFLAGS@
-openGL_la_LDFLAGS = $(shared_ldflags) @X11_LIBS@ @XRENDER_LIBS@ @GL_LIBS@ @GLEE_LIBS@
-
-if HAVE_GLU
-openGL_trickery_libs = openGL_trickery.la
-openGL_trickery_la_SOURCES = openGL_trickery.cpp
-openGL_trickery_la_CPPFLAGS = $(shared_cflags) $(weed_cflags) @X11_CFLAGS@ @XRENDER_CFLAGS@ @GL_CFLAGS@ @GLEE_CFLAGS@ \
+openGL_la_CPPFLAGS = $(shared_cflags) $(weed_cflags) @X11_CFLAGS@ @XRENDER_CFLAGS@ @GL_CFLAGS@ @GLEE_CFLAGS@ \
 	@GLU_CFLAGS@
-openGL_trickery_la_LDFLAGS = $(shared_ldflags) @X11_LIBS@ @XRENDER_LIBS@ @GL_LIBS@ @GLEE_LIBS@ @GLU_LIBS@
+openGL_la_LDFLAGS = $(shared_ldflags) @X11_LIBS@ @XRENDER_LIBS@ @GL_LIBS@ @GLEE_LIBS@ @GLU_LIBS@
 
 
 
 if HAVE_SYSTEM_WEED
-openGL_trickery_la_CPPFLAGS += -DHAVE_SYSTEM_WEED
+openGL_la_CPPFLAGS += -DHAVE_SYSTEM_WEED
 else
-openGL_trickery_la_LDFLAGS += $(shared_ldflags)
+openGL_la_LDFLAGS += $(shared_ldflags)
 endif
 
 if HAVE_SYSTEM_WEED_PLUGIN_UTILS
-openGL_trickery_la_CPPFLAGS += -DHAVE_SYSTEM_WEED_PLUGIN_UTILS
+openGL_la_CPPFLAGS += -DHAVE_SYSTEM_WEED_PLUGIN_UTILS
 endif
 
 
@@ -130,6 +125,6 @@ endif
 
 videopluginslib_LTLIBRARIES = $(SDL_libs) $(YUV4MPEG_libs) $(oggstream_libs) $(icecast_output_libs) \
 	$(vjack_output_libs) $(lives2lives_stream_libs) $(vloopback_libs) $(vloopback2_libs) \
-	$(openGL_libs) $(openGL_trickery_libs)
+	$(openGL_libs) $(openGL_libs)
 
 EXTRA_DIST = videoplugin.h

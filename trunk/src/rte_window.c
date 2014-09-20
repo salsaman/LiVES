@@ -509,7 +509,7 @@ static boolean on_save_keymap_clicked (LiVESButton *button, gpointer user_data) 
 
 
 
-void on_save_rte_defs_activate (GtkMenuItem *menuitem, gpointer user_data) {
+void on_save_rte_defs_activate (LiVESMenuItem *menuitem, gpointer user_data) {
   int fd,i;
   int retval;
   int numfx;
@@ -1752,7 +1752,7 @@ void on_rte_info_clicked (LiVESButton *button, gpointer user_data) {
   hbuttonbox = lives_hbutton_box_new ();
   lives_box_pack_start (LIVES_BOX (vbox), hbuttonbox, TRUE, TRUE, 0);
 
-  ok_button = lives_button_new_from_stock ("gtk-ok");
+  ok_button = lives_button_new_from_stock (LIVES_STOCK_OK);
   lives_widget_show (ok_button);
 
   lives_container_add (LIVES_CONTAINER (hbuttonbox), ok_button);
@@ -2239,8 +2239,8 @@ LiVESWidget * create_rte_window (void) {
 
     hbox = lives_hbox_new (FALSE, 0);
     lives_table_attach (LIVES_TABLE (table), hbox, i, i+1, 0, 1,
-		      (GtkAttachOptions) (GTK_EXPAND | GTK_FILL),
-		      (GtkAttachOptions) (GTK_EXPAND | GTK_FILL), 0, 0);
+		      (GtkAttachOptions) (LIVES_EXPAND | LIVES_FILL),
+		      (GtkAttachOptions) (LIVES_EXPAND | LIVES_FILL), 0, 0);
     lives_container_set_border_width (LIVES_CONTAINER (hbox), widget_opts.border_width);
     
     label = lives_standard_label_new ((tmp=g_strdup_printf(_("Ctrl-%d"),i+1)));
@@ -2282,8 +2282,8 @@ LiVESWidget * create_rte_window (void) {
       idx=i*modes+j;
       hbox = lives_hbox_new (FALSE, 0);
       lives_table_attach (LIVES_TABLE (table), hbox, i, i+1, j+1, j+2,
-			(GtkAttachOptions) (GTK_EXPAND | GTK_FILL),
-			(GtkAttachOptions) (GTK_EXPAND | GTK_FILL), 0, 0);
+			(GtkAttachOptions) (LIVES_EXPAND | LIVES_FILL),
+			(GtkAttachOptions) (LIVES_EXPAND | LIVES_FILL), 0, 0);
       lives_container_set_border_width (LIVES_CONTAINER (hbox), widget_opts.border_width);
 
 
@@ -2459,7 +2459,7 @@ LiVESWidget *refresh_rte_window (void) {
 }
 
 
-void on_assign_rte_keys_activate (GtkMenuItem *menuitem, gpointer user_data) {
+void on_assign_rte_keys_activate (LiVESMenuItem *menuitem, gpointer user_data) {
   if (rte_window!=NULL) {
     on_rtew_ok_clicked(LIVES_BUTTON(dummy_radio), user_data);
     return;
@@ -2519,9 +2519,9 @@ void redraw_pwindow (int key, int mode) {
     if (rfx->is_template||(key==keyw&&mode==modew)) {
       // rip out the contents
       if (mainw->invis==NULL) mainw->invis=lives_vbox_new(FALSE,0);
-      child_list=gtk_container_get_children(LIVES_CONTAINER(lives_dialog_get_content_area(LIVES_DIALOG(fx_dialog[1]))));
+      child_list=lives_container_get_children(LIVES_CONTAINER(lives_dialog_get_content_area(LIVES_DIALOG(fx_dialog[1]))));
       action_area=lives_dialog_get_action_area(LIVES_DIALOG(fx_dialog[1]));
-      gtk_container_set_focus_child(LIVES_CONTAINER(action_area),NULL);
+      lives_container_set_focus_child(LIVES_CONTAINER(action_area),NULL);
       for (i=0;i<g_list_length(child_list);i++) {
 	LiVESWidget *widget=(LiVESWidget *)g_list_nth_data(child_list,i);
 	if (widget!=action_area) {
@@ -2569,7 +2569,7 @@ void update_pwindow (int key, int i, GList *list) {
   }
 }
 
-void rte_set_defs_activate (GtkMenuItem *menuitem, gpointer user_data) {
+void rte_set_defs_activate (LiVESMenuItem *menuitem, gpointer user_data) {
   int idx=GPOINTER_TO_INT(user_data);
   weed_plant_t *filter=get_weed_filter(idx);
   lives_rfx_t *rfx;
@@ -2766,7 +2766,7 @@ void rte_reset_defs_clicked (LiVESButton *button, lives_rfx_t *rfx) {
   // redraw the window
 
   if (mainw->invis==NULL) mainw->invis=lives_vbox_new(FALSE,0);
-  child_list=gtk_container_get_children(LIVES_CONTAINER(lives_dialog_get_content_area(LIVES_DIALOG(fxdialog))));
+  child_list=lives_container_get_children(LIVES_CONTAINER(lives_dialog_get_content_area(LIVES_DIALOG(fxdialog))));
 
   action_area=lives_dialog_get_action_area(LIVES_DIALOG (fxdialog));
 

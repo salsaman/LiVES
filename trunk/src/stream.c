@@ -1001,7 +1001,7 @@ void weed_layer_set_from_lives2lives(weed_plant_t *layer, int clip, lives_vstrea
 
 // gui bits
 
-void on_send_lives2lives_activate (GtkMenuItem *menuitem, gpointer user_data) {
+void on_send_lives2lives_activate (LiVESMenuItem *menuitem, gpointer user_data) {
   _vppaw *vppa;
 
   gchar *orig_name=g_strdup(mainw->string_constants[LIVES_STRING_CONSTANT_NONE]);
@@ -1038,7 +1038,7 @@ void on_send_lives2lives_activate (GtkMenuItem *menuitem, gpointer user_data) {
 
 
 
-void on_open_lives2lives_activate (GtkMenuItem *menuitem, gpointer user_data) {
+void on_open_lives2lives_activate (LiVESMenuItem *menuitem, gpointer user_data) {
   lives_pandh_w *pandh=create_pandh_dialog(0);
 
   gchar *host=NULL;

@@ -1,6 +1,6 @@
 // preferences.c
 // LiVES (lives-exe)
-// (c) G. Finch 2004 - 2013
+// (c) G. Finch 2004 - 2014
 // released under the GNU GPL 3 or later
 // see file ../COPYING or www.gnu.org for licensing details
 
@@ -396,7 +396,7 @@ void set_vpp(boolean set_in_prefs) {
 
 
 
-static void set_temp_label_text(GtkLabel *label) {
+static void set_temp_label_text(LiVESLabel *label) {
   gchar *free_ds;
   gchar *tmpx1,*tmpx2;
   gchar *dir=future_prefs->tmpdir;
@@ -416,7 +416,7 @@ static void set_temp_label_text(GtkLabel *label) {
   tmpx1=g_strdup(_("The temp directory is LiVES working directory where opened clips and sets are stored.\nIt should be in a partition with plenty of free disk space.\n"));
 
   markup = g_markup_printf_escaped ("<span background=\"white\" foreground=\"red\"><b>%s</b></span>%s",tmpx1,tmpx2);
-  gtk_label_set_markup (LIVES_LABEL (label), markup);
+  lives_label_set_markup (LIVES_LABEL (label), markup);
   g_free (markup);
   g_free(tmpx1);
   g_free(tmpx2);
@@ -1902,7 +1902,7 @@ void on_prefDomainChanged(LiVESTreeSelection *widget, gpointer dummy) {
 	lives_widget_show_all(prefsw->scrollw_right_gui);
 	if (nmons<=1) {
 	  lives_widget_hide (prefsw->forcesmon_hbox);
-#if !GTK_CHECK_VERSION(3,2,0)  // required for grid widget
+#if !LIVES_HAS_GRID_WIDGET
 	  lives_widget_hide (prefsw->ce_thumbs);
 #endif
 	}
@@ -3192,37 +3192,37 @@ _prefsw *create_prefs_dialog (void) {
 
   label = lives_standard_label_new (_("      Video load directory (default)      "));
   lives_table_attach (LIVES_TABLE (prefsw->table_right_directories), label, 0, 1, 4, 5,
-		    (GtkAttachOptions) (GTK_FILL),
+		    (GtkAttachOptions) (LIVES_FILL),
 		    (GtkAttachOptions) (0), 0, 0);
   gtk_misc_set_alignment (GTK_MISC (label), 0, 0.5);
   
   label = lives_standard_label_new (_("      Video save directory (default) "));
   lives_table_attach (LIVES_TABLE (prefsw->table_right_directories), label, 0, 1, 5, 6,
-		    (GtkAttachOptions) (GTK_FILL),
+		    (GtkAttachOptions) (LIVES_FILL),
 		    (GtkAttachOptions) (0), 0, 0);
   gtk_misc_set_alignment (GTK_MISC (label), 0, 0.5);
   
   label = lives_standard_label_new (_("      Audio load directory (default) "));
   lives_table_attach (LIVES_TABLE (prefsw->table_right_directories), label, 0, 1, 6, 7,
-                    (GtkAttachOptions) (GTK_FILL),
+                    (GtkAttachOptions) (LIVES_FILL),
                     (GtkAttachOptions) (0), 0, 0);
   gtk_misc_set_alignment (GTK_MISC (label), 0, 0.5);
   
   label = lives_standard_label_new (_("      Image directory (default) "));
   lives_table_attach (LIVES_TABLE (prefsw->table_right_directories), label, 0, 1, 7, 8,
-                    (GtkAttachOptions) (GTK_FILL),
+                    (GtkAttachOptions) (LIVES_FILL),
                     (GtkAttachOptions) (0), 0, 0);
   gtk_misc_set_alignment (GTK_MISC (label), 0, 0.5);
   
   label = lives_standard_label_new (_("      Backup/Restore directory (default) "));
   lives_table_attach (LIVES_TABLE (prefsw->table_right_directories), label, 0, 1, 8, 9,
-                    (GtkAttachOptions) (GTK_FILL),
+                    (GtkAttachOptions) (LIVES_FILL),
                     (GtkAttachOptions) (0), 0, 0);
   gtk_misc_set_alignment (GTK_MISC (label), 0, 0.5);
   
   label = lives_standard_label_new (_("      Temp directory (do not remove) "));
   lives_table_attach (LIVES_TABLE (prefsw->table_right_directories), label, 0, 1, 3, 4,
-		    (GtkAttachOptions) (GTK_FILL),
+		    (GtkAttachOptions) (LIVES_FILL),
 		    (GtkAttachOptions) (0), 0, 0);
   gtk_misc_set_alignment (GTK_MISC (label), 0, 0.5);
 
@@ -3230,7 +3230,7 @@ _prefsw *create_prefs_dialog (void) {
   prefsw->vid_load_dir_entry = lives_entry_new ();
   lives_entry_set_max_length(LIVES_ENTRY(prefsw->vid_load_dir_entry),PATH_MAX);
   lives_table_attach (LIVES_TABLE (prefsw->table_right_directories), prefsw->vid_load_dir_entry, 1, 2, 4, 5,
-		    (GtkAttachOptions) (GTK_EXPAND | GTK_FILL),
+		    (GtkAttachOptions) (LIVES_EXPAND | LIVES_FILL),
 		    (GtkAttachOptions) (0), 0, 0);
 
   lives_widget_set_tooltip_text( prefsw->vid_load_dir_entry, _("The default directory for loading video clips from"));
@@ -3245,7 +3245,7 @@ _prefsw *create_prefs_dialog (void) {
   widget_opts.justify=LIVES_JUSTIFY_DEFAULT;
   set_temp_label_text(LIVES_LABEL(label));
   lives_table_attach (LIVES_TABLE (prefsw->table_right_directories), label, 0, 3, 0, 2,
-		    (GtkAttachOptions) (GTK_EXPAND | GTK_FILL),
+		    (GtkAttachOptions) (LIVES_EXPAND | LIVES_FILL),
 		    (GtkAttachOptions) (0), 0, 0);
   gtk_misc_set_alignment (GTK_MISC (label), 0, 0.65);
  
@@ -3260,7 +3260,7 @@ _prefsw *create_prefs_dialog (void) {
   prefsw->vid_save_dir_entry = lives_standard_entry_new (NULL,FALSE,prefs->def_vid_save_dir,-1,PATH_MAX,
 							 NULL,_("The default directory for saving encoded clips to"));
   lives_table_attach (LIVES_TABLE (prefsw->table_right_directories), prefsw->vid_save_dir_entry, 1, 2, 5, 6,
-		    (GtkAttachOptions) (GTK_EXPAND | GTK_FILL),
+		    (GtkAttachOptions) (LIVES_EXPAND | LIVES_FILL),
 		    (GtkAttachOptions) (0), 0, 0);
 
   lives_entry_set_editable(LIVES_ENTRY(prefsw->vid_save_dir_entry),FALSE);
@@ -3268,7 +3268,7 @@ _prefsw *create_prefs_dialog (void) {
   prefsw->audio_dir_entry = lives_standard_entry_new (NULL,FALSE,prefs->def_audio_dir,-1,PATH_MAX,
 						      NULL,_("The default directory for loading and saving audio"));
   lives_table_attach (LIVES_TABLE (prefsw->table_right_directories), prefsw->audio_dir_entry, 1, 2, 6, 7,
-		    (GtkAttachOptions) (GTK_EXPAND | GTK_FILL),
+		    (GtkAttachOptions) (LIVES_EXPAND | LIVES_FILL),
 		    (GtkAttachOptions) (0), 0, 0);
 
   lives_entry_set_editable(LIVES_ENTRY(prefsw->audio_dir_entry),FALSE);
@@ -3276,7 +3276,7 @@ _prefsw *create_prefs_dialog (void) {
   prefsw->image_dir_entry = lives_standard_entry_new (NULL,FALSE,prefs->def_image_dir,-1,PATH_MAX,
 						      NULL,_("The default directory for saving frameshots to"));
   lives_table_attach (LIVES_TABLE (prefsw->table_right_directories), prefsw->image_dir_entry, 1, 2, 7, 8,
-		    (GtkAttachOptions) (GTK_EXPAND | GTK_FILL),
+		    (GtkAttachOptions) (LIVES_EXPAND | LIVES_FILL),
 		    (GtkAttachOptions) (0), 0, 0);
 
   lives_entry_set_editable(LIVES_ENTRY(prefsw->image_dir_entry),FALSE);
@@ -3284,7 +3284,7 @@ _prefsw *create_prefs_dialog (void) {
   prefsw->proj_dir_entry = lives_standard_entry_new (NULL,FALSE,prefs->def_proj_dir,-1,PATH_MAX,
 						     NULL,_("The default directory for backing up/restoring single clips"));
   lives_table_attach (LIVES_TABLE (prefsw->table_right_directories), prefsw->proj_dir_entry, 1, 2, 8, 9,
-		    (GtkAttachOptions) (GTK_EXPAND | GTK_FILL),
+		    (GtkAttachOptions) (LIVES_EXPAND | LIVES_FILL),
 		    (GtkAttachOptions) (0), 0, 0);
    
   lives_entry_set_editable(LIVES_ENTRY(prefsw->proj_dir_entry),FALSE);
@@ -3293,7 +3293,7 @@ _prefsw *create_prefs_dialog (void) {
 						   NULL,(tmp2=g_strdup(_("LiVES working directory."))));
 
   lives_table_attach (LIVES_TABLE (prefsw->table_right_directories), prefsw->tmpdir_entry, 1, 2, 3, 4,
-		    (GtkAttachOptions) (GTK_EXPAND | GTK_FILL),
+		    (GtkAttachOptions) (LIVES_EXPAND | LIVES_FILL),
 		    (GtkAttachOptions) (0), 0, 0);
 
   g_free(tmp); g_free(tmp2);
@@ -4157,7 +4157,7 @@ _prefsw *create_prefs_dialog (void) {
   lives_button_box_set_layout (LIVES_BUTTON_BOX (dialog_action_area), LIVES_BUTTONBOX_END);
    
   // Preferences 'Revert' button
-  prefsw->cancelbutton = lives_button_new_from_stock ("gtk-revert-to-saved");
+  prefsw->cancelbutton = lives_button_new_from_stock (LIVES_STOCK_REVERT_TO_SAVED);
   lives_widget_show (prefsw->cancelbutton);
   lives_dialog_add_action_widget (LIVES_DIALOG (prefsw->prefs_dialog), prefsw->cancelbutton, GTK_RESPONSE_CANCEL);
 
@@ -4167,7 +4167,7 @@ _prefsw *create_prefs_dialog (void) {
   lives_widget_set_sensitive(prefsw->cancelbutton, FALSE);
    
   // Preferences 'Apply' button
-  prefsw->applybutton = lives_button_new_from_stock ("gtk-apply");
+  prefsw->applybutton = lives_button_new_from_stock (LIVES_STOCK_APPLY);
   lives_widget_show (prefsw->applybutton);
   lives_dialog_add_action_widget (LIVES_DIALOG (prefsw->prefs_dialog), prefsw->applybutton, 0);
 
@@ -4176,7 +4176,7 @@ _prefsw *create_prefs_dialog (void) {
   lives_widget_set_sensitive(prefsw->applybutton, FALSE);
    
   // Preferences 'Close' button
-  prefsw->closebutton = lives_button_new_from_stock ("gtk-close");
+  prefsw->closebutton = lives_button_new_from_stock (LIVES_STOCK_CLOSE);
   lives_widget_show(prefsw->closebutton);
   lives_dialog_add_action_widget(LIVES_DIALOG(prefsw->prefs_dialog), prefsw->closebutton, GTK_RESPONSE_OK);
 
@@ -4439,7 +4439,7 @@ _prefsw *create_prefs_dialog (void) {
 }
 
 
-void on_preferences_activate(GtkMenuItem *menuitem, gpointer user_data) {
+void on_preferences_activate(LiVESMenuItem *menuitem, gpointer user_data) {
   if (menuitem!=NULL) prefs_current_page=-1;
 
   if (prefsw != NULL && prefsw->prefs_dialog != NULL) {

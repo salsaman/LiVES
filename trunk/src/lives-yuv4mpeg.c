@@ -371,7 +371,7 @@ static boolean open_yuv4m_inner(const gchar *filename, const gchar *fname, int n
 
 
 
-void on_open_yuv4m_activate (GtkMenuItem *menuitem, gpointer user_data) {
+void on_open_yuv4m_activate (LiVESMenuItem *menuitem, gpointer user_data) {
   // open a general yuvmpeg stream
   // start "playing" but open frames in yuv4mpeg format on stdin
 
@@ -579,7 +579,7 @@ void lives_yuv_stream_stop_write (lives_yuv4m_t *yuv4mpeg) {
 
 
 
-void on_live_tvcard_activate (GtkMenuItem *menuitem, gpointer user_data) {
+void on_live_tvcard_activate (LiVESMenuItem *menuitem, gpointer user_data) {
   int cardno=0;
 
   int new_file=mainw->first_free_file;
@@ -722,7 +722,7 @@ void on_live_tvcard_activate (GtkMenuItem *menuitem, gpointer user_data) {
 
 
 
-void on_live_fw_activate (GtkMenuItem *menuitem, gpointer user_data) {
+void on_live_fw_activate (LiVESMenuItem *menuitem, gpointer user_data) {
 
   gchar *com,*tmp;
   int cardno;

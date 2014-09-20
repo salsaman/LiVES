@@ -463,16 +463,10 @@ void lives_osc_cb_play (void *context, int arglen, const void *vargs, OSCTimeTag
   }
 
   // re - add the timer, as we will hang here, and we want to receive messages still during playback
-#if !GTK_CHECK_VERSION(3,0,0)
-  gtk_timeout_remove (mainw->kb_timer);
-  mainw->kb_timer=gtk_timeout_add(KEY_RPT_INTERVAL,&ext_triggers_poll,NULL);
-#else
-  mainw->kb_timer=g_timeout_add(KEY_RPT_INTERVAL,&ext_triggers_poll,NULL);
-#endif  
+  lives_timer_remove (mainw->kb_timer);
+  mainw->kb_timer=lives_timer_add(KEY_RPT_INTERVAL,&ext_triggers_poll,NULL);
   on_playall_activate(NULL,NULL);
-#if GTK_CHECK_VERSION(3,0,0)
-    mainw->kb_timer_end=TRUE;
-#endif
+  mainw->kb_timer_end=TRUE;
 
   mainw->osc_auto=FALSE;
 }
@@ -483,18 +477,12 @@ void lives_osc_cb_playsel (void *context, int arglen, const void *vargs, OSCTime
     mainw->osc_auto=TRUE; ///< request early notifiction of success
 
     // re - add the timer, as we will hang here, and we want to receive messages still during playback
-#if !GTK_CHECK_VERSION(3,0,0)
-    gtk_timeout_remove (mainw->kb_timer);
-    mainw->kb_timer=gtk_timeout_add(KEY_RPT_INTERVAL,&ext_triggers_poll,NULL);
-#else
-    mainw->kb_timer=g_timeout_add(KEY_RPT_INTERVAL,&ext_triggers_poll,NULL);
-#endif
+    lives_timer_remove (mainw->kb_timer);
+    mainw->kb_timer=lives_timer_add(KEY_RPT_INTERVAL,&ext_triggers_poll,NULL);
 
     if (mainw->multitrack==NULL) on_playsel_activate(NULL,NULL);
     else multitrack_play_sel(NULL, mainw->multitrack);
-#if GTK_CHECK_VERSION(3,0,0)
     mainw->kb_timer_end=TRUE;
-#endif
     mainw->osc_auto=FALSE; ///< request early notifiction of success
   }
 }
@@ -532,18 +520,12 @@ void lives_osc_cb_play_forward (void *context, int arglen, const void *vargs, OS
     mainw->osc_auto=TRUE; ///< request early notifiction of success
 
     // re - add the timer, as we will hang here, and we want to receive messages still during playback
-#if !GTK_CHECK_VERSION(3,0,0)
-    gtk_timeout_remove (mainw->kb_timer);
-    mainw->kb_timer=gtk_timeout_add(KEY_RPT_INTERVAL,&ext_triggers_poll,NULL);
-#else
-    mainw->kb_timer=g_timeout_add(KEY_RPT_INTERVAL,&ext_triggers_poll,NULL);
-#endif
+    lives_timer_remove (mainw->kb_timer);
+    mainw->kb_timer=lives_timer_add(KEY_RPT_INTERVAL,&ext_triggers_poll,NULL);
 
     on_playall_activate(NULL,NULL);
 
-#if GTK_CHECK_VERSION(3,0,0)
     mainw->kb_timer_end=TRUE;
-#endif
     mainw->osc_auto=FALSE;
   }
   else if (mainw->current_file>0) {
@@ -566,22 +548,19 @@ void lives_osc_cb_play_backward (void *context, int arglen, const void *vargs, O
     mainw->reverse_pb=TRUE;
 
     // re - add the timer, as we will hang here, and we want to receive messages still during playback
-#if !GTK_CHECK_VERSION(3,0,0)
-  gtk_timeout_remove (mainw->kb_timer);
-  mainw->kb_timer=gtk_timeout_add(KEY_RPT_INTERVAL,&ext_triggers_poll,NULL);
-#else
-  mainw->kb_timer=g_timeout_add(KEY_RPT_INTERVAL,&ext_triggers_poll,NULL);
-#endif  
+    lives_timer_remove (mainw->kb_timer);
+    mainw->kb_timer=lives_timer_add(KEY_RPT_INTERVAL,&ext_triggers_poll,NULL);
+
     mainw->osc_auto=TRUE; ///< request early notifiction of success
 
     on_playall_activate(NULL,NULL);
-#if GTK_CHECK_VERSION(3,0,0)
+
     mainw->kb_timer_end=TRUE;
-#endif
     mainw->osc_auto=FALSE;
   }
   else if (mainw->current_file>0) {
-    if (cfile->pb_fps>0||(cfile->play_paused&&cfile->freeze_fps>0)) dirchange_callback(NULL,NULL,0,(LiVESModifierType)0,LIVES_INT_TO_POINTER(TRUE));
+    if (cfile->pb_fps>0||(cfile->play_paused&&cfile->freeze_fps>0)) 
+      dirchange_callback(NULL,NULL,0,(LiVESModifierType)0,LIVES_INT_TO_POINTER(TRUE));
     if (cfile->play_paused) freeze_callback(NULL,NULL,0,(LiVESModifierType)0,NULL);
     lives_osc_notify_success(NULL);
   }
@@ -811,7 +790,8 @@ void lives_osc_cb_set_fps_ratio(void *context, int arglen, const void *vargs, OS
     lives_osc_parse_float_argument(vargs,&fps);
   }
 
-  if (mainw->playing_file>-1) lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_pb_fps),(double)(fps)*mainw->files[mainw->playing_file]->fps);
+  if (mainw->playing_file>-1) lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_pb_fps),
+							  (double)(fps)*mainw->files[mainw->playing_file]->fps);
   lives_osc_notify_success(NULL);
 
 }
@@ -822,7 +802,8 @@ void lives_osc_cb_bgset_fps_ratio(void *context, int arglen, const void *vargs, 
   float fps;
   if (mainw->multitrack!=NULL) return lives_osc_notify_failure();
 
-  if (mainw->blend_file<1||mainw->files[mainw->blend_file]==NULL||mainw->blend_file==mainw->current_file) return lives_osc_notify_failure();
+  if (mainw->blend_file<1||mainw->files[mainw->blend_file]==NULL||mainw->blend_file==mainw->current_file) 
+    return lives_osc_notify_failure();
 
   if (lives_osc_check_arguments (arglen,vargs,"i",FALSE)) {
     lives_osc_check_arguments (arglen,vargs,"i",TRUE);
@@ -839,10 +820,6 @@ void lives_osc_cb_bgset_fps_ratio(void *context, int arglen, const void *vargs, 
 }
 
 
-
-
-
-
 void lives_osc_cb_fx_reset(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
 
   if (!mainw->osc_block) rte_on_off_callback_hook(NULL,LIVES_INT_TO_POINTER(0));
@@ -850,10 +827,12 @@ void lives_osc_cb_fx_reset(void *context, int arglen, const void *vargs, OSCTime
 
 }
 
+
 void lives_osc_cb_fx_map_clear(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
   if (!mainw->osc_block) on_clear_all_clicked(NULL,NULL);
   if (prefs->omc_noisy) lives_osc_notify_success(NULL);
 }
+
 
 void lives_osc_cb_fx_map(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
   int effect_key;
@@ -866,14 +845,14 @@ void lives_osc_cb_fx_map(void *context, int arglen, const void *vargs, OSCTimeTa
   if (prefs->omc_noisy) lives_osc_notify_success(NULL);
 }
 
+
 void lives_osc_cb_fx_enable(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
   // if via_shortcut and not playing, we ignore unless a generator starts (which starts playback)
-#if GTK_CHECK_VERSION(3,0,0)
   boolean new_timer_added=FALSE;
-#endif
   int count;
   int effect_key;
   int grab=mainw->last_grabable_effect;
+
   if (mainw->multitrack!=NULL) return lives_osc_notify_failure();
   if (!lives_osc_check_arguments (arglen,vargs,"i",TRUE)) return lives_osc_notify_failure();
   lives_osc_parse_int_argument(vargs,&effect_key);
@@ -887,28 +866,23 @@ void lives_osc_cb_fx_enable(void *context, int arglen, const void *vargs, OSCTim
     if (!mainw->osc_block) {
       if (mainw->playing_file==-1&&count==0) {
 	// re - add the timer, as we hang here if a generator is started, and we want to receive messages still during playback
-#if !GTK_CHECK_VERSION(3,0,0)
-	gtk_timeout_remove (mainw->kb_timer);
-	mainw->kb_timer=gtk_timeout_add(KEY_RPT_INTERVAL,&ext_triggers_poll,NULL);
-#else
-	mainw->kb_timer=g_timeout_add(KEY_RPT_INTERVAL,&ext_triggers_poll,NULL);
+	lives_timer_remove (mainw->kb_timer);
+	mainw->kb_timer=lives_timer_add(KEY_RPT_INTERVAL,&ext_triggers_poll,NULL);
 	new_timer_added=TRUE;
-#endif
       }
       // TODO ***
       //mainw->osc_auto=TRUE; ///< request early notifiction of success
       rte_on_off_callback_hook(NULL,LIVES_INT_TO_POINTER(effect_key));
       mainw->osc_auto=FALSE;
-#if GTK_CHECK_VERSION(3,0,0)
       if (new_timer_added)
 	mainw->kb_timer_end=TRUE;
-#endif
     }
   }
   mainw->last_grabable_effect=grab;
 
   if (prefs->omc_noisy) lives_osc_notify_success(NULL);
 }
+
 
 void lives_osc_cb_fx_disable(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
 
@@ -941,19 +915,13 @@ void lives_osc_cb_fx_toggle(void *context, int arglen, const void *vargs, OSCTim
   if (!mainw->osc_block) {
     if (!(mainw->rte&(GU641<<(effect_key-1)))&&mainw->playing_file==-1&&count==0&&via_shortcut) {
       // re - add the timer, as we hang here if a generator is started, and we want to receive messages still during playback
-#if !GTK_CHECK_VERSION(3,0,0)
-      gtk_timeout_remove (mainw->kb_timer);
-      mainw->kb_timer=gtk_timeout_add(KEY_RPT_INTERVAL,&ext_triggers_poll,NULL);
-#else
-      mainw->kb_timer=g_timeout_add(KEY_RPT_INTERVAL,&ext_triggers_poll,NULL);
-#endif
+      lives_timer_remove (mainw->kb_timer);
+      mainw->kb_timer=lives_timer_add(KEY_RPT_INTERVAL,&ext_triggers_poll,NULL);
     }
     // TODO ***
     //mainw->osc_auto=TRUE; ///< request early notifiction of success
     rte_on_off_callback_hook(NULL,LIVES_INT_TO_POINTER(effect_key));
-#if GTK_CHECK_VERSION(3,0,0)
     mainw->kb_timer_end=TRUE;
-#endif
   }
   if (prefs->omc_noisy) lives_osc_notify_success(NULL);
 }
@@ -1083,7 +1051,6 @@ void lives_osc_cb_clip_resample(void *context, int arglen, const void *vargs, OS
   float fpsf;
   double fpsd;
 
-
   if (mainw->playing_file>-1) return lives_osc_notify_failure();
 
   if (mainw->current_file<1||mainw->preview||mainw->is_processing||mainw->multitrack!=NULL) return lives_osc_notify_failure();
@@ -1206,7 +1173,7 @@ void lives_osc_cb_clip_redo(void *context, int arglen, const void *vargs, OSCTim
 
 
 
-void lives_osc_cb_fgclip_copy(void *context, int arglen, const void *vargs, OSCTimeTag when,	NetworkReturnAddressPtr ra) {
+void lives_osc_cb_fgclip_copy(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
   int noaudio=0;
   int clipno=mainw->current_file;
   int start,end,current_file=clipno;
@@ -1334,7 +1301,7 @@ void lives_osc_cb_fgclipsel_copy(void *context, int arglen, const void *vargs, O
 
 
 
-void lives_osc_cb_fgclipsel_cut(void *context, int arglen, const void *vargs, OSCTimeTag when,	NetworkReturnAddressPtr ra) {
+void lives_osc_cb_fgclipsel_cut(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
 
   int noaudio=0;
   int clipno=mainw->current_file;
@@ -1384,7 +1351,7 @@ void lives_osc_cb_fgclipsel_cut(void *context, int arglen, const void *vargs, OS
 
 
 
-void lives_osc_cb_fgclipsel_delete(void *context, int arglen, const void *vargs, OSCTimeTag when,	NetworkReturnAddressPtr ra) {
+void lives_osc_cb_fgclipsel_delete(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
 
   int noaudio=0;
   int clipno=mainw->current_file;
@@ -1434,7 +1401,7 @@ void lives_osc_cb_fgclipsel_delete(void *context, int arglen, const void *vargs,
 
 
 
-void lives_osc_cb_clipbd_paste(void *context, int arglen, const void *vargs, OSCTimeTag when,	NetworkReturnAddressPtr ra) {
+void lives_osc_cb_clipbd_paste(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
   int noaudio=0;
   boolean ccpd;
 
@@ -2196,7 +2163,9 @@ void lives_osc_cb_bgclip_goto(void *context, int arglen, const void *vargs, OSCT
   if (!lives_osc_check_arguments (arglen,vargs,"i",TRUE)) return lives_osc_notify_failure();
   lives_osc_parse_int_argument(vargs,&frame);
 
-  if (frame<1||frame>mainw->files[mainw->blend_file]->frames||(mainw->files[mainw->blend_file]->clip_type!=CLIP_TYPE_DISK&&mainw->files[mainw->blend_file]->clip_type!=CLIP_TYPE_FILE)) return lives_osc_notify_failure();
+  if (frame<1||frame>mainw->files[mainw->blend_file]->frames||
+      (mainw->files[mainw->blend_file]->clip_type!=CLIP_TYPE_DISK&&
+       mainw->files[mainw->blend_file]->clip_type!=CLIP_TYPE_FILE)) return lives_osc_notify_failure();
 
   mainw->files[mainw->blend_file]->last_frameno=mainw->files[mainw->blend_file]->frameno=frame;
 
@@ -6673,63 +6642,55 @@ static struct
   };
 
 
-int lives_osc_build_cont( lives_osc *o )
-{ 
+int lives_osc_build_cont(lives_osc *o) { 
   /* Create containers /video , /clip, /chain and /tag */
-  int i;
-  for( i = 0; osc_cont[i].name != NULL ; i ++ )
-    {
-      if ( osc_cont[i].it == 0 )
-	{
-	  o->cqinfo.comment = osc_cont[i].comment;
+  register int i;
+  for (i = 0; osc_cont[i].name != NULL ; i ++) {
+    if (osc_cont[i].it == 0) {
+      o->cqinfo.comment = osc_cont[i].comment;
 	  
-	  // add a container to a leaf
-	  if ( ( o->leaves[ osc_cont[i].leave ] =
-		 OSCNewContainer( osc_cont[i].name,
-				  (osc_cont[i].att == -1 ? o->container : o->leaves[ osc_cont[i].att ] ),
-				  &(o->cqinfo) ) ) == 0 )
-	    {
-	      if(osc_cont[i].att == - 1)
-		{
-		  g_printerr( "Cannot create container %d (%s) \n",
-			      i, osc_cont[i].name );
-		  return 0;
-		}
-	      else
-		{
-		  g_printerr( "Cannot add branch %s to  container %d)\n",
-			      osc_cont[i].name, osc_cont[i].att );  
-		  return 0;
-		}
-	    }
-	}
-      else
+      // add a container to a leaf
+      if ((o->leaves[ osc_cont[i].leave ] =
+	   OSCNewContainer( osc_cont[i].name,
+			    (osc_cont[i].att == -1 ? o->container : o->leaves[ osc_cont[i].att ]),
+			    &(o->cqinfo) ) ) == 0)
 	{
-	  int n = osc_cont[i].it;
-	  int j;
-	  int base = osc_cont[i].leave;
-	  char name[50];
-	  char comment[50];
-	  
-	  for ( j = 0; j < n ; j ++ )
-	    {
-	      sprintf(name, "N%d", j);	
-	      sprintf(comment, "<%d>", j);
-	      g_printerr( "Try cont.%d  '%s', %d %d\n",j, name,
-			  base + j, base );	
-	      o->cqinfo.comment = comment;
-	      if ((	o->leaves[ base + j ] = OSCNewContainer( name,
-								 o->leaves[ osc_cont[i].att ] ,
-								 &(o->cqinfo) ) ) == 0 )
-		{
-		  g_printerr( "Cannot auto numerate container %s \n",
-			      osc_cont[i].name );
-		  return 0;
-		  
-		}
-	    }
+	  if (osc_cont[i].att == - 1) {
+	    g_printerr("Cannot create container %d (%s) \n",
+		       i, osc_cont[i].name);
+	    return 0;
+	  }
+	  else {
+	    g_printerr("Cannot add branch %s to  container %d)\n",
+		       osc_cont[i].name, osc_cont[i].att);  
+	    return 0;
+	  }
 	}
     }
+    else {
+      char name[50];
+      char comment[50];
+      int n = osc_cont[i].it;
+      int base = osc_cont[i].leave;
+      register int j;
+	  
+      for ( j = 0; j < n ; j ++ ) {
+	sprintf(name, "N%d", j);	
+	sprintf(comment, "<%d>", j);
+	g_printerr("Try cont.%d  '%s', %d %d\n", j, name,
+		   base + j, base);	
+	o->cqinfo.comment = comment;
+	if ((o->leaves[ base + j ] = OSCNewContainer(name,
+						     o->leaves[ osc_cont[i].att ],
+						     &(o->cqinfo) ) ) == 0) {
+	  g_printerr("Cannot auto numerate container %s \n",
+		     osc_cont[i].name);
+	  return 0;
+		  
+	}
+      }
+    }
+  }
   return 1;
 }
 
@@ -6819,8 +6780,7 @@ lives_osc* lives_osc_allocate(int port_id) {
 
 
 
-void lives_osc_dump()
-{
+void lives_osc_dump() {
   OSCPrintWholeAddressSpace();
 }
 
@@ -6897,8 +6857,7 @@ boolean lives_osc_act(OSCbuf *obuf) {
 
 
 
-void lives_osc_free(lives_osc *c)
-{
+void lives_osc_free(lives_osc *c) {
   if(c==NULL) return;
   if(c->leaves) free(c->leaves);
   if(c) free(c);

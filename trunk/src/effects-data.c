@@ -2592,7 +2592,7 @@ static void padd_clicked(LiVESWidget *button, gpointer user_data) {
     hbox[i]=lives_hbox_new (FALSE, 0);
 
     lives_table_attach (LIVES_TABLE (conxwp->tablep), hbox[i], i, i+1, conxwp->trowsp-1, conxwp->trowsp,
-			(GtkAttachOptions) (GTK_FILL|GTK_EXPAND),
+			(GtkAttachOptions) (LIVES_FILL|LIVES_EXPAND),
 			(GtkAttachOptions) (0), 0, 0);
 
 
@@ -2880,7 +2880,7 @@ static void cadd_clicked(LiVESWidget *button, gpointer user_data) {
     hbox[i]=lives_hbox_new (FALSE, 0);
 
     lives_table_attach (LIVES_TABLE (conxwp->tablec), hbox[i], i, i+1, conxwp->trowsc-1, conxwp->trowsc,
-			(GtkAttachOptions) (GTK_FILL|GTK_EXPAND),
+			(GtkAttachOptions) (LIVES_FILL|LIVES_EXPAND),
 			(GtkAttachOptions) (0), 0, 0);
 
 
@@ -3888,7 +3888,7 @@ static void ptable_row_add_variable_widgets(lives_conx_w *conxwp, int idx, int r
   hbox=lives_hbox_new (FALSE, 0);
 
   lives_table_attach (LIVES_TABLE (conxwp->tablep), hbox, 0, 1, row, row+1,
-		      (GtkAttachOptions) (GTK_FILL|GTK_EXPAND),
+		      (GtkAttachOptions) (LIVES_FILL|LIVES_EXPAND),
 		      (GtkAttachOptions) (0), 0, 0);
 
   conxwp->pclabel[idx+totchans]=lives_standard_label_new(NULL);
@@ -3903,7 +3903,7 @@ static void ptable_row_add_variable_widgets(lives_conx_w *conxwp, int idx, int r
   lives_box_pack_start (LIVES_BOX (hbox), conxwp->pfxcombo[idx], FALSE, FALSE, 0);
      
   lives_table_attach (LIVES_TABLE (conxwp->tablep), hbox, 2, 3, row, row+1,
-		      (GtkAttachOptions) (GTK_FILL|GTK_EXPAND),
+		      (GtkAttachOptions) (LIVES_FILL|LIVES_EXPAND),
 		      (GtkAttachOptions) (0), 0, 0);
 
   fx_entry = lives_combo_get_entry(LIVES_COMBO(conxwp->pfxcombo[idx]));
@@ -3921,7 +3921,7 @@ static void ptable_row_add_variable_widgets(lives_conx_w *conxwp, int idx, int r
 
 
   lives_table_attach (LIVES_TABLE (conxwp->tablep), hbox, 3, 4, row, row+1,
-		      (GtkAttachOptions) (GTK_FILL|GTK_EXPAND),
+		      (GtkAttachOptions) (LIVES_FILL|LIVES_EXPAND),
 		      (GtkAttachOptions) (0), 0, 0);
 
 
@@ -3955,7 +3955,7 @@ static void ptable_row_add_variable_widgets(lives_conx_w *conxwp, int idx, int r
     hbox=lives_hbox_new (FALSE, 0);
 
     lives_table_attach (LIVES_TABLE (conxwp->tablep), hbox, 4, 5, row, row+1,
-			(GtkAttachOptions) (GTK_FILL|GTK_EXPAND),
+			(GtkAttachOptions) (LIVES_FILL|LIVES_EXPAND),
 			(GtkAttachOptions) (0), 0, 0);
 
     hbox2=lives_hbox_new (FALSE, 0);
@@ -3985,7 +3985,7 @@ static void ctable_row_add_variable_widgets(lives_conx_w *conxwp, int idx, int r
   hbox=lives_hbox_new (FALSE, 0);
 
   lives_table_attach (LIVES_TABLE (conxwp->tablec), hbox, 0, 1, row, row+1,
-		      (GtkAttachOptions) (GTK_FILL|GTK_EXPAND),
+		      (GtkAttachOptions) (LIVES_FILL|LIVES_EXPAND),
 		      (GtkAttachOptions) (0), 0, 0);
 
   conxwp->pclabel[idx]=lives_standard_label_new(NULL);
@@ -4000,7 +4000,7 @@ static void ctable_row_add_variable_widgets(lives_conx_w *conxwp, int idx, int r
   lives_box_pack_start (LIVES_BOX (hbox), conxwp->cfxcombo[idx], FALSE, FALSE, 0);
      
   lives_table_attach (LIVES_TABLE (conxwp->tablec), hbox, 2, 3, row, row+1,
-		      (GtkAttachOptions) (GTK_FILL|GTK_EXPAND),
+		      (GtkAttachOptions) (LIVES_FILL|LIVES_EXPAND),
 		      (GtkAttachOptions) (0), 0, 0);
 
   fx_entry = lives_combo_get_entry(LIVES_COMBO(conxwp->cfxcombo[idx]));
@@ -4018,7 +4018,7 @@ static void ctable_row_add_variable_widgets(lives_conx_w *conxwp, int idx, int r
 
 
   lives_table_attach (LIVES_TABLE (conxwp->tablec), hbox, 3, 4, row, row+1,
-		      (GtkAttachOptions) (GTK_FILL|GTK_EXPAND),
+		      (GtkAttachOptions) (LIVES_FILL|LIVES_EXPAND),
 		      (GtkAttachOptions) (0), 0, 0);
 
 
@@ -4044,7 +4044,7 @@ static void ptable_row_add_standard_widgets(lives_conx_w *conxwp, int idx) {
   hbox=lives_hbox_new (FALSE, 0);
 
   lives_table_attach (LIVES_TABLE (conxwp->tablep), hbox, 1, 2, conxwp->trowsp-1, conxwp->trowsp,
-		      (GtkAttachOptions) (GTK_FILL|GTK_EXPAND),
+		      (GtkAttachOptions) (LIVES_FILL|LIVES_EXPAND),
 		      (GtkAttachOptions) (0), 0, 0);
 
 
@@ -4093,7 +4093,7 @@ static void ctable_row_add_standard_widgets(lives_conx_w *conxwp, int idx) {
   hbox=lives_hbox_new (FALSE, 0);
 
   lives_table_attach (LIVES_TABLE (conxwp->tablec), hbox, 1, 2, conxwp->trowsc-1, conxwp->trowsc,
-		      (GtkAttachOptions) (GTK_FILL|GTK_EXPAND),
+		      (GtkAttachOptions) (LIVES_FILL|LIVES_EXPAND),
 		      (GtkAttachOptions) (0), 0, 0);
 
 
@@ -4297,7 +4297,7 @@ static LiVESWidget *conx_scroll_new(lives_conx_w *conxwp) {
     hbox=lives_hbox_new (FALSE, 0);
 
     lives_table_attach (LIVES_TABLE (conxwp->tablep), hbox, 4, 5, 0, 1,
-			(GtkAttachOptions) (GTK_FILL|GTK_EXPAND),
+			(GtkAttachOptions) (LIVES_FILL|LIVES_EXPAND),
 			(GtkAttachOptions) (0), 0, 0);
 
     conxwp->allcheckc=lives_standard_check_button_new(_("Autoscale All"),FALSE,LIVES_BOX(hbox),NULL);
@@ -4796,10 +4796,10 @@ LiVESWidget *make_datacon_window(int key, int mode) {
     if (cconx_get_nconns(conxw.cconx,0)>0) lives_widget_set_sensitive(conxw.acbutton,TRUE);
   }
 
-  cancelbutton = lives_button_new_from_stock ("gtk-cancel");
+  cancelbutton = lives_button_new_from_stock (LIVES_STOCK_CANCEL);
   lives_dialog_add_action_widget (LIVES_DIALOG (conxw.conx_dialog), cancelbutton, GTK_RESPONSE_CANCEL);
 
-  okbutton = lives_button_new_from_stock ("gtk-ok");
+  okbutton = lives_button_new_from_stock (LIVES_STOCK_OK);
   lives_dialog_add_action_widget (LIVES_DIALOG (conxw.conx_dialog), okbutton, GTK_RESPONSE_OK);
 
   lives_widget_set_can_focus_and_default (okbutton);

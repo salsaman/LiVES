@@ -153,16 +153,12 @@ static void jack_transport_check_state (void) {
     mainw->jack_can_start=FALSE;
     mainw->jack_can_stop=TRUE;
     // re - add the timer, as we will hang here, and we want to receive messages still during playback
-#if !GTK_CHECK_VERSION(3,0,0)
-    gtk_timeout_remove (mainw->kb_timer);
-    mainw->kb_timer=gtk_timeout_add(KEY_RPT_INTERVAL,&ext_triggers_poll,NULL);
-#else
-    mainw->kb_timer=g_timeout_add(KEY_RPT_INTERVAL,&ext_triggers_poll,NULL);
-#endif  
+    lives_timer_remove (mainw->kb_timer);
+    mainw->kb_timer=lives_timer_add(KEY_RPT_INTERVAL,&ext_triggers_poll,NULL);
+
     on_playall_activate(NULL,NULL);
-#if GTK_CHECK_VERSION(3,0,0)
+
     mainw->kb_timer_end=TRUE;
-#endif
 
   }
 

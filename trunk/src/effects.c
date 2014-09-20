@@ -827,7 +827,7 @@ boolean on_realfx_activate_inner(int type, lives_rfx_t *rfx) {
 
 
 
-void on_realfx_activate (GtkMenuItem *menuitem, gpointer user_data) {
+void on_realfx_activate (LiVESMenuItem *menuitem, gpointer user_data) {
   int type=1;
 
   boolean has_lmap_error=FALSE;

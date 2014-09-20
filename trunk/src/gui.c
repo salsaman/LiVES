@@ -172,7 +172,7 @@ void create_LiVES (void) {
   LiVESWidget *trimaudio_submenu_menu;
   LiVESWidget *delaudio_submenu_menu;
   LiVESWidget *menuitemsep;
-#if !GTK_CHECK_VERSION(3,10,0)
+#if LIVES_HAS_IMAGE_MENU_ITEM
   LiVESWidget *image;
 #endif
   LiVESWidget *effects;
@@ -311,10 +311,12 @@ void create_LiVES (void) {
 
   if (palette->style==STYLE_PLAIN) {
     // if lives_widget_ensure_style is used, we can't grab external frames...
+#ifdef GUI_GTK
 #if !GTK_CHECK_VERSION(3,0,0)
     if (!mainw->foreign) {
       lives_widget_ensure_style(mainw->LiVES);
     }
+#endif
 #endif
     lives_widget_get_bg_color(mainw->LiVES,&normal);
     lives_widget_color_copy((LiVESWidgetColor *)(&palette->normal_back),&normal);
@@ -338,7 +340,7 @@ void create_LiVES (void) {
   lives_widget_show (mainw->menu_hbox);
   lives_box_pack_start (LIVES_BOX (mainw->vbox1), mainw->menu_hbox, FALSE, FALSE, 0);
 
-  mainw->menubar = gtk_menu_bar_new ();
+  mainw->menubar = lives_menu_bar_new ();
   lives_widget_show (mainw->menubar);
   lives_box_pack_start (LIVES_BOX (mainw->menu_hbox), mainw->menubar, FALSE, FALSE, 0);
 
@@ -654,7 +656,7 @@ void create_LiVES (void) {
                               LIVES_KEY_u, LIVES_CONTROL_MASK,
                               LIVES_ACCEL_VISIBLE);
 
-#if !GTK_CHECK_VERSION(3,10,0)
+#if LIVES_HAS_IMAGE_MENU_ITEM
   image = lives_image_new_from_stock (LIVES_STOCK_UNDO, LIVES_ICON_SIZE_MENU);
   lives_widget_show (image);
 
@@ -670,7 +672,7 @@ void create_LiVES (void) {
                               LIVES_KEY_z, LIVES_CONTROL_MASK,
                               LIVES_ACCEL_VISIBLE);
 
-#if !GTK_CHECK_VERSION(3,10,0)
+#if LIVES_HAS_IMAGE_MENU_ITEM
   image = lives_image_new_from_stock (LIVES_STOCK_REDO, LIVES_ICON_SIZE_MENU);
   lives_widget_show (image);
 
@@ -718,7 +720,7 @@ void create_LiVES (void) {
                               LIVES_KEY_i, LIVES_CONTROL_MASK,
                               LIVES_ACCEL_VISIBLE);
 
-#if !GTK_CHECK_VERSION(3,10,0)
+#if LIVES_HAS_IMAGE_MENU_ITEM
   image = lives_image_new_from_stock (LIVES_STOCK_ADD, LIVES_ICON_SIZE_MENU);
   lives_widget_show (image);
 
@@ -746,7 +748,7 @@ void create_LiVES (void) {
   lives_container_add (LIVES_CONTAINER (menuitem_menu), mainw->xdelete);
   lives_widget_set_sensitive (mainw->xdelete, FALSE);
 
-#if !GTK_CHECK_VERSION(3,10,0)
+#if LIVES_HAS_IMAGE_MENU_ITEM
   image = lives_image_new_from_stock ("gtk-delete", LIVES_ICON_SIZE_MENU);
   lives_widget_show (image);
   lives_image_menu_item_set_image (LIVES_IMAGE_MENU_ITEM (mainw->xdelete), image);
@@ -857,7 +859,7 @@ void create_LiVES (void) {
   lives_container_add (LIVES_CONTAINER (menuitem_menu), mainw->playall);
   lives_widget_set_sensitive (mainw->playall, FALSE);
 
-#if !GTK_CHECK_VERSION(3,10,0)
+#if LIVES_HAS_IMAGE_MENU_ITEM
   image = lives_image_new_from_stock (LIVES_STOCK_REFRESH, LIVES_ICON_SIZE_MENU);
   lives_widget_show (image);
 
@@ -881,13 +883,13 @@ void create_LiVES (void) {
                               LIVES_KEY_c, (GdkModifierType)0,
                               LIVES_ACCEL_VISIBLE);
 
-#if !GTK_CHECK_VERSION(3,10,0)
+#if LIVES_HAS_IMAGE_MENU_ITEM
   image = lives_image_new_from_stock (LIVES_STOCK_MEDIA_PLAY, LIVES_ICON_SIZE_MENU);
 
   lives_image_menu_item_set_image (LIVES_IMAGE_MENU_ITEM (mainw->playsel), image);
 #endif
 
-#if !GTK_CHECK_VERSION(3,10,0)
+#if LIVES_HAS_IMAGE_MENU_ITEM
   image = lives_image_new_from_stock (LIVES_STOCK_MEDIA_PLAY, LIVES_ICON_SIZE_MENU);
   lives_widget_show (image);
 
@@ -903,7 +905,7 @@ void create_LiVES (void) {
                               LIVES_ACCEL_VISIBLE);
 
 
-#if !GTK_CHECK_VERSION(3,10,0)
+#if LIVES_HAS_IMAGE_MENU_ITEM
   image = lives_image_new_from_stock (LIVES_STOCK_MEDIA_STOP, LIVES_ICON_SIZE_MENU);
   lives_widget_show (image);
   lives_image_menu_item_set_image (LIVES_IMAGE_MENU_ITEM (mainw->stop), image);
@@ -914,7 +916,7 @@ void create_LiVES (void) {
   lives_container_add (LIVES_CONTAINER (menuitem_menu), mainw->rewind);
   lives_widget_set_sensitive (mainw->rewind, FALSE);
 
-#if !GTK_CHECK_VERSION(3,10,0)
+#if LIVES_HAS_IMAGE_MENU_ITEM
   image = lives_image_new_from_stock (LIVES_STOCK_MEDIA_REWIND, LIVES_ICON_SIZE_MENU);
 
   lives_widget_show (image);
@@ -1161,7 +1163,7 @@ void create_LiVES (void) {
                               LIVES_KEY_p, LIVES_CONTROL_MASK,
                               LIVES_ACCEL_VISIBLE);
 
-#if !GTK_CHECK_VERSION(3,10,0)
+#if LIVES_HAS_IMAGE_MENU_ITEM
   image = lives_image_new_from_stock (LIVES_STOCK_PREFERENCES, LIVES_ICON_SIZE_MENU);
   lives_widget_show (image);
   lives_image_menu_item_set_image (LIVES_IMAGE_MENU_ITEM (mainw->preferences), image);
@@ -1349,7 +1351,7 @@ void create_LiVES (void) {
   lives_container_add (LIVES_CONTAINER (info_menu), mainw->show_clipboard_info);
   lives_widget_set_sensitive (mainw->show_clipboard_info, FALSE);
 
-#if !GTK_CHECK_VERSION(3,10,0)
+#if LIVES_HAS_IMAGE_MENU_ITEM
   image = lives_image_new_from_stock (LIVES_STOCK_DIALOG_INFO, LIVES_ICON_SIZE_MENU);
   lives_widget_show (image);
   lives_image_menu_item_set_image (LIVES_IMAGE_MENU_ITEM (mainw->show_file_info), image);
@@ -4371,8 +4373,8 @@ void splash_init(void) {
 
     lives_box_pack_start (LIVES_BOX (vbox), mainw->splash_label, TRUE, TRUE, 0);
 
-    mainw->splash_progress = gtk_progress_bar_new ();
-    gtk_progress_bar_set_pulse_step(GTK_PROGRESS_BAR(mainw->splash_progress),.01);
+    mainw->splash_progress = lives_progress_bar_new ();
+    lives_progress_bar_set_pulse_step(LIVES_PROGRESS_BAR(mainw->splash_progress),.01);
     
     if (palette->style&STYLE_1) {
       lives_widget_set_fg_color(mainw->splash_label, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
@@ -4417,7 +4419,7 @@ void splash_msg(const gchar *msg, double pct) {
 
   lives_label_set_text(LIVES_LABEL(mainw->splash_label),msg);
 
-  gtk_progress_bar_set_fraction(GTK_PROGRESS_BAR(mainw->splash_progress),pct);
+  lives_progress_bar_set_fraction(LIVES_PROGRESS_BAR(mainw->splash_progress),pct);
 
   lives_widget_queue_draw(mainw->splash_window);
 

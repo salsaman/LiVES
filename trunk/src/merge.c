@@ -206,11 +206,11 @@ void create_merge_dialog (void) {
   dialog_action_area = lives_dialog_get_action_area(LIVES_DIALOG (merge_opts->merge_dialog));
   lives_button_box_set_layout (LIVES_BUTTON_BOX (dialog_action_area), LIVES_BUTTONBOX_END);
 
-  cancelbutton = lives_button_new_from_stock ("gtk-cancel");
+  cancelbutton = lives_button_new_from_stock (LIVES_STOCK_CANCEL);
   lives_dialog_add_action_widget (LIVES_DIALOG (merge_opts->merge_dialog), cancelbutton, GTK_RESPONSE_CANCEL);
   lives_widget_set_can_focus (cancelbutton,TRUE);
 
-  okbutton = lives_button_new_from_stock ("gtk-ok");
+  okbutton = lives_button_new_from_stock (LIVES_STOCK_OK);
   lives_dialog_add_action_widget (LIVES_DIALOG (merge_opts->merge_dialog), okbutton, GTK_RESPONSE_OK);
   lives_widget_set_can_focus_and_default (okbutton);
   lives_widget_grab_default (okbutton);
@@ -262,7 +262,7 @@ void on_trans_method_changed (GtkComboBox *combo, gpointer user_data) {
 
   rfx=&mainw->rendered_fx[mainw->last_transition_idx];
 
-  gtk_container_foreach (LIVES_CONTAINER(merge_opts->param_vbox),bang,NULL);
+  lives_container_foreach (LIVES_CONTAINER(merge_opts->param_vbox),bang,NULL);
   on_paramwindow_cancel_clicked (NULL,rfx);
 
   idx=lives_list_index(merge_opts->trans_list,txt);
@@ -292,7 +292,7 @@ void on_trans_method_changed (GtkComboBox *combo, gpointer user_data) {
 
 
 void
-on_merge_activate                     (GtkMenuItem     *menuitem,
+on_merge_activate                     (LiVESMenuItem     *menuitem,
                                         gpointer         user_data)
 {
   create_merge_dialog();

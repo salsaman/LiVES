@@ -299,7 +299,7 @@ boolean rec(s_cam *cam) {
 
 
 
-void on_open_fw_activate (GtkMenuItem *menuitem, gpointer user_data) {
+void on_open_fw_activate (LiVESMenuItem *menuitem, gpointer user_data) {
   int type=GPOINTER_TO_INT(user_data); // type 0==dv, type 1==hdv
   s_cam *cam;
 

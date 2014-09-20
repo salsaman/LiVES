@@ -44,7 +44,7 @@ static void ce_thumbs_remove_param_boxes(boolean remove_pinned);
 static void ce_thumbs_remove_param_box(int key);
 
 
-#if GTK_CHECK_VERSION(3,2,0)  // required for grid widget
+#if LIVES_HAS_GRID_WIDGET
 static boolean switch_clip_cb (LiVESWidget *eventbox, LiVESXEventButton *event, gpointer user_data) {
   int i=GPOINTER_TO_INT(user_data);
   if (mainw->playing_file==-1) return FALSE;
@@ -112,7 +112,7 @@ static void pin_toggled (LiVESToggleButton *t, livespointer pkey) {
   g_object_set_data (G_OBJECT (pscrolls[key]),"pinned",LIVES_INT_TO_POINTER (!state));
 }
 
-#if GTK_CHECK_VERSION(3,2,0)  // required for grid widget
+#if LIVES_HAS_GRID_WIDGET
 
 static void clip_area_toggled (LiVESToggleButton *t, livespointer parea) {
   int area=LIVES_POINTER_TO_INT(parea);
@@ -127,7 +127,7 @@ static void clip_area_toggled (LiVESToggleButton *t, livespointer parea) {
 #define SPARE_CLIP_BOXES 100
 
 void start_ce_thumb_mode(void) {
-#if GTK_CHECK_VERSION(3,2,0)  // required for grid widget
+#if LIVES_HAS_GRID_WIDGET
 
   LiVESWidget *thumb_image=NULL;
   LiVESWidget *vbox,*vbox2,*vbox3;

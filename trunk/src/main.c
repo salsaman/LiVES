@@ -209,7 +209,7 @@ void get_monitors(void) {
   GSList *dlist,*dislist;
   GdkDisplay *disp;
   GdkScreen *screen;
-#if GTK_CHECK_VERSION(3,0,0)
+#if LIVES_HAS_DEVICE_MANAGER
   GdkDeviceManager *devman;
   GList *devlist;
   register int k;
@@ -249,7 +249,7 @@ void get_monitors(void) {
   while (dlist!=NULL) {
     disp=(GdkDisplay *)dlist->data;
 
-#if GTK_CHECK_VERSION(3,0,0)
+#if LIVES_HAS_DEVICE_MANAGER
     devman=gdk_display_get_device_manager(disp);
     devlist=gdk_device_manager_list_devices(devman,GDK_DEVICE_TYPE_MASTER);
 #endif
@@ -266,7 +266,7 @@ void get_monitors(void) {
 	mainw->mgeom[idx].width=rect.width;
 	mainw->mgeom[idx].height=rect.height;
 	mainw->mgeom[idx].mouse_device=NULL;
-#if GTK_CHECK_VERSION(3,0,0)
+#if LIVES_HAS_DEVICE_MANAGER
 	// get (virtual) mouse device for this screen
 	for (k=0;k<g_list_length(devlist);k++) {
 	  GdkDevice *device=(GdkDevice *)g_list_nth_data(devlist,k);
@@ -283,7 +283,7 @@ void get_monitors(void) {
 	if (idx>=capable->nmonitors) break;
       }
     }
-#if GTK_CHECK_VERSION(3,0,0)
+#if LIVES_HAS_DEVICE_MANAGER
     g_list_free(devlist);
 #endif
     dlist=dlist->next;
@@ -643,7 +643,7 @@ static void replace_with_delegates (void) {
       rfx->menu_text=g_strdup(_("_Resize All Frames"));
       mainw->resize_menuitem = lives_menu_item_new_with_mnemonic(rfx->menu_text);
       lives_widget_show(mainw->resize_menuitem);
-      gtk_menu_shell_insert (GTK_MENU_SHELL (mainw->tools_menu), mainw->resize_menuitem, RFX_TOOL_MENU_POSN);
+      lives_menu_shell_insert (LIVES_MENU_SHELL (mainw->tools_menu), mainw->resize_menuitem, RFX_TOOL_MENU_POSN);
     }
     else {
       get_menu_text(mainw->resize_menuitem,mtext);
@@ -1186,11 +1186,13 @@ static void lives_init(_ign_opts *ign_opts) {
 
     prefs->present=FALSE;
 
-#if GTK_CHECK_VERSION(3,2,0)  // required for grid widget
+#if LIVES_HAS_GRID_WIDGET
     prefs->ce_thumb_mode=get_boolean_pref("ce_thumb_mode");
 #else
     prefs->ce_thumb_mode=FALSE;
 #endif
+
+    prefs->show_button_images=FALSE;
 
     //////////////////////////////////////////////////////////////////
 
@@ -1874,7 +1876,7 @@ void set_palette_colours (void) {
     palette->normal_back.red=LIVES_WIDGET_COLOR_SCALE_255(228.);
     palette->normal_back.green=LIVES_WIDGET_COLOR_SCALE_255(196.);
     palette->normal_back.blue=LIVES_WIDGET_COLOR_SCALE_255(196.);
-#if GTK_CHECK_VERSION(3,0,0)
+#if LIVES_WIDGET_COLOR_HAS_ALPHA
     palette->normal_back.alpha=1.;
 #endif      
     lives_widget_color_copy(&palette->normal_fore,&palette->black);
@@ -1890,7 +1892,7 @@ void set_palette_colours (void) {
       palette->normal_back.red=LIVES_WIDGET_COLOR_SCALE_255(224.);
       palette->normal_back.green=LIVES_WIDGET_COLOR_SCALE_255(224.);
       palette->normal_back.blue=LIVES_WIDGET_COLOR_SCALE_255(128.);
-#if GTK_CHECK_VERSION(3,0,0)
+#if LIVES_WIDGET_COLOR_HAS_ALPHA
       palette->normal_back.alpha=1.;
 #endif      
 	  
@@ -1907,7 +1909,7 @@ void set_palette_colours (void) {
 	palette->normal_back.red=LIVES_WIDGET_COLOR_SCALE_255(30.);
 	palette->normal_back.green=LIVES_WIDGET_COLOR_SCALE_255(144.);
 	palette->normal_back.blue=LIVES_WIDGET_COLOR_SCALE_255(232.);
-#if GTK_CHECK_VERSION(3,0,0)
+#if LIVES_WIDGET_COLOR_HAS_ALPHA
 	palette->normal_back.alpha=1.;
 #endif      
 	  
@@ -1936,14 +1938,14 @@ void set_palette_colours (void) {
 	    palette->menu_and_bars.red=LIVES_WIDGET_COLOR_SCALE_255(225.);
 	    palette->menu_and_bars.green=LIVES_WIDGET_COLOR_SCALE_255(160.);
 	    palette->menu_and_bars.blue=LIVES_WIDGET_COLOR_SCALE_255(80.);
-#if GTK_CHECK_VERSION(3,0,0)
+#if LIVES_WIDGET_COLOR_HAS_ALPHA
 	    palette->menu_and_bars.alpha=1.;
 #endif      
 
 	    palette->info_base.red=LIVES_WIDGET_COLOR_SCALE_255(200.);
 	    palette->info_base.green=LIVES_WIDGET_COLOR_SCALE_255(190.);
 	    palette->info_base.blue=LIVES_WIDGET_COLOR_SCALE_255(52.);
-#if GTK_CHECK_VERSION(3,0,0)
+#if LIVES_WIDGET_COLOR_HAS_ALPHA
 	    palette->info_base.alpha=1.;
 #endif      
 	      
@@ -2607,12 +2609,8 @@ static boolean lives_startup(gpointer data) {
 
   if (!prefs->show_gui&&prefs->startup_interface==STARTUP_CE) mainw->is_ready=TRUE;
 
-#if GTK_CHECK_VERSION(3,0,0)
   mainw->kb_timer_end=FALSE;
-  mainw->kb_timer=g_timeout_add(KEY_RPT_INTERVAL,&ext_triggers_poll,NULL);
-#else
-  mainw->kb_timer=gtk_timeout_add(KEY_RPT_INTERVAL,&ext_triggers_poll,NULL);
-#endif
+  mainw->kb_timer=lives_timer_add(KEY_RPT_INTERVAL,&ext_triggers_poll,NULL);
 
 #ifdef HAVE_YUV4MPEG
   if (strlen(prefs->yuvin)>0) g_idle_add(open_yuv4m_startup,NULL);

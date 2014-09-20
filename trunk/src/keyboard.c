@@ -81,12 +81,14 @@ boolean ext_triggers_poll(gpointer data) {
 
   if (mainw->is_exiting) return FALSE;
 
-#if GTK_CHECK_VERSION(3,0,0)
   if (mainw->kb_timer_end) {
     mainw->kb_timer_end=FALSE;
+#if GTK_CHECK_VERSION(3,0,0)
+    // below 3,0,0 the timer is removed by a function
     return FALSE;
-  }
 #endif
+  }
+
 
   if (mainw->playing_file>-1) plugin_poll_keyboard(); ///< keyboard control during playback
 

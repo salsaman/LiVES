@@ -19,7 +19,7 @@ static LiVESWidget *copy_script_okbutton;
 
 static void table_select_row(rfx_build_window_t *rfxbuilder, int row);
 
-void on_new_rfx_activate (GtkMenuItem *menuitem, gpointer user_data) {
+void on_new_rfx_activate (LiVESMenuItem *menuitem, gpointer user_data) {
   rfx_build_window_t *rfxbuilder;
 
   if (!check_builder_programs()) return;
@@ -27,7 +27,7 @@ void on_new_rfx_activate (GtkMenuItem *menuitem, gpointer user_data) {
   lives_widget_show (rfxbuilder->dialog);
 }
 
-void on_edit_rfx_activate (GtkMenuItem *menuitem, gpointer user_data) {
+void on_edit_rfx_activate (LiVESMenuItem *menuitem, gpointer user_data) {
   rfx_build_window_t *rfxbuilder;
   gchar *script_name;
   short status=GPOINTER_TO_INT (user_data);
@@ -51,7 +51,7 @@ void on_edit_rfx_activate (GtkMenuItem *menuitem, gpointer user_data) {
 }
 
 
-void on_copy_rfx_activate (GtkMenuItem *menuitem, gpointer user_data) {
+void on_copy_rfx_activate (LiVESMenuItem *menuitem, gpointer user_data) {
   short status=GPOINTER_TO_INT (user_data);
 
   if (!check_builder_programs()) return;
@@ -65,7 +65,7 @@ void on_copy_rfx_activate (GtkMenuItem *menuitem, gpointer user_data) {
 }
 
 
-void on_rename_rfx_activate (GtkMenuItem *menuitem, gpointer user_data) {
+void on_rename_rfx_activate (LiVESMenuItem *menuitem, gpointer user_data) {
   short status=GPOINTER_TO_INT (user_data);
 
   if (status!=RFX_STATUS_TEST) return; // we only copy to test effects currently
@@ -327,10 +327,10 @@ rfx_build_window_t *make_rfx_build_window (const gchar *script_name, lives_rfx_s
   dialog_action_area = lives_dialog_get_action_area(LIVES_DIALOG (rfxbuilder->dialog));
   lives_button_box_set_layout (LIVES_BUTTON_BOX (dialog_action_area), LIVES_BUTTONBOX_END);
 
-  cancelbutton = lives_button_new_from_stock ("gtk-cancel");
+  cancelbutton = lives_button_new_from_stock (LIVES_STOCK_CANCEL);
   lives_dialog_add_action_widget (LIVES_DIALOG (rfxbuilder->dialog), cancelbutton, GTK_RESPONSE_CANCEL);
 
-  okbutton = lives_button_new_from_stock ("gtk-ok");
+  okbutton = lives_button_new_from_stock (LIVES_STOCK_OK);
   lives_dialog_add_action_widget (LIVES_DIALOG (rfxbuilder->dialog), okbutton, GTK_RESPONSE_OK);
   lives_widget_set_can_focus_and_default (okbutton);
 
@@ -650,14 +650,14 @@ void on_list_table_clicked (LiVESButton *button, gpointer user_data) {
   dialog_action_area = lives_dialog_get_action_area(LIVES_DIALOG (dialog));
   lives_button_box_set_layout (LIVES_BUTTON_BOX (dialog_action_area), LIVES_BUTTONBOX_END);
 
-  cancelbutton = lives_button_new_from_stock ("gtk-cancel");
+  cancelbutton = lives_button_new_from_stock (LIVES_STOCK_CANCEL);
   lives_dialog_add_action_widget (LIVES_DIALOG (dialog), cancelbutton, GTK_RESPONSE_CANCEL);
 
   lives_widget_add_accelerator (cancelbutton, "activate", accel_group,
                               LIVES_KEY_Escape, (GdkModifierType)0, (GtkAccelFlags)0);
 
 
-  okbutton = lives_button_new_from_stock ("gtk-ok");
+  okbutton = lives_button_new_from_stock (LIVES_STOCK_OK);
   lives_dialog_add_action_widget (LIVES_DIALOG (dialog), okbutton, GTK_RESPONSE_OK);
   lives_widget_set_can_focus_and_default (okbutton);
 
@@ -990,10 +990,10 @@ void on_properties_clicked (LiVESButton *button, gpointer user_data) {
   dialog_action_area = lives_dialog_get_action_area(LIVES_DIALOG (dialog));
   lives_button_box_set_layout (LIVES_BUTTON_BOX (dialog_action_area), LIVES_BUTTONBOX_END);
 
-  cancelbutton = lives_button_new_from_stock ("gtk-cancel");
+  cancelbutton = lives_button_new_from_stock (LIVES_STOCK_CANCEL);
   lives_dialog_add_action_widget (LIVES_DIALOG (dialog), cancelbutton, GTK_RESPONSE_CANCEL);
 
-  okbutton = lives_button_new_from_stock ("gtk-ok");
+  okbutton = lives_button_new_from_stock (LIVES_STOCK_OK);
   lives_dialog_add_action_widget (LIVES_DIALOG (dialog), okbutton, GTK_RESPONSE_OK);
   lives_widget_set_can_focus_and_default (okbutton);
 
@@ -1119,7 +1119,7 @@ void on_table_add_row (LiVESButton *button, gpointer user_data) {
     lives_table_resize (LIVES_TABLE (rfxbuilder->table),++rfxbuilder->table_rows,1);
     lives_table_attach (LIVES_TABLE (rfxbuilder->table), ebox, 0, 1, rfxbuilder->table_rows-1, 
 		      rfxbuilder->table_rows,
-		      (GtkAttachOptions) (GTK_FILL|GTK_EXPAND),
+		      (GtkAttachOptions) (LIVES_FILL|LIVES_EXPAND),
 		      (GtkAttachOptions) (0), 0, 0);
 
     lives_widget_context_update();
@@ -1190,7 +1190,7 @@ void on_table_add_row (LiVESButton *button, gpointer user_data) {
 
     lives_table_attach (LIVES_TABLE (rfxbuilder->table), ebox2, 1, 2, rfxbuilder->table_rows-1, 
 		      rfxbuilder->table_rows,
-		      (GtkAttachOptions) (GTK_FILL|GTK_EXPAND),
+		      (GtkAttachOptions) (LIVES_FILL|LIVES_EXPAND),
 		      (GtkAttachOptions) (0), 0, 0);
 
     entry3 = rfxbuilder->entry3[rfxbuilder->table_rows-1] = lives_entry_new ();
@@ -1231,7 +1231,7 @@ void on_table_add_row (LiVESButton *button, gpointer user_data) {
 
     lives_table_attach (LIVES_TABLE (rfxbuilder->table), ebox3, 2, 3, rfxbuilder->table_rows-1, 
 		      rfxbuilder->table_rows,
-		      (GtkAttachOptions) (GTK_FILL),
+		      (GtkAttachOptions) (LIVES_FILL),
 		      (GtkAttachOptions) (0), 0, 0);
 
     if (button==NULL) goto add_row_done;
@@ -1270,7 +1270,7 @@ void on_table_add_row (LiVESButton *button, gpointer user_data) {
     lives_table_resize (LIVES_TABLE (rfxbuilder->table),++rfxbuilder->table_rows,2);
     lives_table_attach (LIVES_TABLE (rfxbuilder->table), ebox, 0, 1, rfxbuilder->table_rows-1, 
 		      rfxbuilder->table_rows,
-		      (GtkAttachOptions) (GTK_FILL),
+		      (GtkAttachOptions) (LIVES_FILL),
 		      (GtkAttachOptions) (0), 0, 0);
 
     entry2 = rfxbuilder->entry2[rfxbuilder->table_rows-1] = lives_entry_new ();
@@ -1311,7 +1311,7 @@ void on_table_add_row (LiVESButton *button, gpointer user_data) {
 
     lives_table_attach (LIVES_TABLE (rfxbuilder->table), ebox2, 1, 2, rfxbuilder->table_rows-1, 
 		      rfxbuilder->table_rows,
-		      (GtkAttachOptions) (GTK_FILL|GTK_EXPAND),
+		      (GtkAttachOptions) (LIVES_FILL|LIVES_EXPAND),
 		      (GtkAttachOptions) (0), 0, 0);
 
 
@@ -1350,7 +1350,7 @@ void on_table_add_row (LiVESButton *button, gpointer user_data) {
     lives_table_resize (LIVES_TABLE (rfxbuilder->table),++rfxbuilder->table_rows,1);
     lives_table_attach (LIVES_TABLE (rfxbuilder->table), ebox, 0, 1, rfxbuilder->table_rows-1, 
 		      rfxbuilder->table_rows,
-		      (GtkAttachOptions) (GTK_FILL|GTK_EXPAND),
+		      (GtkAttachOptions) (LIVES_FILL|LIVES_EXPAND),
 		      (GtkAttachOptions) (0), 0, 0);
 
     if (button==NULL) goto add_row_done;
@@ -2033,7 +2033,7 @@ LiVESWidget * make_param_dialog (int pnum, rfx_build_window_t *rfxbuilder) {
 
   rfxbuilder->param_def_combo = lives_standard_combo_new (_("_Default: "),TRUE,NULL,LIVES_BOX(rfxbuilder->param_strlist_hbox),NULL);
 
-  gtk_label_set_mnemonic_widget (LIVES_LABEL (rfxbuilder->param_def_label),rfxbuilder->param_def_combo);
+  lives_label_set_mnemonic_widget (LIVES_LABEL (rfxbuilder->param_def_label),rfxbuilder->param_def_combo);
 
   if (pnum>=0) {
     switch (rfxbuilder->copy_params[pnum].type) {
@@ -2897,11 +2897,11 @@ void on_code_clicked (LiVESButton *button, gpointer user_data) {
   dialog_action_area = lives_dialog_get_action_area(LIVES_DIALOG (dialog));
   lives_button_box_set_layout (LIVES_BUTTON_BOX (dialog_action_area), LIVES_BUTTONBOX_END);
 
-  cancelbutton = lives_button_new_from_stock ("gtk-cancel");
+  cancelbutton = lives_button_new_from_stock (LIVES_STOCK_CANCEL);
   lives_dialog_add_action_widget (LIVES_DIALOG (dialog), cancelbutton, GTK_RESPONSE_CANCEL);
   lives_widget_set_can_focus_and_default (cancelbutton);
 
-  okbutton = lives_button_new_from_stock ("gtk-ok");
+  okbutton = lives_button_new_from_stock (LIVES_STOCK_OK);
   lives_dialog_add_action_widget (LIVES_DIALOG (dialog), okbutton, GTK_RESPONSE_OK);
   lives_widget_set_can_focus_and_default (okbutton);
 
@@ -3788,7 +3788,7 @@ GList *get_script_section (const gchar *section, const gchar *file, boolean stri
 
 
 
-void on_rebuild_rfx_activate (GtkMenuItem *menuitem, gpointer user_data) {
+void on_rebuild_rfx_activate (LiVESMenuItem *menuitem, gpointer user_data) {
   gchar *com;
   if (!check_builder_programs()) return;
 
@@ -3855,7 +3855,7 @@ boolean check_builder_programs (void) {
 
 
 
-void on_delete_rfx_activate (GtkMenuItem *menuitem, gpointer user_data) {
+void on_delete_rfx_activate (LiVESMenuItem *menuitem, gpointer user_data) {
   lives_rfx_status_t status=(lives_rfx_status_t)GPOINTER_TO_INT (user_data);
   int ret;
   gchar *rfx_script_file,*rfx_script_dir;
@@ -3923,7 +3923,7 @@ void on_delete_rfx_activate (GtkMenuItem *menuitem, gpointer user_data) {
 }
 
 
-void on_promote_rfx_activate (GtkMenuItem *menuitem, gpointer user_data) {
+void on_promote_rfx_activate (LiVESMenuItem *menuitem, gpointer user_data) {
   gchar *rfx_script_from=NULL;
   gchar *rfx_script_to=NULL;
   gchar *rfx_dir_from=NULL;
@@ -3994,7 +3994,7 @@ void on_promote_rfx_activate (GtkMenuItem *menuitem, gpointer user_data) {
 
 
 
-void on_export_rfx_activate (GtkMenuItem *menuitem, gpointer user_data) {
+void on_export_rfx_activate (LiVESMenuItem *menuitem, gpointer user_data) {
   lives_rfx_status_t status=(lives_rfx_status_t)GPOINTER_TO_INT (user_data);
 
   gchar *script_name=prompt_for_script_name (NULL,status);
@@ -4031,7 +4031,7 @@ void on_export_rfx_activate (GtkMenuItem *menuitem, gpointer user_data) {
 }
 
 
-void on_import_rfx_activate (GtkMenuItem *menuitem, gpointer user_data) {
+void on_import_rfx_activate (LiVESMenuItem *menuitem, gpointer user_data) {
 
   short status=(short)GPOINTER_TO_INT (user_data);
   gchar *rfx_script_to,*rfx_dir_to;
@@ -4250,10 +4250,10 @@ gchar *prompt_for_script_name(const gchar *sname, lives_rfx_status_t status) {
   lives_widget_show (dialog_action_area);
   lives_button_box_set_layout (LIVES_BUTTON_BOX (dialog_action_area), LIVES_BUTTONBOX_END);
 
-  cancelbutton = lives_button_new_from_stock ("gtk-cancel");
+  cancelbutton = lives_button_new_from_stock (LIVES_STOCK_CANCEL);
   lives_dialog_add_action_widget (LIVES_DIALOG (dialog), cancelbutton, GTK_RESPONSE_CANCEL);
 
-  copy_script_okbutton = lives_button_new_from_stock ("gtk-ok");
+  copy_script_okbutton = lives_button_new_from_stock (LIVES_STOCK_OK);
   lives_dialog_add_action_widget (LIVES_DIALOG (dialog), copy_script_okbutton, GTK_RESPONSE_OK);
   lives_widget_set_can_focus_and_default (copy_script_okbutton);
   lives_widget_grab_default (copy_script_okbutton); 
@@ -4419,7 +4419,7 @@ void add_rfx_effects(void) {
 
   gchar txt[64]; // menu text
 
-#if !GTK_CHECK_VERSION(3,10,0)
+#if LIVES_HAS_IMAGE_MENU_ITEM
   LiVESWidget *rfx_image;
 #endif
   LiVESWidget *menuitem;
@@ -4485,7 +4485,7 @@ void add_rfx_effects(void) {
   make_custom_submenus();
 
   mainw->run_test_rfx_menu=lives_menu_new();
-  lives_menu_item_set_submenu (GTK_MENU_ITEM (mainw->run_test_rfx_submenu), mainw->run_test_rfx_menu);
+  lives_menu_item_set_submenu (LIVES_MENU_ITEM (mainw->run_test_rfx_submenu), mainw->run_test_rfx_menu);
   if (palette->style&STYLE_1) {
     lives_widget_set_bg_color(mainw->run_test_rfx_menu, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
     lives_widget_set_fg_color(mainw->run_test_rfx_menu, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars_fore);
@@ -4493,7 +4493,7 @@ void add_rfx_effects(void) {
   lives_widget_show(mainw->run_test_rfx_menu);
 
   mainw->custom_effects_menu=lives_menu_new();
-  lives_menu_item_set_submenu (GTK_MENU_ITEM (mainw->custom_effects_submenu), mainw->custom_effects_menu);
+  lives_menu_item_set_submenu (LIVES_MENU_ITEM (mainw->custom_effects_submenu), mainw->custom_effects_menu);
   if (palette->style&STYLE_1) {
     lives_widget_set_bg_color(mainw->custom_effects_menu, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
     lives_widget_set_fg_color(mainw->custom_effects_menu, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars_fore);
@@ -4501,7 +4501,7 @@ void add_rfx_effects(void) {
 
   mainw->custom_tools_menu=lives_menu_new();
 
-  lives_menu_item_set_submenu (GTK_MENU_ITEM (mainw->custom_tools_submenu), mainw->custom_tools_menu);
+  lives_menu_item_set_submenu (LIVES_MENU_ITEM (mainw->custom_tools_submenu), mainw->custom_tools_menu);
   if (palette->style&STYLE_1) {
     lives_widget_set_bg_color(mainw->custom_tools_menu, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
     lives_widget_set_fg_color(mainw->custom_tools_menu, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars_fore);
@@ -4697,7 +4697,7 @@ void add_rfx_effects(void) {
   menuitem = lives_menu_item_new_with_mnemonic (mainw->rendered_fx[0].menu_text);
   lives_widget_show (menuitem);
   // prepend before mainw->rte_separator
-  gtk_menu_shell_prepend (GTK_MENU_SHELL (mainw->effects_menu), menuitem);
+  lives_menu_shell_prepend (LIVES_MENU_SHELL (mainw->effects_menu), menuitem);
   lives_widget_set_sensitive (menuitem, FALSE);
   lives_widget_set_tooltip_text( menuitem,_("See: VJ - show VJ keys. Set the realtime effects, and then apply them here."));
   
@@ -4776,7 +4776,7 @@ void add_rfx_effects(void) {
       }
 
 
-#if !GTK_CHECK_VERSION(3,10,0)
+#if LIVES_HAS_IMAGE_MENU_ITEM
       rfx_image=NULL;
       if (rfx->props&RFX_PROPS_SLOW) {
 	rfx_image = lives_image_new_from_stock (LIVES_STOCK_NO, LIVES_ICON_SIZE_MENU);
@@ -4819,14 +4819,14 @@ void add_rfx_effects(void) {
   }
 
   mainw->utilities_menu=lives_menu_new();
-  lives_menu_item_set_submenu (GTK_MENU_ITEM (mainw->utilities_submenu), mainw->utilities_menu);
+  lives_menu_item_set_submenu (LIVES_MENU_ITEM (mainw->utilities_submenu), mainw->utilities_menu);
   if (palette->style&STYLE_1) {
     lives_widget_set_bg_color(mainw->utilities_menu, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
     lives_widget_set_fg_color(mainw->utilities_menu, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars_fore);
   }
 
   mainw->gens_menu=lives_menu_new();
-  lives_menu_item_set_submenu (GTK_MENU_ITEM (mainw->gens_submenu), mainw->gens_menu);
+  lives_menu_item_set_submenu (LIVES_MENU_ITEM (mainw->gens_submenu), mainw->gens_menu);
   if (palette->style&STYLE_1) {
     lives_widget_set_bg_color(mainw->gens_menu, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
     lives_widget_set_fg_color(mainw->gens_menu, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars_fore);
@@ -4834,7 +4834,7 @@ void add_rfx_effects(void) {
 
 
   mainw->custom_gens_menu=lives_menu_new();
-  lives_menu_item_set_submenu (GTK_MENU_ITEM (mainw->custom_gens_submenu), mainw->custom_gens_menu);
+  lives_menu_item_set_submenu (LIVES_MENU_ITEM (mainw->custom_gens_submenu), mainw->custom_gens_menu);
   if (palette->style&STYLE_1) {
     lives_widget_set_bg_color(mainw->custom_gens_menu, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
     lives_widget_set_fg_color(mainw->custom_gens_menu, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars_fore);
@@ -4878,7 +4878,7 @@ void add_rfx_effects(void) {
 	switch (rfx->status) {
 	case RFX_STATUS_BUILTIN:
 	  if (rfx->min_frames>=0) {
-	    gtk_menu_shell_insert (GTK_MENU_SHELL (mainw->tools_menu), menuitem,tool_posn++);
+	    lives_menu_shell_insert (LIVES_MENU_SHELL (mainw->tools_menu), menuitem,tool_posn++);
 	  }
 	  else {
 	    lives_container_add (LIVES_CONTAINER (mainw->utilities_menu), menuitem);

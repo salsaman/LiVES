@@ -2909,8 +2909,9 @@ void play_file (void) {
     mainw->osc_block=TRUE;
     mainw->rte_textparm=NULL;
 
-    mainw->playing_file=-1;
   }
+
+  mainw->playing_file=-1;
     
   // play completed
 

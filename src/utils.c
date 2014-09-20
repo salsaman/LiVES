@@ -3856,13 +3856,13 @@ void set_menu_text(LiVESWidget *menuitem, const char *text, boolean use_mnemonic
 
 void get_menu_text(LiVESWidget *menuitem, char *text) {
   LiVESWidget *label=lives_bin_get_child(GTK_BIN(menuitem));
-  g_snprintf(text,255,"%s",gtk_label_get_text(LIVES_LABEL(label)));
+  g_snprintf(text,255,"%s",lives_label_get_text(LIVES_LABEL(label)));
 }
 
 void
 get_menu_text_long(LiVESWidget *menuitem, char *text) {
   LiVESWidget *label=lives_bin_get_child(GTK_BIN(menuitem));
-  g_snprintf(text,32768,"%s",gtk_label_get_text(LIVES_LABEL(label)));
+  g_snprintf(text,32768,"%s",lives_label_get_text(LIVES_LABEL(label)));
 }
 
 

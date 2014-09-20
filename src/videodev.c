@@ -457,7 +457,7 @@ void lives_vdev_free(lives_vdev_t *ldev) {
 
 
 
-void on_open_vdev_activate (GtkMenuItem *menuitem, gpointer user_data) {
+void on_open_vdev_activate (LiVESMenuItem *menuitem, gpointer user_data) {
   unicap_device_t devices[MAX_DEVICES];
 
   GList *devlist=NULL;

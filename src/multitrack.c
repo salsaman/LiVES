@@ -69,7 +69,7 @@ static boolean expose_timeline_reg_event (LiVESWidget *, GdkEventExpose *, gpoin
 static boolean mt_expose_audtrack_event (LiVESWidget *ebox, GdkEventExpose *, gpointer mt);
 #endif
 
-static void on_rename_track_activate (GtkMenuItem *, gpointer mt);
+static void on_rename_track_activate (LiVESMenuItem *, gpointer mt);
 
 static boolean mt_add_block_effect_idle (gpointer mt);
 static boolean mt_add_region_effect_idle (gpointer mt);
@@ -118,53 +118,53 @@ static int ce_sepwin_type;
 ////////////////////////////
 
 // menuitem callbacks - TODO : make static
-void on_add_video_track_activate (GtkMenuItem *, gpointer mt);
-void multitrack_adj_start_end (GtkMenuItem *, gpointer mt);
-void multitrack_audio_insert (GtkMenuItem *, gpointer mt);
-void multitrack_view_events (GtkMenuItem *, gpointer mt);
-void multitrack_view_sel_events (GtkMenuItem *, gpointer mt);
-void on_render_activate (GtkMenuItem *, gpointer mt);
-void on_prerender_aud_activate (GtkMenuItem *, gpointer mt);
-void on_jumpnext_activate (GtkMenuItem *, gpointer mt);
-void on_jumpback_activate (GtkMenuItem *, gpointer mt);
-void on_delblock_activate (GtkMenuItem *, gpointer mt);
-void on_seltrack_activate (GtkMenuItem *, gpointer mt);
-void multitrack_view_details (GtkMenuItem *, gpointer mt);
-void mt_add_region_effect (GtkMenuItem *, gpointer mt);
-void mt_add_block_effect (GtkMenuItem *, gpointer mt);
-void on_save_event_list_activate (GtkMenuItem *, gpointer mt);
-void on_load_event_list_activate (GtkMenuItem *, gpointer mt);
-void on_clear_event_list_activate (GtkMenuItem *, gpointer mt);
-void show_frame_events_activate (GtkMenuItem *, gpointer);
-void mt_save_vals_toggled (GtkMenuItem *, gpointer mt);
-void mt_load_vals_toggled (GtkMenuItem *, gpointer mt);
-void mt_load_vals_toggled (GtkMenuItem *, gpointer mt);
-void mt_render_vid_toggled (GtkMenuItem *, gpointer mt);
-void mt_render_aud_toggled (GtkMenuItem *, gpointer mt);
-void mt_norm_aud_toggled (GtkMenuItem *, gpointer mt);
-void mt_fplay_toggled (GtkMenuItem *, gpointer mt);
-void mt_change_vals_activate (GtkMenuItem *, gpointer mt);
+void on_add_video_track_activate (LiVESMenuItem *, gpointer mt);
+void multitrack_adj_start_end (LiVESMenuItem *, gpointer mt);
+void multitrack_audio_insert (LiVESMenuItem *, gpointer mt);
+void multitrack_view_events (LiVESMenuItem *, gpointer mt);
+void multitrack_view_sel_events (LiVESMenuItem *, gpointer mt);
+void on_render_activate (LiVESMenuItem *, gpointer mt);
+void on_prerender_aud_activate (LiVESMenuItem *, gpointer mt);
+void on_jumpnext_activate (LiVESMenuItem *, gpointer mt);
+void on_jumpback_activate (LiVESMenuItem *, gpointer mt);
+void on_delblock_activate (LiVESMenuItem *, gpointer mt);
+void on_seltrack_activate (LiVESMenuItem *, gpointer mt);
+void multitrack_view_details (LiVESMenuItem *, gpointer mt);
+void mt_add_region_effect (LiVESMenuItem *, gpointer mt);
+void mt_add_block_effect (LiVESMenuItem *, gpointer mt);
+void on_save_event_list_activate (LiVESMenuItem *, gpointer mt);
+void on_load_event_list_activate (LiVESMenuItem *, gpointer mt);
+void on_clear_event_list_activate (LiVESMenuItem *, gpointer mt);
+void show_frame_events_activate (LiVESMenuItem *, gpointer);
+void mt_save_vals_toggled (LiVESMenuItem *, gpointer mt);
+void mt_load_vals_toggled (LiVESMenuItem *, gpointer mt);
+void mt_load_vals_toggled (LiVESMenuItem *, gpointer mt);
+void mt_render_vid_toggled (LiVESMenuItem *, gpointer mt);
+void mt_render_aud_toggled (LiVESMenuItem *, gpointer mt);
+void mt_norm_aud_toggled (LiVESMenuItem *, gpointer mt);
+void mt_fplay_toggled (LiVESMenuItem *, gpointer mt);
+void mt_change_vals_activate (LiVESMenuItem *, gpointer mt);
 void on_set_pvals_clicked  (LiVESWidget *button, gpointer mt);
-void on_move_fx_changed (GtkMenuItem *, gpointer mt);
-void select_all_time (GtkMenuItem *, gpointer mt);
-void select_from_zero_time (GtkMenuItem *, gpointer mt);
-void select_to_end_time (GtkMenuItem *, gpointer mt);
-void select_all_vid (GtkMenuItem *, gpointer mt);
-void select_no_vid (GtkMenuItem *, gpointer mt);
-void on_split_sel_activate (GtkMenuItem *, gpointer mt);
-void on_split_curr_activate (GtkMenuItem *, gpointer mt);
-void multitrack_undo (GtkMenuItem *, gpointer mt);
-void multitrack_redo (GtkMenuItem *, gpointer mt);
-void on_mt_showkeys_activate (GtkMenuItem *, gpointer);
-void on_mt_list_fx_activate (GtkMenuItem *, gpointer mt);
-void on_mt_delfx_activate (GtkMenuItem *, gpointer mt);
-void on_mt_fx_edit_activate (GtkMenuItem *, gpointer mt);
-void mt_view_audio_toggled (GtkMenuItem *, gpointer mt);
-void mt_view_ctx_toggled (GtkMenuItem *, gpointer mt);
-void mt_ign_ins_sel_toggled (GtkMenuItem *, gpointer mt);
-void mt_change_max_disp_tracks (GtkMenuItem *, gpointer mt);
+void on_move_fx_changed (LiVESMenuItem *, gpointer mt);
+void select_all_time (LiVESMenuItem *, gpointer mt);
+void select_from_zero_time (LiVESMenuItem *, gpointer mt);
+void select_to_end_time (LiVESMenuItem *, gpointer mt);
+void select_all_vid (LiVESMenuItem *, gpointer mt);
+void select_no_vid (LiVESMenuItem *, gpointer mt);
+void on_split_sel_activate (LiVESMenuItem *, gpointer mt);
+void on_split_curr_activate (LiVESMenuItem *, gpointer mt);
+void multitrack_undo (LiVESMenuItem *, gpointer mt);
+void multitrack_redo (LiVESMenuItem *, gpointer mt);
+void on_mt_showkeys_activate (LiVESMenuItem *, gpointer);
+void on_mt_list_fx_activate (LiVESMenuItem *, gpointer mt);
+void on_mt_delfx_activate (LiVESMenuItem *, gpointer mt);
+void on_mt_fx_edit_activate (LiVESMenuItem *, gpointer mt);
+void mt_view_audio_toggled (LiVESMenuItem *, gpointer mt);
+void mt_view_ctx_toggled (LiVESMenuItem *, gpointer mt);
+void mt_ign_ins_sel_toggled (LiVESMenuItem *, gpointer mt);
+void mt_change_max_disp_tracks (LiVESMenuItem *, gpointer mt);
 
-static void mt_ac_audio_toggled (GtkMenuItem *, gpointer mt);
+static void mt_ac_audio_toggled (LiVESMenuItem *, gpointer mt);
 
 ///////////////////////////////////////////////////////////////////
 
@@ -2088,8 +2088,8 @@ void scroll_tracks (lives_mt *mt, int top_track, boolean set_value) {
       lives_box_pack_start (LIVES_BOX (hbox), label, FALSE, FALSE, 0);
       lives_container_add (LIVES_CONTAINER (ahbox), arrow);
       
-      lives_table_attach (LIVES_TABLE (mt->timeline_table), labelbox, 1, 6, 0, 1, GTK_FILL, (GtkAttachOptions)0, 0, 0);
-      lives_table_attach (LIVES_TABLE (mt->timeline_table), ahbox, 6, 7, 0, 1, GTK_FILL, (GtkAttachOptions)0, 0, 0);
+      lives_table_attach (LIVES_TABLE (mt->timeline_table), labelbox, 1, 6, 0, 1, LIVES_FILL, (GtkAttachOptions)0, 0, 0);
+      lives_table_attach (LIVES_TABLE (mt->timeline_table), ahbox, 6, 7, 0, 1, LIVES_FILL, (GtkAttachOptions)0, 0, 0);
       
       g_object_set_data (G_OBJECT(mt->audio_draws->data),"labelbox",labelbox);
       g_object_set_data (G_OBJECT(mt->audio_draws->data),"ahbox",ahbox);
@@ -2105,8 +2105,8 @@ void scroll_tracks (lives_mt *mt, int top_track, boolean set_value) {
 			(gpointer)mt);
       
       lives_table_attach (LIVES_TABLE (mt->timeline_table), (LiVESWidget *)mt->audio_draws->data, 7, 40, 0, 1,
-			(GtkAttachOptions) (GTK_EXPAND | GTK_FILL),
-			(GtkAttachOptions) (GTK_FILL), 0, 0);
+			(GtkAttachOptions) (LIVES_EXPAND | LIVES_FILL),
+			(GtkAttachOptions) (LIVES_FILL), 0, 0);
 
       g_signal_connect (GTK_OBJECT (mt->audio_draws->data), "button_press_event",
 			G_CALLBACK (on_track_click),
@@ -2125,8 +2125,8 @@ void scroll_tracks (lives_mt *mt, int top_track, boolean set_value) {
 	xeventbox=(LiVESWidget *)g_object_get_data(G_OBJECT(mt->audio_draws->data),"achan0");
 	
 	lives_table_attach (LIVES_TABLE (mt->timeline_table), xeventbox, 7, 40, 1, 2,
-			  (GtkAttachOptions) (GTK_EXPAND | GTK_FILL),
-			  (GtkAttachOptions) (GTK_FILL), 0, 0);
+			  (GtkAttachOptions) (LIVES_EXPAND | LIVES_FILL),
+			  (GtkAttachOptions) (LIVES_FILL), 0, 0);
 	
 	lives_widget_set_bg_color(xeventbox, LIVES_WIDGET_STATE_NORMAL, &palette->white);
 	lives_widget_set_app_paintable(xeventbox,TRUE);
@@ -2138,8 +2138,8 @@ void scroll_tracks (lives_mt *mt, int top_track, boolean set_value) {
 	  xeventbox=(LiVESWidget *)g_object_get_data(G_OBJECT(mt->audio_draws->data),"achan1");
 	  
 	  lives_table_attach (LIVES_TABLE (mt->timeline_table), xeventbox, 7, 40, 2, 3,
-			    (GtkAttachOptions) (GTK_EXPAND | GTK_FILL),
-			    (GtkAttachOptions) (GTK_FILL), 0, 0);
+			    (GtkAttachOptions) (LIVES_EXPAND | LIVES_FILL),
+			    (GtkAttachOptions) (LIVES_FILL), 0, 0);
 	  
 	  lives_widget_set_bg_color(xeventbox, LIVES_WIDGET_STATE_NORMAL, &palette->white);
 	  lives_widget_set_app_paintable(xeventbox,TRUE);
@@ -2235,16 +2235,16 @@ void scroll_tracks (lives_mt *mt, int top_track, boolean set_value) {
       lives_box_pack_start (LIVES_BOX (hbox), label, FALSE, FALSE, 0);
       lives_container_add (LIVES_CONTAINER (ahbox), arrow);
 
-      lives_table_attach (LIVES_TABLE (mt->timeline_table), labelbox, 0, 6, rows, rows+1, GTK_FILL, (GtkAttachOptions)0, 0, 0);
-      lives_table_attach (LIVES_TABLE (mt->timeline_table), ahbox, 6, 7, rows, rows+1, GTK_FILL, (GtkAttachOptions)0, 0, 0);
+      lives_table_attach (LIVES_TABLE (mt->timeline_table), labelbox, 0, 6, rows, rows+1, LIVES_FILL, (GtkAttachOptions)0, 0, 0);
+      lives_table_attach (LIVES_TABLE (mt->timeline_table), ahbox, 6, 7, rows, rows+1, LIVES_FILL, (GtkAttachOptions)0, 0, 0);
       
       g_object_set_data (G_OBJECT(eventbox),"labelbox",labelbox);
       g_object_set_data (G_OBJECT(eventbox),"ahbox",ahbox);
       g_object_set_data (G_OBJECT(ahbox),"eventbox",eventbox);
 
       lives_table_attach (LIVES_TABLE (mt->timeline_table), eventbox, 7, 40, rows, rows+1,
-			(GtkAttachOptions) (GTK_EXPAND | GTK_FILL),
-			(GtkAttachOptions) (GTK_FILL), 0, 0);
+			(GtkAttachOptions) (LIVES_EXPAND | LIVES_FILL),
+			(GtkAttachOptions) (LIVES_FILL), 0, 0);
 
       if (!prefs->lamp_buttons) {
 	g_signal_connect_after (GTK_OBJECT (checkbutton), "toggled",
@@ -2334,8 +2334,8 @@ void scroll_tracks (lives_mt *mt, int top_track, boolean set_value) {
 	  lives_box_pack_start (LIVES_BOX (hbox), label, FALSE, FALSE, 0);
 	  lives_container_add (LIVES_CONTAINER (ahbox), arrow);
 	  
-	  lives_table_attach (LIVES_TABLE (mt->timeline_table), labelbox, 1, 6, rows, rows+1, GTK_FILL, (GtkAttachOptions)0, 0, 0);
-	  lives_table_attach (LIVES_TABLE (mt->timeline_table), ahbox, 6, 7, rows, rows+1, GTK_FILL, (GtkAttachOptions)0, 0, 0);
+	  lives_table_attach (LIVES_TABLE (mt->timeline_table), labelbox, 1, 6, rows, rows+1, LIVES_FILL, (GtkAttachOptions)0, 0, 0);
+	  lives_table_attach (LIVES_TABLE (mt->timeline_table), ahbox, 6, 7, rows, rows+1, LIVES_FILL, (GtkAttachOptions)0, 0, 0);
 	  
 	  g_object_set_data (G_OBJECT(aeventbox),"labelbox",labelbox);
 	  g_object_set_data (G_OBJECT(aeventbox),"ahbox",ahbox);
@@ -2351,8 +2351,8 @@ void scroll_tracks (lives_mt *mt, int top_track, boolean set_value) {
 			    (gpointer)mt);
 	  
 	  lives_table_attach (LIVES_TABLE (mt->timeline_table), aeventbox, 7, 40, rows, rows+1,
-			    (GtkAttachOptions) (GTK_EXPAND | GTK_FILL),
-			    (GtkAttachOptions) (GTK_FILL), 0, 0);
+			    (GtkAttachOptions) (LIVES_EXPAND | LIVES_FILL),
+			    (GtkAttachOptions) (LIVES_FILL), 0, 0);
 	  
 	  g_signal_connect (GTK_OBJECT (aeventbox), "button_press_event",
 			    G_CALLBACK (on_track_click),
@@ -2383,8 +2383,8 @@ void scroll_tracks (lives_mt *mt, int top_track, boolean set_value) {
 
 
 	      lives_table_attach (LIVES_TABLE (mt->timeline_table), xeventbox, 7, 40, rows, rows+1,
-				(GtkAttachOptions) (GTK_EXPAND | GTK_FILL),
-				(GtkAttachOptions) (GTK_FILL), 0, 0);
+				(GtkAttachOptions) (LIVES_EXPAND | LIVES_FILL),
+				(GtkAttachOptions) (LIVES_FILL), 0, 0);
 	      
 	      lives_widget_set_bg_color(xeventbox, LIVES_WIDGET_STATE_NORMAL, &palette->white);
 	      lives_widget_set_app_paintable(xeventbox,TRUE);
@@ -2406,8 +2406,8 @@ void scroll_tracks (lives_mt *mt, int top_track, boolean set_value) {
 					       (double)((int)lives_adjustment_get_page_size(LIVES_ADJUSTMENT(mt->vadjustment))-1));
 		
 		lives_table_attach (LIVES_TABLE (mt->timeline_table), xeventbox, 7, 40, rows, rows+1,
-				  (GtkAttachOptions) (GTK_EXPAND | GTK_FILL),
-				  (GtkAttachOptions) (GTK_FILL), 0, 0);
+				  (GtkAttachOptions) (LIVES_EXPAND | LIVES_FILL),
+				  (GtkAttachOptions) (LIVES_FILL), 0, 0);
 		
 		lives_widget_set_bg_color(xeventbox, LIVES_WIDGET_STATE_NORMAL, &palette->white);
 		lives_widget_set_app_paintable(xeventbox,TRUE);
@@ -2442,7 +2442,7 @@ void scroll_tracks (lives_mt *mt, int top_track, boolean set_value) {
     lives_adjustment_set_upper(LIVES_ADJUSTMENT(mt->vadjustment),lives_adjustment_get_value(LIVES_ADJUSTMENT(mt->vadjustment))+
 			       lives_adjustment_get_page_size(LIVES_ADJUSTMENT(mt->vadjustment)));
 
-  table_children=gtk_container_get_children(LIVES_CONTAINER(mt->timeline_table));
+  table_children=lives_container_get_children(LIVES_CONTAINER(mt->timeline_table));
 
   while (table_children!=NULL) {
     //GtkRequisition req;
@@ -2498,13 +2498,13 @@ boolean track_arrow_pressed (LiVESWidget *ebox, GdkEventButton *event, gpointer 
 
 
 
-void multitrack_view_clips (GtkMenuItem *menuitem, gpointer user_data) {
+void multitrack_view_clips (LiVESMenuItem *menuitem, gpointer user_data) {
   lives_mt *mt=(lives_mt *)user_data;
   polymorph (mt,POLY_CLIPS);
 }
 
 
-void multitrack_view_in_out (GtkMenuItem *menuitem, gpointer user_data) {
+void multitrack_view_in_out (LiVESMenuItem *menuitem, gpointer user_data) {
   lives_mt *mt=(lives_mt *)user_data;
   if (mt->block_selected==NULL) return;
   if (!nb_ignore) polymorph (mt,POLY_IN_OUT);
@@ -2673,7 +2673,7 @@ static void rerenumber_clips(const char *lfile) {
 
 
 void mt_clip_select (lives_mt *mt, boolean scroll) {
-  GList *list=gtk_container_get_children(LIVES_CONTAINER (mt->clip_inner_box));
+  GList *list=lives_container_get_children(LIVES_CONTAINER (mt->clip_inner_box));
   LiVESWidget *clipbox=NULL;
   int len;
   int i;
@@ -3594,7 +3594,7 @@ on_drag_filter_end           (LiVESWidget       *widget,
     /*    // filter - either we drop on a region or on a block
     if (g_list_length(mt->selected_tracks)==1&&mt->region_start!=mt->region_end) {
       // apply to region
-      mt_add_region_effect(GTK_MENU_ITEM(menuitem),mt);
+      mt_add_region_effect(LIVES_MENU_ITEM(menuitem),mt);
     }
     else {*/
     // always apply to block
@@ -3760,7 +3760,7 @@ static void populate_filter_box(LiVESWidget *box, int ninchans, lives_mt *mt) {
 
 
 
-static void mt_selblock(GtkMenuItem *menuitem, gpointer user_data) {
+static void mt_selblock(LiVESMenuItem *menuitem, gpointer user_data) {
   // ctrl-Enter - select block at current time/track
   lives_mt *mt=(lives_mt *)user_data;
   LiVESWidget *eventbox;
@@ -3780,19 +3780,19 @@ static void mt_selblock(GtkMenuItem *menuitem, gpointer user_data) {
 }
 
 
-void mt_center_on_cursor (GtkMenuItem *menuitem, gpointer user_data) {
+void mt_center_on_cursor (LiVESMenuItem *menuitem, gpointer user_data) {
   lives_mt *mt=(lives_mt *)user_data;
   mt_zoom(mt,1.);
   paint_lines(mt,lives_ruler_get_value(LIVES_RULER (mt->timeline)),TRUE);
 }
 
-void mt_zoom_in (GtkMenuItem *menuitem, gpointer user_data) {
+void mt_zoom_in (LiVESMenuItem *menuitem, gpointer user_data) {
   lives_mt *mt=(lives_mt *)user_data;
   mt_zoom(mt,0.5);
   paint_lines(mt,lives_ruler_get_value(LIVES_RULER (mt->timeline)),TRUE);
 }
 
-void mt_zoom_out (GtkMenuItem *menuitem, gpointer user_data) {
+void mt_zoom_out (LiVESMenuItem *menuitem, gpointer user_data) {
   lives_mt *mt=(lives_mt *)user_data;
   mt_zoom(mt,2.);
   paint_lines(mt,lives_ruler_get_value(LIVES_RULER (mt->timeline)),TRUE);
@@ -4348,10 +4348,10 @@ void mouse_mode_context(lives_mt *mt) {
 
 
 
-static void on_insert_mode_changed (GtkMenuItem *menuitem, gpointer user_data) {
+static void on_insert_mode_changed (LiVESMenuItem *menuitem, gpointer user_data) {
   lives_mt *mt=(lives_mt *)user_data;
 
-  if (menuitem==(GtkMenuItem *)mt->ins_normal) {
+  if (menuitem==(LiVESMenuItem *)mt->ins_normal) {
     set_menu_text(mt->ins_menuitem,_("_Insert mode: Normal"),TRUE);
     mt->opts.insert_mode=INSERT_MODE_NORMAL;
   }
@@ -4364,14 +4364,14 @@ static void on_insert_mode_changed (GtkMenuItem *menuitem, gpointer user_data) {
 }
 
 
-static void on_mouse_mode_changed (GtkMenuItem *menuitem, gpointer user_data) {
+static void on_mouse_mode_changed (LiVESMenuItem *menuitem, gpointer user_data) {
   lives_mt *mt=(lives_mt *)user_data;
 
-  if (menuitem==(GtkMenuItem *)mt->mm_move) {
+  if (menuitem==(LiVESMenuItem *)mt->mm_move) {
     set_menu_text(mt->mm_menuitem,_("_Mouse mode: Move"),TRUE);
     mt->opts.mouse_mode=MOUSE_MODE_MOVE;
   }
-  else if (menuitem==(GtkMenuItem *)mt->mm_select) {
+  else if (menuitem==(LiVESMenuItem *)mt->mm_select) {
     set_menu_text(mt->mm_menuitem,_("_Mouse mode: Select"),TRUE);
     mt->opts.mouse_mode=MOUSE_MODE_SELECT;
   }
@@ -4391,19 +4391,19 @@ static void on_mouse_mode_changed (GtkMenuItem *menuitem, gpointer user_data) {
 
 
 
-static void on_grav_mode_changed (GtkMenuItem *menuitem, gpointer user_data) {
+static void on_grav_mode_changed (LiVESMenuItem *menuitem, gpointer user_data) {
   lives_mt *mt=(lives_mt *)user_data;
 
-  if (menuitem==(GtkMenuItem *)mt->grav_normal) {
+  if (menuitem==(LiVESMenuItem *)mt->grav_normal) {
     lives_label_set_text(LIVES_LABEL(mt->grav_label),_("Gravity: Normal"));
     mt->opts.grav_mode=GRAV_MODE_NORMAL;
   }
-  else if (menuitem==(GtkMenuItem *)mt->grav_left) {
+  else if (menuitem==(LiVESMenuItem *)mt->grav_left) {
     lives_label_set_text(LIVES_LABEL(mt->grav_label),_("Gravity: Left"));
     mt->opts.grav_mode=GRAV_MODE_LEFT;
   }
 
-  if (menuitem==(GtkMenuItem *)mt->grav_right) {
+  if (menuitem==(LiVESMenuItem *)mt->grav_right) {
     lives_label_set_text(LIVES_LABEL(mt->grav_menuitem),_("Gravity: Right"));
     mt->opts.grav_mode=GRAV_MODE_RIGHT;
     set_menu_text(mt->remove_first_gaps,_("Close _last gap(s) in selected tracks/time"),TRUE);
@@ -4660,7 +4660,7 @@ void mt_backup(lives_mt *mt, int undo_type, weed_timecode_t tc) {
 
 }
 
-void mt_aparam_view_toggled (GtkMenuItem *menuitem, gpointer user_data) {
+void mt_aparam_view_toggled (LiVESMenuItem *menuitem, gpointer user_data) {
   int which=GPOINTER_TO_INT(g_object_get_data(G_OBJECT(menuitem),"pnum"));
   lives_mt *mt=(lives_mt *)user_data;
   int i;
@@ -4686,7 +4686,7 @@ static void add_aparam_menuitems(lives_mt *mt) {
   lives_rfx_t *rfx;
   int i;
   LiVESWidget *menuitem;
-  gtk_container_foreach(LIVES_CONTAINER(mt->aparam_submenu),destroy_widget,NULL);
+  lives_container_foreach(LIVES_CONTAINER(mt->aparam_submenu),destroy_widget,NULL);
 
   if (mt->avol_fx==-1||mt->audio_draws==NULL) {
     lives_widget_hide(mt->insa_checkbutton);
@@ -5360,7 +5360,7 @@ void delete_audio_tracks(lives_mt *mt, GList *list, boolean full) {
 
 
 
-void mt_quit_activate (GtkMenuItem *menuitem, gpointer user_data) {
+void mt_quit_activate (LiVESMenuItem *menuitem, gpointer user_data) {
   lives_mt *mt=(lives_mt *)user_data;
 
   if (!check_for_layout_del(mt,FALSE)) return;
@@ -5451,12 +5451,12 @@ static void cmi_set_inactive(LiVESWidget *widget, gpointer data) {
   g_object_thaw_notify(G_OBJECT(widget));
 }
 
-static void mt_set_atrans_effect (GtkMenuItem *menuitem, gpointer user_data) {
+static void mt_set_atrans_effect (LiVESMenuItem *menuitem, gpointer user_data) {
   lives_mt *mt=(lives_mt *)user_data;
   gchar *atrans_hash;
 
   if (!lives_check_menu_item_get_active(LIVES_CHECK_MENU_ITEM(menuitem))) return;
-  gtk_container_foreach(LIVES_CONTAINER(mt->submenu_atransfx),cmi_set_inactive,menuitem);
+  lives_container_foreach(LIVES_CONTAINER(mt->submenu_atransfx),cmi_set_inactive,menuitem);
   prefs->atrans_fx=GPOINTER_TO_INT(g_object_get_data(G_OBJECT(menuitem),"idx"));
 
   // set pref
@@ -5644,7 +5644,7 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
   LiVESWidget *menuitem_menu;
   LiVESWidget *menuitem_menu2;
   LiVESWidget *selcopy_menu;
-#if !GTK_CHECK_VERSION(3,10,0)
+#if LIVES_HAS_IMAGE_MENU_ITEM
   LiVESWidget *image;
 #endif
   LiVESWidget *separator;
@@ -5952,7 +5952,7 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
   menu_hbox = lives_hbox_new (FALSE, 0);
   lives_box_pack_start (LIVES_BOX (mt->top_vbox), menu_hbox, FALSE, FALSE, 0);
 
-  menubar = gtk_menu_bar_new ();
+  menubar = lives_menu_bar_new ();
   lives_box_pack_start (LIVES_BOX (menu_hbox), menubar, TRUE, TRUE, 0);
 
   if (palette->style&STYLE_1) {
@@ -5966,7 +5966,7 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
   lives_container_add (LIVES_CONTAINER (menubar), menuitem);
   
   menuitem_menu = lives_menu_new ();
-  lives_menu_item_set_submenu (GTK_MENU_ITEM (menuitem), menuitem_menu);
+  lives_menu_item_set_submenu (LIVES_MENU_ITEM (menuitem), menuitem_menu);
 
   if (palette->style&STYLE_1) {
     lives_widget_set_bg_color(menuitem_menu, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
@@ -5980,7 +5980,7 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
   lives_container_add (LIVES_CONTAINER (menuitem_menu), mt->open_menu);
 
   menuitem_menu2 = lives_menu_new ();
-  lives_menu_item_set_submenu (GTK_MENU_ITEM (mt->open_menu), menuitem_menu2);
+  lives_menu_item_set_submenu (LIVES_MENU_ITEM (mt->open_menu), menuitem_menu2);
 
   if (palette->style&STYLE_1) {
     lives_widget_set_bg_color(menuitem_menu2, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
@@ -6078,7 +6078,7 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
   lives_container_add (LIVES_CONTAINER (menuitem_menu2), device_menu);
   device_submenu=lives_menu_new();
 
-  lives_menu_item_set_submenu (GTK_MENU_ITEM (device_menu), device_submenu);
+  lives_menu_item_set_submenu (LIVES_MENU_ITEM (device_menu), device_submenu);
   if (palette->style&STYLE_1) {
     lives_widget_set_bg_color(device_submenu, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
     lives_widget_set_fg_color(device_submenu, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars_fore);
@@ -6275,7 +6275,7 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
                               LIVES_KEY_u, LIVES_CONTROL_MASK,
                               LIVES_ACCEL_VISIBLE);
   
-#if !GTK_CHECK_VERSION(3,10,0)
+#if LIVES_HAS_IMAGE_MENU_ITEM
   image = lives_image_new_from_stock (LIVES_STOCK_UNDO, LIVES_ICON_SIZE_MENU);
   lives_widget_show (image);
   lives_image_menu_item_set_image (LIVES_IMAGE_MENU_ITEM (mt->undo), image);
@@ -6299,7 +6299,7 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
                               LIVES_KEY_z, LIVES_CONTROL_MASK,
                               LIVES_ACCEL_VISIBLE);
 
-#if !GTK_CHECK_VERSION(3,10,0)
+#if LIVES_HAS_IMAGE_MENU_ITEM
   image = lives_image_new_from_stock (LIVES_STOCK_REDO, LIVES_ICON_SIZE_MENU);
   lives_widget_show (image);
   lives_image_menu_item_set_image (LIVES_IMAGE_MENU_ITEM (mt->redo), image);
@@ -6427,7 +6427,7 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
 
   lives_container_add (LIVES_CONTAINER (menuitem_menu), mt->playall);
 
-#if !GTK_CHECK_VERSION(3,10,0)
+#if LIVES_HAS_IMAGE_MENU_ITEM
   image = lives_image_new_from_stock (LIVES_STOCK_REFRESH, LIVES_ICON_SIZE_MENU);
   lives_image_menu_item_set_image (LIVES_IMAGE_MENU_ITEM (mt->playall), image);
 #endif
@@ -6446,7 +6446,7 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
                               LIVES_KEY_q, (GdkModifierType)0,
                               LIVES_ACCEL_VISIBLE);
 
-#if !GTK_CHECK_VERSION(3,10,0)
+#if LIVES_HAS_IMAGE_MENU_ITEM
   image = lives_image_new_from_stock (LIVES_STOCK_MEDIA_STOP, LIVES_ICON_SIZE_MENU);
   lives_image_menu_item_set_image (LIVES_IMAGE_MENU_ITEM (mt->stop), image);
 #endif
@@ -6454,7 +6454,7 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
   mt->rewind = lives_image_menu_item_new_with_mnemonic (_("Re_wind"));
   lives_container_add (LIVES_CONTAINER (menuitem_menu), mt->rewind);
 
-#if !GTK_CHECK_VERSION(3,10,0)
+#if LIVES_HAS_IMAGE_MENU_ITEM
   image = lives_image_new_from_stock (LIVES_STOCK_MEDIA_REWIND, LIVES_ICON_SIZE_MENU);
   lives_image_menu_item_set_image (LIVES_IMAGE_MENU_ITEM (mt->rewind), image);
 #endif
@@ -6853,9 +6853,9 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
 
 
 	    if (!strcmp(fname,prefs->def_autotrans)) {
-	      gtk_menu_shell_prepend(GTK_MENU_SHELL(mt->submenu_atransfx),menuitem2);
+	      lives_menu_shell_prepend(LIVES_MENU_SHELL(mt->submenu_atransfx),menuitem2);
 	    }
-	    else gtk_menu_shell_append(GTK_MENU_SHELL(mt->submenu_atransfx),menuitem2);
+	    else lives_menu_shell_append(LIVES_MENU_SHELL(mt->submenu_atransfx),menuitem2);
 	    /// apply block effect menu
 	    lives_container_add (LIVES_CONTAINER (submenu_menu10), menuitem);
 	  }
@@ -6874,7 +6874,7 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
   menuitem2 = lives_check_menu_item_new_with_label (mainw->string_constants[LIVES_STRING_CONSTANT_NONE]);
   g_object_set_data(G_OBJECT(menuitem2),"idx",GINT_TO_POINTER(-1));
   lives_check_menu_item_set_active(LIVES_CHECK_MENU_ITEM(menuitem2),prefs->atrans_fx==-1);
-  gtk_menu_shell_prepend(GTK_MENU_SHELL(mt->submenu_atransfx),menuitem2);
+  lives_menu_shell_prepend(LIVES_MENU_SHELL(mt->submenu_atransfx),menuitem2);
 
   g_signal_connect (GTK_OBJECT (menuitem2), "activate",
 		    G_CALLBACK (mt_set_atrans_effect),
@@ -7151,7 +7151,7 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
   lives_container_add (LIVES_CONTAINER (menuitem_menu), mt->gens_submenu);
 
   g_object_ref(mainw->gens_menu);
-  gtk_menu_detach(GTK_MENU(mainw->gens_menu));
+  lives_menu_detach(LIVES_MENU(mainw->gens_menu));
 
   lives_menu_item_set_submenu (LIVES_MENU_ITEM (mt->gens_submenu), mainw->gens_menu);
 
@@ -7178,7 +7178,7 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
                               LIVES_KEY_p, LIVES_CONTROL_MASK,
                               LIVES_ACCEL_VISIBLE);
 
-#if !GTK_CHECK_VERSION(3,10,0)
+#if LIVES_HAS_IMAGE_MENU_ITEM
   image = lives_image_new_from_stock (LIVES_STOCK_PREFERENCES, LIVES_ICON_SIZE_MENU);
   lives_widget_show (image);
   lives_image_menu_item_set_image (LIVES_IMAGE_MENU_ITEM (menuitem), image);
@@ -7920,7 +7920,7 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
 
   lives_toolbar_set_style (LIVES_TOOLBAR (btoolbar), LIVES_TOOLBAR_TEXT);
 
-  mt->grav_menuitem = gtk_menu_tool_button_new (NULL,NULL);
+  mt->grav_menuitem = lives_menu_tool_button_new (NULL,NULL);
   lives_tool_button_set_use_underline (LIVES_TOOL_BUTTON(mt->grav_menuitem),TRUE);
 
   mt->grav_label=lives_label_new(_("Gravity: Normal"));
@@ -7935,7 +7935,7 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
     lives_widget_set_bg_color(mt->grav_label, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
     lives_widget_set_fg_color(mt->grav_label, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars_fore);
   }
-  gtk_menu_tool_button_set_menu (GTK_MENU_TOOL_BUTTON (mt->grav_menuitem), submenu);
+  lives_menu_tool_button_set_menu (LIVES_MENU_TOOL_BUTTON (mt->grav_menuitem), submenu);
 
   mt->grav_normal = lives_check_menu_item_new_with_mnemonic (_("Gravity: _Normal"));
   lives_container_add (LIVES_CONTAINER(submenu), mt->grav_normal);
@@ -8132,7 +8132,7 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
 				     " GtkNotebook tab {\n"  // or  " * tab {\n"
 				     "   background-color: blue;\n"
 				     " }\n"
-				     " GtkNotebook tab GtkLabel {\n"
+				     " GtkNotebook tab LiVESLabel {\n"
 				     "   background-color: blue;\n"
 				     "}\n", -1, NULL);
 
@@ -9247,7 +9247,7 @@ boolean multitrack_delete (lives_mt *mt, boolean save_layout) {
   g_object_unref(mainw->vol_toolitem);
 
   g_object_ref(mainw->gens_menu);
-  gtk_menu_detach(GTK_MENU(mainw->gens_menu));
+  lives_menu_detach(LIVES_MENU(mainw->gens_menu));
 
   lives_menu_item_set_submenu (LIVES_MENU_ITEM (mainw->gens_submenu), mainw->gens_menu);
 
@@ -9501,7 +9501,7 @@ void mt_init_tracks (lives_mt *mt, boolean set_min_max) {
 #ifndef ENABLE_GIW_3
   if (mt->timeline_table==NULL) {
     label=lives_standard_label_new (_("Timeline (seconds)"));
-    lives_table_attach (LIVES_TABLE (mt->timeline_table_header), label, 0, 7, 0, 2, GTK_FILL, (GtkAttachOptions)0, 0, 0);
+    lives_table_attach (LIVES_TABLE (mt->timeline_table_header), label, 0, 7, 0, 2, LIVES_FILL, (GtkAttachOptions)0, 0, 0);
   }
 #endif
 
@@ -9592,12 +9592,12 @@ void mt_init_tracks (lives_mt *mt, boolean set_min_max) {
     lives_container_add (LIVES_CONTAINER (mt->timeline_eb), mt->timeline);
     
     lives_table_attach (LIVES_TABLE (mt->timeline_table_header), mt->timeline_eb, 7, 40, 0, 1,
-		      (GtkAttachOptions) (GTK_EXPAND | GTK_FILL),
-		      (GtkAttachOptions) (GTK_FILL), 0, 0);
+		      (GtkAttachOptions) (LIVES_EXPAND | LIVES_FILL),
+		      (GtkAttachOptions) (LIVES_FILL), 0, 0);
 
     lives_table_attach (LIVES_TABLE (mt->timeline_table_header), mt->timeline_reg, 7, 40, 1, 2,
-		      (GtkAttachOptions) (GTK_EXPAND | GTK_FILL),
-		      (GtkAttachOptions) (GTK_FILL), 0, 0);
+		      (GtkAttachOptions) (LIVES_EXPAND | LIVES_FILL),
+		      (GtkAttachOptions) (LIVES_FILL), 0, 0);
   }
 
   if (mt->event_list!=NULL) {
@@ -10292,14 +10292,14 @@ void add_video_track (lives_mt *mt, boolean behind) {
 
 }
 
-void add_video_track_behind (GtkMenuItem *menuitem, gpointer user_data) {
+void add_video_track_behind (LiVESMenuItem *menuitem, gpointer user_data) {
   lives_mt *mt=(lives_mt *)user_data;
   if (menuitem!=NULL) mt_desensitise(mt);
   add_video_track (mt,TRUE);
   if (menuitem!=NULL) mt_sensitise(mt);
 }
 
-void add_video_track_front (GtkMenuItem *menuitem, gpointer user_data) {
+void add_video_track_front (LiVESMenuItem *menuitem, gpointer user_data) {
   lives_mt *mt=(lives_mt *)user_data;
   if (menuitem!=NULL) mt_desensitise(mt);
   add_video_track (mt,FALSE);
@@ -10308,7 +10308,7 @@ void add_video_track_front (GtkMenuItem *menuitem, gpointer user_data) {
 
 
  
-void on_mt_fx_edit_activate (GtkMenuItem *menuitem, gpointer user_data) {
+void on_mt_fx_edit_activate (LiVESMenuItem *menuitem, gpointer user_data) {
   lives_mt *mt=(lives_mt *)user_data;
   if (mt->selected_init_event==NULL) return;
   fubar(mt);
@@ -10321,13 +10321,13 @@ static boolean mt_fx_edit_idle (gpointer user_data) {
   return FALSE;
 }
 
-static void mt_avol_quick(GtkMenuItem *menuitem, gpointer user_data) {
+static void mt_avol_quick(LiVESMenuItem *menuitem, gpointer user_data) {
   lives_mt *mt=(lives_mt *)user_data;
   mt->selected_init_event=mt->avol_init_event;
   on_mt_fx_edit_activate(menuitem,user_data);
 }
 
-static void rdrw_cb(GtkMenuItem *menuitem, gpointer user_data) {
+static void rdrw_cb(LiVESMenuItem *menuitem, gpointer user_data) {
   lives_mt *mt=(lives_mt *)user_data;
   redraw_all_event_boxes(mt);
 }
@@ -10464,7 +10464,7 @@ fx_ebox_pressed (LiVESWidget *eventbox, GdkEventButton *event, gpointer user_dat
   }
 
   // set clicked-on widget to selected state and reset all others
-  children=gtk_container_get_children(LIVES_CONTAINER(mt->fx_list_vbox));
+  children=lives_container_get_children(LIVES_CONTAINER(mt->fx_list_vbox));
   while (children!=NULL) {
     LiVESWidget *child=(LiVESWidget *)children->data;
     if (child!=eventbox) lives_widget_set_state(child,LIVES_WIDGET_STATE_NORMAL);
@@ -10484,7 +10484,7 @@ fx_ebox_pressed (LiVESWidget *eventbox, GdkEventButton *event, gpointer user_dat
 
 static void set_clip_labels_variable(lives_mt *mt, int i) {
   gchar *tmp;
-  GtkLabel *label1,*label2;
+  LiVESLabel *label1,*label2;
   lives_clip_t *sfile=mainw->files[i];
 
   if (mt->clip_labels==NULL) return;
@@ -10492,8 +10492,8 @@ static void set_clip_labels_variable(lives_mt *mt, int i) {
   i=mt_clip_from_file(mt,i);
   i*=2;
 
-  label1=(GtkLabel *)g_list_nth_data(mt->clip_labels,i);
-  label2=(GtkLabel *)g_list_nth_data(mt->clip_labels,++i);
+  label1=(LiVESLabel *)g_list_nth_data(mt->clip_labels,i);
+  label2=(LiVESLabel *)g_list_nth_data(mt->clip_labels,++i);
 
   lives_label_set_text(label1,(tmp=g_strdup_printf (_("  %d to %d selected  "),sfile->start,sfile->end)));
   g_free(tmp);
@@ -10561,7 +10561,7 @@ void mt_clear_timeline(lives_mt *mt) {
 
 void mt_delete_clips(lives_mt *mt, int file) {
   // close eventbox(es) for a given file
-  GList *list=gtk_container_get_children(LIVES_CONTAINER (mt->clip_inner_box)),*list_next;
+  GList *list=lives_container_get_children(LIVES_CONTAINER (mt->clip_inner_box)),*list_next;
 
   LiVESWidget *child;
   LiVESWidget *label1,*label2;
@@ -10806,7 +10806,7 @@ static void set_audio_mixer_vols(lives_mt *mt, weed_plant_t *elist) {
 
 
 
-boolean on_multitrack_activate (GtkMenuItem *menuitem, weed_plant_t *event_list) {
+boolean on_multitrack_activate (LiVESMenuItem *menuitem, weed_plant_t *event_list) {
   //returns TRUE if we go into mt mode
   int orig_file;
   boolean response;
@@ -13667,11 +13667,7 @@ void unpaint_line(lives_mt *mt, LiVESWidget *eventbox) {
   xoffset=(ocurrtime-mt->tl_min)/(mt->tl_max-mt->tl_min)*(double)ebwidth+.5;
 
   if (xoffset>=0&&xoffset<ebwidth) {
-#if GTK_CHECK_VERSION(3,0,0)
     lives_widget_queue_draw_area(eventbox,xoffset-4,0,9,lives_widget_get_allocation_height(eventbox));
-#else
-    lives_widget_queue_draw(eventbox);
-#endif
     gdk_window_process_updates(lives_widget_get_xwindow(eventbox),TRUE);
   }
 }
@@ -13895,7 +13891,7 @@ void animate_multitrack (lives_mt *mt) {
 // menuitem callbacks
 
 
-static boolean multitrack_end (GtkMenuItem *menuitem, gpointer user_data) {
+static boolean multitrack_end (LiVESMenuItem *menuitem, gpointer user_data) {
   lives_mt *mt=(lives_mt *)user_data;
   return multitrack_delete (mt,!(prefs->warning_mask&WARN_MASK_EXIT_MT)||menuitem==NULL);
 }
@@ -13903,38 +13899,38 @@ static boolean multitrack_end (GtkMenuItem *menuitem, gpointer user_data) {
 
 
 // callbacks for future adding to osc.c
-void multitrack_end_cb (GtkMenuItem *menuitem, gpointer user_data) {
+void multitrack_end_cb (LiVESMenuItem *menuitem, gpointer user_data) {
   lives_mt *mt=(lives_mt *)user_data;
   if (mt->is_rendering) return;
   multitrack_end(menuitem,user_data);
 }
 
-void insert_here_cb (GtkMenuItem *menuitem, gpointer user_data) {
+void insert_here_cb (LiVESMenuItem *menuitem, gpointer user_data) {
   lives_mt *mt=(lives_mt *)user_data;
   if (mt->is_rendering) return;
   multitrack_insert(NULL,user_data);
 }
 
-void insert_at_ctx_cb (GtkMenuItem *menuitem, gpointer user_data) {
+void insert_at_ctx_cb (LiVESMenuItem *menuitem, gpointer user_data) {
   lives_mt *mt=(lives_mt *)user_data;
   if (mt->is_rendering) return;
   mt->use_context=TRUE;
   multitrack_insert(NULL,user_data);
 }
 
-void edit_start_end_cb (GtkMenuItem *menuitem, gpointer user_data) {
+void edit_start_end_cb (LiVESMenuItem *menuitem, gpointer user_data) {
   lives_mt *mt=(lives_mt *)user_data;
   if (mt->is_rendering) return;
   multitrack_adj_start_end(NULL,user_data);
 }
 
-void close_clip_cb (GtkMenuItem *menuitem, gpointer user_data) {
+void close_clip_cb (LiVESMenuItem *menuitem, gpointer user_data) {
   lives_mt *mt=(lives_mt *)user_data;
   if (mt->is_rendering) return;
   on_close_activate(NULL,NULL);
 }
 
-void show_clipinfo_cb (GtkMenuItem *menuitem, gpointer user_data) {
+void show_clipinfo_cb (LiVESMenuItem *menuitem, gpointer user_data) {
   lives_mt *mt=(lives_mt *)user_data;
   int current_file=mainw->current_file;
   if (mt->file_selected!=-1) {
@@ -13944,32 +13940,32 @@ void show_clipinfo_cb (GtkMenuItem *menuitem, gpointer user_data) {
   }
 }
 
-void insert_audio_here_cb (GtkMenuItem *menuitem, gpointer user_data) {
+void insert_audio_here_cb (LiVESMenuItem *menuitem, gpointer user_data) {
   lives_mt *mt=(lives_mt *)user_data;
   if (mt->is_rendering) return;
   multitrack_audio_insert(NULL,user_data);
 }
 
-void insert_audio_at_ctx_cb (GtkMenuItem *menuitem, gpointer user_data) {
+void insert_audio_at_ctx_cb (LiVESMenuItem *menuitem, gpointer user_data) {
   lives_mt *mt=(lives_mt *)user_data;
   if (mt->is_rendering) return;
   mt->use_context=TRUE;
   multitrack_audio_insert(NULL,user_data);
 }
 
-void delete_block_cb (GtkMenuItem *menuitem, gpointer user_data) {
+void delete_block_cb (LiVESMenuItem *menuitem, gpointer user_data) {
   lives_mt *mt=(lives_mt *)user_data;
   if (mt->is_rendering) return;
   on_delblock_activate(NULL,user_data);
 }
 
-void selblock_cb (GtkMenuItem *menuitem, gpointer user_data) {
+void selblock_cb (LiVESMenuItem *menuitem, gpointer user_data) {
   lives_mt *mt=(lives_mt *)user_data;
   select_block(mt);
   mt->putative_block=NULL;
 }
 
-void list_fx_here_cb (GtkMenuItem *menuitem, gpointer user_data) {
+void list_fx_here_cb (LiVESMenuItem *menuitem, gpointer user_data) {
   lives_mt *mt=(lives_mt *)user_data;
   mt->context_time=-1.;
   on_mt_list_fx_activate(NULL,user_data);
@@ -13978,25 +13974,25 @@ void list_fx_here_cb (GtkMenuItem *menuitem, gpointer user_data) {
 
 ///////////////////////////////////////////////////////////
 
-void tc_to_rs (GtkMenuItem *menuitem, gpointer user_data) {
+void tc_to_rs (LiVESMenuItem *menuitem, gpointer user_data) {
   lives_mt *mt=(lives_mt *)user_data;
   mt->region_start=lives_ruler_get_value(LIVES_RULER(mt->timeline));
   on_timeline_release(mt->timeline_reg,NULL,mt);
 }
 
-void tc_to_re (GtkMenuItem *menuitem, gpointer user_data) {
+void tc_to_re (LiVESMenuItem *menuitem, gpointer user_data) {
   lives_mt *mt=(lives_mt *)user_data;
   mt->region_end=lives_ruler_get_value(LIVES_RULER(mt->timeline));
   on_timeline_release(mt->timeline_reg,NULL,mt);
 }
 
 
-void rs_to_tc (GtkMenuItem *menuitem, gpointer user_data) {
+void rs_to_tc (LiVESMenuItem *menuitem, gpointer user_data) {
   lives_mt *mt=(lives_mt *)user_data;
   mt_tl_move(mt,mt->region_start-lives_ruler_get_value(LIVES_RULER(mt->timeline)));
 }
 
-void re_to_tc (GtkMenuItem *menuitem, gpointer user_data) {
+void re_to_tc (LiVESMenuItem *menuitem, gpointer user_data) {
   lives_mt *mt=(lives_mt *)user_data;
   mt_tl_move(mt,mt->region_end-lives_ruler_get_value(LIVES_RULER(mt->timeline)));
 }
@@ -14006,13 +14002,13 @@ void re_to_tc (GtkMenuItem *menuitem, gpointer user_data) {
 
 
 
-void on_move_fx_changed (GtkMenuItem *menuitem, gpointer user_data) {
+void on_move_fx_changed (LiVESMenuItem *menuitem, gpointer user_data) {
   lives_mt *mt=(lives_mt *)user_data;
   mt->opts.move_effects=!mt->opts.move_effects;
 }
 
 
-void multitrack_clear_marks (GtkMenuItem *menuitem, gpointer user_data) {
+void multitrack_clear_marks (LiVESMenuItem *menuitem, gpointer user_data) {
   lives_mt *mt=(lives_mt *)user_data;
   g_list_free(mt->tl_marks);
   mt->tl_marks=NULL;
@@ -14021,7 +14017,7 @@ void multitrack_clear_marks (GtkMenuItem *menuitem, gpointer user_data) {
 }
 
 
-void select_all_time (GtkMenuItem *menuitem, gpointer user_data) {
+void select_all_time (LiVESMenuItem *menuitem, gpointer user_data) {
   lives_mt *mt=(lives_mt *)user_data;
   mt->region_start=0.;
   mt->region_end=mt->end_secs;
@@ -14029,14 +14025,14 @@ void select_all_time (GtkMenuItem *menuitem, gpointer user_data) {
 }
 
 
-void select_from_zero_time (GtkMenuItem *menuitem, gpointer user_data) {
+void select_from_zero_time (LiVESMenuItem *menuitem, gpointer user_data) {
   lives_mt *mt=(lives_mt *)user_data;
   if (mt->region_start==0.&&mt->region_end==0.) mt->region_end=lives_ruler_get_value(LIVES_RULER(mt->timeline));
   mt->region_start=0.;
   on_timeline_release(mt->timeline_reg,NULL,mt);
 }
 
-void select_to_end_time (GtkMenuItem *menuitem, gpointer user_data) {
+void select_to_end_time (LiVESMenuItem *menuitem, gpointer user_data) {
   lives_mt *mt=(lives_mt *)user_data;
   if (mt->region_start==0.&&mt->region_end==0.) mt->region_start=lives_ruler_get_value(LIVES_RULER(mt->timeline));
   mt->region_end=mt->end_secs;
@@ -14045,7 +14041,7 @@ void select_to_end_time (GtkMenuItem *menuitem, gpointer user_data) {
 
 
 
-void select_all_vid (GtkMenuItem *menuitem, gpointer user_data) {
+void select_all_vid (LiVESMenuItem *menuitem, gpointer user_data) {
   lives_mt *mt=(lives_mt *)user_data;
   LiVESWidget *eventbox,*checkbutton;
   GList *vdr=mt->video_draws;
@@ -14082,7 +14078,7 @@ void select_all_vid (GtkMenuItem *menuitem, gpointer user_data) {
 
 }
 
-void select_no_vid (GtkMenuItem *menuitem, gpointer user_data) {
+void select_no_vid (LiVESMenuItem *menuitem, gpointer user_data) {
   lives_mt *mt=(lives_mt *)user_data;
   LiVESWidget *eventbox,*checkbutton;
   GList *vdr=mt->video_draws;
@@ -14122,7 +14118,7 @@ void select_no_vid (GtkMenuItem *menuitem, gpointer user_data) {
 
 
 void
-mt_fplay_toggled                (GtkMenuItem     *menuitem,
+mt_fplay_toggled                (LiVESMenuItem     *menuitem,
 				 gpointer         user_data)
 {
   lives_mt *mt=(lives_mt *)user_data;
@@ -14131,7 +14127,7 @@ mt_fplay_toggled                (GtkMenuItem     *menuitem,
 }
 
 void
-mt_render_vid_toggled                (GtkMenuItem     *menuitem,
+mt_render_vid_toggled                (LiVESMenuItem     *menuitem,
 				      gpointer         user_data)
 {
   lives_mt *mt=(lives_mt *)user_data;
@@ -14141,7 +14137,7 @@ mt_render_vid_toggled                (GtkMenuItem     *menuitem,
 
 
 void
-mt_render_aud_toggled                (GtkMenuItem     *menuitem,
+mt_render_aud_toggled                (LiVESMenuItem     *menuitem,
 				      gpointer         user_data)
 {
   lives_mt *mt=(lives_mt *)user_data;
@@ -14152,7 +14148,7 @@ mt_render_aud_toggled                (GtkMenuItem     *menuitem,
 
 
 void
-mt_norm_aud_toggled                (GtkMenuItem     *menuitem,
+mt_norm_aud_toggled                (LiVESMenuItem     *menuitem,
 				    gpointer         user_data)
 {
   lives_mt *mt=(lives_mt *)user_data;
@@ -14162,7 +14158,7 @@ mt_norm_aud_toggled                (GtkMenuItem     *menuitem,
 
 
 void
-mt_view_audio_toggled                (GtkMenuItem     *menuitem,
+mt_view_audio_toggled                (LiVESMenuItem     *menuitem,
 				      gpointer         user_data)
 {
   lives_mt *mt=(lives_mt *)user_data;
@@ -14177,7 +14173,7 @@ mt_view_audio_toggled                (GtkMenuItem     *menuitem,
 }
 
 void
-mt_view_ctx_toggled                (GtkMenuItem     *menuitem,
+mt_view_ctx_toggled                (LiVESMenuItem     *menuitem,
 				    gpointer         user_data) {
   // toggle between compact view and expanded view
 
@@ -14242,7 +14238,7 @@ mt_view_ctx_toggled                (GtkMenuItem     *menuitem,
 
 
 void
-mt_ign_ins_sel_toggled                (GtkMenuItem     *menuitem,
+mt_ign_ins_sel_toggled                (LiVESMenuItem     *menuitem,
 				       gpointer         user_data)
 {
   lives_mt *mt=(lives_mt *)user_data;
@@ -14251,7 +14247,7 @@ mt_ign_ins_sel_toggled                (GtkMenuItem     *menuitem,
 
 
 
-static void remove_gaps_inner (GtkMenuItem *menuitem, gpointer user_data, boolean only_first) {
+static void remove_gaps_inner (LiVESMenuItem *menuitem, gpointer user_data, boolean only_first) {
   lives_mt *mt=(lives_mt *)user_data;
   GList *vsel=mt->selected_tracks;
   track_rect *block=NULL;
@@ -14413,14 +14409,14 @@ static void remove_gaps_inner (GtkMenuItem *menuitem, gpointer user_data, boolea
 }
 
 
-void remove_first_gaps (GtkMenuItem *menuitem, gpointer user_data) {
+void remove_first_gaps (LiVESMenuItem *menuitem, gpointer user_data) {
   // remove first gaps in selected time/tracks
   // if gravity is Right then we remove last gaps instead
 
   remove_gaps_inner(menuitem,user_data,TRUE);
 }
 
-void remove_gaps (GtkMenuItem *menuitem, gpointer user_data) {
+void remove_gaps (LiVESMenuItem *menuitem, gpointer user_data) {
   remove_gaps_inner(menuitem,user_data,FALSE);
 }
 
@@ -14770,7 +14766,7 @@ static void insgap_inner (lives_mt *mt, int tnum, boolean is_sel, int passnm) {
 
 
 
-void on_insgap_sel_activate (GtkMenuItem     *menuitem,
+void on_insgap_sel_activate (LiVESMenuItem     *menuitem,
 			     gpointer         user_data) {
 
 
@@ -14810,7 +14806,7 @@ void on_insgap_sel_activate (GtkMenuItem     *menuitem,
 
 
 
-void on_insgap_cur_activate (GtkMenuItem     *menuitem,
+void on_insgap_cur_activate (LiVESMenuItem     *menuitem,
 			     gpointer         user_data) {
   lives_mt *mt=(lives_mt *)user_data;
   boolean did_backup=mt->did_backup;
@@ -14846,7 +14842,7 @@ void on_insgap_cur_activate (GtkMenuItem     *menuitem,
 
 
 void
-multitrack_undo            (GtkMenuItem     *menuitem,
+multitrack_undo            (LiVESMenuItem     *menuitem,
 			    gpointer         user_data) {
 
   lives_mt *mt=(lives_mt *)user_data;
@@ -15061,7 +15057,7 @@ multitrack_undo            (GtkMenuItem     *menuitem,
 
 
 void
-multitrack_redo            (GtkMenuItem     *menuitem,
+multitrack_redo            (LiVESMenuItem     *menuitem,
 			    gpointer         user_data) {
 
   lives_mt *mt=(lives_mt *)user_data;
@@ -15246,7 +15242,7 @@ multitrack_redo            (GtkMenuItem     *menuitem,
 
 
 
-void multitrack_view_details (GtkMenuItem *menuitem, gpointer user_data) {
+void multitrack_view_details (LiVESMenuItem *menuitem, gpointer user_data) {
   char buff[512];
   lives_clipinfo_t *filew;
   lives_mt *mt=(lives_mt *)user_data;
@@ -15442,7 +15438,7 @@ weed_plant_t *add_blank_frames_up_to (weed_plant_t *event_list, weed_plant_t *st
 }
 
 
-void mt_add_region_effect (GtkMenuItem *menuitem, gpointer user_data) {
+void mt_add_region_effect (LiVESMenuItem *menuitem, gpointer user_data) {
   lives_mt *mt=(lives_mt *)user_data;
 
   GList *llist;
@@ -15529,7 +15525,7 @@ static boolean mt_add_region_effect_idle (gpointer user_data) {
 }
 
 
-void mt_add_block_effect (GtkMenuItem *menuitem, gpointer user_data) {
+void mt_add_block_effect (LiVESMenuItem *menuitem, gpointer user_data) {
   lives_mt *mt=(lives_mt *)user_data;
   weed_plant_t *start_event=mt->block_selected->start_event;
   weed_plant_t *end_event=mt->block_selected->end_event;
@@ -15563,14 +15559,14 @@ static boolean mt_add_block_effect_idle (gpointer user_data) {
   return FALSE;
 }
 
-void on_mt_list_fx_activate (GtkMenuItem *menuitem, gpointer user_data) {
+void on_mt_list_fx_activate (LiVESMenuItem *menuitem, gpointer user_data) {
   // list effects at current frame/track
   lives_mt *mt=(lives_mt *)user_data;
   polymorph(mt,POLY_FX_STACK);
 }
 
 
-void on_mt_delfx_activate (GtkMenuItem *menuitem, gpointer user_data) {
+void on_mt_delfx_activate (LiVESMenuItem *menuitem, gpointer user_data) {
   lives_mt *mt=(lives_mt *)user_data;
 
   weed_timecode_t start_tc,end_tc;
@@ -15708,19 +15704,19 @@ static void mt_jumpto (lives_mt *mt, lives_direction_t dir) {
 }
 
 
-void on_jumpback_activate (GtkMenuItem *menuitem, gpointer user_data) {
+void on_jumpback_activate (LiVESMenuItem *menuitem, gpointer user_data) {
   lives_mt *mt=(lives_mt *)user_data;
   mt_jumpto(mt,DIRECTION_NEGATIVE);
 }
 
-void on_jumpnext_activate (GtkMenuItem *menuitem, gpointer user_data) {
+void on_jumpnext_activate (LiVESMenuItem *menuitem, gpointer user_data) {
   lives_mt *mt=(lives_mt *)user_data;
   mt_jumpto(mt,DIRECTION_POSITIVE);
 }
 
 
 
-static void on_rename_track_activate (GtkMenuItem *menuitem, gpointer user_data) {
+static void on_rename_track_activate (LiVESMenuItem *menuitem, gpointer user_data) {
   lives_mt *mt=(lives_mt *)user_data;
   _entryw *rnentry;
   LiVESWidget *xeventbox;
@@ -15757,7 +15753,7 @@ static void on_rename_track_activate (GtkMenuItem *menuitem, gpointer user_data)
 
 
 
-void on_cback_audio_activate (GtkMenuItem *menuitem, gpointer user_data) {
+void on_cback_audio_activate (LiVESMenuItem *menuitem, gpointer user_data) {
   lives_mt *mt=(lives_mt *)user_data;
   mt->current_track=-1;
   track_select(mt);
@@ -15765,7 +15761,7 @@ void on_cback_audio_activate (GtkMenuItem *menuitem, gpointer user_data) {
 
 
 
-void on_render_activate (GtkMenuItem *menuitem, gpointer user_data) {
+void on_render_activate (LiVESMenuItem *menuitem, gpointer user_data) {
   lives_mt *mt=(lives_mt *)user_data;
 
   // save these values, because reget_afilesize() can reset them
@@ -16052,7 +16048,7 @@ void on_render_activate (GtkMenuItem *menuitem, gpointer user_data) {
 }
 
 
-void on_prerender_aud_activate (GtkMenuItem *menuitem, gpointer user_data) {
+void on_prerender_aud_activate (LiVESMenuItem *menuitem, gpointer user_data) {
   lives_mt *mt=(lives_mt *)user_data;
   on_render_activate(menuitem,user_data);
   mainw->is_rendering=mainw->internal_messaging=mt->is_rendering=FALSE;
@@ -16163,7 +16159,7 @@ void update_filter_events(lives_mt *mt, weed_plant_t *first_event, weed_timecode
 
 
 
-void on_split_activate (GtkMenuItem *menuitem, gpointer user_data) {
+void on_split_activate (LiVESMenuItem *menuitem, gpointer user_data) {
   // split current block at current time
   lives_mt *mt=(lives_mt *)user_data;
   double timesecs=lives_ruler_get_value(LIVES_RULER(mt->timeline));
@@ -16198,7 +16194,7 @@ void on_split_activate (GtkMenuItem *menuitem, gpointer user_data) {
 
 
 
-void on_split_curr_activate (GtkMenuItem *menuitem, gpointer user_data) {
+void on_split_curr_activate (LiVESMenuItem *menuitem, gpointer user_data) {
   // split current track at current time
   lives_mt *mt=(lives_mt *)user_data;
   double timesecs=lives_ruler_get_value(LIVES_RULER(mt->timeline));
@@ -16233,7 +16229,7 @@ void on_split_curr_activate (GtkMenuItem *menuitem, gpointer user_data) {
 
 
 
-void on_split_sel_activate (GtkMenuItem *menuitem, gpointer user_data) {
+void on_split_sel_activate (LiVESMenuItem *menuitem, gpointer user_data) {
   // split selected tracks at current time
   lives_mt *mt=(lives_mt *)user_data;
   GList *selt=mt->selected_tracks;
@@ -16267,7 +16263,7 @@ void on_split_sel_activate (GtkMenuItem *menuitem, gpointer user_data) {
 
 
 
-void on_delblock_activate (GtkMenuItem *menuitem, gpointer user_data) {
+void on_delblock_activate (LiVESMenuItem *menuitem, gpointer user_data) {
   lives_mt *mt=(lives_mt *)user_data;
   track_rect *block,*blockprev,*blocknext;
   weed_plant_t *event,*prevevent;
@@ -16431,7 +16427,7 @@ void on_delblock_activate (GtkMenuItem *menuitem, gpointer user_data) {
 
 
 
-void on_seltrack_activate (GtkMenuItem *menuitem, gpointer user_data) {
+void on_seltrack_activate (LiVESMenuItem *menuitem, gpointer user_data) {
   lives_mt *mt=(lives_mt *)user_data;
   LiVESWidget *eventbox;
   LiVESWidget *checkbutton;
@@ -16721,7 +16717,7 @@ void mt_swap_play_pause (lives_mt *mt, boolean put_pause) {
     lives_widget_set_tooltip_text(mainw->m_playbutton,_("Play all (p)"));
   }
 
-  lives_widget_show(tmp_img);
+  if (tmp_img!=NULL) lives_widget_show(tmp_img);
   lives_tool_button_set_icon_widget(LIVES_TOOL_BUTTON(mainw->m_playbutton),tmp_img);
 
 }
@@ -16916,7 +16912,7 @@ void multitrack_playall (lives_mt *mt) {
 
 
 
-void multitrack_play_sel (GtkMenuItem *menuitem, gpointer user_data) {
+void multitrack_play_sel (LiVESMenuItem *menuitem, gpointer user_data) {
   // get current pointer time; if it is outside the time region jump to start
   double ptr_time;
   lives_mt *mt=(lives_mt *)user_data;
@@ -16942,7 +16938,7 @@ void multitrack_play_sel (GtkMenuItem *menuitem, gpointer user_data) {
 
 
 
-void multitrack_adj_start_end (GtkMenuItem *menuitem, gpointer user_data) {
+void multitrack_adj_start_end (LiVESMenuItem *menuitem, gpointer user_data) {
   lives_mt *mt=(lives_mt *)user_data;
   unselect_all(mt);
   polymorph (mt,POLY_IN_OUT);
@@ -16952,7 +16948,7 @@ void multitrack_adj_start_end (GtkMenuItem *menuitem, gpointer user_data) {
 
 
 
-void multitrack_insert (GtkMenuItem *menuitem, gpointer user_data) {
+void multitrack_insert (LiVESMenuItem *menuitem, gpointer user_data) {
   lives_mt *mt=(lives_mt *)user_data;
   lives_clip_t *sfile=mainw->files[mt->file_selected];
   double secs=lives_ruler_get_value(LIVES_RULER(mt->timeline));
@@ -17066,7 +17062,7 @@ void multitrack_insert (GtkMenuItem *menuitem, gpointer user_data) {
 }
 
 
-void multitrack_audio_insert (GtkMenuItem *menuitem, gpointer user_data) {
+void multitrack_audio_insert (LiVESMenuItem *menuitem, gpointer user_data) {
   lives_mt *mt=(lives_mt *)user_data;
   lives_clip_t *sfile=mainw->files[mt->file_selected];
   double secs=lives_ruler_get_value(LIVES_RULER(mt->timeline));
@@ -17497,7 +17493,7 @@ void insert_audio (int filenum, weed_timecode_t offset_start, weed_timecode_t of
 
 
 
-void multitrack_view_events (GtkMenuItem *menuitem, gpointer user_data) {
+void multitrack_view_events (LiVESMenuItem *menuitem, gpointer user_data) {
   lives_mt *mt=(lives_mt *)user_data;
   LiVESWidget *elist_dialog;
   if ((prefs->event_window_show_frame_events&&count_events(mt->event_list,TRUE,0,0)>1000)||
@@ -17510,7 +17506,7 @@ void multitrack_view_events (GtkMenuItem *menuitem, gpointer user_data) {
 }
 
 
-void multitrack_view_sel_events (GtkMenuItem *menuitem, gpointer user_data) {
+void multitrack_view_sel_events (LiVESMenuItem *menuitem, gpointer user_data) {
   lives_mt *mt=(lives_mt *)user_data;
   LiVESWidget *elist_dialog;
 
@@ -19143,7 +19139,7 @@ void add_markers(lives_mt *mt, weed_plant_t *event_list) {
 
 
 
-void on_save_event_list_activate (GtkMenuItem *menuitem, gpointer user_data) {
+void on_save_event_list_activate (LiVESMenuItem *menuitem, gpointer user_data) {
   //  here we save a layout list (*.lay) file
 
   // we dump (serialise) the event_list plant, followed by all of its events
@@ -21156,7 +21152,7 @@ void wipe_layout(lives_mt *mt) {
 
 
 
-void on_clear_event_list_activate (GtkMenuItem *menuitem, gpointer user_data) {
+void on_clear_event_list_activate (LiVESMenuItem *menuitem, gpointer user_data) {
   lives_mt *mt=(lives_mt *)user_data;
   _entryw *cdsw;
 
@@ -21236,7 +21232,7 @@ void on_clear_event_list_activate (GtkMenuItem *menuitem, gpointer user_data) {
 
 
 
-void on_load_event_list_activate (GtkMenuItem *menuitem, gpointer user_data) {
+void on_load_event_list_activate (LiVESMenuItem *menuitem, gpointer user_data) {
   int i;
   lives_mt *mt=(lives_mt *)user_data;
   weed_plant_t *new_event_list;
@@ -21532,11 +21528,11 @@ void mt_change_disp_tracks_ok (LiVESButton *button, gpointer user_data) {
 
 ///////////////////////////////////////////////
 
-void show_frame_events_activate (GtkMenuItem *menuitem, gpointer user_data) {
+void show_frame_events_activate (LiVESMenuItem *menuitem, gpointer user_data) {
   prefs->event_window_show_frame_events=!prefs->event_window_show_frame_events;
 }
 
-void mt_change_max_disp_tracks (GtkMenuItem *menuitem, gpointer user_data) {
+void mt_change_max_disp_tracks (LiVESMenuItem *menuitem, gpointer user_data) {
   LiVESWidget *dialog;
   lives_mt *mt=(lives_mt *)user_data;
 
@@ -21546,18 +21542,18 @@ void mt_change_max_disp_tracks (GtkMenuItem *menuitem, gpointer user_data) {
 
 }
 
-void mt_load_vals_toggled (GtkMenuItem *menuitem, gpointer user_data) {
+void mt_load_vals_toggled (LiVESMenuItem *menuitem, gpointer user_data) {
   lives_mt *mt=(lives_mt *)user_data;
   mt->ignore_load_vals=!mt->ignore_load_vals;
 }
 
 
-static void mt_ac_audio_toggled (GtkMenuItem *menuitem, gpointer user_data) {
+static void mt_ac_audio_toggled (LiVESMenuItem *menuitem, gpointer user_data) {
   lives_mt *mt=(lives_mt *)user_data;
   mt->opts.autocross_audio=!mt->opts.autocross_audio;
 }
 
-void mt_change_vals_activate (GtkMenuItem *menuitem, gpointer user_data) {
+void mt_change_vals_activate (LiVESMenuItem *menuitem, gpointer user_data) {
   lives_mt *mt=(lives_mt *)user_data;
   boolean response;
   gchar *msg;
@@ -22130,7 +22126,7 @@ void amixer_show (LiVESButton *button, gpointer user_data) {
     lives_widget_set_tooltip_text(amixer->inv_checkbutton, _("Adjust backing and layer audio values so that they sum to 1.0"));
     eventbox=lives_event_box_new();
     lives_tooltips_copy(eventbox,amixer->inv_checkbutton);
-    gtk_label_set_mnemonic_widget (LIVES_LABEL (label),amixer->inv_checkbutton);
+    lives_label_set_mnemonic_widget (LIVES_LABEL (label),amixer->inv_checkbutton);
     
     lives_container_add(LIVES_CONTAINER(eventbox),label);
     g_signal_connect (GTK_OBJECT (eventbox), "button_press_event",
@@ -22234,7 +22230,7 @@ void amixer_show (LiVESButton *button, gpointer user_data) {
 }
 
 
-void on_mt_showkeys_activate (GtkMenuItem *menuitem, gpointer user_data) {
+void on_mt_showkeys_activate (LiVESMenuItem *menuitem, gpointer user_data) {
   do_mt_keys_window();
 }
 

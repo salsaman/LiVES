@@ -1176,7 +1176,7 @@ boolean get_handle_from_info_file(int index) {
 
 
 
-void save_frame (GtkMenuItem *menuitem, gpointer user_data) {
+void save_frame (LiVESMenuItem *menuitem, gpointer user_data) {
   int frame;
   // save a single frame from a clip
   gchar *filt[2];

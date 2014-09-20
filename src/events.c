@@ -2142,7 +2142,7 @@ LiVESWidget *events_rec_dialog (boolean allow_mt) {
 		    G_CALLBACK (set_render_choice),
 		    GINT_TO_POINTER (RENDER_CHOICE_EVENT_LIST));
 
-  cancelbutton = lives_button_new_from_stock ("gtk-cancel");
+  cancelbutton = lives_button_new_from_stock (LIVES_STOCK_CANCEL);
   lives_widget_set_can_focus (cancelbutton,TRUE);
 
   lives_dialog_add_action_widget (LIVES_DIALOG (e_rec_dialog), cancelbutton, GTK_RESPONSE_CANCEL);
@@ -2157,7 +2157,7 @@ LiVESWidget *events_rec_dialog (boolean allow_mt) {
 
   lives_window_add_accel_group (LIVES_WINDOW (e_rec_dialog), accel_group);
 
-  okbutton = lives_button_new_from_stock ("gtk-ok");
+  okbutton = lives_button_new_from_stock (LIVES_STOCK_OK);
   lives_widget_show (okbutton);
   lives_dialog_add_action_widget (LIVES_DIALOG (e_rec_dialog), okbutton, GTK_RESPONSE_OK);
   lives_widget_set_can_focus_and_default (okbutton);
@@ -3519,7 +3519,7 @@ lives_render_error_t render_events (boolean reset) {
 	  cfile->arps=cfile->undo_arps;
 	  cfile->asampsize=cfile->undo_asampsize;
 	  if (cfile->proc_ptr!=NULL) {
-	    blabel=g_strdup(gtk_label_get_text(LIVES_LABEL(cfile->proc_ptr->label)));
+	    blabel=g_strdup(lives_label_get_text(LIVES_LABEL(cfile->proc_ptr->label)));
 	    lives_label_set_text(LIVES_LABEL(cfile->proc_ptr->label),nlabel);
 	    lives_widget_queue_draw(cfile->proc_ptr->processing);
 	    lives_widget_context_update();
@@ -3594,7 +3594,7 @@ lives_render_error_t render_events (boolean reset) {
 		cfile->asampsize=cfile->undo_asampsize;
 
 		if (cfile->proc_ptr!=NULL) {
-		  blabel=g_strdup(gtk_label_get_text(LIVES_LABEL(cfile->proc_ptr->label)));
+		  blabel=g_strdup(lives_label_get_text(LIVES_LABEL(cfile->proc_ptr->label)));
 		  lives_label_set_text(LIVES_LABEL(cfile->proc_ptr->label),nlabel);
 		  lives_widget_queue_draw(cfile->proc_ptr->processing);
 		  lives_widget_context_update();
@@ -4863,7 +4863,7 @@ LiVESWidget *create_event_list_dialog (weed_plant_t *event_list, weed_timecode_t
       g_free(text);
      
       lives_table_attach (LIVES_TABLE (table), label, 0, 1, currow, currow+1,
-			(GtkAttachOptions) (GTK_EXPAND),
+			(GtkAttachOptions) (LIVES_EXPAND),
 			(GtkAttachOptions) (0), 0, 0);
      
       // event type
@@ -4894,7 +4894,7 @@ LiVESWidget *create_event_list_dialog (weed_plant_t *event_list, weed_timecode_t
       }
 
       lives_table_attach (LIVES_TABLE (table), label, 1, 2, currow, currow+1,
-			(GtkAttachOptions) (GTK_EXPAND),
+			(GtkAttachOptions) (LIVES_EXPAND),
 			(GtkAttachOptions) (0), 0, 0);
      
       // event id
@@ -4903,7 +4903,7 @@ LiVESWidget *create_event_list_dialog (weed_plant_t *event_list, weed_timecode_t
       g_free(text);
 
       lives_table_attach (LIVES_TABLE (table), label, 2, 3, currow, currow+1,
-			(GtkAttachOptions) (GTK_EXPAND),
+			(GtkAttachOptions) (LIVES_EXPAND),
 			(GtkAttachOptions) (0), 0, 0);
      
       // properties
@@ -4937,7 +4937,7 @@ LiVESWidget *create_event_list_dialog (weed_plant_t *event_list, weed_timecode_t
       lives_tree_view_append_column (LIVES_TREE_VIEW (tree), column);
      
       lives_table_attach (LIVES_TABLE (table), tree, 3, 6, currow, currow+1,
-			(GtkAttachOptions) (GTK_FILL|GTK_EXPAND),
+			(GtkAttachOptions) (LIVES_FILL|LIVES_EXPAND),
 			(GtkAttachOptions) (0), 0, 0);
      
       currow++;
@@ -5361,7 +5361,7 @@ render_details *create_render_details (int type) {
   add_fill_to_box(LIVES_BOX (daa));
 
 
-  cancelbutton = lives_button_new_from_stock ("gtk-cancel");
+  cancelbutton = lives_button_new_from_stock (LIVES_STOCK_CANCEL);
   if (!(prefs->startup_interface==STARTUP_MT&&!mainw->is_ready)) {
     lives_dialog_add_action_widget (LIVES_DIALOG (rdet->dialog), cancelbutton, GTK_RESPONSE_CANCEL);
 
@@ -5372,11 +5372,11 @@ render_details *create_render_details (int type) {
 
 
   if (!specified) {
-    rdet->okbutton = lives_button_new_from_stock ("gtk-ok");
+    rdet->okbutton = lives_button_new_from_stock (LIVES_STOCK_OK);
     lives_button_box_set_button_width (LIVES_BUTTON_BOX (daa), rdet->okbutton, DEF_BUTTON_WIDTH*4);
   }
   else  {
-    rdet->okbutton = lives_button_new_from_stock ("gtk-go-forward");
+    rdet->okbutton = lives_button_new_from_stock (LIVES_STOCK_GO_FORWARD);
     lives_button_set_label(LIVES_BUTTON(rdet->okbutton),_("_Next"));
   }
 

@@ -292,7 +292,7 @@ void check_for_special (lives_rfx_t *rfx, lives_param_t *param, LiVESBox *pbox) 
 
       if (box==NULL) return;
 
-      clist=gtk_container_get_children(LIVES_CONTAINER(box));
+      clist=lives_container_get_children(LIVES_CONTAINER(box));
       epos=g_list_index(clist,param->widgets[0]);
       g_list_free(clist);
 
@@ -307,8 +307,8 @@ void check_for_special (lives_rfx_t *rfx, lives_param_t *param, LiVESBox *pbox) 
 	lives_entry_set_editable(LIVES_ENTRY(param->widgets[0]),FALSE);
 	if (param->widgets[1]!=NULL&&
 	    LIVES_IS_LABEL(param->widgets[1])&&
-	    gtk_label_get_mnemonic_widget(LIVES_LABEL(param->widgets[1]))!=NULL) 
-	  gtk_label_set_mnemonic_widget (LIVES_LABEL(param->widgets[1]),buttond);
+	    lives_label_get_mnemonic_widget(LIVES_LABEL(param->widgets[1]))!=NULL) 
+	  lives_label_set_mnemonic_widget (LIVES_LABEL(param->widgets[1]),buttond);
 	lives_entry_set_max_length(LIVES_ENTRY (param->widgets[0]),PATH_MAX);
       }
     }

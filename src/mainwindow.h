@@ -573,8 +573,9 @@ typedef struct {
   boolean effects_paused;
   boolean did_rfx_preview;
 
-  //function pointers
   uint32_t kb_timer;
+
+  //function pointers
   gulong config_func;
   gulong pb_fps_func;
   gulong spin_start_func;
@@ -1122,9 +1123,7 @@ typedef struct {
   boolean has_session_tmpdir;
   boolean startup_error;
 
-#if GTK_CHECK_VERSION(3,0,0)
   boolean kb_timer_end;
-#endif
 
   boolean draw_blocked; // block drawing of timeline bars : prevents an infinite loop
 

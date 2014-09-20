@@ -745,7 +745,7 @@ static void omc_macro_row_add_params(lives_omc_match_node_t *mnode, int row, omc
   lives_widget_show (mnode->treev2);
   
   lives_table_attach (LIVES_TABLE (omclw->table), mnode->treev2, 3, 4, row, row+1,
-		    (GtkAttachOptions) (GTK_FILL|GTK_EXPAND),
+		    (GtkAttachOptions) (LIVES_FILL|LIVES_EXPAND),
 		    (GtkAttachOptions) (0), 0, 0);
   
 
@@ -1261,7 +1261,7 @@ static void clear_unmatched (LiVESButton *button, gpointer user_data) {
 
   // destroy everything in table
   
-  gtk_container_foreach(LIVES_CONTAINER(omclw->table),killit,NULL);
+  lives_container_foreach(LIVES_CONTAINER(omclw->table),killit,NULL);
 
   remove_all_nodes(FALSE,omclw);
 
@@ -1277,7 +1277,7 @@ static void del_all (LiVESButton *button, gpointer user_data) {
 
   // destroy everything in table
   
-  gtk_container_foreach(LIVES_CONTAINER(omclw->table),killit,NULL);
+  lives_container_foreach(LIVES_CONTAINER(omclw->table),killit,NULL);
 
   remove_all_nodes(TRUE,omclw);
 
@@ -2092,7 +2092,7 @@ boolean omc_process_string(int supertype, const gchar *string, boolean learn, om
 
 
 
-void on_midi_learn_activate (GtkMenuItem *menuitem, gpointer user_data) {
+void on_midi_learn_activate (LiVESMenuItem *menuitem, gpointer user_data) {
   omclearn_w *omclw=create_omclearn_dialog();
   gchar *string=NULL;
 
@@ -2414,7 +2414,7 @@ OSCbuf *omc_learner_decode(int type, int idx, const gchar *string) {
  */
 
 
-void on_midi_save_activate (GtkMenuItem *menuitem, gpointer user_data) {
+void on_midi_save_activate (LiVESMenuItem *menuitem, gpointer user_data) {
   GSList *slist=omc_node_list;
 
   size_t srchlen;
@@ -2536,7 +2536,7 @@ static void do_midi_version_error(const gchar *fname) {
 
 
 
-void on_midi_load_activate (GtkMenuItem *menuitem, gpointer user_data) {
+void on_midi_load_activate (LiVESMenuItem *menuitem, gpointer user_data) {
   lives_omc_match_node_t *mnode;
   lives_omc_macro_t omacro;
 

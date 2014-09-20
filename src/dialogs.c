@@ -194,9 +194,9 @@ static LiVESWidget* create_warn_dialog (int warn_mask_number, GtkWindow *transie
     lives_window_set_title (LIVES_WINDOW (dialog), _("LiVES: - Question"));
     widget_opts.justify=LIVES_JUSTIFY_CENTER;
     widget_opts.justify=LIVES_JUSTIFY_DEFAULT;
-    warning_cancelbutton = lives_button_new_from_stock ("gtk-no");
+    warning_cancelbutton = lives_button_new_from_stock (LIVES_STOCK_NO);
     lives_dialog_add_action_widget (LIVES_DIALOG (dialog), warning_cancelbutton, LIVES_NO);
-    warning_okbutton = lives_button_new_from_stock ("gtk-yes");
+    warning_okbutton = lives_button_new_from_stock (LIVES_STOCK_YES);
     lives_dialog_add_action_widget (LIVES_DIALOG (dialog), warning_okbutton, LIVES_YES);
     break;
   case LIVES_DIALOG_ABORT_CANCEL_RETRY:
@@ -204,12 +204,12 @@ static LiVESWidget* create_warn_dialog (int warn_mask_number, GtkWindow *transie
     lives_window_set_title (LIVES_WINDOW (dialog), _("LiVES: - File Error"));
     widget_opts.justify=LIVES_JUSTIFY_CENTER;
     widget_opts.justify=LIVES_JUSTIFY_DEFAULT;
-    abortbutton = lives_button_new_from_stock ("gtk-quit");
+    abortbutton = lives_button_new_from_stock (LIVES_STOCK_QUIT);
     lives_button_set_label(LIVES_BUTTON(abortbutton),_("_Abort"));
     lives_dialog_add_action_widget (LIVES_DIALOG (dialog), abortbutton, LIVES_ABORT);
-    warning_cancelbutton = lives_button_new_from_stock ("gtk-cancel");
+    warning_cancelbutton = lives_button_new_from_stock (LIVES_STOCK_CANCEL);
     lives_dialog_add_action_widget (LIVES_DIALOG (dialog), warning_cancelbutton, LIVES_CANCEL);
-    warning_okbutton = lives_button_new_from_stock ("gtk-refresh");
+    warning_okbutton = lives_button_new_from_stock (LIVES_STOCK_REFRESH);
     lives_button_set_label(LIVES_BUTTON(warning_okbutton),_("_Retry"));
     lives_dialog_add_action_widget (LIVES_DIALOG (dialog), warning_okbutton, LIVES_RETRY);
     break;
@@ -238,7 +238,7 @@ static LiVESWidget* create_warn_dialog (int warn_mask_number, GtkWindow *transie
   dialog_vbox = lives_dialog_get_content_area(LIVES_DIALOG(dialog));
 
   lives_box_pack_start (LIVES_BOX (dialog_vbox), warning_label, TRUE, TRUE, 0);
-  gtk_label_set_selectable (LIVES_LABEL (warning_label), TRUE);
+  lives_label_set_selectable (LIVES_LABEL (warning_label), TRUE);
 
   if (mainw->add_clear_ds_adv) {
     mainw->add_clear_ds_adv=FALSE;
@@ -907,7 +907,7 @@ static void disp_fraction(int done, int start, int end, double timesofar, xproce
   if (fraction_done>1.) fraction_done=1.;
   if (fraction_done<0.) fraction_done=0.;
 
-  if (done>disp_frames_done) gtk_progress_bar_set_fraction(GTK_PROGRESS_BAR(proc->progressbar),fraction_done);
+  if (done>disp_frames_done) lives_progress_bar_set_fraction(LIVES_PROGRESS_BAR(proc->progressbar),fraction_done);
 
   est_time=timesofar/fraction_done-timesofar;
   prog_label=g_strdup_printf(_("\n%s%d%% done. Time remaining: %u sec%s\n"),stretch,(int)(fraction_done*100.),(guint)(est_time+.5),stretch);
@@ -940,7 +940,7 @@ static void progbar_pulse_or_fraction(lives_clip_t *sfile, int frames_done) {
       progress_count=0;
     }
     else {
-      gtk_progress_bar_pulse(GTK_PROGRESS_BAR(sfile->proc_ptr->progressbar));
+      lives_progress_bar_pulse(LIVES_PROGRESS_BAR(sfile->proc_ptr->progressbar));
       progress_count=0;
     }
   }
@@ -1307,13 +1307,13 @@ boolean process_one (boolean visible) {
 		timesofar=(mainw->currticks-mainw->timeout_ticks)/U_SEC;
 		est_time=timesofar/fraction_done-timesofar;
 	      }
-	      gtk_progress_bar_set_fraction(GTK_PROGRESS_BAR(cfile->proc_ptr->progressbar),fraction_done);
+	      lives_progress_bar_set_fraction(LIVES_PROGRESS_BAR(cfile->proc_ptr->progressbar),fraction_done);
 	      if (est_time!=-1.) prog_label=g_strdup_printf(_("\n%d/%d frames opened. Time remaining %u sec.\n"),
 							    mainw->opening_frames-1,cfile->frames,(guint)(est_time+.5));
 	      else prog_label=g_strdup_printf(_("\n%d/%d frames opened.\n"),mainw->opening_frames-1,cfile->frames);
 	    }
 	    else {
-	      gtk_progress_bar_pulse(GTK_PROGRESS_BAR(cfile->proc_ptr->progressbar));
+	      lives_progress_bar_pulse(LIVES_PROGRESS_BAR(cfile->proc_ptr->progressbar));
 	      prog_label=g_strdup_printf(_("\n%d frames opened.\n"),mainw->opening_frames-1);
 	    }
 	    lives_label_set_text(LIVES_LABEL(cfile->proc_ptr->label3),prog_label);
@@ -1441,7 +1441,7 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const gchar *te
     cfile->proc_ptr=create_processing (mytext);
     if (mytext!=NULL) g_free(mytext);
 
-    gtk_progress_bar_set_pulse_step(GTK_PROGRESS_BAR(cfile->proc_ptr->progressbar),.01);
+    lives_progress_bar_set_pulse_step(LIVES_PROGRESS_BAR(cfile->proc_ptr->progressbar),.01);
     if (mainw->show_procd) lives_widget_show(cfile->proc_ptr->processing);
     
     cfile->proc_ptr->frames_done=0;
@@ -1878,7 +1878,7 @@ boolean do_auto_dialog (const gchar *text, int type) {
     mainw->cancel_type=CANCEL_SOFT;
   }
 
-  gtk_progress_bar_set_pulse_step(GTK_PROGRESS_BAR(proc_ptr->progressbar),.01);
+  lives_progress_bar_set_pulse_step(LIVES_PROGRESS_BAR(proc_ptr->progressbar),.01);
   lives_widget_show(proc_ptr->processing);
   
   lives_set_cursor_style(LIVES_CURSOR_BUSY,NULL);
@@ -1903,7 +1903,7 @@ boolean do_auto_dialog (const gchar *text, int type) {
 
   while ((type==0||((type==1||type==2)&&mainw->cancelled==CANCEL_NONE))
 	 &&((type==1||((type==0||type==2)&&!(infofile=fopen(cfile->info_file,"r")))))) {
-    gtk_progress_bar_pulse(GTK_PROGRESS_BAR(proc_ptr->progressbar));
+    lives_progress_bar_pulse(LIVES_PROGRESS_BAR(proc_ptr->progressbar));
     lives_widget_context_update();
     g_usleep(prefs->sleep_time);
     if (type==1&&mainw->rec_end_time!=-1.) {
@@ -1927,7 +1927,7 @@ boolean do_auto_dialog (const gchar *text, int type) {
     if (cfile->clip_type==CLIP_TYPE_DISK) unlink(cfile->info_file);
 
     while (!lives_alarm_get(alarm_handle)) {
-      gtk_progress_bar_pulse(GTK_PROGRESS_BAR(proc_ptr->progressbar));
+      lives_progress_bar_pulse(LIVES_PROGRESS_BAR(proc_ptr->progressbar));
       lives_widget_context_update();
       g_usleep(prefs->sleep_time);
     }
@@ -2532,8 +2532,8 @@ static void create_threaded_dialog(gchar *text, boolean has_cancel) {
   procw->label = lives_standard_label_new (tmp_label);
   lives_box_pack_start (LIVES_BOX (vbox), procw->label, FALSE, FALSE, 0);
 
-  procw->progressbar = gtk_progress_bar_new ();
-  gtk_progress_bar_set_pulse_step(GTK_PROGRESS_BAR(procw->progressbar),.01);
+  procw->progressbar = lives_progress_bar_new ();
+  lives_progress_bar_set_pulse_step(LIVES_PROGRESS_BAR(procw->progressbar),.01);
   lives_box_pack_start (LIVES_BOX (vbox), procw->progressbar, FALSE, FALSE, 0);
 
   if (widget_opts.apply_theme&&(palette->style&STYLE_1)) {
@@ -2551,7 +2551,7 @@ static void create_threaded_dialog(gchar *text, boolean has_cancel) {
   lives_box_pack_start (LIVES_BOX (vbox), procw->label3, FALSE, FALSE, 0);
 
   if (has_cancel) {
-    LiVESWidget *cancelbutton = lives_button_new_from_stock ("gtk-cancel");
+    LiVESWidget *cancelbutton = lives_button_new_from_stock (LIVES_STOCK_CANCEL);
     lives_widget_show (cancelbutton);
 
     if (mainw->current_file>-1&&cfile!=NULL&&cfile->opening_only_audio) {
@@ -2600,7 +2600,7 @@ void threaded_dialog_spin (void) {
   if (mainw->current_file<0||cfile==NULL||cfile->progress_start==0||cfile->progress_end==0||
       strlen(mainw->msg)==0||(progress=atoi(mainw->msg))==0) {
     // pulse the progress bar
-    gtk_progress_bar_pulse(GTK_PROGRESS_BAR(procw->progressbar));
+    lives_progress_bar_pulse(LIVES_PROGRESS_BAR(procw->progressbar));
   }
   else {
     // show fraction
@@ -2617,7 +2617,7 @@ void threaded_dialog_spin (void) {
 
 
 void *splash_prog (void) {
-  gtk_progress_bar_pulse(GTK_PROGRESS_BAR(mainw->splash_progress));
+  lives_progress_bar_pulse(LIVES_PROGRESS_BAR(mainw->splash_progress));
   return NULL;
 }
 

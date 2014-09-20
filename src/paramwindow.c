@@ -40,7 +40,7 @@
 #endif
 
 extern boolean do_effect (lives_rfx_t *, boolean is_preview); //effects.c in LiVES
-extern void on_realfx_activate (GtkMenuItem *, gpointer rfx); // effects.c in LiVES
+extern void on_realfx_activate (LiVESMenuItem *, gpointer rfx); // effects.c in LiVES
 
 
 static void after_param_text_buffer_changed (GtkTextBuffer *textbuffer, lives_rfx_t *rfx);
@@ -277,7 +277,7 @@ static lives_widget_group_t *get_group(lives_rfx_t *rfx, lives_param_t *param) {
 }
 
 
-void on_render_fx_activate (GtkMenuItem *menuitem, lives_rfx_t *rfx) {
+void on_render_fx_activate (LiVESMenuItem *menuitem, lives_rfx_t *rfx) {
   boolean has_lmap_error=FALSE;
 
   if (menuitem!=NULL&&!(prefs->warning_mask&WARN_MASK_LAYOUT_ALTER_FRAMES)&&rfx->num_in_channels>0&&
@@ -690,7 +690,7 @@ static void add_gen_to(GtkBox *vbox, lives_rfx_t *rfx) {
 
 
 
-void on_render_fx_pre_activate (GtkMenuItem *menuitem, lives_rfx_t *rfx) {
+void on_render_fx_pre_activate (LiVESMenuItem *menuitem, lives_rfx_t *rfx) {
   on_fx_pre_activate(rfx,0,NULL);
 }
 
@@ -882,7 +882,7 @@ void on_fx_pre_activate (lives_rfx_t *rfx, int didx, LiVESWidget *pbox) {
 
   if (top_dialog_vbox!=NULL) {
 
-    cancelbutton = lives_button_new_from_stock ("gtk-cancel");
+    cancelbutton = lives_button_new_from_stock (LIVES_STOCK_CANCEL);
     
     fxw_accel_group = LIVES_ACCEL_GROUP(lives_accel_group_new ());
     lives_window_add_accel_group (LIVES_WINDOW (fx_dialog[didx]), fxw_accel_group);
@@ -902,7 +902,7 @@ void on_fx_pre_activate (lives_rfx_t *rfx, int didx, LiVESWidget *pbox) {
 	if (!has_param) lives_widget_set_sensitive(resetbutton,FALSE);
 	lives_dialog_add_action_widget (LIVES_DIALOG (fx_dialog[didx]), resetbutton, LIVES_RESET);
       }
-      else okbutton = lives_button_new_from_stock ("gtk-ok");
+      else okbutton = lives_button_new_from_stock (LIVES_STOCK_OK);
       lives_dialog_add_action_widget (LIVES_DIALOG (fx_dialog[didx]), okbutton, GTK_RESPONSE_OK);
     }
     else {
@@ -1736,7 +1736,7 @@ boolean add_param_to_box (GtkBox *box, lives_rfx_t *rfx, int pnum, boolean add_s
 			    (gpointer) rfx);
 
     if (param->hidden) lives_widget_set_sensitive(param->widgets[0],FALSE);
-    if (use_mnemonic) gtk_label_set_mnemonic_widget (LIVES_LABEL (label),param->widgets[0]);
+    if (use_mnemonic) lives_label_set_mnemonic_widget (LIVES_LABEL (label),param->widgets[0]);
 
     g_free (txt);
 
@@ -1795,7 +1795,7 @@ void add_param_label_to_box (GtkBox *box, boolean do_trans, const gchar *text) {
     char *markup;
     markup=g_markup_printf_escaped("<span weight=\"bold\" style=\"italic\"> %s </span>",_(text));
     label = lives_standard_label_new(NULL);
-    gtk_label_set_markup_with_mnemonic (LIVES_LABEL(label),markup);
+    lives_label_set_markup_with_mnemonic (LIVES_LABEL(label),markup);
     g_free(markup);
   }
   else label = lives_standard_label_new_with_mnemonic (text,NULL);

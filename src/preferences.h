@@ -341,6 +341,8 @@ typedef struct {
 
   boolean ce_thumb_mode;
 
+  boolean show_button_images;
+
 } _prefs;
 
 enum {

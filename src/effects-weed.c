@@ -4688,10 +4688,10 @@ static void make_fx_defs_menu(void) {
 	      
 	    pkg_menu=lives_menu_item_new_with_label (pkgstring);
 	    lives_container_add (LIVES_CONTAINER (mainw->rte_defs), pkg_menu);
-	    gtk_menu_reorder_child(GTK_MENU(mainw->rte_defs),pkg_menu,pkg_posn++);
+	    lives_menu_reorder_child(LIVES_MENU(mainw->rte_defs),pkg_menu,pkg_posn++);
 	      
 	    pkg_submenu=lives_menu_new();
-	    lives_menu_item_set_submenu (GTK_MENU_ITEM (pkg_menu), pkg_submenu);
+	    lives_menu_item_set_submenu (LIVES_MENU_ITEM (pkg_menu), pkg_submenu);
 	      
 	    if (palette->style&STYLE_1) {
 	      lives_widget_set_bg_color(pkg_submenu, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
@@ -6643,6 +6643,7 @@ boolean weed_init_effect(int hotkey) {
   }
 
   if (inc_count==0&&outc_count>0&&!is_audio_gen) {
+    g_print("pt zz\n");
     // generator start
     if (mainw->num_tr_applied>0&&!fg_modeswitch&&mainw->current_file>-1&&mainw->playing_file>-1) {
       // transition is on, make into bg clip
@@ -7317,7 +7318,9 @@ boolean weed_generator_start (weed_plant_t *inst, int key) {
       if (!mainw->fx_is_auto) ce_thumbs_add_param_box(key,!mainw->fx_is_auto);
     }
 
+    g_print("pt a\n");
     play_file();
+    g_print("pt b\n");
 
     if (mainw->play_window!=NULL) {
       lives_widget_queue_draw(mainw->play_window);

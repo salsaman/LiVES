@@ -700,7 +700,7 @@ static void on_reorder_activate (int rwidth, int rheight) {
 
 
 void
-on_resample_audio_activate (GtkMenuItem     *menuitem,
+on_resample_audio_activate (LiVESMenuItem     *menuitem,
 			    gpointer         user_data)
 {
    // show the playback rate - real audio rate is cfile->arps
@@ -949,7 +949,7 @@ on_resaudw_asamps_changed (LiVESWidget *irrelevant, gpointer rubbish) {
 
 
 void
-on_resample_video_activate (GtkMenuItem     *menuitem,
+on_resample_video_activate (LiVESMenuItem     *menuitem,
 			    gpointer         user_data)
 {
   // change speed from the menu
@@ -1570,7 +1570,7 @@ _resaudw *create_resaudw (gshort type, render_details *rdet, LiVESWidget *top_vb
     lives_widget_show (dialog_action_area);
     lives_button_box_set_layout (LIVES_BUTTON_BOX (dialog_action_area), LIVES_BUTTONBOX_END);
     
-    cancelbutton = lives_button_new_from_stock ("gtk-cancel");
+    cancelbutton = lives_button_new_from_stock (LIVES_STOCK_CANCEL);
  
     lives_dialog_add_action_widget (LIVES_DIALOG (resaudw->dialog), cancelbutton, GTK_RESPONSE_CANCEL);
     lives_widget_set_can_focus_and_default (cancelbutton);
@@ -1579,7 +1579,7 @@ _resaudw *create_resaudw (gshort type, render_details *rdet, LiVESWidget *top_vb
 						       LIVES_KEY_Escape, (GdkModifierType)0, (GtkAccelFlags)0);
     
       
-    okbutton = lives_button_new_from_stock ("gtk-ok");
+    okbutton = lives_button_new_from_stock (LIVES_STOCK_OK);
  
     lives_dialog_add_action_widget (LIVES_DIALOG (resaudw->dialog), okbutton, GTK_RESPONSE_OK);
     lives_widget_set_can_focus_and_default (okbutton);
@@ -1733,11 +1733,11 @@ void create_new_pb_speed (short type) {
 							 (double)((int)(cfile->frames/cfile->fps*100.))/100., 
 							 1./FPS_MAX, cfile->frames, 1., 10., 2, LIVES_BOX(hbox),NULL);
 
-    gtk_label_set_mnemonic_widget (LIVES_LABEL (label2), spinbutton_pb_time);
+    lives_label_set_mnemonic_widget (LIVES_LABEL (label2), spinbutton_pb_time);
 
   }
 
-  gtk_label_set_mnemonic_widget (LIVES_LABEL (label), spinbutton_pb_speed);
+  lives_label_set_mnemonic_widget (LIVES_LABEL (label), spinbutton_pb_speed);
 
 
   ca_hbox = lives_hbox_new (FALSE, 0);
@@ -1750,14 +1750,14 @@ void create_new_pb_speed (short type) {
   dialog_action_area = lives_dialog_get_action_area(LIVES_DIALOG (new_pb_speed));
   lives_button_box_set_layout (LIVES_BUTTON_BOX (dialog_action_area), LIVES_BUTTONBOX_END);
 
-  cancelbutton = lives_button_new_from_stock ("gtk-cancel");
+  cancelbutton = lives_button_new_from_stock (LIVES_STOCK_CANCEL);
   lives_dialog_add_action_widget (LIVES_DIALOG (new_pb_speed), cancelbutton, GTK_RESPONSE_CANCEL);
   lives_widget_set_can_focus (cancelbutton,TRUE);
 
   lives_widget_add_accelerator (cancelbutton, "activate", accel_group,
                               LIVES_KEY_Escape, (GdkModifierType)0, (GtkAccelFlags)0);
 
-  change_pb_ok = lives_button_new_from_stock ("gtk-ok");
+  change_pb_ok = lives_button_new_from_stock (LIVES_STOCK_OK);
   lives_dialog_add_action_widget (LIVES_DIALOG (new_pb_speed), change_pb_ok, GTK_RESPONSE_OK);
   lives_widget_set_can_focus_and_default (change_pb_ok);
   lives_widget_grab_default (change_pb_ok);
@@ -1812,7 +1812,7 @@ void create_new_pb_speed (short type) {
 
 
 void
-on_change_speed_activate                (GtkMenuItem     *menuitem,
+on_change_speed_activate                (LiVESMenuItem     *menuitem,
 					 gpointer         user_data)
 {
   // change speed from the menu

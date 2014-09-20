@@ -163,7 +163,7 @@ void framedraw_add_reset(LiVESVBox *box, lives_special_framedraw_rect_t *framedr
  
   framedraw_add_label(box);
 
-  mainw->framedraw_reset = lives_button_new_from_stock ("gtk-refresh");
+  mainw->framedraw_reset = lives_button_new_from_stock (LIVES_STOCK_REFRESH);
   hbox_rst = lives_hbox_new (FALSE, 0);
   lives_box_pack_start (LIVES_BOX (box), hbox_rst, FALSE, FALSE, 0);
   
@@ -274,7 +274,7 @@ void widget_add_framedraw (LiVESVBox *box, int start, int end, boolean add_previ
   gtk_scale_set_draw_value(GTK_SCALE(mainw->framedraw_scale),FALSE);
 
   rfx=(lives_rfx_t *)g_object_get_data(G_OBJECT(lives_widget_get_toplevel(LIVES_WIDGET(box))),"rfx");
-  mainw->framedraw_preview = lives_button_new_from_stock ("gtk-refresh");
+  mainw->framedraw_preview = lives_button_new_from_stock (LIVES_STOCK_REFRESH);
   lives_button_set_label (LIVES_BUTTON (mainw->framedraw_preview),_ ("_Preview"));
   lives_button_set_use_underline (LIVES_BUTTON (mainw->framedraw_preview), TRUE);
   lives_box_pack_start (LIVES_BOX (hbox), mainw->framedraw_preview, TRUE, FALSE, 0);

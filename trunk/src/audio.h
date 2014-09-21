@@ -222,7 +222,7 @@ void apply_rte_audio_end(boolean del);
 boolean apply_rte_audio(int nframes);
 
 void append_to_audio_bufferf(lives_audio_buf_t *abuf, float *src, uint64_t nsamples, int channum);
-void append_to_audio_buffer16(lives_audio_buf_t *abuf, int16_t *src, uint64_t nsamples, int channum);
+void append_to_audio_buffer16(lives_audio_buf_t *abuf, uint8_t *src, uint64_t nsamples, int channum);
 boolean push_audio_to_channel(weed_plant_t *achan, lives_audio_buf_t *abuf);
 
 boolean start_audio_stream(void);

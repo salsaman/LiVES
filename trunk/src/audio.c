@@ -71,11 +71,56 @@ void append_to_audio_bufferf(lives_audio_buf_t *abuf, float *src, uint64_t nsamp
 
 
 
-void append_to_audio_buffer16(lives_audio_buf_t *abuf, int16_t *src, uint64_t nsamples, int channum) { 
+void append_to_audio_buffer16(lives_audio_buf_t *abuf, uint8_t *src, uint64_t nsamples, int channum) { 
   // append 16 bit audio to the audio frame buffer
   size_t nsampsize=(abuf->samples_filled+nsamples)*2;
   abuf->buffer16[channum]=g_realloc(abuf->buffer16[channum],nsampsize);
   lives_memcpy(&abuf->buffer16[channum][abuf->samples_filled],src,nsamples*2);
+}
+
+
+
+void init_audio_frame_buffer(short aplayer) {
+  // function should be called when the first video generator with audio input is enabled
+
+  lives_audio_buf_t *abuf;
+  abuf=mainw->audio_frame_buffer=(lives_audio_buf_t *)g_malloc0(sizeof(lives_audio_buf_t));
+
+  abuf->samples_filled=0;
+  abuf->swap_endian=FALSE;
+
+  switch (aplayer) {
+  case AUD_PLAYER_PULSE:
+    abuf->in_interleaf=TRUE;
+    abuf->s16_signed=TRUE;
+    abuf->out_achans=2;
+    abuf->arate=mainw->pulsed->out_arate;
+    break;
+  case AUD_PLAYER_JACK:
+    abuf->in_interleaf=FALSE;
+    abuf->out_interleaf=FALSE;
+    abuf->out_achans=2;
+    abuf->arate=mainw->jackd->sample_out_rate;
+    break;
+  default:
+    break;
+  }
+
+}
+
+
+
+void free_audio_frame_buffer(lives_audio_buf_t *abuf) {
+  // function should be called when the last video generator with audio input is disabled
+  if (abuf!=NULL) {
+    if (abuf->bufferf!=NULL) g_free(abuf->bufferf);
+    if (abuf->buffer32!=NULL) g_free(abuf->buffer32);
+    if (abuf->buffer24!=NULL) g_free(abuf->buffer24);
+    if (abuf->buffer16!=NULL) g_free(abuf->buffer16);
+    if (abuf->buffer8!=NULL) g_free(abuf->buffer8);
+    g_free(abuf);
+  }
+
 }
 
 
@@ -86,7 +131,7 @@ LIVES_INLINE void sample_silence_dS (float *dst, uint64_t nsamples) {
 }
 
 
-void sample_move_d8_d16(short *dst, unsigned char *src,
+void sample_move_d8_d16(short *dst, uint8_t *src,
 			uint64_t nsamples, size_t tbytes, float scale, int nDstChannels, int nSrcChannels, int swap_sign) {
   // convert 8 bit audio to 16 bit audio
 
@@ -141,14 +186,14 @@ void sample_move_d8_d16(short *dst, unsigned char *src,
 
 
 /* convert from any number of source channels to any number of destination channels - both interleaved */
-void sample_move_d16_d16(short *dst, short *src,
+void sample_move_d16_d16(int16_t *dst, int16_t *src,
 			 uint64_t nsamples, size_t tbytes, float scale, int nDstChannels, int nSrcChannels, int swap_endian, int swap_sign) {
   register int nSrcCount, nDstCount;
   register float src_offset_f=0.f;
   register int src_offset_i=0;
   register int ccount=0;
-  short *ptr;
-  short *src_end;
+  int16_t *ptr;
+  int16_t *src_end;
 
   if(!nSrcChannels) return;
 
@@ -168,7 +213,7 @@ void sample_move_d16_d16(short *dst, short *src,
       ptr=src+src_offset_i;
       ptr=ptr>src?(ptr<src_end?ptr:src_end):src;
 
-      lives_memcpy(dst,ptr,nSrcChannels*sizeof(short));
+      lives_memcpy(dst,ptr,nSrcChannels*2);
       dst+=nDstCount;
     } 
     else {
@@ -2834,6 +2879,9 @@ boolean apply_rte_audio(int nframes) {
 boolean push_audio_to_channel(weed_plant_t *achan, lives_audio_buf_t *abuf) {
   // push audio from abuf into an audio channel
   // audio will be formatted to the channel requested format
+
+  // NB: if player is jack, we will have non-interleaved float
+  // if player is pulse, we will have interleaved S16
   void *dst,*src;
 
   weed_plant_t *ctmpl;
@@ -2895,9 +2943,16 @@ boolean push_audio_to_channel(weed_plant_t *achan, lives_audio_buf_t *abuf) {
       abuf->bufferf=g_malloc(abuf->out_achans*sizeof(float *));
       for (i=0;i<abuf->out_achans;i++) {
 	abuf->bufferf[i]=g_malloc(abuf->samples_filled*sizeof(float));
-	sample_move_d16_float(abuf->bufferf[i],abuf->buffer16[i],abuf->samples_filled,abuf->out_achans,
-			      (abuf->s16_signed?AFORM_SIGNED:AFORM_UNSIGNED),abuf->swap_endian,1.0);
+	if (!abuf->in_interleaf) {
+	  sample_move_d16_float(abuf->bufferf[i],abuf->buffer16[i],abuf->samples_filled,1,
+				(abuf->s16_signed?AFORM_SIGNED:AFORM_UNSIGNED),abuf->swap_endian,1.0);
+	}
+	else {
+	  sample_move_d16_float(abuf->bufferf[i],&abuf->buffer16[0][i],abuf->samples_filled,abuf->out_achans,
+				(abuf->s16_signed?AFORM_SIGNED:AFORM_UNSIGNED),abuf->swap_endian,1.0);
+	}
       }
+      abuf->out_interleaf=FALSE;
     }
   }
 

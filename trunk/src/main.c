@@ -365,6 +365,8 @@ static boolean pre_init(void) {
 
   pthread_mutex_init(&mainw->abuf_mutex,NULL);
 
+  pthread_mutex_init(&mainw->abuf_frame_mutex,NULL);
+
   pthread_mutex_init(&mainw->fxd_active_mutex,NULL);
 
   pthread_mutex_init(&mainw->event_list_mutex,NULL);
@@ -1068,6 +1070,8 @@ static void lives_init(_ign_opts *ign_opts) {
 
   mainw->fx_is_auto=FALSE;
   mainw->gen_started_play=FALSE;
+
+  mainw->audio_frame_buffer=NULL;
   /////////////////////////////////////////////////// add new stuff just above here ^^
 
 

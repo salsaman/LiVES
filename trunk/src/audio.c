@@ -1,6 +1,6 @@
 // audio.c
 // LiVES (lives-exe)
-// (c) G. Finch 2005 - 2012
+// (c) G. Finch 2005 - 2014
 // Released under the GPL 3 or later
 // see file ../COPYING for licensing details
 
@@ -62,9 +62,26 @@ void audio_free_fnames(void) {
 }
 
 
+void append_to_audio_bufferf(lives_audio_buf_t *abuf, float *src, uint64_t nsamples, int channum) { 
+  // append float audio to the audio frame buffer
+  size_t nsampsize=(abuf->samples_filled+nsamples)*sizeof(float);
+  abuf->bufferf[channum]=g_realloc(abuf->bufferf[channum],nsampsize);
+  lives_memcpy(&abuf->bufferf[channum][abuf->samples_filled],src,nsamples*sizeof(float));
+}
+
+
+
+void append_to_audio_buffer16(lives_audio_buf_t *abuf, int16_t *src, uint64_t nsamples, int channum) { 
+  // append 16 bit audio to the audio frame buffer
+  size_t nsampsize=(abuf->samples_filled+nsamples)*2;
+  abuf->buffer16[channum]=g_realloc(abuf->buffer16[channum],nsampsize);
+  lives_memcpy(&abuf->buffer16[channum][abuf->samples_filled],src,nsamples*2);
+}
+
 
 
 LIVES_INLINE void sample_silence_dS (float *dst, uint64_t nsamples) {
+  // send silence to the jack player
   memset(dst,0,nsamples*sizeof(float));
 }
 
@@ -317,13 +334,16 @@ void sample_move_d16_float (float *dst, short *src, uint64_t nsamples, uint64_t 
 
 
 
-void sample_move_float_float (float *dst, float *src, uint64_t nsamples, uint64_t src_skip, float vol) {
-  // copy one channel of (interleaved) float to a buffer, applying the volume
+void sample_move_float_float (float *dst, float *src, uint64_t nsamples, float scale, int dst_skip) {
+  // copy one channel of float to a buffer, applying the scale (scale 2.0 to double the rate, etc)
+  size_t offs=0;
+  float offs_f=0.;
   register int i;
 
   for (i=0;i<nsamples;i++) {
-    *(dst++)=*src*vol;
-    src+=src_skip;
+    *dst=src[offs];
+    dst+=dst_skip;
+    offs=(size_t)(offs_f+=scale);
   }
 }
 
@@ -2424,6 +2444,8 @@ lives_audio_buf_t *audio_cache_init (void) {
 
 
 void audio_cache_end (void) {
+  // TODO - check why we are using free() here
+
   int i;
   lives_audio_buf_t *xcache_buffer;
 
@@ -2804,6 +2826,126 @@ boolean apply_rte_audio(int nframes) {
     return FALSE;
   }
 
+  return TRUE;
+}
+
+
+
+boolean push_audio_to_channel(weed_plant_t *achan, lives_audio_buf_t *abuf) {
+  // push audio from abuf into an audio channel
+  // audio will be formatted to the channel requested format
+  void *dst,*src;
+
+  weed_plant_t *ctmpl;
+
+  float scale;
+
+  size_t samps,offs;
+
+  boolean tinter;
+  int trate,tlen,tchans;
+  int alen;
+  int error;
+
+  register int i;
+
+  if (abuf->samples_filled==0) {
+    weed_set_int_value(achan,"audio_data_length",0);
+    weed_set_voidptr_value(achan,"audio_data",NULL);
+    return FALSE;
+  }
+
+  ctmpl=weed_get_plantptr_value(achan,"template",&error);
+
+  if (weed_plant_has_leaf(achan,"audio_rate")) trate=weed_get_int_value(achan,"audio_rate",&error);
+  else if (weed_plant_has_leaf(ctmpl,"audio_rate")) trate=weed_get_int_value(ctmpl,"audio_rate",&error);
+  else trate=DEFAULT_AUDIO_RATE;
+
+  if (weed_plant_has_leaf(achan,"audio_channels")) tchans=weed_get_int_value(achan,"audio_channels",&error);
+  else if (weed_plant_has_leaf(ctmpl,"audio_channels")) tchans=weed_get_int_value(ctmpl,"audio_channels",&error);
+  else tchans=DEFAULT_AUDIO_CHANS;
+
+  if (weed_plant_has_leaf(achan,"audio_interleaf")) tinter=weed_get_boolean_value(achan,"audio_interleaf",&error);
+  else if (weed_plant_has_leaf(ctmpl,"audio_interleaf")) tinter=weed_get_boolean_value(ctmpl,"audio_interleaf",&error);
+  else tinter=FALSE;
+
+  if (weed_plant_has_leaf(ctmpl,"audio_data_length")) tlen=weed_get_int_value(ctmpl,"audio_data_length",&error);
+  else tlen=0;
+
+
+  // plugin will get float, so we first convert to that
+  if (abuf->bufferf==NULL) {
+    // try 8 bit -> 16 -> float
+    if (abuf->buffer8!=NULL&&abuf->buffer16==NULL) {
+      int swap=0;
+      if (!abuf->s8_signed) swap=SWAP_U_TO_S;
+      abuf->s16_signed=TRUE;
+      abuf->buffer16=g_malloc(abuf->out_achans*sizeof(int16_t *));
+      for (i=0;i<abuf->out_achans;i++) {
+	abuf->bufferf[i]=g_malloc(abuf->samples_filled*2);
+	sample_move_d8_d16 (abuf->buffer16[i],abuf->buffer8[i], abuf->samples_filled, abuf->samples_filled*2, 
+			    1.0, abuf->out_achans, abuf->out_achans, swap);
+
+      }
+    }
+
+
+    // try convert S16 -> float
+    if (abuf->buffer16!=NULL) {
+      abuf->bufferf=g_malloc(abuf->out_achans*sizeof(float *));
+      for (i=0;i<abuf->out_achans;i++) {
+	abuf->bufferf[i]=g_malloc(abuf->samples_filled*sizeof(float));
+	sample_move_d16_float(abuf->bufferf[i],abuf->buffer16[i],abuf->samples_filled,abuf->out_achans,
+			      (abuf->s16_signed?AFORM_SIGNED:AFORM_UNSIGNED),abuf->swap_endian,1.0);
+      }
+    }
+  }
+
+  if (abuf->bufferf==NULL) return FALSE;
+  // now we should have float
+
+  samps=abuf->samples_filled;
+
+  // push to achan "audio_data", taking into account "audio_data_length", "audio_interleaf", "audio_channels"
+
+  alen=samps;
+  if (alen>tlen) alen=tlen;
+
+  offs=samps-alen;
+
+  scale=(float)trate/(float)abuf->arate;
+
+  // malloc audio_data
+  dst=g_malloc(alen*tchans*sizeof(float));
+
+  // set channel values
+  weed_set_voidptr_value(achan,"audio_data",dst);
+  weed_set_boolean_value(achan,"audio_interleaf",tinter);
+  weed_set_int_value(achan,"audio_data_length",alen);
+  weed_set_int_value(achan,"audio_channels",tchans);
+  weed_set_int_value(achan,"audio_rate",trate);
+
+  // copy data from abuf->bufferf[] to "audio_data"
+  for (i=0;i<tchans;i++) {
+    src=abuf->bufferf[i%abuf->out_achans]+offs;
+    if (!tinter) {
+      if ((int)abuf->arate==trate) {
+	lives_memcpy(dst,src,alen*sizeof(float));
+      }
+      else {
+	// needs resample
+	sample_move_float_float(dst,src,alen,scale,1);
+      }
+      dst+=alen*sizeof(float);
+    }
+    else {
+      // interleaved
+      for (i=0;i<tchans;i++) {
+	sample_move_float_float(dst,src,alen,scale,tchans);
+	dst+=sizeof(float);
+      }
+    }
+  }
   return TRUE;
 }
 

@@ -154,9 +154,7 @@ static void sample_silence_pulse (pulse_driver_t *pdriver, size_t nbytes, size_t
     pa_stream_write(pdriver->pstream,buff,xbytes,pulse_buff_free,0,PA_SEEK_RELATIVE);
     if (mainw->audio_frame_buffer!=NULL) {
       pthread_mutex_lock(&mainw->abuf_frame_mutex);
-    }
-    append_to_audio_buffer16(mainw->audio_frame_buffer,buff,xbytes/2,0);
-    if (mainw->audio_frame_buffer!=NULL) {
+      append_to_audio_buffer16(mainw->audio_frame_buffer,buff,xbytes/2,0);
       mainw->audio_frame_buffer->samples_filled+=xbytes/2;
       pthread_mutex_unlock(&mainw->abuf_frame_mutex);
     }
@@ -707,9 +705,7 @@ static void pulse_audio_write_process (pa_stream *pstream, size_t nbytes, void *
 			   pulse_buff_free,0,PA_SEEK_RELATIVE);
 	   if (mainw->audio_frame_buffer!=NULL) {
 	     pthread_mutex_lock(&mainw->abuf_frame_mutex);
-	   }
-	   append_to_audio_buffer16(mainw->audio_frame_buffer,buffer,xbytes/2,0);
-	   if (mainw->audio_frame_buffer!=NULL) {
+	     append_to_audio_buffer16(mainw->audio_frame_buffer,buffer,xbytes/2,0);
 	     mainw->audio_frame_buffer->samples_filled+=xbytes/2;
 	     pthread_mutex_unlock(&mainw->abuf_frame_mutex);
 	   }
@@ -723,9 +719,7 @@ static void pulse_audio_write_process (pa_stream *pstream, size_t nbytes, void *
 	     pa_stream_write(pulsed->pstream,shortbuffer,xbytes,pulse_buff_free,0,PA_SEEK_RELATIVE);
 	     if (mainw->audio_frame_buffer!=NULL) {
 	       pthread_mutex_lock(&mainw->abuf_frame_mutex);
-	     }
-	     append_to_audio_buffer16(mainw->audio_frame_buffer,buffer,xbytes/2,0);
-	     if (mainw->audio_frame_buffer!=NULL) {
+	       append_to_audio_buffer16(mainw->audio_frame_buffer,shortbuffer,xbytes/2,0);
 	       mainw->audio_frame_buffer->samples_filled+=xbytes/2;
 	       pthread_mutex_unlock(&mainw->abuf_frame_mutex);
 	     }
@@ -818,7 +812,8 @@ size_t pulse_flush_read_data(pulse_driver_t *pulsed, int fileno, size_t rbytes, 
   if (!holding_buff) return 0;
 
   if (ofile->asampsize==16) {
-    sample_move_d16_d16((short *)holding_buff,gbuf,frames_out,prb,out_scale,ofile->achans,pulsed->in_achans,pulsed->reverse_endian?SWAP_L_TO_X:0,swap_sign?SWAP_S_TO_U:0);
+    sample_move_d16_d16((short *)holding_buff,gbuf,frames_out,prb,out_scale,ofile->achans,pulsed->in_achans,
+			pulsed->reverse_endian?SWAP_L_TO_X:0,swap_sign?SWAP_S_TO_U:0);
   }
   else {
     sample_move_d16_d8((uint8_t *)holding_buff,gbuf,frames_out,prb,out_scale,ofile->achans,pulsed->in_achans,swap_sign?SWAP_S_TO_U:0);

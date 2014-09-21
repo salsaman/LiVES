@@ -55,6 +55,7 @@ int weed_get_idx_for_hashname (const char *hashname, boolean fullname); ///< ful
 int enabled_in_channels (weed_plant_t *plant, boolean count_repeats);
 int enabled_out_channels (weed_plant_t *plant, boolean count_repeats);
 weed_plant_t *get_enabled_channel (weed_plant_t *inst, int which, boolean is_in); ///< for FILTER_INST
+weed_plant_t *get_enabled_audio_channel (weed_plant_t *inst, int which, boolean is_in); ///< for FILTER_INST
 weed_plant_t *get_mandatory_channel (weed_plant_t *filter, int which, boolean is_in); ///< for FILTER_CLASS
 boolean weed_filter_is_resizer(weed_plant_t *filt);
 boolean weed_instance_is_resizer(weed_plant_t *filt);

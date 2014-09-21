@@ -980,6 +980,7 @@ typedef struct {
   pthread_mutex_t interp_mutex;  ///< interpolation mutex - parameter interpolation must be single threaded
 
   pthread_mutex_t abuf_mutex;  ///< used to synch audio buffer request count - shared between audio and video threads
+  pthread_mutex_t abuf_frame_mutex;  ///< used to synch audio buffer for generators
   pthread_mutex_t data_mutex[FX_KEYS_MAX];  ///< used to prevent data being connected while it is possibly being updated
   pthread_mutex_t fxd_active_mutex; ///< prevent simultaneous writing to active_dummy by audio and video threads
   pthread_mutex_t event_list_mutex; /// prevent simultaneous writing to event_list by audio and video threads
@@ -1174,6 +1175,8 @@ typedef struct {
 
   boolean gen_started_play;
   boolean fx_is_auto;
+
+  lives_audio_buf_t *audio_frame_buffer; ///< used for buffering / feeding audio to video generators
 ////////////////////
 
 } mainwindow;

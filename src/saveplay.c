@@ -2906,11 +2906,11 @@ void play_file (void) {
       if (mainw->multitrack!=NULL) pb_start_event=mainw->multitrack->pb_start_event;
     } while (mainw->multitrack!=NULL&&(mainw->loop_cont||mainw->scratch!=SCRATCH_NONE)&&
 	     (mainw->cancelled==CANCEL_NONE||mainw->cancelled==CANCEL_EVENT_LIST_END));
-    mainw->osc_block=TRUE;
-    mainw->rte_textparm=NULL;
 
   }
 
+  mainw->osc_block=TRUE;
+  mainw->rte_textparm=NULL;
   mainw->playing_file=-1;
     
   // play completed

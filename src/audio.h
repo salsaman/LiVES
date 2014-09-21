@@ -111,6 +111,10 @@ typedef struct {
   int32_t **buffer32; ///< sample data in 32 bit format (or NULL)
   float   **bufferf; ///< sample data in float format (or NULL)
 
+  boolean s8_signed;
+  boolean s16_signed;
+  boolean s24_signed;
+  boolean s32_signed;
   
   // ring buffer 
   size_t samples_filled; ///< number of samples filled (readonly client)
@@ -163,7 +167,7 @@ int64_t sample_move_abuf_float (float **obuf, int nchans, int nsamps, int out_ar
 
 int64_t sample_move_abuf_int16 (short *obuf, int nchans, int nsamps, int out_arate);
 
-void sample_move_float_float (float *dst, float *src, uint64_t nsamples, uint64_t src_skip, float vol);
+void sample_move_float_float (float *dst, float *src, uint64_t nsamples, float scale, int dst_skip);
 
 boolean float_deinterleave(float *fbuffer, int nsamps, int nchans);
 boolean float_interleave(float *fbuffer, int nsamps, int nchans);
@@ -216,6 +220,10 @@ lives_audio_buf_t *audio_cache_get_buffer(void);
 boolean apply_rte_audio_init(void);
 void apply_rte_audio_end(boolean del);
 boolean apply_rte_audio(int nframes);
+
+void append_to_audio_bufferf(lives_audio_buf_t *abuf, float *src, uint64_t nsamples, int channum);
+void append_to_audio_buffer16(lives_audio_buf_t *abuf, int16_t *src, uint64_t nsamples, int channum);
+boolean push_audio_to_channel(weed_plant_t *achan, lives_audio_buf_t *abuf);
 
 boolean start_audio_stream(void);
 void stop_audio_stream(void);

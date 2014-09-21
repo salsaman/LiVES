@@ -71,7 +71,7 @@ void append_to_audio_bufferf(lives_audio_buf_t *abuf, float *src, uint64_t nsamp
 
 
 
-void append_to_audio_buffer16(lives_audio_buf_t *abuf, uint8_t *src, uint64_t nsamples, int channum) { 
+void append_to_audio_buffer16(lives_audio_buf_t *abuf, void *src, uint64_t nsamples, int channum) { 
   // append 16 bit audio to the audio frame buffer
   size_t nsampsize=(abuf->samples_filled+nsamples)*2;
   abuf->buffer16[channum]=g_realloc(abuf->buffer16[channum],nsampsize);

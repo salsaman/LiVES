@@ -1,5 +1,3 @@
-
-
 // effects-weed.c
 // LiVES (lives-exe)
 // (c) G. Finch 2005 - 2014 (salsaman@gmail.com)
@@ -617,9 +615,12 @@ void update_host_info (weed_plant_t *inst) {
 static weed_plant_t *get_enabled_channel_inner (weed_plant_t *inst, int which, boolean is_in, boolean audio_only) {
   // plant is a filter_instance
   // "which" starts at 0
-  int i=0,error,nchans=3;
   weed_plant_t **channels;
-  weed_plant_t *retval;
+  weed_plant_t *retval,*ctmpl=NULL;
+
+  int error,nchans=3;
+
+  register int i=0;
 
   if (!WEED_PLANT_IS_FILTER_INSTANCE(inst)) return NULL;
 
@@ -637,9 +638,13 @@ static weed_plant_t *get_enabled_channel_inner (weed_plant_t *inst, int which, b
   if (channels==NULL||nchans==0) return NULL;
 
   while (1) {
-    if (!weed_plant_has_leaf(channels[i],"disabled")||weed_get_boolean_value(channels[i],"disabled",&error)==WEED_FALSE) 
-      if (audio_only&&weed_plant_has_leaf(channels[i],"is_audio")&&weed_get_boolean_value(channels[i],"is_audio",&error)==WEED_TRUE) 
-      which--;
+    if (!weed_plant_has_leaf(channels[i],"disabled")||weed_get_boolean_value(channels[i],"disabled",&error)==WEED_FALSE) {
+      if (audio_only) ctmpl=weed_get_plantptr_value(channels[i],"template",&error);
+      if (!audio_only||(audio_only&&weed_plant_has_leaf(ctmpl,"is_audio")&&
+			weed_get_boolean_value(ctmpl,"is_audio",&error)==WEED_TRUE)) {
+	which--;
+      }
+    }
     if (which<0) break;
     if (++i>=nchans) {
       weed_free(channels);
@@ -4234,7 +4239,6 @@ static int check_for_lives(weed_plant_t *filter, int filter_idx) {
     }
   }
   if (num_elements>0) weed_free(array);
-
   if (weed_plant_has_leaf(filter,"out_parameter_templates")) has_out_params=TRUE;
 
   if ((chans_out_mand>1&&!all_out_alpha)||((chans_out_mand+chans_out_opt_max+achans_out_mand<1)
@@ -6008,6 +6012,16 @@ void weed_generator_end (weed_plant_t *inst) {
     }
   }
 
+  if (get_audio_channel_in(inst,0)!=NULL) {
+    mainw->afbuffer_clients--;
+    if (mainw->afbuffer_clients==0) {
+      pthread_mutex_lock(&mainw->abuf_frame_mutex);
+      free_audio_frame_buffer(mainw->audio_frame_buffer);
+      g_free(mainw->audio_frame_buffer);
+      mainw->audio_frame_buffer=NULL;
+      pthread_mutex_unlock(&mainw->abuf_frame_mutex);
+    }
+  }
 
   if (is_bg) {
     if (mainw->blend_layer!=NULL) check_layer_ready(mainw->blend_layer);
@@ -6746,6 +6760,7 @@ boolean weed_init_effect(int hotkey) {
 
   }
 
+
   if (inc_count==0&&outc_count>0&&!is_audio_gen) {
     // generator start
     if (mainw->num_tr_applied>0&&!fg_modeswitch&&mainw->current_file>-1&&mainw->playing_file>-1) {
@@ -6780,6 +6795,11 @@ boolean weed_init_effect(int hotkey) {
       }
       if (fg_modeswitch) mainw->num_tr_applied=num_tr_applied;
       key_to_instance[hotkey][key_modes[hotkey]]=NULL;
+
+      if (mainw->playing_file==-1) {
+	int current_file=mainw->current_file;
+	switch_to_file(mainw->current_file=0,current_file);
+      }
 
       return FALSE;
     }
@@ -7217,12 +7237,13 @@ weed_plant_t *weed_layer_new_from_generator (weed_plant_t *inst, weed_timecode_t
       // lock the buffer, convert audio to format requested, and copy it to the audio channel data
       pthread_mutex_lock(&mainw->abuf_frame_mutex);
       push_audio_to_channel(achan,mainw->audio_frame_buffer);
+      free_audio_frame_buffer(mainw->audio_frame_buffer); // TODO: this needs reimplementing to handle the case where we have fg and bg gens
       pthread_mutex_unlock(&mainw->abuf_frame_mutex);
     }
     else {
       // no audio has been buffered
       weed_set_int_value(achan,"audio_data_length",0);
-      weed_set_voidptr_value(achan,"audio_data_length",0);
+      weed_set_voidptr_value(achan,"audio_data",NULL);
     }
   }
 
@@ -7381,13 +7402,13 @@ boolean weed_generator_start (weed_plant_t *inst, int key) {
   }
 
   if ((num_channels=weed_leaf_num_elements(inst,"out_channels"))==0) {
-    if (is_bg&&old_file!=-1) mainw->current_file=old_file;
+    close_current_file(mainw->pre_src_file);
     return FALSE;
   }
   out_channels=weed_get_plantptr_array(inst,"out_channels",&error);
   if ((channel=get_enabled_channel(inst,0,FALSE))==NULL) {
     weed_free(out_channels);
-    if (is_bg&&old_file!=-1) mainw->current_file=old_file;
+    close_current_file(mainw->pre_src_file);
     return FALSE;
   }
   weed_free(out_channels);
@@ -7405,6 +7426,13 @@ boolean weed_generator_start (weed_plant_t *inst, int key) {
   // if the generator has an optional audio in channel, enable it: TODO - make this configurable
   if ((achan=get_audio_channel_in(inst,0))!=NULL) {
     if (weed_plant_has_leaf(achan,"disabled")) weed_leaf_delete(achan,"disabled");
+    mainw->afbuffer_clients++;
+    if (mainw->afbuffer_clients==1) {
+      pthread_mutex_lock(&mainw->abuf_frame_mutex);
+      init_audio_frame_buffer(prefs->audio_player);
+      pthread_mutex_unlock(&mainw->abuf_frame_mutex);
+    }
+
   }
 
   // allow clip switching

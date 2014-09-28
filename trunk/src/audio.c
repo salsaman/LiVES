@@ -64,7 +64,22 @@ void audio_free_fnames(void) {
 
 void append_to_audio_bufferf(lives_audio_buf_t *abuf, float *src, uint64_t nsamples, int channum) { 
   // append float audio to the audio frame buffer
-  size_t nsampsize=(abuf->samples_filled+nsamples)*sizeof(float);
+  size_t nsampsize;
+
+  if (!prefs->push_audio_to_gens) return;
+
+  nsampsize=(abuf->samples_filled+nsamples)*sizeof(float);
+
+  channum++;
+  if (channum>abuf->out_achans) {
+    register int i;
+    abuf->bufferf=g_realloc(abuf->bufferf,channum*sizeof(float *));
+    for (i=abuf->out_achans;i<channum;i++) {
+      abuf->bufferf[i]=NULL;
+    }
+    abuf->out_achans=channum;
+  }
+  channum--;
   abuf->bufferf[channum]=g_realloc(abuf->bufferf[channum],nsampsize);
   lives_memcpy(&abuf->bufferf[channum][abuf->samples_filled],src,nsamples*sizeof(float));
 }
@@ -73,9 +88,26 @@ void append_to_audio_bufferf(lives_audio_buf_t *abuf, float *src, uint64_t nsamp
 
 void append_to_audio_buffer16(lives_audio_buf_t *abuf, void *src, uint64_t nsamples, int channum) { 
   // append 16 bit audio to the audio frame buffer
-  size_t nsampsize=(abuf->samples_filled+nsamples)*2;
+  size_t nsampsize;
+
+  if (!prefs->push_audio_to_gens) return;
+
+  nsampsize=(abuf->samples_filled+nsamples)*2;
+  channum++;
+  if (channum>abuf->out_achans) {
+    register int i;
+    abuf->buffer16=g_realloc(abuf->buffer16,channum*sizeof(int16_t *));
+    for (i=abuf->out_achans;i<channum;i++) {
+      abuf->buffer16[i]=NULL;
+    }
+    abuf->out_achans=channum;
+  }
+  channum--;
   abuf->buffer16[channum]=g_realloc(abuf->buffer16[channum],nsampsize);
   lives_memcpy(&abuf->buffer16[channum][abuf->samples_filled],src,nsamples*2);
+#ifdef DEBUG_AFB
+  g_print("append16 to afb\n");
+#endif
 }
 
 
@@ -88,39 +120,65 @@ void init_audio_frame_buffer(short aplayer) {
 
   abuf->samples_filled=0;
   abuf->swap_endian=FALSE;
+  abuf->out_achans=0;
 
   switch (aplayer) {
   case AUD_PLAYER_PULSE:
     abuf->in_interleaf=TRUE;
     abuf->s16_signed=TRUE;
-    abuf->out_achans=2;
     abuf->arate=mainw->pulsed->out_arate;
     break;
   case AUD_PLAYER_JACK:
     abuf->in_interleaf=FALSE;
     abuf->out_interleaf=FALSE;
-    abuf->out_achans=2;
     abuf->arate=mainw->jackd->sample_out_rate;
     break;
   default:
     break;
   }
-
+#ifdef DEBUG_AFB
+  g_print("init afb\n");
+#endif
 }
 
 
 
 void free_audio_frame_buffer(lives_audio_buf_t *abuf) {
-  // function should be called when the last video generator with audio input is disabled
+  // function should be called to clear samples
+  register int i;
   if (abuf!=NULL) {
-    if (abuf->bufferf!=NULL) g_free(abuf->bufferf);
-    if (abuf->buffer32!=NULL) g_free(abuf->buffer32);
-    if (abuf->buffer24!=NULL) g_free(abuf->buffer24);
-    if (abuf->buffer16!=NULL) g_free(abuf->buffer16);
-    if (abuf->buffer8!=NULL) g_free(abuf->buffer8);
-    g_free(abuf);
-  }
+    if (abuf->bufferf!=NULL) {
+      for (i=0;i<abuf->out_achans;i++) g_free(abuf->bufferf[i]);
+      g_free(abuf->bufferf);
+      abuf->bufferf=NULL;
+    }
+    if (abuf->buffer32!=NULL) {
+      for (i=0;i<abuf->out_achans;i++) g_free(abuf->buffer32[i]);
+      g_free(abuf->buffer32);
+      abuf->buffer32=NULL;
+    }
+    if (abuf->buffer24!=NULL) {
+      for (i=0;i<abuf->out_achans;i++) g_free(abuf->buffer24[i]);
+      g_free(abuf->buffer24);
+      abuf->buffer24=NULL;
+    }
+    if (abuf->buffer16!=NULL) {
+      for (i=0;i<abuf->out_achans;i++) g_free(abuf->buffer16[i]);
+      g_free(abuf->buffer16);
+      abuf->buffer16=NULL;
+    }
+    if (abuf->buffer8!=NULL) {
+      for (i=0;i<abuf->out_achans;i++) g_free(abuf->buffer8[i]);
+      g_free(abuf->buffer8);
+      abuf->buffer8=NULL;
+    }
 
+    abuf->samples_filled=0;
+    abuf->out_achans=0;
+  }
+#ifdef DEBUG_AFB
+  g_print("clear afb\n");
+#endif
 }
 
 
@@ -2920,6 +2978,9 @@ boolean push_audio_to_channel(weed_plant_t *achan, lives_audio_buf_t *abuf) {
   if (weed_plant_has_leaf(ctmpl,"audio_data_length")) tlen=weed_get_int_value(ctmpl,"audio_data_length",&error);
   else tlen=0;
 
+#ifdef DEBUG_AFB
+  g_print("push from afb\n");
+#endif
 
   // plugin will get float, so we first convert to that
   if (abuf->bufferf==NULL) {

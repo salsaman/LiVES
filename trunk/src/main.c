@@ -1072,6 +1072,7 @@ static void lives_init(_ign_opts *ign_opts) {
   mainw->gen_started_play=FALSE;
 
   mainw->audio_frame_buffer=NULL;
+  mainw->afbuffer_clients=0;
   /////////////////////////////////////////////////// add new stuff just above here ^^
 
 
@@ -1198,6 +1199,7 @@ static void lives_init(_ign_opts *ign_opts) {
 
     prefs->show_button_images=FALSE;
 
+    prefs->push_audio_to_gens=FALSE;
     //////////////////////////////////////////////////////////////////
 
     weed_memory_init();

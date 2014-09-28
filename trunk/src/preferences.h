@@ -343,6 +343,8 @@ typedef struct {
 
   boolean show_button_images;
 
+  boolean push_audio_to_gens;
+
 } _prefs;
 
 enum {

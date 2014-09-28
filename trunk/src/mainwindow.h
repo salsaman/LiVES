@@ -1177,6 +1177,7 @@ typedef struct {
   boolean fx_is_auto;
 
   lives_audio_buf_t *audio_frame_buffer; ///< used for buffering / feeding audio to video generators
+  int afbuffer_clients;
 ////////////////////
 
 } mainwindow;

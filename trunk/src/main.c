@@ -1199,7 +1199,7 @@ static void lives_init(_ign_opts *ign_opts) {
 
     prefs->show_button_images=FALSE;
 
-    prefs->push_audio_to_gens=FALSE;
+    prefs->push_audio_to_gens=TRUE;
     //////////////////////////////////////////////////////////////////
 
     weed_memory_init();
@@ -4577,8 +4577,8 @@ void check_layer_ready(weed_plant_t *layer) {
   if (layer==NULL) return;
   if (weed_plant_has_leaf(layer,"host_pthread")) {
     pthread_t *frame_thread=(pthread_t *)weed_get_voidptr_value(layer,"host_pthread",&error);
-    weed_leaf_delete(layer,"host_pthread");
     pthread_join(*frame_thread,NULL);
+    weed_leaf_delete(layer,"host_pthread");
     free(frame_thread);
  
     if (weed_plant_has_leaf(layer,"host_deinterlace")&&weed_get_boolean_value(layer,"host_deinterlace",&error)==WEED_TRUE) {

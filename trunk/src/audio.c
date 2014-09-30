@@ -68,6 +68,8 @@ void append_to_audio_bufferf(lives_audio_buf_t *abuf, float *src, uint64_t nsamp
 
   if (!prefs->push_audio_to_gens) return;
 
+  if (abuf->bufferf==NULL) free_audio_frame_buffer(abuf);
+
   nsampsize=(abuf->samples_filled+nsamples)*sizeof(float);
 
   channum++;
@@ -92,9 +94,11 @@ void append_to_audio_buffer16(lives_audio_buf_t *abuf, void *src, uint64_t nsamp
 
   if (!prefs->push_audio_to_gens) return;
 
+  if (abuf->buffer16==NULL) free_audio_frame_buffer(abuf);
+
   nsampsize=(abuf->samples_filled+nsamples)*2;
   channum++;
-  if (channum>abuf->out_achans) {
+  if (abuf->buffer16==NULL||channum>abuf->out_achans) {
     register int i;
     abuf->buffer16=g_realloc(abuf->buffer16,channum*sizeof(int16_t *));
     for (i=abuf->out_achans;i<channum;i++) {
@@ -2979,7 +2983,7 @@ boolean push_audio_to_channel(weed_plant_t *achan, lives_audio_buf_t *abuf) {
   else tlen=0;
 
 #ifdef DEBUG_AFB
-  g_print("push from afb\n");
+  g_print("push from afb %d\n",abuf->samples_filled);
 #endif
 
   // plugin will get float, so we first convert to that
@@ -3025,7 +3029,7 @@ boolean push_audio_to_channel(weed_plant_t *achan, lives_audio_buf_t *abuf) {
   // push to achan "audio_data", taking into account "audio_data_length", "audio_interleaf", "audio_channels"
 
   alen=samps;
-  if (alen>tlen) alen=tlen;
+  if (alen>tlen&&tlen>0) alen=tlen;
 
   offs=samps-alen;
 

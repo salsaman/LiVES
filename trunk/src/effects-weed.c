@@ -3851,6 +3851,8 @@ boolean has_audio_filters(lives_af_t af_type) {
 
   register int i;
 
+  if (af_type==AF_TYPE_A&&mainw->audio_frame_buffer!=NULL) return TRUE;
+
   for (i=0;i<FX_KEYS_MAX_VIRTUAL;i++) {
     if (rte_key_valid(i+1,TRUE)) {
       if (mainw->rte&(GU641<<i)) {
@@ -7558,10 +7560,8 @@ boolean weed_playback_gen_start (void) {
     // check is still gen
 
     if (enabled_in_channels(weed_filters[key_to_fx[fg_gen_to_start][key_modes[fg_gen_to_start]]],FALSE)==0) {
-      g_print("OK here\n");
       inst=key_to_instance[fg_gen_to_start][key_modes[fg_gen_to_start]];
       if (inst!=NULL) {
-	g_print("OK here2\n");
 
       geninit1:
 

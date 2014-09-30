@@ -51,6 +51,7 @@ static int package_version=1; // version of this package
 #include "projectM-ConfigFile.h"
 #include "projectM-getConfigFilename.h"
 
+#define TARGET_FPS 30.
 
 static int copies=0;
 
@@ -65,10 +66,11 @@ typedef struct {
   pthread_t thread;
   int audio_frames;
   float *audio;
-  volatile int die;
-  volatile int failed;
-  volatile int update_size;
-  volatile int rendering;
+  float fps;
+  volatile bool die;
+  volatile bool failed;
+  volatile bool update_size;
+  volatile bool rendering;
 } _sdata;
 
 static int maxwidth,maxheight;
@@ -236,23 +238,33 @@ static int render_frame(_sdata *sdata) {
 static void *worker(void *data) {
   std::string config_filename = getConfigFilename();
   ConfigFile config(config_filename);
+  projectM::Settings settings;
 
+  bool rerand=true;
 
   _sdata *sd=(_sdata *)data;
 
   if (init_display(sd)) {
-    sd->failed=1;
+    sd->failed=true;
     goto fail;
   }
 
   sd->globalPM = new projectM(config_filename);
+
+  settings = sd->globalPM->settings();
+
   sd->textureHandle = sd->globalPM->initRenderToTexture();
+
 
   while (!sd->die) {
     if (!sd->rendering) {
       usleep(10000);
+      rerand=true;
       continue;
     }
+
+    if (rerand) sd->globalPM->selectRandom(true);
+    rerand=false;
 
     pthread_mutex_lock(&sd->pcm_mutex);
     if (sd->audio_frames>0) {
@@ -266,9 +278,10 @@ static void *worker(void *data) {
     pthread_mutex_lock(&sd->mutex);
     if (sd->update_size) {
       change_size(sd);
-      sd->update_size=0;
+      sd->update_size=false;
     }
     pthread_mutex_unlock(&sd->mutex);
+    settings.fps=sd->fps;
     render_frame(sd);
   }
 
@@ -307,12 +320,15 @@ static int projectM_init (weed_plant_t *inst) {
       return WEED_ERROR_MEMORY_ALLOCATION;
     }
 
+    sd->fps=TARGET_FPS;
+    if (weed_plant_has_leaf(inst,"fps")) sd->fps=weed_get_double_value(inst,"fps",&error);
+
     sd->width=width;
     sd->height=height;
     
-    sd->die=0;
-    sd->failed=0;
-    sd->update_size=0;
+    sd->die=false;
+    sd->failed=false;
+    sd->update_size=false;
 
     sd->audio=NULL;
     sd->audio_frames=0;
@@ -326,7 +342,7 @@ static int projectM_init (weed_plant_t *inst) {
     pthread_create(&sd->thread,NULL,worker,sd);
   }
 
-  sd->rendering=1;
+  sd->rendering=true;
 
   weed_set_voidptr_value(inst,"plugin_internal",sd);
 
@@ -340,7 +356,7 @@ static int projectM_deinit (weed_plant_t *inst) {
     int error;
   _sdata *sd=(_sdata *)weed_get_voidptr_value(inst,"plugin_internal",&error);
 
-  sd->rendering=0;
+  sd->rendering=false;
 
   copies--;
 
@@ -379,7 +395,7 @@ static int projectM_process (weed_plant_t *inst, weed_timecode_t timestamp) {
     sd->height=height;
     if (sd->width>maxwidth) sd->width=maxwidth;
     if (sd->height>maxheight) sd->height=maxheight;
-    sd->update_size=1;
+    sd->update_size=true;
   }
 
   if (sd->update_size||sd->fbuffer==NULL) return WEED_NO_ERROR;
@@ -397,7 +413,7 @@ static int projectM_process (weed_plant_t *inst, weed_timecode_t timestamp) {
     sd->globalPM->key_handler(evt, key, mod);
   }
 
-
+  if (weed_plant_has_leaf(inst,"fps")) sd->fps=weed_get_double_value(inst,"fps",&error);
 
   if (in_channel!=NULL) {
     int adlen=weed_get_int_value(in_channel,"audio_data_length",&error);
@@ -472,7 +488,7 @@ weed_plant_t *weed_setup (weed_bootstrap_f weed_boot) {
     weed_set_boolean_value(in_chantmpls[0],"audio_interleaf",WEED_TRUE);
     weed_set_boolean_value(in_chantmpls[0],"optional",WEED_TRUE);
 
-    weed_set_double_value(filter_class,"target_fps",50.); // set reasonable default fps
+    weed_set_double_value(filter_class,"target_fps",TARGET_FPS); // set reasonable default fps
 
     weed_plugin_info_add_filter_class (plugin_info,filter_class);
 
@@ -488,7 +504,7 @@ weed_plant_t *weed_setup (weed_bootstrap_f weed_boot) {
 
 void weed_desetup(void) {
   if (inited) {
-    sd->die=1;
+    sd->die=true;
     pthread_join(sd->thread,NULL);
     if (sd->fbuffer!=NULL) weed_free(sd->fbuffer);
     if (sd->audio!=NULL) weed_free(sd->audio);

@@ -3345,10 +3345,25 @@ void play_file (void) {
     mainw->bad_aud_file=NULL;
   }
 
+  if (!mainw->preview&&cfile->clip_type==CLIP_TYPE_GENERATOR) {
+    mainw->osc_block=TRUE;
+    weed_generator_end ((weed_plant_t *)cfile->ext_src);
+    mainw->osc_block=FALSE;
+  }
+
+
   // need to do this here, in case we want to preview a generator which will close to -1
-  if (mainw->record) deal_with_render_choice(TRUE);
+  if (mainw->record) {
+    if (!mainw->preview&&cfile->clip_type==CLIP_TYPE_GENERATOR) {
+      // just deinit the generator here, to possibly save CPU cycles
+      mainw->osc_block=TRUE;
+      wge_inner ((weed_plant_t *)cfile->ext_src);
+      mainw->osc_block=FALSE;
+    }
+    deal_with_render_choice(TRUE);
+  }
+
   mainw->record_paused=mainw->record_starting=FALSE;
-  
 
   if (!mainw->preview&&cfile->clip_type==CLIP_TYPE_GENERATOR) {
     mainw->osc_block=TRUE;

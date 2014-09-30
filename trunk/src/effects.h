@@ -58,30 +58,30 @@ gchar *lives_fx_cat_to_text(lives_fx_cat_t cat, boolean plural) WARN_UNUSED;
 
 boolean do_effect(lives_rfx_t *rfx, boolean is_preview); ///< defined as extern in paramwindow.c
 
-void on_render_fx_activate (GtkMenuItem *menuitem, lives_rfx_t *rfx);
+void on_render_fx_activate (LiVESMenuItem *menuitem, lives_rfx_t *rfx);
 
 ///////////////// real time effects
 
 // render
-void on_realfx_activate (GtkMenuItem *, gpointer rfx);
-boolean on_realfx_activate_inner(gint type, lives_rfx_t *rfx);
+void on_realfx_activate (LiVESMenuItem *, gpointer rfx);
+boolean on_realfx_activate_inner(int type, lives_rfx_t *rfx);
 
 lives_render_error_t realfx_progress (boolean reset);
 
 // key callbacks
 
-boolean textparm_callback (GtkAccelGroup *group, GObject *obj, guint keyval, GdkModifierType mod, gpointer user_data);
+boolean textparm_callback (GtkAccelGroup *group, GObject *obj, uint32_t keyval, GdkModifierType mod, gpointer user_data);
 
-boolean grabkeys_callback (GtkAccelGroup *, GObject *, guint, GdkModifierType, gpointer user_data); ///< for accel groups
-boolean grabkeys_callback_hook (GtkToggleButton *button, gpointer user_data); ///< for widgets
+boolean grabkeys_callback (GtkAccelGroup *, GObject *, uint32_t, GdkModifierType, gpointer user_data); ///< for accel groups
+boolean grabkeys_callback_hook (LiVESToggleButton *button, gpointer user_data); ///< for widgets
 
-boolean rte_on_off_callback (GtkAccelGroup *, GObject *, guint, GdkModifierType, gpointer user_data); ///< for accel groups
-boolean rte_on_off_callback_hook (GtkToggleButton *, gpointer user_data); ///< for widgets
+boolean rte_on_off_callback (GtkAccelGroup *, GObject *, uint32_t, GdkModifierType, gpointer user_data); ///< for accel groups
+boolean rte_on_off_callback_hook (LiVESToggleButton *, gpointer user_data); ///< for widgets
 
-boolean rtemode_callback (GtkAccelGroup *, GObject *, guint, GdkModifierType, gpointer user_data); ///< for accel groups
-boolean rtemode_callback_hook (GtkToggleButton *, gpointer user_data); ///< for widgets
+boolean rtemode_callback (GtkAccelGroup *, GObject *, uint32_t, GdkModifierType, gpointer user_data); ///< for accel groups
+boolean rtemode_callback_hook (LiVESToggleButton *, gpointer user_data); ///< for widgets
 
-boolean swap_fg_bg_callback (GtkAccelGroup *, GObject *, guint, GdkModifierType, gpointer user_data);
+boolean swap_fg_bg_callback (GtkAccelGroup *, GObject *, uint32_t, GdkModifierType, gpointer user_data);
 
 weed_plant_t *get_blend_layer(weed_timecode_t tc);
 

@@ -1373,8 +1373,8 @@ lives_filter_error_t weed_reinit_effect (weed_plant_t *inst, boolean reinit_comp
 	// redraw GUI if necessary
 	rfx=(lives_rfx_t *)g_object_get_data(G_OBJECT(fx_dialog[1]),"rfx");
 	if (rfx->source_type==LIVES_RFX_SOURCE_WEED&&rfx->source==inst) {
-	  gint keyw=GPOINTER_TO_INT (g_object_get_data (G_OBJECT (fx_dialog[1]),"key"));
-	  gint modew=GPOINTER_TO_INT (g_object_get_data (G_OBJECT (fx_dialog[1]),"mode"));
+	  int keyw=GPOINTER_TO_INT (g_object_get_data (G_OBJECT (fx_dialog[1]),"key"));
+	  int modew=GPOINTER_TO_INT (g_object_get_data (G_OBJECT (fx_dialog[1]),"mode"));
 	  redraw_pwindow(keyw,modew);
 	}
       }
@@ -3057,21 +3057,25 @@ static lives_filter_error_t weed_apply_audio_instance_inner (weed_plant_t *inst,
 
 
 lives_filter_error_t weed_apply_audio_instance (weed_plant_t *init_event, float **abuf, int nbtracks, int nchans, 
-						int64_t nsamps, gdouble arate, weed_timecode_t tc, double *vis) {
+						int64_t nsamps, double arate, weed_timecode_t tc, double *vis) {
 
-
-  float *in_abuf,*out_abuf;
-  int error;
-  weed_plant_t **layers=NULL,**in_channels=NULL,**out_channels=NULL;
-  int *in_tracks=NULL,*out_tracks=NULL;
-  weed_plant_t *instance=NULL,*filter;
-  size_t nsf=nsamps*sizeof(float);
   lives_filter_error_t retval=FILTER_NO_ERROR,retval2;
+
+  weed_plant_t **layers=NULL,**in_channels=NULL,**out_channels=NULL;
+
+  weed_plant_t *instance=NULL,*filter;
   weed_plant_t *channel=NULL;
-  boolean needs_reinit=FALSE;
   weed_plant_t *ctmpl;
 
+  float *in_abuf,*out_abuf;
+  int *in_tracks=NULL,*out_tracks=NULL;
+
+  size_t nsf=nsamps*sizeof(float);
+
+  boolean needs_reinit=FALSE;
   boolean was_init_event=FALSE;
+
+  int error;
 
   int flags=0;
   int key=-1;
@@ -3700,7 +3704,7 @@ weed_plant_t *weed_apply_effects (weed_plant_t **layers, weed_plant_t *filter_ma
 
 
 void weed_apply_audio_effects (weed_plant_t *filter_map, float **abuf, int nbtracks, int nchans, int64_t nsamps, 
-			       gdouble arate, weed_timecode_t tc, double *vis) {
+			       double arate, weed_timecode_t tc, double *vis) {
   int i,num_inst,error;
   void **init_events;
   lives_filter_error_t filter_error;
@@ -3738,7 +3742,7 @@ void weed_apply_audio_effects (weed_plant_t *filter_map, float **abuf, int nbtra
 
 
 
-void weed_apply_audio_effects_rt(float **abuf, int nchans, int64_t nsamps, gdouble arate, weed_timecode_t tc, boolean analysers_only) {
+void weed_apply_audio_effects_rt(float **abuf, int nchans, int64_t nsamps, double arate, weed_timecode_t tc, boolean analysers_only) {
 
   weed_plant_t *instance,*filter;
 
@@ -4262,7 +4266,7 @@ static int check_for_lives(weed_plant_t *filter, int filter_idx) {
       if (enabled_in_channels(filter,TRUE)>=1000000) {
 	// this is a candidate for audio volume
 	lives_fx_candidate_t *cand=&mainw->fx_candidates[FX_CANDIDATE_AUDIO_VOL];
-	cand->list=g_list_append(cand->list,GINT_TO_POINTER(filter_idx));
+	cand->list=g_list_append(cand->list,INT_TO_POINTER(filter_idx));
 	cand->delegate=0;
       }
     }
@@ -4274,7 +4278,7 @@ static int check_for_lives(weed_plant_t *filter, int filter_idx) {
 	if (ochan_flags&WEED_CHANNEL_SIZE_CAN_VARY) {
 	  // this is a candidate for resize
 	  lives_fx_candidate_t *cand=&mainw->fx_candidates[FX_CANDIDATE_RESIZER];
-	  cand->list=g_list_append(cand->list,GINT_TO_POINTER(filter_idx));
+	  cand->list=g_list_append(cand->list,INT_TO_POINTER(filter_idx));
 	  cand->delegate=0;
 	}
       }
@@ -4833,7 +4837,7 @@ static void make_fx_defs_menu(void) {
 	  
 	g_signal_connect (GTK_OBJECT (menuitem), "activate",
 			  G_CALLBACK (rte_set_defs_activate),
-			  GINT_TO_POINTER(i));
+			  INT_TO_POINTER(i));
 
 	weed_free(filter_name);
       }
@@ -4856,7 +4860,7 @@ void weed_load_all (void) {
   gchar **dirs;
   gchar *msg;
 
-  gint listlen;
+  int listlen;
 
   num_weed_filters=0;
   num_weed_dupes=0;
@@ -5970,15 +5974,33 @@ void weed_instance_ref(weed_plant_t *inst) {
 
 
 
+void wge_inner(weed_plant_t *inst) {
+  weed_plant_t *next_inst=NULL;
+
+  int error;
+
+  if (weed_plant_has_leaf(inst,"host_next_instance")) next_inst=weed_get_plantptr_value(inst,"host_next_instance",&error);
+  else next_inst=NULL;
+
+  weed_call_deinit_func(inst);
+  weed_instance_unref(inst);
+
+  if (next_inst!=NULL) {
+    // handle compound fx
+    inst=next_inst;
+    wge_inner(inst);
+  }
+
+}
+
+
 void weed_generator_end (weed_plant_t *inst) {
   // generator has stopped for one of the following reasons:
   // efect was de-inited; clip (bg/fg) was changed; playback stopped with fg
-  weed_plant_t *next_inst=NULL;
   lives_whentostop_t wts=mainw->whentostop;
   boolean is_bg=FALSE;
   boolean clip_switched=mainw->clip_switched;
   int current_file=mainw->current_file,pre_src_file=mainw->pre_src_file;
-  int error;
 
   if (inst==NULL) {
     LIVES_WARN("inst was NULL !");
@@ -6047,19 +6069,7 @@ void weed_generator_end (weed_plant_t *inst) {
     if (mainw->blend_file==mainw->current_file) mainw->blend_file=-1;
   }
 
- deinit1:
-
-  if (weed_plant_has_leaf(inst,"host_next_instance")) next_inst=weed_get_plantptr_value(inst,"host_next_instance",&error);
-  else next_inst=NULL;
-
-  weed_call_deinit_func(inst);
-  weed_instance_unref(inst);
-
-  if (next_inst!=NULL) {
-    // handle compound fx
-    inst=next_inst;
-    goto deinit1;
-  }
+  wge_inner(inst);
 
   // if the param window is already open, show any reinits now
   if (fx_dialog[1]!=NULL) {
@@ -7463,8 +7473,6 @@ boolean weed_generator_start (weed_plant_t *inst, int key) {
       mainw->playing_sel=FALSE;
     }
 
-    mainw->gen_started_play=TRUE;
-
     new_rte=GU641<<key;
     if (!(mainw->rte&new_rte)) mainw->rte|=new_rte;
 
@@ -7479,6 +7487,8 @@ boolean weed_generator_start (weed_plant_t *inst, int key) {
     }
 
     play_file();
+
+    mainw->gen_started_play=TRUE;
 
     if (mainw->play_window!=NULL) {
       lives_widget_queue_draw(mainw->play_window);
@@ -8275,7 +8285,7 @@ void weed_set_blend_factor(int hotkey) {
     mini=weed_get_int_value(paramtmpl,"min",&error);
     maxi=weed_get_int_value(paramtmpl,"max",&error);
 
-    weed_set_int_value (in_param,"value",(int)((gdouble)mini+(mainw->blend_factor/KEYSCALE*(gdouble)(maxi-mini))+.5));
+    weed_set_int_value (in_param,"value",(int)((double)mini+(mainw->blend_factor/KEYSCALE*(double)(maxi-mini))+.5));
 
     vali=weed_get_int_value (in_param,"value",&error);
 
@@ -8309,7 +8319,7 @@ void weed_set_blend_factor(int hotkey) {
     vali=!!(int)mainw->blend_factor;
     weed_set_boolean_value (in_param,"value",vali);
     vali=weed_get_boolean_value (in_param,"value",&error);
-    mainw->blend_factor=(gdouble)vali;
+    mainw->blend_factor=(double)vali;
 
     list=g_list_append(list,g_strdup_printf("%d",vali));
     update_pwindow(hotkey,pnum,list);
@@ -8372,7 +8382,7 @@ int weed_get_blend_factor(int hotkey) {
     mini=weed_get_int_value(paramtmpl,"min",&error);
     maxi=weed_get_int_value(paramtmpl,"max",&error);
     weed_free(in_params);
-    return (gdouble)(vali-mini)/(gdouble)(maxi-mini)*KEYSCALE;
+    return (double)(vali-mini)/(double)(maxi-mini)*KEYSCALE;
   case WEED_HINT_FLOAT:
     vald=weed_get_double_value(in_param,"value",&error);
     mind=weed_get_double_value(paramtmpl,"min",&error);
@@ -9517,8 +9527,8 @@ boolean interpolate_param(weed_plant_t *inst, int i, void *pchain, weed_timecode
       if (xnum>j) last_valued=last_valuesd[j];
       else last_valued=get_default_element_double(param,j,1,0);
       
-      valds[j]=last_valued+(gdouble)(next_valuesd[j]-last_valued)/(gdouble)(tc_diff/U_SEC)*
-	(gdouble)((tc-weed_get_int64_value((weed_plant_t *)lpc[j],"timecode",&error))/U_SEC);
+      valds[j]=last_valued+(double)(next_valuesd[j]-last_valued)/(double)(tc_diff/U_SEC)*
+	(double)((tc-weed_get_int64_value((weed_plant_t *)lpc[j],"timecode",&error))/U_SEC);
 
       weed_free(last_valuesd);
       weed_free(next_valuesd);

@@ -1122,10 +1122,21 @@ static int audio_read (nframes_t nframes, void *arg) {
     // TODO - dont apply filters when doing ext window grab, or voiceover
 
     // in this case we read external audio, but maybe not record it
-    // we may wish to analyse the audio for example
+    // we may wish to analyse the audio for example, or push it to a video generator
 
     if (has_audio_filters(AF_TYPE_A)) {
 	uint64_t tc=jackd->audio_ticks+(uint64_t)(jackd->frames_written/(double)jackd->sample_in_rate*U_SEC);
+
+	if (mainw->audio_frame_buffer!=NULL) {
+	  // if we have audio triggered gens., push audio to it
+	  pthread_mutex_lock(&mainw->abuf_frame_mutex);
+	  for (i=0;i<jackd->num_input_channels;i++) {
+	    append_to_audio_bufferf(mainw->audio_frame_buffer,in_buffer[i],nframes,i);
+	  }
+	  mainw->audio_frame_buffer->samples_filled+=nframes;
+	  pthread_mutex_unlock(&mainw->abuf_frame_mutex);
+	}
+
 	// apply any audio effects with in_channels and no out_channels
 	weed_apply_audio_effects_rt(in_buffer,jackd->num_input_channels,nframes,jackd->sample_in_rate,tc,TRUE);
     }

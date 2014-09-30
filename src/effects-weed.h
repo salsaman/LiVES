@@ -1,6 +1,6 @@
 // effects-weed.h
 // LiVES (lives-exe)
-// (c) G. Finch 2005 - 2012 <salsaman@gmail.com>
+// (c) G. Finch 2005 - 2014 <salsaman@gmail.com>
 // Released under the GPL 3 or later
 // see file ../COPYING for licensing details
 
@@ -161,19 +161,19 @@ void weed_deinit_all(boolean shutdown); ///< deinit all active effects
 weed_plant_t *weed_apply_effects (weed_plant_t **layers, weed_plant_t *filter_map, weed_timecode_t tc, int opwidth, int opheight, void ***pchains);
 lives_filter_error_t weed_apply_instance (weed_plant_t *inst, weed_plant_t *init_event, weed_plant_t **layers, 
 					  int opwidth, int opheight, weed_timecode_t tc);
-void weed_apply_audio_effects (weed_plant_t *filter_map, float **abuf, int nbtracks, int nchans, int64_t nsamps, gdouble arate, 
+void weed_apply_audio_effects (weed_plant_t *filter_map, float **abuf, int nbtracks, int nchans, int64_t nsamps, double arate, 
 			       weed_timecode_t tc, double *vis);
-void weed_apply_audio_effects_rt(float **abuf, int nchans, int64_t nsamps, gdouble arate, weed_timecode_t tc, boolean analysers_only);
+void weed_apply_audio_effects_rt(float **abuf, int nchans, int64_t nsamps, double arate, weed_timecode_t tc, boolean analysers_only);
 
 lives_filter_error_t weed_apply_audio_instance (weed_plant_t *init_event, float **abuf, int nbtracks, int nchans, int64_t nsamps, 
-						gdouble arate, weed_timecode_t tc, double *vis);
+						double arate, weed_timecode_t tc, double *vis);
 
 boolean weed_generator_start (weed_plant_t *inst, int key); // key starts at 0
 weed_plant_t *weed_layer_new_from_generator (weed_plant_t *inst, weed_timecode_t tc);
 void weed_generator_end (weed_plant_t *inst);
 boolean weed_playback_gen_start (void);
 void weed_bg_generator_end (weed_plant_t *inst);
-
+void wge_inner(weed_plant_t *inst); ///< deinit instance(s) for generator
 
 /// for multitrack
 void backup_weed_instances(void);

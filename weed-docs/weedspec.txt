@@ -132,7 +132,12 @@ Clarified description of "group" leaf for WEED_HINT_SWITCH parameter templates.
 12/10/2013 salsaman
 Add "hidden" option to filter_class gui.
 
-(C) Gabriel "Salsaman" Finch 2005 - 2013
+
+30/09/2014 salsaman
+Add missing type documentation for "fps".
+
+
+(C) Gabriel "Salsaman" Finch 2005 - 2014
 
 With contributions by: Niels Elburg, Dennis "Jaromil" Rojo, Andraz
 Tori, and Oyvind "Pippin" Kolas.
@@ -660,7 +665,7 @@ in the filter class:
 The following is mandatory if the plugin sets "target_fps" for either
 filter_class or filter_instance:
 
- * "fps" : the current target fps of the host running the instance
+ * "fps" : WEED_SEED_DOUBLE : the current target fps of the host running the instance
    (i.e frequency at which it attempts to call process_func() ).
 
 Other optional leaves:

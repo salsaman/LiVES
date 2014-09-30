@@ -1,6 +1,6 @@
 // effects.c
 // LiVES (lives-exe)
-// (c) G. Finch 2003 - 2012
+// (c) G. Finch 2003 - 2014
 // Released under the GPL 3 or later
 // see file ../COPYING for licensing details
 
@@ -610,17 +610,26 @@ boolean do_effect(lives_rfx_t *rfx, boolean is_preview) {
   
 
 lives_render_error_t realfx_progress (boolean reset) {
-  static int i;
+  static lives_render_error_t write_error;
+
   GError *error=NULL;
+
   gchar oname[PATH_MAX];
+
   LiVESPixbuf *pixbuf;
-  gchar *com;
-  gint64 frameticks;
+
+  int64_t frameticks;
+
   weed_plant_t *layer;
+
+  gchar *com;
+
+  static int i;
+
   int weed_error;
   int layer_palette;
   int retval;
-  static lives_render_error_t write_error;
+
 
   // this is called periodically from do_processing_dialog for internal effects
 
@@ -1051,6 +1060,9 @@ boolean rte_on_off_callback (GtkAccelGroup *group, GObject *obj, guint keyval, G
     weed_deinit_all(FALSE);
   }
   else {
+
+    // the idea here is this gets set if a generator starts play, because in weed_init_effect() we will run playback
+    // and then we come out of there and do not wish to set the key on
     mainw->gen_started_play=FALSE;
 
     if (!(mainw->rte&new_rte)) {
@@ -1121,13 +1133,13 @@ boolean rte_on_off_callback (GtkAccelGroup *group, GObject *obj, guint keyval, G
 
 
 
-boolean rte_on_off_callback_hook (GtkToggleButton *button, gpointer user_data) {
+boolean rte_on_off_callback_hook (LiVESToggleButton *button, gpointer user_data) {
   rte_on_off_callback (NULL, NULL, 0, (GdkModifierType)0, user_data);
   return TRUE;
 }
 
 
-boolean grabkeys_callback (GtkAccelGroup *group, GObject *obj, guint keyval, GdkModifierType mod, gpointer user_data) {
+boolean grabkeys_callback (GtkAccelGroup *group, GObject *obj, uint32_t keyval, GdkModifierType mod, gpointer user_data) {
   // assign the keys to the last key-grabable effect 
   mainw->rte_keys=mainw->last_grabable_effect;
   mainw->osc_block=TRUE;
@@ -1141,7 +1153,7 @@ boolean grabkeys_callback (GtkAccelGroup *group, GObject *obj, guint keyval, Gdk
 
 
 
-boolean textparm_callback (GtkAccelGroup *group, GObject *obj, guint keyval, GdkModifierType mod, gpointer user_data) {
+boolean textparm_callback (GtkAccelGroup *group, GObject *obj, uint32_t keyval, GdkModifierType mod, gpointer user_data) {
   // keyboard linked to first string parameter, until TAB is pressed
   mainw->rte_textparm=get_textparm();
   return TRUE;
@@ -1149,7 +1161,7 @@ boolean textparm_callback (GtkAccelGroup *group, GObject *obj, guint keyval, Gdk
 
 
 
-boolean grabkeys_callback_hook (GtkToggleButton *button, gpointer user_data) {
+boolean grabkeys_callback_hook (LiVESToggleButton *button, gpointer user_data) {
   if (!lives_toggle_button_get_active(button)) return TRUE;
   mainw->last_grabable_effect=GPOINTER_TO_INT(user_data);
   grabkeys_callback (NULL, NULL, 0, (GdkModifierType)0, user_data);
@@ -1157,7 +1169,7 @@ boolean grabkeys_callback_hook (GtkToggleButton *button, gpointer user_data) {
 }
 
 
-boolean rtemode_callback (GtkAccelGroup *group, GObject *obj, guint keyval, GdkModifierType mod, gpointer user_data) {
+boolean rtemode_callback (GtkAccelGroup *group, GObject *obj, uint32_t keyval, GdkModifierType mod, gpointer user_data) {
   // "m" mode key
   if (mainw->rte_keys==-1) return TRUE;
   rte_key_setmode(0,-1);
@@ -1166,8 +1178,8 @@ boolean rtemode_callback (GtkAccelGroup *group, GObject *obj, guint keyval, GdkM
 }
 
 
-boolean rtemode_callback_hook (GtkToggleButton *button, gpointer user_data) {
-  gint key_mode=GPOINTER_TO_INT(user_data);
+boolean rtemode_callback_hook (LiVESToggleButton *button, gpointer user_data) {
+  int key_mode=GPOINTER_TO_INT(user_data);
   int modes=rte_getmodespk();
   int key=(int)(key_mode/modes);
   int mode=key_mode-key*modes;
@@ -1179,7 +1191,7 @@ boolean rtemode_callback_hook (GtkToggleButton *button, gpointer user_data) {
 }
 
 
-boolean swap_fg_bg_callback (GtkAccelGroup *group, GObject *obj, guint keyval, GdkModifierType mod, gpointer user_data) {
+boolean swap_fg_bg_callback (GtkAccelGroup *group, GObject *obj, uint32_t keyval, GdkModifierType mod, gpointer user_data) {
   int old_file=mainw->current_file;
 
   if (mainw->playing_file<1||mainw->num_tr_applied==0||mainw->noswitch||mainw->blend_file==-1||

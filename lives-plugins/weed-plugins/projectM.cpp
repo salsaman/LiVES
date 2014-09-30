@@ -67,10 +67,15 @@ typedef struct {
   float *audio;
   volatile int die;
   volatile int failed;
+  volatile int update_size;
+  volatile int rendering;
 } _sdata;
 
 static int maxwidth,maxheight;
 
+static int inited=0;
+
+static _sdata *sd=NULL;
 
 static void winhide() {
   SDL_SysWMinfo info;
@@ -112,12 +117,21 @@ static int resize_display(int width, int height) {
 }
 
 
+static int change_size(_sdata *sdata) {
+  int ret;
+  sdata->globalPM->projectM_resetGL(sdata->width,sdata->height);
+  if (sdata->fbuffer!=NULL) weed_free(sdata->fbuffer);
+  ret=resize_display(sdata->width,sdata->height);
+  sdata->fbuffer = (GLubyte *)weed_malloc( sizeof( GLubyte ) * sdata->width * sdata->height * 3 );
+  return ret;
+}
 
-static int init_display(void) {
+
+static int init_display(_sdata *sd) {
   const SDL_VideoInfo* info;
 
-  int defwidth=640;
-  int defheight=480;
+  int defwidth=sd->width;
+  int defheight=sd->height;
 
   /* First, initialize SDL's video subsystem. */
   if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_TIMER) < 0) {
@@ -149,17 +163,12 @@ static int init_display(void) {
 	
   if (resize_display(defwidth,defheight)) return 3;
 
+  //if (change_size(sd)) return 4;
+
   return 0;
 }
 
 
-
-static void change_size(_sdata *sdata) {
-  sdata->globalPM->projectM_resetGL(sdata->width,sdata->height);
-  resize_display(sdata->width,sdata->height);
-  if (sdata->fbuffer!=NULL) weed_free(sdata->fbuffer);
-  sdata->fbuffer = (GLubyte *)weed_malloc( sizeof( GLubyte ) * sdata->width * sdata->height * 3 );
-}
 
 
 
@@ -228,9 +237,10 @@ static void *worker(void *data) {
   std::string config_filename = getConfigFilename();
   ConfigFile config(config_filename);
 
+
   _sdata *sd=(_sdata *)data;
 
-  if (init_display()) {
+  if (init_display(sd)) {
     sd->failed=1;
     goto fail;
   }
@@ -239,18 +249,30 @@ static void *worker(void *data) {
   sd->textureHandle = sd->globalPM->initRenderToTexture();
 
   while (!sd->die) {
+    if (!sd->rendering) {
+      usleep(10000);
+      continue;
+    }
+
     pthread_mutex_lock(&sd->pcm_mutex);
     if (sd->audio_frames>0) {
       // sd->audio should contain data for 1 channel only
       sd->globalPM->pcm()->addPCMfloat(sd->audio,sd->audio_frames);
       sd->audio_frames=0;
+      weed_free(sd->audio);
+      sd->audio=NULL;
     }
     pthread_mutex_unlock(&sd->pcm_mutex);
+    pthread_mutex_lock(&sd->mutex);
+    if (sd->update_size) {
+      change_size(sd);
+      sd->update_size=0;
+    }
+    pthread_mutex_unlock(&sd->mutex);
     render_frame(sd);
   }
 
   if (sd->globalPM!=NULL) delete(sd->globalPM);
-
 
  fail:
 
@@ -263,43 +285,48 @@ static void *worker(void *data) {
 
 
 static int projectM_init (weed_plant_t *inst) {
-  int error;
-  weed_plant_t *out_channel=weed_get_plantptr_value(inst,"out_channels",&error);
-
-  int width=weed_get_int_value(out_channel,"width",&error);
-  int height=weed_get_int_value(out_channel,"height",&error);
-
-  int palette=weed_get_int_value(out_channel,"current_palette",&error);
-
-  _sdata *sd;
-
   if (copies==1) return WEED_ERROR_TOO_MANY_INSTANCES;
   copies++;
 
-  sd=(_sdata *)weed_malloc(sizeof(_sdata));
-  if (sd==NULL) return WEED_ERROR_MEMORY_ALLOCATION;
+  if (!inited) {
+    int error;
+    weed_plant_t *out_channel=weed_get_plantptr_value(inst,"out_channels",&error);
 
-  sd->fbuffer = (GLubyte *)weed_malloc( sizeof( GLubyte ) * width * height * 3 );
+    int width=weed_get_int_value(out_channel,"width",&error);
+    int height=weed_get_int_value(out_channel,"height",&error);
 
-  if (sd->fbuffer==NULL) {
-    weed_free(sd);
-    return WEED_ERROR_MEMORY_ALLOCATION;
+    int palette=weed_get_int_value(out_channel,"current_palette",&error);
+
+    sd=(_sdata *)weed_malloc(sizeof(_sdata));
+    if (sd==NULL) return WEED_ERROR_MEMORY_ALLOCATION;
+
+    sd->fbuffer = (GLubyte *)weed_malloc( sizeof( GLubyte ) * width * height * 3 );
+
+    if (sd->fbuffer==NULL) {
+      weed_free(sd);
+      return WEED_ERROR_MEMORY_ALLOCATION;
+    }
+
+    sd->width=width;
+    sd->height=height;
+    
+    sd->die=0;
+    sd->failed=0;
+    sd->update_size=0;
+
+    sd->audio=NULL;
+    sd->audio_frames=0;
+
+    pthread_mutex_init(&sd->mutex,NULL);
+    pthread_mutex_init(&sd->pcm_mutex,NULL);
+
+    inited=1;
+
+    // kick off a thread to init screean and render
+    pthread_create(&sd->thread,NULL,worker,sd);
   }
 
-  sd->width=width;
-  sd->height=height;
-
-  sd->die=0;
-  sd->failed=0;
-
-  sd->audio=NULL;
-  sd->audio_frames=0;
-
-  pthread_mutex_init(&sd->mutex,NULL);
-  pthread_mutex_init(&sd->pcm_mutex,NULL);
-
-  // kick off a thread to init screean and render
-  pthread_create(&sd->thread,NULL,worker,sd);
+  sd->rendering=1;
 
   weed_set_voidptr_value(inst,"plugin_internal",sd);
 
@@ -310,18 +337,10 @@ static int projectM_init (weed_plant_t *inst) {
 
 
 static int projectM_deinit (weed_plant_t *inst) {
-  int error;
+    int error;
   _sdata *sd=(_sdata *)weed_get_voidptr_value(inst,"plugin_internal",&error);
 
-  sd->die=1;
-
-  pthread_join(sd->thread,NULL);
-
-  if (sd->fbuffer!=NULL) weed_free(sd->fbuffer);
-
-  if (sd->audio!=NULL) weed_free(sd->audio);
-
-  weed_free(sd);
+  sd->rendering=0;
 
   copies--;
 
@@ -336,6 +355,7 @@ static int projectM_process (weed_plant_t *inst, weed_timecode_t timestamp) {
 
   _sdata *sd=(_sdata *)weed_get_voidptr_value(inst,"plugin_internal",&error);
 
+  weed_plant_t *in_channel=weed_get_plantptr_value(inst,"in_channels",&error);
   weed_plant_t *out_channel=weed_get_plantptr_value(inst,"out_channels",&error);
   unsigned char *dst=(unsigned char *)weed_get_voidptr_value(out_channel,"pixel_data",&error);
 
@@ -359,10 +379,10 @@ static int projectM_process (weed_plant_t *inst, weed_timecode_t timestamp) {
     sd->height=height;
     if (sd->width>maxwidth) sd->width=maxwidth;
     if (sd->height>maxheight) sd->height=maxheight;
-    change_size(sd);
+    sd->update_size=1;
   }
 
-  if (sd->fbuffer==NULL) return WEED_NO_ERROR;
+  if (sd->update_size||sd->fbuffer==NULL) return WEED_NO_ERROR;
 
   if (0) {
     projectMEvent evt;
@@ -375,6 +395,36 @@ static int projectM_process (weed_plant_t *inst, weed_timecode_t timestamp) {
 
     // send any keystrokes to projectM
     sd->globalPM->key_handler(evt, key, mod);
+  }
+
+
+
+  if (in_channel!=NULL) {
+    int adlen=weed_get_int_value(in_channel,"audio_data_length",&error);
+    float *adata=(float *)weed_get_voidptr_value(in_channel,"audio_data",&error);
+    if (adlen>0&&adata!=NULL) {
+      float *aud_data;
+      int ainter=weed_get_boolean_value(in_channel,"audio_interleaf",&error);
+      pthread_mutex_lock(&sd->pcm_mutex);
+      aud_data=(float *)weed_malloc((adlen+sd->audio_frames)*sizeof(float));
+      if (sd->audio!=NULL) {
+	weed_memcpy(aud_data,sd->audio,sd->audio_frames*sizeof(float));
+	weed_free(sd->audio);
+      }
+      if (ainter==WEED_FALSE) {
+	weed_memcpy(aud_data+sd->audio_frames,adata,adlen*sizeof(float));
+      }
+      else {
+	int achans=weed_get_int_value(in_channel,"audio_channels",&error);
+	for (j=0;j<adlen;j++) {
+	  weed_memcpy(aud_data+sd->audio_frames+j,adata,sizeof(float));
+	  adata+=achans;
+	}
+      }
+      sd->audio_frames+=adlen;
+      sd->audio=aud_data;
+      pthread_mutex_unlock(&sd->pcm_mutex);
+    }
   }
 
   //if (palette==WEED_PALETTE_RGBA32) widthx=width*4;
@@ -415,7 +465,7 @@ weed_plant_t *weed_setup (weed_bootstrap_f weed_boot) {
     weed_plant_t *out_chantmpls[]={weed_channel_template_init("out channel 0",WEED_CHANNEL_REINIT_ON_SIZE_CHANGE|
 							      WEED_CHANNEL_REINIT_ON_PALETTE_CHANGE,palette_list),NULL};
     weed_plant_t *filter_class=weed_filter_class_init("projectM","salsaman/projectM authors",1,0,&projectM_init,
-						      &projectM_process,&projectM_deinit,NULL,out_chantmpls,NULL,NULL);
+						      &projectM_process,&projectM_deinit,in_chantmpls,out_chantmpls,NULL,NULL);
 
 
     weed_set_int_value(in_chantmpls[0],"audio_channels",1);
@@ -427,6 +477,8 @@ weed_plant_t *weed_setup (weed_bootstrap_f weed_boot) {
     weed_plugin_info_add_filter_class (plugin_info,filter_class);
 
     weed_set_int_value(plugin_info,"version",package_version);
+
+
   }
   return plugin_info;
 }
@@ -434,4 +486,12 @@ weed_plant_t *weed_setup (weed_bootstrap_f weed_boot) {
 
 
 
-
+void weed_desetup(void) {
+  if (inited) {
+    sd->die=1;
+    pthread_join(sd->thread,NULL);
+    if (sd->fbuffer!=NULL) weed_free(sd->fbuffer);
+    if (sd->audio!=NULL) weed_free(sd->audio);
+    weed_free(sd);
+  }
+}

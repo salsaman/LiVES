@@ -48,10 +48,10 @@ void load_rfx_preview(lives_rfx_t *rfx); ///< rfx preview
 void redraw_framedraw_image(void);
 
 /// change the frame number
-void after_framedraw_frame_spinbutton_changed (GtkSpinButton *, lives_special_framedraw_rect_t *);
+void after_framedraw_frame_spinbutton_changed (LiVESSpinButton *, lives_special_framedraw_rect_t *);
 
 /// reset button
-void on_framedraw_reset_clicked (GtkButton *, lives_special_framedraw_rect_t *);
+void on_framedraw_reset_clicked (LiVESButton *, lives_special_framedraw_rect_t *);
 
 
 boolean on_framedraw_mouse_start (LiVESWidget *, GdkEventButton *, lives_special_framedraw_rect_t *);

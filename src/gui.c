@@ -3524,7 +3524,7 @@ void make_preview_box (void) {
 							      1., 10., 0,
 							      LIVES_BOX(hbox),_("Frame number to preview"));
 
-  mainw->preview_scale=lives_hscale_new(gtk_spin_button_get_adjustment(LIVES_SPIN_BUTTON(mainw->preview_spinbutton)));
+  mainw->preview_scale=lives_hscale_new(lives_spin_button_get_adjustment(LIVES_SPIN_BUTTON(mainw->preview_spinbutton)));
   gtk_scale_set_draw_value(GTK_SCALE(mainw->preview_scale),FALSE);
 
   if (palette->style&STYLE_1) {

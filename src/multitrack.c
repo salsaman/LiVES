@@ -8400,7 +8400,7 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
 					     G_CALLBACK (avel_spin_changed),
 					     mt);
 
-  spinbutton_adj=(LiVESAdjustment *)gtk_spin_button_get_adjustment(LIVES_SPIN_BUTTON(mt->spinbutton_avel));
+  spinbutton_adj=lives_spin_button_get_adjustment(LIVES_SPIN_BUTTON(mt->spinbutton_avel));
 
 
   mt->avel_scale=lives_hscale_new(LIVES_ADJUSTMENT(spinbutton_adj));

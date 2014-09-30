@@ -43,7 +43,7 @@ extern boolean do_effect (lives_rfx_t *, boolean is_preview); //effects.c in LiV
 extern void on_realfx_activate (LiVESMenuItem *, gpointer rfx); // effects.c in LiVES
 
 
-static void after_param_text_buffer_changed (GtkTextBuffer *textbuffer, lives_rfx_t *rfx);
+static void after_param_text_buffer_changed (LiVESTextBuffer *textbuffer, lives_rfx_t *rfx);
 
 
 LiVESWidget *fx_dialog[2];
@@ -312,7 +312,7 @@ void on_render_fx_activate (LiVESMenuItem *menuitem, lives_rfx_t *rfx) {
 }
 
 
-static void gen_width_changed (GtkSpinButton *spin, gpointer user_data) {
+static void gen_width_changed (LiVESSpinButton *spin, gpointer user_data) {
   weed_plant_t *ctmpl=(weed_plant_t *)user_data;
   int val=lives_spin_button_get_value_as_int(spin);
   int error,old_val=0;
@@ -330,7 +330,7 @@ static void gen_width_changed (GtkSpinButton *spin, gpointer user_data) {
 }
 
 
-static void gen_height_changed (GtkSpinButton *spin, gpointer user_data) {
+static void gen_height_changed (LiVESSpinButton *spin, gpointer user_data) {
   weed_plant_t *ctmpl=(weed_plant_t *)user_data;
   int val=lives_spin_button_get_value_as_int(spin);
   int error,old_val=0;
@@ -348,7 +348,7 @@ static void gen_height_changed (GtkSpinButton *spin, gpointer user_data) {
 }
 
 
-static void gen_fps_changed (GtkSpinButton *spin, gpointer user_data) {
+static void gen_fps_changed (LiVESSpinButton *spin, gpointer user_data) {
   weed_plant_t *filter=(weed_plant_t *)user_data;
   double val=lives_spin_button_get_value(spin);
   weed_set_double_value(filter,"host_fps",val);
@@ -399,15 +399,15 @@ static void trans_in_out_pressed(lives_rfx_t *rfx, boolean in) {
 }
 
 
-static void transition_in_pressed(GtkToggleButton *tbut, gpointer rfx) {
+static void transition_in_pressed(LiVESToggleButton *tbut, gpointer rfx) {
   trans_in_out_pressed((lives_rfx_t *)rfx,TRUE);
 }
 
-static void transition_out_pressed(GtkToggleButton *tbut, gpointer rfx) {
+static void transition_out_pressed(LiVESToggleButton *tbut, gpointer rfx) {
   trans_in_out_pressed((lives_rfx_t *)rfx,FALSE);
 }
 
-static void after_transaudio_toggled(GtkToggleButton *togglebutton, gpointer rfx) {
+static void after_transaudio_toggled(LiVESToggleButton *togglebutton, gpointer rfx) {
   weed_plant_t *init_event=mainw->multitrack->init_event;
 
   if (lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(togglebutton))) 
@@ -416,14 +416,14 @@ static void after_transaudio_toggled(GtkToggleButton *togglebutton, gpointer rfx
 
 }
 
-static void gen_cb_toggled(GtkToggleButton *tbut, gpointer rfx) {
+static void gen_cb_toggled(LiVESToggleButton *tbut, gpointer rfx) {
   mainw->gen_to_clipboard=!mainw->gen_to_clipboard;
 }
 
 
 
 
-void transition_add_in_out(GtkBox *vbox, lives_rfx_t *rfx, boolean add_audio_check) {
+void transition_add_in_out(LiVESBox *vbox, lives_rfx_t *rfx, boolean add_audio_check) {
   // add in/out radios for multitrack transitions
   LiVESWidget *radiobutton_in;
   LiVESWidget *radiobutton_out;
@@ -473,7 +473,7 @@ void transition_add_in_out(GtkBox *vbox, lives_rfx_t *rfx, boolean add_audio_che
 			    G_CALLBACK (after_transaudio_toggled),
 			    (gpointer)rfx);
 
-    after_transaudio_toggled(GTK_TOGGLE_BUTTON(checkbutton),(gpointer)rfx);
+    after_transaudio_toggled(LIVES_TOGGLE_BUTTON(checkbutton),(gpointer)rfx);
     
   }
 
@@ -502,7 +502,7 @@ void transition_add_in_out(GtkBox *vbox, lives_rfx_t *rfx, boolean add_audio_che
 
 
 
-static boolean add_sizes(GtkBox *vbox, boolean add_fps, lives_rfx_t *rfx) {
+static boolean add_sizes(LiVESBox *vbox, boolean add_fps, boolean has_param, lives_rfx_t *rfx) {
   // add size settings for generators and resize effects
   static lives_param_t aspect_width,aspect_height;
 
@@ -530,12 +530,18 @@ static boolean add_sizes(GtkBox *vbox, boolean add_fps, lives_rfx_t *rfx) {
 
   register int i;
 
+
+  if (!has_param) {
+    lives_widget_set_size_request (LIVES_WIDGET(vbox), RFX_WINSIZE_H, RFX_WINSIZE_V);
+  }
+
   // add fps
 
 
   if (add_fps) {
 
-    add_hsep_to_box(vbox);
+    if (has_param)
+      add_hsep_to_box(vbox);
 
     hbox = lives_hbox_new (FALSE, 0);
     lives_box_pack_start (LIVES_BOX (vbox), hbox, FALSE, FALSE, widget_opts.packing_height*2);
@@ -647,7 +653,7 @@ static boolean add_sizes(GtkBox *vbox, boolean add_fps, lives_rfx_t *rfx) {
 
 
 
-static void add_gen_to(GtkBox *vbox, lives_rfx_t *rfx) {
+static void add_gen_to(LiVESBox *vbox, lives_rfx_t *rfx) {
   // add "generate to clipboard/new clip" for rendered generators
   LiVESSList *radiobutton_group = NULL;
 
@@ -1147,7 +1153,7 @@ boolean make_param_box(LiVESVBox *top_vbox, lives_rfx_t *rfx) {
 
   // extras for converters
   if (internal&&weed_instance_is_resizer((weed_plant_t *)rfx->source)&&!chk_params) {
-    has_param=add_sizes(LIVES_BOX(param_vbox),FALSE,rfx);
+    has_param=add_sizes(LIVES_BOX(param_vbox),FALSE,has_param,rfx);
   }
 
   if (rfx->status!=RFX_STATUS_SCRAP&&!internal&&rfx->num_in_channels==0&&rfx->min_frames>-1&&!chk_params) {
@@ -1303,7 +1309,7 @@ boolean make_param_box(LiVESVBox *top_vbox, lives_rfx_t *rfx) {
 	needs_sizes=TRUE;
 	if (mainw->overflow_height<900) mainw->overflow_height=900;
       }
-      has_param=TRUE;
+      chk_params=TRUE;
     }
   }
 
@@ -1330,7 +1336,10 @@ boolean make_param_box(LiVESVBox *top_vbox, lives_rfx_t *rfx) {
 
   }
 
-  if (needs_sizes) add_sizes(LIVES_BOX(top_vbox),TRUE,rfx);
+  if (needs_sizes) {
+    add_sizes(LIVES_BOX(top_vbox),TRUE,has_param,rfx);
+    has_param=TRUE;
+  }
 
   mainw->block_param_updates=FALSE;
   mainw->overflow_height=0;
@@ -1347,7 +1356,7 @@ boolean make_param_box(LiVESVBox *top_vbox, lives_rfx_t *rfx) {
 
 
 
-boolean add_param_to_box (GtkBox *box, lives_rfx_t *rfx, int pnum, boolean add_slider) {
+boolean add_param_to_box (LiVESBox *box, lives_rfx_t *rfx, int pnum, boolean add_slider) {
   // box here is vbox inside top_hbox inside top_dialog
 
   // add paramter pnum for rfx to box
@@ -1369,9 +1378,9 @@ boolean add_param_to_box (GtkBox *box, lives_rfx_t *rfx, int pnum, boolean add_s
   LiVESWidget *textview=NULL;
   LiVESWidget *scrolledwindow;
 
-  GtkAdjustment *spinbutton_adj;
+  LiVESAdjustment *spinbutton_adj;
 
-  GtkTextBuffer *textbuffer=NULL;
+  LiVESTextBuffer *textbuffer=NULL;
 
   lives_param_t *param;
   lives_widget_group_t *group;
@@ -1525,7 +1534,7 @@ boolean add_param_to_box (GtkBox *box, lives_rfx_t *rfx, int pnum, boolean add_s
 
 
     if (add_scalers) {
-      spinbutton_adj=gtk_spin_button_get_adjustment(LIVES_SPIN_BUTTON(spinbutton));
+      spinbutton_adj=lives_spin_button_get_adjustment(LIVES_SPIN_BUTTON(spinbutton));
 #ifdef ENABLE_GIW
       if (!prefs->lamp_buttons) {
 #endif
@@ -1694,7 +1703,7 @@ boolean add_param_to_box (GtkBox *box, lives_rfx_t *rfx, int pnum, boolean add_s
 			      (gpointer) rfx);
 
       lives_text_view_set_editable (LIVES_TEXT_VIEW (textview), TRUE);
-      lives_text_view_set_wrap_mode (LIVES_TEXT_VIEW (textview), GTK_WRAP_WORD);
+      lives_text_view_set_wrap_mode (LIVES_TEXT_VIEW (textview), LIVES_WRAP_WORD);
       lives_text_view_set_cursor_visible (LIVES_TEXT_VIEW (textview), TRUE);
 
       lives_text_buffer_set_text (textbuffer, txt, -1);
@@ -1786,7 +1795,7 @@ boolean add_param_to_box (GtkBox *box, lives_rfx_t *rfx, int pnum, boolean add_s
 }
 
 
-void add_param_label_to_box (GtkBox *box, boolean do_trans, const gchar *text) {
+void add_param_label_to_box (LiVESBox *box, boolean do_trans, const gchar *text) {
   LiVESWidget *label;
 
   lives_box_set_homogeneous(LIVES_BOX(box),FALSE);
@@ -1837,7 +1846,7 @@ lives_widget_group_t *livesgrp_from_usrgrp (GSList *u2l, int usrgrp) {
 
 
 
-void after_boolean_param_toggled (GtkToggleButton *togglebutton, lives_rfx_t *rfx) {
+void after_boolean_param_toggled (LiVESToggleButton *togglebutton, lives_rfx_t *rfx) {
   int param_number=GPOINTER_TO_INT (g_object_get_data (G_OBJECT (togglebutton),"param_number"));
 
   GList *retvals=NULL;
@@ -1928,7 +1937,7 @@ void after_boolean_param_toggled (GtkToggleButton *togglebutton, lives_rfx_t *rf
 
 
 
-void after_param_value_changed (GtkSpinButton *spinbutton, lives_rfx_t *rfx) {
+void after_param_value_changed (LiVESSpinButton *spinbutton, lives_rfx_t *rfx) {
   int param_number=GPOINTER_TO_INT (g_object_get_data (G_OBJECT (spinbutton),"param_number"));
   lives_param_t *param=&rfx->params[param_number];
 
@@ -2197,7 +2206,7 @@ void update_weed_color_value(weed_plant_t *plant, int pnum, int c1, int c2, int 
 }
 
 
-void after_param_red_changed (GtkSpinButton *spinbutton, lives_rfx_t *rfx) {
+void after_param_red_changed (LiVESSpinButton *spinbutton, lives_rfx_t *rfx) {
   GList *retvals=NULL;
 
   lives_colRGB24_t old_value;
@@ -2281,7 +2290,7 @@ void after_param_red_changed (GtkSpinButton *spinbutton, lives_rfx_t *rfx) {
 }
 
 
-void after_param_green_changed (GtkSpinButton *spinbutton, lives_rfx_t *rfx) {
+void after_param_green_changed (LiVESSpinButton *spinbutton, lives_rfx_t *rfx) {
   GList *retvals=NULL;
 
   lives_colRGB24_t old_value;
@@ -2365,7 +2374,7 @@ void after_param_green_changed (GtkSpinButton *spinbutton, lives_rfx_t *rfx) {
 }
 
 
-void after_param_blue_changed (GtkSpinButton *spinbutton, lives_rfx_t *rfx) {
+void after_param_blue_changed (LiVESSpinButton *spinbutton, lives_rfx_t *rfx) {
   GList *retvals=NULL;
 
   lives_colRGB24_t old_value;
@@ -2447,9 +2456,7 @@ void after_param_blue_changed (GtkSpinButton *spinbutton, lives_rfx_t *rfx) {
 }
 
 
-void
-after_param_alpha_changed           (GtkSpinButton   *spinbutton,
-				     lives_rfx_t *rfx) {
+void after_param_alpha_changed (LiVESSpinButton *spinbutton, lives_rfx_t *rfx) {
   // not used yet
   int param_number=GPOINTER_TO_INT (g_object_get_data (G_OBJECT (spinbutton),"param_number"));
   GList *retvals=NULL;
@@ -2530,8 +2537,9 @@ boolean after_param_text_focus_changed (LiVESWidget *hbox, LiVESWidget *child, l
   return FALSE;
 }
 
+
 void after_param_text_changed (LiVESWidget *textwidget, lives_rfx_t *rfx) {
-  GtkTextBuffer *textbuffer=NULL;
+  LiVESTextBuffer *textbuffer=NULL;
 
   GList *retvals=NULL;
 
@@ -2607,7 +2615,7 @@ void after_param_text_changed (LiVESWidget *textwidget, lives_rfx_t *rfx) {
 
       if (disp_string!=NULL) {
 	if ((int)param->max>RFX_TEXT_MAGIC||param->max==0.) {
-	  lives_text_buffer_set_text (GTK_TEXT_BUFFER (textbuffer), (gchar *)param->value, -1);
+	  lives_text_buffer_set_text (LIVES_TEXT_BUFFER (textbuffer), (gchar *)param->value, -1);
 	}
 	else {
 	  lives_entry_set_text(LIVES_ENTRY(textwidget),disp_string);
@@ -2642,7 +2650,7 @@ void after_param_text_changed (LiVESWidget *textwidget, lives_rfx_t *rfx) {
 
 }
 
-static void after_param_text_buffer_changed (GtkTextBuffer *textbuffer, lives_rfx_t *rfx) {
+static void after_param_text_buffer_changed (LiVESTextBuffer *textbuffer, lives_rfx_t *rfx) {
   LiVESWidget *textview=(LiVESWidget *)g_object_get_data(G_OBJECT(textbuffer),"textview");
   after_param_text_changed(textview,rfx);
 }
@@ -3042,7 +3050,7 @@ int set_param_from_list(GList *plist, lives_param_t *param, int pnum, boolean wi
     tmp=g_strdup((gchar *)g_list_nth_data (plist,pnum++));
     set_bool_param(param->value,(atoi (tmp)));
     if (upd) {
-      if (param->widgets[0]&&GTK_IS_TOGGLE_BUTTON (param->widgets[0])) {
+      if (param->widgets[0]&&LIVES_IS_TOGGLE_BUTTON (param->widgets[0])) {
 	lives_toggle_button_set_active (LIVES_TOGGLE_BUTTON (param->widgets[0]),get_bool_param(param->value));
       }
     }
@@ -3074,7 +3082,7 @@ int set_param_from_list(GList *plist, lives_param_t *param, int pnum, boolean wi
       }
       set_double_param(param->value,double_val);
       if (upd) {
-	if (param->widgets[0]&&GTK_IS_SPIN_BUTTON (param->widgets[0])) {
+	if (param->widgets[0]&&LIVES_IS_SPIN_BUTTON (param->widgets[0])) {
 	  lives_rfx_t *rfx=(lives_rfx_t *)g_object_get_data(G_OBJECT(param->widgets[0]),"rfx");
 	  g_signal_handlers_block_by_func(param->widgets[0],(gpointer)after_param_value_changed,(gpointer)rfx);
 	  lives_spin_button_set_range (LIVES_SPIN_BUTTON (param->widgets[0]),(double)param->min,(double)param->max);
@@ -3109,7 +3117,7 @@ int set_param_from_list(GList *plist, lives_param_t *param, int pnum, boolean wi
       set_int_param(param->value,int_value);
       
       if (upd) {
-	if (param->widgets[0]&&GTK_IS_SPIN_BUTTON (param->widgets[0])) {
+	if (param->widgets[0]&&LIVES_IS_SPIN_BUTTON (param->widgets[0])) {
 	  lives_rfx_t *rfx=(lives_rfx_t *)g_object_get_data(G_OBJECT(param->widgets[0]),"rfx");
 	  g_signal_handlers_block_by_func(param->widgets[0],(gpointer)after_param_value_changed,(gpointer)rfx);
 	  lives_spin_button_set_range (LIVES_SPIN_BUTTON (param->widgets[0]),(double)param->min,(double)param->max);
@@ -3138,13 +3146,13 @@ int set_param_from_list(GList *plist, lives_param_t *param, int pnum, boolean wi
     set_colRGB24_param(param->value,red,green,blue);
 
     if (upd) {
-      if (param->widgets[0]&&GTK_IS_SPIN_BUTTON (param->widgets[0])) {
+      if (param->widgets[0]&&LIVES_IS_SPIN_BUTTON (param->widgets[0])) {
 	lives_spin_button_set_value (LIVES_SPIN_BUTTON (param->widgets[0]),(double)red);
       }
-      if (param->widgets[1]&&GTK_IS_SPIN_BUTTON (param->widgets[1])) {
+      if (param->widgets[1]&&LIVES_IS_SPIN_BUTTON (param->widgets[1])) {
 	lives_spin_button_set_value (LIVES_SPIN_BUTTON (param->widgets[1]),(double)green);
       }
-      if (param->widgets[2]&&GTK_IS_SPIN_BUTTON (param->widgets[2])) {
+      if (param->widgets[2]&&LIVES_IS_SPIN_BUTTON (param->widgets[2])) {
 	lives_spin_button_set_value (LIVES_SPIN_BUTTON (param->widgets[2]),(double)blue);
       }
     }

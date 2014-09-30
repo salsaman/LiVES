@@ -192,7 +192,7 @@ void widget_add_framedraw (LiVESVBox *box, int start, int end, boolean add_previ
   LiVESWidget *vbox;
   LiVESWidget *hbox;
   LiVESWidget *label;
-  GtkAdjustment *spinbutton_adj;
+  LiVESAdjustment *spinbutton_adj;
   LiVESWidget *frame;
  
   lives_rfx_t *rfx;
@@ -267,7 +267,7 @@ void widget_add_framedraw (LiVESVBox *box, int start, int end, boolean add_previ
   mainw->framedraw_spinbutton = lives_standard_spin_button_new (_("_Frame"),
 								TRUE,start,start,end,1.,10.,0,LIVES_BOX(hbox),NULL);
 
-  spinbutton_adj=gtk_spin_button_get_adjustment(LIVES_SPIN_BUTTON(mainw->framedraw_spinbutton));
+  spinbutton_adj=lives_spin_button_get_adjustment(LIVES_SPIN_BUTTON(mainw->framedraw_spinbutton));
 
   mainw->framedraw_scale=lives_hscale_new(LIVES_ADJUSTMENT(spinbutton_adj));
   lives_box_pack_start (LIVES_BOX (hbox), mainw->framedraw_scale, TRUE, TRUE, 0);
@@ -638,7 +638,7 @@ void load_rfx_preview(lives_rfx_t *rfx) {
 
 
 
-void after_framedraw_frame_spinbutton_changed (GtkSpinButton *spinbutton, lives_special_framedraw_rect_t *framedraw) {
+void after_framedraw_frame_spinbutton_changed (LiVESSpinButton *spinbutton, lives_special_framedraw_rect_t *framedraw) {
   // update the single frame/framedraw preview
   // after the "frame number" spinbutton has changed
   mainw->framedraw_frame=lives_spin_button_get_value_as_int(spinbutton);

@@ -511,6 +511,8 @@ typedef gpointer                          livespointer;
 #define LIVES_IS_COMBO(widget) GTK_IS_COMBO_BOX(widget)
 #define LIVES_IS_LABEL(widget) GTK_IS_LABEL(widget)
 #define LIVES_IS_BUTTON(widget) GTK_IS_BUTTON(widget)
+#define LIVES_IS_SPIN_BUTTON(widget) GTK_IS_SPIN_BUTTON(widget)
+#define LIVES_IS_TOGGLE_BUTTON(widget) GTK_IS_TOGGLE_BUTTON(widget)
 #define LIVES_IS_IMAGE(widget) GTK_IS_IMAGE(widget)
 #define LIVES_IS_ENTRY(widget) GTK_IS_ENTRY(widget)
 #define LIVES_IS_RANGE(widget) GTK_IS_RANGE(widget)

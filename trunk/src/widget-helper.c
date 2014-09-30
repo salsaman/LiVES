@@ -2133,6 +2133,15 @@ LIVES_INLINE int lives_spin_button_get_value_as_int(LiVESSpinButton *button) {
 }
 
 
+LIVES_INLINE LiVESAdjustment *lives_spin_button_get_adjustment(LiVESSpinButton *button) {
+  LiVESAdjustment *adj=NULL;
+#ifdef GUI_GTK
+  adj=gtk_spin_button_get_adjustment(button);
+#endif
+  return adj;
+}
+
+
 LIVES_INLINE boolean lives_spin_button_set_value(LiVESSpinButton *button, double value) {
 #ifdef GUI_GTK
   gtk_spin_button_set_value(button,value);

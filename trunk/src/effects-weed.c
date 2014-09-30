@@ -4783,7 +4783,8 @@ static void make_fx_defs_menu(void) {
     if (!weed_plant_has_leaf(filter,"host_menu_hide")||
 	(weed_get_boolean_value(filter,"host_menu_hide",&error)==WEED_FALSE)) {
 
-      if (num_in_params(filter,TRUE,TRUE)>0) {
+      if ((!has_video_chans_in(filter,FALSE)&&has_video_chans_out(filter,FALSE))||
+	  num_in_params(filter,TRUE,TRUE)>0) {
 	filter_name=weed_get_string_value(filter,"name",&error);
 	if ((pkgstring=strstr(filter_name,": "))!=NULL) {
 	  // package effect

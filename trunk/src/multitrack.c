@@ -3292,7 +3292,7 @@ LIVES_INLINE lives_mt_poly_state_t get_poly_state_from_page(lives_mt *mt) {
 }
 
 
-static void notebook_error(GtkNotebook *nb, uint32_t tab, lives_mt_nb_error_t err, lives_mt *mt) {
+static void notebook_error(LiVESNotebook *nb, uint32_t tab, lives_mt_nb_error_t err, lives_mt *mt) {
   uint32_t page=poly_tab_to_page(tab);
 
   if (mt->nb_label!=NULL) lives_widget_destroy(mt->nb_label);
@@ -4578,9 +4578,10 @@ void mt_backup(lives_mt *mt, int undo_type, weed_timecode_t tc) {
 
   size_t space_needed=0;
   mt_undo *undo;
+  mt_undo *last_valid_undo;
+
   unsigned char *memblock;
 
-  mt_undo *last_valid_undo;
 
   mt->did_backup=TRUE;
 
@@ -4661,9 +4662,9 @@ void mt_backup(lives_mt *mt, int undo_type, weed_timecode_t tc) {
 }
 
 void mt_aparam_view_toggled (LiVESMenuItem *menuitem, gpointer user_data) {
-  int which=GPOINTER_TO_INT(g_object_get_data(G_OBJECT(menuitem),"pnum"));
   lives_mt *mt=(lives_mt *)user_data;
-  int i;
+  int which=GPOINTER_TO_INT(g_object_get_data(G_OBJECT(menuitem),"pnum"));
+  register int i;
 
   if (lives_check_menu_item_get_active(LIVES_CHECK_MENU_ITEM(menuitem))) 
     mt->aparam_view_list=g_list_append(mt->aparam_view_list,GINT_TO_POINTER(which));
@@ -4682,10 +4683,11 @@ static void destroy_widget(LiVESWidget *widget, gpointer user_data) {
 
 static void add_aparam_menuitems(lives_mt *mt) {
   // add menuitems for avol_fx to the View/Audio parameters submenu
+  LiVESWidget *menuitem;
   weed_plant_t *filter;
   lives_rfx_t *rfx;
-  int i;
-  LiVESWidget *menuitem;
+  register int i;
+
   lives_container_foreach(LIVES_CONTAINER(mt->aparam_submenu),destroy_widget,NULL);
 
   if (mt->avol_fx==-1||mt->audio_draws==NULL) {
@@ -5245,12 +5247,6 @@ void remove_current_from_affected_layouts(lives_mt *mt) {
 
 
 
-
-
-
-
-
-
 void stored_event_list_free_all(boolean wiped) {
   int i;
 
@@ -5339,12 +5335,8 @@ boolean check_for_layout_del (lives_mt *mt, boolean exiting) {
 }
 
 
-static void
-on_comp_exp (LiVESButton *button, gpointer user_data)
-{
+static void on_comp_exp (LiVESButton *button, gpointer user_data) {
   lives_check_menu_item_set_active(LIVES_CHECK_MENU_ITEM(user_data),!lives_check_menu_item_get_active(LIVES_CHECK_MENU_ITEM(user_data)));
-
-
 }
 
 

@@ -34,6 +34,7 @@ static int package_version=1; // version of this package
 #include "weed-utils-code.c" // optional
 #include "weed-plugin-utils.c" // optional
 
+
 /////////////////////////////////////////////////////////////
 
 /* precomputed tables */
@@ -90,8 +91,8 @@ void make_blend_table(_sdata *sdata, unsigned char bf, unsigned char bfn) {
   register int i,j;
 
   for (i=0;i<256;i++) {
-    for (j=0;j<=i;j++) {
-      sdata->blend[j][i]=sdata->blend[i][j]=(unsigned char)((bf*i+bfn*j)>>8);
+    for (j=0;j<=256;j++) {
+      sdata->blend[i][j]=(unsigned char)((bf*i+bfn*j)>>8);
     }
   }
 

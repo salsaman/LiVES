@@ -366,6 +366,7 @@ static void trans_in_out_pressed(lives_rfx_t *rfx, boolean in) {
 
   int key=-1;
   int hint,error,nparams;
+  int old_val;
   int trans=get_transition_param(filter,FALSE);
 
   do {
@@ -382,6 +383,8 @@ static void trans_in_out_pressed(lives_rfx_t *rfx, boolean in) {
   tparamtmpl=weed_get_plantptr_value(tparam,"template",&error);
   hint=weed_get_int_value(tparamtmpl,"hint",&error);
 
+  old_val=get_int_param(rfx->params[trans].value);
+
   if (weed_plant_has_leaf(inst,"host_key")) key=weed_get_int_value(inst,"host_key",&error);
   filter_mutex_lock(key);
   if (hint==WEED_HINT_INTEGER) {
@@ -396,6 +399,13 @@ static void trans_in_out_pressed(lives_rfx_t *rfx, boolean in) {
   set_copy_to(inst,trans,TRUE);
   update_visual_params(rfx,FALSE);
   weed_free(in_params);
+
+  if (mainw->multitrack!=NULL) {
+    // force parameter update in multitrack
+    set_int_param(rfx->params[trans].value,old_val);
+    after_param_value_changed (LIVES_SPIN_BUTTON(rfx->params[trans].widgets[0]), rfx);
+  }
+
 }
 
 
@@ -437,7 +447,9 @@ void transition_add_in_out(LiVESBox *vbox, lives_rfx_t *rfx, boolean add_audio_c
   hbox = lives_hbox_new (FALSE, 0);
   lives_box_pack_start (LIVES_BOX (vbox), hbox, FALSE, FALSE, widget_opts.packing_width);
 
-  radiobutton_in=lives_standard_radio_button_new((tmp=g_strdup(_ ("Transition _In"))),TRUE,radiobutton_group,LIVES_BOX(hbox),(tmp2=g_strdup(_("Click to set the transition parameter to show only the front frame"))));
+  radiobutton_in=lives_standard_radio_button_new((tmp=g_strdup(_ ("Transition _In"))),TRUE,
+						 radiobutton_group,LIVES_BOX(hbox),
+						 (tmp2=g_strdup(_("Click to set the transition parameter to show only the front frame"))));
   g_free(tmp); g_free(tmp2);
 
   radiobutton_group = lives_radio_button_get_group (LIVES_RADIO_BUTTON (radiobutton_in));
@@ -478,7 +490,9 @@ void transition_add_in_out(LiVESBox *vbox, lives_rfx_t *rfx, boolean add_audio_c
   }
 
   widget_opts.pack_end=TRUE;
-  radiobutton_out=lives_standard_radio_button_new((tmp=g_strdup(_ ("Transition _Out"))),TRUE,radiobutton_group,LIVES_BOX(hbox),(tmp2=g_strdup(_("Click to set the transition parameter to show only the rear frame"))));
+  radiobutton_out=lives_standard_radio_button_new((tmp=g_strdup(_ ("Transition _Out"))),TRUE,
+						  radiobutton_group,LIVES_BOX(hbox),
+						  (tmp2=g_strdup(_("Click to set the transition parameter to show only the rear frame"))));
 
   g_free(tmp); g_free(tmp2);
 
@@ -553,7 +567,8 @@ static boolean add_sizes(LiVESBox *vbox, boolean add_fps, boolean has_param, liv
     
     if (def_fps==0.) def_fps=prefs->default_fps;
 
-    spinbuttonf = lives_standard_spin_button_new (_("Target _FPS (plugin may override this)"),TRUE,def_fps,1.,FPS_MAX,1.,10.,3,LIVES_BOX(hbox),NULL);
+    spinbuttonf = lives_standard_spin_button_new (_("Target _FPS (plugin may override this)"),TRUE,
+						  def_fps,1.,FPS_MAX,1.,10.,3,LIVES_BOX(hbox),NULL);
     
     g_signal_connect_after (GTK_OBJECT (spinbuttonf), "value_changed",
 			    G_CALLBACK (gen_fps_changed),
@@ -1975,7 +1990,6 @@ void after_param_value_changed (LiVESSpinButton *spinbutton, lives_rfx_t *rfx) {
     if (old_int==new_int) return;
     set_int_param(param->value,new_int);
   }
-
 
   if (rfx->status==RFX_STATUS_WEED) {
     int error;

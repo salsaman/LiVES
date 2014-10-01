@@ -2319,7 +2319,7 @@ void get_frames_sizes(int fileno, int frame) {
   if ((pixbuf=pull_lives_pixbuf(fileno,frame,get_image_ext_for_type(mainw->files[fileno]->img_type),0))) {
     sfile->hsize=lives_pixbuf_get_width(pixbuf);
     sfile->vsize=lives_pixbuf_get_height(pixbuf);
-    g_object_unref(pixbuf);
+    lives_object_unref(pixbuf);
   }
 
 }

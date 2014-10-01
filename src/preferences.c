@@ -1790,7 +1790,7 @@ static void pref_init_list(LiVESWidget *list) {
 
   lives_tree_view_set_model(LIVES_TREE_VIEW(list), LIVES_TREE_MODEL(store));
 
-  //g_object_unref(store);
+  //lives_object_unref(store);
 }
 
 /*

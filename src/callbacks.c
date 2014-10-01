@@ -1546,8 +1546,8 @@ void mt_memory_free(void) {
     g_list_free (mainw->multitrack->video_draws);
   }
   
-  g_object_unref(mainw->multitrack->clip_scroll);
-  g_object_unref(mainw->multitrack->in_out_box);
+  lives_object_unref(mainw->multitrack->clip_scroll);
+  lives_object_unref(mainw->multitrack->in_out_box);
   
   g_list_free(mainw->multitrack->tl_marks);
   
@@ -7047,7 +7047,7 @@ on_details_button_clicked            (LiVESButton       *button,
 
   lives_general_button_clicked(button,NULL);
 
-  g_object_ref(mainw->optextview);
+  lives_object_ref(mainw->optextview);
   textwindow=create_text_window(_("LiVES: - Encoder debug output"),NULL,NULL);
   lives_widget_show_all(textwindow->dialog);
 }

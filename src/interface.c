@@ -2670,7 +2670,7 @@ LiVESTextView *create_output_textview(void) {
     lives_widget_set_text_color(textview, LIVES_WIDGET_STATE_NORMAL, &palette->info_text);
   }
 
-  g_object_ref(textview);
+  lives_object_ref(textview);
   lives_widget_show(textview);
   return LIVES_TEXT_VIEW(textview);
 }

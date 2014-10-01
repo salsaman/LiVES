@@ -1982,7 +1982,7 @@ void save_file (int clip, int start, int end, const char *filename) {
 
       if (mainw->iochan!=NULL) {
 	mainw->iochan=NULL;
-	g_object_unref(mainw->optextview);
+	lives_object_unref(mainw->optextview);
       }
 
       if (mainw->subt_save_file!=NULL) g_free(mainw->subt_save_file);
@@ -2040,7 +2040,7 @@ void save_file (int clip, int start, int end, const char *filename) {
 
       if (mainw->iochan!=NULL) {
 	mainw->iochan=NULL;
-	g_object_unref(mainw->optextview);
+	lives_object_unref(mainw->optextview);
       }
 
       if (mainw->subt_save_file!=NULL) g_free(mainw->subt_save_file);
@@ -2159,7 +2159,7 @@ void save_file (int clip, int start, int end, const char *filename) {
       close (logfd);
     }
     g_free(logfile);
-    g_object_unref(mainw->optextview);
+    lives_object_unref(mainw->optextview);
     mainw->iochan=NULL;
   }
 

@@ -4215,8 +4215,8 @@ static boolean weed_layer_new_from_file_progressive(weed_plant_t *layer,
 
   if (!gdk_pixbuf_loader_close(pbload,gerror)) return FALSE;
 
-  pixbuf=(LiVESPixbuf *)g_object_ref(gdk_pixbuf_loader_get_pixbuf(pbload));
-  if (pbload!=NULL) g_object_unref(pbload);
+  pixbuf=(LiVESPixbuf *)lives_object_ref(gdk_pixbuf_loader_get_pixbuf(pbload));
+  if (pbload!=NULL) lives_object_unref(pbload);
 #endif
 
 # else //PROG_LOAD
@@ -4257,7 +4257,7 @@ static boolean weed_layer_new_from_file_progressive(weed_plant_t *layer,
     mainw->do_not_free=(gpointer)lives_pixbuf_get_pixels_readonly(pixbuf);
     mainw->free_fn=lives_free_with_check;
   }
-  if (pixbuf!=NULL) g_object_unref(pixbuf);
+  if (pixbuf!=NULL) lives_object_unref(pixbuf);
   mainw->do_not_free=NULL;
   mainw->free_fn=lives_free_normal;
 

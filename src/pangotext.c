@@ -231,7 +231,7 @@ weed_plant_t *render_text_to_layer(weed_plant_t *layer, const char *text, const 
 
   lives_painter_to_layer(cr,layer);
 
-  if (layout) g_object_unref(layout);
+  if (layout) lives_object_unref(layout);
 
   surface=lives_painter_get_target(cr);
   src=lives_painter_image_surface_get_data (surface);

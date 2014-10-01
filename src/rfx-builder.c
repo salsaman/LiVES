@@ -514,7 +514,6 @@ void on_list_table_clicked (LiVESButton *button, gpointer user_data) {
   LiVESWidget *button_box;
 
   // buttons
-  LiVESWidget *new_entry_button;
   LiVESWidget *okbutton;
   LiVESWidget *scrolledwindow;
   LiVESWidget *cancelbutton;
@@ -620,8 +619,8 @@ void on_list_table_clicked (LiVESButton *button, gpointer user_data) {
   button_box=lives_vbutton_box_new();
   lives_box_pack_start (LIVES_BOX (hbox), button_box, FALSE, FALSE, 0);
 
-  new_entry_button=lives_button_new_with_mnemonic (_ ("_New Entry"));
-  lives_box_pack_start (LIVES_BOX (button_box), new_entry_button, FALSE, FALSE, 0);
+  rfxbuilder->new_entry_button=lives_button_new_with_mnemonic (_ ("_New Entry"));
+  lives_box_pack_start (LIVES_BOX (button_box), rfxbuilder->new_entry_button, FALSE, FALSE, 0);
 
   rfxbuilder->edit_entry_button=lives_button_new_with_mnemonic (_ ("_Edit Entry"));
   lives_box_pack_start (LIVES_BOX (button_box), rfxbuilder->edit_entry_button, FALSE, FALSE, 0);
@@ -646,6 +645,12 @@ void on_list_table_clicked (LiVESButton *button, gpointer user_data) {
 
   lives_widget_set_sensitive(rfxbuilder->edit_entry_button,FALSE);
   lives_widget_set_sensitive(rfxbuilder->remove_entry_button,FALSE);
+
+  if (rfxbuilder->table_type==RFX_TABLE_TYPE_TRIGGERS) {
+    if (rfxbuilder->num_triggers>rfxbuilder->num_params) {
+      lives_widget_set_sensitive(rfxbuilder->new_entry_button,FALSE);
+    }
+  }
 
   dialog_action_area = lives_dialog_get_action_area(LIVES_DIALOG (dialog));
   lives_button_box_set_layout (LIVES_BUTTON_BOX (dialog_action_area), LIVES_BUTTONBOX_END);
@@ -700,7 +705,7 @@ void on_list_table_clicked (LiVESButton *button, gpointer user_data) {
 
 
 
-  g_signal_connect (GTK_OBJECT (new_entry_button), "clicked",
+  g_signal_connect (GTK_OBJECT (rfxbuilder->new_entry_button), "clicked",
 		    G_CALLBACK (on_table_add_row),
 		    user_data);
 
@@ -938,7 +943,15 @@ void on_triggers_ok (LiVESButton *button, gpointer user_data) {
 void on_triggers_cancel (LiVESButton *button, gpointer user_data) {
   rfx_build_window_t *rfxbuilder=(rfx_build_window_t *)user_data;
 
+  uint8_t *valid_triggers=NULL;
+
+  boolean init_trigger_valid=FALSE;
+
   int i;
+
+  if (rfxbuilder->num_params>0) 
+    valid_triggers=(uint8_t *)g_malloc0(rfxbuilder->num_params);
+
   for (i=0;i<rfxbuilder->num_triggers;i++) {
     g_free (rfxbuilder->copy_triggers[i].code);
   }
@@ -946,6 +959,33 @@ void on_triggers_cancel (LiVESButton *button, gpointer user_data) {
     g_free (rfxbuilder->copy_triggers);
   }
   rfxbuilder->num_triggers=rfxbuilder->onum_triggers;
+
+
+  for (i=0;i<rfxbuilder->num_triggers;i++) {
+    int when=rfxbuilder->triggers[i].when;
+    if (when==0) init_trigger_valid=1;
+    else valid_triggers[when-1]=1;
+  }
+
+  // reset onchange for anything not in triggers
+  for (i=0;i<rfxbuilder->num_params;i++) {
+    if (!valid_triggers[i]) {
+      rfxbuilder->params[i].onchange=FALSE;
+    }
+    else {
+      rfxbuilder->params[i].onchange=TRUE;
+    }
+  }
+
+  if (valid_triggers!=NULL) g_free(valid_triggers);
+
+  if (!init_trigger_valid) {
+    rfxbuilder->has_init_trigger=FALSE;
+  }
+  else {
+    rfxbuilder->has_init_trigger=TRUE;
+  }
+
   lives_general_button_clicked(button,NULL);
 }
 
@@ -1353,12 +1393,18 @@ void on_table_add_row (LiVESButton *button, gpointer user_data) {
 		      (GtkAttachOptions) (LIVES_FILL|LIVES_EXPAND),
 		      (GtkAttachOptions) (0), 0, 0);
 
+
     if (button==NULL) goto add_row_done;
+
+    if (rfxbuilder->num_triggers>rfxbuilder->num_params) {
+      lives_widget_set_sensitive(rfxbuilder->new_entry_button,FALSE);
+    }
 
     rfxbuilder->copy_triggers[rfxbuilder->table_rows-1].code=lives_text_view_get_text(LIVES_TEXT_VIEW (rfxbuilder->code_textview));
     
     rfxbuilder->copy_triggers[rfxbuilder->table_rows-1].when=atoi (lives_entry_get_text (LIVES_ENTRY (rfxbuilder->trigger_when_entry)))+1;
-    if (!strcmp(lives_entry_get_text (LIVES_ENTRY (rfxbuilder->trigger_when_entry)),"init")) rfxbuilder->copy_triggers[rfxbuilder->table_rows-1].when=0;
+    if (!strcmp(lives_entry_get_text (LIVES_ENTRY (rfxbuilder->trigger_when_entry)),"init")) 
+      rfxbuilder->copy_triggers[rfxbuilder->table_rows-1].when=0;
 
     if (!rfxbuilder->copy_triggers[rfxbuilder->table_rows-1].when) {
       rfxbuilder->has_init_trigger=TRUE;
@@ -1369,6 +1415,7 @@ void on_table_add_row (LiVESButton *button, gpointer user_data) {
 
     lives_widget_destroy (trigger_dialog);
     lives_widget_queue_resize (lives_widget_get_parent(LIVES_WIDGET(rfxbuilder->table)));
+
     break;
   default:
     return;
@@ -1697,8 +1744,12 @@ void on_table_swap_row (LiVESButton *button, gpointer user_data) {
 void on_table_delete_row (LiVESButton *button, gpointer user_data) {
   rfx_build_window_t *rfxbuilder=(rfx_build_window_t *)user_data;
 
+  LiVESWidget *ebox;
+
 #if !LIVES_TABLE_IS_GRID
-  LiVESWidget *ebox,*ebox2=NULL,*ebox3=NULL,*ebox4=NULL;
+  LiVESWidget *ebox2=NULL,*ebox3=NULL,*ebox4=NULL;
+#else
+  LiVESWidget *entry=NULL,*entry2;
 #endif
 
   int move=0;
@@ -1723,18 +1774,14 @@ void on_table_delete_row (LiVESButton *button, gpointer user_data) {
       else if (!(lives_widget_get_state(rfxbuilder->entry[i])&LIVES_WIDGET_STATE_INSENSITIVE)) {
 
 #if LIVES_TABLE_IS_GRID
-	if (rfxbuilder->table_rows>1) {
-	  lives_grid_remove_row(LIVES_GRID(rfxbuilder->table),i);
-	  // does this unref child widget ?
-	}
+	lives_grid_remove_row(LIVES_GRID(rfxbuilder->table),i);
 #else
 	ebox=lives_widget_get_parent(rfxbuilder->entry[i]);
 	if (rfxbuilder->table_rows>1) {
 	  lives_table_resize (LIVES_TABLE (rfxbuilder->table),rfxbuilder->table_rows-1,1);
 	}
-#endif
 	lives_widget_destroy (rfxbuilder->entry[i]);
-
+#endif
 	move=i+1;
       }
 
@@ -1751,6 +1798,7 @@ void on_table_delete_row (LiVESButton *button, gpointer user_data) {
 	// note - parameters become renumbered here
 
 #if !LIVES_TABLE_IS_GRID
+	// move everything up except p%d
 	if (i<rfxbuilder->table_rows-1) {
 	  ebox3=lives_widget_get_parent(rfxbuilder->entry2[i]);
 	  ebox4=lives_widget_get_parent(rfxbuilder->entry3[i]);
@@ -1759,6 +1807,15 @@ void on_table_delete_row (LiVESButton *button, gpointer user_data) {
 	lives_widget_reparent(rfxbuilder->entry3[i],ebox2);
 	ebox=ebox3;
 	ebox2=ebox4;
+#else
+	// move p%d up so when we remove the row the numbering is ok
+	entry2=rfxbuilder->entry[i];
+	ebox=lives_widget_get_parent(rfxbuilder->entry[i]);
+	lives_object_ref(entry2);
+	lives_widget_unparent(entry2);
+	lives_container_add(LIVES_CONTAINER(ebox),entry);
+	lives_object_unref(entry);
+	entry=entry2;
 #endif
 
 	rfxbuilder->entry2[i-1]=rfxbuilder->entry2[i];
@@ -1776,9 +1833,10 @@ void on_table_delete_row (LiVESButton *button, gpointer user_data) {
 	}
 
 #if LIVES_TABLE_IS_GRID
-	if (rfxbuilder->table_rows>1) {
-	  lives_grid_remove_row(LIVES_GRID(rfxbuilder->table),i);
-	}
+	entry=rfxbuilder->entry[i];
+	lives_object_ref(entry);
+	lives_widget_unparent(entry);
+	lives_grid_remove_row(LIVES_GRID(rfxbuilder->table),i);
 #else
 	ebox=lives_widget_get_parent(rfxbuilder->entry2[i]);
 	ebox2=lives_widget_get_parent(rfxbuilder->entry3[i]);
@@ -1798,6 +1856,11 @@ void on_table_delete_row (LiVESButton *button, gpointer user_data) {
 	move=i+1;
       }
     }
+
+#if LIVES_TABLE_IS_GRID
+    if (entry!=NULL) lives_widget_destroy(entry);
+#endif
+
     if (move==0) return;
     rfxbuilder->table_rows--;
     rfxbuilder->num_params--;
@@ -1834,9 +1897,7 @@ void on_table_delete_row (LiVESButton *button, gpointer user_data) {
       else if (!(lives_widget_get_state(rfxbuilder->entry[i])&LIVES_WIDGET_STATE_INSENSITIVE)) {
 
 #if LIVES_TABLE_IS_GRID
-	if (rfxbuilder->table_rows>1) {
-	  lives_grid_remove_row(LIVES_GRID(rfxbuilder->table),i);
-	}
+	lives_grid_remove_row(LIVES_GRID(rfxbuilder->table),i);
 #else
 	ebox=lives_widget_get_parent(rfxbuilder->entry[i]);
 	ebox2=lives_widget_get_parent(rfxbuilder->entry2[i]);
@@ -1879,22 +1940,25 @@ void on_table_delete_row (LiVESButton *button, gpointer user_data) {
 	g_free (rfxbuilder->copy_triggers[i].code);
 
 #if LIVES_TABLE_IS_GRID
-	if (rfxbuilder->table_rows>1) {
-	  lives_grid_remove_row(LIVES_GRID(rfxbuilder->table),i);
-	}
+	lives_grid_remove_row(LIVES_GRID(rfxbuilder->table),i);
 #else
 	ebox=lives_widget_get_parent(rfxbuilder->entry[i]);
 	if (rfxbuilder->table_rows>1) {
 	  lives_table_resize (LIVES_TABLE (rfxbuilder->table),rfxbuilder->table_rows-1,1);
 	}
-#endif
 	lives_widget_destroy (rfxbuilder->entry[i]);
+#endif
 	move=i+1;
       }
     }
     if (move==0) return;
     rfxbuilder->table_rows--;
     rfxbuilder->num_triggers--;
+
+    if (rfxbuilder->table_rows<=rfxbuilder->num_params) {
+      lives_widget_set_sensitive(rfxbuilder->new_entry_button,TRUE);
+    }
+
     break;
   default:
     return;
@@ -2821,8 +2885,8 @@ void on_code_clicked (LiVESButton *button, gpointer user_data) {
 
   lives_box_pack_start (LIVES_BOX (dialog_vbox), scrolledwindow, TRUE, TRUE, 0);
 
-  g_object_ref (gtk_scrolled_window_get_hadjustment (GTK_SCROLLED_WINDOW (scrolledwindow)));
-  g_object_ref (gtk_scrolled_window_get_vadjustment (GTK_SCROLLED_WINDOW (scrolledwindow)));
+  lives_object_ref (gtk_scrolled_window_get_hadjustment (GTK_SCROLLED_WINDOW (scrolledwindow)));
+  lives_object_ref (gtk_scrolled_window_get_vadjustment (GTK_SCROLLED_WINDOW (scrolledwindow)));
 
   lives_text_view_set_editable (LIVES_TEXT_VIEW (rfxbuilder->code_textview), TRUE);
   lives_text_view_set_wrap_mode (LIVES_TEXT_VIEW (rfxbuilder->code_textview), LIVES_WRAP_WORD);

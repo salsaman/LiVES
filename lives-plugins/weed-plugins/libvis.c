@@ -49,13 +49,17 @@ static int package_version=2; // version of this package
 #include <libvisual/lv_input.h>
 #include <libvisual/lv_libvisual.h>
 
+#include <pthread.h>
+
 static int libvis_host_audio_callback (VisInput *, VisAudio *, void *user_data);
 
 typedef struct {
   VisVideo *video;
   VisActor *actor;
   VisInput *input;
-  void *audio_data;
+  void *audio;
+  size_t audio_frames;
+  pthread_mutex_t pcm_mutex;
   int instance;
 } weed_libvis_t;
 
@@ -68,13 +72,16 @@ static VisInput *old_visinput;
 int libvis_init (weed_plant_t *inst) {
   weed_libvis_t *libvis=NULL;
   weed_plant_t *out_channel,*filter;
+
   int error;
+
   char *filter_name;
   char *filtname;
+
   weed_plant_t *param;
+
   int palette,listener;
-  weed_plant_t *pinfo,*hinfo;
-  char *hap;
+
   char *ainput=NULL;
 
   param=weed_get_plantptr_value(inst,"in_parameters",&error);
@@ -83,9 +90,6 @@ int libvis_init (weed_plant_t *inst) {
   filter=weed_get_plantptr_value(inst,"filter_class",&error);
 
   switch (listener) {
-  case 0:
-    ainput=NULL; // no audio input
-    break;
   case 1:
     ainput="alsa";
     break;
@@ -99,27 +103,11 @@ int libvis_init (weed_plant_t *inst) {
     ainput="mplayer";
     break;
   case 5:
-    pinfo=weed_get_plantptr_value(filter,"plugin_info",&error);
-    hinfo=weed_get_plantptr_value(pinfo,"host_info",&error);
-    if (weed_plant_has_leaf(hinfo,"host_audio_player")) {
-      hap=weed_get_string_value(hinfo,"host_audio_player",&error);
-      if (!strcmp(hap,"sox")||!strcmp(hap,"mplayer")||!strcmp(hap,"mplayer2")) {
-	ainput="alsa";
-      }
-      else {
-	ainput="jack";
-      }
-      weed_free(hap);
-    }
-    else {
-      ainput="jack";
-    }
+    ainput="auto";
     break;
   default:
-    // not implemented yet
-    libvis=(weed_libvis_t *)weed_malloc (sizeof(weed_libvis_t));
-    if (libvis==NULL) return WEED_ERROR_MEMORY_ALLOCATION;
-    visual_input_set_callback (libvis->input, libvis_host_audio_callback, (void *)libvis);
+    ainput=NULL; // no audio input
+    break;
   }
 
   if (ainput!=NULL&&instances&&strcmp(ainput,"jack")) return WEED_ERROR_TOO_MANY_INSTANCES;
@@ -137,7 +125,7 @@ int libvis_init (weed_plant_t *inst) {
       old_input=NULL;
     }
     if (ainput!=NULL) {
-      old_visinput=libvis->input = visual_input_new (ainput);
+      old_visinput=libvis->input = visual_input_new (!strcmp(ainput,"auto")?NULL:ainput);
       old_input=strdup(ainput);
     }
   }
@@ -150,6 +138,7 @@ int libvis_init (weed_plant_t *inst) {
     weed_free (libvis);
     return WEED_ERROR_INIT_ERROR;
   }
+
 
   libvis->video = visual_video_new();
 
@@ -171,12 +160,19 @@ int libvis_init (weed_plant_t *inst) {
   visual_actor_set_video (libvis->actor, libvis->video);
   visual_actor_video_negotiate (libvis->actor, 0, FALSE, FALSE);
   visual_input_realize (libvis->input);
-  libvis->audio_data=NULL;
+
+  libvis->audio=NULL;
+  libvis->audio_frames=0;
   libvis->instance=instances;
 
   weed_set_voidptr_value(inst,"plugin_internal",(void *)libvis);
 
   instances++;
+
+  if (!strcmp(ainput,"auto")) {
+    pthread_mutex_init(&libvis->pcm_mutex,NULL);
+    visual_input_set_callback (libvis->input, libvis_host_audio_callback, (void *)libvis);
+  }
 
   return WEED_NO_ERROR;
 }
@@ -193,6 +189,7 @@ int libvis_deinit (weed_plant_t *inst) {
     }
     if (libvis->video!=NULL) visual_object_free (VISUAL_OBJECT (libvis->video));
     if (libvis->actor!=NULL) visual_object_destroy (VISUAL_OBJECT (libvis->actor));
+    if (libvis->audio!=NULL) weed_free(libvis->audio);
     weed_free (libvis);
     libvis=NULL;
     weed_set_voidptr_value(inst,"plugin_internal",libvis);
@@ -203,17 +200,70 @@ int libvis_deinit (weed_plant_t *inst) {
 }
 
 
+
+static void store_audio(weed_libvis_t *libvis, weed_plant_t *in_channel) {
+  // convert float audio to s16le, append to libvis->audio
+
+  int error;
+
+  int adlen=weed_get_int_value(in_channel,"audio_data_length",&error);
+  float *adata=(float *)weed_get_voidptr_value(in_channel,"audio_data",&error),*oadata=adata;
+
+  register int i,j;
+
+  if (adlen>0&&adata!=NULL) {
+    short *aud_data;
+    int ainter=weed_get_boolean_value(in_channel,"audio_interleaf",&error);
+    int achans=weed_get_int_value(in_channel,"audio_channels",&error);
+
+    pthread_mutex_lock(&libvis->pcm_mutex);
+    aud_data=(short *)weed_malloc((adlen+libvis->audio_frames)*4);
+
+    if (libvis->audio!=NULL) {
+      weed_memcpy(aud_data,libvis->audio,libvis->audio_frames*4);
+      weed_free(libvis->audio);
+    }
+
+    for (j=0;j<adlen;j++) {
+      if (ainter==WEED_TRUE) {
+	// interlaced
+	for (i=0;i<2;i++) {
+	  aud_data[libvis->audio_frames*2+i]=32767.*adata[i];
+	}
+	adata+=achans;
+      }
+      else {
+	// non-interlaced
+	for (i=0;i<2;i++) {
+	  aud_data[libvis->audio_frames*2+i]=32767.*adata[j];
+	  adata+=adlen;
+	}
+	adata=oadata;
+      }
+      libvis->audio_frames++;
+    }
+    libvis->audio=aud_data;
+    pthread_mutex_unlock(&libvis->pcm_mutex);
+  }
+}
+
+
+
 int libvis_process (weed_plant_t *inst, weed_timecode_t timestamp) {
   int error;
   weed_libvis_t *libvis=(weed_libvis_t *)weed_get_voidptr_value(inst,"plugin_internal",&error);
-  weed_plant_t *channel=weed_get_plantptr_value(inst,"out_channels",&error);
-  void *pixel_data=weed_get_voidptr_value(channel,"pixel_data",&error);
+  weed_plant_t *out_channel=weed_get_plantptr_value(inst,"out_channels",&error);
+  weed_plant_t *in_channel=weed_get_plantptr_value(inst,"in_channels",&error);
+  void *pixel_data=weed_get_voidptr_value(out_channel,"pixel_data",&error);
+
+  if (in_channel!=NULL) store_audio(libvis,in_channel);
 
   visual_input_run (libvis->input);
   visual_video_set_buffer (libvis->video, pixel_data);
   visual_actor_run (libvis->actor, libvis->input->audio);
   return WEED_NO_ERROR;
 }
+
 
 weed_plant_t *weed_setup (weed_bootstrap_f weed_boot) {
   weed_plant_t *plugin_info=weed_plugin_info_init(weed_boot,num_versions,api_versions);
@@ -226,6 +276,15 @@ weed_plant_t *weed_setup (weed_bootstrap_f weed_boot) {
     weed_plant_t *filter_class;
     weed_plant_t *in_params[2];
     const char *listeners[]={"None","Alsa","ESD","Jack","Mplayer","Auto",NULL};
+
+    weed_plant_t *in_chantmpls[]={weed_audio_channel_template_init("In audio",0),NULL};
+
+    // set hints for host
+    weed_set_int_value(in_chantmpls[0],"audio_channels",2);
+    weed_set_int_value(in_chantmpls[0],"audio_rate",44100);
+    weed_set_boolean_value(in_chantmpls[0],"audio_interleaf",WEED_FALSE);
+    weed_set_boolean_value(in_chantmpls[0],"audio_data_length",512);
+    weed_set_boolean_value(in_chantmpls[0],"optional",WEED_TRUE);
 
     instances=0;
     old_input=NULL;
@@ -247,7 +306,8 @@ weed_plant_t *weed_setup (weed_bootstrap_f weed_boot) {
       in_params[0]=weed_string_list_init("listener","Audio _listener",5,listeners);
       weed_set_int_value(in_params[0],"flags",WEED_PARAMETER_REINIT_ON_VALUE_CHANGE);
       out_chantmpls[0]=weed_channel_template_init("out channel 0",0,palette_list);
-      filter_class=weed_filter_class_init(fullname,"Team libvisual",1,0,&libvis_init,&libvis_process,&libvis_deinit,NULL,out_chantmpls,in_params,NULL);
+      filter_class=weed_filter_class_init(fullname,"Team libvisual",1,0,&libvis_init,&libvis_process,&libvis_deinit,
+					  in_chantmpls,out_chantmpls,in_params,NULL);
       weed_set_double_value(filter_class,"target_fps",50.); // set reasonable default fps
 
       weed_plugin_info_add_filter_class (plugin_info,filter_class);
@@ -263,17 +323,26 @@ weed_plant_t *weed_setup (weed_bootstrap_f weed_boot) {
 
 static int libvis_host_audio_callback (VisInput *input, VisAudio *audio, void *user_data) {
   // audio_data is 16bit signed, little endian
-  // two channels non-interlaced, 512 samples in length
+  // two channels non-interlaced, ideally 512 samples in length
   // a rate of 44100Hz is recommended
-
-  // since we have no in channels, we have to use the audio_data of the 
-  // output channel (!)
 
   // return -1 on failure, 0 on success
 
+  int alen;
+
   weed_libvis_t *libvis=(weed_libvis_t *)user_data;
-  if (libvis->audio_data!=NULL) {
-    weed_memcpy (audio->plugpcm,libvis->audio_data,2048);
+
+  alen=libvis->audio_frames*4;
+
+  if (alen>2048) alen=2048;
+
+  if (libvis->audio!=NULL) {
+    pthread_mutex_lock(&libvis->pcm_mutex);
+    weed_memcpy (audio->plugpcm,libvis->audio,alen);
+    weed_free(libvis->audio);
+    libvis->audio=NULL;
+    libvis->audio_frames=0;
+    pthread_mutex_unlock(&libvis->pcm_mutex);
   }
   return 0;
 }

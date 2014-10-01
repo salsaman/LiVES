@@ -9,21 +9,21 @@
 
 void create_merge_dialog (void);
 
-void on_merge_activate (GtkMenuItem *, gpointer);
+void on_merge_activate (LiVESMenuItem *, gpointer);
 
-void on_merge_ok_clicked (GtkButton *, gpointer);
+void on_merge_ok_clicked (LiVESButton *, gpointer);
 
-void on_align_start_end_toggled (GtkToggleButton *, gpointer);
+void on_align_start_end_toggled (LiVESToggleButton *, gpointer);
 
-void on_trans_method_changed (GtkComboBox *, gpointer);
+void on_trans_method_changed (LiVESCombo *, gpointer);
 
-void on_merge_cancel_clicked (GtkButton *, gpointer);
+void on_merge_cancel_clicked (LiVESButton *, gpointer);
 
-void on_fit_toggled (GtkToggleButton *, gpointer);
+void on_fit_toggled (LiVESToggleButton *, gpointer);
 
-void on_ins_frames_toggled (GtkToggleButton *, gpointer);
+void on_ins_frames_toggled (LiVESToggleButton *, gpointer);
 
-void after_spinbutton_loops_changed (GtkSpinButton *, gpointer);
+void after_spinbutton_loops_changed (LiVESSpinButton *, gpointer);
 
 
 #endif

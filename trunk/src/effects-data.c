@@ -2603,7 +2603,7 @@ static void padd_clicked(LiVESWidget *button, gpointer user_data) {
 #else
   lives_grid_insert_row(LIVES_GRID(conxwp->tablep),ours+2);
   trows=conxwp->trowsp;
-  conxwp->trowsp=ours+2;
+  conxwp->trowsp=ours+3;
   ptable_row_add_standard_widgets(conxwp,ours+1);
   conxwp->trowsp=trows;
 #endif
@@ -2667,19 +2667,20 @@ static void pdel_clicked(LiVESWidget *button, gpointer user_data) {
   //  remove the param row at the del button
   lives_conx_w *conxwp=(lives_conx_w *)user_data;
 
-  LiVESWidget *hbox[4],*comhbox;
-
   int totparams,totchans;
   int ours=-1,pidx;
 
 #if !LIVES_TABLE_IS_GRID
-  LiVESWidget *hboxb[4],*achbox;
+  LiVESWidget *comhbox;
+  LiVESWidget *hbox[4],*hboxb[4],*achbox;
   int pidx_next;
 #endif
 
   register int i;
 
+#if !LIVES_TABLE_IS_GRID
   hbox[3]=NULL;
+#endif
 
   totparams=pconx_get_numcons(conxwp,FX_DATA_WILDCARD);
   totchans=cconx_get_numcons(conxwp,FX_DATA_WILDCARD);
@@ -2708,6 +2709,7 @@ static void pdel_clicked(LiVESWidget *button, gpointer user_data) {
 
   totparams--;
 
+#if !LIVES_TABLE_IS_GRID
   hbox[0]=lives_widget_get_parent(conxwp->pclabel[totchans+ours]);
   hbox[1]=lives_widget_get_parent(conxwp->pfxcombo[ours]);
 
@@ -2717,6 +2719,7 @@ static void pdel_clicked(LiVESWidget *button, gpointer user_data) {
   lives_widget_destroy(conxwp->pfxcombo[ours]);
   lives_widget_destroy(conxwp->pcombo[ours]);
   lives_widget_destroy(comhbox);
+#endif
   
   conxwp->trowsp--;
 
@@ -2770,6 +2773,18 @@ static void pdel_clicked(LiVESWidget *button, gpointer user_data) {
       hbox[3]=hboxb[3];
     }
 
+    lives_widget_set_sensitive(conxwp->del_button[totchans+i],
+			       lives_widget_get_sensitive(conxwp->del_button[totchans+i+1]));
+
+#else
+    conxwp->add_button[i]=conxwp->add_button[i+1];
+    conxwp->del_button[i]=conxwp->del_button[i+1];
+    conxwp->clabel[i]=conxwp->clabel[i+1];
+    conxwp->pclabel[i]=conxwp->pclabel[i+1];
+
+    if (i==ours) {
+      lives_label_set_text(LIVES_LABEL(conxwp->pclabel[i+1]),lives_label_get_text(LIVES_LABEL(conxwp->pclabel[i])));
+    }
 #endif
     conxwp->pfxcombo[i]=conxwp->pfxcombo[i+1];
     conxwp->pcombo[i]=conxwp->pcombo[i+1];
@@ -2783,12 +2798,10 @@ static void pdel_clicked(LiVESWidget *button, gpointer user_data) {
 
     conxwp->dpp_func[i]=conxwp->dpp_func[i+1];
 
-    lives_widget_set_sensitive(conxwp->del_button[totchans+i],
-			       lives_widget_get_sensitive(conxwp->del_button[totchans+i+1]));
-
   }
 
 
+#if !LIVES_TABLE_IS_GRID
   lives_widget_destroy(conxwp->clabel[conxwp->trowsp-1+totchans]);
   lives_widget_destroy(conxwp->add_button[conxwp->trowsp-1+totchans]);
   lives_widget_destroy(conxwp->del_button[conxwp->trowsp-1+totchans]);
@@ -2799,7 +2812,6 @@ static void pdel_clicked(LiVESWidget *button, gpointer user_data) {
   lives_widget_destroy(hbox[2]);
   lives_widget_destroy(hbox[3]);
 
-#if !LIVES_TABLE_IS_GRID
   lives_table_resize(LIVES_TABLE(conxwp->tablep),conxwp->trowsp,7);
 #else
   lives_grid_remove_row(LIVES_GRID(conxwp->tablep),ours+1);
@@ -2897,7 +2909,7 @@ static void cadd_clicked(LiVESWidget *button, gpointer user_data) {
 #else
   lives_grid_insert_row(LIVES_GRID(conxwp->tablec),ours+2);
   trows=conxwp->trowsc;
-  conxwp->trowsc=ours+2;
+  conxwp->trowsc=ours+3;
   ctable_row_add_standard_widgets(conxwp,ours+1);
   conxwp->trowsc=trows;
 #endif
@@ -2953,12 +2965,11 @@ static void cdel_clicked(LiVESWidget *button, gpointer user_data) {
   //  remove the channel  row at the del button
   lives_conx_w *conxwp=(lives_conx_w *)user_data;
 
-  LiVESWidget *hbox[3],*comhbox;
-
   int totparams,totchans;
   int ours=-1,cidx;
 
 #if !LIVES_TABLE_IS_GRID
+  LiVESWidget *hbox[3],*comhbox;
   LiVESWidget *hboxb[3];
   int cidx_next;
 #endif
@@ -2992,6 +3003,7 @@ static void cdel_clicked(LiVESWidget *button, gpointer user_data) {
 
   totchans--;
 
+#if !LIVES_TABLE_IS_GRID
   hbox[0]=lives_widget_get_parent(conxwp->pclabel[ours]);
   hbox[1]=lives_widget_get_parent(conxwp->cfxcombo[ours]);
 
@@ -3001,6 +3013,7 @@ static void cdel_clicked(LiVESWidget *button, gpointer user_data) {
   lives_widget_destroy(conxwp->cfxcombo[ours]);
   lives_widget_destroy(conxwp->ccombo[ours]);
   lives_widget_destroy(comhbox);
+#endif
   
   conxwp->trowsc--;
 
@@ -3042,6 +3055,18 @@ static void cdel_clicked(LiVESWidget *button, gpointer user_data) {
     lives_widget_reparent(comhbox,hbox[2]);
     hbox[2]=hboxb[2];
 
+    lives_widget_set_sensitive(conxwp->del_button[i],
+			       lives_widget_get_sensitive(conxwp->del_button[i+1]));
+
+#else
+    conxwp->add_button[i]=conxwp->add_button[i+1];
+    conxwp->del_button[i]=conxwp->del_button[i+1];
+    conxwp->clabel[i]=conxwp->clabel[i+1];
+    conxwp->pclabel[i]=conxwp->pclabel[i+1];
+
+    if (i==ours) {
+      lives_label_set_text(LIVES_LABEL(conxwp->pclabel[i+1]),lives_label_get_text(LIVES_LABEL(conxwp->pclabel[i])));
+    }
 #endif
     conxwp->cfxcombo[i]=conxwp->cfxcombo[i+1];
     conxwp->ccombo[i]=conxwp->ccombo[i+1];
@@ -3052,12 +3077,10 @@ static void cdel_clicked(LiVESWidget *button, gpointer user_data) {
 
     conxwp->dpc_func[i]=conxwp->dpc_func[i+1];
 
-    lives_widget_set_sensitive(conxwp->del_button[i],
-			       lives_widget_get_sensitive(conxwp->del_button[i+1]));
-
   }
 
 
+#if !LIVES_TABLE_IS_GRID
   lives_widget_destroy(conxwp->clabel[conxwp->trowsc-1]);
   lives_widget_destroy(conxwp->add_button[conxwp->trowsc-1]);
   lives_widget_destroy(conxwp->del_button[conxwp->trowsc-1]);
@@ -3067,7 +3090,6 @@ static void cdel_clicked(LiVESWidget *button, gpointer user_data) {
   lives_widget_destroy(hbox[1]);
   lives_widget_destroy(hbox[2]);
 
-#if !LIVES_TABLE_IS_GRID
   lives_table_resize(LIVES_TABLE(conxwp->tablec),conxwp->trowsc,6);
 #else
   lives_grid_remove_row(LIVES_GRID(conxwp->tablec),ours+1);
@@ -3984,7 +4006,6 @@ static void ptable_row_add_variable_widgets(lives_conx_w *conxwp, int idx, int r
 
     g_object_set_data(G_OBJECT(conxwp->acheck[idx]),"pidx",GINT_TO_POINTER(pidx));
   }
-
 
 }
 

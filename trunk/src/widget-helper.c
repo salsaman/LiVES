@@ -1792,7 +1792,10 @@ LIVES_INLINE LiVESWidget *lives_button_new_from_stock(const char *stock_id) {
     button=lives_button_new();
   }
 
-  if (prefs->show_button_images) {
+  if (prefs->show_button_images
+      ||!strcmp(stock_id,LIVES_STOCK_ADD)
+      ||!strcmp(stock_id,LIVES_STOCK_REMOVE)
+      ) {
     image=gtk_image_new_from_icon_name(stock_id,GTK_ICON_SIZE_BUTTON);
     gtk_button_set_image(GTK_BUTTON(button),image);
   }

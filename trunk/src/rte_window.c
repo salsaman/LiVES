@@ -2086,6 +2086,13 @@ static LiVESTreeModel *rte_window_fx_model (void) {
 
     if ((pkgstring=strstr(fxname,": "))!=NULL) {
       // package effect
+      if (pkg!=NULL&&strncmp(pkg,fxname,strlen(pkg))) {
+	g_free(pkg);
+	pkg=NULL;
+	lives_tree_store_append (tstore, &iter1, NULL);  /* Acquire an iterator */
+	lives_tree_store_set(tstore,&iter1,NAME_TYPE_COLUMN,list->data,NAME_COLUMN,fxname,
+			     HASH_COLUMN,g_list_nth_data(hash_list,fx_idx),-1);
+      }
       if (pkg==NULL) {
 	pkg=fxname;
 	fxname=g_strdup(pkg);

@@ -68,7 +68,7 @@ AM_CPPFLAGS = $(shared_cflags) $(weed_CFLAGS) -ffast-math
 
 if HAVE_LIBVISUAL
 libvis_libs = libvis.la
-libvis_la_LDFLAGS = @LIBVISUAL_LIBS@ $(AM_LDFLAGS)
+libvis_la_LDFLAGS = @LIBVISUAL_LIBS@ -lpthread $(AM_LDFLAGS)
 libvis_la_CFLAGS =  @LIBVISUAL_CFLAGS@ $(AM_CFLAGS)
 libvispluginslibdir = "$(libdir)/$(PACKAGE)/plugins/effects/realtime/weed/libvisual"
 libvispluginslib_LTLIBRARIES = $(libvis_libs)

@@ -454,7 +454,7 @@ rfx_build_window_t *make_rfx_build_window (const gchar *script_name, lives_rfx_s
 }
 
 
-void after_rfxbuilder_type_toggled (GtkToggleButton *togglebutton, gpointer user_data) {
+void after_rfxbuilder_type_toggled (LiVESToggleButton *togglebutton, gpointer user_data) {
   rfx_build_window_t *rfxbuilder=(rfx_build_window_t *)user_data;
 
   lives_widget_set_sensitive (rfxbuilder->pre_button,TRUE);
@@ -467,25 +467,25 @@ void after_rfxbuilder_type_toggled (GtkToggleButton *togglebutton, gpointer user
   lives_widget_show (rfxbuilder->action_desc_hbox);
   lives_widget_show (rfxbuilder->action_desc_hsep);
 
-  if (togglebutton==GTK_TOGGLE_BUTTON (rfxbuilder->type_effect1_radiobutton)) {
+  if (togglebutton==LIVES_TOGGLE_BUTTON (rfxbuilder->type_effect1_radiobutton)) {
     rfxbuilder->type=RFX_BUILD_TYPE_EFFECT1;
   }
-  else if (togglebutton==GTK_TOGGLE_BUTTON (rfxbuilder->type_effect2_radiobutton)) {
+  else if (togglebutton==LIVES_TOGGLE_BUTTON (rfxbuilder->type_effect2_radiobutton)) {
     rfxbuilder->type=RFX_BUILD_TYPE_EFFECT2;
     lives_widget_set_sensitive (rfxbuilder->properties_button,FALSE);
   }
-  else if (togglebutton==GTK_TOGGLE_BUTTON (rfxbuilder->type_effect0_radiobutton)) {
+  else if (togglebutton==LIVES_TOGGLE_BUTTON (rfxbuilder->type_effect0_radiobutton)) {
     rfxbuilder->type=RFX_BUILD_TYPE_EFFECT0;
     lives_widget_hide (rfxbuilder->spinbutton_min_frames);
     lives_widget_hide (rfxbuilder->min_frames_label);
   }
-  else if (togglebutton==GTK_TOGGLE_BUTTON (rfxbuilder->type_tool_radiobutton)) {
+  else if (togglebutton==LIVES_TOGGLE_BUTTON (rfxbuilder->type_tool_radiobutton)) {
     rfxbuilder->type=RFX_BUILD_TYPE_TOOL;
     lives_widget_hide (rfxbuilder->spinbutton_min_frames);
     lives_widget_set_sensitive (rfxbuilder->properties_button,FALSE);
     lives_widget_hide (rfxbuilder->min_frames_label);
   }
-  else if (togglebutton==GTK_TOGGLE_BUTTON (rfxbuilder->type_utility_radiobutton)) {
+  else if (togglebutton==LIVES_TOGGLE_BUTTON (rfxbuilder->type_utility_radiobutton)) {
     rfxbuilder->type=RFX_BUILD_TYPE_UTILITY;
     lives_widget_hide (rfxbuilder->spinbutton_min_frames);
     lives_widget_set_sensitive (rfxbuilder->properties_button,FALSE);
@@ -750,7 +750,7 @@ void on_properties_ok (LiVESButton *button, gpointer user_data) {
   rfx_build_window_t *rfxbuilder=(rfx_build_window_t *)user_data;
 
   if (rfxbuilder->type!=RFX_BUILD_TYPE_EFFECT0) {
-    if (gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (rfxbuilder->prop_slow))) {
+    if (lives_toggle_button_get_active (LIVES_TOGGLE_BUTTON (rfxbuilder->prop_slow))) {
       rfxbuilder->props|=RFX_PROPS_SLOW;
     }
     else if (rfxbuilder->props&RFX_PROPS_SLOW) {
@@ -758,7 +758,7 @@ void on_properties_ok (LiVESButton *button, gpointer user_data) {
     }
   }
   else {
-    if (gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (rfxbuilder->prop_batchg))) {
+    if (lives_toggle_button_get_active (LIVES_TOGGLE_BUTTON (rfxbuilder->prop_batchg))) {
       rfxbuilder->props|=RFX_PROPS_BATCHG;
     }
     else if (rfxbuilder->props&RFX_PROPS_BATCHG) {
@@ -1485,7 +1485,7 @@ void param_set_from_dialog (lives_param_t *copy_param, rfx_build_window_t *rfxbu
     copy_param->min=lives_spin_button_get_value(LIVES_SPIN_BUTTON(rfxbuilder->spinbutton_param_min));
     copy_param->max=lives_spin_button_get_value(LIVES_SPIN_BUTTON(rfxbuilder->spinbutton_param_max));
     copy_param->step_size=lives_spin_button_get_value(LIVES_SPIN_BUTTON(rfxbuilder->spinbutton_param_step));
-    copy_param->wrap=gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(rfxbuilder->param_wrap_checkbutton));
+    copy_param->wrap=lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(rfxbuilder->param_wrap_checkbutton));
     if (!copy_param->dp) {
       copy_param->def=g_malloc (sizint);
       set_int_param (copy_param->def,lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(rfxbuilder->spinbutton_param_def)));
@@ -1918,7 +1918,7 @@ LiVESWidget * make_param_dialog (int pnum, rfx_build_window_t *rfxbuilder) {
   LiVESWidget *dialog;
   LiVESWidget *dialog_vbox;
 
-  GtkAccelGroup *accel_group=LIVES_ACCEL_GROUP(lives_accel_group_new ());
+  LiVESAccelGroup *accel_group=LIVES_ACCEL_GROUP(lives_accel_group_new ());
 
   GList *typelist=NULL;
 
@@ -2163,7 +2163,7 @@ LiVESWidget * make_param_dialog (int pnum, rfx_build_window_t *rfxbuilder) {
 }
 
 
-void after_param_dp_changed (GtkSpinButton *spinbutton, gpointer user_data) {
+void after_param_dp_changed (LiVESSpinButton *spinbutton, gpointer user_data) {
   rfx_build_window_t *rfxbuilder=(rfx_build_window_t *)user_data;
   gchar *ctext=lives_combo_get_active_text(LIVES_COMBO(rfxbuilder->param_type_combo));
   int dp;
@@ -2211,7 +2211,7 @@ void after_param_dp_changed (GtkSpinButton *spinbutton, gpointer user_data) {
 }
 
 
-void after_param_min_changed (GtkSpinButton *spinbutton, gpointer user_data) {
+void after_param_min_changed (LiVESSpinButton *spinbutton, gpointer user_data) {
   rfx_build_window_t *rfxbuilder=(rfx_build_window_t *)user_data;
   int dp;
   gchar *ctext=lives_combo_get_active_text(LIVES_COMBO(rfxbuilder->param_type_combo));
@@ -2262,7 +2262,7 @@ void after_param_min_changed (GtkSpinButton *spinbutton, gpointer user_data) {
 
 }
 
-void after_param_max_changed (GtkSpinButton *spinbutton, gpointer user_data) {
+void after_param_max_changed (LiVESSpinButton *spinbutton, gpointer user_data) {
   rfx_build_window_t *rfxbuilder=(rfx_build_window_t *)user_data;
   int dp;
   gchar *ctext=lives_combo_get_active_text(LIVES_COMBO(rfxbuilder->param_type_combo));
@@ -2312,7 +2312,7 @@ void after_param_max_changed (GtkSpinButton *spinbutton, gpointer user_data) {
 
 }
 
-void after_param_def_changed (GtkSpinButton *spinbutton, gpointer user_data) {
+void after_param_def_changed (LiVESSpinButton *spinbutton, gpointer user_data) {
   rfx_build_window_t *rfxbuilder=(rfx_build_window_t *)user_data;
   gchar *ctext=lives_combo_get_active_text(LIVES_COMBO(rfxbuilder->param_type_combo));
 
@@ -2344,7 +2344,7 @@ void after_param_def_changed (GtkSpinButton *spinbutton, gpointer user_data) {
 }
 
 
-void on_param_type_changed (GtkComboBox *param_type_combo, gpointer user_data) {
+void on_param_type_changed (LiVESCombo *param_type_combo, gpointer user_data) {
 
   rfx_build_window_t *rfxbuilder=(rfx_build_window_t *)user_data;
   int pnum=rfxbuilder->edit_param;
@@ -2628,7 +2628,7 @@ LiVESWidget * make_param_window_dialog (int pnum, rfx_build_window_t *rfxbuilder
 
 
 
-void on_paramw_kw_changed (GtkComboBox *combo, gpointer user_data) {
+void on_paramw_kw_changed (LiVESCombo *combo, gpointer user_data) {
 
   rfx_build_window_t *rfxbuilder=(rfx_build_window_t *)user_data;
   gchar *ctext=lives_combo_get_active_text(combo);
@@ -2649,7 +2649,7 @@ void on_paramw_kw_changed (GtkComboBox *combo, gpointer user_data) {
 }
 
 
-void on_paramw_sp_changed (GtkComboBox *combo, gpointer user_data) {
+void on_paramw_sp_changed (LiVESCombo *combo, gpointer user_data) {
 
   rfx_build_window_t *rfxbuilder=(rfx_build_window_t *)user_data;
   int npars;
@@ -2675,7 +2675,7 @@ void on_paramw_sp_changed (GtkComboBox *combo, gpointer user_data) {
 }
 
 
-void on_paramw_spsub_changed (GtkComboBox *combo, gpointer user_data) {
+void on_paramw_spsub_changed (LiVESCombo *combo, gpointer user_data) {
 
   rfx_build_window_t *rfxbuilder=(rfx_build_window_t *)user_data;
   gchar *ctext=lives_combo_get_active_text(combo);
@@ -4346,7 +4346,7 @@ gchar *prompt_for_script_name(const gchar *sname, lives_rfx_status_t status) {
 }
 
 
-void populate_script_combo(GtkComboBox *script_combo, lives_rfx_status_t status) {
+void populate_script_combo(LiVESCombo *script_combo, lives_rfx_status_t status) {
   GList *list=NULL;
   lives_combo_populate (script_combo, (list=get_script_list (status)));
   if (list!=NULL) {
@@ -4363,7 +4363,7 @@ void populate_script_combo(GtkComboBox *script_combo, lives_rfx_status_t status)
 
 
 
-void on_script_status_changed (GtkComboBox *status_combo, gpointer user_data) {
+void on_script_status_changed (LiVESCombo *status_combo, gpointer user_data) {
   gchar *text=lives_combo_get_active_text(status_combo);
   LiVESWidget *script_combo=(LiVESWidget *)user_data;
 

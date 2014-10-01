@@ -246,7 +246,7 @@ static void bang (LiVESWidget *widget, gpointer null) {
 }
 
 
-void on_trans_method_changed (GtkComboBox *combo, gpointer user_data) {
+void on_trans_method_changed (LiVESCombo *combo, gpointer user_data) {
   lives_rfx_t *rfx;
 
   GList *retvals;
@@ -577,30 +577,24 @@ on_merge_ok_clicked                   (LiVESButton       *button,
 }
 
 
-void
-after_spinbutton_loops_changed           (GtkSpinButton   *spinbutton,
-					  gpointer user_data) {
+void after_spinbutton_loops_changed (LiVESSpinButton *spinbutton, gpointer user_data) {
   setmergealign ();
 }
 
 
-void
-on_align_start_end_toggled (GtkToggleButton *togglebutton, gpointer user_data) {
+void on_align_start_end_toggled (LiVESToggleButton *togglebutton, gpointer user_data) {
   merge_opts->align_start=!merge_opts->align_start;
   setmergealign ();
 }
 
 
-void
-on_fit_toggled (GtkToggleButton *togglebutton, gpointer user_data) {
-
+void on_fit_toggled (LiVESToggleButton *togglebutton, gpointer user_data) {
   merge_opts->loop_to_fit=!merge_opts->loop_to_fit;
   lives_widget_set_sensitive(merge_opts->spinbutton_loops,!merge_opts->loop_to_fit);
   setmergealign();
 }
 
 
-void
-on_ins_frames_toggled (GtkToggleButton *togglebutton, gpointer user_data) {
+void on_ins_frames_toggled (LiVESToggleButton *togglebutton, gpointer user_data) {
   merge_opts->ins_frames=!merge_opts->ins_frames;
 }

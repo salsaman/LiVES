@@ -1,6 +1,6 @@
 // rfx-builder.h
 // LiVES
-// (c) G. Finch 2004 - 2013 <salsaman@gmail.com>
+// (c) G. Finch 2004 - 2014 <salsaman@gmail.com>
 // released under the GNU GPL 3 or later
 // see file ../COPYING or www.gnu.org for licensing details
 
@@ -26,15 +26,15 @@
 #define MAXINTLEN strlen(g_strdup_printf("%d",G_MAXINT))
 
 // advanced menu entries
-void on_new_rfx_activate (GtkMenuItem *, gpointer status);
-void on_edit_rfx_activate (GtkMenuItem *, gpointer status);
-void on_copy_rfx_activate (GtkMenuItem *, gpointer);
-void on_rename_rfx_activate (GtkMenuItem *, gpointer);
-void on_delete_rfx_activate (GtkMenuItem *, gpointer status);
-void on_rebuild_rfx_activate (GtkMenuItem *, gpointer);
-void on_promote_rfx_activate (GtkMenuItem *, gpointer);
-void on_import_rfx_activate (GtkMenuItem *, gpointer status);
-void on_export_rfx_activate (GtkMenuItem *, gpointer status);
+void on_new_rfx_activate (LiVESMenuItem *, gpointer status);
+void on_edit_rfx_activate (LiVESMenuItem *, gpointer status);
+void on_copy_rfx_activate (LiVESMenuItem *, gpointer);
+void on_rename_rfx_activate (LiVESMenuItem *, gpointer);
+void on_delete_rfx_activate (LiVESMenuItem *, gpointer status);
+void on_rebuild_rfx_activate (LiVESMenuItem *, gpointer);
+void on_promote_rfx_activate (LiVESMenuItem *, gpointer);
+void on_import_rfx_activate (LiVESMenuItem *, gpointer status);
+void on_export_rfx_activate (LiVESMenuItem *, gpointer status);
 
 // the builder window
 
@@ -225,23 +225,23 @@ typedef struct {
 
 // builder window widgets/callbacks
 rfx_build_window_t *make_rfx_build_window (const gchar *in_script_name, lives_rfx_status_t in_status);
-void on_rfxbuilder_ok (GtkButton *, gpointer);
-void on_rfxbuilder_cancel (GtkButton *, gpointer);
+void on_rfxbuilder_ok (LiVESButton *, gpointer);
+void on_rfxbuilder_cancel (LiVESButton *, gpointer);
 void rfxbuilder_destroy (rfx_build_window_t *);
-void on_list_table_clicked (GtkButton *, gpointer rfxbuilder);
-void on_requirements_ok (GtkButton *, gpointer rfxbuilder);
-void on_requirements_cancel (GtkButton *, gpointer);
-void on_properties_clicked (GtkButton *, gpointer rfxbuilder);
-void on_properties_ok (GtkButton *, gpointer rfxbuilder);
-void on_params_ok (GtkButton *, gpointer rfxbuilder);
-void on_params_cancel (GtkButton *, gpointer);
-void on_param_window_ok (GtkButton *, gpointer rfxbuilder);
-void on_param_window_cancel (GtkButton *, gpointer);
-void on_code_clicked (GtkButton *, gpointer rfxbuilder);
-void on_code_ok (GtkButton *, gpointer rfxbuilder);
-void on_code_cancel (GtkButton *, gpointer);
-void on_triggers_ok (GtkButton *, gpointer rfxbuilder);
-void on_triggers_cancel (GtkButton *, gpointer);
+void on_list_table_clicked (LiVESButton *, gpointer rfxbuilder);
+void on_requirements_ok (LiVESButton *, gpointer rfxbuilder);
+void on_requirements_cancel (LiVESButton *, gpointer);
+void on_properties_clicked (LiVESButton *, gpointer rfxbuilder);
+void on_properties_ok (LiVESButton *, gpointer rfxbuilder);
+void on_params_ok (LiVESButton *, gpointer rfxbuilder);
+void on_params_cancel (LiVESButton *, gpointer);
+void on_param_window_ok (LiVESButton *, gpointer rfxbuilder);
+void on_param_window_cancel (LiVESButton *, gpointer);
+void on_code_clicked (LiVESButton *, gpointer rfxbuilder);
+void on_code_ok (LiVESButton *, gpointer rfxbuilder);
+void on_code_cancel (LiVESButton *, gpointer);
+void on_triggers_ok (LiVESButton *, gpointer rfxbuilder);
+void on_triggers_cancel (LiVESButton *, gpointer);
 
 
 
@@ -250,28 +250,28 @@ LiVESWidget * make_param_dialog (int pnum, rfx_build_window_t *rfxbuilder);
 LiVESWidget * make_param_window_dialog (int hnum, rfx_build_window_t *rfxbuilder);
 LiVESWidget * make_trigger_dialog (int tnum, rfx_build_window_t *rfxbuilder);
 
-void on_table_add_row (GtkButton *, gpointer rfxbuilder);
-void on_table_edit_row (GtkButton *, gpointer rfxbuilder);
-void on_table_swap_row (GtkButton *, gpointer rfxbuilder);
-void on_table_delete_row (GtkButton *, gpointer rfxbuilder);
+void on_table_add_row (LiVESButton *, gpointer rfxbuilder);
+void on_table_edit_row (LiVESButton *, gpointer rfxbuilder);
+void on_table_swap_row (LiVESButton *, gpointer rfxbuilder);
+void on_table_delete_row (LiVESButton *, gpointer rfxbuilder);
 
 void param_set_from_dialog (lives_param_t *copy_param, rfx_build_window_t *rfxbuilder);
 
-void after_param_dp_changed (GtkSpinButton *, gpointer rfxbuilder);
-void after_param_min_changed (GtkSpinButton *, gpointer rfxbuilder);
-void after_param_max_changed (GtkSpinButton *, gpointer rfxbuilder);
-void after_param_def_changed (GtkSpinButton *, gpointer rfxbuilder);
-void after_rfxbuilder_type_toggled (GtkToggleButton *, gpointer rfxbuilder);
-void on_param_type_changed (GtkComboBox *, gpointer rfxbuilder);
-void on_paramw_kw_changed (GtkComboBox *, gpointer rfxbuilder);
-void on_paramw_sp_changed (GtkComboBox *, gpointer rfxbuilder);
-void on_paramw_spsub_changed (GtkComboBox *, gpointer rfxbuilder);
-void populate_script_combo(GtkComboBox *script_combo, lives_rfx_status_t status);
-void on_script_status_changed (GtkComboBox *status_combo, gpointer script_combo);
+void after_param_dp_changed (LiVESSpinButton *, gpointer rfxbuilder);
+void after_param_min_changed (LiVESSpinButton *, gpointer rfxbuilder);
+void after_param_max_changed (LiVESSpinButton *, gpointer rfxbuilder);
+void after_param_def_changed (LiVESSpinButton *, gpointer rfxbuilder);
+void after_rfxbuilder_type_toggled (LiVESToggleButton *, gpointer rfxbuilder);
+void on_param_type_changed (LiVESCombo *, gpointer rfxbuilder);
+void on_paramw_kw_changed (LiVESCombo *, gpointer rfxbuilder);
+void on_paramw_sp_changed (LiVESCombo *, gpointer rfxbuilder);
+void on_paramw_spsub_changed (LiVESCombo *, gpointer rfxbuilder);
+void populate_script_combo(LiVESCombo *script_combo, lives_rfx_status_t status);
+void on_script_status_changed (LiVESCombo *status_combo, gpointer script_combo);
 
 // fileselectors
-void on_export_rfx_ok (GtkButton *, gchar *script_name);
-void on_import_rfx_ok (GtkButton *, gpointer status);
+void on_export_rfx_ok (LiVESButton *, gchar *script_name);
+void on_import_rfx_ok (LiVESButton *, gpointer status);
 
 /// add dynamic menu entries
 void add_rfx_effects(void);

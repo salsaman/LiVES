@@ -1704,50 +1704,50 @@ LIVES_INLINE LiVESWidget *lives_button_new_from_stock(const char *stock_id) {
 #ifdef GUI_GTK
 #if GTK_CHECK_VERSION(3,10,0)
   LiVESWidget *image;
-  if (stock_id==LIVES_STOCK_LABEL_CANCEL) stock_id=LIVES_STOCK_CANCEL;
-  if (stock_id==LIVES_STOCK_LABEL_OK) stock_id=LIVES_STOCK_OK;
+  if (!strcmp(stock_id,LIVES_STOCK_LABEL_CANCEL)) stock_id=LIVES_STOCK_CANCEL;
+  if (!strcmp(stock_id,LIVES_STOCK_LABEL_OK)) stock_id=LIVES_STOCK_OK;
   // gtk 3.10 + -> we need to set the text ourselves
-  if (stock_id==LIVES_STOCK_NO) stock_id="gtk-no";
-  if (stock_id==LIVES_STOCK_APPLY) {
+  if (!strcmp(stock_id,LIVES_STOCK_NO)) stock_id="gtk-no";
+  if (!strcmp(stock_id,LIVES_STOCK_APPLY)) {
     button=lives_button_new_with_mnemonic(LIVES_STOCK_LABEL_APPLY);
   }
-  else if (stock_id==LIVES_STOCK_OK) {
+  else if (!strcmp(stock_id,LIVES_STOCK_OK)) {
     button=lives_button_new_with_mnemonic(LIVES_STOCK_LABEL_OK);
   }
-  else if (stock_id==LIVES_STOCK_CANCEL) {
+  else if (!strcmp(stock_id,LIVES_STOCK_CANCEL)) {
     button=lives_button_new_with_mnemonic(LIVES_STOCK_LABEL_CANCEL);
   }
-  else if (stock_id==LIVES_STOCK_YES) {
+  else if (!strcmp(stock_id,LIVES_STOCK_YES)) {
     button=lives_button_new_with_mnemonic(LIVES_STOCK_LABEL_YES);
   }
   else if (!strcmp(stock_id,"gtk-no")) {
     button=lives_button_new_with_mnemonic(LIVES_STOCK_LABEL_NO);
   }
-  else if (stock_id==LIVES_STOCK_CLOSE) {
+  else if (!strcmp(stock_id,LIVES_STOCK_CLOSE)) {
     button=lives_button_new_with_mnemonic(LIVES_STOCK_LABEL_CLOSE);
   }
-  else if (stock_id==LIVES_STOCK_REVERT_TO_SAVED) {
+  else if (!strcmp(stock_id,LIVES_STOCK_REVERT_TO_SAVED)) {
     button=lives_button_new_with_mnemonic(LIVES_STOCK_LABEL_REVERT);
   }
-  else if (stock_id==LIVES_STOCK_REFRESH) {
+  else if (!strcmp(stock_id,LIVES_STOCK_REFRESH)) {
     button=lives_button_new_with_mnemonic(LIVES_STOCK_LABEL_REFRESH);
   }
-  else if (stock_id==LIVES_STOCK_DELETE) {
+  else if (!strcmp(stock_id,LIVES_STOCK_DELETE)) {
     button=lives_button_new_with_mnemonic(LIVES_STOCK_LABEL_DELETE);
   }
-  else if (stock_id==LIVES_STOCK_SAVE) {
+  else if (!strcmp(stock_id,LIVES_STOCK_SAVE)) {
     button=lives_button_new_with_mnemonic(LIVES_STOCK_LABEL_SAVE);
   }
-  else if (stock_id==LIVES_STOCK_SAVE_AS) {
+  else if (!strcmp(stock_id,LIVES_STOCK_SAVE_AS)) {
     button=lives_button_new_with_mnemonic(LIVES_STOCK_LABEL_SAVE_AS);
   }
-  else if (stock_id==LIVES_STOCK_OPEN) {
+  else if (!strcmp(stock_id,LIVES_STOCK_OPEN)) {
     button=lives_button_new_with_mnemonic(LIVES_STOCK_LABEL_OPEN);
   }
-  else if (stock_id==LIVES_STOCK_QUIT) {
+  else if (!strcmp(stock_id,LIVES_STOCK_QUIT)) {
     button=lives_button_new_with_mnemonic(LIVES_STOCK_LABEL_QUIT);
   }
-  else if (stock_id==LIVES_STOCK_GO_FORWARD) {
+  else if (!strcmp(stock_id,LIVES_STOCK_GO_FORWARD)) {
     button=lives_button_new_with_mnemonic(LIVES_STOCK_LABEL_GO_FORWARD);
   }
   else {

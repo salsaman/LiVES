@@ -4266,7 +4266,7 @@ static int check_for_lives(weed_plant_t *filter, int filter_idx) {
       if (enabled_in_channels(filter,TRUE)>=1000000) {
 	// this is a candidate for audio volume
 	lives_fx_candidate_t *cand=&mainw->fx_candidates[FX_CANDIDATE_AUDIO_VOL];
-	cand->list=g_list_append(cand->list,INT_TO_POINTER(filter_idx));
+	cand->list=g_list_append(cand->list,GINT_TO_POINTER(filter_idx));
 	cand->delegate=0;
       }
     }
@@ -4278,7 +4278,7 @@ static int check_for_lives(weed_plant_t *filter, int filter_idx) {
 	if (ochan_flags&WEED_CHANNEL_SIZE_CAN_VARY) {
 	  // this is a candidate for resize
 	  lives_fx_candidate_t *cand=&mainw->fx_candidates[FX_CANDIDATE_RESIZER];
-	  cand->list=g_list_append(cand->list,INT_TO_POINTER(filter_idx));
+	  cand->list=g_list_append(cand->list,GINT_TO_POINTER(filter_idx));
 	  cand->delegate=0;
 	}
       }
@@ -4792,6 +4792,11 @@ static void make_fx_defs_menu(void) {
 	filter_name=weed_get_string_value(filter,"name",&error);
 	if ((pkgstring=strstr(filter_name,": "))!=NULL) {
 	  // package effect
+	  if (pkg!=NULL&&strncmp(pkg,filter_name,strlen(pkg))) {
+	    g_free(pkg);
+	    pkg=NULL;
+	    menu=mainw->rte_defs;
+	  }
 	  if (pkg==NULL) {
 	    pkg=filter_name;
 	    filter_name=g_strdup(pkg);
@@ -4837,7 +4842,7 @@ static void make_fx_defs_menu(void) {
 	  
 	g_signal_connect (GTK_OBJECT (menuitem), "activate",
 			  G_CALLBACK (rte_set_defs_activate),
-			  INT_TO_POINTER(i));
+			  GINT_TO_POINTER(i));
 
 	weed_free(filter_name);
       }
@@ -7488,6 +7493,7 @@ boolean weed_generator_start (weed_plant_t *inst, int key) {
 
     play_file();
 
+    // need to set this after playback ends; this stops the key from being activated (again) in effects.c
     mainw->gen_started_play=TRUE;
 
     if (mainw->play_window!=NULL) {

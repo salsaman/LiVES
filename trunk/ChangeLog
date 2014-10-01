@@ -1,10 +1,15 @@
 Version 2.2.7
 -------------
+Add support for audio triggered generators.
+Add support for projectM (milkdrop) generators.
+Improvements to openGL playback plugin.
+Fix bug in chroma_blend transition.
 Further code cleanup.
 Fix text width for "show VJ keys" window.
 Remove unnecessary deinterlacing from threaded player.
 Added OSC commands /clip/selection/rte_apply, /clip/undo and /clip/redo.
-
+Add libvisual plugins to correct submenu (regression).
+Minor fixes for the rfx builder window.
 
 
 

@@ -288,7 +288,7 @@ void create_LiVES (void) {
   mainw->accel_group = LIVES_ACCEL_GROUP(lives_accel_group_new ());
 
   mainw->layout_textbuffer=lives_text_buffer_new();
-  g_object_ref(mainw->layout_textbuffer);
+  lives_object_ref(mainw->layout_textbuffer);
   mainw->affected_layouts_map=NULL;
 
   mainw->LiVES = lives_window_new (LIVES_WINDOW_TOPLEVEL);
@@ -1835,7 +1835,7 @@ void create_LiVES (void) {
       lives_widget_show(mainw->vol_label);
     }
   }
-  else g_object_unref(adj);
+  else lives_object_unref(adj);
 
   lives_widget_show(mainw->volume_scale);
 
@@ -2180,7 +2180,7 @@ void create_LiVES (void) {
   mainw->play_image = lives_image_new_from_pixbuf (NULL);
 
   lives_widget_show (mainw->play_image);
-  g_object_ref(mainw->play_image);
+  lives_object_ref(mainw->play_image);
   if (palette->style&STYLE_1) {
     lives_widget_set_bg_color(mainw->play_image, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
   }
@@ -2188,11 +2188,7 @@ void create_LiVES (void) {
   lives_widget_set_hexpand(mainw->play_image,TRUE);
   lives_widget_set_vexpand(mainw->play_image,TRUE);
 
-#if GTK_CHECK_VERSION(3,0,0)
-  g_object_ref_sink (G_OBJECT (mainw->play_image));
-#else
-  gtk_object_sink (GTK_OBJECT (mainw->play_image));
-#endif
+  lives_object_ref_sink(mainw->play_image);
 
   label = lives_standard_label_new (_("Last Frame"));
   lives_widget_show (label);
@@ -3468,7 +3464,7 @@ void make_preview_box (void) {
   gchar *tmp,*tmp2;
 
   mainw->preview_box = lives_vbox_new (FALSE, 0);
-  g_object_ref(mainw->preview_box);
+  lives_object_ref(mainw->preview_box);
 
   eventbox=lives_event_box_new();
   lives_widget_set_events (eventbox, LIVES_SCROLL_MASK);

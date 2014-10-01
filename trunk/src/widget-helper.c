@@ -301,11 +301,48 @@ static void set_label_state(LiVESWidget *widget, LiVESWidgetState state, livespo
   }
 }
 
-LIVES_INLINE void lives_object_unref(livespointer object) {
+
+LIVES_INLINE livespointer lives_object_ref(livespointer object) {
+#ifdef GUI_GTK
+  g_object_ref(object);
+#else
+  // increase refcount by 1
+#endif
+  return object;
+}
+
+
+LIVES_INLINE boolean lives_object_unref(livespointer object) {
 #ifdef GUI_GTK
   g_object_unref(object);
+  return TRUE;
+#else
+  // decrease refcount by 1; if refcount is 0, delete object
 #endif
+  return FALSE;
 }
+
+
+#ifdef GUI_GTK
+#if GTK_CHECK_VERSION(3,0,0)
+LIVES_INLINE livespointer lives_object_ref_sink(livespointer object) {
+  g_object_ref_sink (object);
+  return object;
+}
+#else
+LIVES_INLINE void lives_object_ref_sink(livespointer object) {
+  GtkObject *gtkobject;
+  //assert(GTK_IS_OBJECT(object));
+  gtkobject=(GtkObject *)object;
+  gtk_object_sink (object);
+}
+#endif
+#else
+LIVES_INLINE livespointer lives_object_ref_sink(livespointer object) {
+  // remove any "floating" ref and then increase refcount by 1
+  return object;
+}
+#endif
 
 
 LIVES_INLINE void lives_widget_set_sensitive(LiVESWidget *widget, boolean state) {

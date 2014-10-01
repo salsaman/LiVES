@@ -684,7 +684,7 @@ void load_framedraw_image(LiVESPixbuf *pixbuf) {
       mainw->do_not_free=(gpointer)lives_pixbuf_get_pixels_readonly(pixbuf);
       mainw->free_fn=lives_free_with_check;
     }
-    g_object_unref(pixbuf);
+    lives_object_unref(pixbuf);
     mainw->do_not_free=NULL;
     mainw->free_fn=lives_free_normal;
 
@@ -746,7 +746,7 @@ void redraw_framedraw_image(void) {
     mainw->free_fn=lives_free_with_check;
   }
 
-  g_object_unref(pixbuf);
+  lives_object_unref(pixbuf);
   mainw->do_not_free=NULL;
   mainw->free_fn=lives_free_normal;
 

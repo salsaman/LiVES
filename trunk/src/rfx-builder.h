@@ -170,6 +170,7 @@ typedef struct {
   LiVESWidget *spinbutton_param_max;
   LiVESWidget *spinbutton_param_step;
   LiVESWidget *code_textview;
+  LiVESWidget *new_entry_button;
   LiVESWidget *edit_entry_button;
   LiVESWidget *remove_entry_button;
   LiVESWidget *move_up_button;

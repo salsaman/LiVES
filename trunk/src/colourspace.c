@@ -10535,7 +10535,7 @@ boolean resize_layer (weed_plant_t *layer, int width, int height, LiVESInterpTyp
       mainw->do_not_free=(gpointer)lives_pixbuf_get_pixels_readonly(pixbuf);
       mainw->free_fn=lives_free_with_check;
     }
-    g_object_unref(pixbuf);
+    lives_object_unref(pixbuf);
     mainw->do_not_free=NULL;
     mainw->free_fn=lives_free_normal;
 
@@ -10563,7 +10563,7 @@ boolean resize_layer (weed_plant_t *layer, int width, int height, LiVESInterpTyp
       mainw->do_not_free=(gpointer)lives_pixbuf_get_pixels_readonly(new_pixbuf);
       mainw->free_fn=lives_free_with_check;
     }
-    g_object_unref(new_pixbuf);
+    lives_object_unref(new_pixbuf);
     mainw->do_not_free=NULL;
     mainw->free_fn=lives_free_normal;
   }
@@ -10879,7 +10879,7 @@ boolean pixbuf_to_layer(weed_plant_t *layer, LiVESPixbuf *pixbuf) {
       mainw->do_not_free=(gpointer)lives_pixbuf_get_pixels_readonly(pixbuf);
       mainw->free_fn=lives_free_with_check;
     }
-    g_object_unref(pixbuf);
+    lives_object_unref(pixbuf);
     mainw->do_not_free=NULL;
     mainw->free_fn=lives_free_normal;
   }
@@ -11352,5 +11352,5 @@ void insert_blank_frames(int sfileno, int nframes, int after) {
 
   sfile->frames+=nframes;
 
-  g_object_unref(blankp);
+  lives_object_unref(blankp);
 }

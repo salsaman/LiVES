@@ -2537,12 +2537,13 @@ static void padd_clicked(LiVESWidget *button, gpointer user_data) {
   // add another param row below the add button
   lives_conx_w *conxwp=(lives_conx_w *)user_data;
 
-  LiVESWidget *hbox[5],*hboxb[5],*achbox,*comhbox;
 
   int totparams,totchans;
   int ours=-1,pidx;
 #if LIVES_TABLE_IS_GRID
   int trows;
+#else
+  LiVESWidget *hbox[5],*hboxb[5],*achbox,*comhbox;
 #endif
 
   register int i;
@@ -2666,10 +2667,15 @@ static void pdel_clicked(LiVESWidget *button, gpointer user_data) {
   //  remove the param row at the del button
   lives_conx_w *conxwp=(lives_conx_w *)user_data;
 
-  LiVESWidget *hbox[4],*hboxb[4],*achbox,*comhbox;
+  LiVESWidget *hbox[4],*comhbox;
 
   int totparams,totchans;
-  int ours=-1,pidx,pidx_next;
+  int ours=-1,pidx;
+
+#if !LIVES_TABLE_IS_GRID
+  LiVESWidget *hboxb[4],*achbox;
+  int pidx_next;
+#endif
 
   register int i;
 
@@ -2827,13 +2833,14 @@ static void cadd_clicked(LiVESWidget *button, gpointer user_data) {
   // add another channel row below the add button
   lives_conx_w *conxwp=(lives_conx_w *)user_data;
 
+#if LIVES_TABLE_IS_GRID
+  int trows;
+#else
   LiVESWidget *hbox[4],*hboxb[4],*comhbox;
+#endif
 
   int totparams,totchans;
   int ours=-1,cidx;
-#if LIVES_TABLE_IS_GRID
-  int trows;
-#endif
 
   register int i;
 
@@ -2946,10 +2953,15 @@ static void cdel_clicked(LiVESWidget *button, gpointer user_data) {
   //  remove the channel  row at the del button
   lives_conx_w *conxwp=(lives_conx_w *)user_data;
 
-  LiVESWidget *hbox[3],*hboxb[3],*comhbox;
+  LiVESWidget *hbox[3],*comhbox;
 
   int totparams,totchans;
-  int ours=-1,cidx,cidx_next;
+  int ours=-1,cidx;
+
+#if !LIVES_TABLE_IS_GRID
+  LiVESWidget *hboxb[3];
+  int cidx_next;
+#endif
 
   register int i;
 

@@ -71,9 +71,9 @@ typedef cairo_fill_rule_t lives_painter_fill_rule_t;
 #include "support.h"
 
 // needs testing with gtk+ 3,10,0+
-//#if GTK_CHECK_VERSION(3,10,0)
-//#define LIVES_TABLE_IS_GRID 1
-//#endif
+#if GTK_CHECK_VERSION(3,10,0)
+#define LIVES_TABLE_IS_GRID 1
+#endif
 
 
 #ifndef G_ENCODE_VERSION
@@ -875,7 +875,18 @@ void widget_helper_init(void);
 
 // object funcs.
 
-void lives_object_unref(livespointer);
+livespointer lives_object_ref(livespointer); ///< increase refcount by one
+boolean lives_object_unref(livespointer); ///< decrease refcount by one: if refcount==0, object is destroyed
+
+// remove any "floating" reference and add a new ref
+#ifdef GUI_GTK
+#if GTK_CHECK_VERSION(3,0,0)
+livespointer lives_object_ref_sink(livespointer);
+#else
+void lives_object_ref_sink(livespointer);
+#endif
+livespointer lives_object_ref_sink(livespointer);
+#endif
 
 
 // lives_pixbuf functions

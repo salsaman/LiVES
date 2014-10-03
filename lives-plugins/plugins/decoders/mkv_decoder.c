@@ -1753,7 +1753,7 @@ static void detach_stream (lives_clip_data_t *cdata) {
 
   avcodec_close(priv->vidst->codec);
 
-  if (priv->picture!=NULL) av_free(priv->picture);
+  if (priv->picture!=NULL) av_frame_free(&priv->picture);
 
   priv->ctx=NULL;
   priv->codec=NULL;
@@ -1919,7 +1919,7 @@ static boolean attach_stream(lives_clip_data_t *cdata, boolean isclone) {
 
   av_init_packet(&priv->avpkt);
 
-  priv->picture = avcodec_alloc_frame();
+  priv->picture = av_frame_alloc();
 
   pthread_mutex_lock(&priv->idxc->mutex);
   matroska_read_seek(cdata,0);
@@ -2254,7 +2254,7 @@ static lives_clip_data_t *mkv_clone(lives_clip_data_t *cdata) {
     clone->ainterleaf=TRUE;
   }
 
-  if (dpriv->picture!=NULL) av_free(dpriv->picture);
+  if (dpriv->picture!=NULL) av_frame_free(&dpriv->picture);
   dpriv->picture=NULL;
 
   dpriv->last_frame=-1;
@@ -2345,7 +2345,7 @@ lives_clip_data_t *get_clip_data(const char *URI, lives_clip_data_t *cdata) {
   cdata->asigned=TRUE;
   cdata->ainterleaf=TRUE;
 
-  if (priv->picture!=NULL) av_free(priv->picture);
+  if (priv->picture!=NULL) av_frame_free(&priv->picture);
   priv->picture=NULL;
 
   return cdata;
@@ -2882,7 +2882,7 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstride
     //priv->ctx->skip_frame=AVDISCARD_NONREF;
 
     priv->last_frame=tframe;
-    if (priv->picture==NULL) priv->picture = avcodec_alloc_frame();
+    if (priv->picture==NULL) priv->picture = av_frame_alloc();
 
     // do this until we reach target frame //////////////
 

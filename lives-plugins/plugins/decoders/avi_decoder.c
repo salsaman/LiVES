@@ -671,7 +671,7 @@ static void detach_stream (lives_clip_data_t *cdata) {
     av_free(priv->ctx);
   }
 
-  if (priv->picture!=NULL) av_free(priv->picture);
+  if (priv->picture!=NULL) av_frame_free(priv->picture);
 
   priv->ctx=NULL;
   priv->picture=NULL;
@@ -1498,7 +1498,7 @@ static boolean attach_stream(lives_clip_data_t *cdata) {
     return FALSE;
   }
 
-  priv->picture = avcodec_alloc_frame();
+  priv->picture = av_frame_alloc();
 
   priv->input_position=priv->data_start;
 

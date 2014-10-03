@@ -2864,7 +2864,7 @@ static void detach_stream (lives_clip_data_t *cdata) {
     av_free(priv->s);
   }
 
-  if (priv->picture!=NULL) av_free(priv->picture);
+  if (priv->picture!=NULL) av_frame_free(&priv->picture);
 
   priv->ctx=NULL;
   priv->codec=NULL;
@@ -3158,7 +3158,7 @@ static boolean attach_stream(lives_clip_data_t *cdata, boolean isclone) {
   lseek(priv->fd,priv->input_position,SEEK_SET);
   avcodec_flush_buffers (priv->ctx);
 
-  priv->picture = avcodec_alloc_frame();
+  priv->picture = av_frame_alloc();
 
   mpegts_read_packet(cdata,&priv->avpkt);
 
@@ -3186,7 +3186,7 @@ static boolean attach_stream(lives_clip_data_t *cdata, boolean isclone) {
   priv->last_frame=-1;
 
   if (isclone) {
-    if (priv->picture!=NULL) av_free(priv->picture);
+    if (priv->picture!=NULL) av_frame_free(&priv->picture);
     priv->picture=NULL;
     return TRUE;
   }
@@ -3385,7 +3385,7 @@ static boolean attach_stream(lives_clip_data_t *cdata, boolean isclone) {
   fprintf(stderr,"fps is %.4f %ld %ld %ld\n",cdata->fps,cdata->nframes,ldts,priv->start_dts);
 #endif
 
-  if (priv->picture!=NULL) av_free(priv->picture);
+  if (priv->picture!=NULL) av_frame_free(&priv->picture);
   priv->picture=NULL;
 
   return TRUE;
@@ -3486,7 +3486,7 @@ static lives_clip_data_t *mpegts_clone(lives_clip_data_t *cdata) {
   dpriv->expect_eof=FALSE;
   dpriv->got_eof=FALSE;
 
-  if (dpriv->picture!=NULL) av_free(dpriv->picture);
+  if (dpriv->picture!=NULL) av_frame_free(&dpriv->picture);
   dpriv->picture=NULL;
 
   return clone;
@@ -3718,7 +3718,7 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstride
     //priv->ctx->skip_frame=AVDISCARD_NONREF;
 
     priv->last_frame=tframe;
-    if (priv->picture==NULL) priv->picture = avcodec_alloc_frame();
+    if (priv->picture==NULL) priv->picture = av_frame_alloc();
 
     // do this until we reach target frame //////////////
 

@@ -681,7 +681,7 @@ static void detach_stream (lives_clip_data_t *cdata) {
   priv->ctx=NULL;
 
   if (priv->pFrame!=NULL) {
-    av_free(priv->pFrame);
+    av_frame_free(&priv->pFrame);
     priv->pFrame=NULL;
   }
 
@@ -902,7 +902,7 @@ lives_clip_data_t *get_clip_data(const char *URI, lives_clip_data_t *cdata) {
 
   cdata->nframes=real_frames;
 
-  if (priv->pFrame!=NULL) av_free(priv->pFrame);
+  if (priv->pFrame!=NULL) av_frame_free(&priv->pFrame);
   priv->pFrame=NULL;
 
   return cdata;
@@ -1046,7 +1046,7 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstride
     fprintf(stderr,"pt a1 %d %ld\n",priv->last_frame,tframe);
 #endif
 
-    if (priv->pFrame!=NULL) av_free(priv->pFrame);
+    if (priv->pFrame!=NULL) av_frame_free(&priv->pFrame);
     priv->pFrame=NULL;
 
     time=(double)tframe/cdata->fps;
@@ -1106,7 +1106,7 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstride
       fprintf(stderr,"pt b1 %ld %ld %ld\n",MyPts,target_pts,seek_target);
 #endif
       // decode any frames from this packet
-      if (priv->pFrame==NULL) priv->pFrame=avcodec_alloc_frame();
+      if (priv->pFrame==NULL) priv->pFrame=av_frame_alloc();
 
 
 #if LIBAVCODEC_VERSION_MAJOR >= 53
@@ -1127,7 +1127,7 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstride
       // otherwise discard this frame
       if (gotFrame) {
 	MyPts+=(double)AV_TIME_BASE/cdata->fps;
-	av_free(priv->pFrame);
+	av_frame_free(&priv->pFrame);
 	priv->pFrame=NULL;
       }
 

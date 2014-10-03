@@ -921,7 +921,7 @@ static void detach_stream (lives_clip_data_t *cdata) {
     av_free(priv->ctx);
   }
 
-  if (priv->picture!=NULL) av_free(priv->picture);
+  if (priv->picture!=NULL) av_frame_free(&priv->picture);
 
   priv->ctx=NULL;
   priv->picture=NULL;
@@ -2163,7 +2163,7 @@ static boolean attach_stream(lives_clip_data_t *cdata, boolean isclone) {
   pthread_mutex_unlock(&priv->idxc->mutex);
   priv->def_packet_size=priv->asf->hdr.max_pktsize*10;
 
-  priv->picture = avcodec_alloc_frame();
+  priv->picture = av_frame_alloc();
 
   do {
     if (priv->avpkt.data!=NULL) free(priv->avpkt.data);
@@ -2560,7 +2560,7 @@ static lives_clip_data_t *asf_clone(lives_clip_data_t *cdata) {
 
   }
 
-  if (dpriv->picture!=NULL) av_free(dpriv->picture);
+  if (dpriv->picture!=NULL) av_frame_free(&dpriv->picture);
   dpriv->picture=NULL;
 
   return clone;
@@ -2636,7 +2636,7 @@ lives_clip_data_t *get_clip_data(const char *URI, lives_clip_data_t *cdata) {
   cdata->asigned=TRUE;
   cdata->ainterleaf=TRUE;
 
-  if (priv->picture!=NULL) av_free(priv->picture);
+  if (priv->picture!=NULL) av_frame_free(&priv->picture);
   priv->picture=NULL;
 
   return cdata;
@@ -2762,7 +2762,7 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstride
 
   if (tframe!=priv->last_frame) {
 
-    if (priv->picture!=NULL) av_free(priv->picture);
+    if (priv->picture!=NULL) av_frame_free(&priv->picture);
     priv->picture=NULL;
 
     if (priv->last_frame==-1 || (tframe<priv->last_frame) || (tframe - priv->last_frame > rescan_limit)) {
@@ -2826,7 +2826,7 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstride
 
 
       // decode any frames from this packet
-      if (priv->picture==NULL) priv->picture=avcodec_alloc_frame();
+      if (priv->picture==NULL) priv->picture=av_frame_alloc();
 
 #if LIBAVCODEC_VERSION_MAJOR >= 53
       avcodec_decode_video2( priv->ctx, priv->picture, &got_picture, &priv->avpkt );
@@ -2844,7 +2844,7 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstride
 
       // otherwise discard this frame
       if (got_picture) {
-	av_free(priv->picture);
+	av_frame_free(&priv->picture);
 	priv->picture=NULL;
 	tfrag=-1;
 	nextframe++;

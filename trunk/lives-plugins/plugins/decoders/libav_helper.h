@@ -221,6 +221,14 @@ static void av_set_pts_info(AVStream *s, int pts_wrap_bits,
 #endif
 #endif
 
+
+#if LIBAVCODEC_VERSION_INT < AV_VERSION_INT(55,28,1)
+#define av_frame_alloc  avcodec_alloc_frame
+#define av_frame_free  avcodec_free_frame
+#endif
+
+
+
 #endif // HAVE_LIBAV_LIBS
 
 #endif // HAVE_LIBAV_HELPER_H

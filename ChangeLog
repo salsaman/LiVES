@@ -10,6 +10,7 @@ Remove unnecessary deinterlacing from threaded player.
 Added OSC commands /clip/selection/rte_apply, /clip/undo and /clip/redo.
 Add libvisual plugins to correct submenu (regression).
 Minor fixes for the rfx builder window.
+Minor fixes for merge in clip editor.
 
 
 

@@ -61,6 +61,11 @@ typedef struct {
   int textureHandle;
   int width;
   int height;
+  volatile bool worker_ready;
+  volatile int pidx;
+  int opidx;
+  volatile int nprs;
+  volatile char **prnames;
   pthread_mutex_t mutex;
   pthread_mutex_t pcm_mutex;
   pthread_t thread;
@@ -237,6 +242,8 @@ static int render_frame(_sdata *sdata) {
 
 static void *worker(void *data) {
   std::string config_filename = getConfigFilename();
+  std::string prname;
+
   ConfigFile config(config_filename);
   projectM::Settings settings;
 
@@ -244,7 +251,10 @@ static void *worker(void *data) {
 
   _sdata *sd=(_sdata *)data;
 
+  register int i=0;
+
   if (init_display(sd)) {
+    sd->worker_ready=true;
     sd->failed=true;
     goto fail;
   }
@@ -255,6 +265,18 @@ static void *worker(void *data) {
 
   sd->textureHandle = sd->globalPM->initRenderToTexture();
 
+  sd->nprs=sd->globalPM->getPlaylistSize()+1;
+
+  sd->prnames=(volatile char **)weed_malloc(sd->nprs*sizeof(char *));
+
+  sd->prnames[0]=(volatile char *)"- Random -";
+
+  for (i=1;i<sd->nprs;i++) {
+    sd->prnames[i]=const_cast<volatile char *>((sd->globalPM->getPresetName(i-1)).c_str());
+  };
+
+
+  sd->worker_ready=true;
 
   while (!sd->die) {
     if (!sd->rendering) {
@@ -263,8 +285,16 @@ static void *worker(void *data) {
       continue;
     }
 
-    if (rerand) sd->globalPM->selectRandom(true);
-    rerand=false;
+    if (sd->pidx==-1) {
+      if (rerand) sd->globalPM->selectRandom(true);
+      rerand=false;
+    }
+    else if (sd->pidx!=sd->opidx) {
+      sd->globalPM->setPresetLock(true);
+      sd->globalPM->selectPreset(sd->pidx);
+    }
+
+    sd->opidx=sd->pidx;
 
     pthread_mutex_lock(&sd->pcm_mutex);
     if (sd->audio_frames>0) {
@@ -298,12 +328,17 @@ static void *worker(void *data) {
 
 
 static int projectM_init (weed_plant_t *inst) {
+  weed_plant_t *iparam;
+
   if (copies==1) return WEED_ERROR_TOO_MANY_INSTANCES;
   copies++;
 
   if (!inited) {
     int error;
     weed_plant_t *out_channel=weed_get_plantptr_value(inst,"out_channels",&error);
+    weed_plant_t *iparam=weed_get_plantptr_value(inst,"in_parameters",&error);
+    weed_plant_t *itmpl=weed_get_plantptr_value(iparam,"template",&error);
+    weed_plant_t *iparamgui=weed_get_plantptr_value(itmpl,"gui",&error);
 
     int width=weed_get_int_value(out_channel,"width",&error);
     int height=weed_get_int_value(out_channel,"height",&error);
@@ -319,6 +354,8 @@ static int projectM_init (weed_plant_t *inst) {
       weed_free(sd);
       return WEED_ERROR_MEMORY_ALLOCATION;
     }
+
+    sd->pidx=sd->opidx=-1;
 
     sd->fps=TARGET_FPS;
     if (weed_plant_has_leaf(inst,"fps")) sd->fps=weed_get_double_value(inst,"fps",&error);
@@ -338,8 +375,16 @@ static int projectM_init (weed_plant_t *inst) {
 
     inited=1;
 
+    sd->nprs=0;
+    sd->prnames=NULL;
+    sd->worker_ready=false;
+
     // kick off a thread to init screean and render
     pthread_create(&sd->thread,NULL,worker,sd);
+
+    while (!sd->worker_ready) usleep(10000);
+
+    weed_set_string_array(iparamgui,"choices",sd->nprs,(char **)sd->prnames);
   }
 
   sd->rendering=true;
@@ -373,6 +418,7 @@ static int projectM_process (weed_plant_t *inst, weed_timecode_t timestamp) {
 
   weed_plant_t *in_channel=weed_get_plantptr_value(inst,"in_channels",&error);
   weed_plant_t *out_channel=weed_get_plantptr_value(inst,"out_channels",&error);
+  weed_plant_t *inparam=weed_get_plantptr_value(inst,"in_parameters",&error);
   unsigned char *dst=(unsigned char *)weed_get_voidptr_value(out_channel,"pixel_data",&error);
 
   unsigned char *ptrd,*ptrs;
@@ -399,6 +445,8 @@ static int projectM_process (weed_plant_t *inst, weed_timecode_t timestamp) {
   }
 
   if (sd->update_size||sd->fbuffer==NULL) return WEED_NO_ERROR;
+
+  sd->pidx=weed_get_int_value(inparam,"value",&error)-1;
 
   if (0) {
     projectMEvent evt;
@@ -469,20 +517,24 @@ static int projectM_process (weed_plant_t *inst, weed_timecode_t timestamp) {
 
 
 
-
 weed_plant_t *weed_setup (weed_bootstrap_f weed_boot) {
   weed_plant_t *plugin_info=weed_plugin_info_init(weed_boot,num_versions,api_versions);
   if (plugin_info!=NULL) {
 
     int palette_list[]={WEED_PALETTE_RGB24,WEED_PALETTE_END};
 
+    const char *xlist[3]={"- Random -","Choose...",NULL};
+
+    weed_plant_t *in_params[]={weed_string_list_init("preset","_Preset",0,xlist),NULL};
+
     weed_plant_t *in_chantmpls[]={weed_audio_channel_template_init("In audio",0),NULL};
 
     weed_plant_t *out_chantmpls[]={weed_channel_template_init("out channel 0",WEED_CHANNEL_REINIT_ON_SIZE_CHANGE|
 							      WEED_CHANNEL_REINIT_ON_PALETTE_CHANGE,palette_list),NULL};
     weed_plant_t *filter_class=weed_filter_class_init("projectM","salsaman/projectM authors",1,0,&projectM_init,
-						      &projectM_process,&projectM_deinit,in_chantmpls,out_chantmpls,NULL,NULL);
+						      &projectM_process,&projectM_deinit,in_chantmpls,out_chantmpls,in_params,NULL);
 
+    //weed_set_int_value(in_params[0],"flags",WEED_PARAMETER_REINIT_ON_VALUE_CHANGE);
 
     weed_set_int_value(in_chantmpls[0],"audio_channels",1);
     weed_set_boolean_value(in_chantmpls[0],"audio_interleaf",WEED_TRUE);
@@ -508,6 +560,7 @@ void weed_desetup(void) {
     pthread_join(sd->thread,NULL);
     if (sd->fbuffer!=NULL) weed_free(sd->fbuffer);
     if (sd->audio!=NULL) weed_free(sd->audio);
+    if (sd->prnames!=NULL) weed_free(sd->prnames);
     weed_free(sd);
   }
 }

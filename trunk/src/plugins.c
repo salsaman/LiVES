@@ -3379,6 +3379,7 @@ lives_param_t *weed_params_to_rfx(int npar, weed_plant_t *inst, boolean show_rei
 	  g_list_free(gtk_list);
 	  gtk_list=NULL;
 	  rpar[i].type=LIVES_PARAM_STRING_LIST;
+	  rpar[i].max=listlen;
 	}
 	else if (weed_plant_has_leaf(gui,"step_size")) 
 	  rpar[i].step_size=(double)weed_get_int_value(gui,"step_size",&error);

@@ -1867,7 +1867,11 @@ static void on_params_clicked (LiVESButton *button, gpointer user_data) {
     weed_plant_t *filter=rte_keymode_get_filter(key+1,mode);
     if (filter==NULL) return;
     inst=weed_instance_from_filter(filter);
+
+    // do some fiddly stuff to show the key defs.
+    weed_reinit_effect(inst,TRUE);
     apply_key_defaults(inst,key,mode);
+    weed_reinit_effect(inst,TRUE);
   }
   else {
     int error;

@@ -1375,6 +1375,13 @@ lives_filter_error_t weed_reinit_effect (weed_plant_t *inst, boolean reinit_comp
 	if (rfx->source_type==LIVES_RFX_SOURCE_WEED&&rfx->source==inst) {
 	  int keyw=GPOINTER_TO_INT (g_object_get_data (G_OBJECT (fx_dialog[1]),"key"));
 	  int modew=GPOINTER_TO_INT (g_object_get_data (G_OBJECT (fx_dialog[1]),"mode"));
+
+	  // do updates from "gui"
+	  rfx_params_free(rfx);
+	  g_free(rfx->params);
+    
+	  rfx->params=weed_params_to_rfx(rfx->num_params,inst,FALSE);
+
 	  redraw_pwindow(keyw,modew);
 	}
       }
@@ -6685,7 +6692,9 @@ boolean weed_init_effect(int hotkey) {
     // if it is a key effect, set key defaults
     if (hotkey<FX_KEYS_MAX_VIRTUAL&&key_defaults[hotkey][key_modes[hotkey]]!=NULL) {
       // TODO - handle compound fx
+      weed_reinit_effect(new_instance,FALSE);
       apply_key_defaults(new_instance,hotkey,key_modes[hotkey]);
+      weed_reinit_effect(new_instance,FALSE);
     }
   }
 

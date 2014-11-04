@@ -1139,9 +1139,12 @@ rely on setting "copy_value_to" to force the host to set indentical
 
  * "choices" : WEED_SEED_STRING : n values for a choice: only valid
    for INT parameters, the "value" element(s) indicate the selected
-   element(s); "min" and "max" must constrain "value" to valid choices;
-   0 indicates first element in "choices". A value of -1 (if
-   allowed) indicates "no selection". For non-INT parameters, this
+   element(s);
+   The actual value of "max" is ignored,
+   "max" is assumed to be equal to the number of elements in "choices".
+   "min" must be 0 or -1.
+   For the "value", 0 indicates first element in "choices". A value of -1 (if
+   allowed by "min") indicates "no selection". For non-INT parameters, this
    leaf will be ignored. If "choices" is present, then "wrap" and
    "step_size" may be ignored by the host.
 

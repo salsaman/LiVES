@@ -885,6 +885,7 @@ livespointer lives_object_ref_sink(livespointer);
 #else
 void lives_object_ref_sink(livespointer);
 #endif
+#else
 livespointer lives_object_ref_sink(livespointer);
 #endif
 

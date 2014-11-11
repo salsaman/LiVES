@@ -127,15 +127,19 @@ void init_audio_frame_buffer(short aplayer) {
   abuf->out_achans=0;
 
   switch (aplayer) {
+#ifdef HAVE_PULSE_AUDIO
   case AUD_PLAYER_PULSE:
     abuf->in_interleaf=TRUE;
     abuf->s16_signed=TRUE;
     abuf->arate=mainw->pulsed->out_arate;
     break;
+#endif
+#ifdef ENABLE_JACK
   case AUD_PLAYER_JACK:
     abuf->in_interleaf=FALSE;
     abuf->out_interleaf=FALSE;
     abuf->arate=mainw->jackd->sample_out_rate;
+#endif
     break;
   default:
     break;

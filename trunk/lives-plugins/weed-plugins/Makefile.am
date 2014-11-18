@@ -121,15 +121,20 @@ freenect_LTLIBRARIES = $(freenect_libs)
 endif
 
 if HAVE_X11
+if HAVE_OPENGL
 if HAVE_PROJECTM
 projectM_libs = projectM.la
-projectM_la_LDFLAGS = $(AM_LDFLAGS) $(LDFLAGS_SDL) $(PROJECTM_LIBS) -lpthread @X11_LIBS@ @GL_LIBS@
-projectM_la_CPPFLAGS = $(PROJECTM_CFLAGS) $(CFLAGS_SDL) \
+projectM_la_LDFLAGS = $(AM_LDFLAGS) $(LDFLAGS_SDL) $(LIBPROJECTM_LIBS) -lpthread @X11_LIBS@ @GL_LIBS@
+projectM_la_CPPFLAGS = $(LIBPROJECTM_CFLAGS) $(CFLAGS_SDL) \
 	-DPROJECTM_PREFIX=\"`pkg-config --variable=libdir libprojectM`/libprojectM\" $(AM_CPPFLAGS) \
 	 @X11_CFLAGS@ @GL_CFLAGS@
+projectMdir = "$(libdir)/$(PACKAGE)/plugins/effects/realtime/weed"
 projectM_la_SOURCES = projectM.cpp projectM-getConfigFilename.cpp projectM-getConfigFilename.h projectM-ConfigFile.h
+projectM_LTLIBRARIES = $(projectM_libs)
 endif
 endif
+endif
+
 
 fxpluginslib_LTLIBRARIES = RGBdelay.la \
 	alpha_means.la \
@@ -166,7 +171,6 @@ fxpluginslib_LTLIBRARIES = RGBdelay.la \
 	palette_test.la\
 	plasma.la \
 	posterise.la \
-	projectM.la \
 	randomiser.la \
 	revTV.la \
 	rippleTV.la \

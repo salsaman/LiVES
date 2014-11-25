@@ -6885,15 +6885,16 @@ boolean weed_init_effect(int hotkey) {
       if (mainw->whentostop==STOP_ON_AUD_END) mainw->whentostop=STOP_ON_VID_END;
       if (prefs->audio_player==AUD_PLAYER_JACK) {
 #ifdef ENABLE_JACK
-	if (mainw->jackd_read!=NULL&&(mainw->jackd_read->playing_file==-1||mainw->jackd_read->playing_file==mainw->ascrap_file)) {
+	if (mainw->jackd_read!=NULL&&mainw->jackd_read->in_use&&
+	    (mainw->jackd_read->playing_file==-1||mainw->jackd_read->playing_file==mainw->ascrap_file)) {
 	  // if playing external audio, switch over to internal for an audio gen
 	  mainw->jackd->audio_ticks=mainw->currticks;
 	  mainw->jackd->frames_written=0;
 
 	  // close the reader
-	  jack_rec_audio_end(FALSE);
+	  jack_rec_audio_end(!(prefs->perm_audio_reader&&prefs->audio_src==AUDIO_SRC_EXT),FALSE);
 	}
-	if (mainw->jackd!=NULL&&mainw->jackd_read==NULL) {
+	if (mainw->jackd!=NULL&&(mainw->jackd_read==NULL||!mainw->jackd_read->in_use)) {
 
 	  // enable writer
 	  mainw->jackd->in_use=TRUE;
@@ -6902,13 +6903,14 @@ boolean weed_init_effect(int hotkey) {
       }
       if (prefs->audio_player==AUD_PLAYER_PULSE) {
 #ifdef HAVE_PULSE_AUDIO
-	if (mainw->pulsed_read!=NULL&&(mainw->pulsed_read->playing_file==-1||mainw->pulsed_read->playing_file==mainw->ascrap_file)) {
+	if (mainw->pulsed_read!=NULL&&mainw->pulsed_read->in_use&&
+	    (mainw->pulsed_read->playing_file==-1||mainw->pulsed_read->playing_file==mainw->ascrap_file)) {
 	  // if playing external audio, switch over to internal for an audio gen
 	  mainw->pulsed->audio_ticks=mainw->currticks;
 	  mainw->pulsed->frames_written=0;
-	  pulse_rec_audio_end(FALSE);
+	  pulse_rec_audio_end(!(prefs->perm_audio_reader&&prefs->audio_src==AUDIO_SRC_EXT),FALSE);
 	}
-	if (mainw->pulsed!=NULL&&mainw->pulsed_read==NULL) {
+	if (mainw->pulsed!=NULL&&(mainw->pulsed_read==NULL||!mainw->pulsed_read->in_use)) {
 	  mainw->pulsed->in_use=TRUE;
 	}
 #endif
@@ -7049,7 +7051,7 @@ void weed_deinit_effect(int hotkey) {
     if (mainw->playing_file>0&&prefs->audio_src==AUDIO_SRC_EXT) {
       if (prefs->audio_player==AUD_PLAYER_JACK) {
 #ifdef ENABLE_JACK
-	if (mainw->jackd_read==NULL) {
+	if (mainw->jackd_read==NULL||!mainw->jackd_read->in_use) {
 	  mainw->jackd->in_use=FALSE; // deactivate writer
 	  jack_rec_audio_to_clip(-1,0,(lives_rec_audio_type_t)0); //activate reader
 	  mainw->jackd_read->frames_written+=mainw->jackd->frames_written; // ensure time continues monotonically
@@ -7059,7 +7061,7 @@ void weed_deinit_effect(int hotkey) {
       }
       if (prefs->audio_player==AUD_PLAYER_PULSE) {
 #ifdef HAVE_PULSE_AUDIO
-	if (mainw->pulsed_read==NULL) {
+	if (mainw->pulsed_read==NULL||!mainw->pulsed_read->in_use) {
 	  mainw->pulsed->in_use=FALSE; // deactivate writer
 	  pulse_rec_audio_to_clip(-1,0,(lives_rec_audio_type_t)0); //activate reader
 	  mainw->pulsed_read->frames_written+=mainw->pulsed->frames_written; // ensure time continues monotonically

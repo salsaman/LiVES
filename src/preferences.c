@@ -677,6 +677,22 @@ lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_warn_yuv4
   if (rec_ext_audio&&prefs->audio_src==AUDIO_SRC_INT) {
     prefs->audio_src=AUDIO_SRC_EXT;
     set_int_pref("audio_src",AUDIO_SRC_EXT);
+
+    if (mainw->playing_file==-1) {
+      if (prefs->audio_player==AUD_PLAYER_JACK) {
+	if (prefs->perm_audio_reader) {
+	  // create reader connection now, if permanent
+	  jack_rec_audio_to_clip(-1,-1,RECA_EXTERNAL);
+	}
+      }
+      if (prefs->audio_player==AUD_PLAYER_PULSE) {
+	if (prefs->perm_audio_reader) {
+	  // create reader connection now, if permanent
+	  pulse_rec_audio_to_clip(-1,-1,RECA_EXTERNAL);
+	}
+      }
+    }
+
   }
   else if (!rec_ext_audio&&prefs->audio_src==AUDIO_SRC_EXT) {
     prefs->audio_src=AUDIO_SRC_INT;

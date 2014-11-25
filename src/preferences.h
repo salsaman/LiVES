@@ -345,6 +345,8 @@ typedef struct {
 
   boolean push_audio_to_gens;
 
+  boolean perm_audio_reader;
+
 } _prefs;
 
 enum {

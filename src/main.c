@@ -1200,6 +1200,8 @@ static void lives_init(_ign_opts *ign_opts) {
     prefs->show_button_images=FALSE;
 
     prefs->push_audio_to_gens=TRUE;
+
+    prefs->perm_audio_reader=TRUE;
     //////////////////////////////////////////////////////////////////
 
     weed_memory_init();
@@ -1680,6 +1682,12 @@ static void lives_init(_ign_opts *ign_opts) {
 	    mainw->jackd->cancelled=&mainw->cancelled;
 	    mainw->jackd->in_use=FALSE;
 	    mainw->jackd->play_when_stopped=(prefs->jack_opts&JACK_OPTS_NOPLAY_WHEN_PAUSED)?FALSE:TRUE;
+
+	    if (prefs->perm_audio_reader&&prefs->audio_src==AUDIO_SRC_EXT) {
+	      // create reader connection now, if permanent
+	      jack_rec_audio_to_clip(-1,-1,RECA_EXTERNAL);
+	    }
+
 	  }
 	}
 #endif
@@ -1703,13 +1711,18 @@ static void lives_init(_ign_opts *ign_opts) {
 	    mainw->pulsed->whentostop=&mainw->whentostop;
 	    mainw->pulsed->cancelled=&mainw->cancelled;
 	    mainw->pulsed->in_use=FALSE;
+	    if (prefs->perm_audio_reader&&prefs->audio_src==AUDIO_SRC_EXT) {
+	      // create reader connection now, if permanent
+	      pulse_rec_audio_to_clip(-1,-1,RECA_EXTERNAL);
+	    }
+
 	  }
 	}
 #endif
 
     }
 
-
+    
     if (prefs->startup_phase!=0) {
       gchar *txt;
 
@@ -1742,8 +1755,8 @@ static void lives_init(_ign_opts *ign_opts) {
     lives_widget_set_bg_color (mainw->t_infobutton, LIVES_WIDGET_STATE_PRELIGHT, &palette->fade_colour);
     
 
-  }
-  }
+    }
+}
 
 
 
@@ -2544,11 +2557,13 @@ static boolean lives_startup(gpointer data) {
 
 #ifdef ENABLE_JACK
     if (prefs->audio_player==AUD_PLAYER_JACK&&capable->has_jackd&&mainw->rec_achans>0) {
+      lives_jack_init();
       jack_audio_read_init();
     }
 #endif
 #ifdef HAVE_PULSE_AUDIO
     if (prefs->audio_player==AUD_PLAYER_PULSE&&capable->has_pulse_audio&&mainw->rec_achans>0) {
+      lives_pulse_init(0);
       pulse_audio_read_init();
     }
 #endif

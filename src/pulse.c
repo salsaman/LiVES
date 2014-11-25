@@ -855,6 +855,8 @@ static void pulse_audio_read_process (pa_stream *pstream, size_t nbytes, void *a
   void *data;
   size_t rbytes=nbytes;
 
+  if (!pulsed->in_use) return;
+
   if (mainw->playing_file<0&&prefs->audio_src==AUDIO_SRC_EXT) return; 
 
   if (mainw->effects_paused) return; // pause during record ???
@@ -1180,6 +1182,7 @@ int pulse_driver_activate(pulse_driver_t *pdriver) {
     pdriver->audio_ticks=0;
     pdriver->frames_written=0;
     pdriver->usec_start=0;
+    pdriver->in_use=FALSE;
     prb=0;
 
     pa_stream_set_read_callback(pdriver->pstream,pulse_audio_read_process,pdriver);

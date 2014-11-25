@@ -3359,6 +3359,7 @@ boolean switch_aud_to_jack(void) {
       mainw->jackd->play_when_stopped=(prefs->jack_opts&JACK_OPTS_NOPLAY_WHEN_PAUSED)?FALSE:TRUE;
       jack_driver_activate(mainw->jackd);
     }
+
     mainw->aplayer_broken=FALSE;
     lives_widget_show(mainw->vol_toolitem);
     if (mainw->vol_label!=NULL) lives_widget_show(mainw->vol_label);
@@ -3386,6 +3387,11 @@ boolean switch_aud_to_jack(void) {
 
   if (mainw->is_ready&&mainw->vpp!=NULL&&mainw->vpp->get_audio_fmts!=NULL) 
     mainw->vpp->audio_codec=get_best_audio(mainw->vpp);
+
+  if (prefs->perm_audio_reader&&prefs->audio_src==AUDIO_SRC_EXT) {
+    jack_rec_audio_to_clip(-1,-1,RECA_EXTERNAL);
+  }
+
 
   return TRUE;
 #endif
@@ -3434,6 +3440,11 @@ boolean switch_aud_to_pulse(void) {
       mainw->jackd=NULL;
     }
 #endif
+
+    if (prefs->perm_audio_reader&&prefs->audio_src==AUDIO_SRC_EXT) {
+      jack_rec_audio_to_clip(-1,-1,RECA_EXTERNAL);
+    }
+
     return retval;
   }
 
@@ -3624,15 +3635,16 @@ boolean prepare_to_play_foreign(void) {
     cfile->asampsize=mainw->rec_asamps;
     cfile->signed_endian=mainw->rec_signed_endian;
 #ifdef HAVE_PULSE_AUDIO
-    if (mainw->rec_achans>0&&prefs->audio_player==AUD_PLAYER_PULSE&&mainw->pulsed_read==NULL) {
-      lives_pulse_init(0);
-      pulse_audio_read_init();
+    if (mainw->rec_achans>0&&prefs->audio_player==AUD_PLAYER_PULSE) {
       pulse_rec_audio_to_clip(mainw->current_file,-1,RECA_WINDOW_GRAB);
+      mainw->pulsed_read->in_use=TRUE;
     }
 #endif
 #ifdef ENABLE_JACK
-    if (mainw->rec_achans>0&&prefs->audio_player==AUD_PLAYER_JACK&&mainw->jackd_read==NULL) 
+    if (mainw->rec_achans>0&&prefs->audio_player==AUD_PLAYER_JACK) { 
       jack_rec_audio_to_clip(mainw->current_file,-1,RECA_WINDOW_GRAB);
+      mainw->jackd_read->in_use=TRUE;
+    }
 #endif
   }
 

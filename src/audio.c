@@ -139,8 +139,8 @@ void init_audio_frame_buffer(short aplayer) {
     abuf->in_interleaf=FALSE;
     abuf->out_interleaf=FALSE;
     abuf->arate=mainw->jackd->sample_out_rate;
-#endif
     break;
+#endif
   default:
     break;
   }
@@ -1476,7 +1476,6 @@ void jack_rec_audio_to_clip(int fileno, int old_file, lives_rec_audio_type_t rec
       
       // start jack recording
 
-      // TODO - only if not active
       if (!jackd_read_started) {
 	jack_open_device_read(mainw->jackd_read);
 	jack_read_driver_activate(mainw->jackd_read,FALSE);
@@ -1545,17 +1544,21 @@ void jack_rec_audio_to_clip(int fileno, int old_file, lives_rec_audio_type_t rec
     on_playsel_activate(NULL,NULL);
     mainw->current_file=current_file;
   }
-  jack_rec_audio_end(TRUE);
+  jack_rec_audio_end(!(prefs->perm_audio_reader&&prefs->audio_src==AUDIO_SRC_EXT),TRUE);
 }
 
 
 
-void jack_rec_audio_end(boolean close_fd) {
+void jack_rec_audio_end(boolean close_device, boolean close_fd) {
   // recording ended
 
-  // stop recording
-  if (mainw->jackd_read!=NULL) jack_close_device(mainw->jackd_read);
-  mainw->jackd_read=NULL;
+  if (close_device) {
+    // stop recording
+    if (mainw->jackd_read!=NULL) jack_close_device(mainw->jackd_read);
+    mainw->jackd_read=NULL;
+  }
+  else mainw->jackd_read->in_use=FALSE;
+
 
   if (close_fd&&mainw->aud_rec_fd!=-1) {
     // close file
@@ -1689,24 +1692,28 @@ void pulse_rec_audio_to_clip(int fileno, int old_file, lives_rec_audio_type_t re
     on_playsel_activate(NULL,NULL);
     mainw->current_file=current_file;
   }
-  pulse_rec_audio_end(TRUE);
+  pulse_rec_audio_end(!(prefs->perm_audio_reader&&prefs->audio_src==AUDIO_SRC_EXT),TRUE);
 }
 
 
 
-void pulse_rec_audio_end(boolean close_fd) {
+void pulse_rec_audio_end(boolean close_device, boolean close_fd) {
   // recording ended
 
   // stop recording
 
   if (mainw->pulsed_read!=NULL) {
     pa_threaded_mainloop_lock(mainw->pulsed_read->mloop);
+
     if (mainw->pulsed_read->playing_file>-1)
       pulse_flush_read_data(mainw->pulsed_read,mainw->pulsed_read->playing_file,0,mainw->pulsed_read->reverse_endian,NULL);
-    pulse_close_client(mainw->pulsed_read);
+
+    if (close_device) pulse_close_client(mainw->pulsed_read);
+
     pa_threaded_mainloop_unlock(mainw->pulsed_read->mloop);
 
-    mainw->pulsed_read=NULL;
+    if (close_device) mainw->pulsed_read=NULL;
+    else mainw->pulsed_read->in_use=FALSE;
   }
 
   if (mainw->aud_rec_fd!=-1&&close_fd) {

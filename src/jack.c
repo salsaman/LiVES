@@ -1106,6 +1106,8 @@ static int audio_read (nframes_t nframes, void *arg) {
 
   size_t rbytes;
 
+  if (!jackd->in_use) return 0;
+
   if (mainw->playing_file<0&&prefs->audio_src==AUDIO_SRC_EXT) return 0; 
 
   if (mainw->effects_paused) return 0; // pause during record

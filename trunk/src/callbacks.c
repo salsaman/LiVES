@@ -136,11 +136,11 @@ void lives_exit (void) {
 
     if (!mainw->only_close) {
 #ifdef HAVE_PULSE_AUDIO
-    pthread_mutex_lock(&mainw->abuf_mutex);
-    if (mainw->pulsed!=NULL) pulse_close_client(mainw->pulsed);
-    if (mainw->pulsed_read!=NULL) pulse_close_client(mainw->pulsed_read);
-    pulse_shutdown();
-    pthread_mutex_unlock(&mainw->abuf_mutex);
+      pthread_mutex_lock(&mainw->abuf_mutex);
+      if (mainw->pulsed!=NULL) pulse_close_client(mainw->pulsed);
+      if (mainw->pulsed_read!=NULL) pulse_close_client(mainw->pulsed_read);
+      pulse_shutdown();
+      pthread_mutex_unlock(&mainw->abuf_mutex);
 #endif
 #ifdef ENABLE_JACK
       pthread_mutex_lock(&mainw->abuf_mutex);
@@ -994,13 +994,13 @@ void on_stop_clicked (GtkMenuItem *menuitem, gpointer user_data) {
 #endif
 
 #ifdef ENABLE_JACK
-  if (mainw->jackd!=NULL&&mainw->jackd_read!=NULL) {
+  if (mainw->jackd!=NULL&&mainw->jackd_read!=NULL&&mainw->jackd_read->in_use) {
     mainw->cancelled=CANCEL_KEEP;
     return;
   }
 #endif
 #ifdef HAVE_PULSE_AUDIO
-  if (mainw->pulsed!=NULL&&mainw->pulsed_read!=NULL) {
+  if (mainw->pulsed!=NULL&&mainw->pulsed_read!=NULL&&mainw->pulsed->in_use) {
     mainw->cancelled=CANCEL_KEEP;
     return;
   }
@@ -4000,26 +4000,29 @@ void on_record_perf_activate (GtkMenuItem *menuitem, gpointer user_data) {
 #ifdef ENABLE_JACK
 	if (prefs->audio_player==AUD_PLAYER_JACK) {
 	  if (mainw->agen_key==0&&!mainw->agen_needs_reinit) {
-
-	    // TODO - check
 	    jack_rec_audio_to_clip(mainw->ascrap_file, -1, RECA_EXTERNAL);
-
-
+	    mainw->jackd_read->in_use=TRUE;
 	  }
 	  else {
-	    if (mainw->jackd!=NULL) jack_rec_audio_to_clip(mainw->ascrap_file, -1, RECA_GENERATED);
+	    if (mainw->jackd!=NULL) {
+	      jack_rec_audio_to_clip(mainw->ascrap_file, -1, RECA_GENERATED);
+	      mainw->jackd_read->in_use=TRUE;
+	    }
 	  }
-
 	}
 
 #endif
 #ifdef HAVE_PULSE_AUDIO
 	if (prefs->audio_player==AUD_PLAYER_PULSE) {
 	  if (mainw->agen_key==0&&!mainw->agen_needs_reinit) {
-	    if (mainw->pulsed_read!=NULL) pulse_rec_audio_to_clip(mainw->ascrap_file, -1, RECA_EXTERNAL);
+	    pulse_rec_audio_to_clip(mainw->ascrap_file, -1, RECA_EXTERNAL);
+	    mainw->pulsed_read->in_use=TRUE;
 	  }
 	  else {
-	    if (mainw->pulsed!=NULL) pulse_rec_audio_to_clip(mainw->ascrap_file, -1, RECA_GENERATED);
+	    if (mainw->pulsed!=NULL) {
+	      pulse_rec_audio_to_clip(mainw->ascrap_file, -1, RECA_GENERATED);
+	      mainw->pulsed_read->in_use=TRUE;
+	    }
 	  }
 	}
 #endif
@@ -9407,7 +9410,8 @@ void on_effects_paused (LiVESButton *button, gpointer user_data) {
 	d_print(_ ("paused..."));
       }
 #ifdef RT_AUDIO
-      if ((mainw->jackd!=NULL&&mainw->jackd_read!=NULL)||(mainw->pulsed!=NULL&&mainw->pulsed_read!=NULL)) 
+      if ((mainw->jackd!=NULL&&mainw->jackd_read!=NULL&&mainw->jackd_read->in_use)
+	  ||(mainw->pulsed!=NULL&&mainw->pulsed_read!=NULL&&mainw->pulsed_read->in_use)) 
 	lives_widget_hide(cfile->proc_ptr->stop_button);
 #endif
     } else {
@@ -9421,14 +9425,16 @@ void on_effects_paused (LiVESButton *button, gpointer user_data) {
 	d_print(_ ("resumed..."));
       }
 #ifdef RT_AUDIO
-      if ((mainw->jackd!=NULL&&mainw->jackd_read!=NULL)||(mainw->pulsed!=NULL&&mainw->pulsed_read!=NULL)) 
+      if ((mainw->jackd!=NULL&&mainw->jackd_read!=NULL&&mainw->jackd_read->in_use)
+	  ||(mainw->pulsed!=NULL&&mainw->pulsed_read!=NULL&&mainw->pulsed_read->in_use)) 
 	lives_widget_show(cfile->proc_ptr->stop_button);
 #endif
     }
 
     if (!cfile->opening&&!mainw->internal_messaging
 #ifdef RT_AUDIO
-	&&!((mainw->jackd!=NULL&&mainw->jackd_read!=NULL)||(mainw->pulsed!=NULL&&mainw->pulsed_read!=NULL))
+	&&!((mainw->jackd!=NULL&&mainw->jackd_read!=NULL&&mainw->jackd_read->in_use)
+	    ||(mainw->pulsed!=NULL&&mainw->pulsed_read!=NULL&&mainw->pulsed->in_use))
 #endif
 	) {
       lives_system(com,FALSE);
@@ -11409,10 +11415,7 @@ on_recaudsel_activate (GtkMenuItem     *menuitem,
 
 
 
-void
-on_recaudclip_ok_clicked                      (LiVESButton *button,
-					       gpointer user_data)
-{
+void on_recaudclip_ok_clicked (LiVESButton *button, gpointer user_data) {
 #ifdef RT_AUDIO
   weed_timecode_t ins_pt;
   double aud_start,aud_end,vel=1.,vol=1.;
@@ -11516,11 +11519,13 @@ on_recaudclip_ok_clicked                      (LiVESButton *button,
 #ifdef ENABLE_JACK
   if (prefs->audio_player==AUD_PLAYER_JACK) {
     jack_rec_audio_to_clip(mainw->current_file,old_file,type==0?RECA_NEW_CLIP:RECA_EXISTING);
+    mainw->jackd_read->in_use=TRUE;
   }
 #endif
 #ifdef HAVE_PULSE_AUDIO
   if (prefs->audio_player==AUD_PLAYER_PULSE) {
     pulse_rec_audio_to_clip(mainw->current_file,old_file,type==0?RECA_NEW_CLIP:RECA_EXISTING);
+    mainw->pulsed_read->in_use=TRUE;
   }
 #endif
 

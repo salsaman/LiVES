@@ -2020,6 +2020,7 @@ boolean lives_widget_get_preferred_size(LiVESWidget *widget, LiVESRequisition *m
 #ifdef GUI_GTK
 #if GTK_CHECK_VERSION(3,0,0)
   gtk_widget_get_preferred_size(widget,min_size,nat_size);
+  return TRUE;
 #endif
 #endif
   return FALSE;

@@ -2713,10 +2713,14 @@ void play_file (void) {
 	  mainw->jackd->playing_file=mainw->current_file;
 	  mainw->jackd->frames_written=0;
 	  mainw->jackd->in_use=TRUE;
-	  jack_rec_audio_to_clip(mainw->ascrap_file, -1, RECA_GENERATED);
+	  if (mainw->ascrap_file!=-1 || !prefs->perm_audio_reader) 
+	    jack_rec_audio_to_clip(mainw->ascrap_file, -1, RECA_GENERATED);
+	  mainw->jackd_read->in_use=TRUE;
 	}
 	else {
-	  jack_rec_audio_to_clip(mainw->ascrap_file, -1, RECA_EXTERNAL);
+	  if (mainw->ascrap_file!=-1 || !prefs->perm_audio_reader) 
+	    jack_rec_audio_to_clip(mainw->ascrap_file, -1, RECA_EXTERNAL);
+	  mainw->jackd_read->in_use=TRUE;
 	}
       }
       mainw->jackd->frames_written=0;
@@ -2729,10 +2733,14 @@ void play_file (void) {
 	  mainw->pulsed->playing_file=mainw->current_file;
 	  mainw->pulsed->frames_written=0;
 	  mainw->pulsed->in_use=TRUE;
-	  pulse_rec_audio_to_clip(mainw->ascrap_file, -1, RECA_GENERATED);
+	  if (mainw->ascrap_file!=-1 || !prefs->perm_audio_reader) 
+	    pulse_rec_audio_to_clip(mainw->ascrap_file, -1, RECA_GENERATED);
+	  mainw->pulsed_read->in_use=TRUE;
 	}
 	else {
-	  pulse_rec_audio_to_clip(mainw->ascrap_file, -1, RECA_EXTERNAL);
+	  if (mainw->ascrap_file!=-1 || !prefs->perm_audio_reader) 
+	    pulse_rec_audio_to_clip(mainw->ascrap_file, -1, RECA_EXTERNAL);
+	  mainw->pulsed_read->in_use=TRUE;
 	}
       }
       mainw->pulsed->frames_written=0;
@@ -2920,7 +2928,8 @@ void play_file (void) {
 #ifdef ENABLE_JACK
   if (audio_player==AUD_PLAYER_JACK&&(mainw->jackd!=NULL||mainw->jackd_read!=NULL)) {
 
-    if (mainw->jackd_read!=NULL||mainw->aud_rec_fd!=-1) jack_rec_audio_end(TRUE);
+    if (mainw->jackd_read!=NULL||mainw->aud_rec_fd!=-1) 
+      jack_rec_audio_end(!(prefs->perm_audio_reader&&prefs->audio_src==AUDIO_SRC_EXT),TRUE);
 
     // send jack transport stop
     if (!mainw->preview&&!mainw->foreign) jack_pb_stop();
@@ -2952,7 +2961,8 @@ void play_file (void) {
 #ifdef HAVE_PULSE_AUDIO
     if (audio_player==AUD_PLAYER_PULSE&&(mainw->pulsed!=NULL||mainw->pulsed_read!=NULL)) {
 
-    if (mainw->pulsed_read!=NULL||mainw->aud_rec_fd!=-1) pulse_rec_audio_end(TRUE);
+    if (mainw->pulsed_read!=NULL||mainw->aud_rec_fd!=-1) 
+      pulse_rec_audio_end(!(prefs->perm_audio_reader&&prefs->audio_src==AUDIO_SRC_EXT),TRUE);
 
     // tell pulse client to close audio file
     if (mainw->pulsed!=NULL&&(mainw->pulsed->playing_file>0||mainw->pulsed->fd>0)) {

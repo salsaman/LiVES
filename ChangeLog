@@ -1,8 +1,9 @@
-Version 2.2.7
--------------
+Version 2.2.7 (21 Dec 2014)
+---------------------------
 Add support for audio triggered generators.
 Add support for projectM (milkdrop) generators.
 Improvements to openGL playback plugin.
+Add permanent inputs in jack and pulse audio when handling external audio.
 Fix bug in chroma_blend transition.
 Further code cleanup.
 Fix text width for "show VJ keys" window.

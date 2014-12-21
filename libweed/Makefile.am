@@ -39,7 +39,7 @@ extra_ldflags = -fPIC -DPIC
 extra_cflags = -fPIC -DPIC
 endif
 
-EXTRA_DIST = libweed.doxygen libweed.pc libweed-plugin-utils.pc libweed_slice.pc libweed-utils.pc libweed-compat.pc
+EXTRA_DIST = libweed.doxygen libweed.pc libweed-plugin.pc libweed_slice.pc libweed-utils.pc libweed-compat.pc
 
 lib_LTLIBRARIES = libweed.la libweed_slice.la libweed-utils.la
 

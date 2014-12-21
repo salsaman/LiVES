@@ -1,0 +1,11 @@
+prefix=/usr
+exec_prefix=${prefix}
+libdir=${exec_prefix}/lib
+includedir=${prefix}/include/weed
+
+Name: libweed-plugins
+Description: Effect plugin header for libweed
+Requires:
+Version: 0.13.0
+Libs:
+Cflags: -I${includedir}

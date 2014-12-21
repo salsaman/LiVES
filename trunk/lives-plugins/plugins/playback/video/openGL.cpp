@@ -23,7 +23,7 @@
 #include "../../../../libweed/weed-palettes.h"
 #endif
 
-#ifdef HAVE_SYSTEM_WEED_PLUGIN_UTILS
+#ifdef HAVE_SYSTEM_WEED_PLUGIN_H
 #include <weed/weed-plugin.h>
 #else
 #include "../../../../libweed/weed-plugin.h"

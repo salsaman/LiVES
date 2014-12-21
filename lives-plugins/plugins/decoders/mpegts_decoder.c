@@ -2207,11 +2207,11 @@ static int handle_packet(lives_clip_data_t *cdata, const uint8_t *packet) {
     return 0;
   }
 
-
   pes = tss->u.pes_filter.opaque;
-  st = pes->st;
-
-  if (priv->vidst!=NULL&&st!=priv->vidst) return 0;
+  if (pes!=NULL) {
+    st = pes->st;
+    if (priv->vidst!=NULL&&st!=priv->vidst) return 0;
+  }
 
   afc = (packet[3] >> 4) & 3;
   if (afc == 0) /* reserved value */

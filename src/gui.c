@@ -314,7 +314,7 @@ void create_LiVES (void) {
 #ifdef GUI_GTK
 #if !GTK_CHECK_VERSION(3,0,0)
     if (!mainw->foreign) {
-      lives_widget_ensure_style(mainw->LiVES);
+      gtk_widget_ensure_style(mainw->LiVES);
     }
 #endif
 #endif

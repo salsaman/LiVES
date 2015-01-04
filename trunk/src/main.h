@@ -77,7 +77,6 @@ POSSIBILITY OF SUCH DAMAGES.
 #include <winbase.h>
 #include <tlhelp32.h>
 #include <sddl.h>
-#include <sys/stat.h>
 
 #define O_SYNC (FILE_FLAG_NO_BUFFERING|FILE_FLAG_WRITE_THROUGH)
 
@@ -143,6 +142,7 @@ typedef int lives_pgid_t;
 #endif // GUI_GTK
 
 
+#include <sys/stat.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <unistd.h>
@@ -222,7 +222,7 @@ typedef int lives_pgid_t;
 #define LIVES_FEATURE_URL "https://sourceforge.net/p/lives/feature-requests/"
 #define LIVES_TRANSLATE_URL "https://translations.launchpad.net/lives/trunk"
 
-#ifdef IS_DARWIN
+#if defined (IS_DARWIN) || defined (__FreeBSD__)
 #ifndef off64_t
 #define off64_t off_t
 #endif

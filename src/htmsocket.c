@@ -10,6 +10,7 @@
 #include <errno.h>
 
 #ifndef IS_MINGW
+#include <netinet/in.h>
 #include <netdb.h>
 #include <sys/socket.h>
 #include <sys/ioctl.h>

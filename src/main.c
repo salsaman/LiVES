@@ -76,8 +76,6 @@
 #endif
 
 
-#include <sys/stat.h>
-
 ////////////////////////////////
 capability *capable;
 _palette *palette;

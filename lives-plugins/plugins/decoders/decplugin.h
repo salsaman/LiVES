@@ -22,7 +22,7 @@ extern "C"
 #include "../../../libweed/weed-palettes.h"
 #endif
 
-#ifdef IS_DARWIN
+#if defined (IS_DARWIN) || defined (__FreeBSD__)
 #ifndef lseek64
 #define lseek64 lseek
 #endif

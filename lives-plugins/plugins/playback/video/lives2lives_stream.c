@@ -9,6 +9,10 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 
+#ifndef IS_MINGW
+#include <netinet/in.h>
+#endif
+
 //////////////////////////////////////
 
 static int palette_list[3];

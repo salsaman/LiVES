@@ -32,10 +32,8 @@
 #include <unistd.h>
 #include <stdlib.h>
 #include <ctype.h>
-#ifndef IS_MINGW
-#ifndef IS_SOLARIS
+#if !defined (IS_MINGW) && !defined (IS_SOLARIS) && !defined (__FreeBSD__)
 #include <endian.h>
-#endif
 #endif
 #include <sys/stat.h>
 #include <pthread.h>
@@ -1464,7 +1462,7 @@ static boolean attach_stream(lives_clip_data_t *cdata, boolean isclone) {
 	  if (priv->st->codec->extradata_size && (priv->st->codec->bits_per_coded_sample <= 8)) {
 
 
-#ifndef IS_MINGW
+#if !defined (IS_MINGW) && !defined (IS_SOLARIS) && !defined (__FreeBSD__)
 # if __BYTE_ORDER == __BIG_ENDIAN
             int i;
             for (i = 0; i < FFMIN(priv->st->codec->extradata_size, AVPALETTE_SIZE)/4; i++)

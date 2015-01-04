@@ -30,7 +30,7 @@
 #include <ctype.h>
 #include <sys/stat.h>
 
-#ifndef IS_MINGW
+#if !defined (IS_MINGW) && !defined (IS_SOLARIS) && !defined (__FreeBSD__)
 #include <endian.h>
 #endif
 
@@ -3814,7 +3814,8 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstride
   
   return TRUE;
 }
-#ifndef IS_MINGW
+
+#if !defined (IS_MINGW) && !defined (IS_SOLARIS) && !defined (__FreeBSD__)
 
 # if __BYTE_ORDER == __BIG_ENDIAN
 
@@ -3830,7 +3831,7 @@ static void reverse_bytes(uint8_t *out, const uint8_t *in, size_t count) {
 #endif
 
 static ssize_t lives_write_le(int fd, const void *buf, size_t count) {
-#ifndef IS_MINGW
+#if !defined (IS_MINGW) && !defined (IS_SOLARIS) && !defined (__FreeBSD__)
 # if __BYTE_ORDER == __BIG_ENDIAN
   uint8_t xbuf[count];
   reverse_bytes(xbuf,(const uint8_t *)buf,count);
@@ -3846,7 +3847,7 @@ static ssize_t lives_write_le(int fd, const void *buf, size_t count) {
 
 
 ssize_t lives_read_le(int fd, void *buf, size_t count) {
-#ifndef IS_MINGW
+#if !defined (IS_MINGW) && !defined (IS_SOLARIS) && !defined (__FreeBSD__)
 # if __BYTE_ORDER == __BIG_ENDIAN
   uint8_t xbuf[count];
   ssize_t retval=read(fd,buf,count);

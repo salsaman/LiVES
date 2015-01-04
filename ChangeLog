@@ -1,3 +1,11 @@
+Version 2.2.8
+-------------
+Compilation fix for gtk+ 2.x
+Compilation fixes for freeBSD
+
+
+
+
 Version 2.2.7 (21 Dec 2014)
 ---------------------------
 Add support for audio triggered generators.

@@ -190,6 +190,11 @@
 #define av_new_stream(a, b) avformat_new_stream(a, NULL)
 #endif
 
+#if HAVE_AVFORMAT_CLOSE_INPUT
+#define av_close_input_file(a) avformat_close_input(&a)
+#endif
+
+
 #if !HAVE_AV_SET_PTS_INFO
 #if HAVE_AVFORMAT_INTERNAL_H
 

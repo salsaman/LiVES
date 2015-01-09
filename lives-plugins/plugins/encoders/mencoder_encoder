@@ -6,12 +6,13 @@
 # see file COPYING or www.gnu.org for details
 
 #######################################################################
-# LiVES mencoder plugin v1.9
+# LiVES mencoder plugin v1.10
 
 # 1.7 add kvcd back in
 # 1.8 use mjpeg with -ovc copy (thanks to Rich Felker for the suggestion)
 # 1.9 add ffv1 and png support (thanks to anonymous) 
 # 1.91 add ffv1 image formats
+# 1.93 get audio codec for encoding
 
 #######################################################################
 
@@ -37,7 +38,7 @@ else {
 
 
 if ($command eq "version") {
-    print "mencoder encoder plugin v1.92\n";
+    print "mencoder encoder plugin v1.93\n";
     exit 0;
 }
 
@@ -145,6 +146,9 @@ if ($command eq "encode") {
 	&rc_set("output_type",$otype);
     }
 
+    # get audio codec
+    $aq=&rc_get("encoder_acodec");
+
     # set the codec
     $vcodec="mjpeg";
     
@@ -217,13 +221,13 @@ if ($command eq "encode") {
 		$audio_com.="-audiofile ".$audiofile." -oac lavc -lavcopts acodec=mp3";
 	    }
 	}
-	elsif ($aq==2) {
+	elsif ($aq==1) {
 	    $audio_com="-audiofile ".$audiofile." -oac copy";
 	}
-	elsif ($aq==4) {
+	elsif ($aq==2) {
 	    $audio_com="-audiofile ".$audiofile." -oac lavc -lavcopts acodec=mp2";
 	}
-	elsif ($aq==128) {
+	elsif ($aq==8) {
 	    $audio_com="-audiofile ".$audiofile." -oac lavc -lavcopts acodec=wmav2";
 	}
     }

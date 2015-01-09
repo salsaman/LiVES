@@ -850,12 +850,6 @@ text_window *create_text_window (const gchar *title, const gchar *text, GtkTextB
 
   dialog_vbox = lives_dialog_get_content_area(LIVES_DIALOG(textwindow->dialog));
 
-
-  if (mainw->iochan!=NULL) {
-    //textwindow->textview=LIVES_WIDGET(mainw->optextview);
-    mytext=g_strdup(lives_text_view_get_text(mainw->optextview));
-  }
-
   if (textbuffer!=NULL) textwindow->textview = lives_text_view_new_with_buffer(textbuffer);
   else textwindow->textview = lives_text_view_new ();
 
@@ -2670,6 +2664,7 @@ LiVESTextView *create_output_textview(void) {
   }
 
   lives_object_ref_sink(textview);
+  lives_object_ref(textview);
   return LIVES_TEXT_VIEW(textview);
 }
 

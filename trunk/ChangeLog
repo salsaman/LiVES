@@ -4,8 +4,8 @@ Compilation fix for gtk+ 2.x
 Compilation fixes for freeBSD
 Add check for avformat_close_input in libav
 Fix regression in x264_encoder.
+Fix audio codec bug in mencoder_encoder.
 Fix crash in "Show Details" after encoding failure.
-
 
 
 

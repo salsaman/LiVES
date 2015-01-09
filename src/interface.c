@@ -788,7 +788,7 @@ LiVESWidget* create_info_error_dialog (const gchar *text, boolean is_blocking, i
 
     g_signal_connect (GTK_OBJECT (details_button), "clicked",
 		      G_CALLBACK (lives_general_button_clicked),
-		      textwindow);
+		      NULL);
   }
   
   info_ok_button = lives_button_new_from_stock (LIVES_STOCK_OK);

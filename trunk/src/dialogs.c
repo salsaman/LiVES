@@ -459,107 +459,131 @@ int do_abort_cancel_retry_dialog(const gchar *text, GtkWindow *transient) {
 
 
 
-void do_error_dialog(const gchar *text) {
+int do_error_dialog(const gchar *text) {
+  int ret;
+
   // show error box
   if (!prefs->show_gui) {
-    do_error_dialog_with_check_transient(text,FALSE,0,NULL);
+    ret=do_error_dialog_with_check_transient(text,FALSE,0,NULL);
   } else {
-    if (prefsw!=NULL&&prefsw->prefs_dialog!=NULL) do_error_dialog_with_check_transient(text,FALSE,0,
-										       LIVES_WINDOW(prefsw->prefs_dialog));
+    if (prefsw!=NULL&&prefsw->prefs_dialog!=NULL) ret=do_error_dialog_with_check_transient(text,FALSE,0,
+											   LIVES_WINDOW(prefsw->prefs_dialog));
     else {
-      if (mainw->multitrack==NULL) do_error_dialog_with_check_transient(text,FALSE,0,LIVES_WINDOW(mainw->LiVES));
-      else do_error_dialog_with_check_transient(text,FALSE,0,LIVES_WINDOW(mainw->multitrack->window));
+      if (mainw->multitrack==NULL) ret=do_error_dialog_with_check_transient(text,FALSE,0,LIVES_WINDOW(mainw->LiVES));
+      else ret=do_error_dialog_with_check_transient(text,FALSE,0,LIVES_WINDOW(mainw->multitrack->window));
     }
   }
+  return ret;
 }
 
 
-void do_info_dialog(const gchar *text) {
+int do_info_dialog(const gchar *text) {
   // show info box
+  int ret;
+
   if (!prefs->show_gui) {
-    do_info_dialog_with_transient(text,FALSE,NULL);
+    ret=do_info_dialog_with_transient(text,FALSE,NULL);
   } else {
-    if (prefsw!=NULL&&prefsw->prefs_dialog!=NULL) do_info_dialog_with_transient(text,FALSE,
-										LIVES_WINDOW(prefsw->prefs_dialog));
+    if (prefsw!=NULL&&prefsw->prefs_dialog!=NULL) ret=do_info_dialog_with_transient(text,FALSE,
+										    LIVES_WINDOW(prefsw->prefs_dialog));
     else {
-      if (mainw->multitrack==NULL) do_info_dialog_with_transient(text,FALSE,LIVES_WINDOW(mainw->LiVES));
-      else do_info_dialog_with_transient(text,FALSE,LIVES_WINDOW(mainw->multitrack->window));
+      if (mainw->multitrack==NULL) ret=do_info_dialog_with_transient(text,FALSE,LIVES_WINDOW(mainw->LiVES));
+      else ret=do_info_dialog_with_transient(text,FALSE,LIVES_WINDOW(mainw->multitrack->window));
     }
   }
+  return ret;
 }
 
 
-void do_error_dialog_with_check(const gchar *text, int warn_mask_number) {
+int do_error_dialog_with_check(const gchar *text, int warn_mask_number) {
   // show warning box
+  int ret;
+
   if (!prefs->show_gui) {
-    do_error_dialog_with_check_transient(text,FALSE,warn_mask_number,NULL);
+    ret=do_error_dialog_with_check_transient(text,FALSE,warn_mask_number,NULL);
   } else {
-    if (mainw->multitrack==NULL) do_error_dialog_with_check_transient(text,FALSE,warn_mask_number,LIVES_WINDOW(mainw->LiVES));
-    else do_error_dialog_with_check_transient(text,FALSE,warn_mask_number,LIVES_WINDOW(mainw->multitrack->window));
+    if (mainw->multitrack==NULL) ret=do_error_dialog_with_check_transient(text,FALSE,warn_mask_number,LIVES_WINDOW(mainw->LiVES));
+    else ret=do_error_dialog_with_check_transient(text,FALSE,warn_mask_number,LIVES_WINDOW(mainw->multitrack->window));
   }
+  return ret;
 }
 
 
-void do_blocking_error_dialog(const gchar *text) {
+int do_blocking_error_dialog(const gchar *text) {
   // show error box - blocks until OK is pressed
+  int ret;
+
   if (!prefs->show_gui) {
-    do_error_dialog_with_check_transient(text,TRUE,0,NULL);
+    ret=do_error_dialog_with_check_transient(text,TRUE,0,NULL);
   } else {
-    if (mainw->multitrack==NULL) do_error_dialog_with_check_transient(text,TRUE,0,LIVES_WINDOW(mainw->LiVES));
-    else do_error_dialog_with_check_transient(text,TRUE,0,LIVES_WINDOW(mainw->multitrack->window));
+    if (mainw->multitrack==NULL) ret=do_error_dialog_with_check_transient(text,TRUE,0,LIVES_WINDOW(mainw->LiVES));
+    else ret=do_error_dialog_with_check_transient(text,TRUE,0,LIVES_WINDOW(mainw->multitrack->window));
   }
+  return ret;
 }
 
 
-void do_blocking_info_dialog(const gchar *text) {
+int do_blocking_info_dialog(const gchar *text) {
   // show info box - blocks until OK is pressed
+  int ret;
+
   if (!prefs->show_gui) {
-    do_info_dialog_with_transient(text,TRUE,NULL);
+    ret=do_info_dialog_with_transient(text,TRUE,NULL);
   } else {
-    if (mainw->multitrack==NULL) do_info_dialog_with_transient(text,TRUE,LIVES_WINDOW(mainw->LiVES));
-    else do_info_dialog_with_transient(text,TRUE,LIVES_WINDOW(mainw->multitrack->window));
+    if (mainw->multitrack==NULL) ret=do_info_dialog_with_transient(text,TRUE,LIVES_WINDOW(mainw->LiVES));
+    else ret=do_info_dialog_with_transient(text,TRUE,LIVES_WINDOW(mainw->multitrack->window));
   }
+  return ret;
 }
 
 
 
-void do_error_dialog_with_check_transient(const gchar *text, boolean is_blocking, int warn_mask_number, GtkWindow *transient) {
+int do_error_dialog_with_check_transient(const gchar *text, boolean is_blocking, int warn_mask_number, GtkWindow *transient) {
   // show error box
 
   LiVESWidget *err_box;
   gchar *mytext;
-  if (prefs->warning_mask&warn_mask_number) return;
+
+  int ret=GTK_RESPONSE_NONE;
+
+  if (prefs->warning_mask&warn_mask_number) return ret;
   mytext=g_strdup(text);
   err_box=create_info_error_dialog(mytext,is_blocking,warn_mask_number,warn_mask_number==0?LIVES_INFO_TYPE_ERROR:LIVES_INFO_TYPE_WARNING);
   if (mytext!=NULL) g_free(mytext);
   if (transient!=NULL) lives_window_set_transient_for(LIVES_WINDOW(err_box),transient);
 
   if (is_blocking) {
-    lives_dialog_run(LIVES_DIALOG (err_box));
+    ret=lives_dialog_run(LIVES_DIALOG (err_box));
     if (mainw!=NULL&&mainw->is_ready&&transient!=NULL) {
       lives_widget_queue_draw(LIVES_WIDGET(transient));
     }
   }
+
+  return ret;
 }
 
 
 
-void do_info_dialog_with_transient(const gchar *text, boolean is_blocking, GtkWindow *transient) {
+int do_info_dialog_with_transient(const gchar *text, boolean is_blocking, GtkWindow *transient) {
   // info box
 
   LiVESWidget *info_box;
   gchar *mytext;
+
+  int ret=GTK_RESPONSE_NONE;
+
   mytext=g_strdup(text);
   info_box=create_info_error_dialog(mytext,is_blocking,0,LIVES_INFO_TYPE_INFO);
   if (mytext!=NULL) g_free(mytext);
   if (transient!=NULL) lives_window_set_transient_for(LIVES_WINDOW(info_box),transient);
 
   if (is_blocking) {
-    lives_dialog_run(LIVES_DIALOG (info_box));
+    ret=lives_dialog_run(LIVES_DIALOG (info_box));
     if (mainw!=NULL&&mainw->is_ready&&transient!=NULL) {
       lives_widget_queue_draw(LIVES_WIDGET(transient));
     }
   }
+  return ret;
 }
 
 

@@ -2036,7 +2036,12 @@ void save_file (int clip, int start, int end, const char *filename) {
       }
 
       switch_to_file(mainw->current_file,current_file);
-      do_blocking_error_dialog(_ ("\n\nEncoder error - output file was not created !\n"));
+      retval=do_blocking_error_dialog(_ ("\n\nEncoder error - output file was not created !\n"));
+
+      if (retval==GTK_RESPONSE_YES) {
+	// show iochan (encoder) details
+	on_details_button_clicked();
+      }
 
       if (mainw->iochan!=NULL) {
 	mainw->iochan=NULL;

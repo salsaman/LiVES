@@ -7042,14 +7042,8 @@ void on_cancel_keep_button_clicked (LiVESButton *button, gpointer user_data) {
 
 
 
-void
-on_details_button_clicked            (LiVESButton       *button,
-				      gpointer         user_data)
-{
+void on_details_button_clicked (void) {
   text_window *textwindow;
-
-  lives_general_button_clicked(button,NULL);
-
   lives_object_ref(mainw->optextview);
   textwindow=create_text_window(_("LiVES: - Encoder debug output"),NULL,NULL);
   lives_widget_show_all(textwindow->dialog);

@@ -58,6 +58,7 @@ if ($command eq "init") {
 	if (&location("mplayer2") eq "") {
 	print "mplayer or mplayer2 was not found. Please install it and try again.";
 	exit 1;
+	}
     }
 
     # end init code

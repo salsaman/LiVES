@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: lives\n"
 "Report-Msgid-Bugs-To: https://sourceforge.net/p/lives/bugs/\n"
-"POT-Creation-Date: 2014-12-21 11:07-0300\n"
+"POT-Creation-Date: 2015-01-08 22:58-0300\n"
 "PO-Revision-Date: 2013-03-14 12:31+0000\n"
 "Last-Translator: Launchpad Translations Administrators <Unknown>\n"
 "Language-Team: Romanian <ro@li.org>\n"
@@ -19,7 +19,7 @@ msgstr ""
 "X-Generator: Launchpad (build 16546)\n"
 
 #. TRANSLATORS: do not translate this message
-#: src/main.c:120
+#: src/main.c:118
 msgid ""
 "Attention Translators !\n"
 "This message is intended for you, so please do not translate it.\n"
@@ -28,22 +28,22 @@ msgid ""
 "http://lives.sourceforge.net/TRANS-README.txt"
 msgstr ""
 
-#: src/main.c:136
+#: src/main.c:134
 #, c-format
 msgid "%s Warning: %s\n"
 msgstr ""
 
-#: src/main.c:140
+#: src/main.c:138
 #, c-format
 msgid "%s Critical error: %s\n"
 msgstr ""
 
-#: src/main.c:141
+#: src/main.c:139
 #, c-format
 msgid "%s Fatal error: %s\n"
 msgstr ""
 
-#: src/main.c:178
+#: src/main.c:176
 msgid ""
 "\n"
 "Unfortunately LiVES crashed.\n"
@@ -58,7 +58,7 @@ msgstr ""
 "Mulţumesc. De recuperare ar trebui să fie posibilă în cazul în care "
 "reporniţi LiVES.\n"
 
-#: src/main.c:179
+#: src/main.c:177
 msgid ""
 "\n"
 "\n"
@@ -70,7 +70,7 @@ msgstr ""
 "Atunci când se blochează de raportare, vă rugăm să includă detalii cu "
 "privire la sistemul de operare, de distribuţie, precum şi LiVES versiunea ("
 
-#: src/main.c:182
+#: src/main.c:180
 msgid ""
 "and any information shown below:\n"
 "\n"
@@ -78,7 +78,7 @@ msgstr ""
 "şi orice alte informaţii prezentate mai jos:\n"
 "\n"
 
-#: src/main.c:186
+#: src/main.c:184
 msgid ""
 "Please install gdb and then run LiVES with the -debug option to collect more "
 "information.\n"
@@ -88,84 +88,84 @@ msgstr ""
 "multe informații.\n"
 "\n"
 
-#: src/main.c:194
+#: src/main.c:192
 msgid "Preserving set.\n"
 msgstr "Păstrarea set.\n"
 
-#: src/main.c:638
+#: src/main.c:636
 msgid "Resizing"
 msgstr "Redimensionare"
 
-#: src/main.c:645
+#: src/main.c:643
 msgid "_Resize All Frames"
 msgstr "_Redimensionarea tuturor cadrelor"
 
 #. TRANSLATORS: text saying "Any", for encoder and output format (as in "does not matter")
-#: src/main.c:897
+#: src/main.c:895
 msgid "Any"
 msgstr "Orice"
 
 #. TRANSLATORS: text saying "None", for playback plugin name (as in "none specified")
-#: src/main.c:899
+#: src/main.c:897
 msgid "None"
 msgstr "Nimic"
 
 #. TRANSLATORS: text saying "recommended", for plugin names, etc.
-#: src/main.c:901
+#: src/main.c:899
 msgid "recommended"
 msgstr "recomandat"
 
 #. TRANSLATORS: text saying "disabled", (as in "not enabled")
-#: src/main.c:903
+#: src/main.c:901
 msgid "disabled !"
 msgstr "dezactivat !"
 
 #. TRANSLATORS: text saying "**The current layout**", to warn users that the current layout is affected
-#: src/main.c:905
+#: src/main.c:903
 msgid "**The current layout**"
 msgstr "** Structura actuală **"
 
 #. TRANSLATORS: adjective for "Built in" type effects
-#: src/main.c:907
+#: src/main.c:905
 msgid "Builtin"
 msgstr ""
 
 #. TRANSLATORS: adjective for "Custom" type effects
-#: src/main.c:909
+#: src/main.c:907
 msgid "Custom"
 msgstr ""
 
 #. TRANSLATORS: adjective for "Test" type effects
-#: src/main.c:911
+#: src/main.c:909
 msgid "Test"
 msgstr ""
 
-#: src/main.c:1056
+#: src/main.c:1054
 msgid "Foreground"
 msgstr ""
 
-#: src/main.c:1057
+#: src/main.c:1055
 #, fuzzy
 msgid "Background"
 msgstr "_Ignoră schimbările"
 
-#: src/main.c:1568
+#: src/main.c:1566
 msgid "Loading realtime effect plugins..."
 msgstr "Se incarcă modulele de efecte in timp real..."
 
-#: src/main.c:1633
+#: src/main.c:1631
 msgid "Starting jack audio server..."
 msgstr "Pornirea serverului audio jack..."
 
-#: src/main.c:1635
+#: src/main.c:1633
 msgid "Starting jack transport server..."
 msgstr ""
 
-#: src/main.c:1636
+#: src/main.c:1634
 msgid "Connecting to jack transport server..."
 msgstr ""
 
-#: src/main.c:1665
+#: src/main.c:1663
 #, c-format
 msgid ""
 "\n"
@@ -177,114 +177,114 @@ msgid ""
 "Alternatively, try to start lives with either \"lives -jackopts 16\", or "
 msgstr ""
 
-#: src/main.c:1699
+#: src/main.c:1697
 msgid "Starting pulse audio server..."
 msgstr "Pornirea serverului audio pulse..."
 
-#: src/main.c:1767
+#: src/main.c:1765
 msgid "Checking optional dependencies:"
 msgstr "Verificarea dependenţelor opţionale:"
 
-#: src/main.c:1768
+#: src/main.c:1766
 msgid "mplayer...detected..."
 msgstr "mplayer...a fost detectat..."
 
-#: src/main.c:1769
+#: src/main.c:1767
 msgid "mplayer...NOT DETECTED..."
 msgstr "mplayer... nu a fost detectat..."
 
-#: src/main.c:1770
+#: src/main.c:1768
 #, fuzzy
 msgid "mplayer2...detected..."
 msgstr "mplayer...a fost detectat..."
 
-#: src/main.c:1771
+#: src/main.c:1769
 #, fuzzy
 msgid "mplayer2...NOT DETECTED..."
 msgstr "mplayer... nu a fost detectat..."
 
-#: src/main.c:1772
+#: src/main.c:1770
 msgid "convert...detected..."
 msgstr "convert...detectat..."
 
-#: src/main.c:1773
+#: src/main.c:1771
 msgid "convert...NOT DETECTED..."
 msgstr "convert...NU A FOST DETECTAT..."
 
-#: src/main.c:1774
+#: src/main.c:1772
 msgid "composite...detected..."
 msgstr "composite...detectat..."
 
-#: src/main.c:1775
+#: src/main.c:1773
 msgid "composite...NOT DETECTED..."
 msgstr "composite...NU A FOST DETECTAT..."
 
-#: src/main.c:1776
+#: src/main.c:1774
 msgid "sox...detected\n"
 msgstr "sox...detectat\n"
 
-#: src/main.c:1777
+#: src/main.c:1775
 msgid "sox...NOT DETECTED\n"
 msgstr "sox...NU A FOST DETECTAT\n"
 
-#: src/main.c:1778
+#: src/main.c:1776
 msgid "cdda2wav...detected..."
 msgstr "cdda2wav...detectat..."
 
-#: src/main.c:1779
+#: src/main.c:1777
 msgid "cdda2wav...NOT DETECTED..."
 msgstr "cdda2wav...NU A FOST DETECTAT..."
 
-#: src/main.c:1780
+#: src/main.c:1778
 msgid "jackd...detected..."
 msgstr "jackd...detectat..."
 
-#: src/main.c:1781
+#: src/main.c:1779
 msgid "jackd...NOT DETECTED..."
 msgstr "jackd...NU A FOST DETECTAT..."
 
-#: src/main.c:1782
+#: src/main.c:1780
 msgid "pulse audio...detected..."
 msgstr "pulse audio...detectat..."
 
-#: src/main.c:1783
+#: src/main.c:1781
 msgid "pulse audio...NOT DETECTED..."
 msgstr "pulse audio...NU A FOST DETECTAT..."
 
-#: src/main.c:1784
+#: src/main.c:1782
 msgid "python...detected..."
 msgstr "python...detectat..."
 
-#: src/main.c:1785
+#: src/main.c:1783
 msgid "python...NOT DETECTED..."
 msgstr "python...NU A FOST DETECTAT..."
 
-#: src/main.c:1786
+#: src/main.c:1784
 msgid "dvgrab...detected..."
 msgstr "dvgrab...detectat..."
 
-#: src/main.c:1787
+#: src/main.c:1785
 msgid "dvgrab...NOT DETECTED..."
 msgstr "dvgrab...NU A FOST DETECTAT..."
 
-#: src/main.c:1788
+#: src/main.c:1786
 msgid "xwininfo...detected..."
 msgstr "xwininfo...detectat..."
 
-#: src/main.c:1789
+#: src/main.c:1787
 msgid "xwininfo...NOT DETECTED..."
 msgstr "xwininfo...NU A FOST DETECTAT..."
 
-#: src/main.c:1795
+#: src/main.c:1793
 #, c-format
 msgid "Windows version %04X"
 msgstr ""
 
-#: src/main.c:1797
+#: src/main.c:1795
 msgid "UNKNOWN - please patch me !"
 msgstr ""
 
-#: src/main.c:1801
+#: src/main.c:1799
 #, c-format
 msgid ""
 "\n"
@@ -295,48 +295,48 @@ msgstr ""
 "\n"
 "Rapoarte de manager de ferestre ca \"%s\"; "
 
-#: src/main.c:1804
+#: src/main.c:1802
 #, c-format
 msgid "number of monitors detected: %d\n"
 msgstr "numărul de monitoare detectate: %d\n"
 
-#: src/main.c:1807
+#: src/main.c:1805
 #, c-format
 msgid "Number of CPUs detected: %d "
 msgstr ""
 
-#: src/main.c:1810 src/multitrack.c:4895
+#: src/main.c:1808 src/multitrack.c:4895
 msgid "little endian"
 msgstr ""
 
-#: src/main.c:1811 src/multitrack.c:4894
+#: src/main.c:1809 src/multitrack.c:4894
 msgid "big endian"
 msgstr ""
 
-#: src/main.c:1812
+#: src/main.c:1810
 #, c-format
 msgid "(%d bits, %s)\n"
 msgstr ""
 
-#: src/main.c:1816
+#: src/main.c:1814
 msgid "GUI type is: "
 msgstr ""
 
-#: src/main.c:1820
+#: src/main.c:1818
 #, c-format
 msgid "GTK+ version %d.%d.%d (compiled with %d.%d.%d)"
 msgstr ""
 
-#: src/main.c:1842
+#: src/main.c:1840
 msgid ", with cairo support"
 msgstr ""
 
-#: src/main.c:1849
+#: src/main.c:1847
 #, c-format
 msgid "Temp directory is %s\n"
 msgstr "Directorul temporar este de %s\n"
 
-#: src/main.c:1853
+#: src/main.c:1851
 msgid ""
 "WARNING - this version of LiVES was compiled without either\n"
 "jack or pulse audio support.\n"
@@ -346,15 +346,15 @@ msgstr ""
 "suport pentru jack sau pulse audio.\n"
 "Multe din funcțiile audio vor fi indisponibile.\n"
 
-#: src/main.c:1856
+#: src/main.c:1854
 msgid "Compiled with jack support, good !\n"
 msgstr "Compilate cu suport jack, de bine !\n"
 
-#: src/main.c:1859
+#: src/main.c:1857
 msgid "Compiled with pulse audio support, wonderful !\n"
 msgstr "Compilate cu suport de pulse audio, minunat\n"
 
-#: src/main.c:1863
+#: src/main.c:1861
 #, c-format
 msgid ""
 "Welcome to LiVES version %s.\n"
@@ -363,7 +363,7 @@ msgstr ""
 "Bine ati venit la LiVES versiunea %s.\n"
 "\n"
 
-#: src/main.c:2308
+#: src/main.c:2306
 #, c-format
 msgid ""
 "\n"
@@ -372,87 +372,87 @@ msgstr ""
 "\n"
 "Sintaxa de start este: %s [opts] [filename [start_time] [frames]]\n"
 
-#: src/main.c:2309
+#: src/main.c:2307
 msgid "Where: filename is the name of a media file or backup file.\n"
 msgstr ""
 "În cazul în care: de nume de fişier este numele de mass-media un fişier sau "
 "un fişier copie de rezervă.\n"
 
-#: src/main.c:2310
+#: src/main.c:2308
 msgid "start_time : filename start time in seconds\n"
 msgstr "start_time : timpul de start al fișierului in secunde\n"
 
-#: src/main.c:2311
+#: src/main.c:2309
 msgid "frames : maximum number of frames to open\n"
 msgstr "frames : numărul maxim de cadre pentru a deschide\n"
 
-#: src/main.c:2313
+#: src/main.c:2311
 msgid "opts can be:\n"
 msgstr "opts pot fi:\n"
 
-#: src/main.c:2314
+#: src/main.c:2312
 msgid "-help            : show this help text and exit\n"
 msgstr "-help : arată acest text de ajutor şi de ieşire\n"
 
-#: src/main.c:2315
+#: src/main.c:2313
 msgid "-tmpdir <tempdir>: use alternate working directory (e.g /var/ramdisk)\n"
 msgstr ""
 
-#: src/main.c:2316
+#: src/main.c:2314
 msgid "-set <setname>   : autoload clip set setname\n"
 msgstr ""
 
-#: src/main.c:2317
+#: src/main.c:2315
 msgid "-noset           : do not load any set on startup\n"
 msgstr "-noset : Nu încărcaţi orice set la pornire\n"
 
-#: src/main.c:2318
+#: src/main.c:2316
 msgid "-norecover       : force no-loading of crash recovery\n"
 msgstr "-norecover : vigoare nu-de încărcare de crash de recuperare\n"
 
-#: src/main.c:2319
+#: src/main.c:2317
 msgid "-recover         : force loading of crash recovery\n"
 msgstr "-recover : forţa de încărcare de accident de recuperare\n"
 
-#: src/main.c:2320
+#: src/main.c:2318
 msgid "-nothreaddialog  : doe nothing - retained for backwards compatibility\n"
 msgstr ""
 
-#: src/main.c:2321
+#: src/main.c:2319
 msgid "-nogui           : do not show the gui\n"
 msgstr "-nogui : Nu afişa GUI\n"
 
-#: src/main.c:2322
+#: src/main.c:2320
 msgid "-nosplash        : do not show the splash window\n"
 msgstr ""
 
-#: src/main.c:2323
+#: src/main.c:2321
 msgid "-noplaywin       : do not show the play window\n"
 msgstr ""
 
-#: src/main.c:2324
+#: src/main.c:2322
 msgid "-startup-ce      : start in clip editor mode\n"
 msgstr "-startup-ce      : pornește in modul editare clip\n"
 
-#: src/main.c:2325
+#: src/main.c:2323
 msgid "-startup-mt      : start in multitrack mode\n"
 msgstr "-startup-mt : porni în modul multicale\n"
 
-#: src/main.c:2326
+#: src/main.c:2324
 msgid ""
 "-fxmodesmax <n>  : allow <n> modes per effect key (minimum is 1, default is "
 "8)\n"
 msgstr ""
 
-#: src/main.c:2328
+#: src/main.c:2326
 msgid "-oscstart <port> : start OSC listener on UDP port <port>\n"
 msgstr "-oscstart <port> : pornește ascultătorul OSCpe portul UDP <port>\n"
 
-#: src/main.c:2329
+#: src/main.c:2327
 msgid "-nooscstart      : do not start OSC listener\n"
 msgstr "-nooscstart : nu începeţi ascultător OSC\n"
 
-#: src/main.c:2331
+#: src/main.c:2329
 #, fuzzy
 msgid ""
 "-aplayer <ap>    : start with selected audio player. <ap> can be mplayer, "
@@ -461,45 +461,45 @@ msgstr ""
 "-aplayer <ap>    : pornește cu playerul audio selectat. <ap> poate fi mplayer"
 
 #. TRANSLATORS: pulse (audio)
-#: src/main.c:2334
+#: src/main.c:2332
 msgid ", pulse"
 msgstr ", pulse"
 
-#: src/main.c:2337
+#: src/main.c:2335
 msgid ", sox or jack\n"
 msgstr ", sox sau jack\n"
 
-#: src/main.c:2338
+#: src/main.c:2336
 msgid ""
 "-jackopts <opts>    : opts is a bitmap of jack startup options [1 = jack "
 "transport client, 2 = jack transport master, 4 = start jack transport "
 "server, 8 = pause audio when video paused, 16 = start jack audio server] \n"
 msgstr ""
 
-#: src/main.c:2340
+#: src/main.c:2338
 msgid " or sox\n"
 msgstr " sau sox\n"
 
-#: src/main.c:2342
+#: src/main.c:2340
 msgid "-devicemap <mapname>          : autoload devicemap\n"
 msgstr ""
 
-#: src/main.c:2343
+#: src/main.c:2341
 msgid ""
 "-vppdefaults <file>          : load video playback plugin defaults from "
 "<file> (Note: only sets the settings, not the plugin type)\n"
 msgstr ""
 
-#: src/main.c:2344
+#: src/main.c:2342
 msgid "-debug            : try to debug crashes (requires 'gdb' installed)\n"
 msgstr ""
 "-debug : încerca să se blochează de depanare (necesită 'gdb' instalat)\n"
 
-#: src/main.c:2375 src/gui.c:1128
+#: src/main.c:2373 src/gui.c:1128
 msgid "Starting GUI..."
 msgstr "Incepand GUI ..."
 
-#: src/main.c:2398
+#: src/main.c:2396
 #, c-format
 msgid ""
 "\n"
@@ -510,7 +510,7 @@ msgid ""
 "(Maybe you need to change the value of <prefix_dir> in your %s file)\n"
 msgstr ""
 
-#: src/main.c:2412
+#: src/main.c:2410
 #, c-format
 msgid ""
 "\n"
@@ -518,7 +518,7 @@ msgid ""
 "Please make sure you have write access to %s and try again.\n"
 msgstr ""
 
-#: src/main.c:2417
+#: src/main.c:2415
 msgid ""
 "\n"
 "`smogrify` must be in your path, and be executable\n"
@@ -527,7 +527,7 @@ msgid ""
 "before running LiVES.\n"
 msgstr ""
 
-#: src/main.c:2423
+#: src/main.c:2421
 #, c-format
 msgid ""
 "\n"
@@ -537,7 +537,7 @@ msgid ""
 "Please check the file permissions for this file and try again.\n"
 msgstr ""
 
-#: src/main.c:2430
+#: src/main.c:2428
 #, c-format
 msgid ""
 "\n"
@@ -548,7 +548,7 @@ msgid ""
 "and try again.\n"
 msgstr ""
 
-#: src/main.c:2440
+#: src/main.c:2438
 #, c-format
 msgid ""
 "Please check the <tempdir> setting in \n"
@@ -556,7 +556,7 @@ msgid ""
 "and try again.\n"
 msgstr ""
 
-#: src/main.c:2447
+#: src/main.c:2445
 #, c-format
 msgid ""
 "\n"
@@ -566,7 +566,7 @@ msgid ""
 "%s"
 msgstr ""
 
-#: src/main.c:2455
+#: src/main.c:2453
 msgid ""
 "\n"
 "An incorrect version of smogrify was found in your path.\n"
@@ -577,49 +577,49 @@ msgid ""
 "Thankyou.\n"
 msgstr ""
 
-#: src/main.c:2460
+#: src/main.c:2458
 msgid ""
 "\n"
 "LiVES currently requires 'mplayer', 'mplayer2' or 'sox' to function. Please "
 "install one or other of these, and try again.\n"
 msgstr ""
 
-#: src/main.c:2464
+#: src/main.c:2462
 msgid ""
 "\n"
 "LiVES currently requires both 'mplayer' or 'mplayer2' and 'sox' to function. "
 "Please install these, and try again.\n"
 msgstr ""
 
-#: src/main.c:2474
+#: src/main.c:2472
 msgid ""
 "\n"
 "LiVES was unable to locate 'mplayer' or 'mplayer2'. You may wish to install "
 "either one to use LiVES more fully.\n"
 msgstr ""
 
-#: src/main.c:2477
+#: src/main.c:2475
 msgid ""
 "\n"
 "LiVES was unable to locate 'convert'. You should install convert and image-"
 "magick if you want to use rendered effects.\n"
 msgstr ""
 
-#: src/main.c:2480
+#: src/main.c:2478
 msgid ""
 "\n"
 "LiVES was unable to locate 'composite'. You should install composite and "
 "image-magick if you want to use the merge function.\n"
 msgstr ""
 
-#: src/main.c:2483
+#: src/main.c:2481
 msgid ""
 "\n"
 "LiVES was unable to locate 'sox'. Some audio features may not work. You "
 "should install 'sox'.\n"
 msgstr ""
 
-#: src/main.c:2486
+#: src/main.c:2484
 #, c-format
 msgid ""
 "\n"
@@ -630,59 +630,59 @@ msgid ""
 "You may need to change the value of <lib_dir> in %s\n"
 msgstr ""
 
-#: src/main.c:2613
+#: src/main.c:2611
 #, c-format
 msgid "Autoloading set %s..."
 msgstr ""
 
 #. TRANSLATORS: localised name may be used here
-#: src/main.c:2783 src/interface.c:737
+#: src/main.c:2781 src/interface.c:737
 msgid "LiVES"
 msgstr ""
 
-#: src/main.c:2950
+#: src/main.c:2948
 #, c-format
 msgid "Invalid audio player %s\n"
 msgstr ""
 
-#: src/main.c:3079
+#: src/main.c:3077
 #, c-format
 msgid "LiVES-%s: <Untitled%d> %dx%d : %d frames %d bpp %.3f fps"
 msgstr "LiVES-%s: <Fără titlu%d> %dx%d : %d cadre %d bpp %.3f fps"
 
-#: src/main.c:3084
+#: src/main.c:3082
 #, c-format
 msgid "LiVES-%s: <%s> %dx%d : ??? frames ??? bpp %.3f fps"
 msgstr "LiVES-%s: <%s> %dx%d : ??? cadre ??? bpp %.3f fps"
 
-#: src/main.c:3088
+#: src/main.c:3086
 #, c-format
 msgid "LiVES-%s: <%s> %dx%d : %d frames %d bpp %.3f fps"
 msgstr "LiVES-%s: <%s> %dx%d : %d cadre %d bpp %.3f fps"
 
-#: src/main.c:3096
+#: src/main.c:3094
 #, c-format
 msgid "LiVES-%s: <No File>"
 msgstr "LiVES-%s: <Nici un fişier>"
 
 #. TRANSLATORS: rec(ord)
-#: src/main.c:5087
+#: src/main.c:5085
 #, c-format
 msgid "rec %9d/%d"
 msgstr ""
 
 #. TRANSLATORS: out of memory (rec(ord))
-#: src/main.c:5093
+#: src/main.c:5091
 #, c-format
 msgid "!rec %9d/%d"
 msgstr ""
 
-#: src/main.c:5400 src/main.c:5401 src/gui.c:2110 src/gui.c:3220
+#: src/main.c:5398 src/main.c:5399 src/gui.c:2110 src/gui.c:3220
 #: src/saveplay.c:2328
 msgid "Play"
 msgstr "Rulează"
 
-#: src/main.c:6130
+#: src/main.c:6128
 msgid ""
 "LiVES was unable to capture this image\n"
 "\n"
@@ -690,35 +690,35 @@ msgstr ""
 "LiVES nu a putut pentru a capta această imagine\n"
 "\n"
 
-#: src/main.c:6252
+#: src/main.c:6250
 #, c-format
 msgid "Closed file %s\n"
 msgstr "Închis de fişiere% s\n"
 
-#: src/main.c:6454 src/gui.c:648 src/utils.c:4312 src/utils.c:4344
+#: src/main.c:6452 src/gui.c:648 src/utils.c:4312 src/utils.c:4344
 #: src/saveplay.c:3542 src/multitrack.c:4503 src/multitrack.c:6261
 msgid "_Undo"
 msgstr "An_ulează ultima acțiune"
 
-#: src/main.c:6455 src/gui.c:666 src/utils.c:4313 src/utils.c:4345
+#: src/main.c:6453 src/gui.c:666 src/utils.c:4313 src/utils.c:4345
 #: src/saveplay.c:3543 src/multitrack.c:4524 src/multitrack.c:6286
 msgid "_Redo"
 msgstr "_Refă ultima acțiune"
 
-#: src/main.c:6495 src/interface.c:469 src/gui.c:2326 src/preferences.c:2357
+#: src/main.c:6493 src/interface.c:469 src/gui.c:2326 src/preferences.c:2357
 #: src/resample.c:1516
 msgid "Video"
 msgstr "Video"
 
-#: src/main.c:6496 src/interface.c:482 src/gui.c:2351
+#: src/main.c:6494 src/interface.c:482 src/gui.c:2351
 msgid "Left Audio"
 msgstr ""
 
-#: src/main.c:6497 src/gui.c:2375
+#: src/main.c:6495 src/gui.c:2375
 msgid "Right Audio"
 msgstr ""
 
-#: src/main.c:6542
+#: src/main.c:6540
 msgid ""
 "\n"
 "\n"
@@ -727,7 +727,7 @@ msgid ""
 "Please adjust the playback options in Preferences and try again.\n"
 msgstr ""
 
-#: src/main.c:7053 src/plugins.c:1502
+#: src/main.c:7051 src/plugins.c:1502
 msgid "LiVES: - Play Window"
 msgstr ""
 

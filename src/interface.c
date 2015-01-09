@@ -785,9 +785,10 @@ LiVESWidget* create_info_error_dialog (const gchar *text, boolean is_blocking, i
   if (mainw->iochan!=NULL) {
     details_button = lives_button_new_with_mnemonic(_("Show _Details"));
     lives_dialog_add_action_widget (LIVES_DIALOG (dialog), details_button, GTK_RESPONSE_YES);
+
     g_signal_connect (GTK_OBJECT (details_button), "clicked",
-		      G_CALLBACK (on_details_button_clicked),
-		      NULL);
+		      G_CALLBACK (lives_general_button_clicked),
+		      textwindow);
   }
   
   info_ok_button = lives_button_new_from_stock (LIVES_STOCK_OK);
@@ -851,14 +852,12 @@ text_window *create_text_window (const gchar *title, const gchar *text, GtkTextB
 
 
   if (mainw->iochan!=NULL) {
-    textwindow->textview=LIVES_WIDGET(mainw->optextview);
+    //textwindow->textview=LIVES_WIDGET(mainw->optextview);
+    mytext=g_strdup(lives_text_view_get_text(mainw->optextview));
   }
-  else {
-    if (textbuffer!=NULL) textwindow->textview = lives_text_view_new_with_buffer(textbuffer);
-    else textwindow->textview = lives_text_view_new ();
-    // - removed: causes test to be in too narrow, e.g show_vj_keys
-    //lives_text_view_set_wrap_mode (LIVES_TEXT_VIEW (textwindow->textview), LIVES_WRAP_WORD);
-  }
+
+  if (textbuffer!=NULL) textwindow->textview = lives_text_view_new_with_buffer(textbuffer);
+  else textwindow->textview = lives_text_view_new ();
 
   woat=widget_opts.apply_theme;
   widget_opts.apply_theme=FALSE;
@@ -875,11 +874,11 @@ text_window *create_text_window (const gchar *title, const gchar *text, GtkTextB
     lives_widget_set_text_color(textwindow->textview, LIVES_WIDGET_STATE_NORMAL, &palette->info_text);
     lives_widget_set_bg_color(lives_bin_get_child(LIVES_BIN(scrolledwindow)), LIVES_WIDGET_STATE_NORMAL, &palette->info_base);
   }
-
+  
   if (mytext!=NULL) {
     lives_text_view_set_text (LIVES_TEXT_VIEW (textwindow->textview), mytext, -1);
   }
-
+  
   if (mytext!=NULL||mainw->iochan!=NULL) {
     dialog_action_area = lives_dialog_get_action_area(LIVES_DIALOG (textwindow->dialog));
     lives_button_box_set_layout (LIVES_BUTTON_BOX (dialog_action_area), LIVES_BUTTONBOX_END);
@@ -2670,8 +2669,7 @@ LiVESTextView *create_output_textview(void) {
     lives_widget_set_text_color(textview, LIVES_WIDGET_STATE_NORMAL, &palette->info_text);
   }
 
-  lives_object_ref(textview);
-  lives_widget_show(textview);
+  lives_object_ref_sink(textview);
   return LIVES_TEXT_VIEW(textview);
 }
 

@@ -850,14 +850,14 @@ boolean do_yesno_dialog_with_check_transient(const gchar *text, int warn_mask_nu
 boolean do_yesno_dialog_with_check(const gchar *text, int warn_mask_number);
 boolean do_yesno_dialog_with_check_transient(const gchar *text, int warn_mask_number, GtkWindow *transient);
 int do_abort_cancel_retry_dialog(const gchar *text, GtkWindow *transient) WARN_UNUSED;
-void do_error_dialog(const gchar *text);
-void do_info_dialog(const gchar *text);
-void do_error_dialog_with_check(const gchar *text, int warn_mask_number);
-void do_blocking_error_dialog(const gchar *text);
-void do_blocking_info_dialog(const gchar *text);
-void do_error_dialog_with_check_transient(const gchar *text, boolean is_blocking, int warn_mask_number, 
-					  GtkWindow *transient);
-void do_info_dialog_with_transient(const gchar *text, boolean is_blocking, GtkWindow *transient);
+int do_error_dialog(const gchar *text);
+int do_info_dialog(const gchar *text);
+int do_error_dialog_with_check(const gchar *text, int warn_mask_number);
+int do_blocking_error_dialog(const gchar *text);
+int do_blocking_info_dialog(const gchar *text);
+int do_error_dialog_with_check_transient(const gchar *text, boolean is_blocking, int warn_mask_number, 
+					 GtkWindow *transient);
+int do_info_dialog_with_transient(const gchar *text, boolean is_blocking, GtkWindow *transient);
 
 
 void do_system_failed_error(const char *com, int retval, const char *addinfo);
@@ -1281,6 +1281,8 @@ void on_cleardisk_advanced_clicked (LiVESWidget *, gpointer user_data);
 void popup_lmap_errors(GtkMenuItem *, gpointer);
 void on_filesel_button_clicked (GtkButton *, gpointer user_data);
 void switch_clip(int type, int newclip);
+void on_details_button_clicked (void);
+
 
 
 //preferences.c

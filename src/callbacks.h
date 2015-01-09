@@ -269,10 +269,6 @@ on_mute_activate                (GtkMenuItem     *menuitem,
 				 gpointer         user_data);
 
 
-void
-on_details_button_clicked            (GtkButton       *button,
-				      gpointer         user_data);
-
 
 void
 on_resize_activate                    (GtkMenuItem     *menuitem,

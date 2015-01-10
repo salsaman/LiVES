@@ -328,10 +328,10 @@ rfx_build_window_t *make_rfx_build_window (const gchar *script_name, lives_rfx_s
   lives_button_box_set_layout (LIVES_BUTTON_BOX (dialog_action_area), LIVES_BUTTONBOX_END);
 
   cancelbutton = lives_button_new_from_stock (LIVES_STOCK_CANCEL);
-  lives_dialog_add_action_widget (LIVES_DIALOG (rfxbuilder->dialog), cancelbutton, GTK_RESPONSE_CANCEL);
+  lives_dialog_add_action_widget (LIVES_DIALOG (rfxbuilder->dialog), cancelbutton, LIVES_RESPONSE_CANCEL);
 
   okbutton = lives_button_new_from_stock (LIVES_STOCK_OK);
-  lives_dialog_add_action_widget (LIVES_DIALOG (rfxbuilder->dialog), okbutton, GTK_RESPONSE_OK);
+  lives_dialog_add_action_widget (LIVES_DIALOG (rfxbuilder->dialog), okbutton, LIVES_RESPONSE_OK);
   lives_widget_set_can_focus_and_default (okbutton);
 
   lives_widget_add_accelerator (cancelbutton, "activate", accel_group,
@@ -656,14 +656,14 @@ void on_list_table_clicked (LiVESButton *button, gpointer user_data) {
   lives_button_box_set_layout (LIVES_BUTTON_BOX (dialog_action_area), LIVES_BUTTONBOX_END);
 
   cancelbutton = lives_button_new_from_stock (LIVES_STOCK_CANCEL);
-  lives_dialog_add_action_widget (LIVES_DIALOG (dialog), cancelbutton, GTK_RESPONSE_CANCEL);
+  lives_dialog_add_action_widget (LIVES_DIALOG (dialog), cancelbutton, LIVES_RESPONSE_CANCEL);
 
   lives_widget_add_accelerator (cancelbutton, "activate", accel_group,
                               LIVES_KEY_Escape, (GdkModifierType)0, (GtkAccelFlags)0);
 
 
   okbutton = lives_button_new_from_stock (LIVES_STOCK_OK);
-  lives_dialog_add_action_widget (LIVES_DIALOG (dialog), okbutton, GTK_RESPONSE_OK);
+  lives_dialog_add_action_widget (LIVES_DIALOG (dialog), okbutton, LIVES_RESPONSE_OK);
   lives_widget_set_can_focus_and_default (okbutton);
 
   if (rfxbuilder->table_type==RFX_TABLE_TYPE_REQUIREMENTS) {
@@ -1031,10 +1031,10 @@ void on_properties_clicked (LiVESButton *button, gpointer user_data) {
   lives_button_box_set_layout (LIVES_BUTTON_BOX (dialog_action_area), LIVES_BUTTONBOX_END);
 
   cancelbutton = lives_button_new_from_stock (LIVES_STOCK_CANCEL);
-  lives_dialog_add_action_widget (LIVES_DIALOG (dialog), cancelbutton, GTK_RESPONSE_CANCEL);
+  lives_dialog_add_action_widget (LIVES_DIALOG (dialog), cancelbutton, LIVES_RESPONSE_CANCEL);
 
   okbutton = lives_button_new_from_stock (LIVES_STOCK_OK);
-  lives_dialog_add_action_widget (LIVES_DIALOG (dialog), okbutton, GTK_RESPONSE_OK);
+  lives_dialog_add_action_widget (LIVES_DIALOG (dialog), okbutton, LIVES_RESPONSE_OK);
   lives_widget_set_can_focus_and_default (okbutton);
 
   lives_widget_grab_default (okbutton);
@@ -1184,7 +1184,7 @@ void on_table_add_row (LiVESButton *button, gpointer user_data) {
 
       param_dialog=make_param_dialog(-1,rfxbuilder);
       do {
-	if (lives_dialog_run (LIVES_DIALOG (param_dialog))==GTK_RESPONSE_CANCEL) {
+	if (lives_dialog_run (LIVES_DIALOG (param_dialog))==LIVES_RESPONSE_CANCEL) {
 	  g_free (param->def);
 	  lives_widget_destroy (entry);
 	  lives_widget_destroy (entry2);
@@ -1284,7 +1284,7 @@ void on_table_add_row (LiVESButton *button, gpointer user_data) {
   case RFX_TABLE_TYPE_PARAM_WINDOW:
     if (button!=NULL) {
       param_window_dialog=make_param_window_dialog(-1,rfxbuilder);
-      if (lives_dialog_run (LIVES_DIALOG (param_window_dialog))==GTK_RESPONSE_CANCEL) {
+      if (lives_dialog_run (LIVES_DIALOG (param_window_dialog))==LIVES_RESPONSE_CANCEL) {
 	lives_widget_destroy (param_window_dialog);
 	return;
       }
@@ -1367,7 +1367,7 @@ void on_table_add_row (LiVESButton *button, gpointer user_data) {
 
     if (button!=NULL) {
       trigger_dialog=make_trigger_dialog(-1,rfxbuilder);
-      if (lives_dialog_run (LIVES_DIALOG (trigger_dialog))==GTK_RESPONSE_CANCEL) {
+      if (lives_dialog_run (LIVES_DIALOG (trigger_dialog))==LIVES_RESPONSE_CANCEL) {
 	lives_widget_destroy (trigger_dialog);
 	return;
       }
@@ -1612,7 +1612,7 @@ void on_table_edit_row (LiVESButton *button, gpointer user_data) {
   case RFX_TABLE_TYPE_PARAMS:
     param_dialog=make_param_dialog(found,rfxbuilder);
     do {
-      if (lives_dialog_run (LIVES_DIALOG (param_dialog))==GTK_RESPONSE_CANCEL) {
+      if (lives_dialog_run (LIVES_DIALOG (param_dialog))==LIVES_RESPONSE_CANCEL) {
 	lives_widget_destroy (param_dialog);
 	return;
       }
@@ -1646,7 +1646,7 @@ void on_table_edit_row (LiVESButton *button, gpointer user_data) {
 
   case RFX_TABLE_TYPE_PARAM_WINDOW:
     paramw_dialog=make_param_window_dialog(found,rfxbuilder);
-    if (lives_dialog_run (LIVES_DIALOG (paramw_dialog))==GTK_RESPONSE_CANCEL) {
+    if (lives_dialog_run (LIVES_DIALOG (paramw_dialog))==LIVES_RESPONSE_CANCEL) {
       lives_widget_destroy (paramw_dialog);
       return;
     }
@@ -1679,7 +1679,7 @@ void on_table_edit_row (LiVESButton *button, gpointer user_data) {
 
   case RFX_TABLE_TYPE_TRIGGERS:
     trigger_dialog=make_trigger_dialog(found,rfxbuilder);
-    if (lives_dialog_run (LIVES_DIALOG (trigger_dialog))==GTK_RESPONSE_CANCEL) {
+    if (lives_dialog_run (LIVES_DIALOG (trigger_dialog))==LIVES_RESPONSE_CANCEL) {
       lives_widget_destroy (trigger_dialog);
       return;
     }
@@ -2962,11 +2962,11 @@ void on_code_clicked (LiVESButton *button, gpointer user_data) {
   lives_button_box_set_layout (LIVES_BUTTON_BOX (dialog_action_area), LIVES_BUTTONBOX_END);
 
   cancelbutton = lives_button_new_from_stock (LIVES_STOCK_CANCEL);
-  lives_dialog_add_action_widget (LIVES_DIALOG (dialog), cancelbutton, GTK_RESPONSE_CANCEL);
+  lives_dialog_add_action_widget (LIVES_DIALOG (dialog), cancelbutton, LIVES_RESPONSE_CANCEL);
   lives_widget_set_can_focus_and_default (cancelbutton);
 
   okbutton = lives_button_new_from_stock (LIVES_STOCK_OK);
-  lives_dialog_add_action_widget (LIVES_DIALOG (dialog), okbutton, GTK_RESPONSE_OK);
+  lives_dialog_add_action_widget (LIVES_DIALOG (dialog), okbutton, LIVES_RESPONSE_OK);
   lives_widget_set_can_focus_and_default (okbutton);
 
   g_signal_connect (GTK_OBJECT (okbutton), "clicked",
@@ -4315,10 +4315,10 @@ gchar *prompt_for_script_name(const gchar *sname, lives_rfx_status_t status) {
   lives_button_box_set_layout (LIVES_BUTTON_BOX (dialog_action_area), LIVES_BUTTONBOX_END);
 
   cancelbutton = lives_button_new_from_stock (LIVES_STOCK_CANCEL);
-  lives_dialog_add_action_widget (LIVES_DIALOG (dialog), cancelbutton, GTK_RESPONSE_CANCEL);
+  lives_dialog_add_action_widget (LIVES_DIALOG (dialog), cancelbutton, LIVES_RESPONSE_CANCEL);
 
   copy_script_okbutton = lives_button_new_from_stock (LIVES_STOCK_OK);
-  lives_dialog_add_action_widget (LIVES_DIALOG (dialog), copy_script_okbutton, GTK_RESPONSE_OK);
+  lives_dialog_add_action_widget (LIVES_DIALOG (dialog), copy_script_okbutton, LIVES_RESPONSE_OK);
   lives_widget_set_can_focus_and_default (copy_script_okbutton);
   lives_widget_grab_default (copy_script_okbutton); 
 
@@ -4329,7 +4329,7 @@ gchar *prompt_for_script_name(const gchar *sname, lives_rfx_status_t status) {
 
   do {
     OK=TRUE;
-    if (lives_dialog_run(LIVES_DIALOG (dialog))==GTK_RESPONSE_OK) {
+    if (lives_dialog_run(LIVES_DIALOG (dialog))==LIVES_RESPONSE_OK) {
       if (name!=NULL) g_free (name);
       name=g_strdup(lives_entry_get_text (LIVES_ENTRY (name_entry)));
       if (copy_mode) {

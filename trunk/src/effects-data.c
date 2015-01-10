@@ -4830,10 +4830,10 @@ LiVESWidget *make_datacon_window(int key, int mode) {
   }
 
   cancelbutton = lives_button_new_from_stock (LIVES_STOCK_CANCEL);
-  lives_dialog_add_action_widget (LIVES_DIALOG (conxw.conx_dialog), cancelbutton, GTK_RESPONSE_CANCEL);
+  lives_dialog_add_action_widget (LIVES_DIALOG (conxw.conx_dialog), cancelbutton, LIVES_RESPONSE_CANCEL);
 
   okbutton = lives_button_new_from_stock (LIVES_STOCK_OK);
-  lives_dialog_add_action_widget (LIVES_DIALOG (conxw.conx_dialog), okbutton, GTK_RESPONSE_OK);
+  lives_dialog_add_action_widget (LIVES_DIALOG (conxw.conx_dialog), okbutton, LIVES_RESPONSE_OK);
 
   lives_widget_set_can_focus_and_default (okbutton);
   lives_widget_grab_default(okbutton);

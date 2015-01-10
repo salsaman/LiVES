@@ -775,7 +775,7 @@ boolean on_realfx_activate_inner(int type, lives_rfx_t *rfx) {
       lives_widget_context_update();
       lives_xwindow_raise(lives_widget_get_xwindow(resaudw->dialog));
 
-      if (lives_dialog_run(LIVES_DIALOG(resaudw->dialog))!=GTK_RESPONSE_OK) return FALSE;
+      if (lives_dialog_run(LIVES_DIALOG(resaudw->dialog))!=LIVES_RESPONSE_OK) return FALSE;
       if (mainw->error) {
 	mainw->error=FALSE;
 	return FALSE;

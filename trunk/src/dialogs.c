@@ -1,6 +1,6 @@
 // dialogs.c
 // LiVES (lives-exe)
-// (c) G. Finch 2003 - 2012
+// (c) G. Finch 2003 - 2015
 // Released under the GPL 3 or later
 // see file ../COPYING for licensing details
 
@@ -185,9 +185,9 @@ static LiVESWidget* create_warn_dialog (int warn_mask_number, GtkWindow *transie
     widget_opts.justify=LIVES_JUSTIFY_CENTER;
     widget_opts.justify=LIVES_JUSTIFY_DEFAULT;
     warning_cancelbutton = lives_button_new_from_stock (LIVES_STOCK_LABEL_CANCEL);
-    lives_dialog_add_action_widget (LIVES_DIALOG (dialog), warning_cancelbutton, GTK_RESPONSE_CANCEL);
+    lives_dialog_add_action_widget (LIVES_DIALOG (dialog), warning_cancelbutton, LIVES_RESPONSE_CANCEL);
     warning_okbutton = lives_button_new_from_stock (LIVES_STOCK_LABEL_OK);
-    lives_dialog_add_action_widget (LIVES_DIALOG (dialog), warning_okbutton, GTK_RESPONSE_OK);
+    lives_dialog_add_action_widget (LIVES_DIALOG (dialog), warning_okbutton, LIVES_RESPONSE_OK);
     break;
   case LIVES_DIALOG_YESNO:
     dialog = gtk_message_dialog_new (transient,(GtkDialogFlags)0,GTK_MESSAGE_QUESTION,GTK_BUTTONS_NONE,NULL);
@@ -337,7 +337,7 @@ boolean do_warning_dialog_with_check_transient(const gchar *text, int warn_mask_
   lives_widget_context_update();
   if (mytext!=NULL) g_free(mytext);
 
-  return (response==GTK_RESPONSE_OK);
+  return (response==LIVES_RESPONSE_OK);
 }
 
 
@@ -544,7 +544,7 @@ int do_error_dialog_with_check_transient(const gchar *text, boolean is_blocking,
   LiVESWidget *err_box;
   gchar *mytext;
 
-  int ret=GTK_RESPONSE_NONE;
+  int ret=LIVES_RESPONSE_NONE;
 
   if (prefs->warning_mask&warn_mask_number) return ret;
   mytext=g_strdup(text);
@@ -570,7 +570,7 @@ int do_info_dialog_with_transient(const gchar *text, boolean is_blocking, GtkWin
   LiVESWidget *info_box;
   gchar *mytext;
 
-  int ret=GTK_RESPONSE_NONE;
+  int ret=LIVES_RESPONSE_NONE;
 
   mytext=g_strdup(text);
   info_box=create_info_error_dialog(mytext,is_blocking,0,LIVES_INFO_TYPE_INFO);
@@ -2121,7 +2121,7 @@ boolean rdet_suggest_values (int width, int height, double fps, int fps_num, int
   g_free (msg8);
   prep_dialog=create_encoder_prep_dialog(msg_a,NULL,anr);
   g_free (msg_a);
-  ret=(lives_dialog_run(LIVES_DIALOG (prep_dialog))==GTK_RESPONSE_OK);
+  ret=(lives_dialog_run(LIVES_DIALOG (prep_dialog))==LIVES_RESPONSE_OK);
   lives_widget_destroy (prep_dialog);
   return ret;
 }
@@ -2225,7 +2225,7 @@ boolean do_encoder_restrict_dialog (int width, int height, double fps, int fps_n
   prep_dialog=create_encoder_prep_dialog(msg_a,msg_b,anr);
   g_free (msg_a);
   if (msg_b!=NULL) g_free (msg_b);
-  ret=(lives_dialog_run(LIVES_DIALOG (prep_dialog))==GTK_RESPONSE_OK);
+  ret=(lives_dialog_run(LIVES_DIALOG (prep_dialog))==LIVES_RESPONSE_OK);
   lives_widget_destroy (prep_dialog);
   return ret;
 }
@@ -2268,7 +2268,7 @@ boolean do_comments_dialog (lives_clip_t *sfile, gchar *filename) {
 
   while (!ok) {
     ok=TRUE;
-    if ((response=(lives_dialog_run(LIVES_DIALOG (commentsw->comments_dialog))==GTK_RESPONSE_OK))) {
+    if ((response=(lives_dialog_run(LIVES_DIALOG (commentsw->comments_dialog))==LIVES_RESPONSE_OK))) {
       g_snprintf (sfile->title,256,"%s",lives_entry_get_text (LIVES_ENTRY (commentsw->title_entry)));
       g_snprintf (sfile->author,256,"%s",lives_entry_get_text (LIVES_ENTRY (commentsw->author_entry)));
       g_snprintf (sfile->comment,256,"%s",lives_entry_get_text (LIVES_ENTRY (commentsw->comment_entry)));
@@ -2581,7 +2581,7 @@ static void create_threaded_dialog(gchar *text, boolean has_cancel) {
     if (mainw->current_file>-1&&cfile!=NULL&&cfile->opening_only_audio) {
       LiVESWidget *enoughbutton = lives_button_new_with_mnemonic (_ ("_Enough"));
       lives_widget_show (enoughbutton);
-      lives_dialog_add_action_widget (LIVES_DIALOG (procw->processing), enoughbutton, GTK_RESPONSE_CANCEL);
+      lives_dialog_add_action_widget (LIVES_DIALOG (procw->processing), enoughbutton, LIVES_RESPONSE_CANCEL);
       lives_widget_set_can_focus_and_default (enoughbutton);
 
       g_signal_connect (GTK_OBJECT (enoughbutton), "clicked",
@@ -2591,7 +2591,7 @@ static void create_threaded_dialog(gchar *text, boolean has_cancel) {
       mainw->cancel_type=CANCEL_SOFT;
     }
 
-    lives_dialog_add_action_widget (LIVES_DIALOG (procw->processing), cancelbutton, GTK_RESPONSE_CANCEL);
+    lives_dialog_add_action_widget (LIVES_DIALOG (procw->processing), cancelbutton, LIVES_RESPONSE_CANCEL);
     lives_widget_set_can_focus_and_default (cancelbutton);
 
     g_signal_connect (GTK_OBJECT (cancelbutton), "clicked",
@@ -2704,7 +2704,7 @@ void do_splash_progress(void) {
 
 void 
 response_ok (LiVESButton *button, gpointer user_data) {
-  gtk_dialog_response (LIVES_DIALOG (lives_widget_get_toplevel(LIVES_WIDGET(button))), GTK_RESPONSE_OK);
+  gtk_dialog_response (LIVES_DIALOG (lives_widget_get_toplevel(LIVES_WIDGET(button))), LIVES_RESPONSE_OK);
 }
 
 

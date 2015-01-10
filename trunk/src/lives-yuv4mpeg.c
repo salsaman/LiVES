@@ -606,7 +606,7 @@ void on_live_tvcard_activate (LiVESMenuItem *menuitem, gpointer user_data) {
 
 
   response=lives_dialog_run(LIVES_DIALOG(card_dialog));
-  if (response==GTK_RESPONSE_CANCEL) {
+  if (response==LIVES_RESPONSE_CANCEL) {
     lives_widget_destroy(card_dialog);
     g_free(fifofile);
     g_free(tvcardw);
@@ -741,7 +741,7 @@ void on_live_fw_activate (LiVESMenuItem *menuitem, gpointer user_data) {
 
   card_dialog=create_cdtrack_dialog(5,NULL);
   response=lives_dialog_run(LIVES_DIALOG(card_dialog));
-  if (response==GTK_RESPONSE_CANCEL) {
+  if (response==LIVES_RESPONSE_CANCEL) {
     lives_widget_destroy(card_dialog);
     g_free(fifofile);
     return;

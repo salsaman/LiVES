@@ -1,6 +1,6 @@
 // main.c
 // LiVES (lives-exe)
-// (c) G. Finch 2003 - 2012
+// (c) G. Finch 2003 - 2015
 
 /*  This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License version 3 or higher as published by
@@ -2296,7 +2296,7 @@ capability *get_capabilities (void) {
 
 void print_notice() {
   g_printerr("\nLiVES %s\n",LiVES_VERSION);
-  g_printerr("Copyright 2002-2014 Gabriel Finch (salsaman@gmail.com) and others.\n");
+  g_printerr("Copyright 2002-2015 Gabriel Finch (salsaman@gmail.com) and others.\n");
   g_printerr("LiVES comes with ABSOLUTELY NO WARRANTY\nThis is free software, and you are welcome to redistribute it\nunder certain conditions; see the file COPYING for details.\n\n");
 }
 

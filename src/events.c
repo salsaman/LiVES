@@ -2145,7 +2145,7 @@ LiVESWidget *events_rec_dialog (boolean allow_mt) {
   cancelbutton = lives_button_new_from_stock (LIVES_STOCK_CANCEL);
   lives_widget_set_can_focus (cancelbutton,TRUE);
 
-  lives_dialog_add_action_widget (LIVES_DIALOG (e_rec_dialog), cancelbutton, GTK_RESPONSE_CANCEL);
+  lives_dialog_add_action_widget (LIVES_DIALOG (e_rec_dialog), cancelbutton, LIVES_RESPONSE_CANCEL);
 
   g_signal_connect (GTK_OBJECT (cancelbutton), "clicked",
 		    G_CALLBACK (set_render_choice_button),
@@ -2159,7 +2159,7 @@ LiVESWidget *events_rec_dialog (boolean allow_mt) {
 
   okbutton = lives_button_new_from_stock (LIVES_STOCK_OK);
   lives_widget_show (okbutton);
-  lives_dialog_add_action_widget (LIVES_DIALOG (e_rec_dialog), okbutton, GTK_RESPONSE_OK);
+  lives_dialog_add_action_widget (LIVES_DIALOG (e_rec_dialog), okbutton, LIVES_RESPONSE_OK);
   lives_widget_set_can_focus_and_default (okbutton);
   lives_widget_grab_default (okbutton);
   lives_widget_show_all (e_rec_dialog);
@@ -4089,7 +4089,7 @@ boolean render_to_clip (boolean new_clip) {
       rdet->enc_changed=FALSE;
       do {
 	rdet->suggestion_followed=FALSE;
-	if ((response=lives_dialog_run(LIVES_DIALOG(rdet->dialog)))==GTK_RESPONSE_OK) if (rdet->enc_changed) {
+	if ((response=lives_dialog_run(LIVES_DIALOG(rdet->dialog)))==LIVES_RESPONSE_OK) if (rdet->enc_changed) {
 	    check_encoder_restrictions(FALSE,TRUE,TRUE);
 	}
       } while (rdet->suggestion_followed);
@@ -4111,7 +4111,7 @@ boolean render_to_clip (boolean new_clip) {
 
       lives_widget_destroy (rdet->dialog);
       
-      if (response==GTK_RESPONSE_CANCEL) {
+      if (response==LIVES_RESPONSE_CANCEL) {
 	g_free(rdet->encoder_name);
 	g_free(rdet);
 	rdet=NULL;
@@ -5363,7 +5363,7 @@ render_details *create_render_details (int type) {
 
   cancelbutton = lives_button_new_from_stock (LIVES_STOCK_CANCEL);
   if (!(prefs->startup_interface==STARTUP_MT&&!mainw->is_ready)) {
-    lives_dialog_add_action_widget (LIVES_DIALOG (rdet->dialog), cancelbutton, GTK_RESPONSE_CANCEL);
+    lives_dialog_add_action_widget (LIVES_DIALOG (rdet->dialog), cancelbutton, LIVES_RESPONSE_CANCEL);
 
   }
   else add_fill_to_box(LIVES_BOX (daa));
@@ -5380,7 +5380,7 @@ render_details *create_render_details (int type) {
     lives_button_set_label(LIVES_BUTTON(rdet->okbutton),_("_Next"));
   }
 
-  lives_dialog_add_action_widget (LIVES_DIALOG (rdet->dialog), rdet->okbutton, GTK_RESPONSE_OK);
+  lives_dialog_add_action_widget (LIVES_DIALOG (rdet->dialog), rdet->okbutton, LIVES_RESPONSE_OK);
   lives_widget_set_can_focus_and_default (rdet->okbutton);
   lives_widget_grab_default (rdet->okbutton);
 

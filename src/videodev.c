@@ -513,7 +513,7 @@ void on_open_vdev_activate (LiVESMenuItem *menuitem, gpointer user_data) {
   response=lives_dialog_run(LIVES_DIALOG(card_dialog));
   g_list_free(devlist);
 
-  if (response==GTK_RESPONSE_CANCEL) {
+  if (response==LIVES_RESPONSE_CANCEL) {
     lives_widget_destroy(card_dialog);
     return;
   }

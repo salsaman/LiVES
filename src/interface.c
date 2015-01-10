@@ -1,6 +1,6 @@
 // interface.c
 // LiVES
-// (c) G. Finch 2003 - 2014 <salsaman@gmail.com>
+// (c) G. Finch 2003 - 2015 <salsaman@gmail.com>
 // Released under the GNU GPL 3 or later
 // see file ../COPYING for licensing details
 
@@ -282,7 +282,7 @@ xprocess * create_processing (const gchar *text) {
   }
   
   procw->cancel_button = lives_button_new_with_mnemonic (_ ("_Cancel"));
-  lives_dialog_add_action_widget (LIVES_DIALOG (procw->processing), procw->cancel_button, GTK_RESPONSE_CANCEL);
+  lives_dialog_add_action_widget (LIVES_DIALOG (procw->processing), procw->cancel_button, LIVES_RESPONSE_CANCEL);
   lives_widget_set_can_focus_and_default (procw->cancel_button);
 
   lives_widget_add_accelerator (procw->cancel_button, "activate", accel_group,
@@ -566,7 +566,7 @@ lives_clipinfo_t *create_clip_info_window (int audio_channels, boolean is_mt) {
   lives_button_box_set_layout (LIVES_BUTTON_BOX (dialog_action_area), LIVES_BUTTONBOX_SPREAD);
 
   okbutton = lives_button_new_from_stock (LIVES_STOCK_OK);
-  lives_dialog_add_action_widget (LIVES_DIALOG (filew->dialog), okbutton, GTK_RESPONSE_OK);
+  lives_dialog_add_action_widget (LIVES_DIALOG (filew->dialog), okbutton, LIVES_RESPONSE_OK);
   lives_widget_set_can_focus_and_default (okbutton);
   lives_widget_grab_default (okbutton);
 
@@ -694,10 +694,10 @@ LiVESWidget* create_encoder_prep_dialog (const gchar *text1, const gchar *text2,
     okbutton = lives_button_new_with_mnemonic (_("Use _recommended settings"));
   }
 
-  lives_dialog_add_action_widget (LIVES_DIALOG (dialog), cancelbutton, GTK_RESPONSE_CANCEL);
+  lives_dialog_add_action_widget (LIVES_DIALOG (dialog), cancelbutton, LIVES_RESPONSE_CANCEL);
   lives_widget_set_can_focus_and_default (cancelbutton);
 
-  lives_dialog_add_action_widget (LIVES_DIALOG (dialog), okbutton, GTK_RESPONSE_OK);
+  lives_dialog_add_action_widget (LIVES_DIALOG (dialog), okbutton, LIVES_RESPONSE_OK);
 
   lives_widget_set_can_focus_and_default (okbutton);
   lives_widget_grab_default (okbutton);
@@ -784,7 +784,7 @@ LiVESWidget* create_info_error_dialog (const gchar *text, boolean is_blocking, i
 
   if (mainw->iochan!=NULL) {
     details_button = lives_button_new_with_mnemonic(_("Show _Details"));
-    lives_dialog_add_action_widget (LIVES_DIALOG (dialog), details_button, GTK_RESPONSE_YES);
+    lives_dialog_add_action_widget (LIVES_DIALOG (dialog), details_button, LIVES_RESPONSE_SHOW_DETAILS);
 
     g_signal_connect (GTK_OBJECT (details_button), "clicked",
 		      G_CALLBACK (lives_general_button_clicked),
@@ -792,7 +792,7 @@ LiVESWidget* create_info_error_dialog (const gchar *text, boolean is_blocking, i
   }
   
   info_ok_button = lives_button_new_from_stock (LIVES_STOCK_OK);
-  lives_dialog_add_action_widget (LIVES_DIALOG (dialog), info_ok_button, GTK_RESPONSE_OK);
+  lives_dialog_add_action_widget (LIVES_DIALOG (dialog), info_ok_button, LIVES_RESPONSE_OK);
 
 
   if (mainw->iochan==NULL) {
@@ -880,8 +880,8 @@ text_window *create_text_window (const gchar *title, const gchar *text, GtkTextB
     okbutton = lives_button_new_with_mnemonic (_("_Close Window"));
 
     LiVESWidget *savebutton = lives_button_new_with_mnemonic (_("_Save to file"));
-    lives_dialog_add_action_widget (LIVES_DIALOG (textwindow->dialog), savebutton, GTK_RESPONSE_YES);
-    lives_dialog_add_action_widget (LIVES_DIALOG (textwindow->dialog), okbutton, GTK_RESPONSE_OK);
+    lives_dialog_add_action_widget (LIVES_DIALOG (textwindow->dialog), savebutton, LIVES_RESPONSE_YES);
+    lives_dialog_add_action_widget (LIVES_DIALOG (textwindow->dialog), okbutton, LIVES_RESPONSE_OK);
     
     g_signal_connect (GTK_OBJECT (savebutton), "clicked",
 		      G_CALLBACK (on_save_textview_clicked),
@@ -1036,10 +1036,10 @@ _insertw* create_insert_dialog (void) {
   lives_button_box_set_layout (LIVES_BUTTON_BOX (dialog_action_area), LIVES_BUTTONBOX_END);
 
   cancelbutton = lives_button_new_from_stock (LIVES_STOCK_CANCEL);
-  lives_dialog_add_action_widget (LIVES_DIALOG (insertw->insert_dialog), cancelbutton, GTK_RESPONSE_CANCEL);
+  lives_dialog_add_action_widget (LIVES_DIALOG (insertw->insert_dialog), cancelbutton, LIVES_RESPONSE_CANCEL);
 
   okbutton = lives_button_new_from_stock (LIVES_STOCK_OK);
-  lives_dialog_add_action_widget (LIVES_DIALOG (insertw->insert_dialog), okbutton, GTK_RESPONSE_OK);
+  lives_dialog_add_action_widget (LIVES_DIALOG (insertw->insert_dialog), okbutton, LIVES_RESPONSE_OK);
   lives_widget_set_can_focus_and_default (okbutton);
   lives_widget_grab_default(okbutton);
   lives_widget_grab_focus(okbutton);
@@ -1144,10 +1144,10 @@ LiVESWidget *create_opensel_dialog (void) {
   lives_button_box_set_layout (LIVES_BUTTON_BOX (dialog_action_area), LIVES_BUTTONBOX_END);
 
   cancelbutton = lives_button_new_from_stock (LIVES_STOCK_CANCEL);
-  lives_dialog_add_action_widget (LIVES_DIALOG (opensel_dialog), cancelbutton, GTK_RESPONSE_CANCEL);
+  lives_dialog_add_action_widget (LIVES_DIALOG (opensel_dialog), cancelbutton, LIVES_RESPONSE_CANCEL);
 
   okbutton = lives_button_new_from_stock (LIVES_STOCK_OK);
-  lives_dialog_add_action_widget (LIVES_DIALOG (opensel_dialog), okbutton, GTK_RESPONSE_OK);
+  lives_dialog_add_action_widget (LIVES_DIALOG (opensel_dialog), okbutton, LIVES_RESPONSE_OK);
   lives_widget_set_can_focus_and_default (okbutton);
   lives_widget_grab_default(okbutton);
 
@@ -1290,12 +1290,12 @@ _entryw* create_location_dialog (int type) {
 
   cancelbutton = lives_button_new_from_stock (LIVES_STOCK_CANCEL);
   lives_widget_show (cancelbutton);
-  lives_dialog_add_action_widget (LIVES_DIALOG (locw->dialog), cancelbutton, GTK_RESPONSE_CANCEL);
+  lives_dialog_add_action_widget (LIVES_DIALOG (locw->dialog), cancelbutton, LIVES_RESPONSE_CANCEL);
   lives_widget_set_can_focus_and_default (cancelbutton);
 
   okbutton = lives_button_new_from_stock (LIVES_STOCK_OK);
   lives_widget_show (okbutton);
-  lives_dialog_add_action_widget (LIVES_DIALOG (locw->dialog), okbutton, GTK_RESPONSE_OK);
+  lives_dialog_add_action_widget (LIVES_DIALOG (locw->dialog), okbutton, LIVES_RESPONSE_OK);
   lives_widget_set_can_focus_and_default (okbutton);
   lives_widget_grab_default (okbutton);
 
@@ -1494,7 +1494,7 @@ _entryw* create_rename_dialog (int type) {
 
   cancelbutton = lives_button_new_from_stock (LIVES_STOCK_CANCEL);
 
-  lives_dialog_add_action_widget (LIVES_DIALOG (renamew->dialog), cancelbutton, GTK_RESPONSE_CANCEL);
+  lives_dialog_add_action_widget (LIVES_DIALOG (renamew->dialog), cancelbutton, LIVES_RESPONSE_CANCEL);
   lives_widget_set_can_focus_and_default (cancelbutton);
 
   lives_widget_add_accelerator (cancelbutton, "activate", accel_group,
@@ -1506,7 +1506,7 @@ _entryw* create_rename_dialog (int type) {
   }
   else okbutton = lives_button_new_from_stock (LIVES_STOCK_OK);
 
-  lives_dialog_add_action_widget (LIVES_DIALOG (renamew->dialog), okbutton, GTK_RESPONSE_OK);
+  lives_dialog_add_action_widget (LIVES_DIALOG (renamew->dialog), okbutton, LIVES_RESPONSE_OK);
   lives_widget_set_can_focus_and_default (okbutton);
   lives_widget_grab_default (okbutton);
 
@@ -1918,10 +1918,10 @@ LiVESWidget* create_cdtrack_dialog (int type, gpointer user_data) {
   lives_button_box_set_layout (LIVES_BUTTON_BOX (dialog_action_area), LIVES_BUTTONBOX_END);
 
   cancelbutton = lives_button_new_from_stock (LIVES_STOCK_CANCEL);
-  lives_dialog_add_action_widget (LIVES_DIALOG (cd_dialog), cancelbutton, GTK_RESPONSE_CANCEL);
+  lives_dialog_add_action_widget (LIVES_DIALOG (cd_dialog), cancelbutton, LIVES_RESPONSE_CANCEL);
 
   okbutton = lives_button_new_from_stock (LIVES_STOCK_OK);
-  lives_dialog_add_action_widget (LIVES_DIALOG (cd_dialog), okbutton, GTK_RESPONSE_OK);
+  lives_dialog_add_action_widget (LIVES_DIALOG (cd_dialog), okbutton, LIVES_RESPONSE_OK);
   lives_widget_set_can_focus_and_default (okbutton);
 
   lives_widget_grab_default (okbutton);
@@ -2265,14 +2265,14 @@ gchar *choose_file(gchar *dir, gchar *fname, gchar **filt, LiVESFileChooserActio
 
   if (act!=LIVES_FILE_CHOOSER_ACTION_SAVE) 
     chooser=gtk_file_chooser_dialog_new(mytitle,LIVES_WINDOW(mainw->LiVES),(GtkFileChooserAction)act, 
-					LIVES_STOCK_LABEL_CANCEL, GTK_RESPONSE_CANCEL,
-					LIVES_STOCK_LABEL_OPEN, GTK_RESPONSE_ACCEPT,
+					LIVES_STOCK_LABEL_CANCEL, LIVES_RESPONSE_CANCEL,
+					LIVES_STOCK_LABEL_OPEN, LIVES_RESPONSE_ACCEPT,
 					NULL);
 
   else {
     chooser=gtk_file_chooser_dialog_new(mytitle,LIVES_WINDOW(mainw->LiVES),(GtkFileChooserAction)act, 
-					LIVES_STOCK_LABEL_CANCEL, GTK_RESPONSE_CANCEL,
-					LIVES_STOCK_LABEL_SAVE, GTK_RESPONSE_ACCEPT,
+					LIVES_STOCK_LABEL_CANCEL, LIVES_RESPONSE_CANCEL,
+					LIVES_STOCK_LABEL_SAVE, LIVES_RESPONSE_ACCEPT,
 					NULL);
   }
 
@@ -2336,7 +2336,7 @@ gchar *choose_file(gchar *dir, gchar *fname, gchar **filt, LiVESFileChooserActio
 
  rundlg:
   
-  if ((response=lives_dialog_run(LIVES_DIALOG(chooser)))!=GTK_RESPONSE_CANCEL) {
+  if ((response=lives_dialog_run(LIVES_DIALOG(chooser)))!=LIVES_RESPONSE_CANCEL) {
     gchar *tmp;
     filename=g_filename_to_utf8((tmp=lives_file_chooser_get_filename(GTK_FILE_CHOOSER(chooser))),-1,NULL,NULL,NULL);
     g_free(tmp);
@@ -2360,7 +2360,7 @@ gchar *choose_file(gchar *dir, gchar *fname, gchar **filt, LiVESFileChooserActio
 static void chooser_response(GtkDialog *dialog, int response, gpointer user_data) {
   int type=GPOINTER_TO_INT(user_data);
 
-  if (response!=GTK_RESPONSE_CANCEL) {
+  if (response!=LIVES_RESPONSE_CANCEL) {
     switch (type) {
     case 1:
       on_ok_filesel_open_clicked(GTK_FILE_CHOOSER(dialog),NULL);
@@ -2643,7 +2643,7 @@ LiVESWidget *create_cleardisk_advanced_dialog(void) {
   lives_button_set_label(LIVES_BUTTON(resetbutton),_("_Reset to Defaults"));
 
   okbutton = lives_button_new_from_stock (LIVES_STOCK_OK);
-  lives_dialog_add_action_widget (LIVES_DIALOG (dialog), okbutton, GTK_RESPONSE_OK);
+  lives_dialog_add_action_widget (LIVES_DIALOG (dialog), okbutton, LIVES_RESPONSE_OK);
 
   lives_widget_set_can_focus_and_default (okbutton);
   lives_widget_grab_default (okbutton);

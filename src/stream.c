@@ -1020,7 +1020,7 @@ void on_send_lives2lives_activate (LiVESMenuItem *menuitem, gpointer user_data) 
   vppa=on_vpp_advanced_clicked(NULL,NULL);
   resp=lives_dialog_run(LIVES_DIALOG(vppa->dialog));
 
-  if (resp==GTK_RESPONSE_CANCEL) {
+  if (resp==LIVES_RESPONSE_CANCEL) {
     g_free(orig_name);
     return;
   }
@@ -1046,7 +1046,7 @@ void on_open_lives2lives_activate (LiVESMenuItem *menuitem, gpointer user_data) 
   int port=0;
   int response=lives_dialog_run (LIVES_DIALOG (pandh->dialog));
 
-  if (response==GTK_RESPONSE_OK) {
+  if (response==LIVES_RESPONSE_OK) {
     if (!lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(pandh->rb_anyhost))) {
       host=g_strdup_printf("%s.%s.%s.%s",lives_entry_get_text(LIVES_ENTRY(pandh->entry1)),
 			   lives_entry_get_text(LIVES_ENTRY(pandh->entry2)),

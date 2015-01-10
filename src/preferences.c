@@ -4175,7 +4175,7 @@ _prefsw *create_prefs_dialog (void) {
   // Preferences 'Revert' button
   prefsw->cancelbutton = lives_button_new_from_stock (LIVES_STOCK_REVERT_TO_SAVED);
   lives_widget_show (prefsw->cancelbutton);
-  lives_dialog_add_action_widget (LIVES_DIALOG (prefsw->prefs_dialog), prefsw->cancelbutton, GTK_RESPONSE_CANCEL);
+  lives_dialog_add_action_widget (LIVES_DIALOG (prefsw->prefs_dialog), prefsw->cancelbutton, LIVES_RESPONSE_CANCEL);
 
   lives_widget_set_can_focus (prefsw->cancelbutton,TRUE);
 
@@ -4194,7 +4194,7 @@ _prefsw *create_prefs_dialog (void) {
   // Preferences 'Close' button
   prefsw->closebutton = lives_button_new_from_stock (LIVES_STOCK_CLOSE);
   lives_widget_show(prefsw->closebutton);
-  lives_dialog_add_action_widget(LIVES_DIALOG(prefsw->prefs_dialog), prefsw->closebutton, GTK_RESPONSE_OK);
+  lives_dialog_add_action_widget(LIVES_DIALOG(prefsw->prefs_dialog), prefsw->closebutton, LIVES_RESPONSE_OK);
 
   lives_widget_set_can_focus_and_default (prefsw->closebutton);
 

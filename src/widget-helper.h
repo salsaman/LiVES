@@ -1,6 +1,6 @@
 // widget-helper.h
 // LiVES
-// (c) G. Finch 2012 - 2014 <salsaman@gmail.com>
+// (c) G. Finch 2012 - 2015 <salsaman@gmail.com>
 // released under the GNU GPL 3 or later
 // see file ../COPYING or www.gnu.org for licensing details
 
@@ -233,6 +233,18 @@ typedef GtkStateType LiVESWidgetState;
 #define LIVES_WIDGET_STATE_FOCUSED        (GTK_STATE_INSENSITIVE+2)
 #define LIVES_WIDGET_STATE_BACKDROP       (GTK_STATE_INSENSITIVE+3)
 #endif
+
+
+typedef GtkResponseType LiVESResponseType;
+#define LIVES_RESPONSE_NONE GTK_RESPONSE_NONE
+#define LIVES_RESPONSE_OK GTK_RESPONSE_OK
+#define LIVES_RESPONSE_CANCEL GTK_RESPONSE_CANCEL
+#define LIVES_RESPONSE_ACCEPT GTK_RESPONSE_ACCEPT
+#define LIVES_RESPONSE_YES GTK_RESPONSE_YES
+#define LIVES_RESPONSE_NO GTK_RESPONSE_NO
+
+// positive values for custom responses
+#define LIVES_RESPONSE_SHOW_DETAILS 1
 
 
 typedef GtkAttachOptions LiVESAttachOptions;

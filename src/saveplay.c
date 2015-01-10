@@ -1,6 +1,6 @@
 // saveplay.c
 // LiVES (lives-exe)
-// (c) G. Finch 2003 - 2013
+// (c) G. Finch 2003 - 2015
 // released under the GNU GPL 3 or later
 // see file ../COPYING or www.gnu.org for licensing details
 
@@ -1280,7 +1280,7 @@ void save_file (int clip, int start, int end, const char *filename) {
       response=lives_dialog_run(LIVES_DIALOG(rdet->dialog));
       lives_widget_hide (rdet->dialog);
       
-      if (response==GTK_RESPONSE_CANCEL) {
+      if (response==LIVES_RESPONSE_CANCEL) {
 	lives_widget_destroy (rdet->dialog);
 	g_free(rdet->encoder_name);
 	g_free(rdet);
@@ -2038,7 +2038,7 @@ void save_file (int clip, int start, int end, const char *filename) {
       switch_to_file(mainw->current_file,current_file);
       retval=do_blocking_error_dialog(_ ("\n\nEncoder error - output file was not created !\n"));
 
-      if (retval==GTK_RESPONSE_YES) {
+      if (retval==LIVES_RESPONSE_SHOW_DETAILS) {
 	// show iochan (encoder) details
 	on_details_button_clicked();
       }
@@ -5406,7 +5406,7 @@ void recover_layout_map(int numclips) {
 
 	   resp=lives_dialog_run(LIVES_DIALOG(chooser));
 
-	   if (resp==GTK_RESPONSE_ACCEPT) {
+	   if (resp==LIVES_RESPONSE_ACCEPT) {
 	     newname=lives_file_chooser_get_filename (LIVES_FILE_CHOOSER(chooser));
 	     lives_widget_destroy(LIVES_WIDGET(chooser));
 

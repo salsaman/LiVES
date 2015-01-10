@@ -1076,7 +1076,7 @@ _vppaw *on_vpp_advanced_clicked (LiVESButton *button, gpointer user_data) {
 
 
   cancelbutton = lives_button_new_from_stock (LIVES_STOCK_CANCEL);
-  lives_dialog_add_action_widget (LIVES_DIALOG (vppa->dialog), cancelbutton, GTK_RESPONSE_CANCEL);
+  lives_dialog_add_action_widget (LIVES_DIALOG (vppa->dialog), cancelbutton, LIVES_RESPONSE_CANCEL);
   lives_widget_set_can_focus (cancelbutton,TRUE);
 
   lives_widget_add_accelerator (cancelbutton, "activate", accel_group,
@@ -1089,7 +1089,7 @@ _vppaw *on_vpp_advanced_clicked (LiVESButton *button, gpointer user_data) {
   lives_widget_set_tooltip_text( savebutton, _("Save settings to an alternate file.\n"));
 
   okbutton = lives_button_new_from_stock (LIVES_STOCK_OK);
-  lives_dialog_add_action_widget (LIVES_DIALOG (vppa->dialog), okbutton, GTK_RESPONSE_OK);
+  lives_dialog_add_action_widget (LIVES_DIALOG (vppa->dialog), okbutton, LIVES_RESPONSE_OK);
   lives_widget_set_can_focus_and_default (okbutton);
 
   g_signal_connect (GTK_OBJECT (cancelbutton), "clicked",
@@ -2691,10 +2691,10 @@ void on_decplug_advanced_clicked (LiVESButton *button, gpointer user_data) {
 
 
   cancelbutton = lives_button_new_from_stock (LIVES_STOCK_CANCEL);
-  lives_dialog_add_action_widget (LIVES_DIALOG (dialog), cancelbutton, GTK_RESPONSE_CANCEL);
+  lives_dialog_add_action_widget (LIVES_DIALOG (dialog), cancelbutton, LIVES_RESPONSE_CANCEL);
 
   okbutton = lives_button_new_from_stock (LIVES_STOCK_OK);
-  lives_dialog_add_action_widget (LIVES_DIALOG (dialog), okbutton, GTK_RESPONSE_OK);
+  lives_dialog_add_action_widget (LIVES_DIALOG (dialog), okbutton, LIVES_RESPONSE_OK);
   lives_widget_set_can_focus_and_default (okbutton);
 
   g_signal_connect (GTK_OBJECT (cancelbutton), "clicked",
@@ -3869,7 +3869,7 @@ gchar *plugin_run_param_window(const gchar *get_com, LiVESVBox *vbox, lives_rfx_
       }
       lives_window_set_modal (LIVES_WINDOW (fx_dialog[1]), TRUE);
       
-      if (lives_dialog_run(LIVES_DIALOG(fx_dialog[1]))==GTK_RESPONSE_OK) {
+      if (lives_dialog_run(LIVES_DIALOG(fx_dialog[1]))==LIVES_RESPONSE_OK) {
 	// marshall our params for passing to the plugin
 	res_string=param_marshall(rfx,FALSE);
       }

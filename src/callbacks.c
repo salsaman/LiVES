@@ -1,6 +1,6 @@
 // callbacks.c
 // LiVES
-// (c) G. Finch 2003 - 2014 <salsaman@gmail.com>
+// (c) G. Finch 2003 - 2015 <salsaman@gmail.com>
 // released under the GNU GPL 3 or later
 // see file ../COPYING for licensing details
 
@@ -1422,7 +1422,7 @@ on_export_proj_activate                      (GtkMenuItem     *menuitem,
       renamew=create_rename_dialog(5);
       lives_widget_show(renamew->dialog);
       response=lives_dialog_run(LIVES_DIALOG(renamew->dialog));
-      if (response==GTK_RESPONSE_CANCEL) {
+      if (response==LIVES_RESPONSE_CANCEL) {
 	lives_widget_destroy(renamew->dialog);
 	g_free(renamew);
 	mainw->cancelled=CANCEL_USER;
@@ -4589,7 +4589,7 @@ void on_save_set_activate (GtkMenuItem *menuitem, gpointer user_data) {
       renamew=create_rename_dialog(2);
       lives_widget_show(renamew->dialog);
       response=lives_dialog_run(LIVES_DIALOG(renamew->dialog));
-      if (response==GTK_RESPONSE_CANCEL) {
+      if (response==LIVES_RESPONSE_CANCEL) {
 	lives_widget_destroy(renamew->dialog);
 	g_free(renamew);
 	return;
@@ -5732,7 +5732,7 @@ on_about_activate                     (GtkMenuItem     *menuitem,
 			 "name", "LiVES",
 			 "version", LiVES_VERSION,
 			 "comments",comments,
-			 "copyright", "(C) 2002-2014 salsaman <salsaman@gmail.com> and others",
+			 "copyright", "(C) 2002-2015 salsaman <salsaman@gmail.com> and others",
 			 "website", "http://lives.sourceforge.net",
 			 "license", license,
 			 "title", title,
@@ -5752,7 +5752,7 @@ on_about_activate                     (GtkMenuItem     *menuitem,
 #endif
 
   gchar *mesg;
-  mesg=g_strdup_printf(_ ("LiVES Version %s\n(c) G. Finch (salsaman) %s\n\nReleased under the GPL 3 or later (http://www.gnu.org/licenses/gpl.txt)\nLiVES is distributed WITHOUT WARRANTY\n\nContact the author at:\nsalsaman@gmail.com\nHomepage: http://lives.sourceforge.net"),LiVES_VERSION,"2002-2014");
+  mesg=g_strdup_printf(_ ("LiVES Version %s\n(c) G. Finch (salsaman) %s\n\nReleased under the GPL 3 or later (http://www.gnu.org/licenses/gpl.txt)\nLiVES is distributed WITHOUT WARRANTY\n\nContact the author at:\nsalsaman@gmail.com\nHomepage: http://lives.sourceforge.net"),LiVES_VERSION,"2002-2015");
   do_error_dialog(mesg);
   g_free(mesg);
   
@@ -8591,7 +8591,7 @@ void popup_lmap_errors(GtkMenuItem *menuitem, gpointer user_data) {
 
   button = lives_button_new_with_mnemonic (_("Close _Window"));
 
-  lives_dialog_add_action_widget (LIVES_DIALOG (textwindow->dialog), button, GTK_RESPONSE_OK);
+  lives_dialog_add_action_widget (LIVES_DIALOG (textwindow->dialog), button, LIVES_RESPONSE_OK);
 
   g_signal_connect (GTK_OBJECT (button), "clicked",
 		    G_CALLBACK (lives_general_button_clicked),
@@ -8602,7 +8602,7 @@ void popup_lmap_errors(GtkMenuItem *menuitem, gpointer user_data) {
 
   textwindow->clear_button = lives_button_new_with_mnemonic (_("Clear _Errors"));
 
-  lives_dialog_add_action_widget (LIVES_DIALOG (textwindow->dialog), textwindow->clear_button, GTK_RESPONSE_CANCEL);
+  lives_dialog_add_action_widget (LIVES_DIALOG (textwindow->dialog), textwindow->clear_button, LIVES_RESPONSE_CANCEL);
 
   g_signal_connect (GTK_OBJECT (textwindow->clear_button), "clicked",
 		    G_CALLBACK (on_lerrors_clear_clicked),
@@ -8613,7 +8613,7 @@ void popup_lmap_errors(GtkMenuItem *menuitem, gpointer user_data) {
 
   textwindow->delete_button = lives_button_new_with_mnemonic (_("_Delete affected layouts"));
 
-  lives_dialog_add_action_widget (LIVES_DIALOG (textwindow->dialog), textwindow->delete_button, GTK_RESPONSE_CANCEL);
+  lives_dialog_add_action_widget (LIVES_DIALOG (textwindow->dialog), textwindow->delete_button, LIVES_RESPONSE_CANCEL);
 
   lives_container_set_border_width (LIVES_CONTAINER (textwindow->delete_button), widget_opts.border_width);
   lives_widget_set_can_focus_and_default (textwindow->delete_button);
@@ -10373,7 +10373,7 @@ void on_capture_activate (GtkMenuItem *menuitem, gpointer user_data) {
   }
   response=lives_dialog_run (LIVES_DIALOG (resaudw->dialog));
   
-  if (response!=GTK_RESPONSE_OK) {
+  if (response!=LIVES_RESPONSE_OK) {
     lives_widget_destroy (resaudw->dialog);
 
     if (mainw->multitrack!=NULL) {
@@ -11010,7 +11010,7 @@ void on_fade_audio_activate (GtkMenuItem *menuitem, gpointer user_data) {
   if (menuitem!=NULL) {
     cfile->undo1_int=type=GPOINTER_TO_INT(user_data);
     aud_d=create_audfade_dialog(type);
-    if (lives_dialog_run(LIVES_DIALOG(aud_d->dialog))==GTK_RESPONSE_CANCEL) {
+    if (lives_dialog_run(LIVES_DIALOG(aud_d->dialog))==LIVES_RESPONSE_CANCEL) {
       lives_widget_destroy(aud_d->dialog);
       g_free(aud_d);
       return;
@@ -11671,7 +11671,7 @@ boolean on_ins_silence_activate (GtkMenuItem *menuitem, gpointer user_data) {
     mainw->fx3_val=DEFAULT_AUDIO_SAMPS;
     mainw->fx4_val=mainw->endian;
     resaudw=create_resaudw(2,NULL,NULL);
-    if (lives_dialog_run(LIVES_DIALOG(resaudw->dialog))!=GTK_RESPONSE_OK) return FALSE;
+    if (lives_dialog_run(LIVES_DIALOG(resaudw->dialog))!=LIVES_RESPONSE_OK) return FALSE;
     if (mainw->error) {
       mainw->error=FALSE;
       return FALSE;

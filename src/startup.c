@@ -81,7 +81,7 @@ boolean do_tempdir_query(void) {
   while (!ok) {
     response=lives_dialog_run(LIVES_DIALOG(tdentry->dialog));
 
-    if (response==GTK_RESPONSE_CANCEL) {
+    if (response==LIVES_RESPONSE_CANCEL) {
       return FALSE;
     }
     dirname=g_strdup(lives_entry_get_text(LIVES_ENTRY(tdentry->entry)));
@@ -396,7 +396,7 @@ boolean do_audio_choice_dialog(short startup_phase) {
 
   cancelbutton = lives_button_new_from_stock (LIVES_STOCK_CANCEL);
   lives_widget_show (cancelbutton);
-  lives_dialog_add_action_widget (LIVES_DIALOG (dialog), cancelbutton, GTK_RESPONSE_CANCEL);
+  lives_dialog_add_action_widget (LIVES_DIALOG (dialog), cancelbutton, LIVES_RESPONSE_CANCEL);
 
   lives_widget_add_accelerator (cancelbutton, "activate", accel_group,
                               LIVES_KEY_Escape, (GdkModifierType)0, (GtkAccelFlags)0);
@@ -404,7 +404,7 @@ boolean do_audio_choice_dialog(short startup_phase) {
   okbutton = lives_button_new_from_stock (LIVES_STOCK_GO_FORWARD);
   lives_button_set_label(LIVES_BUTTON(okbutton),_("_Next"));
   lives_widget_show (okbutton);
-  lives_dialog_add_action_widget (LIVES_DIALOG (dialog), okbutton, GTK_RESPONSE_OK);
+  lives_dialog_add_action_widget (LIVES_DIALOG (dialog), okbutton, LIVES_RESPONSE_OK);
   lives_widget_set_can_focus_and_default (okbutton);
   lives_widget_grab_default(okbutton);
   lives_widget_grab_focus(okbutton);
@@ -412,7 +412,7 @@ boolean do_audio_choice_dialog(short startup_phase) {
 
   if (prefs->audio_player==-1) {
     do_no_mplayer_sox_error();
-    return GTK_RESPONSE_CANCEL;
+    return LIVES_RESPONSE_CANCEL;
   }
 
   lives_widget_show_all(dialog);
@@ -429,7 +429,7 @@ boolean do_audio_choice_dialog(short startup_phase) {
 
   lives_widget_context_update();
 
-  return (response==GTK_RESPONSE_OK);
+  return (response==LIVES_RESPONSE_OK);
 }
 
 
@@ -570,7 +570,7 @@ boolean do_startup_tests(boolean tshoot) {
 
   cancelbutton = lives_button_new_from_stock (LIVES_STOCK_CANCEL);
   lives_widget_show (cancelbutton);
-  lives_dialog_add_action_widget (LIVES_DIALOG (dialog), cancelbutton, GTK_RESPONSE_CANCEL);
+  lives_dialog_add_action_widget (LIVES_DIALOG (dialog), cancelbutton, LIVES_RESPONSE_CANCEL);
 
   lives_widget_add_accelerator (cancelbutton, "activate", accel_group,
                               LIVES_KEY_Escape, (GdkModifierType)0, (GtkAccelFlags)0);
@@ -581,7 +581,7 @@ boolean do_startup_tests(boolean tshoot) {
   }
   else okbutton = lives_button_new_from_stock (LIVES_STOCK_OK);
   lives_widget_show (okbutton);
-  lives_dialog_add_action_widget (LIVES_DIALOG (dialog), okbutton, GTK_RESPONSE_OK);
+  lives_dialog_add_action_widget (LIVES_DIALOG (dialog), okbutton, LIVES_RESPONSE_OK);
   lives_widget_set_can_focus_and_default (okbutton);
   lives_widget_grab_default(okbutton);
   lives_widget_grab_focus(okbutton);
@@ -927,7 +927,7 @@ boolean do_startup_tests(boolean tshoot) {
     mainw->multitrack->idlefunc=mt_idle_add(mainw->multitrack);
   }
 
-  return (response==GTK_RESPONSE_OK);
+  return (response==LIVES_RESPONSE_OK);
 }
 
 
@@ -992,7 +992,7 @@ void do_startup_interface_query(void) {
   lives_button_set_label(LIVES_BUTTON(okbutton),_("_Finish"));
 
   lives_widget_show (okbutton);
-  lives_dialog_add_action_widget (LIVES_DIALOG (dialog), okbutton, GTK_RESPONSE_OK);
+  lives_dialog_add_action_widget (LIVES_DIALOG (dialog), okbutton, LIVES_RESPONSE_OK);
   lives_widget_set_can_focus_and_default (okbutton);
   lives_widget_grab_default(okbutton);
   lives_widget_grab_focus(okbutton);

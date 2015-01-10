@@ -4655,14 +4655,14 @@ LiVESWidget *lives_standard_dialog_new(const char *title, boolean add_std_button
 
     lives_window_add_accel_group (LIVES_WINDOW (dialog), accel_group);
 
-    lives_dialog_add_action_widget (LIVES_DIALOG (dialog), cancelbutton, GTK_RESPONSE_CANCEL);
+    lives_dialog_add_action_widget (LIVES_DIALOG (dialog), cancelbutton, LIVES_RESPONSE_CANCEL);
 
     lives_widget_add_accelerator (cancelbutton, "activate", accel_group,
 				LIVES_KEY_Escape, (GdkModifierType)0, (GtkAccelFlags)0);
 
     lives_widget_set_can_focus_and_default(cancelbutton);
 
-    lives_dialog_add_action_widget (LIVES_DIALOG (dialog), okbutton, GTK_RESPONSE_OK);
+    lives_dialog_add_action_widget (LIVES_DIALOG (dialog), okbutton, LIVES_RESPONSE_OK);
 
     lives_widget_set_can_focus_and_default(okbutton);
     lives_widget_grab_default (okbutton);

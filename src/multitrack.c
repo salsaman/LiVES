@@ -10822,7 +10822,7 @@ boolean on_multitrack_activate (LiVESMenuItem *menuitem, weed_plant_t *event_lis
     lives_widget_show_all(rdet->always_hbox);
     do {
       rdet->suggestion_followed=FALSE;
-      if ((response=lives_dialog_run(LIVES_DIALOG(rdet->dialog)))==GTK_RESPONSE_OK) {
+      if ((response=lives_dialog_run(LIVES_DIALOG(rdet->dialog)))==LIVES_RESPONSE_OK) {
 	if (rdet->enc_changed) {
 	  check_encoder_restrictions(FALSE,lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(resaudw->aud_checkbutton)),TRUE);
 	}
@@ -10880,7 +10880,7 @@ boolean on_multitrack_activate (LiVESMenuItem *menuitem, weed_plant_t *event_lis
     if (lives_window_has_toplevel_focus(LIVES_WINDOW(rdet->dialog))) transfer_focus=TRUE;
     lives_widget_destroy (rdet->dialog); 
     
-    if (response==GTK_RESPONSE_CANCEL) {
+    if (response==LIVES_RESPONSE_CANCEL) {
       g_free(rdet->encoder_name);
       g_free(rdet);
       rdet=NULL;
@@ -15727,7 +15727,7 @@ static void on_rename_track_activate (LiVESMenuItem *menuitem, gpointer user_dat
 
   response=lives_dialog_run(LIVES_DIALOG(rnentry->dialog));
   
-  if (response==GTK_RESPONSE_CANCEL) return; // destroyed and freed in a callback
+  if (response==LIVES_RESPONSE_CANCEL) return; // destroyed and freed in a callback
 
   g_free(cname);
 
@@ -19210,7 +19210,7 @@ void on_save_event_list_activate (LiVESMenuItem *menuitem, gpointer user_data) {
       renamew=create_rename_dialog(4);
       lives_widget_show(renamew->dialog);
       response=lives_dialog_run(LIVES_DIALOG(renamew->dialog));
-      if (response==GTK_RESPONSE_CANCEL) {
+      if (response==LIVES_RESPONSE_CANCEL) {
 	lives_widget_destroy(renamew->dialog);
 	g_free(renamew);
 	mainw->cancelled=CANCEL_USER;
@@ -21555,7 +21555,7 @@ void mt_change_vals_activate (LiVESMenuItem *menuitem, gpointer user_data) {
   rdet->enc_changed=FALSE;
   do {
     rdet->suggestion_followed=FALSE;
-    if ((response=lives_dialog_run(LIVES_DIALOG(rdet->dialog)))==GTK_RESPONSE_OK) {
+    if ((response=lives_dialog_run(LIVES_DIALOG(rdet->dialog)))==LIVES_RESPONSE_OK) {
       if (rdet->enc_changed) {
 	check_encoder_restrictions(FALSE,FALSE,TRUE);
       }
@@ -21579,7 +21579,7 @@ void mt_change_vals_activate (LiVESMenuItem *menuitem, gpointer user_data) {
   }
 
   
-  if (response==GTK_RESPONSE_CANCEL) {
+  if (response==LIVES_RESPONSE_CANCEL) {
     lives_widget_destroy (rdet->dialog); 
     g_free(rdet->encoder_name);
     g_free(rdet);

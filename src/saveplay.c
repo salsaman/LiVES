@@ -1025,15 +1025,15 @@ void open_file_sel(const gchar *file_name, double start, int frames) {
       cfile->frames++;
       cfile->end++;
 
-      g_signal_handler_block(mainw->spinbutton_end,mainw->spin_end_func);
+      lives_signal_handler_block(mainw->spinbutton_end,mainw->spin_end_func);
       lives_spin_button_set_range(LIVES_SPIN_BUTTON(mainw->spinbutton_end),cfile->frames==0?0:1,cfile->frames);
       lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_end),cfile->end);
-      g_signal_handler_unblock(mainw->spinbutton_end,mainw->spin_end_func);
+      lives_signal_handler_unblock(mainw->spinbutton_end,mainw->spin_end_func);
        
-      g_signal_handler_block(mainw->spinbutton_start,mainw->spin_start_func);
+      lives_signal_handler_block(mainw->spinbutton_start,mainw->spin_start_func);
       lives_spin_button_set_range(LIVES_SPIN_BUTTON(mainw->spinbutton_start),cfile->frames==0?0:1,cfile->frames);
       lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_start),cfile->start);
-      g_signal_handler_unblock(mainw->spinbutton_start,mainw->spin_start_func);
+      lives_signal_handler_unblock(mainw->spinbutton_start,mainw->spin_start_func);
       lives_set_cursor_style(LIVES_CURSOR_NORMAL,NULL);
       mainw->noswitch=FALSE;
 
@@ -2268,7 +2268,7 @@ void play_file (void) {
 
   // enable the freeze button
   lives_accel_group_connect (LIVES_ACCEL_GROUP (mainw->accel_group), LIVES_KEY_BackSpace, (GdkModifierType)LIVES_CONTROL_MASK, 
-			   (GtkAccelFlags)0, (freeze_closure=g_cclosure_new (G_CALLBACK (freeze_callback),NULL,NULL)));
+			   (GtkAccelFlags)0, (freeze_closure=g_cclosure_new (LIVES_GUI_CALLBACK (freeze_callback),NULL,NULL)));
 
   if (mainw->multitrack!=NULL) {
     mainw->event_list=mainw->multitrack->event_list;
@@ -2435,8 +2435,8 @@ void play_file (void) {
     if (mainw->preview_box!=NULL&&lives_widget_get_parent(mainw->preview_box)!=NULL) {
       lives_container_remove (LIVES_CONTAINER (mainw->play_window), mainw->preview_box);
 
-      mainw->pw_scroll_func=g_signal_connect (GTK_OBJECT (mainw->play_window), "scroll_event",
-					      G_CALLBACK (on_mouse_scroll),
+      mainw->pw_scroll_func=lives_signal_connect (LIVES_GUI_OBJECT (mainw->play_window), "scroll_event",
+					      LIVES_GUI_CALLBACK (on_mouse_scroll),
 					      NULL);
 
     }
@@ -2455,8 +2455,8 @@ void play_file (void) {
 	  if (mainw->preview_box!=NULL&&lives_widget_get_parent(mainw->preview_box)!=NULL) {
 	    lives_container_remove (LIVES_CONTAINER (mainw->play_window), mainw->preview_box);
 
-	    mainw->pw_scroll_func=g_signal_connect (GTK_OBJECT (mainw->play_window), "scroll_event",
-						    G_CALLBACK (on_mouse_scroll),
+	    mainw->pw_scroll_func=lives_signal_connect (LIVES_GUI_OBJECT (mainw->play_window), "scroll_event",
+						    LIVES_GUI_CALLBACK (on_mouse_scroll),
 						    NULL);
 	  }
 	}
@@ -3201,7 +3201,7 @@ void play_file (void) {
 	  (cfile->clip_type!=CLIP_TYPE_GENERATOR)) {
 	if (mainw->preview_box==NULL) {
 	  // create the preview in the sepwin
-	  g_signal_handler_disconnect (mainw->play_window, mainw->pw_scroll_func);
+	  lives_signal_handler_disconnect (mainw->play_window, mainw->pw_scroll_func);
 	  make_preview_box();
 	}
 	if (mainw->current_file!=current_file) {
@@ -3303,9 +3303,9 @@ void play_file (void) {
 
   // TODO - ????
   if (mainw->current_file>-1&&cfile->clip_type==CLIP_TYPE_DISK&&cfile->frames==0&&mainw->record_perf) {
-    g_signal_handler_block(mainw->record_perf,mainw->record_perf_func);
+    lives_signal_handler_block(mainw->record_perf,mainw->record_perf_func);
     lives_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(mainw->record_perf),FALSE);
-    g_signal_handler_unblock(mainw->record_perf,mainw->record_perf_func);
+    lives_signal_handler_unblock(mainw->record_perf,mainw->record_perf_func);
   }
 
   // TODO - can this be done earlier ?

@@ -116,8 +116,8 @@ static void start_preview (LiVESButton *button, lives_rfx_t *rfx) {
 void framedraw_connect_spinbutton(lives_special_framedraw_rect_t *framedraw, lives_rfx_t *rfx) {
   framedraw->rfx=rfx;
 
-  g_signal_connect_after (GTK_OBJECT (mainw->framedraw_spinbutton), "value_changed",
-			  G_CALLBACK (after_framedraw_frame_spinbutton_changed),
+  lives_signal_connect_after (LIVES_GUI_OBJECT (mainw->framedraw_spinbutton), "value_changed",
+			  LIVES_GUI_CALLBACK (after_framedraw_frame_spinbutton_changed),
 			  framedraw);
 
 }
@@ -128,17 +128,17 @@ void framedraw_connect(lives_special_framedraw_rect_t *framedraw, int width, int
 
 
   // add mouse fn's so we can draw on frames
-  g_signal_connect (GTK_OBJECT (mainw->framedraw), "motion_notify_event",
-		    G_CALLBACK (on_framedraw_mouse_update),
+  lives_signal_connect (LIVES_GUI_OBJECT (mainw->framedraw), "motion_notify_event",
+		    LIVES_GUI_CALLBACK (on_framedraw_mouse_update),
 		    framedraw);
-  g_signal_connect (GTK_OBJECT (mainw->framedraw), "button_release_event",
-		    G_CALLBACK (on_framedraw_mouse_reset),
+  lives_signal_connect (LIVES_GUI_OBJECT (mainw->framedraw), "button_release_event",
+		    LIVES_GUI_CALLBACK (on_framedraw_mouse_reset),
 		    framedraw);
-  g_signal_connect (GTK_OBJECT (mainw->framedraw), "button_press_event",
-		    G_CALLBACK (on_framedraw_mouse_start),
+  lives_signal_connect (LIVES_GUI_OBJECT (mainw->framedraw), "button_press_event",
+		    LIVES_GUI_CALLBACK (on_framedraw_mouse_start),
 		    framedraw);
-  g_signal_connect (GTK_OBJECT(mainw->framedraw), "enter-notify-event",G_CALLBACK (on_framedraw_enter),framedraw);
-  g_signal_connect (GTK_OBJECT(mainw->framedraw), "leave-notify-event",G_CALLBACK (on_framedraw_leave),framedraw);
+  lives_signal_connect (LIVES_GUI_OBJECT(mainw->framedraw), "enter-notify-event",LIVES_GUI_CALLBACK (on_framedraw_enter),framedraw);
+  lives_signal_connect (LIVES_GUI_OBJECT(mainw->framedraw), "leave-notify-event",LIVES_GUI_CALLBACK (on_framedraw_leave),framedraw);
 
   framedraw_connect_spinbutton(framedraw,rfx);
 
@@ -172,7 +172,7 @@ void framedraw_add_reset(LiVESVBox *box, lives_special_framedraw_rect_t *framedr
   lives_box_pack_start (LIVES_BOX (hbox_rst), mainw->framedraw_reset, TRUE, FALSE, 0);
   lives_widget_set_sensitive (mainw->framedraw_reset,FALSE);
   
-  g_signal_connect (mainw->framedraw_reset, "clicked",G_CALLBACK (on_framedraw_reset_clicked),framedraw);
+  lives_signal_connect (mainw->framedraw_reset, "clicked",LIVES_GUI_CALLBACK (on_framedraw_reset_clicked),framedraw);
 }
 
 
@@ -257,8 +257,8 @@ void widget_add_framedraw (LiVESVBox *box, int start, int end, boolean add_previ
     lives_widget_set_fg_color (mainw->framedraw, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
   }
 
-  g_signal_connect_after (GTK_OBJECT (mainw->framedraw), LIVES_WIDGET_EVENT_EXPOSE_EVENT,
-			  G_CALLBACK (expose_fd_event), NULL);
+  lives_signal_connect_after (LIVES_GUI_OBJECT (mainw->framedraw), LIVES_WIDGET_EVENT_EXPOSE_EVENT,
+			  LIVES_GUI_CALLBACK (expose_fd_event), NULL);
 
 
   hbox = lives_hbox_new (FALSE, 2);
@@ -280,7 +280,7 @@ void widget_add_framedraw (LiVESVBox *box, int start, int end, boolean add_previ
   lives_box_pack_start (LIVES_BOX (hbox), mainw->framedraw_preview, TRUE, FALSE, 0);
   lives_widget_set_sensitive(mainw->framedraw_spinbutton,FALSE);
   lives_widget_set_sensitive(mainw->framedraw_scale,FALSE);
-  g_signal_connect (mainw->framedraw_preview, "clicked",G_CALLBACK (start_preview),rfx);
+  lives_signal_connect (mainw->framedraw_preview, "clicked",LIVES_GUI_CALLBACK (start_preview),rfx);
   
   lives_widget_show_all (vbox);
 

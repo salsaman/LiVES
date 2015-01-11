@@ -195,8 +195,8 @@ static void giw_led_destroy (GtkObject *object) {
 #if GTK_CHECK_VERSION(3,0,0)
   G_OBJECT_CLASS (giw_led_parent_class)->dispose (object);
 #else
-  if (GTK_OBJECT_CLASS (parent_class)->destroy)
-    (* GTK_OBJECT_CLASS (parent_class)->destroy) (object);
+  if (LIVES_GUI_OBJECT_CLASS (parent_class)->destroy)
+    (* LIVES_GUI_OBJECT_CLASS (parent_class)->destroy) (object);
 #endif
 }
 

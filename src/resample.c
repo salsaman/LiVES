@@ -1481,8 +1481,8 @@ _resaudw *create_resaudw (gshort type, render_details *rdet, LiVESWidget *top_vb
       lives_widget_set_sensitive (resaudw->rb_bigend, FALSE);
     }
 
-    g_signal_connect (GTK_OBJECT(resaudw->entry_asamps), "changed",
-		      G_CALLBACK (on_resaudw_asamps_changed),
+    lives_signal_connect (LIVES_GUI_OBJECT(resaudw->entry_asamps), "changed",
+		      LIVES_GUI_CALLBACK (on_resaudw_asamps_changed),
 		      NULL);
 
     if (type>=3&&type!=11) label_aud = lives_standard_label_new (_("Audio"));
@@ -1545,8 +1545,8 @@ _resaudw *create_resaudw (gshort type, render_details *rdet, LiVESWidget *top_vb
       resaudw->unlim_radiobutton=lives_standard_radio_button_new(_("Unlimited"),FALSE,rbgroup,LIVES_BOX(hbox),NULL);
       rbgroup = lives_radio_button_get_group (LIVES_RADIO_BUTTON (resaudw->unlim_radiobutton));
 
-      g_signal_connect (GTK_OBJECT (radiobutton), "toggled",
-			G_CALLBACK (on_rb_audrec_time_toggled),
+      lives_signal_connect (LIVES_GUI_OBJECT (radiobutton), "toggled",
+			LIVES_GUI_CALLBACK (on_rb_audrec_time_toggled),
 			(gpointer)resaudw);
 
       lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(resaudw->unlim_radiobutton),(type==5||type>7)&&type!=11);
@@ -1586,28 +1586,28 @@ _resaudw *create_resaudw (gshort type, render_details *rdet, LiVESWidget *top_vb
     lives_widget_grab_default (okbutton);
 
     if (type<8||type==11) {
-      g_signal_connect (GTK_OBJECT (cancelbutton), "clicked",
-			G_CALLBACK (lives_general_button_clicked),
+      lives_signal_connect (LIVES_GUI_OBJECT (cancelbutton), "clicked",
+			LIVES_GUI_CALLBACK (lives_general_button_clicked),
 			resaudw);
 
       if (type==1) {
-	g_signal_connect (GTK_OBJECT (okbutton), "clicked",
-			  G_CALLBACK (on_resaudio_ok_clicked),
+	lives_signal_connect (LIVES_GUI_OBJECT (okbutton), "clicked",
+			  LIVES_GUI_CALLBACK (on_resaudio_ok_clicked),
 			  NULL);
       }
       else if (type==2||type==11) {
-	g_signal_connect (GTK_OBJECT (okbutton), "clicked",
-			  G_CALLBACK (on_ins_silence_details_clicked),
+	lives_signal_connect (LIVES_GUI_OBJECT (okbutton), "clicked",
+			  LIVES_GUI_CALLBACK (on_ins_silence_details_clicked),
 			  NULL);
       }
       else if (type==5) {
-	g_signal_connect (GTK_OBJECT (okbutton), "clicked",
-			  G_CALLBACK (on_recaudclip_ok_clicked),
+	lives_signal_connect (LIVES_GUI_OBJECT (okbutton), "clicked",
+			  LIVES_GUI_CALLBACK (on_recaudclip_ok_clicked),
 			  GINT_TO_POINTER(0));
       }
       else if (type==6||type==7) {
-	g_signal_connect (GTK_OBJECT (okbutton), "clicked",
-			  G_CALLBACK (on_recaudclip_ok_clicked),
+	lives_signal_connect (LIVES_GUI_OBJECT (okbutton), "clicked",
+			  LIVES_GUI_CALLBACK (on_recaudclip_ok_clicked),
 			  GINT_TO_POINTER(1));
       }
       
@@ -1618,8 +1618,8 @@ _resaudw *create_resaudw (gshort type, render_details *rdet, LiVESWidget *top_vb
   }
   else {
     if (type>2&&type<5) {
-      g_signal_connect_after (GTK_OBJECT(resaudw->aud_checkbutton), "toggled",
-			      G_CALLBACK (on_resaudw_achans_changed),
+      lives_signal_connect_after (LIVES_GUI_OBJECT(resaudw->aud_checkbutton), "toggled",
+			      LIVES_GUI_CALLBACK (on_resaudw_achans_changed),
 			      (gpointer)resaudw);
       on_resaudw_achans_changed(resaudw->aud_checkbutton,(gpointer)resaudw);
     }
@@ -1766,38 +1766,38 @@ void create_new_pb_speed (short type) {
 
   reorder_leave_back=FALSE;
 
-  g_signal_connect (GTK_OBJECT (change_audio_speed), "toggled",
-		    G_CALLBACK (on_boolean_toggled),
+  lives_signal_connect (LIVES_GUI_OBJECT (change_audio_speed), "toggled",
+		    LIVES_GUI_CALLBACK (on_boolean_toggled),
 		    &mainw->fx1_bool);
-  g_signal_connect (GTK_OBJECT (cancelbutton), "clicked",
-		    G_CALLBACK (lives_general_button_clicked),
+  lives_signal_connect (LIVES_GUI_OBJECT (cancelbutton), "clicked",
+		    LIVES_GUI_CALLBACK (lives_general_button_clicked),
 		    NULL);
   if (type==1) {
-    g_signal_connect (GTK_OBJECT (change_pb_ok), "clicked",
-		      G_CALLBACK (on_change_speed_ok_clicked),
+    lives_signal_connect (LIVES_GUI_OBJECT (change_pb_ok), "clicked",
+		      LIVES_GUI_CALLBACK (on_change_speed_ok_clicked),
 		      NULL);
   }
   else if (type==2) {
-    g_signal_connect (GTK_OBJECT (change_pb_ok), "clicked",
-		      G_CALLBACK (on_resample_vid_ok),
+    lives_signal_connect (LIVES_GUI_OBJECT (change_pb_ok), "clicked",
+		      LIVES_GUI_CALLBACK (on_resample_vid_ok),
 		      NULL);
   }
-  g_signal_connect_after (GTK_OBJECT (spinbutton_pb_speed), "value_changed",
-			  G_CALLBACK (on_spin_value_changed),
+  lives_signal_connect_after (LIVES_GUI_OBJECT (spinbutton_pb_speed), "value_changed",
+			  LIVES_GUI_CALLBACK (on_spin_value_changed),
 			  GINT_TO_POINTER (1));
 
   if (type==1) {
-    g_signal_connect_after (GTK_OBJECT (spinbutton_pb_time), "value_changed",
-			    G_CALLBACK (on_spin_value_changed),
+    lives_signal_connect_after (LIVES_GUI_OBJECT (spinbutton_pb_time), "value_changed",
+			    LIVES_GUI_CALLBACK (on_spin_value_changed),
 			    GINT_TO_POINTER (2));
-    g_signal_connect_after (GTK_OBJECT (spinbutton_pb_speed), "value_changed",
-			    G_CALLBACK (widget_act_toggle),
+    lives_signal_connect_after (LIVES_GUI_OBJECT (spinbutton_pb_speed), "value_changed",
+			    LIVES_GUI_CALLBACK (widget_act_toggle),
 			    radiobutton1);
-    g_signal_connect_after (GTK_OBJECT (spinbutton_pb_time), "value_changed",
-			    G_CALLBACK (widget_act_toggle),
+    lives_signal_connect_after (LIVES_GUI_OBJECT (spinbutton_pb_time), "value_changed",
+			    LIVES_GUI_CALLBACK (widget_act_toggle),
 			    radiobutton2);
-    g_signal_connect (GTK_OBJECT (radiobutton2), "toggled",
-		      G_CALLBACK (on_boolean_toggled),
+    lives_signal_connect (LIVES_GUI_OBJECT (radiobutton2), "toggled",
+		      LIVES_GUI_CALLBACK (on_boolean_toggled),
 		      &mainw->fx2_bool);
   }
 

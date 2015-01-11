@@ -2086,8 +2086,8 @@ LiVESWidget *events_rec_dialog (boolean allow_mt) {
 
   lives_toggle_button_set_active (LIVES_TOGGLE_BUTTON (radiobutton),TRUE);
 
-  g_signal_connect (GTK_OBJECT (radiobutton), "toggled",
-		    G_CALLBACK (set_render_choice),
+  lives_signal_connect (LIVES_GUI_OBJECT (radiobutton), "toggled",
+		    LIVES_GUI_CALLBACK (set_render_choice),
 		    GINT_TO_POINTER (RENDER_CHOICE_PREVIEW));
 
   if (!mainw->clip_switched&&(cfile->clip_type==CLIP_TYPE_DISK||cfile->clip_type==CLIP_TYPE_FILE)) {
@@ -2098,8 +2098,8 @@ LiVESWidget *events_rec_dialog (boolean allow_mt) {
     radiobutton = lives_standard_radio_button_new (_ ("Render events to _same clip"),TRUE,radiobutton_group,LIVES_BOX(hbox),NULL);
     radiobutton_group = lives_radio_button_get_group (LIVES_RADIO_BUTTON (radiobutton));
 
-    g_signal_connect (GTK_OBJECT (radiobutton), "toggled",
-                      G_CALLBACK (set_render_choice),
+    lives_signal_connect (LIVES_GUI_OBJECT (radiobutton), "toggled",
+                      LIVES_GUI_CALLBACK (set_render_choice),
                       GINT_TO_POINTER (RENDER_CHOICE_SAME_CLIP));
   }
 
@@ -2110,8 +2110,8 @@ LiVESWidget *events_rec_dialog (boolean allow_mt) {
   radiobutton = lives_standard_radio_button_new (_ ("Render events to _new clip"),TRUE,radiobutton_group,LIVES_BOX(hbox),NULL);
   radiobutton_group = lives_radio_button_get_group (LIVES_RADIO_BUTTON (radiobutton));
     
-  g_signal_connect (GTK_OBJECT (radiobutton), "toggled",
-		    G_CALLBACK (set_render_choice),
+  lives_signal_connect (LIVES_GUI_OBJECT (radiobutton), "toggled",
+		    LIVES_GUI_CALLBACK (set_render_choice),
 		    GINT_TO_POINTER (RENDER_CHOICE_NEW_CLIP));
   
 
@@ -2122,8 +2122,8 @@ LiVESWidget *events_rec_dialog (boolean allow_mt) {
   radiobutton = lives_standard_radio_button_new (_ ("View/edit events in _multitrack window (test)"),TRUE,radiobutton_group,LIVES_BOX(hbox),NULL);
   radiobutton_group = lives_radio_button_get_group (LIVES_RADIO_BUTTON (radiobutton));
 
-  g_signal_connect (GTK_OBJECT (radiobutton), "toggled",
-		    G_CALLBACK (set_render_choice),
+  lives_signal_connect (LIVES_GUI_OBJECT (radiobutton), "toggled",
+		    LIVES_GUI_CALLBACK (set_render_choice),
 		    GINT_TO_POINTER (RENDER_CHOICE_MULTITRACK));
 
   if (!allow_mt) lives_widget_set_sensitive(radiobutton,FALSE);
@@ -2138,8 +2138,8 @@ LiVESWidget *events_rec_dialog (boolean allow_mt) {
 
   if (mainw->stored_event_list!=NULL) lives_widget_set_sensitive(radiobutton,FALSE);
     
-  g_signal_connect (GTK_OBJECT (radiobutton), "toggled",
-		    G_CALLBACK (set_render_choice),
+  lives_signal_connect (LIVES_GUI_OBJECT (radiobutton), "toggled",
+		    LIVES_GUI_CALLBACK (set_render_choice),
 		    GINT_TO_POINTER (RENDER_CHOICE_EVENT_LIST));
 
   cancelbutton = lives_button_new_from_stock (LIVES_STOCK_CANCEL);
@@ -2147,8 +2147,8 @@ LiVESWidget *events_rec_dialog (boolean allow_mt) {
 
   lives_dialog_add_action_widget (LIVES_DIALOG (e_rec_dialog), cancelbutton, LIVES_RESPONSE_CANCEL);
 
-  g_signal_connect (GTK_OBJECT (cancelbutton), "clicked",
-		    G_CALLBACK (set_render_choice_button),
+  lives_signal_connect (LIVES_GUI_OBJECT (cancelbutton), "clicked",
+		    LIVES_GUI_CALLBACK (set_render_choice_button),
 		    GINT_TO_POINTER (RENDER_CHOICE_DISCARD));
 
   accel_group = LIVES_ACCEL_GROUP(lives_accel_group_new ());
@@ -3009,9 +3009,9 @@ weed_plant_t *process_events (weed_plant_t *next_event, boolean process_audio, w
     // drop frame if it is too far behind
     if (mainw->playing_file>-1&&!mainw->noframedrop&&next_tc<=curr_tc) break;
     if (!mainw->fs&&prefs->show_framecount) {
-      g_signal_handler_block(mainw->spinbutton_pb_fps,mainw->pb_fps_func);
+      lives_signal_handler_block(mainw->spinbutton_pb_fps,mainw->pb_fps_func);
       lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_pb_fps),cfile->pb_fps);
-      g_signal_handler_unblock(mainw->spinbutton_pb_fps,mainw->pb_fps_func);
+      lives_signal_handler_unblock(mainw->spinbutton_pb_fps,mainw->pb_fps_func);
     }
   }
 
@@ -4317,9 +4317,9 @@ boolean deal_with_render_choice (boolean add_deinit) {
   mainw->record=FALSE;
   mainw->record_paused=FALSE;
 
-  g_signal_handler_block(mainw->record_perf,mainw->record_perf_func);
+  lives_signal_handler_block(mainw->record_perf,mainw->record_perf_func);
   lives_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(mainw->record_perf),FALSE);
-  g_signal_handler_unblock(mainw->record_perf,mainw->record_perf_func);
+  lives_signal_handler_unblock(mainw->record_perf,mainw->record_perf_func);
 
   if (count_events(mainw->event_list,FALSE,0,0)==0) {
     event_list_free(mainw->event_list);
@@ -4964,8 +4964,8 @@ LiVESWidget *create_event_list_dialog (weed_plant_t *event_list, weed_timecode_t
   lives_widget_set_can_focus_and_default (ok_button);
   lives_widget_grab_default (ok_button);
  
-  g_signal_connect (GTK_OBJECT (ok_button), "clicked",
-		    G_CALLBACK (response_ok),
+  lives_signal_connect (LIVES_GUI_OBJECT (ok_button), "clicked",
+		    LIVES_GUI_CALLBACK (response_ok),
 		    NULL);
 
   lives_widget_add_accelerator (ok_button, "activate", accel_group,
@@ -5139,16 +5139,16 @@ render_details *create_render_details (int type) {
   rdet->spinbutton_width = lives_standard_spin_button_new 
     (_("_Width"),TRUE,rdet->width,2.,MAX_FRAME_WIDTH,1.,16.,0,LIVES_BOX(hbox),NULL);
   
-  g_signal_connect_after (GTK_OBJECT (rdet->spinbutton_width), "value_changed",
-			  G_CALLBACK (rdetw_spinw_changed),
+  lives_signal_connect_after (LIVES_GUI_OBJECT (rdet->spinbutton_width), "value_changed",
+			  LIVES_GUI_CALLBACK (rdetw_spinw_changed),
 			  rdet);
   
   
   rdet->spinbutton_height = lives_standard_spin_button_new 
     (_("_Height"),TRUE,rdet->height,2.,MAX_FRAME_WIDTH,1.,16.,0,LIVES_BOX(hbox),NULL);
   
-  g_signal_connect_after (GTK_OBJECT (rdet->spinbutton_height), "value_changed",
-			  G_CALLBACK (rdetw_spinh_changed),
+  lives_signal_connect_after (LIVES_GUI_OBJECT (rdet->spinbutton_height), "value_changed",
+			  LIVES_GUI_CALLBACK (rdetw_spinh_changed),
 			  rdet);
 
   // add aspect button
@@ -5173,8 +5173,8 @@ render_details *create_render_details (int type) {
   
   if (type==4&&mainw->multitrack->event_list!=NULL) lives_widget_set_sensitive(rdet->spinbutton_fps,FALSE);
   
-  g_signal_connect_after (GTK_OBJECT (rdet->spinbutton_fps), "value_changed",
-			  G_CALLBACK (rdetw_spinf_changed),
+  lives_signal_connect_after (LIVES_GUI_OBJECT (rdet->spinbutton_fps), "value_changed",
+			  LIVES_GUI_CALLBACK (rdetw_spinf_changed),
 			  rdet);
   
   // TODO
@@ -5258,12 +5258,12 @@ render_details *create_render_details (int type) {
 
   rdet->encoder_combo = lives_standard_combo_new(NULL,FALSE,encoders,LIVES_BOX(top_vbox),NULL);
 
-  rdet->encoder_name_fn = g_signal_connect_after(LIVES_COMBO(rdet->encoder_combo), "changed",
-						 G_CALLBACK(on_encoder_entry_changed), rdet);
+  rdet->encoder_name_fn = lives_signal_connect_after(LIVES_COMBO(rdet->encoder_combo), "changed",
+						 LIVES_GUI_CALLBACK(on_encoder_entry_changed), rdet);
 
-  g_signal_handler_block(rdet->encoder_combo, rdet->encoder_name_fn);
+  lives_signal_handler_block(rdet->encoder_combo, rdet->encoder_name_fn);
   lives_combo_set_active_string(LIVES_COMBO(rdet->encoder_combo), rdet->encoder_name);
-  g_signal_handler_unblock(rdet->encoder_combo, rdet->encoder_name_fn);
+  lives_signal_handler_unblock(rdet->encoder_combo, rdet->encoder_name_fn);
 
   if (encoders!=NULL) {
     g_list_free_strings (encoders);
@@ -5309,8 +5309,8 @@ render_details *create_render_details (int type) {
   g_list_free_strings(ofmt);
   g_list_free(ofmt);
   
-  rdet->encoder_ofmt_fn=g_signal_connect_after (LIVES_COMBO(rdet->ofmt_combo), "changed", 
-						G_CALLBACK (on_encoder_ofmt_changed), rdet);
+  rdet->encoder_ofmt_fn=lives_signal_connect_after (LIVES_COMBO(rdet->ofmt_combo), "changed", 
+						LIVES_GUI_CALLBACK (on_encoder_ofmt_changed), rdet);
 
 
   alabel = lives_standard_label_new (_("Audio format"));
@@ -5330,9 +5330,9 @@ render_details *create_render_details (int type) {
   else {
     add_fill_to_box(LIVES_BOX(top_vbox));
     lives_box_pack_start (LIVES_BOX (top_vbox), alabel, FALSE, FALSE, 0);
-    g_signal_handler_block(rdet->ofmt_combo, rdet->encoder_ofmt_fn);
+    lives_signal_handler_block(rdet->ofmt_combo, rdet->encoder_ofmt_fn);
     lives_combo_set_active_string(LIVES_COMBO(rdet->ofmt_combo), prefs->encoder.of_desc);
-    g_signal_handler_unblock(rdet->ofmt_combo, rdet->encoder_ofmt_fn);
+    lives_signal_handler_unblock(rdet->ofmt_combo, rdet->encoder_ofmt_fn);
 
     rdet->acodec_combo = lives_standard_combo_new (NULL,FALSE,NULL,LIVES_BOX(top_vbox),NULL);
 
@@ -5399,7 +5399,7 @@ render_details *create_render_details (int type) {
     do_encoder_img_ftm_error(rdet);
   }
 
-  g_signal_connect_after(LIVES_COMBO(rdet->acodec_combo), "changed", G_CALLBACK (rdet_acodec_changed), rdet);
+  lives_signal_connect_after(LIVES_COMBO(rdet->acodec_combo), "changed", LIVES_GUI_CALLBACK (rdet_acodec_changed), rdet);
 
   return rdet;
 }

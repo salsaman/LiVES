@@ -137,8 +137,8 @@ void create_merge_dialog (void) {
     merge_opts->ins_frame_button=lives_standard_radio_button_new(_("_Insert Frames"),TRUE,radiobutton_insdrop_group,LIVES_BOX(hbox),NULL);
     radiobutton_insdrop_group = lives_radio_button_get_group (LIVES_RADIO_BUTTON (merge_opts->ins_frame_button));
 
-    merge_opts->ins_frame_function=g_signal_connect (GTK_OBJECT (merge_opts->ins_frame_button),
-						     "toggled",G_CALLBACK (on_ins_frames_toggled),NULL);
+    merge_opts->ins_frame_function=lives_signal_connect (LIVES_GUI_OBJECT (merge_opts->ins_frame_button),
+						     "toggled",LIVES_GUI_CALLBACK (on_ins_frames_toggled),NULL);
 
     merge_opts->drop_frame_button=lives_standard_radio_button_new(_("_Drop Frames"),TRUE,radiobutton_insdrop_group,LIVES_BOX(hbox),NULL);
 
@@ -153,15 +153,15 @@ void create_merge_dialog (void) {
     lives_spin_button_set_value (LIVES_SPIN_BUTTON (merge_opts->spinbutton_loops),mainw->last_transition_loops);
     lives_widget_set_sensitive(merge_opts->spinbutton_loops,!mainw->last_transition_loop_to_fit);
 
-    g_signal_connect_after (GTK_OBJECT (merge_opts->spinbutton_loops), "value_changed",
-			    G_CALLBACK (after_spinbutton_loops_changed),
+    lives_signal_connect_after (LIVES_GUI_OBJECT (merge_opts->spinbutton_loops), "value_changed",
+			    LIVES_GUI_CALLBACK (after_spinbutton_loops_changed),
 			    NULL);
 
     fit_button = lives_standard_check_button_new (_("_Loop Clipboard to Fit Selection"),TRUE,LIVES_BOX(hbox),NULL);
     lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(fit_button),mainw->last_transition_loop_to_fit);
 
-    g_signal_connect (GTK_OBJECT (fit_button), "toggled",
-		      G_CALLBACK (on_fit_toggled),
+    lives_signal_connect (LIVES_GUI_OBJECT (fit_button), "toggled",
+		      LIVES_GUI_CALLBACK (on_fit_toggled),
 		      NULL);
   }
 
@@ -215,8 +215,8 @@ void create_merge_dialog (void) {
   lives_widget_set_can_focus_and_default (okbutton);
   lives_widget_grab_default (okbutton);
 
-  g_signal_connect (GTK_OBJECT (cancelbutton), "clicked",
-                      G_CALLBACK (on_merge_cancel_clicked),
+  lives_signal_connect (LIVES_GUI_OBJECT (cancelbutton), "clicked",
+                      LIVES_GUI_CALLBACK (on_merge_cancel_clicked),
                       rfx);
 
 
@@ -224,15 +224,15 @@ void create_merge_dialog (void) {
                               LIVES_KEY_Escape,  (GdkModifierType)0, (GtkAccelFlags)0);
 
 
-  g_signal_connect (GTK_OBJECT (okbutton), "clicked",
-                      G_CALLBACK (on_merge_ok_clicked),
+  lives_signal_connect (LIVES_GUI_OBJECT (okbutton), "clicked",
+                      LIVES_GUI_CALLBACK (on_merge_ok_clicked),
                       rfx);
   
-  g_signal_connect (GTK_OBJECT(transition_combo),"changed",G_CALLBACK (on_trans_method_changed),NULL);
+  lives_signal_connect (LIVES_GUI_OBJECT(transition_combo),"changed",LIVES_GUI_CALLBACK (on_trans_method_changed),NULL);
   
 
-  g_signal_connect (GTK_OBJECT (align_start_button), "toggled",
-		    G_CALLBACK (on_align_start_end_toggled),
+  lives_signal_connect (LIVES_GUI_OBJECT (align_start_button), "toggled",
+		    LIVES_GUI_CALLBACK (on_align_start_end_toggled),
 		    rfx);
 
 

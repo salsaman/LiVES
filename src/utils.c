@@ -3328,14 +3328,14 @@ void minimise_aspect_delta (double aspect,int hblock,int vblock,int hsize,int vs
 }
 
 void zero_spinbuttons (void) {
-  g_signal_handler_block(mainw->spinbutton_start,mainw->spin_start_func);
+  lives_signal_handler_block(mainw->spinbutton_start,mainw->spin_start_func);
   lives_spin_button_set_range(LIVES_SPIN_BUTTON(mainw->spinbutton_start),0.,0.);
   lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_start),0.);
-  g_signal_handler_unblock(mainw->spinbutton_start,mainw->spin_start_func);
-  g_signal_handler_block(mainw->spinbutton_end,mainw->spin_end_func);
+  lives_signal_handler_unblock(mainw->spinbutton_start,mainw->spin_start_func);
+  lives_signal_handler_block(mainw->spinbutton_end,mainw->spin_end_func);
   lives_spin_button_set_range(LIVES_SPIN_BUTTON(mainw->spinbutton_end),0.,0.);
   lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_end),0.);
-  g_signal_handler_unblock(mainw->spinbutton_end,mainw->spin_end_func);
+  lives_signal_handler_unblock(mainw->spinbutton_end,mainw->spin_end_func);
 }
 
 
@@ -3892,9 +3892,9 @@ void reset_clipmenu (void) {
   // This function will clean up the 'x's and so on.
 
   if (mainw->current_file>0&&cfile!=NULL&&cfile->menuentry!=NULL) {
-    g_signal_handler_block (cfile->menuentry, cfile->menuentry_func);
+    lives_signal_handler_block (cfile->menuentry, cfile->menuentry_func);
     lives_check_menu_item_set_active(LIVES_CHECK_MENU_ITEM(cfile->menuentry), TRUE);
-    g_signal_handler_unblock (cfile->menuentry, cfile->menuentry_func);
+    lives_signal_handler_unblock (cfile->menuentry, cfile->menuentry_func);
   }
 }
 

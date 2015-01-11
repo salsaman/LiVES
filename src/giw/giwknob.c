@@ -277,8 +277,8 @@ static void giw_knob_destroy (GtkObject *object) {
 #if GTK_CHECK_VERSION(3,0,0)
   G_OBJECT_CLASS (giw_knob_parent_class)->dispose (object);
 #else
-  if (GTK_OBJECT_CLASS (parent_class)->destroy)
-    (* GTK_OBJECT_CLASS (parent_class)->destroy) (object);
+  if (LIVES_GUI_OBJECT_CLASS (parent_class)->destroy)
+    (* LIVES_GUI_OBJECT_CLASS (parent_class)->destroy) (object);
 #endif
 }
 
@@ -914,18 +914,18 @@ giw_knob_set_adjustment (GiwKnob *knob,
     g_signal_handler_disconnect((gpointer)(knob->adjustment),knob->chsig);
     g_signal_handler_disconnect((gpointer)(knob->adjustment),knob->vchsig);
 #else
-    gtk_signal_disconnect_by_data (GTK_OBJECT (knob->adjustment), (gpointer) knob);
+    gtk_signal_disconnect_by_data (LIVES_GUI_OBJECT (knob->adjustment), (gpointer) knob);
 #endif
-    g_object_unref (GTK_OBJECT (knob->adjustment));
+    g_object_unref (LIVES_GUI_OBJECT (knob->adjustment));
   }
    
   knob->adjustment = adjustment;
-  g_object_ref (GTK_OBJECT (knob->adjustment));
+  g_object_ref (LIVES_GUI_OBJECT (knob->adjustment));
   
-  knob->chsig = g_signal_connect (GTK_OBJECT (adjustment), "changed",
+  knob->chsig = g_signal_connect (LIVES_GUI_OBJECT (adjustment), "changed",
 				  (GCallback) giw_knob_adjustment_changed,
 				  (gpointer) knob);
-  knob->vchsig = g_signal_connect (GTK_OBJECT (adjustment), "value_changed",
+  knob->vchsig = g_signal_connect (LIVES_GUI_OBJECT (adjustment), "value_changed",
 				   (GCallback) giw_knob_adjustment_value_changed,
 				   (gpointer) knob);
 

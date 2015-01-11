@@ -112,10 +112,13 @@ typedef GdkDeviceManager                  LiVESXDeviceManager;
 
 #if GTK_CHECK_VERSION(3,0,0)
 #define LIVES_WIDGET_EVENT_EXPOSE_EVENT "draw"
-#define GTK_OBJECT(a)                     a
+#define LIVES_GUI_OBJECT(a)                     a
 #else
+#define LIVES_GUI_OBJECT(a)                     GTK_OBJECT(a)
 #define LIVES_WIDGET_EVENT_EXPOSE_EVENT "expose_event"
 #endif
+
+#define LIVES_GUI_CALLBACK G_CALLBACK
 
 typedef GtkWidget                         LiVESWidget;
 typedef GtkWindow                         LiVESWindow;
@@ -928,6 +931,17 @@ LiVESPixbuf *lives_pixbuf_scale_simple(const LiVESPixbuf *src, int dest_width, i
 boolean lives_pixbuf_saturate_and_pixelate(const LiVESPixbuf *src, LiVESPixbuf *dest, float saturation, boolean pixilate);
 
 // basic widget fns (TODO - amend all void to return boolean)
+
+#define lives_signal_connect(instance, detailed_signal, c_handler, data) g_signal_connect(instance, detailed_signal, c_handler, data)
+#define lives_signal_connect_after(instance, detailed_signal, c_handler, data) g_signal_connect_after(instance, detailed_signal, c_handler, data)
+#define lives_signal_handlers_block_by_func(instance, func, data) g_signal_handlers_block_by_func(instance, func, data)
+#define lives_signal_handlers_unblock_by_func(instance, func, data) g_signal_handlers_unblock_by_func(instance, func, data)
+
+boolean lives_signal_handler_block(livespointer instance, unsigned long handler_id);
+boolean lives_signal_handler_unblock(livespointer instance, unsigned long handler_id);
+
+boolean lives_signal_handler_disconnect(livespointer instance, unsigned long handler_id);
+boolean lives_signal_stop_emission_by_name(livespointer instance, const char *detailed_signal);
 
 void lives_widget_set_sensitive(LiVESWidget *, boolean state);
 boolean lives_widget_get_sensitive(LiVESWidget *);

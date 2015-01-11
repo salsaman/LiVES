@@ -1092,16 +1092,16 @@ _vppaw *on_vpp_advanced_clicked (LiVESButton *button, gpointer user_data) {
   lives_dialog_add_action_widget (LIVES_DIALOG (vppa->dialog), okbutton, LIVES_RESPONSE_OK);
   lives_widget_set_can_focus_and_default (okbutton);
 
-  g_signal_connect (GTK_OBJECT (cancelbutton), "clicked",
-		    G_CALLBACK (on_vppa_cancel_clicked),
+  lives_signal_connect (LIVES_GUI_OBJECT (cancelbutton), "clicked",
+		    LIVES_GUI_CALLBACK (on_vppa_cancel_clicked),
 		    vppa);
 
-  g_signal_connect (GTK_OBJECT (savebutton), "clicked",
-		    G_CALLBACK (on_vppa_save_clicked),
+  lives_signal_connect (LIVES_GUI_OBJECT (savebutton), "clicked",
+		    LIVES_GUI_CALLBACK (on_vppa_save_clicked),
 		    vppa);
 
-  g_signal_connect (GTK_OBJECT (okbutton), "clicked",
-		    G_CALLBACK (on_vppa_ok_clicked),
+  lives_signal_connect (LIVES_GUI_OBJECT (okbutton), "clicked",
+		    LIVES_GUI_CALLBACK (on_vppa_ok_clicked),
 		    vppa);
 
 
@@ -2682,8 +2682,8 @@ void on_decplug_advanced_clicked (LiVESButton *button, gpointer user_data) {
     lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(checkbutton),
 				 lives_list_index(future_prefs->disabled_decoders,dpsys->name)==-1);
 
-    g_signal_connect_after (GTK_OBJECT (checkbutton), "toggled",
-			    G_CALLBACK (on_dpa_cb_toggled),
+    lives_signal_connect_after (LIVES_GUI_OBJECT (checkbutton), "toggled",
+			    LIVES_GUI_CALLBACK (on_dpa_cb_toggled),
 			    dpsys->name);
 
     decoder_plugin=decoder_plugin->next;
@@ -2697,12 +2697,12 @@ void on_decplug_advanced_clicked (LiVESButton *button, gpointer user_data) {
   lives_dialog_add_action_widget (LIVES_DIALOG (dialog), okbutton, LIVES_RESPONSE_OK);
   lives_widget_set_can_focus_and_default (okbutton);
 
-  g_signal_connect (GTK_OBJECT (cancelbutton), "clicked",
-		    G_CALLBACK (dpa_cancel_clicked),
+  lives_signal_connect (LIVES_GUI_OBJECT (cancelbutton), "clicked",
+		    LIVES_GUI_CALLBACK (dpa_cancel_clicked),
 		    NULL);
 
-  g_signal_connect (GTK_OBJECT (okbutton), "clicked",
-		    G_CALLBACK (dpa_ok_clicked),
+  lives_signal_connect (LIVES_GUI_OBJECT (okbutton), "clicked",
+		    LIVES_GUI_CALLBACK (dpa_ok_clicked),
 		    NULL);
 
   lives_widget_show_all(dialog);

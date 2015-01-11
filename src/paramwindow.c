@@ -454,8 +454,8 @@ void transition_add_in_out(LiVESBox *vbox, lives_rfx_t *rfx, boolean add_audio_c
 
   radiobutton_group = lives_radio_button_get_group (LIVES_RADIO_BUTTON (radiobutton_in));
 
-  g_signal_connect_after (GTK_OBJECT (radiobutton_in), "toggled",
-			  G_CALLBACK (transition_in_pressed),
+  lives_signal_connect_after (LIVES_GUI_OBJECT (radiobutton_in), "toggled",
+			  LIVES_GUI_CALLBACK (transition_in_pressed),
 			  (gpointer)rfx);
 
 
@@ -481,8 +481,8 @@ void transition_add_in_out(LiVESBox *vbox, lives_rfx_t *rfx, boolean add_audio_c
       lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(checkbutton),FALSE);
     else lives_toggle_button_set_active (LIVES_TOGGLE_BUTTON (checkbutton), TRUE);
 
-    g_signal_connect_after (GTK_OBJECT (checkbutton), "toggled",
-			    G_CALLBACK (after_transaudio_toggled),
+    lives_signal_connect_after (LIVES_GUI_OBJECT (checkbutton), "toggled",
+			    LIVES_GUI_CALLBACK (after_transaudio_toggled),
 			    (gpointer)rfx);
 
     after_transaudio_toggled(LIVES_TOGGLE_BUTTON(checkbutton),(gpointer)rfx);
@@ -498,8 +498,8 @@ void transition_add_in_out(LiVESBox *vbox, lives_rfx_t *rfx, boolean add_audio_c
 
   widget_opts.pack_end=FALSE;
   
-  g_signal_connect_after (GTK_OBJECT (radiobutton_out), "toggled",
-			  G_CALLBACK (transition_out_pressed),
+  lives_signal_connect_after (LIVES_GUI_OBJECT (radiobutton_out), "toggled",
+			  LIVES_GUI_CALLBACK (transition_out_pressed),
 			  (gpointer)rfx);
   
   if (palette->style&STYLE_1) {
@@ -570,8 +570,8 @@ static boolean add_sizes(LiVESBox *vbox, boolean add_fps, boolean has_param, liv
     spinbuttonf = lives_standard_spin_button_new (_("Target _FPS (plugin may override this)"),TRUE,
 						  def_fps,1.,FPS_MAX,1.,10.,3,LIVES_BOX(hbox),NULL);
     
-    g_signal_connect_after (GTK_OBJECT (spinbuttonf), "value_changed",
-			    G_CALLBACK (gen_fps_changed),
+    lives_signal_connect_after (LIVES_GUI_OBJECT (spinbuttonf), "value_changed",
+			    LIVES_GUI_CALLBACK (gen_fps_changed),
 			    filter);
     
     add_fill_to_box(LIVES_BOX(hbox));
@@ -618,8 +618,8 @@ static boolean add_sizes(LiVESBox *vbox, boolean add_fps, boolean has_param, liv
 						  width_step==1?16:width_step*4,0,
 						  LIVES_BOX(hbox),NULL);
 
-    g_signal_connect_after (GTK_OBJECT (spinbuttonw), "value_changed",
-			    G_CALLBACK (gen_width_changed),
+    lives_signal_connect_after (LIVES_GUI_OBJECT (spinbuttonw), "value_changed",
+			    LIVES_GUI_CALLBACK (gen_width_changed),
 			    tmpl);
     weed_leaf_delete(tmpl,"host_width"); // force a reset
     gen_width_changed(LIVES_SPIN_BUTTON(spinbuttonw),tmpl);
@@ -637,8 +637,8 @@ static boolean add_sizes(LiVESBox *vbox, boolean add_fps, boolean has_param, liv
 						  height_step==1?16:height_step*4,0,
 						  LIVES_BOX(hbox),NULL);
 
-    g_signal_connect_after (GTK_OBJECT (spinbuttonh), "value_changed",
-			    G_CALLBACK (gen_height_changed),
+    lives_signal_connect_after (LIVES_GUI_OBJECT (spinbuttonh), "value_changed",
+			    LIVES_GUI_CALLBACK (gen_height_changed),
 			    tmpl);
     weed_leaf_delete(tmpl,"host_height"); // force a reset
     gen_height_changed(LIVES_SPIN_BUTTON(spinbuttonh),tmpl);
@@ -702,8 +702,8 @@ static void add_gen_to(LiVESBox *vbox, lives_rfx_t *rfx) {
 
   lives_toggle_button_set_active (LIVES_TOGGLE_BUTTON (radiobutton), !mainw->gen_to_clipboard);
 
-  g_signal_connect_after (GTK_OBJECT (radiobutton), "toggled",
-			  G_CALLBACK (gen_cb_toggled),
+  lives_signal_connect_after (LIVES_GUI_OBJECT (radiobutton), "toggled",
+			  LIVES_GUI_CALLBACK (gen_cb_toggled),
 			  (gpointer)rfx);
 
 }
@@ -957,68 +957,68 @@ void on_fx_pre_activate (lives_rfx_t *rfx, int didx, LiVESWidget *pbox) {
     if (no_process&&!is_defaults) {
       if (!is_realtime) {
 	if (lives_widget_get_parent(okbutton)!=NULL)
-	  g_signal_connect (GTK_OBJECT (okbutton), "clicked",
-			    G_CALLBACK (on_paramwindow_cancel_clicked),
+	  lives_signal_connect (LIVES_GUI_OBJECT (okbutton), "clicked",
+			    LIVES_GUI_CALLBACK (on_paramwindow_cancel_clicked),
 			    rfx);
-	g_signal_connect (GTK_OBJECT (cancelbutton), "clicked",
-			  G_CALLBACK (on_paramwindow_cancel_clicked),
+	lives_signal_connect (LIVES_GUI_OBJECT (cancelbutton), "clicked",
+			  LIVES_GUI_CALLBACK (on_paramwindow_cancel_clicked),
 			  rfx);
-	g_signal_connect (GTK_OBJECT (fx_dialog[didx]), "delete_event",
-			  G_CALLBACK (on_paramwindow_cancel_clicked),
+	lives_signal_connect (LIVES_GUI_OBJECT (fx_dialog[didx]), "delete_event",
+			  LIVES_GUI_CALLBACK (on_paramwindow_cancel_clicked),
 			  rfx);
       }
       else {
-	g_signal_connect (GTK_OBJECT (cancelbutton), "clicked",
-			  G_CALLBACK (on_paramwindow_cancel_clicked2),
+	lives_signal_connect (LIVES_GUI_OBJECT (cancelbutton), "clicked",
+			  LIVES_GUI_CALLBACK (on_paramwindow_cancel_clicked2),
 			  rfx);
 	if (rfx->status==RFX_STATUS_SCRAP)
-	  g_signal_connect (GTK_OBJECT (okbutton), "clicked",
-			    G_CALLBACK (on_paramwindow_cancel_clicked2),
+	  lives_signal_connect (LIVES_GUI_OBJECT (okbutton), "clicked",
+			    LIVES_GUI_CALLBACK (on_paramwindow_cancel_clicked2),
 			    rfx);
 	else {
-	  g_signal_connect (GTK_OBJECT (okbutton), "clicked",
-			    G_CALLBACK (rte_set_key_defs),
+	  lives_signal_connect (LIVES_GUI_OBJECT (okbutton), "clicked",
+			    LIVES_GUI_CALLBACK (rte_set_key_defs),
 			    rfx);
 	  if (resetbutton!=NULL) {
-	    g_signal_connect_after (GTK_OBJECT (resetbutton), "clicked",
-				    G_CALLBACK (rte_reset_defs_clicked),
+	    lives_signal_connect_after (LIVES_GUI_OBJECT (resetbutton), "clicked",
+				    LIVES_GUI_CALLBACK (rte_reset_defs_clicked),
 				    rfx);
 	  }
 	}
-	g_signal_connect (GTK_OBJECT (fx_dialog[didx]), "delete_event",
-			  G_CALLBACK (on_paramwindow_cancel_clicked2),
+	lives_signal_connect (LIVES_GUI_OBJECT (fx_dialog[didx]), "delete_event",
+			  LIVES_GUI_CALLBACK (on_paramwindow_cancel_clicked2),
 			  rfx);
       }
     }
     else {
       if (!is_defaults) {
-	g_signal_connect (GTK_OBJECT (okbutton), "clicked",
-			  G_CALLBACK (on_paramwindow_ok_clicked),
+	lives_signal_connect (LIVES_GUI_OBJECT (okbutton), "clicked",
+			  LIVES_GUI_CALLBACK (on_paramwindow_ok_clicked),
 			  (gpointer)rfx);
-	g_signal_connect (GTK_OBJECT (cancelbutton), "clicked",
-			  G_CALLBACK (on_paramwindow_cancel_clicked),
+	lives_signal_connect (LIVES_GUI_OBJECT (cancelbutton), "clicked",
+			  LIVES_GUI_CALLBACK (on_paramwindow_cancel_clicked),
 			  (gpointer)rfx);
-	g_signal_connect (GTK_OBJECT (fx_dialog[didx]), "delete_event",
-			  G_CALLBACK (on_paramwindow_cancel_clicked),
+	lives_signal_connect (LIVES_GUI_OBJECT (fx_dialog[didx]), "delete_event",
+			  LIVES_GUI_CALLBACK (on_paramwindow_cancel_clicked),
 			  (gpointer)rfx);
 
       }
       else {
-	g_signal_connect_after (GTK_OBJECT (okbutton), "clicked",
-				G_CALLBACK (rte_set_defs_ok),
+	lives_signal_connect_after (LIVES_GUI_OBJECT (okbutton), "clicked",
+				LIVES_GUI_CALLBACK (rte_set_defs_ok),
 				rfx);
 	if (resetbutton!=NULL) {
-	  g_signal_connect_after (GTK_OBJECT (resetbutton), "clicked",
-				  G_CALLBACK (rte_reset_defs_clicked),
+	  lives_signal_connect_after (LIVES_GUI_OBJECT (resetbutton), "clicked",
+				  LIVES_GUI_CALLBACK (rte_reset_defs_clicked),
 				  rfx);
 	  g_object_set_data(G_OBJECT(resetbutton),"cancelbutton",(gpointer)cancelbutton);
 
 	}
-	g_signal_connect (GTK_OBJECT (cancelbutton), "clicked",
-			  G_CALLBACK (rte_set_defs_cancel),
+	lives_signal_connect (LIVES_GUI_OBJECT (cancelbutton), "clicked",
+			  LIVES_GUI_CALLBACK (rte_set_defs_cancel),
 			  rfx);
-	g_signal_connect (GTK_OBJECT (fx_dialog[didx]), "delete_event",
-			  G_CALLBACK (rte_set_defs_cancel),
+	lives_signal_connect (LIVES_GUI_OBJECT (fx_dialog[didx]), "delete_event",
+			  LIVES_GUI_CALLBACK (rte_set_defs_cancel),
 			  rfx);
       }
     }
@@ -1452,8 +1452,8 @@ boolean add_param_to_box (LiVESBox *box, lives_rfx_t *rfx, int pnum, boolean add
 
       checkbutton=lives_standard_check_button_new(name,use_mnemonic,(LiVESBox *)hbox,param->desc);
       lives_toggle_button_set_active (LIVES_TOGGLE_BUTTON (checkbutton), get_bool_param(param->value));
-      g_signal_connect_after (GTK_OBJECT (checkbutton), "toggled",
-			      G_CALLBACK (after_boolean_param_toggled),
+      lives_signal_connect_after (LIVES_GUI_OBJECT (checkbutton), "toggled",
+			      LIVES_GUI_CALLBACK (after_boolean_param_toggled),
 			      (gpointer)rfx);
       
       // store parameter so we know whose trigger to use
@@ -1500,8 +1500,8 @@ boolean add_param_to_box (LiVESBox *box, lives_rfx_t *rfx, int pnum, boolean add
       }
       else LIVES_WARN("Button group was NULL");
 
-      g_signal_connect_after (GTK_OBJECT (radiobutton), "toggled",
-			      G_CALLBACK (after_boolean_param_toggled),
+      lives_signal_connect_after (LIVES_GUI_OBJECT (radiobutton), "toggled",
+			      LIVES_GUI_CALLBACK (after_boolean_param_toggled),
 			      (gpointer)rfx);
 
       lives_toggle_button_set_active (LIVES_TOGGLE_BUTTON (radiobutton), get_bool_param(param->value));
@@ -1537,8 +1537,8 @@ boolean add_param_to_box (LiVESBox *box, lives_rfx_t *rfx, int pnum, boolean add
 
     lives_spin_button_set_wrap(LIVES_SPIN_BUTTON(spinbutton),param->wrap);
 
-    g_signal_connect_after (GTK_OBJECT (spinbutton), "value_changed",
-			    G_CALLBACK (after_param_value_changed),
+    lives_signal_connect_after (LIVES_GUI_OBJECT (spinbutton), "value_changed",
+			    LIVES_GUI_CALLBACK (after_param_value_changed),
 			    (gpointer)rfx);
     
     // store parameter so we know whose trigger to use
@@ -1642,18 +1642,18 @@ boolean add_param_to_box (LiVESBox *box, lives_rfx_t *rfx, int pnum, boolean add
 
     lives_box_pack_start (LIVES_BOX (hbox), cbutton, TRUE, TRUE, widget_opts.packing_width);
 
-    g_signal_connect (GTK_OBJECT (cbutton), "color-set",
-		      G_CALLBACK (on_pwcolsel),
+    lives_signal_connect (LIVES_GUI_OBJECT (cbutton), "color-set",
+		      LIVES_GUI_CALLBACK (on_pwcolsel),
 		      (gpointer)rfx);
     
-    g_signal_connect_after (GTK_OBJECT (spinbutton_red), "value_changed",
-			    G_CALLBACK (after_param_red_changed),
+    lives_signal_connect_after (LIVES_GUI_OBJECT (spinbutton_red), "value_changed",
+			    LIVES_GUI_CALLBACK (after_param_red_changed),
 			    (gpointer)rfx);
-    g_signal_connect_after (GTK_OBJECT (spinbutton_green), "value_changed",
-			    G_CALLBACK (after_param_green_changed),
+    lives_signal_connect_after (LIVES_GUI_OBJECT (spinbutton_green), "value_changed",
+			    LIVES_GUI_CALLBACK (after_param_green_changed),
 			    (gpointer)rfx);
-    g_signal_connect_after (GTK_OBJECT (spinbutton_blue), "value_changed",
-			    G_CALLBACK (after_param_blue_changed),
+    lives_signal_connect_after (LIVES_GUI_OBJECT (spinbutton_blue), "value_changed",
+			    LIVES_GUI_CALLBACK (after_param_blue_changed),
 			    (gpointer)rfx);
     
     // store parameter so we know whose trigger to use
@@ -1714,7 +1714,7 @@ boolean add_param_to_box (LiVESBox *box, lives_rfx_t *rfx, int pnum, boolean add
       if (param->desc!=NULL) lives_widget_set_tooltip_text( textview, param->desc);
       textbuffer=lives_text_view_get_buffer (LIVES_TEXT_VIEW (textview));
 
-      g_signal_connect_after (G_OBJECT (textbuffer), "changed", G_CALLBACK (after_param_text_buffer_changed), 
+      lives_signal_connect_after (G_OBJECT (textbuffer), "changed", LIVES_GUI_CALLBACK (after_param_text_buffer_changed), 
 			      (gpointer) rfx);
 
       lives_text_view_set_editable (LIVES_TEXT_VIEW (textview), TRUE);
@@ -1748,7 +1748,7 @@ boolean add_param_to_box (LiVESBox *box, lives_rfx_t *rfx, int pnum, boolean add
       param->widgets[0]=entry=lives_standard_entry_new(NULL,FALSE,txt,(int)param->max,(int)param->max,LIVES_BOX(hbox),param->desc);
 
       if (rfx->status==RFX_STATUS_WEED&&param->special_type!=LIVES_PARAM_SPECIAL_TYPE_FILEREAD) {
-	g_signal_connect_after (G_OBJECT (entry), "changed", G_CALLBACK (after_param_text_changed), 
+	lives_signal_connect_after (G_OBJECT (entry), "changed", LIVES_GUI_CALLBACK (after_param_text_changed), 
 				(gpointer) rfx);
       }
 
@@ -1756,7 +1756,7 @@ boolean add_param_to_box (LiVESBox *box, lives_rfx_t *rfx, int pnum, boolean add
 
     if (param->desc!=NULL) lives_widget_set_tooltip_text(label, param->desc);
 
-    g_signal_connect_after (G_OBJECT (hbox), "set-focus-child", G_CALLBACK (after_param_text_focus_changed), 
+    lives_signal_connect_after (G_OBJECT (hbox), "set-focus-child", LIVES_GUI_CALLBACK (after_param_text_focus_changed), 
 			    (gpointer) rfx);
 
     if (param->hidden) lives_widget_set_sensitive(param->widgets[0],FALSE);
@@ -1787,8 +1787,8 @@ boolean add_param_to_box (LiVESBox *box, lives_rfx_t *rfx, int pnum, boolean add
 				     (gchar *)g_list_nth_data (param->list,get_int_param (param->value)));
     }
 
-    g_signal_connect_after (G_OBJECT (combo), "changed", 
-			    G_CALLBACK (after_string_list_changed), (gpointer) rfx);
+    lives_signal_connect_after (G_OBJECT (combo), "changed", 
+			    LIVES_GUI_CALLBACK (after_string_list_changed), (gpointer) rfx);
 
     // store parameter so we know whose trigger to use
     g_object_set_data (G_OBJECT (combo),"param_number",LIVES_INT_TO_POINTER (pnum));
@@ -2733,9 +2733,9 @@ void after_string_list_changed (LiVESCombo *combo, lives_rfx_t *rfx) {
       }
     
       if (disp_string!=NULL) {
-	g_signal_handlers_block_by_func(combo,(gpointer)after_string_list_changed,(gpointer)rfx);
+	lives_signal_handlers_block_by_func(combo,(gpointer)after_string_list_changed,(gpointer)rfx);
 	lives_combo_set_active_string (LIVES_COMBO(combo),disp_string);
-	g_signal_handlers_unblock_by_func(combo,(gpointer)after_string_list_changed,(gpointer)rfx);
+	lives_signal_handlers_unblock_by_func(combo,(gpointer)after_string_list_changed,(gpointer)rfx);
 	weed_free(disp_string);
       } 
       
@@ -3098,10 +3098,10 @@ int set_param_from_list(GList *plist, lives_param_t *param, int pnum, boolean wi
       if (upd) {
 	if (param->widgets[0]&&LIVES_IS_SPIN_BUTTON (param->widgets[0])) {
 	  lives_rfx_t *rfx=(lives_rfx_t *)g_object_get_data(G_OBJECT(param->widgets[0]),"rfx");
-	  g_signal_handlers_block_by_func(param->widgets[0],(gpointer)after_param_value_changed,(gpointer)rfx);
+	  lives_signal_handlers_block_by_func(param->widgets[0],(gpointer)after_param_value_changed,(gpointer)rfx);
 	  lives_spin_button_set_range (LIVES_SPIN_BUTTON (param->widgets[0]),(double)param->min,(double)param->max);
 	  lives_spin_button_update(LIVES_SPIN_BUTTON(param->widgets[0]));
-	  g_signal_handlers_unblock_by_func(param->widgets[0],(gpointer)after_param_value_changed,(gpointer)rfx);
+	  lives_signal_handlers_unblock_by_func(param->widgets[0],(gpointer)after_param_value_changed,(gpointer)rfx);
 	  lives_spin_button_set_value (LIVES_SPIN_BUTTON (param->widgets[0]),get_double_param(param->value));
 	  lives_spin_button_update(LIVES_SPIN_BUTTON(param->widgets[0]));
 	}
@@ -3133,10 +3133,10 @@ int set_param_from_list(GList *plist, lives_param_t *param, int pnum, boolean wi
       if (upd) {
 	if (param->widgets[0]&&LIVES_IS_SPIN_BUTTON (param->widgets[0])) {
 	  lives_rfx_t *rfx=(lives_rfx_t *)g_object_get_data(G_OBJECT(param->widgets[0]),"rfx");
-	  g_signal_handlers_block_by_func(param->widgets[0],(gpointer)after_param_value_changed,(gpointer)rfx);
+	  lives_signal_handlers_block_by_func(param->widgets[0],(gpointer)after_param_value_changed,(gpointer)rfx);
 	  lives_spin_button_set_range (LIVES_SPIN_BUTTON (param->widgets[0]),(double)param->min,(double)param->max);
 	  lives_spin_button_update(LIVES_SPIN_BUTTON(param->widgets[0]));
-	  g_signal_handlers_unblock_by_func(param->widgets[0],(gpointer)after_param_value_changed,(gpointer)rfx);
+	  lives_signal_handlers_unblock_by_func(param->widgets[0],(gpointer)after_param_value_changed,(gpointer)rfx);
 	  lives_spin_button_set_value (LIVES_SPIN_BUTTON (param->widgets[0]),(double)get_int_param(param->value));
 	  lives_spin_button_update(LIVES_SPIN_BUTTON(param->widgets[0]));
 	}

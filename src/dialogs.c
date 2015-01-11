@@ -116,8 +116,8 @@ void add_warn_check (GtkBox *box, int warn_mask_number) {
 
   lives_widget_show_all(hbox);
  
-  g_signal_connect (GTK_OBJECT (checkbutton), "toggled",
-		    G_CALLBACK (on_warn_mask_toggled),
+  lives_signal_connect (LIVES_GUI_OBJECT (checkbutton), "toggled",
+		    LIVES_GUI_CALLBACK (on_warn_mask_toggled),
                       GINT_TO_POINTER(warn_mask_number));
 }
 
@@ -128,8 +128,8 @@ static void add_clear_ds_button(GtkDialog* dialog) {
   lives_button_set_label(LIVES_BUTTON(button),_("_Recover disk space"));
   if (mainw->tried_ds_recover) lives_widget_set_sensitive(button,FALSE);
 
-  g_signal_connect (GTK_OBJECT (button), "clicked",
-		    G_CALLBACK (on_cleardisk_activate),
+  lives_signal_connect (LIVES_GUI_OBJECT (button), "clicked",
+		    LIVES_GUI_CALLBACK (on_cleardisk_activate),
 		    (gpointer)button);
 
   lives_widget_show(button);
@@ -148,8 +148,8 @@ static void add_clear_ds_adv(GtkBox *box) {
 
   lives_widget_show_all(hbox);
 
-  g_signal_connect (GTK_OBJECT (button), "clicked",
-		    G_CALLBACK (on_cleardisk_advanced_clicked),
+  lives_signal_connect (LIVES_GUI_OBJECT (button), "clicked",
+		    LIVES_GUI_CALLBACK (on_cleardisk_advanced_clicked),
 		    NULL);
 
 }
@@ -2584,8 +2584,8 @@ static void create_threaded_dialog(gchar *text, boolean has_cancel) {
       lives_dialog_add_action_widget (LIVES_DIALOG (procw->processing), enoughbutton, LIVES_RESPONSE_CANCEL);
       lives_widget_set_can_focus_and_default (enoughbutton);
 
-      g_signal_connect (GTK_OBJECT (enoughbutton), "clicked",
-			G_CALLBACK (on_dth_cancel_clicked),
+      lives_signal_connect (LIVES_GUI_OBJECT (enoughbutton), "clicked",
+			LIVES_GUI_CALLBACK (on_dth_cancel_clicked),
 			GINT_TO_POINTER(1));
       
       mainw->cancel_type=CANCEL_SOFT;
@@ -2594,8 +2594,8 @@ static void create_threaded_dialog(gchar *text, boolean has_cancel) {
     lives_dialog_add_action_widget (LIVES_DIALOG (procw->processing), cancelbutton, LIVES_RESPONSE_CANCEL);
     lives_widget_set_can_focus_and_default (cancelbutton);
 
-    g_signal_connect (GTK_OBJECT (cancelbutton), "clicked",
-                      G_CALLBACK (on_dth_cancel_clicked),
+    lives_signal_connect (LIVES_GUI_OBJECT (cancelbutton), "clicked",
+                      LIVES_GUI_CALLBACK (on_dth_cancel_clicked),
                       GINT_TO_POINTER(0));
 
     mainw->cancel_type=CANCEL_SOFT;

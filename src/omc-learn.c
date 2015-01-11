@@ -727,7 +727,7 @@ static void omc_macro_row_add_params(lives_omc_match_node_t *mnode, int row, omc
   g_object_set (renderer, "width-chars", 7, "mode", GTK_CELL_RENDERER_MODE_EDITABLE,
 		"editable", TRUE, "xalign", 1.0, "adjustment", spinadj, NULL);
   
-  g_signal_connect(renderer, "edited", (GCallback) cell1_edited_callback, mnode);
+  lives_signal_connect(renderer, "edited", (GCallback) cell1_edited_callback, mnode);
   
   
   //  renderer = gtk_cell_renderer_text_new ();
@@ -963,7 +963,7 @@ static LiVESWidget *create_omc_macro_combo(lives_omc_match_node_t *mnode, int ro
     lives_combo_set_active_index (LIVES_COMBO(combo),mnode->macro);
   }
 
-  g_signal_connect_after (G_OBJECT (combo), "changed", G_CALLBACK (on_omc_combo_entry_changed), mnode);
+  lives_signal_connect_after (G_OBJECT (combo), "changed", LIVES_GUI_CALLBACK (on_omc_combo_entry_changed), mnode);
 
   g_object_set_data(G_OBJECT(combo),"row",GINT_TO_POINTER(row));
   g_object_set_data(G_OBJECT(combo),"omclw",(gpointer)omclw);
@@ -1114,7 +1114,7 @@ static void omc_learner_add_row(int type, int detail, lives_omc_match_node_t *mn
 						      NULL);
    lives_tree_view_append_column (LIVES_TREE_VIEW (mnode->treev1), column);
 
-   g_signal_connect(renderer, "toggled", (GCallback) cell_toggled_callback, mnode);
+   lives_signal_connect(renderer, "toggled", (GCallback) cell_toggled_callback, mnode);
 
    renderer = gtk_cell_renderer_text_new ();
    column = lives_tree_view_column_new_with_attributes (_("range"),
@@ -1132,7 +1132,7 @@ static void omc_learner_add_row(int type, int detail, lives_omc_match_node_t *mn
    g_object_set (renderer, "width-chars", 7, "mode", GTK_CELL_RENDERER_MODE_EDITABLE,
 		 "editable", TRUE, "xalign", 1.0, "adjustment", spinadj, NULL);
 
-   g_signal_connect(renderer, "edited", (GCallback) cell_edited_callback, mnode);
+   lives_signal_connect(renderer, "edited", (GCallback) cell_edited_callback, mnode);
 
 
 
@@ -1151,7 +1151,7 @@ static void omc_learner_add_row(int type, int detail, lives_omc_match_node_t *mn
 		 "digits", OMC_FP_FIX, NULL);
 
    g_object_set_data(G_OBJECT(renderer), "colnum", GUINT_TO_POINTER(SCALE_COLUMN));
-   g_signal_connect(renderer, "edited", (GCallback) cell_edited_callback, mnode);
+   lives_signal_connect(renderer, "edited", (GCallback) cell_edited_callback, mnode);
 
 
    column = lives_tree_view_column_new_with_attributes (_("* scale"),
@@ -1169,7 +1169,7 @@ static void omc_learner_add_row(int type, int detail, lives_omc_match_node_t *mn
 		 "editable", TRUE, "xalign", 1.0, "adjustment", spinadj, NULL);
 
    g_object_set_data(G_OBJECT(renderer), "colnum", GUINT_TO_POINTER(OFFS2_COLUMN));
-   g_signal_connect(renderer, "edited", (GCallback) cell_edited_callback, mnode);
+   lives_signal_connect(renderer, "edited", (GCallback) cell_edited_callback, mnode);
 
 
    column = lives_tree_view_column_new_with_attributes (_("+ offset2"),
@@ -1332,8 +1332,8 @@ static omclearn_w *create_omclearn_dialog(void) {
   lives_container_add (LIVES_CONTAINER (hbuttonbox), omclw->clear_button);
   
 
-  g_signal_connect (GTK_OBJECT (omclw->clear_button), "clicked",
-		    G_CALLBACK (clear_unmatched),
+  lives_signal_connect (LIVES_GUI_OBJECT (omclw->clear_button), "clicked",
+		    LIVES_GUI_CALLBACK (clear_unmatched),
 		    (gpointer)omclw);
 
   lives_widget_set_sensitive(omclw->clear_button,FALSE);
@@ -1343,8 +1343,8 @@ static omclearn_w *create_omclearn_dialog(void) {
   lives_container_add (LIVES_CONTAINER (hbuttonbox), omclw->del_all_button);
   
 
-  g_signal_connect (GTK_OBJECT (omclw->del_all_button), "clicked",
-		    G_CALLBACK (del_all),
+  lives_signal_connect (LIVES_GUI_OBJECT (omclw->del_all_button), "clicked",
+		    LIVES_GUI_CALLBACK (del_all),
 		    (gpointer)omclw);
 
   lives_widget_set_sensitive(omclw->del_all_button,FALSE);
@@ -1365,8 +1365,8 @@ static omclearn_w *create_omclearn_dialog(void) {
   lives_button_box_set_layout (LIVES_BUTTON_BOX (hbuttonbox), LIVES_BUTTONBOX_SPREAD);
   
   
-  g_signal_connect (GTK_OBJECT (ok_button), "clicked",
-		    G_CALLBACK (close_learner_dialog),
+  lives_signal_connect (LIVES_GUI_OBJECT (ok_button), "clicked",
+		    LIVES_GUI_CALLBACK (close_learner_dialog),
 		    NULL);
   
   if (prefs->gui_monitor!=0) {

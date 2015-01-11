@@ -251,8 +251,8 @@ static void giw_vslider_destroy (GtkObject *object) {
 #if GTK_CHECK_VERSION(3,0,0)
   G_OBJECT_CLASS (giw_vslider_parent_class)->dispose (object);
 #else
-  if (GTK_OBJECT_CLASS (parent_class)->destroy)
-    (* GTK_OBJECT_CLASS (parent_class)->destroy) (object);
+  if (LIVES_GUI_OBJECT_CLASS (parent_class)->destroy)
+    (* LIVES_GUI_OBJECT_CLASS (parent_class)->destroy) (object);
 #endif
 }
 
@@ -820,19 +820,19 @@ giw_vslider_set_adjustment (GiwVSlider *vslider,
     g_signal_handler_disconnect((gpointer)(vslider->adjustment),vslider->chsig);
     g_signal_handler_disconnect((gpointer)(vslider->adjustment),vslider->vchsig);
 #else
-    gtk_signal_disconnect_by_data (GTK_OBJECT (vslider->adjustment), (gpointer) vslider);
+    gtk_signal_disconnect_by_data (LIVES_GUI_OBJECT (vslider->adjustment), (gpointer) vslider);
 #endif
     g_object_unref (G_OBJECT (vslider->adjustment));
     vslider->adjustment=NULL;
   }
    
   vslider->adjustment = adjustment;
-  g_object_ref (GTK_OBJECT (vslider->adjustment));
+  g_object_ref (LIVES_GUI_OBJECT (vslider->adjustment));
   
-  vslider->chsig = g_signal_connect (GTK_OBJECT (adjustment), "changed",
+  vslider->chsig = g_signal_connect (LIVES_GUI_OBJECT (adjustment), "changed",
 				     (GCallback) giw_vslider_adjustment_changed,
 				     (gpointer) vslider);
-  vslider->vchsig = g_signal_connect (GTK_OBJECT (adjustment), "value_changed",
+  vslider->vchsig = g_signal_connect (LIVES_GUI_OBJECT (adjustment), "value_changed",
 				      (GCallback) giw_vslider_adjustment_value_changed,
 				      (gpointer) vslider);
 

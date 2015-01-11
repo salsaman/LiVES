@@ -2587,10 +2587,7 @@ void on_copy_activate (GtkMenuItem *menuitem, gpointer user_data) {
 }
 
 
-void
-on_cut_activate                       (GtkMenuItem     *menuitem,
-				       gpointer         user_data)
-{
+void on_cut_activate (GtkMenuItem *menuitem, gpointer user_data) {
   int current_file=mainw->current_file;
   on_copy_activate(menuitem, user_data);
   if (mainw->cancelled) {
@@ -2604,9 +2601,7 @@ on_cut_activate                       (GtkMenuItem     *menuitem,
 }
 
 
-void on_paste_as_new_activate                       (GtkMenuItem     *menuitem,
-						     gpointer         user_data)
-{
+void on_paste_as_new_activate (GtkMenuItem *menuitem, gpointer user_data) {
   gchar *com;
   gchar *msg;
   int old_file=mainw->current_file,current_file;
@@ -3407,16 +3402,16 @@ void on_insert_activate (LiVESButton *button, gpointer user_data) {
     if (bad_header) do_header_write_error(mainw->current_file);
   }
 
-  g_signal_handler_block(mainw->spinbutton_end,mainw->spin_end_func);
+  lives_signal_handler_block(mainw->spinbutton_end,mainw->spin_end_func);
   lives_spin_button_set_range(LIVES_SPIN_BUTTON(mainw->spinbutton_end),cfile->frames==0?0:1,cfile->frames);
   lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_end),cfile->end);
-  g_signal_handler_unblock(mainw->spinbutton_end,mainw->spin_end_func);
+  lives_signal_handler_unblock(mainw->spinbutton_end,mainw->spin_end_func);
 
 
-  g_signal_handler_block(mainw->spinbutton_start,mainw->spin_start_func);
+  lives_signal_handler_block(mainw->spinbutton_start,mainw->spin_start_func);
   lives_spin_button_set_range(LIVES_SPIN_BUTTON(mainw->spinbutton_start),cfile->frames==0?0:1,cfile->frames);
   lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_start),cfile->start);
-  g_signal_handler_unblock(mainw->spinbutton_start,mainw->spin_start_func);
+  lives_signal_handler_unblock(mainw->spinbutton_start,mainw->spin_start_func);
 
   set_undoable (_("Insert"),TRUE);
   cfile->undo1_boolean=with_sound;
@@ -3468,16 +3463,15 @@ void on_insert_activate (LiVESButton *button, gpointer user_data) {
 
 
 
-void
-on_delete_activate                    (GtkMenuItem     *menuitem,
-				       gpointer         user_data)
-{
+void on_delete_activate (GtkMenuItem *menuitem, gpointer user_data) {
+  gchar *com;
+
+  boolean has_lmap_error=FALSE;
+  boolean bad_header=FALSE;
+
   int frames_cut=cfile->end-cfile->start+1;
   int start=cfile->start;
   int end=cfile->end;
-  gchar *com;
-  boolean has_lmap_error=FALSE;
-  boolean bad_header=FALSE;
 
   // occasionally we get a keyboard misread, so this should prevent that
   if (mainw->playing_file>-1) return;
@@ -3691,15 +3685,15 @@ on_delete_activate                    (GtkMenuItem     *menuitem,
     }
   }
 
-  g_signal_handler_block(mainw->spinbutton_end,mainw->spin_end_func);
+  lives_signal_handler_block(mainw->spinbutton_end,mainw->spin_end_func);
   lives_spin_button_set_range(LIVES_SPIN_BUTTON(mainw->spinbutton_end),cfile->frames==0?0:1,cfile->frames);
   lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_end),cfile->end);
-  g_signal_handler_unblock(mainw->spinbutton_end,mainw->spin_end_func);
+  lives_signal_handler_unblock(mainw->spinbutton_end,mainw->spin_end_func);
 
-  g_signal_handler_block(mainw->spinbutton_start,mainw->spin_start_func);
+  lives_signal_handler_block(mainw->spinbutton_start,mainw->spin_start_func);
   lives_spin_button_set_range(LIVES_SPIN_BUTTON(mainw->spinbutton_start),cfile->frames==0?0:1,cfile->frames);
   lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_start),cfile->start);
-  g_signal_handler_unblock(mainw->spinbutton_start,mainw->spin_start_func);
+  lives_signal_handler_unblock(mainw->spinbutton_start,mainw->spin_start_func);
 
   // menuitem is NULL if we came here from undo_insert
   if (menuitem==NULL&&!mainw->osc_auto) return;
@@ -4180,8 +4174,7 @@ void on_pause_clicked(void) {
 }
 
 
-void 
-on_encoder_entry_changed (GtkComboBox *combo, gpointer ptr) {
+void on_encoder_entry_changed (GtkComboBox *combo, gpointer ptr) {
   GList *encoder_capabilities=NULL;
   GList *ofmt_all=NULL;
   GList *ofmt=NULL;
@@ -4202,16 +4195,16 @@ on_encoder_entry_changed (GtkComboBox *combo, gpointer ptr) {
     GList *ofmt = NULL;
     ofmt = g_list_append(ofmt,g_strdup(mainw->string_constants[LIVES_STRING_CONSTANT_ANY]));
 
-    g_signal_handler_block(rdet->encoder_combo, rdet->encoder_name_fn);
+    lives_signal_handler_block(rdet->encoder_combo, rdet->encoder_name_fn);
     // ---
     lives_combo_set_active_string(LIVES_COMBO(rdet->encoder_combo), mainw->string_constants[LIVES_STRING_CONSTANT_ANY]);
     // ---
-    g_signal_handler_unblock(rdet->encoder_combo, rdet->encoder_name_fn);
+    lives_signal_handler_unblock(rdet->encoder_combo, rdet->encoder_name_fn);
 
     lives_combo_populate(LIVES_COMBO(rdet->ofmt_combo), ofmt);
-    g_signal_handler_block (rdet->ofmt_combo, rdet->encoder_ofmt_fn);
+    lives_signal_handler_block (rdet->ofmt_combo, rdet->encoder_ofmt_fn);
     lives_combo_set_active_string(LIVES_COMBO(rdet->ofmt_combo),mainw->string_constants[LIVES_STRING_CONSTANT_ANY]);
-    g_signal_handler_unblock (rdet->ofmt_combo, rdet->encoder_ofmt_fn);
+    lives_signal_handler_unblock (rdet->ofmt_combo, rdet->encoder_ofmt_fn);
 
     g_list_free(ofmt);
     if (prefs->acodec_list!=NULL) {
@@ -4259,19 +4252,19 @@ on_encoder_entry_changed (GtkComboBox *combo, gpointer ptr) {
     g_free (msg);
 
     if (prefsw != NULL) {
-      g_signal_handler_block(prefsw->encoder_combo, prefsw->encoder_name_fn);
+      lives_signal_handler_block(prefsw->encoder_combo, prefsw->encoder_name_fn);
       // ---
       lives_combo_set_active_string(LIVES_COMBO(prefsw->encoder_combo), prefs->encoder.name);
       // ---
-      g_signal_handler_unblock(prefsw->encoder_combo, prefsw->encoder_name_fn);
+      lives_signal_handler_unblock(prefsw->encoder_combo, prefsw->encoder_name_fn);
     }
 
     if (rdet != NULL) {
-      g_signal_handler_block(rdet->encoder_combo, rdet->encoder_name_fn);
+      lives_signal_handler_block(rdet->encoder_combo, rdet->encoder_name_fn);
       // ---
       lives_combo_set_active_string(LIVES_COMBO(rdet->encoder_combo), rdet->encoder_name);
       // ---
-      g_signal_handler_unblock(rdet->encoder_combo, rdet->encoder_name_fn);
+      lives_signal_handler_unblock(rdet->encoder_combo, rdet->encoder_name_fn);
     }
 
     dummy_list = plugin_request(PLUGIN_ENCODERS, prefs->encoder.name, "init");
@@ -4292,19 +4285,19 @@ on_encoder_entry_changed (GtkComboBox *combo, gpointer ptr) {
     do_plugin_encoder_error(future_prefs->encoder.name);
 
     if (prefsw!=NULL) {
-      g_signal_handler_block(prefsw->encoder_combo, prefsw->encoder_name_fn);
+      lives_signal_handler_block(prefsw->encoder_combo, prefsw->encoder_name_fn);
       // ---
       lives_combo_set_active_string(LIVES_COMBO(prefsw->encoder_combo), prefs->encoder.name);
       // ---
-      g_signal_handler_unblock(prefsw->encoder_combo, prefsw->encoder_name_fn);
+      lives_signal_handler_unblock(prefsw->encoder_combo, prefsw->encoder_name_fn);
     }
 
     if (rdet!=NULL) {
-      g_signal_handler_block (rdet->encoder_combo, rdet->encoder_name_fn);
+      lives_signal_handler_block (rdet->encoder_combo, rdet->encoder_name_fn);
       // ---
       lives_combo_set_active_string(LIVES_COMBO(rdet->encoder_combo), rdet->encoder_name);
       // ---
-      g_signal_handler_unblock (rdet->encoder_combo, rdet->encoder_name_fn);
+      lives_signal_handler_unblock (rdet->encoder_combo, rdet->encoder_name_fn);
     }
 
     plugin_request(PLUGIN_ENCODERS, prefs->encoder.name, "init");
@@ -4327,20 +4320,20 @@ on_encoder_entry_changed (GtkComboBox *combo, gpointer ptr) {
 
     if (prefsw!=NULL) {
       // we have to block here, otherwise on_ofmt_changed gets called for every added entry !
-      g_signal_handler_block(prefsw->ofmt_combo, prefsw->encoder_ofmt_fn);
+      lives_signal_handler_block(prefsw->ofmt_combo, prefsw->encoder_ofmt_fn);
 
       lives_combo_populate(LIVES_COMBO(prefsw->ofmt_combo), ofmt);
 
-      g_signal_handler_unblock(prefsw->ofmt_combo, prefsw->encoder_ofmt_fn);
+      lives_signal_handler_unblock(prefsw->ofmt_combo, prefsw->encoder_ofmt_fn);
     }
 
     if (rdet!=NULL) {
       // we have to block here, otherwise on_ofmt_changed gets called for every added entry !
-      g_signal_handler_block (rdet->ofmt_combo, rdet->encoder_ofmt_fn);
+      lives_signal_handler_block (rdet->ofmt_combo, rdet->encoder_ofmt_fn);
 
       lives_combo_populate(LIVES_COMBO(rdet->ofmt_combo), ofmt);
 
-      g_signal_handler_unblock(rdet->ofmt_combo, rdet->encoder_ofmt_fn);
+      lives_signal_handler_unblock(rdet->ofmt_combo, rdet->encoder_ofmt_fn);
     }
     
     g_list_free(ofmt);
@@ -4419,9 +4412,9 @@ boolean dirchange_callback (GtkAccelGroup *group, GObject *obj, guint keyval, Gd
     return TRUE;
   }
 
-  g_signal_handler_block(mainw->spinbutton_pb_fps,mainw->pb_fps_func);
+  lives_signal_handler_block(mainw->spinbutton_pb_fps,mainw->pb_fps_func);
   lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_pb_fps),-cfile->pb_fps);
-  g_signal_handler_unblock(mainw->spinbutton_pb_fps,mainw->pb_fps_func);
+  lives_signal_handler_unblock(mainw->spinbutton_pb_fps,mainw->pb_fps_func);
 
   // make sure this is called, sometimes we switch clips too soon...
   changed_fps_during_pb (LIVES_SPIN_BUTTON(mainw->spinbutton_pb_fps), NULL);
@@ -4444,10 +4437,10 @@ boolean fps_reset_callback (GtkAccelGroup *group, GObject *obj, guint keyval, Gd
     return TRUE;
   }
 
-  g_signal_handler_block(mainw->spinbutton_pb_fps,mainw->pb_fps_func);
+  lives_signal_handler_block(mainw->spinbutton_pb_fps,mainw->pb_fps_func);
   if (cfile->pb_fps>0.) lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_pb_fps),cfile->fps);
   else lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_pb_fps),-cfile->fps);
-  g_signal_handler_unblock(mainw->spinbutton_pb_fps,mainw->pb_fps_func);
+  lives_signal_handler_unblock(mainw->spinbutton_pb_fps,mainw->pb_fps_func);
 
   // make sure this is called, sometimes we switch clips too soon...
   changed_fps_during_pb (LIVES_SPIN_BUTTON(mainw->spinbutton_pb_fps), NULL);
@@ -7522,8 +7515,8 @@ void on_sepwin_activate (GtkMenuItem *menuitem, gpointer user_data) {
 
 	make_play_window();
 
-	mainw->pw_scroll_func=g_signal_connect (GTK_OBJECT (mainw->play_window), "scroll_event",
-						G_CALLBACK (on_mouse_scroll),
+	mainw->pw_scroll_func=lives_signal_connect (LIVES_GUI_OBJECT (mainw->play_window), "scroll_event",
+						LIVES_GUI_CALLBACK (on_mouse_scroll),
 						NULL);
 
 
@@ -7758,9 +7751,9 @@ on_loop_button_activate                (GtkMenuItem     *menuitem,
 					gpointer         user_data)
 {
   if (mainw->multitrack!=NULL) {
-    g_signal_handler_block (mainw->multitrack->loop_continue, mainw->multitrack->loop_cont_func);
+    lives_signal_handler_block (mainw->multitrack->loop_continue, mainw->multitrack->loop_cont_func);
     lives_check_menu_item_set_active(LIVES_CHECK_MENU_ITEM(mainw->multitrack->loop_continue),!mainw->loop_cont);
-    g_signal_handler_unblock (mainw->multitrack->loop_continue, mainw->multitrack->loop_cont_func);
+    lives_signal_handler_unblock (mainw->multitrack->loop_continue, mainw->multitrack->loop_cont_func);
   }
   lives_check_menu_item_set_active(LIVES_CHECK_MENU_ITEM(mainw->loop_continue), !mainw->loop_cont);
 }
@@ -7848,9 +7841,9 @@ void on_volume_slider_value_changed (LiVESScaleButton *sbutton, gpointer user_da
 
 void on_mute_button_activate (GtkMenuItem *menuitem, gpointer user_data) {
   if (mainw->multitrack!=NULL) {
-    g_signal_handler_block (mainw->multitrack->mute_audio, mainw->multitrack->mute_audio_func);
+    lives_signal_handler_block (mainw->multitrack->mute_audio, mainw->multitrack->mute_audio_func);
     lives_check_menu_item_set_active(LIVES_CHECK_MENU_ITEM(mainw->multitrack->mute_audio),!mainw->mute);
-    g_signal_handler_unblock (mainw->multitrack->mute_audio, mainw->multitrack->mute_audio_func);
+    lives_signal_handler_unblock (mainw->multitrack->mute_audio, mainw->multitrack->mute_audio_func);
   }
   lives_check_menu_item_set_active(LIVES_CHECK_MENU_ITEM(mainw->mute_audio), !mainw->mute);
 }
@@ -8601,8 +8594,8 @@ void popup_lmap_errors(GtkMenuItem *menuitem, gpointer user_data) {
 
   lives_dialog_add_action_widget (LIVES_DIALOG (textwindow->dialog), button, LIVES_RESPONSE_OK);
 
-  g_signal_connect (GTK_OBJECT (button), "clicked",
-		    G_CALLBACK (lives_general_button_clicked),
+  lives_signal_connect (LIVES_GUI_OBJECT (button), "clicked",
+		    LIVES_GUI_CALLBACK (lives_general_button_clicked),
 		    textwindow);
 
   lives_container_set_border_width (LIVES_CONTAINER (button), widget_opts.border_width);
@@ -8612,8 +8605,8 @@ void popup_lmap_errors(GtkMenuItem *menuitem, gpointer user_data) {
 
   lives_dialog_add_action_widget (LIVES_DIALOG (textwindow->dialog), textwindow->clear_button, LIVES_RESPONSE_CANCEL);
 
-  g_signal_connect (GTK_OBJECT (textwindow->clear_button), "clicked",
-		    G_CALLBACK (on_lerrors_clear_clicked),
+  lives_signal_connect (LIVES_GUI_OBJECT (textwindow->clear_button), "clicked",
+		    LIVES_GUI_CALLBACK (on_lerrors_clear_clicked),
 		    GINT_TO_POINTER(FALSE));
 
   lives_container_set_border_width (LIVES_CONTAINER (textwindow->clear_button), widget_opts.border_width);
@@ -8626,8 +8619,8 @@ void popup_lmap_errors(GtkMenuItem *menuitem, gpointer user_data) {
   lives_container_set_border_width (LIVES_CONTAINER (textwindow->delete_button), widget_opts.border_width);
   lives_widget_set_can_focus_and_default (textwindow->delete_button);
 
-  g_signal_connect (GTK_OBJECT (textwindow->delete_button), "clicked",
-		    G_CALLBACK (on_lerrors_delete_clicked),
+  lives_signal_connect (LIVES_GUI_OBJECT (textwindow->delete_button), "clicked",
+		    LIVES_GUI_CALLBACK (on_lerrors_delete_clicked),
 		    NULL);
 
   lives_widget_show_all(textwindow->dialog);
@@ -8693,9 +8686,9 @@ void on_toy_activate  (GtkMenuItem *menuitem, gpointer user_data) {
   switch (mainw->toy_type) {
     // old status
   case LIVES_TOY_AUTOLIVES:
-    g_signal_handler_block (mainw->toy_autolives, mainw->toy_func_autolives);
+    lives_signal_handler_block (mainw->toy_autolives, mainw->toy_func_autolives);
     lives_check_menu_item_set_active(LIVES_CHECK_MENU_ITEM(mainw->toy_autolives),FALSE);
-    g_signal_handler_unblock (mainw->toy_autolives, mainw->toy_func_autolives);
+    lives_signal_handler_unblock (mainw->toy_autolives, mainw->toy_func_autolives);
 
     if (mainw->toy_alives_pgid>1) {
       lives_killpg(mainw->toy_alives_pgid,LIVES_SIGHUP);
@@ -8708,9 +8701,9 @@ void on_toy_activate  (GtkMenuItem *menuitem, gpointer user_data) {
     break;
 
   case LIVES_TOY_MAD_FRAMES:
-    g_signal_handler_block (mainw->toy_random_frames, mainw->toy_func_random_frames);
+    lives_signal_handler_block (mainw->toy_random_frames, mainw->toy_func_random_frames);
     lives_check_menu_item_set_active(LIVES_CHECK_MENU_ITEM(mainw->toy_random_frames),FALSE);
-    g_signal_handler_unblock (mainw->toy_random_frames, mainw->toy_func_random_frames);
+    lives_signal_handler_unblock (mainw->toy_random_frames, mainw->toy_func_random_frames);
     if (mainw->playing_file>-1) {
       if (mainw->faded) {
 	lives_widget_hide(mainw->start_image);
@@ -8721,14 +8714,14 @@ void on_toy_activate  (GtkMenuItem *menuitem, gpointer user_data) {
     }
     break;
   case LIVES_TOY_TV:
-    g_signal_handler_block (mainw->toy_tv, mainw->toy_func_lives_tv);
+    lives_signal_handler_block (mainw->toy_tv, mainw->toy_func_lives_tv);
     lives_check_menu_item_set_active(LIVES_CHECK_MENU_ITEM(mainw->toy_tv),FALSE);
-    g_signal_handler_unblock (mainw->toy_tv, mainw->toy_func_lives_tv);
+    lives_signal_handler_unblock (mainw->toy_tv, mainw->toy_func_lives_tv);
     break;
   default:
-    g_signal_handler_block (mainw->toy_none, mainw->toy_func_none);
+    lives_signal_handler_block (mainw->toy_none, mainw->toy_func_none);
     lives_check_menu_item_set_active(LIVES_CHECK_MENU_ITEM(mainw->toy_none),FALSE);
-    g_signal_handler_unblock (mainw->toy_none, mainw->toy_func_none);
+    lives_signal_handler_unblock (mainw->toy_none, mainw->toy_func_none);
     break;
   }
 
@@ -8736,9 +8729,9 @@ void on_toy_activate  (GtkMenuItem *menuitem, gpointer user_data) {
 
   switch (mainw->toy_type) {
   case LIVES_TOY_NONE:
-    g_signal_handler_block (mainw->toy_none, mainw->toy_func_none);
+    lives_signal_handler_block (mainw->toy_none, mainw->toy_func_none);
     lives_check_menu_item_set_active(LIVES_CHECK_MENU_ITEM(mainw->toy_none),TRUE);
-    g_signal_handler_unblock (mainw->toy_none, mainw->toy_func_none);
+    lives_signal_handler_unblock (mainw->toy_none, mainw->toy_func_none);
     return;
 #ifdef ENABLE_OSC
   case LIVES_TOY_AUTOLIVES:
@@ -9817,7 +9810,7 @@ on_mouse_sel_reset           (LiVESWidget       *widget,
   if (mainw->current_file<=0) return FALSE;
   mainw->sel_start=0;
   if (!mainw->mouse_blocked) {
-    g_signal_handler_block (mainw->eventbox2,mainw->mouse_fn1);
+    lives_signal_handler_block (mainw->eventbox2,mainw->mouse_fn1);
     mainw->mouse_blocked=TRUE;
   }
   return FALSE;
@@ -9900,7 +9893,7 @@ on_mouse_sel_start           (LiVESWidget       *widget,
 	    }
 	  }}}}}
   if (mainw->mouse_blocked) {// stops a warning if the user clicks around a lot...
-    g_signal_handler_unblock (mainw->eventbox2,mainw->mouse_fn1);
+    lives_signal_handler_unblock (mainw->eventbox2,mainw->mouse_fn1);
     mainw->mouse_blocked=FALSE;
   }
   return FALSE;
@@ -9958,7 +9951,7 @@ on_hrule_reset           (LiVESWidget       *widget,
 						       lives_widget_get_allocation_width(mainw->vidbar)*cfile->total_time));
 
   if (!mainw->hrule_blocked) {
-    g_signal_handler_block (mainw->eventbox5,mainw->hrule_func);
+    lives_signal_handler_block (mainw->eventbox5,mainw->hrule_func);
     mainw->hrule_blocked=TRUE;
   }
   if (cfile->pointer_time>0.) {
@@ -10007,7 +10000,7 @@ on_hrule_set           (LiVESWidget       *widget,
   lives_widget_queue_draw (mainw->hruler);
   get_play_times();
   if (mainw->hrule_blocked) {
-    g_signal_handler_unblock (mainw->eventbox5,mainw->hrule_func);
+    lives_signal_handler_unblock (mainw->eventbox5,mainw->hrule_func);
     mainw->hrule_blocked=FALSE;
   }
 
@@ -10064,8 +10057,8 @@ boolean frame_context (LiVESWidget *widget, GdkEventButton *event, gpointer whic
 
   if (cfile->frames>0||mainw->multitrack!=NULL) {
     save_frame_as = lives_menu_item_new_with_mnemonic (_("_Save frame as..."));
-    g_signal_connect (GTK_OBJECT (save_frame_as), "activate",
-		      G_CALLBACK (save_frame),
+    lives_signal_connect (LIVES_GUI_OBJECT (save_frame_as), "activate",
+		      LIVES_GUI_CALLBACK (save_frame),
 		      GINT_TO_POINTER(frame));
     
 
@@ -10634,14 +10627,14 @@ void on_encoder_ofmt_changed (GtkComboBox *combo, gpointer user_data) {
 
 	if (!strcmp(array[1],new_fmt)) {
 	  if (prefsw!=NULL) {
-	    g_signal_handler_block(prefsw->ofmt_combo, prefsw->encoder_ofmt_fn);
+	    lives_signal_handler_block(prefsw->ofmt_combo, prefsw->encoder_ofmt_fn);
             lives_combo_set_active_index(LIVES_COMBO(prefsw->ofmt_combo), counter);
-	    g_signal_handler_unblock(prefsw->ofmt_combo, prefsw->encoder_ofmt_fn);
+	    lives_signal_handler_unblock(prefsw->ofmt_combo, prefsw->encoder_ofmt_fn);
 	  }
 	  if (rdet!=NULL) {
-	    g_signal_handler_block(rdet->ofmt_combo, rdet->encoder_ofmt_fn);
+	    lives_signal_handler_block(rdet->ofmt_combo, rdet->encoder_ofmt_fn);
             lives_combo_set_active_index(LIVES_COMBO(rdet->ofmt_combo), counter);
-	    g_signal_handler_unblock(rdet->ofmt_combo, rdet->encoder_ofmt_fn);
+	    lives_signal_handler_unblock(rdet->ofmt_combo, rdet->encoder_ofmt_fn);
 	  }
 	  g_snprintf(future_prefs->encoder.of_name,51,"%s",array[0]);
 	  g_snprintf(future_prefs->encoder.of_desc,128,"%s",array[1]);

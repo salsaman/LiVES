@@ -305,8 +305,8 @@ boolean do_audio_choice_dialog(short startup_phase) {
     set_pref("audio_player","pulse");
   }
 
-  g_signal_connect (GTK_OBJECT (radiobutton0), "toggled",
-                      G_CALLBACK (on_init_aplayer_toggled),
+  lives_signal_connect (LIVES_GUI_OBJECT (radiobutton0), "toggled",
+                      LIVES_GUI_CALLBACK (on_init_aplayer_toggled),
                       GINT_TO_POINTER(AUD_PLAYER_PULSE));
 
 
@@ -326,8 +326,8 @@ boolean do_audio_choice_dialog(short startup_phase) {
     set_pref("audio_player","jack");
   }
 
-  g_signal_connect (GTK_OBJECT (radiobutton1), "toggled",
-                      G_CALLBACK (on_init_aplayer_toggled),
+  lives_signal_connect (LIVES_GUI_OBJECT (radiobutton1), "toggled",
+                      LIVES_GUI_CALLBACK (on_init_aplayer_toggled),
                       GINT_TO_POINTER(AUD_PLAYER_JACK));
 
 
@@ -347,8 +347,8 @@ boolean do_audio_choice_dialog(short startup_phase) {
       set_pref("audio_player","sox");
     }
 
-    g_signal_connect (GTK_OBJECT (radiobutton2), "toggled",
-                      G_CALLBACK (on_init_aplayer_toggled),
+    lives_signal_connect (LIVES_GUI_OBJECT (radiobutton2), "toggled",
+                      LIVES_GUI_CALLBACK (on_init_aplayer_toggled),
                       GINT_TO_POINTER(AUD_PLAYER_SOX));
 
 
@@ -367,8 +367,8 @@ boolean do_audio_choice_dialog(short startup_phase) {
       set_pref("audio_player","mplayer");
     }
 						    
-    g_signal_connect (GTK_OBJECT (radiobutton3), "toggled",
-		      G_CALLBACK (on_init_aplayer_toggled),
+    lives_signal_connect (LIVES_GUI_OBJECT (radiobutton3), "toggled",
+		      LIVES_GUI_CALLBACK (on_init_aplayer_toggled),
                       GINT_TO_POINTER(AUD_PLAYER_MPLAYER));
 
 
@@ -387,8 +387,8 @@ boolean do_audio_choice_dialog(short startup_phase) {
       set_pref("audio_player","mplayer2");
     }
 						    
-    g_signal_connect (GTK_OBJECT (radiobutton4), "toggled",
-		      G_CALLBACK (on_init_aplayer_toggled),
+    lives_signal_connect (LIVES_GUI_OBJECT (radiobutton4), "toggled",
+		      LIVES_GUI_CALLBACK (on_init_aplayer_toggled),
                       GINT_TO_POINTER(AUD_PLAYER_MPLAYER2));
 
 

@@ -2088,8 +2088,8 @@ void scroll_tracks (lives_mt *mt, int top_track, boolean set_value) {
       lives_box_pack_start (LIVES_BOX (hbox), label, FALSE, FALSE, 0);
       lives_container_add (LIVES_CONTAINER (ahbox), arrow);
       
-      lives_table_attach (LIVES_TABLE (mt->timeline_table), labelbox, 1, 6, 0, 1, LIVES_FILL, (GtkAttachOptions)0, 0, 0);
-      lives_table_attach (LIVES_TABLE (mt->timeline_table), ahbox, 6, 7, 0, 1, LIVES_FILL, (GtkAttachOptions)0, 0, 0);
+      lives_table_attach (LIVES_TABLE (mt->timeline_table), labelbox, 1, 6, 0, 1, LIVES_FILL, (LiVESAttachOptions)0, 0, 0);
+      lives_table_attach (LIVES_TABLE (mt->timeline_table), ahbox, 6, 7, 0, 1, LIVES_FILL, (LiVESAttachOptions)0, 0, 0);
       
       g_object_set_data (G_OBJECT(mt->audio_draws->data),"labelbox",labelbox);
       g_object_set_data (G_OBJECT(mt->audio_draws->data),"ahbox",ahbox);
@@ -2105,8 +2105,8 @@ void scroll_tracks (lives_mt *mt, int top_track, boolean set_value) {
 			(gpointer)mt);
       
       lives_table_attach (LIVES_TABLE (mt->timeline_table), (LiVESWidget *)mt->audio_draws->data, 7, 40, 0, 1,
-			(GtkAttachOptions) (LIVES_EXPAND | LIVES_FILL),
-			(GtkAttachOptions) (LIVES_FILL), 0, 0);
+			(LiVESAttachOptions) (LIVES_EXPAND | LIVES_FILL),
+			(LiVESAttachOptions) (LIVES_FILL), 0, 0);
 
       lives_signal_connect (LIVES_GUI_OBJECT (mt->audio_draws->data), "button_press_event",
 			LIVES_GUI_CALLBACK (on_track_click),
@@ -2125,8 +2125,8 @@ void scroll_tracks (lives_mt *mt, int top_track, boolean set_value) {
 	xeventbox=(LiVESWidget *)g_object_get_data(G_OBJECT(mt->audio_draws->data),"achan0");
 	
 	lives_table_attach (LIVES_TABLE (mt->timeline_table), xeventbox, 7, 40, 1, 2,
-			  (GtkAttachOptions) (LIVES_EXPAND | LIVES_FILL),
-			  (GtkAttachOptions) (LIVES_FILL), 0, 0);
+			  (LiVESAttachOptions) (LIVES_EXPAND | LIVES_FILL),
+			  (LiVESAttachOptions) (LIVES_FILL), 0, 0);
 	
 	lives_widget_set_bg_color(xeventbox, LIVES_WIDGET_STATE_NORMAL, &palette->white);
 	lives_widget_set_app_paintable(xeventbox,TRUE);
@@ -2138,8 +2138,8 @@ void scroll_tracks (lives_mt *mt, int top_track, boolean set_value) {
 	  xeventbox=(LiVESWidget *)g_object_get_data(G_OBJECT(mt->audio_draws->data),"achan1");
 	  
 	  lives_table_attach (LIVES_TABLE (mt->timeline_table), xeventbox, 7, 40, 2, 3,
-			    (GtkAttachOptions) (LIVES_EXPAND | LIVES_FILL),
-			    (GtkAttachOptions) (LIVES_FILL), 0, 0);
+			    (LiVESAttachOptions) (LIVES_EXPAND | LIVES_FILL),
+			    (LiVESAttachOptions) (LIVES_FILL), 0, 0);
 	  
 	  lives_widget_set_bg_color(xeventbox, LIVES_WIDGET_STATE_NORMAL, &palette->white);
 	  lives_widget_set_app_paintable(xeventbox,TRUE);
@@ -2235,16 +2235,16 @@ void scroll_tracks (lives_mt *mt, int top_track, boolean set_value) {
       lives_box_pack_start (LIVES_BOX (hbox), label, FALSE, FALSE, 0);
       lives_container_add (LIVES_CONTAINER (ahbox), arrow);
 
-      lives_table_attach (LIVES_TABLE (mt->timeline_table), labelbox, 0, 6, rows, rows+1, LIVES_FILL, (GtkAttachOptions)0, 0, 0);
-      lives_table_attach (LIVES_TABLE (mt->timeline_table), ahbox, 6, 7, rows, rows+1, LIVES_FILL, (GtkAttachOptions)0, 0, 0);
+      lives_table_attach (LIVES_TABLE (mt->timeline_table), labelbox, 0, 6, rows, rows+1, LIVES_FILL, (LiVESAttachOptions)0, 0, 0);
+      lives_table_attach (LIVES_TABLE (mt->timeline_table), ahbox, 6, 7, rows, rows+1, LIVES_FILL, (LiVESAttachOptions)0, 0, 0);
       
       g_object_set_data (G_OBJECT(eventbox),"labelbox",labelbox);
       g_object_set_data (G_OBJECT(eventbox),"ahbox",ahbox);
       g_object_set_data (G_OBJECT(ahbox),"eventbox",eventbox);
 
       lives_table_attach (LIVES_TABLE (mt->timeline_table), eventbox, 7, 40, rows, rows+1,
-			(GtkAttachOptions) (LIVES_EXPAND | LIVES_FILL),
-			(GtkAttachOptions) (LIVES_FILL), 0, 0);
+			(LiVESAttachOptions) (LIVES_EXPAND | LIVES_FILL),
+			(LiVESAttachOptions) (LIVES_FILL), 0, 0);
 
       if (!prefs->lamp_buttons) {
 	lives_signal_connect_after (LIVES_GUI_OBJECT (checkbutton), "toggled",
@@ -2334,8 +2334,8 @@ void scroll_tracks (lives_mt *mt, int top_track, boolean set_value) {
 	  lives_box_pack_start (LIVES_BOX (hbox), label, FALSE, FALSE, 0);
 	  lives_container_add (LIVES_CONTAINER (ahbox), arrow);
 	  
-	  lives_table_attach (LIVES_TABLE (mt->timeline_table), labelbox, 1, 6, rows, rows+1, LIVES_FILL, (GtkAttachOptions)0, 0, 0);
-	  lives_table_attach (LIVES_TABLE (mt->timeline_table), ahbox, 6, 7, rows, rows+1, LIVES_FILL, (GtkAttachOptions)0, 0, 0);
+	  lives_table_attach (LIVES_TABLE (mt->timeline_table), labelbox, 1, 6, rows, rows+1, LIVES_FILL, (LiVESAttachOptions)0, 0, 0);
+	  lives_table_attach (LIVES_TABLE (mt->timeline_table), ahbox, 6, 7, rows, rows+1, LIVES_FILL, (LiVESAttachOptions)0, 0, 0);
 	  
 	  g_object_set_data (G_OBJECT(aeventbox),"labelbox",labelbox);
 	  g_object_set_data (G_OBJECT(aeventbox),"ahbox",ahbox);
@@ -2351,8 +2351,8 @@ void scroll_tracks (lives_mt *mt, int top_track, boolean set_value) {
 			    (gpointer)mt);
 	  
 	  lives_table_attach (LIVES_TABLE (mt->timeline_table), aeventbox, 7, 40, rows, rows+1,
-			    (GtkAttachOptions) (LIVES_EXPAND | LIVES_FILL),
-			    (GtkAttachOptions) (LIVES_FILL), 0, 0);
+			    (LiVESAttachOptions) (LIVES_EXPAND | LIVES_FILL),
+			    (LiVESAttachOptions) (LIVES_FILL), 0, 0);
 	  
 	  lives_signal_connect (LIVES_GUI_OBJECT (aeventbox), "button_press_event",
 			    LIVES_GUI_CALLBACK (on_track_click),
@@ -2383,8 +2383,8 @@ void scroll_tracks (lives_mt *mt, int top_track, boolean set_value) {
 
 
 	      lives_table_attach (LIVES_TABLE (mt->timeline_table), xeventbox, 7, 40, rows, rows+1,
-				(GtkAttachOptions) (LIVES_EXPAND | LIVES_FILL),
-				(GtkAttachOptions) (LIVES_FILL), 0, 0);
+				(LiVESAttachOptions) (LIVES_EXPAND | LIVES_FILL),
+				(LiVESAttachOptions) (LIVES_FILL), 0, 0);
 	      
 	      lives_widget_set_bg_color(xeventbox, LIVES_WIDGET_STATE_NORMAL, &palette->white);
 	      lives_widget_set_app_paintable(xeventbox,TRUE);
@@ -2406,8 +2406,8 @@ void scroll_tracks (lives_mt *mt, int top_track, boolean set_value) {
 					       (double)((int)lives_adjustment_get_page_size(LIVES_ADJUSTMENT(mt->vadjustment))-1));
 		
 		lives_table_attach (LIVES_TABLE (mt->timeline_table), xeventbox, 7, 40, rows, rows+1,
-				  (GtkAttachOptions) (LIVES_EXPAND | LIVES_FILL),
-				  (GtkAttachOptions) (LIVES_FILL), 0, 0);
+				  (LiVESAttachOptions) (LIVES_EXPAND | LIVES_FILL),
+				  (LiVESAttachOptions) (LIVES_FILL), 0, 0);
 		
 		lives_widget_set_bg_color(xeventbox, LIVES_WIDGET_STATE_NORMAL, &palette->white);
 		lives_widget_set_app_paintable(xeventbox,TRUE);
@@ -3819,7 +3819,7 @@ static void no_time_selected(lives_mt *mt) {
 
 
 void
-mt_spin_start_value_changed           (GtkSpinButton   *spinbutton,
+mt_spin_start_value_changed           (LiVESSpinButton   *spinbutton,
 				       gpointer         user_data) {
   lives_mt *mt=(lives_mt *)user_data;
   boolean has_region=(mt->region_start!=mt->region_end);
@@ -3869,7 +3869,7 @@ mt_spin_start_value_changed           (GtkSpinButton   *spinbutton,
 
 
 void
-mt_spin_end_value_changed           (GtkSpinButton   *spinbutton,
+mt_spin_end_value_changed           (LiVESSpinButton   *spinbutton,
 				     gpointer         user_data) {
   lives_mt *mt=(lives_mt *)user_data;
   boolean has_region=(mt->region_start!=mt->region_end);
@@ -5085,7 +5085,7 @@ static weed_plant_t *load_event_list_inner (lives_mt *mt, int fd, boolean show_e
 }
 
 
-static void on_insa_toggled (GtkToggleButton *tbutton, gpointer user_data) {
+static void on_insa_toggled (LiVESToggleButton *tbutton, gpointer user_data) {
   lives_mt *mt=(lives_mt *)user_data;
   mt->opts.insert_audio=lives_toggle_button_get_active(tbutton);
   if (prefs->lamp_buttons) {
@@ -5094,7 +5094,7 @@ static void on_insa_toggled (GtkToggleButton *tbutton, gpointer user_data) {
   }
 }
 
-static void on_snapo_toggled (GtkToggleButton *tbutton, gpointer user_data) {
+static void on_snapo_toggled (LiVESToggleButton *tbutton, gpointer user_data) {
   lives_mt *mt=(lives_mt *)user_data;
   mt->opts.snap_over=lives_toggle_button_get_active(tbutton);
   if (prefs->lamp_buttons) {
@@ -6341,7 +6341,7 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
                               LIVES_ACCEL_VISIBLE);
   lives_widget_add_accelerator (mt->insert, "activate", mt->accel_group,
                               LIVES_KEY_i, LIVES_CONTROL_MASK,
-                              (GtkAccelFlags)0);
+                              (LiVESAccelFlags)0);
   lives_widget_set_sensitive (mt->insert, FALSE);
 
 
@@ -7337,7 +7337,7 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
 
   lives_widget_add_accelerator (zoom_in, "activate", mt->accel_group,
                               LIVES_KEY_Equal, (GdkModifierType)LIVES_CONTROL_MASK,
-                              (GtkAccelFlags)0);
+                              (LiVESAccelFlags)0);
 
   zoom_out = lives_menu_item_new_with_mnemonic (_("_Zoom out"));
   lives_container_add (LIVES_CONTAINER (menuitem_menu), zoom_out);
@@ -7699,7 +7699,7 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
                       LIVES_GUI_CALLBACK (on_mt_list_fx_activate),
                       (gpointer)mt);
 
-  lives_accel_group_connect (LIVES_ACCEL_GROUP (mt->accel_group), LIVES_KEY_m, (GdkModifierType)0, (GtkAccelFlags)0, 
+  lives_accel_group_connect (LIVES_ACCEL_GROUP (mt->accel_group), LIVES_KEY_m, (GdkModifierType)0, (LiVESAccelFlags)0, 
 			   g_cclosure_new (LIVES_GUI_CALLBACK (mt_mark_callback),(gpointer)mt,NULL));
 
   eventbox=lives_event_box_new();
@@ -8786,24 +8786,24 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
 		    LIVES_GUI_CALLBACK (on_mt_delete_event),
 		    (gpointer)mt);
 
-  lives_accel_group_connect (LIVES_ACCEL_GROUP (mt->accel_group), LIVES_KEY_Page_Up, LIVES_CONTROL_MASK, (GtkAccelFlags)0,
+  lives_accel_group_connect (LIVES_ACCEL_GROUP (mt->accel_group), LIVES_KEY_Page_Up, LIVES_CONTROL_MASK, (LiVESAccelFlags)0,
 			   g_cclosure_new (LIVES_GUI_CALLBACK (mt_prevclip),mt,NULL));
-  lives_accel_group_connect (LIVES_ACCEL_GROUP (mt->accel_group), LIVES_KEY_Page_Down, LIVES_CONTROL_MASK, (GtkAccelFlags)0, 
+  lives_accel_group_connect (LIVES_ACCEL_GROUP (mt->accel_group), LIVES_KEY_Page_Down, LIVES_CONTROL_MASK, (LiVESAccelFlags)0, 
 			   g_cclosure_new (LIVES_GUI_CALLBACK (mt_nextclip),mt,NULL));
 
-  lives_accel_group_connect (LIVES_ACCEL_GROUP (mt->accel_group), LIVES_KEY_Left, LIVES_CONTROL_MASK, (GtkAccelFlags)0, 
+  lives_accel_group_connect (LIVES_ACCEL_GROUP (mt->accel_group), LIVES_KEY_Left, LIVES_CONTROL_MASK, (LiVESAccelFlags)0, 
 			   g_cclosure_new (LIVES_GUI_CALLBACK (mt_tlback),mt,NULL));
-  lives_accel_group_connect (LIVES_ACCEL_GROUP (mt->accel_group), LIVES_KEY_Right, LIVES_CONTROL_MASK, (GtkAccelFlags)0, 
+  lives_accel_group_connect (LIVES_ACCEL_GROUP (mt->accel_group), LIVES_KEY_Right, LIVES_CONTROL_MASK, (LiVESAccelFlags)0, 
 			   g_cclosure_new (LIVES_GUI_CALLBACK (mt_tlfor),mt,NULL));
 
-  lives_accel_group_connect (LIVES_ACCEL_GROUP (mt->accel_group), LIVES_KEY_Left, LIVES_SHIFT_MASK, (GtkAccelFlags)0, 
+  lives_accel_group_connect (LIVES_ACCEL_GROUP (mt->accel_group), LIVES_KEY_Left, LIVES_SHIFT_MASK, (LiVESAccelFlags)0, 
 			   g_cclosure_new (LIVES_GUI_CALLBACK (mt_tlback_frame),mt,NULL));
-  lives_accel_group_connect (LIVES_ACCEL_GROUP (mt->accel_group), LIVES_KEY_Right, LIVES_SHIFT_MASK, (GtkAccelFlags)0, 
+  lives_accel_group_connect (LIVES_ACCEL_GROUP (mt->accel_group), LIVES_KEY_Right, LIVES_SHIFT_MASK, (LiVESAccelFlags)0, 
 			   g_cclosure_new (LIVES_GUI_CALLBACK (mt_tlfor_frame),mt,NULL));
 
-  lives_accel_group_connect (LIVES_ACCEL_GROUP (mt->accel_group), LIVES_KEY_Up, LIVES_CONTROL_MASK, (GtkAccelFlags)0, 
+  lives_accel_group_connect (LIVES_ACCEL_GROUP (mt->accel_group), LIVES_KEY_Up, LIVES_CONTROL_MASK, (LiVESAccelFlags)0, 
 			   g_cclosure_new (LIVES_GUI_CALLBACK (mt_trup),mt,NULL));
-  lives_accel_group_connect (LIVES_ACCEL_GROUP (mt->accel_group), LIVES_KEY_Down, LIVES_CONTROL_MASK, (GtkAccelFlags)0, 
+  lives_accel_group_connect (LIVES_ACCEL_GROUP (mt->accel_group), LIVES_KEY_Down, LIVES_CONTROL_MASK, (LiVESAccelFlags)0, 
 			   g_cclosure_new (LIVES_GUI_CALLBACK (mt_trdown),mt,NULL));
 
   mt->last_direction=DIRECTION_POSITIVE;
@@ -9493,7 +9493,7 @@ void mt_init_tracks (lives_mt *mt, boolean set_min_max) {
 #ifndef ENABLE_GIW_3
   if (mt->timeline_table==NULL) {
     label=lives_standard_label_new (_("Timeline (seconds)"));
-    lives_table_attach (LIVES_TABLE (mt->timeline_table_header), label, 0, 7, 0, 2, LIVES_FILL, (GtkAttachOptions)0, 0, 0);
+    lives_table_attach (LIVES_TABLE (mt->timeline_table_header), label, 0, 7, 0, 2, LIVES_FILL, (LiVESAttachOptions)0, 0, 0);
   }
 #endif
 
@@ -9584,12 +9584,12 @@ void mt_init_tracks (lives_mt *mt, boolean set_min_max) {
     lives_container_add (LIVES_CONTAINER (mt->timeline_eb), mt->timeline);
     
     lives_table_attach (LIVES_TABLE (mt->timeline_table_header), mt->timeline_eb, 7, 40, 0, 1,
-		      (GtkAttachOptions) (LIVES_EXPAND | LIVES_FILL),
-		      (GtkAttachOptions) (LIVES_FILL), 0, 0);
+		      (LiVESAttachOptions) (LIVES_EXPAND | LIVES_FILL),
+		      (LiVESAttachOptions) (LIVES_FILL), 0, 0);
 
     lives_table_attach (LIVES_TABLE (mt->timeline_table_header), mt->timeline_reg, 7, 40, 1, 2,
-		      (GtkAttachOptions) (LIVES_EXPAND | LIVES_FILL),
-		      (GtkAttachOptions) (LIVES_FILL), 0, 0);
+		      (LiVESAttachOptions) (LIVES_EXPAND | LIVES_FILL),
+		      (LiVESAttachOptions) (LIVES_FILL), 0, 0);
   }
 
   if (mt->event_list!=NULL) {
@@ -12039,7 +12039,7 @@ void in_out_end_changed (LiVESWidget *widget, gpointer user_data) {
 }
 
 
-void avel_reverse_toggled (GtkToggleButton *togglebutton, gpointer user_data) {
+void avel_reverse_toggled (LiVESToggleButton *togglebutton, gpointer user_data) {
   lives_mt *mt=(lives_mt *)user_data;
   track_rect *block=mt->block_selected;
   int track=GPOINTER_TO_INT(g_object_get_data(G_OBJECT(block->eventbox),"layer_number"));
@@ -12089,7 +12089,7 @@ void avel_reverse_toggled (GtkToggleButton *togglebutton, gpointer user_data) {
 }
 
 
-void avel_spin_changed (GtkSpinButton *spinbutton, gpointer user_data) {
+void avel_spin_changed (LiVESSpinButton *spinbutton, gpointer user_data) {
   lives_mt *mt=(lives_mt *)user_data;
   track_rect *block=mt->block_selected;
   int track=GPOINTER_TO_INT(g_object_get_data(G_OBJECT(block->eventbox),"layer_number"));
@@ -12221,7 +12221,7 @@ void avel_spin_changed (GtkSpinButton *spinbutton, gpointer user_data) {
 
 
 void
-in_anchor_toggled (GtkToggleButton *togglebutton, gpointer user_data) {
+in_anchor_toggled (LiVESToggleButton *togglebutton, gpointer user_data) {
   lives_mt *mt=(lives_mt *)user_data;
   track_rect *block=mt->block_selected;
   weed_timecode_t offset_end;
@@ -12271,7 +12271,7 @@ in_anchor_toggled (GtkToggleButton *togglebutton, gpointer user_data) {
 }
 
 void
-out_anchor_toggled (GtkToggleButton *togglebutton, gpointer user_data) {
+out_anchor_toggled (LiVESToggleButton *togglebutton, gpointer user_data) {
   lives_mt *mt=(lives_mt *)user_data;
   track_rect *block=mt->block_selected;
   weed_timecode_t offset_end;
@@ -18408,7 +18408,7 @@ static boolean is_node_tc(lives_mt *mt, weed_timecode_t tc) {
 
 
 // apply the param changes and update widgets
-void on_node_spin_value_changed (GtkSpinButton *spinbutton, gpointer user_data) {
+void on_node_spin_value_changed (LiVESSpinButton *spinbutton, gpointer user_data) {
   lives_mt *mt=(lives_mt *)user_data;
   weed_timecode_t init_tc=get_event_timecode(mt->init_event);
   weed_timecode_t otc=lives_spin_button_get_value(spinbutton)*U_SEC+init_tc;
@@ -21796,7 +21796,7 @@ static void on_amixer_reset_clicked (LiVESButton *button, lives_mt *mt) {
 }
 
 
-static void after_amixer_gang_toggled (GtkToggleButton *toggle, lives_amixer_t *amixer) {
+static void after_amixer_gang_toggled (LiVESToggleButton *toggle, lives_amixer_t *amixer) {
   lives_widget_set_sensitive(amixer->inv_checkbutton,(lives_toggle_button_get_active(toggle)));
   if (prefs->lamp_buttons) {
     if (lives_toggle_button_get_active(toggle)) lives_widget_set_bg_color(LIVES_WIDGET(toggle), LIVES_WIDGET_STATE_PRELIGHT, &palette->light_green);
@@ -21805,7 +21805,7 @@ static void after_amixer_gang_toggled (GtkToggleButton *toggle, lives_amixer_t *
 }
 
 
-static void after_amixer_inv_toggled (GtkToggleButton *toggle, lives_amixer_t *amixer) {
+static void after_amixer_inv_toggled (LiVESToggleButton *toggle, lives_amixer_t *amixer) {
   if (prefs->lamp_buttons) {
     if (lives_toggle_button_get_active(toggle)) lives_widget_set_bg_color(LIVES_WIDGET(toggle), LIVES_WIDGET_STATE_PRELIGHT, &palette->light_green);
     else lives_widget_set_bg_color(LIVES_WIDGET(toggle), LIVES_WIDGET_STATE_PRELIGHT, &palette->dark_red);
@@ -22073,7 +22073,7 @@ void amixer_show (LiVESButton *button, gpointer user_data) {
 
   lives_widget_add_accelerator (close_button, "clicked", accel_group,
                               LIVES_KEY_m, LIVES_CONTROL_MASK,
-                              (GtkAccelFlags)0);
+                              (LiVESAccelFlags)0);
 
   lives_window_add_accel_group (LIVES_WINDOW (amixerw), accel_group);
 
@@ -22203,7 +22203,7 @@ void amixer_show (LiVESButton *button, gpointer user_data) {
 		    (gpointer)mt);
 
   lives_widget_add_accelerator (close_button, "activate", accel_group,
-                              LIVES_KEY_Escape, (GdkModifierType)0, (GtkAccelFlags)0);
+                              LIVES_KEY_Escape, (GdkModifierType)0, (LiVESAccelFlags)0);
 
 
 

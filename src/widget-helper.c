@@ -4696,7 +4696,7 @@ LiVESWidget *lives_standard_dialog_new(const char *title, boolean add_std_button
     lives_dialog_add_action_widget (LIVES_DIALOG (dialog), cancelbutton, LIVES_RESPONSE_CANCEL);
 
     lives_widget_add_accelerator (cancelbutton, "activate", accel_group,
-				LIVES_KEY_Escape, (GdkModifierType)0, (GtkAccelFlags)0);
+				LIVES_KEY_Escape, (GdkModifierType)0, (LiVESAccelFlags)0);
 
     lives_widget_set_can_focus_and_default(cancelbutton);
 

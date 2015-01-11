@@ -1576,7 +1576,7 @@ _resaudw *create_resaudw (gshort type, render_details *rdet, LiVESWidget *top_vb
     lives_widget_set_can_focus_and_default (cancelbutton);
     
     if (accel_group!=NULL) lives_widget_add_accelerator (cancelbutton, "activate", accel_group,
-						       LIVES_KEY_Escape, (GdkModifierType)0, (GtkAccelFlags)0);
+						       LIVES_KEY_Escape, (GdkModifierType)0, (LiVESAccelFlags)0);
     
       
     okbutton = lives_button_new_from_stock (LIVES_STOCK_OK);
@@ -1755,7 +1755,7 @@ void create_new_pb_speed (short type) {
   lives_widget_set_can_focus (cancelbutton,TRUE);
 
   lives_widget_add_accelerator (cancelbutton, "activate", accel_group,
-                              LIVES_KEY_Escape, (GdkModifierType)0, (GtkAccelFlags)0);
+                              LIVES_KEY_Escape, (GdkModifierType)0, (LiVESAccelFlags)0);
 
   change_pb_ok = lives_button_new_from_stock (LIVES_STOCK_OK);
   lives_dialog_add_action_widget (LIVES_DIALOG (new_pb_speed), change_pb_ok, LIVES_RESPONSE_OK);

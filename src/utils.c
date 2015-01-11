@@ -3855,7 +3855,7 @@ boolean after_foreign_play(void) {
 void set_menu_text(LiVESWidget *menuitem, const char *text, boolean use_mnemonic) {
   LiVESWidget *label;
   if (GTK_IS_MENU_ITEM (menuitem)) {
-    label=lives_bin_get_child(GTK_BIN(menuitem));
+    label=lives_bin_get_child(LIVES_BIN(menuitem));
     if (use_mnemonic) {
       lives_label_set_text_with_mnemonic(LIVES_LABEL(label),text);
     }
@@ -3867,13 +3867,13 @@ void set_menu_text(LiVESWidget *menuitem, const char *text, boolean use_mnemonic
 
 
 void get_menu_text(LiVESWidget *menuitem, char *text) {
-  LiVESWidget *label=lives_bin_get_child(GTK_BIN(menuitem));
+  LiVESWidget *label=lives_bin_get_child(LIVES_BIN(menuitem));
   g_snprintf(text,255,"%s",lives_label_get_text(LIVES_LABEL(label)));
 }
 
 void
 get_menu_text_long(LiVESWidget *menuitem, char *text) {
-  LiVESWidget *label=lives_bin_get_child(GTK_BIN(menuitem));
+  LiVESWidget *label=lives_bin_get_child(LIVES_BIN(menuitem));
   g_snprintf(text,32768,"%s",lives_label_get_text(LIVES_LABEL(label)));
 }
 

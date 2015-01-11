@@ -286,7 +286,7 @@ xprocess * create_processing (const gchar *text) {
   lives_widget_set_can_focus_and_default (procw->cancel_button);
 
   lives_widget_add_accelerator (procw->cancel_button, "activate", accel_group,
-                              LIVES_KEY_Escape, (GdkModifierType)0, (GtkAccelFlags)0);
+                              LIVES_KEY_Escape, (GdkModifierType)0, (LiVESAccelFlags)0);
 
   lives_signal_connect (LIVES_GUI_OBJECT (procw->stop_button), "clicked",
 		    LIVES_GUI_CALLBACK (on_stop_clicked),
@@ -405,65 +405,65 @@ lives_clipinfo_t *create_clip_info_window (int audio_channels, boolean is_mt) {
 
     label = lives_standard_label_new (_("Format"));
     lives_table_attach (LIVES_TABLE (table), label, 0, 1, 0, 1,
-			(GtkAttachOptions) (LIVES_FILL|LIVES_EXPAND),
-			(GtkAttachOptions) (0), 0, 0);
+			(LiVESAttachOptions) (LIVES_FILL|LIVES_EXPAND),
+			(LiVESAttachOptions) (0), 0, 0);
 
     label = lives_standard_label_new (_("Frame size"));
     lives_table_attach (LIVES_TABLE (table), label, 0, 1, 1, 2,
-			(GtkAttachOptions) (LIVES_FILL|LIVES_EXPAND),
-			(GtkAttachOptions) (0), 0, 0);
+			(LiVESAttachOptions) (LIVES_FILL|LIVES_EXPAND),
+			(LiVESAttachOptions) (0), 0, 0);
 
     if (!is_mt) label = lives_standard_label_new (_("File size"));
     else label = lives_standard_label_new (_("Byte size"));
     lives_table_attach (LIVES_TABLE (table), label, 0, 1, 2, 3,
-			(GtkAttachOptions) (LIVES_FILL|LIVES_EXPAND),
-			(GtkAttachOptions) (0), 0, 0);
+			(LiVESAttachOptions) (LIVES_FILL|LIVES_EXPAND),
+			(LiVESAttachOptions) (0), 0, 0);
 
     label = lives_standard_label_new (_("FPS"));
     lives_table_attach (LIVES_TABLE (table), label, 2, 3, 0, 1,
-			(GtkAttachOptions) (LIVES_FILL|LIVES_EXPAND),
-			(GtkAttachOptions) (0), 0, 0);
+			(LiVESAttachOptions) (LIVES_FILL|LIVES_EXPAND),
+			(LiVESAttachOptions) (0), 0, 0);
 
     if (!is_mt) label = lives_standard_label_new (_("Frames"));
     else label = lives_standard_label_new (_("Events"));
     lives_table_attach (LIVES_TABLE (table), label, 2, 3, 1, 2,
-			(GtkAttachOptions) (LIVES_FILL|LIVES_EXPAND),
-			(GtkAttachOptions) (0), 0, 0);
+			(LiVESAttachOptions) (LIVES_FILL|LIVES_EXPAND),
+			(LiVESAttachOptions) (0), 0, 0);
 
     label = lives_standard_label_new (_("Total time"));
     lives_table_attach (LIVES_TABLE (table), label, 2, 3, 2, 3,
-			(GtkAttachOptions) (LIVES_FILL|LIVES_EXPAND),
-			(GtkAttachOptions) (0), 0, 0);
+			(LiVESAttachOptions) (LIVES_FILL|LIVES_EXPAND),
+			(LiVESAttachOptions) (0), 0, 0);
 
     filew->textview24 = vid_text_view_new ();
     lives_table_attach (LIVES_TABLE (table), filew->textview24, 1, 2, 0, 1,
-			(GtkAttachOptions) (LIVES_FILL|LIVES_EXPAND),
-			(GtkAttachOptions) (0), 0, 0);
+			(LiVESAttachOptions) (LIVES_FILL|LIVES_EXPAND),
+			(LiVESAttachOptions) (0), 0, 0);
 
     filew->textview25 = vid_text_view_new ();
     lives_table_attach (LIVES_TABLE (table), filew->textview25, 3, 4, 0, 1,
-			(GtkAttachOptions) (LIVES_FILL|LIVES_EXPAND),
-			(GtkAttachOptions) (0), 0, 0);
+			(LiVESAttachOptions) (LIVES_FILL|LIVES_EXPAND),
+			(LiVESAttachOptions) (0), 0, 0);
 
     filew->textview26 = vid_text_view_new ();
     lives_table_attach (LIVES_TABLE (table), filew->textview26, 1, 2, 1, 2,
-			(GtkAttachOptions) (LIVES_FILL|LIVES_EXPAND),
-			(GtkAttachOptions) (0), 0, 0);
+			(LiVESAttachOptions) (LIVES_FILL|LIVES_EXPAND),
+			(LiVESAttachOptions) (0), 0, 0);
 
     filew->textview27 = vid_text_view_new ();
     lives_table_attach (LIVES_TABLE (table), filew->textview27, 3, 4, 1, 2,
-			(GtkAttachOptions) (LIVES_FILL|LIVES_EXPAND),
-			(GtkAttachOptions) (0), 0, 0);
+			(LiVESAttachOptions) (LIVES_FILL|LIVES_EXPAND),
+			(LiVESAttachOptions) (0), 0, 0);
 
     filew->textview28 = vid_text_view_new ();
     lives_table_attach (LIVES_TABLE (table), filew->textview28, 3, 4, 2, 3,
-			(GtkAttachOptions) (LIVES_FILL|LIVES_EXPAND),
-			(GtkAttachOptions) (0), 0, 0);
+			(LiVESAttachOptions) (LIVES_FILL|LIVES_EXPAND),
+			(LiVESAttachOptions) (0), 0, 0);
 
     filew->textview29 = vid_text_view_new ();
     lives_table_attach (LIVES_TABLE (table), filew->textview29, 1, 2, 2, 3,
-			(GtkAttachOptions) (LIVES_FILL|LIVES_EXPAND),
-			(GtkAttachOptions) (0), 0, 0);
+			(LiVESAttachOptions) (LIVES_FILL|LIVES_EXPAND),
+			(LiVESAttachOptions) (0), 0, 0);
 
 
     label = lives_standard_label_new (_("Video"));
@@ -498,24 +498,24 @@ lives_clipinfo_t *create_clip_info_window (int audio_channels, boolean is_mt) {
     if (!is_mt) {
       label = lives_standard_label_new (_("Total time"));
       lives_table_attach (LIVES_TABLE (table), label, 0, 1, 0, 1,
-			  (GtkAttachOptions) (LIVES_FILL|LIVES_EXPAND),
-			  (GtkAttachOptions) (0), 0, 0);
+			  (LiVESAttachOptions) (LIVES_FILL|LIVES_EXPAND),
+			  (LiVESAttachOptions) (0), 0, 0);
 
       filew->textview_ltime = aud_text_view_new ();
       lives_table_attach (LIVES_TABLE (table), filew->textview_ltime, 1, 2, 0, 1,
-			  (GtkAttachOptions) (LIVES_FILL|LIVES_EXPAND),
-			  (GtkAttachOptions) (0), 0, 0);
+			  (LiVESAttachOptions) (LIVES_FILL|LIVES_EXPAND),
+			  (LiVESAttachOptions) (0), 0, 0);
     }
 
     label = lives_standard_label_new (_("Rate/size"));
     lives_table_attach (LIVES_TABLE (table), label, 2, 3, 0, 1,
-			(GtkAttachOptions) (LIVES_FILL|LIVES_EXPAND),
-			(GtkAttachOptions) (0), 0, 0);
+			(LiVESAttachOptions) (LIVES_FILL|LIVES_EXPAND),
+			(LiVESAttachOptions) (0), 0, 0);
 
     filew->textview_lrate = aud_text_view_new ();
     lives_table_attach (LIVES_TABLE (table), filew->textview_lrate, 3, 4, 0, 1,
-			(GtkAttachOptions) (LIVES_FILL|LIVES_EXPAND),
-			(GtkAttachOptions) (0), 0, 0);
+			(LiVESAttachOptions) (LIVES_FILL|LIVES_EXPAND),
+			(LiVESAttachOptions) (0), 0, 0);
 
 
     if (audio_channels>1) {
@@ -540,24 +540,24 @@ lives_clipinfo_t *create_clip_info_window (int audio_channels, boolean is_mt) {
       if (!is_mt) {
 	label = lives_standard_label_new (_("Total time"));
 	lives_table_attach (LIVES_TABLE (table), label, 0, 1, 0, 1,
-			    (GtkAttachOptions) (LIVES_FILL|LIVES_EXPAND),
-			    (GtkAttachOptions) (0), 0, 0);
+			    (LiVESAttachOptions) (LIVES_FILL|LIVES_EXPAND),
+			    (LiVESAttachOptions) (0), 0, 0);
 
 	filew->textview_rtime = aud_text_view_new ();
 	lives_table_attach (LIVES_TABLE (table), filew->textview_rtime, 1, 2, 0, 1,
-			    (GtkAttachOptions) (LIVES_FILL|LIVES_EXPAND),
-			    (GtkAttachOptions) (0), 0, 0);
+			    (LiVESAttachOptions) (LIVES_FILL|LIVES_EXPAND),
+			    (LiVESAttachOptions) (0), 0, 0);
       }
 
       label = lives_standard_label_new (_("Rate/size"));
       lives_table_attach (LIVES_TABLE (table), label, 2, 3, 0, 1,
-			  (GtkAttachOptions) (LIVES_FILL|LIVES_EXPAND),
-			  (GtkAttachOptions) (0), 0, 0);
+			  (LiVESAttachOptions) (LIVES_FILL|LIVES_EXPAND),
+			  (LiVESAttachOptions) (0), 0, 0);
 
       filew->textview_rrate = aud_text_view_new ();
       lives_table_attach (LIVES_TABLE (table), filew->textview_rrate, 3, 4, 0, 1,
-			  (GtkAttachOptions) (LIVES_FILL|LIVES_EXPAND),
-			  (GtkAttachOptions) (0), 0, 0);
+			  (LiVESAttachOptions) (LIVES_FILL|LIVES_EXPAND),
+			  (LiVESAttachOptions) (0), 0, 0);
 
     }
   }
@@ -580,7 +580,7 @@ lives_clipinfo_t *create_clip_info_window (int audio_channels, boolean is_mt) {
   lives_window_add_accel_group (LIVES_WINDOW (filew->dialog), accel_group);
 
   lives_widget_add_accelerator (okbutton, "activate", accel_group,
-                              LIVES_KEY_Escape, (GdkModifierType)0, (GtkAccelFlags)0);
+                              LIVES_KEY_Escape, (GdkModifierType)0, (LiVESAccelFlags)0);
 
 
   lives_widget_show_all(filew->dialog);
@@ -589,7 +589,7 @@ lives_clipinfo_t *create_clip_info_window (int audio_channels, boolean is_mt) {
 }
 
 
-static void on_resizecb_toggled (GtkToggleButton *t, gpointer user_data) {
+static void on_resizecb_toggled (LiVESToggleButton *t, gpointer user_data) {
   LiVESWidget *cb=(LiVESWidget *)user_data;
 
   if (!lives_toggle_button_get_active(t)) {
@@ -806,7 +806,7 @@ LiVESWidget* create_info_error_dialog (const gchar *text, boolean is_blocking, i
 		    NULL);
 
   lives_widget_add_accelerator (info_ok_button, "activate", accel_group,
-			      LIVES_KEY_Return, (GdkModifierType)0, (GtkAccelFlags)0);
+			      LIVES_KEY_Return, (GdkModifierType)0, (LiVESAccelFlags)0);
 
 
 
@@ -973,8 +973,8 @@ _insertw* create_insert_dialog (void) {
   radiobutton1_group = lives_radio_button_get_group (LIVES_RADIO_BUTTON (radiobutton));
 
   lives_table_attach (LIVES_TABLE (table), hbox, 0, 1, 0, 1,
-                    (GtkAttachOptions) (LIVES_FILL),
-                    (GtkAttachOptions) (0), 0, 0);
+                    (LiVESAttachOptions) (LIVES_FILL),
+                    (LiVESAttachOptions) (0), 0, 0);
 
   if (cfile->frames==0) {
     lives_widget_set_sensitive (radiobutton, FALSE);
@@ -987,8 +987,8 @@ _insertw* create_insert_dialog (void) {
 					      (tmp2=g_strdup(_("Insert clipboard after selected frames"))));
 
   lives_table_attach (LIVES_TABLE (table), hbox, 0, 1, 1, 2,
-                    (GtkAttachOptions) (LIVES_FILL),
-                    (GtkAttachOptions) (0), 0, 0);
+                    (LiVESAttachOptions) (LIVES_FILL),
+                    (LiVESAttachOptions) (0), 0, 0);
 
   lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(radiobutton),mainw->insert_after);
 
@@ -1001,8 +1001,8 @@ _insertw* create_insert_dialog (void) {
 
 
   lives_table_attach (LIVES_TABLE (table), hbox, 2, 3, 0, 1,
-                    (GtkAttachOptions) (LIVES_FILL),
-                    (GtkAttachOptions) (0), 0, 0);
+                    (LiVESAttachOptions) (LIVES_FILL),
+                    (LiVESAttachOptions) (0), 0, 0);
 
   if (cfile->achans==0&&clipboard->achans==0) lives_widget_set_sensitive(insertw->with_sound,FALSE);
 
@@ -1015,21 +1015,21 @@ _insertw* create_insert_dialog (void) {
 				 !((cfile->achans>0||clipboard->achans>0)&&mainw->ccpd_with_sound));
 
   lives_table_attach (LIVES_TABLE (table), hbox, 2, 3, 1, 2,
-                    (GtkAttachOptions) (LIVES_FILL),
-                    (GtkAttachOptions) (0), 0, 0);
+                    (LiVESAttachOptions) (LIVES_FILL),
+                    (LiVESAttachOptions) (0), 0, 0);
 
   lives_widget_set_sensitive (insertw->with_sound, clipboard->achans>0||cfile->achans>0);
   lives_widget_set_sensitive (insertw->without_sound, clipboard->achans>0||cfile->achans>0);
 
   vseparator = lives_vseparator_new ();
   lives_table_attach (LIVES_TABLE (table), vseparator, 1, 2, 0, 1,
-                    (GtkAttachOptions) (LIVES_EXPAND | LIVES_FILL),
-                    (GtkAttachOptions) (LIVES_FILL), 0, 0);
+                    (LiVESAttachOptions) (LIVES_EXPAND | LIVES_FILL),
+                    (LiVESAttachOptions) (LIVES_FILL), 0, 0);
 
   vseparator = lives_vseparator_new ();
   lives_table_attach (LIVES_TABLE (table), vseparator, 1, 2, 1, 2,
-                    (GtkAttachOptions) (LIVES_FILL),
-                    (GtkAttachOptions) (LIVES_FILL), 0, 0);
+                    (LiVESAttachOptions) (LIVES_FILL),
+                    (LiVESAttachOptions) (LIVES_FILL), 0, 0);
 
   dialog_action_area = lives_dialog_get_action_area(LIVES_DIALOG (insertw->insert_dialog));
 
@@ -1064,10 +1064,10 @@ _insertw* create_insert_dialog (void) {
 			  GINT_TO_POINTER (1));
 
   lives_widget_add_accelerator (cancelbutton, "activate", accel_group,
-                              LIVES_KEY_Escape,  (GdkModifierType)0, (GtkAccelFlags)0);
+                              LIVES_KEY_Escape,  (GdkModifierType)0, (LiVESAccelFlags)0);
 
   lives_widget_add_accelerator (okbutton, "activate", accel_group,
-                              LIVES_KEY_Return,  (GdkModifierType)0, (GtkAccelFlags)0);
+                              LIVES_KEY_Return,  (GdkModifierType)0, (LiVESAccelFlags)0);
 
   lives_widget_show_all(insertw->insert_dialog);
 
@@ -1109,14 +1109,14 @@ LiVESWidget *create_opensel_dialog (void) {
 
   label = lives_standard_label_new (_("Selection start time (sec)"));
   lives_table_attach (LIVES_TABLE (table), label, 0, 1, 0, 1,
-                    (GtkAttachOptions) (LIVES_EXPAND | LIVES_FILL),
-                    (GtkAttachOptions) (0), 0, 0);
+                    (LiVESAttachOptions) (LIVES_EXPAND | LIVES_FILL),
+                    (LiVESAttachOptions) (0), 0, 0);
   gtk_misc_set_alignment (GTK_MISC (label), 0, 0.5);
 
   label = lives_standard_label_new (_("Number of frames to open"));
   lives_table_attach (LIVES_TABLE (table), label, 0, 1, 1, 2,
-                    (GtkAttachOptions) (LIVES_EXPAND | LIVES_FILL),
-                    (GtkAttachOptions) (0), 0, 0);
+                    (LiVESAttachOptions) (LIVES_EXPAND | LIVES_FILL),
+                    (LiVESAttachOptions) (0), 0, 0);
   gtk_misc_set_alignment (GTK_MISC (label), 0, 0.5);
 
   spinbutton = lives_standard_spin_button_new (NULL, FALSE, 0., 0., 1000000000., 1., 10., 2, NULL, NULL);
@@ -1126,8 +1126,8 @@ LiVESWidget *create_opensel_dialog (void) {
                             GINT_TO_POINTER (1));
 
   lives_table_attach (LIVES_TABLE (table), spinbutton, 1, 2, 0, 1,
-                    (GtkAttachOptions) (LIVES_EXPAND | LIVES_FILL),
-                    (GtkAttachOptions) (LIVES_EXPAND), widget_opts.packing_height*4+2, 0);
+                    (LiVESAttachOptions) (LIVES_EXPAND | LIVES_FILL),
+                    (LiVESAttachOptions) (LIVES_EXPAND), widget_opts.packing_height*4+2, 0);
 
 
   spinbutton = lives_standard_spin_button_new (NULL,FALSE,1000.,1.,(double)G_MAXINT, 1., 10., 0, NULL, NULL);
@@ -1137,8 +1137,8 @@ LiVESWidget *create_opensel_dialog (void) {
 			  GINT_TO_POINTER (2));
 
   lives_table_attach (LIVES_TABLE (table), spinbutton, 1, 2, 1, 2,
-                    (GtkAttachOptions) (LIVES_EXPAND | LIVES_FILL),
-                    (GtkAttachOptions) (LIVES_EXPAND), widget_opts.packing_height*4+2, 0);
+                    (LiVESAttachOptions) (LIVES_EXPAND | LIVES_FILL),
+                    (LiVESAttachOptions) (LIVES_EXPAND), widget_opts.packing_height*4+2, 0);
 
   dialog_action_area = lives_dialog_get_action_area(LIVES_DIALOG (opensel_dialog));
   lives_button_box_set_layout (LIVES_BUTTON_BOX (dialog_action_area), LIVES_BUTTONBOX_END);
@@ -1316,7 +1316,7 @@ _entryw* create_location_dialog (int type) {
 
 
   lives_widget_add_accelerator (cancelbutton, "activate", accel_group,
-                              LIVES_KEY_Escape, (GdkModifierType)0, (GtkAccelFlags)0);
+                              LIVES_KEY_Escape, (GdkModifierType)0, (LiVESAccelFlags)0);
 
   lives_widget_show_all(locw->dialog);
 
@@ -1498,7 +1498,7 @@ _entryw* create_rename_dialog (int type) {
   lives_widget_set_can_focus_and_default (cancelbutton);
 
   lives_widget_add_accelerator (cancelbutton, "activate", accel_group,
-			      LIVES_KEY_Escape, (GdkModifierType)0, (GtkAccelFlags)0);
+			      LIVES_KEY_Escape, (GdkModifierType)0, (LiVESAccelFlags)0);
 
   if (type==6) {
     okbutton = lives_button_new_from_stock (LIVES_STOCK_GO_FORWARD);
@@ -1529,7 +1529,7 @@ _entryw* create_rename_dialog (int type) {
 
 
   lives_widget_add_accelerator (cancelbutton, "activate", accel_group,
-                              LIVES_KEY_Escape, (GdkModifierType)0, (GtkAccelFlags)0);
+                              LIVES_KEY_Escape, (GdkModifierType)0, (LiVESAccelFlags)0);
 
   lives_widget_show_all(renamew->dialog);
 
@@ -1559,7 +1559,7 @@ void on_liveinp_advanced_clicked (LiVESButton *button, gpointer user_data) {
 }
 
 
-static void rb_tvcarddef_toggled(GtkToggleButton *tbut, gpointer user_data) {
+static void rb_tvcarddef_toggled(LiVESToggleButton *tbut, gpointer user_data) {
   lives_tvcardw_t *tvcardw=(lives_tvcardw_t *)(user_data);
 
   if (!lives_toggle_button_get_active(tbut)) {
@@ -1927,11 +1927,11 @@ LiVESWidget* create_cdtrack_dialog (int type, gpointer user_data) {
   lives_widget_grab_default (okbutton);
 
   lives_widget_add_accelerator (cancelbutton, "activate", accel_group,
-                              LIVES_KEY_Escape, (GdkModifierType)0, (GtkAccelFlags)0);
+                              LIVES_KEY_Escape, (GdkModifierType)0, (LiVESAccelFlags)0);
 
   
   lives_widget_add_accelerator (okbutton, "activate", accel_group,
-                              LIVES_KEY_Return, (GdkModifierType)0, (GtkAccelFlags)0);
+                              LIVES_KEY_Return, (GdkModifierType)0, (LiVESAccelFlags)0);
 
   if (type!=4&&type!=5) {
     lives_signal_connect (LIVES_GUI_OBJECT (cancelbutton), "clicked",
@@ -2106,42 +2106,42 @@ _commentsw* create_comments_dialog (lives_clip_t *sfile, gchar *filename) {
   label = lives_standard_label_new (_("Title/Name : "));
 
   lives_table_attach (LIVES_TABLE (table), label, 0, 1, 0, 1,
-                    (GtkAttachOptions) (LIVES_FILL),
-                    (GtkAttachOptions) (0), 0, 0);
+                    (LiVESAttachOptions) (LIVES_FILL),
+                    (LiVESAttachOptions) (0), 0, 0);
   gtk_misc_set_alignment (GTK_MISC (label), 0, 0.5);
 
   label = lives_standard_label_new (_("Author/Artist : "));
 
   lives_table_attach (LIVES_TABLE (table), label, 0, 1, 1, 2,
-                    (GtkAttachOptions) (LIVES_FILL),
-                    (GtkAttachOptions) (0), 0, 0);
+                    (LiVESAttachOptions) (LIVES_FILL),
+                    (LiVESAttachOptions) (0), 0, 0);
   gtk_misc_set_alignment (GTK_MISC (label), 0, 0.5);
 
   label = lives_standard_label_new (_("Comments : "));
 
   lives_table_attach (LIVES_TABLE (table), label, 0, 1, 3, 4,
-                    (GtkAttachOptions) (LIVES_FILL),
-                    (GtkAttachOptions) (0), 0, 0);
+                    (LiVESAttachOptions) (LIVES_FILL),
+                    (LiVESAttachOptions) (0), 0, 0);
 
   gtk_misc_set_alignment (GTK_MISC (label), 0, 0.5);
 
   commentsw->title_entry = lives_standard_entry_new (NULL,FALSE,cfile->title,80,-1,NULL,NULL);
 
   lives_table_attach (LIVES_TABLE (table), commentsw->title_entry, 1, 2, 0, 1,
-                    (GtkAttachOptions) (LIVES_EXPAND | LIVES_FILL),
-                    (GtkAttachOptions) (LIVES_EXPAND), 0, 0);
+                    (LiVESAttachOptions) (LIVES_EXPAND | LIVES_FILL),
+                    (LiVESAttachOptions) (LIVES_EXPAND), 0, 0);
 
   commentsw->author_entry = lives_standard_entry_new (NULL,FALSE,cfile->author,80,-1,NULL,NULL);
 
   lives_table_attach (LIVES_TABLE (table), commentsw->author_entry, 1, 2, 1, 2,
-                    (GtkAttachOptions) (LIVES_EXPAND | LIVES_FILL),
-                    (GtkAttachOptions) (LIVES_EXPAND), 0, 0);
+                    (LiVESAttachOptions) (LIVES_EXPAND | LIVES_FILL),
+                    (LiVESAttachOptions) (LIVES_EXPAND), 0, 0);
 
   commentsw->comment_entry = lives_standard_entry_new (NULL,FALSE,cfile->comment,80,250,NULL,NULL);
 
   lives_table_attach (LIVES_TABLE (table), commentsw->comment_entry, 1, 2, 3, 4,
-                    (GtkAttachOptions) (LIVES_EXPAND | LIVES_FILL),
-                    (GtkAttachOptions) (LIVES_EXPAND), 0, 0);
+                    (LiVESAttachOptions) (LIVES_EXPAND | LIVES_FILL),
+                    (LiVESAttachOptions) (LIVES_EXPAND), 0, 0);
 
   if (sfile!=NULL) {
     // options
@@ -2357,7 +2357,7 @@ gchar *choose_file(gchar *dir, gchar *fname, gchar **filt, LiVESFileChooserActio
 }
 
 
-static void chooser_response(GtkDialog *dialog, int response, gpointer user_data) {
+static void chooser_response(LiVESDialog *dialog, int response, gpointer user_data) {
   int type=GPOINTER_TO_INT(user_data);
 
   if (response!=LIVES_RESPONSE_CANCEL) {
@@ -2528,7 +2528,7 @@ _entryw* create_cds_dialog (int type) {
   cancelbutton = lives_button_new_from_stock (LIVES_STOCK_CANCEL);
   lives_dialog_add_action_widget (LIVES_DIALOG (cdsw->dialog), cancelbutton, 0);
   lives_widget_add_accelerator (cancelbutton, "activate", accel_group,
-                              LIVES_KEY_Escape, (GdkModifierType)0, (GtkAccelFlags)0);
+                              LIVES_KEY_Escape, (GdkModifierType)0, (LiVESAccelFlags)0);
 
   discardbutton = lives_button_new_from_stock (LIVES_STOCK_DELETE);
   lives_dialog_add_action_widget (LIVES_DIALOG (cdsw->dialog), discardbutton, 1+(type==2));
@@ -2567,7 +2567,7 @@ void do_layout_recover_dialog(void) {
 }
 
 
-static void flip_cdisk_bit (GtkToggleButton *t, gpointer user_data) {
+static void flip_cdisk_bit (LiVESToggleButton *t, gpointer user_data) {
   guint32 bitmask=GPOINTER_TO_INT(user_data);
   prefs->clear_disk_opts^=bitmask;
 }

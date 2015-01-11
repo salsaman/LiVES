@@ -1080,7 +1080,7 @@ _vppaw *on_vpp_advanced_clicked (LiVESButton *button, gpointer user_data) {
   lives_widget_set_can_focus (cancelbutton,TRUE);
 
   lives_widget_add_accelerator (cancelbutton, "activate", accel_group,
-                              LIVES_KEY_Escape, (GdkModifierType)0, (GtkAccelFlags)0);
+                              LIVES_KEY_Escape, (GdkModifierType)0, (LiVESAccelFlags)0);
 
 
   savebutton = lives_button_new_from_stock (LIVES_STOCK_SAVE_AS);
@@ -2616,7 +2616,7 @@ static void dpa_cancel_clicked (LiVESButton *button, gpointer user_data) {
 
 }
 
-static void on_dpa_cb_toggled(GtkToggleButton *button, gchar *decname) {
+static void on_dpa_cb_toggled(LiVESToggleButton *button, gchar *decname) {
   if (!lives_toggle_button_get_active(button))
     // unchecked is disabled
     future_prefs->disabled_decoders_new=g_list_append(future_prefs->disabled_decoders_new,g_strdup(decname));

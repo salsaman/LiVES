@@ -176,7 +176,7 @@ boolean do_tempdir_query(void) {
 
 
 
-static void on_init_aplayer_toggled (GtkToggleButton *tbutton, gpointer user_data) {
+static void on_init_aplayer_toggled (LiVESToggleButton *tbutton, gpointer user_data) {
   int audp=GPOINTER_TO_INT(user_data);
 
   if (!lives_toggle_button_get_active(tbutton)) return;
@@ -399,7 +399,7 @@ boolean do_audio_choice_dialog(short startup_phase) {
   lives_dialog_add_action_widget (LIVES_DIALOG (dialog), cancelbutton, LIVES_RESPONSE_CANCEL);
 
   lives_widget_add_accelerator (cancelbutton, "activate", accel_group,
-                              LIVES_KEY_Escape, (GdkModifierType)0, (GtkAccelFlags)0);
+                              LIVES_KEY_Escape, (GdkModifierType)0, (LiVESAccelFlags)0);
 
   okbutton = lives_button_new_from_stock (LIVES_STOCK_GO_FORWARD);
   lives_button_set_label(LIVES_BUTTON(okbutton),_("_Next"));
@@ -436,7 +436,7 @@ boolean do_audio_choice_dialog(short startup_phase) {
 static void add_test(LiVESWidget *table, int row, gchar *ttext, boolean noskip) {
   LiVESWidget *label=lives_standard_label_new(ttext);
 
-  lives_table_attach (LIVES_TABLE (table), label, 0, 1, row, row+1, (GtkAttachOptions)0, (GtkAttachOptions)0, 10, 10);
+  lives_table_attach (LIVES_TABLE (table), label, 0, 1, row, row+1, (LiVESAttachOptions)0, (LiVESAttachOptions)0, 10, 10);
   lives_widget_show(label);
 
   if (!noskip) {
@@ -444,10 +444,10 @@ static void add_test(LiVESWidget *table, int row, gchar *ttext, boolean noskip) 
     // TRANSLATORS - as in "skipped test"
     label=lives_standard_label_new(_("Skipped"));
 
-    lives_table_attach (LIVES_TABLE (table), label, 1, 2, row, row+1, (GtkAttachOptions)0, (GtkAttachOptions)0, 10, 10);
+    lives_table_attach (LIVES_TABLE (table), label, 1, 2, row, row+1, (LiVESAttachOptions)0, (LiVESAttachOptions)0, 10, 10);
     lives_widget_show(label);
 
-    lives_table_attach (LIVES_TABLE (table), image, 2, 3, row, row+1, (GtkAttachOptions)0, (GtkAttachOptions)0, 0, 10);
+    lives_table_attach (LIVES_TABLE (table), image, 2, 3, row, row+1, (LiVESAttachOptions)0, (LiVESAttachOptions)0, 0, 10);
     lives_widget_show(image);
   }
 
@@ -465,10 +465,10 @@ static boolean pass_test(LiVESWidget *table, int row) {
   LiVESWidget *image=lives_image_new_from_stock(LIVES_STOCK_APPLY,LIVES_ICON_SIZE_LARGE_TOOLBAR);
 #endif
 
-  lives_table_attach (LIVES_TABLE (table), label, 1, 2, row, row+1, (GtkAttachOptions)0, (GtkAttachOptions)0, 10, 10);
+  lives_table_attach (LIVES_TABLE (table), label, 1, 2, row, row+1, (LiVESAttachOptions)0, (LiVESAttachOptions)0, 10, 10);
   lives_widget_show(label);
 
-  lives_table_attach (LIVES_TABLE (table), image, 2, 3, row, row+1, (GtkAttachOptions)0, (GtkAttachOptions)0, 0, 10);
+  lives_table_attach (LIVES_TABLE (table), image, 2, 3, row, row+1, (LiVESAttachOptions)0, (LiVESAttachOptions)0, 0, 10);
   lives_widget_show(image);
 
   lives_widget_context_update();
@@ -486,16 +486,16 @@ static boolean fail_test(LiVESWidget *table, int row, gchar *ftext) {
 
   label=lives_standard_label_new(ftext);
 
-  lives_table_attach (LIVES_TABLE (table), label, 3, 4, row, row+1, (GtkAttachOptions)0, (GtkAttachOptions)0, 10, 10);
+  lives_table_attach (LIVES_TABLE (table), label, 3, 4, row, row+1, (LiVESAttachOptions)0, (LiVESAttachOptions)0, 10, 10);
   lives_widget_show(label);
   
   // TRANSLATORS - as in "failed test"
   label=lives_standard_label_new(_("Failed"));
 
-  lives_table_attach (LIVES_TABLE (table), label, 1, 2, row, row+1, (GtkAttachOptions)0, (GtkAttachOptions)0, 10, 10);
+  lives_table_attach (LIVES_TABLE (table), label, 1, 2, row, row+1, (LiVESAttachOptions)0, (LiVESAttachOptions)0, 10, 10);
   lives_widget_show(label);
 
-  lives_table_attach (LIVES_TABLE (table), image, 2, 3, row, row+1, (GtkAttachOptions)0, (GtkAttachOptions)0, 0, 10);
+  lives_table_attach (LIVES_TABLE (table), image, 2, 3, row, row+1, (LiVESAttachOptions)0, (LiVESAttachOptions)0, 0, 10);
   lives_widget_show(image);
 
   lives_widget_context_update();
@@ -573,7 +573,7 @@ boolean do_startup_tests(boolean tshoot) {
   lives_dialog_add_action_widget (LIVES_DIALOG (dialog), cancelbutton, LIVES_RESPONSE_CANCEL);
 
   lives_widget_add_accelerator (cancelbutton, "activate", accel_group,
-                              LIVES_KEY_Escape, (GdkModifierType)0, (GtkAccelFlags)0);
+                              LIVES_KEY_Escape, (GdkModifierType)0, (LiVESAccelFlags)0);
 
   if (!tshoot) {
     okbutton = lives_button_new_from_stock (LIVES_STOCK_GO_FORWARD);

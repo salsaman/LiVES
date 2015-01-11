@@ -1072,7 +1072,7 @@ void on_open_lives2lives_activate (LiVESMenuItem *menuitem, gpointer user_data) 
 
 
 
-static void pandhw_anyhost_toggled(GtkToggleButton *tbut, gpointer user_data) {
+static void pandhw_anyhost_toggled(LiVESToggleButton *tbut, gpointer user_data) {
   lives_pandh_w *pandhw=(lives_pandh_w *)user_data;
 
   if (lives_toggle_button_get_active(tbut)) {

@@ -1216,7 +1216,25 @@ void save_frame (LiVESMenuItem *menuitem, gpointer user_data) {
 }
 
 
+static void save_log_file(const char *prefix) {
+  int logfd;
 
+  // save the logfile in tempdir
+#ifndef IS_MINGW
+  gchar *logfile=g_strdup_printf("%s/%s_%d_%d.txt",prefs->tmpdir,prefix,lives_getuid(),lives_getgid());
+  if ((logfd=creat(logfile,S_IRUSR|S_IWUSR|S_IRGRP|S_IWGRP|S_IROTH|S_IWOTH))!=-1) {
+#else
+    gchar *logfile=g_strdup_printf("%s\\%s_%d_%d.txt",prefs->tmpdir,prefix,lives_getuid(),lives_getgid());
+    if ((logfd=creat(logfile,S_IRUSR|S_IWUSR))!=-1) {
+#endif
+      gchar *btext=lives_text_view_get_text(mainw->optextview);
+      lives_write(logfd,btext,strlen(btext),TRUE);  // not really important if it fails
+      g_free(btext);
+      close (logfd);
+    }
+
+  g_free(logfile);
+}
 
 
 
@@ -2044,8 +2062,9 @@ void save_file (int clip, int start, int end, const char *filename) {
       }
 
       if (mainw->iochan!=NULL) {
-	mainw->iochan=NULL;
-	lives_object_unref(mainw->optextview);
+	  save_log_file("failed_encoder_log");
+	  mainw->iochan=NULL;
+	  lives_object_unref(mainw->optextview);
       }
 
       if (mainw->subt_save_file!=NULL) g_free(mainw->subt_save_file);
@@ -2147,23 +2166,7 @@ void save_file (int clip, int start, int end, const char *filename) {
   switch_to_file(mainw->current_file,current_file);
 
   if (mainw->iochan!=NULL) {
-    int logfd;
-
-    // save the logfile in tempdir
-
-#ifndef IS_MINGW
-    gchar *logfile=g_strdup_printf("%s/encoder_log_%d_%d.txt",prefs->tmpdir,lives_getuid(),lives_getgid());
-    if ((logfd=creat(logfile,S_IRUSR|S_IWUSR|S_IRGRP|S_IWGRP|S_IROTH|S_IWOTH))!=-1) {
-#else
-    gchar *logfile=g_strdup_printf("%s\\encoder_log_%d_%d.txt",prefs->tmpdir,lives_getuid(),lives_getgid());
-    if ((logfd=creat(logfile,S_IRUSR|S_IWUSR))!=-1) {
-#endif
-      gchar *btext=lives_text_view_get_text(mainw->optextview);
-      lives_write(logfd,btext,strlen(btext),TRUE);  // not really important if it fails
-      g_free(btext);
-      close (logfd);
-    }
-    g_free(logfile);
+    save_log_file("encoder_log");
     lives_object_unref(mainw->optextview);
     mainw->iochan=NULL;
   }

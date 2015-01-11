@@ -4,7 +4,7 @@ import locale
 locale.setlocale(locale.LC_NUMERIC,"")
 
 """
-mng_encoder.py
+lives_mng_encoder3
 
 Front-end to various programs needed to create MNG
 movies with some image-enhancing capabilities through the use of
@@ -33,10 +33,10 @@ convert = 'convert'
 
 usage = \
       """
-mng_encoder.py -h
-mng_encoder.py -V
-mng_encoder.py -C
-mng_encoder.py [-o out] [-p pre] [-d dir] [-a aspect*] [-D delay*]
+lives_mng_encoder3 -h
+lives_mng_encoder3 -V
+lives_mng_encoder3 -C
+lives_mng_encoder3 [-o out] [-p pre] [-d dir] [-a aspect*] [-D delay*]
                [-q|-v] [-t type*] [-k] [-e [[-w dir] [-c geom] [-r geom]]]
                [-s sndfile*] [-b sndrate*] [-f fpscode] [-L lv1file]
                [firstframe lastframe]
@@ -67,13 +67,13 @@ OPTIONS:
 -p pre      the encoder assumes that sound and images are named using
             LiVES' conventions i.e. "audio" and "00000001.ext",
             "00000002.ext"... where "ext" is either "jpg" or "png".
-            However, mng_encoder.py will create temporary files
+            However, lives_mng_encoder3 will create temporary files
             which can be saved for later use (for example, after
             enhancing the images with "-e" , which may take a long
             time). These temporary files will be named
             "pre_00000001.ext", etc... where "pre" is either "eimg"
             or "rimg" and will be kept if the "-k" option is used.
-            mng_encoder.py can then be run over the enhanced images
+            lives_mng_encoder3 can then be run over the enhanced images
             only by selecting the appropriate prefix ("eimg" or
             "rimg") here. See "-e" to see what each prefix means.
             Default: "" (an empty string).
@@ -188,7 +188,7 @@ Suppose you have restored a LiVES' .lv1 file (in either JPG or PNG format),
 and that the images are stored in the directory "/tmp/livestmp/991319584/".
 Then, in order to create an mng file you can simply do the following:
 
-   mng_encoder.py -d /tmp/livestmp/991319584 -o /movies/default.mng
+   lives_mng_encoder3 -d /tmp/livestmp/991319584 -o /movies/default.mng
 
 and the clip "default.mng" will be created in "/movies/".
 
@@ -200,7 +200,7 @@ This is done because we are assuming that there is a black border around
 the original pictures which we want to get rid of (this might distort the
 images somewhat, so be careful about cropping/resizing):
 
-   mng_encoder.py -v -d /tmp/livestmp/991319584 -w /tmp/tmpmng \\
+   lives_mng_encoder3 -v -d /tmp/livestmp/991319584 -w /tmp/tmpmng \\
    -o /movies/download.mng -k -e -c "704x464+5+6" -r "352x240"
 
 Since we use the "-k" flag the enhanced images are kept (both full-size
@@ -210,13 +210,13 @@ keep them is because the above may take quite a long time and we may want
 to re-use the enhanced images. So, for example, creating a
 clip at full size can be accomplished now as follows:
 
-   mng_encoder.py -d /tmp/tmpmng -o /movies/archive.mng \\
+   lives_mng_encoder3 -d /tmp/tmpmng -o /movies/archive.mng \\
    -s /tmp/livestmp/991319584/audio -k -p eimg
 
 If, for example, we only want to encode frames 100 to 150 we can run
 the following:
 
-   mng_encoder.py -v -d /tmp/tmpmng -o /movies/selection.mng \\
+   lives_mng_encoder3 -v -d /tmp/tmpmng -o /movies/selection.mng \\
    -k -p eimg 100 150
 
 To delete all the enhanced images you can just remove "/tmp/tmpmng".
@@ -227,7 +227,7 @@ Batch-encoding can be done as follows (zsh-syntax):
    for i in movie?.lv1
    do
      mkdir /tmp/$i:r
-     mng_encoder.py -d /tmp/$i:r -o /tmp/$i:r.mng -L $i
+     lives_mng_encoder3 -d /tmp/$i:r -o /tmp/$i:r.mng -L $i
      rm -rf /tmp/$i:r
    done
 
@@ -450,7 +450,7 @@ if __name__ == '__main__':
         raise SystemExit
 
     if '-V' in opts:
-        print('mng_encoder.py version ' + version)
+        print('lives_mng_encoder3 version ' + version)
         raise SystemExit
 
     if ('-v' in opts) or ('-C' in opts):

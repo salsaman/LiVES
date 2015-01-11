@@ -5,7 +5,7 @@ import locale
 locale.setlocale(locale.LC_NUMERIC,"")
 
 """
-avi_encoder.py
+lives_avi_encoder3
 
 Front-end to various programs needed to create AVI
 movies with some image-enhancing capabilities through the use of
@@ -34,10 +34,10 @@ sox = 'sox'
 
 usage = \
       """
-avi_encoder.py -h
-avi_encoder.py -V
-avi_encoder.py -C
-avi_encoder.py [-o out] [-p pre] [-d dir] [-a aspect] [-D delay]
+lives_avi_encoder3 -h
+lives_avi_encoder3 -V
+lives_avi_encoder3 -C
+lives_avi_encoder3 [-o out] [-p pre] [-d dir] [-a aspect] [-D delay]
                [-q|-v] [-t type] [-k] [-e [[-w dir] [-c geom] [-r geom]]]
                [-s sndfile] [-b sndrate] [-f fpscode] [-L lv1file]
                [firstframe lastframe]
@@ -68,13 +68,13 @@ OPTIONS:
 -p pre      the encoder assumes that sound and images are named using
             LiVES' conventions i.e. "audio" and "00000001.ext",
             "00000002.ext"... where "ext" is either "jpg" or "png".
-            However, avi_encoder.py will create temporary files
+            However, lives_avi_encoder3 will create temporary files
             which can be saved for later use (for example, after
             enhancing the images with "-e" , which may take a long
             time). These temporary files will be named
             "pre_00000001.ext", etc... where "pre" is either "eimg"
             or "rimg" and will be kept if the "-k" option is used.
-            avi_encoder.py can then be run over the enhanced images
+            lives_avi_encoder3 can then be run over the enhanced images
             only by selecting the appropriate prefix ("eimg" or
             "rimg") here. See "-e" to see what each prefix means.
             Default: "" (an empty string).
@@ -230,7 +230,7 @@ and that the images are stored in the directory "/tmp/livestmp/991319584/".
 In this example the movie is assumed to be 16:9. Then, in order to create
 an AVI file you can simply do the following:
 
-   avi_encoder.py -d /tmp/livestmp/991319584 -o /movies/default.avi -a 3
+   lives_avi_encoder3 -d /tmp/livestmp/991319584 -o /movies/default.avi -a 3
 
 and the clip "default.avi" will be created in "/movies/" with the correct
 aspect ratio.
@@ -244,7 +244,7 @@ the original pictures which we want to get rid of (this might distort the
 images somewhat, so be careful about cropping/resizing, and remember to
 use dimensions which are multiples of 16):
 
-   avi_encoder.py -v -d /tmp/livestmp/991319584 -w /tmp/tmpavi \\
+   lives_avi_encoder3 -v -d /tmp/livestmp/991319584 -w /tmp/tmpavi \\
    -o /movies/download.avi -a 3 -k -e -c "704x464+5+6" -r "352x240"
 
 Since we use the "-k" flag the enhanced images are kept (both full-size
@@ -254,17 +254,17 @@ keep them is because the above may take quite a long time and we may want
 to re-use the enhanced images. So, for example, creating a high-quality
 clip at full size can be accomplished now as follows:
 
-   avi_encoder.py -d /tmp/tmpavi -t hi -o /movies/archive.avi \\
+   lives_avi_encoder3 -d /tmp/tmpavi -t hi -o /movies/archive.avi \\
    -s /tmp/livestmp/991319584/audio -a 3 -k -p eimg
 
 If, for example, we only want to encode frames 100 to 150 we can run
 the following:
 
-   avi_encoder.py -v -d /tmp/tmpavi -o /movies/selection.avi \\
+   lives_avi_encoder3 -v -d /tmp/tmpavi -o /movies/selection.avi \\
    -a 3 -k -p eimg 100 150
 
 Note that no audio has been selected ("-s"). This is because
-avi_encoder.py cannot trim the audio to the appropriate length.
+lives_avi_encoder3 cannot trim the audio to the appropriate length.
 You would need to use LiVES to do this.
 
 To delete all the enhanced images you can just remove "/tmp/tmpavi".
@@ -273,7 +273,7 @@ If you notice that the video and audio become out of sync so that
 near the end of the movie the video trails the audio by, say, 0.2s,
 you can use the "-D" option as follows:
 
-   avi_encoder.py -d /tmp/livestmp/991319584 -o test.avi -D 200
+   lives_avi_encoder3 -d /tmp/livestmp/991319584 -o test.avi -D 200
 
 Suppose that you have "movie1.lv1", "movie2.lv1" and "movie3.lv1".
 Batch-encoding can be done as follows (zsh-syntax):
@@ -281,7 +281,7 @@ Batch-encoding can be done as follows (zsh-syntax):
    for i in movie?.lv1
    do
      mkdir /tmp/$i:r
-     avi_encoder.py -d /tmp/$i:r -o /tmp/$i:r.avi -L $i
+     lives_avi_encoder3 -d /tmp/$i:r -o /tmp/$i:r.avi -L $i
      rm -rf /tmp/$i:r
    done
 
@@ -581,7 +581,7 @@ if __name__ == '__main__':
         raise SystemExit
 
     if '-V' in opts:
-        print('avi_encoder.py version ' + version)
+        print('lives_avi_encoder3 version ' + version)
         raise SystemExit
 
     if ('-v' in opts) or ('-C' in opts):
@@ -815,7 +815,7 @@ if __name__ == '__main__':
 """
 CHANGELOG:
 
-03 Jan 2005 : 0.0.1 : first release, based on mkv_encoder.py.
+03 Jan 2005 : 0.0.1 : first release, based on mkv_encoder.
 04 Jan 2005 : 0.0.2 : added support for h.264.
 10 Mar 2005 : 0.0.3 : fixed snow quality settings.
 26 Mar 2005 : 0.0.4 : use env python (hopefully >= 2.3).

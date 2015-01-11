@@ -345,6 +345,44 @@ LIVES_INLINE livespointer lives_object_ref_sink(livespointer object) {
 #endif
 
 
+LIVES_INLINE boolean lives_signal_handler_block(livespointer instance, unsigned long handler_id) {
+#ifdef GUI_GTK
+  g_signal_handler_block(instance,handler_id);
+  return TRUE;
+#endif
+  return FALSE;
+}
+
+
+LIVES_INLINE boolean lives_signal_handler_unblock(livespointer instance, unsigned long handler_id) {
+#ifdef GUI_GTK
+  g_signal_handler_unblock(instance,handler_id);
+  return TRUE;
+#endif
+  return FALSE;
+}
+
+
+LIVES_INLINE boolean lives_signal_handler_disconnect(livespointer instance, unsigned long handler_id) {
+#ifdef GUI_GTK
+  g_signal_handler_disconnect(instance,handler_id);
+  return TRUE;
+#endif
+  return FALSE;
+}
+
+
+LIVES_INLINE boolean lives_signal_stop_emission_by_name(livespointer instance, const char *detailed_signal) {
+#ifdef GUI_GTK
+  g_signal_stop_emission_by_name(instance,detailed_signal);
+  return TRUE;
+#endif
+  return FALSE;
+}
+
+
+
+
 LIVES_INLINE void lives_widget_set_sensitive(LiVESWidget *widget, boolean state) {
 #ifdef GUI_GTK
   gtk_widget_set_sensitive(widget,state);
@@ -4213,8 +4251,8 @@ LiVESWidget *lives_standard_check_button_new(const char *labeltext, boolean use_
 
     lives_container_add(LIVES_CONTAINER(eventbox),label);
 
-    g_signal_connect (GTK_OBJECT (eventbox), "button_press_event",
-		      G_CALLBACK (label_act_toggle),
+    lives_signal_connect (LIVES_GUI_OBJECT (eventbox), "button_press_event",
+		      LIVES_GUI_CALLBACK (label_act_toggle),
 		      checkbutton);
   
     widget_opts.last_label=label;
@@ -4249,12 +4287,12 @@ LiVESWidget *lives_standard_check_button_new(const char *labeltext, boolean use_
 
   if (label!=NULL) {
 #if GTK_CHECK_VERSION(3,0,0)
-    g_signal_connect_after (GTK_OBJECT (checkbutton), "state_flags_changed",
-			    G_CALLBACK (set_label_state),
+    lives_signal_connect_after (LIVES_GUI_OBJECT (checkbutton), "state_flags_changed",
+			    LIVES_GUI_CALLBACK (set_label_state),
 			    label);
 #else
-    g_signal_connect_after (GTK_OBJECT (checkbutton), "state_changed",
-			    G_CALLBACK (set_label_state),
+    lives_signal_connect_after (LIVES_GUI_OBJECT (checkbutton), "state_changed",
+			    LIVES_GUI_CALLBACK (set_label_state),
 			    label);
 #endif
   }
@@ -4298,8 +4336,8 @@ LiVESWidget *lives_standard_radio_button_new(const char *labeltext, boolean use_
     if (tooltip!=NULL) lives_tooltips_copy(eventbox,radiobutton);
     lives_container_add(LIVES_CONTAINER(eventbox),label);
 
-    g_signal_connect (GTK_OBJECT (eventbox), "button_press_event",
-		      G_CALLBACK (label_act_toggle),
+    lives_signal_connect (LIVES_GUI_OBJECT (eventbox), "button_press_event",
+		      LIVES_GUI_CALLBACK (label_act_toggle),
 		      radiobutton);
     
     if (widget_opts.apply_theme) {
@@ -4331,12 +4369,12 @@ LiVESWidget *lives_standard_radio_button_new(const char *labeltext, boolean use_
 
   if (label!=NULL) {
 #if GTK_CHECK_VERSION(3,0,0)
-    g_signal_connect_after (GTK_OBJECT (radiobutton), "state_flags_changed",
-			    G_CALLBACK (set_label_state),
+    lives_signal_connect_after (LIVES_GUI_OBJECT (radiobutton), "state_flags_changed",
+			    LIVES_GUI_CALLBACK (set_label_state),
 			    label);
 #else
-    g_signal_connect_after (GTK_OBJECT (radiobutton), "state_changed",
-			    G_CALLBACK (set_label_state),
+    lives_signal_connect_after (LIVES_GUI_OBJECT (radiobutton), "state_changed",
+			    LIVES_GUI_CALLBACK (set_label_state),
 			    label);
 #endif
   }
@@ -4435,12 +4473,12 @@ LiVESWidget *lives_standard_spin_button_new(const char *labeltext, boolean use_m
 
   if (label!=NULL) {
 #if GTK_CHECK_VERSION(3,0,0)
-    g_signal_connect_after (GTK_OBJECT (spinbutton), "state_flags_changed",
-			    G_CALLBACK (set_label_state),
+    lives_signal_connect_after (LIVES_GUI_OBJECT (spinbutton), "state_flags_changed",
+			    LIVES_GUI_CALLBACK (set_label_state),
 			    label);
 #else
-    g_signal_connect_after (GTK_OBJECT (spinbutton), "state_changed",
-			    G_CALLBACK (set_label_state),
+    lives_signal_connect_after (LIVES_GUI_OBJECT (spinbutton), "state_changed",
+			    LIVES_GUI_CALLBACK (set_label_state),
 			    label);
 #endif
   }
@@ -4530,12 +4568,12 @@ LiVESWidget *lives_standard_combo_new (const char *labeltext, boolean use_mnemon
 
   if (label!=NULL) {
 #if GTK_CHECK_VERSION(3,0,0)
-    g_signal_connect_after (GTK_OBJECT (combo), "state_flags_changed",
-			    G_CALLBACK (set_label_state),
+    lives_signal_connect_after (LIVES_GUI_OBJECT (combo), "state_flags_changed",
+			    LIVES_GUI_CALLBACK (set_label_state),
 			    label);
 #else
-    g_signal_connect_after (GTK_OBJECT (combo), "state_changed",
-			    G_CALLBACK (set_label_state),
+    lives_signal_connect_after (LIVES_GUI_OBJECT (combo), "state_changed",
+			    LIVES_GUI_CALLBACK (set_label_state),
 			    label);
 #endif
   }
@@ -4603,12 +4641,12 @@ LiVESWidget *lives_standard_entry_new(const char *labeltext, boolean use_mnemoni
 
   if (label!=NULL) {
 #if GTK_CHECK_VERSION(3,0,0)
-    g_signal_connect_after (GTK_OBJECT (entry), "state_flags_changed",
-			    G_CALLBACK (set_label_state),
+    lives_signal_connect_after (LIVES_GUI_OBJECT (entry), "state_flags_changed",
+			    LIVES_GUI_CALLBACK (set_label_state),
 			    label);
 #else
-    g_signal_connect_after (GTK_OBJECT (entry), "state_changed",
-			    G_CALLBACK (set_label_state),
+    lives_signal_connect_after (LIVES_GUI_OBJECT (entry), "state_changed",
+			    LIVES_GUI_CALLBACK (set_label_state),
 			    label);
 #endif
   }
@@ -4668,8 +4706,8 @@ LiVESWidget *lives_standard_dialog_new(const char *title, boolean add_std_button
     lives_widget_grab_default (okbutton);
   }
 
-  g_signal_connect (GTK_OBJECT (dialog), "delete_event",
-                      G_CALLBACK (return_true),
+  lives_signal_connect (LIVES_GUI_OBJECT (dialog), "delete_event",
+                      LIVES_GUI_CALLBACK (return_true),
                       NULL);
 
   // must do this before setting modal !
@@ -4871,7 +4909,7 @@ boolean lives_has_icon(const char *stock_id, LiVESIconSize size)  {
 LIVES_INLINE void lives_cursor_unref(LiVESXCursor *cursor) {
 #ifdef GUI_GTK
 #if GTK_CHECK_VERSION(3,0,0)
-  g_object_unref(GTK_OBJECT(cursor));
+  g_object_unref(LIVES_GUI_OBJECT(cursor));
 #else
   gdk_cursor_unref(cursor);
 #endif

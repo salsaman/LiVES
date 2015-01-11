@@ -4847,8 +4847,8 @@ static void make_fx_defs_menu(void) {
 	  
 	lives_container_add (LIVES_CONTAINER (menu), menuitem);
 	  
-	g_signal_connect (GTK_OBJECT (menuitem), "activate",
-			  G_CALLBACK (rte_set_defs_activate),
+	lives_signal_connect (LIVES_GUI_OBJECT (menuitem), "activate",
+			  LIVES_GUI_CALLBACK (rte_set_defs_activate),
 			  GINT_TO_POINTER(i));
 
 	weed_free(filter_name);

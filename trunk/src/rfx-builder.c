@@ -341,60 +341,60 @@ rfx_build_window_t *make_rfx_build_window (const gchar *script_name, lives_rfx_s
                               LIVES_KEY_Return, (GdkModifierType)0, (GtkAccelFlags)0);
 
 
-  g_signal_connect (GTK_OBJECT (okbutton), "clicked",
-		    G_CALLBACK (on_rfxbuilder_ok),
+  lives_signal_connect (LIVES_GUI_OBJECT (okbutton), "clicked",
+		    LIVES_GUI_CALLBACK (on_rfxbuilder_ok),
 		    (gpointer)rfxbuilder);
 
-  g_signal_connect (GTK_OBJECT (cancelbutton), "clicked",
-		    G_CALLBACK (on_rfxbuilder_cancel),
+  lives_signal_connect (LIVES_GUI_OBJECT (cancelbutton), "clicked",
+		    LIVES_GUI_CALLBACK (on_rfxbuilder_cancel),
 		    (gpointer)rfxbuilder);
 
-  g_signal_connect(rfxbuilder->requirements_button, "clicked", 
-		   G_CALLBACK (on_list_table_clicked),
+  lives_signal_connect(rfxbuilder->requirements_button, "clicked", 
+		   LIVES_GUI_CALLBACK (on_list_table_clicked),
 		   (gpointer)rfxbuilder);
 
-  g_signal_connect(rfxbuilder->properties_button, "clicked", 
-		   G_CALLBACK (on_properties_clicked),
+  lives_signal_connect(rfxbuilder->properties_button, "clicked", 
+		   LIVES_GUI_CALLBACK (on_properties_clicked),
 		   (gpointer)rfxbuilder);
 
-  g_signal_connect(rfxbuilder->params_button, "clicked", 
-		   G_CALLBACK (on_list_table_clicked),
+  lives_signal_connect(rfxbuilder->params_button, "clicked", 
+		   LIVES_GUI_CALLBACK (on_list_table_clicked),
 		   (gpointer)rfxbuilder);
 
-  g_signal_connect(rfxbuilder->param_window_button, "clicked", 
-		   G_CALLBACK (on_list_table_clicked),
+  lives_signal_connect(rfxbuilder->param_window_button, "clicked", 
+		   LIVES_GUI_CALLBACK (on_list_table_clicked),
 		   (gpointer)rfxbuilder);
 
-  g_signal_connect(rfxbuilder->trigger_button, "clicked", 
-		   G_CALLBACK (on_list_table_clicked),
+  lives_signal_connect(rfxbuilder->trigger_button, "clicked", 
+		   LIVES_GUI_CALLBACK (on_list_table_clicked),
 		   (gpointer)rfxbuilder);
 
-  g_signal_connect(rfxbuilder->pre_button, "clicked", 
-		   G_CALLBACK (on_code_clicked),
+  lives_signal_connect(rfxbuilder->pre_button, "clicked", 
+		   LIVES_GUI_CALLBACK (on_code_clicked),
 		   (gpointer)rfxbuilder);
 
-  g_signal_connect(rfxbuilder->loop_button, "clicked", 
-		   G_CALLBACK (on_code_clicked),
+  lives_signal_connect(rfxbuilder->loop_button, "clicked", 
+		   LIVES_GUI_CALLBACK (on_code_clicked),
 		   (gpointer)rfxbuilder);
 
-  g_signal_connect(rfxbuilder->post_button, "clicked", 
-		   G_CALLBACK (on_code_clicked),
+  lives_signal_connect(rfxbuilder->post_button, "clicked", 
+		   LIVES_GUI_CALLBACK (on_code_clicked),
 		   (gpointer)rfxbuilder);
 
-  g_signal_connect_after (GTK_OBJECT (rfxbuilder->type_effect1_radiobutton), "toggled",
-			  G_CALLBACK (after_rfxbuilder_type_toggled),
+  lives_signal_connect_after (LIVES_GUI_OBJECT (rfxbuilder->type_effect1_radiobutton), "toggled",
+			  LIVES_GUI_CALLBACK (after_rfxbuilder_type_toggled),
 			  (gpointer)rfxbuilder);
-  g_signal_connect_after (GTK_OBJECT (rfxbuilder->type_effect2_radiobutton), "toggled",
-			  G_CALLBACK (after_rfxbuilder_type_toggled),
+  lives_signal_connect_after (LIVES_GUI_OBJECT (rfxbuilder->type_effect2_radiobutton), "toggled",
+			  LIVES_GUI_CALLBACK (after_rfxbuilder_type_toggled),
 			  (gpointer)rfxbuilder);
-  g_signal_connect_after (GTK_OBJECT (rfxbuilder->type_effect0_radiobutton), "toggled",
-			  G_CALLBACK (after_rfxbuilder_type_toggled),
+  lives_signal_connect_after (LIVES_GUI_OBJECT (rfxbuilder->type_effect0_radiobutton), "toggled",
+			  LIVES_GUI_CALLBACK (after_rfxbuilder_type_toggled),
 			  (gpointer)rfxbuilder);
-  g_signal_connect_after (GTK_OBJECT (rfxbuilder->type_tool_radiobutton), "toggled",
-			  G_CALLBACK (after_rfxbuilder_type_toggled),
+  lives_signal_connect_after (LIVES_GUI_OBJECT (rfxbuilder->type_tool_radiobutton), "toggled",
+			  LIVES_GUI_CALLBACK (after_rfxbuilder_type_toggled),
 			  (gpointer)rfxbuilder);
-  g_signal_connect_after (GTK_OBJECT (rfxbuilder->type_utility_radiobutton), "toggled",
-			  G_CALLBACK (after_rfxbuilder_type_toggled),
+  lives_signal_connect_after (LIVES_GUI_OBJECT (rfxbuilder->type_utility_radiobutton), "toggled",
+			  LIVES_GUI_CALLBACK (after_rfxbuilder_type_toggled),
 			  (gpointer)rfxbuilder);
 
 
@@ -667,63 +667,63 @@ void on_list_table_clicked (LiVESButton *button, gpointer user_data) {
   lives_widget_set_can_focus_and_default (okbutton);
 
   if (rfxbuilder->table_type==RFX_TABLE_TYPE_REQUIREMENTS) {
-    g_signal_connect (GTK_OBJECT (okbutton), "clicked",
-		      G_CALLBACK (on_requirements_ok),
+    lives_signal_connect (LIVES_GUI_OBJECT (okbutton), "clicked",
+		      LIVES_GUI_CALLBACK (on_requirements_ok),
 		      user_data);
     
-    g_signal_connect (GTK_OBJECT (cancelbutton), "clicked",
-		      G_CALLBACK (on_requirements_cancel),
+    lives_signal_connect (LIVES_GUI_OBJECT (cancelbutton), "clicked",
+		      LIVES_GUI_CALLBACK (on_requirements_cancel),
 		      user_data);
   }
   else if (rfxbuilder->table_type==RFX_TABLE_TYPE_PARAMS) {
-    g_signal_connect (GTK_OBJECT (okbutton), "clicked",
-		      G_CALLBACK (on_params_ok),
+    lives_signal_connect (LIVES_GUI_OBJECT (okbutton), "clicked",
+		      LIVES_GUI_CALLBACK (on_params_ok),
 		      user_data);
     
-    g_signal_connect (GTK_OBJECT (cancelbutton), "clicked",
-		      G_CALLBACK (on_params_cancel),
+    lives_signal_connect (LIVES_GUI_OBJECT (cancelbutton), "clicked",
+		      LIVES_GUI_CALLBACK (on_params_cancel),
 		      user_data);
   }
   else if (rfxbuilder->table_type==RFX_TABLE_TYPE_PARAM_WINDOW) {
-    g_signal_connect (GTK_OBJECT (okbutton), "clicked",
-		      G_CALLBACK (on_param_window_ok),
+    lives_signal_connect (LIVES_GUI_OBJECT (okbutton), "clicked",
+		      LIVES_GUI_CALLBACK (on_param_window_ok),
 		      user_data);
     
-    g_signal_connect (GTK_OBJECT (cancelbutton), "clicked",
-		      G_CALLBACK (on_param_window_cancel),
+    lives_signal_connect (LIVES_GUI_OBJECT (cancelbutton), "clicked",
+		      LIVES_GUI_CALLBACK (on_param_window_cancel),
 		      user_data);
   }
   else if (rfxbuilder->table_type==RFX_TABLE_TYPE_TRIGGERS) {
-    g_signal_connect (GTK_OBJECT (okbutton), "clicked",
-		      G_CALLBACK (on_triggers_ok),
+    lives_signal_connect (LIVES_GUI_OBJECT (okbutton), "clicked",
+		      LIVES_GUI_CALLBACK (on_triggers_ok),
 		      user_data);
     
-    g_signal_connect (GTK_OBJECT (cancelbutton), "clicked",
-		      G_CALLBACK (on_triggers_cancel),
+    lives_signal_connect (LIVES_GUI_OBJECT (cancelbutton), "clicked",
+		      LIVES_GUI_CALLBACK (on_triggers_cancel),
 		      user_data);
   }
 
 
 
-  g_signal_connect (GTK_OBJECT (rfxbuilder->new_entry_button), "clicked",
-		    G_CALLBACK (on_table_add_row),
+  lives_signal_connect (LIVES_GUI_OBJECT (rfxbuilder->new_entry_button), "clicked",
+		    LIVES_GUI_CALLBACK (on_table_add_row),
 		    user_data);
 
-  g_signal_connect (GTK_OBJECT (rfxbuilder->edit_entry_button), "clicked",
-		    G_CALLBACK (on_table_edit_row),
+  lives_signal_connect (LIVES_GUI_OBJECT (rfxbuilder->edit_entry_button), "clicked",
+		    LIVES_GUI_CALLBACK (on_table_edit_row),
 		    user_data);
 
-  g_signal_connect (GTK_OBJECT (rfxbuilder->remove_entry_button), "clicked",
-		    G_CALLBACK (on_table_delete_row),
+  lives_signal_connect (LIVES_GUI_OBJECT (rfxbuilder->remove_entry_button), "clicked",
+		    LIVES_GUI_CALLBACK (on_table_delete_row),
 		    user_data);
 
   if (rfxbuilder->table_type==RFX_TABLE_TYPE_PARAM_WINDOW) {
-    g_signal_connect (GTK_OBJECT (rfxbuilder->move_up_button), "clicked",
-		      G_CALLBACK (on_table_swap_row),
+    lives_signal_connect (LIVES_GUI_OBJECT (rfxbuilder->move_up_button), "clicked",
+		      LIVES_GUI_CALLBACK (on_table_swap_row),
 		      user_data);
     
-    g_signal_connect (GTK_OBJECT (rfxbuilder->move_down_button), "clicked",
-		      G_CALLBACK (on_table_swap_row),
+    lives_signal_connect (LIVES_GUI_OBJECT (rfxbuilder->move_down_button), "clicked",
+		      LIVES_GUI_CALLBACK (on_table_swap_row),
 		      user_data);
   }
 
@@ -1047,12 +1047,12 @@ void on_properties_clicked (LiVESButton *button, gpointer user_data) {
                               LIVES_KEY_Return, (GdkModifierType)0, (GtkAccelFlags)0);
 
 
-  g_signal_connect (GTK_OBJECT (okbutton), "clicked",
-		    G_CALLBACK (on_properties_ok),
+  lives_signal_connect (LIVES_GUI_OBJECT (okbutton), "clicked",
+		    LIVES_GUI_CALLBACK (on_properties_ok),
 		    user_data);
 
-  g_signal_connect (GTK_OBJECT (cancelbutton), "clicked",
-		    G_CALLBACK (lives_general_button_clicked),
+  lives_signal_connect (LIVES_GUI_OBJECT (cancelbutton), "clicked",
+		    LIVES_GUI_CALLBACK (lives_general_button_clicked),
 		    NULL);
   
   lives_widget_show_all (dialog);
@@ -1428,8 +1428,8 @@ void on_table_add_row (LiVESButton *button, gpointer user_data) {
 
   gtk_event_box_set_above_child(GTK_EVENT_BOX(ebox),TRUE);
 
-  g_signal_connect (GTK_OBJECT (ebox), "button_press_event",
-		    G_CALLBACK (on_entry_click),
+  lives_signal_connect (LIVES_GUI_OBJECT (ebox), "button_press_event",
+		    LIVES_GUI_CALLBACK (on_entry_click),
 		    (gpointer)rfxbuilder);
 
   if (palette->style&STYLE_1) {
@@ -1446,8 +1446,8 @@ void on_table_add_row (LiVESButton *button, gpointer user_data) {
   if (entry2!=NULL) {
     gtk_event_box_set_above_child(GTK_EVENT_BOX(ebox2),TRUE);
 
-    g_signal_connect (GTK_OBJECT (ebox2), "button_press_event",
-		      G_CALLBACK (on_entry_click),
+    lives_signal_connect (LIVES_GUI_OBJECT (ebox2), "button_press_event",
+		      LIVES_GUI_CALLBACK (on_entry_click),
 		      (gpointer)rfxbuilder);
 
     if (palette->style&STYLE_1) {
@@ -1465,8 +1465,8 @@ void on_table_add_row (LiVESButton *button, gpointer user_data) {
   if (entry3!=NULL) {
     gtk_event_box_set_above_child(GTK_EVENT_BOX(ebox3),TRUE);
 
-    g_signal_connect (GTK_OBJECT (ebox3), "button_press_event",
-		      G_CALLBACK (on_entry_click),
+    lives_signal_connect (LIVES_GUI_OBJECT (ebox3), "button_press_event",
+		      LIVES_GUI_CALLBACK (on_entry_click),
 		      (gpointer)rfxbuilder);
 
     if (palette->style&STYLE_1) {
@@ -2175,27 +2175,27 @@ LiVESWidget * make_param_dialog (int pnum, rfx_build_window_t *rfxbuilder) {
 
 
 
-  g_signal_connect (GTK_OBJECT (rfxbuilder->param_strdef_button), "clicked",
-		    G_CALLBACK (on_code_clicked),
+  lives_signal_connect (LIVES_GUI_OBJECT (rfxbuilder->param_strdef_button), "clicked",
+		    LIVES_GUI_CALLBACK (on_code_clicked),
 		    (gpointer)rfxbuilder);
 
-  g_signal_connect (GTK_OBJECT(rfxbuilder->param_type_combo),"changed",G_CALLBACK (on_param_type_changed),
+  lives_signal_connect (LIVES_GUI_OBJECT(rfxbuilder->param_type_combo),"changed",LIVES_GUI_CALLBACK (on_param_type_changed),
 		    (gpointer)rfxbuilder);
 
-  g_signal_connect_after (GTK_OBJECT (rfxbuilder->spinbutton_param_dp), "value_changed",
-			  G_CALLBACK (after_param_dp_changed),
+  lives_signal_connect_after (LIVES_GUI_OBJECT (rfxbuilder->spinbutton_param_dp), "value_changed",
+			  LIVES_GUI_CALLBACK (after_param_dp_changed),
 			  (gpointer)rfxbuilder);
 
-  rfxbuilder->def_spin_f=g_signal_connect_after (GTK_OBJECT (rfxbuilder->spinbutton_param_def), "value_changed",
-			  G_CALLBACK (after_param_def_changed),
+  rfxbuilder->def_spin_f=lives_signal_connect_after (LIVES_GUI_OBJECT (rfxbuilder->spinbutton_param_def), "value_changed",
+			  LIVES_GUI_CALLBACK (after_param_def_changed),
 			  (gpointer)rfxbuilder);
 
-  rfxbuilder->min_spin_f=g_signal_connect_after (GTK_OBJECT (rfxbuilder->spinbutton_param_min), "value_changed",
-			  G_CALLBACK (after_param_min_changed),
+  rfxbuilder->min_spin_f=lives_signal_connect_after (LIVES_GUI_OBJECT (rfxbuilder->spinbutton_param_min), "value_changed",
+			  LIVES_GUI_CALLBACK (after_param_min_changed),
 			  (gpointer)rfxbuilder);
 
-  rfxbuilder->max_spin_f=g_signal_connect_after (GTK_OBJECT (rfxbuilder->spinbutton_param_max), "value_changed",
-			  G_CALLBACK (after_param_max_changed),
+  rfxbuilder->max_spin_f=lives_signal_connect_after (LIVES_GUI_OBJECT (rfxbuilder->spinbutton_param_max), "value_changed",
+			  LIVES_GUI_CALLBACK (after_param_max_changed),
 			  (gpointer)rfxbuilder);
 
 
@@ -2287,8 +2287,8 @@ void after_param_min_changed (LiVESSpinButton *spinbutton, gpointer user_data) {
 
   g_free(ctext);
 
-  g_signal_handler_block (rfxbuilder->spinbutton_param_max,rfxbuilder->max_spin_f);
-  g_signal_handler_block (rfxbuilder->spinbutton_param_def,rfxbuilder->def_spin_f);
+  lives_signal_handler_block (rfxbuilder->spinbutton_param_max,rfxbuilder->max_spin_f);
+  lives_signal_handler_block (rfxbuilder->spinbutton_param_def,rfxbuilder->def_spin_f);
 
   if ((dp=lives_spin_button_get_value_as_int (LIVES_SPIN_BUTTON (rfxbuilder->spinbutton_param_dp)))>0) {
     if (lives_spin_button_get_value(LIVES_SPIN_BUTTON(rfxbuilder->spinbutton_param_def))<
@@ -2321,8 +2321,8 @@ void after_param_min_changed (LiVESSpinButton *spinbutton, gpointer user_data) {
 
   }
 
-  g_signal_handler_unblock (rfxbuilder->spinbutton_param_max,rfxbuilder->max_spin_f);
-  g_signal_handler_unblock (rfxbuilder->spinbutton_param_def,rfxbuilder->def_spin_f);
+  lives_signal_handler_unblock (rfxbuilder->spinbutton_param_max,rfxbuilder->max_spin_f);
+  lives_signal_handler_unblock (rfxbuilder->spinbutton_param_def,rfxbuilder->def_spin_f);
 
 }
 
@@ -2338,8 +2338,8 @@ void after_param_max_changed (LiVESSpinButton *spinbutton, gpointer user_data) {
 
   g_free(ctext);
 
-  g_signal_handler_block (rfxbuilder->spinbutton_param_min,rfxbuilder->min_spin_f);
-  g_signal_handler_block (rfxbuilder->spinbutton_param_def,rfxbuilder->def_spin_f);
+  lives_signal_handler_block (rfxbuilder->spinbutton_param_min,rfxbuilder->min_spin_f);
+  lives_signal_handler_block (rfxbuilder->spinbutton_param_def,rfxbuilder->def_spin_f);
 
   if ((dp=lives_spin_button_get_value_as_int (LIVES_SPIN_BUTTON (rfxbuilder->spinbutton_param_dp)))>0) {
     if (lives_spin_button_get_value(LIVES_SPIN_BUTTON(rfxbuilder->spinbutton_param_def))>
@@ -2371,8 +2371,8 @@ void after_param_max_changed (LiVESSpinButton *spinbutton, gpointer user_data) {
 
   }
 
-  g_signal_handler_unblock (rfxbuilder->spinbutton_param_min,rfxbuilder->min_spin_f);
-  g_signal_handler_unblock (rfxbuilder->spinbutton_param_def,rfxbuilder->def_spin_f);
+  lives_signal_handler_unblock (rfxbuilder->spinbutton_param_min,rfxbuilder->min_spin_f);
+  lives_signal_handler_unblock (rfxbuilder->spinbutton_param_def,rfxbuilder->def_spin_f);
 
 }
 
@@ -2675,14 +2675,14 @@ LiVESWidget * make_param_window_dialog (int pnum, rfx_build_window_t *rfxbuilder
 
   lives_widget_grab_focus (rfxbuilder->paramw_rest_entry);
 
-  g_signal_connect (GTK_OBJECT(rfxbuilder->paramw_kw_combo),"changed",
-		    G_CALLBACK (on_paramw_kw_changed),(gpointer)rfxbuilder);
+  lives_signal_connect (LIVES_GUI_OBJECT(rfxbuilder->paramw_kw_combo),"changed",
+		    LIVES_GUI_CALLBACK (on_paramw_kw_changed),(gpointer)rfxbuilder);
 
-  g_signal_connect (GTK_OBJECT(rfxbuilder->paramw_sp_combo),"changed",
-		    G_CALLBACK (on_paramw_sp_changed),(gpointer)rfxbuilder);
+  lives_signal_connect (LIVES_GUI_OBJECT(rfxbuilder->paramw_sp_combo),"changed",
+		    LIVES_GUI_CALLBACK (on_paramw_sp_changed),(gpointer)rfxbuilder);
 
-  g_signal_connect (GTK_OBJECT(rfxbuilder->paramw_spsub_combo),"changed",
-		    G_CALLBACK (on_paramw_spsub_changed),(gpointer)rfxbuilder);
+  lives_signal_connect (LIVES_GUI_OBJECT(rfxbuilder->paramw_spsub_combo),"changed",
+		    LIVES_GUI_CALLBACK (on_paramw_spsub_changed),(gpointer)rfxbuilder);
 
   lives_widget_show_all(dialog);
   on_paramw_kw_changed (LIVES_COMBO (rfxbuilder->paramw_kw_combo),(gpointer)rfxbuilder);
@@ -2969,12 +2969,12 @@ void on_code_clicked (LiVESButton *button, gpointer user_data) {
   lives_dialog_add_action_widget (LIVES_DIALOG (dialog), okbutton, LIVES_RESPONSE_OK);
   lives_widget_set_can_focus_and_default (okbutton);
 
-  g_signal_connect (GTK_OBJECT (okbutton), "clicked",
-		    G_CALLBACK (on_code_ok),
+  lives_signal_connect (LIVES_GUI_OBJECT (okbutton), "clicked",
+		    LIVES_GUI_CALLBACK (on_code_ok),
 		    user_data);
   
-  g_signal_connect (GTK_OBJECT (cancelbutton), "clicked",
-		    G_CALLBACK (lives_general_button_clicked),
+  lives_signal_connect (LIVES_GUI_OBJECT (cancelbutton), "clicked",
+		    LIVES_GUI_CALLBACK (lives_general_button_clicked),
 		    NULL);
 
 
@@ -4289,7 +4289,7 @@ gchar *prompt_for_script_name(const gchar *sname, lives_rfx_status_t status) {
     name_entry=lives_entry_new();
 
     if (copy_mode) {
-      g_signal_connect (GTK_OBJECT(status_combo),"changed",G_CALLBACK (on_script_status_changed),
+      lives_signal_connect (LIVES_GUI_OBJECT(status_combo),"changed",LIVES_GUI_CALLBACK (on_script_status_changed),
 			(gpointer)script_combo);
       label = lives_standard_label_new (_ ("New name: "));
     }
@@ -4769,8 +4769,8 @@ void add_rfx_effects(void) {
 			      LIVES_KEY_e, LIVES_CONTROL_MASK,
 			      LIVES_ACCEL_VISIBLE);
 
-  g_signal_connect (GTK_OBJECT (menuitem), "activate",
-		    G_CALLBACK (on_realfx_activate),
+  lives_signal_connect (LIVES_GUI_OBJECT (menuitem), "activate",
+		    LIVES_GUI_CALLBACK (on_realfx_activate),
 		    &mainw->rendered_fx[0]);
 
   mainw->rendered_fx[0].menuitem=menuitem;
@@ -4854,13 +4854,13 @@ void add_rfx_effects(void) {
 #endif
 
       if (rfx->params==NULL) {
-	g_signal_connect (GTK_OBJECT (menuitem), "activate",
-			  G_CALLBACK (on_render_fx_activate),
+	lives_signal_connect (LIVES_GUI_OBJECT (menuitem), "activate",
+			  LIVES_GUI_CALLBACK (on_render_fx_activate),
 			  (gpointer)rfx);
       }
       else {
-	g_signal_connect (GTK_OBJECT (menuitem), "activate",
-			  G_CALLBACK (on_render_fx_pre_activate),
+	lives_signal_connect (LIVES_GUI_OBJECT (menuitem), "activate",
+			  LIVES_GUI_CALLBACK (on_render_fx_pre_activate),
 			  (gpointer)rfx);
       }
       if (rfx->min_frames>=0) lives_widget_set_sensitive(menuitem,FALSE);
@@ -4968,19 +4968,19 @@ void add_rfx_effects(void) {
 
 	if (menuitem!=mainw->resize_menuitem) {
 	  if (rfx->params==NULL) {
-	    g_signal_connect (GTK_OBJECT (menuitem), "activate",
-			      G_CALLBACK (on_render_fx_activate),
+	    lives_signal_connect (LIVES_GUI_OBJECT (menuitem), "activate",
+			      LIVES_GUI_CALLBACK (on_render_fx_activate),
 			      (gpointer)rfx);
 	  }
 	  else {
-	    g_signal_connect (GTK_OBJECT (menuitem), "activate",
-			      G_CALLBACK (on_render_fx_pre_activate),
+	    lives_signal_connect (LIVES_GUI_OBJECT (menuitem), "activate",
+			      LIVES_GUI_CALLBACK (on_render_fx_pre_activate),
 			      (gpointer)rfx);
 	  }
 	}
 	else {
-	  mainw->fx_candidates[FX_CANDIDATE_RESIZER].func=g_signal_connect (GTK_OBJECT (menuitem), "activate",
-									    G_CALLBACK (on_render_fx_pre_activate),
+	  mainw->fx_candidates[FX_CANDIDATE_RESIZER].func=lives_signal_connect (LIVES_GUI_OBJECT (menuitem), "activate",
+									    LIVES_GUI_CALLBACK (on_render_fx_pre_activate),
 									    (gpointer)rfx);
 	}
 
@@ -5013,13 +5013,13 @@ void add_rfx_effects(void) {
 	}
 
 	if (rfx->params==NULL) {
-	  g_signal_connect (GTK_OBJECT (menuitem), "activate",
-			    G_CALLBACK (on_render_fx_activate),
+	  lives_signal_connect (LIVES_GUI_OBJECT (menuitem), "activate",
+			    LIVES_GUI_CALLBACK (on_render_fx_activate),
 			    (gpointer)rfx);
 	}
 	else {
-	  g_signal_connect (GTK_OBJECT (menuitem), "activate",
-			    G_CALLBACK (on_render_fx_pre_activate),
+	  lives_signal_connect (LIVES_GUI_OBJECT (menuitem), "activate",
+			    LIVES_GUI_CALLBACK (on_render_fx_pre_activate),
 			    (gpointer)rfx);
 	}
       }

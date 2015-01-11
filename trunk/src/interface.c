@@ -36,8 +36,8 @@ void add_suffix_check(GtkBox *box, const gchar *ext) {
   checkbutton=lives_standard_check_button_new(ltext,TRUE,box,NULL);
   g_free(ltext);
   lives_toggle_button_set_active (LIVES_TOGGLE_BUTTON (checkbutton), mainw->fx1_bool);
-  g_signal_connect_after (GTK_OBJECT (checkbutton), "toggled",
-			  G_CALLBACK (on_boolean_toggled),
+  lives_signal_connect_after (LIVES_GUI_OBJECT (checkbutton), "toggled",
+			  LIVES_GUI_CALLBACK (on_boolean_toggled),
 			  &mainw->fx1_bool);
   
 }
@@ -59,8 +59,8 @@ static LiVESWidget *add_deinterlace_checkbox(GtkBox *for_deint) {
 
   lives_widget_set_can_focus_and_default (checkbutton);
   lives_toggle_button_set_active (LIVES_TOGGLE_BUTTON (checkbutton), mainw->open_deint);
-  g_signal_connect_after (GTK_OBJECT (checkbutton), "toggled",
-			  G_CALLBACK (on_boolean_toggled),
+  lives_signal_connect_after (LIVES_GUI_OBJECT (checkbutton), "toggled",
+			  LIVES_GUI_CALLBACK (on_boolean_toggled),
 			  &mainw->open_deint);
   lives_widget_set_tooltip_text( checkbutton,_("If this is set, frames will be deinterlaced as they are imported."));
 
@@ -147,15 +147,15 @@ void widget_add_preview(LiVESWidget *widget, LiVESBox *for_preview, LiVESBox *fo
   }
 
 
-  g_signal_connect (GTK_OBJECT (preview_button), "clicked",
-		    G_CALLBACK (on_fs_preview_clicked),
+  lives_signal_connect (LIVES_GUI_OBJECT (preview_button), "clicked",
+		    LIVES_GUI_CALLBACK (on_fs_preview_clicked),
 		    GINT_TO_POINTER (preview_type));
 
   if (GTK_IS_FILE_CHOOSER(widget)) {
     lives_widget_set_sensitive(preview_button,FALSE);
     
-    g_signal_connect (GTK_OBJECT (widget), "selection_changed",
-		      G_CALLBACK (pv_sel_changed),
+    lives_signal_connect (LIVES_GUI_OBJECT (widget), "selection_changed",
+		      LIVES_GUI_CALLBACK (pv_sel_changed),
 		      (gpointer)preview_button);
   }
 
@@ -288,27 +288,27 @@ xprocess * create_processing (const gchar *text) {
   lives_widget_add_accelerator (procw->cancel_button, "activate", accel_group,
                               LIVES_KEY_Escape, (GdkModifierType)0, (GtkAccelFlags)0);
 
-  g_signal_connect (GTK_OBJECT (procw->stop_button), "clicked",
-		    G_CALLBACK (on_stop_clicked),
+  lives_signal_connect (LIVES_GUI_OBJECT (procw->stop_button), "clicked",
+		    LIVES_GUI_CALLBACK (on_stop_clicked),
 		    NULL);
 
-  g_signal_connect (GTK_OBJECT (procw->pause_button), "clicked",
-                      G_CALLBACK (on_effects_paused),
+  lives_signal_connect (LIVES_GUI_OBJECT (procw->pause_button), "clicked",
+                      LIVES_GUI_CALLBACK (on_effects_paused),
                       NULL);
 
   if (mainw->multitrack!=NULL&&mainw->multitrack->is_rendering) {
-    g_signal_connect (GTK_OBJECT (procw->preview_button), "clicked",
-                      G_CALLBACK (multitrack_preview_clicked),
+    lives_signal_connect (LIVES_GUI_OBJECT (procw->preview_button), "clicked",
+                      LIVES_GUI_CALLBACK (multitrack_preview_clicked),
                       mainw->multitrack);
   }
   else {
-    g_signal_connect (GTK_OBJECT (procw->preview_button), "clicked",
-                      G_CALLBACK (on_preview_clicked),
+    lives_signal_connect (LIVES_GUI_OBJECT (procw->preview_button), "clicked",
+                      LIVES_GUI_CALLBACK (on_preview_clicked),
                       NULL);
   }
 
-  g_signal_connect (GTK_OBJECT (procw->cancel_button), "clicked",
-                      G_CALLBACK (on_cancel_keep_button_clicked),
+  lives_signal_connect (LIVES_GUI_OBJECT (procw->cancel_button), "clicked",
+                      LIVES_GUI_CALLBACK (on_cancel_keep_button_clicked),
                       NULL);
 
 
@@ -572,8 +572,8 @@ lives_clipinfo_t *create_clip_info_window (int audio_channels, boolean is_mt) {
 
   lives_widget_set_size_request(okbutton,DEF_BUTTON_WIDTH*4,-1);
 
-  g_signal_connect (GTK_OBJECT (okbutton), "clicked",
-                      G_CALLBACK (lives_general_button_clicked),
+  lives_signal_connect (LIVES_GUI_OBJECT (okbutton), "clicked",
+                      LIVES_GUI_CALLBACK (lives_general_button_clicked),
                       filew);
 
   accel_group = LIVES_ACCEL_GROUP(lives_accel_group_new ());
@@ -642,8 +642,8 @@ LiVESWidget* create_encoder_prep_dialog (const gchar *text1, const gchar *text2,
 
     g_free(labeltext);
     
-    g_signal_connect_after (GTK_OBJECT (checkbutton), "toggled",
-			    G_CALLBACK (on_boolean_toggled),
+    lives_signal_connect_after (LIVES_GUI_OBJECT (checkbutton), "toggled",
+			    LIVES_GUI_CALLBACK (on_boolean_toggled),
 			    &mainw->fx1_bool);
 
   }
@@ -669,13 +669,13 @@ LiVESWidget* create_encoder_prep_dialog (const gchar *text1, const gchar *text2,
     }
     else lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(checkbutton2),prefs->enc_letterbox);
     
-    g_signal_connect_after (GTK_OBJECT (checkbutton2), "toggled",
-			    G_CALLBACK (on_boolean_toggled),
+    lives_signal_connect_after (LIVES_GUI_OBJECT (checkbutton2), "toggled",
+			    LIVES_GUI_CALLBACK (on_boolean_toggled),
 			    &prefs->enc_letterbox);
 
     if (opt_resize) 
-      g_signal_connect_after (GTK_OBJECT (checkbutton), "toggled",
-			      G_CALLBACK (on_resizecb_toggled),
+      lives_signal_connect_after (LIVES_GUI_OBJECT (checkbutton), "toggled",
+			      LIVES_GUI_CALLBACK (on_resizecb_toggled),
 			      checkbutton2);
 
   }
@@ -774,8 +774,8 @@ LiVESWidget* create_info_error_dialog (const gchar *text, boolean is_blocking, i
 						   _("Do _not show this warning any more\n(can be turned back on from Preferences/Warnings)"),
 						   TRUE,LIVES_BOX(hbox),NULL);
     lives_widget_set_can_focus_and_default (checkbutton);
-    g_signal_connect (GTK_OBJECT (checkbutton), "toggled",
-                      G_CALLBACK (on_warn_mask_toggled),
+    lives_signal_connect (LIVES_GUI_OBJECT (checkbutton), "toggled",
+                      LIVES_GUI_CALLBACK (on_warn_mask_toggled),
                       GINT_TO_POINTER(mask));
   }
 
@@ -786,8 +786,8 @@ LiVESWidget* create_info_error_dialog (const gchar *text, boolean is_blocking, i
     details_button = lives_button_new_with_mnemonic(_("Show _Details"));
     lives_dialog_add_action_widget (LIVES_DIALOG (dialog), details_button, LIVES_RESPONSE_SHOW_DETAILS);
 
-    g_signal_connect (GTK_OBJECT (details_button), "clicked",
-		      G_CALLBACK (lives_general_button_clicked),
+    lives_signal_connect (LIVES_GUI_OBJECT (details_button), "clicked",
+		      LIVES_GUI_CALLBACK (lives_general_button_clicked),
 		      NULL);
   }
   
@@ -801,8 +801,8 @@ LiVESWidget* create_info_error_dialog (const gchar *text, boolean is_blocking, i
     lives_widget_grab_default (info_ok_button);
   }
 
-  g_signal_connect (GTK_OBJECT (info_ok_button), "clicked",
-		    G_CALLBACK (lives_general_button_clicked),
+  lives_signal_connect (LIVES_GUI_OBJECT (info_ok_button), "clicked",
+		    LIVES_GUI_CALLBACK (lives_general_button_clicked),
 		    NULL);
 
   lives_widget_add_accelerator (info_ok_button, "activate", accel_group,
@@ -883,12 +883,12 @@ text_window *create_text_window (const gchar *title, const gchar *text, GtkTextB
     lives_dialog_add_action_widget (LIVES_DIALOG (textwindow->dialog), savebutton, LIVES_RESPONSE_YES);
     lives_dialog_add_action_widget (LIVES_DIALOG (textwindow->dialog), okbutton, LIVES_RESPONSE_OK);
     
-    g_signal_connect (GTK_OBJECT (savebutton), "clicked",
-		      G_CALLBACK (on_save_textview_clicked),
+    lives_signal_connect (LIVES_GUI_OBJECT (savebutton), "clicked",
+		      LIVES_GUI_CALLBACK (on_save_textview_clicked),
 		      textwindow->textview);
     
-    g_signal_connect (GTK_OBJECT (okbutton), "clicked",
-		      G_CALLBACK (lives_general_button_clicked),
+    lives_signal_connect (LIVES_GUI_OBJECT (okbutton), "clicked",
+		      LIVES_GUI_CALLBACK (lives_general_button_clicked),
 		      textwindow);
     
   }
@@ -1044,23 +1044,23 @@ _insertw* create_insert_dialog (void) {
   lives_widget_grab_default(okbutton);
   lives_widget_grab_focus(okbutton);
 
-  g_signal_connect (GTK_OBJECT (insertw->with_sound), "toggled",
-		    G_CALLBACK (on_insertwsound_toggled),
+  lives_signal_connect (LIVES_GUI_OBJECT (insertw->with_sound), "toggled",
+		    LIVES_GUI_CALLBACK (on_insertwsound_toggled),
 		    NULL);
-  g_signal_connect (GTK_OBJECT (radiobutton), "toggled",
-		    G_CALLBACK (on_boolean_toggled),
+  lives_signal_connect (LIVES_GUI_OBJECT (radiobutton), "toggled",
+		    LIVES_GUI_CALLBACK (on_boolean_toggled),
 		    &mainw->insert_after);
-  g_signal_connect (GTK_OBJECT (cancelbutton), "clicked",
-		    G_CALLBACK (lives_general_button_clicked),
+  lives_signal_connect (LIVES_GUI_OBJECT (cancelbutton), "clicked",
+		    LIVES_GUI_CALLBACK (lives_general_button_clicked),
 		    insertw);
-  g_signal_connect (GTK_OBJECT (okbutton), "clicked",
-		    G_CALLBACK (on_insert_activate),
+  lives_signal_connect (LIVES_GUI_OBJECT (okbutton), "clicked",
+		    LIVES_GUI_CALLBACK (on_insert_activate),
 		    NULL);
-  g_signal_connect (GTK_OBJECT (insertw->fit_checkbutton), "toggled",
-		    G_CALLBACK (on_insfitaudio_toggled),
+  lives_signal_connect (LIVES_GUI_OBJECT (insertw->fit_checkbutton), "toggled",
+		    LIVES_GUI_CALLBACK (on_insfitaudio_toggled),
 		    NULL);
-  g_signal_connect_after (GTK_OBJECT (insertw->spinbutton_times), "value_changed",
-			  G_CALLBACK (on_spin_value_changed),
+  lives_signal_connect_after (LIVES_GUI_OBJECT (insertw->spinbutton_times), "value_changed",
+			  LIVES_GUI_CALLBACK (on_spin_value_changed),
 			  GINT_TO_POINTER (1));
 
   lives_widget_add_accelerator (cancelbutton, "activate", accel_group,
@@ -1121,8 +1121,8 @@ LiVESWidget *create_opensel_dialog (void) {
 
   spinbutton = lives_standard_spin_button_new (NULL, FALSE, 0., 0., 1000000000., 1., 10., 2, NULL, NULL);
 
-  g_signal_connect_after (GTK_OBJECT (spinbutton), "value_changed",
-                            G_CALLBACK (on_spin_value_changed),
+  lives_signal_connect_after (LIVES_GUI_OBJECT (spinbutton), "value_changed",
+                            LIVES_GUI_CALLBACK (on_spin_value_changed),
                             GINT_TO_POINTER (1));
 
   lives_table_attach (LIVES_TABLE (table), spinbutton, 1, 2, 0, 1,
@@ -1132,8 +1132,8 @@ LiVESWidget *create_opensel_dialog (void) {
 
   spinbutton = lives_standard_spin_button_new (NULL,FALSE,1000.,1.,(double)G_MAXINT, 1., 10., 0, NULL, NULL);
 
-  g_signal_connect_after (GTK_OBJECT (spinbutton), "value_changed",
-			  G_CALLBACK (on_spin_value_changed),
+  lives_signal_connect_after (LIVES_GUI_OBJECT (spinbutton), "value_changed",
+			  LIVES_GUI_CALLBACK (on_spin_value_changed),
 			  GINT_TO_POINTER (2));
 
   lives_table_attach (LIVES_TABLE (table), spinbutton, 1, 2, 1, 2,
@@ -1153,11 +1153,11 @@ LiVESWidget *create_opensel_dialog (void) {
 
   widget_add_preview (opensel_dialog, LIVES_BOX (dialog_vbox), GTK_BOX (dialog_vbox), GTK_BOX(dialog_vbox), 3);
 
-  g_signal_connect (GTK_OBJECT (cancelbutton), "clicked",
-		    G_CALLBACK (on_cancel_opensel_clicked),
+  lives_signal_connect (LIVES_GUI_OBJECT (cancelbutton), "clicked",
+		    LIVES_GUI_CALLBACK (on_cancel_opensel_clicked),
 		    NULL);
-  g_signal_connect (GTK_OBJECT (okbutton), "clicked",
-		    G_CALLBACK (on_opensel_range_ok_clicked),
+  lives_signal_connect (LIVES_GUI_OBJECT (okbutton), "clicked",
+		    LIVES_GUI_CALLBACK (on_opensel_range_ok_clicked),
 		    NULL);
 
   lives_widget_show_all(opensel_dialog);
@@ -1241,8 +1241,8 @@ _entryw* create_location_dialog (int type) {
     
     lives_box_pack_start (LIVES_BOX(dialog_vbox), hbox, FALSE, FALSE, widget_opts.packing_height*2);
     
-    g_signal_connect (GTK_OBJECT (checkbutton), "toggled",
-		      G_CALLBACK (on_boolean_toggled),
+    lives_signal_connect (LIVES_GUI_OBJECT (checkbutton), "toggled",
+		      LIVES_GUI_CALLBACK (on_boolean_toggled),
 		      &prefs->no_bandwidth);
     
     add_deinterlace_checkbox(LIVES_BOX(dialog_vbox));
@@ -1275,7 +1275,7 @@ _entryw* create_location_dialog (int type) {
     locw->name_entry = lives_standard_entry_new (_("Download _File Name : "),TRUE,"",
 						 74.*widget_opts.scale,PATH_MAX,LIVES_BOX(hbox),NULL);
 
-    g_signal_connect(buttond, "clicked", G_CALLBACK (on_filesel_button_clicked), (gpointer)locw->dir_entry);
+    lives_signal_connect(buttond, "clicked", LIVES_GUI_CALLBACK (on_filesel_button_clicked), (gpointer)locw->dir_entry);
 
     label=lives_standard_label_new (_(".webm"));
 
@@ -1300,18 +1300,18 @@ _entryw* create_location_dialog (int type) {
   lives_widget_grab_default (okbutton);
 
 
-  g_signal_connect (GTK_OBJECT (cancelbutton), "clicked",
-		    G_CALLBACK (lives_general_button_clicked),
+  lives_signal_connect (LIVES_GUI_OBJECT (cancelbutton), "clicked",
+		    LIVES_GUI_CALLBACK (lives_general_button_clicked),
 		    locw);
 
   if (type==1) 
-    g_signal_connect (GTK_OBJECT (okbutton), "clicked",
-		      G_CALLBACK (on_location_select),
+    lives_signal_connect (LIVES_GUI_OBJECT (okbutton), "clicked",
+		      LIVES_GUI_CALLBACK (on_location_select),
 		      NULL);
 
   else if (type==2) 
-    g_signal_connect (GTK_OBJECT (okbutton), "clicked",
-		      G_CALLBACK (on_utube_select),
+    lives_signal_connect (LIVES_GUI_OBJECT (okbutton), "clicked",
+		      LIVES_GUI_CALLBACK (on_utube_select),
 		      NULL);
 
 
@@ -1480,7 +1480,7 @@ _entryw* create_rename_dialog (int type) {
     lives_container_add (LIVES_CONTAINER (dirbutton1), dirimage1);
 
     lives_box_pack_start (LIVES_BOX (hbox), dirbutton1, FALSE, TRUE, widget_opts.packing_width);
-    g_signal_connect(dirbutton1, "clicked", G_CALLBACK (on_filesel_complex_clicked),renamew->entry);
+    lives_signal_connect(dirbutton1, "clicked", LIVES_GUI_CALLBACK (on_filesel_complex_clicked),renamew->entry);
 
   }
 
@@ -1511,19 +1511,19 @@ _entryw* create_rename_dialog (int type) {
   lives_widget_grab_default (okbutton);
 
   if (type!=4&&type!=2&&type!=5) {
-    g_signal_connect (GTK_OBJECT (cancelbutton), "clicked",
-		      G_CALLBACK (lives_general_button_clicked),
+    lives_signal_connect (LIVES_GUI_OBJECT (cancelbutton), "clicked",
+		      LIVES_GUI_CALLBACK (lives_general_button_clicked),
 		      renamew);
   }
 
   if (type==1) {
-    g_signal_connect (GTK_OBJECT (okbutton), "clicked",
-		      G_CALLBACK (on_rename_set_name),
+    lives_signal_connect (LIVES_GUI_OBJECT (okbutton), "clicked",
+		      LIVES_GUI_CALLBACK (on_rename_set_name),
 		      NULL);
   }
   else if (type==3) {
-    g_signal_connect (GTK_OBJECT (okbutton), "clicked",
-		      G_CALLBACK (on_load_set_ok),
+    lives_signal_connect (LIVES_GUI_OBJECT (okbutton), "clicked",
+		      LIVES_GUI_CALLBACK (on_load_set_ok),
 		      GINT_TO_POINTER(FALSE));
   }
 
@@ -1634,7 +1634,7 @@ LiVESWidget *create_combo_dialog (int type, gpointer user_data) {
 
   lives_combo_set_active_index(LIVES_COMBO(combo), 0);
 
-  g_signal_connect_after (G_OBJECT (combo), "changed", G_CALLBACK (after_dialog_combo_changed), list);
+  lives_signal_connect_after (G_OBJECT (combo), "changed", LIVES_GUI_CALLBACK (after_dialog_combo_changed), list);
 
   lives_box_pack_start (LIVES_BOX (dialog_vbox), combo, TRUE, TRUE, widget_opts.packing_height*2);
 
@@ -1754,8 +1754,8 @@ LiVESWidget* create_cdtrack_dialog (int type, gpointer user_data) {
 
   g_free(label_text);
 
-  g_signal_connect_after (GTK_OBJECT (spinbutton), "value_changed",
-			  G_CALLBACK (on_spin_value_changed),
+  lives_signal_connect_after (LIVES_GUI_OBJECT (spinbutton), "value_changed",
+			  LIVES_GUI_CALLBACK (on_spin_value_changed),
 			  GINT_TO_POINTER (1));
 
 
@@ -1778,8 +1778,8 @@ LiVESWidget* create_cdtrack_dialog (int type, gpointer user_data) {
 
     }
 
-    g_signal_connect_after (GTK_OBJECT (spinbutton), "value_changed",
-			    G_CALLBACK (on_spin_value_changed),
+    lives_signal_connect_after (LIVES_GUI_OBJECT (spinbutton), "value_changed",
+			    LIVES_GUI_CALLBACK (on_spin_value_changed),
 			    GINT_TO_POINTER (2));
 
 
@@ -1791,8 +1791,8 @@ LiVESWidget* create_cdtrack_dialog (int type, gpointer user_data) {
 						   128., 159., 1., 1., 0, 
 						   LIVES_BOX(hbox),NULL);
 
-      g_signal_connect_after (GTK_OBJECT (spinbutton), "value_changed",
-			      G_CALLBACK (on_spin_value_changed),
+      lives_signal_connect_after (LIVES_GUI_OBJECT (spinbutton), "value_changed",
+			      LIVES_GUI_CALLBACK (on_spin_value_changed),
 			      GINT_TO_POINTER (3));
 
     }
@@ -1865,8 +1865,8 @@ LiVESWidget* create_cdtrack_dialog (int type, gpointer user_data) {
 							     radiobutton_group,LIVES_BOX(hbox),NULL);
     radiobutton_group = lives_radio_button_get_group (LIVES_RADIO_BUTTON (tvcardw->radiobuttond));
     
-    g_signal_connect_after (GTK_OBJECT (tvcardw->radiobuttond), "toggled",
-			    G_CALLBACK (rb_tvcarddef_toggled),
+    lives_signal_connect_after (LIVES_GUI_OBJECT (tvcardw->radiobuttond), "toggled",
+			    LIVES_GUI_CALLBACK (rb_tvcarddef_toggled),
 			    (gpointer)tvcardw);
 
     hbox = lives_hbox_new (FALSE, 0);
@@ -1904,8 +1904,8 @@ LiVESWidget* create_cdtrack_dialog (int type, gpointer user_data) {
     lives_widget_show_all (hbox);
     lives_box_pack_start (LIVES_BOX (tvcardw->adv_vbox), hbox, TRUE, FALSE, 0);
 
-    g_signal_connect (GTK_OBJECT (tvcardw->advbutton), "clicked",
-		      G_CALLBACK (on_liveinp_advanced_clicked),
+    lives_signal_connect (LIVES_GUI_OBJECT (tvcardw->advbutton), "clicked",
+		      LIVES_GUI_CALLBACK (on_liveinp_advanced_clicked),
 		      tvcardw);
 
     lives_widget_hide(tvcardw->adv_vbox);
@@ -1934,24 +1934,24 @@ LiVESWidget* create_cdtrack_dialog (int type, gpointer user_data) {
                               LIVES_KEY_Return, (GdkModifierType)0, (GtkAccelFlags)0);
 
   if (type!=4&&type!=5) {
-    g_signal_connect (GTK_OBJECT (cancelbutton), "clicked",
-		      G_CALLBACK (lives_general_button_clicked),
+    lives_signal_connect (LIVES_GUI_OBJECT (cancelbutton), "clicked",
+		      LIVES_GUI_CALLBACK (lives_general_button_clicked),
 		      NULL);
   }
 
   if (type==0) {
-    g_signal_connect (GTK_OBJECT (okbutton), "clicked",
-		      G_CALLBACK (on_load_cdtrack_ok_clicked),
+    lives_signal_connect (LIVES_GUI_OBJECT (okbutton), "clicked",
+		      LIVES_GUI_CALLBACK (on_load_cdtrack_ok_clicked),
 		      NULL);
   }
   else if (type==1||type==2)  {
-    g_signal_connect (GTK_OBJECT (okbutton), "clicked",
-		      G_CALLBACK (on_load_vcd_ok_clicked),
+    lives_signal_connect (LIVES_GUI_OBJECT (okbutton), "clicked",
+		      LIVES_GUI_CALLBACK (on_load_vcd_ok_clicked),
 		      GINT_TO_POINTER (type));
   }
   else if (type==3)  {
-    g_signal_connect (GTK_OBJECT (okbutton), "clicked",
-		      G_CALLBACK (mt_change_disp_tracks_ok),
+    lives_signal_connect (LIVES_GUI_OBJECT (okbutton), "clicked",
+		      LIVES_GUI_CALLBACK (mt_change_disp_tracks_ok),
 		      user_data);
   }
 
@@ -2061,8 +2061,8 @@ aud_dialog_t *create_audfade_dialog (int type) {
     rb_aud_sel_pressed(LIVES_BUTTON(rb_sel),(gpointer)audd);
   }
 
-  g_signal_connect_after (GTK_OBJECT (rb_sel), "toggled",
-			  G_CALLBACK (rb_aud_sel_pressed),
+  lives_signal_connect_after (LIVES_GUI_OBJECT (rb_sel), "toggled",
+			  LIVES_GUI_CALLBACK (rb_aud_sel_pressed),
 			  (gpointer)audd);
 
 
@@ -2170,7 +2170,7 @@ _commentsw* create_comments_dialog (lives_clip_t *sfile, gchar *filename) {
 
     buttond = lives_button_new_with_mnemonic(_("Browse..."));
 
-    g_signal_connect (buttond, "clicked",G_CALLBACK (on_save_subs_activate),
+    lives_signal_connect (buttond, "clicked",LIVES_GUI_CALLBACK (on_save_subs_activate),
     		      (gpointer)commentsw->subt_entry);
 
     lives_box_pack_start (LIVES_BOX (hbox), buttond, FALSE, FALSE, widget_opts.packing_width);
@@ -2316,7 +2316,7 @@ gchar *choose_file(gchar *dir, gchar *fname, gchar **filt, LiVESFileChooserActio
     else lives_window_set_transient_for(LIVES_WINDOW(chooser),LIVES_WINDOW(mainw->multitrack->window));
   }
 
-  g_signal_connect (chooser, "current-folder-changed", G_CALLBACK (chooser_check_dir), NULL);
+  lives_signal_connect (chooser, "current-folder-changed", LIVES_GUI_CALLBACK (chooser_check_dir), NULL);
 
   lives_widget_grab_focus (chooser);
 
@@ -2416,7 +2416,7 @@ LiVESWidget *choose_file_with_preview (gchar *dir, const gchar *title, int previ
     lives_widget_context_update();
   }
 
-  g_signal_connect (chooser, "response", G_CALLBACK (chooser_response), GINT_TO_POINTER(preview_type));
+  lives_signal_connect (chooser, "response", LIVES_GUI_CALLBACK (chooser_response), GINT_TO_POINTER(preview_type));
 
   return chooser;
 }
@@ -2513,8 +2513,8 @@ _entryw* create_cds_dialog (int type) {
     
     g_object_set_data(G_OBJECT(checkbutton),"cdsw",(gpointer)cdsw);
     
-    g_signal_connect (GTK_OBJECT (checkbutton), "toggled",
-		      G_CALLBACK (on_autoreload_toggled),
+    lives_signal_connect (LIVES_GUI_OBJECT (checkbutton), "toggled",
+		      LIVES_GUI_CALLBACK (on_autoreload_toggled),
 		      GINT_TO_POINTER(type));
   }
 
@@ -2611,8 +2611,8 @@ LiVESWidget *create_cleardisk_advanced_dialog(void) {
 
   lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(checkbutton), !(prefs->clear_disk_opts & LIVES_CDISK_LEAVE_ORPHAN_SETS));
 
-  g_signal_connect_after (GTK_OBJECT (checkbutton), "toggled",
-			  G_CALLBACK (flip_cdisk_bit),
+  lives_signal_connect_after (LIVES_GUI_OBJECT (checkbutton), "toggled",
+			  LIVES_GUI_CALLBACK (flip_cdisk_bit),
 			  GINT_TO_POINTER(LIVES_CDISK_LEAVE_ORPHAN_SETS));
 
   hbox = lives_hbox_new (FALSE, 0);
@@ -2622,8 +2622,8 @@ LiVESWidget *create_cleardisk_advanced_dialog(void) {
 
   lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(checkbutton), !(prefs->clear_disk_opts & LIVES_CDISK_LEAVE_BFILES));
 
-  g_signal_connect_after (GTK_OBJECT (checkbutton), "toggled",
-			  G_CALLBACK (flip_cdisk_bit),
+  lives_signal_connect_after (LIVES_GUI_OBJECT (checkbutton), "toggled",
+			  LIVES_GUI_CALLBACK (flip_cdisk_bit),
 			  GINT_TO_POINTER(LIVES_CDISK_LEAVE_BFILES));
 
   hbox = lives_hbox_new (FALSE, 0);
@@ -2634,8 +2634,8 @@ LiVESWidget *create_cleardisk_advanced_dialog(void) {
   lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(checkbutton), 
 				 (prefs->clear_disk_opts & LIVES_CDISK_REMOVE_ORPHAN_LAYOUTS));
   
-  g_signal_connect_after (GTK_OBJECT (checkbutton), "toggled",
-			  G_CALLBACK (flip_cdisk_bit),
+  lives_signal_connect_after (LIVES_GUI_OBJECT (checkbutton), "toggled",
+			  LIVES_GUI_CALLBACK (flip_cdisk_bit),
 			  GINT_TO_POINTER(LIVES_CDISK_REMOVE_ORPHAN_LAYOUTS));
 
   resetbutton = lives_button_new_from_stock (LIVES_STOCK_REFRESH);

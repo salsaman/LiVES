@@ -200,14 +200,14 @@ void check_for_special (lives_rfx_t *rfx, lives_param_t *param, LiVESBox *pbox) 
     param->special_type_index=0;
     if (framedraw.type==LIVES_PARAM_SPECIAL_TYPE_RECT_DEMASK)
       lives_spin_button_set_value (LIVES_SPIN_BUTTON (param->widgets[0]),0.);
-    g_signal_connect_after (GTK_OBJECT (param->widgets[0]), "value_changed", G_CALLBACK (after_framedraw_widget_changed), &framedraw);
+    lives_signal_connect_after (LIVES_GUI_OBJECT (param->widgets[0]), "value_changed", LIVES_GUI_CALLBACK (after_framedraw_widget_changed), &framedraw);
   }
   if (param==framedraw.ystart_param) {
     param->special_type=framedraw.type;
     param->special_type_index=1;
     if (framedraw.type==LIVES_PARAM_SPECIAL_TYPE_RECT_DEMASK)
       lives_spin_button_set_value (LIVES_SPIN_BUTTON (param->widgets[0]),0.);
-    g_signal_connect_after (GTK_OBJECT (param->widgets[0]), "value_changed", G_CALLBACK (after_framedraw_widget_changed), &framedraw);
+    lives_signal_connect_after (LIVES_GUI_OBJECT (param->widgets[0]), "value_changed", LIVES_GUI_CALLBACK (after_framedraw_widget_changed), &framedraw);
   }
   if (mainw->current_file>-1) {
     if (param==framedraw.xend_param) {
@@ -215,14 +215,14 @@ void check_for_special (lives_rfx_t *rfx, lives_param_t *param, LiVESBox *pbox) 
       param->special_type_index=2;
       if (framedraw.type==LIVES_PARAM_SPECIAL_TYPE_RECT_DEMASK)
 	lives_spin_button_set_value (LIVES_SPIN_BUTTON (param->widgets[0]),(gdouble)cfile->hsize);
-      g_signal_connect_after (GTK_OBJECT (param->widgets[0]), "value_changed", G_CALLBACK (after_framedraw_widget_changed), &framedraw);
+      lives_signal_connect_after (LIVES_GUI_OBJECT (param->widgets[0]), "value_changed", LIVES_GUI_CALLBACK (after_framedraw_widget_changed), &framedraw);
     }
     if (param==framedraw.yend_param) {
       param->special_type=framedraw.type;
       param->special_type_index=3;
       if (framedraw.type==LIVES_PARAM_SPECIAL_TYPE_RECT_DEMASK)
 	lives_spin_button_set_value (LIVES_SPIN_BUTTON (param->widgets[0]),(gdouble)cfile->vsize);
-      g_signal_connect_after (GTK_OBJECT (param->widgets[0]), "value_changed", G_CALLBACK (after_framedraw_widget_changed), &framedraw);
+      lives_signal_connect_after (LIVES_GUI_OBJECT (param->widgets[0]), "value_changed", LIVES_GUI_CALLBACK (after_framedraw_widget_changed), &framedraw);
     }
 
 
@@ -245,14 +245,14 @@ void check_for_special (lives_rfx_t *rfx, lives_param_t *param, LiVESBox *pbox) 
     
     if (param==aspect.width_param) {
       lives_spin_button_set_value (LIVES_SPIN_BUTTON (param->widgets[0]),(gdouble)cfile->hsize);
-      aspect.width_func=g_signal_connect_after (GTK_OBJECT (param->widgets[0]), "value_changed",
-						G_CALLBACK (after_aspect_width_changed),
+      aspect.width_func=lives_signal_connect_after (LIVES_GUI_OBJECT (param->widgets[0]), "value_changed",
+						LIVES_GUI_CALLBACK (after_aspect_width_changed),
 						NULL);
     }
     if (param==aspect.height_param) {
       lives_spin_button_set_value (LIVES_SPIN_BUTTON (param->widgets[0]),(gdouble)cfile->vsize);
-      aspect.height_func=g_signal_connect_after (GTK_OBJECT (param->widgets[0]), "value_changed",
-						 G_CALLBACK (after_aspect_height_changed),
+      aspect.height_func=lives_signal_connect_after (LIVES_GUI_OBJECT (param->widgets[0]), "value_changed",
+						 LIVES_GUI_CALLBACK (after_aspect_height_changed),
 						 NULL);
       
       box = lives_hbox_new (FALSE, 0);
@@ -299,7 +299,7 @@ void check_for_special (lives_rfx_t *rfx, lives_param_t *param, LiVESBox *pbox) 
       buttond = lives_standard_file_button_new (FALSE,g_get_current_dir());
       lives_box_pack_start(LIVES_BOX(box),buttond,FALSE,FALSE,widget_opts.packing_width);
       lives_box_reorder_child(LIVES_BOX(box),buttond,epos); // insert after label, before textbox
-      g_signal_connect(buttond, "clicked", G_CALLBACK (on_filesel_button_clicked), (gpointer)param->widgets[0]);
+      lives_signal_connect(buttond, "clicked", LIVES_GUI_CALLBACK (on_filesel_button_clicked), (gpointer)param->widgets[0]);
 
       if (!lives_widget_is_sensitive(param->widgets[0])) lives_widget_set_sensitive(buttond,FALSE);
 
@@ -343,8 +343,8 @@ void check_for_special (lives_rfx_t *rfx, lives_param_t *param, LiVESBox *pbox) 
       if (!lives_widget_is_sensitive(param->widgets[0])) lives_widget_set_sensitive(checkbutton,FALSE);
       lives_widget_show_all(hbox);
 
-      g_signal_connect_after (GTK_OBJECT (checkbutton), "toggled",
-			      G_CALLBACK (passwd_toggle_vis),
+      lives_signal_connect_after (LIVES_GUI_OBJECT (checkbutton), "toggled",
+			      LIVES_GUI_CALLBACK (passwd_toggle_vis),
 			      (gpointer)param->widgets[0]);
 
 
@@ -363,7 +363,7 @@ void after_aspect_width_changed (GtkSpinButton *spinbutton, gpointer user_data) 
     boolean keepeven=FALSE;
     gint width=lives_spin_button_get_value_as_int (spinbutton);
     gint height=lives_spin_button_get_value_as_int (LIVES_SPIN_BUTTON (aspect.height_param->widgets[0]));
-    g_signal_handler_block (aspect.height_param->widgets[0],aspect.height_func);
+    lives_signal_handler_block (aspect.height_param->widgets[0],aspect.height_func);
 
     if (((cfile->hsize>>1)<<1)==cfile->hsize&&((cfile->vsize>>1)<<1)==cfile->vsize) {
       // try to keep even
@@ -382,7 +382,7 @@ void after_aspect_width_changed (GtkSpinButton *spinbutton, gpointer user_data) 
     }
 
     lives_spin_button_set_value (LIVES_SPIN_BUTTON (aspect.height_param->widgets[0]), (gdouble)height);
-    g_signal_handler_unblock (aspect.height_param->widgets[0],aspect.height_func);
+    lives_signal_handler_unblock (aspect.height_param->widgets[0],aspect.height_func);
   }
 }
 
@@ -393,7 +393,7 @@ void after_aspect_height_changed (GtkToggleButton *spinbutton, gpointer user_dat
     gint height=lives_spin_button_get_value_as_int (LIVES_SPIN_BUTTON (spinbutton));
     gint width=lives_spin_button_get_value_as_int (LIVES_SPIN_BUTTON (aspect.width_param->widgets[0]));
 
-    g_signal_handler_block (aspect.width_param->widgets[0],aspect.width_func);
+    lives_signal_handler_block (aspect.width_param->widgets[0],aspect.width_func);
 
     if (((cfile->hsize>>1)<<1)==cfile->hsize&&((cfile->vsize>>1)<<1)==cfile->vsize) {
       // try to keep even
@@ -413,7 +413,7 @@ void after_aspect_height_changed (GtkToggleButton *spinbutton, gpointer user_dat
     }
 
     lives_spin_button_set_value (LIVES_SPIN_BUTTON (aspect.width_param->widgets[0]), (gdouble)width);
-    g_signal_handler_unblock (aspect.width_param->widgets[0],aspect.width_func);
+    lives_signal_handler_unblock (aspect.width_param->widgets[0],aspect.width_func);
   }
 }
 

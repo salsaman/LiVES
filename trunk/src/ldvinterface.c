@@ -58,7 +58,7 @@ struct _dvgrabw *create_camwindow (s_cam *cam, int type)
   g_free(tmp);
 
 
-  g_signal_connect(buttond, "clicked", G_CALLBACK (on_filesel_button_clicked), (gpointer)direntry);
+  lives_signal_connect(buttond, "clicked", LIVES_GUI_CALLBACK (on_filesel_button_clicked), (gpointer)direntry);
 
 
   //////////////////
@@ -162,12 +162,12 @@ struct _dvgrabw *create_camwindow (s_cam *cam, int type)
 
   //////////////////////////////////////////////////////////////////////////////////////////
 
-  g_signal_connect (button3, "clicked",G_CALLBACK (on_camrew_clicked),(gpointer)cam);
-  g_signal_connect (button4, "clicked",G_CALLBACK (on_camff_clicked),(gpointer)cam);
-  g_signal_connect (dvgrabw->stop, "clicked",G_CALLBACK (on_camstop_clicked),(gpointer)cam);
-  g_signal_connect (dvgrabw->play, "clicked",G_CALLBACK (on_camplay_clicked),(gpointer)cam);
-  g_signal_connect (dvgrabw->grab, "clicked",G_CALLBACK (on_camgrab_clicked),(gpointer)cam);
-  g_signal_connect (dvgrabw->quit, "clicked",G_CALLBACK (on_camquit_clicked),(gpointer)cam);
+  lives_signal_connect (button3, "clicked",LIVES_GUI_CALLBACK (on_camrew_clicked),(gpointer)cam);
+  lives_signal_connect (button4, "clicked",LIVES_GUI_CALLBACK (on_camff_clicked),(gpointer)cam);
+  lives_signal_connect (dvgrabw->stop, "clicked",LIVES_GUI_CALLBACK (on_camstop_clicked),(gpointer)cam);
+  lives_signal_connect (dvgrabw->play, "clicked",LIVES_GUI_CALLBACK (on_camplay_clicked),(gpointer)cam);
+  lives_signal_connect (dvgrabw->grab, "clicked",LIVES_GUI_CALLBACK (on_camgrab_clicked),(gpointer)cam);
+  lives_signal_connect (dvgrabw->quit, "clicked",LIVES_GUI_CALLBACK (on_camquit_clicked),(gpointer)cam);
 
 
   lives_widget_show_all(dvgrabw->dialog);

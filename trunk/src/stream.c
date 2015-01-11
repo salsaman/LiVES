@@ -1133,8 +1133,8 @@ lives_pandh_w* create_pandh_dialog (int type) {
 
   g_free(tmp); g_free(tmp2);
 
-  g_signal_connect_after (GTK_OBJECT (pandhw->rb_anyhost), "toggled",
-			  G_CALLBACK (pandhw_anyhost_toggled),
+  lives_signal_connect_after (LIVES_GUI_OBJECT (pandhw->rb_anyhost), "toggled",
+			  LIVES_GUI_CALLBACK (pandhw_anyhost_toggled),
 			  (gpointer)pandhw);
 
   hbox = lives_hbox_new (FALSE, 0);

@@ -269,12 +269,12 @@ void create_LiVES (void) {
 
 
 #if GTK_CHECK_VERSION(3,0,0)
-  g_signal_connect (GTK_OBJECT (mainw->start_image), LIVES_WIDGET_EVENT_EXPOSE_EVENT,
-		    G_CALLBACK (expose_sim),
+  lives_signal_connect (LIVES_GUI_OBJECT (mainw->start_image), LIVES_WIDGET_EVENT_EXPOSE_EVENT,
+		    LIVES_GUI_CALLBACK (expose_sim),
 		    NULL);
 
-  g_signal_connect (GTK_OBJECT (mainw->end_image), LIVES_WIDGET_EVENT_EXPOSE_EVENT,
-		    G_CALLBACK (expose_eim),
+  lives_signal_connect (LIVES_GUI_OBJECT (mainw->end_image), LIVES_WIDGET_EVENT_EXPOSE_EVENT,
+		    LIVES_GUI_CALLBACK (expose_eim),
 		    NULL);
 #else
 
@@ -302,8 +302,8 @@ void create_LiVES (void) {
   gtk_drag_dest_set(mainw->LiVES,GTK_DEST_DEFAULT_ALL,mainw->target_table,2,
 		    (GdkDragAction)(GDK_ACTION_COPY|GDK_ACTION_MOVE|GDK_ACTION_LINK));
 
-  g_signal_connect (GTK_OBJECT (mainw->LiVES), "drag-data-received",
-		    G_CALLBACK (drag_from_outside),
+  lives_signal_connect (LIVES_GUI_OBJECT (mainw->LiVES), "drag-data-received",
+		    LIVES_GUI_CALLBACK (drag_from_outside),
 		    NULL);
 
 
@@ -476,8 +476,8 @@ void create_LiVES (void) {
   menuitem = lives_menu_item_new_with_mnemonic (_("Add _Unicap Device"));
   lives_container_add (LIVES_CONTAINER (submenu), menuitem);
   lives_widget_show (menuitem);
-  g_signal_connect (GTK_OBJECT (menuitem), "activate",
-		    G_CALLBACK (on_open_vdev_activate),
+  lives_signal_connect (LIVES_GUI_OBJECT (menuitem), "activate",
+		    LIVES_GUI_CALLBACK (on_open_vdev_activate),
 		    NULL);
 #endif
 
@@ -487,8 +487,8 @@ void create_LiVES (void) {
       lives_container_add (LIVES_CONTAINER (submenu), menuitem);
       lives_widget_show (menuitem);
 
-      g_signal_connect (GTK_OBJECT (menuitem), "activate",
-			G_CALLBACK (on_live_fw_activate),
+      lives_signal_connect (LIVES_GUI_OBJECT (menuitem), "activate",
+			LIVES_GUI_CALLBACK (on_live_fw_activate),
 			NULL);
     }
 
@@ -496,8 +496,8 @@ void create_LiVES (void) {
     lives_container_add (LIVES_CONTAINER (submenu), menuitem);
     lives_widget_show (menuitem);
 
-    g_signal_connect (GTK_OBJECT (menuitem), "activate",
-		      G_CALLBACK (on_live_tvcard_activate),
+    lives_signal_connect (LIVES_GUI_OBJECT (menuitem), "activate",
+		      LIVES_GUI_CALLBACK (on_live_tvcard_activate),
 		      NULL);
 
 #ifndef HAVE_UNICAP
@@ -1853,8 +1853,8 @@ void create_LiVES (void) {
   }
   lives_widget_set_tooltip_text(mainw->vol_toolitem,_("Audio volume (1.00)"));
 
-  g_signal_connect_after (GTK_OBJECT (mainw->volume_scale), "value_changed",
-			  G_CALLBACK (on_volume_slider_value_changed),
+  lives_signal_connect_after (LIVES_GUI_OBJECT (mainw->volume_scale), "value_changed",
+			  LIVES_GUI_CALLBACK (on_volume_slider_value_changed),
 			  NULL);
 
   mainw->play_window=NULL;
@@ -1982,8 +1982,8 @@ void create_LiVES (void) {
 
   lives_widget_set_events (mainw->eventbox, LIVES_SCROLL_MASK);
 
-  g_signal_connect (GTK_OBJECT (mainw->eventbox), "scroll_event",
-                      G_CALLBACK (on_mouse_scroll),
+  lives_signal_connect (LIVES_GUI_OBJECT (mainw->eventbox), "scroll_event",
+                      LIVES_GUI_CALLBACK (on_mouse_scroll),
                       NULL);
 
   mainw->framebar = lives_hbox_new (FALSE, 0);
@@ -2414,115 +2414,115 @@ void create_LiVES (void) {
 
   // accel keys
   lives_accel_group_connect (LIVES_ACCEL_GROUP (mainw->accel_group), LIVES_KEY_Page_Up, LIVES_CONTROL_MASK, (GtkAccelFlags)0, 
-			   g_cclosure_new (G_CALLBACK (prevclip_callback),NULL,NULL));
+			   g_cclosure_new (LIVES_GUI_CALLBACK (prevclip_callback),NULL,NULL));
 
   lives_accel_group_connect (LIVES_ACCEL_GROUP (mainw->accel_group), LIVES_KEY_Page_Down, LIVES_CONTROL_MASK, (GtkAccelFlags)0, 
-			   g_cclosure_new (G_CALLBACK (nextclip_callback),NULL,NULL));
+			   g_cclosure_new (LIVES_GUI_CALLBACK (nextclip_callback),NULL,NULL));
 
   lives_accel_group_connect (LIVES_ACCEL_GROUP (mainw->accel_group), LIVES_KEY_Down, LIVES_CONTROL_MASK, (GtkAccelFlags)0, 
-			   g_cclosure_new (G_CALLBACK (slower_callback),NULL,NULL));
+			   g_cclosure_new (LIVES_GUI_CALLBACK (slower_callback),NULL,NULL));
 
   lives_accel_group_connect (LIVES_ACCEL_GROUP (mainw->accel_group), LIVES_KEY_Up, LIVES_CONTROL_MASK, (GtkAccelFlags)0, 
-			   g_cclosure_new (G_CALLBACK (faster_callback),NULL,NULL));
+			   g_cclosure_new (LIVES_GUI_CALLBACK (faster_callback),NULL,NULL));
 
   lives_accel_group_connect (LIVES_ACCEL_GROUP (mainw->accel_group), LIVES_KEY_Left, LIVES_CONTROL_MASK, (GtkAccelFlags)0, 
-			   g_cclosure_new (G_CALLBACK (skip_back_callback),NULL,NULL));
+			   g_cclosure_new (LIVES_GUI_CALLBACK (skip_back_callback),NULL,NULL));
 
   lives_accel_group_connect (LIVES_ACCEL_GROUP (mainw->accel_group), LIVES_KEY_Right, LIVES_CONTROL_MASK, (GtkAccelFlags)0, 
-			   g_cclosure_new (G_CALLBACK (skip_forward_callback),NULL,NULL));
+			   g_cclosure_new (LIVES_GUI_CALLBACK (skip_forward_callback),NULL,NULL));
 
   lives_accel_group_connect (LIVES_ACCEL_GROUP (mainw->accel_group), LIVES_KEY_Space, LIVES_CONTROL_MASK, (GtkAccelFlags)0, 
-			   g_cclosure_new (G_CALLBACK (dirchange_callback),GINT_TO_POINTER(TRUE),NULL));
+			   g_cclosure_new (LIVES_GUI_CALLBACK (dirchange_callback),GINT_TO_POINTER(TRUE),NULL));
 
   lives_accel_group_connect (LIVES_ACCEL_GROUP (mainw->accel_group), LIVES_KEY_Return, LIVES_CONTROL_MASK, (GtkAccelFlags)0, 
-			   g_cclosure_new (G_CALLBACK (fps_reset_callback),GINT_TO_POINTER(TRUE),NULL));
+			   g_cclosure_new (LIVES_GUI_CALLBACK (fps_reset_callback),GINT_TO_POINTER(TRUE),NULL));
 
   lives_accel_group_connect (LIVES_ACCEL_GROUP (mainw->accel_group), LIVES_KEY_k, (GdkModifierType)0, (GtkAccelFlags)0, 
-			   g_cclosure_new (G_CALLBACK (grabkeys_callback),NULL,NULL));
+			   g_cclosure_new (LIVES_GUI_CALLBACK (grabkeys_callback),NULL,NULL));
 
   lives_accel_group_connect (LIVES_ACCEL_GROUP (mainw->accel_group), LIVES_KEY_t, (GdkModifierType)0, (GtkAccelFlags)0, 
-			   g_cclosure_new (G_CALLBACK (textparm_callback),NULL,NULL));
+			   g_cclosure_new (LIVES_GUI_CALLBACK (textparm_callback),NULL,NULL));
 
   lives_accel_group_connect (LIVES_ACCEL_GROUP (mainw->accel_group), LIVES_KEY_m, (GdkModifierType)0, (GtkAccelFlags)0, 
-			   g_cclosure_new (G_CALLBACK (rtemode_callback),NULL,NULL));
+			   g_cclosure_new (LIVES_GUI_CALLBACK (rtemode_callback),NULL,NULL));
 
   lives_accel_group_connect (LIVES_ACCEL_GROUP (mainw->accel_group), LIVES_KEY_x, (GdkModifierType)0, (GtkAccelFlags)0, 
-			   g_cclosure_new (G_CALLBACK (swap_fg_bg_callback),NULL,NULL));
+			   g_cclosure_new (LIVES_GUI_CALLBACK (swap_fg_bg_callback),NULL,NULL));
 
   lives_accel_group_connect (LIVES_ACCEL_GROUP (mainw->accel_group), LIVES_KEY_n, (GdkModifierType)0, (GtkAccelFlags)0, 
-			   g_cclosure_new (G_CALLBACK (nervous_callback),NULL,NULL));
+			   g_cclosure_new (LIVES_GUI_CALLBACK (nervous_callback),NULL,NULL));
 
   lives_accel_group_connect (LIVES_ACCEL_GROUP (mainw->accel_group), LIVES_KEY_w, (GdkModifierType)0, (GtkAccelFlags)0, 
-			   g_cclosure_new (G_CALLBACK (show_sync_callback),NULL,NULL));
+			   g_cclosure_new (LIVES_GUI_CALLBACK (show_sync_callback),NULL,NULL));
 
   if (FN_KEYS>0) {
     lives_accel_group_connect (LIVES_ACCEL_GROUP (mainw->accel_group), LIVES_KEY_F1, (GdkModifierType)0, (GtkAccelFlags)0, 
-			     g_cclosure_new (G_CALLBACK (storeclip_callback),GINT_TO_POINTER (1),NULL));
+			     g_cclosure_new (LIVES_GUI_CALLBACK (storeclip_callback),GINT_TO_POINTER (1),NULL));
     if (FN_KEYS>1) {
       lives_accel_group_connect (LIVES_ACCEL_GROUP (mainw->accel_group), LIVES_KEY_F2, (GdkModifierType)0, (GtkAccelFlags)0, 
-			       g_cclosure_new (G_CALLBACK (storeclip_callback),GINT_TO_POINTER (2),NULL));
+			       g_cclosure_new (LIVES_GUI_CALLBACK (storeclip_callback),GINT_TO_POINTER (2),NULL));
       if (FN_KEYS>2) {
 	lives_accel_group_connect (LIVES_ACCEL_GROUP (mainw->accel_group), LIVES_KEY_F3, (GdkModifierType)0, (GtkAccelFlags)0, 
-				 g_cclosure_new (G_CALLBACK (storeclip_callback),GINT_TO_POINTER (3),NULL));
+				 g_cclosure_new (LIVES_GUI_CALLBACK (storeclip_callback),GINT_TO_POINTER (3),NULL));
 	if (FN_KEYS>3) {
 	  lives_accel_group_connect (LIVES_ACCEL_GROUP (mainw->accel_group), LIVES_KEY_F4, (GdkModifierType)0, (GtkAccelFlags)0, 
-				   g_cclosure_new (G_CALLBACK (storeclip_callback),GINT_TO_POINTER (4),NULL));
+				   g_cclosure_new (LIVES_GUI_CALLBACK (storeclip_callback),GINT_TO_POINTER (4),NULL));
 	  if (FN_KEYS>4) {
 	    lives_accel_group_connect (LIVES_ACCEL_GROUP (mainw->accel_group), LIVES_KEY_F5, (GdkModifierType)0, (GtkAccelFlags)0, 
-				     g_cclosure_new (G_CALLBACK (storeclip_callback),GINT_TO_POINTER (5),NULL));
+				     g_cclosure_new (LIVES_GUI_CALLBACK (storeclip_callback),GINT_TO_POINTER (5),NULL));
 	    if (FN_KEYS>5) {
 	      lives_accel_group_connect (LIVES_ACCEL_GROUP (mainw->accel_group), LIVES_KEY_F6, (GdkModifierType)0, (GtkAccelFlags)0, 
-				       g_cclosure_new (G_CALLBACK (storeclip_callback),GINT_TO_POINTER (6),NULL));
+				       g_cclosure_new (LIVES_GUI_CALLBACK (storeclip_callback),GINT_TO_POINTER (6),NULL));
 	      if (FN_KEYS>6) {
 		lives_accel_group_connect (LIVES_ACCEL_GROUP (mainw->accel_group), LIVES_KEY_F7, (GdkModifierType)0, (GtkAccelFlags)0, 
-					 g_cclosure_new (G_CALLBACK (storeclip_callback),GINT_TO_POINTER (7),NULL));
+					 g_cclosure_new (LIVES_GUI_CALLBACK (storeclip_callback),GINT_TO_POINTER (7),NULL));
 		if (FN_KEYS>7) {
 		  lives_accel_group_connect (LIVES_ACCEL_GROUP (mainw->accel_group), LIVES_KEY_F8, (GdkModifierType)0, (GtkAccelFlags)0, 
-					   g_cclosure_new (G_CALLBACK (storeclip_callback),GINT_TO_POINTER (8),NULL));
+					   g_cclosure_new (LIVES_GUI_CALLBACK (storeclip_callback),GINT_TO_POINTER (8),NULL));
 		  if (FN_KEYS>8) {
 		    lives_accel_group_connect (LIVES_ACCEL_GROUP (mainw->accel_group), LIVES_KEY_F9, (GdkModifierType)0, (GtkAccelFlags)0, 
-					     g_cclosure_new (G_CALLBACK (storeclip_callback),GINT_TO_POINTER (9),NULL));
+					     g_cclosure_new (LIVES_GUI_CALLBACK (storeclip_callback),GINT_TO_POINTER (9),NULL));
 		    if (FN_KEYS>9) {
 		      lives_accel_group_connect (LIVES_ACCEL_GROUP (mainw->accel_group), LIVES_KEY_F10, (GdkModifierType)0, (GtkAccelFlags)0, 
-					       g_cclosure_new (G_CALLBACK (storeclip_callback),GINT_TO_POINTER (10),NULL));
+					       g_cclosure_new (LIVES_GUI_CALLBACK (storeclip_callback),GINT_TO_POINTER (10),NULL));
 		      if (FN_KEYS>10) {
 		      lives_accel_group_connect (LIVES_ACCEL_GROUP (mainw->accel_group), LIVES_KEY_F11, (GdkModifierType)0, (GtkAccelFlags)0, 
-					       g_cclosure_new (G_CALLBACK (storeclip_callback),GINT_TO_POINTER (11),NULL));
+					       g_cclosure_new (LIVES_GUI_CALLBACK (storeclip_callback),GINT_TO_POINTER (11),NULL));
 		      if (FN_KEYS>11) {
 		      lives_accel_group_connect (LIVES_ACCEL_GROUP (mainw->accel_group), LIVES_KEY_F12, (GdkModifierType)0, (GtkAccelFlags)0, 
-					       g_cclosure_new (G_CALLBACK (storeclip_callback),GINT_TO_POINTER (12),NULL));
+					       g_cclosure_new (LIVES_GUI_CALLBACK (storeclip_callback),GINT_TO_POINTER (12),NULL));
 		      // ad nauseum...
 		      }}}}}}}}}}}}
 
   lives_accel_group_connect (LIVES_ACCEL_GROUP (mainw->accel_group), LIVES_KEY_0, LIVES_CONTROL_MASK, (GtkAccelFlags)0, 
-			   g_cclosure_new (G_CALLBACK (rte_on_off_callback),GINT_TO_POINTER (0),NULL));
+			   g_cclosure_new (LIVES_GUI_CALLBACK (rte_on_off_callback),GINT_TO_POINTER (0),NULL));
   if (FX_KEYS_PHYSICAL>0) {
     lives_accel_group_connect (LIVES_ACCEL_GROUP (mainw->accel_group), LIVES_KEY_1, LIVES_CONTROL_MASK, (GtkAccelFlags)0, 
-			     g_cclosure_new (G_CALLBACK (rte_on_off_callback),GINT_TO_POINTER (1),NULL));
+			     g_cclosure_new (LIVES_GUI_CALLBACK (rte_on_off_callback),GINT_TO_POINTER (1),NULL));
     if (FX_KEYS_PHYSICAL>1) {
       lives_accel_group_connect (LIVES_ACCEL_GROUP (mainw->accel_group), LIVES_KEY_2, LIVES_CONTROL_MASK, (GtkAccelFlags)0, 
-			       g_cclosure_new (G_CALLBACK (rte_on_off_callback),GINT_TO_POINTER (2),NULL));
+			       g_cclosure_new (LIVES_GUI_CALLBACK (rte_on_off_callback),GINT_TO_POINTER (2),NULL));
       if (FX_KEYS_PHYSICAL>2) {
 	lives_accel_group_connect (LIVES_ACCEL_GROUP (mainw->accel_group), LIVES_KEY_3, LIVES_CONTROL_MASK, (GtkAccelFlags)0, 
-				 g_cclosure_new (G_CALLBACK (rte_on_off_callback),GINT_TO_POINTER (3),NULL));
+				 g_cclosure_new (LIVES_GUI_CALLBACK (rte_on_off_callback),GINT_TO_POINTER (3),NULL));
 	if (FX_KEYS_PHYSICAL>3) {
 	  lives_accel_group_connect (LIVES_ACCEL_GROUP (mainw->accel_group), LIVES_KEY_4, LIVES_CONTROL_MASK, (GtkAccelFlags)0, 
-				   g_cclosure_new (G_CALLBACK (rte_on_off_callback),GINT_TO_POINTER (4),NULL));
+				   g_cclosure_new (LIVES_GUI_CALLBACK (rte_on_off_callback),GINT_TO_POINTER (4),NULL));
 	  if (FX_KEYS_PHYSICAL>4) {
 	    lives_accel_group_connect (LIVES_ACCEL_GROUP (mainw->accel_group), LIVES_KEY_5, LIVES_CONTROL_MASK, (GtkAccelFlags)0, 
-				     g_cclosure_new (G_CALLBACK (rte_on_off_callback),GINT_TO_POINTER (5),NULL));
+				     g_cclosure_new (LIVES_GUI_CALLBACK (rte_on_off_callback),GINT_TO_POINTER (5),NULL));
 	    if (FX_KEYS_PHYSICAL>5) {
 	      lives_accel_group_connect (LIVES_ACCEL_GROUP (mainw->accel_group), LIVES_KEY_6, LIVES_CONTROL_MASK, (GtkAccelFlags)0, 
-				       g_cclosure_new (G_CALLBACK (rte_on_off_callback),GINT_TO_POINTER (6),NULL));
+				       g_cclosure_new (LIVES_GUI_CALLBACK (rte_on_off_callback),GINT_TO_POINTER (6),NULL));
 	      if (FX_KEYS_PHYSICAL>6) {
 		lives_accel_group_connect (LIVES_ACCEL_GROUP (mainw->accel_group), LIVES_KEY_7, LIVES_CONTROL_MASK, (GtkAccelFlags)0, 
-					 g_cclosure_new (G_CALLBACK (rte_on_off_callback),GINT_TO_POINTER (7),NULL));
+					 g_cclosure_new (LIVES_GUI_CALLBACK (rte_on_off_callback),GINT_TO_POINTER (7),NULL));
 		if (FX_KEYS_PHYSICAL>7) {
 		  lives_accel_group_connect (LIVES_ACCEL_GROUP (mainw->accel_group), LIVES_KEY_8, LIVES_CONTROL_MASK, (GtkAccelFlags)0, 
-					   g_cclosure_new (G_CALLBACK (rte_on_off_callback),GINT_TO_POINTER (8),NULL));
+					   g_cclosure_new (LIVES_GUI_CALLBACK (rte_on_off_callback),GINT_TO_POINTER (8),NULL));
 		  if (FX_KEYS_PHYSICAL>8) {
 		    lives_accel_group_connect (LIVES_ACCEL_GROUP (mainw->accel_group), LIVES_KEY_9, LIVES_CONTROL_MASK, (GtkAccelFlags)0, 
-					     g_cclosure_new (G_CALLBACK (rte_on_off_callback),GINT_TO_POINTER (9),NULL));
+					     g_cclosure_new (LIVES_GUI_CALLBACK (rte_on_off_callback),GINT_TO_POINTER (9),NULL));
 		  }}}}}}}}}
 
 
@@ -2531,525 +2531,525 @@ void create_LiVES (void) {
   lives_text_view_set_text (LIVES_TEXT_VIEW (mainw->textview1),
 			    _("Starting...\n"), -1);
   
-  g_signal_connect (GTK_OBJECT (mainw->LiVES), "delete_event",
-		    G_CALLBACK (on_LiVES_delete_event),
+  lives_signal_connect (LIVES_GUI_OBJECT (mainw->LiVES), "delete_event",
+		    LIVES_GUI_CALLBACK (on_LiVES_delete_event),
 		    NULL);
 
-  mainw->config_func=g_signal_connect_after (GTK_OBJECT (mainw->video_draw), "configure_event",
-					     G_CALLBACK (config_event),
+  mainw->config_func=lives_signal_connect_after (LIVES_GUI_OBJECT (mainw->video_draw), "configure_event",
+					     LIVES_GUI_CALLBACK (config_event),
 					     NULL);
-  mainw->vidbar_func=g_signal_connect_after (GTK_OBJECT (mainw->video_draw), LIVES_WIDGET_EVENT_EXPOSE_EVENT,
-		    G_CALLBACK (expose_vid_event),
+  mainw->vidbar_func=lives_signal_connect_after (LIVES_GUI_OBJECT (mainw->video_draw), LIVES_WIDGET_EVENT_EXPOSE_EVENT,
+		    LIVES_GUI_CALLBACK (expose_vid_event),
 		    NULL);
-  mainw->laudbar_func=g_signal_connect_after (GTK_OBJECT (mainw->laudio_draw), LIVES_WIDGET_EVENT_EXPOSE_EVENT,
-		    G_CALLBACK (expose_laud_event),
+  mainw->laudbar_func=lives_signal_connect_after (LIVES_GUI_OBJECT (mainw->laudio_draw), LIVES_WIDGET_EVENT_EXPOSE_EVENT,
+		    LIVES_GUI_CALLBACK (expose_laud_event),
 		    NULL);
-  mainw->raudbar_func=g_signal_connect_after (GTK_OBJECT (mainw->raudio_draw), LIVES_WIDGET_EVENT_EXPOSE_EVENT,
-		    G_CALLBACK (expose_raud_event),
+  mainw->raudbar_func=lives_signal_connect_after (LIVES_GUI_OBJECT (mainw->raudio_draw), LIVES_WIDGET_EVENT_EXPOSE_EVENT,
+		    LIVES_GUI_CALLBACK (expose_raud_event),
 		    NULL);
-  mainw->pb_fps_func=g_signal_connect_after (GTK_OBJECT (mainw->spinbutton_pb_fps), "value_changed",
-                      G_CALLBACK (changed_fps_during_pb),
+  mainw->pb_fps_func=lives_signal_connect_after (LIVES_GUI_OBJECT (mainw->spinbutton_pb_fps), "value_changed",
+                      LIVES_GUI_CALLBACK (changed_fps_during_pb),
                       NULL);
-  g_signal_connect (GTK_OBJECT (mainw->open), "activate",
-		    G_CALLBACK (on_open_activate),
+  lives_signal_connect (LIVES_GUI_OBJECT (mainw->open), "activate",
+		    LIVES_GUI_CALLBACK (on_open_activate),
 		    NULL);
-  g_signal_connect (GTK_OBJECT (mainw->open_sel), "activate",
-		    G_CALLBACK (on_open_sel_activate),
+  lives_signal_connect (LIVES_GUI_OBJECT (mainw->open_sel), "activate",
+		    LIVES_GUI_CALLBACK (on_open_sel_activate),
 		    NULL);
-  g_signal_connect (GTK_OBJECT (mainw->open_dvd), "activate",
-		    G_CALLBACK (on_open_vcd_activate),
+  lives_signal_connect (LIVES_GUI_OBJECT (mainw->open_dvd), "activate",
+		    LIVES_GUI_CALLBACK (on_open_vcd_activate),
 		    GINT_TO_POINTER (1));
-  g_signal_connect (GTK_OBJECT (mainw->open_vcd), "activate",
-		    G_CALLBACK (on_open_vcd_activate),
+  lives_signal_connect (LIVES_GUI_OBJECT (mainw->open_vcd), "activate",
+		    LIVES_GUI_CALLBACK (on_open_vcd_activate),
 		    GINT_TO_POINTER (2));
-  g_signal_connect (GTK_OBJECT (mainw->open_loc), "activate",
-		    G_CALLBACK (on_open_loc_activate),
+  lives_signal_connect (LIVES_GUI_OBJECT (mainw->open_loc), "activate",
+		    LIVES_GUI_CALLBACK (on_open_loc_activate),
 		    NULL);
 #ifdef HAVE_WEBM
-  g_signal_connect (GTK_OBJECT (mainw->open_utube), "activate",
-		    G_CALLBACK (on_open_utube_activate),
+  lives_signal_connect (LIVES_GUI_OBJECT (mainw->open_utube), "activate",
+		    LIVES_GUI_CALLBACK (on_open_utube_activate),
 		    NULL);
 #endif
 
 #ifdef HAVE_LDVGRAB
-  g_signal_connect (GTK_OBJECT (mainw->open_firewire), "activate",
-		    G_CALLBACK (on_open_fw_activate),
+  lives_signal_connect (LIVES_GUI_OBJECT (mainw->open_firewire), "activate",
+		    LIVES_GUI_CALLBACK (on_open_fw_activate),
 		    GINT_TO_POINTER(CAM_FORMAT_DV));
-  g_signal_connect (GTK_OBJECT (mainw->open_hfirewire), "activate",
-		    G_CALLBACK (on_open_fw_activate),
+  lives_signal_connect (LIVES_GUI_OBJECT (mainw->open_hfirewire), "activate",
+		    LIVES_GUI_CALLBACK (on_open_fw_activate),
 		    GINT_TO_POINTER(CAM_FORMAT_HDV));
 #endif
 
 #ifdef HAVE_YUV4MPEG
   if (capable->smog_version_correct) {
-    g_signal_connect (GTK_OBJECT (mainw->open_yuv4m), "activate",
-		      G_CALLBACK (on_open_yuv4m_activate),
+    lives_signal_connect (LIVES_GUI_OBJECT (mainw->open_yuv4m), "activate",
+		      LIVES_GUI_CALLBACK (on_open_yuv4m_activate),
 		      NULL);
   }
 #endif
-  g_signal_connect (GTK_OBJECT (mainw->open_lives2lives), "activate",
-		    G_CALLBACK (on_open_lives2lives_activate),
+  lives_signal_connect (LIVES_GUI_OBJECT (mainw->open_lives2lives), "activate",
+		    LIVES_GUI_CALLBACK (on_open_lives2lives_activate),
 		    NULL);
-  g_signal_connect (GTK_OBJECT (mainw->send_lives2lives), "activate",
-		    G_CALLBACK (on_send_lives2lives_activate),
+  lives_signal_connect (LIVES_GUI_OBJECT (mainw->send_lives2lives), "activate",
+		    LIVES_GUI_CALLBACK (on_send_lives2lives_activate),
 		    NULL);
-  g_signal_connect (GTK_OBJECT (mainw->recent1), "activate",
-                      G_CALLBACK (on_recent_activate),
+  lives_signal_connect (LIVES_GUI_OBJECT (mainw->recent1), "activate",
+                      LIVES_GUI_CALLBACK (on_recent_activate),
 		    GINT_TO_POINTER(1));
-  g_signal_connect (GTK_OBJECT (mainw->recent2), "activate",
-                      G_CALLBACK (on_recent_activate),
+  lives_signal_connect (LIVES_GUI_OBJECT (mainw->recent2), "activate",
+                      LIVES_GUI_CALLBACK (on_recent_activate),
 		    GINT_TO_POINTER(2));
-  g_signal_connect (GTK_OBJECT (mainw->recent3), "activate",
-                      G_CALLBACK (on_recent_activate),
+  lives_signal_connect (LIVES_GUI_OBJECT (mainw->recent3), "activate",
+                      LIVES_GUI_CALLBACK (on_recent_activate),
 		    GINT_TO_POINTER(3));
-  g_signal_connect (GTK_OBJECT (mainw->recent4), "activate",
-                      G_CALLBACK (on_recent_activate),
+  lives_signal_connect (LIVES_GUI_OBJECT (mainw->recent4), "activate",
+                      LIVES_GUI_CALLBACK (on_recent_activate),
 		    GINT_TO_POINTER(4));
-  g_signal_connect (GTK_OBJECT (mainw->backup), "activate",
-                      G_CALLBACK (on_backup_activate),
+  lives_signal_connect (LIVES_GUI_OBJECT (mainw->backup), "activate",
+                      LIVES_GUI_CALLBACK (on_backup_activate),
 		    NULL);
-  g_signal_connect (GTK_OBJECT (mainw->restore), "activate",
-                      G_CALLBACK (on_restore_activate),
+  lives_signal_connect (LIVES_GUI_OBJECT (mainw->restore), "activate",
+                      LIVES_GUI_CALLBACK (on_restore_activate),
 		    NULL);
-  g_signal_connect (GTK_OBJECT (mainw->save_as), "activate",
-		    G_CALLBACK (on_save_as_activate),
+  lives_signal_connect (LIVES_GUI_OBJECT (mainw->save_as), "activate",
+		    LIVES_GUI_CALLBACK (on_save_as_activate),
 		    NULL);
-  g_signal_connect (GTK_OBJECT (mainw->save_selection), "activate",
-		    G_CALLBACK (on_save_selection_activate),
+  lives_signal_connect (LIVES_GUI_OBJECT (mainw->save_selection), "activate",
+		    LIVES_GUI_CALLBACK (on_save_selection_activate),
                       NULL);
-  g_signal_connect (GTK_OBJECT (mainw->close), "activate",
-                      G_CALLBACK (on_close_activate),
+  lives_signal_connect (LIVES_GUI_OBJECT (mainw->close), "activate",
+                      LIVES_GUI_CALLBACK (on_close_activate),
                       NULL);
-  g_signal_connect (GTK_OBJECT (mainw->import_proj), "activate",
-                      G_CALLBACK (on_import_proj_activate),
+  lives_signal_connect (LIVES_GUI_OBJECT (mainw->import_proj), "activate",
+                      LIVES_GUI_CALLBACK (on_import_proj_activate),
                       NULL);
-  g_signal_connect (GTK_OBJECT (mainw->export_proj), "activate",
-                      G_CALLBACK (on_export_proj_activate),
+  lives_signal_connect (LIVES_GUI_OBJECT (mainw->export_proj), "activate",
+                      LIVES_GUI_CALLBACK (on_export_proj_activate),
                       NULL);
-  g_signal_connect (GTK_OBJECT (mainw->clear_ds), "activate",
-                      G_CALLBACK (on_cleardisk_activate),
+  lives_signal_connect (LIVES_GUI_OBJECT (mainw->clear_ds), "activate",
+                      LIVES_GUI_CALLBACK (on_cleardisk_activate),
                       NULL);
-  g_signal_connect (GTK_OBJECT (mainw->quit), "activate",
-                      G_CALLBACK (on_quit_activate),
+  lives_signal_connect (LIVES_GUI_OBJECT (mainw->quit), "activate",
+                      LIVES_GUI_CALLBACK (on_quit_activate),
                       GINT_TO_POINTER(0));
-  g_signal_connect (GTK_OBJECT (mainw->vj_save_set), "activate",
-                      G_CALLBACK (on_quit_activate),
+  lives_signal_connect (LIVES_GUI_OBJECT (mainw->vj_save_set), "activate",
+                      LIVES_GUI_CALLBACK (on_quit_activate),
                       GINT_TO_POINTER(1));
-  g_signal_connect (GTK_OBJECT (mainw->undo), "activate",
-                      G_CALLBACK (on_undo_activate),
+  lives_signal_connect (LIVES_GUI_OBJECT (mainw->undo), "activate",
+                      LIVES_GUI_CALLBACK (on_undo_activate),
                       NULL);
-  g_signal_connect (GTK_OBJECT (mainw->redo), "activate",
-                      G_CALLBACK (on_redo_activate),
+  lives_signal_connect (LIVES_GUI_OBJECT (mainw->redo), "activate",
+                      LIVES_GUI_CALLBACK (on_redo_activate),
                       NULL);
-  g_signal_connect (GTK_OBJECT (mainw->copy), "activate",
-                      G_CALLBACK (on_copy_activate),
+  lives_signal_connect (LIVES_GUI_OBJECT (mainw->copy), "activate",
+                      LIVES_GUI_CALLBACK (on_copy_activate),
                       NULL);
-  g_signal_connect (GTK_OBJECT (mainw->mt_menu), "activate",
-                      G_CALLBACK (on_multitrack_activate),
+  lives_signal_connect (LIVES_GUI_OBJECT (mainw->mt_menu), "activate",
+                      LIVES_GUI_CALLBACK (on_multitrack_activate),
                       NULL);
-  g_signal_connect (GTK_OBJECT (mainw->cut), "activate",
-                      G_CALLBACK (on_cut_activate),
+  lives_signal_connect (LIVES_GUI_OBJECT (mainw->cut), "activate",
+                      LIVES_GUI_CALLBACK (on_cut_activate),
                       NULL);
-  g_signal_connect (GTK_OBJECT (mainw->insert), "activate",
-                      G_CALLBACK (on_insert_pre_activate),
+  lives_signal_connect (LIVES_GUI_OBJECT (mainw->insert), "activate",
+                      LIVES_GUI_CALLBACK (on_insert_pre_activate),
                       NULL);
-  g_signal_connect (GTK_OBJECT (mainw->merge), "activate",
-                      G_CALLBACK (on_merge_activate),
+  lives_signal_connect (LIVES_GUI_OBJECT (mainw->merge), "activate",
+                      LIVES_GUI_CALLBACK (on_merge_activate),
                       NULL);
-  g_signal_connect (GTK_OBJECT (mainw->paste_as_new), "activate",
-                      G_CALLBACK (on_paste_as_new_activate),
+  lives_signal_connect (LIVES_GUI_OBJECT (mainw->paste_as_new), "activate",
+                      LIVES_GUI_CALLBACK (on_paste_as_new_activate),
                       NULL);
-  g_signal_connect (GTK_OBJECT (mainw->xdelete), "activate",
-                      G_CALLBACK (on_delete_activate),
+  lives_signal_connect (LIVES_GUI_OBJECT (mainw->xdelete), "activate",
+                      LIVES_GUI_CALLBACK (on_delete_activate),
                       NULL);
-  g_signal_connect (GTK_OBJECT (mainw->select_all), "activate",
-                      G_CALLBACK (on_select_all_activate),
+  lives_signal_connect (LIVES_GUI_OBJECT (mainw->select_all), "activate",
+                      LIVES_GUI_CALLBACK (on_select_all_activate),
                       NULL);
-  g_signal_connect (GTK_OBJECT (mainw->select_start_only), "activate",
-                      G_CALLBACK (on_select_start_only_activate),
+  lives_signal_connect (LIVES_GUI_OBJECT (mainw->select_start_only), "activate",
+                      LIVES_GUI_CALLBACK (on_select_start_only_activate),
                       NULL);
-  g_signal_connect (GTK_OBJECT (mainw->select_end_only), "activate",
-                      G_CALLBACK (on_select_end_only_activate),
+  lives_signal_connect (LIVES_GUI_OBJECT (mainw->select_end_only), "activate",
+                      LIVES_GUI_CALLBACK (on_select_end_only_activate),
                       NULL);
-  g_signal_connect (GTK_OBJECT (mainw->select_invert), "activate",
-                      G_CALLBACK (on_select_invert_activate),
+  lives_signal_connect (LIVES_GUI_OBJECT (mainw->select_invert), "activate",
+                      LIVES_GUI_CALLBACK (on_select_invert_activate),
                       NULL);
-  g_signal_connect (GTK_OBJECT (mainw->select_new), "activate",
-                      G_CALLBACK (on_select_new_activate),
+  lives_signal_connect (LIVES_GUI_OBJECT (mainw->select_new), "activate",
+                      LIVES_GUI_CALLBACK (on_select_new_activate),
                       NULL);
-  g_signal_connect (GTK_OBJECT (mainw->select_to_end), "activate",
-                      G_CALLBACK (on_select_to_end_activate),
+  lives_signal_connect (LIVES_GUI_OBJECT (mainw->select_to_end), "activate",
+                      LIVES_GUI_CALLBACK (on_select_to_end_activate),
                       NULL);
-  g_signal_connect (GTK_OBJECT (mainw->select_from_start), "activate",
-                      G_CALLBACK (on_select_from_start_activate),
+  lives_signal_connect (LIVES_GUI_OBJECT (mainw->select_from_start), "activate",
+                      LIVES_GUI_CALLBACK (on_select_from_start_activate),
                       NULL);
-  g_signal_connect (GTK_OBJECT (mainw->select_last), "activate",
-                      G_CALLBACK (on_select_last_activate),
+  lives_signal_connect (LIVES_GUI_OBJECT (mainw->select_last), "activate",
+                      LIVES_GUI_CALLBACK (on_select_last_activate),
                       NULL);
-  g_signal_connect (GTK_OBJECT (mainw->lock_selwidth), "activate",
-                      G_CALLBACK (on_lock_selwidth_activate),
+  lives_signal_connect (LIVES_GUI_OBJECT (mainw->lock_selwidth), "activate",
+                      LIVES_GUI_CALLBACK (on_lock_selwidth_activate),
                       NULL);
-  mainw->record_perf_func=g_signal_connect (GTK_OBJECT (mainw->record_perf), "activate",
-                      G_CALLBACK (on_record_perf_activate),
+  mainw->record_perf_func=lives_signal_connect (LIVES_GUI_OBJECT (mainw->record_perf), "activate",
+                      LIVES_GUI_CALLBACK (on_record_perf_activate),
                       NULL);
-  g_signal_connect (GTK_OBJECT (mainw->playall), "activate",
-                      G_CALLBACK (on_playall_activate),
+  lives_signal_connect (LIVES_GUI_OBJECT (mainw->playall), "activate",
+                      LIVES_GUI_CALLBACK (on_playall_activate),
                       NULL);
-  g_signal_connect (GTK_OBJECT (mainw->rewind), "activate",
-                      G_CALLBACK (on_rewind_activate),
+  lives_signal_connect (LIVES_GUI_OBJECT (mainw->rewind), "activate",
+                      LIVES_GUI_CALLBACK (on_rewind_activate),
                       NULL);
-  g_signal_connect (GTK_OBJECT (mainw->playsel), "activate",
-                      G_CALLBACK (on_playsel_activate),
+  lives_signal_connect (LIVES_GUI_OBJECT (mainw->playsel), "activate",
+                      LIVES_GUI_CALLBACK (on_playsel_activate),
                       NULL);
-  g_signal_connect (GTK_OBJECT (mainw->playclip), "activate",
-                      G_CALLBACK (on_playclip_activate),
+  lives_signal_connect (LIVES_GUI_OBJECT (mainw->playclip), "activate",
+                      LIVES_GUI_CALLBACK (on_playclip_activate),
                       NULL);
-  g_signal_connect (GTK_OBJECT (mainw->stop), "activate",
-                      G_CALLBACK (on_stop_activate),
+  lives_signal_connect (LIVES_GUI_OBJECT (mainw->stop), "activate",
+                      LIVES_GUI_CALLBACK (on_stop_activate),
                       NULL);
-  mainw->fullscreen_cb_func=g_signal_connect (GTK_OBJECT (mainw->full_screen), "activate",
-					      G_CALLBACK (on_full_screen_activate),
+  mainw->fullscreen_cb_func=lives_signal_connect (LIVES_GUI_OBJECT (mainw->full_screen), "activate",
+					      LIVES_GUI_CALLBACK (on_full_screen_activate),
 					      NULL);
-  g_signal_connect (GTK_OBJECT (mainw->sw_sound), "activate",
-                      G_CALLBACK (on_boolean_toggled),
+  lives_signal_connect (LIVES_GUI_OBJECT (mainw->sw_sound), "activate",
+                      LIVES_GUI_CALLBACK (on_boolean_toggled),
 		    &mainw->save_with_sound); // TODO - make pref
-  g_signal_connect (GTK_OBJECT (mainw->showsubs), "activate",
-                      G_CALLBACK (on_showsubs_toggled),
+  lives_signal_connect (LIVES_GUI_OBJECT (mainw->showsubs), "activate",
+                      LIVES_GUI_CALLBACK (on_showsubs_toggled),
                       NULL);
-  g_signal_connect (GTK_OBJECT (mainw->letter), "activate",
-                      G_CALLBACK (on_boolean_toggled),
+  lives_signal_connect (LIVES_GUI_OBJECT (mainw->letter), "activate",
+                      LIVES_GUI_CALLBACK (on_boolean_toggled),
                       &prefs->letterbox);
-  g_signal_connect (GTK_OBJECT (mainw->aload_subs), "activate",
-                      G_CALLBACK (on_boolean_toggled),
+  lives_signal_connect (LIVES_GUI_OBJECT (mainw->aload_subs), "activate",
+                      LIVES_GUI_CALLBACK (on_boolean_toggled),
                       &prefs->autoload_subs);
-  g_signal_connect (GTK_OBJECT (mainw->ccpd_sound), "activate",
-                      G_CALLBACK (on_boolean_toggled),
+  lives_signal_connect (LIVES_GUI_OBJECT (mainw->ccpd_sound), "activate",
+                      LIVES_GUI_CALLBACK (on_boolean_toggled),
 		    &mainw->ccpd_with_sound); // TODO - make pref
-  g_signal_connect (GTK_OBJECT (mainw->dsize), "activate",
-                      G_CALLBACK (on_double_size_activate),
+  lives_signal_connect (LIVES_GUI_OBJECT (mainw->dsize), "activate",
+                      LIVES_GUI_CALLBACK (on_double_size_activate),
                       NULL);
-  mainw->sepwin_cb_func=g_signal_connect (GTK_OBJECT (mainw->sepwin), "activate",
-					  G_CALLBACK (on_sepwin_activate),
+  mainw->sepwin_cb_func=lives_signal_connect (LIVES_GUI_OBJECT (mainw->sepwin), "activate",
+					  LIVES_GUI_CALLBACK (on_sepwin_activate),
 					  NULL);
-  g_signal_connect (GTK_OBJECT (mainw->fade), "activate",
-                      G_CALLBACK (on_fade_activate),
+  lives_signal_connect (LIVES_GUI_OBJECT (mainw->fade), "activate",
+                      LIVES_GUI_CALLBACK (on_fade_activate),
                       NULL);
-  g_signal_connect (GTK_OBJECT (mainw->loop_video), "activate",
-                      G_CALLBACK (on_loop_video_activate),
+  lives_signal_connect (LIVES_GUI_OBJECT (mainw->loop_video), "activate",
+                      LIVES_GUI_CALLBACK (on_loop_video_activate),
                       NULL);
-  mainw->loop_cont_func=g_signal_connect (GTK_OBJECT (mainw->loop_continue), "activate",
-					  G_CALLBACK (on_loop_cont_activate),
+  mainw->loop_cont_func=lives_signal_connect (LIVES_GUI_OBJECT (mainw->loop_continue), "activate",
+					  LIVES_GUI_CALLBACK (on_loop_cont_activate),
 					  NULL);
-  g_signal_connect (GTK_OBJECT (mainw->loop_ping_pong), "activate",
-                      G_CALLBACK (on_ping_pong_activate),
+  lives_signal_connect (LIVES_GUI_OBJECT (mainw->loop_ping_pong), "activate",
+                      LIVES_GUI_CALLBACK (on_ping_pong_activate),
                       NULL);
-  mainw->mute_audio_func=g_signal_connect (GTK_OBJECT (mainw->mute_audio), "activate",
-					   G_CALLBACK (on_mute_activate),
+  mainw->mute_audio_func=lives_signal_connect (LIVES_GUI_OBJECT (mainw->mute_audio), "activate",
+					   LIVES_GUI_CALLBACK (on_mute_activate),
 					   NULL);
-  g_signal_connect (GTK_OBJECT (mainw->sticky), "activate",
-                      G_CALLBACK (on_sticky_activate),
+  lives_signal_connect (LIVES_GUI_OBJECT (mainw->sticky), "activate",
+                      LIVES_GUI_CALLBACK (on_sticky_activate),
                       NULL);
-  g_signal_connect (GTK_OBJECT (mainw->showfct), "activate",
-                      G_CALLBACK (on_showfct_activate),
+  lives_signal_connect (LIVES_GUI_OBJECT (mainw->showfct), "activate",
+                      LIVES_GUI_CALLBACK (on_showfct_activate),
                       NULL);
-  g_signal_connect (GTK_OBJECT (mainw->preferences), "activate",
-                      G_CALLBACK (on_preferences_activate),
+  lives_signal_connect (LIVES_GUI_OBJECT (mainw->preferences), "activate",
+                      LIVES_GUI_CALLBACK (on_preferences_activate),
                       NULL);
-  g_signal_connect (GTK_OBJECT (mainw->change_speed), "activate",
-                      G_CALLBACK (on_change_speed_activate),
+  lives_signal_connect (LIVES_GUI_OBJECT (mainw->change_speed), "activate",
+                      LIVES_GUI_CALLBACK (on_change_speed_activate),
                       NULL);
-  g_signal_connect (GTK_OBJECT (mainw->resample_video), "activate",
-                      G_CALLBACK (on_resample_video_activate),
+  lives_signal_connect (LIVES_GUI_OBJECT (mainw->resample_video), "activate",
+                      LIVES_GUI_CALLBACK (on_resample_video_activate),
                       NULL);
-  g_signal_connect (GTK_OBJECT (mainw->load_subs), "activate",
-                      G_CALLBACK (on_load_subs_activate),
+  lives_signal_connect (LIVES_GUI_OBJECT (mainw->load_subs), "activate",
+                      LIVES_GUI_CALLBACK (on_load_subs_activate),
                       NULL);
-  g_signal_connect (GTK_OBJECT (mainw->erase_subs), "activate",
-                      G_CALLBACK (on_erase_subs_activate),
+  lives_signal_connect (LIVES_GUI_OBJECT (mainw->erase_subs), "activate",
+                      LIVES_GUI_CALLBACK (on_erase_subs_activate),
                       NULL);
-  g_signal_connect (GTK_OBJECT (mainw->capture), "activate",
-                      G_CALLBACK (on_capture_activate),
+  lives_signal_connect (LIVES_GUI_OBJECT (mainw->capture), "activate",
+                      LIVES_GUI_CALLBACK (on_capture_activate),
                       NULL);
-  g_signal_connect (GTK_OBJECT (mainw->rev_clipboard), "activate",
-                      G_CALLBACK (on_rev_clipboard_activate),
+  lives_signal_connect (LIVES_GUI_OBJECT (mainw->rev_clipboard), "activate",
+                      LIVES_GUI_CALLBACK (on_rev_clipboard_activate),
                       NULL);
-  g_signal_connect (GTK_OBJECT (mainw->export_selaudio), "activate",
-                      G_CALLBACK (on_export_audio_activate),
+  lives_signal_connect (LIVES_GUI_OBJECT (mainw->export_selaudio), "activate",
+                      LIVES_GUI_CALLBACK (on_export_audio_activate),
                       GINT_TO_POINTER (0));
-  g_signal_connect (GTK_OBJECT (mainw->export_allaudio), "activate",
-                      G_CALLBACK (on_export_audio_activate),
+  lives_signal_connect (LIVES_GUI_OBJECT (mainw->export_allaudio), "activate",
+                      LIVES_GUI_CALLBACK (on_export_audio_activate),
                       GINT_TO_POINTER(1));
-  g_signal_connect (GTK_OBJECT (mainw->append_audio), "activate",
-                      G_CALLBACK (on_append_audio_activate),
+  lives_signal_connect (LIVES_GUI_OBJECT (mainw->append_audio), "activate",
+                      LIVES_GUI_CALLBACK (on_append_audio_activate),
                       NULL);
-  g_signal_connect (GTK_OBJECT (mainw->trim_audio), "activate",
-                      G_CALLBACK (on_trim_audio_activate),
+  lives_signal_connect (LIVES_GUI_OBJECT (mainw->trim_audio), "activate",
+                      LIVES_GUI_CALLBACK (on_trim_audio_activate),
                       GINT_TO_POINTER (0));
-  g_signal_connect (GTK_OBJECT (mainw->trim_to_pstart), "activate",
-                      G_CALLBACK (on_trim_audio_activate),
+  lives_signal_connect (LIVES_GUI_OBJECT (mainw->trim_to_pstart), "activate",
+                      LIVES_GUI_CALLBACK (on_trim_audio_activate),
                       GINT_TO_POINTER (1));
-  g_signal_connect (GTK_OBJECT (mainw->delsel_audio), "activate",
-                      G_CALLBACK (on_del_audio_activate),
+  lives_signal_connect (LIVES_GUI_OBJECT (mainw->delsel_audio), "activate",
+                      LIVES_GUI_CALLBACK (on_del_audio_activate),
                       GINT_TO_POINTER (0));
-  g_signal_connect (GTK_OBJECT (mainw->fade_aud_in), "activate",
-                      G_CALLBACK (on_fade_audio_activate),
+  lives_signal_connect (LIVES_GUI_OBJECT (mainw->fade_aud_in), "activate",
+                      LIVES_GUI_CALLBACK (on_fade_audio_activate),
                       GINT_TO_POINTER (0));
-  g_signal_connect (GTK_OBJECT (mainw->fade_aud_out), "activate",
-                      G_CALLBACK (on_fade_audio_activate),
+  lives_signal_connect (LIVES_GUI_OBJECT (mainw->fade_aud_out), "activate",
+                      LIVES_GUI_CALLBACK (on_fade_audio_activate),
                       GINT_TO_POINTER (1));
-  g_signal_connect (GTK_OBJECT (mainw->delall_audio), "activate",
-                      G_CALLBACK (on_del_audio_activate),
+  lives_signal_connect (LIVES_GUI_OBJECT (mainw->delall_audio), "activate",
+                      LIVES_GUI_CALLBACK (on_del_audio_activate),
                       GINT_TO_POINTER (1));
-  g_signal_connect (GTK_OBJECT (mainw->ins_silence), "activate",
-                      G_CALLBACK (on_ins_silence_activate),
+  lives_signal_connect (LIVES_GUI_OBJECT (mainw->ins_silence), "activate",
+                      LIVES_GUI_CALLBACK (on_ins_silence_activate),
                       NULL);
-  g_signal_connect (GTK_OBJECT (mainw->recaudio_clip), "activate",
-                      G_CALLBACK (on_recaudclip_activate),
+  lives_signal_connect (LIVES_GUI_OBJECT (mainw->recaudio_clip), "activate",
+                      LIVES_GUI_CALLBACK (on_recaudclip_activate),
                       NULL);
-  g_signal_connect (GTK_OBJECT (mainw->recaudio_sel), "activate",
-                      G_CALLBACK (on_recaudsel_activate),
+  lives_signal_connect (LIVES_GUI_OBJECT (mainw->recaudio_sel), "activate",
+                      LIVES_GUI_CALLBACK (on_recaudsel_activate),
                       NULL);
-  g_signal_connect (GTK_OBJECT (mainw->resample_audio), "activate",
-                      G_CALLBACK (on_resample_audio_activate),
+  lives_signal_connect (LIVES_GUI_OBJECT (mainw->resample_audio), "activate",
+                      LIVES_GUI_CALLBACK (on_resample_audio_activate),
                       NULL);
-  g_signal_connect (GTK_OBJECT (mainw->load_audio), "activate",
-                      G_CALLBACK (on_load_audio_activate),
+  lives_signal_connect (LIVES_GUI_OBJECT (mainw->load_audio), "activate",
+                      LIVES_GUI_CALLBACK (on_load_audio_activate),
                       NULL);
   if (capable->has_cdda2wav) {
-    g_signal_connect (GTK_OBJECT (mainw->load_cdtrack), "activate",
-                      G_CALLBACK (on_load_cdtrack_activate),
+    lives_signal_connect (LIVES_GUI_OBJECT (mainw->load_cdtrack), "activate",
+                      LIVES_GUI_CALLBACK (on_load_cdtrack_activate),
                       NULL);
     
-    g_signal_connect (GTK_OBJECT (mainw->eject_cd), "activate",
-                      G_CALLBACK (on_eject_cd_activate),
+    lives_signal_connect (LIVES_GUI_OBJECT (mainw->eject_cd), "activate",
+                      LIVES_GUI_CALLBACK (on_eject_cd_activate),
                       NULL);
   }
 
-  g_signal_connect (GTK_OBJECT (mainw->show_file_info), "activate",
-		    G_CALLBACK (on_show_file_info_activate),
+  lives_signal_connect (LIVES_GUI_OBJECT (mainw->show_file_info), "activate",
+		    LIVES_GUI_CALLBACK (on_show_file_info_activate),
 		    NULL);
-  g_signal_connect (GTK_OBJECT (mainw->show_file_comments), "activate",
-		    G_CALLBACK (on_show_file_comments_activate),
+  lives_signal_connect (LIVES_GUI_OBJECT (mainw->show_file_comments), "activate",
+		    LIVES_GUI_CALLBACK (on_show_file_comments_activate),
 		    NULL);
-  g_signal_connect (GTK_OBJECT (mainw->show_clipboard_info), "activate",
-		    G_CALLBACK (on_show_clipboard_info_activate),
+  lives_signal_connect (LIVES_GUI_OBJECT (mainw->show_clipboard_info), "activate",
+		    LIVES_GUI_CALLBACK (on_show_clipboard_info_activate),
 		    NULL);
-  g_signal_connect (GTK_OBJECT (mainw->show_messages), "activate",
-		    G_CALLBACK (on_show_messages_activate),
+  lives_signal_connect (LIVES_GUI_OBJECT (mainw->show_messages), "activate",
+		    LIVES_GUI_CALLBACK (on_show_messages_activate),
 		    NULL);
-  g_signal_connect (GTK_OBJECT (mainw->show_layout_errors), "activate",
-		    G_CALLBACK (popup_lmap_errors),
+  lives_signal_connect (LIVES_GUI_OBJECT (mainw->show_layout_errors), "activate",
+		    LIVES_GUI_CALLBACK (popup_lmap_errors),
 		    NULL);
-  g_signal_connect (GTK_OBJECT (mainw->rename), "activate",
-		    G_CALLBACK (on_rename_activate),
+  lives_signal_connect (LIVES_GUI_OBJECT (mainw->rename), "activate",
+		    LIVES_GUI_CALLBACK (on_rename_activate),
 		    NULL);
 
-  g_signal_connect (GTK_OBJECT (new_test_rfx), "activate",
-		    G_CALLBACK (on_new_rfx_activate),
+  lives_signal_connect (LIVES_GUI_OBJECT (new_test_rfx), "activate",
+		    LIVES_GUI_CALLBACK (on_new_rfx_activate),
 		    GINT_TO_POINTER (RFX_STATUS_TEST));
-  g_signal_connect (GTK_OBJECT (copy_rfx), "activate",
-		    G_CALLBACK (on_copy_rfx_activate),
+  lives_signal_connect (LIVES_GUI_OBJECT (copy_rfx), "activate",
+		    LIVES_GUI_CALLBACK (on_copy_rfx_activate),
 		    GINT_TO_POINTER (RFX_STATUS_TEST));
-  g_signal_connect (GTK_OBJECT (mainw->edit_test_rfx), "activate",
-		    G_CALLBACK (on_edit_rfx_activate),
+  lives_signal_connect (LIVES_GUI_OBJECT (mainw->edit_test_rfx), "activate",
+		    LIVES_GUI_CALLBACK (on_edit_rfx_activate),
 		    GINT_TO_POINTER (RFX_STATUS_TEST));
-  g_signal_connect (GTK_OBJECT (mainw->rename_test_rfx), "activate",
-		    G_CALLBACK (on_rename_rfx_activate),
+  lives_signal_connect (LIVES_GUI_OBJECT (mainw->rename_test_rfx), "activate",
+		    LIVES_GUI_CALLBACK (on_rename_rfx_activate),
 		    GINT_TO_POINTER (RFX_STATUS_TEST));
-  g_signal_connect (GTK_OBJECT (rebuild_rfx), "activate",
-		    G_CALLBACK (on_rebuild_rfx_activate),
+  lives_signal_connect (LIVES_GUI_OBJECT (rebuild_rfx), "activate",
+		    LIVES_GUI_CALLBACK (on_rebuild_rfx_activate),
 		    NULL);
-  g_signal_connect (GTK_OBJECT (mainw->delete_test_rfx), "activate",
-		    G_CALLBACK (on_delete_rfx_activate),
+  lives_signal_connect (LIVES_GUI_OBJECT (mainw->delete_test_rfx), "activate",
+		    LIVES_GUI_CALLBACK (on_delete_rfx_activate),
 		    GINT_TO_POINTER (RFX_STATUS_TEST));
-  g_signal_connect (GTK_OBJECT (mainw->delete_custom_rfx), "activate",
-		    G_CALLBACK (on_delete_rfx_activate),
+  lives_signal_connect (LIVES_GUI_OBJECT (mainw->delete_custom_rfx), "activate",
+		    LIVES_GUI_CALLBACK (on_delete_rfx_activate),
 		    GINT_TO_POINTER (RFX_STATUS_CUSTOM));
-  g_signal_connect (GTK_OBJECT (import_custom_rfx), "activate",
-		    G_CALLBACK (on_import_rfx_activate),
+  lives_signal_connect (LIVES_GUI_OBJECT (import_custom_rfx), "activate",
+		    LIVES_GUI_CALLBACK (on_import_rfx_activate),
 		    GINT_TO_POINTER (RFX_STATUS_CUSTOM));
-  g_signal_connect (GTK_OBJECT (mainw->export_custom_rfx), "activate",
-		    G_CALLBACK (on_export_rfx_activate),
+  lives_signal_connect (LIVES_GUI_OBJECT (mainw->export_custom_rfx), "activate",
+		    LIVES_GUI_CALLBACK (on_export_rfx_activate),
 		    GINT_TO_POINTER (RFX_STATUS_CUSTOM));
-  g_signal_connect (GTK_OBJECT (mainw->promote_test_rfx), "activate",
-		    G_CALLBACK (on_promote_rfx_activate),
+  lives_signal_connect (LIVES_GUI_OBJECT (mainw->promote_test_rfx), "activate",
+		    LIVES_GUI_CALLBACK (on_promote_rfx_activate),
 		    GINT_TO_POINTER (RFX_STATUS_TEST));
 
-  g_signal_connect (GTK_OBJECT (mainw->vj_load_set), "activate",
-		    G_CALLBACK (on_load_set_activate),
+  lives_signal_connect (LIVES_GUI_OBJECT (mainw->vj_load_set), "activate",
+		    LIVES_GUI_CALLBACK (on_load_set_activate),
 		    NULL);
-  g_signal_connect (GTK_OBJECT (mainw->vj_show_keys), "activate",
-		    G_CALLBACK (on_show_keys_activate),
+  lives_signal_connect (LIVES_GUI_OBJECT (mainw->vj_show_keys), "activate",
+		    LIVES_GUI_CALLBACK (on_show_keys_activate),
 		    NULL);
-  g_signal_connect (GTK_OBJECT (assign_rte_keys), "activate",
-		    G_CALLBACK (on_assign_rte_keys_activate),
+  lives_signal_connect (LIVES_GUI_OBJECT (assign_rte_keys), "activate",
+		    LIVES_GUI_CALLBACK (on_assign_rte_keys_activate),
 		    NULL);
-  g_signal_connect (GTK_OBJECT (mainw->save_rte_defs), "activate",
-		    G_CALLBACK (on_save_rte_defs_activate),
+  lives_signal_connect (LIVES_GUI_OBJECT (mainw->save_rte_defs), "activate",
+		    LIVES_GUI_CALLBACK (on_save_rte_defs_activate),
 		    NULL);
-  g_signal_connect (GTK_OBJECT (mainw->vj_reset), "activate",
-		    G_CALLBACK (on_vj_reset_activate),
+  lives_signal_connect (LIVES_GUI_OBJECT (mainw->vj_reset), "activate",
+		    LIVES_GUI_CALLBACK (on_vj_reset_activate),
 		    NULL);
 #ifdef ENABLE_OSC
-  g_signal_connect (GTK_OBJECT (midi_learn), "activate",
-		    G_CALLBACK (on_midi_learn_activate),
+  lives_signal_connect (LIVES_GUI_OBJECT (midi_learn), "activate",
+		    LIVES_GUI_CALLBACK (on_midi_learn_activate),
 		    NULL);
-  g_signal_connect (GTK_OBJECT (midi_save), "activate",
-		    G_CALLBACK (on_midi_save_activate),
+  lives_signal_connect (LIVES_GUI_OBJECT (midi_save), "activate",
+		    LIVES_GUI_CALLBACK (on_midi_save_activate),
 		    NULL);
-  g_signal_connect (GTK_OBJECT (midi_load), "activate",
-		    G_CALLBACK (on_midi_load_activate),
+  lives_signal_connect (LIVES_GUI_OBJECT (midi_load), "activate",
+		    LIVES_GUI_CALLBACK (on_midi_load_activate),
 		    NULL);
 #endif
 
-  mainw->toy_func_none=g_signal_connect_after (GTK_OBJECT (mainw->toy_none), "activate",
-					 G_CALLBACK (on_toy_activate),
+  mainw->toy_func_none=lives_signal_connect_after (LIVES_GUI_OBJECT (mainw->toy_none), "activate",
+					 LIVES_GUI_CALLBACK (on_toy_activate),
 					 NULL);
 
-  mainw->toy_func_autolives=g_signal_connect_after (GTK_OBJECT (mainw->toy_autolives), "activate",
-						  G_CALLBACK (on_toy_activate),
+  mainw->toy_func_autolives=lives_signal_connect_after (LIVES_GUI_OBJECT (mainw->toy_autolives), "activate",
+						  LIVES_GUI_CALLBACK (on_toy_activate),
 						  GINT_TO_POINTER(LIVES_TOY_AUTOLIVES));
 
-  mainw->toy_func_random_frames=g_signal_connect_after (GTK_OBJECT (mainw->toy_random_frames), "activate",
-						  G_CALLBACK (on_toy_activate),
+  mainw->toy_func_random_frames=lives_signal_connect_after (LIVES_GUI_OBJECT (mainw->toy_random_frames), "activate",
+						  LIVES_GUI_CALLBACK (on_toy_activate),
 						  GINT_TO_POINTER(LIVES_TOY_MAD_FRAMES));
 
-  mainw->toy_func_lives_tv=g_signal_connect_after (GTK_OBJECT (mainw->toy_tv), "activate",
-					     G_CALLBACK (on_toy_activate),
+  mainw->toy_func_lives_tv=lives_signal_connect_after (LIVES_GUI_OBJECT (mainw->toy_tv), "activate",
+					     LIVES_GUI_CALLBACK (on_toy_activate),
 					     GINT_TO_POINTER(LIVES_TOY_TV));
 
-  g_signal_connect (GTK_OBJECT (about), "activate",
-		    G_CALLBACK (on_about_activate),
+  lives_signal_connect (LIVES_GUI_OBJECT (about), "activate",
+		    LIVES_GUI_CALLBACK (on_about_activate),
 		    NULL);
 
-  g_signal_connect (GTK_OBJECT (mainw->troubleshoot), "activate",
-		    G_CALLBACK (on_troubleshoot_activate),
+  lives_signal_connect (LIVES_GUI_OBJECT (mainw->troubleshoot), "activate",
+		    LIVES_GUI_CALLBACK (on_troubleshoot_activate),
 		    NULL);
 
-  g_signal_connect (GTK_OBJECT (show_manual), "activate",
-		    G_CALLBACK (show_manual_activate),
+  lives_signal_connect (LIVES_GUI_OBJECT (show_manual), "activate",
+		    LIVES_GUI_CALLBACK (show_manual_activate),
 		    NULL);
 
-  g_signal_connect (GTK_OBJECT (email_author), "activate",
-		    G_CALLBACK (email_author_activate),
+  lives_signal_connect (LIVES_GUI_OBJECT (email_author), "activate",
+		    LIVES_GUI_CALLBACK (email_author_activate),
 		    NULL);
 
-  g_signal_connect (GTK_OBJECT (donate), "activate",
-		    G_CALLBACK (donate_activate),
+  lives_signal_connect (LIVES_GUI_OBJECT (donate), "activate",
+		    LIVES_GUI_CALLBACK (donate_activate),
 		    NULL);
 
-  g_signal_connect (GTK_OBJECT (report_bug), "activate",
-		    G_CALLBACK (report_bug_activate),
+  lives_signal_connect (LIVES_GUI_OBJECT (report_bug), "activate",
+		    LIVES_GUI_CALLBACK (report_bug_activate),
 		    NULL);
 
-  g_signal_connect (GTK_OBJECT (suggest_feature), "activate",
-		    G_CALLBACK (suggest_feature_activate),
+  lives_signal_connect (LIVES_GUI_OBJECT (suggest_feature), "activate",
+		    LIVES_GUI_CALLBACK (suggest_feature_activate),
 		    NULL);
 
-  g_signal_connect (GTK_OBJECT (help_translate), "activate",
-		    G_CALLBACK (help_translate_activate),
+  lives_signal_connect (LIVES_GUI_OBJECT (help_translate), "activate",
+		    LIVES_GUI_CALLBACK (help_translate_activate),
 		    NULL);
 
-  mainw->spin_start_func=g_signal_connect_after (GTK_OBJECT (mainw->spinbutton_start), "value_changed",
-						 G_CALLBACK (on_spinbutton_start_value_changed),
+  mainw->spin_start_func=lives_signal_connect_after (LIVES_GUI_OBJECT (mainw->spinbutton_start), "value_changed",
+						 LIVES_GUI_CALLBACK (on_spinbutton_start_value_changed),
 						 NULL);
-  mainw->spin_end_func=g_signal_connect_after (GTK_OBJECT (mainw->spinbutton_end), "value_changed",
-					       G_CALLBACK (on_spinbutton_end_value_changed),
+  mainw->spin_end_func=lives_signal_connect_after (LIVES_GUI_OBJECT (mainw->spinbutton_end), "value_changed",
+					       LIVES_GUI_CALLBACK (on_spinbutton_end_value_changed),
 					       NULL);
 
   // these are for the menu transport buttons
   if (capable->smog_version_correct) {
-    g_signal_connect (GTK_OBJECT (mainw->m_sepwinbutton), "clicked",
-		      G_CALLBACK (on_sepwin_pressed),
+    lives_signal_connect (LIVES_GUI_OBJECT (mainw->m_sepwinbutton), "clicked",
+		      LIVES_GUI_CALLBACK (on_sepwin_pressed),
 		      NULL);
-    g_signal_connect (GTK_OBJECT (mainw->m_playbutton), "clicked",
-		      G_CALLBACK (on_playall_activate),
+    lives_signal_connect (LIVES_GUI_OBJECT (mainw->m_playbutton), "clicked",
+		      LIVES_GUI_CALLBACK (on_playall_activate),
 		      NULL);
-    g_signal_connect (GTK_OBJECT (mainw->m_stopbutton), "clicked",
-		      G_CALLBACK (on_stop_activate),
+    lives_signal_connect (LIVES_GUI_OBJECT (mainw->m_stopbutton), "clicked",
+		      LIVES_GUI_CALLBACK (on_stop_activate),
 		      NULL);
-    g_signal_connect (GTK_OBJECT (mainw->m_playselbutton), "clicked",
-		      G_CALLBACK (on_playsel_activate),
+    lives_signal_connect (LIVES_GUI_OBJECT (mainw->m_playselbutton), "clicked",
+		      LIVES_GUI_CALLBACK (on_playsel_activate),
 		      NULL);
-    g_signal_connect (GTK_OBJECT (mainw->m_rewindbutton), "clicked",
-		      G_CALLBACK (on_rewind_activate),
+    lives_signal_connect (LIVES_GUI_OBJECT (mainw->m_rewindbutton), "clicked",
+		      LIVES_GUI_CALLBACK (on_rewind_activate),
 		      NULL);
-    g_signal_connect (GTK_OBJECT (mainw->m_mutebutton), "clicked",
-		      G_CALLBACK (on_mute_button_activate),
+    lives_signal_connect (LIVES_GUI_OBJECT (mainw->m_mutebutton), "clicked",
+		      LIVES_GUI_CALLBACK (on_mute_button_activate),
 		      NULL);
-    g_signal_connect (GTK_OBJECT (mainw->m_loopbutton), "clicked",
-		      G_CALLBACK (on_loop_button_activate),
+    lives_signal_connect (LIVES_GUI_OBJECT (mainw->m_loopbutton), "clicked",
+		      LIVES_GUI_CALLBACK (on_loop_button_activate),
 		      NULL);
     
     // these are 'invisible' buttons for the key accelerators
-    g_signal_connect (GTK_OBJECT (mainw->t_stopbutton), "clicked",
-                      G_CALLBACK (on_stop_activate),
+    lives_signal_connect (LIVES_GUI_OBJECT (mainw->t_stopbutton), "clicked",
+                      LIVES_GUI_CALLBACK (on_stop_activate),
                       NULL);
-    g_signal_connect (GTK_OBJECT (mainw->t_bckground), "clicked",
-                      G_CALLBACK (on_fade_pressed),
+    lives_signal_connect (LIVES_GUI_OBJECT (mainw->t_bckground), "clicked",
+                      LIVES_GUI_CALLBACK (on_fade_pressed),
                       NULL);
-    g_signal_connect (GTK_OBJECT (mainw->t_sepwin), "clicked",
-                      G_CALLBACK (on_sepwin_pressed),
+    lives_signal_connect (LIVES_GUI_OBJECT (mainw->t_sepwin), "clicked",
+                      LIVES_GUI_CALLBACK (on_sepwin_pressed),
                       NULL);
-    g_signal_connect (GTK_OBJECT (mainw->t_double), "clicked",
-                      G_CALLBACK (on_double_size_pressed),
+    lives_signal_connect (LIVES_GUI_OBJECT (mainw->t_double), "clicked",
+                      LIVES_GUI_CALLBACK (on_double_size_pressed),
                       NULL);
-    g_signal_connect (GTK_OBJECT (mainw->t_fullscreen), "clicked",
-                      G_CALLBACK (on_full_screen_pressed),
+    lives_signal_connect (LIVES_GUI_OBJECT (mainw->t_fullscreen), "clicked",
+                      LIVES_GUI_CALLBACK (on_full_screen_pressed),
                       NULL);
-    g_signal_connect (GTK_OBJECT (mainw->t_infobutton), "clicked",
-                      G_CALLBACK (on_show_file_info_activate),
+    lives_signal_connect (LIVES_GUI_OBJECT (mainw->t_infobutton), "clicked",
+                      LIVES_GUI_CALLBACK (on_show_file_info_activate),
                       NULL);
-    g_signal_connect (GTK_OBJECT (mainw->t_hide), "clicked",
-                      G_CALLBACK (on_toolbar_hide),
+    lives_signal_connect (LIVES_GUI_OBJECT (mainw->t_hide), "clicked",
+                      LIVES_GUI_CALLBACK (on_toolbar_hide),
                       NULL);
-    g_signal_connect (GTK_OBJECT (mainw->t_slower), "clicked",
-                      G_CALLBACK (on_slower_pressed),
+    lives_signal_connect (LIVES_GUI_OBJECT (mainw->t_slower), "clicked",
+                      LIVES_GUI_CALLBACK (on_slower_pressed),
                       NULL);
-    g_signal_connect (GTK_OBJECT (mainw->t_faster), "clicked",
-                      G_CALLBACK (on_faster_pressed),
+    lives_signal_connect (LIVES_GUI_OBJECT (mainw->t_faster), "clicked",
+                      LIVES_GUI_CALLBACK (on_faster_pressed),
                       NULL);
-    g_signal_connect (GTK_OBJECT (mainw->t_back), "clicked",
-                      G_CALLBACK (on_back_pressed),
+    lives_signal_connect (LIVES_GUI_OBJECT (mainw->t_back), "clicked",
+                      LIVES_GUI_CALLBACK (on_back_pressed),
                       NULL);
-    g_signal_connect (GTK_OBJECT (mainw->t_forward), "clicked",
-                      G_CALLBACK (on_forward_pressed),
+    lives_signal_connect (LIVES_GUI_OBJECT (mainw->t_forward), "clicked",
+                      LIVES_GUI_CALLBACK (on_forward_pressed),
                       NULL);
     
-    mainw->mouse_fn1=g_signal_connect (GTK_OBJECT (mainw->eventbox2), "motion_notify_event",
-				       G_CALLBACK (on_mouse_sel_update),
+    mainw->mouse_fn1=lives_signal_connect (LIVES_GUI_OBJECT (mainw->eventbox2), "motion_notify_event",
+				       LIVES_GUI_CALLBACK (on_mouse_sel_update),
 				       NULL);
-    g_signal_handler_block (mainw->eventbox2,mainw->mouse_fn1);
+    lives_signal_handler_block (mainw->eventbox2,mainw->mouse_fn1);
     mainw->mouse_blocked=TRUE;
-    g_signal_connect (GTK_OBJECT (mainw->eventbox2), "button_release_event",
-                      G_CALLBACK (on_mouse_sel_reset),
+    lives_signal_connect (LIVES_GUI_OBJECT (mainw->eventbox2), "button_release_event",
+                      LIVES_GUI_CALLBACK (on_mouse_sel_reset),
                       NULL);
-    g_signal_connect (GTK_OBJECT (mainw->eventbox2), "button_press_event",
-                      G_CALLBACK (on_mouse_sel_start),
+    lives_signal_connect (LIVES_GUI_OBJECT (mainw->eventbox2), "button_press_event",
+                      LIVES_GUI_CALLBACK (on_mouse_sel_start),
                       NULL);
-    g_signal_connect (GTK_OBJECT (mainw->hruler), "motion_notify_event",
-                      G_CALLBACK (return_true),
+    lives_signal_connect (LIVES_GUI_OBJECT (mainw->hruler), "motion_notify_event",
+                      LIVES_GUI_CALLBACK (return_true),
                       NULL);
-    mainw->hrule_func=g_signal_connect (GTK_OBJECT (mainw->eventbox5), "motion_notify_event",
-					G_CALLBACK (on_hrule_update),
+    mainw->hrule_func=lives_signal_connect (LIVES_GUI_OBJECT (mainw->eventbox5), "motion_notify_event",
+					LIVES_GUI_CALLBACK (on_hrule_update),
 					NULL);
-    g_signal_handler_block (mainw->eventbox5,mainw->hrule_func);
-    g_signal_connect (GTK_OBJECT(mainw->eventbox5), "enter-notify-event",G_CALLBACK (on_hrule_enter),NULL);
+    lives_signal_handler_block (mainw->eventbox5,mainw->hrule_func);
+    lives_signal_connect (LIVES_GUI_OBJECT(mainw->eventbox5), "enter-notify-event",LIVES_GUI_CALLBACK (on_hrule_enter),NULL);
 
   }
 
   mainw->hrule_blocked=TRUE;
-  g_signal_connect (GTK_OBJECT (mainw->eventbox5), "button_release_event",
-                      G_CALLBACK (on_hrule_reset),
+  lives_signal_connect (LIVES_GUI_OBJECT (mainw->eventbox5), "button_release_event",
+                      LIVES_GUI_CALLBACK (on_hrule_reset),
                       NULL);
-  g_signal_connect (GTK_OBJECT (mainw->eventbox5), "button_press_event",
-                      G_CALLBACK (on_hrule_set),
+  lives_signal_connect (LIVES_GUI_OBJECT (mainw->eventbox5), "button_press_event",
+                      LIVES_GUI_CALLBACK (on_hrule_set),
                       NULL);
-  g_signal_connect (GTK_OBJECT (mainw->eventbox3), "button_press_event",
-                      G_CALLBACK (frame_context),
+  lives_signal_connect (LIVES_GUI_OBJECT (mainw->eventbox3), "button_press_event",
+                      LIVES_GUI_CALLBACK (frame_context),
                       GINT_TO_POINTER (1));
-  g_signal_connect (GTK_OBJECT (mainw->eventbox4), "button_press_event",
-                      G_CALLBACK (frame_context),
+  lives_signal_connect (LIVES_GUI_OBJECT (mainw->eventbox4), "button_press_event",
+                      LIVES_GUI_CALLBACK (frame_context),
                       GINT_TO_POINTER (2));
 
   lives_window_add_accel_group (LIVES_WINDOW (mainw->LiVES), mainw->accel_group);
@@ -3144,53 +3144,53 @@ void fade_background(void) {
   if (stop_closure==NULL) {
     lives_widget_remove_accelerator (mainw->stop, mainw->accel_group, LIVES_KEY_q, (GdkModifierType)0);
     lives_accel_group_connect (LIVES_ACCEL_GROUP (mainw->accel_group), LIVES_KEY_q, (GdkModifierType)0, (GtkAccelFlags)0, 
-			     (stop_closure=g_cclosure_new (G_CALLBACK (stop_callback),NULL,NULL)));
+			     (stop_closure=g_cclosure_new (LIVES_GUI_CALLBACK (stop_callback),NULL,NULL)));
 
     if (!mainw->foreign) {
       // TODO - do these checks in the end functions
       lives_widget_remove_accelerator (mainw->record_perf, mainw->accel_group, LIVES_KEY_r, (GdkModifierType)0);
       lives_accel_group_connect (LIVES_ACCEL_GROUP (mainw->accel_group), LIVES_KEY_r, (GdkModifierType)0, (GtkAccelFlags)0, 
-			       (rec_closure=g_cclosure_new (G_CALLBACK (rec_callback),NULL,NULL)));
+			       (rec_closure=g_cclosure_new (LIVES_GUI_CALLBACK (rec_callback),NULL,NULL)));
       
       lives_widget_remove_accelerator (mainw->full_screen, mainw->accel_group, LIVES_KEY_f, (GdkModifierType)0);
       lives_accel_group_connect (LIVES_ACCEL_GROUP (mainw->accel_group), LIVES_KEY_f, (GdkModifierType)0, (GtkAccelFlags)0, 
-			       (fullscreen_closure=g_cclosure_new (G_CALLBACK (fullscreen_callback),NULL,NULL)));
+			       (fullscreen_closure=g_cclosure_new (LIVES_GUI_CALLBACK (fullscreen_callback),NULL,NULL)));
       
       lives_widget_remove_accelerator (mainw->showfct, mainw->accel_group, LIVES_KEY_h, (GdkModifierType)0);
       lives_accel_group_connect (LIVES_ACCEL_GROUP (mainw->accel_group), LIVES_KEY_h, (GdkModifierType)0, (GtkAccelFlags)0, 
-			       (showfct_closure=g_cclosure_new (G_CALLBACK (showfct_callback),NULL,NULL)));
+			       (showfct_closure=g_cclosure_new (LIVES_GUI_CALLBACK (showfct_callback),NULL,NULL)));
       
       lives_widget_remove_accelerator (mainw->showsubs, mainw->accel_group, LIVES_KEY_v, (GdkModifierType)0);
       lives_accel_group_connect (LIVES_ACCEL_GROUP (mainw->accel_group), LIVES_KEY_v, (GdkModifierType)0, (GtkAccelFlags)0, 
-			       (showsubs_closure=g_cclosure_new (G_CALLBACK (showsubs_callback),NULL,NULL)));
+			       (showsubs_closure=g_cclosure_new (LIVES_GUI_CALLBACK (showsubs_callback),NULL,NULL)));
       
       lives_widget_remove_accelerator (mainw->sepwin, mainw->accel_group, LIVES_KEY_s, (GdkModifierType)0);
       lives_accel_group_connect (LIVES_ACCEL_GROUP (mainw->accel_group), LIVES_KEY_s, (GdkModifierType)0, (GtkAccelFlags)0, 
-			       (sepwin_closure=g_cclosure_new (G_CALLBACK (sepwin_callback),NULL,NULL)));
+			       (sepwin_closure=g_cclosure_new (LIVES_GUI_CALLBACK (sepwin_callback),NULL,NULL)));
 
       if (!cfile->achans||mainw->mute||mainw->loop_cont||prefs->audio_player==AUD_PLAYER_JACK||
 	  prefs->audio_player==AUD_PLAYER_PULSE) {
 	lives_widget_remove_accelerator (mainw->loop_video, mainw->accel_group, LIVES_KEY_l, (GdkModifierType)0);
 	lives_accel_group_connect (LIVES_ACCEL_GROUP (mainw->accel_group), LIVES_KEY_l, (GdkModifierType)0, (GtkAccelFlags)0, 
-				 (loop_closure=g_cclosure_new (G_CALLBACK (loop_callback),NULL,NULL)));
+				 (loop_closure=g_cclosure_new (LIVES_GUI_CALLBACK (loop_callback),NULL,NULL)));
 	
 	lives_widget_remove_accelerator (mainw->loop_continue, mainw->accel_group, LIVES_KEY_o, (GdkModifierType)0);
 	lives_accel_group_connect (LIVES_ACCEL_GROUP (mainw->accel_group), LIVES_KEY_o, (GdkModifierType)0, (GtkAccelFlags)0, 
-				 (loop_cont_closure=g_cclosure_new (G_CALLBACK (loop_cont_callback),NULL,NULL)));
+				 (loop_cont_closure=g_cclosure_new (LIVES_GUI_CALLBACK (loop_cont_callback),NULL,NULL)));
 	
       }
       lives_widget_remove_accelerator (mainw->loop_ping_pong, mainw->accel_group, LIVES_KEY_g, (GdkModifierType)0);
       lives_accel_group_connect (LIVES_ACCEL_GROUP (mainw->accel_group), LIVES_KEY_g, (GdkModifierType)0, (GtkAccelFlags)0, 
-			       (ping_pong_closure=g_cclosure_new (G_CALLBACK (ping_pong_callback),NULL,NULL)));
+			       (ping_pong_closure=g_cclosure_new (LIVES_GUI_CALLBACK (ping_pong_callback),NULL,NULL)));
       lives_widget_remove_accelerator (mainw->mute_audio, mainw->accel_group, LIVES_KEY_z, (GdkModifierType)0);
       lives_accel_group_connect (LIVES_ACCEL_GROUP (mainw->accel_group), LIVES_KEY_z, (GdkModifierType)0, (GtkAccelFlags)0, 
-			       (mute_audio_closure=g_cclosure_new (G_CALLBACK (mute_audio_callback),NULL,NULL)));
+			       (mute_audio_closure=g_cclosure_new (LIVES_GUI_CALLBACK (mute_audio_callback),NULL,NULL)));
       lives_widget_remove_accelerator (mainw->dsize, mainw->accel_group, LIVES_KEY_d, (GdkModifierType)0);
       lives_accel_group_connect (LIVES_ACCEL_GROUP (mainw->accel_group), LIVES_KEY_d, (GdkModifierType)0, (GtkAccelFlags)0, 
-			       (dblsize_closure=g_cclosure_new (G_CALLBACK (dblsize_callback),NULL,NULL)));
+			       (dblsize_closure=g_cclosure_new (LIVES_GUI_CALLBACK (dblsize_callback),NULL,NULL)));
       lives_widget_remove_accelerator (mainw->fade, mainw->accel_group, LIVES_KEY_b, (GdkModifierType)0);
       lives_accel_group_connect (LIVES_ACCEL_GROUP (mainw->accel_group), LIVES_KEY_b, (GdkModifierType)0, (GtkAccelFlags)0, 
-			       (fade_closure=g_cclosure_new (G_CALLBACK (fade_callback),NULL,NULL)));
+			       (fade_closure=g_cclosure_new (LIVES_GUI_CALLBACK (fade_callback),NULL,NULL)));
     }
   }
 }
@@ -3422,10 +3422,10 @@ void block_expose (void) {
   // unresponsive
   mainw->draw_blocked=TRUE;
 #if !GTK_CHECK_VERSION(3,0,0)
-  g_signal_handler_block(mainw->video_draw,mainw->config_func);
-  g_signal_handler_block(mainw->video_draw,mainw->vidbar_func);
-  g_signal_handler_block(mainw->laudio_draw,mainw->laudbar_func);
-  g_signal_handler_block(mainw->raudio_draw,mainw->raudbar_func);
+  lives_signal_handler_block(mainw->video_draw,mainw->config_func);
+  lives_signal_handler_block(mainw->video_draw,mainw->vidbar_func);
+  lives_signal_handler_block(mainw->laudio_draw,mainw->laudbar_func);
+  lives_signal_handler_block(mainw->raudio_draw,mainw->raudbar_func);
 #endif
 }
 
@@ -3433,10 +3433,10 @@ void unblock_expose (void) {
   // unblock expose/config events
   mainw->draw_blocked=FALSE;
 #if !GTK_CHECK_VERSION(3,0,0)
-  g_signal_handler_unblock(mainw->video_draw,mainw->config_func);
-  g_signal_handler_unblock(mainw->video_draw,mainw->vidbar_func);
-  g_signal_handler_unblock(mainw->laudio_draw,mainw->laudbar_func);
-  g_signal_handler_unblock(mainw->raudio_draw,mainw->raudbar_func);
+  lives_signal_handler_unblock(mainw->video_draw,mainw->config_func);
+  lives_signal_handler_unblock(mainw->video_draw,mainw->vidbar_func);
+  lives_signal_handler_unblock(mainw->laudio_draw,mainw->laudbar_func);
+  lives_signal_handler_unblock(mainw->raudio_draw,mainw->raudbar_func);
 #endif
 }
 
@@ -3469,20 +3469,20 @@ void make_preview_box (void) {
   eventbox=lives_event_box_new();
   lives_widget_set_events (eventbox, LIVES_SCROLL_MASK);
 
-  g_signal_connect (GTK_OBJECT (eventbox), "scroll_event",
-		    G_CALLBACK (on_mouse_scroll),
+  lives_signal_connect (LIVES_GUI_OBJECT (eventbox), "scroll_event",
+		    LIVES_GUI_CALLBACK (on_mouse_scroll),
 		    NULL);
 
 #if GTK_CHECK_VERSION(3,0,0)
-  g_signal_connect (GTK_OBJECT (eventbox), LIVES_WIDGET_EVENT_EXPOSE_EVENT,
-		    G_CALLBACK (expose_pim),
+  lives_signal_connect (LIVES_GUI_OBJECT (eventbox), LIVES_WIDGET_EVENT_EXPOSE_EVENT,
+		    LIVES_GUI_CALLBACK (expose_pim),
 		    NULL);
 #endif
 
   lives_box_pack_start (LIVES_BOX (mainw->preview_box), eventbox, TRUE, TRUE, 0);
 
-  g_signal_connect (GTK_OBJECT (eventbox), "button_press_event",
-                      G_CALLBACK (frame_context),
+  lives_signal_connect (LIVES_GUI_OBJECT (eventbox), "button_press_event",
+                      LIVES_GUI_CALLBACK (frame_context),
                       GINT_TO_POINTER (3));
 
 
@@ -3639,37 +3639,37 @@ void make_preview_box (void) {
   if (!mainw->mute) lives_widget_set_tooltip_text( mainw->p_mutebutton,_("Mute the audio (z)"));
   else lives_widget_set_tooltip_text( mainw->p_mutebutton,_("Unmute the audio (z)"));
 
-  g_signal_connect (GTK_OBJECT (radiobutton_free), "toggled",
-		    G_CALLBACK (on_prv_link_toggled),
+  lives_signal_connect (LIVES_GUI_OBJECT (radiobutton_free), "toggled",
+		    LIVES_GUI_CALLBACK (on_prv_link_toggled),
 		    GINT_TO_POINTER (PRV_FREE));
-  g_signal_connect (GTK_OBJECT (radiobutton_start), "toggled",
-		    G_CALLBACK (on_prv_link_toggled),
+  lives_signal_connect (LIVES_GUI_OBJECT (radiobutton_start), "toggled",
+		    LIVES_GUI_CALLBACK (on_prv_link_toggled),
 		    GINT_TO_POINTER (PRV_START));
-  g_signal_connect (GTK_OBJECT (radiobutton_end), "toggled",
-		    G_CALLBACK (on_prv_link_toggled),
+  lives_signal_connect (LIVES_GUI_OBJECT (radiobutton_end), "toggled",
+		    LIVES_GUI_CALLBACK (on_prv_link_toggled),
 		    GINT_TO_POINTER (PRV_END));
-  g_signal_connect (GTK_OBJECT (radiobutton_ptr), "toggled",
-		    G_CALLBACK (on_prv_link_toggled),
+  lives_signal_connect (LIVES_GUI_OBJECT (radiobutton_ptr), "toggled",
+		    LIVES_GUI_CALLBACK (on_prv_link_toggled),
 		    GINT_TO_POINTER (PRV_PTR));
 
-  g_signal_connect (GTK_OBJECT (mainw->p_playbutton), "clicked",
-                      G_CALLBACK (on_playall_activate),
+  lives_signal_connect (LIVES_GUI_OBJECT (mainw->p_playbutton), "clicked",
+                      LIVES_GUI_CALLBACK (on_playall_activate),
                       NULL);
-  g_signal_connect (GTK_OBJECT (mainw->p_playselbutton), "clicked",
-                      G_CALLBACK (on_playsel_activate),
+  lives_signal_connect (LIVES_GUI_OBJECT (mainw->p_playselbutton), "clicked",
+                      LIVES_GUI_CALLBACK (on_playsel_activate),
                       NULL);
-  g_signal_connect (GTK_OBJECT (mainw->p_rewindbutton), "clicked",
-                      G_CALLBACK (on_rewind_activate),
+  lives_signal_connect (LIVES_GUI_OBJECT (mainw->p_rewindbutton), "clicked",
+                      LIVES_GUI_CALLBACK (on_rewind_activate),
                       NULL);
-  g_signal_connect (GTK_OBJECT (mainw->p_mutebutton), "clicked",
-                      G_CALLBACK (on_mute_button_activate),
+  lives_signal_connect (LIVES_GUI_OBJECT (mainw->p_mutebutton), "clicked",
+                      LIVES_GUI_CALLBACK (on_mute_button_activate),
                       NULL);
-  g_signal_connect (GTK_OBJECT (mainw->p_loopbutton), "clicked",
-                      G_CALLBACK (on_loop_button_activate),
+  lives_signal_connect (LIVES_GUI_OBJECT (mainw->p_loopbutton), "clicked",
+                      LIVES_GUI_CALLBACK (on_loop_button_activate),
                       NULL);
 
-  mainw->preview_spin_func=g_signal_connect_after (GTK_OBJECT (mainw->preview_spinbutton), "value_changed",
-						   G_CALLBACK (on_preview_spinbutton_changed),
+  mainw->preview_spin_func=lives_signal_connect_after (LIVES_GUI_OBJECT (mainw->preview_spinbutton), "value_changed",
+						   LIVES_GUI_CALLBACK (on_preview_spinbutton_changed),
 						   NULL);
 
   lives_widget_show_all(mainw->preview_box);
@@ -3850,8 +3850,8 @@ void make_play_window(void) {
 
   lives_widget_set_tooltip_text( mainw->m_sepwinbutton,_ ("Hide Play Window"));
 
-  g_signal_connect (GTK_OBJECT (mainw->play_window), "delete_event",
-		    G_CALLBACK (on_stop_activate_by_del),
+  lives_signal_connect (LIVES_GUI_OBJECT (mainw->play_window), "delete_event",
+		    LIVES_GUI_CALLBACK (on_stop_activate_by_del),
 		    NULL);
   
 
@@ -4274,8 +4274,8 @@ void add_to_clipmenu(void) {
   lives_container_add (LIVES_CONTAINER (mainw->clipsmenu), cfile->menuentry);
 
   lives_widget_set_sensitive (cfile->menuentry, TRUE);
-  cfile->menuentry_func=g_signal_connect (GTK_OBJECT (cfile->menuentry), "toggled",
-					  G_CALLBACK (switch_clip_activate),
+  cfile->menuentry_func=lives_signal_connect (LIVES_GUI_OBJECT (cfile->menuentry), "toggled",
+					  LIVES_GUI_CALLBACK (switch_clip_activate),
 					  NULL);
 
   if (cfile->clip_type==CLIP_TYPE_DISK||cfile->clip_type==CLIP_TYPE_FILE) mainw->clips_available++;

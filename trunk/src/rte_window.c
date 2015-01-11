@@ -69,9 +69,9 @@ void ret_set_key_check_state(void) {
   // set (delayed) keycheck state
   register int i;
   for (i=0;i<prefs->rte_keys_virtual;i++) {
-    g_signal_handler_block(key_checks[i],ch_fns[i]);
+    lives_signal_handler_block(key_checks[i],ch_fns[i]);
     lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(key_checks[i]),GPOINTER_TO_INT(g_object_get_data(G_OBJECT(key_checks[i]),"active")));
-    g_signal_handler_unblock(key_checks[i],ch_fns[i]);
+    lives_signal_handler_unblock(key_checks[i],ch_fns[i]);
   }
 }
 
@@ -1761,8 +1761,8 @@ void on_rte_info_clicked (LiVESButton *button, gpointer user_data) {
 
   lives_button_box_set_button_width (LIVES_BUTTON_BOX (hbuttonbox), ok_button, DEF_BUTTON_WIDTH);
 
-  g_signal_connect (GTK_OBJECT (ok_button), "clicked",
-		    G_CALLBACK (lives_general_button_clicked),
+  lives_signal_connect (LIVES_GUI_OBJECT (ok_button), "clicked",
+		    LIVES_GUI_CALLBACK (lives_general_button_clicked),
 		    NULL);
 
   g_free(filter_name);
@@ -2268,8 +2268,8 @@ LiVESWidget * create_rte_window (void) {
     lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(key_checks[i]),mainw->rte&(GU641<<i));
     g_object_set_data(G_OBJECT(key_checks[i]),"active",GINT_TO_POINTER(lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(key_checks[i]))));
 
-    ch_fns[i]=g_signal_connect_after (GTK_OBJECT (key_checks[i]), "toggled",
-                      G_CALLBACK (rte_on_off_callback_hook),GINT_TO_POINTER (i+1));
+    ch_fns[i]=lives_signal_connect_after (LIVES_GUI_OBJECT (key_checks[i]), "toggled",
+                      LIVES_GUI_CALLBACK (rte_on_off_callback_hook),GINT_TO_POINTER (i+1));
 
 
 
@@ -2282,8 +2282,8 @@ LiVESWidget * create_rte_window (void) {
     grab_group = lives_radio_button_get_group (LIVES_RADIO_BUTTON (key_grabs[i]));
     lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(key_grabs[i]),mainw->rte_keys==i);
 
-    gr_fns[i]=g_signal_connect_after (GTK_OBJECT (key_grabs[i]), "toggled",
-				      G_CALLBACK (grabkeys_callback_hook),GINT_TO_POINTER (i));
+    gr_fns[i]=lives_signal_connect_after (LIVES_GUI_OBJECT (key_grabs[i]), "toggled",
+				      LIVES_GUI_CALLBACK (grabkeys_callback_hook),GINT_TO_POINTER (i));
 
     mode_group=NULL;
 
@@ -2306,8 +2306,8 @@ LiVESWidget * create_rte_window (void) {
 
       if (rte_key_getmode(i+1)==j) lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(mode_radios[idx]),TRUE);
 
-      mode_ra_fns[idx]=g_signal_connect_after (GTK_OBJECT (mode_radios[idx]), "toggled",
-					       G_CALLBACK (rtemode_callback_hook),GINT_TO_POINTER (idx));
+      mode_ra_fns[idx]=lives_signal_connect_after (LIVES_GUI_OBJECT (mode_radios[idx]), "toggled",
+					       LIVES_GUI_CALLBACK (rtemode_callback_hook),GINT_TO_POINTER (idx));
 
       type_labels[idx] = lives_standard_label_new ("");
 
@@ -2347,20 +2347,20 @@ LiVESWidget * create_rte_window (void) {
       hbox = lives_hbox_new (FALSE, 0);
       lives_box_pack_start (LIVES_BOX (vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
 
-      g_signal_connect(GTK_OBJECT (combo), "changed",
-		       G_CALLBACK (fx_changed),GINT_TO_POINTER(i*rte_getmodespk()+j));
+      lives_signal_connect(LIVES_GUI_OBJECT (combo), "changed",
+		       LIVES_GUI_CALLBACK (fx_changed),GINT_TO_POINTER(i*rte_getmodespk()+j));
       
-      g_signal_connect (GTK_OBJECT (info_buttons[idx]), "clicked",
-			G_CALLBACK (on_rte_info_clicked),GINT_TO_POINTER (idx));
+      lives_signal_connect (LIVES_GUI_OBJECT (info_buttons[idx]), "clicked",
+			LIVES_GUI_CALLBACK (on_rte_info_clicked),GINT_TO_POINTER (idx));
 
-      g_signal_connect (GTK_OBJECT (clear_buttons[idx]), "clicked",
-			G_CALLBACK (on_clear_clicked),GINT_TO_POINTER (idx));
+      lives_signal_connect (LIVES_GUI_OBJECT (clear_buttons[idx]), "clicked",
+			LIVES_GUI_CALLBACK (on_clear_clicked),GINT_TO_POINTER (idx));
 
-      g_signal_connect (GTK_OBJECT (param_buttons[idx]), "clicked",
-			G_CALLBACK (on_params_clicked),GINT_TO_POINTER (idx));
+      lives_signal_connect (LIVES_GUI_OBJECT (param_buttons[idx]), "clicked",
+			LIVES_GUI_CALLBACK (on_params_clicked),GINT_TO_POINTER (idx));
 
-      g_signal_connect (GTK_OBJECT (conx_buttons[idx]), "clicked",
-			G_CALLBACK (on_datacon_clicked),GINT_TO_POINTER (idx));
+      lives_signal_connect (LIVES_GUI_OBJECT (conx_buttons[idx]), "clicked",
+			LIVES_GUI_CALLBACK (on_datacon_clicked),GINT_TO_POINTER (idx));
       
       lives_box_pack_start (LIVES_BOX (hbox), type_labels[idx], FALSE, FALSE, widget_opts.packing_width);
       lives_box_pack_end (LIVES_BOX (hbox), conx_buttons[idx], FALSE, FALSE, widget_opts.packing_width);
@@ -2414,24 +2414,24 @@ LiVESWidget * create_rte_window (void) {
   lives_widget_add_accelerator (ok_button, "activate", rtew_accel_group,
                               LIVES_KEY_Escape, (GdkModifierType)0, (GtkAccelFlags)0);
 
-  g_signal_connect (GTK_OBJECT (rte_window), "delete_event",
-		    G_CALLBACK (on_rtew_ok_clicked),
+  lives_signal_connect (LIVES_GUI_OBJECT (rte_window), "delete_event",
+		    LIVES_GUI_CALLBACK (on_rtew_ok_clicked),
 		    NULL);
 
-  g_signal_connect (GTK_OBJECT (ok_button), "clicked",
-		    G_CALLBACK (on_rtew_ok_clicked),
+  lives_signal_connect (LIVES_GUI_OBJECT (ok_button), "clicked",
+		    LIVES_GUI_CALLBACK (on_rtew_ok_clicked),
 		    NULL);
 
-  g_signal_connect (GTK_OBJECT (save_keymap_button), "clicked",
-		    G_CALLBACK (on_save_keymap_clicked),
+  lives_signal_connect (LIVES_GUI_OBJECT (save_keymap_button), "clicked",
+		    LIVES_GUI_CALLBACK (on_save_keymap_clicked),
 		    NULL);
 
-  g_signal_connect (GTK_OBJECT (load_keymap_button), "clicked",
-		    G_CALLBACK (on_load_keymap_clicked),
+  lives_signal_connect (LIVES_GUI_OBJECT (load_keymap_button), "clicked",
+		    LIVES_GUI_CALLBACK (on_load_keymap_clicked),
 		    GINT_TO_POINTER(1));
 
-  g_signal_connect (GTK_OBJECT (clear_all_button), "clicked",
-		    G_CALLBACK (on_clear_all_clicked),
+  lives_signal_connect (LIVES_GUI_OBJECT (clear_all_button), "clicked",
+		    LIVES_GUI_CALLBACK (on_clear_all_clicked),
 		    GINT_TO_POINTER(1));
 
  rte_window_ready:
@@ -2482,21 +2482,21 @@ void on_assign_rte_keys_activate (LiVESMenuItem *menuitem, gpointer user_data) {
 
 
 void rtew_set_keych (int key, boolean on) {
-  g_signal_handler_block(key_checks[key],ch_fns[key]);
+  lives_signal_handler_block(key_checks[key],ch_fns[key]);
   if (!pthread_mutex_trylock(&mainw->gtk_mutex)) {
     lives_toggle_button_set_active (LIVES_TOGGLE_BUTTON(key_checks[key]),on);
     pthread_mutex_unlock(&mainw->gtk_mutex);
   }
-  g_signal_handler_unblock(key_checks[key],ch_fns[key]);
+  lives_signal_handler_unblock(key_checks[key],ch_fns[key]);
   g_object_set_data(G_OBJECT(key_checks[key]),"active",GINT_TO_POINTER(on));
 }
 
 
 void rtew_set_keygr (int key) {
   if (key>=0) {
-    g_signal_handler_block(key_grabs[key],gr_fns[key]);
+    lives_signal_handler_block(key_grabs[key],gr_fns[key]);
     lives_toggle_button_set_active (LIVES_TOGGLE_BUTTON(key_grabs[key]),TRUE);
-    g_signal_handler_unblock(key_grabs[key],gr_fns[key]);
+    lives_signal_handler_unblock(key_grabs[key],gr_fns[key]);
   }
   else {
     lives_toggle_button_set_active (LIVES_TOGGLE_BUTTON(dummy_radio),TRUE);
@@ -2505,9 +2505,9 @@ void rtew_set_keygr (int key) {
 
 void rtew_set_mode_radio (int key, int mode) {
   int modes=rte_getmodespk();
-  g_signal_handler_block(mode_radios[key*modes+mode],mode_ra_fns[key*modes+mode]);
+  lives_signal_handler_block(mode_radios[key*modes+mode],mode_ra_fns[key*modes+mode]);
   lives_toggle_button_set_active (LIVES_TOGGLE_BUTTON(mode_radios[key*modes+mode]),TRUE);
-  g_signal_handler_unblock(mode_radios[key*modes+mode],mode_ra_fns[key*modes+mode]);
+  lives_signal_handler_unblock(mode_radios[key*modes+mode],mode_ra_fns[key*modes+mode]);
 }
 
 

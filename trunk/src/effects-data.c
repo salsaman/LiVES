@@ -3245,10 +3245,10 @@ static void dfxp_changed(LiVESWidget *combo, gpointer user_data) {
   if (fidx==-1) {
     LiVESWidget *acheck=conxwp->acheck[ours];
     if (acheck!=NULL) {
-      g_signal_handler_block(acheck,conxwp->acheck_func[ours]);
+      lives_signal_handler_block(acheck,conxwp->acheck_func[ours]);
       lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(acheck),FALSE);
       lives_widget_set_sensitive(acheck,FALSE);
-      g_signal_handler_unblock(acheck,conxwp->acheck_func[ours]);
+      lives_signal_handler_unblock(acheck,conxwp->acheck_func[ours]);
     }
 
     lives_combo_set_active_index (LIVES_COMBO(combo),0);
@@ -3531,16 +3531,16 @@ static void dpp_changed(LiVESWidget *combo, gpointer user_data) {
   if (acheck!=NULL) {
     boolean hasrange=GPOINTER_TO_INT(g_object_get_data(G_OBJECT(acheck),"available"));
 
-    g_signal_handler_block(acheck,conxwp->acheck_func[ours]);
+    lives_signal_handler_block(acheck,conxwp->acheck_func[ours]);
     lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(acheck),FALSE);
-    g_signal_handler_unblock(acheck,conxwp->acheck_func[ours]);
+    lives_signal_handler_unblock(acheck,conxwp->acheck_func[ours]);
     
     if (hasrange) {
       lives_widget_set_sensitive(acheck,TRUE);
       if (lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(conxwp->allcheckc))) {
-	g_signal_handler_block(acheck,conxwp->acheck_func[ours]);
+	lives_signal_handler_block(acheck,conxwp->acheck_func[ours]);
 	lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(acheck),TRUE);
-	g_signal_handler_unblock(acheck,conxwp->acheck_func[ours]);
+	lives_signal_handler_unblock(acheck,conxwp->acheck_func[ours]);
       }
     }
   }
@@ -3548,9 +3548,9 @@ static void dpp_changed(LiVESWidget *combo, gpointer user_data) {
   if (iparam==active_dummy) paramname=g_strdup(_("ACTIVATE"));
   else paramname=weed_get_string_value(iparam,"name",&error);
 
-  g_signal_handler_block(combo,conxwp->dpp_func[ours]);
+  lives_signal_handler_block(combo,conxwp->dpp_func[ours]);
   lives_combo_set_active_string (LIVES_COMBO(combo),paramname);
-  g_signal_handler_unblock(combo,conxwp->dpp_func[ours]);
+  lives_signal_handler_unblock(combo,conxwp->dpp_func[ours]);
 
   weed_free(paramname);
 
@@ -3709,10 +3709,10 @@ static void dpc_changed(LiVESWidget *combo, gpointer user_data) {
     return;
   }
 
-  g_signal_handler_block(combo,conxwp->dpc_func[ours]);
+  lives_signal_handler_block(combo,conxwp->dpc_func[ours]);
   channame=weed_get_string_value(ichan,"name",&error);
   lives_combo_set_active_string (LIVES_COMBO(combo),channame);
-  g_signal_handler_unblock(combo,conxwp->dpc_func[ours]);
+  lives_signal_handler_unblock(combo,conxwp->dpc_func[ours]);
 
   weed_free(channame);
 
@@ -3959,12 +3959,12 @@ static void ptable_row_add_variable_widgets(lives_conx_w *conxwp, int idx, int r
 		      (GtkAttachOptions) (0), 0, 0);
 
 
-  g_signal_connect(GTK_OBJECT (conxwp->pfxcombo[idx]), "changed",
-		   G_CALLBACK (dfxp_changed),(gpointer)conxwp);
+  lives_signal_connect(LIVES_GUI_OBJECT (conxwp->pfxcombo[idx]), "changed",
+		   LIVES_GUI_CALLBACK (dfxp_changed),(gpointer)conxwp);
 
 
-  conxwp->dpp_func[idx]=g_signal_connect(GTK_OBJECT (conxwp->pcombo[idx]), "changed",
-					 G_CALLBACK (dpp_changed),(gpointer)conxwp);
+  conxwp->dpp_func[idx]=lives_signal_connect(LIVES_GUI_OBJECT (conxwp->pcombo[idx]), "changed",
+					 LIVES_GUI_CALLBACK (dpp_changed),(gpointer)conxwp);
 
 
   g_object_set_data(G_OBJECT(conxwp->pcombo[idx]),"pidx",GINT_TO_POINTER(pidx));
@@ -4000,8 +4000,8 @@ static void ptable_row_add_variable_widgets(lives_conx_w *conxwp, int idx, int r
     lives_widget_set_sensitive(conxwp->acheck[idx],FALSE);
     g_object_set_data(G_OBJECT(conxwp->acheck[idx]),"available",GINT_TO_POINTER(hasrange));
 
-    conxwp->acheck_func[idx]=g_signal_connect_after (GTK_OBJECT (conxwp->acheck[idx]), "toggled",
-						     G_CALLBACK (on_acheck_toggled),
+    conxwp->acheck_func[idx]=lives_signal_connect_after (LIVES_GUI_OBJECT (conxwp->acheck[idx]), "toggled",
+						     LIVES_GUI_CALLBACK (on_acheck_toggled),
 						     (gpointer)conxwp);
 
     g_object_set_data(G_OBJECT(conxwp->acheck[idx]),"pidx",GINT_TO_POINTER(pidx));
@@ -4055,12 +4055,12 @@ static void ctable_row_add_variable_widgets(lives_conx_w *conxwp, int idx, int r
 		      (GtkAttachOptions) (0), 0, 0);
 
 
-  g_signal_connect(GTK_OBJECT (conxwp->cfxcombo[idx]), "changed",
-		   G_CALLBACK (dfxc_changed),(gpointer)conxwp);
+  lives_signal_connect(LIVES_GUI_OBJECT (conxwp->cfxcombo[idx]), "changed",
+		   LIVES_GUI_CALLBACK (dfxc_changed),(gpointer)conxwp);
 
 
-  conxwp->dpc_func[idx]=g_signal_connect(GTK_OBJECT (conxwp->ccombo[idx]), "changed",
-					 G_CALLBACK (dpc_changed),(gpointer)conxwp);
+  conxwp->dpc_func[idx]=lives_signal_connect(LIVES_GUI_OBJECT (conxwp->ccombo[idx]), "changed",
+					 LIVES_GUI_CALLBACK (dpc_changed),(gpointer)conxwp);
 
 
   g_object_set_data(G_OBJECT(conxwp->ccombo[idx]),"cidx",GINT_TO_POINTER(cidx));
@@ -4093,8 +4093,8 @@ static void ptable_row_add_standard_widgets(lives_conx_w *conxwp, int idx) {
 		      (GtkAttachOptions) (0),
 		      (GtkAttachOptions) (0), 0, 0);
   
-  g_signal_connect (GTK_OBJECT (conxwp->add_button[idx]), "clicked",
-		    G_CALLBACK (padd_clicked),
+  lives_signal_connect (LIVES_GUI_OBJECT (conxwp->add_button[idx]), "clicked",
+		    LIVES_GUI_CALLBACK (padd_clicked),
 		    (gpointer)conxwp);
 
 
@@ -4109,8 +4109,8 @@ static void ptable_row_add_standard_widgets(lives_conx_w *conxwp, int idx) {
 		      (GtkAttachOptions) (0),
 		      (GtkAttachOptions) (0), 0, 0);
 
-  g_signal_connect (GTK_OBJECT (conxwp->del_button[idx]), "clicked",
-		    G_CALLBACK (pdel_clicked),
+  lives_signal_connect (LIVES_GUI_OBJECT (conxwp->del_button[idx]), "clicked",
+		    LIVES_GUI_CALLBACK (pdel_clicked),
 		    (gpointer)conxwp);
 
   lives_widget_set_sensitive(conxwp->del_button[idx], FALSE);
@@ -4142,8 +4142,8 @@ static void ctable_row_add_standard_widgets(lives_conx_w *conxwp, int idx) {
 		      (GtkAttachOptions) (0),
 		      (GtkAttachOptions) (0), 0, 0);
   
-  g_signal_connect (GTK_OBJECT (conxwp->add_button[idx]), "clicked",
-		    G_CALLBACK (cadd_clicked),
+  lives_signal_connect (LIVES_GUI_OBJECT (conxwp->add_button[idx]), "clicked",
+		    LIVES_GUI_CALLBACK (cadd_clicked),
 		    (gpointer)conxwp);
 
 
@@ -4158,8 +4158,8 @@ static void ctable_row_add_standard_widgets(lives_conx_w *conxwp, int idx) {
 		      (GtkAttachOptions) (0),
 		      (GtkAttachOptions) (0), 0, 0);
 
-  g_signal_connect (GTK_OBJECT (conxwp->del_button[idx]), "clicked",
-		    G_CALLBACK (cdel_clicked),
+  lives_signal_connect (LIVES_GUI_OBJECT (conxwp->del_button[idx]), "clicked",
+		    LIVES_GUI_CALLBACK (cdel_clicked),
 		    (gpointer)conxwp);
 
   lives_widget_set_sensitive(conxwp->del_button[idx], FALSE);
@@ -4338,8 +4338,8 @@ static LiVESWidget *conx_scroll_new(lives_conx_w *conxwp) {
 
     lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(conxwp->allcheckc),TRUE);
 
-    g_signal_connect_after (GTK_OBJECT (conxwp->allcheckc), "toggled",
-			    G_CALLBACK (on_allcheck_toggled),
+    lives_signal_connect_after (LIVES_GUI_OBJECT (conxwp->allcheckc), "toggled",
+			    LIVES_GUI_CALLBACK (on_allcheck_toggled),
 			    (gpointer)conxwp);
 
 
@@ -4596,10 +4596,10 @@ static boolean show_existing(lives_conx_w *conxwp) {
 
       g_object_set_data(G_OBJECT(ccombo),"setup",GINT_TO_POINTER(TRUE));
 
-      g_signal_handler_block(ccombo,conxwp->dpc_func[l]);
+      lives_signal_handler_block(ccombo,conxwp->dpc_func[l]);
       g_object_set_data(G_OBJECT(ccombo),"idx",GINT_TO_POINTER(cidx));
       lives_combo_set_active_index(LIVES_COMBO(ccombo),cidx);
-      g_signal_handler_unblock(ccombo,conxwp->dpc_func[l]);
+      lives_signal_handler_unblock(ccombo,conxwp->dpc_func[l]);
 	      
       conxwp->ikeys[l]=ikey+1;
       conxwp->imodes[l]=imode;
@@ -4655,9 +4655,9 @@ static boolean show_existing(lives_conx_w *conxwp) {
 
 	lives_widget_set_sensitive(acheck,TRUE);
 	
-	g_signal_handler_block(acheck,conxwp->acheck_func[l]);
+	lives_signal_handler_block(acheck,conxwp->acheck_func[l]);
 	lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(acheck),pconx->autoscale[j]);
-	g_signal_handler_unblock(acheck,conxwp->acheck_func[l]);
+	lives_signal_handler_unblock(acheck,conxwp->acheck_func[l]);
 
       }
 
@@ -4690,10 +4690,10 @@ static boolean show_existing(lives_conx_w *conxwp) {
       conxwp->imodes[totchans+l]=imode;
       conxwp->idx[totchans+l]=ipnum;
 
-      //g_signal_handler_block(pcombo,conxwp->dpp_func[pidx]);
+      //lives_signal_handler_block(pcombo,conxwp->dpp_func[pidx]);
       g_object_set_data(G_OBJECT(pcombo),"idx",GINT_TO_POINTER(pidx+EXTRA_PARAMS_IN));
       lives_combo_set_active_index(LIVES_COMBO(pcombo),pidx+EXTRA_PARAMS_IN);
-      //g_signal_handler_unblock(pcombo,conxwp->dpp_func[pidx]);
+      //lives_signal_handler_unblock(pcombo,conxwp->dpp_func[pidx]);
 
       g_object_set_data(G_OBJECT(pcombo),"setup",GINT_TO_POINTER(FALSE));
 
@@ -4786,8 +4786,8 @@ LiVESWidget *make_datacon_window(int key, int mode) {
     lives_box_pack_start (LIVES_BOX (abox), conxw.acbutton, FALSE, FALSE, widget_opts.packing_width);
     lives_widget_set_sensitive(conxw.acbutton,FALSE);
 
-    g_signal_connect (GTK_OBJECT (conxw.acbutton), "clicked",
-		      G_CALLBACK (acbutton_clicked),
+    lives_signal_connect (LIVES_GUI_OBJECT (conxw.acbutton), "clicked",
+		      LIVES_GUI_CALLBACK (acbutton_clicked),
 		      (gpointer)&conxw);
 
 
@@ -4798,8 +4798,8 @@ LiVESWidget *make_datacon_window(int key, int mode) {
     lives_box_pack_start (LIVES_BOX (abox), conxw.apbutton, FALSE, FALSE, widget_opts.packing_width);
     lives_widget_set_sensitive(conxw.apbutton,FALSE);
 
-    g_signal_connect (GTK_OBJECT (conxw.apbutton), "clicked",
-		      G_CALLBACK (apbutton_clicked),
+    lives_signal_connect (LIVES_GUI_OBJECT (conxw.apbutton), "clicked",
+		      LIVES_GUI_CALLBACK (apbutton_clicked),
 		      (gpointer)&conxw);
 
   }
@@ -4808,8 +4808,8 @@ LiVESWidget *make_datacon_window(int key, int mode) {
   lives_box_pack_start (LIVES_BOX (abox), conxw.disconbutton, FALSE, FALSE, widget_opts.packing_width);
   lives_widget_set_sensitive(conxw.disconbutton,FALSE);
 
-  g_signal_connect (GTK_OBJECT (conxw.disconbutton), "clicked",
-		    G_CALLBACK (disconbutton_clicked),
+  lives_signal_connect (LIVES_GUI_OBJECT (conxw.disconbutton), "clicked",
+		    LIVES_GUI_CALLBACK (disconbutton_clicked),
 		    (gpointer)&conxw);
 
   if (conxw.num_alpha>0||conxw.num_params>0) add_fill_to_box(LIVES_BOX(abox));
@@ -4842,13 +4842,13 @@ LiVESWidget *make_datacon_window(int key, int mode) {
 				LIVES_KEY_Escape,  (GdkModifierType)0, (GtkAccelFlags)0);
 
 
-  g_signal_connect (GTK_OBJECT (cancelbutton), "clicked",
-		    G_CALLBACK (conxw_cancel_clicked),
+  lives_signal_connect (LIVES_GUI_OBJECT (cancelbutton), "clicked",
+		    LIVES_GUI_CALLBACK (conxw_cancel_clicked),
 		    (gpointer)&conxw);
 
 
-  g_signal_connect (GTK_OBJECT (okbutton), "clicked",
-		    G_CALLBACK (conxw_ok_clicked),
+  lives_signal_connect (LIVES_GUI_OBJECT (okbutton), "clicked",
+		    LIVES_GUI_CALLBACK (conxw_ok_clicked),
 		    (gpointer)&conxw);
 
 

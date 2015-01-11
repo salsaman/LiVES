@@ -7595,7 +7595,7 @@ sub get_sox_version {
 
     my $soxv=smog_system_direct("sox -h 2>&1 | grep -i sox:");
 
-    my @soxvvz=split(/\./,(split(" ",$soxv))[2]));
+    my @soxvvz=split(/\./,(split(" ",$soxv))[2]);
     my $soxvv=$soxvvz[0];
 
     if (substr($soxvv,0,1) eq "v") {

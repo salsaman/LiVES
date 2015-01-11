@@ -1398,7 +1398,7 @@ if (defined($ARGV[0])) {
 		}
 		$sox_version=&get_sox_version;
 
-		if ($sox_version<13) {
+		if ($sox_version<13000000) {
 		    if ($asamps==1) {
 			$stype="b";
 		    }
@@ -4987,14 +4987,29 @@ sub trim_center {
 
 
 sub get_formats {
+
+    if (!defined($sox_version)) {
+	$sox_version=&get_sox_version;
+    }
+
     if ($asamps==8){
 	$format=16;
 	$signed=0;
-	$xsigned="-u";
+	if ($sox_version < 14004001) {
+	    $xsigned="-u";
+	}
+	else {
+	    $xsigned="-e unsigned-integer";
+	}
     }
     else {
 	$signed=1;
-	$xsigned="-s";
+	if ($sox_version < 14004001) {
+	    $xsigned="-s";
+	}
+	else {
+	    $xsigned="-e signed-integer";
+	}
 	if ($endian==1) {
 	    # little
 	    $format=128;
@@ -5371,6 +5386,7 @@ sub convert_audio_to_raw {
     #convert .wav to raw pcm using sox or mplayer
 
     my $smcom;
+
     &get_formats;
 
     my $ap=&rc_get("audio_player");
@@ -5413,7 +5429,7 @@ sub convert_audio_to_wav {
 	    $sox_version=&get_sox_version;
 	}
 
-	if ($sox_version<13) {
+	if ($sox_version<13000000) {
 	    $nodither="";
 	    if ($asamps==8) {
 		$sasamps="b";
@@ -5426,7 +5442,6 @@ sub convert_audio_to_wav {
 	    $nodither="-D";
 	    $sasamps=$aasamps;
 	}
-
 
 	if (!defined($nrate)) {
 	    $nrate=$arate;
@@ -5441,22 +5456,38 @@ sub convert_audio_to_wav {
 	}
 
 	if (!defined($asigned)) {
-	    if ($sasamps==8) {
-		$asigned="-u";
+	    if ($sox_version < 14004001) {
+		if ($sasamps==8) {
+		    $asigned="-u";
+		}
+		else {
+		    $asigned="-s";
+		}
 	    }
 	    else {
-		$asigned="-s";
+		if ($sasamps==8) {
+		    $asigned="-e unsigned-integer";
+		}
+		else {
+		    $asigned="-e signed-integer";
+		}
 	    }
 	}
 
 	if (!defined($nsigned)) {
 	    if ($nasamps==8) {
-		$nsigned="-u";
+		if ($sox_version < 14004001) {
+		    $nsigned="-u";
+		}
+		else {
+		    $nsigned="-e unsigned-integer";
+		}
 	    }
 	    else {
 		$nsigned=$asigned;
 	    }
 	}
+
 	$smcom="sox $nodither -t .raw -r $arate $asigned -$sasamps -c $achans \"$audio_in\" -t .wav -r $nrate -c $nchans $nsigned -$nasamps \"$curtmpdir/audiodump.wav\" >$nulfile 2>&1";
     }
 
@@ -5547,7 +5578,7 @@ sub resample_audio {
 	$sox_version=&get_sox_version;
     }
     
-    if ($sox_version<13) {
+    if ($sox_version<13000000) {
 	if ($asamps==8) {
 	    $osamps="b";
 	}
@@ -5570,20 +5601,37 @@ sub resample_audio {
 	$nodither="-D";
     }
     
-    if ($asigned==1) {
-	$osigned="s";
+    if ($sox_version < 14000000) {
+	if ($asigned==1) {
+	    $osigned="s";
+	}
+	else {
+	    $osigned="u";
+	}
+    
+	if ($nsigned==1) {
+	    $nsigned="s";
+	}
+	else {
+	    $nsigned="u";
+	}
     }
     else {
-	$osigned="u";
-    }
+	if ($asigned==1) {
+	    $osigned="-e signed-integer";
+	}
+	else {
+	    $osigned="-e unsigned-integer";
+	}
     
-    if ($nsigned==1) {
-	$nsigned="s";
+	if ($nsigned==1) {
+	    $nsigned="-e signed-integer";
+	}
+	else {
+	    $nsigned="-e unsigned-integer";
+	}
     }
-    else {
-	$nsigned="u";
-    }
-    
+
     if ($aendian==$endian) {
 	$oendian="";
     }
@@ -7543,9 +7591,12 @@ sub get_sox_version {
     # which would return 14.3.2
     # (take third word and strip leading v)
 
+    # final value would be 140003002
+
     my $soxv=smog_system_direct("sox -h 2>&1 | grep -i sox:");
 
-    my $soxvv=(split(/\./,(split(" ",$soxv))[2]))[0];
+    my @soxvvz=split(/\./,(split(" ",$soxv))[2]));
+    my $soxvv=$soxvvz[0];
 
     if (substr($soxvv,0,1) eq "v") {
 	$soxvv=substr($soxvv,1,length($soxvv));
@@ -7553,6 +7604,9 @@ sub get_sox_version {
     if ($soxvv eq "") {
 	# version 12.x.x or lower
 	$soxvv=0;
+    }
+    else {
+	$soxvv = $soxvv * 1000000 + $soxvvz[1] * 1000 + $soxvvz[2];
     }
 
     return $soxvv;

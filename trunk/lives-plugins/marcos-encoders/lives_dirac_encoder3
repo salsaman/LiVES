@@ -39,11 +39,15 @@ import os
 if os.name == 'nt':
 	convert = 'convert.exe'
 	mencoder = 'mencoder.exe'
+	oggenc = 'oggenc.exe'
+        mkvmerge = 'mkvmerge.exe'
 	dirac_encoder = 'dirac_encoder.exe'
 	identify = 'identify.exe'
 else:
 	convert = 'convert'
 	mencoder = 'mencoder'
+	oggenc = 'oggenc'
+        mkvmerge = 'mkvmerge'
 	dirac_encoder = 'dirac_encoder'
 	identify = 'identify'
 
@@ -457,9 +461,6 @@ def do_encode():
                 print(('Removing ' + tfile))
             os.remove(tfile)
 
-# Audio not supported yet. Planned to use Matroska container but
-# Dirac developers are thinking of MXF.
-    audio = False
     if audio:
         if not quiet:
             print(('Creating "%s"-quality ogg vorbis file' % vtype))
@@ -488,26 +489,16 @@ def do_encode():
         if not quiet:
             print('Multiplexing...')
         command = """
-%(mkvplex)s --aspect-ratio '1:%(aspect)s' -o "%(vidname)s" %(vidv)s -y '0:0%(delaysh)s' %(ogg)s %(std)s""" % all_vars
+%(mkvmerge)s --aspect-ratio '1:%(aspect)s' -o "%(vidname)s" %(dyuvv)s.drc -y '0:0%(delaysh)s' %(ogg)s %(std)s""" % all_vars
         run(command)
         if rawsndf and os.path.exists(wav): os.remove(wav)
         if os.path.exists(ogg): os.remove(ogg)
         if os.path.exists(dyuvv + '.drc'): os.remove(dyuvv + '.drc')
     else:
-        shutil.move(dyuvv + '.drc', vidname)
-        note = """
-You can play the Dirac file %(vidname)s by running:
+        command = """
+%(mkvmerge)s --aspect-ratio '1:%(aspect)s' -o "%(vidname)s" %(dyuvv)s.drc -y '0:0%(delaysh)s' %(std)s""" % all_vars
+        run(command)
 
-dirac_decoder -v %(vidname)s %(vidname)s
-mplayer -demuxer rawvideo -rawvideo fps=%(ffps)s:size=%(fbytes)s:w=%(fx)s:h=%(fy)s %(vidname)s.yuv
-
-If %(vidname)s has an extension do not include it in the above
-commands e.g. if it's "test.drc" then do:
-
-dirac_decoder -v test test
-mplayer -demuxer rawvideo -rawvideo fps=%(ffps)s:size=%(fbytes)s:w=%(fx)s:h=%(fy)s test.yuv
-""" % all_vars
-        if not quiet: print(note)
 
     if frame_range:
         lframes = os.path.join(source_dir, syml)
@@ -622,7 +613,7 @@ if __name__ == '__main__':
     else:
         quiet = False
 
-    for i in [convert, mencoder, dirac_encoder, identify]:
+    for i in [convert, mencoder, dirac_encoder, identify, oggenc, mkvmerge]:
         is_installed(i)
     if '-C' in opts: raise SystemExit
 

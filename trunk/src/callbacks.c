@@ -2790,8 +2790,8 @@ void on_insert_activate (LiVESButton *button, gpointer user_data) {
 
   // fit video to audio if requested
   if (mainw->fx1_bool&&(cfile->asampsize*cfile->arate*cfile->achans)) {
-    get_total_time(cfile);
-    times_to_insert=(cfile->laudio_time*cfile->fps-cfile->frames)/clipboard->frames;
+    // "insert to fit audio" : number of inserts is (audio_time - video_time) / clipboard_time
+    times_to_insert=(cfile->laudio_time-cfile->frames>0?(double)cfile->frames/cfile->fps:0.)/((double)clipboard->frames/clipboard->fps);
   }
 
   if (times_to_insert<0.&&(mainw->fx1_bool)) {
@@ -3086,11 +3086,19 @@ void on_insert_activate (LiVESButton *button, gpointer user_data) {
   }
 
   d_print(""); // force switchtext
-  if (!resample_clipboard(cfile->fps)) return;
+
+  // if pref is set, resample clipboard video
+  if (prefs->ins_resample&&cfile->fps!=clipboard->fps&&orig_frames>0) {
+    if (!resample_clipboard(cfile->fps)) return;
+  }
 
   if (mainw->fx1_bool&&(cfile->asampsize*cfile->arate*cfile->achans)) {
-    times_to_insert=(times_to_insert*cfile->fps-cfile->frames)/clipboard->frames;
+    // in theory this should not change after resampling, but we will recalculate anyway
+
+    // "insert to fit audio" : number of inserts is (audio_time - video_time) / clipboard_time
+    times_to_insert=(cfile->laudio_time-cfile->frames>0?(double)cfile->frames/cfile->fps:0.)/((double)clipboard->frames/clipboard->fps);
   }
+
   switch_to_file(0,current_file);
 
   if (cb_end>clipboard->frames) {

@@ -4,7 +4,7 @@ import locale
 locale.setlocale(locale.LC_NUMERIC,"")
 
 """
-theora_encoder.py
+lives_theora_encoder
 
 Front-end to various programs needed to create Ogg Theora
 movies with some image-enhancing capabilities through the use of
@@ -46,10 +46,10 @@ else:
 
 usage = \
       """
-theora_encoder.py -h
-theora_encoder.py -V
-theora_encoder.py -C
-theora_encoder.py [-o out] [-p pre] [-d dir] [-a aspect] [-D delay*]
+lives_theora_encoder -h
+lives_theora_encoder -V
+lives_theora_encoder -C
+lives_theora_encoder [-o out] [-p pre] [-d dir] [-a aspect] [-D delay*]
                   [-q|-v] [-t type] [-k] [-e [[-w dir] [-c geom] [-r geom]]]
                   [-s sndfile] [-b sndrate] [-f fpscode] [-L lv1file]
                   [firstframe lastframe]
@@ -80,13 +80,13 @@ OPTIONS:
 -p pre      the encoder assumes that sound and images are named using
             LiVES' conventions i.e. "audio" and "00000001.ext",
             "00000002.ext"... where "ext" is either "jpg" or "png".
-            However, theora_encoder.py will create temporary files
+            However, lives_theora_encoder will create temporary files
             which can be saved for later use (for example, after
             enhancing the images with "-e" , which may take a long
             time). These temporary files will be named
             "pre_00000001.ext", etc... where "pre" is either "eimg"
             or "rimg" and will be kept if the "-k" option is used.
-            theora_encoder.py can then be run over the enhanced images
+            lives_theora_encoder can then be run over the enhanced images
             only by selecting the appropriate prefix ("eimg" or
             "rimg") here. See "-e" to see what each prefix means.
             Default: "" (an empty string).
@@ -234,7 +234,7 @@ and that the images are stored in the directory "/tmp/livestmp/991319584/".
 In this example the movie is assumed to be 16:9. Then, in order to create
 an ogg file you can simply do the following:
 
-   theora_encoder.py -d /tmp/livestmp/991319584 -o /movies/default.ogg -a 3
+   lives_theora_encoder -d /tmp/livestmp/991319584 -o /movies/default.ogg -a 3
 
 and the clip "default.ogg" will be created in "/movies/" with the correct
 aspect ratio.
@@ -248,7 +248,7 @@ the original pictures which we want to get rid of (this might distort the
 images somewhat, so be careful about cropping/resizing, and remember to
 use dimensions which are multiples of 16):
 
-   theora_encoder.py -v -d /tmp/livestmp/991319584 -w /tmp/tmpogg \\
+   lives_theora_encoder -v -d /tmp/livestmp/991319584 -w /tmp/tmpogg \\
    -o /movies/download.ogg -a 3 -k -e -c "704x464+5+6" -r "352x240"
 
 Since we use the "-k" flag the enhanced images are kept (both full-size
@@ -258,17 +258,17 @@ keep them is because the above may take quite a long time and we may want
 to re-use the enhanced images. So, for example, creating a high-quality
 clip at full size can be accomplished now as follows:
 
-   theora_encoder.py -d /tmp/tmpogg -t hi -o /movies/archive.ogg \\
+   lives_theora_encoder -d /tmp/tmpogg -t hi -o /movies/archive.ogg \\
    -s /tmp/livestmp/991319584/audio -a 3 -k -p eimg
 
 If, for example, we only want to encode frames 100 to 150 we can run
 the following:
 
-   theora_encoder.py -v -d /tmp/tmpogg -o /movies/selection.ogg \\
+   lives_theora_encoder -v -d /tmp/tmpogg -o /movies/selection.ogg \\
    -a 3 -k -p eimg 100 150
 
 Note that no audio has been selected ("-s"). This is because
-theora_encoder.py cannot trim the audio to the appropriate length.
+lives_theora_encoder cannot trim the audio to the appropriate length.
 You would need to use LiVES to do this.
 
 To delete all the enhanced images you can just remove "/tmp/tmpogg".
@@ -277,7 +277,7 @@ If you notice that the video and audio become out of sync so that
 near the end of the movie the video trails the audio by, say, 0.2s,
 you can use the "-D" option as follows:
 
-   theora_encoder.py -d /tmp/livestmp/991319584 -o test.ogg -D 200
+   lives_theora_encoder -d /tmp/livestmp/991319584 -o test.ogg -D 200
 
 Note that negative time values are also allowed ("-D" NOT IMPLEMENTED YET).
 
@@ -287,7 +287,7 @@ Batch-encoding can be done as follows (zsh-syntax):
    for i in movie?.lv1
    do
      mkdir /tmp/$i:r
-     theora_encoder.py -d /tmp/$i:r -o /tmp/$i:r.ogg -L $i
+     lives_theora_encoder -d /tmp/$i:r -o /tmp/$i:r.ogg -L $i
      rm -rf /tmp/$i:r
    done
 
@@ -473,22 +473,17 @@ mkfifo.exe /m 0600 stream.yuv ; \\
 %(mplayer)s mf://%(syml)s%(img_pre)s*%(ext)s %(mplayer_opts)s %(std)s &
 """ % all_vars
         run(command)
-        command = """cd %(source_dir)s ; \\
-%(theora_encoder)s %(theora_opts)s -o "%(vidname)s" %(wav)s stream.yuv %(std)s
-""" % all_vars
-        run(command)
     else:
         command = """cd %(source_dir)s ; \\
 mkfifo -m 0600 stream.yuv ; \\
 %(mplayer)s mf://%(syml)s%(img_pre)s*%(ext)s %(mplayer_opts)s %(std)s &
 """ % all_vars
         run(command)
-        command = """cd %(source_dir)s ; \\
-%(theora_encoder)s %(theora_opts)s -o "%(vidname)s" %(wav)s stream.yuv %(std)s
-""" % all_vars
-        run(command)
 
-
+    command = """cd %(source_dir)s ; \\
+    %(theora_encoder)s %(theora_opts)s -o "%(vidname)s" %(wav)s stream.yuv %(std)s
+    """ % all_vars
+    run(command)
 
     if os.path.exists(os.path.join(source_dir, 'stream.yuv')):
         os.remove(os.path.join(source_dir, 'stream.yuv'))
@@ -608,7 +603,7 @@ if __name__ == '__main__':
         raise SystemExit
 
     if '-V' in opts:
-        print 'theora_encoder.py version ' + version
+        print 'lives_theora_encoder version ' + version
         raise SystemExit
 
     if ('-v' in opts) or ('-C' in opts):

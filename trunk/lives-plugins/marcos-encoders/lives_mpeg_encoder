@@ -4,7 +4,7 @@ import locale
 locale.setlocale(locale.LC_NUMERIC,"")
 
 """
-mpeg_encoder.py
+lives_mpeg_encoder
 
 Simple front-end to MJPEGtools with some image-enhancing
 capabilities through the use of ImageMagick. Meant as a
@@ -47,10 +47,10 @@ else:
 
 usage = \
       """
-mpeg_encoder.py -h
-mpeg_encoder.py -V
-mpeg_encoder.py -C
-mpeg_encoder.py [-o out] [-p pre] [-d dir] [-a aspect] [-D delay]
+lives_mpeg_encoder -h
+lives_mpeg_encoder -V
+lives_mpeg_encoder -C
+lives_mpeg_encoder [-o out] [-p pre] [-d dir] [-a aspect] [-D delay]
                 [-q|-v] [-t type] [-k] [-e [[-w dir] [-c geom] [-r geom]]]
                 [-s sndfile] [-b sndrate] [-f fpscode] [-L lv1file]
                 [firstframe lastframe]
@@ -84,13 +84,13 @@ OPTIONS:
 -p pre      the encoder assumes that sound and images are named using
             LiVES' conventions i.e. "audio" and "00000001.ext",
             "00000002.ext"... where "ext" is either "jpg" or "png".
-            However, mpeg_encoder.py will create temporary files
+            However, lives_mpeg_encoder will create temporary files
             which can be saved for later use (for example, after
             enhancing the images with "-e" , which may take a long
             time). These temporary files will be named
             "pre_00000001.ext", etc... where "pre" is either "eimg"
             or "rimg" and will be kept if the "-k" option is used.
-            mpeg_encoder.py can then be run over the enhanced images
+            lives_mpeg_encoder can then be run over the enhanced images
             only by selecting the appropriate prefix ("eimg" or
             "rimg") here. See "-e" to see what each prefix means.
             Default: "" (an empty string).
@@ -259,7 +259,7 @@ In this example the movie is assumed to be 16:9. NOTE THAT THE VIDEO MUST
 BE PROGRESSIVE (NON-INTERLACED) FOR THIS TO WORK. Then, in order to
 create an MPEG-1 file you can simply do the following:
 
-   mpeg_encoder.py -d /tmp/livestmp/991319584 -o /movies/default.mpg -a 3
+   lives_mpeg_encoder -d /tmp/livestmp/991319584 -o /movies/default.mpg -a 3
 
 and the clip "default.mpg" will be created in "/movies/" with the correct
 aspect ratio.
@@ -273,7 +273,7 @@ the original pictures which we want to get rid of (this might distort the
 images somewhat, so be careful about cropping/resizing, and remember to
 use dimensions which are multiples of 16):
 
-   mpeg_encoder.py -v -d /tmp/livestmp/991319584 -w /tmp/tmpmpg \\
+   lives_mpeg_encoder -v -d /tmp/livestmp/991319584 -w /tmp/tmpmpg \\
    -o /movies/download.mpg -a 3 -k -e -c "704x464+5+6" -r "352x240"
 
 Since we use the "-k" flag the enhanced images are kept (both full-size
@@ -283,28 +283,28 @@ keep them is because the above may take quite a long time and we may want
 to re-use the enhanced images. So, for example, creating a high-quality
 clip at full size can be accomplished now as follows:
 
-   mpeg_encoder.py -d /tmp/tmpmpg -t hi -o /movies/archive.mpg \\
+   lives_mpeg_encoder -d /tmp/tmpmpg -t hi -o /movies/archive.mpg \\
    -s /tmp/livestmp/991319584/audio -a 3 -k -p eimg
 
 Creating VCD/SVCD/DVD-compatible clips is also readily done:
 
-   mpeg_encoder.py -d /tmp/tmpmpg -t vcd -o /movies/vcd.mpg \\
+   lives_mpeg_encoder -d /tmp/tmpmpg -t vcd -o /movies/vcd.mpg \\
    -s /tmp/livestmp/991319584/audio -a 3 -k -p eimg
 
-   mpeg_encoder.py -q -d /tmp/tmpmpg -t svcd -o /movies/svcd.mpg \\
+   lives_mpeg_encoder -q -d /tmp/tmpmpg -t svcd -o /movies/svcd.mpg \\
    -s /tmp/livestmp/991319584/audio -a 3 -k -p eimg
 
-   mpeg_encoder.py -v -d /tmp/tmpmpg -t dvd -o /movies/dvd.mpg \\
+   lives_mpeg_encoder -v -d /tmp/tmpmpg -t dvd -o /movies/dvd.mpg \\
    -s /tmp/livestmp/991319584/audio -a 3 -k -p eimg
 
 If, for example, we only want to encode frames 100 to 150 we can run
 the following:
 
-   mpeg_encoder.py -v -d /tmp/tmpmpg -o /movies/selection.mpg \\
+   lives_mpeg_encoder -v -d /tmp/tmpmpg -o /movies/selection.mpg \\
    -a 3 -k -p eimg 100 150
 
 Note that no audio has been selected ("-s"). This is because
-mpeg_encoder.py cannot trim the audio to the appropriate length.
+lives_mpeg_encoder cannot trim the audio to the appropriate length.
 You would need to use LiVES to do this.
 
 To delete all the enhanced images you can just remove "/tmp/tmpmpg".
@@ -313,7 +313,7 @@ If you notice that the video and audio become out of sync so that
 near the end of the movie the video trails the audio by, say, 0.2s,
 you can use the "-D" option as follows:
 
-   mpeg_encoder.py -d /tmp/livestmp/991319584 -o test.mpg -D 200
+   lives_mpeg_encoder -d /tmp/livestmp/991319584 -o test.mpg -D 200
 
 Note that negative time values are also allowed.
 
@@ -323,7 +323,7 @@ Batch-encoding can be done as follows (zsh-syntax):
    for i in movie?.lv1
    do
      mkdir /tmp/$i:r
-     mpeg_encoder.py -d /tmp/$i:r -o /tmp/$i:r.mpg -L $i
+     lives_mpeg_encoder -d /tmp/$i:r -o /tmp/$i:r.mpg -L $i
      rm -rf /tmp/$i:r
    done
 
@@ -655,7 +655,7 @@ if __name__ == '__main__':
         raise SystemExit
 
     if '-V' in opts:
-        print 'mpeg_encoder.py version ' + version
+        print 'lives_mpeg_encoder version ' + version
         raise SystemExit
 
     if ('-v' in opts) or ('-C' in opts):

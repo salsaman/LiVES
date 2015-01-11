@@ -44,7 +44,7 @@ static double est_time;
 
 static volatile boolean dlg_thread_ready=FALSE;
 
-void on_warn_mask_toggled (GtkToggleButton *togglebutton, gpointer user_data) {
+void on_warn_mask_toggled (LiVESToggleButton *togglebutton, gpointer user_data) {
   LiVESWidget *tbutton;
 
   if (lives_toggle_button_get_active(togglebutton)) prefs->warning_mask|=GPOINTER_TO_INT(user_data);
@@ -122,7 +122,7 @@ void add_warn_check (GtkBox *box, int warn_mask_number) {
 }
 
 
-static void add_clear_ds_button(GtkDialog* dialog) {
+static void add_clear_ds_button(LiVESDialog* dialog) {
   LiVESWidget *button = lives_button_new_from_stock (LIVES_STOCK_CLEAR);
 
   lives_button_set_label(LIVES_BUTTON(button),_("_Recover disk space"));
@@ -159,7 +159,7 @@ static void add_clear_ds_adv(GtkBox *box) {
 
 
 //Warning or yes/no dialog
-static LiVESWidget* create_warn_dialog (int warn_mask_number, GtkWindow *transient, const gchar *text, lives_dialog_t diat) {
+static LiVESWidget* create_warn_dialog (int warn_mask_number, LiVESWindow *transient, const gchar *text, lives_dialog_t diat) {
   LiVESWidget *dialog;
   LiVESWidget *dialog_vbox;
   LiVESWidget *dialog_action_area;
@@ -260,10 +260,10 @@ static LiVESWidget* create_warn_dialog (int warn_mask_number, GtkWindow *transie
   lives_widget_set_can_focus_and_default (warning_cancelbutton);
 
   lives_widget_add_accelerator (warning_cancelbutton, "activate", accel_group,
-			      LIVES_KEY_Escape, (GdkModifierType)0, (GtkAccelFlags)0);
+			      LIVES_KEY_Escape, (GdkModifierType)0, (LiVESAccelFlags)0);
 
   lives_widget_add_accelerator (warning_okbutton, "activate", accel_group,
-			      LIVES_KEY_Return, (GdkModifierType)0, (GtkAccelFlags)0);
+			      LIVES_KEY_Return, (GdkModifierType)0, (LiVESAccelFlags)0);
 
   lives_widget_set_can_focus_and_default (warning_okbutton);
   lives_widget_grab_default (warning_okbutton);
@@ -315,7 +315,7 @@ boolean do_yesno_dialog_with_check (const gchar *text, int warn_mask_number) {
 
 
 
-boolean do_warning_dialog_with_check_transient(const gchar *text, int warn_mask_number, GtkWindow *transient) {
+boolean do_warning_dialog_with_check_transient(const gchar *text, int warn_mask_number, LiVESWindow *transient) {
   // show OK/CANCEL, returns FALSE if cancelled
   LiVESWidget *warning;
   int response=1;
@@ -342,7 +342,7 @@ boolean do_warning_dialog_with_check_transient(const gchar *text, int warn_mask_
 
 
 
-boolean do_yesno_dialog_with_check_transient(const gchar *text, int warn_mask_number, GtkWindow *transient) {
+boolean do_yesno_dialog_with_check_transient(const gchar *text, int warn_mask_number, LiVESWindow *transient) {
   // show YES/NO, returns TRUE for YES
   LiVESWidget *warning;
   int response=1;
@@ -373,7 +373,7 @@ boolean do_yesno_dialog(const gchar *text) {
   LiVESWidget *warning;
   int response;
   gchar *mytext;
-  GtkWindow *transient=NULL;
+  LiVESWindow *transient=NULL;
 
   if (prefs->show_gui) {
     if (mainw->multitrack==NULL&&mainw->is_ready) transient=LIVES_WINDOW(mainw->LiVES);
@@ -394,7 +394,7 @@ boolean do_yesno_dialog(const gchar *text) {
 
 
 // returns LIVES_CANCEL or LIVES_RETRY
-int do_abort_cancel_retry_dialog(const gchar *text, GtkWindow *transient) {
+int do_abort_cancel_retry_dialog(const gchar *text, LiVESWindow *transient) {
   int response;
   gchar *mytext;
   LiVESWidget *warning;
@@ -538,7 +538,7 @@ int do_blocking_info_dialog(const gchar *text) {
 
 
 
-int do_error_dialog_with_check_transient(const gchar *text, boolean is_blocking, int warn_mask_number, GtkWindow *transient) {
+int do_error_dialog_with_check_transient(const gchar *text, boolean is_blocking, int warn_mask_number, LiVESWindow *transient) {
   // show error box
 
   LiVESWidget *err_box;
@@ -564,7 +564,7 @@ int do_error_dialog_with_check_transient(const gchar *text, boolean is_blocking,
 
 
 
-int do_info_dialog_with_transient(const gchar *text, boolean is_blocking, GtkWindow *transient) {
+int do_info_dialog_with_transient(const gchar *text, boolean is_blocking, LiVESWindow *transient) {
   // info box
 
   LiVESWidget *info_box;
@@ -1513,7 +1513,7 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const gchar *te
       lives_widget_set_tooltip_text( mainw->m_playbutton,_ ("Preview"));
       lives_widget_remove_accelerator (mainw->playall, mainw->accel_group, LIVES_KEY_p, (GdkModifierType)0);
       lives_widget_add_accelerator (cfile->proc_ptr->preview_button, "clicked", mainw->accel_group, LIVES_KEY_p,
-				  (GdkModifierType)0, (GtkAccelFlags)0);
+				  (GdkModifierType)0, (LiVESAccelFlags)0);
       accelerators_swapped=TRUE;
     }
 
@@ -1745,7 +1745,7 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const gchar *te
 	lives_widget_set_tooltip_text( mainw->m_playbutton,_ ("Preview"));
 	lives_widget_remove_accelerator (mainw->playall, mainw->accel_group, LIVES_KEY_p, (GdkModifierType)0);
 	lives_widget_add_accelerator (cfile->proc_ptr->preview_button, "clicked", mainw->accel_group, LIVES_KEY_p,
-				    (GdkModifierType)0, (GtkAccelFlags)0);
+				    (GdkModifierType)0, (LiVESAccelFlags)0);
 	accelerators_swapped=TRUE;
       }
     }
@@ -2852,7 +2852,7 @@ void do_read_failed_error_s(const char *s, const char *addinfo) {
 
 
 
-int do_write_failed_error_s_with_retry(const gchar *fname, const gchar *errtext, GtkWindow *transient) {
+int do_write_failed_error_s_with_retry(const gchar *fname, const gchar *errtext, LiVESWindow *transient) {
   // err can be errno from open/fopen etc.
 
   // return same as do_abort_cancel_retry_dialog() - LIVES_CANCEL or LIVES_RETRY (both non-zero)
@@ -2905,7 +2905,7 @@ int do_write_failed_error_s_with_retry(const gchar *fname, const gchar *errtext,
 
 
 
-int do_read_failed_error_s_with_retry(const gchar *fname, const gchar *errtext, GtkWindow *transient) {
+int do_read_failed_error_s_with_retry(const gchar *fname, const gchar *errtext, LiVESWindow *transient) {
   // err can be errno from open/fopen etc.
 
   // return same as do_abort_cancel_retry_dialog() - LIVES_CANCEL or LIVES_RETRY (both non-zero)
@@ -3104,7 +3104,7 @@ void do_locked_in_vdevs_error(void) {
 void do_do_not_close_d (void) {
   gchar *msg=g_strdup(_("\n\nCLEANING AND COPYING FILES. THIS MAY TAKE SOME TIME.\nDO NOT SHUT DOWN OR CLOSE LIVES !\n"));
   LiVESWidget *err_box=create_info_error_dialog(msg,FALSE,0,LIVES_INFO_TYPE_WARNING);
-  GtkWindow *transient=NULL;
+  LiVESWindow *transient=NULL;
 
   g_free(msg);
 

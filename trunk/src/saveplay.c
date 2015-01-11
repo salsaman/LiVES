@@ -2268,7 +2268,7 @@ void play_file (void) {
 
   // enable the freeze button
   lives_accel_group_connect (LIVES_ACCEL_GROUP (mainw->accel_group), LIVES_KEY_BackSpace, (GdkModifierType)LIVES_CONTROL_MASK, 
-			   (GtkAccelFlags)0, (freeze_closure=g_cclosure_new (LIVES_GUI_CALLBACK (freeze_callback),NULL,NULL)));
+			   (LiVESAccelFlags)0, (freeze_closure=g_cclosure_new (LIVES_GUI_CALLBACK (freeze_callback),NULL,NULL)));
 
   if (mainw->multitrack!=NULL) {
     mainw->event_list=mainw->multitrack->event_list;

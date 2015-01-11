@@ -2250,8 +2250,8 @@ LiVESWidget * create_rte_window (void) {
 
     hbox = lives_hbox_new (FALSE, 0);
     lives_table_attach (LIVES_TABLE (table), hbox, i, i+1, 0, 1,
-		      (GtkAttachOptions) (LIVES_EXPAND | LIVES_FILL),
-		      (GtkAttachOptions) (LIVES_EXPAND | LIVES_FILL), 0, 0);
+		      (LiVESAttachOptions) (LIVES_EXPAND | LIVES_FILL),
+		      (LiVESAttachOptions) (LIVES_EXPAND | LIVES_FILL), 0, 0);
     lives_container_set_border_width (LIVES_CONTAINER (hbox), widget_opts.border_width);
     
     label = lives_standard_label_new ((tmp=g_strdup_printf(_("Ctrl-%d"),i+1)));
@@ -2293,8 +2293,8 @@ LiVESWidget * create_rte_window (void) {
       idx=i*modes+j;
       hbox = lives_hbox_new (FALSE, 0);
       lives_table_attach (LIVES_TABLE (table), hbox, i, i+1, j+1, j+2,
-			(GtkAttachOptions) (LIVES_EXPAND | LIVES_FILL),
-			(GtkAttachOptions) (LIVES_EXPAND | LIVES_FILL), 0, 0);
+			(LiVESAttachOptions) (LIVES_EXPAND | LIVES_FILL),
+			(LiVESAttachOptions) (LIVES_EXPAND | LIVES_FILL), 0, 0);
       lives_container_set_border_width (LIVES_CONTAINER (hbox), widget_opts.border_width);
 
 
@@ -2412,7 +2412,7 @@ LiVESWidget * create_rte_window (void) {
   lives_window_add_accel_group (LIVES_WINDOW (rte_window), rtew_accel_group);
 
   lives_widget_add_accelerator (ok_button, "activate", rtew_accel_group,
-                              LIVES_KEY_Escape, (GdkModifierType)0, (GtkAccelFlags)0);
+                              LIVES_KEY_Escape, (GdkModifierType)0, (LiVESAccelFlags)0);
 
   lives_signal_connect (LIVES_GUI_OBJECT (rte_window), "delete_event",
 		    LIVES_GUI_CALLBACK (on_rtew_ok_clicked),

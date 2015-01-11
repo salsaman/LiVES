@@ -2035,7 +2035,7 @@ boolean move_event_left(weed_plant_t *event_list, weed_plant_t *event, boolean c
 //////////////////////////////////////////////////////
 // rendering
 
-void set_render_choice (GtkToggleButton *togglebutton, gpointer choice) {
+void set_render_choice (LiVESToggleButton *togglebutton, gpointer choice) {
   if (lives_toggle_button_get_active(togglebutton)) render_choice=GPOINTER_TO_INT (choice);
 }
 
@@ -2153,7 +2153,7 @@ LiVESWidget *events_rec_dialog (boolean allow_mt) {
 
   accel_group = LIVES_ACCEL_GROUP(lives_accel_group_new ());
   lives_widget_add_accelerator (cancelbutton, "activate", accel_group,
-                              LIVES_KEY_Escape, (GdkModifierType)0, (GtkAccelFlags)0);
+                              LIVES_KEY_Escape, (GdkModifierType)0, (LiVESAccelFlags)0);
 
   lives_window_add_accel_group (LIVES_WINDOW (e_rec_dialog), accel_group);
 
@@ -4863,8 +4863,8 @@ LiVESWidget *create_event_list_dialog (weed_plant_t *event_list, weed_timecode_t
       g_free(text);
      
       lives_table_attach (LIVES_TABLE (table), label, 0, 1, currow, currow+1,
-			(GtkAttachOptions) (LIVES_EXPAND),
-			(GtkAttachOptions) (0), 0, 0);
+			(LiVESAttachOptions) (LIVES_EXPAND),
+			(LiVESAttachOptions) (0), 0, 0);
      
       // event type
       hint=get_event_hint (event);
@@ -4894,8 +4894,8 @@ LiVESWidget *create_event_list_dialog (weed_plant_t *event_list, weed_timecode_t
       }
 
       lives_table_attach (LIVES_TABLE (table), label, 1, 2, currow, currow+1,
-			(GtkAttachOptions) (LIVES_EXPAND),
-			(GtkAttachOptions) (0), 0, 0);
+			(LiVESAttachOptions) (LIVES_EXPAND),
+			(LiVESAttachOptions) (0), 0, 0);
      
       // event id
       text=g_strdup_printf(("Event id=%p"),(void *)event);
@@ -4903,8 +4903,8 @@ LiVESWidget *create_event_list_dialog (weed_plant_t *event_list, weed_timecode_t
       g_free(text);
 
       lives_table_attach (LIVES_TABLE (table), label, 2, 3, currow, currow+1,
-			(GtkAttachOptions) (LIVES_EXPAND),
-			(GtkAttachOptions) (0), 0, 0);
+			(LiVESAttachOptions) (LIVES_EXPAND),
+			(LiVESAttachOptions) (0), 0, 0);
      
       // properties
       tree = lives_tree_view_new_with_model (LIVES_TREE_MODEL (gtkstore));
@@ -4937,8 +4937,8 @@ LiVESWidget *create_event_list_dialog (weed_plant_t *event_list, weed_timecode_t
       lives_tree_view_append_column (LIVES_TREE_VIEW (tree), column);
      
       lives_table_attach (LIVES_TABLE (table), tree, 3, 6, currow, currow+1,
-			(GtkAttachOptions) (LIVES_FILL|LIVES_EXPAND),
-			(GtkAttachOptions) (0), 0, 0);
+			(LiVESAttachOptions) (LIVES_FILL|LIVES_EXPAND),
+			(LiVESAttachOptions) (0), 0, 0);
      
       currow++;
     }
@@ -4969,7 +4969,7 @@ LiVESWidget *create_event_list_dialog (weed_plant_t *event_list, weed_timecode_t
 		    NULL);
 
   lives_widget_add_accelerator (ok_button, "activate", accel_group,
-			      LIVES_KEY_Escape,  (GdkModifierType)0, (GtkAccelFlags)0);
+			      LIVES_KEY_Escape,  (GdkModifierType)0, (LiVESAccelFlags)0);
 
   if (prefs->gui_monitor!=0) {
     int xcen=mainw->mgeom[prefs->gui_monitor-1].x+
@@ -4991,19 +4991,19 @@ LiVESWidget *create_event_list_dialog (weed_plant_t *event_list, weed_timecode_t
 
 
 
-void rdetw_spinh_changed (GtkSpinButton *spinbutton, gpointer user_data) {
+void rdetw_spinh_changed (LiVESSpinButton *spinbutton, gpointer user_data) {
   render_details *rdet=(render_details *)user_data;
   rdet->height=lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(spinbutton));
 }
 
 
-void rdetw_spinw_changed (GtkSpinButton *spinbutton, gpointer user_data) {
+void rdetw_spinw_changed (LiVESSpinButton *spinbutton, gpointer user_data) {
   render_details *rdet=(render_details *)user_data;
   rdet->width=lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(spinbutton));
 }
 
 
-void rdetw_spinf_changed (GtkSpinButton *spinbutton, gpointer user_data) {
+void rdetw_spinf_changed (LiVESSpinButton *spinbutton, gpointer user_data) {
   render_details *rdet=(render_details *)user_data;
   rdet->fps=lives_spin_button_get_value(LIVES_SPIN_BUTTON(spinbutton));
 }
@@ -5385,7 +5385,7 @@ render_details *create_render_details (int type) {
   lives_widget_grab_default (rdet->okbutton);
 
   lives_widget_add_accelerator (cancelbutton, "activate", rdet_accel_group,
-                              LIVES_KEY_Escape, (GdkModifierType)0, (GtkAccelFlags)0);
+                              LIVES_KEY_Escape, (GdkModifierType)0, (LiVESAccelFlags)0);
 
 
   lives_widget_show_all (rdet->dialog);

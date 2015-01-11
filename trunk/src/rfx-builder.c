@@ -335,10 +335,10 @@ rfx_build_window_t *make_rfx_build_window (const gchar *script_name, lives_rfx_s
   lives_widget_set_can_focus_and_default (okbutton);
 
   lives_widget_add_accelerator (cancelbutton, "activate", accel_group,
-                              LIVES_KEY_Escape, (GdkModifierType)0, (GtkAccelFlags)0);
+                              LIVES_KEY_Escape, (GdkModifierType)0, (LiVESAccelFlags)0);
 
   lives_widget_add_accelerator (okbutton, "activate", accel_group,
-                              LIVES_KEY_Return, (GdkModifierType)0, (GtkAccelFlags)0);
+                              LIVES_KEY_Return, (GdkModifierType)0, (LiVESAccelFlags)0);
 
 
   lives_signal_connect (LIVES_GUI_OBJECT (okbutton), "clicked",
@@ -659,7 +659,7 @@ void on_list_table_clicked (LiVESButton *button, gpointer user_data) {
   lives_dialog_add_action_widget (LIVES_DIALOG (dialog), cancelbutton, LIVES_RESPONSE_CANCEL);
 
   lives_widget_add_accelerator (cancelbutton, "activate", accel_group,
-                              LIVES_KEY_Escape, (GdkModifierType)0, (GtkAccelFlags)0);
+                              LIVES_KEY_Escape, (GdkModifierType)0, (LiVESAccelFlags)0);
 
 
   okbutton = lives_button_new_from_stock (LIVES_STOCK_OK);
@@ -1040,11 +1040,11 @@ void on_properties_clicked (LiVESButton *button, gpointer user_data) {
   lives_widget_grab_default (okbutton);
 
   lives_widget_add_accelerator (cancelbutton, "activate", accel_group,
-                              LIVES_KEY_Escape, (GdkModifierType)0, (GtkAccelFlags)0);
+                              LIVES_KEY_Escape, (GdkModifierType)0, (LiVESAccelFlags)0);
 
   
   lives_widget_add_accelerator (okbutton, "activate", accel_group,
-                              LIVES_KEY_Return, (GdkModifierType)0, (GtkAccelFlags)0);
+                              LIVES_KEY_Return, (GdkModifierType)0, (LiVESAccelFlags)0);
 
 
   lives_signal_connect (LIVES_GUI_OBJECT (okbutton), "clicked",
@@ -1159,8 +1159,8 @@ void on_table_add_row (LiVESButton *button, gpointer user_data) {
     lives_table_resize (LIVES_TABLE (rfxbuilder->table),++rfxbuilder->table_rows,1);
     lives_table_attach (LIVES_TABLE (rfxbuilder->table), ebox, 0, 1, rfxbuilder->table_rows-1, 
 		      rfxbuilder->table_rows,
-		      (GtkAttachOptions) (LIVES_FILL|LIVES_EXPAND),
-		      (GtkAttachOptions) (0), 0, 0);
+		      (LiVESAttachOptions) (LIVES_FILL|LIVES_EXPAND),
+		      (LiVESAttachOptions) (0), 0, 0);
 
     lives_widget_context_update();
     lives_widget_grab_focus (entry);
@@ -1216,8 +1216,8 @@ void on_table_add_row (LiVESButton *button, gpointer user_data) {
 
     lives_table_attach (LIVES_TABLE (rfxbuilder->table), ebox, 0, 1, rfxbuilder->table_rows-1, 
 		      rfxbuilder->table_rows,
-		      (GtkAttachOptions) (0),
-		      (GtkAttachOptions) (0), 0, 0);
+		      (LiVESAttachOptions) (0),
+		      (LiVESAttachOptions) (0), 0, 0);
 
 
 
@@ -1230,8 +1230,8 @@ void on_table_add_row (LiVESButton *button, gpointer user_data) {
 
     lives_table_attach (LIVES_TABLE (rfxbuilder->table), ebox2, 1, 2, rfxbuilder->table_rows-1, 
 		      rfxbuilder->table_rows,
-		      (GtkAttachOptions) (LIVES_FILL|LIVES_EXPAND),
-		      (GtkAttachOptions) (0), 0, 0);
+		      (LiVESAttachOptions) (LIVES_FILL|LIVES_EXPAND),
+		      (LiVESAttachOptions) (0), 0, 0);
 
     entry3 = rfxbuilder->entry3[rfxbuilder->table_rows-1] = lives_entry_new ();
 
@@ -1271,8 +1271,8 @@ void on_table_add_row (LiVESButton *button, gpointer user_data) {
 
     lives_table_attach (LIVES_TABLE (rfxbuilder->table), ebox3, 2, 3, rfxbuilder->table_rows-1, 
 		      rfxbuilder->table_rows,
-		      (GtkAttachOptions) (LIVES_FILL),
-		      (GtkAttachOptions) (0), 0, 0);
+		      (LiVESAttachOptions) (LIVES_FILL),
+		      (LiVESAttachOptions) (0), 0, 0);
 
     if (button==NULL) goto add_row_done;
     
@@ -1310,8 +1310,8 @@ void on_table_add_row (LiVESButton *button, gpointer user_data) {
     lives_table_resize (LIVES_TABLE (rfxbuilder->table),++rfxbuilder->table_rows,2);
     lives_table_attach (LIVES_TABLE (rfxbuilder->table), ebox, 0, 1, rfxbuilder->table_rows-1, 
 		      rfxbuilder->table_rows,
-		      (GtkAttachOptions) (LIVES_FILL),
-		      (GtkAttachOptions) (0), 0, 0);
+		      (LiVESAttachOptions) (LIVES_FILL),
+		      (LiVESAttachOptions) (0), 0, 0);
 
     entry2 = rfxbuilder->entry2[rfxbuilder->table_rows-1] = lives_entry_new ();
 
@@ -1351,8 +1351,8 @@ void on_table_add_row (LiVESButton *button, gpointer user_data) {
 
     lives_table_attach (LIVES_TABLE (rfxbuilder->table), ebox2, 1, 2, rfxbuilder->table_rows-1, 
 		      rfxbuilder->table_rows,
-		      (GtkAttachOptions) (LIVES_FILL|LIVES_EXPAND),
-		      (GtkAttachOptions) (0), 0, 0);
+		      (LiVESAttachOptions) (LIVES_FILL|LIVES_EXPAND),
+		      (LiVESAttachOptions) (0), 0, 0);
 
 
     if (button==NULL) goto add_row_done;
@@ -1390,8 +1390,8 @@ void on_table_add_row (LiVESButton *button, gpointer user_data) {
     lives_table_resize (LIVES_TABLE (rfxbuilder->table),++rfxbuilder->table_rows,1);
     lives_table_attach (LIVES_TABLE (rfxbuilder->table), ebox, 0, 1, rfxbuilder->table_rows-1, 
 		      rfxbuilder->table_rows,
-		      (GtkAttachOptions) (LIVES_FILL|LIVES_EXPAND),
-		      (GtkAttachOptions) (0), 0, 0);
+		      (LiVESAttachOptions) (LIVES_FILL|LIVES_EXPAND),
+		      (LiVESAttachOptions) (0), 0, 0);
 
 
     if (button==NULL) goto add_row_done;

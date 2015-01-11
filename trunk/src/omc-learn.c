@@ -745,8 +745,8 @@ static void omc_macro_row_add_params(lives_omc_match_node_t *mnode, int row, omc
   lives_widget_show (mnode->treev2);
   
   lives_table_attach (LIVES_TABLE (omclw->table), mnode->treev2, 3, 4, row, row+1,
-		    (GtkAttachOptions) (LIVES_FILL|LIVES_EXPAND),
-		    (GtkAttachOptions) (0), 0, 0);
+		    (LiVESAttachOptions) (LIVES_FILL|LIVES_EXPAND),
+		    (LiVESAttachOptions) (0), 0, 0);
   
 
 
@@ -1082,8 +1082,8 @@ static void omc_learner_add_row(int type, int detail, lives_omc_match_node_t *mn
      
    omclw->tbl_currow++;
    lives_table_attach (LIVES_TABLE (omclw->table), label, 0, 1, omclw->tbl_currow, omclw->tbl_currow+1,
-		     (GtkAttachOptions) (0),
-		     (GtkAttachOptions) (0), 0, 0);
+		     (LiVESAttachOptions) (0),
+		     (LiVESAttachOptions) (0), 0, 0);
 
    // properties
   if (palette->style&STYLE_1) {
@@ -1181,16 +1181,16 @@ static void omc_learner_add_row(int type, int detail, lives_omc_match_node_t *mn
    lives_widget_show (mnode->treev1);
   
    lives_table_attach (LIVES_TABLE (omclw->table), mnode->treev1, 1, 2, omclw->tbl_currow, omclw->tbl_currow+1,
-		     (GtkAttachOptions) (0),
-		     (GtkAttachOptions) (0), 0, 0);
+		     (LiVESAttachOptions) (0),
+		     (LiVESAttachOptions) (0), 0, 0);
 
    combo=create_omc_macro_combo(mnode,omclw->tbl_currow,omclw);
 
    lives_widget_show (combo);
   
    lives_table_attach (LIVES_TABLE (omclw->table), combo, 2, 3, omclw->tbl_currow, omclw->tbl_currow+1,
-		     (GtkAttachOptions) 0,
-		     (GtkAttachOptions) (0), 0, 0);
+		     (LiVESAttachOptions) 0,
+		     (LiVESAttachOptions) (0), 0, 0);
 
 
   if (mnode->macro==-1) lives_widget_set_sensitive(omclw->clear_button,TRUE);

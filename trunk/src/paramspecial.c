@@ -29,8 +29,6 @@ static lives_special_framedraw_rect_t framedraw;
 static GList *fileread;
 static GList *passwd_widgets;
 
-// TODO - rewrite all of this more sensibly
-
 
 void init_special (void) {
   framedraw.type=LIVES_PARAM_SPECIAL_TYPE_NONE;
@@ -57,7 +55,7 @@ void add_to_special (const gchar *sp_string, lives_rfx_t *rfx) {
 
   register int i;
 
-  // TODO - make sure only one of each of these
+  // TODO - assert only one of each of these
 
 
   if (!strcmp (array[0],"aspect")) {
@@ -112,7 +110,7 @@ void add_to_special (const gchar *sp_string, lives_rfx_t *rfx) {
     }
 
     if (num_widgets>framedraw.stdwidgets) framedraw.extra_params=
-				  (gint *)g_malloc(((framedraw.num_extra=(num_widgets-framedraw.stdwidgets)))*sizint);
+				  (int *)g_malloc(((framedraw.num_extra=(num_widgets-framedraw.stdwidgets)))*sizint);
 
     for (i=0;i<num_widgets;i++) {
       pnum=atoi(array[i+2]);
@@ -146,14 +144,14 @@ void add_to_special (const gchar *sp_string, lives_rfx_t *rfx) {
     fileread=g_list_append(fileread,(gpointer)&rfx->params[idx]);
 
     // ensure we get an entry and not a text_view
-    if ((gint)rfx->params[idx].max>RFX_TEXT_MAGIC) rfx->params[idx].max=(gdouble)RFX_TEXT_MAGIC;
+    if ((int)rfx->params[idx].max>RFX_TEXT_MAGIC) rfx->params[idx].max=(double)RFX_TEXT_MAGIC;
   }
   else if (!strcmp (array[0],"password")) {
     int idx=atoi(array[1]);
     passwd_widgets=g_list_append(passwd_widgets,(gpointer)&rfx->params[idx]);
 
     // ensure we get an entry and not a text_view
-    if ((gint)rfx->params[idx].max>RFX_TEXT_MAGIC) rfx->params[idx].max=(gdouble)RFX_TEXT_MAGIC;
+    if ((int)rfx->params[idx].max>RFX_TEXT_MAGIC) rfx->params[idx].max=(double)RFX_TEXT_MAGIC;
   }
 
   g_strfreev (array);
@@ -177,7 +175,7 @@ void fd_connect_spinbutton(lives_rfx_t *rfx) {
 }
 
 
-static void passwd_toggle_vis(GtkToggleButton *b, gpointer entry) {
+static void passwd_toggle_vis(LiVESToggleButton *b, gpointer entry) {
   lives_entry_set_visibility(LIVES_ENTRY(entry),lives_toggle_button_get_active(b));
 }
 
@@ -200,29 +198,33 @@ void check_for_special (lives_rfx_t *rfx, lives_param_t *param, LiVESBox *pbox) 
     param->special_type_index=0;
     if (framedraw.type==LIVES_PARAM_SPECIAL_TYPE_RECT_DEMASK)
       lives_spin_button_set_value (LIVES_SPIN_BUTTON (param->widgets[0]),0.);
-    lives_signal_connect_after (LIVES_GUI_OBJECT (param->widgets[0]), "value_changed", LIVES_GUI_CALLBACK (after_framedraw_widget_changed), &framedraw);
+    lives_signal_connect_after (LIVES_GUI_OBJECT (param->widgets[0]), "value_changed", 
+				LIVES_GUI_CALLBACK (after_framedraw_widget_changed), &framedraw);
   }
   if (param==framedraw.ystart_param) {
     param->special_type=framedraw.type;
     param->special_type_index=1;
     if (framedraw.type==LIVES_PARAM_SPECIAL_TYPE_RECT_DEMASK)
       lives_spin_button_set_value (LIVES_SPIN_BUTTON (param->widgets[0]),0.);
-    lives_signal_connect_after (LIVES_GUI_OBJECT (param->widgets[0]), "value_changed", LIVES_GUI_CALLBACK (after_framedraw_widget_changed), &framedraw);
+    lives_signal_connect_after (LIVES_GUI_OBJECT (param->widgets[0]), "value_changed", 
+				LIVES_GUI_CALLBACK (after_framedraw_widget_changed), &framedraw);
   }
   if (mainw->current_file>-1) {
     if (param==framedraw.xend_param) {
       param->special_type=framedraw.type;
       param->special_type_index=2;
       if (framedraw.type==LIVES_PARAM_SPECIAL_TYPE_RECT_DEMASK)
-	lives_spin_button_set_value (LIVES_SPIN_BUTTON (param->widgets[0]),(gdouble)cfile->hsize);
-      lives_signal_connect_after (LIVES_GUI_OBJECT (param->widgets[0]), "value_changed", LIVES_GUI_CALLBACK (after_framedraw_widget_changed), &framedraw);
+	lives_spin_button_set_value (LIVES_SPIN_BUTTON (param->widgets[0]),(double)cfile->hsize);
+      lives_signal_connect_after (LIVES_GUI_OBJECT (param->widgets[0]), "value_changed", 
+				  LIVES_GUI_CALLBACK (after_framedraw_widget_changed), &framedraw);
     }
     if (param==framedraw.yend_param) {
       param->special_type=framedraw.type;
       param->special_type_index=3;
       if (framedraw.type==LIVES_PARAM_SPECIAL_TYPE_RECT_DEMASK)
-	lives_spin_button_set_value (LIVES_SPIN_BUTTON (param->widgets[0]),(gdouble)cfile->vsize);
-      lives_signal_connect_after (LIVES_GUI_OBJECT (param->widgets[0]), "value_changed", LIVES_GUI_CALLBACK (after_framedraw_widget_changed), &framedraw);
+	lives_spin_button_set_value (LIVES_SPIN_BUTTON (param->widgets[0]),(double)cfile->vsize);
+      lives_signal_connect_after (LIVES_GUI_OBJECT (param->widgets[0]), "value_changed", 
+				  LIVES_GUI_CALLBACK (after_framedraw_widget_changed), &framedraw);
     }
 
 
@@ -244,13 +246,13 @@ void check_for_special (lives_rfx_t *rfx, lives_param_t *param, LiVESBox *pbox) 
     }
     
     if (param==aspect.width_param) {
-      lives_spin_button_set_value (LIVES_SPIN_BUTTON (param->widgets[0]),(gdouble)cfile->hsize);
+      lives_spin_button_set_value (LIVES_SPIN_BUTTON (param->widgets[0]),(double)cfile->hsize);
       aspect.width_func=lives_signal_connect_after (LIVES_GUI_OBJECT (param->widgets[0]), "value_changed",
 						LIVES_GUI_CALLBACK (after_aspect_width_changed),
 						NULL);
     }
     if (param==aspect.height_param) {
-      lives_spin_button_set_value (LIVES_SPIN_BUTTON (param->widgets[0]),(gdouble)cfile->vsize);
+      lives_spin_button_set_value (LIVES_SPIN_BUTTON (param->widgets[0]),(double)cfile->vsize);
       aspect.height_func=lives_signal_connect_after (LIVES_GUI_OBJECT (param->widgets[0]), "value_changed",
 						 LIVES_GUI_CALLBACK (after_aspect_height_changed),
 						 NULL);
@@ -278,7 +280,7 @@ void check_for_special (lives_rfx_t *rfx, lives_param_t *param, LiVESBox *pbox) 
   while (slist!=NULL) {
     if (param==(lives_param_t *)(slist->data)) {
       GList *clist;
-      gint epos;
+      int epos;
 
       param->special_type=LIVES_PARAM_SPECIAL_TYPE_FILEREAD;
 
@@ -303,7 +305,7 @@ void check_for_special (lives_rfx_t *rfx, lives_param_t *param, LiVESBox *pbox) 
 
       if (!lives_widget_is_sensitive(param->widgets[0])) lives_widget_set_sensitive(buttond,FALSE);
 
-      if (GTK_IS_ENTRY(param->widgets[0])) {
+      if (LIVES_IS_ENTRY(param->widgets[0])) {
 	lives_entry_set_editable(LIVES_ENTRY(param->widgets[0]),FALSE);
 	if (param->widgets[1]!=NULL&&
 	    LIVES_IS_LABEL(param->widgets[1])&&
@@ -358,40 +360,40 @@ void check_for_special (lives_rfx_t *rfx, lives_param_t *param, LiVESBox *pbox) 
 
 
 
-void after_aspect_width_changed (GtkSpinButton *spinbutton, gpointer user_data) {
+void after_aspect_width_changed (LiVESSpinButton *spinbutton, gpointer user_data) {
   if (lives_toggle_button_get_active (LIVES_TOGGLE_BUTTON (aspect.checkbutton))) {
     boolean keepeven=FALSE;
-    gint width=lives_spin_button_get_value_as_int (spinbutton);
-    gint height=lives_spin_button_get_value_as_int (LIVES_SPIN_BUTTON (aspect.height_param->widgets[0]));
+    int width=lives_spin_button_get_value_as_int (spinbutton);
+    int height=lives_spin_button_get_value_as_int (LIVES_SPIN_BUTTON (aspect.height_param->widgets[0]));
     lives_signal_handler_block (aspect.height_param->widgets[0],aspect.height_func);
 
     if (((cfile->hsize>>1)<<1)==cfile->hsize&&((cfile->vsize>>1)<<1)==cfile->vsize) {
       // try to keep even
       keepeven=TRUE;
     }
-    height=(gint)(width*cfile->vsize/cfile->hsize+.5);
+    height=(int)(width*cfile->vsize/cfile->hsize+.5);
 
     if (keepeven&&((height>>1)<<1)!=height) {
-      gint owidth=width;
+      int owidth=width;
       height--;
-      width=(gint)(height*cfile->hsize/cfile->vsize+.5);
+      width=(int)(height*cfile->hsize/cfile->vsize+.5);
       if (width!=owidth) {
 	height+=2;
 	width=owidth;
       }
     }
 
-    lives_spin_button_set_value (LIVES_SPIN_BUTTON (aspect.height_param->widgets[0]), (gdouble)height);
+    lives_spin_button_set_value (LIVES_SPIN_BUTTON (aspect.height_param->widgets[0]), (double)height);
     lives_signal_handler_unblock (aspect.height_param->widgets[0],aspect.height_func);
   }
 }
 
 
-void after_aspect_height_changed (GtkToggleButton *spinbutton, gpointer user_data){
+void after_aspect_height_changed (LiVESToggleButton *spinbutton, gpointer user_data){
   if (lives_toggle_button_get_active (LIVES_TOGGLE_BUTTON (aspect.checkbutton))) {
     boolean keepeven=FALSE;
-    gint height=lives_spin_button_get_value_as_int (LIVES_SPIN_BUTTON (spinbutton));
-    gint width=lives_spin_button_get_value_as_int (LIVES_SPIN_BUTTON (aspect.width_param->widgets[0]));
+    int height=lives_spin_button_get_value_as_int (LIVES_SPIN_BUTTON (spinbutton));
+    int width=lives_spin_button_get_value_as_int (LIVES_SPIN_BUTTON (aspect.width_param->widgets[0]));
 
     lives_signal_handler_block (aspect.width_param->widgets[0],aspect.width_func);
 
@@ -400,19 +402,19 @@ void after_aspect_height_changed (GtkToggleButton *spinbutton, gpointer user_dat
       keepeven=TRUE;
     }
 
-    width=(gint)(height*cfile->hsize/cfile->vsize+.5);
+    width=(int)(height*cfile->hsize/cfile->vsize+.5);
 
     if (keepeven&&((width>>1)<<1)!=width) {
-      gint oheight=height;
+      int oheight=height;
       width--;
-      height=(gint)(width*cfile->vsize/cfile->hsize+.5);
+      height=(int)(width*cfile->vsize/cfile->hsize+.5);
       if (height!=oheight) {
 	width+=2;
 	height=oheight;
       }
     }
 
-    lives_spin_button_set_value (LIVES_SPIN_BUTTON (aspect.width_param->widgets[0]), (gdouble)width);
+    lives_spin_button_set_value (LIVES_SPIN_BUTTON (aspect.width_param->widgets[0]), (double)width);
     lives_signal_handler_unblock (aspect.width_param->widgets[0],aspect.width_func);
   }
 }
@@ -450,7 +452,7 @@ void set_aspect_ratio_widgets (lives_param_t *w, lives_param_t *h) {
 
 void setmergealign (void) {
   lives_param_t *param;
-  gint cb_frames=clipboard->frames;
+  int cb_frames=clipboard->frames;
 
   if (prefs->ins_resample&&clipboard->fps!=cfile->fps) {
     cb_frames=count_resampled_frames(clipboard->frames,clipboard->fps,cfile->fps);
@@ -460,46 +462,46 @@ void setmergealign (void) {
 					    lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON (merge_opts->spinbutton_loops)):1))
       &&!merge_opts->loop_to_fit) {
     // set special transalign widgets to their default values
-    if (mergealign.start_param!=NULL&&mergealign.start_param->widgets[0]!=NULL&&GTK_IS_SPIN_BUTTON
+    if (mergealign.start_param!=NULL&&mergealign.start_param->widgets[0]!=NULL&&LIVES_IS_SPIN_BUTTON
 	(mergealign.start_param->widgets[0])&&(param=mergealign.start_param)->type==LIVES_PARAM_NUM) {
       if (param->dp) {
 	lives_spin_button_set_value (LIVES_SPIN_BUTTON (param->widgets[0]),get_double_param (param->def));
       }
       else {
-	lives_spin_button_set_value (LIVES_SPIN_BUTTON (param->widgets[0]),(gdouble)get_int_param (param->def));
+	lives_spin_button_set_value (LIVES_SPIN_BUTTON (param->widgets[0]),(double)get_int_param (param->def));
       }
     }
-    if (mergealign.end_param!=NULL&&mergealign.end_param->widgets[0]!=NULL&&GTK_IS_SPIN_BUTTON 
+    if (mergealign.end_param!=NULL&&mergealign.end_param->widgets[0]!=NULL&&LIVES_IS_SPIN_BUTTON 
 	(mergealign.end_param->widgets[0])&&(param=mergealign.end_param)->type==LIVES_PARAM_NUM) {
       if (param->dp) {
 	lives_spin_button_set_value (LIVES_SPIN_BUTTON (param->widgets[0]),get_double_param (param->def));
       }
       else {
-	lives_spin_button_set_value (LIVES_SPIN_BUTTON (param->widgets[0]),(gdouble)get_int_param (param->def));
+	lives_spin_button_set_value (LIVES_SPIN_BUTTON (param->widgets[0]),(double)get_int_param (param->def));
       }
     }
   }
   else {
     if (merge_opts->align_start) {
       // set special transalign widgets to min/max values
-      if (mergealign.start_param!=NULL&&mergealign.start_param->widgets[0]!=NULL&&GTK_IS_SPIN_BUTTON 
+      if (mergealign.start_param!=NULL&&mergealign.start_param->widgets[0]!=NULL&&LIVES_IS_SPIN_BUTTON 
 	  (mergealign.start_param->widgets[0])&&(param=mergealign.start_param)->type==LIVES_PARAM_NUM) {
-	lives_spin_button_set_value (LIVES_SPIN_BUTTON (param->widgets[0]),(gdouble)param->min);
+	lives_spin_button_set_value (LIVES_SPIN_BUTTON (param->widgets[0]),(double)param->min);
       }
-      if (mergealign.end_param!=NULL&&mergealign.end_param->widgets[0]!=NULL&&GTK_IS_SPIN_BUTTON 
+      if (mergealign.end_param!=NULL&&mergealign.end_param->widgets[0]!=NULL&&LIVES_IS_SPIN_BUTTON 
 	  (mergealign.end_param->widgets[0])&&(param=mergealign.end_param)->type==LIVES_PARAM_NUM) {
-	lives_spin_button_set_value (LIVES_SPIN_BUTTON (param->widgets[0]),(gdouble)param->max);
+	lives_spin_button_set_value (LIVES_SPIN_BUTTON (param->widgets[0]),(double)param->max);
       }
     }
     else {
       // set special transalign widgets to max/min values
-      if (mergealign.start_param!=NULL&&mergealign.start_param->widgets[0]!=NULL&&GTK_IS_SPIN_BUTTON 
+      if (mergealign.start_param!=NULL&&mergealign.start_param->widgets[0]!=NULL&&LIVES_IS_SPIN_BUTTON 
 	  (mergealign.start_param->widgets[0])&&(param=mergealign.start_param)->type==LIVES_PARAM_NUM) {
-	lives_spin_button_set_value (LIVES_SPIN_BUTTON (param->widgets[0]),(gdouble)param->max);
+	lives_spin_button_set_value (LIVES_SPIN_BUTTON (param->widgets[0]),(double)param->max);
       }
-      if (mergealign.end_param!=NULL&&mergealign.end_param->widgets[0]!=NULL&&GTK_IS_SPIN_BUTTON 
+      if (mergealign.end_param!=NULL&&mergealign.end_param->widgets[0]!=NULL&&LIVES_IS_SPIN_BUTTON 
 	  (mergealign.end_param->widgets[0])&&(param=mergealign.end_param)->type==LIVES_PARAM_NUM) {
-	lives_spin_button_set_value (LIVES_SPIN_BUTTON (param->widgets[0]),(gdouble)param->min);
+	lives_spin_button_set_value (LIVES_SPIN_BUTTON (param->widgets[0]),(double)param->min);
       }
     }
   }

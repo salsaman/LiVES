@@ -604,7 +604,7 @@ void on_filesel_complex_clicked (LiVESButton *button, LiVESEntry *entry) {
 
 
 
-void on_open_sel_activate (GtkMenuItem *menuitem, gpointer user_data) {
+void on_open_sel_activate (LiVESMenuItem *menuitem, gpointer user_data) {
   // OPEN A FILE
 
   if (mainw->multitrack!=NULL) {
@@ -655,7 +655,7 @@ void on_ok_filesel_open_clicked (GtkFileChooser *chooser, gpointer user_data) {
 
 
 
-void on_open_vcd_activate (GtkMenuItem *menuitem, gpointer user_data) {
+void on_open_vcd_activate (LiVESMenuItem *menuitem, gpointer user_data) {
   LiVESWidget *vcdtrack_dialog;
   
   if (mainw->multitrack!=NULL) {
@@ -676,7 +676,7 @@ void on_open_vcd_activate (GtkMenuItem *menuitem, gpointer user_data) {
 }
 
 
-void on_open_loc_activate (GtkMenuItem *menuitem, gpointer user_data) {
+void on_open_loc_activate (LiVESMenuItem *menuitem, gpointer user_data) {
   if (mainw->multitrack!=NULL) {
     if (mainw->multitrack->idlefunc>0) {
       g_source_remove(mainw->multitrack->idlefunc);
@@ -693,7 +693,7 @@ void on_open_loc_activate (GtkMenuItem *menuitem, gpointer user_data) {
 }
 
 
-void on_open_utube_activate (GtkMenuItem *menuitem, gpointer user_data) {
+void on_open_utube_activate (LiVESMenuItem *menuitem, gpointer user_data) {
   if (mainw->multitrack!=NULL) {
     if (mainw->multitrack->idlefunc>0) {
       g_source_remove(mainw->multitrack->idlefunc);
@@ -711,7 +711,7 @@ void on_open_utube_activate (GtkMenuItem *menuitem, gpointer user_data) {
 
 
 
-void on_autoreload_toggled (GtkToggleButton *togglebutton, gpointer user_data) {
+void on_autoreload_toggled (LiVESToggleButton *togglebutton, gpointer user_data) {
   // type==1, autoreload clipset
   // type==2, autoreload layout
 
@@ -734,7 +734,7 @@ void on_autoreload_toggled (GtkToggleButton *togglebutton, gpointer user_data) {
 }
 
 
-void on_recent_activate (GtkMenuItem *menuitem, gpointer user_data) {
+void on_recent_activate (LiVESMenuItem *menuitem, gpointer user_data) {
   char file[PATH_MAX];
   double start=0.;
   int end=0,pno;
@@ -982,7 +982,7 @@ void count_opening_frames(void) {
 
 
 
-void on_stop_clicked (GtkMenuItem *menuitem, gpointer user_data) {
+void on_stop_clicked (LiVESMenuItem *menuitem, gpointer user_data) {
 // 'enough' button for open, open location, and record audio
   gchar *com;
 
@@ -1063,7 +1063,7 @@ void on_stop_clicked (GtkMenuItem *menuitem, gpointer user_data) {
 
 
 
-void on_save_as_activate (GtkMenuItem *menuitem, gpointer user_data) {
+void on_save_as_activate (LiVESMenuItem *menuitem, gpointer user_data) {
 
   if (cfile->frames==0) {
     on_export_audio_activate (NULL,NULL);
@@ -1074,13 +1074,12 @@ void on_save_as_activate (GtkMenuItem *menuitem, gpointer user_data) {
 }
 
 
-void
-on_save_selection_activate (GtkMenuItem *menuitem, gpointer user_data) {
+void on_save_selection_activate (LiVESMenuItem *menuitem, gpointer user_data) {
   save_file(mainw->current_file,cfile->start,cfile->end,NULL);
 }
 
 
-void on_close_activate (GtkMenuItem *menuitem, gpointer user_data) {
+void on_close_activate (LiVESMenuItem *menuitem, gpointer user_data) {
   gchar *warn,*extra;
   gchar title[256];
   boolean lmap_errors=FALSE,acurrent=FALSE,only_current=FALSE;
@@ -1297,7 +1296,7 @@ void on_close_activate (GtkMenuItem *menuitem, gpointer user_data) {
 
 
 void
-on_import_proj_activate                      (GtkMenuItem     *menuitem,
+on_import_proj_activate                      (LiVESMenuItem     *menuitem,
 					      gpointer         user_data)
 {
   gchar *com;
@@ -1405,7 +1404,7 @@ on_import_proj_activate                      (GtkMenuItem     *menuitem,
 
 
 void
-on_export_proj_activate                      (GtkMenuItem     *menuitem,
+on_export_proj_activate                      (LiVESMenuItem     *menuitem,
 					      gpointer         user_data)
 {
   gchar *filt[]={"*.lv2",NULL};
@@ -1495,7 +1494,7 @@ on_export_proj_activate                      (GtkMenuItem     *menuitem,
 
 
 
-void on_backup_activate (GtkMenuItem *menuitem, gpointer user_data) {
+void on_backup_activate (LiVESMenuItem *menuitem, gpointer user_data) {
   gchar *filt[]={"*.lv1",NULL};
   gchar *file_name = choose_file (strlen(mainw->proj_save_dir)?mainw->proj_save_dir:NULL,NULL,filt,
 				  LIVES_FILE_CHOOSER_ACTION_SAVE,_ ("Backup as .lv1 file"),NULL);
@@ -1511,7 +1510,7 @@ void on_backup_activate (GtkMenuItem *menuitem, gpointer user_data) {
 
 
 
-void on_restore_activate (GtkMenuItem *menuitem, gpointer user_data) {
+void on_restore_activate (LiVESMenuItem *menuitem, gpointer user_data) {
   gchar *filt[]={"*.lv1",NULL};
   gchar *file_name = choose_file (strlen(mainw->proj_load_dir)?mainw->proj_load_dir:NULL,NULL,filt,
 				  LIVES_FILE_CHOOSER_ACTION_OPEN,_ ("Restore .lv1 file"),NULL);
@@ -1564,14 +1563,13 @@ void mt_memory_free(void) {
 
 
 
-void
-on_quit_activate                      (GtkMenuItem     *menuitem,
-				       gpointer         user_data)
-{
-  int i;
-  boolean has_layout_map=FALSE;
+void on_quit_activate (LiVESMenuItem *menuitem, gpointer user_data) {
   gchar *com,*esave_dir,*msg;
+
+  boolean has_layout_map=FALSE;
   boolean had_clips=FALSE,legal_set_name;
+
+  register int i;
 
   if (user_data!=NULL&&GPOINTER_TO_INT(user_data)==1) mainw->only_close=TRUE;
   else mainw->only_close=FALSE;
@@ -1744,7 +1742,7 @@ on_quit_activate                      (GtkMenuItem     *menuitem,
 
 
 // TODO - split into undo.c
-void on_undo_activate (GtkMenuItem *menuitem, gpointer user_data) {
+void on_undo_activate (LiVESMenuItem *menuitem, gpointer user_data) {
   gchar *com;
   gchar msg[256];
 
@@ -2270,15 +2268,13 @@ void on_undo_activate (GtkMenuItem *menuitem, gpointer user_data) {
 
 }
 
-void
-on_redo_activate                      (GtkMenuItem     *menuitem,
-				       gpointer         user_data)
-{
+void on_redo_activate (LiVESMenuItem *menuitem, gpointer user_data) {
+  gchar msg[256];
   gchar *com;
+
   int ostart=cfile->start;
   int oend=cfile->end;
   int current_file=mainw->current_file;
-  gchar msg[256];
 
   mainw->osc_block=TRUE;
 
@@ -2455,7 +2451,7 @@ on_redo_activate                      (GtkMenuItem     *menuitem,
 
 //////////////////////////////////////////////////
 
-void on_copy_activate (GtkMenuItem *menuitem, gpointer user_data) {
+void on_copy_activate (LiVESMenuItem *menuitem, gpointer user_data) {
   gchar *com;
   gchar *text=g_strdup_printf(_ ("Copying frames %d to %d%s to the clipboard..."),cfile->start,cfile->end,
 			      mainw->ccpd_with_sound&&cfile->achans>0?" (with sound)":"");
@@ -2587,7 +2583,7 @@ void on_copy_activate (GtkMenuItem *menuitem, gpointer user_data) {
 }
 
 
-void on_cut_activate (GtkMenuItem *menuitem, gpointer user_data) {
+void on_cut_activate (LiVESMenuItem *menuitem, gpointer user_data) {
   int current_file=mainw->current_file;
   on_copy_activate(menuitem, user_data);
   if (mainw->cancelled) {
@@ -2601,7 +2597,7 @@ void on_cut_activate (GtkMenuItem *menuitem, gpointer user_data) {
 }
 
 
-void on_paste_as_new_activate (GtkMenuItem *menuitem, gpointer user_data) {
+void on_paste_as_new_activate (LiVESMenuItem *menuitem, gpointer user_data) {
   gchar *com;
   gchar *msg;
   int old_file=mainw->current_file,current_file;
@@ -2713,7 +2709,7 @@ void on_paste_as_new_activate (GtkMenuItem *menuitem, gpointer user_data) {
 }
 
 
-void on_insert_pre_activate (GtkMenuItem *menuitem, gpointer user_data) {
+void on_insert_pre_activate (LiVESMenuItem *menuitem, gpointer user_data) {
   insertw = create_insert_dialog ();
 
   lives_widget_show (insertw->insert_dialog);
@@ -3463,7 +3459,7 @@ void on_insert_activate (LiVESButton *button, gpointer user_data) {
 
 
 
-void on_delete_activate (GtkMenuItem *menuitem, gpointer user_data) {
+void on_delete_activate (LiVESMenuItem *menuitem, gpointer user_data) {
   gchar *com;
 
   boolean has_lmap_error=FALSE;
@@ -3727,7 +3723,7 @@ void on_delete_activate (GtkMenuItem *menuitem, gpointer user_data) {
 
 
 void
-on_select_all_activate                (GtkMenuItem     *menuitem,
+on_select_all_activate                (LiVESMenuItem     *menuitem,
 				       gpointer         user_data)
 {
   if (mainw->current_file==-1) return;
@@ -3751,7 +3747,7 @@ on_select_all_activate                (GtkMenuItem     *menuitem,
 
 
 void
-on_select_start_only_activate                (GtkMenuItem     *menuitem,
+on_select_start_only_activate                (LiVESMenuItem     *menuitem,
 					      gpointer         user_data)
 {
   if (mainw->current_file==-1) return;
@@ -3759,7 +3755,7 @@ on_select_start_only_activate                (GtkMenuItem     *menuitem,
 }
 
 void
-on_select_end_only_activate                (GtkMenuItem     *menuitem,
+on_select_end_only_activate                (LiVESMenuItem     *menuitem,
 					    gpointer         user_data)
 {
   if (mainw->current_file==-1) return;
@@ -3769,7 +3765,7 @@ on_select_end_only_activate                (GtkMenuItem     *menuitem,
 
 
 void
-on_select_invert_activate                (GtkMenuItem     *menuitem,
+on_select_invert_activate                (LiVESMenuItem     *menuitem,
 					  gpointer         user_data)
 {
   if (cfile->start==1) {
@@ -3788,7 +3784,7 @@ on_select_invert_activate                (GtkMenuItem     *menuitem,
 }
 
 void
-on_select_last_activate                (GtkMenuItem     *menuitem,
+on_select_last_activate                (LiVESMenuItem     *menuitem,
                                         gpointer         user_data)
 {
   if (cfile->undo_start > cfile->frames) cfile->undo_start=cfile->frames;
@@ -3808,7 +3804,7 @@ on_select_last_activate                (GtkMenuItem     *menuitem,
 
 
 void
-on_select_new_activate                (GtkMenuItem     *menuitem,
+on_select_new_activate                (LiVESMenuItem     *menuitem,
                                         gpointer         user_data)
 {
   if (cfile->insert_start > cfile->frames) cfile->insert_start=cfile->frames;
@@ -3827,7 +3823,7 @@ on_select_new_activate                (GtkMenuItem     *menuitem,
 }
 
 void
-on_select_to_end_activate                (GtkMenuItem     *menuitem,
+on_select_to_end_activate                (LiVESMenuItem     *menuitem,
 					  gpointer         user_data)
 {
   lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_end),cfile->frames);
@@ -3837,7 +3833,7 @@ on_select_to_end_activate                (GtkMenuItem     *menuitem,
 }
 
 void
-on_select_from_start_activate                (GtkMenuItem     *menuitem,
+on_select_from_start_activate                (LiVESMenuItem     *menuitem,
 					      gpointer         user_data)
 {
   lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_start),1);
@@ -3847,7 +3843,7 @@ on_select_from_start_activate                (GtkMenuItem     *menuitem,
 }
 
 void
-on_lock_selwidth_activate                (GtkMenuItem     *menuitem,
+on_lock_selwidth_activate                (LiVESMenuItem     *menuitem,
 					  gpointer         user_data)
 {
   mainw->selwidth_locked=!mainw->selwidth_locked;
@@ -3856,14 +3852,14 @@ on_lock_selwidth_activate                (GtkMenuItem     *menuitem,
 
 
 void
-on_menubar_activate_menuitem                    (GtkMenuItem     *menuitem,
+on_menubar_activate_menuitem                    (LiVESMenuItem     *menuitem,
 						 gpointer         user_data) {
   gtk_menu_item_activate(menuitem);
   //gtk_menu_shell_set_take_focus(GTK_MENU_SHELL(mainw->menubar),TRUE);
 }
 
 
-void on_playall_activate (GtkMenuItem *menuitem, gpointer user_data) {
+void on_playall_activate (LiVESMenuItem *menuitem, gpointer user_data) {
   if (mainw->current_file<=0) return;
 
   if (mainw->multitrack!=NULL) {
@@ -3899,7 +3895,7 @@ void on_playall_activate (GtkMenuItem *menuitem, gpointer user_data) {
 }
 
 
-void on_playsel_activate (GtkMenuItem *menuitem, gpointer user_data) {
+void on_playsel_activate (LiVESMenuItem *menuitem, gpointer user_data) {
   // play part of a clip (in clip editor)
 
   if (mainw->current_file<=0) return;
@@ -3938,7 +3934,7 @@ void on_playsel_activate (GtkMenuItem *menuitem, gpointer user_data) {
 }
 
 
-void on_playclip_activate (GtkMenuItem *menuitem, gpointer user_data) {
+void on_playclip_activate (LiVESMenuItem *menuitem, gpointer user_data) {
   // play the clipboard
   int current_file=mainw->current_file;
   boolean oloop=mainw->loop;
@@ -3973,7 +3969,7 @@ void on_playclip_activate (GtkMenuItem *menuitem, gpointer user_data) {
 
 
 
-void on_record_perf_activate (GtkMenuItem *menuitem, gpointer user_data) {
+void on_record_perf_activate (LiVESMenuItem *menuitem, gpointer user_data) {
   // real time recording
 
   if (mainw->multitrack!=NULL) return;
@@ -4118,7 +4114,7 @@ boolean record_toggle_callback (GtkAccelGroup *group, GObject *obj, guint keyval
 
 
 void
-on_rewind_activate                    (GtkMenuItem     *menuitem,
+on_rewind_activate                    (LiVESMenuItem     *menuitem,
 				       gpointer         user_data)
 {
   if (mainw->multitrack!=NULL) {
@@ -4135,7 +4131,7 @@ on_rewind_activate                    (GtkMenuItem     *menuitem,
 }
 
 
-void on_stop_activate (GtkMenuItem *menuitem, gpointer user_data) {
+void on_stop_activate (LiVESMenuItem *menuitem, gpointer user_data) {
   if (mainw->multitrack!=NULL&&mainw->multitrack->is_paused&&mainw->playing_file==-1) {
     mainw->multitrack->is_paused=FALSE;
     mainw->multitrack->playing_sel=FALSE;
@@ -4369,7 +4365,7 @@ void on_encoder_entry_changed (GtkComboBox *combo, gpointer ptr) {
 
 
 void
-on_insertwsound_toggled                (GtkToggleButton *togglebutton,
+on_insertwsound_toggled                (LiVESToggleButton *togglebutton,
                                         gpointer         user_data)
 {
   if (lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(togglebutton))) {
@@ -4383,7 +4379,7 @@ on_insertwsound_toggled                (GtkToggleButton *togglebutton,
 
 
 void 
-on_insfitaudio_toggled                (GtkToggleButton *togglebutton,
+on_insfitaudio_toggled                (LiVESToggleButton *togglebutton,
                                         gpointer         user_data)
 {
   mainw->fx1_bool=!mainw->fx1_bool;
@@ -4527,7 +4523,7 @@ boolean nextclip_callback (GtkAccelGroup *group, GObject *obj, guint keyval, Gdk
 }
 
 
-void on_save_set_activate (GtkMenuItem *menuitem, gpointer user_data) {
+void on_save_set_activate (LiVESMenuItem *menuitem, gpointer user_data) {
 
   // here is where we save clipsets
 
@@ -4912,7 +4908,7 @@ void on_save_set_activate (GtkMenuItem *menuitem, gpointer user_data) {
 }
 
 
-void on_load_set_activate (GtkMenuItem *menuitem, gpointer user_data) {
+void on_load_set_activate (LiVESMenuItem *menuitem, gpointer user_data) {
   // get set name (use a modified rename window)
 
   if (mainw->multitrack!=NULL) {
@@ -5465,12 +5461,12 @@ void on_cleardisk_advanced_clicked (LiVESWidget *widget, gpointer user_data) {
 }
 
 
-void on_show_keys_activate (GtkMenuItem *menuitem, gpointer user_data) {
+void on_show_keys_activate (LiVESMenuItem *menuitem, gpointer user_data) {
   do_keys_window();
 }
 
 
-void on_vj_reset_activate (GtkMenuItem *menuitem, gpointer user_data) {
+void on_vj_reset_activate (LiVESMenuItem *menuitem, gpointer user_data) {
   boolean bad_header=FALSE;
 
   register int i;
@@ -5501,12 +5497,12 @@ void on_vj_reset_activate (GtkMenuItem *menuitem, gpointer user_data) {
 }
 
 
-void on_show_messages_activate (GtkMenuItem *menuitem, gpointer user_data) {
+void on_show_messages_activate (LiVESMenuItem *menuitem, gpointer user_data) {
   do_messages_window();
 }
 
 
-void on_show_file_info_activate (GtkMenuItem *menuitem, gpointer user_data) {
+void on_show_file_info_activate (LiVESMenuItem *menuitem, gpointer user_data) {
   char buff[512];
   lives_clipinfo_t *filew;
 
@@ -5615,13 +5611,13 @@ void on_show_file_info_activate (GtkMenuItem *menuitem, gpointer user_data) {
 }
 
 
-void on_show_file_comments_activate (GtkMenuItem *menuitem, gpointer user_data) {
+void on_show_file_comments_activate (LiVESMenuItem *menuitem, gpointer user_data) {
   do_comments_dialog(NULL,NULL);
 }
 
 
 
-void on_show_clipboard_info_activate (GtkMenuItem *menuitem, gpointer user_data) {
+void on_show_clipboard_info_activate (LiVESMenuItem *menuitem, gpointer user_data) {
   int current_file=mainw->current_file;
   mainw->current_file=0;
   on_show_file_info_activate(menuitem,user_data);
@@ -5674,7 +5670,7 @@ void switch_clip(int type, int newclip) {
 }
 
 
-void switch_clip_activate (GtkMenuItem *menuitem, gpointer user_data) {
+void switch_clip_activate (LiVESMenuItem *menuitem, gpointer user_data) {
   // switch clips from the clips menu
 
   register int i;
@@ -5695,7 +5691,7 @@ void switch_clip_activate (GtkMenuItem *menuitem, gpointer user_data) {
 
 
 void
-on_about_activate                     (GtkMenuItem     *menuitem,
+on_about_activate                     (LiVESMenuItem     *menuitem,
                                         gpointer         user_data)
 {
 
@@ -5762,7 +5758,7 @@ on_about_activate                     (GtkMenuItem     *menuitem,
 
 
 void
-show_manual_activate                     (GtkMenuItem     *menuitem,
+show_manual_activate                     (LiVESMenuItem     *menuitem,
 					  gpointer         user_data)
 {
   show_manual_section(NULL,NULL);
@@ -5771,7 +5767,7 @@ show_manual_activate                     (GtkMenuItem     *menuitem,
 
 
 void
-email_author_activate                     (GtkMenuItem     *menuitem,
+email_author_activate                     (LiVESMenuItem     *menuitem,
 					  gpointer         user_data)
 {
   activate_url_inner(LIVES_AUTHOR_EMAIL);
@@ -5779,7 +5775,7 @@ email_author_activate                     (GtkMenuItem     *menuitem,
 
 
 void
-report_bug_activate                     (GtkMenuItem     *menuitem,
+report_bug_activate                     (LiVESMenuItem     *menuitem,
 					  gpointer         user_data)
 {
   activate_url_inner(LIVES_BUG_URL);
@@ -5787,7 +5783,7 @@ report_bug_activate                     (GtkMenuItem     *menuitem,
 
 
 void
-suggest_feature_activate                     (GtkMenuItem     *menuitem,
+suggest_feature_activate                     (LiVESMenuItem     *menuitem,
 					      gpointer         user_data)
 {
   activate_url_inner(LIVES_FEATURE_URL);
@@ -5795,7 +5791,7 @@ suggest_feature_activate                     (GtkMenuItem     *menuitem,
 
 
 void
-help_translate_activate                     (GtkMenuItem     *menuitem,
+help_translate_activate                     (LiVESMenuItem     *menuitem,
 					      gpointer         user_data)
 {
   activate_url_inner(LIVES_TRANSLATE_URL);
@@ -5804,7 +5800,7 @@ help_translate_activate                     (GtkMenuItem     *menuitem,
 
 
 void
-donate_activate                     (GtkMenuItem     *menuitem,
+donate_activate                     (LiVESMenuItem     *menuitem,
 				     gpointer         user_data)
 {
   const gchar *link=g_strdup_printf("%s%s",LIVES_DONATE_URL,user_data==NULL?"":(gchar *)user_data);
@@ -6241,7 +6237,7 @@ void on_fs_preview_clicked (LiVESWidget *widget, gpointer user_data) {
 
 
 
-void on_open_activate (GtkMenuItem *menuitem, gpointer user_data) {
+void on_open_activate (LiVESMenuItem *menuitem, gpointer user_data) {
   // OPEN A FILE
 
   if (mainw->multitrack!=NULL) {
@@ -7057,7 +7053,7 @@ void on_full_screen_pressed (LiVESButton *button,
 }
 
 
-void on_full_screen_activate (GtkMenuItem *menuitem, gpointer user_data) {
+void on_full_screen_activate (LiVESMenuItem *menuitem, gpointer user_data) {
   gchar buff[PATH_MAX];
   LiVESWidget *fs_img;
   gchar *fnamex;
@@ -7275,7 +7271,7 @@ void on_double_size_pressed (LiVESButton *button,
 
 
 void
-on_double_size_activate               (GtkMenuItem     *menuitem,
+on_double_size_activate               (LiVESMenuItem     *menuitem,
 				       gpointer         user_data)
 {
   gchar buff[PATH_MAX];
@@ -7411,7 +7407,7 @@ void on_sepwin_pressed (LiVESButton *button, gpointer user_data) {
 
 
 
-void on_sepwin_activate (GtkMenuItem *menuitem, gpointer user_data) {
+void on_sepwin_activate (LiVESMenuItem *menuitem, gpointer user_data) {
   LiVESWidget *sep_img;
   LiVESWidget *sep_img2;
 
@@ -7628,7 +7624,7 @@ void on_sepwin_activate (GtkMenuItem *menuitem, gpointer user_data) {
 }
 
 
-void on_showfct_activate (GtkMenuItem *menuitem, gpointer user_data) {
+void on_showfct_activate (LiVESMenuItem *menuitem, gpointer user_data) {
   prefs->show_framecount=!prefs->show_framecount;
   if (mainw->playing_file>-1) {
     if (!mainw->fs||(prefs->play_monitor!=prefs->gui_monitor&&mainw->play_window!=NULL)) {
@@ -7644,7 +7640,7 @@ void on_showfct_activate (GtkMenuItem *menuitem, gpointer user_data) {
 
 
 
-void on_sticky_activate (GtkMenuItem *menuitem, gpointer user_data) {
+void on_sticky_activate (LiVESMenuItem *menuitem, gpointer user_data) {
   // type is SEPWIN_TYPE_STICKY (shown even when not playing)
   // or SEPWIN_TYPE_NON_STICKY (shown only when playing)
   
@@ -7704,7 +7700,7 @@ void on_fade_pressed (LiVESButton *button,
 
 
 void
-on_fade_activate               (GtkMenuItem     *menuitem,
+on_fade_activate               (LiVESMenuItem     *menuitem,
 				gpointer         user_data)
 {
   mainw->faded=!mainw->faded;
@@ -7737,7 +7733,7 @@ void on_boolean_toggled(GObject *obj, gpointer user_data) {
 
 
 void
-on_loop_video_activate                (GtkMenuItem     *menuitem,
+on_loop_video_activate                (LiVESMenuItem     *menuitem,
 				       gpointer         user_data)
 {
   if (mainw->current_file==0) return;
@@ -7747,7 +7743,7 @@ on_loop_video_activate                (GtkMenuItem     *menuitem,
 }
 
 void
-on_loop_button_activate                (GtkMenuItem     *menuitem,
+on_loop_button_activate                (LiVESMenuItem     *menuitem,
 					gpointer         user_data)
 {
   if (mainw->multitrack!=NULL) {
@@ -7759,7 +7755,7 @@ on_loop_button_activate                (GtkMenuItem     *menuitem,
 }
 
 
-void on_loop_cont_activate (GtkMenuItem *menuitem, gpointer user_data) {
+void on_loop_cont_activate (LiVESMenuItem *menuitem, gpointer user_data) {
   gchar buff[PATH_MAX];
   LiVESWidget *loop_img;
   gchar *fnamex;
@@ -7812,7 +7808,7 @@ void on_loop_cont_activate (GtkMenuItem *menuitem, gpointer user_data) {
 }
 
 
-void on_ping_pong_activate (GtkMenuItem *menuitem, gpointer user_data) {
+void on_ping_pong_activate (LiVESMenuItem *menuitem, gpointer user_data) {
   mainw->ping_pong=!mainw->ping_pong;
 #ifdef ENABLE_JACK
   if (prefs->audio_player==AUD_PLAYER_JACK&&mainw->jackd!=NULL&&mainw->jackd->loop!=AUDIO_LOOP_NONE) {
@@ -7839,7 +7835,7 @@ void on_volume_slider_value_changed (LiVESScaleButton *sbutton, gpointer user_da
 
 
 
-void on_mute_button_activate (GtkMenuItem *menuitem, gpointer user_data) {
+void on_mute_button_activate (LiVESMenuItem *menuitem, gpointer user_data) {
   if (mainw->multitrack!=NULL) {
     lives_signal_handler_block (mainw->multitrack->mute_audio, mainw->multitrack->mute_audio_func);
     lives_check_menu_item_set_active(LIVES_CHECK_MENU_ITEM(mainw->multitrack->mute_audio),!mainw->mute);
@@ -7855,7 +7851,7 @@ boolean mute_audio_callback (GtkAccelGroup *group, GObject *obj, guint keyval, G
 }
 
 
-void on_mute_activate (GtkMenuItem *menuitem, gpointer user_data) {
+void on_mute_activate (LiVESMenuItem *menuitem, gpointer user_data) {
   gchar buff[PATH_MAX];
   LiVESWidget *mute_img;
   LiVESWidget *mute_img2=NULL;
@@ -7922,7 +7918,7 @@ void on_mute_activate (GtkMenuItem *menuitem, gpointer user_data) {
 }
 
 
-void on_spin_value_changed (GtkSpinButton *spinbutton, gpointer user_data) {
+void on_spin_value_changed (LiVESSpinButton *spinbutton, gpointer user_data) {
   // TODO - use array
   switch (GPOINTER_TO_INT (user_data)) {
   case 1 :
@@ -7942,7 +7938,7 @@ void on_spin_value_changed (GtkSpinButton *spinbutton, gpointer user_data) {
 
 
 void
-on_spin_start_value_changed           (GtkSpinButton   *spinbutton,
+on_spin_start_value_changed           (LiVESSpinButton   *spinbutton,
 				       gpointer         user_data)
 {
   // generic
@@ -7963,7 +7959,7 @@ on_spin_start_value_changed           (GtkSpinButton   *spinbutton,
   }
 }
 void
-on_spin_step_value_changed           (GtkSpinButton   *spinbutton,
+on_spin_step_value_changed           (LiVESSpinButton   *spinbutton,
 				     gpointer         user_data)
 {
   // generic
@@ -7985,7 +7981,7 @@ on_spin_step_value_changed           (GtkSpinButton   *spinbutton,
 }
 
 void
-on_spin_end_value_changed           (GtkSpinButton   *spinbutton,
+on_spin_end_value_changed           (LiVESSpinButton   *spinbutton,
 				     gpointer         user_data)
 {
   // generic
@@ -8008,7 +8004,7 @@ on_spin_end_value_changed           (GtkSpinButton   *spinbutton,
 
 
 
-void on_rev_clipboard_activate (GtkMenuItem *menuitem, gpointer user_data) {
+void on_rev_clipboard_activate (LiVESMenuItem *menuitem, gpointer user_data) {
   // reverse the clipboard
   gchar *com;
   int current_file=mainw->current_file;
@@ -8065,7 +8061,7 @@ void on_rev_clipboard_activate (GtkMenuItem *menuitem, gpointer user_data) {
 
 
 
-void on_load_subs_activate (GtkMenuItem *menuitem, gpointer user_data) {
+void on_load_subs_activate (LiVESMenuItem *menuitem, gpointer user_data) {
   gchar *subfile;
   gchar *filt[]={"*.srt","*.sub",NULL};
   gchar filename[512];
@@ -8157,7 +8153,7 @@ void on_load_subs_activate (GtkMenuItem *menuitem, gpointer user_data) {
 
 
 
-void on_save_subs_activate (GtkMenuItem *menuitem, gpointer user_data) {
+void on_save_subs_activate (LiVESMenuItem *menuitem, gpointer user_data) {
   gchar *subfile;
   gchar xfname[512];
   gchar xfname2[512];
@@ -8185,7 +8181,7 @@ void on_save_subs_activate (GtkMenuItem *menuitem, gpointer user_data) {
 
 
 
-void on_erase_subs_activate (GtkMenuItem *menuitem, gpointer user_data) {
+void on_erase_subs_activate (LiVESMenuItem *menuitem, gpointer user_data) {
   gchar *sfname;
 
   if (cfile->subt==NULL) return;
@@ -8223,7 +8219,7 @@ void on_erase_subs_activate (GtkMenuItem *menuitem, gpointer user_data) {
 
 
 
-void on_load_audio_activate (GtkMenuItem *menuitem, gpointer user_data) {
+void on_load_audio_activate (LiVESMenuItem *menuitem, gpointer user_data) {
   if (mainw->multitrack!=NULL) {
     if (mainw->multitrack->idlefunc>0) {
       g_source_remove(mainw->multitrack->idlefunc);
@@ -8239,7 +8235,7 @@ void on_load_audio_activate (GtkMenuItem *menuitem, gpointer user_data) {
 
 
 void
-on_load_cdtrack_activate                (GtkMenuItem     *menuitem,
+on_load_cdtrack_activate                (LiVESMenuItem     *menuitem,
 					 gpointer         user_data)
 {
   LiVESWidget *cdtrack_dialog;
@@ -8257,7 +8253,7 @@ on_load_cdtrack_activate                (GtkMenuItem     *menuitem,
 
 
 void
-on_eject_cd_activate                (GtkMenuItem     *menuitem,
+on_eject_cd_activate                (LiVESMenuItem     *menuitem,
 				     gpointer         user_data)
 {
   gchar *com=g_strdup_printf("eject \"%s\"",prefs->cdplay_device);
@@ -8570,7 +8566,7 @@ void on_load_vcd_ok_clicked (LiVESButton *button, gpointer         user_data)
 
 
 
-void popup_lmap_errors(GtkMenuItem *menuitem, gpointer user_data) {
+void popup_lmap_errors(LiVESMenuItem *menuitem, gpointer user_data) {
   // popup layout map errors dialog
   LiVESWidget *dialog_action_area,*vbox;
   LiVESWidget *button;
@@ -8630,7 +8626,7 @@ void popup_lmap_errors(GtkMenuItem *menuitem, gpointer user_data) {
 
 
 void
-on_rename_activate                    (GtkMenuItem     *menuitem,
+on_rename_activate                    (LiVESMenuItem     *menuitem,
 				       gpointer         user_data)
 {
   renamew=create_rename_dialog(1);
@@ -8670,7 +8666,7 @@ on_rename_set_name                   (LiVESButton       *button,
 }
 
 
-void on_toy_activate  (GtkMenuItem *menuitem, gpointer user_data) {
+void on_toy_activate  (LiVESMenuItem *menuitem, gpointer user_data) {
 #ifdef ENABLE_OSC
 #ifndef IS_MINGW
   gchar string[PATH_MAX];
@@ -8840,7 +8836,7 @@ void on_toy_activate  (GtkMenuItem *menuitem, gpointer user_data) {
 
 
 void
-on_preview_spinbutton_changed          (GtkSpinButton   *spinbutton,
+on_preview_spinbutton_changed          (LiVESSpinButton   *spinbutton,
 					gpointer         user_data)
 {
   // update the play window preview
@@ -8851,7 +8847,7 @@ on_preview_spinbutton_changed          (GtkSpinButton   *spinbutton,
 }
 
 void
-on_prv_link_toggled                (GtkToggleButton *togglebutton,
+on_prv_link_toggled                (LiVESToggleButton *togglebutton,
 				    gpointer         user_data)
 {
   if (!lives_toggle_button_get_active(togglebutton)) return;
@@ -8868,7 +8864,7 @@ on_prv_link_toggled                (GtkToggleButton *togglebutton,
 }
 
 void
-on_spinbutton_start_value_changed          (GtkSpinButton   *spinbutton,
+on_spinbutton_start_value_changed          (LiVESSpinButton   *spinbutton,
 					    gpointer         user_data)
 {
   int start,ostart=cfile->start;
@@ -8917,7 +8913,7 @@ on_spinbutton_start_value_changed          (GtkSpinButton   *spinbutton,
 
 
 void
-on_spinbutton_end_value_changed          (GtkSpinButton   *spinbutton,
+on_spinbutton_end_value_changed          (LiVESSpinButton   *spinbutton,
 					  gpointer         user_data)
 {
   int end,oend=cfile->end;
@@ -9682,7 +9678,7 @@ void on_preview_clicked (LiVESButton *button, gpointer user_data) {
 }
 
 
-void changed_fps_during_pb (GtkSpinButton   *spinbutton, gpointer user_data) {
+void changed_fps_during_pb (LiVESSpinButton   *spinbutton, gpointer user_data) {
   double new_fps=(double)((int)(lives_spin_button_get_value(LIVES_SPIN_BUTTON(spinbutton))*1000)/1000.);
 
   if ((!cfile->play_paused&&cfile->pb_fps==new_fps)||(cfile->play_paused&&new_fps==0.)) {
@@ -10332,7 +10328,7 @@ void on_toolbar_hide (LiVESButton *button, gpointer user_data) {
 
 
 
-void on_capture_activate (GtkMenuItem *menuitem, gpointer user_data) {
+void on_capture_activate (LiVESMenuItem *menuitem, gpointer user_data) {
   int curr_file=mainw->current_file;
   gchar *msg;
   gchar *com;
@@ -10678,7 +10674,7 @@ void on_encoder_ofmt_changed (GtkComboBox *combo, gpointer user_data) {
 
 // TODO - move all this to audio.c
 
-void on_export_audio_activate (GtkMenuItem *menuitem, gpointer user_data) {
+void on_export_audio_activate (LiVESMenuItem *menuitem, gpointer user_data) {
 
   gchar *com,*tmp;
   int nrate=cfile->arps;
@@ -10761,7 +10757,7 @@ void on_export_audio_activate (GtkMenuItem *menuitem, gpointer user_data) {
 }
 
 
-void on_append_audio_activate (GtkMenuItem *menuitem, gpointer user_data) {
+void on_append_audio_activate (LiVESMenuItem *menuitem, gpointer user_data) {
   if (!(prefs->warning_mask&WARN_MASK_LAYOUT_ALTER_AUDIO)&&
       (mainw->xlays=layout_audio_is_affected(mainw->current_file,0.))!=NULL) {
     if (!do_layout_alter_audio_warning()) {
@@ -10892,7 +10888,7 @@ void on_ok_append_audio_clicked (GtkFileChooser *chooser, gpointer user_data) {
 
 
 
-void on_trim_audio_activate (GtkMenuItem *menuitem, gpointer user_data) {
+void on_trim_audio_activate (LiVESMenuItem *menuitem, gpointer user_data) {
   // type 0 == trim selected
   // type 1 == trim to play pointer
 
@@ -10995,7 +10991,7 @@ void on_trim_audio_activate (GtkMenuItem *menuitem, gpointer user_data) {
 
 
 
-void on_fade_audio_activate (GtkMenuItem *menuitem, gpointer user_data) {
+void on_fade_audio_activate (LiVESMenuItem *menuitem, gpointer user_data) {
   // type == 0 fade in
   // type == 1 fade out
 
@@ -11140,7 +11136,7 @@ void on_fade_audio_activate (GtkMenuItem *menuitem, gpointer user_data) {
 
 
 
-boolean on_del_audio_activate (GtkMenuItem *menuitem, gpointer user_data) {
+boolean on_del_audio_activate (LiVESMenuItem *menuitem, gpointer user_data) {
   double start,end;
   gchar *com,*msg=NULL;
   boolean has_lmap_error=FALSE;
@@ -11324,7 +11320,7 @@ boolean on_del_audio_activate (GtkMenuItem *menuitem, gpointer user_data) {
 
 
 void
-on_rb_audrec_time_toggled                (GtkToggleButton *togglebutton,
+on_rb_audrec_time_toggled                (LiVESToggleButton *togglebutton,
 					  gpointer         user_data)
 {
   _resaudw *resaudw=(_resaudw *)user_data;  
@@ -11342,7 +11338,7 @@ on_rb_audrec_time_toggled                (GtkToggleButton *togglebutton,
 
 
 void
-on_recaudclip_activate (GtkMenuItem     *menuitem,
+on_recaudclip_activate (LiVESMenuItem     *menuitem,
 			gpointer         user_data) {
 
   if (prefs->audio_player!=AUD_PLAYER_JACK&&prefs->audio_player!=AUD_PLAYER_PULSE) {
@@ -11362,7 +11358,7 @@ on_recaudclip_activate (GtkMenuItem     *menuitem,
 static boolean has_lmap_error_recsel;
 
 void
-on_recaudsel_activate (GtkMenuItem     *menuitem,
+on_recaudsel_activate (LiVESMenuItem     *menuitem,
 			gpointer         user_data) {
 
   if (prefs->audio_player!=AUD_PLAYER_JACK&&prefs->audio_player!=AUD_PLAYER_PULSE) {
@@ -11649,7 +11645,7 @@ void on_recaudclip_ok_clicked (LiVESButton *button, gpointer user_data) {
 }
 
 
-boolean on_ins_silence_activate (GtkMenuItem *menuitem, gpointer user_data) {
+boolean on_ins_silence_activate (LiVESMenuItem *menuitem, gpointer user_data) {
   double start=0,end=0;
   gchar *com,*msg;
   boolean has_lmap_error=FALSE;

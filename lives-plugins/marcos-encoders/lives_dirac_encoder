@@ -31,20 +31,24 @@ http://www.gnu.org/copyleft/gpl.html for license.
 
 See my vids at http://amv.reimeika.ca !
 
-Updated by G. Finch (salsaman) 2010
+Updated by G. Finch (salsaman) 2010, 2015
 
 """
 
-version = '0.1'
+version = '0.2'
 import os
 if os.name == 'nt':
 	convert = 'convert.exe'
 	mencoder = 'mencoder.exe'
+	oggenc = 'oggenc.exe'
+        mkvmerge = 'mkvmerge.exe'
 	dirac_encoder = 'dirac_encoder.exe'
 	identify = 'identify.exe'
 else:
 	convert = 'convert'
 	mencoder = 'mencoder'
+	oggenc = 'oggenc'
+        mkvmerge = 'mkvmerge'
 	dirac_encoder = 'dirac_encoder'
 	identify = 'identify'
 
@@ -53,9 +57,9 @@ usage = \
 lives_dirac_encoder -h
 lives_dirac_encoder -V
 lives_dirac_encoder -C
-lives_dirac_encoder [-o out] [-p pre] [-d dir] [-a aspect] [-D delay*]
+lives_dirac_encoder [-o out] [-p pre] [-d dir] [-a aspect] [-D delay]
                  [-q|-v] [-t type] [-k] [-e [[-w dir] [-c geom] [-r geom]]]
-                 [-s sndfile*] [-b sndrate*] [-f fpscode] [-L lv1file]
+                 [-s sndfile] [-b sndrate] [-f fpscode] [-L lv1file]
                  [firstframe lastframe]
       """
 
@@ -456,12 +460,9 @@ def do_encode():
     for tfile in [dyuvv, dyuvv + '.yuv', dyuvv + '.imt']:
         if os.path.exists(tfile):
             if verbose:
-                print('Removing ' + tfile)
+                print(('Removing ' + tfile))
             os.remove(tfile)
 
-# Audio not supported yet. Planned to use Matroska container but
-# Dirac developers are thinking of MXF.
-    audio = False
     if audio:
         if not quiet:
             print('Creating "%s"-quality ogg vorbis file' % vtype)
@@ -487,29 +488,20 @@ def do_encode():
 
         all_vars.update(locals())
 
-        if not quiet:
-            print('Multiplexing...')
+
+        print('Multiplexing...')
+        vidname = "tmp.ogv"
         command = """
-%(mkvplex)s --aspect-ratio '1:%(aspect)s' -o "%(vidname)s" %(vidv)s -y '0:0%(delaysh)s' %(ogg)s %(std)s""" % all_vars
+%(mkvmerge)s --aspect-ratio '1:%(aspect)s' -o "%(vidname)s" %(dyuvv)s.drc -y '0:0%(delaysh)s' %(ogg)s %(std)s""" % all_vars
         run(command)
+
         if rawsndf and os.path.exists(wav): os.remove(wav)
         if os.path.exists(ogg): os.remove(ogg)
         if os.path.exists(dyuvv + '.drc'): os.remove(dyuvv + '.drc')
     else:
-        shutil.move(dyuvv + '.drc', vidname)
-        note = """
-You can play the Dirac file %(vidname)s by running:
-
-dirac_decoder -v %(vidname)s %(vidname)s
-mplayer -demuxer rawvideo -rawvideo fps=%(ffps)s:size=%(fbytes)s:w=%(fx)s:h=%(fy)s %(vidname)s.yuv
-
-If %(vidname)s has an extension do not include it in the above
-commands e.g. if it's "test.drc" then do:
-
-dirac_decoder -v test test
-mplayer -demuxer rawvideo -rawvideo fps=%(ffps)s:size=%(fbytes)s:w=%(fx)s:h=%(fy)s test.yuv
-""" % all_vars
-        if not quiet: print(note)
+        command = """
+%(mkvmerge)s --aspect-ratio '1:%(aspect)s' -o "%(vidname)s" %(dyuvv)s.drc -y '0:0%(delaysh)s' %(std)s""" % all_vars
+        run(command)
 
     if frame_range:
         lframes = os.path.join(source_dir, syml)
@@ -624,7 +616,7 @@ if __name__ == '__main__':
     else:
         quiet = False
 
-    for i in [convert, mencoder, dirac_encoder, identify]:
+    for i in [convert, mencoder, dirac_encoder, identify, oggenc, mkvmerge]:
         is_installed(i)
     if '-C' in opts: raise SystemExit
 
@@ -828,8 +820,8 @@ if __name__ == '__main__':
     vidname = os.path.join(work_dir, out_drc)
     # do_encode() acts on images prefixed by img_pre.
     do_encode()
-    if not keep:
-        do_clean()
+#    if not keep:
+#        do_clean()
     if temp_dir != '':
         shutil.rmtree(temp_dir)
     if not quiet: print("Done!")
@@ -862,4 +854,5 @@ CHANGELOG:
                         updated playback explanation.
 28 Jun 2007 : 0.1.a15 : handles paths with spaces appropriately
                         (thanks Gabriel).
+
 """

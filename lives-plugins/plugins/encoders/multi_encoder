@@ -406,13 +406,13 @@ if __name__ == '__main__':
            print 'mh-theora|Medium-High Quality OGG (THEORA/VORBIS)' + specs
            print 'hi-theora|High Quality OGG (THEORA/VORBIS)' + specs
 
-       # EXPERIMENTAL. Also, drc doesn't support sound yet (needs wrapper).
+       # EXPERIMENTAL.
        if is_installed(drc):
-           specs = '|0|%s,%s,%s,%s|drc|' % (ar, hb, vb, sr)
-           print 'lo-dirac|EXP Low Quality DRC (DIRAC/NONE)' + specs
-           print 'ml-dirac|EXP Medium-Low Quality DRC (DIRAC/NONE)' + specs
-           print 'mh-dirac|EXP Medium-High Quality DRC (DIRAC/NONE)' + specs
-           print 'hi-dirac|EXP High Quality DRC (DIRAC/NONE)' + specs
+           specs = '|8|%s,%s,%s,%s|mkv|' % (ar, hb, vb, sr)
+           print 'lo-dirac|EXP Low Quality Dirac (DIRAC/VORBIS/MKV)' + specs
+           print 'ml-dirac|EXP Medium-Low Quality Dirac (DIRAC/VORBIS/MKV)' + specs
+           print 'mh-dirac|EXP Medium-High Quality Dirac (DIRAC/VORBIS/MKV)' + specs
+           print 'hi-dirac|EXP High Quality Dirac (DIRAC/VORBIS/MKV)' + specs
 
        if is_installed(mng):
            specs = '|0|none|mng|'

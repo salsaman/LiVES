@@ -3061,7 +3061,7 @@ void on_insert_activate (LiVESButton *button, gpointer user_data) {
 	    }}}}}}
 
   
-  if (!virtual_ins && cfile->frame_index!=NULL) {
+  if (!virtual_ins && clipboard->frame_index!=NULL) {
     int current_file=mainw->current_file;
     boolean retb;
     mainw->cancelled=CANCEL_NONE;

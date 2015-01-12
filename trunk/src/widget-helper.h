@@ -82,8 +82,12 @@ typedef cairo_fill_rule_t lives_painter_fill_rule_t;
 
 #define return_true gtk_true
 
+typedef void (*LiVESGuiCallback) (void);
 typedef void (*LiVESWidgetCallback) (GtkWidget *widget, gpointer data);
 typedef gboolean (*LiVESWidgetSourceFunc) (gpointer data);
+
+#define LIVES_GUI_CALLBACK(f) ((LiVESGuiCallback) (f))
+
 
 typedef GObject LiVESObject;
 
@@ -117,8 +121,6 @@ typedef GdkDeviceManager                  LiVESXDeviceManager;
 #define LIVES_GUI_OBJECT(a)                     GTK_OBJECT(a)
 #define LIVES_WIDGET_EVENT_EXPOSE_EVENT "expose_event"
 #endif
-
-#define LIVES_GUI_CALLBACK G_CALLBACK
 
 typedef GtkWidget                         LiVESWidget;
 typedef GtkWindow                         LiVESWindow;

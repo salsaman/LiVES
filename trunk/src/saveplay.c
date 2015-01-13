@@ -2267,7 +2267,7 @@ void play_file (void) {
   mainw->pre_src_audio_file=mainw->current_file;
 
   // enable the freeze button
-  lives_accel_group_connect (LIVES_ACCEL_GROUP (mainw->accel_group), LIVES_KEY_BackSpace, (GdkModifierType)LIVES_CONTROL_MASK, 
+  lives_accel_group_connect (LIVES_ACCEL_GROUP (mainw->accel_group), LIVES_KEY_BackSpace, (LiVESXModifierType)LIVES_CONTROL_MASK, 
 			   (LiVESAccelFlags)0, (freeze_closure=g_cclosure_new (LIVES_GUI_CALLBACK (freeze_callback),NULL,NULL)));
 
   if (mainw->multitrack!=NULL) {
@@ -3186,7 +3186,7 @@ void play_file (void) {
     // update screen for internal players
     lives_widget_hide(mainw->framebar);
     lives_entry_set_text(LIVES_ENTRY(mainw->framecounter),"");
-    lives_image_set_from_pixbuf(GTK_IMAGE(mainw->play_image),NULL);
+    lives_image_set_from_pixbuf(LIVES_IMAGE(mainw->play_image),NULL);
   }
 
   // kill the separate play window

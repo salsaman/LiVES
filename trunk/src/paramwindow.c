@@ -914,7 +914,7 @@ void on_fx_pre_activate (lives_rfx_t *rfx, int didx, LiVESWidget *pbox) {
       lives_button_box_set_layout (LIVES_BUTTON_BOX (dialog_action_area), LIVES_BUTTONBOX_END);
       lives_dialog_add_action_widget (LIVES_DIALOG (fx_dialog[didx]), cancelbutton, LIVES_RESPONSE_CANCEL);
       lives_widget_add_accelerator (cancelbutton, "activate", fxw_accel_group,
-				    LIVES_KEY_Escape, (GdkModifierType)0, (LiVESAccelFlags)0);
+				    LIVES_KEY_Escape, (LiVESXModifierType)0, (LiVESAccelFlags)0);
 
       if (is_defaults) {
 	okbutton = lives_button_new_with_mnemonic (_("Set as default"));
@@ -941,7 +941,7 @@ void on_fx_pre_activate (lives_rfx_t *rfx, int didx, LiVESWidget *pbox) {
       }
       lives_dialog_add_action_widget (LIVES_DIALOG (fx_dialog[didx]), cancelbutton, LIVES_RESPONSE_CANCEL);
       lives_widget_add_accelerator (cancelbutton, "activate", fxw_accel_group,
-				    LIVES_KEY_Escape, (GdkModifierType)0, (LiVESAccelFlags)0);
+				    LIVES_KEY_Escape, (LiVESXModifierType)0, (LiVESAccelFlags)0);
 
     }
 

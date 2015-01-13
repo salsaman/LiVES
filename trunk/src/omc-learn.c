@@ -800,7 +800,7 @@ static void omc_learn_link_params(lives_omc_match_node_t *mnode) {
 
 
 
-static void on_omc_combo_entry_changed (GtkComboBox *combo, gpointer ptr) {
+static void on_omc_combo_entry_changed (LiVESCombo *combo, gpointer ptr) {
   char *macro_text;
 
   int i;

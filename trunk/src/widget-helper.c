@@ -1918,6 +1918,33 @@ LIVES_INLINE void lives_toggle_button_set_active(LiVESToggleButton *button, bool
 }
 
 
+LIVES_INLINE LiVESWidget *lives_radio_button_new(LiVESSList *group) {
+  LiVESWidget *button=NULL;
+#ifdef GUI_GTK
+  button=gtk_radio_button_new(group);
+#endif
+  return button;
+}
+
+
+LIVES_INLINE LiVESWidget *lives_check_button_new(void) {
+  LiVESWidget *button=NULL;
+#ifdef GUI_GTK
+  button=gtk_check_button_new();
+#endif
+  return button;
+}
+
+
+LIVES_INLINE LiVESWidget *lives_check_button_new_with_label(const char *label) {
+  LiVESWidget *button=NULL;
+#ifdef GUI_GTK
+  button=gtk_check_button_new_with_label(label);
+#endif
+  return button;
+}
+
+
 LIVES_INLINE void lives_widget_set_tooltip_text(LiVESWidget *widget, const char *tip_text) {
 #ifdef GUI_GTK
 
@@ -4235,7 +4262,7 @@ LiVESWidget *lives_standard_check_button_new(const char *labeltext, boolean use_
   LiVESWidget *label=NULL;
   LiVESWidget *hbox;
 
-  checkbutton = gtk_check_button_new ();
+  checkbutton = lives_check_button_new ();
   if (tooltip!=NULL) lives_widget_set_tooltip_text(checkbutton, tooltip);
 
   widget_opts.last_label=NULL;
@@ -4318,7 +4345,7 @@ LiVESWidget *lives_standard_radio_button_new(const char *labeltext, boolean use_
   LiVESWidget *label=NULL;
   LiVESWidget *hbox;
 
-  radiobutton = gtk_radio_button_new (rbgroup);
+  radiobutton = lives_radio_button_new (rbgroup);
 
   if (tooltip!=NULL) lives_widget_set_tooltip_text(radiobutton, tooltip);
 
@@ -4696,7 +4723,7 @@ LiVESWidget *lives_standard_dialog_new(const char *title, boolean add_std_button
     lives_dialog_add_action_widget (LIVES_DIALOG (dialog), cancelbutton, LIVES_RESPONSE_CANCEL);
 
     lives_widget_add_accelerator (cancelbutton, "activate", accel_group,
-				LIVES_KEY_Escape, (GdkModifierType)0, (LiVESAccelFlags)0);
+				LIVES_KEY_Escape, (LiVESXModifierType)0, (LiVESAccelFlags)0);
 
     lives_widget_set_can_focus_and_default(cancelbutton);
 

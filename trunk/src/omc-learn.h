@@ -93,8 +93,8 @@ typedef struct {
   LiVESWidget *treev1;
   LiVESWidget *treev2;
 
-  GtkTreeStore *gtkstore;
-  GtkTreeStore *gtkstore2;
+  LiVESTreeStore *gtkstore;
+  LiVESTreeStore *gtkstore2;
 
   int *tmpvals;
 
@@ -147,7 +147,7 @@ enum {
 #define OMC_MIDI_PGM_CHANGE 133
 
 /// start learning MIDI inputs
-void on_midi_learn_activate (GtkMenuItem *, gpointer);
+void on_midi_learn_activate (LiVESMenuItem *, gpointer);
 
 /// process a string (i.e. convert to an OSC message and pass to OSC subsys)
 /// only need to set omclw if learn is TRUE
@@ -157,8 +157,8 @@ boolean omc_process_string(int supertype, const gchar *string, boolean learn, om
 
 #define OMC_FILE_VSTRING "LiVES OMC map version 1.0"
 
-void on_midi_save_activate (GtkMenuItem *, gpointer);
-void on_midi_load_activate (GtkMenuItem *, gpointer);
+void on_midi_save_activate (LiVESMenuItem *, gpointer);
+void on_midi_load_activate (LiVESMenuItem *, gpointer);
 
 
 #include "osc.h"

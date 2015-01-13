@@ -668,7 +668,7 @@ typedef struct {
 
 lives_mt *multitrack (weed_plant_t *, int orig_file, double fps); ///< create and return lives_mt struct
 void mt_init_tracks (lives_mt *, boolean set_min_max);  ///< add basic tracks, or set tracks from mt->event_list
-boolean on_multitrack_activate (GtkMenuItem *menuitem, weed_plant_t *event_list); ///< menuitem callback
+boolean on_multitrack_activate (LiVESMenuItem *menuitem, weed_plant_t *event_list); ///< menuitem callback
 
 // delete function
 boolean multitrack_delete (lives_mt *, boolean save);
@@ -681,36 +681,36 @@ void mt_desensitise (lives_mt *);
 void mt_sensitise (lives_mt *);
 
 // external control callbacks
-void insert_here_cb (GtkMenuItem *, gpointer mt);
-void insert_audio_here_cb (GtkMenuItem *, gpointer mt);
-void insert_at_ctx_cb (GtkMenuItem *, gpointer mt);
-void insert_audio_at_ctx_cb (GtkMenuItem *, gpointer mt);
-void multitrack_end_cb (GtkMenuItem *, gpointer mt);
-void delete_block_cb (GtkMenuItem *, gpointer mt);
-void selblock_cb (GtkMenuItem *, gpointer mt);
-void list_fx_here_cb (GtkMenuItem *, gpointer mt);
-void edit_start_end_cb (GtkMenuItem *, gpointer mt);
-void close_clip_cb (GtkMenuItem *, gpointer mt);
-void show_clipinfo_cb (GtkMenuItem *, gpointer mt);
+void insert_here_cb (LiVESMenuItem *, gpointer mt);
+void insert_audio_here_cb (LiVESMenuItem *, gpointer mt);
+void insert_at_ctx_cb (LiVESMenuItem *, gpointer mt);
+void insert_audio_at_ctx_cb (LiVESMenuItem *, gpointer mt);
+void multitrack_end_cb (LiVESMenuItem *, gpointer mt);
+void delete_block_cb (LiVESMenuItem *, gpointer mt);
+void selblock_cb (LiVESMenuItem *, gpointer mt);
+void list_fx_here_cb (LiVESMenuItem *, gpointer mt);
+void edit_start_end_cb (LiVESMenuItem *, gpointer mt);
+void close_clip_cb (LiVESMenuItem *, gpointer mt);
+void show_clipinfo_cb (LiVESMenuItem *, gpointer mt);
 
-void multitrack_insert (GtkMenuItem *, gpointer mt);
+void multitrack_insert (LiVESMenuItem *, gpointer mt);
 
 // event_list functions
 weed_plant_t *add_blank_frames_up_to (weed_plant_t *event_list, weed_plant_t *start_event, weed_timecode_t end_tc, double fps);
 
 // track functions
-void on_cback_audio_activate (GtkMenuItem *, gpointer mt);
+void on_cback_audio_activate (LiVESMenuItem *, gpointer mt);
 LiVESWidget *add_audio_track (lives_mt *, int trackno, boolean behind);
-void add_video_track_behind (GtkMenuItem *, gpointer mt);
-void add_video_track_front (GtkMenuItem *, gpointer mt);
+void add_video_track_behind (LiVESMenuItem *, gpointer mt);
+void add_video_track_front (LiVESMenuItem *, gpointer mt);
 void delete_video_track(lives_mt *, int layer, boolean full);
 void delete_audio_track(lives_mt *, LiVESWidget *eventbox, boolean full);
 void delete_audio_tracks(lives_mt *, GList *list, boolean full);
-void remove_gaps (GtkMenuItem *, gpointer mt);
-void remove_first_gaps (GtkMenuItem *, gpointer mt);
-void on_insgap_sel_activate (GtkMenuItem *, gpointer mt);
-void on_insgap_cur_activate (GtkMenuItem *, gpointer mt);
-void on_split_activate (GtkMenuItem *, gpointer mt);
+void remove_gaps (LiVESMenuItem *, gpointer mt);
+void remove_first_gaps (LiVESMenuItem *, gpointer mt);
+void on_insgap_sel_activate (LiVESMenuItem *, gpointer mt);
+void on_insgap_cur_activate (LiVESMenuItem *, gpointer mt);
+void on_split_activate (LiVESMenuItem *, gpointer mt);
 void scroll_tracks (lives_mt *, int top_track, boolean set_value);
 boolean track_arrow_pressed (LiVESWidget *ahbox, GdkEventButton *, gpointer mt);
 void track_select (lives_mt *); ///< must call after setting mt->current_track
@@ -741,10 +741,10 @@ void scroll_track_by_scrollbar (GtkScrollbar *sbar, gpointer mt);
 // block functions
 void in_out_start_changed (LiVESWidget *, gpointer mt);
 void in_out_end_changed (LiVESWidget *, gpointer mt);
-void in_anchor_toggled (GtkToggleButton *, gpointer mt);
-void out_anchor_toggled (GtkToggleButton *, gpointer mt);
-void avel_reverse_toggled (GtkToggleButton *, gpointer mt);
-void avel_spin_changed (GtkSpinButton *, gpointer mt);
+void in_anchor_toggled (LiVESToggleButton *, gpointer mt);
+void out_anchor_toggled (LiVESToggleButton *, gpointer mt);
+void avel_reverse_toggled (LiVESToggleButton *, gpointer mt);
+void avel_spin_changed (LiVESSpinButton *, gpointer mt);
 
 // block API functions
 int mt_get_last_block_number(lives_mt *, int ntrack); ///< get index of last inserted (wallclock time) block for track
@@ -760,14 +760,14 @@ boolean on_timeline_press (LiVESWidget *, GdkEventButton *, gpointer mt);
 boolean on_timeline_release (LiVESWidget *, GdkEventButton *, gpointer mt);
 boolean on_timeline_update (LiVESWidget *, GdkEventMotion *, gpointer mt);
 void draw_region (lives_mt *mt);
-void tc_to_rs (GtkMenuItem *, gpointer mt);
-void tc_to_re (GtkMenuItem *, gpointer mt);
-void rs_to_tc (GtkMenuItem *, gpointer mt);
-void re_to_tc (GtkMenuItem *, gpointer mt);
+void tc_to_rs (LiVESMenuItem *, gpointer mt);
+void tc_to_re (LiVESMenuItem *, gpointer mt);
+void rs_to_tc (LiVESMenuItem *, gpointer mt);
+void re_to_tc (LiVESMenuItem *, gpointer mt);
 
 boolean mt_mark_callback (GtkAccelGroup *group, GObject *obj, guint keyval, GdkModifierType mod, gpointer user_data);
 
-void multitrack_clear_marks (GtkMenuItem *, gpointer mt);
+void multitrack_clear_marks (LiVESMenuItem *, gpointer mt);
 void mt_show_current_frame(lives_mt *, boolean return_layer);  ///< preview the current frame
 void mt_clear_timeline(lives_mt *mt);
 
@@ -782,7 +782,7 @@ void do_fx_move_context(lives_mt *mt);
 
 // playback / animation
 void multitrack_playall (lives_mt *);
-void multitrack_play_sel (GtkMenuItem *, gpointer mt);
+void multitrack_play_sel (LiVESMenuItem *, gpointer mt);
 void animate_multitrack (lives_mt *);
 void unpaint_line(lives_mt *, LiVESWidget *eventbox);
 void unpaint_lines(lives_mt *);
@@ -795,10 +795,10 @@ void mt_post_playback(lives_mt *);
 void on_next_node_clicked  (LiVESWidget *, gpointer mt);
 void on_prev_node_clicked  (LiVESWidget *, gpointer mt);
 void on_del_node_clicked  (LiVESWidget *, gpointer mt);
-void on_node_spin_value_changed (GtkSpinButton *, gpointer mt);
+void on_node_spin_value_changed (LiVESSpinButton *, gpointer mt);
 double mt_get_effect_time(lives_mt *);
 
-void on_frame_preview_clicked (GtkButton *, gpointer mt);
+void on_frame_preview_clicked (LiVESButton *, gpointer mt);
 void show_preview (lives_mt *, weed_timecode_t tc);
 
 boolean add_mt_param_box(lives_mt *);
@@ -859,13 +859,13 @@ boolean write_backup_layout_numbering(lives_mt *);
 
 
 // amixer funcs
-void amixer_show (GtkButton *, gpointer mt);
-void on_amixer_close_clicked (GtkButton *, lives_mt *mt);
+void amixer_show (LiVESButton *, gpointer mt);
+void on_amixer_close_clicked (LiVESButton *, lives_mt *mt);
 LiVESWidget * amixer_add_channel_slider (lives_mt *, int i);
 
 
 // misc
-void mt_change_disp_tracks_ok (GtkButton *, gpointer mt);
+void mt_change_disp_tracks_ok (LiVESButton *, gpointer mt);
 void mt_swap_play_pause (lives_mt *, boolean put_pause);
 gchar *set_values_from_defs(lives_mt *, boolean from_prefs);
 

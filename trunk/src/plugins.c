@@ -1080,7 +1080,7 @@ _vppaw *on_vpp_advanced_clicked (LiVESButton *button, gpointer user_data) {
   lives_widget_set_can_focus (cancelbutton,TRUE);
 
   lives_widget_add_accelerator (cancelbutton, "activate", accel_group,
-                              LIVES_KEY_Escape, (GdkModifierType)0, (LiVESAccelFlags)0);
+                              LIVES_KEY_Escape, (LiVESXModifierType)0, (LiVESAccelFlags)0);
 
 
   savebutton = lives_button_new_from_stock (LIVES_STOCK_SAVE_AS);

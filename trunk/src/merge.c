@@ -221,7 +221,7 @@ void create_merge_dialog (void) {
 
 
   lives_widget_add_accelerator (cancelbutton, "activate", accel_group,
-                              LIVES_KEY_Escape,  (GdkModifierType)0, (LiVESAccelFlags)0);
+                              LIVES_KEY_Escape,  (LiVESXModifierType)0, (LiVESAccelFlags)0);
 
 
   lives_signal_connect (LIVES_GUI_OBJECT (okbutton), "clicked",

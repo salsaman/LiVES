@@ -335,10 +335,10 @@ rfx_build_window_t *make_rfx_build_window (const gchar *script_name, lives_rfx_s
   lives_widget_set_can_focus_and_default (okbutton);
 
   lives_widget_add_accelerator (cancelbutton, "activate", accel_group,
-                              LIVES_KEY_Escape, (GdkModifierType)0, (LiVESAccelFlags)0);
+                              LIVES_KEY_Escape, (LiVESXModifierType)0, (LiVESAccelFlags)0);
 
   lives_widget_add_accelerator (okbutton, "activate", accel_group,
-                              LIVES_KEY_Return, (GdkModifierType)0, (LiVESAccelFlags)0);
+                              LIVES_KEY_Return, (LiVESXModifierType)0, (LiVESAccelFlags)0);
 
 
   lives_signal_connect (LIVES_GUI_OBJECT (okbutton), "clicked",
@@ -659,7 +659,7 @@ void on_list_table_clicked (LiVESButton *button, gpointer user_data) {
   lives_dialog_add_action_widget (LIVES_DIALOG (dialog), cancelbutton, LIVES_RESPONSE_CANCEL);
 
   lives_widget_add_accelerator (cancelbutton, "activate", accel_group,
-                              LIVES_KEY_Escape, (GdkModifierType)0, (LiVESAccelFlags)0);
+                              LIVES_KEY_Escape, (LiVESXModifierType)0, (LiVESAccelFlags)0);
 
 
   okbutton = lives_button_new_from_stock (LIVES_STOCK_OK);
@@ -1040,11 +1040,11 @@ void on_properties_clicked (LiVESButton *button, gpointer user_data) {
   lives_widget_grab_default (okbutton);
 
   lives_widget_add_accelerator (cancelbutton, "activate", accel_group,
-                              LIVES_KEY_Escape, (GdkModifierType)0, (LiVESAccelFlags)0);
+                              LIVES_KEY_Escape, (LiVESXModifierType)0, (LiVESAccelFlags)0);
 
   
   lives_widget_add_accelerator (okbutton, "activate", accel_group,
-                              LIVES_KEY_Return, (GdkModifierType)0, (LiVESAccelFlags)0);
+                              LIVES_KEY_Return, (LiVESXModifierType)0, (LiVESAccelFlags)0);
 
 
   lives_signal_connect (LIVES_GUI_OBJECT (okbutton), "clicked",
@@ -1426,7 +1426,7 @@ void on_table_add_row (LiVESButton *button, gpointer user_data) {
 
   lives_widget_show_all(rfxbuilder->table);
 
-  gtk_event_box_set_above_child(GTK_EVENT_BOX(ebox),TRUE);
+  gtk_event_box_set_above_child(LIVES_EVENT_BOX(ebox),TRUE);
 
   lives_signal_connect (LIVES_GUI_OBJECT (ebox), "button_press_event",
 		    LIVES_GUI_CALLBACK (on_entry_click),
@@ -1444,7 +1444,7 @@ void on_table_add_row (LiVESButton *button, gpointer user_data) {
   }
 
   if (entry2!=NULL) {
-    gtk_event_box_set_above_child(GTK_EVENT_BOX(ebox2),TRUE);
+    gtk_event_box_set_above_child(LIVES_EVENT_BOX(ebox2),TRUE);
 
     lives_signal_connect (LIVES_GUI_OBJECT (ebox2), "button_press_event",
 		      LIVES_GUI_CALLBACK (on_entry_click),
@@ -1463,7 +1463,7 @@ void on_table_add_row (LiVESButton *button, gpointer user_data) {
   }
 
   if (entry3!=NULL) {
-    gtk_event_box_set_above_child(GTK_EVENT_BOX(ebox3),TRUE);
+    gtk_event_box_set_above_child(LIVES_EVENT_BOX(ebox3),TRUE);
 
     lives_signal_connect (LIVES_GUI_OBJECT (ebox3), "button_press_event",
 		      LIVES_GUI_CALLBACK (on_entry_click),
@@ -4848,7 +4848,7 @@ void add_rfx_effects(void) {
       else {
 	rfx_image = lives_image_new_from_stock (LIVES_STOCK_YES, LIVES_ICON_SIZE_MENU);
       }
-      lives_image_menu_item_set_image (GTK_IMAGE_MENU_ITEM (menuitem), rfx_image);
+      lives_image_menu_item_set_image (LIVES_IMAGE_MENU_ITEM (menuitem), rfx_image);
       
       lives_widget_show(rfx_image);
 #endif

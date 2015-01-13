@@ -260,10 +260,10 @@ static LiVESWidget* create_warn_dialog (int warn_mask_number, LiVESWindow *trans
   lives_widget_set_can_focus_and_default (warning_cancelbutton);
 
   lives_widget_add_accelerator (warning_cancelbutton, "activate", accel_group,
-			      LIVES_KEY_Escape, (GdkModifierType)0, (LiVESAccelFlags)0);
+			      LIVES_KEY_Escape, (LiVESXModifierType)0, (LiVESAccelFlags)0);
 
   lives_widget_add_accelerator (warning_okbutton, "activate", accel_group,
-			      LIVES_KEY_Return, (GdkModifierType)0, (LiVESAccelFlags)0);
+			      LIVES_KEY_Return, (LiVESXModifierType)0, (LiVESAccelFlags)0);
 
   lives_widget_set_can_focus_and_default (warning_okbutton);
   lives_widget_grab_default (warning_okbutton);
@@ -894,8 +894,8 @@ static void cancel_process(boolean visible) {
     if (mainw->preview_box!=NULL&&!mainw->preview) lives_widget_set_tooltip_text( mainw->p_playbutton,_ ("Play all"));
     if (accelerators_swapped) {
       if (!mainw->preview) lives_widget_set_tooltip_text( mainw->m_playbutton,_ ("Play all"));
-      lives_widget_remove_accelerator (cfile->proc_ptr->preview_button, mainw->accel_group, LIVES_KEY_p, (GdkModifierType)0);
-      lives_widget_add_accelerator (mainw->playall, "activate", mainw->accel_group, LIVES_KEY_p, (GdkModifierType)0, 
+      lives_widget_remove_accelerator (cfile->proc_ptr->preview_button, mainw->accel_group, LIVES_KEY_p, (LiVESXModifierType)0);
+      lives_widget_add_accelerator (mainw->playall, "activate", mainw->accel_group, LIVES_KEY_p, (LiVESXModifierType)0, 
 				  LIVES_ACCEL_VISIBLE);
     }
     if (cfile->proc_ptr!=NULL) {
@@ -1511,9 +1511,9 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const gchar *te
 			 (prefs->audio_player==AUD_PLAYER_PULSE&&mainw->pulsed!=NULL))&&mainw->playing_file==-1) {
       if (mainw->preview_box!=NULL) lives_widget_set_tooltip_text( mainw->p_playbutton,_ ("Preview"));
       lives_widget_set_tooltip_text( mainw->m_playbutton,_ ("Preview"));
-      lives_widget_remove_accelerator (mainw->playall, mainw->accel_group, LIVES_KEY_p, (GdkModifierType)0);
+      lives_widget_remove_accelerator (mainw->playall, mainw->accel_group, LIVES_KEY_p, (LiVESXModifierType)0);
       lives_widget_add_accelerator (cfile->proc_ptr->preview_button, "clicked", mainw->accel_group, LIVES_KEY_p,
-				  (GdkModifierType)0, (LiVESAccelFlags)0);
+				  (LiVESXModifierType)0, (LiVESAccelFlags)0);
       accelerators_swapped=TRUE;
     }
 
@@ -1743,9 +1743,9 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const gchar *te
 	lives_widget_grab_default (cfile->proc_ptr->preview_button);
 	if (mainw->preview_box!=NULL) lives_widget_set_tooltip_text( mainw->p_playbutton,_ ("Preview"));
 	lives_widget_set_tooltip_text( mainw->m_playbutton,_ ("Preview"));
-	lives_widget_remove_accelerator (mainw->playall, mainw->accel_group, LIVES_KEY_p, (GdkModifierType)0);
+	lives_widget_remove_accelerator (mainw->playall, mainw->accel_group, LIVES_KEY_p, (LiVESXModifierType)0);
 	lives_widget_add_accelerator (cfile->proc_ptr->preview_button, "clicked", mainw->accel_group, LIVES_KEY_p,
-				    (GdkModifierType)0, (LiVESAccelFlags)0);
+				    (LiVESXModifierType)0, (LiVESAccelFlags)0);
 	accelerators_swapped=TRUE;
       }
     }
@@ -1815,8 +1815,8 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const gchar *te
 									 _("Play all"));
     if (accelerators_swapped) {
       if (!mainw->preview) lives_widget_set_tooltip_text( mainw->m_playbutton,_ ("Play all"));
-      lives_widget_remove_accelerator (cfile->proc_ptr->preview_button, mainw->accel_group, LIVES_KEY_p, (GdkModifierType)0);
-      lives_widget_add_accelerator (mainw->playall, "activate", mainw->accel_group, LIVES_KEY_p, (GdkModifierType)0,
+      lives_widget_remove_accelerator (cfile->proc_ptr->preview_button, mainw->accel_group, LIVES_KEY_p, (LiVESXModifierType)0);
+      lives_widget_add_accelerator (mainw->playall, "activate", mainw->accel_group, LIVES_KEY_p, (LiVESXModifierType)0,
 				  LIVES_ACCEL_VISIBLE);
       accelerators_swapped=FALSE;
     }

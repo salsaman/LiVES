@@ -50,7 +50,7 @@ void init_special (void);
 
 void add_to_special (const gchar *special_string, lives_rfx_t *);
 
-void check_for_special (lives_rfx_t *, lives_param_t *param, GtkBox *);
+void check_for_special (lives_rfx_t *, lives_param_t *param, LiVESBox *);
 
 void fd_connect_spinbutton(lives_rfx_t *);
 

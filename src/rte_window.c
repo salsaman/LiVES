@@ -1973,7 +1973,7 @@ enum {
 
 
 
-void fx_changed (GtkComboBox *combo, gpointer user_data) {
+void fx_changed (LiVESCombo *combo, gpointer user_data) {
   LiVESTreeIter iter1;
   LiVESTreeModel *model;
 
@@ -2231,7 +2231,7 @@ LiVESWidget * create_rte_window (void) {
   lives_table_set_col_spacings (LIVES_TABLE (table), 4*widget_opts.scale);
 
   // dummy button for "no grab", we dont show this...there is a button instead
-  dummy_radio = gtk_radio_button_new (grab_group);
+  dummy_radio = lives_radio_button_new (grab_group);
   grab_group = lives_radio_button_get_group (LIVES_RADIO_BUTTON (dummy_radio));
 
   name_list=weed_get_all_names(FX_LIST_NAME);
@@ -2412,7 +2412,7 @@ LiVESWidget * create_rte_window (void) {
   lives_window_add_accel_group (LIVES_WINDOW (rte_window), rtew_accel_group);
 
   lives_widget_add_accelerator (ok_button, "activate", rtew_accel_group,
-                              LIVES_KEY_Escape, (GdkModifierType)0, (LiVESAccelFlags)0);
+                              LIVES_KEY_Escape, (LiVESXModifierType)0, (LiVESAccelFlags)0);
 
   lives_signal_connect (LIVES_GUI_OBJECT (rte_window), "delete_event",
 		    LIVES_GUI_CALLBACK (on_rtew_ok_clicked),

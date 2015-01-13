@@ -2153,7 +2153,7 @@ LiVESWidget *events_rec_dialog (boolean allow_mt) {
 
   accel_group = LIVES_ACCEL_GROUP(lives_accel_group_new ());
   lives_widget_add_accelerator (cancelbutton, "activate", accel_group,
-                              LIVES_KEY_Escape, (GdkModifierType)0, (LiVESAccelFlags)0);
+                              LIVES_KEY_Escape, (LiVESXModifierType)0, (LiVESAccelFlags)0);
 
   lives_window_add_accel_group (LIVES_WINDOW (e_rec_dialog), accel_group);
 
@@ -4969,7 +4969,7 @@ LiVESWidget *create_event_list_dialog (weed_plant_t *event_list, weed_timecode_t
 		    NULL);
 
   lives_widget_add_accelerator (ok_button, "activate", accel_group,
-			      LIVES_KEY_Escape,  (GdkModifierType)0, (LiVESAccelFlags)0);
+			      LIVES_KEY_Escape,  (LiVESXModifierType)0, (LiVESAccelFlags)0);
 
   if (prefs->gui_monitor!=0) {
     int xcen=mainw->mgeom[prefs->gui_monitor-1].x+
@@ -5178,8 +5178,8 @@ render_details *create_render_details (int type) {
 			  rdet);
   
   // TODO
-  rdet->pertrack_checkbutton = gtk_check_button_new ();
-  rdet->backaudio_checkbutton = gtk_check_button_new ();
+  rdet->pertrack_checkbutton = lives_check_button_new ();
+  rdet->backaudio_checkbutton = lives_check_button_new ();
   
   if (type==3) resaudw=create_resaudw(3,rdet,top_vbox);
   else if (type!=1) resaudw=create_resaudw(10,rdet,top_vbox);
@@ -5385,7 +5385,7 @@ render_details *create_render_details (int type) {
   lives_widget_grab_default (rdet->okbutton);
 
   lives_widget_add_accelerator (cancelbutton, "activate", rdet_accel_group,
-                              LIVES_KEY_Escape, (GdkModifierType)0, (LiVESAccelFlags)0);
+                              LIVES_KEY_Escape, (LiVESXModifierType)0, (LiVESAccelFlags)0);
 
 
   lives_widget_show_all (rdet->dialog);

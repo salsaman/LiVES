@@ -550,7 +550,7 @@ typedef struct {
   LiVESWidget *ladspa_entry;
   LiVESWidget *cdda_hbox;
   LiVESWidget *midi_hbox;
-  GtkTreeSelection *selection;
+  LiVESTreeSelection *selection;
   boolean needs_restart;
 } _prefsw;
 
@@ -597,25 +597,25 @@ _future_prefs *future_prefs;
 _prefsw *prefsw;
 
 void set_acodec_list_from_allowed (_prefsw *, render_details *);
-void  rdet_acodec_changed (GtkComboBox *acodec_combo, gpointer user_data);
+void  rdet_acodec_changed (LiVESCombo *acodec_combo, gpointer user_data);
 
 _prefsw* create_prefs_dialog (void);
 
 boolean on_prefs_delete_event (LiVESWidget *, GdkEvent *, gpointer prefsw);
 
-void on_preferences_activate (GtkMenuItem *, gpointer);
+void on_preferences_activate (LiVESMenuItem *, gpointer);
 
-void on_prefs_close_clicked (GtkButton *, gpointer);
+void on_prefs_close_clicked (LiVESButton *, gpointer);
 
-void on_prefs_revert_clicked (GtkButton *, gpointer);
+void on_prefs_revert_clicked (LiVESButton *, gpointer);
 
 void set_vpp(boolean set_in_prefs);
 
-void on_prefDomainChanged(GtkTreeSelection *, gpointer);
+void on_prefDomainChanged(LiVESTreeSelection *, gpointer);
 
-void populate_combo_box(GtkComboBox *combo, GList *data);
+void populate_combo_box(LiVESCombo *, GList *data);
 
-void set_combo_box_active_string(GtkComboBox *, gchar *active_str);
+void set_combo_box_active_string(LiVESCombo *, gchar *active_str);
 
 void prefsw_set_astream_settings(_vid_playback_plugin *);
 void prefsw_set_rec_after_settings(_vid_playback_plugin *);

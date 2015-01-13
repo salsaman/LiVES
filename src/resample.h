@@ -60,8 +60,8 @@ void create_new_pb_speed (gshort type);
 /// type 2 : show new
 _resaudw* create_resaudw (gshort type, render_details *rdet, LiVESWidget *top_vbox);
 
-void on_change_speed_activate (GtkMenuItem *, gpointer);
-void on_change_speed_ok_clicked (GtkButton *, gpointer);
+void on_change_speed_activate (LiVESMenuItem *, gpointer);
+void on_change_speed_ok_clicked (LiVESButton *, gpointer);
 
 gboolean auto_resample_resize (gint width, gint height, gdouble fps, gint fps_num, 
 			       gint fps_denom, gint arate, gint asigned, gboolean swap_endian);

@@ -1342,7 +1342,7 @@ _resaudw *create_resaudw (gshort type, render_details *rdet, LiVESWidget *top_vb
       if (rdet!=NULL) lives_toggle_button_set_active (LIVES_TOGGLE_BUTTON (resaudw->aud_checkbutton), rdet->achans>0);
       else lives_toggle_button_set_active (LIVES_TOGGLE_BUTTON (resaudw->aud_checkbutton), prefs->mt_def_achans>0);
     }
-    else resaudw->aud_checkbutton = gtk_check_button_new ();
+    else resaudw->aud_checkbutton = lives_check_button_new ();
 
     hbox2 = lives_hbox_new (FALSE, 0);
     lives_box_pack_start (LIVES_BOX (vbox2), hbox2, FALSE, FALSE, widget_opts.packing_height);
@@ -1576,7 +1576,7 @@ _resaudw *create_resaudw (gshort type, render_details *rdet, LiVESWidget *top_vb
     lives_widget_set_can_focus_and_default (cancelbutton);
     
     if (accel_group!=NULL) lives_widget_add_accelerator (cancelbutton, "activate", accel_group,
-						       LIVES_KEY_Escape, (GdkModifierType)0, (LiVESAccelFlags)0);
+						       LIVES_KEY_Escape, (LiVESXModifierType)0, (LiVESAccelFlags)0);
     
       
     okbutton = lives_button_new_from_stock (LIVES_STOCK_OK);
@@ -1755,7 +1755,7 @@ void create_new_pb_speed (short type) {
   lives_widget_set_can_focus (cancelbutton,TRUE);
 
   lives_widget_add_accelerator (cancelbutton, "activate", accel_group,
-                              LIVES_KEY_Escape, (GdkModifierType)0, (LiVESAccelFlags)0);
+                              LIVES_KEY_Escape, (LiVESXModifierType)0, (LiVESAccelFlags)0);
 
   change_pb_ok = lives_button_new_from_stock (LIVES_STOCK_OK);
   lives_dialog_add_action_widget (LIVES_DIALOG (new_pb_speed), change_pb_ok, LIVES_RESPONSE_OK);

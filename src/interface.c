@@ -286,7 +286,7 @@ xprocess * create_processing (const gchar *text) {
   lives_widget_set_can_focus_and_default (procw->cancel_button);
 
   lives_widget_add_accelerator (procw->cancel_button, "activate", accel_group,
-                              LIVES_KEY_Escape, (GdkModifierType)0, (LiVESAccelFlags)0);
+                              LIVES_KEY_Escape, (LiVESXModifierType)0, (LiVESAccelFlags)0);
 
   lives_signal_connect (LIVES_GUI_OBJECT (procw->stop_button), "clicked",
 		    LIVES_GUI_CALLBACK (on_stop_clicked),
@@ -580,7 +580,7 @@ lives_clipinfo_t *create_clip_info_window (int audio_channels, boolean is_mt) {
   lives_window_add_accel_group (LIVES_WINDOW (filew->dialog), accel_group);
 
   lives_widget_add_accelerator (okbutton, "activate", accel_group,
-                              LIVES_KEY_Escape, (GdkModifierType)0, (LiVESAccelFlags)0);
+                              LIVES_KEY_Escape, (LiVESXModifierType)0, (LiVESAccelFlags)0);
 
 
   lives_widget_show_all(filew->dialog);
@@ -806,7 +806,7 @@ LiVESWidget* create_info_error_dialog (const gchar *text, boolean is_blocking, i
 		    NULL);
 
   lives_widget_add_accelerator (info_ok_button, "activate", accel_group,
-			      LIVES_KEY_Return, (GdkModifierType)0, (LiVESAccelFlags)0);
+			      LIVES_KEY_Return, (LiVESXModifierType)0, (LiVESAccelFlags)0);
 
 
 
@@ -1064,10 +1064,10 @@ _insertw* create_insert_dialog (void) {
 			  GINT_TO_POINTER (1));
 
   lives_widget_add_accelerator (cancelbutton, "activate", accel_group,
-                              LIVES_KEY_Escape,  (GdkModifierType)0, (LiVESAccelFlags)0);
+                              LIVES_KEY_Escape,  (LiVESXModifierType)0, (LiVESAccelFlags)0);
 
   lives_widget_add_accelerator (okbutton, "activate", accel_group,
-                              LIVES_KEY_Return,  (GdkModifierType)0, (LiVESAccelFlags)0);
+                              LIVES_KEY_Return,  (LiVESXModifierType)0, (LiVESAccelFlags)0);
 
   lives_widget_show_all(insertw->insert_dialog);
 
@@ -1316,7 +1316,7 @@ _entryw* create_location_dialog (int type) {
 
 
   lives_widget_add_accelerator (cancelbutton, "activate", accel_group,
-                              LIVES_KEY_Escape, (GdkModifierType)0, (LiVESAccelFlags)0);
+                              LIVES_KEY_Escape, (LiVESXModifierType)0, (LiVESAccelFlags)0);
 
   lives_widget_show_all(locw->dialog);
 
@@ -1498,7 +1498,7 @@ _entryw* create_rename_dialog (int type) {
   lives_widget_set_can_focus_and_default (cancelbutton);
 
   lives_widget_add_accelerator (cancelbutton, "activate", accel_group,
-			      LIVES_KEY_Escape, (GdkModifierType)0, (LiVESAccelFlags)0);
+			      LIVES_KEY_Escape, (LiVESXModifierType)0, (LiVESAccelFlags)0);
 
   if (type==6) {
     okbutton = lives_button_new_from_stock (LIVES_STOCK_GO_FORWARD);
@@ -1529,7 +1529,7 @@ _entryw* create_rename_dialog (int type) {
 
 
   lives_widget_add_accelerator (cancelbutton, "activate", accel_group,
-                              LIVES_KEY_Escape, (GdkModifierType)0, (LiVESAccelFlags)0);
+                              LIVES_KEY_Escape, (LiVESXModifierType)0, (LiVESAccelFlags)0);
 
   lives_widget_show_all(renamew->dialog);
 
@@ -1927,11 +1927,11 @@ LiVESWidget* create_cdtrack_dialog (int type, gpointer user_data) {
   lives_widget_grab_default (okbutton);
 
   lives_widget_add_accelerator (cancelbutton, "activate", accel_group,
-                              LIVES_KEY_Escape, (GdkModifierType)0, (LiVESAccelFlags)0);
+                              LIVES_KEY_Escape, (LiVESXModifierType)0, (LiVESAccelFlags)0);
 
   
   lives_widget_add_accelerator (okbutton, "activate", accel_group,
-                              LIVES_KEY_Return, (GdkModifierType)0, (LiVESAccelFlags)0);
+                              LIVES_KEY_Return, (LiVESXModifierType)0, (LiVESAccelFlags)0);
 
   if (type!=4&&type!=5) {
     lives_signal_connect (LIVES_GUI_OBJECT (cancelbutton), "clicked",
@@ -2278,7 +2278,7 @@ gchar *choose_file(gchar *dir, gchar *fname, gchar **filt, LiVESFileChooserActio
 
   g_free(mytitle);
 
-  gtk_file_chooser_set_local_only(GTK_FILE_CHOOSER(chooser),TRUE);
+  gtk_file_chooser_set_local_only(LIVES_FILE_CHOOSER(chooser),TRUE);
 
 
   if (palette->style&STYLE_1) {
@@ -2287,24 +2287,24 @@ gchar *choose_file(gchar *dir, gchar *fname, gchar **filt, LiVESFileChooserActio
   }
 
   if (dir!=NULL) {
-    gtk_file_chooser_set_current_folder(GTK_FILE_CHOOSER(chooser),dir);
-    gtk_file_chooser_add_shortcut_folder(GTK_FILE_CHOOSER(chooser),dir,NULL);
+    gtk_file_chooser_set_current_folder(LIVES_FILE_CHOOSER(chooser),dir);
+    gtk_file_chooser_add_shortcut_folder(LIVES_FILE_CHOOSER(chooser),dir,NULL);
   }
 
   if (filt!=NULL) {
     filter=gtk_file_filter_new();
     gtk_file_filter_add_pattern(filter,filt[0]);
     for (i=1;filt[i]!=NULL;i++) gtk_file_filter_add_pattern(filter,filt[i]);
-    gtk_file_chooser_set_filter(GTK_FILE_CHOOSER(chooser),filter);
+    gtk_file_chooser_set_filter(LIVES_FILE_CHOOSER(chooser),filter);
     if (fname==NULL&&i==1&&act==LIVES_FILE_CHOOSER_ACTION_SAVE) 
-      gtk_file_chooser_set_current_name(GTK_FILE_CHOOSER(chooser),filt[0]); //utf-8
+      gtk_file_chooser_set_current_name(LIVES_FILE_CHOOSER(chooser),filt[0]); //utf-8
   }
 
   if (fname!=NULL) {
-    gtk_file_chooser_set_current_name(GTK_FILE_CHOOSER(chooser),fname); // utf-8
+    gtk_file_chooser_set_current_name(LIVES_FILE_CHOOSER(chooser),fname); // utf-8
     if (fname!=NULL&&dir!=NULL) {
       gchar *ffname=g_build_filename(dir,fname,NULL);
-      gtk_file_chooser_select_filename(GTK_FILE_CHOOSER(chooser),ffname); // must be dir and file
+      gtk_file_chooser_select_filename(LIVES_FILE_CHOOSER(chooser),ffname); // must be dir and file
       g_free(ffname);
     }
   }
@@ -2332,13 +2332,13 @@ gchar *choose_file(gchar *dir, gchar *fname, gchar **filt, LiVESFileChooserActio
     return (gchar *)chooser; // kludge to allow custom adding of extra widgets
   }
 
-  if (extra_widget!=NULL) gtk_file_chooser_set_extra_widget(GTK_FILE_CHOOSER(chooser),extra_widget);
+  if (extra_widget!=NULL) gtk_file_chooser_set_extra_widget(LIVES_FILE_CHOOSER(chooser),extra_widget);
 
  rundlg:
   
   if ((response=lives_dialog_run(LIVES_DIALOG(chooser)))!=LIVES_RESPONSE_CANCEL) {
     gchar *tmp;
-    filename=g_filename_to_utf8((tmp=lives_file_chooser_get_filename(GTK_FILE_CHOOSER(chooser))),-1,NULL,NULL,NULL);
+    filename=g_filename_to_utf8((tmp=lives_file_chooser_get_filename(LIVES_FILE_CHOOSER(chooser))),-1,NULL,NULL,NULL);
     g_free(tmp);
   }
 
@@ -2363,19 +2363,19 @@ static void chooser_response(LiVESDialog *dialog, int response, gpointer user_da
   if (response!=LIVES_RESPONSE_CANCEL) {
     switch (type) {
     case 1:
-      on_ok_filesel_open_clicked(GTK_FILE_CHOOSER(dialog),NULL);
+      on_ok_filesel_open_clicked(LIVES_FILE_CHOOSER(dialog),NULL);
       break;
     case 2:
-      on_open_new_audio_clicked(GTK_FILE_CHOOSER(dialog),NULL);
+      on_open_new_audio_clicked(LIVES_FILE_CHOOSER(dialog),NULL);
       break;
     case 3:
-      on_ok_file_open_clicked(GTK_FILE_CHOOSER(dialog),NULL);
+      on_ok_file_open_clicked(LIVES_FILE_CHOOSER(dialog),NULL);
       break;
     case 4:
-      //on_xmms_ok_clicked(GTK_FILE_CHOOSER(dialog),NULL);
+      //on_xmms_ok_clicked(LIVES_FILE_CHOOSER(dialog),NULL);
       break;
     case 5:
-      on_ok_append_audio_clicked(GTK_FILE_CHOOSER(dialog),NULL);
+      on_ok_append_audio_clicked(LIVES_FILE_CHOOSER(dialog),NULL);
       break;
     default:
       end_fs_preview();
@@ -2402,7 +2402,7 @@ LiVESWidget *choose_file_with_preview (gchar *dir, const gchar *title, int previ
 
   chooser=(LiVESWidget *)choose_file(dir,NULL,NULL,LIVES_FILE_CHOOSER_ACTION_OPEN,title,mainw->LiVES);
   
-  if (preview_type==3) gtk_file_chooser_set_select_multiple(GTK_FILE_CHOOSER(chooser),TRUE);
+  if (preview_type==3) gtk_file_chooser_set_select_multiple(LIVES_FILE_CHOOSER(chooser),TRUE);
 
   widget_add_preview(chooser,LIVES_BOX(lives_dialog_get_content_area(LIVES_DIALOG(chooser))),
 		     LIVES_BOX(lives_dialog_get_content_area(LIVES_DIALOG(chooser))),
@@ -2528,7 +2528,7 @@ _entryw* create_cds_dialog (int type) {
   cancelbutton = lives_button_new_from_stock (LIVES_STOCK_CANCEL);
   lives_dialog_add_action_widget (LIVES_DIALOG (cdsw->dialog), cancelbutton, 0);
   lives_widget_add_accelerator (cancelbutton, "activate", accel_group,
-                              LIVES_KEY_Escape, (GdkModifierType)0, (LiVESAccelFlags)0);
+                              LIVES_KEY_Escape, (LiVESXModifierType)0, (LiVESAccelFlags)0);
 
   discardbutton = lives_button_new_from_stock (LIVES_STOCK_DELETE);
   lives_dialog_add_action_widget (LIVES_DIALOG (cdsw->dialog), discardbutton, 1+(type==2));

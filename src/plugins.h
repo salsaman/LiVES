@@ -581,8 +581,8 @@ typedef struct {
   lives_rfx_t *rfx;
 } _vppaw;
 
-_vppaw *on_vpp_advanced_clicked (GtkButton *, gpointer);
-void on_decplug_advanced_clicked (GtkButton *button, gpointer user_data);
+_vppaw *on_vpp_advanced_clicked (LiVESButton *, gpointer);
+void on_decplug_advanced_clicked (LiVESButton *button, gpointer user_data);
 
 
 /// for realtime effects, see effects-weed.h

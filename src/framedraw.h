@@ -13,7 +13,7 @@
 #define MAX_PRE_X 320
 #define MAX_PRE_Y 240
 
-// internal padding in pixels for GtkFrame
+// internal padding in pixels for LiVESFrame
 #define FD_HT_ADJ 12
 
 

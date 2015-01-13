@@ -52,7 +52,7 @@ static boolean switch_clip_cb (LiVESWidget *eventbox, LiVESXEventButton *event, 
   return FALSE;
 }
 
-static void ce_thumbs_fx_changed (GtkComboBox *combo, gpointer user_data) {
+static void ce_thumbs_fx_changed (LiVESCombo *combo, gpointer user_data) {
   // callback after user switches fx via combo 
   int key=LIVES_POINTER_TO_INT(user_data);
   int mode,cmode;

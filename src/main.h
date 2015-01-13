@@ -836,34 +836,34 @@ LiVESWidget* create_cdtrack_dialog (int type, gpointer user_data);
 LiVESTextView *create_output_textview(void);
 gchar *choose_file(gchar *dir, gchar *fname, gchar **filt, LiVESFileChooserAction act, const char *title, LiVESWidget *extra);
 LiVESWidget *choose_file_with_preview (gchar *dir, const gchar *title, int preview_type);
-void add_suffix_check(GtkBox *box, const gchar *ext);
+void add_suffix_check(LiVESBox *box, const gchar *ext);
 
 
 // dialogs.c
 boolean do_progress_dialog(boolean visible, boolean cancellable, const gchar *text);
 boolean do_warning_dialog(const gchar *text);
 boolean do_warning_dialog_with_check(const gchar *text, int warn_mask_number);
-boolean do_warning_dialog_with_check_transient(const gchar *text, int warn_mask_number, GtkWindow *transient);
+boolean do_warning_dialog_with_check_transient(const gchar *text, int warn_mask_number, LiVESWindow *transient);
 boolean do_yesno_dialog(const gchar *text);
 boolean do_yesno_dialog_with_check (const gchar *text, int warn_mask_number);
-boolean do_yesno_dialog_with_check_transient(const gchar *text, int warn_mask_number, GtkWindow *transient);
+boolean do_yesno_dialog_with_check_transient(const gchar *text, int warn_mask_number, LiVESWindow *transient);
 boolean do_yesno_dialog_with_check(const gchar *text, int warn_mask_number);
-boolean do_yesno_dialog_with_check_transient(const gchar *text, int warn_mask_number, GtkWindow *transient);
-int do_abort_cancel_retry_dialog(const gchar *text, GtkWindow *transient) WARN_UNUSED;
+boolean do_yesno_dialog_with_check_transient(const gchar *text, int warn_mask_number, LiVESWindow *transient);
+int do_abort_cancel_retry_dialog(const gchar *text, LiVESWindow *transient) WARN_UNUSED;
 int do_error_dialog(const gchar *text);
 int do_info_dialog(const gchar *text);
 int do_error_dialog_with_check(const gchar *text, int warn_mask_number);
 int do_blocking_error_dialog(const gchar *text);
 int do_blocking_info_dialog(const gchar *text);
 int do_error_dialog_with_check_transient(const gchar *text, boolean is_blocking, int warn_mask_number, 
-					 GtkWindow *transient);
-int do_info_dialog_with_transient(const gchar *text, boolean is_blocking, GtkWindow *transient);
+					 LiVESWindow *transient);
+int do_info_dialog_with_transient(const gchar *text, boolean is_blocking, LiVESWindow *transient);
 
 
 void do_system_failed_error(const char *com, int retval, const char *addinfo);
-int do_write_failed_error_s_with_retry(const gchar *fname, const gchar *errtext, GtkWindow *transient) WARN_UNUSED;
+int do_write_failed_error_s_with_retry(const gchar *fname, const gchar *errtext, LiVESWindow *transient) WARN_UNUSED;
 void do_write_failed_error_s(const char *filename, const char *addinfo);
-int do_read_failed_error_s_with_retry(const gchar *fname, const gchar *errtext, GtkWindow *transient) WARN_UNUSED;
+int do_read_failed_error_s_with_retry(const gchar *fname, const gchar *errtext, LiVESWindow *transient) WARN_UNUSED;
 void do_read_failed_error_s(const char *filename, const char *addinfo);
 boolean do_header_write_error(int clip);
 int do_header_read_error_with_retry(int clip) WARN_UNUSED;
@@ -882,7 +882,7 @@ gchar *get_new_install_msg(void);
 
 boolean ask_permission_dialog(int what);
 boolean do_abort_check(void);
-void add_warn_check (GtkBox *box, int warn_mask_number);
+void add_warn_check (LiVESBox *box, int warn_mask_number);
 void do_memory_error_dialog (void);
 void too_many_files(void);
 void tempdir_warning (void);
@@ -963,7 +963,7 @@ boolean process_one (boolean visible);
 void do_threaded_dialog(gchar *translated_text, boolean has_cancel);
 void end_threaded_dialog(void);
 void threaded_dialog_spin (void);
-void response_ok (GtkButton *button, gpointer user_data);
+void response_ok (LiVESButton *button, gpointer user_data);
 void pump_io_chan(GIOChannel *iochan);
 
 void do_splash_progress(void);
@@ -994,7 +994,7 @@ boolean get_handle_from_info_file(int index);
 void create_cfile(void);
 void save_file (int clip, int start, int end, const char *filename);
 void play_file (void);
-void save_frame (GtkMenuItem *menuitem, gpointer user_data);
+void save_frame (LiVESMenuItem *menuitem, gpointer user_data);
 boolean save_frame_inner(int clip, int frame, const gchar *file_name, int width, int height, boolean from_osc);
 void wait_for_stop (const gchar *stop_command);
 boolean save_clip_values(int which_file);
@@ -1038,7 +1038,7 @@ boolean startup_message_info(const gchar *msg);
 boolean startup_message_nonfatal_dismissable(const gchar *msg, int warning_mask);
 capability *get_capabilities(void);
 void get_monitors(void);
-void set_ce_frame_from_pixbuf(GtkImage *image, LiVESPixbuf *pixbuf, lives_painter_t *);
+void set_ce_frame_from_pixbuf(LiVESImage *image, LiVESPixbuf *pixbuf, lives_painter_t *);
 void load_start_image(int frame);
 void load_end_image(int frame);
 void load_preview_image(boolean update_always);
@@ -1272,14 +1272,14 @@ boolean check_encoder_restrictions (boolean get_extension, boolean user_audio, b
 //callbacks.c
 void lives_exit (void);
 void count_opening_frames(void);
-void on_fileread_clicked (GtkFileChooser *, gpointer widget);
+void on_fileread_clicked (LiVESFileChooser *, gpointer widget);
 boolean dirchange_callback (GtkAccelGroup *, GObject *, uint32_t, GdkModifierType, gpointer user_data);
-void on_effects_paused (GtkButton *, gpointer user_data);
-void on_cancel_keep_button_clicked (GtkButton *, gpointer user_data);
+void on_effects_paused (LiVESButton *, gpointer user_data);
+void on_cancel_keep_button_clicked (LiVESButton *, gpointer user_data);
 void on_cleardisk_activate (LiVESWidget *, gpointer user_data);
 void on_cleardisk_advanced_clicked (LiVESWidget *, gpointer user_data);
-void popup_lmap_errors(GtkMenuItem *, gpointer);
-void on_filesel_button_clicked (GtkButton *, gpointer user_data);
+void popup_lmap_errors(LiVESMenuItem *, gpointer);
+void on_filesel_button_clicked (LiVESButton *, gpointer user_data);
 void switch_clip(int type, int newclip);
 void on_details_button_clicked (void);
 
@@ -1345,7 +1345,7 @@ void lives_osc_notify_cancel (void);
 
 // ldvgrab.c
 #ifdef HAVE_LDVGRAB
-void on_open_fw_activate (GtkMenuItem *menuitem, gpointer format);
+void on_open_fw_activate (LiVESMenuItem *menuitem, gpointer format);
 
 #define CAM_FORMAT_DV 0
 #define CAM_FORMAT_HDV 1

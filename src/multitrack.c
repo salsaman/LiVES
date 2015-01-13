@@ -2730,7 +2730,7 @@ void mt_clip_select (lives_mt *mt, boolean scroll) {
 }
 
 
-boolean mt_prevclip (GtkAccelGroup *group, GObject *obj, guint keyval, GdkModifierType mod, gpointer user_data) {
+boolean mt_prevclip (GtkAccelGroup *group, GObject *obj, guint keyval, LiVESXModifierType mod, gpointer user_data) {
   lives_mt *mt=(lives_mt *)user_data;
   mt->clip_selected--;
   polymorph(mt,POLY_CLIPS);
@@ -2738,7 +2738,7 @@ boolean mt_prevclip (GtkAccelGroup *group, GObject *obj, guint keyval, GdkModifi
   return TRUE;
 }
 
-boolean mt_nextclip (GtkAccelGroup *group, GObject *obj, guint keyval, GdkModifierType mod, gpointer user_data) {
+boolean mt_nextclip (GtkAccelGroup *group, GObject *obj, guint keyval, LiVESXModifierType mod, gpointer user_data) {
   lives_mt *mt=(lives_mt *)user_data;
   mt->clip_selected++;
   polymorph(mt,POLY_CLIPS);
@@ -3122,14 +3122,14 @@ void mt_tl_move(lives_mt *mt, double pos_rel) {
 }
 
 
-boolean mt_tlfor (GtkAccelGroup *group, GObject *obj, guint keyval, GdkModifierType mod, gpointer user_data) {
+boolean mt_tlfor (GtkAccelGroup *group, GObject *obj, guint keyval, LiVESXModifierType mod, gpointer user_data) {
   lives_mt *mt=(lives_mt *)user_data;
   mt->fm_edit_event=NULL;
   mt_tl_move(mt,1.);
   return TRUE;
 }
 
-boolean mt_tlfor_frame (GtkAccelGroup *group, GObject *obj, guint keyval, GdkModifierType mod, gpointer user_data) {
+boolean mt_tlfor_frame (GtkAccelGroup *group, GObject *obj, guint keyval, LiVESXModifierType mod, gpointer user_data) {
   lives_mt *mt=(lives_mt *)user_data;
   mt->fm_edit_event=NULL;
   mt_tl_move(mt,1./mt->fps);
@@ -3137,14 +3137,14 @@ boolean mt_tlfor_frame (GtkAccelGroup *group, GObject *obj, guint keyval, GdkMod
 }
 
 
-boolean mt_tlback (GtkAccelGroup *group, GObject *obj, guint keyval, GdkModifierType mod, gpointer user_data) {
+boolean mt_tlback (GtkAccelGroup *group, GObject *obj, guint keyval, LiVESXModifierType mod, gpointer user_data) {
   lives_mt *mt=(lives_mt *)user_data;
   mt->fm_edit_event=NULL;
   mt_tl_move(mt,-1.);
   return TRUE;
 }
 
-boolean mt_tlback_frame (GtkAccelGroup *group, GObject *obj, guint keyval, GdkModifierType mod, gpointer user_data) {
+boolean mt_tlback_frame (GtkAccelGroup *group, GObject *obj, guint keyval, LiVESXModifierType mod, gpointer user_data) {
   lives_mt *mt=(lives_mt *)user_data;
   mt->fm_edit_event=NULL;
   mt_tl_move(mt,-1./mt->fps);
@@ -3220,7 +3220,7 @@ static void scroll_time_by_scrollbar (GtkHScrollbar *sbar, gpointer user_data) {
 }
 
 
-boolean mt_trdown (GtkAccelGroup *group, GObject *obj, guint keyval, GdkModifierType mod, gpointer user_data) {
+boolean mt_trdown (GtkAccelGroup *group, GObject *obj, guint keyval, LiVESXModifierType mod, gpointer user_data) {
   lives_mt *mt=(lives_mt *)user_data;
 
   if (mt->current_track>=0&&mt->opts.pertrack_audio&&!mt->aud_track_selected) {
@@ -3257,7 +3257,7 @@ boolean mt_trdown (GtkAccelGroup *group, GObject *obj, guint keyval, GdkModifier
 }
 
 
-boolean mt_trup (GtkAccelGroup *group, GObject *obj, guint keyval, GdkModifierType mod, gpointer user_data) {
+boolean mt_trup (GtkAccelGroup *group, GObject *obj, guint keyval, LiVESXModifierType mod, gpointer user_data) {
   lives_mt *mt=(lives_mt *)user_data;
   if (mt->current_track==-1||(mt->current_track==0&&!mt->aud_track_selected&&!mt->opts.show_audio)) return TRUE;
 
@@ -6337,7 +6337,7 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
   lives_container_add (LIVES_CONTAINER (menuitem_menu), mt->insert);
 
   lives_widget_add_accelerator (mt->insert, "activate", mt->accel_group,
-                              LIVES_KEY_i, (GdkModifierType)0,
+                              LIVES_KEY_i, (LiVESXModifierType)0,
                               LIVES_ACCEL_VISIBLE);
   lives_widget_add_accelerator (mt->insert, "activate", mt->accel_group,
                               LIVES_KEY_i, LIVES_CONTROL_MASK,
@@ -6412,7 +6412,7 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
 
   mt->playall = lives_image_menu_item_new_with_mnemonic (_("_Play from Timeline Position"));
   lives_widget_add_accelerator (mt->playall, "activate", mt->accel_group,
-                              LIVES_KEY_p, (GdkModifierType)0,
+                              LIVES_KEY_p, (LiVESXModifierType)0,
                               LIVES_ACCEL_VISIBLE);
   lives_widget_set_sensitive (mt->playall, FALSE);
 
@@ -6426,7 +6426,7 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
 
   mt->playsel = lives_image_menu_item_new_with_mnemonic (_("Pla_y selected time only"));
   lives_widget_add_accelerator (mt->playsel, "activate", mt->accel_group,
-                              LIVES_KEY_y, (GdkModifierType)0,
+                              LIVES_KEY_y, (LiVESXModifierType)0,
                               LIVES_ACCEL_VISIBLE);
   lives_container_add (LIVES_CONTAINER (menuitem_menu), mt->playsel);
   lives_widget_set_sensitive (mt->playsel, FALSE);
@@ -6435,7 +6435,7 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
   lives_container_add (LIVES_CONTAINER (menuitem_menu), mt->stop);
   lives_widget_set_sensitive (mt->stop, FALSE);
   lives_widget_add_accelerator (mt->stop, "activate", mt->accel_group,
-                              LIVES_KEY_q, (GdkModifierType)0,
+                              LIVES_KEY_q, (LiVESXModifierType)0,
                               LIVES_ACCEL_VISIBLE);
 
 #if LIVES_HAS_IMAGE_MENU_ITEM
@@ -6454,7 +6454,7 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
   lives_widget_set_sensitive (mt->rewind, FALSE);
 
   lives_widget_add_accelerator (mt->rewind, "activate", mt->accel_group,
-                              LIVES_KEY_w, (GdkModifierType)0,
+                              LIVES_KEY_w, (LiVESXModifierType)0,
                               LIVES_ACCEL_VISIBLE);
 
   separator = lives_menu_item_new ();
@@ -6466,7 +6466,7 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
   lives_check_menu_item_set_active(LIVES_CHECK_MENU_ITEM(full_screen),mainw->fs);
 
   lives_widget_add_accelerator (full_screen, "activate", mt->accel_group,
-                              LIVES_KEY_f, (GdkModifierType)0,
+                              LIVES_KEY_f, (LiVESXModifierType)0,
                               LIVES_ACCEL_VISIBLE);
 
   mt->sepwin = lives_check_menu_item_new_with_mnemonic (_("Play in _Separate Window"));
@@ -6474,7 +6474,7 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
   lives_check_menu_item_set_active(LIVES_CHECK_MENU_ITEM(mt->sepwin),mainw->sep_win);
 
   lives_widget_add_accelerator (mt->sepwin, "activate", mt->accel_group,
-                              LIVES_KEY_s, (GdkModifierType)0,
+                              LIVES_KEY_s, (LiVESXModifierType)0,
                               LIVES_ACCEL_VISIBLE);
 
   mt->loop_continue = lives_check_menu_item_new_with_mnemonic (_("L_oop Continuously"));
@@ -6482,7 +6482,7 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
   lives_check_menu_item_set_active(LIVES_CHECK_MENU_ITEM(mt->loop_continue),mainw->loop_cont);
 
   lives_widget_add_accelerator (mt->loop_continue, "activate", mt->accel_group,
-                              LIVES_KEY_o, (GdkModifierType)0,
+                              LIVES_KEY_o, (LiVESXModifierType)0,
                               LIVES_ACCEL_VISIBLE);
 
   mt->mute_audio = lives_check_menu_item_new_with_mnemonic (_("_Mute"));
@@ -6490,7 +6490,7 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
   lives_check_menu_item_set_active(LIVES_CHECK_MENU_ITEM(mt->mute_audio),mainw->mute);
 
   lives_widget_add_accelerator (mt->mute_audio, "activate", mt->accel_group,
-                              LIVES_KEY_z, (GdkModifierType)0,
+                              LIVES_KEY_z, (LiVESXModifierType)0,
                               LIVES_ACCEL_VISIBLE);
 
 
@@ -6917,7 +6917,7 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
   lives_container_add (LIVES_CONTAINER (menuitem_menu), mt->add_vid_front);
 
   lives_widget_add_accelerator (mt->add_vid_front, "activate", mt->accel_group,
-                              LIVES_KEY_t, (GdkModifierType)(LIVES_CONTROL_MASK|LIVES_SHIFT_MASK),
+                              LIVES_KEY_t, (LiVESXModifierType)(LIVES_CONTROL_MASK|LIVES_SHIFT_MASK),
                               LIVES_ACCEL_VISIBLE);
 
 
@@ -6934,7 +6934,7 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
 		    (gpointer)mt);
 
   lives_widget_add_accelerator (menuitem, "activate", mt->accel_group,
-                              LIVES_KEY_s, (GdkModifierType)LIVES_CONTROL_MASK,
+                              LIVES_KEY_s, (LiVESXModifierType)LIVES_CONTROL_MASK,
                               LIVES_ACCEL_VISIBLE);
 
 
@@ -7257,14 +7257,14 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
   lives_container_add (LIVES_CONTAINER (menuitem_menu), mt->view_clips);
 
   lives_widget_add_accelerator (mt->view_clips, "activate", mt->accel_group,
-                              LIVES_KEY_c, (GdkModifierType)0,
+                              LIVES_KEY_c, (LiVESXModifierType)0,
                               LIVES_ACCEL_VISIBLE);
 
   mt->view_in_out = lives_menu_item_new_with_mnemonic (_("Block _In/out points"));
   lives_container_add (LIVES_CONTAINER (menuitem_menu), mt->view_in_out);
 
   lives_widget_add_accelerator (mt->view_in_out, "activate", mt->accel_group,
-                              LIVES_KEY_n, (GdkModifierType)0,
+                              LIVES_KEY_n, (LiVESXModifierType)0,
                               LIVES_ACCEL_VISIBLE);
 
   lives_widget_set_sensitive(mt->view_in_out,FALSE);
@@ -7273,7 +7273,7 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
   lives_container_add (LIVES_CONTAINER (menuitem_menu), mt->view_effects);
 
   lives_widget_add_accelerator (mt->view_effects, "activate", mt->accel_group,
-                              LIVES_KEY_e, (GdkModifierType)0,
+                              LIVES_KEY_e, (LiVESXModifierType)0,
                               LIVES_ACCEL_VISIBLE);
 
   show_messages = lives_image_menu_item_new_with_mnemonic (_("Show _Messages"));
@@ -7307,7 +7307,7 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
   lives_container_add (LIVES_CONTAINER (menuitem_menu), view_ctx);
 
   lives_widget_add_accelerator (view_ctx, "activate", mt->accel_group,
-                              LIVES_KEY_d, (GdkModifierType)0,
+                              LIVES_KEY_d, (LiVESXModifierType)0,
                               LIVES_ACCEL_VISIBLE);
 
   mt->change_max_disp = lives_menu_item_new_with_mnemonic (_("Maximum tracks to display..."));
@@ -7325,25 +7325,25 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
   lives_container_add (LIVES_CONTAINER (menuitem_menu), ccursor);
 
   lives_widget_add_accelerator (ccursor, "activate", mt->accel_group,
-                              LIVES_KEY_c, (GdkModifierType)LIVES_CONTROL_MASK,
+                              LIVES_KEY_c, (LiVESXModifierType)LIVES_CONTROL_MASK,
                               LIVES_ACCEL_VISIBLE);
 
   zoom_in = lives_menu_item_new_with_mnemonic (_("_Zoom in"));
   lives_container_add (LIVES_CONTAINER (menuitem_menu), zoom_in);
 
   lives_widget_add_accelerator (zoom_in, "activate", mt->accel_group,
-                              LIVES_KEY_Plus, (GdkModifierType)LIVES_CONTROL_MASK,
+                              LIVES_KEY_Plus, (LiVESXModifierType)LIVES_CONTROL_MASK,
                               LIVES_ACCEL_VISIBLE);
 
   lives_widget_add_accelerator (zoom_in, "activate", mt->accel_group,
-                              LIVES_KEY_Equal, (GdkModifierType)LIVES_CONTROL_MASK,
+                              LIVES_KEY_Equal, (LiVESXModifierType)LIVES_CONTROL_MASK,
                               (LiVESAccelFlags)0);
 
   zoom_out = lives_menu_item_new_with_mnemonic (_("_Zoom out"));
   lives_container_add (LIVES_CONTAINER (menuitem_menu), zoom_out);
 
   lives_widget_add_accelerator (zoom_out, "activate", mt->accel_group,
-                              LIVES_KEY_Minus, (GdkModifierType)LIVES_CONTROL_MASK,
+                              LIVES_KEY_Minus, (LiVESXModifierType)LIVES_CONTROL_MASK,
                               LIVES_ACCEL_VISIBLE);
 
 
@@ -7699,7 +7699,7 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
                       LIVES_GUI_CALLBACK (on_mt_list_fx_activate),
                       (gpointer)mt);
 
-  lives_accel_group_connect (LIVES_ACCEL_GROUP (mt->accel_group), LIVES_KEY_m, (GdkModifierType)0, (LiVESAccelFlags)0, 
+  lives_accel_group_connect (LIVES_ACCEL_GROUP (mt->accel_group), LIVES_KEY_m, (LiVESXModifierType)0, (LiVESAccelFlags)0, 
 			   g_cclosure_new (LIVES_GUI_CALLBACK (mt_mark_callback),(gpointer)mt,NULL));
 
   eventbox=lives_event_box_new();
@@ -10163,7 +10163,7 @@ void add_video_track (lives_mt *mt, boolean behind) {
 #ifdef ENABLE_GIW
   if (!prefs->lamp_buttons) {
 #endif
-    checkbutton = gtk_check_button_new ();
+    checkbutton = lives_check_button_new ();
 #ifdef ENABLE_GIW
   }
   else {
@@ -18273,7 +18273,7 @@ static void add_mark_at(lives_mt *mt, double time) {
 
 
 
-boolean mt_mark_callback (GtkAccelGroup *group, GObject *obj, guint keyval, GdkModifierType mod, gpointer user_data) {
+boolean mt_mark_callback (GtkAccelGroup *group, GObject *obj, guint keyval, LiVESXModifierType mod, gpointer user_data) {
   lives_mt *mt=(lives_mt *)user_data;
   double cur_time;
 
@@ -22092,7 +22092,7 @@ void amixer_show (LiVESButton *button, gpointer user_data) {
   
     
   if (prefs->lamp_buttons) {
-    amixer->inv_checkbutton = gtk_check_button_new_with_label (" ");
+    amixer->inv_checkbutton = lives_check_button_new_with_label (" ");
     gtk_toggle_button_set_mode(LIVES_TOGGLE_BUTTON(amixer->inv_checkbutton),FALSE);
 #if GTK_CHECK_VERSION(3,0,0)
   lives_signal_connect (LIVES_GUI_OBJECT (amixer->inv_checkbutton), LIVES_WIDGET_EVENT_EXPOSE_EVENT,
@@ -22109,7 +22109,7 @@ void amixer_show (LiVESButton *button, gpointer user_data) {
     after_amixer_inv_toggled(LIVES_TOGGLE_BUTTON(amixer->inv_checkbutton),amixer);
 
   }
-  else amixer->inv_checkbutton = gtk_check_button_new ();
+  else amixer->inv_checkbutton = lives_check_button_new ();
 
 
   if (mt->opts.back_audio_tracks>0&&mt->opts.pertrack_audio) {
@@ -22144,7 +22144,7 @@ void amixer_show (LiVESButton *button, gpointer user_data) {
 
 
   if (prefs->lamp_buttons) {
-    amixer->gang_checkbutton = gtk_check_button_new_with_label (" ");
+    amixer->gang_checkbutton = lives_check_button_new_with_label (" ");
     gtk_toggle_button_set_mode(LIVES_TOGGLE_BUTTON(amixer->gang_checkbutton),FALSE);
 #if GTK_CHECK_VERSION(3,0,0)
   lives_signal_connect (LIVES_GUI_OBJECT (amixer->gang_checkbutton), LIVES_WIDGET_EVENT_EXPOSE_EVENT,
@@ -22154,7 +22154,7 @@ void amixer_show (LiVESButton *button, gpointer user_data) {
     lives_widget_set_bg_color(amixer->gang_checkbutton, LIVES_WIDGET_STATE_ACTIVE, &palette->light_green);
     lives_widget_set_bg_color(amixer->gang_checkbutton, LIVES_WIDGET_STATE_NORMAL, &palette->dark_red);
   }
-  else amixer->gang_checkbutton = gtk_check_button_new ();
+  else amixer->gang_checkbutton = lives_check_button_new ();
 
 
   if (mt->opts.pertrack_audio) {
@@ -22203,7 +22203,7 @@ void amixer_show (LiVESButton *button, gpointer user_data) {
 		    (gpointer)mt);
 
   lives_widget_add_accelerator (close_button, "activate", accel_group,
-                              LIVES_KEY_Escape, (GdkModifierType)0, (LiVESAccelFlags)0);
+                              LIVES_KEY_Escape, (LiVESXModifierType)0, (LiVESAccelFlags)0);
 
 
 

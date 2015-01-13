@@ -1442,7 +1442,7 @@ void save_future_prefs(void) {
 }
 
 
-void rdet_acodec_changed (GtkComboBox *acodec_combo, gpointer user_data) {
+void rdet_acodec_changed (LiVESCombo *acodec_combo, gpointer user_data) {
   int listlen=g_list_length (prefs->acodec_list);
   int idx;
   char *audio_codec = lives_combo_get_active_text(acodec_combo);
@@ -4199,7 +4199,7 @@ _prefsw *create_prefs_dialog (void) {
   lives_widget_set_can_focus_and_default (prefsw->closebutton);
 
   lives_widget_add_accelerator (prefsw->closebutton, "activate", accel_group,
-			      LIVES_KEY_Escape, (GdkModifierType)0, (LiVESAccelFlags)0);
+			      LIVES_KEY_Escape, (LiVESXModifierType)0, (LiVESAccelFlags)0);
 
    
   lives_signal_connect(dirbutton1, "clicked", LIVES_GUI_CALLBACK (on_filesel_button_clicked),prefsw->vid_load_dir_entry);

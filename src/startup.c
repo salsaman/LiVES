@@ -399,7 +399,7 @@ boolean do_audio_choice_dialog(short startup_phase) {
   lives_dialog_add_action_widget (LIVES_DIALOG (dialog), cancelbutton, LIVES_RESPONSE_CANCEL);
 
   lives_widget_add_accelerator (cancelbutton, "activate", accel_group,
-                              LIVES_KEY_Escape, (GdkModifierType)0, (LiVESAccelFlags)0);
+                              LIVES_KEY_Escape, (LiVESXModifierType)0, (LiVESAccelFlags)0);
 
   okbutton = lives_button_new_from_stock (LIVES_STOCK_GO_FORWARD);
   lives_button_set_label(LIVES_BUTTON(okbutton),_("_Next"));
@@ -573,7 +573,7 @@ boolean do_startup_tests(boolean tshoot) {
   lives_dialog_add_action_widget (LIVES_DIALOG (dialog), cancelbutton, LIVES_RESPONSE_CANCEL);
 
   lives_widget_add_accelerator (cancelbutton, "activate", accel_group,
-                              LIVES_KEY_Escape, (GdkModifierType)0, (LiVESAccelFlags)0);
+                              LIVES_KEY_Escape, (LiVESXModifierType)0, (LiVESAccelFlags)0);
 
   if (!tshoot) {
     okbutton = lives_button_new_from_stock (LIVES_STOCK_GO_FORWARD);

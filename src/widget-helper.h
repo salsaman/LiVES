@@ -399,6 +399,8 @@ typedef GdkWindow                         LiVESXWindow;
 
 typedef GdkCursor                         LiVESXCursor;
 
+typedef GdkModifierType                   LiVESXModifierType;
+
 typedef GError                            LiVESError;
 
 #ifndef IS_MINGW
@@ -992,9 +994,11 @@ boolean lives_button_set_relief(LiVESButton *, LiVESReliefStyle);
 boolean lives_button_set_image(LiVESButton *, LiVESWidget *image);
 boolean lives_button_set_focus_on_click(LiVESButton *, boolean focus);
 
-
 LiVESWidget *lives_check_button_new(void);
 LiVESWidget *lives_check_button_new_with_label(const char *label);
+
+LiVESWidget *lives_radio_button_new(LiVESSList *group);
+
 LiVESWidget *lives_spin_button_new(LiVESAdjustment *, double climb_rate, uint32_t digits);
 
 int lives_dialog_run(LiVESDialog *);

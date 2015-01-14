@@ -82,7 +82,7 @@ THEORA/VORBIS/OGG (various aspect ratios/frame rates)
 XVID/MP3/AVI (various aspect ratios/frame rates)
 SNOW/MP3/AVI (various aspect ratios/frame rates)
 H.264/MP3/AVI (various aspect ratios/frame rates)
-DIRAC/---/DRC (various aspect ratios/frame rates, no sound)
+DIRAC/VORBIS/MKV (various aspect ratios/frame rates)
 VCD/SVCD/DVD (NTSC and PAL video)
 MNG (no sound)
 Animated GIF (no sound)
@@ -413,6 +413,7 @@ if __name__ == '__main__':
            print 'ml-dirac|EXP Medium-Low Quality Dirac (DIRAC/VORBIS/MKV)' + specs
            print 'mh-dirac|EXP Medium-High Quality Dirac (DIRAC/VORBIS/MKV)' + specs
            print 'hi-dirac|EXP High Quality Dirac (DIRAC/VORBIS/MKV)' + specs
+           print 'll-dirac|EXP Lossless Dirac (DIRAC/VORBIS/MKV)' + specs
 
        if is_installed(mng):
            specs = '|0|none|mng|'

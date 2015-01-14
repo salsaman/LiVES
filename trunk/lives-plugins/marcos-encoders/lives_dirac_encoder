@@ -123,6 +123,9 @@ OPTIONS:
 
 -t type     type of video created. The options here are:
 
+               "ll":   lossless DIRAC file, suitable
+                       for archiving images of any size
+
                "hi":   a very high quality MPEG-4 file, suitable
                        for archiving images of 720x480.
 
@@ -390,6 +393,9 @@ def do_encode():
 		    'dsize=%s,format=i420 -ovc raw -of rawvideo -o ' % aspect
 #    dirac_opts = '-HD1080'
     dirac_opts = ''
+    if vtype == 'll':
+        dirac_opts = ' '.join([dirac_opts, '-lossless'])
+        oggenc_opts = '-q 10'
     if vtype == 'hi':
         dirac_opts = ' '.join([dirac_opts, '-qf 10'])
         oggenc_opts = '-q 9'
@@ -441,6 +447,18 @@ def do_encode():
     all_vars = {}
     all_vars.update(globals())
     all_vars.update(locals())
+
+    if vtype != 'll':
+            if fx == 1920 and fy == 1080:
+                    if ffps == 50.:
+                            dirac_opts = ' '.join([dirac_opts, '-HD1080P50'])
+                    elif ffps == 60.:
+                            dirac_opts = ' '.join([dirac_opts, '-HD1080P60'])
+            if fx == 1024 and fy == 720:
+                    if ffps == 50.:
+                            dirac_opts = ' '.join([dirac_opts, '-HD720P50'])
+                    elif ffps == 60.:
+                            dirac_opts = ' '.join([dirac_opts, '-HD720P60'])
 
     if not quiet:
         print('Creating "%s"-quality Dirac file' % vtype)
@@ -678,7 +696,7 @@ if __name__ == '__main__':
 
     vtype = opts.get('-t', 'ml')
 
-    if vtype not in ['hi', 'mh', 'ml', 'lo']:
+    if vtype not in ['ll', 'hi', 'mh', 'ml', 'lo']:
         print('Invalid video type.')
         raise SystemExit, 1
 

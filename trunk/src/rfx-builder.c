@@ -2885,8 +2885,8 @@ void on_code_clicked (LiVESButton *button, gpointer user_data) {
 
   lives_box_pack_start (LIVES_BOX (dialog_vbox), scrolledwindow, TRUE, TRUE, 0);
 
-  lives_object_ref (gtk_scrolled_window_get_hadjustment (GTK_SCROLLED_WINDOW (scrolledwindow)));
-  lives_object_ref (gtk_scrolled_window_get_vadjustment (GTK_SCROLLED_WINDOW (scrolledwindow)));
+  lives_object_ref (gtk_scrolled_window_get_hadjustment (LIVES_SCROLLED_WINDOW (scrolledwindow)));
+  lives_object_ref (gtk_scrolled_window_get_vadjustment (LIVES_SCROLLED_WINDOW (scrolledwindow)));
 
   lives_text_view_set_editable (LIVES_TEXT_VIEW (rfxbuilder->code_textview), TRUE);
   lives_text_view_set_wrap_mode (LIVES_TEXT_VIEW (rfxbuilder->code_textview), LIVES_WRAP_WORD);
@@ -2896,7 +2896,7 @@ void on_code_clicked (LiVESButton *button, gpointer user_data) {
 
   // TODO !!
   /*  if (glib_major_version>=2&&glib_minor_version>=4) {
-      lives_text_view_set_accepts_tab (GTK_TEXT_VIEW (rfxbuilder->code_textview),TRUE);
+      lives_text_view_set_accepts_tab (LIVES_TEXT_VIEW (rfxbuilder->code_textview),TRUE);
     } */
 
   if (button==LIVES_BUTTON (rfxbuilder->pre_button)) {

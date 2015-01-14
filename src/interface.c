@@ -70,7 +70,7 @@ static LiVESWidget *add_deinterlace_checkbox(GtkBox *for_deint) {
 }
 
 
-static void pv_sel_changed(GtkFileChooser *chooser, gpointer user_data) {
+static void pv_sel_changed(LiVESFileChooser *chooser, gpointer user_data) {
   GSList *slist=lives_file_chooser_get_filenames (chooser);
   LiVESWidget *pbutton=(LiVESWidget *)user_data;
 
@@ -2213,7 +2213,7 @@ _commentsw* create_comments_dialog (lives_clip_t *sfile, gchar *filename) {
 
 gchar last_good_folder[PATH_MAX];
 
-static void chooser_check_dir(GtkFileChooser *chooser, gpointer user_data) {
+static void chooser_check_dir(LiVESFileChooser *chooser, gpointer user_data) {
   gchar *cwd=g_get_current_dir();
   gchar *new_dir=gtk_file_chooser_get_current_folder(chooser);
 
@@ -2264,13 +2264,13 @@ gchar *choose_file(gchar *dir, gchar *fname, gchar **filt, LiVESFileChooserActio
   else mytitle=g_strdup(title);
 
   if (act!=LIVES_FILE_CHOOSER_ACTION_SAVE) 
-    chooser=gtk_file_chooser_dialog_new(mytitle,LIVES_WINDOW(mainw->LiVES),(GtkFileChooserAction)act, 
+    chooser=gtk_file_chooser_dialog_new(mytitle,LIVES_WINDOW(mainw->LiVES),(LiVESFileChooserAction)act, 
 					LIVES_STOCK_LABEL_CANCEL, LIVES_RESPONSE_CANCEL,
 					LIVES_STOCK_LABEL_OPEN, LIVES_RESPONSE_ACCEPT,
 					NULL);
 
   else {
-    chooser=gtk_file_chooser_dialog_new(mytitle,LIVES_WINDOW(mainw->LiVES),(GtkFileChooserAction)act, 
+    chooser=gtk_file_chooser_dialog_new(mytitle,LIVES_WINDOW(mainw->LiVES),(LiVESFileChooserAction)act, 
 					LIVES_STOCK_LABEL_CANCEL, LIVES_RESPONSE_CANCEL,
 					LIVES_STOCK_LABEL_SAVE, LIVES_RESPONSE_ACCEPT,
 					NULL);

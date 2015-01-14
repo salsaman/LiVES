@@ -491,7 +491,7 @@ void lives_osc_cb_play_reverse(void *context, int arglen, const void *vargs, OSC
 
   if (mainw->multitrack!=NULL) return lives_osc_notify_failure();
   if (mainw->current_file<0||((cfile->clip_type!=CLIP_TYPE_DISK&&cfile->clip_type!=CLIP_TYPE_FILE)||mainw->playing_file==-1)) if (mainw->playing_file==-1) lives_osc_notify_failure();
-  dirchange_callback(NULL,NULL,0,(LiVESModifierType)0,LIVES_INT_TO_POINTER(TRUE));
+  dirchange_callback(NULL,NULL,0,(LiVESXModifierType)0,LIVES_INT_TO_POINTER(TRUE));
   lives_osc_notify_success(NULL);
 
 }
@@ -529,8 +529,8 @@ void lives_osc_cb_play_forward (void *context, int arglen, const void *vargs, OS
     mainw->osc_auto=FALSE;
   }
   else if (mainw->current_file>0) {
-    if (cfile->pb_fps<0||(cfile->play_paused&&cfile->freeze_fps<0)) dirchange_callback(NULL,NULL,0,(LiVESModifierType)0,LIVES_INT_TO_POINTER(TRUE));
-    if (cfile->play_paused) freeze_callback(NULL,NULL,0,(LiVESModifierType)0,NULL);
+    if (cfile->pb_fps<0||(cfile->play_paused&&cfile->freeze_fps<0)) dirchange_callback(NULL,NULL,0,(LiVESXModifierType)0,LIVES_INT_TO_POINTER(TRUE));
+    if (cfile->play_paused) freeze_callback(NULL,NULL,0,(LiVESXModifierType)0,NULL);
     lives_osc_notify_success(NULL);
   }
   else lives_osc_notify_failure();
@@ -560,8 +560,8 @@ void lives_osc_cb_play_backward (void *context, int arglen, const void *vargs, O
   }
   else if (mainw->current_file>0) {
     if (cfile->pb_fps>0||(cfile->play_paused&&cfile->freeze_fps>0)) 
-      dirchange_callback(NULL,NULL,0,(LiVESModifierType)0,LIVES_INT_TO_POINTER(TRUE));
-    if (cfile->play_paused) freeze_callback(NULL,NULL,0,(LiVESModifierType)0,NULL);
+      dirchange_callback(NULL,NULL,0,(LiVESXModifierType)0,LIVES_INT_TO_POINTER(TRUE));
+    if (cfile->play_paused) freeze_callback(NULL,NULL,0,(LiVESXModifierType)0,NULL);
     lives_osc_notify_success(NULL);
   }
   else lives_osc_notify_failure();
@@ -623,9 +623,9 @@ void lives_osc_cb_play_reset (void *context, int arglen, const void *vargs, OSCT
   if (mainw->multitrack!=NULL) return lives_osc_notify_failure();
   if (mainw->playing_file==-1) return lives_osc_notify_failure();
 
-  fps_reset_callback(NULL,NULL,0,(LiVESModifierType)0,NULL);
-  if (cfile->pb_fps<0||(cfile->play_paused&&cfile->freeze_fps<0)) dirchange_callback(NULL,NULL,0,(LiVESModifierType)0,LIVES_INT_TO_POINTER(TRUE));
-  if (cfile->play_paused) freeze_callback(NULL,NULL,0,(LiVESModifierType)0,NULL);
+  fps_reset_callback(NULL,NULL,0,(LiVESXModifierType)0,NULL);
+  if (cfile->pb_fps<0||(cfile->play_paused&&cfile->freeze_fps<0)) dirchange_callback(NULL,NULL,0,(LiVESXModifierType)0,LIVES_INT_TO_POINTER(TRUE));
+  if (cfile->play_paused) freeze_callback(NULL,NULL,0,(LiVESXModifierType)0,NULL);
 
   lives_osc_notify_success(NULL);
 
@@ -1606,7 +1606,7 @@ void lives_osc_cb_fgclip_select_next(void *context, int arglen, const void *varg
   if (mainw->current_file<1||mainw->preview||mainw->is_processing) return lives_osc_notify_failure(); // TODO
   if (mainw->multitrack!=NULL) return lives_osc_notify_failure();
 
-  nextclip_callback(NULL,NULL,0,(LiVESModifierType)0,LIVES_INT_TO_POINTER(1));
+  nextclip_callback(NULL,NULL,0,(LiVESXModifierType)0,LIVES_INT_TO_POINTER(1));
 
   if (mainw->playing_file==-1&&prefs->omc_noisy) {
     char *msg=g_strdup_printf("%d",mainw->current_file);
@@ -1624,7 +1624,7 @@ void lives_osc_cb_bgclip_select_next(void *context, int arglen, const void *varg
   if (mainw->blend_file<1||mainw->files[mainw->blend_file]==NULL) return lives_osc_notify_failure();
   if (mainw->multitrack!=NULL) return lives_osc_notify_failure();
 
-  nextclip_callback(NULL,NULL,0,(LiVESModifierType)0,LIVES_INT_TO_POINTER(2));
+  nextclip_callback(NULL,NULL,0,(LiVESXModifierType)0,LIVES_INT_TO_POINTER(2));
 
   if (mainw->playing_file==-1&&prefs->omc_noisy) {
     char *msg=g_strdup_printf("%d",mainw->blend_file);
@@ -1642,7 +1642,7 @@ void lives_osc_cb_fgclip_select_previous(void *context, int arglen, const void *
   if (mainw->current_file<1||mainw->preview||mainw->is_processing) return lives_osc_notify_failure(); // TODO
   if (mainw->multitrack!=NULL) return lives_osc_notify_failure();
   
-  prevclip_callback(NULL,NULL,0,(LiVESModifierType)0,LIVES_INT_TO_POINTER(1));
+  prevclip_callback(NULL,NULL,0,(LiVESXModifierType)0,LIVES_INT_TO_POINTER(1));
 
   if (mainw->playing_file==-1&&prefs->omc_noisy) {
     char *msg=g_strdup_printf("%d",mainw->current_file);
@@ -1662,7 +1662,7 @@ void lives_osc_cb_bgclip_select_previous(void *context, int arglen, const void *
 
   if (mainw->blend_file<1||mainw->files[mainw->blend_file]==NULL) return lives_osc_notify_failure();
 
-  prevclip_callback(NULL,NULL,0,(LiVESModifierType)0,LIVES_INT_TO_POINTER(2));
+  prevclip_callback(NULL,NULL,0,(LiVESXModifierType)0,LIVES_INT_TO_POINTER(2));
 
   if (mainw->playing_file==-1&&prefs->omc_noisy) {
     char *msg=g_strdup_printf("%d",mainw->blend_file);
@@ -2593,7 +2593,7 @@ void lives_osc_cb_freeze(void *context, int arglen, const void *vargs, OSCTimeTa
   if (mainw->playing_file<1) return lives_osc_notify_failure();
 
   if (!mainw->osc_block) {
-    freeze_callback(NULL,NULL,0,(LiVESModifierType)0,NULL);
+    freeze_callback(NULL,NULL,0,(LiVESXModifierType)0,NULL);
   }
   if (prefs->omc_noisy) {
     lives_osc_notify_success(NULL);
@@ -6172,14 +6172,14 @@ void lives_osc_cb_rte_listcconnection(void *context, int arglen, const void *var
 
 void lives_osc_cb_swap(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
   if (mainw->multitrack!=NULL) return lives_osc_notify_failure();
-  swap_fg_bg_callback (NULL,NULL,0,(LiVESModifierType)0,NULL);
+  swap_fg_bg_callback (NULL,NULL,0,(LiVESXModifierType)0,NULL);
   lives_osc_notify_success(NULL);
 }
 
 
 void lives_osc_record_start(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
   if (mainw->multitrack!=NULL) return lives_osc_notify_failure();
-  record_toggle_callback (NULL,NULL,0,(LiVESModifierType)0,LIVES_INT_TO_POINTER((int)TRUE));
+  record_toggle_callback (NULL,NULL,0,(LiVESXModifierType)0,LIVES_INT_TO_POINTER((int)TRUE));
   lives_osc_notify_success(NULL);
   // TODO - send record start and record stop events
 }
@@ -6187,13 +6187,13 @@ void lives_osc_record_start(void *context, int arglen, const void *vargs, OSCTim
 
 void lives_osc_record_stop(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
   if (mainw->multitrack!=NULL) return lives_osc_notify_failure();
-  record_toggle_callback (NULL,NULL,0,(LiVESModifierType)0,LIVES_INT_TO_POINTER((int)FALSE));
+  record_toggle_callback (NULL,NULL,0,(LiVESXModifierType)0,LIVES_INT_TO_POINTER((int)FALSE));
   lives_osc_notify_success(NULL);
 }
 
 void lives_osc_record_toggle(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
   if (mainw->multitrack!=NULL) return lives_osc_notify_failure();
-  record_toggle_callback (NULL,NULL,0,(LiVESModifierType)0,LIVES_INT_TO_POINTER(!mainw->record));
+  record_toggle_callback (NULL,NULL,0,(LiVESXModifierType)0,LIVES_INT_TO_POINTER(!mainw->record));
   lives_osc_notify_success(NULL);
 }
 

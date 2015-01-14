@@ -1561,7 +1561,7 @@ boolean add_param_to_box (LiVESBox *box, lives_rfx_t *rfx, int pnum, boolean add
 #ifdef ENABLE_GIW
       }
       else {
-	scale=giw_knob_new(GTK_ADJUSTMENT(spinbutton_adj));
+	scale=giw_knob_new(LIVES_ADJUSTMENT(spinbutton_adj));
 	lives_widget_set_size_request(scale,GIW_KNOB_WIDTH,GIW_KNOB_HEIGHT);
 	giw_knob_set_legends_digits(GIW_KNOB(scale),0);
 	lives_box_pack_start (LIVES_BOX (hbox), scale, FALSE, FALSE, 0);

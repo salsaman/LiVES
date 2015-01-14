@@ -73,7 +73,7 @@ static void add_xlays_widget(GtkBox *box) {
   LiVESWidget *textview=lives_text_view_new();
   LiVESWidget *label;
   GList *xlist=mainw->xlays;
-  GtkTextBuffer *textbuffer = lives_text_view_get_buffer (GTK_TEXT_VIEW (textview));
+  GtkTextBuffer *textbuffer = lives_text_view_get_buffer (LIVES_TEXT_VIEW (textview));
   
   lives_text_view_set_editable (LIVES_TEXT_VIEW (textview), FALSE);
   lives_container_add (LIVES_CONTAINER (expander), textview);

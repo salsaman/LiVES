@@ -210,7 +210,7 @@ boolean pl_key_function (boolean down, uint16_t unicode, uint16_t keymod) {
   // (via a polling mechanism)
 
   // mask for ctrl and alt
-  LiVESModifierType state=(LiVESModifierType)(keymod&(LIVES_CONTROL_MASK|LIVES_ALT_MASK));
+  LiVESXModifierType state=(LiVESXModifierType)(keymod&(LIVES_CONTROL_MASK|LIVES_ALT_MASK));
 
   // hmmm...only works with GTK+2.x
 
@@ -390,17 +390,17 @@ boolean fade_callback (GtkAccelGroup *group, GObject *obj, uint32_t keyval, LiVE
 }
 
 boolean showfct_callback (GtkAccelGroup *group, GObject *obj, uint32_t keyval, LiVESXModifierType mod, gpointer user_data) {
-  lives_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(mainw->showfct),!prefs->show_framecount);
+  lives_check_menu_item_set_active(LIVES_CHECK_MENU_ITEM(mainw->showfct),!prefs->show_framecount);
   return TRUE;
 }
 
 boolean showsubs_callback (GtkAccelGroup *group, GObject *obj, uint32_t keyval, LiVESXModifierType mod, gpointer user_data) {
-  lives_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(mainw->showsubs),!prefs->show_subtitles);
+  lives_check_menu_item_set_active(LIVES_CHECK_MENU_ITEM(mainw->showsubs),!prefs->show_subtitles);
   return TRUE;
 }
 
 boolean loop_callback (GtkAccelGroup *group, GObject *obj, uint32_t keyval, LiVESXModifierType mod, gpointer user_data) {
-  lives_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(mainw->loop_video),!mainw->loop);
+  lives_check_menu_item_set_active(LIVES_CHECK_MENU_ITEM(mainw->loop_video),!mainw->loop);
   return TRUE;
 }
 
@@ -410,7 +410,7 @@ boolean dblsize_callback (GtkAccelGroup *group, GObject *obj, uint32_t keyval, L
 }
 
 boolean rec_callback (GtkAccelGroup *group, GObject *obj, uint32_t keyval, LiVESXModifierType mod, gpointer user_data) {
-  lives_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(mainw->record_perf),!gtk_check_menu_item_get_active (GTK_CHECK_MENU_ITEM (mainw->record_perf)));
+  lives_check_menu_item_set_active(LIVES_CHECK_MENU_ITEM(mainw->record_perf),!gtk_check_menu_item_get_active (LIVES_CHECK_MENU_ITEM (mainw->record_perf)));
   return TRUE;
 }
 

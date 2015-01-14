@@ -3304,7 +3304,7 @@ void play_file (void) {
   // TODO - ????
   if (mainw->current_file>-1&&cfile->clip_type==CLIP_TYPE_DISK&&cfile->frames==0&&mainw->record_perf) {
     lives_signal_handler_block(mainw->record_perf,mainw->record_perf_func);
-    lives_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(mainw->record_perf),FALSE);
+    lives_check_menu_item_set_active(LIVES_CHECK_MENU_ITEM(mainw->record_perf),FALSE);
     lives_signal_handler_unblock(mainw->record_perf,mainw->record_perf_func);
   }
 

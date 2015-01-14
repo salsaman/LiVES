@@ -2709,8 +2709,8 @@ void mt_clip_select (lives_mt *mt, boolean scroll) {
   for (i=0;i<len;i++) {
     clipbox=(LiVESWidget *)g_list_nth_data (list,i);
     if (i==mt->clip_selected) {
-      GtkAdjustment *adj;
-      int value=lives_adjustment_get_upper((adj=gtk_scrolled_window_get_hadjustment(GTK_SCROLLED_WINDOW(mt->clip_scroll))))
+      LiVESAdjustment *adj;
+      int value=lives_adjustment_get_upper((adj=gtk_scrolled_window_get_hadjustment(LIVES_SCROLLED_WINDOW(mt->clip_scroll))))
 	*(mt->clip_selected+.5)/len;
       if (scroll) lives_adjustment_clamp_page(adj,value-lives_adjustment_get_page_size(adj)/2,
 					      value+lives_adjustment_get_page_size(adj)/2);
@@ -21813,7 +21813,7 @@ static void after_amixer_inv_toggled (LiVESToggleButton *toggle, lives_amixer_t 
 }
 
 
-void on_amixer_slider_changed (GtkAdjustment *adj, lives_mt *mt) {
+void on_amixer_slider_changed (LiVESAdjustment *adj, lives_mt *mt) {
   lives_amixer_t *amixer=mt->amixer;
   int layer=GPOINTER_TO_INT(g_object_get_data(G_OBJECT(adj),"layer"));
   boolean gang=lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(amixer->gang_checkbutton));
@@ -21829,7 +21829,7 @@ void on_amixer_slider_changed (GtkAdjustment *adj, lives_mt *mt) {
   else {
 #endif
     if (TRUE) {
-      GtkRange *range=LIVES_RANGE(amixer->ch_sliders[layer]);
+      LiVESRange *range=LIVES_RANGE(amixer->ch_sliders[layer]);
       val=lives_range_get_value(range);
     }
 #if ENABLE_GIW

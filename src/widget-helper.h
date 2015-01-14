@@ -399,8 +399,6 @@ typedef GdkWindow                         LiVESXWindow;
 
 typedef GdkCursor                         LiVESXCursor;
 
-typedef GdkModifierType                   LiVESXModifierType;
-
 typedef GError                            LiVESError;
 
 #ifndef IS_MINGW
@@ -639,7 +637,7 @@ char LIVES_STOCK_LABEL_GO_FORWARD[32];
 
 
 
-typedef GdkModifierType LiVESModifierType;
+typedef GdkModifierType LiVESXModifierType;
 
 #define LIVES_CONTROL_MASK GDK_CONTROL_MASK
 #define LIVES_ALT_MASK     GDK_MOD1_MASK
@@ -994,11 +992,9 @@ boolean lives_button_set_relief(LiVESButton *, LiVESReliefStyle);
 boolean lives_button_set_image(LiVESButton *, LiVESWidget *image);
 boolean lives_button_set_focus_on_click(LiVESButton *, boolean focus);
 
+
 LiVESWidget *lives_check_button_new(void);
 LiVESWidget *lives_check_button_new_with_label(const char *label);
-
-LiVESWidget *lives_radio_button_new(LiVESSList *group);
-
 LiVESWidget *lives_spin_button_new(LiVESAdjustment *, double climb_rate, uint32_t digits);
 
 int lives_dialog_run(LiVESDialog *);
@@ -1207,7 +1203,7 @@ boolean lives_widget_set_can_focus_and_default(LiVESWidget *);
 
 boolean lives_widget_add_events(LiVESWidget *, int events);
 boolean lives_widget_set_events(LiVESWidget *, int events);
-boolean lives_widget_remove_accelerator(LiVESWidget *, LiVESAccelGroup *, uint32_t accel_key, LiVESModifierType accel_mods);
+boolean lives_widget_remove_accelerator(LiVESWidget *, LiVESAccelGroup *, uint32_t accel_key, LiVESXModifierType accel_mods);
 boolean lives_widget_get_preferred_size(LiVESWidget *, LiVESRequisition *min_size, LiVESRequisition *nat_size);
 
 boolean lives_container_remove(LiVESContainer *, LiVESWidget *);
@@ -1396,16 +1392,16 @@ void lives_widget_set_tooltip_text(LiVESWidget *, const char *text);
 
 
 LiVESAccelGroup *lives_accel_group_new(void);
-void lives_accel_group_connect(LiVESAccelGroup *, uint32_t key, LiVESModifierType mod, LiVESAccelFlags flags, LiVESWidgetClosure *closure);
+void lives_accel_group_connect(LiVESAccelGroup *, uint32_t key, LiVESXModifierType mod, LiVESAccelFlags flags, LiVESWidgetClosure *closure);
 void lives_accel_group_disconnect(LiVESAccelGroup *, LiVESWidgetClosure *closure);
-void lives_accel_groups_activate(LiVESObject *object, uint32_t key, LiVESModifierType mod);
+void lives_accel_groups_activate(LiVESObject *object, uint32_t key, LiVESXModifierType mod);
 
 void lives_widget_add_accelerator(LiVESWidget *, const char *accel_signal, LiVESAccelGroup *accel_group,
-				  uint32_t accel_key, LiVESModifierType accel_mods, LiVESAccelFlags accel_flags);
+				  uint32_t accel_key, LiVESXModifierType accel_mods, LiVESAccelFlags accel_flags);
 
 void lives_widget_get_pointer(LiVESXDevice *, LiVESWidget *, int *x, int *y);
 LiVESXWindow *lives_display_get_window_at_pointer (LiVESXDevice *, LiVESXDisplay *, int *win_x, int *win_y);
-void lives_display_get_pointer (LiVESXDevice *, LiVESXDisplay *, LiVESXScreen **, int *x, int *y, LiVESModifierType *mask);
+void lives_display_get_pointer (LiVESXDevice *, LiVESXDisplay *, LiVESXScreen **, int *x, int *y, LiVESXModifierType *mask);
 void lives_display_warp_pointer (LiVESXDevice *, LiVESXDisplay *, LiVESXScreen *, int x, int y);
 
 LiVESXDisplay *lives_widget_get_display(LiVESWidget *);

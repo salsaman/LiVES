@@ -2073,7 +2073,7 @@ LIVES_INLINE boolean lives_widget_set_events(LiVESWidget *widget, int events) {
 
 
 LIVES_INLINE boolean lives_widget_remove_accelerator(LiVESWidget *widget, LiVESAccelGroup *acgroup, 
-						     uint32_t accel_key, LiVESModifierType accel_mods) {
+						     uint32_t accel_key, LiVESXModifierType accel_mods) {
 #ifdef GUI_GTK
   return gtk_widget_remove_accelerator(widget,acgroup,accel_key,accel_mods);
 #endif
@@ -3978,7 +3978,7 @@ LIVES_INLINE LiVESAccelGroup *lives_accel_group_new(void) {
 }
 
 
-LIVES_INLINE void lives_accel_group_connect(LiVESAccelGroup *group, uint32_t key, LiVESModifierType mod, 
+LIVES_INLINE void lives_accel_group_connect(LiVESAccelGroup *group, uint32_t key, LiVESXModifierType mod, 
 					    LiVESAccelFlags flags, LiVESWidgetClosure *closure) {
 
 #ifdef GUI_GTK
@@ -4001,7 +4001,7 @@ LIVES_INLINE void lives_accel_group_disconnect(LiVESAccelGroup *group, LiVESWidg
 
 
 LIVES_INLINE void lives_widget_add_accelerator(LiVESWidget *widget, const char *accel_signal, LiVESAccelGroup *accel_group,
-					       uint32_t accel_key, LiVESModifierType accel_mods, LiVESAccelFlags accel_flags) {
+					       uint32_t accel_key, LiVESXModifierType accel_mods, LiVESAccelFlags accel_flags) {
 #ifdef GUI_GTK
   gtk_widget_add_accelerator(widget,accel_signal,accel_group,accel_key,accel_mods,accel_flags);
 #endif
@@ -4009,7 +4009,7 @@ LIVES_INLINE void lives_widget_add_accelerator(LiVESWidget *widget, const char *
 
 
 
-LIVES_INLINE void lives_accel_groups_activate(LiVESObject *object, uint32_t key, LiVESModifierType mod) {
+LIVES_INLINE void lives_accel_groups_activate(LiVESObject *object, uint32_t key, LiVESXModifierType mod) {
 #ifdef GUI_GTK
   gtk_accel_groups_activate(object,key,mod);
 #endif
@@ -4065,7 +4065,7 @@ LIVES_INLINE LiVESXWindow *lives_display_get_window_at_pointer
 
 
 LIVES_INLINE void lives_display_get_pointer 
-(LiVESXDevice *device, LiVESXDisplay *display, LiVESXScreen **screen, int *x, int *y, LiVESModifierType *mask) {
+(LiVESXDevice *device, LiVESXDisplay *display, LiVESXScreen **screen, int *x, int *y, LiVESXModifierType *mask) {
 #ifdef GUI_GTK
 #if GTK_CHECK_VERSION(3,0,0)
   if (device==NULL) return;

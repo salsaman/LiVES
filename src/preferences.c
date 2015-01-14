@@ -4260,7 +4260,7 @@ _prefsw *create_prefs_dialog (void) {
   lives_signal_connect(LIVES_GUI_OBJECT(prefsw->mt_autoback_always), "toggled", LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
   lives_signal_connect(LIVES_GUI_OBJECT(prefsw->mt_autoback_never), "toggled", LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
   lives_signal_connect(LIVES_GUI_OBJECT(prefsw->mt_autoback_every), "toggled", LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
-  lives_signal_connect(GTK_EDITABLE(prefsw->video_open_entry), "changed", LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
+  lives_signal_connect(LIVES_GUI_OBJECT(prefsw->video_open_entry), "changed", LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
   lives_signal_connect(LIVES_GUI_OBJECT(prefsw->spinbutton_ocp), "changed", LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
   lives_signal_connect(LIVES_GUI_OBJECT(prefsw->jpeg), "toggled", LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
   lives_signal_connect(LIVES_GUI_OBJECT(png), "toggled", LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
@@ -4275,7 +4275,7 @@ _prefsw *create_prefs_dialog (void) {
   lives_signal_connect(LIVES_GUI_OBJECT(prefsw->checkbutton_show_stats), "toggled", LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
   lives_signal_connect(LIVES_GUI_OBJECT(pp_combo), "changed", LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
   lives_signal_connect(LIVES_GUI_OBJECT(prefsw->audp_combo), "changed", LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
-  lives_signal_connect(GTK_EDITABLE(prefsw->audio_command_entry), "changed", LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
+  lives_signal_connect(LIVES_GUI_OBJECT(prefsw->audio_command_entry), "changed", LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
   lives_signal_connect(LIVES_GUI_OBJECT(prefsw->checkbutton_afollow), "toggled", LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
   lives_signal_connect(LIVES_GUI_OBJECT(prefsw->checkbutton_aclips), "toggled", LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
   lives_signal_connect(LIVES_GUI_OBJECT(prefsw->rdesk_audio), "toggled", LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
@@ -4299,12 +4299,12 @@ _prefsw *create_prefs_dialog (void) {
 		   (gpointer)prefsw->spinbutton_nfx_threads);
   lives_signal_connect(LIVES_GUI_OBJECT(prefsw->spinbutton_nfx_threads), "changed", LIVES_GUI_CALLBACK(apply_button_set_enabled), 
 		   NULL);
-  lives_signal_connect(GTK_EDITABLE(prefsw->vid_load_dir_entry), "changed", LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
-  lives_signal_connect(GTK_EDITABLE(prefsw->vid_save_dir_entry), "changed", LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
-  lives_signal_connect(GTK_EDITABLE(prefsw->audio_dir_entry), "changed", LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
-  lives_signal_connect(GTK_EDITABLE(prefsw->image_dir_entry), "changed", LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
-  lives_signal_connect(GTK_EDITABLE(prefsw->proj_dir_entry), "changed", LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
-  lives_signal_connect(GTK_EDITABLE(prefsw->tmpdir_entry), "changed", LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
+  lives_signal_connect(LIVES_GUI_OBJECT(prefsw->vid_load_dir_entry), "changed", LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
+  lives_signal_connect(LIVES_GUI_OBJECT(prefsw->vid_save_dir_entry), "changed", LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
+  lives_signal_connect(LIVES_GUI_OBJECT(prefsw->audio_dir_entry), "changed", LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
+  lives_signal_connect(LIVES_GUI_OBJECT(prefsw->image_dir_entry), "changed", LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
+  lives_signal_connect(LIVES_GUI_OBJECT(prefsw->proj_dir_entry), "changed", LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
+  lives_signal_connect(LIVES_GUI_OBJECT(prefsw->tmpdir_entry), "changed", LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
   lives_signal_connect(LIVES_GUI_OBJECT(prefsw->checkbutton_warn_fps), "toggled", LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
   lives_signal_connect(LIVES_GUI_OBJECT(prefsw->checkbutton_warn_fsize), "toggled", LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
   lives_signal_connect(LIVES_GUI_OBJECT(prefsw->spinbutton_warn_fsize), "changed", LIVES_GUI_CALLBACK(apply_button_set_enabled), 
@@ -4359,7 +4359,7 @@ _prefsw *create_prefs_dialog (void) {
   lives_signal_connect(LIVES_GUI_OBJECT(prefsw->check_midi), "toggled", LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
   lives_signal_connect(LIVES_GUI_OBJECT(prefsw->ins_speed), "toggled", LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
   lives_signal_connect(LIVES_GUI_OBJECT(ins_resample), "toggled", LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
-  lives_signal_connect(GTK_EDITABLE(prefsw->cdplay_entry), "changed", LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
+  lives_signal_connect(LIVES_GUI_OBJECT(prefsw->cdplay_entry), "changed", LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
   lives_signal_connect(LIVES_GUI_OBJECT(prefsw->spinbutton_def_fps), "changed", LIVES_GUI_CALLBACK(apply_button_set_enabled), 
 		   NULL);
   lives_signal_connect(LIVES_GUI_OBJECT(prefsw->theme_combo), "changed", LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
@@ -4372,7 +4372,7 @@ _prefsw *create_prefs_dialog (void) {
 #endif
 
 #ifdef ENABLE_JACK_TRANSPORT
-  lives_signal_connect(GTK_EDITABLE(prefsw->jack_tserver_entry), "changed", LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
+  lives_signal_connect(LIVES_GUI_OBJECT(prefsw->jack_tserver_entry), "changed", LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
   lives_signal_connect(LIVES_GUI_OBJECT(prefsw->checkbutton_start_tjack), "toggled", LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
   lives_signal_connect(LIVES_GUI_OBJECT(prefsw->checkbutton_jack_master), "toggled", LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
   lives_signal_connect(LIVES_GUI_OBJECT(prefsw->checkbutton_jack_client), "toggled", LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
@@ -4383,7 +4383,7 @@ _prefsw *create_prefs_dialog (void) {
 #endif
 
 #ifdef ENABLE_JACK
-  lives_signal_connect(GTK_EDITABLE(prefsw->jack_aserver_entry), "changed", LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
+  lives_signal_connect(LIVES_GUI_OBJECT(prefsw->jack_aserver_entry), "changed", LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
   lives_signal_connect(LIVES_GUI_OBJECT(prefsw->checkbutton_start_ajack), "toggled", LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
   lives_signal_connect(LIVES_GUI_OBJECT(prefsw->checkbutton_jack_pwp), "toggled", LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
   lives_signal_connect(LIVES_GUI_OBJECT(prefsw->checkbutton_jack_read_autocon), "toggled", LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
@@ -4392,13 +4392,13 @@ _prefsw *create_prefs_dialog (void) {
 #ifdef ENABLE_OSC
 #ifdef OMC_JS_IMPL
   lives_signal_connect(LIVES_GUI_OBJECT(prefsw->checkbutton_omc_js), "toggled", LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
-  lives_signal_connect(GTK_EDITABLE(prefsw->omc_js_entry), "changed", LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
+  lives_signal_connect(LIVES_GUI_OBJECT(prefsw->omc_js_entry), "changed", LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
 #endif
 #ifdef OMC_MIDI_IMPL
   lives_signal_connect(LIVES_GUI_OBJECT(prefsw->checkbutton_omc_midi), "toggled", LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
   lives_signal_connect(LIVES_GUI_OBJECT(prefsw->alsa_midi), "toggled", LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
   lives_signal_connect(LIVES_GUI_OBJECT(raw_midi_button), "toggled", LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
-  lives_signal_connect(GTK_EDITABLE(prefsw->omc_midi_entry), "changed", LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
+  lives_signal_connect(LIVES_GUI_OBJECT(prefsw->omc_midi_entry), "changed", LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
   lives_signal_connect(LIVES_GUI_OBJECT(prefsw->spinbutton_midicr), "changed", LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
   lives_signal_connect(LIVES_GUI_OBJECT(prefsw->spinbutton_midirpt), "changed", LIVES_GUI_CALLBACK(apply_button_set_enabled), 
 		   NULL);

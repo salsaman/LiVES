@@ -622,7 +622,7 @@ void on_open_sel_activate (LiVESMenuItem *menuitem, gpointer user_data) {
 
 
 
-void on_ok_filesel_open_clicked (GtkFileChooser *chooser, gpointer user_data) {
+void on_ok_filesel_open_clicked (LiVESFileChooser *chooser, gpointer user_data) {
   gchar *fname=lives_file_chooser_get_filename (chooser);
   gchar *tmp;
 
@@ -6256,7 +6256,7 @@ void on_open_activate (LiVESMenuItem *menuitem, gpointer user_data) {
 
 
 
-void on_ok_file_open_clicked(GtkFileChooser *chooser, GSList *fnames) {
+void on_ok_file_open_clicked(LiVESFileChooser *chooser, GSList *fnames) {
   GSList *ofnames;
   gchar *tmp;
 
@@ -6397,7 +6397,7 @@ void open_sel_range_activate(void) {
 }
 
 
-void on_open_new_audio_clicked (GtkFileChooser *chooser, gpointer user_data) {
+void on_open_new_audio_clicked (LiVESFileChooser *chooser, gpointer user_data) {
   // open audio file
   gchar *a_type;
   gchar *com,*mesg,*tmp;
@@ -10780,7 +10780,7 @@ void on_append_audio_activate (LiVESMenuItem *menuitem, gpointer user_data) {
 
 
 
-void on_ok_append_audio_clicked (GtkFileChooser *chooser, gpointer user_data) {
+void on_ok_append_audio_clicked (LiVESFileChooser *chooser, gpointer user_data) {
 
   gchar *com,*tmp,*tmp2;
   gchar *a_type;

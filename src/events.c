@@ -4318,7 +4318,7 @@ boolean deal_with_render_choice (boolean add_deinit) {
   mainw->record_paused=FALSE;
 
   lives_signal_handler_block(mainw->record_perf,mainw->record_perf_func);
-  lives_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(mainw->record_perf),FALSE);
+  lives_check_menu_item_set_active(LIVES_CHECK_MENU_ITEM(mainw->record_perf),FALSE);
   lives_signal_handler_unblock(mainw->record_perf,mainw->record_perf_func);
 
   if (count_events(mainw->event_list,FALSE,0,0)==0) {

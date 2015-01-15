@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 
+import time
+
 import locale
 locale.setlocale(locale.LC_NUMERIC,"")
 
@@ -479,8 +481,6 @@ def do_encode():
     all_vars.update(globals())
     all_vars.update(locals())
 
-
-
     if os.name == 'nt':
 
         if vtype[-1] == 'h':
@@ -489,14 +489,18 @@ mkfifo.exe /m 0600 %(yuvv)s ; \\
 %(mencoder.exe)s mf://%(syml)s%(img_pre)s*%(ext)s %(mencoder_opts)s%(yuvv)s %(std)s &
     """ % all_vars
             run(yuvcommand)
-            command = """cd %(source_dir)s ; \\
-%(x264.exe)s --stats "%(x264log)s" %(cpass1opts)s %(x264_opts)s1 -o /dev/null %(yuvv)s %(fx)sx%(fy)s %(std)s
+
+            command = """cd %(source_dir)s ; \\ 
+%(x264.exe)s --stats "%(x264log)s" %(cpass1opts)s %(x264_opts)s1 --input-res %(fx)sx%(fy)s -o /dev/null %(yuvv)s %(fx)sx%(fy)s %(std)s
     """ % all_vars
             run(command)
             os.remove(yuvv)
             run(yuvcommand)
+
+
+
             command = """cd %(source_dir)s ; \\
-%(x264.exe)s --stats "%(x264log)s" %(cpass2opts)s %(x264_opts)s2 -o "%(vidv)s" %(yuvv)s %(fx)sx%(fy)s %(std)s
+%(x264.exe)s --stats "%(x264log)s" %(cpass2opts)s %(x264_opts)s2 --input-res %(fx)sx%(fy)s -o "%(vidv)s" %(yuvv)s %(fx)sx%(fy)s %(std)s
     """ % all_vars
             run(command)
             os.remove(yuvv)
@@ -516,25 +520,27 @@ mkfifo -m 0600 %(yuvv)s ; \\
 %(mencoder)s mf://%(syml)s%(img_pre)s*%(ext)s %(mencoder_opts)s%(yuvv)s %(std)s &
     """ % all_vars
             run(yuvcommand)
+
             command = """cd %(source_dir)s ; \\
-%(x264)s --stats "%(x264log)s" %(cpass1opts)s %(x264_opts)s1 -o /dev/null %(yuvv)s %(fx)sx%(fy)s %(std)s
+%(x264)s --stats "%(x264log)s" %(cpass1opts)s %(x264_opts)s1 --input-res %(fx)sx%(fy)s -o /dev/null %(yuvv)s %(fx)sx%(fy)s %(std)s
     """ % all_vars
             run(command)
             os.remove(yuvv)
             run(yuvcommand)
+
             command = """cd %(source_dir)s ; \\
-%(x264)s --stats "%(x264log)s" %(cpass2opts)s %(x264_opts)s2 -o "%(vidv)s" %(yuvv)s %(fx)sx%(fy)s %(std)s
+%(x264)s --stats "%(x264log)s" %(cpass2opts)s %(x264_opts)s2 --input-res %(fx)sx%(fy)s -o "%(vidv)s" %(yuvv)s %(fx)sx%(fy)s %(std)s
     """ % all_vars
             run(command)
             os.remove(yuvv)
             os.remove(x264log)
+
         else:
             command = """cd %(source_dir)s ; \\
 %(mencoder)s "mf://%(syml)s%(img_pre)s*%(ext)s" %(mencoder_opts)s1 -o /dev/null %(std)s ; \\
 %(mencoder)s "mf://%(syml)s%(img_pre)s*%(ext)s" %(mencoder_opts)s2 -o %(vidv)s %(std)s
     """ % all_vars
             run(command)
-
 
     if os.path.exists(os.path.join(source_dir, 'divx2pass.log')):
         os.remove(os.path.join(source_dir, 'divx2pass.log'))

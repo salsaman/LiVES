@@ -476,13 +476,13 @@ mkfifo -m 0600 %(yuvv)s ; \\
     """ % all_vars
         run(yuvcommand)
         command = """cd %(source_dir)s ; \\
-%(x264)s --stats "%(x264log)s" %(cpass1opts)s %(x264_opts)s1 -o /dev/null %(yuvv)s %(fx)sx%(fy)s %(std)s
+%(x264)s --stats "%(x264log)s" %(cpass1opts)s %(x264_opts)s1 --input-res %(fx)sx%(fy)s -o /dev/null %(yuvv)s %(fx)sx%(fy)s %(std)s
     """ % all_vars
         run(command)
         os.remove(yuvv)
         run(yuvcommand)
         command = """cd %(source_dir)s ; \\
-%(x264)s --stats "%(x264log)s" %(cpass2opts)s %(x264_opts)s2 -o "%(vidv)s" %(yuvv)s %(fx)sx%(fy)s %(std)s
+%(x264)s --stats "%(x264log)s" %(cpass2opts)s %(x264_opts)s2 --input-res %(fx)sx%(fy)s -o "%(vidv)s" %(yuvv)s %(fx)sx%(fy)s %(std)s
     """ % all_vars
         run(command)
         os.remove(yuvv)

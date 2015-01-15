@@ -4,10 +4,12 @@ Fix crash on Insert Frames (regression).
 Compilation fix for gtk+ 2.x
 Compilation fixes for freeBSD
 Add check for avformat_close_input in libav
+Fix crash in projectM plugin.
 Fix regression in x264_encoder.
 Fix audio codec bug in mencoder_encoder.
 Fix crash in "Show Details" after encoding failure.
 Update dirac / multi_encoder to encode to dirac/vorbis/mkv.
+Add lossless dirac encoding.
 
 
 

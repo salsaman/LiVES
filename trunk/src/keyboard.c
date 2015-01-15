@@ -410,7 +410,7 @@ boolean dblsize_callback (GtkAccelGroup *group, GObject *obj, uint32_t keyval, L
 }
 
 boolean rec_callback (GtkAccelGroup *group, GObject *obj, uint32_t keyval, LiVESXModifierType mod, gpointer user_data) {
-  lives_check_menu_item_set_active(LIVES_CHECK_MENU_ITEM(mainw->record_perf),!gtk_check_menu_item_get_active (LIVES_CHECK_MENU_ITEM (mainw->record_perf)));
+  lives_check_menu_item_set_active(LIVES_CHECK_MENU_ITEM(mainw->record_perf),!lives_check_menu_item_get_active (LIVES_CHECK_MENU_ITEM (mainw->record_perf)));
   return TRUE;
 }
 

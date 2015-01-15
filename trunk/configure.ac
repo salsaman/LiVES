@@ -800,7 +800,7 @@ AC_ARG_ENABLE( projectM, [  --disable-projectM     Disable projectM support.] , 
 if test "x$disable_projectM" != "xyes" ; then
 
 dnl check for projectM
-PKG_CHECK_MODULES(PROJECTM,libprojectM,HAVE_PROJECTM=true,HAVE_PROJECTM=false)
+PKG_CHECK_MODULES(LIBPROJECTM,libprojectM,HAVE_PROJECTM=true,HAVE_PROJECTM=false)
 AC_SUBST(LIBPROJECTM_CFLAGS)
 AC_SUBST(LIBPROJECTM_LIBS)
 fi

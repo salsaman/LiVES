@@ -1238,21 +1238,21 @@ _resaudw *create_resaudw (gshort type, render_details *rdet, LiVESWidget *top_vb
     combo_entry2 = lives_standard_entry_new(_("Rate (Hz) "),FALSE,tmp,10,6,LIVES_BOX(hbox2),NULL);
     g_free (tmp);
 
-    gtk_editable_set_editable (GTK_EDITABLE (combo_entry2), FALSE);
+    lives_editable_set_editable (LIVES_EDITABLE (combo_entry2), FALSE);
     lives_widget_set_can_focus (combo_entry2, FALSE);
     
     tmp=g_strdup_printf ("%d",(int)mainw->fx2_val);
     combo_entry3 = lives_standard_entry_new(_("Channels"),FALSE,tmp,6,2,LIVES_BOX(hbox2),NULL);
     g_free (tmp);
 
-    gtk_editable_set_editable (GTK_EDITABLE (combo_entry3), FALSE);
+    lives_editable_set_editable (LIVES_EDITABLE (combo_entry3), FALSE);
     lives_widget_set_can_focus (combo_entry3, FALSE);
     
     tmp=g_strdup_printf ("%d",(int)mainw->fx3_val);
     combo_entry1 = lives_standard_entry_new(_("Sample Size "),FALSE,tmp,6,2,LIVES_BOX(hbox2),NULL);
     g_free (tmp);
 
-    gtk_editable_set_editable (GTK_EDITABLE (combo_entry1), FALSE);
+    lives_editable_set_editable (LIVES_EDITABLE (combo_entry1), FALSE);
     lives_widget_set_can_focus (combo_entry1, FALSE);
 
     vseparator = lives_vseparator_new ();
@@ -1398,7 +1398,7 @@ _resaudw *create_resaudw (gshort type, render_details *rdet, LiVESWidget *top_vb
 
     resaudw->entry_asamps = lives_combo_get_entry(LIVES_COMBO(combo6));
     lives_entry_set_max_length (LIVES_ENTRY (resaudw->entry_asamps), 2);
-    gtk_editable_set_editable (GTK_EDITABLE (resaudw->entry_asamps), FALSE);
+    lives_editable_set_editable (LIVES_EDITABLE (resaudw->entry_asamps), FALSE);
     lives_entry_set_width_chars (LIVES_ENTRY (resaudw->entry_asamps), 2);
     
     if (type<3||(type>4&&type<8)||type==11) tmp=g_strdup_printf ("%d",(int)mainw->fx3_val);

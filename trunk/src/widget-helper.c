@@ -1427,6 +1427,48 @@ LIVES_INLINE void lives_alignment_set(LiVESAlignment *alignment, float xalign, f
 }
 
 
+LIVES_INLINE LiVESWidget *lives_expander_new_with_mnemonic(const char *label) {
+  LiVESWidget *expander=NULL;
+#ifdef GUI_GTK
+  expander=gtk_expander_new_with_mnemonic(label);
+#endif
+  return expander;
+}
+
+
+
+LIVES_INLINE LiVESWidget *lives_expander_new(const char *label) {
+  LiVESWidget *expander=NULL;
+#ifdef GUI_GTK
+  expander=gtk_expander_new(label);
+#endif
+  return expander;
+}
+
+
+
+LIVES_INLINE LiVESWidget *lives_expander_get_label_widget(LiVESExpander *expander) {
+  LiVESWidget *widget=NULL;
+#ifdef GUI_GTK
+  widget=gtk_expander_get_label_widget(expander);
+#endif
+  return widget;
+}
+
+
+LIVES_INLINE boolean lives_label_set_halignment(LiVESLabel *label, float yalign) {
+#ifdef GUI_GTK
+#if GTK_CHECK_VERSION(3,16,0)
+  gtk_label_set_y_align(label,yalign);
+#else
+  gtk_misc_set_alignment(GTK_MISC(label),0.,yalign);
+#endif
+  return TRUE;
+#endif
+  return FALSE;
+}
+
+
 LIVES_INLINE LiVESWidget *lives_combo_new(void) {
   LiVESWidget *combo=NULL;
 #ifdef GUI_GTK
@@ -2158,6 +2200,17 @@ LIVES_INLINE boolean lives_container_set_border_width(LiVESContainer *container,
 
 
 LIVES_INLINE boolean lives_container_foreach(LiVESContainer *cont, LiVESWidgetCallback callback, livespointer cb_data) {
+  // excludes internal children
+#ifdef GUI_GTK
+  gtk_container_foreach(cont,callback,cb_data);
+  return TRUE;
+#endif
+  return FALSE;
+}
+
+
+static LIVES_INLINE boolean lives_container_forall(LiVESContainer *cont, LiVESWidgetCallback callback, livespointer cb_data) {
+  // includes internal children
 #ifdef GUI_GTK
   gtk_container_foreach(cont,callback,cb_data);
   return TRUE;
@@ -2191,7 +2244,6 @@ LIVES_INLINE LiVESWidget *lives_progress_bar_new(void) {
   pbar=gtk_progress_bar_new();
 #endif
   return pbar;
-
 }
 
 
@@ -2222,6 +2274,14 @@ LIVES_INLINE boolean lives_progress_bar_pulse(LiVESProgressBar *pbar) {
   return FALSE;
 }
 
+
+LIVES_INLINE LiVESWidget *lives_spin_button_new(LiVESAdjustment *adj, double climb_rate, uint32_t digits) {
+  LiVESWidget *sbutton=NULL;
+#ifdef GUI_GTK
+  sbutton=gtk_spin_button_new(adj,climb_rate,digits);
+#endif
+  return sbutton;
+}
 
 
 LIVES_INLINE double lives_spin_button_get_value(LiVESSpinButton *button) {
@@ -3093,6 +3153,25 @@ LIVES_INLINE boolean lives_label_set_selectable(LiVESLabel *label, boolean setti
 
 
 
+LIVES_INLINE boolean lives_editable_set_editable(LiVESEditable *editable, boolean is_editable) {
+#ifdef GUI_GTK
+  gtk_editable_set_editable(editable,is_editable);
+  return TRUE;
+#endif
+  return FALSE;
+}
+
+
+LIVES_INLINE boolean lives_editable_select_region(LiVESEditable *editable, int start_pos, int end_pos) {
+#ifdef GUI_GTK
+  gtk_editable_select_region(editable,start_pos,end_pos);
+  return TRUE;
+#endif
+  return FALSE;
+}
+
+
+
 LIVES_INLINE LiVESWidget *lives_entry_new(void) {
   LiVESWidget *entry=NULL;
 #ifdef GUI_GTK
@@ -3142,15 +3221,6 @@ LIVES_INLINE boolean lives_entry_set_has_frame(LiVESEntry *entry, boolean has) {
   return FALSE;
 }
 
-
-
-LIVES_INLINE boolean lives_entry_set_editable(LiVESEntry *entry, boolean editable) {
-#ifdef GUI_GTK
-  gtk_editable_set_editable(GTK_EDITABLE(entry),editable);
-  return TRUE;
-#endif
-  return FALSE;
-}
 
 
 LIVES_INLINE const char *lives_entry_get_text(LiVESEntry *entry) {
@@ -4151,6 +4221,13 @@ LIVES_INLINE boolean lives_timer_remove(uint32_t timer) {
 
 // compound functions
 
+
+LIVES_INLINE boolean lives_entry_set_editable(LiVESEntry *entry, boolean editable) {
+  return lives_editable_set_editable(LIVES_EDITABLE(entry),editable);
+}
+
+
+
 void lives_painter_set_source_to_bg(lives_painter_t *cr, LiVESWidget *widget) {
   LiVESWidgetColor color;
   lives_widget_get_bg_color(widget, &color);
@@ -4256,8 +4333,6 @@ LiVESWidget *lives_standard_check_button_new(const char *labeltext, boolean use_
 
   // pack a themed check button into box
 
-
-#ifdef GUI_GTK
   LiVESWidget *eventbox=NULL;
   LiVESWidget *label=NULL;
   LiVESWidget *hbox;
@@ -4324,7 +4399,6 @@ LiVESWidget *lives_standard_check_button_new(const char *labeltext, boolean use_
 #endif
   }
 
-#endif
 
   return checkbutton;
 }
@@ -4339,8 +4413,6 @@ LiVESWidget *lives_standard_radio_button_new(const char *labeltext, boolean use_
   // pack a themed check button into box
 
 
-
-#ifdef GUI_GTK
   LiVESWidget *eventbox=NULL;
   LiVESWidget *label=NULL;
   LiVESWidget *hbox;
@@ -4406,8 +4478,6 @@ LiVESWidget *lives_standard_radio_button_new(const char *labeltext, boolean use_
 #endif
   }
 
-#endif
-
   return radiobutton;
 }
 
@@ -4432,7 +4502,6 @@ LiVESWidget *lives_standard_spin_button_new(const char *labeltext, boolean use_m
   // pack a themed check button into box
 
 
-#ifdef GUI_GTK
   LiVESWidget *eventbox=NULL;
   LiVESWidget *label=NULL;
   LiVESWidget *hbox;
@@ -4443,15 +4512,18 @@ LiVESWidget *lives_standard_spin_button_new(const char *labeltext, boolean use_m
   int maxlen;
 
   adj = lives_adjustment_new (val, min, max, step, page, 0.);
-  spinbutton = gtk_spin_button_new (adj, 1, dp);
+  spinbutton = lives_spin_button_new (adj, 1, dp);
   if (tooltip!=NULL) lives_widget_set_tooltip_text(spinbutton, tooltip);
 
   maxlen=calc_spin_button_width(min,max,dp);
   lives_entry_set_width_chars (LIVES_ENTRY (spinbutton),maxlen);
 
   lives_entry_set_activates_default (LIVES_ENTRY (spinbutton), TRUE);
+
+#ifdef GUI_GTK
   gtk_spin_button_set_update_policy (LIVES_SPIN_BUTTON (spinbutton),GTK_UPDATE_ALWAYS);
   gtk_spin_button_set_numeric (LIVES_SPIN_BUTTON (spinbutton),TRUE);
+#endif
 
   widget_opts.last_label=NULL;
 
@@ -4510,7 +4582,6 @@ LiVESWidget *lives_standard_spin_button_new(const char *labeltext, boolean use_m
 #endif
   }
 
-#endif
 
   return spinbutton;
 }
@@ -4841,27 +4912,24 @@ LiVESWidget *lives_standard_scrolled_window_new(int width, int height, LiVESWidg
 LiVESWidget *lives_standard_expander_new(const char *ltext, boolean use_mnemonic, LiVESBox *parent, LiVESWidget *child) {
   LiVESWidget *expander=NULL;
 
-#ifdef GUI_GTK
-
   if (use_mnemonic)
-    expander=gtk_expander_new_with_mnemonic(ltext);
+    expander=lives_expander_new_with_mnemonic(ltext);
   else 
-    expander=gtk_expander_new(ltext);
+    expander=lives_expander_new(ltext);
 
   if (widget_opts.apply_theme) {
-    LiVESWidget *label=gtk_expander_get_label_widget(GTK_EXPANDER(expander));
+    LiVESWidget *label=lives_expander_get_label_widget(LIVES_EXPANDER(expander));
     lives_widget_apply_theme(label, LIVES_WIDGET_STATE_NORMAL);
     lives_widget_apply_theme(label, LIVES_WIDGET_STATE_PRELIGHT);
     lives_widget_apply_theme(expander, LIVES_WIDGET_STATE_PRELIGHT);
     lives_widget_apply_theme(expander, LIVES_WIDGET_STATE_NORMAL);
   }
   
-  gtk_container_forall(LIVES_CONTAINER(expander),set_child_colour,GINT_TO_POINTER(TRUE));
+  lives_container_forall(LIVES_CONTAINER(expander),set_child_colour,GINT_TO_POINTER(TRUE));
 
   lives_box_pack_start (parent, expander, FALSE, FALSE, widget_opts.packing_height);
 
   lives_container_add (LIVES_CONTAINER (expander), child);
-#endif
 
   return expander;
 }
@@ -4885,7 +4953,6 @@ LIVES_INLINE LiVESWidget *lives_standard_file_button_new(boolean is_dir, const c
 // utils
 
 void widget_helper_init(void) {
-#ifdef GUI_GTK
 #if GTK_CHECK_VERSION(3,10,0)
   g_snprintf(LIVES_STOCK_LABEL_CANCEL,32,"%s",(_("_Cancel")));
   g_snprintf(LIVES_STOCK_LABEL_OK,32,"%s",(_("_OK")));
@@ -4901,7 +4968,6 @@ void widget_helper_init(void) {
   g_snprintf(LIVES_STOCK_LABEL_REFRESH,32,"%s",(_("_Refresh")));
   g_snprintf(LIVES_STOCK_LABEL_DELETE,32,"%s",(_("_Delete")));
   g_snprintf(LIVES_STOCK_LABEL_GO_FORWARD,32,"%s",(_("_Forward")));
-#endif
 #endif
 
   widget_opts = def_widget_opts;
@@ -5033,19 +5099,17 @@ LIVES_INLINE void toggle_button_toggle (LiVESToggleButton *tbutton) {
 
 
 void set_child_colour(LiVESWidget *widget, livespointer set_allx) {
-#ifdef GUI_GTK
   boolean set_all=LIVES_POINTER_TO_INT(set_allx);
 
   if (!set_all&&LIVES_IS_BUTTON(widget)) return;
   if (LIVES_IS_CONTAINER(widget)) {
-    gtk_container_forall(LIVES_CONTAINER(widget),set_child_colour,set_allx);
+    lives_container_forall(LIVES_CONTAINER(widget),set_child_colour,set_allx);
     return;
   }
 
   if (set_all||LIVES_IS_LABEL(widget)) {
     lives_widget_apply_theme(widget, LIVES_WIDGET_STATE_NORMAL);
   }
-#endif
   return;
 }
 
@@ -5394,10 +5458,10 @@ static boolean spaces_inited=FALSE;
 
 LiVESWidget *add_fill_to_box (LiVESBox *box) {
   LiVESWidget *widget=NULL;
-#ifdef GUI_GTK
+
   LiVESWidget *blank_label;
-  static gint old_spaces=-1;
-  static gchar *xspaces=NULL;
+  static int old_spaces=-1;
+  static char *xspaces=NULL;
 
   if (!spaces_inited) {
     register int i;
@@ -5422,7 +5486,6 @@ LiVESWidget *add_fill_to_box (LiVESBox *box) {
     lives_widget_show(blank_label);
   widget=blank_label;
 
-#endif
   return widget;
 }
 

@@ -8299,7 +8299,7 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
 
   mt->node_scale=lives_hscale_new(LIVES_ADJUSTMENT(mt->node_adj));
   gtk_scale_set_draw_value(GTK_SCALE(mt->node_scale),FALSE);
-  mt->node_spinbutton = gtk_spin_button_new (LIVES_ADJUSTMENT (mt->node_adj), 0, 3);
+  mt->node_spinbutton = lives_spin_button_new (LIVES_ADJUSTMENT (mt->node_adj), 0, 3);
 
   lives_signal_connect_after (LIVES_GUI_OBJECT (mt->node_spinbutton), "value_changed",
 			  LIVES_GUI_CALLBACK (on_node_spin_value_changed),
@@ -21920,7 +21920,7 @@ LiVESWidget * amixer_add_channel_slider (lives_mt *mt, int i) {
 
   adj = (GObject *)lives_adjustment_new (0.5, 0., 4., 0.01, 0.1, 0.);
     
-  spinbutton = gtk_spin_button_new (LIVES_ADJUSTMENT (adj), 0.1, 3);
+  spinbutton = lives_spin_button_new (LIVES_ADJUSTMENT (adj), 0.1, 3);
 
 #if ENABLE_GIW
   if (prefs->lamp_buttons) {

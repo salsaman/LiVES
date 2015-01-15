@@ -69,7 +69,7 @@ void on_warn_mask_toggled (LiVESToggleButton *togglebutton, gpointer user_data) 
 static void add_xlays_widget(GtkBox *box) {
   // add widget to preview affected layouts
 
-  LiVESWidget *expander=gtk_expander_new_with_mnemonic(_("Show affected _layouts"));
+  LiVESWidget *expander=lives_expander_new_with_mnemonic(_("Show affected _layouts"));
   LiVESWidget *textview=lives_text_view_new();
   LiVESWidget *label;
   GList *xlist=mainw->xlays;
@@ -79,7 +79,7 @@ static void add_xlays_widget(GtkBox *box) {
   lives_container_add (LIVES_CONTAINER (expander), textview);
 
   if (palette->style&STYLE_1) {
-    label=gtk_expander_get_label_widget(GTK_EXPANDER(expander));
+    label=lives_expander_get_label_widget(LIVES_EXPANDER(expander));
     lives_widget_set_fg_color(label, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
     lives_widget_set_fg_color(label, LIVES_WIDGET_STATE_PRELIGHT, &palette->normal_fore);
     lives_widget_set_fg_color(expander, LIVES_WIDGET_STATE_PRELIGHT, &palette->normal_fore);

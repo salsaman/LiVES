@@ -88,6 +88,9 @@ typedef gboolean (*LiVESWidgetSourceFunc) (gpointer data);
 
 #define LIVES_GUI_CALLBACK(f) ((LiVESGuiCallback) (f))
 
+typedef GClosure                          LiVESWidgetClosure;
+
+
 
 typedef GObject LiVESObject;
 
@@ -160,6 +163,8 @@ typedef GtkRadioMenuItem                  LiVESRadioMenuItem;
 
 typedef GtkNotebook                       LiVESNotebook;
 
+typedef GtkExpander                       LiVESExpander;
+
 typedef GtkProgressBar                    LiVESProgressBar;
 
 typedef GtkTreeView                       LiVESTreeView;
@@ -203,8 +208,7 @@ typedef GtkGrid                           LiVESTable;
 typedef GtkTable                          LiVESTable;
 #endif
 
-typedef GClosure                          LiVESWidgetClosure;
-
+typedef GtkEditable                       LiVESEditable;
 
 #if GTK_CHECK_VERSION(3,0,0)
 #define LIVES_WIDGET_COLOR_HAS_ALPHA (1)
@@ -459,6 +463,10 @@ typedef gpointer                          livespointer;
 
 #define LIVES_PROGRESS_BAR(widget) GTK_PROGRESS_BAR(widget)
 
+#define LIVES_EXPANDER(widget) GTK_EXPANDER(widget)
+
+#define LIVES_MISC(widget) GTK_MISC(widget)
+
 #if GTK_CHECK_VERSION(2,14,0)
 #define LIVES_SCALE_BUTTON(widget) GTK_SCALE_BUTTON(widget)
 #else
@@ -507,6 +515,9 @@ typedef gpointer                          livespointer;
 #endif
 
 #define LIVES_RANGE(widget) GTK_RANGE(widget)
+
+#define LIVES_EDITABLE(widget) GTK_EDITABLE(widget)
+
 
 #define LIVES_XEVENT(event) GDK_EVENT(event)
 
@@ -1093,6 +1104,12 @@ LiVESWidget *lives_arrow_new(LiVESArrowType, LiVESShadowType);
 LiVESWidget *lives_alignment_new(float xalign, float yalign, float xscale, float yscale);
 void lives_alignment_set(LiVESAlignment *, float xalign, float yalign, float xscale, float yscale);
 
+LiVESWidget *lives_expander_new_with_mnemonic(const char *label);
+LiVESWidget *lives_expander_new(const char *label);
+LiVESWidget *lives_expander_get_label_widget(LiVESExpander *expander);
+
+boolean lives_label_set_halignment(LiVESLabel *, float yalign);
+
 LiVESWidget *lives_combo_new(void);
 LiVESWidget *lives_combo_new_with_model (LiVESTreeModel *);
 LiVESTreeModel *lives_combo_get_model(LiVESCombo *);
@@ -1292,6 +1309,9 @@ boolean lives_range_set_increments(LiVESRange *, double step, double page);
 boolean lives_range_set_inverted(LiVESRange *, boolean invert);
 
 double lives_range_get_value(LiVESRange *);
+
+boolean lives_editable_set_editable(LiVESEditable *, boolean editable);
+boolean lives_editable_select_region(LiVESEditable *, int start_pos, int end_pos);
 
 
 LiVESWidget *lives_entry_new(void);

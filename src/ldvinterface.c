@@ -86,7 +86,7 @@ struct _dvgrabw *create_camwindow (s_cam *cam, int type)
 
   lives_box_pack_start(LIVES_BOX(vbox),dvgrabw->status_entry,FALSE,FALSE,widget_opts.packing_height);
   lives_entry_set_text(LIVES_ENTRY(dvgrabw->status_entry),_("Status: Ready"));
-  gtk_editable_set_editable (GTK_EDITABLE(dvgrabw->status_entry),FALSE);
+  lives_editable_set_editable (LIVES_EDITABLE(dvgrabw->status_entry),FALSE);
 
   add_hsep_to_box(LIVES_BOX(vbox));
 

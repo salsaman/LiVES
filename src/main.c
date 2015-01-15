@@ -3369,10 +3369,10 @@ void procw_desensitize(void) {
     lives_widget_set_sensitive (mainw->loop_continue, TRUE);
 
     if (cfile->achans>0&&cfile->frames>0) {
-      mainw->loop=gtk_check_menu_item_get_active (LIVES_CHECK_MENU_ITEM (mainw->loop_video));
+      mainw->loop=lives_check_menu_item_get_active (LIVES_CHECK_MENU_ITEM (mainw->loop_video));
     }
     if (cfile->achans>0&&cfile->frames>0) {
-      mainw->mute=gtk_check_menu_item_get_active (LIVES_CHECK_MENU_ITEM (mainw->mute_audio));
+      mainw->mute=lives_check_menu_item_get_active (LIVES_CHECK_MENU_ITEM (mainw->mute_audio));
     }
   }
   if (mainw->current_file>0&&cfile->menuentry==NULL) {
@@ -6655,7 +6655,7 @@ void switch_to_file(int old_file, int new_file) {
       mainw->loop=FALSE;
     }
     else {
-      mainw->loop=gtk_check_menu_item_get_active(LIVES_CHECK_MENU_ITEM(mainw->loop_video));
+      mainw->loop=lives_check_menu_item_get_active(LIVES_CHECK_MENU_ITEM(mainw->loop_video));
     }
     
     lives_widget_set_sensitive (mainw->undo, cfile->undoable);

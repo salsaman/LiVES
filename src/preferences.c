@@ -3210,37 +3210,37 @@ _prefsw *create_prefs_dialog (void) {
   lives_table_attach (LIVES_TABLE (prefsw->table_right_directories), label, 0, 1, 4, 5,
 		    (LiVESAttachOptions) (LIVES_FILL),
 		    (LiVESAttachOptions) (0), 0, 0);
-  gtk_misc_set_alignment (GTK_MISC (label), 0, 0.5);
+  lives_label_set_halignment (LIVES_LABEL(label), 0.5);
   
   label = lives_standard_label_new (_("      Video save directory (default) "));
   lives_table_attach (LIVES_TABLE (prefsw->table_right_directories), label, 0, 1, 5, 6,
 		    (LiVESAttachOptions) (LIVES_FILL),
 		    (LiVESAttachOptions) (0), 0, 0);
-  gtk_misc_set_alignment (GTK_MISC (label), 0, 0.5);
+  lives_label_set_halignment (LIVES_LABEL(label), 0.5);
   
   label = lives_standard_label_new (_("      Audio load directory (default) "));
   lives_table_attach (LIVES_TABLE (prefsw->table_right_directories), label, 0, 1, 6, 7,
                     (LiVESAttachOptions) (LIVES_FILL),
                     (LiVESAttachOptions) (0), 0, 0);
-  gtk_misc_set_alignment (GTK_MISC (label), 0, 0.5);
+  lives_label_set_halignment (LIVES_LABEL(label), 0.5);
   
   label = lives_standard_label_new (_("      Image directory (default) "));
   lives_table_attach (LIVES_TABLE (prefsw->table_right_directories), label, 0, 1, 7, 8,
                     (LiVESAttachOptions) (LIVES_FILL),
                     (LiVESAttachOptions) (0), 0, 0);
-  gtk_misc_set_alignment (GTK_MISC (label), 0, 0.5);
+  lives_label_set_halignment (LIVES_LABEL(label), 0.5);
   
   label = lives_standard_label_new (_("      Backup/Restore directory (default) "));
   lives_table_attach (LIVES_TABLE (prefsw->table_right_directories), label, 0, 1, 8, 9,
                     (LiVESAttachOptions) (LIVES_FILL),
                     (LiVESAttachOptions) (0), 0, 0);
-  gtk_misc_set_alignment (GTK_MISC (label), 0, 0.5);
+  lives_label_set_halignment (LIVES_LABEL(label), 0.5);
   
   label = lives_standard_label_new (_("      Temp directory (do not remove) "));
   lives_table_attach (LIVES_TABLE (prefsw->table_right_directories), label, 0, 1, 3, 4,
 		    (LiVESAttachOptions) (LIVES_FILL),
 		    (LiVESAttachOptions) (0), 0, 0);
-  gtk_misc_set_alignment (GTK_MISC (label), 0, 0.5);
+  lives_label_set_halignment (LIVES_LABEL(label), 0.5);
 
 
   prefsw->vid_load_dir_entry = lives_entry_new ();
@@ -3263,7 +3263,7 @@ _prefsw *create_prefs_dialog (void) {
   lives_table_attach (LIVES_TABLE (prefsw->table_right_directories), label, 0, 3, 0, 2,
 		    (LiVESAttachOptions) (LIVES_EXPAND | LIVES_FILL),
 		    (LiVESAttachOptions) (0), 0, 0);
-  gtk_misc_set_alignment (GTK_MISC (label), 0, 0.65);
+  lives_label_set_halignment (LIVES_LABEL(label), 0.65);
  
   prefsw->temp_label=label;
 

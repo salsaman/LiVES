@@ -1078,15 +1078,15 @@ static void table_select_row(rfx_build_window_t *rfxbuilder, int row) {
       }
     }
     else {
-      gtk_editable_select_region(GTK_EDITABLE(rfxbuilder->entry[i]),0,0);
+      lives_editable_select_region(LIVES_EDITABLE(rfxbuilder->entry[i]),0,0);
       lives_widget_set_sensitive(rfxbuilder->entry[i],FALSE);
       lives_entry_set_editable(LIVES_ENTRY(rfxbuilder->entry[i]),FALSE);
       if (rfxbuilder->entry2[i]!=NULL) {
-	gtk_editable_select_region(GTK_EDITABLE(rfxbuilder->entry2[i]),0,0);
+	lives_editable_select_region(LIVES_EDITABLE(rfxbuilder->entry2[i]),0,0);
 	lives_widget_set_sensitive(rfxbuilder->entry2[i],FALSE);
       }
       if (rfxbuilder->entry3[i]!=NULL) {
-	gtk_editable_select_region(GTK_EDITABLE(rfxbuilder->entry3[i]),0,0);
+	lives_editable_select_region(LIVES_EDITABLE(rfxbuilder->entry3[i]),0,0);
 	lives_widget_set_sensitive(rfxbuilder->entry3[i],FALSE);
       }
     }

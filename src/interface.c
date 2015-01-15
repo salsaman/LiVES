@@ -1111,13 +1111,13 @@ LiVESWidget *create_opensel_dialog (void) {
   lives_table_attach (LIVES_TABLE (table), label, 0, 1, 0, 1,
                     (LiVESAttachOptions) (LIVES_EXPAND | LIVES_FILL),
                     (LiVESAttachOptions) (0), 0, 0);
-  gtk_misc_set_alignment (GTK_MISC (label), 0, 0.5);
+  lives_label_set_halignment (LIVES_LABEL(label), 0.5);
 
   label = lives_standard_label_new (_("Number of frames to open"));
   lives_table_attach (LIVES_TABLE (table), label, 0, 1, 1, 2,
                     (LiVESAttachOptions) (LIVES_EXPAND | LIVES_FILL),
                     (LiVESAttachOptions) (0), 0, 0);
-  gtk_misc_set_alignment (GTK_MISC (label), 0, 0.5);
+  lives_label_set_halignment (LIVES_LABEL(label), 0.5);
 
   spinbutton = lives_standard_spin_button_new (NULL, FALSE, 0., 0., 1000000000., 1., 10., 2, NULL, NULL);
 
@@ -2108,14 +2108,14 @@ _commentsw* create_comments_dialog (lives_clip_t *sfile, gchar *filename) {
   lives_table_attach (LIVES_TABLE (table), label, 0, 1, 0, 1,
                     (LiVESAttachOptions) (LIVES_FILL),
                     (LiVESAttachOptions) (0), 0, 0);
-  gtk_misc_set_alignment (GTK_MISC (label), 0, 0.5);
+  lives_label_set_halignment (LIVES_LABEL(label), 0.5);
 
   label = lives_standard_label_new (_("Author/Artist : "));
 
   lives_table_attach (LIVES_TABLE (table), label, 0, 1, 1, 2,
                     (LiVESAttachOptions) (LIVES_FILL),
                     (LiVESAttachOptions) (0), 0, 0);
-  gtk_misc_set_alignment (GTK_MISC (label), 0, 0.5);
+  lives_label_set_halignment (LIVES_LABEL(label), 0.5);
 
   label = lives_standard_label_new (_("Comments : "));
 
@@ -2123,7 +2123,7 @@ _commentsw* create_comments_dialog (lives_clip_t *sfile, gchar *filename) {
                     (LiVESAttachOptions) (LIVES_FILL),
                     (LiVESAttachOptions) (0), 0, 0);
 
-  gtk_misc_set_alignment (GTK_MISC (label), 0, 0.5);
+  lives_label_set_halignment (LIVES_LABEL(label), 0.5);
 
   commentsw->title_entry = lives_standard_entry_new (NULL,FALSE,cfile->title,80,-1,NULL,NULL);
 

@@ -5231,16 +5231,22 @@ boolean lives_text_view_scroll_onscreen(LiVESTextView *tview) {
 
 
 int get_box_child_index (LiVESBox *box, LiVESWidget *tchild) {
-  LiVESList *list=lives_container_get_children(LIVES_CONTAINER(box));
+  LiVESList *list=lives_container_get_children(LIVES_CONTAINER(box)),*olist=list;
   LiVESWidget *child;
   register int i=0;
 
   while (list!=NULL) {
     child=(LiVESWidget *)list->data;
-    if (child==tchild) return i;
+    if (child==tchild) {
+      g_list_free(olist);
+      return i;
+    }
     list=list->next;
     i++;
   }
+
+  if (olist!=NULL) g_list_free(olist);
+
 
   return -1;
 }

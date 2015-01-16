@@ -1273,7 +1273,7 @@ boolean check_encoder_restrictions (boolean get_extension, boolean user_audio, b
 void lives_exit (void);
 void count_opening_frames(void);
 void on_fileread_clicked (LiVESFileChooser *, gpointer widget);
-boolean dirchange_callback (GtkAccelGroup *, GObject *, uint32_t, GdkModifierType, gpointer user_data);
+boolean dirchange_callback (GtkAccelGroup *, LiVESObject *, uint32_t, LiVESXModifierType, gpointer user_data);
 void on_effects_paused (LiVESButton *, gpointer user_data);
 void on_cancel_keep_button_clicked (LiVESButton *, gpointer user_data);
 void on_cleardisk_activate (LiVESWidget *, gpointer user_data);

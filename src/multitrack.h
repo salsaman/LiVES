@@ -241,7 +241,7 @@ struct _mt {
   LiVESWidget *mm_select;
   LiVESWidget *ins_menuitem;
   LiVESWidget *ins_normal;
-  GtkToolItem *grav_menuitem;
+  LiVESToolItem *grav_menuitem;
   LiVESWidget *grav_label;
   LiVESWidget *grav_normal;
   LiVESWidget *grav_left;
@@ -318,7 +318,7 @@ struct _mt {
   LiVESWidget *clear_marks;
   LiVESWidget *fd_frame;
   LiVESWidget *apply_fx_button;
-  GtkToolItem *eview_button;
+  LiVESToolItem *eview_button;
   LiVESWidget *eview_label;
   LiVESWidget *follow_play;
   LiVESWidget *change_max_disp;
@@ -359,11 +359,11 @@ struct _mt {
   LiVESWidget *insa_checkbutton;
   LiVESWidget *snapo_checkbutton;
 
-  GObject *spinbutton_in_adj;
-  GObject *spinbutton_out_adj;
+  LiVESObject *spinbutton_in_adj;
+  LiVESObject *spinbutton_out_adj;
 
-  GObject *hadjustment;
-  GObject *node_adj;
+  LiVESObject *hadjustment;
+  LiVESObject *node_adj;
 
   GList *audio_draws; ///< list of audio boxes, 0 == backing audio, 1 == track 0 audio, etc.
 
@@ -372,7 +372,7 @@ struct _mt {
 
   LiVESAccelGroup *accel_group;
   GList *video_draws; ///< list of video timeline eventboxes, in layer order
-  GObject *vadjustment;
+  LiVESObject *vadjustment;
 
   GdkDisplay *display;
 
@@ -736,7 +736,7 @@ void unselect_all (lives_mt *); ///< unselect all blocks
 void insert_frames (int filenum, weed_timecode_t offset_start, weed_timecode_t offset_end, weed_timecode_t tc, lives_direction_t direction, LiVESWidget *eventbox, lives_mt *, track_rect *in_block);
 void insert_audio (int filenum, weed_timecode_t offset_start, weed_timecode_t offset_end, weed_timecode_t tc, double avel, lives_direction_t direction, LiVESWidget *eventbox, lives_mt *, track_rect *in_block);
 void on_seltrack_toggled (LiVESWidget *, gpointer mt);
-void scroll_track_by_scrollbar (GtkScrollbar *sbar, gpointer mt);
+void scroll_track_by_scrollbar (LiVESScrollbar *sbar, gpointer mt);
 
 // block functions
 void in_out_start_changed (LiVESWidget *, gpointer mt);
@@ -765,7 +765,7 @@ void tc_to_re (LiVESMenuItem *, gpointer mt);
 void rs_to_tc (LiVESMenuItem *, gpointer mt);
 void re_to_tc (LiVESMenuItem *, gpointer mt);
 
-boolean mt_mark_callback (GtkAccelGroup *group, GObject *obj, guint keyval, GdkModifierType mod, gpointer user_data);
+boolean mt_mark_callback (GtkAccelGroup *group, LiVESObject *obj, guint keyval, LiVESXModifierType mod, gpointer user_data);
 
 void multitrack_clear_marks (LiVESMenuItem *, gpointer mt);
 void mt_show_current_frame(lives_mt *, boolean return_layer);  ///< preview the current frame
@@ -876,8 +876,8 @@ void mt_delete_clips(lives_mt *, int file);
 void mt_init_clips (lives_mt *, int orig_file, boolean add);
 
 // key shortcuts
-boolean mt_prevclip (LiVESAccelGroup *, GObject *, guint keyval, GdkModifierType mod, gpointer);
-boolean mt_nextclip (LiVESAccelGroup *, GObject *, guint keyval, GdkModifierType mod, gpointer);
+boolean mt_prevclip (LiVESAccelGroup *, LiVESObject *, guint keyval, LiVESXModifierType mod, gpointer);
+boolean mt_nextclip (LiVESAccelGroup *, LiVESObject *, guint keyval, LiVESXModifierType mod, gpointer);
 
 typedef enum {
   /* default to warn about */

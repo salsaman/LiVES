@@ -4913,7 +4913,7 @@ LiVESWidget *create_event_list_dialog (weed_plant_t *event_list, weed_timecode_t
 	lives_widget_set_text_color(tree, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars_fore);
       }
 
-      renderer = gtk_cell_renderer_text_new ();
+      renderer = lives_cell_renderer_text_new ();
       column = lives_tree_view_column_new_with_attributes (NULL,
 							 renderer,
 							 "text", TITLE_COLUMN,
@@ -4921,7 +4921,7 @@ LiVESWidget *create_event_list_dialog (weed_plant_t *event_list, weed_timecode_t
 
       lives_tree_view_append_column (LIVES_TREE_VIEW (tree), column);
      
-      renderer = gtk_cell_renderer_text_new ();
+      renderer = lives_cell_renderer_text_new ();
       column = lives_tree_view_column_new_with_attributes ("Keys",
 							 renderer,
 							 "text", KEY_COLUMN,
@@ -4929,7 +4929,7 @@ LiVESWidget *create_event_list_dialog (weed_plant_t *event_list, weed_timecode_t
       lives_tree_view_append_column (LIVES_TREE_VIEW (tree), column);
      
      
-      renderer = gtk_cell_renderer_text_new ();
+      renderer = lives_cell_renderer_text_new ();
       column = lives_tree_view_column_new_with_attributes ("Values",
 							 renderer,
 							 "text", VALUE_COLUMN,

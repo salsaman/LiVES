@@ -1792,8 +1792,8 @@ static void pref_init_list(LiVESWidget *list) {
   LiVESTreeViewColumn *column1, *column2;
   GtkListStore *store;
 
-  renderer = gtk_cell_renderer_text_new();
-  pixbufRenderer = gtk_cell_renderer_pixbuf_new();
+  renderer = lives_cell_renderer_text_new();
+  pixbufRenderer = lives_cell_renderer_pixbuf_new();
 
   column1 = lives_tree_view_column_new_with_attributes("List Icons", pixbufRenderer, "pixbuf", LIST_ICON, NULL);
   column2 = lives_tree_view_column_new_with_attributes("List Items", renderer, "text", LIST_ITEM, NULL);
@@ -2107,7 +2107,7 @@ _prefsw *create_prefs_dialog (void) {
   // Place list on the left panel
   pref_init_list(prefsw->prefs_list);
   
-  list_scroll = gtk_scrolled_window_new(lives_tree_view_get_hadjustment(LIVES_TREE_VIEW(prefsw->prefs_list)), NULL);
+  list_scroll = lives_scrolled_window_new(lives_tree_view_get_hadjustment(LIVES_TREE_VIEW(prefsw->prefs_list)), NULL);
   lives_widget_show(list_scroll);
   lives_scrolled_window_set_policy (LIVES_SCROLLED_WINDOW (list_scroll), LIVES_POLICY_AUTOMATIC, LIVES_POLICY_AUTOMATIC);
   lives_container_add (LIVES_CONTAINER (list_scroll), prefsw->prefs_list);

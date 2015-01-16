@@ -1039,7 +1039,7 @@ weed_plant_t *get_blend_layer(weed_timecode_t tc) {
 
 
 
-boolean rte_on_off_callback (GtkAccelGroup *group, GObject *obj, guint keyval, LiVESXModifierType mod, gpointer user_data) {
+boolean rte_on_off_callback (GtkAccelGroup *group, LiVESObject *obj, guint keyval, LiVESXModifierType mod, gpointer user_data) {
 // this is the callback which happens when a rte is keyed
   int key=LIVES_POINTER_TO_INT(user_data);
   uint64_t new_rte;
@@ -1139,7 +1139,7 @@ boolean rte_on_off_callback_hook (LiVESToggleButton *button, gpointer user_data)
 }
 
 
-boolean grabkeys_callback (GtkAccelGroup *group, GObject *obj, uint32_t keyval, LiVESXModifierType mod, gpointer user_data) {
+boolean grabkeys_callback (GtkAccelGroup *group, LiVESObject *obj, uint32_t keyval, LiVESXModifierType mod, gpointer user_data) {
   // assign the keys to the last key-grabable effect 
   mainw->rte_keys=mainw->last_grabable_effect;
   mainw->osc_block=TRUE;
@@ -1153,7 +1153,7 @@ boolean grabkeys_callback (GtkAccelGroup *group, GObject *obj, uint32_t keyval, 
 
 
 
-boolean textparm_callback (GtkAccelGroup *group, GObject *obj, uint32_t keyval, LiVESXModifierType mod, gpointer user_data) {
+boolean textparm_callback (GtkAccelGroup *group, LiVESObject *obj, uint32_t keyval, LiVESXModifierType mod, gpointer user_data) {
   // keyboard linked to first string parameter, until TAB is pressed
   mainw->rte_textparm=get_textparm();
   return TRUE;
@@ -1169,7 +1169,7 @@ boolean grabkeys_callback_hook (LiVESToggleButton *button, gpointer user_data) {
 }
 
 
-boolean rtemode_callback (GtkAccelGroup *group, GObject *obj, uint32_t keyval, LiVESXModifierType mod, gpointer user_data) {
+boolean rtemode_callback (GtkAccelGroup *group, LiVESObject *obj, uint32_t keyval, LiVESXModifierType mod, gpointer user_data) {
   // "m" mode key
   if (mainw->rte_keys==-1) return TRUE;
   rte_key_setmode(0,-1);
@@ -1191,7 +1191,7 @@ boolean rtemode_callback_hook (LiVESToggleButton *button, gpointer user_data) {
 }
 
 
-boolean swap_fg_bg_callback (GtkAccelGroup *group, GObject *obj, uint32_t keyval, LiVESXModifierType mod, gpointer user_data) {
+boolean swap_fg_bg_callback (GtkAccelGroup *group, LiVESObject *obj, uint32_t keyval, LiVESXModifierType mod, gpointer user_data) {
   int old_file=mainw->current_file;
 
   if (mainw->playing_file<1||mainw->num_tr_applied==0||mainw->noswitch||mainw->blend_file==-1||

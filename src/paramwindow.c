@@ -3211,7 +3211,7 @@ int set_param_from_list(GList *plist, lives_param_t *param, int pnum, boolean wi
 }
 
 
-GList *do_onchange (GObject *object, lives_rfx_t *rfx) {
+GList *do_onchange (LiVESObject *object, lives_rfx_t *rfx) {
   GList *retvals;
 
   int which=GPOINTER_TO_INT (g_object_get_data (object,"param_number"));

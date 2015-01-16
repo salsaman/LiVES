@@ -377,6 +377,7 @@ typedef struct {
   uint32_t foreign_key;
 
 
+#ifdef GUI_GTK
 #if GTK_CHECK_VERSION(3,0,0)
   Window foreign_id;
 #else
@@ -384,7 +385,11 @@ typedef struct {
   GdkColormap *foreign_cmap;
   GdkPixmap *foreign_map;
 #endif
-  GdkWindow *foreign_window;
+#else
+  Window foreign_id;
+#endif
+
+  LiVESXWindow *foreign_window;
   int foreign_width;
   int foreign_height;
   int foreign_bpp;
@@ -948,7 +953,7 @@ typedef struct {
 #endif
 
   // layouts
-  GtkTextBuffer *layout_textbuffer; ///< stores layout errors
+  LiVESTextBuffer *layout_textbuffer; ///< stores layout errors
   GList *affected_layouts_map; ///< map of layouts with errors
   GList *current_layouts_map; ///< map of all layouts for set
 

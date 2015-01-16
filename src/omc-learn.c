@@ -598,7 +598,7 @@ static int omc_learn_get_pvalue(int type, int idx, const gchar *string) {
 
 
 
-static void cell1_edited_callback (GtkCellRendererSpin *spinbutton, const gchar *path_string, const gchar *new_text, gpointer user_data) {
+static void cell1_edited_callback (LiVESCellRenderer *spinbutton, const gchar *path_string, const gchar *new_text, gpointer user_data) {
   lives_omc_match_node_t *mnode=(lives_omc_match_node_t *)user_data;
 
   lives_omc_macro_t omacro=omc_macros[mnode->macro];
@@ -656,7 +656,7 @@ static void omc_macro_row_add_params(lives_omc_match_node_t *mnode, int row, omc
   
   LiVESTreeIter iter1,iter2;
 
-  GObject *spinadj;
+  LiVESObject *spinadj;
 
   gchar *strval=NULL,*vname;
   gchar *oldval=NULL,*final=NULL;
@@ -712,7 +712,7 @@ static void omc_macro_row_add_params(lives_omc_match_node_t *mnode, int row, omc
     lives_widget_set_text_color(mnode->treev2, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars_fore);
   }
 
-  renderer = gtk_cell_renderer_text_new ();
+  renderer = lives_cell_renderer_text_new ();
   column = lives_tree_view_column_new_with_attributes (NULL,
 						     renderer,
 						     "text", TITLE2_COLUMN,
@@ -720,17 +720,19 @@ static void omc_macro_row_add_params(lives_omc_match_node_t *mnode, int row, omc
   
   lives_tree_view_append_column (LIVES_TREE_VIEW (mnode->treev2), column);
   
-  renderer = gtk_cell_renderer_spin_new ();
+  renderer = lives_cell_renderer_spin_new ();
   
-  spinadj=(GObject *)lives_adjustment_new (0., -100000., 100000., 1., 10., 0);
+  spinadj=(LiVESObject *)lives_adjustment_new (0., -100000., 100000., 1., 10., 0);
   
+#ifdef GUI_GTK
   g_object_set (renderer, "width-chars", 7, "mode", GTK_CELL_RENDERER_MODE_EDITABLE,
 		"editable", TRUE, "xalign", 1.0, "adjustment", spinadj, NULL);
-  
+#endif  
+
   lives_signal_connect(renderer, "edited", (GCallback) cell1_edited_callback, mnode);
   
   
-  //  renderer = gtk_cell_renderer_text_new ();
+  //  renderer = lives_cell_renderer_text_new ();
   column = lives_tree_view_column_new_with_attributes (_("value"),
 						     renderer,
 						     "text", VALUE2_COLUMN,
@@ -848,7 +850,7 @@ static void on_omc_combo_entry_changed (LiVESCombo *combo, gpointer ptr) {
 
 
 
-static void cell_toggled_callback (GtkCellRendererToggle *toggle, const gchar *path_string, gpointer user_data) {
+static void cell_toggled_callback (LiVESCellRenderer *toggle, const gchar *path_string, gpointer user_data) {
   lives_omc_match_node_t *mnode=(lives_omc_match_node_t *)user_data;
   int row;
 
@@ -891,7 +893,7 @@ static void cell_toggled_callback (GtkCellRendererToggle *toggle, const gchar *p
 
 
 
-static void cell_edited_callback (GtkCellRendererSpin *spinbutton, const gchar *path_string, const gchar *new_text, gpointer user_data) {
+static void cell_edited_callback (LiVESCellRenderer *spinbutton, const gchar *path_string, const gchar *new_text, gpointer user_data) {
   lives_omc_match_node_t *mnode=(lives_omc_match_node_t *)user_data;
 
   int col=GPOINTER_TO_INT(g_object_get_data(G_OBJECT(spinbutton),"colnum"));
@@ -975,7 +977,7 @@ static LiVESWidget *create_omc_macro_combo(lives_omc_match_node_t *mnode, int ro
 
 static void omc_learner_add_row(int type, int detail, lives_omc_match_node_t *mnode, const gchar *string, omclearn_w *omclw) {
    LiVESWidget *label,*combo;
-   GObject *spinadj;
+   LiVESObject *spinadj;
 
    LiVESCellRenderer *renderer;
    LiVESTreeViewColumn *column;
@@ -1091,7 +1093,7 @@ static void omc_learner_add_row(int type, int detail, lives_omc_match_node_t *mn
     lives_widget_set_text_color(mnode->treev1, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars_fore);
   }
 
-   renderer = gtk_cell_renderer_text_new ();
+   renderer = lives_cell_renderer_text_new ();
    column = lives_tree_view_column_new_with_attributes (NULL,
 						      renderer,
 						      "text", TITLE_COLUMN,
@@ -1099,7 +1101,7 @@ static void omc_learner_add_row(int type, int detail, lives_omc_match_node_t *mn
   
    lives_tree_view_append_column (LIVES_TREE_VIEW (mnode->treev1), column);
   
-   renderer = gtk_cell_renderer_text_new ();
+   renderer = lives_cell_renderer_text_new ();
    column = lives_tree_view_column_new_with_attributes (_("value"),
 						      renderer,
 						      "text", VALUE_COLUMN,
@@ -1107,7 +1109,7 @@ static void omc_learner_add_row(int type, int detail, lives_omc_match_node_t *mn
    lives_tree_view_append_column (LIVES_TREE_VIEW (mnode->treev1), column);
   
   
-   renderer = gtk_cell_renderer_toggle_new ();
+   renderer = lives_cell_renderer_toggle_new ();
    column = lives_tree_view_column_new_with_attributes (_("x"),
 						      renderer,
 						      "active", FILTER_COLUMN,
@@ -1116,7 +1118,7 @@ static void omc_learner_add_row(int type, int detail, lives_omc_match_node_t *mn
 
    lives_signal_connect(renderer, "toggled", (GCallback) cell_toggled_callback, mnode);
 
-   renderer = gtk_cell_renderer_text_new ();
+   renderer = lives_cell_renderer_text_new ();
    column = lives_tree_view_column_new_with_attributes (_("range"),
 						      renderer,
 						      "text", RANGE_COLUMN,
@@ -1124,13 +1126,15 @@ static void omc_learner_add_row(int type, int detail, lives_omc_match_node_t *mn
    lives_tree_view_append_column (LIVES_TREE_VIEW (mnode->treev1), column);
 
 
-   renderer = gtk_cell_renderer_spin_new ();
+   renderer = lives_cell_renderer_spin_new ();
    g_object_set_data(G_OBJECT(renderer), "colnum", GUINT_TO_POINTER(OFFS1_COLUMN));
 
-   spinadj=(GObject *)lives_adjustment_new (0., -100000., 100000., 1., 10., 0);
+   spinadj=(LiVESObject *)lives_adjustment_new (0., -100000., 100000., 1., 10., 0);
 
+#ifdef GUI_GTK
    g_object_set (renderer, "width-chars", 7, "mode", GTK_CELL_RENDERER_MODE_EDITABLE,
 		 "editable", TRUE, "xalign", 1.0, "adjustment", spinadj, NULL);
+#endif
 
    lives_signal_connect(renderer, "edited", (GCallback) cell_edited_callback, mnode);
 
@@ -1142,9 +1146,9 @@ static void omc_learner_add_row(int type, int detail, lives_omc_match_node_t *mn
 						      NULL);
    lives_tree_view_append_column (LIVES_TREE_VIEW (mnode->treev1), column);
 
-   renderer = gtk_cell_renderer_spin_new ();
+   renderer = lives_cell_renderer_spin_new ();
 
-   spinadj=(GObject *)lives_adjustment_new (1., -100000., 100000., 1., 10., 0);
+   spinadj=(LiVESObject *)lives_adjustment_new (1., -100000., 100000., 1., 10., 0);
 
    g_object_set (renderer, "width-chars", 12, "mode", GTK_CELL_RENDERER_MODE_EDITABLE,
 		 "editable", TRUE, "xalign", 1.0, "adjustment", spinadj, 
@@ -1160,10 +1164,10 @@ static void omc_learner_add_row(int type, int detail, lives_omc_match_node_t *mn
 						      NULL);
    lives_tree_view_append_column (LIVES_TREE_VIEW (mnode->treev1), column);
 
-   renderer = gtk_cell_renderer_spin_new ();
+   renderer = lives_cell_renderer_spin_new ();
 
 
-   spinadj=(GObject *)lives_adjustment_new (0., -100000., 100000., 1., 10., 0);
+   spinadj=(LiVESObject *)lives_adjustment_new (0., -100000., 100000., 1., 10., 0);
 
    g_object_set (renderer, "width-chars", 7, "mode", GTK_CELL_RENDERER_MODE_EDITABLE,
 		 "editable", TRUE, "xalign", 1.0, "adjustment", spinadj, NULL);

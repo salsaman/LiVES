@@ -189,7 +189,7 @@ static LIVES_INLINE int get_track_for_block(track_rect *block) {
 
 
 
-static LIVES_INLINE boolean is_empty_track(GObject *track) {
+static LIVES_INLINE boolean is_empty_track(LiVESObject *track) {
   return (g_object_get_data(track, "blocks")==NULL);
 }
 
@@ -2710,7 +2710,7 @@ void mt_clip_select (lives_mt *mt, boolean scroll) {
     clipbox=(LiVESWidget *)g_list_nth_data (list,i);
     if (i==mt->clip_selected) {
       LiVESAdjustment *adj;
-      int value=lives_adjustment_get_upper((adj=gtk_scrolled_window_get_hadjustment(LIVES_SCROLLED_WINDOW(mt->clip_scroll))))
+      int value=lives_adjustment_get_upper((adj=lives_scrolled_window_get_hadjustment(LIVES_SCROLLED_WINDOW(mt->clip_scroll))))
 	*(mt->clip_selected+.5)/len;
       if (scroll) lives_adjustment_clamp_page(adj,value-lives_adjustment_get_page_size(adj)/2,
 					      value+lives_adjustment_get_page_size(adj)/2);
@@ -2730,7 +2730,7 @@ void mt_clip_select (lives_mt *mt, boolean scroll) {
 }
 
 
-boolean mt_prevclip (GtkAccelGroup *group, GObject *obj, guint keyval, LiVESXModifierType mod, gpointer user_data) {
+boolean mt_prevclip (GtkAccelGroup *group, LiVESObject *obj, guint keyval, LiVESXModifierType mod, gpointer user_data) {
   lives_mt *mt=(lives_mt *)user_data;
   mt->clip_selected--;
   polymorph(mt,POLY_CLIPS);
@@ -2738,7 +2738,7 @@ boolean mt_prevclip (GtkAccelGroup *group, GObject *obj, guint keyval, LiVESXMod
   return TRUE;
 }
 
-boolean mt_nextclip (GtkAccelGroup *group, GObject *obj, guint keyval, LiVESXModifierType mod, gpointer user_data) {
+boolean mt_nextclip (GtkAccelGroup *group, LiVESObject *obj, guint keyval, LiVESXModifierType mod, gpointer user_data) {
   lives_mt *mt=(lives_mt *)user_data;
   mt->clip_selected++;
   polymorph(mt,POLY_CLIPS);
@@ -3122,14 +3122,14 @@ void mt_tl_move(lives_mt *mt, double pos_rel) {
 }
 
 
-boolean mt_tlfor (GtkAccelGroup *group, GObject *obj, guint keyval, LiVESXModifierType mod, gpointer user_data) {
+boolean mt_tlfor (GtkAccelGroup *group, LiVESObject *obj, guint keyval, LiVESXModifierType mod, gpointer user_data) {
   lives_mt *mt=(lives_mt *)user_data;
   mt->fm_edit_event=NULL;
   mt_tl_move(mt,1.);
   return TRUE;
 }
 
-boolean mt_tlfor_frame (GtkAccelGroup *group, GObject *obj, guint keyval, LiVESXModifierType mod, gpointer user_data) {
+boolean mt_tlfor_frame (GtkAccelGroup *group, LiVESObject *obj, guint keyval, LiVESXModifierType mod, gpointer user_data) {
   lives_mt *mt=(lives_mt *)user_data;
   mt->fm_edit_event=NULL;
   mt_tl_move(mt,1./mt->fps);
@@ -3137,14 +3137,14 @@ boolean mt_tlfor_frame (GtkAccelGroup *group, GObject *obj, guint keyval, LiVESX
 }
 
 
-boolean mt_tlback (GtkAccelGroup *group, GObject *obj, guint keyval, LiVESXModifierType mod, gpointer user_data) {
+boolean mt_tlback (GtkAccelGroup *group, LiVESObject *obj, guint keyval, LiVESXModifierType mod, gpointer user_data) {
   lives_mt *mt=(lives_mt *)user_data;
   mt->fm_edit_event=NULL;
   mt_tl_move(mt,-1.);
   return TRUE;
 }
 
-boolean mt_tlback_frame (GtkAccelGroup *group, GObject *obj, guint keyval, LiVESXModifierType mod, gpointer user_data) {
+boolean mt_tlback_frame (GtkAccelGroup *group, LiVESObject *obj, guint keyval, LiVESXModifierType mod, gpointer user_data) {
   lives_mt *mt=(lives_mt *)user_data;
   mt->fm_edit_event=NULL;
   mt_tl_move(mt,-1./mt->fps);
@@ -3220,7 +3220,7 @@ static void scroll_time_by_scrollbar (GtkHScrollbar *sbar, gpointer user_data) {
 }
 
 
-boolean mt_trdown (GtkAccelGroup *group, GObject *obj, guint keyval, LiVESXModifierType mod, gpointer user_data) {
+boolean mt_trdown (GtkAccelGroup *group, LiVESObject *obj, guint keyval, LiVESXModifierType mod, gpointer user_data) {
   lives_mt *mt=(lives_mt *)user_data;
 
   if (mt->current_track>=0&&mt->opts.pertrack_audio&&!mt->aud_track_selected) {
@@ -3257,7 +3257,7 @@ boolean mt_trdown (GtkAccelGroup *group, GObject *obj, guint keyval, LiVESXModif
 }
 
 
-boolean mt_trup (GtkAccelGroup *group, GObject *obj, guint keyval, LiVESXModifierType mod, gpointer user_data) {
+boolean mt_trup (GtkAccelGroup *group, LiVESObject *obj, guint keyval, LiVESXModifierType mod, gpointer user_data) {
   lives_mt *mt=(lives_mt *)user_data;
   if (mt->current_track==-1||(mt->current_track==0&&!mt->aud_track_selected&&!mt->opts.show_audio)) return TRUE;
 
@@ -5692,7 +5692,7 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
   LiVESWidget *suggest_feature;
   LiVESWidget *help_translate;
 
-  GObject *vadjustment;
+  LiVESObject *vadjustment;
   LiVESAdjustment *spinbutton_adj;
 
   gchar buff[32768];
@@ -8138,7 +8138,7 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
   gtk_paned_set_position(GTK_PANED(mt->hpaned),scr_width/2);
 
   // poly clip scroll
-  mt->clip_scroll = gtk_scrolled_window_new (NULL, NULL);
+  mt->clip_scroll = lives_scrolled_window_new (NULL, NULL);
   lives_object_ref (mt->clip_scroll);
   lives_widget_set_events (mt->clip_scroll, LIVES_SCROLL_MASK);
   lives_signal_connect (LIVES_GUI_OBJECT (mt->clip_scroll), "scroll_event",
@@ -8295,7 +8295,7 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
 		    (gpointer)mt);
   
 
-  mt->node_adj = (GObject *)lives_adjustment_new (0., 0., 0., 1./mt->fps, 10./mt->fps, 0.);
+  mt->node_adj = (LiVESObject *)lives_adjustment_new (0., 0., 0., 1./mt->fps, 10./mt->fps, 0.);
 
   mt->node_scale=lives_hscale_new(LIVES_ADJUSTMENT(mt->node_adj));
   gtk_scale_set_draw_value(GTK_SCALE(mt->node_scale),FALSE);
@@ -8655,7 +8655,7 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
   hbox = lives_hbox_new (FALSE, 0);
   lives_container_add (LIVES_CONTAINER (eventbox), hbox);
 
-  vadjustment = (GObject *)lives_adjustment_new (1.0,1.0,1.0,1.0,1.0,1.0);
+  vadjustment = (LiVESObject *)lives_adjustment_new (1.0,1.0,1.0,1.0,1.0,1.0);
   scrollbar=lives_vscrollbar_new(LIVES_ADJUSTMENT(vadjustment));
   lives_widget_set_sensitive(scrollbar,FALSE);
 
@@ -8667,7 +8667,7 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
     
   lives_box_pack_start (LIVES_BOX (tl_vbox), mt->tl_hbox, TRUE, TRUE, 0);
 
-  mt->vadjustment = (GObject *)lives_adjustment_new (0.0,0.0,1.0,1.0,mt->max_disp_vtracks,1.0);
+  mt->vadjustment = (LiVESObject *)lives_adjustment_new (0.0,0.0,1.0,1.0,mt->max_disp_vtracks,1.0);
   mt->scrollbar=lives_vscrollbar_new(LIVES_ADJUSTMENT(mt->vadjustment));
 
   lives_signal_connect_after (LIVES_GUI_OBJECT (mt->scrollbar), "value_changed",
@@ -8733,7 +8733,7 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
 
   lives_box_pack_start (LIVES_BOX (hbox), label, FALSE, FALSE, widget_opts.packing_width);
 
-  mt->hadjustment = (GObject *)lives_adjustment_new (0.0,0.0,1.,0.25,1.,1.);
+  mt->hadjustment = (LiVESObject *)lives_adjustment_new (0.0,0.0,1.,0.25,1.,1.);
   mt->time_scrollbar=lives_hscrollbar_new(LIVES_ADJUSTMENT(mt->hadjustment));
 
   lives_box_pack_start (LIVES_BOX (hbox), mt->time_scrollbar, TRUE, TRUE, widget_opts.packing_width);
@@ -9948,7 +9948,7 @@ void delete_video_track(lives_mt *mt, int layer, boolean full) {
 
 LiVESWidget *add_audio_track (lives_mt *mt, int track, boolean behind) {
   // add float or pertrack audio track to our timeline_table
-  GObject *adj;
+  LiVESObject *adj;
   LiVESWidget *label;
   LiVESWidget *arrow;
   LiVESWidget *eventbox;
@@ -10118,7 +10118,7 @@ LiVESWidget *add_audio_track (lives_mt *mt, int track, boolean behind) {
 	  lives_label_set_text(LIVES_LABEL(label),tname);
 	  g_free(tname);
 	  
-	  adj=(GObject *)g_object_get_data(G_OBJECT(mt->amixer->ch_sliders[i]),"adj");
+	  adj=(LiVESObject *)g_object_get_data(G_OBJECT(mt->amixer->ch_sliders[i]),"adj");
 	  g_object_set_data(G_OBJECT(adj),"layer",GINT_TO_POINTER(i));
 	}
 
@@ -11348,7 +11348,7 @@ void clear_context (lives_mt *mt) {
     lives_widget_destroy (mt->context_scroll);
   }
 
-  mt->context_scroll=gtk_scrolled_window_new (NULL, NULL);
+  mt->context_scroll=lives_scrolled_window_new (NULL, NULL);
 
   lives_container_add (LIVES_CONTAINER (mt->context_frame), mt->context_scroll);
 
@@ -12711,7 +12711,7 @@ void polymorph (lives_mt *mt, lives_mt_poly_state_t poly) {
     filter_map=mt->fm_edit_event=get_filter_map_before(frame_event,-1000000,NULL);
 
     mt->fx_list_box=lives_vbox_new(FALSE,0);
-    mt->fx_list_scroll = gtk_scrolled_window_new (NULL, NULL);
+    mt->fx_list_scroll = lives_scrolled_window_new (NULL, NULL);
     lives_widget_set_hexpand(mt->fx_list_scroll,TRUE);
 
     lives_scrolled_window_set_policy (LIVES_SCROLLED_WINDOW (mt->fx_list_scroll), LIVES_POLICY_AUTOMATIC, LIVES_POLICY_AUTOMATIC);
@@ -12933,7 +12933,7 @@ void polymorph (lives_mt *mt, lives_mt_poly_state_t poly) {
       add_context_label (mt,(_("Effects can be dragged\nonto blocks on the timeline.")));
     }
     mt->fx_list_box=lives_vbox_new(FALSE,0);
-    mt->fx_list_scroll = gtk_scrolled_window_new (NULL, NULL);
+    mt->fx_list_scroll = lives_scrolled_window_new (NULL, NULL);
     lives_widget_set_hexpand(mt->fx_list_scroll,TRUE);
     lives_scrolled_window_set_policy (LIVES_SCROLLED_WINDOW (mt->fx_list_scroll), LIVES_POLICY_AUTOMATIC, LIVES_POLICY_AUTOMATIC);
     lives_box_pack_start (LIVES_BOX (mt->fx_list_box), mt->fx_list_scroll, TRUE, TRUE, 0);
@@ -18273,7 +18273,7 @@ static void add_mark_at(lives_mt *mt, double time) {
 
 
 
-boolean mt_mark_callback (GtkAccelGroup *group, GObject *obj, guint keyval, LiVESXModifierType mod, gpointer user_data) {
+boolean mt_mark_callback (GtkAccelGroup *group, LiVESObject *obj, guint keyval, LiVESXModifierType mod, gpointer user_data) {
   lives_mt *mt=(lives_mt *)user_data;
   double cur_time;
 
@@ -21909,7 +21909,7 @@ LiVESWidget * amixer_add_channel_slider (lives_mt *mt, int i) {
   // add a slider to audio mixer for layer i; i<0 are backing audio tracks 
   // automatically sets the track name and layer number
 
-  GObject *adj;
+  LiVESObject *adj;
   LiVESWidget *spinbutton;
   LiVESWidget *label;
   LiVESWidget *vbox;
@@ -21918,7 +21918,7 @@ LiVESWidget * amixer_add_channel_slider (lives_mt *mt, int i) {
 
   i+=mt->opts.back_audio_tracks;
 
-  adj = (GObject *)lives_adjustment_new (0.5, 0., 4., 0.01, 0.1, 0.);
+  adj = (LiVESObject *)lives_adjustment_new (0.5, 0., 4., 0.01, 0.1, 0.);
     
   spinbutton = lives_spin_button_new (LIVES_ADJUSTMENT (adj), 0.1, 3);
 

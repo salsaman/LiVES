@@ -2906,6 +2906,7 @@ void get_active_track_list(int *clip_index, int num_tracks, weed_plant_t *filter
 	weed_free(in_tracks);
       }
     }
+    weed_free(filter_hash);
   }
 
   weed_free(init_events);

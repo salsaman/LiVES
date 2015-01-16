@@ -1947,7 +1947,7 @@ static int get_top_track_for(lives_mt *mt, int track) {
 
 void scroll_tracks (lives_mt *mt, int top_track, boolean set_value) {
   GList *vdraws=mt->video_draws;
-  GList *table_children;
+  GList *table_children,*xlist;
 
   LiVESWidget *eventbox;
   LiVESWidget *label;
@@ -2442,7 +2442,7 @@ void scroll_tracks (lives_mt *mt, int top_track, boolean set_value) {
     lives_adjustment_set_upper(LIVES_ADJUSTMENT(mt->vadjustment),lives_adjustment_get_value(LIVES_ADJUSTMENT(mt->vadjustment))+
 			       lives_adjustment_get_page_size(LIVES_ADJUSTMENT(mt->vadjustment)));
 
-  table_children=lives_container_get_children(LIVES_CONTAINER(mt->timeline_table));
+  xlist=table_children=lives_container_get_children(LIVES_CONTAINER(mt->timeline_table));
 
   while (table_children!=NULL) {
     //GtkRequisition req;
@@ -2451,6 +2451,8 @@ void scroll_tracks (lives_mt *mt, int top_track, boolean set_value) {
     lives_widget_set_size_request(child,-1,MT_TRACK_HEIGHT);
     table_children=table_children->next;
   }
+
+  if (xlist!=NULL) g_list_free(xlist);
 
   lives_widget_show_all(mt->timeline_table);
   lives_widget_queue_draw (mt->vpaned);
@@ -2681,6 +2683,7 @@ void mt_clip_select (lives_mt *mt, boolean scroll) {
   mt->file_selected=-1;
 
   if (list==NULL) return;
+
   if (mt->poly_state==POLY_FX_STACK&&mt->event_list!=NULL) {
     if (!mt->was_undo_redo) {
       polymorph(mt,POLY_FX_STACK);
@@ -2701,6 +2704,7 @@ void mt_clip_select (lives_mt *mt, boolean scroll) {
 
   if (mt->clip_selected<0) {
     mt->file_selected=-1;
+    g_list_free(list);
     return;
   }
 
@@ -2727,6 +2731,7 @@ void mt_clip_select (lives_mt *mt, boolean scroll) {
     }
     else lives_widget_set_state(clipbox,LIVES_WIDGET_STATE_NORMAL);
   }
+  g_list_free(list);
 }
 
 
@@ -10379,7 +10384,7 @@ void do_effect_context (lives_mt *mt, GdkEventButton *event) {
 static boolean
 fx_ebox_pressed (LiVESWidget *eventbox, GdkEventButton *event, gpointer user_data) {
   lives_mt *mt=(lives_mt *)user_data;
-  GList *children;
+  GList *children,*xlist;
   weed_plant_t *osel=mt->selected_init_event;
 
   if (mt->is_rendering) return FALSE;
@@ -10456,13 +10461,15 @@ fx_ebox_pressed (LiVESWidget *eventbox, GdkEventButton *event, gpointer user_dat
   }
 
   // set clicked-on widget to selected state and reset all others
-  children=lives_container_get_children(LIVES_CONTAINER(mt->fx_list_vbox));
+  xlist=children=lives_container_get_children(LIVES_CONTAINER(mt->fx_list_vbox));
   while (children!=NULL) {
     LiVESWidget *child=(LiVESWidget *)children->data;
     if (child!=eventbox) lives_widget_set_state(child,LIVES_WIDGET_STATE_NORMAL);
     else lives_widget_set_state(child,LIVES_WIDGET_STATE_PRELIGHT);
     children=children->next;
   }
+
+  if (xlist!=NULL) g_list_free(xlist);
 
   if (event->button==3&&mainw->playing_file==-1) {
     do_effect_context(mt,event);
@@ -10553,7 +10560,7 @@ void mt_clear_timeline(lives_mt *mt) {
 
 void mt_delete_clips(lives_mt *mt, int file) {
   // close eventbox(es) for a given file
-  GList *list=lives_container_get_children(LIVES_CONTAINER (mt->clip_inner_box)),*list_next;
+  GList *list=lives_container_get_children(LIVES_CONTAINER (mt->clip_inner_box)),*list_next,*olist=list;
 
   LiVESWidget *child;
   LiVESWidget *label1,*label2;
@@ -10587,6 +10594,8 @@ void mt_delete_clips(lives_mt *mt, int file) {
     list=list_next;
     i++;
   }
+
+  if (olist!=NULL) g_list_free(olist);
 
   if (mt->event_list!=NULL&&used_in_current_layout(mt,file)&&removed) {
     int current_file=mainw->current_file;
@@ -19124,6 +19133,9 @@ void add_markers(lives_mt *mt, weed_plant_t *event_list) {
     }
     event=get_next_event(event);
   }
+
+  if (track_blocks!=NULL) g_list_free(track_blocks);
+
 }
 
 

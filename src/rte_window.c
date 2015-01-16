@@ -2790,6 +2790,8 @@ void rte_reset_defs_clicked (LiVESButton *button, lives_rfx_t *rfx) {
     }
   }
   
+  if (child_list!=NULL) g_list_free(child_list);
+
   if (cancelbutton!=NULL) lives_widget_set_sensitive(cancelbutton,FALSE);
 
   make_param_box(LIVES_VBOX (pbox), rfx);

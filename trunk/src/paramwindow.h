@@ -56,7 +56,7 @@ GList *argv_to_marshalled_list (lives_rfx_t *, int argc, char **argv);
 /// object should have g_set_object_data "param_number" set to parameter number
 ///
 /// (0 based, -ve for init onchanges)
-GList *do_onchange (GObject *object, lives_rfx_t *) WARN_UNUSED;
+GList *do_onchange (LiVESObject *object, lives_rfx_t *) WARN_UNUSED;
 GList *do_onchange_init(lives_rfx_t *) WARN_UNUSED;
 
 

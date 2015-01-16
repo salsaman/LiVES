@@ -70,14 +70,43 @@ typedef cairo_fill_rule_t lives_painter_fill_rule_t;
 
 #include "support.h"
 
-// needs testing with gtk+ 3,10,0+
-#if GTK_CHECK_VERSION(3,10,0)
-#define LIVES_TABLE_IS_GRID 1
+
+
+/// Glib type stuff //////////////////////////////////////////
+#ifndef G_ENCODE_VERSION
+#define G_ENCODE_VERSION(major,minor) ((major) << 16 | (minor) << 8)
 #endif
 
 
-#ifndef G_ENCODE_VERSION
-#define G_ENCODE_VERSION(major,minor) ((major) << 16 | (minor) << 8)
+typedef GError                            LiVESError;
+
+#ifndef IS_MINGW
+typedef gboolean                          boolean;
+#endif
+
+typedef GList                             LiVESList;
+typedef GSList                            LiVESSList;
+
+
+typedef gpointer                          livespointer;
+
+
+typedef GClosure                          LiVESWidgetClosure;
+
+typedef GObject LiVESObject;
+
+typedef GLogLevelFlags LiVESLogLevelFlags;
+
+#define LIVES_LOG_LEVEL_WARNING G_LOG_LEVEL_WARNING
+#define LIVES_LOG_LEVEL_MASK G_LOG_LEVEL_MASK
+#define LIVES_LOG_LEVEL_CRITICAL G_LOG_LEVEL_CRITICAL
+#define LIVES_LOG_FATAL_MASK G_LOG_FATAL_MASK
+
+
+//////////////////////////////////////////////////
+
+#if GTK_CHECK_VERSION(3,10,0)
+#define LIVES_TABLE_IS_GRID 1
 #endif
 
 #define return_true gtk_true
@@ -88,11 +117,6 @@ typedef gboolean (*LiVESWidgetSourceFunc) (gpointer data);
 
 #define LIVES_GUI_CALLBACK(f) ((LiVESGuiCallback) (f))
 
-typedef GClosure                          LiVESWidgetClosure;
-
-
-
-typedef GObject LiVESObject;
 
 typedef GtkJustification LiVESJustification;
 
@@ -185,6 +209,7 @@ typedef GtkTreeSelection                  LiVESTreeSelection;
 
 
 typedef GtkScrolledWindow                 LiVESScrolledWindow;
+typedef GtkScrollbar                      LiVESScrollbar;
 typedef GtkToolbar                        LiVESToolbar;
 typedef GtkToolItem                       LiVESToolItem;
 
@@ -403,14 +428,7 @@ typedef GdkWindow                         LiVESXWindow;
 
 typedef GdkCursor                         LiVESXCursor;
 
-typedef GError                            LiVESError;
-
-#ifndef IS_MINGW
-typedef gboolean                          boolean;
-#endif
-
-typedef GList                             LiVESList;
-typedef GSList                            LiVESSList;
+typedef GdkModifierType                   LiVESXModifierType;
 
 typedef GtkAccelGroup                     LiVESAccelGroup;
 typedef GtkAccelFlags                     LiVESAccelFlags;
@@ -420,8 +438,6 @@ typedef GtkRequisition                    LiVESRequisition;
 typedef GdkPixbufDestroyNotify            LiVESPixbufDestroyNotify;
 
 typedef GdkInterpType                     LiVESInterpType;
-
-typedef gpointer                          livespointer;
 
 #define LIVES_WIDGET(widget) GTK_WIDGET(widget)
 #define LIVES_PIXBUF(widget) GDK_PIXBUF(widget)
@@ -550,13 +566,6 @@ typedef gpointer                          livespointer;
 #define LIVES_INTERP_BEST   GDK_INTERP_HYPER
 #define LIVES_INTERP_NORMAL GDK_INTERP_BILINEAR
 #define LIVES_INTERP_FAST   GDK_INTERP_NEAREST
-
-typedef GLogLevelFlags LiVESLogLevelFlags;
-
-#define LIVES_LOG_LEVEL_WARNING G_LOG_LEVEL_WARNING
-#define LIVES_LOG_LEVEL_MASK G_LOG_LEVEL_MASK
-#define LIVES_LOG_LEVEL_CRITICAL G_LOG_LEVEL_CRITICAL
-#define LIVES_LOG_FATAL_MASK G_LOG_FATAL_MASK
 
 
 #if GTK_CHECK_VERSION(3,10,0)
@@ -1003,9 +1012,11 @@ boolean lives_button_set_relief(LiVESButton *, LiVESReliefStyle);
 boolean lives_button_set_image(LiVESButton *, LiVESWidget *image);
 boolean lives_button_set_focus_on_click(LiVESButton *, boolean focus);
 
-
 LiVESWidget *lives_check_button_new(void);
 LiVESWidget *lives_check_button_new_with_label(const char *label);
+
+LiVESWidget *lives_radio_button_new(LiVESSList *group);
+
 LiVESWidget *lives_spin_button_new(LiVESAdjustment *, double climb_rate, uint32_t digits);
 
 int lives_dialog_run(LiVESDialog *);
@@ -1197,6 +1208,11 @@ boolean lives_tree_view_column_set_fixed_width(LiVESTreeViewColumn *, int fwidth
 boolean lives_tree_selection_get_selected(LiVESTreeSelection *, LiVESTreeModel **, LiVESTreeIter *);
 boolean lives_tree_selection_set_mode(LiVESTreeSelection *, LiVESSelectionMode);
 boolean lives_tree_selection_select_iter(LiVESTreeSelection *, LiVESTreeIter *);
+
+LiVESCellRenderer *lives_cell_renderer_text_new(void);
+LiVESCellRenderer *lives_cell_renderer_spin_new(void);
+LiVESCellRenderer *lives_cell_renderer_toggle_new(void);
+LiVESCellRenderer *lives_cell_renderer_pixbuf_new(void);
 
 
 boolean lives_toggle_button_get_active(LiVESToggleButton *);
@@ -1429,6 +1445,11 @@ lives_display_t lives_widget_get_display_type(LiVESWidget *);
 
 uint64_t lives_widget_get_xwinid(LiVESWidget *, const char *failure_msg);
 
+
+LiVESWidget *lives_scrolled_window_new(LiVESAdjustment *hadj, LiVESAdjustment *vadj);
+LiVESAdjustment *lives_scrolled_window_get_hadjustment(LiVESScrolledWindow *);
+LiVESAdjustment *lives_scrolled_window_get_vadjustment(LiVESScrolledWindow *);
+
 boolean lives_scrolled_window_set_policy(LiVESScrolledWindow *, LiVESPolicyType hpolicy, LiVESPolicyType vpolicy);
 boolean lives_scrolled_window_add_with_viewport(LiVESScrolledWindow *, LiVESWidget *child);
 
@@ -1533,7 +1554,7 @@ boolean widget_act_toggle (LiVESWidget *, LiVESToggleButton *);
 void toggle_button_toggle (LiVESToggleButton *);
 
 // must retain this fn prototype as a callback
-void set_child_colour(LiVESWidget *widget, gpointer set_all);
+void set_child_colour(LiVESWidget *widget, livespointer set_all);
 
 void unhide_cursor(LiVESXWindow *);
 void hide_cursor(LiVESXWindow *);

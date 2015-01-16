@@ -450,13 +450,13 @@ void
 on_record_perf_activate                      (LiVESMenuItem     *menuitem,
 					      gpointer         user_data);
 
-boolean record_toggle_callback (GtkAccelGroup *, GObject *, guint keyval, GdkModifierType mod, gpointer);
+boolean record_toggle_callback (GtkAccelGroup *, LiVESObject *, guint keyval, LiVESXModifierType mod, gpointer);
 
 
-boolean fps_reset_callback (GtkAccelGroup *, GObject *, guint keyval, GdkModifierType mod, gpointer);
+boolean fps_reset_callback (GtkAccelGroup *, LiVESObject *, guint keyval, LiVESXModifierType mod, gpointer);
 
 
-boolean mute_audio_callback (GtkAccelGroup *, GObject *, guint keyval, GdkModifierType mod, gpointer);
+boolean mute_audio_callback (GtkAccelGroup *, LiVESObject *, guint keyval, LiVESXModifierType mod, gpointer);
 
 
 
@@ -569,10 +569,10 @@ void
 on_showfct_activate               (LiVESMenuItem     *menuitem,
 				   gpointer         user_data);
 
-void on_boolean_toggled(GObject *, gpointer user_data);
+void on_boolean_toggled(LiVESObject *, gpointer user_data);
 
 
-void on_showsubs_toggled(GObject *, gpointer);
+void on_showsubs_toggled(LiVESObject *, gpointer);
 
 void
 on_show_messages_activate            (LiVESMenuItem     *menuitem,
@@ -621,17 +621,17 @@ void
 on_preview_spinbutton_changed          (LiVESSpinButton   *spinbutton,
 					  gpointer         user_data);
 
-boolean prevclip_callback (GtkAccelGroup *, GObject *, guint, GdkModifierType, gpointer );
+boolean prevclip_callback (GtkAccelGroup *, LiVESObject *, guint, LiVESXModifierType, gpointer );
 
-boolean nextclip_callback (GtkAccelGroup *, GObject *, guint, GdkModifierType, gpointer );
+boolean nextclip_callback (GtkAccelGroup *, LiVESObject *, guint, LiVESXModifierType, gpointer );
 
-boolean freeze_callback (GtkAccelGroup *, GObject *, guint, GdkModifierType, gpointer );
+boolean freeze_callback (GtkAccelGroup *, LiVESObject *, guint, LiVESXModifierType, gpointer );
 
-boolean storeclip_callback (GtkAccelGroup *, GObject *, guint, GdkModifierType, gpointer );
+boolean storeclip_callback (GtkAccelGroup *, LiVESObject *, guint, LiVESXModifierType, gpointer );
 
-boolean nervous_callback (GtkAccelGroup *, GObject *, guint, GdkModifierType, gpointer );
+boolean nervous_callback (GtkAccelGroup *, LiVESObject *, guint, LiVESXModifierType, gpointer );
 
-boolean show_sync_callback (GtkAccelGroup *, GObject *, guint keyval, GdkModifierType mod, gpointer clip_number);
+boolean show_sync_callback (GtkAccelGroup *, LiVESObject *, guint keyval, LiVESXModifierType mod, gpointer clip_number);
 
 void on_save_set_activate (LiVESMenuItem *, gpointer );
 

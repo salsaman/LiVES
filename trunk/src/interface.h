@@ -80,7 +80,7 @@ typedef struct {
   LiVESWidget *textview;
 } text_window;
 
-text_window* create_text_window (const gchar *title_part, const gchar *text, GtkTextBuffer *);
+text_window* create_text_window (const gchar *title_part, const gchar *text, LiVESTextBuffer *);
 
 
 typedef struct {

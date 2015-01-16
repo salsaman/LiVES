@@ -89,7 +89,7 @@ void add_message_scroller(LiVESWidget *conter) {
     lives_widget_destroy(mainw->scrolledwindow);
   }
 
-  mainw->scrolledwindow = gtk_scrolled_window_new (NULL, NULL);
+  mainw->scrolledwindow = lives_scrolled_window_new (NULL, NULL);
   lives_scrolled_window_set_policy(LIVES_SCROLLED_WINDOW(mainw->scrolledwindow),LIVES_POLICY_AUTOMATIC,LIVES_POLICY_ALWAYS);
   lives_widget_show (mainw->scrolledwindow);
   lives_widget_set_vexpand(mainw->scrolledwindow,TRUE);

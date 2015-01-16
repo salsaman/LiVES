@@ -2885,8 +2885,8 @@ void on_code_clicked (LiVESButton *button, gpointer user_data) {
 
   lives_box_pack_start (LIVES_BOX (dialog_vbox), scrolledwindow, TRUE, TRUE, 0);
 
-  lives_object_ref (gtk_scrolled_window_get_hadjustment (LIVES_SCROLLED_WINDOW (scrolledwindow)));
-  lives_object_ref (gtk_scrolled_window_get_vadjustment (LIVES_SCROLLED_WINDOW (scrolledwindow)));
+  lives_object_ref (lives_scrolled_window_get_hadjustment (LIVES_SCROLLED_WINDOW (scrolledwindow)));
+  lives_object_ref (lives_scrolled_window_get_vadjustment (LIVES_SCROLLED_WINDOW (scrolledwindow)));
 
   lives_text_view_set_editable (LIVES_TEXT_VIEW (rfxbuilder->code_textview), TRUE);
   lives_text_view_set_wrap_mode (LIVES_TEXT_VIEW (rfxbuilder->code_textview), LIVES_WRAP_WORD);

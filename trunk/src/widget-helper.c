@@ -1,6 +1,6 @@
 // widget-helper.c
 // LiVES
-// (c) G. Finch 2012 - 2014 <salsaman@gmail.com>
+// (c) G. Finch 2012 - 2015 <salsaman@gmail.com>
 // released under the GNU GPL 3 or later
 // see file ../COPYING or www.gnu.org for licensing details
 
@@ -2452,6 +2452,45 @@ LIVES_INLINE double lives_ruler_set_lower(LiVESRuler *ruler, double value) {
 }
 
 
+LIVES_INLINE LiVESCellRenderer *lives_cell_renderer_text_new(void) {
+  LiVESCellRenderer *renderer=NULL;
+#ifdef GUI_GTK
+  renderer=gtk_cell_renderer_text_new();
+#endif
+  return renderer;
+}
+
+
+LIVES_INLINE LiVESCellRenderer *lives_cell_renderer_spin_new(void) {
+  LiVESCellRenderer *renderer=NULL;
+#ifdef GUI_GTK
+  renderer=gtk_cell_renderer_spin_new();
+#endif
+  return renderer;
+}
+
+
+LIVES_INLINE LiVESCellRenderer *lives_cell_renderer_toggle_new(void) {
+  LiVESCellRenderer *renderer=NULL;
+#ifdef GUI_GTK
+  renderer=gtk_cell_renderer_toggle_new();
+#endif
+  return renderer;
+}
+
+
+
+LIVES_INLINE LiVESCellRenderer *lives_cell_renderer_pixbuf_new(void) {
+  LiVESCellRenderer *renderer=NULL;
+#ifdef GUI_GTK
+  renderer=gtk_cell_renderer_pixbuf_new();
+#endif
+  return renderer;
+}
+
+
+
+
 LIVES_INLINE LiVESWidget *lives_toolbar_new(void) {
   LiVESWidget *toolbar=NULL;
 #ifdef GUI_GTK
@@ -3249,6 +3288,33 @@ LIVES_INLINE boolean lives_entry_set_width_chars(LiVESEntry *entry, int nchars) 
   return FALSE;
 }
 
+
+
+LIVES_INLINE LiVESWidget *lives_scrolled_window_new(LiVESAdjustment *hadj, LiVESAdjustment *vadj) {
+  LiVESWidget *swindow=NULL;
+#ifdef GUI_GTK
+  swindow=gtk_scrolled_window_new(hadj,vadj);
+#endif
+  return swindow;
+}
+
+
+LIVES_INLINE LiVESAdjustment *lives_scrolled_window_get_hadjustment(LiVESScrolledWindow *swindow) {
+  LiVESAdjustment *adj=NULL;
+#ifdef GUI_GTK
+  adj=gtk_scrolled_window_get_hadjustment(swindow);
+#endif
+  return adj;
+}
+
+
+LIVES_INLINE LiVESAdjustment *lives_scrolled_window_get_vadjustment(LiVESScrolledWindow *swindow) {
+  LiVESAdjustment *adj=NULL;
+#ifdef GUI_GTK
+  adj=gtk_scrolled_window_get_vadjustment(swindow);
+#endif
+  return adj;
+}
 
 
 LIVES_INLINE boolean lives_scrolled_window_set_policy(LiVESScrolledWindow *scrolledwindow, LiVESPolicyType hpolicy, 
@@ -4852,7 +4918,7 @@ LiVESWidget *lives_standard_scrolled_window_new(int width, int height, LiVESWidg
   LiVESWidget *swchild;
 
 #ifdef GUI_GTK
-  scrolledwindow = gtk_scrolled_window_new (NULL, NULL);
+  scrolledwindow = lives_scrolled_window_new (NULL, NULL);
   lives_scrolled_window_set_policy (LIVES_SCROLLED_WINDOW (scrolledwindow), LIVES_POLICY_AUTOMATIC, LIVES_POLICY_AUTOMATIC);
 
   if (widget_opts.apply_theme) {
@@ -4862,6 +4928,7 @@ LiVESWidget *lives_standard_scrolled_window_new(int width, int height, LiVESWidg
   }
 
   if (child!=NULL) {
+
 #if GTK_CHECK_VERSION(3,0,0)
     if (!LIVES_IS_SCROLLABLE(child))
 #else
@@ -5451,10 +5518,9 @@ LiVESWidget *add_vsep_to_box (LiVESBox *box) {
   return vseparator;
 }
 
-#ifdef GUI_GTK
-static gchar spaces[W_MAX_FILLER_LEN+1];
+
+static char spaces[W_MAX_FILLER_LEN+1];
 static boolean spaces_inited=FALSE;
-#endif
 
 LiVESWidget *add_fill_to_box (LiVESBox *box) {
   LiVESWidget *widget=NULL;

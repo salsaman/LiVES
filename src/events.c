@@ -4808,17 +4808,17 @@ LiVESWidget *create_event_list_dialog (weed_plant_t *event_list, weed_timecode_t
 	  }
 	  if (j==0) {
 	    if (num_elems==1) {
-	      lives_tree_store_set (gtkstore, &iter2, KEY_COLUMN, propnames[i], VALUE_COLUMN, strval, -1);
+	      lives_tree_store_set (treestore, &iter2, KEY_COLUMN, propnames[i], VALUE_COLUMN, strval, -1);
 	    }
 	    else {
-	      lives_tree_store_set (gtkstore, &iter2, KEY_COLUMN, propnames[i], VALUE_COLUMN, "", -1);
-	      lives_tree_store_append (gtkstore, &iter3, &iter2);
-	      lives_tree_store_set (gtkstore, &iter3, VALUE_COLUMN, strval, -1);
+	      lives_tree_store_set (treestore, &iter2, KEY_COLUMN, propnames[i], VALUE_COLUMN, "", -1);
+	      lives_tree_store_append (treestore, &iter3, &iter2);
+	      lives_tree_store_set (treestore, &iter3, VALUE_COLUMN, strval, -1);
 	    }
 	  }
 	  else {
-	    lives_tree_store_append (gtkstore, &iter3, &iter2);
-	    lives_tree_store_set (gtkstore, &iter3, VALUE_COLUMN, strval, -1);
+	    lives_tree_store_append (treestore, &iter3, &iter2);
+	    lives_tree_store_set (treestore, &iter3, VALUE_COLUMN, strval, -1);
 	  }
 	  if (strval!=NULL) g_free (strval);
 	  strval=NULL;
@@ -4906,7 +4906,7 @@ LiVESWidget *create_event_list_dialog (weed_plant_t *event_list, weed_timecode_t
 			(LiVESAttachOptions) (0), 0, 0);
      
       // properties
-      tree = lives_tree_view_new_with_model (LIVES_TREE_MODEL (gtkstore));
+      tree = lives_tree_view_new_with_model (LIVES_TREE_MODEL (treestore));
       if (palette->style&STYLE_1) {
 	lives_widget_set_base_color(tree, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
 	lives_widget_set_text_color(tree, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars_fore);

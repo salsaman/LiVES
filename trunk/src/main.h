@@ -51,6 +51,10 @@ POSSIBILITY OF SUCH DAMAGES.
 #ifndef HAS_LIVES_MAIN_H
 #define HAS_LIVES_MAIN_H
 
+#ifdef __cplusplus
+#undef HAVE_UNICAP
+#endif
+
 #define GUI_GTK
 #define PAINTER_CAIRO
 

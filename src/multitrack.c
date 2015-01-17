@@ -2735,7 +2735,7 @@ void mt_clip_select (lives_mt *mt, boolean scroll) {
 }
 
 
-boolean mt_prevclip (GtkAccelGroup *group, LiVESObject *obj, guint keyval, LiVESXModifierType mod, gpointer user_data) {
+boolean mt_prevclip (GtkAccelGroup *group, LiVESObject *obj, uint32_t keyval, LiVESXModifierType mod, gpointer user_data) {
   lives_mt *mt=(lives_mt *)user_data;
   mt->clip_selected--;
   polymorph(mt,POLY_CLIPS);
@@ -2743,7 +2743,7 @@ boolean mt_prevclip (GtkAccelGroup *group, LiVESObject *obj, guint keyval, LiVES
   return TRUE;
 }
 
-boolean mt_nextclip (GtkAccelGroup *group, LiVESObject *obj, guint keyval, LiVESXModifierType mod, gpointer user_data) {
+boolean mt_nextclip (GtkAccelGroup *group, LiVESObject *obj, uint32_t keyval, LiVESXModifierType mod, gpointer user_data) {
   lives_mt *mt=(lives_mt *)user_data;
   mt->clip_selected++;
   polymorph(mt,POLY_CLIPS);
@@ -3127,14 +3127,14 @@ void mt_tl_move(lives_mt *mt, double pos_rel) {
 }
 
 
-boolean mt_tlfor (GtkAccelGroup *group, LiVESObject *obj, guint keyval, LiVESXModifierType mod, gpointer user_data) {
+boolean mt_tlfor (GtkAccelGroup *group, LiVESObject *obj, uint32_t keyval, LiVESXModifierType mod, gpointer user_data) {
   lives_mt *mt=(lives_mt *)user_data;
   mt->fm_edit_event=NULL;
   mt_tl_move(mt,1.);
   return TRUE;
 }
 
-boolean mt_tlfor_frame (GtkAccelGroup *group, LiVESObject *obj, guint keyval, LiVESXModifierType mod, gpointer user_data) {
+boolean mt_tlfor_frame (GtkAccelGroup *group, LiVESObject *obj, uint32_t keyval, LiVESXModifierType mod, gpointer user_data) {
   lives_mt *mt=(lives_mt *)user_data;
   mt->fm_edit_event=NULL;
   mt_tl_move(mt,1./mt->fps);
@@ -3142,14 +3142,14 @@ boolean mt_tlfor_frame (GtkAccelGroup *group, LiVESObject *obj, guint keyval, Li
 }
 
 
-boolean mt_tlback (GtkAccelGroup *group, LiVESObject *obj, guint keyval, LiVESXModifierType mod, gpointer user_data) {
+boolean mt_tlback (GtkAccelGroup *group, LiVESObject *obj, uint32_t keyval, LiVESXModifierType mod, gpointer user_data) {
   lives_mt *mt=(lives_mt *)user_data;
   mt->fm_edit_event=NULL;
   mt_tl_move(mt,-1.);
   return TRUE;
 }
 
-boolean mt_tlback_frame (GtkAccelGroup *group, LiVESObject *obj, guint keyval, LiVESXModifierType mod, gpointer user_data) {
+boolean mt_tlback_frame (GtkAccelGroup *group, LiVESObject *obj, uint32_t keyval, LiVESXModifierType mod, gpointer user_data) {
   lives_mt *mt=(lives_mt *)user_data;
   mt->fm_edit_event=NULL;
   mt_tl_move(mt,-1./mt->fps);
@@ -3225,7 +3225,7 @@ static void scroll_time_by_scrollbar (GtkHScrollbar *sbar, gpointer user_data) {
 }
 
 
-boolean mt_trdown (GtkAccelGroup *group, LiVESObject *obj, guint keyval, LiVESXModifierType mod, gpointer user_data) {
+boolean mt_trdown (GtkAccelGroup *group, LiVESObject *obj, uint32_t keyval, LiVESXModifierType mod, gpointer user_data) {
   lives_mt *mt=(lives_mt *)user_data;
 
   if (mt->current_track>=0&&mt->opts.pertrack_audio&&!mt->aud_track_selected) {
@@ -3262,7 +3262,7 @@ boolean mt_trdown (GtkAccelGroup *group, LiVESObject *obj, guint keyval, LiVESXM
 }
 
 
-boolean mt_trup (GtkAccelGroup *group, LiVESObject *obj, guint keyval, LiVESXModifierType mod, gpointer user_data) {
+boolean mt_trup (GtkAccelGroup *group, LiVESObject *obj, uint32_t keyval, LiVESXModifierType mod, gpointer user_data) {
   lives_mt *mt=(lives_mt *)user_data;
   if (mt->current_track==-1||(mt->current_track==0&&!mt->aud_track_selected&&!mt->opts.show_audio)) return TRUE;
 
@@ -10136,7 +10136,7 @@ LiVESWidget *add_audio_track (lives_mt *mt, int track, boolean behind) {
 }
 
 
-static void set_track_label(GtkEventBox *xeventbox, int tnum) {
+static void set_track_label(LiVESEventBox *xeventbox, int tnum) {
   LiVESWidget *label=LIVES_WIDGET(g_object_get_data(G_OBJECT(xeventbox),"label"));
   const gchar *tname=(const gchar *)g_object_get_data(G_OBJECT(xeventbox),"track_name");
   gchar *newtext=g_strdup_printf(_("%s (layer %d)"),tname,tnum);
@@ -18282,7 +18282,7 @@ static void add_mark_at(lives_mt *mt, double time) {
 
 
 
-boolean mt_mark_callback (GtkAccelGroup *group, LiVESObject *obj, guint keyval, LiVESXModifierType mod, gpointer user_data) {
+boolean mt_mark_callback (GtkAccelGroup *group, LiVESObject *obj, uint32_t keyval, LiVESXModifierType mod, gpointer user_data) {
   lives_mt *mt=(lives_mt *)user_data;
   double cur_time;
 

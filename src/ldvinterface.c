@@ -10,8 +10,7 @@
 #include "ldvinterface.h"
 
 
-struct _dvgrabw *create_camwindow (s_cam *cam, int type)
-{
+struct _dvgrabw *create_camwindow (s_cam *cam, int type) {
   LiVESWidget *hbuttonbox1;
   LiVESWidget *hbuttonbox2;
   LiVESWidget *button3;

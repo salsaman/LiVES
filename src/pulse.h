@@ -77,7 +77,7 @@ typedef struct {
 
   boolean is_paused;
 
-  volatile gint64 audio_ticks; ///< ticks when we did the last seek, used to calculate current ticks from audio
+  volatile int64_t audio_ticks; ///< ticks when we did the last seek, used to calculate current ticks from audio
 
   int fd; /**< if >0 we are playing from a lives_clip_t */
   boolean is_opening; ///< TRUE if file is opening (audiodump.pcm)
@@ -137,7 +137,7 @@ int64_t pulse_audio_seek_bytes (pulse_driver_t *, int64_t bytes); ///< seek to b
 
 int64_t lives_pulse_get_time(pulse_driver_t *, boolean absolute); ///< get time from pa, in 10^-8 seconds
 
-gdouble lives_pulse_get_pos(pulse_driver_t *);
+double lives_pulse_get_pos(pulse_driver_t *);
 
 
 //////////////////////

@@ -43,7 +43,7 @@ typedef struct {
 
 
 void lives2lives_read_stream (const gchar *host, int port);
-void weed_layer_set_from_lives2lives (weed_plant_t *layer, gint clip, lives_vstream_t *lstream);
+void weed_layer_set_from_lives2lives (weed_plant_t *layer, int clip, lives_vstream_t *lstream);
 void on_open_lives2lives_activate (LiVESMenuItem *, gpointer);
 void on_send_lives2lives_activate (LiVESMenuItem *, gpointer);
 
@@ -57,7 +57,7 @@ typedef struct {
   LiVESWidget *rb_anyhost;
 } lives_pandh_w;
 
-lives_pandh_w* create_pandh_dialog (gint type);
+lives_pandh_w* create_pandh_dialog (int type);
 
 
 

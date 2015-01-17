@@ -1,6 +1,6 @@
 // resample.c
 // LiVES
-// (c) G. Finch 2004 - 2013 <salsaman@gmail.com>
+// (c) G. Finch 2004 - 2015 <salsaman@gmail.com>
 // released under the GNU GPL 3 or later
 // see file ../COPYING or www.gnu.org for licensing details
 
@@ -1094,7 +1094,7 @@ void on_resample_vid_ok (LiVESButton *button, LiVESEntry *entry) {
 
 
 
-_resaudw *create_resaudw (gshort type, render_details *rdet, LiVESWidget *top_vbox) {
+_resaudw *create_resaudw (short type, render_details *rdet, LiVESWidget *top_vbox) {
   // type 1 == resample
   // type 2 == insert silence
   // type 3 == enter multitrack or encode or render to clip

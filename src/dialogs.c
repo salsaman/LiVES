@@ -66,14 +66,14 @@ void on_warn_mask_toggled (LiVESToggleButton *togglebutton, gpointer user_data) 
 
 
 
-static void add_xlays_widget(GtkBox *box) {
+static void add_xlays_widget(LiVESBox *box) {
   // add widget to preview affected layouts
 
   LiVESWidget *expander=lives_expander_new_with_mnemonic(_("Show affected _layouts"));
   LiVESWidget *textview=lives_text_view_new();
   LiVESWidget *label;
   GList *xlist=mainw->xlays;
-  GtkTextBuffer *textbuffer = lives_text_view_get_buffer (LIVES_TEXT_VIEW (textview));
+  LiVESTextBuffer *textbuffer = lives_text_view_get_buffer (LIVES_TEXT_VIEW (textview));
   
   lives_text_view_set_editable (LIVES_TEXT_VIEW (textview), FALSE);
   lives_container_add (LIVES_CONTAINER (expander), textview);
@@ -106,7 +106,7 @@ static void add_xlays_widget(GtkBox *box) {
 
 
 
-void add_warn_check (GtkBox *box, int warn_mask_number) {
+void add_warn_check (LiVESBox *box, int warn_mask_number) {
   LiVESWidget *checkbutton;
   LiVESWidget *hbox=lives_hbox_new (FALSE, 0);
 
@@ -138,7 +138,7 @@ static void add_clear_ds_button(LiVESDialog* dialog) {
 }
 
 
-static void add_clear_ds_adv(GtkBox *box) {
+static void add_clear_ds_adv(LiVESBox *box) {
   // add a button which opens up  Recover/Repair widget
   LiVESWidget *button = lives_button_new_with_mnemonic(_(" _Advanced Settings >>"));
   LiVESWidget *hbox = lives_hbox_new (FALSE, 0);
@@ -588,7 +588,7 @@ int do_info_dialog_with_transient(const gchar *text, boolean is_blocking, LiVESW
 
 
 
-gchar *ds_critical_msg(const gchar *dir, guint64 dsval) {
+gchar *ds_critical_msg(const gchar *dir, uint64_t dsval) {
   gchar *msg;
   gchar *msgx;
   gchar *tmp;
@@ -605,7 +605,7 @@ gchar *ds_critical_msg(const gchar *dir, guint64 dsval) {
 }
 
 
-gchar *ds_warning_msg(const gchar *dir, guint64 dsval, guint64 cwarn, guint64 nwarn) {
+gchar *ds_warning_msg(const gchar *dir, uint64_t dsval, uint64_t cwarn, uint64_t nwarn) {
   gchar *msg;
   gchar *msgx;
   gchar *tmp;
@@ -741,7 +741,7 @@ void pump_io_chan(GIOChannel *iochan) {
 
 boolean check_storage_space(lives_clip_t *sfile, boolean is_processing) {
   // check storage space in prefs->tmpdir, and if sfile!=NULL, in sfile->op_dir
-  guint64 dsval;
+  uint64_t dsval;
 
   int retval;
   boolean did_pause=FALSE;
@@ -754,7 +754,7 @@ boolean check_storage_space(lives_clip_t *sfile, boolean is_processing) {
   do {
     ds=get_storage_status(prefs->tmpdir,mainw->next_ds_warn_level,&dsval);
     if (ds==LIVES_STORAGE_STATUS_WARNING) {
-      guint64 curr_ds_warn=mainw->next_ds_warn_level;
+      uint64_t curr_ds_warn=mainw->next_ds_warn_level;
       mainw->next_ds_warn_level>>=1;
       if (mainw->next_ds_warn_level>(dsval>>1)) mainw->next_ds_warn_level=dsval>>1;
       if (mainw->next_ds_warn_level<prefs->ds_crit_level) mainw->next_ds_warn_level=prefs->ds_crit_level;
@@ -814,7 +814,7 @@ boolean check_storage_space(lives_clip_t *sfile, boolean is_processing) {
     do {
       ds=get_storage_status(sfile->op_dir,sfile->op_ds_warn_level,&dsval);
       if (ds==LIVES_STORAGE_STATUS_WARNING) {
-	guint64 curr_ds_warn=sfile->op_ds_warn_level;
+	uint64_t curr_ds_warn=sfile->op_ds_warn_level;
 	sfile->op_ds_warn_level>>=1;
 	if (sfile->op_ds_warn_level>(dsval>>1)) sfile->op_ds_warn_level=dsval>>1;
 	if (sfile->op_ds_warn_level<prefs->ds_crit_level) sfile->op_ds_warn_level=prefs->ds_crit_level;
@@ -934,7 +934,7 @@ static void disp_fraction(int done, int start, int end, double timesofar, xproce
   if (done>disp_frames_done) lives_progress_bar_set_fraction(LIVES_PROGRESS_BAR(proc->progressbar),fraction_done);
 
   est_time=timesofar/fraction_done-timesofar;
-  prog_label=g_strdup_printf(_("\n%s%d%% done. Time remaining: %u sec%s\n"),stretch,(int)(fraction_done*100.),(guint)(est_time+.5),stretch);
+  prog_label=g_strdup_printf(_("\n%s%d%% done. Time remaining: %u sec%s\n"),stretch,(int)(fraction_done*100.),(uint32_t)(est_time+.5),stretch);
   if (LIVES_IS_LABEL(proc->label3)) lives_label_set_text(LIVES_LABEL(proc->label3),prog_label);
   g_free(prog_label);
 
@@ -1315,11 +1315,11 @@ boolean process_one (boolean visible) {
 
       if (cfile->opening&&cfile->clip_type==CLIP_TYPE_DISK&&!cfile->opening_only_audio&&
 	  (cfile->hsize>0||cfile->vsize>0||cfile->frames>0)&&(!mainw->effects_paused||!shown_paused_frames)) {
-	guint apxl;
+	uint32_t apxl;
 	gettimeofday(&tv, NULL);
 	mainw->currticks=U_SECL*(tv.tv_sec-mainw->origsecs)+tv.tv_usec*U_SEC_RATIO-mainw->origusecs*U_SEC_RATIO;
 	if ((mainw->currticks-last_open_check_ticks)>OPEN_CHECK_TICKS*
-	    ((apxl=get_approx_ln((guint)mainw->opening_frames))<200?apxl:200)||
+	    ((apxl=get_approx_ln((uint32_t)mainw->opening_frames))<200?apxl:200)||
 	    (mainw->effects_paused&&!shown_paused_frames)) {
 	  count_opening_frames();
 	  last_open_check_ticks=mainw->currticks;
@@ -1333,7 +1333,7 @@ boolean process_one (boolean visible) {
 	      }
 	      lives_progress_bar_set_fraction(LIVES_PROGRESS_BAR(cfile->proc_ptr->progressbar),fraction_done);
 	      if (est_time!=-1.) prog_label=g_strdup_printf(_("\n%d/%d frames opened. Time remaining %u sec.\n"),
-							    mainw->opening_frames-1,cfile->frames,(guint)(est_time+.5));
+							    mainw->opening_frames-1,cfile->frames,(uint32_t)(est_time+.5));
 	      else prog_label=g_strdup_printf(_("\n%d/%d frames opened.\n"),mainw->opening_frames-1,cfile->frames);
 	    }
 	    else {
@@ -2740,7 +2740,7 @@ void do_system_failed_error(const char *com, int retval, const char *addinfo) {
   gchar *dsmsg1=g_strdup("");
   gchar *dsmsg2=g_strdup("");
 
-  guint64 dsval1,dsval2;
+  uint64_t dsval1,dsval2;
 
   lives_storage_status_t ds1=get_storage_status(prefs->tmpdir,prefs->ds_crit_level,&dsval1),ds2;
 
@@ -2795,7 +2795,7 @@ void do_write_failed_error_s(const char *s, const char *addinfo) {
   gchar dirname[PATH_MAX];
   gchar *sutf=g_filename_to_utf8(s,-1,NULL,NULL,NULL);
 
-  guint64 dsval;
+  uint64_t dsval;
 
   lives_storage_status_t ds;
 
@@ -2864,7 +2864,7 @@ int do_write_failed_error_s_with_retry(const gchar *fname, const gchar *errtext,
 
   gchar dirname[PATH_MAX];
 
-  guint64 dsval;
+  uint64_t dsval;
 
   lives_storage_status_t ds;
 

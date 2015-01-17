@@ -400,7 +400,7 @@ static int audio_process (nframes_t nframes, void *arg) {
     uint64_t numFramesToWrite;              /* num frames we are writing this loop */
     int64_t in_frames=0;
     uint64_t in_bytes=0,xin_bytes=0;
-    gfloat shrink_factor=1.f;
+    float shrink_factor=1.f;
     double vol;
 
     lives_clip_t *xfile=afile;
@@ -473,7 +473,7 @@ static int audio_process (nframes_t nframes, void *arg) {
 	  in_bytes=ABS((in_frames=((double)jackd->sample_in_rate/(double)jackd->sample_out_rate*
 				   (double)jackFramesAvailable+((double)fastrand()/(double)G_MAXUINT32))))
 	    *jackd->num_input_channels*jackd->bytes_per_channel;
-	  if ((shrink_factor=(gfloat)in_frames/(gfloat)jackFramesAvailable)<0.f) {
+	  if ((shrink_factor=(float)in_frames/(float)jackFramesAvailable)<0.f) {
 	    // reverse playback
 	    if ((jackd->seek_pos-=in_bytes)<0) {
 	      // reached beginning backwards

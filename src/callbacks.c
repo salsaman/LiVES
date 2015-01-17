@@ -4097,7 +4097,7 @@ void on_record_perf_activate (LiVESMenuItem *menuitem, gpointer user_data) {
 
 
 
-boolean record_toggle_callback (GtkAccelGroup *group, LiVESObject *obj, guint keyval, LiVESXModifierType mod, 
+boolean record_toggle_callback (GtkAccelGroup *group, LiVESObject *obj, uint32_t keyval, LiVESXModifierType mod, 
 				 gpointer user_data) {
   // from osc
   boolean start=(boolean)GPOINTER_TO_INT(user_data);
@@ -4399,7 +4399,7 @@ on_insfitaudio_toggled                (LiVESToggleButton *togglebutton,
 
 
 
-boolean dirchange_callback (GtkAccelGroup *group, LiVESObject *obj, guint keyval, LiVESXModifierType mod, gpointer user_data) {
+boolean dirchange_callback (GtkAccelGroup *group, LiVESObject *obj, uint32_t keyval, LiVESXModifierType mod, gpointer user_data) {
   if (mainw->playing_file==-1) return TRUE;
 
   // change play direction
@@ -4419,7 +4419,7 @@ boolean dirchange_callback (GtkAccelGroup *group, LiVESObject *obj, guint keyval
 }
 
 
-boolean fps_reset_callback (GtkAccelGroup *group, LiVESObject *obj, guint keyval, LiVESXModifierType mod, gpointer user_data) {
+boolean fps_reset_callback (GtkAccelGroup *group, LiVESObject *obj, uint32_t keyval, LiVESXModifierType mod, gpointer user_data) {
   // reset playback fps (cfile->pb_fps) to normal fps (cfile->fps)
   // also resync the audio
 
@@ -4448,7 +4448,7 @@ boolean fps_reset_callback (GtkAccelGroup *group, LiVESObject *obj, guint keyval
   return TRUE;
 }
 
-boolean prevclip_callback (GtkAccelGroup *group, LiVESObject *obj, guint keyval, LiVESXModifierType mod, gpointer user_data) {
+boolean prevclip_callback (GtkAccelGroup *group, LiVESObject *obj, uint32_t keyval, LiVESXModifierType mod, gpointer user_data) {
   GList *list_index;
   int i=0;
   int num_tried=0,num_clips;
@@ -4486,7 +4486,7 @@ boolean prevclip_callback (GtkAccelGroup *group, LiVESObject *obj, guint keyval,
 }
 
 
-boolean nextclip_callback (GtkAccelGroup *group, LiVESObject *obj, guint keyval, LiVESXModifierType mod, gpointer user_data) {
+boolean nextclip_callback (GtkAccelGroup *group, LiVESObject *obj, uint32_t keyval, LiVESXModifierType mod, gpointer user_data) {
   GList *list_index;
   int i;
   int num_tried=0,num_clips;
@@ -6829,7 +6829,7 @@ void on_cancel_opensel_clicked (LiVESButton  *button, gpointer user_data) {
 void on_cancel_keep_button_clicked (LiVESButton *button, gpointer user_data) {
   // Cancel/Keep from progress dialog
   gchar *com=NULL;
-  guint keep_frames=0;
+  uint32_t keep_frames=0;
   FILE *infofile;
 
   if (cfile->opening&&mainw->effects_paused) {
@@ -7845,7 +7845,7 @@ void on_mute_button_activate (LiVESMenuItem *menuitem, gpointer user_data) {
 }
 
 
-boolean mute_audio_callback (GtkAccelGroup *group, LiVESObject *obj, guint keyval, LiVESXModifierType mod, gpointer user_data) {
+boolean mute_audio_callback (GtkAccelGroup *group, LiVESObject *obj, uint32_t keyval, LiVESXModifierType mod, gpointer user_data) {
   lives_check_menu_item_set_active(LIVES_CHECK_MENU_ITEM(mainw->mute_audio), !mainw->mute);
   return TRUE;
 }
@@ -8158,7 +8158,7 @@ void on_save_subs_activate (LiVESMenuItem *menuitem, gpointer user_data) {
   gchar xfname[512];
   gchar xfname2[512];
 
-  LiVESEntry *entry=(GtkEntry *)user_data;
+  LiVESEntry *entry=(LiVESEntry *)user_data;
 
   // try to repaint the screen, as it may take a few seconds to get a directory listing
   lives_widget_context_update();
@@ -10187,7 +10187,7 @@ void on_forward_pressed (LiVESButton *button, gpointer user_data) {
 }
 
 
-boolean freeze_callback (GtkAccelGroup *group, LiVESObject *obj, guint keyval, LiVESXModifierType mod, gpointer user_data) {
+boolean freeze_callback (GtkAccelGroup *group, LiVESObject *obj, uint32_t keyval, LiVESXModifierType mod, gpointer user_data) {
   if (mainw->playing_file==-1||(mainw->is_processing&&cfile->is_loaded)) return TRUE;
   if (mainw->record&&!(prefs->rec_opts&REC_FRAMES)) return TRUE;
 
@@ -10241,14 +10241,14 @@ boolean freeze_callback (GtkAccelGroup *group, LiVESObject *obj, guint keyval, L
 }
 
 
-boolean nervous_callback (GtkAccelGroup *group, LiVESObject *obj, guint keyval, LiVESXModifierType mod, gpointer clip_number) {
+boolean nervous_callback (GtkAccelGroup *group, LiVESObject *obj, uint32_t keyval, LiVESXModifierType mod, gpointer clip_number) {
   if (mainw->multitrack!=NULL) return FALSE;
   mainw->nervous=!mainw->nervous;
   return TRUE;
 }
 
 
-boolean show_sync_callback (GtkAccelGroup *group, LiVESObject *obj, guint keyval, LiVESXModifierType mod, gpointer clip_number) {
+boolean show_sync_callback (GtkAccelGroup *group, LiVESObject *obj, uint32_t keyval, LiVESXModifierType mod, gpointer clip_number) {
   double avsync;
   gchar *msg;
 
@@ -10294,7 +10294,7 @@ boolean show_sync_callback (GtkAccelGroup *group, LiVESObject *obj, guint keyval
 
 
 
-boolean storeclip_callback (GtkAccelGroup *group, LiVESObject *obj, guint keyval, LiVESXModifierType mod, gpointer clip_number) {
+boolean storeclip_callback (GtkAccelGroup *group, LiVESObject *obj, uint32_t keyval, LiVESXModifierType mod, gpointer clip_number) {
   // ctrl-fn key will store a clip for higher switching
   int clip=GPOINTER_TO_INT (clip_number)-1;
   register int i;

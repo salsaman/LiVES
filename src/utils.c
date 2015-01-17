@@ -1,6 +1,6 @@
 // utils.c
 // LiVES
-// (c) G. Finch 2003 - 2012 <salsaman@gmail.com>
+// (c) G. Finch 2003 - 2015 <salsaman@gmail.com>
 // released under the GNU GPL 3 or later
 // see file ../COPYING or www.gnu.org for licensing details
 
@@ -5246,7 +5246,7 @@ getfserr:
 
 
 
-LIVES_INLINE LiVESInterpType get_interp_value(gshort quality) {
+LIVES_INLINE LiVESInterpType get_interp_value(short quality) {
   if (quality==PB_QUALITY_HIGH) return LIVES_INTERP_BEST;
   else if (quality==PB_QUALITY_MED) return LIVES_INTERP_NORMAL;
   return LIVES_INTERP_FAST;

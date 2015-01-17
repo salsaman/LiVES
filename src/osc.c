@@ -6871,7 +6871,7 @@ void lives_osc_free(lives_osc *c) {
 
 
 
-boolean lives_osc_init(guint udp_port) {
+boolean lives_osc_init(uint32_t udp_port) {
   char *tmp;
 
   if (livesOSC!=NULL&&udp_port!=0) {

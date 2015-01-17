@@ -75,14 +75,14 @@ void append_to_audio_bufferf(lives_audio_buf_t *abuf, float *src, uint64_t nsamp
   channum++;
   if (channum>abuf->out_achans) {
     register int i;
-    abuf->bufferf=g_realloc(abuf->bufferf,channum*sizeof(float *));
+    abuf->bufferf=(float **)g_realloc(abuf->bufferf,channum*sizeof(float *));
     for (i=abuf->out_achans;i<channum;i++) {
       abuf->bufferf[i]=NULL;
     }
     abuf->out_achans=channum;
   }
   channum--;
-  abuf->bufferf[channum]=g_realloc(abuf->bufferf[channum],nsampsize);
+  abuf->bufferf[channum]=(float *)g_realloc(abuf->bufferf[channum],nsampsize);
   lives_memcpy(&abuf->bufferf[channum][abuf->samples_filled],src,nsamples*sizeof(float));
 }
 
@@ -100,14 +100,14 @@ void append_to_audio_buffer16(lives_audio_buf_t *abuf, void *src, uint64_t nsamp
   channum++;
   if (abuf->buffer16==NULL||channum>abuf->out_achans) {
     register int i;
-    abuf->buffer16=g_realloc(abuf->buffer16,channum*sizeof(int16_t *));
+    abuf->buffer16=(int16_t **)g_realloc(abuf->buffer16,channum*sizeof(int16_t *));
     for (i=abuf->out_achans;i<channum;i++) {
       abuf->buffer16[i]=NULL;
     }
     abuf->out_achans=channum;
   }
   channum--;
-  abuf->buffer16[channum]=g_realloc(abuf->buffer16[channum],nsampsize);
+  abuf->buffer16[channum]=(int16_t *)g_realloc(abuf->buffer16[channum],nsampsize);
   lives_memcpy(&abuf->buffer16[channum][abuf->samples_filled],src,nsamples*2);
 #ifdef DEBUG_AFB
   g_print("append16 to afb\n");
@@ -3004,9 +3004,9 @@ boolean push_audio_to_channel(weed_plant_t *achan, lives_audio_buf_t *abuf) {
       int swap=0;
       if (!abuf->s8_signed) swap=SWAP_U_TO_S;
       abuf->s16_signed=TRUE;
-      abuf->buffer16=g_malloc(abuf->out_achans*sizeof(int16_t *));
+      abuf->buffer16=(int16_t **)g_malloc(abuf->out_achans*sizeof(int16_t *));
       for (i=0;i<abuf->out_achans;i++) {
-	abuf->bufferf[i]=g_malloc(abuf->samples_filled*2);
+	abuf->bufferf[i]=(float *)g_malloc(abuf->samples_filled*2);
 	sample_move_d8_d16 (abuf->buffer16[i],abuf->buffer8[i], abuf->samples_filled, abuf->samples_filled*2, 
 			    1.0, abuf->out_achans, abuf->out_achans, swap);
 
@@ -3016,9 +3016,9 @@ boolean push_audio_to_channel(weed_plant_t *achan, lives_audio_buf_t *abuf) {
 
     // try convert S16 -> float
     if (abuf->buffer16!=NULL) {
-      abuf->bufferf=g_malloc(abuf->out_achans*sizeof(float *));
+      abuf->bufferf=(float **)g_malloc(abuf->out_achans*sizeof(float *));
       for (i=0;i<abuf->out_achans;i++) {
-	abuf->bufferf[i]=g_malloc(abuf->samples_filled*sizeof(float));
+	abuf->bufferf[i]=(float *)g_malloc(abuf->samples_filled*sizeof(float));
 	if (!abuf->in_interleaf) {
 	  sample_move_d16_float(abuf->bufferf[i],abuf->buffer16[i],abuf->samples_filled,1,
 				(abuf->s16_signed?AFORM_SIGNED:AFORM_UNSIGNED),abuf->swap_endian,1.0);
@@ -3065,14 +3065,14 @@ boolean push_audio_to_channel(weed_plant_t *achan, lives_audio_buf_t *abuf) {
       }
       else {
 	// needs resample
-	sample_move_float_float(dst,src,alen,scale,1);
+	sample_move_float_float((float *)dst,(float *)src,alen,scale,1);
       }
       dst+=alen*sizeof(float);
     }
     else {
       // interleaved
       for (i=0;i<tchans;i++) {
-	sample_move_float_float(dst,src,alen,scale,tchans);
+	sample_move_float_float((float *)dst,(float *)src,alen,scale,tchans);
 	dst+=sizeof(float);
       }
     }

@@ -712,7 +712,7 @@ void on_insgap_sel_activate (LiVESMenuItem *, gpointer mt);
 void on_insgap_cur_activate (LiVESMenuItem *, gpointer mt);
 void on_split_activate (LiVESMenuItem *, gpointer mt);
 void scroll_tracks (lives_mt *, int top_track, boolean set_value);
-boolean track_arrow_pressed (LiVESWidget *ahbox, GdkEventButton *, gpointer mt);
+boolean track_arrow_pressed (LiVESWidget *ahbox, LiVESXEventButton *, gpointer mt);
 void track_select (lives_mt *); ///< must call after setting mt->current_track
 boolean mt_track_is_audio(lives_mt *, int ntrack); ///< return TRUE if ntrack is a valid backing audio track
 boolean mt_track_is_video(lives_mt *, int ntrack); ///< return TRUE if ntrack is a valid video track
@@ -721,16 +721,16 @@ void mt_do_autotransition(lives_mt *, track_rect *block); ///< call this on a bl
 
 
 // track mouse movement
-boolean on_track_click (LiVESWidget *eventbox, GdkEventButton *, gpointer mt);
-boolean on_atrack_click (LiVESWidget *eventbox, GdkEventButton *, gpointer mt);
-boolean on_track_header_click (LiVESWidget *eventbox, GdkEventButton *, gpointer mt);
-boolean on_track_between_click (LiVESWidget *eventbox, GdkEventButton *, gpointer mt);
-boolean on_track_release (LiVESWidget *eventbox, GdkEventButton *event, gpointer mt);
-boolean on_atrack_release (LiVESWidget *eventbox, GdkEventButton *event, gpointer mt);
-boolean on_track_header_release (LiVESWidget *eventbox, GdkEventButton *, gpointer mt);
-boolean on_track_between_release (LiVESWidget *eventbox, GdkEventButton *, gpointer mt);
-boolean on_track_move (LiVESWidget *widget, GdkEventMotion *event, gpointer mt);
-boolean on_track_header_move (LiVESWidget *widget, GdkEventMotion *event, gpointer mt);
+boolean on_track_click (LiVESWidget *eventbox, LiVESXEventButton *, gpointer mt);
+boolean on_atrack_click (LiVESWidget *eventbox, LiVESXEventButton *, gpointer mt);
+boolean on_track_header_click (LiVESWidget *eventbox, LiVESXEventButton *, gpointer mt);
+boolean on_track_between_click (LiVESWidget *eventbox, LiVESXEventButton *, gpointer mt);
+boolean on_track_release (LiVESWidget *eventbox, LiVESXEventButton *event, gpointer mt);
+boolean on_atrack_release (LiVESWidget *eventbox, LiVESXEventButton *event, gpointer mt);
+boolean on_track_header_release (LiVESWidget *eventbox, LiVESXEventButton *, gpointer mt);
+boolean on_track_between_release (LiVESWidget *eventbox, LiVESXEventButton *, gpointer mt);
+boolean on_track_move (LiVESWidget *widget, LiVESXEventMotion *event, gpointer mt);
+boolean on_track_header_move (LiVESWidget *widget, LiVESXEventMotion *event, gpointer mt);
 
 void unselect_all (lives_mt *); ///< unselect all blocks
 void insert_frames (int filenum, weed_timecode_t offset_start, weed_timecode_t offset_end, weed_timecode_t tc, lives_direction_t direction, LiVESWidget *eventbox, lives_mt *, track_rect *in_block);
@@ -756,16 +756,16 @@ double mt_get_block_entime(lives_mt *, int ntrack, int iblock); /// get timeline
 // timeline functions
 void mt_tl_move(lives_mt *, double pos_rel);
 void set_timeline_end_secs (lives_mt *, double secs);
-boolean on_timeline_press (LiVESWidget *, GdkEventButton *, gpointer mt);
-boolean on_timeline_release (LiVESWidget *, GdkEventButton *, gpointer mt);
-boolean on_timeline_update (LiVESWidget *, GdkEventMotion *, gpointer mt);
+boolean on_timeline_press (LiVESWidget *, LiVESXEventButton *, gpointer mt);
+boolean on_timeline_release (LiVESWidget *, LiVESXEventButton *, gpointer mt);
+boolean on_timeline_update (LiVESWidget *, LiVESXEventMotion *, gpointer mt);
 void draw_region (lives_mt *mt);
 void tc_to_rs (LiVESMenuItem *, gpointer mt);
 void tc_to_re (LiVESMenuItem *, gpointer mt);
 void rs_to_tc (LiVESMenuItem *, gpointer mt);
 void re_to_tc (LiVESMenuItem *, gpointer mt);
 
-boolean mt_mark_callback (GtkAccelGroup *group, LiVESObject *obj, uint32_t keyval, LiVESXModifierType mod, gpointer user_data);
+boolean mt_mark_callback (LiVESAccelGroup *group, LiVESObject *obj, uint32_t keyval, LiVESXModifierType mod, gpointer user_data);
 
 void multitrack_clear_marks (LiVESMenuItem *, gpointer mt);
 void mt_show_current_frame(lives_mt *, boolean return_layer);  ///< preview the current frame

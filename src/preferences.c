@@ -4163,7 +4163,7 @@ _prefsw *create_prefs_dialog (void) {
 
 
   prefsw->selection = lives_tree_view_get_selection(LIVES_TREE_VIEW(prefsw->prefs_list));
-  lives_tree_selection_set_mode(prefsw->selection, GTK_SELECTION_SINGLE);
+  lives_tree_selection_set_mode(prefsw->selection, LIVES_SELECTION_SINGLE);
 
   lives_signal_connect(prefsw->selection, "changed", LIVES_GUI_CALLBACK(on_prefDomainChanged), NULL);
   //

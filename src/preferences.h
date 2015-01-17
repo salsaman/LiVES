@@ -601,7 +601,7 @@ void  rdet_acodec_changed (LiVESCombo *acodec_combo, gpointer user_data);
 
 _prefsw* create_prefs_dialog (void);
 
-boolean on_prefs_delete_event (LiVESWidget *, GdkEvent *, gpointer prefsw);
+boolean on_prefs_delete_event (LiVESWidget *, LiVESXEvent *, gpointer prefsw);
 
 void on_preferences_activate (LiVESMenuItem *, gpointer);
 

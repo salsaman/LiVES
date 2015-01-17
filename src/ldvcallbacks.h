@@ -14,4 +14,4 @@ void on_cameject_clicked (LiVESButton *, gpointer s_cam);
 void on_campause_clicked (LiVESButton *, gpointer s_cam);
 void on_camquit_clicked (LiVESButton *, gpointer s_cam);
 
-boolean on_camdelete_event (LiVESWidget *, GdkEvent *, gpointer s_cam);
+boolean on_camdelete_event (LiVESWidget *, LiVESXEvent *, gpointer s_cam);

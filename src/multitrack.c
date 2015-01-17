@@ -931,6 +931,7 @@ static void draw_block (lives_mt *mt, lives_painter_t *cairo,
   double offset_endd;
 
   boolean needs_text=TRUE;
+  boolean is_audio=FALSE;
 
   int offset_start;
   int offset_end;
@@ -968,7 +969,10 @@ static void draw_block (lives_mt *mt, lives_painter_t *cairo,
   lives_widget_get_bg_color(mt->window,&bgcolor);
 
   track=GPOINTER_TO_INT(g_object_get_data(G_OBJECT(eventbox),"layer_number"));
-  filenum=get_frame_event_clip(block->start_event,track);
+  if (track<0) is_audio=TRUE;
+
+  if (!is_audio) filenum=get_frame_event_clip(block->start_event,track);
+  else filenum=get_audio_frame_clip(block->start_event,track);
 
   switch (block->state) {
   case BLOCK_UNSELECTED:
@@ -987,7 +991,7 @@ static void draw_block (lives_mt *mt, lives_painter_t *cairo,
       lives_painter_stroke(cr);
     }
     else {
-      if ((!is_audio_eventbox(mt,eventbox))&&track>-1) {
+      if (!is_audio&&track>-1) {
 	last_framenum=-1;
 	for (i=offset_start;i<offset_end;i+=BLOCK_THUMB_WIDTH) {
 	  if (i>x2-x1) break;
@@ -1002,7 +1006,7 @@ static void draw_block (lives_mt *mt, lives_painter_t *cairo,
 	    thumbnail=NULL;
 
 
-	    if (framenum!=last_framenum) {
+	    if (mainw->files[filenum]!=NULL&&framenum!=last_framenum) {
 	      if (mainw->files[filenum]->frames>0&&mainw->files[filenum]->clip_type==CLIP_TYPE_FILE) {
 		lives_clip_data_t *cdata=((lives_decoder_t *)mainw->files[filenum]->ext_src)->cdata;
 		if (cdata!=NULL&&!(cdata->seek_flag&LIVES_SEEK_FAST)&&

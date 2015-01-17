@@ -2136,8 +2136,6 @@ LiVESWidget *events_rec_dialog (boolean allow_mt) {
   radiobutton = lives_standard_radio_button_new (_ ("View/edit events in _event window"),TRUE,radiobutton_group,LIVES_BOX(hbox),NULL);
   radiobutton_group = lives_radio_button_get_group (LIVES_RADIO_BUTTON (radiobutton));
 
-  if (mainw->stored_event_list!=NULL) lives_widget_set_sensitive(radiobutton,FALSE);
-    
   lives_signal_connect (LIVES_GUI_OBJECT (radiobutton), "toggled",
 		    LIVES_GUI_CALLBACK (set_render_choice),
 		    GINT_TO_POINTER (RENDER_CHOICE_EVENT_LIST));
@@ -4634,7 +4632,7 @@ LiVESWidget *create_event_list_dialog (weed_plant_t *event_list, weed_timecode_t
   // TODO - some event properties should be editable, e.g. parameter values
   weed_timecode_t tc,tc_secs;
 
-  LiVESTreeStore *gtkstore;
+  LiVESTreeStore *treestore;
   LiVESTreeIter iter1,iter2,iter3;
 
   gchar **string=NULL;
@@ -4715,10 +4713,10 @@ LiVESWidget *create_event_list_dialog (weed_plant_t *event_list, weed_timecode_t
 	lives_table_resize(LIVES_TABLE(table),rows,6);
       }
 			
-      gtkstore = lives_tree_store_new (NUM_COLUMNS, G_TYPE_STRING, G_TYPE_STRING, G_TYPE_STRING);
+      treestore = lives_tree_store_new (NUM_COLUMNS, G_TYPE_STRING, G_TYPE_STRING, G_TYPE_STRING);
 
-      lives_tree_store_append (gtkstore, &iter1, NULL);  /* Acquire an iterator */
-      lives_tree_store_set (gtkstore, &iter1, TITLE_COLUMN, "Properties", -1);
+      lives_tree_store_append (treestore, &iter1, NULL);  /* Acquire an iterator */
+      lives_tree_store_set (treestore, &iter1, TITLE_COLUMN, "Properties", -1);
 
       propnames=weed_plant_list_leaves (event);
    
@@ -4727,7 +4725,7 @@ LiVESWidget *create_event_list_dialog (weed_plant_t *event_list, weed_timecode_t
 	  weed_free(propnames[i]);
 	  continue;
 	}
-	lives_tree_store_append (gtkstore, &iter2, &iter1);  /* Acquire a child iterator */
+	lives_tree_store_append (treestore, &iter2, &iter1);  /* Acquire a child iterator */
        
 	if (oldval!=NULL) {
 	  g_free(oldval);

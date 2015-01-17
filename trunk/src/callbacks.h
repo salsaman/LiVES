@@ -1,6 +1,6 @@
 // callbacks.h
 // LiVES
-// (c) G. Finch <salsaman@gmail.com> 2003 - 2013
+// (c) G. Finch <salsaman@gmail.com> 2003 - 2015
 // Released under the GPL 3 or later
 // see file ../COPYING for licensing details
 
@@ -140,7 +140,7 @@ void
 on_rev_clipboard_activate              (LiVESMenuItem     *menuitem,
                                         gpointer         user_data);
 
-void on_encoder_entry_changed(LiVESCombo *, gpointer ptr);
+void on_encoder_entry_changed (LiVESCombo *, gpointer ptr);
 
 void on_vid_playback_plugin_changed (LiVESEntry *vpp_entry, gpointer user_data);
 
@@ -450,13 +450,13 @@ void
 on_record_perf_activate                      (LiVESMenuItem     *menuitem,
 					      gpointer         user_data);
 
-boolean record_toggle_callback (GtkAccelGroup *, LiVESObject *, guint keyval, LiVESXModifierType mod, gpointer);
+boolean record_toggle_callback (GtkAccelGroup *, LiVESObject *, uint32_t keyval, LiVESXModifierType mod, gpointer);
 
 
-boolean fps_reset_callback (GtkAccelGroup *, LiVESObject *, guint keyval, LiVESXModifierType mod, gpointer);
+boolean fps_reset_callback (GtkAccelGroup *, LiVESObject *, uint32_t keyval, LiVESXModifierType mod, gpointer);
 
 
-boolean mute_audio_callback (GtkAccelGroup *, LiVESObject *, guint keyval, LiVESXModifierType mod, gpointer);
+boolean mute_audio_callback (GtkAccelGroup *, LiVESObject *, uint32_t keyval, LiVESXModifierType mod, gpointer);
 
 
 
@@ -484,7 +484,7 @@ void
 on_filesel_complex_ok_clicked                      (LiVESButton *button,
 						   LiVESEntry *entry);
 
-void on_encoder_ofmt_changed(LiVESCombo *combo, gpointer user_data);
+void on_encoder_ofmt_changed (LiVESCombo *combo, gpointer user_data);
 
 void
 on_ok_export_audio_clicked                      (LiVESButton *button,
@@ -605,33 +605,25 @@ void
 on_loop_cont_activate                (LiVESMenuItem     *menuitem,
 				      gpointer         user_data);
 
-void
-on_show_file_comments_activate            (LiVESMenuItem     *menuitem,
-					   gpointer         user_data);
+void on_show_file_comments_activate (LiVESMenuItem *menuitem, gpointer user_data);
 
-void
-on_toolbar_hide (LiVESButton *button,
-		 gpointer user_data);
+void on_toolbar_hide (LiVESButton *button, gpointer user_data);
 
-void
-on_toy_activate                (LiVESMenuItem     *new_toy,
-				gpointer         old_toy_p);
+void on_toy_activate (LiVESMenuItem *new_toy, gpointer old_toy_p);
 
-void
-on_preview_spinbutton_changed          (LiVESSpinButton   *spinbutton,
-					  gpointer         user_data);
+void on_preview_spinbutton_changed (LiVESSpinButton   *spinbutton, gpointer user_data);
 
-boolean prevclip_callback (GtkAccelGroup *, LiVESObject *, guint, LiVESXModifierType, gpointer );
+boolean prevclip_callback (GtkAccelGroup *, LiVESObject *, uint32_t, LiVESXModifierType, gpointer );
 
-boolean nextclip_callback (GtkAccelGroup *, LiVESObject *, guint, LiVESXModifierType, gpointer );
+boolean nextclip_callback (GtkAccelGroup *, LiVESObject *, uint32_t, LiVESXModifierType, gpointer );
 
-boolean freeze_callback (GtkAccelGroup *, LiVESObject *, guint, LiVESXModifierType, gpointer );
+boolean freeze_callback (GtkAccelGroup *, LiVESObject *, uint32_t, LiVESXModifierType, gpointer );
 
-boolean storeclip_callback (GtkAccelGroup *, LiVESObject *, guint, LiVESXModifierType, gpointer );
+boolean storeclip_callback (GtkAccelGroup *, LiVESObject *, uint32_t, LiVESXModifierType, gpointer );
 
-boolean nervous_callback (GtkAccelGroup *, LiVESObject *, guint, LiVESXModifierType, gpointer );
+boolean nervous_callback (GtkAccelGroup *, LiVESObject *, uint32_t, LiVESXModifierType, gpointer );
 
-boolean show_sync_callback (GtkAccelGroup *, LiVESObject *, guint keyval, LiVESXModifierType mod, gpointer clip_number);
+boolean show_sync_callback (GtkAccelGroup *, LiVESObject *, uint32_t, LiVESXModifierType, gpointer clip_number);
 
 void on_save_set_activate (LiVESMenuItem *, gpointer );
 

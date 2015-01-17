@@ -765,7 +765,7 @@ void tc_to_re (LiVESMenuItem *, gpointer mt);
 void rs_to_tc (LiVESMenuItem *, gpointer mt);
 void re_to_tc (LiVESMenuItem *, gpointer mt);
 
-boolean mt_mark_callback (GtkAccelGroup *group, LiVESObject *obj, guint keyval, LiVESXModifierType mod, gpointer user_data);
+boolean mt_mark_callback (GtkAccelGroup *group, LiVESObject *obj, uint32_t keyval, LiVESXModifierType mod, gpointer user_data);
 
 void multitrack_clear_marks (LiVESMenuItem *, gpointer mt);
 void mt_show_current_frame(lives_mt *, boolean return_layer);  ///< preview the current frame
@@ -876,8 +876,8 @@ void mt_delete_clips(lives_mt *, int file);
 void mt_init_clips (lives_mt *, int orig_file, boolean add);
 
 // key shortcuts
-boolean mt_prevclip (LiVESAccelGroup *, LiVESObject *, guint keyval, LiVESXModifierType mod, gpointer);
-boolean mt_nextclip (LiVESAccelGroup *, LiVESObject *, guint keyval, LiVESXModifierType mod, gpointer);
+boolean mt_prevclip (LiVESAccelGroup *, LiVESObject *, uint32_t keyval, LiVESXModifierType mod, gpointer);
+boolean mt_nextclip (LiVESAccelGroup *, LiVESObject *, uint32_t keyval, LiVESXModifierType mod, gpointer);
 
 typedef enum {
   /* default to warn about */

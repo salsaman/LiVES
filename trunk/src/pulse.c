@@ -24,7 +24,7 @@ static pa_context *pcon=NULL;
 
 static pa_cvolume out_vol;
 
-static guint pulse_server_rate=0;
+static uint32_t pulse_server_rate=0;
 
 #define PULSE_READ_BYTES 48000
 
@@ -285,7 +285,7 @@ static void pulse_audio_write_process (pa_stream *pstream, size_t nbytes, void *
      uint64_t numFramesToWrite;
      int64_t in_frames=0;
      uint64_t in_bytes=0,xin_bytes=0;
-     gfloat shrink_factor=1.f;
+     float shrink_factor=1.f;
      int swap_sign;
 
      lives_clip_t *xfile=afile;
@@ -341,7 +341,7 @@ static void pulse_audio_write_process (pa_stream *pstream, size_t nbytes, void *
 				    (double)pulseFramesAvailable+((double)fastrand()/(double)G_MAXUINT32))))
 	     *pulsed->in_achans*(pulsed->in_asamps>>3);
 	   //g_print("in bytes=%ld %ld %ld %ld %d %d\n",in_bytes,pulsed->in_arate,pulsed->out_arate,pulseFramesAvailable,pulsed->in_achans,pulsed->in_asamps);
-	   if ((shrink_factor=(gfloat)in_frames/(gfloat)pulseFramesAvailable)<0.f) {
+	   if ((shrink_factor=(float)in_frames/(float)pulseFramesAvailable)<0.f) {
 	     // reverse playback
 	     if ((pulsed->seek_pos-=in_bytes)<0) {
 	       if (pulsed->loop==AUDIO_LOOP_NONE) {

@@ -27,7 +27,51 @@ typedef enum {
 #define W_BORDER_WIDTH   10 // default border width
 
 
+
+#ifdef GUI_GTK
+
+#ifdef GDK_WINDOWING_WIN32
+#include <gdk/gdkwin32.h>
+
+#ifndef GDK_IS_WIN32_DISPLAY 
+#define GDK_IS_WIN32_DISPLAY(display) (TRUE)
+#endif
+
+#endif //GDK_WINDOWING_WIN32
+
+#ifdef GDK_WINDOWING_X11
+
+// needed for GDK_WINDOW_XID - for fileselector preview
+// needed for gdk_x11_screen_get_window_manager_name()
+
+#include <gdk/gdkx.h>
+
+#ifndef GDK_IS_X11_DISPLAY 
+#define GDK_IS_X11_DISPLAY(display) (TRUE)
+#endif
+
+#ifndef GDK_IS_WIN32_DISPLAY 
+#define GDK_IS_WIN32_DISPLAY(display) (FALSE)
+#endif
+
+
+#else
+
+#ifndef GDK_IS_X11_DISPLAY 
+#define GDK_IS_X11_DISPLAY(display) (FALSE)
+#endif
+
+#endif // GDK_WINDOWING_X11
+
+#endif // GUI_GTK
+
+
 #ifdef PAINTER_CAIRO
+
+#ifndef GUI_GTK
+#include <cairo/cairo.h>
+#endif
+
 typedef cairo_t lives_painter_t;
 typedef cairo_surface_t lives_painter_surface_t;
 
@@ -417,6 +461,8 @@ typedef GtkRuler                          LiVESRuler;
 typedef GtkVBox                           LiVESVBox;
 typedef GtkHBox                           LiVESHBox;
 #endif
+
+typedef GtkEventBox                       LiVESEventBox;
 
 typedef GtkRange                          LiVESRange;
 
@@ -821,26 +867,122 @@ typedef GdkModifierType LiVESXModifierType;
 
 
 #ifdef GUI_QT
+// just for testing
+
+#include <QtGui/QMainWindow>
+#include <QtGui/QLabel>
+#include <QtGui/QPushButton>
+#include <QtGui/QDialog>
+#include <QtGui/QBoxLayout>
+#include <QtGui/QComboBox>
+
+#include <QtGui/QColor>
+#include <QtCore/QLinkedList>
+
+#define GTK_CHECK_VERSION(a,b,c) 0
+
+typedef QStringList LiVESSList;
+
+typedef QWidget                           LiVESWidget;
+typedef QWidget                           LiVESWindow;
 typedef QImage                            LiVESPixbuf;
 typedef bool                              boolean;
 typedef int                               gint;
 typedef uchar                             guchar;
-typedef (void *)                          gpointer;  
-typedef (void *)(LiVESPixbufDestroyNotify(uchar *, gpointer));
+typedef void*                             gpointer;
+  
+typedef void *(*LiVESPixbufDestroyNotify(uchar *, gpointer));
 
-// etc.
+typedef int                               lives_painter_content_t;
+
+typedef gpointer                          livespointer;
+
+#define LiVESError void
+
+typedef int LiVESXScreen;
+/*    QDesktopWidget *pDesktop = QApplication::desktop();
+    QRect geometry = pDesktop->availableScreenGeometry(number);
+    move(geometry.topLeft());*/
+
+#define LiVESAdjustment void
 
 
 
+typedef int LiVESInterpType;
 #define LIVES_INTERP_BEST   Qt::SmoothTransformation
 #define LIVES_INTERP_NORMAL Qt::SmoothTransformation
 #define LIVES_INTERP_FAST   Qt::FastTransformation
 
 
+typedef QLabel LiVESLabel;
+typedef QPushButton LiVESButton;
+typedef QBoxLayout LiVESBox;
+typedef QHBoxLayout LiVESHBox;
+typedef QVBoxLayout LiVESVBox;
+typedef QDialog LiVESDialog;
+typedef QComboBox LiVESCombo;
+
+
+
+typedef int LiVESReliefStyle;
+
+#define LIVES_RELIEF_NORMAL 2
+#define LIVES_RELIEF_HALF 1
+#define LIVES_RELIEF_NONE 0
+
+typedef int LiVESWidgetState;
+
+typedef QColor LiVESWidgetColor;
+
+typedef int LiVESIconSize;
+#define LIVES_ICON_SIZE_INVALID QStyle::CE_CustomBase
+#define LIVES_ICON_SIZE_MENU QStyle::PM_SmallIconSize
+#define LIVES_ICON_SIZE_SMALL_TOOLBAR QStyle::PM_ToolBarIconSize
+#define LIVES_ICON_SIZE_LARGE_TOOLBAR QStyle::PM_ToolBarIconSize
+#define LIVES_ICON_SIZE_BUTTON QStyle::PM_ButtonIconSize
+#define LIVES_ICON_SIZE_DND QStyle::PM_LargeIconSize
+#define LIVES_ICON_SIZE_DIALOG QStyle::PM_MessageBoxIconSize
+
+typedef int LiVESWindowType;
+#define LIVES_WINDOW_TOPLEVEL Qt::Window
+#define LIVES_WINDOW_POPUP Qt::Popup
+
+typedef int LiVESWindowPosition;
+#define LIVES_WIN_POS_CENTER_ALWAYS 1
+
 #endif
 
 
 
+#ifdef PAINTER_QPAINTER
+# include <QtGui/QPainter>
+typedef QPainter lives_painter_t;
+typedef QImage lives_painter_surface_t;
+typedef QImage LiVESImage;
+typedef int lives_painter_format_t;
+
+#define LIVES_PAINTER_FORMAT_A1   QImage::Format_Mono
+#define LIVES_PAINTER_FORMAT_A8   QImage::Format_Indexed8
+#define LIVES_PAINTER_FORMAT_ARGB32 QImage::Format_ARGB32_Premultiplied
+
+#define LIVES_PAINTER_CONTENT_COLOR 0
+
+typedef int lives_painter_operator_t;
+
+#define LIVES_PAINTER_OPERATOR_UNKNOWN QPainter::CompositionMode_SourceOver
+#define LIVES_PAINTER_OPERATOR_DEFAULT QPainter::CompositionMode_SourceOver
+
+#define LIVES_PAINTER_OPERATOR_DEST_OUT QPainter::CompositionMode_DestinationOut
+
+#define LIVES_PAINTER_OPERATOR_DIFFERENCE QPainter::CompositionMode_Difference
+#define LIVES_PAINTER_OPERATOR_OVERLAY QPainter::CompositionMode_Overlay
+
+typedef int lives_painter_fill_rule_t;
+
+#define LIVES_PAINTER_FILL_RULE_WINDING  Qt::WindingFill
+#define LIVES_PAINTER_FILL_RULE_EVEN_ODD Qt::OddEvenFill
+
+#endif
 
 
 
@@ -858,40 +1000,40 @@ typedef (void *)(LiVESPixbufDestroyNotify(uchar *, gpointer));
 
 lives_painter_t *lives_painter_create(lives_painter_surface_t *target);
 lives_painter_t *lives_painter_create_from_widget(LiVESWidget *);
-void lives_painter_set_source_pixbuf (lives_painter_t *, const LiVESPixbuf *, double pixbuf_x, double pixbuf_y);
-void lives_painter_set_source_surface (lives_painter_t *, lives_painter_surface_t *, double x, double y);
+boolean lives_painter_set_source_pixbuf (lives_painter_t *, const LiVESPixbuf *, double pixbuf_x, double pixbuf_y);
+boolean lives_painter_set_source_surface (lives_painter_t *, lives_painter_surface_t *, double x, double y);
 lives_painter_surface_t *lives_painter_image_surface_create(lives_painter_format_t format, int width, int height);
 lives_painter_surface_t *lives_painter_image_surface_create_for_data(uint8_t *data, lives_painter_format_t, 
 								     int width, int height, int stride);
 lives_painter_surface_t *lives_painter_surface_create_from_widget(LiVESWidget *, lives_painter_content_t, 
 								  int width, int height);
-void lives_painter_surface_flush(lives_painter_surface_t *);
+boolean lives_painter_surface_flush(lives_painter_surface_t *);
 
-void lives_painter_destroy(lives_painter_t *);
-void lives_painter_surface_destroy(lives_painter_surface_t *);
+boolean lives_painter_destroy(lives_painter_t *);
+boolean lives_painter_surface_destroy(lives_painter_surface_t *);
 
-void lives_painter_new_path(lives_painter_t *);
+boolean lives_painter_new_path(lives_painter_t *);
 
-void lives_painter_paint(lives_painter_t *);
-void lives_painter_fill(lives_painter_t *);
-void lives_painter_stroke(lives_painter_t *);
-void lives_painter_clip(lives_painter_t *);
+boolean lives_painter_paint(lives_painter_t *);
+boolean lives_painter_fill(lives_painter_t *);
+boolean lives_painter_stroke(lives_painter_t *);
+boolean lives_painter_clip(lives_painter_t *);
 
-void lives_painter_set_source_rgb(lives_painter_t *, double red, double green, double blue);
-void lives_painter_set_source_rgba(lives_painter_t *, double red, double green, double blue, double alpha);
+boolean lives_painter_set_source_rgb(lives_painter_t *, double red, double green, double blue);
+boolean lives_painter_set_source_rgba(lives_painter_t *, double red, double green, double blue, double alpha);
 
 void lives_painter_set_line_width(lives_painter_t *, double width);
 
-void lives_painter_translate(lives_painter_t *, double x, double y);
+boolean lives_painter_translate(lives_painter_t *, double x, double y);
 
-void lives_painter_rectangle(lives_painter_t *, double x, double y, double width, double height);
-void lives_painter_arc(lives_painter_t *, double xc, double yc, double radius, double angle1, double angle2);
-void lives_painter_line_to(lives_painter_t *, double x, double y);
-void lives_painter_move_to(lives_painter_t *, double x, double y);
+boolean lives_painter_rectangle(lives_painter_t *, double x, double y, double width, double height);
+boolean lives_painter_arc(lives_painter_t *, double xc, double yc, double radius, double angle1, double angle2);
+boolean lives_painter_line_to(lives_painter_t *, double x, double y);
+boolean lives_painter_move_to(lives_painter_t *, double x, double y);
 
 boolean lives_painter_set_operator(lives_painter_t *, lives_painter_operator_t);
 
-void lives_painter_set_fill_rule(lives_painter_t *, lives_painter_fill_rule_t);
+boolean lives_painter_set_fill_rule(lives_painter_t *, lives_painter_fill_rule_t);
 
 
 lives_painter_surface_t *lives_painter_get_target(lives_painter_t *);
@@ -965,7 +1107,7 @@ boolean lives_signal_handler_unblock(livespointer instance, unsigned long handle
 boolean lives_signal_handler_disconnect(livespointer instance, unsigned long handler_id);
 boolean lives_signal_stop_emission_by_name(livespointer instance, const char *detailed_signal);
 
-void lives_widget_set_sensitive(LiVESWidget *, boolean state);
+boolean lives_widget_set_sensitive(LiVESWidget *, boolean state);
 boolean lives_widget_get_sensitive(LiVESWidget *);
 
 void lives_widget_show(LiVESWidget *);

@@ -3680,7 +3680,7 @@ void make_preview_box (void) {
 
 void calibrate_sepwin_size(void) {
   // get size of preview box in sepwin
-  GtkRequisition req;
+  LiVESRequisition req;
   make_preview_box();
   lives_widget_get_preferred_size(mainw->preview_controls,NULL,&req);
   mainw->sepwin_minwidth=req.width;

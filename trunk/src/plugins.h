@@ -41,7 +41,7 @@ typedef weed_plant_t *(*weed_bootstrap_f) (weed_default_getter_f *value, int num
 #endif
 
 /// video playback plugins
-typedef boolean (*plugin_keyfunc) (boolean down, guint16 unicode, guint16 keymod);
+typedef boolean (*plugin_keyfunc) (boolean down, uint16_t unicode, uint16_t keymod);
 
 
 typedef struct {
@@ -56,14 +56,14 @@ typedef struct {
 
   int *(*get_palette_list) (void);
   boolean (*set_palette) (int palette);
-  guint64 (*get_capabilities) (int palette);
+  uint64_t (*get_capabilities) (int palette);
 
   boolean (*render_frame) (int hsize, int vsize, int64_t timecode, void **pixel_data, void **return_data,
 			    weed_plant_t **play_params);
 
   // optional
   boolean (*init_screen) (int width, int height, boolean fullscreen, uint64_t window_id, int argc, gchar **argv);
-  void (*exit_screen) (guint16 mouse_x, guint16 mouse_y);
+  void (*exit_screen) (uint16_t mouse_x, uint16_t mouse_y);
   void (*module_unload) (void);
   const gchar *(*get_fps_list) (int palette);
   boolean (*set_fps) (double fps);
@@ -87,11 +87,11 @@ typedef struct {
   // audio streaming
   int *(*get_audio_fmts)(void);
 
-  guint32 audio_codec;
+  uint32_t audio_codec;
   // must match with the "acodec" GList in interface.c
   // and bitmaps in the encder plugins, with this one addition:
 
-  guint64 capabilities;
+  uint64_t capabilities;
 
 #define VPP_CAN_RESIZE    1<<0
 #define VPP_CAN_RETURN    1<<1
@@ -142,7 +142,7 @@ GList *filter_encoders_by_img_ext(GList *encoders, const gchar *img_ext);
 
 typedef struct {
   gchar name[51];
-  guint32 audio_codec;
+  uint32_t audio_codec;
   // match with bitmaps in the encoder plugins
   // and also anames array in plugins.c (see below)
 
@@ -162,7 +162,7 @@ typedef struct {
 #define AUDIO_CODEC_NONE 32
 #define AUDIO_CODEC_UNKNOWN 33
 
-  guint capabilities;
+  uint32_t capabilities;
 
 
 #define HAS_RFX 1<<0
@@ -483,7 +483,7 @@ typedef struct {
   lives_rfx_status_t status;
 
 
-  guint32 props;
+  uint32_t props;
 #define RFX_PROPS_SLOW        0x0001  ///< hint to GUI
 #define RFX_PROPS_MAY_RESIZE  0x0002 ///< is a tool
 #define RFX_PROPS_BATCHG      0x0004 ///< is a batch generator

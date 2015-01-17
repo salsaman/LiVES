@@ -999,7 +999,7 @@ typedef struct {
 
   GList *file_buffers;
 
-  gfloat volume; ///< audio volume level (for jack)
+  float volume; ///< audio volume level (for jack)
 
   int aud_rec_fd; ///< fd of file we are recording audio to
   double rec_end_time;

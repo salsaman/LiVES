@@ -1,3 +1,4 @@
+
 // interface.c
 // LiVES
 // (c) G. Finch 2003 - 2015 <salsaman@gmail.com>
@@ -26,7 +27,7 @@ extern void multitrack_preview_clicked  (LiVESButton *, gpointer user_data);
 extern void mt_change_disp_tracks_ok (LiVESButton *, gpointer user_data);
 
 
-void add_suffix_check(GtkBox *box, const gchar *ext) {
+void add_suffix_check(LiVESBox *box, const gchar *ext) {
   gchar *ltext;
 
   LiVESWidget *checkbutton;
@@ -44,7 +45,7 @@ void add_suffix_check(GtkBox *box, const gchar *ext) {
 
 
 
-static LiVESWidget *add_deinterlace_checkbox(GtkBox *for_deint) {
+static LiVESWidget *add_deinterlace_checkbox(LiVESBox *for_deint) {
   LiVESWidget *hbox=lives_hbox_new (FALSE, 0);
   LiVESWidget *checkbutton = lives_standard_check_button_new (_ ("Apply _Deinterlace"),TRUE,LIVES_BOX(hbox),NULL);
 
@@ -2568,7 +2569,7 @@ void do_layout_recover_dialog(void) {
 
 
 static void flip_cdisk_bit (LiVESToggleButton *t, gpointer user_data) {
-  guint32 bitmask=GPOINTER_TO_INT(user_data);
+  uint32_t bitmask=GPOINTER_TO_INT(user_data);
   prefs->clear_disk_opts^=bitmask;
 }
 

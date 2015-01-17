@@ -58,6 +58,9 @@ POSSIBILITY OF SUCH DAMAGES.
 #define GUI_GTK
 #define PAINTER_CAIRO
 
+//#define GUI_QT
+//#define PAINTER_QPAINTER
+
 #ifdef GUI_GTK
 
 #include <gtk/gtk.h>
@@ -99,51 +102,18 @@ typedef PROCESS_INFORMATION * lives_pgid_t;
 #ifndef GDK_WINDOWING_X11
 #define GDK_WINDOWING_X11
 #endif
-#endif
+#else
+#include <sys/types.h>
+#include <unistd.h>
+#endif // GUI_GTK
 
 typedef pid_t lives_pid_t;
 typedef int lives_pgid_t;
 
-#endif
+#endif // IS_MINGW
 
 
 
-#ifdef GUI_GTK
-
-#ifdef GDK_WINDOWING_WIN32
-#include <gdk/gdkwin32.h>
-
-#ifndef GDK_IS_WIN32_DISPLAY 
-#define GDK_IS_WIN32_DISPLAY(display) (TRUE)
-#endif
-
-#endif //GDK_WINDOWING_WIN32
-
-#ifdef GDK_WINDOWING_X11
-
-// needed for GDK_WINDOW_XID - for fileselector preview
-// needed for gdk_x11_screen_get_window_manager_name()
-
-#include <gdk/gdkx.h>
-
-#ifndef GDK_IS_X11_DISPLAY 
-#define GDK_IS_X11_DISPLAY(display) (TRUE)
-#endif
-
-#ifndef GDK_IS_WIN32_DISPLAY 
-#define GDK_IS_WIN32_DISPLAY(display) (FALSE)
-#endif
-
-
-#else
-
-#ifndef GDK_IS_X11_DISPLAY 
-#define GDK_IS_X11_DISPLAY(display) (FALSE)
-#endif
-
-#endif // GDK_WINDOWING_X11
-
-#endif // GUI_GTK
 
 
 #include <sys/stat.h>

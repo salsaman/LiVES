@@ -47,11 +47,11 @@ void event_list_replace_events (weed_plant_t *event_list, weed_plant_t *new_even
 weed_plant_t *event_copy_and_insert (weed_plant_t *in_event, weed_plant_t *event_list);
 
 /// if all_events is FALSE we only count FRAME events
-int count_events (weed_plant_t *event_list, gboolean all_events, weed_timecode_t start_tc, weed_timecode_t end_tc);
+int count_events (weed_plant_t *event_list, boolean all_events, weed_timecode_t start_tc, weed_timecode_t end_tc);
 
 int count_resampled_events (weed_plant_t *event_list, double fps);
 
-gboolean event_list_to_block (weed_plant_t *event_list, int num_events);
+boolean event_list_to_block (weed_plant_t *event_list, int num_events);
 double event_list_get_end_secs (weed_plant_t *event_list);
 double event_list_get_start_secs (weed_plant_t *event_list);
 weed_timecode_t event_list_get_end_tc (weed_plant_t *event_list);
@@ -63,11 +63,11 @@ weed_plant_t *get_first_frame_event (weed_plant_t *event_list);
 weed_plant_t *get_next_frame_event (weed_plant_t *event);
 weed_plant_t *get_prev_frame_event (weed_plant_t *event);
 
-weed_plant_t *get_frame_event_at (weed_plant_t *event_list, weed_timecode_t tc, weed_plant_t *shortcut, gboolean exact);
+weed_plant_t *get_frame_event_at (weed_plant_t *event_list, weed_timecode_t tc, weed_plant_t *shortcut, boolean exact);
 weed_plant_t *get_frame_event_at_or_before (weed_plant_t *event_list, weed_timecode_t tc, weed_plant_t *shortcut);
 
-gboolean filter_map_after_frame(weed_plant_t *fmap);
-gboolean init_event_is_relevant(weed_plant_t *init_event, int ctrack);
+boolean filter_map_after_frame(weed_plant_t *fmap);
+boolean init_event_is_relevant(weed_plant_t *init_event, int ctrack);
 
 
 // definitions in events.c
@@ -88,13 +88,13 @@ weed_plant_t *get_next_event(weed_plant_t *event);
 
 weed_timecode_t get_event_timecode (weed_plant_t *);
 int get_event_hint (weed_plant_t *);
-gboolean is_blank_frame (weed_plant_t *, gboolean count_audio);
-gboolean has_audio_frame(weed_plant_t *event_list);
+boolean is_blank_frame (weed_plant_t *, boolean count_audio);
+boolean has_audio_frame(weed_plant_t *event_list);
 int get_frame_event_clip (weed_plant_t *, int layer);
 int get_frame_event_frame (weed_plant_t *, int layer);
-gboolean frame_event_has_frame_for_track (weed_plant_t *event, int track);
+boolean frame_event_has_frame_for_track (weed_plant_t *event, int track);
 double *get_track_visibility_at_tc(weed_plant_t *event_list, int ntracks, int n_back_tracks, 
-				    weed_timecode_t tc, weed_plant_t **shortcut, gboolean bleedthru);
+				    weed_timecode_t tc, weed_plant_t **shortcut, boolean bleedthru);
 void get_active_track_list(int *clip_index, int num_tracks, weed_plant_t *filter_map);
 
 //////////////////////////////////////////////////////////
@@ -104,7 +104,7 @@ typedef struct {
   int width;
   int height;
   double fps;
-  gboolean ratio_fps;
+  boolean ratio_fps;
   LiVESWidget *dialog;
   LiVESWidget *okbutton;
   LiVESWidget *encoder_combo;
@@ -120,11 +120,11 @@ typedef struct {
   LiVESWidget *always_hbox;
   gulong encoder_name_fn;
   gulong encoder_ofmt_fn;
-  gboolean enc_changed;
+  boolean enc_changed;
   gchar *encoder_name;
-  gboolean suggestion_followed;
+  boolean suggestion_followed;
 
-  gboolean is_encoding;
+  boolean is_encoding;
 
   int arate;
   int achans;
@@ -140,9 +140,9 @@ render_details *rdet;
 //// UI stuff ///////
 
 
-LiVESWidget *events_rec_dialog (gboolean allow_mt);
+LiVESWidget *events_rec_dialog (boolean allow_mt);
 int get_render_choice (void);
-gboolean deal_with_render_choice (gboolean add_deinit);
+boolean deal_with_render_choice (boolean add_deinit);
 
 #define RENDER_CHOICE_DISCARD 0
 #define RENDER_CHOICE_PREVIEW 1

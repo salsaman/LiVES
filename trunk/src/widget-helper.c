@@ -27,6 +27,9 @@ LIVES_INLINE lives_painter_t *lives_painter_create(lives_painter_surface_t *targ
 #ifdef PAINTER_CAIRO
   cr=cairo_create(target);
 #endif
+#ifdef PAINTER_QPAINTER
+  QPainter cr = new QPainter(target);
+#endif
   return cr;
 
 }
@@ -41,72 +44,139 @@ LIVES_INLINE lives_painter_t *lives_painter_create_from_widget(LiVESWidget *widg
   }
 #endif
 #endif
+#ifdef PAINTER_QPAINTER
+  QPainter cr = new QPainter();
+  cr.initFrom(widget);
+#endif
   return cr;
 }
 
 
-LIVES_INLINE void lives_painter_set_source_pixbuf (lives_painter_t *cr, const LiVESPixbuf *pixbuf, double pixbuf_x, double pixbuf_y) {
+LIVES_INLINE boolean lives_painter_set_source_pixbuf (lives_painter_t *cr, const LiVESPixbuf *pixbuf, double pixbuf_x, double pixbuf_y) {
+  // blit pixbuf to cairo at x,y
 #ifdef PAINTER_CAIRO
   gdk_cairo_set_source_pixbuf(cr,pixbuf,pixbuf_x,pixbuf_y);
+  return TRUE;
 #endif
+#ifdef PAINTER_QPAINTER
+  QPointF qp(pixbuf_x,pixbuf_y);
+  cr.drawImage(pixbuf);
+  return TRUE;
+#endif
+  return FALSE;
 
 }
 
 
-LIVES_INLINE void lives_painter_set_source_surface (lives_painter_t *cr, lives_painter_surface_t *surface, double x, double y) {
+LIVES_INLINE boolean lives_painter_set_source_surface (lives_painter_t *cr, lives_painter_surface_t *surface, double x, double y) {
 #ifdef PAINTER_CAIRO
   cairo_set_source_surface(cr,surface,x,y);
+  return TRUE;
 #endif
+#ifdef PAINTER_QPAINTER
+  QPointF qp(x,y);
+  cr.drawImage(surface);
+  return TRUE;
+#endif
+  return FALSE;
+  
 
 }
 
-LIVES_INLINE void lives_painter_paint(lives_painter_t *cr) {
+LIVES_INLINE boolean lives_painter_paint(lives_painter_t *cr) {
 #ifdef PAINTER_CAIRO
   cairo_paint(cr);
+  return TRUE;
 #endif
+  return FALSE;
 }
 
-LIVES_INLINE void lives_painter_fill(lives_painter_t *cr) {
+LIVES_INLINE boolean lives_painter_fill(lives_painter_t *cr) {
 #ifdef PAINTER_CAIRO
   cairo_fill(cr);
+  return TRUE;
 #endif
+#ifdef PAINTER_QPAINTER
+  cr.fillPath(p,col);
+  return TRUE;
+#endif
+  return FALSE;
 }
 
-LIVES_INLINE void lives_painter_stroke(lives_painter_t *cr) {
+LIVES_INLINE boolean lives_painter_stroke(lives_painter_t *cr) {
 #ifdef PAINTER_CAIRO
   cairo_stroke(cr);
+  return TRUE;
 #endif
+#ifdef PAINTER_QPAINTER
+  cr.strokePath(p,pen);
+  return TRUE;
+#endif
+  return FALSE;
 }
 
-LIVES_INLINE void lives_painter_clip(lives_painter_t *cr) {
+LIVES_INLINE boolean lives_painter_clip(lives_painter_t *cr) {
 #ifdef PAINTER_CAIRO
   cairo_clip(cr);
+  return TRUE;
 #endif
+#ifdef PAINTER_QPAINTER
+  cr.setClipPath(p);
+  return TRUE;
+#endif
+  return FALSE;
 }
 
-LIVES_INLINE void lives_painter_destroy(lives_painter_t *cr) {
+LIVES_INLINE boolean lives_painter_destroy(lives_painter_t *cr) {
 #ifdef PAINTER_CAIRO
   cairo_destroy(cr);
+  return TRUE;
 #endif
+#ifdef PAINTER_QPAINTER
+  delete cr;
+  return TRUE;
+#endif
+  return FALSE;
 }
 
-LIVES_INLINE void lives_painter_surface_destroy(lives_painter_surface_t *surf) {
+LIVES_INLINE boolean lives_painter_surface_destroy(lives_painter_surface_t *surf) {
 #ifdef PAINTER_CAIRO
   cairo_surface_destroy(surf);
+  return TRUE;
 #endif
+#ifdef PAINTER_QPAINTER
+  delete surf;
+  return TRUE;
+#endif
+  return FALSE;
 }
 
-LIVES_INLINE void lives_painter_new_path(lives_painter_t *cr) {
+LIVES_INLINE boolean lives_painter_new_path(lives_painter_t *cr) {
 #ifdef PAINTER_CAIRO
   cairo_new_path(cr);
+  return TRUE;
 #endif
+#ifdef PAINTER_QPAINTER
+  QPainterPath p;
+  // do something with this
+  return TRUE;
+#endif
+  return FALSE;
 }
 
 
-LIVES_INLINE void lives_painter_translate(lives_painter_t *cr, double x, double y) {
+LIVES_INLINE boolean lives_painter_translate(lives_painter_t *cr, double x, double y) {
 #ifdef PAINTER_CAIRO
   cairo_translate(cr,x,y);
+  return TRUE;
 #endif
+#ifdef PAINTER_QPAINTER
+  QTransform qt;
+  qt.translate(x,y);
+  cr.setTransform(qt,true);
+  return TRUE;
+#endif
+  return FALSE;
 
 }
 
@@ -119,34 +189,62 @@ LIVES_INLINE void lives_painter_set_line_width(lives_painter_t *cr, double width
 }
 
 
-LIVES_INLINE void lives_painter_move_to(lives_painter_t *cr, double x, double y) {
+LIVES_INLINE boolean lives_painter_move_to(lives_painter_t *cr, double x, double y) {
 #ifdef PAINTER_CAIRO
   cairo_move_to(cr,x,y);
+  return TRUE;
 #endif
-
+#ifdef PAINTER_QPAINTER
+  p.moveTo(x,y);
+  return TRUE;
+#endif
+  return FALSE;
 }
 
-LIVES_INLINE void lives_painter_line_to(lives_painter_t *cr, double x, double y) {
+
+LIVES_INLINE boolean lives_painter_line_to(lives_painter_t *cr, double x, double y) {
 #ifdef PAINTER_CAIRO
   cairo_line_to(cr,x,y);
+  return TRUE;
 #endif
-
+#ifdef PAINTER_QPAINTER
+  p.lineTo(x,y);
+  return TRUE;
+#endif
+  return FALSE;
 }
 
-LIVES_INLINE void lives_painter_rectangle(lives_painter_t *cr, double x, double y, double width, double height) {
+
+LIVES_INLINE boolean lives_painter_rectangle(lives_painter_t *cr, double x, double y, double width, double height) {
 #ifdef PAINTER_CAIRO
   cairo_rectangle(cr,x,y,width,height);
+  return TRUE;
 #endif
-
+#ifdef PAINTER_QPAINTER
+  p.addRect(x,y,width,height);
+  return TRUE;
+#endif
+  return FALSE;
 }
 
-LIVES_INLINE void lives_painter_arc(lives_painter_t *cr, double xc, double yc, double radius, double angle1, double angle2) {
+LIVES_INLINE boolean lives_painter_arc(lives_painter_t *cr, double xc, double yc, double radius, double angle1, double angle2) {
 #ifdef PAINTER_CAIRO
   cairo_arc(cr,xc,yc,radius,angle1,angle2);
+  return TRUE;
 #endif
-
+#ifdef PAINTER_QPAINTER
+  double l=xc-radius;
+  double t=yc-radius;
+  double w=h=radius*2;
+  angle1=angle1/PI*180.;
+  angle2=angle2/PI*180.;
+  p.arcTo(l,t,w,h,angle1,angle2-angle1);
+  return TRUE;
+#endif
+  return FALSE;
 }
- 
+
+
 LIVES_INLINE boolean lives_painter_set_operator(lives_painter_t *cr, lives_painter_operator_t op) {
   // if op was not LIVES_PAINTER_OPERATOR_DEFAULT, and FALSE is returned, then the operation failed,
   // and op was set to the default
@@ -155,32 +253,61 @@ LIVES_INLINE boolean lives_painter_set_operator(lives_painter_t *cr, lives_paint
   if (op==LIVES_PAINTER_OPERATOR_UNKNOWN) return FALSE;
   return TRUE;
 #endif
+#ifdef PAINTER_QPAINTER
+  cr.setCompositionMode(op);
+  return TRUE;
+#endif
   return FALSE;
 }
 
-LIVES_INLINE void lives_painter_set_source_rgb(lives_painter_t *cr, double red, double green, double blue) {
+
+LIVES_INLINE boolean lives_painter_set_source_rgb(lives_painter_t *cr, double red, double green, double blue) {
 #ifdef PAINTER_CAIRO
   cairo_set_source_rgb(cr,red,green,blue);
+  return TRUE;
 #endif
+#ifdef PAINTER_QPAINTER
+  QColor qc(red*255.,green*255.,blue*255.);
+  cr.setPen(qc);
+  return TRUE;
+#endif
+  return FALSE;
 }
 
-LIVES_INLINE void lives_painter_set_source_rgba(lives_painter_t *cr, double red, double green, double blue, double alpha) {
+
+LIVES_INLINE boolean lives_painter_set_source_rgba(lives_painter_t *cr, double red, double green, double blue, double alpha) {
 #ifdef PAINTER_CAIRO
    cairo_set_source_rgba(cr,red,green,blue,alpha);
+  return TRUE;
 #endif
+#ifdef PAINTER_QPAINTER
+  QColor qc(red*255.,green*255.,blue*255.,alpha*255.);
+  cr.setPen(qc);
+  return TRUE;
+#endif
+  return FALSE;
 }
 
-LIVES_INLINE void lives_painter_set_fill_rule(lives_painter_t *cr, lives_painter_fill_rule_t fill_rule) {
+
+LIVES_INLINE boolean lives_painter_set_fill_rule(lives_painter_t *cr, lives_painter_fill_rule_t fill_rule) {
 #ifdef PAINTER_CAIRO
   cairo_set_fill_rule(cr,fill_rule);
+  return TRUE;
 #endif
+#ifdef PAINTER_QPAINTER
+  fr=fill_rule;
+  return TRUE;
+#endif
+  return FALSE;
 }
 
 
-LIVES_INLINE void lives_painter_surface_flush(lives_painter_surface_t *surf) {
+LIVES_INLINE boolean lives_painter_surface_flush(lives_painter_surface_t *surf) {
 #ifdef PAINTER_CAIRO
   cairo_surface_flush(surf);
+  return TRUE;
 #endif
+  return FALSE;
 }
 
 
@@ -195,19 +322,24 @@ LIVES_INLINE lives_painter_surface_t *lives_painter_image_surface_create_for_dat
 }
 
 
-LIVES_INLINE lives_painter_surface_t *lives_painter_surface_create_from_widget(LiVESWidget *widget, lives_painter_content_t format, 
+LIVES_INLINE lives_painter_surface_t *lives_painter_surface_create_from_widget(LiVESWidget *widget, lives_painter_content_t content, 
 									       int width, int height) {
   lives_painter_surface_t *surf=NULL;
 #ifdef PAINTER_CAIRO
   LiVESXWindow *window=lives_widget_get_xwindow(widget);
   if (window!=NULL) {
 #if G_ENCODE_VERSION(GDK_MAJOR_VERSION,GDK_MINOR_VERSION) >= G_ENCODE_VERSION(2,22)
-    surf=gdk_window_create_similar_surface(window,format,width,height);
+    surf=gdk_window_create_similar_surface(window,content,width,height);
 #else 
-    surf=cairo_image_surface_create(CAIRO_FORMAT_ARGB32,width,height);
+    surf=cairo_image_surface_create(LIVES_PAINTER_FORMAT_ARGB32,width,height);
 #endif
 }
 #endif
+
+#ifdef PAINTER_QPAINTER
+  surf=new QImage(width,height,LIVES_PAINTER_FORMAT_ARGB32);
+#endif
+
   return surf;
 }
 
@@ -216,6 +348,9 @@ LIVES_INLINE lives_painter_surface_t *lives_painter_image_surface_create(lives_p
   lives_painter_surface_t *surf=NULL;
 #ifdef PAINTER_CAIRO
   surf=cairo_image_surface_create(format,width,height);
+#endif
+#ifdef PAINTER_QPAINTER
+  surf=new QImage(width,height,format);
 #endif
   return surf;
 }
@@ -383,10 +518,12 @@ LIVES_INLINE boolean lives_signal_stop_emission_by_name(livespointer instance, c
 
 
 
-LIVES_INLINE void lives_widget_set_sensitive(LiVESWidget *widget, boolean state) {
+LIVES_INLINE boolean lives_widget_set_sensitive(LiVESWidget *widget, boolean state) {
 #ifdef GUI_GTK
   gtk_widget_set_sensitive(widget,state);
+  return TRUE;
 #endif
+  return FALSE;
 }
 
 
@@ -394,6 +531,7 @@ LIVES_INLINE boolean lives_widget_get_sensitive(LiVESWidget *widget) {
 #ifdef GUI_GTK
   return gtk_widget_get_sensitive(widget);
 #endif
+  return FALSE;
 }
 
 
@@ -948,9 +1086,9 @@ LIVES_INLINE LiVESPixbuf *lives_pixbuf_new(boolean has_alpha, int width, int hei
 #ifdef GUI_QT
   // alpha fmt is ARGB32 premult
   enum fmt;
-  if (!has_alpha) fmt=QImage::Format_RGB888;
+  if (!has_alpha) fmt=QImage.Format_RGB888;
   else {
-    fmt=QImage::Format_ARGB32_Premultiplied;
+    fmt=QImage.Format_ARGB32_Premultiplied;
     LIVES_WARN("Image fmt is ARGB pre");
   }
   return new QImage(width, height, fmt);
@@ -973,9 +1111,9 @@ LIVES_INLINE LiVESPixbuf *lives_pixbuf_new_from_data (const unsigned char *buf, 
 #ifdef GUI_QT
   // alpha fmt is ARGB32 premult
   enum fmt;
-  if (!has_alpha) fmt=QImage::Format_RGB888;
+  if (!has_alpha) fmt=QImage.Format_RGB888;
   else {
-    fmt=QImage::Format_ARGB32_Premultiplied;
+    fmt=QImage.Format_ARGB32_Premultiplied;
     LIVES_WARN("Image fmt is ARGB pre");
   }
   // on destruct, we need to call lives_free_buffer_fn(uchar *pixels, gpointer destroy_fn_data)
@@ -1025,9 +1163,9 @@ LIVES_INLINE LiVESPixbuf *lives_pixbuf_new_from_file_at_scale(const char *filena
     LIVES_WARN("QImage not loaded");
     return NULL;
   }
-  if (preserve_aspect_ratio) asp=Qt::KeepAspectRatio;
-  else asp=Qt::IgnoreAspectRatio;
-  image2 = new image.scaled(width, height, asp,  Qt::SmoothTransformation);
+  if (preserve_aspect_ratio) asp=Qt.KeepAspectRatio;
+  else asp=Qt.IgnoreAspectRatio;
+  image2 = new image.scaled(width, height, asp,  Qt.SmoothTransformation);
   if (!image2) {
     LIVES_WARN("QImage not scaled");
     return NULL;
@@ -1130,7 +1268,7 @@ LIVES_INLINE LiVESPixbuf *lives_pixbuf_scale_simple(const LiVESPixbuf *src, int 
 
 
 #ifdef GUI_QT
-  QImage *image = new src.scaled(dest_width, dest_height, Qt::IgnoreAspectRatio,  interp_type);
+  QImage *image = new src.scaled(dest_width, dest_height, Qt.IgnoreAspectRatio,  interp_type);
   if (!image) {
     LIVES_WARN("QImage not scaled");
     return NULL;
@@ -1920,6 +2058,10 @@ LIVES_INLINE boolean lives_button_set_relief(LiVESButton *button, LiVESReliefSty
 #ifdef GUI_GTK
   gtk_button_set_relief(button,rstyle);
   return TRUE;
+#endif
+#ifdef GUI_QT
+  if (rstyle==LIVES_RELIEF_NONE) button.setFlat(true);
+  else button.setFlat(false);
 #endif
   return FALSE;
 }

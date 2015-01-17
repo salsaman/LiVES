@@ -1233,7 +1233,7 @@ _vid_playback_plugin *open_vid_playback_plugin (const gchar *name, boolean in_us
   if ((vpp->set_palette=(boolean (*)(int))dlsym (handle,"set_palette"))==NULL) {
     OK=FALSE;
   }
-  if ((vpp->get_capabilities=(guint64 (*)(int))dlsym (handle,"get_capabilities"))==NULL) {
+  if ((vpp->get_capabilities=(uint64_t (*)(int))dlsym (handle,"get_capabilities"))==NULL) {
     OK=FALSE;
   }
   if ((vpp->render_frame=(boolean (*)(int, int, int64_t, void**, void**, weed_plant_t **)) 
@@ -1284,7 +1284,7 @@ _vid_playback_plugin *open_vid_playback_plugin (const gchar *name, boolean in_us
   vpp->send_keycodes=(boolean (*)(plugin_keyfunc))dlsym (handle,"send_keycodes");
   vpp->get_audio_fmts=(int* (*)())dlsym (handle,"get_audio_fmts");
   vpp->init_screen=(boolean (*)(int, int, boolean, uint64_t, int, gchar**))dlsym (handle,"init_screen");
-  vpp->exit_screen=(void (*)(guint16, guint16))dlsym (handle,"exit_screen");
+  vpp->exit_screen=(void (*)(uint16_t, uint16_t))dlsym (handle,"exit_screen");
   vpp->module_unload=(void (*)())dlsym (handle,"module_unload");
 
   vpp->YUV_sampling=0;

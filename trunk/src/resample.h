@@ -40,34 +40,34 @@ _resaudw *resaudw;
 
 weed_timecode_t q_gint64(weed_timecode_t in, double fps);
 weed_timecode_t q_gint64_floor(weed_timecode_t in, double fps);
-weed_timecode_t q_dbl (gdouble in, gdouble fps);
+weed_timecode_t q_dbl (double in, double fps);
 
 
-weed_plant_t *quantise_events (weed_plant_t *in_list, gdouble new_fps, gboolean allow_gap); ///< quantise frame events for a single clip
+weed_plant_t *quantise_events (weed_plant_t *in_list, double new_fps, boolean allow_gap); ///< quantise frame events for a single clip
 
 ///////////////////////////////////////////////////////
-gint count_resampled_frames (gint in_frames, gdouble orig_fps, gdouble resampled_fps);
+int count_resampled_frames (int in_frames, double orig_fps, double resampled_fps);
 
 /////////////////////////////////////////
 
 // GUI functions
 /// window change speed from Tools menu
-void create_new_pb_speed (gshort type);
+void create_new_pb_speed (short type);
 
 /// resample audio window
 ///
 /// type 1 : show current and new, 
 /// type 2 : show new
-_resaudw* create_resaudw (gshort type, render_details *rdet, LiVESWidget *top_vbox);
+_resaudw* create_resaudw (short type, render_details *rdet, LiVESWidget *top_vbox);
 
 void on_change_speed_activate (LiVESMenuItem *, gpointer);
 void on_change_speed_ok_clicked (LiVESButton *, gpointer);
 
-gboolean auto_resample_resize (gint width, gint height, gdouble fps, gint fps_num, 
-			       gint fps_denom, gint arate, gint asigned, gboolean swap_endian);
-gint reorder_frames(int rwidth, int rheight);
-gint deorder_frames(gint old_framecount, gboolean leave_bak); ///< leave_bak is a special mode for the clipboard
+boolean auto_resample_resize (int width, int height, double fps, int fps_num, 
+			       int fps_denom, int arate, int asigned, boolean swap_endian);
+int reorder_frames(int rwidth, int rheight);
+int deorder_frames(int old_framecount, boolean leave_bak); ///< leave_bak is a special mode for the clipboard
 
-gboolean resample_clipboard(gdouble new_fps); ///< call this to resample clipboard video
+boolean resample_clipboard(double new_fps); ///< call this to resample clipboard video
 
 #endif

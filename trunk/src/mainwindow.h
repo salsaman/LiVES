@@ -743,7 +743,7 @@ typedef struct {
   LiVESWidget *show_messages;
   LiVESWidget *show_layout_errors;
   LiVESWidget *sel_label;
-  GtkAccelGroup *accel_group;
+  LiVESAccelGroup *accel_group;
   LiVESWidget *sep_image;
   LiVESWidget *hruler;
   LiVESWidget *vj_menu;

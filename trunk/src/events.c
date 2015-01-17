@@ -2061,7 +2061,7 @@ LiVESWidget *events_rec_dialog (boolean allow_mt) {
   LiVESWidget *okbutton;
   LiVESWidget *cancelbutton;
   GSList *radiobutton_group = NULL;
-  GtkAccelGroup *accel_group;
+  LiVESAccelGroup *accel_group;
 
   render_choice=RENDER_CHOICE_PREVIEW;
 
@@ -4655,7 +4655,7 @@ LiVESWidget *create_event_list_dialog (weed_plant_t *event_list, weed_timecode_t
   LiVESCellRenderer *renderer;
   LiVESTreeViewColumn *column;
 
-  GtkAccelGroup *accel_group;
+  LiVESAccelGroup *accel_group;
 
   char **propnames;
 
@@ -5029,7 +5029,7 @@ render_details *create_render_details (int type) {
   LiVESWidget *alabel;
   LiVESWidget *daa;
 
-  GtkAccelGroup *rdet_accel_group;
+  LiVESAccelGroup *rdet_accel_group;
 
   GList *ofmt_all=NULL;
   GList *ofmt=NULL;

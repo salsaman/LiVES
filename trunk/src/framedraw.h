@@ -54,9 +54,9 @@ void after_framedraw_frame_spinbutton_changed (LiVESSpinButton *, lives_special_
 void on_framedraw_reset_clicked (LiVESButton *, lives_special_framedraw_rect_t *);
 
 
-boolean on_framedraw_mouse_start (LiVESWidget *, GdkEventButton *, lives_special_framedraw_rect_t *);
-boolean on_framedraw_mouse_update (LiVESWidget *, GdkEventMotion *, lives_special_framedraw_rect_t *);
-boolean on_framedraw_mouse_reset (LiVESWidget *, GdkEventButton *, lives_special_framedraw_rect_t *);
+boolean on_framedraw_mouse_start (LiVESWidget *, LiVESXEventButton *, lives_special_framedraw_rect_t *);
+boolean on_framedraw_mouse_update (LiVESWidget *, LiVESXEventMotion *, lives_special_framedraw_rect_t *);
+boolean on_framedraw_mouse_reset (LiVESWidget *, LiVESXEventButton *, lives_special_framedraw_rect_t *);
 
 
 boolean on_framedraw_leave (LiVESWidget *, GdkEventCrossing *, lives_special_framedraw_rect_t *);

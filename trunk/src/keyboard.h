@@ -20,41 +20,41 @@ uint16_t cached_mod;
 
 boolean ext_triggers_poll(gpointer); ///< poll for external playback start
 
-GdkFilterReturn filter_func(GdkXEvent *xevent, GdkEvent *event, gpointer data);
+GdkFilterReturn filter_func(GdkXEvent *xevent, LiVESXEvent *event, gpointer data);
 
 boolean plugin_poll_keyboard (void);
 
 boolean pl_key_function (boolean down, uint16_t unicode, uint16_t keymod);
 
-boolean faster_callback (GtkAccelGroup *, LiVESObject *, uint32_t, LiVESXModifierType, gpointer user_data);
+boolean faster_callback (LiVESAccelGroup *, LiVESObject *, uint32_t, LiVESXModifierType, gpointer user_data);
 
-boolean slower_callback (GtkAccelGroup *, LiVESObject *, uint32_t, LiVESXModifierType, gpointer user_data);
+boolean slower_callback (LiVESAccelGroup *, LiVESObject *, uint32_t, LiVESXModifierType, gpointer user_data);
 
-boolean skip_back_callback (GtkAccelGroup *, LiVESObject *, uint32_t, LiVESXModifierType, gpointer user_data);
+boolean skip_back_callback (LiVESAccelGroup *, LiVESObject *, uint32_t, LiVESXModifierType, gpointer user_data);
 
-boolean skip_forward_callback (GtkAccelGroup *, LiVESObject *, uint32_t, LiVESXModifierType, gpointer user_data);
+boolean skip_forward_callback (LiVESAccelGroup *, LiVESObject *, uint32_t, LiVESXModifierType, gpointer user_data);
 
-boolean stop_callback (GtkAccelGroup *, LiVESObject *, uint32_t, LiVESXModifierType, gpointer user_data);
+boolean stop_callback (LiVESAccelGroup *, LiVESObject *, uint32_t, LiVESXModifierType, gpointer user_data);
 
-boolean rec_callback (GtkAccelGroup *, LiVESObject *, uint32_t, LiVESXModifierType, gpointer user_data);
+boolean rec_callback (LiVESAccelGroup *, LiVESObject *, uint32_t, LiVESXModifierType, gpointer user_data);
 
-boolean loop_callback (GtkAccelGroup *, LiVESObject *, uint32_t, LiVESXModifierType, gpointer user_data);
+boolean loop_callback (LiVESAccelGroup *, LiVESObject *, uint32_t, LiVESXModifierType, gpointer user_data);
 
-boolean loop_cont_callback (GtkAccelGroup *, LiVESObject *, uint32_t, LiVESXModifierType, gpointer user_data);
+boolean loop_cont_callback (LiVESAccelGroup *, LiVESObject *, uint32_t, LiVESXModifierType, gpointer user_data);
 
-boolean ping_pong_callback (GtkAccelGroup *, LiVESObject *, uint32_t, LiVESXModifierType, gpointer user_data);
+boolean ping_pong_callback (LiVESAccelGroup *, LiVESObject *, uint32_t, LiVESXModifierType, gpointer user_data);
 
-boolean dblsize_callback (GtkAccelGroup *, LiVESObject *, uint32_t, LiVESXModifierType, gpointer user_data);
+boolean dblsize_callback (LiVESAccelGroup *, LiVESObject *, uint32_t, LiVESXModifierType, gpointer user_data);
 
-boolean showfct_callback (GtkAccelGroup *, LiVESObject *, uint32_t, LiVESXModifierType, gpointer user_data);
+boolean showfct_callback (LiVESAccelGroup *, LiVESObject *, uint32_t, LiVESXModifierType, gpointer user_data);
 
-boolean showsubs_callback (GtkAccelGroup *, LiVESObject *, uint32_t, LiVESXModifierType, gpointer user_data);
+boolean showsubs_callback (LiVESAccelGroup *, LiVESObject *, uint32_t, LiVESXModifierType, gpointer user_data);
 
-boolean fullscreen_callback (GtkAccelGroup *, LiVESObject *, uint32_t, LiVESXModifierType, gpointer user_data);
+boolean fullscreen_callback (LiVESAccelGroup *, LiVESObject *, uint32_t, LiVESXModifierType, gpointer user_data);
 
-boolean sepwin_callback (GtkAccelGroup *, LiVESObject *, uint32_t, LiVESXModifierType, gpointer user_data);
+boolean sepwin_callback (LiVESAccelGroup *, LiVESObject *, uint32_t, LiVESXModifierType, gpointer user_data);
 
-boolean fade_callback (GtkAccelGroup *, LiVESObject *, uint32_t, LiVESXModifierType, gpointer user_data);
+boolean fade_callback (LiVESAccelGroup *, LiVESObject *, uint32_t, LiVESXModifierType, gpointer user_data);
 
 
 #define KEY_RPT_INTERVAL 4

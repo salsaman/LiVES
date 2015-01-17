@@ -28,7 +28,7 @@ LIVES_INLINE lives_painter_t *lives_painter_create(lives_painter_surface_t *targ
   cr=cairo_create(target);
 #endif
 #ifdef PAINTER_QPAINTER
-  QPainter cr = new QPainter(target);
+  cr = new QPainter(target);
 #endif
   return cr;
 
@@ -45,8 +45,8 @@ LIVES_INLINE lives_painter_t *lives_painter_create_from_widget(LiVESWidget *widg
 #endif
 #endif
 #ifdef PAINTER_QPAINTER
-  QPainter cr = new QPainter();
-  cr.initFrom(widget);
+  cr = new QPainter();
+  cr->initFrom(widget);
 #endif
   return cr;
 }
@@ -60,7 +60,7 @@ LIVES_INLINE boolean lives_painter_set_source_pixbuf (lives_painter_t *cr, const
 #endif
 #ifdef PAINTER_QPAINTER
   QPointF qp(pixbuf_x,pixbuf_y);
-  cr.drawImage(pixbuf);
+  cr->drawImage(qp,*pixbuf);
   return TRUE;
 #endif
   return FALSE;
@@ -75,7 +75,7 @@ LIVES_INLINE boolean lives_painter_set_source_surface (lives_painter_t *cr, live
 #endif
 #ifdef PAINTER_QPAINTER
   QPointF qp(x,y);
-  cr.drawImage(surface);
+  cr->drawImage(qp,*surface);
   return TRUE;
 #endif
   return FALSE;
@@ -97,7 +97,7 @@ LIVES_INLINE boolean lives_painter_fill(lives_painter_t *cr) {
   return TRUE;
 #endif
 #ifdef PAINTER_QPAINTER
-  cr.fillPath(p,col);
+  cr->fillPath(p,col);
   return TRUE;
 #endif
   return FALSE;
@@ -109,7 +109,7 @@ LIVES_INLINE boolean lives_painter_stroke(lives_painter_t *cr) {
   return TRUE;
 #endif
 #ifdef PAINTER_QPAINTER
-  cr.strokePath(p,pen);
+  cr->strokePath(p,pen);
   return TRUE;
 #endif
   return FALSE;
@@ -121,7 +121,7 @@ LIVES_INLINE boolean lives_painter_clip(lives_painter_t *cr) {
   return TRUE;
 #endif
 #ifdef PAINTER_QPAINTER
-  cr.setClipPath(p);
+  cr->setClipPath(p);
   return TRUE;
 #endif
   return FALSE;
@@ -173,7 +173,7 @@ LIVES_INLINE boolean lives_painter_translate(lives_painter_t *cr, double x, doub
 #ifdef PAINTER_QPAINTER
   QTransform qt;
   qt.translate(x,y);
-  cr.setTransform(qt,true);
+  cr->setTransform(qt,true);
   return TRUE;
 #endif
   return FALSE;
@@ -236,8 +236,8 @@ LIVES_INLINE boolean lives_painter_arc(lives_painter_t *cr, double xc, double yc
   double l=xc-radius;
   double t=yc-radius;
   double w=h=radius*2;
-  angle1=angle1/PI*180.;
-  angle2=angle2/PI*180.;
+  angle1=angle1/M_PI*180.;
+  angle2=angle2/M_PI*180.;
   p.arcTo(l,t,w,h,angle1,angle2-angle1);
   return TRUE;
 #endif
@@ -254,7 +254,7 @@ LIVES_INLINE boolean lives_painter_set_operator(lives_painter_t *cr, lives_paint
   return TRUE;
 #endif
 #ifdef PAINTER_QPAINTER
-  cr.setCompositionMode(op);
+  cr->setCompositionMode(op);
   return TRUE;
 #endif
   return FALSE;
@@ -268,7 +268,7 @@ LIVES_INLINE boolean lives_painter_set_source_rgb(lives_painter_t *cr, double re
 #endif
 #ifdef PAINTER_QPAINTER
   QColor qc(red*255.,green*255.,blue*255.);
-  cr.setPen(qc);
+  cr->setPen(qc);
   return TRUE;
 #endif
   return FALSE;
@@ -282,7 +282,7 @@ LIVES_INLINE boolean lives_painter_set_source_rgba(lives_painter_t *cr, double r
 #endif
 #ifdef PAINTER_QPAINTER
   QColor qc(red*255.,green*255.,blue*255.,alpha*255.);
-  cr.setPen(qc);
+  cr->setPen(qc);
   return TRUE;
 #endif
   return FALSE;
@@ -615,6 +615,7 @@ LIVES_INLINE int lives_dialog_run(LiVESDialog *dialog) {
 #ifdef GUI_GTK
   return gtk_dialog_run(dialog);
 #endif
+  return LIVES_RESPONSE_INVALID;
 }
 
 
@@ -814,6 +815,7 @@ LIVES_INLINE LiVESWidget *lives_dialog_get_content_area(LiVESDialog *dialog) {
 #endif
 
 #endif
+  return NULL;
 }
 
 
@@ -828,6 +830,7 @@ LIVES_INLINE LiVESWidget *lives_dialog_get_action_area(LiVESDialog *dialog) {
 #endif
 
 #endif
+  return NULL;
 }
 
 
@@ -1085,12 +1088,13 @@ LIVES_INLINE LiVESPixbuf *lives_pixbuf_new(boolean has_alpha, int width, int hei
 			
 #ifdef GUI_QT
   // alpha fmt is ARGB32 premult
-  enum fmt;
-  if (!has_alpha) fmt=QImage.Format_RGB888;
+  QImage::Format fmt;
+  if (!has_alpha) fmt=QImage::Format_RGB888;
   else {
-    fmt=QImage.Format_ARGB32_Premultiplied;
+    fmt=QImage::Format_ARGB32_Premultiplied;
     LIVES_WARN("Image fmt is ARGB pre");
   }
+  // on destruct, we need to call lives_free_buffer_fn(uchar *pixels, gpointer destroy_fn_data)
   return new QImage(width, height, fmt);
 #endif
 }
@@ -1110,10 +1114,10 @@ LIVES_INLINE LiVESPixbuf *lives_pixbuf_new_from_data (const unsigned char *buf, 
 
 #ifdef GUI_QT
   // alpha fmt is ARGB32 premult
-  enum fmt;
-  if (!has_alpha) fmt=QImage.Format_RGB888;
+  QImage::Format fmt;
+  if (!has_alpha) fmt=QImage::Format_RGB888;
   else {
-    fmt=QImage.Format_ARGB32_Premultiplied;
+    fmt=QImage::Format_ARGB32_Premultiplied;
     LIVES_WARN("Image fmt is ARGB pre");
   }
   // on destruct, we need to call lives_free_buffer_fn(uchar *pixels, gpointer destroy_fn_data)
@@ -1131,17 +1135,16 @@ LIVES_INLINE LiVESPixbuf *lives_pixbuf_new_from_file(const char *filename, LiVES
 #endif
 
 #ifdef GUI_QT
-  QImage image = new QImage();
-  if (!image.load(filename)) {
+  QImage *image = new QImage();
+  if (!image->load(filename)) {
     // do something with error
     LIVES_WARN("QImage not loaded");
-    ~image();
+    delete image;
     return NULL;
   }
   return image;
-}
-
 #endif
+  return NULL;
 }
 
 
@@ -1158,23 +1161,24 @@ LIVES_INLINE LiVESPixbuf *lives_pixbuf_new_from_file_at_scale(const char *filena
 #ifdef GUI_QT
   QImage image = QImage();
   QImage image2;
+  Qt::AspectRatioMode asp;
   if (!image.load(filename)) {
     // do something with error
     LIVES_WARN("QImage not loaded");
     return NULL;
   }
-  if (preserve_aspect_ratio) asp=Qt.KeepAspectRatio;
-  else asp=Qt.IgnoreAspectRatio;
-  image2 = new image.scaled(width, height, asp,  Qt.SmoothTransformation);
-  if (!image2) {
+  if (preserve_aspect_ratio) asp=Qt::KeepAspectRatio;
+  else asp=Qt::IgnoreAspectRatio;
+  image2 = image.scaled(width, height, asp,  Qt::SmoothTransformation);
+  if (image2.isNull()) {
     LIVES_WARN("QImage not scaled");
     return NULL;
   }
 
-  return image2;
-}
-
+  return new QImage(image2);
 #endif
+
+  return NULL;
 }
 
 
@@ -1268,13 +1272,13 @@ LIVES_INLINE LiVESPixbuf *lives_pixbuf_scale_simple(const LiVESPixbuf *src, int 
 
 
 #ifdef GUI_QT
-  QImage *image = new src.scaled(dest_width, dest_height, Qt.IgnoreAspectRatio,  interp_type);
-  if (!image) {
+  QImage image = src->scaled(dest_width, dest_height, Qt::IgnoreAspectRatio,  interp_type);
+  if (image.isNull()) {
     LIVES_WARN("QImage not scaled");
     return NULL;
   }
 
-  return image;
+  return new QImage(image);
 
 #endif
 
@@ -1645,27 +1649,33 @@ LIVES_INLINE LiVESTreeModel *lives_combo_get_model(LiVESCombo *combo) {
 
 
 
-LIVES_INLINE void lives_combo_append_text(LiVESCombo *combo, const char *text) {
+LIVES_INLINE boolean lives_combo_append_text(LiVESCombo *combo, const char *text) {
 #ifdef GUI_GTK
 #if GTK_CHECK_VERSION(2,24,0)
   gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(combo),text);
 #else
   gtk_combo_box_append_text(GTK_COMBO(combo),text);
 #endif
+  return TRUE;
 #endif
+  return FALSE;
 }
 
 
+
+static boolean lives_combo_remove_all_text(LiVESCombo *combo) {
 #ifdef GUI_GTK
-static void lives_combo_remove_all_text(LiVESCombo *combo) {
 #if GTK_CHECK_VERSION(3,0,0)
   gtk_combo_box_text_remove_all(GTK_COMBO_BOX_TEXT(combo));
 #else
   register int count = lives_tree_model_iter_n_children(lives_combo_get_model(combo),NULL);
   while (count-- > 0) gtk_combo_box_remove_text(combo,0);
 #endif
-}
+  return TRUE;
 #endif
+  return FALSE;
+}
+
 
 
 
@@ -1689,21 +1699,25 @@ LIVES_INLINE char *lives_combo_get_active_text(LiVESCombo *combo) {
   return gtk_combo_box_get_active_text(GTK_COMBO_BOX(combo));
 #endif
 #endif
+  return NULL;
 }
 
 
-LIVES_INLINE void lives_combo_set_active_index(LiVESCombo *combo, int index) {
+LIVES_INLINE boolean lives_combo_set_active_index(LiVESCombo *combo, int index) {
 #ifdef GUI_GTK
   gtk_combo_box_set_active(combo,index);
+  return TRUE;
 #endif
-
+  return FALSE;
 }
 
 
-LIVES_INLINE void lives_combo_set_active_iter(LiVESCombo *combo, LiVESTreeIter *iter) {
+LIVES_INLINE boolean lives_combo_set_active_iter(LiVESCombo *combo, LiVESTreeIter *iter) {
 #ifdef GUI_GTK
   gtk_combo_box_set_active_iter(combo,iter);
+  return TRUE;
 #endif
+  return FALSE;
 
 }
 
@@ -2060,8 +2074,8 @@ LIVES_INLINE boolean lives_button_set_relief(LiVESButton *button, LiVESReliefSty
   return TRUE;
 #endif
 #ifdef GUI_QT
-  if (rstyle==LIVES_RELIEF_NONE) button.setFlat(true);
-  else button.setFlat(false);
+  if (rstyle==LIVES_RELIEF_NONE) button->setFlat(true);
+  else button->setFlat(false);
 #endif
   return FALSE;
 }
@@ -2555,6 +2569,7 @@ LIVES_INLINE double lives_ruler_get_value(LiVESRuler *ruler) {
   return ruler->position;
 #endif
 #endif
+  return 0.;
 }
 
 
@@ -2773,6 +2788,8 @@ LIVES_INLINE LiVESWidgetState lives_widget_get_state(LiVESWidget *widget) {
   return GTK_WIDGET_STATE(widget);
 #endif
 #endif
+#else
+  return 0;
 #endif
 }
 
@@ -2994,11 +3011,11 @@ LIVES_INLINE LiVESTreePath *lives_tree_model_get_path(LiVESTreeModel *tmod, LiVE
 }
 
 
-LIVES_INLINE boolean lives_tree_model_iter_n_children(LiVESTreeModel *tmod, LiVESTreeIter *titer) {
+LIVES_INLINE int lives_tree_model_iter_n_children(LiVESTreeModel *tmod, LiVESTreeIter *titer) {
 #ifdef GUI_GTK
   return gtk_tree_model_iter_n_children(tmod,titer);
 #endif
-  return FALSE;
+  return 0;
 }
 
 
@@ -3766,8 +3783,8 @@ LIVES_INLINE boolean lives_menu_set_title(LiVESMenu *menu, const char *title) {
   gtk_menu_set_title(menu,title);
   return TRUE;
 #endif
-  return FALSE;
 #endif
+  return FALSE;
 }
 
 
@@ -4471,16 +4488,17 @@ void lives_tooltips_copy(LiVESWidget *dest, LiVESWidget *source) {
 }
 
 
-void lives_combo_populate(LiVESCombo *combo, LiVESList *list) {
+boolean lives_combo_populate(LiVESCombo *combo, LiVESList *list) {
   // remove any current list
-  lives_combo_set_active_index(combo,-1);
-  lives_combo_remove_all_text(combo);
+  if (!lives_combo_set_active_index(combo,-1)) return FALSE;
+  if (!lives_combo_remove_all_text(combo)) return FALSE;
 
   // add the new list
   while (list!=NULL) {
-    lives_combo_append_text(LIVES_COMBO(combo),(const char *)list->data);
+    if (!lives_combo_append_text(LIVES_COMBO(combo),(const char *)list->data)) return FALSE;
     list=list->next;
   }
+  return TRUE;
 }
 
 ///// lives compounds
@@ -5618,8 +5636,8 @@ void get_border_size (LiVESWidget *win, int *bx, int *by) {
 /*
  * Set active string to the combo box
  */
-void lives_combo_set_active_string(LiVESCombo *combo, const char *active_str) {
-  lives_entry_set_text(LIVES_ENTRY(lives_bin_get_child(LIVES_BIN(combo))),active_str);
+boolean lives_combo_set_active_string(LiVESCombo *combo, const char *active_str) {
+  return lives_entry_set_text(LIVES_ENTRY(lives_bin_get_child(LIVES_BIN(combo))),active_str);
 }
 
 LiVESWidget *lives_combo_get_entry(LiVESCombo *widget) {

@@ -175,6 +175,7 @@ typedef GtkOrientation LiVESOrientation;
 
 typedef GdkEvent                          LiVESXEvent;
 typedef GdkEventButton                    LiVESXEventButton;
+typedef GdkEventMotion                    LiVESXEventMotion;
 typedef GdkDisplay                        LiVESXDisplay;
 typedef GdkScreen                         LiVESXScreen;
 typedef GdkDevice                         LiVESXDevice;
@@ -322,6 +323,7 @@ typedef GtkResponseType LiVESResponseType;
 #define LIVES_RESPONSE_NO GTK_RESPONSE_NO
 
 // positive values for custom responses
+#define LIVES_RESPONSE_INVALID 0
 #define LIVES_RESPONSE_SHOW_DETAILS 1
 
 
@@ -398,7 +400,7 @@ typedef GtkToolbarStyle LiVESToolbarStyle;
 typedef GtkSelectionMode LiVESSelectionMode;
 #define LIVES_SELECTION_NONE GTK_SELECTION_NONE
 #define LIVES_SELECTION_SINGLE GTK_SELECTION_SINGLE
-#define LIVES_SELECTION_BROWSE GTK_SELECTION_BROWSE
+//#define LIVES_SELECTION_BROWSE GTK_SELECTION_BROWSE
 #define LIVES_SELECTION_MULTIPLE GTK_SELECTION_MULTIPLE
 
 typedef GtkButtonBoxStyle LiVESButtonBoxStyle;
@@ -867,21 +869,61 @@ typedef GdkModifierType LiVESXModifierType;
 
 
 #ifdef GUI_QT
-// just for testing
+// just for testing !!!!
 
-#include <QtGui/QMainWindow>
-#include <QtGui/QLabel>
-#include <QtGui/QPushButton>
-#include <QtGui/QDialog>
-#include <QtGui/QBoxLayout>
-#include <QtGui/QComboBox>
+#include <QtCore/QLinkedList>
+
+#include <QtGui/QScreen>
+#include <QtGui/QWindow>
+#include <QtGui/QTextCursor>
+
+#include <QtWidgets/QLabel>
+#include <QtWidgets/QLineEdit>
+#include <QtWidgets/QPushButton>
+#include <QtWidgets/QToolButton>
+#include <QtWidgets/QToolBar>
+#include <QtWidgets/QTableWidget>
+#include <QtWidgets/QDialog>
+#include <QtWidgets/QBoxLayout>
+#include <QtWidgets/QComboBox>
+#include <QtWidgets/QMenu>
+#include <QtWidgets/QFileDialog>
+#include <QtWidgets/QLayout>
+#include <QtWidgets/QTextEdit>
+#include <QtWidgets/QTreeWidget>
+#include <QtWidgets/QRadioButton>
+#include <QtWidgets/QButtonGroup>
+#include <QtWidgets/QProgressBar>
+#include <QtWidgets/QSpinBox>
+#include <QtWidgets/QShortcut>
+#include <QtWidgets/QGridLayout>
+#include <QtWidgets/QFrame>
+#include <QtWidgets/QScrollArea>
+#include <QtWidgets/QScrollBar>
 
 #include <QtGui/QColor>
-#include <QtCore/QLinkedList>
+#include <QtCore/QAbstractItemModel>
+#include <QtCore/QModelIndex>
+
+#define FALSE false
+#define TRUE true
 
 #define GTK_CHECK_VERSION(a,b,c) 0
 
+//#define LIVES_TABLE_IS_GRID 1
+
+typedef int LiVESAttachOptions;
+#define LIVES_EXPAND 1
+#define LIVES_SHRINK 2
+#define LIVES_FILL 3
+
 typedef QStringList LiVESSList;
+typedef QStringList LiVESList;
+
+typedef QStringList GSList; // TODO - remove
+typedef QStringList GList; // TODO - remove
+
+typedef void PangoLayout; // TODO - replace
 
 typedef QWidget                           LiVESWidget;
 typedef QWidget                           LiVESWindow;
@@ -891,24 +933,63 @@ typedef int                               gint;
 typedef uchar                             guchar;
 typedef void*                             gpointer;
   
-typedef void *(*LiVESPixbufDestroyNotify(uchar *, gpointer));
+typedef void *(*LiVESPixbufDestroyNotify(uchar *, void *));
+typedef void (*LiVESWidgetCallback) (QWidget *widget, void *data);
+
 
 typedef int                               lives_painter_content_t;
 
 typedef gpointer                          livespointer;
+typedef char                              gchar;
+typedef ulong                             gulong;
+
+typedef struct {
+  ulong func;
+} LiVESWidgetClosure;
+
+
+typedef struct {
+  ulong func;
+} LiVESWidgetSourceFunc;
+
 
 #define LiVESError void
 
-typedef int LiVESXScreen;
+typedef QScreen LiVESXScreen;
+typedef QScreen LiVESXDisplay; // TODO
+typedef QScreen GdkDisplay; // TODO - specialised
+typedef QScreen LiVESXDevice; // TODO
+
 /*    QDesktopWidget *pDesktop = QApplication::desktop();
     QRect geometry = pDesktop->availableScreenGeometry(number);
     move(geometry.topLeft());*/
 
+typedef QWindow LiVESXWindow;
+
+typedef QEvent LiVESXEvent;
+
+typedef Qt::MouseButton LiVESXEventButton;
+typedef void LiVESXEventMotion;
+
+typedef QCursor LiVESXCursor;
+
 #define LiVESAdjustment void
 
+typedef QObject LiVESObject;
+
+typedef QShortcut LiVESAccelGroup;
+typedef QKeySequence LiVESXModifierType;
+typedef QAbstractItemModel LiVESTreeModel;
+typedef QAbstractListModel LiVESTreeStore;
+typedef QModelIndex LiVESTreeIter;
+typedef QPersistentModelIndex LiVESTreePath;
+typedef QTreeWidget LiVESTreeView;
+
+typedef int LiVESTreeViewColumn;
+typedef QItemSelection LiVESTreeSelection;
 
 
-typedef int LiVESInterpType;
+typedef Qt:TransformationMode LiVESInterpType;
 #define LIVES_INTERP_BEST   Qt::SmoothTransformation
 #define LIVES_INTERP_NORMAL Qt::SmoothTransformation
 #define LIVES_INTERP_FAST   Qt::FastTransformation
@@ -916,13 +997,103 @@ typedef int LiVESInterpType;
 
 typedef QLabel LiVESLabel;
 typedef QPushButton LiVESButton;
+typedef QPushButton LiVESColorButton;
 typedef QBoxLayout LiVESBox;
 typedef QHBoxLayout LiVESHBox;
 typedef QVBoxLayout LiVESVBox;
 typedef QDialog LiVESDialog;
 typedef QComboBox LiVESCombo;
+typedef QMenu LiVESMenu;
+typedef QButtonGroup LiVESButtonBox;
+typedef QAbstractButton LiVESToggleButton;
+typedef QRadioButton LiVESRadioButton;
+typedef QMenu LiVESMenuShell;
+typedef QToolButton LiVESMenuToolButton;
+typedef QAction LiVESRadioMenuItem;
+typedef QAction LiVESImageMenuItem;
+typedef QAction LiVESCheckMenuItem;
+typedef QAction LiVESMenuItem;
+typedef QLayout LiVESAlignment;
+//typedef QGridLayout LiVESTable;
+//typedef QGridLayout LiVESGrid;
+typedef QTableWidget LiVESTable;
+typedef QTableWidget LiVESGrid;
+typedef QWidget LiVESContainer;
+typedef QProgressBar LiVESProgressBar;
+typedef QSpinBox LiVESSpinButton;
+typedef QWidget LiVESToolItem;
+typedef QWidget LiVESRuler; // TODO - create
+typedef QWidget LiVESRange; // TODO
+typedef QWidget LiVESScaleButton; // TODO - create
+typedef QWidget LiVESEditable;
+typedef QScrollBar LiVESScrollbar;
+typedef QScrollArea LiVESScrolledWindow;
 
 
+// scrolledwindow policies
+typedef int LiVESPolicyType;
+#define LIVES_POLICY_AUTOMATIC Qt::ScrollBarAsNeeded
+#define LIVES_POLICY_NEVER Qt::ScrollBarAlwaysOff
+#define LIVES_POLICY_ALWAYS Qt::ScrollBarAlwaysOn
+
+
+typedef QLineEdit LiVESEntry;
+typedef QFrame LiVESFrame;
+typedef QFileDialog LiVESFileChooser;
+typedef QTabWidget LiVESNotebook;
+typedef QToolBar LiVESToolbar;
+typedef QToolButton LiVESToolButton;
+
+typedef int LiVESToolbarStyle;
+#define LIVES_TOOLBAR_ICONS Qt::ToolButtonIconOnly
+#define LIVES_TOOLBAR_TEXT  Qt::ToolButtonTextOnly
+
+typedef QWidget LiVESBin;
+
+typedef QSize LiVESRequisition;
+
+typedef QTextDocument                     LiVESTextBuffer;
+typedef QTextEdit                         LiVESTextView;
+
+typedef int LiVESWrapMode;
+#define LIVES_WRAP_NONE QTextEdit::NoWrap
+#define LIVES_WRAP_WORD QTextEdit::WidgetWidth
+
+typedef int LiVESJustification;
+
+#define LIVES_JUSTIFY_LEFT   Qt::AlignLeft
+#define LIVES_JUSTIFY_RIGHT  Qt::AlignRight
+#define LIVES_JUSTIFY_CENTER Qt::AlignHCenter
+#define LIVES_JUSTIFY_FILL   Qt::AlignJustify
+
+typedef QTextCursor LiVESTextMark;
+typedef QTextCursor LiVESTextIter;
+
+typedef void LiVESCellRenderer;
+
+typedef int LiVESAccelFlags;
+
+typedef int LiVESTreeViewColumnSizing;
+#define LIVES_TREE_VIEW_COLUMN_GROW_ONLY 0
+#define LIVES_TREE_VIEW_COLUMN_AUTOSIZE 1
+#define LIVES_TREE_VIEW_COLUMN_FIXED 2
+
+typedef int LiVESSelectionMode;
+#define LIVES_SELECTION_NONE QAbstractItemView::NoSelection
+#define LIVES_SELECTION_SINGLE QAbstractItemView::SingleSelection
+#define LIVES_SELECTION_MULTIPLE QAbstractItemView::MultiSelection
+
+typedef void LiVESExpander;
+
+typedef int LiVESOrientation;
+#define LIVES_ORIENTATION_HORIZONTAL 1
+#define LIVES_ORIENTATION_VERTICAL   2
+
+typedef int LiVESButtonBoxStyle;
+#define LIVES_BUTTONBOX_DEFAULT_STYLE 0
+#define LIVES_BUTTONBOX_SPREAD 1
+#define LIVES_BUTTONBOX_EDGE 0
+#define LIVES_BUTTONBOX_CENTER 1
 
 typedef int LiVESReliefStyle;
 
@@ -950,6 +1121,31 @@ typedef int LiVESWindowType;
 typedef int LiVESWindowPosition;
 #define LIVES_WIN_POS_CENTER_ALWAYS 1
 
+
+typedef int LiVESArrowType;
+#define LIVES_ARROW_UP 1
+#define LIVES_ARROW_DOWN 2
+#define LIVES_ARROW_LEFT 3
+#define LIVES_ARROW_RIGHT 4
+#define LIVES_ARROW_NONE 0
+
+
+typedef int LiVESShadowType;
+#define LIVES_SHADOW_NONE 0
+#define LIVES_SHADOW_IN 1
+#define LIVES_SHADOW_OUT 2
+#define LIVES_SHADOW_ETCHED_IN 3
+#define LIVES_SHADOW_ETCHED_OUT 4
+
+
+
+typedef int LiVESPositionType;
+#define LIVES_POS_LEFT 1
+#define LIVES_POS_RIGHT 2
+#define LIVES_POS_TOP 3
+#define LIVES_POS_BOTTOM 4
+
+
 #endif
 
 
@@ -959,15 +1155,15 @@ typedef int LiVESWindowPosition;
 typedef QPainter lives_painter_t;
 typedef QImage lives_painter_surface_t;
 typedef QImage LiVESImage;
-typedef int lives_painter_format_t;
 
+typedef QImage::Format lives_painter_format_t;
 #define LIVES_PAINTER_FORMAT_A1   QImage::Format_Mono
 #define LIVES_PAINTER_FORMAT_A8   QImage::Format_Indexed8
 #define LIVES_PAINTER_FORMAT_ARGB32 QImage::Format_ARGB32_Premultiplied
 
 #define LIVES_PAINTER_CONTENT_COLOR 0
 
-typedef int lives_painter_operator_t;
+typedef QPainter::CompositionMode lives_painter_operator_t;
 
 #define LIVES_PAINTER_OPERATOR_UNKNOWN QPainter::CompositionMode_SourceOver
 #define LIVES_PAINTER_OPERATOR_DEFAULT QPainter::CompositionMode_SourceOver
@@ -1267,20 +1463,20 @@ LiVESWidget *lives_combo_new(void);
 LiVESWidget *lives_combo_new_with_model (LiVESTreeModel *);
 LiVESTreeModel *lives_combo_get_model(LiVESCombo *);
 
-void lives_combo_append_text(LiVESCombo *, const char *text);
+boolean lives_combo_append_text(LiVESCombo *, const char *text);
 void lives_combo_set_entry_text_column(LiVESCombo *, int column);
 
 char *lives_combo_get_active_text(LiVESCombo *) WARN_UNUSED;
-void lives_combo_set_active_text(LiVESCombo *, const char *text);
-void lives_combo_set_active_index(LiVESCombo *, int index);
+boolean lives_combo_set_active_text(LiVESCombo *, const char *text);
+boolean lives_combo_set_active_index(LiVESCombo *, int index);
 int lives_combo_get_active(LiVESCombo *);
 boolean lives_combo_get_active_iter(LiVESCombo *, LiVESTreeIter *);
-void lives_combo_set_active_iter(LiVESCombo *, LiVESTreeIter *);
-void lives_combo_set_active_string(LiVESCombo *, const char *active_str);
+boolean lives_combo_set_active_iter(LiVESCombo *, LiVESTreeIter *);
+boolean lives_combo_set_active_string(LiVESCombo *, const char *active_str);
 
 LiVESWidget *lives_combo_get_entry(LiVESCombo *);
 
-void lives_combo_populate(LiVESCombo *, LiVESList *list);
+boolean lives_combo_populate(LiVESCombo *, LiVESList *list);
 
 LiVESWidget *lives_text_view_new(void);
 LiVESWidget *lives_text_view_new_with_buffer(LiVESTextBuffer *);

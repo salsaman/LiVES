@@ -804,7 +804,7 @@ boolean on_framedraw_leave (LiVESWidget *widget, GdkEventCrossing *event, lives_
 
 // using these 3 functions, the user can draw on frames
 
-boolean on_framedraw_mouse_start (LiVESWidget *widget, GdkEventButton *event, lives_special_framedraw_rect_t *framedraw) {
+boolean on_framedraw_mouse_start (LiVESWidget *widget, LiVESXEventButton *event, lives_special_framedraw_rect_t *framedraw) {
   // user clicked in the framedraw widget (or multitrack playback widget)
 
   int fd_height;
@@ -924,7 +924,7 @@ boolean on_framedraw_mouse_start (LiVESWidget *widget, GdkEventButton *event, li
   return FALSE;
 }
 
-boolean on_framedraw_mouse_update (LiVESWidget *widget, GdkEventMotion *event, lives_special_framedraw_rect_t *framedraw) {
+boolean on_framedraw_mouse_update (LiVESWidget *widget, LiVESXEventMotion *event, lives_special_framedraw_rect_t *framedraw) {
   // pointer moved in the framedraw widget
   int xcurrenti,ycurrenti;
 
@@ -1062,7 +1062,7 @@ boolean on_framedraw_mouse_update (LiVESWidget *widget, GdkEventMotion *event, l
 }
 
 
-boolean on_framedraw_mouse_reset (LiVESWidget *widget, GdkEventButton *event, lives_special_framedraw_rect_t *framedraw) {
+boolean on_framedraw_mouse_reset (LiVESWidget *widget, LiVESXEventButton *event, lives_special_framedraw_rect_t *framedraw) {
   // user released the mouse button in framedraw widget
   if (event->button!=1||!b1_held) return FALSE;
 

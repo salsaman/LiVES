@@ -7,7 +7,10 @@
 #ifndef HAS_LIVES_PLUGINS_H
 #define HAS_LIVES_PLUGINS_H
 
+#ifdef GUI_GTK
 #include <gmodule.h>
+#endif
+
 #include <unistd.h>
 #include <string.h>
 #include <fcntl.h>

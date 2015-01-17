@@ -1828,7 +1828,7 @@ static void show_track_info(lives_mt *mt, LiVESWidget *eventbox, int track, doub
 }
 
 
-static boolean atrack_ebox_pressed (LiVESWidget *labelbox, GdkEventButton *event, gpointer user_data) {
+static boolean atrack_ebox_pressed (LiVESWidget *labelbox, LiVESXEventButton *event, gpointer user_data) {
   lives_mt *mt=(lives_mt *)user_data;
   int current_track=mt->current_track;
   mt->current_track=GPOINTER_TO_INT(g_object_get_data (G_OBJECT(labelbox),"layer_number"));
@@ -1843,7 +1843,7 @@ static boolean atrack_ebox_pressed (LiVESWidget *labelbox, GdkEventButton *event
 
 
 
-static boolean track_ebox_pressed (LiVESWidget *labelbox, GdkEventButton *event, gpointer user_data) {
+static boolean track_ebox_pressed (LiVESWidget *labelbox, LiVESXEventButton *event, gpointer user_data) {
   lives_mt *mt=(lives_mt *)user_data;
   int current_track=mt->current_track;
   mt->current_track=GPOINTER_TO_INT(g_object_get_data (G_OBJECT(labelbox),"layer_number"));
@@ -2465,7 +2465,7 @@ void scroll_tracks (lives_mt *mt, int top_track, boolean set_value) {
 
 
 
-boolean track_arrow_pressed (LiVESWidget *ebox, GdkEventButton *event, gpointer user_data) {
+boolean track_arrow_pressed (LiVESWidget *ebox, LiVESXEventButton *event, gpointer user_data) {
   LiVESWidget *eventbox=(LiVESWidget *)g_object_get_data(G_OBJECT(ebox),"eventbox");
   LiVESWidget *arrow=(LiVESWidget *)g_object_get_data(G_OBJECT(eventbox),"arrow"),*new_arrow;
   lives_mt *mt=(lives_mt *)user_data;
@@ -2739,7 +2739,7 @@ void mt_clip_select (lives_mt *mt, boolean scroll) {
 }
 
 
-boolean mt_prevclip (GtkAccelGroup *group, LiVESObject *obj, uint32_t keyval, LiVESXModifierType mod, gpointer user_data) {
+boolean mt_prevclip (LiVESAccelGroup *group, LiVESObject *obj, uint32_t keyval, LiVESXModifierType mod, gpointer user_data) {
   lives_mt *mt=(lives_mt *)user_data;
   mt->clip_selected--;
   polymorph(mt,POLY_CLIPS);
@@ -2747,7 +2747,7 @@ boolean mt_prevclip (GtkAccelGroup *group, LiVESObject *obj, uint32_t keyval, Li
   return TRUE;
 }
 
-boolean mt_nextclip (GtkAccelGroup *group, LiVESObject *obj, uint32_t keyval, LiVESXModifierType mod, gpointer user_data) {
+boolean mt_nextclip (LiVESAccelGroup *group, LiVESObject *obj, uint32_t keyval, LiVESXModifierType mod, gpointer user_data) {
   lives_mt *mt=(lives_mt *)user_data;
   mt->clip_selected++;
   polymorph(mt,POLY_CLIPS);
@@ -3131,14 +3131,14 @@ void mt_tl_move(lives_mt *mt, double pos_rel) {
 }
 
 
-boolean mt_tlfor (GtkAccelGroup *group, LiVESObject *obj, uint32_t keyval, LiVESXModifierType mod, gpointer user_data) {
+boolean mt_tlfor (LiVESAccelGroup *group, LiVESObject *obj, uint32_t keyval, LiVESXModifierType mod, gpointer user_data) {
   lives_mt *mt=(lives_mt *)user_data;
   mt->fm_edit_event=NULL;
   mt_tl_move(mt,1.);
   return TRUE;
 }
 
-boolean mt_tlfor_frame (GtkAccelGroup *group, LiVESObject *obj, uint32_t keyval, LiVESXModifierType mod, gpointer user_data) {
+boolean mt_tlfor_frame (LiVESAccelGroup *group, LiVESObject *obj, uint32_t keyval, LiVESXModifierType mod, gpointer user_data) {
   lives_mt *mt=(lives_mt *)user_data;
   mt->fm_edit_event=NULL;
   mt_tl_move(mt,1./mt->fps);
@@ -3146,14 +3146,14 @@ boolean mt_tlfor_frame (GtkAccelGroup *group, LiVESObject *obj, uint32_t keyval,
 }
 
 
-boolean mt_tlback (GtkAccelGroup *group, LiVESObject *obj, uint32_t keyval, LiVESXModifierType mod, gpointer user_data) {
+boolean mt_tlback (LiVESAccelGroup *group, LiVESObject *obj, uint32_t keyval, LiVESXModifierType mod, gpointer user_data) {
   lives_mt *mt=(lives_mt *)user_data;
   mt->fm_edit_event=NULL;
   mt_tl_move(mt,-1.);
   return TRUE;
 }
 
-boolean mt_tlback_frame (GtkAccelGroup *group, LiVESObject *obj, uint32_t keyval, LiVESXModifierType mod, gpointer user_data) {
+boolean mt_tlback_frame (LiVESAccelGroup *group, LiVESObject *obj, uint32_t keyval, LiVESXModifierType mod, gpointer user_data) {
   lives_mt *mt=(lives_mt *)user_data;
   mt->fm_edit_event=NULL;
   mt_tl_move(mt,-1./mt->fps);
@@ -3229,7 +3229,7 @@ static void scroll_time_by_scrollbar (GtkHScrollbar *sbar, gpointer user_data) {
 }
 
 
-boolean mt_trdown (GtkAccelGroup *group, LiVESObject *obj, uint32_t keyval, LiVESXModifierType mod, gpointer user_data) {
+boolean mt_trdown (LiVESAccelGroup *group, LiVESObject *obj, uint32_t keyval, LiVESXModifierType mod, gpointer user_data) {
   lives_mt *mt=(lives_mt *)user_data;
 
   if (mt->current_track>=0&&mt->opts.pertrack_audio&&!mt->aud_track_selected) {
@@ -3266,7 +3266,7 @@ boolean mt_trdown (GtkAccelGroup *group, LiVESObject *obj, uint32_t keyval, LiVE
 }
 
 
-boolean mt_trup (GtkAccelGroup *group, LiVESObject *obj, uint32_t keyval, LiVESXModifierType mod, gpointer user_data) {
+boolean mt_trup (LiVESAccelGroup *group, LiVESObject *obj, uint32_t keyval, LiVESXModifierType mod, gpointer user_data) {
   lives_mt *mt=(lives_mt *)user_data;
   if (mt->current_track==-1||(mt->current_track==0&&!mt->aud_track_selected&&!mt->opts.show_audio)) return TRUE;
 
@@ -3512,7 +3512,7 @@ static void select_block (lives_mt *mt) {
 
 static boolean
 on_drag_filter_end           (LiVESWidget       *widget,
-			      GdkEventButton  *event,
+			      LiVESXEventButton  *event,
 			      gpointer         user_data) {
   GdkWindow *window;
   LiVESWidget *eventbox=NULL,*oeventbox;
@@ -3647,7 +3647,7 @@ on_drag_filter_end           (LiVESWidget       *widget,
 
 
 
-static boolean filter_ebox_pressed (LiVESWidget *eventbox, GdkEventButton *event, gpointer user_data) {
+static boolean filter_ebox_pressed (LiVESWidget *eventbox, LiVESXEventButton *event, gpointer user_data) {
   lives_mt *mt=(lives_mt *)user_data;
 
   if (mt->is_rendering) return FALSE;
@@ -3927,7 +3927,7 @@ mt_spin_end_value_changed           (LiVESSpinButton   *spinbutton,
 }
 
 
-static boolean in_out_ebox_pressed (LiVESWidget *eventbox, GdkEventButton *event, gpointer user_data) {
+static boolean in_out_ebox_pressed (LiVESWidget *eventbox, LiVESXEventButton *event, gpointer user_data) {
 
   int height;
   double width;
@@ -3976,7 +3976,7 @@ static boolean in_out_ebox_pressed (LiVESWidget *eventbox, GdkEventButton *event
 
 
 
-static void do_clip_context (lives_mt *mt, GdkEventButton *event, lives_clip_t *sfile) {
+static void do_clip_context (lives_mt *mt, LiVESXEventButton *event, lives_clip_t *sfile) {
   // pop up a context menu when clip is right clicked on
 
   // unfinished...
@@ -4029,7 +4029,7 @@ static void do_clip_context (lives_mt *mt, GdkEventButton *event, lives_clip_t *
 
 
 
-static boolean clip_ebox_pressed (LiVESWidget *eventbox, GdkEventButton *event, gpointer user_data) {
+static boolean clip_ebox_pressed (LiVESWidget *eventbox, LiVESXEventButton *event, gpointer user_data) {
 
   int height;
   double width;
@@ -4090,7 +4090,7 @@ static boolean clip_ebox_pressed (LiVESWidget *eventbox, GdkEventButton *event, 
 
 static boolean
 on_drag_clip_end           (LiVESWidget       *widget,
-			    GdkEventButton  *event,
+			    LiVESXEventButton  *event,
 			    gpointer         user_data) {
   lives_mt *mt=(lives_mt *)user_data;
 
@@ -10333,7 +10333,7 @@ static void rdrw_cb(LiVESMenuItem *menuitem, gpointer user_data) {
   redraw_all_event_boxes(mt);
 }
 
-void do_effect_context (lives_mt *mt, GdkEventButton *event) {
+void do_effect_context (lives_mt *mt, LiVESXEventButton *event) {
   // pop up a context menu when a selected block is right clicked on
 
   LiVESWidget *edit_effect;
@@ -10386,7 +10386,7 @@ void do_effect_context (lives_mt *mt, GdkEventButton *event) {
 
 
 static boolean
-fx_ebox_pressed (LiVESWidget *eventbox, GdkEventButton *event, gpointer user_data) {
+fx_ebox_pressed (LiVESWidget *eventbox, LiVESXEventButton *event, gpointer user_data) {
   lives_mt *mt=(lives_mt *)user_data;
   GList *children,*xlist;
   weed_plant_t *osel=mt->selected_init_event;
@@ -12974,7 +12974,7 @@ void polymorph (lives_mt *mt, lives_mt_poly_state_t poly) {
 }
 
 
-static void mouse_select_start(LiVESWidget *widget, GdkEventButton *event, lives_mt *mt) {
+static void mouse_select_start(LiVESWidget *widget, LiVESXEventButton *event, lives_mt *mt) {
   double timesecs;
   int min_x;
 
@@ -13004,7 +13004,7 @@ static void mouse_select_start(LiVESWidget *widget, GdkEventButton *event, lives
 
 }
 
-static void mouse_select_end(LiVESWidget *widget, GdkEventButton *event, lives_mt *mt) {
+static void mouse_select_end(LiVESWidget *widget, LiVESXEventButton *event, lives_mt *mt) {
   mt->tl_selecting=FALSE;
   lives_widget_get_pointer((LiVESXDevice *)mainw->mgeom[prefs->gui_monitor>0?prefs->gui_monitor-1:0].mouse_device, 
 			   mt->timeline, &mt->sel_x, &mt->sel_y);
@@ -13014,7 +13014,7 @@ static void mouse_select_end(LiVESWidget *widget, GdkEventButton *event, lives_m
 }
 
 
-static void mouse_select_move(LiVESWidget *widget, GdkEventMotion *event, lives_mt *mt) {
+static void mouse_select_move(LiVESWidget *widget, LiVESXEventMotion *event, lives_mt *mt) {
   lives_painter_t *cr;
 
   LiVESWidget *xeventbox;
@@ -13149,7 +13149,7 @@ static void mouse_select_move(LiVESWidget *widget, GdkEventMotion *event, lives_
 
 
 
-void do_block_context (lives_mt *mt, GdkEventButton *event, track_rect *block) {
+void do_block_context (lives_mt *mt, LiVESXEventButton *event, track_rect *block) {
   // pop up a context menu when a selected block is right clicked on
 
   // unfinished...
@@ -13228,7 +13228,7 @@ void do_block_context (lives_mt *mt, GdkEventButton *event, track_rect *block) {
 }
 
 
-void do_track_context (lives_mt *mt, GdkEventButton *event, double timesecs, int track) {
+void do_track_context (lives_mt *mt, LiVESXEventButton *event, double timesecs, int track) {
   // pop up a context menu when track is right clicked on
 
   // unfinished...
@@ -13313,7 +13313,7 @@ void do_track_context (lives_mt *mt, GdkEventButton *event, double timesecs, int
 }
 
 
-boolean on_track_release (LiVESWidget *eventbox, GdkEventButton *event, gpointer user_data) {
+boolean on_track_release (LiVESWidget *eventbox, LiVESXEventButton *event, gpointer user_data) {
   lives_mt *mt=(lives_mt *)user_data;
   weed_timecode_t tc,tcpp;
 
@@ -13459,7 +13459,7 @@ boolean on_track_release (LiVESWidget *eventbox, GdkEventButton *event, gpointer
 
 
 
-boolean on_track_header_click (LiVESWidget *widget, GdkEventButton *event, gpointer user_data) {
+boolean on_track_header_click (LiVESWidget *widget, LiVESXEventButton *event, gpointer user_data) {
   lives_mt *mt=(lives_mt *)user_data;
   if (mt->opts.mouse_mode==MOUSE_MODE_SELECT) {
     mouse_select_start(widget,event,mt);
@@ -13468,7 +13468,7 @@ boolean on_track_header_click (LiVESWidget *widget, GdkEventButton *event, gpoin
   return TRUE;
 }
 
-boolean on_track_header_release (LiVESWidget *widget, GdkEventButton *event, gpointer user_data) {
+boolean on_track_header_release (LiVESWidget *widget, LiVESXEventButton *event, gpointer user_data) {
   lives_mt *mt=(lives_mt *)user_data;
   if (mt->opts.mouse_mode==MOUSE_MODE_SELECT) {
     mouse_select_end(widget,event,mt);
@@ -13477,7 +13477,7 @@ boolean on_track_header_release (LiVESWidget *widget, GdkEventButton *event, gpo
   return TRUE;
 }
 
-boolean on_track_between_click (LiVESWidget *widget, GdkEventButton *event, gpointer user_data) {
+boolean on_track_between_click (LiVESWidget *widget, LiVESXEventButton *event, gpointer user_data) {
   lives_mt *mt=(lives_mt *)user_data;
   if (mt->opts.mouse_mode==MOUSE_MODE_SELECT) {
     mouse_select_start(widget,event,mt);
@@ -13486,7 +13486,7 @@ boolean on_track_between_click (LiVESWidget *widget, GdkEventButton *event, gpoi
   return TRUE;
 }
 
-boolean on_track_between_release (LiVESWidget *widget, GdkEventButton *event, gpointer user_data) {
+boolean on_track_between_release (LiVESWidget *widget, LiVESXEventButton *event, gpointer user_data) {
   lives_mt *mt=(lives_mt *)user_data;
   if (mt->opts.mouse_mode==MOUSE_MODE_SELECT) {
     mouse_select_end(widget,event,mt);
@@ -13497,7 +13497,7 @@ boolean on_track_between_release (LiVESWidget *widget, GdkEventButton *event, gp
 
 
 
-boolean on_track_click (LiVESWidget *eventbox, GdkEventButton *event, gpointer user_data) {
+boolean on_track_click (LiVESWidget *eventbox, LiVESXEventButton *event, gpointer user_data) {
   lives_mt *mt=(lives_mt *)user_data;
   track_rect *block;
 
@@ -13639,14 +13639,14 @@ boolean on_track_click (LiVESWidget *eventbox, GdkEventButton *event, gpointer u
   return TRUE;
 }
 
-boolean on_track_move (LiVESWidget *widget, GdkEventMotion *event, gpointer user_data) {
+boolean on_track_move (LiVESWidget *widget, LiVESXEventMotion *event, gpointer user_data) {
   // used for mouse mode SELECT
   lives_mt *mt=(lives_mt *)user_data;
   if (mt->opts.mouse_mode==MOUSE_MODE_SELECT) mouse_select_move(widget,event,mt);
   return TRUE;
 }
 
-boolean on_track_header_move (LiVESWidget *widget, GdkEventMotion *event, gpointer user_data) {
+boolean on_track_header_move (LiVESWidget *widget, LiVESXEventMotion *event, gpointer user_data) {
   // used for mouse mode SELECT
   lives_mt *mt=(lives_mt *)user_data;
   if (mt->opts.mouse_mode==MOUSE_MODE_SELECT) mouse_select_move(widget,event,mt);
@@ -17869,7 +17869,7 @@ static boolean mt_expose_audtrack_event (LiVESWidget *ebox, GdkEventExpose *even
 // functions for moving and clicking on the timeline
 
 
-boolean on_timeline_update (LiVESWidget *widget, GdkEventMotion *event, gpointer user_data) {
+boolean on_timeline_update (LiVESWidget *widget, LiVESXEventMotion *event, gpointer user_data) {
   lives_mt *mt=(lives_mt *)user_data;
   int x;
   double pos;
@@ -18030,7 +18030,7 @@ void do_fx_move_context(lives_mt *mt) {
 
 
 boolean
-on_timeline_release (LiVESWidget *eventbox, GdkEventButton *event, gpointer user_data) {
+on_timeline_release (LiVESWidget *eventbox, LiVESXEventButton *event, gpointer user_data) {
   //button release
   lives_mt *mt=(lives_mt *)user_data;
   double pos=mt->region_end;
@@ -18144,7 +18144,7 @@ on_timeline_release (LiVESWidget *eventbox, GdkEventButton *event, gpointer user
 }
 
 
-boolean on_timeline_press (LiVESWidget *widget, GdkEventButton *event, gpointer user_data) {
+boolean on_timeline_press (LiVESWidget *widget, LiVESXEventButton *event, gpointer user_data) {
   lives_mt *mt=(lives_mt *)user_data;
   int x;
   double pos;
@@ -18286,7 +18286,7 @@ static void add_mark_at(lives_mt *mt, double time) {
 
 
 
-boolean mt_mark_callback (GtkAccelGroup *group, LiVESObject *obj, uint32_t keyval, LiVESXModifierType mod, gpointer user_data) {
+boolean mt_mark_callback (LiVESAccelGroup *group, LiVESObject *obj, uint32_t keyval, LiVESXModifierType mod, gpointer user_data) {
   lives_mt *mt=(lives_mt *)user_data;
   double cur_time;
 

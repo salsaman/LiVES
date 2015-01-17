@@ -4097,7 +4097,7 @@ void on_record_perf_activate (LiVESMenuItem *menuitem, gpointer user_data) {
 
 
 
-boolean record_toggle_callback (GtkAccelGroup *group, LiVESObject *obj, uint32_t keyval, LiVESXModifierType mod, 
+boolean record_toggle_callback (LiVESAccelGroup *group, LiVESObject *obj, uint32_t keyval, LiVESXModifierType mod, 
 				 gpointer user_data) {
   // from osc
   boolean start=(boolean)GPOINTER_TO_INT(user_data);
@@ -4399,7 +4399,7 @@ on_insfitaudio_toggled                (LiVESToggleButton *togglebutton,
 
 
 
-boolean dirchange_callback (GtkAccelGroup *group, LiVESObject *obj, uint32_t keyval, LiVESXModifierType mod, gpointer user_data) {
+boolean dirchange_callback (LiVESAccelGroup *group, LiVESObject *obj, uint32_t keyval, LiVESXModifierType mod, gpointer user_data) {
   if (mainw->playing_file==-1) return TRUE;
 
   // change play direction
@@ -4419,7 +4419,7 @@ boolean dirchange_callback (GtkAccelGroup *group, LiVESObject *obj, uint32_t key
 }
 
 
-boolean fps_reset_callback (GtkAccelGroup *group, LiVESObject *obj, uint32_t keyval, LiVESXModifierType mod, gpointer user_data) {
+boolean fps_reset_callback (LiVESAccelGroup *group, LiVESObject *obj, uint32_t keyval, LiVESXModifierType mod, gpointer user_data) {
   // reset playback fps (cfile->pb_fps) to normal fps (cfile->fps)
   // also resync the audio
 
@@ -4448,7 +4448,7 @@ boolean fps_reset_callback (GtkAccelGroup *group, LiVESObject *obj, uint32_t key
   return TRUE;
 }
 
-boolean prevclip_callback (GtkAccelGroup *group, LiVESObject *obj, uint32_t keyval, LiVESXModifierType mod, gpointer user_data) {
+boolean prevclip_callback (LiVESAccelGroup *group, LiVESObject *obj, uint32_t keyval, LiVESXModifierType mod, gpointer user_data) {
   GList *list_index;
   int i=0;
   int num_tried=0,num_clips;
@@ -4486,7 +4486,7 @@ boolean prevclip_callback (GtkAccelGroup *group, LiVESObject *obj, uint32_t keyv
 }
 
 
-boolean nextclip_callback (GtkAccelGroup *group, LiVESObject *obj, uint32_t keyval, LiVESXModifierType mod, gpointer user_data) {
+boolean nextclip_callback (LiVESAccelGroup *group, LiVESObject *obj, uint32_t keyval, LiVESXModifierType mod, gpointer user_data) {
   GList *list_index;
   int i;
   int num_tried=0,num_clips;
@@ -7845,7 +7845,7 @@ void on_mute_button_activate (LiVESMenuItem *menuitem, gpointer user_data) {
 }
 
 
-boolean mute_audio_callback (GtkAccelGroup *group, LiVESObject *obj, uint32_t keyval, LiVESXModifierType mod, gpointer user_data) {
+boolean mute_audio_callback (LiVESAccelGroup *group, LiVESObject *obj, uint32_t keyval, LiVESXModifierType mod, gpointer user_data) {
   lives_check_menu_item_set_active(LIVES_CHECK_MENU_ITEM(mainw->mute_audio), !mainw->mute);
   return TRUE;
 }
@@ -9759,7 +9759,7 @@ boolean on_mouse_scroll (LiVESWidget *widget, GdkEventScroll  *event, gpointer u
 // next few functions are for the timer bars
 boolean
 on_mouse_sel_update           (LiVESWidget       *widget,
-			       GdkEventMotion  *event,
+			       LiVESXEventMotion  *event,
 			       gpointer         user_data)
 {
   if (mainw->current_file>-1&&mainw->sel_start>0) {
@@ -9800,7 +9800,7 @@ on_mouse_sel_update           (LiVESWidget       *widget,
 
 boolean
 on_mouse_sel_reset           (LiVESWidget       *widget,
-			      GdkEventButton  *event,
+			      LiVESXEventButton  *event,
 			      gpointer         user_data)
 {
   if (mainw->current_file<=0) return FALSE;
@@ -9815,7 +9815,7 @@ on_mouse_sel_reset           (LiVESWidget       *widget,
 
 boolean
 on_mouse_sel_start           (LiVESWidget       *widget,
-			      GdkEventButton  *event,
+			      LiVESXEventButton  *event,
 			      gpointer         user_data)
 {
   int x;
@@ -9905,7 +9905,7 @@ boolean on_hrule_enter (LiVESWidget *widget, GdkEventCrossing *event, gpointer u
 
 boolean
 on_hrule_update           (LiVESWidget       *widget,
-			   GdkEventMotion  *event,
+			   LiVESXEventMotion  *event,
 			   gpointer         user_data) {
   int x;
   if (mainw->current_file<=0) return FALSE;
@@ -9929,7 +9929,7 @@ on_hrule_update           (LiVESWidget       *widget,
 
 boolean
 on_hrule_reset           (LiVESWidget       *widget,
-			  GdkEventButton  *event,
+			  LiVESXEventButton  *event,
 			  gpointer         user_data)
 {
   //button release
@@ -9974,7 +9974,7 @@ on_hrule_reset           (LiVESWidget       *widget,
 
 boolean
 on_hrule_set           (LiVESWidget       *widget,
-			GdkEventButton  *event,
+			LiVESXEventButton  *event,
 			gpointer         user_data)
 {
   // button press
@@ -10010,7 +10010,7 @@ on_hrule_set           (LiVESWidget       *widget,
 
 
 
-boolean frame_context (LiVESWidget *widget, GdkEventButton *event, gpointer which) {
+boolean frame_context (LiVESWidget *widget, LiVESXEventButton *event, gpointer which) {
   //popup a context menu when we right click on a frame
   int frame=0;
 
@@ -10187,7 +10187,7 @@ void on_forward_pressed (LiVESButton *button, gpointer user_data) {
 }
 
 
-boolean freeze_callback (GtkAccelGroup *group, LiVESObject *obj, uint32_t keyval, LiVESXModifierType mod, gpointer user_data) {
+boolean freeze_callback (LiVESAccelGroup *group, LiVESObject *obj, uint32_t keyval, LiVESXModifierType mod, gpointer user_data) {
   if (mainw->playing_file==-1||(mainw->is_processing&&cfile->is_loaded)) return TRUE;
   if (mainw->record&&!(prefs->rec_opts&REC_FRAMES)) return TRUE;
 
@@ -10241,14 +10241,14 @@ boolean freeze_callback (GtkAccelGroup *group, LiVESObject *obj, uint32_t keyval
 }
 
 
-boolean nervous_callback (GtkAccelGroup *group, LiVESObject *obj, uint32_t keyval, LiVESXModifierType mod, gpointer clip_number) {
+boolean nervous_callback (LiVESAccelGroup *group, LiVESObject *obj, uint32_t keyval, LiVESXModifierType mod, gpointer clip_number) {
   if (mainw->multitrack!=NULL) return FALSE;
   mainw->nervous=!mainw->nervous;
   return TRUE;
 }
 
 
-boolean show_sync_callback (GtkAccelGroup *group, LiVESObject *obj, uint32_t keyval, LiVESXModifierType mod, gpointer clip_number) {
+boolean show_sync_callback (LiVESAccelGroup *group, LiVESObject *obj, uint32_t keyval, LiVESXModifierType mod, gpointer clip_number) {
   double avsync;
   gchar *msg;
 
@@ -10294,7 +10294,7 @@ boolean show_sync_callback (GtkAccelGroup *group, LiVESObject *obj, uint32_t key
 
 
 
-boolean storeclip_callback (GtkAccelGroup *group, LiVESObject *obj, uint32_t keyval, LiVESXModifierType mod, gpointer clip_number) {
+boolean storeclip_callback (LiVESAccelGroup *group, LiVESObject *obj, uint32_t keyval, LiVESXModifierType mod, gpointer clip_number) {
   // ctrl-fn key will store a clip for higher switching
   int clip=GPOINTER_TO_INT (clip_number)-1;
   register int i;

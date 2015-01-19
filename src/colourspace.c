@@ -11054,8 +11054,8 @@ lives_painter_t *layer_to_lives_painter(weed_plant_t *layer) {
 
   if (surf==NULL) return NULL;
 
-  cairo=lives_painter_create(surf); // this copies the pixel_data
-  lives_painter_surface_destroy(surf);
+  cairo=lives_painter_create(surf); // surf is refcounted
+  lives_painter_surface_destroy(surf); // reduce refcount, so it is destroyed with the cairo
 
   return cairo;
 }

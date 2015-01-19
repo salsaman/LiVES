@@ -156,6 +156,7 @@ endif
 
 lives_exe_SOURCES = \
 	widget-helper.c widget-helper.h \
+	widget-helper-gtk.h widget-helper-qt.h \
 	main.c\
 	support.c support.h \
 	effects.c\

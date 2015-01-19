@@ -256,6 +256,8 @@ typedef int lives_pgid_t;
 #define LIVES_LOG "lives.log"
 #endif
 
+uint64_t lives_random(void);
+
 #include "widget-helper.h"
 
 typedef  void *(*fn_ptr) (void *ptr);
@@ -1103,7 +1105,6 @@ int lives_win32_get_num_logical_cpus(void);
 int lives_kill(lives_pid_t pid, int sig);
 int lives_killpg(lives_pgid_t pgrp, int sig);
 void lives_srandom(unsigned int seed);
-uint64_t lives_random(void);
 ssize_t lives_readlink(const char *path, char *buf, size_t bufsiz);
 boolean lives_setenv(const char *name, const char *value);
 boolean lives_fsync(int fd);

@@ -2435,7 +2435,7 @@ void play_file (void) {
     if (mainw->preview_box!=NULL&&lives_widget_get_parent(mainw->preview_box)!=NULL) {
       lives_container_remove (LIVES_CONTAINER (mainw->play_window), mainw->preview_box);
 
-      mainw->pw_scroll_func=lives_signal_connect (LIVES_GUI_OBJECT (mainw->play_window), "scroll_event",
+      mainw->pw_scroll_func=lives_signal_connect (LIVES_GUI_OBJECT (mainw->play_window), LIVES_WIDGET_SCROLL_EVENT,
 					      LIVES_GUI_CALLBACK (on_mouse_scroll),
 					      NULL);
 
@@ -2455,7 +2455,7 @@ void play_file (void) {
 	  if (mainw->preview_box!=NULL&&lives_widget_get_parent(mainw->preview_box)!=NULL) {
 	    lives_container_remove (LIVES_CONTAINER (mainw->play_window), mainw->preview_box);
 
-	    mainw->pw_scroll_func=lives_signal_connect (LIVES_GUI_OBJECT (mainw->play_window), "scroll_event",
+	    mainw->pw_scroll_func=lives_signal_connect (LIVES_GUI_OBJECT (mainw->play_window), LIVES_WIDGET_SCROLL_EVENT,
 						    LIVES_GUI_CALLBACK (on_mouse_scroll),
 						    NULL);
 	  }

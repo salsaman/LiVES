@@ -233,7 +233,7 @@ LiVESPixbuf *lives_image_get_pixbuf(LiVESImage *);
 LiVESWidget *lives_dialog_get_content_area(LiVESDialog *);
 LiVESWidget *lives_dialog_get_action_area(LiVESDialog *);
 
-void lives_dialog_add_action_widget(LiVESDialog *, LiVESWidget *, int response_id);
+boolean lives_dialog_add_action_widget(LiVESDialog *, LiVESWidget *, int response_id);
 
 LiVESWidget *lives_window_new(LiVESWindowType wintype);
 boolean lives_window_set_title(LiVESWindow *, const char *title);
@@ -301,7 +301,7 @@ LiVESWidget *lives_vscrollbar_new(LiVESAdjustment *);
 LiVESWidget *lives_arrow_new(LiVESArrowType, LiVESShadowType);
 
 LiVESWidget *lives_alignment_new(float xalign, float yalign, float xscale, float yscale);
-void lives_alignment_set(LiVESAlignment *, float xalign, float yalign, float xscale, float yscale);
+boolean lives_alignment_set(LiVESAlignment *, float xalign, float yalign, float xscale, float yscale);
 
 LiVESWidget *lives_expander_new_with_mnemonic(const char *label);
 LiVESWidget *lives_expander_new(const char *label);
@@ -314,7 +314,7 @@ LiVESWidget *lives_combo_new_with_model (LiVESTreeModel *);
 LiVESTreeModel *lives_combo_get_model(LiVESCombo *);
 
 boolean lives_combo_append_text(LiVESCombo *, const char *text);
-void lives_combo_set_entry_text_column(LiVESCombo *, int column);
+boolean lives_combo_set_entry_text_column(LiVESCombo *, int column);
 
 char *lives_combo_get_active_text(LiVESCombo *) WARN_UNUSED;
 boolean lives_combo_set_active_text(LiVESCombo *, const char *text);
@@ -404,7 +404,7 @@ LiVESCellRenderer *lives_cell_renderer_pixbuf_new(void);
 
 
 boolean lives_toggle_button_get_active(LiVESToggleButton *);
-void lives_toggle_button_set_active(LiVESToggleButton *, boolean active);
+boolean lives_toggle_button_set_active(LiVESToggleButton *, boolean active);
 
 boolean lives_has_icon(const char *stock_id, LiVESIconSize size);
 
@@ -491,8 +491,8 @@ LiVESWidget *lives_bin_get_child(LiVESBin *);
 
 boolean lives_widget_is_sensitive(LiVESWidget *);
 boolean lives_widget_is_visible(LiVESWidget *);
-boolean lives_widget_is_realized(LiVESWidget *);
 
+boolean lives_widget_is_realized(LiVESWidget *);
 
 double lives_adjustment_get_upper(LiVESAdjustment *);
 double lives_adjustment_get_lower(LiVESAdjustment *);
@@ -612,18 +612,18 @@ LiVESSList *lives_file_chooser_get_filenames(LiVESFileChooser *);
 boolean lives_widget_grab_focus(LiVESWidget *);
 boolean lives_widget_grab_default(LiVESWidget *);
 
-void lives_widget_set_tooltip_text(LiVESWidget *, const char *text);
+boolean lives_widget_set_tooltip_text(LiVESWidget *, const char *text);
 
 
 LiVESAccelGroup *lives_accel_group_new(void);
-void lives_accel_group_connect(LiVESAccelGroup *, uint32_t key, LiVESXModifierType mod, LiVESAccelFlags flags, LiVESWidgetClosure *closure);
-void lives_accel_group_disconnect(LiVESAccelGroup *, LiVESWidgetClosure *closure);
-void lives_accel_groups_activate(LiVESObject *object, uint32_t key, LiVESXModifierType mod);
+boolean lives_accel_group_connect(LiVESAccelGroup *, uint32_t key, LiVESXModifierType mod, LiVESAccelFlags flags, LiVESWidgetClosure *closure);
+boolean lives_accel_group_disconnect(LiVESAccelGroup *, LiVESWidgetClosure *closure);
+boolean lives_accel_groups_activate(LiVESObject *object, uint32_t key, LiVESXModifierType mod);
 
-void lives_widget_add_accelerator(LiVESWidget *, const char *accel_signal, LiVESAccelGroup *accel_group,
+boolean lives_widget_add_accelerator(LiVESWidget *, const char *accel_signal, LiVESAccelGroup *accel_group,
 				  uint32_t accel_key, LiVESXModifierType accel_mods, LiVESAccelFlags accel_flags);
 
-void lives_widget_get_pointer(LiVESXDevice *, LiVESWidget *, int *x, int *y);
+boolean lives_widget_get_pointer(LiVESXDevice *, LiVESWidget *, int *x, int *y);
 LiVESXWindow *lives_display_get_window_at_pointer (LiVESXDevice *, LiVESXDisplay *, int *win_x, int *win_y);
 void lives_display_get_pointer (LiVESXDevice *, LiVESXDisplay *, LiVESXScreen **, int *x, int *y, LiVESXModifierType *mask);
 void lives_display_warp_pointer (LiVESXDevice *, LiVESXDisplay *, LiVESXScreen *, int x, int y);
@@ -699,8 +699,7 @@ void lives_widget_apply_theme2(LiVESWidget *, LiVESWidgetState state); // menu a
 
 void lives_cursor_unref(LiVESXCursor *cursor);
 
-void lives_widget_context_update(void);
-void lives_widget_context_update_one(void);
+boolean lives_widget_context_update(void);
 
 LiVESWidget *lives_menu_add_separator(LiVESMenu *menu);
 

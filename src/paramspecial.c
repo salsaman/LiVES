@@ -301,7 +301,7 @@ void check_for_special (lives_rfx_t *rfx, lives_param_t *param, LiVESBox *pbox) 
       buttond = lives_standard_file_button_new (FALSE,g_get_current_dir());
       lives_box_pack_start(LIVES_BOX(box),buttond,FALSE,FALSE,widget_opts.packing_width);
       lives_box_reorder_child(LIVES_BOX(box),buttond,epos); // insert after label, before textbox
-      lives_signal_connect(buttond, "clicked", LIVES_GUI_CALLBACK (on_filesel_button_clicked), (gpointer)param->widgets[0]);
+      lives_signal_connect(buttond, LIVES_WIDGET_CLICKED_EVENT, LIVES_GUI_CALLBACK (on_filesel_button_clicked), (gpointer)param->widgets[0]);
 
       if (!lives_widget_is_sensitive(param->widgets[0])) lives_widget_set_sensitive(buttond,FALSE);
 
@@ -345,7 +345,7 @@ void check_for_special (lives_rfx_t *rfx, lives_param_t *param, LiVESBox *pbox) 
       if (!lives_widget_is_sensitive(param->widgets[0])) lives_widget_set_sensitive(checkbutton,FALSE);
       lives_widget_show_all(hbox);
 
-      lives_signal_connect_after (LIVES_GUI_OBJECT (checkbutton), "toggled",
+      lives_signal_connect_after (LIVES_GUI_OBJECT (checkbutton), LIVES_WIDGET_TOGGLED_EVENT,
 			      LIVES_GUI_CALLBACK (passwd_toggle_vis),
 			      (gpointer)param->widgets[0]);
 

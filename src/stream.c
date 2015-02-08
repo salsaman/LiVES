@@ -1133,7 +1133,7 @@ lives_pandh_w* create_pandh_dialog (int type) {
 
   g_free(tmp); g_free(tmp2);
 
-  lives_signal_connect_after (LIVES_GUI_OBJECT (pandhw->rb_anyhost), "toggled",
+  lives_signal_connect_after (LIVES_GUI_OBJECT (pandhw->rb_anyhost), LIVES_WIDGET_TOGGLED_EVENT,
 			  LIVES_GUI_CALLBACK (pandhw_anyhost_toggled),
 			  (gpointer)pandhw);
 

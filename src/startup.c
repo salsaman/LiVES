@@ -305,7 +305,7 @@ boolean do_audio_choice_dialog(short startup_phase) {
     set_pref("audio_player","pulse");
   }
 
-  lives_signal_connect (LIVES_GUI_OBJECT (radiobutton0), "toggled",
+  lives_signal_connect (LIVES_GUI_OBJECT (radiobutton0), LIVES_WIDGET_TOGGLED_EVENT,
                       LIVES_GUI_CALLBACK (on_init_aplayer_toggled),
                       GINT_TO_POINTER(AUD_PLAYER_PULSE));
 
@@ -326,7 +326,7 @@ boolean do_audio_choice_dialog(short startup_phase) {
     set_pref("audio_player","jack");
   }
 
-  lives_signal_connect (LIVES_GUI_OBJECT (radiobutton1), "toggled",
+  lives_signal_connect (LIVES_GUI_OBJECT (radiobutton1), LIVES_WIDGET_TOGGLED_EVENT,
                       LIVES_GUI_CALLBACK (on_init_aplayer_toggled),
                       GINT_TO_POINTER(AUD_PLAYER_JACK));
 
@@ -347,7 +347,7 @@ boolean do_audio_choice_dialog(short startup_phase) {
       set_pref("audio_player","sox");
     }
 
-    lives_signal_connect (LIVES_GUI_OBJECT (radiobutton2), "toggled",
+    lives_signal_connect (LIVES_GUI_OBJECT (radiobutton2), LIVES_WIDGET_TOGGLED_EVENT,
                       LIVES_GUI_CALLBACK (on_init_aplayer_toggled),
                       GINT_TO_POINTER(AUD_PLAYER_SOX));
 
@@ -367,7 +367,7 @@ boolean do_audio_choice_dialog(short startup_phase) {
       set_pref("audio_player","mplayer");
     }
 						    
-    lives_signal_connect (LIVES_GUI_OBJECT (radiobutton3), "toggled",
+    lives_signal_connect (LIVES_GUI_OBJECT (radiobutton3), LIVES_WIDGET_TOGGLED_EVENT,
 		      LIVES_GUI_CALLBACK (on_init_aplayer_toggled),
                       GINT_TO_POINTER(AUD_PLAYER_MPLAYER));
 
@@ -387,7 +387,7 @@ boolean do_audio_choice_dialog(short startup_phase) {
       set_pref("audio_player","mplayer2");
     }
 						    
-    lives_signal_connect (LIVES_GUI_OBJECT (radiobutton4), "toggled",
+    lives_signal_connect (LIVES_GUI_OBJECT (radiobutton4), LIVES_WIDGET_TOGGLED_EVENT,
 		      LIVES_GUI_CALLBACK (on_init_aplayer_toggled),
                       GINT_TO_POINTER(AUD_PLAYER_MPLAYER2));
 
@@ -398,7 +398,7 @@ boolean do_audio_choice_dialog(short startup_phase) {
   lives_widget_show (cancelbutton);
   lives_dialog_add_action_widget (LIVES_DIALOG (dialog), cancelbutton, LIVES_RESPONSE_CANCEL);
 
-  lives_widget_add_accelerator (cancelbutton, "activate", accel_group,
+  lives_widget_add_accelerator (cancelbutton, LIVES_WIDGET_CLICKED_EVENT, accel_group,
                               LIVES_KEY_Escape, (LiVESXModifierType)0, (LiVESAccelFlags)0);
 
   okbutton = lives_button_new_from_stock (LIVES_STOCK_GO_FORWARD);
@@ -572,7 +572,7 @@ boolean do_startup_tests(boolean tshoot) {
   lives_widget_show (cancelbutton);
   lives_dialog_add_action_widget (LIVES_DIALOG (dialog), cancelbutton, LIVES_RESPONSE_CANCEL);
 
-  lives_widget_add_accelerator (cancelbutton, "activate", accel_group,
+  lives_widget_add_accelerator (cancelbutton, LIVES_WIDGET_CLICKED_EVENT, accel_group,
                               LIVES_KEY_Escape, (LiVESXModifierType)0, (LiVESAccelFlags)0);
 
   if (!tshoot) {

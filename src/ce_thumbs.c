@@ -226,7 +226,7 @@ void start_ce_thumb_mode(void) {
     lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(key_checks[i]),mainw->rte&(GU641<<i));
     g_object_set_data(G_OBJECT(key_checks[i]),"active",GINT_TO_POINTER(lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(key_checks[i]))));
 
-    ch_fns[i]=lives_signal_connect_after (LIVES_GUI_OBJECT (key_checks[i]), "toggled",
+    ch_fns[i]=lives_signal_connect_after (LIVES_GUI_OBJECT (key_checks[i]), LIVES_WIDGET_TOGGLED_EVENT,
 				      LIVES_GUI_CALLBACK (rte_on_off_callback_hook),GINT_TO_POINTER (i+1));
 
 
@@ -245,7 +245,7 @@ void start_ce_thumb_mode(void) {
  
     lives_entry_set_editable (LIVES_ENTRY (combo_entries[i]), FALSE);
       
-    combo_fns[i]=lives_signal_connect(LIVES_GUI_OBJECT (fxcombos[i]), "changed",
+    combo_fns[i]=lives_signal_connect(LIVES_GUI_OBJECT (fxcombos[i]), LIVES_WIDGET_CHANGED_EVENT,
 				  LIVES_GUI_CALLBACK (ce_thumbs_fx_changed),GINT_TO_POINTER(i));
 
   }
@@ -317,7 +317,7 @@ void start_ce_thumb_mode(void) {
     rb_clip_areas_group = lives_radio_button_get_group (LIVES_RADIO_BUTTON (rb_clip_areas[i]));
     g_free(tmp);
 
-    rb_clip_fns[i]=lives_signal_connect (LIVES_GUI_OBJECT (rb_clip_areas[i]), "toggled", LIVES_GUI_CALLBACK (clip_area_toggled), LIVES_INT_TO_POINTER(i));
+    rb_clip_fns[i]=lives_signal_connect (LIVES_GUI_OBJECT (rb_clip_areas[i]), LIVES_WIDGET_TOGGLED_EVENT, LIVES_GUI_CALLBACK (clip_area_toggled), LIVES_INT_TO_POINTER(i));
 
   }
 
@@ -515,7 +515,7 @@ void ce_thumbs_add_param_box(int key, boolean remove) {
   pin_check=lives_standard_check_button_new((tmp=g_strdup(_("_Pin"))),TRUE,LIVES_BOX(hbox),(tmp2=g_strdup(_("Pin the parameter box to the window"))));
   g_free(tmp); g_free(tmp2);
 
-  lives_signal_connect_after (LIVES_GUI_OBJECT (pin_check), "toggled",
+  lives_signal_connect_after (LIVES_GUI_OBJECT (pin_check), LIVES_WIDGET_TOGGLED_EVENT,
 			  LIVES_GUI_CALLBACK (pin_toggled),LIVES_INT_TO_POINTER (key));
 
 

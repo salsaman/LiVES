@@ -1,8 +1,10 @@
-// widget-helper.h
+// widget-helper-gtk.h
 // LiVES
 // (c) G. Finch 2012 - 2015 <salsaman@gmail.com>
 // released under the GNU GPL 3 or later
 // see file ../COPYING or www.gnu.org for licensing details
+
+// widget implementation for GTK+
 
 #ifndef HAS_LIVES_WIDGET_HELPER_GTK_H
 #define HAS_LIVES_WIDGET_HELPER_GTK_H
@@ -143,6 +145,8 @@ typedef void (*LiVESGuiCallback) (void);
 typedef void (*LiVESWidgetCallback) (GtkWidget *widget, gpointer data);
 typedef gboolean (*LiVESWidgetSourceFunc) (gpointer data);
 
+
+
 #define LIVES_GUI_CALLBACK(f) ((LiVESGuiCallback) (f))
 
 
@@ -160,9 +164,13 @@ typedef GtkOrientation LiVESOrientation;
 typedef GdkEvent                          LiVESXEvent;
 typedef GdkEventButton                    LiVESXEventButton;
 typedef GdkEventMotion                    LiVESXEventMotion;
+typedef GdkEventScroll                    LiVESXEventScroll;
 typedef GdkDisplay                        LiVESXDisplay;
 typedef GdkScreen                         LiVESXScreen;
 typedef GdkDevice                         LiVESXDevice;
+
+#define LIVES_SCROLL_UP   GDK_SCROLL_UP
+#define LIVES_SCROLL_DOWN GDK_SCROLL_DOWN
 
 #if GTK_CHECK_VERSION(3,0,0)
 #undef LIVES_HAS_DEVICE_MANAGER
@@ -171,12 +179,19 @@ typedef GdkDeviceManager                  LiVESXDeviceManager;
 #endif
 
 #if GTK_CHECK_VERSION(3,0,0)
-#define LIVES_WIDGET_EVENT_EXPOSE_EVENT "draw"
+#define LIVES_WIDGET_EXPOSE_EVENT "draw"
 #define LIVES_GUI_OBJECT(a)                     a
 #else
 #define LIVES_GUI_OBJECT(a)                     GTK_OBJECT(a)
-#define LIVES_WIDGET_EVENT_EXPOSE_EVENT "expose_event"
+#define LIVES_WIDGET_EXPOSE_EVENT "expose_event"
 #endif
+
+#define LIVES_WIDGET_SCROLL_EVENT "scroll_event"
+#define LIVES_WIDGET_CLICKED_EVENT "clicked"
+#define LIVES_WIDGET_TOGGLED_EVENT "toggled"
+#define LIVES_WIDGET_CHANGED_EVENT "changed"
+#define LIVES_WIDGET_VALUE_CHANGED_EVENT "value-changed"
+
 
 typedef GtkWidget                         LiVESWidget;
 typedef GtkWindow                         LiVESWindow;
@@ -366,9 +381,9 @@ typedef GtkArrowType LiVESArrowType;
 
 typedef GtkWrapMode LiVESWrapMode;
 #define LIVES_WRAP_NONE GTK_WRAP_NONE
-#define LIVES_WRAP_CHAR GTK_WRAP_CHAR
+//#define LIVES_WRAP_CHAR GTK_WRAP_CHAR
 #define LIVES_WRAP_WORD GTK_WRAP_WORD
-#define LIVES_WRAP_WORD_CHAR GTK_WRAP_WORD_CHAR
+//#define LIVES_WRAP_WORD_CHAR GTK_WRAP_WORD_CHAR
 
 typedef GtkReliefStyle LiVESReliefStyle;
 #define LIVES_RELIEF_NORMAL GTK_RELIEF_NORMAL
@@ -602,17 +617,17 @@ typedef GdkInterpType                     LiVESInterpType;
 
 
 #if GTK_CHECK_VERSION(3,10,0)
+#define LIVES_STOCK_YES "gtk-yes"             // non-standard image ?
+#define LIVES_STOCK_APPLY "gtk-apply"      // non-standard image ?
+#define LIVES_STOCK_CANCEL "gtk-cancel"    // non-standard image ?
+#define LIVES_STOCK_OK "gtk-ok"    // non-standard image ?
 #define LIVES_STOCK_UNDO "edit-undo"
 #define LIVES_STOCK_REDO "edit-redo"
 #define LIVES_STOCK_ADD "list-add"
-#define LIVES_STOCK_APPLY "gtk-apply"      // non-standard image ?
 #define LIVES_STOCK_REMOVE "list-remove"
 #define LIVES_STOCK_NO "media-record"
-#define LIVES_STOCK_YES "gtk-yes"             // non-standard image ?
 #define LIVES_STOCK_QUIT "application-exit"
 #define LIVES_STOCK_OPEN "document-open"
-#define LIVES_STOCK_CANCEL "gtk-cancel"    // non-standard image ?
-#define LIVES_STOCK_OK "gtk-ok"    // non-standard image ?
 #define LIVES_STOCK_CLOSE "window-close"
 #define LIVES_STOCK_CLEAR "edit-clear"
 #define LIVES_STOCK_DELETE "edit-delete"
@@ -703,7 +718,6 @@ typedef GdkModifierType LiVESXModifierType;
 #define LIVES_KEY_Up GDK_KEY_Up
 #define LIVES_KEY_Down GDK_KEY_Down
 
-#define LIVES_KEY_Space GDK_KEY_space
 #define LIVES_KEY_BackSpace GDK_KEY_BackSpace
 #define LIVES_KEY_Return GDK_KEY_Return
 #define LIVES_KEY_Tab GDK_KEY_Tab
@@ -777,7 +791,6 @@ typedef GdkModifierType LiVESXModifierType;
 #define LIVES_KEY_Up GDK_Up
 #define LIVES_KEY_Down GDK_Down
 
-#define LIVES_KEY_Space GDK_space
 #define LIVES_KEY_BackSpace GDK_BackSpace
 #define LIVES_KEY_Return GDK_Return
 #define LIVES_KEY_Tab GDK_Tab

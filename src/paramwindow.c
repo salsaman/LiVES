@@ -454,7 +454,7 @@ void transition_add_in_out(LiVESBox *vbox, lives_rfx_t *rfx, boolean add_audio_c
 
   radiobutton_group = lives_radio_button_get_group (LIVES_RADIO_BUTTON (radiobutton_in));
 
-  lives_signal_connect_after (LIVES_GUI_OBJECT (radiobutton_in), "toggled",
+  lives_signal_connect_after (LIVES_GUI_OBJECT (radiobutton_in), LIVES_WIDGET_TOGGLED_EVENT,
 			  LIVES_GUI_CALLBACK (transition_in_pressed),
 			  (gpointer)rfx);
 
@@ -481,7 +481,7 @@ void transition_add_in_out(LiVESBox *vbox, lives_rfx_t *rfx, boolean add_audio_c
       lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(checkbutton),FALSE);
     else lives_toggle_button_set_active (LIVES_TOGGLE_BUTTON (checkbutton), TRUE);
 
-    lives_signal_connect_after (LIVES_GUI_OBJECT (checkbutton), "toggled",
+    lives_signal_connect_after (LIVES_GUI_OBJECT (checkbutton), LIVES_WIDGET_TOGGLED_EVENT,
 			    LIVES_GUI_CALLBACK (after_transaudio_toggled),
 			    (gpointer)rfx);
 
@@ -498,7 +498,7 @@ void transition_add_in_out(LiVESBox *vbox, lives_rfx_t *rfx, boolean add_audio_c
 
   widget_opts.pack_end=FALSE;
   
-  lives_signal_connect_after (LIVES_GUI_OBJECT (radiobutton_out), "toggled",
+  lives_signal_connect_after (LIVES_GUI_OBJECT (radiobutton_out), LIVES_WIDGET_TOGGLED_EVENT,
 			  LIVES_GUI_CALLBACK (transition_out_pressed),
 			  (gpointer)rfx);
   
@@ -702,7 +702,7 @@ static void add_gen_to(LiVESBox *vbox, lives_rfx_t *rfx) {
 
   lives_toggle_button_set_active (LIVES_TOGGLE_BUTTON (radiobutton), !mainw->gen_to_clipboard);
 
-  lives_signal_connect_after (LIVES_GUI_OBJECT (radiobutton), "toggled",
+  lives_signal_connect_after (LIVES_GUI_OBJECT (radiobutton), LIVES_WIDGET_TOGGLED_EVENT,
 			  LIVES_GUI_CALLBACK (gen_cb_toggled),
 			  (gpointer)rfx);
 
@@ -913,7 +913,7 @@ void on_fx_pre_activate (lives_rfx_t *rfx, int didx, LiVESWidget *pbox) {
     if (!no_process||is_defaults||rfx->status==RFX_STATUS_SCRAP) {
       lives_button_box_set_layout (LIVES_BUTTON_BOX (dialog_action_area), LIVES_BUTTONBOX_END);
       lives_dialog_add_action_widget (LIVES_DIALOG (fx_dialog[didx]), cancelbutton, LIVES_RESPONSE_CANCEL);
-      lives_widget_add_accelerator (cancelbutton, "activate", fxw_accel_group,
+      lives_widget_add_accelerator (cancelbutton, LIVES_WIDGET_CLICKED_EVENT, fxw_accel_group,
 				    LIVES_KEY_Escape, (LiVESXModifierType)0, (LiVESAccelFlags)0);
 
       if (is_defaults) {
@@ -940,7 +940,7 @@ void on_fx_pre_activate (lives_rfx_t *rfx, int didx, LiVESWidget *pbox) {
 	lives_dialog_add_action_widget (LIVES_DIALOG (fx_dialog[didx]), okbutton, LIVES_RESPONSE_OK);
       }
       lives_dialog_add_action_widget (LIVES_DIALOG (fx_dialog[didx]), cancelbutton, LIVES_RESPONSE_CANCEL);
-      lives_widget_add_accelerator (cancelbutton, "activate", fxw_accel_group,
+      lives_widget_add_accelerator (cancelbutton, LIVES_WIDGET_CLICKED_EVENT, fxw_accel_group,
 				    LIVES_KEY_Escape, (LiVESXModifierType)0, (LiVESAccelFlags)0);
 
     }
@@ -957,10 +957,10 @@ void on_fx_pre_activate (lives_rfx_t *rfx, int didx, LiVESWidget *pbox) {
     if (no_process&&!is_defaults) {
       if (!is_realtime) {
 	if (lives_widget_get_parent(okbutton)!=NULL)
-	  lives_signal_connect (LIVES_GUI_OBJECT (okbutton), "clicked",
+	  lives_signal_connect (LIVES_GUI_OBJECT (okbutton), LIVES_WIDGET_CLICKED_EVENT,
 			    LIVES_GUI_CALLBACK (on_paramwindow_cancel_clicked),
 			    rfx);
-	lives_signal_connect (LIVES_GUI_OBJECT (cancelbutton), "clicked",
+	lives_signal_connect (LIVES_GUI_OBJECT (cancelbutton), LIVES_WIDGET_CLICKED_EVENT,
 			  LIVES_GUI_CALLBACK (on_paramwindow_cancel_clicked),
 			  rfx);
 	lives_signal_connect (LIVES_GUI_OBJECT (fx_dialog[didx]), "delete_event",
@@ -968,19 +968,19 @@ void on_fx_pre_activate (lives_rfx_t *rfx, int didx, LiVESWidget *pbox) {
 			  rfx);
       }
       else {
-	lives_signal_connect (LIVES_GUI_OBJECT (cancelbutton), "clicked",
+	lives_signal_connect (LIVES_GUI_OBJECT (cancelbutton), LIVES_WIDGET_CLICKED_EVENT,
 			  LIVES_GUI_CALLBACK (on_paramwindow_cancel_clicked2),
 			  rfx);
 	if (rfx->status==RFX_STATUS_SCRAP)
-	  lives_signal_connect (LIVES_GUI_OBJECT (okbutton), "clicked",
+	  lives_signal_connect (LIVES_GUI_OBJECT (okbutton), LIVES_WIDGET_CLICKED_EVENT,
 			    LIVES_GUI_CALLBACK (on_paramwindow_cancel_clicked2),
 			    rfx);
 	else {
-	  lives_signal_connect (LIVES_GUI_OBJECT (okbutton), "clicked",
+	  lives_signal_connect (LIVES_GUI_OBJECT (okbutton), LIVES_WIDGET_CLICKED_EVENT,
 			    LIVES_GUI_CALLBACK (rte_set_key_defs),
 			    rfx);
 	  if (resetbutton!=NULL) {
-	    lives_signal_connect_after (LIVES_GUI_OBJECT (resetbutton), "clicked",
+	    lives_signal_connect_after (LIVES_GUI_OBJECT (resetbutton), LIVES_WIDGET_CLICKED_EVENT,
 				    LIVES_GUI_CALLBACK (rte_reset_defs_clicked),
 				    rfx);
 	  }
@@ -992,10 +992,10 @@ void on_fx_pre_activate (lives_rfx_t *rfx, int didx, LiVESWidget *pbox) {
     }
     else {
       if (!is_defaults) {
-	lives_signal_connect (LIVES_GUI_OBJECT (okbutton), "clicked",
+	lives_signal_connect (LIVES_GUI_OBJECT (okbutton), LIVES_WIDGET_CLICKED_EVENT,
 			  LIVES_GUI_CALLBACK (on_paramwindow_ok_clicked),
 			  (gpointer)rfx);
-	lives_signal_connect (LIVES_GUI_OBJECT (cancelbutton), "clicked",
+	lives_signal_connect (LIVES_GUI_OBJECT (cancelbutton), LIVES_WIDGET_CLICKED_EVENT,
 			  LIVES_GUI_CALLBACK (on_paramwindow_cancel_clicked),
 			  (gpointer)rfx);
 	lives_signal_connect (LIVES_GUI_OBJECT (fx_dialog[didx]), "delete_event",
@@ -1004,17 +1004,17 @@ void on_fx_pre_activate (lives_rfx_t *rfx, int didx, LiVESWidget *pbox) {
 
       }
       else {
-	lives_signal_connect_after (LIVES_GUI_OBJECT (okbutton), "clicked",
+	lives_signal_connect_after (LIVES_GUI_OBJECT (okbutton), LIVES_WIDGET_CLICKED_EVENT,
 				LIVES_GUI_CALLBACK (rte_set_defs_ok),
 				rfx);
 	if (resetbutton!=NULL) {
-	  lives_signal_connect_after (LIVES_GUI_OBJECT (resetbutton), "clicked",
+	  lives_signal_connect_after (LIVES_GUI_OBJECT (resetbutton), LIVES_WIDGET_CLICKED_EVENT,
 				  LIVES_GUI_CALLBACK (rte_reset_defs_clicked),
 				  rfx);
 	  g_object_set_data(G_OBJECT(resetbutton),"cancelbutton",(gpointer)cancelbutton);
 
 	}
-	lives_signal_connect (LIVES_GUI_OBJECT (cancelbutton), "clicked",
+	lives_signal_connect (LIVES_GUI_OBJECT (cancelbutton), LIVES_WIDGET_CLICKED_EVENT,
 			  LIVES_GUI_CALLBACK (rte_set_defs_cancel),
 			  rfx);
 	lives_signal_connect (LIVES_GUI_OBJECT (fx_dialog[didx]), "delete_event",
@@ -1452,7 +1452,7 @@ boolean add_param_to_box (LiVESBox *box, lives_rfx_t *rfx, int pnum, boolean add
 
       checkbutton=lives_standard_check_button_new(name,use_mnemonic,(LiVESBox *)hbox,param->desc);
       lives_toggle_button_set_active (LIVES_TOGGLE_BUTTON (checkbutton), get_bool_param(param->value));
-      lives_signal_connect_after (LIVES_GUI_OBJECT (checkbutton), "toggled",
+      lives_signal_connect_after (LIVES_GUI_OBJECT (checkbutton), LIVES_WIDGET_TOGGLED_EVENT,
 			      LIVES_GUI_CALLBACK (after_boolean_param_toggled),
 			      (gpointer)rfx);
       
@@ -1500,7 +1500,7 @@ boolean add_param_to_box (LiVESBox *box, lives_rfx_t *rfx, int pnum, boolean add
       }
       else LIVES_WARN("Button group was NULL");
 
-      lives_signal_connect_after (LIVES_GUI_OBJECT (radiobutton), "toggled",
+      lives_signal_connect_after (LIVES_GUI_OBJECT (radiobutton), LIVES_WIDGET_TOGGLED_EVENT,
 			      LIVES_GUI_CALLBACK (after_boolean_param_toggled),
 			      (gpointer)rfx);
 
@@ -1714,7 +1714,7 @@ boolean add_param_to_box (LiVESBox *box, lives_rfx_t *rfx, int pnum, boolean add
       if (param->desc!=NULL) lives_widget_set_tooltip_text( textview, param->desc);
       textbuffer=lives_text_view_get_buffer (LIVES_TEXT_VIEW (textview));
 
-      lives_signal_connect_after (G_OBJECT (textbuffer), "changed", LIVES_GUI_CALLBACK (after_param_text_buffer_changed), 
+      lives_signal_connect_after (G_OBJECT (textbuffer), LIVES_WIDGET_CHANGED_EVENT, LIVES_GUI_CALLBACK (after_param_text_buffer_changed), 
 			      (gpointer) rfx);
 
       lives_text_view_set_editable (LIVES_TEXT_VIEW (textview), TRUE);
@@ -1748,7 +1748,7 @@ boolean add_param_to_box (LiVESBox *box, lives_rfx_t *rfx, int pnum, boolean add
       param->widgets[0]=entry=lives_standard_entry_new(NULL,FALSE,txt,(int)param->max,(int)param->max,LIVES_BOX(hbox),param->desc);
 
       if (rfx->status==RFX_STATUS_WEED&&param->special_type!=LIVES_PARAM_SPECIAL_TYPE_FILEREAD) {
-	lives_signal_connect_after (G_OBJECT (entry), "changed", LIVES_GUI_CALLBACK (after_param_text_changed), 
+	lives_signal_connect_after (G_OBJECT (entry), LIVES_WIDGET_CHANGED_EVENT, LIVES_GUI_CALLBACK (after_param_text_changed), 
 				(gpointer) rfx);
       }
 
@@ -1787,7 +1787,7 @@ boolean add_param_to_box (LiVESBox *box, lives_rfx_t *rfx, int pnum, boolean add
 				     (gchar *)g_list_nth_data (param->list,get_int_param (param->value)));
     }
 
-    lives_signal_connect_after (G_OBJECT (combo), "changed", 
+    lives_signal_connect_after (G_OBJECT (combo), LIVES_WIDGET_CHANGED_EVENT, 
 			    LIVES_GUI_CALLBACK (after_string_list_changed), (gpointer) rfx);
 
     // store parameter so we know whose trigger to use

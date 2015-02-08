@@ -269,11 +269,11 @@ void create_LiVES (void) {
 
 
 #if GTK_CHECK_VERSION(3,0,0)
-  lives_signal_connect (LIVES_GUI_OBJECT (mainw->start_image), LIVES_WIDGET_EVENT_EXPOSE_EVENT,
+  lives_signal_connect (LIVES_GUI_OBJECT (mainw->start_image), LIVES_WIDGET_EXPOSE_EVENT,
 		    LIVES_GUI_CALLBACK (expose_sim),
 		    NULL);
 
-  lives_signal_connect (LIVES_GUI_OBJECT (mainw->end_image), LIVES_WIDGET_EVENT_EXPOSE_EVENT,
+  lives_signal_connect (LIVES_GUI_OBJECT (mainw->end_image), LIVES_WIDGET_EXPOSE_EVENT,
 		    LIVES_GUI_CALLBACK (expose_eim),
 		    NULL);
 #else
@@ -366,7 +366,7 @@ void create_LiVES (void) {
 
   mainw->open = lives_menu_item_new_with_mnemonic (_("_Open File/Directory"));
   lives_container_add (LIVES_CONTAINER (menuitem_menu), mainw->open);
-  lives_widget_add_accelerator (mainw->open, "activate", mainw->accel_group,
+  lives_widget_add_accelerator (mainw->open, LIVES_WIDGET_CLICKED_EVENT, mainw->accel_group,
                               LIVES_KEY_o, LIVES_CONTROL_MASK,
                               LIVES_ACCEL_VISIBLE);
 
@@ -476,7 +476,7 @@ void create_LiVES (void) {
   menuitem = lives_menu_item_new_with_mnemonic (_("Add _Unicap Device"));
   lives_container_add (LIVES_CONTAINER (submenu), menuitem);
   lives_widget_show (menuitem);
-  lives_signal_connect (LIVES_GUI_OBJECT (menuitem), "activate",
+  lives_signal_connect (LIVES_GUI_OBJECT (menuitem), LIVES_WIDGET_CLICKED_EVENT,
 		    LIVES_GUI_CALLBACK (on_open_vdev_activate),
 		    NULL);
 #endif
@@ -487,7 +487,7 @@ void create_LiVES (void) {
       lives_container_add (LIVES_CONTAINER (submenu), menuitem);
       lives_widget_show (menuitem);
 
-      lives_signal_connect (LIVES_GUI_OBJECT (menuitem), "activate",
+      lives_signal_connect (LIVES_GUI_OBJECT (menuitem), LIVES_WIDGET_CLICKED_EVENT,
 			LIVES_GUI_CALLBACK (on_live_fw_activate),
 			NULL);
     }
@@ -496,7 +496,7 @@ void create_LiVES (void) {
     lives_container_add (LIVES_CONTAINER (submenu), menuitem);
     lives_widget_show (menuitem);
 
-    lives_signal_connect (LIVES_GUI_OBJECT (menuitem), "activate",
+    lives_signal_connect (LIVES_GUI_OBJECT (menuitem), LIVES_WIDGET_CLICKED_EVENT,
 		      LIVES_GUI_CALLBACK (on_live_tvcard_activate),
 		      NULL);
 
@@ -582,7 +582,7 @@ void create_LiVES (void) {
   lives_widget_show (mainw->save_selection);
 
   mainw->close = lives_menu_item_new_with_mnemonic (_("_Close This Clip"));
-  lives_widget_add_accelerator (mainw->close, "activate", mainw->accel_group,
+  lives_widget_add_accelerator (mainw->close, LIVES_WIDGET_CLICKED_EVENT, mainw->accel_group,
                               LIVES_KEY_w, LIVES_CONTROL_MASK,
                               LIVES_ACCEL_VISIBLE);
   lives_widget_show (mainw->close);
@@ -597,7 +597,7 @@ void create_LiVES (void) {
   lives_container_add (LIVES_CONTAINER (menuitem_menu), mainw->backup);
   lives_widget_set_sensitive (mainw->backup, FALSE);
 
-  lives_widget_add_accelerator (mainw->backup, "activate", mainw->accel_group,
+  lives_widget_add_accelerator (mainw->backup, LIVES_WIDGET_CLICKED_EVENT, mainw->accel_group,
                               LIVES_KEY_b, LIVES_CONTROL_MASK,
                               LIVES_ACCEL_VISIBLE);
 
@@ -605,7 +605,7 @@ void create_LiVES (void) {
   lives_widget_show (mainw->restore);
   lives_container_add (LIVES_CONTAINER (menuitem_menu), mainw->restore);
 
-  lives_widget_add_accelerator (mainw->restore, "activate", mainw->accel_group,
+  lives_widget_add_accelerator (mainw->restore, LIVES_WIDGET_CLICKED_EVENT, mainw->accel_group,
                               LIVES_KEY_r, LIVES_CONTROL_MASK,
                               LIVES_ACCEL_VISIBLE);
 
@@ -652,7 +652,7 @@ void create_LiVES (void) {
   lives_widget_set_sensitive (mainw->undo, FALSE);
 
 
-  lives_widget_add_accelerator (mainw->undo, "activate", mainw->accel_group,
+  lives_widget_add_accelerator (mainw->undo, LIVES_WIDGET_CLICKED_EVENT, mainw->accel_group,
                               LIVES_KEY_u, LIVES_CONTROL_MASK,
                               LIVES_ACCEL_VISIBLE);
 
@@ -668,7 +668,7 @@ void create_LiVES (void) {
   lives_container_add (LIVES_CONTAINER (menuitem_menu), mainw->redo);
   lives_widget_set_sensitive (mainw->redo, FALSE);
 
-  lives_widget_add_accelerator (mainw->redo, "activate", mainw->accel_group,
+  lives_widget_add_accelerator (mainw->redo, LIVES_WIDGET_CLICKED_EVENT, mainw->accel_group,
                               LIVES_KEY_z, LIVES_CONTROL_MASK,
                               LIVES_ACCEL_VISIBLE);
 
@@ -689,7 +689,7 @@ void create_LiVES (void) {
   separatormenuitem=lives_menu_add_separator(LIVES_MENU(menuitem_menu));
   lives_widget_show (separatormenuitem);
 
-  lives_widget_add_accelerator (mainw->mt_menu, "activate", mainw->accel_group,
+  lives_widget_add_accelerator (mainw->mt_menu, LIVES_WIDGET_CLICKED_EVENT, mainw->accel_group,
                               LIVES_KEY_m, LIVES_CONTROL_MASK,
                               LIVES_ACCEL_VISIBLE);
 
@@ -698,7 +698,7 @@ void create_LiVES (void) {
   lives_container_add (LIVES_CONTAINER (menuitem_menu), mainw->copy);
   lives_widget_set_sensitive (mainw->copy, FALSE);
 
-  lives_widget_add_accelerator (mainw->copy, "activate", mainw->accel_group,
+  lives_widget_add_accelerator (mainw->copy, LIVES_WIDGET_CLICKED_EVENT, mainw->accel_group,
                               LIVES_KEY_c, LIVES_CONTROL_MASK,
                               LIVES_ACCEL_VISIBLE);
 
@@ -707,7 +707,7 @@ void create_LiVES (void) {
   lives_container_add (LIVES_CONTAINER (menuitem_menu), mainw->cut);
   lives_widget_set_sensitive (mainw->cut, FALSE);
 
-  lives_widget_add_accelerator (mainw->cut, "activate", mainw->accel_group,
+  lives_widget_add_accelerator (mainw->cut, LIVES_WIDGET_CLICKED_EVENT, mainw->accel_group,
                               LIVES_KEY_t, LIVES_CONTROL_MASK,
                               LIVES_ACCEL_VISIBLE);
 
@@ -716,7 +716,7 @@ void create_LiVES (void) {
   lives_container_add (LIVES_CONTAINER (menuitem_menu), mainw->insert);
   lives_widget_set_sensitive (mainw->insert, FALSE);
 
-  lives_widget_add_accelerator (mainw->insert, "activate", mainw->accel_group,
+  lives_widget_add_accelerator (mainw->insert, LIVES_WIDGET_CLICKED_EVENT, mainw->accel_group,
                               LIVES_KEY_i, LIVES_CONTROL_MASK,
                               LIVES_ACCEL_VISIBLE);
 
@@ -732,7 +732,7 @@ void create_LiVES (void) {
   lives_container_add (LIVES_CONTAINER (menuitem_menu), mainw->paste_as_new);
   lives_widget_set_sensitive (mainw->paste_as_new, FALSE);
 
-  lives_widget_add_accelerator (mainw->paste_as_new, "activate", mainw->accel_group,
+  lives_widget_add_accelerator (mainw->paste_as_new, LIVES_WIDGET_CLICKED_EVENT, mainw->accel_group,
                               LIVES_KEY_n, LIVES_CONTROL_MASK,
                               LIVES_ACCEL_VISIBLE);
 
@@ -754,7 +754,7 @@ void create_LiVES (void) {
   lives_image_menu_item_set_image (LIVES_IMAGE_MENU_ITEM (mainw->xdelete), image);
 #endif
 
-  lives_widget_add_accelerator (mainw->xdelete, "activate", mainw->accel_group,
+  lives_widget_add_accelerator (mainw->xdelete, LIVES_WIDGET_CLICKED_EVENT, mainw->accel_group,
                               LIVES_KEY_d, LIVES_CONTROL_MASK,
                               LIVES_ACCEL_VISIBLE);
 
@@ -787,7 +787,7 @@ void create_LiVES (void) {
   lives_widget_show (mainw->select_all);
   lives_container_add (LIVES_CONTAINER (select_submenu_menu), mainw->select_all);
 
-  lives_widget_add_accelerator (mainw->select_all, "activate", mainw->accel_group,
+  lives_widget_add_accelerator (mainw->select_all, LIVES_WIDGET_CLICKED_EVENT, mainw->accel_group,
                               LIVES_KEY_a, LIVES_CONTROL_MASK,
                               LIVES_ACCEL_VISIBLE);
 
@@ -795,14 +795,14 @@ void create_LiVES (void) {
   lives_widget_show (mainw->select_start_only);
   lives_container_add (LIVES_CONTAINER (select_submenu_menu), mainw->select_start_only);
 
-  lives_widget_add_accelerator (mainw->select_start_only, "activate", mainw->accel_group,
+  lives_widget_add_accelerator (mainw->select_start_only, LIVES_WIDGET_CLICKED_EVENT, mainw->accel_group,
 			      LIVES_KEY_Home, LIVES_CONTROL_MASK,
 			      LIVES_ACCEL_VISIBLE);
 
   mainw->select_end_only = lives_image_menu_item_new_with_mnemonic (_("_End Frame Only"));
   lives_widget_show (mainw->select_end_only);
   lives_container_add (LIVES_CONTAINER (select_submenu_menu), mainw->select_end_only);
-  lives_widget_add_accelerator (mainw->select_end_only, "activate", mainw->accel_group,
+  lives_widget_add_accelerator (mainw->select_end_only, LIVES_WIDGET_CLICKED_EVENT, mainw->accel_group,
 			      LIVES_KEY_End, LIVES_CONTROL_MASK,
 			      LIVES_ACCEL_VISIBLE);
 
@@ -830,7 +830,7 @@ void create_LiVES (void) {
   lives_widget_show (mainw->select_invert);
   lives_container_add (LIVES_CONTAINER (select_submenu_menu), mainw->select_invert);
 
-  lives_widget_add_accelerator (mainw->select_invert, "activate", mainw->accel_group,
+  lives_widget_add_accelerator (mainw->select_invert, LIVES_WIDGET_CLICKED_EVENT, mainw->accel_group,
                               LIVES_KEY_Slash, LIVES_CONTROL_MASK,
                               LIVES_ACCEL_VISIBLE);
 
@@ -852,7 +852,7 @@ void create_LiVES (void) {
   }
 
   mainw->playall = lives_image_menu_item_new_with_mnemonic (_("_Play All"));
-  lives_widget_add_accelerator (mainw->playall, "activate", mainw->accel_group,
+  lives_widget_add_accelerator (mainw->playall, LIVES_WIDGET_CLICKED_EVENT, mainw->accel_group,
                               LIVES_KEY_p, (LiVESXModifierType)0,
                               LIVES_ACCEL_VISIBLE);
   lives_widget_show (mainw->playall);
@@ -867,7 +867,7 @@ void create_LiVES (void) {
 #endif
 
   mainw->playsel = lives_image_menu_item_new_with_mnemonic (_("Pla_y Selection"));
-  lives_widget_add_accelerator (mainw->playsel, "activate", mainw->accel_group,
+  lives_widget_add_accelerator (mainw->playsel, LIVES_WIDGET_CLICKED_EVENT, mainw->accel_group,
                               LIVES_KEY_y, (LiVESXModifierType)0,
                               LIVES_ACCEL_VISIBLE);
   lives_widget_show (mainw->playsel);
@@ -879,7 +879,7 @@ void create_LiVES (void) {
   lives_container_add (LIVES_CONTAINER (menuitem_menu), mainw->playclip);
   lives_widget_set_sensitive (mainw->playclip, FALSE);
 
-  lives_widget_add_accelerator (mainw->playclip, "activate", mainw->accel_group,
+  lives_widget_add_accelerator (mainw->playclip, LIVES_WIDGET_CLICKED_EVENT, mainw->accel_group,
                               LIVES_KEY_c, (LiVESXModifierType)0,
                               LIVES_ACCEL_VISIBLE);
 
@@ -900,7 +900,7 @@ void create_LiVES (void) {
   lives_widget_show (mainw->stop);
   lives_container_add (LIVES_CONTAINER (menuitem_menu), mainw->stop);
   lives_widget_set_sensitive (mainw->stop, FALSE);
-  lives_widget_add_accelerator (mainw->stop, "activate", mainw->accel_group,
+  lives_widget_add_accelerator (mainw->stop, LIVES_WIDGET_CLICKED_EVENT, mainw->accel_group,
                               LIVES_KEY_q, (LiVESXModifierType)0,
                               LIVES_ACCEL_VISIBLE);
 
@@ -923,7 +923,7 @@ void create_LiVES (void) {
   lives_image_menu_item_set_image (LIVES_IMAGE_MENU_ITEM (mainw->rewind), image);
 #endif
 
-  lives_widget_add_accelerator (mainw->rewind, "activate", mainw->accel_group,
+  lives_widget_add_accelerator (mainw->rewind, LIVES_WIDGET_CLICKED_EVENT, mainw->accel_group,
                               LIVES_KEY_w, (LiVESXModifierType)0,
                               LIVES_ACCEL_VISIBLE);
 
@@ -931,7 +931,7 @@ void create_LiVES (void) {
 
   disable_record();
 
-  lives_widget_add_accelerator (mainw->record_perf, "activate", mainw->accel_group,
+  lives_widget_add_accelerator (mainw->record_perf, LIVES_WIDGET_CLICKED_EVENT, mainw->accel_group,
 			      LIVES_KEY_r, (LiVESXModifierType)0,
 			      LIVES_ACCEL_VISIBLE);
 
@@ -948,7 +948,7 @@ void create_LiVES (void) {
   lives_container_add (LIVES_CONTAINER (menuitem_menu), mainw->full_screen);
   
 
-  lives_widget_add_accelerator (mainw->full_screen, "activate", mainw->accel_group,
+  lives_widget_add_accelerator (mainw->full_screen, LIVES_WIDGET_CLICKED_EVENT, mainw->accel_group,
                               LIVES_KEY_f, (LiVESXModifierType)0,
                               LIVES_ACCEL_VISIBLE);
 
@@ -956,7 +956,7 @@ void create_LiVES (void) {
   lives_widget_show (mainw->dsize);
   lives_container_add (LIVES_CONTAINER (menuitem_menu), mainw->dsize);
 
-  lives_widget_add_accelerator (mainw->dsize, "activate", mainw->accel_group,
+  lives_widget_add_accelerator (mainw->dsize, LIVES_WIDGET_CLICKED_EVENT, mainw->accel_group,
                               LIVES_KEY_d, (LiVESXModifierType)0,
                               LIVES_ACCEL_VISIBLE);
 
@@ -964,13 +964,13 @@ void create_LiVES (void) {
   lives_widget_show (mainw->sepwin);
   lives_container_add (LIVES_CONTAINER (menuitem_menu), mainw->sepwin);
 
-  lives_widget_add_accelerator (mainw->sepwin, "activate", mainw->accel_group,
+  lives_widget_add_accelerator (mainw->sepwin, LIVES_WIDGET_CLICKED_EVENT, mainw->accel_group,
                               LIVES_KEY_s, (LiVESXModifierType)0,
                               LIVES_ACCEL_VISIBLE);
 
 
   mainw->fade = lives_check_menu_item_new_with_mnemonic (_("_Blank Background"));
-  lives_widget_add_accelerator (mainw->fade, "activate", mainw->accel_group,
+  lives_widget_add_accelerator (mainw->fade, LIVES_WIDGET_CLICKED_EVENT, mainw->accel_group,
                               LIVES_KEY_b, (LiVESXModifierType)0,
                               LIVES_ACCEL_VISIBLE);
   lives_widget_show (mainw->fade);
@@ -981,7 +981,7 @@ void create_LiVES (void) {
   lives_container_add (LIVES_CONTAINER (menuitem_menu), mainw->loop_video);
   lives_widget_set_sensitive (mainw->loop_video, FALSE);
   lives_check_menu_item_set_active(LIVES_CHECK_MENU_ITEM(mainw->loop_video),mainw->loop);
-  lives_widget_add_accelerator (mainw->loop_video, "activate", mainw->accel_group,
+  lives_widget_add_accelerator (mainw->loop_video, LIVES_WIDGET_CLICKED_EVENT, mainw->accel_group,
                               LIVES_KEY_l, (LiVESXModifierType)0,
                               LIVES_ACCEL_VISIBLE);
 
@@ -990,7 +990,7 @@ void create_LiVES (void) {
   lives_container_add (LIVES_CONTAINER (menuitem_menu), mainw->loop_continue);
   lives_widget_set_sensitive (mainw->loop_continue, FALSE);
 
-  lives_widget_add_accelerator (mainw->loop_continue, "activate", mainw->accel_group,
+  lives_widget_add_accelerator (mainw->loop_continue, LIVES_WIDGET_CLICKED_EVENT, mainw->accel_group,
                               LIVES_KEY_o, (LiVESXModifierType)0,
                               LIVES_ACCEL_VISIBLE);
 
@@ -998,7 +998,7 @@ void create_LiVES (void) {
   lives_widget_show (mainw->loop_ping_pong);
   lives_container_add (LIVES_CONTAINER (menuitem_menu), mainw->loop_ping_pong);
 
-  lives_widget_add_accelerator (mainw->loop_ping_pong, "activate", mainw->accel_group,
+  lives_widget_add_accelerator (mainw->loop_ping_pong, LIVES_WIDGET_CLICKED_EVENT, mainw->accel_group,
                               LIVES_KEY_g, (LiVESXModifierType)0,
                               LIVES_ACCEL_VISIBLE);
 
@@ -1007,7 +1007,7 @@ void create_LiVES (void) {
   lives_container_add (LIVES_CONTAINER (menuitem_menu), mainw->mute_audio);
   lives_widget_set_sensitive (mainw->mute_audio, FALSE);
 
-  lives_widget_add_accelerator (mainw->mute_audio, "activate", mainw->accel_group,
+  lives_widget_add_accelerator (mainw->mute_audio, LIVES_WIDGET_CLICKED_EVENT, mainw->accel_group,
                               LIVES_KEY_z, (LiVESXModifierType)0,
                               LIVES_ACCEL_VISIBLE);
 
@@ -1026,7 +1026,7 @@ void create_LiVES (void) {
   lives_widget_show (mainw->showfct);
   lives_container_add (LIVES_CONTAINER (menuitem_menu), mainw->showfct);
 
-  lives_widget_add_accelerator (mainw->showfct, "activate", mainw->accel_group,
+  lives_widget_add_accelerator (mainw->showfct, LIVES_WIDGET_CLICKED_EVENT, mainw->accel_group,
                               LIVES_KEY_h, (LiVESXModifierType)0,
                               LIVES_ACCEL_VISIBLE);
 
@@ -1036,7 +1036,7 @@ void create_LiVES (void) {
   lives_widget_show (mainw->showsubs);
   lives_container_add (LIVES_CONTAINER (menuitem_menu), mainw->showsubs);
 
-  lives_widget_add_accelerator (mainw->showsubs, "activate", mainw->accel_group,
+  lives_widget_add_accelerator (mainw->showsubs, LIVES_WIDGET_CLICKED_EVENT, mainw->accel_group,
                               LIVES_KEY_v, (LiVESXModifierType)0,
                               LIVES_ACCEL_VISIBLE);
 
@@ -1087,7 +1087,7 @@ void create_LiVES (void) {
   lives_container_add (LIVES_CONTAINER (mainw->tools_menu), mainw->rev_clipboard);
   lives_widget_set_sensitive (mainw->rev_clipboard, FALSE);
 
-  lives_widget_add_accelerator (mainw->rev_clipboard, "activate", mainw->accel_group,
+  lives_widget_add_accelerator (mainw->rev_clipboard, LIVES_WIDGET_CLICKED_EVENT, mainw->accel_group,
                               LIVES_KEY_x, LIVES_CONTROL_MASK,
                               LIVES_ACCEL_VISIBLE);
 
@@ -1159,7 +1159,7 @@ void create_LiVES (void) {
   mainw->preferences = lives_image_menu_item_new_with_mnemonic (_("_Preferences..."));
   lives_widget_show (mainw->preferences);
   lives_container_add (LIVES_CONTAINER (mainw->tools_menu), mainw->preferences);
-  lives_widget_add_accelerator (mainw->preferences, "activate", mainw->accel_group,
+  lives_widget_add_accelerator (mainw->preferences, LIVES_WIDGET_CLICKED_EVENT, mainw->accel_group,
                               LIVES_KEY_p, LIVES_CONTROL_MASK,
                               LIVES_ACCEL_VISIBLE);
 
@@ -1334,7 +1334,7 @@ void create_LiVES (void) {
   }
 
   mainw->show_file_info = lives_image_menu_item_new_with_mnemonic (_("Show Clip _Info"));
-  lives_widget_add_accelerator (mainw->show_file_info, "activate", mainw->accel_group,
+  lives_widget_add_accelerator (mainw->show_file_info, LIVES_WIDGET_CLICKED_EVENT, mainw->accel_group,
                               LIVES_KEY_i, (LiVESXModifierType)0,
                               LIVES_ACCEL_VISIBLE);
   lives_widget_show (mainw->show_file_info);
@@ -1557,7 +1557,7 @@ void create_LiVES (void) {
   assign_rte_keys = lives_menu_item_new_with_mnemonic (_("Real Time _Effect Mapping"));
   lives_widget_show (assign_rte_keys);
   lives_container_add (LIVES_CONTAINER (vj_menu), assign_rte_keys);
-  lives_widget_add_accelerator (assign_rte_keys, "activate", mainw->accel_group,
+  lives_widget_add_accelerator (assign_rte_keys, LIVES_WIDGET_CLICKED_EVENT, mainw->accel_group,
                               LIVES_KEY_v, LIVES_CONTROL_MASK,
                               LIVES_ACCEL_VISIBLE);
   lives_widget_set_tooltip_text( assign_rte_keys,(_ ("Bind real time effects to ctrl-number keys.")));
@@ -1982,7 +1982,7 @@ void create_LiVES (void) {
 
   lives_widget_set_events (mainw->eventbox, LIVES_SCROLL_MASK);
 
-  lives_signal_connect (LIVES_GUI_OBJECT (mainw->eventbox), "scroll_event",
+  lives_signal_connect (LIVES_GUI_OBJECT (mainw->eventbox), LIVES_WIDGET_SCROLL_EVENT,
                       LIVES_GUI_CALLBACK (on_mouse_scroll),
                       NULL);
 
@@ -2538,415 +2538,415 @@ void create_LiVES (void) {
   mainw->config_func=lives_signal_connect_after (LIVES_GUI_OBJECT (mainw->video_draw), "configure_event",
 					     LIVES_GUI_CALLBACK (config_event),
 					     NULL);
-  mainw->vidbar_func=lives_signal_connect_after (LIVES_GUI_OBJECT (mainw->video_draw), LIVES_WIDGET_EVENT_EXPOSE_EVENT,
+  mainw->vidbar_func=lives_signal_connect_after (LIVES_GUI_OBJECT (mainw->video_draw), LIVES_WIDGET_EXPOSE_EVENT,
 		    LIVES_GUI_CALLBACK (expose_vid_event),
 		    NULL);
-  mainw->laudbar_func=lives_signal_connect_after (LIVES_GUI_OBJECT (mainw->laudio_draw), LIVES_WIDGET_EVENT_EXPOSE_EVENT,
+  mainw->laudbar_func=lives_signal_connect_after (LIVES_GUI_OBJECT (mainw->laudio_draw), LIVES_WIDGET_EXPOSE_EVENT,
 		    LIVES_GUI_CALLBACK (expose_laud_event),
 		    NULL);
-  mainw->raudbar_func=lives_signal_connect_after (LIVES_GUI_OBJECT (mainw->raudio_draw), LIVES_WIDGET_EVENT_EXPOSE_EVENT,
+  mainw->raudbar_func=lives_signal_connect_after (LIVES_GUI_OBJECT (mainw->raudio_draw), LIVES_WIDGET_EXPOSE_EVENT,
 		    LIVES_GUI_CALLBACK (expose_raud_event),
 		    NULL);
   mainw->pb_fps_func=lives_signal_connect_after (LIVES_GUI_OBJECT (mainw->spinbutton_pb_fps), "value_changed",
                       LIVES_GUI_CALLBACK (changed_fps_during_pb),
                       NULL);
-  lives_signal_connect (LIVES_GUI_OBJECT (mainw->open), "activate",
+  lives_signal_connect (LIVES_GUI_OBJECT (mainw->open), LIVES_WIDGET_CLICKED_EVENT,
 		    LIVES_GUI_CALLBACK (on_open_activate),
 		    NULL);
-  lives_signal_connect (LIVES_GUI_OBJECT (mainw->open_sel), "activate",
+  lives_signal_connect (LIVES_GUI_OBJECT (mainw->open_sel), LIVES_WIDGET_CLICKED_EVENT,
 		    LIVES_GUI_CALLBACK (on_open_sel_activate),
 		    NULL);
-  lives_signal_connect (LIVES_GUI_OBJECT (mainw->open_dvd), "activate",
+  lives_signal_connect (LIVES_GUI_OBJECT (mainw->open_dvd), LIVES_WIDGET_CLICKED_EVENT,
 		    LIVES_GUI_CALLBACK (on_open_vcd_activate),
 		    GINT_TO_POINTER (1));
-  lives_signal_connect (LIVES_GUI_OBJECT (mainw->open_vcd), "activate",
+  lives_signal_connect (LIVES_GUI_OBJECT (mainw->open_vcd), LIVES_WIDGET_CLICKED_EVENT,
 		    LIVES_GUI_CALLBACK (on_open_vcd_activate),
 		    GINT_TO_POINTER (2));
-  lives_signal_connect (LIVES_GUI_OBJECT (mainw->open_loc), "activate",
+  lives_signal_connect (LIVES_GUI_OBJECT (mainw->open_loc), LIVES_WIDGET_CLICKED_EVENT,
 		    LIVES_GUI_CALLBACK (on_open_loc_activate),
 		    NULL);
 #ifdef HAVE_WEBM
-  lives_signal_connect (LIVES_GUI_OBJECT (mainw->open_utube), "activate",
+  lives_signal_connect (LIVES_GUI_OBJECT (mainw->open_utube), LIVES_WIDGET_CLICKED_EVENT,
 		    LIVES_GUI_CALLBACK (on_open_utube_activate),
 		    NULL);
 #endif
 
 #ifdef HAVE_LDVGRAB
-  lives_signal_connect (LIVES_GUI_OBJECT (mainw->open_firewire), "activate",
+  lives_signal_connect (LIVES_GUI_OBJECT (mainw->open_firewire), LIVES_WIDGET_CLICKED_EVENT,
 		    LIVES_GUI_CALLBACK (on_open_fw_activate),
 		    GINT_TO_POINTER(CAM_FORMAT_DV));
-  lives_signal_connect (LIVES_GUI_OBJECT (mainw->open_hfirewire), "activate",
+  lives_signal_connect (LIVES_GUI_OBJECT (mainw->open_hfirewire), LIVES_WIDGET_CLICKED_EVENT,
 		    LIVES_GUI_CALLBACK (on_open_fw_activate),
 		    GINT_TO_POINTER(CAM_FORMAT_HDV));
 #endif
 
 #ifdef HAVE_YUV4MPEG
   if (capable->smog_version_correct) {
-    lives_signal_connect (LIVES_GUI_OBJECT (mainw->open_yuv4m), "activate",
+    lives_signal_connect (LIVES_GUI_OBJECT (mainw->open_yuv4m), LIVES_WIDGET_CLICKED_EVENT,
 		      LIVES_GUI_CALLBACK (on_open_yuv4m_activate),
 		      NULL);
   }
 #endif
-  lives_signal_connect (LIVES_GUI_OBJECT (mainw->open_lives2lives), "activate",
+  lives_signal_connect (LIVES_GUI_OBJECT (mainw->open_lives2lives), LIVES_WIDGET_CLICKED_EVENT,
 		    LIVES_GUI_CALLBACK (on_open_lives2lives_activate),
 		    NULL);
-  lives_signal_connect (LIVES_GUI_OBJECT (mainw->send_lives2lives), "activate",
+  lives_signal_connect (LIVES_GUI_OBJECT (mainw->send_lives2lives), LIVES_WIDGET_CLICKED_EVENT,
 		    LIVES_GUI_CALLBACK (on_send_lives2lives_activate),
 		    NULL);
-  lives_signal_connect (LIVES_GUI_OBJECT (mainw->recent1), "activate",
+  lives_signal_connect (LIVES_GUI_OBJECT (mainw->recent1), LIVES_WIDGET_CLICKED_EVENT,
                       LIVES_GUI_CALLBACK (on_recent_activate),
 		    GINT_TO_POINTER(1));
-  lives_signal_connect (LIVES_GUI_OBJECT (mainw->recent2), "activate",
+  lives_signal_connect (LIVES_GUI_OBJECT (mainw->recent2), LIVES_WIDGET_CLICKED_EVENT,
                       LIVES_GUI_CALLBACK (on_recent_activate),
 		    GINT_TO_POINTER(2));
-  lives_signal_connect (LIVES_GUI_OBJECT (mainw->recent3), "activate",
+  lives_signal_connect (LIVES_GUI_OBJECT (mainw->recent3), LIVES_WIDGET_CLICKED_EVENT,
                       LIVES_GUI_CALLBACK (on_recent_activate),
 		    GINT_TO_POINTER(3));
-  lives_signal_connect (LIVES_GUI_OBJECT (mainw->recent4), "activate",
+  lives_signal_connect (LIVES_GUI_OBJECT (mainw->recent4), LIVES_WIDGET_CLICKED_EVENT,
                       LIVES_GUI_CALLBACK (on_recent_activate),
 		    GINT_TO_POINTER(4));
-  lives_signal_connect (LIVES_GUI_OBJECT (mainw->backup), "activate",
+  lives_signal_connect (LIVES_GUI_OBJECT (mainw->backup), LIVES_WIDGET_CLICKED_EVENT,
                       LIVES_GUI_CALLBACK (on_backup_activate),
 		    NULL);
-  lives_signal_connect (LIVES_GUI_OBJECT (mainw->restore), "activate",
+  lives_signal_connect (LIVES_GUI_OBJECT (mainw->restore), LIVES_WIDGET_CLICKED_EVENT,
                       LIVES_GUI_CALLBACK (on_restore_activate),
 		    NULL);
-  lives_signal_connect (LIVES_GUI_OBJECT (mainw->save_as), "activate",
+  lives_signal_connect (LIVES_GUI_OBJECT (mainw->save_as), LIVES_WIDGET_CLICKED_EVENT,
 		    LIVES_GUI_CALLBACK (on_save_as_activate),
 		    NULL);
-  lives_signal_connect (LIVES_GUI_OBJECT (mainw->save_selection), "activate",
+  lives_signal_connect (LIVES_GUI_OBJECT (mainw->save_selection), LIVES_WIDGET_CLICKED_EVENT,
 		    LIVES_GUI_CALLBACK (on_save_selection_activate),
                       NULL);
-  lives_signal_connect (LIVES_GUI_OBJECT (mainw->close), "activate",
+  lives_signal_connect (LIVES_GUI_OBJECT (mainw->close), LIVES_WIDGET_CLICKED_EVENT,
                       LIVES_GUI_CALLBACK (on_close_activate),
                       NULL);
-  lives_signal_connect (LIVES_GUI_OBJECT (mainw->import_proj), "activate",
+  lives_signal_connect (LIVES_GUI_OBJECT (mainw->import_proj), LIVES_WIDGET_CLICKED_EVENT,
                       LIVES_GUI_CALLBACK (on_import_proj_activate),
                       NULL);
-  lives_signal_connect (LIVES_GUI_OBJECT (mainw->export_proj), "activate",
+  lives_signal_connect (LIVES_GUI_OBJECT (mainw->export_proj), LIVES_WIDGET_CLICKED_EVENT,
                       LIVES_GUI_CALLBACK (on_export_proj_activate),
                       NULL);
-  lives_signal_connect (LIVES_GUI_OBJECT (mainw->clear_ds), "activate",
+  lives_signal_connect (LIVES_GUI_OBJECT (mainw->clear_ds), LIVES_WIDGET_CLICKED_EVENT,
                       LIVES_GUI_CALLBACK (on_cleardisk_activate),
                       NULL);
-  lives_signal_connect (LIVES_GUI_OBJECT (mainw->quit), "activate",
+  lives_signal_connect (LIVES_GUI_OBJECT (mainw->quit), LIVES_WIDGET_CLICKED_EVENT,
                       LIVES_GUI_CALLBACK (on_quit_activate),
                       GINT_TO_POINTER(0));
-  lives_signal_connect (LIVES_GUI_OBJECT (mainw->vj_save_set), "activate",
+  lives_signal_connect (LIVES_GUI_OBJECT (mainw->vj_save_set), LIVES_WIDGET_CLICKED_EVENT,
                       LIVES_GUI_CALLBACK (on_quit_activate),
                       GINT_TO_POINTER(1));
-  lives_signal_connect (LIVES_GUI_OBJECT (mainw->undo), "activate",
+  lives_signal_connect (LIVES_GUI_OBJECT (mainw->undo), LIVES_WIDGET_CLICKED_EVENT,
                       LIVES_GUI_CALLBACK (on_undo_activate),
                       NULL);
-  lives_signal_connect (LIVES_GUI_OBJECT (mainw->redo), "activate",
+  lives_signal_connect (LIVES_GUI_OBJECT (mainw->redo), LIVES_WIDGET_CLICKED_EVENT,
                       LIVES_GUI_CALLBACK (on_redo_activate),
                       NULL);
-  lives_signal_connect (LIVES_GUI_OBJECT (mainw->copy), "activate",
+  lives_signal_connect (LIVES_GUI_OBJECT (mainw->copy), LIVES_WIDGET_CLICKED_EVENT,
                       LIVES_GUI_CALLBACK (on_copy_activate),
                       NULL);
-  lives_signal_connect (LIVES_GUI_OBJECT (mainw->mt_menu), "activate",
+  lives_signal_connect (LIVES_GUI_OBJECT (mainw->mt_menu), LIVES_WIDGET_CLICKED_EVENT,
                       LIVES_GUI_CALLBACK (on_multitrack_activate),
                       NULL);
-  lives_signal_connect (LIVES_GUI_OBJECT (mainw->cut), "activate",
+  lives_signal_connect (LIVES_GUI_OBJECT (mainw->cut), LIVES_WIDGET_CLICKED_EVENT,
                       LIVES_GUI_CALLBACK (on_cut_activate),
                       NULL);
-  lives_signal_connect (LIVES_GUI_OBJECT (mainw->insert), "activate",
+  lives_signal_connect (LIVES_GUI_OBJECT (mainw->insert), LIVES_WIDGET_CLICKED_EVENT,
                       LIVES_GUI_CALLBACK (on_insert_pre_activate),
                       NULL);
-  lives_signal_connect (LIVES_GUI_OBJECT (mainw->merge), "activate",
+  lives_signal_connect (LIVES_GUI_OBJECT (mainw->merge), LIVES_WIDGET_CLICKED_EVENT,
                       LIVES_GUI_CALLBACK (on_merge_activate),
                       NULL);
-  lives_signal_connect (LIVES_GUI_OBJECT (mainw->paste_as_new), "activate",
+  lives_signal_connect (LIVES_GUI_OBJECT (mainw->paste_as_new), LIVES_WIDGET_CLICKED_EVENT,
                       LIVES_GUI_CALLBACK (on_paste_as_new_activate),
                       NULL);
-  lives_signal_connect (LIVES_GUI_OBJECT (mainw->xdelete), "activate",
+  lives_signal_connect (LIVES_GUI_OBJECT (mainw->xdelete), LIVES_WIDGET_CLICKED_EVENT,
                       LIVES_GUI_CALLBACK (on_delete_activate),
                       NULL);
-  lives_signal_connect (LIVES_GUI_OBJECT (mainw->select_all), "activate",
+  lives_signal_connect (LIVES_GUI_OBJECT (mainw->select_all), LIVES_WIDGET_CLICKED_EVENT,
                       LIVES_GUI_CALLBACK (on_select_all_activate),
                       NULL);
-  lives_signal_connect (LIVES_GUI_OBJECT (mainw->select_start_only), "activate",
+  lives_signal_connect (LIVES_GUI_OBJECT (mainw->select_start_only), LIVES_WIDGET_CLICKED_EVENT,
                       LIVES_GUI_CALLBACK (on_select_start_only_activate),
                       NULL);
-  lives_signal_connect (LIVES_GUI_OBJECT (mainw->select_end_only), "activate",
+  lives_signal_connect (LIVES_GUI_OBJECT (mainw->select_end_only), LIVES_WIDGET_CLICKED_EVENT,
                       LIVES_GUI_CALLBACK (on_select_end_only_activate),
                       NULL);
-  lives_signal_connect (LIVES_GUI_OBJECT (mainw->select_invert), "activate",
+  lives_signal_connect (LIVES_GUI_OBJECT (mainw->select_invert), LIVES_WIDGET_CLICKED_EVENT,
                       LIVES_GUI_CALLBACK (on_select_invert_activate),
                       NULL);
-  lives_signal_connect (LIVES_GUI_OBJECT (mainw->select_new), "activate",
+  lives_signal_connect (LIVES_GUI_OBJECT (mainw->select_new), LIVES_WIDGET_CLICKED_EVENT,
                       LIVES_GUI_CALLBACK (on_select_new_activate),
                       NULL);
-  lives_signal_connect (LIVES_GUI_OBJECT (mainw->select_to_end), "activate",
+  lives_signal_connect (LIVES_GUI_OBJECT (mainw->select_to_end), LIVES_WIDGET_CLICKED_EVENT,
                       LIVES_GUI_CALLBACK (on_select_to_end_activate),
                       NULL);
-  lives_signal_connect (LIVES_GUI_OBJECT (mainw->select_from_start), "activate",
+  lives_signal_connect (LIVES_GUI_OBJECT (mainw->select_from_start), LIVES_WIDGET_CLICKED_EVENT,
                       LIVES_GUI_CALLBACK (on_select_from_start_activate),
                       NULL);
-  lives_signal_connect (LIVES_GUI_OBJECT (mainw->select_last), "activate",
+  lives_signal_connect (LIVES_GUI_OBJECT (mainw->select_last), LIVES_WIDGET_CLICKED_EVENT,
                       LIVES_GUI_CALLBACK (on_select_last_activate),
                       NULL);
-  lives_signal_connect (LIVES_GUI_OBJECT (mainw->lock_selwidth), "activate",
+  lives_signal_connect (LIVES_GUI_OBJECT (mainw->lock_selwidth), LIVES_WIDGET_CLICKED_EVENT,
                       LIVES_GUI_CALLBACK (on_lock_selwidth_activate),
                       NULL);
-  mainw->record_perf_func=lives_signal_connect (LIVES_GUI_OBJECT (mainw->record_perf), "activate",
+  mainw->record_perf_func=lives_signal_connect (LIVES_GUI_OBJECT (mainw->record_perf), LIVES_WIDGET_CLICKED_EVENT,
                       LIVES_GUI_CALLBACK (on_record_perf_activate),
                       NULL);
-  lives_signal_connect (LIVES_GUI_OBJECT (mainw->playall), "activate",
+  lives_signal_connect (LIVES_GUI_OBJECT (mainw->playall), LIVES_WIDGET_CLICKED_EVENT,
                       LIVES_GUI_CALLBACK (on_playall_activate),
                       NULL);
-  lives_signal_connect (LIVES_GUI_OBJECT (mainw->rewind), "activate",
+  lives_signal_connect (LIVES_GUI_OBJECT (mainw->rewind), LIVES_WIDGET_CLICKED_EVENT,
                       LIVES_GUI_CALLBACK (on_rewind_activate),
                       NULL);
-  lives_signal_connect (LIVES_GUI_OBJECT (mainw->playsel), "activate",
+  lives_signal_connect (LIVES_GUI_OBJECT (mainw->playsel), LIVES_WIDGET_CLICKED_EVENT,
                       LIVES_GUI_CALLBACK (on_playsel_activate),
                       NULL);
-  lives_signal_connect (LIVES_GUI_OBJECT (mainw->playclip), "activate",
+  lives_signal_connect (LIVES_GUI_OBJECT (mainw->playclip), LIVES_WIDGET_CLICKED_EVENT,
                       LIVES_GUI_CALLBACK (on_playclip_activate),
                       NULL);
-  lives_signal_connect (LIVES_GUI_OBJECT (mainw->stop), "activate",
+  lives_signal_connect (LIVES_GUI_OBJECT (mainw->stop), LIVES_WIDGET_CLICKED_EVENT,
                       LIVES_GUI_CALLBACK (on_stop_activate),
                       NULL);
-  mainw->fullscreen_cb_func=lives_signal_connect (LIVES_GUI_OBJECT (mainw->full_screen), "activate",
+  mainw->fullscreen_cb_func=lives_signal_connect (LIVES_GUI_OBJECT (mainw->full_screen), LIVES_WIDGET_CLICKED_EVENT,
 					      LIVES_GUI_CALLBACK (on_full_screen_activate),
 					      NULL);
-  lives_signal_connect (LIVES_GUI_OBJECT (mainw->sw_sound), "activate",
+  lives_signal_connect (LIVES_GUI_OBJECT (mainw->sw_sound), LIVES_WIDGET_CLICKED_EVENT,
                       LIVES_GUI_CALLBACK (on_boolean_toggled),
 		    &mainw->save_with_sound); // TODO - make pref
-  lives_signal_connect (LIVES_GUI_OBJECT (mainw->showsubs), "activate",
+  lives_signal_connect (LIVES_GUI_OBJECT (mainw->showsubs), LIVES_WIDGET_CLICKED_EVENT,
                       LIVES_GUI_CALLBACK (on_showsubs_toggled),
                       NULL);
-  lives_signal_connect (LIVES_GUI_OBJECT (mainw->letter), "activate",
+  lives_signal_connect (LIVES_GUI_OBJECT (mainw->letter), LIVES_WIDGET_CLICKED_EVENT,
                       LIVES_GUI_CALLBACK (on_boolean_toggled),
                       &prefs->letterbox);
-  lives_signal_connect (LIVES_GUI_OBJECT (mainw->aload_subs), "activate",
+  lives_signal_connect (LIVES_GUI_OBJECT (mainw->aload_subs), LIVES_WIDGET_CLICKED_EVENT,
                       LIVES_GUI_CALLBACK (on_boolean_toggled),
                       &prefs->autoload_subs);
-  lives_signal_connect (LIVES_GUI_OBJECT (mainw->ccpd_sound), "activate",
+  lives_signal_connect (LIVES_GUI_OBJECT (mainw->ccpd_sound), LIVES_WIDGET_CLICKED_EVENT,
                       LIVES_GUI_CALLBACK (on_boolean_toggled),
 		    &mainw->ccpd_with_sound); // TODO - make pref
-  lives_signal_connect (LIVES_GUI_OBJECT (mainw->dsize), "activate",
+  lives_signal_connect (LIVES_GUI_OBJECT (mainw->dsize), LIVES_WIDGET_CLICKED_EVENT,
                       LIVES_GUI_CALLBACK (on_double_size_activate),
                       NULL);
-  mainw->sepwin_cb_func=lives_signal_connect (LIVES_GUI_OBJECT (mainw->sepwin), "activate",
+  mainw->sepwin_cb_func=lives_signal_connect (LIVES_GUI_OBJECT (mainw->sepwin), LIVES_WIDGET_CLICKED_EVENT,
 					  LIVES_GUI_CALLBACK (on_sepwin_activate),
 					  NULL);
-  lives_signal_connect (LIVES_GUI_OBJECT (mainw->fade), "activate",
+  lives_signal_connect (LIVES_GUI_OBJECT (mainw->fade), LIVES_WIDGET_CLICKED_EVENT,
                       LIVES_GUI_CALLBACK (on_fade_activate),
                       NULL);
-  lives_signal_connect (LIVES_GUI_OBJECT (mainw->loop_video), "activate",
+  lives_signal_connect (LIVES_GUI_OBJECT (mainw->loop_video), LIVES_WIDGET_CLICKED_EVENT,
                       LIVES_GUI_CALLBACK (on_loop_video_activate),
                       NULL);
-  mainw->loop_cont_func=lives_signal_connect (LIVES_GUI_OBJECT (mainw->loop_continue), "activate",
+  mainw->loop_cont_func=lives_signal_connect (LIVES_GUI_OBJECT (mainw->loop_continue), LIVES_WIDGET_CLICKED_EVENT,
 					  LIVES_GUI_CALLBACK (on_loop_cont_activate),
 					  NULL);
-  lives_signal_connect (LIVES_GUI_OBJECT (mainw->loop_ping_pong), "activate",
+  lives_signal_connect (LIVES_GUI_OBJECT (mainw->loop_ping_pong), LIVES_WIDGET_CLICKED_EVENT,
                       LIVES_GUI_CALLBACK (on_ping_pong_activate),
                       NULL);
-  mainw->mute_audio_func=lives_signal_connect (LIVES_GUI_OBJECT (mainw->mute_audio), "activate",
+  mainw->mute_audio_func=lives_signal_connect (LIVES_GUI_OBJECT (mainw->mute_audio), LIVES_WIDGET_CLICKED_EVENT,
 					   LIVES_GUI_CALLBACK (on_mute_activate),
 					   NULL);
-  lives_signal_connect (LIVES_GUI_OBJECT (mainw->sticky), "activate",
+  lives_signal_connect (LIVES_GUI_OBJECT (mainw->sticky), LIVES_WIDGET_CLICKED_EVENT,
                       LIVES_GUI_CALLBACK (on_sticky_activate),
                       NULL);
-  lives_signal_connect (LIVES_GUI_OBJECT (mainw->showfct), "activate",
+  lives_signal_connect (LIVES_GUI_OBJECT (mainw->showfct), LIVES_WIDGET_CLICKED_EVENT,
                       LIVES_GUI_CALLBACK (on_showfct_activate),
                       NULL);
-  lives_signal_connect (LIVES_GUI_OBJECT (mainw->preferences), "activate",
+  lives_signal_connect (LIVES_GUI_OBJECT (mainw->preferences), LIVES_WIDGET_CLICKED_EVENT,
                       LIVES_GUI_CALLBACK (on_preferences_activate),
                       NULL);
-  lives_signal_connect (LIVES_GUI_OBJECT (mainw->change_speed), "activate",
+  lives_signal_connect (LIVES_GUI_OBJECT (mainw->change_speed), LIVES_WIDGET_CLICKED_EVENT,
                       LIVES_GUI_CALLBACK (on_change_speed_activate),
                       NULL);
-  lives_signal_connect (LIVES_GUI_OBJECT (mainw->resample_video), "activate",
+  lives_signal_connect (LIVES_GUI_OBJECT (mainw->resample_video), LIVES_WIDGET_CLICKED_EVENT,
                       LIVES_GUI_CALLBACK (on_resample_video_activate),
                       NULL);
-  lives_signal_connect (LIVES_GUI_OBJECT (mainw->load_subs), "activate",
+  lives_signal_connect (LIVES_GUI_OBJECT (mainw->load_subs), LIVES_WIDGET_CLICKED_EVENT,
                       LIVES_GUI_CALLBACK (on_load_subs_activate),
                       NULL);
-  lives_signal_connect (LIVES_GUI_OBJECT (mainw->erase_subs), "activate",
+  lives_signal_connect (LIVES_GUI_OBJECT (mainw->erase_subs), LIVES_WIDGET_CLICKED_EVENT,
                       LIVES_GUI_CALLBACK (on_erase_subs_activate),
                       NULL);
-  lives_signal_connect (LIVES_GUI_OBJECT (mainw->capture), "activate",
+  lives_signal_connect (LIVES_GUI_OBJECT (mainw->capture), LIVES_WIDGET_CLICKED_EVENT,
                       LIVES_GUI_CALLBACK (on_capture_activate),
                       NULL);
-  lives_signal_connect (LIVES_GUI_OBJECT (mainw->rev_clipboard), "activate",
+  lives_signal_connect (LIVES_GUI_OBJECT (mainw->rev_clipboard), LIVES_WIDGET_CLICKED_EVENT,
                       LIVES_GUI_CALLBACK (on_rev_clipboard_activate),
                       NULL);
-  lives_signal_connect (LIVES_GUI_OBJECT (mainw->export_selaudio), "activate",
+  lives_signal_connect (LIVES_GUI_OBJECT (mainw->export_selaudio), LIVES_WIDGET_CLICKED_EVENT,
                       LIVES_GUI_CALLBACK (on_export_audio_activate),
                       GINT_TO_POINTER (0));
-  lives_signal_connect (LIVES_GUI_OBJECT (mainw->export_allaudio), "activate",
+  lives_signal_connect (LIVES_GUI_OBJECT (mainw->export_allaudio), LIVES_WIDGET_CLICKED_EVENT,
                       LIVES_GUI_CALLBACK (on_export_audio_activate),
                       GINT_TO_POINTER(1));
-  lives_signal_connect (LIVES_GUI_OBJECT (mainw->append_audio), "activate",
+  lives_signal_connect (LIVES_GUI_OBJECT (mainw->append_audio), LIVES_WIDGET_CLICKED_EVENT,
                       LIVES_GUI_CALLBACK (on_append_audio_activate),
                       NULL);
-  lives_signal_connect (LIVES_GUI_OBJECT (mainw->trim_audio), "activate",
+  lives_signal_connect (LIVES_GUI_OBJECT (mainw->trim_audio), LIVES_WIDGET_CLICKED_EVENT,
                       LIVES_GUI_CALLBACK (on_trim_audio_activate),
                       GINT_TO_POINTER (0));
-  lives_signal_connect (LIVES_GUI_OBJECT (mainw->trim_to_pstart), "activate",
+  lives_signal_connect (LIVES_GUI_OBJECT (mainw->trim_to_pstart), LIVES_WIDGET_CLICKED_EVENT,
                       LIVES_GUI_CALLBACK (on_trim_audio_activate),
                       GINT_TO_POINTER (1));
-  lives_signal_connect (LIVES_GUI_OBJECT (mainw->delsel_audio), "activate",
+  lives_signal_connect (LIVES_GUI_OBJECT (mainw->delsel_audio), LIVES_WIDGET_CLICKED_EVENT,
                       LIVES_GUI_CALLBACK (on_del_audio_activate),
                       GINT_TO_POINTER (0));
-  lives_signal_connect (LIVES_GUI_OBJECT (mainw->fade_aud_in), "activate",
+  lives_signal_connect (LIVES_GUI_OBJECT (mainw->fade_aud_in), LIVES_WIDGET_CLICKED_EVENT,
                       LIVES_GUI_CALLBACK (on_fade_audio_activate),
                       GINT_TO_POINTER (0));
-  lives_signal_connect (LIVES_GUI_OBJECT (mainw->fade_aud_out), "activate",
+  lives_signal_connect (LIVES_GUI_OBJECT (mainw->fade_aud_out), LIVES_WIDGET_CLICKED_EVENT,
                       LIVES_GUI_CALLBACK (on_fade_audio_activate),
                       GINT_TO_POINTER (1));
-  lives_signal_connect (LIVES_GUI_OBJECT (mainw->delall_audio), "activate",
+  lives_signal_connect (LIVES_GUI_OBJECT (mainw->delall_audio), LIVES_WIDGET_CLICKED_EVENT,
                       LIVES_GUI_CALLBACK (on_del_audio_activate),
                       GINT_TO_POINTER (1));
-  lives_signal_connect (LIVES_GUI_OBJECT (mainw->ins_silence), "activate",
+  lives_signal_connect (LIVES_GUI_OBJECT (mainw->ins_silence), LIVES_WIDGET_CLICKED_EVENT,
                       LIVES_GUI_CALLBACK (on_ins_silence_activate),
                       NULL);
-  lives_signal_connect (LIVES_GUI_OBJECT (mainw->recaudio_clip), "activate",
+  lives_signal_connect (LIVES_GUI_OBJECT (mainw->recaudio_clip), LIVES_WIDGET_CLICKED_EVENT,
                       LIVES_GUI_CALLBACK (on_recaudclip_activate),
                       NULL);
-  lives_signal_connect (LIVES_GUI_OBJECT (mainw->recaudio_sel), "activate",
+  lives_signal_connect (LIVES_GUI_OBJECT (mainw->recaudio_sel), LIVES_WIDGET_CLICKED_EVENT,
                       LIVES_GUI_CALLBACK (on_recaudsel_activate),
                       NULL);
-  lives_signal_connect (LIVES_GUI_OBJECT (mainw->resample_audio), "activate",
+  lives_signal_connect (LIVES_GUI_OBJECT (mainw->resample_audio), LIVES_WIDGET_CLICKED_EVENT,
                       LIVES_GUI_CALLBACK (on_resample_audio_activate),
                       NULL);
-  lives_signal_connect (LIVES_GUI_OBJECT (mainw->load_audio), "activate",
+  lives_signal_connect (LIVES_GUI_OBJECT (mainw->load_audio), LIVES_WIDGET_CLICKED_EVENT,
                       LIVES_GUI_CALLBACK (on_load_audio_activate),
                       NULL);
   if (capable->has_cdda2wav) {
-    lives_signal_connect (LIVES_GUI_OBJECT (mainw->load_cdtrack), "activate",
+    lives_signal_connect (LIVES_GUI_OBJECT (mainw->load_cdtrack), LIVES_WIDGET_CLICKED_EVENT,
                       LIVES_GUI_CALLBACK (on_load_cdtrack_activate),
                       NULL);
     
-    lives_signal_connect (LIVES_GUI_OBJECT (mainw->eject_cd), "activate",
+    lives_signal_connect (LIVES_GUI_OBJECT (mainw->eject_cd), LIVES_WIDGET_CLICKED_EVENT,
                       LIVES_GUI_CALLBACK (on_eject_cd_activate),
                       NULL);
   }
 
-  lives_signal_connect (LIVES_GUI_OBJECT (mainw->show_file_info), "activate",
+  lives_signal_connect (LIVES_GUI_OBJECT (mainw->show_file_info), LIVES_WIDGET_CLICKED_EVENT,
 		    LIVES_GUI_CALLBACK (on_show_file_info_activate),
 		    NULL);
-  lives_signal_connect (LIVES_GUI_OBJECT (mainw->show_file_comments), "activate",
+  lives_signal_connect (LIVES_GUI_OBJECT (mainw->show_file_comments), LIVES_WIDGET_CLICKED_EVENT,
 		    LIVES_GUI_CALLBACK (on_show_file_comments_activate),
 		    NULL);
-  lives_signal_connect (LIVES_GUI_OBJECT (mainw->show_clipboard_info), "activate",
+  lives_signal_connect (LIVES_GUI_OBJECT (mainw->show_clipboard_info), LIVES_WIDGET_CLICKED_EVENT,
 		    LIVES_GUI_CALLBACK (on_show_clipboard_info_activate),
 		    NULL);
-  lives_signal_connect (LIVES_GUI_OBJECT (mainw->show_messages), "activate",
+  lives_signal_connect (LIVES_GUI_OBJECT (mainw->show_messages), LIVES_WIDGET_CLICKED_EVENT,
 		    LIVES_GUI_CALLBACK (on_show_messages_activate),
 		    NULL);
-  lives_signal_connect (LIVES_GUI_OBJECT (mainw->show_layout_errors), "activate",
+  lives_signal_connect (LIVES_GUI_OBJECT (mainw->show_layout_errors), LIVES_WIDGET_CLICKED_EVENT,
 		    LIVES_GUI_CALLBACK (popup_lmap_errors),
 		    NULL);
-  lives_signal_connect (LIVES_GUI_OBJECT (mainw->rename), "activate",
+  lives_signal_connect (LIVES_GUI_OBJECT (mainw->rename), LIVES_WIDGET_CLICKED_EVENT,
 		    LIVES_GUI_CALLBACK (on_rename_activate),
 		    NULL);
 
-  lives_signal_connect (LIVES_GUI_OBJECT (new_test_rfx), "activate",
+  lives_signal_connect (LIVES_GUI_OBJECT (new_test_rfx), LIVES_WIDGET_CLICKED_EVENT,
 		    LIVES_GUI_CALLBACK (on_new_rfx_activate),
 		    GINT_TO_POINTER (RFX_STATUS_TEST));
-  lives_signal_connect (LIVES_GUI_OBJECT (copy_rfx), "activate",
+  lives_signal_connect (LIVES_GUI_OBJECT (copy_rfx), LIVES_WIDGET_CLICKED_EVENT,
 		    LIVES_GUI_CALLBACK (on_copy_rfx_activate),
 		    GINT_TO_POINTER (RFX_STATUS_TEST));
-  lives_signal_connect (LIVES_GUI_OBJECT (mainw->edit_test_rfx), "activate",
+  lives_signal_connect (LIVES_GUI_OBJECT (mainw->edit_test_rfx), LIVES_WIDGET_CLICKED_EVENT,
 		    LIVES_GUI_CALLBACK (on_edit_rfx_activate),
 		    GINT_TO_POINTER (RFX_STATUS_TEST));
-  lives_signal_connect (LIVES_GUI_OBJECT (mainw->rename_test_rfx), "activate",
+  lives_signal_connect (LIVES_GUI_OBJECT (mainw->rename_test_rfx), LIVES_WIDGET_CLICKED_EVENT,
 		    LIVES_GUI_CALLBACK (on_rename_rfx_activate),
 		    GINT_TO_POINTER (RFX_STATUS_TEST));
-  lives_signal_connect (LIVES_GUI_OBJECT (rebuild_rfx), "activate",
+  lives_signal_connect (LIVES_GUI_OBJECT (rebuild_rfx), LIVES_WIDGET_CLICKED_EVENT,
 		    LIVES_GUI_CALLBACK (on_rebuild_rfx_activate),
 		    NULL);
-  lives_signal_connect (LIVES_GUI_OBJECT (mainw->delete_test_rfx), "activate",
+  lives_signal_connect (LIVES_GUI_OBJECT (mainw->delete_test_rfx), LIVES_WIDGET_CLICKED_EVENT,
 		    LIVES_GUI_CALLBACK (on_delete_rfx_activate),
 		    GINT_TO_POINTER (RFX_STATUS_TEST));
-  lives_signal_connect (LIVES_GUI_OBJECT (mainw->delete_custom_rfx), "activate",
+  lives_signal_connect (LIVES_GUI_OBJECT (mainw->delete_custom_rfx), LIVES_WIDGET_CLICKED_EVENT,
 		    LIVES_GUI_CALLBACK (on_delete_rfx_activate),
 		    GINT_TO_POINTER (RFX_STATUS_CUSTOM));
-  lives_signal_connect (LIVES_GUI_OBJECT (import_custom_rfx), "activate",
+  lives_signal_connect (LIVES_GUI_OBJECT (import_custom_rfx), LIVES_WIDGET_CLICKED_EVENT,
 		    LIVES_GUI_CALLBACK (on_import_rfx_activate),
 		    GINT_TO_POINTER (RFX_STATUS_CUSTOM));
-  lives_signal_connect (LIVES_GUI_OBJECT (mainw->export_custom_rfx), "activate",
+  lives_signal_connect (LIVES_GUI_OBJECT (mainw->export_custom_rfx), LIVES_WIDGET_CLICKED_EVENT,
 		    LIVES_GUI_CALLBACK (on_export_rfx_activate),
 		    GINT_TO_POINTER (RFX_STATUS_CUSTOM));
-  lives_signal_connect (LIVES_GUI_OBJECT (mainw->promote_test_rfx), "activate",
+  lives_signal_connect (LIVES_GUI_OBJECT (mainw->promote_test_rfx), LIVES_WIDGET_CLICKED_EVENT,
 		    LIVES_GUI_CALLBACK (on_promote_rfx_activate),
 		    GINT_TO_POINTER (RFX_STATUS_TEST));
 
-  lives_signal_connect (LIVES_GUI_OBJECT (mainw->vj_load_set), "activate",
+  lives_signal_connect (LIVES_GUI_OBJECT (mainw->vj_load_set), LIVES_WIDGET_CLICKED_EVENT,
 		    LIVES_GUI_CALLBACK (on_load_set_activate),
 		    NULL);
-  lives_signal_connect (LIVES_GUI_OBJECT (mainw->vj_show_keys), "activate",
+  lives_signal_connect (LIVES_GUI_OBJECT (mainw->vj_show_keys), LIVES_WIDGET_CLICKED_EVENT,
 		    LIVES_GUI_CALLBACK (on_show_keys_activate),
 		    NULL);
-  lives_signal_connect (LIVES_GUI_OBJECT (assign_rte_keys), "activate",
+  lives_signal_connect (LIVES_GUI_OBJECT (assign_rte_keys), LIVES_WIDGET_CLICKED_EVENT,
 		    LIVES_GUI_CALLBACK (on_assign_rte_keys_activate),
 		    NULL);
-  lives_signal_connect (LIVES_GUI_OBJECT (mainw->save_rte_defs), "activate",
+  lives_signal_connect (LIVES_GUI_OBJECT (mainw->save_rte_defs), LIVES_WIDGET_CLICKED_EVENT,
 		    LIVES_GUI_CALLBACK (on_save_rte_defs_activate),
 		    NULL);
-  lives_signal_connect (LIVES_GUI_OBJECT (mainw->vj_reset), "activate",
+  lives_signal_connect (LIVES_GUI_OBJECT (mainw->vj_reset), LIVES_WIDGET_CLICKED_EVENT,
 		    LIVES_GUI_CALLBACK (on_vj_reset_activate),
 		    NULL);
 #ifdef ENABLE_OSC
-  lives_signal_connect (LIVES_GUI_OBJECT (midi_learn), "activate",
+  lives_signal_connect (LIVES_GUI_OBJECT (midi_learn), LIVES_WIDGET_CLICKED_EVENT,
 		    LIVES_GUI_CALLBACK (on_midi_learn_activate),
 		    NULL);
-  lives_signal_connect (LIVES_GUI_OBJECT (midi_save), "activate",
+  lives_signal_connect (LIVES_GUI_OBJECT (midi_save), LIVES_WIDGET_CLICKED_EVENT,
 		    LIVES_GUI_CALLBACK (on_midi_save_activate),
 		    NULL);
-  lives_signal_connect (LIVES_GUI_OBJECT (midi_load), "activate",
+  lives_signal_connect (LIVES_GUI_OBJECT (midi_load), LIVES_WIDGET_CLICKED_EVENT,
 		    LIVES_GUI_CALLBACK (on_midi_load_activate),
 		    NULL);
 #endif
 
-  mainw->toy_func_none=lives_signal_connect_after (LIVES_GUI_OBJECT (mainw->toy_none), "activate",
+  mainw->toy_func_none=lives_signal_connect_after (LIVES_GUI_OBJECT (mainw->toy_none), LIVES_WIDGET_CLICKED_EVENT,
 					 LIVES_GUI_CALLBACK (on_toy_activate),
 					 NULL);
 
-  mainw->toy_func_autolives=lives_signal_connect_after (LIVES_GUI_OBJECT (mainw->toy_autolives), "activate",
+  mainw->toy_func_autolives=lives_signal_connect_after (LIVES_GUI_OBJECT (mainw->toy_autolives), LIVES_WIDGET_CLICKED_EVENT,
 						  LIVES_GUI_CALLBACK (on_toy_activate),
 						  GINT_TO_POINTER(LIVES_TOY_AUTOLIVES));
 
-  mainw->toy_func_random_frames=lives_signal_connect_after (LIVES_GUI_OBJECT (mainw->toy_random_frames), "activate",
+  mainw->toy_func_random_frames=lives_signal_connect_after (LIVES_GUI_OBJECT (mainw->toy_random_frames), LIVES_WIDGET_CLICKED_EVENT,
 						  LIVES_GUI_CALLBACK (on_toy_activate),
 						  GINT_TO_POINTER(LIVES_TOY_MAD_FRAMES));
 
-  mainw->toy_func_lives_tv=lives_signal_connect_after (LIVES_GUI_OBJECT (mainw->toy_tv), "activate",
+  mainw->toy_func_lives_tv=lives_signal_connect_after (LIVES_GUI_OBJECT (mainw->toy_tv), LIVES_WIDGET_CLICKED_EVENT,
 					     LIVES_GUI_CALLBACK (on_toy_activate),
 					     GINT_TO_POINTER(LIVES_TOY_TV));
 
-  lives_signal_connect (LIVES_GUI_OBJECT (about), "activate",
+  lives_signal_connect (LIVES_GUI_OBJECT (about), LIVES_WIDGET_CLICKED_EVENT,
 		    LIVES_GUI_CALLBACK (on_about_activate),
 		    NULL);
 
-  lives_signal_connect (LIVES_GUI_OBJECT (mainw->troubleshoot), "activate",
+  lives_signal_connect (LIVES_GUI_OBJECT (mainw->troubleshoot), LIVES_WIDGET_CLICKED_EVENT,
 		    LIVES_GUI_CALLBACK (on_troubleshoot_activate),
 		    NULL);
 
-  lives_signal_connect (LIVES_GUI_OBJECT (show_manual), "activate",
+  lives_signal_connect (LIVES_GUI_OBJECT (show_manual), LIVES_WIDGET_CLICKED_EVENT,
 		    LIVES_GUI_CALLBACK (show_manual_activate),
 		    NULL);
 
-  lives_signal_connect (LIVES_GUI_OBJECT (email_author), "activate",
+  lives_signal_connect (LIVES_GUI_OBJECT (email_author), LIVES_WIDGET_CLICKED_EVENT,
 		    LIVES_GUI_CALLBACK (email_author_activate),
 		    NULL);
 
-  lives_signal_connect (LIVES_GUI_OBJECT (donate), "activate",
+  lives_signal_connect (LIVES_GUI_OBJECT (donate), LIVES_WIDGET_CLICKED_EVENT,
 		    LIVES_GUI_CALLBACK (donate_activate),
 		    NULL);
 
-  lives_signal_connect (LIVES_GUI_OBJECT (report_bug), "activate",
+  lives_signal_connect (LIVES_GUI_OBJECT (report_bug), LIVES_WIDGET_CLICKED_EVENT,
 		    LIVES_GUI_CALLBACK (report_bug_activate),
 		    NULL);
 
-  lives_signal_connect (LIVES_GUI_OBJECT (suggest_feature), "activate",
+  lives_signal_connect (LIVES_GUI_OBJECT (suggest_feature), LIVES_WIDGET_CLICKED_EVENT,
 		    LIVES_GUI_CALLBACK (suggest_feature_activate),
 		    NULL);
 
-  lives_signal_connect (LIVES_GUI_OBJECT (help_translate), "activate",
+  lives_signal_connect (LIVES_GUI_OBJECT (help_translate), LIVES_WIDGET_CLICKED_EVENT,
 		    LIVES_GUI_CALLBACK (help_translate_activate),
 		    NULL);
 
@@ -2959,60 +2959,60 @@ void create_LiVES (void) {
 
   // these are for the menu transport buttons
   if (capable->smog_version_correct) {
-    lives_signal_connect (LIVES_GUI_OBJECT (mainw->m_sepwinbutton), "clicked",
+    lives_signal_connect (LIVES_GUI_OBJECT (mainw->m_sepwinbutton), LIVES_WIDGET_CLICKED_EVENT,
 		      LIVES_GUI_CALLBACK (on_sepwin_pressed),
 		      NULL);
-    lives_signal_connect (LIVES_GUI_OBJECT (mainw->m_playbutton), "clicked",
+    lives_signal_connect (LIVES_GUI_OBJECT (mainw->m_playbutton), LIVES_WIDGET_CLICKED_EVENT,
 		      LIVES_GUI_CALLBACK (on_playall_activate),
 		      NULL);
-    lives_signal_connect (LIVES_GUI_OBJECT (mainw->m_stopbutton), "clicked",
+    lives_signal_connect (LIVES_GUI_OBJECT (mainw->m_stopbutton), LIVES_WIDGET_CLICKED_EVENT,
 		      LIVES_GUI_CALLBACK (on_stop_activate),
 		      NULL);
-    lives_signal_connect (LIVES_GUI_OBJECT (mainw->m_playselbutton), "clicked",
+    lives_signal_connect (LIVES_GUI_OBJECT (mainw->m_playselbutton), LIVES_WIDGET_CLICKED_EVENT,
 		      LIVES_GUI_CALLBACK (on_playsel_activate),
 		      NULL);
-    lives_signal_connect (LIVES_GUI_OBJECT (mainw->m_rewindbutton), "clicked",
+    lives_signal_connect (LIVES_GUI_OBJECT (mainw->m_rewindbutton), LIVES_WIDGET_CLICKED_EVENT,
 		      LIVES_GUI_CALLBACK (on_rewind_activate),
 		      NULL);
-    lives_signal_connect (LIVES_GUI_OBJECT (mainw->m_mutebutton), "clicked",
+    lives_signal_connect (LIVES_GUI_OBJECT (mainw->m_mutebutton), LIVES_WIDGET_CLICKED_EVENT,
 		      LIVES_GUI_CALLBACK (on_mute_button_activate),
 		      NULL);
-    lives_signal_connect (LIVES_GUI_OBJECT (mainw->m_loopbutton), "clicked",
+    lives_signal_connect (LIVES_GUI_OBJECT (mainw->m_loopbutton), LIVES_WIDGET_CLICKED_EVENT,
 		      LIVES_GUI_CALLBACK (on_loop_button_activate),
 		      NULL);
     
     // these are 'invisible' buttons for the key accelerators
-    lives_signal_connect (LIVES_GUI_OBJECT (mainw->t_stopbutton), "clicked",
+    lives_signal_connect (LIVES_GUI_OBJECT (mainw->t_stopbutton), LIVES_WIDGET_CLICKED_EVENT,
                       LIVES_GUI_CALLBACK (on_stop_activate),
                       NULL);
-    lives_signal_connect (LIVES_GUI_OBJECT (mainw->t_bckground), "clicked",
+    lives_signal_connect (LIVES_GUI_OBJECT (mainw->t_bckground), LIVES_WIDGET_CLICKED_EVENT,
                       LIVES_GUI_CALLBACK (on_fade_pressed),
                       NULL);
-    lives_signal_connect (LIVES_GUI_OBJECT (mainw->t_sepwin), "clicked",
+    lives_signal_connect (LIVES_GUI_OBJECT (mainw->t_sepwin), LIVES_WIDGET_CLICKED_EVENT,
                       LIVES_GUI_CALLBACK (on_sepwin_pressed),
                       NULL);
-    lives_signal_connect (LIVES_GUI_OBJECT (mainw->t_double), "clicked",
+    lives_signal_connect (LIVES_GUI_OBJECT (mainw->t_double), LIVES_WIDGET_CLICKED_EVENT,
                       LIVES_GUI_CALLBACK (on_double_size_pressed),
                       NULL);
-    lives_signal_connect (LIVES_GUI_OBJECT (mainw->t_fullscreen), "clicked",
+    lives_signal_connect (LIVES_GUI_OBJECT (mainw->t_fullscreen), LIVES_WIDGET_CLICKED_EVENT,
                       LIVES_GUI_CALLBACK (on_full_screen_pressed),
                       NULL);
-    lives_signal_connect (LIVES_GUI_OBJECT (mainw->t_infobutton), "clicked",
+    lives_signal_connect (LIVES_GUI_OBJECT (mainw->t_infobutton), LIVES_WIDGET_CLICKED_EVENT,
                       LIVES_GUI_CALLBACK (on_show_file_info_activate),
                       NULL);
-    lives_signal_connect (LIVES_GUI_OBJECT (mainw->t_hide), "clicked",
+    lives_signal_connect (LIVES_GUI_OBJECT (mainw->t_hide), LIVES_WIDGET_CLICKED_EVENT,
                       LIVES_GUI_CALLBACK (on_toolbar_hide),
                       NULL);
-    lives_signal_connect (LIVES_GUI_OBJECT (mainw->t_slower), "clicked",
+    lives_signal_connect (LIVES_GUI_OBJECT (mainw->t_slower), LIVES_WIDGET_CLICKED_EVENT,
                       LIVES_GUI_CALLBACK (on_slower_pressed),
                       NULL);
-    lives_signal_connect (LIVES_GUI_OBJECT (mainw->t_faster), "clicked",
+    lives_signal_connect (LIVES_GUI_OBJECT (mainw->t_faster), LIVES_WIDGET_CLICKED_EVENT,
                       LIVES_GUI_CALLBACK (on_faster_pressed),
                       NULL);
-    lives_signal_connect (LIVES_GUI_OBJECT (mainw->t_back), "clicked",
+    lives_signal_connect (LIVES_GUI_OBJECT (mainw->t_back), LIVES_WIDGET_CLICKED_EVENT,
                       LIVES_GUI_CALLBACK (on_back_pressed),
                       NULL);
-    lives_signal_connect (LIVES_GUI_OBJECT (mainw->t_forward), "clicked",
+    lives_signal_connect (LIVES_GUI_OBJECT (mainw->t_forward), LIVES_WIDGET_CLICKED_EVENT,
                       LIVES_GUI_CALLBACK (on_forward_pressed),
                       NULL);
     
@@ -3275,67 +3275,67 @@ void unfade_background(void) {
 
   if (stop_closure!=NULL) {
     lives_accel_group_disconnect (LIVES_ACCEL_GROUP (mainw->accel_group), stop_closure);
-    lives_widget_add_accelerator (mainw->stop, "activate", mainw->accel_group,
+    lives_widget_add_accelerator (mainw->stop, LIVES_WIDGET_CLICKED_EVENT, mainw->accel_group,
 				LIVES_KEY_q, (LiVESXModifierType)0,
 				LIVES_ACCEL_VISIBLE);
     
     lives_accel_group_disconnect (LIVES_ACCEL_GROUP (mainw->accel_group), rec_closure);
-    lives_widget_add_accelerator (mainw->record_perf, "activate", mainw->accel_group,
+    lives_widget_add_accelerator (mainw->record_perf, LIVES_WIDGET_CLICKED_EVENT, mainw->accel_group,
 				LIVES_KEY_r, (LiVESXModifierType)0,
 				LIVES_ACCEL_VISIBLE);
     
     lives_accel_group_disconnect (LIVES_ACCEL_GROUP (mainw->accel_group), fullscreen_closure);
-    lives_widget_add_accelerator (mainw->full_screen, "activate", mainw->accel_group,
+    lives_widget_add_accelerator (mainw->full_screen, LIVES_WIDGET_CLICKED_EVENT, mainw->accel_group,
 				  LIVES_KEY_f, (LiVESXModifierType)0,
 				LIVES_ACCEL_VISIBLE);
     lives_accel_group_disconnect (LIVES_ACCEL_GROUP (mainw->accel_group), sepwin_closure);
-    lives_widget_add_accelerator (mainw->sepwin, "activate", mainw->accel_group,
+    lives_widget_add_accelerator (mainw->sepwin, LIVES_WIDGET_CLICKED_EVENT, mainw->accel_group,
 				LIVES_KEY_s, (LiVESXModifierType)0,
 				LIVES_ACCEL_VISIBLE);
 
     lives_accel_group_disconnect (LIVES_ACCEL_GROUP (mainw->accel_group), mute_audio_closure);
-    lives_widget_add_accelerator (mainw->mute_audio, "activate", mainw->accel_group,
+    lives_widget_add_accelerator (mainw->mute_audio, LIVES_WIDGET_CLICKED_EVENT, mainw->accel_group,
 				LIVES_KEY_z, (LiVESXModifierType)0,
 				LIVES_ACCEL_VISIBLE);
 
     lives_accel_group_disconnect (LIVES_ACCEL_GROUP (mainw->accel_group), ping_pong_closure);
-    lives_widget_add_accelerator (mainw->loop_ping_pong, "activate", mainw->accel_group,
+    lives_widget_add_accelerator (mainw->loop_ping_pong, LIVES_WIDGET_CLICKED_EVENT, mainw->accel_group,
 				LIVES_KEY_g, (LiVESXModifierType)0,
 				LIVES_ACCEL_VISIBLE);
 
     if (!cfile->achans||mainw->mute||mainw->loop_cont||prefs->audio_player==AUD_PLAYER_JACK||
 	prefs->audio_player==AUD_PLAYER_PULSE) {
       lives_accel_group_disconnect (LIVES_ACCEL_GROUP (mainw->accel_group), loop_closure);
-      lives_widget_add_accelerator (mainw->loop_video, "activate", mainw->accel_group,
+      lives_widget_add_accelerator (mainw->loop_video, LIVES_WIDGET_CLICKED_EVENT, mainw->accel_group,
 				  LIVES_KEY_l, (LiVESXModifierType)0,
 				  LIVES_ACCEL_VISIBLE);
       lives_accel_group_disconnect (LIVES_ACCEL_GROUP (mainw->accel_group), loop_cont_closure);
-      lives_widget_add_accelerator (mainw->loop_continue, "activate", mainw->accel_group,
+      lives_widget_add_accelerator (mainw->loop_continue, LIVES_WIDGET_CLICKED_EVENT, mainw->accel_group,
 				  LIVES_KEY_o, (LiVESXModifierType)0,
 				  LIVES_ACCEL_VISIBLE);
       lives_accel_group_disconnect (LIVES_ACCEL_GROUP (mainw->accel_group), showfct_closure);
     }
-    lives_widget_add_accelerator (mainw->showfct, "activate", mainw->accel_group,
+    lives_widget_add_accelerator (mainw->showfct, LIVES_WIDGET_CLICKED_EVENT, mainw->accel_group,
 				LIVES_KEY_h, (LiVESXModifierType)0,
 				LIVES_ACCEL_VISIBLE);
 
     lives_accel_group_disconnect (LIVES_ACCEL_GROUP (mainw->accel_group), showsubs_closure);
-    lives_widget_add_accelerator (mainw->showsubs, "activate", mainw->accel_group,
+    lives_widget_add_accelerator (mainw->showsubs, LIVES_WIDGET_CLICKED_EVENT, mainw->accel_group,
 				LIVES_KEY_v, (LiVESXModifierType)0,
 				LIVES_ACCEL_VISIBLE);
 
     lives_accel_group_disconnect (LIVES_ACCEL_GROUP (mainw->accel_group), sepwin_closure);
-    lives_widget_add_accelerator (mainw->sepwin, "activate", mainw->accel_group,
+    lives_widget_add_accelerator (mainw->sepwin, LIVES_WIDGET_CLICKED_EVENT, mainw->accel_group,
 				LIVES_KEY_s, (LiVESXModifierType)0,
 				LIVES_ACCEL_VISIBLE);
 
     lives_accel_group_disconnect (LIVES_ACCEL_GROUP (mainw->accel_group), dblsize_closure);
-    lives_widget_add_accelerator (mainw->dsize, "activate", mainw->accel_group,
+    lives_widget_add_accelerator (mainw->dsize, LIVES_WIDGET_CLICKED_EVENT, mainw->accel_group,
 				LIVES_KEY_d, (LiVESXModifierType)0,
 				LIVES_ACCEL_VISIBLE);
 
     lives_accel_group_disconnect (LIVES_ACCEL_GROUP (mainw->accel_group), fade_closure);
-    lives_widget_add_accelerator (mainw->fade, "activate", mainw->accel_group,
+    lives_widget_add_accelerator (mainw->fade, LIVES_WIDGET_CLICKED_EVENT, mainw->accel_group,
 				LIVES_KEY_b, (LiVESXModifierType)0,
 				LIVES_ACCEL_VISIBLE);
 
@@ -3469,12 +3469,12 @@ void make_preview_box (void) {
   eventbox=lives_event_box_new();
   lives_widget_set_events (eventbox, LIVES_SCROLL_MASK);
 
-  lives_signal_connect (LIVES_GUI_OBJECT (eventbox), "scroll_event",
+  lives_signal_connect (LIVES_GUI_OBJECT (eventbox), LIVES_WIDGET_SCROLL_EVENT,
 		    LIVES_GUI_CALLBACK (on_mouse_scroll),
 		    NULL);
 
 #if GTK_CHECK_VERSION(3,0,0)
-  lives_signal_connect (LIVES_GUI_OBJECT (eventbox), LIVES_WIDGET_EVENT_EXPOSE_EVENT,
+  lives_signal_connect (LIVES_GUI_OBJECT (eventbox), LIVES_WIDGET_EXPOSE_EVENT,
 		    LIVES_GUI_CALLBACK (expose_pim),
 		    NULL);
 #endif
@@ -3639,32 +3639,32 @@ void make_preview_box (void) {
   if (!mainw->mute) lives_widget_set_tooltip_text( mainw->p_mutebutton,_("Mute the audio (z)"));
   else lives_widget_set_tooltip_text( mainw->p_mutebutton,_("Unmute the audio (z)"));
 
-  lives_signal_connect (LIVES_GUI_OBJECT (radiobutton_free), "toggled",
+  lives_signal_connect (LIVES_GUI_OBJECT (radiobutton_free), LIVES_WIDGET_TOGGLED_EVENT,
 		    LIVES_GUI_CALLBACK (on_prv_link_toggled),
 		    GINT_TO_POINTER (PRV_FREE));
-  lives_signal_connect (LIVES_GUI_OBJECT (radiobutton_start), "toggled",
+  lives_signal_connect (LIVES_GUI_OBJECT (radiobutton_start), LIVES_WIDGET_TOGGLED_EVENT,
 		    LIVES_GUI_CALLBACK (on_prv_link_toggled),
 		    GINT_TO_POINTER (PRV_START));
-  lives_signal_connect (LIVES_GUI_OBJECT (radiobutton_end), "toggled",
+  lives_signal_connect (LIVES_GUI_OBJECT (radiobutton_end), LIVES_WIDGET_TOGGLED_EVENT,
 		    LIVES_GUI_CALLBACK (on_prv_link_toggled),
 		    GINT_TO_POINTER (PRV_END));
-  lives_signal_connect (LIVES_GUI_OBJECT (radiobutton_ptr), "toggled",
+  lives_signal_connect (LIVES_GUI_OBJECT (radiobutton_ptr), LIVES_WIDGET_TOGGLED_EVENT,
 		    LIVES_GUI_CALLBACK (on_prv_link_toggled),
 		    GINT_TO_POINTER (PRV_PTR));
 
-  lives_signal_connect (LIVES_GUI_OBJECT (mainw->p_playbutton), "clicked",
+  lives_signal_connect (LIVES_GUI_OBJECT (mainw->p_playbutton), LIVES_WIDGET_CLICKED_EVENT,
                       LIVES_GUI_CALLBACK (on_playall_activate),
                       NULL);
-  lives_signal_connect (LIVES_GUI_OBJECT (mainw->p_playselbutton), "clicked",
+  lives_signal_connect (LIVES_GUI_OBJECT (mainw->p_playselbutton), LIVES_WIDGET_CLICKED_EVENT,
                       LIVES_GUI_CALLBACK (on_playsel_activate),
                       NULL);
-  lives_signal_connect (LIVES_GUI_OBJECT (mainw->p_rewindbutton), "clicked",
+  lives_signal_connect (LIVES_GUI_OBJECT (mainw->p_rewindbutton), LIVES_WIDGET_CLICKED_EVENT,
                       LIVES_GUI_CALLBACK (on_rewind_activate),
                       NULL);
-  lives_signal_connect (LIVES_GUI_OBJECT (mainw->p_mutebutton), "clicked",
+  lives_signal_connect (LIVES_GUI_OBJECT (mainw->p_mutebutton), LIVES_WIDGET_CLICKED_EVENT,
                       LIVES_GUI_CALLBACK (on_mute_button_activate),
                       NULL);
-  lives_signal_connect (LIVES_GUI_OBJECT (mainw->p_loopbutton), "clicked",
+  lives_signal_connect (LIVES_GUI_OBJECT (mainw->p_loopbutton), LIVES_WIDGET_CLICKED_EVENT,
                       LIVES_GUI_CALLBACK (on_loop_button_activate),
                       NULL);
 
@@ -4274,7 +4274,7 @@ void add_to_clipmenu(void) {
   lives_container_add (LIVES_CONTAINER (mainw->clipsmenu), cfile->menuentry);
 
   lives_widget_set_sensitive (cfile->menuentry, TRUE);
-  cfile->menuentry_func=lives_signal_connect (LIVES_GUI_OBJECT (cfile->menuentry), "toggled",
+  cfile->menuentry_func=lives_signal_connect (LIVES_GUI_OBJECT (cfile->menuentry), LIVES_WIDGET_TOGGLED_EVENT,
 					  LIVES_GUI_CALLBACK (switch_clip_activate),
 					  NULL);
 

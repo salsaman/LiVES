@@ -1,8 +1,9 @@
 [Desktop Entry]
-Name=LiVES 
-Comment=Video Editor/VJ tool
+Name=LiVES
+GenericName=Video Editor/VJ tool
+Comment=A video editor and VJ program
 Categories=AudioVideo;AudioVideoEditing;
 Exec=lives
-Icon=lives.xpm
+Icon=lives
 Type=Application
 Terminal=false

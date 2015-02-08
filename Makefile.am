@@ -116,7 +116,7 @@ install-exec-local:
 	"$(top_srcdir)/po/update_with_plugins.sh" install "$(PACKAGE)" "$(prefix)" "$(DESTDIR)"
 
 install-exec-hook:
-	$(LN_S) "$(DESTDIR)$(bindir)/lives-exe" "$(DESTDIR)$(bindir)/lives"
+	$(LN_S) "lives-exe" "$(DESTDIR)$(bindir)/lives"
 
 
 uninstall-local:

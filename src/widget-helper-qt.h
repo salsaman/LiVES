@@ -362,6 +362,7 @@ typedef uint32_t LiVESEventMask;
 #define LIVES_WIDGET_CLICKED_EVENT "clicked"
 #define LIVES_WIDGET_TOGGLED_EVENT "toggled"
 #define LIVES_WIDGET_CHANGED_EVENT "changed"
+#define LIVES_WIDGET_ACTIVATE_EVENT "activate"
 #define LIVES_WIDGET_VALUE_CHANGED_EVENT "value-changed"
 #define LIVES_WIDGET_SELECTION_CHANGED_EVENT "selection-changed"
 

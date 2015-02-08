@@ -895,7 +895,7 @@ static void cancel_process(boolean visible) {
     if (accelerators_swapped) {
       if (!mainw->preview) lives_widget_set_tooltip_text( mainw->m_playbutton,_ ("Play all"));
       lives_widget_remove_accelerator (cfile->proc_ptr->preview_button, mainw->accel_group, LIVES_KEY_p, (LiVESXModifierType)0);
-      lives_widget_add_accelerator (mainw->playall, LIVES_WIDGET_CLICKED_EVENT, mainw->accel_group, LIVES_KEY_p, (LiVESXModifierType)0, 
+      lives_widget_add_accelerator (mainw->playall, LIVES_WIDGET_ACTIVATE_EVENT, mainw->accel_group, LIVES_KEY_p, (LiVESXModifierType)0, 
 				  LIVES_ACCEL_VISIBLE);
     }
     if (cfile->proc_ptr!=NULL) {
@@ -1816,7 +1816,7 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const gchar *te
     if (accelerators_swapped) {
       if (!mainw->preview) lives_widget_set_tooltip_text( mainw->m_playbutton,_ ("Play all"));
       lives_widget_remove_accelerator (cfile->proc_ptr->preview_button, mainw->accel_group, LIVES_KEY_p, (LiVESXModifierType)0);
-      lives_widget_add_accelerator (mainw->playall, LIVES_WIDGET_CLICKED_EVENT, mainw->accel_group, LIVES_KEY_p, (LiVESXModifierType)0,
+      lives_widget_add_accelerator (mainw->playall, LIVES_WIDGET_ACTIVATE_EVENT, mainw->accel_group, LIVES_KEY_p, (LiVESXModifierType)0,
 				  LIVES_ACCEL_VISIBLE);
       accelerators_swapped=FALSE;
     }

@@ -10053,7 +10053,7 @@ boolean frame_context (LiVESWidget *widget, LiVESXEventButton *event, gpointer w
 
   if (cfile->frames>0||mainw->multitrack!=NULL) {
     save_frame_as = lives_menu_item_new_with_mnemonic (_("_Save frame as..."));
-    lives_signal_connect (LIVES_GUI_OBJECT (save_frame_as), LIVES_WIDGET_CLICKED_EVENT,
+    lives_signal_connect (LIVES_GUI_OBJECT (save_frame_as), LIVES_WIDGET_ACTIVATE_EVENT,
 		      LIVES_GUI_CALLBACK (save_frame),
 		      GINT_TO_POINTER(frame));
     

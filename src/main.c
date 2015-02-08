@@ -658,7 +658,7 @@ static void replace_with_delegates (void) {
       
     }
     // connect new menu entry
-    mainw->fx_candidates[FX_CANDIDATE_RESIZER].func=lives_signal_connect (LIVES_GUI_OBJECT (mainw->resize_menuitem), LIVES_WIDGET_CLICKED_EVENT,
+    mainw->fx_candidates[FX_CANDIDATE_RESIZER].func=lives_signal_connect (LIVES_GUI_OBJECT (mainw->resize_menuitem), LIVES_WIDGET_ACTIVATE_EVENT,
 								      LIVES_GUI_CALLBACK (on_render_fx_pre_activate),
 								      (gpointer)rfx);
     mainw->fx_candidates[FX_CANDIDATE_RESIZER].rfx=rfx;

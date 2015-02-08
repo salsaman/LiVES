@@ -4847,7 +4847,7 @@ static void make_fx_defs_menu(void) {
 	  
 	lives_container_add (LIVES_CONTAINER (menu), menuitem);
 	  
-	lives_signal_connect (LIVES_GUI_OBJECT (menuitem), LIVES_WIDGET_CLICKED_EVENT,
+	lives_signal_connect (LIVES_GUI_OBJECT (menuitem), LIVES_WIDGET_ACTIVATE_EVENT,
 			  LIVES_GUI_CALLBACK (rte_set_defs_activate),
 			  GINT_TO_POINTER(i));
 

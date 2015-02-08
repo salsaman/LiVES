@@ -184,7 +184,9 @@ typedef GdkDeviceManager                  LiVESXDeviceManager;
 #else
 #define LIVES_GUI_OBJECT(a)                     GTK_OBJECT(a)
 #define LIVES_WIDGET_EXPOSE_EVENT "expose_event"
+#define LIVES_GUI_OBJECT_CLASS(a) GTK_OBJECT_CLASS(a)
 #endif
+
 
 #define LIVES_WIDGET_SCROLL_EVENT "scroll_event"
 #define LIVES_WIDGET_CLICKED_EVENT "clicked"

@@ -7511,7 +7511,7 @@ void on_sepwin_activate (LiVESMenuItem *menuitem, gpointer user_data) {
 
 	make_play_window();
 
-	mainw->pw_scroll_func=lives_signal_connect (LIVES_GUI_OBJECT (mainw->play_window), "scroll_event",
+	mainw->pw_scroll_func=lives_signal_connect (LIVES_GUI_OBJECT (mainw->play_window), LIVES_WIDGET_SCROLL_EVENT,
 						LIVES_GUI_CALLBACK (on_mouse_scroll),
 						NULL);
 
@@ -8590,7 +8590,7 @@ void popup_lmap_errors(LiVESMenuItem *menuitem, gpointer user_data) {
 
   lives_dialog_add_action_widget (LIVES_DIALOG (textwindow->dialog), button, LIVES_RESPONSE_OK);
 
-  lives_signal_connect (LIVES_GUI_OBJECT (button), "clicked",
+  lives_signal_connect (LIVES_GUI_OBJECT (button), LIVES_WIDGET_CLICKED_EVENT,
 		    LIVES_GUI_CALLBACK (lives_general_button_clicked),
 		    textwindow);
 
@@ -8601,7 +8601,7 @@ void popup_lmap_errors(LiVESMenuItem *menuitem, gpointer user_data) {
 
   lives_dialog_add_action_widget (LIVES_DIALOG (textwindow->dialog), textwindow->clear_button, LIVES_RESPONSE_CANCEL);
 
-  lives_signal_connect (LIVES_GUI_OBJECT (textwindow->clear_button), "clicked",
+  lives_signal_connect (LIVES_GUI_OBJECT (textwindow->clear_button), LIVES_WIDGET_CLICKED_EVENT,
 		    LIVES_GUI_CALLBACK (on_lerrors_clear_clicked),
 		    GINT_TO_POINTER(FALSE));
 
@@ -8615,7 +8615,7 @@ void popup_lmap_errors(LiVESMenuItem *menuitem, gpointer user_data) {
   lives_container_set_border_width (LIVES_CONTAINER (textwindow->delete_button), widget_opts.border_width);
   lives_widget_set_can_focus_and_default (textwindow->delete_button);
 
-  lives_signal_connect (LIVES_GUI_OBJECT (textwindow->delete_button), "clicked",
+  lives_signal_connect (LIVES_GUI_OBJECT (textwindow->delete_button), LIVES_WIDGET_CLICKED_EVENT,
 		    LIVES_GUI_CALLBACK (on_lerrors_delete_clicked),
 		    NULL);
 
@@ -9732,15 +9732,15 @@ void changed_fps_during_pb (LiVESSpinButton   *spinbutton, gpointer user_data) {
 }
 
 
-boolean on_mouse_scroll (LiVESWidget *widget, GdkEventScroll  *event, gpointer user_data) {
-  uint32_t kstate;
+boolean on_mouse_scroll (LiVESWidget *widget, LiVESXEventScroll *event, gpointer user_data) {
+  LiVESXModifierType kstate;
   uint32_t type=1;
 
   if (!prefs->mouse_scroll_clips||mainw->noswitch) return FALSE;
 
   if (mainw->multitrack!=NULL) {
-    if (event->direction==GDK_SCROLL_UP) mt_prevclip(NULL,NULL,0,(LiVESXModifierType)0,user_data);
-    else if (event->direction==GDK_SCROLL_DOWN) mt_nextclip(NULL,NULL,0,(LiVESXModifierType)0,user_data);
+    if (event->direction==LIVES_SCROLL_UP) mt_prevclip(NULL,NULL,0,(LiVESXModifierType)0,user_data);
+    else if (event->direction==LIVES_SCROLL_DOWN) mt_nextclip(NULL,NULL,0,(LiVESXModifierType)0,user_data);
     return FALSE;
   }
 
@@ -9749,8 +9749,8 @@ boolean on_mouse_scroll (LiVESWidget *widget, GdkEventScroll  *event, gpointer u
   if (kstate==LIVES_SHIFT_MASK) type=2; // bg
   else if (kstate==LIVES_CONTROL_MASK) type=0; // fg or bg
 
-  if (event->direction==GDK_SCROLL_UP) prevclip_callback(NULL,NULL,0,(LiVESXModifierType)0,GINT_TO_POINTER(type));
-  else if (event->direction==GDK_SCROLL_DOWN) nextclip_callback(NULL,NULL,0,(LiVESXModifierType)0,GINT_TO_POINTER(type));
+  if (event->direction==LIVES_SCROLL_UP) prevclip_callback(NULL,NULL,0,(LiVESXModifierType)0,GINT_TO_POINTER(type));
+  else if (event->direction==LIVES_SCROLL_DOWN) nextclip_callback(NULL,NULL,0,(LiVESXModifierType)0,GINT_TO_POINTER(type));
   return FALSE;
 }
 
@@ -10053,7 +10053,7 @@ boolean frame_context (LiVESWidget *widget, LiVESXEventButton *event, gpointer w
 
   if (cfile->frames>0||mainw->multitrack!=NULL) {
     save_frame_as = lives_menu_item_new_with_mnemonic (_("_Save frame as..."));
-    lives_signal_connect (LIVES_GUI_OBJECT (save_frame_as), "activate",
+    lives_signal_connect (LIVES_GUI_OBJECT (save_frame_as), LIVES_WIDGET_CLICKED_EVENT,
 		      LIVES_GUI_CALLBACK (save_frame),
 		      GINT_TO_POINTER(frame));
     

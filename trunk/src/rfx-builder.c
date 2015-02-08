@@ -334,66 +334,66 @@ rfx_build_window_t *make_rfx_build_window (const gchar *script_name, lives_rfx_s
   lives_dialog_add_action_widget (LIVES_DIALOG (rfxbuilder->dialog), okbutton, LIVES_RESPONSE_OK);
   lives_widget_set_can_focus_and_default (okbutton);
 
-  lives_widget_add_accelerator (cancelbutton, "activate", accel_group,
+  lives_widget_add_accelerator (cancelbutton, LIVES_WIDGET_CLICKED_EVENT, accel_group,
                               LIVES_KEY_Escape, (LiVESXModifierType)0, (LiVESAccelFlags)0);
 
-  lives_widget_add_accelerator (okbutton, "activate", accel_group,
+  lives_widget_add_accelerator (okbutton, LIVES_WIDGET_CLICKED_EVENT, accel_group,
                               LIVES_KEY_Return, (LiVESXModifierType)0, (LiVESAccelFlags)0);
 
 
-  lives_signal_connect (LIVES_GUI_OBJECT (okbutton), "clicked",
+  lives_signal_connect (LIVES_GUI_OBJECT (okbutton), LIVES_WIDGET_CLICKED_EVENT,
 		    LIVES_GUI_CALLBACK (on_rfxbuilder_ok),
 		    (gpointer)rfxbuilder);
 
-  lives_signal_connect (LIVES_GUI_OBJECT (cancelbutton), "clicked",
+  lives_signal_connect (LIVES_GUI_OBJECT (cancelbutton), LIVES_WIDGET_CLICKED_EVENT,
 		    LIVES_GUI_CALLBACK (on_rfxbuilder_cancel),
 		    (gpointer)rfxbuilder);
 
-  lives_signal_connect(rfxbuilder->requirements_button, "clicked", 
+  lives_signal_connect(rfxbuilder->requirements_button, LIVES_WIDGET_CLICKED_EVENT, 
 		   LIVES_GUI_CALLBACK (on_list_table_clicked),
 		   (gpointer)rfxbuilder);
 
-  lives_signal_connect(rfxbuilder->properties_button, "clicked", 
+  lives_signal_connect(rfxbuilder->properties_button, LIVES_WIDGET_CLICKED_EVENT, 
 		   LIVES_GUI_CALLBACK (on_properties_clicked),
 		   (gpointer)rfxbuilder);
 
-  lives_signal_connect(rfxbuilder->params_button, "clicked", 
+  lives_signal_connect(rfxbuilder->params_button, LIVES_WIDGET_CLICKED_EVENT, 
 		   LIVES_GUI_CALLBACK (on_list_table_clicked),
 		   (gpointer)rfxbuilder);
 
-  lives_signal_connect(rfxbuilder->param_window_button, "clicked", 
+  lives_signal_connect(rfxbuilder->param_window_button, LIVES_WIDGET_CLICKED_EVENT, 
 		   LIVES_GUI_CALLBACK (on_list_table_clicked),
 		   (gpointer)rfxbuilder);
 
-  lives_signal_connect(rfxbuilder->trigger_button, "clicked", 
+  lives_signal_connect(rfxbuilder->trigger_button, LIVES_WIDGET_CLICKED_EVENT, 
 		   LIVES_GUI_CALLBACK (on_list_table_clicked),
 		   (gpointer)rfxbuilder);
 
-  lives_signal_connect(rfxbuilder->pre_button, "clicked", 
+  lives_signal_connect(rfxbuilder->pre_button, LIVES_WIDGET_CLICKED_EVENT, 
 		   LIVES_GUI_CALLBACK (on_code_clicked),
 		   (gpointer)rfxbuilder);
 
-  lives_signal_connect(rfxbuilder->loop_button, "clicked", 
+  lives_signal_connect(rfxbuilder->loop_button, LIVES_WIDGET_CLICKED_EVENT, 
 		   LIVES_GUI_CALLBACK (on_code_clicked),
 		   (gpointer)rfxbuilder);
 
-  lives_signal_connect(rfxbuilder->post_button, "clicked", 
+  lives_signal_connect(rfxbuilder->post_button, LIVES_WIDGET_CLICKED_EVENT, 
 		   LIVES_GUI_CALLBACK (on_code_clicked),
 		   (gpointer)rfxbuilder);
 
-  lives_signal_connect_after (LIVES_GUI_OBJECT (rfxbuilder->type_effect1_radiobutton), "toggled",
+  lives_signal_connect_after (LIVES_GUI_OBJECT (rfxbuilder->type_effect1_radiobutton), LIVES_WIDGET_TOGGLED_EVENT,
 			  LIVES_GUI_CALLBACK (after_rfxbuilder_type_toggled),
 			  (gpointer)rfxbuilder);
-  lives_signal_connect_after (LIVES_GUI_OBJECT (rfxbuilder->type_effect2_radiobutton), "toggled",
+  lives_signal_connect_after (LIVES_GUI_OBJECT (rfxbuilder->type_effect2_radiobutton), LIVES_WIDGET_TOGGLED_EVENT,
 			  LIVES_GUI_CALLBACK (after_rfxbuilder_type_toggled),
 			  (gpointer)rfxbuilder);
-  lives_signal_connect_after (LIVES_GUI_OBJECT (rfxbuilder->type_effect0_radiobutton), "toggled",
+  lives_signal_connect_after (LIVES_GUI_OBJECT (rfxbuilder->type_effect0_radiobutton), LIVES_WIDGET_TOGGLED_EVENT,
 			  LIVES_GUI_CALLBACK (after_rfxbuilder_type_toggled),
 			  (gpointer)rfxbuilder);
-  lives_signal_connect_after (LIVES_GUI_OBJECT (rfxbuilder->type_tool_radiobutton), "toggled",
+  lives_signal_connect_after (LIVES_GUI_OBJECT (rfxbuilder->type_tool_radiobutton), LIVES_WIDGET_TOGGLED_EVENT,
 			  LIVES_GUI_CALLBACK (after_rfxbuilder_type_toggled),
 			  (gpointer)rfxbuilder);
-  lives_signal_connect_after (LIVES_GUI_OBJECT (rfxbuilder->type_utility_radiobutton), "toggled",
+  lives_signal_connect_after (LIVES_GUI_OBJECT (rfxbuilder->type_utility_radiobutton), LIVES_WIDGET_TOGGLED_EVENT,
 			  LIVES_GUI_CALLBACK (after_rfxbuilder_type_toggled),
 			  (gpointer)rfxbuilder);
 
@@ -658,7 +658,7 @@ void on_list_table_clicked (LiVESButton *button, gpointer user_data) {
   cancelbutton = lives_button_new_from_stock (LIVES_STOCK_CANCEL);
   lives_dialog_add_action_widget (LIVES_DIALOG (dialog), cancelbutton, LIVES_RESPONSE_CANCEL);
 
-  lives_widget_add_accelerator (cancelbutton, "activate", accel_group,
+  lives_widget_add_accelerator (cancelbutton, LIVES_WIDGET_CLICKED_EVENT, accel_group,
                               LIVES_KEY_Escape, (LiVESXModifierType)0, (LiVESAccelFlags)0);
 
 
@@ -667,62 +667,62 @@ void on_list_table_clicked (LiVESButton *button, gpointer user_data) {
   lives_widget_set_can_focus_and_default (okbutton);
 
   if (rfxbuilder->table_type==RFX_TABLE_TYPE_REQUIREMENTS) {
-    lives_signal_connect (LIVES_GUI_OBJECT (okbutton), "clicked",
+    lives_signal_connect (LIVES_GUI_OBJECT (okbutton), LIVES_WIDGET_CLICKED_EVENT,
 		      LIVES_GUI_CALLBACK (on_requirements_ok),
 		      user_data);
     
-    lives_signal_connect (LIVES_GUI_OBJECT (cancelbutton), "clicked",
+    lives_signal_connect (LIVES_GUI_OBJECT (cancelbutton), LIVES_WIDGET_CLICKED_EVENT,
 		      LIVES_GUI_CALLBACK (on_requirements_cancel),
 		      user_data);
   }
   else if (rfxbuilder->table_type==RFX_TABLE_TYPE_PARAMS) {
-    lives_signal_connect (LIVES_GUI_OBJECT (okbutton), "clicked",
+    lives_signal_connect (LIVES_GUI_OBJECT (okbutton), LIVES_WIDGET_CLICKED_EVENT,
 		      LIVES_GUI_CALLBACK (on_params_ok),
 		      user_data);
     
-    lives_signal_connect (LIVES_GUI_OBJECT (cancelbutton), "clicked",
+    lives_signal_connect (LIVES_GUI_OBJECT (cancelbutton), LIVES_WIDGET_CLICKED_EVENT,
 		      LIVES_GUI_CALLBACK (on_params_cancel),
 		      user_data);
   }
   else if (rfxbuilder->table_type==RFX_TABLE_TYPE_PARAM_WINDOW) {
-    lives_signal_connect (LIVES_GUI_OBJECT (okbutton), "clicked",
+    lives_signal_connect (LIVES_GUI_OBJECT (okbutton), LIVES_WIDGET_CLICKED_EVENT,
 		      LIVES_GUI_CALLBACK (on_param_window_ok),
 		      user_data);
     
-    lives_signal_connect (LIVES_GUI_OBJECT (cancelbutton), "clicked",
+    lives_signal_connect (LIVES_GUI_OBJECT (cancelbutton), LIVES_WIDGET_CLICKED_EVENT,
 		      LIVES_GUI_CALLBACK (on_param_window_cancel),
 		      user_data);
   }
   else if (rfxbuilder->table_type==RFX_TABLE_TYPE_TRIGGERS) {
-    lives_signal_connect (LIVES_GUI_OBJECT (okbutton), "clicked",
+    lives_signal_connect (LIVES_GUI_OBJECT (okbutton), LIVES_WIDGET_CLICKED_EVENT,
 		      LIVES_GUI_CALLBACK (on_triggers_ok),
 		      user_data);
     
-    lives_signal_connect (LIVES_GUI_OBJECT (cancelbutton), "clicked",
+    lives_signal_connect (LIVES_GUI_OBJECT (cancelbutton), LIVES_WIDGET_CLICKED_EVENT,
 		      LIVES_GUI_CALLBACK (on_triggers_cancel),
 		      user_data);
   }
 
 
 
-  lives_signal_connect (LIVES_GUI_OBJECT (rfxbuilder->new_entry_button), "clicked",
+  lives_signal_connect (LIVES_GUI_OBJECT (rfxbuilder->new_entry_button), LIVES_WIDGET_CLICKED_EVENT,
 		    LIVES_GUI_CALLBACK (on_table_add_row),
 		    user_data);
 
-  lives_signal_connect (LIVES_GUI_OBJECT (rfxbuilder->edit_entry_button), "clicked",
+  lives_signal_connect (LIVES_GUI_OBJECT (rfxbuilder->edit_entry_button), LIVES_WIDGET_CLICKED_EVENT,
 		    LIVES_GUI_CALLBACK (on_table_edit_row),
 		    user_data);
 
-  lives_signal_connect (LIVES_GUI_OBJECT (rfxbuilder->remove_entry_button), "clicked",
+  lives_signal_connect (LIVES_GUI_OBJECT (rfxbuilder->remove_entry_button), LIVES_WIDGET_CLICKED_EVENT,
 		    LIVES_GUI_CALLBACK (on_table_delete_row),
 		    user_data);
 
   if (rfxbuilder->table_type==RFX_TABLE_TYPE_PARAM_WINDOW) {
-    lives_signal_connect (LIVES_GUI_OBJECT (rfxbuilder->move_up_button), "clicked",
+    lives_signal_connect (LIVES_GUI_OBJECT (rfxbuilder->move_up_button), LIVES_WIDGET_CLICKED_EVENT,
 		      LIVES_GUI_CALLBACK (on_table_swap_row),
 		      user_data);
     
-    lives_signal_connect (LIVES_GUI_OBJECT (rfxbuilder->move_down_button), "clicked",
+    lives_signal_connect (LIVES_GUI_OBJECT (rfxbuilder->move_down_button), LIVES_WIDGET_CLICKED_EVENT,
 		      LIVES_GUI_CALLBACK (on_table_swap_row),
 		      user_data);
   }
@@ -1039,19 +1039,19 @@ void on_properties_clicked (LiVESButton *button, gpointer user_data) {
 
   lives_widget_grab_default (okbutton);
 
-  lives_widget_add_accelerator (cancelbutton, "activate", accel_group,
+  lives_widget_add_accelerator (cancelbutton, LIVES_WIDGET_CLICKED_EVENT, accel_group,
                               LIVES_KEY_Escape, (LiVESXModifierType)0, (LiVESAccelFlags)0);
 
   
-  lives_widget_add_accelerator (okbutton, "activate", accel_group,
+  lives_widget_add_accelerator (okbutton, LIVES_WIDGET_CLICKED_EVENT, accel_group,
                               LIVES_KEY_Return, (LiVESXModifierType)0, (LiVESAccelFlags)0);
 
 
-  lives_signal_connect (LIVES_GUI_OBJECT (okbutton), "clicked",
+  lives_signal_connect (LIVES_GUI_OBJECT (okbutton), LIVES_WIDGET_CLICKED_EVENT,
 		    LIVES_GUI_CALLBACK (on_properties_ok),
 		    user_data);
 
-  lives_signal_connect (LIVES_GUI_OBJECT (cancelbutton), "clicked",
+  lives_signal_connect (LIVES_GUI_OBJECT (cancelbutton), LIVES_WIDGET_CLICKED_EVENT,
 		    LIVES_GUI_CALLBACK (lives_general_button_clicked),
 		    NULL);
   
@@ -2175,11 +2175,11 @@ LiVESWidget * make_param_dialog (int pnum, rfx_build_window_t *rfxbuilder) {
 
 
 
-  lives_signal_connect (LIVES_GUI_OBJECT (rfxbuilder->param_strdef_button), "clicked",
+  lives_signal_connect (LIVES_GUI_OBJECT (rfxbuilder->param_strdef_button), LIVES_WIDGET_CLICKED_EVENT,
 		    LIVES_GUI_CALLBACK (on_code_clicked),
 		    (gpointer)rfxbuilder);
 
-  lives_signal_connect (LIVES_GUI_OBJECT(rfxbuilder->param_type_combo),"changed",LIVES_GUI_CALLBACK (on_param_type_changed),
+  lives_signal_connect (LIVES_GUI_OBJECT(rfxbuilder->param_type_combo),LIVES_WIDGET_CHANGED_EVENT,LIVES_GUI_CALLBACK (on_param_type_changed),
 		    (gpointer)rfxbuilder);
 
   lives_signal_connect_after (LIVES_GUI_OBJECT (rfxbuilder->spinbutton_param_dp), "value_changed",
@@ -2675,13 +2675,13 @@ LiVESWidget * make_param_window_dialog (int pnum, rfx_build_window_t *rfxbuilder
 
   lives_widget_grab_focus (rfxbuilder->paramw_rest_entry);
 
-  lives_signal_connect (LIVES_GUI_OBJECT(rfxbuilder->paramw_kw_combo),"changed",
+  lives_signal_connect (LIVES_GUI_OBJECT(rfxbuilder->paramw_kw_combo),LIVES_WIDGET_CHANGED_EVENT,
 		    LIVES_GUI_CALLBACK (on_paramw_kw_changed),(gpointer)rfxbuilder);
 
-  lives_signal_connect (LIVES_GUI_OBJECT(rfxbuilder->paramw_sp_combo),"changed",
+  lives_signal_connect (LIVES_GUI_OBJECT(rfxbuilder->paramw_sp_combo),LIVES_WIDGET_CHANGED_EVENT,
 		    LIVES_GUI_CALLBACK (on_paramw_sp_changed),(gpointer)rfxbuilder);
 
-  lives_signal_connect (LIVES_GUI_OBJECT(rfxbuilder->paramw_spsub_combo),"changed",
+  lives_signal_connect (LIVES_GUI_OBJECT(rfxbuilder->paramw_spsub_combo),LIVES_WIDGET_CHANGED_EVENT,
 		    LIVES_GUI_CALLBACK (on_paramw_spsub_changed),(gpointer)rfxbuilder);
 
   lives_widget_show_all(dialog);
@@ -2969,11 +2969,11 @@ void on_code_clicked (LiVESButton *button, gpointer user_data) {
   lives_dialog_add_action_widget (LIVES_DIALOG (dialog), okbutton, LIVES_RESPONSE_OK);
   lives_widget_set_can_focus_and_default (okbutton);
 
-  lives_signal_connect (LIVES_GUI_OBJECT (okbutton), "clicked",
+  lives_signal_connect (LIVES_GUI_OBJECT (okbutton), LIVES_WIDGET_CLICKED_EVENT,
 		    LIVES_GUI_CALLBACK (on_code_ok),
 		    user_data);
   
-  lives_signal_connect (LIVES_GUI_OBJECT (cancelbutton), "clicked",
+  lives_signal_connect (LIVES_GUI_OBJECT (cancelbutton), LIVES_WIDGET_CLICKED_EVENT,
 		    LIVES_GUI_CALLBACK (lives_general_button_clicked),
 		    NULL);
 
@@ -4289,7 +4289,7 @@ gchar *prompt_for_script_name(const gchar *sname, lives_rfx_status_t status) {
     name_entry=lives_entry_new();
 
     if (copy_mode) {
-      lives_signal_connect (LIVES_GUI_OBJECT(status_combo),"changed",LIVES_GUI_CALLBACK (on_script_status_changed),
+      lives_signal_connect (LIVES_GUI_OBJECT(status_combo),LIVES_WIDGET_CHANGED_EVENT,LIVES_GUI_CALLBACK (on_script_status_changed),
 			(gpointer)script_combo);
       label = lives_standard_label_new (_ ("New name: "));
     }
@@ -4765,11 +4765,11 @@ void add_rfx_effects(void) {
   lives_widget_set_sensitive (menuitem, FALSE);
   lives_widget_set_tooltip_text( menuitem,_("See: VJ - show VJ keys. Set the realtime effects, and then apply them here."));
   
-  lives_widget_add_accelerator (menuitem, "activate", mainw->accel_group,
+  lives_widget_add_accelerator (menuitem, LIVES_WIDGET_CLICKED_EVENT, mainw->accel_group,
 			      LIVES_KEY_e, LIVES_CONTROL_MASK,
 			      LIVES_ACCEL_VISIBLE);
 
-  lives_signal_connect (LIVES_GUI_OBJECT (menuitem), "activate",
+  lives_signal_connect (LIVES_GUI_OBJECT (menuitem), LIVES_WIDGET_CLICKED_EVENT,
 		    LIVES_GUI_CALLBACK (on_realfx_activate),
 		    &mainw->rendered_fx[0]);
 
@@ -4854,12 +4854,12 @@ void add_rfx_effects(void) {
 #endif
 
       if (rfx->params==NULL) {
-	lives_signal_connect (LIVES_GUI_OBJECT (menuitem), "activate",
+	lives_signal_connect (LIVES_GUI_OBJECT (menuitem), LIVES_WIDGET_CLICKED_EVENT,
 			  LIVES_GUI_CALLBACK (on_render_fx_activate),
 			  (gpointer)rfx);
       }
       else {
-	lives_signal_connect (LIVES_GUI_OBJECT (menuitem), "activate",
+	lives_signal_connect (LIVES_GUI_OBJECT (menuitem), LIVES_WIDGET_CLICKED_EVENT,
 			  LIVES_GUI_CALLBACK (on_render_fx_pre_activate),
 			  (gpointer)rfx);
       }
@@ -4968,18 +4968,18 @@ void add_rfx_effects(void) {
 
 	if (menuitem!=mainw->resize_menuitem) {
 	  if (rfx->params==NULL) {
-	    lives_signal_connect (LIVES_GUI_OBJECT (menuitem), "activate",
+	    lives_signal_connect (LIVES_GUI_OBJECT (menuitem), LIVES_WIDGET_CLICKED_EVENT,
 			      LIVES_GUI_CALLBACK (on_render_fx_activate),
 			      (gpointer)rfx);
 	  }
 	  else {
-	    lives_signal_connect (LIVES_GUI_OBJECT (menuitem), "activate",
+	    lives_signal_connect (LIVES_GUI_OBJECT (menuitem), LIVES_WIDGET_CLICKED_EVENT,
 			      LIVES_GUI_CALLBACK (on_render_fx_pre_activate),
 			      (gpointer)rfx);
 	  }
 	}
 	else {
-	  mainw->fx_candidates[FX_CANDIDATE_RESIZER].func=lives_signal_connect (LIVES_GUI_OBJECT (menuitem), "activate",
+	  mainw->fx_candidates[FX_CANDIDATE_RESIZER].func=lives_signal_connect (LIVES_GUI_OBJECT (menuitem), LIVES_WIDGET_CLICKED_EVENT,
 									    LIVES_GUI_CALLBACK (on_render_fx_pre_activate),
 									    (gpointer)rfx);
 	}
@@ -5013,12 +5013,12 @@ void add_rfx_effects(void) {
 	}
 
 	if (rfx->params==NULL) {
-	  lives_signal_connect (LIVES_GUI_OBJECT (menuitem), "activate",
+	  lives_signal_connect (LIVES_GUI_OBJECT (menuitem), LIVES_WIDGET_CLICKED_EVENT,
 			    LIVES_GUI_CALLBACK (on_render_fx_activate),
 			    (gpointer)rfx);
 	}
 	else {
-	  lives_signal_connect (LIVES_GUI_OBJECT (menuitem), "activate",
+	  lives_signal_connect (LIVES_GUI_OBJECT (menuitem), LIVES_WIDGET_CLICKED_EVENT,
 			    LIVES_GUI_CALLBACK (on_render_fx_pre_activate),
 			    (gpointer)rfx);
 	}

@@ -8,8 +8,9 @@
 #ifndef HAS_LIVES_SUPPORT_H
 #define HAS_LIVES_SUPPORT_H
 
+#ifndef NO_GTK
 #include <gtk/gtk.h>
-
+#endif
 
 /*
  * Standard gettext macros.

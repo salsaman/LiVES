@@ -116,7 +116,7 @@ void add_warn_check (LiVESBox *box, int warn_mask_number) {
 
   lives_widget_show_all(hbox);
  
-  lives_signal_connect (LIVES_GUI_OBJECT (checkbutton), "toggled",
+  lives_signal_connect (LIVES_GUI_OBJECT (checkbutton), LIVES_WIDGET_TOGGLED_EVENT,
 		    LIVES_GUI_CALLBACK (on_warn_mask_toggled),
                       GINT_TO_POINTER(warn_mask_number));
 }
@@ -128,7 +128,7 @@ static void add_clear_ds_button(LiVESDialog* dialog) {
   lives_button_set_label(LIVES_BUTTON(button),_("_Recover disk space"));
   if (mainw->tried_ds_recover) lives_widget_set_sensitive(button,FALSE);
 
-  lives_signal_connect (LIVES_GUI_OBJECT (button), "clicked",
+  lives_signal_connect (LIVES_GUI_OBJECT (button), LIVES_WIDGET_CLICKED_EVENT,
 		    LIVES_GUI_CALLBACK (on_cleardisk_activate),
 		    (gpointer)button);
 
@@ -148,7 +148,7 @@ static void add_clear_ds_adv(LiVESBox *box) {
 
   lives_widget_show_all(hbox);
 
-  lives_signal_connect (LIVES_GUI_OBJECT (button), "clicked",
+  lives_signal_connect (LIVES_GUI_OBJECT (button), LIVES_WIDGET_CLICKED_EVENT,
 		    LIVES_GUI_CALLBACK (on_cleardisk_advanced_clicked),
 		    NULL);
 
@@ -259,10 +259,10 @@ static LiVESWidget* create_warn_dialog (int warn_mask_number, LiVESWindow *trans
 
   lives_widget_set_can_focus_and_default (warning_cancelbutton);
 
-  lives_widget_add_accelerator (warning_cancelbutton, "activate", accel_group,
+  lives_widget_add_accelerator (warning_cancelbutton, LIVES_WIDGET_CLICKED_EVENT, accel_group,
 			      LIVES_KEY_Escape, (LiVESXModifierType)0, (LiVESAccelFlags)0);
 
-  lives_widget_add_accelerator (warning_okbutton, "activate", accel_group,
+  lives_widget_add_accelerator (warning_okbutton, LIVES_WIDGET_CLICKED_EVENT, accel_group,
 			      LIVES_KEY_Return, (LiVESXModifierType)0, (LiVESAccelFlags)0);
 
   lives_widget_set_can_focus_and_default (warning_okbutton);
@@ -895,7 +895,7 @@ static void cancel_process(boolean visible) {
     if (accelerators_swapped) {
       if (!mainw->preview) lives_widget_set_tooltip_text( mainw->m_playbutton,_ ("Play all"));
       lives_widget_remove_accelerator (cfile->proc_ptr->preview_button, mainw->accel_group, LIVES_KEY_p, (LiVESXModifierType)0);
-      lives_widget_add_accelerator (mainw->playall, "activate", mainw->accel_group, LIVES_KEY_p, (LiVESXModifierType)0, 
+      lives_widget_add_accelerator (mainw->playall, LIVES_WIDGET_CLICKED_EVENT, mainw->accel_group, LIVES_KEY_p, (LiVESXModifierType)0, 
 				  LIVES_ACCEL_VISIBLE);
     }
     if (cfile->proc_ptr!=NULL) {
@@ -1512,7 +1512,7 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const gchar *te
       if (mainw->preview_box!=NULL) lives_widget_set_tooltip_text( mainw->p_playbutton,_ ("Preview"));
       lives_widget_set_tooltip_text( mainw->m_playbutton,_ ("Preview"));
       lives_widget_remove_accelerator (mainw->playall, mainw->accel_group, LIVES_KEY_p, (LiVESXModifierType)0);
-      lives_widget_add_accelerator (cfile->proc_ptr->preview_button, "clicked", mainw->accel_group, LIVES_KEY_p,
+      lives_widget_add_accelerator (cfile->proc_ptr->preview_button, LIVES_WIDGET_CLICKED_EVENT, mainw->accel_group, LIVES_KEY_p,
 				  (LiVESXModifierType)0, (LiVESAccelFlags)0);
       accelerators_swapped=TRUE;
     }
@@ -1744,7 +1744,7 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const gchar *te
 	if (mainw->preview_box!=NULL) lives_widget_set_tooltip_text( mainw->p_playbutton,_ ("Preview"));
 	lives_widget_set_tooltip_text( mainw->m_playbutton,_ ("Preview"));
 	lives_widget_remove_accelerator (mainw->playall, mainw->accel_group, LIVES_KEY_p, (LiVESXModifierType)0);
-	lives_widget_add_accelerator (cfile->proc_ptr->preview_button, "clicked", mainw->accel_group, LIVES_KEY_p,
+	lives_widget_add_accelerator (cfile->proc_ptr->preview_button, LIVES_WIDGET_CLICKED_EVENT, mainw->accel_group, LIVES_KEY_p,
 				    (LiVESXModifierType)0, (LiVESAccelFlags)0);
 	accelerators_swapped=TRUE;
       }
@@ -1816,7 +1816,7 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const gchar *te
     if (accelerators_swapped) {
       if (!mainw->preview) lives_widget_set_tooltip_text( mainw->m_playbutton,_ ("Play all"));
       lives_widget_remove_accelerator (cfile->proc_ptr->preview_button, mainw->accel_group, LIVES_KEY_p, (LiVESXModifierType)0);
-      lives_widget_add_accelerator (mainw->playall, "activate", mainw->accel_group, LIVES_KEY_p, (LiVESXModifierType)0,
+      lives_widget_add_accelerator (mainw->playall, LIVES_WIDGET_CLICKED_EVENT, mainw->accel_group, LIVES_KEY_p, (LiVESXModifierType)0,
 				  LIVES_ACCEL_VISIBLE);
       accelerators_swapped=FALSE;
     }
@@ -2584,7 +2584,7 @@ static void create_threaded_dialog(gchar *text, boolean has_cancel) {
       lives_dialog_add_action_widget (LIVES_DIALOG (procw->processing), enoughbutton, LIVES_RESPONSE_CANCEL);
       lives_widget_set_can_focus_and_default (enoughbutton);
 
-      lives_signal_connect (LIVES_GUI_OBJECT (enoughbutton), "clicked",
+      lives_signal_connect (LIVES_GUI_OBJECT (enoughbutton), LIVES_WIDGET_CLICKED_EVENT,
 			LIVES_GUI_CALLBACK (on_dth_cancel_clicked),
 			GINT_TO_POINTER(1));
       
@@ -2594,7 +2594,7 @@ static void create_threaded_dialog(gchar *text, boolean has_cancel) {
     lives_dialog_add_action_widget (LIVES_DIALOG (procw->processing), cancelbutton, LIVES_RESPONSE_CANCEL);
     lives_widget_set_can_focus_and_default (cancelbutton);
 
-    lives_signal_connect (LIVES_GUI_OBJECT (cancelbutton), "clicked",
+    lives_signal_connect (LIVES_GUI_OBJECT (cancelbutton), LIVES_WIDGET_CLICKED_EVENT,
                       LIVES_GUI_CALLBACK (on_dth_cancel_clicked),
                       GINT_TO_POINTER(0));
 

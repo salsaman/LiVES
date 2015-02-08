@@ -965,7 +965,7 @@ static LiVESWidget *create_omc_macro_combo(lives_omc_match_node_t *mnode, int ro
     lives_combo_set_active_index (LIVES_COMBO(combo),mnode->macro);
   }
 
-  lives_signal_connect_after (G_OBJECT (combo), "changed", LIVES_GUI_CALLBACK (on_omc_combo_entry_changed), mnode);
+  lives_signal_connect_after (G_OBJECT (combo), LIVES_WIDGET_CHANGED_EVENT, LIVES_GUI_CALLBACK (on_omc_combo_entry_changed), mnode);
 
   g_object_set_data(G_OBJECT(combo),"row",GINT_TO_POINTER(row));
   g_object_set_data(G_OBJECT(combo),"omclw",(gpointer)omclw);
@@ -1116,7 +1116,7 @@ static void omc_learner_add_row(int type, int detail, lives_omc_match_node_t *mn
 						      NULL);
    lives_tree_view_append_column (LIVES_TREE_VIEW (mnode->treev1), column);
 
-   lives_signal_connect(renderer, "toggled", (GCallback) cell_toggled_callback, mnode);
+   lives_signal_connect(renderer, LIVES_WIDGET_TOGGLED_EVENT, (GCallback) cell_toggled_callback, mnode);
 
    renderer = lives_cell_renderer_text_new ();
    column = lives_tree_view_column_new_with_attributes (_("range"),
@@ -1336,7 +1336,7 @@ static omclearn_w *create_omclearn_dialog(void) {
   lives_container_add (LIVES_CONTAINER (hbuttonbox), omclw->clear_button);
   
 
-  lives_signal_connect (LIVES_GUI_OBJECT (omclw->clear_button), "clicked",
+  lives_signal_connect (LIVES_GUI_OBJECT (omclw->clear_button), LIVES_WIDGET_CLICKED_EVENT,
 		    LIVES_GUI_CALLBACK (clear_unmatched),
 		    (gpointer)omclw);
 
@@ -1347,7 +1347,7 @@ static omclearn_w *create_omclearn_dialog(void) {
   lives_container_add (LIVES_CONTAINER (hbuttonbox), omclw->del_all_button);
   
 
-  lives_signal_connect (LIVES_GUI_OBJECT (omclw->del_all_button), "clicked",
+  lives_signal_connect (LIVES_GUI_OBJECT (omclw->del_all_button), LIVES_WIDGET_CLICKED_EVENT,
 		    LIVES_GUI_CALLBACK (del_all),
 		    (gpointer)omclw);
 
@@ -1369,7 +1369,7 @@ static omclearn_w *create_omclearn_dialog(void) {
   lives_button_box_set_layout (LIVES_BUTTON_BOX (hbuttonbox), LIVES_BUTTONBOX_SPREAD);
   
   
-  lives_signal_connect (LIVES_GUI_OBJECT (ok_button), "clicked",
+  lives_signal_connect (LIVES_GUI_OBJECT (ok_button), LIVES_WIDGET_CLICKED_EVENT,
 		    LIVES_GUI_CALLBACK (close_learner_dialog),
 		    NULL);
   

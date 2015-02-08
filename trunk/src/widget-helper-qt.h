@@ -1,22 +1,46 @@
+// widget-helper.h
+// LiVES
+// (c) G. Finch 2012 - 2015 <salsaman@gmail.com>
+// released under the GNU GPL 3 or later
+// see file ../COPYING or www.gnu.org for licensing details
+
+// this is kind of a fun project.
+// a) for me to learn more C++
+// b) to experiment with another widget toolkit
+// c) to make LiVES a little less dependent on GKT+
+
+
+#ifndef HAS_LIVES_WIDGET_HELPER_QT_H
+#define HAS_LIVES_WIDGET_HELPER_QT_H
+
 #ifdef GUI_QT
 // just for testing !!!!
+
+using namespace std;
 
 #include <QtCore/QLinkedList>
 
 #include <QtGui/QScreen>
 #include <QtGui/QWindow>
 #include <QtGui/QTextCursor>
+#include <QtGui/QTextDocumentFragment>
+#include <QtGui/QShortcutEvent>
+#include <QtGui/QWheelEvent>
 
 #include <QtWidgets/QLabel>
+#include <QtWidgets/QSplitter>
 #include <QtWidgets/QLineEdit>
 #include <QtWidgets/QPushButton>
 #include <QtWidgets/QToolButton>
 #include <QtWidgets/QToolBar>
 #include <QtWidgets/QTableWidget>
 #include <QtWidgets/QDialog>
+#include <QtWidgets/QDialogButtonBox>
 #include <QtWidgets/QBoxLayout>
 #include <QtWidgets/QComboBox>
 #include <QtWidgets/QMenu>
+#include <QtWidgets/QLabel>
+#include <QtWidgets/QMainWindow>
 #include <QtWidgets/QFileDialog>
 #include <QtWidgets/QLayout>
 #include <QtWidgets/QTextEdit>
@@ -24,7 +48,7 @@
 #include <QtWidgets/QRadioButton>
 #include <QtWidgets/QButtonGroup>
 #include <QtWidgets/QProgressBar>
-#include <QtWidgets/QSpinBox>
+#include <QtWidgets/QDoubleSpinBox>
 #include <QtWidgets/QCheckBox>
 #include <QtWidgets/QShortcut>
 #include <QtWidgets/QGridLayout>
@@ -34,11 +58,41 @@
 
 #include <QtGui/QColor>
 #include <QtCore/QAbstractItemModel>
+#include <QtCore/QSharedPointer>
+#include <QtGui/QStandardItemModel>
 #include <QtCore/QModelIndex>
 
 #define GTK_CHECK_VERSION(a,b,c) 0
 
 #define g_free(a) lives_free(a)
+
+typedef char gchar;
+
+#define NO_GTK
+#include "support.h"
+
+// TODO - move to support.c
+char *translate(const char *String) {
+  delete trString; // be very careful, as trString is free()d automatically here
+  if (strlen(String)) {
+    QString qs = QString::fromLocal8Bit(dgettext (PACKAGE, String));
+    trString = strdup(qs.toUtf8().constData());
+  }
+  else trString=strdup(String);
+  return trString;
+}
+
+char *translate_with_plural(const char *String, const char *StringPlural, unsigned long int n) {
+  delete trString; // be very careful, as trString is free()d automatically here
+  if (strlen(String)) {
+    QString qs = QString::fromLocal8Bit(dngettext (PACKAGE, String, StringPlural, n));
+    trString = strdup(qs.toUtf8().constData());
+  }
+  else trString=strdup(String);
+  return trString;
+}
+
+//////////////////
 
 #ifndef IS_MINGW
 typedef bool                          boolean;
@@ -52,20 +106,31 @@ typedef bool                          boolean;
 #define TRUE true
 #endif
 
-typedef void*                             gpointer;
+typedef void*                             gpointer;  // TODO
+typedef void*                             livespointer;
+
+typedef int                               gint;
+typedef uchar                             guchar;
+  
+typedef void *(*LiVESPixbufDestroyNotify(uchar *, void *));
+
+
+typedef int                               lives_painter_content_t;
+
+typedef gpointer                          livespointer;
+typedef ulong                             gulong;
+
+typedef void GError;
+typedef void LiVESError;
+
+typedef QScreen LiVESXScreen;
+typedef QScreen LiVESXDisplay;
+typedef QScreen GdkDisplay;
+typedef QScreen LiVESXDevice;
 
 //#define LIVES_TABLE_IS_GRID 1
 
-typedef int LiVESAttachOptions;
-#define LIVES_EXPAND 1
-#define LIVES_SHRINK 2
-#define LIVES_FILL 3
 
-typedef QStringList LiVESSList;
-typedef QStringList LiVESList;
-
-typedef QStringList GSList; // TODO - remove
-typedef QStringList GList; // TODO - remove
 
 typedef void PangoLayout; // TODO - replace
 
@@ -87,41 +152,218 @@ typedef QStyle::StateFlag LiVESWidgetState;
 #define LIVES_WIDGET_COLOR_SCALE(x) (x) ///< macro to get 0. to 1.
 #define LIVES_WIDGET_COLOR_SCALE_255(x) ((double)x/255.) ///< macro to convert from (0. - 255.) to component
 
+
+typedef Qt::Modifier LiVESXModifierType;
+
+#define LIVES_CONTROL_MASK Qt::CTRL
+#define LIVES_ALT_MASK     Qt::ALT
+#define LIVES_SHIFT_MASK   Qt::SHIFT
+#define LIVES_LOCK_MASK    Qt::SHIFT
+
+
+#define LIVES_KEY_Left (static_cast<uint32_t>(Qt::Key_Left))
+#define LIVES_KEY_Right (static_cast<uint32_t>(Qt::Key_Right))
+#define LIVES_KEY_Up (static_cast<uint32_t>(Qt::Key_Up))
+#define LIVES_KEY_Down (static_cast<uint32_t>(Qt::Key_Down))
+
+#define LIVES_KEY_BackSpace (static_cast<uint32_t>(Qt::Key_Backspace))
+#define LIVES_KEY_Return (static_cast<uint32_t>(Qt::Key_Return))
+#define LIVES_KEY_Tab (static_cast<uint32_t>(Qt::Key_Tab))
+#define LIVES_KEY_Home (static_cast<uint32_t>(Qt::Key_Home))
+#define LIVES_KEY_End (static_cast<uint32_t>(Qt::Key_End))
+#define LIVES_KEY_Slash (static_cast<uint32_t>(Qt::Key_Slash))
+#define LIVES_KEY_Space (static_cast<uint32_t>(Qt::Key_Space))
+#define LIVES_KEY_Plus (static_cast<uint32_t>(Qt::Key_Plus))
+#define LIVES_KEY_Minus (static_cast<uint32_t>(Qt::Key_Minus))
+#define LIVES_KEY_Equal (static_cast<uint32_t>(Qt::Key_Equal))
+
+#define LIVES_KEY_1 (static_cast<uint32_t>(Qt::Key_1))
+#define LIVES_KEY_2 (static_cast<uint32_t>(Qt::Key_2))
+#define LIVES_KEY_3 (static_cast<uint32_t>(Qt::Key_3))
+#define LIVES_KEY_4 (static_cast<uint32_t>(Qt::Key_4))
+#define LIVES_KEY_5 (static_cast<uint32_t>(Qt::Key_5))
+#define LIVES_KEY_6 (static_cast<uint32_t>(Qt::Key_6))
+#define LIVES_KEY_7 (static_cast<uint32_t>(Qt::Key_7))
+#define LIVES_KEY_8 (static_cast<uint32_t>(Qt::Key_8))
+#define LIVES_KEY_9 (static_cast<uint32_t>(Qt::Key_9))
+#define LIVES_KEY_0 (static_cast<uint32_t>(Qt::Key_0))
+
+#define LIVES_KEY_a (static_cast<uint32_t>(Qt::Key_a))
+#define LIVES_KEY_b (static_cast<uint32_t>(Qt::Key_b))
+#define LIVES_KEY_c (static_cast<uint32_t>(Qt::Key_c))
+#define LIVES_KEY_d (static_cast<uint32_t>(Qt::Key_d))
+#define LIVES_KEY_e (static_cast<uint32_t>(Qt::Key_e))
+#define LIVES_KEY_f (static_cast<uint32_t>(Qt::Key_f))
+#define LIVES_KEY_g (static_cast<uint32_t>(Qt::Key_g))
+#define LIVES_KEY_h (static_cast<uint32_t>(Qt::Key_h))
+#define LIVES_KEY_i (static_cast<uint32_t>(Qt::Key_i))
+#define LIVES_KEY_j (static_cast<uint32_t>(Qt::Key_j))
+#define LIVES_KEY_k (static_cast<uint32_t>(Qt::Key_k))
+#define LIVES_KEY_l (static_cast<uint32_t>(Qt::Key_l))
+#define LIVES_KEY_m (static_cast<uint32_t>(Qt::Key_m))
+#define LIVES_KEY_n (static_cast<uint32_t>(Qt::Key_n))
+#define LIVES_KEY_o (static_cast<uint32_t>(Qt::Key_o))
+#define LIVES_KEY_p (static_cast<uint32_t>(Qt::Key_p))
+#define LIVES_KEY_q (static_cast<uint32_t>(Qt::Key_q))
+#define LIVES_KEY_r (static_cast<uint32_t>(Qt::Key_r))
+#define LIVES_KEY_s (static_cast<uint32_t>(Qt::Key_s))
+#define LIVES_KEY_t (static_cast<uint32_t>(Qt::Key_t))
+#define LIVES_KEY_u (static_cast<uint32_t>(Qt::Key_u))
+#define LIVES_KEY_v (static_cast<uint32_t>(Qt::Key_v))
+#define LIVES_KEY_w (static_cast<uint32_t>(Qt::Key_w))
+#define LIVES_KEY_x (static_cast<uint32_t>(Qt::Key_x))
+#define LIVES_KEY_y (static_cast<uint32_t>(Qt::Key_y))
+#define LIVES_KEY_z (static_cast<uint32_t>(Qt::Key_z))
+
+#define LIVES_KEY_F1 (static_cast<uint32_t>(Qt::Key_F1))
+#define LIVES_KEY_F2 (static_cast<uint32_t>(Qt::Key_F2))
+#define LIVES_KEY_F3 (static_cast<uint32_t>(Qt::Key_F3))
+#define LIVES_KEY_F4 (static_cast<uint32_t>(Qt::Key_F4))
+#define LIVES_KEY_F5 (static_cast<uint32_t>(Qt::Key_F5))
+#define LIVES_KEY_F6 (static_cast<uint32_t>(Qt::Key_F6))
+#define LIVES_KEY_F7 (static_cast<uint32_t>(Qt::Key_F7))
+#define LIVES_KEY_F8 (static_cast<uint32_t>(Qt::Key_F8))
+#define LIVES_KEY_F9 (static_cast<uint32_t>(Qt::Key_F9))
+#define LIVES_KEY_F10 (static_cast<uint32_t>(Qt::Key_F10))
+#define LIVES_KEY_F11 (static_cast<uint32_t>(Qt::Key_F11))
+#define LIVES_KEY_F12 (static_cast<uint32_t>(Qt::Key_F12))
+
+#define LIVES_KEY_Page_Up (static_cast<uint32_t>(Qt::Key_PageUp))
+#define LIVES_KEY_Page_Down (static_cast<uint32_t>(Qt::Key_PageDown))
+
+#define LIVES_KEY_Escape (static_cast<uint32_t>(Qt::Key_Escape))
+
+typedef int LiVESAccelFlags;
+
+typedef class LiVESAccelGroup LiVESAccelGroup;
+typedef class LiVESWidget LiVESWidget;
+
 typedef struct {
-// values from 0.0 -> 1.0
-double red;
-double green;
-double blue;
-double alpha;
+  ulong function;
+  void *data;
+} LiVESClosure;
+
+typedef LiVESClosure LiVESWidgetClosure;
+typedef LiVESClosure LiVESWidgetSourceFunc;
+
+
+typedef QEvent LiVESXEvent;
+typedef Qt::MouseButton LiVESXEventButton;
+typedef void LiVESXEventMotion;
+typedef QCursor LiVESXCursor; 
+
+
+#define LIVES_SCROLL_UP   1
+#define LIVES_SCROLL_DOWN 2
+
+typedef struct {
+  int direction;
+  LiVESXModifierType state;
+} LiVESXEventScroll;
+
+
+typedef class LiVESObject LiVESObject;
+
+typedef void (*LiVESWidgetCallback) (LiVESWidget *widget, livespointer data);
+typedef boolean (*LiVESScrollEventCallback) (LiVESWidget *widget, LiVESXEventScroll *event, livespointer data);
+typedef boolean (*LiVESAccelCallback) (LiVESAccelGroup *group, LiVESObject *obj, uint32_t keyval, LiVESXModifierType mod, livespointer data);
+
+#define LIVES_GUI_CALLBACK(a) (ulong)(a)
+
+
+typedef struct {
+  ulong handler_id; // set for signals, 0 for key accels
+  QKeySequence ks;  // set for key accels
+  LiVESAccelFlags flags;
+  LiVESAccelGroup *group;
+  QShortcut *shortcut; // created for key accels
+
+  // for key accels, one or the other of these: - either we emit accel_signal, or we call closure
+  // for normal signals, both are set (name of signal and the closure it calls)
+  const char *signal_name;  // or NULL, if not NULL we emit signal (or is set for signal)
+  LiVESClosure *closure; // or NULL, if not NULL we call closure
+  bool blocked;
+} LiVESAccel;
+
+
+
+typedef struct {
+  // values from 0.0 -> 1.0
+  double red;
+  double green;
+  double blue;
+  double alpha;
 } LiVESWidgetColor;
 
-typedef class LiVESWidget LWid;
 
-typedef void (*LiVESWidgetCallback) (LWid *widget, gpointer data);
 
-#define LIVES_WIDGET_EVENT_EXPOSE_EVENT "update"
+typedef QList<const void *> LiVESSList;
+typedef LiVESSList LiVESList;
+typedef LiVESSList GSList;
+typedef LiVESList GList;
 
-class ExposeBlocker
-{
-public:
- ExposeBlocker() : m_widg(NULL)
-    {
-    }
+LIVES_INLINE static const void *lives_slist_nth_data(LiVESSList *slist, uint32_t n) {
+  return slist->at(n);
+}
 
-  void set_widget( QWidget *widg) {
-    m_widg=widg;
-    widg->setUpdatesEnabled(false );
-  }
+LIVES_INLINE static LiVESSList *lives_slist_remove(LiVESSList *slist, const void *data) {
+  slist->removeOne(data);
+  return slist;
+}
 
-  ~ExposeBlocker()
-    {
-      if (m_widg!=NULL) m_widg->setUpdatesEnabled( m_old );
-    }
+LIVES_INLINE static LiVESSList *lives_slist_append(LiVESSList *slist, const void *data) {
+  slist->push_back(data);
+  return slist;
+}
 
-private:
-    QWidget *m_widg;
-    bool m_old;
-};
+
+LIVES_INLINE static void lives_slist_free(LiVESSList *slist) {
+  delete slist;
+}
+
+#define g_list_free(a) lives_slist_free(a) // TODO
+
+
+typedef uint32_t LiVESEventMask;
+#define LIVES_EXPOSURE_MASK (1<<0)
+#define LIVES_POINTER_MOTION_MASK (1<<1)
+#define LIVES_POINTER_MOTION_HINT_MASK (1<<2)
+#define LIVES_BUTTON_MOTION_MASK (1<<3)
+#define LIVES_BUTTON1_MOTION_MASK (1<<4)
+#define LIVES_BUTTON2_MOTION_MASK (1<<5)
+#define LIVES_BUTTON3_MOTION_MASK (1<<6)
+#define LIVES_BUTTON_PRESS_MASK (1<<7)
+#define LIVES_BUTTON_RELEASE_MASK (1<<8)
+#define LIVES_KEY_PRESS_MASK (1<<9)
+#define LIVES_KEY_RELEASE_MASK (1<<10)
+#define LIVES_ENTER_NOTIFY_MASK (1<<11)
+#define LIVES_LEAVE_NOTIFY_MASK (1<<12)
+#define LIVES_FOCUS_CHANGE_MASK (1<<13)
+#define LIVES_STRUCTURE_MASK (1<<14)
+#define LIVES_PROPERTY_CHANGE_MASK (1<<15)
+#define LIVES_VISIBILITY_NOTIFY_MASK (1<<16)
+#define LIVES_PROXIMITY_IN_MASK (1<<17)
+#define LIVES_PROXIMITY_OUT_MASK (1<<18)
+#define LIVES_SUBSTRUCTURE_MASK (1<<19)
+#define LIVES_SCROLL_MASK (1<<20)
+#define LIVES_TOUCH_MASK (1<<21)
+#define LIVES_SMOOTH_SCROLL_MASK (1<<22)
+
+#define LIVES_ALL_EVENTS_MASK 0xFFFF
+
+// events
+#define LIVES_WIDGET_EXPOSE_EVENT "update"
+#define LIVES_WIDGET_SCROLL_EVENT "scroll_event"
+
+// TODO - add: "button_press_event", "motion_notify_event", "button_release_event", "enter-notify-event", "leave-notify-event", "drag-data-received", "delete-event", "configure-event", "expose_event", "state_flags_changed", "state_changed"
+
+
+// signals
+#define LIVES_WIDGET_CLICKED_EVENT "clicked"
+#define LIVES_WIDGET_TOGGLED_EVENT "toggled"
+#define LIVES_WIDGET_CHANGED_EVENT "changed"
+#define LIVES_WIDGET_VALUE_CHANGED_EVENT "value-changed"
+#define LIVES_WIDGET_SELECTION_CHANGED_EVENT "selection-changed"
 
 LiVESWidgetColor *lives_widget_color_copy(LiVESWidgetColor *c1orNULL, const LiVESWidgetColor *c2);
 
@@ -132,335 +374,659 @@ static QString make_col(LiVESWidgetColor *col) {
     .arg(col->green*255.)
     .arg(col->blue*255.)
     .arg(col->alpha*255.);
-    return qc;
+  return qc;
 }
 
 
-class LiVESWidget : public QWidget {
+typedef enum {
+  LIVES_WIDGET_TYPE_BUTTON,
+  LIVES_WIDGET_TYPE_SPIN_BUTTON,
+  LIVES_WIDGET_TYPE_RADIO_BUTTON,
+  LIVES_WIDGET_TYPE_CHECK_BUTTON,
+  LIVES_WIDGET_TYPE_COLOR_BUTTON,
+  LIVES_WIDGET_TYPE_TOOL_BUTTON,
+  LIVES_WIDGET_TYPE_BUTTON_BOX,
+  LIVES_WIDGET_TYPE_TEXT_VIEW,
+  LIVES_WIDGET_TYPE_SCALE,
+  LIVES_WIDGET_TYPE_SCROLLBAR,
+  LIVES_WIDGET_TYPE_PROGRESS_BAR,
+  LIVES_WIDGET_TYPE_PANED,
+  LIVES_WIDGET_TYPE_MENU,
+  LIVES_WIDGET_TYPE_ENTRY,
+  LIVES_WIDGET_TYPE_ARROW,
+  LIVES_WIDGET_TYPE_RULER,
+  LIVES_WIDGET_TYPE_COMBO,
+  LIVES_WIDGET_TYPE_DIALOG,
+  LIVES_WIDGET_TYPE_ALIGNMENT,
+  LIVES_WIDGET_TYPE_IMAGE,
+  LIVES_WIDGET_TYPE_LABEL,
+  LIVES_WIDGET_TYPE_TREE_VIEW,
+  LIVES_WIDGET_TYPE_HSEPARATOR,
+  LIVES_WIDGET_TYPE_VSEPARATOR,
+  LIVES_WIDGET_TYPE_MAIN_WINDOW,
+  LIVES_WIDGET_TYPE_SUB_WINDOW,
+  LIVES_WIDGET_TYPE_EVENT_BOX,
+  LIVES_WIDGET_TYPE_HBOX,
+  LIVES_WIDGET_TYPE_VBOX,
+} LiVESObjectType;
+
+
+LIVES_INLINE static QKeySequence make_qkey_sequence(uint32_t key, LiVESXModifierType mods) {
+  return static_cast<Qt::Key>(key) | mods;
+}
+
+LIVES_INLINE static uint32_t qkeysequence_get_key(QKeySequence ks) {
+  return ks[0] & 0x01FFFFFF;
+}
+
+
+LIVES_INLINE static LiVESXModifierType qkeysequence_get_mod(QKeySequence ks) {
+  return (LiVESXModifierType)(ks[0] & 0xF2000000);
+}
+
+
+class evFilter : public QObject {
  public:
+
+ protected:
+  bool eventFilter(QObject *obj, QEvent *event);
+
+};
+
+
+
+class LiVESObject : public QObject {
+  Q_OBJECT
+
+ public:
+
+  void block_signal(ulong handler_id);
+  void block_signals(const char *signame);
+  void unblock_signal(ulong handler_id);
+  void disconnect_signal(ulong handler_id);
+
+  void add_accel(LiVESAccel *accel);
+  void add_accel(ulong handler_id, const char *signal_name, ulong funcptr, gpointer data);
+  void add_accel(const char* signal_name, LiVESAccelGroup* group, uint32_t key, LiVESXModifierType mod, LiVESAccelFlags flags);
+
+  boolean remove_accel(LiVESAccel *accel);
+  boolean remove_accels(LiVESAccelGroup*, uint32_t key, LiVESXModifierType mod);
+
+  boolean remove_accel_group(LiVESAccelGroup *group);
+  void add_accel_group(LiVESAccelGroup *group);
+
+  QList<LiVESAccelGroup *> get_accel_groups();
+
+  QList<LiVESAccel *> get_accels_for(LiVESAccelGroup *group, QKeySequence ks);
+  QList<LiVESAccel *> get_accels_for(const char *signame);
+  LiVESAccel *get_accel_for(ulong handler_id);
+
+  boolean activate_accel(uint32_t key, LiVESXModifierType mod);
+  boolean activate_accel(QKeySequence ks);
+
+  void remove_all_accels();
+
+  LiVESObject() {
+    eFilter = new evFilter(); 
+    ((QObject *)this)->installEventFilter(eFilter);
+    refcount = 1;
+  };
+
+
+  void inc_refcount() {
+    refcount++;
+  }
+
+  void dec_refcount() {
+    if (--refcount == 0) {
+      finalise();
+    }
+  }
+
+  void set_type(LiVESObjectType xtype) {
+    type = xtype;
+  }
+
+  LiVESObjectType get_type() {
+    return type;
+  }
+
+
+ private:
   int refcount;
-  LiVESWidgetState state;
-  
-  LiVESWidget() {
+  evFilter *eFilter;
+  QList<LiVESAccel *>accels;
+  QList<LiVESAccelGroup *>accel_groups;
+  LiVESObjectType type;
+
+  void finalise(void) {
+    ((QObject *)this)->deleteLater(); // schedule for deletion
+
+    // remove us from all accel_groups
+    while (accel_groups.size() > 0) {
+      remove_accel_group(accel_groups[0]);
+    }
+
+    remove_all_accels();
+  }
+
+};
+
+
+
+
+#define ICON_SCALE(a) ((int)(1.0 * a))
+typedef QSize LiVESIconSize;
+#define LIVES_ICON_SIZE_INVALID QSize(0,0)
+#define LIVES_ICON_SIZE_MENU QSize(ICON_SCALE(16),ICON_SCALE(16))
+#define LIVES_ICON_SIZE_SMALL_TOOLBAR QSize(ICON_SCALE(16),ICON_SCALE(16))
+#define LIVES_ICON_SIZE_LARGE_TOOLBAR QSize(ICON_SCALE(24),ICON_SCALE(24))
+#define LIVES_ICON_SIZE_BUTTON QSize(ICON_SCALE(16),ICON_SCALE(16))
+#define LIVES_ICON_SIZE_DND QSize(ICON_SCALE(32),ICON_SCALE(32))
+#define LIVES_ICON_SIZE_DIALOG QSize(ICON_SCALE(48),ICON_SCALE(48))
+
+
+typedef Qt::TransformationMode LiVESInterpType;
+#define LIVES_INTERP_BEST Qt::SmoothTransformation
+#define LIVES_INTERP_NORMAL Qt::SmoothTransformation
+#define LIVES_INTERP_FAST Qt::FastTransformation
+
+typedef int LiVESResponseType;
+#define LIVES_RESPONSE_NONE QDialog::Rejected
+#define LIVES_RESPONSE_OK QDialog::Accepted
+#define LIVES_RESPONSE_CANCEL QDialog::Rejected
+#define LIVES_RESPONSE_ACCEPT QDialog::Accepted
+#define LIVES_RESPONSE_YES QDialog::Accepted
+#define LIVES_RESPONSE_NO QDialog::Rejected
+#define LIVES_RESPONSE_INVALID -1
+#define LIVES_RESPONSE_SHOW_DETAILS 2
+
+
+typedef QStyle::StandardPixmap LiVESArrowType;
+#define LIVES_ARROW_UP QStyle::SP_ArrowUp
+#define LIVES_ARROW_DOWN QStyle::SP_ArrowDown
+#define LIVES_ARROW_LEFT QStyle::SP_ArrowLeft
+#define LIVES_ARROW_RIGHT QStyle::SP_ArrowRight
+#define LIVES_ARROW_NONE -1
+
+class LiVESWidget : public LiVESObject, public QWidget {
+ public:
+
+  void set_fg_color(LiVESWidgetState state, const LiVESWidgetColor *col);
+  void set_bg_color(LiVESWidgetState state, const LiVESWidgetColor *col);
+  void set_base_color(LiVESWidgetState state, const LiVESWidgetColor *col);
+  void set_text_color(LiVESWidgetState state, const LiVESWidgetColor *col);
+
+  LiVESWidgetColor *get_fg_color(LiVESWidgetState state);
+  LiVESWidgetColor *get_bg_color(LiVESWidgetState state);
+
+  void update_stylesheet();
+
+ LiVESWidget() : parent(NULL) {
+
+    QVariant qv = QVariant::fromValue((LiVESObject *)this);
+    (static_cast<QWidget *>(this))->setProperty("LiVESObject", qv);
+
     fg_norm=bg_norm=base_norm=text_norm=NULL;
     fg_act=bg_act=base_act=text_act=NULL;
     fg_insen=bg_insen=base_insen=text_insen=NULL;
     fg_hover=bg_hover=base_hover=text_hover=NULL;
     fg_sel=bg_sel=base_sel=text_sel=NULL;
-
-    refcount=0;
     state = LIVES_WIDGET_STATE_NORMAL;
-
-    widgetName = QString("%1").arg(ulong_random());
+    widgetName = QString("%1").arg(ulong_random()); 
+    events_mask = LIVES_EXPOSURE_MASK;
+    onetime_events_mask = 0;
   }
 
-  LiVESWidget(const LiVESWidget &widget) {
-    refcount = widget.refcount;
-    state = widget.state;
+  ~LiVESWidget();
+
+
+  void add_child(LiVESWidget *child) {
+    if (child->parent != NULL) return;
+    child->set_parent(this);
+    children.push_back(child);
   }
 
-  ~LiVESWidget() {
-
+  void remove_child(LiVESWidget *child) {
+    children.removeOne(child);
+    child->set_parent(NULL);
+    child->dec_refcount();
   }
 
-  QWidget *get_widget() {
-    QWidget *qw = qobject_cast<QWidget *>(this);
-    qw->setProperty("LiVESWidget", QVariant::fromValue(this));
-    return qw;
+  void set_parent(LiVESWidget *new_parent) {
+    parent = new_parent;
   }
 
-  QWidget *parentWidget() {
-    return get_widget();
+  LiVESWidget *get_parent() {
+    return parent;
   }
 
-  boolean isWidgetType() {
-    return FALSE;
+  QString get_name() {
+    return widgetName;
   }
 
-
-void update_stylesheet() {
-QWidget *qw = qobject_cast<QWidget *>(this);
-
-QString stylesheet;
-QString col;
-
-stylesheet = "QWidget#" + widgetName + " {color: ";
-col=make_col(fg_norm);
-stylesheet += col;
-stylesheet += "; background-color: ";
-col=make_col(bg_norm);
-stylesheet += col;
-stylesheet += "; selection-background-color: ";
-col=make_col(bg_sel);
-stylesheet += col;
-stylesheet += "; selection-color: ";
-col=make_col(fg_sel);
-stylesheet += col;
-stylesheet += " } ";
-
-stylesheet = "QWidget#" + widgetName + ":active {color: ";
-col=make_col(fg_act);
-stylesheet += col;
-stylesheet += "; background-color: ";
-col=make_col(bg_act);
-stylesheet += col;
-stylesheet += " } ";
-
-stylesheet = "QWidget#" + widgetName + ":hover {color: ";
-col=make_col(fg_hover);
-stylesheet += col;
-stylesheet += "; background-color: ";
-col=make_col(bg_hover);
-stylesheet += col;
-stylesheet += " } ";
-
-stylesheet = "QWidget#" + widgetName + ":disabled {color: ";
-col=make_col(fg_insen);
-stylesheet += col;
-stylesheet += "; background-color: ";
-col=make_col(bg_insen);
-stylesheet += col;
-stylesheet += " } ";
-
-
-qw->setStyleSheet(stylesheet);
-
-qw->update();
-}
-
-
-
-
-
-
-void set_fg_color(LiVESWidgetState state, const LiVESWidgetColor *col) {
-switch (state) {
- case (LIVES_WIDGET_STATE_NORMAL):
-lives_widget_color_copy(fg_norm,col);
-break;
- case (LIVES_WIDGET_STATE_ACTIVE):
-lives_widget_color_copy(fg_act,col);
-break;
- case (LIVES_WIDGET_STATE_INSENSITIVE):
-lives_widget_color_copy(fg_insen,col);
-break;
- case (LIVES_WIDGET_STATE_PRELIGHT):
-lives_widget_color_copy(fg_hover,col);
-break;
- case (LIVES_WIDGET_STATE_SELECTED):
-lives_widget_color_copy(fg_sel,col);
-break;
- default:
-break;
-}
-
-update_stylesheet();
-
-}
-
-
-void set_bg_color(LiVESWidgetState state, const LiVESWidgetColor *col) {
-switch (state) {
- case (LIVES_WIDGET_STATE_NORMAL):
-lives_widget_color_copy(bg_norm,col);
-break;
- case (LIVES_WIDGET_STATE_ACTIVE):
-lives_widget_color_copy(bg_act,col);
-break;
- case (LIVES_WIDGET_STATE_INSENSITIVE):
-lives_widget_color_copy(bg_insen,col);
-break;
- case (LIVES_WIDGET_STATE_PRELIGHT):
-lives_widget_color_copy(bg_hover,col);
-break;
- case (LIVES_WIDGET_STATE_SELECTED):
-lives_widget_color_copy(bg_sel,col);
-break;
- default:
-break;
-}
-
-update_stylesheet();
-
-}
-
-
-void set_base_color(LiVESWidgetState state, const LiVESWidgetColor *col) {
-switch (state) {
- case (LIVES_WIDGET_STATE_NORMAL):
-lives_widget_color_copy(base_norm,col);
-break;
- case (LIVES_WIDGET_STATE_ACTIVE):
-lives_widget_color_copy(base_act,col);
-break;
- case (LIVES_WIDGET_STATE_INSENSITIVE):
-lives_widget_color_copy(base_insen,col);
-break;
- case (LIVES_WIDGET_STATE_PRELIGHT):
-lives_widget_color_copy(base_hover,col);
-break;
- case (LIVES_WIDGET_STATE_SELECTED):
-lives_widget_color_copy(base_sel,col);
-break;
- default:
-break;
-}
-
-update_stylesheet();
-
-}
-
-
-void set_text_color(LiVESWidgetState state, const LiVESWidgetColor *col) {
-switch (state) {
- case (LIVES_WIDGET_STATE_NORMAL):
-lives_widget_color_copy(text_norm,col);
-break;
- case (LIVES_WIDGET_STATE_ACTIVE):
-lives_widget_color_copy(text_act,col);
-break;
- case (LIVES_WIDGET_STATE_INSENSITIVE):
-lives_widget_color_copy(text_insen,col);
-break;
- case (LIVES_WIDGET_STATE_PRELIGHT):
-lives_widget_color_copy(text_hover,col);
-break;
- case (LIVES_WIDGET_STATE_SELECTED):
-lives_widget_color_copy(text_sel,col);
-break;
- default:
-break;
-}
-
-update_stylesheet();
-
-}
-
-
-LiVESWidgetColor *get_fg_color(LiVESWidgetState state) {
-switch (state) {
- case (LIVES_WIDGET_STATE_NORMAL):
-return fg_norm;
-break;
- case (LIVES_WIDGET_STATE_ACTIVE):
-return fg_act;
-break;
- case (LIVES_WIDGET_STATE_INSENSITIVE):
-return fg_insen;
-break;
- case (LIVES_WIDGET_STATE_PRELIGHT):
-return fg_hover;
-break;
- case (LIVES_WIDGET_STATE_SELECTED):
-return fg_sel;
-break;
- default:
-break;
-}
-return NULL;
-}
-
-LiVESWidgetColor *get_bg_color(LiVESWidgetState state) {
-switch (state) {
- case (LIVES_WIDGET_STATE_NORMAL):
-return bg_norm;
-break;
- case (LIVES_WIDGET_STATE_ACTIVE):
-return bg_act;
-break;
- case (LIVES_WIDGET_STATE_INSENSITIVE):
-return bg_insen;
-break;
- case (LIVES_WIDGET_STATE_PRELIGHT):
-return bg_hover;
-break;
- case (LIVES_WIDGET_STATE_SELECTED):
-return bg_sel;
-break;
- default:
-break;
-}
-return NULL;
-}
-
-  void block_signal(ulong handler_id) {
-    // TODO - add to blocked list
-
+  void set_events(uint32_t mask) {
+    events_mask = mask;
   }
 
-
-  void block_signal(const char *signame) {
-    // TODO :: need to block expose / paint signals
-
+  void add_onetime_event_block(uint32_t mask) {
+    onetime_events_mask |= mask;
   }
 
-
-  void unblock_signal(ulong handler_id) {
-    // TODO - remove from blocked list
-
+  void remove_onetime_event_block(uint32_t mask) {
+    if (onetime_events_mask & mask) onetime_events_mask  ^= mask;
   }
 
-
-  void disconnect_signal(ulong handler_id) {
-    // TODO - remove from list, if no more with same name, disconnect
-
-
+  uint32_t get_onetime_events_block() {
+    return onetime_events_mask;
   }
 
+  uint32_t get_events() {
+    return events_mask;
+  }
+
+  int count_children() {
+    return children.count();
+  }
+
+  LiVESSList *get_children() {
+    return &children;
+  }
+
+  LiVESWidget *get_child(int index) {
+    return (LiVESWidget *)children.at(index);
+  }
+
+  LiVESWidgetState get_state() {
+    return state;
+  }
+
+ Q_SLOTS
+   void cb_wrapper_clicked() {
+   // "clicked" callback
+
+   QList<LiVESAccel *> ql = get_accels_for(LIVES_WIDGET_CLICKED_EVENT);
+   for (int i=0; i < ql.size(); i++) {
+     LiVESWidgetCallback *cb = (LiVESWidgetCallback *)ql[i]->closure->function;
+     (*cb)(this, ql[i]->closure->data);
+   }
+
+ }
+
+   void cb_wrapper_toggled() {
+   // "toggled" callback
+
+   QList<LiVESAccel *> ql = get_accels_for(LIVES_WIDGET_TOGGLED_EVENT);
+   for (int i=0; i < ql.size(); i++) {
+     LiVESWidgetCallback *cb = (LiVESWidgetCallback *)ql[i]->closure->function;
+     (*cb)(this, ql[i]->closure->data);
+   }
+
+ }
 
 
-  public Q_SLOTS:
-    void cb_wrapper_clicked() {
+   void cb_wrapper_changed() {
+     // "changed" callback
 
-      // retrieve func and data
-      LiVESWidgetCallback funcptr;
-      ulong func;
-      void *data;
-      ulong handler_id;
+     QList<LiVESAccel *> ql = get_accels_for(LIVES_WIDGET_CHANGED_EVENT);
+     for (int i=0; i < ql.size(); i++) {
+       LiVESWidgetCallback *cb = (LiVESWidgetCallback *)ql[i]->closure->function;
+       (*cb)(this, ql[i]->closure->data);
+     }
 
-      //retrieve_signal_callbacks("clicked",&func,&data,&handler_id);
-      // (may be multiple with different handler_id)
+   }
 
-      // may be blocked by handler_id
 
-      funcptr = (LiVESWidgetCallback)func;
+   void cb_wrapper_value_changed() {
+     // "value-changed" callback
+     
+     QList<LiVESAccel *> ql = get_accels_for(LIVES_WIDGET_VALUE_CHANGED_EVENT);
+     for (int i=0; i < ql.size(); i++) {
+       LiVESWidgetCallback *cb = (LiVESWidgetCallback *)ql[i]->closure->function;
+       (*cb)(this, ql[i]->closure->data);
+     }
 
-      (*funcptr)(this, data);
-    }
+   }
 
-private:
-QString widgetName;
+   void cb_wrapper_selection_changed() {
+     // "selection-changed" callback
+     
+     QList<LiVESAccel *> ql = get_accels_for(LIVES_WIDGET_SELECTION_CHANGED_EVENT);
+     for (int i=0; i < ql.size(); i++) {
+       LiVESWidgetCallback *cb = (LiVESWidgetCallback *)ql[i]->closure->function;
+       (*cb)(this, ql[i]->closure->data);
+     }
 
-QWidget *widget;
+   }
 
-LiVESWidgetColor *fg_norm,*bg_norm,*base_norm,*text_norm;
-LiVESWidgetColor *fg_act,*bg_act,*base_act,*text_act;
-LiVESWidgetColor *fg_insen,*bg_insen,*base_insen,*text_insen;
-LiVESWidgetColor *fg_hover,*bg_hover,*base_hover,*text_hover;
-LiVESWidgetColor *fg_sel,*bg_sel,*base_sel,*text_sel;
-
+ private:
+   LiVESSList children;
+   LiVESWidget *parent;
+   QString widgetName;
+   
+   LiVESWidgetColor *fg_norm,*bg_norm,*base_norm,*text_norm;
+   LiVESWidgetColor *fg_act,*bg_act,*base_act,*text_act;
+   LiVESWidgetColor *fg_insen,*bg_insen,*base_insen,*text_insen;
+   LiVESWidgetColor *fg_hover,*bg_hover,*base_hover,*text_hover;
+   LiVESWidgetColor *fg_sel,*bg_sel,*base_sel,*text_sel; 
+   
+   LiVESWidgetState state;
+   
+   uint32_t events_mask;
+   uint32_t onetime_events_mask;
 };
 
 
-//Q_DECLARE_METATYPE(LiVESWidget)
+#define LIVES_IS_WIDGET(a) 1
+#define LIVES_IS_CONTAINER(a) 1
+#define LIVES_IS_XWINDOW(a) 1
 
-#define LIVES_GUI_CALLBACK(a) (ulong)(a)
+#define LIVES_IS_BUTTON(a) (static_cast<LiVESObject *>(a)->get_type() == LIVES_WIDGET_TYPE_BUTTON || \
+			    static_cast<LiVESObject *>(a)->get_type() == LIVES_WIDGET_TYPE_CHECK_BUTTON)
+#define LIVES_IS_PUSH_BUTTON(a) (static_cast<LiVESObject *>(a)->get_type() == LIVES_WIDGET_TYPE_BUTTON || \
+				 static_cast<LiVESObject *>(a)->get_type() == LIVES_WIDGET_TYPE_RADIO_BUTTON)
+#define LIVES_IS_LABEL(a) (static_cast<LiVESObject *>(a)->get_type() == LIVES_WIDGET_TYPE_LABEL)
+#define LIVES_IS_HBOX(a) (static_cast<LiVESObject *>(a)->get_type() == LIVES_WIDGET_TYPE_HBOX)
+#define LIVES_IS_VBOX(a) (static_cast<LiVESObject *>(a)->get_type() == LIVES_WIDGET_TYPE_VBOX)
+#define LIVES_IS_COMBO(a) (static_cast<LiVESObject *>(a)->get_type() == LIVES_WIDGET_TYPE_COMBO)
+#define LIVES_IS_ENTRY(a) (static_cast<LiVESObject *>(a)->get_type() == LIVES_WIDGET_TYPE_ENTRY)
+
+   
+bool evFilter::eventFilter(QObject *obj, QEvent *event) {
+
+  // return true to block
+
+  switch (event->type()) {
+
+  case (QEvent::Shortcut): {
+    QShortcutEvent *qevent = static_cast<QShortcutEvent *>(event);
+    QKeySequence ks = qevent->key();
+    LiVESObject *object = static_cast<LiVESObject *>(obj);
+    object->activate_accel(ks);
+    return false;
+  }
+
+  case (QEvent::Wheel): {
+    QWheelEvent *qevent = static_cast<QWheelEvent *>(event);
+    LiVESObject *object = static_cast<LiVESObject *>(obj);
+    LiVESWidget *widget = static_cast<LiVESWidget *>(object);
+    if (!(widget->get_events() & LIVES_SCROLL_MASK)) return true;
+    if (!(widget->get_onetime_events_block() & LIVES_SCROLL_MASK)) {widget->remove_onetime_event_block(LIVES_SCROLL_MASK); return true;}
+    QList<LiVESAccel *>accels = object->get_accels_for(LIVES_WIDGET_SCROLL_EVENT);
+    LiVESXEventScroll *scrollevent = NULL;
+    if (qevent->angleDelta().y() > 0) scrollevent->direction = LIVES_SCROLL_UP;
+    else scrollevent->direction = LIVES_SCROLL_DOWN;
+
+    // TODO - set kstate
+
+    for (int i=0; i < accels.size(); i++) {
+      LiVESScrollEventCallback *cb = (LiVESScrollEventCallback *)accels[i]->closure->function;
+      bool ret = (*cb)(widget, scrollevent, accels[i]->closure->data);
+      if (ret) return true;
+    }
+  }
+
+  default:
+    return false;
+
+  }
+
+  return false; // continue
+}
 
 
-ulong lives_signal_connect(LiVESWidget *widget, const char *signal_name, ulong funcptr, gpointer data) {
+
+
+void LiVESWidget::update_stylesheet() {
+  QWidget *qw = static_cast<QWidget *>(this);
+  QString stylesheet;
+  QString col;
+
+  stylesheet = "QWidget#" + widgetName + " {color: ";
+  col=make_col(fg_norm);
+  stylesheet += col;
+  stylesheet += "; background-color: ";
+  col=make_col(bg_norm);
+  stylesheet += col;
+  stylesheet += "; selection-background-color: ";
+  col=make_col(bg_sel);
+  stylesheet += col;
+  stylesheet += "; selection-color: ";
+  col=make_col(fg_sel);
+  stylesheet += col;
+  stylesheet += " } ";
+  stylesheet = "QWidget#" + widgetName + ":active {color: ";
+  col=make_col(fg_act);
+  stylesheet += col;
+  stylesheet += "; background-color: ";
+  col=make_col(bg_act);
+  stylesheet += col;
+  stylesheet += " } ";
+  stylesheet = "QWidget#" + widgetName + ":hover {color: ";
+  col=make_col(fg_hover);
+  stylesheet += col;
+  stylesheet += "; background-color: ";
+  col=make_col(bg_hover);
+  stylesheet += col;
+  stylesheet += " } ";
+  stylesheet = "QWidget#" + widgetName + ":disabled {color: ";
+  col=make_col(fg_insen);
+  stylesheet += col;
+  stylesheet += "; background-color: ";
+  col=make_col(bg_insen);
+  stylesheet += col;
+  stylesheet += " } ";
+
+  qw->setStyleSheet(stylesheet);
+  qw->update();
+}
+
+
+
+void LiVESWidget::set_fg_color(LiVESWidgetState state, const LiVESWidgetColor *col) {
+  switch (state) {
+  case (LIVES_WIDGET_STATE_NORMAL):
+    lives_widget_color_copy(fg_norm,col);
+    break;
+  case (LIVES_WIDGET_STATE_ACTIVE):
+    lives_widget_color_copy(fg_act,col);
+    break;
+  case (LIVES_WIDGET_STATE_INSENSITIVE):
+    lives_widget_color_copy(fg_insen,col);
+    break;
+  case (LIVES_WIDGET_STATE_PRELIGHT):
+    lives_widget_color_copy(fg_hover,col);
+    break;
+  case (LIVES_WIDGET_STATE_SELECTED):
+    lives_widget_color_copy(fg_sel,col);
+    break;
+  default:
+    break;
+  }
+  update_stylesheet();
+}
+
+
+void LiVESWidget::set_bg_color(LiVESWidgetState state, const LiVESWidgetColor *col) {
+  switch (state) {
+  case (LIVES_WIDGET_STATE_NORMAL):
+    lives_widget_color_copy(bg_norm,col);
+    break;
+  case (LIVES_WIDGET_STATE_ACTIVE):
+    lives_widget_color_copy(bg_act,col);
+    break;
+  case (LIVES_WIDGET_STATE_INSENSITIVE):
+    lives_widget_color_copy(bg_insen,col);
+    break;
+  case (LIVES_WIDGET_STATE_PRELIGHT):
+    lives_widget_color_copy(bg_hover,col);
+    break;
+  case (LIVES_WIDGET_STATE_SELECTED):
+    lives_widget_color_copy(bg_sel,col);
+    break;
+  default:
+    break;
+  }
+  update_stylesheet();
+}
+
+
+void LiVESWidget::set_base_color(LiVESWidgetState state, const LiVESWidgetColor *col) {
+  switch (state) {
+  case (LIVES_WIDGET_STATE_NORMAL):
+    lives_widget_color_copy(base_norm,col);
+    break;
+  case (LIVES_WIDGET_STATE_ACTIVE):
+    lives_widget_color_copy(base_act,col);
+    break;
+  case (LIVES_WIDGET_STATE_INSENSITIVE):
+    lives_widget_color_copy(base_insen,col);
+    break;
+  case (LIVES_WIDGET_STATE_PRELIGHT):
+    lives_widget_color_copy(base_hover,col);
+    break;
+  case (LIVES_WIDGET_STATE_SELECTED):
+    lives_widget_color_copy(base_sel,col);
+    break;
+  default:
+    break;
+  }
+  update_stylesheet();
+}
+
+
+void LiVESWidget::set_text_color(LiVESWidgetState state, const LiVESWidgetColor *col) {
+  switch (state) {
+  case (LIVES_WIDGET_STATE_NORMAL):
+    lives_widget_color_copy(text_norm,col);
+    break;
+  case (LIVES_WIDGET_STATE_ACTIVE):
+    lives_widget_color_copy(text_act,col);
+    break;
+  case (LIVES_WIDGET_STATE_INSENSITIVE):
+    lives_widget_color_copy(text_insen,col);
+    break;
+  case (LIVES_WIDGET_STATE_PRELIGHT):
+    lives_widget_color_copy(text_hover,col);
+    break;
+  case (LIVES_WIDGET_STATE_SELECTED):
+    lives_widget_color_copy(text_sel,col);
+    break;
+  default:
+    break;
+  }
+  update_stylesheet();
+}
+
+
+LiVESWidgetColor *LiVESWidget::get_fg_color(LiVESWidgetState state) {
+  switch (state) {
+  case (LIVES_WIDGET_STATE_NORMAL):
+    return fg_norm;
+    break;
+  case (LIVES_WIDGET_STATE_ACTIVE):
+    return fg_act;
+    break;
+  case (LIVES_WIDGET_STATE_INSENSITIVE):
+    return fg_insen;
+    break;
+  case (LIVES_WIDGET_STATE_PRELIGHT):
+    return fg_hover;
+    break;
+  case (LIVES_WIDGET_STATE_SELECTED):
+    return fg_sel;
+    break;
+  default:
+    break;
+  }
+  return NULL;
+}
+
+
+LiVESWidgetColor *LiVESWidget::get_bg_color(LiVESWidgetState state) {
+  switch (state) {
+  case (LIVES_WIDGET_STATE_NORMAL):
+    return bg_norm;
+    break;
+  case (LIVES_WIDGET_STATE_ACTIVE):
+    return bg_act;
+    break;
+  case (LIVES_WIDGET_STATE_INSENSITIVE):
+    return bg_insen;
+    break;
+  case (LIVES_WIDGET_STATE_PRELIGHT):
+    return bg_hover;
+    break;
+  case (LIVES_WIDGET_STATE_SELECTED):
+    return bg_sel;
+    break;
+  default:
+    break;
+  }
+  return NULL;
+}
+
+
+ulong lives_signal_connect(LiVESObject *object, const char *signal_name, ulong funcptr, gpointer data) {
   ulong handler_id;
-
   handler_id=ulong_random();
 
-  // generate random handler_id
+  object->add_accel(handler_id, signal_name, funcptr, data);
 
-  // need to store: (ulong)handler_id, signal_name, funcptr, data
-  //widget->store_signal_callback(handler_id,signal_name,funcptr,data);
-
-  if (!strcmp(signal_name,"clicked")) {
-    widget->connect(widget, SIGNAL(clicked()), widget, SLOT(cb_wrapper_clicked()));
+  if (!strcmp(signal_name, LIVES_WIDGET_CLICKED_EVENT)) {
+    (static_cast<QObject *>(object))->connect(static_cast<QObject *>(object), 
+					      SIGNAL(clicked()), 
+					      static_cast<QObject *>(object), 
+					      SLOT(cb_wrapper_clicked()));
   }
-  // etc. "scroll_event", "toggled", "changed", "button_press_event", "value_changed", "motion_notify_event", "button_release_event", "enter-notify-event", "leave-notify-event", "drag-data-received", "delete-event", "configure-event", "selection_changed", "expose_event", "state_flags_changed", "state_changed"
+  else if (!strcmp(signal_name, LIVES_WIDGET_TOGGLED_EVENT)) {
+    (static_cast<QObject *>(object))->connect(static_cast<QObject *>(object), 
+					      SIGNAL(toggled()), 
+					      static_cast<QObject *>(object), 
+					      SLOT(cb_wrapper_toggled()));
+  }
+  else if (!strcmp(signal_name, LIVES_WIDGET_CHANGED_EVENT)) {
+    // for combo, entry, LiVESTreeSelection
+    if (LIVES_IS_COMBO(object))
+	(static_cast<QObject *>(object))->connect(static_cast<QObject *>(object), 
+						  SIGNAL(currentTextChanged()), 
+						  static_cast<QObject *>(object), 
+						  SLOT(cb_wrapper_changed()));
+
+    else if (LIVES_IS_ENTRY(object)) 
+	     (static_cast<QObject *>(object))->connect(static_cast<QObject *>(object), 
+						       SIGNAL(textChanged()), 
+						       static_cast<QObject *>(object), 
+						       SLOT(cb_wrapper_changed()));
+
+    else {
+      QItemSelectionModel *qism = dynamic_cast<QItemSelectionModel *>(object);
+      if (qism != NULL) { 
+	(static_cast<QObject *>(object))->connect(static_cast<QObject *>(object), 
+						  SIGNAL(selectionChanged()), 
+						  static_cast<QObject *>(object), 
+						  SLOT(cb_wrapper_changed()));
+
+      }
+    }
+  }
+  else if (!strcmp(signal_name, LIVES_WIDGET_VALUE_CHANGED_EVENT)) {
+    // for spinbutton, scrollbar
+    (static_cast<QObject *>(object))->connect(static_cast<QObject *>(object), 
+					      SIGNAL(valueChanged()), 
+					      static_cast<QObject *>(object), 
+					      SLOT(cb_wrapper_value_changed()));
+
+  }
+  else if (!strcmp(signal_name, LIVES_WIDGET_SELECTION_CHANGED_EVENT)) {
+    // for filedialog
+    (static_cast<QObject *>(object))->connect(static_cast<QObject *>(object), 
+					      SIGNAL(currentChanged()), 
+					      static_cast<QObject *>(object), 
+					      SLOT(cb_wrapper_selection_changed()));
+
+  }
+
 
   return handler_id;
 }
@@ -470,146 +1036,921 @@ ulong lives_signal_connect(LiVESWidget *widget, const char *signal_name, ulong f
 
 
 
+void LiVESObject::add_accel(LiVESAccel *accel) {
+  accels.push_back(accel);
 
-typedef int                               gint;
-typedef uchar                             guchar;
-  
-typedef void *(*LiVESPixbufDestroyNotify(uchar *, void *));
-
-
-typedef int                               lives_painter_content_t;
-
-typedef gpointer                          livespointer;
-typedef char                              gchar;
-typedef ulong                             gulong;
-
-typedef void GError;
-
-typedef struct {
-  ulong func;
-} LiVESWidgetClosure;
+  QShortcut *shortcut = new QShortcut(accel->ks, dynamic_cast<QWidget *>(this));
+  accel->shortcut = shortcut;
+}
 
 
-typedef struct {
-  ulong func;
-} LiVESWidgetSourceFunc;
+void LiVESObject::add_accel(ulong handler_id, const char *signal_name, ulong funcptr, gpointer data) {
+  LiVESAccel *accel = new LiVESAccel;
+  accel->handler_id = handler_id;
+  accel->signal_name = strdup(signal_name);
+  LiVESClosure *cl = new LiVESClosure;
+  cl->function = funcptr;
+  cl->data = data;
+  accel->closure = cl;
+  add_accel(accel);
+}
 
 
-#define LiVESError void
-
-typedef QScreen LiVESXScreen;
-typedef QScreen LiVESXDisplay; // TODO
-typedef QScreen GdkDisplay; // TODO - specialised
-typedef QScreen LiVESXDevice; // TODO
-
-/*    QDesktopWidget *pDesktop = QApplication::desktop();
-    QRect geometry = pDesktop->availableScreenGeometry(number);
-    move(geometry.topLeft());*/
-
-typedef QWindow LiVESXWindow;
-
-typedef QEvent LiVESXEvent;
-
-typedef Qt::MouseButton LiVESXEventButton;
-typedef void LiVESXEventMotion;
-
-typedef QCursor LiVESXCursor;
-
-typedef QObject LiVESObject;
-
-typedef QShortcut LiVESAccelGroup;
-typedef QKeySequence LiVESXModifierType;
-typedef QAbstractItemModel LiVESTreeModel;
-typedef QAbstractListModel LiVESTreeStore;
-typedef QModelIndex LiVESTreeIter;
-typedef QPersistentModelIndex LiVESTreePath;
-typedef QTreeWidget LiVESTreeView;
-
-typedef int LiVESTreeViewColumn;
-typedef QItemSelection LiVESTreeSelection;
+void LiVESObject::add_accel(const char* signal_name, LiVESAccelGroup* group, uint32_t key, LiVESXModifierType mod, LiVESAccelFlags flags) {
+  LiVESAccel *accel = new LiVESAccel;
+  accel->handler_id = 0;
+  accel->signal_name = strdup(signal_name);
+  accel->closure = NULL;
+  accel->group = group;
+  accel->ks = make_qkey_sequence(key, mod);
+  accel->flags = flags;
+  add_accel(accel);
+}
 
 
-typedef Qt::TransformationMode LiVESInterpType;
-#define LIVES_INTERP_BEST   Qt::SmoothTransformation
-#define LIVES_INTERP_NORMAL Qt::SmoothTransformation
-#define LIVES_INTERP_FAST   Qt::FastTransformation
+boolean LiVESObject::remove_accel(LiVESAccel *accel) {
+  QList<LiVESAccel *>::iterator it = accels.begin();
 
-typedef int LiVESResponseType;
-#define LIVES_RESPONSE_NONE QDialog::Rejected
-#define LIVES_RESPONSE_OK QDialog::Accepted
-#define LIVES_RESPONSE_CANCEL QDialog::Rejected
-#define LIVES_RESPONSE_ACCEPT QDialog::Accepted
-#define LIVES_RESPONSE_YES QDialog::Accepted
-#define LIVES_RESPONSE_NO QDialog::Rejected
+  while (it != accels.end()) {
+    if (((LiVESAccel *)*it) == accel) {
+      delete accel->shortcut;
+      delete accel->signal_name;
+      delete accel->closure;
+      accels.erase(it);
+      return TRUE;
+    }
+    else
+      ++it;
+  }
+
+  return FALSE;
+}
 
 
-#define LIVES_RESPONSE_INVALID QDialog::Rejected
-#define LIVES_RESPONSE_SHOW_DETAILS QDialog::Rejected
+boolean LiVESObject::activate_accel(uint32_t key, LiVESXModifierType mod) {
+  return activate_accel(make_qkey_sequence(key, mod));
+}
 
-class LiVESLabel : public LiVESWidget, public QLabel {};
-class LiVESBox : public LiVESWidget, public QBoxLayout {};
-class LiVESHBox : public LiVESWidget, public QHBoxLayout {};
-class LiVESVBox : public LiVESWidget, public QVBoxLayout {};
-class LiVESEventBox : public LiVESWidget, public QHBoxLayout {};
-class LiVESEntry : public LiVESWidget, public QLineEdit {};
-class LiVESCombo : public LiVESWidget, public QComboBox {};
-class LiVESSpinButton : public LiVESWidget, public QSpinBox {};
-class LiVESMenu : public LiVESWidget, public QMenu {};
-class LiVESButton : public LiVESWidget, public QPushButton {};
-class LiVESColorButton : public LiVESWidget, public QPushButton {};
-class LiVESToggleButton : public LiVESWidget, public QAbstractButton {};
 
-/*class LiVESPixbuf : public LiVESWidget, public QImage {
+boolean LiVESObject::activate_accel(QKeySequence ks) {
+  for (int j=0; j < accel_groups.size(); j++) {
+    QList<LiVESAccel *> ql = get_accels_for(accel_groups.at(j), ks);
+    for (int i=0; i < ql.size(); i++) {
+      LiVESAccel *accel = ql.at(i);
+      if (accel->closure != NULL) {
+	LiVESAccelCallback *cb = (LiVESAccelCallback *)accel->closure->function;
+	uint32_t key = qkeysequence_get_key(ks);
+	LiVESXModifierType mod = qkeysequence_get_mod(ks);
+	(*cb)(accel->group, this, key, mod, accel->closure->data);
+      }
+      else {
+	if (!strcmp(accel->signal_name, LIVES_WIDGET_CLICKED_EVENT)) {
+	  QAbstractButton *widget = dynamic_cast<QAbstractButton *>(this);
+	  if (widget != NULL) widget->click();
+	}
+
+	if (!strcmp(accel->signal_name, LIVES_WIDGET_TOGGLED_EVENT)) {
+	  QAbstractButton *widget = dynamic_cast<QAbstractButton *>(this);
+	  if (widget != NULL) widget->toggle();
+	}
+
+      }
+      return TRUE;
+    }
+  }
+  return FALSE;
+}
+
+
+
+void LiVESObject::remove_all_accels() {
+  QList<LiVESAccel *>::iterator it = accels.begin();
+  while (it != accels.end()) {
+    remove_accel((LiVESAccel *)*it);
+  }
+}
+
+
+QList<LiVESAccel *> LiVESObject::get_accels_for(const char *signame) {
+  QList<LiVESAccel *> ql;
+  for (int i=0; i < accels.size(); i++) {
+    if (accels[i]->signal_name == signame) ql.push_back(accels[i]);
+  }
+  return ql;
+}
+
+
+LiVESAccel *LiVESObject::get_accel_for(ulong handler_id) {
+  for (int i=0; i < accels.size(); i++) {
+    if (accels[i]->handler_id == handler_id) {
+      return accels[i];
+    }
+  }
+  return NULL;
+}
+
+
+void LiVESObject::block_signal(ulong handler_id) {
+  LiVESAccel *accel = get_accel_for(handler_id);
+  accel->blocked = true;
+}
+
+
+void LiVESObject::block_signals(const char *signame) {
+  QList<LiVESAccel *>ql = get_accels_for(signame);
+  for (int i=0; i < ql.size(); i++) {
+    ql[i]->blocked = true;
+  }
+}
+
+
+void LiVESObject::unblock_signal(ulong handler_id) {
+  LiVESAccel *accel = get_accel_for(handler_id);
+  accel->blocked = false;
+}
+
+
+void LiVESObject::disconnect_signal(ulong handler_id) {
+  LiVESAccel *accel = get_accel_for(handler_id);
+  remove_accel(accel);
+}
+
+
+QList<LiVESAccelGroup *> LiVESObject::get_accel_groups() {
+  return accel_groups;
+}
+
+
+
+class LiVESAdjustment : public LiVESObject {
  public:
- LiVESPixbuf() : QImage() {};
- LiVESPixbuf(QImage& qi) : QImage(qi) {};
- LiVESPixbuf(int width, int height, QImage::Format fmt) : QImage(width,height,fmt) {};
- LiVESPixbuf(uint8_t *data, int width, int height, int stride, QImage::Format fmt) : QImage(data,width,height,stride,fmt) {};
-};*/
+  double value;
+  double lower;
+  double upper;
 
-typedef class LiVESImage LiVESPixbuf;
+ LiVESAdjustment(double xval, double low, double upp, double step_i, double page_i, double page_size) : value(xval), lower(low), upper(upp) {};
+
+  void set_owner(LiVESWidget *widget) {
+    owner = widget;
+  }
+
+  LiVESWidget *get_owner() {
+    return owner;
+  }
 
 
-class LiVESAdjustment {
- public:
-  double value, lower, upper, si, pi, ps;
-
- LiVESAdjustment(double A, double B, double C, double D, double E, double F) :
-  value(A), lower(B), upper(C), si(D), pi(E), ps(F) {};
+ private:
+  LiVESWidget *owner;
 
 };
 
 
-typedef LiVESWidget                           LiVESWindow;
+
+
+class LiVESButtonBase : public LiVESWidget {
+ public:
+  LiVESButtonBase() {
+    init();
+  }
+
+ LiVESButtonBase(QString qs) {
+   init();
+  }
+
+ void set_use_underline(bool use) {
+   QAbstractButton *qab = dynamic_cast<QAbstractButton *>(this);
+   if (qab != NULL) {
+     if (use && !use_underline) {
+       // alter label
+       QString qlabel = qab->text();
+       qlabel = qlabel.replace('&',"&&");
+       qlabel = qlabel.replace('_','&');
+       qab->setText(qlabel);
+     }
+     else if (!use && use_underline) {
+       QString qlabel = qab->text();
+       qlabel = qlabel.replace('&','_');
+       qlabel = qlabel.replace("__","&");
+       qab->setText(qlabel);
+     }
+   }
+   use_underline = use;
+ }
+
+ bool get_use_underline() {
+   return use_underline;
+ }
+
+ private:
+ bool use_underline;
+
+ void init() {
+    use_underline = false;
+ }
+
+};
+
+
+class LiVESButton : public LiVESButtonBase, public QPushButton {
+ public:
+
+ LiVESButton() {
+    init();
+  }
+
+ LiVESButton(QString qs) {
+   init();
+ }
+
+
+ private:
+ void init() {
+    set_type(LIVES_WIDGET_TYPE_BUTTON);
+ }
+
+};
+
+
+
+
+class LiVESSpinButton : public LiVESButtonBase, public QDoubleSpinBox {
+ public:
+
+ LiVESSpinButton(LiVESAdjustment *xadj, double climb_rate, uint32_t digits) : adj(xadj) {
+    init();
+
+    this->setDecimals(digits);
+    this->setSingleStep(climb_rate);
+
+    this->setValue(adj->value);
+    this->setMinimum(adj->lower);
+    this->setMaximum(adj->upper);
+
+    adj->set_owner(this);
+  }
+
+  LiVESAdjustment *get_adj() {
+    return adj;
+  }
+
+ private:
+ LiVESAdjustment *adj;
+
+ void init() {
+    set_type(LIVES_WIDGET_TYPE_SPIN_BUTTON);
+ }
+
+};
+
+
+
+
+class LiVESRadioButton : public LiVESButtonBase, public QPushButton {
+ public:
+  LiVESRadioButton() {
+    init();
+  }
+
+ LiVESRadioButton(QString qs) {
+   init();
+ }
+
+ void set_group(LiVESSList *xlist) {
+   slist = xlist;
+ }
+
+ LiVESSList *get_list() {
+   return slist;
+ }
+
+
+  ~LiVESRadioButton() {
+    QButtonGroup *qbg = (QButtonGroup *)lives_slist_nth_data(slist, 0);
+    QList<QAbstractButton *> ql = qbg->buttons();
+    if (ql.size() == 1) lives_slist_remove(slist, (const void *)qbg);
+  }
+
+ private:
+ LiVESSList *slist;
+
+ void init() {
+   this->setCheckable(true);
+   set_type(LIVES_WIDGET_TYPE_RADIO_BUTTON);
+ }
+
+};
+
+
+
+class LiVESCheckButton : public LiVESButtonBase, public QCheckBox {
+ public:
+
+  LiVESCheckButton() {
+    init();
+  }
+
+ LiVESCheckButton(QString qs) {
+   init();
+ }
+
+ private:
+ void init() {
+    set_type(LIVES_WIDGET_TYPE_CHECK_BUTTON);
+ }
+
+};
+
+
+
+class LiVESButtonBox : public LiVESWidget, public QDialogButtonBox {
+ public:
+  LiVESButtonBox() {
+    set_type(LIVES_WIDGET_TYPE_BUTTON_BOX);
+  }
+
+};
+
+
+class LiVESColorButton : public LiVESButtonBase, public QPushButton {  
+ public:
+  LiVESColorButton() {
+    set_type(LIVES_WIDGET_TYPE_COLOR_BUTTON);
+  }
+};
+
+
+
+
+
+class LiVESMenu : public LiVESWidget, public QMenu {  
+ public:
+  LiVESMenu() {
+    set_type(LIVES_WIDGET_TYPE_MENU);
+  }
+
+  void add_accel_group(LiVESAccelGroup *group);
+
+};
+
+
+
+
+class LiVESCombo : public LiVESWidget, public QComboBox {  
+ public:
+  LiVESCombo() {
+    set_type(LIVES_WIDGET_TYPE_COMBO);
+  }
+};
+
+
+class LiVESHSeparator : public LiVESWidget, public QHBoxLayout {  
+ public:
+  LiVESHSeparator() {
+    QFrame* line = new QFrame();
+    line->setFrameShape(QFrame::HLine);
+    line->setFrameShadow(QFrame::Sunken);
+    this->addWidget(line);
+    set_type(LIVES_WIDGET_TYPE_HSEPARATOR);
+  }
+};
+
+
+
+class LiVESVSeparator : public LiVESWidget, public QVBoxLayout {  
+ public:
+  LiVESVSeparator() {
+    QFrame* line = new QFrame();
+    line->setFrameShape(QFrame::VLine);
+    line->setFrameShadow(QFrame::Sunken);
+    this->addWidget(line);
+    set_type(LIVES_WIDGET_TYPE_VSEPARATOR);
+  }
+};
+
+
+
+class LiVESTextBuffer : public LiVESWidget, public QTextDocument {  
+ public:
+
+  LiVESTextBuffer() {
+    insert = QTextCursor(this);
+  }
+
+  QTextCursor get_cursor() {
+    return insert;
+  }
+
+ private:
+  QTextCursor insert;
+
+};
+
+
+
+class LiVESTextView : public LiVESWidget, public QTextEdit {  
+ public:
+
+  LiVESTextView() {
+    buff = new LiVESTextBuffer();
+  }
+
+
+ LiVESTextView(LiVESTextBuffer *xbuff) : QTextEdit(), buff(xbuff) {
+    set_type(LIVES_WIDGET_TYPE_TEXT_VIEW);
+    this->setDocument(buff);
+  }
+
+  ~LiVESTextView() {
+    delete buff;
+  }
+
+
+  LiVESTextBuffer *get_buffer() {
+    return buff;
+  }
+
+ private:
+  LiVESTextBuffer *buff;
+
+  void init() {
+    set_type(LIVES_WIDGET_TYPE_TEXT_VIEW);
+    this->setDocument(buff);
+  }
+
+
+};
+
+
+
+class LiVESTextMark : public LiVESObject, public QTextCursor {
+ public:
+
+ LiVESTextMark(LiVESTextBuffer *tbuff, const char *mark_name, 
+	       int where, boolean left_gravity) : QTextCursor(tbuff), name(mark_name), lgrav(left_gravity) {
+    ((QTextCursor *)this)->setPosition(where);
+  }
+
+  ~LiVESTextMark() {
+    delete name;
+  }
+
+  QString get_name() {
+    return name;
+  }
+
+ private:
+  const char *name;
+  boolean lgrav;
+
+};
+
+
+
+class LiVESScale : public LiVESWidget, public QSlider {  
+ public:
+  LiVESScale(Qt::Orientation) {
+    set_type(LIVES_WIDGET_TYPE_SCALE);
+  }
+};
+
+
+class LiVESScrollbar : public LiVESWidget, public QScrollBar {  
+ public:
+  LiVESScrollbar(Qt::Orientation) {
+    set_type(LIVES_WIDGET_TYPE_SCROLLBAR);
+  }
+};
+
+
+class LiVESEntry : public LiVESWidget, public QLineEdit {  
+ public:
+  LiVESEntry() {
+    set_type(LIVES_WIDGET_TYPE_ENTRY);
+  }
+};
+
+
+class LiVESProgressBar : public LiVESWidget, public QProgressBar {  
+ public:
+  LiVESProgressBar() {
+    set_type(LIVES_WIDGET_TYPE_PROGRESS_BAR);
+  }
+};
+
+
+class LiVESPaned : public LiVESWidget, public QSplitter {
+ public:
+
+  LiVESPaned() {
+    set_type(LIVES_WIDGET_TYPE_PANED);
+  }
+};
+
+
+class LiVESBox : public LiVESWidget {};
+
+
+class LiVESHBox : public LiVESBox, public QHBoxLayout {
+ public:
+  LiVESHBox() {
+    set_type(LIVES_WIDGET_TYPE_HBOX);
+  }
+};
+
+
+class LiVESEventBox : public LiVESBox, public QHBoxLayout {
+ public:
+  LiVESEventBox() {
+    set_type(LIVES_WIDGET_TYPE_EVENT_BOX);
+  }
+};
+
+
+class LiVESVBox : public LiVESBox, public QVBoxLayout {
+ public:
+  LiVESVBox() {
+    set_type(LIVES_WIDGET_TYPE_VBOX);
+  }
+};
+
+
+class LiVESLabel : public LiVESWidget, public QLabel {
+ public:
+  LiVESLabel(QString qstring) {
+    set_type(LIVES_WIDGET_TYPE_LABEL);
+  }
+};
+
+
+class LiVESRuler : public LiVESWidget, public QSlider {
+ public:
+  LiVESRuler() {
+    set_type(LIVES_WIDGET_TYPE_RULER);
+  }
+};
+
+
+class LiVESToolItem {};
+
+
+class LiVESToolButton : public LiVESToolItem, public LiVESButtonBase, public QToolButton {
+ public:
+
+  LiVESToolButton(LiVESWidget *icon_widget, const char *label) {
+    set_type(LIVES_WIDGET_TYPE_TOOL_BUTTON);
+    set_icon_widget(icon_widget);
+    layout = new LiVESVBox;
+    QBoxLayout *ql = (QVBoxLayout *)layout;
+    ql->setParent(static_cast<QToolButton *>(this));
+    add_child(layout);
+    if (label != NULL) {
+      label_widget = new LiVESLabel(label);
+      ((QBoxLayout *)layout)->addWidget((QLabel *)label_widget);
+      layout->add_child(label_widget);
+    }
+    else label_widget = NULL;
+  }
+
+
+  void set_icon_widget(LiVESWidget *widget) {
+    if (icon_widget != NULL) remove_child(icon_widget);
+    icon_widget = NULL;
+    QImage *qim = NULL;
+    if (widget != NULL) qim = dynamic_cast<QImage *>(widget);
+    if (qim) {
+      QPixmap *qpx = new QPixmap();
+      qpx->convertFromImage(*qim);
+      QIcon *qi = new QIcon(*qpx);
+      this->setIcon(*qi);
+      this->setIconSize(LIVES_ICON_SIZE_SMALL_TOOLBAR);
+      this->icon_widget = widget;
+      this->add_child(widget);
+    }
+  }
+
+
+  void set_label_widget(LiVESWidget *widget) {
+    if (label_widget != NULL) {
+      layout->remove_child(label_widget);
+      layout->removeWidget(label_widget);
+    }
+    label_widget = widget;
+    if (widget != NULL) {
+      layout->addWidget(label_widget);
+      layout->add_child(label_widget);
+    }
+  }
+
+ private:
+  LiVESWidget *icon_widget;
+  LiVESWidget *label_widget;
+  LiVESVBox *layout;
+  
+};
+
+
+typedef LiVESToolButton LiVESMenuToolButton;
+
+
+class LiVESToggleButton : public LiVESButtonBase, public QAbstractButton {};
+
+typedef class LiVESWindow LiVESWindow;
+
+class LiVESAccelGroup {
+ public:
+  void add_all_accelerators(LiVESObject *window);
+  void add_widget(LiVESObject *window);
+  void remove_all_accelerators(LiVESObject *window);
+  void remove_widget(LiVESObject *window);
+
+  void connect(uint32_t key, LiVESXModifierType mod, LiVESAccelFlags flags, LiVESWidgetClosure *closure);
+  void disconnect(LiVESWidgetClosure *closure);
+
+  ~LiVESAccelGroup();
+
+ private:
+  QList<LiVESObject *>widgets;
+  QList<LiVESAccel *>accels;
+
+
+};
+
+
+
+
+void LiVESObject::add_accel_group(LiVESAccelGroup *group) {
+  accel_groups.push_back(group);
+  group->add_all_accelerators(this);
+  group->add_widget(this);
+}
+
+
+
+boolean LiVESObject::remove_accel_group(LiVESAccelGroup *group) {
+  if (accel_groups.removeAll(group) > 0) {
+    group->remove_all_accelerators(this);
+    group->remove_widget(this);
+    return TRUE;
+  }
+  return FALSE;
+}
+
+
+
+boolean LiVESObject::remove_accels(LiVESAccelGroup *group, uint32_t key, LiVESXModifierType mods) {
+  bool ret = false;
+  QKeySequence ks = make_qkey_sequence(key, mods);
+
+  QList<LiVESAccel *>::iterator it = accels.begin();
+  while (it != accels.end()) {
+    if (((LiVESAccel *)*it)->group == group && ((LiVESAccel *)*it)->ks == ks) {
+      remove_accel((LiVESAccel *)*it);
+      ret = true;
+    }
+    else
+      ++it;
+  }
+  return ret;
+}
+
+
+QList<LiVESAccel *> LiVESObject::get_accels_for(LiVESAccelGroup *group, QKeySequence ks) {
+  QList<LiVESAccel *> ql;
+  for (int i=0; i < accels.size(); i++) {
+    if (accels[i]->group == group && accels[i]->ks == ks) ql.push_back(accels[i]);
+  }
+  return ql;
+}
+
+
+
+class LiVESWindow : public LiVESWidget {};
+
+
+
+class LiVESMainWindow : public LiVESWindow, public QMainWindow {
+ public:
+  LiVESMainWindow() {
+    set_type(LIVES_WIDGET_TYPE_MAIN_WINDOW);
+  }
+};
+
+class LiVESSubWindow : public LiVESWindow, public QDialog {
+ public:
+  LiVESSubWindow() {
+    set_type(LIVES_WIDGET_TYPE_SUB_WINDOW);
+  }
+};
+
+
+
+void LiVESAccelGroup::add_all_accelerators(LiVESObject *object) {
+  for (int i=0; i < accels.size(); i++) {
+    object->add_accel(accels.at(i));
+  }
+}
+
+void LiVESAccelGroup::add_widget(LiVESObject *window) {
+  widgets.push_back(window);
+}
+
+
+void LiVESAccelGroup::remove_all_accelerators(LiVESObject *object) {
+  while (accels.size() > 0) {
+    object->remove_accel(accels.at(0));
+  }
+}
+
+
+void LiVESAccelGroup::remove_widget(LiVESObject *window) {
+  widgets.removeAll(window);
+}
+
+
+LiVESAccelGroup::~LiVESAccelGroup() {
+  while (widgets.size() > 0) {
+    remove_all_accelerators(widgets.at(0));
+  }
+}
+
+
+class LiVESVLayout: public LiVESWidget, public QVBoxLayout {};
+
+class LiVESDialog : public LiVESWidget, public QDialog {
+ public:
+  LiVESDialog() {
+    contentArea = new LiVESVLayout();
+    QVBoxLayout *ca = (QVBoxLayout *)contentArea;
+    ca->setMargin(0);
+    QDialog *qd = (QDialog *)this;
+    qd->setLayout(ca);
+    set_type(LIVES_WIDGET_TYPE_DIALOG);
+  }
+
+  LiVESWidget *get_content_area() {
+    return contentArea;
+  }
+
+ private:
+  LiVESWidget *contentArea;
+};
+
+
+class LiVESAlignment: public LiVESWidget, public QGridLayout {
+ public:
+  float xalign, yalign, xscale, yscale;
+
+ LiVESAlignment(float xxalign, float yyalign, float xxscale, float yyscale) :
+  xalign(xxalign),
+    yalign(yyalign),
+    xscale(xxscale),
+    yscale(yyscale)
+  {
+    set_type(LIVES_WIDGET_TYPE_ALIGNMENT);
+  }
+
+ void set_alignment(float xxalign, float yyalign, float xxscale, float yyscale) 
+ {
+   xalign = xxalign;
+   yalign = yyalign;
+   xscale = xxscale;
+   yscale = yyscale;
+
+   // do something with layout spacers
+   // or setContentsmargins()
+
+ }
+
+
+};
+
+
+class LiVESImage : public LiVESWidget, public QImage {
+ public:
+
+ LiVESImage() {
+   init();
+ }
+
+ LiVESImage (QImage *lim) {
+   init();
+ };
+
+ LiVESImage(int width, int height, QImage::Format fmt) {
+   init();
+ }
+
+ LiVESImage(uint8_t *data, int width, int height, int bpl, QImage::Format fmt, QImageCleanupFunction cleanupFunction, void * cleanupInfo) {
+   init();
+ }
+
+ private:
+ void init() {
+   set_type(LIVES_WIDGET_TYPE_IMAGE);
+ }
+
+};
+
+
+
+
+class LiVESArrow : public LiVESImage {
+ public:
+ LiVESArrow(QImage *image) {
+    set_type(LIVES_WIDGET_TYPE_ARROW);
+  }
+};
+
+
+
+typedef QItemSelectionModel LiVESTreeSelection;
+
+class LiVESTreeView : public LiVESWidget, public QTreeWidget {
+ public:
+
+ public:
+  LiVESTreeView() {
+    set_type(LIVES_WIDGET_TYPE_TREE_VIEW);
+  }
+
+};
+
+
+
+class LiVESTreeModel : public LiVESObject, public QStandardItemModel {
+ public:
+  
+  LiVESTreeModel(QStandardItemModel *xmodel) {
+    QVariant qv = QVariant::fromValue((LiVESObject *)this);
+    ((QStandardItemModel *)this)->setProperty("LiVESObject", qv);
+  }
+
+  void set_tree_widget(LiVESTreeView *twidget) {
+    widget = twidget;
+  }
+
+  QAbstractItemModel *get_model() {
+    return static_cast<QAbstractItemModel *>(this);
+  }
+
+  QTreeWidget *get_tree_widget() {
+    return static_cast<QTreeWidget *>(widget);
+  }
+
+  ~LiVESTreeModel() {
+    widget->dec_refcount();
+  }
+
+ private:
+  LiVESTreeView *widget;
+
+};
+
+
+
+typedef QTreeWidgetItem LiVESTreeIter;
+
+
+
+class LiVESTreeStore : public LiVESObject, public QStandardItemModel {
+ public:
+  LiVESTreeStore() {
+    QVariant qv = QVariant::fromValue((LiVESObject *)this);
+    ((QStandardItemModel *)this)->setProperty("LiVESObject", qv);
+  }
+
+};
+
+
+
+typedef int LiVESTreeViewColumn;
+
+typedef QWindow LiVESXWindow;
+
+typedef class LiVESImage LiVESPixbuf;
+
+
+
 typedef LiVESWidget LiVESEditable;
 
-//typedef QLayout LiVESEventBox;
+
+typedef LiVESWidget LiVESContainer;
 
 
-typedef QDialog LiVESDialog;
-typedef QCheckBox LiVESCheckButton;
-typedef QButtonGroup LiVESButtonBox;
-typedef QRadioButton LiVESRadioButton;
 typedef QMenu LiVESMenuShell;
-typedef QToolButton LiVESMenuToolButton;
+
 typedef QAction LiVESRadioMenuItem;
 typedef QAction LiVESImageMenuItem;
 typedef QAction LiVESCheckMenuItem;
 typedef QAction LiVESMenuItem;
-typedef QLayout LiVESAlignment;
 
 //typedef QGridLayout LiVESTable;
 //typedef QGridLayout LiVESGrid;
 
 typedef QTableWidget LiVESTable;
 typedef QTableWidget LiVESGrid;
-typedef LiVESWidget LiVESContainer;
-typedef QProgressBar LiVESProgressBar;
-typedef QWidget LiVESToolItem;
-typedef QWidget LiVESRuler; // TODO - create
 typedef QWidget LiVESRange; // TODO
 typedef QWidget LiVESScaleButton; // TODO - create
-typedef QScrollBar LiVESScrollbar;
 typedef QScrollArea LiVESScrolledWindow;
 
 
@@ -622,9 +1963,21 @@ typedef int LiVESPolicyType;
 
 typedef QFrame LiVESFrame;
 typedef QFileDialog LiVESFileChooser;
+
+
+typedef int LiVESFileChooserAction;
+#define LIVES_FILE_CHOOSER_ACTION_OPEN 1
+#define LIVES_FILE_CHOOSER_ACTION_SAVE 2
+#define LIVES_FILE_CHOOSER_ACTION_SELECT_FOLDER 3
+#define LIVES_FILE_CHOOSER_ACTION_CREATE_FOLDER 4
+#define LIVES_FILE_CHOOSER_ACTION_SELECT_DEVICE 5
+
+
 typedef QTabWidget LiVESNotebook;
 typedef QToolBar LiVESToolbar;
-typedef QToolButton LiVESToolButton;
+
+
+
 
 typedef int LiVESToolbarStyle;
 #define LIVES_TOOLBAR_ICONS Qt::ToolButtonIconOnly
@@ -634,26 +1987,13 @@ typedef LiVESWidget LiVESBin;
 
 typedef QSize LiVESRequisition;
 
-typedef QTextDocument                     LiVESTextBuffer;
-typedef QTextEdit                         LiVESTextView;
-
-typedef int LiVESWrapMode;
-#define LIVES_WRAP_NONE QTextEdit::NoWrap
-#define LIVES_WRAP_WORD QTextEdit::WidgetWidth
-
-typedef int LiVESJustification;
-
-#define LIVES_JUSTIFY_LEFT   Qt::AlignLeft
-#define LIVES_JUSTIFY_RIGHT  Qt::AlignRight
-#define LIVES_JUSTIFY_CENTER Qt::AlignHCenter
-#define LIVES_JUSTIFY_FILL   Qt::AlignJustify
-
-typedef QTextCursor LiVESTextMark;
-typedef QTextCursor LiVESTextIter;
+typedef int LiVESTextIter;
 
 typedef void LiVESCellRenderer;
 
-typedef int LiVESAccelFlags;
+typedef const char LiVESTreePath;
+
+
 
 typedef int LiVESTreeViewColumnSizing;
 #define LIVES_TREE_VIEW_COLUMN_GROW_ONLY 0
@@ -667,15 +2007,15 @@ typedef int LiVESSelectionMode;
 
 typedef void LiVESExpander;
 
-typedef int LiVESOrientation;
-#define LIVES_ORIENTATION_HORIZONTAL 1
-#define LIVES_ORIENTATION_VERTICAL   2
+typedef Qt::Orientation LiVESOrientation;
+#define LIVES_ORIENTATION_HORIZONTAL Qt::Horizontal
+#define LIVES_ORIENTATION_VERTICAL   Qt::Vertical
 
 typedef int LiVESButtonBoxStyle;
 #define LIVES_BUTTONBOX_DEFAULT_STYLE 0
 #define LIVES_BUTTONBOX_SPREAD 1
-#define LIVES_BUTTONBOX_EDGE 0
-#define LIVES_BUTTONBOX_CENTER 1
+#define LIVES_BUTTONBOX_EDGE 2
+#define LIVES_BUTTONBOX_CENTER 3
 
 typedef int LiVESReliefStyle;
 
@@ -683,31 +2023,12 @@ typedef int LiVESReliefStyle;
 #define LIVES_RELIEF_HALF 1
 #define LIVES_RELIEF_NONE 0
 
-#define ICON_SCALE(a) ((int)(1.0 * a))
-
-typedef QSize LiVESIconSize;
-#define LIVES_ICON_SIZE_INVALID QSize(0,0)
-#define LIVES_ICON_SIZE_MENU QSize(ICON_SCALE(16),ICON_SCALE(16))
-#define LIVES_ICON_SIZE_SMALL_TOOLBAR QSize(ICON_SCALE(16),ICON_SCALE(16))
-#define LIVES_ICON_SIZE_LARGE_TOOLBAR QSize(ICON_SCALE(24),ICON_SCALE(24))
-#define LIVES_ICON_SIZE_BUTTON QSize(ICON_SCALE(16),ICON_SCALE(16))
-#define LIVES_ICON_SIZE_DND QSize(ICON_SCALE(32),ICON_SCALE(32))
-#define LIVES_ICON_SIZE_DIALOG QSize(ICON_SCALE(48),ICON_SCALE(48))
-
 typedef int LiVESWindowType;
 #define LIVES_WINDOW_TOPLEVEL Qt::Window
 #define LIVES_WINDOW_POPUP Qt::Popup
 
 typedef int LiVESWindowPosition;
 #define LIVES_WIN_POS_CENTER_ALWAYS 1
-
-
-typedef int LiVESArrowType;
-#define LIVES_ARROW_UP 1
-#define LIVES_ARROW_DOWN 2
-#define LIVES_ARROW_LEFT 3
-#define LIVES_ARROW_RIGHT 4
-#define LIVES_ARROW_NONE 0
 
 
 typedef int LiVESShadowType;
@@ -725,15 +2046,8 @@ typedef int LiVESPositionType;
 #define LIVES_POS_TOP 3
 #define LIVES_POS_BOTTOM 4
 
-// LiVESWidget from QWidget
-//#define LIVES_WIDGET(a) (a->isWidgetType()?((LiVESWidget *)( (a->property("LiVESWidget")).value<LiVESWidget *>() )):a)
 
 #define LIVES_WIDGET(a) (a)
-
-// QWidget from LiVESWidget / QWidget
-//#define QT_WIDGET(a) (a->isWidgetType()?(QWidget *)a:a->parentWidget())
-
-#define QT_WIDGET(a) (a->get_widget())
 
 
 #define LIVES_EDITABLE(a) (a)
@@ -743,22 +2057,15 @@ typedef int LiVESPositionType;
 #define LIVES_EXPANDER(a) LIVES_WIDGET(a)
 #define LIVES_BIN(a) LIVES_WIDGET(a)
 
-#define LIVES_IS_WIDGET(a) 1
-#define LIVES_IS_CONTAINER(a) 1
+#define LIVES_COMBO(a) ((LiVESCombo *)a)
+#define LIVES_HBOX(a) ((LiVESHBox *)a)
+#define LIVES_VBOX(a) ((LiVESVBox *)a)
+#define LIVES_BOX(a) ((LiVESBox *)a)
+#define LIVES_LABEL(a) ((LiVESLabel *)a)
+#define LIVES_ENTRY(a) ((LiVESEntry *)a)
+#define LIVES_WINDOW(a) ((LiVESWindow *)a)
+#define LIVES_TREE_MODEL(a) a->get_model()
 
-#define LIVES_IS_BUTTON(a) ((LiVESHBox *)dynamic_cast<QAbstractButton *>(a) != NULL)
-#define LIVES_IS_LABEL(a) ((LiVESHBox *)dynamic_cast<LiVESLabel *>(a) != NULL)
-#define LIVES_IS_HBOX(a) ((LiVESHBox *)dynamic_cast<LiVESHBox *>(a) != NULL)
-#define LIVES_IS_VBOX(a) ((LiVESHBox *)dynamic_cast<LiVESVBox *>(a) != NULL)
-#define LIVES_IS_XWINDOW(a) ((LiVESHBox *)dynamic_cast<LiVESXWindow *>(a) != NULL)
-
-#define LIVES_COMBO(a) dynamic_cast<LiVESCombo *>(QT_WIDGET(a))
-#define LIVES_HBOX(a) dynamic_cast<LiVESHBox *>(QT_WIDGET(a))
-#define LIVES_VBOX(a) dynamic_cast<LiVESVBox *>(QT_WIDGET(a))
-#define LIVES_BOX(a) dynamic_cast<LiVESBox *>(QT_WIDGET(a))
-#define LIVES_LABEL(a) dynamic_cast<LiVESLabel *>(QT_WIDGET(a))
-#define LIVES_ENTRY(a) dynamic_cast<LiVESEntry *>(QT_WIDGET(a))
-#define LIVES_WINDOW(a) dynamic_cast<LiVESWindow *>(QT_WIDGET(a))
 
 
 #define LIVES_STOCK_UNDO "edit-undo"
@@ -794,6 +2101,63 @@ typedef int LiVESPositionType;
 #define LIVES_STOCK_OK "gtk-ok"    // non-standard image ?
 
 
+char LIVES_STOCK_LABEL_CANCEL[32];
+char LIVES_STOCK_LABEL_OK[32];
+char LIVES_STOCK_LABEL_YES[32];
+char LIVES_STOCK_LABEL_NO[32];
+char LIVES_STOCK_LABEL_SAVE[32];
+char LIVES_STOCK_LABEL_SAVE_AS[32];
+char LIVES_STOCK_LABEL_OPEN[32];
+char LIVES_STOCK_LABEL_QUIT[32];
+char LIVES_STOCK_LABEL_APPLY[32];
+char LIVES_STOCK_LABEL_CLOSE[32];
+char LIVES_STOCK_LABEL_REVERT[32];
+char LIVES_STOCK_LABEL_REFRESH[32];
+char LIVES_STOCK_LABEL_DELETE[32];
+char LIVES_STOCK_LABEL_GO_FORWARD[32];
+
+
+typedef int LiVESAttachOptions;
+#define LIVES_EXPAND 1
+#define LIVES_SHRINK 2
+#define LIVES_FILL 3
+
+
+//typedef int LiVESWrapMode;
+//#define LIVES_WRAP_NONE QTextEdit::NoWrap
+//#define LIVES_WRAP_WORD QTextEdit::WidgetWidth
+
+typedef bool LiVESWrapMode;
+#define LIVES_WRAP_NONE false
+#define LIVES_WRAP_WORD true
+
+typedef Qt::Alignment LiVESJustification;
+
+#define LIVES_JUSTIFY_LEFT   Qt::AlignLeft
+#define LIVES_JUSTIFY_RIGHT  Qt::AlignRight
+#define LIVES_JUSTIFY_CENTER Qt::AlignHCenter
+#define LIVES_JUSTIFY_FILL   Qt::AlignJustify
+
+LiVESWidget::~LiVESWidget() {
+  if (this->get_type() == LIVES_WIDGET_TYPE_SPIN_BUTTON) {
+    LiVESAdjustment *adj = (static_cast<LiVESSpinButton *>(this))->get_adj();
+    adj->dec_refcount();
+  }
+
+  // remove from parents children
+  if (parent != NULL) {
+    this->inc_refcount();
+    parent->remove_child(this);
+  }
+
+  // decref all children
+  while (children.size() > 0) {
+    this->remove_child((LiVESWidget *)children.at(0));
+  }
+
+}
+
+
 #endif
 
 
@@ -813,7 +2177,7 @@ typedef QImage::Format lives_painter_format_t;
 #define LIVES_PAINTER_FORMAT_ARGB32 QImage::Format_ARGB32_Premultiplied
 
 
-class lives_painter_surface_t : public QImage {
+class lives_painter_surface_t : public QImage, public LiVESObject {
  public:
   int refcount;
 
@@ -867,45 +2231,6 @@ class lives_painter_t : public QPainter {
 
 };
 
-class LiVESImage : public LiVESWidget {
- public:
-
- LiVESImage() {
-
-  }
-
- LiVESImage(int width, int height, QImage::Format fmt) {
-   qi = QImage(width, height, fmt);
- }
-
- LiVESImage(QImage *qix) {
-   copy_from(qix);
- }
-
- LiVESImage(uint8_t *data, int width, int height, int bpl, QImage::Format fmt, QImageCleanupFunction cleanupFunction, void * cleanupInfo) {
-   qi = QImage(data,width,height,bpl,fmt,cleanupFunction,cleanupInfo);
-  }
-
- ~LiVESImage() {
-
- }
-
- void copy_from(QImage *qix) {
-   qi = qix->copy();
- }
-
- void copy_from(LiVESImage *li) {
-   qi = li->get_image().copy();
- }
-
- QImage get_image() {
-   return qi;
- }
-
- private:
-  QImage qi;
-
-};
 
 #define LIVES_PAINTER_CONTENT_COLOR 0
 
@@ -924,5 +2249,8 @@ typedef Qt::FillRule lives_painter_fill_rule_t;
 #define LIVES_PAINTER_FILL_RULE_WINDING  Qt::WindingFill
 #define LIVES_PAINTER_FILL_RULE_EVEN_ODD Qt::OddEvenFill
 
+
+
 #endif
 
+#endif

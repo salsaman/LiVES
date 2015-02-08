@@ -29,7 +29,6 @@ LIVES_INLINE lives_painter_t *lives_painter_create(lives_painter_surface_t *targ
 #endif
 #ifdef PAINTER_QPAINTER
   cr = new lives_painter_t(target);
-  target->refcount++;
 #endif
   return cr;
 
@@ -46,7 +45,7 @@ LIVES_INLINE lives_painter_t *lives_painter_create_from_widget(LiVESWidget *widg
 #endif
 #endif
 #ifdef PAINTER_QPAINTER
-  QWidget *widg = widget->get_widget();
+  QWidget *widg = ((QWidget *)widget);
   if (widg!=NULL) cr = new lives_painter_t(widg);
 #endif
   return cr;
@@ -61,7 +60,8 @@ LIVES_INLINE boolean lives_painter_set_source_pixbuf (lives_painter_t *cr, const
 #endif
 #ifdef PAINTER_QPAINTER
   QPointF qp(pixbuf_x,pixbuf_y);
-  cr->drawImage(qp,((LiVESPixbuf *)pixbuf)->get_image());
+  const QImage *qi = (const QImage *)pixbuf;
+  cr->drawImage(qp, *qi);
   return TRUE;
 #endif
   return FALSE;
@@ -104,7 +104,7 @@ LIVES_INLINE boolean lives_painter_fill(lives_painter_t *cr) {
 #ifdef PAINTER_QPAINTER
   cr->fillPath(*(cr->p),cr->pen.color());
   delete cr->p;
-  cr->p = new QPainterPath();
+  cr->p = new QPainterPath;
   return TRUE;
 #endif
   return FALSE;
@@ -118,7 +118,7 @@ LIVES_INLINE boolean lives_painter_stroke(lives_painter_t *cr) {
 #ifdef PAINTER_QPAINTER
   cr->strokePath(*(cr->p),cr->pen);
   delete cr->p;
-  cr->p = new QPainterPath();
+  cr->p = new QPainterPath;
   return TRUE;
 #endif
   return FALSE;
@@ -132,7 +132,7 @@ LIVES_INLINE boolean lives_painter_clip(lives_painter_t *cr) {
 #ifdef PAINTER_QPAINTER
   cr->setClipPath(*(cr->p),Qt::IntersectClip);
   delete cr->p;
-  cr->p = new QPainterPath();
+  cr->p = new QPainterPath;
   return TRUE;
 #endif
   return FALSE;
@@ -156,8 +156,7 @@ LIVES_INLINE boolean lives_painter_surface_destroy(lives_painter_surface_t *surf
   return TRUE;
 #endif
 #ifdef PAINTER_QPAINTER
-  surf->refcount--;
-  if (surf->refcount < 0) delete surf;
+  surf->dec_refcount();
   return TRUE;
 #endif
   return FALSE;
@@ -170,7 +169,7 @@ LIVES_INLINE boolean lives_painter_new_path(lives_painter_t *cr) {
 #endif
 #ifdef PAINTER_QPAINTER
   delete cr->p;
-  cr->p = new QPainterPath();
+  cr->p = new QPainterPath;
   return TRUE;
 #endif
   return FALSE;
@@ -480,7 +479,7 @@ LIVES_INLINE livespointer lives_object_ref(livespointer object) {
   g_object_ref(object);
 #endif
 #ifdef GUI_QT
-  static_cast<LiVESWidget *>(object)->refcount++;
+  static_cast<LiVESObject *>(object)->inc_refcount();
 #endif
   return object;
 }
@@ -492,8 +491,7 @@ LIVES_INLINE boolean lives_object_unref(livespointer object) {
   return TRUE;
 #endif
 #ifdef GUI_QT
-  LiVESWidget *widget=static_cast<LiVESWidget *>(object);
-  if (--widget->refcount < 0) delete(widget);
+  static_cast<LiVESObject *>(object)->dec_refcount();
   return TRUE;
 #endif
   return FALSE;
@@ -518,7 +516,7 @@ LIVES_INLINE void lives_object_ref_sink(livespointer object) {
 
 #ifdef GUI_QT
 LIVES_INLINE livespointer lives_object_ref_sink(livespointer object) {
-  static_cast<LiVESWidget *>(object)->refcount++;
+  //static_cast<LiVESObject *>(object)->inc_refcount();
   return object;
 }
 #endif
@@ -531,8 +529,8 @@ LIVES_INLINE boolean lives_signal_handler_block(livespointer instance, unsigned 
   return TRUE;
 #endif
 #ifdef GUI_QT
-  LiVESWidget *widget=static_cast<LiVESWidget *>(instance);
-  widget->block_signal(handler_id);
+  LiVESObject *obj = static_cast<LiVESObject *>(instance);
+  obj->block_signal(handler_id);
   return TRUE;
 #endif
   return FALSE;
@@ -545,8 +543,8 @@ LIVES_INLINE boolean lives_signal_handler_unblock(livespointer instance, unsigne
   return TRUE;
 #endif
 #ifdef GUI_QT
-  LiVESWidget *widget=static_cast<LiVESWidget *>(instance);
-  widget->unblock_signal(handler_id);
+  LiVESObject *obj = static_cast<LiVESObject *>(instance);
+  obj->unblock_signal(handler_id);
   return TRUE;
 #endif
   return FALSE;
@@ -559,8 +557,8 @@ LIVES_INLINE boolean lives_signal_handler_disconnect(livespointer instance, unsi
   return TRUE;
 #endif
 #ifdef GUI_QT
-  LiVESWidget *widget=static_cast<LiVESWidget *>(instance);
-  widget->disconnect_signal(handler_id);
+  LiVESObject *obj = static_cast<LiVESObject *>(instance);
+  obj->disconnect_signal(handler_id);
   return TRUE;
 #endif
   return FALSE;
@@ -573,11 +571,8 @@ LIVES_INLINE boolean lives_signal_stop_emission_by_name(livespointer instance, c
   return TRUE;
 #endif
 #ifdef GUI_QT
-  ExposeBlocker eb=ExposeBlocker();
-  if (!strcmp(detailed_signal,LIVES_WIDGET_EVENT_EXPOSE_EVENT)) {
-    LiVESWidget *widget=static_cast<LiVESWidget *>(instance);
-    eb.set_widget(widget->get_widget()); // signals will be restored when this goes out of scope
-  }
+  LiVESWidget *widget = static_cast<LiVESWidget *>(instance);
+  if (!strcmp(detailed_signal, LIVES_WIDGET_EXPOSE_EVENT)) widget->add_onetime_event_block(LIVES_EXPOSURE_MASK);
   return TRUE;
 #endif
   return FALSE;
@@ -592,7 +587,7 @@ LIVES_INLINE boolean lives_widget_set_sensitive(LiVESWidget *widget, boolean sta
   return TRUE;
 #endif
 #ifdef GUI_QT
-  widget->get_widget()->setEnabled(state);
+  ((QWidget *)widget)->setEnabled(state);
   return TRUE;
 #endif
   return FALSE;
@@ -604,7 +599,7 @@ LIVES_INLINE boolean lives_widget_get_sensitive(LiVESWidget *widget) {
   return gtk_widget_get_sensitive(widget);
 #endif
 #ifdef GUI_QT
-  return widget->get_widget()->isEnabled();
+  return ((QWidget *)widget)->isEnabled();
 #endif
   return FALSE;
 }
@@ -616,7 +611,7 @@ LIVES_INLINE boolean lives_widget_show(LiVESWidget *widget) {
   return TRUE;
 #endif
 #ifdef GUI_QT
-  widget->get_widget()->setVisible(true);
+  ((QWidget *)widget)->setVisible(true);
   return TRUE;
 #endif
   return FALSE;
@@ -629,7 +624,7 @@ LIVES_INLINE boolean lives_widget_hide(LiVESWidget *widget) {
   return TRUE;
 #endif
 #ifdef GUI_QT
-  widget->get_widget()->setVisible(false);
+  ((QWidget *)widget)->setVisible(false);
   return TRUE;
 #endif
   return FALSE;
@@ -641,7 +636,7 @@ LIVES_INLINE boolean lives_widget_show_all(LiVESWidget *widget) {
   gtk_widget_show_all(widget);
 #endif
 #ifdef GUI_QT
-  widget->get_widget()->show();
+  ((QWidget *)widget)->show();
   return TRUE;
 #endif
   return FALSE;
@@ -654,8 +649,7 @@ LIVES_INLINE boolean lives_widget_destroy(LiVESWidget *widget) {
   return TRUE;
 #endif
 #ifdef GUI_QT
-  // TODO - need to destroy all child widgets
-  if (--widget->refcount<0) delete(widget);
+  widget->dec_refcount();
   return TRUE;
 #endif
   return FALSE;
@@ -668,7 +662,7 @@ LIVES_INLINE boolean lives_widget_queue_draw(LiVESWidget *widget) {
   return TRUE;
 #endif
 #ifdef GUI_QT
-  widget->get_widget()->update();
+  ((QWidget *)widget)->update();
   return TRUE;
 #endif
   return FALSE;
@@ -684,7 +678,7 @@ LIVES_INLINE boolean lives_widget_queue_draw_area(LiVESWidget *widget, int x, in
 #endif
 #endif
 #ifdef GUI_QT
-  widget->get_widget()->update(x,y,width,height);
+  ((QWidget *)widget)->update(x,y,width,height);
   return TRUE;
 #endif
   return FALSE;
@@ -697,7 +691,7 @@ LIVES_INLINE boolean lives_widget_queue_resize(LiVESWidget *widget) {
   return TRUE;
 #endif
 #ifdef GUI_QT
-  widget->get_widget()->updateGeometry();
+  ((QWidget *)widget)->updateGeometry();
   return TRUE;
 #endif
   return FALSE;
@@ -711,7 +705,7 @@ LIVES_INLINE boolean lives_widget_set_size_request(LiVESWidget *widget, int widt
   return TRUE;
 #endif
 #ifdef GUI_QT
-  QWidget *widg=widget->get_widget();
+  QWidget *widg=((QWidget *)widget);
   widg->setMaximumSize(width,height);
   widg->setMinimumSize(width,height);
   return TRUE;
@@ -726,7 +720,10 @@ LIVES_INLINE boolean lives_widget_reparent(LiVESWidget *widget, LiVESWidget *new
   return TRUE;
 #endif
 #ifdef GUI_QT
-  widget->get_widget()->setParent(new_parent->get_widget());
+  ((QWidget *)widget)->setParent((QWidget *)new_parent);
+  widget->inc_refcount();
+  widget->get_parent()->remove_child(widget);
+  new_parent->add_child(widget);
   return TRUE;
 #endif
   return FALSE;
@@ -739,7 +736,7 @@ LIVES_INLINE boolean lives_widget_set_app_paintable(LiVESWidget *widget, boolean
   return TRUE;
 #endif
 #ifdef GUI_QT
-  widget->get_widget()->setUpdatesEnabled(!paintable);
+  ((QWidget *)widget)->setUpdatesEnabled(!paintable);
   return TRUE;
 #endif
   return FALSE;
@@ -907,7 +904,7 @@ LIVES_INLINE LiVESWidget *lives_event_box_new(void) {
   eventbox=gtk_event_box_new();
 #endif
 #ifdef GUI_QT
-  eventbox = new LiVESEventBox();
+  eventbox = new LiVESEventBox;
 #endif
   return eventbox;
 }
@@ -919,7 +916,7 @@ LIVES_INLINE LiVESWidget *lives_image_new(void) {
   image=gtk_image_new();
 #endif
 #ifdef GUI_QT
-  image=new LiVESImage();
+  image=new LiVESImage;
 #endif
   return image;
 }
@@ -976,7 +973,8 @@ LIVES_INLINE LiVESWidget *lives_image_new_from_file(const char *filename) {
 #endif
 #ifdef GUI_QT
   QPixmap qp;
-  qp.load(filename);
+  QString qs = QString::fromUtf8(filename); // TODO ??
+  qp.load(qs);
   QImage qm = qp.toImage();
   uint8_t *data = qm.bits();
   int width = qm.width();
@@ -1009,7 +1007,7 @@ LIVES_INLINE boolean lives_image_set_from_pixbuf(LiVESImage *image, LiVESPixbuf 
   return TRUE;
 #endif
 #ifdef GUI_QT
-  image->copy_from(pixbuf);
+  *((QImage *)image) = pixbuf->copy(0, 0, ((QImage *)pixbuf)->width(), ((QImage *)pixbuf)->height());
   return TRUE;
 #endif
   return FALSE;
@@ -1022,8 +1020,7 @@ LIVES_INLINE LiVESPixbuf *lives_image_get_pixbuf(LiVESImage *image) {
   pixbuf=gtk_image_get_pixbuf(image);
 #endif
 #ifdef GUI_QT
-  pixbuf = new LiVESPixbuf();
-  pixbuf->copy_from(image);
+  pixbuf = new LiVESPixbuf(image);
 #endif
   return pixbuf;
 }
@@ -1039,6 +1036,16 @@ LIVES_INLINE boolean lives_color_parse(const char *spec, LiVESWidgetColor *color
   retval=gdk_color_parse(spec,color);
 #endif
 #endif
+#ifdef GUI_QT
+  QColor qc = QColor(spec);
+  if (qc.isValid()) {
+    color->red = qc.redF();
+    color->green = qc.greenF();
+    color->blue = qc.blueF();
+    color->alpha = qc.alphaF();
+    retval=TRUE;
+  }
+#endif
   return retval;
 }
 
@@ -1052,7 +1059,9 @@ LIVES_INLINE LiVESWidget *lives_dialog_get_content_area(LiVESDialog *dialog) {
 #else
   return LIVES_DIALOG(dialog)->vbox;
 #endif
-
+#endif
+#ifdef GUI_QT
+  return dialog->get_content_area();
 #endif
   return NULL;
 }
@@ -1067,17 +1076,25 @@ LIVES_INLINE LiVESWidget *lives_dialog_get_action_area(LiVESDialog *dialog) {
 #else
   return LIVES_DIALOG(dialog)->vbox;
 #endif
-
+#endif
+#ifdef GUI_QT
+  return dialog->get_content_area(); // TODO
 #endif
   return NULL;
 }
 
 
 
-LIVES_INLINE void lives_dialog_add_action_widget(LiVESDialog *dialog, LiVESWidget *widget, int response) {
+LIVES_INLINE boolean lives_dialog_add_action_widget(LiVESDialog *dialog, LiVESWidget *widget, int response) {
 #ifdef GUI_GTK
   gtk_dialog_add_action_widget(dialog,widget,response);
+  return TRUE;
 #endif
+#ifdef GUI_QT
+  // TODO
+#endif
+  return FALSE;
+
 }
 
 
@@ -1086,6 +1103,16 @@ LIVES_INLINE LiVESWidget *lives_window_new(LiVESWindowType wintype) {
 #ifdef GUI_GTK
   window=gtk_window_new(wintype);
 #endif
+
+#ifdef GUI_QT
+  if (wintype == LIVES_WINDOW_TOPLEVEL) {
+    window = new LiVESMainWindow;
+  }
+  else {
+    window = new LiVESSubWindow;
+  }
+#endif
+
   return window;
 }
 
@@ -1093,6 +1120,18 @@ LIVES_INLINE LiVESWidget *lives_window_new(LiVESWindowType wintype) {
 LIVES_INLINE boolean lives_window_set_title(LiVESWindow *window, const char *title) {
 #ifdef GUI_GTK
   gtk_window_set_title(window,title);
+  return TRUE;
+#endif
+#ifdef GUI_QT
+  QString *qs = new QString(QString::fromUtf8(title));
+
+  if (window->get_type() == LIVES_WIDGET_TYPE_SUB_WINDOW) {
+    window->setWindowTitle(*qs);
+  }
+  else {
+    QWindow *qwindow = (QWindow *)window;
+    qwindow->setTitle(*qs);
+  }
   return TRUE;
 #endif
   return FALSE;
@@ -1104,6 +1143,12 @@ LIVES_INLINE boolean lives_window_set_transient_for(LiVESWindow *window, LiVESWi
   gtk_window_set_transient_for(window,parent);
   return TRUE;
 #endif
+#ifdef GUI_QT
+  if (window->get_type() == LIVES_WIDGET_TYPE_SUB_WINDOW) {
+    ((QWidget *)window)->setParent(parent);
+  }
+  return TRUE;
+#endif
   return FALSE;
 }
 
@@ -1111,6 +1156,13 @@ LIVES_INLINE boolean lives_window_set_transient_for(LiVESWindow *window, LiVESWi
 LIVES_INLINE boolean lives_window_set_modal(LiVESWindow *window, boolean modal) {
 #ifdef GUI_GTK
   gtk_window_set_modal(window,modal);
+  return TRUE;
+#endif
+#ifdef GUI_QT
+  if (window->get_type() == LIVES_WIDGET_TYPE_SUB_WINDOW) {
+    QDialog *qwindow = (QDialog *)window;
+    qwindow->setModal(modal);
+  }
   return TRUE;
 #endif
   return FALSE;
@@ -1122,6 +1174,25 @@ LIVES_INLINE boolean lives_window_set_deletable(LiVESWindow *window, boolean del
   gtk_window_set_deletable(window,deletable);
   return TRUE;
 #endif
+#ifdef GUI_QT
+  if (window->get_type() == LIVES_WIDGET_TYPE_SUB_WINDOW) {
+    //QDialog *qd = (QDialog *)window;
+  bool vis = window->isVisible();
+  const Qt::WindowFlags flags = window->windowFlags();
+  Qt::WindowFlags newflags;
+  if (!deletable) {
+    newflags = flags;
+    if (flags & Qt::WindowCloseButtonHint) newflags ^= Qt::WindowCloseButtonHint;
+    newflags &= (flags | Qt::CustomizeWindowHint | Qt::WindowMinMaxButtonsHint);
+  }
+  else {
+    newflags = flags | Qt::WindowCloseButtonHint;
+  }
+  window->setWindowFlags(newflags);
+  if (vis) window->setVisible(true);
+  }
+  return TRUE;
+#endif
   return FALSE;
 }
 
@@ -1129,6 +1200,23 @@ LIVES_INLINE boolean lives_window_set_deletable(LiVESWindow *window, boolean del
 LIVES_INLINE boolean lives_window_set_resizable(LiVESWindow *window, boolean resizable) {
 #ifdef GUI_GTK
   gtk_window_set_resizable(window,resizable);
+  return TRUE;
+#endif
+#ifdef GUI_QT
+  if (window->get_type() == LIVES_WIDGET_TYPE_SUB_WINDOW) {
+  bool vis = window->isVisible();
+  const Qt::WindowFlags flags = window->windowFlags();
+  Qt::WindowFlags newflags = flags;
+  if (!resizable) {
+    if (flags & Qt::WindowMinMaxButtonsHint) newflags ^= Qt::WindowMinMaxButtonsHint;
+    newflags |= Qt::CustomizeWindowHint | Qt::WindowCloseButtonHint;
+  }
+  else {
+    newflags = flags | Qt::WindowMinMaxButtonsHint;
+  }
+  window->setWindowFlags(newflags);
+  if (vis) window->setVisible(true);
+  }
   return TRUE;
 #endif
   return FALSE;
@@ -1140,6 +1228,22 @@ LIVES_INLINE boolean lives_window_set_keep_below(LiVESWindow *window, boolean se
   gtk_window_set_keep_below(window,set);
   return TRUE;
 #endif
+#ifdef GUI_QT
+  if (window->get_type() == LIVES_WIDGET_TYPE_SUB_WINDOW) {
+  bool vis = window->isVisible();
+  const Qt::WindowFlags flags = window->windowFlags();
+  Qt::WindowFlags newflags = flags;
+  if (set) {
+    newflags = flags | Qt::WindowStaysOnBottomHint;
+  }
+  else {
+    if (flags & Qt::WindowStaysOnBottomHint) newflags ^= Qt::WindowStaysOnBottomHint;
+  }
+  window->setWindowFlags(newflags);
+  if (vis) window->setVisible(true);
+  }
+  return TRUE;
+#endif
   return FALSE;
 }
 
@@ -1147,6 +1251,22 @@ LIVES_INLINE boolean lives_window_set_keep_below(LiVESWindow *window, boolean se
 LIVES_INLINE boolean lives_window_set_decorated(LiVESWindow *window, boolean set) {
 #ifdef GUI_GTK
   gtk_window_set_decorated(window,set);
+  return TRUE;
+#endif
+#ifdef GUI_QT
+  if (window->get_type() == LIVES_WIDGET_TYPE_SUB_WINDOW) {
+  bool vis = window->isVisible();
+  const Qt::WindowFlags flags = window->windowFlags();
+  Qt::WindowFlags newflags = flags;
+  if (!set) {
+    newflags = flags | Qt::FramelessWindowHint;
+  }
+  else {
+    if (flags & Qt::FramelessWindowHint) newflags ^= Qt::FramelessWindowHint;
+  }
+  window->setWindowFlags(newflags);
+  if (vis) window->setVisible(true);
+  }
   return TRUE;
 #endif
   return FALSE;
@@ -1158,6 +1278,10 @@ LIVES_INLINE boolean lives_window_set_auto_startup_notification(boolean set) {
   gtk_window_set_auto_startup_notification(set);
   return TRUE;
 #endif
+#ifdef GUI_QT
+  // TODO
+#endif
+
   return FALSE;
 }
 
@@ -1166,6 +1290,13 @@ LIVES_INLINE boolean lives_window_set_auto_startup_notification(boolean set) {
 LIVES_INLINE boolean lives_window_set_screen(LiVESWindow *window, LiVESXScreen *screen) {
 #ifdef GUI_GTK
   gtk_window_set_screen(window,screen);
+  return TRUE;
+#endif
+#ifdef GUI_QT
+  if (window->get_type() == LIVES_WIDGET_TYPE_MAIN_WINDOW) {
+    QWindow *qwindow = (QWindow *)window;
+    qwindow->setScreen(screen);
+  }
   return TRUE;
 #endif
   return FALSE;
@@ -1177,6 +1308,12 @@ LIVES_INLINE boolean lives_window_set_default_size(LiVESWindow *window, int widt
   gtk_window_set_default_size(window,width,height);
   return TRUE;
 #endif
+#ifdef GUI_QT
+  if (window->get_type() == LIVES_WIDGET_TYPE_MAIN_WINDOW) {
+    window->resize(width,height);
+  }
+  return TRUE;
+#endif
   return FALSE;
 }
 
@@ -1184,6 +1321,15 @@ LIVES_INLINE boolean lives_window_set_default_size(LiVESWindow *window, int widt
 LIVES_INLINE const char *lives_window_get_title(LiVESWindow *window) {
 #ifdef GUI_GTK
   return gtk_window_get_title(window);
+#endif
+#ifdef GUI_QT
+  if (window->get_type() == LIVES_WIDGET_TYPE_MAIN_WINDOW) {
+    QWindow *qwindow = (QWindow *)window;
+    return (const char *)qwindow->title().toUtf8().constData();
+  }
+  else {
+    return (const char *)window->windowTitle().toUtf8().constData();
+  }
 #endif
   return NULL;
 }
@@ -1194,6 +1340,14 @@ LIVES_INLINE boolean lives_window_move(LiVESWindow *window, int x, int y) {
   gtk_window_move(window,x,y);
   return TRUE;
 #endif
+#ifdef GUI_QT
+  if (window->get_type() == LIVES_WIDGET_TYPE_MAIN_WINDOW) {
+    QWindow *qw = (QWindow *)window;
+    qw->setX(x);
+    qw->setY(y);
+    return TRUE;
+  }
+#endif
   return FALSE;
 }
 
@@ -1203,6 +1357,14 @@ LIVES_INLINE boolean lives_window_get_position(LiVESWindow *window, int *x, int 
   gtk_window_get_position(window,x,y);
   return TRUE;
 #endif
+#ifdef GUI_QT
+  if (window->get_type() == LIVES_WIDGET_TYPE_MAIN_WINDOW) {
+    QWindow *qw = (QWindow *)window;
+    *x = qw->x();
+    *y = qw->y();
+    return TRUE;
+  }
+#endif
   return FALSE;
 }
 
@@ -1211,6 +1373,9 @@ LIVES_INLINE boolean lives_window_set_position(LiVESWindow *window, LiVESWindowP
 #ifdef GUI_GTK
   gtk_window_set_position(window,pos);
   return TRUE;
+#endif
+#ifdef GUI_QT
+  // TODO
 #endif
   return FALSE;
 }
@@ -1222,6 +1387,9 @@ LIVES_INLINE boolean lives_window_set_hide_titlebar_when_maximized(LiVESWindow *
   gtk_window_set_hide_titlebar_when_maximized(window,setting);
 #endif
   return TRUE;
+#endif
+#ifdef GUI_QT
+  // TODO
 #endif
   return FALSE;
 }
@@ -1241,6 +1409,10 @@ LIVES_INLINE boolean lives_window_present(LiVESWindow *window) {
   gtk_window_present(window);
   return TRUE;
 #endif
+#ifdef GUI_QT
+  window->raise();
+  return TRUE;
+#endif
   return FALSE;
 }
 
@@ -1248,6 +1420,13 @@ LIVES_INLINE boolean lives_window_present(LiVESWindow *window) {
 LIVES_INLINE boolean lives_window_fullscreen(LiVESWindow *window) {
 #ifdef GUI_GTK
   gtk_window_fullscreen(window);
+  return TRUE;
+#endif
+#ifdef GUI_QT
+  if (window->get_type() == LIVES_WIDGET_TYPE_MAIN_WINDOW) {
+    QWindow *qwindow = (QWindow *)window;
+    qwindow->setWindowState(Qt::WindowFullScreen);
+  }
   return TRUE;
 #endif
   return FALSE;
@@ -1259,6 +1438,13 @@ LIVES_INLINE boolean lives_window_unfullscreen(LiVESWindow *window) {
   gtk_window_unfullscreen(window);
   return TRUE;
 #endif
+#ifdef GUI_QT
+  if (window->get_type() == LIVES_WIDGET_TYPE_MAIN_WINDOW) {
+    QWindow *qwindow = (QWindow *)window;
+    qwindow->setWindowState(Qt::WindowNoState);
+  }
+  return TRUE;
+#endif
   return FALSE;
 }
 
@@ -1266,6 +1452,13 @@ LIVES_INLINE boolean lives_window_unfullscreen(LiVESWindow *window) {
 LIVES_INLINE boolean lives_window_maximize(LiVESWindow *window) {
 #ifdef GUI_GTK
   gtk_window_maximize(window);
+  return TRUE;
+#endif
+#ifdef GUI_QT
+  if (window->get_type() == LIVES_WIDGET_TYPE_MAIN_WINDOW) {
+    QWindow *qwindow = (QWindow *)window;
+    qwindow->setWindowState(Qt::WindowMaximized);
+  }
   return TRUE;
 #endif
   return FALSE;
@@ -1277,13 +1470,83 @@ LIVES_INLINE boolean lives_window_unmaximize(LiVESWindow *window) {
   gtk_window_unmaximize(window);
   return TRUE;
 #endif
+#ifdef GUI_QT
+  if (window->get_type() == LIVES_WIDGET_TYPE_MAIN_WINDOW) {
+    QWindow *qwindow = (QWindow *)window;
+    qwindow->setWindowState(Qt::WindowNoState);
+  }
+  return TRUE;
+#endif
   return FALSE;
 }
+
+
+LIVES_INLINE LiVESAccelGroup *lives_accel_group_new(void) {
+  LiVESAccelGroup *group=NULL;
+#ifdef GUI_GTK
+  group=gtk_accel_group_new();
+#endif
+#ifdef GUI_QT
+  group = new LiVESAccelGroup;
+#endif
+  return group;
+}
+
+
+
+LIVES_INLINE boolean lives_accel_group_connect(LiVESAccelGroup *group, uint32_t key, LiVESXModifierType mod, 
+					    LiVESAccelFlags flags, LiVESWidgetClosure *closure) {
+
+#ifdef GUI_GTK
+  gtk_accel_group_connect(group,key,mod,flags,closure);
+  return TRUE;
+#endif
+#ifdef GUI_QT
+  group->connect(key,mod,flags,closure);
+  return FALSE;
+#endif
+}
+
+
+
+LIVES_INLINE boolean lives_accel_group_disconnect(LiVESAccelGroup *group, LiVESWidgetClosure *closure) {
+
+#ifdef GUI_GTK
+  gtk_accel_group_disconnect(group,closure);
+  return TRUE;
+#endif
+#ifdef GUI_QT
+  group->disconnect(closure);
+  return TRUE;
+#endif
+  return FALSE;
+}
+
+
+
+
+LIVES_INLINE boolean lives_widget_add_accelerator(LiVESWidget *widget, const char *accel_signal, LiVESAccelGroup *accel_group,
+					       uint32_t accel_key, LiVESXModifierType accel_mods, LiVESAccelFlags accel_flags) {
+#ifdef GUI_GTK
+  gtk_widget_add_accelerator(widget,accel_signal,accel_group,accel_key,accel_mods,accel_flags);
+  return TRUE;
+#endif
+#ifdef GUI_QT
+  widget->add_accel(accel_signal,accel_group,accel_key,accel_mods,accel_flags);
+  return TRUE;
+#endif
+  return FALSE;
+}
+
 
 
 LIVES_INLINE boolean lives_window_add_accel_group(LiVESWindow *window, LiVESAccelGroup *group) {
 #ifdef GUI_GTK
   gtk_window_add_accel_group(window,group);
+  return TRUE;
+#endif
+#ifdef GUI_QT
+  ((LiVESWindow *)window)->add_accel_group(group);
   return TRUE;
 #endif
   return FALSE;
@@ -1295,6 +1558,10 @@ LIVES_INLINE boolean lives_window_remove_accel_group(LiVESWindow *window, LiVESA
   gtk_window_remove_accel_group(window,group);
   return TRUE;
 #endif
+#ifdef GUI_QT
+  ((LiVESWindow *)window)->remove_accel_group(group);
+  return TRUE;
+#endif
   return FALSE;
 }
 
@@ -1304,14 +1571,38 @@ LIVES_INLINE boolean lives_menu_set_accel_group(LiVESMenu *menu, LiVESAccelGroup
   gtk_menu_set_accel_group(menu,group);
   return TRUE;
 #endif
+#ifdef GUI_QT
+  ((LiVESMenu *)menu)->add_accel_group(group);
+  return TRUE;
+#endif
   return FALSE;
 }
+
+
+LIVES_INLINE boolean lives_accel_groups_activate(LiVESObject *object, uint32_t key, LiVESXModifierType mod) {
+#ifdef GUI_GTK
+  gtk_accel_groups_activate(object,key,mod);
+  return TRUE;
+#endif
+#ifdef GUI_QT
+  object->activate_accel(key, mod);
+  return TRUE;
+#endif
+  return FALSE;
+}
+
 
 
 
 LIVES_INLINE boolean lives_window_has_toplevel_focus(LiVESWindow *window) {
 #ifdef GUI_GTK
   return gtk_window_has_toplevel_focus(window);
+#endif
+#ifdef GUI_QT
+  if (window->get_type() == LIVES_WIDGET_TYPE_MAIN_WINDOW) {
+    return guiapp->focusObject() == (QObject *)(QWidget *)window;
+  }
+  return TRUE;
 #endif
   return FALSE;
 }
@@ -1372,8 +1663,9 @@ LIVES_INLINE LiVESPixbuf *lives_pixbuf_new_from_file(const char *filename, LiVES
 #endif
 
 #ifdef GUI_QT
-  LiVESPixbuf *image = new LiVESPixbuf();
-  if (!image->get_image().load(filename)) {
+  LiVESPixbuf *image = new LiVESPixbuf;
+  QString qs = QString::fromUtf8(filename); // TODO ??
+  if (!((QImage *)image)->load(qs)) {
     // do something with error
     LIVES_WARN("QImage not loaded");
     delete image;
@@ -1396,10 +1688,11 @@ LIVES_INLINE LiVESPixbuf *lives_pixbuf_new_from_file_at_scale(const char *filena
 #endif
 
 #ifdef GUI_QT
-  QImage image = QImage();
+  QImage image;
   QImage image2;
   Qt::AspectRatioMode asp;
-  if (!image.load(filename)) {
+  QString qs = QString::fromUtf8(filename); // TODO ??
+  if (!image.load(qs)) {
     // do something with error
     LIVES_WARN("QImage not loaded");
     return NULL;
@@ -1426,7 +1719,7 @@ LIVES_INLINE int lives_pixbuf_get_rowstride(const LiVESPixbuf *pixbuf) {
 #endif
 
 #ifdef GUI_QT
-  return ((LiVESPixbuf *)pixbuf)->get_image().bytesPerLine();
+  return ((QImage *)pixbuf)->bytesPerLine();
 #endif
 }
 
@@ -1437,7 +1730,7 @@ LIVES_INLINE int lives_pixbuf_get_width(const LiVESPixbuf *pixbuf) {
 #endif
 
 #ifdef GUI_QT
-  return ((LiVESPixbuf *)pixbuf)->get_image().width();
+  return ((QImage *)pixbuf)->width();
 #endif
 }
 
@@ -1448,7 +1741,7 @@ LIVES_INLINE int lives_pixbuf_get_height(const LiVESPixbuf *pixbuf) {
 #endif
 
 #ifdef GUI_QT
-  return ((LiVESPixbuf *)pixbuf)->get_image().height();
+  return ((QImage *)pixbuf)->height();
 #endif
 }
 
@@ -1459,7 +1752,7 @@ LIVES_INLINE int lives_pixbuf_get_n_channels(const LiVESPixbuf *pixbuf) {
 #endif
 
 #ifdef GUI_QT
-  return ((LiVESPixbuf *)pixbuf)->get_image().depth()>>3;
+  return ((QImage *)pixbuf)->depth()>>3;
 #endif
 }
 
@@ -1471,7 +1764,7 @@ LIVES_INLINE unsigned char *lives_pixbuf_get_pixels(const LiVESPixbuf *pixbuf) {
 #endif
 
 #ifdef GUI_QT
-  return (uchar *)((LiVESPixbuf *)pixbuf)->get_image().bits();
+  return (uchar *)((QImage *)pixbuf)->bits();
 #endif
 }
 
@@ -1483,7 +1776,7 @@ LIVES_INLINE const unsigned char *lives_pixbuf_get_pixels_readonly(const LiVESPi
 #endif
 
 #ifdef GUI_QT
-  return (const uchar *)((LiVESPixbuf *)pixbuf)->get_image().bits();
+  return (const uchar *)((QImage *)pixbuf)->bits();
 #endif
 }
 
@@ -1495,7 +1788,7 @@ LIVES_INLINE boolean lives_pixbuf_get_has_alpha(const LiVESPixbuf *pixbuf) {
 #endif
 
 #ifdef GUI_QT
-  return (const uchar *)((LiVESPixbuf *)pixbuf)->get_image().hasAlphaChannel();
+  return ((QImage *)pixbuf)->hasAlphaChannel();
 #endif
 }
 
@@ -1509,7 +1802,7 @@ LIVES_INLINE LiVESPixbuf *lives_pixbuf_scale_simple(const LiVESPixbuf *src, int 
 
 
 #ifdef GUI_QT
-  QImage image = ((LiVESPixbuf *)src)->get_image().scaled(dest_width, dest_height, Qt::IgnoreAspectRatio, interp_type);
+  QImage image = ((QImage *)src)->scaled(dest_width, dest_height, Qt::IgnoreAspectRatio, interp_type);
   if (image.isNull()) {
     LIVES_WARN("QImage not scaled");
     return NULL;
@@ -1571,8 +1864,17 @@ LIVES_INLINE boolean lives_box_reorder_child(LiVESBox *box, LiVESWidget *child, 
   return TRUE;
 #endif
 #ifdef GUI_QT
-  box->removeWidget(child);
-  box->insertWidget(pos,child);
+  if (LIVES_IS_HBOX(box)) {
+    QHBoxLayout *qbox = (QHBoxLayout *)box;
+    qbox->removeWidget(child);
+    qbox->insertWidget(pos,child);
+  }
+  else {
+    QVBoxLayout *qbox = (QVBoxLayout *)box;
+    qbox->removeWidget(child);
+    qbox->insertWidget(pos,child);
+  }
+  return TRUE;
 #endif
   return FALSE;
 }
@@ -1584,7 +1886,14 @@ LIVES_INLINE boolean lives_box_set_spacing(LiVESBox *box, int spacing) {
   return TRUE;
 #endif
 #ifdef GUI_QT
-  box->setSpacing(spacing);
+  if (LIVES_IS_HBOX(box)) {
+    QHBoxLayout *qbox = (QHBoxLayout *)box;
+    qbox->setSpacing(spacing);
+  }
+  else {
+    QVBoxLayout *qbox = (QVBoxLayout *)box;
+    qbox->setSpacing(spacing);
+  }
   return TRUE;
 #endif
   return FALSE;
@@ -1602,7 +1911,7 @@ LIVES_INLINE LiVESWidget *lives_hbox_new(boolean homogeneous, int spacing) {
 #endif
 #endif
 #ifdef GUI_QT
-  hbox = new LiVESHBox();
+  hbox = new LiVESHBox;
   ((QHBoxLayout *)hbox)->setSpacing(spacing);
 #endif
   return hbox;
@@ -1620,7 +1929,7 @@ LIVES_INLINE LiVESWidget *lives_vbox_new(boolean homogeneous, int spacing) {
 #endif
 #endif
 #ifdef GUI_QT
-  vbox = new LiVESVBox();
+  vbox = new LiVESVBox;
   ((QVBoxLayout *)vbox)->setSpacing(spacing);
 #endif
   return vbox;
@@ -1634,20 +1943,27 @@ LIVES_INLINE boolean lives_box_pack_start(LiVESBox *box, LiVESWidget *child, boo
   return TRUE;
 #endif
 #ifdef GUI_QT
-  bool isH = false;
-  QBoxLayout::Direction dir = box->direction();
-  if (dir == QBoxLayout::LeftToRight) {
-    box->setDirection(QBoxLayout::RightToLeft);
-    isH=true;
+  if (LIVES_IS_HBOX(box)) {
+    QHBoxLayout *qbox = (QHBoxLayout *)box;
+    QBoxLayout::Direction dir = qbox->direction();
+    if (dir == QBoxLayout::LeftToRight) {
+      qbox->setDirection(QBoxLayout::RightToLeft);
+    }
+    else if (dir == QBoxLayout::RightToLeft) {
+      qbox->setDirection(QBoxLayout::LeftToRight);
+    }
+    qbox->insertWidget(0,child,expand?100:0,fill?(Qt::Alignment)0:Qt::AlignHCenter);
+    qbox->setDirection(dir);
   }
-  else if (dir == QBoxLayout::RightToLeft) {
-    box->setDirection(QBoxLayout::LeftToRight);
-    isH=true;
+  else {
+    QVBoxLayout *qbox = (QVBoxLayout *)box;
+    QBoxLayout::Direction dir = qbox->direction();
+    if (dir == QBoxLayout::TopToBottom) qbox->setDirection(QBoxLayout::BottomToTop);
+    else qbox->setDirection(QBoxLayout::TopToBottom);
+    qbox->insertWidget(0,child,expand?100:0,fill?(Qt::Alignment)0:Qt::AlignVCenter);
+    qbox->setDirection(dir);
   }
-  else if (dir == QBoxLayout::TopToBottom) box->setDirection(QBoxLayout::BottomToTop);
-  else if (dir == QBoxLayout::BottomToTop) box->setDirection(QBoxLayout::TopToBottom);
-  box->insertWidget(0,child,expand?100:0,fill?(Qt::Alignment)0:(isH?Qt::AlignHCenter:Qt::AlignVCenter));
-  box->setDirection(dir);
+  box->add_child(child);
   return TRUE;
 #endif
   return FALSE;
@@ -1661,15 +1977,15 @@ LIVES_INLINE boolean lives_box_pack_end(LiVESBox *box, LiVESWidget *child, boole
   return TRUE;
 #endif
 #ifdef GUI_QT
-  bool isH = false;
-  QBoxLayout::Direction dir = box->direction();
-  if (dir == QBoxLayout::LeftToRight) {
-    isH=true;
+  if (LIVES_IS_HBOX(box)) {
+    QHBoxLayout *qbox = (QHBoxLayout *)box;
+    qbox->insertWidget(0,child,expand?100:0,fill?(Qt::Alignment)0:Qt::AlignHCenter);
   }
-  else if (dir == QBoxLayout::RightToLeft) {
-    isH=true;
+  else {
+    QVBoxLayout *qbox = (QVBoxLayout *)box;
+    qbox->insertWidget(0,child,expand?100:0,fill?(Qt::Alignment)0:Qt::AlignVCenter);
   }
-  box->insertWidget(0,child,expand?100:0,fill?(Qt::Alignment)0:(isH?Qt::AlignHCenter:Qt::AlignVCenter));
+  box->add_child(child);
   return TRUE;
 #endif
   return FALSE;
@@ -1687,6 +2003,9 @@ LIVES_INLINE LiVESWidget *lives_hseparator_new(void) {
   hsep=gtk_hseparator_new();
 #endif
 #endif
+#ifdef GUI_QT
+  hsep = new LiVESHSeparator;
+#endif  
   return hsep;
 }
 
@@ -1700,6 +2019,9 @@ LIVES_INLINE LiVESWidget *lives_vseparator_new(void) {
   vsep=gtk_vseparator_new();
 #endif
 #endif
+#ifdef GUI_QT
+  vsep = new LiVESVSeparator;
+#endif  
   return vsep;
 }
 
@@ -1711,6 +2033,9 @@ LIVES_INLINE LiVESWidget *lives_hbutton_box_new(void) {
   bbox=gtk_button_box_new(LIVES_ORIENTATION_HORIZONTAL);
 #else
   bbox=gtk_hbutton_box_new();
+#endif
+#ifdef GUI_QT
+  bbox = new LiVESButtonBox(LIVES_ORIENTATION_HORIZONTAL);
 #endif
 #endif
   return bbox;
@@ -1725,6 +2050,9 @@ LIVES_INLINE LiVESWidget *lives_vbutton_box_new(void) {
 #else
   bbox=gtk_vbutton_box_new();
 #endif
+#ifdef GUI_QT
+  bbox = new LiVESButtonBox(LIVES_ORIENTATION_VERTICAL);
+#endif
 #endif
   return bbox;
 }
@@ -1735,6 +2063,14 @@ LIVES_INLINE boolean lives_button_box_set_layout(LiVESButtonBox *bbox, LiVESButt
 #ifdef GUI_GTK
   gtk_button_box_set_layout(bbox,bstyle);
   return TRUE;
+#ifdef GUI_QT
+  if (bstyle == LIVES_BUTTONBOX_CENTER) {
+    bbox->setCenterButtons(true);
+  }
+  else {
+    bbox->setCenterButtons(false);
+  }
+#endif
 #endif
   return FALSE;
 }
@@ -1751,6 +2087,9 @@ LIVES_INLINE LiVESWidget *lives_hscale_new(LiVESAdjustment *adj) {
   hscale=gtk_hscale_new(adj);
 #endif
 #endif
+#ifdef GUI_QT
+  hscale = new LiVESScale(LIVES_ORIENTATION_HORIZONTAL);
+#endif
   return hscale;
 }
 
@@ -1763,6 +2102,9 @@ LIVES_INLINE LiVESWidget *lives_vscale_new(LiVESAdjustment *adj) {
 #else
   vscale=gtk_vscale_new(adj);
 #endif
+#endif
+#ifdef GUI_QT
+  vscale = new LiVESScale(LIVES_ORIENTATION_VERTICAL);
 #endif
   return vscale;
 }
@@ -1777,6 +2119,12 @@ LIVES_INLINE LiVESWidget *lives_hpaned_new(void) {
   hpaned=gtk_hpaned_new();
 #endif
 #endif
+#ifdef GUI_QT
+  hpaned = new LiVESPaned;
+  QSplitter *qs = dynamic_cast<QSplitter *>(hpaned);
+  if (qs != NULL) 
+    qs->setOrientation(LIVES_ORIENTATION_HORIZONTAL);
+#endif
   return hpaned;
 }
 
@@ -1789,6 +2137,12 @@ LIVES_INLINE LiVESWidget *lives_vpaned_new(void) {
 #else
   vpaned=gtk_vpaned_new();
 #endif
+#endif
+#ifdef GUI_QT
+  vpaned = new LiVESPaned;
+  QSplitter *qs = dynamic_cast<QSplitter *>(vpaned);
+  if (qs != NULL) 
+    qs->setOrientation(LIVES_ORIENTATION_VERTICAL);
 #endif
   return vpaned;
 }
@@ -1803,6 +2157,9 @@ LIVES_INLINE LiVESWidget *lives_hscrollbar_new(LiVESAdjustment *adj) {
   hscrollbar=gtk_hscrollbar_new(adj);
 #endif
 #endif
+#ifdef GUI_QT
+  hscrollbar = new LiVESScrollbar(LIVES_ORIENTATION_HORIZONTAL);
+#endif
   return hscrollbar;
 }
 
@@ -1815,6 +2172,9 @@ LIVES_INLINE LiVESWidget *lives_vscrollbar_new(LiVESAdjustment *adj) {
 #else
   vscrollbar=gtk_vscrollbar_new(adj);
 #endif
+#endif
+#ifdef GUI_QT
+  vscrollbar = new LiVESScrollbar(LIVES_ORIENTATION_VERTICAL);
 #endif
   return vscrollbar;
 }
@@ -1830,7 +2190,13 @@ LIVES_INLINE LiVESWidget *lives_label_new(const char *text) {
 
   gtk_label_set_line_wrap (LIVES_LABEL (label), widget_opts.line_wrap);
 #endif
-
+#ifdef GUI_QT
+  QString *qs = new QString(QString::fromUtf8(text));
+  label = new LiVESLabel(*qs);
+  QLabel *ql = (QLabel *)label;
+  ql->setAlignment(widget_opts.justify);
+  ql->setWordWrap(widget_opts.line_wrap);
+#endif
   return label;
 }
 
@@ -1839,6 +2205,13 @@ LIVES_INLINE LiVESWidget *lives_arrow_new(LiVESArrowType arrow_type, LiVESShadow
   LiVESWidget *arrow=NULL;
 #ifdef GUI_GTK
   arrow=gtk_arrow_new(arrow_type,shadow_type);
+#endif
+#ifdef GUI_QT
+  QStyleOption *qstyleopt = 0;
+  QIcon qi = guiapp->style()->standardIcon(arrow_type, qstyleopt);
+  QPixmap qp = qi.pixmap(LIVES_ICON_SIZE_DIALOG);
+  QImage qm = qp.toImage();
+  arrow = new LiVESArrow(&qm);
 #endif
   return arrow;
 }
@@ -1849,14 +2222,23 @@ LIVES_INLINE LiVESWidget *lives_alignment_new(float xalign, float yalign, float 
 #ifdef GUI_GTK
   alignment=gtk_alignment_new(xalign,yalign,xscale,yscale);
 #endif
+#ifdef GUI_QT
+  alignment = new LiVESAlignment(xalign,yalign,xscale,yscale);
+#endif
   return alignment;
 }
 
 
-LIVES_INLINE void lives_alignment_set(LiVESAlignment *alignment, float xalign, float yalign, float xscale, float yscale) {
+LIVES_INLINE boolean lives_alignment_set(LiVESAlignment *alignment, float xalign, float yalign, float xscale, float yscale) {
 #ifdef GUI_GTK
   gtk_alignment_set(alignment,xalign,yalign,xscale,yscale);
+  return TRUE;
 #endif
+#ifdef GUI_QT
+  alignment->set_alignment(xalign,yalign,xscale,yscale);
+  return TRUE;
+#endif
+  return FALSE;
 }
 
 
@@ -1889,6 +2271,8 @@ LIVES_INLINE LiVESWidget *lives_expander_get_label_widget(LiVESExpander *expande
 }
 
 
+
+
 LIVES_INLINE boolean lives_label_set_halignment(LiVESLabel *label, float yalign) {
 #ifdef GUI_GTK
 #if GTK_CHECK_VERSION(3,16,0)
@@ -1897,6 +2281,11 @@ LIVES_INLINE boolean lives_label_set_halignment(LiVESLabel *label, float yalign)
   gtk_misc_set_alignment(GTK_MISC(label),0.,yalign);
 #endif
   return TRUE;
+#endif
+#ifdef GUI_QT
+  QRect qr = ((QFrame *)label)->contentsRect();
+  int pixels = (float)qr.width() * yalign;
+  label->setIndent(pixels);
 #endif
   return FALSE;
 }
@@ -1910,6 +2299,9 @@ LIVES_INLINE LiVESWidget *lives_combo_new(void) {
 #else
   combo = gtk_combo_box_entry_new_text ();
 #endif
+#endif
+#ifdef GUI_QT
+  combo = new LiVESCombo;
 #endif
   return combo;
 }
@@ -1925,6 +2317,12 @@ LIVES_INLINE LiVESWidget *lives_combo_new_with_model (LiVESTreeModel *model) {
   gtk_combo_box_set_model(GTK_COMBO_BOX(combo),model);
 #endif
 #endif
+#ifdef GUI_QT
+  combo = new LiVESCombo;
+  QComboBox *qcombo = (QComboBox *)combo;
+  qcombo->setModel(model->get_model());
+  qcombo->setView(model->get_tree_widget());
+#endif
   return combo;
 
 }
@@ -1934,6 +2332,18 @@ LIVES_INLINE LiVESTreeModel *lives_combo_get_model(LiVESCombo *combo) {
   LiVESTreeModel *model=NULL;
 #ifdef GUI_GTK
   model=gtk_combo_box_get_model(combo);
+#endif
+#ifdef GUI_QT
+  QAbstractItemModel *qqmodel = ((QComboBox *)combo)->model();
+
+  QStandardItemModel *qmodel = static_cast<QStandardItemModel *>(qqmodel);
+  if (qmodel == NULL) return model;
+
+  QVariant qv = ((QAbstractItemModel *)qmodel)->property("LiVESObject");
+  if (qv.isValid()) {
+    return static_cast<LiVESTreeModel *>(qv.value<LiVESObject *>());
+  }
+  model = new LiVESTreeModel(qmodel);
 #endif
   return model;
 }
@@ -1947,6 +2357,11 @@ LIVES_INLINE boolean lives_combo_append_text(LiVESCombo *combo, const char *text
 #else
   gtk_combo_box_append_text(GTK_COMBO(combo),text);
 #endif
+  return TRUE;
+#endif
+#ifdef GUI_QT
+  QString *qs = new QString(QString::fromUtf8(text));
+  ((QComboBox *)combo)->addItem(*qs);
   return TRUE;
 #endif
   return FALSE;
@@ -1964,20 +2379,30 @@ static boolean lives_combo_remove_all_text(LiVESCombo *combo) {
 #endif
   return TRUE;
 #endif
+#ifdef GUI_QT
+  ((QComboBox *)combo)->clear();
+  return TRUE;
+#endif
   return FALSE;
 }
 
 
 
 
-LIVES_INLINE void lives_combo_set_entry_text_column(LiVESCombo *combo, int column) {
+LIVES_INLINE boolean lives_combo_set_entry_text_column(LiVESCombo *combo, int column) {
 #ifdef GUI_GTK
 #if GTK_CHECK_VERSION(2,24,0)
   gtk_combo_box_set_entry_text_column(GTK_COMBO_BOX(combo),column);
 #else
   gtk_combo_box_entry_set_text_column(GTK_COMBO_BOX_ENTRY(combo),column);
 #endif
+  return TRUE;
 #endif
+#ifdef GUI_QT
+  ((QComboBox *)combo)->setModelColumn(column);
+  return TRUE;
+#endif
+  return FALSE;
 }
 
 
@@ -1990,6 +2415,9 @@ LIVES_INLINE char *lives_combo_get_active_text(LiVESCombo *combo) {
   return gtk_combo_box_get_active_text(GTK_COMBO_BOX(combo));
 #endif
 #endif
+#ifdef GUI_QT
+  return strdup(((QComboBox *)combo)->currentText().toUtf8().constData());
+#endif
   return NULL;
 }
 
@@ -1997,6 +2425,10 @@ LIVES_INLINE char *lives_combo_get_active_text(LiVESCombo *combo) {
 LIVES_INLINE boolean lives_combo_set_active_index(LiVESCombo *combo, int index) {
 #ifdef GUI_GTK
   gtk_combo_box_set_active(combo,index);
+  return TRUE;
+#endif
+#ifdef GUI_QT
+  ((QComboBox *)combo)->setCurrentIndex(index);
   return TRUE;
 #endif
   return FALSE;
@@ -2008,6 +2440,12 @@ LIVES_INLINE boolean lives_combo_set_active_iter(LiVESCombo *combo, LiVESTreeIte
   gtk_combo_box_set_active_iter(combo,iter);
   return TRUE;
 #endif
+#ifdef GUI_QT
+  LiVESTreeModel *model = lives_combo_get_model(combo);
+  QTreeWidget *widget = model->get_tree_widget();
+  widget->setCurrentItem(iter);
+  return TRUE;
+#endif
   return FALSE;
 
 }
@@ -2017,6 +2455,13 @@ LIVES_INLINE boolean lives_combo_get_active_iter(LiVESCombo *combo, LiVESTreeIte
 #ifdef GUI_GTK
   return gtk_combo_box_get_active_iter(combo,iter);
 #endif
+#ifdef GUI_QT
+  LiVESTreeModel *model = lives_combo_get_model(combo);
+  QTreeWidget *widget = model->get_tree_widget();
+  if (widget == NULL) return FALSE;
+  QTreeWidgetItem *qtwi = widget->currentItem();
+  *iter = *qtwi;
+#endif
   return FALSE;
 }
 
@@ -2025,7 +2470,10 @@ LIVES_INLINE int lives_combo_get_active(LiVESCombo *combo) {
 #ifdef GUI_GTK
   return gtk_combo_box_get_active(combo);
 #endif
-  return FALSE;
+#ifdef GUI_QT
+  return ((QComboBox *)combo)->currentIndex();
+#endif
+  return -1;
 }
 
 
@@ -2034,6 +2482,9 @@ LIVES_INLINE LiVESWidget *lives_text_view_new(void) {
   LiVESWidget *tview=NULL;
 #ifdef GUI_GTK
   tview=gtk_text_view_new();
+#endif
+#ifdef GUI_QT
+  tview = new LiVESTextView;
 #endif
   return tview;
 }
@@ -2045,6 +2496,9 @@ LIVES_INLINE LiVESWidget *lives_text_view_new_with_buffer(LiVESTextBuffer *tbuff
 #ifdef GUI_GTK
   tview=gtk_text_view_new_with_buffer(tbuff);
 #endif
+#ifdef GUI_QT
+  tview = new LiVESTextView(tbuff);
+#endif
   return tview;
 }
 
@@ -2054,6 +2508,9 @@ LIVES_INLINE LiVESTextBuffer *lives_text_view_get_buffer(LiVESTextView *tview) {
 #ifdef GUI_GTK
   tbuff=gtk_text_view_get_buffer(tview);
 #endif
+#ifdef GUI_QT
+  tbuff = tview->get_buffer();
+#endif
   return tbuff;
 }
 
@@ -2061,6 +2518,10 @@ LIVES_INLINE LiVESTextBuffer *lives_text_view_get_buffer(LiVESTextView *tview) {
 LIVES_INLINE boolean lives_text_view_set_editable(LiVESTextView *tview, boolean setting) {
 #ifdef GUI_GTK
   gtk_text_view_set_editable(tview, setting);
+  return TRUE;
+#endif
+#ifdef GUI_QT
+  tview->setReadOnly(!setting);
   return TRUE;
 #endif
   return FALSE;
@@ -2073,6 +2534,10 @@ LIVES_INLINE boolean lives_text_view_set_accepts_tab(LiVESTextView *tview, boole
   gtk_text_view_set_accepts_tab(tview, setting);
   return TRUE;
 #endif
+#ifdef GUI_QT
+  tview->setTabChangesFocus(!setting);
+  return TRUE;
+#endif
   return FALSE;
 }
 
@@ -2080,6 +2545,11 @@ LIVES_INLINE boolean lives_text_view_set_accepts_tab(LiVESTextView *tview, boole
 LIVES_INLINE boolean lives_text_view_set_cursor_visible(LiVESTextView *tview, boolean setting) {
 #ifdef GUI_GTK
   gtk_text_view_set_cursor_visible(tview, setting);
+  return TRUE;
+#endif
+#ifdef GUI_QT
+  if (setting) tview->setCursorWidth(1);
+  else tview->setCursorWidth(0);
   return TRUE;
 #endif
   return FALSE;
@@ -2092,6 +2562,11 @@ LIVES_INLINE boolean lives_text_view_set_wrap_mode(LiVESTextView *tview, LiVESWr
   gtk_text_view_set_wrap_mode(tview, wrapmode);
   return TRUE;
 #endif
+#ifdef GUI_QT
+  if (wrapmode == LIVES_WRAP_NONE) tview->setLineWrapMode(QTextEdit::NoWrap);
+  if (wrapmode == LIVES_WRAP_WORD) tview->setLineWrapMode(QTextEdit::WidgetWidth);
+  return TRUE;
+#endif
   return FALSE;
 }
 
@@ -2102,6 +2577,10 @@ LIVES_INLINE boolean lives_text_view_set_justification(LiVESTextView *tview, LiV
   gtk_text_view_set_justification(tview, justify);
   return TRUE;
 #endif
+#ifdef GUI_QT
+  tview->setAlignment(justify);
+  return TRUE;
+#endif
   return FALSE;
 }
 
@@ -2109,6 +2588,11 @@ LIVES_INLINE boolean lives_text_view_set_justification(LiVESTextView *tview, LiV
 LIVES_INLINE boolean lives_text_view_scroll_mark_onscreen(LiVESTextView *tview, LiVESTextMark *mark) {
 #ifdef GUI_GTK
   gtk_text_view_scroll_mark_onscreen(tview, mark);
+  return TRUE;
+#endif
+#ifdef GUI_QT
+  // TODO
+  tview->scrollToAnchor(mark->get_name());
   return TRUE;
 #endif
   return FALSE;
@@ -2121,6 +2605,9 @@ LIVES_INLINE LiVESTextBuffer *lives_text_buffer_new(void) {
 #ifdef GUI_GTK
   tbuff=gtk_text_buffer_new(NULL);
 #endif
+#ifdef GUI_QT
+  tbuff = new LiVESTextBuffer;
+#endif
   return tbuff;
 }
 
@@ -2131,6 +2618,12 @@ LIVES_INLINE boolean lives_text_buffer_insert(LiVESTextBuffer *tbuff, LiVESTextI
   gtk_text_buffer_insert(tbuff, iter, text, len);
   return TRUE;
 #endif
+#ifdef GUI_QT
+  QTextCursor qtc = QTextCursor(tbuff);
+  qtc.setPosition(*iter);
+  QString qs = QString::fromUtf8(text);
+  qtc.insertText(qs);
+#endif
   return FALSE;
 }
 
@@ -2139,6 +2632,11 @@ LIVES_INLINE boolean lives_text_buffer_insert_at_cursor(LiVESTextBuffer *tbuff, 
 #ifdef GUI_GTK
   gtk_text_buffer_insert_at_cursor(tbuff, text, len);
   return TRUE;
+#endif
+#ifdef GUI_QT
+  QTextCursor qtc = tbuff->get_cursor();
+  QString qs = QString::fromUtf8(text, len);
+  qtc.insertText(qs);
 #endif
   return FALSE;
 }
@@ -2150,6 +2648,10 @@ LIVES_INLINE boolean lives_text_buffer_set_text(LiVESTextBuffer *tbuff, const ch
   gtk_text_buffer_set_text(tbuff, text, len);
   return TRUE;
 #endif
+#ifdef GUI_QT
+  QString qs = QString::fromUtf8(text, len);
+  tbuff->setPlainText(qs);
+#endif
   return FALSE;
 }
 
@@ -2158,6 +2660,12 @@ LIVES_INLINE char *lives_text_buffer_get_text(LiVESTextBuffer *tbuff, LiVESTextI
 #ifdef GUI_GTK
   return gtk_text_buffer_get_text(tbuff,start,end,inc_hidden_chars);
 #endif
+#ifdef GUI_QT
+  QTextCursor qtc = QTextCursor(tbuff);
+  qtc.setPosition(*start);
+  qtc.setPosition(*end, QTextCursor::KeepAnchor);
+  return strdup(qtc.selection().toPlainText().toUtf8().constData());
+#endif
   return NULL;
 }
 
@@ -2165,6 +2673,10 @@ LIVES_INLINE char *lives_text_buffer_get_text(LiVESTextBuffer *tbuff, LiVESTextI
 LIVES_INLINE boolean lives_text_buffer_get_start_iter(LiVESTextBuffer *tbuff, LiVESTextIter *iter) {
 #ifdef GUI_GTK
   gtk_text_buffer_get_start_iter(tbuff, iter);
+  return TRUE;
+#endif
+#ifdef GUI_QT
+  *iter = 0;
   return TRUE;
 #endif
   return FALSE;
@@ -2176,6 +2688,10 @@ LIVES_INLINE boolean lives_text_buffer_get_end_iter(LiVESTextBuffer *tbuff, LiVE
   gtk_text_buffer_get_end_iter(tbuff, iter);
   return TRUE;
 #endif
+#ifdef GUI_QT
+  *iter = tbuff->characterCount();
+  return TRUE;
+#endif
   return FALSE;
 }
 
@@ -2184,6 +2700,10 @@ LIVES_INLINE boolean lives_text_buffer_get_end_iter(LiVESTextBuffer *tbuff, LiVE
 LIVES_INLINE boolean lives_text_buffer_place_cursor(LiVESTextBuffer *tbuff, LiVESTextIter *iter) {
 #ifdef GUI_GTK
   gtk_text_buffer_place_cursor(tbuff, iter);
+  return TRUE;
+#endif
+#ifdef GUI_QT
+  tbuff->get_cursor().setPosition(*iter);
   return TRUE;
 #endif
   return FALSE;
@@ -2198,6 +2718,9 @@ LIVES_INLINE LiVESTextMark *lives_text_buffer_create_mark(LiVESTextBuffer *tbuff
 #ifdef GUI_GTK
   tmark=gtk_text_buffer_create_mark(tbuff, mark_name, where, left_gravity);
 #endif
+#ifdef GUI_QT
+  tmark = new LiVESTextMark(tbuff,mark_name,*where,left_gravity);
+#endif
   return tmark;
 }
 
@@ -2206,6 +2729,10 @@ LIVES_INLINE LiVESTextMark *lives_text_buffer_create_mark(LiVESTextBuffer *tbuff
 LIVES_INLINE boolean lives_text_buffer_delete_mark(LiVESTextBuffer *tbuff, LiVESTextMark *mark) {
 #ifdef GUI_GTK
   gtk_text_buffer_delete_mark(tbuff, mark);
+  return TRUE;
+#endif
+#ifdef GUI_QT
+  mark->dec_refcount();
   return TRUE;
 #endif
   return FALSE;
@@ -2218,6 +2745,13 @@ LIVES_INLINE boolean lives_text_buffer_delete(LiVESTextBuffer *tbuff, LiVESTextI
   gtk_text_buffer_delete(tbuff, start, end);
   return TRUE;
 #endif
+#ifdef GUI_QT
+  QTextCursor qtc = QTextCursor(tbuff);
+  qtc.setPosition(*start);
+  qtc.setPosition(*end, QTextCursor::KeepAnchor);
+  qtc.removeSelectedText();
+  return TRUE;
+#endif
   return FALSE;
 }
 
@@ -2226,6 +2760,10 @@ LIVES_INLINE boolean lives_text_buffer_delete(LiVESTextBuffer *tbuff, LiVESTextI
 LIVES_INLINE boolean lives_text_buffer_get_iter_at_mark(LiVESTextBuffer *tbuff, LiVESTextIter *iter, LiVESTextMark *mark) {
 #ifdef GUI_GTK
   gtk_text_buffer_get_iter_at_mark(tbuff, iter, mark);
+  return TRUE;
+#endif
+#ifdef GUI_QT
+  *iter = mark->position();
   return TRUE;
 #endif
   return FALSE;
@@ -2237,6 +2775,9 @@ LIVES_INLINE LiVESWidget *lives_button_new(void) {
 #ifdef GUI_GTK
   button=gtk_button_new();
 #endif
+#ifdef GUI_QT
+  button = new LiVESButton;
+#endif
   return button;
 }
 
@@ -2245,6 +2786,12 @@ LIVES_INLINE LiVESWidget *lives_button_new_with_mnemonic(const char *label) {
   LiVESWidget *button=NULL;
 #ifdef GUI_GTK
   button=gtk_button_new_with_mnemonic(label);
+#endif
+#ifdef GUI_QT
+  QString qlabel = QString::fromUtf8(label); 
+  qlabel = qlabel.replace('&',"&&");
+  qlabel = qlabel.replace('_','&');
+  button = new LiVESButton(qlabel);
 #endif
   return button;
 }
@@ -2255,15 +2802,18 @@ LIVES_INLINE LiVESWidget *lives_button_new_with_label(const char *label) {
 #ifdef GUI_GTK
   button=gtk_button_new_with_label(label);
 #endif
+#ifdef GUI_QT
+  QString qlabel = QString::fromUtf8(label);
+  button = new LiVESButton(qlabel);
+#endif
   return button;
 }
 
 
 LIVES_INLINE LiVESWidget *lives_button_new_from_stock(const char *stock_id) {
   LiVESWidget *button=NULL;
-#ifdef GUI_GTK
-#if GTK_CHECK_VERSION(3,10,0)
-  LiVESWidget *image;
+
+#if GTK_CHECK_VERSION(3,10,0) || defined GUI_QT
   if (!strcmp(stock_id,LIVES_STOCK_LABEL_CANCEL)) stock_id=LIVES_STOCK_CANCEL;
   if (!strcmp(stock_id,LIVES_STOCK_LABEL_OK)) stock_id=LIVES_STOCK_OK;
   // gtk 3.10 + -> we need to set the text ourselves
@@ -2315,12 +2865,27 @@ LIVES_INLINE LiVESWidget *lives_button_new_from_stock(const char *stock_id) {
     button=lives_button_new();
   }
 
+#ifdef GUI_GTK
   if (prefs->show_button_images
       ||!strcmp(stock_id,LIVES_STOCK_ADD)
       ||!strcmp(stock_id,LIVES_STOCK_REMOVE)
       ) {
-    image=gtk_image_new_from_icon_name(stock_id,GTK_ICON_SIZE_BUTTON);
+    LiVESWidget *image=gtk_image_new_from_icon_name(stock_id,GTK_ICON_SIZE_BUTTON);
     gtk_button_set_image(GTK_BUTTON(button),image);
+#endif
+
+#ifdef GUI_QT
+    if (!QIcon::hasThemeIcon(stock_id)) lives_printerr("Missing icon %s\n",stock_id);
+    else {
+      QAbstractButton *qbutton = dynamic_cast<QAbstractButton *>(button);
+      if (qbutton != NULL) {
+	qbutton->setIconSize(LIVES_ICON_SIZE_BUTTON);
+	QIcon qi = QIcon::fromTheme(stock_id);
+	QPixmap qp = qi.pixmap(qbutton->iconSize());
+	qbutton->setIcon(qp);
+      }
+#endif
+
   }
 
 #else
@@ -2332,9 +2897,6 @@ LIVES_INLINE LiVESWidget *lives_button_new_from_stock(const char *stock_id) {
   gtk_button_set_always_show_image(GTK_BUTTON(button),prefs->show_button_images);
 #endif
 
-#endif
-
-
   return button;
 }
 
@@ -2345,14 +2907,27 @@ LIVES_INLINE boolean lives_button_set_label(LiVESButton *button, const char *lab
   gtk_button_set_label(button,label);
   return TRUE;
 #endif
+#ifdef GUI_QT
+  QString qlabel = QString::fromUtf8(label);
+  if (button->get_use_underline()) {
+    qlabel = qlabel.replace('&',"&&");
+    qlabel = qlabel.replace('_','&');
+  }
+  ((QAbstractButton *)((LiVESButtonBase *)button))->setText(qlabel);
+  return TRUE;
+#endif
   return FALSE;
 }
 
 
 
-LIVES_INLINE boolean lives_button_set_use_underline(LiVESButton *button, boolean use){
+LIVES_INLINE boolean lives_button_set_use_underline(LiVESButton *button, boolean use) {
 #ifdef GUI_GTK
   gtk_button_set_use_underline(button,use);
+  return TRUE;
+#endif
+#ifdef GUI_QT
+  button->set_use_underline(use);
   return TRUE;
 #endif
   return FALSE;
@@ -2367,6 +2942,7 @@ LIVES_INLINE boolean lives_button_set_relief(LiVESButton *button, LiVESReliefSty
 #ifdef GUI_QT
   if (rstyle==LIVES_RELIEF_NONE) button->setFlat(true);
   else button->setFlat(false);
+  return TRUE;
 #endif
   return FALSE;
 }
@@ -2375,6 +2951,23 @@ LIVES_INLINE boolean lives_button_set_relief(LiVESButton *button, LiVESReliefSty
 LIVES_INLINE boolean lives_button_set_image(LiVESButton *button, LiVESWidget *image) {
 #ifdef GUI_GTK
   gtk_button_set_image(button,image);
+  return TRUE;
+#endif
+#ifdef GUI_QT
+  QAbstractButton *qbutton = (QAbstractButton *)((LiVESButtonBase *)button);
+  if (image != NULL && image->get_type() == LIVES_WIDGET_TYPE_IMAGE) {
+    QImage *qim = dynamic_cast<QImage *>(image);
+    if (qim != NULL) {
+      QPixmap *qpx = new QPixmap();
+      qpx->convertFromImage(*qim);
+      QIcon *qi = new QIcon(*qpx);
+      qbutton->setIcon(*qi);
+    }
+  }
+  else {
+    //qbutton->setIcon(NULL);
+  }
+  qbutton->setIconSize(LIVES_ICON_SIZE_BUTTON);
   return TRUE;
 #endif
   return FALSE;
@@ -2387,6 +2980,15 @@ LIVES_INLINE boolean lives_button_set_focus_on_click(LiVESButton *button, boolea
   gtk_button_set_focus_on_click(button,focus);
   return TRUE;
 #endif
+#ifdef GUI_QT
+  QWidget *qw = (QWidget *)((QPushButton *)button);
+  if (qw->focusPolicy() == Qt::NoFocus) return TRUE;
+  if (focus) {
+    qw->setFocusPolicy(Qt::StrongFocus);
+  }
+  else qw->setFocusPolicy(Qt::TabFocus);
+  return TRUE;
+#endif
   return FALSE;
 }
 
@@ -2396,14 +2998,23 @@ LIVES_INLINE boolean lives_toggle_button_get_active(LiVESToggleButton *button) {
 #ifdef GUI_GTK
   return gtk_toggle_button_get_active(button);
 #endif
+#ifdef GUI_QT
+  return button->isChecked();
+#endif
   return FALSE;
 }
 
 
-LIVES_INLINE void lives_toggle_button_set_active(LiVESToggleButton *button, boolean active) {
+LIVES_INLINE boolean lives_toggle_button_set_active(LiVESToggleButton *button, boolean active) {
 #ifdef GUI_GTK
   gtk_toggle_button_set_active(button,active);
+  return TRUE;
 #endif
+#ifdef GUI_QT
+  button->setChecked(active);
+  return TRUE;
+#endif
+  return FALSE;
 }
 
 
@@ -2411,6 +3022,22 @@ LIVES_INLINE LiVESWidget *lives_radio_button_new(LiVESSList *group) {
   LiVESWidget *button=NULL;
 #ifdef GUI_GTK
   button=gtk_radio_button_new(group);
+#endif
+#ifdef GUI_QT
+  QButtonGroup *qbg;
+  button = new LiVESRadioButton;
+  if (group == NULL) {
+    qbg = new QButtonGroup;
+    group = lives_slist_append(group, (void *)qbg);
+    qbg->setExclusive(true);
+  }
+  else {
+    qbg = (QButtonGroup *)lives_slist_nth_data(group, 0);
+  }
+
+  ((LiVESRadioButton *)button)->set_group(group);
+  qbg->addButton((QPushButton *)button);
+
 #endif
   return button;
 }
@@ -2421,6 +3048,9 @@ LIVES_INLINE LiVESWidget *lives_check_button_new(void) {
 #ifdef GUI_GTK
   button=gtk_check_button_new();
 #endif
+#ifdef GUI_QT
+  button = new LiVESCheckButton;
+#endif
   return button;
 }
 
@@ -2430,13 +3060,21 @@ LIVES_INLINE LiVESWidget *lives_check_button_new_with_label(const char *label) {
 #ifdef GUI_GTK
   button=gtk_check_button_new_with_label(label);
 #endif
+#ifdef GUI_QT
+  button = new LiVESCheckButton;
+  QString qlabel = QString::fromUtf8(label);
+  if (((LiVESButtonBase *)button)->get_use_underline()) {
+    qlabel = qlabel.replace('&',"&&");
+    qlabel = qlabel.replace('_','&');
+  }
+  ((QAbstractButton *)button)->setText(qlabel);
+#endif
   return button;
 }
 
 
-LIVES_INLINE void lives_widget_set_tooltip_text(LiVESWidget *widget, const char *tip_text) {
+LIVES_INLINE boolean lives_widget_set_tooltip_text(LiVESWidget *widget, const char *tip_text) {
 #ifdef GUI_GTK
-
 #if GTK_CHECK_VERSION(2,12,0)
   gtk_widget_set_tooltip_text(widget,tip_text);
 #else
@@ -2444,7 +3082,14 @@ LIVES_INLINE void lives_widget_set_tooltip_text(LiVESWidget *widget, const char 
   tips = gtk_tooltips_new ();
   gtk_tooltips_set_tip(tips,widget,tip_text,NULL);
 #endif
+  return TRUE;
 #endif
+#ifdef GUI_QT
+  QString *qs = new QString(QString::fromUtf8(tip_text));
+  widget->setToolTip(*qs);
+  return TRUE;
+#endif
+  return FALSE;
 }
 
 
@@ -2452,6 +3097,9 @@ LIVES_INLINE boolean lives_widget_grab_focus(LiVESWidget *widget) {
 #ifdef GUI_GTK
   gtk_widget_grab_focus(widget);
   return TRUE;
+#endif
+#ifdef GUI_QT
+  widget->setFocus(Qt::OtherFocusReason);
 #endif
   return FALSE;
 }
@@ -2462,6 +3110,14 @@ LIVES_INLINE boolean lives_widget_grab_default(LiVESWidget *widget) {
   gtk_widget_grab_default(widget);
   return TRUE;
 #endif
+#ifdef GUI_QT
+  if (LIVES_IS_PUSH_BUTTON(widget)) {
+    QPushButton *button = dynamic_cast<QPushButton *>(widget);
+    if (button != NULL) 
+      button->setDefault(true);
+  }
+  return TRUE;
+#endif
   return FALSE;
 }
 
@@ -2470,21 +3126,20 @@ LIVES_INLINE LiVESSList *lives_radio_button_get_group(LiVESRadioButton *rbutton)
 #ifdef GUI_GTK
   return gtk_radio_button_get_group(rbutton);
 #endif
-  return NULL;
-}
-
-
-LIVES_INLINE LiVESSList *lives_radio_menu_item_get_group(LiVESRadioMenuItem *rmenuitem) {
-#ifdef GUI_GTK
-  return gtk_radio_menu_item_get_group(rmenuitem);
+#ifdef GUI_QT
+  return rbutton->get_list();
 #endif
   return NULL;
 }
 
 
+
 LIVES_INLINE LiVESWidget *lives_widget_get_parent(LiVESWidget *widget) {
 #ifdef GUI_GTK
   return gtk_widget_get_parent(widget);
+#endif
+#ifdef GUI_QT
+  return widget->get_parent();
 #endif
   return NULL;
 }
@@ -2494,6 +3149,14 @@ LIVES_INLINE LiVESWidget *lives_widget_get_parent(LiVESWidget *widget) {
 LIVES_INLINE LiVESWidget *lives_widget_get_toplevel(LiVESWidget *widget) {
 #ifdef GUI_GTK
   return gtk_widget_get_toplevel(widget);
+#endif
+#ifdef GUI_QT
+  QWidget *qwidget = widget->window();
+  QVariant qv = qwidget->property("LiVESObject");
+  if (qv.isValid()) {
+    return static_cast<LiVESWidget *>(qv.value<LiVESObject *>());
+  }
+  return widget;
 #endif
   return NULL;
 }
@@ -2506,6 +3169,10 @@ LIVES_INLINE LiVESXWindow *lives_widget_get_xwindow(LiVESWidget *widget) {
 #else
   return GDK_WINDOW(widget->window);
 #endif
+#endif
+#ifdef GUI_QT
+  widget->winID();
+  return widget->windowHandle();
 #endif
   return NULL;
 }
@@ -2521,6 +3188,13 @@ LIVES_INLINE boolean lives_widget_set_can_focus(LiVESWidget *widget, boolean sta
   else
     GTK_WIDGET_UNSET_FLAGS (widget, GTK_CAN_FOCUS);
 #endif
+  return TRUE;
+#endif
+#ifdef GUI_QT
+  if (state) {
+    widget->setFocusPolicy(Qt::StrongFocus);
+  }
+  else widget->setFocusPolicy(Qt::NoFocus);
   return TRUE;
 #endif
   return FALSE;
@@ -2539,6 +3213,14 @@ LIVES_INLINE boolean lives_widget_set_can_default(LiVESWidget *widget, boolean s
 #endif
   return TRUE;
 #endif
+#ifdef GUI_QT
+  if (LIVES_IS_PUSH_BUTTON(widget)) {
+    QPushButton *button = dynamic_cast<QPushButton *>(widget);
+    if (button != NULL) 
+      button->setAutoDefault(state);
+  }
+  return TRUE;
+#endif
   return FALSE;
 }
 
@@ -2546,6 +3228,11 @@ LIVES_INLINE boolean lives_widget_set_can_default(LiVESWidget *widget, boolean s
 LIVES_INLINE boolean lives_widget_add_events(LiVESWidget *widget, int events) {
 #ifdef GUI_GTK
   gtk_widget_add_events(widget,events);
+  return TRUE;
+#endif
+#ifdef GUI_QT
+  events |= widget->get_events();
+  widget->set_events(events);
   return TRUE;
 #endif
   return FALSE;
@@ -2557,6 +3244,10 @@ LIVES_INLINE boolean lives_widget_set_events(LiVESWidget *widget, int events) {
   gtk_widget_set_events(widget,events);
   return TRUE;
 #endif
+#ifdef GUI_QT
+  widget->set_events(events);
+  return TRUE;
+#endif
   return FALSE;
 }
 
@@ -2565,6 +3256,9 @@ LIVES_INLINE boolean lives_widget_remove_accelerator(LiVESWidget *widget, LiVESA
 						     uint32_t accel_key, LiVESXModifierType accel_mods) {
 #ifdef GUI_GTK
   return gtk_widget_remove_accelerator(widget,acgroup,accel_key,accel_mods);
+#endif
+#ifdef GUI_QT
+  return ((LiVESObject *)widget)->remove_accels(acgroup, accel_key, accel_mods);
 #endif
   return FALSE;
 }
@@ -2576,6 +3270,11 @@ boolean lives_widget_get_preferred_size(LiVESWidget *widget, LiVESRequisition *m
   gtk_widget_get_preferred_size(widget,min_size,nat_size);
   return TRUE;
 #endif
+#endif
+#ifdef GUI_QT
+  *min_size = widget->minimumSize();
+  *nat_size = widget->size();
+  return TRUE;
 #endif
   return FALSE;
 }
@@ -2589,6 +3288,9 @@ LIVES_INLINE boolean lives_widget_is_sensitive(LiVESWidget *widget) {
   return GTK_WIDGET_IS_SENSITIVE (widget);
 #endif
 #endif
+#ifdef GUI_QT
+  return widget->isEnabled();
+#endif
   return FALSE;
 }
 
@@ -2601,25 +3303,40 @@ LIVES_INLINE boolean lives_widget_is_visible(LiVESWidget *widget) {
   return GTK_WIDGET_VISIBLE (widget);
 #endif
 #endif
+#ifdef GUI_QT
+  return widget->isVisible();
+#endif
   return FALSE;
 }
 
 
 LIVES_INLINE boolean lives_widget_is_realized(LiVESWidget *widget) {
+  // used for giw widgets
 #ifdef GUI_GTK
 #if GTK_CHECK_VERSION(2,18,0)
-  return gtk_widget_get_realized(widget);
+return gtk_widget_get_realized(widget);
 #else
-  return GTK_WIDGET_REALIZED (widget);
+return GTK_WIDGET_REALIZED (widget);
 #endif
 #endif
-  return FALSE;
-}
+return FALSE;
+} 
+
 
 
 LIVES_INLINE boolean lives_container_add(LiVESContainer *container, LiVESWidget *widget) {
 #ifdef GUI_GTK
   gtk_container_add(container,widget);
+  return TRUE;
+#endif
+#ifdef GUI_QT
+  QLayout *ql = dynamic_cast<QLayout *>(container);
+  if (ql == NULL) {
+    LIVES_WARN("Attempt to add widget to non-layout class");
+    return FALSE;
+  }
+  ql->addWidget(widget);
+  container->add_child(widget);
   return TRUE;
 #endif
   return FALSE;
@@ -2631,6 +3348,16 @@ LIVES_INLINE boolean lives_container_remove(LiVESContainer *container, LiVESWidg
   gtk_container_remove(container,widget);
   return TRUE;
 #endif
+#ifdef GUI_QT
+  QLayout *ql = dynamic_cast<QLayout *>(container);
+  if (ql == NULL) {
+    LIVES_WARN("Attempt to add widget to non-layout class");
+    return FALSE;
+  }
+  ql->removeWidget(widget);
+  container->remove_child(widget);
+  return TRUE;
+#endif
   return FALSE;
 }
 
@@ -2639,6 +3366,15 @@ LIVES_INLINE boolean lives_container_set_border_width(LiVESContainer *container,
   // sets border OUTSIDE container
 #ifdef GUI_GTK
   gtk_container_set_border_width(container,width);
+  return TRUE;
+#endif
+#ifdef GUI_QT
+  QLayout *ql = dynamic_cast<QLayout *>(container);
+  if (ql == NULL) {
+    LIVES_WARN("Attempt to add widget to non-layout class");
+    return FALSE;
+  }
+  ql->setContentsMargins(width, width, width, width);
   return TRUE;
 #endif
   return FALSE;
@@ -2652,6 +3388,12 @@ LIVES_INLINE boolean lives_container_foreach(LiVESContainer *cont, LiVESWidgetCa
   gtk_container_foreach(cont,callback,cb_data);
   return TRUE;
 #endif
+#ifdef GUI_QT
+  for (int i = 0; i < cont->count_children(); ++i) {
+    (*callback)(cont->get_child(i), cb_data);
+  }
+  return TRUE;
+#endif
   return FALSE;
 }
 
@@ -2659,8 +3401,22 @@ LIVES_INLINE boolean lives_container_foreach(LiVESContainer *cont, LiVESWidgetCa
 static LIVES_INLINE boolean lives_container_forall(LiVESContainer *cont, LiVESWidgetCallback callback, livespointer cb_data) {
   // includes internal children
 #ifdef GUI_GTK
-  gtk_container_foreach(cont,callback,cb_data);
+  gtk_container_forall(cont,callback,cb_data);
   return TRUE;
+#endif
+#ifdef GUI_QT
+  /*  QLayout *ql = static_cast<QLayout *>(container);
+  if (ql == NULL) {
+    LIVES_WARN("Attempt to add widget to non-layout class");
+    return FALSE;
+  }
+  for (int i = 0; i < ql->count(); ++i) {
+    QWidget *widget = ql->itemAt(i)->widget();
+    if (widget) {
+      (*callback)(widget, cb_data);
+    }
+  }
+  return TRUE;*/
 #endif
   return FALSE;
 }
@@ -2670,6 +3426,9 @@ LIVES_INLINE LiVESList *lives_container_get_children(LiVESContainer *cont) {
   LiVESList *children=NULL;
 #ifdef GUI_GTK
   children=gtk_container_get_children(cont);
+#endif
+#ifdef GUI_QT
+  return cont->get_children();
 #endif
   return children;
 }
@@ -2681,6 +3440,22 @@ LIVES_INLINE boolean lives_container_set_focus_child(LiVESContainer *cont, LiVES
   gtk_container_set_focus_child(cont,child);
   return TRUE;
 #endif
+#ifdef GUI_QT
+  if (child == NULL) {
+    for (int i = 0; i < cont->count_children(); ++i) {
+      if (cont->get_child(i)->hasFocus()) {
+	cont->get_child(i)->clearFocus();
+	break;
+      }
+    }
+  }
+  else {
+    if (cont->hasFocus()) {
+      child->setFocus();
+    }
+  }
+  return TRUE;
+#endif
   return FALSE;
 }
 
@@ -2689,6 +3464,9 @@ LIVES_INLINE LiVESWidget *lives_progress_bar_new(void) {
   LiVESWidget *pbar=NULL;
 #ifdef GUI_GTK
   pbar=gtk_progress_bar_new();
+#endif
+#ifdef GUI_QT
+  pbar = new LiVESProgressBar;
 #endif
   return pbar;
 }
@@ -2699,6 +3477,12 @@ LIVES_INLINE boolean lives_progress_bar_set_fraction(LiVESProgressBar *pbar, dou
   gtk_progress_bar_set_fraction(pbar,fraction);
   return TRUE;
 #endif
+#ifdef GUI_QT
+  pbar->setMinimum(0);
+  pbar->setMaximum(1000000);
+  pbar->setValue(fraction * 1000000.);
+  return TRUE;
+#endif
   return FALSE;
 }
 
@@ -2706,6 +3490,9 @@ LIVES_INLINE boolean lives_progress_bar_set_fraction(LiVESProgressBar *pbar, dou
 LIVES_INLINE boolean lives_progress_bar_set_pulse_step(LiVESProgressBar *pbar, double fraction) {
 #ifdef GUI_GTK
   gtk_progress_bar_set_pulse_step(pbar,fraction);
+  return TRUE;
+#endif
+#ifdef GUI_QT
   return TRUE;
 #endif
   return FALSE;
@@ -2718,14 +3505,24 @@ LIVES_INLINE boolean lives_progress_bar_pulse(LiVESProgressBar *pbar) {
   gtk_progress_bar_pulse(pbar);
   return TRUE;
 #endif
+#ifdef GUI_QT
+  pbar->setMinimum(0);
+  pbar->setMaximum(0);
+  pbar->setValue (qrand () % 99 + 1);
+  return TRUE;
+#endif
   return FALSE;
 }
+
 
 
 LIVES_INLINE LiVESWidget *lives_spin_button_new(LiVESAdjustment *adj, double climb_rate, uint32_t digits) {
   LiVESWidget *sbutton=NULL;
 #ifdef GUI_GTK
   sbutton=gtk_spin_button_new(adj,climb_rate,digits);
+#endif
+#ifdef GUI_QT
+  sbutton = new LiVESSpinButton(adj, climb_rate, digits);
 #endif
   return sbutton;
 }
@@ -2735,6 +3532,9 @@ LIVES_INLINE double lives_spin_button_get_value(LiVESSpinButton *button) {
 #ifdef GUI_GTK
   return gtk_spin_button_get_value(button);
 #endif
+#ifdef GUI_QT
+  return button->value();
+#endif
   return 0.;
 }
 
@@ -2742,6 +3542,9 @@ LIVES_INLINE double lives_spin_button_get_value(LiVESSpinButton *button) {
 LIVES_INLINE int lives_spin_button_get_value_as_int(LiVESSpinButton *button) {
 #ifdef GUI_GTK
   return gtk_spin_button_get_value_as_int(button);
+#endif
+#ifdef GUI_QT
+  return (int)button->value();
 #endif
   return 0.;
 }
@@ -2752,6 +3555,9 @@ LIVES_INLINE LiVESAdjustment *lives_spin_button_get_adjustment(LiVESSpinButton *
 #ifdef GUI_GTK
   adj=gtk_spin_button_get_adjustment(button);
 #endif
+#ifdef GUI_QT
+  adj = button->get_adj();
+#endif
   return adj;
 }
 
@@ -2759,6 +3565,12 @@ LIVES_INLINE LiVESAdjustment *lives_spin_button_get_adjustment(LiVESSpinButton *
 LIVES_INLINE boolean lives_spin_button_set_value(LiVESSpinButton *button, double value) {
 #ifdef GUI_GTK
   gtk_spin_button_set_value(button,value);
+  return TRUE;
+#endif
+#ifdef GUI_QT
+  LiVESAdjustment *adj = button->get_adj();
+  button->setValue(value);
+  adj->value = value;
   return TRUE;
 #endif
   return FALSE;
@@ -2770,6 +3582,18 @@ LIVES_INLINE boolean lives_spin_button_set_range(LiVESSpinButton *button, double
   gtk_spin_button_set_range(button,min,max);
   return TRUE;
 #endif
+#ifdef GUI_QT
+  LiVESAdjustment *adj = button->get_adj();
+  button->setRange(min, max);
+  double value = button->value();
+  if (value < min) value = min;
+  if (value > max) value = max;
+  button->setValue(value);
+  adj->lower = min;
+  adj->upper = max;
+  adj->value = value;
+  return TRUE;
+#endif
   return FALSE;
 }
 
@@ -2777,6 +3601,10 @@ LIVES_INLINE boolean lives_spin_button_set_range(LiVESSpinButton *button, double
 LIVES_INLINE boolean lives_spin_button_set_wrap(LiVESSpinButton *button, boolean wrap) {
 #ifdef GUI_GTK
   gtk_spin_button_set_wrap(button,wrap);
+  return TRUE;
+#endif
+#ifdef GUI_QT
+  button->setWrapping(wrap);
   return TRUE;
 #endif
   return FALSE;
@@ -2788,6 +3616,10 @@ LIVES_INLINE boolean lives_spin_button_set_digits(LiVESSpinButton *button, uint3
   gtk_spin_button_set_digits(button,digits);
   return TRUE;
 #endif
+#ifdef GUI_QT
+  button->setDecimals(digits);
+  return TRUE;
+#endif
   return FALSE;
 }
 
@@ -2796,6 +3628,9 @@ LIVES_INLINE boolean lives_spin_button_update(LiVESSpinButton *button) {
 #ifdef GUI_GTK
   gtk_spin_button_update(button);
   return TRUE;
+#endif
+#ifdef GUI_QT
+  return TRUE; // not needed ?
 #endif
   return FALSE;
 }
@@ -2807,6 +3642,9 @@ LIVES_INLINE LiVESToolItem *lives_tool_button_new(LiVESWidget *icon_widget, cons
 #ifdef GUI_GTK
   button=gtk_tool_button_new(icon_widget,label);
 #endif
+#ifdef GUI_QT
+  button = new LiVESToolButton(icon_widget, label);
+#endif
   return button;
 }
 
@@ -2815,6 +3653,9 @@ LIVES_INLINE boolean lives_tool_button_set_icon_widget(LiVESToolButton *button, 
 #ifdef GUI_GTK
   gtk_tool_button_set_icon_widget(button,icon);
   return TRUE;
+#endif
+#ifdef GUI_QT
+  button->set_icon_widget(icon);
 #endif
   return FALSE;
 }
@@ -2825,6 +3666,9 @@ LIVES_INLINE boolean lives_tool_button_set_label_widget(LiVESToolButton *button,
   gtk_tool_button_set_label_widget(button,label);
   return TRUE;
 #endif
+#ifdef GUI_QT
+  button->set_label_widget(label);
+#endif
   return FALSE;
 }
 
@@ -2833,6 +3677,10 @@ LIVES_INLINE boolean lives_tool_button_set_label_widget(LiVESToolButton *button,
 LIVES_INLINE boolean lives_tool_button_set_use_underline(LiVESToolButton *button, boolean use_underline) {
 #ifdef GUI_GTK
   gtk_tool_button_set_use_underline(button,use_underline);
+  return TRUE;
+#endif
+#ifdef GUI_QT
+  button->set_use_underline(use_underline);
   return TRUE;
 #endif
   return FALSE;
@@ -2848,6 +3696,12 @@ LIVES_INLINE void lives_ruler_set_range(LiVESRuler *ruler, double lower, double 
 #else
   gtk_ruler_set_range(ruler,lower,upper,position,max_size);
 #endif
+#ifdef GUI_QT
+  ruler->setMinimum(lower);
+  ruler->setMaximum(upper);
+  ruler->setValue(position);
+#endif
+
 #endif
 }
 
@@ -2859,6 +3713,9 @@ LIVES_INLINE double lives_ruler_get_value(LiVESRuler *ruler) {
 #else
   return ruler->position;
 #endif
+#endif
+#ifdef GUI_QT
+  return ruler->value();
 #endif
   return 0.;
 }
@@ -2872,6 +3729,9 @@ LIVES_INLINE double lives_ruler_set_value(LiVESRuler *ruler, double value) {
   ruler->position=value;
 #endif
 #endif
+#ifdef GUI_QT
+  ruler->setValue(value);
+#endif
   return value;
 }
 
@@ -2884,6 +3744,9 @@ LIVES_INLINE double lives_ruler_set_upper(LiVESRuler *ruler, double value) {
   ruler->upper=value;
 #endif
 #endif
+#ifdef GUI_QT
+  ruler->setMaximum(value);
+#endif
   return value;
 }
 
@@ -2895,6 +3758,9 @@ LIVES_INLINE double lives_ruler_set_lower(LiVESRuler *ruler, double value) {
 #else
   ruler->lower=value;
 #endif
+#endif
+#ifdef GUI_QT
+  ruler->setMinimum(value);
 #endif
   return value;
 }
@@ -3082,7 +3948,7 @@ LIVES_INLINE LiVESWidgetState lives_widget_get_state(LiVESWidget *widget) {
 #endif
 
 #ifdef GUI_QT
-  return widget->state;
+  return widget->get_state();
 #else
   return 0;
 #endif
@@ -3270,6 +4136,9 @@ LIVES_INLINE boolean lives_tree_model_get(LiVESTreeModel *tmod, LiVESTreeIter *t
   gtk_tree_model_get_valist(tmod,titer,argList);
   res=TRUE;
 #endif
+#ifdef GUI_QT
+  // TODO
+#endif
   va_end(argList);
   return res;
 }
@@ -3279,6 +4148,9 @@ LIVES_INLINE boolean lives_tree_model_get_iter(LiVESTreeModel *tmod, LiVESTreeIt
 #ifdef GUI_GTK
   return gtk_tree_model_get_iter(tmod,titer,tpath);
 #endif
+#ifdef GUI_QT
+  // TODO
+#endif
   return FALSE;
 }
 
@@ -3286,6 +4158,11 @@ LIVES_INLINE boolean lives_tree_model_get_iter(LiVESTreeModel *tmod, LiVESTreeIt
 LIVES_INLINE boolean lives_tree_model_get_iter_first(LiVESTreeModel *tmod, LiVESTreeIter *titer) {
 #ifdef GUI_GTK
   return gtk_tree_model_get_iter_first(tmod,titer);
+#endif
+#ifdef GUI_QT
+  QTreeWidgetItem *qtwi = tmod->get_tree_widget()->invisibleRootItem();
+  *titer = *qtwi;
+  return TRUE;
 #endif
   return FALSE;
 }
@@ -3296,6 +4173,9 @@ LIVES_INLINE LiVESTreePath *lives_tree_model_get_path(LiVESTreeModel *tmod, LiVE
 #ifdef GUI_GTK
   tpath=gtk_tree_model_get_path(tmod,titer);
 #endif
+#ifdef GUI_QT
+  // TODO
+#endif
   return tpath;
 }
 
@@ -3303,6 +4183,17 @@ LIVES_INLINE LiVESTreePath *lives_tree_model_get_path(LiVESTreeModel *tmod, LiVE
  LIVES_INLINE boolean lives_tree_model_iter_children(LiVESTreeModel *tmod, LiVESTreeIter *titer, LiVESTreeIter *parent) {
 #ifdef GUI_GTK
   return gtk_tree_model_iter_children(tmod,titer,parent);
+#endif
+#ifdef GUI_QT
+    if (parent == NULL || parent == tmod->get_tree_widget()->invisibleRootItem()) {
+    QTreeWidget *tw = tmod->get_tree_widget();
+    if (tw->topLevelItemCount() == 0) return FALSE;
+    *titer = *tw->topLevelItem(0);
+    return TRUE;
+  }
+  if (parent->childCount() == 0) return FALSE;
+  *titer = *parent->child(0);
+  return TRUE;
 #endif
   return FALSE;
 }
@@ -3312,6 +4203,13 @@ LIVES_INLINE int lives_tree_model_iter_n_children(LiVESTreeModel *tmod, LiVESTre
 #ifdef GUI_GTK
   return gtk_tree_model_iter_n_children(tmod,titer);
 #endif
+#ifdef GUI_QT
+  if (titer == NULL || titer == tmod->get_tree_widget()->invisibleRootItem()) {
+    // return num toplevel
+    return tmod->get_tree_widget()->topLevelItemCount();
+  }
+  return titer->childCount();
+#endif
   return 0;
 }
 
@@ -3319,6 +4217,25 @@ LIVES_INLINE int lives_tree_model_iter_n_children(LiVESTreeModel *tmod, LiVESTre
 LIVES_INLINE boolean lives_tree_model_iter_next(LiVESTreeModel *tmod, LiVESTreeIter *titer) {
 #ifdef GUI_GTK
   return gtk_tree_model_iter_next(tmod,titer);
+#endif
+#ifdef GUI_QT
+  QTreeWidgetItem *parent = titer->parent();
+  if (parent == NULL || parent == tmod->get_tree_widget()->invisibleRootItem()) {
+    QTreeWidget *tw = tmod->get_tree_widget();
+    int idx = tw->indexOfTopLevelItem(titer) + 1;
+    if (idx >= tw->topLevelItemCount()) {
+      return FALSE;
+    }
+    *titer = *(tw->topLevelItem(idx));
+    return TRUE;
+  }
+  int idx = parent->indexOfChild(titer) + 1;
+  if (idx >= parent->childCount()) {
+    return FALSE;
+  }
+  *titer = *(parent->child(idx));
+  return TRUE;
+
 #endif
   return FALSE;
 }
@@ -3329,6 +4246,9 @@ LIVES_INLINE boolean lives_tree_path_free(LiVESTreePath *tpath) {
   gtk_tree_path_free(tpath);
   return TRUE;
 #endif
+#ifdef GUI_QT
+  delete tpath;
+#endif
   return FALSE;
 }
 
@@ -3337,6 +4257,9 @@ LIVES_INLINE LiVESTreePath *lives_tree_path_new_from_string(const char *path) {
   LiVESTreePath *tpath=NULL;
 #ifdef GUI_GTK
   tpath=gtk_tree_path_new_from_string(path);
+#endif
+#ifdef GUI_QT
+  tpath = strdup(path);
 #endif
   return tpath;
 }
@@ -3348,6 +4271,9 @@ LIVES_INLINE int lives_tree_path_get_depth(LiVESTreePath *tpath) {
 #ifdef GUI_GTK
   depth=gtk_tree_path_get_depth(tpath);
 #endif
+#ifdef GUI_QT
+  // TODO
+#endif
   return depth;
 }
 
@@ -3357,6 +4283,9 @@ LIVES_INLINE int *lives_tree_path_get_indices(LiVESTreePath *tpath) {
   int *indices=NULL;
 #ifdef GUI_GTK
   indices=gtk_tree_path_get_indices(tpath);
+#endif
+#ifdef GUI_QT
+  // TODO
 #endif
   return indices;
 }
@@ -3378,6 +4307,11 @@ LIVES_INLINE LiVESTreeStore *lives_tree_store_new(int ncols, ...) {
     g_free(types);
   }
 #endif
+#ifdef GUI_QT
+  QModelIndex qmi = QModelIndex();
+  tstore = new LiVESTreeStore;
+  tstore->insertColumns(0, ncols, qmi);
+#endif
   va_end(argList);
   return tstore;
 }
@@ -3388,6 +4322,23 @@ LIVES_INLINE boolean lives_tree_store_append(LiVESTreeStore *tstore, LiVESTreeIt
 #ifdef GUI_GTK
   gtk_tree_store_append(tstore,titer,parent);
   return TRUE;
+#endif
+#ifdef GUI_QT
+  QVariant qv = ((QAbstractItemModel *)tstore)->property("LiVESObject");
+  if (qv.isValid()) {
+    LiVESTreeModel *ltm = static_cast<LiVESTreeModel *>(qv.value<LiVESObject *>());
+    QTreeWidget *qtw = ltm->get_tree_widget();
+    if (parent != NULL) {
+      QTreeWidgetItem *qtwi = new QTreeWidgetItem(parent);
+      *titer = *qtwi;
+      return TRUE;
+    }
+    else {
+      QTreeWidgetItem *qtwi = new QTreeWidgetItem(qtw);
+      *titer = *qtwi;
+     return TRUE;
+    }
+  }
 #endif
   return FALSE;
 }
@@ -3402,6 +4353,9 @@ LIVES_INLINE boolean lives_tree_store_set(LiVESTreeStore *tstore, LiVESTreeIter 
   gtk_tree_store_set_valist(tstore,titer,argList);
   res=TRUE;
 #endif
+#ifdef GUI_QT
+  // TODO
+#endif
   va_end(argList);
   return res;
 }
@@ -3413,6 +4367,11 @@ LIVES_INLINE LiVESWidget *lives_tree_view_new_with_model(LiVESTreeModel *tmod) {
 #ifdef GUI_GTK
   tview=gtk_tree_view_new_with_model(tmod);
 #endif
+#ifdef GUI_QT
+  tview = new LiVESTreeView;
+  tmod->set_tree_widget(static_cast<LiVESTreeView *>(tview));
+  ((QAbstractItemView *)tview)->setModel((QAbstractItemModel *)(tmod->get_model()));
+#endif
   return tview;
 }
 
@@ -3422,6 +4381,9 @@ LIVES_INLINE LiVESWidget *lives_tree_view_new(void) {
   LiVESWidget *tview=NULL;
 #ifdef GUI_GTK
   tview=gtk_tree_view_new();
+#endif
+#ifdef GUI_QT
+  tview = new LiVESTreeView;
 #endif
   return tview;
 }
@@ -3435,6 +4397,11 @@ LIVES_INLINE boolean lives_tree_view_set_model(LiVESTreeView *tview, LiVESTreeMo
   gtk_tree_view_set_model(tview,tmod);
   return TRUE;
 #endif
+#ifdef GUI_QT
+  ((QAbstractItemView *)tview)->setModel((QAbstractItemModel *)(tmod->get_model()));
+  tmod->set_tree_widget(tview);
+  return TRUE;
+#endif
   return FALSE;
 }
 
@@ -3444,6 +4411,13 @@ LIVES_INLINE LiVESTreeModel *lives_tree_view_get_model(LiVESTreeView *tview) {
   LiVESTreeModel *tmod=NULL;
 #ifdef GUI_GTK
   tmod=gtk_tree_view_get_model(tview);
+#endif
+#ifdef GUI_QT
+  QAbstractItemModel *qtmod = ((QTreeWidget *)tview)->model();
+  QVariant qv = qtmod->property("LiVESObject");
+  if (qv.isValid()) {
+    tmod = static_cast<LiVESTreeModel *>(qv.value<LiVESObject *>());
+  }
 #endif
   return tmod;
 }
@@ -3803,6 +4777,10 @@ LIVES_INLINE boolean lives_xwindow_raise(LiVESXWindow *xwin) {
   gdk_window_raise(xwin);
   return TRUE;
 #endif
+#ifdef GUI_QT
+  xwin->raise();
+  return TRUE;
+#endif
   return FALSE;
 }
 
@@ -3810,6 +4788,10 @@ LIVES_INLINE boolean lives_xwindow_raise(LiVESXWindow *xwin) {
  LIVES_INLINE boolean lives_xwindow_set_cursor(LiVESXWindow *xwin, LiVESXCursor *cursor) {
 #ifdef GUI_GTK
    gdk_window_set_cursor(xwin,cursor);
+  return TRUE;
+#endif
+#ifdef GUI_QT
+  xwin->setCursor(*cursor);
   return TRUE;
 #endif
   return FALSE;
@@ -3952,6 +4934,19 @@ LIVES_INLINE LiVESWidget *lives_radio_menu_item_new_with_label(LiVESSList *group
 #endif
   return menuitem;
 }
+
+
+
+LIVES_INLINE LiVESSList *lives_radio_menu_item_get_group(LiVESRadioMenuItem *rmenuitem) {
+#ifdef GUI_GTK
+  return gtk_radio_menu_item_get_group(rmenuitem);
+#endif
+#ifdef GUI_QT
+  return rmenuitem->get_list();
+#endif
+  return NULL;
+}
+
 
 
 LIVES_INLINE LiVESWidget *lives_check_menu_item_new_with_label(const char *label) {
@@ -4561,58 +5556,11 @@ LIVES_INLINE boolean lives_color_button_set_use_alpha(LiVESColorButton *button, 
 }
 
 
-LIVES_INLINE LiVESAccelGroup *lives_accel_group_new(void) {
-  LiVESAccelGroup *group=NULL;
-#ifdef GUI_GTK
-  group=gtk_accel_group_new();
-#endif
-  return group;
-}
-
-
-LIVES_INLINE void lives_accel_group_connect(LiVESAccelGroup *group, uint32_t key, LiVESXModifierType mod, 
-					    LiVESAccelFlags flags, LiVESWidgetClosure *closure) {
-
-#ifdef GUI_GTK
-  gtk_accel_group_connect(group,key,mod,flags,closure);
-#endif
-
-}
-
-
-
-LIVES_INLINE void lives_accel_group_disconnect(LiVESAccelGroup *group, LiVESWidgetClosure *closure) {
-
-#ifdef GUI_GTK
-  gtk_accel_group_disconnect(group,closure);
-#endif
-
-}
 
 
 
 
-LIVES_INLINE void lives_widget_add_accelerator(LiVESWidget *widget, const char *accel_signal, LiVESAccelGroup *accel_group,
-					       uint32_t accel_key, LiVESXModifierType accel_mods, LiVESAccelFlags accel_flags) {
-#ifdef GUI_GTK
-  gtk_widget_add_accelerator(widget,accel_signal,accel_group,accel_key,accel_mods,accel_flags);
-#endif
-}
-
-
-
-LIVES_INLINE void lives_accel_groups_activate(LiVESObject *object, uint32_t key, LiVESXModifierType mod) {
-#ifdef GUI_GTK
-  gtk_accel_groups_activate(object,key,mod);
-#endif
-
-}
-
-
-
-
-
-LIVES_INLINE void lives_widget_get_pointer(LiVESXDevice *device, LiVESWidget *widget, int *x, int *y) {
+LIVES_INLINE boolean lives_widget_get_pointer(LiVESXDevice *device, LiVESWidget *widget, int *x, int *y) {
 #ifdef GUI_GTK
 #if GTK_CHECK_VERSION(3,0,0)
   // try: gdk_event_get_device (event)
@@ -4621,14 +5569,22 @@ LIVES_INLINE void lives_widget_get_pointer(LiVESXDevice *device, LiVESWidget *wi
   else xwin=lives_widget_get_xwindow(widget);
   if (xwin==NULL) {
     LIVES_ERROR("Tried to get pointer for windowless widget");
-    return;
+    return TRUE;
   }
   gdk_window_get_device_position (xwin,device,x,y,NULL);
 #else 
   gtk_widget_get_pointer(widget,x,y);
 #endif
+  return TRUE;
 #endif
-
+#ifdef GUI_QT
+  QPoint p = QCursor::pos(device);
+  if (widget != NULL) p = widget->mapFromGlobal(p);
+  *x = p.x;
+  *y = p.y;
+  return TRUE;
+#endif
+  return FALSE;
 }
 
 
@@ -4652,7 +5608,13 @@ LIVES_INLINE LiVESXWindow *lives_display_get_window_at_pointer
   xwindow=gdk_display_get_window_at_pointer(display,win_x,win_y);
 #endif
 #endif
-  return xwindow;
+#ifdef GUI_QT
+  QWidget *widget = guiapp->widgetAt(QCursor::pos(display));
+  widget->winId();
+  xwindow = widget->windowHandle();
+#endif
+ return xwindow;
+
 }
 
 
@@ -4710,7 +5672,11 @@ LIVES_INLINE uint64_t lives_widget_get_xwinid(LiVESWidget *widget, const gchar *
     else 
 #endif
 #endif
-      if (msg!=NULL) LIVES_WARN(msg);
+#ifdef GUI_QT
+      if (1) xwin = (uint64_t)widget->winId();
+      else 
+#endif
+	if (msg!=NULL) LIVES_WARN(msg);
 
   return xwin;
 }
@@ -5327,7 +6293,7 @@ LiVESWidget *lives_standard_dialog_new(const char *title, boolean add_std_button
 
     lives_dialog_add_action_widget (LIVES_DIALOG (dialog), cancelbutton, LIVES_RESPONSE_CANCEL);
 
-    lives_widget_add_accelerator (cancelbutton, "activate", accel_group,
+    lives_widget_add_accelerator (cancelbutton, LIVES_WIDGET_CLICKED_EVENT, accel_group,
 				LIVES_KEY_Escape, (LiVESXModifierType)0, (LiVESAccelFlags)0);
 
     lives_widget_set_can_focus_and_default(cancelbutton);
@@ -5460,7 +6426,9 @@ LiVESWidget *lives_standard_expander_new(const char *ltext, boolean use_mnemonic
     lives_widget_apply_theme(expander, LIVES_WIDGET_STATE_NORMAL);
   }
   
+#ifdef GUI_GTK
   lives_container_forall(LIVES_CONTAINER(expander),set_child_colour,LIVES_INT_TO_POINTER(TRUE));
+#endif
 
   lives_box_pack_start (parent, expander, FALSE, FALSE, widget_opts.packing_height);
 
@@ -5488,7 +6456,7 @@ LIVES_INLINE LiVESWidget *lives_standard_file_button_new(boolean is_dir, const c
 // utils
 
 void widget_helper_init(void) {
-#if GTK_CHECK_VERSION(3,10,0)
+#if GTK_CHECK_VERSION(3,10,0) || defined GUI_QT
   g_snprintf(LIVES_STOCK_LABEL_CANCEL,32,"%s",(_("_Cancel")));
   g_snprintf(LIVES_STOCK_LABEL_OK,32,"%s",(_("_OK")));
   g_snprintf(LIVES_STOCK_LABEL_YES,32,"%s",(_("_Yes")));
@@ -5637,6 +6605,7 @@ void set_child_colour(LiVESWidget *widget, livespointer set_allx) {
   boolean set_all=LIVES_POINTER_TO_INT(set_allx);
 
   if (!set_all&&LIVES_IS_BUTTON(widget)) return;
+
   if (LIVES_IS_CONTAINER(widget)) {
     lives_container_forall(LIVES_CONTAINER(widget),set_child_colour,set_allx);
     return;
@@ -5645,6 +6614,7 @@ void set_child_colour(LiVESWidget *widget, livespointer set_allx) {
   if (set_all||LIVES_IS_LABEL(widget)) {
     lives_widget_apply_theme(widget, LIVES_WIDGET_STATE_NORMAL);
   }
+
   return;
 }
 
@@ -5750,14 +6720,15 @@ void lives_spin_button_configure(LiVESSpinButton *spinbutton,
 #include "rte_window.h"
 #include "ce_thumbs.h"
 
-static void lives_widget_context_update_real(boolean all) {
-#ifdef GUI_GTK
+boolean lives_widget_context_update(void) {
   boolean mt_needs_idlefunc=FALSE;
 
-  if (pthread_mutex_trylock(&mainw->gtk_mutex)) return;
+  if (pthread_mutex_trylock(&mainw->gtk_mutex)) return FALSE;
 
   if (mainw->multitrack!=NULL&&mainw->multitrack->idlefunc>0) {
+#ifdef GUI_GTK
     g_source_remove(mainw->multitrack->idlefunc);
+#endif
     mainw->multitrack->idlefunc=0;
     mt_needs_idlefunc=TRUE;
   }
@@ -5772,25 +6743,19 @@ static void lives_widget_context_update_real(boolean all) {
 	mainw->ce_upd_clip=FALSE;
       }
     }
-    if (all) while (!mainw->is_exiting&&g_main_context_iteration(NULL,FALSE));
-    else g_main_context_iteration(NULL,FALSE);
-
+#ifdef GUI_GTK
+    while (!mainw->is_exiting&&g_main_context_iteration(NULL,FALSE));
+#endif
+#ifdef GUI_QT
+    coreApp->processEvents();
+#endif
   }
 
   if (!mainw->is_exiting&&mt_needs_idlefunc) mainw->multitrack->idlefunc=mt_idle_add(mainw->multitrack);
 
   pthread_mutex_unlock(&mainw->gtk_mutex);
+  return TRUE;
 
-#endif
-}
-
-void lives_widget_context_update(void) {
-  lives_widget_context_update_real(TRUE);
-}
-
-
-void lives_widget_context_update_one(void) {
-  lives_widget_context_update_real(FALSE);
 }
 
 

@@ -533,13 +533,19 @@ void lives_exit (void) {
 
 void on_filesel_button_clicked (LiVESButton *button, gpointer user_data) {
   LiVESWidget *tentry=LIVES_WIDGET(user_data);
+
+  boolean is_dir=TRUE;
+
   gchar *dirname;
   gchar *fname;
   gchar *tmp;
 
-  gchar *def_dir=(gchar *)g_object_get_data(G_OBJECT(button),"def_dir");
+  gchar *def_dir=NULL;
 
-  boolean is_dir=LIVES_POINTER_TO_INT(g_object_get_data(G_OBJECT(button),"is_dir"));
+  if (button!=NULL) {
+    def_dir=(gchar *)g_object_get_data(G_OBJECT(button),"def_dir");
+    is_dir=LIVES_POINTER_TO_INT(g_object_get_data(G_OBJECT(button),"is_dir"));
+  }
 
   if (LIVES_IS_TEXT_VIEW(tentry)) fname=lives_text_view_get_text(LIVES_TEXT_VIEW(tentry));
   else fname=g_strdup(lives_entry_get_text(LIVES_ENTRY(tentry)));

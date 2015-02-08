@@ -50,8 +50,8 @@ if ($command eq "init") {
     # On error, print error message and exit 1
     # otherwise exit 0
     
-    if (&location("ffmpeg") eq "") {
-        print "The ffmpeg binary was not found, please install it and try again !";
+    if (&location("ffmpeg") eq "" && &location("avconv") eq "") {
+        print "The ffmpeg or avconv binary was not found, please install it and try again !";
 	exit 1;
     }
 

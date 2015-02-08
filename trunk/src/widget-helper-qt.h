@@ -28,6 +28,8 @@ using namespace std;
 #include <QtGui/QWheelEvent>
 
 #include <QtWidgets/QLabel>
+#include <QtWidgets/QStyledItemDelegate>
+#include <QtWidgets/QHeaderView>
 #include <QtWidgets/QSplitter>
 #include <QtWidgets/QLineEdit>
 #include <QtWidgets/QPushButton>
@@ -386,6 +388,7 @@ typedef enum {
   LIVES_WIDGET_TYPE_CHECK_BUTTON,
   LIVES_WIDGET_TYPE_COLOR_BUTTON,
   LIVES_WIDGET_TYPE_TOOL_BUTTON,
+  LIVES_WIDGET_TYPE_TOOLBAR,
   LIVES_WIDGET_TYPE_BUTTON_BOX,
   LIVES_WIDGET_TYPE_TEXT_VIEW,
   LIVES_WIDGET_TYPE_SCALE,
@@ -551,7 +554,20 @@ typedef QStyle::StandardPixmap LiVESArrowType;
 #define LIVES_ARROW_NONE -1
 
 class LiVESWidget : public LiVESObject, public QWidget {
+  Q_OBJECT
+
  public:
+
+  Q_PROPERTY(bool prelight READ get_prelight WRITE set_prelight)
+
+  void set_prelight(bool val) {
+    (static_cast<QObject *>(static_cast<QWidget *>(this)))->setProperty("prelight", val);
+  }
+
+  bool get_prelight() {
+    QVariant qv = (static_cast<QObject *>(static_cast<QWidget *>(this)))->property("prelight");
+    return qv.value<bool>();
+  }
 
   void set_fg_color(LiVESWidgetState state, const LiVESWidgetColor *col);
   void set_bg_color(LiVESWidgetState state, const LiVESWidgetColor *col);
@@ -562,6 +578,7 @@ class LiVESWidget : public LiVESObject, public QWidget {
   LiVESWidgetColor *get_bg_color(LiVESWidgetState state);
 
   void update_stylesheet();
+
 
  LiVESWidget() : parent(NULL) {
 
@@ -642,63 +659,59 @@ class LiVESWidget : public LiVESObject, public QWidget {
     return state;
   }
 
+  void set_state(LiVESWidgetState xstate) {
+    state = xstate;
+
+    if (state & LIVES_WIDGET_STATE_INSENSITIVE) {
+      setEnabled(false);
+    }
+    else {
+      setEnabled(true);
+    }
+
+
+    if (state & LIVES_WIDGET_STATE_PRELIGHT) {
+      if (!get_prelight()) set_prelight(true);
+    }
+    else {
+      if (get_prelight()) set_prelight(false);
+    }
+
+  }
+
+
  Q_SLOTS
    void cb_wrapper_clicked() {
    // "clicked" callback
-
-   QList<LiVESAccel *> ql = get_accels_for(LIVES_WIDGET_CLICKED_EVENT);
-   for (int i=0; i < ql.size(); i++) {
-     LiVESWidgetCallback *cb = (LiVESWidgetCallback *)ql[i]->closure->function;
-     (*cb)(this, ql[i]->closure->data);
-   }
-
+   call_accels_for(LIVES_WIDGET_CLICKED_EVENT);
  }
 
-   void cb_wrapper_toggled() {
+ void cb_wrapper_toggled() {
    // "toggled" callback
-
-   QList<LiVESAccel *> ql = get_accels_for(LIVES_WIDGET_TOGGLED_EVENT);
-   for (int i=0; i < ql.size(); i++) {
-     LiVESWidgetCallback *cb = (LiVESWidgetCallback *)ql[i]->closure->function;
-     (*cb)(this, ql[i]->closure->data);
-   }
-
+   call_accels_for(LIVES_WIDGET_CLICKED_EVENT);
  }
 
 
-   void cb_wrapper_changed() {
-     // "changed" callback
-
-     QList<LiVESAccel *> ql = get_accels_for(LIVES_WIDGET_CHANGED_EVENT);
-     for (int i=0; i < ql.size(); i++) {
-       LiVESWidgetCallback *cb = (LiVESWidgetCallback *)ql[i]->closure->function;
-       (*cb)(this, ql[i]->closure->data);
-     }
-
-   }
+ void cb_wrapper_changed() {
+   // "changed" callback
+   call_accels_for(LIVES_WIDGET_CHANGED_EVENT);
+ }
 
 
-   void cb_wrapper_value_changed() {
-     // "value-changed" callback
-     
-     QList<LiVESAccel *> ql = get_accels_for(LIVES_WIDGET_VALUE_CHANGED_EVENT);
-     for (int i=0; i < ql.size(); i++) {
-       LiVESWidgetCallback *cb = (LiVESWidgetCallback *)ql[i]->closure->function;
-       (*cb)(this, ql[i]->closure->data);
-     }
+ void cb_wrapper_value_changed() {
+   // "value-changed" callback
+   call_accels_for(LIVES_WIDGET_VALUE_CHANGED_EVENT);
+ }
 
-   }
-
-   void cb_wrapper_selection_changed() {
+ void cb_wrapper_selection_changed() {
      // "selection-changed" callback
-     
-     QList<LiVESAccel *> ql = get_accels_for(LIVES_WIDGET_SELECTION_CHANGED_EVENT);
-     for (int i=0; i < ql.size(); i++) {
-       LiVESWidgetCallback *cb = (LiVESWidgetCallback *)ql[i]->closure->function;
-       (*cb)(this, ql[i]->closure->data);
-     }
+   call_accels_for(LIVES_WIDGET_SELECTION_CHANGED_EVENT);
+ }
 
-   }
+ void cb_wrapper_activate() {
+   // "activate" callback
+   call_accels_for(LIVES_WIDGET_ACTIVATE_EVENT);
+ }
 
  private:
    LiVESSList children;
@@ -715,6 +728,15 @@ class LiVESWidget : public LiVESObject, public QWidget {
    
    uint32_t events_mask;
    uint32_t onetime_events_mask;
+
+   void call_accels_for(const char *type) {
+     QList<LiVESAccel *> ql = get_accels_for(type);
+     for (int i=0; i < ql.size(); i++) {
+       LiVESWidgetCallback *cb = (LiVESWidgetCallback *)ql[i]->closure->function;
+       (*cb)(this, ql[i]->closure->data);
+     }
+   }
+
 };
 
 
@@ -726,11 +748,18 @@ class LiVESWidget : public LiVESObject, public QWidget {
 			    static_cast<LiVESObject *>(a)->get_type() == LIVES_WIDGET_TYPE_CHECK_BUTTON)
 #define LIVES_IS_PUSH_BUTTON(a) (static_cast<LiVESObject *>(a)->get_type() == LIVES_WIDGET_TYPE_BUTTON || \
 				 static_cast<LiVESObject *>(a)->get_type() == LIVES_WIDGET_TYPE_RADIO_BUTTON)
+#define LIVES_IS_RANGE(a) (static_cast<LiVESObject *>(a)->get_type() == LIVES_WIDGET_TYPE_SCALE || \
+			   static_cast<LiVESObject *>(a)->get_type() == LIVES_WIDGET_TYPE_SCROLLBAR)
 #define LIVES_IS_LABEL(a) (static_cast<LiVESObject *>(a)->get_type() == LIVES_WIDGET_TYPE_LABEL)
 #define LIVES_IS_HBOX(a) (static_cast<LiVESObject *>(a)->get_type() == LIVES_WIDGET_TYPE_HBOX)
 #define LIVES_IS_VBOX(a) (static_cast<LiVESObject *>(a)->get_type() == LIVES_WIDGET_TYPE_VBOX)
 #define LIVES_IS_COMBO(a) (static_cast<LiVESObject *>(a)->get_type() == LIVES_WIDGET_TYPE_COMBO)
 #define LIVES_IS_ENTRY(a) (static_cast<LiVESObject *>(a)->get_type() == LIVES_WIDGET_TYPE_ENTRY)
+#define LIVES_IS_SCALE(a) (static_cast<LiVESObject *>(a)->get_type() == LIVES_WIDGET_TYPE_SCALE)
+#define LIVES_IS_SPIN_BUTTON(a) (static_cast<LiVESObject *>(a)->get_type() == LIVES_WIDGET_TYPE_SPIN_BUTTON)
+#define LIVES_IS_SCROLLBAR(a) (static_cast<LiVESObject *>(a)->get_type() == LIVES_WIDGET_TYPE_SCROLLBAR)
+#define LIVES_IS_TREE_VIEW(a) (static_cast<LiVESObject *>(a)->get_type() == LIVES_WIDGET_TYPE_TREE_VIEW)
+#define LIVES_IS_SCROLLED_WINDOW(a) (static_cast<LiVESObject *>(a)->get_type() == LIVES_WIDGET_TYPE_SCROLLED_WINDOW)
 
    
 bool evFilter::eventFilter(QObject *obj, QEvent *event) {
@@ -801,6 +830,13 @@ void LiVESWidget::update_stylesheet() {
   stylesheet += col;
   stylesheet += "; background-color: ";
   col=make_col(bg_act);
+  stylesheet += col;
+  stylesheet += " } ";
+  stylesheet = "QWidget#" + widgetName + ":[prelight=true] {color: ";
+  col=make_col(fg_hover);
+  stylesheet += col;
+  stylesheet += "; background-color: ";
+  col=make_col(bg_hover);
   stylesheet += col;
   stylesheet += " } ";
   stylesheet = "QWidget#" + widgetName + ":hover {color: ";
@@ -1027,6 +1063,14 @@ ulong lives_signal_connect(LiVESObject *object, const char *signal_name, ulong f
 					      SLOT(cb_wrapper_selection_changed()));
 
   }
+  else if (!strcmp(signal_name, LIVES_WIDGET_ACTIVATE_EVENT)) {
+    // for menuitems (QAction)
+    (static_cast<QObject *>(object))->connect(static_cast<QObject *>(object), 
+					      SIGNAL(triggered()), 
+					      static_cast<QObject *>(object), 
+					      SLOT(cb_wrapper_selection_activate()));
+
+  }
 
 
   return handler_id;
@@ -1183,13 +1227,29 @@ QList<LiVESAccelGroup *> LiVESObject::get_accel_groups() {
 
 
 
-class LiVESAdjustment : public LiVESObject {
- public:
-  double value;
-  double lower;
-  double upper;
+typedef class LiVESRange LiVESRange;
+typedef class LiVESTreeView LiVESTreeView;
 
- LiVESAdjustment(double xval, double low, double upp, double step_i, double page_i, double page_size) : value(xval), lower(low), upper(upp) {};
+class LiVESAdjustment : public LiVESObject {
+
+ public:
+
+ LiVESAdjustment(double xval, double low, double upp, double step_i, double page_i, double page_s) : 
+  value(xval), lower(low), upper(upp), step_increment(step_i), page_increment(page_i), page_size(page_s), frozen(FALSE) {};
+  // TODO - set owner values from here and vice-versa
+
+  // widgets we use are: LiVESScale / LiVESScrollbar = LiVESRange, LiVESSpinButton, LiVESTreeView,2, LiVESScrolledWindow,2 
+  // if we set any of these, we need to update adj manually, after temporarily setting freeze
+
+  // update to this when freeze is false are forwarded to owner
+
+
+  void set_value(double newval);
+  void set_lower(double newval);
+  void set_upper(double newval);
+  void set_step_increment(double newval);
+  void set_page_increment(double newval);
+  void set_page_size(double newval);
 
   void set_owner(LiVESWidget *widget) {
     owner = widget;
@@ -1200,11 +1260,52 @@ class LiVESAdjustment : public LiVESObject {
   }
 
 
+  double get_value() {
+    return value;
+  }
+
+
+  double get_upper() {
+    return upper;
+  }
+
+
+  double get_lower() {
+    return lower;
+  }
+
+  double get_step_increment() {
+    return step_increment;
+  }
+
+  double get_page_increment() {
+    return page_increment;
+  }
+
+  double get_page_size() {
+    return page_size;
+  }
+
+  void freeze() {
+    frozen = true;
+  }
+
+  void thaw() {
+    frozen = false;
+  }
+
  private:
+  double value;
+  double lower;
+  double upper;
+  double step_increment;
+  double page_increment;
+  double page_size;
+  boolean frozen;
+
   LiVESWidget *owner;
 
 };
-
 
 
 
@@ -1280,25 +1381,32 @@ class LiVESSpinButton : public LiVESButtonBase, public QDoubleSpinBox {
  LiVESSpinButton(LiVESAdjustment *xadj, double climb_rate, uint32_t digits) : adj(xadj) {
     init();
 
-    this->setDecimals(digits);
-    this->setSingleStep(climb_rate);
-
-    this->setValue(adj->value);
-    this->setMinimum(adj->lower);
-    this->setMaximum(adj->upper);
-
     adj->set_owner(this);
+
+    setDecimals(digits);
+    setSingleStep(climb_rate);
+
+    setValue(adj->get_value());
+    setMinimum(adj->get_lower());
+    setMaximum(adj->get_upper());
+
   }
 
   LiVESAdjustment *get_adj() {
     return adj;
   }
 
+  void valueChanged(double value) {
+    adj->freeze();
+    adj->set_value(value);
+    adj->thaw();
+  }
+
  private:
  LiVESAdjustment *adj;
 
  void init() {
-    set_type(LIVES_WIDGET_TYPE_SPIN_BUTTON);
+   set_type(LIVES_WIDGET_TYPE_SPIN_BUTTON);
  }
 
 };
@@ -1335,7 +1443,7 @@ class LiVESRadioButton : public LiVESButtonBase, public QPushButton {
  LiVESSList *slist;
 
  void init() {
-   this->setCheckable(true);
+   setCheckable(true);
    set_type(LIVES_WIDGET_TYPE_RADIO_BUTTON);
  }
 
@@ -1410,7 +1518,7 @@ class LiVESHSeparator : public LiVESWidget, public QHBoxLayout {
     QFrame* line = new QFrame();
     line->setFrameShape(QFrame::HLine);
     line->setFrameShadow(QFrame::Sunken);
-    this->addWidget(line);
+    addWidget(line);
     set_type(LIVES_WIDGET_TYPE_HSEPARATOR);
   }
 };
@@ -1423,7 +1531,7 @@ class LiVESVSeparator : public LiVESWidget, public QVBoxLayout {
     QFrame* line = new QFrame();
     line->setFrameShape(QFrame::VLine);
     line->setFrameShadow(QFrame::Sunken);
-    this->addWidget(line);
+    addWidget(line);
     set_type(LIVES_WIDGET_TYPE_VSEPARATOR);
   }
 };
@@ -1458,7 +1566,7 @@ class LiVESTextView : public LiVESWidget, public QTextEdit {
 
  LiVESTextView(LiVESTextBuffer *xbuff) : QTextEdit(), buff(xbuff) {
     set_type(LIVES_WIDGET_TYPE_TEXT_VIEW);
-    this->setDocument(buff);
+    setDocument(buff);
   }
 
   ~LiVESTextView() {
@@ -1475,7 +1583,7 @@ class LiVESTextView : public LiVESWidget, public QTextEdit {
 
   void init() {
     set_type(LIVES_WIDGET_TYPE_TEXT_VIEW);
-    this->setDocument(buff);
+    setDocument(buff);
   }
 
 
@@ -1507,19 +1615,65 @@ class LiVESTextMark : public LiVESObject, public QTextCursor {
 
 
 
-class LiVESScale : public LiVESWidget, public QSlider {  
+class LiVESRange : public LiVESWidget {
+  Q_OBJECT
+
  public:
-  LiVESScale(Qt::Orientation) {
+  LiVESRange(LiVESAdjustment *adj) {
+    init(adj);
+  }
+
+  virtual void init(LiVESAdjustment *adj) {}
+  
+  LiVESAdjustment *get_adj() {
+    return adj;
+  }
+
+Q_SLOTS
+  void valueChanged(int value) {
+    adj->freeze();
+    adj->set_value(value);
+    adj->thaw();
+  }
+
+ private:
+  LiVESAdjustment *adj;  
+
+};
+
+
+class LiVESScale : public LiVESRange, public QSlider {  
+ public:
+ LiVESScale(Qt::Orientation, LiVESAdjustment *xadj) : LiVESRange(xadj) {
     set_type(LIVES_WIDGET_TYPE_SCALE);
+  }
+
+  void init(LiVESAdjustment *adj) {
+    adj->set_owner(this);
+    setMinimum(adj->get_lower());
+    setMaximum(adj->get_upper());
+    setValue(adj->get_value());
+    setSingleStep(adj->get_step_increment());
+    setPageStep(adj->get_page_increment());
   }
 };
 
 
-class LiVESScrollbar : public LiVESWidget, public QScrollBar {  
+class LiVESScrollbar : public LiVESRange, public QScrollBar {  
  public:
-  LiVESScrollbar(Qt::Orientation) {
+ LiVESScrollbar(Qt::Orientation, LiVESAdjustment *xadj) : LiVESRange(xadj) {
     set_type(LIVES_WIDGET_TYPE_SCROLLBAR);
   }
+
+  void init(LiVESAdjustment *adj) {
+    adj->set_owner(this);
+    setMinimum(adj->get_lower());
+    setMaximum(adj->get_upper());
+    setValue(adj->get_value());
+    setSingleStep(adj->get_step_increment());
+    setPageStep(adj->get_page_increment());
+  }
+
 };
 
 
@@ -1591,10 +1745,10 @@ class LiVESRuler : public LiVESWidget, public QSlider {
 };
 
 
-class LiVESToolItem {};
+typedef LiVESWidget LiVESToolItem;
 
 
-class LiVESToolButton : public LiVESToolItem, public LiVESButtonBase, public QToolButton {
+class LiVESToolButton : public LiVESButtonBase, public QToolButton {
  public:
 
   LiVESToolButton(LiVESWidget *icon_widget, const char *label) {
@@ -1622,10 +1776,10 @@ class LiVESToolButton : public LiVESToolItem, public LiVESButtonBase, public QTo
       QPixmap *qpx = new QPixmap();
       qpx->convertFromImage(*qim);
       QIcon *qi = new QIcon(*qpx);
-      this->setIcon(*qi);
-      this->setIconSize(LIVES_ICON_SIZE_SMALL_TOOLBAR);
-      this->icon_widget = widget;
-      this->add_child(widget);
+      setIcon(*qi);
+      setIconSize(LIVES_ICON_SIZE_SMALL_TOOLBAR);
+      icon_widget = widget;
+      add_child(widget);
     }
   }
 
@@ -1864,15 +2018,176 @@ class LiVESArrow : public LiVESImage {
 
 
 
+/*class LiVESCellRenderer {
+
+
+  };*/
+
+typedef char LiVESCellRenderer;
+
+
+
+typedef struct {
+  const char *attr;
+  int col;
+} tvattrcol;
+
+typedef QHeaderView::ResizeMode LiVESTreeViewColumnSizing;
+
+#define LIVES_TREE_VIEW_COLUMN_GROW_ONLY QHeaderView::Stretch
+#define LIVES_TREE_VIEW_COLUMN_AUTOSIZE QHeaderView::ResizeToContents
+#define LIVES_TREE_VIEW_COLUMN_FIXED QHeaderView::Fixed
+
+typedef class LiVESTreeView LiVESTreeView;
+
+class LiVESTreeViewColumn : public QStyledItemDelegate {
+  friend LiVESTreeView;
+
+ public:
+
+  LiVESTreeViewColumn() {
+    fwidth = -1;
+  }
+
+  void set_title(const char *xtitle) {
+    title = strdup(xtitle);
+  }
+
+  void pack_start(LiVESCellRenderer *xrend, boolean xexpand) {
+    rend = xrend;
+    expand = xexpand;
+  }
+
+  void add_attribute(const char *attr, int col) {
+    tvattrcol *attrcol = new tvattrcol;
+    attrcol->attr = strdup(attr);
+    attrcol->col = col;
+    attributes.push_back(attrcol);
+  }
+
+  void set_sizing(LiVESTreeViewColumnSizing xsizing) {
+    sizing = xsizing;
+  }
+
+
+  void set_fixed_width(int xfwidth) {
+    fwidth = xfwidth;
+  }
+
+
+  QList<tvattrcol *> get_attributes() {
+    return attributes;
+  }
+
+
+  ~LiVESTreeViewColumn() {
+    delete title;
+    for (int i=0; i < attributes.size(); i++) {
+      delete attributes[i]->attr;
+    }
+  }
+
+
+ protected:
+  int fwidth;
+  LiVESTreeViewColumnSizing sizing;
+  QList<tvattrcol *>attributes;
+  const char *title;
+  LiVESCellRenderer *rend;
+  boolean expand;
+};
+
+
 typedef QItemSelectionModel LiVESTreeSelection;
 
 class LiVESTreeView : public LiVESWidget, public QTreeWidget {
- public:
+  Q_OBJECT
 
  public:
   LiVESTreeView() {
     set_type(LIVES_WIDGET_TYPE_TREE_VIEW);
+
+    QAbstractSlider *sbar = static_cast<QAbstractSlider *>(horizontalScrollBar());
+    hadj = new LiVESAdjustment(sbar->value(), sbar->minimum(), sbar->maximum(), sbar->singleStep(), sbar->pageStep(), -1.);
+    hadj->set_owner(this);
+    sbar->connect(sbar, SIGNAL(valueChanged(int)), static_cast<QObject *>(static_cast<LiVESObject *>(this)), SLOT(hvalue_changed(int)));
+
+    sbar = static_cast<QAbstractSlider *>(verticalScrollBar());
+    vadj = new LiVESAdjustment(sbar->value(), sbar->minimum(), sbar->maximum(), sbar->singleStep(), sbar->pageStep(), -1.);
+    vadj->set_owner(this);
+    sbar->connect(sbar, SIGNAL(valueChanged(int)), static_cast<QObject *>(static_cast<LiVESObject *>(this)), SLOT(vvalue_changed(int)));
+
   }
+
+  void set_model (QStandardItemModel *xqmodel) {
+    qmodel = xqmodel;
+  }
+
+  void append_column(LiVESTreeViewColumn *col) {
+    // make QList from data in column x
+
+    // get stuff from attributes
+    QList<tvattrcol *> ql = col->get_attributes();
+    QList<QStandardItem *> qvals;
+    int attrcol;
+    for (int i=0; i < ql.size(); i++) {
+      attrcol = ql[i]->col;
+      if (!strcmp(ql[i]->attr,"text")) {
+	// make QList of QString from model col 
+	qmodel->appendColumn(qvals);
+      }
+
+      else if (!strcmp(ql[i]->attr,"pixbuf")) {
+	// make QList of QIcons from model col 
+	qmodel->appendColumn(qvals);
+      }
+
+      else if (!strcmp(ql[i]->attr,"active")) {
+	// make QList of checkable from model col 
+	qmodel->appendColumn(qvals);
+      }
+    }
+    
+    int newcol = qmodel->columnCount();
+    QTreeView *qtv = static_cast<QTreeView *>(this);
+    if (col->fwidth != -1) {
+      qtv->setColumnWidth(newcol, col->fwidth);
+    }
+
+    QHeaderView *qv = (static_cast<QTreeView *>(this))->header();
+    qv->setSectionResizeMode(newcol, col->sizing);
+    
+    //resizeColumnToContents()
+
+  }
+
+  LiVESAdjustment *get_hadj() {
+    return hadj;
+  }
+
+  LiVESAdjustment *get_vadj() {
+    return vadj;
+  }
+
+
+Q_SLOTS
+
+  void hvalue_changed(int newval) {
+    hadj->freeze();
+    hadj->set_value(newval);
+    hadj->thaw();
+  }
+
+  void vvalue_changed(int newval) {
+    vadj->freeze();
+    vadj->set_value(newval);
+    vadj->thaw();
+  }
+
+
+ private:
+  QStandardItemModel *qmodel;
+  LiVESAdjustment *hadj, *vadj;
 
 };
 
@@ -1890,8 +2205,8 @@ class LiVESTreeModel : public LiVESObject, public QStandardItemModel {
     widget = twidget;
   }
 
-  QAbstractItemModel *get_model() {
-    return static_cast<QAbstractItemModel *>(this);
+  QStandardItemModel *get_model() {
+    return static_cast<QStandardItemModel *>(this);
   }
 
   QTreeWidget *get_tree_widget() {
@@ -1924,7 +2239,161 @@ class LiVESTreeStore : public LiVESObject, public QStandardItemModel {
 
 
 
-typedef int LiVESTreeViewColumn;
+void LiVESAdjustment::set_value(double newval) {
+  if (newval != value) {
+    value = newval;
+
+    if (frozen) return;
+
+    if (LIVES_IS_SCALE(owner)) {
+      (dynamic_cast<QAbstractSlider *>(owner))->setValue(newval);
+    }
+    else if (LIVES_IS_SCROLLBAR(owner)){
+      //
+      (dynamic_cast<QScrollBar *>(owner))->setValue(newval);
+    }
+    else if (LIVES_IS_SPIN_BUTTON(owner)){
+      //
+      (dynamic_cast<QDoubleSpinBox *>(owner))->setValue(newval);
+    }
+    else if (LIVES_IS_TREE_VIEW(owner)) {
+      if (this == (dynamic_cast<LiVESTreeView *>(owner))->get_hadj()) {
+	(dynamic_cast<QAbstractScrollArea *>(owner))->horizontalScrollBar()->setValue(newval);
+      }
+      else {
+	(dynamic_cast<QAbstractScrollArea *>(owner))->verticalScrollBar()->setValue(newval);
+      }
+    }
+  }
+}
+
+
+void LiVESAdjustment::set_upper(double newval) {
+  if (newval != upper) {
+    upper = newval;
+
+    if (frozen) return;
+
+    if (LIVES_IS_SCALE(owner)) {
+      (dynamic_cast<QAbstractSlider *>(owner))->setMaximum(newval);
+    }
+    else if (LIVES_IS_SCROLLBAR(owner)){
+      //
+      (dynamic_cast<QScrollBar *>(owner))->setMaximum(newval);
+    }
+    else if (LIVES_IS_SPIN_BUTTON(owner)){
+      //
+      (dynamic_cast<QDoubleSpinBox *>(owner))->setMaximum(newval);
+    }
+    else if (LIVES_IS_TREE_VIEW(owner)) {
+      if (this == (dynamic_cast<LiVESTreeView *>(owner))->get_hadj()) {
+	(dynamic_cast<QAbstractScrollArea *>(owner))->horizontalScrollBar()->setMaximum(newval);
+      }
+      else {
+	(dynamic_cast<QAbstractScrollArea *>(owner))->verticalScrollBar()->setMaximum(newval);
+      }
+    }
+  }
+
+
+}
+
+
+
+void LiVESAdjustment::set_lower(double newval) {
+  if (newval != lower) {
+    lower = newval;
+    if (frozen) return;
+
+    if (LIVES_IS_SCALE(owner)) {
+      (dynamic_cast<QAbstractSlider *>(owner))->setMinimum(newval);
+    }
+    else if (LIVES_IS_SCROLLBAR(owner)){
+      //
+      (dynamic_cast<QScrollBar *>(owner))->setMinimum(newval);
+    }
+    else if (LIVES_IS_SPIN_BUTTON(owner)){
+      //
+      (dynamic_cast<QDoubleSpinBox *>(owner))->setMinimum(newval);
+    }
+    else if (LIVES_IS_TREE_VIEW(owner)) {
+      if (this == (dynamic_cast<LiVESTreeView *>(owner))->get_hadj()) {
+	(dynamic_cast<QAbstractScrollArea *>(owner))->horizontalScrollBar()->setMinimum(newval);
+      }
+      else {
+	(dynamic_cast<QAbstractScrollArea *>(owner))->verticalScrollBar()->setMinimum(newval);
+      }
+    }
+  }
+}
+
+
+
+void LiVESAdjustment::set_step_increment(double newval) {
+  if (newval != step_increment) {
+    step_increment = newval;
+
+    if (frozen) return;
+
+    if (LIVES_IS_SCALE(owner)) {
+      (dynamic_cast<QAbstractSlider *>(owner))->setSingleStep(newval);
+    }
+    else if (LIVES_IS_SCROLLBAR(owner)){
+      //
+      (dynamic_cast<QScrollBar *>(owner))->setSingleStep(newval);
+    }
+    else if (LIVES_IS_SPIN_BUTTON(owner)){
+      //
+      (dynamic_cast<QDoubleSpinBox *>(owner))->setSingleStep(newval);
+    }
+    else if (LIVES_IS_TREE_VIEW(owner)) {
+      if (this == (dynamic_cast<LiVESTreeView *>(owner))->get_hadj()) {
+	(dynamic_cast<QAbstractScrollArea *>(owner))->horizontalScrollBar()->setSingleStep(newval);
+      }
+      else {
+	(dynamic_cast<QAbstractScrollArea *>(owner))->verticalScrollBar()->setSingleStep(newval);
+      }
+    }
+  }
+}
+
+
+void LiVESAdjustment::set_page_increment(double newval) {
+  if (newval != page_increment) {
+    page_increment = newval;
+
+    if (frozen) return;
+
+    if (LIVES_IS_SCALE(owner)) {
+      (dynamic_cast<QAbstractSlider *>(owner))->setPageStep(newval);
+    }
+    else if (LIVES_IS_SCROLLBAR(owner)){
+      //
+      (dynamic_cast<QScrollBar *>(owner))->setPageStep(newval);
+    }
+    else if (LIVES_IS_TREE_VIEW(owner)) {
+      if (this == (dynamic_cast<LiVESTreeView *>(owner))->get_hadj()) {
+	(dynamic_cast<QAbstractScrollArea *>(owner))->horizontalScrollBar()->setPageStep(newval);
+      }
+      else {
+	(dynamic_cast<QAbstractScrollArea *>(owner))->verticalScrollBar()->setPageStep(newval);
+      }
+    }
+  }
+}
+
+
+void LiVESAdjustment::set_page_size(double newval) {
+  // TODO
+  if (newval != page_size) {
+    page_size = newval;
+
+    if (frozen) return;
+  }
+}
+
+
+
 
 typedef QWindow LiVESXWindow;
 
@@ -1950,7 +2419,6 @@ typedef QAction LiVESMenuItem;
 
 typedef QTableWidget LiVESTable;
 typedef QTableWidget LiVESGrid;
-typedef QWidget LiVESRange; // TODO
 typedef QWidget LiVESScaleButton; // TODO - create
 typedef QScrollArea LiVESScrolledWindow;
 
@@ -1975,12 +2443,37 @@ typedef int LiVESFileChooserAction;
 
 
 typedef QTabWidget LiVESNotebook;
-typedef QToolBar LiVESToolbar;
+
+class LiVESToolbar : public LiVESWidget, public QToolBar {
+ public:
+
+  LiVESToolbar() {
+    set_type(LIVES_WIDGET_TYPE_TOOLBAR);
+  }
+
+  void add_action(QAction *act, int pos) {
+    actions.insert(pos, act);
+  }
+
+  QAction *get_action(int pos) {
+    return actions.at(pos);
+  }
+
+  int num_actions() {
+    return actions.size();
+  }
+
+ private:
+  QList<QAction *>actions;
+
+
+};
 
 
 
 
-typedef int LiVESToolbarStyle;
+
+typedef Qt::ToolButtonStyle LiVESToolbarStyle;
 #define LIVES_TOOLBAR_ICONS Qt::ToolButtonIconOnly
 #define LIVES_TOOLBAR_TEXT  Qt::ToolButtonTextOnly
 
@@ -1990,16 +2483,8 @@ typedef QSize LiVESRequisition;
 
 typedef int LiVESTextIter;
 
-typedef void LiVESCellRenderer;
-
 typedef const char LiVESTreePath;
 
-
-
-typedef int LiVESTreeViewColumnSizing;
-#define LIVES_TREE_VIEW_COLUMN_GROW_ONLY 0
-#define LIVES_TREE_VIEW_COLUMN_AUTOSIZE 1
-#define LIVES_TREE_VIEW_COLUMN_FIXED 2
 
 typedef int LiVESSelectionMode;
 #define LIVES_SELECTION_NONE QAbstractItemView::NoSelection
@@ -2140,20 +2625,39 @@ typedef Qt::Alignment LiVESJustification;
 #define LIVES_JUSTIFY_FILL   Qt::AlignJustify
 
 LiVESWidget::~LiVESWidget() {
-  if (this->get_type() == LIVES_WIDGET_TYPE_SPIN_BUTTON) {
+  if (LIVES_IS_SPIN_BUTTON(this)) {
     LiVESAdjustment *adj = (static_cast<LiVESSpinButton *>(this))->get_adj();
+    adj->dec_refcount();
+  }
+
+  if (LIVES_IS_RANGE(this)) {
+    LiVESAdjustment *adj = (dynamic_cast<LiVESRange *>(this))->get_adj();
+    adj->dec_refcount();
+  }
+
+  if (LIVES_IS_TREE_VIEW(this)) {
+    LiVESAdjustment *adj = (static_cast<LiVESTreeView *>(this))->get_hadj();
+    adj->dec_refcount();
+    adj = (static_cast<LiVESTreeView *>(this))->get_vadj();
+    adj->dec_refcount();
+  }
+
+  if (LIVES_IS_SCROLLED_WINDOW(this)) {
+    LiVESAdjustment *adj = (static_cast<LiVESScrolledWindow *>(this))->get_hadj();
+    adj->dec_refcount();
+    adj = (static_cast<LiVESScrolledWindow *>(this))->get_vadj();
     adj->dec_refcount();
   }
 
   // remove from parents children
   if (parent != NULL) {
-    this->inc_refcount();
+    inc_refcount();
     parent->remove_child(this);
   }
 
   // decref all children
   while (children.size() > 0) {
-    this->remove_child((LiVESWidget *)children.at(0));
+    remove_child((LiVESWidget *)children.at(0));
   }
 
 }

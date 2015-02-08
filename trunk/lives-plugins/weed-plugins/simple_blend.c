@@ -91,7 +91,7 @@ void make_blend_table(_sdata *sdata, unsigned char bf, unsigned char bfn) {
   register int i,j;
 
   for (i=0;i<256;i++) {
-    for (j=0;j<=256;j++) {
+    for (j=0;j<256;j++) {
       sdata->blend[i][j]=(unsigned char)((bf*i+bfn*j)>>8);
     }
   }

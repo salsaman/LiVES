@@ -1,6 +1,6 @@
-Version 2.2.8
--------------
-Fix crash on Insert Frames (regression).
+Version 2.2.8 (8 Feb 2015)
+--------------------------
+Fix crash in Insert Frames (regression).
 Compilation fix for gtk+ 2.x
 Compilation fixes for freeBSD
 Add check for avformat_close_input in libav
@@ -8,9 +8,11 @@ Fix crash in projectM plugin.
 Fix regression in x264_encoder.
 Fix audio codec bug in mencoder_encoder.
 Fix crash in "Show Details" after encoding failure.
+Fix regression in "Insert Silence" for clips with no existing audio.
+Check for avconv properly for Ubuntu in ffmpeg_encoder.
 Update dirac / multi_encoder to encode to dirac/vorbis/mkv.
 Add lossless dirac encoding.
-
+Updates to fix lives_mkv_encoder.
 
 
 

@@ -490,7 +490,8 @@ void lives_osc_cb_playsel (void *context, int arglen, const void *vargs, OSCTime
 void lives_osc_cb_play_reverse(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
 
   if (mainw->multitrack!=NULL) return lives_osc_notify_failure();
-  if (mainw->current_file<0||((cfile->clip_type!=CLIP_TYPE_DISK&&cfile->clip_type!=CLIP_TYPE_FILE)||mainw->playing_file==-1)) if (mainw->playing_file==-1) lives_osc_notify_failure();
+  if (mainw->current_file<0||((cfile->clip_type!=CLIP_TYPE_DISK&&cfile->clip_type!=CLIP_TYPE_FILE)||mainw->playing_file==-1)) 
+    if (mainw->playing_file==-1) lives_osc_notify_failure();
   dirchange_callback(NULL,NULL,0,(LiVESXModifierType)0,LIVES_INT_TO_POINTER(TRUE));
   lives_osc_notify_success(NULL);
 
@@ -500,9 +501,12 @@ void lives_osc_cb_play_reverse(void *context, int arglen, const void *vargs, OSC
 void lives_osc_cb_bgplay_reverse(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
 
   if (mainw->multitrack!=NULL) return lives_osc_notify_failure();
-  if (mainw->blend_file<1||mainw->files[mainw->blend_file]==NULL||mainw->blend_file==mainw->current_file||mainw->playing_file==-1) if (mainw->playing_file==-1) lives_osc_notify_failure();
+  if (mainw->blend_file<1||mainw->files[mainw->blend_file]==NULL||mainw->blend_file==mainw->current_file||mainw->playing_file==-1) 
+    if (mainw->playing_file==-1) lives_osc_notify_failure();
 
-  if (mainw->current_file<0||(mainw->files[mainw->blend_file]->clip_type!=CLIP_TYPE_DISK&&mainw->files[mainw->blend_file]->clip_type!=CLIP_TYPE_FILE)) if (mainw->playing_file==-1) lives_osc_notify_failure();
+  if (mainw->current_file<0||(mainw->files[mainw->blend_file]->clip_type!=CLIP_TYPE_DISK&&
+			      mainw->files[mainw->blend_file]->clip_type!=CLIP_TYPE_FILE)) 
+    if (mainw->playing_file==-1) lives_osc_notify_failure();
 
   mainw->files[mainw->blend_file]->pb_fps=-mainw->files[mainw->blend_file]->pb_fps;
                                                                                                                           
@@ -514,7 +518,8 @@ void lives_osc_cb_bgplay_reverse(void *context, int arglen, const void *vargs, O
 void lives_osc_cb_play_forward (void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
   if (mainw->go_away) lives_osc_notify_failure(); // not ready to play yet
 
-  if (mainw->current_file<0||(cfile->clip_type!=CLIP_TYPE_DISK&&cfile->clip_type!=CLIP_TYPE_FILE)) if (mainw->playing_file==1) lives_osc_notify_failure();
+  if (mainw->current_file<0||(cfile->clip_type!=CLIP_TYPE_DISK&&cfile->clip_type!=CLIP_TYPE_FILE)) 
+    if (mainw->playing_file==1) lives_osc_notify_failure();
 
   if (mainw->playing_file==-1&&mainw->current_file>0) {
     mainw->osc_auto=TRUE; ///< request early notifiction of success
@@ -529,7 +534,8 @@ void lives_osc_cb_play_forward (void *context, int arglen, const void *vargs, OS
     mainw->osc_auto=FALSE;
   }
   else if (mainw->current_file>0) {
-    if (cfile->pb_fps<0||(cfile->play_paused&&cfile->freeze_fps<0)) dirchange_callback(NULL,NULL,0,(LiVESXModifierType)0,LIVES_INT_TO_POINTER(TRUE));
+    if (cfile->pb_fps<0||(cfile->play_paused&&cfile->freeze_fps<0)) 
+      dirchange_callback(NULL,NULL,0,(LiVESXModifierType)0,LIVES_INT_TO_POINTER(TRUE));
     if (cfile->play_paused) freeze_callback(NULL,NULL,0,(LiVESXModifierType)0,NULL);
     lives_osc_notify_success(NULL);
   }

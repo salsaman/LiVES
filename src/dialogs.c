@@ -1497,6 +1497,8 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const gchar *te
 	for (i=cfile->fx_frame_pump;i<=vend;i++) {
 	  boolean retb=virtual_to_images(mainw->current_file,i,i,FALSE,NULL);
 	  if (mainw->cancelled||!retb) {
+	    cancel_process(TRUE);
+	    lives_set_cursor_style(LIVES_CURSOR_NORMAL,NULL);
 	    if (mainw->current_file>-1&&cfile!=NULL) lives_freep((void**)&cfile->op_dir);
 	    return FALSE;
 	  }

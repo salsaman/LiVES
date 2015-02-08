@@ -5,7 +5,7 @@ ifdef([m4_pattern_allow],
       [m4_pattern_allow([^AC_.*])])
 
 dnl IMPORTANT !! $version must also be set to exactly the same string in smogrify
-AC_INIT(LiVES,2.2.8-svn,https://sourceforge.net/p/lives/bugs/)
+AC_INIT(LiVES,2.2.8,https://sourceforge.net/p/lives/bugs/)
 
 AC_CANONICAL_HOST
 AC_CANONICAL_TARGET
@@ -1005,7 +1005,7 @@ echo  "*******************************************************************"
 if test "$GTK310_WARN" = "true"; then
 echo
 echo "******************************************************************************************"
-echo "WARNING: GTK+ 3.10.x is known to buggy with LiVES. This version of gtk+ should be avoided."
+echo "WARNING: GTK+ 3.10.x is known to be buggy with LiVES. This version of gtk+ should be avoided."
 echo "******************************************************************************************"
 fi
 

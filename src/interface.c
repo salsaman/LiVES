@@ -2282,7 +2282,7 @@ gchar *choose_file(gchar *dir, gchar *fname, gchar **filt, LiVESFileChooserActio
   gtk_file_chooser_set_local_only(LIVES_FILE_CHOOSER(chooser),TRUE);
 
 
-  if (palette->style&STYLE_1) {
+  if (mainw->is_ready && palette->style&STYLE_1) {
     lives_widget_set_bg_color(chooser, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
     set_child_colour(chooser,FALSE);
   }

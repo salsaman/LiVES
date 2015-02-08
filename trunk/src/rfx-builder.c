@@ -4765,11 +4765,11 @@ void add_rfx_effects(void) {
   lives_widget_set_sensitive (menuitem, FALSE);
   lives_widget_set_tooltip_text( menuitem,_("See: VJ - show VJ keys. Set the realtime effects, and then apply them here."));
   
-  lives_widget_add_accelerator (menuitem, LIVES_WIDGET_CLICKED_EVENT, mainw->accel_group,
+  lives_widget_add_accelerator (menuitem, LIVES_WIDGET_ACTIVATE_EVENT, mainw->accel_group,
 			      LIVES_KEY_e, LIVES_CONTROL_MASK,
 			      LIVES_ACCEL_VISIBLE);
 
-  lives_signal_connect (LIVES_GUI_OBJECT (menuitem), LIVES_WIDGET_CLICKED_EVENT,
+  lives_signal_connect (LIVES_GUI_OBJECT (menuitem), LIVES_WIDGET_ACTIVATE_EVENT,
 		    LIVES_GUI_CALLBACK (on_realfx_activate),
 		    &mainw->rendered_fx[0]);
 
@@ -4854,12 +4854,12 @@ void add_rfx_effects(void) {
 #endif
 
       if (rfx->params==NULL) {
-	lives_signal_connect (LIVES_GUI_OBJECT (menuitem), LIVES_WIDGET_CLICKED_EVENT,
+	lives_signal_connect (LIVES_GUI_OBJECT (menuitem), LIVES_WIDGET_ACTIVATE_EVENT,
 			  LIVES_GUI_CALLBACK (on_render_fx_activate),
 			  (gpointer)rfx);
       }
       else {
-	lives_signal_connect (LIVES_GUI_OBJECT (menuitem), LIVES_WIDGET_CLICKED_EVENT,
+	lives_signal_connect (LIVES_GUI_OBJECT (menuitem), LIVES_WIDGET_ACTIVATE_EVENT,
 			  LIVES_GUI_CALLBACK (on_render_fx_pre_activate),
 			  (gpointer)rfx);
       }
@@ -4968,18 +4968,18 @@ void add_rfx_effects(void) {
 
 	if (menuitem!=mainw->resize_menuitem) {
 	  if (rfx->params==NULL) {
-	    lives_signal_connect (LIVES_GUI_OBJECT (menuitem), LIVES_WIDGET_CLICKED_EVENT,
+	    lives_signal_connect (LIVES_GUI_OBJECT (menuitem), LIVES_WIDGET_ACTIVATE_EVENT,
 			      LIVES_GUI_CALLBACK (on_render_fx_activate),
 			      (gpointer)rfx);
 	  }
 	  else {
-	    lives_signal_connect (LIVES_GUI_OBJECT (menuitem), LIVES_WIDGET_CLICKED_EVENT,
+	    lives_signal_connect (LIVES_GUI_OBJECT (menuitem), LIVES_WIDGET_ACTIVATE_EVENT,
 			      LIVES_GUI_CALLBACK (on_render_fx_pre_activate),
 			      (gpointer)rfx);
 	  }
 	}
 	else {
-	  mainw->fx_candidates[FX_CANDIDATE_RESIZER].func=lives_signal_connect (LIVES_GUI_OBJECT (menuitem), LIVES_WIDGET_CLICKED_EVENT,
+	  mainw->fx_candidates[FX_CANDIDATE_RESIZER].func=lives_signal_connect (LIVES_GUI_OBJECT (menuitem), LIVES_WIDGET_ACTIVATE_EVENT,
 									    LIVES_GUI_CALLBACK (on_render_fx_pre_activate),
 									    (gpointer)rfx);
 	}
@@ -5013,12 +5013,12 @@ void add_rfx_effects(void) {
 	}
 
 	if (rfx->params==NULL) {
-	  lives_signal_connect (LIVES_GUI_OBJECT (menuitem), LIVES_WIDGET_CLICKED_EVENT,
+	  lives_signal_connect (LIVES_GUI_OBJECT (menuitem), LIVES_WIDGET_ACTIVATE_EVENT,
 			    LIVES_GUI_CALLBACK (on_render_fx_activate),
 			    (gpointer)rfx);
 	}
 	else {
-	  lives_signal_connect (LIVES_GUI_OBJECT (menuitem), LIVES_WIDGET_CLICKED_EVENT,
+	  lives_signal_connect (LIVES_GUI_OBJECT (menuitem), LIVES_WIDGET_ACTIVATE_EVENT,
 			    LIVES_GUI_CALLBACK (on_render_fx_pre_activate),
 			    (gpointer)rfx);
 	}

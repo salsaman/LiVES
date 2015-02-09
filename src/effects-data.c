@@ -3857,7 +3857,7 @@ static LiVESTreeModel *inparam_fx_model (boolean is_chans, int key) {
 
   register int i,j;
 
-  tstore=lives_tree_store_new (NUM_COLUMNS, G_TYPE_STRING, G_TYPE_STRING, G_TYPE_INT, G_TYPE_INT);
+  tstore=lives_tree_store_new (NUM_COLUMNS, LIVES_COL_TYPE_STRING, LIVES_COL_TYPE_STRING, LIVES_COL_TYPE_INT, LIVES_COL_TYPE_INT);
 
   lives_tree_store_append (tstore, &iter1, NULL);  /* Acquire an iterator */
   lives_tree_store_set(tstore,&iter1,

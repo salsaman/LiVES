@@ -665,7 +665,7 @@ static void omc_macro_row_add_params(lives_omc_match_node_t *mnode, int row, omc
   register int i;
   
 
-  mnode->gtkstore2 = lives_tree_store_new (NUM2_COLUMNS, G_TYPE_STRING, G_TYPE_STRING, G_TYPE_STRING);
+  mnode->gtkstore2 = lives_tree_store_new (NUM2_COLUMNS, LIVES_COL_TYPE_STRING, LIVES_COL_TYPE_STRING, LIVES_COL_TYPE_STRING);
 
   if (macro.nparams==0) return;
 
@@ -994,8 +994,8 @@ static void omc_learner_add_row(int type, int detail, lives_omc_match_node_t *mn
    omclw->tbl_rows++;
    lives_table_resize(LIVES_TABLE(omclw->table),omclw->tbl_rows,6);
 			
-   mnode->gtkstore = lives_tree_store_new (NUM_COLUMNS, G_TYPE_STRING, G_TYPE_STRING, G_TYPE_BOOLEAN, G_TYPE_STRING, 
-					 G_TYPE_STRING, G_TYPE_STRING, G_TYPE_STRING);
+   mnode->gtkstore = lives_tree_store_new (NUM_COLUMNS, LIVES_COL_TYPE_STRING, LIVES_COL_TYPE_STRING, LIVES_COL_TYPE_BOOLEAN, LIVES_COL_TYPE_STRING, 
+					 LIVES_COL_TYPE_STRING, LIVES_COL_TYPE_STRING, LIVES_COL_TYPE_STRING);
 
    lives_tree_store_append (mnode->gtkstore, &iter1, NULL);  /* Acquire an iterator */
    lives_tree_store_set (mnode->gtkstore, &iter1, TITLE_COLUMN, (_("Vars.")), -1);

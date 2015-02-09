@@ -382,6 +382,7 @@ static QString make_col(LiVESWidgetColor *col) {
 
 
 typedef enum {
+  LIVES_OBJECT_TYPE_UNKNOWN,
   LIVES_WIDGET_TYPE_BUTTON,
   LIVES_WIDGET_TYPE_SPIN_BUTTON,
   LIVES_WIDGET_TYPE_RADIO_BUTTON,
@@ -471,10 +472,14 @@ class LiVESObject : public QObject {
   void remove_all_accels();
 
   LiVESObject() {
-    eFilter = new evFilter(); 
-    ((QObject *)this)->installEventFilter(eFilter);
-    refcount = 1;
+    init();
   };
+
+
+  LiVESObject(const LiVESObject &xobj) {
+    init();
+    type = xobj.type;
+  }
 
 
   void inc_refcount() {
@@ -502,6 +507,13 @@ class LiVESObject : public QObject {
   QList<LiVESAccel *>accels;
   QList<LiVESAccelGroup *>accel_groups;
   LiVESObjectType type;
+
+  void init() {
+    eFilter = new evFilter(); 
+    ((QObject *)this)->installEventFilter(eFilter);
+    refcount = 1;
+    type = LIVES_OBJECT_TYPE_UNKNOWN;
+  }
 
   void finalise(void) {
     ((QObject *)this)->deleteLater(); // schedule for deletion
@@ -582,7 +594,7 @@ class LiVESWidget : public LiVESObject, public QWidget {
 
  LiVESWidget() : parent(NULL) {
 
-    QVariant qv = QVariant::fromValue((LiVESObject *)this);
+    QVariant qv = QVariant::fromValue(static_cast<LiVESObject *>(this));
     (static_cast<QWidget *>(this))->setProperty("LiVESObject", qv);
 
     fg_norm=bg_norm=base_norm=text_norm=NULL;
@@ -1037,10 +1049,10 @@ ulong lives_signal_connect(LiVESObject *object, const char *signal_name, ulong f
 						       SLOT(cb_wrapper_changed()));
 
     else {
-      QItemSelectionModel *qism = dynamic_cast<QItemSelectionModel *>(object);
-      if (qism != NULL) { 
+      QTreeWidget *qtw = dynamic_cast<QTreeWidget *>(object);
+      if (qtw != NULL) { 
 	(static_cast<QObject *>(object))->connect(static_cast<QObject *>(object), 
-						  SIGNAL(selectionChanged()), 
+						  SIGNAL(itemSelectionChanged()), 
 						  static_cast<QObject *>(object), 
 						  SLOT(cb_wrapper_changed()));
 
@@ -2018,13 +2030,11 @@ class LiVESArrow : public LiVESImage {
 
 
 
-/*class LiVESCellRenderer {
-
-
-  };*/
-
-typedef char LiVESCellRenderer;
-
+typedef int LiVESCellRenderer;
+#define LIVES_CELL_RENDERER_TEXT 1
+#define LIVES_CELL_RENDERER_SPIN 2
+#define LIVES_CELL_RENDERER_TOGGLE 3
+#define LIVES_CELL_RENDERER_PIXBUF 4
 
 
 typedef struct {
@@ -2038,7 +2048,6 @@ typedef QHeaderView::ResizeMode LiVESTreeViewColumnSizing;
 #define LIVES_TREE_VIEW_COLUMN_AUTOSIZE QHeaderView::ResizeToContents
 #define LIVES_TREE_VIEW_COLUMN_FIXED QHeaderView::Fixed
 
-typedef class LiVESTreeView LiVESTreeView;
 
 class LiVESTreeViewColumn : public QStyledItemDelegate {
   friend LiVESTreeView;
@@ -2097,8 +2106,50 @@ class LiVESTreeViewColumn : public QStyledItemDelegate {
   boolean expand;
 };
 
+typedef int LiVESSelectionMode;
+#define LIVES_SELECTION_NONE QAbstractItemView::NoSelection
+#define LIVES_SELECTION_SINGLE QAbstractItemView::SingleSelection
+#define LIVES_SELECTION_MULTIPLE QAbstractItemView::MultiSelection
 
-typedef QItemSelectionModel LiVESTreeSelection;
+
+typedef LiVESTreeView LiVESTreeSelection;
+
+typedef class LiVESTreeStore LiVESTreeStore;
+
+
+class LiVESTreeModel : public LiVESObject, public QStandardItemModel {
+  friend LiVESTreeStore;
+
+ public:
+  
+  QStandardItemModel *to_qsimodel() {
+    QStandardItemModel *qsim = static_cast<QStandardItemModel *>(this);
+    QVariant qv = QVariant::fromValue(static_cast<LiVESObject *>(this));
+    qsim->setProperty("LiVESObject", qv);
+    return qsim;
+  }
+
+  int get_coltype(int index) {
+    return coltypes[index];
+  }
+
+  void set_tree_widget(LiVESTreeView *twidget);
+  QTreeWidget *get_qtree_widget();
+
+ protected:
+  void set_coltypes(int ncols, int *types) {
+    for (int i = 0; i < ncols; i++) {
+      coltypes.append(types[i]);
+    }
+  }
+
+
+ private:
+  LiVESTreeView *widget;
+  QList<int> coltypes;
+
+};
+
 
 class LiVESTreeView : public LiVESWidget, public QTreeWidget {
   Q_OBJECT
@@ -2119,9 +2170,18 @@ class LiVESTreeView : public LiVESWidget, public QTreeWidget {
 
   }
 
-  void set_model (QStandardItemModel *xqmodel) {
-    qmodel = xqmodel;
+  void set_model (LiVESTreeModel *xmodel) {
+    model = xmodel;
+    xmodel->set_tree_widget(this);
+    QStandardItemModel *qmodel = xmodel->to_qsimodel();
+    ((QAbstractItemView *)this)->setModel(static_cast<QAbstractItemModel *>(qmodel));
   }
+
+  LiVESTreeModel *get_model() {
+    return model;
+  }
+
+
 
   void append_column(LiVESTreeViewColumn *col) {
     // make QList from data in column x
@@ -2129,10 +2189,14 @@ class LiVESTreeView : public LiVESWidget, public QTreeWidget {
     // get stuff from attributes
     QList<tvattrcol *> ql = col->get_attributes();
     QList<QStandardItem *> qvals;
+    QStandardItemModel *qmodel = model->to_qsimodel();
+
     int attrcol;
+
     for (int i=0; i < ql.size(); i++) {
       attrcol = ql[i]->col;
       if (!strcmp(ql[i]->attr,"text")) {
+	// TODO
 	// make QList of QString from model col 
 	qmodel->appendColumn(qvals);
       }
@@ -2186,54 +2250,35 @@ Q_SLOTS
 
 
  private:
-  QStandardItemModel *qmodel;
+  LiVESTreeModel *model;
   LiVESAdjustment *hadj, *vadj;
+  LiVESTreeSelection sel;
 
 };
 
 
-
-class LiVESTreeModel : public LiVESObject, public QStandardItemModel {
- public:
-  
-  LiVESTreeModel(QStandardItemModel *xmodel) {
-    QVariant qv = QVariant::fromValue((LiVESObject *)this);
-    ((QStandardItemModel *)this)->setProperty("LiVESObject", qv);
-  }
-
-  void set_tree_widget(LiVESTreeView *twidget) {
-    widget = twidget;
-  }
-
-  QStandardItemModel *get_model() {
-    return static_cast<QStandardItemModel *>(this);
-  }
-
-  QTreeWidget *get_tree_widget() {
-    return static_cast<QTreeWidget *>(widget);
-  }
-
-  ~LiVESTreeModel() {
-    widget->dec_refcount();
-  }
-
- private:
-  LiVESTreeView *widget;
-
-};
-
+#define LIVES_COL_TYPE_STRING 1
+#define LIVES_COL_TYPE_INT 2
+#define LIVES_COL_TYPE_UINT 3
+#define LIVES_COL_TYPE_BOOLEAN 4
+#define LIVES_COL_TYPE_PIXBUF 5
 
 
 typedef QTreeWidgetItem LiVESTreeIter;
 
+void LiVESTreeModel::set_tree_widget(LiVESTreeView *twidget) {
+  widget = twidget;
+}
+
+QTreeWidget *LiVESTreeModel::get_qtree_widget() {
+  return static_cast<QTreeWidget *>(widget);
+}
 
 
-class LiVESTreeStore : public LiVESObject, public QStandardItemModel {
+
+class LiVESTreeStore : public LiVESTreeModel {
  public:
-  LiVESTreeStore() {
-    QVariant qv = QVariant::fromValue((LiVESObject *)this);
-    ((QStandardItemModel *)this)->setProperty("LiVESObject", qv);
-  }
+  LiVESTreeStore (int ncols, int *types) {}
 
 };
 
@@ -2483,13 +2528,53 @@ typedef QSize LiVESRequisition;
 
 typedef int LiVESTextIter;
 
-typedef const char LiVESTreePath;
+class LiVESTreePath {
+ public:
+
+  LiVESTreePath(const char *string) {
+    QString qs(string);
+    QStringList qsl = qs.split(":");
+    QList<int> qli;
+
+    for (int i=0; i < qsl.size(); i++) {
+      qli.append(qsl.at(i).toInt());
+    }
+
+    init(qli);
+   }
+
+  LiVESTreePath(QList<int> qli) {
+    init(qli);
+  }
+
+  ~LiVESTreePath() {
+    delete indices;
+  }
 
 
-typedef int LiVESSelectionMode;
-#define LIVES_SELECTION_NONE QAbstractItemView::NoSelection
-#define LIVES_SELECTION_SINGLE QAbstractItemView::SingleSelection
-#define LIVES_SELECTION_MULTIPLE QAbstractItemView::MultiSelection
+  int get_depth() {
+    return cnt;
+  }
+
+
+  int *get_indices() {
+    return indices;
+  }
+
+ private:
+  int *indices;
+  int cnt;
+
+  void init(QList<int> qli) {
+    cnt = qli.size();
+    indices = (int *)(malloc(cnt * sizeof(int)));
+    for (int i=0; i < cnt; i++) {
+      indices[i] = qli.at(i);
+    }
+  }
+
+};
+
 
 typedef void LiVESExpander;
 
@@ -2550,7 +2635,7 @@ typedef int LiVESPositionType;
 #define LIVES_LABEL(a) ((LiVESLabel *)a)
 #define LIVES_ENTRY(a) ((LiVESEntry *)a)
 #define LIVES_WINDOW(a) ((LiVESWindow *)a)
-#define LIVES_TREE_MODEL(a) a->get_model()
+#define LIVES_TREE_MODEL(a) ((LiVESTreeModel *)a)
 
 
 

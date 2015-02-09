@@ -2320,8 +2320,8 @@ LIVES_INLINE LiVESWidget *lives_combo_new_with_model (LiVESTreeModel *model) {
 #ifdef GUI_QT
   combo = new LiVESCombo;
   QComboBox *qcombo = (QComboBox *)combo;
-  qcombo->setModel(model->get_model());
-  qcombo->setView(model->get_tree_widget());
+  qcombo->setModel(model->to_qsimodel());
+  if (model->get_qtree_widget() != NULL) qcombo->setView(model->get_qtree_widget());
 #endif
   return combo;
 
@@ -2336,14 +2336,12 @@ LIVES_INLINE LiVESTreeModel *lives_combo_get_model(LiVESCombo *combo) {
 #ifdef GUI_QT
   QAbstractItemModel *qqmodel = ((QComboBox *)combo)->model();
 
-  QStandardItemModel *qmodel = static_cast<QStandardItemModel *>(qqmodel);
-  if (qmodel == NULL) return model;
+  QVariant qv = (qqmodel)->property("LiVESObject");
 
-  QVariant qv = ((QAbstractItemModel *)qmodel)->property("LiVESObject");
   if (qv.isValid()) {
-    return static_cast<LiVESTreeModel *>(qv.value<LiVESObject *>());
+    model = static_cast<LiVESTreeModel *>(qv.value<LiVESObject *>());
   }
-  model = new LiVESTreeModel(qmodel);
+
 #endif
   return model;
 }
@@ -2355,7 +2353,7 @@ LIVES_INLINE boolean lives_combo_append_text(LiVESCombo *combo, const char *text
 #if GTK_CHECK_VERSION(2,24,0)
   gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(combo),text);
 #else
-  gtk_combo_box_append_text(GTK_COMBO(combo),text);
+  gtk_combo_box_append_text(GTK_COMBO_BOX(combo),text);
 #endif
   return TRUE;
 #endif
@@ -2380,7 +2378,7 @@ static boolean lives_combo_remove_all_text(LiVESCombo *combo) {
   return TRUE;
 #endif
 #ifdef GUI_QT
-  ((QComboBox *)combo)->clear();
+  static_cast<QComboBox *>(combo)->clear();
   return TRUE;
 #endif
   return FALSE;
@@ -2442,8 +2440,10 @@ LIVES_INLINE boolean lives_combo_set_active_iter(LiVESCombo *combo, LiVESTreeIte
 #endif
 #ifdef GUI_QT
   LiVESTreeModel *model = lives_combo_get_model(combo);
-  QTreeWidget *widget = model->get_tree_widget();
-  widget->setCurrentItem(iter);
+  if (model != NULL) {
+    QTreeWidget *widget = model->get_qtree_widget();
+    if (widget != NULL) widget->setCurrentItem(iter);
+  }
   return TRUE;
 #endif
   return FALSE;
@@ -2457,10 +2457,14 @@ LIVES_INLINE boolean lives_combo_get_active_iter(LiVESCombo *combo, LiVESTreeIte
 #endif
 #ifdef GUI_QT
   LiVESTreeModel *model = lives_combo_get_model(combo);
-  QTreeWidget *widget = model->get_tree_widget();
-  if (widget == NULL) return FALSE;
-  QTreeWidgetItem *qtwi = widget->currentItem();
-  *iter = *qtwi;
+  if (model != NULL) {
+    QTreeWidget *widget = model->get_qtree_widget();
+    if (widget != NULL) {
+      QTreeWidgetItem *qtwi = widget->currentItem();
+      *iter = *qtwi;
+      return TRUE;
+    }
+  }
 #endif
   return FALSE;
 }
@@ -3772,7 +3776,7 @@ LIVES_INLINE LiVESCellRenderer *lives_cell_renderer_text_new(void) {
   renderer=gtk_cell_renderer_text_new();
 #endif
 #ifdef GUI_QT
-  renderer = "text";
+  *renderer = LIVES_CELL_RENDERER_TEXT;
 #endif
   return renderer;
 }
@@ -3784,7 +3788,7 @@ LIVES_INLINE LiVESCellRenderer *lives_cell_renderer_spin_new(void) {
   renderer=gtk_cell_renderer_spin_new();
 #endif
 #ifdef GUI_QT
-  renderer = "spin";
+  *renderer = LIVES_CELL_RENDERER_SPIN;
 #endif
   return renderer;
 }
@@ -3796,7 +3800,7 @@ LIVES_INLINE LiVESCellRenderer *lives_cell_renderer_toggle_new(void) {
   renderer=gtk_cell_renderer_toggle_new();
 #endif
 #ifdef GUI_QT
-  renderer = "toggle";
+  *renderer = LIVES_CELL_RENDERER_TOGGLE;
 #endif
   return renderer;
 }
@@ -3809,7 +3813,7 @@ LIVES_INLINE LiVESCellRenderer *lives_cell_renderer_pixbuf_new(void) {
   renderer=gtk_cell_renderer_pixbuf_new();
 #endif
 #ifdef GUI_QT
-  renderer = "pixbuf";
+  *renderer = LIVES_CELL_RENDERER_PIXBUF;
 #endif
   return renderer;
 }
@@ -4253,7 +4257,7 @@ LIVES_INLINE double lives_range_get_value(LiVESRange *range) {
   value=gtk_range_get_value(range);
 #endif
 #ifdef GUI_QT
-  value = range->get_value();
+  value = range->get_adj()->get_value();
 #endif
   return value;
 }
@@ -4268,7 +4272,28 @@ LIVES_INLINE boolean lives_tree_model_get(LiVESTreeModel *tmod, LiVESTreeIter *t
   res=TRUE;
 #endif
 #ifdef GUI_QT
-  // TODO
+  // get 1 or more cells in row refd by titer
+  // we have col number, locn to store value in
+  char *attribute=va_arg(argList, char *);
+  QVariant qv;
+
+  while (attribute != NULL) {
+    int colnum = va_arg (argList, int);
+    int coltype = tmod->get_coltype(colnum);
+
+    // types may be STRING, INT, (BOOLEAN, UINT, PIXBUF)
+    if (coltype == LIVES_COL_TYPE_INT) {
+      int *iattr = va_arg (argList, int *);
+      qv = titer->data(colnum, Qt::DisplayRole);
+      *iattr = qv.value<int>();
+    }
+    if (coltype == LIVES_COL_TYPE_STRING) {
+      char **cattr = va_arg (argList, char **);
+      qv = titer->data(colnum, Qt::DisplayRole);
+      *cattr = strdup(qv.value<QString>().toUtf8().constData());
+    }
+  }
+
 #endif
   va_end(argList);
   return res;
@@ -4280,7 +4305,16 @@ LIVES_INLINE boolean lives_tree_model_get_iter(LiVESTreeModel *tmod, LiVESTreeIt
   return gtk_tree_model_get_iter(tmod,titer,tpath);
 #endif
 #ifdef GUI_QT
-  // TODO
+  int *indices = tpath->get_indices();
+  int cnt = tpath->get_depth();
+
+  QTreeWidgetItem *qtwi = tmod->get_qtree_widget()->invisibleRootItem();
+
+  for (int i=0; i < cnt; i++) {
+    qtwi = qtwi->child(indices[i]);
+  }
+
+  *titer = *qtwi;
 #endif
   return FALSE;
 }
@@ -4291,7 +4325,8 @@ LIVES_INLINE boolean lives_tree_model_get_iter_first(LiVESTreeModel *tmod, LiVES
   return gtk_tree_model_get_iter_first(tmod,titer);
 #endif
 #ifdef GUI_QT
-  QTreeWidgetItem *qtwi = tmod->get_tree_widget()->invisibleRootItem();
+  QTreeWidgetItem *qtwi = tmod->get_qtree_widget()->invisibleRootItem();
+  qtwi = qtwi->child(0);
   *titer = *qtwi;
   return TRUE;
 #endif
@@ -4305,7 +4340,23 @@ LIVES_INLINE LiVESTreePath *lives_tree_model_get_path(LiVESTreeModel *tmod, LiVE
   tpath=gtk_tree_model_get_path(tmod,titer);
 #endif
 #ifdef GUI_QT
-  // TODO
+  QList<int> qli;
+  QTreeWidgetItem *qtw = titer;
+  int idx;
+  QTreeWidget *twidget = tmod->get_qtree_widget();
+
+  while (1) {
+    if (qtw->parent() == 0) {
+      idx = twidget->indexOfTopLevelItem(qtw);
+      qli.append(idx);
+      break;
+    }
+    idx = qtw->parent()->indexOfChild(qtw);
+    qli.append(idx);
+  }
+
+  tpath = new LiVESTreePath(qli);
+
 #endif
   return tpath;
 }
@@ -4316,8 +4367,8 @@ LIVES_INLINE LiVESTreePath *lives_tree_model_get_path(LiVESTreeModel *tmod, LiVE
   return gtk_tree_model_iter_children(tmod,titer,parent);
 #endif
 #ifdef GUI_QT
-    if (parent == NULL || parent == tmod->get_tree_widget()->invisibleRootItem()) {
-    QTreeWidget *tw = tmod->get_tree_widget();
+    if (parent == NULL || parent == tmod->get_qtree_widget()->invisibleRootItem()) {
+    QTreeWidget *tw = tmod->get_qtree_widget();
     if (tw->topLevelItemCount() == 0) return FALSE;
     *titer = *tw->topLevelItem(0);
     return TRUE;
@@ -4335,9 +4386,9 @@ LIVES_INLINE int lives_tree_model_iter_n_children(LiVESTreeModel *tmod, LiVESTre
   return gtk_tree_model_iter_n_children(tmod,titer);
 #endif
 #ifdef GUI_QT
-  if (titer == NULL || titer == tmod->get_tree_widget()->invisibleRootItem()) {
+  if (titer == NULL || titer == tmod->get_qtree_widget()->invisibleRootItem()) {
     // return num toplevel
-    return tmod->get_tree_widget()->topLevelItemCount();
+    return tmod->get_qtree_widget()->topLevelItemCount();
   }
   return titer->childCount();
 #endif
@@ -4351,8 +4402,8 @@ LIVES_INLINE boolean lives_tree_model_iter_next(LiVESTreeModel *tmod, LiVESTreeI
 #endif
 #ifdef GUI_QT
   QTreeWidgetItem *parent = titer->parent();
-  if (parent == NULL || parent == tmod->get_tree_widget()->invisibleRootItem()) {
-    QTreeWidget *tw = tmod->get_tree_widget();
+  if (parent == NULL || parent == tmod->get_qtree_widget()->invisibleRootItem()) {
+    QTreeWidget *tw = tmod->get_qtree_widget();
     int idx = tw->indexOfTopLevelItem(titer) + 1;
     if (idx >= tw->topLevelItemCount()) {
       return FALSE;
@@ -4390,7 +4441,7 @@ LIVES_INLINE LiVESTreePath *lives_tree_path_new_from_string(const char *path) {
   tpath=gtk_tree_path_new_from_string(path);
 #endif
 #ifdef GUI_QT
-  tpath = strdup(path);
+  tpath = new LiVESTreePath(path);
 #endif
   return tpath;
 }
@@ -4403,7 +4454,7 @@ LIVES_INLINE int lives_tree_path_get_depth(LiVESTreePath *tpath) {
   depth=gtk_tree_path_get_depth(tpath);
 #endif
 #ifdef GUI_QT
-  // TODO
+  return tpath->get_depth();
 #endif
   return depth;
 }
@@ -4416,7 +4467,7 @@ LIVES_INLINE int *lives_tree_path_get_indices(LiVESTreePath *tpath) {
   indices=gtk_tree_path_get_indices(tpath);
 #endif
 #ifdef GUI_QT
-  // TODO
+  indices = tpath->get_indices();
 #endif
   return indices;
 }
@@ -4438,10 +4489,21 @@ LIVES_INLINE LiVESTreeStore *lives_tree_store_new(int ncols, ...) {
     g_free(types);
   }
 #endif
+
 #ifdef GUI_QT
-  QModelIndex qmi = QModelIndex();
-  tstore = new LiVESTreeStore;
-  tstore->insertColumns(0, ncols, qmi);
+  if (ncols > 0) {
+    QModelIndex qmi = QModelIndex();
+    int *types = (int *)g_malloc(ncols*sizeof(int));
+
+    for (int i=0; i < ncols; i++) {
+      types[i]=va_arg(argList, int);
+    }
+
+    tstore = new LiVESTreeStore(ncols, types);
+    g_free(types);
+
+    tstore->insertColumns(0, ncols, qmi);
+  }
 #endif
   va_end(argList);
   return tstore;
@@ -4457,8 +4519,10 @@ LIVES_INLINE boolean lives_tree_store_append(LiVESTreeStore *tstore, LiVESTreeIt
 #ifdef GUI_QT
   QVariant qv = ((QAbstractItemModel *)tstore)->property("LiVESObject");
   if (qv.isValid()) {
+
     LiVESTreeModel *ltm = static_cast<LiVESTreeModel *>(qv.value<LiVESObject *>());
-    QTreeWidget *qtw = ltm->get_tree_widget();
+    QTreeWidget *qtw = ltm->get_qtree_widget();
+
     if (parent != NULL) {
       QTreeWidgetItem *qtwi = new QTreeWidgetItem(parent);
       *titer = *qtwi;
@@ -4485,7 +4549,29 @@ LIVES_INLINE boolean lives_tree_store_set(LiVESTreeStore *tstore, LiVESTreeIter 
   res=TRUE;
 #endif
 #ifdef GUI_QT
-  // TODO
+  // set a row in the treestore
+  QVariant qv;
+
+  while (1) {
+    int colnum = va_arg (argList, int);
+    if (colnum == -1) break;
+
+    int coltype = tstore->get_coltype(colnum);
+
+    // types may be STRING, INT, (BOOLEAN, UINT, PIXBUF)
+    if (coltype == LIVES_COL_TYPE_INT) {
+      int iattr = va_arg (argList, int);
+      qv = QVariant::fromValue(iattr);
+      titer->setData(colnum, Qt::DisplayRole, qv);
+    }
+    if (coltype == LIVES_COL_TYPE_STRING) {
+      char *cattr = va_arg (argList, char *);
+      QString qs = QString::fromUtf8(cattr);
+      qv = QVariant::fromValue(qs);
+      titer->setData(colnum, Qt::DisplayRole, qv);
+    }
+  }
+
 #endif
   va_end(argList);
   return res;
@@ -4499,11 +4585,9 @@ LIVES_INLINE LiVESWidget *lives_tree_view_new_with_model(LiVESTreeModel *tmod) {
   tview=gtk_tree_view_new_with_model(tmod);
 #endif
 #ifdef GUI_QT
-  tview = new LiVESTreeView;
-  tmod->set_tree_widget(static_cast<LiVESTreeView *>(tview));
-  QStandardItemModel *qmodel = tmod->get_model();
-  ((QAbstractItemView *)tview)->setModel(static_cast<QAbstractItemModel *>(qmodel));
-  (static_cast<LiVESTreeView *>(tview))->set_model(qmodel);
+  LiVESTreeView *trview = new LiVESTreeView;
+  trview->set_model(tmod);
+  tview = static_cast<LiVESWidget *>(trview);
 #endif
   return tview;
 }
@@ -4531,8 +4615,7 @@ LIVES_INLINE boolean lives_tree_view_set_model(LiVESTreeView *tview, LiVESTreeMo
   return TRUE;
 #endif
 #ifdef GUI_QT
-  ((QAbstractItemView *)tview)->setModel((QAbstractItemModel *)(tmod->get_model()));
-  tmod->set_tree_widget(tview);
+  tview->set_model(tmod);
   return TRUE;
 #endif
   return FALSE;
@@ -4546,11 +4629,7 @@ LIVES_INLINE LiVESTreeModel *lives_tree_view_get_model(LiVESTreeView *tview) {
   tmod=gtk_tree_view_get_model(tview);
 #endif
 #ifdef GUI_QT
-  QAbstractItemModel *qtmod = ((QTreeWidget *)tview)->model();
-  QVariant qv = qtmod->property("LiVESObject");
-  if (qv.isValid()) {
-    tmod = static_cast<LiVESTreeModel *>(qv.value<LiVESObject *>());
-  }
+  tmod = tview->get_model();
 #endif
   return tmod;
 }
@@ -4561,6 +4640,9 @@ LIVES_INLINE LiVESTreeSelection *lives_tree_view_get_selection(LiVESTreeView *tv
   LiVESTreeSelection *tsel=NULL;
 #ifdef GUI_GTK
   tsel=gtk_tree_view_get_selection(tview);
+#endif
+#ifdef GUI_QT
+  tsel = tview;
 #endif
   return tsel;
 }
@@ -4576,7 +4658,6 @@ LIVES_INLINE int lives_tree_view_append_column(LiVESTreeView *tview, LiVESTreeVi
   tview->append_column(tvcol);
   return TRUE;
 #endif
-
   return FALSE;
 }
 
@@ -4585,6 +4666,10 @@ LIVES_INLINE int lives_tree_view_append_column(LiVESTreeView *tview, LiVESTreeVi
 LIVES_INLINE boolean lives_tree_view_set_headers_visible(LiVESTreeView *tview, boolean vis) {
 #ifdef GUI_GTK
   gtk_tree_view_set_headers_visible(tview,vis);
+  return TRUE;
+#endif
+#ifdef GUI_QT
+  tview->setHeaderHidden(!vis);
   return TRUE;
 #endif
   return FALSE;
@@ -4601,6 +4686,9 @@ LIVES_INLINE LiVESAdjustment *lives_tree_view_get_hadjustment(LiVESTreeView *tvi
 #else
   adj=gtk_tree_view_get_hadjustment(tview);
 #endif
+#endif
+#ifdef GUI_QT
+  adj = tview->get_hadj();
 #endif
   return adj;
 }
@@ -4652,6 +4740,10 @@ LIVES_INLINE boolean lives_tree_view_column_set_sizing(LiVESTreeViewColumn *tvco
   gtk_tree_view_column_set_sizing(tvcol,type);
   return TRUE;
 #endif
+#ifdef GUI_QT
+  tvcol->set_sizing(type);
+  return TRUE;
+#endif
   return FALSE;
 }
 
@@ -4660,6 +4752,10 @@ LIVES_INLINE boolean lives_tree_view_column_set_sizing(LiVESTreeViewColumn *tvco
 LIVES_INLINE boolean lives_tree_view_column_set_fixed_width(LiVESTreeViewColumn *tvcol, int fwidth) {
 #ifdef GUI_GTK
   gtk_tree_view_column_set_fixed_width(tvcol,fwidth);
+  return TRUE;
+#endif
+#ifdef GUI_QT
+  tvcol->set_fixed_width(fwidth);
   return TRUE;
 #endif
   return FALSE;
@@ -6680,7 +6776,7 @@ boolean lives_entry_set_completion_from_list(LiVESEntry *entry, LiVESList *xlist
 #ifdef GUI_GTK
   GtkListStore *store;
   LiVESEntryCompletion *completion;
-  store = gtk_list_store_new (1, G_TYPE_STRING);
+  store = gtk_list_store_new (1, LIVES_COL_TYPE_STRING);
 
   while (xlist != NULL) {
     LiVESTreeIter iter;

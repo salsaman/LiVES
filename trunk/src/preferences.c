@@ -1802,7 +1802,7 @@ static void pref_init_list(LiVESWidget *list) {
   lives_tree_view_column_set_sizing(column2, LIVES_TREE_VIEW_COLUMN_FIXED);
   lives_tree_view_column_set_fixed_width(column2, 150.*widget_opts.scale);
 
-  store = gtk_list_store_new(N_COLUMNS, GDK_TYPE_PIXBUF, G_TYPE_STRING, G_TYPE_UINT);
+  store = gtk_list_store_new(N_COLUMNS, LIVES_COL_TYPE_PIXBUF, LIVES_COL_TYPE_STRING, LIVES_COL_TYPE_UINT);
 
   lives_tree_view_set_model(LIVES_TREE_VIEW(list), LIVES_TREE_MODEL(store));
 

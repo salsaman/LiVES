@@ -4713,7 +4713,7 @@ LiVESWidget *create_event_list_dialog (weed_plant_t *event_list, weed_timecode_t
 	lives_table_resize(LIVES_TABLE(table),rows,6);
       }
 			
-      treestore = lives_tree_store_new (NUM_COLUMNS, G_TYPE_STRING, G_TYPE_STRING, G_TYPE_STRING);
+      treestore = lives_tree_store_new (NUM_COLUMNS, LIVES_COL_TYPE_STRING, LIVES_COL_TYPE_STRING, LIVES_COL_TYPE_STRING);
 
       lives_tree_store_append (treestore, &iter1, NULL);  /* Acquire an iterator */
       lives_tree_store_set (treestore, &iter1, TITLE_COLUMN, "Properties", -1);

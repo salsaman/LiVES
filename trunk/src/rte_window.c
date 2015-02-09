@@ -2069,7 +2069,7 @@ static LiVESTreeModel *rte_window_fx_model (void) {
 
   gchar *pkg=NULL,*pkgstring,*fxname;
 
-  tstore=lives_tree_store_new (NUM_COLUMNS, G_TYPE_STRING, G_TYPE_STRING, G_TYPE_STRING);
+  tstore=lives_tree_store_new (NUM_COLUMNS, LIVES_COL_TYPE_STRING, LIVES_COL_TYPE_STRING, LIVES_COL_TYPE_STRING);
 
   while (list!=NULL) {
     weed_plant_t *filter=get_weed_filter(weed_get_idx_for_hashname((gchar *)g_list_nth_data(hash_list,fx_idx),TRUE));

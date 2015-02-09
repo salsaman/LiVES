@@ -238,6 +238,13 @@ typedef GtkExpander                       LiVESExpander;
 
 typedef GtkProgressBar                    LiVESProgressBar;
 
+#define LIVES_COL_TYPE_STRING G_TYPE_STRING
+#define LIVES_COL_TYPE_INT G_TYPE_INT
+#define LIVES_COL_TYPE_UINT G_TYPE_UINT
+#define LIVES_COL_TYPE_BOOLEAN G_TYPE_BOOLEAN
+#define LIVES_COL_TYPE_PIXBUF GDK_TYPE_PIXBUF
+
+
 typedef GtkTreeView                       LiVESTreeView;
 typedef GtkTreeViewColumn                 LiVESTreeViewColumn;
 
@@ -706,9 +713,6 @@ char LIVES_STOCK_LABEL_GO_FORWARD[32];
 
 #endif
 
-
-
-typedef GdkModifierType LiVESXModifierType;
 
 #define LIVES_CONTROL_MASK GDK_CONTROL_MASK
 #define LIVES_ALT_MASK     GDK_MOD1_MASK

@@ -2182,19 +2182,19 @@ LiVESWidget * make_param_dialog (int pnum, rfx_build_window_t *rfxbuilder) {
   lives_signal_connect (LIVES_GUI_OBJECT(rfxbuilder->param_type_combo),LIVES_WIDGET_CHANGED_EVENT,LIVES_GUI_CALLBACK (on_param_type_changed),
 		    (gpointer)rfxbuilder);
 
-  lives_signal_connect_after (LIVES_GUI_OBJECT (rfxbuilder->spinbutton_param_dp), "value_changed",
+  lives_signal_connect_after (LIVES_GUI_OBJECT (rfxbuilder->spinbutton_param_dp), LIVES_WIDGET_VALUE_CHANGED_EVENT,
 			  LIVES_GUI_CALLBACK (after_param_dp_changed),
 			  (gpointer)rfxbuilder);
 
-  rfxbuilder->def_spin_f=lives_signal_connect_after (LIVES_GUI_OBJECT (rfxbuilder->spinbutton_param_def), "value_changed",
+  rfxbuilder->def_spin_f=lives_signal_connect_after (LIVES_GUI_OBJECT (rfxbuilder->spinbutton_param_def), LIVES_WIDGET_VALUE_CHANGED_EVENT,
 			  LIVES_GUI_CALLBACK (after_param_def_changed),
 			  (gpointer)rfxbuilder);
 
-  rfxbuilder->min_spin_f=lives_signal_connect_after (LIVES_GUI_OBJECT (rfxbuilder->spinbutton_param_min), "value_changed",
+  rfxbuilder->min_spin_f=lives_signal_connect_after (LIVES_GUI_OBJECT (rfxbuilder->spinbutton_param_min), LIVES_WIDGET_VALUE_CHANGED_EVENT,
 			  LIVES_GUI_CALLBACK (after_param_min_changed),
 			  (gpointer)rfxbuilder);
 
-  rfxbuilder->max_spin_f=lives_signal_connect_after (LIVES_GUI_OBJECT (rfxbuilder->spinbutton_param_max), "value_changed",
+  rfxbuilder->max_spin_f=lives_signal_connect_after (LIVES_GUI_OBJECT (rfxbuilder->spinbutton_param_max), LIVES_WIDGET_VALUE_CHANGED_EVENT,
 			  LIVES_GUI_CALLBACK (after_param_max_changed),
 			  (gpointer)rfxbuilder);
 

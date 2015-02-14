@@ -187,6 +187,10 @@ typedef GdkDeviceManager                  LiVESXDeviceManager;
 #define LIVES_GUI_OBJECT_CLASS(a) GTK_OBJECT_CLASS(a)
 #endif
 
+#define lives_widget_object_set_data(a, b, c) g_object_set_data(a, b, c)
+#define lives_widget_object_get_data(a, b) g_object_get_data(a, b)
+
+#define LIVES_WIDGET_OBJECT(a) G_OBJECT(a)
 
 #define LIVES_WIDGET_SCROLL_EVENT "scroll_event"
 #define LIVES_WIDGET_CLICKED_EVENT "clicked"
@@ -194,6 +198,8 @@ typedef GdkDeviceManager                  LiVESXDeviceManager;
 #define LIVES_WIDGET_CHANGED_EVENT "changed"
 #define LIVES_WIDGET_ACTIVATE_EVENT "activate"
 #define LIVES_WIDGET_VALUE_CHANGED_EVENT "value-changed"
+#define LIVES_WIDGET_SELECTION_CHANGED_EVENT "selection-changed"
+#define LIVES_WIDGET_CURRENT_FOLDER_CHANGED_EVENT "current-folder-changed"
 
 
 typedef GtkWidget                         LiVESWidget;
@@ -324,7 +330,7 @@ typedef GtkStateType LiVESWidgetState;
 #endif
 
 
-typedef GtkResponseType LiVESResponseType;
+typedef int LiVESResponseType;
 #define LIVES_RESPONSE_NONE GTK_RESPONSE_NONE
 #define LIVES_RESPONSE_OK GTK_RESPONSE_OK
 #define LIVES_RESPONSE_CANCEL GTK_RESPONSE_CANCEL

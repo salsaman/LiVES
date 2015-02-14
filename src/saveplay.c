@@ -767,7 +767,7 @@ void open_file_sel(const gchar *file_name, double start, int frames) {
 	  on_playsel_activate (NULL, NULL);
 	} while (mainw->cancelled==CANCEL_KEEP_LOOPING);
 	mainw->preview=FALSE;
-	on_toy_activate(NULL,GINT_TO_POINTER(LIVES_TOY_NONE));
+	on_toy_activate(NULL,LIVES_INT_TO_POINTER(LIVES_TOY_NONE));
 	g_free (mainw->file_open_params);
 	mainw->file_open_params=NULL;
 	mainw->cancelled=CANCEL_NONE;
@@ -3097,7 +3097,7 @@ void play_file (void) {
   }
 
   if (mainw->toy_type==LIVES_TOY_AUTOLIVES) {
-    on_toy_activate(NULL, GINT_TO_POINTER(LIVES_TOY_NONE));
+    on_toy_activate(NULL, LIVES_INT_TO_POINTER(LIVES_TOY_NONE));
   }
 
   lives_widget_hide(mainw->playarea);
@@ -4913,7 +4913,7 @@ boolean open_scrap_file (void) {
 
   add_to_recovery_file(scrap_handle);
 
-  mainw->cliplist = g_list_append (mainw->cliplist, GINT_TO_POINTER (mainw->current_file));
+  mainw->cliplist = g_list_append (mainw->cliplist, LIVES_INT_TO_POINTER (mainw->current_file));
 
   g_free(scrap_handle);
 
@@ -4953,7 +4953,7 @@ boolean open_ascrap_file (void) {
 
   add_to_recovery_file(ascrap_handle);
 
-  mainw->cliplist = g_list_append (mainw->cliplist, GINT_TO_POINTER (mainw->current_file));
+  mainw->cliplist = g_list_append (mainw->cliplist, LIVES_INT_TO_POINTER (mainw->current_file));
 
   g_free(ascrap_handle);
 
@@ -5261,7 +5261,7 @@ void close_scrap_file (void) {
   mainw->current_file=mainw->scrap_file;
   close_current_file(current_file);
 
-  mainw->cliplist=g_list_remove (mainw->cliplist, GINT_TO_POINTER (mainw->scrap_file));
+  mainw->cliplist=g_list_remove (mainw->cliplist, LIVES_INT_TO_POINTER (mainw->scrap_file));
 
   if (prefs->crash_recovery) rewrite_recovery_file();
 
@@ -5278,7 +5278,7 @@ void close_ascrap_file (void) {
   mainw->current_file=mainw->ascrap_file;
   close_current_file(current_file);
 
-  mainw->cliplist=g_list_remove (mainw->cliplist, GINT_TO_POINTER (mainw->ascrap_file));
+  mainw->cliplist=g_list_remove (mainw->cliplist, LIVES_INT_TO_POINTER (mainw->ascrap_file));
 
   if (prefs->crash_recovery) rewrite_recovery_file();
 
@@ -5600,7 +5600,7 @@ static boolean recover_files(gchar *recovery_file, boolean auto_recover) {
       if (!is_legal_set_name(buff,TRUE)) continue;
       g_snprintf(mainw->set_name,128,"%s",buff);
 
-      if (!on_load_set_ok(NULL,GINT_TO_POINTER(TRUE))) {
+      if (!on_load_set_ok(NULL,LIVES_INT_TO_POINTER(TRUE))) {
 	fclose(rfile);
 	end_threaded_dialog();
 
@@ -5815,7 +5815,7 @@ static boolean recover_files(gchar *recovery_file, boolean auto_recover) {
 #endif
       }
       else {
-	mainw->cliplist = g_list_append (mainw->cliplist, GINT_TO_POINTER (mainw->current_file));
+	mainw->cliplist = g_list_append (mainw->cliplist, LIVES_INT_TO_POINTER (mainw->current_file));
 	get_next_free_file();
       }
     }

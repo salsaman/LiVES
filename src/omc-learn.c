@@ -809,8 +809,8 @@ static void on_omc_combo_entry_changed (LiVESCombo *combo, gpointer ptr) {
     
   lives_omc_match_node_t *mnode=(lives_omc_match_node_t *)ptr;
 
-  int row=GPOINTER_TO_INT(g_object_get_data(G_OBJECT(combo),"row"));
-  omclearn_w *omclw=(omclearn_w *)g_object_get_data(G_OBJECT(combo),"omclw");
+  int row=GPOINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(combo),"row"));
+  omclearn_w *omclw=(omclearn_w *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(combo),"omclw");
 
   macro_text=lives_combo_get_active_text(LIVES_COMBO(combo));
 
@@ -896,7 +896,7 @@ static void cell_toggled_callback (LiVESCellRenderer *toggle, const gchar *path_
 static void cell_edited_callback (LiVESCellRenderer *spinbutton, const gchar *path_string, const gchar *new_text, gpointer user_data) {
   lives_omc_match_node_t *mnode=(lives_omc_match_node_t *)user_data;
 
-  int col=GPOINTER_TO_INT(g_object_get_data(G_OBJECT(spinbutton),"colnum"));
+  int col=GPOINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(spinbutton),"colnum"));
 
   int vali;
   double vald;
@@ -965,10 +965,10 @@ static LiVESWidget *create_omc_macro_combo(lives_omc_match_node_t *mnode, int ro
     lives_combo_set_active_index (LIVES_COMBO(combo),mnode->macro);
   }
 
-  lives_signal_connect_after (G_OBJECT (combo), LIVES_WIDGET_CHANGED_EVENT, LIVES_GUI_CALLBACK (on_omc_combo_entry_changed), mnode);
+  lives_signal_connect_after (LIVES_WIDGET_OBJECT (combo), LIVES_WIDGET_CHANGED_EVENT, LIVES_GUI_CALLBACK (on_omc_combo_entry_changed), mnode);
 
-  g_object_set_data(G_OBJECT(combo),"row",GINT_TO_POINTER(row));
-  g_object_set_data(G_OBJECT(combo),"omclw",(gpointer)omclw);
+  lives_widget_object_set_data(LIVES_WIDGET_OBJECT(combo),"row",LIVES_INT_TO_POINTER(row));
+  lives_widget_object_set_data(LIVES_WIDGET_OBJECT(combo),"omclw",(gpointer)omclw);
 
   return combo;
 }
@@ -1127,7 +1127,7 @@ static void omc_learner_add_row(int type, int detail, lives_omc_match_node_t *mn
 
 
    renderer = lives_cell_renderer_spin_new ();
-   g_object_set_data(G_OBJECT(renderer), "colnum", GUINT_TO_POINTER(OFFS1_COLUMN));
+   lives_widget_object_set_data(LIVES_WIDGET_OBJECT(renderer), "colnum", GUINT_TO_POINTER(OFFS1_COLUMN));
 
    spinadj=(LiVESObject *)lives_adjustment_new (0., -100000., 100000., 1., 10., 0);
 
@@ -1154,7 +1154,7 @@ static void omc_learner_add_row(int type, int detail, lives_omc_match_node_t *mn
 		 "editable", TRUE, "xalign", 1.0, "adjustment", spinadj, 
 		 "digits", OMC_FP_FIX, NULL);
 
-   g_object_set_data(G_OBJECT(renderer), "colnum", GUINT_TO_POINTER(SCALE_COLUMN));
+   lives_widget_object_set_data(LIVES_WIDGET_OBJECT(renderer), "colnum", GUINT_TO_POINTER(SCALE_COLUMN));
    lives_signal_connect(renderer, "edited", (GCallback) cell_edited_callback, mnode);
 
 
@@ -1172,7 +1172,7 @@ static void omc_learner_add_row(int type, int detail, lives_omc_match_node_t *mn
    g_object_set (renderer, "width-chars", 7, "mode", GTK_CELL_RENDERER_MODE_EDITABLE,
 		 "editable", TRUE, "xalign", 1.0, "adjustment", spinadj, NULL);
 
-   g_object_set_data(G_OBJECT(renderer), "colnum", GUINT_TO_POINTER(OFFS2_COLUMN));
+   lives_widget_object_set_data(LIVES_WIDGET_OBJECT(renderer), "colnum", GUINT_TO_POINTER(OFFS2_COLUMN));
    lives_signal_connect(renderer, "edited", (GCallback) cell_edited_callback, mnode);
 
 

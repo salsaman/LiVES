@@ -666,7 +666,7 @@ static void replace_with_delegates (void) {
 
   deint_idx=weed_get_idx_for_hashname("deinterlacedeinterlace",FALSE);
   if (deint_idx>-1) {
-    mainw->fx_candidates[FX_CANDIDATE_DEINTERLACE].list=g_list_append(mainw->fx_candidates[FX_CANDIDATE_DEINTERLACE].list,GINT_TO_POINTER(deint_idx));
+    mainw->fx_candidates[FX_CANDIDATE_DEINTERLACE].list=g_list_append(mainw->fx_candidates[FX_CANDIDATE_DEINTERLACE].list,LIVES_INT_TO_POINTER(deint_idx));
     mainw->fx_candidates[FX_CANDIDATE_DEINTERLACE].delegate=0;
   }
   
@@ -2613,7 +2613,7 @@ static boolean lives_startup(gpointer data) {
     splash_msg(msg,1.);
     g_free(msg);
     g_snprintf(mainw->set_name,128,"%s",prefs->ar_clipset_name);
-    on_load_set_ok(NULL,GINT_TO_POINTER(FALSE));
+    on_load_set_ok(NULL,LIVES_INT_TO_POINTER(FALSE));
     if (mainw->current_file==-1) {
       set_pref("ar_clipset","");
       prefs->ar_clipset=FALSE;
@@ -4206,7 +4206,7 @@ static boolean weed_layer_new_from_file_progressive(weed_plant_t *layer,
   else if (!strcmp(img_ext,"jpg")) pbload=gdk_pixbuf_loader_new_with_type("jpeg",gerror);
   else pbload=gdk_pixbuf_loader_new();
 
-  lives_signal_connect (G_OBJECT (pbload), "size_prepared",
+  lives_signal_connect (LIVES_WIDGET_OBJECT (pbload), "size_prepared",
                       LIVES_GUI_CALLBACK (pbsize_set),
                       NULL);
 
@@ -5399,7 +5399,7 @@ void load_frame_image(int frame) {
 	      lives_widget_set_tooltip_text( mainw->m_playbutton,_ ("Play"));
 	      if (cfile->opening&&!cfile->is_loaded) {
 		if (mainw->toy_type==LIVES_TOY_TV) {
-		  on_toy_activate(NULL,GINT_TO_POINTER(LIVES_TOY_NONE));
+		  on_toy_activate(NULL,LIVES_INT_TO_POINTER(LIVES_TOY_NONE));
 		}
 	      }
 	      mainw->preview=FALSE;
@@ -6265,7 +6265,7 @@ void close_current_file(int file_to_switch_to) {
     // this must all be done last...
     if (cfile->menuentry!=NULL) {
       // c.f. on_prevclip_activate
-      list_index=g_list_find (mainw->cliplist, GINT_TO_POINTER (mainw->current_file));
+      list_index=g_list_find (mainw->cliplist, LIVES_INT_TO_POINTER (mainw->current_file));
       do {
 	if ((list_index=g_list_previous(list_index))==NULL) list_index=g_list_last (mainw->cliplist);
 	index=GPOINTER_TO_INT (list_index->data);
@@ -6716,7 +6716,7 @@ void switch_to_file(int old_file, int new_file) {
 
   if (mainw->playing_file>-1) {
       if (mainw->fs) {
-	//on_full_screen_activate (NULL,GINT_TO_POINTER (1));
+	//on_full_screen_activate (NULL,LIVES_INT_TO_POINTER (1));
       }
       else {
 	if (!mainw->faded&&cfile->frames>0) {

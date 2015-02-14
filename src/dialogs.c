@@ -51,7 +51,7 @@ void on_warn_mask_toggled (LiVESToggleButton *togglebutton, gpointer user_data) 
   else prefs->warning_mask^=GPOINTER_TO_INT(user_data);
   set_int_pref("lives_warning_mask",prefs->warning_mask);
 
-  if ((tbutton=(LiVESWidget *)g_object_get_data(G_OBJECT(togglebutton),"auto"))!=NULL) {
+  if ((tbutton=(LiVESWidget *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(togglebutton),"auto"))!=NULL) {
     // this is for the cds window - disable autoreload if we are not gonna show this window
     if (lives_toggle_button_get_active(togglebutton)) {
       lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(tbutton),FALSE);
@@ -118,7 +118,7 @@ void add_warn_check (LiVESBox *box, int warn_mask_number) {
  
   lives_signal_connect (LIVES_GUI_OBJECT (checkbutton), LIVES_WIDGET_TOGGLED_EVENT,
 		    LIVES_GUI_CALLBACK (on_warn_mask_toggled),
-                      GINT_TO_POINTER(warn_mask_number));
+                      LIVES_INT_TO_POINTER(warn_mask_number));
 }
 
 
@@ -2588,7 +2588,7 @@ static void create_threaded_dialog(gchar *text, boolean has_cancel) {
 
       lives_signal_connect (LIVES_GUI_OBJECT (enoughbutton), LIVES_WIDGET_CLICKED_EVENT,
 			LIVES_GUI_CALLBACK (on_dth_cancel_clicked),
-			GINT_TO_POINTER(1));
+			LIVES_INT_TO_POINTER(1));
       
       mainw->cancel_type=CANCEL_SOFT;
     }
@@ -2598,7 +2598,7 @@ static void create_threaded_dialog(gchar *text, boolean has_cancel) {
 
     lives_signal_connect (LIVES_GUI_OBJECT (cancelbutton), LIVES_WIDGET_CLICKED_EVENT,
                       LIVES_GUI_CALLBACK (on_dth_cancel_clicked),
-                      GINT_TO_POINTER(0));
+                      LIVES_INT_TO_POINTER(0));
 
     mainw->cancel_type=CANCEL_SOFT;
   }

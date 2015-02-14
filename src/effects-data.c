@@ -1452,10 +1452,10 @@ boolean pconx_chain_data(int key, int mode) {
 	  }
 
 	  if (fx_dialog[1]!=NULL&&!reinit_inst) {
-	    lives_rfx_t *rfx=(lives_rfx_t *)g_object_get_data(G_OBJECT(fx_dialog[1]),"rfx");
+	    lives_rfx_t *rfx=(lives_rfx_t *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(fx_dialog[1]),"rfx");
 	    if (!rfx->is_template) {
-	      int keyw=GPOINTER_TO_INT (g_object_get_data (G_OBJECT (fx_dialog[1]),"key"));
-	      int modew=GPOINTER_TO_INT (g_object_get_data (G_OBJECT (fx_dialog[1]),"mode"));
+	      int keyw=GPOINTER_TO_INT (lives_widget_object_get_data (LIVES_WIDGET_OBJECT (fx_dialog[1]),"key"));
+	      int modew=GPOINTER_TO_INT (lives_widget_object_get_data (LIVES_WIDGET_OBJECT (fx_dialog[1]),"mode"));
 	      if (keyw==key&&modew==mode)
 		// ask the main thread to update the param window
 		mainw->vrfx_update=rfx;
@@ -2302,8 +2302,8 @@ static void disconbutton_clicked(LiVESButton *button, gpointer user_data) {
 
     if (i==0) lives_widget_set_sensitive(conxwp->del_button[i],FALSE);
     else {
-      cidx=GPOINTER_TO_INT(g_object_get_data(G_OBJECT(conxwp->ccombo[i]),"cidx"));
-      cidx_last=GPOINTER_TO_INT(g_object_get_data(G_OBJECT(conxwp->ccombo[i-1]),"cidx"));
+      cidx=GPOINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(conxwp->ccombo[i]),"cidx"));
+      cidx_last=GPOINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(conxwp->ccombo[i-1]),"cidx"));
       lives_widget_set_sensitive(conxwp->del_button[i],cidx==cidx_last);
     }
   }
@@ -2313,8 +2313,8 @@ static void disconbutton_clicked(LiVESButton *button, gpointer user_data) {
 
     if (i==0) lives_widget_set_sensitive(conxwp->del_button[i+totchans],FALSE);
     else {
-      pidx=GPOINTER_TO_INT(g_object_get_data(G_OBJECT(conxwp->pcombo[i]),"pidx"));
-      pidx_last=GPOINTER_TO_INT(g_object_get_data(G_OBJECT(conxwp->pcombo[i-1]),"pidx"));
+      pidx=GPOINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(conxwp->pcombo[i]),"pidx"));
+      pidx_last=GPOINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(conxwp->pcombo[i-1]),"pidx"));
       lives_widget_set_sensitive(conxwp->del_button[i+totchans],pidx==pidx_last);
     }
   }
@@ -2559,7 +2559,7 @@ static void padd_clicked(LiVESWidget *button, gpointer user_data) {
     }
   }
 
-  pidx=GPOINTER_TO_INT(g_object_get_data(G_OBJECT(conxwp->pcombo[ours]),"pidx"));
+  pidx=GPOINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(conxwp->pcombo[ours]),"pidx"));
 
   totparams++;
 
@@ -2692,7 +2692,7 @@ static void pdel_clicked(LiVESWidget *button, gpointer user_data) {
     }
   }
 
-  pidx=GPOINTER_TO_INT(g_object_get_data(G_OBJECT(conxwp->pcombo[ours]),"pidx"));
+  pidx=GPOINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(conxwp->pcombo[ours]),"pidx"));
 
   lives_combo_set_active_index (LIVES_COMBO(conxwp->pfxcombo[ours]),0);
 
@@ -2732,7 +2732,7 @@ static void pdel_clicked(LiVESWidget *button, gpointer user_data) {
     hboxb[0]=lives_widget_get_parent(conxwp->pclabel[totchans+i+1]);
     
     if (i==ours) {
-      pidx_next=GPOINTER_TO_INT(g_object_get_data(G_OBJECT(conxwp->pcombo[i+1]),"pidx"));
+      pidx_next=GPOINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(conxwp->pcombo[i+1]),"pidx"));
       if (pidx_next!=pidx) {
 	// secondary param
 	lives_widget_destroy(conxwp->pclabel[totchans+i]);
@@ -2866,7 +2866,7 @@ static void cadd_clicked(LiVESWidget *button, gpointer user_data) {
     }
   }
 
-  cidx=GPOINTER_TO_INT(g_object_get_data(G_OBJECT(conxwp->cfxcombo[ours]),"cidx"));
+  cidx=GPOINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(conxwp->cfxcombo[ours]),"cidx"));
 
   conxwp->dispc[cidx]++;
 
@@ -2986,7 +2986,7 @@ static void cdel_clicked(LiVESWidget *button, gpointer user_data) {
     }
   }
 
-  cidx=GPOINTER_TO_INT(g_object_get_data(G_OBJECT(conxwp->ccombo[ours]),"cidx"));
+  cidx=GPOINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(conxwp->ccombo[ours]),"cidx"));
 
   lives_combo_set_active_index (LIVES_COMBO(conxwp->cfxcombo[ours]),0);
 
@@ -3026,7 +3026,7 @@ static void cdel_clicked(LiVESWidget *button, gpointer user_data) {
     hboxb[0]=lives_widget_get_parent(conxwp->pclabel[i+1]);
     
     if (i==ours) {
-      cidx_next=GPOINTER_TO_INT(g_object_get_data(G_OBJECT(conxwp->ccombo[i+1]),"cidx"));
+      cidx_next=GPOINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(conxwp->ccombo[i+1]),"cidx"));
       if (cidx_next!=cidx) {
 	// secondary chan
 	lives_widget_destroy(conxwp->pclabel[i]);
@@ -3152,7 +3152,7 @@ static void dfxc_changed(LiVESWidget *combo, gpointer user_data) {
     }
   }
 
-  cidx=GPOINTER_TO_INT(g_object_get_data(G_OBJECT(combo),"cidx"));
+  cidx=GPOINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(combo),"cidx"));
 
   if (fidx==-1) {
     lives_combo_set_active_index (LIVES_COMBO(combo),0);
@@ -3240,7 +3240,7 @@ static void dfxp_changed(LiVESWidget *combo, gpointer user_data) {
   lives_tree_model_get(model,&iter,KEYVAL_COLUMN,&key,MODEVAL_COLUMN,&mode,-1);
   fidx=rte_keymode_get_filter_idx(key,mode);
 
-  pidx=GPOINTER_TO_INT(g_object_get_data(G_OBJECT(combo),"pidx"));
+  pidx=GPOINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(combo),"pidx"));
 
   if (fidx==-1) {
     LiVESWidget *acheck=conxwp->acheck[ours];
@@ -3434,7 +3434,7 @@ static void dpp_changed(LiVESWidget *combo, gpointer user_data) {
   gchar *paramname;
 
   boolean hasone=FALSE;
-  boolean setup=GPOINTER_TO_INT(g_object_get_data(G_OBJECT(combo),"setup"));
+  boolean setup=GPOINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(combo),"setup"));
 
   int nparams,nchans;
   int okey,omode,opnum;
@@ -3455,7 +3455,7 @@ static void dpp_changed(LiVESWidget *combo, gpointer user_data) {
     }
   }
 
-  pidx=GPOINTER_TO_INT(g_object_get_data(G_OBJECT(combo),"pidx"));
+  pidx=GPOINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(combo),"pidx"));
 
   if (idx==-1) {
     if (setup) return;
@@ -3463,7 +3463,7 @@ static void dpp_changed(LiVESWidget *combo, gpointer user_data) {
 	hasone=TRUE;
 	break;
       }
-    if (!hasone) for (i=0;i<nparams;i++) if (GPOINTER_TO_INT(g_object_get_data(G_OBJECT(conxwp->pcombo[i]),"idx"))>-1) {
+    if (!hasone) for (i=0;i<nparams;i++) if (GPOINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(conxwp->pcombo[i]),"idx"))>-1) {
 	  hasone=TRUE;
 	  break;
 	}
@@ -3486,7 +3486,7 @@ static void dpp_changed(LiVESWidget *combo, gpointer user_data) {
 
     lives_widget_set_sensitive(conxwp->del_button[nchans+ours], FALSE);
 
-    g_object_set_data(G_OBJECT(combo),"idx",GINT_TO_POINTER(idx));
+    lives_widget_object_set_data(LIVES_WIDGET_OBJECT(combo),"idx",LIVES_INT_TO_POINTER(idx));
 
     return;
   }
@@ -3524,12 +3524,12 @@ static void dpp_changed(LiVESWidget *combo, gpointer user_data) {
 
   idx+=EXTRA_PARAMS_IN;
 
-  g_object_set_data(G_OBJECT(combo),"idx",GINT_TO_POINTER(idx));
+  lives_widget_object_set_data(LIVES_WIDGET_OBJECT(combo),"idx",LIVES_INT_TO_POINTER(idx));
 
   acheck=conxwp->acheck[ours];
 
   if (acheck!=NULL) {
-    boolean hasrange=GPOINTER_TO_INT(g_object_get_data(G_OBJECT(acheck),"available"));
+    boolean hasrange=GPOINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(acheck),"available"));
 
     lives_signal_handler_block(acheck,conxwp->acheck_func[ours]);
     lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(acheck),FALSE);
@@ -3640,7 +3640,7 @@ static void dpc_changed(LiVESWidget *combo, gpointer user_data) {
   gchar *channame;
 
   boolean hasone=FALSE;
-  boolean setup=GPOINTER_TO_INT(g_object_get_data(G_OBJECT(combo),"setup"));
+  boolean setup=GPOINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(combo),"setup"));
 
   int nchans,nparams;
 
@@ -3661,7 +3661,7 @@ static void dpc_changed(LiVESWidget *combo, gpointer user_data) {
     }
   }
 
-  cidx=GPOINTER_TO_INT(g_object_get_data(G_OBJECT(combo),"cidx"));
+  cidx=GPOINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(combo),"cidx"));
 
   if (idx==-1) {
 
@@ -3669,7 +3669,7 @@ static void dpc_changed(LiVESWidget *combo, gpointer user_data) {
 	hasone=TRUE;
 	break;
       }
-    if (!hasone) for (i=0;i<nparams;i++) if (GPOINTER_TO_INT(g_object_get_data(G_OBJECT(conxwp->pcombo[i]),"idx"))>-1) {
+    if (!hasone) for (i=0;i<nparams;i++) if (GPOINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(conxwp->pcombo[i]),"idx"))>-1) {
 	  hasone=TRUE;
 	  break;
 	}
@@ -3716,7 +3716,7 @@ static void dpc_changed(LiVESWidget *combo, gpointer user_data) {
 
   weed_free(channame);
 
-  g_object_set_data(G_OBJECT(combo),"idx",GINT_TO_POINTER(idx));
+  lives_widget_object_set_data(LIVES_WIDGET_OBJECT(combo),"idx",LIVES_INT_TO_POINTER(idx));
 
   lives_widget_set_sensitive(conxwp->del_button[ours], TRUE);
 
@@ -3788,7 +3788,7 @@ static void on_acheck_toggled(LiVESToggleButton *acheck, gpointer user_data) {
     }
   }
 
-  idx=GPOINTER_TO_INT(g_object_get_data(G_OBJECT(conxwp->pcombo[ours]),"idx"));
+  idx=GPOINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(conxwp->pcombo[ours]),"idx"));
 
   fxcombo=conxwp->pfxcombo[ours];
 
@@ -3822,7 +3822,7 @@ static void on_acheck_toggled(LiVESToggleButton *acheck, gpointer user_data) {
   }
   else j=idx-EXTRA_PARAMS_IN;
 
-  pidx=GPOINTER_TO_INT(g_object_get_data(G_OBJECT(acheck),"pidx"));
+  pidx=GPOINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(acheck),"pidx"));
 
   if (conxwp->ikeys[nchans+ours]!=0) {
     pconx_delete(conxwp->okey,conxwp->omode,pidx,key-1,mode,j);
@@ -3950,7 +3950,7 @@ static void ptable_row_add_variable_widgets(lives_conx_w *conxwp, int idx, int r
   lives_box_pack_start (LIVES_BOX (hbox), hbox2, FALSE, FALSE, 0);
 
   conxwp->pcombo[idx]=lives_standard_combo_new("",FALSE,NULL,LIVES_BOX(hbox2),NULL);
-  g_object_set_data(G_OBJECT(conxwp->pcombo[idx]),"idx",GINT_TO_POINTER(-1));
+  lives_widget_object_set_data(LIVES_WIDGET_OBJECT(conxwp->pcombo[idx]),"idx",LIVES_INT_TO_POINTER(-1));
   lives_widget_set_sensitive(conxwp->pcombo[idx],FALSE);
 
 
@@ -3967,7 +3967,7 @@ static void ptable_row_add_variable_widgets(lives_conx_w *conxwp, int idx, int r
 					 LIVES_GUI_CALLBACK (dpp_changed),(gpointer)conxwp);
 
 
-  g_object_set_data(G_OBJECT(conxwp->pcombo[idx]),"pidx",GINT_TO_POINTER(pidx));
+  lives_widget_object_set_data(LIVES_WIDGET_OBJECT(conxwp->pcombo[idx]),"pidx",LIVES_INT_TO_POINTER(pidx));
   
   if (pidx<0) {
     conxwp->acheck[idx]=NULL;
@@ -3998,13 +3998,13 @@ static void ptable_row_add_variable_widgets(lives_conx_w *conxwp, int idx, int r
     conxwp->acheck[idx]=lives_standard_check_button_new(_("Autoscale"),FALSE,LIVES_BOX(hbox2),NULL);
 
     lives_widget_set_sensitive(conxwp->acheck[idx],FALSE);
-    g_object_set_data(G_OBJECT(conxwp->acheck[idx]),"available",GINT_TO_POINTER(hasrange));
+    lives_widget_object_set_data(LIVES_WIDGET_OBJECT(conxwp->acheck[idx]),"available",LIVES_INT_TO_POINTER(hasrange));
 
     conxwp->acheck_func[idx]=lives_signal_connect_after (LIVES_GUI_OBJECT (conxwp->acheck[idx]), LIVES_WIDGET_TOGGLED_EVENT,
 						     LIVES_GUI_CALLBACK (on_acheck_toggled),
 						     (gpointer)conxwp);
 
-    g_object_set_data(G_OBJECT(conxwp->acheck[idx]),"pidx",GINT_TO_POINTER(pidx));
+    lives_widget_object_set_data(LIVES_WIDGET_OBJECT(conxwp->acheck[idx]),"pidx",LIVES_INT_TO_POINTER(pidx));
   }
 
 }
@@ -4046,7 +4046,7 @@ static void ctable_row_add_variable_widgets(lives_conx_w *conxwp, int idx, int r
   lives_box_pack_start (LIVES_BOX (hbox), hbox2, FALSE, FALSE, 0);
 
   conxwp->ccombo[idx]=lives_standard_combo_new("",FALSE,NULL,LIVES_BOX(hbox2),NULL);
-  g_object_set_data(G_OBJECT(conxwp->ccombo[idx]),"idx",GINT_TO_POINTER(-1));
+  lives_widget_object_set_data(LIVES_WIDGET_OBJECT(conxwp->ccombo[idx]),"idx",LIVES_INT_TO_POINTER(-1));
   lives_widget_set_sensitive(conxwp->ccombo[idx],FALSE);
 
 
@@ -4063,7 +4063,7 @@ static void ctable_row_add_variable_widgets(lives_conx_w *conxwp, int idx, int r
 					 LIVES_GUI_CALLBACK (dpc_changed),(gpointer)conxwp);
 
 
-  g_object_set_data(G_OBJECT(conxwp->ccombo[idx]),"cidx",GINT_TO_POINTER(cidx));
+  lives_widget_object_set_data(LIVES_WIDGET_OBJECT(conxwp->ccombo[idx]),"cidx",LIVES_INT_TO_POINTER(cidx));
   
 
 
@@ -4594,10 +4594,10 @@ static boolean show_existing(lives_conx_w *conxwp) {
 	      
       weed_free(ichans);
 
-      g_object_set_data(G_OBJECT(ccombo),"setup",GINT_TO_POINTER(TRUE));
+      lives_widget_object_set_data(LIVES_WIDGET_OBJECT(ccombo),"setup",LIVES_INT_TO_POINTER(TRUE));
 
       lives_signal_handler_block(ccombo,conxwp->dpc_func[l]);
-      g_object_set_data(G_OBJECT(ccombo),"idx",GINT_TO_POINTER(cidx));
+      lives_widget_object_set_data(LIVES_WIDGET_OBJECT(ccombo),"idx",LIVES_INT_TO_POINTER(cidx));
       lives_combo_set_active_index(LIVES_COMBO(ccombo),cidx);
       lives_signal_handler_unblock(ccombo,conxwp->dpc_func[l]);
 	      
@@ -4605,7 +4605,7 @@ static boolean show_existing(lives_conx_w *conxwp) {
       conxwp->imodes[l]=imode;
       conxwp->idx[l]=icnum;
 
-      g_object_set_data(G_OBJECT(ccombo),"setup",GINT_TO_POINTER(FALSE));
+      lives_widget_object_set_data(LIVES_WIDGET_OBJECT(ccombo),"setup",LIVES_INT_TO_POINTER(FALSE));
       lives_widget_set_sensitive(conxwp->disconbutton,TRUE);
       lives_widget_set_sensitive(ccombo,TRUE);
 
@@ -4684,18 +4684,18 @@ static boolean show_existing(lives_conx_w *conxwp) {
 	weed_free(iparams);
       }
 
-      g_object_set_data(G_OBJECT(pcombo),"setup",GINT_TO_POINTER(TRUE));
+      lives_widget_object_set_data(LIVES_WIDGET_OBJECT(pcombo),"setup",LIVES_INT_TO_POINTER(TRUE));
 
       conxwp->ikeys[totchans+l]=ikey+1;
       conxwp->imodes[totchans+l]=imode;
       conxwp->idx[totchans+l]=ipnum;
 
       //lives_signal_handler_block(pcombo,conxwp->dpp_func[pidx]);
-      g_object_set_data(G_OBJECT(pcombo),"idx",GINT_TO_POINTER(pidx+EXTRA_PARAMS_IN));
+      lives_widget_object_set_data(LIVES_WIDGET_OBJECT(pcombo),"idx",LIVES_INT_TO_POINTER(pidx+EXTRA_PARAMS_IN));
       lives_combo_set_active_index(LIVES_COMBO(pcombo),pidx+EXTRA_PARAMS_IN);
       //lives_signal_handler_unblock(pcombo,conxwp->dpp_func[pidx]);
 
-      g_object_set_data(G_OBJECT(pcombo),"setup",GINT_TO_POINTER(FALSE));
+      lives_widget_object_set_data(LIVES_WIDGET_OBJECT(pcombo),"setup",LIVES_INT_TO_POINTER(FALSE));
 
       lives_widget_set_sensitive(conxwp->disconbutton,TRUE);
       lives_widget_set_sensitive(pcombo,TRUE);

@@ -1371,10 +1371,10 @@ lives_filter_error_t weed_reinit_effect (weed_plant_t *inst, boolean reinit_comp
       set_param_gui_readonly(inst);
       if (fx_dialog[1]!=NULL) {
 	// redraw GUI if necessary
-	rfx=(lives_rfx_t *)g_object_get_data(G_OBJECT(fx_dialog[1]),"rfx");
+	rfx=(lives_rfx_t *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(fx_dialog[1]),"rfx");
 	if (rfx->source_type==LIVES_RFX_SOURCE_WEED&&rfx->source==inst) {
-	  int keyw=GPOINTER_TO_INT (g_object_get_data (G_OBJECT (fx_dialog[1]),"key"));
-	  int modew=GPOINTER_TO_INT (g_object_get_data (G_OBJECT (fx_dialog[1]),"mode"));
+	  int keyw=GPOINTER_TO_INT (lives_widget_object_get_data (LIVES_WIDGET_OBJECT (fx_dialog[1]),"key"));
+	  int modew=GPOINTER_TO_INT (lives_widget_object_get_data (LIVES_WIDGET_OBJECT (fx_dialog[1]),"mode"));
 
 	  // do updates from "gui"
 	  rfx_params_free(rfx);
@@ -4273,7 +4273,7 @@ static int check_for_lives(weed_plant_t *filter, int filter_idx) {
       if (enabled_in_channels(filter,TRUE)>=1000000) {
 	// this is a candidate for audio volume
 	lives_fx_candidate_t *cand=&mainw->fx_candidates[FX_CANDIDATE_AUDIO_VOL];
-	cand->list=g_list_append(cand->list,GINT_TO_POINTER(filter_idx));
+	cand->list=g_list_append(cand->list,LIVES_INT_TO_POINTER(filter_idx));
 	cand->delegate=0;
       }
     }
@@ -4285,7 +4285,7 @@ static int check_for_lives(weed_plant_t *filter, int filter_idx) {
 	if (ochan_flags&WEED_CHANNEL_SIZE_CAN_VARY) {
 	  // this is a candidate for resize
 	  lives_fx_candidate_t *cand=&mainw->fx_candidates[FX_CANDIDATE_RESIZER];
-	  cand->list=g_list_append(cand->list,GINT_TO_POINTER(filter_idx));
+	  cand->list=g_list_append(cand->list,LIVES_INT_TO_POINTER(filter_idx));
 	  cand->delegate=0;
 	}
       }
@@ -4849,7 +4849,7 @@ static void make_fx_defs_menu(void) {
 	  
 	lives_signal_connect (LIVES_GUI_OBJECT (menuitem), LIVES_WIDGET_ACTIVATE_EVENT,
 			  LIVES_GUI_CALLBACK (rte_set_defs_activate),
-			  GINT_TO_POINTER(i));
+			  LIVES_INT_TO_POINTER(i));
 
 	weed_free(filter_name);
       }
@@ -6672,9 +6672,9 @@ boolean weed_init_effect(int hotkey) {
   // TODO - unblock template channel changes
 
   // if the param window is already open, use instance from there
-  if (fx_dialog[1]!=NULL&&GPOINTER_TO_INT(g_object_get_data(G_OBJECT(fx_dialog[1]),"key"))==hotkey&&
-      GPOINTER_TO_INT(g_object_get_data(G_OBJECT(fx_dialog[1]),"mode"))==key_modes[hotkey]) {
-    lives_rfx_t *rfx=(lives_rfx_t *)g_object_get_data(G_OBJECT(fx_dialog[1]),"rfx");
+  if (fx_dialog[1]!=NULL&&GPOINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(fx_dialog[1]),"key"))==hotkey&&
+      GPOINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(fx_dialog[1]),"mode"))==key_modes[hotkey]) {
+    lives_rfx_t *rfx=(lives_rfx_t *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(fx_dialog[1]),"rfx");
     new_instance=(weed_plant_t *)rfx->source;
 
     weed_instance_ref(new_instance);
@@ -7116,8 +7116,8 @@ void weed_deinit_effect(int hotkey) {
 
 
   // if the param window is already open, show any reinits now
-  if (fx_dialog[1]!=NULL&&GPOINTER_TO_INT(g_object_get_data(G_OBJECT(fx_dialog[1]),"key"))==hotkey&&
-      GPOINTER_TO_INT(g_object_get_data(G_OBJECT(fx_dialog[1]),"mode"))==key_modes[hotkey]) {
+  if (fx_dialog[1]!=NULL&&GPOINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(fx_dialog[1]),"key"))==hotkey&&
+      GPOINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(fx_dialog[1]),"mode"))==key_modes[hotkey]) {
     redraw_pwindow(hotkey,key_modes[hotkey]);
   }
 

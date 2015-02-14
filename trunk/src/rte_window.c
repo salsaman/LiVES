@@ -70,7 +70,7 @@ void ret_set_key_check_state(void) {
   register int i;
   for (i=0;i<prefs->rte_keys_virtual;i++) {
     lives_signal_handler_block(key_checks[i],ch_fns[i]);
-    lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(key_checks[i]),GPOINTER_TO_INT(g_object_get_data(G_OBJECT(key_checks[i]),"active")));
+    lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(key_checks[i]),GPOINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(key_checks[i]),"active")));
     lives_signal_handler_unblock(key_checks[i],ch_fns[i]);
   }
 }
@@ -121,7 +121,7 @@ boolean on_clear_all_clicked (LiVESButton *button, gpointer user_data) {
   for (i=0;i<prefs->rte_keys_virtual;i++) {
     if (rte_window!=NULL) {
       lives_toggle_button_set_active (LIVES_TOGGLE_BUTTON(key_checks[i]),FALSE);
-      g_object_set_data(G_OBJECT(key_checks[i]),"active",GINT_TO_POINTER(FALSE));
+      lives_widget_object_set_data(LIVES_WIDGET_OBJECT(key_checks[i]),"active",LIVES_INT_TO_POINTER(FALSE));
     }
     for (j=modes-1;j>=0;j--) {
       weed_delete_effectkey (i+1,j);
@@ -1563,9 +1563,9 @@ boolean on_load_keymap_clicked (LiVESButton *button, gpointer user_data) {
 
       if (fx_idx!=-1) {
 	hashname=(gchar *)g_list_nth_data(hash_list,fx_idx);
-	g_object_set_data(G_OBJECT(combos[idx]),"hashname",hashname);
+	lives_widget_object_set_data(LIVES_WIDGET_OBJECT(combos[idx]),"hashname",hashname);
       }
-      else g_object_set_data(G_OBJECT(combos[idx]),"hashname",empty_string);
+      else lives_widget_object_set_data(LIVES_WIDGET_OBJECT(combos[idx]),"hashname",empty_string);
 
       // set parameters button sensitive/insensitive
       set_param_and_con_buttons(key-1,mode);
@@ -1815,9 +1815,9 @@ void on_clear_clicked (LiVESButton *button, gpointer user_data) {
 
     if (fx_idx!=-1) {
       gchar *hashname=(gchar *)g_list_nth_data(hash_list,fx_idx);
-      g_object_set_data(G_OBJECT(combos[idx]),"hashname",hashname);
+      lives_widget_object_set_data(LIVES_WIDGET_OBJECT(combos[idx]),"hashname",hashname);
     }
-    else g_object_set_data(G_OBJECT(combos[idx]),"hashname",empty_string);
+    else lives_widget_object_set_data(LIVES_WIDGET_OBJECT(combos[idx]),"hashname",empty_string);
 
     // set parameters button sensitive/insensitive
     set_param_and_con_buttons(key,i);
@@ -1826,7 +1826,7 @@ void on_clear_clicked (LiVESButton *button, gpointer user_data) {
   idx++;
   lives_entry_set_text (LIVES_ENTRY(combo_entries[idx]),"");
 
-  g_object_set_data(G_OBJECT(combos[idx]),"hashname",empty_string);
+  lives_widget_object_set_data(LIVES_WIDGET_OBJECT(combos[idx]),"hashname",empty_string);
 
   // set parameters button sensitive/insensitive
   set_param_and_con_buttons(key,i);
@@ -1883,7 +1883,7 @@ static void on_params_clicked (LiVESButton *button, gpointer user_data) {
 
 
   if (fx_dialog[1]!=NULL) {
-    rfx=(lives_rfx_t *)g_object_get_data (G_OBJECT (fx_dialog[1]),"rfx");
+    rfx=(lives_rfx_t *)lives_widget_object_get_data (LIVES_WIDGET_OBJECT (fx_dialog[1]),"rfx");
     lives_widget_destroy(fx_dialog[1]);
     on_paramwindow_cancel_clicked2(NULL,rfx);
   }
@@ -1897,9 +1897,9 @@ static void on_params_clicked (LiVESButton *button, gpointer user_data) {
   // record the key so we know whose parameters to record later
   weed_set_int_value((weed_plant_t *)rfx->source,"host_key",key);
 
-  g_object_set_data (G_OBJECT (fx_dialog[1]),"key",GINT_TO_POINTER (key));
-  g_object_set_data (G_OBJECT (fx_dialog[1]),"mode",GINT_TO_POINTER (mode));
-  g_object_set_data (G_OBJECT (fx_dialog[1]),"rfx",rfx);
+  lives_widget_object_set_data (LIVES_WIDGET_OBJECT (fx_dialog[1]),"key",LIVES_INT_TO_POINTER (key));
+  lives_widget_object_set_data (LIVES_WIDGET_OBJECT (fx_dialog[1]),"mode",LIVES_INT_TO_POINTER (mode));
+  lives_widget_object_set_data (LIVES_WIDGET_OBJECT (fx_dialog[1]),"rfx",rfx);
 }
 
 
@@ -1980,7 +1980,7 @@ void fx_changed (LiVESCombo *combo, gpointer user_data) {
   gchar *txt;
   gchar *tmp;
   gchar *hashname1;
-  gchar *hashname2=(gchar *)g_object_get_data(G_OBJECT(combo),"hashname");
+  gchar *hashname2=(gchar *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(combo),"hashname");
 
   int key_mode=GPOINTER_TO_INT(user_data);
   int modes=rte_getmodespk();
@@ -2035,7 +2035,7 @@ void fx_changed (LiVESCombo *combo, gpointer user_data) {
   lives_entry_set_text (LIVES_ENTRY (combo_entries[key_mode]),txt);
   g_free(txt);
 
-  g_object_set_data(G_OBJECT(combo),"hashname",hashname1);
+  lives_widget_object_set_data(LIVES_WIDGET_OBJECT(combo),"hashname",hashname1);
     
   // set parameters button sensitive/insensitive
   set_param_and_con_buttons(key,mode);
@@ -2266,10 +2266,10 @@ LiVESWidget * create_rte_window (void) {
     lives_box_pack_start (LIVES_BOX (hbox), hbox2, FALSE, FALSE, widget_opts.packing_width);
 
     lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(key_checks[i]),mainw->rte&(GU641<<i));
-    g_object_set_data(G_OBJECT(key_checks[i]),"active",GINT_TO_POINTER(lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(key_checks[i]))));
+    lives_widget_object_set_data(LIVES_WIDGET_OBJECT(key_checks[i]),"active",LIVES_INT_TO_POINTER(lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(key_checks[i]))));
 
     ch_fns[i]=lives_signal_connect_after (LIVES_GUI_OBJECT (key_checks[i]), LIVES_WIDGET_TOGGLED_EVENT,
-                      LIVES_GUI_CALLBACK (rte_on_off_callback_hook),GINT_TO_POINTER (i+1));
+                      LIVES_GUI_CALLBACK (rte_on_off_callback_hook),LIVES_INT_TO_POINTER (i+1));
 
 
 
@@ -2283,7 +2283,7 @@ LiVESWidget * create_rte_window (void) {
     lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(key_grabs[i]),mainw->rte_keys==i);
 
     gr_fns[i]=lives_signal_connect_after (LIVES_GUI_OBJECT (key_grabs[i]), LIVES_WIDGET_TOGGLED_EVENT,
-				      LIVES_GUI_CALLBACK (grabkeys_callback_hook),GINT_TO_POINTER (i));
+				      LIVES_GUI_CALLBACK (grabkeys_callback_hook),LIVES_INT_TO_POINTER (i));
 
     mode_group=NULL;
 
@@ -2307,7 +2307,7 @@ LiVESWidget * create_rte_window (void) {
       if (rte_key_getmode(i+1)==j) lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(mode_radios[idx]),TRUE);
 
       mode_ra_fns[idx]=lives_signal_connect_after (LIVES_GUI_OBJECT (mode_radios[idx]), LIVES_WIDGET_TOGGLED_EVENT,
-					       LIVES_GUI_CALLBACK (rtemode_callback_hook),GINT_TO_POINTER (idx));
+					       LIVES_GUI_CALLBACK (rtemode_callback_hook),LIVES_INT_TO_POINTER (idx));
 
       type_labels[idx] = lives_standard_label_new ("");
 
@@ -2331,7 +2331,7 @@ LiVESWidget * create_rte_window (void) {
  
       lives_combo_set_entry_text_column(LIVES_COMBO(combo),NAME_TYPE_COLUMN);
 
-      g_object_set_data (G_OBJECT(combo), "hashname", empty_string);
+      lives_widget_object_set_data (LIVES_WIDGET_OBJECT(combo), "hashname", empty_string);
       lives_box_pack_start (LIVES_BOX (hbox), combo, TRUE, TRUE, widget_opts.packing_width);
       lives_box_pack_end (LIVES_BOX (hbox), clear_buttons[idx], FALSE, FALSE, widget_opts.packing_width);
       lives_box_pack_end (LIVES_BOX (hbox), info_buttons[idx], FALSE, FALSE, widget_opts.packing_width);
@@ -2348,19 +2348,19 @@ LiVESWidget * create_rte_window (void) {
       lives_box_pack_start (LIVES_BOX (vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
 
       lives_signal_connect(LIVES_GUI_OBJECT (combo), LIVES_WIDGET_CHANGED_EVENT,
-		       LIVES_GUI_CALLBACK (fx_changed),GINT_TO_POINTER(i*rte_getmodespk()+j));
+		       LIVES_GUI_CALLBACK (fx_changed),LIVES_INT_TO_POINTER(i*rte_getmodespk()+j));
       
       lives_signal_connect (LIVES_GUI_OBJECT (info_buttons[idx]), LIVES_WIDGET_CLICKED_EVENT,
-			LIVES_GUI_CALLBACK (on_rte_info_clicked),GINT_TO_POINTER (idx));
+			LIVES_GUI_CALLBACK (on_rte_info_clicked),LIVES_INT_TO_POINTER (idx));
 
       lives_signal_connect (LIVES_GUI_OBJECT (clear_buttons[idx]), LIVES_WIDGET_CLICKED_EVENT,
-			LIVES_GUI_CALLBACK (on_clear_clicked),GINT_TO_POINTER (idx));
+			LIVES_GUI_CALLBACK (on_clear_clicked),LIVES_INT_TO_POINTER (idx));
 
       lives_signal_connect (LIVES_GUI_OBJECT (param_buttons[idx]), LIVES_WIDGET_CLICKED_EVENT,
-			LIVES_GUI_CALLBACK (on_params_clicked),GINT_TO_POINTER (idx));
+			LIVES_GUI_CALLBACK (on_params_clicked),LIVES_INT_TO_POINTER (idx));
 
       lives_signal_connect (LIVES_GUI_OBJECT (conx_buttons[idx]), LIVES_WIDGET_CLICKED_EVENT,
-			LIVES_GUI_CALLBACK (on_datacon_clicked),GINT_TO_POINTER (idx));
+			LIVES_GUI_CALLBACK (on_datacon_clicked),LIVES_INT_TO_POINTER (idx));
       
       lives_box_pack_start (LIVES_BOX (hbox), type_labels[idx], FALSE, FALSE, widget_opts.packing_width);
       lives_box_pack_end (LIVES_BOX (hbox), conx_buttons[idx], FALSE, FALSE, widget_opts.packing_width);
@@ -2428,11 +2428,11 @@ LiVESWidget * create_rte_window (void) {
 
   lives_signal_connect (LIVES_GUI_OBJECT (load_keymap_button), LIVES_WIDGET_CLICKED_EVENT,
 		    LIVES_GUI_CALLBACK (on_load_keymap_clicked),
-		    GINT_TO_POINTER(1));
+		    LIVES_INT_TO_POINTER(1));
 
   lives_signal_connect (LIVES_GUI_OBJECT (clear_all_button), LIVES_WIDGET_CLICKED_EVENT,
 		    LIVES_GUI_CALLBACK (on_clear_all_clicked),
-		    GINT_TO_POINTER(1));
+		    LIVES_INT_TO_POINTER(1));
 
  rte_window_ready:
 
@@ -2488,7 +2488,7 @@ void rtew_set_keych (int key, boolean on) {
     pthread_mutex_unlock(&mainw->gtk_mutex);
   }
   lives_signal_handler_unblock(key_checks[key],ch_fns[key]);
-  g_object_set_data(G_OBJECT(key_checks[key]),"active",GINT_TO_POINTER(on));
+  lives_widget_object_set_data(LIVES_WIDGET_OBJECT(key_checks[key]),"active",LIVES_INT_TO_POINTER(on));
 }
 
 
@@ -2522,10 +2522,10 @@ void redraw_pwindow (int key, int mode) {
   int i;
 
   if (fx_dialog[1]!=NULL) {
-    rfx=(lives_rfx_t *)g_object_get_data(G_OBJECT(fx_dialog[1]),"rfx");
+    rfx=(lives_rfx_t *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(fx_dialog[1]),"rfx");
     if (!rfx->is_template) {
-      keyw=GPOINTER_TO_INT (g_object_get_data (G_OBJECT (fx_dialog[1]),"key"));
-      modew=GPOINTER_TO_INT (g_object_get_data (G_OBJECT (fx_dialog[1]),"mode"));
+      keyw=GPOINTER_TO_INT (lives_widget_object_get_data (LIVES_WIDGET_OBJECT (fx_dialog[1]),"key"));
+      modew=GPOINTER_TO_INT (lives_widget_object_get_data (LIVES_WIDGET_OBJECT (fx_dialog[1]),"mode"));
     }
     if (rfx->is_template||(key==keyw&&mode==modew)) {
       // rip out the contents
@@ -2570,11 +2570,11 @@ void update_pwindow (int key, int i, GList *list) {
   int keyw,modew;
 
   if (fx_dialog[1]!=NULL) {
-    keyw=GPOINTER_TO_INT (g_object_get_data (G_OBJECT (fx_dialog[1]),"key"));
-    modew=GPOINTER_TO_INT (g_object_get_data (G_OBJECT (fx_dialog[1]),"mode"));
+    keyw=GPOINTER_TO_INT (lives_widget_object_get_data (LIVES_WIDGET_OBJECT (fx_dialog[1]),"key"));
+    modew=GPOINTER_TO_INT (lives_widget_object_get_data (LIVES_WIDGET_OBJECT (fx_dialog[1]),"mode"));
     if (key==keyw) {
       if ((inst=rte_keymode_get_instance(key+1,modew))==NULL) return;
-      rfx=(lives_rfx_t *)g_object_get_data(G_OBJECT(fx_dialog[1]),"rfx");
+      rfx=(lives_rfx_t *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(fx_dialog[1]),"rfx");
       mainw->block_param_updates=TRUE;
       set_param_from_list(list,&rfx->params[i],0,TRUE,TRUE);
       mainw->block_param_updates=FALSE;
@@ -2588,7 +2588,7 @@ void rte_set_defs_activate (LiVESMenuItem *menuitem, gpointer user_data) {
   lives_rfx_t *rfx;
 
   if (fx_dialog[1]!=NULL) {
-    rfx=(lives_rfx_t *)g_object_get_data (G_OBJECT (fx_dialog[1]),"rfx");
+    rfx=(lives_rfx_t *)lives_widget_object_get_data (LIVES_WIDGET_OBJECT (fx_dialog[1]),"rfx");
     lives_widget_destroy(fx_dialog[1]);
     on_paramwindow_cancel_clicked2(NULL,rfx);
   }
@@ -2604,13 +2604,13 @@ void rte_set_defs_activate (LiVESMenuItem *menuitem, gpointer user_data) {
 void rte_set_key_defs (LiVESButton *button, lives_rfx_t *rfx) {
   int key,mode;
   if (mainw->textwidget_focus!=NULL) {
-    LiVESWidget *textwidget=(LiVESWidget *)g_object_get_data (G_OBJECT (mainw->textwidget_focus),"textwidget");
+    LiVESWidget *textwidget=(LiVESWidget *)lives_widget_object_get_data (LIVES_WIDGET_OBJECT (mainw->textwidget_focus),"textwidget");
     after_param_text_changed(textwidget,rfx);
   }
 
   if (rfx->num_params>0) {
-    key=GPOINTER_TO_INT (g_object_get_data (G_OBJECT (fx_dialog[1]),"key"));
-    mode=GPOINTER_TO_INT (g_object_get_data (G_OBJECT (fx_dialog[1]),"mode"));
+    key=GPOINTER_TO_INT (lives_widget_object_get_data (LIVES_WIDGET_OBJECT (fx_dialog[1]),"key"));
+    mode=GPOINTER_TO_INT (lives_widget_object_get_data (LIVES_WIDGET_OBJECT (fx_dialog[1]),"mode"));
     set_key_defaults((weed_plant_t *)rfx->source,key,mode);
   }
 }
@@ -2626,7 +2626,7 @@ void rte_set_defs_ok (LiVESButton *button, lives_rfx_t *rfx) {
   register int i;
 
   if (mainw->textwidget_focus!=NULL) {
-    LiVESWidget *textwidget=(LiVESWidget *)g_object_get_data (G_OBJECT (mainw->textwidget_focus),"textwidget");
+    LiVESWidget *textwidget=(LiVESWidget *)lives_widget_object_get_data (LIVES_WIDGET_OBJECT (mainw->textwidget_focus),"textwidget");
     after_param_text_changed(textwidget,rfx);
   }
 
@@ -2693,7 +2693,7 @@ void rte_reset_defs_clicked (LiVESButton *button, lives_rfx_t *rfx) {
 
   register int i;
 
-  cancelbutton=(LiVESWidget *)g_object_get_data(G_OBJECT(button),"cancelbutton");
+  cancelbutton=(LiVESWidget *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(button),"cancelbutton");
 
   if (cancelbutton!=NULL) is_generic_defs=TRUE;
 
@@ -2767,8 +2767,8 @@ void rte_reset_defs_clicked (LiVESButton *button, lives_rfx_t *rfx) {
     }
   }
   else {
-    int key=GPOINTER_TO_INT (g_object_get_data (G_OBJECT (fx_dialog[1]),"key"));
-    int mode=GPOINTER_TO_INT (g_object_get_data (G_OBJECT (fx_dialog[1]),"mode"));
+    int key=GPOINTER_TO_INT (lives_widget_object_get_data (LIVES_WIDGET_OBJECT (fx_dialog[1]),"key"));
+    int mode=GPOINTER_TO_INT (lives_widget_object_get_data (LIVES_WIDGET_OBJECT (fx_dialog[1]),"mode"));
     set_key_defaults(inst,key,mode);
   }
 

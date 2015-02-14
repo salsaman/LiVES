@@ -307,7 +307,7 @@ boolean do_audio_choice_dialog(short startup_phase) {
 
   lives_signal_connect (LIVES_GUI_OBJECT (radiobutton0), LIVES_WIDGET_TOGGLED_EVENT,
                       LIVES_GUI_CALLBACK (on_init_aplayer_toggled),
-                      GINT_TO_POINTER(AUD_PLAYER_PULSE));
+                      LIVES_INT_TO_POINTER(AUD_PLAYER_PULSE));
 
 
 #endif
@@ -328,7 +328,7 @@ boolean do_audio_choice_dialog(short startup_phase) {
 
   lives_signal_connect (LIVES_GUI_OBJECT (radiobutton1), LIVES_WIDGET_TOGGLED_EVENT,
                       LIVES_GUI_CALLBACK (on_init_aplayer_toggled),
-                      GINT_TO_POINTER(AUD_PLAYER_JACK));
+                      LIVES_INT_TO_POINTER(AUD_PLAYER_JACK));
 
 
 #endif
@@ -349,7 +349,7 @@ boolean do_audio_choice_dialog(short startup_phase) {
 
     lives_signal_connect (LIVES_GUI_OBJECT (radiobutton2), LIVES_WIDGET_TOGGLED_EVENT,
                       LIVES_GUI_CALLBACK (on_init_aplayer_toggled),
-                      GINT_TO_POINTER(AUD_PLAYER_SOX));
+                      LIVES_INT_TO_POINTER(AUD_PLAYER_SOX));
 
 
   }
@@ -369,7 +369,7 @@ boolean do_audio_choice_dialog(short startup_phase) {
 						    
     lives_signal_connect (LIVES_GUI_OBJECT (radiobutton3), LIVES_WIDGET_TOGGLED_EVENT,
 		      LIVES_GUI_CALLBACK (on_init_aplayer_toggled),
-                      GINT_TO_POINTER(AUD_PLAYER_MPLAYER));
+                      LIVES_INT_TO_POINTER(AUD_PLAYER_MPLAYER));
 
 
   }
@@ -389,7 +389,7 @@ boolean do_audio_choice_dialog(short startup_phase) {
 						    
     lives_signal_connect (LIVES_GUI_OBJECT (radiobutton4), LIVES_WIDGET_TOGGLED_EVENT,
 		      LIVES_GUI_CALLBACK (on_init_aplayer_toggled),
-                      GINT_TO_POINTER(AUD_PLAYER_MPLAYER2));
+                      LIVES_INT_TO_POINTER(AUD_PLAYER_MPLAYER2));
 
 
   }

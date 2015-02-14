@@ -1603,12 +1603,12 @@ _resaudw *create_resaudw (short type, render_details *rdet, LiVESWidget *top_vbo
       else if (type==5) {
 	lives_signal_connect (LIVES_GUI_OBJECT (okbutton), LIVES_WIDGET_CLICKED_EVENT,
 			  LIVES_GUI_CALLBACK (on_recaudclip_ok_clicked),
-			  GINT_TO_POINTER(0));
+			  LIVES_INT_TO_POINTER(0));
       }
       else if (type==6||type==7) {
 	lives_signal_connect (LIVES_GUI_OBJECT (okbutton), LIVES_WIDGET_CLICKED_EVENT,
 			  LIVES_GUI_CALLBACK (on_recaudclip_ok_clicked),
-			  GINT_TO_POINTER(1));
+			  LIVES_INT_TO_POINTER(1));
       }
       
     }
@@ -1782,18 +1782,18 @@ void create_new_pb_speed (short type) {
 		      LIVES_GUI_CALLBACK (on_resample_vid_ok),
 		      NULL);
   }
-  lives_signal_connect_after (LIVES_GUI_OBJECT (spinbutton_pb_speed), "value_changed",
+  lives_signal_connect_after (LIVES_GUI_OBJECT (spinbutton_pb_speed), LIVES_WIDGET_VALUE_CHANGED_EVENT,
 			  LIVES_GUI_CALLBACK (on_spin_value_changed),
-			  GINT_TO_POINTER (1));
+			  LIVES_INT_TO_POINTER (1));
 
   if (type==1) {
-    lives_signal_connect_after (LIVES_GUI_OBJECT (spinbutton_pb_time), "value_changed",
+    lives_signal_connect_after (LIVES_GUI_OBJECT (spinbutton_pb_time), LIVES_WIDGET_VALUE_CHANGED_EVENT,
 			    LIVES_GUI_CALLBACK (on_spin_value_changed),
-			    GINT_TO_POINTER (2));
-    lives_signal_connect_after (LIVES_GUI_OBJECT (spinbutton_pb_speed), "value_changed",
+			    LIVES_INT_TO_POINTER (2));
+    lives_signal_connect_after (LIVES_GUI_OBJECT (spinbutton_pb_speed), LIVES_WIDGET_VALUE_CHANGED_EVENT,
 			    LIVES_GUI_CALLBACK (widget_act_toggle),
 			    radiobutton1);
-    lives_signal_connect_after (LIVES_GUI_OBJECT (spinbutton_pb_time), "value_changed",
+    lives_signal_connect_after (LIVES_GUI_OBJECT (spinbutton_pb_time), LIVES_WIDGET_VALUE_CHANGED_EVENT,
 			    LIVES_GUI_CALLBACK (widget_act_toggle),
 			    radiobutton2);
     lives_signal_connect (LIVES_GUI_OBJECT (radiobutton2), LIVES_WIDGET_TOGGLED_EVENT,

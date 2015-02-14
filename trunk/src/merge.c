@@ -153,7 +153,7 @@ void create_merge_dialog (void) {
     lives_spin_button_set_value (LIVES_SPIN_BUTTON (merge_opts->spinbutton_loops),mainw->last_transition_loops);
     lives_widget_set_sensitive(merge_opts->spinbutton_loops,!mainw->last_transition_loop_to_fit);
 
-    lives_signal_connect_after (LIVES_GUI_OBJECT (merge_opts->spinbutton_loops), "value_changed",
+    lives_signal_connect_after (LIVES_GUI_OBJECT (merge_opts->spinbutton_loops), LIVES_WIDGET_VALUE_CHANGED_EVENT,
 			    LIVES_GUI_CALLBACK (after_spinbutton_loops_changed),
 			    NULL);
 
@@ -541,7 +541,7 @@ on_merge_ok_clicked                   (LiVESButton       *button,
     mainw->fx1_start=clipboard->frames-excess_frames+1;
     mainw->fx2_start=clipboard->frames;
 
-    on_insert_activate(NULL,GINT_TO_POINTER (1));
+    on_insert_activate(NULL,LIVES_INT_TO_POINTER (1));
   }
   
   if (excess_frames==0||!mainw->last_transition_ins_frames) {

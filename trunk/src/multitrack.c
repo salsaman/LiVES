@@ -184,13 +184,13 @@ static LIVES_INLINE int mt_clip_from_file(lives_mt *mt, int file) {
 
 /// return track number for a given block
 static LIVES_INLINE int get_track_for_block(track_rect *block) {
-  return GPOINTER_TO_INT(g_object_get_data(G_OBJECT(block->eventbox),"layer_number"));  
+  return GPOINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(block->eventbox),"layer_number"));  
 }
 
 
 
 static LIVES_INLINE boolean is_empty_track(LiVESObject *track) {
-  return (g_object_get_data(track, "blocks")==NULL);
+  return (lives_widget_object_get_data(track, "blocks")==NULL);
 }
 
 double get_mixer_track_vol(lives_mt *mt, int trackno) {
@@ -200,7 +200,7 @@ double get_mixer_track_vol(lives_mt *mt, int trackno) {
 
 void set_mixer_track_vol(lives_mt *mt, int trackno, double vol) {
   int x=vol*LIVES_AVOL_SCALE;
-  g_list_nth(mt->audio_vols,trackno)->data=GINT_TO_POINTER(x);
+  g_list_nth(mt->audio_vols,trackno)->data=LIVES_INT_TO_POINTER(x);
 }
 
 
@@ -868,7 +868,7 @@ LIVES_INLINE gchar *get_track_name(lives_mt *mt, int track_num, boolean is_audio
   if (track_num<0) return g_strdup(_("Backing audio")); 
   if (!is_audio) xeventbox=(LiVESWidget *)g_list_nth_data(mt->video_draws,track_num);
   else xeventbox=(LiVESWidget *)g_list_nth_data(mt->audio_draws,track_num+mt->opts.back_audio_tracks);
-  return g_strdup((gchar *)g_object_get_data(G_OBJECT(xeventbox),"track_name"));
+  return g_strdup((gchar *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(xeventbox),"track_name"));
 }
 
 
@@ -891,7 +891,7 @@ static int get_track_height(lives_mt *mt) {
 
   while (glist!=NULL) {
     eventbox=(LiVESWidget *)glist->data;
-    if (GPOINTER_TO_INT(g_object_get_data(G_OBJECT(eventbox),"hidden"))==0) 
+    if (GPOINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(eventbox),"hidden"))==0) 
       return lives_widget_get_allocation_height(eventbox);
     glist=glist->next;
   }
@@ -940,7 +940,7 @@ static void draw_block (lives_mt *mt, lives_painter_t *cairo,
   int framenum,last_framenum;
   int width=BLOCK_THUMB_WIDTH;
 
-  int hidden=(int)GPOINTER_TO_INT(g_object_get_data (G_OBJECT(eventbox), "hidden"));
+  int hidden=(int)GPOINTER_TO_INT(lives_widget_object_get_data (LIVES_WIDGET_OBJECT(eventbox), "hidden"));
 
   register int i;
 
@@ -968,7 +968,7 @@ static void draw_block (lives_mt *mt, lives_painter_t *cairo,
 
   lives_widget_get_bg_color(mt->window,&bgcolor);
 
-  track=GPOINTER_TO_INT(g_object_get_data(G_OBJECT(eventbox),"layer_number"));
+  track=GPOINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(eventbox),"layer_number"));
   if (track<0) is_audio=TRUE;
 
   if (!is_audio) filenum=get_frame_event_clip(block->start_event,track);
@@ -1190,7 +1190,7 @@ static void draw_aparams(lives_mt *mt, LiVESWidget *eventbox, lives_painter_t *c
   if (offset_start>startx) startpos=offset_start;
   else startpos=startx;
 
-  track=GPOINTER_TO_INT(g_object_get_data (G_OBJECT(eventbox),"layer_number"))+mt->opts.back_audio_tracks;
+  track=GPOINTER_TO_INT(lives_widget_object_get_data (LIVES_WIDGET_OBJECT(eventbox),"layer_number"))+mt->opts.back_audio_tracks;
 
   lives_painter_set_line_width(cr,1.);
   lives_painter_set_source_rgb(cr, 0., 0., 0.); ///< opaque black
@@ -1259,19 +1259,19 @@ static void redraw_eventbox(lives_mt *mt, LiVESWidget *eventbox) {
 
   if (!G_IS_OBJECT(eventbox)) return;
 
-  g_object_set_data(G_OBJECT(eventbox),"drawn",GINT_TO_POINTER(FALSE));
+  lives_widget_object_set_data(LIVES_WIDGET_OBJECT(eventbox),"drawn",LIVES_INT_TO_POINTER(FALSE));
   lives_widget_queue_draw (eventbox); // redraw the track
 
   if (is_audio_eventbox(mt,eventbox)) {
     // handle expanded audio
     LiVESWidget *xeventbox;
     if (cfile->achans>0) {
-      xeventbox=(LiVESWidget *)g_object_get_data(G_OBJECT(eventbox),"achan0");
-      g_object_set_data (G_OBJECT(xeventbox), "drawn",GINT_TO_POINTER(FALSE));
+      xeventbox=(LiVESWidget *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(eventbox),"achan0");
+      lives_widget_object_set_data (LIVES_WIDGET_OBJECT(xeventbox), "drawn",LIVES_INT_TO_POINTER(FALSE));
       lives_widget_queue_draw (xeventbox); // redraw the track
       if (cfile->achans>1) {
-	xeventbox=(LiVESWidget *)g_object_get_data(G_OBJECT(eventbox),"achan1");
-	g_object_set_data (G_OBJECT(xeventbox), "drawn",GINT_TO_POINTER(FALSE));
+	xeventbox=(LiVESWidget *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(eventbox),"achan1");
+	lives_widget_object_set_data (LIVES_WIDGET_OBJECT(xeventbox), "drawn",LIVES_INT_TO_POINTER(FALSE));
 	lives_widget_queue_draw (xeventbox); // redraw the track
       }
     }
@@ -1326,9 +1326,9 @@ static boolean expose_track_event (LiVESWidget *eventbox, GdkEventExpose *event,
 
   if (width==0) return FALSE;
 
-  hidden=(int)GPOINTER_TO_INT(g_object_get_data (G_OBJECT(eventbox), "hidden"));
+  hidden=(int)GPOINTER_TO_INT(lives_widget_object_get_data (LIVES_WIDGET_OBJECT(eventbox), "hidden"));
   if (hidden!=0) {
-    LiVESWidget *label=(LiVESWidget *)g_object_get_data (G_OBJECT(eventbox), "label");
+    LiVESWidget *label=(LiVESWidget *)lives_widget_object_get_data (LIVES_WIDGET_OBJECT(eventbox), "label");
     lives_widget_hide(eventbox);
     lives_widget_hide(lives_widget_get_parent(label));
     return FALSE;
@@ -1343,11 +1343,11 @@ static boolean expose_track_event (LiVESWidget *eventbox, GdkEventExpose *event,
   if (width>lives_widget_get_allocation_width(eventbox)-startx) width=lives_widget_get_allocation_width(eventbox)-startx;
 
   if (cairo==NULL) cr = lives_painter_create_from_widget (eventbox);
-  bgimage=(lives_painter_surface_t *)g_object_get_data (G_OBJECT(eventbox), "bgimg");
+  bgimage=(lives_painter_surface_t *)lives_widget_object_get_data (LIVES_WIDGET_OBJECT(eventbox), "bgimg");
 
  draw1:
 
-  if (GPOINTER_TO_INT(g_object_get_data (G_OBJECT(eventbox), "drawn"))) {
+  if (GPOINTER_TO_INT(lives_widget_object_get_data (LIVES_WIDGET_OBJECT(eventbox), "drawn"))) {
     if (bgimage!=NULL&&lives_painter_image_surface_get_width(bgimage)>0) {
       lives_painter_set_source_surface (cr, bgimage, startx, starty);
       lives_painter_rectangle(cr,startx,starty,width,height);
@@ -1387,7 +1387,7 @@ static boolean expose_track_event (LiVESWidget *eventbox, GdkEventExpose *event,
       sblock->state=BLOCK_UNSELECTED;
     }
     
-    block=(track_rect *)g_object_get_data (G_OBJECT(eventbox), "blocks");
+    block=(track_rect *)lives_widget_object_get_data (LIVES_WIDGET_OBJECT(eventbox), "blocks");
     
     while (block!=NULL) {
       draw_block(mt,NULL,bgimage,block,startx,width);
@@ -1409,8 +1409,8 @@ static boolean expose_track_event (LiVESWidget *eventbox, GdkEventExpose *event,
     bgimage=NULL;
   }
 
-  g_object_set_data(G_OBJECT(eventbox),"bgimg",(gpointer)bgimage);
-  g_object_set_data(G_OBJECT(eventbox),"drawn",GINT_TO_POINTER(bgimage!=NULL));
+  lives_widget_object_set_data(LIVES_WIDGET_OBJECT(eventbox),"bgimg",(gpointer)bgimage);
+  lives_widget_object_set_data(LIVES_WIDGET_OBJECT(eventbox),"drawn",LIVES_INT_TO_POINTER(bgimage!=NULL));
 
   if (bgimage!=NULL&&lives_painter_image_surface_get_width(bgimage)>0) goto draw1;
 
@@ -1515,7 +1515,7 @@ static track_rect *get_block_from_time (LiVESWidget *eventbox, double time, live
   weed_timecode_t tc=time*U_SECL;
   track_rect *block;
 
-  block=(track_rect *)g_object_get_data (G_OBJECT(eventbox),"blocks");
+  block=(track_rect *)lives_widget_object_get_data (LIVES_WIDGET_OBJECT(eventbox),"blocks");
   tc=q_gint64(tc,mt->fps);
 
   while (block!=NULL) {
@@ -1669,19 +1669,19 @@ void track_select (lives_mt *mt) {
   if (cfile->achans>0) {
     for (i=0;i<g_list_length(mt->audio_draws);i++) {
       eventbox=(LiVESWidget *)g_list_nth_data(mt->audio_draws,i);
-      if ((oeventbox=(LiVESWidget *)g_object_get_data(G_OBJECT(eventbox),"owner"))!=NULL) 
-	hidden=!GPOINTER_TO_INT(g_object_get_data(G_OBJECT(oeventbox),"expanded"));
-      if (hidden==0) hidden=GPOINTER_TO_INT(g_object_get_data(G_OBJECT(eventbox),"hidden"));
+      if ((oeventbox=(LiVESWidget *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(eventbox),"owner"))!=NULL) 
+	hidden=!GPOINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(oeventbox),"expanded"));
+      if (hidden==0) hidden=GPOINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(eventbox),"hidden"));
       if (hidden==0) {
-	labelbox=(LiVESWidget *)g_object_get_data(G_OBJECT(eventbox),"labelbox");
-	ahbox=(LiVESWidget *)g_object_get_data(G_OBJECT(eventbox),"ahbox");
+	labelbox=(LiVESWidget *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(eventbox),"labelbox");
+	ahbox=(LiVESWidget *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(eventbox),"ahbox");
 	if (mt->current_track==i-mt->opts.back_audio_tracks&&(mt->current_track<0||mt->aud_track_selected)) {
 	  // audio track is selected
 
 	  if (labelbox!=NULL) lives_widget_set_state(labelbox,LIVES_WIDGET_STATE_PRELIGHT);
 	  if (ahbox!=NULL) lives_widget_set_state(ahbox,LIVES_WIDGET_STATE_PRELIGHT);
-	  lives_widget_set_sensitive (mt->jumpback, g_object_get_data(G_OBJECT(eventbox),"blocks")!=NULL);
-	  lives_widget_set_sensitive (mt->jumpnext, g_object_get_data(G_OBJECT(eventbox),"blocks")!=NULL);
+	  lives_widget_set_sensitive (mt->jumpback, lives_widget_object_get_data(LIVES_WIDGET_OBJECT(eventbox),"blocks")!=NULL);
+	  lives_widget_set_sensitive (mt->jumpnext, lives_widget_object_get_data(LIVES_WIDGET_OBJECT(eventbox),"blocks")!=NULL);
 
 	}
 	else {
@@ -1694,11 +1694,11 @@ void track_select (lives_mt *mt) {
 
   for (i=0;i<mt->num_video_tracks;i++) {
     eventbox=(LiVESWidget *)g_list_nth_data(mt->video_draws,i);
-    hidden=GPOINTER_TO_INT(g_object_get_data(G_OBJECT(eventbox),"hidden"));
+    hidden=GPOINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(eventbox),"hidden"));
     if (hidden==0) {
-      labelbox=(LiVESWidget *)g_object_get_data(G_OBJECT(eventbox),"labelbox");
-      ahbox=(LiVESWidget *)g_object_get_data(G_OBJECT(eventbox),"ahbox");
-      checkbutton=(LiVESWidget *)g_object_get_data (G_OBJECT(eventbox), "checkbutton");
+      labelbox=(LiVESWidget *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(eventbox),"labelbox");
+      ahbox=(LiVESWidget *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(eventbox),"ahbox");
+      checkbutton=(LiVESWidget *)lives_widget_object_get_data (LIVES_WIDGET_OBJECT(eventbox), "checkbutton");
       if (i==mt->current_track) {
 	
 	if (!mt->aud_track_selected) {
@@ -1713,8 +1713,8 @@ void track_select (lives_mt *mt) {
 	    lives_widget_set_state(checkbutton,LIVES_WIDGET_STATE_PRELIGHT);
 	    lives_widget_queue_draw(checkbutton);
 	  }
-	  lives_widget_set_sensitive (mt->jumpback, g_object_get_data(G_OBJECT(eventbox),"blocks")!=NULL);
-	  lives_widget_set_sensitive (mt->jumpnext, g_object_get_data(G_OBJECT(eventbox),"blocks")!=NULL);
+	  lives_widget_set_sensitive (mt->jumpback, lives_widget_object_get_data(LIVES_WIDGET_OBJECT(eventbox),"blocks")!=NULL);
+	  lives_widget_set_sensitive (mt->jumpnext, lives_widget_object_get_data(LIVES_WIDGET_OBJECT(eventbox),"blocks")!=NULL);
 	}
 	else {
 	  if (labelbox!=NULL) lives_widget_set_state(labelbox,LIVES_WIDGET_STATE_NORMAL);
@@ -1807,7 +1807,7 @@ static void show_track_info(lives_mt *mt, LiVESWidget *eventbox, int track, doub
   if (!is_audio_eventbox(mt,eventbox)) add_context_label 
 					 (mt,(tmp=g_strdup_printf 
 					      (_("Current track: %s (layer %d)\n"),
-					       g_object_get_data(G_OBJECT(eventbox),
+					       lives_widget_object_get_data(LIVES_WIDGET_OBJECT(eventbox),
 								 "track_name"),track)));
   else {
     if (track==-1) add_context_label (mt,(tmp=g_strdup (_("Current track: Backing audio\n"))));
@@ -1831,7 +1831,7 @@ static void show_track_info(lives_mt *mt, LiVESWidget *eventbox, int track, doub
 static boolean atrack_ebox_pressed (LiVESWidget *labelbox, LiVESXEventButton *event, gpointer user_data) {
   lives_mt *mt=(lives_mt *)user_data;
   int current_track=mt->current_track;
-  mt->current_track=GPOINTER_TO_INT(g_object_get_data (G_OBJECT(labelbox),"layer_number"));
+  mt->current_track=GPOINTER_TO_INT(lives_widget_object_get_data (LIVES_WIDGET_OBJECT(labelbox),"layer_number"));
   if (current_track!=mt->current_track) mt->fm_edit_event=NULL;
   mt->aud_track_selected=TRUE;
   track_select(mt);
@@ -1846,7 +1846,7 @@ static boolean atrack_ebox_pressed (LiVESWidget *labelbox, LiVESXEventButton *ev
 static boolean track_ebox_pressed (LiVESWidget *labelbox, LiVESXEventButton *event, gpointer user_data) {
   lives_mt *mt=(lives_mt *)user_data;
   int current_track=mt->current_track;
-  mt->current_track=GPOINTER_TO_INT(g_object_get_data (G_OBJECT(labelbox),"layer_number"));
+  mt->current_track=GPOINTER_TO_INT(lives_widget_object_get_data (LIVES_WIDGET_OBJECT(labelbox),"layer_number"));
   if (current_track!=mt->current_track) mt->fm_edit_event=NULL;
   mt->aud_track_selected=FALSE;
   track_select(mt);
@@ -1891,10 +1891,10 @@ static int get_top_track_for(lives_mt *mt, int track) {
   if (mt->opts.back_audio_tracks>0&&mt->audio_draws==NULL) mt->opts.back_audio_tracks=0;
   if (cfile->achans>0&&mt->opts.back_audio_tracks>0) {
     eventbox=(LiVESWidget *)mt->audio_draws->data;
-    hidden=GPOINTER_TO_INT(g_object_get_data(G_OBJECT(eventbox),"hidden"));
+    hidden=GPOINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(eventbox),"hidden"));
     if (!hidden) {
       extras--;
-      expanded=GPOINTER_TO_INT(g_object_get_data(G_OBJECT(eventbox),"expanded"));
+      expanded=GPOINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(eventbox),"expanded"));
       if (expanded) {
 	extras-=cfile->achans;
       }
@@ -1905,11 +1905,11 @@ static int get_top_track_for(lives_mt *mt, int track) {
 
   vdraw=g_list_nth(mt->video_draws,track);
   eventbox=(LiVESWidget *)vdraw->data;
-  expanded=GPOINTER_TO_INT(g_object_get_data(G_OBJECT(eventbox),"expanded"));
+  expanded=GPOINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(eventbox),"expanded"));
   if (expanded) {
-    eventbox=(LiVESWidget *)(g_object_get_data(G_OBJECT(eventbox),"atrack"));
+    eventbox=(LiVESWidget *)(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(eventbox),"atrack"));
     extras--;
-    expanded=GPOINTER_TO_INT(g_object_get_data(G_OBJECT(eventbox),"expanded"));
+    expanded=GPOINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(eventbox),"expanded"));
     if (expanded) {
       extras-=cfile->achans;
     }
@@ -1921,13 +1921,13 @@ static int get_top_track_for(lives_mt *mt, int track) {
 
   while (vdraw!=NULL) {
     eventbox=(LiVESWidget *)vdraw->data;
-    hidden=GPOINTER_TO_INT(g_object_get_data(G_OBJECT(eventbox),"hidden"))&TRACK_I_HIDDEN_USER;
-    expanded=GPOINTER_TO_INT(g_object_get_data(G_OBJECT(eventbox),"expanded"));
+    hidden=GPOINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(eventbox),"hidden"))&TRACK_I_HIDDEN_USER;
+    expanded=GPOINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(eventbox),"expanded"));
     extras--;
     if (expanded) {
-      eventbox=(LiVESWidget *)(g_object_get_data(G_OBJECT(eventbox),"atrack"));
+      eventbox=(LiVESWidget *)(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(eventbox),"atrack"));
       extras--;
-      expanded=GPOINTER_TO_INT(g_object_get_data(G_OBJECT(eventbox),"expanded"));
+      expanded=GPOINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(eventbox),"expanded"));
       if (expanded) {
 	extras-=cfile->achans;
       }
@@ -1980,33 +1980,33 @@ void scroll_tracks (lives_mt *mt, int top_track, boolean set_value) {
   // first set all tracks to hidden
   while (vdraws!=NULL) {
     eventbox=(LiVESWidget *)vdraws->data;
-    hidden=GPOINTER_TO_INT(g_object_get_data(G_OBJECT(eventbox),"hidden"));
+    hidden=GPOINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(eventbox),"hidden"));
     hidden|=TRACK_I_HIDDEN_SCROLLED;
-    g_object_set_data(G_OBJECT(eventbox),"hidden",GINT_TO_POINTER(hidden));
+    lives_widget_object_set_data(LIVES_WIDGET_OBJECT(eventbox),"hidden",LIVES_INT_TO_POINTER(hidden));
 
-    aeventbox=LIVES_WIDGET(g_object_get_data(G_OBJECT(eventbox),"atrack"));
+    aeventbox=LIVES_WIDGET(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(eventbox),"atrack"));
 
     if (aeventbox!=NULL) {
-      hidden=GPOINTER_TO_INT(g_object_get_data(G_OBJECT(aeventbox),"hidden"));
+      hidden=GPOINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(aeventbox),"hidden"));
       hidden|=TRACK_I_HIDDEN_SCROLLED;
-      g_object_set_data(G_OBJECT(aeventbox),"hidden",GINT_TO_POINTER(hidden));
+      lives_widget_object_set_data(LIVES_WIDGET_OBJECT(aeventbox),"hidden",LIVES_INT_TO_POINTER(hidden));
       
       
-      xeventbox=(LiVESWidget *)g_object_get_data(G_OBJECT(aeventbox),"achan0");
+      xeventbox=(LiVESWidget *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(aeventbox),"achan0");
     
       if (xeventbox!=NULL) {
-	hidden=GPOINTER_TO_INT(g_object_get_data(G_OBJECT(xeventbox),"hidden"));
+	hidden=GPOINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(xeventbox),"hidden"));
 	hidden|=TRACK_I_HIDDEN_SCROLLED;
-	g_object_set_data(G_OBJECT(xeventbox),"hidden",GINT_TO_POINTER(hidden));
+	lives_widget_object_set_data(LIVES_WIDGET_OBJECT(xeventbox),"hidden",LIVES_INT_TO_POINTER(hidden));
 	
       }
 
-      xeventbox=(LiVESWidget *)g_object_get_data(G_OBJECT(aeventbox),"achan1");
+      xeventbox=(LiVESWidget *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(aeventbox),"achan1");
     
       if (xeventbox!=NULL) {
-	hidden=GPOINTER_TO_INT(g_object_get_data(G_OBJECT(xeventbox),"hidden"));
+	hidden=GPOINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(xeventbox),"hidden"));
 	hidden|=TRACK_I_HIDDEN_SCROLLED;
-	g_object_set_data(G_OBJECT(xeventbox),"hidden",GINT_TO_POINTER(hidden));
+	lives_widget_object_set_data(LIVES_WIDGET_OBJECT(xeventbox),"hidden",LIVES_INT_TO_POINTER(hidden));
       }
     }
 
@@ -2029,13 +2029,13 @@ void scroll_tracks (lives_mt *mt, int top_track, boolean set_value) {
 
   if (cfile->achans>0&&mt->opts.back_audio_tracks>0) {
     // show our float audio
-    if (GPOINTER_TO_INT(g_object_get_data(G_OBJECT(mt->audio_draws->data),"hidden"))==0) {
+    if (GPOINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(mt->audio_draws->data),"hidden"))==0) {
       aud_tracks++;
       
-      expanded=GPOINTER_TO_INT(g_object_get_data(G_OBJECT(mt->audio_draws->data),"expanded"));
+      expanded=GPOINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(mt->audio_draws->data),"expanded"));
 
-      label=(LIVES_WIDGET(g_object_get_data(G_OBJECT(mt->audio_draws->data),"label")));
-      arrow=(LIVES_WIDGET(g_object_get_data(G_OBJECT(mt->audio_draws->data),"arrow")));
+      label=(LIVES_WIDGET(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(mt->audio_draws->data),"label")));
+      arrow=(LIVES_WIDGET(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(mt->audio_draws->data),"arrow")));
       
       labelbox=lives_event_box_new();
       hbox=lives_hbox_new(FALSE,widget_opts.packing_width);
@@ -2093,10 +2093,10 @@ void scroll_tracks (lives_mt *mt, int top_track, boolean set_value) {
       lives_table_attach (LIVES_TABLE (mt->timeline_table), labelbox, 1, 6, 0, 1, LIVES_FILL, (LiVESAttachOptions)0, 0, 0);
       lives_table_attach (LIVES_TABLE (mt->timeline_table), ahbox, 6, 7, 0, 1, LIVES_FILL, (LiVESAttachOptions)0, 0, 0);
       
-      g_object_set_data (G_OBJECT(mt->audio_draws->data),"labelbox",labelbox);
-      g_object_set_data (G_OBJECT(mt->audio_draws->data),"ahbox",ahbox);
-      g_object_set_data (G_OBJECT(ahbox),"eventbox",mt->audio_draws->data);
-      g_object_set_data(G_OBJECT(labelbox),"layer_number",GINT_TO_POINTER(GPOINTER_TO_INT(-1)));
+      lives_widget_object_set_data (LIVES_WIDGET_OBJECT(mt->audio_draws->data),"labelbox",labelbox);
+      lives_widget_object_set_data (LIVES_WIDGET_OBJECT(mt->audio_draws->data),"ahbox",ahbox);
+      lives_widget_object_set_data (LIVES_WIDGET_OBJECT(ahbox),"eventbox",mt->audio_draws->data);
+      lives_widget_object_set_data(LIVES_WIDGET_OBJECT(labelbox),"layer_number",LIVES_INT_TO_POINTER(GPOINTER_TO_INT(-1)));
       
       lives_signal_connect (LIVES_GUI_OBJECT (labelbox), "button_press_event",
 			LIVES_GUI_CALLBACK (atrack_ebox_pressed),
@@ -2124,7 +2124,7 @@ void scroll_tracks (lives_mt *mt, int top_track, boolean set_value) {
 			(gpointer)mt);
 
       if (expanded) {
-	xeventbox=(LiVESWidget *)g_object_get_data(G_OBJECT(mt->audio_draws->data),"achan0");
+	xeventbox=(LiVESWidget *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(mt->audio_draws->data),"achan0");
 	
 	lives_table_attach (LIVES_TABLE (mt->timeline_table), xeventbox, 7, 40, 1, 2,
 			  (LiVESAttachOptions) (LIVES_EXPAND | LIVES_FILL),
@@ -2137,7 +2137,7 @@ void scroll_tracks (lives_mt *mt, int top_track, boolean set_value) {
 			  (gpointer)mt);
 
 	if (cfile->achans>1) {
-	  xeventbox=(LiVESWidget *)g_object_get_data(G_OBJECT(mt->audio_draws->data),"achan1");
+	  xeventbox=(LiVESWidget *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(mt->audio_draws->data),"achan1");
 	  
 	  lives_table_attach (LIVES_TABLE (mt->timeline_table), xeventbox, 7, 40, 2, 3,
 			    (LiVESAttachOptions) (LIVES_EXPAND | LIVES_FILL),
@@ -2166,14 +2166,14 @@ void scroll_tracks (lives_mt *mt, int top_track, boolean set_value) {
   while (vdraws!=NULL&&rows<mt->max_disp_vtracks) {
     eventbox=(LiVESWidget *)vdraws->data;
 
-    hidden=GPOINTER_TO_INT(g_object_get_data(G_OBJECT(eventbox),"hidden"))&TRACK_I_HIDDEN_USER;
-    g_object_set_data(G_OBJECT(eventbox),"hidden",GINT_TO_POINTER(hidden));
+    hidden=GPOINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(eventbox),"hidden"))&TRACK_I_HIDDEN_USER;
+    lives_widget_object_set_data(LIVES_WIDGET_OBJECT(eventbox),"hidden",LIVES_INT_TO_POINTER(hidden));
 
     if (hidden==0) {
 
-      label=(LIVES_WIDGET(g_object_get_data(G_OBJECT(eventbox),"label")));
-      arrow=(LIVES_WIDGET(g_object_get_data(G_OBJECT(eventbox),"arrow")));
-      checkbutton=(LIVES_WIDGET(g_object_get_data(G_OBJECT(eventbox),"checkbutton")));
+      label=(LIVES_WIDGET(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(eventbox),"label")));
+      arrow=(LIVES_WIDGET(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(eventbox),"arrow")));
+      checkbutton=(LIVES_WIDGET(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(eventbox),"checkbutton")));
       labelbox=lives_event_box_new();
       hbox=lives_hbox_new(FALSE,widget_opts.packing_width);
       ahbox=lives_event_box_new();
@@ -2230,7 +2230,7 @@ void scroll_tracks (lives_mt *mt, int top_track, boolean set_value) {
 #endif
 
 
-      g_object_set_data(G_OBJECT(labelbox),"layer_number",GINT_TO_POINTER(GPOINTER_TO_INT(g_object_get_data(G_OBJECT(eventbox),"layer_number"))));
+      lives_widget_object_set_data(LIVES_WIDGET_OBJECT(labelbox),"layer_number",LIVES_INT_TO_POINTER(GPOINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(eventbox),"layer_number"))));
 
       lives_container_add (LIVES_CONTAINER (labelbox), hbox);
       lives_box_pack_start (LIVES_BOX (hbox), checkbutton, FALSE, FALSE, 0);
@@ -2240,9 +2240,9 @@ void scroll_tracks (lives_mt *mt, int top_track, boolean set_value) {
       lives_table_attach (LIVES_TABLE (mt->timeline_table), labelbox, 0, 6, rows, rows+1, LIVES_FILL, (LiVESAttachOptions)0, 0, 0);
       lives_table_attach (LIVES_TABLE (mt->timeline_table), ahbox, 6, 7, rows, rows+1, LIVES_FILL, (LiVESAttachOptions)0, 0, 0);
       
-      g_object_set_data (G_OBJECT(eventbox),"labelbox",labelbox);
-      g_object_set_data (G_OBJECT(eventbox),"ahbox",ahbox);
-      g_object_set_data (G_OBJECT(ahbox),"eventbox",eventbox);
+      lives_widget_object_set_data (LIVES_WIDGET_OBJECT(eventbox),"labelbox",labelbox);
+      lives_widget_object_set_data (LIVES_WIDGET_OBJECT(eventbox),"ahbox",ahbox);
+      lives_widget_object_set_data (LIVES_WIDGET_OBJECT(ahbox),"eventbox",eventbox);
 
       lives_table_attach (LIVES_TABLE (mt->timeline_table), eventbox, 7, 40, rows, rows+1,
 			(LiVESAttachOptions) (LIVES_EXPAND | LIVES_FILL),
@@ -2285,22 +2285,22 @@ void scroll_tracks (lives_mt *mt, int top_track, boolean set_value) {
       if (rows==mt->max_disp_vtracks) break;
 
 
-      if (mt->opts.pertrack_audio&&g_object_get_data(G_OBJECT(eventbox),"expanded")) {
+      if (mt->opts.pertrack_audio&&lives_widget_object_get_data(LIVES_WIDGET_OBJECT(eventbox),"expanded")) {
 
-	aeventbox=LIVES_WIDGET(g_object_get_data(G_OBJECT(eventbox),"atrack"));
+	aeventbox=LIVES_WIDGET(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(eventbox),"atrack"));
 
-	hidden=GPOINTER_TO_INT(g_object_get_data(G_OBJECT(aeventbox),"hidden"))&TRACK_I_HIDDEN_USER;
-	g_object_set_data(G_OBJECT(aeventbox),"hidden",GINT_TO_POINTER(hidden));
+	hidden=GPOINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(aeventbox),"hidden"))&TRACK_I_HIDDEN_USER;
+	lives_widget_object_set_data(LIVES_WIDGET_OBJECT(aeventbox),"hidden",LIVES_INT_TO_POINTER(hidden));
 
 
 	if (hidden==0) {
 	  lives_adjustment_set_page_size(LIVES_ADJUSTMENT(mt->vadjustment),
 					 (double)((int)lives_adjustment_get_page_size(LIVES_ADJUSTMENT(mt->vadjustment))-1));
 	    
-	  expanded=GPOINTER_TO_INT(g_object_get_data(G_OBJECT(aeventbox),"expanded"));
+	  expanded=GPOINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(aeventbox),"expanded"));
 	    
-	  label=(LIVES_WIDGET(g_object_get_data(G_OBJECT(aeventbox),"label")));
-	  arrow=(LIVES_WIDGET(g_object_get_data(G_OBJECT(aeventbox),"arrow")));
+	  label=(LIVES_WIDGET(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(aeventbox),"label")));
+	  arrow=(LIVES_WIDGET(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(aeventbox),"arrow")));
 	  
 	  labelbox=lives_event_box_new();
 	  hbox=lives_hbox_new(FALSE,widget_opts.packing_width);
@@ -2339,10 +2339,10 @@ void scroll_tracks (lives_mt *mt, int top_track, boolean set_value) {
 	  lives_table_attach (LIVES_TABLE (mt->timeline_table), labelbox, 1, 6, rows, rows+1, LIVES_FILL, (LiVESAttachOptions)0, 0, 0);
 	  lives_table_attach (LIVES_TABLE (mt->timeline_table), ahbox, 6, 7, rows, rows+1, LIVES_FILL, (LiVESAttachOptions)0, 0, 0);
 	  
-	  g_object_set_data (G_OBJECT(aeventbox),"labelbox",labelbox);
-	  g_object_set_data (G_OBJECT(aeventbox),"ahbox",ahbox);
-	  g_object_set_data (G_OBJECT(ahbox),"eventbox",aeventbox);
-	  g_object_set_data(G_OBJECT(labelbox),"layer_number",GINT_TO_POINTER(GPOINTER_TO_INT(g_object_get_data(G_OBJECT(eventbox),"layer_number"))));
+	  lives_widget_object_set_data (LIVES_WIDGET_OBJECT(aeventbox),"labelbox",labelbox);
+	  lives_widget_object_set_data (LIVES_WIDGET_OBJECT(aeventbox),"ahbox",ahbox);
+	  lives_widget_object_set_data (LIVES_WIDGET_OBJECT(ahbox),"eventbox",aeventbox);
+	  lives_widget_object_set_data(LIVES_WIDGET_OBJECT(labelbox),"layer_number",LIVES_INT_TO_POINTER(GPOINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(eventbox),"layer_number"))));
 	  
 	  lives_signal_connect (LIVES_GUI_OBJECT (labelbox), "button_press_event",
 			    LIVES_GUI_CALLBACK (atrack_ebox_pressed),
@@ -2375,9 +2375,9 @@ void scroll_tracks (lives_mt *mt, int top_track, boolean set_value) {
 	  if (rows==mt->max_disp_vtracks) break;
 
 	  if (expanded) {
-	    xeventbox=(LiVESWidget *)g_object_get_data(G_OBJECT(aeventbox),"achan0");
-	    hidden=GPOINTER_TO_INT(g_object_get_data(G_OBJECT(xeventbox),"hidden"))&TRACK_I_HIDDEN_USER;
-	    g_object_set_data(G_OBJECT(xeventbox),"hidden",GINT_TO_POINTER(hidden));
+	    xeventbox=(LiVESWidget *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(aeventbox),"achan0");
+	    hidden=GPOINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(xeventbox),"hidden"))&TRACK_I_HIDDEN_USER;
+	    lives_widget_object_set_data(LIVES_WIDGET_OBJECT(xeventbox),"hidden",LIVES_INT_TO_POINTER(hidden));
 	    
 	    if (hidden==0) {
 	      lives_adjustment_set_page_size(LIVES_ADJUSTMENT(mt->vadjustment),
@@ -2399,9 +2399,9 @@ void scroll_tracks (lives_mt *mt, int top_track, boolean set_value) {
 	    }
 
 	    if (cfile->achans>1) {
-	      xeventbox=(LiVESWidget *)g_object_get_data(G_OBJECT(aeventbox),"achan1");
-	      hidden=GPOINTER_TO_INT(g_object_get_data(G_OBJECT(xeventbox),"hidden"))&TRACK_I_HIDDEN_USER;
-	      g_object_set_data(G_OBJECT(xeventbox),"hidden",GINT_TO_POINTER(hidden));
+	      xeventbox=(LiVESWidget *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(aeventbox),"achan1");
+	      hidden=GPOINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(xeventbox),"hidden"))&TRACK_I_HIDDEN_USER;
+	      lives_widget_object_set_data(LIVES_WIDGET_OBJECT(xeventbox),"hidden",LIVES_INT_TO_POINTER(hidden));
 	      
 	      if (hidden==0) {
 		lives_adjustment_set_page_size(LIVES_ADJUSTMENT(mt->vadjustment),
@@ -2464,10 +2464,10 @@ void scroll_tracks (lives_mt *mt, int top_track, boolean set_value) {
 
 
 boolean track_arrow_pressed (LiVESWidget *ebox, LiVESXEventButton *event, gpointer user_data) {
-  LiVESWidget *eventbox=(LiVESWidget *)g_object_get_data(G_OBJECT(ebox),"eventbox");
-  LiVESWidget *arrow=(LiVESWidget *)g_object_get_data(G_OBJECT(eventbox),"arrow"),*new_arrow;
+  LiVESWidget *eventbox=(LiVESWidget *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(ebox),"eventbox");
+  LiVESWidget *arrow=(LiVESWidget *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(eventbox),"arrow"),*new_arrow;
   lives_mt *mt=(lives_mt *)user_data;
-  boolean expanded=!(g_object_get_data(G_OBJECT(eventbox),"expanded"));
+  boolean expanded=!(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(eventbox),"expanded"));
 
   if (mt->audio_draws==NULL||(!mt->opts.pertrack_audio&&(mt->opts.back_audio_tracks==0||
 							 eventbox!=mt->audio_draws->data))) {
@@ -2475,7 +2475,7 @@ boolean track_arrow_pressed (LiVESWidget *ebox, LiVESXEventButton *event, gpoint
     return FALSE;
   }
 
-  g_object_set_data(G_OBJECT(eventbox),"expanded",GINT_TO_POINTER(expanded));
+  lives_widget_object_set_data(LIVES_WIDGET_OBJECT(eventbox),"expanded",LIVES_INT_TO_POINTER(expanded));
 
   if (!expanded) {
     new_arrow = lives_arrow_new (LIVES_ARROW_RIGHT, LIVES_SHADOW_OUT);
@@ -2487,7 +2487,7 @@ boolean track_arrow_pressed (LiVESWidget *ebox, LiVESXEventButton *event, gpoint
 
   lives_object_ref(new_arrow);
 
-  g_object_set_data(G_OBJECT(eventbox),"arrow",new_arrow);
+  lives_widget_object_set_data(LIVES_WIDGET_OBJECT(eventbox),"arrow",new_arrow);
 
   lives_tooltips_copy(new_arrow,arrow);
 
@@ -2570,7 +2570,7 @@ static void renumber_clips(void) {
 	clist=mainw->cliplist;
 	while (clist!=NULL) {
 	  if (GPOINTER_TO_INT(clist->data)==i) {
-	    clist->data=GINT_TO_POINTER(cclip);
+	    clist->data=LIVES_INT_TO_POINTER(cclip);
 	    break;
 	  }
 	  clist=clist->next;
@@ -2760,12 +2760,12 @@ static void set_time_scrollbar(lives_mt *mt) {
 
   if (mt->tl_max>mt->end_secs) mt->end_secs=mt->tl_max;
 
-  g_object_freeze_notify (G_OBJECT(mt->hadjustment));
+  g_object_freeze_notify (LIVES_WIDGET_OBJECT(mt->hadjustment));
   lives_range_set_range(LIVES_RANGE(mt->time_scrollbar),0.,mt->end_secs);
   lives_range_set_increments(LIVES_RANGE(mt->time_scrollbar),page/4.,page);
   lives_adjustment_set_page_size(LIVES_ADJUSTMENT(mt->hadjustment),(double)page);
   lives_adjustment_set_value(LIVES_ADJUSTMENT(mt->hadjustment),(double)mt->tl_min);
-  g_object_thaw_notify (G_OBJECT(mt->hadjustment));
+  g_object_thaw_notify (LIVES_WIDGET_OBJECT(mt->hadjustment));
   lives_widget_queue_draw(mt->time_scrollbar);
 
 }
@@ -3232,7 +3232,7 @@ boolean mt_trdown (LiVESAccelGroup *group, LiVESObject *obj, uint32_t keyval, Li
 
   if (mt->current_track>=0&&mt->opts.pertrack_audio&&!mt->aud_track_selected) {
     LiVESWidget *eventbox=(LiVESWidget *)g_list_nth_data(mt->video_draws,mt->current_track);
-    mt->aud_track_selected=GPOINTER_TO_INT(g_object_get_data(G_OBJECT(eventbox),"expanded"));
+    mt->aud_track_selected=GPOINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(eventbox),"expanded"));
     if (!mt->aud_track_selected&&mt->current_track==mt->num_video_tracks-1) return TRUE;
   }
   else {
@@ -3246,7 +3246,7 @@ boolean mt_trdown (LiVESAccelGroup *group, LiVESObject *obj, uint32_t keyval, Li
       int i=0;
       GList *llist=mt->video_draws;
       while (llist!=NULL) {
-	if (GPOINTER_TO_INT(g_object_get_data(G_OBJECT(llist->data),"hidden"))==0) {
+	if (GPOINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(llist->data),"hidden"))==0) {
 	  mt->current_track=i;
 	  break;
 	}
@@ -3273,7 +3273,7 @@ boolean mt_trup (LiVESAccelGroup *group, LiVESObject *obj, uint32_t keyval, LiVE
     mt->current_track--;
     if (mt->current_track>=0&&mt->opts.pertrack_audio) {
       LiVESWidget *eventbox=(LiVESWidget *)g_list_nth_data(mt->video_draws,mt->current_track);
-      mt->aud_track_selected=GPOINTER_TO_INT(g_object_get_data(G_OBJECT(eventbox),"expanded"));
+      mt->aud_track_selected=GPOINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(eventbox),"expanded"));
     }
   }
   mt->selected_init_event=NULL;
@@ -3329,8 +3329,11 @@ static void notebook_error(LiVESNotebook *nb, uint32_t tab, lives_mt_nb_error_t 
 
   lives_widget_set_hexpand(mt->nb_label,TRUE);
 
+  // add label to notebook page
   lives_container_add(LIVES_CONTAINER(lives_notebook_get_nth_page(LIVES_NOTEBOOK(nb),page)),mt->nb_label);
   lives_widget_show(mt->nb_label);
+
+  // hide the poly box
   lives_widget_hide(mt->poly_box);
 
   lives_widget_queue_resize(mt->nb_label);
@@ -3384,10 +3387,18 @@ static boolean notebook_page(LiVESWidget *nb, LiVESWidget *nbp, uint32_t tab, gp
     page=poly_tab_to_page(tab);
   }
 
+  // destroy the label that was in the page
   if (mt->nb_label!=NULL) lives_widget_destroy(mt->nb_label);
   mt->nb_label=NULL;
 
   lives_widget_show(mt->poly_box);
+
+
+  // we remove every widget from the notebook page and reparent it in the poly_box
+  // the tabs at the top are now only used to select the page, which is hidden or shown in poly_box
+  // or to show a label in the page
+  //
+  // i forget why it is done like this, but i think there was a reason
 
   switch (tab) {
   case POLY_CLIPS:
@@ -3469,7 +3480,7 @@ static void select_block (lives_mt *mt) {
     LiVESWidget *eventbox=block->eventbox;
 
     if (cfile->achans==0||mt->audio_draws==NULL||(mt->opts.back_audio_tracks==0||eventbox!=mt->audio_draws->data)) 
-      track=GPOINTER_TO_INT(g_object_get_data(G_OBJECT(eventbox),"layer_number"));
+      track=GPOINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(eventbox),"layer_number"));
     else track=-1;
 
     if (!is_audio_eventbox(mt,eventbox)) filenum=get_frame_event_clip(block->start_event,track);
@@ -3480,7 +3491,7 @@ static void select_block (lives_mt *mt) {
     clear_context(mt);
 
     if (cfile->achans==0||mt->audio_draws==NULL||(mt->opts.back_audio_tracks==0||eventbox!=mt->audio_draws->data)) 
-      add_context_label (mt,(tmp2=g_strdup_printf (_("Current track: %s (layer %d)\n"),g_object_get_data(G_OBJECT(eventbox),"track_name"),track)));
+      add_context_label (mt,(tmp2=g_strdup_printf (_("Current track: %s (layer %d)\n"),lives_widget_object_get_data(LIVES_WIDGET_OBJECT(eventbox),"track_name"),track)));
     else add_context_label (mt,(tmp2=g_strdup (_("Current track: Backing audio\n"))));
     g_free(tmp2);
     
@@ -3547,16 +3558,16 @@ on_drag_filter_end           (LiVESWidget       *widget,
   if (cfile->achans>0&&enabled_in_channels(get_weed_filter(mt->selected_filter),TRUE)==1) {
     for (i=0;i<g_list_length(mt->audio_draws);i++) {
       eventbox=(LiVESWidget *)g_list_nth_data(mt->audio_draws,i);
-      if (GPOINTER_TO_INT(g_object_get_data(G_OBJECT(eventbox),"hidden"))!=0) continue;
-      labelbox=(LiVESWidget *)g_object_get_data(G_OBJECT(eventbox),"labelbox");
+      if (GPOINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(eventbox),"hidden"))!=0) continue;
+      labelbox=(LiVESWidget *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(eventbox),"labelbox");
       if (lives_widget_get_xwindow(eventbox)==window||lives_widget_get_xwindow(labelbox)==window) {
 	if (lives_widget_get_xwindow(labelbox)!=window) {
 	  lives_widget_get_pointer((LiVESXDevice *)mainw->mgeom[prefs->gui_monitor>0?prefs->gui_monitor-1:0].mouse_device, 
 				   mt->timeline, &mt->sel_x, &mt->sel_y);
 	  timesecs=get_time_from_x(mt,mt->sel_x);
 	}
-	tchan=GPOINTER_TO_INT(g_object_get_data(G_OBJECT(eventbox),"layer_number"));
-	if ((oeventbox=(LiVESWidget *)g_object_get_data(G_OBJECT(eventbox),"owner"))!=NULL) {
+	tchan=GPOINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(eventbox),"layer_number"));
+	if ((oeventbox=(LiVESWidget *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(eventbox),"owner"))!=NULL) {
 	  eventbox=oeventbox;
 	}
 	ok=TRUE;
@@ -3568,16 +3579,16 @@ on_drag_filter_end           (LiVESWidget       *widget,
   if (!ok) {
     for (i=0;i<g_list_length(mt->video_draws);i++) {
       eventbox=(LiVESWidget *)g_list_nth_data(mt->video_draws,i);
-      if (GPOINTER_TO_INT(g_object_get_data(G_OBJECT(eventbox),"hidden"))!=0) continue;
-      labelbox=(LiVESWidget *)g_object_get_data(G_OBJECT(eventbox),"labelbox");
-      ahbox=(LiVESWidget *)g_object_get_data(G_OBJECT(eventbox),"ahbox");
+      if (GPOINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(eventbox),"hidden"))!=0) continue;
+      labelbox=(LiVESWidget *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(eventbox),"labelbox");
+      ahbox=(LiVESWidget *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(eventbox),"ahbox");
       if (lives_widget_get_xwindow(eventbox)==window||lives_widget_get_xwindow(labelbox)==window||lives_widget_get_xwindow(ahbox)==window) {
 	if (lives_widget_get_xwindow(labelbox)!=window) {
 	  lives_widget_get_pointer((LiVESXDevice *)mainw->mgeom[prefs->gui_monitor>0?prefs->gui_monitor-1:0].mouse_device, 
 				   mt->timeline, &mt->sel_x, &mt->sel_y);
 	  timesecs=get_time_from_x(mt,mt->sel_x);
 	}
-	tchan=GPOINTER_TO_INT(g_object_get_data(G_OBJECT(eventbox),"layer_number"));
+	tchan=GPOINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(eventbox),"layer_number"));
 	ok=TRUE;
 	break;
       }
@@ -3594,7 +3605,7 @@ on_drag_filter_end           (LiVESWidget       *widget,
 
   // create dummy menuitem
   dummy_menuitem=lives_menu_item_new();
-  g_object_set_data(G_OBJECT(dummy_menuitem),"idx",GINT_TO_POINTER(mt->current_fx));
+  lives_widget_object_set_data(LIVES_WIDGET_OBJECT(dummy_menuitem),"idx",LIVES_INT_TO_POINTER(mt->current_fx));
 
   nins=enabled_in_channels(get_weed_filter(mt->current_fx),TRUE);
   if (nins==1) {
@@ -3650,7 +3661,7 @@ static boolean filter_ebox_pressed (LiVESWidget *eventbox, LiVESXEventButton *ev
 
   if (mt->is_rendering) return FALSE;
 
-  mt->selected_filter=GPOINTER_TO_INT(g_object_get_data(G_OBJECT(eventbox),"fxid"));
+  mt->selected_filter=GPOINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(eventbox),"fxid"));
 
   if (event->type!=GDK_BUTTON_PRESS) {
     // double click
@@ -3721,7 +3732,7 @@ static void populate_filter_box(LiVESWidget *box, int ninchans, lives_mt *mt) {
 	}
 
 	xeventbox=lives_event_box_new();
-	g_object_set_data(G_OBJECT(xeventbox),"fxid",GINT_TO_POINTER(i));
+	lives_widget_object_set_data(LIVES_WIDGET_OBJECT(xeventbox),"fxid",LIVES_INT_TO_POINTER(i));
 
 	lives_widget_add_events (xeventbox, LIVES_BUTTON_RELEASE_MASK | LIVES_BUTTON_PRESS_MASK);
 	if (palette->style&STYLE_1) {
@@ -4115,9 +4126,9 @@ on_drag_clip_end           (LiVESWidget       *widget,
     ((LiVESXDevice *)mainw->mgeom[prefs->gui_monitor>0?prefs->gui_monitor-1:0].mouse_device,
      mt->display,&win_x,&win_y);
 
-  if (cfile->achans>0&&mt->opts.back_audio_tracks>0&&GPOINTER_TO_INT(g_object_get_data(G_OBJECT(mt->audio_draws->data),"hidden"))==0) {
-    labelbox=(LiVESWidget *)g_object_get_data(G_OBJECT(mt->audio_draws->data),"labelbox");
-    ahbox=(LiVESWidget *)g_object_get_data(G_OBJECT(mt->audio_draws->data),"ahbox");
+  if (cfile->achans>0&&mt->opts.back_audio_tracks>0&&GPOINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(mt->audio_draws->data),"hidden"))==0) {
+    labelbox=(LiVESWidget *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(mt->audio_draws->data),"labelbox");
+    ahbox=(LiVESWidget *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(mt->audio_draws->data),"ahbox");
   
     if (lives_widget_get_xwindow(LIVES_WIDGET(mt->audio_draws->data))==window||
 	lives_widget_get_xwindow(labelbox)==window||lives_widget_get_xwindow(ahbox)==window) {
@@ -4159,9 +4170,9 @@ on_drag_clip_end           (LiVESWidget       *widget,
 
   for (i=0;i<g_list_length(mt->video_draws);i++) {
     eventbox=(LiVESWidget *)g_list_nth_data(mt->video_draws,i);
-    if (GPOINTER_TO_INT(g_object_get_data(G_OBJECT(eventbox),"hidden"))!=0) continue;
-    labelbox=(LiVESWidget *)g_object_get_data(G_OBJECT(eventbox),"labelbox");
-    ahbox=(LiVESWidget *)g_object_get_data(G_OBJECT(eventbox),"ahbox");
+    if (GPOINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(eventbox),"hidden"))!=0) continue;
+    labelbox=(LiVESWidget *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(eventbox),"labelbox");
+    ahbox=(LiVESWidget *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(eventbox),"ahbox");
     if (lives_widget_get_xwindow(eventbox)==window||lives_widget_get_xwindow(labelbox)==window||lives_widget_get_xwindow(ahbox)==window) {
       if (lives_widget_get_xwindow(labelbox)==window||lives_widget_get_xwindow(ahbox)==window) timesecs=0.;
       else {
@@ -4169,7 +4180,7 @@ on_drag_clip_end           (LiVESWidget       *widget,
 				 mt->timeline, &mt->sel_x, &mt->sel_y);
 	timesecs=get_time_from_x(mt,mt->sel_x);
       }
-      mt->current_track=GPOINTER_TO_INT(g_object_get_data(G_OBJECT(eventbox),"layer_number"));
+      mt->current_track=GPOINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(eventbox),"layer_number"));
 
       track_select(mt);
 
@@ -4318,11 +4329,11 @@ void mt_init_start_end_spins(lives_mt *mt) {
     lives_widget_set_fg_color(mt->sel_label, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
   }
 
-  mt->spin_start_func=lives_signal_connect_after (LIVES_GUI_OBJECT (mt->spinbutton_start), "value_changed",
+  mt->spin_start_func=lives_signal_connect_after (LIVES_GUI_OBJECT (mt->spinbutton_start), LIVES_WIDGET_VALUE_CHANGED_EVENT,
 					      LIVES_GUI_CALLBACK (mt_spin_start_value_changed),
 					      (gpointer)mt);
 
-  mt->spin_end_func=lives_signal_connect_after (LIVES_GUI_OBJECT (mt->spinbutton_end), "value_changed",
+  mt->spin_end_func=lives_signal_connect_after (LIVES_GUI_OBJECT (mt->spinbutton_end), LIVES_WIDGET_VALUE_CHANGED_EVENT,
 					    LIVES_GUI_CALLBACK (mt_spin_end_value_changed),
 					    (gpointer)mt);
 }
@@ -4670,12 +4681,12 @@ void mt_backup(lives_mt *mt, int undo_type, weed_timecode_t tc) {
 
 void mt_aparam_view_toggled (LiVESMenuItem *menuitem, gpointer user_data) {
   lives_mt *mt=(lives_mt *)user_data;
-  int which=GPOINTER_TO_INT(g_object_get_data(G_OBJECT(menuitem),"pnum"));
+  int which=GPOINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(menuitem),"pnum"));
   register int i;
 
   if (lives_check_menu_item_get_active(LIVES_CHECK_MENU_ITEM(menuitem))) 
-    mt->aparam_view_list=g_list_append(mt->aparam_view_list,GINT_TO_POINTER(which));
-  else mt->aparam_view_list=g_list_remove(mt->aparam_view_list,GINT_TO_POINTER(which));
+    mt->aparam_view_list=g_list_append(mt->aparam_view_list,LIVES_INT_TO_POINTER(which));
+  else mt->aparam_view_list=g_list_remove(mt->aparam_view_list,LIVES_INT_TO_POINTER(which));
   for (i=0;i<g_list_length(mt->audio_draws);i++) {
     lives_widget_queue_draw((LiVESWidget *)g_list_nth_data(mt->audio_draws,i));
   }
@@ -4733,12 +4744,12 @@ static void add_aparam_menuitems(lives_mt *mt) {
     // TODO - check rfx->params[i].multi
     if ((rfx->params[i].hidden|HIDDEN_MULTI)==HIDDEN_MULTI&&rfx->params[i].type==LIVES_PARAM_NUM) {
       menuitem = lives_check_menu_item_new_with_label (rfx->params[i].name);
-      if (mt->aparam_view_list!=NULL&&g_list_find(mt->aparam_view_list,GINT_TO_POINTER(i))) 
+      if (mt->aparam_view_list!=NULL&&g_list_find(mt->aparam_view_list,LIVES_INT_TO_POINTER(i))) 
 	lives_check_menu_item_set_active(LIVES_CHECK_MENU_ITEM(menuitem),TRUE);
       else lives_check_menu_item_set_active(LIVES_CHECK_MENU_ITEM(menuitem),FALSE);
       lives_container_add (LIVES_CONTAINER (mt->aparam_submenu), menuitem);
       lives_widget_show(menuitem);
-      g_object_set_data(G_OBJECT(menuitem),"pnum",GINT_TO_POINTER(i));
+      lives_widget_object_set_data(LIVES_WIDGET_OBJECT(menuitem),"pnum",LIVES_INT_TO_POINTER(i));
       lives_signal_connect (LIVES_GUI_OBJECT (menuitem), LIVES_WIDGET_ACTIVATE_EVENT,
 			LIVES_GUI_CALLBACK (mt_aparam_view_toggled),
 			(gpointer)mt);
@@ -4803,10 +4814,10 @@ static void apply_avol_filter(lives_mt *mt) {
       g_list_free(mt->selected_tracks);
       mt->selected_tracks=NULL;
     }
-    if (mt->opts.back_audio_tracks>0) mt->selected_tracks=g_list_append(mt->selected_tracks,GINT_TO_POINTER(-1));
+    if (mt->opts.back_audio_tracks>0) mt->selected_tracks=g_list_append(mt->selected_tracks,LIVES_INT_TO_POINTER(-1));
     if (mt->opts.pertrack_audio) {
       for (i=0;i<mt->num_video_tracks;i++) {
-	mt->selected_tracks=g_list_append(mt->selected_tracks,GINT_TO_POINTER(i));
+	mt->selected_tracks=g_list_append(mt->selected_tracks,LIVES_INT_TO_POINTER(i));
       }
     }
     mt->current_fx=mt->avol_fx;
@@ -5445,9 +5456,9 @@ static boolean on_mt_delete_event (LiVESWidget *widget, GdkEvent *event, gpointe
 
 static void cmi_set_inactive(LiVESWidget *widget, gpointer data) {
   if (widget==data) return;
-  g_object_freeze_notify(G_OBJECT(widget));
+  g_object_freeze_notify(LIVES_WIDGET_OBJECT(widget));
   lives_check_menu_item_set_active(LIVES_CHECK_MENU_ITEM(widget),FALSE);
-  g_object_thaw_notify(G_OBJECT(widget));
+  g_object_thaw_notify(LIVES_WIDGET_OBJECT(widget));
 }
 
 static void mt_set_atrans_effect (LiVESMenuItem *menuitem, gpointer user_data) {
@@ -5456,7 +5467,7 @@ static void mt_set_atrans_effect (LiVESMenuItem *menuitem, gpointer user_data) {
 
   if (!lives_check_menu_item_get_active(LIVES_CHECK_MENU_ITEM(menuitem))) return;
   lives_container_foreach(LIVES_CONTAINER(mt->submenu_atransfx),cmi_set_inactive,menuitem);
-  prefs->atrans_fx=GPOINTER_TO_INT(g_object_get_data(G_OBJECT(menuitem),"idx"));
+  prefs->atrans_fx=GPOINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(menuitem),"idx"));
 
   // set pref
   atrans_hash=make_weed_hashname(prefs->atrans_fx,FALSE,FALSE);
@@ -6052,7 +6063,7 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
     
     lives_signal_connect (LIVES_GUI_OBJECT (menuitem), LIVES_WIDGET_ACTIVATE_EVENT,
 		      LIVES_GUI_CALLBACK (on_open_vcd_activate),
-		      GINT_TO_POINTER (1));
+		      LIVES_INT_TO_POINTER (1));
     
     
 # endif
@@ -6067,7 +6078,7 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
     
     lives_signal_connect (LIVES_GUI_OBJECT (menuitem), LIVES_WIDGET_ACTIVATE_EVENT,
 		      LIVES_GUI_CALLBACK (on_open_vcd_activate),
-		      GINT_TO_POINTER (2));
+		      LIVES_INT_TO_POINTER (2));
 
   }
 
@@ -6089,14 +6100,14 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
 
   lives_signal_connect (LIVES_GUI_OBJECT (menuitem), LIVES_WIDGET_ACTIVATE_EVENT,
 		    LIVES_GUI_CALLBACK (on_open_fw_activate),
-		    GINT_TO_POINTER(CAM_FORMAT_DV));
+		    LIVES_INT_TO_POINTER(CAM_FORMAT_DV));
 
   menuitem = lives_menu_item_new_with_mnemonic (_("Import from _Firewire Device (hdv)"));
   lives_container_add (LIVES_CONTAINER (device_submenu), menuitem);
 
   lives_signal_connect (LIVES_GUI_OBJECT (menuitem), LIVES_WIDGET_ACTIVATE_EVENT,
 		    LIVES_GUI_CALLBACK (on_open_fw_activate),
-		    GINT_TO_POINTER(CAM_FORMAT_HDV));
+		    LIVES_INT_TO_POINTER(CAM_FORMAT_HDV));
 #endif
 
 
@@ -6158,16 +6169,16 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
 
   lives_signal_connect (LIVES_GUI_OBJECT (mt->recent1), LIVES_WIDGET_ACTIVATE_EVENT,
                       LIVES_GUI_CALLBACK (on_recent_activate),
-		    GINT_TO_POINTER(1));
+		    LIVES_INT_TO_POINTER(1));
   lives_signal_connect (LIVES_GUI_OBJECT (mt->recent2), LIVES_WIDGET_ACTIVATE_EVENT,
                       LIVES_GUI_CALLBACK (on_recent_activate),
-		    GINT_TO_POINTER(2));
+		    LIVES_INT_TO_POINTER(2));
   lives_signal_connect (LIVES_GUI_OBJECT (mt->recent3), LIVES_WIDGET_ACTIVATE_EVENT,
                       LIVES_GUI_CALLBACK (on_recent_activate),
-		    GINT_TO_POINTER(3));
+		    LIVES_INT_TO_POINTER(3));
   lives_signal_connect (LIVES_GUI_OBJECT (mt->recent4), LIVES_WIDGET_ACTIVATE_EVENT,
                       LIVES_GUI_CALLBACK (on_recent_activate),
-		    GINT_TO_POINTER(4));
+		    LIVES_INT_TO_POINTER(4));
 
 
   separator = lives_menu_item_new ();
@@ -6189,7 +6200,7 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
 
   lives_signal_connect (LIVES_GUI_OBJECT (mt->save_set), LIVES_WIDGET_ACTIVATE_EVENT,
                       LIVES_GUI_CALLBACK (on_quit_activate),
-                      GINT_TO_POINTER(1));
+                      LIVES_INT_TO_POINTER(1));
 
   separator = lives_menu_item_new ();
   lives_container_add (LIVES_CONTAINER (menuitem_menu), separator);
@@ -6794,7 +6805,7 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
       if (enabled_in_channels(filter,TRUE)>=1000000&&enabled_out_channels(filter,FALSE)==1) {
 	menuitem = lives_image_menu_item_new_with_label (fxname);
 	lives_container_add (LIVES_CONTAINER (submenu_menu5), menuitem);
-	g_object_set_data(G_OBJECT(menuitem),"idx",GINT_TO_POINTER(i));
+	lives_widget_object_set_data(LIVES_WIDGET_OBJECT(menuitem),"idx",LIVES_INT_TO_POINTER(i));
 	lives_signal_connect (LIVES_GUI_OBJECT (menuitem), LIVES_WIDGET_ACTIVATE_EVENT,
 			  LIVES_GUI_CALLBACK (mt_add_region_effect),
 			  (gpointer)mt);
@@ -6805,28 +6816,28 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
 
 	if (!is_pure_audio(filter,FALSE)) {
 	  lives_container_add (LIVES_CONTAINER (submenu_menuv), menuitem);
-	  g_object_set_data(G_OBJECT(menuitem),"idx",GINT_TO_POINTER(i));
+	  lives_widget_object_set_data(LIVES_WIDGET_OBJECT(menuitem),"idx",LIVES_INT_TO_POINTER(i));
 	  lives_signal_connect (LIVES_GUI_OBJECT (menuitem), LIVES_WIDGET_ACTIVATE_EVENT,
 			    LIVES_GUI_CALLBACK (mt_add_block_effect),
 			    (gpointer)mt);
 
 	  menuitem = lives_image_menu_item_new_with_label (fxname);
 	  lives_container_add (LIVES_CONTAINER (submenu_menu4v), menuitem);
-	  g_object_set_data(G_OBJECT(menuitem),"idx",GINT_TO_POINTER(i));
+	  lives_widget_object_set_data(LIVES_WIDGET_OBJECT(menuitem),"idx",LIVES_INT_TO_POINTER(i));
 	  lives_signal_connect (LIVES_GUI_OBJECT (menuitem), LIVES_WIDGET_ACTIVATE_EVENT,
 			    LIVES_GUI_CALLBACK (mt_add_region_effect),
 			    (gpointer)mt);
 	}
 	else {
 	  lives_container_add (LIVES_CONTAINER (submenu_menua), menuitem);
-	  g_object_set_data(G_OBJECT(menuitem),"idx",GINT_TO_POINTER(i));
+	  lives_widget_object_set_data(LIVES_WIDGET_OBJECT(menuitem),"idx",LIVES_INT_TO_POINTER(i));
 	  lives_signal_connect (LIVES_GUI_OBJECT (menuitem), LIVES_WIDGET_ACTIVATE_EVENT,
 			    LIVES_GUI_CALLBACK (mt_add_block_effect),
 			    (gpointer)mt);
 
 	  menuitem = lives_image_menu_item_new_with_label (fxname);
 	  lives_container_add (LIVES_CONTAINER (submenu_menu4a), menuitem);
-	  g_object_set_data(G_OBJECT(menuitem),"idx",GINT_TO_POINTER(i));
+	  lives_widget_object_set_data(LIVES_WIDGET_OBJECT(menuitem),"idx",LIVES_INT_TO_POINTER(i));
 	  lives_signal_connect (LIVES_GUI_OBJECT (menuitem), LIVES_WIDGET_ACTIVATE_EVENT,
 			    LIVES_GUI_CALLBACK (mt_add_region_effect),
 			    (gpointer)mt);
@@ -6837,14 +6848,14 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
       else if (enabled_in_channels(filter,FALSE)==2&&enabled_out_channels(filter,FALSE)==1) {
 	// add all transitions to submenus
 	menuitem = lives_image_menu_item_new_with_label (fxname);
-	g_object_set_data(G_OBJECT(menuitem),"idx",GINT_TO_POINTER(i));
+	lives_widget_object_set_data(LIVES_WIDGET_OBJECT(menuitem),"idx",LIVES_INT_TO_POINTER(i));
 	if (get_transition_param(filter,FALSE)==-1) lives_container_add (LIVES_CONTAINER (submenu_menu11), menuitem);
 	else {
 	  if (has_video_chans_in(filter,FALSE)) {
 	    /// the autotransitions menu
 	    menuitem2 = lives_check_menu_item_new_with_label (fxname);
 	    lives_check_menu_item_set_active(LIVES_CHECK_MENU_ITEM(menuitem2),prefs->atrans_fx==i);
-	    g_object_set_data(G_OBJECT(menuitem2),"idx",GINT_TO_POINTER(i));
+	    lives_widget_object_set_data(LIVES_WIDGET_OBJECT(menuitem2),"idx",LIVES_INT_TO_POINTER(i));
 
 	    lives_signal_connect (LIVES_GUI_OBJECT (menuitem2), LIVES_WIDGET_ACTIVATE_EVENT,
 			      LIVES_GUI_CALLBACK (mt_set_atrans_effect),
@@ -6871,7 +6882,7 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
 
   /// None autotransition
   menuitem2 = lives_check_menu_item_new_with_label (mainw->string_constants[LIVES_STRING_CONSTANT_NONE]);
-  g_object_set_data(G_OBJECT(menuitem2),"idx",GINT_TO_POINTER(-1));
+  lives_widget_object_set_data(LIVES_WIDGET_OBJECT(menuitem2),"idx",LIVES_INT_TO_POINTER(-1));
   lives_check_menu_item_set_active(LIVES_CHECK_MENU_ITEM(menuitem2),prefs->atrans_fx==-1);
   lives_menu_shell_prepend(LIVES_MENU_SHELL(mt->submenu_atransfx),menuitem2);
 
@@ -7791,7 +7802,7 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
   lives_widget_add_events(mt->timecode,LIVES_FOCUS_CHANGE_MASK);
   lives_widget_set_sensitive(mt->timecode,FALSE);
 
-  mt->tc_func=lives_signal_connect_after (G_OBJECT (mt->timecode),"focus_out_event", LIVES_GUI_CALLBACK (after_timecode_changed), (gpointer) mt);
+  mt->tc_func=lives_signal_connect_after (LIVES_WIDGET_OBJECT (mt->timecode),"focus_out_event", LIVES_GUI_CALLBACK (after_timecode_changed), (gpointer) mt);
 
   lives_widget_set_bg_color(mt->timecode, LIVES_WIDGET_STATE_NORMAL, &palette->black);
   lives_widget_set_base_color(mt->timecode, LIVES_WIDGET_STATE_NORMAL, &palette->black);
@@ -8096,6 +8107,7 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
   hbox = lives_hbox_new (FALSE, 0);
   lives_widget_show(hbox);
 
+  // add a page
   lives_container_add (LIVES_CONTAINER (mt->nb), hbox);
 
   tname=get_tab_name(POLY_CLIPS);
@@ -8117,6 +8129,11 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
   lives_container_add (LIVES_CONTAINER (hbox), mt->poly_box);
 
   lives_notebook_set_tab_label (LIVES_NOTEBOOK(mt->nb), lives_notebook_get_nth_page (LIVES_NOTEBOOK (mt->nb), 0), label);
+
+  // poly box is first page in notebook
+
+
+
 
 
   // does not work...
@@ -8140,8 +8157,8 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
   */
     
 
+  // notebook goes in paned: so we have paned -> nb-> poly_box
   gtk_paned_pack1 (GTK_PANED (mt->hpaned), mt->nb, TRUE, FALSE);
-
   gtk_paned_set_position(GTK_PANED(mt->hpaned),scr_width/2);
 
   // poly clip scroll
@@ -8165,6 +8182,9 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
   }
 
 
+
+  // add a dummy hbox to nb (adds a tab with a label)
+
   tname=get_tab_name(POLY_IN_OUT);
   label=lives_label_new (tname);
   g_free(tname);
@@ -8183,6 +8203,8 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
 #endif
 
 
+  // add a dummy hbox to nb (adds a tab with label)
+
   tname=get_tab_name(POLY_FX_STACK);
   label=lives_label_new (tname);
   g_free(tname);
@@ -8200,6 +8222,8 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
   }
 #endif
 
+  // add a dummy hbox to nb
+
   tname=get_tab_name(POLY_EFFECTS);
   label=lives_label_new (tname);
   g_free(tname);
@@ -8216,6 +8240,8 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
     lives_widget_set_fg_color (label, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
   }
 #endif
+
+  // add a dummy hbox to nb
 
 
   tname=get_tab_name(POLY_TRANS);
@@ -8235,6 +8261,8 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
   }
 #endif
 
+  // add a dummy hbox to nb
+
   tname=get_tab_name(POLY_COMP);
   label=lives_label_new (tname);
   g_free(tname);
@@ -8251,6 +8279,8 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
     lives_widget_set_fg_color (label, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
   }
 #endif
+
+  // add a dummy hbox to nb
 
   tname=get_tab_name(POLY_PARAMS);
   label=lives_label_new (tname);
@@ -8308,7 +8338,7 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
   gtk_scale_set_draw_value(GTK_SCALE(mt->node_scale),FALSE);
   mt->node_spinbutton = lives_spin_button_new (LIVES_ADJUSTMENT (mt->node_adj), 0, 3);
 
-  lives_signal_connect_after (LIVES_GUI_OBJECT (mt->node_spinbutton), "value_changed",
+  lives_signal_connect_after (LIVES_GUI_OBJECT (mt->node_spinbutton), LIVES_WIDGET_VALUE_CHANGED_EVENT,
 			  LIVES_GUI_CALLBACK (on_node_spin_value_changed),
 			  (gpointer)mt);
   
@@ -8363,6 +8393,8 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
 
   mt_init_clips (mt,orig_file,FALSE);
 
+
+
   // poly audio velocity
   mt->avel_box = lives_vbox_new (FALSE, 0);
   lives_object_ref (mt->avel_box);
@@ -8388,6 +8420,7 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
 						  mt);
 
 
+
   hbox = lives_hbox_new (FALSE, 8);
   lives_box_pack_start(LIVES_BOX(mt->avel_box),hbox,FALSE,FALSE,widget_opts.packing_height);
 
@@ -8395,7 +8428,7 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
   mt->spinbutton_avel = lives_standard_spin_button_new (_("_Velocity  "),TRUE,1.,0.5,2.,.1,1.,2,
 							LIVES_BOX(hbox),NULL);
 
-  mt->spin_avel_func=lives_signal_connect_after (LIVES_GUI_OBJECT (mt->spinbutton_avel), "value_changed",
+  mt->spin_avel_func=lives_signal_connect_after (LIVES_GUI_OBJECT (mt->spinbutton_avel), LIVES_WIDGET_VALUE_CHANGED_EVENT,
 					     LIVES_GUI_CALLBACK (avel_spin_changed),
 					     mt);
 
@@ -8469,7 +8502,7 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
 
   add_fill_to_box(LIVES_BOX(hbox));
   
-  mt->spin_in_func=lives_signal_connect_after (LIVES_GUI_OBJECT (mt->spinbutton_in), "value_changed",
+  mt->spin_in_func=lives_signal_connect_after (LIVES_GUI_OBJECT (mt->spinbutton_in), LIVES_WIDGET_VALUE_CHANGED_EVENT,
 					   LIVES_GUI_CALLBACK (in_out_start_changed),
 					   mt);
 
@@ -8535,7 +8568,7 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
 
   g_free(tmp); g_free(tmp2);
 
-  mt->spin_out_func=lives_signal_connect_after (LIVES_GUI_OBJECT (mt->spinbutton_out), "value_changed",
+  mt->spin_out_func=lives_signal_connect_after (LIVES_GUI_OBJECT (mt->spinbutton_out), LIVES_WIDGET_VALUE_CHANGED_EVENT,
 					    LIVES_GUI_CALLBACK (in_out_end_changed),
 					    mt);
 
@@ -8677,7 +8710,7 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
   mt->vadjustment = (LiVESObject *)lives_adjustment_new (0.0,0.0,1.0,1.0,mt->max_disp_vtracks,1.0);
   mt->scrollbar=lives_vscrollbar_new(LIVES_ADJUSTMENT(mt->vadjustment));
 
-  lives_signal_connect_after (LIVES_GUI_OBJECT (mt->scrollbar), "value_changed",
+  lives_signal_connect_after (LIVES_GUI_OBJECT (mt->scrollbar), LIVES_WIDGET_VALUE_CHANGED_EVENT,
 			  LIVES_GUI_CALLBACK (scroll_track_by_scrollbar),
 			  (gpointer)mt);
 
@@ -8745,7 +8778,7 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
 
   lives_box_pack_start (LIVES_BOX (hbox), mt->time_scrollbar, TRUE, TRUE, widget_opts.packing_width);
 
-  lives_signal_connect (LIVES_GUI_OBJECT (mt->time_scrollbar), "value_changed",
+  lives_signal_connect (LIVES_GUI_OBJECT (mt->time_scrollbar), LIVES_WIDGET_VALUE_CHANGED_EVENT,
 		    LIVES_GUI_CALLBACK (scroll_time_by_scrollbar),
 		    (gpointer)mt);
 
@@ -8839,7 +8872,7 @@ void delete_audio_track(lives_mt *mt, LiVESWidget *eventbox, boolean full) {
   // WARNING - does not yet delete events from event_list
   // only deletes visually
 
-  track_rect *block=(track_rect *)g_object_get_data (G_OBJECT(eventbox), "blocks"),*blocknext;
+  track_rect *block=(track_rect *)lives_widget_object_get_data (LIVES_WIDGET_OBJECT(eventbox), "blocks"),*blocknext;
 
   LiVESWidget *label,*labelbox,*arrow,*ahbox,*xeventbox;
   lives_painter_surface_t *bgimg;
@@ -8851,33 +8884,33 @@ void delete_audio_track(lives_mt *mt, LiVESWidget *eventbox, boolean full) {
     block=blocknext;
   }
 
-  if ((bgimg=(lives_painter_surface_t *)g_object_get_data(G_OBJECT(eventbox), "bgimg"))!=NULL) {
+  if ((bgimg=(lives_painter_surface_t *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(eventbox), "bgimg"))!=NULL) {
     lives_painter_surface_destroy(bgimg);
   }
 
-  label=(LiVESWidget *)g_object_get_data (G_OBJECT(eventbox), "label");
-  arrow=(LiVESWidget *)g_object_get_data (G_OBJECT(eventbox), "arrow");
+  label=(LiVESWidget *)lives_widget_object_get_data (LIVES_WIDGET_OBJECT(eventbox), "label");
+  arrow=(LiVESWidget *)lives_widget_object_get_data (LIVES_WIDGET_OBJECT(eventbox), "arrow");
   lives_widget_destroy(label);
   lives_widget_destroy(arrow);
-  if (GPOINTER_TO_INT(g_object_get_data(G_OBJECT(eventbox),"hidden"))==0) {
-    labelbox=(LiVESWidget *)g_object_get_data (G_OBJECT(eventbox), "labelbox");
-    ahbox=(LiVESWidget *)g_object_get_data (G_OBJECT(eventbox), "ahbox");
+  if (GPOINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(eventbox),"hidden"))==0) {
+    labelbox=(LiVESWidget *)lives_widget_object_get_data (LIVES_WIDGET_OBJECT(eventbox), "labelbox");
+    ahbox=(LiVESWidget *)lives_widget_object_get_data (LIVES_WIDGET_OBJECT(eventbox), "ahbox");
     if (labelbox!=NULL) lives_widget_destroy(labelbox);
     if (ahbox!=NULL) lives_widget_destroy(ahbox);
   }
 
-  xeventbox=(LiVESWidget *)g_object_get_data(G_OBJECT(eventbox),"achan0");
+  xeventbox=(LiVESWidget *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(eventbox),"achan0");
   if (xeventbox!=NULL) {
-    if ((bgimg=(lives_painter_surface_t *)g_object_get_data(G_OBJECT(xeventbox), "bgimg"))!=NULL) {
+    if ((bgimg=(lives_painter_surface_t *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(xeventbox), "bgimg"))!=NULL) {
       lives_painter_surface_destroy(bgimg);
     }
     
     lives_widget_destroy(xeventbox);
   }
   if (cfile->achans>1) {
-    xeventbox=(LiVESWidget *)g_object_get_data(G_OBJECT(eventbox),"achan1");
+    xeventbox=(LiVESWidget *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(eventbox),"achan1");
     if (xeventbox!=NULL) {
-      if ((bgimg=(lives_painter_surface_t *)g_object_get_data(G_OBJECT(xeventbox), "bgimg"))!=NULL) {
+      if ((bgimg=(lives_painter_surface_t *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(xeventbox), "bgimg"))!=NULL) {
 	lives_painter_surface_destroy(bgimg);
       }
       
@@ -8885,7 +8918,7 @@ void delete_audio_track(lives_mt *mt, LiVESWidget *eventbox, boolean full) {
     }
   }
 
-  g_free(g_object_get_data(G_OBJECT(eventbox),"track_name"));
+  g_free(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(eventbox),"track_name"));
   lives_widget_destroy(eventbox);
 }
 
@@ -9389,7 +9422,7 @@ static track_rect *add_block_start_point (LiVESWidget *eventbox, weed_timecode_t
 
   // note: filenum is unused and may be removed in future
 
-  track_rect *block=(track_rect *)g_object_get_data (G_OBJECT(eventbox), "blocks");
+  track_rect *block=(track_rect *)lives_widget_object_get_data (LIVES_WIDGET_OBJECT(eventbox), "blocks");
   track_rect *new_block=(track_rect *)g_malloc (sizeof(track_rect));
 
   new_block->next=new_block->prev=NULL;
@@ -9400,7 +9433,7 @@ static track_rect *add_block_start_point (LiVESWidget *eventbox, weed_timecode_t
   new_block->eventbox=eventbox;
   new_block->offset_start=offset_start;
 
-  g_object_set_data (G_OBJECT(eventbox),"block_last",(gpointer)new_block);
+  lives_widget_object_set_data (LIVES_WIDGET_OBJECT(eventbox),"block_last",(gpointer)new_block);
 
   while (block!=NULL) {
     if (get_event_timecode(block->start_event)>tc) {
@@ -9410,7 +9443,7 @@ static track_rect *add_block_start_point (LiVESWidget *eventbox, weed_timecode_t
 	new_block->prev=block->prev;
       }
       // add as first block
-      else g_object_set_data (G_OBJECT(eventbox),"blocks",(gpointer)new_block);
+      else lives_widget_object_set_data (LIVES_WIDGET_OBJECT(eventbox),"blocks",(gpointer)new_block);
       new_block->next=block;
       block->prev=new_block;
       break;
@@ -9425,7 +9458,7 @@ static track_rect *add_block_start_point (LiVESWidget *eventbox, weed_timecode_t
   }
 
   // there were no blocks there
-  if (block==NULL) g_object_set_data (G_OBJECT(eventbox),"blocks",(gpointer)new_block);
+  if (block==NULL) lives_widget_object_set_data (LIVES_WIDGET_OBJECT(eventbox),"blocks",(gpointer)new_block);
 
   return new_block;
 }
@@ -9433,7 +9466,7 @@ static track_rect *add_block_start_point (LiVESWidget *eventbox, weed_timecode_t
 
 static track_rect *add_block_end_point (LiVESWidget *eventbox, weed_plant_t *event) {
   // here we add the end point to our last track_rect
-  track_rect *block=(track_rect *)g_object_get_data (G_OBJECT(eventbox),"block_last");
+  track_rect *block=(track_rect *)lives_widget_object_get_data (LIVES_WIDGET_OBJECT(eventbox),"block_last");
   if (block!=NULL) block->end_event=event;
   return block;
 }
@@ -9914,7 +9947,7 @@ void delete_video_track(lives_mt *mt, int layer, boolean full) {
   // only deletes visually
 
   LiVESWidget *eventbox=(LiVESWidget *)g_list_nth_data(mt->video_draws,layer);
-  track_rect *block=(track_rect *)g_object_get_data (G_OBJECT(eventbox), "blocks"),*blocknext;
+  track_rect *block=(track_rect *)lives_widget_object_get_data (LIVES_WIDGET_OBJECT(eventbox), "blocks"),*blocknext;
 
   LiVESWidget *checkbutton;
   LiVESWidget *label,*labelbox,*ahbox,*arrow;
@@ -9927,24 +9960,24 @@ void delete_video_track(lives_mt *mt, int layer, boolean full) {
     block=blocknext;
   }
 
-  if ((bgimg=(lives_painter_surface_t *)g_object_get_data(G_OBJECT(eventbox), "bgimg"))!=NULL) {
+  if ((bgimg=(lives_painter_surface_t *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(eventbox), "bgimg"))!=NULL) {
     lives_painter_surface_destroy(bgimg);
   }
 
-  checkbutton=(LiVESWidget *)g_object_get_data (G_OBJECT(eventbox), "checkbutton");
-  label=(LiVESWidget *)g_object_get_data (G_OBJECT(eventbox), "label");
-  arrow=(LiVESWidget *)g_object_get_data (G_OBJECT(eventbox), "arrow");
+  checkbutton=(LiVESWidget *)lives_widget_object_get_data (LIVES_WIDGET_OBJECT(eventbox), "checkbutton");
+  label=(LiVESWidget *)lives_widget_object_get_data (LIVES_WIDGET_OBJECT(eventbox), "label");
+  arrow=(LiVESWidget *)lives_widget_object_get_data (LIVES_WIDGET_OBJECT(eventbox), "arrow");
 
   lives_widget_destroy(checkbutton);
   lives_widget_destroy(label);
   lives_widget_destroy(arrow);
-  if (GPOINTER_TO_INT(g_object_get_data(G_OBJECT(eventbox),"hidden"))==0) {
-    labelbox=(LiVESWidget *)g_object_get_data (G_OBJECT(eventbox), "labelbox");
-    ahbox=(LiVESWidget *)g_object_get_data (G_OBJECT(eventbox), "ahbox");
+  if (GPOINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(eventbox),"hidden"))==0) {
+    labelbox=(LiVESWidget *)lives_widget_object_get_data (LIVES_WIDGET_OBJECT(eventbox), "labelbox");
+    ahbox=(LiVESWidget *)lives_widget_object_get_data (LIVES_WIDGET_OBJECT(eventbox), "ahbox");
     if (labelbox!=NULL) lives_widget_destroy(labelbox);
     if (ahbox!=NULL) lives_widget_destroy(ahbox);
   }
-  g_free(g_object_get_data(G_OBJECT(eventbox),"track_name"));
+  g_free(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(eventbox),"track_name"));
 
 
   // corresponding audio track will be deleted in delete_audio_track(s)
@@ -9969,11 +10002,11 @@ LiVESWidget *add_audio_track (lives_mt *mt, int track, boolean behind) {
 
   lives_object_ref(audio_draw);
 
-  g_object_set_data (G_OBJECT(audio_draw), "blocks", (gpointer)NULL);
-  g_object_set_data (G_OBJECT(audio_draw), "block_last", (gpointer)NULL);
-  g_object_set_data (G_OBJECT(audio_draw), "hidden", GINT_TO_POINTER(0));
-  g_object_set_data (G_OBJECT(audio_draw), "expanded",GINT_TO_POINTER(FALSE));
-  g_object_set_data (G_OBJECT(audio_draw), "bgimg", NULL);
+  lives_widget_object_set_data (LIVES_WIDGET_OBJECT(audio_draw), "blocks", (gpointer)NULL);
+  lives_widget_object_set_data (LIVES_WIDGET_OBJECT(audio_draw), "block_last", (gpointer)NULL);
+  lives_widget_object_set_data (LIVES_WIDGET_OBJECT(audio_draw), "hidden", LIVES_INT_TO_POINTER(0));
+  lives_widget_object_set_data (LIVES_WIDGET_OBJECT(audio_draw), "expanded",LIVES_INT_TO_POINTER(FALSE));
+  lives_widget_object_set_data (LIVES_WIDGET_OBJECT(audio_draw), "bgimg", NULL);
 
   lives_adjustment_set_upper(LIVES_ADJUSTMENT(mt->vadjustment),(double)mt->num_video_tracks);
   lives_adjustment_set_page_size(LIVES_ADJUSTMENT(mt->vadjustment),(double)(max_disp_vtracks>mt->num_video_tracks?
@@ -10002,24 +10035,24 @@ LiVESWidget *add_audio_track (lives_mt *mt, int track, boolean behind) {
     }
   }
 
-  g_object_set_data (G_OBJECT(audio_draw),"label",label);
-  g_object_set_data (G_OBJECT(audio_draw),"arrow",arrow);
+  lives_widget_object_set_data (LIVES_WIDGET_OBJECT(audio_draw),"label",label);
+  lives_widget_object_set_data (LIVES_WIDGET_OBJECT(audio_draw),"arrow",arrow);
 
-  g_object_set_data (G_OBJECT(arrow),"layer_number",GINT_TO_POINTER(track));
-  g_object_set_data (G_OBJECT(audio_draw),"layer_number",GINT_TO_POINTER(track));
-  g_object_set_data (G_OBJECT(audio_draw),"track_name",g_strdup_printf(_("Layer %d audio"),track));
+  lives_widget_object_set_data (LIVES_WIDGET_OBJECT(arrow),"layer_number",LIVES_INT_TO_POINTER(track));
+  lives_widget_object_set_data (LIVES_WIDGET_OBJECT(audio_draw),"layer_number",LIVES_INT_TO_POINTER(track));
+  lives_widget_object_set_data (LIVES_WIDGET_OBJECT(audio_draw),"track_name",g_strdup_printf(_("Layer %d audio"),track));
 
   // add channel subtracks
   for (i=0;i<cfile->achans;i++) {
     eventbox=lives_event_box_new();
     lives_object_ref(eventbox);
     pname=g_strdup_printf("achan%d",i);
-    g_object_set_data(G_OBJECT(audio_draw),pname,eventbox);
+    lives_widget_object_set_data(LIVES_WIDGET_OBJECT(audio_draw),pname,eventbox);
     g_free(pname);
-    g_object_set_data(G_OBJECT(eventbox),"owner",audio_draw);
-    g_object_set_data (G_OBJECT(eventbox), "hidden", GINT_TO_POINTER(0));
-    g_object_set_data (G_OBJECT(eventbox), "bgimg", NULL);
-    g_object_set_data (G_OBJECT(eventbox), "channel", GINT_TO_POINTER(i));
+    lives_widget_object_set_data(LIVES_WIDGET_OBJECT(eventbox),"owner",audio_draw);
+    lives_widget_object_set_data (LIVES_WIDGET_OBJECT(eventbox), "hidden", LIVES_INT_TO_POINTER(0));
+    lives_widget_object_set_data (LIVES_WIDGET_OBJECT(eventbox), "bgimg", NULL);
+    lives_widget_object_set_data (LIVES_WIDGET_OBJECT(eventbox), "channel", LIVES_INT_TO_POINTER(i));
   }
 
   lives_widget_queue_draw (mt->vpaned);
@@ -10034,7 +10067,7 @@ LiVESWidget *add_audio_track (lives_mt *mt, int track, boolean behind) {
     else if (llen==1) {
       if (mt->opts.back_audio_tracks>0) {
 	vol=LIVES_AVOL_SCALE/2.;
-	mt->audio_vols->data=GINT_TO_POINTER(vol);
+	mt->audio_vols->data=LIVES_INT_TO_POINTER(vol);
       }
       else {
 	if (mt->opts.gang_audio) {
@@ -10087,7 +10120,7 @@ LiVESWidget *add_audio_track (lives_mt *mt, int track, boolean behind) {
 
   if (track==-1) {
     mt->audio_draws=g_list_prepend(mt->audio_draws,(gpointer)audio_draw);
-    if (!mt->was_undo_redo) mt->audio_vols=g_list_prepend(mt->audio_vols,GINT_TO_POINTER(vol));
+    if (!mt->was_undo_redo) mt->audio_vols=g_list_prepend(mt->audio_vols,LIVES_INT_TO_POINTER(vol));
   }
   else if (behind) {
     mt->audio_draws=g_list_append(mt->audio_draws,(gpointer)audio_draw);
@@ -10100,13 +10133,13 @@ LiVESWidget *add_audio_track (lives_mt *mt, int track, boolean behind) {
 	lives_widget_show_all(vbox);
       }
 
-      mt->audio_vols=g_list_append(mt->audio_vols,GINT_TO_POINTER(vol));
+      mt->audio_vols=g_list_append(mt->audio_vols,LIVES_INT_TO_POINTER(vol));
     }
   }
   else {
     mt->audio_draws=g_list_insert(mt->audio_draws,(gpointer)audio_draw,mt->opts.back_audio_tracks);
     if (!mt->was_undo_redo) {
-      mt->audio_vols=g_list_insert(mt->audio_vols,GINT_TO_POINTER(vol),mt->opts.back_audio_tracks);
+      mt->audio_vols=g_list_insert(mt->audio_vols,LIVES_INT_TO_POINTER(vol),mt->opts.back_audio_tracks);
 
       if (mt->amixer!=NULL) {
 	// if mixer is open add a new track at posn 0 and update all labels and layer numbers
@@ -10120,13 +10153,13 @@ LiVESWidget *add_audio_track (lives_mt *mt, int track, boolean behind) {
 	// update labels and layer numbers
 
 	for (i=mt->opts.back_audio_tracks+1;i<nachans;i++) {
-	  label=(LiVESWidget *)g_object_get_data(G_OBJECT(mt->amixer->ch_sliders[i]),"label");
+	  label=(LiVESWidget *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(mt->amixer->ch_sliders[i]),"label");
 	  tname=get_track_name(mt,i-mt->opts.back_audio_tracks,TRUE);
 	  lives_label_set_text(LIVES_LABEL(label),tname);
 	  g_free(tname);
 	  
-	  adj=(LiVESObject *)g_object_get_data(G_OBJECT(mt->amixer->ch_sliders[i]),"adj");
-	  g_object_set_data(G_OBJECT(adj),"layer",GINT_TO_POINTER(i));
+	  adj=(LiVESObject *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(mt->amixer->ch_sliders[i]),"adj");
+	  lives_widget_object_set_data(LIVES_WIDGET_OBJECT(adj),"layer",LIVES_INT_TO_POINTER(i));
 	}
 
       }
@@ -10139,8 +10172,8 @@ LiVESWidget *add_audio_track (lives_mt *mt, int track, boolean behind) {
 
 
 static void set_track_label(LiVESEventBox *xeventbox, int tnum) {
-  LiVESWidget *label=LIVES_WIDGET(g_object_get_data(G_OBJECT(xeventbox),"label"));
-  const gchar *tname=(const gchar *)g_object_get_data(G_OBJECT(xeventbox),"track_name");
+  LiVESWidget *label=LIVES_WIDGET(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(xeventbox),"label"));
+  const gchar *tname=(const gchar *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(xeventbox),"track_name");
   gchar *newtext=g_strdup_printf(_("%s (layer %d)"),tname,tnum);
   lives_label_set_text(LIVES_LABEL(label),newtext);
   g_free(newtext);
@@ -10160,9 +10193,9 @@ void add_video_track (lives_mt *mt, boolean behind) {
   gchar *tmp;
 
   if (mt->audio_draws!=NULL&&mt->audio_draws->data!=NULL&&mt->opts.back_audio_tracks>0&&
-      GPOINTER_TO_INT(g_object_get_data(G_OBJECT(mt->audio_draws->data),"hidden"))==0) {
+      GPOINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(mt->audio_draws->data),"hidden"))==0) {
     max_disp_vtracks--;
-    if (GPOINTER_TO_INT(g_object_get_data(G_OBJECT(mt->audio_draws->data),"expanded"))) max_disp_vtracks-=cfile->achans;
+    if (GPOINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(mt->audio_draws->data),"expanded"))) max_disp_vtracks-=cfile->achans;
   }
 
   mt->num_video_tracks++;
@@ -10191,15 +10224,15 @@ void add_video_track (lives_mt *mt, boolean behind) {
   eventbox=lives_event_box_new();
   lives_object_ref(eventbox);
 
-  g_object_set_data (G_OBJECT(eventbox),"track_name",g_strdup_printf(_("Video %d"),mt->num_video_tracks));
-  g_object_set_data (G_OBJECT(eventbox),"checkbutton",(gpointer)checkbutton);
-  g_object_set_data (G_OBJECT(eventbox),"arrow",(gpointer)arrow);
-  g_object_set_data (G_OBJECT(eventbox),"expanded",GINT_TO_POINTER(FALSE));
+  lives_widget_object_set_data (LIVES_WIDGET_OBJECT(eventbox),"track_name",g_strdup_printf(_("Video %d"),mt->num_video_tracks));
+  lives_widget_object_set_data (LIVES_WIDGET_OBJECT(eventbox),"checkbutton",(gpointer)checkbutton);
+  lives_widget_object_set_data (LIVES_WIDGET_OBJECT(eventbox),"arrow",(gpointer)arrow);
+  lives_widget_object_set_data (LIVES_WIDGET_OBJECT(eventbox),"expanded",LIVES_INT_TO_POINTER(FALSE));
 
-  g_object_set_data (G_OBJECT(eventbox), "blocks", (gpointer)NULL);
-  g_object_set_data (G_OBJECT(eventbox), "block_last", (gpointer)NULL);
-  g_object_set_data (G_OBJECT(eventbox), "hidden", GINT_TO_POINTER(0));
-  g_object_set_data (G_OBJECT(eventbox), "bgimg", NULL);
+  lives_widget_object_set_data (LIVES_WIDGET_OBJECT(eventbox), "blocks", (gpointer)NULL);
+  lives_widget_object_set_data (LIVES_WIDGET_OBJECT(eventbox), "block_last", (gpointer)NULL);
+  lives_widget_object_set_data (LIVES_WIDGET_OBJECT(eventbox), "hidden", LIVES_INT_TO_POINTER(0));
+  lives_widget_object_set_data (LIVES_WIDGET_OBJECT(eventbox), "bgimg", NULL);
 
   lives_adjustment_set_page_size(LIVES_ADJUSTMENT(mt->vadjustment),(double)(max_disp_vtracks>mt->num_video_tracks?
 									    mt->num_video_tracks:max_disp_vtracks));
@@ -10210,27 +10243,27 @@ void add_video_track (lives_mt *mt, boolean behind) {
     // track in front of (above) stack
     // shift all rows down
     // increment "layer_number"s, change labels
-    g_object_set_data (G_OBJECT(eventbox),"layer_number",GINT_TO_POINTER(0));
+    lives_widget_object_set_data (LIVES_WIDGET_OBJECT(eventbox),"layer_number",LIVES_INT_TO_POINTER(0));
     for (i=0;i<mt->num_video_tracks-1;i++) {
       gchar *newtext;
       LiVESWidget *xeventbox=(LiVESWidget *)g_list_nth_data(mt->video_draws,i);
-      LiVESWidget *xcheckbutton=(LiVESWidget *)g_object_get_data(G_OBJECT(xeventbox),"checkbutton");
-      LiVESWidget *xarrow=(LiVESWidget *)g_object_get_data(G_OBJECT(xeventbox),"arrow");
-      g_object_set_data (G_OBJECT(xeventbox),"layer_number",GINT_TO_POINTER(i+1));
-      g_object_set_data (G_OBJECT(xcheckbutton),"layer_number",GINT_TO_POINTER(i+1));
-      g_object_set_data (G_OBJECT(xarrow),"layer_number",GINT_TO_POINTER(i+1));
+      LiVESWidget *xcheckbutton=(LiVESWidget *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(xeventbox),"checkbutton");
+      LiVESWidget *xarrow=(LiVESWidget *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(xeventbox),"arrow");
+      lives_widget_object_set_data (LIVES_WIDGET_OBJECT(xeventbox),"layer_number",LIVES_INT_TO_POINTER(i+1));
+      lives_widget_object_set_data (LIVES_WIDGET_OBJECT(xcheckbutton),"layer_number",LIVES_INT_TO_POINTER(i+1));
+      lives_widget_object_set_data (LIVES_WIDGET_OBJECT(xarrow),"layer_number",LIVES_INT_TO_POINTER(i+1));
 
 
       set_track_label(LIVES_EVENT_BOX(xeventbox),i+1);
 
       if (mt->opts.pertrack_audio) {
-	LiVESWidget *aeventbox=(LiVESWidget *)g_object_get_data(G_OBJECT(xeventbox),"atrack");
-	g_object_set_data (G_OBJECT(aeventbox),"layer_number",GINT_TO_POINTER(i+1));
-	xarrow=(LiVESWidget *)g_object_get_data(G_OBJECT(aeventbox),"arrow");
-	g_object_set_data (G_OBJECT(xarrow),"layer_number",GINT_TO_POINTER(i+1));
-	label=(LiVESWidget *)g_object_get_data(G_OBJECT(aeventbox),"label");
-	g_object_set_data (G_OBJECT(aeventbox),"track_name",g_strdup_printf(_("Layer %d audio"),i+1));
-	newtext=g_strdup_printf(_(" %s"),g_object_get_data(G_OBJECT(aeventbox),"track_name"));
+	LiVESWidget *aeventbox=(LiVESWidget *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(xeventbox),"atrack");
+	lives_widget_object_set_data (LIVES_WIDGET_OBJECT(aeventbox),"layer_number",LIVES_INT_TO_POINTER(i+1));
+	xarrow=(LiVESWidget *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(aeventbox),"arrow");
+	lives_widget_object_set_data (LIVES_WIDGET_OBJECT(xarrow),"layer_number",LIVES_INT_TO_POINTER(i+1));
+	label=(LiVESWidget *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(aeventbox),"label");
+	lives_widget_object_set_data (LIVES_WIDGET_OBJECT(aeventbox),"track_name",g_strdup_printf(_("Layer %d audio"),i+1));
+	newtext=g_strdup_printf(_(" %s"),lives_widget_object_get_data(LIVES_WIDGET_OBJECT(aeventbox),"track_name"));
 	lives_label_set_text(LIVES_LABEL(label),newtext);
       }
     }
@@ -10244,22 +10277,22 @@ void add_video_track (lives_mt *mt, boolean behind) {
     //renumber all tracks in mt->selected_tracks
     liste=mt->selected_tracks;
     while (liste!=NULL) {
-      liste->data=GINT_TO_POINTER(GPOINTER_TO_INT(liste->data)+1);
+      liste->data=LIVES_INT_TO_POINTER(GPOINTER_TO_INT(liste->data)+1);
       liste=liste->next;
     }
   }
   else {
     // add track behind (below) stack
     mt->video_draws=g_list_append (mt->video_draws, (gpointer)eventbox);
-    g_object_set_data (G_OBJECT(eventbox),"layer_number",GINT_TO_POINTER(mt->num_video_tracks-1));
-    g_object_set_data (G_OBJECT(checkbutton),"layer_number",GINT_TO_POINTER(mt->num_video_tracks-1));
-    g_object_set_data (G_OBJECT(arrow),"layer_number",GINT_TO_POINTER(mt->num_video_tracks-1));
+    lives_widget_object_set_data (LIVES_WIDGET_OBJECT(eventbox),"layer_number",LIVES_INT_TO_POINTER(mt->num_video_tracks-1));
+    lives_widget_object_set_data (LIVES_WIDGET_OBJECT(checkbutton),"layer_number",LIVES_INT_TO_POINTER(mt->num_video_tracks-1));
+    lives_widget_object_set_data (LIVES_WIDGET_OBJECT(arrow),"layer_number",LIVES_INT_TO_POINTER(mt->num_video_tracks-1));
     mt->current_track=mt->num_video_tracks-1;
   }
 
   widget_opts.justify=LIVES_JUSTIFY_LEFT;
-  label=lives_label_new ((tmp=g_strdup_printf(_("%s (layer %d)"),g_object_get_data (G_OBJECT(eventbox),"track_name"),
-					    GPOINTER_TO_INT(g_object_get_data(G_OBJECT(eventbox),"layer_number")))));
+  label=lives_label_new ((tmp=g_strdup_printf(_("%s (layer %d)"),lives_widget_object_get_data (LIVES_WIDGET_OBJECT(eventbox),"track_name"),
+					    GPOINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(eventbox),"layer_number")))));
   widget_opts.justify=widget_opts.default_justify;
   
   g_free(tmp);
@@ -10272,12 +10305,12 @@ void add_video_track (lives_mt *mt, boolean behind) {
     }
   }
 
-  g_object_set_data (G_OBJECT(eventbox),"label",label);
+  lives_widget_object_set_data (LIVES_WIDGET_OBJECT(eventbox),"label",label);
 
   if (mt->opts.pertrack_audio) {
     aeventbox=add_audio_track(mt,mt->current_track,behind);
-    g_object_set_data (G_OBJECT(aeventbox),"owner",eventbox);
-    g_object_set_data (G_OBJECT(eventbox),"atrack",aeventbox);
+    lives_widget_object_set_data (LIVES_WIDGET_OBJECT(aeventbox),"owner",eventbox);
+    lives_widget_object_set_data (LIVES_WIDGET_OBJECT(eventbox),"atrack",aeventbox);
 
     if (mt->avol_init_event!=NULL) {
       weed_plant_t *filter=get_weed_filter(mt->avol_fx);
@@ -10391,7 +10424,7 @@ fx_ebox_pressed (LiVESWidget *eventbox, LiVESXEventButton *event, gpointer user_
 
   if (mt->is_rendering) return FALSE;
 
-  mt->selected_init_event=(weed_plant_t *)g_object_get_data(G_OBJECT(eventbox),"init_event");
+  mt->selected_init_event=(weed_plant_t *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(eventbox),"init_event");
 
   if (event->type==GDK_2BUTTON_PRESS) {
     // double click
@@ -11124,7 +11157,7 @@ boolean on_multitrack_activate (LiVESMenuItem *menuitem, weed_plant_t *event_lis
 boolean block_overlap (LiVESWidget *eventbox, double time_start, double time_end) {
   weed_timecode_t tc_start=time_start*U_SECL;
   weed_timecode_t tc_end=time_end*U_SECL;
-  track_rect *block=(track_rect *)g_object_get_data (G_OBJECT(eventbox),"blocks");
+  track_rect *block=(track_rect *)lives_widget_object_get_data (LIVES_WIDGET_OBJECT(eventbox),"blocks");
 
   while (block!=NULL) {
     if (get_event_timecode(block->start_event)>tc_end) return FALSE;
@@ -11143,7 +11176,7 @@ static track_rect *get_block_before (LiVESWidget *eventbox, double time, boolean
   // before or at time
 
   weed_timecode_t tc=time*U_SECL;
-  track_rect *block=(track_rect *)g_object_get_data (G_OBJECT(eventbox),"blocks"),*last_block=NULL;
+  track_rect *block=(track_rect *)lives_widget_object_get_data (LIVES_WIDGET_OBJECT(eventbox),"blocks"),*last_block=NULL;
 
   while (block!=NULL) {
     if ((allow_cur&&get_event_timecode(block->start_event)>=tc)||(!allow_cur&&get_event_timecode(block->end_event)>=tc)) break;
@@ -11159,7 +11192,7 @@ static track_rect *get_block_after (LiVESWidget *eventbox, double time, boolean 
   // before or at time
 
   weed_timecode_t tc=time*U_SECL;
-  track_rect *block=(track_rect *)g_object_get_data (G_OBJECT(eventbox),"blocks");
+  track_rect *block=(track_rect *)lives_widget_object_get_data (LIVES_WIDGET_OBJECT(eventbox),"blocks");
 
   while (block!=NULL) {
     if (get_event_timecode(block->start_event)>=tc||(allow_cur&&get_event_timecode(block->end_event)>=tc)) break;
@@ -11186,7 +11219,7 @@ static track_rect *move_block (lives_mt *mt, track_rect *block, double timesecs,
     else mt_backup(mt,MT_UNDO_MOVE_BLOCK,0);
   }
 
-  if (is_audio_eventbox(mt,block->eventbox)&&(oeventbox=(LiVESWidget *)g_object_get_data(G_OBJECT(block->eventbox),"owner"))!=NULL) {
+  if (is_audio_eventbox(mt,block->eventbox)&&(oeventbox=(LiVESWidget *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(block->eventbox),"owner"))!=NULL) {
     // if moving an audio block we move the associated video block first
     block=get_block_from_time(oeventbox,start_tc/U_SEC,mt);
   }
@@ -11236,7 +11269,7 @@ static track_rect *move_block (lives_mt *mt, track_rect *block, double timesecs,
 
   if (new_track!=-1) eventbox=(LiVESWidget *)g_list_nth_data(mt->video_draws,mt->current_track);
   else eventbox=(LiVESWidget *)mt->audio_draws->data;
-  block = (track_rect *)g_object_get_data(G_OBJECT(eventbox),"block_last");
+  block = (track_rect *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(eventbox),"block_last");
   
   remove_end_blank_frames(mt->event_list);
 
@@ -11269,7 +11302,7 @@ static track_rect *move_block (lives_mt *mt, track_rect *block, double timesecs,
       tracks_sel=g_list_copy(mt->selected_tracks);
       if (mt->selected_tracks!=NULL) g_list_free(mt->selected_tracks);
       mt->selected_tracks=NULL;
-      mt->selected_tracks=g_list_append(mt->selected_tracks,GINT_TO_POINTER(new_track));
+      mt->selected_tracks=g_list_append(mt->selected_tracks,LIVES_INT_TO_POINTER(new_track));
      }
     else {
       current_track=mt->current_track;
@@ -11289,7 +11322,7 @@ static track_rect *move_block (lives_mt *mt, track_rect *block, double timesecs,
   }
 
   // get this again because it could have moved
-  block = (track_rect *)g_object_get_data(G_OBJECT(eventbox),"block_last");
+  block = (track_rect *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(eventbox),"block_last");
 
   if (!did_backup) {
     if (mt->avol_fx!=-1&&(block==NULL||block->next==NULL)&&mt->audio_draws!=NULL&&
@@ -11325,7 +11358,7 @@ void unselect_all (lives_mt *mt) {
     for (i=0;i<g_list_length(mt->audio_draws);i++) {
       eventbox=(LiVESWidget *)g_list_nth_data(mt->audio_draws,i);
       if (eventbox!=NULL) {
-	trec=(track_rect *)g_object_get_data (G_OBJECT(eventbox),"blocks");
+	trec=(track_rect *)lives_widget_object_get_data (LIVES_WIDGET_OBJECT(eventbox),"blocks");
 	while (trec!=NULL) {
 	  trec->state=BLOCK_UNSELECTED;
 	  trec=trec->next;
@@ -11337,7 +11370,7 @@ void unselect_all (lives_mt *mt) {
   for (i=0;i<mt->num_video_tracks;i++) {
     eventbox=(LiVESWidget *)g_list_nth_data(mt->video_draws,i);
     if (eventbox!=NULL) {
-      trec=(track_rect *)g_object_get_data (G_OBJECT(eventbox),"blocks");
+      trec=(track_rect *)lives_widget_object_get_data (LIVES_WIDGET_OBJECT(eventbox),"blocks");
       while (trec!=NULL) {
 	trec->state=BLOCK_UNSELECTED;
 	trec=trec->next;
@@ -11429,7 +11462,7 @@ static void set_in_out_spin_ranges(lives_mt *mt, weed_timecode_t start_tc, weed_
   double in_end_range=out_val-1./mt->fps,real_in_start_range=in_start_range;
   double avel=1.;
 
-  int track=GPOINTER_TO_INT(g_object_get_data(G_OBJECT(block->eventbox),"layer_number"));
+  int track=GPOINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(block->eventbox),"layer_number"));
 
   lives_signal_handler_block (mt->spinbutton_out,mt->spin_out_func);
   lives_signal_handler_block (mt->spinbutton_in,mt->spin_in_func);
@@ -11487,7 +11520,7 @@ static void update_in_image(lives_mt *mt) {
   int height=cfile->vsize;
 
   if (block!=NULL) {
-    track=GPOINTER_TO_INT(g_object_get_data(G_OBJECT(block->eventbox),"layer_number"));
+    track=GPOINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(block->eventbox),"layer_number"));
     filenum=get_frame_event_clip(block->start_event,track);
     frame_start=calc_frame_from_time(filenum,block->offset_start/U_SEC);
   }
@@ -11515,7 +11548,7 @@ static void update_out_image(lives_mt *mt, weed_timecode_t end_tc) {
   int height=cfile->vsize;
   
   if (block!=NULL) {
-    track=GPOINTER_TO_INT(g_object_get_data(G_OBJECT(block->eventbox),"layer_number"));
+    track=GPOINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(block->eventbox),"layer_number"));
     filenum=get_frame_event_clip(block->start_event,track);
     frame_end=calc_frame_from_time(filenum,end_tc/U_SEC-1./mt->fps);
   }
@@ -11566,7 +11599,7 @@ void in_out_start_changed (LiVESWidget *widget, gpointer user_data) {
 
   event=block->start_event;
   orig_start_tc=block->offset_start;
-  track=GPOINTER_TO_INT(g_object_get_data(G_OBJECT(block->eventbox),"layer_number"));
+  track=GPOINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(block->eventbox),"layer_number"));
   new_start_tc=q_dbl(new_start,mt->fps);
 
   if (new_start_tc==orig_start_tc||!block->ordered) {
@@ -11578,13 +11611,13 @@ void in_out_start_changed (LiVESWidget *widget, gpointer user_data) {
   if (track>=0) {
     if (!mt->aud_track_selected) {
       if (mt->opts.pertrack_audio) {
-	LiVESWidget *aeventbox=LIVES_WIDGET(g_object_get_data(G_OBJECT(block->eventbox),"atrack"));
+	LiVESWidget *aeventbox=LIVES_WIDGET(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(block->eventbox),"atrack"));
 	ablock=get_block_from_time(aeventbox,tl_start/U_SEC,mt);
       }
       start_anchored=block->start_anchored;
     }
     else {
-      LiVESWidget *eventbox=LIVES_WIDGET(g_object_get_data(G_OBJECT(block->eventbox),"owner"));
+      LiVESWidget *eventbox=LIVES_WIDGET(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(block->eventbox),"owner"));
       ablock=block;
       block=get_block_from_time(eventbox,tl_start/U_SEC,mt);
       start_anchored=ablock->start_anchored;
@@ -11796,20 +11829,20 @@ void in_out_end_changed (LiVESWidget *widget, gpointer user_data) {
 
   start_val=block->offset_start/U_SEC;
   event=block->end_event;
-  track=GPOINTER_TO_INT(g_object_get_data(G_OBJECT(block->eventbox),"layer_number"));
+  track=GPOINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(block->eventbox),"layer_number"));
 
   tl_end=get_event_timecode(event);
 
   if (track>=0) {
     if (!mt->aud_track_selected) {
       if (mt->opts.pertrack_audio) {
-	LiVESWidget *aeventbox=LIVES_WIDGET(g_object_get_data(G_OBJECT(block->eventbox),"atrack"));
+	LiVESWidget *aeventbox=LIVES_WIDGET(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(block->eventbox),"atrack"));
 	ablock=get_block_from_time(aeventbox,tl_end/U_SEC-1./mt->fps,mt);
       }
       end_anchored=block->end_anchored;
     }
     else {
-      LiVESWidget *eventbox=LIVES_WIDGET(g_object_get_data(G_OBJECT(block->eventbox),"owner"));
+      LiVESWidget *eventbox=LIVES_WIDGET(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(block->eventbox),"owner"));
       ablock=block;
       block=get_block_from_time(eventbox,tl_end/U_SEC-1./mt->fps,mt);
       end_anchored=ablock->end_anchored;
@@ -12053,7 +12086,7 @@ void in_out_end_changed (LiVESWidget *widget, gpointer user_data) {
 void avel_reverse_toggled (LiVESToggleButton *togglebutton, gpointer user_data) {
   lives_mt *mt=(lives_mt *)user_data;
   track_rect *block=mt->block_selected;
-  int track=GPOINTER_TO_INT(g_object_get_data(G_OBJECT(block->eventbox),"layer_number"));
+  int track=GPOINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(block->eventbox),"layer_number"));
   double avel=-get_audio_frame_vel(block->start_event,track);
   double aseek=get_audio_frame_seek(block->start_event,track),aseek_end;
   int aclip=get_audio_frame_clip(block->start_event,track);
@@ -12103,7 +12136,7 @@ void avel_reverse_toggled (LiVESToggleButton *togglebutton, gpointer user_data) 
 void avel_spin_changed (LiVESSpinButton *spinbutton, gpointer user_data) {
   lives_mt *mt=(lives_mt *)user_data;
   track_rect *block=mt->block_selected;
-  int track=GPOINTER_TO_INT(g_object_get_data(G_OBJECT(block->eventbox),"layer_number"));
+  int track=GPOINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(block->eventbox),"layer_number"));
   double new_avel=lives_spin_button_get_value(spinbutton);
   double aseek=get_audio_frame_seek(block->start_event,track);
   int aclip=get_audio_frame_clip(block->start_event,track);
@@ -12269,10 +12302,10 @@ in_anchor_toggled (LiVESToggleButton *togglebutton, gpointer user_data) {
     track_rect *xblock;
 
     if (mt->aud_track_selected) {
-      xeventbox=(LiVESWidget *)g_object_get_data(G_OBJECT(block->eventbox),"owner");
+      xeventbox=(LiVESWidget *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(block->eventbox),"owner");
     }
     else {
-      xeventbox=(LiVESWidget *)g_object_get_data(G_OBJECT(block->eventbox),"atrack");
+      xeventbox=(LiVESWidget *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(block->eventbox),"atrack");
     }
     if (xeventbox!=NULL) {
       xblock=get_block_from_time(xeventbox,get_event_timecode(block->start_event)/U_SEC,mt);
@@ -12318,10 +12351,10 @@ out_anchor_toggled (LiVESToggleButton *togglebutton, gpointer user_data) {
     track_rect *xblock;
 
     if (mt->aud_track_selected) {
-      xeventbox=(LiVESWidget *)g_object_get_data(G_OBJECT(block->eventbox),"owner");
+      xeventbox=(LiVESWidget *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(block->eventbox),"owner");
     }
     else {
-      xeventbox=(LiVESWidget *)g_object_get_data(G_OBJECT(block->eventbox),"atrack");
+      xeventbox=(LiVESWidget *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(block->eventbox),"atrack");
     }
     if (xeventbox!=NULL) {
       xblock=get_block_from_time(xeventbox,get_event_timecode(block->start_event)/U_SEC,mt);
@@ -12484,7 +12517,7 @@ void polymorph (lives_mt *mt, lives_mt_poly_state_t poly) {
     }
 
     if (block!=NULL) {
-      track=GPOINTER_TO_INT(g_object_get_data(G_OBJECT(block->eventbox),"layer_number"));
+      track=GPOINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(block->eventbox),"layer_number"));
 
       offset_end=block->offset_start+(weed_timecode_t)((double)(track>=0)*U_SEC/mt->fps)+
 	((get_event_timecode(block->end_event)-get_event_timecode(block->start_event))*ABS(avel));
@@ -12510,7 +12543,7 @@ void polymorph (lives_mt *mt, lives_mt_poly_state_t poly) {
       if (block!=NULL) {
 	secs=lives_ruler_get_value(LIVES_RULER(mt->timeline));
 	if (mt->context_time!=-1.&&mt->use_context) secs=mt->context_time;
-	if (is_audio_eventbox(mt,block->eventbox)&&(oeventbox=(LiVESWidget *)g_object_get_data(G_OBJECT(block->eventbox),
+	if (is_audio_eventbox(mt,block->eventbox)&&(oeventbox=(LiVESWidget *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(block->eventbox),
 										"owner"))!=NULL) {
 	  // if moving an audio block we move the associated video block first
 	  block=get_block_from_time(oeventbox,secs,mt);
@@ -12670,7 +12703,7 @@ void polymorph (lives_mt *mt, lives_mt_poly_state_t poly) {
     tc=get_event_timecode(mt->init_event);
 
     if (fx_dialog[1]!=NULL) {
-      lives_rfx_t *rfx=(lives_rfx_t *)g_object_get_data (G_OBJECT (fx_dialog[1]),"rfx");
+      lives_rfx_t *rfx=(lives_rfx_t *)lives_widget_object_get_data (LIVES_WIDGET_OBJECT (fx_dialog[1]),"rfx");
       lives_widget_destroy(fx_dialog[1]);
       on_paramwindow_cancel_clicked2(NULL,rfx);
     }
@@ -12790,7 +12823,7 @@ void polymorph (lives_mt *mt, lives_mt_poly_state_t poly) {
 	    else if (!is_output&&num_out_tracks>0) {
 	      if (def_out_track>-1) {
 		yeventbox=(LiVESWidget *)g_list_nth_data(mt->video_draws,def_out_track);
-		olayer=GPOINTER_TO_INT(g_object_get_data(G_OBJECT(yeventbox),"layer_number"));
+		olayer=GPOINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(yeventbox),"layer_number"));
 		otrackname=g_strdup_printf(_("layer %d"),olayer);
 	      }
 	      else otrackname=g_strdup(_("audio track"));
@@ -12800,7 +12833,7 @@ void polymorph (lives_mt *mt, lives_mt_poly_state_t poly) {
 	    else if (num_in_tracks==2&&num_out_tracks>0) {
 	      if (fromtrack>-1) {
 		yeventbox=(LiVESWidget *)g_list_nth_data(mt->video_draws,fromtrack);
-		olayer=GPOINTER_TO_INT(g_object_get_data(G_OBJECT(yeventbox),"layer_number"));
+		olayer=GPOINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(yeventbox),"layer_number"));
 		otrackname=g_strdup_printf(_("layer %d"),olayer);
 	      }
 	      else otrackname=g_strdup(_("audio track"));
@@ -12811,7 +12844,7 @@ void polymorph (lives_mt *mt, lives_mt_poly_state_t poly) {
 	      txt=g_strdup(fname);
 	    }
 	    xeventbox=lives_event_box_new();
-	    g_object_set_data(G_OBJECT(xeventbox),"init_event",(gpointer)init_event);
+	    lives_widget_object_set_data(LIVES_WIDGET_OBJECT(xeventbox),"init_event",(gpointer)init_event);
 
 	    lives_widget_add_events (xeventbox, LIVES_BUTTON_RELEASE_MASK | LIVES_BUTTON_PRESS_MASK);
 	    if (palette->style&STYLE_1) {
@@ -13067,9 +13100,9 @@ static void mouse_select_move(LiVESWidget *widget, LiVESXEventMotion *event, liv
 
   for (i=0;i<mt->num_video_tracks;i++) {
     xeventbox=(LiVESWidget *)g_list_nth_data(mt->video_draws,i);
-    if (GPOINTER_TO_INT(g_object_get_data(G_OBJECT(xeventbox),"hidden"))==0) {
+    if (GPOINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(xeventbox),"hidden"))==0) {
       xheight=lives_widget_get_allocation_height(xeventbox);
-      checkbutton=(LiVESWidget *)g_object_get_data(G_OBJECT(xeventbox),"checkbutton");
+      checkbutton=(LiVESWidget *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(xeventbox),"checkbutton");
       gdk_window_get_position(lives_widget_get_xwindow(xeventbox),&rel_x,&rel_y);
       if (start_y>(rel_y+xheight/2)||(start_y+height)<(rel_y+xheight/2)) {
 #ifdef ENABLE_GIW
@@ -13355,10 +13388,10 @@ boolean on_track_release (LiVESWidget *eventbox, LiVESXEventButton *event, gpoin
   if (cfile->achans>0) {
     for (i=0;i<g_list_length(mt->audio_draws);i++) {
       xeventbox=(LiVESWidget *)g_list_nth_data(mt->audio_draws,i);
-      oeventbox=(LiVESWidget *)g_object_get_data(G_OBJECT(xeventbox),"owner");
-      if (i>=mt->opts.back_audio_tracks&&!GPOINTER_TO_INT(g_object_get_data(G_OBJECT(oeventbox),"expanded"))) continue;
-      xlabelbox=(LiVESWidget *)g_object_get_data(G_OBJECT(xeventbox),"labelbox");
-      xahbox=(LiVESWidget *)g_object_get_data(G_OBJECT(xeventbox),"ahbox");
+      oeventbox=(LiVESWidget *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(xeventbox),"owner");
+      if (i>=mt->opts.back_audio_tracks&&!GPOINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(oeventbox),"expanded"))) continue;
+      xlabelbox=(LiVESWidget *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(xeventbox),"labelbox");
+      xahbox=(LiVESWidget *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(xeventbox),"ahbox");
       if (lives_widget_get_xwindow(xeventbox)==window||lives_widget_get_xwindow(xlabelbox)==window||lives_widget_get_xwindow(xahbox)==window) {
 	track=i-1;
 	got_track=TRUE;
@@ -13370,10 +13403,10 @@ boolean on_track_release (LiVESWidget *eventbox, LiVESXEventButton *event, gpoin
   if (track!=-1) {
     for (i=0;i<g_list_length(mt->video_draws);i++) {
       xeventbox=(LiVESWidget *)g_list_nth_data(mt->video_draws,i);
-      xlabelbox=(LiVESWidget *)g_object_get_data(G_OBJECT(xeventbox),"labelbox");
-      xahbox=(LiVESWidget *)g_object_get_data(G_OBJECT(xeventbox),"ahbox");
+      xlabelbox=(LiVESWidget *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(xeventbox),"labelbox");
+      xahbox=(LiVESWidget *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(xeventbox),"ahbox");
       if (lives_widget_get_xwindow(xeventbox)==window||lives_widget_get_xwindow(xlabelbox)==window||lives_widget_get_xwindow(xahbox)==window) {
-	track=GPOINTER_TO_INT(g_object_get_data(G_OBJECT(xeventbox),"layer_number"));
+	track=GPOINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(xeventbox),"layer_number"));
 	mt->aud_track_selected=FALSE;
 	got_track=TRUE;
 	break;
@@ -13517,7 +13550,7 @@ boolean on_track_click (LiVESWidget *eventbox, LiVESXEventButton *event, gpointe
   timesecs=get_time_from_x(mt,x+mt->hotspot_x);
 
   if (cfile->achans==0||mt->audio_draws==NULL||(mt->opts.back_audio_tracks==0||eventbox!=mt->audio_draws->data)) 
-    track=GPOINTER_TO_INT(g_object_get_data(G_OBJECT(eventbox),"layer_number"));
+    track=GPOINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(eventbox),"layer_number"));
   else track=-1;
   block=mt->putative_block=get_block_from_time(eventbox,timesecs,mt);
 
@@ -13664,8 +13697,8 @@ void unpaint_line(lives_mt *mt, LiVESWidget *eventbox) {
 
   ebwidth=lives_widget_get_allocation_width(eventbox);
 
-  bth=((uint64_t)((uint32_t)(GPOINTER_TO_INT(g_object_get_data(G_OBJECT(eventbox),"backup_timepos_h")))))<<32;
-  btl=(uint64_t)((uint32_t)(GPOINTER_TO_INT(g_object_get_data(G_OBJECT(eventbox),"backup_timepos_l"))));
+  bth=((uint64_t)((uint32_t)(GPOINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(eventbox),"backup_timepos_h")))))<<32;
+  btl=(uint64_t)((uint32_t)(GPOINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(eventbox),"backup_timepos_l"))));
   ocurrtime=(bth+btl)/U_SEC;
   xoffset=(ocurrtime-mt->tl_min)/(mt->tl_max-mt->tl_min)*(double)ebwidth+.5;
 
@@ -13690,21 +13723,21 @@ void unpaint_lines(lives_mt *mt) {
       eventbox=(LiVESWidget *)g_list_nth_data(mt->video_draws,i);
       is_video=TRUE;
     }
-    if (GPOINTER_TO_INT(g_object_get_data(G_OBJECT(eventbox),"hidden"))==0) {
+    if (GPOINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(eventbox),"hidden"))==0) {
       unpaint_line(mt,eventbox);
     }
     if (is_video) {
-      if (GPOINTER_TO_INT(g_object_get_data(G_OBJECT(eventbox),"expanded"))) {
-	eventbox=LIVES_WIDGET(g_object_get_data(G_OBJECT(eventbox),"atrack"));
+      if (GPOINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(eventbox),"expanded"))) {
+	eventbox=LIVES_WIDGET(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(eventbox),"atrack"));
 	unpaint_line(mt,eventbox);
       }
       else continue;
     }
-    if (GPOINTER_TO_INT(g_object_get_data(G_OBJECT(eventbox),"expanded"))) {
-      xeventbox=(LiVESWidget *)g_object_get_data(G_OBJECT(eventbox),"achan0");
+    if (GPOINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(eventbox),"expanded"))) {
+      xeventbox=(LiVESWidget *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(eventbox),"achan0");
       unpaint_line(mt,xeventbox);
       if (cfile->achans>1) {
-	xeventbox=(LiVESWidget *)g_object_get_data(G_OBJECT(eventbox),"achan1");
+	xeventbox=(LiVESWidget *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(eventbox),"achan1");
 	unpaint_line(mt,xeventbox);
       }
     }
@@ -13736,16 +13769,16 @@ static void paint_lines(lives_mt *mt, double currtime, boolean unpaint) {
       eventbox=(LiVESWidget *)g_list_nth_data(mt->video_draws,i);
       is_video=TRUE;
     }
-    expanded=GPOINTER_TO_INT(g_object_get_data(G_OBJECT(eventbox),"expanded"));
+    expanded=GPOINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(eventbox),"expanded"));
     if (lives_widget_is_visible(eventbox)) {
       if (unpaint) unpaint_line(mt,eventbox);
 
       if (offset>0&&offset<ebwidth) {
 
-	g_object_set_data(G_OBJECT(eventbox),"backup_timepos_h",
-			  GINT_TO_POINTER((int)(((uint64_t)(currtime*U_SEC))>>32))); // upper 4 bytes
-	g_object_set_data(G_OBJECT(eventbox),"backup_timepos_l",
-			  GINT_TO_POINTER((uint32_t)(((uint64_t)(currtime*U_SEC))&0XFFFFFFFF))); // lower 4 bytes
+	lives_widget_object_set_data(LIVES_WIDGET_OBJECT(eventbox),"backup_timepos_h",
+			  LIVES_INT_TO_POINTER((int)(((uint64_t)(currtime*U_SEC))>>32))); // upper 4 bytes
+	lives_widget_object_set_data(LIVES_WIDGET_OBJECT(eventbox),"backup_timepos_l",
+			  LIVES_INT_TO_POINTER((uint32_t)(((uint64_t)(currtime*U_SEC))&0XFFFFFFFF))); // lower 4 bytes
 
 	cr = lives_painter_create_from_widget (eventbox);
 
@@ -13766,16 +13799,16 @@ static void paint_lines(lives_mt *mt, double currtime, boolean unpaint) {
     }
     if (expanded) {
       if (is_video) {
-	aeventbox=LIVES_WIDGET(g_object_get_data(G_OBJECT(eventbox),"atrack"));
-	expanded=GPOINTER_TO_INT(g_object_get_data(G_OBJECT(aeventbox),"expanded"));
+	aeventbox=LIVES_WIDGET(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(eventbox),"atrack"));
+	expanded=GPOINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(aeventbox),"expanded"));
 	if (lives_widget_is_visible(aeventbox)) {
 	  if (unpaint) unpaint_line(mt,aeventbox);
 
 	  if (offset>0&&offset<ebwidth) {
-	    g_object_set_data(G_OBJECT(aeventbox),"backup_timepos_h",
-			      GINT_TO_POINTER((int)(((uint64_t)(currtime*U_SEC))>>32))); // upper 4 bytes
-	    g_object_set_data(G_OBJECT(aeventbox),"backup_timepos_l",
-			      GINT_TO_POINTER((uint32_t)(((uint64_t)(currtime*U_SEC))&0XFFFFFFFF))); // lower 4 bytes
+	    lives_widget_object_set_data(LIVES_WIDGET_OBJECT(aeventbox),"backup_timepos_h",
+			      LIVES_INT_TO_POINTER((int)(((uint64_t)(currtime*U_SEC))>>32))); // upper 4 bytes
+	    lives_widget_object_set_data(LIVES_WIDGET_OBJECT(aeventbox),"backup_timepos_l",
+			      LIVES_INT_TO_POINTER((uint32_t)(((uint64_t)(currtime*U_SEC))&0XFFFFFFFF))); // lower 4 bytes
 
 	    cr = lives_painter_create_from_widget (aeventbox);
 
@@ -13792,16 +13825,16 @@ static void paint_lines(lives_mt *mt, double currtime, boolean unpaint) {
 	  }
 	}
       }
-      if (expanded) eventbox=(LiVESWidget *)g_object_get_data(G_OBJECT(aeventbox),"achan0");
+      if (expanded) eventbox=(LiVESWidget *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(aeventbox),"achan0");
       else continue;
       if (lives_widget_is_visible(eventbox)) {
 	if (unpaint) unpaint_line(mt,eventbox);
 
 	if (offset>0&&offset<ebwidth) {
-	  g_object_set_data(G_OBJECT(eventbox),"backup_timepos_h",
-			    GINT_TO_POINTER((int)(((uint64_t)(currtime*U_SEC))>>32))); // upper 4 bytes
-	  g_object_set_data(G_OBJECT(eventbox),"backup_timepos_l",
-			    GINT_TO_POINTER((uint32_t)(((uint64_t)(currtime*U_SEC))&0XFFFFFFFF))); // lower 4 bytes
+	  lives_widget_object_set_data(LIVES_WIDGET_OBJECT(eventbox),"backup_timepos_h",
+			    LIVES_INT_TO_POINTER((int)(((uint64_t)(currtime*U_SEC))>>32))); // upper 4 bytes
+	  lives_widget_object_set_data(LIVES_WIDGET_OBJECT(eventbox),"backup_timepos_l",
+			    LIVES_INT_TO_POINTER((uint32_t)(((uint64_t)(currtime*U_SEC))&0XFFFFFFFF))); // lower 4 bytes
 
 	  cr = lives_painter_create_from_widget (eventbox);
 
@@ -13819,16 +13852,16 @@ static void paint_lines(lives_mt *mt, double currtime, boolean unpaint) {
 	}
       }
       // expanded right audio
-      if (cfile->achans>1) eventbox=(LiVESWidget *)g_object_get_data(G_OBJECT(aeventbox),"achan1");
+      if (cfile->achans>1) eventbox=(LiVESWidget *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(aeventbox),"achan1");
       else continue;
       if (lives_widget_is_visible(eventbox)) {
 	if (unpaint) unpaint_line(mt,eventbox);
 
 	if (offset>0&&offset<ebwidth) {
-	  g_object_set_data(G_OBJECT(eventbox),"backup_timepos_h",
-			    GINT_TO_POINTER((int)(((uint64_t)(currtime*U_SEC))>>32))); // upper 4 bytes
-	  g_object_set_data(G_OBJECT(eventbox),"backup_timepos_l",
-			    GINT_TO_POINTER((uint32_t)(((uint64_t)(currtime*U_SEC))&0XFFFFFFFF))); // lower 4 bytes
+	  lives_widget_object_set_data(LIVES_WIDGET_OBJECT(eventbox),"backup_timepos_h",
+			    LIVES_INT_TO_POINTER((int)(((uint64_t)(currtime*U_SEC))>>32))); // upper 4 bytes
+	  lives_widget_object_set_data(LIVES_WIDGET_OBJECT(eventbox),"backup_timepos_l",
+			    LIVES_INT_TO_POINTER((uint32_t)(((uint64_t)(currtime*U_SEC))&0XFFFFFFFF))); // lower 4 bytes
 
 	  cr = lives_painter_create_from_widget (eventbox);
 
@@ -14059,7 +14092,7 @@ void select_all_vid (LiVESMenuItem *menuitem, gpointer user_data) {
 
   while (vdr!=NULL) {
     eventbox=(LiVESWidget *)vdr->data;
-    checkbutton=(LiVESWidget *)g_object_get_data(G_OBJECT(eventbox),"checkbutton");
+    checkbutton=(LiVESWidget *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(eventbox),"checkbutton");
 
 #ifdef ENABLE_GIW
     if (!prefs->lamp_buttons) {
@@ -14096,7 +14129,7 @@ void select_no_vid (LiVESMenuItem *menuitem, gpointer user_data) {
 
   while (vdr!=NULL) {
     eventbox=(LiVESWidget *)vdr->data;
-    checkbutton=(LiVESWidget *)g_object_get_data(G_OBJECT(eventbox),"checkbutton");
+    checkbutton=(LiVESWidget *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(eventbox),"checkbutton");
 
 
 #ifdef ENABLE_GIW
@@ -14167,9 +14200,9 @@ mt_view_audio_toggled                (LiVESMenuItem     *menuitem,
   lives_mt *mt=(lives_mt *)user_data;
   mt->opts.show_audio=lives_check_menu_item_get_active(LIVES_CHECK_MENU_ITEM(menuitem));
 
-  if (!mt->opts.show_audio) g_object_set_data(G_OBJECT(mt->audio_draws->data),"hidden",
-					      GINT_TO_POINTER(TRACK_I_HIDDEN_USER));
-  else g_object_set_data(G_OBJECT(mt->audio_draws->data),"hidden",GINT_TO_POINTER(0));
+  if (!mt->opts.show_audio) lives_widget_object_set_data(LIVES_WIDGET_OBJECT(mt->audio_draws->data),"hidden",
+					      LIVES_INT_TO_POINTER(TRACK_I_HIDDEN_USER));
+  else lives_widget_object_set_data(LIVES_WIDGET_OBJECT(mt->audio_draws->data),"hidden",LIVES_INT_TO_POINTER(0));
 
   scroll_tracks(mt,mt->top_track,FALSE);
   track_select(mt);
@@ -14451,7 +14484,7 @@ static void split_block(lives_mt *mt, track_rect *block, weed_timecode_t tc, int
   if (!is_audio_eventbox(mt,eventbox)) {
     if (!no_recurse) {
       // if we have an audio block, split it too
-      LiVESWidget *aeventbox=LIVES_WIDGET(g_object_get_data(G_OBJECT(eventbox),"atrack"));
+      LiVESWidget *aeventbox=LIVES_WIDGET(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(eventbox),"atrack"));
       if (aeventbox!=NULL) {
 	track_rect *ablock=get_block_from_time(aeventbox,tc/U_SEC+1./mt->fps,mt);
 	if (ablock!=NULL) split_block(mt,ablock,tc+U_SEC/mt->fps,track,TRUE);
@@ -14463,7 +14496,7 @@ static void split_block(lives_mt *mt, track_rect *block, weed_timecode_t tc, int
   else {
     if (!no_recurse) {
       // if we have a video block, split it too
-      LiVESWidget *oeventbox=LIVES_WIDGET(g_object_get_data(G_OBJECT(eventbox),"owner"));
+      LiVESWidget *oeventbox=LIVES_WIDGET(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(eventbox),"owner"));
       if (oeventbox!=NULL) split_block(mt,get_block_from_time(oeventbox,tc/U_SEC-1./mt->fps,mt),tc-U_SEC/mt->fps,track,TRUE);
     }
     clip=get_audio_frame_clip(start_event,track);
@@ -14548,7 +14581,7 @@ static void insgap_inner (lives_mt *mt, int tnum, boolean is_sel, int passnm) {
     event=block->end_event;
 
     if (tnum>=0&&mt->opts.pertrack_audio) {
-      LiVESWidget *aeventbox=LIVES_WIDGET(g_object_get_data(G_OBJECT(eventbox),"atrack"));
+      LiVESWidget *aeventbox=LIVES_WIDGET(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(eventbox),"atrack"));
       if (aeventbox!=NULL) {
 	ablock=get_block_after(aeventbox,mt->region_start,FALSE);
 	if (ablock!=NULL) {
@@ -14920,7 +14953,7 @@ multitrack_undo            (LiVESMenuItem     *menuitem,
     vlist=mt->video_draws;
     while (vlist!=NULL) {
       eventbox=LIVES_WIDGET(vlist->data);
-      label=LIVES_WIDGET(g_object_get_data(G_OBJECT(eventbox),"label"));
+      label=LIVES_WIDGET(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(eventbox),"label"));
       txt=g_strdup(lives_label_get_text(LIVES_LABEL(label)));
       label_list=g_list_append(label_list,txt);
       vlist=vlist->next;
@@ -14984,7 +15017,7 @@ multitrack_undo            (LiVESMenuItem     *menuitem,
     llist=label_list;
     while (vlist!=NULL) {
       eventbox=LIVES_WIDGET(vlist->data);
-      label=LIVES_WIDGET(g_object_get_data(G_OBJECT(eventbox),"label"));
+      label=LIVES_WIDGET(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(eventbox),"label"));
       lives_label_set_text(LIVES_LABEL(label),(const gchar *)llist->data);
       vlist=vlist->next;
       llist=llist->next;
@@ -14997,7 +15030,7 @@ multitrack_undo            (LiVESMenuItem     *menuitem,
     slist=mt->selected_tracks;
     while (slist!=NULL) {
       eventbox=(LiVESWidget *)g_list_nth_data(mt->video_draws,GPOINTER_TO_INT(slist->data));
-      checkbutton=(LiVESWidget *)g_object_get_data(G_OBJECT(eventbox),"checkbutton");
+      checkbutton=(LiVESWidget *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(eventbox),"checkbutton");
 #ifdef ENABLE_GIW
       if (!prefs->lamp_buttons) {
 #endif
@@ -15107,7 +15140,7 @@ multitrack_redo            (LiVESMenuItem     *menuitem,
     vlist=mt->video_draws;
     while (vlist!=NULL) {
       eventbox=LIVES_WIDGET(vlist->data);
-      label=LIVES_WIDGET(g_object_get_data(G_OBJECT(eventbox),"label"));
+      label=LIVES_WIDGET(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(eventbox),"label"));
       txt=g_strdup(lives_label_get_text(LIVES_LABEL(label)));
       label_list=g_list_append(label_list,txt);
       vlist=vlist->next;
@@ -15171,7 +15204,7 @@ multitrack_redo            (LiVESMenuItem     *menuitem,
     llist=label_list;
     while (vlist!=NULL) {
       eventbox=LIVES_WIDGET(vlist->data);
-      label=LIVES_WIDGET(g_object_get_data(G_OBJECT(eventbox),"label"));
+      label=LIVES_WIDGET(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(eventbox),"label"));
       lives_label_set_text(LIVES_LABEL(label),(const gchar *)llist->data);
       vlist=vlist->next;
       llist=llist->next;
@@ -15184,7 +15217,7 @@ multitrack_redo            (LiVESMenuItem     *menuitem,
     slist=mt->selected_tracks;
     while (slist!=NULL) {
       eventbox=(LiVESWidget *)g_list_nth_data(mt->video_draws,GPOINTER_TO_INT(slist->data));
-      checkbutton=(LiVESWidget *)g_object_get_data(G_OBJECT(eventbox),"checkbutton");
+      checkbutton=(LiVESWidget *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(eventbox),"checkbutton");
 #ifdef ENABLE_GIW
       if (!prefs->lamp_buttons) {
 #endif
@@ -15479,7 +15512,7 @@ void mt_add_region_effect (LiVESMenuItem *menuitem, gpointer user_data) {
   if (mt->event_list!=NULL&&((last_frame_event=get_last_frame_event(mt->event_list))!=NULL)) last_frame_tc=get_event_timecode(last_frame_event);
   if (end_tc>last_frame_tc) mt->event_list=add_blank_frames_up_to(mt->event_list,last_frame_event,end_tc-(double)(tracks[0]<0)*U_SEC/mt->fps,mt->fps);
 
-  if (menuitem!=NULL) mt->current_fx=GPOINTER_TO_INT(g_object_get_data(G_OBJECT(menuitem),"idx"));
+  if (menuitem!=NULL) mt->current_fx=GPOINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(menuitem),"idx"));
 
   start_event=get_frame_event_at(mt->event_list,start_tc,NULL,TRUE);
   end_event=get_frame_event_at(mt->event_list,end_tc,start_event,TRUE);
@@ -15539,9 +15572,9 @@ void mt_add_block_effect (LiVESMenuItem *menuitem, gpointer user_data) {
   int selected_track;
   gchar *tmp;
 
-  selected_track=GPOINTER_TO_INT(g_object_get_data(G_OBJECT(mt->block_selected->eventbox),"layer_number"));
+  selected_track=GPOINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(mt->block_selected->eventbox),"layer_number"));
 
-  if (menuitem!=NULL) mt->current_fx=GPOINTER_TO_INT(g_object_get_data(G_OBJECT(menuitem),"idx"));
+  if (menuitem!=NULL) mt->current_fx=GPOINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(menuitem),"idx"));
 
   mt->last_fx_type=MT_LAST_FX_BLOCK;
   add_effect_inner(mt,1,&selected_track,1,&selected_track,start_event,end_event);
@@ -15732,7 +15765,7 @@ static void on_rename_track_activate (LiVESMenuItem *menuitem, gpointer user_dat
 
   xeventbox=(LiVESWidget *)g_list_nth_data(mt->video_draws,mt->current_track);
 
-  cname=(gchar *)g_object_get_data(G_OBJECT(xeventbox),"track_name");
+  cname=(gchar *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(xeventbox),"track_name");
 
   rnentry=create_rename_dialog(7);
 
@@ -15747,7 +15780,7 @@ static void on_rename_track_activate (LiVESMenuItem *menuitem, gpointer user_dat
   lives_widget_destroy(rnentry->dialog);
   g_free(rnentry);
 
-  g_object_set_data (G_OBJECT(xeventbox),"track_name",cname);
+  lives_widget_object_set_data (LIVES_WIDGET_OBJECT(xeventbox),"track_name",cname);
 
   set_track_label(LIVES_EVENT_BOX(xeventbox),mt->current_track);
 
@@ -15834,7 +15867,7 @@ void on_render_activate (LiVESMenuItem *menuitem, gpointer user_data) {
     if (mt->opts.back_audio_tracks>=1) {
       // check backing track(s) for audio blocks
       for (i=0;i<mt->opts.back_audio_tracks;i++) {
-	if (!is_empty_track(G_OBJECT(g_list_nth_data(mt->audio_draws,i)))) {
+	if (!is_empty_track(LIVES_WIDGET_OBJECT(g_list_nth_data(mt->audio_draws,i)))) {
 	  if (get_mixer_track_vol(mt,i)==0.5) {
 	    has_backing_audio=TRUE;
 	  }
@@ -15844,7 +15877,7 @@ void on_render_activate (LiVESMenuItem *menuitem, gpointer user_data) {
 
     for (i=mt->opts.back_audio_tracks;i<g_list_length(mt->audio_draws);i++) {
       // check channel track(s) for audio blocks
-      if (!is_empty_track(G_OBJECT(g_list_nth_data(mt->audio_draws,i)))) {
+      if (!is_empty_track(LIVES_WIDGET_OBJECT(g_list_nth_data(mt->audio_draws,i)))) {
 	if (get_mixer_track_vol(mt,i)==0.5) {
 	  has_channel_audio=TRUE;
 	}
@@ -15861,7 +15894,7 @@ void on_render_activate (LiVESMenuItem *menuitem, gpointer user_data) {
       // if ALL backing levels are at 0.5, set them to 1.0
 
       for (i=0;i<mt->opts.back_audio_tracks;i++) {
-	if (!is_empty_track(G_OBJECT(g_list_nth_data(mt->audio_draws,i)))) {
+	if (!is_empty_track(LIVES_WIDGET_OBJECT(g_list_nth_data(mt->audio_draws,i)))) {
 	  if (get_mixer_track_vol(mt,i)!=0.5) {
 	    has_backing_audio=FALSE;
 	    break;
@@ -15872,7 +15905,7 @@ void on_render_activate (LiVESMenuItem *menuitem, gpointer user_data) {
       if (has_backing_audio) {
 	post_reset_ba=TRUE; // reset levels after rendering
 	for (i=0;i<mt->opts.back_audio_tracks;i++) {
-	  if (!is_empty_track(G_OBJECT(g_list_nth_data(mt->audio_draws,i)))) {
+	  if (!is_empty_track(LIVES_WIDGET_OBJECT(g_list_nth_data(mt->audio_draws,i)))) {
 	    set_mixer_track_vol(mt,i,1.0);
 	  }
 	}
@@ -15888,7 +15921,7 @@ void on_render_activate (LiVESMenuItem *menuitem, gpointer user_data) {
       
       for (i=mt->opts.back_audio_tracks;i<g_list_length(mt->audio_draws);i++) {
 	// check channel track(s) for audio blocks
-	if (!is_empty_track(G_OBJECT(g_list_nth_data(mt->audio_draws,i)))) {
+	if (!is_empty_track(LIVES_WIDGET_OBJECT(g_list_nth_data(mt->audio_draws,i)))) {
 	  if (get_mixer_track_vol(mt,i)!=0.5) {
 	    has_channel_audio=FALSE;
 	  }
@@ -15898,7 +15931,7 @@ void on_render_activate (LiVESMenuItem *menuitem, gpointer user_data) {
       if (has_channel_audio) {
 	post_reset_ca=TRUE;  // reset levels after rendering
 	for (i=mt->opts.back_audio_tracks;i<g_list_length(mt->audio_draws);i++) {
-	  if (!is_empty_track(G_OBJECT(g_list_nth_data(mt->audio_draws,i)))) {
+	  if (!is_empty_track(LIVES_WIDGET_OBJECT(g_list_nth_data(mt->audio_draws,i)))) {
 	    // set to 1.0
 	    set_mixer_track_vol(mt,i,1.0);
 	  }
@@ -15946,7 +15979,7 @@ void on_render_activate (LiVESMenuItem *menuitem, gpointer user_data) {
     if (post_reset_ba) {
       // reset after normalising backing audio
       for (i=0;i<mt->opts.back_audio_tracks;i++) {
-	if (!is_empty_track(G_OBJECT(g_list_nth_data(mt->audio_draws,i)))) {
+	if (!is_empty_track(LIVES_WIDGET_OBJECT(g_list_nth_data(mt->audio_draws,i)))) {
 	  if (get_mixer_track_vol(mt,i)==1.0) {
 	    set_mixer_track_vol(mt,i,0.5);
 	  }
@@ -15957,7 +15990,7 @@ void on_render_activate (LiVESMenuItem *menuitem, gpointer user_data) {
     if (post_reset_ca) {
       // reset after normalising channel audio
       for (i=mt->opts.back_audio_tracks;i<g_list_length(mt->audio_draws);i++) {
-	if (!is_empty_track(G_OBJECT(g_list_nth_data(mt->audio_draws,i)))) {
+	if (!is_empty_track(LIVES_WIDGET_OBJECT(g_list_nth_data(mt->audio_draws,i)))) {
 	  if (get_mixer_track_vol(mt,i)==1.0) {
 	    set_mixer_track_vol(mt,i,0.5);
 	  }
@@ -16295,10 +16328,10 @@ void on_delblock_activate (LiVESMenuItem *menuitem, gpointer user_data) {
   block=mt->block_selected;
   eventbox=block->eventbox;
 
-  if (mt->current_track!=-1) track=GPOINTER_TO_INT(g_object_get_data(G_OBJECT(eventbox),"layer_number"));
+  if (mt->current_track!=-1) track=GPOINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(eventbox),"layer_number"));
   else track=-1;
 
-  if ((aeventbox=LIVES_WIDGET(g_object_get_data(G_OBJECT(eventbox),"atrack")))!=NULL) {
+  if ((aeventbox=LIVES_WIDGET(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(eventbox),"atrack")))!=NULL) {
     int current_track=mt->current_track;
     mt->current_track=track;
     mt->block_selected=get_block_from_time(aeventbox,get_event_timecode(block->start_event)/U_SEC,mt);
@@ -16346,17 +16379,17 @@ void on_delblock_activate (LiVESMenuItem *menuitem, gpointer user_data) {
   }
 
   if ((blockprev=block->prev)!=NULL) blockprev->next=block->next;
-  else g_object_set_data (G_OBJECT(eventbox),"blocks",(gpointer)block->next);
+  else lives_widget_object_set_data (LIVES_WIDGET_OBJECT(eventbox),"blocks",(gpointer)block->next);
   if ((blocknext=block->next)!=NULL) blocknext->prev=blockprev;
 
   g_free(block);
 
   lives_widget_queue_draw (eventbox);
   if (cfile->achans>0&&mt->audio_draws!=NULL&&mt->opts.back_audio_tracks>0&&eventbox==mt->audio_draws->data&&
-      GPOINTER_TO_INT(g_object_get_data(G_OBJECT(eventbox),"expanded"))) {
-    LiVESWidget *xeventbox=(LiVESWidget *)g_object_get_data(G_OBJECT(eventbox),"achan0");
+      GPOINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(eventbox),"expanded"))) {
+    LiVESWidget *xeventbox=(LiVESWidget *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(eventbox),"achan0");
     if (xeventbox!=NULL) lives_widget_queue_draw (xeventbox);
-    xeventbox=(LiVESWidget *)g_object_get_data(G_OBJECT(eventbox),"achan1");
+    xeventbox=(LiVESWidget *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(eventbox),"achan1");
     if (xeventbox!=NULL) lives_widget_queue_draw (xeventbox);
   }
 
@@ -16382,7 +16415,7 @@ void on_delblock_activate (LiVESMenuItem *menuitem, gpointer user_data) {
       tracks_sel=g_list_copy(mt->selected_tracks);
       if (mt->selected_tracks!=NULL) g_list_free(mt->selected_tracks);
       mt->selected_tracks=NULL;
-      mt->selected_tracks=g_list_append(mt->selected_tracks,GINT_TO_POINTER(mt->current_track));
+      mt->selected_tracks=g_list_append(mt->selected_tracks,LIVES_INT_TO_POINTER(mt->current_track));
     }
 
     if (mt->opts.grav_mode==GRAV_MODE_LEFT) {
@@ -16439,19 +16472,19 @@ void on_seltrack_activate (LiVESMenuItem *menuitem, gpointer user_data) {
   if (mt->current_track==-1) return;
 
   eventbox=(LiVESWidget *)g_list_nth_data(mt->video_draws,mt->current_track);
-  checkbutton=(LiVESWidget *)g_object_get_data(G_OBJECT(eventbox),"checkbutton");
+  checkbutton=(LiVESWidget *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(eventbox),"checkbutton");
 
   mi_state=lives_check_menu_item_get_active(LIVES_CHECK_MENU_ITEM(menuitem));
 
   if (mi_state) {
     // selected
-    if (g_list_index(mt->selected_tracks,GINT_TO_POINTER(mt->current_track))==-1) 
-      mt->selected_tracks=g_list_append(mt->selected_tracks,GINT_TO_POINTER(mt->current_track));
+    if (g_list_index(mt->selected_tracks,LIVES_INT_TO_POINTER(mt->current_track))==-1) 
+      mt->selected_tracks=g_list_append(mt->selected_tracks,LIVES_INT_TO_POINTER(mt->current_track));
   }
   else {
     // unselected
-    if (g_list_index(mt->selected_tracks,GINT_TO_POINTER(mt->current_track))!=-1) 
-      mt->selected_tracks=g_list_remove(mt->selected_tracks,GINT_TO_POINTER(mt->current_track));
+    if (g_list_index(mt->selected_tracks,LIVES_INT_TO_POINTER(mt->current_track))!=-1) 
+      mt->selected_tracks=g_list_remove(mt->selected_tracks,LIVES_INT_TO_POINTER(mt->current_track));
   }
 
 #ifdef ENABLE_GIW
@@ -16516,7 +16549,7 @@ void on_seltrack_activate (LiVESMenuItem *menuitem, gpointer user_data) {
 
 
 void on_seltrack_toggled (LiVESWidget *checkbutton, gpointer user_data) {
-  int track=GPOINTER_TO_INT(g_object_get_data(G_OBJECT(checkbutton),"layer_number"));
+  int track=GPOINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(checkbutton),"layer_number"));
   lives_mt *mt=(lives_mt *)user_data;
 
   mt->current_track=track;
@@ -16652,8 +16685,8 @@ void mt_sensitise (lives_mt *mt) {
   else if (mt->audio_draws!=NULL) eventbox=(LiVESWidget *)mt->audio_draws->data;
 
   if (eventbox!=NULL) {
-    lives_widget_set_sensitive (mt->jumpback, g_object_get_data(G_OBJECT(eventbox),"blocks")!=NULL);
-    lives_widget_set_sensitive (mt->jumpnext, g_object_get_data(G_OBJECT(eventbox),"blocks")!=NULL);
+    lives_widget_set_sensitive (mt->jumpback, lives_widget_object_get_data(LIVES_WIDGET_OBJECT(eventbox),"blocks")!=NULL);
+    lives_widget_set_sensitive (mt->jumpnext, lives_widget_object_get_data(LIVES_WIDGET_OBJECT(eventbox),"blocks")!=NULL);
   }
 
   lives_widget_set_sensitive (mt->change_vals,TRUE);
@@ -16885,7 +16918,7 @@ void multitrack_playall (lives_mt *mt) {
 	  mt->pb_loop_event=get_frame_event_at(mt->event_list,q_gint64(mt->region_start*U_SEC,mt->fps),NULL,TRUE);
 	else if (mt->is_paused) mt->pb_loop_event=pb_loop_event;
 	
-	on_preview_clicked (NULL,GINT_TO_POINTER(1));
+	on_preview_clicked (NULL,LIVES_INT_TO_POINTER(1));
       }
 
       mainw->is_rendering=mainw->is_processing=FALSE;
@@ -16996,7 +17029,7 @@ void multitrack_insert (LiVESMenuItem *menuitem, gpointer user_data) {
 
   insert_frames (mt->file_selected,ins_start,ins_end,secs*U_SECL,DIRECTION_POSITIVE,eventbox,mt,NULL);
 
-  block=(track_rect *)g_object_get_data(G_OBJECT(eventbox),"block_last");
+  block=(track_rect *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(eventbox),"block_last");
 
   if (block!=NULL&&(mt->opts.grav_mode==GRAV_MODE_LEFT||(block->next!=NULL&&mt->opts.grav_mode==GRAV_MODE_RIGHT))&&
       !(did_backup||mt->moving_block)) {
@@ -17008,7 +17041,7 @@ void multitrack_insert (LiVESMenuItem *menuitem, gpointer user_data) {
     tracks_sel=g_list_copy(mt->selected_tracks);
     if (mt->selected_tracks!=NULL) g_list_free(mt->selected_tracks);
     mt->selected_tracks=NULL;
-    mt->selected_tracks=g_list_append(mt->selected_tracks,GINT_TO_POINTER(mt->current_track));
+    mt->selected_tracks=g_list_append(mt->selected_tracks,LIVES_INT_TO_POINTER(mt->current_track));
     
     if (mt->opts.grav_mode==GRAV_MODE_LEFT) {
       if (block->prev!=NULL) mt->region_start=get_event_timecode(block->prev->end_event)/U_SEC;
@@ -17031,14 +17064,14 @@ void multitrack_insert (LiVESMenuItem *menuitem, gpointer user_data) {
   }
 
   // get this again because it could have moved
-  block=(track_rect *)g_object_get_data(G_OBJECT(eventbox),"block_last");
+  block=(track_rect *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(eventbox),"block_last");
 
   if (prefs->atrans_fx!=-1) mt_do_autotransition(mt, block);
 
   mt->did_backup=did_backup;
 
   if (block!=NULL&&!resize_timeline(mt)&&!did_backup) {
-    lives_painter_surface_t *bgimage=(lives_painter_surface_t *)g_object_get_data (G_OBJECT(eventbox), "bgimg");
+    lives_painter_surface_t *bgimage=(lives_painter_surface_t *)lives_widget_object_get_data (LIVES_WIDGET_OBJECT(eventbox), "bgimg");
     draw_block(mt,NULL,bgimage,block,0,lives_widget_get_allocation_width(eventbox));
     lives_widget_queue_draw(eventbox);
   }
@@ -17115,7 +17148,7 @@ void multitrack_audio_insert (LiVESMenuItem *menuitem, gpointer user_data) {
 
   insert_audio (mt->file_selected,ins_start,ins_end,secs*U_SECL,mt->insert_avel,dir,eventbox,mt,NULL);
 
-  block=(track_rect *)g_object_get_data(G_OBJECT(eventbox),"block_last");
+  block=(track_rect *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(eventbox),"block_last");
 
   if (block!=NULL&&(mt->opts.grav_mode==GRAV_MODE_LEFT||
 		    (mt->opts.grav_mode==GRAV_MODE_RIGHT&&block->next!=NULL))
@@ -17158,20 +17191,20 @@ void multitrack_audio_insert (LiVESMenuItem *menuitem, gpointer user_data) {
   g_free(text);
 
   if (!resize_timeline(mt)&&!did_backup) {
-    lives_painter_surface_t *bgimage=(lives_painter_surface_t *)g_object_get_data (G_OBJECT(eventbox), "bgimg");
+    lives_painter_surface_t *bgimage=(lives_painter_surface_t *)lives_widget_object_get_data (LIVES_WIDGET_OBJECT(eventbox), "bgimg");
     draw_block(mt,NULL,bgimage,block,0,lives_widget_get_allocation_width(eventbox));
     lives_widget_queue_draw(eventbox);
 
-    if (GPOINTER_TO_INT(g_object_get_data(G_OBJECT(eventbox),"expanded"))) {
-      LiVESWidget *xeventbox=(LiVESWidget *)g_object_get_data(G_OBJECT(eventbox),"achan0");
+    if (GPOINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(eventbox),"expanded"))) {
+      LiVESWidget *xeventbox=(LiVESWidget *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(eventbox),"achan0");
       if (xeventbox!=NULL) lives_widget_queue_draw (xeventbox);
-      xeventbox=(LiVESWidget *)g_object_get_data(G_OBJECT(eventbox),"achan1");
+      xeventbox=(LiVESWidget *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(eventbox),"achan1");
       if (xeventbox!=NULL) lives_widget_queue_draw (xeventbox);
     }
   }
 
   // get this again because it could have moved
-  block=(track_rect *)g_object_get_data(G_OBJECT(eventbox),"block_last");
+  block=(track_rect *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(eventbox),"block_last");
   
   if (!did_backup) {
     if (mt->avol_fx!=-1&&block!=NULL&&block->next==NULL&&get_first_event(mt->event_list)!=NULL) {
@@ -17216,7 +17249,7 @@ void insert_frames (int filenum, weed_timecode_t offset_start, weed_timecode_t o
   int render_file=mainw->current_file;
   boolean isfirst=TRUE;
   lives_clip_t *sfile=mainw->files[filenum];
-  int track=GPOINTER_TO_INT(g_object_get_data(G_OBJECT(eventbox),"layer_number"));
+  int track=GPOINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(eventbox),"layer_number"));
   weed_timecode_t last_tc=0,offset_start_tc,start_tc,last_offset;
   int *clips=NULL,*frames=NULL,*rep_clips,*rep_frames,error;
   weed_plant_t *last_frame_event=NULL;
@@ -17231,9 +17264,9 @@ void insert_frames (int filenum, weed_timecode_t offset_start, weed_timecode_t o
 
   mt_desensitise(mt);
 
-  g_object_set_data (G_OBJECT(eventbox),"block_last",(gpointer)NULL);
-  if ((aeventbox=(LiVESWidget *)g_object_get_data(G_OBJECT(eventbox),"atrack"))!=NULL) 
-    g_object_set_data (G_OBJECT(aeventbox),"block_last",(gpointer)NULL);
+  lives_widget_object_set_data (LIVES_WIDGET_OBJECT(eventbox),"block_last",(gpointer)NULL);
+  if ((aeventbox=(LiVESWidget *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(eventbox),"atrack"))!=NULL) 
+    lives_widget_object_set_data (LIVES_WIDGET_OBJECT(aeventbox),"block_last",(gpointer)NULL);
 
   last_offset=offset_start_tc=q_gint64(offset_start,mt->fps);
   offset_end=q_gint64(offset_end,mt->fps);
@@ -17377,7 +17410,7 @@ void insert_frames (int filenum, weed_timecode_t offset_start, weed_timecode_t o
 
   if (!isfirst) {
     if (direction==DIRECTION_POSITIVE) {
-      if (in_block!=NULL) g_object_set_data (G_OBJECT(eventbox),"block_last",(gpointer)in_block);
+      if (in_block!=NULL) lives_widget_object_set_data (LIVES_WIDGET_OBJECT(eventbox),"block_last",(gpointer)in_block);
       add_block_end_point(eventbox,shortcut1);
 
       if (cfile->achans>0&&sfile->achans>0&&mt->opts.insert_audio&&mt->opts.pertrack_audio) {
@@ -17443,7 +17476,7 @@ void insert_audio (int filenum, weed_timecode_t offset_start, weed_timecode_t of
 
   double end_secs;
 
-  g_object_set_data (G_OBJECT(eventbox),"block_last",(gpointer)NULL);
+  lives_widget_object_set_data (LIVES_WIDGET_OBJECT(eventbox),"block_last",(gpointer)NULL);
 
   if (direction==DIRECTION_NEGATIVE) {
     weed_timecode_t tmp_tc=offset_end;
@@ -17677,9 +17710,9 @@ static void draw_soundwave(LiVESWidget *ebox, lives_painter_surface_t *surf, int
 
   lives_painter_t *cr = lives_painter_create(surf);
 
-  LiVESWidget *eventbox=(LiVESWidget *)g_object_get_data(G_OBJECT(ebox),"owner");
+  LiVESWidget *eventbox=(LiVESWidget *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(ebox),"owner");
 
-  track_rect *block=(track_rect *)g_object_get_data (G_OBJECT(eventbox), "blocks");
+  track_rect *block=(track_rect *)lives_widget_object_get_data (LIVES_WIDGET_OBJECT(eventbox), "blocks");
 
   double offset_startd,offset_endd; // time values
   double tl_span=mt->tl_max-mt->tl_min;
@@ -17690,7 +17723,7 @@ static void draw_soundwave(LiVESWidget *ebox, lives_painter_surface_t *surf, int
   int offset_start,offset_end;  // pixel values
   int fnum;
   int width=lives_widget_get_allocation_width(ebox);
-  int track=GPOINTER_TO_INT(g_object_get_data(G_OBJECT(eventbox),"layer_number"));
+  int track=GPOINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(eventbox),"layer_number"));
 
   register int i;
 
@@ -17810,7 +17843,7 @@ static boolean mt_expose_audtrack_event (LiVESWidget *ebox, GdkEventExpose *even
 
   if (width==0) return FALSE;
 
-  hidden=(int)GPOINTER_TO_INT(g_object_get_data (G_OBJECT(ebox), "hidden"));
+  hidden=(int)GPOINTER_TO_INT(lives_widget_object_get_data (LIVES_WIDGET_OBJECT(ebox), "hidden"));
   if (hidden!=0) {
     return FALSE;
   }
@@ -17818,9 +17851,9 @@ static boolean mt_expose_audtrack_event (LiVESWidget *ebox, GdkEventExpose *even
   if (width>lives_widget_get_allocation_width(ebox)-startx) width=lives_widget_get_allocation_width(ebox)-startx;
 
   if (cairo==NULL) cr = lives_painter_create_from_widget (ebox);
-  bgimage=(lives_painter_surface_t *)g_object_get_data (G_OBJECT(ebox), "bgimg");
+  bgimage=(lives_painter_surface_t *)lives_widget_object_get_data (LIVES_WIDGET_OBJECT(ebox), "bgimg");
 
-  if (GPOINTER_TO_INT(g_object_get_data (G_OBJECT(ebox), "drawn"))) {
+  if (GPOINTER_TO_INT(lives_widget_object_get_data (LIVES_WIDGET_OBJECT(ebox), "drawn"))) {
 
     if (bgimage!=NULL&&lives_painter_image_surface_get_width(bgimage)>0) {
       lives_painter_set_source_surface (cr, bgimage, startx, starty);
@@ -17842,11 +17875,11 @@ static boolean mt_expose_audtrack_event (LiVESWidget *ebox, GdkEventExpose *even
 					     width,
 					     height);
 
-  channum=GPOINTER_TO_INT(g_object_get_data(G_OBJECT(ebox),"channel"));
+  channum=GPOINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(ebox),"channel"));
 
   if (bgimage!=NULL&&lives_painter_image_surface_get_width(bgimage)>0) {
     draw_soundwave(ebox,bgimage,channum,mt);
-    g_object_set_data (G_OBJECT(ebox),"drawn",GINT_TO_POINTER(TRUE));
+    lives_widget_object_set_data (LIVES_WIDGET_OBJECT(ebox),"drawn",LIVES_INT_TO_POINTER(TRUE));
     lives_widget_queue_draw(ebox);
   }
   else if (bgimage!=NULL) {
@@ -17854,7 +17887,7 @@ static boolean mt_expose_audtrack_event (LiVESWidget *ebox, GdkEventExpose *even
     bgimage=NULL;
   }
 
-  g_object_set_data (G_OBJECT(ebox),"bgimg",bgimage);
+  lives_widget_object_set_data (LIVES_WIDGET_OBJECT(ebox),"bgimg",bgimage);
 
   if (cairo==NULL) lives_painter_destroy (cr);
 
@@ -19098,7 +19131,7 @@ void add_markers(lives_mt *mt, weed_plant_t *event_list) {
 
   while (tlist!=NULL) {
     eventbox=(LiVESWidget *)tlist->data;
-    block=(track_rect *)g_object_get_data (G_OBJECT(eventbox), "blocks");
+    block=(track_rect *)lives_widget_object_get_data (LIVES_WIDGET_OBJECT(eventbox), "blocks");
     track_blocks=g_list_append(track_blocks,(gpointer)block);
     tlist=tlist->next;
   }
@@ -19116,16 +19149,16 @@ void add_markers(lives_mt *mt, weed_plant_t *event_list) {
 	  if (block->prev!=NULL&&(get_event_timecode(block->prev->end_event)==
 				  q_gint64(tc-U_SEC/mt->fps,mt->fps))&&(tc==get_event_timecode(block->start_event))&&
 	      (get_frame_event_clip(block->prev->end_event,track)==get_frame_event_clip(block->start_event,track))) {
-	    insert_marker_event_at(mt->event_list,event,EVENT_MARKER_BLOCK_START,GINT_TO_POINTER(track));
+	    insert_marker_event_at(mt->event_list,event,EVENT_MARKER_BLOCK_START,LIVES_INT_TO_POINTER(track));
 
 	    if (mt->audio_draws!=NULL&&g_list_length(mt->audio_draws)>=track+mt->opts.back_audio_tracks) {
 	      // insert in audio too
 	      insert_marker_event_at(mt->event_list,event,EVENT_MARKER_BLOCK_START,
-				     GINT_TO_POINTER(-track-mt->opts.back_audio_tracks-1));
+				     LIVES_INT_TO_POINTER(-track-mt->opts.back_audio_tracks-1));
 	    }
 	  }
 	  if (!block->ordered)  {
-	    insert_marker_event_at(mt->event_list,event,EVENT_MARKER_BLOCK_UNORDERED,GINT_TO_POINTER(track));
+	    insert_marker_event_at(mt->event_list,event,EVENT_MARKER_BLOCK_UNORDERED,LIVES_INT_TO_POINTER(track));
 	  }
 	  if (event==block->end_event) blist->data=block->next;
 	}
@@ -19253,7 +19286,7 @@ void on_save_event_list_activate (LiVESMenuItem *menuitem, gpointer user_data) {
   lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(ar_checkbutton),prefs->ar_layout);
   lives_signal_connect (LIVES_GUI_OBJECT (ar_checkbutton), LIVES_WIDGET_TOGGLED_EVENT,
 		    LIVES_GUI_CALLBACK (on_autoreload_toggled),
-		    GINT_TO_POINTER(2));
+		    LIVES_INT_TO_POINTER(2));
 
   lives_widget_show_all(hbox);
 
@@ -20877,7 +20910,7 @@ weed_plant_t *load_event_list(lives_mt *mt, gchar *eload_file) {
     lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(ar_checkbutton),prefs->ar_layout);
     lives_signal_connect (LIVES_GUI_OBJECT (ar_checkbutton), LIVES_WIDGET_TOGGLED_EVENT,
 		      LIVES_GUI_CALLBACK (on_autoreload_toggled),
-		      GINT_TO_POINTER(2));
+		      LIVES_INT_TO_POINTER(2));
     eload_file=choose_file(startdir,NULL,filt,LIVES_FILE_CHOOSER_ACTION_OPEN,NULL,hbox);
 
     g_free(startdir);
@@ -21606,7 +21639,7 @@ void mt_change_vals_activate (LiVESMenuItem *menuitem, gpointer user_data) {
   if (xachans==0&&mt->audio_draws!=NULL) {
     GList *slist=mt->audio_draws;
     while (slist!=NULL) {
-      if (g_object_get_data(G_OBJECT(slist->data),"blocks")!=NULL) {
+      if (lives_widget_object_get_data(LIVES_WIDGET_OBJECT(slist->data),"blocks")!=NULL) {
 	do_mt_no_audchan_error();
 	lives_widget_destroy (rdet->dialog); 
 	g_free(rdet->encoder_name);
@@ -21829,7 +21862,7 @@ static void after_amixer_inv_toggled (LiVESToggleButton *toggle, lives_amixer_t 
 
 void on_amixer_slider_changed (LiVESAdjustment *adj, lives_mt *mt) {
   lives_amixer_t *amixer=mt->amixer;
-  int layer=GPOINTER_TO_INT(g_object_get_data(G_OBJECT(adj),"layer"));
+  int layer=GPOINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(adj),"layer"));
   boolean gang=lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(amixer->gang_checkbutton));
   boolean inv=lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(amixer->inv_checkbutton));
   double val;
@@ -21956,10 +21989,10 @@ LiVESWidget * amixer_add_channel_slider (lives_mt *mt, int i) {
   }
 #endif
   
-  g_object_set_data(G_OBJECT(amixer->ch_sliders[i]),"adj",adj);
-  g_object_set_data(G_OBJECT(adj),"layer",GINT_TO_POINTER(i));
+  lives_widget_object_set_data(LIVES_WIDGET_OBJECT(amixer->ch_sliders[i]),"adj",adj);
+  lives_widget_object_set_data(LIVES_WIDGET_OBJECT(adj),"layer",LIVES_INT_TO_POINTER(i));
     
-  amixer->ch_slider_fns[i]=lives_signal_connect_after (LIVES_GUI_OBJECT (adj), "value_changed",
+  amixer->ch_slider_fns[i]=lives_signal_connect_after (LIVES_GUI_OBJECT (adj), LIVES_WIDGET_VALUE_CHANGED_EVENT,
 						   LIVES_GUI_CALLBACK (on_amixer_slider_changed),
 						   (gpointer)mt);
   
@@ -21971,7 +22004,7 @@ LiVESWidget * amixer_add_channel_slider (lives_mt *mt, int i) {
   label=lives_standard_label_new(tname);
   g_free(tname);
 
-  g_object_set_data(G_OBJECT(amixer->ch_sliders[i]),"label",label);
+  lives_widget_object_set_data(LIVES_WIDGET_OBJECT(amixer->ch_sliders[i]),"label",label);
   
   vbox = lives_vbox_new (FALSE, widget_opts.packing_height*1.5);
   lives_box_pack_start (LIVES_BOX (vbox), label, FALSE, FALSE, widget_opts.packing_height);
@@ -22258,7 +22291,7 @@ static track_rect *get_nth_block_for_track(lives_mt *mt, int itrack, int iblock)
   track_rect *block;
   LiVESWidget *eventbox=get_eventbox_for_track(mt,itrack);
   if (eventbox==NULL) return NULL; //<invalid track
-  block=(track_rect *)g_object_get_data (G_OBJECT(eventbox), "blocks");
+  block=(track_rect *)lives_widget_object_get_data (LIVES_WIDGET_OBJECT(eventbox), "blocks");
   while(block!=NULL) {
     if (count==iblock) return block;
     block=block->next;
@@ -22294,9 +22327,9 @@ int mt_get_last_block_number(lives_mt *mt, int ntrack) {
   track_rect *block,*lastblock;
   LiVESWidget *eventbox=get_eventbox_for_track(mt,ntrack);
   if (eventbox==NULL) return -1; //<invalid track
-  lastblock=(track_rect *)g_object_get_data (G_OBJECT(eventbox),"block_last");
+  lastblock=(track_rect *)lives_widget_object_get_data (LIVES_WIDGET_OBJECT(eventbox),"block_last");
   if (lastblock==NULL) return -1; ///< no blocks in track
-  block=(track_rect *)g_object_get_data (G_OBJECT(eventbox), "blocks");
+  block=(track_rect *)lives_widget_object_get_data (LIVES_WIDGET_OBJECT(eventbox), "blocks");
   while(block!=NULL) {
     if (block==lastblock) break;
     block=block->next;
@@ -22313,9 +22346,9 @@ int mt_get_block_count(lives_mt *mt, int ntrack) {
   track_rect *block,*lastblock;
   LiVESWidget *eventbox=get_eventbox_for_track(mt,ntrack);
   if (eventbox==NULL) return -1; //<invalid track
-  lastblock=(track_rect *)g_object_get_data (G_OBJECT(eventbox),"block_last");
+  lastblock=(track_rect *)lives_widget_object_get_data (LIVES_WIDGET_OBJECT(eventbox),"block_last");
   if (lastblock==NULL) return -1; ///< no blocks in track
-  block=(track_rect *)g_object_get_data (G_OBJECT(eventbox), "blocks");
+  block=(track_rect *)lives_widget_object_get_data (LIVES_WIDGET_OBJECT(eventbox), "blocks");
   while(block!=NULL) {
     if (block==lastblock) break;
     block=block->next;
@@ -22433,8 +22466,8 @@ void mt_do_autotransition(lives_mt *mt, track_rect *block) {
   mt->is_atrans=TRUE; ///< force some visual changes
 
   if (oblock!=NULL) {
-    mt->selected_tracks=g_list_append(mt->selected_tracks,GINT_TO_POINTER(track));
-    mt->selected_tracks=g_list_append(mt->selected_tracks,GINT_TO_POINTER(i));
+    mt->selected_tracks=g_list_append(mt->selected_tracks,LIVES_INT_TO_POINTER(track));
+    mt->selected_tracks=g_list_append(mt->selected_tracks,LIVES_INT_TO_POINTER(i));
 
     mt_backup(mt,MT_UNDO_APPLY_FILTER,0);
     did_backup=mt->did_backup=TRUE;
@@ -22505,8 +22538,8 @@ void mt_do_autotransition(lives_mt *mt, track_rect *block) {
 
 
   if (oblock!=NULL) {
-    mt->selected_tracks=g_list_append(mt->selected_tracks,GINT_TO_POINTER(track));
-    mt->selected_tracks=g_list_append(mt->selected_tracks,GINT_TO_POINTER(i));
+    mt->selected_tracks=g_list_append(mt->selected_tracks,LIVES_INT_TO_POINTER(track));
+    mt->selected_tracks=g_list_append(mt->selected_tracks,LIVES_INT_TO_POINTER(i));
 
     if (!did_backup) mt_backup(mt,MT_UNDO_APPLY_FILTER,0);
     did_backup=mt->did_backup=TRUE;

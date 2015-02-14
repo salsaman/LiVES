@@ -262,8 +262,8 @@ void lives_yuv_stream_stop_read (lives_yuv4m_t *yuv4mpeg) {
 
   if (yuv4mpeg->name!=NULL) g_free(yuv4mpeg->name);
 
-  if (yuv4mpeg->type==YUV4_TYPE_FW) fw_cards=g_list_remove(fw_cards,GINT_TO_POINTER(yuv4mpeg->cardno));
-  if (yuv4mpeg->type==YUV4_TYPE_TV) mainw->videodevs=g_list_remove(mainw->videodevs,GINT_TO_POINTER(yuv4mpeg->cardno));
+  if (yuv4mpeg->type==YUV4_TYPE_FW) fw_cards=g_list_remove(fw_cards,LIVES_INT_TO_POINTER(yuv4mpeg->cardno));
+  if (yuv4mpeg->type==YUV4_TYPE_TV) mainw->videodevs=g_list_remove(mainw->videodevs,LIVES_INT_TO_POINTER(yuv4mpeg->cardno));
 
 
 }
@@ -602,7 +602,7 @@ void on_live_tvcard_activate (LiVESMenuItem *menuitem, gpointer user_data) {
 
   card_dialog=create_cdtrack_dialog(4,NULL);
 
-  tvcardw=(lives_tvcardw_t *)g_object_get_data(G_OBJECT(card_dialog),"tvcard_data");
+  tvcardw=(lives_tvcardw_t *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(card_dialog),"tvcard_data");
 
 
   response=lives_dialog_run(LIVES_DIALOG(card_dialog));
@@ -616,7 +616,7 @@ void on_live_tvcard_activate (LiVESMenuItem *menuitem, gpointer user_data) {
   cardno=(int)mainw->fx1_val;
   chanstr=g_strdup_printf("%d",(int)mainw->fx2_val);
 
-  if (g_list_find(mainw->videodevs,GINT_TO_POINTER(cardno))) {
+  if (g_list_find(mainw->videodevs,LIVES_INT_TO_POINTER(cardno))) {
     lives_widget_destroy(card_dialog);
     do_card_in_use_error();
     g_free(chanstr);
@@ -649,7 +649,7 @@ void on_live_tvcard_activate (LiVESMenuItem *menuitem, gpointer user_data) {
     return;
   }
 
-  mainw->videodevs=g_list_append(mainw->videodevs,GINT_TO_POINTER(cardno));
+  mainw->videodevs=g_list_append(mainw->videodevs,LIVES_INT_TO_POINTER(cardno));
 
   mainw->current_file=new_file;
 
@@ -751,7 +751,7 @@ void on_live_fw_activate (LiVESMenuItem *menuitem, gpointer user_data) {
 
   lives_widget_destroy(card_dialog);
 
-  if (g_list_find(fw_cards,GINT_TO_POINTER(cardno))) {
+  if (g_list_find(fw_cards,LIVES_INT_TO_POINTER(cardno))) {
     g_free(fifofile);
     do_card_in_use_error();
     return;
@@ -765,7 +765,7 @@ void on_live_fw_activate (LiVESMenuItem *menuitem, gpointer user_data) {
     return;
   }
 
-  fw_cards=g_list_append(fw_cards,GINT_TO_POINTER(cardno));
+  fw_cards=g_list_append(fw_cards,LIVES_INT_TO_POINTER(cardno));
 
   mainw->current_file=new_file;
   cfile->deinterlace=mainw->open_deint;

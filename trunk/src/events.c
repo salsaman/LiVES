@@ -2088,7 +2088,7 @@ LiVESWidget *events_rec_dialog (boolean allow_mt) {
 
   lives_signal_connect (LIVES_GUI_OBJECT (radiobutton), LIVES_WIDGET_TOGGLED_EVENT,
 		    LIVES_GUI_CALLBACK (set_render_choice),
-		    GINT_TO_POINTER (RENDER_CHOICE_PREVIEW));
+		    LIVES_INT_TO_POINTER (RENDER_CHOICE_PREVIEW));
 
   if (!mainw->clip_switched&&(cfile->clip_type==CLIP_TYPE_DISK||cfile->clip_type==CLIP_TYPE_FILE)) {
 
@@ -2100,7 +2100,7 @@ LiVESWidget *events_rec_dialog (boolean allow_mt) {
 
     lives_signal_connect (LIVES_GUI_OBJECT (radiobutton), LIVES_WIDGET_TOGGLED_EVENT,
                       LIVES_GUI_CALLBACK (set_render_choice),
-                      GINT_TO_POINTER (RENDER_CHOICE_SAME_CLIP));
+                      LIVES_INT_TO_POINTER (RENDER_CHOICE_SAME_CLIP));
   }
 
 
@@ -2112,7 +2112,7 @@ LiVESWidget *events_rec_dialog (boolean allow_mt) {
     
   lives_signal_connect (LIVES_GUI_OBJECT (radiobutton), LIVES_WIDGET_TOGGLED_EVENT,
 		    LIVES_GUI_CALLBACK (set_render_choice),
-		    GINT_TO_POINTER (RENDER_CHOICE_NEW_CLIP));
+		    LIVES_INT_TO_POINTER (RENDER_CHOICE_NEW_CLIP));
   
 
 
@@ -2124,7 +2124,7 @@ LiVESWidget *events_rec_dialog (boolean allow_mt) {
 
   lives_signal_connect (LIVES_GUI_OBJECT (radiobutton), LIVES_WIDGET_TOGGLED_EVENT,
 		    LIVES_GUI_CALLBACK (set_render_choice),
-		    GINT_TO_POINTER (RENDER_CHOICE_MULTITRACK));
+		    LIVES_INT_TO_POINTER (RENDER_CHOICE_MULTITRACK));
 
   if (!allow_mt) lives_widget_set_sensitive(radiobutton,FALSE);
 
@@ -2138,7 +2138,7 @@ LiVESWidget *events_rec_dialog (boolean allow_mt) {
 
   lives_signal_connect (LIVES_GUI_OBJECT (radiobutton), LIVES_WIDGET_TOGGLED_EVENT,
 		    LIVES_GUI_CALLBACK (set_render_choice),
-		    GINT_TO_POINTER (RENDER_CHOICE_EVENT_LIST));
+		    LIVES_INT_TO_POINTER (RENDER_CHOICE_EVENT_LIST));
 
   cancelbutton = lives_button_new_from_stock (LIVES_STOCK_CANCEL);
   lives_widget_set_can_focus (cancelbutton,TRUE);
@@ -2147,7 +2147,7 @@ LiVESWidget *events_rec_dialog (boolean allow_mt) {
 
   lives_signal_connect (LIVES_GUI_OBJECT (cancelbutton), LIVES_WIDGET_CLICKED_EVENT,
 		    LIVES_GUI_CALLBACK (set_render_choice_button),
-		    GINT_TO_POINTER (RENDER_CHOICE_DISCARD));
+		    LIVES_INT_TO_POINTER (RENDER_CHOICE_DISCARD));
 
   accel_group = LIVES_ACCEL_GROUP(lives_accel_group_new ());
   lives_widget_add_accelerator (cancelbutton, LIVES_WIDGET_CLICKED_EVENT, accel_group,
@@ -5138,7 +5138,7 @@ render_details *create_render_details (int type) {
   rdet->spinbutton_width = lives_standard_spin_button_new 
     (_("_Width"),TRUE,rdet->width,2.,MAX_FRAME_WIDTH,1.,16.,0,LIVES_BOX(hbox),NULL);
   
-  lives_signal_connect_after (LIVES_GUI_OBJECT (rdet->spinbutton_width), "value_changed",
+  lives_signal_connect_after (LIVES_GUI_OBJECT (rdet->spinbutton_width), LIVES_WIDGET_VALUE_CHANGED_EVENT,
 			  LIVES_GUI_CALLBACK (rdetw_spinw_changed),
 			  rdet);
   
@@ -5146,7 +5146,7 @@ render_details *create_render_details (int type) {
   rdet->spinbutton_height = lives_standard_spin_button_new 
     (_("_Height"),TRUE,rdet->height,2.,MAX_FRAME_WIDTH,1.,16.,0,LIVES_BOX(hbox),NULL);
   
-  lives_signal_connect_after (LIVES_GUI_OBJECT (rdet->spinbutton_height), "value_changed",
+  lives_signal_connect_after (LIVES_GUI_OBJECT (rdet->spinbutton_height), LIVES_WIDGET_VALUE_CHANGED_EVENT,
 			  LIVES_GUI_CALLBACK (rdetw_spinh_changed),
 			  rdet);
 
@@ -5172,7 +5172,7 @@ render_details *create_render_details (int type) {
   
   if (type==4&&mainw->multitrack->event_list!=NULL) lives_widget_set_sensitive(rdet->spinbutton_fps,FALSE);
   
-  lives_signal_connect_after (LIVES_GUI_OBJECT (rdet->spinbutton_fps), "value_changed",
+  lives_signal_connect_after (LIVES_GUI_OBJECT (rdet->spinbutton_fps), LIVES_WIDGET_VALUE_CHANGED_EVENT,
 			  LIVES_GUI_CALLBACK (rdetw_spinf_changed),
 			  rdet);
   

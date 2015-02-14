@@ -196,7 +196,7 @@ boolean plugin_poll_keyboard (void) {
   // we also auto-repeat our cached keys
   if (cached_key&&current_kb_time-last_kb_time>KEY_RPT_INTERVAL*10) {
     last_kb_time=current_kb_time;
-    lives_accel_groups_activate (G_OBJECT (mainw->LiVES),(uint32_t)cached_key, (LiVESXModifierType)cached_mod);
+    lives_accel_groups_activate (LIVES_WIDGET_OBJECT (mainw->LiVES),(uint32_t)cached_key, (LiVESXModifierType)cached_mod);
   }
 
   return TRUE;
@@ -321,8 +321,8 @@ boolean pl_key_function (boolean down, uint16_t unicode, uint16_t keymod) {
 
   if (mainw->ext_keyboard) {
     if (cached_key) return FALSE;
-    if (mainw->multitrack==NULL) lives_accel_groups_activate (G_OBJECT (mainw->LiVES),(uint32_t)unicode,state);
-    else lives_accel_groups_activate (G_OBJECT (mainw->multitrack->window),(uint32_t)unicode,state);
+    if (mainw->multitrack==NULL) lives_accel_groups_activate (LIVES_WIDGET_OBJECT (mainw->LiVES),(uint32_t)unicode,state);
+    else lives_accel_groups_activate (LIVES_WIDGET_OBJECT (mainw->multitrack->window),(uint32_t)unicode,state);
     if (!mainw->ext_keyboard) return TRUE; // if user switched out of ext_keyboard, do no further processing *
   }
 

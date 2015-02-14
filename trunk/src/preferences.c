@@ -2712,7 +2712,7 @@ _prefsw *create_prefs_dialog (void) {
   g_list_free_strings (vid_playback_plugins);
   g_list_free (vid_playback_plugins);
 
-  lives_signal_connect_after (G_OBJECT (pp_combo), LIVES_WIDGET_CHANGED_EVENT, LIVES_GUI_CALLBACK (after_vpp_changed), (gpointer) advbutton);
+  lives_signal_connect_after (LIVES_WIDGET_OBJECT (pp_combo), LIVES_WIDGET_CHANGED_EVENT, LIVES_GUI_CALLBACK (after_vpp_changed), (gpointer) advbutton);
 
   prefsw->checkbutton_stream_audio = 
     lives_standard_check_button_new((tmp=g_strdup(_("Stream audio"))),
@@ -4222,7 +4222,7 @@ _prefsw *create_prefs_dialog (void) {
   lives_signal_connect(LIVES_GUI_OBJECT(prefsw->checkbutton_ce_maxspect), LIVES_WIDGET_TOGGLED_EVENT, LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
   lives_signal_connect(LIVES_GUI_OBJECT(prefsw->rb_startup_ce), LIVES_WIDGET_TOGGLED_EVENT, LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
   lives_signal_connect(LIVES_GUI_OBJECT(prefsw->rb_startup_mt), LIVES_WIDGET_TOGGLED_EVENT, LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
-  lives_signal_connect(LIVES_GUI_OBJECT(prefsw->spinbutton_crit_ds), "value_changed", 
+  lives_signal_connect(LIVES_GUI_OBJECT(prefsw->spinbutton_crit_ds), LIVES_WIDGET_VALUE_CHANGED_EVENT, 
 		   LIVES_GUI_CALLBACK(spinbutton_crit_ds_value_changed), NULL);
   lives_signal_connect(LIVES_GUI_OBJECT(prefsw->spinbutton_crit_ds), LIVES_WIDGET_VALUE_CHANGED_EVENT, LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
 

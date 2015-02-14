@@ -67,7 +67,7 @@ void lives_exit (void) {
     threaded_dialog_spin();
 
     if (mainw->toy_type!=LIVES_TOY_NONE) {
-      on_toy_activate(NULL, GINT_TO_POINTER(LIVES_TOY_NONE));
+      on_toy_activate(NULL, LIVES_INT_TO_POINTER(LIVES_TOY_NONE));
     }
 
     if (mainw->stored_event_list!=NULL||mainw->sl_undo_mem!=NULL) {
@@ -543,8 +543,8 @@ void on_filesel_button_clicked (LiVESButton *button, gpointer user_data) {
   gchar *def_dir=NULL;
 
   if (button!=NULL) {
-    def_dir=(gchar *)g_object_get_data(G_OBJECT(button),"def_dir");
-    is_dir=LIVES_POINTER_TO_INT(g_object_get_data(G_OBJECT(button),"is_dir"));
+    def_dir=(gchar *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(button),"def_dir");
+    is_dir=LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(button),"is_dir"));
   }
 
   if (LIVES_IS_TEXT_VIEW(tentry)) fname=lives_text_view_get_text(LIVES_TEXT_VIEW(tentry));
@@ -577,8 +577,8 @@ void on_filesel_button_clicked (LiVESButton *button, gpointer user_data) {
   }
 
   // force update to be recognized
-  if (g_object_get_data(G_OBJECT(tentry),"rfx")!=NULL) 
-    after_param_text_changed(tentry,(lives_rfx_t *)g_object_get_data(G_OBJECT(tentry),"rfx"));
+  if (lives_widget_object_get_data(LIVES_WIDGET_OBJECT(tentry),"rfx")!=NULL) 
+    after_param_text_changed(tentry,(lives_rfx_t *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(tentry),"rfx"));
 }
 
 
@@ -723,7 +723,7 @@ void on_autoreload_toggled (LiVESToggleButton *togglebutton, gpointer user_data)
 
   int type=LIVES_POINTER_TO_INT(user_data);
   if (type==0) {
-    _entryw *cdsw=(_entryw *)g_object_get_data(G_OBJECT(togglebutton),"cdsw");
+    _entryw *cdsw=(_entryw *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(togglebutton),"cdsw");
     prefs->ar_layout=!prefs->ar_layout;
     if (cdsw->warn_checkbutton!=NULL) {
       if (prefs->ar_layout) {
@@ -1403,7 +1403,7 @@ on_import_proj_activate                      (LiVESMenuItem     *menuitem,
   d_print_done();
 
   g_snprintf(mainw->set_name,128,"%s",new_set);
-  on_load_set_ok(NULL,GINT_TO_POINTER(FALSE));
+  on_load_set_ok(NULL,LIVES_INT_TO_POINTER(FALSE));
   g_free(new_set);
 }
 
@@ -4472,10 +4472,10 @@ boolean prevclip_callback (LiVESAccelGroup *group, LiVESObject *obj, uint32_t ke
   num_clips=g_list_length(mainw->cliplist);
 
   if (type==2||(mainw->active_sa_clips==SCREEN_AREA_BACKGROUND&&mainw->playing_file>0&&type!=1)) {
-    list_index=g_list_find (mainw->cliplist, GINT_TO_POINTER (mainw->blend_file));
+    list_index=g_list_find (mainw->cliplist, LIVES_INT_TO_POINTER (mainw->blend_file));
   }
   else {
-    list_index=g_list_find (mainw->cliplist, GINT_TO_POINTER (mainw->current_file));
+    list_index=g_list_find (mainw->cliplist, LIVES_INT_TO_POINTER (mainw->current_file));
   }
   do {
     if (num_tried++==num_clips) return TRUE; // we might have only audio clips, and then we will block here
@@ -4506,10 +4506,10 @@ boolean nextclip_callback (LiVESAccelGroup *group, LiVESObject *obj, uint32_t ke
   if (user_data!=NULL) type=GPOINTER_TO_INT(user_data);
 
   if (type==2||(mainw->active_sa_clips==SCREEN_AREA_BACKGROUND&&mainw->playing_file>0&&type!=1)) {
-    list_index=g_list_find (mainw->cliplist, GINT_TO_POINTER (mainw->blend_file));
+    list_index=g_list_find (mainw->cliplist, LIVES_INT_TO_POINTER (mainw->blend_file));
   }
   else {
-    list_index=g_list_find (mainw->cliplist, GINT_TO_POINTER (mainw->current_file));
+    list_index=g_list_find (mainw->cliplist, LIVES_INT_TO_POINTER (mainw->current_file));
   }
 
   num_clips=g_list_length(mainw->cliplist);
@@ -8609,7 +8609,7 @@ void popup_lmap_errors(LiVESMenuItem *menuitem, gpointer user_data) {
 
   lives_signal_connect (LIVES_GUI_OBJECT (textwindow->clear_button), LIVES_WIDGET_CLICKED_EVENT,
 		    LIVES_GUI_CALLBACK (on_lerrors_clear_clicked),
-		    GINT_TO_POINTER(FALSE));
+		    LIVES_INT_TO_POINTER(FALSE));
 
   lives_container_set_border_width (LIVES_CONTAINER (textwindow->clear_button), widget_opts.border_width);
   lives_widget_set_can_focus_and_default (textwindow->clear_button);
@@ -8682,7 +8682,7 @@ void on_toy_activate  (LiVESMenuItem *menuitem, gpointer user_data) {
 
   if (menuitem!=NULL&&mainw->toy_type==GPOINTER_TO_INT(user_data)) {
     // switch is off
-    user_data=GINT_TO_POINTER(LIVES_TOY_NONE);
+    user_data=LIVES_INT_TO_POINTER(LIVES_TOY_NONE);
   }
 
   switch (mainw->toy_type) {
@@ -8698,7 +8698,7 @@ void on_toy_activate  (LiVESMenuItem *menuitem, gpointer user_data) {
 
     // switch off rte so as not to cause alarm
     if (mainw->autolives_reset_fx) 
-      rte_on_off_callback(NULL,NULL,0,(LiVESXModifierType)0,GINT_TO_POINTER(0));
+      rte_on_off_callback(NULL,NULL,0,(LiVESXModifierType)0,LIVES_INT_TO_POINTER(0));
     mainw->autolives_reset_fx=FALSE;
     break;
 
@@ -8753,7 +8753,7 @@ void on_toy_activate  (LiVESMenuItem *menuitem, gpointer user_data) {
 	) {
       // ignore if doing something more important
     
-      on_toy_activate(NULL, GINT_TO_POINTER(LIVES_TOY_NONE));
+      on_toy_activate(NULL, LIVES_INT_TO_POINTER(LIVES_TOY_NONE));
       return;
     }
 
@@ -8764,7 +8764,7 @@ void on_toy_activate  (LiVESMenuItem *menuitem, gpointer user_data) {
       if (strlen(string)) capable->has_autolives=TRUE;
       else {
 	do_no_autolives_error();
-	on_toy_activate(NULL, GINT_TO_POINTER(LIVES_TOY_NONE));
+	on_toy_activate(NULL, LIVES_INT_TO_POINTER(LIVES_TOY_NONE));
 	return;
       }
     }
@@ -8774,14 +8774,14 @@ void on_toy_activate  (LiVESMenuItem *menuitem, gpointer user_data) {
     if (!prefs->osc_udp_started) {
       if (!lives_ask_permission(LIVES_PERM_OSC_PORTS)) {
 	// permission not given
-	on_toy_activate(NULL, GINT_TO_POINTER(LIVES_TOY_NONE));
+	on_toy_activate(NULL, LIVES_INT_TO_POINTER(LIVES_TOY_NONE));
 	return;
       }
 
       // try: start up osc
       prefs->osc_udp_started=lives_osc_init(prefs->osc_udp_port);
       if (!prefs->osc_udp_started) {
-	on_toy_activate(NULL, GINT_TO_POINTER(LIVES_TOY_NONE));
+	on_toy_activate(NULL, LIVES_INT_TO_POINTER(LIVES_TOY_NONE));
 	return;
       }
     }
@@ -9750,13 +9750,13 @@ boolean on_mouse_scroll (LiVESWidget *widget, LiVESXEventScroll *event, gpointer
     return FALSE;
   }
 
-  kstate=event->state;
+  kstate=(LiVESXModifierType)event->state;
 
   if (kstate==LIVES_SHIFT_MASK) type=2; // bg
   else if (kstate==LIVES_CONTROL_MASK) type=0; // fg or bg
 
-  if (event->direction==LIVES_SCROLL_UP) prevclip_callback(NULL,NULL,0,(LiVESXModifierType)0,GINT_TO_POINTER(type));
-  else if (event->direction==LIVES_SCROLL_DOWN) nextclip_callback(NULL,NULL,0,(LiVESXModifierType)0,GINT_TO_POINTER(type));
+  if (event->direction==LIVES_SCROLL_UP) prevclip_callback(NULL,NULL,0,(LiVESXModifierType)0,LIVES_INT_TO_POINTER(type));
+  else if (event->direction==LIVES_SCROLL_DOWN) nextclip_callback(NULL,NULL,0,(LiVESXModifierType)0,LIVES_INT_TO_POINTER(type));
   return FALSE;
 }
 
@@ -10061,7 +10061,7 @@ boolean frame_context (LiVESWidget *widget, LiVESXEventButton *event, gpointer w
     save_frame_as = lives_menu_item_new_with_mnemonic (_("_Save frame as..."));
     lives_signal_connect (LIVES_GUI_OBJECT (save_frame_as), LIVES_WIDGET_ACTIVATE_EVENT,
 		      LIVES_GUI_CALLBACK (save_frame),
-		      GINT_TO_POINTER(frame));
+		      LIVES_INT_TO_POINTER(frame));
     
 
     if (capable->has_convert&&capable->has_composite)
@@ -11874,7 +11874,7 @@ void on_lerrors_delete_clicked (LiVESButton *button, gpointer user_data) {
 
   g_free(msg);
   remove_layout_files(mainw->affected_layouts_map);
-  on_lerrors_clear_clicked(button,GINT_TO_POINTER(TRUE));
+  on_lerrors_clear_clicked(button,LIVES_INT_TO_POINTER(TRUE));
 }
 
 

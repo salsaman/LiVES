@@ -116,7 +116,7 @@ static void start_preview (LiVESButton *button, lives_rfx_t *rfx) {
 void framedraw_connect_spinbutton(lives_special_framedraw_rect_t *framedraw, lives_rfx_t *rfx) {
   framedraw->rfx=rfx;
 
-  lives_signal_connect_after (LIVES_GUI_OBJECT (mainw->framedraw_spinbutton), "value_changed",
+  lives_signal_connect_after (LIVES_GUI_OBJECT (mainw->framedraw_spinbutton), LIVES_WIDGET_VALUE_CHANGED_EVENT,
 			  LIVES_GUI_CALLBACK (after_framedraw_frame_spinbutton_changed),
 			  framedraw);
 
@@ -273,7 +273,7 @@ void widget_add_framedraw (LiVESVBox *box, int start, int end, boolean add_previ
   lives_box_pack_start (LIVES_BOX (hbox), mainw->framedraw_scale, TRUE, TRUE, 0);
   gtk_scale_set_draw_value(GTK_SCALE(mainw->framedraw_scale),FALSE);
 
-  rfx=(lives_rfx_t *)g_object_get_data(G_OBJECT(lives_widget_get_toplevel(LIVES_WIDGET(box))),"rfx");
+  rfx=(lives_rfx_t *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(lives_widget_get_toplevel(LIVES_WIDGET(box))),"rfx");
   mainw->framedraw_preview = lives_button_new_from_stock (LIVES_STOCK_REFRESH);
   lives_button_set_label (LIVES_BUTTON (mainw->framedraw_preview),_ ("_Preview"));
   lives_button_set_use_underline (LIVES_BUTTON (mainw->framedraw_preview), TRUE);
@@ -822,7 +822,7 @@ boolean on_framedraw_mouse_start (LiVESWidget *widget, LiVESXEventButton *event,
 
   if (framedraw==NULL&&mainw->multitrack!=NULL&&event->button==3) {
     // right click brings up context menu
-    frame_context(widget,event,GINT_TO_POINTER(0));
+    frame_context(widget,event,LIVES_INT_TO_POINTER(0));
   }
 
   if (event->button!=1) return FALSE;

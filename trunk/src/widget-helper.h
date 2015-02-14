@@ -538,7 +538,7 @@ boolean lives_table_attach(LiVESTable *, LiVESWidget *child, uint32_t left, uint
 			   uint32_t top, uint32_t bottom, LiVESAttachOptions xoptions, LiVESAttachOptions yoptions,
 			   uint32_t xpad, uint32_t ypad);
 
-
+#if LIVES_TABLE_IS_GRID
 LiVESWidget *lives_grid_new(void);
 boolean lives_grid_set_row_spacing(LiVESGrid *, uint32_t spacing);
 boolean lives_grid_set_column_spacing(LiVESGrid *, uint32_t spacing);
@@ -547,6 +547,7 @@ boolean lives_grid_attach_next_to(LiVESGrid *, LiVESWidget *child, LiVESWidget *
 
 boolean lives_grid_insert_row(LiVESGrid *, int posn);
 boolean lives_grid_remove_row(LiVESGrid *, int posn);
+#endif
 
 LiVESWidget *lives_frame_new(const char *label);
 boolean lives_frame_set_label(LiVESFrame *, const char *label);
@@ -625,8 +626,8 @@ boolean lives_widget_add_accelerator(LiVESWidget *, const char *accel_signal, Li
 
 boolean lives_widget_get_pointer(LiVESXDevice *, LiVESWidget *, int *x, int *y);
 LiVESXWindow *lives_display_get_window_at_pointer (LiVESXDevice *, LiVESXDisplay *, int *win_x, int *win_y);
-void lives_display_get_pointer (LiVESXDevice *, LiVESXDisplay *, LiVESXScreen **, int *x, int *y, LiVESXModifierType *mask);
-void lives_display_warp_pointer (LiVESXDevice *, LiVESXDisplay *, LiVESXScreen *, int x, int y);
+boolean lives_display_get_pointer (LiVESXDevice *, LiVESXDisplay *, LiVESXScreen **, int *x, int *y, LiVESXModifierType *mask);
+boolean lives_display_warp_pointer (LiVESXDevice *, LiVESXDisplay *, LiVESXScreen *, int x, int y);
 
 LiVESXDisplay *lives_widget_get_display(LiVESWidget *);
 lives_display_t lives_widget_get_display_type(LiVESWidget *);

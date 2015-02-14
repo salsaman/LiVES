@@ -4243,10 +4243,10 @@ void lives_osc_cb_rte_setparam(void *context, int arglen, const void *vargs, OSC
   }
 
   if (fx_dialog[1]!=NULL) {
-    lives_rfx_t *rfx=(lives_rfx_t *)g_object_get_data(G_OBJECT(fx_dialog[1]),"rfx");
+    lives_rfx_t *rfx=(lives_rfx_t *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(fx_dialog[1]),"rfx");
     if (!rfx->is_template) {
-      int keyw=GPOINTER_TO_INT (g_object_get_data (G_OBJECT (fx_dialog[1]),"key"));
-      int modew=GPOINTER_TO_INT (g_object_get_data (G_OBJECT (fx_dialog[1]),"mode"));
+      int keyw=GPOINTER_TO_INT (lives_widget_object_get_data (LIVES_WIDGET_OBJECT (fx_dialog[1]),"key"));
+      int modew=GPOINTER_TO_INT (lives_widget_object_get_data (LIVES_WIDGET_OBJECT (fx_dialog[1]),"mode"));
       if (keyw==effect_key&&modew==rte_key_getmode(effect_key))
 	mainw->vrfx_update=rfx;
     }

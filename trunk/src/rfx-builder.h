@@ -1,6 +1,6 @@
 // rfx-builder.h
 // LiVES
-// (c) G. Finch 2004 - 2014 <salsaman@gmail.com>
+// (c) G. Finch 2004 - 2015 <salsaman@gmail.com>
 // released under the GNU GPL 3 or later
 // see file ../COPYING or www.gnu.org for licensing details
 
@@ -23,18 +23,18 @@
 #define MAXFLOATLEN 11
 
 /// length in chars of G_MAXINT (for display only)
-#define MAXINTLEN strlen(g_strdup_printf("%d",G_MAXINT))
+#define MAXINTLEN strlen(lives_strdup_printf("%d",LIVES_MAXINT))
 
 // advanced menu entries
-void on_new_rfx_activate (LiVESMenuItem *, gpointer status);
-void on_edit_rfx_activate (LiVESMenuItem *, gpointer status);
-void on_copy_rfx_activate (LiVESMenuItem *, gpointer);
-void on_rename_rfx_activate (LiVESMenuItem *, gpointer);
-void on_delete_rfx_activate (LiVESMenuItem *, gpointer status);
-void on_rebuild_rfx_activate (LiVESMenuItem *, gpointer);
-void on_promote_rfx_activate (LiVESMenuItem *, gpointer);
-void on_import_rfx_activate (LiVESMenuItem *, gpointer status);
-void on_export_rfx_activate (LiVESMenuItem *, gpointer status);
+void on_new_rfx_activate (LiVESMenuItem *, livespointer status);
+void on_edit_rfx_activate (LiVESMenuItem *, livespointer status);
+void on_copy_rfx_activate (LiVESMenuItem *, livespointer);
+void on_rename_rfx_activate (LiVESMenuItem *, livespointer);
+void on_delete_rfx_activate (LiVESMenuItem *, livespointer status);
+void on_rebuild_rfx_activate (LiVESMenuItem *, livespointer);
+void on_promote_rfx_activate (LiVESMenuItem *, livespointer);
+void on_import_rfx_activate (LiVESMenuItem *, livespointer status);
+void on_export_rfx_activate (LiVESMenuItem *, livespointer status);
 
 // the builder window
 
@@ -60,7 +60,7 @@ void on_export_rfx_activate (LiVESMenuItem *, gpointer status);
 #define RFXBUILD_MAX_DP 16
 typedef struct {
   int when;
-  gchar *code;
+  char *code;
 } rfx_trigger_t;
 
 
@@ -178,13 +178,13 @@ typedef struct {
 
   uint32_t props;
 
-  gchar *pre_code;
-  gchar *loop_code;
-  gchar *post_code;
+  char *pre_code;
+  char *loop_code;
+  char *post_code;
 
   int edit_param;
 
-  gchar *reqs[RFXBUILD_MAX_REQ];
+  char *reqs[RFXBUILD_MAX_REQ];
   int num_reqs;
   int onum_reqs;
 
@@ -193,7 +193,7 @@ typedef struct {
   int num_params; ///< upper limit is RFXBUILD_MAX_PARAMS-1
   int onum_params;
 
-  gchar *paramw_hints[RFXBUILD_MAX_PARAMS];
+  char *paramw_hints[RFXBUILD_MAX_PARAMS];
   int num_paramw_hints;  ///< upper limit is RFXBUILD_MAX_PARAMW_HINTS-1
   int onum_paramw_hints;
 
@@ -204,45 +204,45 @@ typedef struct {
 
   boolean has_init_trigger;
 
-  gchar *field_delim;
+  char *field_delim;
 
   lives_rfx_builder_mode_t mode;
 
   int table_swap_row1;
   int table_swap_row2;
 
-  gchar *script_name;
-  gchar *oname;
+  char *script_name;
+  char *oname;
 
   gulong min_spin_f;
   gulong max_spin_f;
   gulong def_spin_f;
   gulong step_spin_f;
 
-  gchar *rfx_version;
+  char *rfx_version;
   int plugin_version;
 
 } rfx_build_window_t;
 
 // builder window widgets/callbacks
-rfx_build_window_t *make_rfx_build_window (const gchar *in_script_name, lives_rfx_status_t in_status);
-void on_rfxbuilder_ok (LiVESButton *, gpointer);
-void on_rfxbuilder_cancel (LiVESButton *, gpointer);
+rfx_build_window_t *make_rfx_build_window (const char *in_script_name, lives_rfx_status_t in_status);
+void on_rfxbuilder_ok (LiVESButton *, livespointer);
+void on_rfxbuilder_cancel (LiVESButton *, livespointer);
 void rfxbuilder_destroy (rfx_build_window_t *);
-void on_list_table_clicked (LiVESButton *, gpointer rfxbuilder);
-void on_requirements_ok (LiVESButton *, gpointer rfxbuilder);
-void on_requirements_cancel (LiVESButton *, gpointer);
-void on_properties_clicked (LiVESButton *, gpointer rfxbuilder);
-void on_properties_ok (LiVESButton *, gpointer rfxbuilder);
-void on_params_ok (LiVESButton *, gpointer rfxbuilder);
-void on_params_cancel (LiVESButton *, gpointer);
-void on_param_window_ok (LiVESButton *, gpointer rfxbuilder);
-void on_param_window_cancel (LiVESButton *, gpointer);
-void on_code_clicked (LiVESButton *, gpointer rfxbuilder);
-void on_code_ok (LiVESButton *, gpointer rfxbuilder);
-void on_code_cancel (LiVESButton *, gpointer);
-void on_triggers_ok (LiVESButton *, gpointer rfxbuilder);
-void on_triggers_cancel (LiVESButton *, gpointer);
+void on_list_table_clicked (LiVESButton *, livespointer rfxbuilder);
+void on_requirements_ok (LiVESButton *, livespointer rfxbuilder);
+void on_requirements_cancel (LiVESButton *, livespointer);
+void on_properties_clicked (LiVESButton *, livespointer rfxbuilder);
+void on_properties_ok (LiVESButton *, livespointer rfxbuilder);
+void on_params_ok (LiVESButton *, livespointer rfxbuilder);
+void on_params_cancel (LiVESButton *, livespointer);
+void on_param_window_ok (LiVESButton *, livespointer rfxbuilder);
+void on_param_window_cancel (LiVESButton *, livespointer);
+void on_code_clicked (LiVESButton *, livespointer rfxbuilder);
+void on_code_ok (LiVESButton *, livespointer rfxbuilder);
+void on_code_cancel (LiVESButton *, livespointer);
+void on_triggers_ok (LiVESButton *, livespointer rfxbuilder);
+void on_triggers_cancel (LiVESButton *, livespointer);
 
 
 
@@ -251,36 +251,36 @@ LiVESWidget * make_param_dialog (int pnum, rfx_build_window_t *rfxbuilder);
 LiVESWidget * make_param_window_dialog (int hnum, rfx_build_window_t *rfxbuilder);
 LiVESWidget * make_trigger_dialog (int tnum, rfx_build_window_t *rfxbuilder);
 
-void on_table_add_row (LiVESButton *, gpointer rfxbuilder);
-void on_table_edit_row (LiVESButton *, gpointer rfxbuilder);
-void on_table_swap_row (LiVESButton *, gpointer rfxbuilder);
-void on_table_delete_row (LiVESButton *, gpointer rfxbuilder);
+void on_table_add_row (LiVESButton *, livespointer rfxbuilder);
+void on_table_edit_row (LiVESButton *, livespointer rfxbuilder);
+void on_table_swap_row (LiVESButton *, livespointer rfxbuilder);
+void on_table_delete_row (LiVESButton *, livespointer rfxbuilder);
 
 void param_set_from_dialog (lives_param_t *copy_param, rfx_build_window_t *rfxbuilder);
 
-void after_param_dp_changed (LiVESSpinButton *, gpointer rfxbuilder);
-void after_param_min_changed (LiVESSpinButton *, gpointer rfxbuilder);
-void after_param_max_changed (LiVESSpinButton *, gpointer rfxbuilder);
-void after_param_def_changed (LiVESSpinButton *, gpointer rfxbuilder);
-void after_rfxbuilder_type_toggled (LiVESToggleButton *, gpointer rfxbuilder);
-void on_param_type_changed (LiVESCombo *, gpointer rfxbuilder);
-void on_paramw_kw_changed (LiVESCombo *, gpointer rfxbuilder);
-void on_paramw_sp_changed (LiVESCombo *, gpointer rfxbuilder);
-void on_paramw_spsub_changed (LiVESCombo *, gpointer rfxbuilder);
+void after_param_dp_changed (LiVESSpinButton *, livespointer rfxbuilder);
+void after_param_min_changed (LiVESSpinButton *, livespointer rfxbuilder);
+void after_param_max_changed (LiVESSpinButton *, livespointer rfxbuilder);
+void after_param_def_changed (LiVESSpinButton *, livespointer rfxbuilder);
+void after_rfxbuilder_type_toggled (LiVESToggleButton *, livespointer rfxbuilder);
+void on_param_type_changed (LiVESCombo *, livespointer rfxbuilder);
+void on_paramw_kw_changed (LiVESCombo *, livespointer rfxbuilder);
+void on_paramw_sp_changed (LiVESCombo *, livespointer rfxbuilder);
+void on_paramw_spsub_changed (LiVESCombo *, livespointer rfxbuilder);
 void populate_script_combo(LiVESCombo *script_combo, lives_rfx_status_t status);
-void on_script_status_changed (LiVESCombo *status_combo, gpointer script_combo);
+void on_script_status_changed (LiVESCombo *status_combo, livespointer script_combo);
 
 // fileselectors
-void on_export_rfx_ok (LiVESButton *, gchar *script_name);
-void on_import_rfx_ok (LiVESButton *, gpointer status);
+void on_export_rfx_ok (LiVESButton *, char *script_name);
+void on_import_rfx_ok (LiVESButton *, livespointer status);
 
 /// add dynamic menu entries
 void add_rfx_effects(void);
 
 // utility functions
-gchar *prompt_for_script_name (const gchar *sname, lives_rfx_status_t status);
+char *prompt_for_script_name (const char *sname, lives_rfx_status_t status);
 boolean check_builder_programs (void);
-GList *get_script_list (short status);
+LiVESList *get_script_list (short status);
 
 boolean perform_rfxbuilder_checks (rfx_build_window_t *);
 boolean perform_param_checks (rfx_build_window_t *, int index, int rows);
@@ -288,8 +288,8 @@ boolean perform_param_checks (rfx_build_window_t *, int index, int rows);
 
 // read/write script files
 boolean rfxbuilder_to_script (rfx_build_window_t *);
-boolean script_to_rfxbuilder (rfx_build_window_t *, const gchar *script_file);
+boolean script_to_rfxbuilder (rfx_build_window_t *, const char *script_file);
 
-GList *get_script_section (const gchar *section, const gchar *script_file, boolean strip);
+LiVESList *get_script_section (const char *section, const char *script_file, boolean strip);
 
 #endif // HAS_LIVES_RFX_BUILDER_H

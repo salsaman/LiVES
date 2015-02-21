@@ -43,7 +43,7 @@ static void handle_omc_events(void) {
       gchar *string=js_mangle();
       if (string!=NULL) {
 	omc_process_string(OMC_JS,string,FALSE,NULL);
-	g_free(string);
+	lives_free(string);
 	string=NULL;
       }
     }
@@ -61,7 +61,7 @@ static void handle_omc_events(void) {
 	  gchar *string=midi_mangle();
 	  if (string!=NULL) {
 	    omc_process_string(OMC_MIDI,string,FALSE,NULL);
-	    g_free(string);
+	    lives_free(string);
 	    string=NULL;
 #ifdef ALSA_MIDI
 	    if (prefs->use_alsa_midi) gotone=TRUE;
@@ -77,7 +77,7 @@ static void handle_omc_events(void) {
 #endif
 
 
-boolean ext_triggers_poll(gpointer data) {
+boolean ext_triggers_poll(livespointer data) {
 
   if (mainw->is_exiting) return FALSE;
 
@@ -112,11 +112,14 @@ boolean ext_triggers_poll(gpointer data) {
 }
 
 
+#define LIVES_XEVENT_TYPE_KEYPRESS 2
+#define LIVES_XEVENT_TYPE_KEYRELEASE 3
 
-
-GdkFilterReturn filter_func(GdkXEvent *xevent, GdkEvent *event, gpointer data) {
+#if defined HAVE_X11 || defined IS_MINGW 
+LiVESFilterReturn filter_func(LiVESXXEvent *xevent, LiVESXEvent *event, livespointer data) {
   // filter events at X11 level and act on key press/release
   uint32_t modifiers=0;
+  uint32_t key;
 
 #ifndef IS_MINGW
   // seems to broken in some cases - X does not send keypress/keyrelease events
@@ -125,14 +128,18 @@ GdkFilterReturn filter_func(GdkXEvent *xevent, GdkEvent *event, gpointer data) {
 
   //g_print("t is %d\n",xev->type);
 
-  if (xev->type<2||xev->type>3) return GDK_FILTER_CONTINUE;
-  modifiers = (gtk_accelerator_get_default_mod_mask() & xev->xkey.state)|NEEDS_TRANSLATION;
+  if (xev->type != LIVES_XEVENT_TYPE_KEYPRESS && xev->type != LIVES_XEVENT_TYPE_KEYRELEASE) return LIVES_FILTER_CONTINUE;
+
+  key = xev->xkey.state;
+  modifiers = xev->xkey.state;
+
+  modifiers = (lives_accelerator_get_default_mod_mask() & modifiers)|NEEDS_TRANSLATION;
 
   // key down
-  if (xev->type==2) return pl_key_function(TRUE,xev->xkey.keycode,modifiers)?GDK_FILTER_REMOVE:GDK_FILTER_CONTINUE;
+  if (xev->type==LIVES_XEVENT_TYPE_KEYPRESS) return pl_key_function(TRUE,key,modifiers)?LIVES_FILTER_REMOVE:LIVES_FILTER_CONTINUE;
 
   // key up
-  return pl_key_function(FALSE,xev->xkey.keycode,modifiers)?GDK_FILTER_REMOVE:GDK_FILTER_CONTINUE;
+  return pl_key_function(FALSE,key,modifiers)?LIVES_FILTER_REMOVE:LIVES_FILTER_CONTINUE;
 #else
   // windows uses MSGs
   PMSG msg=(PMSG)xevent;
@@ -140,7 +147,7 @@ GdkFilterReturn filter_func(GdkXEvent *xevent, GdkEvent *event, gpointer data) {
 
 #define KEY_DOWN(vk_code) ((GetAsyncKeyState(vk_code) & 0x8000) ? 1 : 0)
 
-  if (msg->message!=WM_KEYDOWN && msg->message!=WM_KEYUP) return GDK_FILTER_CONTINUE;
+  if (msg->message!=WM_KEYDOWN && msg->message!=WM_KEYUP) return LIVES_FILTER_CONTINUE;
 
   if (KEY_DOWN(VK_CONTROL))
     modifiers |= LIVES_CONTROL_MASK;
@@ -162,17 +169,21 @@ GdkFilterReturn filter_func(GdkXEvent *xevent, GdkEvent *event, gpointer data) {
   }
   
   if (msg->message==WM_KEYDOWN) return pl_key_function(TRUE,key,modifiers)?
-				  GDK_FILTER_REMOVE:GDK_FILTER_CONTINUE;
+				  LIVES_FILTER_REMOVE:LIVES_FILTER_CONTINUE;
 
-  return pl_key_function(FALSE,key,modifiers)?GDK_FILTER_REMOVE:GDK_FILTER_CONTINUE;
+  return pl_key_function(FALSE,key,modifiers)?LIVES_FILTER_REMOVE:LIVES_FILTER_CONTINUE;
 
 #endif
 
-  return GDK_FILTER_CONTINUE;
+  return LIVES_FILTER_CONTINUE;
 }
 
 
+bool nevfilter::nativeEventFilter(const QByteArray & eventType, livespointer message, long *result)  Q_DECL_OVERRIDE {
+  return filter_func(message, NULL, NULL);
+}
 
+#endif
 
 boolean plugin_poll_keyboard (void) {
   static int last_kb_time=0,current_kb_time;
@@ -301,10 +312,10 @@ boolean pl_key_function (boolean down, uint16_t unicode, uint16_t keymod) {
       char *cval=weed_get_string_value(mainw->rte_textparm,"value",&error);
       if (unicode==8&&strlen(cval)>0) { 
 	memset(cval+strlen(cval)-1,0,1); // delete 1 char
-	nval=g_strdup(cval);
+	nval=lives_strdup(cval);
       }
-      else nval=g_strdup_printf("%s%c",cval,(unsigned char)unicode); // append 1 char
-      weed_free(cval);
+      else nval=lives_strdup_printf("%s%c",cval,(unsigned char)unicode); // append 1 char
+      lives_free(cval);
       weed_set_string_value(mainw->rte_textparm,"value",nval);
       inst=weed_get_plantptr_value(mainw->rte_textparm,"host_instance",&error);
       param_number=weed_get_int_value(mainw->rte_textparm,"host_idx",&error);
@@ -314,7 +325,7 @@ boolean pl_key_function (boolean down, uint16_t unicode, uint16_t keymod) {
 	rec_param_change(inst,param_number);
 	if (copyto!=-1) rec_param_change(inst,copyto);
       }
-      g_free(nval);
+      lives_free(nval);
       return TRUE;
     }
   }
@@ -335,81 +346,81 @@ boolean pl_key_function (boolean down, uint16_t unicode, uint16_t keymod) {
 // key callback functions - ones which have keys and need wrappers
 
 
-boolean slower_callback (LiVESAccelGroup *group, LiVESObject *obj, uint32_t keyval, LiVESXModifierType mod, gpointer user_data) {
+boolean slower_callback (LiVESAccelGroup *group, LiVESObject *obj, uint32_t keyval, LiVESXModifierType mod, livespointer user_data) {
   
   on_slower_pressed (NULL,user_data);
   return TRUE;
 }
 
-boolean faster_callback (LiVESAccelGroup *group, LiVESObject *obj, uint32_t keyval, LiVESXModifierType mod, gpointer user_data) {
+boolean faster_callback (LiVESAccelGroup *group, LiVESObject *obj, uint32_t keyval, LiVESXModifierType mod, livespointer user_data) {
   
   on_faster_pressed (NULL,user_data);
   return TRUE;
 }
 
-boolean skip_back_callback (LiVESAccelGroup *group, LiVESObject *obj, uint32_t keyval, LiVESXModifierType mod, gpointer user_data) {
+boolean skip_back_callback (LiVESAccelGroup *group, LiVESObject *obj, uint32_t keyval, LiVESXModifierType mod, livespointer user_data) {
   
   on_back_pressed (NULL,user_data);
   return TRUE;
 }
 
-boolean skip_forward_callback (LiVESAccelGroup *group, LiVESObject *obj, uint32_t keyval, LiVESXModifierType mod, gpointer user_data) {
+boolean skip_forward_callback (LiVESAccelGroup *group, LiVESObject *obj, uint32_t keyval, LiVESXModifierType mod, livespointer user_data) {
   
   on_forward_pressed (NULL,user_data);
   return TRUE;
 }
 
-boolean stop_callback (LiVESAccelGroup *group, LiVESObject *obj, uint32_t keyval, LiVESXModifierType mod, gpointer user_data) {
+boolean stop_callback (LiVESAccelGroup *group, LiVESObject *obj, uint32_t keyval, LiVESXModifierType mod, livespointer user_data) {
   on_stop_activate (NULL,NULL);
   return TRUE;
 }
 
-boolean fullscreen_callback (LiVESAccelGroup *group, LiVESObject *obj, uint32_t keyval, LiVESXModifierType mod, gpointer user_data) {
+boolean fullscreen_callback (LiVESAccelGroup *group, LiVESObject *obj, uint32_t keyval, LiVESXModifierType mod, livespointer user_data) {
   on_full_screen_pressed (NULL,NULL);
   return TRUE;
 }
 
-boolean sepwin_callback (LiVESAccelGroup *group, LiVESObject *obj, uint32_t keyval, LiVESXModifierType mod, gpointer user_data) {
+boolean sepwin_callback (LiVESAccelGroup *group, LiVESObject *obj, uint32_t keyval, LiVESXModifierType mod, livespointer user_data) {
   on_sepwin_pressed (NULL,NULL);
   return TRUE;
 }
 
-boolean loop_cont_callback (LiVESAccelGroup *group, LiVESObject *obj, uint32_t keyval, LiVESXModifierType mod, gpointer user_data) {
+boolean loop_cont_callback (LiVESAccelGroup *group, LiVESObject *obj, uint32_t keyval, LiVESXModifierType mod, livespointer user_data) {
   on_loop_button_activate (NULL,NULL);
   return TRUE;
 }
 
-boolean ping_pong_callback (LiVESAccelGroup *group, LiVESObject *obj, uint32_t keyval, LiVESXModifierType mod, gpointer user_data) {
+boolean ping_pong_callback (LiVESAccelGroup *group, LiVESObject *obj, uint32_t keyval, LiVESXModifierType mod, livespointer user_data) {
   on_ping_pong_activate (NULL,NULL);
   return TRUE;
 }
 
-boolean fade_callback (LiVESAccelGroup *group, LiVESObject *obj, uint32_t keyval, LiVESXModifierType mod, gpointer user_data) {
+boolean fade_callback (LiVESAccelGroup *group, LiVESObject *obj, uint32_t keyval, LiVESXModifierType mod, livespointer user_data) {
   on_fade_pressed (NULL,NULL);
   return TRUE;
 }
 
-boolean showfct_callback (LiVESAccelGroup *group, LiVESObject *obj, uint32_t keyval, LiVESXModifierType mod, gpointer user_data) {
+boolean showfct_callback (LiVESAccelGroup *group, LiVESObject *obj, uint32_t keyval, LiVESXModifierType mod, livespointer user_data) {
   lives_check_menu_item_set_active(LIVES_CHECK_MENU_ITEM(mainw->showfct),!prefs->show_framecount);
   return TRUE;
 }
 
-boolean showsubs_callback (LiVESAccelGroup *group, LiVESObject *obj, uint32_t keyval, LiVESXModifierType mod, gpointer user_data) {
+boolean showsubs_callback (LiVESAccelGroup *group, LiVESObject *obj, uint32_t keyval, LiVESXModifierType mod, livespointer user_data) {
   lives_check_menu_item_set_active(LIVES_CHECK_MENU_ITEM(mainw->showsubs),!prefs->show_subtitles);
   return TRUE;
 }
 
-boolean loop_callback (LiVESAccelGroup *group, LiVESObject *obj, uint32_t keyval, LiVESXModifierType mod, gpointer user_data) {
+boolean loop_callback (LiVESAccelGroup *group, LiVESObject *obj, uint32_t keyval, LiVESXModifierType mod, livespointer user_data) {
   lives_check_menu_item_set_active(LIVES_CHECK_MENU_ITEM(mainw->loop_video),!mainw->loop);
   return TRUE;
 }
 
-boolean dblsize_callback (LiVESAccelGroup *group, LiVESObject *obj, uint32_t keyval, LiVESXModifierType mod, gpointer user_data) {
+boolean dblsize_callback (LiVESAccelGroup *group, LiVESObject *obj, uint32_t keyval, LiVESXModifierType mod, livespointer user_data) {
   on_double_size_pressed (NULL,NULL);
   return TRUE;
 }
 
-boolean rec_callback (LiVESAccelGroup *group, LiVESObject *obj, uint32_t keyval, LiVESXModifierType mod, gpointer user_data) {
+boolean rec_callback (LiVESAccelGroup *group, LiVESObject *obj, uint32_t keyval, LiVESXModifierType mod, livespointer user_data) {
   lives_check_menu_item_set_active(LIVES_CHECK_MENU_ITEM(mainw->record_perf),!lives_check_menu_item_get_active (LIVES_CHECK_MENU_ITEM (mainw->record_perf)));
   return TRUE;
 }

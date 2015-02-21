@@ -24,7 +24,7 @@ struct _dvgrabw *create_camwindow (s_cam *cam, int type) {
 
   gchar *tmp;
 
-  struct _dvgrabw * dvgrabw=(struct _dvgrabw *)g_malloc(sizeof(struct _dvgrabw));
+  struct _dvgrabw * dvgrabw=(struct _dvgrabw *)lives_malloc(sizeof(struct _dvgrabw));
 
   dvgrabw->filename=NULL;
 
@@ -51,13 +51,13 @@ struct _dvgrabw *create_camwindow (s_cam *cam, int type) {
 
   lives_box_pack_start(LIVES_BOX(hbox),buttond,FALSE,FALSE,widget_opts.packing_width);
 
-  direntry=lives_standard_entry_new(NULL,FALSE,(tmp=g_filename_to_utf8(g_get_current_dir(),-1,NULL,NULL,NULL)),-1,PATH_MAX,
+  direntry=lives_standard_entry_new(NULL,FALSE,(tmp=lives_filename_to_utf8(lives_get_current_dir(),-1,NULL,NULL,NULL)),-1,PATH_MAX,
 				    LIVES_BOX(hbox),NULL);
 
-  g_free(tmp);
+  lives_free(tmp);
 
 
-  lives_signal_connect(buttond, LIVES_WIDGET_CLICKED_EVENT, LIVES_GUI_CALLBACK (on_filesel_button_clicked), (gpointer)direntry);
+  lives_signal_connect(buttond, LIVES_WIDGET_CLICKED_EVENT, LIVES_GUI_CALLBACK (on_filesel_button_clicked), (livespointer)direntry);
 
 
   //////////////////
@@ -161,12 +161,12 @@ struct _dvgrabw *create_camwindow (s_cam *cam, int type) {
 
   //////////////////////////////////////////////////////////////////////////////////////////
 
-  lives_signal_connect (button3, LIVES_WIDGET_CLICKED_EVENT,LIVES_GUI_CALLBACK (on_camrew_clicked),(gpointer)cam);
-  lives_signal_connect (button4, LIVES_WIDGET_CLICKED_EVENT,LIVES_GUI_CALLBACK (on_camff_clicked),(gpointer)cam);
-  lives_signal_connect (dvgrabw->stop, LIVES_WIDGET_CLICKED_EVENT,LIVES_GUI_CALLBACK (on_camstop_clicked),(gpointer)cam);
-  lives_signal_connect (dvgrabw->play, LIVES_WIDGET_CLICKED_EVENT,LIVES_GUI_CALLBACK (on_camplay_clicked),(gpointer)cam);
-  lives_signal_connect (dvgrabw->grab, LIVES_WIDGET_CLICKED_EVENT,LIVES_GUI_CALLBACK (on_camgrab_clicked),(gpointer)cam);
-  lives_signal_connect (dvgrabw->quit, LIVES_WIDGET_CLICKED_EVENT,LIVES_GUI_CALLBACK (on_camquit_clicked),(gpointer)cam);
+  lives_signal_connect (button3, LIVES_WIDGET_CLICKED_EVENT,LIVES_GUI_CALLBACK (on_camrew_clicked),(livespointer)cam);
+  lives_signal_connect (button4, LIVES_WIDGET_CLICKED_EVENT,LIVES_GUI_CALLBACK (on_camff_clicked),(livespointer)cam);
+  lives_signal_connect (dvgrabw->stop, LIVES_WIDGET_CLICKED_EVENT,LIVES_GUI_CALLBACK (on_camstop_clicked),(livespointer)cam);
+  lives_signal_connect (dvgrabw->play, LIVES_WIDGET_CLICKED_EVENT,LIVES_GUI_CALLBACK (on_camplay_clicked),(livespointer)cam);
+  lives_signal_connect (dvgrabw->grab, LIVES_WIDGET_CLICKED_EVENT,LIVES_GUI_CALLBACK (on_camgrab_clicked),(livespointer)cam);
+  lives_signal_connect (dvgrabw->quit, LIVES_WIDGET_CLICKED_EVENT,LIVES_GUI_CALLBACK (on_camquit_clicked),(livespointer)cam);
 
 
   lives_widget_show_all(dvgrabw->dialog);

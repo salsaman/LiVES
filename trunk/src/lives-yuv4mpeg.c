@@ -38,7 +38,7 @@ static int yuvout,hsize_out,vsize_out;
 
 
 // lists of cards in use
-static GList *fw_cards=NULL;
+static LiVESList *fw_cards=NULL;
 
 
 static lives_yuv4m_t *lives_yuv4mpeg_alloc (void) {
@@ -153,7 +153,7 @@ static boolean lives_yuv_stream_start_read (lives_clip_t *sfile) {
 
     while (!lives_alarm_get(alarm_handle)&&!pthread_kill(y4thread,0)) {
       // wait for thread to complete or timeout
-      g_usleep(prefs->sleep_time);
+      lives_usleep(prefs->sleep_time);
       lives_widget_context_update();
     }
     
@@ -193,7 +193,7 @@ static boolean lives_yuv_stream_start_read (lives_clip_t *sfile) {
 
   while (!lives_alarm_get(alarm_handle)&&!pthread_kill(y4thread,0)) {
     // wait for thread to complete or timeout
-    g_usleep(prefs->sleep_time);
+    lives_usleep(prefs->sleep_time);
     lives_widget_context_update();
   }
 
@@ -213,8 +213,8 @@ static boolean lives_yuv_stream_start_read (lives_clip_t *sfile) {
 
   if (i != Y4M_OK) {
     gchar *tmp;
-    d_print ((tmp=g_strdup_printf ("yuv4mpeg: %s\n", y4m_strerr (i))));
-    g_free(tmp);
+    d_print ((tmp=lives_strdup_printf ("yuv4mpeg: %s\n", y4m_strerr (i))));
+    lives_free(tmp);
     return FALSE;
   }
 
@@ -223,11 +223,11 @@ static boolean lives_yuv_stream_start_read (lives_clip_t *sfile) {
   sfile->hsize = yuv4mpeg->hsize = y4m_si_get_width (&(yuv4mpeg->streaminfo));
   sfile->vsize = yuv4mpeg->vsize = y4m_si_get_height (&(yuv4mpeg->streaminfo));
 
-  sfile->fps=cfile->pb_fps=g_strtod (g_strdup_printf ("%.8f",Y4M_RATIO_DBL 
+  sfile->fps=cfile->pb_fps=lives_strtod (lives_strdup_printf ("%.8f",Y4M_RATIO_DBL 
 						      (y4m_si_get_framerate (&(yuv4mpeg->streaminfo)))),NULL);
 
   if(!(sfile->hsize*sfile->vsize)){
-      do_error_dialog (g_strdup_printf (_("Video dimensions: %d x %d are invalid. Stream cannot be opened"), 
+      do_error_dialog (lives_strdup_printf (_("Video dimensions: %d x %d are invalid. Stream cannot be opened"), 
 					sfile->hsize,sfile->vsize));
       return FALSE;
   }
@@ -236,9 +236,9 @@ static boolean lives_yuv_stream_start_read (lives_clip_t *sfile) {
     set_main_title(sfile->file_name,0);
   }
 
-  d_print ((tmp=g_strdup_printf(_ ("Reset clip values for %s: size=%dx%d fps=%.3f\n"),yuv4mpeg->name,
+  d_print ((tmp=lives_strdup_printf(_ ("Reset clip values for %s: size=%dx%d fps=%.3f\n"),yuv4mpeg->name,
 				cfile->hsize,yuv4mpeg->vsize,cfile->bpp,cfile->fps)));
-  g_free(tmp);
+  lives_free(tmp);
 
   yuv4mpeg->ready=TRUE;
 
@@ -257,13 +257,13 @@ void lives_yuv_stream_stop_read (lives_yuv4m_t *yuv4mpeg) {
 
   if (yuv4mpeg->filename!=NULL) {
     unlink(yuv4mpeg->filename);
-    g_free(yuv4mpeg->filename);
+    lives_free(yuv4mpeg->filename);
   }
 
-  if (yuv4mpeg->name!=NULL) g_free(yuv4mpeg->name);
+  if (yuv4mpeg->name!=NULL) lives_free(yuv4mpeg->name);
 
-  if (yuv4mpeg->type==YUV4_TYPE_FW) fw_cards=g_list_remove(fw_cards,LIVES_INT_TO_POINTER(yuv4mpeg->cardno));
-  if (yuv4mpeg->type==YUV4_TYPE_TV) mainw->videodevs=g_list_remove(mainw->videodevs,LIVES_INT_TO_POINTER(yuv4mpeg->cardno));
+  if (yuv4mpeg->type==YUV4_TYPE_FW) fw_cards=lives_list_remove(fw_cards,LIVES_INT_TO_POINTER(yuv4mpeg->cardno));
+  if (yuv4mpeg->type==YUV4_TYPE_TV) mainw->videodevs=lives_list_remove(mainw->videodevs,LIVES_INT_TO_POINTER(yuv4mpeg->cardno));
 
 
 }
@@ -306,7 +306,7 @@ void weed_layer_set_from_yuv4m (weed_plant_t *layer, lives_clip_t *sfile) {
 
   while (!lives_alarm_get(alarm_handle)&&!pthread_kill(y4thread,0)) {
     // wait for thread to complete or timeout
-    g_usleep(prefs->sleep_time);
+    lives_usleep(prefs->sleep_time);
   }
 
   if (lives_alarm_get(alarm_handle)) {
@@ -319,7 +319,7 @@ void weed_layer_set_from_yuv4m (weed_plant_t *layer, lives_clip_t *sfile) {
   pthread_join(y4thread,NULL);
   lives_alarm_clear(alarm_handle);
 
-  weed_free(yuv4mpeg->pixel_data);
+  lives_free(yuv4mpeg->pixel_data);
   yuv4mpeg->pixel_data=NULL;
 
   weed_set_int_value(layer,"YUV_sampling",WEED_YUV_SAMPLING_MPEG);
@@ -343,8 +343,8 @@ static boolean open_yuv4m_inner(const gchar *filename, const gchar *fname, int n
 
   yuv4mpeg->fd=-1;
 
-  yuv4mpeg->filename=g_strdup(filename);
-  yuv4mpeg->name=g_strdup(fname);
+  yuv4mpeg->filename=lives_strdup(filename);
+  yuv4mpeg->name=lives_strdup(fname);
 
   yuv4mpeg->type=type;
   yuv4mpeg->cardno=cardno;
@@ -371,7 +371,7 @@ static boolean open_yuv4m_inner(const gchar *filename, const gchar *fname, int n
 
 
 
-void on_open_yuv4m_activate (LiVESMenuItem *menuitem, gpointer user_data) {
+void on_open_yuv4m_activate (LiVESMenuItem *menuitem, livespointer user_data) {
   // open a general yuvmpeg stream
   // start "playing" but open frames in yuv4mpeg format on stdin
 
@@ -384,44 +384,44 @@ void on_open_yuv4m_activate (LiVESMenuItem *menuitem, gpointer user_data) {
 
   if (menuitem && !do_yuv4m_open_warning()) return;
 
-  fname=g_strdup(_("yuv4mpeg stream"));
+  fname=lives_strdup(_("yuv4mpeg stream"));
 
   if (!get_new_handle(new_file,fname)) {
-    g_free(fname);
+    lives_free(fname);
     return;
   }
 
   mainw->current_file=new_file;
 
   if (!strlen(prefs->yuvin))
-      filename=g_build_filename(prefs->tmpdir,"stream.yuv",NULL);
+      filename=lives_build_filename(prefs->tmpdir,"stream.yuv",NULL);
   else
-    filename=g_strdup(prefs->yuvin);
+    filename=lives_strdup(prefs->yuvin);
 
   mkfifo(filename,S_IRUSR|S_IWUSR);
 
   if (!open_yuv4m_inner(filename,fname,new_file,YUV4_TYPE_GENERIC,0)) {
     close_current_file(old_file);
-    g_free(filename);
-    g_free(fname);
+    lives_free(filename);
+    lives_free(fname);
     return;
   }
 
-  g_free(fname);
+  lives_free(fname);
 
   if (!lives_yuv_stream_start_read(cfile)) {
     close_current_file(old_file);
-    g_free(filename);
+    lives_free(filename);
     return;
   }
 
   new_file=mainw->current_file;
 
-  g_snprintf(cfile->type,40,"%s",_("yu4mpeg stream in"));
+  lives_snprintf(cfile->type,40,"%s",_("yu4mpeg stream in"));
 
-  d_print ((tmp=g_strdup_printf (_("Opened yuv4mpeg stream on %s"),filename)));
-  g_free(tmp);
-  g_free(filename);
+  d_print ((tmp=lives_strdup_printf (_("Opened yuv4mpeg stream on %s"),filename)));
+  lives_free(tmp);
+  lives_free(filename);
 
   d_print(_("Audio: "));
 
@@ -429,9 +429,9 @@ void on_open_yuv4m_activate (LiVESMenuItem *menuitem, gpointer user_data) {
     d_print (_ ("none\n"));
   }
   else {
-    d_print ((tmp=g_strdup_printf(P_("%d Hz %d channel %d bps\n","%d Hz %d channels %d bps\n",cfile->achans),
+    d_print ((tmp=lives_strdup_printf(P_("%d Hz %d channel %d bps\n","%d Hz %d channels %d bps\n",cfile->achans),
 				  cfile->arate,cfile->achans,cfile->asampsize)));
-    g_free(tmp);
+    lives_free(tmp);
   }
 
   // if not playing, start playing
@@ -447,23 +447,23 @@ void on_open_yuv4m_activate (LiVESMenuItem *menuitem, gpointer user_data) {
 
 
     // real is tmpdir/audiodump.pcm
-    audio_real=g_build_filename(prefs->tmpdir,"audiodump.pcm",NULL);
+    audio_real=lives_build_filename(prefs->tmpdir,"audiodump.pcm",NULL);
     // fake is tmpdir/handle/audiodump.pcm
-    audio_fake=g_build_filename(prefs->tmpdir,cfile->handle,"audiodump.pcm",NULL);
+    audio_fake=lives_build_filename(prefs->tmpdir,cfile->handle,"audiodump.pcm",NULL);
 
 
 #ifndef IS_MINGW
     // fake file will go away when we close the current clip
-    lives_system ((tmp=g_strdup_printf ("/bin/ln -s \"%s\" \"%s\" >/dev/null 2>&1",
+    lives_system ((tmp=lives_strdup_printf ("/bin/ln -s \"%s\" \"%s\" >/dev/null 2>&1",
 					audio_real,audio_fake)),TRUE);
 #else
     // TODO
 #endif
 
-    g_free(audio_real);
-    g_free(audio_fake);
+    lives_free(audio_real);
+    lives_free(audio_fake);
 
-    g_free(tmp);
+    lives_free(tmp);
 
     // start playing
     play_file();
@@ -491,16 +491,16 @@ boolean lives_yuv_stream_start_write (lives_yuv4m_t * yuv4mpeg, const gchar *fil
   int i;
 
   if (mainw->fixed_fpsd>-1.&&mainw->fixed_fpsd!=fps) {
-    do_error_dialog(g_strdup_printf(_("Unable to set display framerate to %.3f fps.\n\n"),fps));
+    do_error_dialog(lives_strdup_printf(_("Unable to set display framerate to %.3f fps.\n\n"),fps));
     return FALSE;
   }
   mainw->fixed_fpsd=fps;
 
-  if (filename==NULL) filename=g_strdup_printf ("%s/streamout.yuv",prefs->tmpdir);
+  if (filename==NULL) filename=lives_strdup_printf ("%s/streamout.yuv",prefs->tmpdir);
 
   // TODO - do_threaded_dialog
   if ((yuvout=creat (filename,O_CREAT))<0) {
-    do_error_dialog (g_strdup_printf (_("Unable to open yuv4mpeg out stream %s\n"),filename));
+    do_error_dialog (lives_strdup_printf (_("Unable to open yuv4mpeg out stream %s\n"),filename));
     return FALSE;
   }
 
@@ -579,7 +579,7 @@ void lives_yuv_stream_stop_write (lives_yuv4m_t *yuv4mpeg) {
 
 
 
-void on_live_tvcard_activate (LiVESMenuItem *menuitem, gpointer user_data) {
+void on_live_tvcard_activate (LiVESMenuItem *menuitem, livespointer user_data) {
   int cardno=0;
 
   int new_file=mainw->first_free_file;
@@ -587,7 +587,7 @@ void on_live_tvcard_activate (LiVESMenuItem *menuitem, gpointer user_data) {
   int response;
 
   gchar *com,*tmp;
-  gchar *fifofile=g_strdup_printf("%s/tvpic.%d",prefs->tmpdir,capable->mainpid);
+  gchar *fifofile=lives_strdup_printf("%s/tvpic.%d",prefs->tmpdir,capable->mainpid);
 
   gchar *chanstr;
   gchar *devstr;
@@ -608,48 +608,48 @@ void on_live_tvcard_activate (LiVESMenuItem *menuitem, gpointer user_data) {
   response=lives_dialog_run(LIVES_DIALOG(card_dialog));
   if (response==LIVES_RESPONSE_CANCEL) {
     lives_widget_destroy(card_dialog);
-    g_free(fifofile);
-    g_free(tvcardw);
+    lives_free(fifofile);
+    lives_free(tvcardw);
     return;
   }
 
   cardno=(int)mainw->fx1_val;
-  chanstr=g_strdup_printf("%d",(int)mainw->fx2_val);
+  chanstr=lives_strdup_printf("%d",(int)mainw->fx2_val);
 
-  if (g_list_find(mainw->videodevs,LIVES_INT_TO_POINTER(cardno))) {
+  if (lives_list_find(mainw->videodevs,LIVES_INT_TO_POINTER(cardno))) {
     lives_widget_destroy(card_dialog);
     do_card_in_use_error();
-    g_free(chanstr);
-    g_free(fifofile);
-    g_free(tvcardw);
+    lives_free(chanstr);
+    lives_free(fifofile);
+    lives_free(tvcardw);
     return;
   }
 
-  fname=g_strdup_printf(_("TV card %d"),cardno);
+  fname=lives_strdup_printf(_("TV card %d"),cardno);
 
   if (!get_new_handle(new_file,fname)) {
     lives_widget_destroy(card_dialog);
-    g_free(chanstr);
-    g_free(fifofile);
-    g_free(fname);
-    g_free(tvcardw);
+    lives_free(chanstr);
+    lives_free(fifofile);
+    lives_free(fname);
+    lives_free(tvcardw);
     return;
   }
 
-  devstr=g_strdup_printf("/dev/video%d",cardno);
+  devstr=lives_strdup_printf("/dev/video%d",cardno);
 
   if (!check_dev_busy(devstr)) {
     lives_widget_destroy(card_dialog);
     do_dev_busy_error(fname);
-    g_free(devstr);
-    g_free(chanstr);
-    g_free(fifofile);
-    g_free(fname);
-    g_free(tvcardw);
+    lives_free(devstr);
+    lives_free(chanstr);
+    lives_free(fifofile);
+    lives_free(fname);
+    lives_free(tvcardw);
     return;
   }
 
-  mainw->videodevs=g_list_append(mainw->videodevs,LIVES_INT_TO_POINTER(cardno));
+  mainw->videodevs=lives_list_append(mainw->videodevs,LIVES_INT_TO_POINTER(cardno));
 
   mainw->current_file=new_file;
 
@@ -659,7 +659,7 @@ void on_live_tvcard_activate (LiVESMenuItem *menuitem, gpointer user_data) {
   mkfifo(fifofile,S_IRUSR|S_IWUSR);
 
   if (!tvcardw->use_advanced) {
-    com=g_strdup_printf("%s open_tv_card \"%s\" \"%s\" \"%s\" \"%s\"",prefs->backend,cfile->handle,chanstr,
+    com=lives_strdup_printf("%s open_tv_card \"%s\" \"%s\" \"%s\" \"%s\"",prefs->backend,cfile->handle,chanstr,
 			devstr,fifofile);
   }
   else {
@@ -677,52 +677,52 @@ void on_live_tvcard_activate (LiVESMenuItem *menuitem, gpointer user_data) {
     driver=lives_combo_get_active_text(LIVES_COMBO(tvcardw->combod));
     outfmt=lives_combo_get_active_text(LIVES_COMBO(tvcardw->comboo));
 
-    com=g_strdup_printf("%s open_tv_card \"%s\" \"%s\" \"%s\" \"%s\" %d %d %d %.3f \"%s\" \"%s\"",
+    com=lives_strdup_printf("%s open_tv_card \"%s\" \"%s\" \"%s\" \"%s\" %d %d %d %.3f \"%s\" \"%s\"",
 			prefs->backend,cfile->handle,chanstr,
 			devstr,fifofile,input,width,height,fps,driver,outfmt);
-    g_free(driver);
-    g_free(outfmt);
+    lives_free(driver);
+    lives_free(outfmt);
 
   }
   lives_widget_destroy(card_dialog);
-  g_free(tvcardw);
+  lives_free(tvcardw);
 
   mainw->com_failed=FALSE;
   lives_system(com,FALSE);
-  g_free(com);
+  lives_free(com);
 
   if (mainw->com_failed) {
     mainw->com_failed=FALSE;
-    g_free(fname);
-    g_free(chanstr);
-    g_free(fifofile);
-    g_free(devstr);
+    lives_free(fname);
+    lives_free(chanstr);
+    lives_free(fifofile);
+    lives_free(devstr);
     return;
   }
 			       
   if (!open_yuv4m_inner(fifofile,fname,new_file,YUV4_TYPE_TV,cardno)) {
-    g_free(fname);
-    g_free(chanstr);
-    g_free(fifofile);
-    g_free(devstr);
+    lives_free(fname);
+    lives_free(chanstr);
+    lives_free(fifofile);
+    lives_free(devstr);
     return;
   }
 			       
-  g_snprintf(cfile->type,40,"%s",fname);
+  lives_snprintf(cfile->type,40,"%s",fname);
   
-  d_print ((tmp=g_strdup_printf (_("Opened TV card %d (%s)"),cardno,devstr)));
+  d_print ((tmp=lives_strdup_printf (_("Opened TV card %d (%s)"),cardno,devstr)));
 
-  g_free(tmp);
-  g_free(fname);
-  g_free(chanstr);
-  g_free(devstr);
-  g_free(fifofile);
+  lives_free(tmp);
+  lives_free(fname);
+  lives_free(chanstr);
+  lives_free(devstr);
+  lives_free(fifofile);
     
 }
 
 
 
-void on_live_fw_activate (LiVESMenuItem *menuitem, gpointer user_data) {
+void on_live_fw_activate (LiVESMenuItem *menuitem, livespointer user_data) {
 
   gchar *com,*tmp;
   int cardno;
@@ -732,7 +732,7 @@ void on_live_fw_activate (LiVESMenuItem *menuitem, gpointer user_data) {
 
   int response;
 
-  gchar *fifofile=g_strdup_printf("%s/firew.%d",prefs->tmpdir,capable->mainpid);
+  gchar *fifofile=lives_strdup_printf("%s/firew.%d",prefs->tmpdir,capable->mainpid);
   gchar *fname;
 
   LiVESWidget *card_dialog;
@@ -743,7 +743,7 @@ void on_live_fw_activate (LiVESMenuItem *menuitem, gpointer user_data) {
   response=lives_dialog_run(LIVES_DIALOG(card_dialog));
   if (response==LIVES_RESPONSE_CANCEL) {
     lives_widget_destroy(card_dialog);
-    g_free(fifofile);
+    lives_free(fifofile);
     return;
   }
 
@@ -751,21 +751,21 @@ void on_live_fw_activate (LiVESMenuItem *menuitem, gpointer user_data) {
 
   lives_widget_destroy(card_dialog);
 
-  if (g_list_find(fw_cards,LIVES_INT_TO_POINTER(cardno))) {
-    g_free(fifofile);
+  if (lives_list_find(fw_cards,LIVES_INT_TO_POINTER(cardno))) {
+    lives_free(fifofile);
     do_card_in_use_error();
     return;
   }
 
-  fname=g_strdup_printf(_("Firewire card %d"),cardno);
+  fname=lives_strdup_printf(_("Firewire card %d"),cardno);
 
   if (!get_new_handle(new_file,fname)) {
-    g_free(fifofile);
-    g_free(fname);
+    lives_free(fifofile);
+    lives_free(fname);
     return;
   }
 
-  fw_cards=g_list_append(fw_cards,LIVES_INT_TO_POINTER(cardno));
+  fw_cards=lives_list_append(fw_cards,LIVES_INT_TO_POINTER(cardno));
 
   mainw->current_file=new_file;
   cfile->deinterlace=mainw->open_deint;
@@ -773,30 +773,30 @@ void on_live_fw_activate (LiVESMenuItem *menuitem, gpointer user_data) {
   unlink(fifofile);
   mkfifo(fifofile,S_IRUSR|S_IWUSR);
 
-  com=g_strdup_printf("%s open_fw_card \"%s\" %d %d \"%s\"",prefs->backend,cfile->handle,cardno,cache,fifofile);
+  com=lives_strdup_printf("%s open_fw_card \"%s\" %d %d \"%s\"",prefs->backend,cfile->handle,cardno,cache,fifofile);
   mainw->com_failed=FALSE;
   lives_system(com,FALSE);
-  g_free(com);
+  lives_free(com);
 
   if (mainw->com_failed) {
     mainw->com_failed=FALSE;
-    g_free(fname);
-    g_free(fifofile);
+    lives_free(fname);
+    lives_free(fifofile);
     return;
   }
 
   if (!open_yuv4m_inner(fifofile,fname,new_file,YUV4_TYPE_FW,cardno)) {
-    g_free(fname);
-    g_free(fifofile);
+    lives_free(fname);
+    lives_free(fifofile);
     return;
   }
 			       
-  g_snprintf(cfile->type,40,"%s",fname);
+  lives_snprintf(cfile->type,40,"%s",fname);
   
-  d_print ((tmp=g_strdup_printf (_("Opened firewire card %d"),cardno)));
+  d_print ((tmp=lives_strdup_printf (_("Opened firewire card %d"),cardno)));
 
-  g_free(tmp);
-  g_free(fname);
-  g_free(fifofile);
+  lives_free(tmp);
+  lives_free(fname);
+  lives_free(fifofile);
 
 }

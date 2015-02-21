@@ -19,7 +19,7 @@
 
 // generic plugins
 
-GList *get_plugin_list (const gchar *plugin_type, boolean allow_nonex, const gchar *plugdir, const gchar *filter_ext);
+LiVESList *get_plugin_list (const gchar *plugin_type, boolean allow_nonex, const gchar *plugdir, const gchar *filter_ext);
 #define PLUGIN_ENCODERS "encoders"
 #define PLUGIN_DECODERS "decoders"
 #define PLUGIN_VID_PLAYBACK "playback/video"
@@ -33,11 +33,11 @@ GList *get_plugin_list (const gchar *plugin_type, boolean allow_nonex, const gch
 #define PLUGIN_WEED_FX_BUILTIN "effects/realtime/weed"
 
 
-GList *plugin_request (const gchar *plugin_type, const gchar *plugin_name, const gchar *request);
-GList *plugin_request_with_blanks (const gchar *plugin_type, const gchar *plugin_name, const gchar *request);
-GList *plugin_request_by_line (const gchar *plugin_type, const gchar *plugin_name, const gchar *request);
-GList *plugin_request_by_space (const gchar *plugin_type, const gchar *plugin_name, const gchar *request);
-GList *plugin_request_common (const gchar *plugin_type, const gchar *plugin_name, const gchar *request, const gchar *delim, boolean allow_blanks);
+LiVESList *plugin_request (const gchar *plugin_type, const gchar *plugin_name, const gchar *request);
+LiVESList *plugin_request_with_blanks (const gchar *plugin_type, const gchar *plugin_name, const gchar *request);
+LiVESList *plugin_request_by_line (const gchar *plugin_type, const gchar *plugin_name, const gchar *request);
+LiVESList *plugin_request_by_space (const gchar *plugin_type, const gchar *plugin_name, const gchar *request);
+LiVESList *plugin_request_common (const gchar *plugin_type, const gchar *plugin_name, const gchar *request, const gchar *delim, boolean allow_blanks);
 
 #ifndef  __WEED_EFFECTS_H__
 typedef weed_plant_t *(*weed_bootstrap_f) (weed_default_getter_f *value, int num_versions, int *plugin_versions);
@@ -91,7 +91,7 @@ typedef struct {
   int *(*get_audio_fmts)(void);
 
   uint32_t audio_codec;
-  // must match with the "acodec" GList in interface.c
+  // must match with the "acodec" LiVESList in interface.c
   // and bitmaps in the encder plugins, with this one addition:
 
   uint64_t capabilities;
@@ -141,7 +141,7 @@ const weed_plant_t *pp_get_chan(weed_plant_t **pparams, int idx);
 
 void do_plugin_encoder_error(const gchar *plugin_name_or_null);
 
-GList *filter_encoders_by_img_ext(GList *encoders, const gchar *img_ext);
+LiVESList *filter_encoders_by_img_ext(LiVESList *encoders, const gchar *img_ext);
 
 typedef struct {
   gchar name[51];
@@ -317,7 +317,7 @@ typedef struct {
 
 
 
-const lives_clip_data_t *get_decoder_cdata(int fileno, GList *disabled, const lives_clip_data_t *fake_cdata);
+const lives_clip_data_t *get_decoder_cdata(int fileno, LiVESList *disabled, const lives_clip_data_t *fake_cdata);
 void close_decoder_plugin (lives_decoder_t *);
 lives_decoder_sys_t *open_decoder_plugin(const gchar *plname);
 void get_mime_type(gchar *text, int maxlen, const lives_clip_data_t *);
@@ -431,7 +431,7 @@ typedef struct {
   double max; ///< for string this is max characters
 
   void *def; ///< default values
-  GList *list; ///< for string list (choices)
+  LiVESList *list; ///< for string list (choices)
 
   /// multivalue type - single value, multi value, or per channel
   short multi;
@@ -531,7 +531,7 @@ void param_copy (lives_param_t *src, lives_param_t *dest, boolean full);
 
 
 typedef struct {
-  GList *list; ///< list of filter_idx from which user can delegate
+  LiVESList *list; ///< list of filter_idx from which user can delegate
   int delegate; ///< offset in list of current delegate
   gulong func; ///< menuitem activation function for current delegate
   lives_rfx_t *rfx; ///< pointer to rfx for current delegate (or NULL)
@@ -565,7 +565,7 @@ void **store_rfx_params (lives_rfx_t *);
 void set_rfx_params_from_store (lives_rfx_t *rfx, void **store);
 void rfx_params_store_free (lives_rfx_t *, void **store);
 
-GList *array_to_string_list (gchar **array, int offset, int len);
+LiVESList *array_to_string_list (gchar **array, int offset, int len);
 
 lives_rfx_t *weed_to_rfx (weed_plant_t *plant, boolean show_reinits);
 lives_param_t *weed_params_to_rfx(int npar, weed_plant_t *instance, boolean show_reinits);
@@ -584,8 +584,8 @@ typedef struct {
   lives_rfx_t *rfx;
 } _vppaw;
 
-_vppaw *on_vpp_advanced_clicked (LiVESButton *, gpointer);
-void on_decplug_advanced_clicked (LiVESButton *button, gpointer user_data);
+_vppaw *on_vpp_advanced_clicked (LiVESButton *, livespointer);
+void on_decplug_advanced_clicked (LiVESButton *button, livespointer user_data);
 
 
 /// for realtime effects, see effects-weed.h

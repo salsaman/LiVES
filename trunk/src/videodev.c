@@ -4,7 +4,6 @@
 // see file COPYING or www.gnu.org for details
 
 
-#include "support.h"
 #include "main.h"
 
 #ifdef HAVE_UNICAP
@@ -51,7 +50,7 @@ static boolean lives_wait_user_buffer(lives_vdev_t *ldev, unicap_data_buffer_t *
     status=unicap_poll_buffer(ldev->handle,&ncount);
 
 #ifdef DEBUG_UNICAP
-    if (status!=STATUS_SUCCESS) g_printerr("Unicap poll failed with status %d\n",status);
+    if (status!=STATUS_SUCCESS) lives_printerr("Unicap poll failed with status %d\n",status);
 #endif
 
     if (ncount>=0) {
@@ -64,7 +63,7 @@ static boolean lives_wait_user_buffer(lives_vdev_t *ldev, unicap_data_buffer_t *
 
     if (dtime-stime>timer) return FALSE;
 
-    g_usleep(prefs->sleep_time);
+    lives_usleep(prefs->sleep_time);
     lives_widget_context_update();
   }
 
@@ -89,7 +88,7 @@ static boolean lives_wait_system_buffer(lives_vdev_t *ldev, double timeout) {
 
     if (dtime-stime>timer) return FALSE;
 
-    g_usleep(prefs->sleep_time);
+    lives_usleep(prefs->sleep_time);
     lives_widget_context_update();
   }
 
@@ -148,7 +147,7 @@ boolean weed_layer_set_from_lvdev (weed_plant_t *layer, lives_clip_t *sfile, dou
     
     if (!lives_wait_user_buffer(ldev, &returned_buffer, timeoutsecs)) {
 #ifdef DEBUG_UNICAP
-      g_printerr("Failed to wait for user buffer!\n");
+      lives_printerr("Failed to wait for user buffer!\n");
       unicap_stop_capture (ldev->handle);
       unicap_dequeue_buffer (ldev->handle, &returned_buffer);
       unicap_start_capture (ldev->handle);
@@ -161,7 +160,7 @@ boolean weed_layer_set_from_lvdev (weed_plant_t *layer, lives_clip_t *sfile, dou
     // wait for callback to fill buffer
     if (!lives_wait_system_buffer(ldev,timeoutsecs)) {
 #ifdef DEBUG_UNICAP
-      g_printerr("Failed to wait for system buffer!\n");
+      lives_printerr("Failed to wait for system buffer!\n");
 #endif
     }
     if (ldev->buffer_ready==1) returned_buffer=&ldev->buffer1;
@@ -179,7 +178,7 @@ boolean weed_layer_set_from_lvdev (weed_plant_t *layer, lives_clip_t *sfile, dou
       size_t bsize=rowstride*sfile->vsize;
       if (bsize>returned_buffer->buffer_size) {
 #ifdef DEBUG_UNICAP
-	g_printerr("Warning - returned buffer size too small !\n");
+	lives_printerr("Warning - returned buffer size too small !\n");
 #endif
 	bsize=returned_buffer->buffer_size;
       }
@@ -194,7 +193,7 @@ boolean weed_layer_set_from_lvdev (weed_plant_t *layer, lives_clip_t *sfile, dou
     memset(pixel_data[2],128,sfile->hsize*sfile->vsize);
   }
 
-  weed_free(pixel_data);
+  lives_free(pixel_data);
 
   ldev->buffer1.data=(unsigned char *)odata;
 
@@ -234,7 +233,7 @@ static unicap_format_t *lvdev_get_best_format(const unicap_format_t *formats,
 #ifdef DEBUG_UNICAP
       // set format to try and get more data
       unicap_set_format (ldev->handle, format);
-      g_printerr("Unusable palette with fourcc 0x%x  bpp=%d, size=%dx%d buf=%d\n",format->fourcc,format->bpp,format->size.width,
+      lives_printerr("Unusable palette with fourcc 0x%x  bpp=%d, size=%dx%d buf=%d\n",format->fourcc,format->bpp,format->size.width,
 		 format->size.height,(int)format->buffer_size);
 #endif
       continue;
@@ -257,7 +256,7 @@ static unicap_format_t *lvdev_get_best_format(const unicap_format_t *formats,
       if (width>=format->min_size.width && height>=format->min_size.height) {
 	if (format->h_stepping>0&&format->v_stepping>0) {
 #ifdef DEBUG_UNICAP
-	  g_printerr("Can set any size with step %d and %d; min %d x %d, max %d x %d\n",format->h_stepping,format->v_stepping,
+	  lives_printerr("Can set any size with step %d and %d; min %d x %d, max %d x %d\n",format->h_stepping,format->v_stepping,
 		     format->min_size.width,format->min_size.height,format->max_size.width,format->max_size.height);
 #endif
 	  // can set exact size (within stepping limits)
@@ -280,7 +279,7 @@ static unicap_format_t *lvdev_get_best_format(const unicap_format_t *formats,
 	  // array of sizes supported
 	  // step through sizes
 #ifdef DEBUG_UNICAP
-	  g_printerr("Checking %d array sizes\n",format->size_count);
+	  lives_printerr("Checking %d array sizes\n",format->size_count);
 #endif
 
 	  if (format->size_count==0) {
@@ -292,7 +291,7 @@ static unicap_format_t *lvdev_get_best_format(const unicap_format_t *formats,
 	      besth=format->size.height=format->size.height;
 	      f=format_count;
 #ifdef DEBUG_UNICAP
-	      g_printerr("Size is best so far\n");
+	      lives_printerr("Size is best so far\n");
 #endif
 	    }
 	    continue;
@@ -301,7 +300,7 @@ static unicap_format_t *lvdev_get_best_format(const unicap_format_t *formats,
 	  // array of sizes
 	  for (i=0;i<format->size_count;i++) {
 #ifdef DEBUG_UNICAP
-	    g_printerr("entry %d:%d x %d\n",i,format->sizes[i].width,format->sizes[i].height);
+	    lives_printerr("entry %d:%d x %d\n",i,format->sizes[i].width,format->sizes[i].height);
 #endif
 	    if (format->sizes[i].width>bestw&&format->sizes[i].height>besth&&
 		(bestw<width||besth<height)) {
@@ -310,7 +309,7 @@ static unicap_format_t *lvdev_get_best_format(const unicap_format_t *formats,
 	      besth=format->size.height=format->sizes[i].height;
 	      f=format_count;
 #ifdef DEBUG_UNICAP
-	      g_printerr("Size is best so far\n");
+	      lives_printerr("Size is best so far\n");
 #endif
 	    }
 	  }
@@ -338,7 +337,7 @@ static unicap_format_t *lvdev_get_best_format(const unicap_format_t *formats,
 
 static boolean open_vdev_inner(unicap_device_t *device) {
   // create a virtual clip
-  lives_vdev_t *ldev=(lives_vdev_t *)g_malloc(sizeof(lives_vdev_t));
+  lives_vdev_t *ldev=(lives_vdev_t *)lives_malloc(sizeof(lives_vdev_t));
   unicap_format_t formats[MAX_FORMATS];
   unicap_format_t *format;
 
@@ -348,7 +347,7 @@ static boolean open_vdev_inner(unicap_device_t *device) {
   //check return value and take appropriate action
   if (ldev->handle==NULL) {
     LIVES_ERROR ("vdev input: cannot open device");
-    g_free(ldev);
+    lives_free(ldev);
     return FALSE;
   }
 
@@ -360,7 +359,7 @@ static boolean open_vdev_inner(unicap_device_t *device) {
     LIVES_INFO("No useful formats found");
     unicap_unlock_stream(ldev->handle);
     unicap_close(ldev->handle);
-    g_free(ldev);
+    lives_free(ldev);
     return FALSE;
   }
 
@@ -382,7 +381,7 @@ static boolean open_vdev_inner(unicap_device_t *device) {
 					 &ldev->YUV_sampling, &ldev->YUV_subspace, &ldev->YUV_clamping);
 
 #ifdef DEBUG_UNICAP
-  g_printerr("\nUsing palette with fourcc 0x%x, translated as %s\n",format->fourcc,
+  lives_printerr("\nUsing palette with fourcc 0x%x, translated as %s\n",format->fourcc,
 	     weed_palette_get_name(ldev->current_palette));
 #endif
 
@@ -390,7 +389,7 @@ static boolean open_vdev_inner(unicap_device_t *device) {
     LIVES_ERROR("Unicap error setting format");
     unicap_unlock_stream(ldev->handle);
     unicap_close(ldev->handle);
-    g_free(ldev);
+    lives_free(ldev);
     return FALSE;
   }
 
@@ -401,7 +400,7 @@ static boolean open_vdev_inner(unicap_device_t *device) {
     int wheight=format->size.height,aheight;
     // something went wrong setting the size - the buffer is wrongly sized
 #ifdef DEBUG_UNICAP
-    g_printerr("Unicap buffer size is wrong, resetting it.\n");
+    lives_printerr("Unicap buffer size is wrong, resetting it.\n");
 #endif
     // get the size again
 
@@ -410,7 +409,7 @@ static boolean open_vdev_inner(unicap_device_t *device) {
     aheight=format->size.height;
 
 #ifdef DEBUG_UNICAP
-    g_printerr("Wanted frame size %d x %d, got %d x %d\n",wwidth,wheight,awidth,aheight);
+    lives_printerr("Wanted frame size %d x %d, got %d x %d\n",wwidth,wheight,awidth,aheight);
 #endif
 
     format->buffer_size=format->size.width*format->size.height*weed_palette_get_bits_per_macropixel(ldev->current_palette)/
@@ -422,10 +421,10 @@ static boolean open_vdev_inner(unicap_device_t *device) {
 
   cfile->ext_src=ldev;
 
-  ldev->buffer1.data = (unsigned char *)g_malloc (format->buffer_size);
+  ldev->buffer1.data = (unsigned char *)lives_malloc (format->buffer_size);
   ldev->buffer1.buffer_size = format->buffer_size;
 
-  ldev->buffer2.data = (unsigned char *)g_malloc (format->buffer_size);
+  ldev->buffer2.data = (unsigned char *)lives_malloc (format->buffer_size);
   ldev->buffer2.buffer_size = format->buffer_size;
 
   ldev->buffer_ready=0;
@@ -451,16 +450,16 @@ void lives_vdev_free(lives_vdev_t *ldev) {
   unicap_stop_capture (ldev->handle);
   unicap_unlock_stream(ldev->handle);
   unicap_close(ldev->handle);
-  if (ldev->buffer1.data!=NULL) g_free(ldev->buffer1.data);
-  if (ldev->buffer2.data!=NULL) g_free(ldev->buffer2.data);
+  if (ldev->buffer1.data!=NULL) lives_free(ldev->buffer1.data);
+  if (ldev->buffer2.data!=NULL) lives_free(ldev->buffer2.data);
 }
 
 
 
-void on_open_vdev_activate (LiVESMenuItem *menuitem, gpointer user_data) {
+void on_open_vdev_activate (LiVESMenuItem *menuitem, livespointer user_data) {
   unicap_device_t devices[MAX_DEVICES];
 
-  GList *devlist=NULL;
+  LiVESList *devlist=NULL;
 
   LiVESWidget *card_dialog;
 
@@ -498,7 +497,7 @@ void on_open_vdev_activate (LiVESMenuItem *menuitem, gpointer user_data) {
 
   for (i=0;i<dev_count;i++) {
     if (!unicap_is_stream_locked(&devices[i])) {
-      devlist=g_list_prepend(devlist,devices[i].identifier);
+      devlist=lives_list_prepend(devlist,devices[i].identifier);
     }
   }
 
@@ -509,9 +508,9 @@ void on_open_vdev_activate (LiVESMenuItem *menuitem, gpointer user_data) {
 
   mainw->fx1_val=0;
   mainw->open_deint=FALSE;
-  card_dialog=create_combo_dialog(1,(gpointer)devlist);
+  card_dialog=create_combo_dialog(1,(livespointer)devlist);
   response=lives_dialog_run(LIVES_DIALOG(card_dialog));
-  g_list_free(devlist);
+  lives_list_free(devlist);
 
   if (response==LIVES_RESPONSE_CANCEL) {
     lives_widget_destroy(card_dialog);
@@ -530,11 +529,11 @@ void on_open_vdev_activate (LiVESMenuItem *menuitem, gpointer user_data) {
     mainw->fx1_val--;
   }
 
-  if (devices[devno].device!=NULL) fname=g_strdup_printf("%s",devices[devno].device);
-  else fname=g_strdup_printf("%s",devices[devno].identifier);
+  if (devices[devno].device!=NULL) fname=lives_strdup_printf("%s",devices[devno].device);
+  else fname=lives_strdup_printf("%s",devices[devno].identifier);
 
   if (!get_new_handle(new_file,fname)) {
-    g_free(fname);
+    lives_free(fname);
     return;
   }
 
@@ -544,10 +543,10 @@ void on_open_vdev_activate (LiVESMenuItem *menuitem, gpointer user_data) {
   d_print(""); ///< force switchtext
 
   if (!open_vdev_inner(&devices[devno])) {
-    gchar *msg=g_strdup_printf(_("Unable to open device %s\n"),fname);
+    gchar *msg=lives_strdup_printf(_("Unable to open device %s\n"),fname);
     d_print(msg);
-    g_free(msg);
-    g_free(fname);
+    lives_free(msg);
+    lives_free(fname);
     close_current_file(old_file);
     return;
   }
@@ -559,14 +558,14 @@ void on_open_vdev_activate (LiVESMenuItem *menuitem, gpointer user_data) {
   cfile->is_loaded=TRUE;
   add_to_clipmenu();
 
-  g_snprintf(cfile->type,40,"%s",fname);
+  lives_snprintf(cfile->type,40,"%s",fname);
 
-  d_print ((tmp=g_strdup_printf (_("Opened device %s\n"),devices[devno].identifier)));
+  d_print ((tmp=lives_strdup_printf (_("Opened device %s\n"),devices[devno].identifier)));
 
   switch_to_file((mainw->current_file=old_file),new_file);
 
-  g_free(tmp);
-  g_free(fname);
+  lives_free(tmp);
+  lives_free(fname);
 
 }
 

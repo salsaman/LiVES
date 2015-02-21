@@ -7,7 +7,6 @@
 
 // functions for first time startup
 
-#include "support.h"
 #include "main.h"
 #include "interface.h"
 
@@ -21,19 +20,19 @@ static boolean prompt_existing_dir(gchar *dirname, uint64_t freespace, boolean w
 
   if (wrtable) {
     gchar *fspstr=lives_format_storage_space_string(freespace);
-    msg=g_strdup_printf
+    msg=lives_strdup_printf
       (_("A directory named\n%s\nalready exists. Do you wish to use this directory ?\n\n(Free space = %s)\n"),dirname,fspstr);
-    g_free(fspstr);
+    lives_free(fspstr);
     res=do_yesno_dialog(msg);
   }
   else
     {
-      msg=g_strdup_printf
+      msg=lives_strdup_printf
 	(_("A directory named\n%s\nalready exists.\nLiVES could not write to this directory or read its free space.\nPlease select another location.\n"),
 	 dirname);
       do_error_dialog(msg);
     }
-  g_free(msg);
+  lives_free(msg);
   return res;
 }
 
@@ -46,16 +45,16 @@ static boolean prompt_new_dir(gchar *dirname, uint64_t freespace, boolean wrtabl
   gchar *msg;
   if (wrtable) {
     gchar *fspstr=lives_format_storage_space_string(freespace);
-    msg=g_strdup_printf(_("\nCreate the directory\n%s\n?\n\n(Free space = %s)"),dirname,fspstr);
-    g_free(fspstr);
+    msg=lives_strdup_printf(_("\nCreate the directory\n%s\n?\n\n(Free space = %s)"),dirname,fspstr);
+    lives_free(fspstr);
     res=do_warning_dialog(msg);
   }
   else {
-    msg=g_strdup_printf(_("\nLiVES could not write to the directory\n%s\nPlease try again and choose a different location.\n"),dirname);
+    msg=lives_strdup_printf(_("\nLiVES could not write to the directory\n%s\nPlease try again and choose a different location.\n"),dirname);
     do_error_dialog(msg);
   }
 
-  g_free(msg);
+  lives_free(msg);
   return res;
 }
 
@@ -84,38 +83,38 @@ boolean do_tempdir_query(void) {
     if (response==LIVES_RESPONSE_CANCEL) {
       return FALSE;
     }
-    dirname=g_strdup(lives_entry_get_text(LIVES_ENTRY(tdentry->entry)));
+    dirname=lives_strdup(lives_entry_get_text(LIVES_ENTRY(tdentry->entry)));
 
-    if (strcmp(dirname+strlen(dirname)-1,G_DIR_SEPARATOR_S)) {
-      gchar *tmp=g_strdup_printf("%s%s",dirname,G_DIR_SEPARATOR_S);
-      g_free(dirname);
+    if (strcmp(dirname+strlen(dirname)-1,LIVES_DIR_SEPARATOR_S)) {
+      gchar *tmp=lives_strdup_printf("%s%s",dirname,LIVES_DIR_SEPARATOR_S);
+      lives_free(dirname);
       dirname=tmp;
     }
 
     if (strlen(dirname)>(PATH_MAX-1)) {
       do_blocking_error_dialog(_("Directory name is too long !"));
-      g_free(dirname);
+      lives_free(dirname);
       continue;
     }
 
     if (!check_dir_access(dirname)) {
       do_dir_perm_error(dirname);
-      g_free(dirname);
+      lives_free(dirname);
       continue;
     }
 
 
-    if (g_file_test(dirname,G_FILE_TEST_IS_DIR)) {
+    if (lives_file_test(dirname,LIVES_FILE_TEST_IS_DIR)) {
       if (is_writeable_dir(dirname)) {
 	freesp=get_fs_free(dirname);
 	if (!prompt_existing_dir(dirname,freesp,TRUE)) {
-	  g_free(dirname);
+	  lives_free(dirname);
 	  continue;
 	}
       }
       else {
 	if (!prompt_existing_dir(dirname,0,FALSE)) {
-	  g_free(dirname);
+	  lives_free(dirname);
 	  continue;
 	}
       }
@@ -125,14 +124,14 @@ boolean do_tempdir_query(void) {
 	freesp=get_fs_free(dirname);
 	if (!prompt_new_dir(dirname,freesp,TRUE)) {
 	  rmdir(dirname);
-	  g_free(dirname);
+	  lives_free(dirname);
 	  continue;
 	}
       }
       else {
 	if (!prompt_new_dir(dirname,0,FALSE)) {
 	  rmdir(dirname);
-	  g_free(dirname);
+	  lives_free(dirname);
 	  continue;
 	}
       }
@@ -142,33 +141,33 @@ boolean do_tempdir_query(void) {
   }
 
   lives_widget_destroy(tdentry->dialog);
-  g_free(tdentry);
+  lives_free(tdentry);
 
   mainw->com_failed=FALSE;
 
-  if (!g_file_test(dirname,G_FILE_TEST_IS_DIR)) {
-    if (g_mkdir_with_parents(dirname,S_IRWXU)==-1) goto top;
+  if (!lives_file_test(dirname,LIVES_FILE_TEST_IS_DIR)) {
+    if (lives_mkdir_with_parents(dirname,S_IRWXU)==-1) goto top;
   }
 
 #ifndef IS_MINGW
-  com=g_strdup_printf ("/bin/chmod 777 \"%s\" 2>/dev/null",dirname);
+  com=lives_strdup_printf ("/bin/chmod 777 \"%s\" 2>/dev/null",dirname);
   lives_system (com,FALSE);
-  g_free (com);
+  lives_free (com);
 #endif
 
-  g_snprintf(prefs->tmpdir,PATH_MAX,"%s",dirname);
-  g_snprintf(future_prefs->tmpdir,PATH_MAX,"%s",prefs->tmpdir);
+  lives_snprintf(prefs->tmpdir,PATH_MAX,"%s",dirname);
+  lives_snprintf(future_prefs->tmpdir,PATH_MAX,"%s",prefs->tmpdir);
 
   set_pref("tempdir",prefs->tmpdir);
   set_pref("session_tempdir",prefs->tmpdir);
 
 #ifndef IS_MINGW
-  g_snprintf(mainw->first_info_file,PATH_MAX,"%s"G_DIR_SEPARATOR_S".info.%d",prefs->tmpdir,capable->mainpid);
+  lives_snprintf(mainw->first_info_file,PATH_MAX,"%s"LIVES_DIR_SEPARATOR_S".info.%d",prefs->tmpdir,capable->mainpid);
 #else
-  g_snprintf(mainw->first_info_file,PATH_MAX,"%s"G_DIR_SEPARATOR_S"info.%d",prefs->tmpdir,capable->mainpid);
+  lives_snprintf(mainw->first_info_file,PATH_MAX,"%s"LIVES_DIR_SEPARATOR_S"info.%d",prefs->tmpdir,capable->mainpid);
 #endif
 
-  g_free(dirname);
+  lives_free(dirname);
   return TRUE;
 }
 
@@ -176,8 +175,8 @@ boolean do_tempdir_query(void) {
 
 
 
-static void on_init_aplayer_toggled (LiVESToggleButton *tbutton, gpointer user_data) {
-  int audp=GPOINTER_TO_INT(user_data);
+static void on_init_aplayer_toggled (LiVESToggleButton *tbutton, livespointer user_data) {
+  int audp=LIVES_POINTER_TO_INT(user_data);
 
   if (!lives_toggle_button_get_active(tbutton)) return;
 
@@ -213,70 +212,70 @@ boolean do_audio_choice_dialog(short startup_phase) {
 
   LiVESAccelGroup *accel_group;
 
-  GSList *radiobutton_group = NULL;
+  LiVESSList *radiobutton_group = NULL;
 
   gchar *txt0,*txt1,*txt2,*txt3,*txt4,*txt5,*txt6,*txt7,*msg;
 
   int response;
 
   if (startup_phase==2) {
-    txt0=g_strdup(_("LiVES FAILED TO START YOUR SELECTED AUDIO PLAYER !\n\n"));
+    txt0=lives_strdup(_("LiVES FAILED TO START YOUR SELECTED AUDIO PLAYER !\n\n"));
   }
   else {
     prefs->audio_player=-1;
-    txt0=g_strdup("");
+    txt0=lives_strdup("");
   }
 
-  txt1=g_strdup(_("Before starting LiVES, you need to choose an audio player.\n\nPULSE AUDIO is recommended for most users"));
+  txt1=lives_strdup(_("Before starting LiVES, you need to choose an audio player.\n\nPULSE AUDIO is recommended for most users"));
 
 #ifndef HAVE_PULSE_AUDIO
-  txt2=g_strdup(_(", but this version of LiVES was not compiled with pulse audio support.\n\n"));
+  txt2=lives_strdup(_(", but this version of LiVES was not compiled with pulse audio support.\n\n"));
 #else
   if (!capable->has_pulse_audio) {
-    txt2=g_strdup(_(", but you do not have pulse audio installed on your system.\n You are advised to install pulse audio first before running LiVES.\n\n"));
+    txt2=lives_strdup(_(", but you do not have pulse audio installed on your system.\n You are advised to install pulse audio first before running LiVES.\n\n"));
   }
-  else txt2=g_strdup(".\n\n");
+  else txt2=lives_strdup(".\n\n");
 #endif
 
-  txt3=g_strdup(_("JACK audio is recommended for pro users"));
+  txt3=lives_strdup(_("JACK audio is recommended for pro users"));
 
 #ifndef ENABLE_JACK
-  txt4=g_strdup(_(", but this version of LiVES was not compiled with jack audio support.\n\n"));
+  txt4=lives_strdup(_(", but this version of LiVES was not compiled with jack audio support.\n\n"));
 #else
   if (!capable->has_jackd) {
-    txt4=g_strdup(_(", but you do not have jackd installed. You may wish to install jackd first before running LiVES.\n\n"));
+    txt4=lives_strdup(_(", but you do not have jackd installed. You may wish to install jackd first before running LiVES.\n\n"));
   }
   else {
-    txt4=g_strdup(_(", but may prevent LiVES from starting on some systems.\nIf LiVES will not start with jack, you can restart and try with another audio player instead.\n\n"));
+    txt4=lives_strdup(_(", but may prevent LiVES from starting on some systems.\nIf LiVES will not start with jack, you can restart and try with another audio player instead.\n\n"));
   }
 #endif
 
-  txt5=g_strdup(_("SOX may be used if neither of the preceding players work, "));
+  txt5=lives_strdup(_("SOX may be used if neither of the preceding players work, "));
 
   if (capable->has_sox_play) {
-    txt6=g_strdup(_("but some audio features will be disabled.\n\n"));
+    txt6=lives_strdup(_("but some audio features will be disabled.\n\n"));
   }
   else {
-    txt6=g_strdup(_("but you do not have sox installed.\nYou are advised to install it before running LiVES.\n\n"));
+    txt6=lives_strdup(_("but you do not have sox installed.\nYou are advised to install it before running LiVES.\n\n"));
   }
 
   if (capable->has_mplayer||capable->has_mplayer2) {
-    txt7=g_strdup(_("The MPLAYER/MPLAYER2 audio player is only recommended for testing purposes.\n\n"));
+    txt7=lives_strdup(_("The MPLAYER/MPLAYER2 audio player is only recommended for testing purposes.\n\n"));
   }
   else {
-    txt7=g_strdup("");
+    txt7=lives_strdup("");
   }
 
-  msg=g_strdup_printf("%s%s%s%s%s%s%s%s",txt0,txt1,txt2,txt3,txt4,txt5,txt6,txt7);
+  msg=lives_strdup_printf("%s%s%s%s%s%s%s%s",txt0,txt1,txt2,txt3,txt4,txt5,txt6,txt7);
 
-  g_free(txt0);
-  g_free(txt1);
-  g_free(txt2);
-  g_free(txt3);
-  g_free(txt4);
-  g_free(txt5);
-  g_free(txt6);
-  g_free(txt7);
+  lives_free(txt0);
+  lives_free(txt1);
+  lives_free(txt2);
+  lives_free(txt3);
+  lives_free(txt4);
+  lives_free(txt5);
+  lives_free(txt6);
+  lives_free(txt7);
 
   dialog = lives_standard_dialog_new (_("LiVES: - Choose an audio player"),FALSE);
 
@@ -287,7 +286,7 @@ boolean do_audio_choice_dialog(short startup_phase) {
   
   label=lives_standard_label_new(msg);
   lives_container_add (LIVES_CONTAINER (dialog_vbox), label);
-  g_free(msg);
+  lives_free(msg);
 
 
 
@@ -481,7 +480,7 @@ static boolean fail_test(LiVESWidget *table, int row, gchar *ftext) {
 #if GTK_CHECK_VERSION(3,10,0)
   LiVESWidget *image=lives_image_new_from_stock(LIVES_STOCK_REMOVE,LIVES_ICON_SIZE_LARGE_TOOLBAR);
 #else
-  LiVESWidget *image=lives_image_new_from_stock(GTK_STOCK_CANCEL,LIVES_ICON_SIZE_LARGE_TOOLBAR);
+  LiVESWidget *image=lives_image_new_from_stock(LIVES_STOCK_CANCEL,LIVES_ICON_SIZE_LARGE_TOOLBAR);
 #endif
 
   label=lives_standard_label_new(ftext);
@@ -505,7 +504,7 @@ static boolean fail_test(LiVESWidget *table, int row, gchar *ftext) {
 
 
 LIVES_INLINE gchar *get_resource(gchar *fname) {
-  return g_strdup_printf("%s%sresources/%s",prefs->prefix_dir,DATA_DIR,fname);
+  return lives_strdup_printf("%s%sresources/%s",prefs->prefix_dir,DATA_DIR,fname);
 }
 
 
@@ -522,7 +521,7 @@ boolean do_startup_tests(boolean tshoot) {
   LiVESAccelGroup *accel_group;
 
   gchar *com,*rname,*afile,*tmp;
-  gchar *image_ext=g_strdup(prefs->image_ext);
+  gchar *image_ext=lives_strdup(prefs->image_ext);
   gchar *title;
 
   uint8_t *abuff;
@@ -542,17 +541,17 @@ boolean do_startup_tests(boolean tshoot) {
 
   if (mainw->multitrack!=NULL) {
     if (mainw->multitrack->idlefunc>0) {
-      g_source_remove(mainw->multitrack->idlefunc);
+      lives_source_remove(mainw->multitrack->idlefunc);
       mainw->multitrack->idlefunc=0;
     }
     mt_desensitise(mainw->multitrack);
   }
 
   if (!tshoot) {
-    title=g_strdup(_("LiVES: - Testing Configuration"));
+    title=lives_strdup(_("LiVES: - Testing Configuration"));
   }
   else {
-    title=g_strdup(_("LiVES: - Troubleshoot"));
+    title=lives_strdup(_("LiVES: - Troubleshoot"));
   }
 
 
@@ -561,7 +560,7 @@ boolean do_startup_tests(boolean tshoot) {
   accel_group = LIVES_ACCEL_GROUP(lives_accel_group_new ());
   lives_window_add_accel_group (LIVES_WINDOW (dialog), accel_group);
 
-  g_free(title);
+  lives_free(title);
 
   dialog_vbox = lives_dialog_get_content_area(LIVES_DIALOG(dialog));
 
@@ -615,7 +614,7 @@ boolean do_startup_tests(boolean tshoot) {
   add_test(table,1,_("Checking if sox can convert audio"),success);
   
   if (!tshoot) set_pref("default_image_format","png");
-  g_snprintf (prefs->image_ext,16,"%s","png");
+  lives_snprintf (prefs->image_ext,16,"%s","png");
 
   get_temp_handle(mainw->first_free_file,TRUE);
 
@@ -626,7 +625,7 @@ boolean do_startup_tests(boolean tshoot) {
     unlink(cfile->info_file);
 
     // write 1 second of silence
-    afile=g_build_filename(prefs->tmpdir,cfile->handle,"audio",NULL);
+    afile=lives_build_filename(prefs->tmpdir,cfile->handle,"audio",NULL);
     out_fd=open(afile,O_WRONLY|O_CREAT,S_IRUSR|S_IWUSR);
 
     if (out_fd<0) mainw->write_failed=TRUE;
@@ -635,9 +634,9 @@ boolean do_startup_tests(boolean tshoot) {
     if (!mainw->write_failed) {
       abuff=(uint8_t *)lives_calloc(44100,4);
       if (!abuff) {
-	tmp=g_strdup(_("Unable to allocate 176400 bytes memory."));
+	tmp=lives_strdup(_("Unable to allocate 176400 bytes memory."));
 	fail_test(table,1,tmp);
-	g_free(tmp);
+	lives_free(tmp);
       }
       else {
 #ifdef IS_MINGW
@@ -645,34 +644,34 @@ boolean do_startup_tests(boolean tshoot) {
 #endif
 	lives_write (out_fd,abuff,176400,TRUE);
 	close(out_fd);
-	g_free(abuff);
+	lives_free(abuff);
       }
     }
 
     if (mainw->write_failed) {
-      tmp=g_strdup_printf(_("Unable to write to: %s"),afile);
+      tmp=lives_strdup_printf(_("Unable to write to: %s"),afile);
       fail_test(table,1,tmp);
-      g_free(tmp);
+      lives_free(tmp);
     }
 
-    g_free(afile);
+    lives_free(afile);
 
     if (!mainw->write_failed) {
-      afile=g_build_filename(prefs->tmpdir,cfile->handle,"testout.wav",NULL);
+      afile=lives_build_filename(prefs->tmpdir,cfile->handle,"testout.wav",NULL);
     
       mainw->com_failed=FALSE;
-      com=g_strdup_printf("%s export_audio \"%s\" 0. 0. 44100 2 16 0 22050 \"%s\"",prefs->backend_sync,cfile->handle,afile);
+      com=lives_strdup_printf("%s export_audio \"%s\" 0. 0. 44100 2 16 0 22050 \"%s\"",prefs->backend_sync,cfile->handle,afile);
       lives_system(com,TRUE);
       if (mainw->com_failed) {
-	tmp=g_strdup_printf(_("Command failed: %s"),com);
+	tmp=lives_strdup_printf(_("Command failed: %s"),com);
 	fail_test(table,1,tmp);
-	g_free(tmp);
+	lives_free(tmp);
       }
       
-      g_free(com);
+      lives_free(com);
 
       while (mainw->cancelled==CANCEL_NONE&&(info_fd=open(cfile->info_file,O_RDONLY))==-1) {
-	g_usleep(prefs->sleep_time);
+	lives_usleep(prefs->sleep_time);
 	lives_widget_context_update();
       }
       
@@ -683,7 +682,7 @@ boolean do_startup_tests(boolean tshoot) {
 	
 	fsize=sget_file_size(afile);
 	unlink(afile);
-	g_free(afile);
+	lives_free(afile);
 	
 	if (fsize==0) {
 	  fail_test(table,1,_("You should install sox_fmt_all or similar"));
@@ -695,7 +694,7 @@ boolean do_startup_tests(boolean tshoot) {
     }
   }
 
-  if (tshoot) g_snprintf (prefs->image_ext,16,"%s",image_ext);
+  if (tshoot) lives_snprintf (prefs->image_ext,16,"%s",image_ext);
 
   if (mainw->cancelled!=CANCEL_NONE) {
     mainw->cancelled=CANCEL_NONE;
@@ -773,14 +772,14 @@ boolean do_startup_tests(boolean tshoot) {
 
   rname=get_resource("");
 
-  if (!g_file_test(rname,G_FILE_TEST_IS_DIR)) {
+  if (!lives_file_test(rname,LIVES_FILE_TEST_IS_DIR)) {
     /// oops, no resources dir
     success4=FALSE;
   }
   else success4=TRUE;
 
 
-  g_free(rname);
+  lives_free(rname);
 
   add_test(table,4,_("Checking if mplayer can decode to png/alpha"),success2&&success4);
 
@@ -796,23 +795,23 @@ boolean do_startup_tests(boolean tshoot) {
 
     rname=get_resource("vidtest.avi");
 
-    com=g_strdup_printf("%s open_test \"%s\" \"%s\" 0 png",prefs->backend_sync,cfile->handle,
-			(tmp=g_filename_from_utf8 (rname,-1,NULL,NULL,NULL)));
-    g_free(tmp);
-    g_free(rname);
+    com=lives_strdup_printf("%s open_test \"%s\" \"%s\" 0 png",prefs->backend_sync,cfile->handle,
+			(tmp=lives_filename_from_utf8 (rname,-1,NULL,NULL,NULL)));
+    lives_free(tmp);
+    lives_free(rname);
 
     mainw->com_failed=FALSE;
     lives_system(com,TRUE);
     if (mainw->com_failed) {
-      tmp=g_strdup_printf(_("Command failed: %s"),com);
+      tmp=lives_strdup_printf(_("Command failed: %s"),com);
       fail_test(table,4,tmp);
-      g_free(tmp);
+      lives_free(tmp);
     }
 
-    g_free(com);
+    lives_free(com);
 
     while (mainw->cancelled==CANCEL_NONE&&(info_fd=open(cfile->info_file,O_RDONLY))==-1) {
-      g_usleep(prefs->sleep_time);
+      lives_usleep(prefs->sleep_time);
     }
     
     if (info_fd!=-1) {
@@ -875,7 +874,7 @@ boolean do_startup_tests(boolean tshoot) {
       if (!success3) {
 	if (!strcmp(prefs->image_ext,"png")) imgext_switched=TRUE;
 	set_pref("default_image_format","jpeg");
-	g_snprintf (prefs->image_ext,16,"%s","jpg");
+	lives_snprintf (prefs->image_ext,16,"%s","jpg");
       }
     }
     else {
@@ -943,20 +942,20 @@ void do_startup_interface_query(void) {
   LiVESWidget *dialog,*dialog_vbox,*radiobutton0,*radiobutton1,*label;
   LiVESWidget *okbutton;
   LiVESWidget *hbox;
-  GSList *radiobutton_group = NULL;
+  LiVESSList *radiobutton_group = NULL;
   gchar *txt1,*txt2,*txt3,*msg;
 
-  txt1=g_strdup(_("\n\nFinally, you can choose the default startup interface for LiVES.\n"));
-  txt2=g_strdup(_("\n\nLiVES has two main interfaces and you can start up with either of them.\n"));
-  txt3=g_strdup(_("\n\nThe default can always be changed later from Preferences.\n"));
+  txt1=lives_strdup(_("\n\nFinally, you can choose the default startup interface for LiVES.\n"));
+  txt2=lives_strdup(_("\n\nLiVES has two main interfaces and you can start up with either of them.\n"));
+  txt3=lives_strdup(_("\n\nThe default can always be changed later from Preferences.\n"));
 
 
-  msg=g_strdup_printf("%s%s%s",txt1,txt2,txt3);
+  msg=lives_strdup_printf("%s%s%s",txt1,txt2,txt3);
 
 
-  g_free(txt1);
-  g_free(txt2);
-  g_free(txt3);
+  lives_free(txt1);
+  lives_free(txt2);
+  lives_free(txt3);
 
   dialog = lives_standard_dialog_new (_("LiVES: - Choose the startup interface"),FALSE);
 
@@ -964,7 +963,7 @@ void do_startup_interface_query(void) {
   
   label=lives_standard_label_new(msg);
   lives_container_add (LIVES_CONTAINER (dialog_vbox), label);
-  g_free(msg);
+  lives_free(msg);
 
 
   hbox = lives_hbox_new (FALSE, 0);
@@ -1016,6 +1015,6 @@ void do_startup_interface_query(void) {
 
 
 
-void on_troubleshoot_activate (LiVESMenuItem *menuitem, gpointer user_data) {
+void on_troubleshoot_activate (LiVESMenuItem *menuitem, livespointer user_data) {
   do_startup_tests(TRUE);
 }

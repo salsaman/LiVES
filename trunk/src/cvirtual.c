@@ -32,7 +32,7 @@ void create_frame_index(int fileno, boolean init, int start_offset, int nframes)
   lives_clip_t *sfile=mainw->files[fileno];
   if (sfile==NULL||sfile->frame_index!=NULL) return;
 
-  sfile->frame_index=(int *)g_malloc(nframes*sizint);
+  sfile->frame_index=(int *)lives_malloc(nframes*sizint);
 
   if (init) {
     for (i=0;i<sfile->frames;i++) {
@@ -53,13 +53,13 @@ boolean save_frame_index(int fileno) {
 
   if (sfile==NULL||sfile->frame_index==NULL) return FALSE;
 
-  fname=g_build_filename(prefs->tmpdir,sfile->handle,"file_index",NULL);
+  fname=lives_build_filename(prefs->tmpdir,sfile->handle,"file_index",NULL);
 
   do {
     retval=0;
     fd=lives_creat_buffered(fname,DEF_FILE_PERMS);
     if (fd<0) {
-      retval=do_write_failed_error_s_with_retry(fname,g_strerror(errno),NULL);
+      retval=do_write_failed_error_s_with_retry(fname,lives_strerror(errno),NULL);
     }
     else {
 
@@ -81,7 +81,7 @@ boolean save_frame_index(int fileno) {
     }
   } while (retval==LIVES_RETRY);
 
-  g_free(fname);
+  lives_free(fname);
 
   if (retval==LIVES_CANCEL) return FALSE;
   
@@ -99,13 +99,13 @@ boolean load_frame_index(int fileno) {
 
   if (sfile==NULL||sfile->frame_index!=NULL) return FALSE;
 
-  if (sfile->frame_index!=NULL) g_free(sfile->frame_index);
+  if (sfile->frame_index!=NULL) lives_free(sfile->frame_index);
   sfile->frame_index=NULL;
 
-  fname=g_build_filename(prefs->tmpdir,sfile->handle,"file_index",NULL);
+  fname=lives_build_filename(prefs->tmpdir,sfile->handle,"file_index",NULL);
 
-  if (!g_file_test(fname,G_FILE_TEST_EXISTS)) {
-    g_free(fname);
+  if (!lives_file_test(fname,LIVES_FILE_TEST_EXISTS)) {
+    lives_free(fname);
     return FALSE;
   }
 
@@ -116,9 +116,9 @@ boolean load_frame_index(int fileno) {
     fd=lives_open_buffered_rdonly(fname);
 
     if (fd<0) {
-      retval=do_read_failed_error_s_with_retry(fname,g_strerror(errno),NULL);
+      retval=do_read_failed_error_s_with_retry(fname,lives_strerror(errno),NULL);
       if (retval==LIVES_CANCEL) {
-	g_free(fname);
+	lives_free(fname);
 	return FALSE;
       }
     }
@@ -145,7 +145,7 @@ boolean load_frame_index(int fileno) {
     }
   } while (retval==LIVES_RETRY);
 
-  g_free(fname);
+  lives_free(fname);
 
   return TRUE;
 }
@@ -172,21 +172,21 @@ void del_frame_index(lives_clip_t *sfile) {
   }
 
   if (sfile!=clipboard) {
-    idxfile=g_build_filename(prefs->tmpdir,sfile->handle,"file_index",NULL);
+    idxfile=lives_build_filename(prefs->tmpdir,sfile->handle,"file_index",NULL);
   
 #ifndef IS_MINGW
-    com=g_strdup_printf("/bin/rm -f \"%s\"",idxfile);
+    com=lives_strdup_printf("/bin/rm -f \"%s\"",idxfile);
 #else
-    com=g_strdup_printf("rm.exe -f \"%s\"",idxfile);
+    com=lives_strdup_printf("rm.exe -f \"%s\"",idxfile);
 #endif
 
     lives_system(com,FALSE);
-    g_free(com);
+    lives_free(com);
 
-    g_free(idxfile);
+    lives_free(idxfile);
   }
 
-  if (sfile->frame_index!=NULL) g_free(sfile->frame_index);
+  if (sfile->frame_index!=NULL) lives_free(sfile->frame_index);
   sfile->frame_index=NULL;
 }
 
@@ -215,10 +215,10 @@ boolean check_clip_integrity(int fileno, const lives_clip_data_t *cdata) {
   for (i=0;i<sfile->frames;i++) {
     if (sfile->frame_index[i]==-1) {
       // this is a non-virtual frame
-      gchar *frame=g_strdup_printf("%s/%s/%08d.png",prefs->tmpdir,sfile->handle,i+1);
-      if (g_file_test(frame,G_FILE_TEST_EXISTS)) empirical_img_type=IMG_TYPE_PNG;
+      gchar *frame=lives_strdup_printf("%s/%s/%08d.png",prefs->tmpdir,sfile->handle,i+1);
+      if (lives_file_test(frame,LIVES_FILE_TEST_EXISTS)) empirical_img_type=IMG_TYPE_PNG;
       else empirical_img_type=IMG_TYPE_JPEG;
-      g_free(frame);
+      lives_free(frame);
       first_real_frame=i+1;
       break;
     }
@@ -316,7 +316,7 @@ boolean virtual_to_images(int sfileno, int sframe, int eframe, boolean update_pr
   register int i;
   lives_clip_t *sfile=mainw->files[sfileno];
   LiVESPixbuf *pixbuf=NULL;
-  GError *error=NULL;
+  LiVESError *error=NULL;
   char *oname;
   int retval;
 
@@ -340,19 +340,19 @@ boolean virtual_to_images(int sfileno, int sframe, int eframe, boolean update_pr
       pixbuf=pull_lives_pixbuf_at_size(sfileno,i,get_image_ext_for_type(sfile->img_type),
 				       q_gint64((i-1.)/sfile->fps,sfile->fps),sfile->hsize,sfile->vsize,LIVES_INTERP_BEST);
       
-      oname=g_strdup_printf("%s/%s/%08d.%s",prefs->tmpdir,sfile->handle,i,get_image_ext_for_type(sfile->img_type));
+      oname=lives_strdup_printf("%s/%s/%08d.%s",prefs->tmpdir,sfile->handle,i,get_image_ext_for_type(sfile->img_type));
 
       do {
 	retval=0;
 	lives_pixbuf_save (pixbuf, oname, sfile->img_type, 100-prefs->ocp, TRUE, &error);
 	if (error!=NULL&&pbr==NULL) {
 	  retval=do_write_failed_error_s_with_retry(oname,error->message,NULL);
-	  g_error_free(error);
+	  lives_error_free(error);
 	  error=NULL;
 	}
       } while (retval==LIVES_RETRY);
 
-      if (oname!=NULL) g_free(oname);
+      if (oname!=NULL) lives_free(oname);
 
       if (pbr==NULL) {
 	if (pixbuf!=NULL) lives_object_unref(pixbuf);
@@ -368,7 +368,7 @@ boolean virtual_to_images(int sfileno, int sframe, int eframe, boolean update_pr
 
       if (update_progress) {
 	// sig_progress...
-	g_snprintf (mainw->msg,256,"%d",progress++);
+	lives_snprintf (mainw->msg,256,"%d",progress++);
 	threaded_dialog_spin();
 	lives_widget_context_update();
       }
@@ -404,7 +404,7 @@ void insert_images_in_virtual (int sfileno, int where, int frames, int *frame_in
 
   register int i,j=start-1;
 
-  if (sfile->frame_index_back!=NULL) g_free(sfile->frame_index_back);
+  if (sfile->frame_index_back!=NULL) lives_free(sfile->frame_index_back);
 
   sfile->frame_index_back=sfile->frame_index;
   sfile->frame_index=NULL;
@@ -445,7 +445,7 @@ void delete_frames_from_virtual (int sfileno, int start, int end) {
   lives_clip_t *sfile=mainw->files[sfileno];
   int nframes=sfile->frames,frames=end-start+1;
 
-  if (sfile->frame_index_back!=NULL) g_free(sfile->frame_index_back);
+  if (sfile->frame_index_back!=NULL) lives_free(sfile->frame_index_back);
 
   sfile->frame_index_back=sfile->frame_index;
   sfile->frame_index=NULL;
@@ -495,7 +495,7 @@ void restore_frame_index_back (int sfileno) {
 
   lives_clip_t *sfile=mainw->files[sfileno];
 
-  if (sfile->frame_index!=NULL) g_free(sfile->frame_index);
+  if (sfile->frame_index!=NULL) lives_free(sfile->frame_index);
 
   sfile->frame_index=sfile->frame_index_back;
   sfile->frame_index_back=NULL;
@@ -537,15 +537,15 @@ void clean_images_from_virtual (lives_clip_t *sfile, int oldframes) {
     threaded_dialog_spin();
 
     if ((i<sfile->frames&&sfile->frame_index[i]!=-1)||i>=sfile->frames) {
-      iname=g_strdup_printf("%s/%s/%08d.%s",prefs->tmpdir,sfile->handle,i,get_image_ext_for_type(sfile->img_type));
+      iname=lives_strdup_printf("%s/%s/%08d.%s",prefs->tmpdir,sfile->handle,i,get_image_ext_for_type(sfile->img_type));
 
 #ifndef IS_MINGW
-      com=g_strdup_printf("/bin/rm -f \"%s\"",iname);
+      com=lives_strdup_printf("/bin/rm -f \"%s\"",iname);
 #else
-      com=g_strdup_printf("rm.exe -f \"%s\"",iname);
+      com=lives_strdup_printf("rm.exe -f \"%s\"",iname);
 #endif
       lives_system(com,FALSE);
-      g_free(com);
+      lives_free(com);
     }
   }
 }
@@ -558,7 +558,7 @@ int *frame_index_copy(int *findex, int nframes, int offset) {
 
   // start at frame offset
 
-  int *findexc=(int *)g_malloc(sizint*nframes);
+  int *findexc=(int *)lives_malloc(sizint*nframes);
   register int i;
 
   for (i=0;i<nframes;i++) findexc[i]=findex[i+offset];

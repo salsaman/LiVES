@@ -56,12 +56,12 @@ char *filename_from_fd(char *val, int fd) {
 
   if (fstat(fd,&stb0)) return val;
 
-  fidi=g_strdup_printf("%d",fd);
-  fdpath=g_build_filename("/proc","self","fd",fidi,NULL);
-  g_free(fidi);
+  fidi=lives_strdup_printf("%d",fd);
+  fdpath=lives_build_filename("/proc","self","fd",fidi,NULL);
+  lives_free(fidi);
 
   if ((slen=lives_readlink(fdpath,rfdpath,PATH_MAX))==-1) return val;
-  g_free(fdpath);
+  lives_free(fdpath);
 
   memset(rfdpath+slen,0,1);
 
@@ -71,10 +71,10 @@ char *filename_from_fd(char *val, int fd) {
 
   if (stb0.st_ino!=stb1.st_ino) return val;
 
-  if (val!=NULL) g_free(val);
-  return g_strdup(rfdpath);
+  if (val!=NULL) lives_free(val);
+  return lives_strdup(rfdpath);
 #else
-  return g_strdup("unknown");
+  return lives_strdup("unknown");
 #endif
 }
 
@@ -311,17 +311,17 @@ int lives_system(const char *com, boolean allow_error) {
     char *msg=NULL;
     mainw->com_failed=TRUE;
     if (!allow_error) {
-      msg=g_strdup_printf("lives_system failed with code %d: %s",retval,com);
+      msg=lives_strdup_printf("lives_system failed with code %d: %s",retval,com);
       LIVES_ERROR(msg);
       do_system_failed_error(com,retval,NULL);
     }
 #ifndef LIVES_NO_DEBUG
     else {
-      msg=g_strdup_printf("lives_system failed with code %d: %s (not an error)",retval,com);
+      msg=lives_strdup_printf("lives_system failed with code %d: %s (not an error)",retval,com);
       LIVES_DEBUG(msg);
     }
 #endif
-    if (msg!=NULL) g_free(msg);
+    if (msg!=NULL) lives_free(msg);
   }
 
   if (cnorm) lives_set_cursor_style(LIVES_CURSOR_NORMAL,NULL);
@@ -374,10 +374,10 @@ ssize_t lives_write(int fd, const void *buf, size_t count, boolean allow_fail) {
     mainw->write_failed=TRUE;
     mainw->write_failed_file=filename_from_fd(mainw->write_failed_file,fd);
     if (retval>=0)
-      msg=g_strdup_printf("Write failed %"PRIu64" of %"PRIu64" in: %s",(uint64_t)retval,
+      msg=lives_strdup_printf("Write failed %"PRIu64" of %"PRIu64" in: %s",(uint64_t)retval,
 			  (uint64_t)count,mainw->write_failed_file);
     else 
-      msg=g_strdup_printf("Write failed with error %"PRIu64" in: %s",(uint64_t)retval,
+      msg=lives_strdup_printf("Write failed with error %"PRIu64" in: %s",(uint64_t)retval,
 			  mainw->write_failed_file);
 
     if (!allow_fail) {
@@ -388,16 +388,16 @@ ssize_t lives_write(int fd, const void *buf, size_t count, boolean allow_fail) {
     else {
       char *ffile=filename_from_fd(NULL,fd);
       if (retval>=0)
-	msg=g_strdup_printf("Write failed %"PRIu64" of %"PRIu64" in: %s (not an error)",(uint64_t)retval,
+	msg=lives_strdup_printf("Write failed %"PRIu64" of %"PRIu64" in: %s (not an error)",(uint64_t)retval,
 			    (uint64_t)count,ffile);
       else 
-	msg=g_strdup_printf("Write failed with error %"PRIu64" in: %s (allowed)",(uint64_t)retval,
+	msg=lives_strdup_printf("Write failed with error %"PRIu64" in: %s (allowed)",(uint64_t)retval,
 			    mainw->write_failed_file);
       LIVES_DEBUG(msg);
-      g_free(ffile);
+      lives_free(ffile);
     }
 #endif
-    if (msg!=NULL) g_free(msg);
+    if (msg!=NULL) lives_free(msg);
   }
   return retval;
 }
@@ -447,7 +447,7 @@ char *lives_fgets(char *s, int size, FILE *stream) {
 
 static lives_file_buffer_t *find_in_file_buffers(int fd) {
   lives_file_buffer_t *fbuff;
-  GList *fblist=mainw->file_buffers;
+  LiVESList *fblist=mainw->file_buffers;
 
   while (fblist!=NULL) {
     fbuff=(lives_file_buffer_t *)fblist->data;
@@ -475,16 +475,16 @@ static void do_file_read_error(int fd, ssize_t errval, size_t count) {
   mainw->read_failed_file=filename_from_fd(mainw->read_failed_file,fd);
  
   if (errval>=0)
-    msg=g_strdup_printf("Read failed %"PRId64" of %"PRIu64" in: %s",(int64_t)errval,
+    msg=lives_strdup_printf("Read failed %"PRId64" of %"PRIu64" in: %s",(int64_t)errval,
 			(uint64_t)count,mainw->read_failed_file);
   else 
-    msg=g_strdup_printf("Read failed with error %"PRId64" in: %s",(int64_t)errval,
+    msg=lives_strdup_printf("Read failed with error %"PRId64" in: %s",(int64_t)errval,
 			mainw->read_failed_file);
 
 
 
   LIVES_ERROR(msg);
-  g_free(msg);
+  lives_free(msg);
 }
 
 
@@ -500,10 +500,10 @@ ssize_t lives_read(int fd, void *buf, size_t count, boolean allow_less) {
     else {
       char *msg=NULL;
       char *ffile=filename_from_fd(NULL,fd);
-      msg=g_strdup_printf("Read got %"PRIu64" of %"PRIu64" in: %s (not an error)",(uint64_t)retval,
+      msg=lives_strdup_printf("Read got %"PRIu64" of %"PRIu64" in: %s (not an error)",(uint64_t)retval,
 			  (uint64_t)count,ffile);
       LIVES_DEBUG(msg);
-      g_free(ffile); g_free(msg);
+      lives_free(ffile); g_free(msg);
     }
 #endif
   }
@@ -551,14 +551,14 @@ static int lives_open_real_buffered(const char *pathname, int flags, int mode, b
   lives_file_buffer_t *fbuff;
   int fd=open(pathname,flags,mode);
   if (fd>=0) {
-    fbuff=(lives_file_buffer_t *)g_malloc(sizeof(lives_file_buffer_t));
+    fbuff=(lives_file_buffer_t *)lives_malloc(sizeof(lives_file_buffer_t));
     fbuff->fd=fd;
     fbuff->bytes=0;
     fbuff->eof=FALSE;
     fbuff->ptr=NULL;
     fbuff->buffer=NULL;
     fbuff->read=isread;
-    mainw->file_buffers=g_list_append(mainw->file_buffers,(gpointer)fbuff);
+    mainw->file_buffers=lives_list_append(mainw->file_buffers,(livespointer)fbuff);
   }
 
   return fd;
@@ -604,9 +604,9 @@ int lives_close_buffered(int fd) {
 
   if (should_close && fbuff->fd>=0) ret=close(fbuff->fd);
 
-  mainw->file_buffers=g_list_remove(mainw->file_buffers,(gconstpointer)fbuff);
-  if (fbuff->buffer!=NULL) g_free(fbuff->buffer);
-  g_free(fbuff);
+  mainw->file_buffers=lives_list_remove(mainw->file_buffers,(livesconstpointer)fbuff);
+  if (fbuff->buffer!=NULL) lives_free(fbuff->buffer);
+  lives_free(fbuff);
   return ret;
 }
 
@@ -615,7 +615,7 @@ int lives_close_buffered(int fd) {
 static ssize_t file_buffer_fill(lives_file_buffer_t *fbuff) {
   ssize_t res;
 
-  if (fbuff->buffer==NULL) fbuff->buffer=(uint8_t *)g_malloc(BUFFER_FILL_BYTES);
+  if (fbuff->buffer==NULL) fbuff->buffer=(uint8_t *)lives_malloc(BUFFER_FILL_BYTES);
 
   res=lives_read(fbuff->fd,fbuff->buffer,BUFFER_FILL_BYTES,TRUE);
 
@@ -738,7 +738,7 @@ ssize_t lives_write_buffered(int fd, const void *buf, size_t count, boolean allo
   }
 
   if (fbuff->buffer==NULL) {
-    fbuff->buffer=(uint8_t *)g_malloc(BUFFER_FILL_BYTES);
+    fbuff->buffer=(uint8_t *)lives_malloc(BUFFER_FILL_BYTES);
     fbuff->ptr=fbuff->buffer;
     fbuff->bytes=0;
   }
@@ -791,30 +791,30 @@ char *lives_format_storage_space_string(uint64_t space) {
 
   if (space>lives_10pow(18)) {
     // TRANSLATORS: Exabytes
-    fmt=g_strdup_printf(_("%.2f EB"),(double)space/(double)lives_10pow(18));
+    fmt=lives_strdup_printf(_("%.2f EB"),(double)space/(double)lives_10pow(18));
   }
   else if (space>lives_10pow(15)) {
     // TRANSLATORS: Petabytes
-    fmt=g_strdup_printf(_("%.2f PB"),(double)space/(double)lives_10pow(15));
+    fmt=lives_strdup_printf(_("%.2f PB"),(double)space/(double)lives_10pow(15));
   }
   else if (space>lives_10pow(12)) {
     // TRANSLATORS: Terabytes
-    fmt=g_strdup_printf(_("%.2f TB"),(double)space/(double)lives_10pow(12));
+    fmt=lives_strdup_printf(_("%.2f TB"),(double)space/(double)lives_10pow(12));
   }
   else if (space>lives_10pow(9)) {
     // TRANSLATORS: Gigabytes
-    fmt=g_strdup_printf(_("%.2f GB"),(double)space/(double)lives_10pow(9));
+    fmt=lives_strdup_printf(_("%.2f GB"),(double)space/(double)lives_10pow(9));
   }
   else if (space>lives_10pow(6)) {
     // TRANSLATORS: Megabytes
-    fmt=g_strdup_printf(_("%.2f MB"),(double)space/(double)lives_10pow(6));
+    fmt=lives_strdup_printf(_("%.2f MB"),(double)space/(double)lives_10pow(6));
   }
   else if (space>1024) {
     // TRANSLATORS: Kilobytes (1024 bytes)
-    fmt=g_strdup_printf(_("%.2f KiB"),(double)space/1024.);
+    fmt=lives_strdup_printf(_("%.2f KiB"),(double)space/1024.);
   }
   else {
-    fmt=g_strdup_printf(_("%d bytes"),space);
+    fmt=lives_strdup_printf(_("%d bytes"),space);
   }
 
   return fmt;
@@ -842,14 +842,14 @@ int lives_chdir(const char *path, boolean allow_fail) {
   retval=chdir(path);
 
   if (retval) {
-    char *msg=g_strdup_printf("Chdir failed to: %s",path);
+    char *msg=lives_strdup_printf("Chdir failed to: %s",path);
     mainw->chdir_failed=TRUE;
     if (!allow_fail) {
       LIVES_ERROR(msg);
       do_chdir_failed_error(path);
     }
     else LIVES_DEBUG(msg);
-    g_free(msg);
+    lives_free(msg);
   }
   return retval;
 }
@@ -860,7 +860,7 @@ LIVES_INLINE void lives_freep(void **ptr) {
   // free a pointer and nullify it, only if it is non-null to start with
   // pass the address of the pointer in
   if (ptr!=NULL&&*ptr!=NULL) {
-    g_free(*ptr);
+    lives_free(*ptr);
     *ptr=NULL;
   }
 }
@@ -921,9 +921,9 @@ int lives_win32_get_num_logical_cpus(void) {
 
     if (FALSE == rc) {
       if (GetLastError() == ERROR_INSUFFICIENT_BUFFER) {
-	if (buffer) g_free(buffer);
+	if (buffer) lives_free(buffer);
 	  
-	buffer = (PSYSTEM_LOGICAL_PROCESSOR_INFORMATION)g_malloc(returnLength);
+	buffer = (PSYSTEM_LOGICAL_PROCESSOR_INFORMATION)lives_malloc(returnLength);
 	  
 	if (NULL == buffer) {
 	  LIVES_ERROR("Allocation failure");
@@ -1000,7 +1000,7 @@ int lives_win32_get_num_logical_cpus(void) {
 	 processorL2CacheCount,
 	 processorL3CacheCount);*/
 /*    
-  g_free(buffer);
+  lives_free(buffer);
 
   return logicalProcessorCount;
 }
@@ -1386,16 +1386,16 @@ void lives_alarm_clear(int alarm_handle) {
 
 
 
-LIVES_INLINE char *g_strappend (char *string, int len, const char *xnew) {
-  char *tmp=g_strconcat (string,xnew,NULL);
-  g_snprintf(string,len,"%s",tmp);
-  g_free(tmp);
+LIVES_INLINE char *lives_strappend (char *string, int len, const char *xnew) {
+  char *tmp=lives_strconcat (string,xnew,NULL);
+  lives_snprintf(string,len,"%s",tmp);
+  lives_free(tmp);
   return string;
 }
 
 
-LIVES_INLINE GList *g_list_append_unique(GList *xlist, const char *add) {
-  if (g_list_find_custom(xlist,add,(GCompareFunc)strcmp)==NULL) return g_list_append(xlist,g_strdup(add));
+LIVES_INLINE LiVESList *lives_list_append_unique(LiVESList *xlist, const char *add) {
+  if (lives_list_find_custom(xlist,add,(LiVESCompareFunc)strcmp)==NULL) return lives_list_append(xlist,lives_strdup(add));
   return xlist;
 }
 
@@ -1817,7 +1817,7 @@ void init_clipboard(void) {
     cfile->cb_src=current_file;
 
     if (cfile->clip_type==CLIP_TYPE_FILE) {
-      if (cfile->frame_index!=NULL) g_free(cfile->frame_index);
+      if (cfile->frame_index!=NULL) lives_free(cfile->frame_index);
       cfile->frame_index=NULL;
       close_decoder_plugin((lives_decoder_t *)cfile->ext_src);
       cfile->ext_src=NULL;
@@ -1825,10 +1825,10 @@ void init_clipboard(void) {
     }
 
     mainw->com_failed=FALSE;
-    com=g_strdup_printf("%s delete_all \"%s\"",prefs->backend,clipboard->handle);
+    com=lives_strdup_printf("%s delete_all \"%s\"",prefs->backend,clipboard->handle);
     unlink(clipboard->info_file);
     lives_system(com,FALSE);
-    g_free(com);
+    lives_free(com);
 
     if (mainw->com_failed) {
       mainw->current_file=current_file;
@@ -1871,16 +1871,16 @@ void d_print(const char *text) {
     if (mainw->current_file!=mainw->last_dprint_file&&mainw->current_file!=0&&mainw->multitrack==NULL&&
 	(mainw->current_file==-1||cfile->clip_type!=CLIP_TYPE_GENERATOR)&&!mainw->no_switch_dprint) {
       if (mainw->current_file>0) {
-	switchtext=g_strdup_printf (_ ("\n==============================\nSwitched to clip %s\n"),
-				    cfile->clip_type!=CLIP_TYPE_VIDEODEV?(tmp=g_path_get_basename(cfile->name)):
-				    (tmp=g_strdup(cfile->name)));
-	g_free(tmp);
+	switchtext=lives_strdup_printf (_ ("\n==============================\nSwitched to clip %s\n"),
+				    cfile->clip_type!=CLIP_TYPE_VIDEODEV?(tmp=lives_path_get_basename(cfile->name)):
+				    (tmp=lives_strdup(cfile->name)));
+	lives_free(tmp);
       }
       else {
-	switchtext=g_strdup (_ ("\n==============================\nSwitched to empty clip\n"));
+	switchtext=lives_strdup (_ ("\n==============================\nSwitched to empty clip\n"));
       }
       lives_text_buffer_insert_at_end(tbuf,switchtext);
-      g_free (switchtext);
+      lives_free (switchtext);
     }
     if ((mainw->current_file==-1||cfile->clip_type!=CLIP_TYPE_GENERATOR)&&
 	(!mainw->no_switch_dprint||mainw->current_file!=0)) mainw->last_dprint_file=mainw->current_file;
@@ -1894,7 +1894,7 @@ boolean add_lmap_error(lives_lmap_error_t lerror, const char *name, livespointer
 			int frameno, double atime, boolean affects_current) {
   // potentially add a layout map error to the layout textbuffer
   LiVESTextIter end_iter;
-  GList *lmap;
+  LiVESList *lmap;
 
   char *text,*name2;
   char **array;
@@ -1907,67 +1907,67 @@ boolean add_lmap_error(lives_lmap_error_t lerror, const char *name, livespointer
   lives_text_buffer_get_end_iter(LIVES_TEXT_BUFFER(mainw->layout_textbuffer),&end_iter);
 
   if (affects_current&&user_data==NULL) {
-    mainw->affected_layout_marks=g_list_append(mainw->affected_layout_marks,
-					       (gpointer)lives_text_buffer_create_mark
+    mainw->affected_layout_marks=lives_list_append(mainw->affected_layout_marks,
+					       (livespointer)lives_text_buffer_create_mark
 					       (LIVES_TEXT_BUFFER(mainw->layout_textbuffer),NULL,&end_iter,TRUE));
   }
 
   switch (lerror) {
   case LMAP_INFO_SETNAME_CHANGED:
-    if (strlen(name)==0) name2=g_strdup(_("(blank)"));
-    else name2=g_strdup(name);
-    text=g_strdup_printf
+    if (strlen(name)==0) name2=lives_strdup(_("(blank)"));
+    else name2=lives_strdup(name);
+    text=lives_strdup_printf
       (_("The set name has been changed from %s to %s. Affected layouts have been updated accordingly\n"),
        name2,(char *)user_data);
     lives_text_buffer_insert(LIVES_TEXT_BUFFER(mainw->layout_textbuffer),&end_iter,text,-1);
-    g_free(name2);
-    g_free(text);
+    lives_free(name2);
+    lives_free(text);
     break;
   case LMAP_ERROR_MISSING_CLIP:
     if (prefs->warning_mask&WARN_MASK_LAYOUT_MISSING_CLIPS) return FALSE;
-    text=g_strdup_printf(_("The clip %s is missing from this set.\nIt is required by the following layouts:\n"),name);
+    text=lives_strdup_printf(_("The clip %s is missing from this set.\nIt is required by the following layouts:\n"),name);
     lives_text_buffer_insert(LIVES_TEXT_BUFFER(mainw->layout_textbuffer),&end_iter,text,-1);
-    g_free(text);
+    lives_free(text);
   case LMAP_ERROR_CLOSE_FILE:
-    text=g_strdup_printf(_("The clip %s has been closed.\nIt is required by the following layouts:\n"),name);
+    text=lives_strdup_printf(_("The clip %s has been closed.\nIt is required by the following layouts:\n"),name);
     lives_text_buffer_insert(LIVES_TEXT_BUFFER(mainw->layout_textbuffer),&end_iter,text,-1);
-    g_free(text);
+    lives_free(text);
     break;
   case LMAP_ERROR_SHIFT_FRAMES:
-    text=g_strdup_printf(_("Frames have been shifted in the clip %s.\nThe following layouts are affected:\n"),name);
+    text=lives_strdup_printf(_("Frames have been shifted in the clip %s.\nThe following layouts are affected:\n"),name);
     lives_text_buffer_insert(LIVES_TEXT_BUFFER(mainw->layout_textbuffer),&end_iter,text,-1);
-    g_free(text);
+    lives_free(text);
     break;
   case LMAP_ERROR_DELETE_FRAMES:
-    text=g_strdup_printf(_("Frames have been deleted from the clip %s.\nThe following layouts are affected:\n"),name);
+    text=lives_strdup_printf(_("Frames have been deleted from the clip %s.\nThe following layouts are affected:\n"),name);
     lives_text_buffer_insert(LIVES_TEXT_BUFFER(mainw->layout_textbuffer),&end_iter,text,-1);
-    g_free(text);
+    lives_free(text);
     break;
   case LMAP_ERROR_DELETE_AUDIO:
-    text=g_strdup_printf(_("Audio has been deleted from the clip %s.\nThe following layouts are affected:\n"),name);
+    text=lives_strdup_printf(_("Audio has been deleted from the clip %s.\nThe following layouts are affected:\n"),name);
     lives_text_buffer_insert(LIVES_TEXT_BUFFER(mainw->layout_textbuffer),&end_iter,text,-1);
-    g_free(text);
+    lives_free(text);
     break;
   case LMAP_ERROR_SHIFT_AUDIO:
-    text=g_strdup_printf(_("Audio has been shifted in clip %s.\nThe following layouts are affected:\n"),name);
+    text=lives_strdup_printf(_("Audio has been shifted in clip %s.\nThe following layouts are affected:\n"),name);
     lives_text_buffer_insert(LIVES_TEXT_BUFFER(mainw->layout_textbuffer),&end_iter,text,-1);
-    g_free(text);
+    lives_free(text);
     break;
   case LMAP_ERROR_ALTER_AUDIO:
-    text=g_strdup_printf(_("Audio has been altered in the clip %s.\nThe following layouts are affected:\n"),name);
+    text=lives_strdup_printf(_("Audio has been altered in the clip %s.\nThe following layouts are affected:\n"),name);
     lives_text_buffer_insert(LIVES_TEXT_BUFFER(mainw->layout_textbuffer),&end_iter,text,-1);
-    g_free(text);
+    lives_free(text);
     break;
   case LMAP_ERROR_ALTER_FRAMES:
-    text=g_strdup_printf(_("Frames have been altered in the clip %s.\nThe following layouts are affected:\n"),name);
+    text=lives_strdup_printf(_("Frames have been altered in the clip %s.\nThe following layouts are affected:\n"),name);
     lives_text_buffer_insert(LIVES_TEXT_BUFFER(mainw->layout_textbuffer),&end_iter,text,-1);
-    g_free(text);
+    lives_free(text);
     break;
   }
 
   if (affects_current&&user_data!=NULL) {
-    mainw->affected_layout_marks=g_list_append(mainw->affected_layout_marks,
-					       (gpointer)lives_text_buffer_create_mark
+    mainw->affected_layout_marks=lives_list_append(mainw->affected_layout_marks,
+					       (livespointer)lives_text_buffer_create_mark
 					       (LIVES_TEXT_BUFFER(mainw->layout_textbuffer),NULL,&end_iter,TRUE));
   }
 
@@ -1975,36 +1975,36 @@ boolean add_lmap_error(lives_lmap_error_t lerror, const char *name, livespointer
   case LMAP_INFO_SETNAME_CHANGED:
     lmap=mainw->current_layouts_map;
     while (lmap!=NULL) {
-      array=g_strsplit((char *)lmap->data,"|",-1);
-      text=g_strdup_printf("%s\n",array[0]);
+      array=lives_strsplit((char *)lmap->data,"|",-1);
+      text=lives_strdup_printf("%s\n",array[0]);
       lives_text_buffer_insert(LIVES_TEXT_BUFFER(mainw->layout_textbuffer),&end_iter,text,-1);
-      g_free(text);
-      //mainw->affected_layouts_map=g_list_append_unique(mainw->affected_layouts_map,array[0]);
-      g_strfreev(array);
+      lives_free(text);
+      //mainw->affected_layouts_map=lives_list_append_unique(mainw->affected_layouts_map,array[0]);
+      lives_strfreev(array);
       lmap=lmap->next;
     }
     break;
   case LMAP_ERROR_MISSING_CLIP:
   case LMAP_ERROR_CLOSE_FILE:
     if (affects_current) {
-      text=g_strdup_printf("%s\n",mainw->string_constants[LIVES_STRING_CONSTANT_CL]);
+      text=lives_strdup_printf("%s\n",mainw->string_constants[LIVES_STRING_CONSTANT_CL]);
       lives_text_buffer_insert(LIVES_TEXT_BUFFER(mainw->layout_textbuffer),&end_iter,text,-1);
-      g_free(text);
-      mainw->affected_layouts_map=g_list_append_unique(mainw->affected_layouts_map,mainw->string_constants[LIVES_STRING_CONSTANT_CL]);
+      lives_free(text);
+      mainw->affected_layouts_map=lives_list_append_unique(mainw->affected_layouts_map,mainw->string_constants[LIVES_STRING_CONSTANT_CL]);
 
-      mainw->affected_layout_marks=g_list_append(mainw->affected_layout_marks,
-						 (gpointer)lives_text_buffer_create_mark(LIVES_TEXT_BUFFER(mainw->layout_textbuffer),
+      mainw->affected_layout_marks=lives_list_append(mainw->affected_layout_marks,
+						 (livespointer)lives_text_buffer_create_mark(LIVES_TEXT_BUFFER(mainw->layout_textbuffer),
 											 NULL,&end_iter,TRUE));
 
     }
-    lmap=(GList *)user_data;
+    lmap=(LiVESList *)user_data;
     while (lmap!=NULL) {
-      array=g_strsplit((char *)lmap->data,"|",-1);
-      text=g_strdup_printf("%s\n",array[0]);
+      array=lives_strsplit((char *)lmap->data,"|",-1);
+      text=lives_strdup_printf("%s\n",array[0]);
       lives_text_buffer_insert(LIVES_TEXT_BUFFER(mainw->layout_textbuffer),&end_iter,text,-1);
-      g_free(text);
-      mainw->affected_layouts_map=g_list_append_unique(mainw->affected_layouts_map,array[0]);
-      g_strfreev(array);
+      lives_free(text);
+      mainw->affected_layouts_map=lives_list_append_unique(mainw->affected_layouts_map,array[0]);
+      lives_strfreev(array);
       lmap=lmap->next;
     }
     break;
@@ -2012,27 +2012,27 @@ boolean add_lmap_error(lives_lmap_error_t lerror, const char *name, livespointer
   case LMAP_ERROR_DELETE_FRAMES:
   case LMAP_ERROR_ALTER_FRAMES:
     if (affects_current) {
-      text=g_strdup_printf("%s\n",mainw->string_constants[LIVES_STRING_CONSTANT_CL]);
+      text=lives_strdup_printf("%s\n",mainw->string_constants[LIVES_STRING_CONSTANT_CL]);
       lives_text_buffer_insert(LIVES_TEXT_BUFFER(mainw->layout_textbuffer),&end_iter,text,-1);
-      g_free(text);
-      mainw->affected_layouts_map=g_list_append_unique(mainw->affected_layouts_map,mainw->string_constants[LIVES_STRING_CONSTANT_CL]);
+      lives_free(text);
+      mainw->affected_layouts_map=lives_list_append_unique(mainw->affected_layouts_map,mainw->string_constants[LIVES_STRING_CONSTANT_CL]);
 
-      mainw->affected_layout_marks=g_list_append(mainw->affected_layout_marks,
-						 (gpointer)lives_text_buffer_create_mark(LIVES_TEXT_BUFFER(mainw->layout_textbuffer),
+      mainw->affected_layout_marks=lives_list_append(mainw->affected_layout_marks,
+						 (livespointer)lives_text_buffer_create_mark(LIVES_TEXT_BUFFER(mainw->layout_textbuffer),
 											 NULL,&end_iter,TRUE));
     }
-    lmap=(GList *)user_data;
+    lmap=(LiVESList *)user_data;
     while (lmap!=NULL) {
-      array=g_strsplit((char *)lmap->data,"|",-1);
+      array=lives_strsplit((char *)lmap->data,"|",-1);
       orig_fps=strtod(array[3],NULL);
       resampled_frame=count_resampled_frames(frameno,orig_fps,mainw->files[clipno]->fps);
       if (resampled_frame<=atoi(array[2])) {
-	text=g_strdup_printf("%s\n",array[0]);
+	text=lives_strdup_printf("%s\n",array[0]);
 	lives_text_buffer_insert(LIVES_TEXT_BUFFER(mainw->layout_textbuffer),&end_iter,text,-1);
-	g_free(text);
-	mainw->affected_layouts_map=g_list_append_unique(mainw->affected_layouts_map,array[0]);
+	lives_free(text);
+	mainw->affected_layouts_map=lives_list_append_unique(mainw->affected_layouts_map,array[0]);
       }
-      g_strfreev(array);
+      lives_strfreev(array);
       lmap=lmap->next;
     }
     break;
@@ -2040,26 +2040,26 @@ boolean add_lmap_error(lives_lmap_error_t lerror, const char *name, livespointer
   case LMAP_ERROR_DELETE_AUDIO:
   case LMAP_ERROR_ALTER_AUDIO:
     if (affects_current) {
-      text=g_strdup_printf("%s\n",mainw->string_constants[LIVES_STRING_CONSTANT_CL]);
+      text=lives_strdup_printf("%s\n",mainw->string_constants[LIVES_STRING_CONSTANT_CL]);
       lives_text_buffer_insert(LIVES_TEXT_BUFFER(mainw->layout_textbuffer),&end_iter,text,-1);
-      g_free(text);
-      mainw->affected_layouts_map=g_list_append_unique(mainw->affected_layouts_map,mainw->string_constants[LIVES_STRING_CONSTANT_CL]);
+      lives_free(text);
+      mainw->affected_layouts_map=lives_list_append_unique(mainw->affected_layouts_map,mainw->string_constants[LIVES_STRING_CONSTANT_CL]);
 
-      mainw->affected_layout_marks=g_list_append(mainw->affected_layout_marks,
-						 (gpointer)lives_text_buffer_create_mark(LIVES_TEXT_BUFFER(mainw->layout_textbuffer),
+      mainw->affected_layout_marks=lives_list_append(mainw->affected_layout_marks,
+						 (livespointer)lives_text_buffer_create_mark(LIVES_TEXT_BUFFER(mainw->layout_textbuffer),
 											 NULL,&end_iter,TRUE));
     }
-    lmap=(GList *)user_data;
+    lmap=(LiVESList *)user_data;
     while (lmap!=NULL) {
-      array=g_strsplit((char *)lmap->data,"|",-1);
+      array=lives_strsplit((char *)lmap->data,"|",-1);
       max_time=strtod(array[4],NULL);
       if (max_time>0.&&atime<=max_time) {
-	text=g_strdup_printf("%s\n",array[0]);
+	text=lives_strdup_printf("%s\n",array[0]);
 	lives_text_buffer_insert(LIVES_TEXT_BUFFER(mainw->layout_textbuffer),&end_iter,text,-1);
-	g_free(text);
-	mainw->affected_layouts_map=g_list_append_unique(mainw->affected_layouts_map,array[0]);
+	lives_free(text);
+	mainw->affected_layouts_map=lives_list_append_unique(mainw->affected_layouts_map,array[0]);
       }
-      g_strfreev(array);
+      lives_strfreev(array);
       lmap=lmap->next;
     }
     break;
@@ -2073,7 +2073,7 @@ boolean add_lmap_error(lives_lmap_error_t lerror, const char *name, livespointer
 
 void clear_lmap_errors(void) {
   LiVESTextIter start_iter,end_iter;
-  GList *lmap;
+  LiVESList *lmap;
 
   lives_text_buffer_get_start_iter(LIVES_TEXT_BUFFER(mainw->layout_textbuffer),&start_iter);
   lives_text_buffer_get_end_iter(LIVES_TEXT_BUFFER(mainw->layout_textbuffer),&end_iter);
@@ -2082,10 +2082,10 @@ void clear_lmap_errors(void) {
   lmap=mainw->affected_layouts_map;
 
   while (lmap!=NULL) {
-    g_free(lmap->data);
+    lives_free((livespointer)lmap->data);
     lmap=lmap->next;
   }
-  g_list_free(lmap);
+  lives_list_free(lmap);
 
   mainw->affected_layouts_map=NULL;
   lives_widget_set_sensitive (mainw->show_layout_errors, FALSE);
@@ -2110,8 +2110,8 @@ boolean check_for_lock_file(const char *set_name, int type) {
   char *msg=NULL;
   ssize_t bytes;
 
-  char *info_file=g_strdup_printf("%s/.locks.%d",prefs->tmpdir,capable->mainpid);
-  char *com=g_strdup_printf("%s check_for_lock \"%s\" \"%s\" %d >\"%s\"",prefs->backend_sync,set_name,capable->myname,
+  char *info_file=lives_strdup_printf("%s/.locks.%d",prefs->tmpdir,capable->mainpid);
+  char *com=lives_strdup_printf("%s check_for_lock \"%s\" \"%s\" %d >\"%s\"",prefs->backend_sync,set_name,capable->myname,
 			    capable->mainpid,info_file);
 
   unlink(info_file);
@@ -2119,7 +2119,7 @@ boolean check_for_lock_file(const char *set_name, int type) {
   mainw->com_failed=FALSE;
   lives_system(com,FALSE);
   threaded_dialog_spin();
-  g_free(com);
+  lives_free(com);
 
   clear_mainw_msg();
 
@@ -2132,27 +2132,27 @@ boolean check_for_lock_file(const char *set_name, int type) {
       memset(mainw->msg+bytes,0,1);
 
       if (type==0) {
-	msg=g_strdup_printf(_("Set %s\ncannot be opened, as it is in use\nby another copy of LiVES.\n"),set_name);
+	msg=lives_strdup_printf(_("Set %s\ncannot be opened, as it is in use\nby another copy of LiVES.\n"),set_name);
 	threaded_dialog_spin();
 	do_error_dialog(msg);
 	threaded_dialog_spin();
       }
       else if (type==1) {
-	msg=g_strdup_printf
+	msg=lives_strdup_printf
 	  (_("\nThe set %s is currently in use by another copy of LiVES.\nPlease choose another set name.\n"),set_name);
 	if (!mainw->osc_auto) do_blocking_error_dialog(msg);
       }
       if (msg!=NULL) {
-	g_free(msg);
+	lives_free(msg);
       }
       unlink(info_file);
-      g_free(info_file);
+      lives_free(info_file);
       return FALSE;
     }
   }
   close (info_fd);
   unlink(info_file);
-  g_free(info_file);
+  lives_free(info_file);
 
   return TRUE;
 }
@@ -2189,17 +2189,17 @@ boolean is_legal_set_name(const char *set_name, boolean allow_dupes) {
   }
 
   if (strcspn(set_name,reject)!=slen) {
-    msg=g_strdup_printf(_("\nSet names may not contain spaces or the characters%s.\n"),reject);
+    msg=lives_strdup_printf(_("\nSet names may not contain spaces or the characters%s.\n"),reject);
     if (!mainw->osc_auto) do_blocking_error_dialog(msg);
-    g_free(msg);
+    lives_free(msg);
     return FALSE;
   }
 
   for (i=0;i<slen;i+=2) {
     if (set_name[i]=='.'&&((i==0||set_name[i-1]=='.')||(i<slen-1&&set_name[i+1]=='.'))) {
-      msg=g_strdup(_("\nSet names may not start with a '.' or contain '..'\n"));
+      msg=lives_strdup(_("\nSet names may not start with a '.' or contain '..'\n"));
       if (!mainw->osc_auto) do_blocking_error_dialog(msg);
-      g_free(msg);
+      lives_free(msg);
       return FALSE;
     }
   }
@@ -2209,15 +2209,15 @@ boolean is_legal_set_name(const char *set_name, boolean allow_dupes) {
   
   if (!allow_dupes) {
     // check for duplicate set names
-    char *set_dir=g_build_filename(prefs->tmpdir,set_name,NULL);
-    if (g_file_test(set_dir,G_FILE_TEST_IS_DIR)) {
-      g_free(set_dir);
-      msg=g_strdup_printf(_("\nThe set %s already exists.\nPlease choose another set name.\n"),set_name);
+    char *set_dir=lives_build_filename(prefs->tmpdir,set_name,NULL);
+    if (lives_file_test(set_dir,LIVES_FILE_TEST_IS_DIR)) {
+      lives_free(set_dir);
+      msg=lives_strdup_printf(_("\nThe set %s already exists.\nPlease choose another set name.\n"),set_name);
       do_blocking_error_dialog(msg);
-      g_free(msg);
+      lives_free(msg);
       return FALSE;
     }
-    g_free(set_dir);
+    lives_free(set_dir);
   }
 
   return TRUE;
@@ -2236,25 +2236,25 @@ boolean check_frame_count(int idx) {
   // ingores gaps
 
   // make sure nth frame is there...
-  char *frame=g_strdup_printf("%s/%s/%08d.%s",prefs->tmpdir,mainw->files[idx]->handle,mainw->files[idx]->frames,
+  char *frame=lives_strdup_printf("%s/%s/%08d.%s",prefs->tmpdir,mainw->files[idx]->handle,mainw->files[idx]->frames,
 			       get_image_ext_for_type(mainw->files[idx]->img_type));
 
-  if (!g_file_test(frame,G_FILE_TEST_EXISTS)) {
+  if (!lives_file_test(frame,LIVES_FILE_TEST_EXISTS)) {
     // not enough frames
-    g_free(frame);
+    lives_free(frame);
     return FALSE;
   }
-  g_free(frame);
+  lives_free(frame);
 
   // ...make sure n + 1 th frame is not
-  frame=g_strdup_printf("%s/%s/%08d.%s",prefs->tmpdir,mainw->files[idx]->handle,mainw->files[idx]->frames+1,
+  frame=lives_strdup_printf("%s/%s/%08d.%s",prefs->tmpdir,mainw->files[idx]->handle,mainw->files[idx]->frames+1,
 			get_image_ext_for_type(mainw->files[idx]->img_type));
-  if (g_file_test(frame,G_FILE_TEST_EXISTS)) {
+  if (lives_file_test(frame,LIVES_FILE_TEST_EXISTS)) {
     // too many frames
-    g_free(frame);
+    lives_free(frame);
     return FALSE;
   }
-  g_free(frame);
+  lives_free(frame);
 
   // just right
   return TRUE;
@@ -2274,16 +2274,16 @@ void get_frame_count(int idx) {
   int info_fd;
   int retval;
   ssize_t bytes;
-  char *info_file=g_strdup_printf("%s/.check.%d",prefs->tmpdir,capable->mainpid);
-  char *com=g_strdup_printf("%s count_frames \"%s\" \"%s\" > \"%s\"",prefs->backend_sync,mainw->files[idx]->handle,
+  char *info_file=lives_strdup_printf("%s/.check.%d",prefs->tmpdir,capable->mainpid);
+  char *com=lives_strdup_printf("%s count_frames \"%s\" \"%s\" > \"%s\"",prefs->backend_sync,mainw->files[idx]->handle,
 			     get_image_ext_for_type(mainw->files[idx]->img_type),info_file);
 
   mainw->com_failed=FALSE;
   lives_system(com,FALSE);
-  g_free(com);
+  lives_free(com);
   
   if (mainw->com_failed) {
-    g_free(info_file);
+    lives_free(info_file);
     return;
   }
 
@@ -2291,7 +2291,7 @@ void get_frame_count(int idx) {
     retval=0;
     info_fd=open(info_file,O_RDONLY);
     if (info_fd<0) {
-      retval=do_read_failed_error_s_with_retry(info_file,g_strerror(errno),NULL);
+      retval=do_read_failed_error_s_with_retry(info_file,lives_strerror(errno),NULL);
     }
     else {
       if ((bytes=lives_read(info_fd,mainw->msg,256,TRUE))>0) {
@@ -2308,7 +2308,7 @@ void get_frame_count(int idx) {
   } while (retval==LIVES_RETRY);
 
   unlink(info_file);
-  g_free(info_file);
+  lives_free(info_file);
 }
 
 
@@ -2341,8 +2341,8 @@ void get_dirname(char *filename) {
   // get directory name from a file
   //filename should point to char[PATH_MAX]
 
-  g_snprintf (filename,PATH_MAX,"%s%s",(tmp=g_path_get_dirname (filename)),G_DIR_SEPARATOR_S);
-  g_free(tmp);
+  lives_snprintf (filename,PATH_MAX,"%s%s",(tmp=lives_path_get_dirname (filename)),LIVES_DIR_SEPARATOR_S);
+  lives_free(tmp);
 
   if (!strcmp(filename,"//")) {
     memset(filename+1,0,1);
@@ -2350,19 +2350,19 @@ void get_dirname(char *filename) {
   }
 
   if (!strncmp(filename,"./",2)) {
-    char *tmp1=g_get_current_dir(),*tmp=g_build_filename(tmp1,filename+2,NULL);
-    g_free(tmp1);
-    g_snprintf(filename,PATH_MAX,"%s",tmp);
-    g_free(tmp);
+    char *tmp1=lives_get_current_dir(),*tmp=lives_build_filename(tmp1,filename+2,NULL);
+    lives_free(tmp1);
+    lives_snprintf(filename,PATH_MAX,"%s",tmp);
+    lives_free(tmp);
   }
 }
 
 
 char *get_dir(const char *filename) {
   char tmp[PATH_MAX];
-  g_snprintf(tmp,PATH_MAX,"%s",filename);
+  lives_snprintf(tmp,PATH_MAX,"%s",filename);
   get_dirname(tmp);
-  return g_strdup(tmp);
+  return lives_strdup(tmp);
 }
 
 
@@ -2370,9 +2370,9 @@ void get_basename(char *filename) {
   // get basename from a file
   // (filename without directory)
   //filename should point to char[PATH_MAX]
-  char *tmp=g_path_get_basename(filename);
-  g_snprintf (filename,PATH_MAX,"%s",tmp);
-  g_free(tmp);
+  char *tmp=lives_path_get_basename(filename);
+  lives_snprintf (filename,PATH_MAX,"%s",tmp);
+  lives_free(tmp);
 }
 
 void get_filename(char *filename, boolean strip_dir) {
@@ -2380,26 +2380,26 @@ void get_filename(char *filename, boolean strip_dir) {
   //filename should point to char[PATH_MAX]
   char **array;
   if (strip_dir) get_basename(filename);
-  array=g_strsplit(filename,".",-1);
-  g_snprintf(filename,PATH_MAX,"%s",array[0]);
-  g_strfreev(array);
+  array=lives_strsplit(filename,".",-1);
+  lives_snprintf(filename,PATH_MAX,"%s",array[0]);
+  lives_strfreev(array);
 }
 
 
 char *get_extension(const char *filename) {
-  char *tmp=g_path_get_basename(filename);
+  char *tmp=lives_path_get_basename(filename);
   int ntok=get_token_count((char *)filename,'.');
-  char **array=g_strsplit(tmp,".",-1);
-  char *ret=g_strdup(array[ntok-1]);
-  g_strfreev(array);
-  g_free(tmp);
+  char **array=lives_strsplit(tmp,".",-1);
+  char *ret=lives_strdup(array[ntok-1]);
+  lives_strfreev(array);
+  lives_free(tmp);
   return ret;
 }
 
 
 char *ensure_extension(const char *fname, const char *ext) {
-  if (!strcmp(fname+strlen(fname)-strlen(ext),ext)) return g_strdup(fname);
-  return g_strconcat(fname,ext,NULL);
+  if (!strcmp(fname+strlen(fname)-strlen(ext),ext)) return lives_strdup(fname);
+  return lives_strconcat(fname,ext,NULL);
 }
 
 
@@ -2413,12 +2413,12 @@ boolean ensure_isdir(char *fname) {
   size_t offs=slen-1;
   char *tmp;
 
-  while (offs>=0&&!strcmp(fname+offs,G_DIR_SEPARATOR_S)) offs--;
+  while (offs>=0&&!strcmp(fname+offs,LIVES_DIR_SEPARATOR_S)) offs--;
   if (offs==slen-2) return FALSE;
   memset(fname+offs+1,0,1);
-  tmp=g_strdup_printf("%s%s",fname,G_DIR_SEPARATOR_S);
-  g_snprintf(fname,PATH_MAX,"%s",tmp);
-  g_free(tmp);
+  tmp=lives_strdup_printf("%s%s",fname,LIVES_DIR_SEPARATOR_S);
+  lives_snprintf(fname,PATH_MAX,"%s",tmp);
+  lives_free(tmp);
   return TRUE;
 }
 
@@ -2428,9 +2428,9 @@ void get_location(const char *exe, char *val, int maxlen) {
   // sets it in val which is a char array of maxlen bytes
 
   char *loc;
-  if ((loc=g_find_program_in_path (exe))!=NULL) {
-    g_snprintf (val,maxlen,"%s",loc);
-    g_free (loc);
+  if ((loc=lives_find_program_in_path (exe))!=NULL) {
+    lives_snprintf (val,maxlen,"%s",loc);
+    lives_free (loc);
   }
   else {
     memset (val,0,1);
@@ -2443,12 +2443,12 @@ uint64_t get_version_hash(const char *exe, const char *sep, int piece) {
   FILE *rfile;
   ssize_t rlen;
   char val[16];
-  char *com=g_strdup_printf("%s get_version_hash \"%s\" \"%s\" %d",prefs->backend_sync,exe,sep,piece);
+  char *com=lives_strdup_printf("%s get_version_hash \"%s\" \"%s\" %d",prefs->backend_sync,exe,sep,piece);
   rfile=popen(com,"r");
   rlen=fread(val,1,16,rfile);
   pclose(rfile);
   memset(val+rlen,0,1);
-  g_free(com);
+  lives_free(com);
   return strtol(val,NULL,10);
 }
 
@@ -2466,7 +2466,7 @@ uint64_t make_version_hash(const char *ver) {
   if (ver==NULL) return 0;
 
   ntok=get_token_count((char *)ver,'.');
-  array=g_strsplit(ver,".",-1);
+  array=lives_strsplit(ver,".",-1);
 
   hash=atoi(array[0])*VER_MAJOR_MULT;
 
@@ -2478,7 +2478,7 @@ uint64_t make_version_hash(const char *ver) {
     hash+=atoi(array[2])*VER_MICRO_MULT;
   }
 
-  g_strfreev(array);
+  lives_strfreev(array);
 
   return hash;
 }
@@ -2488,32 +2488,32 @@ uint64_t make_version_hash(const char *ver) {
 char *repl_tmpdir(const char *entry, boolean fwd) {
   // replace prefs->tmpdir with string tmpdir or vice-versa. This allows us to relocate tmpdir if necessary.
   // used for layout.map file
-  // return value should be g_free()'d
+  // return value should be lives_free()'d
 
   // fwd TRUE replaces "/tmp/foo" with "tmpdir"
   // fwd FALSE replaces "tmpdir" with "/tmp/foo"
 
 
-  char *string=g_strdup(entry);;
+  char *string=lives_strdup(entry);;
 
   if (fwd) {
     if (!strncmp(entry,prefs->tmpdir,strlen(prefs->tmpdir))) {
-      g_free(string);
-      string=g_strdup_printf("tmpdir%s",entry+strlen(prefs->tmpdir));
+      lives_free(string);
+      string=lives_strdup_printf("tmpdir%s",entry+strlen(prefs->tmpdir));
     }
   }
   else {
     if (!strncmp(entry,"tmpdir",6)) {
-      g_free(string);
-      string=g_build_filename(prefs->tmpdir,entry+6,NULL);
+      lives_free(string);
+      string=lives_build_filename(prefs->tmpdir,entry+6,NULL);
     }
   }
   return string;
 }
 
 
-void remove_layout_files(GList *map) {
-  // removes a GList of layouts from the set layout map
+void remove_layout_files(LiVESList *map) {
+  // removes a LiVESList of layouts from the set layout map
 
   // removes from: - global layouts map
   //               - disk
@@ -2524,7 +2524,7 @@ void remove_layout_files(GList *map) {
   char *com,*msg;
   char *fname,*fdir;
   char **array;
-  GList *lmap,*lmap_next,*cmap,*cmap_next,*map_next;
+  LiVESList *lmap,*lmap_next,*cmap,*cmap_next,*map_next;
   size_t maplen;
   int i;
   boolean is_current;
@@ -2534,7 +2534,7 @@ void remove_layout_files(GList *map) {
     if (map->data!=NULL) {
       if (!strcmp((char *)map->data,mainw->string_constants[LIVES_STRING_CONSTANT_CL])) {
 	is_current=TRUE;
-	fname=g_strdup(mainw->string_constants[LIVES_STRING_CONSTANT_CL]);
+	fname=lives_strdup(mainw->string_constants[LIVES_STRING_CONSTANT_CL]);
       }
       else {
 	is_current=FALSE;
@@ -2545,31 +2545,32 @@ void remove_layout_files(GList *map) {
 	while (cmap!=NULL) {
 	  cmap_next=cmap->next;
 	  if (!strcmp((char *)cmap->data,(char *)map->data)) {
-	    mainw->current_layouts_map=g_list_remove_link(mainw->current_layouts_map,cmap);
+	    lives_free((livespointer)cmap->data);
+	    mainw->current_layouts_map=lives_list_delete_link(mainw->current_layouts_map,cmap);
 	    break;
 	  }
 	  cmap=cmap_next;
 	}
 
-	array=g_strsplit((char *)map->data,"|",-1);
+	array=lives_strsplit((char *)map->data,"|",-1);
 	fname=repl_tmpdir(array[0],FALSE);
-	g_strfreev(array);
+	lives_strfreev(array);
       }
 
       // fname should now hold the layout name on disk
 
-      msg=g_strdup_printf(_("Removing layout %s\n"),fname);
+      msg=lives_strdup_printf(_("Removing layout %s\n"),fname);
       d_print(msg);
-      g_free(msg);
+      lives_free(msg);
 
       if (!is_current) {
 #ifndef IS_MINGW
-	com=g_strdup_printf("/bin/rm \"%s\" 2>/dev/null",fname);
+	com=lives_strdup_printf("/bin/rm \"%s\" 2>/dev/null",fname);
 #else
-	com=g_strdup_printf("rm.exe \"%s\" 2>NUL",fname);
+	com=lives_strdup_printf("rm.exe \"%s\" 2>NUL",fname);
 #endif
 	lives_system(com,TRUE);
-	g_free(com);
+	lives_free(com);
 	
 
 	// if no more layouts in parent dir, we can delete dir
@@ -2578,35 +2579,35 @@ void remove_layout_files(GList *map) {
 	if (!strncmp(fname,prefs->tmpdir,strlen(prefs->tmpdir))) {
 	  // is in tmpdir, safe to remove parents
 
-	  char *protect_file=g_build_filename(prefs->tmpdir,"noremove",NULL);
+	  char *protect_file=lives_build_filename(prefs->tmpdir,"noremove",NULL);
 
 	  mainw->com_failed=FALSE;
 	  // touch a file in tpmdir, so we cannot remove tmpdir itself
 #ifndef IS_MINGW
-	  com=g_strdup_printf("/bin/touch \"%s\" >/dev/null 2>&1",protect_file);
+	  com=lives_strdup_printf("/bin/touch \"%s\" >/dev/null 2>&1",protect_file);
 #else
-	  com=g_strdup_printf("touch.exe \"%s\" >NUL 2>&1",protect_file);
+	  com=lives_strdup_printf("touch.exe \"%s\" >NUL 2>&1",protect_file);
 #endif
 	  lives_system(com,FALSE);
-	  g_free(com);
+	  lives_free(com);
 	  
 	  if (!mainw->com_failed) {
 	    // ok, the "touch" worked
 	    // now we call rmdir -p : remove directory + any empty parents
-	    fdir=g_path_get_dirname (fname);
+	    fdir=lives_path_get_dirname (fname);
 #ifndef IS_MINGW
-	    com=g_strdup_printf("/bin/rmdir -p \"%s\" 2>/dev/null",fdir);
+	    com=lives_strdup_printf("/bin/rmdir -p \"%s\" 2>/dev/null",fdir);
 #else
-	    com=g_strdup_printf("rmdir.exe /p \"%s\" 2>NUL",fdir);
+	    com=lives_strdup_printf("rmdir.exe /p \"%s\" 2>NUL",fdir);
 #endif
 	    lives_system(com,TRUE);
-	    g_free(com);
-	    g_free(fdir);
+	    lives_free(com);
+	    lives_free(fdir);
 	  }
 
 	  // remove the file we touched to clean up
 	  unlink(protect_file);
-	  g_free(protect_file);
+	  lives_free(protect_file);
 	}
 	
 
@@ -2618,13 +2619,8 @@ void remove_layout_files(GList *map) {
 	      while (lmap!=NULL) {
 		lmap_next=lmap->next;
 		if (!strncmp((char *)lmap->data,(char *)map->data,maplen)) {
-		  // remove matching entry
-		  if (lmap->prev!=NULL) lmap->prev->next=lmap_next;
-		  else mainw->files[i]->layout_map=lmap_next;
-		  if (lmap->next!=NULL) lmap_next->prev=lmap->prev;
-		  lmap->next=lmap->prev=NULL;
-		  g_free(lmap->data);
-		  g_list_free(lmap);
+		  lives_free((livespointer)lmap->data);
+		  mainw->files[i]->layout_map=lives_list_delete_link(mainw->files[i]->layout_map,lmap);
 		}
 		lmap=lmap_next;
 	      }
@@ -2647,7 +2643,7 @@ void remove_layout_files(GList *map) {
 	set_pref("ar_layout","");
 	memset(prefs->ar_layout_name,0,1);
       }
-      g_free(fname);
+      lives_free(fname);
     }
     map=map_next;
   }
@@ -3011,56 +3007,56 @@ void get_play_times(void) {
     }
 
     if (cfile->opening_loc||(cfile->frames==123456789&&cfile->opening)) {
-      tmpstr=g_strdup(_ ("Video [opening...]"));
+      tmpstr=lives_strdup(_ ("Video [opening...]"));
     }
     else {
       if (cfile->video_time>0.) {
-	tmpstr=g_strdup_printf(_ ("Video [%.2f sec]"),cfile->video_time);
+	tmpstr=lives_strdup_printf(_ ("Video [%.2f sec]"),cfile->video_time);
       }
       else {
 	if (cfile->video_time<=0.&&cfile->frames>0) {
-	  tmpstr=g_strdup (_ ("(Undefined)"));
+	  tmpstr=lives_strdup (_ ("(Undefined)"));
 	}
 	else {
-	  tmpstr=g_strdup (_ ("(No video)"));
+	  tmpstr=lives_strdup (_ ("(No video)"));
 	}
       }
     }
     lives_label_set_text(LIVES_LABEL(mainw->vidbar),tmpstr);
-    g_free(tmpstr);
+    lives_free(tmpstr);
     if (cfile->achans==0) {
-      tmpstr=g_strdup (_ ("(No audio)"));
+      tmpstr=lives_strdup (_ ("(No audio)"));
     }
     else {
       if (cfile->opening_audio) {
 	if (cfile->achans==1) {
-	  tmpstr=g_strdup (_ ("Mono  [opening...]"));
+	  tmpstr=lives_strdup (_ ("Mono  [opening...]"));
 	}
 	else {
-	  tmpstr=g_strdup (_ ("Left Audio [opening...]"));
+	  tmpstr=lives_strdup (_ ("Left Audio [opening...]"));
 	}
       }
       else {
 	if (cfile->achans==1) {
-	  tmpstr=g_strdup_printf(_ ("Mono [%.2f sec]"),cfile->laudio_time);
+	  tmpstr=lives_strdup_printf(_ ("Mono [%.2f sec]"),cfile->laudio_time);
 	}
 	else {
-	  tmpstr=g_strdup_printf(_ ("Left Audio [%.2f sec]"),cfile->laudio_time);
+	  tmpstr=lives_strdup_printf(_ ("Left Audio [%.2f sec]"),cfile->laudio_time);
 	}
       }
     }
     lives_label_set_text(LIVES_LABEL(mainw->laudbar),tmpstr);
-    g_free(tmpstr);
+    lives_free(tmpstr);
     if (cfile->achans>1) {
       if (cfile->opening_audio) {
-	tmpstr=g_strdup (_ ("Right Audio [opening...]"));
+	tmpstr=lives_strdup (_ ("Right Audio [opening...]"));
       }
       else {
-	tmpstr=g_strdup_printf(_ ("Right Audio [%.2f sec]"),cfile->raudio_time);
+	tmpstr=lives_strdup_printf(_ ("Right Audio [%.2f sec]"),cfile->raudio_time);
       }
       lives_label_set_text(LIVES_LABEL(mainw->raudbar),tmpstr);
       lives_widget_show (mainw->raudbar);
-      g_free(tmpstr);
+      lives_free(tmpstr);
     }
     else {
       lives_widget_hide (mainw->raudbar);
@@ -3288,7 +3284,7 @@ void minimise_aspect_delta (double aspect,int hblock,int vblock,int hsize,int vs
   current_delta=(hsize-cw)*(hsize-cw)+(vsize-ch)*(vsize-ch);
 
 #ifdef DEBUG_ASPECT
-  g_printerr ("aspect %.8f : width %d height %d is best fit\n",aspect,calc_width,(int)(calc_width/aspect));
+  lives_printerr ("aspect %.8f : width %d height %d is best fit\n",aspect,calc_width,(int)(calc_width/aspect));
 #endif
   // use the block size to find the nearest allowed size
   for (i=-1;i<2;i++) {
@@ -3314,11 +3310,11 @@ void minimise_aspect_delta (double aspect,int hblock,int vblock,int hsize,int vs
     }
 
 #ifdef DEBUG_ASPECT
-    g_printerr ("block quantise to %d x %d\n",real_width,real_height);
+    lives_printerr ("block quantise to %d x %d\n",real_width,real_height);
 #endif
     if (delta<current_delta) {
 #ifdef DEBUG_ASPECT
-      g_printerr ("is better fit\n");
+      lives_printerr ("is better fit\n");
 #endif
       current_delta=delta;
       width[0]=real_width;
@@ -3383,7 +3379,7 @@ boolean switch_aud_to_jack(void) {
   }
   prefs->audio_player=AUD_PLAYER_JACK;
   set_pref("audio_player","jack");
-  g_snprintf(prefs->aplayer,512,"%s","jack");
+  lives_snprintf(prefs->aplayer,512,"%s","jack");
 
   if (mainw->is_ready&&mainw->vpp!=NULL&&mainw->vpp->get_audio_fmts!=NULL) 
     mainw->vpp->audio_codec=get_best_audio(mainw->vpp);
@@ -3422,7 +3418,7 @@ boolean switch_aud_to_pulse(void) {
 
       prefs->audio_player=AUD_PLAYER_PULSE;
       set_pref("audio_player","pulse");
-      g_snprintf(prefs->aplayer,512,"%s","pulse");
+      lives_snprintf(prefs->aplayer,512,"%s","pulse");
 
       if (mainw->vpp!=NULL&&mainw->vpp->get_audio_fmts!=NULL) 
 	mainw->vpp->audio_codec=get_best_audio(mainw->vpp);
@@ -3458,7 +3454,7 @@ void switch_aud_to_sox(boolean set_in_prefs) {
   prefs->audio_player=AUD_PLAYER_SOX;
   get_pref_default("sox_command",prefs->audio_play_command,256);
   if (set_in_prefs) set_pref("audio_player","sox");
-  g_snprintf(prefs->aplayer,512,"%s","sox");
+  lives_snprintf(prefs->aplayer,512,"%s","sox");
   set_pref("audio_play_command",prefs->audio_play_command);
   if (mainw->is_ready) {
     lives_widget_hide(mainw->vol_toolitem);
@@ -3512,7 +3508,7 @@ void switch_aud_to_mplayer(boolean set_in_prefs) {
   prefs->audio_player=AUD_PLAYER_MPLAYER;
   get_pref_default("mplayer_audio_command",prefs->audio_play_command,256);
   if (set_in_prefs) set_pref("audio_player","mplayer");
-  g_snprintf(prefs->aplayer,512,"%s","mplayer");
+  lives_snprintf(prefs->aplayer,512,"%s","mplayer");
   set_pref("audio_play_command",prefs->audio_play_command);
   if (mainw->is_ready) {
     lives_widget_hide(mainw->vol_toolitem);
@@ -3565,7 +3561,7 @@ void switch_aud_to_mplayer2(boolean set_in_prefs) {
   prefs->audio_player=AUD_PLAYER_MPLAYER2;
   get_pref_default("mplayer2_audio_command",prefs->audio_play_command,256); // TODO
   if (set_in_prefs) set_pref("audio_player","mplayer2"); // TODO
-  g_snprintf(prefs->aplayer,512,"%s","mplayer2");
+  lives_snprintf(prefs->aplayer,512,"%s","mplayer2");
   set_pref("audio_play_command",prefs->audio_play_command);
   if (mainw->is_ready) {
     lives_widget_hide(mainw->vol_toolitem);
@@ -3746,7 +3742,7 @@ boolean prepare_to_play_foreign(void) {
 boolean after_foreign_play(void) {
   // read details from capture file
   int capture_fd;
-  char *capfile=g_strdup_printf("%s/.capture.%d",prefs->tmpdir,capable->mainpid);
+  char *capfile=lives_strdup_printf("%s/.capture.%d",prefs->tmpdir,capable->mainpid);
   char capbuf[256];
   ssize_t length;
   int new_file=-1;
@@ -3762,19 +3758,19 @@ boolean after_foreign_play(void) {
     memset(capbuf,0,256);
     if ((length=read(capture_fd,capbuf,256))) {
       if (get_token_count (capbuf,'|')>2) {
-	array=g_strsplit(capbuf,"|",3);
+	array=lives_strsplit(capbuf,"|",3);
 	new_frames=atoi(array[1]);
 
 	if (new_frames>0) {
 	  new_file=mainw->first_free_file;
 	  mainw->current_file=new_file;
-	  cfile=(lives_clip_t *)(g_malloc(sizeof(lives_clip_t)));
-	  g_snprintf(cfile->handle,255,"%s",array[0]);
-	  g_strfreev(array);
+	  cfile=(lives_clip_t *)(lives_malloc(sizeof(lives_clip_t)));
+	  lives_snprintf(cfile->handle,255,"%s",array[0]);
+	  lives_strfreev(array);
 	  create_cfile();
-	  g_snprintf(cfile->file_name,256,"Capture %d",mainw->cap_number);
-	  g_snprintf(cfile->name,256,"Capture %d",mainw->cap_number++);
-	  g_snprintf(cfile->type,40,"Frames");
+	  lives_snprintf(cfile->file_name,256,"Capture %d",mainw->cap_number);
+	  lives_snprintf(cfile->name,256,"Capture %d",mainw->cap_number++);
+	  lives_snprintf(cfile->type,40,"Frames");
 
 	  cfile->progress_start=cfile->start=1;
 	  cfile->progress_end=cfile->frames=cfile->end=new_frames;
@@ -3792,9 +3788,9 @@ boolean after_foreign_play(void) {
 	  
 	  // TODO - dirsep
 
-	  g_snprintf(file_name,PATH_MAX,"%s/%s/",prefs->tmpdir,cfile->handle);
+	  lives_snprintf(file_name,PATH_MAX,"%s/%s/",prefs->tmpdir,cfile->handle);
 	  
-	  com=g_strdup_printf("%s fill_and_redo_frames \"%s\" %d %d %d \"%s\" %.4f %d %d %d %d %d",
+	  com=lives_strdup_printf("%s fill_and_redo_frames \"%s\" %d %d %d \"%s\" %.4f %d %d %d %d %d",
 			      prefs->backend,
 			      cfile->handle,cfile->frames,cfile->hsize,cfile->vsize,
 			      get_image_ext_for_type(cfile->img_type),cfile->fps,cfile->arate,
@@ -3814,9 +3810,9 @@ boolean after_foreign_play(void) {
 	    new_frames=0;
 	    close_current_file(old_file);
 	  }
-	  g_free(com);
+	  lives_free(com);
 	}
-	else g_strfreev(array);
+	else lives_strfreev(array);
       }
       close(capture_fd);
       unlink(capfile);
@@ -3825,12 +3821,12 @@ boolean after_foreign_play(void) {
 
   if (new_frames==0) {
     // nothing captured; or cancelled
-    g_free(capfile);
+    lives_free(capfile);
     return FALSE;
   }
 
   cfile->nopreview=FALSE;
-  g_free(capfile);
+  lives_free(capfile);
 
   add_to_clipmenu();
   if (mainw->multitrack==NULL) switch_to_file(old_file,mainw->current_file);
@@ -3854,7 +3850,7 @@ boolean after_foreign_play(void) {
 
 void set_menu_text(LiVESWidget *menuitem, const char *text, boolean use_mnemonic) {
   LiVESWidget *label;
-  if (GTK_IS_MENU_ITEM (menuitem)) {
+  if (LIVES_IS_MENU_ITEM (menuitem)) {
     label=lives_bin_get_child(LIVES_BIN(menuitem));
     if (use_mnemonic) {
       lives_label_set_text_with_mnemonic(LIVES_LABEL(label),text);
@@ -3868,13 +3864,13 @@ void set_menu_text(LiVESWidget *menuitem, const char *text, boolean use_mnemonic
 
 void get_menu_text(LiVESWidget *menuitem, char *text) {
   LiVESWidget *label=lives_bin_get_child(LIVES_BIN(menuitem));
-  g_snprintf(text,255,"%s",lives_label_get_text(LIVES_LABEL(label)));
+  lives_snprintf(text,255,"%s",lives_label_get_text(LIVES_LABEL(label)));
 }
 
 void
 get_menu_text_long(LiVESWidget *menuitem, char *text) {
   LiVESWidget *label=lives_bin_get_child(LIVES_BIN(menuitem));
-  g_snprintf(text,32768,"%s",lives_label_get_text(LIVES_LABEL(label)));
+  lives_snprintf(text,32768,"%s",lives_label_get_text(LIVES_LABEL(label)));
 }
 
 
@@ -3905,18 +3901,18 @@ boolean check_file(const char *file_name, boolean check_existing) {
   boolean exists=FALSE;
   char *msg;
   // file_name should be in utf8
-  char *lfile_name=g_filename_from_utf8(file_name,-1,NULL,NULL,NULL);
+  char *lfile_name=lives_filename_from_utf8(file_name,-1,NULL,NULL,NULL);
 
   // check if file exists
-  if (g_file_test (lfile_name, G_FILE_TEST_EXISTS)) {
+  if (lives_file_test (lfile_name, LIVES_FILE_TEST_EXISTS)) {
     if (check_existing) {
-      msg=g_strdup_printf (_ ("\n%s\nalready exists.\n\nOverwrite ?\n"),file_name);
+      msg=lives_strdup_printf (_ ("\n%s\nalready exists.\n\nOverwrite ?\n"),file_name);
       if (!do_warning_dialog(msg)) {
-	g_free (msg);
-	g_free(lfile_name);
+	lives_free (msg);
+	lives_free(lfile_name);
 	return FALSE;
       }
-      g_free (msg);
+      lives_free (msg);
     }
     check=open(lfile_name,O_WRONLY);
     exists=TRUE;
@@ -3933,7 +3929,7 @@ boolean check_file(const char *file_name, boolean check_existing) {
       else 
 	do_write_failed_error_s(lfile_name,NULL);
     }
-    g_free(lfile_name);
+    lives_free(lfile_name);
     return FALSE;
   }
 
@@ -3941,7 +3937,7 @@ boolean check_file(const char *file_name, boolean check_existing) {
   if (!exists) {
     unlink (lfile_name);
   }
-  g_free(lfile_name);
+  lives_free(lfile_name);
   return TRUE;
 }
 
@@ -3955,30 +3951,30 @@ boolean check_dir_access (const char *dir) {
 
   // see also is_writeable_dir() which uses statvfs
 
-  boolean exists=g_file_test (dir, G_FILE_TEST_EXISTS);
+  boolean exists=lives_file_test (dir, LIVES_FILE_TEST_EXISTS);
   boolean is_OK=FALSE;
 
   char *com;
   char *testfile;
 
   if (!exists) {
-    g_mkdir_with_parents(dir,S_IRWXU);
+    lives_mkdir_with_parents(dir,S_IRWXU);
   }
 
-  if (!g_file_test(dir, G_FILE_TEST_IS_DIR)) return FALSE;
+  if (!lives_file_test(dir, LIVES_FILE_TEST_IS_DIR)) return FALSE;
 
-  testfile=g_build_filename (dir,"livestst.txt",NULL);
+  testfile=lives_build_filename (dir,"livestst.txt",NULL);
 #ifndef IS_MINGW
-  com=g_strdup_printf ("/bin/touch \"%s\"",testfile);
+  com=lives_strdup_printf ("/bin/touch \"%s\"",testfile);
 #else
-  com=g_strdup_printf ("touch.exe \"%s\"",testfile);
+  com=lives_strdup_printf ("touch.exe \"%s\"",testfile);
 #endif
   lives_system (com,TRUE);
-  g_free (com);
-  if ((is_OK=g_file_test(testfile, G_FILE_TEST_EXISTS))) {
+  lives_free (com);
+  if ((is_OK=lives_file_test(testfile, LIVES_FILE_TEST_EXISTS))) {
     unlink (testfile);
   }
-  g_free (testfile);
+  lives_free (testfile);
   if (!exists) {
     rmdir(dir);
   }
@@ -4014,18 +4010,18 @@ boolean check_dev_busy(char *devstr) {
 
 void activate_url_inner(const char *link) {
 #if GTK_CHECK_VERSION(2,14,0)
-  GError *err=NULL;
+  LiVESError *err=NULL;
   gtk_show_uri(NULL,link,GDK_CURRENT_TIME,&err);
 #else
   char *com = getenv("BROWSER");
-  com = g_strdup_printf("\"%s\" '%s' &", com ? com : "gnome-open", link);
+  com = lives_strdup_printf("\"%s\" '%s' &", com ? com : "gnome-open", link);
   lives_system(com,FALSE);
-  g_free(com);
+  lives_free(com);
 #endif
 }
 
 
-void activate_url (GtkAboutDialog *about, const char *link, gpointer data) {
+void activate_url (LiVESAboutDialog *about, const char *link, livespointer data) {
   activate_url_inner(link);
 }
 
@@ -4034,13 +4030,13 @@ void show_manual_section (const char *lang, const char *section) {
   char *tmp=NULL,*tmp2=NULL;
   const char *link;
 
-  link=g_strdup_printf("%s%s%s%s",LIVES_MANUAL_URL,(lang==NULL?"":(tmp2=g_strdup_printf("//%s//",lang))),
-		       LIVES_MANUAL_FILENAME,(section==NULL?"":(tmp=g_strdup_printf("#%s",section))));
+  link=lives_strdup_printf("%s%s%s%s",LIVES_MANUAL_URL,(lang==NULL?"":(tmp2=lives_strdup_printf("//%s//",lang))),
+		       LIVES_MANUAL_FILENAME,(section==NULL?"":(tmp=lives_strdup_printf("#%s",section))));
 
   activate_url_inner(link);
 
-  if (tmp!=NULL) g_free(tmp);
-  if (tmp2!=NULL) g_free(tmp2);
+  if (tmp!=NULL) lives_free(tmp);
+  if (tmp2!=NULL) lives_free(tmp2);
 
 }
 
@@ -4078,8 +4074,8 @@ void reget_afilesize (int fileno) {
 
   if (mainw->multitrack!=NULL) return; // otherwise achans gets set to 0...
 
-  if (!sfile->opening) afile=g_build_filename (prefs->tmpdir,sfile->handle,"audio",NULL);
-  else afile=g_build_filename (prefs->tmpdir,sfile->handle,"audiodump.pcm",NULL);
+  if (!sfile->opening) afile=lives_build_filename (prefs->tmpdir,sfile->handle,"audio",NULL);
+  else afile=lives_build_filename (prefs->tmpdir,sfile->handle,"audiodump.pcm",NULL);
   if ((sfile->afilesize=sget_file_size (afile))==0l) {
     if (!sfile->opening&&fileno!=mainw->ascrap_file&&fileno!=mainw->scrap_file) {
       if (sfile->arate!=0||sfile->achans!=0||sfile->asampsize!=0||sfile->arps!=0) {
@@ -4096,7 +4092,7 @@ void reget_afilesize (int fileno) {
       }
     }
   }
-  g_free (afile);
+  lives_free (afile);
 }
 
 
@@ -4113,9 +4109,9 @@ create_event_space(int length) {
   // NOTE: this is the OLD event system, it's only used for reordering in the clip editor
 
   if (cfile->events[0]!=NULL) {
-    g_free(cfile->events[0]);
+    lives_free(cfile->events[0]);
   }
-  if ((cfile->events[0]=(event *)(g_try_malloc(sizeof(event)*length)))==NULL) {
+  if ((cfile->events[0]=(event *)(lives_try_malloc(sizeof(event)*length)))==NULL) {
     // memory overflow
     return FALSE;
   }
@@ -4125,7 +4121,7 @@ create_event_space(int length) {
 
 
 
-int lives_list_index (GList *list, const char *data) {
+int lives_list_index (LiVESList *list, livesconstpointer data) {
   // find data in list, GTK's version is broken
   // well, actually not broken - but we need to use strcmp
 
@@ -4133,10 +4129,10 @@ int lives_list_index (GList *list, const char *data) {
   int len;
   if (list==NULL) return -1;
 
-  len=g_list_length (list);
+  len=lives_list_length (list);
 
   for (i=0;i<len;i++) {
-    if (!strcmp ((char *)g_list_nth_data (list,i),data)) return i;
+    if (!strcmp ((const char *)lives_list_nth_data (list,i),(const char *)data)) return i;
   }
   return -1;
 }
@@ -4152,12 +4148,12 @@ add_to_recent(const char *filename, double start, int frames, const char *extra_
   char *file,*tmp;
 
   if (frames>0) {
-    if (extra_params==NULL||(strlen(extra_params)==0)) file=g_strdup_printf ("%s|%.2f|%d",filename,start,frames);
-    else file=g_strdup_printf ("%s|%.2f|%d\n%s",filename,start,frames,extra_params);
+    if (extra_params==NULL||(strlen(extra_params)==0)) file=lives_strdup_printf ("%s|%.2f|%d",filename,start,frames);
+    else file=lives_strdup_printf ("%s|%.2f|%d\n%s",filename,start,frames,extra_params);
   }
   else {
-    if (extra_params==NULL||(strlen(extra_params)==0)) file=g_strdup (filename);
-    else file=g_strdup_printf ("%s\n%s",filename,extra_params);
+    if (extra_params==NULL||(strlen(extra_params)==0)) file=lives_strdup (filename);
+    else file=lives_strdup_printf ("%s\n%s",filename,extra_params);
   }
 
   get_menu_text(mainw->recent1,buff);
@@ -4170,44 +4166,44 @@ add_to_recent(const char *filename, double start, int frames, const char *extra_
 	get_menu_text(mainw->recent3,buff);
 	set_menu_text(mainw->recent4,buff,FALSE);
 	if (mainw->multitrack!=NULL) set_menu_text(mainw->multitrack->recent4,buff,FALSE);
-	set_pref("recent4",(tmp=g_filename_from_utf8(buff,-1,NULL,NULL,NULL)));
-	g_free(tmp);
+	set_pref("recent4",(tmp=lives_filename_from_utf8(buff,-1,NULL,NULL,NULL)));
+	lives_free(tmp);
 
 	get_menu_text(mainw->recent2,buff);
 	set_menu_text(mainw->recent3,buff,FALSE);
 	if (mainw->multitrack!=NULL) set_menu_text(mainw->multitrack->recent3,buff,FALSE);
-	set_pref("recent3",(tmp=g_filename_from_utf8(buff,-1,NULL,NULL,NULL)));
-	g_free(tmp);
+	set_pref("recent3",(tmp=lives_filename_from_utf8(buff,-1,NULL,NULL,NULL)));
+	lives_free(tmp);
 
 	get_menu_text(mainw->recent1,buff);
 	set_menu_text(mainw->recent2,buff,FALSE);
 	if (mainw->multitrack!=NULL) set_menu_text(mainw->multitrack->recent2,buff,FALSE);
-	set_pref("recent2",(tmp=g_filename_from_utf8(buff,-1,NULL,NULL,NULL)));
-	g_free(tmp);
+	set_pref("recent2",(tmp=lives_filename_from_utf8(buff,-1,NULL,NULL,NULL)));
+	lives_free(tmp);
 	
 	set_menu_text(mainw->recent1,file,FALSE);
 	if (mainw->multitrack!=NULL) set_menu_text(mainw->multitrack->recent1,file,FALSE);
-	set_pref("recent1",(tmp=g_filename_from_utf8(file,-1,NULL,NULL,NULL)));
-	g_free(tmp);
+	set_pref("recent1",(tmp=lives_filename_from_utf8(file,-1,NULL,NULL,NULL)));
+	lives_free(tmp);
       }
       else {
 	// #3 in list
 	get_menu_text(mainw->recent2,buff);
 	set_menu_text(mainw->recent3,buff,FALSE);
 	if (mainw->multitrack!=NULL) set_menu_text(mainw->multitrack->recent3,buff,FALSE);
-	set_pref("recent3",(tmp=g_filename_from_utf8(buff,-1,NULL,NULL,NULL)));
-	g_free(tmp);
+	set_pref("recent3",(tmp=lives_filename_from_utf8(buff,-1,NULL,NULL,NULL)));
+	lives_free(tmp);
 	
 	get_menu_text(mainw->recent1,buff);
 	set_menu_text(mainw->recent2,buff,FALSE);
 	if (mainw->multitrack!=NULL) set_menu_text(mainw->multitrack->recent2,buff,FALSE);
-	set_pref("recent2",(tmp=g_filename_from_utf8(buff,-1,NULL,NULL,NULL)));
-	g_free(tmp);
+	set_pref("recent2",(tmp=lives_filename_from_utf8(buff,-1,NULL,NULL,NULL)));
+	lives_free(tmp);
 
 	set_menu_text(mainw->recent1,file,FALSE);
 	if (mainw->multitrack!=NULL) set_menu_text(mainw->multitrack->recent1,file,FALSE);
-	set_pref("recent1",(tmp=g_filename_from_utf8(file,-1,NULL,NULL,NULL)));
-	g_free(tmp);
+	set_pref("recent1",(tmp=lives_filename_from_utf8(file,-1,NULL,NULL,NULL)));
+	lives_free(tmp);
       }
     }
     else {
@@ -4215,13 +4211,13 @@ add_to_recent(const char *filename, double start, int frames, const char *extra_
       get_menu_text(mainw->recent1,buff);
       set_menu_text(mainw->recent2,buff,FALSE);
       if (mainw->multitrack!=NULL) set_menu_text(mainw->multitrack->recent2,buff,FALSE);
-      set_pref("recent2",(tmp=g_filename_from_utf8(buff,-1,NULL,NULL,NULL)));
-      g_free(tmp);
+      set_pref("recent2",(tmp=lives_filename_from_utf8(buff,-1,NULL,NULL,NULL)));
+      lives_free(tmp);
 	
       set_menu_text(mainw->recent1,file,FALSE);
       if (mainw->multitrack!=NULL) set_menu_text(mainw->multitrack->recent1,file,FALSE);
-      set_pref("recent1",(tmp=g_filename_from_utf8(file,-1,NULL,NULL,NULL)));
-      g_free(tmp);
+      set_pref("recent1",(tmp=lives_filename_from_utf8(file,-1,NULL,NULL,NULL)));
+      lives_free(tmp);
     }
   }
   else {
@@ -4245,7 +4241,7 @@ add_to_recent(const char *filename, double start, int frames, const char *extra_
     lives_widget_show (mainw->recent4);
   }
 
-  g_free(file);
+  lives_free(file);
 }
 
 
@@ -4280,14 +4276,14 @@ verhash (char *version) {
 #ifdef PRODUCE_LOG
 // disabled by default
 void lives_log(const char *what) {
-  char *lives_log_file=g_build_filename(prefs->tmpdir,LIVES_LOG_FILE,NULL);
+  char *lives_log_file=lives_build_filename(prefs->tmpdir,LIVES_LOG_FILE,NULL);
   if (mainw->log_fd<0) mainw->log_fd=open(lives_log_file,O_WRONLY|O_CREAT,DEF_FILE_PERMS);
   if (mainw->log_fd!=-1) {
-    char *msg=g_strdup("%s|%d|",what,mainw->current_file);
+    char *msg=lives_strdup("%s|%d|",what,mainw->current_file);
     write (mainw->log_fd,msg,strlen(msg));
-    g_free(msg);
+    lives_free(msg);
   }
-  g_free(lives_log_file);
+  lives_free(lives_log_file);
 }
 #endif
 
@@ -4295,22 +4291,21 @@ void lives_log(const char *what) {
 
 
 // TODO - move into undo.c
-void 
-set_undoable (const char *what, boolean sensitive) {
+void set_undoable (const char *what, boolean sensitive) {
   if (mainw->current_file>-1) {
     cfile->redoable=FALSE;
     cfile->undoable=sensitive;
     if (!(what==NULL)) {
-      char *what_safe=g_strdelimit (g_strdup (what),"_",' ');
-      g_snprintf(cfile->undo_text,32,_ ("_Undo %s"),what_safe);
-      g_snprintf(cfile->redo_text,32,_ ("_Redo %s"),what_safe);
-      g_free (what_safe);
+      char *what_safe=lives_strdelimit (lives_strdup (what),"_",' ');
+      lives_snprintf(cfile->undo_text,32,_ ("_Undo %s"),what_safe);
+      lives_snprintf(cfile->redo_text,32,_ ("_Redo %s"),what_safe);
+      lives_free (what_safe);
     }
     else {
       cfile->undoable=FALSE;
       cfile->undo_action=UNDO_NONE;
-      g_snprintf(cfile->undo_text,32,"%s",_ ("_Undo"));
-      g_snprintf(cfile->redo_text,32,"%s",_ ("_Redo"));
+      lives_snprintf(cfile->undo_text,32,"%s",_ ("_Undo"));
+      lives_snprintf(cfile->redo_text,32,"%s",_ ("_Redo"));
     }
     set_menu_text(mainw->undo,cfile->undo_text,TRUE);
     set_menu_text(mainw->redo,cfile->redo_text,TRUE);
@@ -4327,22 +4322,21 @@ set_undoable (const char *what, boolean sensitive) {
 
 }
 
-void 
-set_redoable (const char *what, boolean sensitive) {
+void set_redoable (const char *what, boolean sensitive) {
   if (mainw->current_file>-1) {
     cfile->undoable=FALSE;
     cfile->redoable=sensitive;
     if (!(what==NULL)) {
-      char *what_safe=g_strdelimit (g_strdup (what),"_",' ');
-      g_snprintf(cfile->undo_text,32,_ ("_Undo %s"),what_safe);
-      g_snprintf(cfile->redo_text,32,_ ("_Redo %s"),what_safe);
-      g_free (what_safe);
+      char *what_safe=lives_strdelimit (lives_strdup (what),"_",' ');
+      lives_snprintf(cfile->undo_text,32,_ ("_Undo %s"),what_safe);
+      lives_snprintf(cfile->redo_text,32,_ ("_Redo %s"),what_safe);
+      lives_free (what_safe);
     }
     else {
       cfile->redoable=FALSE;
       cfile->undo_action=UNDO_NONE;
-      g_snprintf(cfile->undo_text,32,"%s",_ ("_Undo"));
-      g_snprintf(cfile->redo_text,32,"%s",_ ("_Redo"));
+      lives_snprintf(cfile->undo_text,32,"%s",_ ("_Undo"));
+      lives_snprintf(cfile->redo_text,32,"%s",_ ("_Redo"));
     }
     set_menu_text(mainw->undo,cfile->undo_text,TRUE);
     set_menu_text(mainw->redo,cfile->redo_text,TRUE);
@@ -4363,18 +4357,18 @@ set_sel_label (LiVESWidget *sel_label) {
     lives_label_set_text(LIVES_LABEL(sel_label),_ ("-------------Selection------------"));
   }
   else {
-    tstr=g_strdup_printf ("%.2f",calc_time_from_frame (mainw->current_file,cfile->end+1)-
+    tstr=lives_strdup_printf ("%.2f",calc_time_from_frame (mainw->current_file,cfile->end+1)-
 			  calc_time_from_frame (mainw->current_file,cfile->start));
-    frstr=g_strdup_printf ("%d",cfile->end-cfile->start+1);
+    frstr=lives_strdup_printf ("%d",cfile->end-cfile->start+1);
 
     // TRANSLATORS: - try to keep the text of the middle part the same length, by deleting "-" if necessary
-    lives_label_set_text(LIVES_LABEL(sel_label),(tmp=g_strconcat ("---------- [ ",tstr,(sy=(g_strdup(_(" sec ] ----------Selection---------- [ ")))),frstr,(sz=g_strdup(_(" frames ] ----------"))),NULL)));
-    g_free(sy);
-    g_free(sz);
+    lives_label_set_text(LIVES_LABEL(sel_label),(tmp=lives_strconcat ("---------- [ ",tstr,(sy=(lives_strdup(_(" sec ] ----------Selection---------- [ ")))),frstr,(sz=lives_strdup(_(" frames ] ----------"))),NULL)));
+    lives_free(sy);
+    lives_free(sz);
 
-    g_free (tmp);
-    g_free (frstr);
-    g_free (tstr);
+    lives_free (tmp);
+    lives_free (frstr);
+    lives_free (tstr);
   }
   lives_widget_queue_draw (sel_label);
 }
@@ -4382,15 +4376,16 @@ set_sel_label (LiVESWidget *sel_label) {
 
 
 
-LIVES_INLINE void g_list_free_strings(GList *slist) {
-  GList *list=slist;
+LIVES_INLINE void lives_list_free_strings(LiVESList *list) {
+  register int i;
+
   if (list==NULL) return;
-  while (list!=NULL) {
-    if (list->data!=NULL) {
-      //g_printerr("free %s\n",list->data);
-      g_free(list->data);
+
+  for (i=0;i<lives_list_length(list);i++) {
+    if (lives_list_nth_data(list,i)!=NULL) {
+      //lives_printerr("free %s\n",list->data);
+      lives_free((livespointer)lives_list_nth_data(list,i));
     }
-    list=list->next;
   }
 }
 
@@ -4400,14 +4395,14 @@ boolean cache_file_contents(const char *filename) {
   char buff[65536];
 
   if (mainw->cached_list!=NULL) {
-    g_list_free_strings(mainw->cached_list);
-    g_list_free(mainw->cached_list);
+    lives_list_free_strings(mainw->cached_list);
+    lives_list_free(mainw->cached_list);
     mainw->cached_list=NULL;
   }
 
   if (!(hfile=fopen(filename,"r"))) return FALSE;
   while (fgets(buff,65536,hfile)!=NULL) {
-    mainw->cached_list=g_list_append(mainw->cached_list,g_strdup(buff));
+    mainw->cached_list=lives_list_append(mainw->cached_list,lives_strdup(buff));
     threaded_dialog_spin();
   }
   fclose(hfile);
@@ -4416,9 +4411,9 @@ boolean cache_file_contents(const char *filename) {
 
 
 char *get_val_from_cached_list(const char *key, size_t maxlen) {
-  GList *clist=mainw->cached_list;
-  char *keystr_start=g_strdup_printf("<%s>",key);
-  char *keystr_end=g_strdup_printf("</%s>",key);
+  LiVESList *clist=mainw->cached_list;
+  char *keystr_start=lives_strdup_printf("<%s>",key);
+  char *keystr_end=lives_strdup_printf("</%s>",key);
   size_t kslen=strlen(keystr_start);
   size_t kelen=strlen(keystr_end);
 
@@ -4432,7 +4427,7 @@ char *get_val_from_cached_list(const char *key, size_t maxlen) {
       if (!strncmp(keystr_end,(char *)clist->data,kelen)) {
 	break;
       }
-      if (strncmp((char *)clist->data,"|",1)) g_strappend(buff,maxlen,(char *)clist->data);
+      if (strncmp((char *)clist->data,"|",1)) lives_strappend(buff,maxlen,(char *)clist->data);
       else {
 	if (clist->prev!=NULL) clist->prev->next=clist->next;
       }
@@ -4442,14 +4437,14 @@ char *get_val_from_cached_list(const char *key, size_t maxlen) {
     }
     clist=clist->next;
   }
-  g_free(keystr_start);
-  g_free(keystr_end);
+  lives_free(keystr_start);
+  lives_free(keystr_end);
 
   if (!gotit) return NULL;
 
   if (strlen(buff)>0) memset(buff+strlen(buff)-1,0,1); // remove trailing newline
 
-  return g_strdup(buff);
+  return lives_strdup(buff);
 }
 
 
@@ -4460,88 +4455,88 @@ char *clip_detail_to_string(lives_clip_details_t what, size_t *maxlenp) {
 
   switch (what) {
   case CLIP_DETAILS_HEADER_VERSION:
-    key=g_strdup("header_version");
+    key=lives_strdup("header_version");
     if (maxlenp!=NULL) *maxlenp=256;
     break;
   case CLIP_DETAILS_BPP:
-    key=g_strdup("bpp");
+    key=lives_strdup("bpp");
     if (maxlenp!=NULL) *maxlenp=256;
     break;
   case CLIP_DETAILS_FPS:
-    key=g_strdup("fps");
+    key=lives_strdup("fps");
     if (maxlenp!=NULL) *maxlenp=256;
     break;
   case CLIP_DETAILS_PB_FPS:
-    key=g_strdup("pb_fps");
+    key=lives_strdup("pb_fps");
     if (maxlenp!=NULL) *maxlenp=256;
     break;
   case CLIP_DETAILS_WIDTH:
-    key=g_strdup("width");
+    key=lives_strdup("width");
     if (maxlenp!=NULL) *maxlenp=256;
     break;
   case CLIP_DETAILS_HEIGHT:
-    key=g_strdup("height");
+    key=lives_strdup("height");
     if (maxlenp!=NULL) *maxlenp=256;
     break;
   case CLIP_DETAILS_UNIQUE_ID:
-    key=g_strdup("unique_id");
+    key=lives_strdup("unique_id");
     if (maxlenp!=NULL) *maxlenp=256;
     break;
   case CLIP_DETAILS_ARATE:
-    key=g_strdup("audio_rate");
+    key=lives_strdup("audio_rate");
     if (maxlenp!=NULL) *maxlenp=256;
     break;
   case CLIP_DETAILS_PB_ARATE:
-    key=g_strdup("pb_audio_rate");
+    key=lives_strdup("pb_audio_rate");
     if (maxlenp!=NULL) *maxlenp=256;
     break;
   case CLIP_DETAILS_ACHANS:
-    key=g_strdup("audio_channels");
+    key=lives_strdup("audio_channels");
     if (maxlenp!=NULL) *maxlenp=256;
     break;
   case CLIP_DETAILS_ASIGNED:
-    key=g_strdup("audio_signed");
+    key=lives_strdup("audio_signed");
     if (maxlenp!=NULL) *maxlenp=256;
     break;
   case CLIP_DETAILS_AENDIAN:
-    key=g_strdup("audio_endian");
+    key=lives_strdup("audio_endian");
     if (maxlenp!=NULL) *maxlenp=256;
     break;
   case CLIP_DETAILS_ASAMPS:
-    key=g_strdup("audio_sample_size");
+    key=lives_strdup("audio_sample_size");
     if (maxlenp!=NULL) *maxlenp=256;
     break;
   case CLIP_DETAILS_FRAMES:
-    key=g_strdup("frames");
+    key=lives_strdup("frames");
     if (maxlenp!=NULL) *maxlenp=256;
     break;
   case CLIP_DETAILS_TITLE:
-    key=g_strdup("title");
+    key=lives_strdup("title");
     break;
   case CLIP_DETAILS_AUTHOR:
-    key=g_strdup("author");
+    key=lives_strdup("author");
     break;
   case CLIP_DETAILS_COMMENT:
-    key=g_strdup("comment");
+    key=lives_strdup("comment");
     break;
   case CLIP_DETAILS_KEYWORDS:
-    key=g_strdup("keywords");
+    key=lives_strdup("keywords");
     break;
   case CLIP_DETAILS_PB_FRAMENO:
-    key=g_strdup("pb_frameno");
+    key=lives_strdup("pb_frameno");
     if (maxlenp!=NULL) *maxlenp=256;
     break;
   case CLIP_DETAILS_CLIPNAME:
-    key=g_strdup("clipname");
+    key=lives_strdup("clipname");
     break;
   case CLIP_DETAILS_FILENAME:
-    key=g_strdup("filename");
+    key=lives_strdup("filename");
     break;
   case CLIP_DETAILS_INTERLACE:
-    key=g_strdup("interlace");
+    key=lives_strdup("interlace");
     break;
   case CLIP_DETAILS_DECODER_NAME:
-    key=g_strdup("decoder");
+    key=lives_strdup("decoder");
     break;
   default:
     break;
@@ -4571,16 +4566,16 @@ boolean get_clip_value(int which, lives_clip_details_t what, void *retval, size_
 
   if (mainw->cached_list==NULL) {
     
-    lives_header=g_build_filename(prefs->tmpdir,mainw->files[which]->handle,"header.lives",NULL);
-    old_header=g_build_filename(prefs->tmpdir,mainw->files[which]->handle,"header",NULL);
+    lives_header=lives_build_filename(prefs->tmpdir,mainw->files[which]->handle,"header.lives",NULL);
+    old_header=lives_build_filename(prefs->tmpdir,mainw->files[which]->handle,"header",NULL);
     
     // TODO - remove this some time before 2038
     if (!stat(old_header,&mystat)) old_time=mystat.st_mtime;
     if (!stat(lives_header,&mystat)) new_time=mystat.st_mtime;
-    g_free(old_header);
+    lives_free(old_header);
     
     if (old_time>new_time) {
-      g_free(lives_header);
+      lives_free(lives_header);
       return FALSE; // clip has been edited by an older version of LiVES
     }
   }
@@ -4588,10 +4583,10 @@ boolean get_clip_value(int which, lives_clip_details_t what, void *retval, size_
   key=clip_detail_to_string(what,&maxlen);
 
   if (key==NULL) {
-    tmp=g_strdup_printf("Invalid detail %d requested from file %s",which,lives_header);
+    tmp=lives_strdup_printf("Invalid detail %d requested from file %s",which,lives_header);
     LIVES_ERROR(tmp);
-    g_free(tmp);
-    g_free(lives_header);
+    lives_free(tmp);
+    lives_free(lives_header);
     return FALSE;
   }
 
@@ -4599,16 +4594,16 @@ boolean get_clip_value(int which, lives_clip_details_t what, void *retval, size_
 
   if (mainw->cached_list!=NULL) {
     val=get_val_from_cached_list(key,maxlen);
-    g_free(key);
+    lives_free(key);
     if (val==NULL) return FALSE;
   }
   else {
-    com=g_strdup_printf("%s get_clip_value \"%s\" %d %d \"%s\"",prefs->backend_sync,key,
+    com=lives_strdup_printf("%s get_clip_value \"%s\" %d %d \"%s\"",prefs->backend_sync,key,
 			lives_getuid(),capable->mainpid,lives_header);
-    g_free(lives_header);
-    g_free(key);
+    lives_free(lives_header);
+    lives_free(key);
     
-    val=(char *)g_malloc(maxlen);
+    val=(char *)lives_malloc(maxlen);
     memset(val,0,maxlen);
     
     threaded_dialog_spin();
@@ -4616,14 +4611,14 @@ boolean get_clip_value(int which, lives_clip_details_t what, void *retval, size_
     if (lives_system(com,TRUE)) {
       tempdir_warning();
       threaded_dialog_spin();
-      g_free(com);
+      lives_free(com);
       return FALSE;
     }
     
 #ifndef IS_MINGW
-    vfile=g_strdup_printf("%s/.smogval.%d.%d",prefs->tmpdir,lives_getuid(),capable->mainpid);
+    vfile=lives_strdup_printf("%s/.smogval.%d.%d",prefs->tmpdir,lives_getuid(),capable->mainpid);
 #else
-    vfile=g_strdup_printf("%s/smogval.%d.%d",prefs->tmpdir,lives_getuid(),capable->mainpid);
+    vfile=lives_strdup_printf("%s/smogval.%d.%d",prefs->tmpdir,lives_getuid(),capable->mainpid);
 #endif
 
     do {
@@ -4642,7 +4637,7 @@ boolean get_clip_value(int which, lives_clip_details_t what, void *retval, size_
 	      lives_widget_context_update();
 	      mainw->frame_layer=frame_layer;
 	    }
-	    g_usleep(prefs->sleep_time);
+	    lives_usleep(prefs->sleep_time);
 	  }
 	  else break;
 	}
@@ -4664,8 +4659,8 @@ boolean get_clip_value(int which, lives_clip_details_t what, void *retval, size_
       }
     } while (retval2==LIVES_RETRY);
     
-    g_free(vfile);
-    g_free(com);
+    lives_free(vfile);
+    lives_free(com);
   }
 
   if (retval2==LIVES_CANCEL) {
@@ -4723,15 +4718,15 @@ boolean get_clip_value(int which, lives_clip_details_t what, void *retval, size_
   case CLIP_DETAILS_COMMENT:
   case CLIP_DETAILS_CLIPNAME:
   case CLIP_DETAILS_KEYWORDS:
-    g_snprintf((char *)retval,maxlen,"%s",val);
+    lives_snprintf((char *)retval,maxlen,"%s",val);
     break;
   case CLIP_DETAILS_FILENAME:
   case CLIP_DETAILS_DECODER_NAME:
-    g_snprintf((char *)retval,maxlen,"%s",(tmp=g_filename_to_utf8(val,-1,NULL,NULL,NULL)));
-    g_free(tmp);
+    lives_snprintf((char *)retval,maxlen,"%s",(tmp=lives_filename_to_utf8(val,-1,NULL,NULL,NULL)));
+    lives_free(tmp);
     break;
   }
-  g_free(val);
+  lives_free(val);
   return TRUE;
 }
 
@@ -4749,103 +4744,103 @@ void save_clip_value(int which, lives_clip_details_t what, void *val) {
 
   if (which==0||which==mainw->scrap_file) return;
 
-  lives_header=g_build_filename(prefs->tmpdir,mainw->files[which]->handle,"header.lives",NULL);
+  lives_header=lives_build_filename(prefs->tmpdir,mainw->files[which]->handle,"header.lives",NULL);
   key=clip_detail_to_string(what,NULL);
 
   if (key==NULL) {
-    tmp=g_strdup_printf("Invalid detail %d added for file %s",which,lives_header);
+    tmp=lives_strdup_printf("Invalid detail %d added for file %s",which,lives_header);
     LIVES_ERROR(tmp);
-    g_free(tmp);
-    g_free(lives_header);
+    lives_free(tmp);
+    lives_free(lives_header);
     return;
   }
 
   switch (what) {
   case CLIP_DETAILS_BPP:
-    myval=g_strdup_printf("%d",*(int *)val);
+    myval=lives_strdup_printf("%d",*(int *)val);
     break;
   case CLIP_DETAILS_FPS:
-    if (!mainw->files[which]->ratio_fps) myval=g_strdup_printf("%.3f",*(double *)val);
-    else myval=g_strdup_printf("%.8f",*(double *)val);
+    if (!mainw->files[which]->ratio_fps) myval=lives_strdup_printf("%.3f",*(double *)val);
+    else myval=lives_strdup_printf("%.8f",*(double *)val);
     break;
   case CLIP_DETAILS_PB_FPS:
     if (mainw->files[which]->ratio_fps&&(mainw->files[which]->pb_fps==mainw->files[which]->fps)) 
-      myval=g_strdup_printf("%.8f",*(double *)val);
-    else myval=g_strdup_printf("%.3f",*(double *)val);
+      myval=lives_strdup_printf("%.8f",*(double *)val);
+    else myval=lives_strdup_printf("%.3f",*(double *)val);
     break;
   case CLIP_DETAILS_WIDTH:
-    myval=g_strdup_printf("%d",*(int *)val);
+    myval=lives_strdup_printf("%d",*(int *)val);
     break;
   case CLIP_DETAILS_HEIGHT:
-    myval=g_strdup_printf("%d",*(int *)val);
+    myval=lives_strdup_printf("%d",*(int *)val);
     break;
   case CLIP_DETAILS_UNIQUE_ID:
-    myval=g_strdup_printf("%"PRId64,*(int64_t *)val);
+    myval=lives_strdup_printf("%"PRId64,*(int64_t *)val);
     break;
   case CLIP_DETAILS_ARATE:
-    myval=g_strdup_printf("%d",*(int *)val);
+    myval=lives_strdup_printf("%d",*(int *)val);
     break;
   case CLIP_DETAILS_PB_ARATE:
-    myval=g_strdup_printf("%d",*(int *)val);
+    myval=lives_strdup_printf("%d",*(int *)val);
     break;
   case CLIP_DETAILS_ACHANS:
-    myval=g_strdup_printf("%d",*(int *)val);
+    myval=lives_strdup_printf("%d",*(int *)val);
     break;
   case CLIP_DETAILS_ASIGNED:
-    if ((*(int *)val)==1) myval=g_strdup("true");
-    else myval=g_strdup("false");
+    if ((*(int *)val)==1) myval=lives_strdup("true");
+    else myval=lives_strdup("false");
     break;
   case CLIP_DETAILS_AENDIAN:
-    myval=g_strdup_printf("%d",(*(int *)val)/2);
+    myval=lives_strdup_printf("%d",(*(int *)val)/2);
     break;
   case CLIP_DETAILS_ASAMPS:
-    myval=g_strdup_printf("%d",*(int *)val);
+    myval=lives_strdup_printf("%d",*(int *)val);
     break;
   case CLIP_DETAILS_FRAMES:
-    myval=g_strdup_printf("%d",*(int *)val);
+    myval=lives_strdup_printf("%d",*(int *)val);
     break;
   case CLIP_DETAILS_INTERLACE:
-    myval=g_strdup_printf("%d",*(int *)val);
+    myval=lives_strdup_printf("%d",*(int *)val);
     break;
   case CLIP_DETAILS_TITLE:
-    myval=g_strdup((char *)val);
+    myval=lives_strdup((char *)val);
     break;
   case CLIP_DETAILS_AUTHOR:
-    myval=g_strdup((char *)val);
+    myval=lives_strdup((char *)val);
     break;
   case CLIP_DETAILS_COMMENT:
-    myval=g_strdup((const char *)val);
+    myval=lives_strdup((const char *)val);
     break;
   case CLIP_DETAILS_KEYWORDS:
-    myval=g_strdup((const char *)val);
+    myval=lives_strdup((const char *)val);
     break;
   case CLIP_DETAILS_PB_FRAMENO:
-    myval=g_strdup_printf("%d",*(int *)val);
+    myval=lives_strdup_printf("%d",*(int *)val);
     break;
   case CLIP_DETAILS_CLIPNAME:
-    myval=g_strdup((char *)val);
+    myval=lives_strdup((char *)val);
     break;
   case CLIP_DETAILS_FILENAME:
-    myval=g_filename_from_utf8((const char *)val,-1,NULL,NULL,NULL);
+    myval=lives_filename_from_utf8((const char *)val,-1,NULL,NULL,NULL);
     break;
   case CLIP_DETAILS_DECODER_NAME:
-    myval=g_filename_from_utf8((const char *)val,-1,NULL,NULL,NULL);
+    myval=lives_filename_from_utf8((const char *)val,-1,NULL,NULL,NULL);
     break;
   case CLIP_DETAILS_HEADER_VERSION:
-    myval=g_strdup_printf("%d",*(int *)val);
+    myval=lives_strdup_printf("%d",*(int *)val);
     break;
   default:
     return;
   }
 
   if (mainw->clip_header!=NULL) {
-    char *keystr_start=g_strdup_printf("<%s>\n",key);
-    char *keystr_end=g_strdup_printf("\n</%s>\n",key);
+    char *keystr_start=lives_strdup_printf("<%s>\n",key);
+    char *keystr_end=lives_strdup_printf("\n</%s>\n",key);
     lives_fputs(keystr_start,mainw->clip_header);
     lives_fputs(myval,mainw->clip_header);
     lives_fputs(keystr_end,mainw->clip_header);
-    g_free(keystr_start);
-    g_free(keystr_end);
+    lives_free(keystr_start);
+    lives_free(keystr_end);
 
   }
   else {
@@ -4853,25 +4848,25 @@ void save_clip_value(int which, lives_clip_details_t what, void *val) {
       set_signal_handlers((SignalHandlerPointer)defer_sigint);
       needs_sigs=TRUE;
     }
-    com=g_strdup_printf("%s set_clip_value \"%s\" \"%s\" \"%s\"",prefs->backend_sync,lives_header,key,myval);
+    com=lives_strdup_printf("%s set_clip_value \"%s\" \"%s\" \"%s\"",prefs->backend_sync,lives_header,key,myval);
     lives_system(com,FALSE);
     if (mainw->signal_caught) catch_sigint(mainw->signal_caught);
     if (needs_sigs) set_signal_handlers((SignalHandlerPointer)catch_sigint);
-    g_free(com);
+    lives_free(com);
   }
 
-  g_free(lives_header);
-  g_free(myval);
-  g_free(key);
+  lives_free(lives_header);
+  lives_free(myval);
+  lives_free(key);
   
   return;
 }
 
 
 
-GList *get_set_list(const char *dir) {
+LiVESList *get_set_list(const char *dir) {
   // get list of sets in top level dir
-  GList *setlist=NULL;
+  LiVESList *setlist=NULL;
   DIR *tldir,*subdir;
   struct dirent *tdirent,*subdirent;
   char *subdirname;
@@ -4897,12 +4892,12 @@ GList *get_set_list(const char *dir) {
     
     if (!strncmp(tdirent->d_name,"..",strlen(tdirent->d_name))) continue;
 
-    subdirname=g_build_filename(dir,tdirent->d_name,NULL);
+    subdirname=lives_build_filename(dir,tdirent->d_name,NULL);
 
     subdir=opendir(subdirname);
 
     if (subdir==NULL) {
-      g_free(subdirname);
+      lives_free(subdirname);
       continue;
     }
 
@@ -4914,11 +4909,11 @@ GList *get_set_list(const char *dir) {
       }
 
       if (!strcmp(subdirent->d_name,"order")) {
-	setlist=g_list_append(setlist,g_strdup(tdirent->d_name));
+	setlist=lives_list_append(setlist,lives_strdup(tdirent->d_name));
 	break;
       }
     }
-    g_free(subdirname);
+    lives_free(subdirname);
     closedir(subdir);
   }
 
@@ -4929,8 +4924,8 @@ GList *get_set_list(const char *dir) {
 
 boolean check_for_ratio_fps (double fps) {
   boolean ratio_fps;
-  char *test_fps_string1=g_strdup_printf ("%.3f00000",fps);
-  char *test_fps_string2=g_strdup_printf ("%.8f",fps);
+  char *test_fps_string1=lives_strdup_printf ("%.3f00000",fps);
+  char *test_fps_string2=lives_strdup_printf ("%.8f",fps);
   
   if (strcmp (test_fps_string1,test_fps_string2)) {
     // got a ratio
@@ -4939,8 +4934,8 @@ boolean check_for_ratio_fps (double fps) {
   else {
     ratio_fps=FALSE;
   }
-  g_free (test_fps_string1);
-  g_free (test_fps_string2);
+  lives_free (test_fps_string1);
+  lives_free (test_fps_string2);
 
   return ratio_fps;
 }
@@ -4950,14 +4945,14 @@ double get_ratio_fps(const char *string) {
   // return a ratio (8dp) fps from a string with format num:denom
   double fps;
   char *fps_string;
-  char **array=g_strsplit(string,":",2);
+  char **array=lives_strsplit(string,":",2);
   int num=atoi (array[0]);
   int denom=atoi (array[1]);
-  g_strfreev (array);
+  lives_strfreev (array);
   fps=(double)num/(double)denom;
-  fps_string=g_strdup_printf("%.8f",fps);
-  fps=g_strtod(fps_string,NULL);
-  g_free(fps_string);
+  fps_string=lives_strdup_printf("%.8f",fps);
+  fps=lives_strtod(fps_string,NULL);
+  lives_free(fps_string);
   return fps;
 }
 
@@ -4967,12 +4962,12 @@ char *remove_trailing_zeroes(double val) {
   int i;
   double xval=val;
 
-  if (val==(int)val) return g_strdup_printf("%d",(int)val);
+  if (val==(int)val) return lives_strdup_printf("%d",(int)val);
   for (i=0;i<=16;i++) {
     xval*=10.;
-    if (xval==(int)xval) return g_strdup_printf("%.*f",i,val);
+    if (xval==(int)xval) return lives_strdup_printf("%.*f",i,val);
   }
-  return g_strdup_printf("%.*f",i,val);
+  return lives_strdup_printf("%.*f",i,val);
 }
 
 
@@ -5021,17 +5016,17 @@ int get_token_count (const char *string, int delim) {
 char *subst (const char *string, const char *from, const char *to) {
   // return a string with all occurrences of from replaced with to
   // return value should be freed after use
-  char *ret=g_strdup(string),*first;
+  char *ret=lives_strdup(string),*first;
   char *search=ret;
 
-  while ((search=g_strstr_len (search,-1,from))!=NULL) {
-    first=g_strndup(ret,search-ret);
-    search=g_strdup(search+strlen(from));
-    g_free(ret);
-    ret=g_strconcat (first,to,search,NULL);
-    g_free(search);
+  while ((search=lives_strstr_len (search,-1,from))!=NULL) {
+    first=lives_strndup(ret,search-ret);
+    search=lives_strdup(search+strlen(from));
+    lives_free(ret);
+    ret=lives_strconcat (first,to,search,NULL);
+    lives_free(search);
     search=ret+strlen(first)+strlen(to);
-    g_free(first);
+    lives_free(first);
   }
   return ret;
 }
@@ -5053,7 +5048,7 @@ char *insert_newlines(const char *text, int maxwidth) {
 
   if (text==NULL) return NULL;
 
-  if (maxwidth<1) return g_strdup("Bad maxwidth, dummy");
+  if (maxwidth<1) return lives_strdup("Bad maxwidth, dummy");
 
   tlen=strlen(text);
 
@@ -5065,7 +5060,7 @@ char *insert_newlines(const char *text, int maxwidth) {
     xtoffs=mbtowc(&utfsym,&text[i],4); // get next utf8 wchar
     if (xtoffs==-1) {
       LIVES_WARN("mbtowc returned -1");
-      return g_strdup(text);
+      return lives_strdup(text);
     }
 
     if (!strncmp(text+i,"\n",nlen)) runlen=0; // is a newline (in any encoding)
@@ -5086,7 +5081,7 @@ char *insert_newlines(const char *text, int maxwidth) {
   }
 
 
-  retstr=(char *)g_malloc(req_size);
+  retstr=(char *)lives_malloc(req_size);
   req_size=0; // reuse as a ptr to offset in retstr
   runlen=0;
   needsnl=FALSE;
@@ -5125,7 +5120,7 @@ char *insert_newlines(const char *text, int maxwidth) {
 
 
 
-int hextodec (const char *string) {
+int hextodec (char *string) {
   int i;
   int tot=0;
   char test[2];
@@ -5134,7 +5129,7 @@ int hextodec (const char *string) {
 
   for (i=0;i<strlen (string);i++) {
     tot*=16;
-    lives_memcpy (test,&string[i],1);
+    lives_memcpy (test,(void *)&string[i],1);
     tot+=get_hex_digit (test);
   }
   return tot;
@@ -5178,9 +5173,9 @@ boolean is_writeable_dir(const char *dir) {
   char *com;
 #endif
 
-  if (!g_file_test(dir,G_FILE_TEST_IS_DIR)) {
-    g_mkdir_with_parents(dir,S_IRWXU);
-    if (!g_file_test(dir,G_FILE_TEST_IS_DIR)) {
+  if (!lives_file_test(dir,LIVES_FILE_TEST_IS_DIR)) {
+    lives_mkdir_with_parents(dir,S_IRWXU);
+    if (!lives_file_test(dir,LIVES_FILE_TEST_IS_DIR)) {
       return FALSE;
     }
   }
@@ -5191,12 +5186,12 @@ boolean is_writeable_dir(const char *dir) {
   if (sbuf.f_flag&ST_RDONLY) return FALSE;
 #else
   mainw->com_failed=FALSE;
-  com=g_strdup_printf("touch.exe \"%s\\xxxxfile.txt\"",dir);
+  com=lives_strdup_printf("touch.exe \"%s\\xxxxfile.txt\"",dir);
   lives_system(com,TRUE);
-  g_free(com);
-  com=g_strdup_printf("%s\\xxxxfile.txt",dir);
+  lives_free(com);
+  com=lives_strdup_printf("%s\\xxxxfile.txt",dir);
   unlink(com);
-  g_free(com);
+  lives_free(com);
   if (mainw->com_failed) return FALSE;
 #endif
   return TRUE;
@@ -5221,7 +5216,7 @@ uint64_t get_fs_free(const char *dir) {
   uint64_t bytes=0;
   boolean must_delete=FALSE;
 
-  if (!g_file_test(dir,G_FILE_TEST_IS_DIR)) must_delete=TRUE;
+  if (!lives_file_test(dir,LIVES_FILE_TEST_IS_DIR)) must_delete=TRUE;
   if (!is_writeable_dir(dir)) goto getfserr;
 
 #ifndef IS_MINGW
@@ -5254,25 +5249,21 @@ LIVES_INLINE LiVESInterpType get_interp_value(short quality) {
 
 
 
-LIVES_INLINE GList *lives_list_move_to_first(GList *list, GList *item) {
+LIVES_INLINE LiVESList *lives_list_move_to_first(LiVESList *list, LiVESList *item) {
   // move item to first in list
-  GList *xlist=g_list_remove_link(list,item); // item becomes standalone list
-  return g_list_concat(item,xlist); // concat rest of list after item
+  LiVESList *xlist=lives_list_remove_link(list,item); // item becomes standalone list
+  return lives_list_concat(item,xlist); // concat rest of list after item
 }
 
 
-GList *g_list_delete_string(GList *list, char *string) {
+LiVESList *lives_list_delete_string(LiVESList *list, char *string) {
   // remove string from list, using strcmp
 
-  GList *xlist=list;
+  LiVESList *xlist=list;
   while (xlist!=NULL) {
     if (!strcmp((char *)xlist->data,string)) {
-      if (xlist->prev!=NULL) xlist->prev->next=xlist->next;
-      else list=xlist->next;
-      if (xlist->next!=NULL) xlist->next->prev=xlist->prev;
-      xlist->next=xlist->prev=NULL;
-      g_free(xlist->data);
-      g_list_free(xlist);
+      lives_free((livespointer)xlist->data);
+      list=lives_list_delete_link(list,xlist);
       return list;
     }
     xlist=xlist->next;
@@ -5281,13 +5272,13 @@ GList *g_list_delete_string(GList *list, char *string) {
 }
 
 
-GList *g_list_copy_strings(GList *list) {
+LiVESList *lives_list_copy_strings(LiVESList *list) {
   // copy a list, copying the strings too
 
-  GList *xlist=NULL,*olist=list;
+  LiVESList *xlist=NULL,*olist=list;
 
   while (olist!=NULL) {
-    xlist=g_list_append(xlist,g_strdup((gchar *)olist->data));
+    xlist=lives_list_append(xlist,lives_strdup((gchar *)olist->data));
     olist=olist->next;
   }
 
@@ -5297,21 +5288,21 @@ GList *g_list_copy_strings(GList *list) {
 
 
 
-boolean string_lists_differ(GList *alist, GList *blist) {
+boolean string_lists_differ(LiVESList *alist, LiVESList *blist) {
   // compare 2 lists of strings and see if they are different (ignoring ordering)
   // for long lists this would be quicker if we sorted the lists first; however this function 
   // is designed to deal with short lists only
 
 
-  GList *plist;
+  LiVESList *plist;
 
-  if (g_list_length(alist)!=g_list_length(blist)) return TRUE; // check the simple case first
+  if (lives_list_length(alist)!=lives_list_length(blist)) return TRUE; // check the simple case first
 
   // run through alist and see if we have a mismatch
 
   plist=alist;
   while (plist!=NULL) {
-    GList *qlist=blist;
+    LiVESList *qlist=blist;
     boolean matched=FALSE;
     while (qlist!=NULL) {
       if (!(strcmp((char *)plist->data,(char *)qlist->data))) {
@@ -5347,7 +5338,7 @@ lives_cancel_t check_for_bad_ffmpeg(void) {
   fcount=cfile->frames;
 
   for (i=1;i<=fcount;i++) {
-    fname_next=g_strdup_printf("%s/%s/%08d.%s",prefs->tmpdir,cfile->handle,i,prefs->image_ext);
+    fname_next=lives_strdup_printf("%s/%s/%08d.%s",prefs->tmpdir,cfile->handle,i,prefs->image_ext);
     if (sget_file_size(fname_next)>0) {
       maybeok=TRUE;
       break;

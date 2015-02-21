@@ -38,9 +38,9 @@ static boolean list_plugins;
 // command-line plugins
 
 
-static GList *get_plugin_result (const gchar *command, const gchar *delim, boolean allow_blanks) {
+static LiVESList *get_plugin_result (const gchar *command, const gchar *delim, boolean allow_blanks) {
 
-  GList *list=NULL;
+  LiVESList *list=NULL;
   gchar **array;
   ssize_t bytes=0;
   int pieces;
@@ -59,21 +59,21 @@ static GList *get_plugin_result (const gchar *command, const gchar *delim, boole
   threaded_dialog_spin();
 
 #ifndef IS_MINGW
-  outfile=g_strdup_printf ("%s/.smogplugin.%d",prefs->tmpdir,capable->mainpid);
+  outfile=lives_strdup_printf ("%s/.smogplugin.%d",prefs->tmpdir,capable->mainpid);
 #else
-  outfile=g_strdup_printf ("%s/smogplugin.%d",prefs->tmpdir,capable->mainpid);
+  outfile=lives_strdup_printf ("%s/smogplugin.%d",prefs->tmpdir,capable->mainpid);
 #endif
 
   unlink(outfile);
 
-  com=g_strconcat (command," > \"",outfile,"\"",NULL);
+  com=lives_strconcat (command," > \"",outfile,"\"",NULL);
 
   mainw->error=FALSE;
 
   if ((error=system (com))!=0&&error!=126*256&&error!=256) {
     if (!list_plugins) {
       gchar *msg2;
-      g_free (com);
+      lives_free (com);
       if (mainw->is_ready) {
 	if ((outfile_fd=open(outfile,O_RDONLY))>-1) {
 	  bytes=read (outfile_fd,&buffer,65535);
@@ -82,27 +82,27 @@ static GList *get_plugin_result (const gchar *command, const gchar *delim, boole
 	  unlink (outfile);
 	  memset (buffer+bytes,0,1);
 	}
-	msg=g_strdup_printf (_("\nPlugin error: %s failed with code %d"),command,error/256);
+	msg=lives_strdup_printf (_("\nPlugin error: %s failed with code %d"),command,error/256);
 	if (bytes) {
-	  msg2=g_strconcat (msg,g_strdup_printf (_ (" : message was %s\n"),buffer),NULL);
-	  g_snprintf(mainw->msg,512,"%s",buffer);
+	  msg2=lives_strconcat (msg,lives_strdup_printf (_ (" : message was %s\n"),buffer),NULL);
+	  lives_snprintf(mainw->msg,512,"%s",buffer);
 	}
 	else {
-	  msg2=g_strconcat (msg,"\n",NULL);
+	  msg2=lives_strconcat (msg,"\n",NULL);
 	}
 	d_print (msg2);
-	g_free (msg2);
-	g_free (msg);
+	lives_free (msg2);
+	lives_free (msg);
       }
     }
-    g_free (outfile);
+    lives_free (outfile);
     threaded_dialog_spin();
     unlink(outfile);
     return list;
   }
-  g_free (com);
-  if (!g_file_test (outfile, G_FILE_TEST_EXISTS)) {
-    g_free (outfile);
+  lives_free (com);
+  if (!lives_file_test (outfile, LIVES_FILE_TEST_EXISTS)) {
+    lives_free (outfile);
     threaded_dialog_spin();
     return NULL;
   }
@@ -117,15 +117,15 @@ static GList *get_plugin_result (const gchar *command, const gchar *delim, boole
     alarm_handle=lives_alarm_set(LIVES_PLUGIN_TIMEOUT);
 
     while ((outfile_fd=open(outfile,O_RDONLY))==-1&&!(timeout=lives_alarm_get(alarm_handle))) {
-      g_usleep (prefs->sleep_time);
+      lives_usleep (prefs->sleep_time);
     }
 
     lives_alarm_clear(alarm_handle);
 
     if (timeout) {
-      msg=g_strdup_printf(("Plugin timed out on message %s"),command);
+      msg=lives_strdup_printf(("Plugin timed out on message %s"),command);
       LIVES_ERROR(msg);
-      g_free(msg);
+      lives_free(msg);
       retval=do_read_failed_error_s_with_retry(outfile,NULL,NULL);
     }
     else {
@@ -144,7 +144,7 @@ static GList *get_plugin_result (const gchar *command, const gchar *delim, boole
   } while (retval==LIVES_RETRY);
 
   unlink (outfile);
-  g_free (outfile);
+  lives_free (outfile);
 
   if (retval==LIVES_CANCEL) {
     threaded_dialog_spin();
@@ -152,61 +152,61 @@ static GList *get_plugin_result (const gchar *command, const gchar *delim, boole
   }
 
 #ifdef DEBUG_PLUGINS
-  g_printerr("plugin msg: %s %d\n",buffer,error);
+  lives_printerr("plugin msg: %s %d\n",buffer,error);
 #endif
   
   if (error==256) {
     mainw->error=TRUE;
-    g_snprintf (mainw->msg,512,"%s",buffer);
+    lives_snprintf (mainw->msg,512,"%s",buffer);
     return list;
   }
   
   pieces=get_token_count (buffer,delim[0]);
-  array=g_strsplit(buffer,delim,pieces);
+  array=lives_strsplit(buffer,delim,pieces);
   for (i=0;i<pieces;i++) {
     if (array[i]!=NULL) {
-      buf=g_strdup(g_strstrip(array[i]));
+      buf=lives_strdup(lives_strstrip(array[i]));
       if (strlen (buf)||allow_blanks) {
-	list=g_list_append (list, buf);
+	list=lives_list_append (list, buf);
       }
-      else g_free(buf);
+      else lives_free(buf);
     }
   }
-  g_strfreev (array);
+  lives_strfreev (array);
   threaded_dialog_spin();
   return list;
 }
 
 
-GList * plugin_request_with_blanks (const gchar *plugin_type, const gchar *plugin_name, const gchar *request) {
+LiVESList * plugin_request_with_blanks (const gchar *plugin_type, const gchar *plugin_name, const gchar *request) {
   // allow blanks in a list
   return plugin_request_common(plugin_type, plugin_name, request, "|", TRUE);
 }
 
-GList * plugin_request (const gchar *plugin_type, const gchar *plugin_name, const gchar *request) {
+LiVESList * plugin_request (const gchar *plugin_type, const gchar *plugin_name, const gchar *request) {
   return plugin_request_common(plugin_type, plugin_name, request, "|", FALSE);
 }
 
-GList * plugin_request_by_line (const gchar *plugin_type, const gchar *plugin_name, const gchar *request) {
+LiVESList * plugin_request_by_line (const gchar *plugin_type, const gchar *plugin_name, const gchar *request) {
   return plugin_request_common(plugin_type, plugin_name, request, "\n", FALSE);
 }
 
-GList * plugin_request_by_space (const gchar *plugin_type, const gchar *plugin_name, const gchar *request) {
+LiVESList * plugin_request_by_space (const gchar *plugin_type, const gchar *plugin_name, const gchar *request) {
   return plugin_request_common(plugin_type, plugin_name, request, " ", FALSE);
 }
 
 
 
-GList * plugin_request_common (const gchar *plugin_type, const gchar *plugin_name, const gchar *request, 
+LiVESList * plugin_request_common (const gchar *plugin_type, const gchar *plugin_name, const gchar *request, 
 			       const gchar *delim, boolean allow_blanks) {
-  // returns a GList of responses to -request, or NULL on error
+  // returns a LiVESList of responses to -request, or NULL on error
   // by_line says whether we split on '\n' or on '|'
 
   // NOTE: request must not be quoted here, since it contains a list of parameters
   // instead, caller should ensure that any strings in *request are suitably escaped and quoted
   // e.g. by calling param_marshall()
 
-  GList *reslist=NULL;
+  LiVESList *reslist=NULL;
   gchar *com,*comfile;
 
 #ifdef IS_MINGW
@@ -221,23 +221,23 @@ GList * plugin_request_common (const gchar *plugin_type, const gchar *plugin_nam
 
     // some types live in home directory...
     if (!strcmp (plugin_type,PLUGIN_RENDERED_EFFECTS_CUSTOM)||!strcmp (plugin_type,PLUGIN_RENDERED_EFFECTS_TEST)) {
-      comfile=g_build_filename(capable->home_dir,LIVES_CONFIG_DIR,plugin_type,plugin_name,NULL);
+      comfile=lives_build_filename(capable->home_dir,LIVES_CONFIG_DIR,plugin_type,plugin_name,NULL);
     }
     else if (!strcmp(plugin_type,PLUGIN_RFX_SCRAP)) {
       // scraps are in the tmpdir
-      comfile=g_build_filename(prefs->tmpdir,plugin_name,NULL);
+      comfile=lives_build_filename(prefs->tmpdir,plugin_name,NULL);
     }
     else {
-      comfile=g_build_filename (prefs->lib_dir,PLUGIN_EXEC_DIR,plugin_type,plugin_name,NULL);
+      comfile=lives_build_filename (prefs->lib_dir,PLUGIN_EXEC_DIR,plugin_type,plugin_name,NULL);
     }
 
 #ifndef IS_MINGW
     //#define DEBUG_PLUGINS
 #ifdef DEBUG_PLUGINS
-    com=g_strdup_printf ("\"%s\" %s",comfile,request);
-    g_printerr("will run: %s\n",com);
+    com=lives_strdup_printf ("\"%s\" %s",comfile,request);
+    lives_printerr("will run: %s\n",com);
 #else
-    com=g_strdup_printf ("\"%s\" %s 2>/dev/null",comfile,request);
+    com=lives_strdup_printf ("\"%s\" %s 2>/dev/null",comfile,request);
 #endif
 
 #else
@@ -246,34 +246,34 @@ GList * plugin_request_common (const gchar *plugin_type, const gchar *plugin_nam
     ext=get_extension(comfile);
     if (!strcmp(ext,"py")) {
       if (!capable->has_python) {
-	g_free(ext);
-	g_free(comfile);
+	lives_free(ext);
+	lives_free(comfile);
 	return reslist;
       }
-      cmd=g_strdup("python");
+      cmd=lives_strdup("python");
     }
 
-    else cmd=g_strdup("perl");
+    else cmd=lives_strdup("perl");
 
     //#define DEBUG_PLUGINS
 #ifdef DEBUG_PLUGINS
-    com=g_strdup_printf ("%s \"%s\" %s",cmd,comfile,request);
-    g_printerr("will run: %s\n",com);
+    com=lives_strdup_printf ("%s \"%s\" %s",cmd,comfile,request);
+    lives_printerr("will run: %s\n",com);
 #else
-    com=g_strdup_printf ("%s \"%s\" %s 2>NUL",cmd,comfile,request);
+    com=lives_strdup_printf ("%s \"%s\" %s 2>NUL",cmd,comfile,request);
 #endif
 
-    g_free(ext);
-    g_free(cmd);
+    lives_free(ext);
+    lives_free(cmd);
 
 #endif
 
-    g_free(comfile);
+    lives_free(comfile);
   }
-  else com=g_strdup (request);
+  else com=lives_strdup (request);
   list_plugins=FALSE;
   reslist=get_plugin_result (com,delim,allow_blanks);
-  g_free(com);
+  lives_free(com);
   threaded_dialog_spin();
   return reslist;
 }
@@ -282,8 +282,8 @@ GList * plugin_request_common (const gchar *plugin_type, const gchar *plugin_nam
 //////////////////
 // get list of plugins of various types
 
-GList *get_plugin_list (const gchar *plugin_type, boolean allow_nonex, const gchar *plugdir, const gchar *filter_ext) {
-  // returns a GList * of plugins of type plugin_type
+LiVESList *get_plugin_list (const char *plugin_type, boolean allow_nonex, const char *plugdir, const char *filter_ext) {
+  // returns a LiVESList * of plugins of type plugin_type
   // returns empty list if there are no plugins of that type
 
   // allow_nonex to allow non-executable files (e.g. libs)
@@ -291,13 +291,13 @@ GList *get_plugin_list (const gchar *plugin_type, boolean allow_nonex, const gch
 
   // TODO - use enum for plugin_type
 
-  gchar *com,*tmp;
-  GList *pluglist;
+  char *com,*tmp;
+  LiVESList *pluglist;
 
-  const gchar *ext=(filter_ext==NULL)?"":filter_ext;
+  const char *ext=(filter_ext==NULL)?"":filter_ext;
 
   if (!strcmp(plugin_type,PLUGIN_THEMES)) {
-    com=g_strdup_printf ("%s list_plugins 0 1 \"%s%s\" \"\"",prefs->backend_sync,prefs->prefix_dir,THEME_DIR);
+    com=lives_strdup_printf ("%s list_plugins 0 1 \"%s%s\" \"\"",prefs->backend_sync,prefs->prefix_dir,THEME_DIR);
   }
   else if (!strcmp (plugin_type,PLUGIN_RENDERED_EFFECTS_CUSTOM_SCRIPTS)||
 	   !strcmp (plugin_type,PLUGIN_RENDERED_EFFECTS_TEST_SCRIPTS)||
@@ -306,29 +306,29 @@ GList *get_plugin_list (const gchar *plugin_type, boolean allow_nonex, const gch
 	   !strcmp (plugin_type,PLUGIN_COMPOUND_EFFECTS_CUSTOM)
 	   ) {
     // look in home
-    com=g_strdup_printf ("%s list_plugins %d 0 \"%s/%s%s\" \"%s\"",prefs->backend_sync,allow_nonex,capable->home_dir,
+    com=lives_strdup_printf ("%s list_plugins %d 0 \"%s/%s%s\" \"%s\"",prefs->backend_sync,allow_nonex,capable->home_dir,
 			 LIVES_CONFIG_DIR,plugin_type,ext);
   }
   else if (!strcmp(plugin_type,PLUGIN_EFFECTS_WEED)) {
-    com=g_strdup_printf ("%s list_plugins 1 1 \"%s\" \"%s\"",prefs->backend_sync,
-			 (tmp=g_filename_from_utf8(plugdir,-1,NULL,NULL,NULL)),ext);
-    g_free(tmp);
+    com=lives_strdup_printf ("%s list_plugins 1 1 \"%s\" \"%s\"",prefs->backend_sync,
+			     (tmp=lives_filename_from_utf8((char *)plugdir,-1,NULL,NULL,NULL)),ext);
+    lives_free(tmp);
   }
   else if (!strcmp(plugin_type,PLUGIN_DECODERS)) {
-    com=g_strdup_printf ("%s list_plugins 1 0 \"%s\" \"%s\"",prefs->backend_sync,
-			 (tmp=g_filename_from_utf8(plugdir,-1,NULL,NULL,NULL)),ext);
-    g_free(tmp);
+    com=lives_strdup_printf ("%s list_plugins 1 0 \"%s\" \"%s\"",prefs->backend_sync,
+			     (tmp=lives_filename_from_utf8((char *)plugdir,-1,NULL,NULL,NULL)),ext);
+    lives_free(tmp);
   }
   else if (!strcmp(plugin_type,PLUGIN_RENDERED_EFFECTS_BUILTIN_SCRIPTS)) {
-    com=g_strdup_printf ("%s list_plugins %d 0 \"%s%s%s\" \"%s\"",prefs->backend_sync,allow_nonex,prefs->prefix_dir,
+    com=lives_strdup_printf ("%s list_plugins %d 0 \"%s%s%s\" \"%s\"",prefs->backend_sync,allow_nonex,prefs->prefix_dir,
 			 PLUGIN_SCRIPTS_DIR,plugin_type,ext);
   }
   else if (!strcmp(plugin_type,PLUGIN_COMPOUND_EFFECTS_BUILTIN)) {
-    com=g_strdup_printf ("%s list_plugins %d 0 \"%s%s%s\" \"%s\"",prefs->backend_sync,allow_nonex,prefs->prefix_dir,
+    com=lives_strdup_printf ("%s list_plugins %d 0 \"%s%s%s\" \"%s\"",prefs->backend_sync,allow_nonex,prefs->prefix_dir,
 			 PLUGIN_COMPOUND_DIR,plugin_type,ext);
   }
   else {
-    com=g_strdup_printf ("%s list_plugins %d 0 \"%s%s%s\" \"%s\"",prefs->backend_sync,allow_nonex,prefs->lib_dir,
+    com=lives_strdup_printf ("%s list_plugins %d 0 \"%s%s%s\" \"%s\"",prefs->backend_sync,allow_nonex,prefs->lib_dir,
 			 PLUGIN_EXEC_DIR,plugin_type,ext);
   }
   list_plugins=TRUE;
@@ -336,7 +336,7 @@ GList *get_plugin_list (const gchar *plugin_type, boolean allow_nonex, const gch
   //g_print("\n\n\nLIST CMD: %s\n",com);
 
   pluglist=get_plugin_result (com,"|",FALSE);
-  g_free(com);
+  lives_free(com);
   threaded_dialog_spin();
   return pluglist;
 }
@@ -384,9 +384,9 @@ void save_vpp_defaults(_vid_playback_plugin *vpp, gchar *vpp_file) {
   }
 
   if ((fd=open(vpp_file,O_WRONLY|O_CREAT|O_TRUNC,S_IRUSR|S_IWUSR))==-1) {
-    msg=g_strdup_printf (_("\n\nUnable to write video playback plugin defaults file\n%s\nError code %d\n"),vpp_file,errno);
+    msg=lives_strdup_printf (_("\n\nUnable to write video playback plugin defaults file\n%s\nError code %d\n"),vpp_file,errno);
     LIVES_ERROR (msg);
-    g_free (msg);
+    lives_free (msg);
     return;
   }
 
@@ -394,13 +394,13 @@ void save_vpp_defaults(_vid_playback_plugin *vpp, gchar *vpp_file) {
   setmode(fd, O_BINARY);
 #endif
 
-  msg=g_strdup_printf(_("Updating video playback plugin defaults in %s\n"),vpp_file);
+  msg=lives_strdup_printf(_("Updating video playback plugin defaults in %s\n"),vpp_file);
   LIVES_INFO(msg);
-  g_free(msg);
+  lives_free(msg);
 
-  msg=g_strdup("LiVES vpp defaults file version 2\n");
+  msg=lives_strdup("LiVES vpp defaults file version 2\n");
   if (!lives_write(fd,msg,strlen(msg),FALSE)) return;
-  g_free(msg);
+  lives_free(msg);
 
   len=strlen(mainw->vpp->name);
   if (lives_write_le(fd,&len,4,FALSE)<4) return;
@@ -445,18 +445,18 @@ void load_vpp_defaults(_vid_playback_plugin *vpp, gchar *vpp_file) {
   int retval;
   gchar *msg;
 
-  if (!g_file_test(vpp_file,G_FILE_TEST_EXISTS)) {
+  if (!lives_file_test(vpp_file,LIVES_FILE_TEST_EXISTS)) {
     return;
   }
 
-  msg=g_strdup_printf(_("Loading video playback plugin defaults from %s..."),vpp_file);
+  msg=lives_strdup_printf(_("Loading video playback plugin defaults from %s..."),vpp_file);
   d_print(msg);
-  g_free(msg);
+  lives_free(msg);
 
   do {
     retval=0;
     if ((fd=open(vpp_file,O_RDONLY))==-1) {
-      retval=do_read_failed_error_s_with_retry(vpp_file,g_strerror(errno),NULL);
+      retval=do_read_failed_error_s_with_retry(vpp_file,lives_strerror(errno),NULL);
       if (retval==LIVES_CANCEL) {
 	mainw->vpp=NULL;
 	return;
@@ -470,7 +470,7 @@ void load_vpp_defaults(_vid_playback_plugin *vpp, gchar *vpp_file) {
 #endif
 
 	mainw->read_failed=FALSE;
-	msg=g_strdup("LiVES vpp defaults file version 2\n");
+	msg=lives_strdup("LiVES vpp defaults file version 2\n");
 	len=lives_read(fd,buf,strlen(msg),FALSE);
 	if (len<0) len=0;
 	memset(buf+len,0,1);
@@ -479,12 +479,12 @@ void load_vpp_defaults(_vid_playback_plugin *vpp, gchar *vpp_file) {
 
 	// identifier string
 	if (strcmp(msg,buf)) {
-	  g_free(msg);
+	  lives_free(msg);
 	  d_print_file_error_failed();
 	  close(fd);
 	  return;
 	}
-	g_free(msg);
+	lives_free(msg);
 
 	// plugin name
 	lives_read_le(fd,&len,4,FALSE);
@@ -512,9 +512,9 @@ void load_vpp_defaults(_vid_playback_plugin *vpp, gchar *vpp_file) {
 	memset(buf+len,0,1);
 
 	if (strcmp(buf,version)) {
-	  msg=g_strdup_printf(_("\nThe %s video playback plugin has been updated.\nPlease check your settings in\n Tools|Preferences|Playback|Playback Plugins Advanced\n\n"),mainw->vpp->name);
+	  msg=lives_strdup_printf(_("\nThe %s video playback plugin has been updated.\nPlease check your settings in\n Tools|Preferences|Playback|Playback Plugins Advanced\n\n"),mainw->vpp->name);
 	  do_error_dialog(msg);
-	  g_free(msg);
+	  lives_free(msg);
 	  unlink(vpp_file);
 	  d_print_failed();
 	  close(fd);
@@ -540,17 +540,17 @@ void load_vpp_defaults(_vid_playback_plugin *vpp, gchar *vpp_file) {
 
 	if (vpp->extra_argv!=NULL) {
 	  for (i=0;vpp->extra_argv[i]!=NULL;i++) {
-	    g_free(vpp->extra_argv[i]);
+	    lives_free(vpp->extra_argv[i]);
 	  }
-	  g_free(vpp->extra_argv);
+	  lives_free(vpp->extra_argv);
 	}
 	
-	mainw->vpp->extra_argv=(char **)g_malloc((mainw->vpp->extra_argc+1)*(sizeof(gchar *)));
+	mainw->vpp->extra_argv=(char **)lives_malloc((mainw->vpp->extra_argc+1)*(sizeof(gchar *)));
 	
 	for (i=0;i<mainw->vpp->extra_argc;i++) {
 	  lives_read_le(fd,&len,4,FALSE);
 	  if (mainw->read_failed) break;
-	  mainw->vpp->extra_argv[i]=(gchar *)g_malloc(len+1);
+	  mainw->vpp->extra_argv[i]=(gchar *)lives_malloc(len+1);
 	  lives_read(fd,mainw->vpp->extra_argv[i],len,FALSE);
 	  if (mainw->read_failed) break;
 	  memset((mainw->vpp->extra_argv[i])+len,0,1);
@@ -579,7 +579,7 @@ void load_vpp_defaults(_vid_playback_plugin *vpp, gchar *vpp_file) {
 }
 
 
-void on_vppa_cancel_clicked (LiVESButton *button, gpointer user_data) {
+void on_vppa_cancel_clicked (LiVESButton *button, livespointer user_data) {
   _vppaw *vppw=(_vppaw *)user_data;
   _vid_playback_plugin *vpp=vppw->plugin;
 
@@ -592,10 +592,10 @@ void on_vppa_cancel_clicked (LiVESButton *button, gpointer user_data) {
 
   if (vppw->rfx!=NULL) {
     rfx_free(vppw->rfx);
-    g_free(vppw->rfx);
+    lives_free(vppw->rfx);
   }
 
-  g_free(vppw);
+  lives_free(vppw);
 
   if (prefsw!=NULL) {
     lives_window_present(LIVES_WINDOW(prefsw->prefs_dialog));
@@ -604,7 +604,7 @@ void on_vppa_cancel_clicked (LiVESButton *button, gpointer user_data) {
 }
 
 
-void on_vppa_ok_clicked (LiVESButton *button, gpointer user_data) {
+void on_vppa_ok_clicked (LiVESButton *button, livespointer user_data) {
   _vppaw *vppw=(_vppaw *)user_data;
   const gchar *fixed_fps=NULL;
   gchar *cur_pal=NULL;
@@ -620,13 +620,13 @@ void on_vppa_ok_clicked (LiVESButton *button, gpointer user_data) {
     if (vppw->spinbuttonh!=NULL) mainw->vpp->fheight=lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(vppw->spinbuttonh));
     if (vppw->fps_entry!=NULL) fixed_fps=lives_entry_get_text(LIVES_ENTRY(vppw->fps_entry));
     if (vppw->pal_entry!=NULL) {
-      cur_pal=g_strdup(lives_entry_get_text(LIVES_ENTRY(vppw->pal_entry)));
+      cur_pal=lives_strdup(lives_entry_get_text(LIVES_ENTRY(vppw->pal_entry)));
 
       if (get_token_count(cur_pal,' ')>1) {
-	gchar **array=g_strsplit(cur_pal," ",2);
-	gchar *clamping=g_strdup(array[1]+1);
-	g_free(cur_pal);
-	cur_pal=g_strdup(array[0]);
+	gchar **array=lives_strsplit(cur_pal," ",2);
+	gchar *clamping=lives_strdup(array[1]+1);
+	lives_free(cur_pal);
+	cur_pal=lives_strdup(array[0]);
 	memset(clamping+strlen(clamping)-1,0,1);
 	do {
 	  tmp=weed_yuv_clamping_get_name(i);
@@ -636,8 +636,8 @@ void on_vppa_ok_clicked (LiVESButton *button, gpointer user_data) {
 	  }
 	  i++;
 	} while (tmp!=NULL);
-	g_strfreev(array);
-	g_free(clamping);
+	lives_strfreev(array);
+	lives_free(clamping);
       }
     }
 
@@ -648,14 +648,14 @@ void on_vppa_ok_clicked (LiVESButton *button, gpointer user_data) {
       }
       else {
 	if (get_token_count ((gchar *)fixed_fps,':')>1) {
-	  gchar **array=g_strsplit(fixed_fps,":",2);
+	  gchar **array=lives_strsplit(fixed_fps,":",2);
 	  mainw->vpp->fixed_fps_numer=atoi(array[0]);
 	  mainw->vpp->fixed_fps_denom=atoi(array[1]);
-	  g_strfreev(array);
+	  lives_strfreev(array);
 	  mainw->vpp->fixed_fpsd=get_ratio_fps((gchar *)fixed_fps);
 	}
 	else {
-	  mainw->vpp->fixed_fpsd=g_strtod(fixed_fps,NULL);
+	  mainw->vpp->fixed_fpsd=lives_strtod(fixed_fps,NULL);
 	  mainw->vpp->fixed_fps_numer=0;
 	}
       }
@@ -734,11 +734,11 @@ void on_vppa_ok_clicked (LiVESButton *button, gpointer user_data) {
 	  }
 	}
       }
-      g_free(cur_pal);
+      lives_free(cur_pal);
     }
     if (vpp->extra_argv!=NULL) {
-      for (i=0;vpp->extra_argv[i]!=NULL;i++) g_free(vpp->extra_argv[i]);
-      g_free(vpp->extra_argv);
+      for (i=0;vpp->extra_argv[i]!=NULL;i++) lives_free(vpp->extra_argv[i]);
+      lives_free(vpp->extra_argv);
       vpp->extra_argv=NULL;
     }
     vpp->extra_argc=0;
@@ -757,13 +757,13 @@ void on_vppa_ok_clicked (LiVESButton *button, gpointer user_data) {
     else future_prefs->vpp_fheight=-1;
     if (vppw->fps_entry!=NULL) fixed_fps=lives_entry_get_text(LIVES_ENTRY(vppw->fps_entry));
     if (vppw->pal_entry!=NULL) {
-      cur_pal=g_strdup(lives_entry_get_text(LIVES_ENTRY(vppw->pal_entry)));
+      cur_pal=lives_strdup(lives_entry_get_text(LIVES_ENTRY(vppw->pal_entry)));
 
       if (get_token_count(cur_pal,' ')>1) {
-	gchar **array=g_strsplit(cur_pal," ",2);
-	gchar *clamping=g_strdup(array[1]+1);
-	g_free(cur_pal);
-	cur_pal=g_strdup(array[0]);
+	gchar **array=lives_strsplit(cur_pal," ",2);
+	gchar *clamping=lives_strdup(array[1]+1);
+	lives_free(cur_pal);
+	cur_pal=lives_strdup(array[0]);
 	memset(clamping+strlen(clamping)-1,0,1);
 	do {
 	  tmp=weed_yuv_clamping_get_name(i);
@@ -773,21 +773,21 @@ void on_vppa_ok_clicked (LiVESButton *button, gpointer user_data) {
 	  }
 	  i++;
 	} while (tmp!=NULL);
-	g_strfreev(array);
-	g_free(clamping);
+	lives_strfreev(array);
+	lives_free(clamping);
       }
     }
 
     if (fixed_fps!=NULL) {
       if (get_token_count ((gchar *)fixed_fps,':')>1) {
-	gchar **array=g_strsplit(fixed_fps,":",2);
+	gchar **array=lives_strsplit(fixed_fps,":",2);
 	future_prefs->vpp_fixed_fps_numer=atoi(array[0]);
 	future_prefs->vpp_fixed_fps_denom=atoi(array[1]);
-	g_strfreev(array);
+	lives_strfreev(array);
 	future_prefs->vpp_fixed_fpsd=get_ratio_fps((gchar *)fixed_fps);
       }
       else {
-	future_prefs->vpp_fixed_fpsd=g_strtod(fixed_fps,NULL);
+	future_prefs->vpp_fixed_fpsd=lives_strtod(fixed_fps,NULL);
 	future_prefs->vpp_fixed_fps_numer=0;
       }
     }
@@ -805,13 +805,13 @@ void on_vppa_ok_clicked (LiVESButton *button, gpointer user_data) {
 	  }
 	}
       }
-      g_free(cur_pal);
+      lives_free(cur_pal);
     }
     else future_prefs->vpp_palette=WEED_PALETTE_END;
 
     if (future_prefs->vpp_argv!=NULL) {
-      for (i=0;future_prefs->vpp_argv[i]!=NULL;i++) g_free(future_prefs->vpp_argv[i]);
-      g_free(future_prefs->vpp_argv);
+      for (i=0;future_prefs->vpp_argv[i]!=NULL;i++) lives_free(future_prefs->vpp_argv[i]);
+      lives_free(future_prefs->vpp_argv);
       future_prefs->vpp_argv=NULL;
     }
 
@@ -833,7 +833,7 @@ void on_vppa_ok_clicked (LiVESButton *button, gpointer user_data) {
 }
 
 
-void on_vppa_save_clicked (LiVESButton *button, gpointer user_data) {
+void on_vppa_save_clicked (LiVESButton *button, livespointer user_data) {
   _vppaw *vppw=(_vppaw *)user_data;
   _vid_playback_plugin *vpp=vppw->plugin;
   gchar *save_file;
@@ -852,12 +852,12 @@ void on_vppa_save_clicked (LiVESButton *button, gpointer user_data) {
   if (save_file==NULL) return;
 
   // save
-  msg=g_strdup_printf(_("Saving playback plugin defaults to %s..."),save_file);
+  msg=lives_strdup_printf(_("Saving playback plugin defaults to %s..."),save_file);
   d_print(msg);
-  g_free(msg);
+  lives_free(msg);
   save_vpp_defaults(vpp, save_file);
   d_print_done();
-  g_free(save_file);
+  lives_free(save_file);
 
 }
 
@@ -865,7 +865,7 @@ void on_vppa_save_clicked (LiVESButton *button, gpointer user_data) {
 
 
 
-_vppaw *on_vpp_advanced_clicked (LiVESButton *button, gpointer user_data) {
+_vppaw *on_vpp_advanced_clicked (LiVESButton *button, livespointer user_data) {
   LiVESWidget *dialog_vbox;
   LiVESWidget *hbox;
   LiVESWidget *label;
@@ -882,8 +882,8 @@ _vppaw *on_vpp_advanced_clicked (LiVESButton *button, gpointer user_data) {
 
   int *pal_list;
 
-  GList *fps_list_strings=NULL;
-  GList *pal_list_strings=NULL;
+  LiVESList *fps_list_strings=NULL;
+  LiVESList *pal_list_strings=NULL;
 
   const gchar *string;
   const gchar *pversion;
@@ -907,7 +907,7 @@ _vppaw *on_vpp_advanced_clicked (LiVESButton *button, gpointer user_data) {
     tmpvpp=mainw->vpp;
   }
 
-  vppa=(_vppaw*)(g_malloc(sizeof(_vppaw)));
+  vppa=(_vppaw*)(lives_malloc(sizeof(_vppaw)));
 
   vppa->plugin=tmpvpp;
 
@@ -916,10 +916,10 @@ _vppaw *on_vpp_advanced_clicked (LiVESButton *button, gpointer user_data) {
 
   pversion=(tmpvpp->version)();
 
-  title=g_strdup_printf("LiVES: - %s",pversion);
+  title=lives_strdup_printf("LiVES: - %s",pversion);
 
   vppa->dialog = lives_standard_dialog_new (title,FALSE);
-  g_free(title);
+  lives_free(title);
 
   accel_group = LIVES_ACCEL_GROUP(lives_accel_group_new ());
   lives_window_add_accel_group (LIVES_WINDOW (vppa->dialog), accel_group);
@@ -946,42 +946,42 @@ _vppaw *on_vpp_advanced_clicked (LiVESButton *button, gpointer user_data) {
 
   if (tmpvpp->get_fps_list!=NULL&&(fps_list=(*tmpvpp->get_fps_list)(tmpvpp->palette))!=NULL) {
     int nfps,i;
-    gchar **array=g_strsplit (fps_list,"|",-1);
+    gchar **array=lives_strsplit (fps_list,"|",-1);
 
     nfps=get_token_count((gchar *)fps_list,'|');
     for (i=0;i<nfps;i++) {
       if (strlen(array[i])&&strcmp(array[i],"\n")) {
 	if (get_token_count(array[i],':')==0) {
-	  fps_list_strings=g_list_append (fps_list_strings, remove_trailing_zeroes(g_strtod(array[i],NULL)));
+	  fps_list_strings=lives_list_append (fps_list_strings, remove_trailing_zeroes(lives_strtod(array[i],NULL)));
 	}
-	else fps_list_strings=g_list_append (fps_list_strings,g_strdup(array[i]));
+	else fps_list_strings=lives_list_append (fps_list_strings,lives_strdup(array[i]));
       }
     }
 
     // fps
-    combo = lives_standard_combo_new ((tmp=g_strdup(_("_FPS"))),TRUE,fps_list_strings,
-				      LIVES_BOX(dialog_vbox),(tmp2=g_strdup(_("Fixed framerate for plugin.\n"))));
+    combo = lives_standard_combo_new ((tmp=lives_strdup(_("_FPS"))),TRUE,fps_list_strings,
+				      LIVES_BOX(dialog_vbox),(tmp2=lives_strdup(_("Fixed framerate for plugin.\n"))));
 
-    g_free(tmp);
-    g_free(tmp2);
+    lives_free(tmp);
+    lives_free(tmp2);
     vppa->fps_entry=lives_combo_get_entry(LIVES_COMBO(combo));
     lives_entry_set_width_chars (LIVES_ENTRY (lives_combo_get_entry(LIVES_COMBO(combo))), 14);
 
 
-    g_list_free_strings(fps_list_strings);
-    g_list_free(fps_list_strings);
+    lives_list_free_strings(fps_list_strings);
+    lives_list_free(fps_list_strings);
     fps_list_strings=NULL;
-    g_strfreev (array);
+    lives_strfreev (array);
 
     if (tmpvpp->fixed_fps_numer>0) {
-      gchar *tmp=g_strdup_printf("%d:%d",tmpvpp->fixed_fps_numer,tmpvpp->fixed_fps_denom);
+      gchar *tmp=lives_strdup_printf("%d:%d",tmpvpp->fixed_fps_numer,tmpvpp->fixed_fps_denom);
       lives_entry_set_text(LIVES_ENTRY(vppa->fps_entry),tmp);
-      g_free(tmp);
+      lives_free(tmp);
     }
     else {
       gchar *tmp=remove_trailing_zeroes(tmpvpp->fixed_fpsd);
       lives_entry_set_text(LIVES_ENTRY(vppa->fps_entry),tmp);
-      g_free(tmp);
+      lives_free(tmp);
     }
   }
 
@@ -1019,33 +1019,33 @@ _vppaw *on_vpp_advanced_clicked (LiVESButton *button, gpointer user_data) {
       if (weed_palette_is_yuv_palette(pal_list[i])&&tmpvpp->get_yuv_palette_clamping!=NULL) {
        	int *clampings=(*tmpvpp->get_yuv_palette_clamping)(pal_list[i]);
 	while (clampings[j]!=-1) {
-	  gchar *string2=g_strdup_printf("%s (%s)",string,weed_yuv_clamping_get_name(clampings[j]));
-	  pal_list_strings=g_list_append (pal_list_strings, string2);
+	  gchar *string2=lives_strdup_printf("%s (%s)",string,weed_yuv_clamping_get_name(clampings[j]));
+	  pal_list_strings=lives_list_append (pal_list_strings, string2);
 	  j++;
 	}
       }
       if (j==0) {
-	pal_list_strings=g_list_append (pal_list_strings, g_strdup(string));
+	pal_list_strings=lives_list_append (pal_list_strings, lives_strdup(string));
       }
     }
 
-    combo = lives_standard_combo_new ((tmp=g_strdup(_("_Colourspace"))),TRUE,pal_list_strings,
-				      LIVES_BOX(dialog_vbox),tmp2=g_strdup(_("Colourspace input to the plugin.\n")));
-    g_free(tmp);
-    g_free(tmp2);
+    combo = lives_standard_combo_new ((tmp=lives_strdup(_("_Colourspace"))),TRUE,pal_list_strings,
+				      LIVES_BOX(dialog_vbox),tmp2=lives_strdup(_("Colourspace input to the plugin.\n")));
+    lives_free(tmp);
+    lives_free(tmp2);
     vppa->pal_entry=lives_combo_get_entry(LIVES_COMBO(combo));
 
     if (tmpvpp->get_yuv_palette_clamping!=NULL&&weed_palette_is_yuv_palette(tmpvpp->palette)) {
       int *clampings=tmpvpp->get_yuv_palette_clamping(tmpvpp->palette);
       if (clampings[0]!=-1) 
-	ctext=g_strdup_printf("%s (%s)",weed_palette_get_name(tmpvpp->palette),
+	ctext=lives_strdup_printf("%s (%s)",weed_palette_get_name(tmpvpp->palette),
 			      weed_yuv_clamping_get_name(tmpvpp->YUV_clamping));
     }
-    if (ctext==NULL) ctext=g_strdup(weed_palette_get_name(tmpvpp->palette));
+    if (ctext==NULL) ctext=lives_strdup(weed_palette_get_name(tmpvpp->palette));
     lives_entry_set_text(LIVES_ENTRY(vppa->pal_entry),ctext);
-    g_free(ctext);
-    g_list_free_strings(pal_list_strings);
-    g_list_free(pal_list_strings);
+    lives_free(ctext);
+    lives_list_free_strings(pal_list_strings);
+    lives_list_free(pal_list_strings);
   }
 
   // extra params
@@ -1056,18 +1056,18 @@ _vppaw *on_vpp_advanced_clicked (LiVESButton *button, gpointer user_data) {
     lives_box_pack_start (LIVES_BOX (dialog_vbox), scrolledwindow, TRUE, TRUE, 0);
 
 #ifndef IS_MINGW
-    com=g_strdup_printf("/bin/echo -e \"%s\"",(*tmpvpp->get_init_rfx)());
+    com=lives_strdup_printf("/bin/echo -e \"%s\"",(*tmpvpp->get_init_rfx)());
 #else
-    com=g_strdup_printf("echo.exe -e \"%s\"",(*tmpvpp->get_init_rfx)());
+    com=lives_strdup_printf("echo.exe -e \"%s\"",(*tmpvpp->get_init_rfx)());
 #endif
     plugin_run_param_window(com,LIVES_VBOX(vbox),&(vppa->rfx));
-    g_free(com);
+    lives_free(com);
     if (tmpvpp->extra_argv!=NULL&&tmpvpp->extra_argc>0) {
       // update with defaults
-      GList *plist=argv_to_marshalled_list(vppa->rfx,tmpvpp->extra_argc,tmpvpp->extra_argv);
+      LiVESList *plist=argv_to_marshalled_list(vppa->rfx,tmpvpp->extra_argc,tmpvpp->extra_argv);
       param_demarshall(vppa->rfx,plist,FALSE,TRUE);
-      g_list_free_strings(plist);
-      g_list_free(plist);
+      lives_list_free_strings(plist);
+      lives_list_free(plist);
     }
   }
   else {
@@ -1138,18 +1138,18 @@ void close_vid_playback_plugin(_vid_playback_plugin *vpp) {
 
     if (vpp->extra_argv!=NULL) {
       for (i=0;vpp->extra_argv[i]!=NULL;i++) {
-	g_free(vpp->extra_argv[i]);
+	lives_free(vpp->extra_argv[i]);
       }
-      g_free(vpp->extra_argv);
+      lives_free(vpp->extra_argv);
     }
 
     for (i=0;i<vpp->num_play_params+vpp->num_alpha_chans;i++) {
       weed_plant_free(vpp->play_params[i]);
     }
 
-    if (vpp->play_params!=NULL) g_free(vpp->play_params);
+    if (vpp->play_params!=NULL) lives_free(vpp->play_params);
 
-    g_free (vpp);
+    lives_free (vpp);
   }
 }
 
@@ -1188,9 +1188,9 @@ _vid_playback_plugin *open_vid_playback_plugin (const gchar *name, boolean in_us
   // TODO - dirsep
 
 #ifndef IS_MINGW
-  gchar *plugname=g_strdup_printf ("%s%s%s/%s.so",prefs->lib_dir,PLUGIN_EXEC_DIR,PLUGIN_VID_PLAYBACK,name);
+  gchar *plugname=lives_strdup_printf ("%s%s%s/%s.so",prefs->lib_dir,PLUGIN_EXEC_DIR,PLUGIN_VID_PLAYBACK,name);
 #else
-  gchar *plugname=g_strdup_printf ("%s%s%s/%s.dll",prefs->lib_dir,PLUGIN_EXEC_DIR,PLUGIN_VID_PLAYBACK,name);
+  gchar *plugname=lives_strdup_printf ("%s%s%s/%s.dll",prefs->lib_dir,PLUGIN_EXEC_DIR,PLUGIN_VID_PLAYBACK,name);
 #endif
   void *handle=dlopen(plugname,RTLD_LAZY);
   boolean OK=TRUE;
@@ -1203,17 +1203,17 @@ _vid_playback_plugin *open_vid_playback_plugin (const gchar *name, boolean in_us
   _vid_playback_plugin *vpp;
 
   if (handle==NULL) {
-    gchar *msg=g_strdup_printf (_("\n\nFailed to open playback plugin %s\nError was %s\n"),plugname,dlerror());
+    gchar *msg=lives_strdup_printf (_("\n\nFailed to open playback plugin %s\nError was %s\n"),plugname,dlerror());
     if (prefsw!=NULL) do_error_dialog_with_check_transient(msg,TRUE,0,prefsw!=NULL?LIVES_WINDOW(prefsw->prefs_dialog):
 							   LIVES_WINDOW(mainw->LiVES));
     else do_error_dialog(msg);
-    g_free (msg);
-    g_free(plugname);
+    lives_free (msg);
+    lives_free(plugname);
     return NULL;
   }
 
 
-  vpp=(_vid_playback_plugin *) g_malloc (sizeof(_vid_playback_plugin));
+  vpp=(_vid_playback_plugin *) lives_malloc (sizeof(_vid_playback_plugin));
 
   vpp->play_paramtmpls=NULL;
   vpp->play_params=NULL;
@@ -1248,28 +1248,28 @@ _vid_playback_plugin *open_vid_playback_plugin (const gchar *name, boolean in_us
 
 
   if (!OK) {
-    gchar *msg=g_strdup_printf 
+    gchar *msg=lives_strdup_printf 
       (_("\n\nPlayback module %s\nis missing a mandatory function.\nUnable to use it.\n"),plugname);
     set_pref ("vid_playback_plugin","none");
     do_error_dialog_with_check_transient(msg,TRUE,0,prefsw!=NULL?LIVES_WINDOW(prefsw->prefs_dialog):
 					 LIVES_WINDOW(mainw->LiVES));
-    g_free (msg);
+    lives_free (msg);
     dlclose (handle);
-    g_free (vpp);
+    lives_free (vpp);
     vpp=NULL;
-    g_free(plugname);
+    lives_free(plugname);
     return NULL;
   }
 
   if ((pl_error=(*vpp->module_check_init)())!=NULL) {
-    msg=g_strdup_printf(_("Video playback plugin failed to initialise.\nError was: %s\n"),pl_error);
+    msg=lives_strdup_printf(_("Video playback plugin failed to initialise.\nError was: %s\n"),pl_error);
     do_error_dialog_with_check_transient(msg,TRUE,0,prefsw!=NULL?LIVES_WINDOW(prefsw->prefs_dialog):
 					 LIVES_WINDOW(mainw->LiVES));
-    g_free(msg);
+    lives_free(msg);
     dlclose (handle);
-    g_free (vpp);
+    lives_free (vpp);
     vpp=NULL;
-    g_free(plugname);
+    lives_free(plugname);
     return NULL;
   }
 
@@ -1340,22 +1340,22 @@ _vid_playback_plugin *open_vid_playback_plugin (const gchar *name, boolean in_us
   }
 
   vpp->handle=handle;
-  g_snprintf (vpp->name,256,"%s",name);
+  lives_snprintf (vpp->name,256,"%s",name);
 
   if (future_prefs->vpp_argv!=NULL) {
     vpp->extra_argc=future_prefs->vpp_argc;
-    vpp->extra_argv=(gchar **)g_malloc((vpp->extra_argc+1)*(sizeof(gchar *)));
-    for (i=0;i<=vpp->extra_argc;i++) vpp->extra_argv[i]=g_strdup(future_prefs->vpp_argv[i]);
+    vpp->extra_argv=(gchar **)lives_malloc((vpp->extra_argc+1)*(sizeof(gchar *)));
+    for (i=0;i<=vpp->extra_argc;i++) vpp->extra_argv[i]=lives_strdup(future_prefs->vpp_argv[i]);
   }
   else {
     if (!in_use&&mainw->vpp!=NULL&&!(strcmp(name,mainw->vpp->name))) {
     vpp->extra_argc=mainw->vpp->extra_argc;
-    vpp->extra_argv=(gchar **)g_malloc((mainw->vpp->extra_argc+1)*(sizeof(gchar *)));
-    for (i=0;i<=vpp->extra_argc;i++) vpp->extra_argv[i]=g_strdup(mainw->vpp->extra_argv[i]);
+    vpp->extra_argv=(gchar **)lives_malloc((mainw->vpp->extra_argc+1)*(sizeof(gchar *)));
+    for (i=0;i<=vpp->extra_argc;i++) vpp->extra_argv[i]=lives_strdup(mainw->vpp->extra_argv[i]);
     }
     else {
       vpp->extra_argc=0;
-      vpp->extra_argv=(gchar **)g_malloc(sizeof(gchar *));
+      vpp->extra_argv=(gchar **)lives_malloc(sizeof(gchar *));
       vpp->extra_argv[0]=NULL;
     }
   }
@@ -1365,19 +1365,19 @@ _vid_playback_plugin *open_vid_playback_plugin (const gchar *name, boolean in_us
     // fixed fps
 
     if ((fps_list=(*vpp->get_fps_list)(vpp->palette))!=NULL) {
-      array=g_strsplit (fps_list,"|",-1);
+      array=lives_strsplit (fps_list,"|",-1);
       if (get_token_count (array[0],':')>1) {
-	gchar **array2=g_strsplit(array[0],":",2);
+	gchar **array2=lives_strsplit(array[0],":",2);
 	vpp->fixed_fps_numer=atoi(array2[0]);
 	vpp->fixed_fps_denom=atoi(array2[1]);
-	g_strfreev(array2);
+	lives_strfreev(array2);
 	vpp->fixed_fpsd=get_ratio_fps(array[0]);
       }
       else {
-	vpp->fixed_fpsd=g_strtod(array[0],NULL);
+	vpp->fixed_fpsd=lives_strtod(array[0],NULL);
 	vpp->fixed_fps_numer=0;
       }
-      g_strfreev(array);
+      lives_strfreev(array);
     }
   }
 
@@ -1414,7 +1414,7 @@ _vid_playback_plugin *open_vid_playback_plugin (const gchar *name, boolean in_us
   if (!(*vpp->set_palette)(vpp->palette)) {
     do_vpp_palette_error();
     close_vid_playback_plugin(vpp);
-    g_free(plugname);
+    lives_free(plugname);
     return NULL;
   }
     
@@ -1438,7 +1438,7 @@ _vid_playback_plugin *open_vid_playback_plugin (const gchar *name, boolean in_us
   if (vpp->play_paramtmpls!=NULL) {
     weed_plant_t *ptmpl;
     for (i=0;(ptmpl=(weed_plant_t *)vpp->play_paramtmpls[i])!=NULL;i++) {
-      vpp->play_params=(weed_plant_t **)g_realloc(vpp->play_params,(i+2)*sizeof(weed_plant_t *));
+      vpp->play_params=(weed_plant_t **)lives_realloc(vpp->play_params,(i+2)*sizeof(weed_plant_t *));
       if (WEED_PLANT_IS_PARAMETER_TEMPLATE(ptmpl)) {
 	// is param template, create a param
 	vpp->play_params[i]=weed_plant_new(WEED_PLANT_PARAMETER);
@@ -1462,16 +1462,16 @@ _vid_playback_plugin *open_vid_playback_plugin (const gchar *name, boolean in_us
   }
 
   cached_key=cached_mod=0;
-  msg=g_strdup_printf(_("*** Using %s plugin for fs playback, agreed to use palette type %d ( %s ). ***\n"),name,
+  msg=lives_strdup_printf(_("*** Using %s plugin for fs playback, agreed to use palette type %d ( %s ). ***\n"),name,
 		      vpp->palette,(tmp=weed_palette_get_name_full(vpp->palette,vpp->YUV_clamping,
 								   WEED_YUV_SUBSPACE_YCBCR)));
-  g_free(tmp);
+  lives_free(tmp);
   d_print (msg);
-  g_free (msg);
-  g_free(plugname);
+  lives_free (msg);
+  lives_free(plugname);
 
   while (mainw->noswitch) {
-    g_usleep(prefs->sleep_time);
+    lives_usleep(prefs->sleep_time);
   }
 
   if (mainw->is_ready&&in_use&&mainw->vpp!=NULL) {
@@ -1521,64 +1521,64 @@ int64_t get_best_audio(_vid_playback_plugin *vpp) {
     fmts=(*vpp->get_audio_fmts)(); // const, so do not free()
 
     // make audiostream plugin name
-    astreamer=g_build_filename(prefs->lib_dir,PLUGIN_EXEC_DIR,PLUGIN_AUDIO_STREAM,"audiostreamer.pl",NULL);
+    astreamer=lives_build_filename(prefs->lib_dir,PLUGIN_EXEC_DIR,PLUGIN_AUDIO_STREAM,"audiostreamer.pl",NULL);
 
     // create sfmts array and nfmts
 
-    com=g_strdup_printf("\"%s\" get_formats",astreamer);
+    com=lives_strdup_printf("\"%s\" get_formats",astreamer);
 
     rfile=popen(com,"r");
     rlen=fread(buf,1,1023,rfile);
     pclose(rfile);
     memset(buf+rlen,0,1);
-    g_free(com);
+    lives_free(com);
 
     nfmts=get_token_count(buf,'|');
-    array=g_strsplit(buf,"|",nfmts);
-    sfmts=(int *)g_malloc(nfmts*sizint);
+    array=lives_strsplit(buf,"|",nfmts);
+    sfmts=(int *)lives_malloc(nfmts*sizint);
 
     for (i=0;i<nfmts;i++) {
       if (array[i]!=NULL&&strlen(array[i])>0) sfmts[j++]=atoi(array[i]);
     }
 
     nfmts=j;
-    g_strfreev(array);
+    lives_strfreev(array);
 
     for (i=0;fmts[i]!=-1;i++) {
       // traverse video list and see if audiostreamer supports each one
       if (int_array_contains_value(sfmts,nfmts,fmts[i])) {
 
-	com=g_strdup_printf("\"%s\" check %d",astreamer,fmts[i]);
+	com=lives_strdup_printf("\"%s\" check %d",astreamer,fmts[i]);
 
 	rfile=popen(com,"r");
 	if (!rfile) {
 	  // command failed
 	  do_system_failed_error(com,0,NULL);
-	  g_free(astreamer);
-	  g_free(com);
-	  g_free(sfmts);
+	  lives_free(astreamer);
+	  lives_free(com);
+	  lives_free(sfmts);
 	  return ret;
 	}
 	rlen=fread(buf,1,1023,rfile);
 	pclose(rfile);
 	memset(buf+rlen,0,1);
-	g_free(com);
+	lives_free(com);
 
 	if (strlen(buf)>0) {
 	  if (i==0&&prefsw!=NULL) { 
 	    do_error_dialog_with_check_transient 
 	      (buf,TRUE,0,LIVES_WINDOW(prefsw->prefs_dialog));
-	    msg=g_strdup_printf(_("Audio stream unable to use preferred format '%s'\n"),anames[fmts[i]]);
+	    msg=lives_strdup_printf(_("Audio stream unable to use preferred format '%s'\n"),anames[fmts[i]]);
 	    d_print(msg);
-	    g_free(msg);
+	    lives_free(msg);
 	  }
 	  continue;
 	}
 
 	if (i>0&&prefsw!=NULL) { 
-	  msg=g_strdup_printf(_("Using format '%s' instead.\n"),anames[fmts[i]]);
+	  msg=lives_strdup_printf(_("Using format '%s' instead.\n"),anames[fmts[i]]);
 	  d_print(msg);
-	  g_free(msg);
+	  lives_free(msg);
 	}
 	ret=fmts[i];
 	break;
@@ -1596,8 +1596,8 @@ int64_t get_best_audio(_vid_playback_plugin *vpp) {
       }
     }
 
-    g_free(sfmts);
-    g_free(astreamer);
+    lives_free(sfmts);
+    lives_free(astreamer);
   }
 
   return ret;
@@ -1613,17 +1613,17 @@ void do_plugin_encoder_error(const gchar *plugin_name) {
   gchar *msg,*tmp;
 
   if (plugin_name==NULL) {
-    msg=g_strdup_printf(_("LiVES was unable to find its encoder plugins. Please make sure you have the plugins installed in\n%s%s%s\nor change the value of <lib_dir> in %s\n"),prefs->lib_dir,PLUGIN_EXEC_DIR,PLUGIN_ENCODERS,(tmp=g_filename_to_utf8(capable->rcfile,-1,NULL,NULL,NULL)));
-    g_free(tmp);
+    msg=lives_strdup_printf(_("LiVES was unable to find its encoder plugins. Please make sure you have the plugins installed in\n%s%s%s\nor change the value of <lib_dir> in %s\n"),prefs->lib_dir,PLUGIN_EXEC_DIR,PLUGIN_ENCODERS,(tmp=lives_filename_to_utf8(capable->rcfile,-1,NULL,NULL,NULL)));
+    lives_free(tmp);
     if (rdet!=NULL) do_error_dialog_with_check_transient(msg,FALSE,0,LIVES_WINDOW(rdet->dialog));
     else do_error_dialog(msg);
-    g_free(msg);
+    lives_free(msg);
     return;
   }
 
-  msg=g_strdup_printf(_("LiVES did not receive a response from the encoder plugin called '%s'.\nPlease make sure you have that plugin installed correctly in\n%s%s%s\nor switch to another plugin using Tools|Preferences|Encoding\n"),plugin_name,prefs->lib_dir,PLUGIN_EXEC_DIR,PLUGIN_ENCODERS);
+  msg=lives_strdup_printf(_("LiVES did not receive a response from the encoder plugin called '%s'.\nPlease make sure you have that plugin installed correctly in\n%s%s%s\nor switch to another plugin using Tools|Preferences|Encoding\n"),plugin_name,prefs->lib_dir,PLUGIN_EXEC_DIR,PLUGIN_ENCODERS);
   do_blocking_error_dialog(msg);
-  g_free(msg);
+  lives_free(msg);
 }
 
 
@@ -1636,7 +1636,7 @@ boolean check_encoder_restrictions (boolean get_extension, boolean user_audio, b
   gchar aspect_buffer[512];
   int hblock=2,vblock=2;
   int i,r,val;
-  GList *ofmt_all=NULL;
+  LiVESList *ofmt_all=NULL;
   boolean sizer=FALSE;
 
   // for auto resizing/resampling
@@ -1676,32 +1676,32 @@ boolean check_encoder_restrictions (boolean get_extension, boolean user_audio, b
   }
 
   // TODO - allow lists for size
-  g_snprintf (prefs->encoder.of_restrict,5,"none");
+  lives_snprintf (prefs->encoder.of_restrict,5,"none");
   if (!((ofmt_all=plugin_request_by_line(PLUGIN_ENCODERS,prefs->encoder.name,"get_formats"))==NULL)) {
     // get any restrictions for the current format
-    for (i=0;i<g_list_length(ofmt_all);i++) {
-      if ((numtok=get_token_count ((gchar *)g_list_nth_data (ofmt_all,i),'|'))>2) {
-	array=g_strsplit ((gchar *)g_list_nth_data (ofmt_all,i),"|",-1);
+    for (i=0;i<lives_list_length(ofmt_all);i++) {
+      if ((numtok=get_token_count ((gchar *)lives_list_nth_data (ofmt_all,i),'|'))>2) {
+	array=lives_strsplit ((gchar *)lives_list_nth_data (ofmt_all,i),"|",-1);
 	if (!strcmp(array[0],prefs->encoder.of_name)) {
 	  if (numtok>4) {
-	    g_snprintf(prefs->encoder.of_def_ext,16,"%s",array[4]);
+	    lives_snprintf(prefs->encoder.of_def_ext,16,"%s",array[4]);
 	  }
 	  else {
 	    memset (prefs->encoder.of_def_ext,0,1);
 	  }
 	  if (numtok>3) {
-	    g_snprintf(prefs->encoder.of_restrict,128,"%s",array[3]);
+	    lives_snprintf(prefs->encoder.of_restrict,128,"%s",array[3]);
 	  }
 	  else {
-	    g_snprintf(prefs->encoder.of_restrict,128,"none");
+	    lives_snprintf(prefs->encoder.of_restrict,128,"none");
 	  }
 	  prefs->encoder.of_allowed_acodecs=atoi (array[2]);
-	  g_list_free_strings (ofmt_all);
-	  g_list_free (ofmt_all);
-	  g_strfreev(array);
+	  lives_list_free_strings (ofmt_all);
+	  lives_list_free (ofmt_all);
+	  lives_strfreev(array);
 	  break;
 	}
-	g_strfreev(array);
+	lives_strfreev(array);
       }
     }
   }
@@ -1752,7 +1752,7 @@ boolean check_encoder_restrictions (boolean get_extension, boolean user_audio, b
   if (strlen(prefs->encoder.of_restrict)>0) {
 
     pieces=get_token_count (prefs->encoder.of_restrict,',');
-    checks=g_strsplit(prefs->encoder.of_restrict,",",pieces);
+    checks=lives_strsplit(prefs->encoder.of_restrict,",",pieces);
     
 
     for (r=0;r<pieces;r++) {
@@ -1765,24 +1765,24 @@ boolean check_encoder_restrictions (boolean get_extension, boolean user_audio, b
 	gchar *fixer;
 	
 	best_fps_delta=1000000000.;
-	array=g_strsplit(checks[r],"=",2);
+	array=lives_strsplit(checks[r],"=",2);
 	numtok=get_token_count (array[1],';');
-	array2=g_strsplit(array[1],";",numtok);
+	array2=lives_strsplit(array[1],";",numtok);
 	for (i=0;i<numtok;i++) {
 	  mbest_num=mbest_denom=0;
 	  if ((numparts=get_token_count (array2[i],':'))>1) {
-	    gchar **array3=g_strsplit(array2[i],":",2);
+	    gchar **array3=lives_strsplit(array2[i],":",2);
 	    mbest_num=atoi (array3[0]);
 	    mbest_denom=atoi (array3[1]);
-	    g_strfreev (array3);
+	    lives_strfreev (array3);
 	    if (mbest_denom==0) continue;
 	    allowed_fps=(mbest_num*1.)/(mbest_denom*1.);
 	  }
-	  else allowed_fps=g_strtod (array2[i],NULL);
+	  else allowed_fps=lives_strtod (array2[i],NULL);
 	  
 	  // convert to 8dp
-	  fixer=g_strdup_printf ("%.8f %.8f",allowed_fps,fps);
-	  g_free (fixer);
+	  fixer=lives_strdup_printf ("%.8f %.8f",allowed_fps,fps);
+	  lives_free (fixer);
 	  
 	  if (allowed_fps>=fps) {
 	    if (allowed_fps-fps<best_fps_delta) {
@@ -1825,52 +1825,52 @@ boolean check_encoder_restrictions (boolean get_extension, boolean user_audio, b
 	  }
 	  if (best_fps_delta==0.) break;
 	}
-	g_strfreev(array);
-	g_strfreev(array2);
+	lives_strfreev(array);
+	lives_strfreev(array2);
 	continue;
       }
       
       if (!strncmp (checks[r],"size=",5)) {
 	// TODO - allow list for size
-	array=g_strsplit(checks[r],"=",2);
-	array2=g_strsplit(array[1],"x",2);
+	array=lives_strsplit(checks[r],"=",2);
+	array2=lives_strsplit(array[1],"x",2);
 	width=atoi (array2[0]);
 	height=atoi (array2[1]);
-	g_strfreev(array2);
-	g_strfreev(array);
+	lives_strfreev(array2);
+	lives_strfreev(array);
 	sizer=TRUE;
 	continue;
       }
       
       if (!strncmp (checks[r],"minw=",5)) {
-	array=g_strsplit(checks[r],"=",2);
+	array=lives_strsplit(checks[r],"=",2);
 	val=atoi(array[1]);
 	if (width<val) width=val;
-	g_strfreev(array);
+	lives_strfreev(array);
 	continue;
       }
 
       if (!strncmp (checks[r],"minh=",5)) {
-	array=g_strsplit(checks[r],"=",2);
+	array=lives_strsplit(checks[r],"=",2);
 	val=atoi(array[1]);
 	if (height<val) height=val;
-	g_strfreev(array);
+	lives_strfreev(array);
 	continue;
       }
 
       if (!strncmp (checks[r],"maxh=",5)) {
-	array=g_strsplit(checks[r],"=",2);
+	array=lives_strsplit(checks[r],"=",2);
 	val=atoi(array[1]);
 	if (height>val) height=val;
-	g_strfreev(array);
+	lives_strfreev(array);
 	continue;
       }
 
       if (!strncmp (checks[r],"maxw=",5)) {
-	array=g_strsplit(checks[r],"=",2);
+	array=lives_strsplit(checks[r],"=",2);
 	val=atoi(array[1]);
 	if (width>val) width=val;
-	g_strfreev(array);
+	lives_strfreev(array);
 	continue;
       }
 
@@ -1882,7 +1882,7 @@ boolean check_encoder_restrictions (boolean get_extension, boolean user_audio, b
 						  (LIVES_TOGGLE_BUTTON(resaudw->aud_checkbutton))))&&
 	  prefs->encoder.audio_codec!=AUDIO_CODEC_NONE
 	  &&(arate*achans*asampsize)) {
-	array=g_strsplit(checks[r],"=",2);
+	array=lives_strsplit(checks[r],"=",2);
 	if (!strcmp(array[1],"signed")) {
 	  asigned=1;
 	}
@@ -1891,11 +1891,11 @@ boolean check_encoder_restrictions (boolean get_extension, boolean user_audio, b
 	  asigned=2;
 	}
 	
-	g_strfreev(array);
+	lives_strfreev(array);
       
 	if (asigned!=0&&!capable->has_sox_sox) {
 	  do_encoder_sox_error();
-	  g_strfreev(checks);
+	  lives_strfreev(checks);
 	  return FALSE;
 	}
 	continue;
@@ -1914,9 +1914,9 @@ boolean check_encoder_restrictions (boolean get_extension, boolean user_audio, b
 	int allowed_arate;
 	best_arate_delta=1000000000;
 	
-	array=g_strsplit(checks[r],"=",2);
+	array=lives_strsplit(checks[r],"=",2);
 	numtok=get_token_count (array[1],';');
-	array2=g_strsplit(array[1],";",numtok);
+	array2=lives_strsplit(array[1],";",numtok);
 	for (i=0;i<numtok;i++) {
 	  allowed_arate=atoi (array2[i]);
 	  if (allowed_arate>=arate) {
@@ -1927,12 +1927,12 @@ boolean check_encoder_restrictions (boolean get_extension, boolean user_audio, b
 	  }
 	  else if (allowed_arate>best_arate) best_arate=allowed_arate;
 	}
-	g_strfreev(array2);
-	g_strfreev(array);
+	lives_strfreev(array2);
+	lives_strfreev(array);
 	
 	if (!capable->has_sox_sox) {
 	  do_encoder_sox_error();
-	  g_strfreev(checks);
+	  lives_strfreev(checks);
 	  return FALSE;
 	}
 	continue;
@@ -1940,19 +1940,19 @@ boolean check_encoder_restrictions (boolean get_extension, boolean user_audio, b
       
       if (!strncmp (checks[r],"hblock=",7)) {
 	// width must be a multiple of this
-	array=g_strsplit(checks[r],"=",2);
+	array=lives_strsplit(checks[r],"=",2);
 	hblock=atoi (array[1]);
 	width=(int)(width/hblock+.5)*hblock;
-	g_strfreev(array);
+	lives_strfreev(array);
 	continue;
       }
       
       if (!strncmp (checks[r],"vblock=",7)) {
 	// height must be a multiple of this
-	array=g_strsplit(checks[r],"=",2);
+	array=lives_strsplit(checks[r],"=",2);
 	vblock=atoi (array[1]);
 	height=(int)(height/vblock+.5)*vblock;
-	g_strfreev(array);
+	lives_strfreev(array);
 	continue;
       }
       
@@ -1960,15 +1960,15 @@ boolean check_encoder_restrictions (boolean get_extension, boolean user_audio, b
 	// we calculate the nearest smaller frame size using aspect, 
 	// hblock and vblock
 	calc_aspect=TRUE;
-	array=g_strsplit(checks[r],"=",2);
-	g_snprintf (aspect_buffer,512,"%s",array[1]);
-	g_strfreev(array);
+	array=lives_strsplit(checks[r],"=",2);
+	lives_snprintf (aspect_buffer,512,"%s",array[1]);
+	lives_strfreev(array);
 	continue;
       }
     }
     
     /// end restrictions
-    g_strfreev(checks);
+    lives_strfreev(checks);
     
     if (!mainw->osc_auto&&calc_aspect&&!sizer) {
       // we calculate this last, after getting hblock and vblock sizes
@@ -1980,18 +1980,18 @@ boolean check_encoder_restrictions (boolean get_extension, boolean user_audio, b
       width=height=1000000;
       
       numtok=get_token_count (aspect_buffer,';');
-      array2=g_strsplit(aspect_buffer,";",numtok);
+      array2=lives_strsplit(aspect_buffer,";",numtok);
     
       // see if we can get a width:height which is nearer an aspect than 
       // current width:height
       
       for (i=0;i<numtok;i++) {
-	array3=g_strsplit(array2[i],":",2);
-	allowed_aspect=g_strtod(array3[0],NULL)/g_strtod(array3[1],NULL);
-	g_strfreev(array3);
+	array3=lives_strsplit(array2[i],":",2);
+	allowed_aspect=lives_strtod(array3[0],NULL)/lives_strtod(array3[1],NULL);
+	lives_strfreev(array3);
 	minimise_aspect_delta (allowed_aspect,hblock,vblock,xwidth,xheight,&width,&height);
       }
-      g_strfreev(array2);
+      lives_strfreev(array2);
       
       // allow override if current width and height are integer multiples of blocks
       if (owidth%hblock==0&&oheight%vblock==0) allow_aspect_override=TRUE;
@@ -2071,9 +2071,9 @@ boolean check_encoder_restrictions (boolean get_extension, boolean user_audio, b
 	  lives_spin_button_set_value(LIVES_SPIN_BUTTON(rdet->spinbutton_width),rdet->width);
 	  lives_spin_button_set_value(LIVES_SPIN_BUTTON(rdet->spinbutton_height),rdet->height);
 	  if (best_arate!=-1) {
-	    arate_string=g_strdup_printf("%d",best_arate);
+	    arate_string=lives_strdup_printf("%d",best_arate);
 	    lives_entry_set_text (LIVES_ENTRY (resaudw->entry_arate),arate_string);
-	    g_free(arate_string);
+	    lives_free(arate_string);
 	  }
 	  rdet->suggestion_followed=TRUE;
 	  return TRUE;
@@ -2105,9 +2105,9 @@ boolean check_encoder_restrictions (boolean get_extension, boolean user_audio, b
 
 
 
-GList *filter_encoders_by_img_ext(GList *encoders, const gchar *img_ext) {
-  GList *encoder_capabilities=NULL;
-  GList *list=encoders,*listnext;
+LiVESList *filter_encoders_by_img_ext(LiVESList *encoders, const gchar *img_ext) {
+  LiVESList *encoder_capabilities=NULL;
+  LiVESList *list=encoders,*listnext;
   int caps;
 
   register int i;
@@ -2118,7 +2118,7 @@ GList *filter_encoders_by_img_ext(GList *encoders, const gchar *img_ext) {
   };
 
   // something broke as of python 2.7.2, and python 3 files now just hang
-  if (capable->python_version<3000000) blacklist[0]=g_strdup("multi_encoder3");
+  if (capable->python_version<3000000) blacklist[0]=lives_strdup("multi_encoder3");
 
   while (list!=NULL) {
     boolean skip=FALSE;
@@ -2129,8 +2129,8 @@ GList *filter_encoders_by_img_ext(GList *encoders, const gchar *img_ext) {
     while (blacklist[i]!=NULL) {
       if (strlen((char *)list->data)==strlen(blacklist[i])&&!strcmp((char *)list->data,blacklist[i])) {
 	// skip blacklisted encoders
-	g_free(list->data);
-	encoders=g_list_delete_link(encoders,list);
+	lives_free((livespointer)list->data);
+	encoders=lives_list_delete_link(encoders,list);
 	skip=TRUE;
 	break;
       }
@@ -2147,25 +2147,25 @@ GList *filter_encoders_by_img_ext(GList *encoders, const gchar *img_ext) {
     }
 
     if ((encoder_capabilities=plugin_request(PLUGIN_ENCODERS,(gchar *)list->data,"get_capabilities"))==NULL) {
-      g_free(list->data);
-      encoders=g_list_delete_link(encoders,list);
+      lives_free((livespointer)list->data);
+      encoders=lives_list_delete_link(encoders,list);
     }
     else {
-      caps=atoi ((char *)g_list_nth_data (encoder_capabilities,0));
+      caps=atoi ((char *)lives_list_nth_data (encoder_capabilities,0));
       if (!(caps&CAN_ENCODE_PNG)&&!strcmp(img_ext,"png")) {
-	g_free(list->data);
-	encoders=g_list_delete_link(encoders,list);
+	lives_free((livespointer)list->data);
+	encoders=lives_list_delete_link(encoders,list);
       }
 
-      g_list_free_strings (encoder_capabilities);
-      g_list_free (encoder_capabilities);
+      lives_list_free_strings (encoder_capabilities);
+      lives_list_free (encoder_capabilities);
 
     }
 
     list=listnext;
   }
 
-  for (i=0;blacklist[i]!=NULL;i++) g_free(blacklist[i]);
+  for (i=0;blacklist[i]!=NULL;i++) lives_free(blacklist[i]);
 
   return encoders;
 
@@ -2186,16 +2186,16 @@ LIVES_INLINE boolean decplugin_supports_palette (const lives_decoder_t *dplug, i
 
 
 
-static GList *load_decoders(void) {
+static LiVESList *load_decoders(void) {
   lives_decoder_sys_t *dplug;
-  gchar *decplugdir=g_strdup_printf("%s%s%s",prefs->lib_dir,PLUGIN_EXEC_DIR,PLUGIN_DECODERS);
-  GList *dlist=NULL;
+  gchar *decplugdir=lives_strdup_printf("%s%s%s",prefs->lib_dir,PLUGIN_EXEC_DIR,PLUGIN_DECODERS);
+  LiVESList *dlist=NULL;
 #ifndef IS_MINGW
-  GList *decoder_plugins_o=get_plugin_list (PLUGIN_DECODERS,TRUE,decplugdir,"-so");
+  LiVESList *decoder_plugins_o=get_plugin_list (PLUGIN_DECODERS,TRUE,decplugdir,"-so");
 #else
-  GList *decoder_plugins_o=get_plugin_list (PLUGIN_DECODERS,TRUE,decplugdir,"-dll");
+  LiVESList *decoder_plugins_o=get_plugin_list (PLUGIN_DECODERS,TRUE,decplugdir,"-dll");
 #endif
-  GList *decoder_plugins=decoder_plugins_o;
+  LiVESList *decoder_plugins=decoder_plugins_o;
 
   char *blacklist[2]={
     "zyavformat_decoder",
@@ -2219,22 +2219,22 @@ static GList *load_decoders(void) {
     }
     if (!skip) {
       dplug=open_decoder_plugin((gchar *)decoder_plugins->data);
-      if (dplug!=NULL) dlist=g_list_append(dlist,(gpointer)dplug);
+      if (dplug!=NULL) dlist=lives_list_append(dlist,(livespointer)dplug);
     }
-    g_free(decoder_plugins->data);
+    lives_free((livespointer)decoder_plugins->data);
     decoder_plugins=decoder_plugins->next;
   }
 
-  g_list_free(decoder_plugins_o);
+  lives_list_free(decoder_plugins_o);
 
   if (dlist==NULL) {
-    gchar *msg=g_strdup_printf(_("\n\nNo decoders found in %s !\n"),decplugdir);
+    gchar *msg=lives_strdup_printf(_("\n\nNo decoders found in %s !\n"),decplugdir);
     LIVES_WARN(msg);
     d_print(msg);
-    g_free(msg);
+    lives_free(msg);
   }
 
-  g_free(decplugdir);
+  lives_free(decplugdir);
   return dlist;
 }
 
@@ -2252,7 +2252,7 @@ static boolean sanity_check_cdata(lives_clip_data_t *cdata) {
 
 
 typedef struct {
-  GList *disabled;
+  LiVESList *disabled;
   lives_decoder_t *dplug;
   lives_clip_t *sfile;
 } tdp_data;
@@ -2270,7 +2270,7 @@ lives_decoder_t *clone_decoder(int fileno) {
 
   if (cdata==NULL) return NULL;
 
-  dplug=(lives_decoder_t *)g_malloc(sizeof(lives_decoder_t));
+  dplug=(lives_decoder_t *)lives_malloc(sizeof(lives_decoder_t));
 
   dpsys=((lives_decoder_t *)mainw->files[fileno]->ext_src)->decoder;
 
@@ -2281,9 +2281,9 @@ lives_decoder_t *clone_decoder(int fileno) {
 }
 
 
-static lives_decoder_t *try_decoder_plugins(char *file_name, GList *disabled, const lives_clip_data_t *fake_cdata) {
-  lives_decoder_t *dplug=(lives_decoder_t *)g_malloc(sizeof(lives_decoder_t));
-  GList *decoder_plugin=mainw->decoder_list;
+static lives_decoder_t *try_decoder_plugins(char *file_name, LiVESList *disabled, const lives_clip_data_t *fake_cdata) {
+  lives_decoder_t *dplug=(lives_decoder_t *)lives_malloc(sizeof(lives_decoder_t));
+  LiVESList *decoder_plugin=mainw->decoder_list;
 
   while (decoder_plugin!=NULL) {
     lives_decoder_sys_t *dpsys=(lives_decoder_sys_t *)decoder_plugin->data;
@@ -2321,7 +2321,7 @@ static lives_decoder_t *try_decoder_plugins(char *file_name, GList *disabled, co
     decoder_plugin=decoder_plugin->next;
   }
   if (decoder_plugin==NULL) {
-    g_free(dplug);
+    lives_free(dplug);
     dplug=NULL;
   }
   
@@ -2332,7 +2332,7 @@ static lives_decoder_t *try_decoder_plugins(char *file_name, GList *disabled, co
 
 
 
-const lives_clip_data_t *get_decoder_cdata(int fileno, GList *disabled, const lives_clip_data_t *fake_cdata) {
+const lives_clip_data_t *get_decoder_cdata(int fileno, LiVESList *disabled, const lives_clip_data_t *fake_cdata) {
   // pass file to each decoder (demuxer) plugin in turn, until we find one that can parse
   // the file
   // NULL is returned if no decoder plugin recognises the file - then we
@@ -2346,7 +2346,7 @@ const lives_clip_data_t *get_decoder_cdata(int fileno, GList *disabled, const li
 
   lives_decoder_t *dplug;
 
-  GList *dlist=NULL,*xdisabled;
+  LiVESList *dlist=NULL,*xdisabled;
 
   lives_clip_t *sfile=mainw->files[fileno];
 
@@ -2355,7 +2355,7 @@ const lives_clip_data_t *get_decoder_cdata(int fileno, GList *disabled, const li
 
   mainw->error=FALSE;
 
-  if (!g_file_test (sfile->file_name, G_FILE_TEST_EXISTS)) {
+  if (!lives_file_test (sfile->file_name, LIVES_FILE_TEST_EXISTS)) {
     mainw->error=TRUE;
     return NULL;
   }
@@ -2374,15 +2374,15 @@ const lives_clip_data_t *get_decoder_cdata(int fileno, GList *disabled, const li
     mainw->decoders_loaded=TRUE;
   }
 
-  xdisabled=g_list_copy(disabled);
+  xdisabled=lives_list_copy(disabled);
 
   if (fake_cdata!=NULL) {
     get_clip_value(fileno,CLIP_DETAILS_DECODER_NAME,decplugname,PATH_MAX);
 
     if (strlen(decplugname)) {
-      GList *decoder_plugin=mainw->decoder_list;
+      LiVESList *decoder_plugin=mainw->decoder_list;
       if (!strncmp(decplugname,"zz",2)) {
-	dlist=g_list_copy(mainw->decoder_list);
+	dlist=lives_list_copy(mainw->decoder_list);
       }
       
       while (decoder_plugin!=NULL) {
@@ -2394,7 +2394,7 @@ const lives_clip_data_t *get_decoder_cdata(int fileno, GList *disabled, const li
 	decoder_plugin=decoder_plugin->next;
       }
 
-      xdisabled=g_list_remove(disabled,decplugname);
+      xdisabled=lives_list_remove(disabled,decplugname);
     }
   }
 
@@ -2402,19 +2402,19 @@ const lives_clip_data_t *get_decoder_cdata(int fileno, GList *disabled, const li
 
   if (strlen(decplugname)) {
     if (!strncmp(decplugname,"zz",2)) {
-      if (mainw->decoder_list!=NULL) g_list_free(mainw->decoder_list);
+      if (mainw->decoder_list!=NULL) lives_list_free(mainw->decoder_list);
       mainw->decoder_list=dlist;
     }
   }
 
-  if (xdisabled!=NULL) g_list_free(xdisabled);
+  if (xdisabled!=NULL) lives_list_free(xdisabled);
 
   lives_set_cursor_style(LIVES_CURSOR_NORMAL,NULL);
 
   if (dplug!=NULL) {
-    msg=g_strdup_printf(_(" using %s"),dplug->decoder->version());
+    msg=lives_strdup_printf(_(" using %s"),dplug->decoder->version());
     d_print(msg);
-    g_free(msg);
+    lives_free(msg);
     sfile->ext_src=dplug;
     return dplug->cdata;
   }
@@ -2438,7 +2438,7 @@ void close_decoder_plugin (lives_decoder_t *dplug) {
 
   if (cdata!=NULL) (*dplug->decoder->clip_data_free)(cdata);
 
-  g_free(dplug);
+  lives_free(dplug);
 
 }
 
@@ -2447,23 +2447,23 @@ static void unload_decoder_plugin(lives_decoder_sys_t *dplug) {
   if (dplug->module_unload!=NULL) (*dplug->module_unload)();
 
   if (dplug->name!=NULL) {
-    g_free(dplug->name);
+    lives_free(dplug->name);
   }
 
   dlclose(dplug->handle);
-  g_free(dplug);
+  lives_free(dplug);
 }
 
 
 void unload_decoder_plugins(void) {
-  GList *dplugs=mainw->decoder_list;
+  LiVESList *dplugs=mainw->decoder_list;
 
   while (dplugs!=NULL) {
     unload_decoder_plugin((lives_decoder_sys_t *)dplugs->data);
     dplugs=dplugs->next;
   }
 
-  g_list_free(mainw->decoder_list);
+  lives_list_free(mainw->decoder_list);
   mainw->decoder_list=NULL;
   mainw->decoders_loaded=FALSE;
 }
@@ -2482,24 +2482,24 @@ lives_decoder_sys_t *open_decoder_plugin(const gchar *plname) {
     return NULL;
   }
 
-  dplug=(lives_decoder_sys_t *)g_malloc(sizeof(lives_decoder_sys_t));
+  dplug=(lives_decoder_sys_t *)lives_malloc(sizeof(lives_decoder_sys_t));
 
   dplug->name=NULL;
 
 #ifndef IS_MINGW
-  plugname=g_strdup_printf ("%s%s%s/%s.so",prefs->lib_dir,PLUGIN_EXEC_DIR,PLUGIN_DECODERS,plname);
+  plugname=lives_strdup_printf ("%s%s%s/%s.so",prefs->lib_dir,PLUGIN_EXEC_DIR,PLUGIN_DECODERS,plname);
 #else
-  plugname=g_strdup_printf ("%s%s%s/%s.dll",prefs->lib_dir,PLUGIN_EXEC_DIR,PLUGIN_DECODERS,plname);
+  plugname=lives_strdup_printf ("%s%s%s/%s.dll",prefs->lib_dir,PLUGIN_EXEC_DIR,PLUGIN_DECODERS,plname);
 #endif
 
   dplug->handle=dlopen(plugname,RTLD_LAZY);
-  g_free (plugname);
+  lives_free (plugname);
 
   if (dplug->handle==NULL) {
-    gchar *msg=g_strdup_printf (_("\n\nFailed to open decoder plugin %s\nError was %s\n"),plname,dlerror());
+    gchar *msg=lives_strdup_printf (_("\n\nFailed to open decoder plugin %s\nError was %s\n"),plname,dlerror());
     d_print(msg);
-    g_free (msg);
-    g_free (dplug);
+    lives_free (msg);
+    lives_free (dplug);
     return NULL;
   }
 
@@ -2519,11 +2519,11 @@ lives_decoder_sys_t *open_decoder_plugin(const gchar *plname) {
   }
 
   if (!OK) {
-    gchar *msg=g_strdup_printf (_("\n\nDecoder plugin %s\nis missing a mandatory function.\nUnable to use it.\n"),plname);
+    gchar *msg=lives_strdup_printf (_("\n\nDecoder plugin %s\nis missing a mandatory function.\nUnable to use it.\n"),plname);
     d_print(msg);
-    g_free (msg);
+    lives_free (msg);
     unload_decoder_plugin(dplug);
-    g_free(dplug);
+    lives_free(dplug);
     return NULL;
   }
 
@@ -2539,14 +2539,14 @@ lives_decoder_sys_t *open_decoder_plugin(const gchar *plname) {
     err=(*dplug->module_check_init)();
     
     if (err!=NULL) {
-      g_snprintf(mainw->msg,512,"%s",err);
+      lives_snprintf(mainw->msg,512,"%s",err);
       unload_decoder_plugin(dplug);
-      g_free(dplug);
+      lives_free(dplug);
       return NULL;
     }
   }
 
-  dplug->name=g_strdup(plname);
+  dplug->name=lives_strdup(plname);
   return dplug;
 }
 
@@ -2556,31 +2556,31 @@ lives_decoder_sys_t *open_decoder_plugin(const gchar *plname) {
 void get_mime_type(gchar *text, int maxlen, const lives_clip_data_t *cdata) {
   gchar *audname;
   
-  if (cdata->container_name==NULL||!strlen(cdata->container_name)) g_snprintf(text,40,"%s",_("unknown"));
-  else g_snprintf(text,40,"%s",cdata->container_name);
+  if (cdata->container_name==NULL||!strlen(cdata->container_name)) lives_snprintf(text,40,"%s",_("unknown"));
+  else lives_snprintf(text,40,"%s",cdata->container_name);
 
   if ((cdata->video_name==NULL||!strlen(cdata->video_name))&&(cdata->audio_name==NULL||!strlen(cdata->audio_name))) return;
 
-  if (cdata->video_name==NULL) g_strappend(text,40,_("/unknown"));
+  if (cdata->video_name==NULL) lives_strappend(text,40,_("/unknown"));
   else {
-    gchar *vidname=g_strdup_printf("/%s",cdata->video_name);
-    g_strappend(text,40,vidname);
-    g_free(vidname);
+    gchar *vidname=lives_strdup_printf("/%s",cdata->video_name);
+    lives_strappend(text,40,vidname);
+    lives_free(vidname);
   }
 
   if (cdata->audio_name==NULL||!strlen(cdata->audio_name)) {
     if (cfile->achans==0) return;
-    audname=g_strdup_printf("/%s",_("unknown"));
+    audname=lives_strdup_printf("/%s",_("unknown"));
   }
   else 
-    audname=g_strdup_printf("/%s",cdata->audio_name);
-  g_strappend(text,40,audname);
-  g_free(audname);
+    audname=lives_strdup_printf("/%s",cdata->audio_name);
+  lives_strappend(text,40,audname);
+  lives_free(audname);
 }
 
 
 
-static void dpa_ok_clicked (LiVESButton *button, gpointer user_data) {
+static void dpa_ok_clicked (LiVESButton *button, livespointer user_data) {
   lives_general_button_clicked(button,NULL);
 
   if (prefsw!=NULL) {
@@ -2591,8 +2591,8 @@ static void dpa_ok_clicked (LiVESButton *button, gpointer user_data) {
   }
 
   if (future_prefs->disabled_decoders!=NULL) {
-    g_list_free_strings(future_prefs->disabled_decoders);
-    g_list_free(future_prefs->disabled_decoders);
+    lives_list_free_strings(future_prefs->disabled_decoders);
+    lives_list_free(future_prefs->disabled_decoders);
   }
 
   future_prefs->disabled_decoders=future_prefs->disabled_decoders_new;
@@ -2600,7 +2600,7 @@ static void dpa_ok_clicked (LiVESButton *button, gpointer user_data) {
 }
 
 
-static void dpa_cancel_clicked (LiVESButton *button, gpointer user_data) {
+static void dpa_cancel_clicked (LiVESButton *button, livespointer user_data) {
   lives_general_button_clicked(button,NULL);
 
   if (prefsw!=NULL) {
@@ -2609,8 +2609,8 @@ static void dpa_cancel_clicked (LiVESButton *button, gpointer user_data) {
   }
 
   if (future_prefs->disabled_decoders_new!=NULL) {
-    g_list_free_strings(future_prefs->disabled_decoders_new);
-    g_list_free(future_prefs->disabled_decoders_new);
+    lives_list_free_strings(future_prefs->disabled_decoders_new);
+    lives_list_free(future_prefs->disabled_decoders_new);
   }
 
 
@@ -2619,14 +2619,14 @@ static void dpa_cancel_clicked (LiVESButton *button, gpointer user_data) {
 static void on_dpa_cb_toggled(LiVESToggleButton *button, gchar *decname) {
   if (!lives_toggle_button_get_active(button))
     // unchecked is disabled
-    future_prefs->disabled_decoders_new=g_list_append(future_prefs->disabled_decoders_new,g_strdup(decname));
+    future_prefs->disabled_decoders_new=lives_list_append(future_prefs->disabled_decoders_new,lives_strdup(decname));
   else 
-    future_prefs->disabled_decoders_new=g_list_delete_string(future_prefs->disabled_decoders_new,decname);
+    future_prefs->disabled_decoders_new=lives_list_delete_string(future_prefs->disabled_decoders_new,decname);
 }
 
 
-void on_decplug_advanced_clicked (LiVESButton *button, gpointer user_data) {
-  GList *decoder_plugin;
+void on_decplug_advanced_clicked (LiVESButton *button, livespointer user_data) {
+  LiVESList *decoder_plugin;
 
   LiVESWidget *hbox;
   LiVESWidget *vbox;
@@ -2639,7 +2639,7 @@ void on_decplug_advanced_clicked (LiVESButton *button, gpointer user_data) {
   LiVESWidget *okbutton;
 
   gchar *ltext;
-  gchar *decplugdir=g_strdup_printf("%s%s%s",prefs->lib_dir,PLUGIN_EXEC_DIR,PLUGIN_DECODERS);
+  gchar *decplugdir=lives_strdup_printf("%s%s%s",prefs->lib_dir,PLUGIN_EXEC_DIR,PLUGIN_DECODERS);
 
   if (!mainw->decoders_loaded) {
     mainw->decoder_list=load_decoders();
@@ -2673,11 +2673,11 @@ void on_decplug_advanced_clicked (LiVESButton *button, gpointer user_data) {
     lives_decoder_sys_t *dpsys=(lives_decoder_sys_t *)decoder_plugin->data;
     hbox = lives_hbox_new (FALSE, 0);
     lives_box_pack_start (LIVES_BOX (vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
-    ltext=g_strdup_printf("%s   (%s)",dpsys->name,(*dpsys->version)());
+    ltext=lives_strdup_printf("%s   (%s)",dpsys->name,(*dpsys->version)());
 
     checkbutton=lives_standard_check_button_new(ltext,FALSE,LIVES_BOX(hbox),NULL);
 
-    g_free(ltext);
+    lives_free(ltext);
 
     lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(checkbutton),
 				 lives_list_index(future_prefs->disabled_decoders,dpsys->name)==-1);
@@ -2709,9 +2709,9 @@ void on_decplug_advanced_clicked (LiVESButton *button, gpointer user_data) {
   lives_window_present (LIVES_WINDOW (dialog));
   lives_xwindow_raise(lives_widget_get_xwindow(dialog));
 
-  future_prefs->disabled_decoders_new=g_list_copy_strings(future_prefs->disabled_decoders);
+  future_prefs->disabled_decoders_new=lives_list_copy_strings(future_prefs->disabled_decoders);
 
-  g_free(decplugdir);
+  lives_free(decplugdir);
 }
 
 ///////////////////////////////////////////////////////
@@ -2723,8 +2723,8 @@ boolean check_rfx_for_lives (lives_rfx_t *rfx) {
   // check that an RFX is suitable for loading (cf. check_for_lives in effects-weed.c)
   if (rfx->num_in_channels==2&&rfx->props&RFX_PROPS_MAY_RESIZE) {
     gchar *tmp;
-    d_print ((tmp=g_strdup_printf (_ ("Failed to load %s, transitions may not resize.\n"),rfx->name)));
-    g_free(tmp);
+    d_print ((tmp=lives_strdup_printf (_ ("Failed to load %s, transitions may not resize.\n"),rfx->name)));
+    lives_free(tmp);
     return FALSE;
   }
   return TRUE;
@@ -2738,20 +2738,20 @@ void do_rfx_cleanup(lives_rfx_t *rfx) {
 
   switch (rfx->status) {
   case RFX_STATUS_BUILTIN:
-    dir=g_build_filename(prefs->lib_dir,PLUGIN_EXEC_DIR,NULL);
-    com=g_strdup_printf("%s plugin_clear \"%s\" %d %d \"%s\" \"%s\" \"%s\"",prefs->backend_sync,
+    dir=lives_build_filename(prefs->lib_dir,PLUGIN_EXEC_DIR,NULL);
+    com=lives_strdup_printf("%s plugin_clear \"%s\" %d %d \"%s\" \"%s\" \"%s\"",prefs->backend_sync,
 			cfile->handle,cfile->start,cfile->end,dir,
 			PLUGIN_RENDERED_EFFECTS_BUILTIN,rfx->name);
     break;
   case RFX_STATUS_CUSTOM:
-    dir=g_build_filename(capable->home_dir,LIVES_CONFIG_DIR,NULL);
-    com=g_strdup_printf("%s plugin_clear \"%s\" %d %d \"%s\" \"%s\" \"%s\"",prefs->backend_sync,
+    dir=lives_build_filename(capable->home_dir,LIVES_CONFIG_DIR,NULL);
+    com=lives_strdup_printf("%s plugin_clear \"%s\" %d %d \"%s\" \"%s\" \"%s\"",prefs->backend_sync,
 			cfile->handle,cfile->start,cfile->end,dir,
 			PLUGIN_RENDERED_EFFECTS_CUSTOM,rfx->name);
     break;
   case RFX_STATUS_TEST:
-    dir=g_build_filename(capable->home_dir,LIVES_CONFIG_DIR,NULL);
-    com=g_strdup_printf("%s plugin_clear \"%s\" %d %d \"%s\" \"%s\" \"%s\"",prefs->backend_sync,
+    dir=lives_build_filename(capable->home_dir,LIVES_CONFIG_DIR,NULL);
+    com=lives_strdup_printf("%s plugin_clear \"%s\" %d %d \"%s\" \"%s\" \"%s\"",prefs->backend_sync,
 			cfile->handle,cfile->start,cfile->end,dir,
 			PLUGIN_RENDERED_EFFECTS_TEST,rfx->name);
     break;
@@ -2759,12 +2759,12 @@ void do_rfx_cleanup(lives_rfx_t *rfx) {
     return;
   }
 
-  if (dir!=NULL) g_free(dir);
+  if (dir!=NULL) lives_free(dir);
 
   // if the command fails we just give a warning
   lives_system(com,FALSE);
 
-  g_free(com);
+  lives_free(com);
 }
 
 
@@ -2772,7 +2772,7 @@ void do_rfx_cleanup(lives_rfx_t *rfx) {
 
 void render_fx_get_params (lives_rfx_t *rfx, const gchar *plugin_name, short status) {
   // create lives_param_t array from plugin supplied values
-  GList *parameter_list;
+  LiVESList *parameter_list;
   int param_idx,i;
   lives_param_t *cparam;
   gchar **param_array;
@@ -2801,22 +2801,22 @@ void render_fx_get_params (lives_rfx_t *rfx, const gchar *plugin_name, short sta
   }
 
   threaded_dialog_spin();
-  rfx->num_params=g_list_length (parameter_list);
-  rfx->params=(lives_param_t *)g_malloc (rfx->num_params*sizeof(lives_param_t));
+  rfx->num_params=lives_list_length (parameter_list);
+  rfx->params=(lives_param_t *)lives_malloc (rfx->num_params*sizeof(lives_param_t));
   
   for (param_idx=0;param_idx<rfx->num_params;param_idx++) {
  
-    line=(gchar *)g_list_nth_data(parameter_list,param_idx);
+    line=(gchar *)lives_list_nth_data(parameter_list,param_idx);
 
     len=get_token_count (line,(unsigned int)rfx->delim[0]);
 
     if (len<3) continue;
 
-    param_array=g_strsplit(line,rfx->delim,-1);
+    param_array=lives_strsplit(line,rfx->delim,-1);
 
     cparam=&rfx->params[param_idx];
-    cparam->name=g_strdup (param_array[0]);
-    cparam->label=g_strdup (param_array[1]);
+    cparam->name=lives_strdup (param_array[0]);
+    cparam->label=lives_strdup (param_array[1]);
     cparam->desc=NULL;
     cparam->use_mnemonic=TRUE;
     cparam->interp_func=NULL;
@@ -2836,7 +2836,7 @@ void render_fx_get_params (lives_rfx_t *rfx, const gchar *plugin_name, short sta
     cparam->special_type_index=0;
 
 #ifdef DEBUG_RENDER_FX_P
-    g_printerr("Got parameter %s\n",cparam->name);
+    lives_printerr("Got parameter %s\n",cparam->name);
 #endif
     cparam->dp=0;
     cparam->list=NULL;
@@ -2854,7 +2854,7 @@ void render_fx_get_params (lives_rfx_t *rfx, const gchar *plugin_name, short sta
     else if (!strncmp (param_array[2],"string",8)) {
       cparam->type=LIVES_PARAM_STRING;
     }
-    else if (!strncmp (param_array[2],"string_list",8)) {
+    else if (!strncmp (param_array[2],"strinlives_list",8)) {
       cparam->type=LIVES_PARAM_STRING_LIST;
     }
     else continue;
@@ -2862,15 +2862,15 @@ void render_fx_get_params (lives_rfx_t *rfx, const gchar *plugin_name, short sta
     if (cparam->dp) {
       double val;
       if (len<6) continue;
-      val=g_strtod (param_array[3],NULL);
-      cparam->value=g_malloc(sizdbl);
-      cparam->def=g_malloc(sizdbl);
+      val=lives_strtod (param_array[3],NULL);
+      cparam->value=lives_malloc(sizdbl);
+      cparam->def=lives_malloc(sizdbl);
       set_double_param(cparam->def,val);
       set_double_param(cparam->value,val);
-      cparam->min=g_strtod (param_array[4],NULL);
-      cparam->max=g_strtod (param_array[5],NULL);
+      cparam->min=lives_strtod (param_array[4],NULL);
+      cparam->max=lives_strtod (param_array[5],NULL);
       if (len>6) {
-	cparam->step_size=g_strtod(param_array[6],NULL);
+	cparam->step_size=lives_strtod(param_array[6],NULL);
 	if (cparam->step_size==0.) cparam->step_size=1./(double)lives_10pow(cparam->dp);
 	else if (cparam->step_size<0.) {
 	  cparam->step_size=-cparam->step_size;
@@ -2886,22 +2886,22 @@ void render_fx_get_params (lives_rfx_t *rfx, const gchar *plugin_name, short sta
       red=(short)atoi (param_array[3]);
       green=(short)atoi (param_array[4]);
       blue=(short)atoi (param_array[5]);
-      cparam->value=g_malloc(sizeof(lives_colRGB24_t));
-      cparam->def=g_malloc(sizeof(lives_colRGB24_t));
+      cparam->value=lives_malloc(sizeof(lives_colRGB24_t));
+      cparam->def=lives_malloc(sizeof(lives_colRGB24_t));
       set_colRGB24_param(cparam->def,red,green,blue);
       set_colRGB24_param(cparam->value,red,green,blue);
     }
     else if (cparam->type==LIVES_PARAM_STRING) {
       if (len<4) continue;
-      cparam->value=g_strdup(_ (param_array[3]));
-      cparam->def=g_strdup(_ (param_array[3]));
+      cparam->value=lives_strdup(_ (param_array[3]));
+      cparam->def=lives_strdup(_ (param_array[3]));
       if (len>4) cparam->max=(double)atoi (param_array[4]);
       if (cparam->max==0.||cparam->max>RFX_MAXSTRINGLEN) cparam->max=RFX_MAXSTRINGLEN;
     }
     else if (cparam->type==LIVES_PARAM_STRING_LIST) {
       if (len<4) continue;
-      cparam->value=g_malloc(sizint);
-      cparam->def=g_malloc(sizint);
+      cparam->value=lives_malloc(sizint);
+      cparam->def=lives_malloc(sizint);
       *(int *)cparam->def=atoi (param_array[3]);
       if (len>4) {
 	cparam->list=array_to_string_list (param_array,3,len);
@@ -2916,8 +2916,8 @@ void render_fx_get_params (lives_rfx_t *rfx, const gchar *plugin_name, short sta
       int val;
       if (len<4) continue;
       val=atoi (param_array[3]);
-      cparam->value=g_malloc(sizint);
-      cparam->def=g_malloc(sizint);
+      cparam->value=lives_malloc(sizint);
+      cparam->def=lives_malloc(sizint);
       set_int_param(cparam->def,val);
       set_int_param(cparam->value,val);
       if (cparam->type==LIVES_PARAM_BOOL) {
@@ -2944,30 +2944,30 @@ void render_fx_get_params (lives_rfx_t *rfx, const gchar *plugin_name, short sta
       cparam->widgets[i]=NULL;
     }
     cparam->onchange=FALSE;
-    g_strfreev (param_array);
+    lives_strfreev (param_array);
   }
-  g_list_free_strings (parameter_list);
-  g_list_free (parameter_list);
+  lives_list_free_strings (parameter_list);
+  lives_list_free (parameter_list);
   threaded_dialog_spin();
 }
 
 
-GList *array_to_string_list (gchar **array, int offset, int len) {
-  // build a GList from an array.
+LiVESList *array_to_string_list (gchar **array, int offset, int len) {
+  // build a LiVESList from an array.
   int i;
 
   gchar *string,*tmp;
-  GList *slist=NULL;
+  LiVESList *slist=NULL;
 
   for (i=offset+1;i<len;i++) {
     string=subst ((tmp=L2U8(array[i])),"\\n","\n");
-    g_free(tmp);
+    lives_free(tmp);
 
     // omit a last empty string
     if (i<len-1||strlen (string)) {
-      slist=g_list_append (slist, string);
+      slist=lives_list_append (slist, string);
     }
-    else g_free(string);
+    else lives_free(string);
   }
 
   return slist;
@@ -2977,23 +2977,33 @@ GList *array_to_string_list (gchar **array, int offset, int len) {
 
 void sort_rfx_array (lives_rfx_t *in, int num) {
   // sort rfx array into UTF-8 order by menu entry
-  register int i;
-  int start=1,min_val=0;
-  boolean used[num];
-  int sorted=1;
-  gchar *min_string=NULL;
+#ifdef GUI_QT
+  QString min_string, str;
+#endif
+
   lives_rfx_t *rfx;
-  gchar *tmp;
+
+#ifdef GUI_GTK
+  char *min_string=NULL;
+#endif
+  char *tmp=NULL;
+
+  boolean used[num];
+
+  int start=1,min_val=0;
+  int sorted=1;
+
+  register int i;
 
   for (i=0;i<num;i++) {
     used[i]=FALSE;
   }
 
-  rfx=mainw->rendered_fx=(lives_rfx_t *)g_malloc ((num+1)*sizeof(lives_rfx_t));
+  rfx=mainw->rendered_fx=(lives_rfx_t *)lives_malloc ((num+1)*sizeof(lives_rfx_t));
 
-  rfx->name=g_strdup (in[0].name);
-  rfx->menu_text=g_strdup (in[0].menu_text);
-  rfx->action_desc=g_strdup (in[0].action_desc);
+  rfx->name=lives_strdup (in[0].name);
+  rfx->menu_text=lives_strdup (in[0].menu_text);
+  rfx->action_desc=lives_strdup (in[0].action_desc);
   rfx->props=in[0].props;
   rfx->num_params=0;
   rfx->min_frames=1;
@@ -3007,24 +3017,39 @@ void sort_rfx_array (lives_rfx_t *in, int num) {
     for (i=start;i<=num;i++) {
       if (!used[i-1]) {
 	if (min_string==NULL) {
+#ifdef GUI_GTK
 	  min_string=g_utf8_collate_key (in[i].menu_text,-1);
+#endif
+#ifdef GUI_QT
+	  min_string = QString::fromUtf8(in[i].menu_text);
+#endif
 	  min_val=i;
 	}
 	else {
+#ifdef GUI_GTK
 	  if (strcmp (min_string,(tmp=g_utf8_collate_key(in[i].menu_text,-1)))==1) {
-	    g_free (min_string);
+	    lives_free (min_string);
 	    min_string=g_utf8_collate_key (in[i].menu_text,-1);
+#endif
+#ifdef GUI_QT
+	str = QString::fromUtf8(in[i].menu_text);
+	if (str.compare(min_string) < 0) {
+	    min_string = str;
+#endif
 	    min_val=i;
 	  }
-	  g_free(tmp);
+	if (tmp!=NULL) lives_free(tmp);
 	}
       }
     }
     rfx_copy (&in[min_val],&mainw->rendered_fx[sorted++],FALSE);
     used[min_val-1]=TRUE;
-    if (min_string!=NULL) g_free (min_string);
+#ifdef GUI_GTK
+    if (min_string!=NULL) lives_free (min_string);
     min_string=NULL;
+#endif
   }
+
   for (i=0;i<=num;i++) {
     rfx_free(&in[i]);
   }
@@ -3033,9 +3058,9 @@ void sort_rfx_array (lives_rfx_t *in, int num) {
 
 void rfx_copy (lives_rfx_t *src, lives_rfx_t *dest, boolean full) {
   // Warning, does not copy all fields (full will do that)
-  dest->name=g_strdup (src->name);
-  dest->menu_text=g_strdup (src->menu_text);
-  dest->action_desc=g_strdup (src->action_desc);
+  dest->name=lives_strdup (src->name);
+  dest->menu_text=lives_strdup (src->menu_text);
+  dest->action_desc=lives_strdup (src->action_desc);
   dest->min_frames=src->min_frames;
   dest->num_in_channels=src->num_in_channels;
   dest->status=src->status;
@@ -3052,14 +3077,14 @@ void rfx_params_free(lives_rfx_t *rfx) {
   register int i;
   for (i=0;i<rfx->num_params;i++) {
     if (rfx->params[i].type==LIVES_PARAM_UNDISPLAYABLE) continue;
-    g_free(rfx->params[i].name);
-    if (rfx->params[i].def!=NULL) g_free(rfx->params[i].def);
-    if (rfx->params[i].value!=NULL) g_free(rfx->params[i].value);
-    if (rfx->params[i].label!=NULL) g_free(rfx->params[i].label);
-    if (rfx->params[i].desc!=NULL) g_free(rfx->params[i].desc);
+    lives_free(rfx->params[i].name);
+    if (rfx->params[i].def!=NULL) lives_free(rfx->params[i].def);
+    if (rfx->params[i].value!=NULL) lives_free(rfx->params[i].value);
+    if (rfx->params[i].label!=NULL) lives_free(rfx->params[i].label);
+    if (rfx->params[i].desc!=NULL) lives_free(rfx->params[i].desc);
     if (rfx->params[i].list!=NULL) {
-      g_list_free_strings(rfx->params[i].list);
-      g_list_free(rfx->params[i].list);
+      lives_list_free_strings(rfx->params[i].list);
+      lives_list_free(rfx->params[i].list);
     }
   }
 }
@@ -3069,13 +3094,13 @@ void rfx_params_free(lives_rfx_t *rfx) {
 void rfx_free(lives_rfx_t *rfx) {
   if (mainw->vrfx_update==rfx) mainw->vrfx_update=NULL;
 
-  if (rfx->name!=NULL) g_free(rfx->name);
-  if (rfx->menu_text!=NULL) g_free(rfx->menu_text);
-  if (rfx->action_desc!=NULL) g_free(rfx->action_desc);
+  if (rfx->name!=NULL) lives_free(rfx->name);
+  if (rfx->menu_text!=NULL) lives_free(rfx->menu_text);
+  if (rfx->action_desc!=NULL) lives_free(rfx->action_desc);
 
   if (rfx->params!=NULL) {
     rfx_params_free(rfx);
-    g_free(rfx->params);
+    lives_free(rfx->params);
   }
   if (rfx->extra!=NULL) {
     free(rfx->extra);
@@ -3091,7 +3116,7 @@ void rfx_free_all (void) {
   for (i=0;i<=mainw->num_rendered_effects_builtin+mainw->num_rendered_effects_custom+mainw->num_rendered_effects_test;i++) {
     rfx_free(&mainw->rendered_fx[i]);
   }
-  g_free(mainw->rendered_fx);
+  lives_free(mainw->rendered_fx);
   mainw->rendered_fx=NULL;
 }
 
@@ -3099,8 +3124,8 @@ void rfx_free_all (void) {
 void param_copy (lives_param_t *src, lives_param_t *dest, boolean full) {
   // rfxbuilder.c uses this to copy params to a temporary copy and back again
 
-  dest->name=g_strdup (src->name);
-  dest->label=g_strdup (src->label);
+  dest->name=lives_strdup (src->name);
+  dest->label=lives_strdup (src->label);
   dest->group=src->group;
   dest->onchange=src->onchange;
   dest->type=src->type;
@@ -3119,25 +3144,25 @@ void param_copy (lives_param_t *src, lives_param_t *dest, boolean full) {
     dest->dp=0;
   case LIVES_PARAM_NUM:
     if (!dest->dp) {
-      dest->def=g_malloc (sizint);
+      dest->def=lives_malloc (sizint);
       lives_memcpy (dest->def,src->def,sizint);
     }
     else {
-      dest->def=g_malloc (sizdbl);
+      dest->def=lives_malloc (sizdbl);
       lives_memcpy (dest->def,src->def,sizdbl);
     }
     break;
   case LIVES_PARAM_COLRGB24:
-    dest->def=g_malloc (sizeof(lives_colRGB24_t));
+    dest->def=lives_malloc (sizeof(lives_colRGB24_t));
     lives_memcpy (dest->def,src->def,sizeof(lives_colRGB24_t));
     break;
   case LIVES_PARAM_STRING:
-    dest->def=g_strdup ((gchar *)src->def);
+    dest->def=lives_strdup ((gchar *)src->def);
     break;
   case LIVES_PARAM_STRING_LIST:
-    dest->def=g_malloc (sizint);
+    dest->def=lives_malloc (sizint);
     set_int_param (dest->def,get_int_param (src->def));
-    if (src->list!=NULL) dest->list=g_list_copy (src->list);
+    if (src->list!=NULL) dest->list=lives_list_copy (src->list);
     break;
   default:
     break;
@@ -3231,10 +3256,10 @@ int find_rfx_plugin_by_name (const gchar *name, short status) {
 
 lives_param_t *weed_params_to_rfx(int npar, weed_plant_t *inst, boolean show_reinits) {
   int i,j;
-  lives_param_t *rpar=(lives_param_t *)g_malloc(npar*sizeof(lives_param_t));
+  lives_param_t *rpar=(lives_param_t *)lives_malloc(npar*sizeof(lives_param_t));
   int param_hint;
   char **list;
-  GList *gtk_list=NULL;
+  LiVESList *gtk_list=NULL;
   gchar *string;
   int error;
   int vali;
@@ -3260,7 +3285,7 @@ lives_param_t *weed_params_to_rfx(int npar, weed_plant_t *inst, boolean show_rei
     if (i-poffset>=nwpars) {
       // handling for compound fx
       poffset+=nwpars;
-      if (wpars!=NULL) weed_free(wpars);
+      if (wpars!=NULL) lives_free(wpars);
       inst=weed_get_plantptr_value(inst,"host_next_instance",&error);
       if (weed_plant_has_leaf(inst,"in_parameters")) nwpars=weed_leaf_num_elements(inst,"in_parameters");
       else nwpars=0;
@@ -3338,8 +3363,8 @@ lives_param_t *weed_params_to_rfx(int npar, weed_plant_t *inst, boolean show_rei
 	rpar[i].hidden|=HIDDEN_MULTI;
       }
       rpar[i].type=LIVES_PARAM_BOOL;
-      rpar[i].value=g_malloc(sizint);
-      rpar[i].def=g_malloc(sizint);
+      rpar[i].value=lives_malloc(sizint);
+      rpar[i].def=lives_malloc(sizint);
       if (weed_plant_has_leaf(wtmpl,"host_default")) vali=weed_get_boolean_value(wtmpl,"host_default",&error); 
       else if (weed_leaf_num_elements(wtmpl,"default")>0) vali=weed_get_boolean_value(wtmpl,"default",&error);
       else vali=weed_get_boolean_value(wtmpl,"new_default",&error);
@@ -3353,8 +3378,8 @@ lives_param_t *weed_params_to_rfx(int npar, weed_plant_t *inst, boolean show_rei
 	rpar[i].hidden|=HIDDEN_MULTI;
       }
       rpar[i].type=LIVES_PARAM_NUM;
-      rpar[i].value=g_malloc(sizint);
-      rpar[i].def=g_malloc(sizint);
+      rpar[i].value=lives_malloc(sizint);
+      rpar[i].def=lives_malloc(sizint);
       if (weed_plant_has_leaf(wtmpl,"host_default")) {
 	vali=weed_get_int_value(wtmpl,"host_default",&error);
       }
@@ -3371,12 +3396,12 @@ lives_param_t *weed_params_to_rfx(int npar, weed_plant_t *inst, boolean show_rei
 	  listlen=weed_leaf_num_elements(gui,"choices");
 	  list=weed_get_string_array(gui,"choices",&error);
 	  for (j=0;j<listlen;j++) {
-	    gtk_list=g_list_append(gtk_list,g_strdup(list[j]));
-	    weed_free(list[j]);
+	    gtk_list=lives_list_append(gtk_list,lives_strdup(list[j]));
+	    lives_free(list[j]);
 	  }
-	  weed_free(list);
-	  rpar[i].list=g_list_copy(gtk_list);
-	  g_list_free(gtk_list);
+	  lives_free(list);
+	  rpar[i].list=lives_list_copy(gtk_list);
+	  lives_list_free(gtk_list);
 	  gtk_list=NULL;
 	  rpar[i].type=LIVES_PARAM_STRING_LIST;
 	  rpar[i].max=listlen;
@@ -3391,8 +3416,8 @@ lives_param_t *weed_params_to_rfx(int npar, weed_plant_t *inst, boolean show_rei
 	rpar[i].hidden|=HIDDEN_MULTI;
       }
       rpar[i].type=LIVES_PARAM_NUM;
-      rpar[i].value=g_malloc(sizdbl);
-      rpar[i].def=g_malloc(sizdbl);
+      rpar[i].value=lives_malloc(sizdbl);
+      rpar[i].def=lives_malloc(sizdbl);
       if (weed_plant_has_leaf(wtmpl,"host_default")) vald=weed_get_double_value(wtmpl,"host_default",&error); 
       else if (weed_leaf_num_elements(wtmpl,"default")>0) vald=weed_get_double_value(wtmpl,"default",&error);
       else vald=weed_get_double_value(wtmpl,"new_default",&error);
@@ -3421,11 +3446,11 @@ lives_param_t *weed_params_to_rfx(int npar, weed_plant_t *inst, boolean show_rei
       if (weed_plant_has_leaf(wtmpl,"host_default")) string=weed_get_string_value(wtmpl,"host_default",&error); 
       else if (weed_leaf_num_elements(wtmpl,"default")>0) string=weed_get_string_value(wtmpl,"default",&error);
       else string=weed_get_string_value(wtmpl,"new_default",&error);
-      rpar[i].def=g_strdup(string);
-      weed_free(string);
+      rpar[i].def=lives_strdup(string);
+      lives_free(string);
       string=weed_get_string_value(wpar,"value",&error);
-      rpar[i].value=g_strdup(string);
-      weed_free(string);
+      rpar[i].value=lives_strdup(string);
+      lives_free(string);
       rpar[i].max=0.;
       if (gui!=NULL&&weed_plant_has_leaf(gui,"maxchars")) {
 	rpar[i].max=(double)weed_get_int_value(gui,"maxchars",&error);
@@ -3440,8 +3465,8 @@ lives_param_t *weed_params_to_rfx(int npar, weed_plant_t *inst, boolean show_rei
 	  rpar[i].hidden|=HIDDEN_MULTI;
 	}
 	rpar[i].type=LIVES_PARAM_COLRGB24;
-	rpar[i].value=g_malloc(3*sizint);
-	rpar[i].def=g_malloc(3*sizint);
+	rpar[i].value=lives_malloc(3*sizint);
+	rpar[i].def=lives_malloc(3*sizint);
 
 	if (weed_leaf_seed_type(wtmpl,"default")==WEED_SEED_INT) {
 	  if (weed_plant_has_leaf(wtmpl,"host_default")) {
@@ -3515,7 +3540,7 @@ lives_param_t *weed_params_to_rfx(int npar, weed_plant_t *inst, boolean show_rei
 	set_colRGB24_param(rpar[i].def,cols[0],cols[1],cols[2]);
 
 	if (col_int) {
-	  weed_free(cols);
+	  lives_free(cols);
 	  cols=weed_get_int_array(wpar,"value",&error);
 	  if (cols[0]<red_min) cols[0]=red_min;
 	  if (cols[1]<green_min) cols[1]=green_min;
@@ -3540,12 +3565,12 @@ lives_param_t *weed_params_to_rfx(int npar, weed_plant_t *inst, boolean show_rei
 	  cols[2]=(colsd[2]-blue_mind)/(blue_maxd-blue_mind)*255.+.49999;
 	}
 	set_colRGB24_param(rpar[i].value,(short)cols[0],(short)cols[1],(short)cols[2]);
-	weed_free(cols);
+	lives_free(cols);
 
-	if (maxi!=NULL) weed_free(maxi);
-	if (mini!=NULL) weed_free(mini);
-	if (maxd!=NULL) weed_free(maxd);
-	if (mind!=NULL) weed_free(mind);
+	if (maxi!=NULL) lives_free(maxi);
+	if (mini!=NULL) lives_free(mini);
+	if (maxd!=NULL) lives_free(maxd);
+	if (mind!=NULL) lives_free(mind);
 	break;
       }
       break;
@@ -3555,14 +3580,14 @@ lives_param_t *weed_params_to_rfx(int npar, weed_plant_t *inst, boolean show_rei
     }
 
     string=weed_get_string_value(wtmpl,"name",&error);
-    rpar[i].name=g_strdup(string);
-    rpar[i].label=g_strdup(string);
-    weed_free(string);
+    rpar[i].name=lives_strdup(string);
+    rpar[i].label=lives_strdup(string);
+    lives_free(string);
 
     if (weed_plant_has_leaf(wtmpl,"description")) {
       string=weed_get_string_value(wtmpl,"description",&error);
-      rpar[i].desc=g_strdup(string);
-      weed_free(string);
+      rpar[i].desc=lives_strdup(string);
+      lives_free(string);
     }
     else rpar[i].desc=NULL;
 
@@ -3571,9 +3596,9 @@ lives_param_t *weed_params_to_rfx(int npar, weed_plant_t *inst, boolean show_rei
     if (gui!=NULL) {
       if (weed_plant_has_leaf(gui,"label")) {
 	string=weed_get_string_value(gui,"label",&error);
-	g_free(rpar[i].label);
-	rpar[i].label=g_strdup(string);
-	weed_free(string);
+	lives_free(rpar[i].label);
+	rpar[i].label=lives_strdup(string);
+	lives_free(string);
       }
       if (weed_plant_has_leaf(gui,"use_mnemonic")) rpar[i].use_mnemonic=weed_get_boolean_value(gui,"use_mnemonic",&error);
       if (weed_plant_has_leaf(gui,"hidden")) 
@@ -3600,7 +3625,7 @@ lives_param_t *weed_params_to_rfx(int npar, weed_plant_t *inst, boolean show_rei
     rpar[i].onchange=FALSE;
   }
 
-  weed_free(wpars);
+  lives_free(wpars);
 
   return rpar;
 }
@@ -3613,7 +3638,7 @@ lives_rfx_t *weed_to_rfx (weed_plant_t *plant, boolean show_reinits) {
   weed_plant_t *filter,*inst;
 
   gchar *string;
-  lives_rfx_t *rfx=(lives_rfx_t *)g_malloc(sizeof(lives_rfx_t));
+  lives_rfx_t *rfx=(lives_rfx_t *)lives_malloc(sizeof(lives_rfx_t));
   rfx->is_template=FALSE;
   if (weed_get_int_value(plant,"type",&error)==WEED_PLANT_FILTER_INSTANCE) {
     filter=weed_instance_get_filter(plant,TRUE);
@@ -3628,10 +3653,10 @@ lives_rfx_t *weed_to_rfx (weed_plant_t *plant, boolean show_reinits) {
   }
 
   string=weed_get_string_value(filter,"name",&error);
-  rfx->name=g_strdup(string);
-  rfx->menu_text=g_strdup(string);
-  weed_free(string);
-  rfx->action_desc=g_strdup("no action");
+  rfx->name=lives_strdup(string);
+  rfx->menu_text=lives_strdup(string);
+  lives_free(string);
+  rfx->action_desc=lives_strdup("no action");
   rfx->min_frames=-1;
   rfx->num_in_channels=enabled_in_channels(filter,FALSE);
   rfx->status=RFX_STATUS_WEED;
@@ -3650,8 +3675,8 @@ lives_rfx_t *weed_to_rfx (weed_plant_t *plant, boolean show_reinits) {
 
 
 
-GList *get_external_window_hints(lives_rfx_t *rfx) {
-  GList *hints=NULL;
+LiVESList *get_external_window_hints(lives_rfx_t *rfx) {
+  LiVESList *hints=NULL;
 
   if (rfx->status==RFX_STATUS_WEED) {
     int nfilters,error;
@@ -3682,15 +3707,15 @@ GList *get_external_window_hints(lives_rfx_t *rfx) {
 
       string=weed_get_string_value(gui,"layout_scheme",&error);
       if (strcmp(string,"RFX")) {
-	weed_free(string);
+	lives_free(string);
 	continue;
       }
-      weed_free(string);
+      lives_free(string);
 
       if (!weed_plant_has_leaf(gui,"rfx_delim")) continue;
       delim=weed_get_string_value(gui,"rfx_delim",&error);
-      g_snprintf(rfx->delim,2,"%s",delim);
-      weed_free(delim);
+      lives_snprintf(rfx->delim,2,"%s",delim);
+      lives_free(delim);
       
       if (!weed_plant_has_leaf(gui,"rfx_strings")) continue;
       
@@ -3700,16 +3725,16 @@ GList *get_external_window_hints(lives_rfx_t *rfx) {
       rfx_strings=weed_get_string_array(gui,"rfx_strings",&error);
       
       for (i=0;i<num_hints;i++) {
-	hints=g_list_append(hints,g_strdup(rfx_strings[i]));
-	weed_free(rfx_strings[i]);
+	hints=lives_list_append(hints,lives_strdup(rfx_strings[i]));
+	lives_free(rfx_strings[i]);
       }
-      weed_free(rfx_strings);
+      lives_free(rfx_strings);
 
-      if (filters!=NULL) hints=g_list_append(hints,g_strdup("internal|nextfilter"));
+      if (filters!=NULL) hints=lives_list_append(hints,lives_strdup("internal|nextfilter"));
 
     }
 
-    if (filters!=NULL) weed_free(filters);
+    if (filters!=NULL) lives_free(filters);
 
   }
 
@@ -3743,10 +3768,10 @@ gchar *plugin_run_param_window(const gchar *get_com, LiVESVBox *vbox, lives_rfx_
 
 
   FILE *sfile;
-  lives_rfx_t *rfx=(lives_rfx_t *)g_malloc(sizeof(lives_rfx_t));
+  lives_rfx_t *rfx=(lives_rfx_t *)lives_malloc(sizeof(lives_rfx_t));
   gchar *string;
-  gchar *rfx_scrapname=g_strdup_printf("rfx.%d",capable->mainpid);
-  gchar *rfxfile=g_strdup_printf ("%s/.%s.script",prefs->tmpdir,rfx_scrapname);
+  gchar *rfx_scrapname=lives_strdup_printf("rfx.%d",capable->mainpid);
+  gchar *rfxfile=lives_strdup_printf ("%s/.%s.script",prefs->tmpdir,rfx_scrapname);
   int res;
   gchar *com;
   gchar *fnamex;
@@ -3754,15 +3779,15 @@ gchar *plugin_run_param_window(const gchar *get_com, LiVESVBox *vbox, lives_rfx_
   gchar buff[32];
   int retval;
 
-  string=g_strdup_printf("<name>\n%s\n</name>\n",rfx_scrapname);
+  string=lives_strdup_printf("<name>\n%s\n</name>\n",rfx_scrapname);
 
   do {
     retval=0;
     sfile=fopen(rfxfile,"w");
     if (sfile==NULL) {
-      retval=do_write_failed_error_s_with_retry(rfxfile,g_strerror(errno),NULL);
+      retval=do_write_failed_error_s_with_retry(rfxfile,lives_strerror(errno),NULL);
       if (retval==LIVES_CANCEL) {
-	g_free(string);
+	lives_free(string);
 	return NULL;
       }
     }
@@ -3770,7 +3795,7 @@ gchar *plugin_run_param_window(const gchar *get_com, LiVESVBox *vbox, lives_rfx_
       mainw->write_failed=FALSE;
       lives_fputs(string,sfile);
       fclose(sfile);
-      g_free(string);
+      lives_free(string);
       if (mainw->write_failed) {
 	retval=do_write_failed_error_s_with_retry(rfxfile,NULL,NULL);
 	if (retval==LIVES_CANCEL) return NULL;
@@ -3780,9 +3805,9 @@ gchar *plugin_run_param_window(const gchar *get_com, LiVESVBox *vbox, lives_rfx_
 
 
 
-  com=g_strdup_printf("%s >> \"%s\"", get_com, rfxfile);
+  com=lives_strdup_printf("%s >> \"%s\"", get_com, rfxfile);
   retval=lives_system(com,FALSE);
-  g_free(com);
+  lives_free(com);
 
   // command failed
   if (retval) return NULL;
@@ -3791,15 +3816,15 @@ gchar *plugin_run_param_window(const gchar *get_com, LiVESVBox *vbox, lives_rfx_
     
   // call RFX_BUILDER program to compile the script, passing parameters input_filename and output_directory
 #ifndef IS_MINGW
-  com=g_strdup_printf("\"%s\" \"%s\" \"%s\" >/dev/null",RFX_BUILDER,rfxfile,prefs->tmpdir);
+  com=lives_strdup_printf("\"%s\" \"%s\" \"%s\" >/dev/null",RFX_BUILDER,rfxfile,prefs->tmpdir);
 #else
-  com=g_strdup_printf("\"%s\" \"%s\" \"%s\" >NUL",RFX_BUILDER,rfxfile,prefs->tmpdir);
+  com=lives_strdup_printf("\"%s\" \"%s\" \"%s\" >NUL",RFX_BUILDER,rfxfile,prefs->tmpdir);
 #endif
   res=system(com);
-  g_free(com);
+  lives_free(com);
     
   unlink(rfxfile);
-  g_free(rfxfile);
+  lives_free(rfxfile);
 
   if (res==0) {
     // the script compiled correctly
@@ -3807,7 +3832,7 @@ gchar *plugin_run_param_window(const gchar *get_com, LiVESVBox *vbox, lives_rfx_
     // now we pop up the parameter window, get the values of our parameters, and marshall them as extra_params
       
     // first create a lives_rfx_t from the scrap
-    rfx->name=g_strdup(rfx_scrapname);
+    rfx->name=lives_strdup(rfx_scrapname);
     rfx->action_desc=NULL;
     rfx->extra=NULL;
     rfx->status=RFX_STATUS_SCRAP;
@@ -3816,12 +3841,12 @@ gchar *plugin_run_param_window(const gchar *get_com, LiVESVBox *vbox, lives_rfx_
     rfx->min_frames=-1;
 
     // get the delimiter
-    rfxfile=g_strdup_printf("%ssmdef.%d",prefs->tmpdir,capable->mainpid);
-    fnamex=g_build_filename(prefs->tmpdir,rfx_scrapname,NULL);
-    com=g_strdup_printf("\"%s\" get_define > \"%s\"",fnamex,rfxfile);
-    g_free(fnamex);
+    rfxfile=lives_strdup_printf("%ssmdef.%d",prefs->tmpdir,capable->mainpid);
+    fnamex=lives_build_filename(prefs->tmpdir,rfx_scrapname,NULL);
+    com=lives_strdup_printf("\"%s\" get_define > \"%s\"",fnamex,rfxfile);
+    lives_free(fnamex);
     retval=lives_system(com,FALSE);
-    g_free(com);
+    lives_free(com);
 
     // command to get_define failed
     if (retval) return NULL;
@@ -3830,7 +3855,7 @@ gchar *plugin_run_param_window(const gchar *get_com, LiVESVBox *vbox, lives_rfx_
       retval=0;
       sfile=fopen(rfxfile,"r");
       if (!sfile) {
-	retval=do_read_failed_error_s_with_retry(rfxfile,g_strerror(errno),NULL);
+	retval=do_read_failed_error_s_with_retry(rfxfile,lives_strerror(errno),NULL);
       }
       else {
 	mainw->read_failed=FALSE;
@@ -3844,14 +3869,14 @@ gchar *plugin_run_param_window(const gchar *get_com, LiVESVBox *vbox, lives_rfx_
     } while (retval==LIVES_RETRY);
 
     unlink(rfxfile);
-    g_free(rfxfile);
+    lives_free(rfxfile);
 
     if (retval==LIVES_CANCEL) return NULL;
 
-    g_snprintf(rfx->delim,2,"%s",buff);
+    lives_snprintf(rfx->delim,2,"%s",buff);
 
     // ok, this might need adjusting afterwards
-    rfx->menu_text=(vbox==NULL?g_strdup_printf(_("%s advanced settings"),prefs->encoder.of_desc):g_strdup(""));
+    rfx->menu_text=(vbox==NULL?lives_strdup_printf(_("%s advanced settings"),prefs->encoder.of_desc):lives_strdup(""));
     rfx->is_template=FALSE;
 
     rfx->source=NULL;
@@ -3878,16 +3903,16 @@ gchar *plugin_run_param_window(const gchar *get_com, LiVESVBox *vbox, lives_rfx_
       make_param_box(vbox,rfx);
     }
       
-    rfxfile=g_build_filename (prefs->tmpdir,rfx_scrapname,NULL);
+    rfxfile=lives_build_filename (prefs->tmpdir,rfx_scrapname,NULL);
     unlink(rfxfile);
-    g_free(rfxfile);
+    lives_free(rfxfile);
 
     if (ret_rfx!=NULL) {
       *ret_rfx=rfx;
     }
     else {
       rfx_free(rfx);
-      g_free(rfx);
+      lives_free(rfx);
     }
   }
   else {
@@ -3895,13 +3920,13 @@ gchar *plugin_run_param_window(const gchar *get_com, LiVESVBox *vbox, lives_rfx_
       *ret_rfx=NULL;
     }
     else {
-      res_string=g_strdup("");
+      res_string=lives_strdup("");
     }
     if (rfx!=NULL) {
-      g_free(rfx);
+      lives_free(rfx);
     }
   }
 
-  g_free(rfx_scrapname);
+  lives_free(rfx_scrapname);
   return res_string;
 }

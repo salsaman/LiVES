@@ -9,7 +9,7 @@
 
 typedef struct {
   int usr_number;
-  GSList *rbgroup;
+  LiVESSList *rbgroup;
   int active_param;
 } lives_widget_group_t;
 
@@ -32,8 +32,8 @@ boolean make_param_box(LiVESVBox *, lives_rfx_t *);
 boolean add_param_to_box (LiVESBox *, lives_rfx_t *, int param_number, boolean add_slider);
 void add_param_label_to_box (LiVESBox *, boolean do_trans, const gchar *text);
 
-GSList *add_usrgrp_to_livesgrp (GSList *u2l, GSList *rbgroup, int usr_number);
-lives_widget_group_t *livesgrp_from_usrgrp (GSList *u2l, int usrgrp);
+LiVESSList *add_usrgrp_to_livesgrp (LiVESSList *u2l, LiVESSList *rbgroup, int usr_number);
+lives_widget_group_t *livesgrp_from_usrgrp (LiVESSList *u2l, int usrgrp);
 
 void after_boolean_param_toggled (LiVESToggleButton *, lives_rfx_t *);
 void after_param_value_changed (LiVESSpinButton *, lives_rfx_t *);
@@ -49,15 +49,15 @@ void on_pwcolsel (LiVESButton *, lives_rfx_t *);
 
 char *param_marshall (lives_rfx_t *, boolean with_min_max);
 char **param_marshall_to_argv (lives_rfx_t *);
-void param_demarshall (lives_rfx_t *, GList *plist, boolean with_min_max, boolean update_widgets);
-int set_param_from_list(GList *plist, lives_param_t *param, int pnum, boolean with_min_max, boolean upd);
-GList *argv_to_marshalled_list (lives_rfx_t *, int argc, char **argv);
+void param_demarshall (lives_rfx_t *, LiVESList *plist, boolean with_min_max, boolean update_widgets);
+int set_param_from_list(LiVESList *plist, lives_param_t *param, int pnum, boolean with_min_max, boolean upd);
+LiVESList *argv_to_marshalled_list (lives_rfx_t *, int argc, char **argv);
 
 /// object should have g_set_object_data "param_number" set to parameter number
 ///
 /// (0 based, -ve for init onchanges)
-GList *do_onchange (LiVESObject *object, lives_rfx_t *) WARN_UNUSED;
-GList *do_onchange_init(lives_rfx_t *) WARN_UNUSED;
+LiVESList *do_onchange (LiVESObject *object, lives_rfx_t *) WARN_UNUSED;
+LiVESList *do_onchange_init(lives_rfx_t *) WARN_UNUSED;
 
 
 

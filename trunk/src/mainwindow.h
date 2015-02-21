@@ -291,9 +291,9 @@ typedef struct {
   int clips_available;
 
   /// hash table of clips in menu order
-  GList *cliplist;
+  LiVESList *cliplist;
 
-  GSList *clips_group;
+  LiVESSList *clips_group;
 
   /// sets
   gchar set_name[256];   // actually 128 is the limit now
@@ -346,7 +346,7 @@ typedef struct {
   boolean stored_layout_save_all_vals;
   gchar stored_layout_name[PATH_MAX];
 
-  GList *stored_layout_undos;
+  LiVESList *stored_layout_undos;
   size_t sl_undo_buffer_used;
   unsigned char *sl_undo_mem;
   int sl_undo_offset;
@@ -954,15 +954,15 @@ typedef struct {
 
   // layouts
   LiVESTextBuffer *layout_textbuffer; ///< stores layout errors
-  GList *affected_layouts_map; ///< map of layouts with errors
-  GList *current_layouts_map; ///< map of all layouts for set
+  LiVESList *affected_layouts_map; ///< map of layouts with errors
+  LiVESList *current_layouts_map; ///< map of all layouts for set
 
   /// list of pairs of marks in affected_layouts_map, text between them should be deleted when 
   /// stored_layout is deleted
-  GList *affected_layout_marks;
+  LiVESList *affected_layout_marks;
 
   /// immediately (to be) affected layout maps
-  GList *xlays;
+  LiVESList *xlays;
 
   gchar *recovery_file;  ///< the filename of our recover file
   boolean leave_recovery;
@@ -977,9 +977,9 @@ typedef struct {
   double rec_avel;
   double rec_aseek;
 
-  gpointer do_not_free; ///< mess with memory so that g_object_unref can be forced not to free() the pixel_data
-  GMemVTable alt_vtable;
-  void (*free_fn)(gpointer);
+  livespointer do_not_free; ///< mess with memory so that lives_object_unref can be forced not to free() the pixel_data
+  LiVESMemVTable alt_vtable;
+  void (*free_fn)(livespointer);
 
   pthread_mutex_t gtk_mutex;  ///< gtk drawing mutex - no longer used
   pthread_mutex_t interp_mutex;  ///< interpolation mutex - parameter interpolation must be single threaded
@@ -994,10 +994,10 @@ typedef struct {
 
   lives_fx_candidate_t fx_candidates[MAX_FX_CANDIDATE_TYPES]; ///< effects which can have candidates from which a delegate is selected (current examples are: audio_volume, resize)
 
-  GList *cached_list;  ///< cache of preferences or file header file (or NULL)
+  LiVESList *cached_list;  ///< cache of preferences or file header file (or NULL)
   FILE *clip_header;
 
-  GList *file_buffers;
+  LiVESList *file_buffers;
 
   float volume; ///< audio volume level (for jack)
 
@@ -1075,7 +1075,7 @@ typedef struct {
   boolean soft_debug; ///< for testing
 
   /// encoder text output
-  GIOChannel *iochan;
+  LiVESIOChannel *iochan;
   LiVESTextView *optextview;
 
   boolean has_custom_tools;
@@ -1084,7 +1084,7 @@ typedef struct {
 
   /// decoders
   boolean decoders_loaded;
-  GList *decoder_list;
+  LiVESList *decoder_list;
 
   boolean go_away;
   boolean debug; ///< debug crashes and asserts
@@ -1094,9 +1094,9 @@ typedef struct {
   gchar **fonts_array;
   int nfonts;
 
-  GtkTargetEntry *target_table; ///< drag and drop target table
+  LiVESTargetEntry *target_table; ///< drag and drop target table
 
-  GList *videodevs;
+  LiVESList *videodevs;
 
   gchar vpp_defs_file[PATH_MAX];
 
@@ -1203,7 +1203,7 @@ typedef struct {
   boolean ins_frames;
 
   int *list_to_rfx_index;
-  GList *trans_list;
+  LiVESList *trans_list;
 
 } _merge_opts;
 

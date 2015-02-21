@@ -123,7 +123,7 @@ const unsigned char *lives_pixbuf_get_pixels_readonly(const LiVESPixbuf *);
 LiVESPixbuf *lives_pixbuf_new(boolean has_alpha, int width, int height);
 LiVESPixbuf *lives_pixbuf_new_from_data (const unsigned char *buf, boolean has_alpha, int width, int height, 
 					 int rowstride, LiVESPixbufDestroyNotify lives_free_buffer_fn, 
-					 gpointer destroy_fn_data);
+					 livespointer destroy_fn_data);
 
 LiVESPixbuf *lives_pixbuf_new_from_file(const char *filename, LiVESError **error);
 LiVESWidget *lives_image_new_from_pixbuf(LiVESPixbuf *);
@@ -138,13 +138,19 @@ boolean lives_pixbuf_saturate_and_pixelate(const LiVESPixbuf *src, LiVESPixbuf *
 
 // basic widget fns (TODO - amend all void to return boolean)
 
+boolean lives_mem_set_vtable(LiVESMemVTable *alt_vtable);
+
+
 #ifdef GUI_GTK
+
 #define lives_signal_connect(instance, detailed_signal, c_handler, data) g_signal_connect(instance, detailed_signal, c_handler, data)
 #define lives_signal_connect_after(instance, detailed_signal, c_handler, data) g_signal_connect_after(instance, detailed_signal, c_handler, data)
 #define lives_signal_handlers_block_by_func(instance, func, data) g_signal_handlers_block_by_func(instance, func, data)
 #define lives_signal_handlers_unblock_by_func(instance, func, data) g_signal_handlers_unblock_by_func(instance, func, data)
 #else
-ulong lives_signal_connect(LiVESWidget *widget, const char *signal_name, ulong funcptr, gpointer data);
+ulong lives_signal_connect(LiVESWidget *widget, const char *signal_name, ulong funcptr, livespointer data);
+boolean lives_signal_handlers_block_by_func(livespointer instance, livespointer func, livespointer data);
+boolean lives_signal_handlers_unblock_by_func(livespointer instance, livespointer func, livespointer data);
 #endif
 
 boolean lives_signal_handler_block(livespointer instance, unsigned long handler_id);
@@ -152,6 +158,7 @@ boolean lives_signal_handler_unblock(livespointer instance, unsigned long handle
 
 boolean lives_signal_handler_disconnect(livespointer instance, unsigned long handler_id);
 boolean lives_signal_stop_emission_by_name(livespointer instance, const char *detailed_signal);
+
 
 boolean lives_widget_set_sensitive(LiVESWidget *, boolean state);
 boolean lives_widget_get_sensitive(LiVESWidget *);
@@ -171,6 +178,7 @@ boolean lives_widget_reparent(LiVESWidget *, LiVESWidget *new_parent);
 boolean lives_widget_set_app_paintable(LiVESWidget *widget, boolean paintable);
 
 LiVESWidget *lives_event_box_new(void);
+boolean lives_event_box_set_above_child(LiVESEventBox *ebox, boolean set);
 
 LiVESWidget *lives_label_new(const char *text);
 LiVESWidget *lives_label_new_with_mnemonic(const char *text);
@@ -208,6 +216,7 @@ LiVESWidget *lives_radio_button_new(LiVESSList *group);
 LiVESWidget *lives_spin_button_new(LiVESAdjustment *, double climb_rate, uint32_t digits);
 
 LiVESResponseType lives_dialog_run(LiVESDialog *);
+boolean lives_dialog_response(LiVESDialog *, int response);
 
 boolean lives_widget_set_bg_color(LiVESWidget *, LiVESWidgetState state, const LiVESWidgetColor *);
 boolean lives_widget_set_fg_color(LiVESWidget *, LiVESWidgetState state, const LiVESWidgetColor *);
@@ -249,6 +258,8 @@ boolean lives_window_set_decorated(LiVESWindow *, boolean decorated);
 boolean lives_window_set_default_size(LiVESWindow *, int width, int height);
 
 boolean lives_window_set_screen(LiVESWindow *, LiVESXScreen *);
+
+boolean lives_widget_get_position(LiVESWidget *, int *x, int *y);
 
 boolean lives_window_move(LiVESWindow *, int x, int y);
 boolean lives_window_get_position(LiVESWindow *, int *x, int *y);
@@ -294,6 +305,9 @@ LiVESWidget *lives_vscale_new(LiVESAdjustment *);
 
 LiVESWidget *lives_hpaned_new(void);
 LiVESWidget *lives_vpaned_new(void);
+
+boolean lives_paned_set_position(LiVESPaned *, int pos);
+boolean lives_paned_pack(int where, LiVESPaned *, LiVESWidget *child, boolean resize, boolean shrink);
 
 LiVESWidget *lives_hscrollbar_new(LiVESAdjustment *);
 LiVESWidget *lives_vscrollbar_new(LiVESAdjustment *);
@@ -397,14 +411,22 @@ boolean lives_tree_selection_get_selected(LiVESTreeSelection *, LiVESTreeModel *
 boolean lives_tree_selection_set_mode(LiVESTreeSelection *, LiVESSelectionMode);
 boolean lives_tree_selection_select_iter(LiVESTreeSelection *, LiVESTreeIter *);
 
+LiVESListStore *lives_list_store_new(int ncols, ...);
+boolean lives_list_store_set(LiVESListStore *, LiVESTreeIter *, ...);
+boolean lives_list_store_insert(LiVESListStore *, LiVESTreeIter *, int position);
+
 LiVESCellRenderer *lives_cell_renderer_text_new(void);
 LiVESCellRenderer *lives_cell_renderer_spin_new(void);
 LiVESCellRenderer *lives_cell_renderer_toggle_new(void);
 LiVESCellRenderer *lives_cell_renderer_pixbuf_new(void);
 
+LiVESWidget *lives_drawing_area_new(void);
+
+int lives_event_get_time(LiVESXEvent *);
 
 boolean lives_toggle_button_get_active(LiVESToggleButton *);
 boolean lives_toggle_button_set_active(LiVESToggleButton *, boolean active);
+boolean lives_toggle_button_set_mode(LiVESToggleButton *, boolean drawind);
 
 boolean lives_has_icon(const char *stock_id, LiVESIconSize size);
 
@@ -417,6 +439,7 @@ LiVESWidget *lives_widget_get_parent(LiVESWidget *);
 LiVESWidget *lives_widget_get_toplevel(LiVESWidget *);
 
 LiVESXWindow *lives_widget_get_xwindow(LiVESWidget *);
+boolean lives_xwindow_set_keep_above(LiVESXWindow *, boolean setting);
 
 boolean lives_widget_set_can_focus(LiVESWidget *, boolean state);
 boolean lives_widget_set_can_default(LiVESWidget *, boolean state);
@@ -461,9 +484,12 @@ boolean lives_color_button_set_title(LiVESColorButton *, const char *title);
 boolean lives_color_button_set_use_alpha(LiVESColorButton *, boolean use_alpha);
 
 LiVESToolItem *lives_tool_button_new(LiVESWidget *icon_widget, const char *label);
+LiVESToolItem *lives_tool_item_new(void);
 boolean lives_tool_button_set_icon_widget(LiVESToolButton *, LiVESWidget *icon);
 boolean lives_tool_button_set_label_widget(LiVESToolButton *, LiVESWidget *label);
 boolean lives_tool_button_set_use_underline(LiVESToolButton *, boolean use_underline);
+
+LiVESWidget *lives_message_dialog_new(LiVESWindow *parent, LiVESDialogFlags flags, LiVESMessageType type, LiVESButtonsType buttons, const char *msg_fmt, ...);
 
 double lives_ruler_get_value(LiVESRuler *);
 double lives_ruler_set_value(LiVESRuler *, double value);
@@ -615,6 +641,8 @@ boolean lives_widget_grab_default(LiVESWidget *);
 
 boolean lives_widget_set_tooltip_text(LiVESWidget *, const char *text);
 
+boolean lives_widget_process_updates(LiVESWidget *, boolean upd_children);
+boolean lives_xwindow_process_all_updates(void);
 
 LiVESAccelGroup *lives_accel_group_new(void);
 boolean lives_accel_group_connect(LiVESAccelGroup *, uint32_t key, LiVESXModifierType mod, LiVESAccelFlags flags, LiVESWidgetClosure *closure);
@@ -647,6 +675,17 @@ boolean lives_xwindow_set_cursor(LiVESXWindow *, LiVESXCursor *);
 
 uint32_t lives_timer_add(uint32_t interval, LiVESWidgetSourceFunc function, livespointer data);
 boolean lives_timer_remove(uint32_t timer);
+
+boolean lives_source_remove(ulong handle);
+
+uint32_t lives_accelerator_get_default_mod_mask();
+
+int lives_screen_get_width(LiVESXScreen *);
+int lives_screen_get_height(LiVESXScreen *);
+
+boolean lives_scale_set_draw_value(LiVESScale *, boolean draw_value);
+boolean lives_scale_set_value_pos(LiVESScale *, LiVESPositionType ptype);
+boolean lives_scale_set_digits(LiVESScale *, int digits);
 
 // optional (return TRUE if implemented)
 
@@ -691,7 +730,7 @@ LiVESWidget *lives_volume_button_new(LiVESOrientation orientation, LiVESAdjustme
 
 LiVESWidget *lives_standard_file_button_new(boolean is_dir, const char *def_dir);
 
-
+LiVESXCursor *lives_cursor_new_from_pixbuf(LiVESXDisplay *, LiVESPixbuf *, int x, int y);
 
 // util functions
 

@@ -119,10 +119,10 @@ boolean auto_resample_resize (int width,int height,double fps,int fps_num,int fp
 	  }
 
 	  if (!prefs->enc_letterbox) {
-	    com=g_strdup_printf ("%s resize_all \"%s\" %d %d %d \"%s\"",prefs->backend,
+	    com=lives_strdup_printf ("%s resize_all \"%s\" %d %d %d \"%s\"",prefs->backend,
 				 cfile->handle,cfile->frames,width,height,
 				 get_image_ext_for_type(cfile->img_type));
-	    msg=g_strdup_printf(_("Resizing frames 1 to %d"),cfile->frames);
+	    msg=lives_strdup_printf(_("Resizing frames 1 to %d"),cfile->frames);
 	  }
 	  else {
 	    int iwidth=cfile->hsize,iheight=cfile->vsize;
@@ -134,10 +134,10 @@ boolean auto_resample_resize (int width,int height,double fps,int fps_num,int fp
 	    }
 
 	    reorder_leave_back=TRUE;
-	    com=g_strdup_printf ("%s resize_all \"%s\" %d %d %d \"%s\" %d %d",prefs->backend,cfile->handle,
+	    com=lives_strdup_printf ("%s resize_all \"%s\" %d %d %d \"%s\" %d %d",prefs->backend,cfile->handle,
 				 cfile->frames,width,height,
 				 get_image_ext_for_type(cfile->img_type),iwidth,iheight);
-	    msg=g_strdup_printf(_("Resizing/letterboxing frames 1 to %d"),cfile->frames);
+	    msg=lives_strdup_printf(_("Resizing/letterboxing frames 1 to %d"),cfile->frames);
 	  }
 
 	  cfile->progress_start=1;
@@ -146,7 +146,7 @@ boolean auto_resample_resize (int width,int height,double fps,int fps_num,int fp
 	  unlink(cfile->info_file);
 	  mainw->com_failed=FALSE;
 	  lives_system(com,FALSE);
-	  g_free (com);
+	  lives_free (com);
 	  
 	  if (mainw->com_failed) return FALSE;
 
@@ -171,7 +171,7 @@ boolean auto_resample_resize (int width,int height,double fps,int fps_num,int fp
 
 	if ((rs_builtin&&!do_progress_dialog(TRUE,TRUE,msg))||(!rs_builtin&&!on_realfx_activate_inner(1,resize_rfx))) {
 	  mainw->resizing=FALSE;
-	  g_free(msg);
+	  lives_free(msg);
 	  cfile->undo_action=UNDO_ATOMIC_RESAMPLE_RESIZE;
 
 	  cfile->hsize=width;
@@ -185,7 +185,7 @@ boolean auto_resample_resize (int width,int height,double fps,int fps_num,int fp
 	  cfile->nokeep=FALSE;
 	  return FALSE;
 	}
-	g_free(msg);
+	lives_free(msg);
 	    
 	mainw->resizing=FALSE;
 	cfile->fx_frame_pump=0;
@@ -298,10 +298,10 @@ boolean auto_resample_resize (int width,int height,double fps,int fps_num,int fp
 	}
 
 	if (!prefs->enc_letterbox) {
-	  com=g_strdup_printf ("%s resize_all \"%s\" %d %d %d \"%s\"",prefs->backend,
+	  com=lives_strdup_printf ("%s resize_all \"%s\" %d %d %d \"%s\"",prefs->backend,
 			       cfile->handle,cfile->frames,width,height,
 			       get_image_ext_for_type(cfile->img_type));
-	  msg=g_strdup_printf(_("Resizing frames 1 to %d"),cfile->frames);
+	  msg=lives_strdup_printf(_("Resizing frames 1 to %d"),cfile->frames);
 	}
 	else {
 	  int iwidth=cfile->hsize,iheight=cfile->vsize;
@@ -312,10 +312,10 @@ boolean auto_resample_resize (int width,int height,double fps,int fps_num,int fp
 	    iheight=-iheight;
 	  }
 
-	  com=g_strdup_printf ("%s resize_all \"%s\" %d %d %d \"%s\" %d %d",prefs->backend,
+	  com=lives_strdup_printf ("%s resize_all \"%s\" %d %d %d \"%s\" %d %d",prefs->backend,
 			       cfile->handle,cfile->frames,width,height,
 			       get_image_ext_for_type(cfile->img_type),iwidth,iheight);
-	  msg=g_strdup_printf(_("Resizing/letterboxing frames 1 to %d"),cfile->frames);
+	  msg=lives_strdup_printf(_("Resizing/letterboxing frames 1 to %d"),cfile->frames);
 	}
 
 	cfile->progress_start=1;
@@ -329,7 +329,7 @@ boolean auto_resample_resize (int width,int height,double fps,int fps_num,int fp
 	unlink(cfile->info_file);
 	mainw->com_failed=FALSE;
 	lives_system(com,FALSE);
-	g_free (com);
+	lives_free (com);
 	
 	if (mainw->com_failed) return FALSE;
 
@@ -352,7 +352,7 @@ boolean auto_resample_resize (int width,int height,double fps,int fps_num,int fp
 
       if ((rs_builtin&&!do_progress_dialog(TRUE,TRUE,msg))||(!rs_builtin&&!on_realfx_activate_inner(1,resize_rfx))) {
 	mainw->resizing=FALSE;
-	if (msg!=NULL) g_free(msg);
+	if (msg!=NULL) lives_free(msg);
 	cfile->hsize=width;
 	cfile->vsize=height;
 	if (audio_resampled) cfile->undo_action=UNDO_ATOMIC_RESAMPLE_RESIZE;
@@ -369,7 +369,7 @@ boolean auto_resample_resize (int width,int height,double fps,int fps_num,int fp
       cfile->hsize=width;
       cfile->vsize=height;
 
-      g_free(msg);
+      lives_free(msg);
       mainw->resizing=FALSE;
       cfile->fx_frame_pump=0;
 
@@ -491,8 +491,8 @@ quantise_events (weed_plant_t *in_list, double qfps, boolean allow_gap) {
       if (last_audio_event!=event&&weed_plant_has_leaf(event,"audio_clips")) {
 	last_audio_event=event;
 	needs_audio=TRUE;
-	if (aclips!=NULL) weed_free(aclips);
-	if (aseeks!=NULL) weed_free(aseeks);
+	if (aclips!=NULL) lives_free(aclips);
+	if (aseeks!=NULL) lives_free(aseeks);
 	num_aclips=weed_leaf_num_elements(event,"audio_clips");
 	aclips=weed_get_int_array(event,"audio_clips",&error);
 	aseeks=weed_get_double_array(event,"audio_seeks",&error);
@@ -516,8 +516,8 @@ quantise_events (weed_plant_t *in_list, double qfps, boolean allow_gap) {
 
     if (in_tc<=(out_tc+tl)&&event!=NULL) {
       // event is before slot, note it and get next event
-      if (out_clips!=NULL) weed_free(out_clips);
-      if (out_frames!=NULL) weed_free(out_frames);
+      if (out_clips!=NULL) lives_free(out_clips);
+      if (out_frames!=NULL) lives_free(out_frames);
 
       numframes=weed_leaf_num_elements(event,"clips");
       out_clips=weed_get_int_array(event,"clips",&error);
@@ -540,8 +540,8 @@ quantise_events (weed_plant_t *in_list, double qfps, boolean allow_gap) {
       if (!(is_first&&allow_gap)) {
 	if (in_tc-(out_tc+tl)<nearest_tc) {
 	  if (event!=NULL) {
-	    if (out_clips!=NULL) weed_free(out_clips);
-	    if (out_frames!=NULL) weed_free(out_frames);
+	    if (out_clips!=NULL) lives_free(out_clips);
+	    if (out_frames!=NULL) lives_free(out_frames);
 
 	    numframes=weed_leaf_num_elements(event,"clips");
 	    out_clips=weed_get_int_array(event,"clips",&error);
@@ -597,8 +597,8 @@ quantise_events (weed_plant_t *in_list, double qfps, boolean allow_gap) {
     // make sure we have at least one frame
     if ((event=get_last_frame_event(in_list))!=NULL) {
 
-      if (out_clips!=NULL) weed_free(out_clips);
-      if (out_frames!=NULL) weed_free(out_frames);
+      if (out_clips!=NULL) lives_free(out_clips);
+      if (out_frames!=NULL) lives_free(out_frames);
     
       numframes=weed_leaf_num_elements(event,"clips");
       out_clips=weed_get_int_array(event,"clips",&error);
@@ -613,11 +613,11 @@ quantise_events (weed_plant_t *in_list, double qfps, boolean allow_gap) {
     }
   }
   
-  if (out_clips!=NULL) weed_free(out_clips);
-  if (out_frames!=NULL) weed_free(out_frames);
+  if (out_clips!=NULL) lives_free(out_clips);
+  if (out_frames!=NULL) lives_free(out_frames);
 
-  if (aclips!=NULL) weed_free(aclips);
-  if (aseeks!=NULL) weed_free(aseeks);
+  if (aclips!=NULL) lives_free(aclips);
+  if (aseeks!=NULL) lives_free(aseeks);
   
   return out_list;
 }
@@ -632,15 +632,15 @@ static void on_reorder_activate (int rwidth, int rheight) {
 
   if (!(prefs->warning_mask&WARN_MASK_LAYOUT_ALTER_FRAMES)&&(mainw->xlays=layout_frame_is_affected(mainw->current_file,1))!=NULL) {
     if (!do_layout_alter_frames_warning()) {
-      g_list_free_strings(mainw->xlays);
-      g_list_free(mainw->xlays);
+      lives_list_free_strings(mainw->xlays);
+      lives_list_free(mainw->xlays);
       mainw->xlays=NULL;
       return;
     }
-    add_lmap_error(LMAP_ERROR_ALTER_FRAMES,cfile->name,(gpointer)cfile->layout_map,mainw->current_file,0,0.,cfile->stored_layout_frame>0);
+    add_lmap_error(LMAP_ERROR_ALTER_FRAMES,cfile->name,(livespointer)cfile->layout_map,mainw->current_file,0,0.,cfile->stored_layout_frame>0);
     has_lmap_error=TRUE;
-    g_list_free_strings(mainw->xlays);
-    g_list_free(mainw->xlays);
+    lives_list_free_strings(mainw->xlays);
+    lives_list_free(mainw->xlays);
     mainw->xlays=NULL;
   }
 
@@ -677,14 +677,14 @@ static void on_reorder_activate (int rwidth, int rheight) {
   switch_to_file(mainw->current_file,mainw->current_file);
   if (mainw->current_file>0) {
     d_print_done();
-    msg=g_strdup_printf(_ ("Length of video is now %d frames.\n"),cfile->frames);
+    msg=lives_strdup_printf(_ ("Length of video is now %d frames.\n"),cfile->frames);
   }
   else {
-    msg=g_strdup_printf(_ ("Clipboard was resampled to %d frames.\n"),cfile->frames);
+    msg=lives_strdup_printf(_ ("Clipboard was resampled to %d frames.\n"),cfile->frames);
   }
 
   d_print(msg);
-  g_free(msg);
+  lives_free(msg);
 
   if (has_lmap_error) popup_lmap_errors(NULL,NULL);
 
@@ -701,7 +701,7 @@ static void on_reorder_activate (int rwidth, int rheight) {
 
 void
 on_resample_audio_activate (LiVESMenuItem     *menuitem,
-			    gpointer         user_data)
+			    livespointer         user_data)
 {
    // show the playback rate - real audio rate is cfile->arps
   mainw->fx1_val=cfile->arate;
@@ -739,7 +739,7 @@ on_resaudio_ok_clicked                      (LiVESButton *button,
     mainw->noswitch=TRUE;
     lives_widget_context_update();
     mainw->noswitch=noswitch;
-    g_free (resaudw);
+    lives_free (resaudw);
     
     if (arate<=0) {
       do_error_dialog (_ ("\n\nNew rate must be greater than 0\n"));
@@ -758,16 +758,16 @@ on_resaudio_ok_clicked                      (LiVESButton *button,
   if (!(prefs->warning_mask&WARN_MASK_LAYOUT_ALTER_AUDIO)&&(mainw->xlays=layout_audio_is_affected
 							    (mainw->current_file,0.))) {
     if (!do_layout_alter_audio_warning()) {
-      g_list_free_strings(mainw->xlays);
-      g_list_free(mainw->xlays);
+      lives_list_free_strings(mainw->xlays);
+      lives_list_free(mainw->xlays);
       mainw->xlays=NULL;
       return;
     }
-    add_lmap_error(LMAP_ERROR_ALTER_AUDIO,cfile->name,(gpointer)cfile->layout_map,mainw->current_file,0,0.,
+    add_lmap_error(LMAP_ERROR_ALTER_AUDIO,cfile->name,(livespointer)cfile->layout_map,mainw->current_file,0,0.,
 		   cfile->stored_layout_audio>0.);
     has_lmap_error=TRUE;
-    g_list_free_strings(mainw->xlays);
-    g_list_free(mainw->xlays);
+    lives_list_free_strings(mainw->xlays);
+    lives_list_free(mainw->xlays);
     mainw->xlays=NULL;
   }
 
@@ -787,7 +787,7 @@ on_resaudio_ok_clicked                      (LiVESButton *button,
       double audio_stretch=(double)cfile->arps/(double)cfile->arate;
      // pb rate != real rate - stretch to pb rate and resample 
       unlink (cfile->info_file);
-      com=g_strdup_printf ("%s resample_audio \"%s\" %d %d %d %d %d %d %d %d %d %d %.4f",prefs->backend,
+      com=lives_strdup_printf ("%s resample_audio \"%s\" %d %d %d %d %d %d %d %d %d %d %.4f",prefs->backend,
 			   cfile->handle,cfile->arps,
 			   cfile->achans,cfile->asampsize,cur_signed,cur_endian,arps,cfile->achans,cfile->asampsize,
 			   cur_signed,cur_endian,audio_stretch);
@@ -795,12 +795,12 @@ on_resaudio_ok_clicked                      (LiVESButton *button,
       lives_system (com,FALSE);
       if (mainw->com_failed) return;
       do_progress_dialog (TRUE,FALSE,_ ("Resampling audio")); // TODO - allow cancel ??
-      g_free (com);
+      lives_free (com);
       cfile->arate=cfile->arps=arps;
     }
     else {
       unlink (cfile->info_file);
-      com=g_strdup_printf ("%s resample_audio \"%s\" %d %d %d %d %d %d %d %d %d %d",prefs->backend,
+      com=lives_strdup_printf ("%s resample_audio \"%s\" %d %d %d %d %d %d %d %d %d %d",prefs->backend,
 			   cfile->handle,cfile->arps,
 			   cfile->achans,cfile->asampsize,cur_signed,cur_endian,arps,achans,asampsize,asigned,aendian);
       mainw->com_failed=FALSE;
@@ -811,7 +811,7 @@ on_resaudio_ok_clicked                      (LiVESButton *button,
       check_backend_return(cfile);
       if (mainw->com_failed) return;
       do_progress_dialog (TRUE,FALSE,_ ("Resampling audio"));
-      g_free (com);
+      lives_free (com);
 
     }
   }
@@ -842,9 +842,9 @@ on_resaudio_ok_clicked                      (LiVESButton *button,
 
   d_print("");  // force printing of switch message
 
-  msg=g_strdup_printf (_ ("Audio was resampled to %d Hz, %d channels, %d bit"),arate,achans,asampsize);
+  msg=lives_strdup_printf (_ ("Audio was resampled to %d Hz, %d channels, %d bit"),arate,achans,asampsize);
   d_print (msg);
-  g_free (msg);
+  lives_free (msg);
   if (cur_signed!=asigned) {
     if (asigned==1) {
       d_print (_ (", signed"));
@@ -874,7 +874,7 @@ on_resaudio_ok_clicked                      (LiVESButton *button,
 
 
 
-static void on_resaudw_achans_changed (LiVESWidget *widg, gpointer user_data) {
+static void on_resaudw_achans_changed (LiVESWidget *widg, livespointer user_data) {
   _resaudw *resaudw=(_resaudw *)user_data;
   gchar *tmp;
 
@@ -916,9 +916,9 @@ static void on_resaudw_achans_changed (LiVESWidget *widg, gpointer user_data) {
       lives_widget_set_sensitive(rdet->pertrack_checkbutton,TRUE);
     }
 
-    tmp=g_strdup_printf ("%d",DEFAULT_AUDIO_CHANS);
+    tmp=lives_strdup_printf ("%d",DEFAULT_AUDIO_CHANS);
     lives_entry_set_text (LIVES_ENTRY (resaudw->entry_achans),tmp);
-    g_free (tmp);
+    lives_free (tmp);
 
   }
 }
@@ -927,7 +927,7 @@ static void on_resaudw_achans_changed (LiVESWidget *widg, gpointer user_data) {
 
 
 void 
-on_resaudw_asamps_changed (LiVESWidget *irrelevant, gpointer rubbish) {
+on_resaudw_asamps_changed (LiVESWidget *irrelevant, livespointer rubbish) {
   if (atoi (lives_entry_get_text (LIVES_ENTRY (resaudw->entry_asamps)))==8) {
     lives_widget_set_sensitive (resaudw->rb_bigend,FALSE);
     lives_widget_set_sensitive (resaudw->rb_littleend,FALSE);
@@ -950,7 +950,7 @@ on_resaudw_asamps_changed (LiVESWidget *irrelevant, gpointer rubbish) {
 
 void
 on_resample_video_activate (LiVESMenuItem     *menuitem,
-			    gpointer         user_data)
+			    livespointer         user_data)
 {
   // change speed from the menu
   create_new_pb_speed(2);
@@ -1031,15 +1031,15 @@ void on_resample_vid_ok (LiVESButton *button, LiVESEntry *entry) {
 
   if (ratio_fps) {
     // got a ratio
-    msg=g_strdup_printf(_ ("Resampling video at %.8f frames per second..."),mainw->fx1_val);
+    msg=lives_strdup_printf(_ ("Resampling video at %.8f frames per second..."),mainw->fx1_val);
   }
   else {
-    msg=g_strdup_printf(_ ("Resampling video at %.3f frames per second..."),mainw->fx1_val);
+    msg=lives_strdup_printf(_ ("Resampling video at %.3f frames per second..."),mainw->fx1_val);
   }
   if (mainw->current_file>0) {
     d_print(msg);
   }
-  g_free(msg);
+  lives_free(msg);
 
   old_frames=cfile->frames;
 
@@ -1135,15 +1135,15 @@ _resaudw *create_resaudw (short type, render_details *rdet, LiVESWidget *top_vbo
 
   LiVESAccelGroup *accel_group=NULL;
 
-  GSList *s1_group=NULL;
-  GSList *e1_group=NULL;
-  GSList *s2_group=NULL;
-  GSList *e2_group=NULL;
-  GSList *rbgroup = NULL;
+  LiVESSList *s1_group=NULL;
+  LiVESSList *e1_group=NULL;
+  LiVESSList *s2_group=NULL;
+  LiVESSList *e2_group=NULL;
+  LiVESSList *rbgroup = NULL;
 
-  GList *channels = NULL;
-  GList *sampsize = NULL;
-  GList *rate = NULL;
+  LiVESList *channels = NULL;
+  LiVESList *sampsize = NULL;
+  LiVESList *rate = NULL;
 
   double secs=0.;
 
@@ -1155,7 +1155,7 @@ _resaudw *create_resaudw (short type, render_details *rdet, LiVESWidget *top_vbo
   boolean chans_fixed=FALSE;
   boolean is_8bit;
 
-  _resaudw *resaudw=(_resaudw*)(g_malloc(sizeof(_resaudw)));
+  _resaudw *resaudw=(_resaudw*)(lives_malloc(sizeof(_resaudw)));
 
   if (type==10) {
     if (mainw->multitrack!=NULL) chans_fixed=TRUE; // TODO *
@@ -1168,41 +1168,41 @@ _resaudw *create_resaudw (short type, render_details *rdet, LiVESWidget *top_vbo
     secs=mainw->rec_end_time-hours*3600.-mins*60.;
   }
 
-  channels = g_list_append (channels, (gpointer)"1");
-  channels = g_list_append (channels, (gpointer)"2");
+  channels = lives_list_append (channels, (livespointer)"1");
+  channels = lives_list_append (channels, (livespointer)"2");
 
-  sampsize = g_list_append (sampsize, (gpointer)"8");
-  sampsize = g_list_append (sampsize, (gpointer)"16");
+  sampsize = lives_list_append (sampsize, (livespointer)"8");
+  sampsize = lives_list_append (sampsize, (livespointer)"16");
 
-  rate = g_list_append (rate, (gpointer)"5512");
-  rate = g_list_append (rate, (gpointer)"8000");
-  rate = g_list_append (rate, (gpointer)"11025");
-  rate = g_list_append (rate, (gpointer)"22050");
-  rate = g_list_append (rate, (gpointer)"32000");
-  rate = g_list_append (rate, (gpointer)"44100");
-  rate = g_list_append (rate, (gpointer)"48000");
-  rate = g_list_append (rate, (gpointer)"88200");
-  rate = g_list_append (rate, (gpointer)"96000");
-  rate = g_list_append (rate, (gpointer)"128000");
+  rate = lives_list_append (rate, (livespointer)"5512");
+  rate = lives_list_append (rate, (livespointer)"8000");
+  rate = lives_list_append (rate, (livespointer)"11025");
+  rate = lives_list_append (rate, (livespointer)"22050");
+  rate = lives_list_append (rate, (livespointer)"32000");
+  rate = lives_list_append (rate, (livespointer)"44100");
+  rate = lives_list_append (rate, (livespointer)"48000");
+  rate = lives_list_append (rate, (livespointer)"88200");
+  rate = lives_list_append (rate, (livespointer)"96000");
+  rate = lives_list_append (rate, (livespointer)"128000");
 
   if (type<3||type>4) {
     gchar *title=NULL;
 
     if (type==1) {
-      title=g_strdup(_("LiVES: - Resample Audio"));
+      title=lives_strdup(_("LiVES: - Resample Audio"));
     }
     else if (type==2) {
-      title=g_strdup(_("LiVES: - Insert Silence"));
+      title=lives_strdup(_("LiVES: - Insert Silence"));
     }
     else if (type==5||type==11||type==6||type==7) {
-      title=g_strdup(_("LiVES: - New Clip Audio"));
+      title=lives_strdup(_("LiVES: - New Clip Audio"));
     }
     else if (type==9||type==8) {
-      title=g_strdup(_("LiVES: - External Clip Settings"));
+      title=lives_strdup(_("LiVES: - External Clip Settings"));
     }
 
     resaudw->dialog = lives_standard_dialog_new (title,FALSE);
-    g_free(title);
+    lives_free(title);
 
     accel_group = LIVES_ACCEL_GROUP(lives_accel_group_new ());
     lives_window_add_accel_group (LIVES_WINDOW (resaudw->dialog), accel_group);
@@ -1233,24 +1233,24 @@ _resaudw *create_resaudw (short type, render_details *rdet, LiVESWidget *top_vbo
     lives_container_add (LIVES_CONTAINER (frame), hbox2);
     lives_container_set_border_width (LIVES_CONTAINER (hbox2), widget_opts.packing_width);
     
-    tmp=g_strdup_printf ("%d",(int)mainw->fx1_val);
+    tmp=lives_strdup_printf ("%d",(int)mainw->fx1_val);
     
     combo_entry2 = lives_standard_entry_new(_("Rate (Hz) "),FALSE,tmp,10,6,LIVES_BOX(hbox2),NULL);
-    g_free (tmp);
+    lives_free (tmp);
 
     lives_editable_set_editable (LIVES_EDITABLE (combo_entry2), FALSE);
     lives_widget_set_can_focus (combo_entry2, FALSE);
     
-    tmp=g_strdup_printf ("%d",(int)mainw->fx2_val);
+    tmp=lives_strdup_printf ("%d",(int)mainw->fx2_val);
     combo_entry3 = lives_standard_entry_new(_("Channels"),FALSE,tmp,6,2,LIVES_BOX(hbox2),NULL);
-    g_free (tmp);
+    lives_free (tmp);
 
     lives_editable_set_editable (LIVES_EDITABLE (combo_entry3), FALSE);
     lives_widget_set_can_focus (combo_entry3, FALSE);
     
-    tmp=g_strdup_printf ("%d",(int)mainw->fx3_val);
+    tmp=lives_strdup_printf ("%d",(int)mainw->fx3_val);
     combo_entry1 = lives_standard_entry_new(_("Sample Size "),FALSE,tmp,6,2,LIVES_BOX(hbox2),NULL);
-    g_free (tmp);
+    lives_free (tmp);
 
     lives_editable_set_editable (LIVES_EDITABLE (combo_entry1), FALSE);
     lives_widget_set_can_focus (combo_entry1, FALSE);
@@ -1362,12 +1362,12 @@ _resaudw *create_resaudw (short type, render_details *rdet, LiVESWidget *top_vbo
     lives_entry_set_width_chars (LIVES_ENTRY (resaudw->entry_arate), 6);
     if (type==7) lives_widget_set_sensitive(combo4,FALSE);
   
-    if (type<3||(type>4&&type<8)||type==11) tmp=g_strdup_printf ("%d",(int)mainw->fx1_val);
-    else if (type==8) tmp=g_strdup_printf ("%d",DEFAULT_AUDIO_RATE);
-    else if (type==3) tmp=g_strdup_printf ("%d",rdet->arate);
-    else tmp=g_strdup_printf ("%d",prefs->mt_def_arate);
+    if (type<3||(type>4&&type<8)||type==11) tmp=lives_strdup_printf ("%d",(int)mainw->fx1_val);
+    else if (type==8) tmp=lives_strdup_printf ("%d",DEFAULT_AUDIO_RATE);
+    else if (type==3) tmp=lives_strdup_printf ("%d",rdet->arate);
+    else tmp=lives_strdup_printf ("%d",prefs->mt_def_arate);
     lives_entry_set_text (LIVES_ENTRY (resaudw->entry_arate),tmp);
-    g_free (tmp);
+    lives_free (tmp);
 
     combo5 = lives_standard_combo_new ((type>=3&&type!=11?(_("_Channels")):(_("Channels"))),type>=3&&type!=11,
 				       channels,LIVES_BOX(hbox),NULL);
@@ -1378,12 +1378,12 @@ _resaudw *create_resaudw (short type, render_details *rdet, LiVESWidget *top_vbo
     resaudw->entry_achans = lives_combo_get_entry(LIVES_COMBO(combo5));
     lives_entry_set_width_chars (LIVES_ENTRY (resaudw->entry_achans), 2);
     
-    if (type<3||(type>4&&type<8)||type==11) tmp=g_strdup_printf ("%d",(int)mainw->fx2_val);
-    else if (type==8) tmp=g_strdup_printf ("%d",DEFAULT_AUDIO_CHANS);
-    else if (type==3) tmp=g_strdup_printf ("%d",rdet->achans);
-    else tmp=g_strdup_printf ("%d",prefs->mt_def_achans==0?DEFAULT_AUDIO_CHANS:prefs->mt_def_achans);
+    if (type<3||(type>4&&type<8)||type==11) tmp=lives_strdup_printf ("%d",(int)mainw->fx2_val);
+    else if (type==8) tmp=lives_strdup_printf ("%d",DEFAULT_AUDIO_CHANS);
+    else if (type==3) tmp=lives_strdup_printf ("%d",rdet->achans);
+    else tmp=lives_strdup_printf ("%d",prefs->mt_def_achans==0?DEFAULT_AUDIO_CHANS:prefs->mt_def_achans);
     lives_entry_set_text (LIVES_ENTRY (resaudw->entry_achans),tmp);
-    g_free (tmp);
+    lives_free (tmp);
     
     if (chans_fixed) {
       lives_widget_set_sensitive(resaudw->entry_achans,FALSE);
@@ -1401,16 +1401,16 @@ _resaudw *create_resaudw (short type, render_details *rdet, LiVESWidget *top_vbo
     lives_editable_set_editable (LIVES_EDITABLE (resaudw->entry_asamps), FALSE);
     lives_entry_set_width_chars (LIVES_ENTRY (resaudw->entry_asamps), 2);
     
-    if (type<3||(type>4&&type<8)||type==11) tmp=g_strdup_printf ("%d",(int)mainw->fx3_val);
-    else if (type==8) tmp=g_strdup_printf ("%d",DEFAULT_AUDIO_SAMPS);
-    else if (type==3) tmp=g_strdup_printf ("%d",rdet->asamps);
-    else tmp=g_strdup_printf ("%d",prefs->mt_def_asamps);
+    if (type<3||(type>4&&type<8)||type==11) tmp=lives_strdup_printf ("%d",(int)mainw->fx3_val);
+    else if (type==8) tmp=lives_strdup_printf ("%d",DEFAULT_AUDIO_SAMPS);
+    else if (type==3) tmp=lives_strdup_printf ("%d",rdet->asamps);
+    else tmp=lives_strdup_printf ("%d",prefs->mt_def_asamps);
     lives_entry_set_text (LIVES_ENTRY (resaudw->entry_asamps),tmp);
 
     if (!strcmp(tmp,"8")) is_8bit=TRUE;
     else is_8bit=FALSE;
 
-    g_free (tmp);
+    lives_free (tmp);
 
     vseparator = lives_vseparator_new ();
     lives_widget_show (vseparator);
@@ -1547,7 +1547,7 @@ _resaudw *create_resaudw (short type, render_details *rdet, LiVESWidget *top_vbo
 
       lives_signal_connect (LIVES_GUI_OBJECT (radiobutton), LIVES_WIDGET_TOGGLED_EVENT,
 			LIVES_GUI_CALLBACK (on_rb_audrec_time_toggled),
-			(gpointer)resaudw);
+			(livespointer)resaudw);
 
       lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(resaudw->unlim_radiobutton),(type==5||type>7)&&type!=11);
 
@@ -1620,8 +1620,8 @@ _resaudw *create_resaudw (short type, render_details *rdet, LiVESWidget *top_vbo
     if (type>2&&type<5) {
       lives_signal_connect_after (LIVES_GUI_OBJECT(resaudw->aud_checkbutton), LIVES_WIDGET_TOGGLED_EVENT,
 			      LIVES_GUI_CALLBACK (on_resaudw_achans_changed),
-			      (gpointer)resaudw);
-      on_resaudw_achans_changed(resaudw->aud_checkbutton,(gpointer)resaudw);
+			      (livespointer)resaudw);
+      on_resaudw_achans_changed(resaudw->aud_checkbutton,(livespointer)resaudw);
     }
   }
 
@@ -1629,9 +1629,9 @@ _resaudw *create_resaudw (short type, render_details *rdet, LiVESWidget *top_vbo
 
   if (type==2) lives_widget_hide (label_aud);
 
-  g_list_free (channels);
-  g_list_free (sampsize);
-  g_list_free (rate);
+  lives_list_free (channels);
+  lives_list_free (sampsize);
+  lives_list_free (rate);
 
   return resaudw;
 }
@@ -1660,21 +1660,21 @@ void create_new_pb_speed (short type) {
 
   LiVESAccelGroup *accel_group;
 
-  GSList *rbgroup = NULL;
+  LiVESSList *rbgroup = NULL;
 
   gchar label_text[256];
 
   gchar *title=NULL;
 
   if (type==1) {
-    title=g_strdup( _("LiVES: - Change playback speed"));
+    title=lives_strdup( _("LiVES: - Change playback speed"));
   }
   else {
-    title=g_strdup(_("LiVES: - Resample Video"));
+    title=lives_strdup(_("LiVES: - Resample Video"));
   }
 
   new_pb_speed = lives_standard_dialog_new (title,FALSE);
-  g_free(title);
+  lives_free(title);
 
   lives_container_set_border_width (LIVES_CONTAINER (new_pb_speed), widget_opts.border_width*2);
 
@@ -1692,12 +1692,12 @@ void create_new_pb_speed (short type) {
   lives_box_pack_start (LIVES_BOX (dialog_vbox), vbox, TRUE, TRUE, widget_opts.packing_height*2);
 
   if (type==1) {
-    g_snprintf(label_text,256,
+    lives_snprintf(label_text,256,
 	       _("\n\nCurrent playback speed is %.3f frames per second.\n\nPlease enter the desired playback speed\nin _frames per second"),
 	       cfile->fps);
   }
   else if (type==2) {
-    g_snprintf(label_text,256,
+    lives_snprintf(label_text,256,
 	       _("\n\nCurrent playback speed is %.3f frames per second.\n\nPlease enter the _resampled rate\nin frames per second"),
 	       cfile->fps);
   }
@@ -1813,7 +1813,7 @@ void create_new_pb_speed (short type) {
 
 void
 on_change_speed_activate                (LiVESMenuItem     *menuitem,
-					 gpointer         user_data)
+					 livespointer         user_data)
 {
   // change speed from the menu
   create_new_pb_speed(1);
@@ -1823,7 +1823,7 @@ on_change_speed_activate                (LiVESMenuItem     *menuitem,
 
 
 
-void on_change_speed_ok_clicked (LiVESButton *button, gpointer user_data) {
+void on_change_speed_ok_clicked (LiVESButton *button, livespointer user_data) {
   double arate=cfile->arate/cfile->fps;
   gchar *msg;
   boolean has_lmap_error=FALSE;
@@ -1844,15 +1844,15 @@ void on_change_speed_ok_clicked (LiVESButton *button, gpointer user_data) {
     int new_frames=count_resampled_frames(cfile->frames,mainw->fx1_val,cfile->fps);
     if ((mainw->xlays=layout_frame_is_affected(mainw->current_file,new_frames))!=NULL) {
       if (!do_warning_dialog(_("\nSpeeding up the clip will cause missing frames in some multitrack layouts.\nAre you sure you wish to change the speed ?\n"))) {
-	g_list_free_strings(mainw->xlays);
-	g_list_free(mainw->xlays);
+	lives_list_free_strings(mainw->xlays);
+	lives_list_free(mainw->xlays);
 	mainw->xlays=NULL;
 	return;
       }
-      add_lmap_error(LMAP_ERROR_DELETE_FRAMES,cfile->name,(gpointer)cfile->layout_map,mainw->current_file,new_frames,0.,new_frames<=count_resampled_frames(cfile->stored_layout_frame,cfile->stored_layout_fps,cfile->fps));
+      add_lmap_error(LMAP_ERROR_DELETE_FRAMES,cfile->name,(livespointer)cfile->layout_map,mainw->current_file,new_frames,0.,new_frames<=count_resampled_frames(cfile->stored_layout_frame,cfile->stored_layout_fps,cfile->fps));
       has_lmap_error=TRUE;
-      g_list_free_strings(mainw->xlays);
-      g_list_free(mainw->xlays);
+      lives_list_free_strings(mainw->xlays);
+      lives_list_free(mainw->xlays);
       mainw->xlays=NULL;
     }
   }
@@ -1861,72 +1861,72 @@ void on_change_speed_ok_clicked (LiVESButton *button, gpointer user_data) {
     int new_frames=count_resampled_frames(cfile->frames,mainw->fx1_val,cfile->fps);
     if ((mainw->xlays=layout_audio_is_affected(mainw->current_file,(new_frames-1.)/cfile->fps))!=NULL) {
       if (!do_warning_dialog(_("\nSpeeding up the clip will cause missing audio in some multitrack layouts.\nAre you sure you wish to change the speed ?\n"))) {
-	g_list_free_strings(mainw->xlays);
-	g_list_free(mainw->xlays);
+	lives_list_free_strings(mainw->xlays);
+	lives_list_free(mainw->xlays);
 	mainw->xlays=NULL;
 	return;
       }
-      add_lmap_error(LMAP_ERROR_DELETE_AUDIO,cfile->name,(gpointer)cfile->layout_map,mainw->current_file,0,(new_frames-1.)/cfile->fps,(new_frames-1.)/cfile->fps<cfile->stored_layout_audio);
+      add_lmap_error(LMAP_ERROR_DELETE_AUDIO,cfile->name,(livespointer)cfile->layout_map,mainw->current_file,0,(new_frames-1.)/cfile->fps,(new_frames-1.)/cfile->fps<cfile->stored_layout_audio);
       has_lmap_error=TRUE;
-      g_list_free_strings(mainw->xlays);
-      g_list_free(mainw->xlays);
+      lives_list_free_strings(mainw->xlays);
+      lives_list_free(mainw->xlays);
       mainw->xlays=NULL;
     }
   }
 
   if (!has_lmap_error&&!(prefs->warning_mask&WARN_MASK_LAYOUT_SHIFT_FRAMES)&&(mainw->xlays=layout_frame_is_affected(mainw->current_file,1))!=NULL) {
     if (!do_warning_dialog(_("\nChanging the speed will cause frames to shift in some multitrack layouts.\nAre you sure you wish to continue ?\n"))) {
-      g_list_free_strings(mainw->xlays);
-      g_list_free(mainw->xlays);
+      lives_list_free_strings(mainw->xlays);
+      lives_list_free(mainw->xlays);
       mainw->xlays=NULL;
       return;
     }
-    add_lmap_error(LMAP_ERROR_SHIFT_FRAMES,cfile->name,(gpointer)cfile->layout_map,mainw->current_file,0,0.,cfile->stored_layout_frame>0);
+    add_lmap_error(LMAP_ERROR_SHIFT_FRAMES,cfile->name,(livespointer)cfile->layout_map,mainw->current_file,0,0.,cfile->stored_layout_frame>0);
     has_lmap_error=TRUE;
-    g_list_free_strings(mainw->xlays);
-    g_list_free(mainw->xlays);
+    lives_list_free_strings(mainw->xlays);
+    lives_list_free(mainw->xlays);
     mainw->xlays=NULL;
   }
 
   if (mainw->fx1_bool&&!has_lmap_error&&!(prefs->warning_mask&WARN_MASK_LAYOUT_SHIFT_AUDIO)&&(mainw->xlays=layout_audio_is_affected(mainw->current_file,0.))!=NULL) {
     if (!do_warning_dialog(_("\nChanging the speed will cause audio to shift in some multitrack layouts.\nAre you sure you wish to continue ?\n"))) {
-      g_list_free_strings(mainw->xlays);
-      g_list_free(mainw->xlays);
+      lives_list_free_strings(mainw->xlays);
+      lives_list_free(mainw->xlays);
       mainw->xlays=NULL;
       return;
     }
-    add_lmap_error(LMAP_ERROR_SHIFT_AUDIO,cfile->name,(gpointer)cfile->layout_map,mainw->current_file,0,0.,cfile->stored_layout_audio>0.);
+    add_lmap_error(LMAP_ERROR_SHIFT_AUDIO,cfile->name,(livespointer)cfile->layout_map,mainw->current_file,0,0.,cfile->stored_layout_audio>0.);
     has_lmap_error=TRUE;
-    g_list_free_strings(mainw->xlays);
-    g_list_free(mainw->xlays);
+    lives_list_free_strings(mainw->xlays);
+    lives_list_free(mainw->xlays);
     mainw->xlays=NULL;
   }
 
   if (!has_lmap_error&&!(prefs->warning_mask&WARN_MASK_LAYOUT_ALTER_FRAMES)&&(mainw->xlays=layout_frame_is_affected(mainw->current_file,1))!=NULL) {
     if (!do_layout_alter_frames_warning()) {
-      g_list_free_strings(mainw->xlays);
-      g_list_free(mainw->xlays);
+      lives_list_free_strings(mainw->xlays);
+      lives_list_free(mainw->xlays);
       mainw->xlays=NULL;
       return;
     }
-    add_lmap_error(LMAP_ERROR_ALTER_FRAMES,cfile->name,(gpointer)cfile->layout_map,mainw->current_file,0,0.,cfile->stored_layout_frame>0);
+    add_lmap_error(LMAP_ERROR_ALTER_FRAMES,cfile->name,(livespointer)cfile->layout_map,mainw->current_file,0,0.,cfile->stored_layout_frame>0);
     has_lmap_error=TRUE;
-    g_list_free_strings(mainw->xlays);
-    g_list_free(mainw->xlays);
+    lives_list_free_strings(mainw->xlays);
+    lives_list_free(mainw->xlays);
     mainw->xlays=NULL;
   }
 
   if (mainw->fx1_bool&&!has_lmap_error&&!(prefs->warning_mask&WARN_MASK_LAYOUT_ALTER_AUDIO)&&(mainw->xlays=layout_audio_is_affected(mainw->current_file,0.))!=NULL) {
     if (!do_layout_alter_audio_warning()) {
-      g_list_free_strings(mainw->xlays);
-      g_list_free(mainw->xlays);
+      lives_list_free_strings(mainw->xlays);
+      lives_list_free(mainw->xlays);
       mainw->xlays=NULL;
       return;
     }
-    add_lmap_error(LMAP_ERROR_ALTER_AUDIO,cfile->name,(gpointer)cfile->layout_map,mainw->current_file,0,0.,cfile->stored_layout_audio>0.);
+    add_lmap_error(LMAP_ERROR_ALTER_AUDIO,cfile->name,(livespointer)cfile->layout_map,mainw->current_file,0,0.,cfile->stored_layout_audio>0.);
     has_lmap_error=TRUE;
-    g_list_free_strings(mainw->xlays);
-    g_list_free(mainw->xlays);
+    lives_list_free_strings(mainw->xlays);
+    lives_list_free(mainw->xlays);
     mainw->xlays=NULL;
   }
 
@@ -1944,13 +1944,13 @@ void on_change_speed_ok_clicked (LiVESButton *button, gpointer user_data) {
   cfile->pb_fps=cfile->fps=mainw->fx1_val;
   if (mainw->fx1_bool) {
     cfile->arate=(int)(arate*cfile->fps+.5);
-    msg=g_strdup_printf (_ ("Changed playback speed to %.3f frames per second and audio to %d Hz.\n"),cfile->fps,cfile->arate);
+    msg=lives_strdup_printf (_ ("Changed playback speed to %.3f frames per second and audio to %d Hz.\n"),cfile->fps,cfile->arate);
   }
   else {
-    msg=g_strdup_printf (_ ("Changed playback speed to %.3f frames per second.\n"),cfile->fps);
+    msg=lives_strdup_printf (_ ("Changed playback speed to %.3f frames per second.\n"),cfile->fps);
   }
   d_print (msg);
-  g_free (msg);
+  lives_free (msg);
 
   cfile->ratio_fps=FALSE;
 
@@ -1984,12 +1984,12 @@ int reorder_frames(int rwidth, int rheight) {
   gchar **array;
   gchar *com;
 
-  if (rwidth*rheight==0) com=g_strdup_printf("%s reorder \"%s\" \"%s\" %d 0 0 %d %d",prefs->backend,cfile->handle,
+  if (rwidth*rheight==0) com=lives_strdup_printf("%s reorder \"%s\" \"%s\" %d 0 0 %d %d",prefs->backend,cfile->handle,
 					     get_image_ext_for_type(cfile->img_type),!mainw->endian,
 					     reorder_leave_back,cfile->frames);
   else {
     if (!prefs->enc_letterbox) {
-      com=g_strdup_printf("%s reorder \"%s\" \"%s\" %d %d %d 0 %d",prefs->backend,cfile->handle,
+      com=lives_strdup_printf("%s reorder \"%s\" \"%s\" %d %d %d 0 %d",prefs->backend,cfile->handle,
 			  get_image_ext_for_type(cfile->img_type),!mainw->endian,rwidth,rheight,cfile->frames);
     }
     else {
@@ -2001,7 +2001,7 @@ int reorder_frames(int rwidth, int rheight) {
 	iheight=-iheight;
       }
   
-      com=g_strdup_printf("%s reorder \"%s\" \"%s\" %d %d %d %d %d %d %d",prefs->backend,cfile->handle,
+      com=lives_strdup_printf("%s reorder \"%s\" \"%s\" %d %d %d %d %d %d %d",prefs->backend,cfile->handle,
 			  get_image_ext_for_type(cfile->img_type),!mainw->endian,rwidth,rheight,
 			  reorder_leave_back,cfile->frames,iwidth,iheight);
     }
@@ -2050,7 +2050,7 @@ int reorder_frames(int rwidth, int rheight) {
     }
     cfile->nopreview=cfile->nokeep=FALSE;
   }
-  g_free(com);
+  lives_free(com);
   
   if (mainw->error) {
     if (mainw->cancelled!=CANCEL_ERROR) do_error_dialog (_ ("\n\nLiVES was unable to reorder the frames."));
@@ -2058,10 +2058,10 @@ int reorder_frames(int rwidth, int rheight) {
     new_frames=-new_frames;
   }
   else {
-    array=g_strsplit(mainw->msg,"|",2);
+    array=lives_strsplit(mainw->msg,"|",2);
   
     new_frames=atoi(array[1]);
-    g_strfreev(array);
+    lives_strfreev(array);
     
     if (cfile->frames>new_frames) {
       new_frames=cfile->frames;
@@ -2092,7 +2092,7 @@ int deorder_frames(int old_frames, boolean leave_bak) {
     perf_start=(int)(cfile->fps*(double)time_start/U_SEC)+1;
     perf_end=perf_start+count_events (cfile->event_list,FALSE,0,0)-1;
   }
-  com=g_strdup_printf("%s deorder \"%s\" %d %d %d \"%s\" %d",prefs->backend,cfile->handle,
+  com=lives_strdup_printf("%s deorder \"%s\" %d %d %d \"%s\" %d",prefs->backend,cfile->handle,
 		      perf_start,cfile->frames,perf_end,
 		      get_image_ext_for_type(cfile->img_type),leave_bak);
 
@@ -2102,7 +2102,7 @@ int deorder_frames(int old_frames, boolean leave_bak) {
   if (mainw->com_failed) return cfile->frames;
 
   do_progress_dialog(TRUE,FALSE,_ ("Deordering frames"));
-  g_free(com);
+  lives_free(com);
 
 
   // check for EOF
@@ -2141,7 +2141,7 @@ boolean resample_clipboard(double new_fps) {
     mainw->current_file=0;
 
     // copy .mgk to .img_ext and .img_ext to .bak (i.e redo the resample)
-    com=g_strdup_printf("%s redo \"%s\" %d %d \"%s\"",prefs->backend,cfile->handle,1,new_frames,
+    com=lives_strdup_printf("%s redo \"%s\" %d %d \"%s\"",prefs->backend,cfile->handle,1,new_frames,
 			get_image_ext_for_type(cfile->img_type));
     unlink(cfile->info_file);
     mainw->com_failed=FALSE;
@@ -2158,21 +2158,21 @@ boolean resample_clipboard(double new_fps) {
     cfile->old_frames=cfile->frames;
     // show a progress dialog, not cancellable
     do_progress_dialog(TRUE,FALSE,_ ("Resampling clipboard video"));
-    g_free(com);
+    lives_free(com);
     cfile->frames=new_frames;
     cfile->undo_action=UNDO_RESAMPLE;
     cfile->fps=cfile->undo1_dbl;
     cfile->undo1_dbl=old_fps;
-    msg=g_strdup_printf(_ ("Clipboard was resampled to %d frames.\n"),cfile->frames);
+    msg=lives_strdup_printf(_ ("Clipboard was resampled to %d frames.\n"),cfile->frames);
     d_print(msg);
-    g_free(msg);
+    lives_free(msg);
     mainw->current_file=current_file;
   }
   else {
     if (clipboard->undo1_dbl<clipboard->fps) {
       int old_frames=count_resampled_frames(clipboard->frames,clipboard->fps,clipboard->undo1_dbl);
       mainw->current_file=0;
-      com=g_strdup_printf("%s undo \"%s\" %d %d \"%s\"",prefs->backend,cfile->handle,old_frames+1,cfile->frames,
+      com=lives_strdup_printf("%s undo \"%s\" %d %d \"%s\"",prefs->backend,cfile->handle,old_frames+1,cfile->frames,
 			  get_image_ext_for_type(cfile->img_type));
       unlink(cfile->info_file);
       lives_system(com,FALSE);
@@ -2180,7 +2180,7 @@ boolean resample_clipboard(double new_fps) {
       cfile->progress_end=cfile->frames;
       // show a progress dialog, not cancellable
       do_progress_dialog(TRUE,FALSE,_ ("Resampling clipboard video"));
-      g_free(com);
+      lives_free(com);
     }
 
     // resample to cfile fps

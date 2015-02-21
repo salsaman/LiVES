@@ -1,6 +1,6 @@
 // keyboard.h
 // LiVES
-// (c) G. Finch 2004 - 2012 <salsaman@gmail.com>
+// (c) G. Finch 2004 - 2015 <salsaman@gmail.com>
 // see file ../COPYING for licensing details
 
 // repeating keys
@@ -18,43 +18,45 @@ uint16_t cached_mod;
 #define key_down2 116
 
 
-boolean ext_triggers_poll(gpointer); ///< poll for external playback start
+boolean ext_triggers_poll(livespointer); ///< poll for external playback start
 
-GdkFilterReturn filter_func(GdkXEvent *xevent, LiVESXEvent *event, gpointer data);
+#if defined HAVE_X11 || defined IS_MINGW
+LiVESFilterReturn filter_func(LiVESXXEvent *xevent, LiVESXEvent *event, livespointer data);
+#endif
 
 boolean plugin_poll_keyboard (void);
 
 boolean pl_key_function (boolean down, uint16_t unicode, uint16_t keymod);
 
-boolean faster_callback (LiVESAccelGroup *, LiVESObject *, uint32_t, LiVESXModifierType, gpointer user_data);
+boolean faster_callback (LiVESAccelGroup *, LiVESObject *, uint32_t, LiVESXModifierType, livespointer user_data);
 
-boolean slower_callback (LiVESAccelGroup *, LiVESObject *, uint32_t, LiVESXModifierType, gpointer user_data);
+boolean slower_callback (LiVESAccelGroup *, LiVESObject *, uint32_t, LiVESXModifierType, livespointer user_data);
 
-boolean skip_back_callback (LiVESAccelGroup *, LiVESObject *, uint32_t, LiVESXModifierType, gpointer user_data);
+boolean skip_back_callback (LiVESAccelGroup *, LiVESObject *, uint32_t, LiVESXModifierType, livespointer user_data);
 
-boolean skip_forward_callback (LiVESAccelGroup *, LiVESObject *, uint32_t, LiVESXModifierType, gpointer user_data);
+boolean skip_forward_callback (LiVESAccelGroup *, LiVESObject *, uint32_t, LiVESXModifierType, livespointer user_data);
 
-boolean stop_callback (LiVESAccelGroup *, LiVESObject *, uint32_t, LiVESXModifierType, gpointer user_data);
+boolean stop_callback (LiVESAccelGroup *, LiVESObject *, uint32_t, LiVESXModifierType, livespointer user_data);
 
-boolean rec_callback (LiVESAccelGroup *, LiVESObject *, uint32_t, LiVESXModifierType, gpointer user_data);
+boolean rec_callback (LiVESAccelGroup *, LiVESObject *, uint32_t, LiVESXModifierType, livespointer user_data);
 
-boolean loop_callback (LiVESAccelGroup *, LiVESObject *, uint32_t, LiVESXModifierType, gpointer user_data);
+boolean loop_callback (LiVESAccelGroup *, LiVESObject *, uint32_t, LiVESXModifierType, livespointer user_data);
 
-boolean loop_cont_callback (LiVESAccelGroup *, LiVESObject *, uint32_t, LiVESXModifierType, gpointer user_data);
+boolean loop_cont_callback (LiVESAccelGroup *, LiVESObject *, uint32_t, LiVESXModifierType, livespointer user_data);
 
-boolean ping_pong_callback (LiVESAccelGroup *, LiVESObject *, uint32_t, LiVESXModifierType, gpointer user_data);
+boolean ping_pong_callback (LiVESAccelGroup *, LiVESObject *, uint32_t, LiVESXModifierType, livespointer user_data);
 
-boolean dblsize_callback (LiVESAccelGroup *, LiVESObject *, uint32_t, LiVESXModifierType, gpointer user_data);
+boolean dblsize_callback (LiVESAccelGroup *, LiVESObject *, uint32_t, LiVESXModifierType, livespointer user_data);
 
-boolean showfct_callback (LiVESAccelGroup *, LiVESObject *, uint32_t, LiVESXModifierType, gpointer user_data);
+boolean showfct_callback (LiVESAccelGroup *, LiVESObject *, uint32_t, LiVESXModifierType, livespointer user_data);
 
-boolean showsubs_callback (LiVESAccelGroup *, LiVESObject *, uint32_t, LiVESXModifierType, gpointer user_data);
+boolean showsubs_callback (LiVESAccelGroup *, LiVESObject *, uint32_t, LiVESXModifierType, livespointer user_data);
 
-boolean fullscreen_callback (LiVESAccelGroup *, LiVESObject *, uint32_t, LiVESXModifierType, gpointer user_data);
+boolean fullscreen_callback (LiVESAccelGroup *, LiVESObject *, uint32_t, LiVESXModifierType, livespointer user_data);
 
-boolean sepwin_callback (LiVESAccelGroup *, LiVESObject *, uint32_t, LiVESXModifierType, gpointer user_data);
+boolean sepwin_callback (LiVESAccelGroup *, LiVESObject *, uint32_t, LiVESXModifierType, livespointer user_data);
 
-boolean fade_callback (LiVESAccelGroup *, LiVESObject *, uint32_t, LiVESXModifierType, gpointer user_data);
+boolean fade_callback (LiVESAccelGroup *, LiVESObject *, uint32_t, LiVESXModifierType, livespointer user_data);
 
 
 #define KEY_RPT_INTERVAL 4

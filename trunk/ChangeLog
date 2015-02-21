@@ -1,3 +1,14 @@
+Version 2.2.9
+-------------
+Code cleanup.
+Fix timeline start position for gtkgrid widget in multitrack.
+
+
+
+
+
+
+
 Version 2.2.8 (8 Feb 2015)
 --------------------------
 Fix crash in Insert Frames (regression).

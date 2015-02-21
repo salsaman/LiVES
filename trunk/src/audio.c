@@ -53,7 +53,7 @@ void audio_free_fnames(void) {
 
   for (i=0;i<NSTOREDFDS;i++) {
     if (storedfnames!=NULL) {
-      g_free(storedfnames[i]);
+      lives_free(storedfnames[i]);
       storedfnames[i]=NULL;
       if (storedfds[i]>-1) close(storedfds[i]);
       storedfds[i]=-1;
@@ -75,14 +75,14 @@ void append_to_audio_bufferf(lives_audio_buf_t *abuf, float *src, uint64_t nsamp
   channum++;
   if (channum>abuf->out_achans) {
     register int i;
-    abuf->bufferf=(float **)g_realloc(abuf->bufferf,channum*sizeof(float *));
+    abuf->bufferf=(float **)lives_realloc(abuf->bufferf,channum*sizeof(float *));
     for (i=abuf->out_achans;i<channum;i++) {
       abuf->bufferf[i]=NULL;
     }
     abuf->out_achans=channum;
   }
   channum--;
-  abuf->bufferf[channum]=(float *)g_realloc(abuf->bufferf[channum],nsampsize);
+  abuf->bufferf[channum]=(float *)lives_realloc(abuf->bufferf[channum],nsampsize);
   lives_memcpy(&abuf->bufferf[channum][abuf->samples_filled],src,nsamples*sizeof(float));
 }
 
@@ -100,14 +100,14 @@ void append_to_audio_buffer16(lives_audio_buf_t *abuf, void *src, uint64_t nsamp
   channum++;
   if (abuf->buffer16==NULL||channum>abuf->out_achans) {
     register int i;
-    abuf->buffer16=(int16_t **)g_realloc(abuf->buffer16,channum*sizeof(int16_t *));
+    abuf->buffer16=(int16_t **)lives_realloc(abuf->buffer16,channum*sizeof(int16_t *));
     for (i=abuf->out_achans;i<channum;i++) {
       abuf->buffer16[i]=NULL;
     }
     abuf->out_achans=channum;
   }
   channum--;
-  abuf->buffer16[channum]=(int16_t *)g_realloc(abuf->buffer16[channum],nsampsize);
+  abuf->buffer16[channum]=(int16_t *)lives_realloc(abuf->buffer16[channum],nsampsize);
   lives_memcpy(&abuf->buffer16[channum][abuf->samples_filled],src,nsamples*2);
 #ifdef DEBUG_AFB
   g_print("append16 to afb\n");
@@ -120,7 +120,7 @@ void init_audio_frame_buffer(short aplayer) {
   // function should be called when the first video generator with audio input is enabled
 
   lives_audio_buf_t *abuf;
-  abuf=mainw->audio_frame_buffer=(lives_audio_buf_t *)g_malloc0(sizeof(lives_audio_buf_t));
+  abuf=mainw->audio_frame_buffer=(lives_audio_buf_t *)lives_malloc0(sizeof(lives_audio_buf_t));
 
   abuf->samples_filled=0;
   abuf->swap_endian=FALSE;
@@ -156,28 +156,28 @@ void free_audio_frame_buffer(lives_audio_buf_t *abuf) {
   register int i;
   if (abuf!=NULL) {
     if (abuf->bufferf!=NULL) {
-      for (i=0;i<abuf->out_achans;i++) g_free(abuf->bufferf[i]);
-      g_free(abuf->bufferf);
+      for (i=0;i<abuf->out_achans;i++) lives_free(abuf->bufferf[i]);
+      lives_free(abuf->bufferf);
       abuf->bufferf=NULL;
     }
     if (abuf->buffer32!=NULL) {
-      for (i=0;i<abuf->out_achans;i++) g_free(abuf->buffer32[i]);
-      g_free(abuf->buffer32);
+      for (i=0;i<abuf->out_achans;i++) lives_free(abuf->buffer32[i]);
+      lives_free(abuf->buffer32);
       abuf->buffer32=NULL;
     }
     if (abuf->buffer24!=NULL) {
-      for (i=0;i<abuf->out_achans;i++) g_free(abuf->buffer24[i]);
-      g_free(abuf->buffer24);
+      for (i=0;i<abuf->out_achans;i++) lives_free(abuf->buffer24[i]);
+      lives_free(abuf->buffer24);
       abuf->buffer24=NULL;
     }
     if (abuf->buffer16!=NULL) {
-      for (i=0;i<abuf->out_achans;i++) g_free(abuf->buffer16[i]);
-      g_free(abuf->buffer16);
+      for (i=0;i<abuf->out_achans;i++) lives_free(abuf->buffer16[i]);
+      lives_free(abuf->buffer16);
       abuf->buffer16=NULL;
     }
     if (abuf->buffer8!=NULL) {
-      for (i=0;i<abuf->out_achans;i++) g_free(abuf->buffer8[i]);
-      g_free(abuf->buffer8);
+      for (i=0;i<abuf->out_achans;i++) lives_free(abuf->buffer8[i]);
+      lives_free(abuf->buffer8);
       abuf->buffer8=NULL;
     }
 
@@ -748,7 +748,7 @@ boolean float_deinterleave(float *fbuffer, int nsamps, int nchans) {
   // deinterleave a float buffer
   register int i,j;
 
-  float *tmpfbuffer=(float *)g_try_malloc(nsamps*nchans*sizeof(float));
+  float *tmpfbuffer=(float *)lives_try_malloc(nsamps*nchans*sizeof(float));
   if (tmpfbuffer==NULL) return FALSE;
   
   for (i=0;i<nsamps;i++) {
@@ -757,7 +757,7 @@ boolean float_deinterleave(float *fbuffer, int nsamps, int nchans) {
     }
   }
   lives_memcpy(fbuffer,tmpfbuffer,nsamps*nchans*sizeof(float));
-  g_free(tmpfbuffer);
+  lives_free(tmpfbuffer);
   return TRUE;
 }
 
@@ -766,7 +766,7 @@ boolean float_interleave(float *fbuffer, int nsamps, int nchans) {
   // deinterleave a float buffer
   register int i,j;
 
-  float *tmpfbuffer=(float *)g_try_malloc(nsamps*nchans*sizeof(float));
+  float *tmpfbuffer=(float *)lives_try_malloc(nsamps*nchans*sizeof(float));
   if (tmpfbuffer==NULL) return FALSE;
   
   for (i=0;i<nsamps;i++) {
@@ -775,7 +775,7 @@ boolean float_interleave(float *fbuffer, int nsamps, int nchans) {
     }
   }
   lives_memcpy(fbuffer,tmpfbuffer,nsamps*nchans*sizeof(float));
-  g_free(tmpfbuffer);
+  lives_free(tmpfbuffer);
   return TRUE;
 }
 
@@ -821,9 +821,9 @@ static boolean pad_with_silence(int out_fd, off64_t oins_size, int64_t ins_size,
 #endif
   if (sbytes>0) {
     lseek64(out_fd,oins_size,SEEK_SET);
-    if (!aunsigned) zero_buff=(uint8_t *)g_malloc0(SILENCE_BLOCK_SIZE);
+    if (!aunsigned) zero_buff=(uint8_t *)lives_malloc0(SILENCE_BLOCK_SIZE);
     else {
-      zero_buff=(uint8_t *)g_malloc(SILENCE_BLOCK_SIZE);
+      zero_buff=(uint8_t *)lives_malloc(SILENCE_BLOCK_SIZE);
       if (asamps==1) memset(zero_buff,0x80,SILENCE_BLOCK_SIZE);
       else {
 	for (i=0;i<SILENCE_BLOCK_SIZE;i+=2) {
@@ -845,7 +845,7 @@ static boolean pad_with_silence(int out_fd, off64_t oins_size, int64_t ins_size,
       lives_write (out_fd,zero_buff,sblocksize,TRUE);
       if (mainw->write_failed) retval=FALSE;
     }
-    g_free(zero_buff);
+    lives_free(zero_buff);
   }
   else if (sbytes<=0) {
     lseek64(out_fd,oins_size+sbytes,SEEK_SET);
@@ -1013,16 +1013,16 @@ int64_t render_audio_segment(int nfiles, int *from_files, int to_file, double *a
 
   if (to_file>-1) {
     // prepare outfile stuff
-    outfilename=g_build_filename(prefs->tmpdir,outfile->handle,"audio",NULL);
+    outfilename=lives_build_filename(prefs->tmpdir,outfile->handle,"audio",NULL);
 #ifdef DEBUG_ARENDER
     g_print("writing to %s\n",outfilename);
 #endif
     out_fd=open(outfilename,O_WRONLY|O_CREAT|O_SYNC,S_IRUSR|S_IWUSR);
-    g_free(outfilename);
+    lives_free(outfilename);
     
     if (out_fd<0) {
-      if (mainw->write_failed_file!=NULL) g_free(mainw->write_failed_file);
-      mainw->write_failed_file=g_strdup(outfilename);
+      if (mainw->write_failed_file!=NULL) lives_free(mainw->write_failed_file);
+      mainw->write_failed_file=lives_strdup(outfilename);
       mainw->write_failed=TRUE;
       return 0l;
     }
@@ -1083,7 +1083,7 @@ int64_t render_audio_segment(int nfiles, int *from_files, int to_file, double *a
     in_unsigned[track]=infile->signed_endian&AFORM_UNSIGNED;
     in_bendian=infile->signed_endian&AFORM_BIG_ENDIAN;
 
-    if (G_UNLIKELY(in_achans[track]==0)) is_silent[track]=TRUE;
+    if (LIVES_UNLIKELY(in_achans[track]==0)) is_silent[track]=TRUE;
     else {
       if ((!in_bendian&&(capable->byte_order==LIVES_BIG_ENDIAN))||
 	  (in_bendian&&(capable->byte_order==LIVES_LITTLE_ENDIAN))) 
@@ -1096,7 +1096,7 @@ int64_t render_audio_segment(int nfiles, int *from_files, int to_file, double *a
       zavel=avels[track]*(double)in_arate[track]/(double)out_arate*in_asamps[track]*in_achans[track]/sizeof(float);
       if (ABS(zavel)>zavel_max) zavel_max=ABS(zavel);
       
-      infilename=g_build_filename(prefs->tmpdir,infile->handle,"audio",NULL);
+      infilename=lives_build_filename(prefs->tmpdir,infile->handle,"audio",NULL);
 
 
       // try to speed up access by keeping some files open
@@ -1107,8 +1107,8 @@ int64_t render_audio_segment(int nfiles, int *from_files, int to_file, double *a
 	if (track<NSTOREDFDS&&storedfds[track]>-1) close(storedfds[track]);
 	in_fd[track]=open(infilename,O_RDONLY);
 	if (in_fd[track]<0) {
-	  if (mainw->read_failed_file!=NULL) g_free(mainw->read_failed_file);
-	  mainw->read_failed_file=g_strdup(infilename);
+	  if (mainw->read_failed_file!=NULL) lives_free(mainw->read_failed_file);
+	  mainw->read_failed_file=lives_strdup(infilename);
 	  mainw->read_failed=TRUE;
 	}
 
@@ -1117,13 +1117,13 @@ int64_t render_audio_segment(int nfiles, int *from_files, int to_file, double *a
 #endif
 	if (track<NSTOREDFDS) {
 	  storedfds[track]=in_fd[track];
-	  storedfnames[track]=g_strdup(infilename);
+	  storedfnames[track]=lives_strdup(infilename);
 	}
       }
 
       if (in_fd[track]>-1) lseek64(in_fd[track],seekstart[track],SEEK_SET);
       
-      g_free(infilename);
+      lives_free(infilename);
     }
   }
 
@@ -1191,13 +1191,13 @@ int64_t render_audio_segment(int nfiles, int *from_files, int to_file, double *a
 
   xsamples=zsamples+(tsamples-(max_segments*zsamples)); // e.g 10 + 30 - 3 * 10 == 10
 
-  holding_buff=(short *)g_malloc(xsamples*sizeof(short)*out_achans);
+  holding_buff=(short *)lives_malloc(xsamples*sizeof(short)*out_achans);
   
   for (i=0;i<out_achans*nfiles;i++) {
-    float_buffer[i]=(float *)g_malloc(xsamples*sizeof(float));
+    float_buffer[i]=(float *)lives_malloc(xsamples*sizeof(float));
   }
 
-  finish_buff=g_malloc(tsamples*out_achans*out_asamps);
+  finish_buff=lives_malloc(tsamples*out_achans*out_asamps);
 
 #ifdef DEBUG_ARENDER
   g_print("  rendering %ld samples\n",tsamples);
@@ -1221,10 +1221,10 @@ int64_t render_audio_segment(int nfiles, int *from_files, int to_file, double *a
 
       zavel=avels[track]*(double)in_arate[track]/(double)out_arate;
 
-      tbytes=(int)((double)xsamples*ABS(zavel)+((double)fastrand()/(double)G_MAXUINT32))*
+      tbytes=(int)((double)xsamples*ABS(zavel)+((double)fastrand()/(double)LIVES_MAXUINT32))*
 	in_asamps[track]*in_achans[track];
 
-      in_buff=(uint8_t *)g_malloc(tbytes);
+      in_buff=(uint8_t *)lives_malloc(tbytes);
 
       if (zavel<0. && in_fd[track]>-1) lseek64(in_fd[track],seekstart[track]-tbytes,SEEK_SET);
 
@@ -1260,7 +1260,7 @@ int64_t render_audio_segment(int nfiles, int *from_files, int to_file, double *a
 			    in_achans[track],in_reverse_endian[track]?SWAP_X_TO_L:0,0);
       }
 
-      g_free(in_buff);
+      lives_free(in_buff);
 
       for(c=0;c<out_achans;c++) {
 	sample_move_d16_float(float_buffer[c+track*out_achans],holding_buff+c,nframes,
@@ -1311,7 +1311,7 @@ int64_t render_audio_segment(int nfiles, int *from_files, int to_file, double *a
 	weed_apply_audio_effects(mainw->afilter_map,chunk_float_buffer,nbtracks,
 				 out_achans,blocksize,out_arate,tc,vis);
 	
-	if (vis!=NULL) g_free(vis);
+	if (vis!=NULL) lives_free(vis);
 
       }
 
@@ -1365,12 +1365,12 @@ int64_t render_audio_segment(int nfiles, int *from_files, int to_file, double *a
 
   if (xsamples>0) {
     for (i=0;i<out_achans*nfiles;i++) {
-      if (float_buffer[i]!=NULL) g_free(float_buffer[i]);
+      if (float_buffer[i]!=NULL) lives_free(float_buffer[i]);
     }
   }
 
-  if (finish_buff!=NULL) g_free(finish_buff);
-  if (holding_buff!=NULL) g_free(holding_buff);
+  if (finish_buff!=NULL) lives_free(finish_buff);
+  if (holding_buff!=NULL) lives_free(holding_buff);
   
   // close files
   for (track=0;track<nfiles;track++) {
@@ -1397,12 +1397,12 @@ LIVES_INLINE void aud_fade(int fileno, double startt, double endt, double startv
   render_audio_segment(1,&fileno,fileno,&vel,&startt,startt*U_SECL,endt*U_SECL,&vol,startv,endv,NULL);
 
   if (mainw->write_failed) {
-    gchar *outfilename=g_build_filename(prefs->tmpdir,mainw->files[fileno]->handle,"audio",NULL);
+    gchar *outfilename=lives_build_filename(prefs->tmpdir,mainw->files[fileno]->handle,"audio",NULL);
     do_write_failed_error_s(outfilename,NULL);
   }
   
   if (mainw->read_failed) {
-    gchar *infilename=g_build_filename(prefs->tmpdir,mainw->files[fileno]->handle,"audio",NULL);
+    gchar *infilename=lives_build_filename(prefs->tmpdir,mainw->files[fileno]->handle,"audio",NULL);
     do_read_failed_error_s(infilename,NULL);
   }
 
@@ -1437,19 +1437,19 @@ void jack_rec_audio_to_clip(int fileno, int old_file, lives_rec_audio_type_t rec
   outfile=mainw->files[fileno];
   
   if (mainw->aud_rec_fd==-1) {
-    gchar *outfilename=g_build_filename(prefs->tmpdir,outfile->handle,"audio",NULL);
+    gchar *outfilename=lives_build_filename(prefs->tmpdir,outfile->handle,"audio",NULL);
     do {
       retval=0;
       mainw->aud_rec_fd=open(outfilename,O_WRONLY|O_CREAT|O_APPEND,S_IRUSR|S_IWUSR);
       if (mainw->aud_rec_fd<0) {
-	retval=do_write_failed_error_s_with_retry(outfilename,g_strerror(errno),NULL);
+	retval=do_write_failed_error_s_with_retry(outfilename,lives_strerror(errno),NULL);
 	if (retval==LIVES_CANCEL) {
-	  g_free(outfilename);
+	  lives_free(outfilename);
 	  return;
 	}
       }
     } while (retval==LIVES_RETRY);
-    g_free(outfilename);
+    lives_free(outfilename);
   }
 
   if (rec_type==RECA_GENERATED) {
@@ -1595,19 +1595,19 @@ void pulse_rec_audio_to_clip(int fileno, int old_file, lives_rec_audio_type_t re
   outfile=mainw->files[fileno];
 
   if (mainw->aud_rec_fd==-1) {
-    gchar *outfilename=g_build_filename(prefs->tmpdir,outfile->handle,"audio",NULL);
+    gchar *outfilename=lives_build_filename(prefs->tmpdir,outfile->handle,"audio",NULL);
     do {
       retval=0;
       mainw->aud_rec_fd=open(outfilename,O_WRONLY|O_CREAT|O_APPEND,S_IRUSR|S_IWUSR);
       if (mainw->aud_rec_fd<0) {
-	retval=do_write_failed_error_s_with_retry(outfilename,g_strerror(errno),NULL);
+	retval=do_write_failed_error_s_with_retry(outfilename,lives_strerror(errno),NULL);
 	if (retval==LIVES_CANCEL) {
-	  g_free(outfilename);
+	  lives_free(outfilename);
 	  return;
 	}
       }
     } while (retval==LIVES_RETRY);
-    g_free(outfilename);
+    lives_free(outfilename);
   }
 
   if (rec_type==RECA_GENERATED) {
@@ -1743,7 +1743,7 @@ static lives_audio_track_state_t *resize_audstate(lives_audio_track_state_t *ost
   // increase the element size of the audstate array (ostate)
   // from nostate elements to nstate elements
 
-  lives_audio_track_state_t *audstate=(lives_audio_track_state_t *)g_malloc(nstate*sizeof(lives_audio_track_state_t));
+  lives_audio_track_state_t *audstate=(lives_audio_track_state_t *)lives_malloc(nstate*sizeof(lives_audio_track_state_t));
   int i;
 
   for (i=0;i<nstate;i++) {
@@ -1758,7 +1758,7 @@ static lives_audio_track_state_t *resize_audstate(lives_audio_track_state_t *ost
     }
   }
 
-  if (ostate!=NULL) g_free(ostate);
+  if (ostate!=NULL) lives_free(ostate);
 
   return audstate;
 }
@@ -1798,8 +1798,8 @@ static lives_audio_track_state_t *aframe_to_atstate(weed_plant_t *event) {
     }
   }
 
-  weed_free(aclips);
-  weed_free(aseeks);
+  lives_free(aclips);
+  lives_free(aseeks);
 
   return atstate;
 }
@@ -1873,7 +1873,7 @@ lives_audio_track_state_t *get_audio_and_effects_state_at(weed_plant_t *event_li
 	    audstate[i].vel=atstate[i].vel;
 	  }
 	}                                                             
-	g_free(atstate);
+	lives_free(atstate);
       }
 
       last_tc=get_event_timecode(event);
@@ -1931,17 +1931,17 @@ void fill_abuffer_from(lives_audio_buf_t *abuf, weed_plant_t *event_list, weed_p
     event=st_event;
     last_tc=get_event_timecode(event);
 
-    if (from_files!=NULL) g_free(from_files);
-    if (avels!=NULL) g_free(avels);
-    if (aseeks!=NULL) g_free(aseeks);
+    if (from_files!=NULL) lives_free(from_files);
+    if (avels!=NULL) lives_free(avels);
+    if (aseeks!=NULL) lives_free(aseeks);
 
     if (mainw->multitrack!=NULL) nfiles=weed_leaf_num_elements(mainw->multitrack->avol_init_event,"in_tracks");
 
     else nfiles=1;
 
-    from_files=(int *)g_malloc(nfiles*sizint);
-    avels=(double *)g_malloc(nfiles*sizdbl);
-    aseeks=(double *)g_malloc(nfiles*sizdbl);
+    from_files=(int *)lives_malloc(nfiles*sizint);
+    avels=(double *)lives_malloc(nfiles*sizdbl);
+    aseeks=(double *)lives_malloc(nfiles*sizdbl);
 
     for (i=0;i<nfiles;i++) {
       from_files[i]=0;
@@ -1978,7 +1978,7 @@ void fill_abuffer_from(lives_audio_buf_t *abuf, weed_plant_t *event_list, weed_p
 	}
       }
       
-      g_free(atstate);
+      lives_free(atstate);
     }
   }
   else {
@@ -1989,7 +1989,7 @@ void fill_abuffer_from(lives_audio_buf_t *abuf, weed_plant_t *event_list, weed_p
     // get channel volumes from the mixer
     for (i=0;i<nfiles;i++) {
       if (mainw->multitrack!=NULL&&mainw->multitrack->audio_vols!=NULL) {
-	chvols[i]=(double)GPOINTER_TO_INT(g_list_nth_data(mainw->multitrack->audio_vols,i))/1000000.;
+	chvols[i]=(double)LIVES_POINTER_TO_INT(lives_list_nth_data(mainw->multitrack->audio_vols,i))/1000000.;
       }
     }
   }
@@ -2008,7 +2008,7 @@ void fill_abuffer_from(lives_audio_buf_t *abuf, weed_plant_t *event_list, weed_p
       tc+=(U_SEC/cfile->fps*!is_blank_frame(event,FALSE));
 
       mainw->read_failed=FALSE;
-      if (mainw->read_failed_file!=NULL) g_free(mainw->read_failed_file);
+      if (mainw->read_failed_file!=NULL) lives_free(mainw->read_failed_file);
       mainw->read_failed_file=NULL;
 
       render_audio_segment(nfiles, from_files, -1, avels, aseeks, last_tc, tc, chvols, 1., 1., abuf);
@@ -2037,7 +2037,7 @@ void fill_abuffer_from(lives_audio_buf_t *abuf, weed_plant_t *event_list, weed_p
 	    aseeks[i]=atstate[i].seek;
 	  }
 	}
-	g_free(atstate);
+	lives_free(atstate);
       }
     }
     is_cont=FALSE;
@@ -2047,7 +2047,7 @@ void fill_abuffer_from(lives_audio_buf_t *abuf, weed_plant_t *event_list, weed_p
     // flush the rest of the audio
 
     mainw->read_failed=FALSE;
-    if (mainw->read_failed_file!=NULL) g_free(mainw->read_failed_file);
+    if (mainw->read_failed_file!=NULL) lives_free(mainw->read_failed_file);
     mainw->read_failed_file=NULL;
 
     render_audio_segment(nfiles, from_files, -1, avels, aseeks, last_tc, fill_tc, chvols, 1., 1., abuf);
@@ -2082,17 +2082,17 @@ void init_jack_audio_buffers (int achans, int arate, boolean exact) {
 
   int i,chan;
 
-  mainw->jackd->abufs=(lives_audio_buf_t **)g_malloc(prefs->num_rtaudiobufs*sizeof(lives_audio_buf_t *));
+  mainw->jackd->abufs=(lives_audio_buf_t **)lives_malloc(prefs->num_rtaudiobufs*sizeof(lives_audio_buf_t *));
   
   for (i=0;i<prefs->num_rtaudiobufs;i++) {
-    mainw->jackd->abufs[i]=(lives_audio_buf_t *)g_malloc(sizeof(lives_audio_buf_t));
+    mainw->jackd->abufs[i]=(lives_audio_buf_t *)lives_malloc(sizeof(lives_audio_buf_t));
     
     mainw->jackd->abufs[i]->out_achans=achans;
     mainw->jackd->abufs[i]->arate=arate;
     mainw->jackd->abufs[i]->samp_space=XSAMPLES/prefs->num_rtaudiobufs;
-    mainw->jackd->abufs[i]->bufferf=(float **)g_malloc(achans*sizeof(float *));
+    mainw->jackd->abufs[i]->bufferf=(float **)lives_malloc(achans*sizeof(float *));
     for (chan=0;chan<achans;chan++) {
-      mainw->jackd->abufs[i]->bufferf[chan]=(float *)g_malloc(XSAMPLES/prefs->num_rtaudiobufs*sizeof(float));
+      mainw->jackd->abufs[i]->bufferf[chan]=(float *)lives_malloc(XSAMPLES/prefs->num_rtaudiobufs*sizeof(float));
     }
   }
 #endif
@@ -2104,16 +2104,16 @@ void init_pulse_audio_buffers (int achans, int arate, boolean exact) {
 
   int i;
 
-  mainw->pulsed->abufs=(lives_audio_buf_t **)g_malloc(prefs->num_rtaudiobufs*sizeof(lives_audio_buf_t *));
+  mainw->pulsed->abufs=(lives_audio_buf_t **)lives_malloc(prefs->num_rtaudiobufs*sizeof(lives_audio_buf_t *));
   
   for (i=0;i<prefs->num_rtaudiobufs;i++) {
-    mainw->pulsed->abufs[i]=(lives_audio_buf_t *)g_malloc(sizeof(lives_audio_buf_t));
+    mainw->pulsed->abufs[i]=(lives_audio_buf_t *)lives_malloc(sizeof(lives_audio_buf_t));
     
     mainw->pulsed->abufs[i]->out_achans=achans;
     mainw->pulsed->abufs[i]->arate=arate;
     mainw->pulsed->abufs[i]->samp_space=XSAMPLES/prefs->num_rtaudiobufs;  // samp_space here is in stereo samples
-    mainw->pulsed->abufs[i]->buffer16=(short **)g_malloc(sizeof(short *));
-    mainw->pulsed->abufs[i]->buffer16[0]=(short *)g_malloc(XSAMPLES/prefs->num_rtaudiobufs*achans*sizeof(short));
+    mainw->pulsed->abufs[i]->buffer16=(short **)lives_malloc(sizeof(short *));
+    mainw->pulsed->abufs[i]->buffer16[0]=(short *)lives_malloc(XSAMPLES/prefs->num_rtaudiobufs*achans*sizeof(short));
   }
 #endif
 }
@@ -2132,13 +2132,13 @@ void free_jack_audio_buffers(void) {
   for (i=0;i<prefs->num_rtaudiobufs;i++) {
     if (mainw->jackd->abufs[i]!=NULL) {
       for (chan=0;chan<mainw->jackd->abufs[i]->out_achans;chan++) {
-	g_free(mainw->jackd->abufs[i]->bufferf[chan]);
+	lives_free(mainw->jackd->abufs[i]->bufferf[chan]);
       }
-      g_free(mainw->jackd->abufs[i]->bufferf);
-      g_free(mainw->jackd->abufs[i]);
+      lives_free(mainw->jackd->abufs[i]->bufferf);
+      lives_free(mainw->jackd->abufs[i]);
     }
   }
-  g_free(mainw->jackd->abufs);
+  lives_free(mainw->jackd->abufs);
 #endif
 }
 
@@ -2154,12 +2154,12 @@ void free_pulse_audio_buffers(void) {
 
   for (i=0;i<prefs->num_rtaudiobufs;i++) {
     if (mainw->pulsed->abufs[i]!=NULL) {
-      g_free(mainw->pulsed->abufs[i]->buffer16[0]);
-      g_free(mainw->pulsed->abufs[i]->buffer16);
-      g_free(mainw->pulsed->abufs[i]);
+      lives_free(mainw->pulsed->abufs[i]->buffer16[0]);
+      lives_free(mainw->pulsed->abufs[i]->buffer16);
+      lives_free(mainw->pulsed->abufs[i]);
     }
   }
-  g_free(mainw->pulsed->abufs);
+  lives_free(mainw->pulsed->abufs);
 #endif
 }
 
@@ -2243,7 +2243,7 @@ static void *cache_my_audio(void *arg) {
     // wait for request from client
     while (cbuffer->is_ready&&!cbuffer->die) {
       sched_yield();
-      g_usleep(prefs->sleep_time);
+      lives_usleep(prefs->sleep_time);
     }
 
     if (cbuffer->die) {
@@ -2252,7 +2252,7 @@ static void *cache_my_audio(void *arg) {
     }
 
     // read from file and process data
-    //g_printerr("got buffer request !\n");
+    //lives_printerr("got buffer request !\n");
 
     if (cbuffer->operation!=LIVES_READ_OPERATION) {
       cbuffer->is_ready=TRUE;
@@ -2314,7 +2314,7 @@ static void *cache_my_audio(void *arg) {
 	if ( (cbuffer->out_interleaf?1:cbuffer->out_achans) > (cbuffer->_cout_interleaf?1:cbuffer->_cachans) ) {
 	  // ouput channels increased
 	  cbuffer->buffer16 = (short **) 
-	    g_realloc(cbuffer->buffer16,(cbuffer->out_interleaf?1:cbuffer->out_achans)*sizeof(short *));
+	    lives_realloc(cbuffer->buffer16,(cbuffer->out_interleaf?1:cbuffer->out_achans)*sizeof(short *));
 	  for (i=(cbuffer->_cout_interleaf?1:cbuffer->_cachans);i<(cbuffer->out_interleaf?1:cbuffer->out_achans);i++) {
 	    cbuffer->buffer16[i]=NULL;
 	  }
@@ -2322,7 +2322,7 @@ static void *cache_my_audio(void *arg) {
 
 	for (i=0;i<(cbuffer->out_interleaf?1:cbuffer->out_achans);i++) {
 	  // realloc existing channels and add new ones
-	  cbuffer->buffer16[i]=(short *)g_realloc(cbuffer->buffer16[i], cbuffer->samp_space*sizeof(short)*
+	  cbuffer->buffer16[i]=(short *)lives_realloc(cbuffer->buffer16[i], cbuffer->samp_space*sizeof(short)*
 						  (cbuffer->out_interleaf?cbuffer->out_achans:1));
 	}
 
@@ -2335,7 +2335,7 @@ static void *cache_my_audio(void *arg) {
 	if ( (cbuffer->out_interleaf?1:cbuffer->out_achans) < (cbuffer->_cout_interleaf?1:cbuffer->_cachans) ) {
 	  // output channels decreased
 	  cbuffer->buffer16 = (short **)
-	    g_realloc(cbuffer->buffer16,(cbuffer->out_interleaf?1:cbuffer->out_achans)*sizeof(short *));
+	    lives_realloc(cbuffer->buffer16,(cbuffer->out_interleaf?1:cbuffer->out_achans)*sizeof(short *));
 	}
       }
 
@@ -2353,7 +2353,7 @@ static void *cache_my_audio(void *arg) {
 	if ( (cbuffer->in_interleaf?1:cbuffer->out_achans) > (cbuffer->_cin_interleaf?1:cbuffer->_cachans) ) {
 	  // ouput channels increased
 	  cbuffer->buffer16 = (short **) 
-	    g_realloc(cbuffer->buffer16,(cbuffer->in_interleaf?1:cbuffer->out_achans)*sizeof(short *));
+	    lives_realloc(cbuffer->buffer16,(cbuffer->in_interleaf?1:cbuffer->out_achans)*sizeof(short *));
 	  for (i=(cbuffer->_cin_interleaf?1:cbuffer->_cachans);i<(cbuffer->in_interleaf?1:cbuffer->out_achans);i++) {
 	    cbuffer->buffer16[i]=NULL;
 	  }
@@ -2361,7 +2361,7 @@ static void *cache_my_audio(void *arg) {
 
 	for (i=0;i<(cbuffer->in_interleaf?1:cbuffer->out_achans);i++) {
 	  // realloc existing channels and add new ones
-	  cbuffer->buffer16[i]=(short *)g_realloc(cbuffer->buffer16[i], cbuffer->samp_space*sizeof(short)*
+	  cbuffer->buffer16[i]=(short *)lives_realloc(cbuffer->buffer16[i], cbuffer->samp_space*sizeof(short)*
 						  (cbuffer->in_interleaf?cbuffer->out_achans:1));
 	}
 
@@ -2375,7 +2375,7 @@ static void *cache_my_audio(void *arg) {
 	if ((cbuffer->in_interleaf?1:cbuffer->out_achans)<(cbuffer->_cin_interleaf?1:cbuffer->_cachans)) {
 	  // output channels decreased
 	  cbuffer->buffer16 = (short **)
-	    g_realloc(cbuffer->buffer16,(cbuffer->in_interleaf?1:cbuffer->out_achans)*sizeof(short *));
+	    lives_realloc(cbuffer->buffer16,(cbuffer->in_interleaf?1:cbuffer->out_achans)*sizeof(short *));
 	}
       }
 
@@ -2389,7 +2389,7 @@ static void *cache_my_audio(void *arg) {
 	if ( (cbuffer->out_interleaf?1:cbuffer->out_achans) > (cbuffer->_cout_interleaf?1:cbuffer->_cachans) ) {
 	  // ouput channels increased
 	  cbuffer->bufferf = (float **)
-	    g_realloc(cbuffer->bufferf,(cbuffer->out_interleaf?1:cbuffer->out_achans)*sizeof(float *));
+	    lives_realloc(cbuffer->bufferf,(cbuffer->out_interleaf?1:cbuffer->out_achans)*sizeof(float *));
 	  for (i=(cbuffer->_cout_interleaf?1:cbuffer->_cachans);i<(cbuffer->out_interleaf?1:cbuffer->out_achans);i++) {
 	    cbuffer->bufferf[i]=NULL;
 	  }
@@ -2397,7 +2397,7 @@ static void *cache_my_audio(void *arg) {
 
 	for (i=0;i<(cbuffer->out_interleaf?1:cbuffer->out_achans);i++) {
 	  // realloc existing channels and add new ones
-	  cbuffer->bufferf[i]=(float *)g_realloc(cbuffer->bufferf[i], cbuffer->samp_space*sizeof(float)*
+	  cbuffer->bufferf[i]=(float *)lives_realloc(cbuffer->bufferf[i], cbuffer->samp_space*sizeof(float)*
 						 (cbuffer->out_interleaf?cbuffer->out_achans:1));
 	}
 
@@ -2411,7 +2411,7 @@ static void *cache_my_audio(void *arg) {
 	if ( (cbuffer->out_interleaf?1:cbuffer->out_achans) > (cbuffer->_cout_interleaf?1:cbuffer->_cachans) ) {
 	  // output channels decreased
 	  cbuffer->bufferf = (float **)
-	    g_realloc(cbuffer->bufferf,(cbuffer->out_interleaf?1:cbuffer->out_achans)*sizeof(float *));
+	    lives_realloc(cbuffer->bufferf,(cbuffer->out_interleaf?1:cbuffer->out_achans)*sizeof(float *));
 	}
       }
 
@@ -2435,12 +2435,12 @@ static void *cache_my_audio(void *arg) {
       if (cbuffer->_fd!=-1) close(cbuffer->_fd);
 
       if (afile->opening) 
-	filename=g_strdup_printf("%s/%s/audiodump.pcm",prefs->tmpdir,mainw->files[cbuffer->fileno]->handle);
-      else filename=g_strdup_printf("%s/%s/audio",prefs->tmpdir,mainw->files[cbuffer->fileno]->handle);
+	filename=lives_strdup_printf("%s/%s/audiodump.pcm",prefs->tmpdir,mainw->files[cbuffer->fileno]->handle);
+      else filename=lives_strdup_printf("%s/%s/audio",prefs->tmpdir,mainw->files[cbuffer->fileno]->handle);
 
       cbuffer->_fd=open(filename,O_RDONLY);
       if (cbuffer->_fd==-1) {
-	g_printerr("audio cache thread: error opening %s\n",filename);
+	lives_printerr("audio cache thread: error opening %s\n",filename);
 	cbuffer->in_achans=0;
 	cbuffer->fileno=-1;  ///< let client handle this
 	cbuffer->is_ready=TRUE;
@@ -2451,7 +2451,7 @@ static void *cache_my_audio(void *arg) {
       setmode(cbuffer->_fd, O_BINARY);
 #endif
 
-      g_free(filename);
+      lives_free(filename);
     }
 
     if (cbuffer->fileno!=cbuffer->_cfileno||cbuffer->seek!=cbuffer->_cseek) {
@@ -2463,7 +2463,7 @@ static void *cache_my_audio(void *arg) {
     // prepare file read buffer
 
     if (cbuffer->bytesize!=cbuffer->_cbytesize) {
-      cbuffer->_filebuffer=(uint8_t *)g_realloc(cbuffer->_filebuffer,cbuffer->bytesize);
+      cbuffer->_filebuffer=(uint8_t *)lives_realloc(cbuffer->_filebuffer,cbuffer->bytesize);
 
       if (cbuffer->_filebuffer==NULL) {
 	cbuffer->_cbytesize=cbuffer->bytesize=0;
@@ -2527,7 +2527,7 @@ static void *cache_my_audio(void *arg) {
 
 lives_audio_buf_t *audio_cache_init (void) {
 
-  cache_buffer=(lives_audio_buf_t *)g_malloc0(sizeof(lives_audio_buf_t));
+  cache_buffer=(lives_audio_buf_t *)lives_malloc0(sizeof(lives_audio_buf_t));
   cache_buffer->is_ready=FALSE;
   cache_buffer->in_achans=0;
 
@@ -2750,9 +2750,9 @@ boolean apply_rte_audio_init(void) {
 
   if (!prefs->conserve_space) {
     mainw->error=FALSE;
-    com=g_strdup_printf("%s backup_audio %s",prefs->backend_sync,cfile->handle);
+    com=lives_strdup_printf("%s backup_audio %s",prefs->backend_sync,cfile->handle);
     lives_system(com,FALSE);
-    g_free(com);
+    lives_free(com);
     
     if (mainw->error) {
       d_print_failed();
@@ -2761,7 +2761,7 @@ boolean apply_rte_audio_init(void) {
   }
 
 audio_pos=(double)((cfile->start-1)*cfile->arate*cfile->achans*cfile->asampsize/8)/cfile->fps;
-  audio_file=g_build_filename(prefs->tmpdir,cfile->handle,"audio",NULL);
+  audio_file=lives_build_filename(prefs->tmpdir,cfile->handle,"audio",NULL);
 
   audio_fd=open(audio_file,O_RDWR|O_CREAT,DEF_FILE_PERMS);
 
@@ -2786,7 +2786,7 @@ audio_pos=(double)((cfile->start-1)*cfile->arate*cfile->achans*cfile->asampsize/
 void apply_rte_audio_end(boolean del) {
   close(audio_fd);
   if (del) unlink(audio_file);
-  g_free(audio_file);
+  lives_free(audio_file);
 }
 
 
@@ -2817,18 +2817,18 @@ boolean apply_rte_audio(int nframes) {
 
   onframes=nframes;
 
-  in_buff=(uint8_t *)g_try_malloc(tbytes);
+  in_buff=(uint8_t *)lives_try_malloc(tbytes);
   if (in_buff==NULL) return FALSE;
 
   if (cfile->asampsize==8) {
-    shortbuf=(short *)g_try_malloc(tbytes);
+    shortbuf=(short *)lives_try_malloc(tbytes);
     if (shortbuf==NULL) {
-      g_free(in_buff);
+      lives_free(in_buff);
       return FALSE;
     }
   }
 
-  fltbuf=(float **)g_malloc(cfile->achans*sizeof(float *));
+  fltbuf=(float **)lives_malloc(cfile->achans*sizeof(float *));
 
 
   if (mainw->agen_key==0) {
@@ -2838,11 +2838,11 @@ boolean apply_rte_audio(int nframes) {
       
     if (mainw->read_failed) {
       do_read_failed_error_s(audio_file,NULL);
-      if (mainw->read_failed_file!=NULL) g_free(mainw->read_failed_file);
+      if (mainw->read_failed_file!=NULL) lives_free(mainw->read_failed_file);
       mainw->read_failed_file=NULL;
-      g_free(fltbuf);
-      g_free(in_buff);
-      if (shortbuf!=NULL) g_free(shortbuf);
+      lives_free(fltbuf);
+      lives_free(in_buff);
+      if (shortbuf!=NULL) lives_free(shortbuf);
       return FALSE;
     }
 
@@ -2859,14 +2859,14 @@ boolean apply_rte_audio(int nframes) {
 
     for (i=0;i<cfile->achans;i++) {
       // convert s16 to non-interleaved float
-      fltbuf[i]=(float *)g_try_malloc(nframes*sizeof(float));
+      fltbuf[i]=(float *)lives_try_malloc(nframes*sizeof(float));
       if (fltbuf[i]==NULL) {
 	for (--i;i>=0;i--) {
-	  g_free(fltbuf[i]);
+	  lives_free(fltbuf[i]);
 	}
-	g_free(fltbuf);
-	if (shortbuf!=(short *)in_buff) g_free(shortbuf);
-	g_free(in_buff);
+	lives_free(fltbuf);
+	if (shortbuf!=(short *)in_buff) lives_free(shortbuf);
+	lives_free(in_buff);
 	return FALSE;
       }
       memset(fltbuf[i],0,nframes*sizeof(float));
@@ -2875,11 +2875,11 @@ boolean apply_rte_audio(int nframes) {
     
   }
   else {
-    fltbufni=(float *)g_try_malloc(nframes*cfile->achans*sizeof(float));
+    fltbufni=(float *)lives_try_malloc(nframes*cfile->achans*sizeof(float));
     if (fltbufni==NULL) {
-      g_free(fltbuf);
-      if (shortbuf!=(short *)in_buff) g_free(shortbuf);
-      g_free(in_buff);
+      lives_free(fltbuf);
+      if (shortbuf!=(short *)in_buff) lives_free(shortbuf);
+      lives_free(in_buff);
       return FALSE;
     }
     get_audio_from_plugin(fltbufni, cfile->achans, cfile->arate, nframes);
@@ -2902,15 +2902,15 @@ boolean apply_rte_audio(int nframes) {
 
     if (fltbufni==NULL) {
       for (i=0;i<cfile->achans;i++) {
-	g_free(fltbuf[i]);
+	lives_free(fltbuf[i]);
       }
     }
-    else g_free(fltbufni);
+    else lives_free(fltbufni);
     
-    g_free(fltbuf);
+    lives_free(fltbuf);
   
-    if (shortbuf!=(short *)in_buff) g_free(shortbuf);
-    g_free(in_buff);
+    if (shortbuf!=(short *)in_buff) lives_free(shortbuf);
+    lives_free(in_buff);
 
     return TRUE;
   }
@@ -2921,12 +2921,12 @@ boolean apply_rte_audio(int nframes) {
   
   if (fltbufni==NULL) {
     for (i=0;i<cfile->achans;i++) {
-      g_free(fltbuf[i]);
+      lives_free(fltbuf[i]);
     }
   }
-  else g_free(fltbufni);
+  else lives_free(fltbufni);
   
-  g_free(fltbuf);
+  lives_free(fltbuf);
   
   
   // save to file
@@ -2936,8 +2936,8 @@ boolean apply_rte_audio(int nframes) {
   lives_write(audio_fd,in_buff,tbytes,FALSE);
   audio_pos+=tbytes;
 
-  if (shortbuf!=(short *)in_buff) g_free(shortbuf);
-  g_free(in_buff);
+  if (shortbuf!=(short *)in_buff) lives_free(shortbuf);
+  lives_free(in_buff);
 
   if (mainw->write_failed) {
     do_write_failed_error_s(audio_file,NULL);
@@ -3004,9 +3004,9 @@ boolean push_audio_to_channel(weed_plant_t *achan, lives_audio_buf_t *abuf) {
       int swap=0;
       if (!abuf->s8_signed) swap=SWAP_U_TO_S;
       abuf->s16_signed=TRUE;
-      abuf->buffer16=(int16_t **)g_malloc(abuf->out_achans*sizeof(int16_t *));
+      abuf->buffer16=(int16_t **)lives_malloc(abuf->out_achans*sizeof(int16_t *));
       for (i=0;i<abuf->out_achans;i++) {
-	abuf->bufferf[i]=(float *)g_malloc(abuf->samples_filled*2);
+	abuf->bufferf[i]=(float *)lives_malloc(abuf->samples_filled*2);
 	sample_move_d8_d16 (abuf->buffer16[i],abuf->buffer8[i], abuf->samples_filled, abuf->samples_filled*2, 
 			    1.0, abuf->out_achans, abuf->out_achans, swap);
 
@@ -3016,9 +3016,9 @@ boolean push_audio_to_channel(weed_plant_t *achan, lives_audio_buf_t *abuf) {
 
     // try convert S16 -> float
     if (abuf->buffer16!=NULL) {
-      abuf->bufferf=(float **)g_malloc(abuf->out_achans*sizeof(float *));
+      abuf->bufferf=(float **)lives_malloc(abuf->out_achans*sizeof(float *));
       for (i=0;i<abuf->out_achans;i++) {
-	abuf->bufferf[i]=(float *)g_malloc(abuf->samples_filled*sizeof(float));
+	abuf->bufferf[i]=(float *)lives_malloc(abuf->samples_filled*sizeof(float));
 	if (!abuf->in_interleaf) {
 	  sample_move_d16_float(abuf->bufferf[i],abuf->buffer16[i],abuf->samples_filled,1,
 				(abuf->s16_signed?AFORM_SIGNED:AFORM_UNSIGNED),abuf->swap_endian,1.0);
@@ -3047,7 +3047,7 @@ boolean push_audio_to_channel(weed_plant_t *achan, lives_audio_buf_t *abuf) {
   scale=(float)trate/(float)abuf->arate;
 
   // malloc audio_data
-  dst=g_malloc(alen*tchans*sizeof(float));
+  dst=lives_malloc(alen*tchans*sizeof(float));
 
   // set channel values
   weed_set_voidptr_value(achan,"audio_data",dst);
@@ -3095,8 +3095,8 @@ boolean start_audio_stream(void) {
 
   // playback plugin wants an audio stream - so fork and run the stream
   // player
-  gchar *astname=g_strdup_printf("livesaudio-%d.pcm",capable->mainpid);
-  gchar *astname_out=g_strdup_printf("livesaudio-%d.stream",capable->mainpid);
+  gchar *astname=lives_strdup_printf("livesaudio-%d.pcm",capable->mainpid);
+  gchar *astname_out=lives_strdup_printf("livesaudio-%d.stream",capable->mainpid);
   gchar *astreamer,*com;
 
   int arate=0;
@@ -3105,14 +3105,14 @@ boolean start_audio_stream(void) {
 
   boolean timeout=FALSE;
 
-  astream_name=g_build_filename(prefs->tmpdir,astname,NULL);
+  astream_name=lives_build_filename(prefs->tmpdir,astname,NULL);
 
   mkfifo(astream_name,S_IRUSR|S_IWUSR);
 
-  astream_name_out=g_build_filename(prefs->tmpdir,astname_out,NULL);
+  astream_name_out=lives_build_filename(prefs->tmpdir,astname_out,NULL);
 
-  g_free(astname);
-  g_free(astname_out);
+  lives_free(astname);
+  lives_free(astname_out);
 
   if (prefs->audio_player==AUD_PLAYER_PULSE) {
 #ifdef HAVE_PULSE_AUDIO
@@ -3129,9 +3129,9 @@ boolean start_audio_stream(void) {
 #endif
   }
 
-  astreamer=g_build_filename(prefs->lib_dir,PLUGIN_EXEC_DIR,PLUGIN_AUDIO_STREAM,playername,NULL);
-  com=g_strdup_printf("%s play %d \"%s\" \"%s\" %d",astreamer,mainw->vpp->audio_codec,astream_name,astream_name_out,arate);
-  g_free(astreamer);
+  astreamer=lives_build_filename(prefs->lib_dir,PLUGIN_EXEC_DIR,PLUGIN_AUDIO_STREAM,playername,NULL);
+  com=lives_strdup_printf("%s play %d \"%s\" \"%s\" %d",astreamer,mainw->vpp->audio_codec,astream_name,astream_name_out,arate);
+  lives_free(astreamer);
 
   astream_pgid=lives_fork(com);
 
@@ -3141,7 +3141,7 @@ boolean start_audio_stream(void) {
     // wait for other thread to create stream (or timeout)
     afd=open(astream_name,O_WRONLY|O_SYNC);
     if (afd!=-1) break;
-    g_usleep(prefs->sleep_time);
+    lives_usleep(prefs->sleep_time);
   } while (!(timeout=lives_alarm_get(alarm_handle)));
 
   lives_alarm_clear(alarm_handle);
@@ -3166,8 +3166,8 @@ boolean start_audio_stream(void) {
   setmode(afd, O_BINARY);
 #endif
 
-  g_free(astream_name);
-  g_free(astream_name_out);
+  lives_free(astream_name);
+  lives_free(astream_name_out);
 
   return TRUE;
 }
@@ -3178,17 +3178,17 @@ void stop_audio_stream(void) {
   if (astream_pgid>0) {
     // if we were streaming audio, kill it
     const gchar *playername="audiostreamer.pl";
-    gchar *astname=g_strdup_printf("livesaudio-%d.pcm",capable->mainpid);
-    gchar *astname_out=g_strdup_printf("livesaudio-%d.stream",capable->mainpid);
-    gchar *astreamer=g_build_filename(prefs->lib_dir,PLUGIN_EXEC_DIR,PLUGIN_AUDIO_STREAM,playername,NULL);
+    gchar *astname=lives_strdup_printf("livesaudio-%d.pcm",capable->mainpid);
+    gchar *astname_out=lives_strdup_printf("livesaudio-%d.stream",capable->mainpid);
+    gchar *astreamer=lives_build_filename(prefs->lib_dir,PLUGIN_EXEC_DIR,PLUGIN_AUDIO_STREAM,playername,NULL);
 
-    gchar *astream_name=g_build_filename(prefs->tmpdir,astname,NULL);
-    gchar *astream_name_out=g_build_filename(prefs->tmpdir,astname_out,NULL);
+    gchar *astream_name=lives_build_filename(prefs->tmpdir,astname,NULL);
+    gchar *astream_name_out=lives_build_filename(prefs->tmpdir,astname_out,NULL);
 
     gchar *com;
 
-    g_free(astname);
-    g_free(astname_out);
+    lives_free(astname);
+    lives_free(astname_out);
 
     if (prefs->audio_player==AUD_PLAYER_PULSE) {
 #ifdef HAVE_PULSE_AUDIO
@@ -3205,14 +3205,14 @@ void stop_audio_stream(void) {
 
     lives_killpg(astream_pgid,LIVES_SIGKILL);
     unlink(astream_name);
-    g_free(astream_name);
+    lives_free(astream_name);
 
     // astreamer should remove cooked stream
-    com=g_strdup_printf("\"%s\" cleanup %d \"%s\"",astreamer,mainw->vpp->audio_codec,astream_name_out);
+    com=lives_strdup_printf("\"%s\" cleanup %d \"%s\"",astreamer,mainw->vpp->audio_codec,astream_name_out);
     lives_system(com,FALSE);
-    g_free(astreamer);
-    g_free(com);
-    g_free(astream_name_out);
+    lives_free(astreamer);
+    lives_free(com);
+    lives_free(astream_name_out);
 
   }
 
@@ -3221,16 +3221,16 @@ void stop_audio_stream(void) {
 
 void clear_audio_stream(void) {
   // remove raw and cooked streams
-  gchar *astname=g_strdup_printf("livesaudio-%d.pcm",capable->mainpid);
-  gchar *astream_name=g_build_filename(prefs->tmpdir,astname,NULL);
-  gchar *astname_out=g_strdup_printf("livesaudio-%d.stream",capable->mainpid);
-  gchar *astream_name_out=g_build_filename(prefs->tmpdir,astname_out,NULL);
+  gchar *astname=lives_strdup_printf("livesaudio-%d.pcm",capable->mainpid);
+  gchar *astream_name=lives_build_filename(prefs->tmpdir,astname,NULL);
+  gchar *astname_out=lives_strdup_printf("livesaudio-%d.stream",capable->mainpid);
+  gchar *astream_name_out=lives_build_filename(prefs->tmpdir,astname_out,NULL);
   unlink(astream_name);
   unlink(astream_name_out);
-  g_free(astname);
-  g_free(astream_name);
-  g_free(astname_out);
-  g_free(astream_name_out);
+  lives_free(astname);
+  lives_free(astream_name);
+  lives_free(astname_out);
+  lives_free(astream_name_out);
 }
 
 

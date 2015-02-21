@@ -56,9 +56,9 @@ void fd_connect_spinbutton(lives_rfx_t *);
 
 void fd_tweak(lives_rfx_t *);
 
-void after_aspect_width_changed (LiVESSpinButton *, gpointer);
+void after_aspect_width_changed (LiVESSpinButton *, livespointer);
 
-void after_aspect_height_changed (LiVESToggleButton *, gpointer);
+void after_aspect_height_changed (LiVESToggleButton *, livespointer);
 
 void special_cleanup (void);
 

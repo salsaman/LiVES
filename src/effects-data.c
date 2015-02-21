@@ -3897,7 +3897,7 @@ static LiVESTreeModel *inparam_fx_model (boolean is_chans, int key) {
       lives_tree_store_append (tstore, &iter2, &iter1);
       lives_tree_store_set(tstore,&iter2,KEY_COLUMN,text,NAME_COLUMN,text,KEYVAL_COLUMN,i,MODEVAL_COLUMN,j,-1);
 
-      lives_free(fxname); weed_free(text);
+      lives_free(fxname); lives_free(text);
     }
 
     lives_free(keystr);

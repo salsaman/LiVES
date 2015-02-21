@@ -3772,11 +3772,13 @@ boolean add_file_info(const gchar *check_handle, boolean aud_only) {
   if (cfile->opening) return TRUE;
 
   if (cfile->bpp==256) {
-    mesg1=lives_strdup_printf(_ ("Frames=%d type=%s size=%dx%d *bpp=Greyscale* fps=%.3f\nAudio:"),cfile->frames,cfile->type,cfile->hsize,cfile->vsize,cfile->fps);
+    mesg1=lives_strdup_printf(_ ("Frames=%d type=%s size=%dx%d *bpp=Greyscale* fps=%.3f\nAudio:"),cfile->frames,
+			      cfile->type,cfile->hsize,cfile->vsize,cfile->fps);
   }
   else {
     if (cfile->bpp!=32) cfile->bpp=24; // assume RGB24  *** TODO - check
-    mesg1=lives_strdup_printf(_ ("Frames=%d type=%s size=%dx%d bpp=%d fps=%.3f\nAudio:"),cfile->frames,cfile->type,cfile->hsize,cfile->vsize,cfile->bpp,cfile->fps);
+    mesg1=lives_strdup_printf(_ ("Frames=%d type=%s size=%dx%d bpp=%d fps=%.3f\nAudio:"),cfile->frames,
+			      cfile->type,cfile->hsize,cfile->vsize,cfile->bpp,cfile->fps);
   }
 
   if (cfile->achans==0) {
@@ -4780,7 +4782,8 @@ void restore_file(const gchar *file_name) {
   }
 
   lives_snprintf(cfile->type,40,"Frames");
-  mesg1=lives_strdup_printf(_ ("Frames=%d type=%s size=%dx%d bpp=%d fps=%.3f\nAudio:"),cfile->frames,cfile->type,cfile->hsize,cfile->vsize,cfile->bpp,cfile->fps);
+  mesg1=lives_strdup_printf(_ ("Frames=%d type=%s size=%dx%d bpp=%d fps=%.3f\nAudio:"),cfile->frames,cfile->type,
+			    cfile->hsize,cfile->vsize,cfile->bpp,cfile->fps);
 
   if (cfile->afilesize==0l) {
     cfile->achans=0;

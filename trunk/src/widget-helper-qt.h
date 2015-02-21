@@ -13,6 +13,10 @@
 #ifndef HAS_LIVES_WIDGET_HELPER_QT_H
 #define HAS_LIVES_WIDGET_HELPER_QT_H
 
+#ifdef __cplusplus
+extern "C++" {
+#endif
+
 #ifdef GUI_QT
 // just for testing !!!!
 
@@ -492,7 +496,9 @@ typedef int (*LiVESCompareFunc) (livesconstpointer a, livesconstpointer b);
 #endif
 
 
+extern "C" {
 uint32_t lives_timer_add(uint32_t interval, LiVESWidgetSourceFunc function, livespointer data);
+}
 
 #define G_PRIORITY_LOW 0
 #define G_PRIORITY_HIGH 1
@@ -907,8 +913,9 @@ typedef uint32_t LiVESEventMask;
 
 // add "unmap", "color-set", "drag-data-received", "mode-changed", "accept-position", "edited", "set-focus-child", "state-changed", "switch-page", "size-prepared"
 
+extern "C" {
 LiVESWidgetColor *lives_widget_color_copy(LiVESWidgetColor *c1orNULL, const LiVESWidgetColor *c2);
-
+}
 
 static QString make_col(LiVESWidgetColor *col) {
   QString qc = QString("rgba(%1,%2,%3,%4)")
@@ -4669,7 +4676,9 @@ typedef Qt::Alignment LiVESJustification;
 #define LIVES_JUSTIFY_CENTER Qt::AlignHCenter
 #define LIVES_JUSTIFY_FILL   Qt::AlignJustify
 
+extern "C" {
 boolean lives_container_remove(LiVESContainer *, LiVESWidget *);
+}
 
 LiVESWidget::~LiVESWidget() {
   if (LIVES_IS_SPIN_BUTTON(this)) {
@@ -4891,5 +4900,10 @@ void LingoLayout::render_text(lives_painter_t *painter) {
 
 
 #endif
+
+#ifdef __cplusplus
+}
+#endif
+
 
 #endif

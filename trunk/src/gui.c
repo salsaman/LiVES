@@ -3094,8 +3094,9 @@ void fade_background(void) {
   lives_widget_set_fg_color (mainw->vps_label, LIVES_WIDGET_STATE_NORMAL, &palette->fade_colour);
   lives_widget_set_bg_color (mainw->vbox1, LIVES_WIDGET_STATE_NORMAL, &palette->fade_colour);
   lives_widget_set_bg_color (mainw->LiVES, LIVES_WIDGET_STATE_NORMAL, &palette->fade_colour);
-
   lives_widget_set_bg_color (mainw->eventbox3, LIVES_WIDGET_STATE_NORMAL, &palette->fade_colour);
+  lives_widget_set_bg_color (lives_widget_get_parent(mainw->message_box), LIVES_WIDGET_STATE_NORMAL, &palette->fade_colour);
+
   lives_widget_set_bg_color (mainw->eventbox4, LIVES_WIDGET_STATE_NORMAL, &palette->fade_colour);
   lives_widget_set_bg_color (mainw->eventbox, LIVES_WIDGET_STATE_NORMAL, &palette->fade_colour);
   lives_widget_set_bg_color (mainw->pl_eventbox, LIVES_WIDGET_STATE_NORMAL, &palette->fade_colour);
@@ -3104,7 +3105,11 @@ void fade_background(void) {
   lives_widget_set_bg_color (mainw->frame1, LIVES_WIDGET_STATE_NORMAL, &palette->fade_colour);
   lives_widget_set_bg_color (mainw->frame2, LIVES_WIDGET_STATE_NORMAL, &palette->fade_colour);
   lives_widget_set_bg_color (mainw->freventbox0, LIVES_WIDGET_STATE_NORMAL, &palette->fade_colour);
+  lives_widget_set_app_paintable(mainw->freventbox0,FALSE);
+
   lives_widget_set_bg_color (mainw->freventbox1, LIVES_WIDGET_STATE_NORMAL, &palette->fade_colour);
+  lives_widget_set_app_paintable(mainw->freventbox1,FALSE);
+
   lives_frame_set_shadow_type (LIVES_FRAME(mainw->frame1), LIVES_SHADOW_NONE);
   lives_frame_set_label (LIVES_FRAME(mainw->frame1), "");
   lives_frame_set_shadow_type (LIVES_FRAME(mainw->frame2), LIVES_SHADOW_NONE);
@@ -3198,6 +3203,8 @@ void fade_background(void) {
 			       (fade_closure=lives_cclosure_new (LIVES_GUI_CALLBACK (fade_callback),NULL,NULL)));
     }
   }
+
+  lives_widget_queue_draw(mainw->vbox1);
 }
 
 
@@ -3241,7 +3248,18 @@ void unfade_background(void) {
     lives_widget_set_fg_color(lives_frame_get_label_widget(LIVES_FRAME(mainw->frame2)), LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
   }
 
+  lives_widget_set_fg_color (mainw->curf_label, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
+  lives_widget_set_fg_color (mainw->vps_label, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
+  lives_widget_set_bg_color (mainw->vbox1, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
+  lives_widget_set_bg_color (mainw->LiVES, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
+  lives_widget_set_bg_color (mainw->eventbox3, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
+  lives_widget_set_bg_color (lives_widget_get_parent(mainw->message_box), LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
+
   lives_widget_set_bg_color (mainw->eventbox4, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
+  lives_widget_set_bg_color (mainw->eventbox, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
+  lives_widget_set_bg_color (mainw->pl_eventbox, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
+  lives_widget_set_bg_color (mainw->play_image, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
+
   lives_widget_set_bg_color (mainw->frame1, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
   lives_widget_set_bg_color (mainw->frame2, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
   lives_widget_set_bg_color (mainw->freventbox0, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
@@ -3353,7 +3371,13 @@ void unfade_background(void) {
   else {
     resize(1);
   }
+
+  lives_widget_context_update();
+
+  lives_widget_set_app_paintable(mainw->freventbox0,TRUE);
+  lives_widget_set_app_paintable(mainw->freventbox1,TRUE);
 }
+
 
 
 void fullscreen_internal(void) {

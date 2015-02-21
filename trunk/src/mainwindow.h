@@ -19,6 +19,8 @@
 
 #ifdef HAVE_PULSE_AUDIO
 #include "pulse.h"
+#else
+#include "audio.h"
 #endif
 
 // hardware related prefs

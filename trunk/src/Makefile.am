@@ -207,7 +207,6 @@ lives_exe_LDADD = @X11_LIBS@ @MJPEGTOOLS_LIBS@ $(osc_LDADD) $(jack_LDADD) $(ldvg
 	 $(giw_LDADD) $(v4l1_LDADD) \
 	@UNICAP_LIBS@
 
-#-D__STDC_CONSTANT_MACROS
 
 AM_CFLAGS = -Wstrict-aliasing=0 $(yuv4mpeg_CFLAGS) $(ldvgrab_CFLAGS) $(dvgrab_CFLAGS) \
 	$(oil_CFLAGS) \
@@ -215,7 +214,8 @@ AM_CFLAGS = -Wstrict-aliasing=0 $(yuv4mpeg_CFLAGS) $(ldvgrab_CFLAGS) $(dvgrab_CF
 	$(jack_CFLAGS) $(pulse_CFLAGS) $(giw_CFLAGS) $(unicap_CFLAGS) $(libweed_CFLAGS) $(libweed_compat_CFLAGS) \
 	-DLIVES_LIBDIR=\""$(libdir)"\" $(gtk_def)
 
-AM_CXXFLAGS = -D__STDC_CONSTANT_MACROS
+AM_CXXFLAGS = $(AM_CFLAGS) #-I/usr/include/qt5 -fPIE
+
 
 if HAVE_AVFORMAT
 if HAVE_AVCODEC

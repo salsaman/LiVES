@@ -1350,6 +1350,7 @@ static boolean expose_track_event (LiVESWidget *eventbox, LiVESXEventExpose *eve
  draw1:
 
   if (LIVES_POINTER_TO_INT(lives_widget_object_get_data (LIVES_WIDGET_OBJECT(eventbox), "drawn"))) {
+    // seems to not always work in gtk+ 3.10.x
     if (bgimage!=NULL&&lives_painter_image_surface_get_width(bgimage)>0) {
       lives_painter_set_source_surface (cr, bgimage, startx, starty);
       lives_painter_rectangle(cr,startx,starty,width,height);
@@ -1366,9 +1367,11 @@ static boolean expose_track_event (LiVESWidget *eventbox, LiVESXEventExpose *eve
 	mt->idlefunc=mt_idle_add(mt);
       }
       if (cairo==NULL) lives_painter_destroy (cr);
+
       return TRUE;
     }
   }
+
 
 #if !GTK_CHECK_VERSION(3,0,0)
   width=lives_widget_get_allocation_width(eventbox);
@@ -2026,6 +2029,8 @@ void scroll_tracks (lives_mt *mt, int top_track, boolean set_value) {
 
   lives_table_set_row_spacings (LIVES_TABLE(mt->timeline_table),widget_opts.packing_height>>1);
   lives_table_set_col_spacings (LIVES_TABLE(mt->timeline_table),0);
+
+  lives_widget_set_vexpand(mt->timeline_table,FALSE);
 
   if (mt->opts.back_audio_tracks>0&&mt->audio_draws==NULL) mt->opts.back_audio_tracks=0;
 
@@ -21859,7 +21864,8 @@ static void on_amixer_reset_clicked (LiVESButton *button, lives_mt *mt) {
 static void after_amixer_gang_toggled (LiVESToggleButton *toggle, lives_amixer_t *amixer) {
   lives_widget_set_sensitive(amixer->inv_checkbutton,(lives_toggle_button_get_active(toggle)));
   if (prefs->lamp_buttons) {
-    if (lives_toggle_button_get_active(toggle)) lives_widget_set_bg_color(LIVES_WIDGET(toggle), LIVES_WIDGET_STATE_PRELIGHT, &palette->light_green);
+    if (lives_toggle_button_get_active(toggle)) 
+      lives_widget_set_bg_color(LIVES_WIDGET(toggle), LIVES_WIDGET_STATE_PRELIGHT, &palette->light_green);
     else lives_widget_set_bg_color(LIVES_WIDGET(toggle), LIVES_WIDGET_STATE_PRELIGHT, &palette->dark_red);
   }
 }
@@ -21867,7 +21873,8 @@ static void after_amixer_gang_toggled (LiVESToggleButton *toggle, lives_amixer_t
 
 static void after_amixer_inv_toggled (LiVESToggleButton *toggle, lives_amixer_t *amixer) {
   if (prefs->lamp_buttons) {
-    if (lives_toggle_button_get_active(toggle)) lives_widget_set_bg_color(LIVES_WIDGET(toggle), LIVES_WIDGET_STATE_PRELIGHT, &palette->light_green);
+    if (lives_toggle_button_get_active(toggle)) 
+      lives_widget_set_bg_color(LIVES_WIDGET(toggle), LIVES_WIDGET_STATE_PRELIGHT, &palette->light_green);
     else lives_widget_set_bg_color(LIVES_WIDGET(toggle), LIVES_WIDGET_STATE_PRELIGHT, &palette->dark_red);
   }
 }

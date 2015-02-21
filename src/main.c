@@ -5838,6 +5838,7 @@ void load_frame_image(int frame) {
 #if GTK_CHECK_VERSION(3,0,0)
 	int rwidth=mainw->ce_frame_width-H_RESIZE_ADJUST*2;
 	int rheight=mainw->ce_frame_height-V_RESIZE_ADJUST*2;
+
 	if (mainw->double_size) {
 	  rwidth*=4;
 	  rheight*=4;
@@ -5854,6 +5855,7 @@ void load_frame_image(int frame) {
 	  if (mainw->pheight<2) mainw->pheight=weed_get_int_value(mainw->frame_layer,"height",&weed_error);
 
 	}
+
 	calc_maxspect(rwidth,rheight,&mainw->pwidth,&mainw->pheight);
 
 	check_layer_ready(mainw->frame_layer);
@@ -6080,6 +6082,12 @@ void load_frame_image(int frame) {
     if (mainw->play_window!=NULL&&!mainw->fs) {
       mainw->pwidth=lives_widget_get_allocation_width(mainw->play_window);
       mainw->pheight=lives_widget_get_allocation_height(mainw->play_window);
+    }
+    else if (!mainw->fs) {
+      if (mainw->pwidth>lives_widget_get_allocation_width(mainw->play_image)-widget_opts.border_width*2) 
+	mainw->pwidth=lives_widget_get_allocation_width(mainw->play_image)-widget_opts.border_width*2;
+      if (mainw->pheight>lives_widget_get_allocation_height(mainw->play_image)-widget_opts.border_width*2) 
+	mainw->pheight=lives_widget_get_allocation_height(mainw->play_image)-widget_opts.border_width*2;
     }
 
     pwidth=weed_get_int_value(mainw->frame_layer,"width",&weed_error)*

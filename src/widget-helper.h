@@ -7,6 +7,7 @@
 #ifndef HAS_LIVES_WIDGET_HELPER_H
 #define HAS_LIVES_WIDGET_HELPER_H
 
+
 #ifndef M_PI
 #define M_PI 3.1415926536
 #endif
@@ -36,6 +37,8 @@ typedef enum {
 #include "widget-helper-qt.h"
 #endif
 
+
+//#ifndef __cplusplus
 
 // basic functions (wrappers for Toolkit functions)
 
@@ -793,6 +796,7 @@ LiVESWidget *add_vsep_to_box (LiVESBox *);
 
 LiVESWidget *add_fill_to_box (LiVESBox *);
 
+#endif // cplusplus
 
 #define LIVES_JUSTIFY_DEFAULT (widget_opts.default_justify)
 
@@ -870,7 +874,7 @@ const widget_opts_t def_widget_opts = {
 
 extern const widget_opts_t def_widget_opts;
 
-#endif
+//#endif
 
 #endif
 

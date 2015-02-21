@@ -35,10 +35,10 @@ void create_merge_dialog (void) {
   LiVESWidget *cancelbutton;
   LiVESWidget *okbutton;
 
-  GSList *radiobutton_align_group = NULL;
-  GSList *radiobutton_insdrop_group = NULL;
+  LiVESSList *radiobutton_align_group = NULL;
+  LiVESSList *radiobutton_insdrop_group = NULL;
 
-  GList *retvals;
+  LiVESList *retvals;
 
   LiVESAccelGroup *accel_group;
 
@@ -51,8 +51,8 @@ void create_merge_dialog (void) {
 
   register int i;
 
-  merge_opts=(_merge_opts*)(g_malloc(sizeof(_merge_opts)));
-  merge_opts->list_to_rfx_index=(int *)g_malloc (sizint*(mainw->num_rendered_effects_builtin+
+  merge_opts=(_merge_opts*)(lives_malloc(sizeof(_merge_opts)));
+  merge_opts->list_to_rfx_index=(int *)lives_malloc (sizint*(mainw->num_rendered_effects_builtin+
 							 mainw->num_rendered_effects_custom+
 							 mainw->num_rendered_effects_test));
   merge_opts->trans_list=NULL;
@@ -64,21 +64,21 @@ void create_merge_dialog (void) {
       if (i==mainw->last_transition_idx) defstart=idx;
       merge_opts->list_to_rfx_index[idx++]=i;
       if (rfx->status==RFX_STATUS_CUSTOM) {
-	merge_opts->trans_list = g_list_append (merge_opts->trans_list,g_strconcat ( _(rfx->menu_text)," (custom)",NULL));
+	merge_opts->trans_list = lives_list_append (merge_opts->trans_list,lives_strconcat ( _(rfx->menu_text)," (custom)",NULL));
       }
       else if (rfx->status==RFX_STATUS_TEST) {
-	merge_opts->trans_list = g_list_append (merge_opts->trans_list,g_strconcat ( _(rfx->menu_text)," (test)",NULL));
+	merge_opts->trans_list = lives_list_append (merge_opts->trans_list,lives_strconcat ( _(rfx->menu_text)," (test)",NULL));
       }
       else {
-	merge_opts->trans_list = g_list_append (merge_opts->trans_list, g_strdup(_(rfx->menu_text)));
+	merge_opts->trans_list = lives_list_append (merge_opts->trans_list, lives_strdup(_(rfx->menu_text)));
       }
     }
   }
 
   if (!idx) {
     do_rendered_fx_dialog();
-    g_free (merge_opts->list_to_rfx_index);
-    g_free (merge_opts);
+    lives_free (merge_opts->list_to_rfx_index);
+    lives_free (merge_opts);
     return;
   }
 
@@ -99,17 +99,17 @@ void create_merge_dialog (void) {
   hbox = lives_hbox_new (FALSE, 0);
   lives_box_pack_start (LIVES_BOX (vbox), hbox, FALSE, FALSE, widget_opts.packing_height*2);
 
-  txt=g_strdup_printf(_ ("Merge Clipboard [ %d Frames ]       With Selection [ %d Frames ]"),clipboard->frames,cfile->end-cfile->start+1);
+  txt=lives_strdup_printf(_ ("Merge Clipboard [ %d Frames ]       With Selection [ %d Frames ]"),clipboard->frames,cfile->end-cfile->start+1);
   if (prefs->ins_resample&&clipboard->fps!=cfile->fps) {
     cb_frames=count_resampled_frames(clipboard->frames,clipboard->fps,cfile->fps);
     if (!(cb_frames==clipboard->frames)) {
-      g_free(txt);
-      txt=g_strdup_printf(_ ("Merge Clipboard [ %d Frames (resampled) ]       With Selection [ %d Frames ]"),cb_frames,cfile->end-cfile->start+1);
+      lives_free(txt);
+      txt=lives_strdup_printf(_ ("Merge Clipboard [ %d Frames (resampled) ]       With Selection [ %d Frames ]"),cb_frames,cfile->end-cfile->start+1);
     }
   }
 
   label = lives_standard_label_new (txt);
-  g_free(txt);
+  lives_free(txt);
 
   lives_box_pack_start (LIVES_BOX (hbox), label, FALSE, FALSE, 0);
 
@@ -196,8 +196,8 @@ void create_merge_dialog (void) {
   if (retvals!=NULL) {
     // now apply visually anything we got from onchange_init
     //param_demarshall (rfx,retvals,TRUE,TRUE);
-    g_list_free_strings (retvals);
-    g_list_free (retvals);
+    lives_list_free_strings (retvals);
+    lives_list_free (retvals);
   }
 
   // done !
@@ -241,22 +241,22 @@ void create_merge_dialog (void) {
   }
 }
 
-static void bang (LiVESWidget *widget, gpointer null) {
+static void bang (LiVESWidget *widget, livespointer null) {
   lives_widget_destroy (widget);
 }
 
 
-void on_trans_method_changed (LiVESCombo *combo, gpointer user_data) {
+void on_trans_method_changed (LiVESCombo *combo, livespointer user_data) {
   lives_rfx_t *rfx;
 
-  GList *retvals;
+  LiVESList *retvals;
 
   char *txt=lives_combo_get_active_text (combo);
 
   int idx;
 
   if (!strlen (txt)) {
-    g_free(txt);
+    lives_free(txt);
     return;
   }
 
@@ -267,7 +267,7 @@ void on_trans_method_changed (LiVESCombo *combo, gpointer user_data) {
 
   idx=lives_list_index(merge_opts->trans_list,txt);
 
-  g_free(txt);
+  lives_free(txt);
 
   mainw->last_transition_idx=merge_opts->list_to_rfx_index[idx];
   rfx=&mainw->rendered_fx[mainw->last_transition_idx];
@@ -280,8 +280,8 @@ void on_trans_method_changed (LiVESCombo *combo, gpointer user_data) {
   if (retvals!=NULL) {
     // now apply visually anything we got from onchange_init
     param_demarshall (rfx,retvals,TRUE,TRUE);
-    g_list_free_strings (retvals);
-    g_list_free (retvals);
+    lives_list_free_strings (retvals);
+    lives_list_free (retvals);
   }
 
   merge_opts->align_start=!merge_opts->align_start;
@@ -293,7 +293,7 @@ void on_trans_method_changed (LiVESCombo *combo, gpointer user_data) {
 
 void
 on_merge_activate                     (LiVESMenuItem     *menuitem,
-                                        gpointer         user_data)
+                                        livespointer         user_data)
 {
   create_merge_dialog();
 
@@ -308,7 +308,7 @@ on_merge_activate                     (LiVESMenuItem     *menuitem,
 
 void
 on_merge_cancel_clicked                   (LiVESButton       *button,
-					   gpointer         user_data)
+					   livespointer         user_data)
 {
   lives_rfx_t *rfx=(lives_rfx_t *)user_data;
   on_paramwindow_cancel_clicked (NULL,rfx);
@@ -319,10 +319,10 @@ on_merge_cancel_clicked                   (LiVESButton       *button,
   mainw->last_transition_loop_to_fit=merge_opts->loop_to_fit;
   mainw->last_transition_ins_frames=merge_opts->ins_frames;
   mainw->last_transition_align_start=merge_opts->align_start;
-  g_list_free_strings (merge_opts->trans_list);
-  g_list_free (merge_opts->trans_list);
-  g_free (merge_opts->list_to_rfx_index);
-  g_free(merge_opts);
+  lives_list_free_strings (merge_opts->trans_list);
+  lives_list_free (merge_opts->trans_list);
+  lives_free (merge_opts->list_to_rfx_index);
+  lives_free(merge_opts);
 }
 
 
@@ -331,7 +331,7 @@ on_merge_cancel_clicked                   (LiVESButton       *button,
 
 void
 on_merge_ok_clicked                   (LiVESButton       *button,
-				       gpointer         user_data)
+				       livespointer         user_data)
 {
   gchar *msg;
   int start,end;
@@ -363,9 +363,9 @@ on_merge_ok_clicked                   (LiVESButton       *button,
       on_paramwindow_cancel_clicked (NULL,rfx);
       lives_widget_destroy(merge_opts->merge_dialog);
       lives_widget_context_update();
-      g_list_free (merge_opts->trans_list);
-      g_free (merge_opts->list_to_rfx_index);
-      g_free(merge_opts);
+      lives_list_free (merge_opts->trans_list);
+      lives_free (merge_opts->list_to_rfx_index);
+      lives_free(merge_opts);
       return;
     }
   }
@@ -378,9 +378,9 @@ on_merge_ok_clicked                   (LiVESButton       *button,
   on_paramwindow_cancel_clicked (NULL,rfx);
   lives_widget_destroy(merge_opts->merge_dialog);
   lives_widget_context_update();
-  g_list_free (merge_opts->trans_list);
-  g_free (merge_opts->list_to_rfx_index);
-  g_free(merge_opts);
+  lives_list_free (merge_opts->trans_list);
+  lives_free (merge_opts->list_to_rfx_index);
+  lives_free(merge_opts);
 
   // if pref is set, resample clipboard video
   if (prefs->ins_resample&&cfile->fps!=clipboard->fps) {
@@ -391,9 +391,9 @@ on_merge_ok_clicked                   (LiVESButton       *button,
     times_to_loop=1;
   }
 
-  msg=g_strdup(_ ("Merging clipboard with selection..."));
+  msg=lives_strdup(_ ("Merging clipboard with selection..."));
   d_print(msg);
-  g_free(msg);
+  lives_free(msg);
 
   excess_frames=clipboard->frames-(cfile->end-cfile->start+1);
   if (excess_frames<0) excess_frames=0;
@@ -413,9 +413,9 @@ on_merge_ok_clicked                   (LiVESButton       *button,
   // insert pre-frames
   if (!mainw->last_transition_align_start&&excess_frames>0&&mainw->last_transition_ins_frames) {
     mainw->insert_after=FALSE;
-    msg=g_strdup_printf(P_ ("inserting %d extra frame before merge\n","inserting %d extra frames before merge\n",excess_frames),excess_frames);
+    msg=lives_strdup_printf(P_ ("inserting %d extra frame before merge\n","inserting %d extra frames before merge\n",excess_frames),excess_frames);
     d_print(msg);
-    g_free(msg);
+    lives_free(msg);
   
     // fx1_start and fx2_start indicate the clipboard start/end values, fx2_bool is insert_with_audio
     // TODO - allow this to be cancelled
@@ -532,9 +532,9 @@ on_merge_ok_clicked                   (LiVESButton       *button,
   // insert any post frames
   if (mainw->last_transition_align_start&&excess_frames>0&&mainw->last_transition_ins_frames) {
     mainw->insert_after=TRUE;
-    msg=g_strdup_printf(P_ ("now inserting %d extra frame\n","now inserting %d extra frames\n",excess_frames),excess_frames);
+    msg=lives_strdup_printf(P_ ("now inserting %d extra frame\n","now inserting %d extra frames\n",excess_frames),excess_frames);
     d_print(msg);
-    g_free(msg);
+    lives_free(msg);
     
       
     // fx1_start and fx2_start hold the clipboard start/end values
@@ -577,24 +577,24 @@ on_merge_ok_clicked                   (LiVESButton       *button,
 }
 
 
-void after_spinbutton_loops_changed (LiVESSpinButton *spinbutton, gpointer user_data) {
+void after_spinbutton_loops_changed (LiVESSpinButton *spinbutton, livespointer user_data) {
   setmergealign ();
 }
 
 
-void on_align_start_end_toggled (LiVESToggleButton *togglebutton, gpointer user_data) {
+void on_align_start_end_toggled (LiVESToggleButton *togglebutton, livespointer user_data) {
   merge_opts->align_start=!merge_opts->align_start;
   setmergealign ();
 }
 
 
-void on_fit_toggled (LiVESToggleButton *togglebutton, gpointer user_data) {
+void on_fit_toggled (LiVESToggleButton *togglebutton, livespointer user_data) {
   merge_opts->loop_to_fit=!merge_opts->loop_to_fit;
   lives_widget_set_sensitive(merge_opts->spinbutton_loops,!merge_opts->loop_to_fit);
   setmergealign();
 }
 
 
-void on_ins_frames_toggled (LiVESToggleButton *togglebutton, gpointer user_data) {
+void on_ins_frames_toggled (LiVESToggleButton *togglebutton, livespointer user_data) {
   merge_opts->ins_frames=!merge_opts->ins_frames;
 }

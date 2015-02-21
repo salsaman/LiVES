@@ -1,10 +1,10 @@
 /*htm sockets*/
 
-void *OpenHTMSocket(const char *host, int portnumber, gboolean sender);
+void *OpenHTMSocket(const char *host, int portnumber, boolean sender);
 
-gboolean lives_stream_out(void *htmsendhandle, size_t length_in_bytes, void *buffer);
+boolean lives_stream_out(void *htmsendhandle, size_t length_in_bytes, void *buffer);
 
-ssize_t lives_stream_in(void *htmrecvhandle, size_t length, void *buffer, gboolean block);
+ssize_t lives_stream_in(void *htmrecvhandle, size_t length, void *buffer, boolean block);
 
 void CloseHTMSocket(void *htmsendhandle);
 

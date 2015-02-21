@@ -1,6 +1,6 @@
 // htmsocket.c
 // LiVES
-// (c) G. Finch 2008 - 2012  <salsaman@gmail.com>
+// (c) G. Finch 2008 - 2015  <salsaman@gmail.com>
 // released under the GNU GPL 3 or later
 // see file ../COPYING for licensing details
 
@@ -23,8 +23,6 @@
 #endif
 
 #include "main.h"
-#include "support.h"
-
 #include "htmsocket.h"                          
 
 typedef struct {
@@ -39,7 +37,7 @@ typedef struct {
 } desc;
 
 
-void *OpenHTMSocket(const char *host, int portnumber, gboolean sender) {
+void *OpenHTMSocket(const char *host, int portnumber, boolean sender) {
   int sockfd;
   struct sockaddr_in cl_addr;
   desc *o;
@@ -95,15 +93,15 @@ void *OpenHTMSocket(const char *host, int portnumber, gboolean sender) {
       cl_addr.sin_port = htons(portnumber);
     }
     if (bind(sockfd, (struct sockaddr *) &cl_addr, sizeof(cl_addr)) < 0) {
-      g_printerr("could not bind\n");
+      lives_printerr("could not bind\n");
       close(sockfd);
       sockfd = -1;
     }
   }
-  else g_printerr("unable to make socket\n");
+  else lives_printerr("unable to make socket\n");
 
   if(sockfd<0) {
-    g_free(o);
+    lives_free(o);
     o = NULL;
   }
   else {
@@ -148,7 +146,7 @@ static ssize_t getudp(struct sockaddr *sp, int sockfd, int length, size_t count,
   return res;
 }
 
-static gboolean sendudp(const struct sockaddr *sp, int sockfd, int length, size_t count, void  *b) {
+static boolean sendudp(const struct sockaddr *sp, int sockfd, int length, size_t count, void  *b) {
   size_t rcount;
   if ((rcount=sendto(sockfd, b, count, 0, sp, length)) != count) {
     //printf("sockfd %d count %d rcount %dlength %d errno %d\n", sockfd,count,rcount,length,errno);
@@ -157,7 +155,7 @@ static gboolean sendudp(const struct sockaddr *sp, int sockfd, int length, size_
   return TRUE;
 }
 
-gboolean lives_stream_out(void *htmsendhandle, size_t length, void *buffer) {
+boolean lives_stream_out(void *htmsendhandle, size_t length, void *buffer) {
   desc *o = (desc *)(htmsendhandle);
   return sendudp(o->addr, o->sockfd, o->len, length, buffer);
 }
@@ -174,5 +172,5 @@ ssize_t lives_stream_in(void *htmrecvhandle, size_t length, void *buffer, int bf
 void CloseHTMSocket(void *htmsendhandle) {
   desc *o = (desc *)htmsendhandle;
   close(o->sockfd);
-  g_free(o);
+  lives_free(o);
 }

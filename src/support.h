@@ -10,6 +10,9 @@
 
 #ifndef NO_GTK
 #include <gtk/gtk.h>
+#define lives_strdup(a) g_strdup(a)
+#define lives_free(a) g_free(a)
+#define lives_locale_to_utf8(a,b,c,d,e) g_locale_to_utf8(a,b,c,d,e)
 #endif
 
 /*

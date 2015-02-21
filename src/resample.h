@@ -60,8 +60,8 @@ void create_new_pb_speed (short type);
 /// type 2 : show new
 _resaudw* create_resaudw (short type, render_details *rdet, LiVESWidget *top_vbox);
 
-void on_change_speed_activate (LiVESMenuItem *, gpointer);
-void on_change_speed_ok_clicked (LiVESButton *, gpointer);
+void on_change_speed_activate (LiVESMenuItem *, livespointer);
+void on_change_speed_ok_clicked (LiVESButton *, livespointer);
 
 boolean auto_resample_resize (int width, int height, double fps, int fps_num, 
 			       int fps_denom, int arate, int asigned, boolean swap_endian);

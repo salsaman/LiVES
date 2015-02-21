@@ -57,84 +57,84 @@ gchar *lives_fx_cat_to_text(lives_fx_cat_t cat, boolean plural) {
 
     // main categories
   case LIVES_FX_CAT_VIDEO_GENERATOR:
-    if (!plural) return (g_strdup(_("generator")));
-    else return (g_strdup(_("Generators")));
+    if (!plural) return (lives_strdup(_("generator")));
+    else return (lives_strdup(_("Generators")));
   case LIVES_FX_CAT_AUDIO_GENERATOR:
-    if (!plural) return (g_strdup(_("audio generator")));
-    else return (g_strdup(_("Audio Generators")));
+    if (!plural) return (lives_strdup(_("audio generator")));
+    else return (lives_strdup(_("Audio Generators")));
   case LIVES_FX_CAT_AV_GENERATOR:
-    if (!plural) return (g_strdup(_("audio/video generator")));
-    else return (g_strdup(_("Audio/Video Generators")));
+    if (!plural) return (lives_strdup(_("audio/video generator")));
+    else return (lives_strdup(_("Audio/Video Generators")));
   case LIVES_FX_CAT_DATA_GENERATOR:
-    if (!plural) return (g_strdup(_("data generator")));
-    else return (g_strdup(_("Data Generators")));
+    if (!plural) return (lives_strdup(_("data generator")));
+    else return (lives_strdup(_("Data Generators")));
   case LIVES_FX_CAT_DATA_VISUALISER:
-    if (!plural) return (g_strdup(_("data visualiser")));
-    else return (g_strdup(_("Data Visualisers")));
+    if (!plural) return (lives_strdup(_("data visualiser")));
+    else return (lives_strdup(_("Data Visualisers")));
   case LIVES_FX_CAT_DATA_PROCESSOR:
-    if (!plural) return (g_strdup(_("data processor")));
-    else return (g_strdup(_("Data Processors")));
+    if (!plural) return (lives_strdup(_("data processor")));
+    else return (lives_strdup(_("Data Processors")));
   case LIVES_FX_CAT_DATA_SOURCE:
-    if (!plural) return (g_strdup(_("data source")));
-    else return (g_strdup(_("Data Sources")));
+    if (!plural) return (lives_strdup(_("data source")));
+    else return (lives_strdup(_("Data Sources")));
   case LIVES_FX_CAT_TRANSITION:
-    if (!plural) return (g_strdup(_("transition")));
-    else return (g_strdup(_("Transitions")));
+    if (!plural) return (lives_strdup(_("transition")));
+    else return (lives_strdup(_("Transitions")));
   case LIVES_FX_CAT_EFFECT:
-    if (!plural) return (g_strdup(_("effect")));
-    else return (g_strdup(_("Effects")));
+    if (!plural) return (lives_strdup(_("effect")));
+    else return (lives_strdup(_("Effects")));
   case LIVES_FX_CAT_UTILITY:
-    if (!plural) return (g_strdup(_("utility")));
-    else return (g_strdup(_("Utilities")));
+    if (!plural) return (lives_strdup(_("utility")));
+    else return (lives_strdup(_("Utilities")));
   case LIVES_FX_CAT_COMPOSITOR:
-    if (!plural) return (g_strdup(_("compositor")));
-    else return (g_strdup(_("Compositors")));
+    if (!plural) return (lives_strdup(_("compositor")));
+    else return (lives_strdup(_("Compositors")));
   case LIVES_FX_CAT_TAP:
-    if (!plural) return (g_strdup(_("tap")));
-    else return (g_strdup(_("Taps")));
+    if (!plural) return (lives_strdup(_("tap")));
+    else return (lives_strdup(_("Taps")));
   case LIVES_FX_CAT_SPLITTER:
-    if (!plural) return (g_strdup(_("splitter")));
-    else return (g_strdup(_("Splitters")));
+    if (!plural) return (lives_strdup(_("splitter")));
+    else return (lives_strdup(_("Splitters")));
   case LIVES_FX_CAT_CONVERTER:
-    if (!plural) return (g_strdup(_("converter")));
-    else return (g_strdup(_("Converters")));
+    if (!plural) return (lives_strdup(_("converter")));
+    else return (lives_strdup(_("Converters")));
   case LIVES_FX_CAT_ANALYSER:
-    if (!plural) return (g_strdup(_("analyser")));
-    else return (g_strdup(_("Analysers")));
+    if (!plural) return (lives_strdup(_("analyser")));
+    else return (lives_strdup(_("Analysers")));
 
 
     // subcategories
   case LIVES_FX_CAT_AV_TRANSITION:
-    if (!plural) return (g_strdup(_("audio/video")));
-    else return (g_strdup(_("Audio/Video Transitions")));
+    if (!plural) return (lives_strdup(_("audio/video")));
+    else return (lives_strdup(_("Audio/Video Transitions")));
   case LIVES_FX_CAT_VIDEO_TRANSITION:
-    if (!plural) return (g_strdup(_("video only")));
-    else return (g_strdup(_("Video only Transitions")));
+    if (!plural) return (lives_strdup(_("video only")));
+    else return (lives_strdup(_("Video only Transitions")));
   case LIVES_FX_CAT_AUDIO_TRANSITION:
-    if (!plural) return (g_strdup(_("audio only")));
-    else return (g_strdup(_("Audio only Transitions")));
+    if (!plural) return (lives_strdup(_("audio only")));
+    else return (lives_strdup(_("Audio only Transitions")));
   case LIVES_FX_CAT_AUDIO_MIXER:
-    if (!plural) return (g_strdup(_("audio")));
-    else return (g_strdup(_("Audio Mixers")));
+    if (!plural) return (lives_strdup(_("audio")));
+    else return (lives_strdup(_("Audio Mixers")));
   case LIVES_FX_CAT_AUDIO_EFFECT:
-    if (!plural) return (g_strdup(_("audio")));
-    else return (g_strdup(_("Audio Effects")));
+    if (!plural) return (lives_strdup(_("audio")));
+    else return (lives_strdup(_("Audio Effects")));
   case LIVES_FX_CAT_VIDEO_EFFECT:
-    if (!plural) return (g_strdup(_("video")));
-    else return (g_strdup(_("Video Effects")));
+    if (!plural) return (lives_strdup(_("video")));
+    else return (lives_strdup(_("Video Effects")));
   case LIVES_FX_CAT_AUDIO_VOL:
-    if (!plural) return (g_strdup(_("audio volume controller")));
-    else return (g_strdup(_("Audio Volume Controllers")));
+    if (!plural) return (lives_strdup(_("audio volume controller")));
+    else return (lives_strdup(_("Audio Volume Controllers")));
   case LIVES_FX_CAT_VIDEO_ANALYSER:
-    if (!plural) return (g_strdup(_("video analyser")));
-    else return (g_strdup(_("Video analysers")));
+    if (!plural) return (lives_strdup(_("video analyser")));
+    else return (lives_strdup(_("Video analysers")));
   case LIVES_FX_CAT_AUDIO_ANALYSER:
-    if (!plural) return (g_strdup(_("audio analyser")));
-    else return (g_strdup(_("Audio Analysers")));
+    if (!plural) return (lives_strdup(_("audio analyser")));
+    else return (lives_strdup(_("Audio Analysers")));
 
 
   default:
-    return (g_strdup(_("unknown")));
+    return (lives_strdup(_("unknown")));
   }
 }
 
@@ -179,45 +179,45 @@ boolean do_effect(lives_rfx_t *rfx, boolean is_preview) {
     gchar *pdefault;
     gchar *plugin_name;
 
-    if (rfx->status==RFX_STATUS_BUILTIN) plugin_name=g_build_filename(prefs->lib_dir,PLUGIN_EXEC_DIR,
+    if (rfx->status==RFX_STATUS_BUILTIN) plugin_name=lives_build_filename(prefs->lib_dir,PLUGIN_EXEC_DIR,
 								      PLUGIN_RENDERED_EFFECTS_BUILTIN,rfx->name,NULL);
-    else plugin_name=g_strdup(rfx->name);
+    else plugin_name=lives_strdup(rfx->name);
 
     if (rfx->num_in_channels==2) {
       // transition has a few extra bits
-      pdefault=g_strdup_printf ("%s %d %d %d %d %d %s %s %d \"%s/%s\"",cfile->handle,rfx->status,
+      pdefault=lives_strdup_printf ("%s %d %d %d %d %d %s %s %d \"%s/%s\"",cfile->handle,rfx->status,
 				cfile->progress_start,cfile->progress_end,cfile->hsize,cfile->vsize,
 				get_image_ext_for_type(cfile->img_type),get_image_ext_for_type(clipboard->img_type),
 				clipboard->start,prefs->tmpdir,clipboard->handle);
     }
     else {
-      pdefault=g_strdup_printf ("%s %d %d %d %d %d %s",cfile->handle,rfx->status,cfile->progress_start,
+      pdefault=lives_strdup_printf ("%s %d %d %d %d %d %s",cfile->handle,rfx->status,cfile->progress_start,
 				cfile->progress_end,cfile->hsize,cfile->vsize,get_image_ext_for_type(cfile->img_type));
     }
     // and append params
     if (is_preview) {
-      cmd=g_strdup("pfxrender");
+      cmd=lives_strdup("pfxrender");
       mainw->show_procd=FALSE;
     }
-    else cmd=g_strdup("fxrender");
-    fxcommand=g_strconcat (prefs->backend," \"",cmd,"_",plugin_name,"\" ", pdefault, 
+    else cmd=lives_strdup("fxrender");
+    fxcommand=lives_strconcat (prefs->backend," \"",cmd,"_",plugin_name,"\" ", pdefault, 
 			   (tmp=param_marshall (rfx, FALSE)), NULL);
 
-    g_free(plugin_name);
-    g_free(cmd);
-    g_free(pdefault);
-    g_free(tmp);
+    lives_free(plugin_name);
+    lives_free(cmd);
+    lives_free(pdefault);
+    lives_free(tmp);
   }
 
   if (!mainw->keep_pre) unlink(cfile->info_file);
 
   if (!mainw->internal_messaging&&!mainw->keep_pre) {
     if (cfile->frame_index_back!=NULL) {
-      g_free(cfile->frame_index_back);
+      lives_free(cfile->frame_index_back);
       cfile->frame_index_back=NULL;
     }
     lives_system(fxcommand,FALSE);
-    g_free (fxcommand);
+    lives_free (fxcommand);
   }
   else {
     if (mainw->num_tr_applied>0&&mainw->blend_file>0&&mainw->files[mainw->blend_file]!=NULL&&
@@ -235,29 +235,29 @@ boolean do_effect(lives_rfx_t *rfx, boolean is_preview) {
   }
 
   if (rfx->props&RFX_PROPS_MAY_RESIZE) {
-    tmp=g_strdup(_ ("%s all frames..."));
-    text=g_strdup_printf(tmp,_(rfx->action_desc));
+    tmp=lives_strdup(_ ("%s all frames..."));
+    text=lives_strdup_printf(tmp,_(rfx->action_desc));
   }
   else {
     if (rfx->num_in_channels==2) {
-      tmp=g_strdup(_ ("%s clipboard into frames %d to %d..."));
-      text=g_strdup_printf(tmp,_(rfx->action_desc),cfile->progress_start,cfile->progress_end);
+      tmp=lives_strdup(_ ("%s clipboard into frames %d to %d..."));
+      text=lives_strdup_printf(tmp,_(rfx->action_desc),cfile->progress_start,cfile->progress_end);
     }
     else {
       if (rfx->num_in_channels==0) {
 	mainw->no_switch_dprint=TRUE;
 	if (mainw->gen_to_clipboard) {
-	  tmp=g_strdup(_("%s to clipboard..."));
-	  text=g_strdup_printf(tmp,_(rfx->action_desc));
+	  tmp=lives_strdup(_("%s to clipboard..."));
+	  text=lives_strdup_printf(tmp,_(rfx->action_desc));
 	}
 	else {
-	  tmp=g_strdup(_("%s to new clip..."));
-	  text=g_strdup_printf(tmp,_(rfx->action_desc));
+	  tmp=lives_strdup(_("%s to new clip..."));
+	  text=lives_strdup_printf(tmp,_(rfx->action_desc));
 	}
       } 
       else {
-	tmp=g_strdup(_ ("%s frames %d to %d..."));
-	text=g_strdup_printf(tmp,_(rfx->action_desc),cfile->start,cfile->end);
+	tmp=lives_strdup(_ ("%s frames %d to %d..."));
+	text=lives_strdup_printf(tmp,_(rfx->action_desc),cfile->start,cfile->end);
       }
     }
   }
@@ -266,8 +266,8 @@ boolean do_effect(lives_rfx_t *rfx, boolean is_preview) {
   ldfile=mainw->last_dprint_file;
 
   d_print(text);
-  g_free(text);
-  g_free(tmp);
+  lives_free(text);
+  lives_free(tmp);
   mainw->last_dprint_file=ldfile;
 
   cfile->redoable=cfile->undoable=FALSE;
@@ -287,24 +287,24 @@ boolean do_effect(lives_rfx_t *rfx, boolean is_preview) {
   cfile->pb_fps=1000000.;
 
   if (rfx->num_in_channels==2) {
-    tmp=g_strdup(_ ("%s clipboard with selection"));
-    g_snprintf (effectstring,128,tmp,_ (rfx->action_desc));
+    tmp=lives_strdup(_ ("%s clipboard with selection"));
+    lives_snprintf (effectstring,128,tmp,_ (rfx->action_desc));
   }
   else if (rfx->num_in_channels==0) {
     if (mainw->gen_to_clipboard) {
-      tmp=g_strdup(_ ("%s to clipboard"));
-      g_snprintf (effectstring,128,tmp,_ (rfx->action_desc));
+      tmp=lives_strdup(_ ("%s to clipboard"));
+      lives_snprintf (effectstring,128,tmp,_ (rfx->action_desc));
     }
     else {
-      tmp=g_strdup(_ ("%s to new clip"));
-      g_snprintf (effectstring,128,tmp,_ (rfx->action_desc));
+      tmp=lives_strdup(_ ("%s to new clip"));
+      lives_snprintf (effectstring,128,tmp,_ (rfx->action_desc));
     }
   }
   else {
-    tmp=g_strdup(_ ("%s frames %d to %d"));
-    g_snprintf (effectstring,128,tmp,_ (rfx->action_desc),cfile->undo_start,cfile->undo_end);
+    tmp=lives_strdup(_ ("%s frames %d to %d"));
+    lives_snprintf (effectstring,128,tmp,_ (rfx->action_desc),cfile->undo_start,cfile->undo_end);
   }
-  g_free(tmp);
+  lives_free(tmp);
 
   if (cfile->clip_type==CLIP_TYPE_FILE&&rfx->status!=RFX_STATUS_WEED) {
     // pull a batch of frames for the backend to start processing
@@ -396,7 +396,7 @@ boolean do_effect(lives_rfx_t *rfx, boolean is_preview) {
       int numtok=get_token_count (mainw->msg,'|');
       
       if (numtok>1) {
-	gchar **array=g_strsplit(mainw->msg,"|",numtok);
+	gchar **array=lives_strsplit(mainw->msg,"|",numtok);
 	// [0] is "completed"
 	cfile->hsize=atoi (array[1]);
 	cfile->vsize=atoi (array[2]);
@@ -406,7 +406,7 @@ boolean do_effect(lives_rfx_t *rfx, boolean is_preview) {
 	  cfile->end=cfile->frames=atoi(array[4]);
 	  cfile->bpp=cfile->img_type==IMG_TYPE_JPEG?24:32;
 	}
-	g_strfreev(array);
+	lives_strfreev(array);
       }
       if (rfx->num_in_channels==0) {
 	cfile->progress_start=1;
@@ -440,13 +440,13 @@ boolean do_effect(lives_rfx_t *rfx, boolean is_preview) {
 
   if (mainw->keep_pre) {
     // this comes from a preview which then turned into processing
-    gchar *com=g_strdup_printf("%s mv_pre \"%s\" %d %d \"%s\"",prefs->backend_sync, cfile->handle,cfile->progress_start,
+    gchar *com=lives_strdup_printf("%s mv_pre \"%s\" %d %d \"%s\"",prefs->backend_sync, cfile->handle,cfile->progress_start,
 			       cfile->progress_end,get_image_ext_for_type(cfile->img_type));
 
     unlink(cfile->info_file);
     mainw->cancelled=CANCEL_NONE;
     lives_system(com,FALSE);
-    g_free(com);
+    lives_free(com);
     mainw->keep_pre=FALSE;
 
     check_backend_return(cfile);
@@ -483,19 +483,19 @@ boolean do_effect(lives_rfx_t *rfx, boolean is_preview) {
   if (rfx->num_in_channels==0) {
     if (rfx->props&RFX_PROPS_BATCHG) {
       // batch mode generators need some extra processing
-      gchar *imgdir=g_strdup_printf("%s%s",prefs->tmpdir,cfile->handle);
+      gchar *imgdir=lives_strdup_printf("%s%s",prefs->tmpdir,cfile->handle);
       int img_file=mainw->current_file;
       
       mainw->suppress_dprint=TRUE;
       open_file_sel(imgdir,0,0);
-      g_free(imgdir);
+      lives_free(imgdir);
       new_file=mainw->current_file;
       
       if (new_file!=img_file) {
 	mainw->current_file=img_file;
 	
-	g_snprintf(mainw->files[new_file]->name,256,"%s",cfile->name);
-	g_snprintf(mainw->files[new_file]->file_name,PATH_MAX,"%s",cfile->file_name);
+	lives_snprintf(mainw->files[new_file]->name,256,"%s",cfile->name);
+	lives_snprintf(mainw->files[new_file]->file_name,PATH_MAX,"%s",cfile->file_name);
 	set_menu_text(mainw->files[new_file]->menuentry,cfile->name,FALSE);
 	
 	mainw->files[new_file]->fps=mainw->files[new_file]->pb_fps=cfile->fps;
@@ -508,13 +508,13 @@ boolean do_effect(lives_rfx_t *rfx, boolean is_preview) {
       if (!got_no_frames) mainw->current_file=new_file;
     }
     else {
-      gchar *tfile=g_strdup_printf("%s/%s/%08d.%s",prefs->tmpdir,cfile->handle,cfile->frames,prefs->image_ext);
+      gchar *tfile=lives_strdup_printf("%s/%s/%08d.%s",prefs->tmpdir,cfile->handle,cfile->frames,prefs->image_ext);
 
-      if (!g_file_test (tfile, G_FILE_TEST_EXISTS)) {
+      if (!lives_file_test (tfile, LIVES_FILE_TEST_EXISTS)) {
 	get_frame_count(mainw->current_file);
 	cfile->end=cfile->frames;
       }
-      g_free(tfile);
+      lives_free(tfile);
     }
 
     if (got_no_frames||cfile->frames==0) {
@@ -612,7 +612,7 @@ boolean do_effect(lives_rfx_t *rfx, boolean is_preview) {
 lives_render_error_t realfx_progress (boolean reset) {
   static lives_render_error_t write_error;
 
-  GError *error=NULL;
+  LiVESError *error=NULL;
 
   gchar oname[PATH_MAX];
 
@@ -638,7 +638,7 @@ lives_render_error_t realfx_progress (boolean reset) {
     clear_mainw_msg();
 
     if (cfile->clip_type==CLIP_TYPE_FILE) {
-      if (cfile->frame_index_back!=NULL) g_free(cfile->frame_index_back);
+      if (cfile->frame_index_back!=NULL) lives_free(cfile->frame_index_back);
       cfile->frame_index_back=frame_index_copy(cfile->frame_index,cfile->frames,0);
     }
     write_error=LIVES_RENDER_ERROR_NONE;
@@ -648,14 +648,14 @@ lives_render_error_t realfx_progress (boolean reset) {
   if (mainw->effects_paused) return LIVES_RENDER_EFFECTS_PAUSED;
 
   // sig_progress...
-  g_snprintf (mainw->msg,256,"%d",i);
+  lives_snprintf (mainw->msg,256,"%d",i);
   // load, effect, save frame
 
   // skip resizing virtual frames
   if (resize_instance!=NULL&&is_virtual_frame(mainw->current_file,i)) {
     if (++i>cfile->end) {
       mainw->internal_messaging=FALSE;
-      g_snprintf(mainw->msg,9,"completed");
+      lives_snprintf(mainw->msg,9,"completed");
     }
     mainw->rowstride_alignment_hint=1;
     return LIVES_RENDER_COMPLETE;
@@ -672,7 +672,7 @@ lives_render_error_t realfx_progress (boolean reset) {
 
     if (!pull_frame(layer,get_image_ext_for_type(cfile->img_type),frameticks)) {
       // do_read_failed_error_s() cannot be used here as we dont know the filename
-      g_snprintf (mainw->msg,256,"error|missing image %d",i);
+      lives_snprintf (mainw->msg,256,"error|missing image %d",i);
       return LIVES_RENDER_WARNING_READ_FRAME;
     }
 
@@ -695,7 +695,7 @@ lives_render_error_t realfx_progress (boolean reset) {
       pixbuf=layer_to_pixbuf(layer);
       weed_plant_free(layer);
       
-      g_snprintf(oname,PATH_MAX,"%s/%s/%08d.mgk",prefs->tmpdir,cfile->handle,i);
+      lives_snprintf(oname,PATH_MAX,"%s/%s/%08d.mgk",prefs->tmpdir,cfile->handle,i);
       
       do {
 	retval=0;
@@ -703,7 +703,7 @@ lives_render_error_t realfx_progress (boolean reset) {
 
 	if (error!=NULL) {
 	  retval=do_write_failed_error_s_with_retry(oname,error->message,NULL);
-	  g_error_free(error);
+	  lives_error_free(error);
 	  error=NULL;
 	  if (retval!=LIVES_RETRY) write_error=LIVES_RENDER_ERROR_WRITE_FRAME;
 	}
@@ -728,10 +728,10 @@ lives_render_error_t realfx_progress (boolean reset) {
     if (resize_instance!=NULL||(has_video_filters(FALSE)&&!has_video_filters(TRUE))) {
       mainw->error=FALSE;
       mainw->cancelled=CANCEL_NONE;
-      com=g_strdup_printf ("%s mv_mgk \"%s\" %d %d \"%s\"",prefs->backend,cfile->handle,cfile->start,
+      com=lives_strdup_printf ("%s mv_mgk \"%s\" %d %d \"%s\"",prefs->backend,cfile->handle,cfile->start,
 			   cfile->end,get_image_ext_for_type(cfile->img_type));
       lives_system (com,FALSE);
-      g_free (com);
+      lives_free (com);
       mainw->internal_messaging=FALSE;
       
       check_backend_return(cfile);
@@ -818,11 +818,11 @@ boolean on_realfx_activate_inner(int type, lives_rfx_t *rfx) {
     else {
       if (has_new_audio) cfile->achans=cfile->asampsize=cfile->arate=cfile->arps=0;
       else {
-      	gchar *com=g_strdup_printf("%s undo_audio %s",prefs->backend_sync,cfile->handle);
+      	gchar *com=lives_strdup_printf("%s undo_audio %s",prefs->backend_sync,cfile->handle);
 	mainw->com_failed=FALSE;
 	unlink (cfile->info_file);
 	lives_system(com,FALSE);
-	g_free(com);
+	lives_free(com);
       }
     }
     reget_afilesize(mainw->current_file);
@@ -836,7 +836,7 @@ boolean on_realfx_activate_inner(int type, lives_rfx_t *rfx) {
 
 
 
-void on_realfx_activate (LiVESMenuItem *menuitem, gpointer user_data) {
+void on_realfx_activate (LiVESMenuItem *menuitem, livespointer user_data) {
   int type=1;
 
   boolean has_lmap_error=FALSE;
@@ -850,15 +850,15 @@ void on_realfx_activate (LiVESMenuItem *menuitem, gpointer user_data) {
     if (!(prefs->warning_mask&WARN_MASK_LAYOUT_ALTER_FRAMES)&&(mainw->xlays=
 							       layout_frame_is_affected(mainw->current_file,1))!=NULL) {
       if (!do_layout_alter_frames_warning()) {
-	g_list_free_strings(mainw->xlays);
-	g_list_free(mainw->xlays);
+	lives_list_free_strings(mainw->xlays);
+	lives_list_free(mainw->xlays);
 	mainw->xlays=NULL;
 	return;
       }
-      add_lmap_error(LMAP_ERROR_ALTER_FRAMES,cfile->name,(gpointer)cfile->layout_map,mainw->current_file,0,0.,
+      add_lmap_error(LMAP_ERROR_ALTER_FRAMES,cfile->name,(livespointer)cfile->layout_map,mainw->current_file,0,0.,
 		     cfile->stored_layout_frame>0);
-      g_list_free_strings(mainw->xlays);
-      g_list_free(mainw->xlays);
+      lives_list_free_strings(mainw->xlays);
+      lives_list_free(mainw->xlays);
       mainw->xlays=NULL;
       has_lmap_error=TRUE;
     }
@@ -867,16 +867,16 @@ void on_realfx_activate (LiVESMenuItem *menuitem, gpointer user_data) {
     if (!(prefs->warning_mask&WARN_MASK_LAYOUT_ALTER_AUDIO)&&
 	(mainw->xlays=layout_audio_is_affected(mainw->current_file,0.))!=NULL) {
       if (!do_layout_alter_audio_warning()) {
-	g_list_free_strings(mainw->xlays);
-	g_list_free(mainw->xlays);
+	lives_list_free_strings(mainw->xlays);
+	lives_list_free(mainw->xlays);
 	mainw->xlays=NULL;
 	return;
       }
-      add_lmap_error(LMAP_ERROR_ALTER_AUDIO,cfile->name,(gpointer)cfile->layout_map,mainw->current_file,0,0.,
+      add_lmap_error(LMAP_ERROR_ALTER_AUDIO,cfile->name,(livespointer)cfile->layout_map,mainw->current_file,0,0.,
 		     cfile->stored_layout_audio>0.);
       has_lmap_error=TRUE;
-      g_list_free_strings(mainw->xlays);
-      g_list_free(mainw->xlays);
+      lives_list_free_strings(mainw->xlays);
+      lives_list_free(mainw->xlays);
       mainw->xlays=NULL;
     }
   }
@@ -899,7 +899,7 @@ weed_plant_t *on_rte_apply (weed_plant_t *layer, int opwidth, int opheight, weed
 
   if (mainw->foreign) return NULL;
 
-  layers=(weed_plant_t **)g_malloc(3*sizeof(weed_plant_t *));
+  layers=(weed_plant_t **)lives_malloc(3*sizeof(weed_plant_t *));
 
   layers[2]=NULL;
 
@@ -938,7 +938,7 @@ weed_plant_t *on_rte_apply (weed_plant_t *layer, int opwidth, int opheight, weed
   for (i=0;layers[i]!=NULL;i++) {
     if (layers[i]!=retlayer) weed_plant_free(layers[i]);
   }
-  g_free(layers);
+  lives_free(layers);
 
   return retlayer;
 }
@@ -956,14 +956,14 @@ void deinterlace_frame(weed_plant_t *layer, weed_timecode_t tc) {
 
   if (mainw->fx_candidates[FX_CANDIDATE_DEINTERLACE].delegate==-1) return;
 
-  deint_idx=GPOINTER_TO_INT(g_list_nth_data(mainw->fx_candidates[FX_CANDIDATE_DEINTERLACE].list,
+  deint_idx=LIVES_POINTER_TO_INT(lives_list_nth_data(mainw->fx_candidates[FX_CANDIDATE_DEINTERLACE].list,
 					    mainw->fx_candidates[FX_CANDIDATE_DEINTERLACE].delegate));
 
   deint_filter=get_weed_filter(deint_idx);
 
   deint_instance=weed_instance_from_filter(deint_filter);
 
-  layers=(weed_plant_t **)g_malloc(2*sizeof(weed_plant_t *));
+  layers=(weed_plant_t **)lives_malloc(2*sizeof(weed_plant_t *));
 
   layers[1]=NULL;
 
@@ -990,7 +990,7 @@ void deinterlace_frame(weed_plant_t *layer, weed_timecode_t tc) {
 
   weed_plant_free(init_event);
 
-  g_free(layers);
+  lives_free(layers);
 }
 
 
@@ -1039,7 +1039,7 @@ weed_plant_t *get_blend_layer(weed_timecode_t tc) {
 
 
 
-boolean rte_on_off_callback (LiVESAccelGroup *group, LiVESObject *obj, uint32_t keyval, LiVESXModifierType mod, gpointer user_data) {
+boolean rte_on_off_callback (LiVESAccelGroup *group, LiVESObject *obj, uint32_t keyval, LiVESXModifierType mod, livespointer user_data) {
 // this is the callback which happens when a rte is keyed
   int key=LIVES_POINTER_TO_INT(user_data);
   uint64_t new_rte;
@@ -1133,13 +1133,13 @@ boolean rte_on_off_callback (LiVESAccelGroup *group, LiVESObject *obj, uint32_t 
 
 
 
-boolean rte_on_off_callback_hook (LiVESToggleButton *button, gpointer user_data) {
+boolean rte_on_off_callback_hook (LiVESToggleButton *button, livespointer user_data) {
   rte_on_off_callback (NULL, NULL, 0, (LiVESXModifierType)0, user_data);
   return TRUE;
 }
 
 
-boolean grabkeys_callback (LiVESAccelGroup *group, LiVESObject *obj, uint32_t keyval, LiVESXModifierType mod, gpointer user_data) {
+boolean grabkeys_callback (LiVESAccelGroup *group, LiVESObject *obj, uint32_t keyval, LiVESXModifierType mod, livespointer user_data) {
   // assign the keys to the last key-grabable effect 
   mainw->rte_keys=mainw->last_grabable_effect;
   mainw->osc_block=TRUE;
@@ -1153,7 +1153,7 @@ boolean grabkeys_callback (LiVESAccelGroup *group, LiVESObject *obj, uint32_t ke
 
 
 
-boolean textparm_callback (LiVESAccelGroup *group, LiVESObject *obj, uint32_t keyval, LiVESXModifierType mod, gpointer user_data) {
+boolean textparm_callback (LiVESAccelGroup *group, LiVESObject *obj, uint32_t keyval, LiVESXModifierType mod, livespointer user_data) {
   // keyboard linked to first string parameter, until TAB is pressed
   mainw->rte_textparm=get_textparm();
   return TRUE;
@@ -1161,15 +1161,15 @@ boolean textparm_callback (LiVESAccelGroup *group, LiVESObject *obj, uint32_t ke
 
 
 
-boolean grabkeys_callback_hook (LiVESToggleButton *button, gpointer user_data) {
+boolean grabkeys_callback_hook (LiVESToggleButton *button, livespointer user_data) {
   if (!lives_toggle_button_get_active(button)) return TRUE;
-  mainw->last_grabable_effect=GPOINTER_TO_INT(user_data);
+  mainw->last_grabable_effect=LIVES_POINTER_TO_INT(user_data);
   grabkeys_callback (NULL, NULL, 0, (LiVESXModifierType)0, user_data);
   return TRUE;
 }
 
 
-boolean rtemode_callback (LiVESAccelGroup *group, LiVESObject *obj, uint32_t keyval, LiVESXModifierType mod, gpointer user_data) {
+boolean rtemode_callback (LiVESAccelGroup *group, LiVESObject *obj, uint32_t keyval, LiVESXModifierType mod, livespointer user_data) {
   // "m" mode key
   if (mainw->rte_keys==-1) return TRUE;
   rte_key_setmode(0,-1);
@@ -1178,8 +1178,8 @@ boolean rtemode_callback (LiVESAccelGroup *group, LiVESObject *obj, uint32_t key
 }
 
 
-boolean rtemode_callback_hook (LiVESToggleButton *button, gpointer user_data) {
-  int key_mode=GPOINTER_TO_INT(user_data);
+boolean rtemode_callback_hook (LiVESToggleButton *button, livespointer user_data) {
+  int key_mode=LIVES_POINTER_TO_INT(user_data);
   int modes=rte_getmodespk();
   int key=(int)(key_mode/modes);
   int mode=key_mode-key*modes;
@@ -1191,7 +1191,7 @@ boolean rtemode_callback_hook (LiVESToggleButton *button, gpointer user_data) {
 }
 
 
-boolean swap_fg_bg_callback (LiVESAccelGroup *group, LiVESObject *obj, uint32_t keyval, LiVESXModifierType mod, gpointer user_data) {
+boolean swap_fg_bg_callback (LiVESAccelGroup *group, LiVESObject *obj, uint32_t keyval, LiVESXModifierType mod, livespointer user_data) {
   int old_file=mainw->current_file;
 
   if (mainw->playing_file<1||mainw->num_tr_applied==0||mainw->noswitch||mainw->blend_file==-1||

@@ -87,7 +87,7 @@ static size_t l2l_rcv_packet(lives_vstream_t *lstream, size_t buflen, void *buf)
   size_t end=bufoffs+buflen;
 
   while ((end<STREAM_BUF_SIZE&&lstream->bufoffs>=bufoffs&&lstream->bufoffs<=end)||(end>=STREAM_BUF_SIZE&&(lstream->bufoffs>=bufoffs||lstream->bufoffs<=(end-STREAM_BUF_SIZE)))) {
-    g_usleep(1000);
+    lives_usleep(1000);
   }
 
   while (1) {
@@ -111,7 +111,7 @@ static size_t l2l_rcv_packet(lives_vstream_t *lstream, size_t buflen, void *buf)
       mainw->frame_layer=frame_layer;
       threaded_dialog_spin();
       if (mainw->cancelled) return buflen+btoread;
-      g_usleep(prefs->sleep_time);
+      lives_usleep(prefs->sleep_time);
     }
   }
 }
@@ -149,7 +149,7 @@ static size_t l2l_rcv_packet(lives_vstream_t *lstream, size_t buflen, void *buf)
       if (mainw->cancelled) {
 	return -1;
       }
-      g_usleep(prefs->sleep_time);
+      lives_usleep(prefs->sleep_time);
     }
   } while (ret==-1);
   return ret;
@@ -184,7 +184,7 @@ static boolean lives_stream_in_chunks(lives_vstream_t *lstream, size_t buflen, u
 	mainw->frame_layer=frame_layer;
 	threaded_dialog_spin();
 	if (mainw->cancelled) return TRUE;
-	g_usleep(prefs->sleep_time);
+	lives_usleep(prefs->sleep_time);
       }
     } while (copied==-1);
     buflen-=copied;
@@ -373,16 +373,16 @@ static gchar *l2l_get_packet_header(lives_vstream_t *lstream) {
 
   pckoffs++;
 
-  return g_strdup(hdr_buf);
+  return lives_strdup(hdr_buf);
 }
 
 
 static boolean l2l_parse_packet_header(lives_vstream_t *lstream, int strtype, int strid) {
-  gchar **array=g_strsplit(hdr," ",-1);
+  gchar **array=lives_strsplit(hdr," ",-1);
   int pid=-1,ptype=-1;
   
   if (hdr==NULL||array==NULL||array[0]==NULL||array[1]==NULL||array[2]==NULL||array[3]==NULL) {
-    if (array!=NULL) g_strfreev(array);
+    if (array!=NULL) lives_strfreev(array);
     return FALSE;
   }
 
@@ -391,7 +391,7 @@ static boolean l2l_parse_packet_header(lives_vstream_t *lstream, int strtype, in
 
   if (pid!=strid||ptype!=strtype) {
     // wrong stream id, or not video
-    if (array!=NULL) g_strfreev(array);
+    if (array!=NULL) lives_strfreev(array);
     return FALSE;
   }
 
@@ -408,7 +408,7 @@ static boolean l2l_parse_packet_header(lives_vstream_t *lstream, int strtype, in
 
     lstream->hsize=atoi(array[5]);
     lstream->vsize=atoi(array[6]);
-    lstream->fps=g_strtod(array[7],NULL);
+    lstream->fps=lives_strtod(array[7],NULL);
     lstream->palette=atoi(array[8]);
     lstream->YUV_sampling=atoi(array[9]);
     lstream->YUV_clamping=atoi(array[10]);
@@ -416,7 +416,7 @@ static boolean l2l_parse_packet_header(lives_vstream_t *lstream, int strtype, in
     lstream->compression_type=atoi(array[12]);
   }
 
-  g_strfreev(array);
+  lives_strfreev(array);
   lstream->data_ready=TRUE;
 
   return TRUE;
@@ -425,7 +425,7 @@ static boolean l2l_parse_packet_header(lives_vstream_t *lstream, int strtype, in
 
 
 void lives2lives_read_stream(const gchar *host, int port) {
-  lives_vstream_t *lstream=(lives_vstream_t *)g_malloc(sizeof(lives_vstream_t));
+  lives_vstream_t *lstream=(lives_vstream_t *)lives_malloc(sizeof(lives_vstream_t));
 
   gchar *tmp,*tmp2;
   gchar *msg;
@@ -449,9 +449,9 @@ void lives2lives_read_stream(const gchar *host, int port) {
     return;
   }
 
-  msg=g_strdup_printf(_("Waiting for LiVES stream on port %d..."),port);
+  msg=lives_strdup_printf(_("Waiting for LiVES stream on port %d..."),port);
   d_print(msg);
-  g_free(msg);
+  lives_free(msg);
 
   mainw->cancelled=CANCEL_NONE;
   do_threaded_dialog(_("\nWaiting for stream"),TRUE);
@@ -463,11 +463,11 @@ void lives2lives_read_stream(const gchar *host, int port) {
   pthread_attr_init(&pattr);
   if (pthread_attr_setstacksize(&pattr,STREAM_BUF_SIZE*4)) {
     do_error_dialog(_("LiVES to LiVES stream error: Could not set buffer size !\n"));
-    g_free(lstream);
+    lives_free(lstream);
     lives_widget_set_sensitive (mainw->open_lives2lives, TRUE);
     return;
   }
-  lstream->buffer=g_malloc(STREAM_BUF_SIZE);
+  lstream->buffer=lives_malloc(STREAM_BUF_SIZE);
   pthread_create(&stthread,&pattr,streambuf,(void *)lstream);
   pthread_attr_destroy(&pattr);
 #endif
@@ -482,9 +482,9 @@ void lives2lives_read_stream(const gchar *host, int port) {
 #endif
     CloseHTMSocket(lstream->handle);
 #ifdef USE_STRMBUF
-    g_free(lstream->buffer);
+    lives_free(lstream->buffer);
 #endif
-    g_free(lstream);
+    lives_free(lstream);
     d_print_cancelled();
     lives_widget_set_sensitive (mainw->open_lives2lives, TRUE);
     return;
@@ -502,9 +502,9 @@ void lives2lives_read_stream(const gchar *host, int port) {
 #endif
 	CloseHTMSocket(lstream->handle);
 #ifdef USE_STRMBUF
-	g_free(lstream->buffer);
+	lives_free(lstream->buffer);
 #endif
-	g_free(lstream);
+	lives_free(lstream);
 	d_print_cancelled();
 	lives_widget_set_sensitive (mainw->open_lives2lives, TRUE);
 	return;
@@ -519,9 +519,9 @@ void lives2lives_read_stream(const gchar *host, int port) {
 #endif
 	CloseHTMSocket(lstream->handle);
 #ifdef USE_STRMBUF
-	g_free(lstream->buffer);
+	lives_free(lstream->buffer);
 #endif
-	g_free(lstream);
+	lives_free(lstream);
 	d_print_cancelled();
 	lives_widget_set_sensitive (mainw->open_lives2lives, TRUE);
 	return;
@@ -532,11 +532,11 @@ void lives2lives_read_stream(const gchar *host, int port) {
     if (lstream->flags&LIVES_VSTREAM_FLAGS_IS_CONTINUATION) done=FALSE;
     if (!done) {
       // wrong packet type or id, or a continuation packet
-      uint8_t *tmpbuf=(uint8_t *)g_malloc(lstream->dsize);
+      uint8_t *tmpbuf=(uint8_t *)lives_malloc(lstream->dsize);
       lives_stream_in_chunks(lstream,lstream->dsize,tmpbuf,lstream->dsize*4);
       // throw this packet away
-      g_printerr("unrecognised packet in stream - dropping it.\n");
-      g_free(tmpbuf);
+      lives_printerr("unrecognised packet in stream - dropping it.\n");
+      lives_free(tmpbuf);
       if (mainw->cancelled) {
 	end_threaded_dialog();
 #ifdef USE_STRMBUF
@@ -545,15 +545,15 @@ void lives2lives_read_stream(const gchar *host, int port) {
 #endif
 	CloseHTMSocket(lstream->handle);
 #ifdef USE_STRMBUF
-	g_free(lstream->buffer);
+	lives_free(lstream->buffer);
 #endif
-	g_free(lstream);
+	lives_free(lstream);
 	d_print_cancelled();
 	lives_widget_set_sensitive (mainw->open_lives2lives, TRUE);
 	return;
       }
     }
-    g_free(hdr);
+    lives_free(hdr);
   }
 
   end_threaded_dialog();
@@ -569,9 +569,9 @@ void lives2lives_read_stream(const gchar *host, int port) {
 #endif
     CloseHTMSocket(lstream->handle);
 #ifdef USE_STRMBUF
-    g_free(lstream->buffer);
+    lives_free(lstream->buffer);
 #endif
-    g_free(lstream);
+    lives_free(lstream);
     d_print_failed();
     lives_widget_set_sensitive (mainw->open_lives2lives, TRUE);
     return;
@@ -589,9 +589,9 @@ void lives2lives_read_stream(const gchar *host, int port) {
 #endif
     CloseHTMSocket(lstream->handle);
 #ifdef USE_STRMBUF
-    g_free(lstream->buffer);
+    lives_free(lstream->buffer);
 #endif
-    g_free(lstream);
+    lives_free(lstream);
     d_print_failed();
     lives_widget_set_sensitive (mainw->open_lives2lives, TRUE);
     return;
@@ -628,28 +628,28 @@ void lives2lives_read_stream(const gchar *host, int port) {
 
   d_print("\n");
 
-  g_snprintf(cfile->type,40,"LiVES to LiVES stream in");
+  lives_snprintf(cfile->type,40,"LiVES to LiVES stream in");
 
-  if (!strcmp(host,"INADDR_ANY")) hostname=g_strdup(_("any host"));
-  else hostname=g_strdup(_("host %d"));
+  if (!strcmp(host,"INADDR_ANY")) hostname=lives_strdup(_("any host"));
+  else hostname=lives_strdup(_("host %d"));
 
-  d_print ((tmp=g_strdup_printf (_("Opened LiVES to LiVES stream from %s on port %d"),hostname,port)));
-  g_free(tmp);
-  g_free(hostname);
-  d_print ((tmp=g_strdup_printf(_ (" size=%dx%d bpp=%d fps=%.3f\nAudio: "),cfile->hsize,cfile->vsize,cfile->bpp,cfile->fps)));
-  g_free(tmp);
+  d_print ((tmp=lives_strdup_printf (_("Opened LiVES to LiVES stream from %s on port %d"),hostname,port)));
+  lives_free(tmp);
+  lives_free(hostname);
+  d_print ((tmp=lives_strdup_printf(_ (" size=%dx%d bpp=%d fps=%.3f\nAudio: "),cfile->hsize,cfile->vsize,cfile->bpp,cfile->fps)));
+  lives_free(tmp);
 
   if (cfile->achans==0) {
     d_print (_ ("none\n"));
   }
   else {
-    d_print ((tmp=g_strdup_printf(P_("%d Hz %d channel %d bps\n","%d Hz %d channels %d bps\n",cfile->achans),cfile->arate,cfile->achans,cfile->asampsize)));
-    g_free(tmp);
+    d_print ((tmp=lives_strdup_printf(P_("%d Hz %d channel %d bps\n","%d Hz %d channels %d bps\n",cfile->achans),cfile->arate,cfile->achans,cfile->asampsize)));
+    lives_free(tmp);
   }
 
-  d_print ((tmp=g_strdup_printf (_("Syncing to external framerate of %s frames per second.\n"),(tmp2=remove_trailing_zeroes(mainw->fixed_fpsd)))));
-  g_free(tmp);
-  g_free(tmp2);
+  d_print ((tmp=lives_strdup_printf (_("Syncing to external framerate of %s frames per second.\n"),(tmp2=remove_trailing_zeroes(mainw->fixed_fpsd)))));
+  lives_free(tmp);
+  lives_free(tmp2);
 
   has_last_delta_ticks=FALSE;
 
@@ -673,9 +673,9 @@ void lives2lives_read_stream(const gchar *host, int port) {
 #endif
   CloseHTMSocket(lstream->handle);
 #ifdef USE_STRMBUF
-    g_free(lstream->buffer);
+    lives_free(lstream->buffer);
 #endif
-  g_free (cfile->ext_src);
+  lives_free (cfile->ext_src);
   cfile->ext_src=NULL;
 
   close_current_file(old_file);
@@ -715,7 +715,7 @@ void weed_layer_set_from_lives2lives(weed_plant_t *layer, int clip, lives_vstrea
 	  if (mainw->cancelled) return;
 	} while (hdr==NULL&&mainw->cancelled==CANCEL_NONE);
 	if (mainw->cancelled) {
-	  g_free(hdr);
+	  lives_free(hdr);
 	  hdr=NULL;
 	  return;
 	}
@@ -725,34 +725,34 @@ void weed_layer_set_from_lives2lives(weed_plant_t *layer, int clip, lives_vstrea
 	if ((myflags&LIVES_VSTREAM_FLAGS_IS_CONTINUATION)&&!(lstream->flags&LIVES_VSTREAM_FLAGS_IS_CONTINUATION)) {
 	  // we missed some continuation packets, just return what we have
 	  lstream->data_ready=TRUE;
-	  g_free(hdr);
+	  lives_free(hdr);
 	  hdr=NULL;
 	  return;
 	}
 
 	if (!done) {
 	  // wrong packet type or id, or a continuation of previous frame
-	  uint8_t *tmpbuf=(uint8_t *)g_malloc(lstream->dsize);
+	  uint8_t *tmpbuf=(uint8_t *)lives_malloc(lstream->dsize);
 	  lives_stream_in_chunks(lstream,lstream->dsize,tmpbuf,lstream->dsize*4);
 	  // throw this packet away
-	  g_printerr("unrecognised packet in stream - dropping it.\n");
-	  g_free(tmpbuf);
+	  lives_printerr("unrecognised packet in stream - dropping it.\n");
+	  lives_free(tmpbuf);
 	  if (mainw->cancelled) {
-	    g_free(hdr);
+	    lives_free(hdr);
 	    hdr=NULL;
 	    return;
 	  }
 	}
-	g_free(hdr);
+	lives_free(hdr);
 	hdr=NULL;
 
 	if (lstream->fps!=mainw->fixed_fpsd&&fps_can_change) {
 	  gchar *tmp,*tmp2;
 	  d_print(_("Detected new framerate for stream:\n"));
 	  mainw->files[clip]->fps=mainw->fixed_fpsd=lstream->fps;
-	  d_print ((tmp=g_strdup_printf (_("Syncing to external framerate of %s frames per second.\n"),(tmp2=remove_trailing_zeroes(mainw->fixed_fpsd)))));
-	  g_free(tmp);
-	  g_free(tmp2);
+	  d_print ((tmp=lives_strdup_printf (_("Syncing to external framerate of %s frames per second.\n"),(tmp2=remove_trailing_zeroes(mainw->fixed_fpsd)))));
+	  lives_free(tmp);
+	  lives_free(tmp2);
 	  has_last_delta_ticks=FALSE;
 	  if (clip==mainw->current_file) set_main_title(cfile->file_name,0);
 	}
@@ -767,16 +767,16 @@ void weed_layer_set_from_lives2lives(weed_plant_t *layer, int clip, lives_vstrea
 	if (mainw->record&&!mainw->record_paused) {
 	  if (has_last_delta_ticks&&(abs64(currticks-lstream->timecode))<last_delta_ticks) {
 	    // drop this frame
-	    uint8_t *tmpbuf=(uint8_t *)g_malloc(lstream->dsize);
+	    uint8_t *tmpbuf=(uint8_t *)lives_malloc(lstream->dsize);
 	    lives_stream_in_chunks(lstream,lstream->dsize,tmpbuf,lstream->dsize*4);
 	    // throw this packet away
 #ifdef DEBUG_STREAM_AGING
-	    g_printerr("packet too early (!) - dropping it.\n");
+	    lives_printerr("packet too early (!) - dropping it.\n");
 #endif
-	    g_free(tmpbuf);
+	    lives_free(tmpbuf);
 	    done=FALSE;
 	    if (mainw->cancelled) {
-	      g_free(hdr);
+	      lives_free(hdr);
 	      hdr=NULL;
 	      return;
 	    }
@@ -801,9 +801,9 @@ void weed_layer_set_from_lives2lives(weed_plant_t *layer, int clip, lives_vstrea
 
     if (lstream->hsize!=width||lstream->vsize!=height) {
       // frame size changed...
-      gchar *msg=g_strdup_printf((_("Detected frame size change to %d x %d\n")),lstream->hsize,lstream->vsize);
+      gchar *msg=lives_strdup_printf((_("Detected frame size change to %d x %d\n")),lstream->hsize,lstream->vsize);
       d_print(msg);
-      g_free(msg);
+      lives_free(msg);
       
       mainw->files[clip]->hsize=lstream->hsize;
       mainw->files[clip]->vsize=lstream->vsize;
@@ -848,12 +848,12 @@ void weed_layer_set_from_lives2lives(weed_plant_t *layer, int clip, lives_vstrea
 	  mainw->cancelled=CANCEL_ERROR;
 	}
 	if (mainw->cancelled) {
-	  weed_free(pixel_data);
+	  lives_free(pixel_data);
 	  return;
 	}
       }
 #endif
-      weed_free(pixel_data);
+      lives_free(pixel_data);
       if (framedataread>=lstream->hsize*lstream->vsize*3) {
 	return;
       }
@@ -877,13 +877,13 @@ void weed_layer_set_from_lives2lives(weed_plant_t *layer, int clip, lives_vstrea
 	    mainw->cancelled=CANCEL_ERROR;
 	  }
 	  if (mainw->cancelled) {
-	    weed_free(pixel_data);
+	    lives_free(pixel_data);
 	    return;
 	  }
 	}
 	else {
 	  // this packet contains data for multiple planes
-	  uint8_t *fbuffer=(uint8_t *)g_malloc(lstream->dsize);
+	  uint8_t *fbuffer=(uint8_t *)lives_malloc(lstream->dsize);
 	  size_t fbufoffs=0;
 	  size_t dsize=lstream->dsize;
 	  
@@ -892,8 +892,8 @@ void weed_layer_set_from_lives2lives(weed_plant_t *layer, int clip, lives_vstrea
 	    mainw->cancelled=CANCEL_ERROR;
 	  }
 	  if (mainw->cancelled) {
-	    weed_free(pixel_data);
-	    g_free(fbuffer);
+	    lives_free(pixel_data);
+	    lives_free(fbuffer);
 	    return;
 	  }
 	  lives_memcpy((uint8_t *)pixel_data[0]+framedataread,fbuffer,target_size);
@@ -913,7 +913,7 @@ void weed_layer_set_from_lives2lives(weed_plant_t *layer, int clip, lives_vstrea
 	  
 	  if (target_size>0) lives_memcpy((uint8_t *)pixel_data[2],fbuffer+fbufoffs,target_size);
 	  
-	  g_free(fbuffer);
+	  lives_free(fbuffer);
 	}
 #endif
       }
@@ -931,20 +931,20 @@ void weed_layer_set_from_lives2lives(weed_plant_t *layer, int clip, lives_vstrea
 	    lives_stream_in_chunks(lstream,lstream->dsize,
 				   (uint8_t *)(pixel_data[1]+framedataread-lstream->hsize*lstream->vsize),0);
 	    if (mainw->cancelled) {
-	      weed_free(pixel_data);
+	      lives_free(pixel_data);
 	      return;
 	    }
 	  }
 	  else {
 	    // this packet contains data for multiple planes
-	    uint8_t *fbuffer=(uint8_t *)g_malloc(lstream->dsize);
+	    uint8_t *fbuffer=(uint8_t *)lives_malloc(lstream->dsize);
 	    size_t fbufoffs=0;
 	    size_t dsize=lstream->dsize;
 	    
 	    lives_stream_in_chunks(lstream,lstream->dsize,fbuffer,0);
 	    if (mainw->cancelled) {
-	      weed_free(pixel_data);
-	      g_free(fbuffer);
+	      lives_free(pixel_data);
+	      lives_free(fbuffer);
 	      return;
 	    }
 	    lives_memcpy((uint8_t *)pixel_data[1]+framedataread-lstream->hsize*lstream->vsize,fbuffer,target_size);
@@ -957,7 +957,7 @@ void weed_layer_set_from_lives2lives(weed_plant_t *layer, int clip, lives_vstrea
 	    
 	    if (target_size>0) lives_memcpy((uint8_t *)pixel_data[2],fbuffer+fbufoffs,target_size);
 	    
-	    g_free(fbuffer);
+	    lives_free(fbuffer);
 	  }
 #endif
 	}
@@ -977,13 +977,13 @@ void weed_layer_set_from_lives2lives(weed_plant_t *layer, int clip, lives_vstrea
 	  lives_stream_in_chunks(lstream,target_size,
 				 (uint8_t *)(pixel_data[2]+framedataread-((lstream->hsize*lstream->vsize*5)>>2)),0);
 	  if (mainw->cancelled) {
-	    weed_free(pixel_data);
+	    lives_free(pixel_data);
 	    return;
 	  }
 	}
 	framedataread+=lstream->dsize;
 #endif
-	weed_free(pixel_data);
+	lives_free(pixel_data);
 	if (framedataread>=(lstream->hsize*lstream->vsize*3)>>1) {
 	  return;
 	}
@@ -1001,44 +1001,44 @@ void weed_layer_set_from_lives2lives(weed_plant_t *layer, int clip, lives_vstrea
 
 // gui bits
 
-void on_send_lives2lives_activate (LiVESMenuItem *menuitem, gpointer user_data) {
+void on_send_lives2lives_activate (LiVESMenuItem *menuitem, livespointer user_data) {
   _vppaw *vppa;
 
-  gchar *orig_name=g_strdup(mainw->string_constants[LIVES_STRING_CONSTANT_NONE]);
+  gchar *orig_name=lives_strdup(mainw->string_constants[LIVES_STRING_CONSTANT_NONE]);
   gchar *tmp;
 
   int resp;
 
   if (mainw->vpp!=NULL) {
-    g_free(orig_name);
-    orig_name=g_strdup(mainw->vpp->name);
+    lives_free(orig_name);
+    orig_name=lives_strdup(mainw->vpp->name);
   }
 
   if (mainw->vpp==NULL||strcmp(mainw->vpp->name,"lives2lives_stream")) {
-    g_snprintf(future_prefs->vpp_name,64,"lives2lives_stream");
+    lives_snprintf(future_prefs->vpp_name,64,"lives2lives_stream");
   }
   vppa=on_vpp_advanced_clicked(NULL,NULL);
   resp=lives_dialog_run(LIVES_DIALOG(vppa->dialog));
 
   if (resp==LIVES_RESPONSE_CANCEL) {
-    g_free(orig_name);
+    lives_free(orig_name);
     return;
   }
 
   set_vpp(FALSE);
   
   if (strcmp(orig_name,"lives2lives_stream")) {
-    do_info_dialog((tmp=g_strdup_printf(_("\nLiVES will stream whenever it is in full screen/separate window mode.\nTo reset this behaviour, go to Tools/Preferences/Playback,\nand set the playback plugin back to %s\n"),orig_name)));
-    g_free(tmp);
+    do_info_dialog((tmp=lives_strdup_printf(_("\nLiVES will stream whenever it is in full screen/separate window mode.\nTo reset this behaviour, go to Tools/Preferences/Playback,\nand set the playback plugin back to %s\n"),orig_name)));
+    lives_free(tmp);
   }
-  g_free(orig_name);
+  lives_free(orig_name);
 }
 
 
 
 
 
-void on_open_lives2lives_activate (LiVESMenuItem *menuitem, gpointer user_data) {
+void on_open_lives2lives_activate (LiVESMenuItem *menuitem, livespointer user_data) {
   lives_pandh_w *pandh=create_pandh_dialog(0);
 
   gchar *host=NULL;
@@ -1048,23 +1048,23 @@ void on_open_lives2lives_activate (LiVESMenuItem *menuitem, gpointer user_data) 
 
   if (response==LIVES_RESPONSE_OK) {
     if (!lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(pandh->rb_anyhost))) {
-      host=g_strdup_printf("%s.%s.%s.%s",lives_entry_get_text(LIVES_ENTRY(pandh->entry1)),
+      host=lives_strdup_printf("%s.%s.%s.%s",lives_entry_get_text(LIVES_ENTRY(pandh->entry1)),
 			   lives_entry_get_text(LIVES_ENTRY(pandh->entry2)),
 			   lives_entry_get_text(LIVES_ENTRY(pandh->entry3)),lives_entry_get_text(LIVES_ENTRY(pandh->entry4)));
     }
-    else host=g_strdup("INADDR_ANY");
+    else host=lives_strdup("INADDR_ANY");
     port=lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(pandh->port_spin));
   }
 
   lives_widget_destroy (pandh->dialog);
-  g_free(pandh);
+  lives_free(pandh);
   
   lives_widget_context_update();
 
   if (host!=NULL) {
     // start receiving
     lives2lives_read_stream(host,port);
-    g_free(host);
+    lives_free(host);
   }
 }
 
@@ -1072,7 +1072,7 @@ void on_open_lives2lives_activate (LiVESMenuItem *menuitem, gpointer user_data) 
 
 
 
-static void pandhw_anyhost_toggled(LiVESToggleButton *tbut, gpointer user_data) {
+static void pandhw_anyhost_toggled(LiVESToggleButton *tbut, livespointer user_data) {
   lives_pandh_w *pandhw=(lives_pandh_w *)user_data;
 
   if (lives_toggle_button_get_active(tbut)) {
@@ -1100,7 +1100,7 @@ lives_pandh_w* create_pandh_dialog (int type) {
 
   LiVESSList *radiobutton_group = NULL;
 
-  lives_pandh_w *pandhw=(lives_pandh_w *)(g_malloc(sizeof(lives_pandh_w)));
+  lives_pandh_w *pandhw=(lives_pandh_w *)(lives_malloc(sizeof(lives_pandh_w)));
 
   gchar *tmp,*tmp2;
 
@@ -1126,26 +1126,26 @@ lives_pandh_w* create_pandh_dialog (int type) {
   hbox = lives_hbox_new (FALSE, 0);
   lives_box_pack_start (LIVES_BOX (dialog_vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
 
-  pandhw->rb_anyhost = lives_standard_radio_button_new ((tmp=g_strdup(_("Accept LiVES streams from _any host")))
+  pandhw->rb_anyhost = lives_standard_radio_button_new ((tmp=lives_strdup(_("Accept LiVES streams from _any host")))
 							,TRUE,radiobutton_group,LIVES_BOX(hbox),
-							(tmp2=g_strdup(_("Accept incoming LiVES streams from any connected host."))));
+							(tmp2=lives_strdup(_("Accept incoming LiVES streams from any connected host."))));
   radiobutton_group = lives_radio_button_get_group (LIVES_RADIO_BUTTON (pandhw->rb_anyhost));
 
-  g_free(tmp); g_free(tmp2);
+  lives_free(tmp); lives_free(tmp2);
 
   lives_signal_connect_after (LIVES_GUI_OBJECT (pandhw->rb_anyhost), LIVES_WIDGET_TOGGLED_EVENT,
 			  LIVES_GUI_CALLBACK (pandhw_anyhost_toggled),
-			  (gpointer)pandhw);
+			  (livespointer)pandhw);
 
   hbox = lives_hbox_new (FALSE, 0);
   lives_box_pack_start (LIVES_BOX (dialog_vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
 
 
-  lives_standard_radio_button_new ((tmp=g_strdup(_("Accept LiVES streams only from the _specified host:")))
+  lives_standard_radio_button_new ((tmp=lives_strdup(_("Accept LiVES streams only from the _specified host:")))
 				   ,TRUE,radiobutton_group,LIVES_BOX(hbox),
-				   (tmp2=g_strdup(_("Accept LiVES streams from the specified host only."))));
+				   (tmp2=lives_strdup(_("Accept LiVES streams from the specified host only."))));
   
-  g_free(tmp); g_free(tmp2);
+  lives_free(tmp); lives_free(tmp2);
 
   ////////////////////////////////////
 

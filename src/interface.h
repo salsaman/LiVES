@@ -43,7 +43,7 @@ typedef struct {
   LiVESWidget *dir_entry;
   LiVESWidget *name_entry;
   LiVESWidget *warn_checkbutton;
-  GList *setlist;
+  LiVESList *setlist;
 } _entryw;
 
 _entryw* create_rename_dialog (int type);
@@ -107,7 +107,7 @@ typedef struct {
 
 
 aud_dialog_t *create_audfade_dialog (int type);
-LiVESWidget *create_combo_dialog (int type, gpointer user_data);
+LiVESWidget *create_combo_dialog (int type, livespointer user_data);
 
 _commentsw *commentsw;
 _entryw *renamew;

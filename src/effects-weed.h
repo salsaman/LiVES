@@ -219,7 +219,7 @@ int rte_switch_keymode (int key, int mode, const gchar *hashname);
 /////////////////////////////////////////////////////////////
 
 int rte_getmodespk (void);
-GList *weed_get_all_names (lives_fx_list_t list_type);
+LiVESList *weed_get_all_names (lives_fx_list_t list_type);
 int rte_get_numfilters(boolean inc_dupes);
 
 /////////////////////////////////////////////////////////

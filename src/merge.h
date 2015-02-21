@@ -9,21 +9,21 @@
 
 void create_merge_dialog (void);
 
-void on_merge_activate (LiVESMenuItem *, gpointer);
+void on_merge_activate (LiVESMenuItem *, livespointer);
 
-void on_merge_ok_clicked (LiVESButton *, gpointer);
+void on_merge_ok_clicked (LiVESButton *, livespointer);
 
-void on_align_start_end_toggled (LiVESToggleButton *, gpointer);
+void on_align_start_end_toggled (LiVESToggleButton *, livespointer);
 
-void on_trans_method_changed (LiVESCombo *, gpointer);
+void on_trans_method_changed (LiVESCombo *, livespointer);
 
-void on_merge_cancel_clicked (LiVESButton *, gpointer);
+void on_merge_cancel_clicked (LiVESButton *, livespointer);
 
-void on_fit_toggled (LiVESToggleButton *, gpointer);
+void on_fit_toggled (LiVESToggleButton *, livespointer);
 
-void on_ins_frames_toggled (LiVESToggleButton *, gpointer);
+void on_ins_frames_toggled (LiVESToggleButton *, livespointer);
 
-void after_spinbutton_loops_changed (LiVESSpinButton *, gpointer);
+void after_spinbutton_loops_changed (LiVESSpinButton *, livespointer);
 
 
 #endif

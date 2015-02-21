@@ -54,7 +54,7 @@ static void start_preview (LiVESButton *button, lives_rfx_t *rfx) {
 
   if (mainw->did_rfx_preview) {
 #ifndef IS_MINGW
-    com=g_strdup_printf("%s stopsubsub \"%s\" 2>/dev/null",prefs->backend_sync,cfile->handle);
+    com=lives_strdup_printf("%s stopsubsub \"%s\" 2>/dev/null",prefs->backend_sync,cfile->handle);
     lives_system(com,TRUE); // try to stop any in-progress preview
 #else
     // get pid from backend
@@ -62,7 +62,7 @@ static void start_preview (LiVESButton *button, lives_rfx_t *rfx) {
     ssize_t rlen;
     char val[16];
     int pid;
-    com=g_strdup_printf("%s get_pid_for_handle \"%s\"",prefs->backend_sync,cfile->handle);
+    com=lives_strdup_printf("%s get_pid_for_handle \"%s\"",prefs->backend_sync,cfile->handle);
     rfile=popen(com,"r");
     rlen=fread(val,1,16,rfile);
     pclose(rfile);
@@ -71,7 +71,7 @@ static void start_preview (LiVESButton *button, lives_rfx_t *rfx) {
     
     lives_win32_kill_subprocesses(pid,TRUE);
 #endif
-    g_free(com);
+    lives_free(com);
 
     if (cfile->start==0) {
       cfile->start=1;
@@ -82,9 +82,9 @@ static void start_preview (LiVESButton *button, lives_rfx_t *rfx) {
   }
 
 #ifndef IS_MINGW
-  com=g_strdup_printf("%s clear_pre_files \"%s\" 2>/dev/null",prefs->backend_sync,cfile->handle);
+  com=lives_strdup_printf("%s clear_pre_files \"%s\" 2>/dev/null",prefs->backend_sync,cfile->handle);
 #else
-  com=g_strdup_printf("%s clear_pre_files \"%s\" 2>NUL",prefs->backend_sync,cfile->handle);
+  com=lives_strdup_printf("%s clear_pre_files \"%s\" 2>NUL",prefs->backend_sync,cfile->handle);
 #endif
   lives_system(com,TRUE); // clear any .pre files from before
 
@@ -134,10 +134,10 @@ void framedraw_connect(lives_special_framedraw_rect_t *framedraw, int width, int
   lives_signal_connect (LIVES_GUI_OBJECT (mainw->framedraw), "button_release_event",
 		    LIVES_GUI_CALLBACK (on_framedraw_mouse_reset),
 		    framedraw);
-  lives_signal_connect (LIVES_GUI_OBJECT (mainw->framedraw), "button_press_event",
+  lives_signal_connect (LIVES_GUI_OBJECT (mainw->framedraw), LIVES_WIDGET_BUTTON_PRESS_EVENT,
 		    LIVES_GUI_CALLBACK (on_framedraw_mouse_start),
 		    framedraw);
-  lives_signal_connect (LIVES_GUI_OBJECT(mainw->framedraw), "enter-notify-event",LIVES_GUI_CALLBACK (on_framedraw_enter),framedraw);
+  lives_signal_connect (LIVES_GUI_OBJECT(mainw->framedraw), LIVES_WIDGET_ENTER_EVENT,LIVES_GUI_CALLBACK (on_framedraw_enter),framedraw);
   lives_signal_connect (LIVES_GUI_OBJECT(mainw->framedraw), "leave-notify-event",LIVES_GUI_CALLBACK (on_framedraw_leave),framedraw);
 
   framedraw_connect_spinbutton(framedraw,rfx);
@@ -176,7 +176,7 @@ void framedraw_add_reset(LiVESVBox *box, lives_special_framedraw_rect_t *framedr
 }
 
 
-static boolean expose_fd_event (LiVESWidget *widget, GdkEventExpose ev) {
+static boolean expose_fd_event (LiVESWidget *widget, LiVESXEventExpose ev) {
   redraw_framedraw_image();
   return TRUE;
 }
@@ -271,7 +271,7 @@ void widget_add_framedraw (LiVESVBox *box, int start, int end, boolean add_previ
 
   mainw->framedraw_scale=lives_hscale_new(LIVES_ADJUSTMENT(spinbutton_adj));
   lives_box_pack_start (LIVES_BOX (hbox), mainw->framedraw_scale, TRUE, TRUE, 0);
-  gtk_scale_set_draw_value(GTK_SCALE(mainw->framedraw_scale),FALSE);
+  lives_scale_set_draw_value(LIVES_SCALE(mainw->framedraw_scale),FALSE);
 
   rfx=(lives_rfx_t *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(lives_widget_get_toplevel(LIVES_WIDGET(box))),"rfx");
   mainw->framedraw_preview = lives_button_new_from_stock (LIVES_STOCK_REFRESH);
@@ -557,7 +557,7 @@ void load_rfx_preview(lives_rfx_t *rfx) {
     }
     else {
       // otherwise wait
-      g_usleep(prefs->sleep_time);
+      lives_usleep(prefs->sleep_time);
     }
   }
 
@@ -584,14 +584,14 @@ void load_rfx_preview(lives_rfx_t *rfx) {
     else {
       int numtok=get_token_count (mainw->msg,'|');
       if (numtok>4) {
-	gchar **array=g_strsplit(mainw->msg,"|",numtok);
+	gchar **array=lives_strsplit(mainw->msg,"|",numtok);
 	max_frame=atoi(array[0]);
 	cfile->hsize=atoi(array[1]);
 	cfile->vsize=atoi(array[2]);
 	cfile->fps=cfile->pb_fps=strtod(array[3],NULL);
 	if (cfile->fps==0) cfile->fps=cfile->pb_fps=prefs->default_fps;
 	tot_frames=atoi(array[4]);
-	g_strfreev(array);
+	lives_strfreev(array);
       }
     }
   }
@@ -681,12 +681,12 @@ void load_framedraw_image(LiVESPixbuf *pixbuf) {
     mainw->fd_layer_orig=weed_layer_new(0,0,NULL,WEED_PALETTE_END);
 
     if (pixbuf_to_layer(mainw->fd_layer_orig,pixbuf)) {
-      mainw->do_not_free=(gpointer)lives_pixbuf_get_pixels_readonly(pixbuf);
-      mainw->free_fn=lives_free_with_check;
+      mainw->do_not_free=(livespointer)lives_pixbuf_get_pixels_readonly(pixbuf);
+      mainw->free_fn=_lives_free_with_check;
     }
     lives_object_unref(pixbuf);
     mainw->do_not_free=NULL;
-    mainw->free_fn=lives_free_normal;
+    mainw->free_fn=_lives_free_normal;
 
   }
 
@@ -742,13 +742,13 @@ void redraw_framedraw_image(void) {
 
   // convert pixbuf back to layer (layer_to_pixbuf destroys it)
   if (pixbuf_to_layer(mainw->fd_layer,pixbuf)) {
-    mainw->do_not_free=(gpointer)lives_pixbuf_get_pixels_readonly(pixbuf);
-    mainw->free_fn=lives_free_with_check;
+    mainw->do_not_free=(livespointer)lives_pixbuf_get_pixels_readonly(pixbuf);
+    mainw->free_fn=_lives_free_with_check;
   }
 
   lives_object_unref(pixbuf);
   mainw->do_not_free=NULL;
-  mainw->free_fn=lives_free_normal;
+  mainw->free_fn=_lives_free_normal;
 
 
 }
@@ -756,7 +756,7 @@ void redraw_framedraw_image(void) {
 
 // change cursor maybe when we enter or leave the framedraw window
 
-boolean on_framedraw_enter (LiVESWidget *widget, GdkEventCrossing *event, lives_special_framedraw_rect_t *framedraw) {
+boolean on_framedraw_enter (LiVESWidget *widget, LiVESXEventCrossing *event, lives_special_framedraw_rect_t *framedraw) {
 
   if (framedraw==NULL&&mainw->multitrack!=NULL) {
     framedraw=mainw->multitrack->framedraw;
@@ -795,7 +795,7 @@ boolean on_framedraw_enter (LiVESWidget *widget, GdkEventCrossing *event, lives_
 }
 
 
-boolean on_framedraw_leave (LiVESWidget *widget, GdkEventCrossing *event, lives_special_framedraw_rect_t *framedraw) {
+boolean on_framedraw_leave (LiVESWidget *widget, LiVESXEventCrossing *event, lives_special_framedraw_rect_t *framedraw) {
   if (framedraw==NULL) return FALSE;
   lives_set_cursor_style (LIVES_CURSOR_NORMAL,mainw->framedraw);
   return FALSE;

@@ -5,7 +5,7 @@
 // released under the GNU GPL 3 or later
 // see file COPYING or www.gnu.org for details
 
-// (c) G. Finch 2002 - 2013
+// (c) G. Finch 2002 - 2015
 
 #ifndef LIVES_PANGOTEXT_H
 #define LIVES_PANGOTEXT_H
@@ -60,7 +60,7 @@ weed_plant_t *render_text_to_layer(weed_plant_t *layer, const char *text, const 
 				   double size, lives_text_mode_t mode, lives_colRGBA32_t *fg_col, 
 				   lives_colRGBA32_t *bg_col, boolean center, boolean rising, double top);
 
-PangoLayout *render_text_to_cr (lives_painter_t *, const char *text, const char *fontname,
+LingoLayout *render_text_to_cr (lives_painter_t *, const char *text, const char *fontname,
 				double size, lives_text_mode_t mode, lives_colRGBA32_t *fg_col, lives_colRGBA32_t *bg_col,
 				boolean center, boolean rising, double top, int start, int width, int height);
 

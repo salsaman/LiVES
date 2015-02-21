@@ -44,11 +44,11 @@ static double est_time;
 
 static volatile boolean dlg_thread_ready=FALSE;
 
-void on_warn_mask_toggled (LiVESToggleButton *togglebutton, gpointer user_data) {
+void on_warn_mask_toggled (LiVESToggleButton *togglebutton, livespointer user_data) {
   LiVESWidget *tbutton;
 
-  if (lives_toggle_button_get_active(togglebutton)) prefs->warning_mask|=GPOINTER_TO_INT(user_data);
-  else prefs->warning_mask^=GPOINTER_TO_INT(user_data);
+  if (lives_toggle_button_get_active(togglebutton)) prefs->warning_mask|=LIVES_POINTER_TO_INT(user_data);
+  else prefs->warning_mask^=LIVES_POINTER_TO_INT(user_data);
   set_int_pref("lives_warning_mask",prefs->warning_mask);
 
   if ((tbutton=(LiVESWidget *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(togglebutton),"auto"))!=NULL) {
@@ -72,7 +72,7 @@ static void add_xlays_widget(LiVESBox *box) {
   LiVESWidget *expander=lives_expander_new_with_mnemonic(_("Show affected _layouts"));
   LiVESWidget *textview=lives_text_view_new();
   LiVESWidget *label;
-  GList *xlist=mainw->xlays;
+  LiVESList *xlist=mainw->xlays;
   LiVESTextBuffer *textbuffer = lives_text_view_get_buffer (LIVES_TEXT_VIEW (textview));
   
   lives_text_view_set_editable (LIVES_TEXT_VIEW (textview), FALSE);
@@ -130,7 +130,7 @@ static void add_clear_ds_button(LiVESDialog* dialog) {
 
   lives_signal_connect (LIVES_GUI_OBJECT (button), LIVES_WIDGET_CLICKED_EVENT,
 		    LIVES_GUI_CALLBACK (on_cleardisk_activate),
-		    (gpointer)button);
+		    (livespointer)button);
 
   lives_widget_show(button);
   lives_dialog_add_action_widget (dialog, button, LIVES_RETRY);
@@ -174,7 +174,7 @@ static LiVESWidget* create_warn_dialog (int warn_mask_number, LiVESWindow *trans
 
   switch (diat) {
   case LIVES_DIALOG_WARN:
-    dialog = gtk_message_dialog_new (transient,(GtkDialogFlags)0,GTK_MESSAGE_WARNING,GTK_BUTTONS_NONE,NULL);
+    dialog = lives_message_dialog_new (transient,(LiVESDialogFlags)0,LIVES_MESSAGE_WARNING,LIVES_BUTTONS_NONE,NULL);
 
     if (mainw->add_clear_ds_button) {
       mainw->add_clear_ds_button=FALSE;
@@ -182,28 +182,22 @@ static LiVESWidget* create_warn_dialog (int warn_mask_number, LiVESWindow *trans
     }
 
     lives_window_set_title (LIVES_WINDOW (dialog), _("LiVES: - Warning !"));
-    widget_opts.justify=LIVES_JUSTIFY_CENTER;
-    widget_opts.justify=LIVES_JUSTIFY_DEFAULT;
     warning_cancelbutton = lives_button_new_from_stock (LIVES_STOCK_LABEL_CANCEL);
     lives_dialog_add_action_widget (LIVES_DIALOG (dialog), warning_cancelbutton, LIVES_RESPONSE_CANCEL);
     warning_okbutton = lives_button_new_from_stock (LIVES_STOCK_LABEL_OK);
     lives_dialog_add_action_widget (LIVES_DIALOG (dialog), warning_okbutton, LIVES_RESPONSE_OK);
     break;
   case LIVES_DIALOG_YESNO:
-    dialog = gtk_message_dialog_new (transient,(GtkDialogFlags)0,GTK_MESSAGE_QUESTION,GTK_BUTTONS_NONE,NULL);
+    dialog = lives_message_dialog_new (transient,(LiVESDialogFlags)0,LIVES_MESSAGE_QUESTION,LIVES_BUTTONS_NONE,NULL);
     lives_window_set_title (LIVES_WINDOW (dialog), _("LiVES: - Question"));
-    widget_opts.justify=LIVES_JUSTIFY_CENTER;
-    widget_opts.justify=LIVES_JUSTIFY_DEFAULT;
     warning_cancelbutton = lives_button_new_from_stock (LIVES_STOCK_NO);
     lives_dialog_add_action_widget (LIVES_DIALOG (dialog), warning_cancelbutton, LIVES_NO);
     warning_okbutton = lives_button_new_from_stock (LIVES_STOCK_YES);
     lives_dialog_add_action_widget (LIVES_DIALOG (dialog), warning_okbutton, LIVES_YES);
     break;
   case LIVES_DIALOG_ABORT_CANCEL_RETRY:
-    dialog = gtk_message_dialog_new (transient,(GtkDialogFlags)0,GTK_MESSAGE_ERROR,GTK_BUTTONS_NONE,NULL);
+    dialog = lives_message_dialog_new (transient,(LiVESDialogFlags)0,LIVES_MESSAGE_ERROR,LIVES_BUTTONS_NONE,NULL);
     lives_window_set_title (LIVES_WINDOW (dialog), _("LiVES: - File Error"));
-    widget_opts.justify=LIVES_JUSTIFY_CENTER;
-    widget_opts.justify=LIVES_JUSTIFY_DEFAULT;
     abortbutton = lives_button_new_from_stock (LIVES_STOCK_QUIT);
     lives_button_set_label(LIVES_BUTTON(abortbutton),_("_Abort"));
     lives_dialog_add_action_widget (LIVES_DIALOG (dialog), abortbutton, LIVES_ABORT);
@@ -231,9 +225,12 @@ static LiVESWidget* create_warn_dialog (int warn_mask_number, LiVESWindow *trans
   lives_container_set_border_width (LIVES_CONTAINER (dialog), widget_opts.border_width*2);
 
   textx=insert_newlines(text,MAX_MSG_WIDTH_CHARS);
-  warning_label=lives_standard_label_new(textx);
 
-  g_free(textx);
+  widget_opts.justify=LIVES_JUSTIFY_CENTER;
+  warning_label=lives_standard_label_new(textx);
+  widget_opts.justify=LIVES_JUSTIFY_DEFAULT;
+
+  lives_free(textx);
 
   dialog_vbox = lives_dialog_get_content_area(LIVES_DIALOG(dialog));
 
@@ -325,7 +322,7 @@ boolean do_warning_dialog_with_check_transient(const gchar *text, int warn_mask_
     return TRUE;
   }
 
-  mytext=g_strdup(text); // must copy this because of translation issues
+  mytext=lives_strdup(text); // must copy this because of translation issues
 
   do {
     warning=create_warn_dialog(warn_mask_number,transient,mytext,LIVES_DIALOG_WARN);
@@ -335,7 +332,7 @@ boolean do_warning_dialog_with_check_transient(const gchar *text, int warn_mask_
   } while (response==LIVES_RETRY);
 
   lives_widget_context_update();
-  if (mytext!=NULL) g_free(mytext);
+  if (mytext!=NULL) lives_free(mytext);
 
   return (response==LIVES_RESPONSE_OK);
 }
@@ -352,7 +349,7 @@ boolean do_yesno_dialog_with_check_transient(const gchar *text, int warn_mask_nu
     return TRUE;
   }
 
-  mytext=g_strdup(text); // must copy this because of translation issues
+  mytext=lives_strdup(text); // must copy this because of translation issues
 
   do {
     warning=create_warn_dialog(warn_mask_number,transient,mytext,LIVES_DIALOG_YESNO);
@@ -362,7 +359,7 @@ boolean do_yesno_dialog_with_check_transient(const gchar *text, int warn_mask_nu
   } while (response==LIVES_RETRY);
 
   lives_widget_context_update();
-  if (mytext!=NULL) g_free(mytext);
+  if (mytext!=NULL) lives_free(mytext);
 
   return (response==LIVES_YES);
 }
@@ -380,9 +377,9 @@ boolean do_yesno_dialog(const gchar *text) {
     else if (mainw->multitrack!=NULL&&mainw->multitrack->is_ready) transient=LIVES_WINDOW(mainw->multitrack->window);
   }
 
-  mytext=g_strdup(text); // translation issues
+  mytext=lives_strdup(text); // translation issues
   warning=create_warn_dialog(0,transient,mytext,LIVES_DIALOG_YESNO);
-  if (mytext!=NULL) g_free(mytext);
+  if (mytext!=NULL) lives_free(mytext);
 
   response=lives_dialog_run (LIVES_DIALOG (warning));
   lives_widget_destroy (warning);
@@ -408,7 +405,7 @@ int do_abort_cancel_retry_dialog(const gchar *text, LiVESWindow *transient) {
     }
   }
 
-  mytext=g_strdup(text); // translation issues
+  mytext=lives_strdup(text); // translation issues
 
   do {
     warning=create_warn_dialog(0,transient,mytext,LIVES_DIALOG_ABORT_CANCEL_RETRY);
@@ -425,7 +422,7 @@ int do_abort_cancel_retry_dialog(const gchar *text, LiVESWindow *transient) {
 	    gchar *com;
 	    // stop any processing processing
 #ifndef IS_MINGW
-	    com=g_strdup_printf("%s stopsubsub \"%s\" 2>/dev/null",prefs->backend_sync,cfile->handle);
+	    com=lives_strdup_printf("%s stopsubsub \"%s\" 2>/dev/null",prefs->backend_sync,cfile->handle);
 	    lives_system(com,TRUE);
 #else
 	    // get pid from backend
@@ -433,7 +430,7 @@ int do_abort_cancel_retry_dialog(const gchar *text, LiVESWindow *transient) {
 	    ssize_t rlen;
 	    char val[16];
 	    int pid;
-	    com=g_strdup_printf("%s get_pid_for_handle \"%s\"",prefs->backend_sync,cfile->handle);
+	    com=lives_strdup_printf("%s get_pid_for_handle \"%s\"",prefs->backend_sync,cfile->handle);
 	    rfile=popen(com,"r");
 	    rlen=fread(val,1,16,rfile);
 	    pclose(rfile);
@@ -442,7 +439,7 @@ int do_abort_cancel_retry_dialog(const gchar *text, LiVESWindow *transient) {
 	    
 	    lives_win32_kill_subprocesses(pid,TRUE);
 #endif
-	    g_free(com);
+	    lives_free(com);
 	  }
 	}
 	exit(1);
@@ -451,7 +448,7 @@ int do_abort_cancel_retry_dialog(const gchar *text, LiVESWindow *transient) {
 
   } while (response==LIVES_ABORT);
 
-  if (mytext!=NULL) g_free(mytext);
+  if (mytext!=NULL) lives_free(mytext);
   return response;
 }
 
@@ -547,9 +544,9 @@ int do_error_dialog_with_check_transient(const gchar *text, boolean is_blocking,
   int ret=LIVES_RESPONSE_NONE;
 
   if (prefs->warning_mask&warn_mask_number) return ret;
-  mytext=g_strdup(text);
+  mytext=lives_strdup(text);
   err_box=create_info_error_dialog(mytext,is_blocking,warn_mask_number,warn_mask_number==0?LIVES_INFO_TYPE_ERROR:LIVES_INFO_TYPE_WARNING);
-  if (mytext!=NULL) g_free(mytext);
+  if (mytext!=NULL) lives_free(mytext);
   if (transient!=NULL) lives_window_set_transient_for(LIVES_WINDOW(err_box),transient);
 
   if (is_blocking) {
@@ -572,9 +569,9 @@ int do_info_dialog_with_transient(const gchar *text, boolean is_blocking, LiVESW
 
   int ret=LIVES_RESPONSE_NONE;
 
-  mytext=g_strdup(text);
+  mytext=lives_strdup(text);
   info_box=create_info_error_dialog(mytext,is_blocking,0,LIVES_INFO_TYPE_INFO);
-  if (mytext!=NULL) g_free(mytext);
+  if (mytext!=NULL) lives_free(mytext);
   if (transient!=NULL) lives_window_set_transient_for(LIVES_WINDOW(info_box),transient);
 
   if (is_blocking) {
@@ -594,13 +591,13 @@ gchar *ds_critical_msg(const gchar *dir, uint64_t dsval) {
   gchar *tmp;
   gchar *dscr=lives_format_storage_space_string(prefs->ds_crit_level); ///< crit level
   gchar *dscu=lives_format_storage_space_string(dsval); ///< current level
-  msg=g_strdup_printf(_("FREE SPACE IN THE PARTITION CONTAINING\n%s\nHAS FALLEN BELOW THE CRITICAL LEVEL OF %s\nCURRENT FREE SPACE IS %s\n\n(Disk warning levels can be configured in Preferences.)"),
-		      (tmp=g_filename_to_utf8(dir,-1,NULL,NULL,NULL)),dscr,dscu);
+  msg=lives_strdup_printf(_("FREE SPACE IN THE PARTITION CONTAINING\n%s\nHAS FALLEN BELOW THE CRITICAL LEVEL OF %s\nCURRENT FREE SPACE IS %s\n\n(Disk warning levels can be configured in Preferences.)"),
+			  (tmp=lives_filename_to_utf8(dir,-1,NULL,NULL,NULL)),dscr,dscu);
   msgx=insert_newlines(msg,MAX_MSG_WIDTH_CHARS);
-  g_free(msg);
-  g_free(tmp);
-  g_free(dscr);
-  g_free(dscu);
+  lives_free(msg);
+  lives_free(tmp);
+  lives_free(dscr);
+  lives_free(dscu);
   return msgx;
 }
 
@@ -612,13 +609,13 @@ gchar *ds_warning_msg(const gchar *dir, uint64_t dsval, uint64_t cwarn, uint64_t
   gchar *dscw=lives_format_storage_space_string(cwarn); ///< warn level
   gchar *dscu=lives_format_storage_space_string(dsval); ///< current level
   gchar *dscn=lives_format_storage_space_string(nwarn); ///< next warn level
-  msg=g_strdup_printf(_("Free space in the partition containing\n%s\nhas fallen below the warning level of %s\nCurrent free space is %s\n\n(Next warning will be shown at %s. Disk warning levels can be configured in Preferences.)"),
-		      (tmp=g_filename_to_utf8(dir,-1,NULL,NULL,NULL)),dscw,dscu,dscn);
+  msg=lives_strdup_printf(_("Free space in the partition containing\n%s\nhas fallen below the warning level of %s\nCurrent free space is %s\n\n(Next warning will be shown at %s. Disk warning levels can be configured in Preferences.)"),
+			  (tmp=lives_filename_to_utf8(dir,-1,NULL,NULL,NULL)),dscw,dscu,dscn);
   msgx=insert_newlines(msg,MAX_MSG_WIDTH_CHARS);
-  g_free(msg);
-  g_free(dscw);
-  g_free(dscu);
-  g_free(dscn);
+  lives_free(msg);
+  lives_free(dscw);
+  lives_free(dscu);
+  lives_free(dscn);
   return msgx;
 }
 
@@ -647,7 +644,7 @@ void handle_backend_errors(void) {
 
   numtok=get_token_count (mainw->msg,'|');
   
-  array=g_strsplit(mainw->msg,"|",numtok);
+  array=lives_strsplit(mainw->msg,"|",numtok);
   
   if (numtok>2 && !strcmp(array[1],"read")) {
     // got read error from backend
@@ -657,7 +654,7 @@ void handle_backend_errors(void) {
       do_read_failed_error_s(array[2],addinfo);
     pxstart=3;
     mainw->read_failed=TRUE;
-    mainw->read_failed_file=g_strdup(array[2]);
+    mainw->read_failed_file=lives_strdup(array[2]);
     mainw->cancelled=CANCEL_ERROR;
   }
   
@@ -669,7 +666,7 @@ void handle_backend_errors(void) {
       do_write_failed_error_s(array[2],addinfo);
     pxstart=3;
     mainw->write_failed=TRUE;
-    mainw->write_failed_file=g_strdup(array[2]);
+    mainw->write_failed_file=lives_strdup(array[2]);
     mainw->cancelled=CANCEL_ERROR;
   }
   
@@ -686,12 +683,12 @@ void handle_backend_errors(void) {
   
   // for other types of errors...more info....
   // set mainw->error but not mainw->cancelled
-  g_snprintf(mainw->msg,512,"\n\n");
+  lives_snprintf(mainw->msg,512,"\n\n");
   for (i=pxstart;i<numtok;i++) {
-    g_strappend(mainw->msg,512,_(array[i]));
-    g_strappend(mainw->msg,512,"\n");
+    lives_strappend(mainw->msg,512,_(array[i]));
+    lives_strappend(mainw->msg,512,"\n");
   }
-  g_strfreev(array);
+  lives_strfreev(array);
 
   mainw->error=TRUE;
 
@@ -716,25 +713,31 @@ boolean check_backend_return(lives_clip_t *sfile) {
   return TRUE;
 }
 
-void pump_io_chan(GIOChannel *iochan) {
+void pump_io_chan(LiVESIOChannel *iochan) {
   // pump data from stdout to textbuffer
-  GError *gerr=NULL;
-  gchar *str_return=NULL;
-  gsize retlen;
+  char *str_return=NULL;
+  size_t retlen=0;
   LiVESTextBuffer *optextbuf=lives_text_view_get_buffer(mainw->optextview);
 
+#ifdef GUI_GTK
+  LiVESError *gerr=NULL;
+
   if (!iochan->is_readable) return;
-
   g_io_channel_read_to_end(iochan,&str_return,&retlen,&gerr);
+  if (gerr!=NULL) lives_error_free(gerr);
+#endif
 
-  if (gerr!=NULL) g_error_free(gerr);
-
+#ifdef GUI_QT
+  QByteArray qba = iochan->readAll();
+  str_return = strdup(qba.constData());
+  retlen = strlen(str_return);
+#endif
   if (retlen>0) {
     lives_text_buffer_insert_at_end(optextbuf,str_return);
     lives_text_view_scroll_onscreen(LIVES_TEXT_VIEW (mainw->optextview));
   }
 
-  if (str_return!=NULL) g_free(str_return);
+  if (str_return!=NULL) lives_free(str_return);
 
 }
 
@@ -749,7 +752,7 @@ boolean check_storage_space(lives_clip_t *sfile, boolean is_processing) {
   lives_storage_status_t ds;
 
   gchar *msg,*tmp;
-  gchar *pausstr=g_strdup(_("Processing has been paused."));
+  gchar *pausstr=lives_strdup(_("Processing has been paused."));
 
   do {
     ds=get_storage_status(prefs->tmpdir,mainw->next_ds_warn_level,&dsval);
@@ -766,14 +769,14 @@ boolean check_storage_space(lives_clip_t *sfile, boolean is_processing) {
 
       tmp=ds_warning_msg(prefs->tmpdir,dsval,curr_ds_warn,mainw->next_ds_warn_level);
       if (!did_pause)
-	msg=g_strdup_printf("\n%s\n",tmp);
+	msg=lives_strdup_printf("\n%s\n",tmp);
       else 
-	msg=g_strdup_printf("\n%s\n%s\n",tmp,pausstr);
-      g_free(tmp);
+	msg=lives_strdup_printf("\n%s\n%s\n",tmp,pausstr);
+      lives_free(tmp);
       mainw->add_clear_ds_button=TRUE; // gets reset by do_warning_dialog()
       if (!do_warning_dialog(msg)) {
-	g_free(msg);
-	g_free(pausstr);
+	lives_free(msg);
+	lives_free(pausstr);
 	mainw->cancelled=CANCEL_USER;
 	if (is_processing) {
 	  sfile->nokeep=TRUE;
@@ -781,7 +784,7 @@ boolean check_storage_space(lives_clip_t *sfile, boolean is_processing) {
 	}
 	return FALSE;
       }
-      g_free(msg);
+      lives_free(msg);
     }
     else if (ds==LIVES_STORAGE_STATUS_CRITICAL) {
       if (is_processing&&sfile!=NULL&&sfile->proc_ptr!=NULL&&!mainw->effects_paused&&
@@ -791,19 +794,19 @@ boolean check_storage_space(lives_clip_t *sfile, boolean is_processing) {
       }
       tmp=ds_critical_msg(prefs->tmpdir,dsval);
       if (!did_pause)
-	msg=g_strdup_printf("\n%s\n",tmp);
+	msg=lives_strdup_printf("\n%s\n",tmp);
       else 
-	msg=g_strdup_printf("\n%s\n%s\n",tmp,pausstr);
-      g_free(tmp);
+	msg=lives_strdup_printf("\n%s\n%s\n",tmp,pausstr);
+      lives_free(tmp);
         retval=do_abort_cancel_retry_dialog(msg,NULL);
-      g_free(msg);
+      lives_free(msg);
       if (retval==LIVES_CANCEL) {
 	if (is_processing) {
 	  sfile->nokeep=TRUE;
 	  on_cancel_keep_button_clicked(NULL,NULL); // press the cancel button
 	}
 	mainw->cancelled=CANCEL_ERROR;
-	g_free(pausstr);
+	lives_free(pausstr);
 	return FALSE;
       }
     }
@@ -825,14 +828,14 @@ boolean check_storage_space(lives_clip_t *sfile, boolean is_processing) {
 	}
 	tmp=ds_warning_msg(sfile->op_dir,dsval,curr_ds_warn,sfile->op_ds_warn_level);
 	if (!did_pause)
-	  msg=g_strdup_printf("\n%s\n",tmp);
+	  msg=lives_strdup_printf("\n%s\n",tmp);
 	else 
-	  msg=g_strdup_printf("\n%s\n%s\n",tmp,pausstr);
-	g_free(tmp);
+	  msg=lives_strdup_printf("\n%s\n%s\n",tmp,pausstr);
+	lives_free(tmp);
 	mainw->add_clear_ds_button=TRUE; // gets reset by do_warning_dialog()
 	if (!do_warning_dialog(msg)) {
-	  g_free(msg);
-	  g_free(pausstr);
+	  lives_free(msg);
+	  lives_free(pausstr);
 	  lives_freep((void**)&sfile->op_dir);
 	  if (is_processing) {
 	    sfile->nokeep=TRUE;
@@ -841,7 +844,7 @@ boolean check_storage_space(lives_clip_t *sfile, boolean is_processing) {
 	  mainw->cancelled=CANCEL_USER;
 	  return FALSE;
 	}
-	g_free(msg);
+	lives_free(msg);
       }
       else if (ds==LIVES_STORAGE_STATUS_CRITICAL) {
 	if (is_processing&&sfile!=NULL&&sfile->proc_ptr!=NULL&&!mainw->effects_paused&&
@@ -851,12 +854,12 @@ boolean check_storage_space(lives_clip_t *sfile, boolean is_processing) {
 	}
 	tmp=ds_critical_msg(sfile->op_dir,dsval);
 	if (!did_pause)
-	  msg=g_strdup_printf("\n%s\n",tmp);
+	  msg=lives_strdup_printf("\n%s\n",tmp);
 	else 
-	  msg=g_strdup_printf("\n%s\n%s\n",tmp,pausstr);
-	g_free(tmp);
+	  msg=lives_strdup_printf("\n%s\n%s\n",tmp,pausstr);
+	lives_free(tmp);
 	retval=do_abort_cancel_retry_dialog(msg,NULL);
-	g_free(msg);
+	lives_free(msg);
 	if (retval==LIVES_CANCEL) {
 	  if (is_processing) {
 	    sfile->nokeep=TRUE;
@@ -864,7 +867,7 @@ boolean check_storage_space(lives_clip_t *sfile, boolean is_processing) {
 	  }
 	  mainw->cancelled=CANCEL_ERROR;
 	  if (sfile!=NULL) lives_freep((void**)&sfile->op_dir);
-	  g_free(pausstr);
+	  lives_free(pausstr);
 	  return FALSE;
 	}
       }
@@ -875,7 +878,7 @@ boolean check_storage_space(lives_clip_t *sfile, boolean is_processing) {
     on_effects_paused(LIVES_BUTTON(sfile->proc_ptr->pause_button),NULL);
   }
 
-  g_free(pausstr);
+  lives_free(pausstr);
 
   return TRUE;
 }
@@ -900,7 +903,7 @@ static void cancel_process(boolean visible) {
     }
     if (cfile->proc_ptr!=NULL) {
       lives_widget_destroy(LIVES_WIDGET(cfile->proc_ptr->processing));
-      g_free(cfile->proc_ptr);
+      lives_free(cfile->proc_ptr);
       cfile->proc_ptr=NULL;
     }
     mainw->is_processing=FALSE;
@@ -934,9 +937,9 @@ static void disp_fraction(int done, int start, int end, double timesofar, xproce
   if (done>disp_frames_done) lives_progress_bar_set_fraction(LIVES_PROGRESS_BAR(proc->progressbar),fraction_done);
 
   est_time=timesofar/fraction_done-timesofar;
-  prog_label=g_strdup_printf(_("\n%s%d%% done. Time remaining: %u sec%s\n"),stretch,(int)(fraction_done*100.),(uint32_t)(est_time+.5),stretch);
+  prog_label=lives_strdup_printf(_("\n%s%d%% done. Time remaining: %u sec%s\n"),stretch,(int)(fraction_done*100.),(uint32_t)(est_time+.5),stretch);
   if (LIVES_IS_LABEL(proc->label3)) lives_label_set_text(LIVES_LABEL(proc->label3),prog_label);
-  g_free(prog_label);
+  lives_free(prog_label);
 
   disp_frames_done=done;
 
@@ -993,7 +996,7 @@ boolean process_one (boolean visible) {
 
   if (!visible) {
     // INTERNAL PLAYER
-    if (G_UNLIKELY(mainw->new_clip!=-1)) {
+    if (LIVES_UNLIKELY(mainw->new_clip!=-1)) {
       do_quick_switch(mainw->new_clip);
       mainw->new_clip=-1;
     }
@@ -1111,7 +1114,7 @@ boolean process_one (boolean visible) {
       // get time from system clock
       gettimeofday(&tv, NULL);
       mainw->currticks=U_SECL*(tv.tv_sec-mainw->origsecs)+tv.tv_usec*U_SEC_RATIO-mainw->origusecs*U_SEC_RATIO;
-      if (G_UNLIKELY(mainw->currticks<prev_ticks)) mainw->currticks=prev_ticks;
+      if (LIVES_UNLIKELY(mainw->currticks<prev_ticks)) mainw->currticks=prev_ticks;
       time_source=LIVES_TIME_SOURCE_SYSTEM;
       prev_ticks=mainw->currticks;
     }
@@ -1173,7 +1176,7 @@ boolean process_one (boolean visible) {
 #endif
     }
 
-    if (G_UNLIKELY(cfile->proc_ptr==NULL&&cfile->next_event!=NULL)) {
+    if (LIVES_UNLIKELY(cfile->proc_ptr==NULL&&cfile->next_event!=NULL)) {
       // playing an event_list
 
 
@@ -1231,13 +1234,13 @@ boolean process_one (boolean visible) {
     }
 
     // play next frame
-    if (G_LIKELY(mainw->cancelled==CANCEL_NONE)) {
+    if (LIVES_LIKELY(mainw->cancelled==CANCEL_NONE)) {
 
       // calculate the audio 'frame' for no-realtime audio players
       // for realtime players, we did this in calc_new_playback_position()
       if (prefs->audio_player==AUD_PLAYER_SOX||prefs->audio_player==AUD_PLAYER_MPLAYER||prefs->audio_player==AUD_PLAYER_MPLAYER2) {
 	mainw->aframeno=(int64_t)(mainw->currticks-mainw->firstticks)*cfile->fps/U_SEC+audio_start;
-	if (G_UNLIKELY(mainw->loop_cont&&(mainw->aframeno>(mainw->audio_end?mainw->audio_end:
+	if (LIVES_UNLIKELY(mainw->loop_cont&&(mainw->aframeno>(mainw->audio_end?mainw->audio_end:
 							   cfile->laudio_time*cfile->fps)))) {
 	  mainw->firstticks=mainw->startticks-mainw->deltaticks;
 	}
@@ -1293,7 +1296,7 @@ boolean process_one (boolean visible) {
 
     }
     // paused
-    if (G_UNLIKELY(cfile->play_paused)) {
+    if (LIVES_UNLIKELY(cfile->play_paused)) {
       mainw->startticks=mainw->currticks+mainw->deltaticks;
       if (mainw->ext_playback&&mainw->vpp->send_keycodes!=NULL) (*mainw->vpp->send_keycodes)(pl_key_function);
     }
@@ -1309,7 +1312,7 @@ boolean process_one (boolean visible) {
       double fraction_done,timesofar;
       gchar *prog_label;
 
-      if (GTK_IS_SPIN_BUTTON(mainw->framedraw_spinbutton)) 
+      if (LIVES_IS_SPIN_BUTTON(mainw->framedraw_spinbutton)) 
 	lives_spin_button_set_range(LIVES_SPIN_BUTTON(mainw->framedraw_spinbutton),1,cfile->proc_ptr->frames_done);
       // set the progress bar %
 
@@ -1332,16 +1335,16 @@ boolean process_one (boolean visible) {
 		est_time=timesofar/fraction_done-timesofar;
 	      }
 	      lives_progress_bar_set_fraction(LIVES_PROGRESS_BAR(cfile->proc_ptr->progressbar),fraction_done);
-	      if (est_time!=-1.) prog_label=g_strdup_printf(_("\n%d/%d frames opened. Time remaining %u sec.\n"),
+	      if (est_time!=-1.) prog_label=lives_strdup_printf(_("\n%d/%d frames opened. Time remaining %u sec.\n"),
 							    mainw->opening_frames-1,cfile->frames,(uint32_t)(est_time+.5));
-	      else prog_label=g_strdup_printf(_("\n%d/%d frames opened.\n"),mainw->opening_frames-1,cfile->frames);
+	      else prog_label=lives_strdup_printf(_("\n%d/%d frames opened.\n"),mainw->opening_frames-1,cfile->frames);
 	    }
 	    else {
 	      lives_progress_bar_pulse(LIVES_PROGRESS_BAR(cfile->proc_ptr->progressbar));
-	      prog_label=g_strdup_printf(_("\n%d frames opened.\n"),mainw->opening_frames-1);
+	      prog_label=lives_strdup_printf(_("\n%d frames opened.\n"),mainw->opening_frames-1);
 	    }
 	    lives_label_set_text(LIVES_LABEL(cfile->proc_ptr->label3),prog_label);
-	    g_free(prog_label);
+	    lives_free(prog_label);
 	  }
 	}
 	shown_paused_frames=mainw->effects_paused;
@@ -1369,7 +1372,7 @@ boolean process_one (boolean visible) {
 
   }
 
-  if (G_LIKELY(mainw->cancelled==CANCEL_NONE)) {
+  if (LIVES_LIKELY(mainw->cancelled==CANCEL_NONE)) {
 
     if ((xrfx=(lives_rfx_t *)mainw->vrfx_update)!=NULL&&fx_dialog[1]!=NULL) {
       // the audio thread wants to update the parameter window
@@ -1382,7 +1385,7 @@ boolean process_one (boolean visible) {
 
     lives_widget_context_update();  // animate GUI, allow kb timer to run
 
-    if (G_UNLIKELY(mainw->cancelled!=CANCEL_NONE)) {
+    if (LIVES_UNLIKELY(mainw->cancelled!=CANCEL_NONE)) {
       cancel_process(visible);
       return FALSE;
     }
@@ -1411,7 +1414,7 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const gchar *te
   boolean got_err=FALSE;
   
   // translation issues
-  if (visible&&text!=NULL) mytext=g_strdup(text);
+  if (visible&&text!=NULL) mytext=lives_strdup(text);
 
   if (visible) {
     // check we have sufficient storage space
@@ -1463,7 +1466,7 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const gchar *te
     lives_set_cursor_style(LIVES_CURSOR_BUSY,NULL);
 
     cfile->proc_ptr=create_processing (mytext);
-    if (mytext!=NULL) g_free(mytext);
+    if (mytext!=NULL) lives_free(mytext);
 
     lives_progress_bar_set_pulse_step(LIVES_PROGRESS_BAR(cfile->proc_ptr->progressbar),.01);
     if (mainw->show_procd) lives_widget_show(cfile->proc_ptr->processing);
@@ -1669,7 +1672,7 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const gchar *te
     while (!mainw->internal_messaging&&(((!visible&&(mainw->whentostop!=STOP_ON_AUD_END||
 						    prefs->audio_player==AUD_PLAYER_JACK||
 						     prefs->audio_player==AUD_PLAYER_PULSE)))||
-					!g_file_test(cfile->info_file,G_FILE_TEST_EXISTS))) {
+					!lives_file_test(cfile->info_file,LIVES_FILE_TEST_EXISTS))) {
 
 
       // just pulse the progress bar, or play video
@@ -1680,7 +1683,7 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const gchar *te
 	return FALSE;
       }
 
-      if (G_UNLIKELY(mainw->agen_needs_reinit)) {
+      if (LIVES_UNLIKELY(mainw->agen_needs_reinit)) {
 	// we are generating audio from a plugin and it needs reinit - we do it in this thread so as not to hold up the player thread
 	reinit_audio_gen();
       }
@@ -1696,7 +1699,7 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const gchar *te
 	pump_io_chan(mainw->iochan);
       }
 
-      if (visible&&!mainw->internal_messaging) g_usleep(prefs->sleep_time);
+      if (visible&&!mainw->internal_messaging) lives_usleep(prefs->sleep_time);
 
     }
 
@@ -1763,7 +1766,7 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const gchar *te
 	int numtok=get_token_count (mainw->msg,'|');
 	// get progress count from backend
 	if (numtok>1) {
-	  gchar **array=g_strsplit(mainw->msg,"|",numtok);
+	  gchar **array=lives_strsplit(mainw->msg,"|",numtok);
 	  cfile->proc_ptr->frames_done=atoi(array[0]);
 	  if (numtok==2&&strlen(array[1])>0) cfile->progress_end=atoi(array[1]);
 	  else if (numtok==5&&strlen(array[4])>0) {
@@ -1776,7 +1779,7 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const gchar *te
 	    if (cfile->fps==0.) cfile->fps=cfile->pb_fps=prefs->default_fps;
 	    cfile->progress_end=atoi(array[4]);
 	  }
-	  g_strfreev(array);
+	  lives_strfreev(array);
 	}
 	else cfile->proc_ptr->frames_done=atoi(mainw->msg);
       }
@@ -1788,7 +1791,7 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const gchar *te
 	return FALSE;
       }
 
-      if (G_UNLIKELY(mainw->agen_needs_reinit)) {
+      if (LIVES_UNLIKELY(mainw->agen_needs_reinit)) {
 	// we are generating audio from a plugin and it needs reinit - we do it in this thread so as not to hold up the player thread
 	reinit_audio_gen();
       }
@@ -1797,7 +1800,7 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const gchar *te
 	// pump data from stdout to textbuffer
 	pump_io_chan(mainw->iochan);
       }
-      g_usleep(prefs->sleep_time);
+      lives_usleep(prefs->sleep_time);
     }
     else break;
   }
@@ -1826,11 +1829,11 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const gchar *te
       const gchar *btext=NULL;
       if (mainw->iochan!=NULL) btext=lives_text_view_get_text(mainw->optextview); 
       if (cfile->proc_ptr->processing!=NULL) lives_widget_destroy(cfile->proc_ptr->processing);
-      g_free(cfile->proc_ptr);
+      lives_free(cfile->proc_ptr);
       cfile->proc_ptr=NULL;
       if (btext!=NULL) {
 	lives_text_view_set_text(mainw->optextview,btext,-1);
-	g_free((gchar *)btext);
+	lives_free((gchar *)btext);
       }
     }
     mainw->is_processing=FALSE;
@@ -1885,7 +1888,7 @@ boolean do_auto_dialog (const gchar *text, int type) {
   xprocess *proc_ptr;
 
   gchar *label_text;
-  gchar *mytext=g_strdup(text);
+  gchar *mytext=lives_strdup(text);
 
   int time_rem,last_time_rem=10000000;
   int alarm_handle=0;
@@ -1894,7 +1897,7 @@ boolean do_auto_dialog (const gchar *text, int type) {
   mainw->error=FALSE;
 
   proc_ptr=create_processing (mytext);
-  if (mytext!=NULL) g_free(mytext);
+  if (mytext!=NULL) lives_free(mytext);
   lives_widget_hide (proc_ptr->stop_button);
   lives_window_set_modal (LIVES_WINDOW (proc_ptr->processing), TRUE);
      
@@ -1923,7 +1926,7 @@ boolean do_auto_dialog (const gchar *text, int type) {
 #endif
     if (mainw->rec_samples!=0) {
       lives_widget_context_update();
-      g_usleep(prefs->sleep_time);
+      lives_usleep(prefs->sleep_time);
     }
   }
 
@@ -1931,15 +1934,15 @@ boolean do_auto_dialog (const gchar *text, int type) {
 	 &&((type==1||((type==0||type==2)&&!(infofile=fopen(cfile->info_file,"r")))))) {
     lives_progress_bar_pulse(LIVES_PROGRESS_BAR(proc_ptr->progressbar));
     lives_widget_context_update();
-    g_usleep(prefs->sleep_time);
+    lives_usleep(prefs->sleep_time);
     if (type==1&&mainw->rec_end_time!=-1.) {
       gettimeofday(&tv, NULL);
       time=tv.tv_sec*1000000.+tv.tv_usec; // time in microseconds
       time_rem=(int)((double)(end_time-time)/1000000.+.5);
       if (time_rem>=0&&time_rem<last_time_rem) {
-	label_text=g_strdup_printf(_("\nTime remaining: %d sec"),time_rem);
+	label_text=lives_strdup_printf(_("\nTime remaining: %d sec"),time_rem);
 	lives_label_set_text(LIVES_LABEL(proc_ptr->label2),label_text);
-	g_free(label_text);
+	lives_free(label_text);
 	last_time_rem=time_rem;
       }
     }
@@ -1955,14 +1958,14 @@ boolean do_auto_dialog (const gchar *text, int type) {
     while (!lives_alarm_get(alarm_handle)) {
       lives_progress_bar_pulse(LIVES_PROGRESS_BAR(proc_ptr->progressbar));
       lives_widget_context_update();
-      g_usleep(prefs->sleep_time);
+      lives_usleep(prefs->sleep_time);
     }
     lives_alarm_clear(alarm_handle);
   }
 
   if (proc_ptr!=NULL) {
     lives_widget_destroy(proc_ptr->processing);
-    g_free(proc_ptr);
+    lives_free(proc_ptr);
   }
 
   if (type==2) mainw->cancel_type=CANCEL_KILL;
@@ -1985,19 +1988,19 @@ boolean do_auto_dialog (const gchar *text, int type) {
 
 
 void too_many_files(void) {
-  gchar *warn=g_strdup_printf(_ ("\nSorry, LiVES can only open %d files at once.\nPlease close a file and then try again."),MAX_FILES);
+  gchar *warn=lives_strdup_printf(_ ("\nSorry, LiVES can only open %d files at once.\nPlease close a file and then try again."),MAX_FILES);
   do_error_dialog(warn);
-  g_free(warn);
+  lives_free(warn);
 }
 
 void tempdir_warning (void) {
-  gchar *tmp,*com=g_strdup_printf(_ ("LiVES was unable to write to its temporary directory.\n\nThe current temporary directory is:\n\n%s\n\nPlease make sure you can write to this directory."),
-				  (tmp=g_filename_to_utf8(prefs->tmpdir,-1,NULL,NULL,NULL)));
-  g_free(tmp);
+  gchar *tmp,*com=lives_strdup_printf(_ ("LiVES was unable to write to its temporary directory.\n\nThe current temporary directory is:\n\n%s\n\nPlease make sure you can write to this directory."),
+				  (tmp=lives_filename_to_utf8(prefs->tmpdir,-1,NULL,NULL,NULL)));
+  lives_free(tmp);
   if (mainw!=NULL&&mainw->is_ready) {
     do_error_dialog(com);
   }
-  g_free(com);
+  lives_free(com);
 }
 
 
@@ -2036,14 +2039,14 @@ boolean rdet_suggest_values (int width, int height, double fps, int fps_num, int
 			     boolean swap_endian, boolean anr, boolean ignore_fps) {
   LiVESWidget *prep_dialog;
 
-  gchar *msg1=g_strdup_printf (_ ("\n\nDue to restrictions in the %s format\n"),prefs->encoder.of_desc);
-  gchar *msg2=g_strdup ("");
-  gchar *msg3=g_strdup ("");
-  gchar *msg4=g_strdup ("");
-  gchar *msg5=g_strdup ("");
-  gchar *msg6=g_strdup ("");
-  gchar *msg7=g_strdup ("");
-  gchar *msg8=g_strdup ("");
+  gchar *msg1=lives_strdup_printf (_ ("\n\nDue to restrictions in the %s format\n"),prefs->encoder.of_desc);
+  gchar *msg2=lives_strdup ("");
+  gchar *msg3=lives_strdup ("");
+  gchar *msg4=lives_strdup ("");
+  gchar *msg5=lives_strdup ("");
+  gchar *msg6=lives_strdup ("");
+  gchar *msg7=lives_strdup ("");
+  gchar *msg8=lives_strdup ("");
   gchar *msg_a;
 
   boolean ochange=FALSE;
@@ -2055,74 +2058,74 @@ boolean rdet_suggest_values (int width, int height, double fps, int fps_num, int
       (fps>0.&&fps!=rdet->fps)||(fps_denom>0&&(fps_num*1.)/(fps_denom*1.)!=rdet->fps)||
       (!anr&&(rdet->width!=width||rdet->height!=height)&&height*width>0)||
       (arate!=rdet->arate&&arate>0)) {
-    g_free (msg2);
-    msg2=g_strdup (_ ("LiVES recommends the following settings:\n\n"));
+    lives_free (msg2);
+    msg2=lives_strdup (_ ("LiVES recommends the following settings:\n\n"));
     if (swap_endian||(asigned==1&&rdet->aendian==AFORM_UNSIGNED)||(asigned==2&&rdet->aendian==AFORM_SIGNED)
 	||(arate>0&&arate!=rdet->arate)) {
       gchar *sstring;
       gchar *estring;
 
-      if (asigned==1&&rdet->aendian==AFORM_UNSIGNED) sstring=g_strdup(_(", signed"));
-      else if (asigned==2&&rdet->aendian==AFORM_SIGNED) sstring=g_strdup(_(", unsigned"));
-      else sstring=g_strdup("");
+      if (asigned==1&&rdet->aendian==AFORM_UNSIGNED) sstring=lives_strdup(_(", signed"));
+      else if (asigned==2&&rdet->aendian==AFORM_SIGNED) sstring=lives_strdup(_(", unsigned"));
+      else sstring=lives_strdup("");
 
       if (swap_endian) {
-	if (mainw->endian!=AFORM_BIG_ENDIAN) estring=g_strdup(_(", little-endian"));
-	else estring=g_strdup(_(", big-endian"));
+	if (mainw->endian!=AFORM_BIG_ENDIAN) estring=lives_strdup(_(", little-endian"));
+	else estring=lives_strdup(_(", big-endian"));
       }
-      else estring=g_strdup("");
+      else estring=lives_strdup("");
 
       ochange=TRUE;
-      g_free (msg3);
-      msg3=g_strdup_printf (_ ("Use an audio rate of %d Hz%s%s\n"),arate,sstring,estring);
-      g_free(sstring);
-      g_free(estring);
+      lives_free (msg3);
+      msg3=lives_strdup_printf (_ ("Use an audio rate of %d Hz%s%s\n"),arate,sstring,estring);
+      lives_free(sstring);
+      lives_free(estring);
     }
     if (!ignore_fps) {
       ochange=TRUE;
       if (fps>0&&fps!=rdet->fps) {
-	g_free (msg4);
-	msg4=g_strdup_printf (_ ("Set video rate to %.3f frames per second\n"),fps);
+	lives_free (msg4);
+	msg4=lives_strdup_printf (_ ("Set video rate to %.3f frames per second\n"),fps);
       }
       else if (fps_denom>0&&(fps_num*1.)/(fps_denom*1.)!=rdet->fps) {
-	g_free (msg4);
-	msg4=g_strdup_printf (_ ("Set video rate to %d:%d frames per second\n"),fps_num,fps_denom);
+	lives_free (msg4);
+	msg4=lives_strdup_printf (_ ("Set video rate to %d:%d frames per second\n"),fps_num,fps_denom);
       }
     }
     if (!anr&&((rdet->width!=width||rdet->height!=height)&&height*width>0)) {
-      g_free (msg5);
-      msg5=g_strdup_printf (_ ("Set video size to %d x %d pixels\n"),width,height);
+      lives_free (msg5);
+      msg5=lives_strdup_printf (_ ("Set video size to %d x %d pixels\n"),width,height);
       mainw->fx1_bool=TRUE;
     }
   }
   if (anr||arate<0) {
     if (arate<1||((rdet->width!=width||rdet->height!=height)&&height*width>0)) {
-      g_free (msg6);
+      lives_free (msg6);
       if (!ochange) anr=FALSE;
-      msg6=g_strdup (_ ("\nYou may wish to:\n"));
+      msg6=lives_strdup (_ ("\nYou may wish to:\n"));
       if ((rdet->width!=width||rdet->height!=height)&&height*width>0) {
-	g_free (msg7);
-	msg7=g_strdup_printf(_ ("resize video to %d x %d pixels\n"),width,height);
+	lives_free (msg7);
+	msg7=lives_strdup_printf(_ ("resize video to %d x %d pixels\n"),width,height);
       }
       else anr=FALSE;
       if (arate<1) {
-	g_free (msg8);
-	msg8=g_strdup(_("disable audio, since the target encoder cannot encode audio\n"));
+	lives_free (msg8);
+	msg8=lives_strdup(_("disable audio, since the target encoder cannot encode audio\n"));
       }
     }
     else anr=FALSE;
   }
-  msg_a=g_strconcat (msg1,msg2,msg3,msg4,msg5,msg6,msg7,msg8,NULL);
-  g_free (msg1);
-  g_free (msg2);
-  g_free (msg3);
-  g_free (msg4);
-  g_free (msg5);
-  g_free (msg6);
-  g_free (msg7);
-  g_free (msg8);
+  msg_a=lives_strconcat (msg1,msg2,msg3,msg4,msg5,msg6,msg7,msg8,NULL);
+  lives_free (msg1);
+  lives_free (msg2);
+  lives_free (msg3);
+  lives_free (msg4);
+  lives_free (msg5);
+  lives_free (msg6);
+  lives_free (msg7);
+  lives_free (msg8);
   prep_dialog=create_encoder_prep_dialog(msg_a,NULL,anr);
-  g_free (msg_a);
+  lives_free (msg_a);
   ret=(lives_dialog_run(LIVES_DIALOG (prep_dialog))==LIVES_RESPONSE_OK);
   lives_widget_destroy (prep_dialog);
   return ret;
@@ -2134,13 +2137,13 @@ boolean do_encoder_restrict_dialog (int width, int height, double fps, int fps_n
 				    boolean swap_endian, boolean anr, boolean save_all) {
   LiVESWidget *prep_dialog;
 
-  gchar *msg1=g_strdup_printf (_ ("\n\nDue to restrictions in the %s format\n"),prefs->encoder.of_desc);
-  gchar *msg2=g_strdup ("");
-  gchar *msg3=g_strdup ("");
-  gchar *msg4=g_strdup ("");
-  gchar *msg5=g_strdup ("");
-  gchar *msg6=g_strdup ("");
-  gchar *msg7=g_strdup ("");
+  gchar *msg1=lives_strdup_printf (_ ("\n\nDue to restrictions in the %s format\n"),prefs->encoder.of_desc);
+  gchar *msg2=lives_strdup ("");
+  gchar *msg3=lives_strdup ("");
+  gchar *msg4=lives_strdup ("");
+  gchar *msg5=lives_strdup ("");
+  gchar *msg6=lives_strdup ("");
+  gchar *msg7=lives_strdup ("");
   gchar *msg_a,*msg_b=NULL;
 
   double cfps;
@@ -2166,67 +2169,67 @@ boolean do_encoder_restrict_dialog (int width, int height, double fps, int fps_n
   if (swap_endian||asigned!=0||(arate>0&&arate!=carate)||(fps>0.&&fps!=cfps)||
       (fps_denom>0&&(fps_num*1.)/(fps_denom*1.)!=cfps)||(!anr&&
 							 (chsize!=width||cvsize!=height)&&height*width>0)) {
-    g_free (msg2);
-    msg2=g_strdup (_ ("LiVES must:\n"));
+    lives_free (msg2);
+    msg2=lives_strdup (_ ("LiVES must:\n"));
     if (swap_endian||asigned!=0||(arate>0&&arate!=carate)) {
       gchar *sstring;
       gchar *estring;
-      if (asigned==1) sstring=g_strdup(_(", signed"));
-      else if (asigned==2) sstring=g_strdup(_(", unsigned"));
-      else sstring=g_strdup("");
+      if (asigned==1) sstring=lives_strdup(_(", signed"));
+      else if (asigned==2) sstring=lives_strdup(_(", unsigned"));
+      else sstring=lives_strdup("");
 
       if (swap_endian) {
-	if (cfile->signed_endian&AFORM_BIG_ENDIAN) estring=g_strdup(_(", little-endian"));
-	else estring=g_strdup(_(", big-endian"));
+	if (cfile->signed_endian&AFORM_BIG_ENDIAN) estring=lives_strdup(_(", little-endian"));
+	else estring=lives_strdup(_(", big-endian"));
       }
-      else estring=g_strdup("");
+      else estring=lives_strdup("");
 
-      g_free (msg3);
-      msg3=g_strdup_printf (_ ("resample audio to %d Hz%s%s\n"),arate,sstring,estring);
-      g_free(sstring);
-      g_free(estring);
+      lives_free (msg3);
+      msg3=lives_strdup_printf (_ ("resample audio to %d Hz%s%s\n"),arate,sstring,estring);
+      lives_free(sstring);
+      lives_free(estring);
 
     }
     if (fps>0&&fps!=cfps) {
-      g_free (msg4);
-      msg4=g_strdup_printf (_ ("resample video to %.3f frames per second\n"),fps);
+      lives_free (msg4);
+      msg4=lives_strdup_printf (_ ("resample video to %.3f frames per second\n"),fps);
     }
     else if (fps_denom>0&&(fps_num*1.)/(fps_denom*1.)!=cfps) {
-      g_free (msg4);
-      msg4=g_strdup_printf (_ ("resample video to %d:%d frames per second\n"),fps_num,fps_denom);
+      lives_free (msg4);
+      msg4=lives_strdup_printf (_ ("resample video to %d:%d frames per second\n"),fps_num,fps_denom);
     }
     if (!anr&&((chsize!=width||cvsize!=height)&&height*width>0)) {
-      g_free (msg5);
-      msg5=g_strdup_printf (_ ("resize video to %d x %d pixels\n"),width,height);
+      lives_free (msg5);
+      msg5=lives_strdup_printf (_ ("resize video to %d x %d pixels\n"),width,height);
       mainw->fx1_bool=TRUE;
     }
   }
   if (anr) {
     if ((chsize!=width||cvsize!=height)&&height*width>0) {
-      g_free (msg6);
-      g_free (msg7);
-      msg6=g_strdup(_ ("\nYou may wish to:\n"));
-      msg7=g_strdup_printf (_ ("Set video size to %d x %d pixels\n"),width,height);
+      lives_free (msg6);
+      lives_free (msg7);
+      msg6=lives_strdup(_ ("\nYou may wish to:\n"));
+      msg7=lives_strdup_printf (_ ("Set video size to %d x %d pixels\n"),width,height);
     }
     else anr=FALSE;
   }
-  msg_a=g_strconcat (msg1,msg2,msg3,msg4,msg5,msg6,msg7,NULL);
+  msg_a=lives_strconcat (msg1,msg2,msg3,msg4,msg5,msg6,msg7,NULL);
   if (save_all) {
-    msg_b=g_strdup (_ ("\nYou will be able to undo these changes afterwards.\n\nClick `OK` to proceed, `Cancel` to abort.\n\n"));
+    msg_b=lives_strdup (_ ("\nYou will be able to undo these changes afterwards.\n\nClick `OK` to proceed, `Cancel` to abort.\n\n"));
   }
   else {
-    msg_b=g_strdup (_ ("\nChanges applied to the selection will not be permanent.\n\n"));
+    msg_b=lives_strdup (_ ("\nChanges applied to the selection will not be permanent.\n\n"));
   }
-  g_free (msg1);
-  g_free (msg2);
-  g_free (msg3);
-  g_free (msg4);
-  g_free (msg5);
-  g_free (msg6);
-  g_free (msg7);
+  lives_free (msg1);
+  lives_free (msg2);
+  lives_free (msg3);
+  lives_free (msg4);
+  lives_free (msg5);
+  lives_free (msg6);
+  lives_free (msg7);
   prep_dialog=create_encoder_prep_dialog(msg_a,msg_b,anr);
-  g_free (msg_a);
-  if (msg_b!=NULL) g_free (msg_b);
+  lives_free (msg_a);
+  if (msg_b!=NULL) lives_free (msg_b);
   ret=(lives_dialog_run(LIVES_DIALOG (prep_dialog))==LIVES_RESPONSE_OK);
   lives_widget_destroy (prep_dialog);
   return ret;
@@ -2250,9 +2253,9 @@ boolean do_yuv4m_open_warning(void) {
   if (prefs->warning_mask&WARN_MASK_OPEN_YUV4M) {
     return TRUE;
   }
-  msg=g_strdup_printf(_ ("When opening a yuvmpeg stream, you should first create a fifo file in:\n\n%sstream.yuv\n\n and then write yuv4mpeg frames to it.\nLiVES will pause briefly until frames are received.\nYou should only click OK if you understand what you are doing, otherwise, click Cancel."),prefs->tmpdir);
+  msg=lives_strdup_printf(_ ("When opening a yuvmpeg stream, you should first create a fifo file in:\n\n%sstream.yuv\n\n and then write yuv4mpeg frames to it.\nLiVES will pause briefly until frames are received.\nYou should only click OK if you understand what you are doing, otherwise, click Cancel."),prefs->tmpdir);
   resp=do_warning_dialog_with_check(msg,WARN_MASK_OPEN_YUV4M);
-  g_free(msg);
+  lives_free(msg);
   return resp;
 }
 
@@ -2271,9 +2274,9 @@ boolean do_comments_dialog (lives_clip_t *sfile, gchar *filename) {
   while (!ok) {
     ok=TRUE;
     if ((response=(lives_dialog_run(LIVES_DIALOG (commentsw->comments_dialog))==LIVES_RESPONSE_OK))) {
-      g_snprintf (sfile->title,256,"%s",lives_entry_get_text (LIVES_ENTRY (commentsw->title_entry)));
-      g_snprintf (sfile->author,256,"%s",lives_entry_get_text (LIVES_ENTRY (commentsw->author_entry)));
-      g_snprintf (sfile->comment,256,"%s",lives_entry_get_text (LIVES_ENTRY (commentsw->comment_entry)));
+      lives_snprintf (sfile->title,256,"%s",lives_entry_get_text (LIVES_ENTRY (commentsw->title_entry)));
+      lives_snprintf (sfile->author,256,"%s",lives_entry_get_text (LIVES_ENTRY (commentsw->author_entry)));
+      lives_snprintf (sfile->comment,256,"%s",lives_entry_get_text (LIVES_ENTRY (commentsw->comment_entry)));
       
       if (encoding&&sfile->subt!=NULL&&lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(commentsw->subt_checkbutton))) {
 	gchar *ext=get_extension(lives_entry_get_text(LIVES_ENTRY(commentsw->subt_entry)));
@@ -2284,35 +2287,35 @@ boolean do_comments_dialog (lives_clip_t *sfile, gchar *filename) {
 	    continue;
 	  }
 	}
-	if (mainw->subt_save_file!=NULL) g_free(mainw->subt_save_file);
-	mainw->subt_save_file=g_strdup(lives_entry_get_text(LIVES_ENTRY(commentsw->subt_entry)));
+	if (mainw->subt_save_file!=NULL) lives_free(mainw->subt_save_file);
+	mainw->subt_save_file=lives_strdup(lives_entry_get_text(LIVES_ENTRY(commentsw->subt_entry)));
       }
       else {
-	if (mainw->subt_save_file!=NULL) g_free(mainw->subt_save_file);
+	if (mainw->subt_save_file!=NULL) lives_free(mainw->subt_save_file);
 	mainw->subt_save_file=NULL;
       }
     }
   }
 
   lives_widget_destroy (commentsw->comments_dialog);
-  g_free (commentsw);
+  lives_free (commentsw);
   
   return response;
 }
 
 
 void do_keys_window (void) {
-  gchar *tmp=g_strdup(_ ("Show Keys"));
+  gchar *tmp=lives_strdup(_ ("Show Keys"));
   do_text_window (tmp,_ ("You can use the following keys during playback to control LiVES:-\n\nRecordable keys (press 'r' before playback to make a recording)\n-----------------------\nctrl-left                     skip back\nctrl-right                   skip forwards\nctrl-up                      faster/increase effect\nctrl-down                 slower/decrease effect\nctrl-enter                    reset frame rate\nctrl-space                reverse direction\nctrl-backspace         freeze frame\nn                             nervous\nctrl-page up            previous clip\nctrl-page down        next clip\n\nctrl-1                       toggle real-time effect 1\nctrl-2                       toggle real-time effect 2\n                                          ...etc...\nctrl-0                       real-time effects off\n\nk           grab keyboard for last activated effect\nm         switch effect mode (when effect has keyboard grab)\nx                     swap background/foreground\nf1                           store/switch to clip mnemonic 1\nf2                           store/switch to clip mnemonic 2\n                                          ...etc...\nf12                          clear function keys\n\n\n Other playback keys\n-----------------------------\np                             play all\ny                             play selection\nq                             stop\nf                               fullscreen\ns                              separate window\nd                             double size\ng                             ping pong loops\n"));
-  g_free(tmp);
+  lives_free(tmp);
 }
 
 
 
 void do_mt_keys_window (void) {
-  gchar *tmp=g_strdup(_ ("Multitrack Keys"));
+  gchar *tmp=lives_strdup(_ ("Multitrack Keys"));
   do_text_window (tmp,_ ("You can use the following keys to control the multitrack window:-\n\nctrl-left-arrow              move timeline cursor left 1 second\nctrl-right-arrow            move timeline cursor right 1 second\nshift-left-arrow            move timeline cursor left 1 frame\nshift-right-arrow          move timeline cursor right 1 frame\nctrl-up-arrow               move current track up\nctrl-down-arrow           move current track down\nctrl-page-up                select previous clip\nctrl-page-down            select next clip\nctrl-space                    select/deselect current track\nctrl-plus                       zoom in\nctrl-minus                    zoom out\nm                                 make a mark on the timeline (during playback)\nw                                 rewind to play start.\n\nFor other keys, see the menus.\n"));
-  g_free(tmp);
+  lives_free(tmp);
 }
 
 
@@ -2320,7 +2323,7 @@ void do_mt_keys_window (void) {
 void do_messages_window (void) {
   gchar *text=lives_text_view_get_text(LIVES_TEXT_VIEW(mainw->textview1));
   do_text_window (_ ("Message History"),text);
-  g_free(text);
+  lives_free(text);
 }
 
 
@@ -2332,19 +2335,20 @@ void do_text_window (const gchar *title, const gchar *text) {
 
 void do_upgrade_error_dialog (void) {
   gchar *tmp;
-  gchar *msg=g_strdup_printf (_("After upgrading/installing, you may need to adjust the <prefix_dir> setting in your %s file"),(tmp=g_filename_to_utf8(capable->rcfile,-1,NULL,NULL,NULL)));
+  gchar *msg=lives_strdup_printf (_("After upgrading/installing, you may need to adjust the <prefix_dir> setting in your %s file"),
+				  (tmp=lives_filename_to_utf8(capable->rcfile,-1,NULL,NULL,NULL)));
   startup_message_info (msg);
-  g_free(msg);
-  g_free(tmp);
+  lives_free(msg);
+  lives_free(tmp);
 }
 
 
 void do_rendered_fx_dialog(void) {
   gchar *tmp;
-  gchar *msg=g_strdup_printf(_("\n\nLiVES could not find any rendered effect plugins.\nPlease make sure you have them installed in\n%s%s%s\nor change the value of <lib_dir> in %s\n"),prefs->lib_dir,PLUGIN_EXEC_DIR,PLUGIN_RENDERED_EFFECTS_BUILTIN,(tmp=g_filename_to_utf8(capable->rcfile,-1,NULL,NULL,NULL)));
+  gchar *msg=lives_strdup_printf(_("\n\nLiVES could not find any rendered effect plugins.\nPlease make sure you have them installed in\n%s%s%s\nor change the value of <lib_dir> in %s\n"),prefs->lib_dir,PLUGIN_EXEC_DIR,PLUGIN_RENDERED_EFFECTS_BUILTIN,(tmp=lives_filename_to_utf8(capable->rcfile,-1,NULL,NULL,NULL)));
   do_error_dialog_with_check(msg,WARN_MASK_RENDERED_FX);
-  g_free(msg);
-  g_free(tmp);
+  lives_free(msg);
+  lives_free(tmp);
 }
 
 
@@ -2360,9 +2364,9 @@ boolean prompt_remove_layout_files(void) {
 
 
 boolean do_set_duplicate_warning (const gchar *new_set) {
-  gchar *msg=g_strdup_printf(_("\nA set entitled %s already exists.\nClick OK to add the current clips and layouts to the existing set.\nClick Cancel to pick a new name.\n"),new_set);
+  gchar *msg=lives_strdup_printf(_("\nA set entitled %s already exists.\nClick OK to add the current clips and layouts to the existing set.\nClick Cancel to pick a new name.\n"),new_set);
   boolean retcode=do_warning_dialog_with_check(msg,WARN_MASK_DUPLICATE_SET);
-  g_free(msg);
+  lives_free(msg);
   return retcode;
 }
 
@@ -2375,16 +2379,16 @@ boolean do_layout_alter_audio_warning(void) {
 }
 
 boolean do_original_lost_warning(const gchar *fname) {
-  gchar *msg=g_strdup_printf(_("\nThe original file\n%s\ncould not be found.\nIf this file has been moved, click 'OK' to browse to the new location.\nOtherwise click Cancel to skip loading this file.\n"),fname);
+  gchar *msg=lives_strdup_printf(_("\nThe original file\n%s\ncould not be found.\nIf this file has been moved, click 'OK' to browse to the new location.\nOtherwise click Cancel to skip loading this file.\n"),fname);
   boolean retcode=do_warning_dialog(msg);
-  g_free(msg);
+  lives_free(msg);
   return retcode;
 }
 
 void do_no_decoder_error(const gchar *fname) {
-  gchar *msg=g_strdup_printf(_("\n\nLiVES could not find a required decoder plugin for the clip\n%s\nThe clip could not be loaded.\n"),fname);
+  gchar *msg=lives_strdup_printf(_("\n\nLiVES could not find a required decoder plugin for the clip\n%s\nThe clip could not be loaded.\n"),fname);
     do_error_dialog(msg);
-    g_free(msg);
+    lives_free(msg);
 }
 
 
@@ -2408,9 +2412,9 @@ void do_jack_noopen_warn4(void) {
 #else
   const gchar *otherbit="\"lives -aplayer sox\"";
 #endif
-  gchar *msg=g_strdup_printf(_("\nAlternatively, try to start lives with either:\n\n\"lives -jackopts 16\", or\n\n%s\n"),otherbit);
+  gchar *msg=lives_strdup_printf(_("\nAlternatively, try to start lives with either:\n\n\"lives -jackopts 16\", or\n\n%s\n"),otherbit);
   do_blocking_info_dialog(msg);
-  g_free(msg);
+  lives_free(msg);
 }
 
 
@@ -2420,15 +2424,15 @@ void do_jack_noopen_warn2(void) {
 
 
 void do_mt_backup_space_error(lives_mt *mt, int memreq_mb) {
-  gchar *msg=g_strdup_printf(_("\n\nLiVES needs more backup space for this layout.\nYou can increase the value in Preferences/Multitrack.\nIt is recommended to increase it to at least %d MB"),memreq_mb);
+  gchar *msg=lives_strdup_printf(_("\n\nLiVES needs more backup space for this layout.\nYou can increase the value in Preferences/Multitrack.\nIt is recommended to increase it to at least %d MB"),memreq_mb);
     do_error_dialog_with_check_transient(msg,TRUE,WARN_MASK_MT_BACKUP_SPACE,LIVES_WINDOW(mt->window));
-    g_free(msg);
+    lives_free(msg);
 }
 
 boolean do_set_rename_old_layouts_warning(const gchar *new_set) {
-  gchar *msg=g_strdup_printf(_("\nSome old layouts for the set %s already exist.\nIt is recommended that you delete them.\nDo you wish to delete them ?\n"),new_set);
+  gchar *msg=lives_strdup_printf(_("\nSome old layouts for the set %s already exist.\nIt is recommended that you delete them.\nDo you wish to delete them ?\n"),new_set);
   boolean retcode=do_yesno_dialog(msg);
-  g_free(msg);
+  lives_free(msg);
   return retcode;
 }
 
@@ -2448,11 +2452,11 @@ void do_mt_set_mem_error(boolean has_mt, boolean trans) {
   if (has_mt) msg2=(_("Try again from the clip editor, try closing some other applications\n"));
   else msg2=(_("Try closing some other applications\n"));
 
-  msg=g_strdup_printf("%s%s%s",msg1,msg2,msg3);
+  msg=lives_strdup_printf("%s%s%s",msg1,msg2,msg3);
 
   if (!trans) do_blocking_error_dialog(msg);
   else do_error_dialog_with_check_transient(msg,TRUE,0,LIVES_WINDOW(prefsw->prefs_dialog));
-  g_free(msg);
+  lives_free(msg);
 }
 
 
@@ -2516,16 +2520,16 @@ void do_after_crash_warning (void) {
 
 
 
-static void on_dth_cancel_clicked (LiVESButton *button, gpointer user_data) {
-  if (GPOINTER_TO_INT(user_data)==1) mainw->cancelled=CANCEL_KEEP;
+static void on_dth_cancel_clicked (LiVESButton *button, livespointer user_data) {
+  if (LIVES_POINTER_TO_INT(user_data)==1) mainw->cancelled=CANCEL_KEEP;
   else mainw->cancelled=CANCEL_USER;
 }
 
 
 void do_rmem_max_error (int size) {
-  gchar *msg=g_strdup_printf((_("Stream frame size is too large for your network buffers.\nYou should do the following as root:\n\necho %d > /proc/sys/net/core/rmem_max\n")),size);
+  gchar *msg=lives_strdup_printf((_("Stream frame size is too large for your network buffers.\nYou should do the following as root:\n\necho %d > /proc/sys/net/core/rmem_max\n")),size);
   do_error_dialog(msg);
-  g_free(msg);
+  lives_free(msg);
 }
 
 static xprocess *procw=NULL;
@@ -2537,7 +2541,7 @@ static void create_threaded_dialog(gchar *text, boolean has_cancel) {
   LiVESWidget *vbox;
   gchar tmp_label[256];
  
-  procw=(xprocess*)(g_malloc(sizeof(xprocess)));
+  procw=(xprocess*)(lives_malloc(sizeof(xprocess)));
 
   procw->processing = lives_standard_dialog_new (_("LiVES: - Processing..."),FALSE);
 
@@ -2554,7 +2558,7 @@ static void create_threaded_dialog(gchar *text, boolean has_cancel) {
   lives_widget_show (vbox);
   lives_box_pack_start (LIVES_BOX (dialog_vbox), vbox, TRUE, TRUE, 0);
 
-  g_snprintf(tmp_label,256,"%s...\n",text);
+  lives_snprintf(tmp_label,256,"%s...\n",text);
   procw->label = lives_standard_label_new (tmp_label);
   lives_box_pack_start (LIVES_BOX (vbox), procw->label, FALSE, FALSE, 0);
 
@@ -2655,7 +2659,7 @@ void do_threaded_dialog(gchar *trans_text, boolean has_cancel) {
   //
   // WARNING: if trans_text is a translated string, it will be autoamtically freed by translations inside this function
 
-  gchar *copy_text=g_strdup(trans_text);
+  gchar *copy_text=lives_strdup(trans_text);
 
   lives_set_cursor_style(LIVES_CURSOR_BUSY,NULL);
 
@@ -2666,7 +2670,7 @@ void do_threaded_dialog(gchar *trans_text, boolean has_cancel) {
   clear_mainw_msg();
 
   create_threaded_dialog(copy_text, has_cancel);
-  g_free(copy_text);
+  lives_free(copy_text);
 
   lives_widget_context_update();
 }
@@ -2686,7 +2690,7 @@ void end_threaded_dialog(void) {
   }
   else lives_set_cursor_style(LIVES_CURSOR_NORMAL,mainw->splash_window);
   if (procw!=NULL) {
-    g_free(procw);
+    lives_free(procw);
     procw=NULL;
   }
   mainw->cancel_type=CANCEL_KILL;
@@ -2704,9 +2708,8 @@ void do_splash_progress(void) {
 }
 
 
-void 
-response_ok (LiVESButton *button, gpointer user_data) {
-  gtk_dialog_response (LIVES_DIALOG (lives_widget_get_toplevel(LIVES_WIDGET(button))), LIVES_RESPONSE_OK);
+void response_ok (LiVESButton *button, livespointer user_data) {
+  lives_dialog_response (LIVES_DIALOG (lives_widget_get_toplevel(LIVES_WIDGET(button))), LIVES_RESPONSE_OK);
 }
 
 
@@ -2736,11 +2739,11 @@ LIVES_INLINE void d_print_file_error_failed(void) {
 void do_system_failed_error(const char *com, int retval, const char *addinfo) {
   gchar *msg,*tmp,*emsg,*msgx;
   gchar *bit;
-  gchar *retstr=g_strdup_printf("%d",retval>>8);
-  gchar *bit2=(retval>255)?g_strdup(""):g_strdup_printf("[%s]",g_strerror(retval));
+  gchar *retstr=lives_strdup_printf("%d",retval>>8);
+  gchar *bit2=(retval>255)?lives_strdup(""):lives_strdup_printf("[%s]",lives_strerror(retval));
   gchar *addbit;
-  gchar *dsmsg1=g_strdup("");
-  gchar *dsmsg2=g_strdup("");
+  gchar *dsmsg1=lives_strdup("");
+  gchar *dsmsg2=lives_strdup("");
 
   uint64_t dsval1,dsval2;
 
@@ -2749,107 +2752,107 @@ void do_system_failed_error(const char *com, int retval, const char *addinfo) {
   if (mainw->current_file>-1&&cfile!=NULL&&cfile->op_dir!=NULL) {
     ds2=get_storage_status(cfile->op_dir,prefs->ds_crit_level,&dsval2);
     if (ds2==LIVES_STORAGE_STATUS_CRITICAL) {
-      g_free(dsmsg2);
+      lives_free(dsmsg2);
       tmp=ds_critical_msg(cfile->op_dir,dsval2);
-      dsmsg2=g_strdup_printf("%s\n",tmp);
-      g_free(tmp);
+      dsmsg2=lives_strdup_printf("%s\n",tmp);
+      lives_free(tmp);
     }
   }
 
   if (ds1==LIVES_STORAGE_STATUS_CRITICAL) {
-    g_free(dsmsg1);
+    lives_free(dsmsg1);
     tmp=ds_critical_msg(prefs->tmpdir,dsval1);
-    dsmsg1=g_strdup_printf("%s\n",tmp);
-    g_free(tmp);
+    dsmsg1=lives_strdup_printf("%s\n",tmp);
+    lives_free(tmp);
   }
 
-  if (addinfo!=NULL) addbit=g_strdup_printf(_("Additional info: %s\n"),addinfo);
-  else addbit=g_strdup("");
+  if (addinfo!=NULL) addbit=lives_strdup_printf(_("Additional info: %s\n"),addinfo);
+  else addbit=lives_strdup("");
 
-  if (retval>0) bit=g_strdup_printf(_("The error value was %d%s\n"),retval,bit2);
-    else bit=g_strdup("");
+  if (retval>0) bit=lives_strdup_printf(_("The error value was %d%s\n"),retval,bit2);
+    else bit=lives_strdup("");
 
-  msg=g_strdup_printf(_("\nLiVES failed doing the following:\n%s\nPlease check your system for errors.\n%s%s%s"),
+  msg=lives_strdup_printf(_("\nLiVES failed doing the following:\n%s\nPlease check your system for errors.\n%s%s%s"),
 		      com,bit,addbit,dsmsg1,dsmsg2);
 
-  emsg=g_strdup_printf("Command failed doing\n%s\n%s%s",com,bit,addbit);
+  emsg=lives_strdup_printf("Command failed doing\n%s\n%s%s",com,bit,addbit);
   LIVES_ERROR(emsg);
-  g_free(emsg);
+  lives_free(emsg);
 
   msgx=insert_newlines(msg,MAX_MSG_WIDTH_CHARS);
   do_error_dialog(msgx);
-  g_free(msgx);
-  g_free(msg);
-  g_free(dsmsg1);
-  g_free(dsmsg2);
-  g_free(bit);
-  g_free(bit2);
-  g_free(addbit);
-  g_free(retstr);
+  lives_free(msgx);
+  lives_free(msg);
+  lives_free(dsmsg1);
+  lives_free(dsmsg2);
+  lives_free(bit);
+  lives_free(bit2);
+  lives_free(addbit);
+  lives_free(retstr);
 }
 
 
 void do_write_failed_error_s(const char *s, const char *addinfo) {
   gchar *msg,*emsg;
   gchar *addbit,*tmp;
-  gchar *dsmsg=g_strdup("");
+  gchar *dsmsg=lives_strdup("");
 
   gchar dirname[PATH_MAX];
-  gchar *sutf=g_filename_to_utf8(s,-1,NULL,NULL,NULL);
+  gchar *sutf=lives_filename_to_utf8(s,-1,NULL,NULL,NULL);
 
   uint64_t dsval;
 
   lives_storage_status_t ds;
 
-  g_snprintf(dirname,PATH_MAX,"%s",s);
+  lives_snprintf(dirname,PATH_MAX,"%s",s);
   get_dirname(dirname);
   ds=get_storage_status(dirname,prefs->ds_crit_level,&dsval);
 
   if (ds==LIVES_STORAGE_STATUS_CRITICAL) {
-    g_free(dsmsg);
+    lives_free(dsmsg);
     tmp=ds_critical_msg(dirname,dsval);
-    dsmsg=g_strdup_printf("%s\n",tmp);
-    g_free(tmp);
+    dsmsg=lives_strdup_printf("%s\n",tmp);
+    lives_free(tmp);
   }
 
-  if (addinfo!=NULL) addbit=g_strdup_printf(_("Additional info: %s\n"),addinfo);
-  else addbit=g_strdup("");
+  if (addinfo!=NULL) addbit=lives_strdup_printf(_("Additional info: %s\n"),addinfo);
+  else addbit=lives_strdup("");
 
-  msg=g_strdup_printf(_("\nLiVES was unable to write to the file\n%s\nPlease check for possible error causes.\n%s"),
+  msg=lives_strdup_printf(_("\nLiVES was unable to write to the file\n%s\nPlease check for possible error causes.\n%s"),
 		      sutf,addbit,dsmsg);
-  emsg=g_strdup_printf("Unable to write to file\n%s\n%s",s,addbit);
+  emsg=lives_strdup_printf("Unable to write to file\n%s\n%s",s,addbit);
 
-  g_free(sutf);
+  lives_free(sutf);
 
   LIVES_ERROR(emsg);
-  g_free(emsg);
+  lives_free(emsg);
 
   do_blocking_error_dialog(msg);
-  g_free(addbit);
-  g_free(dsmsg);
-  g_free(msg);
+  lives_free(addbit);
+  lives_free(dsmsg);
+  lives_free(msg);
 }
 
 
 void do_read_failed_error_s(const char *s, const char *addinfo) {
   gchar *msg,*emsg;
   gchar *addbit;
-  gchar *sutf=g_filename_to_utf8(s,-1,NULL,NULL,NULL);
+  gchar *sutf=lives_filename_to_utf8(s,-1,NULL,NULL,NULL);
 
-  if (addinfo!=NULL) addbit=g_strdup_printf(_("Additional info: %s\n"),addinfo);
-  else addbit=g_strdup("");
+  if (addinfo!=NULL) addbit=lives_strdup_printf(_("Additional info: %s\n"),addinfo);
+  else addbit=lives_strdup("");
 
-  msg=g_strdup_printf(_("\nLiVES was unable to read from the file\n%s\nPlease check for possible error causes.\n%s"),
+  msg=lives_strdup_printf(_("\nLiVES was unable to read from the file\n%s\nPlease check for possible error causes.\n%s"),
 		      sutf,addbit);
-  emsg=g_strdup_printf("Unable to read from the file\n%s\n%s",s,addbit);
+  emsg=lives_strdup_printf("Unable to read from the file\n%s\n%s",s,addbit);
 
   LIVES_ERROR(emsg);
-  g_free(emsg);
-  g_free(sutf);
+  lives_free(emsg);
+  lives_free(sutf);
 
   do_blocking_error_dialog(msg);
-  g_free(msg);
-  g_free(addbit);
+  lives_free(msg);
+  lives_free(addbit);
 }
 
 
@@ -2861,8 +2864,8 @@ int do_write_failed_error_s_with_retry(const gchar *fname, const gchar *errtext,
 
   int ret;
   gchar *msg,*emsg,*tmp;
-  gchar *sutf=g_filename_to_utf8(fname,-1,NULL,NULL,NULL);
-  gchar *dsmsg=g_strdup("");
+  gchar *sutf=lives_filename_to_utf8(fname,-1,NULL,NULL,NULL);
+  gchar *dsmsg=lives_strdup("");
 
   gchar dirname[PATH_MAX];
 
@@ -2870,34 +2873,34 @@ int do_write_failed_error_s_with_retry(const gchar *fname, const gchar *errtext,
 
   lives_storage_status_t ds;
 
-  g_snprintf(dirname,PATH_MAX,"%s",fname);
+  lives_snprintf(dirname,PATH_MAX,"%s",fname);
   get_dirname(dirname);
   ds=get_storage_status(dirname,prefs->ds_crit_level,&dsval);
 
   if (ds==LIVES_STORAGE_STATUS_CRITICAL) {
-    g_free(dsmsg);
+    lives_free(dsmsg);
     tmp=ds_critical_msg(dirname,dsval);
-    dsmsg=g_strdup_printf("%s\n",tmp);
-    g_free(tmp);
+    dsmsg=lives_strdup_printf("%s\n",tmp);
+    lives_free(tmp);
   }
 
   if (errtext==NULL) {
-    emsg=g_strdup_printf("Unable to write to file %s",fname);
-    msg=g_strdup_printf(_("\nLiVES was unable to write to the file\n%s\nPlease check for possible error causes.\n"),sutf);
+    emsg=lives_strdup_printf("Unable to write to file %s",fname);
+    msg=lives_strdup_printf(_("\nLiVES was unable to write to the file\n%s\nPlease check for possible error causes.\n"),sutf);
   }
   else {
-    emsg=g_strdup_printf("Unable to write to file %s, error was %s",fname,errtext);
-    msg=g_strdup_printf(_("\nLiVES was unable to write to the file\n%s\nThe error was\n%s.\n"),sutf,errtext);
+    emsg=lives_strdup_printf("Unable to write to file %s, error was %s",fname,errtext);
+    msg=lives_strdup_printf(_("\nLiVES was unable to write to the file\n%s\nThe error was\n%s.\n"),sutf,errtext);
   }
   
   LIVES_ERROR(emsg);
-  g_free(emsg);
+  lives_free(emsg);
 
   ret=do_abort_cancel_retry_dialog(msg,transient);
 
-  g_free(dsmsg);
-  g_free(msg);
-  g_free(sutf);
+  lives_free(dsmsg);
+  lives_free(msg);
+  lives_free(sutf);
 
   mainw->write_failed=FALSE; // reset this
 
@@ -2914,24 +2917,24 @@ int do_read_failed_error_s_with_retry(const gchar *fname, const gchar *errtext, 
 
   int ret;
   gchar *msg,*emsg;
-  gchar *sutf=g_filename_to_utf8(fname,-1,NULL,NULL,NULL);
+  gchar *sutf=lives_filename_to_utf8(fname,-1,NULL,NULL,NULL);
 
   if (errtext==NULL) {
-    emsg=g_strdup_printf("Unable to read from file %s",fname);
-    msg=g_strdup_printf(_("\nLiVES was unable to read from the file\n%s\nPlease check for possible error causes.\n"),sutf);
+    emsg=lives_strdup_printf("Unable to read from file %s",fname);
+    msg=lives_strdup_printf(_("\nLiVES was unable to read from the file\n%s\nPlease check for possible error causes.\n"),sutf);
   }
   else {
-    emsg=g_strdup_printf("Unable to read from file %s, error was %s",fname,errtext);
-    msg=g_strdup_printf(_("\nLiVES was unable to read from the file\n%s\nThe error was\n%s.\n"),sutf,errtext);
+    emsg=lives_strdup_printf("Unable to read from file %s, error was %s",fname,errtext);
+    msg=lives_strdup_printf(_("\nLiVES was unable to read from the file\n%s\nThe error was\n%s.\n"),sutf,errtext);
   }
   
   LIVES_ERROR(emsg);
-  g_free(emsg);
+  lives_free(emsg);
 
   ret=do_abort_cancel_retry_dialog(msg,transient);
 
-  g_free(msg);
-  g_free(sutf);
+  lives_free(msg);
+  lives_free(sutf);
 
   mainw->read_failed=FALSE; // reset this
 
@@ -2945,11 +2948,11 @@ int do_header_read_error_with_retry(int clip) {
   gchar *hname;
   if (mainw->files[clip]==NULL) return 0;
 
-  hname=g_build_filename(prefs->tmpdir,mainw->files[clip]->handle,"header.lives",NULL);
+  hname=lives_build_filename(prefs->tmpdir,mainw->files[clip]->handle,"header.lives",NULL);
 
   ret=do_read_failed_error_s_with_retry(hname,NULL,NULL);
 
-  g_free(hname);
+  lives_free(hname);
   return ret;
 }
 
@@ -2963,10 +2966,10 @@ boolean do_header_write_error(int clip) {
 
   if (mainw->files[clip]==NULL) return TRUE;
 
-  hname=g_build_filename(prefs->tmpdir,mainw->files[clip]->handle,"header.lives",NULL);
+  hname=lives_build_filename(prefs->tmpdir,mainw->files[clip]->handle,"header.lives",NULL);
   retval=do_write_failed_error_s_with_retry(hname,NULL,NULL);
   if (retval==LIVES_RETRY && save_clip_values(clip)) retval=0; // on retry try to save all values
-  g_free(hname);
+  lives_free(hname);
 
   return (!retval);
 }
@@ -2978,24 +2981,24 @@ int do_header_missing_detail_error(int clip, lives_clip_details_t detail) {
   gchar *hname,*key,*msg;
   if (mainw->files[clip]==NULL) return 0;
 
-  hname=g_build_filename(prefs->tmpdir,mainw->files[clip]->handle,"header.lives",NULL);
+  hname=lives_build_filename(prefs->tmpdir,mainw->files[clip]->handle,"header.lives",NULL);
 
   key=clip_detail_to_string(detail,NULL);
 
   if (key==NULL) {
-    msg=g_strdup_printf("Invalid detail %d requested from file %s",detail,hname);
+    msg=lives_strdup_printf("Invalid detail %d requested from file %s",detail,hname);
     LIVES_ERROR(msg);
-    g_free(msg);
-    g_free(hname);
+    lives_free(msg);
+    lives_free(hname);
     return 0;
   }
 
-  msg=g_strdup_printf(_("Value for \"%s\" could not be read."),key);
+  msg=lives_strdup_printf(_("Value for \"%s\" could not be read."),key);
   ret=do_read_failed_error_s_with_retry(hname,msg,NULL);
 
-  g_free(msg);
-  g_free(key);
-  g_free(hname);
+  lives_free(msg);
+  lives_free(key);
+  lives_free(hname);
   return ret;
 }
 
@@ -3004,36 +3007,36 @@ int do_header_missing_detail_error(int clip, lives_clip_details_t detail) {
 void do_chdir_failed_error(const char *dir) {
   gchar *msg;
   gchar *dutf;
-  gchar *emsg=g_strdup_printf("Failed directory change to\n%s",dir);
+  gchar *emsg=lives_strdup_printf("Failed directory change to\n%s",dir);
   LIVES_ERROR(emsg);
-  g_free(emsg);
-  dutf=g_filename_to_utf8(dir,-1,NULL,NULL,NULL);
-  msg=g_strdup_printf(_("\nLiVES failed to change directory to\n%s\nPlease check your system for errors.\n"),dutf);
+  lives_free(emsg);
+  dutf=lives_filename_to_utf8(dir,-1,NULL,NULL,NULL);
+  msg=lives_strdup_printf(_("\nLiVES failed to change directory to\n%s\nPlease check your system for errors.\n"),dutf);
   do_error_dialog(msg);
-  g_free(msg);
-  g_free(dutf);
+  lives_free(msg);
+  lives_free(dutf);
 }
 
 
 
 void do_file_perm_error(const gchar *file_name) {
-  gchar *msg=g_strdup_printf(_("\nLiVES was unable to write to the file:\n%s\nPlease check the file permissions and try again."),file_name);
+  gchar *msg=lives_strdup_printf(_("\nLiVES was unable to write to the file:\n%s\nPlease check the file permissions and try again."),file_name);
   do_blocking_error_dialog(msg);
-  g_free(msg);
+  lives_free(msg);
 }
 
 
 void do_dir_perm_error(const gchar *dir_name) {
-  gchar *msg=g_strdup_printf(_("\nLiVES was unable to either create or write to the directory:\n%s\nPlease check the directory permissions and try again."),dir_name);
+  gchar *msg=lives_strdup_printf(_("\nLiVES was unable to either create or write to the directory:\n%s\nPlease check the directory permissions and try again."),dir_name);
   do_blocking_error_dialog(msg);
-  g_free(msg);
+  lives_free(msg);
 }
 
 
 void do_dir_perm_access_error(const gchar *dir_name) {
-  gchar *msg=g_strdup_printf(_("\nLiVES was unable to read from the directory:\n%s\n"),dir_name);
+  gchar *msg=lives_strdup_printf(_("\nLiVES was unable to read from the directory:\n%s\n"),dir_name);
   do_blocking_error_dialog(msg);
-  g_free(msg);
+  lives_free(msg);
 }
 
 
@@ -3044,11 +3047,11 @@ boolean do_abort_check(void) {
 
 
 void do_encoder_img_ftm_error(render_details *rdet) {
-  gchar *msg=g_strdup_printf(_("\nThe %s cannot encode clips with image type %s.\nPlease select another encoder from the list.\n"),prefs->encoder.name,get_image_ext_for_type(cfile->img_type));
+  gchar *msg=lives_strdup_printf(_("\nThe %s cannot encode clips with image type %s.\nPlease select another encoder from the list.\n"),prefs->encoder.name,get_image_ext_for_type(cfile->img_type));
 
   do_error_dialog_with_check_transient(msg,TRUE,0,LIVES_WINDOW(rdet->dialog));
 
-  g_free(msg);
+  lives_free(msg);
 }
 
 
@@ -3058,9 +3061,9 @@ void do_card_in_use_error(void) {
 
 
 void do_dev_busy_error(const gchar *devstr) {
-  gchar *msg=g_strdup_printf(_("\nThe device %s is in use or unavailable.\n- Check the device permissions\n- Check if this device is in use by another program.\n- Check if the device actually exists.\n"),devstr);
+  gchar *msg=lives_strdup_printf(_("\nThe device %s is in use or unavailable.\n- Check the device permissions\n- Check if this device is in use by another program.\n- Check if the device actually exists.\n"),devstr);
   do_blocking_error_dialog(msg);
-  g_free(msg);
+  lives_free(msg);
 }
 
 
@@ -3079,9 +3082,9 @@ boolean do_erase_subs_warning(void) {
 
 boolean do_sub_type_warning(const gchar *ext, const gchar *type_ext) {
   boolean ret;
-  gchar *msg=g_strdup_printf(_("\nLiVES does not recognise the subtitle file type \"%s\".\nClick Cancel to set another file name\nor OK to continue and save as type \"%s\"\n"),ext,type_ext);
+  gchar *msg=lives_strdup_printf(_("\nLiVES does not recognise the subtitle file type \"%s\".\nClick Cancel to set another file name\nor OK to continue and save as type \"%s\"\n"),ext,type_ext);
   ret=do_warning_dialog(msg);
-  g_free(msg);
+  lives_free(msg);
   return ret;
 }
 
@@ -3090,9 +3093,9 @@ boolean do_move_tmpdir_dialog(void) {
 }
 
 void do_set_locked_warning (const gchar *setname) {
-  gchar *msg=g_strdup_printf(_("\nWarning - the set %s\nis in use by another copy of LiVES.\nYou are strongly advised to close the other copy before clicking OK to continue\n."),setname);
+  gchar *msg=lives_strdup_printf(_("\nWarning - the set %s\nis in use by another copy of LiVES.\nYou are strongly advised to close the other copy before clicking OK to continue\n."),setname);
   do_warning_dialog(msg);
-  g_free(msg);
+  lives_free(msg);
 }
 
 void do_no_in_vdevs_error(void) {
@@ -3104,11 +3107,11 @@ void do_locked_in_vdevs_error(void) {
 }
 
 void do_do_not_close_d (void) {
-  gchar *msg=g_strdup(_("\n\nCLEANING AND COPYING FILES. THIS MAY TAKE SOME TIME.\nDO NOT SHUT DOWN OR CLOSE LIVES !\n"));
+  gchar *msg=lives_strdup(_("\n\nCLEANING AND COPYING FILES. THIS MAY TAKE SOME TIME.\nDO NOT SHUT DOWN OR CLOSE LIVES !\n"));
   LiVESWidget *err_box=create_info_error_dialog(msg,FALSE,0,LIVES_INFO_TYPE_WARNING);
   LiVESWindow *transient=NULL;
 
-  g_free(msg);
+  lives_free(msg);
 
   if (prefs->show_gui) {
     if (mainw->multitrack==NULL&&mainw->is_ready) transient=LIVES_WINDOW(mainw->LiVES);
@@ -3124,16 +3127,16 @@ void do_do_not_close_d (void) {
 
 
 void do_set_noclips_error(const char *setname) {
-  gchar *msg=g_strdup_printf (_ ("No clips were recovered for set (%s).\nPlease check the spelling of the set name and try again.\n"),setname);
+  gchar *msg=lives_strdup_printf (_ ("No clips were recovered for set (%s).\nPlease check the spelling of the set name and try again.\n"),setname);
   d_print (msg);
-  g_free (msg);
+  lives_free (msg);
 }
 
 
 gchar * get_upd_msg(void) {
   LIVES_DEBUG("upd msg !");
   // TRANSLATORS: make sure the menu text matches what is in gui.c
-  gchar *msg=g_strdup_printf(_("\nWelcome to LiVES version %s\n\nAfter upgrading, you are *strongly* advised to run:\n\nFile -> Clean up Diskspace\n"),LiVES_VERSION);
+  gchar *msg=lives_strdup_printf(_("\nWelcome to LiVES version %s\n\nAfter upgrading, you are *strongly* advised to run:\n\nFile -> Clean up Diskspace\n"),LiVES_VERSION);
   return msg;
 }
 
@@ -3141,7 +3144,7 @@ gchar * get_upd_msg(void) {
 gchar * get_new_install_msg(void) {
   LIVES_DEBUG("upd msg !");
   // TRANSLATORS: make sure the menu text matches what is in gui.c
-  gchar *msg=g_strdup_printf(_("\n\nWelcome to LiVES version %s !\n\n"),LiVES_VERSION);
+  gchar *msg=lives_strdup_printf(_("\n\nWelcome to LiVES version %s !\n\n"),LiVES_VERSION);
   return msg;
 }
 
@@ -3172,9 +3175,9 @@ boolean ask_permission_dialog(int what) {
 
   switch (what) {
   case LIVES_PERM_OSC_PORTS:
-    msg=g_strdup_printf(_("\nLiVES would like to open a local network connection (UDP port %d),\nto let other applications connect to it.\nDo you wish to allow this (for this session only) ?\n"),prefs->osc_udp_port);
+    msg=lives_strdup_printf(_("\nLiVES would like to open a local network connection (UDP port %d),\nto let other applications connect to it.\nDo you wish to allow this (for this session only) ?\n"),prefs->osc_udp_port);
     ret=do_yesno_dialog(msg);
-    g_free(msg);
+    lives_free(msg);
     return ret;
   default:
     break;

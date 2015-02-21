@@ -26,8 +26,8 @@
 
 static lives_special_aspect_t aspect;
 static lives_special_framedraw_rect_t framedraw;
-static GList *fileread;
-static GList *passwd_widgets;
+static LiVESList *fileread;
+static LiVESList *passwd_widgets;
 
 
 void init_special (void) {
@@ -49,7 +49,7 @@ void init_special (void) {
 
 
 void add_to_special (const gchar *sp_string, lives_rfx_t *rfx) {
-  gchar **array=g_strsplit (sp_string,"|",-1);
+  gchar **array=lives_strsplit (sp_string,"|",-1);
   int num_widgets=get_token_count(sp_string,'|')-2;
   int pnum;
 
@@ -65,7 +65,7 @@ void add_to_special (const gchar *sp_string, lives_rfx_t *rfx) {
   else if (!strcmp (array[0],"mergealign")) {
     // align start/end
     /*    if (fx_dialog[1]!=NULL) {
-      g_strfreev(array);
+      lives_strfreev(array);
       return;
       }*/
     mergealign.start_param=&rfx->params[atoi(array[1])];
@@ -74,7 +74,7 @@ void add_to_special (const gchar *sp_string, lives_rfx_t *rfx) {
   }
   else if (!strcmp (array[0],"framedraw")) {
     if (fx_dialog[1]!=NULL) {
-      g_strfreev(array);
+      lives_strfreev(array);
       return;
     }
     framedraw.rfx=rfx;
@@ -110,7 +110,7 @@ void add_to_special (const gchar *sp_string, lives_rfx_t *rfx) {
     }
 
     if (num_widgets>framedraw.stdwidgets) framedraw.extra_params=
-				  (int *)g_malloc(((framedraw.num_extra=(num_widgets-framedraw.stdwidgets)))*sizint);
+				  (int *)lives_malloc(((framedraw.num_extra=(num_widgets-framedraw.stdwidgets)))*sizint);
 
     for (i=0;i<num_widgets;i++) {
       pnum=atoi(array[i+2]);
@@ -141,20 +141,20 @@ void add_to_special (const gchar *sp_string, lives_rfx_t *rfx) {
 
   else if (!strcmp (array[0],"fileread")) {
     int idx=atoi(array[1]);
-    fileread=g_list_append(fileread,(gpointer)&rfx->params[idx]);
+    fileread=lives_list_append(fileread,(livespointer)&rfx->params[idx]);
 
     // ensure we get an entry and not a text_view
     if ((int)rfx->params[idx].max>RFX_TEXT_MAGIC) rfx->params[idx].max=(double)RFX_TEXT_MAGIC;
   }
   else if (!strcmp (array[0],"password")) {
     int idx=atoi(array[1]);
-    passwd_widgets=g_list_append(passwd_widgets,(gpointer)&rfx->params[idx]);
+    passwd_widgets=lives_list_append(passwd_widgets,(livespointer)&rfx->params[idx]);
 
     // ensure we get an entry and not a text_view
     if ((int)rfx->params[idx].max>RFX_TEXT_MAGIC) rfx->params[idx].max=(double)RFX_TEXT_MAGIC;
   }
 
-  g_strfreev (array);
+  lives_strfreev (array);
 }
 
 
@@ -175,7 +175,7 @@ void fd_connect_spinbutton(lives_rfx_t *rfx) {
 }
 
 
-static void passwd_toggle_vis(LiVESToggleButton *b, gpointer entry) {
+static void passwd_toggle_vis(LiVESToggleButton *b, livespointer entry) {
   lives_entry_set_visibility(LIVES_ENTRY(entry),lives_toggle_button_get_active(b));
 }
 
@@ -185,7 +185,7 @@ void check_for_special (lives_rfx_t *rfx, lives_param_t *param, LiVESBox *pbox) 
   LiVESWidget *hbox;
   LiVESWidget *box;
   LiVESWidget *buttond;
-  GList *slist;
+  LiVESList *slist;
 
 
   gchar *tmp,*tmp2;
@@ -263,10 +263,10 @@ void check_for_special (lives_rfx_t *rfx, lives_param_t *param, LiVESBox *pbox) 
       
       add_fill_to_box(LIVES_BOX(box));
       
-      checkbutton = lives_standard_check_button_new ((tmp=g_strdup(_("Maintain _Aspect Ratio"))),TRUE,
-						     LIVES_BOX(box),(tmp2=g_strdup(_("Maintain aspect ratio of original frame"))));
+      checkbutton = lives_standard_check_button_new ((tmp=lives_strdup(_("Maintain _Aspect Ratio"))),TRUE,
+						     LIVES_BOX(box),(tmp2=lives_strdup(_("Maintain aspect ratio of original frame"))));
 
-      g_free(tmp); g_free(tmp2);
+      lives_free(tmp); lives_free(tmp2);
 
       add_fill_to_box(LIVES_BOX(box));
 
@@ -279,7 +279,7 @@ void check_for_special (lives_rfx_t *rfx, lives_param_t *param, LiVESBox *pbox) 
   slist=fileread;
   while (slist!=NULL) {
     if (param==(lives_param_t *)(slist->data)) {
-      GList *clist;
+      LiVESList *clist;
       int epos;
 
       param->special_type=LIVES_PARAM_SPECIAL_TYPE_FILEREAD;
@@ -295,13 +295,13 @@ void check_for_special (lives_rfx_t *rfx, lives_param_t *param, LiVESBox *pbox) 
       if (box==NULL) return;
 
       clist=lives_container_get_children(LIVES_CONTAINER(box));
-      epos=g_list_index(clist,param->widgets[0]);
-      g_list_free(clist);
+      epos=lives_list_index(clist,param->widgets[0]);
+      lives_list_free(clist);
 
-      buttond = lives_standard_file_button_new (FALSE,g_get_current_dir());
+      buttond = lives_standard_file_button_new (FALSE,lives_get_current_dir());
       lives_box_pack_start(LIVES_BOX(box),buttond,FALSE,FALSE,widget_opts.packing_width);
       lives_box_reorder_child(LIVES_BOX(box),buttond,epos); // insert after label, before textbox
-      lives_signal_connect(buttond, LIVES_WIDGET_CLICKED_EVENT, LIVES_GUI_CALLBACK (on_filesel_button_clicked), (gpointer)param->widgets[0]);
+      lives_signal_connect(buttond, LIVES_WIDGET_CLICKED_EVENT, LIVES_GUI_CALLBACK (on_filesel_button_clicked), (livespointer)param->widgets[0]);
 
       if (!lives_widget_is_sensitive(param->widgets[0])) lives_widget_set_sensitive(buttond,FALSE);
 
@@ -347,7 +347,7 @@ void check_for_special (lives_rfx_t *rfx, lives_param_t *param, LiVESBox *pbox) 
 
       lives_signal_connect_after (LIVES_GUI_OBJECT (checkbutton), LIVES_WIDGET_TOGGLED_EVENT,
 			      LIVES_GUI_CALLBACK (passwd_toggle_vis),
-			      (gpointer)param->widgets[0]);
+			      (livespointer)param->widgets[0]);
 
 
 
@@ -360,7 +360,7 @@ void check_for_special (lives_rfx_t *rfx, lives_param_t *param, LiVESBox *pbox) 
 
 
 
-void after_aspect_width_changed (LiVESSpinButton *spinbutton, gpointer user_data) {
+void after_aspect_width_changed (LiVESSpinButton *spinbutton, livespointer user_data) {
   if (lives_toggle_button_get_active (LIVES_TOGGLE_BUTTON (aspect.checkbutton))) {
     boolean keepeven=FALSE;
     int width=lives_spin_button_get_value_as_int (spinbutton);
@@ -389,7 +389,7 @@ void after_aspect_width_changed (LiVESSpinButton *spinbutton, gpointer user_data
 }
 
 
-void after_aspect_height_changed (LiVESToggleButton *spinbutton, gpointer user_data){
+void after_aspect_height_changed (LiVESToggleButton *spinbutton, livespointer user_data){
   if (lives_toggle_button_get_active (LIVES_TOGGLE_BUTTON (aspect.checkbutton))) {
     boolean keepeven=FALSE;
     int height=lives_spin_button_get_value_as_int (LIVES_SPIN_BUTTON (spinbutton));
@@ -435,10 +435,10 @@ void special_cleanup (void) {
 
   mainw->framedraw_preview=NULL;
 
-  if (framedraw.extra_params!=NULL) g_free(framedraw.extra_params);
+  if (framedraw.extra_params!=NULL) lives_free(framedraw.extra_params);
 
-  if (fileread!=NULL) g_list_free(fileread);
-  if (passwd_widgets!=NULL) g_list_free(passwd_widgets);
+  if (fileread!=NULL) lives_list_free(fileread);
+  if (passwd_widgets!=NULL) lives_list_free(passwd_widgets);
 
   framedraw.added=FALSE;
 }

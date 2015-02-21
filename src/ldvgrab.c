@@ -101,7 +101,7 @@ void close_raw1394(raw1394handle_t handle) {
 
 void camdest(s_cam *cam) {
   raw1394_destroy_handle(cam->handle);
-  g_free(cam);
+  lives_free(cam);
 }
 
 s_cam *camready (void) {
@@ -112,7 +112,7 @@ s_cam *camready (void) {
   int n_ports;
   struct raw1394_portinfo pinf[ 16 ];
 
-  s_cam *cam=(s_cam *)g_malloc(sizeof(s_cam));
+  s_cam *cam=(s_cam *)lives_malloc(sizeof(s_cam));
 
   cam->device=-1;
 
@@ -133,7 +133,7 @@ s_cam *camready (void) {
   } 
 
   if ( ( n_ports = raw1394_get_port_info( cam->handle, pinf, 16 ) ) < 0 ) {
-      msg=g_strdup_printf(_("raw1394 - failed to get port info: %s.\n"), g_strerror( errno ));
+      msg=lives_strdup_printf(_("raw1394 - failed to get port info: %s.\n"), lives_strerror( errno ));
       raw1394_destroy_handle( cam->handle ); 
       return NULL;;
   }
@@ -143,18 +143,18 @@ s_cam *camready (void) {
   for ( j = 0; j < n_ports && cam->device == -1; j++ ) {
 
     if (raw1394_set_port(cam->handle, j) < 0) {
-      msg=g_strdup_printf(_("\nraw1394 - couldn't set port %d !\n"),j);
+      msg=lives_strdup_printf(_("\nraw1394 - couldn't set port %d !\n"),j);
       d_print(msg);
-      g_free(msg);
+      lives_free(msg);
       continue;
     }
     
     for (i=0; i < raw1394_get_nodecount(cam->handle); ++i) {
 
       if (rom1394_get_directory(cam->handle, i, &rom_dir) < 0) {
-	msg=g_strdup_printf(_("error reading config rom directory for node %d\n"), i);
+	msg=lives_strdup_printf(_("error reading config rom directory for node %d\n"), i);
 	d_print(msg);
-	g_free(msg);
+	lives_free(msg);
 	continue;
       }
 
@@ -213,36 +213,36 @@ void cameject (s_cam *cam) {
 
 
 gchar *find_free_camfile(int format) {
-  gchar *filename=g_strdup(lives_entry_get_text(LIVES_ENTRY(dvgrabw->filent)));
+  gchar *filename=lives_strdup(lives_entry_get_text(LIVES_ENTRY(dvgrabw->filent)));
   int i;
   gchar *fname,*tmp=NULL,*tmp2,*tmp3;
 
   if (format==CAM_FORMAT_HDV) {
     for (i=1;i<10000;i++) {
-      fname=g_strdup_printf("%s%04d.mpg",filename,i);
-      if (!g_file_test((tmp=g_build_filename((tmp2=g_filename_from_utf8(dvgrabw->dirname,-1,NULL,NULL,NULL)),
-					     (tmp3=g_filename_from_utf8(fname,-1,NULL,NULL,NULL)),NULL)),
-		       G_FILE_TEST_EXISTS)) break;
-      g_free(tmp);
-      g_free(tmp2);
-      g_free(tmp3);
+      fname=lives_strdup_printf("%s%04d.mpg",filename,i);
+      if (!lives_file_test((tmp=lives_build_filename((tmp2=lives_filename_from_utf8(dvgrabw->dirname,-1,NULL,NULL,NULL)),
+					     (tmp3=lives_filename_from_utf8(fname,-1,NULL,NULL,NULL)),NULL)),
+		       LIVES_FILE_TEST_EXISTS)) break;
+      lives_free(tmp);
+      lives_free(tmp2);
+      lives_free(tmp3);
       tmp=NULL;
     }
   }
   else {
     for (i=1;i<1000;i++) {
-      fname=g_strdup_printf("%s%03d.dv",filename,i);
-      if (!g_file_test((tmp=g_build_filename((tmp2=g_filename_from_utf8(dvgrabw->dirname,-1,NULL,NULL,NULL)),
-					     (tmp3=g_filename_from_utf8(fname,-1,NULL,NULL,NULL)),NULL)),
-		       G_FILE_TEST_EXISTS)) break;
-      g_free(tmp);
-      g_free(tmp2);
-      g_free(tmp3);
+      fname=lives_strdup_printf("%s%03d.dv",filename,i);
+      if (!lives_file_test((tmp=lives_build_filename((tmp2=lives_filename_from_utf8(dvgrabw->dirname,-1,NULL,NULL,NULL)),
+					     (tmp3=lives_filename_from_utf8(fname,-1,NULL,NULL,NULL)),NULL)),
+		       LIVES_FILE_TEST_EXISTS)) break;
+      lives_free(tmp);
+      lives_free(tmp2);
+      lives_free(tmp3);
       tmp=NULL;
     }
   }
-  if (tmp!=NULL) g_free(tmp);
-  g_free(filename);
+  if (tmp!=NULL) lives_free(tmp);
+  lives_free(filename);
 
   return fname;
 }
@@ -256,51 +256,51 @@ boolean rec(s_cam *cam) {
 
   if (cam->pgid!=0) return FALSE;
 
-  if (lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(dvgrabw->split))) splits=g_strdup("-autosplit ");
-  else splits=g_strdup("");
+  if (lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(dvgrabw->split))) splits=lives_strdup("-autosplit ");
+  else splits=lives_strdup("");
 
   if (cam->format==CAM_FORMAT_DV) {
     // dv format
 #ifndef IS_MINGW
-    com=g_strdup_printf("dvgrab -format raw %s\"%s/%s\" >/dev/null 2>&1 &",splits,
-			(tmp2=g_filename_from_utf8(dvgrabw->dirname,-1,NULL,NULL,NULL)),
-			(tmp3=g_filename_from_utf8(dvgrabw->filename,-1,NULL,NULL,NULL)));
+    com=lives_strdup_printf("dvgrab -format raw %s\"%s/%s\" >/dev/null 2>&1 &",splits,
+			(tmp2=lives_filename_from_utf8(dvgrabw->dirname,-1,NULL,NULL,NULL)),
+			(tmp3=lives_filename_from_utf8(dvgrabw->filename,-1,NULL,NULL,NULL)));
 #else
-    com=g_strdup_printf("dvgrab.exe -format raw %s\"%s/%s\" >NUL 2>&1 &",splits,
-			(tmp2=g_filename_from_utf8(dvgrabw->dirname,-1,NULL,NULL,NULL)),
-			(tmp3=g_filename_from_utf8(dvgrabw->filename,-1,NULL,NULL,NULL)));
+    com=lives_strdup_printf("dvgrab.exe -format raw %s\"%s/%s\" >NUL 2>&1 &",splits,
+			(tmp2=lives_filename_from_utf8(dvgrabw->dirname,-1,NULL,NULL,NULL)),
+			(tmp3=lives_filename_from_utf8(dvgrabw->filename,-1,NULL,NULL,NULL)));
 #endif
     cam->pgid=lives_fork (com);
-    g_free(com);
-    g_free(tmp2);
-    g_free(tmp3);
-    g_free(splits);
+    lives_free(com);
+    lives_free(tmp2);
+    lives_free(tmp3);
+    lives_free(splits);
     return TRUE;
   }
 
   // hdv format
 #ifndef IS_MINGW
-  com=g_strdup_printf("dvgrab -format mpeg2 %s\"%s/%s\" >/dev/null 2>&1 &",splits,
-		      (tmp2=g_filename_from_utf8(dvgrabw->dirname,-1,NULL,NULL,NULL)),
-		      (tmp3=g_filename_from_utf8(dvgrabw->filename,-1,NULL,NULL,NULL)));
+  com=lives_strdup_printf("dvgrab -format mpeg2 %s\"%s/%s\" >/dev/null 2>&1 &",splits,
+		      (tmp2=lives_filename_from_utf8(dvgrabw->dirname,-1,NULL,NULL,NULL)),
+		      (tmp3=lives_filename_from_utf8(dvgrabw->filename,-1,NULL,NULL,NULL)));
 #else
-  com=g_strdup_printf("dvgrab.exe -format mpeg2 %s\"%s/%s\" >NUL 2>&1 &",splits,
-		      (tmp2=g_filename_from_utf8(dvgrabw->dirname,-1,NULL,NULL,NULL)),
-		      (tmp3=g_filename_from_utf8(dvgrabw->filename,-1,NULL,NULL,NULL)));
+  com=lives_strdup_printf("dvgrab.exe -format mpeg2 %s\"%s/%s\" >NUL 2>&1 &",splits,
+		      (tmp2=lives_filename_from_utf8(dvgrabw->dirname,-1,NULL,NULL,NULL)),
+		      (tmp3=lives_filename_from_utf8(dvgrabw->filename,-1,NULL,NULL,NULL)));
 #endif
   cam->pgid=lives_fork (com);
-  g_free(com);
-  g_free(tmp2);
-  g_free(tmp3);
-  g_free(splits);
+  lives_free(com);
+  lives_free(tmp2);
+  lives_free(tmp3);
+  lives_free(splits);
 
   return TRUE;
 }
 
 
 
-void on_open_fw_activate (LiVESMenuItem *menuitem, gpointer user_data) {
-  int type=GPOINTER_TO_INT(user_data); // type 0==dv, type 1==hdv
+void on_open_fw_activate (LiVESMenuItem *menuitem, livespointer user_data) {
+  int type=LIVES_POINTER_TO_INT(user_data); // type 0==dv, type 1==hdv
   s_cam *cam;
 
   if (type==CAM_FORMAT_DV&&!capable->has_dvgrab) {
@@ -320,7 +320,7 @@ void on_open_fw_activate (LiVESMenuItem *menuitem, gpointer user_data) {
 
   if (mainw->multitrack!=NULL) {
     if (mainw->multitrack->idlefunc>0) {
-      g_source_remove(mainw->multitrack->idlefunc);
+      lives_source_remove(mainw->multitrack->idlefunc);
       mainw->multitrack->idlefunc=0;
     }
     mt_desensitise(mainw->multitrack);

@@ -59,8 +59,8 @@ boolean on_framedraw_mouse_update (LiVESWidget *, LiVESXEventMotion *, lives_spe
 boolean on_framedraw_mouse_reset (LiVESWidget *, LiVESXEventButton *, lives_special_framedraw_rect_t *);
 
 
-boolean on_framedraw_leave (LiVESWidget *, GdkEventCrossing *, lives_special_framedraw_rect_t *);
-boolean on_framedraw_enter (LiVESWidget *, GdkEventCrossing *, lives_special_framedraw_rect_t *);
+boolean on_framedraw_leave (LiVESWidget *, LiVESXEventCrossing *, lives_special_framedraw_rect_t *);
+boolean on_framedraw_enter (LiVESWidget *, LiVESXEventCrossing *, lives_special_framedraw_rect_t *);
 
 // graphics routines
 

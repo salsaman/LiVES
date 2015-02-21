@@ -1,15 +1,13 @@
 // pangotext.c
 // text handling code
 // (c) A. Penkov 2010
-// (c) G. Finch 2010 - 2013
+// (c) G. Finch 2010 - 2015
 // pieces of code taken and modified from scribbler.c
 // released under the GNU GPL 3 or later
 // see file COPYING or www.gnu.org for details
 
 #include <stdlib.h>
 #include <string.h>
-
-#include <pango/pangocairo.h>
 
 #ifdef HAVE_SYSTEM_WEED
 #include <weed/weed.h>
@@ -23,34 +21,41 @@
 #include "../libweed/weed-host.h"
 #endif
 
-#include "support.h"
 #include "main.h"
 #include "pangotext.h"
 
-
+#ifdef GUI_GTK
+#include <pango/pangocairo.h>
 static int font_cmp(const void *p1, const void *p2); 
+#endif
+
 
 //
 // code things from scribbler.c
 //
-static void getxypos(PangoLayout *layout, double *px, double *py, int width, int height, int cent, double *pw, double *ph)
-{
+static void getxypos(LingoLayout *layout, double *px, double *py, int width, int height, boolean cent, double *pw, double *ph) {
+  // calc coords of text, text will fit so it goes to bottom. Set cent to center text.
+
+  // width and height are frame width / height in pixels
+  // py, px : return locations for x,y
+  // pw, ph : return locations for pango width, height
+
   int w_, h_;
   double d;
 
   // get size of layout
-  pango_layout_get_size(layout, &w_, &h_);
+  lingo_layout_get_size(layout, &w_, &h_, width, height);
 
   // scale width, height to pixels
   if(pw)
-    *pw = ((double)w_)/PANGO_SCALE;
+    *pw = ((double)w_)/LINGO_SCALE;
   if(ph)
-    *ph = ((double)h_)/PANGO_SCALE;
+    *ph = ((double)h_)/LINGO_SCALE;
 
   // xpos (left or centered)
 
-  if(cent) {
-    d = ((double)w_)/PANGO_SCALE;
+  if (cent) {
+    d = ((double)w_)/LINGO_SCALE;
     d /= 2.0;
     d = (width>>1) - d;
   }
@@ -61,7 +66,7 @@ static void getxypos(PangoLayout *layout, double *px, double *py, int width, int
 
   // ypos (adjusted so text goes to bottom)
 
-  d = ((double)h_)/PANGO_SCALE;
+  d = ((double)h_)/LINGO_SCALE;
   d = height - d;
 
   if (py) *py = d;
@@ -76,7 +81,9 @@ static void fill_bckg(lives_painter_t *cr, double x, double y, double dx, double
 
 
 char **get_font_list(void) {
+  register int i;
   char **font_list = NULL;
+#ifdef GUI_GTK
   PangoContext *ctx;
   ctx = gdk_pango_context_get();
   if(ctx) {
@@ -87,39 +94,49 @@ char **get_font_list(void) {
       PangoFontFamily **pff = NULL;
       pango_font_map_list_families(pfm, &pff, &num);
       if(num > 0) {
-        font_list = (char **)g_malloc((num+1)*sizeof(char*));
+        font_list = (char **)lives_malloc((num+1)*sizeof(char*));
         if(font_list) {
-          int i;
           for(i = 0; i < num; ++i)
             font_list[i] = strdup(pango_font_family_get_name(pff[i]));
           font_list[num] = NULL;
           qsort(font_list, num, sizeof(char *), font_cmp);
         }
       }
-      g_free(pff);
+      lives_free(pff);
     }
   }
+#endif
+
+#ifdef GUI_QT
+  QFontDatabase qfd;
+  QStringList qsl = qfd.families();
+  font_list = (char **)lives_malloc((qsl.size() + 1) * sizeof(char *));
+  for (i = 0; i < qsl.size(); i++) {
+    font_list[i] = strdup(qsl.at(i).toUtf8().constData());
+  }
+#endif
+
   return font_list;
 }
 
+
+
+#ifdef GUI_GTK
 static int font_cmp(const void *p1, const void *p2) {  
   const char *s1 = (const char *)(*(char **)p1);
   const char *s2 = (const char *)(*(char **)p2);
   char *u1 = g_utf8_casefold(s1, -1);
   char *u2 = g_utf8_casefold(s2, -1);
   int ret = strcmp(u1, u2);
-  g_free(u1);
-  g_free(u2);
+  lives_free(u1);
+  lives_free(u2);
   return ret;
 }
-
-
-
-
+#endif
 
   
 
-PangoLayout *render_text_to_cr (lives_painter_t *cr, const char *text, const char *fontname,
+LingoLayout *render_text_to_cr (lives_painter_t *cr, const char *text, const char *fontname,
 				double size, lives_text_mode_t mode, lives_colRGBA32_t *fg, lives_colRGBA32_t *bg,
 				boolean center, boolean rising, double top, int offs_x, int width, int height) {
 
@@ -130,12 +147,13 @@ PangoLayout *render_text_to_cr (lives_painter_t *cr, const char *text, const cha
   // if "rising" is FALSE,  "top" (0.0 -> 1.0) is used
 
   // xpos:
-  // aligned to left, unless "center" is TRUE
+  // aligned to left (offs_x), unless "center" is TRUE
 
-
+#ifdef GUI_GTK
   PangoFontDescription *font;
+#endif
 
-  PangoLayout *layout;
+  LingoLayout *layout;
 
   double x_pos, y_pos;
   double x_text, y_text;
@@ -144,14 +162,13 @@ PangoLayout *render_text_to_cr (lives_painter_t *cr, const char *text, const cha
   double b_alpha=1.;
   double f_alpha=1.;
 
-
   if (bg!=NULL) b_alpha=(double)bg->alpha/65535.;
   if (fg!=NULL) f_alpha=(double)fg->alpha/65535.;
 
   if (cr==NULL) return NULL;
 
+#ifdef GUI_GTK
   layout = pango_cairo_create_layout(cr);
-  
   if (layout==NULL) return NULL;
 
   font = pango_font_description_new();
@@ -160,6 +177,11 @@ PangoLayout *render_text_to_cr (lives_painter_t *cr, const char *text, const cha
     
   pango_layout_set_font_description(layout, font);
   pango_layout_set_text(layout, text, -1);
+#endif
+
+#ifdef GUI_QT
+  layout = new LingoLayout(text, fontname, size);
+#endif
 
   getxypos(layout, &x_pos, &y_pos, width, height, center, &dwidth, &dheight);
     
@@ -170,16 +192,16 @@ PangoLayout *render_text_to_cr (lives_painter_t *cr, const char *text, const cha
   x_text = x_pos;
   y_text = y_pos;
     
-  if (center) pango_layout_set_alignment(layout, PANGO_ALIGN_CENTER);
-  else pango_layout_set_alignment(layout, PANGO_ALIGN_LEFT);
-
-  lives_painter_new_path(cr);
+  /*  lives_painter_new_path(cr);
   lives_painter_rectangle(cr,offs_x,0,width,height);
-  lives_painter_clip(cr);
+  lives_painter_clip(cr);*/
+
+  if (center) lingo_layout_set_alignment(layout, LINGO_ALIGN_CENTER);
+  else lingo_layout_set_alignment(layout, LINGO_ALIGN_LEFT);
     
   switch(mode) {
   case LIVES_TEXT_MODE_BACKGROUND_ONLY:
-    pango_layout_set_text(layout, "", -1);
+    lingo_layout_set_text(layout, "", -1);
   case LIVES_TEXT_MODE_FOREGROUND_AND_BACKGROUND:
     lives_painter_set_source_rgba(cr,bg->red/66535., bg->green/66535., bg->blue/66535., b_alpha);
     fill_bckg(cr, x_pos, y_pos, dwidth, dheight);
@@ -191,7 +213,14 @@ PangoLayout *render_text_to_cr (lives_painter_t *cr, const char *text, const cha
   lives_painter_new_path(cr);
   lives_painter_move_to(cr, x_text, y_text);
   lives_painter_set_source_rgba(cr,fg->red/66535., fg->green/66535., fg->blue/66535., f_alpha);
+
+#ifdef GUI_QT
+  lingo_layout_set_coords(layout, x_pos, y_pos, dwidth, dheight);
+#endif
+
+#ifdef GUI_GTK
   pango_font_description_free(font);
+#endif
 
   return layout;
 }
@@ -212,7 +241,7 @@ weed_plant_t *render_text_to_layer(weed_plant_t *layer, const char *text, const 
 
   void *src;
 
-  PangoLayout *layout;
+  LingoLayout *layout;
 
   int width, height, error;
 
@@ -225,7 +254,9 @@ weed_plant_t *render_text_to_layer(weed_plant_t *layer, const char *text, const 
   if (cr==NULL) return layer; ///< error occured
 
   layout = render_text_to_cr(cr,text,fontname,size,mode,fg_col,bg_col,center,rising,top,0,width,height);
-  pango_cairo_show_layout(cr, layout);
+
+  lingo_painter_show_layout(cr, layout);
+
   // do not !!
   //lives_painter_paint(cr);
 
@@ -235,7 +266,7 @@ weed_plant_t *render_text_to_layer(weed_plant_t *layer, const char *text, const 
 
   surface=lives_painter_get_target(cr);
   src=lives_painter_image_surface_get_data (surface);
-  g_free(src);
+  lives_free(src);
   lives_painter_destroy(cr);
   return layer;
 }
@@ -260,12 +291,12 @@ static char *srt_read_text(FILE *pf, lives_subtitle_t *title) {
   int64_t curpos;
 
   if(!pf || !title)
-    return(FALSE);
+    return NULL;
 
   curpos=ftell(pf);
 
   if(fseek(pf, title->textpos, SEEK_SET) == -1)
-    return(FALSE);
+    return NULL;
 
   while(fgets(data, sizeof(data)-1, pf)) {
     // remove \n \r
@@ -281,21 +312,21 @@ static char *srt_read_text(FILE *pf, lives_subtitle_t *title) {
     strcat(data,"\n");
     curlen = strlen(data);
     if(!ret) {
-      ret = (char *)g_malloc(curlen+1);
+      ret = (char *)lives_malloc(curlen+1);
       if(ret)
         strcpy(ret, data);
       else {
 	fseek(pf, curpos, SEEK_SET);
-        return(FALSE);
+        return NULL;
       }
     }
     else {
-      ret = (char *)g_realloc(ret, curlen+1+strlen(ret));
+      ret = (char *)lives_realloc(ret, curlen+1+strlen(ret));
       if(ret)
         strcat(ret, data);
       else {
 	fseek(pf, curpos, SEEK_SET);
-        return(FALSE);
+        return NULL;
       }
     }
   }
@@ -316,12 +347,12 @@ static char *sub_read_text(FILE *pf, lives_subtitle_t *title) {
   int64_t curpos;
 
   if(!pf || !title)
-    return(FALSE);
+    return NULL;
 
   curpos=ftell(pf);
 
   if(fseek(pf, title->textpos, SEEK_SET) == -1)
-    return(FALSE);
+    return NULL;
 
   while(fgets(data, sizeof(data)-1, pf)) {
     // remove \n \r
@@ -339,24 +370,24 @@ static char *sub_read_text(FILE *pf, lives_subtitle_t *title) {
       ret = subst(data,"[br]","\n");
       if(!ret) {
 	fseek(pf, curpos, SEEK_SET);
-        return(FALSE);
+        return NULL;
       }
     }
     else {
       retmore = subst(data,"[br]","\n");
       if(!retmore) {
 	fseek(pf, curpos, SEEK_SET);
-        return(FALSE);
+        return NULL;
       }
-      ret = (char *)g_realloc(ret, strlen(retmore)+1+strlen(ret));
+      ret = (char *)lives_realloc(ret, strlen(retmore)+1+strlen(ret));
       if(ret)
         strcat(ret, retmore);
       else {
 	fseek(pf, curpos, SEEK_SET);
-        g_free(retmore);
-        return(FALSE);
+        lives_free(retmore);
+        return NULL;
       }
-      g_free(retmore);
+      lives_free(retmore);
     }
   }
 
@@ -390,10 +421,10 @@ boolean get_srt_text(lives_clip_t *sfile, double xtime) {
   char data[32768];
 
   if(!sfile)
-    return (FALSE);
+    return  FALSE;
 
   if(!sfile->subt)
-    return (FALSE);
+    return  FALSE;
 
   curr = sfile->subt->current;
 
@@ -402,7 +433,7 @@ boolean get_srt_text(lives_clip_t *sfile, double xtime) {
 
   if (sfile->subt->last_time!=-1. && xtime>sfile->subt->last_time) {
     // past end of subtitles
-    if (sfile->subt->text!=NULL) g_free(sfile->subt->text);
+    if (sfile->subt->text!=NULL) lives_free(sfile->subt->text);
     sfile->subt->text=NULL;
     sfile->subt->current=NULL;
     return TRUE;
@@ -416,14 +447,14 @@ boolean get_srt_text(lives_clip_t *sfile, double xtime) {
 
   while(index_ptr) {
     if(index_ptr->start_time > xtime) {
-      if (sfile->subt->text!=NULL) g_free(sfile->subt->text);
+      if (sfile->subt->text!=NULL) lives_free(sfile->subt->text);
       sfile->subt->text=NULL;
       sfile->subt->current = NULL;
       return (TRUE);
     }
     if(index_ptr->end_time >= xtime) {
       sfile->subt->current = index_ptr;
-      if (sfile->subt->text!=NULL) g_free(sfile->subt->text);
+      if (sfile->subt->text!=NULL) lives_free(sfile->subt->text);
       sfile->subt->text=srt_read_text(sfile->subt->tfile,sfile->subt->current);
       return (TRUE);
     }
@@ -446,11 +477,11 @@ boolean get_srt_text(lives_clip_t *sfile, double xtime) {
 
     if(!fgets(data,sizeof(data), pf)) {
       // EOF
-      if (sfile->subt->text!=NULL) g_free(sfile->subt->text);
+      if (sfile->subt->text!=NULL) lives_free(sfile->subt->text);
       sfile->subt->text=NULL;
       sfile->subt->current=NULL;
       sub_get_last_time(sfile->subt);
-      return(FALSE);
+      return FALSE;
     }
     //
     // data contains time range
@@ -471,7 +502,7 @@ boolean get_srt_text(lives_clip_t *sfile, double xtime) {
       // parsing ok
         starttime = hstart*3600 + mstart*60 + sstart + fstart/1000.;
         endtime = hend*3600 + mend*60 + send + fend/1000.;
-        node = (lives_subtitle_t *)g_malloc(sizeof(lives_subtitle_t));
+        node = (lives_subtitle_t *)lives_malloc(sizeof(lives_subtitle_t));
         if(node) {
           node->start_time = starttime;
           node->end_time = endtime;
@@ -500,13 +531,13 @@ boolean get_srt_text(lives_clip_t *sfile, double xtime) {
 
        if(node) {
          if(node->start_time > xtime) {
-	   if (sfile->subt->text!=NULL) g_free(sfile->subt->text);
+	   if (sfile->subt->text!=NULL) lives_free(sfile->subt->text);
 	   sfile->subt->text=NULL;
            sfile->subt->current = NULL;
 	   return TRUE;
 	 }
          if(node->end_time >= xtime) {
-	   if (sfile->subt->text!=NULL) g_free(sfile->subt->text);
+	   if (sfile->subt->text!=NULL) lives_free(sfile->subt->text);
            sfile->subt->current = node;
 	   sfile->subt->text=srt_read_text(sfile->subt->tfile,sfile->subt->current);
 	   return TRUE;
@@ -521,10 +552,10 @@ boolean get_srt_text(lives_clip_t *sfile, double xtime) {
 
   // EOF
   sfile->subt->current=NULL;
-  if (sfile->subt->text!=NULL) g_free(sfile->subt->text);
+  if (sfile->subt->text!=NULL) lives_free(sfile->subt->text);
   sfile->subt->text=NULL;
   sub_get_last_time(sfile->subt);
-  return (FALSE);
+  return FALSE;
 }
 
 
@@ -541,10 +572,10 @@ boolean get_sub_text(lives_clip_t *sfile, double xtime) {
   boolean starttext;
 
   if(!sfile)
-    return (FALSE);
+    return  FALSE;
 
   if(!sfile->subt)
-    return (FALSE);
+    return  FALSE;
 
   curr = sfile->subt->current;
 
@@ -553,7 +584,7 @@ boolean get_sub_text(lives_clip_t *sfile, double xtime) {
 
   if (sfile->subt->last_time!=-1. && xtime>sfile->subt->last_time) {
     // past end of subtitles
-    if (sfile->subt->text!=NULL) g_free(sfile->subt->text);
+    if (sfile->subt->text!=NULL) lives_free(sfile->subt->text);
     sfile->subt->text=NULL;
     sfile->subt->current=NULL;
     return TRUE;
@@ -567,14 +598,14 @@ boolean get_sub_text(lives_clip_t *sfile, double xtime) {
 
   while(index_ptr) {
     if(index_ptr->start_time > xtime) {
-      if (sfile->subt->text!=NULL) g_free(sfile->subt->text);
+      if (sfile->subt->text!=NULL) lives_free(sfile->subt->text);
       sfile->subt->text=NULL;
       sfile->subt->current = NULL;
       return (TRUE);
     }
     if(index_ptr->end_time >= xtime) {
       sfile->subt->current = index_ptr;
-      if (sfile->subt->text!=NULL) g_free(sfile->subt->text);
+      if (sfile->subt->text!=NULL) lives_free(sfile->subt->text);
       sfile->subt->text=sub_read_text(sfile->subt->tfile,sfile->subt->current);
       return (TRUE);
     }
@@ -623,7 +654,7 @@ boolean get_sub_text(lives_clip_t *sfile, double xtime) {
       // parsing ok
         starttime = hstart*3600 + mstart*60 + sstart + fstart/100.;
         endtime = hend*3600 + mend*60 + send + fend/100.;
-        node = (lives_subtitle_t *)g_malloc(sizeof(lives_subtitle_t));
+        node = (lives_subtitle_t *)lives_malloc(sizeof(lives_subtitle_t));
         if(node) {
           node->start_time = starttime;
           node->end_time = endtime;
@@ -652,13 +683,13 @@ boolean get_sub_text(lives_clip_t *sfile, double xtime) {
 
        if(node) {
          if(node->start_time > xtime) {
-	   if (sfile->subt->text!=NULL) g_free(sfile->subt->text);
+	   if (sfile->subt->text!=NULL) lives_free(sfile->subt->text);
 	   sfile->subt->text=NULL;
            sfile->subt->current = NULL;
 	   return TRUE;
 	 }
          if(node->end_time >= xtime) {
-	   if (sfile->subt->text!=NULL) g_free(sfile->subt->text);
+	   if (sfile->subt->text!=NULL) lives_free(sfile->subt->text);
            sfile->subt->current = node;
 	   sfile->subt->text=sub_read_text(sfile->subt->tfile,sfile->subt->current);
 	   return TRUE;
@@ -672,10 +703,10 @@ boolean get_sub_text(lives_clip_t *sfile, double xtime) {
 
   // EOF
   sfile->subt->current=NULL;
-  if (sfile->subt->text!=NULL) g_free(sfile->subt->text);
+  if (sfile->subt->text!=NULL) lives_free(sfile->subt->text);
   sfile->subt->text=NULL;
   sub_get_last_time(sfile->subt);
-  return (FALSE);
+  return TRUE;
 }
 
 ///
@@ -692,13 +723,13 @@ void subtitles_free(lives_clip_t *sfile) {
 
     sfile->subt->index = (lives_subtitle_t *)sfile->subt->index->next;
 
-    if(to_delete->style != NULL) g_free(to_delete->style);
-    g_free(to_delete);    
+    if(to_delete->style != NULL) lives_free(to_delete->style);
+    lives_free(to_delete);    
   } 
 
-  if (sfile->subt->text!=NULL) g_free(sfile->subt->text);
+  if (sfile->subt->text!=NULL) lives_free(sfile->subt->text);
 
-  g_free (sfile->subt);
+  lives_free (sfile->subt);
   sfile->subt=NULL;
 }
 
@@ -715,7 +746,7 @@ boolean subtitles_init(lives_clip_t *sfile, char * fname, lives_subtitle_type_t 
 
   if ((tfile=fopen(fname,"r"))==NULL) return FALSE;
 
-  sfile->subt=(lives_subtitles_t *)g_malloc(sizeof(lives_subtitles_t));
+  sfile->subt=(lives_subtitles_t *)lives_malloc(sizeof(lives_subtitles_t));
 
   sfile->subt->tfile=tfile;
 
@@ -759,10 +790,10 @@ boolean save_srt_subtitles(lives_clip_t *sfile, double start_time, double end_ti
   lives_subtitle_t *ptr = NULL;
  
   if(!sfile)
-    return(FALSE);
+    return FALSE;
   subt = sfile->subt;
   if(!subt)
-    return(FALSE);
+    return FALSE;
   if(subt->last_time <= -1.)
     get_srt_text(sfile, end_time);
   if(subt->last_time <= -1.)
@@ -771,7 +802,7 @@ boolean save_srt_subtitles(lives_clip_t *sfile, double start_time, double end_ti
   // save the contents
   pf = fopen(filename, "w");
   if(!pf)
-    return(FALSE);
+    return FALSE;
   num_saves = 0;
   ptr = subt->index;
   while(ptr) {
@@ -801,7 +832,7 @@ boolean save_srt_subtitles(lives_clip_t *sfile, double start_time, double end_ti
         fprintf(pf, "%02d:%02d:%02d,%03d\n", h, m, s, ms);
 
         fprintf(pf, "%s", text);
-        g_free(text);
+        lives_free(text);
       }
     }
     else if (ptr->start_time>=end_time) break;
@@ -815,7 +846,7 @@ boolean save_srt_subtitles(lives_clip_t *sfile, double start_time, double end_ti
   if(subt->last_time <= -1.)
     fseek(subt->tfile, savepos, SEEK_SET);
 
-  return(TRUE);
+  return TRUE;
 }
 
 boolean save_sub_subtitles(lives_clip_t *sfile, double start_time, double end_time, double offset_time, const char *filename) {
@@ -826,10 +857,10 @@ boolean save_sub_subtitles(lives_clip_t *sfile, double start_time, double end_ti
   lives_subtitle_t *ptr = NULL;
  
   if(!sfile)
-    return(FALSE);
+    return FALSE;
   subt = sfile->subt;
   if(!subt)
-    return(FALSE);
+    return FALSE;
   if(subt->last_time <= -1.)
     get_sub_text(sfile, end_time);
   if(subt->last_time <= -1.)
@@ -838,7 +869,7 @@ boolean save_sub_subtitles(lives_clip_t *sfile, double start_time, double end_ti
   // save the contents
   pf = fopen(filename, "w");
   if(!pf)
-    return(FALSE);
+    return FALSE;
   num_saves = 0;
   ptr = subt->index;
 
@@ -882,10 +913,10 @@ boolean save_sub_subtitles(lives_clip_t *sfile, double start_time, double end_ti
           parse_double_time(dtim, &h, &m, &s, &ms, 2);
           fprintf(pf, "%02d:%02d:%02d.%02d\n", h, m, s, ms);
           fprintf(pf, "%s\n", br_text);
-          g_free(br_text);
+          lives_free(br_text);
           num_saves++;
         }
-        g_free(text);
+        lives_free(text);
       }
     }
     else if (ptr->start_time>=end_time) break;
@@ -899,7 +930,7 @@ boolean save_sub_subtitles(lives_clip_t *sfile, double start_time, double end_ti
   if(subt->last_time <= -1.)
     fseek(subt->tfile, savepos, SEEK_SET);
 
-  return(TRUE);
+  return TRUE;
 
 }
 

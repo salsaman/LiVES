@@ -110,16 +110,23 @@ typedef cairo_fill_rule_t lives_painter_fill_rule_t;
 #define G_ENCODE_VERSION(major,minor) ((major) << 16 | (minor) << 8)
 #endif
 
+#define lives_free(a) g_free(a)
+#define lives_malloc(a) g_malloc(a)
+#define lives_malloc0(a) g_malloc0(a)
+#define lives_realloc(a,b) g_realloc(a,b)
+#define lives_try_malloc0_n(a,b) g_try_malloc0_n(a,b)
+#define lives_try_malloc(a) g_try_malloc(a)
+#define lives_try_malloc0(a) g_try_malloc0(a)
+#define lives_try_realloc(a,b) g_try_realloc(a,b)
+
 
 typedef GError                            LiVESError;
-
 
 typedef GList                             LiVESList;
 typedef GSList                            LiVESSList;
 
-
 typedef gpointer                          livespointer;
-
+typedef gconstpointer                     livesconstpointer;
 
 typedef GClosure                          LiVESWidgetClosure;
 
@@ -132,7 +139,6 @@ typedef GLogLevelFlags LiVESLogLevelFlags;
 #define LIVES_LOG_LEVEL_CRITICAL G_LOG_LEVEL_CRITICAL
 #define LIVES_LOG_FATAL_MASK G_LOG_FATAL_MASK
 
-
 //////////////////////////////////////////////////
 
 #if GTK_CHECK_VERSION(3,10,0)
@@ -144,11 +150,102 @@ typedef GLogLevelFlags LiVESLogLevelFlags;
 typedef void (*LiVESGuiCallback) (void);
 typedef void (*LiVESWidgetCallback) (GtkWidget *widget, gpointer data);
 typedef gboolean (*LiVESWidgetSourceFunc) (gpointer data);
+typedef gint (*LiVESCompareFunc) (gconstpointer a, gconstpointer b);
 
+#define LIVES_LITTLE_ENDIAN G_LITTLE_ENDIAN
+#define LIVES_BIG_ENDIAN G_BIG_ENDIAN
 
+#define LIVES_MAXINT G_MAXINT
+#define LIVES_MAXUINT32 G_MAXUINT32
+#define LIVES_MAXSIZE G_MAXSIZE
+#define LIVES_MAXFLOAT G_MAXFLOAT
 
 #define LIVES_GUI_CALLBACK(f) ((LiVESGuiCallback) (f))
 
+#define lives_printerr(args...) g_printerr(args)
+#define lives_strdup_printf(args...) g_strdup_printf(args)
+#define lives_strndup(a,b) g_strndup(a,b)
+#define lives_snprintf(a,b,args...) g_snprintf(a,b,args)
+#define lives_strsplit(a,b,c) g_strsplit(a,b,c)
+#define lives_strfreev(a) g_strfreev(a)
+#define lives_ascii_strcasecmp(a,b) g_ascii_strcasecmp(a,b)
+#define lives_ascii_strncasecmp(a,b,c) g_ascii_strncasecmp(a,b,c)
+#define lives_strconcat(a,args...) g_strconcat(a,args)
+#define lives_strstrip(a) g_strstrip(a)
+#define lives_strrstr(a,b) g_strrstr(a,b)
+#define lives_strstr_len(a,b,c) g_strstr_len(a,b,c)
+#define lives_strdelimit(a,b,c) g_strdelimit(a,b,c)
+
+
+#define lives_list_nth_data(list,i) g_list_nth_data(list,i)
+#define lives_list_nth(list,i) g_list_nth(list,i)
+#define lives_list_length(list) g_list_length(list)
+#define lives_list_free(list) g_list_free(list)
+#define lives_list_append(list,data) g_list_append(list,data)
+#define lives_list_prepend(list,data) g_list_prepend(list,data)
+#define lives_list_find(list,data) g_list_find(list,data)
+#define lives_list_previous(list) g_list_previous(list)
+#define lives_list_last(list) g_list_last(list)
+#define lives_list_delete_link(list,link) g_list_delete_link(list,link)
+#define lives_list_copy(list) g_list_copy(list)
+#define lives_list_next(list) g_list_next(list)
+#define lives_list_first(list) g_list_first(list)
+#define lives_list_remove(list,data) g_list_remove(list,data)
+#define lives_list_remove_link(list,data) g_list_remove_link(list,data)
+#define lives_list_concat(list,data) g_list_concat(list,data)
+#define lives_list_insert(list,data,pos) g_list_insert(list,data,pos)
+#define lives_list_find_custom(list,data,func) g_list_find_custom(list,data,func)
+
+#define lives_slist_free(list) g_slist_free(list)
+#define lives_slist_length(list) g_slist_length(list)
+#define lives_slist_nth_data(list,i) g_slist_nth_data(list,i)
+#define lives_slist_append(list,data) g_slist_append(list,data)
+
+#define lives_build_filename(args...) g_build_filename(args)
+#define lives_filename_to_utf8(a,b,c,d,e) g_filename_to_utf8(a,b,c,d,e)
+#define lives_filename_from_utf8(a,b,c,d,e) g_filename_from_utf8(a,b,c,d,e)
+
+#define lives_utf8_strdown(a,b) g_utf8_strdown(a,b)
+
+#define lives_find_program_in_path(a) g_find_program_in_path(a)
+
+#define lives_idle_add(a,b) g_idle_add(a,b)
+#define lives_idle_add_full(a,b,c,d) g_idle_add_full(a,b,c,d)
+
+#define lives_set_application_name(a) g_set_application_name(a)
+#define lives_get_application_name() g_get_application_name()
+
+#define lives_usleep(a) g_usleep(a)
+
+#define lives_mkdir_with_parents(a,b) g_mkdir_with_parents(a,b)
+
+#define lives_strtod(a,b) g_strtod(a,b)
+
+#define lives_path_get_basename(a) g_path_get_basename(a)
+
+#define LIVES_UNLIKELY(a) G_UNLIKELY(a)
+#define LIVES_LIKELY(a) G_LIKELY(a)
+
+#define lives_file_test(a,b) g_file_test(a,b)
+
+#define lives_get_current_dir() g_get_current_dir()
+
+#define lives_error_free(a) g_error_free(a)
+
+#define lives_strerror(a) g_strerror(a)
+
+#define lives_cclosure_new(a,b,c) g_cclosure_new(a,b,c)
+
+#define lives_path_get_dirname(a) g_path_get_dirname(a)
+
+#define U82L(String) ( g_locale_from_utf8 (String,-1,NULL,NULL,NULL) ) 
+#define L2U8(String) ( g_locale_to_utf8 (String,-1,NULL,NULL,NULL) ) 
+
+#define LIVES_FILE_TEST_EXISTS G_FILE_TEST_EXISTS
+#define LIVES_FILE_TEST_IS_DIR G_FILE_TEST_IS_DIR
+#define LIVES_FILE_TEST_IS_REGULAR G_FILE_TEST_IS_REGULAR
+
+#define LIVES_DIR_SEPARATOR_S G_DIR_SEPARATOR_S
 
 typedef GtkJustification LiVESJustification;
 
@@ -162,12 +259,19 @@ typedef GtkOrientation LiVESOrientation;
 #define LIVES_ORIENTATION_VERTICAL   GTK_ORIENTATION_VERTICAL
 
 typedef GdkEvent                          LiVESXEvent;
+typedef GdkXEvent                         LiVESXXEvent;
 typedef GdkEventButton                    LiVESXEventButton;
 typedef GdkEventMotion                    LiVESXEventMotion;
 typedef GdkEventScroll                    LiVESXEventScroll;
+typedef GdkEventExpose                    LiVESXEventExpose;
+typedef GdkEventCrossing                  LiVESXEventCrossing;
+typedef GdkEventConfigure                 LiVESXEventConfigure;
+typedef GdkEventFocus                     LiVESXEventFocus;
+typedef GdkEvent                          LiVESXEventDelete;
 typedef GdkDisplay                        LiVESXDisplay;
 typedef GdkScreen                         LiVESXScreen;
 typedef GdkDevice                         LiVESXDevice;
+
 
 #define LIVES_SCROLL_UP   GDK_SCROLL_UP
 #define LIVES_SCROLL_DOWN GDK_SCROLL_DOWN
@@ -192,7 +296,23 @@ typedef GdkDeviceManager                  LiVESXDeviceManager;
 
 #define LIVES_WIDGET_OBJECT(a) G_OBJECT(a)
 
-#define LIVES_WIDGET_SCROLL_EVENT "scroll_event"
+typedef GMemVTable LiVESMemVTable;
+typedef GIOChannel LiVESIOChannel;
+
+typedef GtkTargetEntry LiVESTargetEntry;
+
+typedef GdkFilterReturn LiVESFilterReturn;
+
+#define LIVES_FILTER_REMOVE GDK_FILTER_REMOVE
+#define LIVES_FILTER_CONTINUE GDK_FILTER_CONTINUE
+
+
+#define LIVES_WIDGET_SCROLL_EVENT "scroll-event"
+#define LIVES_WIDGET_CONFIGURE_EVENT "configure-event"
+#define LIVES_WIDGET_ENTER_EVENT "enter-notify-event"
+#define LIVES_WIDGET_BUTTON_PRESS_EVENT "button-press-event"
+#define LIVES_WIDGET_DELETE_EVENT "delete-event"
+
 #define LIVES_WIDGET_CLICKED_EVENT "clicked"
 #define LIVES_WIDGET_TOGGLED_EVENT "toggled"
 #define LIVES_WIDGET_CHANGED_EVENT "changed"
@@ -200,7 +320,7 @@ typedef GdkDeviceManager                  LiVESXDeviceManager;
 #define LIVES_WIDGET_VALUE_CHANGED_EVENT "value-changed"
 #define LIVES_WIDGET_SELECTION_CHANGED_EVENT "selection-changed"
 #define LIVES_WIDGET_CURRENT_FOLDER_CHANGED_EVENT "current-folder-changed"
-
+#define LIVES_WIDGET_RESPONSE_EVENT "response"
 
 typedef GtkWidget                         LiVESWidget;
 typedef GtkWindow                         LiVESWindow;
@@ -244,6 +364,8 @@ typedef GtkExpander                       LiVESExpander;
 
 typedef GtkProgressBar                    LiVESProgressBar;
 
+typedef GtkAboutDialog                    LiVESAboutDialog;
+
 #define LIVES_COL_TYPE_STRING G_TYPE_STRING
 #define LIVES_COL_TYPE_INT G_TYPE_INT
 #define LIVES_COL_TYPE_UINT G_TYPE_UINT
@@ -266,10 +388,12 @@ typedef GtkTreeIter                       LiVESTreeIter;
 typedef GtkTreePath                       LiVESTreePath;
 typedef GtkTreeStore                      LiVESTreeStore;
 typedef GtkTreeSelection                  LiVESTreeSelection;
+typedef GtkListStore                      LiVESListStore;
 
 
 typedef GtkScrolledWindow                 LiVESScrolledWindow;
 typedef GtkScrollbar                      LiVESScrollbar;
+typedef GtkHScrollbar                     LiVESHScrollbar;
 typedef GtkToolbar                        LiVESToolbar;
 typedef GtkToolItem                       LiVESToolItem;
 
@@ -352,6 +476,19 @@ typedef GtkAttachOptions LiVESAttachOptions;
 typedef GtkWindowType LiVESWindowType;
 #define LIVES_WINDOW_TOPLEVEL GTK_WINDOW_TOPLEVEL
 #define LIVES_WINDOW_POPUP GTK_WINDOW_POPUP
+
+
+typedef GtkDialogFlags LiVESDialogFlags;
+
+typedef GtkMessageType LiVESMessageType;
+#define LIVES_MESSAGE_INFO GTK_MESSAGE_INFO
+#define LIVES_MESSAGE_WARNING GTK_MESSAGE_WARNING
+#define LIVES_MESSAGE_QUESTION GTK_MESSAGE_QUESTION
+#define LIVES_MESSAGE_ERROR GTK_MESSAGE_ERROR
+#define LIVES_MESSAGE_OTHER GTK_MESSAGE_OTHER
+
+typedef GtkButtonsType LiVESButtonsType;
+#define LIVES_BUTTONS_NONE GTK_BUTTONS_NONE
 
 
 typedef GtkFileChooserAction LiVESFileChooserAction;
@@ -451,6 +588,11 @@ typedef GdkEventMask LiVESEventMask;
 #define LIVES_SUBSTRUCTURE_MASK GDK_SUBSTRUCTURE_MASK
 #define LIVES_SCROLL_MASK GDK_SCROLL_MASK
 
+
+#define LIVES_BUTTON_PRESS GDK_BUTTON_PRESS
+#define LIVES_BUTTON_RELEASE GDK_BUTTON_RELEASE
+#define LIVES_BUTTON2_PRESS GDK_2BUTTON_PRESS
+
 #if GTK_CHECK_VERSION(3,4,0)
 #define LIVES_TOUCH_MASK GDK_TOUCH_MASK
 #define LIVES_SMOOTH_SCROLL_MASK GDK_SMOOTH_SCROLL_MASK
@@ -499,6 +641,10 @@ typedef GtkAccelFlags                     LiVESAccelFlags;
 
 typedef GtkRequisition                    LiVESRequisition;
 
+typedef GtkPaned                          LiVESPaned;
+
+typedef GtkScale                          LiVESScale;
+
 typedef GdkPixbufDestroyNotify            LiVESPixbufDestroyNotify;
 
 typedef GdkInterpType                     LiVESInterpType;
@@ -515,6 +661,8 @@ typedef GdkInterpType                     LiVESInterpType;
 #define LIVES_BIN(widget) GTK_BIN(widget)
 #define LIVES_ADJUSTMENT(widget) GTK_ADJUSTMENT(widget)
 #define LIVES_DIALOG(widget) GTK_DIALOG(widget)
+#define LIVES_SCALE(widget) GTK_SCALE(widget)
+#define LIVES_PANED(widget) GTK_PANED(widget)
 #define LIVES_COMBO(widget) GTK_COMBO_BOX(widget)
 #define LIVES_COMBO_BOX(widget) GTK_COMBO_BOX(widget)
 #define LIVES_BUTTON(widget) GTK_BUTTON(widget)
@@ -560,6 +708,8 @@ typedef GdkInterpType                     LiVESInterpType;
 #define LIVES_TREE_VIEW(widget) GTK_TREE_VIEW(widget)
 #define LIVES_TREE_MODEL(object) GTK_TREE_MODEL(object)
 
+#define LIVES_LIST_STORE(object) GTK_LIST_STORE(object)
+
 #define LIVES_ACCEL_GROUP(object) GTK_ACCEL_GROUP(object)
 
 
@@ -601,6 +751,7 @@ typedef GdkInterpType                     LiVESInterpType;
 
 #define LIVES_XEVENT(event) GDK_EVENT(event)
 
+#define LIVES_IS_WIDGET_OBJECT(object) G_IS_OBJECT(object)
 #define LIVES_IS_WIDGET(widget) GTK_IS_WIDGET(widget)
 #define LIVES_IS_WINDOW(widget) GTK_IS_WINDOW(widget)
 #define LIVES_IS_XWINDOW(widget) GDK_IS_WINDOW(widget)
@@ -625,6 +776,8 @@ typedef GdkInterpType                     LiVESInterpType;
 #define LIVES_IS_ENTRY(widget) GTK_IS_ENTRY(widget)
 #define LIVES_IS_RANGE(widget) GTK_IS_RANGE(widget)
 #define LIVES_IS_TEXT_VIEW(widget) GTK_IS_TEXT_VIEW(widget)
+#define LIVES_IS_MENU_ITEM(widget) GTK_IS_MENU_ITEM(widget)
+#define LIVES_IS_FILE_CHOOSER(widget) GTK_IS_FILE_CHOOSER(widget)
 
 // (image resize) interpolation types
 #define LIVES_INTERP_BEST   GDK_INTERP_HYPER
@@ -873,8 +1026,24 @@ char LIVES_STOCK_LABEL_GO_FORWARD[32];
 
 #endif
 
-#define LIVES_INT_TO_POINTER GINT_TO_POINTER
-#define LIVES_POINTER_TO_INT GPOINTER_TO_INT
+#define LIVES_INT_TO_POINTER  GINT_TO_POINTER
+#define LIVES_UINT_TO_POINTER GUINT_TO_POINTER
+#define LIVES_POINTER_TO_INT  GPOINTER_TO_INT
+
+// pango stuff
+typedef PangoLayout LingoLayout;
+#define lingo_layout_set_alignment(a,b) pango_layout_set_alignment(a,b)
+
+#define LINGO_ALIGN_LEFT PANGO_ALIGN_LEFT
+#define LINGO_ALIGN_RIGHT PANGO_ALIGN_RIGHT
+#define LINGO_ALIGN_CENTER PANGO_ALIGN_CENTER
+
+#define lingo_layout_set_text(a,b,c) pango_layout_set_text(a,b,c)
+#define lingo_painter_show_layout(a,b) pango_cairo_show_layout(a,b)
+
+#define lingo_layout_get_size(a,b,c,d,e) pango_layout_get_size(a,b,c)
+
+#define LINGO_SCALE PANGO_SCALE
 
 #endif
 

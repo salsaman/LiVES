@@ -180,7 +180,7 @@ typedef struct {
   gchar *fxsizesfile;
   gchar *vppdefaultsfile;
 
-  GList *acodec_list;
+  LiVESList *acodec_list;
   int acodec_list_to_format[AUDIO_CODEC_NONE];
 
   uint32_t audio_opts;
@@ -328,7 +328,7 @@ typedef struct {
   gchar yuvin[PATH_MAX];
 #endif
 
-  GList *disabled_decoders;
+  LiVESList *disabled_decoders;
 
   char backend_sync[PATH_MAX];
   char backend[PATH_MAX];
@@ -526,7 +526,7 @@ typedef struct {
   LiVESWidget *checkbutton_concat_images;
   LiVESWidget *forcesmon;
   LiVESWidget *forcesmon_hbox;
-  GList *pbq_list;
+  LiVESList *pbq_list;
   gchar *audp_name;
   gchar *orig_audp_name;
   gulong audp_entry_func;
@@ -587,8 +587,8 @@ typedef struct {
   int nfx_threads;
 
 
-  GList *disabled_decoders;
-  GList *disabled_decoders_new;
+  LiVESList *disabled_decoders;
+  LiVESList *disabled_decoders_new;
 
 } _future_prefs;
 
@@ -597,30 +597,30 @@ _future_prefs *future_prefs;
 _prefsw *prefsw;
 
 void set_acodec_list_from_allowed (_prefsw *, render_details *);
-void  rdet_acodec_changed (LiVESCombo *acodec_combo, gpointer user_data);
+void  rdet_acodec_changed (LiVESCombo *acodec_combo, livespointer user_data);
 
 _prefsw* create_prefs_dialog (void);
 
-boolean on_prefs_delete_event (LiVESWidget *, LiVESXEvent *, gpointer prefsw);
+boolean on_prefs_delete_event (LiVESWidget *, LiVESXEvent *, livespointer prefsw);
 
-void on_preferences_activate (LiVESMenuItem *, gpointer);
+void on_preferences_activate (LiVESMenuItem *, livespointer);
 
-void on_prefs_close_clicked (LiVESButton *, gpointer);
+void on_prefs_close_clicked (LiVESButton *, livespointer);
 
-void on_prefs_revert_clicked (LiVESButton *, gpointer);
+void on_prefs_revert_clicked (LiVESButton *, livespointer);
 
 void set_vpp(boolean set_in_prefs);
 
-void on_prefDomainChanged(LiVESTreeSelection *, gpointer);
+void on_prefDomainChanged(LiVESTreeSelection *, livespointer);
 
-void populate_combo_box(LiVESCombo *, GList *data);
+void populate_combo_box(LiVESCombo *, LiVESList *data);
 
 void set_combo_box_active_string(LiVESCombo *, gchar *active_str);
 
 void prefsw_set_astream_settings(_vid_playback_plugin *);
 void prefsw_set_rec_after_settings(_vid_playback_plugin *);
 
-void apply_button_set_enabled(LiVESWidget *widget, gpointer func_data);
+void apply_button_set_enabled(LiVESWidget *widget, livespointer func_data);
 
 
 // permissions

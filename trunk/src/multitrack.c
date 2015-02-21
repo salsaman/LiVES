@@ -19734,7 +19734,7 @@ static gchar *filter_map_check(ttable *trans_table,weed_plant_t *filter_map, wee
   else {
     if (num_init_events==1&&weed_get_voidptr_value(filter_map,"init_events",&error)==NULL) return ebuf;
     pinit_events=weed_get_voidptr_array(filter_map,"init_events",&error);
-    init_events=(uint64_t *)weed_malloc(num_init_events*sizeof(uint64_t));
+    init_events=(uint64_t *)lives_malloc(num_init_events*sizeof(uint64_t));
     for (i=0;i<num_init_events;i++) init_events[i]=(uint64_t)pinit_events[i];
     lives_free(pinit_events);
   }
@@ -20318,7 +20318,7 @@ boolean event_list_rectify(lives_mt *mt, weed_plant_t *event_list) {
 	  init_events=(uint64_t *)weed_get_int64_array(event,"init_events",&error);
 	else  {
 	  void **pinit_events=weed_get_voidptr_array(event,"init_events",&error);
-	  init_events=(uint64_t *)weed_malloc(num_init_events*sizeof(uint64_t));
+	  init_events=(uint64_t *)lives_malloc(num_init_events*sizeof(uint64_t));
 	  for (i=0;i<num_init_events;i++) init_events[i]=(uint64_t)pinit_events[i];
 	  lives_free(pinit_events);
 	}
@@ -20581,8 +20581,8 @@ boolean event_list_rectify(lives_mt *mt, weed_plant_t *event_list) {
 	  if (last_valid_frame<num_tracks) {
 	    lives_free(clip_index);
 	    lives_free(frame_index);
-	    clip_index=(int *)weed_malloc(last_valid_frame*sizint);
-	    frame_index=(int *)weed_malloc(last_valid_frame*sizint);
+	    clip_index=(int *)lives_malloc(last_valid_frame*sizint);
+	    frame_index=(int *)lives_malloc(last_valid_frame*sizint);
 	    for (i=0;i<last_valid_frame;i++) {
 	      clip_index[i]=new_clip_index[i];
 	      frame_index[i]=new_frame_index[i];

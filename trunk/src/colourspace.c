@@ -6474,7 +6474,7 @@ static void convert_delpost_frame(uint8_t *src,int width,int height, int irowstr
   if ((irowstride==width*4)&&(orowstride==width*3)) {
     // quick version
     for (;src<end;src+=4) {
-      weed_memcpy(dest,src,3);
+      lives_memcpy(dest,src,3);
       dest+=3;
     }
   }
@@ -6483,7 +6483,7 @@ static void convert_delpost_frame(uint8_t *src,int width,int height, int irowstr
     orowstride-=width*3;
     for (;src<end;src+=irowstride) {
       for (i=0;i<width4;i+=4) {
-	weed_memcpy(dest,&src[i],3);
+	lives_memcpy(dest,&src[i],3);
 	dest+=3;
       }
       dest+=orowstride;
@@ -6553,7 +6553,7 @@ static void convert_delpre_frame(uint8_t *src,int width,int height, int irowstri
   if ((irowstride==width*4)&&(orowstride==width*3)) {
     // quick version
     for (;src<end;src+=4) {
-      weed_memcpy(dest,src,3);
+      lives_memcpy(dest,src,3);
       dest+=3;
     }
   }
@@ -6562,7 +6562,7 @@ static void convert_delpre_frame(uint8_t *src,int width,int height, int irowstri
     orowstride-=width*3;
     for (;src<end;src+=irowstride) {
       for (i=0;i<width4;i+=4) {
-	weed_memcpy(dest,&src[i],3);
+	lives_memcpy(dest,&src[i],3);
 	dest+=3;
       }
       dest+=orowstride;
@@ -10457,7 +10457,7 @@ boolean resize_layer (weed_plant_t *layer, int width, int height, LiVESInterpTyp
 	irowstrides[i]=ir_array[i];
       }
 
-      lives_free(pd_array); weed_free(ir_array);
+      lives_free(pd_array); lives_free(ir_array);
 
       if (palette!=opal_hint) {
 	width*=weed_palette_get_pixels_per_macropixel(palette); // desired width is in macropixels
@@ -10484,7 +10484,7 @@ boolean resize_layer (weed_plant_t *layer, int width, int height, LiVESInterpTyp
 	orowstrides[i]=or_array[i];
       }
 
-      lives_free(pd_array); weed_free(or_array);
+      lives_free(pd_array); lives_free(or_array);
 
       width*=weed_palette_get_pixels_per_macropixel(opal_hint);
 

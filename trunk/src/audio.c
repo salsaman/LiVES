@@ -2706,7 +2706,7 @@ boolean get_audio_from_plugin(float *fbuffer, int nchans, int arate, int nsamps)
 
   if (xnchans==1&&nchans==2) {
     // if we got mono but we wanted stereo, copy to right channel
-    weed_memcpy(&fbuffer[nsamps],fbuffer,nsamps*sizeof(float));
+    lives_memcpy(&fbuffer[nsamps],fbuffer,nsamps*sizeof(float));
   }
 
   if (weed_plant_has_leaf(inst,"host_next_instance")) {

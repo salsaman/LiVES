@@ -67,7 +67,7 @@ livespointer lives_memcpy  (livespointer dest, livesconstpointer src, size_t n) 
 livespointer lives_memcpy  (livespointer dest, livesconstpointer src, size_t n) {return memcpy(dest,src,n);}
 #endif
 
-G_GNUC_MALLOC livespointer  _lives_malloc(size_t size) {
+G_GNUC_MALLOC livespointer _lives_malloc(size_t size) {
 #ifdef __cplusplus
 #ifdef HAVE_OPENCV
   return fastMalloc(size);
@@ -80,7 +80,7 @@ G_GNUC_MALLOC livespointer  _lives_malloc(size_t size) {
 livespointer  _lives_realloc(livespointer ptr, size_t new_size) {
 #ifdef __cplusplus
 #ifdef HAVE_OPENCV
-  nptr = _lives_malloc(new_size);
+  livespointer nptr = _lives_malloc(new_size);
   if (nptr) {
     if (ptr) {
       lives_memcpy(nptr,ptr,new_size);
@@ -1785,11 +1785,11 @@ lives_filter_error_t weed_apply_instance (weed_plant_t *inst, weed_plant_t *init
 
   if (init_event==NULL) {
     num_in_tracks=enabled_in_channels(inst,FALSE);
-    in_tracks=(int *)weed_malloc(2*sizint);
+    in_tracks=(int *)lives_malloc(2*sizint);
     in_tracks[0]=0;
     in_tracks[1]=1;
     num_out_tracks=enabled_out_channels(inst,FALSE);
-    out_tracks=(int *)weed_malloc(sizint);
+    out_tracks=(int *)lives_malloc(sizint);
     out_tracks[0]=0;
   }
   else {
@@ -2857,11 +2857,11 @@ static lives_filter_error_t weed_apply_audio_instance_inner (weed_plant_t *inst,
 
   if (init_event==NULL) {
     num_in_tracks=enabled_in_channels(inst,FALSE);
-    in_tracks=(int *)weed_malloc(2*sizint);
+    in_tracks=(int *)lives_malloc(2*sizint);
     in_tracks[0]=0;
     in_tracks[1]=1;
     num_out_tracks=1;
-    out_tracks=(int *)weed_malloc(sizint);
+    out_tracks=(int *)lives_malloc(sizint);
     out_tracks[0]=0;
   }
   else {
@@ -3118,10 +3118,10 @@ lives_filter_error_t weed_apply_audio_instance (weed_plant_t *init_event, float 
     // set init_event to NULL before passing it to the inner function
     init_event=NULL;
 
-    in_tracks=(int *)weed_malloc(sizint);
+    in_tracks=(int *)lives_malloc(sizint);
     in_tracks[0]=0;
 
-    out_tracks=(int *)weed_malloc(sizint);
+    out_tracks=(int *)lives_malloc(sizint);
     out_tracks[0]=0;
 
   }
@@ -9141,7 +9141,7 @@ void fill_param_vals_to (weed_plant_t *param, weed_plant_t *paramtmpl, int index
       if (weed_leaf_seed_type(paramtmpl,"new_default")==WEED_SEED_INT) {
 	colsis=weed_get_int_array(param,"value",&error);
 	if (weed_leaf_num_elements(paramtmpl,"new_default")==1) {
-	  coli=(int *)weed_malloc(3*sizint);
+	  coli=(int *)lives_malloc(3*sizint);
 	  coli[0]=coli[1]=coli[2]=weed_get_int_value(paramtmpl,"new_default",&error);
 	}
 	else coli=weed_get_int_array(paramtmpl,"new_default",&error);
@@ -9172,7 +9172,7 @@ void fill_param_vals_to (weed_plant_t *param, weed_plant_t *paramtmpl, int index
       else {
 	colsds=weed_get_double_array(param,"value",&error);
 	if (weed_leaf_num_elements(paramtmpl,"new_default")==1) {
-	  cold=(double *)weed_malloc(3*sizdbl);
+	  cold=(double *)lives_malloc(3*sizdbl);
 	  cold[0]=cold[1]=cold[2]=weed_get_double_value(paramtmpl,"new_default",&error);
 	}
 	else cold=weed_get_double_array(paramtmpl,"new_default",&error);
@@ -10685,11 +10685,11 @@ boolean read_generator_sizes(int fd) {
 
 void reset_frame_and_clip_index(void) {
   if (mainw->clip_index==NULL) {
-    mainw->clip_index=(int *)weed_malloc(sizint);
+    mainw->clip_index=(int *)lives_malloc(sizint);
     mainw->clip_index[0]=-1;
   }
   if (mainw->frame_index==NULL) {
-    mainw->frame_index=(int *)weed_malloc(sizint);
+    mainw->frame_index=(int *)lives_malloc(sizint);
     mainw->frame_index[0]=0;
   }
 }

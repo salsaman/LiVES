@@ -687,16 +687,20 @@ lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_warn_yuv4
 
     if (mainw->playing_file==-1) {
       if (prefs->audio_player==AUD_PLAYER_JACK) {
+#ifdef ENABLE_JACK
 	if (prefs->perm_audio_reader) {
 	  // create reader connection now, if permanent
 	  jack_rec_audio_to_clip(-1,-1,RECA_EXTERNAL);
 	}
+#endif
       }
       if (prefs->audio_player==AUD_PLAYER_PULSE) {
+#ifdef HAVE_PULSE_AUDIO
 	if (prefs->perm_audio_reader) {
 	  // create reader connection now, if permanent
 	  pulse_rec_audio_to_clip(-1,-1,RECA_EXTERNAL);
 	}
+#endif
       }
     }
 
@@ -3831,7 +3835,7 @@ _prefsw *create_prefs_dialog (void) {
    
 #ifndef ENABLE_OSC
   label = lives_standard_label_new (_("LiVES must be compiled without \"configure --disable-OSC\" to use OMC"));
-  lives_box_pack_start (LIVES_BOX (prefsw->vbox_right_net), label, FALSE, FALSE, widget_opts->packing_height);
+  lives_box_pack_start (LIVES_BOX (prefsw->vbox_right_net), label, FALSE, FALSE, widget_opts.packing_height);
 #endif
    
   hbox1 = lives_hbox_new (FALSE, 0);

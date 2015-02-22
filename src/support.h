@@ -42,6 +42,7 @@ gchar *translate_with_plural(const char *String, const char *StringPlural, unsig
 #  define bindtextdomain(Domain,Directory) (Domain)
 #  define _(String) (String)
 #  define N_(String) (String)
+#  define P_(String,StringPlural,n) (String)
 #endif
 
 #endif

@@ -4,7 +4,6 @@
 // Released under the GPL 3 or later
 // see file ../COPYING for licensing details
 
-
 extern "C" {
 #include <libOSC/libosc.h>
 #include <libOSC/OSC-client.h>
@@ -13,9 +12,19 @@ extern "C" {
 #include <string.h>
 #include <stdlib.h>
 
-typedef bool boolean;
-
+#define HAVE_OSC_TT
 #include "bindings.hpp"
+
+
+
+extern "C" {
+  int real_main(int argc, char *argv[]);
+  bool lives_osc_cb_quit(void *context, int arglen, const void *vargs, OSCTimeTag when, void * ra);
+  bool lives_osc_cb_fgclip_select(void *context, int arglen, const void *vargs, OSCTimeTag when, void * ra);
+  bool lives_osc_record_start(void *context, int arglen, const void *vargs, OSCTimeTag when, void * ra);
+  bool lives_osc_record_stop(void *context, int arglen, const void *vargs, OSCTimeTag when, void * ra);
+  bool lives_osc_record_toggle(void *context, int arglen, const void *vargs, OSCTimeTag when, void * ra);
+}
 
 
 static int pad4(int val) {
@@ -52,32 +61,34 @@ static int add_int_arg(char **str, int arglen, int val) {
 
 //////////////////////////////////////////////////
 
-namespace LiVES {
+//using namespace lives;
 
+  livesApp::livesApp() {
+    char *argv[1]={"lives-exe"};
+    real_main(1, argv);
+  }
 
-  LiVES::LiVES(int argc, char *argv[]) {
+  livesApp::livesApp(int argc, char *argv[]) {
     real_main(argc, argv);
   }
 
 
-  LiVES::~LiVES() {
-    lives_exit();
+  livesApp::~livesApp() {
+    lives_osc_cb_quit(NULL, 0, NULL, OSCTT_CurrentTime(), NULL);
   }
 
 
-  list<clip *> LiVES::clipList() {
+  list<clip *> livesApp::clipList() {
 
   }
 
 
-
-
-  boolean clip::select(int cnum) {
+  bool clip::select(int cnum) {
     int arglen = 2;
     char *vargs = strdup(",i");
     arglen = padup(&vargs, arglen);
     arglen = add_int_arg(&vargs, arglen, cnum);
-    boolean ret = lives_osc_cb_fgclip_select(NULL, arglen, (const void *)vargs, OSCTT_CurrentTime(), NULL);
+    bool ret = lives_osc_cb_fgclip_select(NULL, arglen, (const void *)vargs, OSCTT_CurrentTime(), NULL);
     free(vargs);
     return ret;
   }
@@ -85,22 +96,21 @@ namespace LiVES {
 
 
 
-  boolean record::enable() {
-    int arglen = 0;
-    const char *vargs = NULL;
-    return lives_osc_record_start(NULL, arglen, (const void *)vargs, OSCTT_CurrentTime(), NULL);
+  bool record::enable() {
+    return lives_osc_record_start(NULL, 0, NULL, OSCTT_CurrentTime(), NULL);
   }
 
-  boolean record::disable() {
+  bool record::disable() {
     int arglen = 0;
     const char *vargs = NULL;
     return lives_osc_record_stop(NULL, arglen, (const void *)vargs, OSCTT_CurrentTime(), NULL);
   }
 
-  boolean record::toggle() {
+  bool record::toggle() {
     int arglen = 0;
     const char *vargs = NULL;
     return lives_osc_record_toggle(NULL, arglen, (const void *)vargs, OSCTT_CurrentTime(), NULL);
   }
 
-}
+
+

@@ -2630,7 +2630,7 @@ void threaded_dialog_spin (void) {
   if (mainw->current_file<0||cfile==NULL||cfile->progress_start==0||cfile->progress_end==0||
       strlen(mainw->msg)==0||(progress=atoi(mainw->msg))==0) {
     // pulse the progress bar
-    lives_progress_bar_pulse(LIVES_PROGRESS_BAR(procw->progressbar));
+    if (LIVES_IS_PROGRESS_BAR(procw->progressbar)) lives_progress_bar_pulse(LIVES_PROGRESS_BAR(procw->progressbar));
   }
   else {
     // show fraction
@@ -2639,7 +2639,7 @@ void threaded_dialog_spin (void) {
     disp_fraction(progress,cfile->progress_start,cfile->progress_end,timesofar,procw);
   }
 
-  lives_widget_queue_draw(procw->processing);
+  if (LIVES_IS_WIDGET(procw->processing)) lives_widget_queue_draw(procw->processing);
   lives_widget_context_update();
 
 }

@@ -129,6 +129,14 @@ void break_me(void) {
 }
 
 
+#ifdef NO_MAIN
+static pthread_t gtk_thread;
+void *gtk_thread_wrapper(void *data) {
+  gtk_main();
+  return NULL;
+}
+#endif
+
 #ifdef USE_GLIB
 static void lives_log_handler (const char *domain, LiVESLogLevelFlags level, const char *message,  livespointer data) {
   gchar *msg;
@@ -2822,7 +2830,7 @@ int real_main (int argc, char *argv[]) {
 #ifdef GUI_GTK
 #ifdef LIVES_NO_DEBUG
   // don't crash on GTK+ fatals
-  g_log_set_always_fatal ((GLogLevelFlags)0);
+  //g_log_set_always_fatal ((GLogLevelFlags)0);
 #endif
 
   g_log_set_default_handler(lives_log_handler,NULL);
@@ -3113,8 +3121,12 @@ int real_main (int argc, char *argv[]) {
 
   lives_idle_add(lives_startup,NULL);
 
+#ifndef NO_MAIN
 #ifdef GUI_GTK
   gtk_main ();
+#endif
+#else
+  pthread_create(&gtk_thread,NULL,gtk_thread_wrapper,NULL);
 #endif
 
 #ifdef GUI_QT
@@ -3904,11 +3916,12 @@ void load_end_image(int frame) {
 }
 
 
+#ifndef NO_MAIN
 int main (int argc, char *argv[]) {
   // call any hooks here
   return real_main(argc, argv);
 }
-
+#endif
 
 void load_preview_image(boolean update_always) {
   // this is for the sepwin preview

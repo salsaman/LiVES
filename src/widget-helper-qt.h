@@ -13,10 +13,6 @@
 #ifndef HAS_LIVES_WIDGET_HELPER_QT_H
 #define HAS_LIVES_WIDGET_HELPER_QT_H
 
-#ifdef __cplusplus
-extern "C++" {
-#endif
-
 #ifdef GUI_QT
 // just for testing !!!!
 
@@ -50,6 +46,7 @@ using namespace std;
 #include <QtWidgets/QCompleter>
 #include <QtWidgets/QLabel>
 #include <QtWidgets/QColorDialog>
+#include <QtWidgets/QWidget>
 #include <QtWidgets/QWidgetAction>
 #include <QtWidgets/QStyledItemDelegate>
 #include <QtWidgets/QHeaderView>
@@ -86,6 +83,8 @@ using namespace std;
 
 #include <QtGui/QColor>
 #include <QtCore/QAbstractItemModel>
+#include <QtWidgets/QAbstractSlider>
+#include <QtWidgets/QAbstractButton>
 #include <QtCore/QSharedPointer>
 #include <QtGui/QStandardItemModel>
 #include <QtCore/QModelIndex>
@@ -98,7 +97,7 @@ using namespace std;
 QApplication *qapp;
 QTime *qtime;
 
-#define GTK_CHECK_VERSION(a,b,c) 0
+#define GTK_CHECK_VERSION(a,b,c) 1
 
 #define LIVES_LITTLE_ENDIAN 0
 #define LIVES_BIG_ENDIAN 1
@@ -210,6 +209,8 @@ typedef ulong                             gulong;
 
 #define NO_GTK
 #include "support.h"
+
+extern char *trString;
 
 // TODO - move to support.c
 char *translate(const char *String) {
@@ -1010,7 +1011,7 @@ class nevfilter : public QAbstractNativeEventFilter {
 
 #endif
 
-class LiVESObject : public QObject {
+class LiVESObject : public QWidget {
   Q_OBJECT
 
  public:
@@ -1082,7 +1083,6 @@ class LiVESObject : public QObject {
   LiVESObjectType get_type() {
     return type;
   }
-
 
  private:
   bool floating;
@@ -1478,7 +1478,7 @@ typedef QStyle::StandardPixmap LiVESArrowType;
 #define LIVES_ARROW_RIGHT QStyle::SP_ArrowRight
 #define LIVES_ARROW_NONE -1
 
-class LiVESWidget : public LiVESObject, public QWidget {
+class LiVESWidget : public LiVESObject {
   Q_OBJECT
 
  public:
@@ -1637,7 +1637,7 @@ class LiVESWidget : public LiVESObject, public QWidget {
   }
 
 
- Q_SLOTS
+ public slots:
    void cb_wrapper_clicked() {
    // "clicked" callback
    call_accels_for(LIVES_WIDGET_CLICKED_EVENT);
@@ -2166,7 +2166,7 @@ ulong lives_signal_connect(LiVESObject *object, const char *signal_name, ulong f
 						  static_cast<QObject *>(object), 
 						  SLOT(cb_wrapper_changed()));
 
-      }
+						  }
     }
   }
   else if (!strcmp(signal_name, LIVES_WIDGET_VALUE_CHANGED_EVENT)) {
@@ -2236,8 +2236,8 @@ LIVES_INLINE livespointer lives_widget_object_get_data(LiVESObject *widget, cons
 void LiVESObject::add_accel(LiVESAccel *accel) {
   accels.push_back(accel);
 
-  QShortcut *shortcut = new QShortcut(accel->ks, dynamic_cast<QWidget *>(this));
-  accel->shortcut = shortcut;
+  //QShortcut *shortcut = new QShortcut(accel->ks, dynamic_cast<QWidget *>(this));
+  //accel->shortcut = shortcut;
 }
 
 
@@ -2303,7 +2303,7 @@ boolean LiVESObject::activate_accel(QKeySequence ks) {
       else {
 	if (!strcmp(accel->signal_name, LIVES_WIDGET_CLICKED_EVENT)) {
 	  QAbstractButton *widget = dynamic_cast<QAbstractButton *>(this);
-	  if (widget != NULL) widget->click();
+		  if (widget != NULL) widget->click();
 	}
 
 	if (!strcmp(accel->signal_name, LIVES_WIDGET_TOGGLED_EVENT)) {
@@ -2458,6 +2458,7 @@ class LiVESAdjustment : public LiVESObject {
 
   void set_value(double newval);
   void set_lower(double newval);
+
   void set_upper(double newval);
   void set_step_increment(double newval);
   void set_page_increment(double newval);
@@ -3061,7 +3062,7 @@ class LiVESRange : public LiVESWidget {
     return adj;
   }
 
-Q_SLOTS
+  public slots:
   void valueChanged(int value) {
     adj->freeze();
     adj->set_value(value);
@@ -3764,7 +3765,7 @@ typedef LiVESTreeModel LiVESListModel;
 
 
 class LiVESTreeView : public LiVESWidget, public QTreeWidget {
-  Q_OBJECT
+  //Q_OBJECT
 
  public:
   LiVESTreeView() {
@@ -3846,7 +3847,7 @@ class LiVESTreeView : public LiVESWidget, public QTreeWidget {
   }
 
 
-Q_SLOTS
+  /*  public slots:
 
   void hvalue_changed(int newval) {
     hadj->freeze();
@@ -3859,7 +3860,7 @@ Q_SLOTS
     vadj->set_value(newval);
     vadj->thaw();
   }
-
+  */
 
  private:
   LiVESTreeModel *model;
@@ -3913,7 +3914,6 @@ void LiVESAdjustment::set_value(double newval) {
       (dynamic_cast<QAbstractSlider *>(owner))->setValue(newval);
     }
     else if (LIVES_IS_SCROLLBAR(owner)){
-      //
       (dynamic_cast<QScrollBar *>(owner))->setValue(newval);
     }
     else if (LIVES_IS_SPIN_BUTTON(owner)){
@@ -4310,7 +4310,7 @@ class LiVESToolbar : public LiVESWidget, public QToolBar {
 
 
 class LiVESColorButton : public LiVESButtonBase, public QPushButton {
-  Q_OBJECT
+  //Q_OBJECT
 
  public:
 
@@ -4340,7 +4340,7 @@ class LiVESColorButton : public LiVESButtonBase, public QPushButton {
       p.setColor(QPalette::Button, mycolour);
       qpb->setPalette(p);
       
-      Q_EMIT changed();
+      //Q_EMIT changed();
     }
   }
 
@@ -4366,7 +4366,7 @@ class LiVESColorButton : public LiVESButtonBase, public QPushButton {
   }
 
 
- Q_SIGNALS:
+  /* Q_SIGNALS:
   void changed();
 
   private Q_SLOTS:
@@ -4381,7 +4381,7 @@ class LiVESColorButton : public LiVESButtonBase, public QPushButton {
 	set_colour(dlg.selectedColor());
       }
       if (!use_alpha) colour.setAlpha(255);
-    }
+      }*/
 
  private:
     QColor colour;
@@ -4392,8 +4392,6 @@ class LiVESColorButton : public LiVESButtonBase, public QPushButton {
 
 
 class LiVESTimer : public LiVESObject, public QTimer {
-  Q_OBJECT
-
  public:
 
   LiVESTimer(uint32_t interval, LiVESWidgetSourceFunc xfunc, livespointer data);
@@ -4402,16 +4400,15 @@ class LiVESTimer : public LiVESObject, public QTimer {
     return handle;
   }
 
-  Q_SLOTS
+  /*  public slots:*/
 
-    void update();
+  void update();
 
 
  private:
   uint32_t handle;
   LiVESWidgetSourceFunc func;
   livespointer data;
-
 
 };
 
@@ -4680,6 +4677,7 @@ extern "C" {
 boolean lives_container_remove(LiVESContainer *, LiVESWidget *);
 }
 
+
 LiVESWidget::~LiVESWidget() {
   if (LIVES_IS_SPIN_BUTTON(this)) {
     LiVESAdjustment *adj = (static_cast<LiVESSpinButton *>(this))->get_adj();
@@ -4901,9 +4899,7 @@ void LingoLayout::render_text(lives_painter_t *painter) {
 
 #endif
 
-#ifdef __cplusplus
-}
-#endif
+#include "moc_widget-helper-qt.cpp"
 
 
 #endif

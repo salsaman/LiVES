@@ -5,6 +5,7 @@
 // see file ../COPYING or www.gnu.org for licensing details
 
 
+#include "main.h"
 
 // The idea here is to replace toolkit specific functions with generic ones
 
@@ -12,12 +13,7 @@
 
 // TODO - add for other toolkits, e.g. qt
 
-
-#include "main.h"
-
 // basic functions
-
-
 
 ////////////////////////////////////////////////////
 //lives_painter functions
@@ -429,7 +425,7 @@ int lives_painter_image_surface_get_width(lives_painter_surface_t *surf) {
   width=cairo_image_surface_get_width(surf);
 #endif
 #ifdef PAINTER_QPAINTER
-  width=surf->width();
+  width=((QImage *)surf)->width();
 #endif
   return width;
 }
@@ -441,7 +437,7 @@ int lives_painter_image_surface_get_height(lives_painter_surface_t *surf) {
   height=cairo_image_surface_get_height(surf);
 #endif
 #ifdef PAINTER_QPAINTER
-  height=surf->height();
+  height=((QImage *)surf)->height();
 #endif
   return height;
 }
@@ -453,7 +449,7 @@ int lives_painter_image_surface_get_stride(lives_painter_surface_t *surf) {
   stride=cairo_image_surface_get_stride(surf);
 #endif
 #ifdef PAINTER_QPAINTER
-  stride=surf->bytesPerLine();
+  stride=((QImage *)surf)->bytesPerLine();
 #endif
   return stride;
 }
@@ -465,7 +461,7 @@ lives_painter_format_t lives_painter_image_surface_get_format(lives_painter_surf
   format=cairo_image_surface_get_format(surf);
 #endif
 #ifdef PAINTER_QPAINTER
-  format=surf->format();
+  format=((QImage *)surf)->format();
 #endif
   return format;
 }
@@ -488,14 +484,15 @@ LIVES_INLINE boolean lives_mem_set_vtable(LiVESMemVTable *alt_vtable) {
 
   lives_realloc = realloc_wrapper;
 
-  if (mainw->alt_vtable.try_malloc == NULL) lives_try_malloc = try_malloc_wrapper;
-  else lives_try_malloc = mainw->alt_vtable.try_malloc;
+  if (alt_vtable->try_malloc == NULL) lives_try_malloc = try_malloc_wrapper;
+  else lives_try_malloc = alt_vtable->try_malloc;
 
-  if (mainw->alt_vtable.try_realloc == NULL) lives_try_realloc = try_realloc_wrapper;
-  else lives_try_realloc = mainw->alt_vtable.try_realloc;
+  if (alt_vtable->try_realloc == NULL) lives_try_realloc = try_realloc_wrapper;
+  else lives_try_realloc = alt_vtable->try_realloc;
 
   return TRUE;
 #endif
+  return FALSE;
 }
 
 
@@ -691,6 +688,7 @@ LIVES_INLINE boolean lives_widget_hide(LiVESWidget *widget) {
 LIVES_INLINE boolean lives_widget_show_all(LiVESWidget *widget) {
 #ifdef GUI_GTK
   gtk_widget_show_all(widget);
+  return TRUE;
 #endif
 #ifdef GUI_QT
   (static_cast<QWidget *>(widget))->show();
@@ -1224,7 +1222,6 @@ LIVES_INLINE LiVESWidget *lives_window_new(LiVESWindowType wintype) {
     window = new LiVESDialog;
   }
 #endif
-
   return window;
 }
 
@@ -1451,8 +1448,8 @@ LIVES_INLINE boolean lives_window_move(LiVESWindow *window, int x, int y) {
     QWindow *qw = window->windowHandle();
     qw->setX(x);
     qw->setY(y);
-    return TRUE;
   }
+  return TRUE;
 #endif
   return FALSE;
 }
@@ -1526,6 +1523,7 @@ LIVES_INLINE boolean lives_window_resize(LiVESWindow *window, int width, int hei
   gtk_window_resize(window,width,height);
   return TRUE;
 #endif
+  // TODO
   return FALSE;
 }
 
@@ -2329,11 +2327,8 @@ LIVES_INLINE LiVESWidget *lives_vscrollbar_new(LiVESAdjustment *adj) {
 LIVES_INLINE LiVESWidget *lives_label_new(const char *text) {
   LiVESWidget *label=NULL;
 #ifdef GUI_GTK
-
   label=gtk_label_new(text);
-
   gtk_label_set_justify (LIVES_LABEL (label), widget_opts.justify);
-
   gtk_label_set_line_wrap (LIVES_LABEL (label), widget_opts.line_wrap);
 #endif
 #ifdef GUI_QT
@@ -3056,8 +3051,10 @@ LIVES_INLINE LiVESWidget *lives_button_new_from_stock(const char *stock_id) {
   button=gtk_button_new_from_stock(stock_id);
 #endif
 
+#ifdef GUI_GTK
 #if GTK_CHECK_VERSION(3,6,0)
   gtk_button_set_always_show_image(GTK_BUTTON(button),prefs->show_button_images);
+#endif
 #endif
 
   return button;

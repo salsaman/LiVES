@@ -915,6 +915,8 @@ AM_CONDITIONAL(HAVE_SYSTEM_WEED_PLUGIN,$HAVE_SYSTEM_WEED_PLUGIN)
 
 AM_CONDITIONAL(BUILD_EXPERIMENTAL,false)
 
+AM_CONDITIONAL(TEST_BINDINGS,false)
+
 
 dnl find -name Makefile.am | sed "s/\.\///g" | sed "s/\.am//g" >> configure.in
 AC_CONFIG_FILES([

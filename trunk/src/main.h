@@ -277,6 +277,7 @@ typedef struct {
 } event;
 
 typedef struct {
+  // processing / busy dialog
   LiVESWidget *processing;
   LiVESWidget *progressbar;
   LiVESWidget *label;
@@ -288,6 +289,7 @@ typedef struct {
   LiVESWidget *cancel_button;
   LiVESWidget *scrolledwindow;
   uint32_t frames_done;
+  boolean is_ready;
 } xprocess;
 
 

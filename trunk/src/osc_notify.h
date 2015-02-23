@@ -20,6 +20,10 @@
 #ifndef HAS_LIVES_OSC_NOTIFY_H
 #define HAS_LIVES_OSC_NOTIFY_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define LIVES_OSC_NOTIFY_FRAME_SYNCH 1 ///< sent when a frame is displayed
 #define LIVES_OSC_NOTIFY_PLAYBACK_STARTED 2 ///< sent when a/v playback starts or clip is switched
 #define LIVES_OSC_NOTIFY_PLAYBACK_STOPPED 3 ///< sent when a/v playback ends
@@ -47,5 +51,9 @@
 #define LIVES_OSC_NOTIFY_CANCELLED 2048
 
 #define LIVES_OSC_NOTIFY_MODE_CHANGED 4096 ///< mode changed to clip editor or to multitrack
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

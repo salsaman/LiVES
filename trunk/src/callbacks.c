@@ -4927,6 +4927,11 @@ void on_load_set_activate (LiVESMenuItem *menuitem, livespointer user_data) {
 }
 
 
+const char *get_set_name() {
+  return mainw->set_name;
+}
+
+
 
 boolean on_load_set_ok (LiVESButton *button, livespointer user_data) {
   // this is the main clip set loader

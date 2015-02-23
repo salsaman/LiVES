@@ -5,8 +5,7 @@
 // see file ../COPYING for licensing details
 
 
-
-//-fvisibility=hidden
+#include "osc_notify.h"
 
 #if defined _WIN32 || defined __CYGWIN__
   #ifdef BUILDING_DLL
@@ -82,6 +81,10 @@ static bool is_big_endian() {
 }
 
 
+extern "C" {
+  void binding_cb (int msgnumber,const char *msgstring);
+}
+
 /////////////////////////////////////////////////////
 
 #include <list>
@@ -93,13 +96,37 @@ using namespace std;
 //// API start /////
 
 
-//namespace lives {
+namespace lives {
+
+
+typedef class livesApp livesApp;
 
   class LIVES_DLL_PUBLIC clip {
   public:
     bool select(int cnum);
+
+  private:
+    uint64_t handle;
+
   };
   
+
+  class LIVES_DLL_PUBLIC set {
+    friend livesApp;
+
+  public:
+    ~set();
+    char *name();
+    list<clip *> clipList();
+
+  protected:
+    void setName(const char *setname);
+
+  private:
+    char *m_name;
+    list<clip *>clips;
+    //list<layout *>layouts;
+  };
   
   class LIVES_DLL_PUBLIC record {
   public:
@@ -109,16 +136,25 @@ using namespace std;
   };
 
 
+
   class LIVES_DLL_PUBLIC livesApp {
   public:
     livesApp();
     livesApp(int argc, char *argv[]);
     ~livesApp();
 
-    list<clip *> clipList();
+    set currentSet();
+
+    void play();
+    bool stop();
+
+    void showInfo(const char *text, bool blocking);
+
+  private:
+    set m_set;
 
   };
 
 
 
-//}
+}

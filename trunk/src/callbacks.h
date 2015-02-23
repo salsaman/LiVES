@@ -7,6 +7,8 @@
 #ifndef HAS_LIVES_CALLBACKS_H
 #define HAS_LIVES_CALLBACKS_H
 
+const char *get_set_name();
+
 boolean
 on_LiVES_delete_event                  (LiVESWidget       *widget,
                                         LiVESXEvent        *event,

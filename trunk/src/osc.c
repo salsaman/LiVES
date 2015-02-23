@@ -162,12 +162,10 @@ void *_lives_osc_rt_malloc(int num_bytes) {
 
 // status returns
 
-boolean lives_status_send (const char *msgstring) {
+boolean lives_status_send (const char *msg) {
   if (status_socket==NULL) return FALSE;
   else {
-    char *msg=lives_strdup_printf("%s\n",msgstring);
     boolean retval = lives_stream_out (status_socket,strlen (msg)+1,(void *)msg);
-    lives_free(msg);
     return retval;
   }
 }
@@ -190,14 +188,16 @@ boolean lives_osc_notify (int msgnumber,const char *msgstring) {
   }
 }
 
-void lives_osc_notify_success (const char *msg) {
+boolean lives_osc_notify_success (const char *msg) {
   if (prefs->omc_noisy)
     lives_osc_notify(LIVES_OSC_NOTIFY_SUCCESS,msg);
+  return TRUE;
 }
 
-void lives_osc_notify_failure (void) {
+boolean lives_osc_notify_failure (void) {
   if (prefs->omc_noisy)
     lives_osc_notify(LIVES_OSC_NOTIFY_FAILED,NULL);
+  return FALSE;
 }
 
 /* unused */
@@ -415,13 +415,14 @@ static char *lives_osc_format_result(weed_plant_t *plant, const char *key, int s
 ///////////////////////////////////// CALLBACKS FOR OSC ////////////////////////////////////////
 // TODO - handle clipboard playback
 
-void lives_osc_cb_test(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
+boolean lives_osc_cb_test(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
   int val=lives_osc_get_num_arguments (vargs);
   lives_printerr("got %d\n",val);
+  return TRUE;
 }
 
 /* /video/play */
-void lives_osc_cb_play (void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
+boolean lives_osc_cb_play (void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
   float ent, stt;
   double entd,sttd;
 
@@ -469,9 +470,10 @@ void lives_osc_cb_play (void *context, int arglen, const void *vargs, OSCTimeTag
   mainw->kb_timer_end=TRUE;
 
   mainw->osc_auto=FALSE;
+  return TRUE;
 }
 
-void lives_osc_cb_playsel (void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
+boolean lives_osc_cb_playsel (void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
   if (mainw->go_away) return lives_osc_notify_failure();
   if (mainw->playing_file==-1&&mainw->current_file>0) {
     mainw->osc_auto=TRUE; ///< request early notifiction of success
@@ -485,20 +487,21 @@ void lives_osc_cb_playsel (void *context, int arglen, const void *vargs, OSCTime
     mainw->kb_timer_end=TRUE;
     mainw->osc_auto=FALSE; ///< request early notifiction of success
   }
+  return TRUE;
 }
 
-void lives_osc_cb_play_reverse(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
+boolean lives_osc_cb_play_reverse(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
 
   if (mainw->multitrack!=NULL) return lives_osc_notify_failure();
   if (mainw->current_file<0||((cfile->clip_type!=CLIP_TYPE_DISK&&cfile->clip_type!=CLIP_TYPE_FILE)||mainw->playing_file==-1)) 
     if (mainw->playing_file==-1) lives_osc_notify_failure();
   dirchange_callback(NULL,NULL,0,(LiVESXModifierType)0,LIVES_INT_TO_POINTER(TRUE));
-  lives_osc_notify_success(NULL);
+  return lives_osc_notify_success(NULL);
 
 }
 
 
-void lives_osc_cb_bgplay_reverse(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
+boolean lives_osc_cb_bgplay_reverse(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
 
   if (mainw->multitrack!=NULL) return lives_osc_notify_failure();
   if (mainw->blend_file<1||mainw->files[mainw->blend_file]==NULL||mainw->blend_file==mainw->current_file||mainw->playing_file==-1) 
@@ -510,12 +513,12 @@ void lives_osc_cb_bgplay_reverse(void *context, int arglen, const void *vargs, O
 
   mainw->files[mainw->blend_file]->pb_fps=-mainw->files[mainw->blend_file]->pb_fps;
                                                                                                                           
-  lives_osc_notify_success(NULL);
+  return lives_osc_notify_success(NULL);
                                                                                              
 }
 
 
-void lives_osc_cb_play_forward (void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
+boolean lives_osc_cb_play_forward (void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
   if (mainw->go_away) lives_osc_notify_failure(); // not ready to play yet
 
   if (mainw->current_file<0||(cfile->clip_type!=CLIP_TYPE_DISK&&cfile->clip_type!=CLIP_TYPE_FILE)) 
@@ -537,14 +540,15 @@ void lives_osc_cb_play_forward (void *context, int arglen, const void *vargs, OS
     if (cfile->pb_fps<0||(cfile->play_paused&&cfile->freeze_fps<0)) 
       dirchange_callback(NULL,NULL,0,(LiVESXModifierType)0,LIVES_INT_TO_POINTER(TRUE));
     if (cfile->play_paused) freeze_callback(NULL,NULL,0,(LiVESXModifierType)0,NULL);
-    lives_osc_notify_success(NULL);
+    return lives_osc_notify_success(NULL);
   }
-  else lives_osc_notify_failure();
+
+  return lives_osc_notify_failure();
 
 }
 
 
-void lives_osc_cb_play_backward (void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
+boolean lives_osc_cb_play_backward (void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
   if (mainw->go_away) lives_osc_notify_failure();
   if (mainw->multitrack!=NULL) return lives_osc_notify_failure();
 
@@ -568,25 +572,26 @@ void lives_osc_cb_play_backward (void *context, int arglen, const void *vargs, O
     if (cfile->pb_fps>0||(cfile->play_paused&&cfile->freeze_fps>0)) 
       dirchange_callback(NULL,NULL,0,(LiVESXModifierType)0,LIVES_INT_TO_POINTER(TRUE));
     if (cfile->play_paused) freeze_callback(NULL,NULL,0,(LiVESXModifierType)0,NULL);
-    lives_osc_notify_success(NULL);
+    return lives_osc_notify_success(NULL);
   }
-  else lives_osc_notify_failure();
+
+  return lives_osc_notify_failure();
 
 }
 
 
-void lives_osc_cb_play_faster (void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
+boolean lives_osc_cb_play_faster (void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
 
   if (mainw->multitrack!=NULL) return lives_osc_notify_failure();
   if (mainw->playing_file==-1) return lives_osc_notify_failure();
 
   on_faster_pressed(NULL,LIVES_INT_TO_POINTER(1));
-  lives_osc_notify_success(NULL);
+  return lives_osc_notify_success(NULL);
 
 }
 
 
-void lives_osc_cb_bgplay_faster (void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
+boolean lives_osc_cb_bgplay_faster (void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
 
   if (mainw->multitrack!=NULL) return lives_osc_notify_failure();
   if (mainw->playing_file==-1) return lives_osc_notify_failure();
@@ -594,23 +599,23 @@ void lives_osc_cb_bgplay_faster (void *context, int arglen, const void *vargs, O
   if (mainw->blend_file<1||mainw->files[mainw->blend_file]==NULL||mainw->blend_file==mainw->current_file) return lives_osc_notify_failure();
 
   on_faster_pressed(NULL,LIVES_INT_TO_POINTER(2));
-  lives_osc_notify_success(NULL);
+  return lives_osc_notify_success(NULL);
 
 }
 
 
-void lives_osc_cb_play_slower (void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
+boolean lives_osc_cb_play_slower (void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
 
   if (mainw->multitrack!=NULL) return lives_osc_notify_failure();
   if (mainw->playing_file==-1) return lives_osc_notify_failure();
 
   on_slower_pressed(NULL,LIVES_INT_TO_POINTER(1));
-  lives_osc_notify_success(NULL);
+  return lives_osc_notify_success(NULL);
 
 }
 
 
-void lives_osc_cb_bgplay_slower (void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
+boolean lives_osc_cb_bgplay_slower (void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
 
   if (mainw->multitrack!=NULL) return lives_osc_notify_failure();
   if (mainw->playing_file==-1) return lives_osc_notify_failure();
@@ -618,13 +623,13 @@ void lives_osc_cb_bgplay_slower (void *context, int arglen, const void *vargs, O
   if (mainw->blend_file<1||mainw->files[mainw->blend_file]==NULL||mainw->blend_file==mainw->current_file) return lives_osc_notify_failure();
 
   on_slower_pressed(NULL,LIVES_INT_TO_POINTER(2));
-  lives_osc_notify_success(NULL);
+  return lives_osc_notify_success(NULL);
 
 }
 
 
 
-void lives_osc_cb_play_reset (void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
+boolean lives_osc_cb_play_reset (void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
 
   if (mainw->multitrack!=NULL) return lives_osc_notify_failure();
   if (mainw->playing_file==-1) return lives_osc_notify_failure();
@@ -633,12 +638,12 @@ void lives_osc_cb_play_reset (void *context, int arglen, const void *vargs, OSCT
   if (cfile->pb_fps<0||(cfile->play_paused&&cfile->freeze_fps<0)) dirchange_callback(NULL,NULL,0,(LiVESXModifierType)0,LIVES_INT_TO_POINTER(TRUE));
   if (cfile->play_paused) freeze_callback(NULL,NULL,0,(LiVESXModifierType)0,NULL);
 
-  lives_osc_notify_success(NULL);
+  return lives_osc_notify_success(NULL);
 
 }
 
 
-void lives_osc_cb_bgplay_reset (void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
+boolean lives_osc_cb_bgplay_reset (void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
 
   if (mainw->multitrack!=NULL) return lives_osc_notify_failure();
   if (mainw->playing_file==-1) return lives_osc_notify_failure();
@@ -651,7 +656,7 @@ void lives_osc_cb_bgplay_reset (void *context, int arglen, const void *vargs, OS
 
   if (mainw->files[mainw->blend_file]->pb_fps>=0.) mainw->files[mainw->blend_file]->pb_fps=mainw->files[mainw->blend_file]->fps;
   else mainw->files[mainw->blend_file]->pb_fps=-mainw->files[mainw->blend_file]->fps;
-  lives_osc_notify_success(NULL);
+  return lives_osc_notify_success(NULL);
 
 }
 
@@ -659,17 +664,17 @@ void lives_osc_cb_bgplay_reset (void *context, int arglen, const void *vargs, OS
 
 
 /* /video/stop */
-void lives_osc_cb_stop(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
+boolean lives_osc_cb_stop(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
   if (mainw->playing_file>-1) {
     on_stop_activate(NULL,NULL); // should send play stop event
-    lives_osc_notify_success(NULL);
+    return lives_osc_notify_success(NULL);
   }
-  else lives_osc_notify_failure();
+  else return lives_osc_notify_failure();
 }
 
 
 
-void lives_osc_cb_set_loop(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
+boolean lives_osc_cb_set_loop(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
   int lmode;
 
   if (lives_osc_check_arguments (arglen,vargs,"i",FALSE)) {
@@ -694,14 +699,14 @@ void lives_osc_cb_set_loop(void *context, int arglen, const void *vargs, OSCTime
     else if (!mainw->loop) on_loop_video_activate(NULL,NULL);
   }
 
-  lives_osc_notify_success(NULL);
+  return lives_osc_notify_success(NULL);
 
 }
 
 
 
 
-void lives_osc_cb_get_loop(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
+boolean lives_osc_cb_get_loop(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
   int lmode=0;
   char *lmodes;
 
@@ -711,11 +716,11 @@ void lives_osc_cb_get_loop(void *context, int arglen, const void *vargs, OSCTime
   lmodes=lives_strdup_printf("%d",lmode);
   lives_status_send(lmodes);
   lives_free(lmodes);
-
+  return TRUE;
 }
 
 
-void lives_osc_cb_set_pingpong(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
+boolean lives_osc_cb_set_pingpong(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
   int lmode;
 
   if (lives_osc_check_arguments (arglen,vargs,"i",FALSE)) {
@@ -726,20 +731,21 @@ void lives_osc_cb_set_pingpong(void *context, int arglen, const void *vargs, OSC
 
   if ((lmode && !mainw->ping_pong) || (!lmode && mainw->ping_pong)) on_ping_pong_activate(NULL,NULL);
 
-  lives_osc_notify_success(NULL);
+  return lives_osc_notify_success(NULL);
 }
 
 
 
-void lives_osc_cb_get_pingpong(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
+boolean lives_osc_cb_get_pingpong(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
   if (mainw->ping_pong) lives_status_send(get_omc_const("LIVES_TRUE"));
   else lives_status_send(get_omc_const("LIVES_FALSE"));
+  return TRUE;
 }
 
 
 
 
-void lives_osc_cb_set_fps(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
+boolean lives_osc_cb_set_fps(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
   int fpsi;
   float fps;
   if (mainw->multitrack!=NULL) return lives_osc_notify_failure();
@@ -754,12 +760,12 @@ void lives_osc_cb_set_fps(void *context, int arglen, const void *vargs, OSCTimeT
   }
 
   if (mainw->playing_file>-1) lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_pb_fps),(double)(fps));
-  lives_osc_notify_success(NULL);
+  return lives_osc_notify_success(NULL);
 
 }
 
 
-void lives_osc_cb_bgset_fps(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
+boolean lives_osc_cb_bgset_fps(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
   int fpsi;
   float fps;
 
@@ -777,12 +783,12 @@ void lives_osc_cb_bgset_fps(void *context, int arglen, const void *vargs, OSCTim
   }
 
   mainw->files[mainw->blend_file]->pb_fps=(double)fps;
-  lives_osc_notify_success(NULL);
+  return lives_osc_notify_success(NULL);
 }
 
 
 
-void lives_osc_cb_set_fps_ratio(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
+boolean lives_osc_cb_set_fps_ratio(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
   int fpsi;
   float fps;
   if (mainw->multitrack!=NULL) return lives_osc_notify_failure();
@@ -798,12 +804,12 @@ void lives_osc_cb_set_fps_ratio(void *context, int arglen, const void *vargs, OS
 
   if (mainw->playing_file>-1) lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_pb_fps),
 							  (double)(fps)*mainw->files[mainw->playing_file]->fps);
-  lives_osc_notify_success(NULL);
+  return lives_osc_notify_success(NULL);
 
 }
 
 
-void lives_osc_cb_bgset_fps_ratio(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
+boolean lives_osc_cb_bgset_fps_ratio(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
   int fpsi;
   float fps;
   if (mainw->multitrack!=NULL) return lives_osc_notify_failure();
@@ -822,25 +828,24 @@ void lives_osc_cb_bgset_fps_ratio(void *context, int arglen, const void *vargs, 
   }
 
   mainw->files[mainw->blend_file]->pb_fps=mainw->files[mainw->blend_file]->fps*(double)fps;
-
+  return lives_osc_notify_success(NULL);
 }
 
 
-void lives_osc_cb_fx_reset(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
+boolean lives_osc_cb_fx_reset(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
 
   if (!mainw->osc_block) rte_on_off_callback_hook(NULL,LIVES_INT_TO_POINTER(0));
-  if (prefs->omc_noisy) lives_osc_notify_success(NULL);
-
+  return lives_osc_notify_success(NULL);
 }
 
 
-void lives_osc_cb_fx_map_clear(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
+boolean lives_osc_cb_fx_map_clear(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
   if (!mainw->osc_block) on_clear_all_clicked(NULL,NULL);
-  if (prefs->omc_noisy) lives_osc_notify_success(NULL);
+  return lives_osc_notify_success(NULL);
 }
 
 
-void lives_osc_cb_fx_map(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
+boolean lives_osc_cb_fx_map(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
   int effect_key;
   char effect_name[OSC_STRING_SIZE];
 
@@ -848,11 +853,11 @@ void lives_osc_cb_fx_map(void *context, int arglen, const void *vargs, OSCTimeTa
   lives_osc_parse_int_argument(vargs,&effect_key);
   lives_osc_parse_string_argument(vargs,effect_name);
   if (!mainw->osc_block) weed_add_effectkey(effect_key,effect_name,FALSE); // allow partial matches
-  if (prefs->omc_noisy) lives_osc_notify_success(NULL);
+  return lives_osc_notify_success(NULL);
 }
 
 
-void lives_osc_cb_fx_enable(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
+boolean lives_osc_cb_fx_enable(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
   // if via_shortcut and not playing, we ignore unless a generator starts (which starts playback)
   boolean new_timer_added=FALSE;
   int count;
@@ -886,11 +891,11 @@ void lives_osc_cb_fx_enable(void *context, int arglen, const void *vargs, OSCTim
   }
   mainw->last_grabable_effect=grab;
 
-  if (prefs->omc_noisy) lives_osc_notify_success(NULL);
+  return lives_osc_notify_success(NULL);
 }
 
 
-void lives_osc_cb_fx_disable(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
+boolean lives_osc_cb_fx_disable(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
 
   int effect_key;
   if (mainw->multitrack!=NULL) return lives_osc_notify_failure();
@@ -899,11 +904,11 @@ void lives_osc_cb_fx_disable(void *context, int arglen, const void *vargs, OSCTi
   if (mainw->rte&(GU641<<(effect_key-1))) {
     if (!mainw->osc_block) rte_on_off_callback_hook(NULL,LIVES_INT_TO_POINTER(effect_key));
   }
-  if (prefs->omc_noisy) lives_osc_notify_success(NULL);
+  return lives_osc_notify_success(NULL);
 }
 
 
-void lives_osc_cb_fx_toggle(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
+boolean lives_osc_cb_fx_toggle(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
   // if not playing and via_shortcut, see if fx key points to generator
 
   int count=0;
@@ -929,14 +934,14 @@ void lives_osc_cb_fx_toggle(void *context, int arglen, const void *vargs, OSCTim
     rte_on_off_callback_hook(NULL,LIVES_INT_TO_POINTER(effect_key));
     mainw->kb_timer_end=TRUE;
   }
-  if (prefs->omc_noisy) lives_osc_notify_success(NULL);
+  return lives_osc_notify_success(NULL);
 }
 
 // *_set will allow setting of invalid clips - in this case nothing happens
 //*_select will index only valid clips
 
 
-void lives_osc_cb_fgclip_set(void *context, int arglen, const void *vargs, OSCTimeTag when,	NetworkReturnAddressPtr ra) {
+boolean lives_osc_cb_fgclip_set(void *context, int arglen, const void *vargs, OSCTimeTag when,	NetworkReturnAddressPtr ra) {
   // switch fg clip
 
   int clip;
@@ -948,21 +953,19 @@ void lives_osc_cb_fgclip_set(void *context, int arglen, const void *vargs, OSCTi
   if (clip>0&&clip<MAX_FILES-1) {
     if (mainw->files[clip]!=NULL&&(mainw->files[clip]->clip_type==CLIP_TYPE_DISK||mainw->files[clip]->clip_type==CLIP_TYPE_FILE)) {
       if (mainw->playing_file!=0) {
+	char *msg=lives_strdup_printf("%d",clip);
 	switch_clip(1,clip);
-	if (prefs->omc_noisy) {
-	  char *msg=lives_strdup_printf("%d",clip);
-	  lives_osc_notify_success(msg);
-	  lives_free(msg);
-	}
-	return;
+	lives_osc_notify_success(msg);
+	lives_free(msg);
+	return TRUE;
       }
     }
   }
-  lives_osc_notify_failure();
+  return lives_osc_notify_failure();
 }
 
 
-void lives_osc_cb_bgclip_set(void *context, int arglen, const void *vargs, OSCTimeTag when,	NetworkReturnAddressPtr ra) {
+boolean lives_osc_cb_bgclip_set(void *context, int arglen, const void *vargs, OSCTimeTag when,	NetworkReturnAddressPtr ra) {
   // switch bg clip
 
   int clip;
@@ -973,20 +976,18 @@ void lives_osc_cb_bgclip_set(void *context, int arglen, const void *vargs, OSCTi
 
   if (clip>0&&clip<MAX_FILES-1) {
     if (mainw->files[clip]!=NULL&&(mainw->files[clip]->clip_type==CLIP_TYPE_DISK||mainw->files[clip]->clip_type==CLIP_TYPE_FILE)) {
+      char *msg=lives_strdup_printf("%d",clip);
       switch_clip(2,clip);
-      if (prefs->omc_noisy) {
-	char *msg=lives_strdup_printf("%d",clip);
-	lives_osc_notify_success(msg);
-	lives_free(msg);
-      }
-      return;
+      lives_osc_notify_success(msg);
+      lives_free(msg);
+      return TRUE;
     }
   }
-  lives_osc_notify_failure();
+  return lives_osc_notify_failure();
 }
 
 
-void lives_osc_cb_fgclip_select(void *context, int arglen, const void *vargs, OSCTimeTag when,	NetworkReturnAddressPtr ra) {
+boolean lives_osc_cb_fgclip_select(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
   // switch fg clip
   int clip,i;
   if (mainw->current_file<1||mainw->preview||mainw->is_processing||mainw->multitrack!=NULL) return lives_osc_notify_failure();
@@ -1005,22 +1006,22 @@ void lives_osc_cb_fgclip_select(void *context, int arglen, const void *vargs, OS
     
   if (i==mainw->current_file) return lives_osc_notify_failure();
   if (mainw->playing_file!=0) {
+    char *msg;
     switch_clip(1,i);
-    if (prefs->omc_noisy) {
-      char *msg=lives_strdup_printf("%d",i);
-      lives_osc_notify_success(msg);
-      lives_free(msg);
-      return;
-    }
+    msg=lives_strdup_printf("%d",i);
+    lives_osc_notify_success(msg);
+    lives_free(msg);
+    return TRUE;
   }
-  lives_osc_notify_failure();
+  return lives_osc_notify_failure();
 }
 
 
 
 
-void lives_osc_cb_bgclip_select(void *context, int arglen, const void *vargs, OSCTimeTag when,	NetworkReturnAddressPtr ra) {
+boolean lives_osc_cb_bgclip_select(void *context, int arglen, const void *vargs, OSCTimeTag when,	NetworkReturnAddressPtr ra) {
   // switch bg clip
+  char *msg;
   int clip,i;
   if (mainw->current_file<1||mainw->preview||mainw->is_processing||mainw->multitrack!=NULL) return lives_osc_notify_failure(); // etc
 
@@ -1042,17 +1043,15 @@ void lives_osc_cb_bgclip_select(void *context, int arglen, const void *vargs, OS
 
   switch_clip(2,i);
 
-  if (prefs->omc_noisy) {
-    char *msg=lives_strdup_printf("%d",i);
-    lives_osc_notify_success(msg);
-    lives_free(msg);
-    return;
-  }
+  msg=lives_strdup_printf("%d",i);
+  lives_osc_notify_success(msg);
+  lives_free(msg);
+  return TRUE;
 
 }
 
 
-void lives_osc_cb_clip_resample(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
+boolean lives_osc_cb_clip_resample(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
   int fps;
   float fpsf;
   double fpsd;
@@ -1083,7 +1082,7 @@ void lives_osc_cb_clip_resample(void *context, int arglen, const void *vargs, OS
 
 
 
-void lives_osc_cb_clip_close(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
+boolean lives_osc_cb_clip_close(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
   int noaudio=0;
   int clipno=mainw->current_file;
   int current_file=clipno;
@@ -1113,7 +1112,7 @@ void lives_osc_cb_clip_close(void *context, int arglen, const void *vargs, OSCTi
 
 
 
-void lives_osc_cb_clip_undo(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
+boolean lives_osc_cb_clip_undo(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
   int clipno=mainw->current_file;
   int current_file=clipno;
 
@@ -1145,7 +1144,7 @@ void lives_osc_cb_clip_undo(void *context, int arglen, const void *vargs, OSCTim
 
 
 
-void lives_osc_cb_clip_redo(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
+boolean lives_osc_cb_clip_redo(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
   int clipno=mainw->current_file;
   int current_file=clipno;
 
@@ -1179,7 +1178,7 @@ void lives_osc_cb_clip_redo(void *context, int arglen, const void *vargs, OSCTim
 
 
 
-void lives_osc_cb_fgclip_copy(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
+boolean lives_osc_cb_fgclip_copy(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
   int noaudio=0;
   int clipno=mainw->current_file;
   int start,end,current_file=clipno;
@@ -1225,13 +1224,13 @@ void lives_osc_cb_fgclip_copy(void *context, int arglen, const void *vargs, OSCT
 
   mainw->current_file=current_file;
 
-  lives_osc_notify_success(NULL);
+  return lives_osc_notify_success(NULL);
 
 }
 
 
 
-void lives_osc_cb_fgclipsel_rteapply(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
+boolean lives_osc_cb_fgclipsel_rteapply(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
   int clipno=mainw->current_file;
   int current_file=clipno;
 
@@ -1256,13 +1255,13 @@ void lives_osc_cb_fgclipsel_rteapply(void *context, int arglen, const void *varg
 
   mainw->current_file=current_file;
 
-  lives_osc_notify_success(NULL);
+  return lives_osc_notify_success(NULL);
 }
 
 
 
 
-void lives_osc_cb_fgclipsel_copy(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
+boolean lives_osc_cb_fgclipsel_copy(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
 
   int noaudio=0;
   int clipno=mainw->current_file;
@@ -1301,13 +1300,13 @@ void lives_osc_cb_fgclipsel_copy(void *context, int arglen, const void *vargs, O
 
   mainw->current_file=current_file;
 
-  lives_osc_notify_success(NULL);
+  return lives_osc_notify_success(NULL);
 }
 
 
 
 
-void lives_osc_cb_fgclipsel_cut(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
+boolean lives_osc_cb_fgclipsel_cut(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
 
   int noaudio=0;
   int clipno=mainw->current_file;
@@ -1349,15 +1348,14 @@ void lives_osc_cb_fgclipsel_cut(void *context, int arglen, const void *vargs, OS
 
   mainw->current_file=current_file;
 
-  if (prefs->omc_noisy) {
-    lives_osc_notify_success(NULL);
-  }
+  return lives_osc_notify_success(NULL);
+
 }
 
 
 
 
-void lives_osc_cb_fgclipsel_delete(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
+boolean lives_osc_cb_fgclipsel_delete(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
 
   int noaudio=0;
   int clipno=mainw->current_file;
@@ -1399,15 +1397,13 @@ void lives_osc_cb_fgclipsel_delete(void *context, int arglen, const void *vargs,
 
   mainw->current_file=current_file;
 
-  if (prefs->omc_noisy) {
-    lives_osc_notify_success(NULL);
-  }
+  return lives_osc_notify_success(NULL);
 }
 
 
 
 
-void lives_osc_cb_clipbd_paste(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
+boolean lives_osc_cb_clipbd_paste(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
   int noaudio=0;
   boolean ccpd;
 
@@ -1434,16 +1430,14 @@ void lives_osc_cb_clipbd_paste(void *context, int arglen, const void *vargs, OSC
 
   mainw->ccpd_with_sound=ccpd;
 
-  if (prefs->omc_noisy) {
-    lives_osc_notify_success(NULL);
-  }
+  return lives_osc_notify_success(NULL);
 
 }
 
 
 
 
-void lives_osc_cb_clipbd_insertb(void *context, int arglen, const void *vargs, OSCTimeTag when,	NetworkReturnAddressPtr ra) {
+boolean lives_osc_cb_clipbd_insertb(void *context, int arglen, const void *vargs, OSCTimeTag when,	NetworkReturnAddressPtr ra) {
 
   int noaudio=0;
   int times=1;
@@ -1493,17 +1487,15 @@ void lives_osc_cb_clipbd_insertb(void *context, int arglen, const void *vargs, O
   on_insert_activate(NULL,NULL);
 
   mainw->current_file=current_file;
+  return lives_osc_notify_success(NULL);
 
-  if (prefs->omc_noisy) {
-    lives_osc_notify_success(NULL);
-  }
 }
 
 
 
 
 
-void lives_osc_cb_clipbd_inserta(void *context, int arglen, const void *vargs, OSCTimeTag when,	NetworkReturnAddressPtr ra) {
+boolean lives_osc_cb_clipbd_inserta(void *context, int arglen, const void *vargs, OSCTimeTag when,	NetworkReturnAddressPtr ra) {
 
   int noaudio=0;
   int times=1;
@@ -1557,15 +1549,14 @@ void lives_osc_cb_clipbd_inserta(void *context, int arglen, const void *vargs, O
 
   mainw->current_file=current_file;
 
-  if (prefs->omc_noisy) {
-    lives_osc_notify_success(NULL);
-  }
+  return lives_osc_notify_success(NULL);
+
 }
 
 
 
 
-void lives_osc_cb_fgclip_retrigger (void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
+boolean lives_osc_cb_fgclip_retrigger (void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
   // switch fg clip and reset framenumber
 
   if (mainw->playing_file<1||mainw->preview||mainw->is_processing) return lives_osc_notify_failure();
@@ -1582,11 +1573,12 @@ void lives_osc_cb_fgclip_retrigger (void *context, int arglen, const void *vargs
     resync_audio(cfile->frameno);
   }
 #endif
+  return lives_osc_notify_success(NULL);
 }
 
 
 
-void lives_osc_cb_bgclip_retrigger (void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
+boolean lives_osc_cb_bgclip_retrigger (void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
   // switch bg clip and reset framenumber
 
   if (mainw->playing_file<1||mainw->preview||mainw->is_processing) return lives_osc_notify_failure();
@@ -1600,13 +1592,13 @@ void lives_osc_cb_bgclip_retrigger (void *context, int arglen, const void *vargs
   if (mainw->files[mainw->blend_file]->pb_fps>0.||(mainw->files[mainw->blend_file]->play_paused&&mainw->files[mainw->blend_file]->freeze_fps>0.)) 
     mainw->files[mainw->blend_file]->frameno=mainw->files[mainw->blend_file]->last_frameno=1;
   else mainw->files[mainw->blend_file]->frameno=mainw->files[mainw->blend_file]->last_frameno=mainw->files[mainw->blend_file]->frames;
-  lives_osc_notify_success(NULL);
+  return lives_osc_notify_success(NULL);
 }
 
 
 
 
-void lives_osc_cb_fgclip_select_next(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
+boolean lives_osc_cb_fgclip_select_next(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
   // switch fg clip
 
   if (mainw->current_file<1||mainw->preview||mainw->is_processing) return lives_osc_notify_failure(); // TODO
@@ -1618,12 +1610,14 @@ void lives_osc_cb_fgclip_select_next(void *context, int arglen, const void *varg
     char *msg=lives_strdup_printf("%d",mainw->current_file);
     lives_osc_notify_success(msg);
     lives_free(msg);
+    return TRUE;
   }
+  return lives_osc_notify_failure();
 
 }
 
 
-void lives_osc_cb_bgclip_select_next(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
+boolean lives_osc_cb_bgclip_select_next(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
   // switch bg clip
 
   if (mainw->current_file<1||mainw->preview||mainw->is_processing) return lives_osc_notify_failure(); // TODO
@@ -1636,13 +1630,14 @@ void lives_osc_cb_bgclip_select_next(void *context, int arglen, const void *varg
     char *msg=lives_strdup_printf("%d",mainw->blend_file);
     lives_osc_notify_success(msg);
     lives_free(msg);
+    return TRUE;
   }
-
+  return lives_osc_notify_failure();
 }
 
 
 
-void lives_osc_cb_fgclip_select_previous(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
+boolean lives_osc_cb_fgclip_select_previous(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
   // switch fg clip
 
   if (mainw->current_file<1||mainw->preview||mainw->is_processing) return lives_osc_notify_failure(); // TODO
@@ -1654,13 +1649,13 @@ void lives_osc_cb_fgclip_select_previous(void *context, int arglen, const void *
     char *msg=lives_strdup_printf("%d",mainw->current_file);
     lives_osc_notify_success(msg);
     lives_free(msg);
+    return TRUE;
   }
-
-
+  return lives_osc_notify_failure();
 }
 
 
-void lives_osc_cb_bgclip_select_previous(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
+boolean lives_osc_cb_bgclip_select_previous(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
   // switch bg clip
 
   if (mainw->current_file<1||mainw->preview||mainw->is_processing) return lives_osc_notify_failure(); // TODO
@@ -1670,11 +1665,13 @@ void lives_osc_cb_bgclip_select_previous(void *context, int arglen, const void *
 
   prevclip_callback(NULL,NULL,0,(LiVESXModifierType)0,LIVES_INT_TO_POINTER(2));
 
-  if (mainw->playing_file==-1&&prefs->omc_noisy) {
+  if (mainw->playing_file==-1) {
     char *msg=lives_strdup_printf("%d",mainw->blend_file);
     lives_osc_notify_success(msg);
     lives_free(msg);
+    return TRUE;
   }
+  return lives_osc_notify_failure();
 }
 
 
@@ -1683,7 +1680,7 @@ void lives_osc_cb_bgclip_select_previous(void *context, int arglen, const void *
 
 
 
-void lives_osc_cb_quit(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
+boolean lives_osc_cb_quit(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
 
   if (mainw->playing_file>-1) return lives_osc_notify_failure();
 
@@ -1695,22 +1692,22 @@ void lives_osc_cb_quit(void *context, int arglen, const void *vargs, OSCTimeTag 
   }
   else mainw->leave_files=FALSE;
   lives_exit();
-
+  return TRUE;
 }
 
-void lives_osc_cb_getname(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
-  if (status_socket==NULL) return;
+boolean lives_osc_cb_getname(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
   lives_status_send (PACKAGE_NAME);
+  return TRUE;
 }
 
 
-void lives_osc_cb_getversion(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
-  if (status_socket==NULL) return;
+boolean lives_osc_cb_getversion(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
   lives_status_send (VERSION);
+  return TRUE;
 }
 
 
-void lives_osc_cb_getconst(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
+boolean lives_osc_cb_getconst(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
   const char *retval;
   char cname[OSC_STRING_SIZE];
 
@@ -1718,11 +1715,12 @@ void lives_osc_cb_getconst(void *context, int arglen, const void *vargs, OSCTime
   lives_osc_parse_string_argument(vargs,cname);
   retval=get_omc_const(cname);
   lives_status_send (retval);
+  return TRUE;
 }
 
 
 
-void lives_osc_cb_open_status_socket(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
+boolean lives_osc_cb_open_status_socket(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
   char host[OSC_STRING_SIZE];
   int port;
 
@@ -1741,19 +1739,22 @@ void lives_osc_cb_open_status_socket(void *context, int arglen, const void *varg
     return lives_osc_notify_failure();
   }
 
-  if (!(status_socket=OpenHTMSocket (host,port,TRUE))) LIVES_WARN ("Unable to open status socket !");
-  else if (prefs->omc_noisy) {
-    lives_osc_notify_success(NULL);
+  if (!(status_socket=OpenHTMSocket (host,port,TRUE))) {
+    LIVES_WARN ("Unable to open status socket !");
+    return lives_osc_notify_failure();
   }
+
+  return lives_osc_notify_success(NULL);
+
 
 }
 
-void lives_osc_cb_open_notify_socket(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
+boolean lives_osc_cb_open_notify_socket(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
   char host[OSC_STRING_SIZE];
   int port;
 
   if (!lives_osc_check_arguments (arglen,vargs,"si",FALSE)) {
-    if (!lives_osc_check_arguments (arglen,vargs,"i",TRUE)) return;
+    if (!lives_osc_check_arguments (arglen,vargs,"i",TRUE)) return lives_osc_notify_failure();
     lives_snprintf (host,OSC_STRING_SIZE,"localhost");
   }
   else {
@@ -1764,33 +1765,37 @@ void lives_osc_cb_open_notify_socket(void *context, int arglen, const void *varg
 
   if (notify_socket!=NULL) {
     LIVES_INFO("OMC notify socket already opened");
-    return;
+    return lives_osc_notify_failure();
   }
 
-  if (!(notify_socket=OpenHTMSocket (host,port,TRUE))) LIVES_WARN ("Unable to open notify socket !");
   prefs->omc_noisy=FALSE; // default for confirms is OFF
+  if (!(notify_socket=OpenHTMSocket (host,port,TRUE))) {
+    LIVES_WARN ("Unable to open notify socket !");
+    return lives_osc_notify_failure();
+  }
+  return lives_osc_notify_success(NULL);
 
 }
 
-void lives_osc_cb_close_status_socket(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
+boolean lives_osc_cb_close_status_socket(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
   lives_osc_close_status_socket();
-  lives_osc_notify_success(NULL);
+  return lives_osc_notify_success(NULL);
 }
 
 
-void lives_osc_cb_notify_c(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
+boolean lives_osc_cb_notify_c(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
   int state;
   if (!lives_osc_check_arguments (arglen,vargs,"i",TRUE)) return lives_osc_notify_failure();
   lives_osc_parse_int_argument(vargs,&state);
   if (state>0) {
     prefs->omc_noisy=TRUE;
-    lives_osc_notify_success(NULL);
   }
   else prefs->omc_noisy=FALSE;
+  return lives_osc_notify_success(NULL);
 }
 
 
-void lives_osc_cb_notify_e(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
+boolean lives_osc_cb_notify_e(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
   int state;
   if (!lives_osc_check_arguments (arglen,vargs,"i",TRUE)) return lives_osc_notify_failure();
   lives_osc_parse_int_argument(vargs,&state);
@@ -1798,21 +1803,20 @@ void lives_osc_cb_notify_e(void *context, int arglen, const void *vargs, OSCTime
     prefs->omc_events=TRUE;
   }
   else prefs->omc_events=FALSE;
-  lives_osc_notify_success(NULL);
+  return lives_osc_notify_success(NULL);
 }
 
 
 
-void lives_osc_cb_clip_count(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
+boolean lives_osc_cb_clip_count(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
   char *tmp;
 
-  if (status_socket==NULL) return;
   lives_status_send ((tmp=lives_strdup_printf ("%d",mainw->clips_available)));
   lives_free(tmp);
-
+  return TRUE;
 }
 
-void lives_osc_cb_clip_goto(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
+boolean lives_osc_cb_clip_goto(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
 
   int frame;
   if (mainw->current_file<1||mainw->preview||mainw->playing_file<1) return lives_osc_notify_failure();
@@ -1830,22 +1834,22 @@ void lives_osc_cb_clip_goto(void *context, int arglen, const void *vargs, OSCTim
     resync_audio(frame);
   }
 #endif
-  lives_osc_notify_success(NULL);
+  return lives_osc_notify_success(NULL);
 }
 
 
-void lives_osc_cb_clip_getframe(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
+boolean lives_osc_cb_clip_getframe(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
   char *tmp;
-  if (status_socket==NULL) return;
   if (mainw->current_file<1||mainw->preview||mainw->playing_file<1) lives_status_send ("0");
   else {
     lives_status_send ((tmp=lives_strdup_printf ("%d",mainw->actual_frame)));
     lives_free(tmp);
   }
+  return TRUE;
 }
 
 
-void lives_osc_cb_clip_getfps(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
+boolean lives_osc_cb_clip_getfps(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
   char *tmp;
 
   if (mainw->current_file<1) return lives_osc_notify_failure();
@@ -1854,10 +1858,11 @@ void lives_osc_cb_clip_getfps(void *context, int arglen, const void *vargs, OSCT
   else if (mainw->preview||mainw->playing_file<1) lives_status_send ((tmp=lives_strdup_printf ("%.3f",cfile->fps)));
   else lives_status_send ((tmp=lives_strdup_printf ("%.3f",cfile->pb_fps)));
   lives_free(tmp);
+  return TRUE;
 }
 
 
-void lives_osc_cb_clip_get_ifps(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
+boolean lives_osc_cb_clip_get_ifps(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
   char *tmp;
   lives_clip_t *sfile;
   int clip=mainw->current_file;
@@ -1873,10 +1878,11 @@ void lives_osc_cb_clip_get_ifps(void *context, int arglen, const void *vargs, OS
   if (mainw->preview||mainw->playing_file<1) lives_status_send ((tmp=lives_strdup_printf ("%.3f",sfile->fps)));
   else lives_status_send ((tmp=lives_strdup_printf ("%.3f",sfile->pb_fps)));
   lives_free(tmp);
+  return TRUE;
 }
 
 
-void lives_osc_cb_get_fps_ratio(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
+boolean lives_osc_cb_get_fps_ratio(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
   char *tmp;
 
   if (mainw->current_file<1) return lives_osc_notify_failure();
@@ -1885,10 +1891,11 @@ void lives_osc_cb_get_fps_ratio(void *context, int arglen, const void *vargs, OS
   else if (mainw->preview||mainw->playing_file<1) lives_status_send ((tmp=lives_strdup_printf ("%.4f",1.)));
   else lives_status_send ((tmp=lives_strdup_printf ("%.4f",cfile->pb_fps/cfile->fps)));
   lives_free(tmp);
+  return TRUE;
 }
 
 
-void lives_osc_cb_bgget_fps_ratio(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
+boolean lives_osc_cb_bgget_fps_ratio(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
   char *tmp;
 
   if (mainw->current_file<1) return lives_osc_notify_failure();
@@ -1899,10 +1906,11 @@ void lives_osc_cb_bgget_fps_ratio(void *context, int arglen, const void *vargs, 
   else lives_status_send ((tmp=lives_strdup_printf ("%.4f",mainw->files[mainw->blend_file]->pb_fps/
 						mainw->files[mainw->blend_file]->fps)));
   lives_free(tmp);
+  return TRUE;
 }
 
 
-void lives_osc_cb_bgclip_getframe(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
+boolean lives_osc_cb_bgclip_getframe(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
   char *tmp;
 
   if (mainw->current_file<1||mainw->preview||mainw->playing_file<1||mainw->blend_file<0||
@@ -1911,10 +1919,11 @@ void lives_osc_cb_bgclip_getframe(void *context, int arglen, const void *vargs, 
     lives_status_send ((tmp=lives_strdup_printf ("%d",mainw->files[mainw->blend_file]->frameno)));
     lives_free(tmp);
   }
+  return TRUE;
 }
 
 
-void lives_osc_cb_bgclip_getfps(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
+boolean lives_osc_cb_bgclip_getfps(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
   char *tmp;
 
   if (mainw->current_file<1) return lives_osc_notify_failure();
@@ -1922,20 +1931,20 @@ void lives_osc_cb_bgclip_getfps(void *context, int arglen, const void *vargs, OS
   else if (mainw->preview||mainw->playing_file<1) lives_status_send ((tmp=lives_strdup_printf ("%.3f",mainw->files[mainw->blend_file]->fps)));
   else lives_status_send ((tmp=lives_strdup_printf ("%.3f",mainw->files[mainw->blend_file]->pb_fps)));
   lives_free(tmp);
+  return TRUE;
 }
 
 
-void lives_osc_cb_getmode(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
-  if (status_socket==NULL) return;
-
+boolean lives_osc_cb_getmode(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
   if (mainw->multitrack!=NULL) lives_status_send(get_omc_const("LIVES_MODE_MULTITRACK"));
   else lives_status_send(get_omc_const("LIVES_MODE_CLIPEDIT"));
+  return TRUE;
 }
 
 
 
 
-void lives_osc_cb_setmode(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
+boolean lives_osc_cb_setmode(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
   char *modes;
   int mode;
   int cliped=atoi(get_omc_const("LIVES_MODE_CLIPEDIT")); // 0
@@ -1956,17 +1965,18 @@ void lives_osc_cb_setmode(void *context, int arglen, const void *vargs, OSCTimeT
   modes=lives_strdup_printf("%d",mode);
   lives_osc_notify_success(modes);
   lives_free(modes);
+  return TRUE;
 }
 
 
-void lives_osc_cb_clearlay(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
+boolean lives_osc_cb_clearlay(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
   if (mainw->playing_file>-1||mainw->preview||mainw->is_processing||mainw->multitrack==NULL) return lives_osc_notify_failure();
   wipe_layout(mainw->multitrack);
   return lives_osc_notify_success(NULL);
 }
 
 
-void lives_osc_cb_blockcount(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
+boolean lives_osc_cb_blockcount(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
   char *tmp;
   int nblocks;
   int track;
@@ -1985,11 +1995,12 @@ void lives_osc_cb_blockcount(void *context, int arglen, const void *vargs, OSCTi
   tmp=lives_strdup_printf("%d",nblocks);
   lives_status_send(tmp);
   lives_free(tmp);
+  return TRUE;
 
 }
 
 
-void lives_osc_cb_blockinsert(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
+boolean lives_osc_cb_blockinsert(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
   int clip;
   int opt;
 
@@ -2019,10 +2030,11 @@ void lives_osc_cb_blockinsert(void *context, int arglen, const void *vargs, OSCT
 
   lives_osc_notify_success(tmp);
   lives_free(tmp);
+  return TRUE;
 
 }
 
-void lives_osc_cb_mtctimeset(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
+boolean lives_osc_cb_mtctimeset(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
   float time;
   char *msg;
 
@@ -2041,9 +2053,10 @@ void lives_osc_cb_mtctimeset(void *context, int arglen, const void *vargs, OSCTi
   msg=lives_strdup_printf("%.8f",lives_ruler_get_value(LIVES_RULER(mainw->multitrack->timeline)));
   lives_osc_notify_success(msg);
   lives_free(msg);
+  return TRUE;
 }
 
-void lives_osc_cb_mtctimeget(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
+boolean lives_osc_cb_mtctimeget(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
   char *msg;
 
   if (mainw->multitrack==NULL) return lives_osc_notify_failure();
@@ -2051,9 +2064,10 @@ void lives_osc_cb_mtctimeget(void *context, int arglen, const void *vargs, OSCTi
   msg=lives_strdup_printf("%.8f",lives_ruler_get_value(LIVES_RULER(mainw->multitrack->timeline)));
   lives_status_send(msg);
   lives_free(msg);
+  return TRUE;
 }
 
-void lives_osc_cb_mtctrackset(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
+boolean lives_osc_cb_mtctrackset(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
   int track;
   char *msg;
 
@@ -2070,24 +2084,26 @@ void lives_osc_cb_mtctrackset(void *context, int arglen, const void *vargs, OSCT
     msg=lives_strdup_printf("%d",track);
     lives_osc_notify_success(msg);
     lives_free(msg);
+    return TRUE;
   }
   else return lives_osc_notify_failure();
 }
 
 
-void lives_osc_cb_mtctrackget(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
+boolean lives_osc_cb_mtctrackget(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
   char *msg;
   if (mainw->multitrack==NULL) return lives_osc_notify_failure();
   
   msg=lives_strdup_printf("%d",mainw->multitrack->current_track);
   lives_status_send(msg);
   lives_free(msg);
+  return TRUE;
 
 }
 
 
 
-void lives_osc_cb_blockstget(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
+boolean lives_osc_cb_blockstget(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
   int track;
   int nblock;
   double sttime;
@@ -2111,13 +2127,13 @@ void lives_osc_cb_blockstget(void *context, int arglen, const void *vargs, OSCTi
     tmp=lives_strdup_printf("%.8f",sttime);
     lives_status_send(tmp);
     lives_free(tmp);
-    return;
+    return TRUE;
   }
   return lives_osc_notify_failure(); ///< invalid track
 }
 
 
-void lives_osc_cb_blockenget(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
+boolean lives_osc_cb_blockenget(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
   int track;
   int nblock;
   double entime;
@@ -2141,24 +2157,25 @@ void lives_osc_cb_blockenget(void *context, int arglen, const void *vargs, OSCTi
     tmp=lives_strdup_printf("%.8f",entime);
     lives_status_send(tmp);
     lives_free(tmp);
-    return;
+    return TRUE;
   }
   return lives_osc_notify_failure(); ///< invalid track
 }
 
 
 
-void lives_osc_cb_get_playtime(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
+boolean lives_osc_cb_get_playtime(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
   char *tmp;
 
   if (mainw->current_file<1||mainw->preview||mainw->playing_file<1) return lives_osc_notify_failure();
 
   lives_status_send ((tmp=lives_strdup_printf ("%.8f",(double)mainw->currticks/U_SEC)));
   lives_free(tmp);
+  return TRUE;
 }
 
 
-void lives_osc_cb_bgclip_goto(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
+boolean lives_osc_cb_bgclip_goto(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
 
   int frame;
   if (mainw->current_file<1||mainw->preview||mainw->playing_file<1) return lives_osc_notify_failure();
@@ -2174,32 +2191,34 @@ void lives_osc_cb_bgclip_goto(void *context, int arglen, const void *vargs, OSCT
        mainw->files[mainw->blend_file]->clip_type!=CLIP_TYPE_FILE)) return lives_osc_notify_failure();
 
   mainw->files[mainw->blend_file]->last_frameno=mainw->files[mainw->blend_file]->frameno=frame;
+  return lives_osc_notify_success(NULL);
 
 }
 
 
-void lives_osc_cb_clip_get_current(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
+boolean lives_osc_cb_clip_get_current(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
   char *tmp;
-
-  if (status_socket==NULL) return;
   lives_status_send ((tmp=lives_strdup_printf ("%d",mainw->current_file<0?0:mainw->current_file)));
   lives_free(tmp);
+  return TRUE;
 
 }
 
 
-void lives_osc_cb_bgclip_get_current(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
+boolean lives_osc_cb_bgclip_get_current(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
   char *tmp;
 
   if (mainw->multitrack!=NULL) return lives_osc_notify_failure();
   lives_status_send ((tmp=lives_strdup_printf ("%d",mainw->blend_file<0?0:mainw->blend_file)));
   lives_free(tmp);
-
+  return TRUE;
 }
 
 
 
-void lives_osc_cb_clip_set_start(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
+boolean lives_osc_cb_clip_set_start(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
+  char *msg;
+
   int current_file=mainw->current_file;
   int clip=current_file;
   int frame;
@@ -2230,16 +2249,16 @@ void lives_osc_cb_clip_set_start(void *context, int arglen, const void *vargs, O
   if (clip==mainw->current_file) lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_start),frame);
   else sfile->start=frame;
 
-  if (prefs->omc_noisy) {
-    char *msg=lives_strdup_printf("%d",frame);
-    lives_osc_notify_success(msg);
-    lives_free(msg);
-  }
+  msg=lives_strdup_printf("%d",frame);
+  lives_osc_notify_success(msg);
+  lives_free(msg);
+
+  return TRUE;
 }
 
 
 
-void lives_osc_cb_clip_get_start(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
+boolean lives_osc_cb_clip_get_start(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
   int current_file=mainw->current_file;
   int clip=current_file;
   char *tmp;
@@ -2260,10 +2279,13 @@ void lives_osc_cb_clip_get_start(void *context, int arglen, const void *vargs, O
 
   lives_status_send ((tmp=lives_strdup_printf ("%d",sfile->start)));
   lives_free(tmp);
+  return TRUE;
 }
 
 
-void lives_osc_cb_clip_set_end(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
+boolean lives_osc_cb_clip_set_end(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
+  char *msg;
+
   int current_file=mainw->current_file;
   int clip=current_file;
   int frame;
@@ -2294,14 +2316,14 @@ void lives_osc_cb_clip_set_end(void *context, int arglen, const void *vargs, OSC
   if (clip==mainw->current_file) lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_end),frame);
   else sfile->end=frame;
 
-  if (prefs->omc_noisy) {
-    char *msg=lives_strdup_printf("%d",frame);
-    lives_osc_notify_success(msg);
-    lives_free(msg);
-  }
+  msg=lives_strdup_printf("%d",frame);
+  lives_osc_notify_success(msg);
+  lives_free(msg);
+
+  return TRUE;
 }
 
-void lives_osc_cb_clip_get_end(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
+boolean lives_osc_cb_clip_get_end(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
   int current_file=mainw->current_file;
   int clip=current_file;
   char *tmp;
@@ -2322,9 +2344,10 @@ void lives_osc_cb_clip_get_end(void *context, int arglen, const void *vargs, OSC
 
   lives_status_send ((tmp=lives_strdup_printf ("%d",sfile->end)));
   lives_free(tmp);
+  return TRUE;
 }
 
-void lives_osc_cb_clip_get_size(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
+boolean lives_osc_cb_clip_get_size(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
   int current_file=mainw->current_file;
   int clip=current_file;
   char *tmp;
@@ -2344,9 +2367,10 @@ void lives_osc_cb_clip_get_size(void *context, int arglen, const void *vargs, OS
 
   lives_status_send ((tmp=lives_strdup_printf ("%d|%d",sfile->hsize,sfile->vsize)));
   lives_free(tmp);
+  return TRUE;
 }
 
-void lives_osc_cb_clip_get_name(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
+boolean lives_osc_cb_clip_get_name(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
   int current_file=mainw->current_file;
   int clip=current_file;
 
@@ -2366,11 +2390,12 @@ void lives_osc_cb_clip_get_name(void *context, int arglen, const void *vargs, OS
   sfile=mainw->files[clip];
 
   lives_status_send (sfile->name);
+  return TRUE;
 }
 
 
 
-void lives_osc_cb_clip_set_name(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
+boolean lives_osc_cb_clip_set_name(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
   int current_file=mainw->current_file;
   int clip=current_file;
   char name[OSC_STRING_SIZE];
@@ -2396,15 +2421,13 @@ void lives_osc_cb_clip_set_name(void *context, int arglen, const void *vargs, OS
   if (clip==current_file) set_main_title(name,0);
   else mainw->current_file=current_file;
 
-  if (prefs->omc_noisy) {
-    lives_osc_notify_success(name);
-  }
+  return lives_osc_notify_success(name);
 
 }
 
 
 
-void lives_osc_cb_clip_get_frames(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
+boolean lives_osc_cb_clip_get_frames(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
   int current_file=mainw->current_file;
   int clip=current_file;
   char *tmp;
@@ -2426,10 +2449,11 @@ void lives_osc_cb_clip_get_frames(void *context, int arglen, const void *vargs, 
 
   lives_status_send ((tmp=lives_strdup_printf ("%d",sfile->frames)));
   lives_free(tmp);
+  return TRUE;
 }
 
 
-void lives_osc_cb_clip_save_frame(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
+boolean lives_osc_cb_clip_save_frame(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
   int current_file=mainw->current_file;
   int clip=current_file;
   int frame,width=-1,height=-1;
@@ -2484,25 +2508,22 @@ void lives_osc_cb_clip_save_frame(void *context, int arglen, const void *vargs, 
 
   retval=save_frame_inner(clip,frame,fname,width,height,TRUE);
 
-  if (retval) lives_osc_notify_success(NULL);
-  else lives_osc_notify_failure();
+  if (retval) return lives_osc_notify_success(NULL);
+  else return lives_osc_notify_failure();
 
 }
 
 
-void lives_osc_cb_clip_select_all(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
+boolean lives_osc_cb_clip_select_all(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
 
   if (mainw->current_file<1||mainw->preview||mainw->is_processing) return lives_osc_notify_failure();
   if ((cfile->clip_type!=CLIP_TYPE_DISK&&cfile->clip_type!=CLIP_TYPE_FILE)||!cfile->frames) return lives_osc_notify_failure();
 
   on_select_all_activate (NULL,NULL);
-
-  if (prefs->omc_noisy) {
-    lives_osc_notify_success(NULL);
-  }
+  return lives_osc_notify_success(NULL);
 }
 
-void lives_osc_cb_clip_isvalid(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
+boolean lives_osc_cb_clip_isvalid(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
 
   int clip;
 
@@ -2512,31 +2533,27 @@ void lives_osc_cb_clip_isvalid(void *context, int arglen, const void *vargs, OSC
   if (clip>0&&clip<MAX_FILES&&mainw->files[clip]!=NULL&&!(mainw->multitrack!=NULL&&clip==mainw->multitrack->render_file)&&clip!=mainw->scrap_file) 
     lives_status_send (get_omc_const("LIVES_TRUE"));
   else lives_status_send (get_omc_const("LIVES_FALSE"));
-
+  return TRUE;
 }
 
-void lives_osc_cb_rte_count(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
+boolean lives_osc_cb_rte_count(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
   // count realtime effects - (only those assigned to keys for now)
   char *tmp;
-  if (status_socket==NULL) return;
-
   lives_status_send ((tmp=lives_strdup_printf ("%d",prefs->rte_keys_virtual)));
   lives_free(tmp);
-
+  return TRUE;
 }
 
-void lives_osc_cb_rteuser_count(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
+boolean lives_osc_cb_rteuser_count(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
   // count realtime effects
   char *tmp;
-  if (status_socket==NULL) return;
-
   lives_status_send ((tmp=lives_strdup_printf ("%d",FX_MAX)));
   lives_free(tmp);
-
+  return TRUE;
 }
 
 
-void lives_osc_cb_fssepwin_enable(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
+boolean lives_osc_cb_fssepwin_enable(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
   if (!mainw->sep_win) {
     on_sepwin_pressed (NULL,NULL);
   }
@@ -2544,13 +2561,11 @@ void lives_osc_cb_fssepwin_enable(void *context, int arglen, const void *vargs, 
   if (!mainw->fs) {
     on_full_screen_pressed (NULL,NULL);
   }
-  if (prefs->omc_noisy) {
-    lives_osc_notify_success(NULL);
-  }
+  return lives_osc_notify_success(NULL);
 }
 
 
-void lives_osc_cb_fssepwin_disable(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
+boolean lives_osc_cb_fssepwin_disable(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
 
   if (mainw->fs) {
     on_full_screen_pressed (NULL,NULL);
@@ -2558,12 +2573,10 @@ void lives_osc_cb_fssepwin_disable(void *context, int arglen, const void *vargs,
   if (mainw->sep_win) {
     on_sepwin_pressed (NULL,NULL);
   }
-  if (prefs->omc_noisy) {
-    lives_osc_notify_success(NULL);
-  }
+  return lives_osc_notify_success(NULL);
 }
 
-void lives_osc_cb_op_fps_set(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
+boolean lives_osc_cb_op_fps_set(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
   int fps;
   float fpsf;
   double fpsd;
@@ -2587,45 +2600,39 @@ void lives_osc_cb_op_fps_set(void *context, int arglen, const void *vargs, OSCTi
   }
   else if (fpsd==0.) mainw->fixed_fpsd=-1.; ///< 0. to release
   else lives_osc_notify_failure();
-  if (prefs->omc_noisy) {
+  {
     char *msg=lives_strdup_printf("%.3f",fpsd);
     lives_osc_notify_success(msg);
     lives_free(msg);
+    return TRUE;
   }
 }
 
 
-void lives_osc_cb_freeze(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
+boolean lives_osc_cb_freeze(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
   if (mainw->playing_file<1) return lives_osc_notify_failure();
 
   if (!mainw->osc_block) {
     freeze_callback(NULL,NULL,0,(LiVESXModifierType)0,NULL);
   }
-  if (prefs->omc_noisy) {
-    lives_osc_notify_success(NULL);
-  }
+  return lives_osc_notify_success(NULL);
 }
 
-void lives_osc_cb_op_nodrope(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
+boolean lives_osc_cb_op_nodrope(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
   
   mainw->noframedrop=TRUE;
-
-  if (prefs->omc_noisy) {
-    lives_osc_notify_success(NULL);
-  }
+  return lives_osc_notify_success(NULL);
 }
 
 
-void lives_osc_cb_op_nodropd(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
+boolean lives_osc_cb_op_nodropd(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
   
   mainw->noframedrop=FALSE;
-  if (prefs->omc_noisy) {
-    lives_osc_notify_success(NULL);
-  }
+  return lives_osc_notify_success(NULL);
 
 }
 
-void lives_osc_cb_fx_getname(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
+boolean lives_osc_cb_fx_getname(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
   char *retval;
   int fidx;
 
@@ -2640,9 +2647,11 @@ void lives_osc_cb_fx_getname(void *context, int arglen, const void *vargs, OSCTi
   lives_status_send(retval);
 
   lives_free(retval);
+
+  return TRUE;
 }
 
-void lives_osc_cb_clip_encodeas(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
+boolean lives_osc_cb_clip_encodeas(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
   char fname[OSC_STRING_SIZE];
 
   if (mainw->playing_file>-1||mainw->current_file<1) return lives_osc_notify_failure();
@@ -2683,20 +2692,19 @@ void lives_osc_cb_clip_encodeas(void *context, int arglen, const void *vargs, OS
   if (cfile->frames==0) {
     // TODO
     on_export_audio_activate (NULL,NULL);
-    lives_osc_notify_success(NULL);
-    return;
+    return lives_osc_notify_success(NULL);
   }
 
   mainw->osc_auto=TRUE;
   save_file(mainw->current_file,1,cfile->frames,fname);
-  lives_osc_notify_success(NULL);
   mainw->osc_auto=FALSE;
+  return lives_osc_notify_success(NULL);
 
 }
 
 
 
-void lives_osc_cb_rte_setmode(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
+boolean lives_osc_cb_rte_setmode(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
   int effect_key;
   int mode;
 
@@ -2706,12 +2714,12 @@ void lives_osc_cb_rte_setmode(void *context, int arglen, const void *vargs, OSCT
   if (effect_key<1||effect_key>=FX_KEYS_MAX_VIRTUAL||mode<1||mode>rte_getmodespk()) return lives_osc_notify_failure();
   if (!mainw->osc_block) rte_key_setmode (effect_key,mode-1);
 
-  lives_osc_notify_success(NULL);
+  return lives_osc_notify_success(NULL);
 }
 
 
 
-void lives_osc_cb_rte_nextmode(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
+boolean lives_osc_cb_rte_nextmode(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
   int effect_key;
 
   if (!lives_osc_check_arguments (arglen,vargs,"i",TRUE)) return lives_osc_notify_failure();
@@ -2719,11 +2727,11 @@ void lives_osc_cb_rte_nextmode(void *context, int arglen, const void *vargs, OSC
   if (effect_key<1||effect_key>=FX_KEYS_MAX_VIRTUAL) return lives_osc_notify_failure();
   if (!mainw->osc_block) rte_key_setmode (effect_key,-1);
 
-  lives_osc_notify_success(NULL);
+  return lives_osc_notify_success(NULL);
 }
 
 
-void lives_osc_cb_rte_prevmode(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
+boolean lives_osc_cb_rte_prevmode(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
   int effect_key;
 
   if (!lives_osc_check_arguments (arglen,vargs,"i",TRUE)) return lives_osc_notify_failure();
@@ -2731,7 +2739,7 @@ void lives_osc_cb_rte_prevmode(void *context, int arglen, const void *vargs, OSC
   if (effect_key<1||effect_key>=FX_KEYS_MAX_VIRTUAL) return lives_osc_notify_failure();
   if (!mainw->osc_block) rte_key_setmode (effect_key,-2);
 
-  lives_osc_notify_success(NULL);
+  return lives_osc_notify_success(NULL);
 }
 
 
@@ -3528,7 +3536,7 @@ static boolean setfx (weed_plant_t *plant, weed_plant_t *tparam, int pnum, int n
 
 
 
-void lives_osc_cb_rte_getparamtype(void *context, int arglen, const void *vargs, OSCTimeTag when, 
+boolean lives_osc_cb_rte_getparamtype(void *context, int arglen, const void *vargs, OSCTimeTag when, 
 				   NetworkReturnAddressPtr ra) {
   weed_plant_t *filter;
   weed_plant_t *ptmpl;
@@ -3582,10 +3590,11 @@ void lives_osc_cb_rte_getparamtype(void *context, int arglen, const void *vargs,
   }
 
   lives_status_send (retval);
+  return TRUE;
 }
 
 
-void lives_osc_cb_rte_getoparamtype(void *context, int arglen, const void *vargs, OSCTimeTag when, 
+boolean lives_osc_cb_rte_getoparamtype(void *context, int arglen, const void *vargs, OSCTimeTag when, 
 				    NetworkReturnAddressPtr ra) {
   weed_plant_t *filter;
   weed_plant_t **out_ptmpls;
@@ -3639,11 +3648,12 @@ void lives_osc_cb_rte_getoparamtype(void *context, int arglen, const void *vargs
   }
 
   lives_status_send (retval);
+  return TRUE;
 }
 
 
 
-void lives_osc_cb_rte_getpparamtype(void *context, int arglen, const void *vargs, OSCTimeTag when, 
+boolean lives_osc_cb_rte_getpparamtype(void *context, int arglen, const void *vargs, OSCTimeTag when, 
 				    NetworkReturnAddressPtr ra) {
   // playback plugin params
   weed_plant_t *ptmpl,*param;
@@ -3676,11 +3686,12 @@ void lives_osc_cb_rte_getpparamtype(void *context, int arglen, const void *vargs
   }
 
   lives_status_send (retval);
+  return TRUE;
 }
 
 
 
-void lives_osc_cb_rte_getnparamtype(void *context, int arglen, const void *vargs, OSCTimeTag when, 
+boolean lives_osc_cb_rte_getnparamtype(void *context, int arglen, const void *vargs, OSCTimeTag when, 
 				    NetworkReturnAddressPtr ra) {
   weed_plant_t *filter;
   weed_plant_t **in_ptmpls;
@@ -3717,11 +3728,12 @@ void lives_osc_cb_rte_getnparamtype(void *context, int arglen, const void *vargs
   }
 
   lives_status_send (retval);
+  return TRUE;
 }
 
 
 
-void lives_osc_cb_rte_getparamcspace(void *context, int arglen, const void *vargs, OSCTimeTag when, 
+boolean lives_osc_cb_rte_getparamcspace(void *context, int arglen, const void *vargs, OSCTimeTag when, 
 				     NetworkReturnAddressPtr ra) {
   weed_plant_t *filter;
   weed_plant_t *ptmpl;
@@ -3780,11 +3792,12 @@ void lives_osc_cb_rte_getparamcspace(void *context, int arglen, const void *varg
   }
 
   lives_status_send (retval);
+  return TRUE;
 
 }
 
 
-void lives_osc_cb_rte_getparamgrp(void *context, int arglen, const void *vargs, OSCTimeTag when, 
+boolean lives_osc_cb_rte_getparamgrp(void *context, int arglen, const void *vargs, OSCTimeTag when, 
 				     NetworkReturnAddressPtr ra) {
   weed_plant_t *filter;
   weed_plant_t *ptmpl;
@@ -3833,11 +3846,12 @@ void lives_osc_cb_rte_getparamgrp(void *context, int arglen, const void *vargs, 
   retval=lives_strdup_printf("%d",grp);
 
   lives_status_send (retval);
+  return TRUE;
 
 }
 
 
-void lives_osc_cb_rte_getoparamcspace(void *context, int arglen, const void *vargs, OSCTimeTag when, 
+boolean lives_osc_cb_rte_getoparamcspace(void *context, int arglen, const void *vargs, OSCTimeTag when, 
 				     NetworkReturnAddressPtr ra) {
   weed_plant_t *filter;
   weed_plant_t **out_ptmpls;
@@ -3900,13 +3914,14 @@ void lives_osc_cb_rte_getoparamcspace(void *context, int arglen, const void *var
 
   lives_status_send (retval);
   lives_free(out_ptmpls);
+  return TRUE;
 
 }
 
 
 
 
-void lives_osc_cb_rte_getpparamcspace(void *context, int arglen, const void *vargs, OSCTimeTag when, 
+boolean lives_osc_cb_rte_getpparamcspace(void *context, int arglen, const void *vargs, OSCTimeTag when, 
 				      NetworkReturnAddressPtr ra) {
   // playback plugin params
   weed_plant_t *ptmpl,*param;
@@ -3946,12 +3961,13 @@ void lives_osc_cb_rte_getpparamcspace(void *context, int arglen, const void *var
   }
 
   lives_status_send (retval);
+  return TRUE;
 
 }
 
 
 
-void lives_osc_cb_rte_getparamflags(void *context, int arglen, const void *vargs, OSCTimeTag when, 
+boolean lives_osc_cb_rte_getparamflags(void *context, int arglen, const void *vargs, OSCTimeTag when, 
 				    NetworkReturnAddressPtr ra) {
   weed_plant_t *filter;
   weed_plant_t *ptmpl;
@@ -3996,11 +4012,12 @@ void lives_osc_cb_rte_getparamflags(void *context, int arglen, const void *vargs
   retval=lives_strdup_printf("%d",flags);
   lives_status_send (retval);
   lives_free(retval);
+  return TRUE;
 }
 
 
 
-void lives_osc_cb_rte_getpparamflags(void *context, int arglen, const void *vargs, OSCTimeTag when, 
+boolean lives_osc_cb_rte_getpparamflags(void *context, int arglen, const void *vargs, OSCTimeTag when, 
 				     NetworkReturnAddressPtr ra) {
   weed_plant_t *ptmpl,*param;
   int error;
@@ -4026,10 +4043,11 @@ void lives_osc_cb_rte_getpparamflags(void *context, int arglen, const void *varg
   retval=lives_strdup_printf("%d",flags);
   lives_status_send (retval);
   lives_free(retval);
+  return TRUE;
 }
 
 
-void lives_osc_cb_rte_getparamname(void *context, int arglen, const void *vargs, OSCTimeTag when, 
+boolean lives_osc_cb_rte_getparamname(void *context, int arglen, const void *vargs, OSCTimeTag when, 
 				   NetworkReturnAddressPtr ra) {
   weed_plant_t *filter;
   weed_plant_t *ptmpl;
@@ -4073,11 +4091,12 @@ void lives_osc_cb_rte_getparamname(void *context, int arglen, const void *vargs,
   lives_status_send (retval);
 
   lives_free(retval);
+  return TRUE;
 
 }
 
 
-void lives_osc_cb_rte_getoparamname(void *context, int arglen, const void *vargs, OSCTimeTag when, 
+boolean lives_osc_cb_rte_getoparamname(void *context, int arglen, const void *vargs, OSCTimeTag when, 
 				   NetworkReturnAddressPtr ra) {
   weed_plant_t *filter;
   weed_plant_t **out_ptmpls;
@@ -4124,12 +4143,13 @@ void lives_osc_cb_rte_getoparamname(void *context, int arglen, const void *vargs
 
   lives_free(retval);
   lives_free(out_ptmpls);
+  return TRUE;
 
 }
 
 
 
-void lives_osc_cb_rte_getpparamname(void *context, int arglen, const void *vargs, OSCTimeTag when, 
+boolean lives_osc_cb_rte_getpparamname(void *context, int arglen, const void *vargs, OSCTimeTag when, 
 				    NetworkReturnAddressPtr ra) {
   weed_plant_t *ptmpl,*param;
   int error;
@@ -4154,12 +4174,13 @@ void lives_osc_cb_rte_getpparamname(void *context, int arglen, const void *vargs
   lives_status_send (retval);
 
   lives_free(retval);
+  return TRUE;
 
 }
 
 
 
-void lives_osc_cb_rte_getnparamname(void *context, int arglen, const void *vargs, OSCTimeTag when, 
+boolean lives_osc_cb_rte_getnparamname(void *context, int arglen, const void *vargs, OSCTimeTag when, 
 				    NetworkReturnAddressPtr ra) {
   weed_plant_t *filter;
   weed_plant_t **in_ptmpls;
@@ -4194,12 +4215,13 @@ void lives_osc_cb_rte_getnparamname(void *context, int arglen, const void *vargs
 
   lives_free(in_ptmpls);
   lives_free(retval);
+  return TRUE;
 }
 
 
 
 
-void lives_osc_cb_rte_setparam(void *context, int arglen, const void *vargs, OSCTimeTag when, 
+boolean lives_osc_cb_rte_setparam(void *context, int arglen, const void *vargs, OSCTimeTag when, 
 			       NetworkReturnAddressPtr ra) {
 
   weed_plant_t *inst,*filter;
@@ -4254,12 +4276,12 @@ void lives_osc_cb_rte_setparam(void *context, int arglen, const void *vargs, OSC
 
   if (mainw->ce_thumbs) ce_thumbs_register_rfx_change(effect_key,rte_key_getmode(effect_key));
 
-  lives_osc_notify_success(NULL);
+  return lives_osc_notify_success(NULL);
 
 }
 
 
-void lives_osc_cb_rte_setparamdef(void *context, int arglen, const void *vargs, OSCTimeTag when, 
+boolean lives_osc_cb_rte_setparamdef(void *context, int arglen, const void *vargs, OSCTimeTag when, 
 				  NetworkReturnAddressPtr ra) {
 
   weed_plant_t *filter;
@@ -4310,13 +4332,13 @@ void lives_osc_cb_rte_setparamdef(void *context, int arglen, const void *vargs, 
     return lives_osc_notify_failure();
   }
 
-  lives_osc_notify_success(NULL);
+  return lives_osc_notify_success(NULL);
 
 }
 
 
 
-void lives_osc_cb_rte_setpparam(void *context, int arglen, const void *vargs, OSCTimeTag when, 
+boolean lives_osc_cb_rte_setpparam(void *context, int arglen, const void *vargs, OSCTimeTag when, 
 				NetworkReturnAddressPtr ra) {
   // set playback plugin param
   weed_plant_t *param;
@@ -4342,12 +4364,12 @@ void lives_osc_cb_rte_setpparam(void *context, int arglen, const void *vargs, OS
   }
   else return lives_osc_notify_failure();
   
-  lives_osc_notify_success(NULL);
+  return lives_osc_notify_success(NULL);
 }
 
 
 
-void lives_osc_cb_rte_setnparam(void *context, int arglen, const void *vargs, OSCTimeTag when, 
+boolean lives_osc_cb_rte_setnparam(void *context, int arglen, const void *vargs, OSCTimeTag when, 
 				NetworkReturnAddressPtr ra) {
 
   int effect_key;
@@ -4387,14 +4409,14 @@ void lives_osc_cb_rte_setnparam(void *context, int arglen, const void *vargs, OS
   }
   else lives_osc_notify_failure();
 
-  lives_osc_notify_success(NULL);
+  return lives_osc_notify_success(NULL);
 
 }
 
 
 
 
-void lives_osc_cb_rte_setnparamdef(void *context, int arglen, const void *vargs, OSCTimeTag when, 
+boolean lives_osc_cb_rte_setnparamdef(void *context, int arglen, const void *vargs, OSCTimeTag when, 
 				  NetworkReturnAddressPtr ra) {
 
   weed_plant_t *filter;
@@ -4445,13 +4467,13 @@ void lives_osc_cb_rte_setnparamdef(void *context, int arglen, const void *vargs,
     return lives_osc_notify_failure();
   }
 
-  lives_osc_notify_success(NULL);
+  return lives_osc_notify_success(NULL);
 
 }
 
 
 
-void lives_osc_cb_rte_paramcount(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
+boolean lives_osc_cb_rte_paramcount(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
 
   int effect_key,mode;
     
@@ -4484,10 +4506,11 @@ void lives_osc_cb_rte_paramcount(void *context, int arglen, const void *vargs, O
   msg=lives_strdup_printf("%d",count);
   lives_status_send(msg);
   lives_free(msg);
+  return TRUE;
 }
 
 
-void lives_osc_cb_rte_oparamcount(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
+boolean lives_osc_cb_rte_oparamcount(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
 
   int effect_key,mode;
   int count=0;
@@ -4520,11 +4543,12 @@ void lives_osc_cb_rte_oparamcount(void *context, int arglen, const void *vargs, 
   msg=lives_strdup_printf("%d",count);
   lives_status_send(msg);
   lives_free(msg);
+  return TRUE;
 }
 
 
 
-void lives_osc_cb_rte_getinpal(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
+boolean lives_osc_cb_rte_getinpal(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
 
   int effect_key,mode,cnum,count,error;
   weed_plant_t **ctmpls;
@@ -4571,24 +4595,25 @@ void lives_osc_cb_rte_getinpal(void *context, int arglen, const void *vargs, OSC
       msg=lives_strdup_printf("%d",WEED_PALETTE_END);
       lives_status_send(msg);
       lives_free(msg);
-      return;
+      return TRUE;
   }
 
   if (inst!=NULL) {
     msg=lives_strdup_printf("%d",weed_get_int_value(chan,"current_palette",&error));
     lives_status_send(msg);
     lives_free(msg);
-    return;
+    return TRUE;
   }
 
   msg=lives_osc_format_result(ctmpl,"palette_list",0,-1);
   lives_status_send(msg);
   lives_free(msg);
+  return TRUE;
 
 }
 
 
-void lives_osc_cb_rte_getoutpal(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
+boolean lives_osc_cb_rte_getoutpal(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
 
   int effect_key,mode,cnum,count,error;
   weed_plant_t **ctmpls;
@@ -4635,25 +4660,26 @@ void lives_osc_cb_rte_getoutpal(void *context, int arglen, const void *vargs, OS
       msg=lives_strdup_printf("%d",WEED_PALETTE_END);
       lives_status_send(msg);
       lives_free(msg);
-      return;
+      return TRUE;
   }
 
   if (inst!=NULL) {
     msg=lives_strdup_printf("%d",weed_get_int_value(chan,"current_palette",&error));
     lives_status_send(msg);
     lives_free(msg);
-    return;
+    return TRUE;
   }
 
   msg=lives_osc_format_result(ctmpl,"palette_list",0,-1);
   lives_status_send(msg);
   lives_free(msg);
+  return TRUE;
 
 }
 
 
 
-void lives_osc_cb_rte_pparamcount(void *context, int arglen, const void *vargs, OSCTimeTag when,
+boolean lives_osc_cb_rte_pparamcount(void *context, int arglen, const void *vargs, OSCTimeTag when,
 				  NetworkReturnAddressPtr ra) {
   // return num playback plugin params
   int count=0;
@@ -4661,7 +4687,7 @@ void lives_osc_cb_rte_pparamcount(void *context, int arglen, const void *vargs, 
 
   if (mainw->vpp==NULL) {
     lives_status_send("0");
-    return;
+    return TRUE;
   }
 
   count=mainw->vpp->num_play_params;
@@ -4669,11 +4695,12 @@ void lives_osc_cb_rte_pparamcount(void *context, int arglen, const void *vargs, 
   msg=lives_strdup_printf("%d",count);
   lives_status_send(msg);
   lives_free(msg);
+  return TRUE;
 }
 
 
 
-void lives_osc_cb_rte_nparamcount(void *context, int arglen, const void *vargs, OSCTimeTag when, 
+boolean lives_osc_cb_rte_nparamcount(void *context, int arglen, const void *vargs, OSCTimeTag when, 
 				  NetworkReturnAddressPtr ra) {
 
   int effect_key;
@@ -4702,10 +4729,11 @@ void lives_osc_cb_rte_nparamcount(void *context, int arglen, const void *vargs, 
   msg=lives_strdup_printf("%d",count);
   lives_status_send(msg);
   lives_free(msg);
+  return TRUE;
 }
 
 
-void lives_osc_cb_rte_getnchannels(void *context, int arglen, const void *vargs, OSCTimeTag when, 
+boolean lives_osc_cb_rte_getnchannels(void *context, int arglen, const void *vargs, OSCTimeTag when, 
 				   NetworkReturnAddressPtr ra) {
 
   int effect_key,mode;
@@ -4738,10 +4766,11 @@ void lives_osc_cb_rte_getnchannels(void *context, int arglen, const void *vargs,
   msg=lives_strdup_printf("%d",count);
   lives_status_send(msg);
   lives_free(msg);
+  return TRUE;
 }
 
 
-void lives_osc_cb_rte_getnochannels(void *context, int arglen, const void *vargs, OSCTimeTag when, 
+boolean lives_osc_cb_rte_getnochannels(void *context, int arglen, const void *vargs, OSCTimeTag when, 
 				    NetworkReturnAddressPtr ra) {
 
   int effect_key;
@@ -4769,11 +4798,12 @@ void lives_osc_cb_rte_getnochannels(void *context, int arglen, const void *vargs
   msg=lives_strdup_printf("%d",count);
   lives_status_send(msg);
   lives_free(msg);
+  return TRUE;
 }
 
 
 
-void lives_osc_cb_rte_getparammin(void *context, int arglen, const void *vargs, OSCTimeTag when, 
+boolean lives_osc_cb_rte_getparammin(void *context, int arglen, const void *vargs, OSCTimeTag when, 
 				  NetworkReturnAddressPtr ra) {
 
   int effect_key;
@@ -4821,11 +4851,12 @@ void lives_osc_cb_rte_getparammin(void *context, int arglen, const void *vargs, 
 
   lives_status_send(msg);
   lives_free(msg);
+  return TRUE;
 
 }
 
 
-void lives_osc_cb_rte_getoparammin(void *context, int arglen, const void *vargs, OSCTimeTag when, 
+boolean lives_osc_cb_rte_getoparammin(void *context, int arglen, const void *vargs, OSCTimeTag when, 
 				   NetworkReturnAddressPtr ra) {
 
   int effect_key;
@@ -4879,11 +4910,12 @@ void lives_osc_cb_rte_getoparammin(void *context, int arglen, const void *vargs,
   lives_status_send(msg);
   lives_free(msg);
   lives_free(out_ptmpls);
+  return TRUE;
 
 }
 
 
-void lives_osc_cb_rte_getohasparammin(void *context, int arglen, const void *vargs, OSCTimeTag when, 
+boolean lives_osc_cb_rte_getohasparammin(void *context, int arglen, const void *vargs, OSCTimeTag when, 
 				      NetworkReturnAddressPtr ra) {
 
   int effect_key;
@@ -4929,10 +4961,11 @@ void lives_osc_cb_rte_getohasparammin(void *context, int arglen, const void *var
   if (!weed_plant_has_leaf(ptmpl,"min")) lives_status_send(get_omc_const("LIVES_FALSE"));
   else lives_status_send(get_omc_const("LIVES_TRUE"));
 
+  return TRUE;
 }
 
 
-void lives_osc_cb_rte_getpparammin(void *context, int arglen, const void *vargs, OSCTimeTag when, 
+boolean lives_osc_cb_rte_getpparammin(void *context, int arglen, const void *vargs, OSCTimeTag when, 
 				   NetworkReturnAddressPtr ra) {
 
   int pnum;
@@ -4961,10 +4994,11 @@ void lives_osc_cb_rte_getpparammin(void *context, int arglen, const void *vargs,
 
   lives_status_send(msg);
   lives_free(msg);
+  return TRUE;
 }
 
 
-void lives_osc_cb_rte_getparammax(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
+boolean lives_osc_cb_rte_getparammax(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
 
   int effect_key;
   int mode;
@@ -5011,11 +5045,12 @@ void lives_osc_cb_rte_getparammax(void *context, int arglen, const void *vargs, 
 
   lives_status_send(msg);
   lives_free(msg);
+  return TRUE;
 
 }
 
 
-void lives_osc_cb_rte_getoparammax(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
+boolean lives_osc_cb_rte_getoparammax(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
 
   int effect_key;
   int mode;
@@ -5067,11 +5102,12 @@ void lives_osc_cb_rte_getoparammax(void *context, int arglen, const void *vargs,
   lives_status_send(msg);
   lives_free(msg);
   lives_free(out_ptmpls);
+  return TRUE;
 
 }
 
 
-void lives_osc_cb_rte_getohasparammax(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
+boolean lives_osc_cb_rte_getohasparammax(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
 
   int effect_key;
   int mode;
@@ -5115,11 +5151,12 @@ void lives_osc_cb_rte_getohasparammax(void *context, int arglen, const void *var
   if (!weed_plant_has_leaf(ptmpl,"max")) lives_status_send(get_omc_const("LIVES_FALSE"));
   else lives_status_send(get_omc_const("LIVES_TRUE"));
 
+  return TRUE;
 }
 
 
 
-void lives_osc_cb_rte_getpparammax(void *context, int arglen, const void *vargs, OSCTimeTag when, 
+boolean lives_osc_cb_rte_getpparammax(void *context, int arglen, const void *vargs, OSCTimeTag when, 
 				   NetworkReturnAddressPtr ra) {
   // playback plugin param max
 
@@ -5150,10 +5187,11 @@ void lives_osc_cb_rte_getpparammax(void *context, int arglen, const void *vargs,
   lives_status_send(msg);
   lives_free(msg);
 
+  return TRUE;
 }
 
 
-void lives_osc_cb_rte_getparamdef(void *context, int arglen, const void *vargs, OSCTimeTag when, 
+boolean lives_osc_cb_rte_getparamdef(void *context, int arglen, const void *vargs, OSCTimeTag when, 
 				  NetworkReturnAddressPtr ra) {
 
   int effect_key;
@@ -5209,10 +5247,11 @@ void lives_osc_cb_rte_getparamdef(void *context, int arglen, const void *vargs, 
   lives_status_send(msg);
   lives_free(msg);
 
+  return TRUE;
 }
 
 
-void lives_osc_cb_rte_getoparamdef(void *context, int arglen, const void *vargs, OSCTimeTag when, 
+boolean lives_osc_cb_rte_getoparamdef(void *context, int arglen, const void *vargs, OSCTimeTag when, 
 				   NetworkReturnAddressPtr ra) {
 
   int effect_key;
@@ -5277,10 +5316,11 @@ void lives_osc_cb_rte_getoparamdef(void *context, int arglen, const void *vargs,
   lives_free(msg);
   lives_free(out_ptmpls);
 
+  return TRUE;
 }
 
 
-void lives_osc_cb_rte_gethasparamdef(void *context, int arglen, const void *vargs, OSCTimeTag when, 
+boolean lives_osc_cb_rte_gethasparamdef(void *context, int arglen, const void *vargs, OSCTimeTag when, 
 				      NetworkReturnAddressPtr ra) {
 
   int effect_key;
@@ -5321,15 +5361,16 @@ void lives_osc_cb_rte_gethasparamdef(void *context, int arglen, const void *varg
   if (weed_plant_has_leaf(ptmpl,"host_default")) {
     if (weed_leaf_num_elements(ptmpl,"host_default")==0) lives_status_send(get_omc_const("LIVES_FALSE"));
     lives_status_send(get_omc_const("LIVES_DEFAULT_OVERRIDDEN"));
-    return;
+    return TRUE;
   }
   if (!weed_plant_has_leaf(ptmpl,"default")||weed_leaf_num_elements(ptmpl,"default")==0) lives_status_send(get_omc_const("LIVES_FALSE"));
   else lives_status_send(get_omc_const("LIVES_TRUE"));
 
+  return TRUE;
 }
 
 
-void lives_osc_cb_rte_getohasparamdef(void *context, int arglen, const void *vargs, OSCTimeTag when, 
+boolean lives_osc_cb_rte_getohasparamdef(void *context, int arglen, const void *vargs, OSCTimeTag when, 
 				      NetworkReturnAddressPtr ra) {
 
   int effect_key;
@@ -5374,12 +5415,13 @@ void lives_osc_cb_rte_getohasparamdef(void *context, int arglen, const void *var
   if (!weed_plant_has_leaf(ptmpl,"host_default")&&!weed_plant_has_leaf(ptmpl,"default")) lives_status_send(get_omc_const("LIVES_FALSE"));
   else lives_status_send(get_omc_const("LIVES_TRUE"));
 
+  return TRUE;
 }
 
 
 
 
-void lives_osc_cb_rte_getpparamdef(void *context, int arglen, const void *vargs, OSCTimeTag when, 
+boolean lives_osc_cb_rte_getpparamdef(void *context, int arglen, const void *vargs, OSCTimeTag when, 
 				   NetworkReturnAddressPtr ra) {
   // default for playback plugin param
 
@@ -5415,12 +5457,13 @@ void lives_osc_cb_rte_getpparamdef(void *context, int arglen, const void *vargs,
   lives_status_send(msg);
   lives_free(msg);
 
+  return TRUE;
 }
 
 
 
 
-void lives_osc_cb_rte_getparamval(void *context, int arglen, const void *vargs, OSCTimeTag when, 
+boolean lives_osc_cb_rte_getparamval(void *context, int arglen, const void *vargs, OSCTimeTag when, 
 				  NetworkReturnAddressPtr ra) {
 
   int effect_key;
@@ -5478,10 +5521,11 @@ void lives_osc_cb_rte_getparamval(void *context, int arglen, const void *vargs, 
   lives_status_send(msg);
   lives_free(msg);
 
+  return TRUE;
 }
 
 
-void lives_osc_cb_rte_getoparamval(void *context, int arglen, const void *vargs, OSCTimeTag when, 
+boolean lives_osc_cb_rte_getoparamval(void *context, int arglen, const void *vargs, OSCTimeTag when, 
 				   NetworkReturnAddressPtr ra) {
 
   int effect_key;
@@ -5546,11 +5590,12 @@ void lives_osc_cb_rte_getoparamval(void *context, int arglen, const void *vargs,
   lives_status_send(msg);
   lives_free(msg);
 
+  return TRUE;
 }
 
 
 
-void lives_osc_cb_rte_getpparamval(void *context, int arglen, const void *vargs, OSCTimeTag when, 
+boolean lives_osc_cb_rte_getpparamval(void *context, int arglen, const void *vargs, OSCTimeTag when, 
 				   NetworkReturnAddressPtr ra) {
   // playback plugin param value
   int pnum,st=0,end=1,hint,cspace;
@@ -5592,10 +5637,11 @@ void lives_osc_cb_rte_getpparamval(void *context, int arglen, const void *vargs,
   lives_status_send(msg);
   lives_free(msg);
 
+  return TRUE;
 }
 
 
-void lives_osc_cb_rte_getnparam(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
+boolean lives_osc_cb_rte_getnparam(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
 
   int effect_key;
   int pnum,i;
@@ -5646,11 +5692,12 @@ void lives_osc_cb_rte_getnparam(void *context, int arglen, const void *vargs, OS
   lives_free(msg);
   lives_free(in_ptmpls);
 
+  return TRUE;
 }
 
 
 
-void lives_osc_cb_rte_getnparammin(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
+boolean lives_osc_cb_rte_getnparammin(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
 
   int effect_key;
   int pnum,i;
@@ -5701,11 +5748,12 @@ void lives_osc_cb_rte_getnparammin(void *context, int arglen, const void *vargs,
   lives_free(msg);
   lives_free(in_ptmpls);
 
+  return TRUE;
 }
 
 
 
-void lives_osc_cb_rte_getnparammax(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
+boolean lives_osc_cb_rte_getnparammax(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
 
   int effect_key;
   int pnum,i;
@@ -5755,10 +5803,11 @@ void lives_osc_cb_rte_getnparammax(void *context, int arglen, const void *vargs,
   lives_status_send(msg);
   lives_free(msg);
   lives_free(in_ptmpls);
+  return TRUE;
 }
 
 
-void lives_osc_cb_rte_getnparamdef(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
+boolean lives_osc_cb_rte_getnparamdef(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
 
   int effect_key;
   int pnum,i;
@@ -5811,10 +5860,11 @@ void lives_osc_cb_rte_getnparamdef(void *context, int arglen, const void *vargs,
   lives_status_send(msg);
   lives_free(msg);
   lives_free(in_ptmpls);
+  return TRUE;
 }
 
 
-void lives_osc_cb_rte_getnparamtrans(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
+boolean lives_osc_cb_rte_getnparamtrans(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
 
   int effect_key;
   int pnum;
@@ -5849,12 +5899,13 @@ void lives_osc_cb_rte_getnparamtrans(void *context, int arglen, const void *varg
   lives_status_send(msg);
   lives_free(msg);
   
+  return TRUE;
 
 }
 
 
 
-void lives_osc_cb_rte_getparamtrans(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
+boolean lives_osc_cb_rte_getparamtrans(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
 
   int effect_key;
   int mode;
@@ -5901,10 +5952,11 @@ void lives_osc_cb_rte_getparamtrans(void *context, int arglen, const void *vargs
   lives_status_send(msg);
   lives_free(msg);
 
+  return TRUE;
 }
 
 
-void lives_osc_cb_rte_getmode(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
+boolean lives_osc_cb_rte_getmode(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
   char *tmp;
 
   int effect_key;
@@ -5914,16 +5966,17 @@ void lives_osc_cb_rte_getmode(void *context, int arglen, const void *vargs, OSCT
 
   if (effect_key<1||effect_key>FX_MAX) {
     lives_status_send ("0");
-    return;
+    return TRUE;
   }
 
   lives_status_send ((tmp=lives_strdup_printf ("%d",rte_key_getmode (effect_key)+1)));
   lives_free(tmp);
+  return TRUE;
 
 }
 
 
-void lives_osc_cb_rte_getstate(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
+boolean lives_osc_cb_rte_getstate(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
   int effect_key;
 
   if (!lives_osc_check_arguments (arglen,vargs,"i",TRUE)) return lives_osc_notify_failure();
@@ -5931,15 +5984,16 @@ void lives_osc_cb_rte_getstate(void *context, int arglen, const void *vargs, OSC
 
   if (effect_key<1||effect_key>FX_KEYS_MAX_VIRTUAL) {
     lives_status_send (get_omc_const("LIVES_FALSE"));
-    return;
+    return TRUE;
   }
   if (rte_keymode_get_instance(effect_key,rte_key_getmode(effect_key))==NULL) lives_status_send(get_omc_const("LIVES_FALSE"));
   else lives_status_send(get_omc_const("LIVES_TRUE"));
+  return TRUE;
 }
 
 
 
-void lives_osc_cb_rte_get_keyfxname(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
+boolean lives_osc_cb_rte_get_keyfxname(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
   int effect_key;
   int mode;
   char *tmp;
@@ -5950,10 +6004,11 @@ void lives_osc_cb_rte_get_keyfxname(void *context, int arglen, const void *vargs
   if (effect_key<1||effect_key>FX_MAX||mode<1||mode>rte_getmodespk()) return lives_osc_notify_failure();
   lives_status_send ((tmp=lives_strdup_printf ("%s",rte_keymode_get_filter_name (effect_key,mode-1))));
   lives_free(tmp);
+  return TRUE;
 }
 
 
-void lives_osc_cb_rte_getmodespk(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
+boolean lives_osc_cb_rte_getmodespk(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
 
   int effect_key;
   char *tmp;
@@ -5962,8 +6017,9 @@ void lives_osc_cb_rte_getmodespk(void *context, int arglen, const void *vargs, O
     if (lives_osc_check_arguments (arglen,vargs,"",TRUE)) {
       lives_status_send ((tmp=lives_strdup_printf ("%d",rte_getmodespk ())));
       lives_free(tmp);
+      return TRUE;
     }
-    return;
+    return lives_osc_notify_failure();
   }
 
   lives_osc_check_arguments (arglen,vargs,"i",TRUE);
@@ -5971,17 +6027,18 @@ void lives_osc_cb_rte_getmodespk(void *context, int arglen, const void *vargs, O
 
   if (effect_key>FX_KEYS_MAX_VIRTUAL||effect_key<1) {
     lives_status_send ("0");
-    return;
+    return TRUE;
   }
 
   lives_status_send ((tmp=lives_strdup_printf ("%d",rte_key_getmaxmode (effect_key)+1)));
   lives_free(tmp);
 
+  return TRUE;
 }
 
 
 
-void lives_osc_cb_rte_addpconnection(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
+boolean lives_osc_cb_rte_addpconnection(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
   weed_plant_t *ofilter,*ifilter;
 
   int key0,mode0,pnum0;
@@ -6038,10 +6095,10 @@ void lives_osc_cb_rte_addpconnection(void *context, int arglen, const void *varg
   key1--;
 
   pconx_add_connection(key0,mode0,pnum0,key1,mode1,pnum1,autoscale);
-  lives_osc_notify_success(NULL);
+  return lives_osc_notify_success(NULL);
 }
 
-void lives_osc_cb_rte_delpconnection(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
+boolean lives_osc_cb_rte_delpconnection(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
   int key0,mode0,pnum0;
   int key1,mode1,pnum1;
 
@@ -6059,11 +6116,11 @@ void lives_osc_cb_rte_delpconnection(void *context, int arglen, const void *varg
   if (pnum0<-EXTRA_PARAMS_OUT||pnum1<-EXTRA_PARAMS_IN) return lives_osc_notify_failure();
 
   pconx_delete(key0==0?FX_DATA_WILDCARD:--key0,--mode0,pnum0,key1==0?FX_DATA_WILDCARD:--key1,--mode1,pnum1);
-  lives_osc_notify_success(NULL);
+  return lives_osc_notify_success(NULL);
 
 }
 
-void lives_osc_cb_rte_listpconnection(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
+boolean lives_osc_cb_rte_listpconnection(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
   int okey,omode,opnum;
   char *msg;
  
@@ -6083,10 +6140,11 @@ void lives_osc_cb_rte_listpconnection(void *context, int arglen, const void *var
 
   lives_status_send(msg);
   lives_free(msg);
+  return TRUE;
 
 }
 
-void lives_osc_cb_rte_addcconnection(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
+boolean lives_osc_cb_rte_addcconnection(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
   int key0,mode0,cnum0;
   int key1,mode1,cnum1;
   weed_plant_t *filter;
@@ -6129,11 +6187,11 @@ void lives_osc_cb_rte_addcconnection(void *context, int arglen, const void *varg
   key1--;
 
   cconx_add_connection(key0,mode0,cnum0,key1,mode1,cnum1);
-  lives_osc_notify_success(NULL);
+  return lives_osc_notify_success(NULL);
 
 }
 
-void lives_osc_cb_rte_delcconnection(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
+boolean lives_osc_cb_rte_delcconnection(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
   int key0,mode0,cnum0;
   int key1,mode1,cnum1;
 
@@ -6150,10 +6208,10 @@ void lives_osc_cb_rte_delcconnection(void *context, int arglen, const void *varg
 
   cconx_delete(key0==0?FX_DATA_WILDCARD:--key0,--mode0,cnum0,key1==0?FX_DATA_WILDCARD:--key1,--mode1,cnum1);
 
-  lives_osc_notify_success(NULL);
+  return lives_osc_notify_success(NULL);
 }
 
-void lives_osc_cb_rte_listcconnection(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
+boolean lives_osc_cb_rte_listcconnection(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
   int okey,omode,ocnum;
   char *msg;
 
@@ -6173,44 +6231,45 @@ void lives_osc_cb_rte_listcconnection(void *context, int arglen, const void *var
 
   lives_status_send(msg);
   lives_free(msg);
+  return TRUE;
 }
 
 
-void lives_osc_cb_swap(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
+boolean lives_osc_cb_swap(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
   if (mainw->multitrack!=NULL) return lives_osc_notify_failure();
   swap_fg_bg_callback (NULL,NULL,0,(LiVESXModifierType)0,NULL);
-  lives_osc_notify_success(NULL);
+  return lives_osc_notify_success(NULL);
 }
 
 
-void lives_osc_record_start(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
+boolean lives_osc_record_start(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
   if (mainw->multitrack!=NULL) return lives_osc_notify_failure();
   record_toggle_callback (NULL,NULL,0,(LiVESXModifierType)0,LIVES_INT_TO_POINTER((int)TRUE));
-  lives_osc_notify_success(NULL);
+  return lives_osc_notify_success(NULL);
   // TODO - send record start and record stop events
 }
 
 
-void lives_osc_record_stop(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
+boolean lives_osc_record_stop(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
   if (mainw->multitrack!=NULL) return lives_osc_notify_failure();
   record_toggle_callback (NULL,NULL,0,(LiVESXModifierType)0,LIVES_INT_TO_POINTER((int)FALSE));
-  lives_osc_notify_success(NULL);
+  return lives_osc_notify_success(NULL);
 }
 
-void lives_osc_record_toggle(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
+boolean lives_osc_record_toggle(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
   if (mainw->multitrack!=NULL) return lives_osc_notify_failure();
   record_toggle_callback (NULL,NULL,0,(LiVESXModifierType)0,LIVES_INT_TO_POINTER(!mainw->record));
-  lives_osc_notify_success(NULL);
+  return lives_osc_notify_success(NULL);
 }
 
 
-void lives_osc_cb_ping(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
-  if (status_socket==NULL) return;
+boolean lives_osc_cb_ping(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
   lives_status_send ("pong");
+  return TRUE;
 }
 
 
-void lives_osc_cb_open_file(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
+boolean lives_osc_cb_open_file(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
   char filename[OSC_STRING_SIZE];
   float starttime=0.;
   int numframes=0; // all frames by default
@@ -6239,12 +6298,12 @@ void lives_osc_cb_open_file(void *context, int arglen, const void *vargs, OSCTim
     }
   }
   deduce_file(filename,starttime,numframes);
-  lives_osc_notify_success(NULL);
+  return lives_osc_notify_success(NULL);
 
 }
 
 
-void lives_osc_cb_new_audio(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
+boolean lives_osc_cb_new_audio(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
   char filename[OSC_STRING_SIZE];
 
   if (mainw->preview||mainw->is_processing||mainw->multitrack!=NULL) return lives_osc_notify_failure();
@@ -6257,12 +6316,12 @@ void lives_osc_cb_new_audio(void *context, int arglen, const void *vargs, OSCTim
 
   lives_osc_parse_string_argument(vargs,filename);
   on_open_new_audio_clicked(NULL,filename);
-  lives_osc_notify_success(NULL);
+  return lives_osc_notify_success(NULL);
 
 }
 
 
-void lives_osc_cb_loadset(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
+boolean lives_osc_cb_loadset(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
   char setname[OSC_STRING_SIZE];
 
   if (mainw->preview||mainw->is_processing||mainw->multitrack!=NULL) return lives_osc_notify_failure();
@@ -6286,12 +6345,12 @@ void lives_osc_cb_loadset(void *context, int arglen, const void *vargs, OSCTimeT
   lives_snprintf(mainw->set_name,128,"%s",setname);
 
   on_load_set_ok(NULL,LIVES_INT_TO_POINTER((int)FALSE));
-  lives_osc_notify_success(NULL);
+  return lives_osc_notify_success(NULL);
 
 }
 
 
-void lives_osc_cb_saveset(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
+boolean lives_osc_cb_saveset(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
   char setname[OSC_STRING_SIZE];
 
   if (mainw->preview||mainw->is_processing||mainw->multitrack!=NULL) return lives_osc_notify_failure();
@@ -6308,12 +6367,12 @@ void lives_osc_cb_saveset(void *context, int arglen, const void *vargs, OSCTimeT
     on_save_set_activate(NULL,setname);
     mainw->only_close=FALSE;
   }
-  lives_osc_notify_success(NULL);
+  return lives_osc_notify_success(NULL);
 
 }
 
 
-
+typedef void (*osc_cb)(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra);
 
 static struct 
 {
@@ -6323,201 +6382,201 @@ static struct
   int		 leave; // leaf
 } osc_methods[] = 
   {
-    { "/record/enable",		"enable",		lives_osc_record_start,			3	},	
-    { "/record/disable",	"disable",		lives_osc_record_stop,			3	},	
-    { "/record/toggle",	        "toggle",		lives_osc_record_toggle,			3	},	
-    { "/video/play",		"play",		lives_osc_cb_play,			5	},	
-    { "/video/selection/play",		"play",		lives_osc_cb_playsel,			46	},	
-    { "/video/play/forwards",		"forwards",		lives_osc_cb_play_forward,			36	},	
-    { "/video/play/backwards",		"backwards",		lives_osc_cb_play_backward,			36	},	
-    { "/video/play/faster",		"faster",		lives_osc_cb_play_faster,			36	},	
-    { "/clip/foreground/fps/faster",		"faster",		lives_osc_cb_play_faster,			61	},	
-    { "/clip/foreground/fps/get",		"get",		lives_osc_cb_clip_getfps,			61	},	
-    { "/clip/background/fps/faster",		"faster",		lives_osc_cb_bgplay_faster,			63	},	
-    { "/clip/background/fps/get",		"get",		lives_osc_cb_bgclip_getfps,			63	},	
-    { "/video/play/slower",		"slower",		lives_osc_cb_play_slower,			36	},	
-    { "/clip/foreground/fps/slower",		"slower",		lives_osc_cb_play_slower,			61	},	
-    { "/clip/background/fps/slower",		"slower",		lives_osc_cb_bgplay_slower,			63	},	
-    { "/video/play/reset",		"reset",		lives_osc_cb_play_reset,			36	},	
-    { "/video/play/parameter/count",		"set",		lives_osc_cb_rte_pparamcount,			140	},
-    { "/video/play/parameter/value/set",		"set",		lives_osc_cb_rte_setpparam,			140	},
-    { "/video/play/parameter/flags/get",		"get",	lives_osc_cb_rte_getpparamflags,        141	},
-    { "/video/play/parameter/min/get",		"get",	lives_osc_cb_rte_getpparammin,		        142	},
-    { "/video/play/parameter/max/get",		"get",	lives_osc_cb_rte_getpparammax,		        143	},
-    { "/video/play/parameter/type/get",		"get",	lives_osc_cb_rte_getpparamtype,		        144	},
-    { "/video/play/parameter/name/get",		"get",	lives_osc_cb_rte_getpparamname,		        145	},
-    { "/video/play/parameter/colorspace/get",		"get",	lives_osc_cb_rte_getpparamcspace,      	        146	},
-    { "/video/play/parameter/default/get",		"get",	lives_osc_cb_rte_getpparamdef,		        147	},
-    { "/video/play/parameter/value/get",		"get",	lives_osc_cb_rte_getpparamval,		        140	},
-    { "/clip/foreground/fps/reset",		"reset",		lives_osc_cb_play_reset,			61	},	
-    { "/clip/background/fps/reset",		"reset",		lives_osc_cb_bgplay_reset,			63	},	
-    { "/video/stop",		"stop",	        lives_osc_cb_stop,				5	},
-    { "/video/fps/set",	       "set",	lives_osc_cb_set_fps,			40	},
-    { "/video/fps/get",	       "get",	lives_osc_cb_clip_getfps,			40	},
-    { "/video/loop/set",	       "set",	lives_osc_cb_set_loop,			38	},
-    { "/video/loop/get",	       "get",	lives_osc_cb_get_loop,			38	},
-    { "/video/pingpong/set",	       "set",	lives_osc_cb_set_pingpong,			39	},
-    { "/video/pingpong/get",	       "get",	lives_osc_cb_get_pingpong,			39	},
-    { "/lives/mode/set",	       "set",	lives_osc_cb_setmode,			103	},
-    { "/lives/mode/get",	       "get",	lives_osc_cb_getmode,			103	},
-    { "/video/fps/ratio/set",	       "set",	lives_osc_cb_set_fps_ratio,			65	},
-    { "/video/fps/ratio/get",	       "get",	lives_osc_cb_get_fps_ratio,			65	},
-    { "/video/play/time/get",	       "get",	lives_osc_cb_get_playtime,			67	},
-    { "/clip/foreground/fps/set",	"set",	lives_osc_cb_set_fps,			61	},
-    { "/clip/background/fps/set",	"set",	lives_osc_cb_bgset_fps,			63	},
-    { "/clip/foreground/fps/ratio/set",	"set",	lives_osc_cb_set_fps_ratio,			64	},
-    { "/clip/foreground/fps/ratio/get",	"get",	lives_osc_cb_get_fps_ratio,			64	},
-    { "/clip/background/fps/ratio/set",	"set",	lives_osc_cb_bgset_fps_ratio,			66	},
-    { "/clip/background/fps/ratio/get",	"get",	lives_osc_cb_bgget_fps_ratio,			66	},
-    { "/video/play/reverse",		"reverse",	lives_osc_cb_play_reverse,		36	},
-    { "/clip/foreground/fps/reverse",	"reverse",	lives_osc_cb_play_reverse,		61	},
-    { "/clip/background/fps/reverse",	"reverse",	lives_osc_cb_bgplay_reverse,		63	},
-    { "/video/freeze/toggle",		"toggle", lives_osc_cb_freeze,		37	},
-    { "/effects/realtime/name/get",		"get",	lives_osc_cb_fx_getname,			115	},
-    { "/effect_key/map",		"map",	lives_osc_cb_fx_map,			25	},
-    { "/effect_key/map/clear",		"clear",	lives_osc_cb_fx_map_clear,			32	},
-    { "/effect_key/reset",		"reset",	lives_osc_cb_fx_reset,			25	},
-    { "/effect_key/enable",		"enable",	lives_osc_cb_fx_enable,		        25	},
-    { "/effect_key/disable",		"disable",	lives_osc_cb_fx_disable,		        25	},
-    { "/effect_key/toggle",		"toggle",	lives_osc_cb_fx_toggle,		        25	},
-    { "/effect_key/count",		"count",	lives_osc_cb_rte_count,		        25	},
-    { "/effect_key/parameter/value/set",		"set",	lives_osc_cb_rte_setparam,		        42	},
-    { "/effect_key/parameter/type/get",		"get",	lives_osc_cb_rte_getparamtype,		        68	},
-    { "/effect_key/outparameter/type/get",		"get",	lives_osc_cb_rte_getoparamtype,		        153	},
-    { "/effect_key/nparameter/type/get",		"get",	lives_osc_cb_rte_getnparamtype,		        116	},
-    { "/effect_key/parameter/name/get",		"get",	lives_osc_cb_rte_getparamname,		        71	},
-    { "/effect_key/outparameter/name/get",		"get",	lives_osc_cb_rte_getoparamname,		        152	},
-    { "/effect_key/nparameter/name/get",		"get",	lives_osc_cb_rte_getnparamname,		        72	},
-    { "/effect_key/parameter/colorspace/get",		"get",	lives_osc_cb_rte_getparamcspace,		        73	},
-    { "/effect_key/outparameter/colorspace/get",		"get",	lives_osc_cb_rte_getoparamcspace,		        154	},
-    { "/effect_key/parameter/flags/get",		"get",	lives_osc_cb_rte_getparamflags,		        74	},
-    { "/effect_key/parameter/min/get",		"get",	lives_osc_cb_rte_getparammin,		        75	},
-    { "/effect_key/parameter/max/get",		"get",	lives_osc_cb_rte_getparammax,		        76	},
-    { "/effect_key/parameter/default/get",		"get",	lives_osc_cb_rte_getparamdef,		        77	},
-    { "/effect_key/parameter/default/set",		"set",	lives_osc_cb_rte_setparamdef,		        77	},
-    { "/effect_key/parameter/group/get",		"get",	lives_osc_cb_rte_getparamgrp,		        78	},
-    { "/effect_key/outparameter/min/get",		"get",	lives_osc_cb_rte_getoparammin,		        156	},
-    { "/effect_key/outparameter/max/get",		"get",	lives_osc_cb_rte_getoparammax,		        157	},
-    { "/effect_key/outparameter/default/get",		"get",	lives_osc_cb_rte_getoparamdef,		        158	},
-    { "/effect_key/outparameter/has_min",		"has_min",	lives_osc_cb_rte_getohasparammin,		        150	},
-    { "/effect_key/outparameter/has_max",		"has_max",	lives_osc_cb_rte_getohasparammax,		        150	},
-    { "/effect_key/outparameter/has_default",		"has_default",	lives_osc_cb_rte_getohasparamdef,		        150	},
-    { "/effect_key/parameter/has_default",		"has_default",	lives_osc_cb_rte_gethasparamdef,		        41	},
-    { "/effect_key/parameter/value/get",		"get",	lives_osc_cb_rte_getparamval,		        42	},
-    { "/effect_key/outparameter/value/get",		"get",	lives_osc_cb_rte_getoparamval,		        155	},
-    { "/effect_key/nparameter/count",		"count",	lives_osc_cb_rte_nparamcount,		        91	},
-    { "/effect_key/parameter/count",		"count",	lives_osc_cb_rte_paramcount,		        41	},
-    { "/effect_key/outparameter/count",		"count",	lives_osc_cb_rte_oparamcount,		        150	},
-    { "/effect_key/nparameter/value/set",		"set",	lives_osc_cb_rte_setnparam,		        92	},
-    { "/effect_key/nparameter/value/get",		"get",	lives_osc_cb_rte_getnparam,		        92	},
-    { "/effect_key/nparameter/min/get",		"get",	lives_osc_cb_rte_getnparammin,		        93	},
-    { "/effect_key/nparameter/max/get",		"get",	lives_osc_cb_rte_getnparammax,		        94	},
-    { "/effect_key/nparameter/default/get",		"get",	lives_osc_cb_rte_getnparamdef,		        95	},
-    { "/effect_key/nparameter/default/set",		"set",	lives_osc_cb_rte_setnparamdef,		        95	},
-    { "/effect_key/nparameter/is_transition",		"is_transition",	lives_osc_cb_rte_getnparamtrans,		        91	},
-    { "/effect_key/parameter/is_transition",		"is_transition",	lives_osc_cb_rte_getparamtrans,		        41	},
-    { "/effect_key/inchannel/active/count",		"count",	lives_osc_cb_rte_getnchannels,		        131	},
-    { "/effect_key/inchannel/palette/get",		"get",	lives_osc_cb_rte_getinpal,		        132	},
-    { "/effect_key/outchannel/active/count",		"count",	lives_osc_cb_rte_getnochannels,		        171	},
-    { "/effect_key/outchannel/palette/get",		"get",	lives_osc_cb_rte_getoutpal,		        162	},
-    { "/effect_key/mode/set",		"set",	lives_osc_cb_rte_setmode,		        43	},
-    { "/effect_key/mode/get",		"get",	lives_osc_cb_rte_getmode,		        43	},
-    { "/effect_key/mode/next",		"next",	lives_osc_cb_rte_nextmode,		        43	},
-    { "/effect_key/mode/previous",		"previous",	lives_osc_cb_rte_prevmode,		        43	},
-    { "/effect_key/name/get",		"get",	lives_osc_cb_rte_get_keyfxname,		        44	},
-    { "/effect_key/maxmode/get",		"get",	lives_osc_cb_rte_getmodespk,		        45	},
-    { "/effect_key/state/get",		"get",	lives_osc_cb_rte_getstate,		        56	},
-    { "/effect_key/outparameter/connection/add",		"add",	lives_osc_cb_rte_addpconnection,		        151	},
-    { "/effect_key/outparameter/connection/delete",		"delete",	lives_osc_cb_rte_delpconnection,		        151	},
-    { "/effect_key/outparameter/connection/list",		"list",	lives_osc_cb_rte_listpconnection,		        151	},
-    { "/effect_key/outchannel/connection/add",		        "add",	lives_osc_cb_rte_addcconnection,		        161	},
-    { "/effect_key/outchannel/connection/delete",		"delete",	lives_osc_cb_rte_delcconnection,		        161	},
-    { "/effect_key/outchannel/connection/list",		"list",	lives_osc_cb_rte_listcconnection,		        161	},
-    { "/clip/encode_as",		"encode_as",	lives_osc_cb_clip_encodeas,			1	},
-    { "/clip/select",		"select",	lives_osc_cb_fgclip_select,			1	},
-    { "/clip/close",		"close",	lives_osc_cb_clip_close,	  		        1	},
-    { "/clip/copy",		"copy",	lives_osc_cb_fgclip_copy,	  		        1	},
-    { "/clip/undo",		"undo",	lives_osc_cb_clip_undo,	  		        1	},
-    { "/clip/redo",		"redo",	lives_osc_cb_clip_redo,	  		        1	},
-    { "/clip/selection/copy",		"copy",	lives_osc_cb_fgclipsel_copy,	  		        55	},
-    { "/clip/selection/cut",		"cut",	lives_osc_cb_fgclipsel_cut,	  		        55	},
-    { "/clip/selection/delete",		"delete",	lives_osc_cb_fgclipsel_delete,	  		        55	},
-    { "/clip/selection/rte_apply",		"rte_apply",	lives_osc_cb_fgclipsel_rteapply,	  		        55	},
-    { "/clipboard/paste",		"paste",	lives_osc_cb_clipbd_paste,			70	},
-    { "/clipboard/insert_before",		"insert_before",	lives_osc_cb_clipbd_insertb,			70	},
-    { "/clipboard/insert_after",		"insert_after",	lives_osc_cb_clipbd_inserta,			70	},
-    { "/clip/retrigger",		"retrigger",	lives_osc_cb_fgclip_retrigger,			1	},
-    { "/clip/resample",		        "resample",	lives_osc_cb_clip_resample,			1	},
-    { "/clip/select/next",		"next",	lives_osc_cb_fgclip_select_next,			54	},
-    { "/clip/select/previous",		"previous",	lives_osc_cb_fgclip_select_previous,			54	},
-    { "/clip/foreground/select",		"select",	lives_osc_cb_fgclip_select,			47	},
-    { "/clip/background/select",		"select",	lives_osc_cb_bgclip_select,			48	},
-    { "/clip/foreground/retrigger",		"retrigger",	lives_osc_cb_fgclip_retrigger,			47	},
-    { "/clip/background/retrigger",		"retrigger",	lives_osc_cb_bgclip_retrigger,			48	},
-    { "/clip/foreground/set",		"set",	lives_osc_cb_fgclip_set,			47	},
-    { "/clip/background/set",		"set",	lives_osc_cb_bgclip_set,			48	},
-    { "/clip/foreground/get",		"get",	lives_osc_cb_clip_get_current,			47	},
-    { "/clip/background/get",		"get",	lives_osc_cb_bgclip_get_current,			48	},
-    { "/clip/foreground/next",		"next",	lives_osc_cb_fgclip_select_next,			47	},
-    { "/clip/background/next",		"next",	lives_osc_cb_bgclip_select_next,			48	},
-    { "/clip/foreground/previous",		"previous",	lives_osc_cb_fgclip_select_previous,			47	},
-    { "/clip/background/previous",		"previous",	lives_osc_cb_bgclip_select_previous,			48	},
-    { "/lives/quit",	         "quit",	        lives_osc_cb_quit,			21	},
-    { "/lives/version/get",	         "get",	        lives_osc_cb_getversion,			24	},
-    { "/lives/constant/value/get",	         "get",	        lives_osc_cb_getconst,			121	},
-    { "/app/quit",	         "quit",	           lives_osc_cb_quit,			22	},
-    { "/app/name",	         "name",	           lives_osc_cb_getname,			22	},
-    { "/app/name/get",	         "get",	           lives_osc_cb_getname,			23	},
-    { "/app/version/get",	         "get",	           lives_osc_cb_getversion,			125	},
-    { "/quit",	         "quit",	        lives_osc_cb_quit,			2	},
-    { "/reply_to",	         "reply_to",	 lives_osc_cb_open_status_socket,			2	},
-    { "/lives/open_status_socket",	         "open_status_socket",	        lives_osc_cb_open_status_socket,			21	},
-    { "/app/open_status_socket",	         "open_status_socket",	        lives_osc_cb_open_status_socket,			22	},
-    { "/app/ping",	         "ping",	           lives_osc_cb_ping,			22	},
-    { "/lives/ping",	         "ping",	           lives_osc_cb_ping,			21	},
-    { "/ping",	         "ping",	           lives_osc_cb_ping,			2	},
-    { "/notify_to",	         "notify_to",	   lives_osc_cb_open_notify_socket,			2	},
-    { "/lives/open_notify_socket",	         "open_notify_socket",	        lives_osc_cb_open_notify_socket,			21	},
-    { "/notify/confirmations/set",	         "set",	        lives_osc_cb_notify_c,			101	},
-    { "/notify/events/set",	         "set",	        lives_osc_cb_notify_e,			102	},
-    { "/clip/count",	         "count",	        lives_osc_cb_clip_count,			1  },
-    { "/clip/goto",	         "goto",	        lives_osc_cb_clip_goto,			1	},
-    { "/clip/foreground/frame/set",	         "set",	        lives_osc_cb_clip_goto,			60	},
-    { "/clip/foreground/frame/get",	         "get",	        lives_osc_cb_clip_getframe,			60	},
-    { "/clip/background/frame/set",	         "set",	        lives_osc_cb_bgclip_goto,			62	},
-    { "/clip/background/frame/get",	         "get",	        lives_osc_cb_bgclip_getframe,			62	},
-    { "/clip/is_valid/get",	         "get",	        lives_osc_cb_clip_isvalid,			49	},
-    { "/clip/frame/count",	         "count",	        lives_osc_cb_clip_get_frames,			57	},
-    { "/clip/frame/save_as_image",	         "save_as_image",	        lives_osc_cb_clip_save_frame,			57	},
-    { "/clip/select_all",	         "select_all",	        lives_osc_cb_clip_select_all,			1	},
-    { "/clip/start/set",	 "set",	        lives_osc_cb_clip_set_start,			50	},
-    { "/clip/start/get",	 "get",	        lives_osc_cb_clip_get_start,			50	},
-    { "/clip/end/set",	 "set",	        lives_osc_cb_clip_set_end,			51	},
-    { "/clip/end/get",	 "get",	        lives_osc_cb_clip_get_end,			51	},
-    { "/clip/size/get",	 "get",	        lives_osc_cb_clip_get_size,			58	},
-    { "/clip/name/get",	 "get",	        lives_osc_cb_clip_get_name,			59	},
-    { "/clip/name/set",	 "set",	        lives_osc_cb_clip_set_name,			59	},
-    { "/clip/fps/get",	 "get",	        lives_osc_cb_clip_get_ifps,			113	},
-    { "/clip/open/file",	 "file",	        lives_osc_cb_open_file,			33	},
-    { "/clip/audio/new",	 "new", 	        lives_osc_cb_new_audio,			108	},
-    { "/output/fullscreen/enable",		"enable",	lives_osc_cb_fssepwin_enable,		28	},
-    { "/output/fullscreen/disable",		"disable",	lives_osc_cb_fssepwin_disable,       	28	},
-    { "/output/fps/set",		"set",	lives_osc_cb_op_fps_set,       	52	},
-    { "/output/nodrop/enable",		"enable",	lives_osc_cb_op_nodrope,       	30	},
-    { "/output/nodrop/disable",		"disable",	lives_osc_cb_op_nodropd,       	30	},
-    { "/clip/foreground/background/swap",		"swap",	lives_osc_cb_swap,       	53	},
-    { "/clipset/load",		"load",	lives_osc_cb_loadset,       	35	},
-    { "/clipset/save",		"save",	lives_osc_cb_saveset,       	35	},
-    { "/layout/clear",		"clear",	lives_osc_cb_clearlay,       	104	},
-    { "/block/count",		"count",	lives_osc_cb_blockcount,       	105	},
-    { "/block/insert",		"insert",	lives_osc_cb_blockinsert,       	105	},
-    { "/block/start/time/get",		"get",	lives_osc_cb_blockstget,       	111	},
-    { "/block/end/time/get",		"get",	lives_osc_cb_blockenget,       	112	},
-    { "/mt/time/get",		"get",	lives_osc_cb_mtctimeget,       	201	},
-    { "/mt/time/set",		"set",	lives_osc_cb_mtctimeset,       	201	},
-    { "/mt/ctrack/get",		"get",	lives_osc_cb_mtctrackget,       	201	},
-    { "/mt/ctrack/set",		"set",	lives_osc_cb_mtctrackset,       	201	},
-    { "/test",		"",	lives_osc_cb_test,       	500	},
+    { "/record/enable",		"enable",		(osc_cb)lives_osc_record_start,			3	},	
+    { "/record/disable",	"disable",		(osc_cb)lives_osc_record_stop,			3	},	
+    { "/record/toggle",	        "toggle",		(osc_cb)lives_osc_record_toggle,			3	},	
+    { "/video/play",		"play",		(osc_cb)lives_osc_cb_play,			5	},	
+    { "/video/selection/play",		"play",		(osc_cb)lives_osc_cb_playsel,			46	},	
+    { "/video/play/forwards",		"forwards",		(osc_cb)lives_osc_cb_play_forward,			36	},	
+    { "/video/play/backwards",		"backwards",		(osc_cb)lives_osc_cb_play_backward,			36	},	
+    { "/video/play/faster",		"faster",		(osc_cb)lives_osc_cb_play_faster,			36	},	
+    { "/clip/foreground/fps/faster",		"faster",		(osc_cb)lives_osc_cb_play_faster,			61	},	
+    { "/clip/foreground/fps/get",		"get",		(osc_cb)lives_osc_cb_clip_getfps,			61	},	
+    { "/clip/background/fps/faster",		"faster",		(osc_cb)lives_osc_cb_bgplay_faster,			63	},	
+    { "/clip/background/fps/get",		"get",		(osc_cb)lives_osc_cb_bgclip_getfps,			63	},	
+    { "/video/play/slower",		"slower",		(osc_cb)lives_osc_cb_play_slower,			36	},	
+    { "/clip/foreground/fps/slower",		"slower",		(osc_cb)lives_osc_cb_play_slower,			61	},	
+    { "/clip/background/fps/slower",		"slower",		(osc_cb)lives_osc_cb_bgplay_slower,			63	},	
+    { "/video/play/reset",		"reset",		(osc_cb)lives_osc_cb_play_reset,			36	},	
+    { "/video/play/parameter/count",		"set",		(osc_cb)lives_osc_cb_rte_pparamcount,			140	},
+    { "/video/play/parameter/value/set",		"set",		(osc_cb)lives_osc_cb_rte_setpparam,			140	},
+    { "/video/play/parameter/flags/get",		"get",	(osc_cb)lives_osc_cb_rte_getpparamflags,        141	},
+    { "/video/play/parameter/min/get",		"get",	(osc_cb)lives_osc_cb_rte_getpparammin,		        142	},
+    { "/video/play/parameter/max/get",		"get",	(osc_cb)lives_osc_cb_rte_getpparammax,		        143	},
+    { "/video/play/parameter/type/get",		"get",	(osc_cb)lives_osc_cb_rte_getpparamtype,		        144	},
+    { "/video/play/parameter/name/get",		"get",	(osc_cb)lives_osc_cb_rte_getpparamname,		        145	},
+    { "/video/play/parameter/colorspace/get",		"get",	(osc_cb)lives_osc_cb_rte_getpparamcspace,      	        146	},
+    { "/video/play/parameter/default/get",		"get",	(osc_cb)lives_osc_cb_rte_getpparamdef,		        147	},
+    { "/video/play/parameter/value/get",		"get",	(osc_cb)lives_osc_cb_rte_getpparamval,		        140	},
+    { "/clip/foreground/fps/reset",		"reset",		(osc_cb)lives_osc_cb_play_reset,			61	},	
+    { "/clip/background/fps/reset",		"reset",		(osc_cb)lives_osc_cb_bgplay_reset,			63	},	
+    { "/video/stop",		"stop",	        (osc_cb)lives_osc_cb_stop,				5	},
+    { "/video/fps/set",	       "set",	(osc_cb)lives_osc_cb_set_fps,			40	},
+    { "/video/fps/get",	       "get",	(osc_cb)lives_osc_cb_clip_getfps,			40	},
+    { "/video/loop/set",	       "set",	(osc_cb)lives_osc_cb_set_loop,			38	},
+    { "/video/loop/get",	       "get",	(osc_cb)lives_osc_cb_get_loop,			38	},
+    { "/video/pingpong/set",	       "set",	(osc_cb)lives_osc_cb_set_pingpong,			39	},
+    { "/video/pingpong/get",	       "get",	(osc_cb)lives_osc_cb_get_pingpong,			39	},
+    { "/lives/mode/set",	       "set",	(osc_cb)lives_osc_cb_setmode,			103	},
+    { "/lives/mode/get",	       "get",	(osc_cb)lives_osc_cb_getmode,			103	},
+    { "/video/fps/ratio/set",	       "set",	(osc_cb)lives_osc_cb_set_fps_ratio,			65	},
+    { "/video/fps/ratio/get",	       "get",	(osc_cb)lives_osc_cb_get_fps_ratio,			65	},
+    { "/video/play/time/get",	       "get",	(osc_cb)lives_osc_cb_get_playtime,			67	},
+    { "/clip/foreground/fps/set",	"set",	(osc_cb)lives_osc_cb_set_fps,			61	},
+    { "/clip/background/fps/set",	"set",	(osc_cb)lives_osc_cb_bgset_fps,			63	},
+    { "/clip/foreground/fps/ratio/set",	"set",	(osc_cb)lives_osc_cb_set_fps_ratio,			64	},
+    { "/clip/foreground/fps/ratio/get",	"get",	(osc_cb)lives_osc_cb_get_fps_ratio,			64	},
+    { "/clip/background/fps/ratio/set",	"set",	(osc_cb)lives_osc_cb_bgset_fps_ratio,			66	},
+    { "/clip/background/fps/ratio/get",	"get",	(osc_cb)lives_osc_cb_bgget_fps_ratio,			66	},
+    { "/video/play/reverse",		"reverse",	(osc_cb)lives_osc_cb_play_reverse,		36	},
+    { "/clip/foreground/fps/reverse",	"reverse",	(osc_cb)lives_osc_cb_play_reverse,		61	},
+    { "/clip/background/fps/reverse",	"reverse",	(osc_cb)lives_osc_cb_bgplay_reverse,		63	},
+    { "/video/freeze/toggle",		"toggle", (osc_cb)lives_osc_cb_freeze,		37	},
+    { "/effects/realtime/name/get",		"get",	(osc_cb)lives_osc_cb_fx_getname,			115	},
+    { "/effect_key/map",		"map",	(osc_cb)lives_osc_cb_fx_map,			25	},
+    { "/effect_key/map/clear",		"clear",	(osc_cb)lives_osc_cb_fx_map_clear,			32	},
+    { "/effect_key/reset",		"reset",	(osc_cb)lives_osc_cb_fx_reset,			25	},
+    { "/effect_key/enable",		"enable",	(osc_cb)lives_osc_cb_fx_enable,		        25	},
+    { "/effect_key/disable",		"disable",	(osc_cb)lives_osc_cb_fx_disable,		        25	},
+    { "/effect_key/toggle",		"toggle",	(osc_cb)lives_osc_cb_fx_toggle,		        25	},
+    { "/effect_key/count",		"count",	(osc_cb)lives_osc_cb_rte_count,		        25	},
+    { "/effect_key/parameter/value/set",		"set",	(osc_cb)lives_osc_cb_rte_setparam,		        42	},
+    { "/effect_key/parameter/type/get",		"get",	(osc_cb)lives_osc_cb_rte_getparamtype,		        68	},
+    { "/effect_key/outparameter/type/get",		"get",	(osc_cb)lives_osc_cb_rte_getoparamtype,		        153	},
+    { "/effect_key/nparameter/type/get",		"get",	(osc_cb)lives_osc_cb_rte_getnparamtype,		        116	},
+    { "/effect_key/parameter/name/get",		"get",	(osc_cb)lives_osc_cb_rte_getparamname,		        71	},
+    { "/effect_key/outparameter/name/get",		"get",	(osc_cb)lives_osc_cb_rte_getoparamname,		        152	},
+    { "/effect_key/nparameter/name/get",		"get",	(osc_cb)lives_osc_cb_rte_getnparamname,		        72	},
+    { "/effect_key/parameter/colorspace/get",		"get",	(osc_cb)lives_osc_cb_rte_getparamcspace,		        73	},
+    { "/effect_key/outparameter/colorspace/get",		"get",	(osc_cb)lives_osc_cb_rte_getoparamcspace,		        154	},
+    { "/effect_key/parameter/flags/get",		"get",	(osc_cb)lives_osc_cb_rte_getparamflags,		        74	},
+    { "/effect_key/parameter/min/get",		"get",	(osc_cb)lives_osc_cb_rte_getparammin,		        75	},
+    { "/effect_key/parameter/max/get",		"get",	(osc_cb)lives_osc_cb_rte_getparammax,		        76	},
+    { "/effect_key/parameter/default/get",		"get",	(osc_cb)lives_osc_cb_rte_getparamdef,		        77	},
+    { "/effect_key/parameter/default/set",		"set",	(osc_cb)lives_osc_cb_rte_setparamdef,		        77	},
+    { "/effect_key/parameter/group/get",		"get",	(osc_cb)lives_osc_cb_rte_getparamgrp,		        78	},
+    { "/effect_key/outparameter/min/get",		"get",	(osc_cb)lives_osc_cb_rte_getoparammin,		        156	},
+    { "/effect_key/outparameter/max/get",		"get",	(osc_cb)lives_osc_cb_rte_getoparammax,		        157	},
+    { "/effect_key/outparameter/default/get",		"get",	(osc_cb)lives_osc_cb_rte_getoparamdef,		        158	},
+    { "/effect_key/outparameter/has_min",		"has_min",	(osc_cb)lives_osc_cb_rte_getohasparammin,		        150	},
+    { "/effect_key/outparameter/has_max",		"has_max",	(osc_cb)lives_osc_cb_rte_getohasparammax,		        150	},
+    { "/effect_key/outparameter/has_default",		"has_default",	(osc_cb)lives_osc_cb_rte_getohasparamdef,		        150	},
+    { "/effect_key/parameter/has_default",		"has_default",	(osc_cb)lives_osc_cb_rte_gethasparamdef,		        41	},
+    { "/effect_key/parameter/value/get",		"get",	(osc_cb)lives_osc_cb_rte_getparamval,		        42	},
+    { "/effect_key/outparameter/value/get",		"get",	(osc_cb)lives_osc_cb_rte_getoparamval,		        155	},
+    { "/effect_key/nparameter/count",		"count",	(osc_cb)lives_osc_cb_rte_nparamcount,		        91	},
+    { "/effect_key/parameter/count",		"count",	(osc_cb)lives_osc_cb_rte_paramcount,		        41	},
+    { "/effect_key/outparameter/count",		"count",	(osc_cb)lives_osc_cb_rte_oparamcount,		        150	},
+    { "/effect_key/nparameter/value/set",		"set",	(osc_cb)lives_osc_cb_rte_setnparam,		        92	},
+    { "/effect_key/nparameter/value/get",		"get",	(osc_cb)lives_osc_cb_rte_getnparam,		        92	},
+    { "/effect_key/nparameter/min/get",		"get",	(osc_cb)lives_osc_cb_rte_getnparammin,		        93	},
+    { "/effect_key/nparameter/max/get",		"get",	(osc_cb)lives_osc_cb_rte_getnparammax,		        94	},
+    { "/effect_key/nparameter/default/get",		"get",	(osc_cb)lives_osc_cb_rte_getnparamdef,		        95	},
+    { "/effect_key/nparameter/default/set",		"set",	(osc_cb)lives_osc_cb_rte_setnparamdef,		        95	},
+    { "/effect_key/nparameter/is_transition",		"is_transition",	(osc_cb)lives_osc_cb_rte_getnparamtrans,		        91	},
+    { "/effect_key/parameter/is_transition",		"is_transition",	(osc_cb)lives_osc_cb_rte_getparamtrans,		        41	},
+    { "/effect_key/inchannel/active/count",		"count",	(osc_cb)lives_osc_cb_rte_getnchannels,		        131	},
+    { "/effect_key/inchannel/palette/get",		"get",	(osc_cb)lives_osc_cb_rte_getinpal,		        132	},
+    { "/effect_key/outchannel/active/count",		"count",	(osc_cb)lives_osc_cb_rte_getnochannels,		        171	},
+    { "/effect_key/outchannel/palette/get",		"get",	(osc_cb)lives_osc_cb_rte_getoutpal,		        162	},
+    { "/effect_key/mode/set",		"set",	(osc_cb)lives_osc_cb_rte_setmode,		        43	},
+    { "/effect_key/mode/get",		"get",	(osc_cb)lives_osc_cb_rte_getmode,		        43	},
+    { "/effect_key/mode/next",		"next",	(osc_cb)lives_osc_cb_rte_nextmode,		        43	},
+    { "/effect_key/mode/previous",		"previous",	(osc_cb)lives_osc_cb_rte_prevmode,		        43	},
+    { "/effect_key/name/get",		"get",	(osc_cb)lives_osc_cb_rte_get_keyfxname,		        44	},
+    { "/effect_key/maxmode/get",		"get",	(osc_cb)lives_osc_cb_rte_getmodespk,		        45	},
+    { "/effect_key/state/get",		"get",	(osc_cb)lives_osc_cb_rte_getstate,		        56	},
+    { "/effect_key/outparameter/connection/add",		"add",	(osc_cb)lives_osc_cb_rte_addpconnection,		        151	},
+    { "/effect_key/outparameter/connection/delete",		"delete",	(osc_cb)lives_osc_cb_rte_delpconnection,		        151	},
+    { "/effect_key/outparameter/connection/list",		"list",	(osc_cb)lives_osc_cb_rte_listpconnection,		        151	},
+    { "/effect_key/outchannel/connection/add",		        "add",	(osc_cb)lives_osc_cb_rte_addcconnection,		        161	},
+    { "/effect_key/outchannel/connection/delete",		"delete",	(osc_cb)lives_osc_cb_rte_delcconnection,		        161	},
+    { "/effect_key/outchannel/connection/list",		"list",	(osc_cb)lives_osc_cb_rte_listcconnection,		        161	},
+    { "/clip/encode_as",		"encode_as",	(osc_cb)lives_osc_cb_clip_encodeas,			1	},
+    { "/clip/select",		"select",	(osc_cb)lives_osc_cb_fgclip_select,			1	},
+    { "/clip/close",		"close",	(osc_cb)lives_osc_cb_clip_close,	  		        1	},
+    { "/clip/copy",		"copy",	(osc_cb)lives_osc_cb_fgclip_copy,	  		        1	},
+    { "/clip/undo",		"undo",	(osc_cb)lives_osc_cb_clip_undo,	  		        1	},
+    { "/clip/redo",		"redo",	(osc_cb)lives_osc_cb_clip_redo,	  		        1	},
+    { "/clip/selection/copy",		"copy",	(osc_cb)lives_osc_cb_fgclipsel_copy,	  		        55	},
+    { "/clip/selection/cut",		"cut",	(osc_cb)lives_osc_cb_fgclipsel_cut,	  		        55	},
+    { "/clip/selection/delete",		"delete",	(osc_cb)lives_osc_cb_fgclipsel_delete,	  		        55	},
+    { "/clip/selection/rte_apply",		"rte_apply",	(osc_cb)lives_osc_cb_fgclipsel_rteapply,	  		        55	},
+    { "/clipboard/paste",		"paste",	(osc_cb)lives_osc_cb_clipbd_paste,			70	},
+    { "/clipboard/insert_before",		"insert_before",	(osc_cb)lives_osc_cb_clipbd_insertb,			70	},
+    { "/clipboard/insert_after",		"insert_after",	(osc_cb)lives_osc_cb_clipbd_inserta,			70	},
+    { "/clip/retrigger",		"retrigger",	(osc_cb)lives_osc_cb_fgclip_retrigger,			1	},
+    { "/clip/resample",		        "resample",	(osc_cb)lives_osc_cb_clip_resample,			1	},
+    { "/clip/select/next",		"next",	(osc_cb)lives_osc_cb_fgclip_select_next,			54	},
+    { "/clip/select/previous",		"previous",	(osc_cb)lives_osc_cb_fgclip_select_previous,			54	},
+    { "/clip/foreground/select",		"select",	(osc_cb)lives_osc_cb_fgclip_select,			47	},
+    { "/clip/background/select",		"select",	(osc_cb)lives_osc_cb_bgclip_select,			48	},
+    { "/clip/foreground/retrigger",		"retrigger",	(osc_cb)lives_osc_cb_fgclip_retrigger,			47	},
+    { "/clip/background/retrigger",		"retrigger",	(osc_cb)lives_osc_cb_bgclip_retrigger,			48	},
+    { "/clip/foreground/set",		"set",	(osc_cb)lives_osc_cb_fgclip_set,			47	},
+    { "/clip/background/set",		"set",	(osc_cb)lives_osc_cb_bgclip_set,			48	},
+    { "/clip/foreground/get",		"get",	(osc_cb)lives_osc_cb_clip_get_current,			47	},
+    { "/clip/background/get",		"get",	(osc_cb)lives_osc_cb_bgclip_get_current,			48	},
+    { "/clip/foreground/next",		"next",	(osc_cb)lives_osc_cb_fgclip_select_next,			47	},
+    { "/clip/background/next",		"next",	(osc_cb)lives_osc_cb_bgclip_select_next,			48	},
+    { "/clip/foreground/previous",		"previous",	(osc_cb)lives_osc_cb_fgclip_select_previous,			47	},
+    { "/clip/background/previous",		"previous",	(osc_cb)lives_osc_cb_bgclip_select_previous,			48	},
+    { "/lives/quit",	         "quit",	        (osc_cb)lives_osc_cb_quit,			21	},
+    { "/lives/version/get",	         "get",	        (osc_cb)lives_osc_cb_getversion,			24	},
+    { "/lives/constant/value/get",	         "get",	        (osc_cb)lives_osc_cb_getconst,			121	},
+    { "/app/quit",	         "quit",	           (osc_cb)lives_osc_cb_quit,			22	},
+    { "/app/name",	         "name",	           (osc_cb)lives_osc_cb_getname,			22	},
+    { "/app/name/get",	         "get",	           (osc_cb)lives_osc_cb_getname,			23	},
+    { "/app/version/get",	         "get",	           (osc_cb)lives_osc_cb_getversion,			125	},
+    { "/quit",	         "quit",	        (osc_cb)lives_osc_cb_quit,			2	},
+    { "/reply_to",	         "reply_to",	 (osc_cb)lives_osc_cb_open_status_socket,			2	},
+    { "/lives/open_status_socket",	         "open_status_socket",	        (osc_cb)lives_osc_cb_open_status_socket,			21	},
+    { "/app/open_status_socket",	         "open_status_socket",	        (osc_cb)lives_osc_cb_open_status_socket,			22	},
+    { "/app/ping",	         "ping",	           (osc_cb)lives_osc_cb_ping,			22	},
+    { "/lives/ping",	         "ping",	           (osc_cb)lives_osc_cb_ping,			21	},
+    { "/ping",	         "ping",	           (osc_cb)lives_osc_cb_ping,			2	},
+    { "/notify_to",	         "notify_to",	   (osc_cb)lives_osc_cb_open_notify_socket,			2	},
+    { "/lives/open_notify_socket",	         "open_notify_socket",	        (osc_cb)lives_osc_cb_open_notify_socket,			21	},
+    { "/notify/confirmations/set",	         "set",	        (osc_cb)lives_osc_cb_notify_c,			101	},
+    { "/notify/events/set",	         "set",	        (osc_cb)lives_osc_cb_notify_e,			102	},
+    { "/clip/count",	         "count",	        (osc_cb)lives_osc_cb_clip_count,			1  },
+    { "/clip/goto",	         "goto",	        (osc_cb)lives_osc_cb_clip_goto,			1	},
+    { "/clip/foreground/frame/set",	         "set",	        (osc_cb)lives_osc_cb_clip_goto,			60	},
+    { "/clip/foreground/frame/get",	         "get",	        (osc_cb)lives_osc_cb_clip_getframe,			60	},
+    { "/clip/background/frame/set",	         "set",	        (osc_cb)lives_osc_cb_bgclip_goto,			62	},
+    { "/clip/background/frame/get",	         "get",	        (osc_cb)lives_osc_cb_bgclip_getframe,			62	},
+    { "/clip/is_valid/get",	         "get",	        (osc_cb)lives_osc_cb_clip_isvalid,			49	},
+    { "/clip/frame/count",	         "count",	        (osc_cb)lives_osc_cb_clip_get_frames,			57	},
+    { "/clip/frame/save_as_image",	         "save_as_image",	        (osc_cb)lives_osc_cb_clip_save_frame,			57	},
+    { "/clip/select_all",	         "select_all",	        (osc_cb)lives_osc_cb_clip_select_all,			1	},
+    { "/clip/start/set",	 "set",	        (osc_cb)lives_osc_cb_clip_set_start,			50	},
+    { "/clip/start/get",	 "get",	        (osc_cb)lives_osc_cb_clip_get_start,			50	},
+    { "/clip/end/set",	 "set",	        (osc_cb)lives_osc_cb_clip_set_end,			51	},
+    { "/clip/end/get",	 "get",	        (osc_cb)lives_osc_cb_clip_get_end,			51	},
+    { "/clip/size/get",	 "get",	        (osc_cb)lives_osc_cb_clip_get_size,			58	},
+    { "/clip/name/get",	 "get",	        (osc_cb)lives_osc_cb_clip_get_name,			59	},
+    { "/clip/name/set",	 "set",	        (osc_cb)lives_osc_cb_clip_set_name,			59	},
+    { "/clip/fps/get",	 "get",	        (osc_cb)lives_osc_cb_clip_get_ifps,			113	},
+    { "/clip/open/file",	 "file",	        (osc_cb)lives_osc_cb_open_file,			33	},
+    { "/clip/audio/new",	 "new", 	        (osc_cb)lives_osc_cb_new_audio,			108	},
+    { "/output/fullscreen/enable",		"enable",	(osc_cb)lives_osc_cb_fssepwin_enable,		28	},
+    { "/output/fullscreen/disable",		"disable",	(osc_cb)lives_osc_cb_fssepwin_disable,       	28	},
+    { "/output/fps/set",		"set",	(osc_cb)lives_osc_cb_op_fps_set,       	52	},
+    { "/output/nodrop/enable",		"enable",	(osc_cb)lives_osc_cb_op_nodrope,       	30	},
+    { "/output/nodrop/disable",		"disable",	(osc_cb)lives_osc_cb_op_nodropd,       	30	},
+    { "/clip/foreground/background/swap",		"swap",	(osc_cb)lives_osc_cb_swap,       	53	},
+    { "/clipset/load",		"load",	(osc_cb)lives_osc_cb_loadset,       	35	},
+    { "/clipset/save",		"save",	(osc_cb)lives_osc_cb_saveset,       	35	},
+    { "/layout/clear",		"clear",	(osc_cb)lives_osc_cb_clearlay,       	104	},
+    { "/block/count",		"count",	(osc_cb)lives_osc_cb_blockcount,       	105	},
+    { "/block/insert",		"insert",	(osc_cb)lives_osc_cb_blockinsert,       	105	},
+    { "/block/start/time/get",		"get",	(osc_cb)lives_osc_cb_blockstget,       	111	},
+    { "/block/end/time/get",		"get",	(osc_cb)lives_osc_cb_blockenget,       	112	},
+    { "/mt/time/get",		"get",	(osc_cb)lives_osc_cb_mtctimeget,       	201	},
+    { "/mt/time/set",		"set",	(osc_cb)lives_osc_cb_mtctimeset,       	201	},
+    { "/mt/ctrack/get",		"get",	(osc_cb)lives_osc_cb_mtctrackget,       	201	},
+    { "/mt/ctrack/set",		"set",	(osc_cb)lives_osc_cb_mtctrackset,       	201	},
+    { "/test",		"",	(osc_cb)lives_osc_cb_test,       	500	},
     
     { NULL,					NULL,		NULL,							0	},
   };

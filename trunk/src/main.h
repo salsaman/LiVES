@@ -55,13 +55,14 @@ POSSIBILITY OF SUCH DAMAGES.
 #undef HAVE_UNICAP
 #endif
 
+#ifndef GUI_QT
 #define GUI_GTK
 #define PAINTER_CAIRO
-
-//#define GUI_QT
-//#define PAINTER_QPAINTER
-//#define NO_PROG_LOAD
-//#undef ENABLE_GIW
+#else
+#define PAINTER_QPAINTER
+#define NO_PROG_LOAD
+#undef ENABLE_GIW
+#endif
 
 #ifdef GUI_GTK
 
@@ -1313,8 +1314,8 @@ boolean lives_osc_init(uint32_t osc_udp_port);
 boolean lives_osc_poll(livespointer data);
 void lives_osc_end(void);
 boolean lives_osc_notify(int msgtype, const char *msgstring);
-void lives_osc_notify_success (const gchar *msg);
-void lives_osc_notify_failure (void);
+boolean lives_osc_notify_success (const gchar *msg);
+boolean lives_osc_notify_failure (void);
 void lives_osc_notify_cancel (void);
 #include "osc_notify.h"
 #endif

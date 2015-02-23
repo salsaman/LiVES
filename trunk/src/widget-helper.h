@@ -33,13 +33,6 @@ typedef enum {
 #include "widget-helper-gtk.h"
 #endif
 
-#if defined (GUI_QT) || defined (PAINTER_QPAINTER)
-#include "widget-helper-qt.h"
-#endif
-
-
-//#ifndef __cplusplus
-
 // basic functions (wrappers for Toolkit functions)
 
 // lives_painter_functions

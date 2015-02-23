@@ -16,6 +16,7 @@
     Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
 */
 
+
 #ifdef USE_GLIB
 #include <glib.h>
 #endif
@@ -387,6 +388,11 @@ static boolean pre_init(void) {
 
   lives_mem_set_vtable(&mainw->alt_vtable);
 
+  prefs=(_prefs *)lives_malloc(sizeof(_prefs));
+  future_prefs=(_future_prefs *)lives_malloc(sizeof(_future_prefs));
+
+  prefs->gui_monitor=-1;
+
   // set to allow multiple locking by the same thread
   pthread_mutexattr_init(&mattr);
   pthread_mutexattr_settype(&mattr,PTHREAD_MUTEX_RECURSIVE); 
@@ -409,11 +415,6 @@ static boolean pre_init(void) {
   mainw->vrfx_update=NULL;
 
   mainw->kb_timer=-1;
-
-  prefs=(_prefs *)lives_malloc0(sizeof(_prefs));
-  future_prefs=(_future_prefs *)lives_malloc(sizeof(_future_prefs));
-
-  prefs->gui_monitor=-1;
 
   prefs->wm=NULL;
   prefs->sleep_time=1000;
@@ -1236,6 +1237,7 @@ static void lives_init(_ign_opts *ign_opts) {
     prefs->push_audio_to_gens=TRUE;
 
     prefs->perm_audio_reader=TRUE;
+
     //////////////////////////////////////////////////////////////////
 
     weed_memory_init();
@@ -2712,6 +2714,7 @@ static boolean lives_startup(livespointer data) {
 
   mainw->go_away=FALSE;
 
+
   return FALSE;
 } // end lives_startup()
 
@@ -2757,7 +2760,7 @@ void set_signal_handlers(SignalHandlerPointer sigfunc) {
 }
 
 
-int main (int argc, char *argv[]) {
+int real_main (int argc, char *argv[]) {
 #ifdef ENABLE_OSC
 #ifdef IS_MINGW
   WSADATA wsaData;
@@ -3106,6 +3109,7 @@ int main (int argc, char *argv[]) {
 	if (optind<argc) start=lives_strtod(argv[optind++],NULL); // start time (seconds)
 	if (optind<argc) end=atoi(argv[optind++]); // number of frames
       }}}
+
 
   lives_idle_add(lives_startup,NULL);
 
@@ -3900,8 +3904,10 @@ void load_end_image(int frame) {
 }
 
 
-
-
+int main (int argc, char *argv[]) {
+  // call any hooks here
+  return real_main(argc, argv);
+}
 
 
 void load_preview_image(boolean update_always) {

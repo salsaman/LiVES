@@ -154,6 +154,19 @@ giw_CFLAGS=-DENABLE_GIW=1
 endif
 
 
+if TEST_BINDINGS
+bindings_SOURCES = bindings.cpp bindings.hpp
+bindings_CFLAGS = -fvisibility=hidden
+if IS_DARWIN
+bindings_LIBFLAGS = -dynamiclib -module
+bindings_CFLAGS += -fno-common
+else
+bindings_LIBFLAGS = -shared -fPIC -DPIC -module
+bindings_CFLAGS += -fPIC -DPIC
+endif
+endif
+
+
 lives_exe_SOURCES = \
 	widget-helper.c widget-helper.h \
 	widget-helper-gtk.h widget-helper-qt.h \
@@ -196,11 +209,11 @@ lives_exe_SOURCES = \
 	$(jack_SOURCES) \
 	$(pulse_SOURCES) \
 	$(ldvgrab_SOURCES) \
-	$(giw_SOURCES)
+	$(giw_SOURCES) \
+	$(bindings_SOURCES)
 
 
-
-lives_exe_LDFLAGS = $(gtk_LIBFLAGS) -shared $(oil_LIBFLAGS)
+lives_exe_LDFLAGS = $(gtk_LIBFLAGS) -shared $(oil_LIBFLAGS) $(bindings_LIBFLAGS)
 
 lives_exe_LDADD = @X11_LIBS@ @MJPEGTOOLS_LIBS@ $(osc_LDADD) $(jack_LDADD) $(ldvgrab_LDADD) \
 	$(alsa_LDADD) $(pulse_LDADD) $(png_LDADD) $(swscale_LDADD) $(pthread_LDADD) $(libweed_LDADD) \
@@ -212,9 +225,7 @@ AM_CFLAGS = -Wstrict-aliasing=0 $(yuv4mpeg_CFLAGS) $(ldvgrab_CFLAGS) $(dvgrab_CF
 	$(oil_CFLAGS) \
 	$(darwin_CFLAGS) $(irix_CFLAGS) $(linux_CFLAGS) $(solaris_CFLAGS) $(osc_CFLAGS) $(mingw_CFLAGS) $(alsa_CFLAGS) $(png_CFLAGS) $(swscale_CFLAGS) \
 	$(jack_CFLAGS) $(pulse_CFLAGS) $(giw_CFLAGS) $(unicap_CFLAGS) $(libweed_CFLAGS) $(libweed_compat_CFLAGS) \
-	-DLIVES_LIBDIR=\""$(libdir)"\" $(gtk_def)
-
-AM_CXXFLAGS = $(AM_CFLAGS) #-I/usr/include/qt5 -fPIE
+	-DLIVES_LIBDIR=\""$(libdir)"\" $(gtk_def) $(bindings_CFLAGS)
 
 
 if HAVE_AVFORMAT
@@ -227,7 +238,9 @@ endif
 
 if ENABLE_PROFILING
 AM_CFLAGS += -pg
-AM_CXXFLAGS += -pg
 endif
+
+AM_CXXFLAGS = $(AM_CFLAGS)
+
 
 

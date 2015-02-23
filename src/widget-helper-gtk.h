@@ -775,6 +775,7 @@ typedef GdkInterpType                     LiVESInterpType;
 #define LIVES_IS_IMAGE(widget) GTK_IS_IMAGE(widget)
 #define LIVES_IS_ENTRY(widget) GTK_IS_ENTRY(widget)
 #define LIVES_IS_RANGE(widget) GTK_IS_RANGE(widget)
+#define LIVES_IS_PROGRESS_BAR(widget) GTK_IS_PROGRESS_BAR(widget)
 #define LIVES_IS_TEXT_VIEW(widget) GTK_IS_TEXT_VIEW(widget)
 #define LIVES_IS_MENU_ITEM(widget) GTK_IS_MENU_ITEM(widget)
 #define LIVES_IS_FILE_CHOOSER(widget) GTK_IS_FILE_CHOOSER(widget)

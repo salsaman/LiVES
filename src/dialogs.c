@@ -2541,7 +2541,7 @@ static void create_threaded_dialog(gchar *text, boolean has_cancel) {
   LiVESWidget *vbox;
   gchar tmp_label[256];
  
-  procw=(xprocess*)(lives_malloc(sizeof(xprocess)));
+  procw=(xprocess*)(lives_calloc(1,sizeof(xprocess)));
 
   procw->processing = lives_standard_dialog_new (_("LiVES: - Processing..."),FALSE);
 
@@ -2610,6 +2610,8 @@ static void create_threaded_dialog(gchar *text, boolean has_cancel) {
   lives_widget_show_all(procw->processing);
 
   lives_set_cursor_style(LIVES_CURSOR_BUSY,procw->processing);
+
+  procw->is_ready=TRUE;
 }
 
 
@@ -2625,7 +2627,7 @@ void threaded_dialog_spin (void) {
     return;
   }
 
-  if (procw==NULL) return;
+  if (procw==NULL||!procw->is_ready) return;
 
   if (mainw->current_file<0||cfile==NULL||cfile->progress_start==0||cfile->progress_end==0||
       strlen(mainw->msg)==0||(progress=atoi(mainw->msg))==0) {

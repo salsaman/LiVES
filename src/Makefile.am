@@ -242,19 +242,26 @@ liblives_la_LIBFLAGS = -dynamiclib -module
 liblives_la_CFLAGS += -fno-common
 else
 liblives_la_LIBFLAGS = -fPIC -DPIC -module
-liblives_la_CFLAGS += -fPIC -DPIC
+liblives_la_CFLAGS += -shared -fPIC -DPIC
 endif
 
 
 liblivesdir = .
 
-liblives_la_LDFLAGS = -Wl,-Bstatic $(lives_exe_ldflags) $(liblives_la_LIBFLAGS) \
-	-lweed_slice_static -lweed-utils_static @X11_LIBS@ @MJPEGTOOLS_LIBS@ $(osc_LDADD) $(jack_LDADD) $(ldvgrab_LDADD) \
+liblives_la_LDFLAGS = -lweed_slice -lweed-utils \
+	@X11_LIBS@ @MJPEGTOOLS_LIBS@ \
+        $(jack_LDADD) $(ldvgrab_LDADD) \
 	$(alsa_LDADD) $(pulse_LDADD) $(png_LDADD) $(swscale_LDADD) $(pthread_LDADD) \
-	$(giw_LDADD) $(v4l1_LDADD) @UNICAP_LIBS@
+	$(giw_LDADD) $(v4l1_LDADD) @UNICAP_LIBS@ $(gtk_LIBFLAGS) $(oil_LIBFLAGS)
 
 liblives_la_CFLAGS += $(AM_CFLAGS) -Wno-unused-function -DNO_MAIN
 
+
+all-local: 
+	@echo -n "-L.libs -llives -ld " > flags.txt
+	@echo $(liblives_la_LDFLAGS) >> flags.txt
+	@sed -i s/weed_slice/weed_slice_static/g flags.txt
+	@sed -i s/weed-utils/weed-utils_static/g flags.txt
 endif
 
 

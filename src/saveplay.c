@@ -2786,7 +2786,6 @@ void play_file (void) {
 
 #ifdef ENABLE_OSC
     lives_osc_notify(LIVES_OSC_NOTIFY_PLAYBACK_STARTED,"");
-    if (mainw->osc_auto) lives_osc_notify_success(NULL);
 #endif
     
 #ifdef ENABLE_JACK

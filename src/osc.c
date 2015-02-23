@@ -51,6 +51,34 @@ static boolean via_shortcut=FALSE;
 
 #define FX_MAX FX_KEYS_MAX_VIRTUAL-1
 
+#ifdef NO_MAIN
+void binding_cb (int msgnumber,const char *msgstring);
+#endif
+
+
+static boolean osc_playall(livespointer data) {
+  on_playall_activate(NULL,NULL);
+  return FALSE;
+}
+
+
+static boolean osc_show_info(livespointer text) {
+  do_info_dialog(text);
+  return FALSE;
+}
+
+static boolean osc_show_blocking_info(livespointer text) {
+  do_blocking_info_dialog(text);
+  return FALSE;
+}
+
+
+// TODO - move into bindings.c
+void idle_show_info(const char *text, boolean blocking) {
+  if (!blocking) lives_idle_add(osc_show_info,(livespointer)text);
+  else lives_idle_add(osc_show_blocking_info,(livespointer)text);
+}
+
 
 
 /* convert a big endian 32 bit string to an int for internal use */
@@ -171,7 +199,12 @@ boolean lives_status_send (const char *msg) {
 }
 
 
+
 boolean lives_osc_notify (int msgnumber,const char *msgstring) {
+#ifdef NO_MAIN
+  binding_cb(msgnumber, msgstring);
+#endif
+
   if (notify_socket==NULL) return FALSE;
   if (!prefs->omc_events&&(msgnumber!=LIVES_OSC_NOTIFY_SUCCESS
 			   &&msgnumber!=LIVES_OSC_NOTIFY_FAILED)) return FALSE;
@@ -438,6 +471,7 @@ boolean lives_osc_cb_play (void *context, int arglen, const void *vargs, OSCTime
   if (!lives_osc_check_arguments (arglen,vargs,"ff",FALSE)) {
     if (!lives_osc_check_arguments (arglen,vargs,"f",FALSE)) {
       if (!lives_osc_check_arguments (arglen,vargs,"",FALSE)) {
+	g_print("pt a15\n");
 	return lives_osc_notify_failure();
       }
     }
@@ -463,14 +497,9 @@ boolean lives_osc_cb_play (void *context, int arglen, const void *vargs, OSCTime
 
   }
 
-  // re - add the timer, as we will hang here, and we want to receive messages still during playback
-  lives_timer_remove (mainw->kb_timer);
-  mainw->kb_timer=lives_timer_add(KEY_RPT_INTERVAL,&ext_triggers_poll,NULL);
-  on_playall_activate(NULL,NULL);
-  mainw->kb_timer_end=TRUE;
+  lives_idle_add(osc_playall,NULL);
 
-  mainw->osc_auto=FALSE;
-  return TRUE;
+  return lives_osc_notify_success(NULL);
 }
 
 boolean lives_osc_cb_playsel (void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
@@ -525,16 +554,8 @@ boolean lives_osc_cb_play_forward (void *context, int arglen, const void *vargs,
     if (mainw->playing_file==1) lives_osc_notify_failure();
 
   if (mainw->playing_file==-1&&mainw->current_file>0) {
-    mainw->osc_auto=TRUE; ///< request early notifiction of success
-
-    // re - add the timer, as we will hang here, and we want to receive messages still during playback
-    lives_timer_remove (mainw->kb_timer);
-    mainw->kb_timer=lives_timer_add(KEY_RPT_INTERVAL,&ext_triggers_poll,NULL);
-
-    on_playall_activate(NULL,NULL);
-
-    mainw->kb_timer_end=TRUE;
-    mainw->osc_auto=FALSE;
+    lives_idle_add(osc_playall,NULL);
+    return lives_osc_notify_success(NULL);
   }
   else if (mainw->current_file>0) {
     if (cfile->pb_fps<0||(cfile->play_paused&&cfile->freeze_fps<0)) 
@@ -556,17 +577,8 @@ boolean lives_osc_cb_play_backward (void *context, int arglen, const void *vargs
 
   if (mainw->playing_file==-1&&mainw->current_file>0) {
     mainw->reverse_pb=TRUE;
-
-    // re - add the timer, as we will hang here, and we want to receive messages still during playback
-    lives_timer_remove (mainw->kb_timer);
-    mainw->kb_timer=lives_timer_add(KEY_RPT_INTERVAL,&ext_triggers_poll,NULL);
-
-    mainw->osc_auto=TRUE; ///< request early notifiction of success
-
-    on_playall_activate(NULL,NULL);
-
-    mainw->kb_timer_end=TRUE;
-    mainw->osc_auto=FALSE;
+    lives_idle_add(osc_playall,NULL);
+    return lives_osc_notify_success(NULL);
   }
   else if (mainw->current_file>0) {
     if (cfile->pb_fps>0||(cfile->play_paused&&cfile->freeze_fps>0)) 

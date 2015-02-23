@@ -44,54 +44,81 @@ public:
    static void foo(int a);
    };*/
 
+#include <inttypes.h>
 
-static boolean is_big_endian() {
+#ifndef HAVE_OSC_TT
+#ifdef __sgi
+    #define HAS8BYTEINT
+    /* You may have to change this typedef if there's some other
+       way to specify 8 byte ints on your system */
+    typedef long long int8;
+    typedef unsigned long long uint8;
+    typedef unsigned long uint4;
+#else
+    /* You may have to redefine this typedef if ints on your system 
+       aren't 4 bytes. */
+    typedef unsigned int uint4;
+#endif
+
+
+#ifdef HAS8BYTEINT
+    typedef uint8 OSCTimeTag;
+#else
+    typedef struct {
+        uint4 seconds;
+        uint4 fraction;
+    } OSCTimeTag;
+#endif
+
+#endif
+
+
+static bool is_big_endian() {
   int32_t testint = 0x12345678;
   char *pMem;
   pMem = (char *) &testint;
-  if (pMem[0] == 0x78) return FALSE;
-  return TRUE;
+  if (pMem[0] == 0x78) return false;
+  return true;
 }
 
-
-extern "C" {
-  int real_main(int argc, char *argv[]);
-  void lives_exit(void);
-  boolean lives_osc_cb_fgclip_select(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra);
-  boolean lives_osc_record_start(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra);
-  boolean lives_osc_record_stop(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra);
-  boolean lives_osc_record_toggle(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra);
-}
 
 /////////////////////////////////////////////////////
 
 #include <list>
-
+#include <string.h>
 
 using namespace std;
 
-namespace LiVES {
+
+//// API start /////
+
+
+//namespace lives {
 
   class LIVES_DLL_PUBLIC clip {
   public:
-    boolean select(int cnum);
+    bool select(int cnum);
   };
   
   
   class LIVES_DLL_PUBLIC record {
   public:
-    static boolean enable();
-    static boolean disable();
-    static boolean toggle();
+    static bool enable();
+    static bool disable();
+    static bool toggle();
   };
 
 
-  class LIVES_DLL_PUBLIC LiVES {
+  class LIVES_DLL_PUBLIC livesApp {
   public:
-    LiVES(int argc, char *argv[]);
-    ~LiVES();
+    livesApp();
+    livesApp(int argc, char *argv[]);
+    ~livesApp();
 
     list<clip *> clipList();
 
   };
-}
+
+
+
+//}

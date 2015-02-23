@@ -154,18 +154,6 @@ giw_CFLAGS=-DENABLE_GIW=1
 endif
 
 
-if TEST_BINDINGS
-bindings_SOURCES = bindings.cpp bindings.hpp
-bindings_CFLAGS = -fvisibility=hidden
-if IS_DARWIN
-bindings_LIBFLAGS = -dynamiclib -module
-bindings_CFLAGS += -fno-common
-else
-bindings_LIBFLAGS = -shared -fPIC -DPIC -module
-bindings_CFLAGS += -fPIC -DPIC
-endif
-endif
-
 
 lives_exe_SOURCES = \
 	widget-helper.c widget-helper.h \
@@ -209,11 +197,10 @@ lives_exe_SOURCES = \
 	$(jack_SOURCES) \
 	$(pulse_SOURCES) \
 	$(ldvgrab_SOURCES) \
-	$(giw_SOURCES) \
-	$(bindings_SOURCES)
+	$(giw_SOURCES)
 
 
-lives_exe_LDFLAGS = $(gtk_LIBFLAGS) -shared $(oil_LIBFLAGS) $(bindings_LIBFLAGS)
+lives_exe_LDFLAGS = $(gtk_LIBFLAGS) -shared $(oil_LIBFLAGS)
 
 lives_exe_LDADD = @X11_LIBS@ @MJPEGTOOLS_LIBS@ $(osc_LDADD) $(jack_LDADD) $(ldvgrab_LDADD) \
 	$(alsa_LDADD) $(pulse_LDADD) $(png_LDADD) $(swscale_LDADD) $(pthread_LDADD) $(libweed_LDADD) \
@@ -225,7 +212,7 @@ AM_CFLAGS = -Wstrict-aliasing=0 $(yuv4mpeg_CFLAGS) $(ldvgrab_CFLAGS) $(dvgrab_CF
 	$(oil_CFLAGS) \
 	$(darwin_CFLAGS) $(irix_CFLAGS) $(linux_CFLAGS) $(solaris_CFLAGS) $(osc_CFLAGS) $(mingw_CFLAGS) $(alsa_CFLAGS) $(png_CFLAGS) $(swscale_CFLAGS) \
 	$(jack_CFLAGS) $(pulse_CFLAGS) $(giw_CFLAGS) $(unicap_CFLAGS) $(libweed_CFLAGS) $(libweed_compat_CFLAGS) \
-	-DLIVES_LIBDIR=\""$(libdir)"\" $(gtk_def) $(bindings_CFLAGS)
+	-DLIVES_LIBDIR=\""$(libdir)"\" $(gtk_def)
 
 
 if HAVE_AVFORMAT
@@ -241,6 +228,34 @@ AM_CFLAGS += -pg
 endif
 
 AM_CXXFLAGS = $(AM_CFLAGS)
+
+
+if TEST_BINDINGS
+
+liblives_libs = liblives.la
+lib_LTLIBRARIES = $(liblives_libs)
+
+liblives_la_SOURCES = $(lives_exe_SOURCES) bindings.cpp bindings.hpp
+liblives_la_CFLAGS = -fvisibility=hidden
+if IS_DARWIN
+liblives_la_LIBFLAGS = -dynamiclib -module
+liblives_la_CFLAGS += -fno-common
+else
+liblives_la_LIBFLAGS = -fPIC -DPIC -module
+liblives_la_CFLAGS += -fPIC -DPIC
+endif
+
+
+liblivesdir = .
+
+liblives_la_LDFLAGS = -Wl,-Bstatic $(lives_exe_ldflags) $(liblives_la_LIBFLAGS) \
+	-lweed_slice_static -lweed-utils_static @X11_LIBS@ @MJPEGTOOLS_LIBS@ $(osc_LDADD) $(jack_LDADD) $(ldvgrab_LDADD) \
+	$(alsa_LDADD) $(pulse_LDADD) $(png_LDADD) $(swscale_LDADD) $(pthread_LDADD) \
+	$(giw_LDADD) $(v4l1_LDADD) @UNICAP_LIBS@
+
+liblives_la_CFLAGS += $(AM_CFLAGS) -Wno-unused-function -DNO_MAIN
+
+endif
 
 
 

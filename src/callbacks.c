@@ -4476,7 +4476,7 @@ boolean prevclip_callback (LiVESAccelGroup *group, LiVESObject *obj, uint32_t ke
   }
   do {
     if (num_tried++==num_clips) return TRUE; // we might have only audio clips, and then we will block here
-    if ((list_index=list_index->prev)==NULL) list_index=lives_list_last (mainw->cliplist);
+    if (list_index==NULL||((list_index=list_index->prev)==NULL)) list_index=lives_list_last (mainw->cliplist);
     i=LIVES_POINTER_TO_INT (list_index->data);
   } while ((mainw->files[i]==NULL||mainw->files[i]->opening||mainw->files[i]->restoring||i==mainw->scrap_file||
 	    i==mainw->ascrap_file||(!mainw->files[i]->frames&&mainw->playing_file>-1))&&
@@ -4513,7 +4513,7 @@ boolean nextclip_callback (LiVESAccelGroup *group, LiVESObject *obj, uint32_t ke
 
   do {
     if (num_tried++==num_clips) return TRUE; // we might have only audio clips, and then we will block here
-    if ((list_index=list_index->next)==NULL) list_index=mainw->cliplist;
+    if (list_index==NULL||((list_index=list_index->next)==NULL)) list_index=mainw->cliplist;
     i=LIVES_POINTER_TO_INT (list_index->data);
   } while ((mainw->files[i]==NULL||mainw->files[i]->opening||mainw->files[i]->restoring||i==mainw->scrap_file||
 	    i==mainw->ascrap_file||(!mainw->files[i]->frames&&mainw->playing_file>-1))&&

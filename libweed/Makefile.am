@@ -39,15 +39,21 @@ extra_ldflags = -fPIC -DPIC
 extra_cflags = -fPIC -DPIC
 endif
 
-EXTRA_DIST = libweed.doxygen libweed.pc libweed-plugin.pc libweed_slice.pc libweed-utils.pc libweed-compat.pc
+lib_LTLIBRARIES = libweed.la libweed_slice.la libweed-utils.la libweed_static.la libweed_slice_static.la libweed-utils_static.la
 
-lib_LTLIBRARIES = libweed.la libweed_slice.la libweed-utils.la
+EXTRA_DIST = libweed.doxygen libweed.pc libweed-plugin.pc libweed_slice.pc libweed-utils.pc libweed-compat.pc
 
 libweed_la_SOURCES = weed.c
 
 libweed_slice_la_SOURCES = weed-gslice.c
 
 libweed_utils_la_SOURCES = weed-utils.c 
+
+libweed_static_la_SOURCES = weed.c
+
+libweed_slice_static_la_SOURCES = weed-gslice.c
+
+libweed_utils_static_la_SOURCES = weed-utils.c 
 
 
 libweedinclude_HEADERS = weed.h weed-host.h weed-plugin.h weed-utils.h weed-events.h weed-palettes.h weed-effects.h \
@@ -56,20 +62,28 @@ libweedinclude_HEADERS = weed.h weed-host.h weed-plugin.h weed-utils.h weed-even
 libweedincludedir = "$(includedir)/weed"
 
 libweed_ladir = "$(libdir)/weed"
+libweed_static_ladir = "$(libdir)/weed"
+
 
 libweed_la_CFLAGS = -fvisibility=hidden
 
 shared_LDFLAGS = -shared --tag=disable-static
 
-libweed_la_LDFLAGS = -version-info $(WEED_SO_VERSION) $(shared_LDFLAGS)
+static_LDFLAGS = -static
 
-libweed_slice_la_CFLAGS = @GLIB_CFLAGS@ -fvisibility=hidden
+libweed_la_LDFLAGS = -version-info $(WEED_SO_VERSION) $(shared_LDFLAGS)
+libweed_static_la_LDFLAGS = -version-info $(WEED_SO_VERSION) $(static_LDFLAGS)
+
+libweed_slice_la_CFLAGS = @GLIB_CFLAGS@ $(libweed_la_CFLAGS)
+libweed_slice_static_la_CFLAGS = @GLIB_CFLAGS@ 
 
 libweed_slice_la_LDFLAGS = @GLIB_LIBS@ -version-info $(WEED_SO_VERSION) $(shared_LDFLAGS)
+libweed_slice_static_la_LDFLAGS = @GLIB_LIBS@ -version-info $(WEED_SO_VERSION) $(static_LDFLAGS)
 
 libweed_utils_la_CFLAGS = $(extra_cflags)
 
 libweed_utils_la_LDFLAGS = $(extra_ldflags) -version-info $(WEED_SO_VERSION) $(shared_LDFLAGS)
+libweed_utils_static_la_LDFLAGS = $(extra_ldflags) -version-info $(WEED_SO_VERSION) $(static_LDFLAGS)
 
 
 uninstall-local:

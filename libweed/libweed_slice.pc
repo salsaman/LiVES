@@ -9,4 +9,5 @@ Requires:
 Requires.private: 
 Version: 0.7.0
 Libs: -L${libdir} -lweed_slice
+Static: -L${libdir} -lweed_slice_static
 Cflags: -I${includedir}

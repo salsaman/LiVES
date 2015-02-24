@@ -63,7 +63,7 @@ endif
 
 if ENABLE_OSC
 osc_SOURCES=osc.c osc.h omc-learn.c omc-learn.h osc_notify.h
-osc_LDADD=-L$(top_builddir)/libOSC/ -lOSC -L$(top_builddir)/libOSC/client/ -lOSC_client -lm
+osc_LDADD=$(top_builddir)/libOSC/.libs/libOSC.a $(top_builddir)/libOSC/client/.libs/libOSC_client.a -lm
 osc_CFLAGS = -DENABLE_OSC=1
 endif
 
@@ -193,6 +193,7 @@ lives_exe_SOURCES = \
 	cvirtual.c cvirtual.h \
 	startup.c startup.h \
 	pangotext.c pangotext.h \
+	lbindings.c lbindings.h \
 	$(unicap_SOURCES) \
 	$(jack_SOURCES) \
 	$(pulse_SOURCES) \
@@ -230,12 +231,12 @@ endif
 AM_CXXFLAGS = $(AM_CFLAGS)
 
 
-if TEST_BINDINGS
+if BUILD_LIBLIVES
 
 liblives_libs = liblives.la
 lib_LTLIBRARIES = $(liblives_libs)
 
-liblives_la_SOURCES = $(lives_exe_SOURCES) bindings.cpp bindings.hpp
+liblives_la_SOURCES = $(lives_exe_SOURCES) liblives.cpp liblives.hpp
 liblives_la_CFLAGS = -fvisibility=hidden
 if IS_DARWIN
 liblives_la_LIBFLAGS = -dynamiclib -module
@@ -246,22 +247,28 @@ liblives_la_CFLAGS += -shared -fPIC -DPIC
 endif
 
 
-liblivesdir = .
+liblivesdir = $(libdir)
 
-liblives_la_LDFLAGS = -lweed_slice -lweed-utils \
+extra_LDFLAGS = -lweed_slice -lweed-utils \
 	@X11_LIBS@ @MJPEGTOOLS_LIBS@ \
         $(jack_LDADD) $(ldvgrab_LDADD) \
 	$(alsa_LDADD) $(pulse_LDADD) $(png_LDADD) $(swscale_LDADD) $(pthread_LDADD) \
 	$(giw_LDADD) $(v4l1_LDADD) @UNICAP_LIBS@ $(gtk_LIBFLAGS) $(oil_LIBFLAGS)
 
-liblives_la_CFLAGS += $(AM_CFLAGS) -Wno-unused-function -DNO_MAIN
+
+liblives_la_LDFLAGS =  $(extra_LDFLAGS)
+
+liblives_la_CFLAGS += $(AM_CFLAGS) -Wno-unused-function -DIS_LIBLIVES
 
 
 all-local: 
-	@echo -n "-L.libs -llives -ld " > flags.txt
-	@echo $(liblives_la_LDFLAGS) >> flags.txt
-	@sed -i s/weed_slice/weed_slice_static/g flags.txt
-	@sed -i s/weed-utils/weed-utils_static/g flags.txt
+	@echo -n "g++ \$$1 $(DESTDIR)$(libdir)/liblives.a -lOSC -lOSC_client " \
+	> ../tools/liblives-compile
+	@echo -n $(extra_LDFLAGS) >> ../tools/liblives-compile
+	@echo " -ldl \$${@:2}" >> ../tools/liblives-compile
+	@sed -i s/weed_slice/weed_slice_static/g ../tools/liblives-compile
+	@sed -i s/weed-utils/weed-utils_static/g ../tools/liblives-compile
+
 endif
 
 

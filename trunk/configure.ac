@@ -915,7 +915,9 @@ AM_CONDITIONAL(HAVE_SYSTEM_WEED_PLUGIN,$HAVE_SYSTEM_WEED_PLUGIN)
 
 AM_CONDITIONAL(BUILD_EXPERIMENTAL,false)
 
-AM_CONDITIONAL(TEST_BINDINGS,false)
+AC_ARG_ENABLE( liblives, [  --enable-liblives     Build additional liblives static library.] , liblives=yes, liblives=no)
+
+AM_CONDITIONAL(BUILD_LIBLIVES, test $liblives != no)
 
 
 dnl find -name Makefile.am | sed "s/\.\///g" | sed "s/\.am//g" >> configure.in

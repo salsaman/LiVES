@@ -29,6 +29,7 @@
 #include "cvirtual.h"
 #include "paramwindow.h"
 #include "ce_thumbs.h"
+#include "lbindings.h"
 
 #ifdef HAVE_YUV4MPEG
 #include "lives-yuv4mpeg.h"
@@ -2708,9 +2709,7 @@ void on_paste_as_new_activate (LiVESMenuItem *menuitem, livespointer user_data) 
   mainw->last_dprint_file=old_file;
   d_print(""); // force switchtext
 
-#ifdef ENABLE_OSC
-    lives_osc_notify(LIVES_OSC_NOTIFY_CLIP_OPENED,"");
-#endif
+  lives_notify(LIVES_NOTIFY_CLIP_OPENED,"");
 }
 
 
@@ -4894,9 +4893,8 @@ void on_save_set_activate (LiVESMenuItem *menuitem, livespointer user_data) {
     popup_lmap_errors(NULL,NULL);
   }
 
-#ifdef ENABLE_OSC
-  lives_osc_notify(LIVES_OSC_NOTIFY_CLIPSET_SAVED,old_set);
-#endif
+
+  lives_notify(LIVES_NOTIFY_CLIPSET_SAVED,old_set);
 
   lives_free (old_set);
   if (!mainw->no_exit) {
@@ -4925,7 +4923,6 @@ void on_load_set_activate (LiVESMenuItem *menuitem, livespointer user_data) {
   renamew=create_rename_dialog(3);
   lives_widget_show(renamew->dialog);
 }
-
 
 const char *get_set_name() {
   return mainw->set_name;
@@ -5097,9 +5094,7 @@ boolean on_load_set_ok (LiVESButton *button, livespointer user_data) {
 	d_print (msg);
 	lives_free (msg);
 
-#ifdef ENABLE_OSC
-	lives_osc_notify(LIVES_OSC_NOTIFY_CLIPSET_OPENED,mainw->set_name);
-#endif
+	lives_notify(LIVES_NOTIFY_CLIPSET_OPENED,mainw->set_name);
 
       }
     
@@ -5262,9 +5257,7 @@ boolean on_load_set_ok (LiVESButton *button, livespointer user_data) {
       mt_clip_select(mainw->multitrack,TRUE);
     }
 
-#ifdef ENABLE_OSC
-    lives_osc_notify(LIVES_OSC_NOTIFY_CLIP_OPENED,"");
-#endif
+    lives_notify(LIVES_NOTIFY_CLIP_OPENED,"");
   }
   
   threaded_dialog_spin();
@@ -8554,9 +8547,7 @@ on_load_cdtrack_ok_clicked                (LiVESButton     *button,
   lives_widget_set_sensitive(mainw->loop_video,TRUE);
   mainw->noswitch=FALSE;
 
-#ifdef ENABLE_OSC
-    lives_osc_notify(LIVES_OSC_NOTIFY_CLIP_OPENED,"");
-#endif
+  lives_notify(LIVES_NOTIFY_CLIP_OPENED,"");
 
 }
 
@@ -11481,9 +11472,7 @@ void on_recaudclip_ok_clicked (LiVESButton *button, livespointer user_data) {
     lives_snprintf(cfile->type,40,"Audio");
     add_to_clipmenu();
 
-#ifdef ENABLE_OSC
-    lives_osc_notify(LIVES_OSC_NOTIFY_CLIP_OPENED,"");
-#endif
+    lives_notify(LIVES_NOTIFY_CLIP_OPENED,"");
 
   }
 

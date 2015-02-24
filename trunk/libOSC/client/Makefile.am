@@ -9,7 +9,7 @@ OSC_CLIENT_LIB_FILE = libOSC_client.la
 
 ALL_LIB_OPTS = -export-dynamic
 
-noinst_LTLIBRARIES = $(OSC_CLIENT_LIB_FILE)
+lib_LTLIBRARIES = $(OSC_CLIENT_LIB_FILE)
 
 libOSC_client_la_CFLAGS = -I "$(srcdir)/.." $(DEBUG_CFLAGS) $(mingw_CFLAGS)
 

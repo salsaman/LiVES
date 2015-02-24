@@ -66,21 +66,23 @@ libweed_static_ladir = "$(libdir)/weed"
 
 
 libweed_la_CFLAGS = -fvisibility=hidden
+libweed_la_static_CFLAGS = -FPIC -DPIC
 
 shared_LDFLAGS = -shared --tag=disable-static
 
-static_LDFLAGS = -static
+static_LDFLAGS = -static -FPIC -DPIC
 
 libweed_la_LDFLAGS = -version-info $(WEED_SO_VERSION) $(shared_LDFLAGS)
 libweed_static_la_LDFLAGS = -version-info $(WEED_SO_VERSION) $(static_LDFLAGS)
 
 libweed_slice_la_CFLAGS = @GLIB_CFLAGS@ $(libweed_la_CFLAGS)
-libweed_slice_static_la_CFLAGS = @GLIB_CFLAGS@ 
+libweed_slice_static_la_CFLAGS = @GLIB_CFLAGS@ -FPIC -DPIC
 
 libweed_slice_la_LDFLAGS = @GLIB_LIBS@ -version-info $(WEED_SO_VERSION) $(shared_LDFLAGS)
 libweed_slice_static_la_LDFLAGS = @GLIB_LIBS@ -version-info $(WEED_SO_VERSION) $(static_LDFLAGS)
 
 libweed_utils_la_CFLAGS = $(extra_cflags)
+libweed_utils_static_la_CFLAGS = -FPIC -DPIC
 
 libweed_utils_la_LDFLAGS = $(extra_ldflags) -version-info $(WEED_SO_VERSION) $(shared_LDFLAGS)
 libweed_utils_static_la_LDFLAGS = $(extra_ldflags) -version-info $(WEED_SO_VERSION) $(static_LDFLAGS)
@@ -89,6 +91,7 @@ libweed_utils_static_la_LDFLAGS = $(extra_ldflags) -version-info $(WEED_SO_VERSI
 uninstall-local:
 	rm -rf "$(libweedincludedir)"
 	rm -rf "$(libweed_ladir)"
+	rm -rf "$(libdir)/libweed"*
 	rm -rf "$(libdir)/pkgconfig/libweed"*
 
 

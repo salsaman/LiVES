@@ -9,7 +9,7 @@ SUBDIRS = . client sendOSC
 OSC_LIB_FILE = libOSC.la 
 ALL_LIB_OPTS = -export-dynamic
 
-noinst_LTLIBRARIES = $(OSC_LIB_FILE)
+lib_LTLIBRARIES = $(OSC_LIB_FILE)
 
 if IS_SOLARIS
 solaris_CFLAGS=-DIS_SOLARIS=1
@@ -43,6 +43,7 @@ libOSC_la_SOURCES = OSC-address-space.c OSC-address-space.h\
 		 OSC-struct.h \
 		 OSC-dispatch.h
 endif
+
 
 libOSC_la_LDFLAGS = $(ALL_LIB_OPTS) $(mingw_LIBFLAGS) -DDYNAMIC -O2 -Wall -rdynamic
 

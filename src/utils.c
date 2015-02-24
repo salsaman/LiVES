@@ -23,6 +23,7 @@
 #include "support.h"
 #include "audio.h"
 #include "resample.h"
+#include "lbindings.h"
 
 static boolean  omute,  osepwin,  ofs,  ofaded,  odouble;
 
@@ -3841,9 +3842,7 @@ boolean after_foreign_play(void) {
   cfile->changed=TRUE;
   save_clip_values(mainw->current_file);
   if (prefs->crash_recovery) add_to_recovery_file(cfile->handle);
-#ifdef ENABLE_OSC
-  lives_osc_notify(LIVES_OSC_NOTIFY_CLIP_OPENED,"");
-#endif
+  lives_notify(LIVES_NOTIFY_CLIP_OPENED,"");
   return TRUE;
 }
 

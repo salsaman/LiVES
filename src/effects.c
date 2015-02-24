@@ -28,6 +28,7 @@
 #include "cvirtual.h"
 #include "resample.h"
 #include "ce_thumbs.h"
+#include "lbindings.h"
 
 //////////// Effects ////////////////
 
@@ -574,10 +575,7 @@ boolean do_effect(lives_rfx_t *rfx, boolean is_preview) {
 	}
 
       }
-      
-#ifdef ENABLE_OSC
-    lives_osc_notify(LIVES_OSC_NOTIFY_CLIP_OPENED,"");
-#endif
+      lives_notify(LIVES_NOTIFY_CLIP_OPENED,"");
     }
     mainw->is_generating=FALSE;
   }

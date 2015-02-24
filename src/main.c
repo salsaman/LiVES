@@ -51,6 +51,7 @@
 #include "startup.h"
 #include "cvirtual.h"
 #include "ce_thumbs.h"
+#include "lbindings.h"
 
 #ifdef ENABLE_OSC
 #include "omc-learn.h"
@@ -129,7 +130,8 @@ void break_me(void) {
 }
 
 
-#ifdef NO_MAIN
+#ifdef IS_LIBLIVES
+// in library we run gtk in a thread so we can return to caller
 static pthread_t gtk_thread;
 void *gtk_thread_wrapper(void *data) {
   gtk_main();
@@ -2583,10 +2585,6 @@ static boolean lives_startup(livespointer data) {
 		    if (prefs->show_gui) {
 		      lives_widget_show (mainw->LiVES);
 		    }
-#ifdef ENABLE_OSC
-		    lives_osc_notify(LIVES_OSC_NOTIFY_MODE_CHANGED,(tmp=lives_strdup_printf("%d",STARTUP_CE)));
-		    lives_free(tmp);
-#endif
 		  }
 		}}}}}}}}
 
@@ -2722,6 +2720,8 @@ static boolean lives_startup(livespointer data) {
 
   mainw->go_away=FALSE;
 
+  lives_notify(LIVES_NOTIFY_MODE_CHANGED,(tmp=lives_strdup_printf("%d",STARTUP_CE)));
+  lives_free(tmp);
 
   return FALSE;
 } // end lives_startup()
@@ -2768,7 +2768,7 @@ void set_signal_handlers(SignalHandlerPointer sigfunc) {
 }
 
 
-int real_main (int argc, char *argv[]) {
+ int real_main (int argc, char *argv[], ulong id) {
 #ifdef ENABLE_OSC
 #ifdef IS_MINGW
   WSADATA wsaData;
@@ -2842,6 +2842,8 @@ int real_main (int argc, char *argv[]) {
   mainw->foreign=FALSE;
   memset (start_file,0,1);
   mainw->has_session_tmpdir=FALSE;
+
+  mainw->id=id;
 
 #ifndef IS_MINGW
   lives_snprintf(mainw->first_info_file,PATH_MAX,"%s"LIVES_DIR_SEPARATOR_S".info.%d",prefs->tmpdir,capable->mainpid);
@@ -3121,7 +3123,7 @@ int real_main (int argc, char *argv[]) {
 
   lives_idle_add(lives_startup,NULL);
 
-#ifndef NO_MAIN
+#ifndef IS_LIBLIVES
 #ifdef GUI_GTK
   gtk_main ();
 #endif
@@ -3916,10 +3918,10 @@ void load_end_image(int frame) {
 }
 
 
-#ifndef NO_MAIN
+#ifndef IS_LIBLIVES
 int main (int argc, char *argv[]) {
   // call any hooks here
-  return real_main(argc, argv);
+  return real_main(argc, argv, 0);
 }
 #endif
 
@@ -5771,13 +5773,11 @@ void load_frame_image(int frame) {
 	if (mainw->multitrack!=NULL&&!cfile->opening) animate_multitrack(mainw->multitrack);
 	if (framecount!=NULL) lives_free(framecount);
 	
-#ifdef ENABLE_OSC
 	// format is now msg|timecode|fgclip|fgframe|fgfps|
-	lives_osc_notify(LIVES_OSC_NOTIFY_FRAME_SYNCH,(const gchar *)
-			 (tmp=lives_strdup_printf("%.8f|%d|%d|%.3f|",(double)mainw->currticks/U_SEC,
+	lives_notify(LIVES_NOTIFY_FRAME_SYNCH,(const gchar *)
+		     (tmp=lives_strdup_printf("%.8f|%d|%d|%.3f|",(double)mainw->currticks/U_SEC,
 					      mainw->current_file,mainw->actual_frame,cfile->pb_fps)));
 	lives_free(tmp);
-#endif
 	
 	return;
       }
@@ -6044,13 +6044,11 @@ void load_frame_image(int frame) {
 	if (mainw->multitrack!=NULL&&!cfile->opening) animate_multitrack(mainw->multitrack);
 	if (framecount!=NULL) lives_free(framecount);
       
-#ifdef ENABLE_OSC
 	// format is now msg|timecode|fgclip|fgframe|fgfps|
-	lives_osc_notify(LIVES_OSC_NOTIFY_FRAME_SYNCH,(const gchar *)
-			 (tmp=lives_strdup_printf("%.8f|%d|%d|%.3f|",(double)mainw->currticks/U_SEC,
+	lives_notify(LIVES_NOTIFY_FRAME_SYNCH,(const gchar *)
+		     (tmp=lives_strdup_printf("%.8f|%d|%d|%.3f|",(double)mainw->currticks/U_SEC,
 					      mainw->current_file,mainw->actual_frame,cfile->pb_fps)));
 	lives_free(tmp);
-#endif
 	
 	return;
       }
@@ -6169,13 +6167,12 @@ void load_frame_image(int frame) {
     
     if (pixbuf!=NULL) lives_object_unref(pixbuf);
     
-#ifdef ENABLE_OSC
     // format is now msg|timecode|fgclip|fgframe|fgfps|
-    lives_osc_notify(LIVES_OSC_NOTIFY_FRAME_SYNCH,(const gchar *)
-		     (tmp=lives_strdup_printf("%.8f|%d|%d|%.3f|",(double)mainw->currticks/U_SEC,
+    lives_notify(LIVES_NOTIFY_FRAME_SYNCH,(const gchar *)
+		 (tmp=lives_strdup_printf("%.8f|%d|%d|%.3f|",(double)mainw->currticks/U_SEC,
 					  mainw->current_file,mainw->actual_frame,cfile->pb_fps)));
     lives_free(tmp);
-#endif
+
     if (framecount!=NULL) lives_free(framecount);
     return;
   }
@@ -6379,9 +6376,9 @@ void close_current_file(int file_to_switch_to) {
 	(mainw->multitrack==NULL||mainw->current_file!=mainw->multitrack->render_file)) {
       d_print ((tmp=lives_strdup_printf(_ ("Closed file %s\n"),cfile->file_name)));
       lives_free(tmp);
-#ifdef ENABLE_OSC
-      lives_osc_notify(LIVES_OSC_NOTIFY_CLIP_CLOSED,"");
-#endif
+
+      lives_notify(LIVES_NOTIFY_CLIP_CLOSED,"");
+
     }
     
     // resize frame widgets to default

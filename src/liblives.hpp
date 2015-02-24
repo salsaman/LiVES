@@ -1,4 +1,4 @@
-// bindings.hpp
+// liblives.hpp
 // LiVES (lives-exe)
 // (c) G. Finch <salsaman@gmail.com> 2015
 // Released under the GPL 3 or later
@@ -41,34 +41,15 @@
 public:
    Person(int _c) : c(_c) { }
    static void foo(int a);
-   };*/
+};*/
 
 #include <inttypes.h>
 
 #ifndef HAVE_OSC_TT
-#ifdef __sgi
-    #define HAS8BYTEINT
-    /* You may have to change this typedef if there's some other
-       way to specify 8 byte ints on your system */
-    typedef long long int8;
-    typedef unsigned long long uint8;
-    typedef unsigned long uint4;
-#else
-    /* You may have to redefine this typedef if ints on your system 
-       aren't 4 bytes. */
-    typedef unsigned int uint4;
-#endif
-
-
-#ifdef HAS8BYTEINT
-    typedef uint8 OSCTimeTag;
-#else
-    typedef struct {
-        uint4 seconds;
-        uint4 fraction;
-    } OSCTimeTag;
-#endif
-
+typedef struct {
+  uint32_t seconds;
+  uint32_t fraction;
+} OSCTimeTag;
 #endif
 
 
@@ -82,7 +63,7 @@ static bool is_big_endian() {
 
 
 extern "C" {
-  void binding_cb (int msgnumber,const char *msgstring);
+  void binding_cb (int msgnumber, const char *msgstring, uint64_t id);
 }
 
 /////////////////////////////////////////////////////
@@ -92,14 +73,36 @@ extern "C" {
 
 using namespace std;
 
+typedef unsigned long ulong;
+
 
 //// API start /////
 
 
 namespace lives {
+  typedef class livesApp livesApp;
+
+  typedef bool (*callback_f)(void *, void *);
+
+  typedef struct {
+    int msgnum;
+    callback_f func;
+    void *data;
+  } closure;
 
 
-typedef class livesApp livesApp;
+  typedef struct {
+    ulong id;
+    livesApp *app;
+  } livesAppCtx;
+
+
+  typedef struct {
+    int mode;
+  } modeChangedInfo;
+
+
+  typedef bool (*modeChanged_callback_f)(modeChangedInfo *, void *);
 
   class LIVES_DLL_PUBLIC clip {
   public:
@@ -148,11 +151,17 @@ typedef class livesApp livesApp;
     void play();
     bool stop();
 
+    bool addCallback(int msgnum, modeChanged_callback_f func, void *data);
+
     void showInfo(const char *text, bool blocking);
+
+    list<closure*> closures();
+
 
   private:
     set m_set;
-
+    uint64_t m_id;
+    list<closure*> m_closures;
   };
 
 

@@ -51,35 +51,11 @@ static boolean via_shortcut=FALSE;
 
 #define FX_MAX FX_KEYS_MAX_VIRTUAL-1
 
-#ifdef NO_MAIN
-void binding_cb (int msgnumber,const char *msgstring);
-#endif
-
 
 static boolean osc_playall(livespointer data) {
   on_playall_activate(NULL,NULL);
   return FALSE;
 }
-
-
-static boolean osc_show_info(livespointer text) {
-  do_info_dialog(text);
-  return FALSE;
-}
-
-static boolean osc_show_blocking_info(livespointer text) {
-  do_blocking_info_dialog(text);
-  return FALSE;
-}
-
-
-// TODO - move into bindings.c
-void idle_show_info(const char *text, boolean blocking) {
-  if (!blocking) lives_idle_add(osc_show_info,(livespointer)text);
-  else lives_idle_add(osc_show_blocking_info,(livespointer)text);
-}
-
-
 
 /* convert a big endian 32 bit string to an int for internal use */
 
@@ -201,13 +177,9 @@ boolean lives_status_send (const char *msg) {
 
 
 boolean lives_osc_notify (int msgnumber,const char *msgstring) {
-#ifdef NO_MAIN
-  binding_cb(msgnumber, msgstring);
-#endif
-
   if (notify_socket==NULL) return FALSE;
-  if (!prefs->omc_events&&(msgnumber!=LIVES_OSC_NOTIFY_SUCCESS
-			   &&msgnumber!=LIVES_OSC_NOTIFY_FAILED)) return FALSE;
+  if (!prefs->omc_events&&(msgnumber!=LIVES_NOTIFY_SUCCESS
+			   &&msgnumber!=LIVES_NOTIFY_FAILED)) return FALSE;
   else {
     char *msg;
     boolean retval;
@@ -223,13 +195,13 @@ boolean lives_osc_notify (int msgnumber,const char *msgstring) {
 
 boolean lives_osc_notify_success (const char *msg) {
   if (prefs->omc_noisy)
-    lives_osc_notify(LIVES_OSC_NOTIFY_SUCCESS,msg);
+    lives_osc_notify(LIVES_NOTIFY_SUCCESS,msg);
   return TRUE;
 }
 
 boolean lives_osc_notify_failure (void) {
   if (prefs->omc_noisy)
-    lives_osc_notify(LIVES_OSC_NOTIFY_FAILED,NULL);
+    lives_osc_notify(LIVES_NOTIFY_FAILED,NULL);
   return FALSE;
 }
 
@@ -237,7 +209,7 @@ boolean lives_osc_notify_failure (void) {
 /*
   void lives_osc_notify_cancel (void) {
   if (prefs->omc_noisy);
-  lives_osc_notify(LIVES_OSC_NOTIFY_CANCELLED,NULL);
+  lives_osc_notify(LIVES_NOTIFY_CANCELLED,NULL);
   }*/
 
 
@@ -309,42 +281,42 @@ static const char *get_omc_const(const char *cname) {
     return get_value_of((const int)WEED_PARAMETER_ELEMENT_PER_CHANNEL);
 
   // notification types
-  if (!strcmp(cname,"LIVES_OSC_NOTIFY_SUCCESS")) 
-    return get_value_of((const int)LIVES_OSC_NOTIFY_SUCCESS);
-  if (!strcmp(cname,"LIVES_OSC_NOTIFY_FAILED")) 
-    return get_value_of((const int)LIVES_OSC_NOTIFY_FAILED);
+  if (!strcmp(cname,"LIVES_NOTIFY_SUCCESS")) 
+    return get_value_of((const int)LIVES_NOTIFY_SUCCESS);
+  if (!strcmp(cname,"LIVES_NOTIFY_FAILED")) 
+    return get_value_of((const int)LIVES_NOTIFY_FAILED);
 
   // notification events
-  if (!strcmp(cname,"LIVES_OSC_NOTIFY_FRAME_SYNCH")) 
-    return get_value_of((const int)LIVES_OSC_NOTIFY_FRAME_SYNCH);
-  if (!strcmp(cname,"LIVES_OSC_NOTIFY_PLAYBACK_STARTED")) 
-    return get_value_of((const int)LIVES_OSC_NOTIFY_PLAYBACK_STARTED);
-  if (!strcmp(cname,"LIVES_OSC_NOTIFY_PLAYBACK_STOPPED"))
-    return get_value_of((const int)LIVES_OSC_NOTIFY_PLAYBACK_STOPPED);
-  if (!strcmp(cname,"LIVES_OSC_NOTIFY_PLAYBACK_STOPPED_RD"))
-    return get_value_of((const int)LIVES_OSC_NOTIFY_PLAYBACK_STOPPED_RD);
-  if (!strcmp(cname,"LIVES_OSC_NOTIFY_RECORD_STARTED"))
-    return get_value_of((const int)LIVES_OSC_NOTIFY_RECORD_STARTED);
-  if (!strcmp(cname,"LIVES_OSC_NOTIFY_RECORD_STOPPED"))
-    return get_value_of((const int)LIVES_OSC_NOTIFY_RECORD_STOPPED);
-  if (!strcmp(cname,"LIVES_OSC_NOTIFY_QUIT"))
-    return get_value_of((const int)LIVES_OSC_NOTIFY_QUIT);
-  if (!strcmp(cname,"LIVES_OSC_NOTIFY_CLIP_OPENED")) 
-    return get_value_of((const int)LIVES_OSC_NOTIFY_CLIP_OPENED);
-  if (!strcmp(cname,"LIVES_OSC_NOTIFY_CLIP_CLOSED"))
-    return get_value_of((const int)LIVES_OSC_NOTIFY_CLIP_CLOSED);
-  if (!strcmp(cname,"LIVES_OSC_NOTIFY_CLIPSET_OPENED"))
-    return get_value_of((const int)LIVES_OSC_NOTIFY_CLIPSET_OPENED);
-  if (!strcmp(cname,"LIVES_OSC_NOTIFY_CLIPSET_SAVED"))
-    return get_value_of((const int)LIVES_OSC_NOTIFY_CLIPSET_SAVED);
-  if (!strcmp(cname,"LIVES_OSC_NOTIFY_SUCCESS"))
-    return get_value_of((const int)LIVES_OSC_NOTIFY_SUCCESS);
-  if (!strcmp(cname,"LIVES_OSC_NOTIFY_FAILED"))
-    return get_value_of((const int)LIVES_OSC_NOTIFY_FAILED);
-  if (!strcmp(cname,"LIVES_OSC_NOTIFY_CANCELLED"))
-    return get_value_of((const int)LIVES_OSC_NOTIFY_CANCELLED);
-  if (!strcmp(cname,"LIVES_OSC_NOTIFY_MODE_CHANGED"))
-    return get_value_of((const int)LIVES_OSC_NOTIFY_MODE_CHANGED);
+  if (!strcmp(cname,"LIVES_NOTIFY_FRAME_SYNCH")) 
+    return get_value_of((const int)LIVES_NOTIFY_FRAME_SYNCH);
+  if (!strcmp(cname,"LIVES_NOTIFY_PLAYBACK_STARTED")) 
+    return get_value_of((const int)LIVES_NOTIFY_PLAYBACK_STARTED);
+  if (!strcmp(cname,"LIVES_NOTIFY_PLAYBACK_STOPPED"))
+    return get_value_of((const int)LIVES_NOTIFY_PLAYBACK_STOPPED);
+  if (!strcmp(cname,"LIVES_NOTIFY_PLAYBACK_STOPPED_RD"))
+    return get_value_of((const int)LIVES_NOTIFY_PLAYBACK_STOPPED_RD);
+  if (!strcmp(cname,"LIVES_NOTIFY_RECORD_STARTED"))
+    return get_value_of((const int)LIVES_NOTIFY_RECORD_STARTED);
+  if (!strcmp(cname,"LIVES_NOTIFY_RECORD_STOPPED"))
+    return get_value_of((const int)LIVES_NOTIFY_RECORD_STOPPED);
+  if (!strcmp(cname,"LIVES_NOTIFY_QUIT"))
+    return get_value_of((const int)LIVES_NOTIFY_QUIT);
+  if (!strcmp(cname,"LIVES_NOTIFY_CLIP_OPENED")) 
+    return get_value_of((const int)LIVES_NOTIFY_CLIP_OPENED);
+  if (!strcmp(cname,"LIVES_NOTIFY_CLIP_CLOSED"))
+    return get_value_of((const int)LIVES_NOTIFY_CLIP_CLOSED);
+  if (!strcmp(cname,"LIVES_NOTIFY_CLIPSET_OPENED"))
+    return get_value_of((const int)LIVES_NOTIFY_CLIPSET_OPENED);
+  if (!strcmp(cname,"LIVES_NOTIFY_CLIPSET_SAVED"))
+    return get_value_of((const int)LIVES_NOTIFY_CLIPSET_SAVED);
+  if (!strcmp(cname,"LIVES_NOTIFY_SUCCESS"))
+    return get_value_of((const int)LIVES_NOTIFY_SUCCESS);
+  if (!strcmp(cname,"LIVES_NOTIFY_FAILED"))
+    return get_value_of((const int)LIVES_NOTIFY_FAILED);
+  if (!strcmp(cname,"LIVES_NOTIFY_CANCELLED"))
+    return get_value_of((const int)LIVES_NOTIFY_CANCELLED);
+  if (!strcmp(cname,"LIVES_NOTIFY_MODE_CHANGED"))
+    return get_value_of((const int)LIVES_NOTIFY_MODE_CHANGED);
 
   // generic constants
   if (!strcmp(cname,"LIVES_FPS_MAX")) 
@@ -6981,7 +6953,7 @@ boolean lives_osc_poll(livespointer data) {
 
 void lives_osc_end(void) {
   if (notify_socket!=NULL) {
-    lives_osc_notify (LIVES_OSC_NOTIFY_QUIT,"");
+    lives_osc_notify (LIVES_NOTIFY_QUIT,"");
     lives_osc_close_notify_socket();
   }
   if (status_socket!=NULL) {

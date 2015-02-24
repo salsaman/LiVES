@@ -18,6 +18,7 @@
 #include "resample.h"
 #include "paramwindow.h"
 #include "ce_thumbs.h"
+#include "lbindings.h"
 
 extern void reset_frame_and_clip_index (void);
 
@@ -2717,16 +2718,12 @@ void response_ok (LiVESButton *button, livespointer user_data) {
 
 LIVES_INLINE void d_print_cancelled(void) {
   d_print(_("cancelled.\n"));
-#ifdef ENABLE_OSC
-      lives_osc_notify(LIVES_OSC_NOTIFY_CANCELLED,"");
-#endif
+  lives_notify(LIVES_NOTIFY_CANCELLED,"");
 }
 
 LIVES_INLINE void d_print_failed(void) {
   d_print(_("failed.\n"));
-#ifdef ENABLE_OSC
-      lives_osc_notify(LIVES_OSC_NOTIFY_FAILED,"");
-#endif
+  lives_notify(LIVES_NOTIFY_FAILED,"");
 }
 
 LIVES_INLINE void d_print_done(void) {

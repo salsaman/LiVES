@@ -50,6 +50,7 @@
 #include "framedraw.h"
 #include "cvirtual.h"
 #include "pangotext.h"
+#include "lbindings.h"
 
 #ifdef ENABLE_GIW
 #include "giw/giwvslider.h"
@@ -9395,10 +9396,8 @@ boolean multitrack_delete (lives_mt *mt, boolean save_layout) {
     lives_free(xtrabit);
   }
 
-#ifdef ENABLE_OSC
-  lives_osc_notify(LIVES_OSC_NOTIFY_MODE_CHANGED,(tmp=lives_strdup_printf("%d",STARTUP_CE)));
+  lives_notify(LIVES_NOTIFY_MODE_CHANGED,(tmp=lives_strdup_printf("%d",STARTUP_CE)));
   lives_free(tmp);
-#endif
 
   return TRUE;
 }
@@ -11159,10 +11158,8 @@ boolean on_multitrack_activate (LiVESMenuItem *menuitem, weed_plant_t *event_lis
   mainw_was_ready=mainw->is_ready;
   mainw->is_ready=TRUE;
 
-#ifdef ENABLE_OSC
-  lives_osc_notify(LIVES_OSC_NOTIFY_MODE_CHANGED,(tmp=lives_strdup_printf("%d",STARTUP_MT)));
+  lives_notify(LIVES_NOTIFY_MODE_CHANGED,(tmp=lives_strdup_printf("%d",STARTUP_MT)));
   lives_free(tmp);
-#endif
 
   multi->no_expose=FALSE;
 

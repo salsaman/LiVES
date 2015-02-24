@@ -11,7 +11,7 @@ LIBOSCDIR = ../client
 
 sendOSCdir = $(bindir)
 
-sendOSC_LDFLAGS = -L$(LIBOSCDIR) -lOSC_client $(mingw_LIBFLAGS)
+sendOSC_LDFLAGS = $(mingw_LIBFLAGS) $(top_builddir)/libOSC/client/.libs/libOSC_client.a
 
 sendOSC_CFLAGS = -I.. $(mingw_CFLAGS)
 

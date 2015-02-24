@@ -31,6 +31,7 @@
 #include "audio.h"
 #include "htmsocket.h"
 #include "cvirtual.h"
+#include "lbindings.h"
 
 
 boolean save_clip_values(int which) {
@@ -973,10 +974,7 @@ void open_file_sel(const gchar *file_name, double start, int frames) {
     lives_free(isubfname);
   }
 
-
-#ifdef ENABLE_OSC
-    lives_osc_notify(LIVES_OSC_NOTIFY_CLIP_OPENED,"");
-#endif
+  lives_notify(LIVES_NOTIFY_CLIP_OPENED,"");
 
   if (prefs->show_recent&&!mainw->is_generating) {
     add_to_recent(file_name,start,frames,mainw->file_open_params);
@@ -2213,13 +2211,12 @@ void save_file (int clip, int start, int end, const char *filename) {
     }
 
     mainw->no_switch_dprint=FALSE;
-#ifdef ENABLE_OSC
-    lives_osc_notify(LIVES_OSC_NOTIFY_SUCCESS,
-		     (mesg=lives_strdup_printf("encode %d \"%s\"",clip,
+
+    lives_notify(LIVES_NOTIFY_SUCCESS,
+		 (mesg=lives_strdup_printf("encode %d \"%s\"",clip,
 					   (tmp=lives_filename_from_utf8(full_file_name,-1,NULL,NULL,NULL)))));
     lives_free(tmp);
     lives_free(mesg);
-#endif
 
   }
   lives_free(full_file_name);
@@ -2784,9 +2781,7 @@ void play_file (void) {
 
   if (mainw->foreign||weed_playback_gen_start()) {
 
-#ifdef ENABLE_OSC
-    lives_osc_notify(LIVES_OSC_NOTIFY_PLAYBACK_STARTED,"");
-#endif
+    lives_notify(LIVES_NOTIFY_PLAYBACK_STARTED,"");
     
 #ifdef ENABLE_JACK
     if (mainw->event_list!=NULL&&!mainw->record&&audio_player==AUD_PLAYER_JACK&&mainw->jackd!=NULL&&
@@ -3033,9 +3028,7 @@ void play_file (void) {
 
   if (audio_player==AUD_PLAYER_JACK) audio_cache_end();
 
-#ifdef ENABLE_OSC
-  lives_osc_notify(LIVES_OSC_NOTIFY_PLAYBACK_STOPPED,"");
-#endif
+  lives_notify(LIVES_NOTIFY_PLAYBACK_STOPPED,"");
 
   mainw->video_seek_ready=FALSE;
 
@@ -4811,9 +4804,7 @@ void restore_file(const gchar *file_name) {
 
   switch_to_file((mainw->current_file=old_file),current_file);
 
-#ifdef ENABLE_OSC
-    lives_osc_notify(LIVES_OSC_NOTIFY_CLIP_OPENED,"");
-#endif
+  lives_notify(LIVES_NOTIFY_CLIP_OPENED,"");
 
 }
 
@@ -5833,9 +5824,7 @@ static boolean recover_files(gchar *recovery_file, boolean auto_recover) {
 	
 	threaded_dialog_spin();
 	
-#ifdef ENABLE_OSC
-	lives_osc_notify(LIVES_OSC_NOTIFY_CLIP_OPENED,"");
-#endif
+	lives_notify(LIVES_NOTIFY_CLIP_OPENED,"");
       }
       else {
 	mainw->cliplist = lives_list_append (mainw->cliplist, LIVES_INT_TO_POINTER (mainw->current_file));

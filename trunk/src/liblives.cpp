@@ -97,24 +97,11 @@ static void *play_thread(void *) {
 
 static volatile bool spinning;
 static ulong blocking_id;
-static int private_response_int;
-static char *private_response_string;
+static char *private_response;
 
-
-static bool private_int_cb(lives::privateIntInfo *info, void *data) {
+static bool private_cb(lives::privateInfo *info, void *data) {
   if (info->id == blocking_id) {
-    private_response_int = info->response;
-    spinning = false;
-    return false;
-  }
-
-  return true;
-}
-
-
-static bool private_string_cb(lives::privateStringInfo *info, void *data) {
-  if (info->id == blocking_id) {
-    private_response_string = info->response;
+    private_response = strdup(info->response);
     spinning = false;
     return false;
   }
@@ -225,14 +212,9 @@ namespace lives {
     return true;
   }
 
-  bool livesApp::addCallback(int msgnum, private_int_callback_f func, void *data) {
-    if (msgnum != LIVES_NOTIFY_PRIVATE_INT) return false;
-    appendClosure(msgnum, (callback_f)func, data);
-    return true;
-  }
 
-  bool livesApp::addCallback(int msgnum, private_string_callback_f func, void *data) {
-    if (msgnum != LIVES_NOTIFY_PRIVATE_STRING) return false;
+  bool livesApp::addCallback(int msgnum, private_callback_f func, void *data) {
+    if (msgnum != LIVES_NOTIFY_PRIVATE) return false;
     appendClosure(msgnum, (callback_f)func, data);
     return true;
   }
@@ -262,28 +244,47 @@ namespace lives {
     if (blocking) {
       spinning = true;
       blocking_id = lives_random();
-      addCallback(LIVES_NOTIFY_PRIVATE_INT, private_int_cb, NULL); 
+      addCallback(LIVES_NOTIFY_PRIVATE, private_cb, NULL); 
       idle_show_info(text,blocking,blocking_id);
       while (spinning) usleep(100);
-      return private_response_int;
+      int ret = atoi(private_response);
+      lives_free(private_response);
+      return ret;
     }
     idle_show_info(text,blocking,0);
     return 0;
   }
 
-  int livesApp::showInfo(const char *text) {
-    if (!m_id) return 0;
-    return showInfo(text, true);
+  char *livesApp::chooseFileWithPreview(const char *dirname, const char *title, int preview_type) {
+    spinning = true;
+    blocking_id = lives_random();
+    addCallback(LIVES_NOTIFY_PRIVATE, private_cb, NULL); 
+    idle_choose_file_with_preview(dirname,title,preview_type,blocking_id);
+    while (spinning) usleep(100);
+    char *ret = strdup(private_response);
+    lives_free(private_response);
+    return ret;
   }
 
 
   char *livesApp::chooseFileWithPreview(const char *dirname, int preview_type) {
+    return chooseFileWithPreview(dirname,NULL,preview_type);
+  }
+
+  clip *livesApp::openFile(const char *fname, double stime, int frames) {
+    if (fname == NULL) return NULL;
     spinning = true;
     blocking_id = lives_random();
-    addCallback(LIVES_NOTIFY_PRIVATE_STRING, private_string_cb, NULL); 
-    idle_choose_file_with_preview(dirname,NULL,preview_type,blocking_id);
+    addCallback(LIVES_NOTIFY_PRIVATE, private_cb, NULL); 
+    idle_open_file(fname, stime, frames, blocking_id);
     while (spinning) usleep(100);
-    return private_response_string;
+    ulong cid = strtoul(private_response, NULL, 10);
+    lives_free(private_response);
+    clip *c = NULL;
+    if (cid != 0l) {
+      c = new clip(cid);
+    }
+    return c;
   }
 
 
@@ -340,14 +341,17 @@ namespace lives {
     spinning = true;
     blocking_id = lives_random();
 
-    m_lives->addCallback(LIVES_NOTIFY_PRIVATE_INT, private_int_cb, NULL); 
+    m_lives->addCallback(LIVES_NOTIFY_PRIVATE, private_cb, NULL); 
 
     idle_save_set(name,arglen,(const void *)(*vargs),blocking_id);
 
     while (spinning) usleep(100);
     lives_free(*vargs);
-    return private_response_int;
+    bool ret = (bool)(atoi(private_response));
+    lives_free(private_response);
+    return ret;
   }
+
 
   clipList set::cliplist() {
     ulong *ids = get_unique_ids();
@@ -370,15 +374,20 @@ namespace lives {
 
   /////////////// clip ////////////////
 
-  clip::clip(uint64_t handle) {
-    m_handle = handle;
+  clip::clip(uint64_t uid) {
+    m_uid = uid;
   }
 
+  int clip::frames() {
+    int cnum = cnum_for_uid(m_uid);
+    if (mainw->files[cnum]!=NULL) return mainw->files[cnum]->frames;
+    return -1;
+  }
   
   bool clip::select() {
     bool ret = false;
     int arglen = 2;
-    int cnum = cnum_for_uid(m_handle);
+    int cnum = cnum_for_uid(m_uid);
     char **vargs=(char **)lives_malloc(sizeof(char *));
     *vargs = strdup(",i");
 
@@ -434,28 +443,16 @@ void binding_cb (int msgnumber, const char *msgstring, uint64_t id) {
 	  ret = (fn)((*it)->object, (*it)->data);
 	}
 	break;
-      case LIVES_NOTIFY_PRIVATE_INT:
+      case LIVES_NOTIFY_PRIVATE:
 	{
 	  // private event type
-	  lives::privateIntInfo info;
-	  char **msgtok = lives_strsplit(msgstring, " ", -1);
-	  info.id = strtoul(msgtok[0],NULL,10);
-	  info.response = atoi(msgtok[1]);
-	  lives_strfreev(msgtok);
-	  lives::private_int_callback_f fn = (lives::private_int_callback_f)((*it)->func);
-	  ret = (fn)(&info, (*it)->data);
-	}
-	break;
-      case LIVES_NOTIFY_PRIVATE_STRING:
-	{
-	  // private event type
-	  lives::privateStringInfo info;
+	  lives::privateInfo info;
 	  char **msgtok = lives_strsplit(msgstring, " ", -1);
 	  info.id = strtoul(msgtok[0],NULL,10);
 	  if (get_token_count(msgstring,' ')==1) info.response=NULL;
 	  else info.response = strdup(msgtok[1]);
 	  lives_strfreev(msgtok);
-	  lives::private_string_callback_f fn = (lives::private_string_callback_f)((*it)->func);
+	  lives::private_callback_f fn = (lives::private_callback_f)((*it)->func);
 	  ret = (fn)(&info, (*it)->data);
 	}
 	break;

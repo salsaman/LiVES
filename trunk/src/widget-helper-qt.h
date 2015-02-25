@@ -1470,6 +1470,9 @@ typedef int LiVESResponseType;
 #define LIVES_RESPONSE_INVALID QDialogButtonBox::InvalidRole
 #define LIVES_RESPONSE_SHOW_DETAILS 100
 
+#define LIVES_RESPONSE_RETRY 101
+#define LIVES_RESPONSE_ABORT 102
+#define LIVES_RESPONSE_RESET 103
 
 typedef QStyle::StandardPixmap LiVESArrowType;
 #define LIVES_ARROW_UP QStyle::SP_ArrowUp

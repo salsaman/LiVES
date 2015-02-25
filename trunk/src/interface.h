@@ -7,7 +7,7 @@
 #ifndef HAS_LIVES_INTERFACE_H
 #define HAS_LIVES_INTERFACE_H
 
-LiVESWidget* create_info_error_dialog (const gchar *text, boolean is_blocking, int mask, lives_info_t infotype);
+LiVESWidget* create_info_error_dialog (lives_dialog_t info_type, const gchar *text, LiVESWindow *transient, int mask, boolean is_blocking);
 LiVESWidget* create_opensel_dialog (void);
 LiVESWidget* create_encoder_prep_dialog (const gchar *text1, const gchar *text2, boolean opt_resize);
 
@@ -118,6 +118,8 @@ text_window *textwindow;
 
 #define DEF_AUD_FADE_SECS 10. ///< default time to offer fade audio in/out for
 
+
+#define MIN_MSGBOX_WIDTH ((int)(mainw->scr_width>1024?(820.*widget_opts.scale):600))
 
 
 #endif

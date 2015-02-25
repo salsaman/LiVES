@@ -7,8 +7,6 @@
 #ifndef HAS_LIVES_CALLBACKS_H
 #define HAS_LIVES_CALLBACKS_H
 
-const char *get_set_name();
-
 boolean
 on_LiVES_delete_event                  (LiVESWidget       *widget,
                                         LiVESXEvent        *event,
@@ -627,7 +625,7 @@ boolean nervous_callback (LiVESAccelGroup *, LiVESObject *, uint32_t, LiVESXModi
 
 boolean show_sync_callback (LiVESAccelGroup *, LiVESObject *, uint32_t, LiVESXModifierType, livespointer clip_number);
 
-void on_save_set_activate (LiVESMenuItem *, livespointer );
+boolean on_save_set_activate (LiVESMenuItem *, livespointer );
 
 void on_save_set_ok (void);
 

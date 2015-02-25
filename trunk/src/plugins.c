@@ -141,12 +141,12 @@ static LiVESList *get_plugin_result (const gchar *command, const gchar *delim, b
 	memset (buffer+bytes,0,1);
       }
     }
-  } while (retval==LIVES_RETRY);
+  } while (retval==LIVES_RESPONSE_RETRY);
 
   unlink (outfile);
   lives_free (outfile);
 
-  if (retval==LIVES_CANCEL) {
+  if (retval==LIVES_RESPONSE_CANCEL) {
     threaded_dialog_spin();
     return list;
   }
@@ -457,7 +457,7 @@ void load_vpp_defaults(_vid_playback_plugin *vpp, gchar *vpp_file) {
     retval=0;
     if ((fd=open(vpp_file,O_RDONLY))==-1) {
       retval=do_read_failed_error_s_with_retry(vpp_file,lives_strerror(errno),NULL);
-      if (retval==LIVES_CANCEL) {
+      if (retval==LIVES_RESPONSE_CANCEL) {
 	mainw->vpp=NULL;
 	return;
       }
@@ -564,7 +564,7 @@ void load_vpp_defaults(_vid_playback_plugin *vpp, gchar *vpp_file) {
       if (mainw->read_failed) {
 	close(fd);
 	retval=do_read_failed_error_s_with_retry(vpp_file,NULL,NULL);
-	if (retval==LIVES_CANCEL) {
+	if (retval==LIVES_RESPONSE_CANCEL) {
 	  mainw->read_failed=FALSE;
 	  mainw->vpp=NULL;
 	  d_print_file_error_failed();
@@ -572,7 +572,7 @@ void load_vpp_defaults(_vid_playback_plugin *vpp, gchar *vpp_file) {
 	}
       }
     }
-  } while (retval==LIVES_RETRY);
+  } while (retval==LIVES_RESPONSE_RETRY);
 
   d_print_done();
     
@@ -3786,7 +3786,7 @@ gchar *plugin_run_param_window(const gchar *get_com, LiVESVBox *vbox, lives_rfx_
     sfile=fopen(rfxfile,"w");
     if (sfile==NULL) {
       retval=do_write_failed_error_s_with_retry(rfxfile,lives_strerror(errno),NULL);
-      if (retval==LIVES_CANCEL) {
+      if (retval==LIVES_RESPONSE_CANCEL) {
 	lives_free(string);
 	return NULL;
       }
@@ -3798,10 +3798,10 @@ gchar *plugin_run_param_window(const gchar *get_com, LiVESVBox *vbox, lives_rfx_
       lives_free(string);
       if (mainw->write_failed) {
 	retval=do_write_failed_error_s_with_retry(rfxfile,NULL,NULL);
-	if (retval==LIVES_CANCEL) return NULL;
+	if (retval==LIVES_RESPONSE_CANCEL) return NULL;
       }
     }
-  } while (retval==LIVES_RETRY);
+  } while (retval==LIVES_RESPONSE_RETRY);
 
 
 
@@ -3866,12 +3866,12 @@ gchar *plugin_run_param_window(const gchar *get_com, LiVESVBox *vbox, lives_rfx_
 	retval=do_read_failed_error_s_with_retry(rfxfile,NULL,NULL);
       }
 
-    } while (retval==LIVES_RETRY);
+    } while (retval==LIVES_RESPONSE_RETRY);
 
     unlink(rfxfile);
     lives_free(rfxfile);
 
-    if (retval==LIVES_CANCEL) return NULL;
+    if (retval==LIVES_RESPONSE_CANCEL) return NULL;
 
     lives_snprintf(rfx->delim,2,"%s",buff);
 

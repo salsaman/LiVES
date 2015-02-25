@@ -1443,12 +1443,12 @@ void jack_rec_audio_to_clip(int fileno, int old_file, lives_rec_audio_type_t rec
       mainw->aud_rec_fd=open(outfilename,O_WRONLY|O_CREAT|O_APPEND,S_IRUSR|S_IWUSR);
       if (mainw->aud_rec_fd<0) {
 	retval=do_write_failed_error_s_with_retry(outfilename,lives_strerror(errno),NULL);
-	if (retval==LIVES_CANCEL) {
+	if (retval==LIVES_RESPONSE_CANCEL) {
 	  lives_free(outfilename);
 	  return;
 	}
       }
-    } while (retval==LIVES_RETRY);
+    } while (retval==LIVES_RESPONSE_RETRY);
     lives_free(outfilename);
   }
 
@@ -1601,12 +1601,12 @@ void pulse_rec_audio_to_clip(int fileno, int old_file, lives_rec_audio_type_t re
       mainw->aud_rec_fd=open(outfilename,O_WRONLY|O_CREAT|O_APPEND,S_IRUSR|S_IWUSR);
       if (mainw->aud_rec_fd<0) {
 	retval=do_write_failed_error_s_with_retry(outfilename,lives_strerror(errno),NULL);
-	if (retval==LIVES_CANCEL) {
+	if (retval==LIVES_RESPONSE_CANCEL) {
 	  lives_free(outfilename);
 	  return;
 	}
       }
-    } while (retval==LIVES_RETRY);
+    } while (retval==LIVES_RESPONSE_RETRY);
     lives_free(outfilename);
   }
 

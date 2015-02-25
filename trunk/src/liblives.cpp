@@ -7,11 +7,15 @@
 extern "C" {
 #include <libOSC/libosc.h>
 #include <libOSC/OSC-client.h>
+#include "main.h"
+#include "lbindings.h"
 }
+
 
 #include <string.h>
 #include <stdlib.h>
 #include <pthread.h>
+#include <unistd.h>
 
 #include <iostream>
 
@@ -19,11 +23,9 @@ extern "C" {
 #include "liblives.hpp"
 
 
+
 extern "C" {
-
   int real_main(int argc, char *argv[], ulong id);
-
-  uint64_t lives_random(void);
 
   bool lives_osc_cb_quit(void *context, int arglen, const void *vargs, OSCTimeTag when, void * ra);
   bool lives_osc_cb_play(void *context, int arglen, const void *vargs, OSCTimeTag when, void * ra);
@@ -32,43 +34,10 @@ extern "C" {
   bool lives_osc_record_start(void *context, int arglen, const void *vargs, OSCTimeTag when, void * ra);
   bool lives_osc_record_stop(void *context, int arglen, const void *vargs, OSCTimeTag when, void * ra);
   bool lives_osc_record_toggle(void *context, int arglen, const void *vargs, OSCTimeTag when, void * ra);
+  bool lives_osc_cb_saveset(void *context, int arglen, const void *vargs, OSCTimeTag when, void * ra);
 
-  void idle_show_info(const char *text, bool blocking);
-
-
-  const char *get_set_name();
 }
 
-
-#include <sys/time.h>
-
-#define SECONDS_FROM_1900_to_1970 2208988800 /* 17 leap years */
-#define TWO_TO_THE_32_OVER_ONE_MILLION 4295
-
-
-static OSCTimeTag OSCTT_CurrentTimex(void) {
-  OSCTimeTag tag;
-  
-  uint64_t result;
-  uint32_t usecOffset;
-  struct timeval tv;
-  struct timezone tz;
-
-  gettimeofday(&tv, &tz);
-
-  result = (unsigned) SECONDS_FROM_1900_to_1970 + 
-    (unsigned) tv.tv_sec - 
-    (unsigned) 60 * tz.tz_minuteswest +
-    (unsigned) (tz.tz_dsttime ? 3600 : 0);
-
-  tag.seconds = result;
-    	
-  usecOffset = (unsigned) tv.tv_usec * (unsigned) TWO_TO_THE_32_OVER_ONE_MILLION;
-
-  tag.fraction = usecOffset;
-
-  return tag;
-}
 
 
 static int pad4(int val) {
@@ -79,38 +48,67 @@ static int pad4(int val) {
 static int padup(char **str, int arglen) {
   int newlen = pad4(arglen);
   char *ostr = *str;
-  *str = (char *)calloc(1,newlen);
-  memcpy(*str, ostr, arglen);
-  free(ostr);
+  *str = (char *)lives_calloc(1,newlen);
+  lives_memcpy(*str, ostr, arglen);
+  lives_free(ostr);
   return newlen;
 }
+
 
 static int add_int_arg(char **str, int arglen, int val) {
   int newlen = arglen + 4;
   char *ostr = *str;
-  *str = (char *)calloc(1,newlen);
+  *str = (char *)lives_calloc(1,newlen);
+  lives_memcpy(*str, ostr, arglen);
   if (!is_big_endian()) {
-    *str[arglen] = (unsigned char)((val&0xFF000000)>>3);
-    *str[arglen+1] = (unsigned char)((val&0x00FF0000)>>2);
-    *str[arglen+2] = (unsigned char)((val&0x0000FF00)>>1);
-    *str[arglen+3] = (unsigned char)(val&0x000000FF);
+    (*str)[arglen] = (unsigned char)((val&0xFF000000)>>3);
+    (*str)[arglen+1] = (unsigned char)((val&0x00FF0000)>>2);
+    (*str)[arglen+2] = (unsigned char)((val&0x0000FF00)>>1);
+    (*str)[arglen+3] = (unsigned char)(val&0x000000FF);
   }
   else {
-    memcpy(*str + arglen, &val, 4);
+    lives_memcpy(*str + arglen, &val, 4);
   }
-  free(ostr);
+  lives_free(ostr);
   return newlen;
 }
 
-static void *play_thread(void *) {
-  int arglen = 1;
-  char *vargs = strdup(",");
-  arglen = padup(&vargs, arglen);
-  lives_osc_cb_play(NULL, arglen, vargs, OSCTT_CurrentTime(), NULL);
-  return NULL;
+
+static int add_string_arg(char **str, int arglen, const char *val) {
+  int newlen = arglen + strlen(val) + 1;
+  char *ostr = *str;
+  *str = (char *)lives_calloc(1,newlen);
+  lives_memcpy(*str, ostr, arglen);
+  lives_memcpy(*str + arglen, val, strlen(val));
+  lives_free(ostr);
+  return newlen;
 }
 
 
+static void *play_thread(void *) {
+  int arglen = 1;
+  char **vargs=(char **)lives_malloc(sizeof(char *));
+  *vargs = strdup(",");
+  arglen = padup(vargs, arglen);
+  lives_osc_cb_play(NULL, arglen, (const void *)(*vargs), OSCTT_CurrentTime(), NULL);
+  lives_free(*vargs);
+  return NULL;
+}
+
+static volatile bool spinning;
+static ulong blocking_id;
+static int private_response;
+
+
+static bool private_cb(lives::privateInfo *info, void *data) {
+  if (info->id == blocking_id) {
+    private_response = info->response;
+    spinning = false;
+    return false;
+  }
+
+  return true;
+}
 
 
 //////////////////////////////////////////////////
@@ -131,66 +129,93 @@ namespace lives {
   }
 
 
-  livesApp::livesApp() {
+  void livesApp::init(int argc, char *oargv[]) {
+    char **argv;
     char progname[] = "lives-exe";
-    char *argv[]={progname};
-    uint64_t id = lives_random();
-    livesAppCtx ctx;
-    ctx.id = id;
-    ctx.app = this;
-    appMgr.push_back(ctx);
-    m_id = id;
-    real_main(1, argv, id);
-  }
+    if (argc < 0) argc=0;
+    argc++;
 
-  livesApp::livesApp(int argc, char *argv[]) {
-    // TODO
-    char progname[] = "lives-exe";
-    argv[0]=progname;
+    argv=(char **)malloc(argc * sizeof(char *));
+    argv[0]=strdup(progname);
+
+    for (int i=1; i < argc; i++) {
+      argv[i]=strdup(oargv[i-1]);
+    }
+
     uint64_t id = lives_random();
     livesAppCtx ctx;
+
     ctx.id = id;
     ctx.app = this;
     appMgr.push_back(ctx);
+
     m_id = id;
     real_main(argc, argv, id);
+    free(argv);
+  }
+
+
+  livesApp::livesApp() : m_set(this) {
+    init(0,NULL);
+  }
+
+  livesApp::livesApp(int argc, char *argv[]) : m_set(this) {
+    init(argc,argv);
   }
 
 
   livesApp::~livesApp() {
     int arglen = 1;
-    char *vargs = strdup(",");
-    arglen = padup(&vargs, arglen);
+    char **vargs=(char **)lives_malloc(sizeof(char *));
+    *vargs = strdup(",");
+    arglen = padup(vargs, arglen);
+
+    // call object destructor callback
+    binding_cb (LIVES_NOTIFY_OBJECT_DESTROYED, NULL, (uint64_t)this);
     
     list<closure *>::iterator it = m_closures.begin();
     while (it != m_closures.end()) {
       delete *it;
       m_closures.erase(it++);
     }
-    lives_osc_cb_quit(NULL, arglen, vargs, OSCTT_CurrentTime(), NULL);
+    lives_osc_cb_quit(NULL, arglen, (const void *)(*vargs), OSCTT_CurrentTime(), NULL);
+    lives_free(*vargs);
   }
 
 
   set livesApp::currentSet() {
-    m_set.setName(get_set_name());
     return m_set;
   }
 
-
-  bool livesApp::addCallback(int msgnum, modeChanged_callback_f func, void *data) {
-    if (msgnum != LIVES_NOTIFY_MODE_CHANGED) return false;
+  void livesApp::appendClosure(int msgnum, callback_f func, void *data) {
     closure *cl = new closure;
+    cl->object = this;
     cl->msgnum = msgnum;
     cl->func = (callback_f)func;
     cl->data = data;
     m_closures.push_back(cl);
+  }
+
+  bool livesApp::addCallback(int msgnum, modeChanged_callback_f func, void *data) {
+    if (msgnum != LIVES_NOTIFY_MODE_CHANGED) return false;
+    appendClosure(msgnum, (callback_f)func, data);
+    return true;
+  }
+
+  bool livesApp::addCallback(int msgnum, private_callback_f func, void *data) {
+    if (msgnum != LIVES_NOTIFY_PRIVATE) return false;
+    appendClosure(msgnum, (callback_f)func, data);
+    return true;
+  }
+
+  bool livesApp::addCallback(int msgnum, objectDestroyed_callback_f func, void *data) {
+    if (msgnum != LIVES_NOTIFY_OBJECT_DESTROYED) return false;
+    appendClosure(msgnum, (callback_f)func, data);
     return true;
   }
 
 
   void livesApp::play() {
-    // pthread_t playthread;
-    //pthread_create(&playthread, NULL, play_thread, NULL);
     play_thread(NULL);
   }
 
@@ -200,10 +225,22 @@ namespace lives {
   }
 
 
-  void livesApp::showInfo(const char *text, bool blocking) {
-    idle_show_info(text,blocking);
-    // TODO - if blocking wait for response
+  int livesApp::showInfo(const char *text, bool blocking) {
+    // if blocking wait for response
+    if (blocking) {
+      spinning = true;
+      blocking_id = lives_random();
+      addCallback(LIVES_NOTIFY_PRIVATE, private_cb, NULL); 
+      idle_show_info(text,blocking,blocking_id);
+      while (spinning) usleep(100);
+      return private_response;
+    }
+    idle_show_info(text,blocking,0);
+    return 0;
+  }
 
+  int livesApp::showInfo(const char *text) {
+    return showInfo(text, true);
   }
 
   list<closure*> livesApp::closures() {
@@ -211,34 +248,103 @@ namespace lives {
   }
 
 
+  //////////////// set ////////////////////
 
+  set::set(livesApp *lives) {
+    m_lives = lives;
+    m_name = NULL;
+  }
 
+  set::~set() {
+    if (m_name != NULL) lives_free(m_name);
+
+    clipList::iterator it = m_clips.begin();
+    while (it != m_clips.end()) {
+      delete *it;
+      m_clips.erase(it++);
+    }
+  }
 
   char *set::name() {
+    setName(get_set_name());
     return m_name;
   }
 
   void set::setName(const char *name) {
     char noname[] = "";
-    if (m_name != NULL) free(m_name);
+    if (m_name != NULL) {
+      if (!strcmp(m_name, name)) return;
+      lives_free(m_name);
+    }
     if (name == NULL) m_name = strdup(noname);
     else m_name = strdup(name);
   }
 
-  set::~set() {
-    if (m_name != NULL) free(m_name);
+  bool set::save(const char *name) {
+    save(name, false);
   }
 
 
-  bool clip::select(int cnum) {
-    OSCTimeTag t;
-    t.seconds = t.fraction = 0;
+  bool set::save(const char *name, bool force_append) {
+    int arglen = 3;
+    char **vargs=(char **)lives_malloc(sizeof(char *));
+    *vargs = strdup(",si");
+    arglen = padup(vargs, arglen);
+    arglen = add_string_arg(vargs, arglen, name);
+    arglen = add_int_arg(vargs, arglen, force_append);
+
+    spinning = true;
+    blocking_id = lives_random();
+
+    m_lives->addCallback(LIVES_NOTIFY_PRIVATE, private_cb, NULL); 
+
+    idle_save_set(name,arglen,(const void *)(*vargs),blocking_id);
+
+    while (spinning) usleep(100);
+    lives_free(*vargs);
+    return private_response;
+  }
+
+  clipList set::cliplist() {
+    ulong *ids = get_unique_ids();
+    // clear old cliplist
+
+    clipList::iterator it = m_clips.begin();
+    while (it != m_clips.end()) {
+      delete *it;
+      m_clips.erase(it++);
+    }
+
+    for (int i=0; ids[i] != 0l; i++) {
+      clip *c = new clip(ids[i]);
+      m_clips.push_back(c);
+    }
+    lives_free(ids);
+    return m_clips;
+  }
+
+
+  /////////////// clip ////////////////
+
+  clip::clip(uint64_t handle) {
+    m_handle = handle;
+  }
+
+  
+  bool clip::select() {
+    bool ret = false;
     int arglen = 2;
-    char *vargs = strdup(",i");
-    arglen = padup(&vargs, arglen);
-    arglen = add_int_arg(&vargs, arglen, cnum);
-    bool ret = lives_osc_cb_fgclip_select(NULL, arglen, (const void *)vargs, OSCTT_CurrentTime(), NULL);
-    free(vargs);
+    int cnum = cnum_for_uid(m_handle);
+    char **vargs=(char **)lives_malloc(sizeof(char *));
+    *vargs = strdup(",i");
+
+    if (cnum > 0) {
+      arglen = padup(vargs, arglen);
+      arglen = add_int_arg(vargs, arglen, cnum);
+      ret = lives_osc_cb_fgclip_select(NULL, arglen, (const void *)(*vargs), OSCTT_CurrentTime(), NULL);
+    }
+
+    lives_free(vargs);
     return ret;
   }
 
@@ -276,7 +382,11 @@ namespace lives {
 
 void binding_cb (int msgnumber, const char *msgstring, uint64_t id) {
   bool ret;
-  lives::livesApp *lapp = lives::find_instance_for_id(id);
+  lives::livesApp *lapp;
+
+  if (msgnumber == LIVES_NOTIFY_OBJECT_DESTROYED) lapp = (lives::livesApp *)id;
+  else lapp = lives::find_instance_for_id(id);
+
   list <lives::closure *> cl = lapp->closures();
 
   list<lives::closure *>::iterator it = cl.begin();
@@ -285,9 +395,30 @@ void binding_cb (int msgnumber, const char *msgstring, uint64_t id) {
     if ((*it)->msgnum == msgnumber) {
       switch (msgnumber) {
       case LIVES_NOTIFY_MODE_CHANGED:
-	lives::modeChangedInfo info;
-	info.mode = atoi(msgstring);
-	ret = ((*it)->func)(&info, (*it)->data);
+	{
+	  lives::modeChangedInfo info;
+	  info.mode = atoi(msgstring);
+	  lives::modeChanged_callback_f fn = (lives::modeChanged_callback_f)((*it)->func);
+	  ret = (fn)((*it)->object, &info, (*it)->data);
+	}
+	break;
+      case LIVES_NOTIFY_OBJECT_DESTROYED:
+	{
+	  lives::objectDestroyed_callback_f fn = (lives::objectDestroyed_callback_f)((*it)->func);
+	  ret = (fn)((*it)->object, (*it)->data);
+	}
+	break;
+      case LIVES_NOTIFY_PRIVATE:
+	{
+	  // private event type
+	  lives::privateInfo info;
+	  char **msgtok = lives_strsplit(msgstring, " ", -1);
+	  info.id = strtoul(msgtok[0],NULL,10);
+	  info.response = atoi(msgtok[1]);
+	  lives_strfreev(msgtok);
+	  lives::private_callback_f fn = (lives::private_callback_f)((*it)->func);
+	  ret = (fn)(&info, (*it)->data);
+	}
 	break;
       default:
 	continue;

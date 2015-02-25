@@ -3181,7 +3181,7 @@ boolean rfxbuilder_to_script (rfx_build_window_t *rfxbuilder) {
     retval=0;
     if (!(sfile=fopen(script_file,"w"))) {
       retval=do_write_failed_error_s_with_retry(script_file,lives_strerror(errno),LIVES_WINDOW(rfxbuilder->dialog));
-      if (retval==LIVES_CANCEL) {
+      if (retval==LIVES_RESPONSE_CANCEL) {
 	lives_free (msg);
 	lives_free (script_file);
 	d_print_failed();
@@ -3434,15 +3434,15 @@ boolean rfxbuilder_to_script (rfx_build_window_t *rfxbuilder) {
       if (mainw->write_failed) {
 	mainw->write_failed=FALSE;
 	retval=do_write_failed_error_s_with_retry(script_file,NULL,LIVES_WINDOW(rfxbuilder->dialog));
-	if (retval==LIVES_CANCEL) d_print_file_error_failed();
+	if (retval==LIVES_RESPONSE_CANCEL) d_print_file_error_failed();
       }
 
     }
-  } while (retval==LIVES_RETRY);
+  } while (retval==LIVES_RESPONSE_RETRY);
 
   lives_free(script_file);
 
-  if (retval!=LIVES_CANCEL) {
+  if (retval!=LIVES_RESPONSE_CANCEL) {
     d_print_done();
 
     lives_widget_set_sensitive(mainw->promote_test_rfx,TRUE);

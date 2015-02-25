@@ -710,114 +710,21 @@ LiVESWidget* create_encoder_prep_dialog (const gchar *text1, const gchar *text2,
 
 
 // Information/error dialog
-LiVESWidget* create_info_error_dialog (const gchar *text, boolean is_blocking, int mask, lives_info_t info_type) {
+
+// the type of message box here is with a single OK button
+// if 2 or more buttons (e.g. OK/CANCEL, YES/NO, ABORT/RETRY/CANCEL) are needed, use create_message_dialog() in dialogs.c
+
+LiVESWidget* create_info_error_dialog (lives_dialog_t info_type, const gchar *text, LiVESWindow *transient, int mask, boolean is_blocking) {
   LiVESWidget *dialog;
-  LiVESWidget *dialog_vbox;
-  LiVESWidget *info_text;
-  LiVESWidget *dialog_action_area;
-  LiVESWidget *info_ok_button;
-  LiVESWidget *details_button;
-  LiVESWidget *checkbutton;
-  LiVESWidget *hbox;
-  gchar *form_text;
-  gchar *textx;
 
-  LiVESAccelGroup *accel_group=LIVES_ACCEL_GROUP(lives_accel_group_new ());
-
-  if (info_type==LIVES_INFO_TYPE_WARNING)
-    dialog = lives_message_dialog_new (NULL,(LiVESDialogFlags)0,
-				       LIVES_MESSAGE_WARNING,LIVES_BUTTONS_NONE,NULL);
-  else if (info_type==LIVES_INFO_TYPE_ERROR)
-    dialog = lives_message_dialog_new (NULL,(LiVESDialogFlags)0,
-				       LIVES_MESSAGE_ERROR,LIVES_BUTTONS_NONE,NULL);
-  else // INFO
-    dialog = lives_message_dialog_new (NULL,(LiVESDialogFlags)0,
-				       LIVES_MESSAGE_INFO,LIVES_BUTTONS_NONE,NULL);
-
-  lives_window_set_title (LIVES_WINDOW (dialog), _("LiVES"));
-  
-  lives_window_set_deletable(LIVES_WINDOW(dialog), FALSE);
-  lives_window_set_resizable (LIVES_WINDOW (dialog), FALSE);
-
-  lives_container_set_border_width (LIVES_CONTAINER (dialog), widget_opts.border_width*2);
-
-  lives_window_add_accel_group (LIVES_WINDOW (dialog), accel_group);
-
-  if (mainw!=NULL&&widget_opts.apply_theme&&palette->style&STYLE_1) {
-    lives_dialog_set_has_separator(LIVES_DIALOG(dialog),FALSE);
-    lives_widget_set_bg_color(dialog, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
+  if (!prefs->show_gui) {
+    transient=NULL;
+  } else {
+    if (mainw->multitrack==NULL) transient=LIVES_WINDOW(mainw->LiVES);
+    else transient=LIVES_WINDOW(mainw->multitrack->window);
   }
 
-  dialog_vbox = lives_dialog_get_content_area(LIVES_DIALOG(dialog));
-
-  textx=insert_newlines(text,MAX_MSG_WIDTH_CHARS);
-
-  form_text=lives_strdup_printf("\n\n%s",textx);
-
-  widget_opts.justify=LIVES_JUSTIFY_CENTER;
-  info_text = lives_standard_label_new (form_text);
-  widget_opts.justify=LIVES_JUSTIFY_DEFAULT;
-  lives_free(form_text);
-  lives_free(textx);
-
-  lives_label_set_selectable (LIVES_LABEL (info_text), TRUE);
-
-  hbox = lives_hbox_new (FALSE, 0);
-  lives_box_pack_start (LIVES_BOX (dialog_vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
-
-  lives_box_pack_start (LIVES_BOX (hbox), info_text, FALSE, FALSE, widget_opts.packing_width*2);
-  
-  if (mask>0) {
-    hbox = lives_hbox_new (FALSE, 0);
-    lives_box_pack_start (LIVES_BOX (dialog_vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
-    checkbutton = lives_standard_check_button_new (
-						   _("Do _not show this warning any more\n(can be turned back on from Preferences/Warnings)"),
-						   TRUE,LIVES_BOX(hbox),NULL);
-    lives_widget_set_can_focus_and_default (checkbutton);
-    lives_signal_connect (LIVES_GUI_OBJECT (checkbutton), LIVES_WIDGET_TOGGLED_EVENT,
-                      LIVES_GUI_CALLBACK (on_warn_mask_toggled),
-                      LIVES_INT_TO_POINTER(mask));
-  }
-
-  dialog_action_area = lives_dialog_get_action_area(LIVES_DIALOG (dialog));
-  lives_button_box_set_layout (LIVES_BUTTON_BOX (dialog_action_area), LIVES_BUTTONBOX_END);
-
-  if (mainw->iochan!=NULL) {
-    details_button = lives_button_new_with_mnemonic(_("Show _Details"));
-    lives_dialog_add_action_widget (LIVES_DIALOG (dialog), details_button, LIVES_RESPONSE_SHOW_DETAILS);
-
-    lives_signal_connect (LIVES_GUI_OBJECT (details_button), LIVES_WIDGET_CLICKED_EVENT,
-		      LIVES_GUI_CALLBACK (lives_general_button_clicked),
-		      NULL);
-  }
-  
-  info_ok_button = lives_button_new_from_stock (LIVES_STOCK_OK);
-  lives_dialog_add_action_widget (LIVES_DIALOG (dialog), info_ok_button, LIVES_RESPONSE_OK);
-
-
-  if (mainw->iochan==NULL) {
-    lives_widget_set_can_focus_and_default (info_ok_button);
-    lives_widget_grab_focus (info_ok_button);
-    lives_widget_grab_default (info_ok_button);
-  }
-
-  lives_signal_connect (LIVES_GUI_OBJECT (info_ok_button), LIVES_WIDGET_CLICKED_EVENT,
-		    LIVES_GUI_CALLBACK (lives_general_button_clicked),
-		    NULL);
-
-  lives_widget_add_accelerator (info_ok_button, LIVES_WIDGET_CLICKED_EVENT, accel_group,
-			      LIVES_KEY_Return, (LiVESXModifierType)0, (LiVESAccelFlags)0);
-
-
-
-  lives_widget_show_all(dialog);
-  if (is_blocking) lives_window_set_modal (LIVES_WINDOW (dialog), TRUE);
-
-  if (prefs->present) {
-    lives_window_present (LIVES_WINDOW (dialog));
-    lives_xwindow_raise (lives_widget_get_xwindow(dialog));
-  }
-
+  dialog=create_message_dialog(info_type,text,transient,mask,is_blocking);
   return dialog;
 }
 
@@ -2728,7 +2635,7 @@ LiVESWidget *create_cleardisk_advanced_dialog(void) {
 			  LIVES_INT_TO_POINTER(LIVES_CDISK_REMOVE_ORPHAN_LAYOUTS));
 
   resetbutton = lives_button_new_from_stock (LIVES_STOCK_REFRESH);
-  lives_dialog_add_action_widget (LIVES_DIALOG (dialog), resetbutton, LIVES_RETRY);
+  lives_dialog_add_action_widget (LIVES_DIALOG (dialog), resetbutton, LIVES_RESPONSE_RETRY);
   lives_button_set_label(LIVES_BUTTON(resetbutton),_("_Reset to Defaults"));
 
   okbutton = lives_button_new_from_stock (LIVES_STOCK_OK);

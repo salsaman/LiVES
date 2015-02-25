@@ -109,11 +109,6 @@ install-exec-local:
 	cp -f "$(srcdir)/smogrify" "$(DESTDIR)$(bindir)" && chmod a+rx "$(DESTDIR)$(bindir)/smogrify"
 	cp -f "$(srcdir)/midistart" "$(DESTDIR)$(bindir)" && chmod a+rx "$(DESTDIR)$(bindir)/midistart"
 	cp -f "$(srcdir)/midistop" "$(DESTDIR)$(bindir)" && chmod a+rx "$(DESTDIR)$(bindir)/midistop"
-if BUILD_LIBLIVES
-	$(MKDIR_P) "$(DESTDIR)$(sharedir)/$(PACKAGE)/tools/"
-	cp -f "$(srcdir)/tools/liblives-compile" "$(DESTDIR)$(sharedir)/$(PACKAGE)/tools/" && \
-	chmod a+rx "$(DESTDIR)$(sharedir)/$(PACKAGE)/tools/liblives-compile"
-endif
 	cp -f "$(srcdir)/tools/autolives.pl" "$(DESTDIR)$(bindir)" && chmod a+rx "$(DESTDIR)$(bindir)/autolives.pl"
 	cp -f "$(srcdir)/build-lives-rfx-plugin" "$(DESTDIR)$(bindir)" && chmod a+rx "$(DESTDIR)$(bindir)/build-lives-rfx-plugin"
 	cp -f "$(srcdir)/build-lives-rfx-plugin-multi" "$(DESTDIR)$(bindir)" && chmod a+rx "$(DESTDIR)$(bindir)/build-lives-rfx-plugin-multi"

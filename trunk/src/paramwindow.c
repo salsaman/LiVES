@@ -921,7 +921,7 @@ void on_fx_pre_activate (lives_rfx_t *rfx, int didx, LiVESWidget *pbox) {
 	if (!has_param) lives_widget_set_sensitive(okbutton,FALSE);
 	resetbutton = lives_button_new_with_mnemonic (_("Reset"));
 	if (!has_param) lives_widget_set_sensitive(resetbutton,FALSE);
-	lives_dialog_add_action_widget (LIVES_DIALOG (fx_dialog[didx]), resetbutton, LIVES_RESET);
+	lives_dialog_add_action_widget (LIVES_DIALOG (fx_dialog[didx]), resetbutton, LIVES_RESPONSE_RESET);
       }
       else okbutton = lives_button_new_from_stock (LIVES_STOCK_OK);
       lives_dialog_add_action_widget (LIVES_DIALOG (fx_dialog[didx]), okbutton, LIVES_RESPONSE_OK);
@@ -936,7 +936,7 @@ void on_fx_pre_activate (lives_rfx_t *rfx, int didx, LiVESWidget *pbox) {
       }
       if (rfx->status==RFX_STATUS_WEED) {
 	resetbutton = lives_button_new_with_mnemonic (_("Reset"));
-	lives_dialog_add_action_widget (LIVES_DIALOG (fx_dialog[didx]), resetbutton, LIVES_RESET);
+	lives_dialog_add_action_widget (LIVES_DIALOG (fx_dialog[didx]), resetbutton, LIVES_RESPONSE_RESET);
 	lives_dialog_add_action_widget (LIVES_DIALOG (fx_dialog[didx]), okbutton, LIVES_RESPONSE_OK);
       }
       lives_dialog_add_action_widget (LIVES_DIALOG (fx_dialog[didx]), cancelbutton, LIVES_RESPONSE_CANCEL);

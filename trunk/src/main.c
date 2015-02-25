@@ -51,7 +51,7 @@
 #include "startup.h"
 #include "cvirtual.h"
 #include "ce_thumbs.h"
-#include "lbindings.h"
+
 
 #ifdef ENABLE_OSC
 #include "omc-learn.h"
@@ -417,6 +417,8 @@ static boolean pre_init(void) {
   pthread_mutex_init(&mainw->fxd_active_mutex,NULL);
 
   pthread_mutex_init(&mainw->event_list_mutex,NULL);
+
+  pthread_mutex_init(&mainw->clip_list_mutex,NULL);
 
   for (i=0;i<FX_KEYS_MAX;i++) {
     pthread_mutex_init(&mainw->data_mutex[i],&mattr); // because audio filters can enable/disable video filters and vice-versa
@@ -983,7 +985,7 @@ static void lives_init(_ign_opts *ign_opts) {
 
   mainw->reverse_pb=FALSE;
 
-  mainw->osc_auto=FALSE;
+  mainw->osc_auto=0;
   mainw->osc_enc_width=mainw->osc_enc_height=0;
 
 
@@ -1118,6 +1120,8 @@ static void lives_init(_ign_opts *ign_opts) {
 
   mainw->audio_frame_buffer=NULL;
   mainw->afbuffer_clients=0;
+
+  mainw->ext_caller=0; // external caller ref. for C++ bindings
   /////////////////////////////////////////////////// add new stuff just above here ^^
 
 
@@ -2768,7 +2772,7 @@ void set_signal_handlers(SignalHandlerPointer sigfunc) {
 }
 
 
- int real_main (int argc, char *argv[], ulong id) {
+int real_main (int argc, char *argv[], ulong id) {
 #ifdef ENABLE_OSC
 #ifdef IS_MINGW
   WSADATA wsaData;
@@ -2830,7 +2834,7 @@ void set_signal_handlers(SignalHandlerPointer sigfunc) {
 #ifdef GUI_GTK
 #ifdef LIVES_NO_DEBUG
   // don't crash on GTK+ fatals
-  //g_log_set_always_fatal ((GLogLevelFlags)0);
+  g_log_set_always_fatal ((GLogLevelFlags)0);
 #endif
 
   g_log_set_default_handler(lives_log_handler,NULL);
@@ -5498,7 +5502,7 @@ void load_frame_image(int frame) {
 	      mainw->read_failed=FALSE;
 	      lives_fgets(mainw->msg,512,fd);
 	      if (mainw->read_failed) retval=do_read_failed_error_s_with_retry(info_file,NULL,NULL);
-	    } while (retval==LIVES_RETRY);
+	    } while (retval==LIVES_RESPONSE_RETRY);
 	    fclose(fd);
 	    if (!strncmp(mainw->msg,"completed",9)||!strncmp(mainw->msg,"error",5)) {
 	      // effect completed whilst we were busy playing a preview

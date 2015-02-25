@@ -32,6 +32,7 @@ extern "C" {
 /// rendering/previewing
 #define LIVES_NOTIFY_PLAYBACK_STOPPED_RD 4
 
+#define LIVES_NOTIFY_DIALOG_CLOSED 16
 
 #define LIVES_NOTIFY_RECORD_STARTED 32 ///< sent when record starts (TODO)
 #define LIVES_NOTIFY_RECORD_STOPPED 33 ///< sent when record stops (TODO)
@@ -51,6 +52,12 @@ extern "C" {
 #define LIVES_NOTIFY_CANCELLED 2048
 
 #define LIVES_NOTIFY_MODE_CHANGED 4096 ///< mode changed to clip editor or to multitrack
+
+
+#define LIVES_NOTIFY_PRIVATE 65536
+  // > 65536 reserved for custom
+
+
 #ifdef __cplusplus
 }
 #endif

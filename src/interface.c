@@ -92,10 +92,6 @@ static void pv_sel_changed(LiVESFileChooser *chooser, livespointer user_data) {
 
 
 void widget_add_preview(LiVESWidget *widget, LiVESBox *for_preview, LiVESBox *for_button, LiVESBox *for_deint, int preview_type) {
-  // preview type 1 - video and audio, fileselector
-  // preview type 2 - audio only, fileselector
-  // preview type 3 - range preview
-
   LiVESWidget *preview_button=NULL;
   LiVESWidget *fs_label;
 
@@ -103,7 +99,7 @@ void widget_add_preview(LiVESWidget *widget, LiVESBox *for_preview, LiVESBox *fo
   mainw->fs_playalign = lives_alignment_new (0.,0.,1.,1.);
   mainw->fs_playarea = lives_event_box_new ();
 
-  if (preview_type==1||preview_type==3) {
+  if (preview_type==LIVES_PREVIEW_TYPE_VIDEO_AUDIO||preview_type==LIVES_PREVIEW_TYPE_RANGE) {
 
     lives_widget_show (mainw->fs_playframe);
     lives_widget_show (mainw->fs_playalign);
@@ -129,22 +125,21 @@ void widget_add_preview(LiVESWidget *widget, LiVESBox *for_preview, LiVESBox *fo
     lives_widget_show(mainw->fs_playarea);
    }
 
-  if (preview_type==1) {
+  if (preview_type==LIVES_PREVIEW_TYPE_VIDEO_AUDIO) {
     preview_button = lives_button_new_with_mnemonic (_ ("Click here to _Preview any selected video, image or audio file"));
   }
-  else if (preview_type==2) {
+  else if (preview_type==LIVES_PREVIEW_TYPE_AUDIO_ONLY) {
     preview_button = lives_button_new_with_mnemonic (_ ("Click here to _Preview any selected audio file"));
   }
-  else if (preview_type==3) {
+  else if (preview_type==LIVES_PREVIEW_TYPE_RANGE) {
     preview_button = lives_button_new_with_mnemonic (_ ("Click here to _Preview the video"));
   }
 
   lives_widget_show (preview_button);
 
-
   lives_box_pack_start (for_button, preview_button, FALSE, FALSE, widget_opts.packing_width);
 
-  if (preview_type==1||preview_type==3) {
+  if (preview_type==LIVES_PREVIEW_TYPE_VIDEO_AUDIO||preview_type==LIVES_PREVIEW_TYPE_RANGE) {
     add_deinterlace_checkbox(for_deint);
   }
 
@@ -1058,7 +1053,7 @@ LiVESWidget *create_opensel_dialog (void) {
   lives_widget_set_can_focus_and_default (okbutton);
   lives_widget_grab_default(okbutton);
 
-  widget_add_preview (opensel_dialog, LIVES_BOX (dialog_vbox), LIVES_BOX (dialog_vbox), LIVES_BOX(dialog_vbox), 3);
+  widget_add_preview (opensel_dialog, LIVES_BOX (dialog_vbox), LIVES_BOX (dialog_vbox), LIVES_BOX(dialog_vbox), LIVES_PREVIEW_TYPE_RANGE);
 
   lives_signal_connect (LIVES_GUI_OBJECT (cancelbutton), LIVES_WIDGET_CLICKED_EVENT,
 		    LIVES_GUI_CALLBACK (on_cancel_opensel_clicked),
@@ -2156,7 +2151,8 @@ static void chooser_check_dir(LiVESFileChooser *chooser, livespointer user_data)
 
 
 
-char *choose_file(char *dir, char *fname, char **filt, LiVESFileChooserAction act, const char *title, LiVESWidget *extra_widget) {
+char *choose_file(const char *dir, const char *fname, char ** const filt, LiVESFileChooserAction act, 
+		  const char *title, LiVESWidget *extra_widget) {
   // new style file chooser
 
   // in/out values are in utf8 encoding
@@ -2231,7 +2227,7 @@ char *choose_file(char *dir, char *fname, char **filt, LiVESFileChooserAction ac
     }
   }
 
-  if (extra_widget!=NULL) gtk_file_chooser_set_extra_widget(LIVES_FILE_CHOOSER(chooser),extra_widget);
+  if (extra_widget!=NULL && extra_widget!=mainw->LiVES) gtk_file_chooser_set_extra_widget(LIVES_FILE_CHOOSER(chooser),extra_widget);
 
 #endif
 
@@ -2307,7 +2303,7 @@ char *choose_file(char *dir, char *fname, char **filt, LiVESFileChooserAction ac
 
   lives_widget_grab_focus (chooser);
 
-  lives_widget_show(chooser);
+  lives_widget_show_all(chooser);
 
   lives_window_center(LIVES_WINDOW(chooser));
   
@@ -2316,7 +2312,7 @@ char *choose_file(char *dir, char *fname, char **filt, LiVESFileChooserAction ac
   memset(last_good_folder,0,1);
 
   if (extra_widget==mainw->LiVES) {
-    return (gchar *)chooser; // kludge to allow custom adding of extra widgets
+    return (char *)chooser; // kludge to allow custom adding of extra widgets
   }
 
  rundlg:
@@ -2375,13 +2371,15 @@ static void chooser_response(LiVESDialog *dialog, int response, livespointer use
 
 
 
-LiVESWidget *choose_file_with_preview (gchar *dir, const gchar *title, int preview_type) {
+LiVESWidget *choose_file_with_preview (const char *dir, const char *title, int preview_type) {
   // preview_type 1 - video and audio open (single - opensel)
   // preview type 2 - import audio
   // preview_type 3 - video and audio open (multiple)
-  // type 4 xmms (deprecated)
-  // type 5 append audio
+  // preview_type 4 - append audio
   
+  // preview type 16 - generic video/audio
+  // preview type 17 - generic audio
+
   // type 128 - locate missing clip
 
 
@@ -2402,7 +2400,8 @@ LiVESWidget *choose_file_with_preview (gchar *dir, const gchar *title, int previ
   widget_add_preview(chooser,LIVES_BOX(lives_dialog_get_content_area(LIVES_DIALOG(chooser))),
 		     LIVES_BOX(lives_dialog_get_content_area(LIVES_DIALOG(chooser))),
 		     LIVES_BOX(lives_dialog_get_action_area(LIVES_DIALOG(chooser))),
-		     (preview_type==3||preview_type==128)?1:preview_type>3?2:preview_type);
+		     (preview_type==1||preview_type==3||preview_type==128||preview_type==16)?LIVES_PREVIEW_TYPE_VIDEO_AUDIO:
+		     LIVES_PREVIEW_TYPE_AUDIO_ONLY);
 
   if (prefs->fileselmax) {
     lives_window_set_resizable (LIVES_WINDOW(chooser),TRUE);
@@ -2410,6 +2409,8 @@ LiVESWidget *choose_file_with_preview (gchar *dir, const gchar *title, int previ
     lives_widget_queue_draw(chooser);
     lives_widget_context_update();
   }
+
+  lives_widget_show_all(chooser);
 
   lives_signal_connect (chooser, LIVES_WIDGET_RESPONSE_EVENT, 
 			LIVES_GUI_CALLBACK (chooser_response), LIVES_INT_TO_POINTER(preview_type));

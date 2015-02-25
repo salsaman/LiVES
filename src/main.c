@@ -1121,7 +1121,6 @@ static void lives_init(_ign_opts *ign_opts) {
   mainw->audio_frame_buffer=NULL;
   mainw->afbuffer_clients=0;
 
-  mainw->ext_caller=0; // external caller ref. for C++ bindings
   /////////////////////////////////////////////////// add new stuff just above here ^^
 
 

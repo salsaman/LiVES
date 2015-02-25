@@ -643,10 +643,6 @@ int do_info_dialog_with_transient(const gchar *text, boolean is_blocking, LiVESW
     }
   }
 
-#ifdef IS_LIBLIVES
-  ext_caller_check(ret);
-#endif
-
   return ret;
 }
 

@@ -105,6 +105,11 @@ typedef struct {
 } lives_tvcardw_t;
 
 
+#define LIVES_PREVIEW_TYPE_VIDEO_AUDIO 1
+#define LIVES_PREVIEW_TYPE_AUDIO_ONLY 2
+#define LIVES_PREVIEW_TYPE_RANGE 3
+  
+
 
 aud_dialog_t *create_audfade_dialog (int type);
 LiVESWidget *create_combo_dialog (int type, livespointer user_data);

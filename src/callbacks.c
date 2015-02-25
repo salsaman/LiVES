@@ -10776,7 +10776,7 @@ void on_append_audio_activate (LiVESMenuItem *menuitem, livespointer user_data) 
     mainw->xlays=NULL;
   }
 
-  choose_file_with_preview(strlen(mainw->audio_dir)?mainw->audio_dir:NULL,_ ("LiVES: - Append Audio File"),5);
+  choose_file_with_preview(strlen(mainw->audio_dir)?mainw->audio_dir:NULL,_ ("LiVES: - Append Audio File"),4);
 
 }
 

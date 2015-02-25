@@ -97,12 +97,24 @@ static void *play_thread(void *) {
 
 static volatile bool spinning;
 static ulong blocking_id;
-static int private_response;
+static int private_response_int;
+static char *private_response_string;
 
 
-static bool private_cb(lives::privateInfo *info, void *data) {
+static bool private_int_cb(lives::privateIntInfo *info, void *data) {
   if (info->id == blocking_id) {
-    private_response = info->response;
+    private_response_int = info->response;
+    spinning = false;
+    return false;
+  }
+
+  return true;
+}
+
+
+static bool private_string_cb(lives::privateStringInfo *info, void *data) {
+  if (info->id == blocking_id) {
+    private_response_string = info->response;
     spinning = false;
     return false;
   }
@@ -156,15 +168,23 @@ namespace lives {
 
 
   livesApp::livesApp() : m_set(this) {
-    init(0,NULL);
+    if (appMgr.empty())
+      init(0,NULL);
+    else 
+      m_id = 0;
   }
 
   livesApp::livesApp(int argc, char *argv[]) : m_set(this) {
-    init(argc,argv);
+    if (appMgr.empty())
+      init(argc,argv);
+    else 
+      m_id = 0;
   }
 
 
   livesApp::~livesApp() {
+    if (!m_id) return;
+
     int arglen = 1;
     char **vargs=(char **)lives_malloc(sizeof(char *));
     *vargs = strdup(",");
@@ -178,6 +198,9 @@ namespace lives {
       delete *it;
       m_closures.erase(it++);
     }
+
+    appMgr.clear();
+
     lives_osc_cb_quit(NULL, arglen, (const void *)(*vargs), OSCTT_CurrentTime(), NULL);
     lives_free(*vargs);
   }
@@ -202,8 +225,14 @@ namespace lives {
     return true;
   }
 
-  bool livesApp::addCallback(int msgnum, private_callback_f func, void *data) {
-    if (msgnum != LIVES_NOTIFY_PRIVATE) return false;
+  bool livesApp::addCallback(int msgnum, private_int_callback_f func, void *data) {
+    if (msgnum != LIVES_NOTIFY_PRIVATE_INT) return false;
+    appendClosure(msgnum, (callback_f)func, data);
+    return true;
+  }
+
+  bool livesApp::addCallback(int msgnum, private_string_callback_f func, void *data) {
+    if (msgnum != LIVES_NOTIFY_PRIVATE_STRING) return false;
     appendClosure(msgnum, (callback_f)func, data);
     return true;
   }
@@ -216,32 +245,47 @@ namespace lives {
 
 
   void livesApp::play() {
+    if (!m_id) return;
     play_thread(NULL);
   }
 
   bool livesApp::stop() {
+    if (!m_id) return FALSE;
     // return false if we are not playing
     return lives_osc_cb_stop(NULL, 0, NULL, OSCTT_CurrentTime(), NULL);
   }
 
 
   int livesApp::showInfo(const char *text, bool blocking) {
+    if (!m_id) return 0;
     // if blocking wait for response
     if (blocking) {
       spinning = true;
       blocking_id = lives_random();
-      addCallback(LIVES_NOTIFY_PRIVATE, private_cb, NULL); 
+      addCallback(LIVES_NOTIFY_PRIVATE_INT, private_int_cb, NULL); 
       idle_show_info(text,blocking,blocking_id);
       while (spinning) usleep(100);
-      return private_response;
+      return private_response_int;
     }
     idle_show_info(text,blocking,0);
     return 0;
   }
 
   int livesApp::showInfo(const char *text) {
+    if (!m_id) return 0;
     return showInfo(text, true);
   }
+
+
+  char *livesApp::chooseFileWithPreview(const char *dirname, int preview_type) {
+    spinning = true;
+    blocking_id = lives_random();
+    addCallback(LIVES_NOTIFY_PRIVATE_STRING, private_string_cb, NULL); 
+    idle_choose_file_with_preview(dirname,NULL,preview_type,blocking_id);
+    while (spinning) usleep(100);
+    return private_response_string;
+  }
+
 
   list<closure*> livesApp::closures() {
     return m_closures;
@@ -296,13 +340,13 @@ namespace lives {
     spinning = true;
     blocking_id = lives_random();
 
-    m_lives->addCallback(LIVES_NOTIFY_PRIVATE, private_cb, NULL); 
+    m_lives->addCallback(LIVES_NOTIFY_PRIVATE_INT, private_int_cb, NULL); 
 
     idle_save_set(name,arglen,(const void *)(*vargs),blocking_id);
 
     while (spinning) usleep(100);
     lives_free(*vargs);
-    return private_response;
+    return private_response_int;
   }
 
   clipList set::cliplist() {
@@ -349,33 +393,13 @@ namespace lives {
   }
 
 
+  namespace prefs {
+    const char *currentVideoLoadDir() {
+      return mainw->vid_load_dir;
+    }
 
 
-
-
-  bool record::enable() {
-    OSCTimeTag t;
-    t.seconds = t.fraction = 0;
-    return lives_osc_record_start(NULL, 0, NULL, t, NULL);
   }
-
-  bool record::disable() {
-    OSCTimeTag t;
-    t.seconds = t.fraction = 0;
-    int arglen = 0;
-    const char *vargs = NULL;
-    return lives_osc_record_stop(NULL, arglen, (const void *)vargs, t, NULL);
-  }
-
-  bool record::toggle() {
-    OSCTimeTag t;
-    t.seconds = t.fraction = 0;
-    int arglen = 0;
-    const char *vargs = NULL;
-    return lives_osc_record_toggle(NULL, arglen, (const void *)vargs, t, NULL);
-  }
-
-
 
 }
 
@@ -386,6 +410,8 @@ void binding_cb (int msgnumber, const char *msgstring, uint64_t id) {
 
   if (msgnumber == LIVES_NOTIFY_OBJECT_DESTROYED) lapp = (lives::livesApp *)id;
   else lapp = lives::find_instance_for_id(id);
+
+  if (lapp == NULL) return;
 
   list <lives::closure *> cl = lapp->closures();
 
@@ -408,15 +434,28 @@ void binding_cb (int msgnumber, const char *msgstring, uint64_t id) {
 	  ret = (fn)((*it)->object, (*it)->data);
 	}
 	break;
-      case LIVES_NOTIFY_PRIVATE:
+      case LIVES_NOTIFY_PRIVATE_INT:
 	{
 	  // private event type
-	  lives::privateInfo info;
+	  lives::privateIntInfo info;
 	  char **msgtok = lives_strsplit(msgstring, " ", -1);
 	  info.id = strtoul(msgtok[0],NULL,10);
 	  info.response = atoi(msgtok[1]);
 	  lives_strfreev(msgtok);
-	  lives::private_callback_f fn = (lives::private_callback_f)((*it)->func);
+	  lives::private_int_callback_f fn = (lives::private_int_callback_f)((*it)->func);
+	  ret = (fn)(&info, (*it)->data);
+	}
+	break;
+      case LIVES_NOTIFY_PRIVATE_STRING:
+	{
+	  // private event type
+	  lives::privateStringInfo info;
+	  char **msgtok = lives_strsplit(msgstring, " ", -1);
+	  info.id = strtoul(msgtok[0],NULL,10);
+	  if (get_token_count(msgstring,' ')==1) info.response=NULL;
+	  else info.response = strdup(msgtok[1]);
+	  lives_strfreev(msgtok);
+	  lives::private_string_callback_f fn = (lives::private_string_callback_f)((*it)->func);
 	  ret = (fn)(&info, (*it)->data);
 	}
 	break;

@@ -7,6 +7,18 @@
 #ifndef HAS_LIBLIVES_H
 #define HAS_LIBLIVES_H
 
+// defs shared with lbindings.c
+
+#define LIVES_PREVIEW_TYPE_VIDEO_AUDIO 1
+#define LIVES_PREVIEW_TYPE_AUDIO_ONLY 2
+#define LIVES_PREVIEW_TYPE_RANGE 3
+
+
+
+
+
+#ifdef __cplusplus
+
 #include "osc_notify.h"
 
 #if defined _WIN32 || defined __CYGWIN__
@@ -108,10 +120,16 @@ namespace lives {
   typedef struct {
     ulong id;
     int response;
-  } privateInfo;
+  } privateIntInfo;
+
+  typedef struct {
+    ulong id;
+    char *response;
+  } privateStringInfo;
 
 
-  typedef bool (*private_callback_f)(privateInfo *, void *);
+  typedef bool (*private_int_callback_f)(privateIntInfo *, void *);
+  typedef bool (*private_string_callback_f)(privateStringInfo *, void *);
 
   typedef bool (*modeChanged_callback_f)(livesApp *lives, modeChangedInfo *, void *);
   typedef bool (*objectDestroyed_callback_f)(livesApp *lives, void *);
@@ -188,11 +206,14 @@ namespace lives {
     int showInfo(const char *text);
     int showInfo(const char *text, bool blocking);
 
+    char *chooseFileWithPreview(const char *dirname, int preview_type);
+
     list<closure*> closures();
 
 
   protected:
-    LIVES_DLL_LOCAL bool addCallback(int msgnum, private_callback_f func, void *data);
+    LIVES_DLL_LOCAL bool addCallback(int msgnum, private_int_callback_f func, void *data);
+    LIVES_DLL_LOCAL bool addCallback(int msgnum, private_string_callback_f func, void *data);
 
 
   private:
@@ -202,12 +223,20 @@ namespace lives {
     LIVES_DLL_LOCAL void appendClosure(int msgnum, callback_f func, void *data);
     LIVES_DLL_LOCAL void init(int argc, char *argv[]);
 
+    livesApp(livesApp const&);              // Don't Implement
+    void operator=(livesApp const&); // Don't implement
+
+
   };
 
 
+  namespace prefs {
+    const char *currentVideoLoadDir();
+
+  }
 
 }
 
-
+#endif // __cplusplus
 
 #endif //HAS_LIBLIVES_H

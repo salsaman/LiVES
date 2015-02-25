@@ -219,32 +219,34 @@ const gchar *get_deinterlace_string(void) {
 }
 
 
-void deduce_file(const gchar *file_name, double start, int end) {
+ulong deduce_file(const gchar *file_name, double start, int end) {
   // this is a utility function to deduce whether we are dealing with a file, 
   // a selection, a backup, or a location
-  gchar short_file_name[PATH_MAX];
+  char short_file_name[PATH_MAX];
+  ulong uid;
   mainw->img_concat_clip=-1;
 
   if (lives_strrstr(file_name,"://")!=NULL&&strncmp (file_name,"dvd://",6)) {
     mainw->opening_loc=TRUE;
-    open_file(file_name);
+    uid=open_file(file_name);
     mainw->opening_loc=FALSE;
   }
   else {
     lives_snprintf(short_file_name,PATH_MAX,"%s",file_name);
     if (!(strcmp(file_name+strlen(file_name)-4,".lv1"))) {
-      restore_file(file_name);
+      uid=restore_file(file_name);
     }
     else {
-      open_file_sel(file_name,start,end);
+      uid=open_file_sel(file_name,start,end);
     }
   }
+  return uid;
 }
 
 
-void open_file (const gchar *file_name) {
+ulong open_file (const char *file_name) {
   // this function should be called to open a whole file
-  open_file_sel(file_name,0.,0);
+  return open_file_sel(file_name,0.,0);
 }
 
 
@@ -280,12 +282,12 @@ static boolean rip_audio_cancelled(int old_file, weed_plant_t *mt_pb_start_event
 
 #define AUDIO_FRAMES_TO_READ 100
 
-void open_file_sel(const gchar *file_name, double start, int frames) {
-  gchar msg[256],loc[256];
-  gchar *tmp=NULL;
-  gchar *isubfname=NULL;
-  gchar *fname=lives_strdup(file_name),*msgstr;
-  gchar *com;
+ulong open_file_sel(const gchar *file_name, double start, int frames) {
+  char msg[256],loc[256];
+  char *tmp=NULL;
+  char *isubfname=NULL;
+  char *fname=lives_strdup(file_name),*msgstr;
+  char *com;
 
   int withsound=1;
   int old_file=mainw->current_file;
@@ -305,7 +307,7 @@ void open_file_sel(const gchar *file_name, double start, int frames) {
 
     if (!get_new_handle(new_file,fname)) {
       lives_free(fname);
-      return;
+      return 0;
     }
     lives_free(fname);
     
@@ -418,7 +420,7 @@ void open_file_sel(const gchar *file_name, double start, int frames) {
 	  if (mainw->cancelled!=CANCEL_NONE) {
 	    if (!rip_audio_cancelled(old_file,mt_pb_start_event,mt_has_audio_file)) {
 	      lives_free(afile);
-	      return;
+	      return 0;
 	    }
 	  }
 
@@ -450,7 +452,7 @@ void open_file_sel(const gchar *file_name, double start, int frames) {
 	    read_file_details(file_name,FALSE);
 	    unlink (cfile->info_file);
 	  
-	    if (mainw->com_failed) return;
+	    if (mainw->com_failed) return 0;
 
 	    if (strlen(mainw->msg)>0) add_file_info (cfile->handle,TRUE);
 
@@ -494,7 +496,7 @@ void open_file_sel(const gchar *file_name, double start, int frames) {
 		if (mainw->cancelled==CANCEL_NO_PROPOGATE) {
 		  lives_set_cursor_style(LIVES_CURSOR_NORMAL,NULL);
 		  mainw->cancelled=CANCEL_NONE;
-		  return;
+		  return 0;
 		}
 	      
 		// cancelled
@@ -526,7 +528,7 @@ void open_file_sel(const gchar *file_name, double start, int frames) {
 		mainw->file_open_params=NULL;
 		close_current_file(old_file);
 		lives_set_cursor_style(LIVES_CURSOR_NORMAL,NULL);
-		return;
+		return 0;
 	      }
 	      if (mainw->error==0) add_file_info (cfile->handle,TRUE);
 	      mainw->error=0;
@@ -638,7 +640,7 @@ void open_file_sel(const gchar *file_name, double start, int frames) {
 	if (mainw->file_open_params!=NULL) lives_free (mainw->file_open_params);
 	mainw->file_open_params=NULL;
 	lives_set_cursor_style(LIVES_CURSOR_NORMAL,NULL);
-	return;
+	return 0;
       }
       unlink (cfile->info_file);
 
@@ -656,7 +658,7 @@ void open_file_sel(const gchar *file_name, double start, int frames) {
 	if (mainw->file_open_params!=NULL) lives_free (mainw->file_open_params);
 	mainw->file_open_params=NULL;
 	lives_set_cursor_style(LIVES_CURSOR_NORMAL,NULL);
-	return;
+	return 0;
       }
 
       if (frames>0&&cfile->frames>frames) cfile->end=cfile->undo_end=cfile->frames=frames;
@@ -680,7 +682,7 @@ void open_file_sel(const gchar *file_name, double start, int frames) {
 	    mainw->multitrack->has_audio_file=mt_has_audio_file;
 	  }
 	  lives_set_cursor_style(LIVES_CURSOR_NORMAL,NULL);
-	  return;
+	  return 0;
 	}
 	lives_free(warn);
 	d_print(_ (" - please be patient."));
@@ -774,7 +776,7 @@ void open_file_sel(const gchar *file_name, double start, int frames) {
 	mainw->cancelled=CANCEL_NONE;
 	lives_set_cursor_style(LIVES_CURSOR_NORMAL,NULL);
 	mainw->noswitch=FALSE;
-	return;
+	return 0;
       }
     }
 
@@ -808,7 +810,7 @@ void open_file_sel(const gchar *file_name, double start, int frames) {
 	  mainw->cancelled=CANCEL_NONE;
 	  lives_set_cursor_style(LIVES_CURSOR_NORMAL,NULL);
 	  mainw->noswitch=FALSE;
-	  return;
+	  return 0;
 	}
 	
 	// cancelled
@@ -837,7 +839,7 @@ void open_file_sel(const gchar *file_name, double start, int frames) {
 	}
 	mainw->noswitch=FALSE;
 	lives_set_cursor_style(LIVES_CURSOR_NORMAL,NULL);
-	return;
+	return 0;
       }
     }
     lives_free(msgstr);
@@ -873,7 +875,7 @@ void open_file_sel(const gchar *file_name, double start, int frames) {
     if (mainw->file_open_params!=NULL) lives_free (mainw->file_open_params);
     mainw->file_open_params=NULL;
     lives_set_cursor_style(LIVES_CURSOR_NORMAL,NULL);
-    return;
+    return 0;
   }
 
   if (cfile->opening_loc) {
@@ -960,7 +962,7 @@ void open_file_sel(const gchar *file_name, double start, int frames) {
       if (mainw->file_open_params!=NULL) lives_free (mainw->file_open_params);
       mainw->file_open_params=NULL;
       lives_set_cursor_style(LIVES_CURSOR_NORMAL,NULL);
-      return;
+      return 0;
     }
     cfile->frames=0;
   }
@@ -1035,7 +1037,7 @@ void open_file_sel(const gchar *file_name, double start, int frames) {
       lives_set_cursor_style(LIVES_CURSOR_NORMAL,NULL);
       mainw->noswitch=FALSE;
 
-      return;
+      return 0;
     }
   }
 
@@ -1043,7 +1045,7 @@ void open_file_sel(const gchar *file_name, double start, int frames) {
   if (!save_clip_values(current_file)) {
     close_current_file(old_file);
     mainw->noswitch=FALSE;
-    return;
+    return 0;
   }
 
   if (prefs->crash_recovery) add_to_recovery_file(cfile->handle);
@@ -1067,6 +1069,7 @@ load_done:
     mt_clip_select(mainw->multitrack,TRUE);
   }
   lives_set_cursor_style(LIVES_CURSOR_NORMAL,NULL);
+  return cfile->unique_id;
 }
 
 
@@ -4655,21 +4658,21 @@ void open_set_file (const gchar *set_name, int clipnum) {
 
 
 
-void restore_file(const gchar *file_name) {
-  gchar *com=lives_strdup("dummy");
-  gchar *mesg,*mesg1,*tmp;
+ulong restore_file(const gchar *file_name) {
+  char *com=lives_strdup("dummy");
+  char *mesg,*mesg1,*tmp;
   boolean is_OK=TRUE;
-  gchar *fname=lives_strdup(file_name);
+  char *fname=lives_strdup(file_name);
 
   int old_file=mainw->current_file,current_file;
   int new_file=mainw->first_free_file;
   boolean not_cancelled;
 
-  gchar *subfname;
+  char *subfname;
 
   // create a new file
   if (!get_new_handle(new_file,fname)) {
-    return;
+    return 0;
   }
   
 
@@ -4700,7 +4703,7 @@ void restore_file(const gchar *file_name) {
   if (mainw->com_failed) {
     mainw->com_failed=FALSE;
     close_current_file(old_file);
-    return;
+    return 0;
   }
 
   cfile->restoring=TRUE;
@@ -4712,7 +4715,7 @@ void restore_file(const gchar *file_name) {
       do_blocking_error_dialog (mainw->msg);
     }
     close_current_file(old_file);
-    return;
+    return 0;
   }
   
   // call function to return rest of file details
@@ -4732,7 +4735,7 @@ void restore_file(const gchar *file_name) {
     
     d_print_failed();
     close_current_file(old_file);
-    return;
+    return 0;
   }
   if (!check_frame_count(mainw->current_file)) get_frame_count(mainw->current_file);
   
@@ -4797,7 +4800,7 @@ void restore_file(const gchar *file_name) {
 
   if (!save_clip_values(current_file)) {
     close_current_file(old_file);
-    return;
+    return 0;
   }
 
   if (prefs->crash_recovery) add_to_recovery_file(cfile->handle);
@@ -4806,6 +4809,7 @@ void restore_file(const gchar *file_name) {
 
   lives_notify(LIVES_NOTIFY_CLIP_OPENED,"");
 
+  return cfile->unique_id;
 }
 
 

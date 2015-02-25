@@ -117,19 +117,14 @@ namespace lives {
     int mode;
   } modeChangedInfo;
 
-  typedef struct {
-    ulong id;
-    int response;
-  } privateIntInfo;
 
   typedef struct {
     ulong id;
     char *response;
-  } privateStringInfo;
+  } privateInfo;
 
 
-  typedef bool (*private_int_callback_f)(privateIntInfo *, void *);
-  typedef bool (*private_string_callback_f)(privateStringInfo *, void *);
+  typedef bool (*private_callback_f)(privateInfo *, void *);
 
   typedef bool (*modeChanged_callback_f)(livesApp *lives, modeChangedInfo *, void *);
   typedef bool (*objectDestroyed_callback_f)(livesApp *lives, void *);
@@ -138,10 +133,12 @@ namespace lives {
   public:
     clip(uint64_t handle);
 
+    int frames();
+
     bool select();
 
   private:
-    uint64_t m_handle;
+    uint64_t m_uid;
 
   };
   
@@ -203,17 +200,18 @@ namespace lives {
     bool addCallback(int msgnum, modeChanged_callback_f func, void *data);
     bool addCallback(int msgnum, objectDestroyed_callback_f func, void *data);
 
-    int showInfo(const char *text);
-    int showInfo(const char *text, bool blocking);
+    int showInfo(const char *text, bool blocking=true);
 
     char *chooseFileWithPreview(const char *dirname, int preview_type);
+    char *chooseFileWithPreview(const char *dirname, const char *title, int preview_type);
+
+    clip *openFile(const char *fname, double stime=0., int frames=0);
 
     list<closure*> closures();
 
 
   protected:
-    LIVES_DLL_LOCAL bool addCallback(int msgnum, private_int_callback_f func, void *data);
-    LIVES_DLL_LOCAL bool addCallback(int msgnum, private_string_callback_f func, void *data);
+    LIVES_DLL_LOCAL bool addCallback(int msgnum, private_callback_f func, void *data);
 
 
   private:

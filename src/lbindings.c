@@ -15,11 +15,18 @@ typedef boolean Boolean;
 
 boolean lives_osc_cb_saveset(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra);
 
-
 static void ext_caller_return_int(ulong caller_id, int ret) {
   // this is for the C++ binding
   char *msgstring = lives_strdup_printf("%lu %d",caller_id,ret);
-  binding_cb (LIVES_NOTIFY_PRIVATE_INT, msgstring, mainw->id);
+  binding_cb (LIVES_NOTIFY_PRIVATE, msgstring, mainw->id);
+  lives_free(msgstring);
+}
+
+
+static void ext_caller_return_ulong(ulong caller_id, ulong ret) {
+  // this is for the C++ binding
+  char *msgstring = lives_strdup_printf("%lu %lu",caller_id,ret);
+  binding_cb (LIVES_NOTIFY_PRIVATE, msgstring, mainw->id);
   lives_free(msgstring);
 }
 
@@ -27,7 +34,7 @@ static void ext_caller_return_int(ulong caller_id, int ret) {
 static void ext_caller_return_string(ulong caller_id, const char *ret) {
   // this is for the C++ binding
   char *msgstring = lives_strdup_printf("%lu %s",caller_id,ret);
-  binding_cb (LIVES_NOTIFY_PRIVATE_STRING, msgstring, mainw->id);
+  binding_cb (LIVES_NOTIFY_PRIVATE, msgstring, mainw->id);
   lives_free(msgstring);
 }
 
@@ -112,13 +119,28 @@ static boolean call_file_choose_with_preview(livespointer data) {
   else preview_type=17;
   chooser=choose_file_with_preview(fdata->dir, fdata->title, preview_type);
   response=lives_dialog_run(LIVES_DIALOG(chooser));
-  if (response != LIVES_RESPONSE_CANCEL) fname=lives_file_chooser_get_filename (LIVES_FILE_CHOOSER(chooser));
+  if (response == LIVES_RESPONSE_ACCEPT) {
+    fname=lives_file_chooser_get_filename (LIVES_FILE_CHOOSER(chooser));
+    lives_widget_destroy(chooser);
+  }
   if (fdata->dir!=NULL) lives_free(fdata->dir);
   if (fdata->title!=NULL) lives_free(fdata->title);
   ext_caller_return_string(fdata->id,fname);
   lives_free(fdata);
   return FALSE;
 }
+
+
+
+static boolean call_open_file(livespointer data) {
+  opfidata *opfi = (opfidata *)data;
+  ulong uid=open_file_sel(opfi->fname,opfi->stime,opfi->frames);
+  if (opfi->fname!=NULL) lives_free(opfi->fname);
+  ext_caller_return_ulong(opfi->id,uid);
+  lives_free(opfi);
+  return FALSE;
+}
+
 
 
 /// idlefunc hooks
@@ -145,7 +167,14 @@ void idle_save_set(const char *name, int arglen, const void *vargs, ulong id) {
 
 
 void idle_choose_file_with_preview(const char *dirname, const char *title, int preview_type, ulong id) {
-  fprev *data = (fprev *)lives_malloc(sizeof(fprev));
+  fprev *data;
+
+  if (mainw->preview||mainw->is_processing||mainw->playing_file>-1) {
+    ext_caller_return_string(id,NULL);
+    return;
+  }
+
+  data= (fprev *)lives_malloc(sizeof(fprev));
   data->id=id;
 
   if (dirname!=NULL) data->dir=strdup(dirname);
@@ -156,6 +185,25 @@ void idle_choose_file_with_preview(const char *dirname, const char *title, int p
 
   data->preview_type=preview_type;
   lives_idle_add(call_file_choose_with_preview,(livespointer)data);
+
+  
 }
 
 
+void idle_open_file(const char *fname, double stime, int frames, ulong id) {
+  opfidata *data;
+
+  if (mainw->preview||mainw->is_processing||mainw->playing_file>-1) {
+    ext_caller_return_ulong(id,0l);
+    return;
+  }
+
+  data= (opfidata *)lives_malloc(sizeof(opfidata));
+  data->id=id;
+  data->fname=strdup(fname);
+  data->stime=stime;
+  data->frames=frames;
+
+  lives_idle_add(call_open_file,(livespointer)data);
+  return;
+}

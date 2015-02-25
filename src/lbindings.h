@@ -29,6 +29,14 @@ typedef struct {
 
 typedef struct {
   ulong id;
+  char *fname;
+  double stime;
+  int frames;
+} opfidata;
+
+
+typedef struct {
+  ulong id;
   char *dir;
   char *title;
   int preview_type;
@@ -42,6 +50,8 @@ typedef struct {
 void idle_show_info(const char *text, boolean blocking, ulong id);
 void idle_save_set(const char *name, int arglen, const void *vargs, ulong id);
 void idle_choose_file_with_preview(const char *dirname, const char *title, int preview_type, ulong id);
+void idle_open_file(const char *fname, double stime, int frames, ulong id);
+
 
 ulong *get_unique_ids(void);
 

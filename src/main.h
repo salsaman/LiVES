@@ -969,9 +969,9 @@ boolean add_file_info(const gchar *check_handle, boolean aud_only);
 boolean save_file_comments (int fileno);
 boolean reload_clip(int fileno);
 void reget_afilesize (int fileno);
-void deduce_file(const gchar *filename, double start_time, int end);
-void open_file (const gchar *filename);
-void open_file_sel(const gchar *file_name, double start_time, int frames);
+ulong deduce_file(const char *filename, double start_time, int end);
+ulong open_file (const char *filename);
+ulong open_file_sel(const gchar *file_name, double start_time, int frames);
 void open_fw_device (void);
 boolean get_new_handle(int index, const gchar *name);
 boolean get_temp_handle(int index, boolean create);
@@ -995,8 +995,8 @@ int save_event_frames(void);
 boolean write_headers (lives_clip_t *file);
 
 // saveplay.c restore
-void restore_file(const gchar *filename);
-boolean read_headers(const gchar *file_name);
+ulong restore_file(const char *filename);
+boolean read_headers(const char *file_name);
 
 // saveplay.c sets
 void open_set_file (const gchar *set_name, int clipnum);

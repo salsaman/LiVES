@@ -50,7 +50,7 @@
 #include "framedraw.h"
 #include "cvirtual.h"
 #include "pangotext.h"
-#include "lbindings.h"
+
 
 #ifdef ENABLE_GIW
 #include "giw/giwvslider.h"
@@ -700,7 +700,7 @@ static void save_mt_autoback(lives_mt *mt, int64_t stime) {
     if (!retval||mainw->write_failed) {
       retval2=do_write_failed_error_s_with_retry(asave_file,NULL,NULL);
     }
-  } while (retval2==LIVES_RETRY);
+  } while (retval2==LIVES_RESPONSE_RETRY);
 
   lives_free(asave_file);
 
@@ -18952,7 +18952,7 @@ LiVESList *load_layout_map(void) {
     if (err) {
       retval=do_read_failed_error_s_with_retry(lmap_name,NULL,NULL);
     }
-  } while (retval==LIVES_RETRY);
+  } while (retval==LIVES_RESPONSE_RETRY);
 
   lives_free(lmap_name);
   return lmap;
@@ -19095,10 +19095,10 @@ void save_layout_map (int *lmap, double *lmap_audio, const gchar *file, const gc
       }
 
     }
-    if (retval==LIVES_RETRY && fd>=0) lives_close_buffered(fd);
-  } while (retval==LIVES_RETRY);
+    if (retval==LIVES_RESPONSE_RETRY && fd>=0) lives_close_buffered(fd);
+  } while (retval==LIVES_RESPONSE_RETRY);
 
-  if (retval!=LIVES_CANCEL) {
+  if (retval!=LIVES_RESPONSE_CANCEL) {
     size=get_file_size(fd);
     lives_close_buffered(fd);
 
@@ -19378,7 +19378,7 @@ void on_save_event_list_activate (LiVESMenuItem *menuitem, livespointer user_dat
 
     if (!retval||fd<0) {
       retval2=do_write_failed_error_s_with_retry(esave_file,(fd<0)?lives_strerror(errno):NULL,NULL);
-      if (retval2==LIVES_CANCEL) {
+      if (retval2==LIVES_RESPONSE_CANCEL) {
 	if (mt!=NULL) {
 	  mt->idlefunc=0;
 	  mt->idlefunc=mt_idle_add(mt);
@@ -19387,9 +19387,9 @@ void on_save_event_list_activate (LiVESMenuItem *menuitem, livespointer user_dat
 	return;
       }
     }
-  } while (retval2==LIVES_RETRY);
+  } while (retval2==LIVES_RESPONSE_RETRY);
 
-  if (retval2!=LIVES_CANCEL) {
+  if (retval2!=LIVES_RESPONSE_CANCEL) {
     msg=lives_strdup_printf(_("Saved layout to %s\n"),esave_file);
     d_print(msg);
     lives_free(msg);
@@ -21009,7 +21009,7 @@ weed_plant_t *load_event_list(lives_mt *mt, gchar *eload_file) {
 	mainw->read_failed=FALSE;
       }
       
-      if (retval!=LIVES_RETRY) {
+      if (retval!=LIVES_RESPONSE_RETRY) {
 	if (mt->is_ready) mt_sensitise(mt);
 	lives_free(eload_name);
 	mt->idlefunc=mt_idle_add(mt);
@@ -21017,7 +21017,7 @@ weed_plant_t *load_event_list(lives_mt *mt, gchar *eload_file) {
       }
     }
     else lives_close_buffered(fd);
-  } while (retval==LIVES_RETRY);
+  } while (retval==LIVES_RESPONSE_RETRY);
 
   lives_free(eload_name);
 
@@ -21084,9 +21084,9 @@ weed_plant_t *load_event_list(lives_mt *mt, gchar *eload_file) {
 
 	  if (fd<0||!retval) {
 	    retval2=do_write_failed_error_s_with_retry(eload_file,(fd<0)?lives_strerror(errno):NULL,NULL);
-	    if (retval2==LIVES_CANCEL) d_print_file_error_failed();
+	    if (retval2==LIVES_RESPONSE_CANCEL) d_print_file_error_failed();
 	  }
-	} while (retval2==LIVES_RETRY);
+	} while (retval2==LIVES_RESPONSE_RETRY);
       }
     }
   }
@@ -21417,7 +21417,7 @@ void migrate_layouts (const gchar *old_set_name, const gchar *new_set_name) {
 		if (fd>0) lives_close_buffered(fd);
 		retval2=do_write_failed_error_s_with_retry((char *)map->data,(fd<0)?lives_strerror(errno):NULL,NULL);
 	      }
-	    } while (retval2==LIVES_RETRY);
+	    } while (retval2==LIVES_RESPONSE_RETRY);
 	    
 	    event_list_free(event_list);
 	  }
@@ -21427,7 +21427,7 @@ void migrate_layouts (const gchar *old_set_name, const gchar *new_set_name) {
 	  retval2=do_read_failed_error_s_with_retry((char *)map->data,NULL,NULL);
 	}
 	
-      } while (retval2==LIVES_RETRY);
+      } while (retval2==LIVES_RESPONSE_RETRY);
     }
 
     if (old_set_name!=NULL&&!strncmp((char *)map->data,changefrom,chlen)) {

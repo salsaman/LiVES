@@ -2453,7 +2453,7 @@ void on_midi_save_activate (LiVESMenuItem *menuitem, livespointer user_data) {
     retval=0;
     if ((fd=open(save_file,O_WRONLY|O_CREAT|O_TRUNC,S_IRUSR|S_IWUSR))<0) {
       retval=do_write_failed_error_s_with_retry (save_file,lives_strerror(errno),NULL);
-      if (retval==LIVES_CANCEL) {
+      if (retval==LIVES_RESPONSE_CANCEL) {
 	lives_free (save_file);
 	d_print_failed();
 	return;
@@ -2506,12 +2506,12 @@ void on_midi_save_activate (LiVESMenuItem *menuitem, livespointer user_data) {
 
       if (mainw->write_failed) {
 	retval=do_write_failed_error_s_with_retry(save_file,NULL,NULL);
-	if (retval==LIVES_CANCEL) d_print_file_error_failed();
+	if (retval==LIVES_RESPONSE_CANCEL) d_print_file_error_failed();
       }
     }
-  } while (retval==LIVES_RETRY);
+  } while (retval==LIVES_RESPONSE_RETRY);
 
-  if (retval!=LIVES_CANCEL) d_print_done();
+  if (retval!=LIVES_RESPONSE_CANCEL) d_print_done();
 
   lives_free (save_file);
 

@@ -572,7 +572,7 @@ void load_rfx_preview(lives_rfx_t *rfx) {
     mainw->read_failed=FALSE;
     lives_fgets(mainw->msg,512,infofile);
     if (mainw->read_failed) retval=do_read_failed_error_s_with_retry(cfile->info_file,NULL,NULL);
-  } while (retval==LIVES_RETRY);
+  } while (retval==LIVES_RESPONSE_RETRY);
 
   fclose(infofile);
 

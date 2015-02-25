@@ -18,7 +18,6 @@
 #include "resample.h"
 #include "paramwindow.h"
 #include "ce_thumbs.h"
-#include "lbindings.h"
 
 extern void reset_frame_and_clip_index (void);
 
@@ -134,7 +133,7 @@ static void add_clear_ds_button(LiVESDialog* dialog) {
 		    (livespointer)button);
 
   lives_widget_show(button);
-  lives_dialog_add_action_widget (dialog, button, LIVES_RETRY);
+  lives_dialog_add_action_widget (dialog, button, LIVES_RESPONSE_RETRY);
 
 }
 
@@ -160,21 +159,59 @@ static void add_clear_ds_adv(LiVESBox *box) {
 
 
 //Warning or yes/no dialog
-static LiVESWidget* create_warn_dialog (int warn_mask_number, LiVESWindow *transient, const gchar *text, lives_dialog_t diat) {
+
+// the type of message box here is with 2 or more buttons (e.g. OK/CANCEL, YES/NO, ABORT/CANCEL/RETRY)
+// if a single OK button is needed, use create_info_error_dialog() in inteface.c instead
+
+LiVESWidget* create_message_dialog (lives_dialog_t diat, const gchar *text, LiVESWindow *transient, 
+				    int warn_mask_number, boolean is_blocking) {
   LiVESWidget *dialog;
   LiVESWidget *dialog_vbox;
   LiVESWidget *dialog_action_area;
-  LiVESWidget *warning_label;
-  LiVESWidget *warning_cancelbutton=NULL;
-  LiVESWidget *warning_okbutton=NULL;
+  LiVESWidget *label;
+  LiVESWidget *cancelbutton=NULL;
+  LiVESWidget *okbutton=NULL;
   LiVESWidget *abortbutton=NULL;
 
   LiVESAccelGroup *accel_group=LIVES_ACCEL_GROUP(lives_accel_group_new ());
 
-  gchar *textx;
+  char *textx,*form_text,*pad;
 
   switch (diat) {
   case LIVES_DIALOG_WARN:
+    dialog = lives_message_dialog_new (NULL,(LiVESDialogFlags)0,
+				       LIVES_MESSAGE_WARNING,LIVES_BUTTONS_NONE,NULL);
+    lives_window_set_title (LIVES_WINDOW (dialog), _("LiVES: - Warning !"));
+    okbutton = lives_button_new_from_stock (LIVES_STOCK_OK);
+    lives_dialog_add_action_widget (LIVES_DIALOG (dialog), okbutton, LIVES_RESPONSE_OK);
+    lives_signal_connect (LIVES_GUI_OBJECT (okbutton), LIVES_WIDGET_CLICKED_EVENT,
+			  LIVES_GUI_CALLBACK (lives_general_button_clicked),
+			  NULL);
+
+    break;
+  case LIVES_DIALOG_ERROR:
+    dialog = lives_message_dialog_new (NULL,(LiVESDialogFlags)0,
+				       LIVES_MESSAGE_ERROR,LIVES_BUTTONS_NONE,NULL);
+    lives_window_set_title (LIVES_WINDOW (dialog), _("LiVES: - Error !"));
+    okbutton = lives_button_new_from_stock (LIVES_STOCK_OK);
+    lives_dialog_add_action_widget (LIVES_DIALOG (dialog), okbutton, LIVES_RESPONSE_OK);
+    lives_signal_connect (LIVES_GUI_OBJECT (okbutton), LIVES_WIDGET_CLICKED_EVENT,
+			  LIVES_GUI_CALLBACK (lives_general_button_clicked),
+			  NULL);
+   break;
+  case LIVES_DIALOG_INFO:
+    dialog = lives_message_dialog_new (NULL,(LiVESDialogFlags)0,
+				       LIVES_MESSAGE_INFO,LIVES_BUTTONS_NONE,NULL);
+    lives_window_set_title (LIVES_WINDOW (dialog), _("LiVES: - Information"));
+    okbutton = lives_button_new_from_stock (LIVES_STOCK_OK);
+    lives_dialog_add_action_widget (LIVES_DIALOG (dialog), okbutton, LIVES_RESPONSE_OK);
+    lives_signal_connect (LIVES_GUI_OBJECT (okbutton), LIVES_WIDGET_CLICKED_EVENT,
+			  LIVES_GUI_CALLBACK (lives_general_button_clicked),
+			  NULL);
+    break;
+
+
+  case LIVES_DIALOG_WARN_WITH_CANCEL:
     dialog = lives_message_dialog_new (transient,(LiVESDialogFlags)0,LIVES_MESSAGE_WARNING,LIVES_BUTTONS_NONE,NULL);
 
     if (mainw->add_clear_ds_button) {
@@ -183,35 +220,40 @@ static LiVESWidget* create_warn_dialog (int warn_mask_number, LiVESWindow *trans
     }
 
     lives_window_set_title (LIVES_WINDOW (dialog), _("LiVES: - Warning !"));
-    warning_cancelbutton = lives_button_new_from_stock (LIVES_STOCK_LABEL_CANCEL);
-    lives_dialog_add_action_widget (LIVES_DIALOG (dialog), warning_cancelbutton, LIVES_RESPONSE_CANCEL);
-    warning_okbutton = lives_button_new_from_stock (LIVES_STOCK_LABEL_OK);
-    lives_dialog_add_action_widget (LIVES_DIALOG (dialog), warning_okbutton, LIVES_RESPONSE_OK);
+    cancelbutton = lives_button_new_from_stock (LIVES_STOCK_LABEL_CANCEL);
+    lives_dialog_add_action_widget (LIVES_DIALOG (dialog), cancelbutton, LIVES_RESPONSE_CANCEL);
+    okbutton = lives_button_new_from_stock (LIVES_STOCK_LABEL_OK);
+    lives_dialog_add_action_widget (LIVES_DIALOG (dialog), okbutton, LIVES_RESPONSE_OK);
     break;
+
   case LIVES_DIALOG_YESNO:
     dialog = lives_message_dialog_new (transient,(LiVESDialogFlags)0,LIVES_MESSAGE_QUESTION,LIVES_BUTTONS_NONE,NULL);
     lives_window_set_title (LIVES_WINDOW (dialog), _("LiVES: - Question"));
-    warning_cancelbutton = lives_button_new_from_stock (LIVES_STOCK_NO);
-    lives_dialog_add_action_widget (LIVES_DIALOG (dialog), warning_cancelbutton, LIVES_NO);
-    warning_okbutton = lives_button_new_from_stock (LIVES_STOCK_YES);
-    lives_dialog_add_action_widget (LIVES_DIALOG (dialog), warning_okbutton, LIVES_YES);
+    cancelbutton = lives_button_new_from_stock (LIVES_STOCK_NO);
+    lives_dialog_add_action_widget (LIVES_DIALOG (dialog), cancelbutton, LIVES_RESPONSE_NO);
+    okbutton = lives_button_new_from_stock (LIVES_STOCK_YES);
+    lives_dialog_add_action_widget (LIVES_DIALOG (dialog), okbutton, LIVES_RESPONSE_YES);
     break;
+
   case LIVES_DIALOG_ABORT_CANCEL_RETRY:
     dialog = lives_message_dialog_new (transient,(LiVESDialogFlags)0,LIVES_MESSAGE_ERROR,LIVES_BUTTONS_NONE,NULL);
     lives_window_set_title (LIVES_WINDOW (dialog), _("LiVES: - File Error"));
     abortbutton = lives_button_new_from_stock (LIVES_STOCK_QUIT);
     lives_button_set_label(LIVES_BUTTON(abortbutton),_("_Abort"));
-    lives_dialog_add_action_widget (LIVES_DIALOG (dialog), abortbutton, LIVES_ABORT);
-    warning_cancelbutton = lives_button_new_from_stock (LIVES_STOCK_CANCEL);
-    lives_dialog_add_action_widget (LIVES_DIALOG (dialog), warning_cancelbutton, LIVES_CANCEL);
-    warning_okbutton = lives_button_new_from_stock (LIVES_STOCK_REFRESH);
-    lives_button_set_label(LIVES_BUTTON(warning_okbutton),_("_Retry"));
-    lives_dialog_add_action_widget (LIVES_DIALOG (dialog), warning_okbutton, LIVES_RETRY);
+    lives_dialog_add_action_widget (LIVES_DIALOG (dialog), abortbutton, LIVES_RESPONSE_ABORT);
+    cancelbutton = lives_button_new_from_stock (LIVES_STOCK_CANCEL);
+    lives_dialog_add_action_widget (LIVES_DIALOG (dialog), cancelbutton, LIVES_RESPONSE_CANCEL);
+    okbutton = lives_button_new_from_stock (LIVES_STOCK_REFRESH);
+    lives_button_set_label(LIVES_BUTTON(okbutton),_("_Retry"));
+    lives_dialog_add_action_widget (LIVES_DIALOG (dialog), okbutton, LIVES_RESPONSE_RETRY);
     break;
+
   default:
     return NULL;
     break;
   }
+
+  lives_window_set_default_size(LIVES_WINDOW(dialog), MIN_MSGBOX_WIDTH, -1);
 
   lives_window_add_accel_group (LIVES_WINDOW (dialog), accel_group);
 
@@ -227,16 +269,26 @@ static LiVESWidget* create_warn_dialog (int warn_mask_number, LiVESWindow *trans
 
   textx=insert_newlines(text,MAX_MSG_WIDTH_CHARS);
 
+  pad=lives_strdup("");
+  if (strlen(textx) < MIN_MSG_WIDTH_CHARS) {
+    lives_free(pad);
+    pad=lives_strndup("                                  ",(MIN_MSG_WIDTH_CHARS-strlen(textx))/2);
+  }
+  form_text=lives_strdup_printf("\n%s%s%s\n",pad,textx,pad);
+
   widget_opts.justify=LIVES_JUSTIFY_CENTER;
-  warning_label=lives_standard_label_new(textx);
+  label=lives_standard_label_new(form_text);
   widget_opts.justify=LIVES_JUSTIFY_DEFAULT;
 
+  lives_free(form_text);
   lives_free(textx);
+  lives_free(pad);
 
   dialog_vbox = lives_dialog_get_content_area(LIVES_DIALOG(dialog));
+  lives_container_set_border_width (LIVES_CONTAINER (dialog_vbox), widget_opts.border_width*2);
 
-  lives_box_pack_start (LIVES_BOX (dialog_vbox), warning_label, TRUE, TRUE, 0);
-  lives_label_set_selectable (LIVES_LABEL (warning_label), TRUE);
+  lives_box_pack_start (LIVES_BOX (dialog_vbox), label, TRUE, TRUE, 0);
+  lives_label_set_selectable (LIVES_LABEL (label), TRUE);
 
   if (mainw->add_clear_ds_adv) {
     mainw->add_clear_ds_adv=FALSE;
@@ -251,32 +303,45 @@ static LiVESWidget* create_warn_dialog (int warn_mask_number, LiVESWindow *trans
     add_xlays_widget(LIVES_BOX(dialog_vbox));
   }
 
+  if (mainw->iochan!=NULL) {
+    LiVESWidget *details_button = lives_button_new_with_mnemonic(_("Show _Details"));
+    lives_dialog_add_action_widget (LIVES_DIALOG (dialog), details_button, LIVES_RESPONSE_SHOW_DETAILS);
+
+    lives_signal_connect (LIVES_GUI_OBJECT (details_button), LIVES_WIDGET_CLICKED_EVENT,
+		      LIVES_GUI_CALLBACK (lives_general_button_clicked),
+		      NULL);
+  }
+
   dialog_action_area = lives_dialog_get_action_area(LIVES_DIALOG (dialog));
 
   lives_button_box_set_layout (LIVES_BUTTON_BOX (dialog_action_area), LIVES_BUTTONBOX_END);
 
-  lives_widget_set_can_focus_and_default (warning_cancelbutton);
+  if (cancelbutton != NULL) {
+    lives_widget_set_can_focus (cancelbutton,TRUE);
+    lives_widget_add_accelerator (cancelbutton, LIVES_WIDGET_CLICKED_EVENT, accel_group,
+				  LIVES_KEY_Escape, (LiVESXModifierType)0, (LiVESAccelFlags)0);
+  }
 
-  lives_widget_add_accelerator (warning_cancelbutton, LIVES_WIDGET_CLICKED_EVENT, accel_group,
-			      LIVES_KEY_Escape, (LiVESXModifierType)0, (LiVESAccelFlags)0);
-
-  lives_widget_add_accelerator (warning_okbutton, LIVES_WIDGET_CLICKED_EVENT, accel_group,
+  lives_widget_add_accelerator (okbutton, LIVES_WIDGET_CLICKED_EVENT, accel_group,
 			      LIVES_KEY_Return, (LiVESXModifierType)0, (LiVESAccelFlags)0);
 
-  lives_widget_set_can_focus_and_default (warning_okbutton);
-  lives_widget_grab_default (warning_okbutton);
+  if (mainw->iochan==NULL) {
+    lives_widget_set_can_focus_and_default (okbutton);
+    lives_widget_grab_default (okbutton);
+    lives_widget_grab_focus (okbutton);
+  }
 
   lives_widget_show_all(dialog);
 
   lives_window_center(LIVES_WINDOW(dialog));
 
-  lives_window_set_modal (LIVES_WINDOW (dialog), TRUE);
+  if (is_blocking) 
+    lives_window_set_modal (LIVES_WINDOW (dialog), TRUE);
 
   if (prefs->present) {
     lives_window_present (LIVES_WINDOW (dialog));
     lives_xwindow_raise (lives_widget_get_xwindow(dialog));
   }
-
 
   return dialog;
 }
@@ -326,11 +391,10 @@ boolean do_warning_dialog_with_check_transient(const gchar *text, int warn_mask_
   mytext=lives_strdup(text); // must copy this because of translation issues
 
   do {
-    warning=create_warn_dialog(warn_mask_number,transient,mytext,LIVES_DIALOG_WARN);
-    lives_widget_show(warning);
+    warning=create_message_dialog(LIVES_DIALOG_WARN_WITH_CANCEL,mytext,transient,warn_mask_number,TRUE);
     response=lives_dialog_run (LIVES_DIALOG (warning));
     lives_widget_destroy (warning);
-  } while (response==LIVES_RETRY);
+  } while (response==LIVES_RESPONSE_RETRY);
 
   lives_widget_context_update();
   if (mytext!=NULL) lives_free(mytext);
@@ -353,16 +417,15 @@ boolean do_yesno_dialog_with_check_transient(const gchar *text, int warn_mask_nu
   mytext=lives_strdup(text); // must copy this because of translation issues
 
   do {
-    warning=create_warn_dialog(warn_mask_number,transient,mytext,LIVES_DIALOG_YESNO);
-    lives_widget_show(warning);
+    warning=create_message_dialog(LIVES_DIALOG_YESNO,mytext,transient,warn_mask_number,TRUE);
     response=lives_dialog_run (LIVES_DIALOG (warning));
     lives_widget_destroy (warning);
-  } while (response==LIVES_RETRY);
+  } while (response==LIVES_RESPONSE_RETRY);
 
   lives_widget_context_update();
   if (mytext!=NULL) lives_free(mytext);
 
-  return (response==LIVES_YES);
+  return (response==LIVES_RESPONSE_YES);
 }
 
 
@@ -379,19 +442,19 @@ boolean do_yesno_dialog(const gchar *text) {
   }
 
   mytext=lives_strdup(text); // translation issues
-  warning=create_warn_dialog(0,transient,mytext,LIVES_DIALOG_YESNO);
+  warning=create_message_dialog(LIVES_DIALOG_YESNO,mytext,transient,0,TRUE);
   if (mytext!=NULL) lives_free(mytext);
 
   response=lives_dialog_run (LIVES_DIALOG (warning));
   lives_widget_destroy (warning);
 
   lives_widget_context_update();
-  return (response==LIVES_YES);
+  return (response==LIVES_RESPONSE_YES);
 }
 
 
 
-// returns LIVES_CANCEL or LIVES_RETRY
+// returns LIVES_RESPONSE_CANCEL or LIVES_RESPONSE_RETRY
 int do_abort_cancel_retry_dialog(const gchar *text, LiVESWindow *transient) {
   int response;
   gchar *mytext;
@@ -409,14 +472,14 @@ int do_abort_cancel_retry_dialog(const gchar *text, LiVESWindow *transient) {
   mytext=lives_strdup(text); // translation issues
 
   do {
-    warning=create_warn_dialog(0,transient,mytext,LIVES_DIALOG_ABORT_CANCEL_RETRY);
+    warning=create_message_dialog(LIVES_DIALOG_ABORT_CANCEL_RETRY,mytext,transient,0,TRUE);
 
     response=lives_dialog_run (LIVES_DIALOG (warning));
     lives_widget_destroy (warning);
 
     lives_widget_context_update();
 
-    if (response==LIVES_ABORT) {
+    if (response==LIVES_RESPONSE_ABORT) {
       if (do_abort_check()) {
 	if (mainw->current_file>-1) {
 	  if (cfile->handle!=NULL) {
@@ -447,7 +510,7 @@ int do_abort_cancel_retry_dialog(const gchar *text, LiVESWindow *transient) {
       }
     }
 
-  } while (response==LIVES_ABORT);
+  } while (response==LIVES_RESPONSE_ABORT);
 
   if (mytext!=NULL) lives_free(mytext);
   return response;
@@ -546,13 +609,12 @@ int do_error_dialog_with_check_transient(const gchar *text, boolean is_blocking,
 
   if (prefs->warning_mask&warn_mask_number) return ret;
   mytext=lives_strdup(text);
-  err_box=create_info_error_dialog(mytext,is_blocking,warn_mask_number,warn_mask_number==0?LIVES_INFO_TYPE_ERROR:LIVES_INFO_TYPE_WARNING);
+  err_box=create_info_error_dialog(warn_mask_number==0?LIVES_DIALOG_ERROR:LIVES_DIALOG_WARN,mytext,transient,warn_mask_number,is_blocking);
   if (mytext!=NULL) lives_free(mytext);
-  if (transient!=NULL) lives_window_set_transient_for(LIVES_WINDOW(err_box),transient);
 
   if (is_blocking) {
     ret=lives_dialog_run(LIVES_DIALOG (err_box));
-    if (mainw!=NULL&&mainw->is_ready&&transient!=NULL) {
+   if (mainw!=NULL&&mainw->is_ready&&transient!=NULL) {
       lives_widget_queue_draw(LIVES_WIDGET(transient));
     }
   }
@@ -566,14 +628,13 @@ int do_info_dialog_with_transient(const gchar *text, boolean is_blocking, LiVESW
   // info box
 
   LiVESWidget *info_box;
-  gchar *mytext;
+  char *mytext;
 
   int ret=LIVES_RESPONSE_NONE;
 
   mytext=lives_strdup(text);
-  info_box=create_info_error_dialog(mytext,is_blocking,0,LIVES_INFO_TYPE_INFO);
+  info_box=create_info_error_dialog(LIVES_DIALOG_INFO,mytext,transient,0,is_blocking);
   if (mytext!=NULL) lives_free(mytext);
-  if (transient!=NULL) lives_window_set_transient_for(LIVES_WINDOW(info_box),transient);
 
   if (is_blocking) {
     ret=lives_dialog_run(LIVES_DIALOG (info_box));
@@ -581,6 +642,11 @@ int do_info_dialog_with_transient(const gchar *text, boolean is_blocking, LiVESW
       lives_widget_queue_draw(LIVES_WIDGET(transient));
     }
   }
+
+#ifdef IS_LIBLIVES
+  ext_caller_check(ret);
+#endif
+
   return ret;
 }
 
@@ -801,7 +867,7 @@ boolean check_storage_space(lives_clip_t *sfile, boolean is_processing) {
       lives_free(tmp);
         retval=do_abort_cancel_retry_dialog(msg,NULL);
       lives_free(msg);
-      if (retval==LIVES_CANCEL) {
+      if (retval==LIVES_RESPONSE_CANCEL) {
 	if (is_processing) {
 	  sfile->nokeep=TRUE;
 	  on_cancel_keep_button_clicked(NULL,NULL); // press the cancel button
@@ -861,7 +927,7 @@ boolean check_storage_space(lives_clip_t *sfile, boolean is_processing) {
 	lives_free(tmp);
 	retval=do_abort_cancel_retry_dialog(msg,NULL);
 	lives_free(msg);
-	if (retval==LIVES_CANCEL) {
+	if (retval==LIVES_RESPONSE_CANCEL) {
 	  if (is_processing) {
 	    sfile->nokeep=TRUE;
 	    on_cancel_keep_button_clicked(NULL,NULL); // press the cancel button
@@ -2660,7 +2726,7 @@ void do_threaded_dialog(gchar *trans_text, boolean has_cancel) {
   // calling this causes a threaded progress dialog to appear
   // until end_threaded_dialog() is called
   //
-  // WARNING: if trans_text is a translated string, it will be autoamtically freed by translations inside this function
+  // WARNING: if trans_text is a translated string, it will be automatically freed by translations inside this function
 
   gchar *copy_text=lives_strdup(trans_text);
 
@@ -2859,7 +2925,7 @@ void do_read_failed_error_s(const char *s, const char *addinfo) {
 int do_write_failed_error_s_with_retry(const gchar *fname, const gchar *errtext, LiVESWindow *transient) {
   // err can be errno from open/fopen etc.
 
-  // return same as do_abort_cancel_retry_dialog() - LIVES_CANCEL or LIVES_RETRY (both non-zero)
+  // return same as do_abort_cancel_retry_dialog() - LIVES_RESPONSE_CANCEL or LIVES_RESPONSE_RETRY (both non-zero)
 
   int ret;
   gchar *msg,*emsg,*tmp;
@@ -2912,7 +2978,7 @@ int do_write_failed_error_s_with_retry(const gchar *fname, const gchar *errtext,
 int do_read_failed_error_s_with_retry(const gchar *fname, const gchar *errtext, LiVESWindow *transient) {
   // err can be errno from open/fopen etc.
 
-  // return same as do_abort_cancel_retry_dialog() - LIVES_CANCEL or LIVES_RETRY (both non-zero)
+  // return same as do_abort_cancel_retry_dialog() - LIVES_RESPONSE_CANCEL or LIVES_RESPONSE_RETRY (both non-zero)
 
   int ret;
   gchar *msg,*emsg;
@@ -2967,7 +3033,7 @@ boolean do_header_write_error(int clip) {
 
   hname=lives_build_filename(prefs->tmpdir,mainw->files[clip]->handle,"header.lives",NULL);
   retval=do_write_failed_error_s_with_retry(hname,NULL,NULL);
-  if (retval==LIVES_RETRY && save_clip_values(clip)) retval=0; // on retry try to save all values
+  if (retval==LIVES_RESPONSE_RETRY && save_clip_values(clip)) retval=0; // on retry try to save all values
   lives_free(hname);
 
   return (!retval);
@@ -3107,21 +3173,8 @@ void do_locked_in_vdevs_error(void) {
 
 void do_do_not_close_d (void) {
   gchar *msg=lives_strdup(_("\n\nCLEANING AND COPYING FILES. THIS MAY TAKE SOME TIME.\nDO NOT SHUT DOWN OR CLOSE LIVES !\n"));
-  LiVESWidget *err_box=create_info_error_dialog(msg,FALSE,0,LIVES_INFO_TYPE_WARNING);
-  LiVESWindow *transient=NULL;
-
+  create_info_error_dialog(LIVES_DIALOG_WARN,msg,NULL,0,FALSE);
   lives_free(msg);
-
-  if (prefs->show_gui) {
-    if (mainw->multitrack==NULL&&mainw->is_ready) transient=LIVES_WINDOW(mainw->LiVES);
-    else if (mainw->multitrack!=NULL&&mainw->multitrack->is_ready) transient=LIVES_WINDOW(mainw->multitrack->window);
-  }
-
-  if (transient!=NULL) lives_window_set_transient_for(LIVES_WINDOW(err_box),transient);
-  lives_widget_show(err_box);
-
-  lives_window_present (LIVES_WINDOW (err_box));
-  lives_xwindow_raise (lives_widget_get_xwindow(err_box));
 }
 
 

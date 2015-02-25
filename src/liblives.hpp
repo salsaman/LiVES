@@ -4,6 +4,8 @@
 // Released under the GPL 3 or later
 // see file ../COPYING for licensing details
 
+#ifndef HAS_LIBLIVES_H
+#define HAS_LIBLIVES_H
 
 #include "osc_notify.h"
 
@@ -78,13 +80,15 @@ typedef unsigned long ulong;
 
 //// API start /////
 
+#define LIVES_NOTIFY_OBJECT_DESTROYED 65537
 
 namespace lives {
   typedef class livesApp livesApp;
 
-  typedef bool (*callback_f)(void *, void *);
+  typedef void *(*callback_f)(void *);
 
   typedef struct {
+    livesApp *object;
     int msgnum;
     callback_f func;
     void *data;
@@ -101,35 +105,60 @@ namespace lives {
     int mode;
   } modeChangedInfo;
 
+  typedef struct {
+    ulong id;
+    int response;
+  } privateInfo;
 
-  typedef bool (*modeChanged_callback_f)(modeChangedInfo *, void *);
+
+  typedef bool (*private_callback_f)(privateInfo *, void *);
+
+  typedef bool (*modeChanged_callback_f)(livesApp *lives, modeChangedInfo *, void *);
+  typedef bool (*objectDestroyed_callback_f)(livesApp *lives, void *);
 
   class LIVES_DLL_PUBLIC clip {
   public:
-    bool select(int cnum);
+    clip(uint64_t handle);
+
+    bool select();
 
   private:
-    uint64_t handle;
+    uint64_t m_handle;
 
   };
   
+
+
+
+  typedef list<clip *> clipList;
+
+  ///// set ////////
+
 
   class LIVES_DLL_PUBLIC set {
     friend livesApp;
 
   public:
+    set(livesApp *lives);
     ~set();
     char *name();
-    list<clip *> clipList();
+
+    bool save(const char *name);
+    bool save(const char *name, bool force_append);
+
+    clipList cliplist();
 
   protected:
     void setName(const char *setname);
 
   private:
+    livesApp *m_lives;
     char *m_name;
-    list<clip *>clips;
+    clipList m_clips;
     //list<layout *>layouts;
   };
+
+
   
   class LIVES_DLL_PUBLIC record {
   public:
@@ -141,6 +170,8 @@ namespace lives {
 
 
   class LIVES_DLL_PUBLIC livesApp {
+    friend set;
+
   public:
     livesApp();
     livesApp(int argc, char *argv[]);
@@ -152,18 +183,31 @@ namespace lives {
     bool stop();
 
     bool addCallback(int msgnum, modeChanged_callback_f func, void *data);
+    bool addCallback(int msgnum, objectDestroyed_callback_f func, void *data);
 
-    void showInfo(const char *text, bool blocking);
+    int showInfo(const char *text);
+    int showInfo(const char *text, bool blocking);
 
     list<closure*> closures();
+
+
+  protected:
+    LIVES_DLL_LOCAL bool addCallback(int msgnum, private_callback_f func, void *data);
 
 
   private:
     set m_set;
     uint64_t m_id;
     list<closure*> m_closures;
+    LIVES_DLL_LOCAL void appendClosure(int msgnum, callback_f func, void *data);
+    LIVES_DLL_LOCAL void init(int argc, char *argv[]);
+
   };
 
 
 
 }
+
+
+
+#endif //HAS_LIBLIVES_H

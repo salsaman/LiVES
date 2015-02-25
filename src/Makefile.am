@@ -193,7 +193,6 @@ lives_exe_SOURCES = \
 	cvirtual.c cvirtual.h \
 	startup.c startup.h \
 	pangotext.c pangotext.h \
-	lbindings.c lbindings.h \
 	$(unicap_SOURCES) \
 	$(jack_SOURCES) \
 	$(pulse_SOURCES) \
@@ -236,7 +235,8 @@ if BUILD_LIBLIVES
 liblives_libs = liblives.la
 lib_LTLIBRARIES = $(liblives_libs)
 
-liblives_la_SOURCES = $(lives_exe_SOURCES) liblives.cpp liblives.hpp
+liblives_la_SOURCES = $(lives_exe_SOURCES) liblives.cpp liblives.hpp lbindings.c lbindings.h 
+
 liblives_la_CFLAGS = -fvisibility=hidden
 if IS_DARWIN
 liblives_la_LIBFLAGS = -dynamiclib -module
@@ -262,12 +262,24 @@ liblives_la_CFLAGS += $(AM_CFLAGS) -Wno-unused-function -DIS_LIBLIVES
 
 
 all-local: 
-	@echo -n "g++ \$$1 $(DESTDIR)$(libdir)/liblives.a -lOSC -lOSC_client " \
+	@echo -n "g++ \$$1 $(DESTDIR)$(libdir)/liblives.a -lOSC -lOSC_client -I$(DESTDIR)$(includedir)/liblives " \
 	> ../tools/liblives-compile
 	@echo -n $(extra_LDFLAGS) >> ../tools/liblives-compile
 	@echo " -ldl \$${@:2}" >> ../tools/liblives-compile
 	@sed -i s/weed_slice/weed_slice_static/g ../tools/liblives-compile
 	@sed -i s/weed-utils/weed-utils_static/g ../tools/liblives-compile
+
+
+install-exec-local:
+	$(MKDIR_P) "$(DESTDIR)$(libexecdir)/$(PACKAGE)/"
+	cp -f "$(top_srcdir)/tools/liblives-compile" "$(DESTDIR)$(libexecdir)/$(PACKAGE)/" && \
+	chmod a+rx "$(DESTDIR)$(libexecdir)/$(PACKAGE)/liblives-compile"
+	$(MKDIR_P) "$(DESTDIR)$(includedir)/liblives/"
+	cp -f "$(srcdir)/osc_notify.h" "$(DESTDIR)$(includedir)/liblives/"
+	cp -f "$(srcdir)/liblives.hpp" "$(DESTDIR)$(includedir)/liblives/"
+
+uninstall-local:
+	rm -rf "$(includedir)/liblives"
 
 endif
 

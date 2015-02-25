@@ -79,11 +79,11 @@ boolean save_frame_index(int fileno) {
 	retval=do_write_failed_error_s_with_retry(fname,NULL,NULL);
       }
     }
-  } while (retval==LIVES_RETRY);
+  } while (retval==LIVES_RESPONSE_RETRY);
 
   lives_free(fname);
 
-  if (retval==LIVES_CANCEL) return FALSE;
+  if (retval==LIVES_RESPONSE_CANCEL) return FALSE;
   
   return TRUE;
 }
@@ -117,7 +117,7 @@ boolean load_frame_index(int fileno) {
 
     if (fd<0) {
       retval=do_read_failed_error_s_with_retry(fname,lives_strerror(errno),NULL);
-      if (retval==LIVES_CANCEL) {
+      if (retval==LIVES_RESPONSE_CANCEL) {
 	lives_free(fname);
 	return FALSE;
       }
@@ -143,7 +143,7 @@ boolean load_frame_index(int fileno) {
       }
 
     }
-  } while (retval==LIVES_RETRY);
+  } while (retval==LIVES_RESPONSE_RETRY);
 
   lives_free(fname);
 
@@ -350,7 +350,7 @@ boolean virtual_to_images(int sfileno, int sframe, int eframe, boolean update_pr
 	  lives_error_free(error);
 	  error=NULL;
 	}
-      } while (retval==LIVES_RETRY);
+      } while (retval==LIVES_RESPONSE_RETRY);
 
       if (oname!=NULL) lives_free(oname);
 
@@ -359,7 +359,7 @@ boolean virtual_to_images(int sfileno, int sframe, int eframe, boolean update_pr
 	pixbuf=NULL;
       }
 
-      if (retval==LIVES_CANCEL) return FALSE;
+      if (retval==LIVES_RESPONSE_CANCEL) return FALSE;
 
 
       // another thread may have called check_if_non_virtual - TODO : use a mutex

@@ -316,6 +316,9 @@ typedef struct {
 /// need this for event_list_t *
 #include "events.h"
 
+#ifdef IS_LIBLIVES
+#include "lbindings.h"
+#endif
 
 typedef enum {
   UNDO_NONE=0,
@@ -838,6 +841,8 @@ int do_blocking_info_dialog(const gchar *text);
 int do_error_dialog_with_check_transient(const gchar *text, boolean is_blocking, int warn_mask_number, 
 					 LiVESWindow *transient);
 int do_info_dialog_with_transient(const gchar *text, boolean is_blocking, LiVESWindow *transient);
+LiVESWidget* create_message_dialog (lives_dialog_t diat, const gchar *text, LiVESWindow *transient, 
+				    int warn_mask_number, boolean is_blocking);
 
 
 void do_system_failed_error(const char *com, int retval, const char *addinfo);
@@ -1076,6 +1081,11 @@ boolean expose_pim (LiVESWidget *widget, lives_painter_t *cr, livespointer user_
 boolean expose_sim (LiVESWidget *widget, lives_painter_t *cr, livespointer user_data);
 boolean expose_eim (LiVESWidget *widget, lives_painter_t *cr, livespointer user_data);
 #endif
+
+
+
+
+
 // system calls in utils.c
 int lives_system(const char *com, boolean allow_error);
 lives_pid_t lives_fork(const char *com);
@@ -1248,6 +1258,8 @@ boolean check_encoder_restrictions (boolean get_extension, boolean user_audio, b
 
 //callbacks.c
 void lives_exit (void);
+void lives_notify(int msgnumber,const char *msgstring);
+const char *get_set_name(void);
 void count_opening_frames(void);
 void on_fileread_clicked (LiVESFileChooser *, livespointer widget);
 boolean dirchange_callback (LiVESAccelGroup *, LiVESObject *, uint32_t, LiVESXModifierType, livespointer user_data);
@@ -1259,6 +1271,7 @@ void popup_lmap_errors(LiVESMenuItem *, livespointer);
 void on_filesel_button_clicked (LiVESButton *, livespointer user_data);
 void switch_clip(int type, int newclip);
 void on_details_button_clicked (void);
+
 
 
 

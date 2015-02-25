@@ -23,7 +23,7 @@
 #include "support.h"
 #include "audio.h"
 #include "resample.h"
-#include "lbindings.h"
+
 
 static boolean  omute,  osepwin,  ofs,  ofaded,  odouble;
 
@@ -2306,7 +2306,7 @@ void get_frame_count(int idx) {
       }
       close(info_fd);
     }
-  } while (retval==LIVES_RETRY);
+  } while (retval==LIVES_RESPONSE_RETRY);
 
   unlink(info_file);
   lives_free(info_file);
@@ -4656,13 +4656,13 @@ boolean get_clip_value(int which, lives_clip_details_t what, void *retval, size_
 	  retval2=do_read_failed_error_s_with_retry(vfile,NULL,NULL);
 	}
       }
-    } while (retval2==LIVES_RETRY);
+    } while (retval2==LIVES_RESPONSE_RETRY);
     
     lives_free(vfile);
     lives_free(com);
   }
 
-  if (retval2==LIVES_CANCEL) {
+  if (retval2==LIVES_RESPONSE_CANCEL) {
     return FALSE;
   }
 

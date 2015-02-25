@@ -28,7 +28,7 @@
 #include "cvirtual.h"
 #include "resample.h"
 #include "ce_thumbs.h"
-#include "lbindings.h"
+
 
 //////////// Effects ////////////////
 
@@ -703,9 +703,9 @@ lives_render_error_t realfx_progress (boolean reset) {
 	  retval=do_write_failed_error_s_with_retry(oname,error->message,NULL);
 	  lives_error_free(error);
 	  error=NULL;
-	  if (retval!=LIVES_RETRY) write_error=LIVES_RENDER_ERROR_WRITE_FRAME;
+	  if (retval!=LIVES_RESPONSE_RETRY) write_error=LIVES_RENDER_ERROR_WRITE_FRAME;
 	}
-      } while (retval==LIVES_RETRY);
+      } while (retval==LIVES_RESPONSE_RETRY);
     
       
       lives_object_unref (pixbuf);

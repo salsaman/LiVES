@@ -196,12 +196,18 @@ boolean lives_osc_notify (int msgnumber,const char *msgstring) {
 boolean lives_osc_notify_success (const char *msg) {
   if (prefs->omc_noisy)
     lives_osc_notify(LIVES_NOTIFY_SUCCESS,msg);
+#ifdef IS_LIBLIVES
+  ext_caller_check(TRUE);
+#endif
   return TRUE;
 }
 
 boolean lives_osc_notify_failure (void) {
   if (prefs->omc_noisy)
     lives_osc_notify(LIVES_NOTIFY_FAILED,NULL);
+#ifdef IS_LIBLIVES
+  ext_caller_check(FALSE);
+#endif
   return FALSE;
 }
 
@@ -432,7 +438,7 @@ boolean lives_osc_cb_play (void *context, int arglen, const void *vargs, OSCTime
   double entd,sttd;
 
   if (mainw->go_away) return lives_osc_notify_failure();
-  mainw->osc_auto=TRUE; ///< request early notifiction of success
+  mainw->osc_auto=1; ///< request early notifiction of success
 
   if (mainw->current_file<=0||mainw->playing_file!=-1) return lives_osc_notify_failure();
 
@@ -477,7 +483,7 @@ boolean lives_osc_cb_play (void *context, int arglen, const void *vargs, OSCTime
 boolean lives_osc_cb_playsel (void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
   if (mainw->go_away) return lives_osc_notify_failure();
   if (mainw->playing_file==-1&&mainw->current_file>0) {
-    mainw->osc_auto=TRUE; ///< request early notifiction of success
+    mainw->osc_auto=1; ///< request early notifiction of success
 
     // re - add the timer, as we will hang here, and we want to receive messages still during playback
     lives_timer_remove (mainw->kb_timer);
@@ -486,7 +492,7 @@ boolean lives_osc_cb_playsel (void *context, int arglen, const void *vargs, OSCT
     if (mainw->multitrack==NULL) on_playsel_activate(NULL,NULL);
     else multitrack_play_sel(NULL, mainw->multitrack);
     mainw->kb_timer_end=TRUE;
-    mainw->osc_auto=FALSE; ///< request early notifiction of success
+    mainw->osc_auto=0; ///< request early notifiction of success
   }
   return TRUE;
 }
@@ -866,9 +872,9 @@ boolean lives_osc_cb_fx_enable(void *context, int arglen, const void *vargs, OSC
 	new_timer_added=TRUE;
       }
       // TODO ***
-      //mainw->osc_auto=TRUE; ///< request early notifiction of success
+      //mainw->osc_auto=1; ///< request early notifiction of success
       rte_on_off_callback_hook(NULL,LIVES_INT_TO_POINTER(effect_key));
-      mainw->osc_auto=FALSE;
+      mainw->osc_auto=0;
       if (new_timer_added)
 	mainw->kb_timer_end=TRUE;
     }
@@ -914,7 +920,7 @@ boolean lives_osc_cb_fx_toggle(void *context, int arglen, const void *vargs, OSC
       mainw->kb_timer=lives_timer_add(KEY_RPT_INTERVAL,&ext_triggers_poll,NULL);
     }
     // TODO ***
-    //mainw->osc_auto=TRUE; ///< request early notifiction of success
+    //mainw->osc_auto=1; ///< request early notifiction of success
     rte_on_off_callback_hook(NULL,LIVES_INT_TO_POINTER(effect_key));
     mainw->kb_timer_end=TRUE;
   }
@@ -1324,9 +1330,9 @@ boolean lives_osc_cb_fgclipsel_cut(void *context, int arglen, const void *vargs,
 
   mainw->ccpd_with_sound=!noaudio;
 
-  mainw->osc_auto=TRUE;
+  mainw->osc_auto=1;
   on_cut_activate(NULL,NULL);
-  mainw->osc_auto=FALSE;
+  mainw->osc_auto=0;
 
   mainw->ccpd_with_sound=ccpd;
 
@@ -1373,9 +1379,9 @@ boolean lives_osc_cb_fgclipsel_delete(void *context, int arglen, const void *var
 
   mainw->ccpd_with_sound=!noaudio;
 
-  mainw->osc_auto=TRUE;
+  mainw->osc_auto=1;
   on_delete_activate(NULL,NULL);
-  mainw->osc_auto=FALSE;
+  mainw->osc_auto=0;
 
   mainw->ccpd_with_sound=ccpd;
 
@@ -2679,9 +2685,9 @@ boolean lives_osc_cb_clip_encodeas(void *context, int arglen, const void *vargs,
     return lives_osc_notify_success(NULL);
   }
 
-  mainw->osc_auto=TRUE;
+  mainw->osc_auto=1;
   save_file(mainw->current_file,1,cfile->frames,fname);
-  mainw->osc_auto=FALSE;
+  mainw->osc_auto=0;
   return lives_osc_notify_success(NULL);
 
 }
@@ -6253,6 +6259,12 @@ boolean lives_osc_cb_ping(void *context, int arglen, const void *vargs, OSCTimeT
 }
 
 
+boolean lives_osc_cb_getsetname(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
+  lives_status_send (get_set_name());
+  return TRUE;
+}
+
+
 boolean lives_osc_cb_open_file(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
   char filename[OSC_STRING_SIZE];
   float starttime=0.;
@@ -6319,12 +6331,12 @@ boolean lives_osc_cb_loadset(void *context, int arglen, const void *vargs, OSCTi
   }
   lives_osc_parse_string_argument(vargs,setname);
 
-  mainw->osc_auto=TRUE;
+  mainw->osc_auto=1;
   if (!is_legal_set_name(setname,TRUE)) {
-    mainw->osc_auto=FALSE;
+    mainw->osc_auto=0;
     return lives_osc_notify_failure();
   }
-  mainw->osc_auto=FALSE;
+  mainw->osc_auto=0;
 
   lives_snprintf(mainw->set_name,128,"%s",setname);
 
@@ -6335,23 +6347,50 @@ boolean lives_osc_cb_loadset(void *context, int arglen, const void *vargs, OSCTi
 
 
 boolean lives_osc_cb_saveset(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
+  boolean ret;
+  int force_append=0;
   char setname[OSC_STRING_SIZE];
+  lives_memset(setname,0,1);
 
   if (mainw->preview||mainw->is_processing||mainw->multitrack!=NULL) return lives_osc_notify_failure();
 
   if (mainw->playing_file>-1) return lives_osc_notify_failure();
 
   if (!lives_osc_check_arguments (arglen,vargs,"s",TRUE)) {
-    return lives_osc_notify_failure();
+    if (!lives_osc_check_arguments (arglen,vargs,"si",TRUE)) {
+      if (!lives_osc_check_arguments (arglen,vargs,"",TRUE)) {
+	return lives_osc_notify_failure();
+      }
+    }
+    else {
+      lives_osc_parse_string_argument(vargs,setname);
+      lives_osc_parse_int_argument(vargs,&force_append);
+    }
+  }
+  else {
+    lives_osc_parse_string_argument(vargs,setname);
   }
 
-  lives_osc_parse_string_argument(vargs,setname);
+  if (strlen(setname)==0) {
+    mainw->only_close=TRUE;
+    ret=on_save_set_activate((void *)1,NULL);
+    mainw->only_close=FALSE;
+    if (ret) return lives_osc_notify_success(NULL);
+    else return lives_osc_notify_failure();
+  }
+  
   if (is_legal_set_name(setname,TRUE)) {
     mainw->only_close=TRUE;
-    on_save_set_activate(NULL,setname);
+    if (force_append) mainw->osc_auto=2;
+    else mainw->osc_auto=1;
+    ret=on_save_set_activate(NULL,setname);
+    mainw->osc_auto=0;
     mainw->only_close=FALSE;
+    if (ret) return lives_osc_notify_success(NULL);
+    else return lives_osc_notify_failure();
   }
-  return lives_osc_notify_success(NULL);
+
+  return lives_osc_notify_failure();
 
 }
 
@@ -6551,6 +6590,7 @@ static struct
     { "/clip/foreground/background/swap",		"swap",	(osc_cb)lives_osc_cb_swap,       	53	},
     { "/clipset/load",		"load",	(osc_cb)lives_osc_cb_loadset,       	35	},
     { "/clipset/save",		"save",	(osc_cb)lives_osc_cb_saveset,       	35	},
+    { "/clipset/name/get",		"get",	(osc_cb)lives_osc_cb_getsetname,       	135	},
     { "/layout/clear",		"clear",	(osc_cb)lives_osc_cb_clearlay,       	104	},
     { "/block/count",		"count",	(osc_cb)lives_osc_cb_blockcount,       	105	},
     { "/block/insert",		"insert",	(osc_cb)lives_osc_cb_blockinsert,       	105	},
@@ -6666,6 +6706,7 @@ static struct
     {	"/lives/constant/" , 		"constant",	 120, 21,0	},
     {	"/lives/constant/value/" , 		"value",	 121, 120,0	},
     {	"/clipset/" , 		"clipset",	 35, -1,0	},
+    {	"/clipset/name/" , 		"name",	 135, 35,0	},
     {	"/app/" , 		"app",	         22, -1,0	},
     {	"/app/name/" , 		"name",	         23, 22,0	},
     {	"/app/version/" , 		"version",	         125, 22,0	},

@@ -184,9 +184,9 @@ static boolean save_keymap2_file(gchar *kfname) {
 	mainw->write_failed=FALSE;
       }
     }
-  } while (retval==LIVES_RETRY);
+  } while (retval==LIVES_RESPONSE_RETRY);
 
-  if (retval==LIVES_CANCEL) return FALSE;
+  if (retval==LIVES_RESPONSE_CANCEL) return FALSE;
   return TRUE;
 
 }
@@ -380,9 +380,9 @@ static boolean save_keymap3_file(gchar *kfname) {
 	mainw->write_failed=FALSE;
       }
     }
-  } while (retval==LIVES_RETRY);
+  } while (retval==LIVES_RESPONSE_RETRY);
 
-  if (retval==LIVES_CANCEL) return FALSE;
+  if (retval==LIVES_RESPONSE_CANCEL) return FALSE;
   return TRUE;
 
 }
@@ -473,14 +473,14 @@ static boolean on_save_keymap_clicked (LiVESButton *button, livespointer user_da
     if (mainw->write_failed) {
       retval=do_write_failed_error_s_with_retry(keymap_file,NULL,LIVES_WINDOW(rte_window));
     }
-  } while (retval==LIVES_RETRY);
+  } while (retval==LIVES_RESPONSE_RETRY);
 
 
   // if we have default values, save them
   if (has_key_defaults()) {
     if (!save_keymap2_file(keymap_file2)) {
       unlink(keymap_file2);
-      retval=LIVES_CANCEL;
+      retval=LIVES_RESPONSE_CANCEL;
     }
   }
   else unlink(keymap_file2);
@@ -490,7 +490,7 @@ static boolean on_save_keymap_clicked (LiVESButton *button, livespointer user_da
   if (mainw->pconx!=NULL||mainw->cconx!=NULL) {
     if (!save_keymap3_file(keymap_file3)) {
       unlink(keymap_file3);
-      retval=LIVES_CANCEL;
+      retval=LIVES_RESPONSE_CANCEL;
     }
   }
   else unlink(keymap_file3);
@@ -500,7 +500,7 @@ static boolean on_save_keymap_clicked (LiVESButton *button, livespointer user_da
   lives_free(keymap_file2);
   lives_free(keymap_file);
 
-  if (retval==LIVES_CANCEL) d_print_file_error_failed();
+  if (retval==LIVES_RESPONSE_CANCEL) d_print_file_error_failed();
   else d_print_done();
 
   return FALSE;
@@ -559,10 +559,10 @@ void on_save_rte_defs_activate (LiVESMenuItem *menuitem, livespointer user_data)
       }
       lives_close_buffered (fd);
     }
-  } while (retval==LIVES_RETRY);
+  } while (retval==LIVES_RESPONSE_RETRY);
 
 
-  if (retval==LIVES_CANCEL) d_print_file_error_failed();
+  if (retval==LIVES_RESPONSE_CANCEL) d_print_file_error_failed();
   
   do {
     retval=0;
@@ -591,9 +591,9 @@ void on_save_rte_defs_activate (LiVESMenuItem *menuitem, livespointer user_data)
       }
       lives_close_buffered(fd);
     }
-  } while (retval==LIVES_RETRY);
+  } while (retval==LIVES_RESPONSE_RETRY);
 
-  if (retval==LIVES_CANCEL) {
+  if (retval==LIVES_RESPONSE_CANCEL) {
     d_print_file_error_failed();
     mainw->write_failed=FALSE;
     return;
@@ -658,7 +658,7 @@ void load_rte_defs (void) {
 	lives_free(buf);
 	lives_free(msg);
       }
-    } while (retval==LIVES_RETRY);
+    } while (retval==LIVES_RESPONSE_RETRY);
   }
 
 
@@ -672,7 +672,7 @@ void load_rte_defs (void) {
       retval=0;
       if ((fd=lives_open_buffered_rdonly(prefs->fxsizesfile))==-1) {
 	retval=do_read_failed_error_s_with_retry(prefs->fxsizesfile,lives_strerror(errno),NULL);
-	if (retval==LIVES_CANCEL) return;
+	if (retval==LIVES_RESPONSE_CANCEL) return;
       }
       else {
 #ifdef IS_MINGW
@@ -705,7 +705,7 @@ void load_rte_defs (void) {
 	lives_free(buf);
 	lives_free(msg);
       }
-    } while (retval==LIVES_RETRY);
+    } while (retval==LIVES_RESPONSE_RETRY);
   }
   
   return;
@@ -1214,9 +1214,9 @@ static boolean load_datacons(const gchar *fname, uint8_t **badkeymap) {
       lives_close_buffered(kfd);
 	
     }
-  } while (retval==LIVES_RETRY);
+  } while (retval==LIVES_RESPONSE_RETRY);
 
-  if (retval==LIVES_CANCEL) {
+  if (retval==LIVES_RESPONSE_CANCEL) {
     d_print_cancelled();
     return FALSE;
   }
@@ -1330,14 +1330,14 @@ boolean on_load_keymap_clicked (LiVESButton *button, livespointer user_data) {
       retval=do_abort_cancel_retry_dialog(msg,LIVES_WINDOW(rte_window));
       lives_free (msg);
    
-      if (retval==LIVES_CANCEL) {
+      if (retval==LIVES_RESPONSE_CANCEL) {
 	lives_free(keymap_file);
 	d_print_file_error_failed();
 	lives_free(def_modes);
 	return FALSE;
       }
     }
-  } while (retval==LIVES_RETRY);
+  } while (retval==LIVES_RESPONSE_RETRY);
 
   on_clear_all_clicked(NULL,user_data);
 
@@ -2844,7 +2844,7 @@ void load_default_keymap(void) {
 
       lives_free(tmp);
 
-      if (retval==LIVES_CANCEL) {
+      if (retval==LIVES_RESPONSE_CANCEL) {
 	lives_free(keymap_file);
 	lives_free(keymap_template);
 	lives_free(dir);
@@ -2853,7 +2853,7 @@ void load_default_keymap(void) {
 	return;
       }
     }
-  } while (retval==LIVES_RETRY);
+  } while (retval==LIVES_RESPONSE_RETRY);
 
   on_load_keymap_clicked(NULL,NULL);
 

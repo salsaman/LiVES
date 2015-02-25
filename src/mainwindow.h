@@ -81,6 +81,7 @@
 #define ENC_DETAILS_WIN_H ((int)(600.*widget_opts.scale)) ///< horizontal size in pixels of the encoder output window
 #define ENC_DETAILS_WIN_V ((int)(200.*widget_opts.scale)) ///< vertical size in pixels of the encoder output window
 
+#define MIN_MSG_WIDTH_CHARS ((int)(40.*widget_opts.scale)) ///< min width of text on warning/error labels
 #define MAX_MSG_WIDTH_CHARS ((int)(100.*widget_opts.scale)) ///< max width of text on warning/error labels
 
 /// size of the fx dialog windows scrollwindow
@@ -143,28 +144,13 @@ typedef enum {
 
 
 typedef enum {
+  LIVES_DIALOG_INFO,
+  LIVES_DIALOG_ERROR,
   LIVES_DIALOG_WARN,
+  LIVES_DIALOG_WARN_WITH_CANCEL,
   LIVES_DIALOG_YESNO,
   LIVES_DIALOG_ABORT_CANCEL_RETRY
 } lives_dialog_t;
-
-typedef enum {
-  LIVES_INFO_TYPE_INFO,
-  LIVES_INFO_TYPE_WARNING,
-  LIVES_INFO_TYPE_QUESTION,
-  LIVES_INFO_TYPE_ERROR
-} lives_info_t;
-
-
-/// return values from abort/cancel/retry dialog and yes/no dialog
-enum {
-  LIVES_NO=0,
-  LIVES_YES,
-  LIVES_CANCEL,
-  LIVES_RETRY,
-  LIVES_ABORT,
-  LIVES_RESET
-};
 
 
 /// various return conditions from rendering (multitrack or after recording)
@@ -519,7 +505,7 @@ typedef struct {
   /// TODO - make this a mutex and more finely grained : things we need to block are (clip switches, clip closure, effects on/off, etc)
   boolean osc_block;
 
-  boolean osc_auto; ///< bypass user choices automatically
+  int osc_auto; ///< bypass user choices automatically
 
   /// encode width, height and fps set externally
   int osc_enc_width;
@@ -991,6 +977,7 @@ typedef struct {
   pthread_mutex_t data_mutex[FX_KEYS_MAX];  ///< used to prevent data being connected while it is possibly being updated
   pthread_mutex_t fxd_active_mutex; ///< prevent simultaneous writing to active_dummy by audio and video threads
   pthread_mutex_t event_list_mutex; /// prevent simultaneous writing to event_list by audio and video threads
+  pthread_mutex_t clip_list_mutex; /// prevent adding/removing to cliplist while another thread could be reading it
 
   volatile lives_rfx_t *vrfx_update;
 
@@ -1187,6 +1174,9 @@ typedef struct {
   int afbuffer_clients;
 
   ulong id;
+  ulong ext_caller;
+
+  
 ////////////////////
 
 } mainwindow;

@@ -4309,7 +4309,9 @@ void add_to_clipmenu(void) {
 					  NULL);
 
   if (cfile->clip_type==CLIP_TYPE_DISK||cfile->clip_type==CLIP_TYPE_FILE) mainw->clips_available++;
+  pthread_mutex_lock(&mainw->clip_list_mutex);
   mainw->cliplist = lives_list_append (mainw->cliplist, LIVES_INT_TO_POINTER (mainw->current_file));
+  pthread_mutex_unlock(&mainw->clip_list_mutex);
   cfile->old_frames=cfile->frames;
   cfile->ratio_fps=check_for_ratio_fps(cfile->fps);
 }
@@ -4324,7 +4326,9 @@ void remove_from_clipmenu(void) {
   lives_container_remove(LIVES_CONTAINER(mainw->clipsmenu), cfile->menuentry);
   if (LIVES_IS_WIDGET(cfile->menuentry))
     lives_widget_destroy(cfile->menuentry);
+  pthread_mutex_lock(&mainw->clip_list_mutex);
   mainw->cliplist=lives_list_remove (mainw->cliplist, LIVES_INT_TO_POINTER (mainw->current_file));
+  pthread_mutex_unlock(&mainw->clip_list_mutex);
   if (cfile->clip_type==CLIP_TYPE_DISK||cfile->clip_type==CLIP_TYPE_FILE) {
     mainw->clips_available--;
     if (prefs->crash_recovery) rewrite_recovery_file();

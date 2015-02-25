@@ -114,7 +114,7 @@ void get_pref(const gchar *key, gchar *val, int maxlen) {
 	retval=do_read_failed_error_s_with_retry(vfile,NULL,NULL);
       }
     }
-  } while (retval==LIVES_RETRY);
+  } while (retval==LIVES_RESPONSE_RETRY);
 
   lives_free(vfile);
   lives_free(com);
@@ -219,7 +219,7 @@ void get_pref_default(const gchar *key, gchar *val, int maxlen) {
 	retval=do_read_failed_error_s_with_retry(vfile,NULL,NULL);
       }
     }
-  } while (retval==LIVES_RETRY);
+  } while (retval==LIVES_RESPONSE_RETRY);
 
   if (!strcmp(val,"NULL")) memset(val,0,1);
 

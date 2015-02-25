@@ -464,7 +464,10 @@ typedef int LiVESResponseType;
 
 // positive values for custom responses
 #define LIVES_RESPONSE_INVALID 0
-#define LIVES_RESPONSE_SHOW_DETAILS 1
+#define LIVES_RESPONSE_RETRY 1
+#define LIVES_RESPONSE_ABORT 2
+#define LIVES_RESPONSE_RESET 3
+#define LIVES_RESPONSE_SHOW_DETAILS 4
 
 
 typedef GtkAttachOptions LiVESAttachOptions;

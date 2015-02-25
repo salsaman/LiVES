@@ -29,7 +29,6 @@
 #include "cvirtual.h"
 #include "paramwindow.h"
 #include "ce_thumbs.h"
-#include "lbindings.h"
 
 #ifdef HAVE_YUV4MPEG
 #include "lives-yuv4mpeg.h"
@@ -40,6 +39,19 @@
 #endif
 
 static gchar file_name[PATH_MAX];
+
+void lives_notify(int msgnumber,const char *msgstring) {
+#ifdef IS_LIBLIVES
+  binding_cb(msgnumber, msgstring, mainw->id);
+#endif
+#ifdef ENABLE_OSC
+  lives_osc_notify(msgnumber,msgstring);
+#endif
+}
+
+const char *get_set_name() {
+  return mainw->set_name;
+}
 
 boolean on_LiVES_delete_event (LiVESWidget *widget, LiVESXEventDelete *event, livespointer user_data) {
   on_quit_activate(NULL,NULL);
@@ -4525,7 +4537,7 @@ boolean nextclip_callback (LiVESAccelGroup *group, LiVESObject *obj, uint32_t ke
 }
 
 
-void on_save_set_activate (LiVESMenuItem *menuitem, livespointer user_data) {
+boolean on_save_set_activate (LiVESMenuItem *menuitem, livespointer user_data) {
 
   // here is where we save clipsets
 
@@ -4538,18 +4550,18 @@ void on_save_set_activate (LiVESMenuItem *menuitem, livespointer user_data) {
 
   LiVESList *cliplist;
 
-  gchar *old_set=lives_strdup(mainw->set_name);
-  gchar *layout_map_file,*layout_map_dir,*new_clips_dir,*current_clips_dir;
-  gchar *com,*tmp;
-  gchar new_handle[256];
-  gchar *text;
-  gchar *new_dir;
-  gchar *cwd;
-  gchar *ordfile;
-  gchar *ord_entry;
-  gchar new_set_name[128];
-  gchar *msg,*extra;
-  gchar *dfile,*osetn,*nsetn;
+  char *old_set=lives_strdup(mainw->set_name);
+  char *layout_map_file,*layout_map_dir,*new_clips_dir,*current_clips_dir;
+  char *com,*tmp;
+  char new_handle[256];
+  char *text;
+  char *new_dir;
+  char *cwd;
+  char *ordfile;
+  char *ord_entry;
+  char new_set_name[128];
+  char *msg,*extra;
+  char *dfile,*osetn,*nsetn;
 
   boolean is_append=FALSE; // we will overwrite the target layout.map file
   boolean response;
@@ -4560,6 +4572,8 @@ void on_save_set_activate (LiVESMenuItem *menuitem, livespointer user_data) {
 
   register int i;
 
+  if (mainw->cliplist == NULL) return FALSE;
+
   // warn the user what will happen
   if (!mainw->no_exit&&!mainw->only_close) extra=lives_strdup(", and LiVES will exit");
   else extra=lives_strdup("");
@@ -4569,14 +4583,14 @@ void on_save_set_activate (LiVESMenuItem *menuitem, livespointer user_data) {
 
   if (menuitem!=NULL&&!do_warning_dialog_with_check (msg,WARN_MASK_SAVE_SET)) {
     lives_free(msg);
-    return;
+    return FALSE;
   }
   lives_free(msg);
 
 
   if (mainw->stored_event_list!=NULL&&mainw->stored_event_list_changed) {
     // if we have a current layout, give the user the chance to change their mind
-    if (!check_for_layout_del(NULL,FALSE)) return;
+    if (!check_for_layout_del(NULL,FALSE)) return FALSE;
   }
 
 
@@ -4591,7 +4605,7 @@ void on_save_set_activate (LiVESMenuItem *menuitem, livespointer user_data) {
       if (response==LIVES_RESPONSE_CANCEL) {
 	lives_widget_destroy(renamew->dialog);
 	lives_free(renamew);
-	return;
+	return FALSE;
       }
       lives_snprintf(new_set_name,128,"%s",lives_entry_get_text (LIVES_ENTRY (renamew->entry)));
       lives_widget_destroy(renamew->dialog);
@@ -4599,7 +4613,7 @@ void on_save_set_activate (LiVESMenuItem *menuitem, livespointer user_data) {
       lives_widget_context_update();
     } while (!is_legal_set_name(new_set_name,TRUE));
   }
-  else lives_snprintf(new_set_name,128,"%s",(gchar *)user_data);
+  else lives_snprintf(new_set_name,128,"%s",(char *)user_data);
 
   lives_widget_queue_draw (mainw->LiVES);
   lives_widget_context_update();
@@ -4618,10 +4632,14 @@ void on_save_set_activate (LiVESMenuItem *menuitem, livespointer user_data) {
     // check if target clips dir exists, ask if user wants to append files
     if (lives_file_test(new_clips_dir,LIVES_FILE_TEST_IS_DIR)) {
       lives_free(new_clips_dir);
-      if (!do_set_duplicate_warning(mainw->set_name)) {
-	lives_snprintf(mainw->set_name,128,"%s",old_set);
-	return;
+      if (mainw->osc_auto==0) {
+	if (!do_set_duplicate_warning(mainw->set_name)) {
+	  lives_snprintf(mainw->set_name,128,"%s",old_set);
+	  return FALSE;
+	}
       }
+      else if (mainw->osc_auto==1) return FALSE;
+
       is_append=TRUE;
     }
     else {
@@ -4632,7 +4650,7 @@ void on_save_set_activate (LiVESMenuItem *menuitem, livespointer user_data) {
 	if (do_set_rename_old_layouts_warning(mainw->set_name)) {
 	  // user answered "yes" - delete
 	  // clear _old_ layout maps
-	  gchar *dfile=lives_build_filename(prefs->tmpdir,mainw->set_name,"layouts",NULL);
+	  char *dfile=lives_build_filename(prefs->tmpdir,mainw->set_name,"layouts",NULL);
 #ifndef IS_MINGW
 	  com=lives_strdup_printf("/bin/rm -r \"%s/\" 2>/dev/null",dfile);
 #else
@@ -4671,7 +4689,7 @@ void on_save_set_activate (LiVESMenuItem *menuitem, livespointer user_data) {
 	  lives_snprintf(mainw->set_name,128,"%s",old_set);
 	  lives_free(dfile);
 	  end_threaded_dialog();
-	  return;
+	  return FALSE;
 	}
       }
       lives_free(dfile);
@@ -4690,7 +4708,7 @@ void on_save_set_activate (LiVESMenuItem *menuitem, livespointer user_data) {
 	lives_snprintf(mainw->set_name,128,"%s",old_set);
 	lives_free(dfile);
 	end_threaded_dialog();
-	return;
+	return FALSE;
       }
     }
     lives_free(dfile);
@@ -4709,10 +4727,10 @@ void on_save_set_activate (LiVESMenuItem *menuitem, livespointer user_data) {
 
     if (ord_fd<0) {
       retval=do_write_failed_error_s_with_retry(ordfile,lives_strerror(errno),NULL);
-      if (retval==LIVES_CANCEL) {
+      if (retval==LIVES_RESPONSE_CANCEL) {
 	end_threaded_dialog();
 	lives_free(ordfile);
-	return;
+	return FALSE;
       }
     }
 
@@ -4762,7 +4780,7 @@ void on_save_set_activate (LiVESMenuItem *menuitem, livespointer user_data) {
 	    if (mainw->com_failed) {
 	      end_threaded_dialog();
 	      lives_free(ordfile);
-	      return;
+	      return FALSE;
 	    }
 
 	    got_new_handle=TRUE;
@@ -4792,7 +4810,7 @@ void on_save_set_activate (LiVESMenuItem *menuitem, livespointer user_data) {
 
     }
 
-  } while (retval==LIVES_RETRY);
+  } while (retval==LIVES_RESPONSE_RETRY);
   
   close (ord_fd);
   lives_free(ordfile);
@@ -4800,9 +4818,9 @@ void on_save_set_activate (LiVESMenuItem *menuitem, livespointer user_data) {
   lives_chdir(cwd,FALSE);
   lives_free(cwd);
 
-  if (retval==LIVES_CANCEL) {
+  if (retval==LIVES_RESPONSE_CANCEL) {
     end_threaded_dialog();
-    return;
+    return FALSE;
   }
 
   if (got_new_handle&&!strlen(old_set)) migrate_layouts(NULL,mainw->set_name);
@@ -4893,7 +4911,6 @@ void on_save_set_activate (LiVESMenuItem *menuitem, livespointer user_data) {
     popup_lmap_errors(NULL,NULL);
   }
 
-
   lives_notify(LIVES_NOTIFY_CLIPSET_SAVED,old_set);
 
   lives_free (old_set);
@@ -4906,6 +4923,7 @@ void on_save_set_activate (LiVESMenuItem *menuitem, livespointer user_data) {
   else end_threaded_dialog();
 
   lives_widget_set_sensitive (mainw->vj_load_set, TRUE);
+  return TRUE;
 }
 
 
@@ -4923,11 +4941,6 @@ void on_load_set_activate (LiVESMenuItem *menuitem, livespointer user_data) {
   renamew=create_rename_dialog(3);
   lives_widget_show(renamew->dialog);
 }
-
-const char *get_set_name() {
-  return mainw->set_name;
-}
-
 
 
 boolean on_load_set_ok (LiVESButton *button, livespointer user_data) {
@@ -5343,7 +5356,7 @@ void on_cleardisk_activate (LiVESWidget *widget, livespointer user_data) {
 	if (marker_fd<0) {
 	  retval=do_write_failed_error_s_with_retry(markerfile,lives_strerror(errno),NULL);
 	}
-      } while (retval==LIVES_RETRY);
+      } while (retval==LIVES_RESPONSE_RETRY);
 
       close(marker_fd);
       lives_free(markerfile);
@@ -5355,7 +5368,7 @@ void on_cleardisk_activate (LiVESWidget *widget, livespointer user_data) {
 	  if (marker_fd<0) {
 	    retval=do_write_failed_error_s_with_retry(markerfile,lives_strerror(errno),NULL);
 	  }
-	} while (retval==LIVES_RETRY);
+	} while (retval==LIVES_RESPONSE_RETRY);
 	close(marker_fd);
 	lives_free(markerfile);
       }
@@ -5369,7 +5382,7 @@ void on_cleardisk_activate (LiVESWidget *widget, livespointer user_data) {
   // call "smogrify bg_weed" to do the actual cleanup
   // its parameters are the handle of a temp file, and opts mask
 
-  if (retval!=LIVES_CANCEL) {
+  if (retval!=LIVES_RESPONSE_CANCEL) {
     mainw->com_failed=FALSE;
     unlink(cfile->info_file);
     com=lives_strdup_printf("%s bg_weed \"%s\" %d",prefs->backend,cfile->handle,prefs->clear_disk_opts);
@@ -5429,7 +5442,7 @@ void on_cleardisk_activate (LiVESWidget *widget, livespointer user_data) {
 
   if (bytes<0) bytes=0;
 
-  if (retval!=LIVES_CANCEL&&!mainw->com_failed) {
+  if (retval!=LIVES_RESPONSE_CANCEL&&!mainw->com_failed) {
     d_print_done();
     do_info_dialog(lives_strdup_printf(_("%s of disk space was recovered.\n"), 
 				   lives_format_storage_space_string((uint64_t)bytes)));
@@ -5455,8 +5468,8 @@ void on_cleardisk_advanced_clicked (LiVESWidget *widget, livespointer user_data)
     lives_widget_show_all(dialog);
     response=lives_dialog_run(LIVES_DIALOG(dialog));
     lives_widget_destroy(dialog);
-    if (response==LIVES_RETRY) prefs->clear_disk_opts=0;
-  } while (response==LIVES_RETRY);
+    if (response==LIVES_RESPONSE_RETRY) prefs->clear_disk_opts=0;
+  } while (response==LIVES_RESPONSE_RETRY);
 
   set_int_pref("clear_disk_opts",prefs->clear_disk_opts);
 }
@@ -5930,9 +5943,9 @@ void on_fs_preview_clicked (LiVESWidget *widget, livespointer user_data) {
 	  retval=do_read_failed_error_s_with_retry(info_file,NULL,NULL);
 	}
 	
-      } while (retval==LIVES_RETRY);
+      } while (retval==LIVES_RESPONSE_RETRY);
       
-      if (retval==LIVES_CANCEL) {
+      if (retval==LIVES_RESPONSE_CANCEL) {
 	mainw->read_failed=FALSE;
 	return;
       }
@@ -6113,7 +6126,7 @@ void on_fs_preview_clicked (LiVESWidget *widget, livespointer user_data) {
       if (timeout||mainw->read_failed) {
 	retval=do_read_failed_error_s_with_retry(info_file,NULL,NULL);
       }
-    } while (retval==LIVES_RETRY);
+    } while (retval==LIVES_RESPONSE_RETRY);
     
     if (mainw->msg!=NULL&&get_token_count(mainw->msg,'|')>6) {
       array=lives_strsplit(mainw->msg,"|",-1);

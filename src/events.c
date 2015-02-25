@@ -27,7 +27,7 @@
 #include "paramwindow.h" // for DEF_BUTTON_WIDTH
 #include "audio.h"
 #include "cvirtual.h"
-#include "lbindings.h"
+
 
 //////////////////////////////////
 //#define DEBUG_EVENTS
@@ -3679,9 +3679,9 @@ lives_render_error_t render_events (boolean reset) {
 	    retval=do_write_failed_error_s_with_retry(oname,error->message,NULL);
 	    lives_error_free(error);
 	    error=NULL;
-	    if (retval!=LIVES_RETRY) read_write_error=LIVES_RENDER_ERROR_WRITE_FRAME;
+	    if (retval!=LIVES_RESPONSE_RETRY) read_write_error=LIVES_RENDER_ERROR_WRITE_FRAME;
 	  }
-	} while (retval==LIVES_RETRY);
+	} while (retval==LIVES_RESPONSE_RETRY);
 
 	cfile->undo_end=out_frame;
 	if (out_frame>cfile->frames) cfile->frames=out_frame;

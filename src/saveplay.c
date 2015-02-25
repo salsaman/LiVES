@@ -31,7 +31,7 @@
 #include "audio.h"
 #include "htmsocket.h"
 #include "cvirtual.h"
-#include "lbindings.h"
+
 
 
 boolean save_clip_values(int which) {
@@ -59,7 +59,7 @@ boolean save_clip_values(int which) {
 
     if (mainw->clip_header==NULL) {
       retval=do_write_failed_error_s_with_retry(lives_header,lives_strerror(errno),NULL);
-      if (retval==LIVES_CANCEL) {
+      if (retval==LIVES_RESPONSE_CANCEL) {
 	lives_free(lives_header);
 #ifndef IS_MINGW
 	umask(xumask);
@@ -135,7 +135,7 @@ boolean save_clip_values(int which) {
       }
 
     }
-  } while (retval==LIVES_RETRY);
+  } while (retval==LIVES_RESPONSE_RETRY);
   
   lives_free(lives_header);
 #ifndef IS_MINGW
@@ -145,7 +145,7 @@ boolean save_clip_values(int which) {
   fclose(mainw->clip_header);
   mainw->clip_header=NULL;
 
-  if (retval==LIVES_CANCEL) return FALSE;
+  if (retval==LIVES_RESPONSE_CANCEL) return FALSE;
 
   return TRUE;
 }
@@ -207,7 +207,7 @@ boolean read_file_details(const gchar *file_name, boolean is_audio) {
     if (timeout||mainw->read_failed) {
       retval=do_read_failed_error_s_with_retry(cfile->info_file,NULL,NULL);
     }
-  } while (retval==LIVES_RETRY);
+  } while (retval==LIVES_RESPONSE_RETRY);
 
   threaded_dialog_spin();
   return TRUE;
@@ -1148,9 +1148,9 @@ boolean get_handle_from_info_file(int index) {
     if (timeout || mainw->read_failed) {
       retval=do_read_failed_error_s_with_retry(mainw->first_info_file,NULL,NULL);
     }
-  } while (retval==LIVES_RETRY);
+  } while (retval==LIVES_RESPONSE_RETRY);
   
-  if (retval==LIVES_CANCEL) {
+  if (retval==LIVES_RESPONSE_CANCEL) {
     mainw->read_failed=FALSE;
     return FALSE;
   }
@@ -1814,7 +1814,7 @@ void save_file (int clip, int start, int end, const char *filename) {
       new_stderr=open(new_stderr_name,O_CREAT|O_RDONLY|O_TRUNC|O_SYNC,S_IRUSR|S_IWUSR);
       if (new_stderr<0) {
 	retval=do_write_failed_error_s_with_retry(new_stderr_name,lives_strerror(errno),NULL);
-	if (retval==LIVES_CANCEL) redir=lives_strdup("1>&2");
+	if (retval==LIVES_RESPONSE_CANCEL) redir=lives_strdup("1>&2");
       }
       else {
 
@@ -1845,7 +1845,7 @@ void save_file (int clip, int start, int end, const char *filename) {
 #endif
 	mainw->optextview=create_output_textview();
       }
-    } while (retval==LIVES_RETRY);
+    } while (retval==LIVES_RESPONSE_RETRY);
   }
   else {
     lives_free(redir);
@@ -3483,7 +3483,7 @@ boolean get_temp_handle(int index, boolean create) {
 
 
 void create_cfile(void) {
-  gchar *stfile;
+  char *stfile;
 
   // any cfile (clip) initialisation goes in here
   cfile->menuentry=NULL;
@@ -3835,7 +3835,7 @@ boolean save_file_comments (int fileno) {
 	retval=do_write_failed_error_s_with_retry(comment_file,NULL,NULL);
       }
     }
-  } while (retval==LIVES_RETRY);
+  } while (retval==LIVES_RESPONSE_RETRY);
 
   lives_free (comment_file);
 
@@ -3962,7 +3962,7 @@ boolean save_frame_inner(int clip, int frame, const gchar *file_name, int width,
 	gerr=NULL;
       }
 
-    } while (retval==LIVES_RETRY);
+    } while (retval==LIVES_RESPONSE_RETRY);
 
     free(tmp);
     lives_object_unref(pixbuf);
@@ -4154,12 +4154,12 @@ boolean write_headers (lives_clip_t *file) {
       if (mainw->write_failed) retval=do_write_failed_error_s_with_retry(hdrfile,NULL,NULL);
       
     }
-  } while (retval==LIVES_RETRY);
+  } while (retval==LIVES_RESPONSE_RETRY);
 
 
   lives_free(hdrfile);
 
-  if (retval!=LIVES_CANCEL) {
+  if (retval!=LIVES_RESPONSE_CANCEL) {
     // more file details (since version 0.7.5)
     hdrfile=lives_build_filename(prefs->tmpdir,file->handle,"header2",NULL);
 
@@ -4180,12 +4180,12 @@ boolean write_headers (lives_clip_t *file) {
       }
       
       if (mainw->write_failed) retval=do_write_failed_error_s_with_retry(hdrfile,NULL,NULL);
-    } while (retval==LIVES_RETRY);
+    } while (retval==LIVES_RESPONSE_RETRY);
 
     lives_free(hdrfile);
   }
 
-  if (retval==LIVES_CANCEL) {
+  if (retval==LIVES_RESPONSE_CANCEL) {
     mainw->write_failed=FALSE;
     return FALSE;
   }
@@ -4278,9 +4278,9 @@ boolean read_headers(const gchar *file_name) {
 	  if (timeout || mainw->read_failed) {
 	    retval2=do_read_failed_error_s_with_retry(cfile->info_file,NULL,NULL);
 	  }
-	} while (retval2==LIVES_RETRY);
+	} while (retval2==LIVES_RESPONSE_RETRY);
 
-	if (retval2==LIVES_CANCEL) {
+	if (retval2==LIVES_RESPONSE_CANCEL) {
 	  return FALSE;
 	}
 
@@ -4305,7 +4305,7 @@ boolean read_headers(const gchar *file_name) {
 	  if (!cache_file_contents(lives_header)) {
 	    retval2=do_read_failed_error_s_with_retry(lives_header,NULL,NULL);
 	  }
-	} while (retval2==LIVES_RETRY);
+	} while (retval2==LIVES_RESPONSE_RETRY);
 
 	lives_free(lives_header);
 
@@ -4419,8 +4419,8 @@ boolean read_headers(const gchar *file_name) {
 	  retval2=do_header_read_error_with_retry(mainw->current_file);
 	}
       }
-    } while (retval2==LIVES_RETRY);
-    return FALSE; // retval2==LIVES_CANCEL
+    } while (retval2==LIVES_RESPONSE_RETRY);
+    return FALSE; // retval2==LIVES_RESPONSE_CANCEL
   }
 
   // old style headers (pre 0.9.6)
@@ -4486,12 +4486,12 @@ boolean read_headers(const gchar *file_name) {
 
     if (mainw->read_failed) {
       retval=do_read_failed_error_s_with_retry(old_hdrfile,NULL,NULL);
-      if (retval==LIVES_CANCEL) {
+      if (retval==LIVES_RESPONSE_CANCEL) {
 	lives_free(old_hdrfile);
 	return FALSE;
       }
     }
-  } while (retval==LIVES_RETRY);
+  } while (retval==LIVES_RESPONSE_RETRY);
 
   lives_free(old_hdrfile);
 
@@ -4538,9 +4538,9 @@ boolean read_headers(const gchar *file_name) {
       retval2=do_read_failed_error_s_with_retry(cfile->info_file,NULL,NULL);
     }
   
-  } while (retval2==LIVES_RETRY);
+  } while (retval2==LIVES_RESPONSE_RETRY);
 
-  if (retval2==LIVES_CANCEL) {
+  if (retval2==LIVES_RESPONSE_CANCEL) {
     mainw->read_failed=FALSE;
     return FALSE;
   }
@@ -4633,7 +4633,7 @@ void open_set_file (const gchar *set_name, int clipnum) {
 	close (set_fd);
       }
       else retval=do_read_failed_error_s_with_retry(setfile,lives_strerror(errno),NULL);
-    } while (retval==LIVES_RETRY);
+    } while (retval==LIVES_RESPONSE_RETRY);
 
     lives_free (setfile);
     needs_update=TRUE;
@@ -4879,10 +4879,10 @@ int save_event_frames(void) {
       close(header_fd);
 
     }
-  } while (retval==LIVES_RETRY);
+  } while (retval==LIVES_RESPONSE_RETRY);
 
 
-  if (retval==LIVES_CANCEL) {
+  if (retval==LIVES_RESPONSE_CANCEL) {
     i=-1;
   }
 
@@ -4912,8 +4912,8 @@ boolean open_scrap_file (void) {
   int current_file=mainw->current_file;
   int new_file=mainw->first_free_file;
   
-  gchar *dir;
-  gchar *scrap_handle;
+  char *dir;
+  char *scrap_handle;
 
   if (!get_temp_handle (new_file,TRUE)) return FALSE;
   get_next_free_file();
@@ -4923,11 +4923,15 @@ boolean open_scrap_file (void) {
   lives_snprintf(cfile->type,40,"scrap");
   cfile->frames=0;
 
+  cfile->unique_id=0;
+
   scrap_handle=lives_strdup_printf("scrap|%s",cfile->handle);
 
   add_to_recovery_file(scrap_handle);
 
+  pthread_mutex_lock(&mainw->clip_list_mutex);
   mainw->cliplist = lives_list_append (mainw->cliplist, LIVES_INT_TO_POINTER (mainw->current_file));
+  pthread_mutex_unlock(&mainw->clip_list_mutex);
 
   lives_free(scrap_handle);
 
@@ -4961,13 +4965,16 @@ boolean open_ascrap_file (void) {
   lives_snprintf(cfile->type,40,"ascrap");
 
   cfile->frames=0;
+  cfile->unique_id=0;
   cfile->opening=FALSE;
 
   ascrap_handle=lives_strdup_printf("ascrap|%s",cfile->handle);
 
   add_to_recovery_file(ascrap_handle);
 
+  pthread_mutex_lock(&mainw->clip_list_mutex);
   mainw->cliplist = lives_list_append (mainw->cliplist, LIVES_INT_TO_POINTER (mainw->current_file));
+  pthread_mutex_unlock(&mainw->clip_list_mutex);
 
   lives_free(ascrap_handle);
 
@@ -5275,7 +5282,9 @@ void close_scrap_file (void) {
   mainw->current_file=mainw->scrap_file;
   close_current_file(current_file);
 
+  pthread_mutex_lock(&mainw->clip_list_mutex);
   mainw->cliplist=lives_list_remove (mainw->cliplist, LIVES_INT_TO_POINTER (mainw->scrap_file));
+  pthread_mutex_unlock(&mainw->clip_list_mutex);
 
   if (prefs->crash_recovery) rewrite_recovery_file();
 
@@ -5292,7 +5301,9 @@ void close_ascrap_file (void) {
   mainw->current_file=mainw->ascrap_file;
   close_current_file(current_file);
 
+  pthread_mutex_lock(&mainw->clip_list_mutex);
   mainw->cliplist=lives_list_remove (mainw->cliplist, LIVES_INT_TO_POINTER (mainw->ascrap_file));
+  pthread_mutex_unlock(&mainw->clip_list_mutex);
 
   if (prefs->crash_recovery) rewrite_recovery_file();
 
@@ -5562,9 +5573,9 @@ static boolean recover_files(gchar *recovery_file, boolean auto_recover) {
     rfile=fopen(recovery_file,"r");
     if (!rfile) {
       retval=do_read_failed_error_s_with_retry(recovery_file,lives_strerror(errno),NULL);
-      if (retval==LIVES_CANCEL) return FALSE;
+      if (retval==LIVES_RESPONSE_CANCEL) return FALSE;
     }
-  } while (retval==LIVES_RETRY);
+  } while (retval==LIVES_RESPONSE_RETRY);
 
   
   mainw->is_ready=TRUE;
@@ -5827,7 +5838,9 @@ static boolean recover_files(gchar *recovery_file, boolean auto_recover) {
 	lives_notify(LIVES_NOTIFY_CLIP_OPENED,"");
       }
       else {
+	pthread_mutex_lock(&mainw->clip_list_mutex);
 	mainw->cliplist = lives_list_append (mainw->cliplist, LIVES_INT_TO_POINTER (mainw->current_file));
+	pthread_mutex_unlock(&mainw->clip_list_mutex);
 	get_next_free_file();
       }
     }
@@ -5942,7 +5955,7 @@ void rewrite_recovery_file(void) {
       clist=clist->next;
     }
 
-  } while (retval==LIVES_RETRY);
+  } while (retval==LIVES_RESPONSE_RETRY);
 
   if (!opened) unlink(mainw->recovery_file);
   else if (recovery_fd>=0) close(recovery_fd);

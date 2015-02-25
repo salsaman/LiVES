@@ -5,7 +5,7 @@
 // see file ../COPYING for licensing details
 
 #include "main.h"
-
+#include "liblives.hpp"
 
 typedef boolean Boolean;
 
@@ -16,14 +16,19 @@ typedef boolean Boolean;
 boolean lives_osc_cb_saveset(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra);
 
 
-void ext_caller_check(int ret) {
-  if (mainw->ext_caller) {
-    // this is for the C++ binding
-    char *tmp = lives_strdup_printf("%lu %d",mainw->ext_caller,ret);
-    lives_notify(LIVES_NOTIFY_PRIVATE,(const char *)tmp);
-    lives_free(tmp);
-    mainw->ext_caller=0l;
-  }
+static void ext_caller_return_int(ulong caller_id, int ret) {
+  // this is for the C++ binding
+  char *msgstring = lives_strdup_printf("%lu %d",caller_id,ret);
+  binding_cb (LIVES_NOTIFY_PRIVATE_INT, msgstring, mainw->id);
+  lives_free(msgstring);
+}
+
+
+static void ext_caller_return_string(ulong caller_id, const char *ret) {
+  // this is for the C++ binding
+  char *msgstring = lives_strdup_printf("%lu %s",caller_id,ret);
+  binding_cb (LIVES_NOTIFY_PRIVATE_STRING, msgstring, mainw->id);
+  lives_free(msgstring);
 }
 
 
@@ -62,6 +67,8 @@ int cnum_for_uid(ulong uid) {
 }
 
 
+//// interface callers
+
 
 static boolean osc_show_info(livespointer text) {
   // function that is picked up on idle
@@ -73,10 +80,11 @@ static boolean osc_show_info(livespointer text) {
 
 static boolean osc_show_blocking_info(livespointer data) {
   // function that is picked up on idle
+  int ret;
   msginfo *minfo = (msginfo *)data;
-  mainw->ext_caller=minfo->id;
-  do_blocking_info_dialog(minfo->msg);
+  ret=do_blocking_info_dialog(minfo->msg);
   lives_free(minfo->msg);
+  ext_caller_return_int(minfo->id,ret);
   lives_free(minfo);
   return FALSE;
 }
@@ -84,11 +92,36 @@ static boolean osc_show_blocking_info(livespointer data) {
 
 static boolean call_osc_save_set(livespointer data) {
   // function that is picked up on idle
+  boolean ret;
   oscdata *oscd = (oscdata *)data;
-  mainw->ext_caller=oscd->id;
-  lives_osc_cb_saveset(NULL, oscd->arglen, oscd->vargs, OSCTT_CurrentTime(), NULL);
+  ret=lives_osc_cb_saveset(NULL, oscd->arglen, oscd->vargs, OSCTT_CurrentTime(), NULL);
+  ext_caller_return_int(oscd->id,(int)ret);
+  lives_free(oscd);
   return FALSE;
 }
+
+
+static boolean call_file_choose_with_preview(livespointer data) {
+  LiVESWidget *chooser;
+  fprev *fdata = (fprev *)data;
+  char *fname=NULL;
+  int preview_type;
+  int response;
+
+  if (fdata->preview_type==LIVES_PREVIEW_TYPE_VIDEO_AUDIO) preview_type=16;
+  else preview_type=17;
+  chooser=choose_file_with_preview(fdata->dir, fdata->title, preview_type);
+  response=lives_dialog_run(LIVES_DIALOG(chooser));
+  if (response != LIVES_RESPONSE_CANCEL) fname=lives_file_chooser_get_filename (LIVES_FILE_CHOOSER(chooser));
+  if (fdata->dir!=NULL) lives_free(fdata->dir);
+  if (fdata->title!=NULL) lives_free(fdata->title);
+  ext_caller_return_string(fdata->id,fname);
+  lives_free(fdata);
+  return FALSE;
+}
+
+
+/// idlefunc hooks
 
 
 void idle_show_info(const char *text, boolean blocking, ulong id) {
@@ -108,6 +141,21 @@ void idle_save_set(const char *name, int arglen, const void *vargs, ulong id) {
   data->arglen=arglen;
   data->vargs=vargs;
   lives_idle_add(call_osc_save_set,(livespointer)data);
+}
+
+
+void idle_choose_file_with_preview(const char *dirname, const char *title, int preview_type, ulong id) {
+  fprev *data = (fprev *)lives_malloc(sizeof(fprev));
+  data->id=id;
+
+  if (dirname!=NULL) data->dir=strdup(dirname);
+  else data->dir=NULL;
+  
+  if (title!=NULL) data->title=strdup(title);
+  else data->title=NULL;
+
+  data->preview_type=preview_type;
+  lives_idle_add(call_file_choose_with_preview,(livespointer)data);
 }
 
 

@@ -11,7 +11,6 @@
 
 #ifdef IS_LIBLIVES
 void binding_cb (int msgnumber, const char *msgstring, uint64_t myid);
-void ext_caller_check(int ret);
 #endif
 
 
@@ -28,12 +27,21 @@ typedef struct {
 } oscdata;
 
 
+typedef struct {
+  ulong id;
+  char *dir;
+  char *title;
+  int preview_type;
+} fprev;
+
+
 #endif
 
 
 
 void idle_show_info(const char *text, boolean blocking, ulong id);
 void idle_save_set(const char *name, int arglen, const void *vargs, ulong id);
+void idle_choose_file_with_preview(const char *dirname, const char *title, int preview_type, ulong id);
 
 ulong *get_unique_ids(void);
 

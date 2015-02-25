@@ -196,18 +196,12 @@ boolean lives_osc_notify (int msgnumber,const char *msgstring) {
 boolean lives_osc_notify_success (const char *msg) {
   if (prefs->omc_noisy)
     lives_osc_notify(LIVES_NOTIFY_SUCCESS,msg);
-#ifdef IS_LIBLIVES
-  ext_caller_check(TRUE);
-#endif
   return TRUE;
 }
 
 boolean lives_osc_notify_failure (void) {
   if (prefs->omc_noisy)
     lives_osc_notify(LIVES_NOTIFY_FAILED,NULL);
-#ifdef IS_LIBLIVES
-  ext_caller_check(FALSE);
-#endif
   return FALSE;
 }
 

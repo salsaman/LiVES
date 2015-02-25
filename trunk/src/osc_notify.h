@@ -54,7 +54,10 @@ extern "C" {
 #define LIVES_NOTIFY_MODE_CHANGED 4096 ///< mode changed to clip editor or to multitrack
 
 
-#define LIVES_NOTIFY_PRIVATE 65536
+#define LIVES_NOTIFY_PRIVATE_INT 32767
+#define LIVES_NOTIFY_PRIVATE_STRING 32768
+
+
   // > 65536 reserved for custom
 
 

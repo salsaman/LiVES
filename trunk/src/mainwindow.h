@@ -1174,8 +1174,6 @@ typedef struct {
   int afbuffer_clients;
 
   ulong id;
-  ulong ext_caller;
-
   
 ////////////////////
 

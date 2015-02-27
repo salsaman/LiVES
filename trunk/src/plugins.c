@@ -2288,7 +2288,7 @@ static lives_decoder_t *try_decoder_plugins(char *file_name, LiVESList *disabled
   while (decoder_plugin!=NULL) {
     lives_decoder_sys_t *dpsys=(lives_decoder_sys_t *)decoder_plugin->data;
 
-    if (lives_list_index(disabled,dpsys->name)!=-1) {
+    if (lives_list_strcmp_index(disabled,dpsys->name)!=-1) {
       // check if (user) disabled this decoder
       decoder_plugin=decoder_plugin->next;
       continue;
@@ -2680,7 +2680,7 @@ void on_decplug_advanced_clicked (LiVESButton *button, livespointer user_data) {
     lives_free(ltext);
 
     lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(checkbutton),
-				 lives_list_index(future_prefs->disabled_decoders,dpsys->name)==-1);
+				 lives_list_strcmp_index(future_prefs->disabled_decoders,dpsys->name)==-1);
 
     lives_signal_connect_after (LIVES_GUI_OBJECT (checkbutton), LIVES_WIDGET_TOGGLED_EVENT,
 			    LIVES_GUI_CALLBACK (on_dpa_cb_toggled),

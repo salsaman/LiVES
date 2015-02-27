@@ -179,6 +179,7 @@ struct _mt_opts {
 struct _mt {
   // widgets
   LiVESWidget *window;
+  LiVESWidget *menubar;
   LiVESWidget *top_vbox;
   LiVESWidget *hbox;
   LiVESWidget *play_blank;
@@ -336,6 +337,12 @@ struct _mt {
   LiVESWidget *nb;
   LiVESWidget *nb_label;
 
+  LiVESWidget *btoolbar;
+  LiVESWidget *btoolbar2;
+  LiVESWidget *btoolbar3;
+
+  LiVESWidget *menu_hbox;
+
   LiVESWidget *open_menu;
   LiVESWidget *recent_menu;
   LiVESWidget *recent1;
@@ -379,6 +386,8 @@ struct _mt {
   LiVESList *aparam_view_list;
 
   LiVESPixbuf *frame_pixbuf;
+
+  LiVESList *cb_list;
 
   gulong spin_in_func;
   gulong spin_out_func;

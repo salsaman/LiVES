@@ -1174,7 +1174,8 @@ typedef struct {
   int afbuffer_clients;
 
   ulong id;
-  
+
+  boolean interactive;
 ////////////////////
 
 } mainwindow;

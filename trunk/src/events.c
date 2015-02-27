@@ -4237,7 +4237,7 @@ boolean render_to_clip (boolean new_clip) {
       d_print ((tmp=lives_strdup_printf (_ ("rendered %d frames to new clip.\n"),cfile->frames)));
       lives_free(tmp);
       mainw->pre_src_file=mainw->current_file; // if a generator started playback, we will switch back to this file after
-      lives_notify(LIVES_NOTIFY_CLIP_OPENED,"");
+      lives_notify(LIVES_OSC_NOTIFY_CLIP_OPENED,"");
 
     }
     else {

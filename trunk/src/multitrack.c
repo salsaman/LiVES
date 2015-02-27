@@ -1,4 +1,3 @@
-
 // multitrack.c
 // LiVES
 // (c) G. Finch 2005 - 2014 <salsaman@gmail.com>
@@ -203,7 +202,6 @@ void set_mixer_track_vol(lives_mt *mt, int trackno, double vol) {
   int x=vol*LIVES_AVOL_SCALE;
   lives_list_nth(mt->audio_vols,trackno)->data=LIVES_INT_TO_POINTER(x);
 }
-
 
 
 static boolean save_event_list_inner(lives_mt *mt, int fd, weed_plant_t *event_list, unsigned char **mem) {
@@ -1837,6 +1835,7 @@ static void show_track_info(lives_mt *mt, LiVESWidget *eventbox, int track, doub
 static boolean atrack_ebox_pressed (LiVESWidget *labelbox, LiVESXEventButton *event, livespointer user_data) {
   lives_mt *mt=(lives_mt *)user_data;
   int current_track=mt->current_track;
+  if (!mainw->interactive) return FALSE;
   mt->current_track=LIVES_POINTER_TO_INT(lives_widget_object_get_data (LIVES_WIDGET_OBJECT(labelbox),"layer_number"));
   if (current_track!=mt->current_track) mt->fm_edit_event=NULL;
   mt->aud_track_selected=TRUE;
@@ -1852,6 +1851,7 @@ static boolean atrack_ebox_pressed (LiVESWidget *labelbox, LiVESXEventButton *ev
 static boolean track_ebox_pressed (LiVESWidget *labelbox, LiVESXEventButton *event, livespointer user_data) {
   lives_mt *mt=(lives_mt *)user_data;
   int current_track=mt->current_track;
+  if (!mainw->interactive) return FALSE;
   mt->current_track=LIVES_POINTER_TO_INT(lives_widget_object_get_data (LIVES_WIDGET_OBJECT(labelbox),"layer_number"));
   if (current_track!=mt->current_track) mt->fm_edit_event=NULL;
   mt->aud_track_selected=FALSE;
@@ -2483,6 +2483,8 @@ boolean track_arrow_pressed (LiVESWidget *ebox, LiVESXEventButton *event, livesp
   lives_mt *mt=(lives_mt *)user_data;
   boolean expanded=!(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(eventbox),"expanded"));
 
+  if (!mainw->interactive) return FALSE;
+
   if (mt->audio_draws==NULL||(!mt->opts.pertrack_audio&&(mt->opts.back_audio_tracks==0||
 							 eventbox!=mt->audio_draws->data))) {
     track_ebox_pressed(eventbox,NULL,mt);
@@ -2753,6 +2755,7 @@ void mt_clip_select (lives_mt *mt, boolean scroll) {
 
 boolean mt_prevclip (LiVESAccelGroup *group, LiVESObject *obj, uint32_t keyval, LiVESXModifierType mod, livespointer user_data) {
   lives_mt *mt=(lives_mt *)user_data;
+  if (!mainw->interactive) return TRUE;
   mt->clip_selected--;
   polymorph(mt,POLY_CLIPS);
   mt_clip_select(mt,TRUE);
@@ -2761,6 +2764,7 @@ boolean mt_prevclip (LiVESAccelGroup *group, LiVESObject *obj, uint32_t keyval, 
 
 boolean mt_nextclip (LiVESAccelGroup *group, LiVESObject *obj, uint32_t keyval, LiVESXModifierType mod, livespointer user_data) {
   lives_mt *mt=(lives_mt *)user_data;
+  if (!mainw->interactive) return TRUE;
   mt->clip_selected++;
   polymorph(mt,POLY_CLIPS);
   mt_clip_select(mt,TRUE);
@@ -3145,6 +3149,7 @@ void mt_tl_move(lives_mt *mt, double pos_rel) {
 
 boolean mt_tlfor (LiVESAccelGroup *group, LiVESObject *obj, uint32_t keyval, LiVESXModifierType mod, livespointer user_data) {
   lives_mt *mt=(lives_mt *)user_data;
+  if (!mainw->interactive) return TRUE;
   mt->fm_edit_event=NULL;
   mt_tl_move(mt,1.);
   return TRUE;
@@ -3152,6 +3157,7 @@ boolean mt_tlfor (LiVESAccelGroup *group, LiVESObject *obj, uint32_t keyval, LiV
 
 boolean mt_tlfor_frame (LiVESAccelGroup *group, LiVESObject *obj, uint32_t keyval, LiVESXModifierType mod, livespointer user_data) {
   lives_mt *mt=(lives_mt *)user_data;
+  if (!mainw->interactive) return TRUE;
   mt->fm_edit_event=NULL;
   mt_tl_move(mt,1./mt->fps);
   return TRUE;
@@ -3160,6 +3166,7 @@ boolean mt_tlfor_frame (LiVESAccelGroup *group, LiVESObject *obj, uint32_t keyva
 
 boolean mt_tlback (LiVESAccelGroup *group, LiVESObject *obj, uint32_t keyval, LiVESXModifierType mod, livespointer user_data) {
   lives_mt *mt=(lives_mt *)user_data;
+  if (!mainw->interactive) return TRUE;
   mt->fm_edit_event=NULL;
   mt_tl_move(mt,-1.);
   return TRUE;
@@ -3167,6 +3174,7 @@ boolean mt_tlback (LiVESAccelGroup *group, LiVESObject *obj, uint32_t keyval, Li
 
 boolean mt_tlback_frame (LiVESAccelGroup *group, LiVESObject *obj, uint32_t keyval, LiVESXModifierType mod, livespointer user_data) {
   lives_mt *mt=(lives_mt *)user_data;
+  if (!mainw->interactive) return TRUE;
   mt->fm_edit_event=NULL;
   mt_tl_move(mt,-1./mt->fps);
   return TRUE;
@@ -3243,6 +3251,7 @@ static void scroll_time_by_scrollbar (LiVESHScrollbar *sbar, livespointer user_d
 
 boolean mt_trdown (LiVESAccelGroup *group, LiVESObject *obj, uint32_t keyval, LiVESXModifierType mod, livespointer user_data) {
   lives_mt *mt=(lives_mt *)user_data;
+  if (!mainw->interactive) return TRUE;
 
   if (mt->current_track>=0&&mt->opts.pertrack_audio&&!mt->aud_track_selected) {
     LiVESWidget *eventbox=(LiVESWidget *)lives_list_nth_data(mt->video_draws,mt->current_track);
@@ -3281,6 +3290,7 @@ boolean mt_trdown (LiVESAccelGroup *group, LiVESObject *obj, uint32_t keyval, Li
 boolean mt_trup (LiVESAccelGroup *group, LiVESObject *obj, uint32_t keyval, LiVESXModifierType mod, livespointer user_data) {
   lives_mt *mt=(lives_mt *)user_data;
   if (mt->current_track==-1||(mt->current_track==0&&!mt->aud_track_selected&&!mt->opts.show_audio)) return TRUE;
+  if (!mainw->interactive) return TRUE;
 
   if (mt->aud_track_selected) mt->aud_track_selected=FALSE;
   else {
@@ -3856,6 +3866,8 @@ mt_spin_start_value_changed           (LiVESSpinButton   *spinbutton,
   lives_mt *mt=(lives_mt *)user_data;
   boolean has_region=(mt->region_start!=mt->region_end);
 
+  if (!mainw->interactive) return;
+
   lives_signal_handler_block(mt->spinbutton_start,mt->spin_start_func);
   mt->region_start=q_dbl(lives_spin_button_get_value(spinbutton),mt->fps)/U_SEC;
   lives_spin_button_set_value(spinbutton,mt->region_start);
@@ -3905,6 +3917,8 @@ mt_spin_end_value_changed           (LiVESSpinButton   *spinbutton,
 				     livespointer         user_data) {
   lives_mt *mt=(lives_mt *)user_data;
   boolean has_region=(mt->region_start!=mt->region_end);
+
+  if (!mainw->interactive) return;
 
   lives_signal_handler_block(mt->spinbutton_end,mt->spin_end_func);
   mt->region_end=q_dbl(lives_spin_button_get_value(spinbutton),mt->fps)/U_SEC;
@@ -3959,6 +3973,8 @@ static boolean in_out_ebox_pressed (LiVESWidget *eventbox, LiVESXEventButton *ev
   int file;
   lives_mt *mt=(lives_mt *)user_data;
 
+  if (!mainw->interactive) return FALSE;
+
   if (mt->block_selected!=NULL) return FALSE;
 
   ebwidth=lives_widget_get_allocation_width(mt->timeline);
@@ -4006,6 +4022,8 @@ static void do_clip_context (lives_mt *mt, LiVESXEventButton *event, lives_clip_
 
   LiVESWidget *edit_start_end,*edit_clipedit,*close_clip,*show_clipinfo;
   LiVESWidget *menu=lives_menu_new();
+
+  if (!mainw->interactive) return;
 
   lives_menu_set_title (LIVES_MENU(menu),_("LiVES: Selected clip"));
 
@@ -4062,6 +4080,8 @@ static boolean clip_ebox_pressed (LiVESWidget *eventbox, LiVESXEventButton *even
   lives_mt *mt=(lives_mt *)user_data;
 
   if (!mt->is_ready) return FALSE;
+
+  if (!mainw->interactive) return FALSE;
 
   if (event->type!=LIVES_BUTTON_PRESS&&!mt->is_rendering) {
     lives_set_cursor_style(LIVES_CURSOR_NORMAL,NULL);
@@ -4127,6 +4147,8 @@ on_drag_clip_end           (LiVESWidget       *widget,
   int win_x,win_y;
 
   register int i;
+
+  if (!mainw->interactive) return FALSE;
 
   if (mt->is_rendering) return FALSE;
 
@@ -4230,7 +4252,7 @@ static boolean on_clipbox_enter (LiVESWidget *widget, LiVESXEventCrossing *event
 
 
 void mt_init_start_end_spins(lives_mt *mt) {
-  LiVESWidget *hbox,*btoolbar,*label,*eventbox;
+  LiVESWidget *hbox,*label,*eventbox;
 
   int dpw;
   boolean woat;
@@ -4248,12 +4270,12 @@ void mt_init_start_end_spins(lives_mt *mt) {
     lives_widget_set_fg_color(eventbox, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars_fore);
   }
 
-  btoolbar=lives_toolbar_new();
-  lives_container_add (LIVES_CONTAINER (eventbox), btoolbar);
+  mt->btoolbar=lives_toolbar_new();
+  lives_container_add (LIVES_CONTAINER (eventbox), mt->btoolbar);
 
-  lives_toolbar_set_show_arrow(LIVES_TOOLBAR(btoolbar),FALSE);
+  lives_toolbar_set_show_arrow(LIVES_TOOLBAR(mt->btoolbar),FALSE);
 
-  lives_toolbar_set_style (LIVES_TOOLBAR (btoolbar), LIVES_TOOLBAR_TEXT);
+  lives_toolbar_set_style (LIVES_TOOLBAR (mt->btoolbar), LIVES_TOOLBAR_TEXT);
 
 
   mt->amixer_button=LIVES_WIDGET(lives_tool_button_new(NULL,NULL));
@@ -4261,24 +4283,24 @@ void mt_init_start_end_spins(lives_mt *mt) {
   label=lives_standard_label_new(_ ("Audio mixer (ctrl-m)"));
   lives_tool_button_set_label_widget(LIVES_TOOL_BUTTON(mt->amixer_button),label);
 
-  lives_toolbar_insert(LIVES_TOOLBAR(btoolbar),LIVES_TOOL_ITEM(mt->amixer_button),-1);
+  lives_toolbar_insert(LIVES_TOOLBAR(mt->btoolbar),LIVES_TOOL_ITEM(mt->amixer_button),-1);
 
   if (palette->style&STYLE_1) {
-    lives_widget_set_bg_color(btoolbar, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
+    lives_widget_set_bg_color(mt->btoolbar, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
 
     lives_widget_set_bg_color(mt->amixer_button, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
     lives_widget_set_bg_color(label, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
 
-    lives_widget_set_bg_color(btoolbar, LIVES_WIDGET_STATE_PRELIGHT, &palette->menu_and_bars);
-    lives_widget_set_bg_color(btoolbar, LIVES_WIDGET_STATE_INSENSITIVE, &palette->menu_and_bars);
+    lives_widget_set_bg_color(mt->btoolbar, LIVES_WIDGET_STATE_PRELIGHT, &palette->menu_and_bars);
+    lives_widget_set_bg_color(mt->btoolbar, LIVES_WIDGET_STATE_INSENSITIVE, &palette->menu_and_bars);
 
-    lives_widget_set_fg_color(btoolbar, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars_fore);
+    lives_widget_set_fg_color(mt->btoolbar, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars_fore);
 
     lives_widget_set_fg_color(mt->amixer_button, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars_fore);
     lives_widget_set_fg_color(label, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars_fore);
 
-    lives_widget_set_fg_color(btoolbar, LIVES_WIDGET_STATE_PRELIGHT, &palette->menu_and_bars_fore);
-    lives_widget_set_fg_color(btoolbar, LIVES_WIDGET_STATE_INSENSITIVE, &palette->menu_and_bars_fore);
+    lives_widget_set_fg_color(mt->btoolbar, LIVES_WIDGET_STATE_PRELIGHT, &palette->menu_and_bars_fore);
+    lives_widget_set_fg_color(mt->btoolbar, LIVES_WIDGET_STATE_INSENSITIVE, &palette->menu_and_bars_fore);
   }
 
   lives_widget_add_accelerator (mt->amixer_button, LIVES_WIDGET_CLICKED_EVENT, mt->accel_group,
@@ -4383,6 +4405,8 @@ void mouse_mode_context(lives_mt *mt) {
 static void on_insert_mode_changed (LiVESMenuItem *menuitem, livespointer user_data) {
   lives_mt *mt=(lives_mt *)user_data;
 
+  if (!mainw->interactive) return;
+
   if (menuitem==(LiVESMenuItem *)mt->ins_normal) {
     set_menu_text(mt->ins_menuitem,_("_Insert mode: Normal"),TRUE);
     mt->opts.insert_mode=INSERT_MODE_NORMAL;
@@ -4398,6 +4422,8 @@ static void on_insert_mode_changed (LiVESMenuItem *menuitem, livespointer user_d
 
 static void on_mouse_mode_changed (LiVESMenuItem *menuitem, livespointer user_data) {
   lives_mt *mt=(lives_mt *)user_data;
+
+  if (!mainw->interactive) return;
 
   if (menuitem==(LiVESMenuItem *)mt->mm_move) {
     set_menu_text(mt->mm_menuitem,_("_Mouse mode: Move"),TRUE);
@@ -4425,6 +4451,8 @@ static void on_mouse_mode_changed (LiVESMenuItem *menuitem, livespointer user_da
 
 static void on_grav_mode_changed (LiVESMenuItem *menuitem, livespointer user_data) {
   lives_mt *mt=(lives_mt *)user_data;
+
+  if (!mainw->interactive) return;
 
   if (menuitem==(LiVESMenuItem *)mt->grav_normal) {
     lives_label_set_text(LIVES_LABEL(mt->grav_label),_("Gravity: Normal"));
@@ -5119,6 +5147,7 @@ static weed_plant_t *load_event_list_inner (lives_mt *mt, int fd, boolean show_e
 
 static void on_insa_toggled (LiVESToggleButton *tbutton, livespointer user_data) {
   lives_mt *mt=(lives_mt *)user_data;
+  if (!mainw->interactive) return;
   mt->opts.insert_audio=lives_toggle_button_get_active(tbutton);
   if (prefs->lamp_buttons) {
     if (mt->opts.insert_audio) lives_widget_set_bg_color(LIVES_WIDGET(tbutton), LIVES_WIDGET_STATE_PRELIGHT, &palette->light_green);
@@ -5128,6 +5157,7 @@ static void on_insa_toggled (LiVESToggleButton *tbutton, livespointer user_data)
 
 static void on_snapo_toggled (LiVESToggleButton *tbutton, livespointer user_data) {
   lives_mt *mt=(lives_mt *)user_data;
+  if (!mainw->interactive) return;
   mt->opts.snap_over=lives_toggle_button_get_active(tbutton);
   if (prefs->lamp_buttons) {
     if (mt->opts.snap_over) lives_widget_set_bg_color(LIVES_WIDGET(tbutton), LIVES_WIDGET_STATE_PRELIGHT, &palette->light_green);
@@ -5464,6 +5494,7 @@ static boolean timecode_string_validate(LiVESEntry *entry, lives_mt *mt) {
 }
 
 static boolean on_mt_delete_event (LiVESWidget *widget, LiVESXEventDelete *event, livespointer user_data) {
+  if (!mainw->interactive) return TRUE;
   mt_quit_activate(NULL,user_data);
   return FALSE;
 }
@@ -5660,9 +5691,7 @@ static gchar *get_tab_name(uint32_t tab) {
 
 lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
   LiVESWidget *hseparator;
-  LiVESWidget *menubar;
   LiVESWidget *btoolbar;
-  LiVESWidget *menu_hbox;
   LiVESWidget *menuitem;
   LiVESWidget *menuitem2;
   LiVESWidget *menuitemsep;
@@ -5920,6 +5949,8 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
 
   mt->top_track=0;
 
+  mt->cb_list=NULL;
+
   if (mainw->fx_candidates[FX_CANDIDATE_AUDIO_VOL].delegate!=-1) {
     // user (or system) has delegated an audio volume filter from the candidates
     mt->avol_fx=LIVES_POINTER_TO_INT(lives_list_nth_data(mainw->fx_candidates[FX_CANDIDATE_AUDIO_VOL].list,
@@ -5951,7 +5982,7 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
   force_backing_tracks=0;
 
   mt->window = lives_window_new (LIVES_WINDOW_TOPLEVEL);
-  lives_window_set_hide_titlebar_when_maximized(LIVES_WINDOW(mainw->LiVES),FALSE);
+  lives_window_set_hide_titlebar_when_maximized(LIVES_WINDOW(mt->window),FALSE);
 
   if (palette->style&STYLE_1) {
     if (palette->style&STYLE_3) {
@@ -5973,24 +6004,26 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
 		    NULL);
 #endif
 
+
+
   mt->top_vbox = lives_vbox_new (FALSE, 0);
   lives_container_add (LIVES_CONTAINER (mt->window), mt->top_vbox);
 
-  menu_hbox = lives_hbox_new (FALSE, 0);
-  lives_box_pack_start (LIVES_BOX (mt->top_vbox), menu_hbox, FALSE, FALSE, 0);
+  mt->menu_hbox = lives_hbox_new (FALSE, 0);
+  lives_box_pack_start (LIVES_BOX (mt->top_vbox), mt->menu_hbox, FALSE, FALSE, 0);
 
-  menubar = lives_menu_bar_new ();
-  lives_box_pack_start (LIVES_BOX (menu_hbox), menubar, TRUE, TRUE, 0);
+  mt->menubar = lives_menu_bar_new ();
+  lives_box_pack_start (LIVES_BOX (mt->menu_hbox), mt->menubar, FALSE, FALSE, 0);
 
   if (palette->style&STYLE_1) {
-    lives_widget_set_bg_color(menubar, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
-    lives_widget_set_fg_color(menubar, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars_fore);
+    lives_widget_set_bg_color(mt->menubar, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
+    lives_widget_set_fg_color(mt->menubar, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars_fore);
   }
 
 
   // File
   menuitem = lives_menu_item_new_with_mnemonic (_ ("_File"));
-  lives_container_add (LIVES_CONTAINER (menubar), menuitem);
+  lives_container_add (LIVES_CONTAINER (mt->menubar), menuitem);
   
   menuitem_menu = lives_menu_new ();
   lives_menu_item_set_submenu (LIVES_MENU_ITEM (menuitem), menuitem_menu);
@@ -6283,7 +6316,7 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
   // Edit
 
   menuitem = lives_menu_item_new_with_mnemonic (_("_Edit"));
-  lives_container_add (LIVES_CONTAINER (menubar), menuitem);
+  lives_container_add (LIVES_CONTAINER (mt->menubar), menuitem);
 
   menuitem_menu = lives_menu_new ();
   lives_menu_item_set_submenu (LIVES_MENU_ITEM (menuitem), menuitem_menu);
@@ -6435,7 +6468,7 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
   // Play
 
   menuitem = lives_menu_item_new_with_mnemonic (_ ("_Play"));
-  lives_container_add (LIVES_CONTAINER (menubar), menuitem);
+  lives_container_add (LIVES_CONTAINER (mt->menubar), menuitem);
   
   menuitem_menu = lives_menu_new ();
   lives_menu_item_set_submenu (LIVES_MENU_ITEM (menuitem), menuitem_menu);
@@ -6533,7 +6566,7 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
   // Effects
 
   menuitem = lives_menu_item_new_with_mnemonic (_ ("Effect_s"));
-  lives_container_add (LIVES_CONTAINER (menubar), menuitem);
+  lives_container_add (LIVES_CONTAINER (mt->menubar), menuitem);
   
   menuitem_menu = lives_menu_new ();
   lives_menu_item_set_submenu (LIVES_MENU_ITEM (menuitem), menuitem_menu);
@@ -6911,7 +6944,7 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
   // Tracks
 
   menuitem = lives_menu_item_new_with_mnemonic (_ ("_Tracks"));
-  lives_container_add (LIVES_CONTAINER (menubar), menuitem);
+  lives_container_add (LIVES_CONTAINER (mt->menubar), menuitem);
   
   menuitem_menu = lives_menu_new ();
   lives_menu_item_set_submenu (LIVES_MENU_ITEM (menuitem), menuitem_menu);
@@ -7033,7 +7066,7 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
   // Selection
 
   menuitem = lives_menu_item_new_with_mnemonic (_ ("Se_lection"));
-  lives_container_add (LIVES_CONTAINER (menubar), menuitem);
+  lives_container_add (LIVES_CONTAINER (mt->menubar), menuitem);
 
   menuitem_menu = lives_menu_new ();
   lives_menu_item_set_submenu (LIVES_MENU_ITEM (menuitem), menuitem_menu);
@@ -7149,7 +7182,7 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
   // Tools
 
   menuitem = lives_menu_item_new_with_mnemonic (_ ("_Tools"));
-  lives_container_add (LIVES_CONTAINER (menubar), menuitem);
+  lives_container_add (LIVES_CONTAINER (mt->menubar), menuitem);
   
   menuitem_menu = lives_menu_new ();
   lives_menu_item_set_submenu (LIVES_MENU_ITEM (menuitem), menuitem_menu);
@@ -7220,7 +7253,7 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
   // Render
 
   menuitem = lives_menu_item_new_with_mnemonic (_ ("_Render"));
-  lives_container_add (LIVES_CONTAINER (menubar), menuitem);
+  lives_container_add (LIVES_CONTAINER (mt->menubar), menuitem);
   
   menuitem_menu = lives_menu_new ();
   lives_menu_item_set_submenu (LIVES_MENU_ITEM (menuitem), menuitem_menu);
@@ -7277,7 +7310,7 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
   // View
 
   menuitem = lives_menu_item_new_with_mnemonic (_ ("_View"));
-  lives_container_add (LIVES_CONTAINER (menubar), menuitem);
+  lives_container_add (LIVES_CONTAINER (mt->menubar), menuitem);
   
   menuitem_menu = lives_menu_new ();
   lives_menu_item_set_submenu (LIVES_MENU_ITEM (menuitem), menuitem_menu);
@@ -7414,7 +7447,7 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
   // help
   menuitem = lives_menu_item_new_with_mnemonic (_("_Help"));
   lives_widget_show (menuitem);
-  lives_container_add (LIVES_CONTAINER (menubar), menuitem);
+  lives_container_add (LIVES_CONTAINER (mt->menubar), menuitem);
 
   menuitem_menu = lives_menu_new ();
   lives_menu_item_set_submenu (LIVES_MENU_ITEM (menuitem), menuitem_menu);
@@ -7475,7 +7508,7 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
   // gtk dont like menu_item_separator in horizontal menus
   menuitemsep = lives_menu_item_new_with_label("|");
   lives_widget_set_sensitive(menuitemsep,FALSE);
-  lives_container_add (LIVES_CONTAINER(menubar), menuitemsep);
+  lives_container_add (LIVES_CONTAINER(mt->menubar), menuitemsep);
 
   if (palette->style&STYLE_1) {
     lives_widget_set_bg_color(menuitemsep, LIVES_WIDGET_STATE_INSENSITIVE, &palette->menu_and_bars);
@@ -7484,7 +7517,7 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
 
   mt->mm_menuitem = lives_menu_item_new_with_label ("");
 
-  lives_container_add (LIVES_CONTAINER(menubar), mt->mm_menuitem);
+  lives_container_add (LIVES_CONTAINER(mt->menubar), mt->mm_menuitem);
 
   submenu = lives_menu_new ();
   if (palette->style&STYLE_1) {
@@ -7512,7 +7545,7 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
 
   menuitemsep = lives_menu_item_new_with_label("|");
   lives_widget_set_sensitive(menuitemsep,FALSE);
-  lives_container_add (LIVES_CONTAINER(menubar), menuitemsep);
+  lives_container_add (LIVES_CONTAINER(mt->menubar), menuitemsep);
 
   if (palette->style&STYLE_1) {
     lives_widget_set_bg_color(menuitemsep, LIVES_WIDGET_STATE_INSENSITIVE, &palette->menu_and_bars);
@@ -7521,7 +7554,7 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
 
   mt->ins_menuitem = lives_menu_item_new_with_label ("");
 
-  lives_container_add (LIVES_CONTAINER(menubar), mt->ins_menuitem);
+  lives_container_add (LIVES_CONTAINER(mt->menubar), mt->ins_menuitem);
 
   submenu = lives_menu_new ();
   if (palette->style&STYLE_1) {
@@ -7748,8 +7781,8 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
   hbox = lives_hbox_new (FALSE, 0);
   lives_container_add(LIVES_CONTAINER(eventbox),hbox);
 
-  btoolbar=lives_toolbar_new();
-  lives_box_pack_start (LIVES_BOX (hbox), btoolbar, FALSE, FALSE, 0);
+  mt->btoolbar2=lives_toolbar_new();
+  lives_box_pack_start (LIVES_BOX (hbox), mt->btoolbar2, FALSE, FALSE, 0);
 
   widget_opts.apply_theme=FALSE;
   widget_opts.expand=LIVES_EXPAND_NONE;
@@ -7777,39 +7810,39 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
 
   // play buttons
 
-  lives_toolbar_set_show_arrow(LIVES_TOOLBAR(btoolbar),FALSE);
+  lives_toolbar_set_show_arrow(LIVES_TOOLBAR(mt->btoolbar2),FALSE);
 
   if (palette->style&STYLE_1) {
-    lives_widget_set_bg_color(btoolbar, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
-    lives_widget_set_fg_color(btoolbar, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars_fore);
+    lives_widget_set_bg_color(mt->btoolbar2, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
+    lives_widget_set_fg_color(mt->btoolbar2, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars_fore);
   }
 
-  lives_toolbar_set_style (LIVES_TOOLBAR (btoolbar), LIVES_TOOLBAR_ICONS);
-  lives_toolbar_set_icon_size (LIVES_TOOLBAR(btoolbar),LIVES_ICON_SIZE_SMALL_TOOLBAR);
+  lives_toolbar_set_style (LIVES_TOOLBAR (mt->btoolbar2), LIVES_TOOLBAR_ICONS);
+  lives_toolbar_set_icon_size (LIVES_TOOLBAR(mt->btoolbar2),LIVES_ICON_SIZE_SMALL_TOOLBAR);
 
   lives_object_ref(mainw->m_sepwinbutton);
   lives_widget_unparent(mainw->m_sepwinbutton);
-  lives_toolbar_insert(LIVES_TOOLBAR(btoolbar),LIVES_TOOL_ITEM(mainw->m_sepwinbutton),-1);
+  lives_toolbar_insert(LIVES_TOOLBAR(mt->btoolbar2),LIVES_TOOL_ITEM(mainw->m_sepwinbutton),-1);
   lives_object_unref(mainw->m_sepwinbutton);
 
   lives_object_ref(mainw->m_rewindbutton);
   lives_widget_unparent(mainw->m_rewindbutton);
-  lives_toolbar_insert(LIVES_TOOLBAR(btoolbar),LIVES_TOOL_ITEM(mainw->m_rewindbutton),-1);
+  lives_toolbar_insert(LIVES_TOOLBAR(mt->btoolbar2),LIVES_TOOL_ITEM(mainw->m_rewindbutton),-1);
   lives_object_unref(mainw->m_rewindbutton);
 
   lives_object_ref(mainw->m_playbutton);
   lives_widget_unparent(mainw->m_playbutton);
-  lives_toolbar_insert(LIVES_TOOLBAR(btoolbar),LIVES_TOOL_ITEM(mainw->m_playbutton),-1);
+  lives_toolbar_insert(LIVES_TOOLBAR(mt->btoolbar2),LIVES_TOOL_ITEM(mainw->m_playbutton),-1);
   lives_object_unref(mainw->m_playbutton);
 
   lives_object_ref(mainw->m_stopbutton);
   lives_widget_unparent(mainw->m_stopbutton);
-  lives_toolbar_insert(LIVES_TOOLBAR(btoolbar),LIVES_TOOL_ITEM(mainw->m_stopbutton),-1);
+  lives_toolbar_insert(LIVES_TOOLBAR(mt->btoolbar2),LIVES_TOOL_ITEM(mainw->m_stopbutton),-1);
   lives_object_unref(mainw->m_stopbutton);
 
   lives_object_ref(mainw->m_loopbutton);
   lives_widget_unparent(mainw->m_loopbutton);
-  lives_toolbar_insert(LIVES_TOOLBAR(btoolbar),LIVES_TOOL_ITEM(mainw->m_loopbutton),-1);
+  lives_toolbar_insert(LIVES_TOOLBAR(mt->btoolbar2),LIVES_TOOL_ITEM(mainw->m_loopbutton),-1);
   lives_object_unref(mainw->m_loopbutton);
 
 
@@ -7934,19 +7967,19 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
 
 
 
-  btoolbar=lives_toolbar_new();
-  lives_box_pack_start (LIVES_BOX (hbox), btoolbar, FALSE, FALSE, 0);
+  mt->btoolbar3=lives_toolbar_new();
+  lives_box_pack_start (LIVES_BOX (hbox), mt->btoolbar3, FALSE, FALSE, 0);
 
-  lives_toolbar_set_show_arrow(LIVES_TOOLBAR(btoolbar),FALSE);
+  lives_toolbar_set_show_arrow(LIVES_TOOLBAR(mt->btoolbar3),FALSE);
 
   if (palette->style&STYLE_1) {
-    lives_widget_set_bg_color(btoolbar, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
-    lives_widget_set_fg_color(btoolbar, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars_fore);
+    lives_widget_set_bg_color(mt->btoolbar3, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
+    lives_widget_set_fg_color(mt->btoolbar3, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars_fore);
     lives_widget_set_bg_color(mt->eview_label, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
     lives_widget_set_fg_color(mt->eview_label, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars_fore);
   }
 
-  lives_toolbar_set_style (LIVES_TOOLBAR (btoolbar), LIVES_TOOLBAR_TEXT);
+  lives_toolbar_set_style (LIVES_TOOLBAR (mt->btoolbar3), LIVES_TOOLBAR_TEXT);
 
   mt->grav_menuitem = lives_menu_tool_button_new (NULL,NULL);
   lives_tool_button_set_use_underline (LIVES_TOOL_BUTTON(mt->grav_menuitem),TRUE);
@@ -7954,7 +7987,7 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
   mt->grav_label=lives_label_new(_("Gravity: Normal"));
   lives_tool_button_set_label_widget(LIVES_TOOL_BUTTON(mt->grav_menuitem),mt->grav_label);
 
-  lives_toolbar_insert(LIVES_TOOLBAR(btoolbar),LIVES_TOOL_ITEM(mt->grav_menuitem),-1);
+  lives_toolbar_insert(LIVES_TOOLBAR(mt->btoolbar3),LIVES_TOOL_ITEM(mt->grav_menuitem),-1);
 
   submenu = lives_menu_new ();
   if (palette->style&STYLE_1) {
@@ -9396,7 +9429,7 @@ boolean multitrack_delete (lives_mt *mt, boolean save_layout) {
     lives_free(xtrabit);
   }
 
-  lives_notify(LIVES_NOTIFY_MODE_CHANGED,(tmp=lives_strdup_printf("%d",STARTUP_CE)));
+  lives_notify(LIVES_OSC_NOTIFY_MODE_CHANGED,(tmp=lives_strdup_printf("%d",STARTUP_CE)));
   lives_free(tmp);
 
   return TRUE;
@@ -9996,6 +10029,8 @@ void delete_video_track(lives_mt *mt, int layer, boolean full) {
   label=(LiVESWidget *)lives_widget_object_get_data (LIVES_WIDGET_OBJECT(eventbox), "label");
   arrow=(LiVESWidget *)lives_widget_object_get_data (LIVES_WIDGET_OBJECT(eventbox), "arrow");
 
+  mt->cb_list=lives_list_remove(mt->cb_list,(livespointer)checkbutton);
+
   lives_widget_destroy(checkbutton);
   lives_widget_destroy(label);
   lives_widget_destroy(arrow);
@@ -10240,6 +10275,8 @@ void add_video_track (lives_mt *mt, boolean behind) {
   }
 #endif
   lives_object_ref(checkbutton);
+
+  mt->cb_list=lives_list_append(mt->cb_list,checkbutton);
 
   if (LIVES_IS_WIDGET(checkbutton)) {
     lives_widget_set_tooltip_text( checkbutton, _("Select track"));
@@ -11029,6 +11066,7 @@ boolean on_multitrack_activate (LiVESMenuItem *menuitem, weed_plant_t *event_lis
   if (palette->style&STYLE_1) widget_opts.apply_theme=TRUE;
   multi=multitrack(event_list,orig_file,cfile->fps);
 
+
   if (mainw->stored_event_list!=NULL) {
     mainw->stored_event_list=NULL;
     mainw->stored_layout_undos=NULL;
@@ -11128,6 +11166,7 @@ boolean on_multitrack_activate (LiVESMenuItem *menuitem, weed_plant_t *event_lis
 
   }
 
+
   d_print (_ ("\n==============================\nSwitched to Multitrack mode\n"));
 
 
@@ -11158,7 +11197,7 @@ boolean on_multitrack_activate (LiVESMenuItem *menuitem, weed_plant_t *event_lis
   mainw_was_ready=mainw->is_ready;
   mainw->is_ready=TRUE;
 
-  lives_notify(LIVES_NOTIFY_MODE_CHANGED,(tmp=lives_strdup_printf("%d",STARTUP_MT)));
+  lives_notify(LIVES_OSC_NOTIFY_MODE_CHANGED,(tmp=lives_strdup_printf("%d",STARTUP_MT)));
   lives_free(tmp);
 
   multi->no_expose=FALSE;
@@ -11176,6 +11215,7 @@ boolean on_multitrack_activate (LiVESMenuItem *menuitem, weed_plant_t *event_lis
     multi->idlefunc=mt_idle_add(multi);
   }
 
+  set_interactive(mainw->interactive);
   return TRUE;
 }
 
@@ -11611,6 +11651,8 @@ void in_out_start_changed (LiVESWidget *widget, livespointer user_data) {
 
   boolean start_anchored;
 
+  if (!mainw->interactive) return;
+
   if (block==NULL) {
     lives_clip_t *sfile=mainw->files[mt->file_selected];
     sfile->start=lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(widget));
@@ -11842,6 +11884,8 @@ void in_out_end_changed (LiVESWidget *widget, livespointer user_data) {
   double aseek,avel=1.;
 
   boolean end_anchored;
+
+  if (!mainw->interactive) return;
 
   if (block==NULL) {
     lives_clip_t *sfile=mainw->files[mt->file_selected];
@@ -12171,6 +12215,8 @@ void avel_spin_changed (LiVESSpinButton *spinbutton, livespointer user_data) {
   double orig_end_val,orig_start_val;
   boolean was_adjusted=FALSE;
 
+  if (!mainw->interactive) return;
+
   if (lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(mt->checkbutton_avel_reverse))) new_avel=-new_avel;
 
   start_tc=block->offset_start;
@@ -12290,12 +12336,13 @@ void avel_spin_changed (LiVESSpinButton *spinbutton, livespointer user_data) {
 }
 
 
-void
-in_anchor_toggled (LiVESToggleButton *togglebutton, livespointer user_data) {
+void in_anchor_toggled (LiVESToggleButton *togglebutton, livespointer user_data) {
   lives_mt *mt=(lives_mt *)user_data;
   track_rect *block=mt->block_selected;
   weed_timecode_t offset_end;
   double avel=1.;
+
+  if (!mainw->interactive) return;
 
   if (mt->current_track<0) {
     avel=get_audio_frame_vel(block->start_event,mt->current_track);
@@ -12340,12 +12387,13 @@ in_anchor_toggled (LiVESToggleButton *togglebutton, livespointer user_data) {
   }
 }
 
-void
-out_anchor_toggled (LiVESToggleButton *togglebutton, livespointer user_data) {
+void out_anchor_toggled (LiVESToggleButton *togglebutton, livespointer user_data) {
   lives_mt *mt=(lives_mt *)user_data;
   track_rect *block=mt->block_selected;
   weed_timecode_t offset_end;
   double avel=1.;
+
+  if (!mainw->interactive) return;
 
   if (mt->current_track<0) {
     avel=get_audio_frame_vel(block->start_event,mt->current_track);
@@ -13035,6 +13083,8 @@ static void mouse_select_start(LiVESWidget *widget, LiVESXEventButton *event, li
   double timesecs;
   int min_x;
 
+  if (!mainw->interactive) return;
+
   lives_widget_set_sensitive(mt->mm_menuitem,FALSE);
   lives_widget_set_sensitive(mt->view_sel_events,FALSE);
   
@@ -13062,6 +13112,8 @@ static void mouse_select_start(LiVESWidget *widget, LiVESXEventButton *event, li
 }
 
 static void mouse_select_end(LiVESWidget *widget, LiVESXEventButton *event, lives_mt *mt) {
+  if (!mainw->interactive) return;
+
   mt->tl_selecting=FALSE;
   lives_widget_get_pointer((LiVESXDevice *)mainw->mgeom[prefs->gui_monitor>0?prefs->gui_monitor-1:0].mouse_device, 
 			   mt->timeline, &mt->sel_x, &mt->sel_y);
@@ -13085,6 +13137,8 @@ static void mouse_select_move(LiVESWidget *widget, LiVESXEventMotion *event, liv
   int offs_y_start,offs_y_end,xheight;
 
   register int i;
+
+  if (!mainw->interactive) return;
 
   if (mt->block_selected!=NULL) unselect_all(mt);
 
@@ -13221,6 +13275,7 @@ void do_block_context (lives_mt *mt, LiVESXEventButton *event, track_rect *block
   int error;
 
   //mouse_select_end(NULL,mt);
+  if (!mainw->interactive) return;
 
   lives_menu_set_title (LIVES_MENU(menu),_("LiVES: Selected block/frame"));
 
@@ -13294,6 +13349,8 @@ void do_track_context (lives_mt *mt, LiVESXEventButton *event, double timesecs, 
   LiVESWidget *menu=lives_menu_new();
   boolean has_something=FALSE;
   boolean needs_idlefunc=FALSE;
+
+  if (!mainw->interactive) return;
 
   if (mt->idlefunc>0) {
     lives_source_remove(mt->idlefunc);
@@ -13392,6 +13449,8 @@ boolean on_track_release (LiVESWidget *eventbox, LiVESXEventButton *event, lives
   int old_track=mt->current_track;
 
   register int i;
+
+  if (!mainw->interactive) return FALSE;
 
   if (mt->idlefunc>0) {
     lives_source_remove(mt->idlefunc);
@@ -13518,6 +13577,7 @@ boolean on_track_release (LiVESWidget *eventbox, LiVESXEventButton *event, lives
 
 boolean on_track_header_click (LiVESWidget *widget, LiVESXEventButton *event, livespointer user_data) {
   lives_mt *mt=(lives_mt *)user_data;
+  if (!mainw->interactive) return FALSE;
   if (mt->opts.mouse_mode==MOUSE_MODE_SELECT) {
     mouse_select_start(widget,event,mt);
     lives_signal_handler_unblock (widget,mt->mouse_mot1);
@@ -13527,6 +13587,7 @@ boolean on_track_header_click (LiVESWidget *widget, LiVESXEventButton *event, li
 
 boolean on_track_header_release (LiVESWidget *widget, LiVESXEventButton *event, livespointer user_data) {
   lives_mt *mt=(lives_mt *)user_data;
+  if (!mainw->interactive) return FALSE;
   if (mt->opts.mouse_mode==MOUSE_MODE_SELECT) {
     mouse_select_end(widget,event,mt);
     lives_signal_handler_block (widget,mt->mouse_mot1);
@@ -13536,6 +13597,7 @@ boolean on_track_header_release (LiVESWidget *widget, LiVESXEventButton *event, 
 
 boolean on_track_between_click (LiVESWidget *widget, LiVESXEventButton *event, livespointer user_data) {
   lives_mt *mt=(lives_mt *)user_data;
+  if (!mainw->interactive) return FALSE;
   if (mt->opts.mouse_mode==MOUSE_MODE_SELECT) {
     mouse_select_start(widget,event,mt);
     lives_signal_handler_unblock (mt->tl_eventbox,mt->mouse_mot2);
@@ -13545,6 +13607,7 @@ boolean on_track_between_click (LiVESWidget *widget, LiVESXEventButton *event, l
 
 boolean on_track_between_release (LiVESWidget *widget, LiVESXEventButton *event, livespointer user_data) {
   lives_mt *mt=(lives_mt *)user_data;
+  if (!mainw->interactive) return FALSE;
   if (mt->opts.mouse_mode==MOUSE_MODE_SELECT) {
     mouse_select_end(widget,event,mt);
     lives_signal_handler_block (mt->tl_eventbox,mt->mouse_mot2);
@@ -13565,6 +13628,8 @@ boolean on_track_click (LiVESWidget *eventbox, LiVESXEventButton *event, livespo
   int filenum=-1;
 
   //doubleclick=FALSE;
+
+  if (!mainw->interactive) return FALSE;
 
   mt->aud_track_selected=is_audio_eventbox(mt,eventbox);
 
@@ -13699,6 +13764,7 @@ boolean on_track_click (LiVESWidget *eventbox, LiVESXEventButton *event, livespo
 boolean on_track_move (LiVESWidget *widget, LiVESXEventMotion *event, livespointer user_data) {
   // used for mouse mode SELECT
   lives_mt *mt=(lives_mt *)user_data;
+  if (!mainw->interactive) return FALSE;
   if (mt->opts.mouse_mode==MOUSE_MODE_SELECT) mouse_select_move(widget,event,mt);
   return TRUE;
 }
@@ -13706,6 +13772,7 @@ boolean on_track_move (LiVESWidget *widget, LiVESXEventMotion *event, livespoint
 boolean on_track_header_move (LiVESWidget *widget, LiVESXEventMotion *event, livespointer user_data) {
   // used for mouse mode SELECT
   lives_mt *mt=(lives_mt *)user_data;
+  if (!mainw->interactive) return FALSE;
   if (mt->opts.mouse_mode==MOUSE_MODE_SELECT) mouse_select_move(widget,event,mt);
   return TRUE;
 }
@@ -16574,9 +16641,12 @@ void on_seltrack_activate (LiVESMenuItem *menuitem, livespointer user_data) {
 }
 
 
+
 void on_seltrack_toggled (LiVESWidget *checkbutton, livespointer user_data) {
   int track=LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(checkbutton),"layer_number"));
   lives_mt *mt=(lives_mt *)user_data;
+
+  if (!mainw->interactive) return;
 
   mt->current_track=track;
   if (track>-1) mt->aud_track_selected=FALSE;
@@ -18085,6 +18155,8 @@ on_timeline_release (LiVESWidget *eventbox, LiVESXEventButton *event, livespoint
   lives_mt *mt=(lives_mt *)user_data;
   double pos=mt->region_end;
 
+  if (!mainw->interactive) return FALSE;
+
   if (mainw->playing_file>-1) return FALSE;
 
   mt->tl_mouse=FALSE;
@@ -18198,6 +18270,8 @@ boolean on_timeline_press (LiVESWidget *widget, LiVESXEventButton *event, livesp
   lives_mt *mt=(lives_mt *)user_data;
   int x;
   double pos;
+
+  if (!mainw->interactive) return FALSE;
 
   if (mainw->playing_file>-1) return FALSE;
 
@@ -21797,6 +21871,8 @@ void on_amixer_close_clicked (LiVESButton *button, lives_mt *mt) {
   int i;
   double val;
 
+  if (!mainw->interactive) return;
+
   mt->opts.gang_audio=lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(amixer->gang_checkbutton));
 
   // set vols from slider vals
@@ -21829,6 +21905,8 @@ void on_amixer_close_clicked (LiVESButton *button, lives_mt *mt) {
 static void on_amixer_reset_clicked (LiVESButton *button, lives_mt *mt) {
   lives_amixer_t *amixer=mt->amixer;
   int i;
+
+  if (!mainw->interactive) return;
 
   lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(amixer->inv_checkbutton),FALSE);
   lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(amixer->gang_checkbutton),mt->opts.gang_audio);
@@ -22036,17 +22114,6 @@ LiVESWidget * amixer_add_channel_slider (lives_mt *mt, int i) {
 
 
 
-
-
-
-
-
-
-
-
-
-
-
 void amixer_show (LiVESButton *button, livespointer user_data) {
   lives_mt *mt=(lives_mt *)user_data;
   LiVESWidget *amixerw;
@@ -22070,6 +22137,8 @@ void amixer_show (LiVESButton *button, livespointer user_data) {
   int i;
 
   lives_amixer_t *amixer;
+
+  if (!mainw->interactive) return;
 
   if (nachans==0) return;
 

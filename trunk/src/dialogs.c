@@ -2780,12 +2780,12 @@ void response_ok (LiVESButton *button, livespointer user_data) {
 
 LIVES_INLINE void d_print_cancelled(void) {
   d_print(_("cancelled.\n"));
-  lives_notify(LIVES_NOTIFY_CANCELLED,"");
+  lives_notify(LIVES_OSC_NOTIFY_CANCELLED,"");
 }
 
 LIVES_INLINE void d_print_failed(void) {
   d_print(_("failed.\n"));
-  lives_notify(LIVES_NOTIFY_FAILED,"");
+  lives_notify(LIVES_OSC_NOTIFY_FAILED,"");
 }
 
 LIVES_INLINE void d_print_done(void) {

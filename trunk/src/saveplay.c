@@ -31,7 +31,7 @@
 #include "audio.h"
 #include "htmsocket.h"
 #include "cvirtual.h"
-
+#include "interface.h"
 
 
 boolean save_clip_values(int which) {
@@ -976,7 +976,7 @@ ulong open_file_sel(const gchar *file_name, double start, int frames) {
     lives_free(isubfname);
   }
 
-  lives_notify(LIVES_NOTIFY_CLIP_OPENED,"");
+  lives_notify(LIVES_OSC_NOTIFY_CLIP_OPENED,"");
 
   if (prefs->show_recent&&!mainw->is_generating) {
     add_to_recent(file_name,start,frames,mainw->file_open_params);
@@ -2215,7 +2215,7 @@ void save_file (int clip, int start, int end, const char *filename) {
 
     mainw->no_switch_dprint=FALSE;
 
-    lives_notify(LIVES_NOTIFY_SUCCESS,
+    lives_notify(LIVES_OSC_NOTIFY_SUCCESS,
 		 (mesg=lives_strdup_printf("encode %d \"%s\"",clip,
 					   (tmp=lives_filename_from_utf8(full_file_name,-1,NULL,NULL,NULL)))));
     lives_free(tmp);
@@ -2784,7 +2784,7 @@ void play_file (void) {
 
   if (mainw->foreign||weed_playback_gen_start()) {
 
-    lives_notify(LIVES_NOTIFY_PLAYBACK_STARTED,"");
+    lives_notify(LIVES_OSC_NOTIFY_PLAYBACK_STARTED,"");
     
 #ifdef ENABLE_JACK
     if (mainw->event_list!=NULL&&!mainw->record&&audio_player==AUD_PLAYER_JACK&&mainw->jackd!=NULL&&
@@ -3031,7 +3031,7 @@ void play_file (void) {
 
   if (audio_player==AUD_PLAYER_JACK) audio_cache_end();
 
-  lives_notify(LIVES_NOTIFY_PLAYBACK_STOPPED,"");
+  lives_notify(LIVES_OSC_NOTIFY_PLAYBACK_STOPPED,"");
 
   mainw->video_seek_ready=FALSE;
 
@@ -4807,7 +4807,7 @@ ulong restore_file(const gchar *file_name) {
 
   switch_to_file((mainw->current_file=old_file),current_file);
 
-  lives_notify(LIVES_NOTIFY_CLIP_OPENED,"");
+  lives_notify(LIVES_OSC_NOTIFY_CLIP_OPENED,"");
 
   return cfile->unique_id;
 }
@@ -5434,9 +5434,11 @@ void recover_layout_map(int numclips) {
 	   get_dirname(dirname);
 	   get_basename(fname);
 
-	   chooser=choose_file_with_preview(dirname,fname,128);
+	   chooser=choose_file_with_preview(dirname,fname,LIVES_FILE_SELECTION_VIDEO_AUDIO);
 
 	   resp=lives_dialog_run(LIVES_DIALOG(chooser));
+
+	   end_fs_preview();
 
 	   if (resp==LIVES_RESPONSE_ACCEPT) {
 	     newname=lives_file_chooser_get_filename (LIVES_FILE_CHOOSER(chooser));
@@ -5461,6 +5463,7 @@ void recover_layout_map(int numclips) {
 	     was_renamed=TRUE;
 	     continue;
 	   }
+	   lives_widget_destroy(LIVES_WIDGET(chooser));
 	 }
 	 else {
 	   // deleted : TODO ** - show layout errors
@@ -5839,7 +5842,7 @@ static boolean recover_files(gchar *recovery_file, boolean auto_recover) {
 	
 	threaded_dialog_spin();
 	
-	lives_notify(LIVES_NOTIFY_CLIP_OPENED,"");
+	lives_notify(LIVES_OSC_NOTIFY_CLIP_OPENED,"");
       }
       else {
 	pthread_mutex_lock(&mainw->clip_list_mutex);

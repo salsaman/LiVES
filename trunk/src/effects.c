@@ -575,7 +575,7 @@ boolean do_effect(lives_rfx_t *rfx, boolean is_preview) {
 	}
 
       }
-      lives_notify(LIVES_NOTIFY_CLIP_OPENED,"");
+      lives_notify(LIVES_OSC_NOTIFY_CLIP_OPENED,"");
     }
     mainw->is_generating=FALSE;
   }

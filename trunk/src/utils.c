@@ -3842,7 +3842,7 @@ boolean after_foreign_play(void) {
   cfile->changed=TRUE;
   save_clip_values(mainw->current_file);
   if (prefs->crash_recovery) add_to_recovery_file(cfile->handle);
-  lives_notify(LIVES_NOTIFY_CLIP_OPENED,"");
+  lives_notify(LIVES_OSC_NOTIFY_CLIP_OPENED,"");
   return TRUE;
 }
 
@@ -4120,9 +4120,8 @@ create_event_space(int length) {
 
 
 
-int lives_list_index (LiVESList *list, livesconstpointer data) {
-  // find data in list, GTK's version is broken
-  // well, actually not broken - but we need to use strcmp
+int lives_list_strcmp_index (LiVESList *list, livesconstpointer data) {
+  // find data in list, using strcmp
 
   int i;
   int len;

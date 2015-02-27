@@ -1554,7 +1554,8 @@ void param_set_from_dialog (lives_param_t *copy_param, rfx_build_window_t *rfxbu
   case LIVES_PARAM_STRING_LIST:
     copy_param->dp=0;
     copy_param->def=lives_malloc (sizdbl);
-    set_int_param (copy_param->def,lives_list_index (copy_param->list,lives_combo_get_active_text(LIVES_COMBO(rfxbuilder->param_def_combo))));
+    set_int_param (copy_param->def,lives_list_strcmp_index (copy_param->list,
+							    lives_combo_get_active_text(LIVES_COMBO(rfxbuilder->param_def_combo))));
     break;
   case LIVES_PARAM_COLRGB24:
     copy_param->def=lives_malloc (3*sizint);

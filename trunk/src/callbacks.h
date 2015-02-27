@@ -192,7 +192,6 @@ on_ok_button1_clicked                  (LiVESButton       *button,
 
 void on_ok_file_open_clicked(LiVESFileChooser *, LiVESSList *fnames);
 
-void on_ok_filesel_open_clicked (LiVESFileChooser *, livespointer);
 
 void open_sel_range_activate (void);
 
@@ -520,7 +519,6 @@ void on_volume_slider_value_changed (LiVESRange *, livespointer);
 
 void on_fade_audio_activate (LiVESMenuItem *, livespointer user_data);
 
-void on_ok_append_audio_clicked (LiVESFileChooser *, livespointer);
 
 void
 on_resample_video_activate (LiVESMenuItem     *menuitem,

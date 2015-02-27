@@ -54,6 +54,7 @@ const char *get_set_name() {
 }
 
 boolean on_LiVES_delete_event (LiVESWidget *widget, LiVESXEventDelete *event, livespointer user_data) {
+  if (!mainw->interactive) return TRUE;
   on_quit_activate(NULL,NULL);
   return TRUE;
 }
@@ -624,6 +625,9 @@ void on_filesel_complex_clicked (LiVESButton *button, LiVESEntry *entry) {
 
 void on_open_sel_activate (LiVESMenuItem *menuitem, livespointer user_data) {
   // OPEN A FILE
+  LiVESWidget *chooser;
+  char *fname, *tmp;
+  int resp;
 
   if (mainw->multitrack!=NULL) {
     if (mainw->multitrack->idlefunc>0) {
@@ -635,21 +639,23 @@ void on_open_sel_activate (LiVESMenuItem *menuitem, livespointer user_data) {
     lives_widget_set_sensitive (mainw->m_playbutton, TRUE);
   }
 
-  choose_file_with_preview(strlen(mainw->vid_load_dir)?mainw->vid_load_dir:NULL,NULL,1);
-}
+  chooser=choose_file_with_preview(strlen(mainw->vid_load_dir)?mainw->vid_load_dir:NULL,NULL,LIVES_FILE_SELECTION_VIDEO_AUDIO);
+  resp=lives_dialog_run(LIVES_DIALOG(chooser));
 
+  end_fs_preview();
 
+  if (resp!=LIVES_RESPONSE_ACCEPT) {
+    on_cancel_button1_clicked(chooser,NULL);
+    return;
+  }
 
-void on_ok_filesel_open_clicked (LiVESFileChooser *chooser, livespointer user_data) {
-  gchar *fname=lives_file_chooser_get_filename (chooser);
-  gchar *tmp;
+  fname=lives_file_chooser_get_filename (LIVES_FILE_CHOOSER(chooser));
 
   if (fname==NULL) return;
 
   lives_snprintf(file_name,PATH_MAX,"%s",(tmp=lives_filename_to_utf8(fname,-1,NULL,NULL,NULL)));
   lives_free(tmp); lives_free(fname);
 
-  end_fs_preview();
   lives_widget_destroy(LIVES_WIDGET(chooser));
 
   lives_snprintf(mainw->vid_load_dir,PATH_MAX,"%s",file_name);
@@ -2721,7 +2727,7 @@ void on_paste_as_new_activate (LiVESMenuItem *menuitem, livespointer user_data) 
   mainw->last_dprint_file=old_file;
   d_print(""); // force switchtext
 
-  lives_notify(LIVES_NOTIFY_CLIP_OPENED,"");
+  lives_notify(LIVES_OSC_NOTIFY_CLIP_OPENED,"");
 }
 
 
@@ -4473,6 +4479,8 @@ boolean prevclip_callback (LiVESAccelGroup *group, LiVESObject *obj, uint32_t ke
   // type = 1 fg only
   // type = 2 bg only 
 
+  if (!mainw->interactive) return TRUE;
+
   if (mainw->current_file<1||mainw->preview||(mainw->is_processing&&cfile->is_loaded)||mainw->cliplist==NULL) return TRUE;
 
   if (user_data!=NULL) type=LIVES_POINTER_TO_INT(user_data);
@@ -4506,6 +4514,8 @@ boolean nextclip_callback (LiVESAccelGroup *group, LiVESObject *obj, uint32_t ke
   int num_tried=0,num_clips;
 
   int type=0;
+
+  if (!mainw->interactive) return TRUE;
 
   // next clip
   // if the effect is a transition, this will change the background clip
@@ -4911,7 +4921,7 @@ boolean on_save_set_activate (LiVESMenuItem *menuitem, livespointer user_data) {
     popup_lmap_errors(NULL,NULL);
   }
 
-  lives_notify(LIVES_NOTIFY_CLIPSET_SAVED,old_set);
+  lives_notify(LIVES_OSC_NOTIFY_CLIPSET_SAVED,old_set);
 
   lives_free (old_set);
   if (!mainw->no_exit) {
@@ -5107,7 +5117,7 @@ boolean on_load_set_ok (LiVESButton *button, livespointer user_data) {
 	d_print (msg);
 	lives_free (msg);
 
-	lives_notify(LIVES_NOTIFY_CLIPSET_OPENED,mainw->set_name);
+	lives_notify(LIVES_OSC_NOTIFY_CLIPSET_OPENED,mainw->set_name);
 
       }
     
@@ -5270,7 +5280,7 @@ boolean on_load_set_ok (LiVESButton *button, livespointer user_data) {
       mt_clip_select(mainw->multitrack,TRUE);
     }
 
-    lives_notify(LIVES_NOTIFY_CLIP_OPENED,"");
+    lives_notify(LIVES_OSC_NOTIFY_CLIP_OPENED,"");
   }
   
   threaded_dialog_spin();
@@ -6252,7 +6262,9 @@ void on_fs_preview_clicked (LiVESWidget *widget, livespointer user_data) {
 
 
 void on_open_activate (LiVESMenuItem *menuitem, livespointer user_data) {
-  // OPEN A FILE
+  // OPEN A FILE (single or multiple)
+  LiVESWidget *chooser;
+  int resp;
 
   if (mainw->multitrack!=NULL) {
     if (mainw->multitrack->idlefunc>0) {
@@ -6264,20 +6276,29 @@ void on_open_activate (LiVESMenuItem *menuitem, livespointer user_data) {
     lives_widget_set_sensitive (mainw->m_playbutton, TRUE);
   }
 
-  choose_file_with_preview(strlen(mainw->vid_load_dir)?mainw->vid_load_dir:NULL,NULL,3);
+  chooser=choose_file_with_preview(strlen(mainw->vid_load_dir)?mainw->vid_load_dir:NULL,NULL,LIVES_FILE_SELECTION_VIDEO_AUDIO_MULTI);
+
+  resp=lives_dialog_run(LIVES_DIALOG(chooser));
+
+  end_fs_preview();
+
+  if (resp==LIVES_RESPONSE_ACCEPT) on_ok_file_open_clicked(LIVES_FILE_CHOOSER(chooser),NULL);
+
+  on_cancel_button1_clicked(chooser,NULL);
 }
 
 
 
 
 void on_ok_file_open_clicked(LiVESFileChooser *chooser, LiVESSList *fnames) {
+  // this is also called from drag target
+
   LiVESSList *ofnames;
-  gchar *tmp;
+  char *tmp;
 
   if (chooser!=NULL) {
     fnames=lives_file_chooser_get_filenames (chooser);
 
-    end_fs_preview();
     lives_widget_destroy(LIVES_WIDGET(chooser));
 
     if (fnames==NULL) return;
@@ -6413,297 +6434,6 @@ void open_sel_range_activate(void) {
 }
 
 
-void on_open_new_audio_clicked (LiVESFileChooser *chooser, livespointer user_data) {
-  // open audio file
-  gchar *a_type;
-  gchar *com,*mesg,*tmp;
-  gchar **array;
-
-  int oundo_start;
-  int oundo_end;
-  int israw=1;
-  int asigned,aendian;
-
-  boolean has_lmap_error=FALSE;
-  boolean bad_header=FALSE;
-  boolean preparse=FALSE;
-
-  if (!(prefs->warning_mask&WARN_MASK_LAYOUT_DELETE_AUDIO)) {
-    if ((mainw->xlays=layout_audio_is_affected(mainw->current_file,0.))!=NULL) {
-      if (!do_warning_dialog(_("\nLoading new audio may cause missing audio in some multitrack layouts.\nAre you sure you wish to continue ?\n."))) {
-	lives_list_free_strings(mainw->xlays);
-	lives_list_free(mainw->xlays);
-	mainw->xlays=NULL;
-	return;
-      }
-      add_lmap_error(LMAP_ERROR_DELETE_AUDIO,cfile->name,(livespointer)cfile->layout_map,mainw->current_file,0,0.,
-		     cfile->stored_layout_frame>0.);
-      has_lmap_error=TRUE;
-      lives_list_free_strings(mainw->xlays);
-      lives_list_free(mainw->xlays);
-      mainw->xlays=NULL;
-    }
-  }
-
-  if (!has_lmap_error&&!(prefs->warning_mask&WARN_MASK_LAYOUT_ALTER_AUDIO)&&
-      (mainw->xlays=layout_audio_is_affected(mainw->current_file,0.))) {
-    if (!do_layout_alter_audio_warning()) {
-      lives_list_free_strings(mainw->xlays);
-      lives_list_free(mainw->xlays);
-      mainw->xlays=NULL;
-      return;
-    }
-    add_lmap_error(LMAP_ERROR_ALTER_AUDIO,cfile->name,(livespointer)cfile->layout_map,mainw->current_file,0,0.,
-		   cfile->stored_layout_audio>0.);
-    has_lmap_error=TRUE;
-    lives_list_free_strings(mainw->xlays);
-    lives_list_free(mainw->xlays);
-    mainw->xlays=NULL;
-  }
-
-  mainw->noswitch=TRUE;
-
-  cfile->undo_arate=cfile->arate;
-  cfile->undo_achans=cfile->achans;
-  cfile->undo_asampsize=cfile->asampsize;
-  cfile->undo_signed_endian=cfile->signed_endian;
-  cfile->undo_arps=cfile->arps;
-
-  oundo_start=cfile->undo_start;
-  oundo_end=cfile->undo_end;
-
-  if (user_data==NULL) {
-    gchar *filename=lives_file_chooser_get_filename(chooser);
-    lives_snprintf(file_name,PATH_MAX,"%s",(tmp=lives_filename_to_utf8(filename,-1,NULL,NULL,NULL)));
-    lives_free(filename);
-    lives_free(tmp);
-  }
-  else lives_snprintf(file_name,PATH_MAX,"%s",(char *)user_data);
-
-  lives_snprintf(mainw->audio_dir,PATH_MAX,"%s",file_name);
-  get_dirname(mainw->audio_dir);
-  end_fs_preview();
-  lives_widget_destroy(LIVES_WIDGET(chooser));
-  lives_widget_context_update();
-  mainw->fs_playarea=NULL;
-
-  a_type=file_name+strlen(file_name)-3;
-
-  if (!lives_ascii_strncasecmp(a_type,".it",3)||
-      !lives_ascii_strncasecmp(a_type,"mp3",3)||
-      !lives_ascii_strncasecmp(a_type,"ogg",3)||
-      !lives_ascii_strncasecmp(a_type,"wav",3)||
-      !lives_ascii_strncasecmp(a_type,"mod",3)||
-      !lives_ascii_strncasecmp(a_type,".xm",3)) {
-    com=lives_strdup_printf("%s audioopen \"%s\" \"%s\"",prefs->backend,cfile->handle,
-			(tmp=lives_filename_from_utf8(file_name,-1,NULL,NULL,NULL)));
-    lives_free(tmp);
-  }
-  else {
-    do_audio_import_error();
-    mainw->noswitch=FALSE;
-    return;
-  }
-
-  if (!lives_ascii_strncasecmp(a_type,"wav",3)) israw=0;
-
-  if (capable->has_mplayer||capable->has_mplayer2) {
-    if (read_file_details (file_name,TRUE)) {
-      array=lives_strsplit(mainw->msg,"|",15);
-      cfile->arate=atoi(array[9]);
-      cfile->achans=atoi(array[10]);
-      cfile->asampsize=atoi(array[11]);
-      cfile->signed_endian=get_signed_endian(atoi (array[12]), atoi (array[13]));
-      lives_strfreev(array);
-      preparse=TRUE;
-    }
-  }
-
-  if (!preparse) {
-    // TODO !!! - need some way to identify audio without invoking mplayer
-    cfile->arate=cfile->arps=DEFAULT_AUDIO_RATE;
-    cfile->achans=DEFAULT_AUDIO_CHANS;
-    cfile->asampsize=DEFAULT_AUDIO_SAMPS;
-    cfile->signed_endian=mainw->endian;
-  }
-
-  if (cfile->undo_arate>0) cfile->arps=cfile->undo_arps/cfile->undo_arate*cfile->arate;
-  else cfile->arps=cfile->arate;
-
-  mesg=lives_strdup_printf(_ ("Opening audio %s, type %s..."),file_name,a_type);
-  d_print(""); // force switchtext
-  d_print(mesg);
-  lives_free(mesg);
-
-  unlink(cfile->info_file);
-  mainw->com_failed=FALSE;
-  lives_system(com,FALSE);
-  lives_free(com);
-
-  if (mainw->com_failed) {
-    cfile->arate=cfile->undo_arate;
-    cfile->achans=cfile->undo_achans;
-    cfile->asampsize=cfile->undo_asampsize;
-    cfile->signed_endian=cfile->undo_signed_endian;
-    cfile->arps=cfile->undo_arps;
-    cfile->undo_start=oundo_start;
-    cfile->undo_end=oundo_end;
-    sensitize();
-    reget_afilesize(mainw->current_file);
-    get_play_times();
-    mainw->noswitch=FALSE;
-    return;
-  }
-
-  cfile->opening=cfile->opening_audio=cfile->opening_only_audio=TRUE;
-
-  cfile->undo_start=1;
-  cfile->undo_end=cfile->frames;
-  
-  // show audio [opening...] in main window
-  get_play_times();
-
-  if (!(do_progress_dialog(TRUE,TRUE,_ ("Opening audio")))) {
-    lives_widget_queue_draw(mainw->LiVES);
-    lives_widget_context_update();
-    mainw->cancelled=CANCEL_NONE;
-    mainw->error=FALSE;
-    mainw->com_failed=FALSE;
-    unlink (cfile->info_file);
-    com=lives_strdup_printf("%s cancel_audio \"%s\"",prefs->backend,cfile->handle);
-    lives_system(com,FALSE);
-    do_auto_dialog(_("Cancelling"),0);
-    lives_free(com);
-    cfile->opening_audio=cfile->opening=cfile->opening_only_audio=FALSE;
-    cfile->arate=cfile->undo_arate;
-    cfile->achans=cfile->undo_achans;
-    cfile->asampsize=cfile->undo_asampsize;
-    cfile->signed_endian=cfile->undo_signed_endian;
-    cfile->arps=cfile->undo_arps;
-    cfile->undo_start=oundo_start;
-    cfile->undo_end=oundo_end;
-    sensitize();
-    reget_afilesize(mainw->current_file);
-    get_play_times();
-    mainw->noswitch=FALSE;
-    if (mainw->error) d_print_failed();
-    return;
-  }
-
-  cfile->opening_audio=cfile->opening=cfile->opening_only_audio=FALSE;
-
-  lives_widget_queue_draw(mainw->LiVES);
-  lives_widget_context_update();
-
-  cfile->afilesize=0;
-  if (get_token_count(mainw->msg,'|')>6) {
-    array=lives_strsplit(mainw->msg,"|",7);
-    cfile->arate=atoi(array[1]);
-    cfile->achans=atoi(array[2]);
-    cfile->asampsize=atoi(array[3]);
-    cfile->signed_endian=get_signed_endian(atoi (array[4]), atoi (array[5]));
-    cfile->afilesize=strtol(array[6],NULL,10);
-    lives_strfreev(array);
-  }
-
-  if (cfile->afilesize==0) {
-    d_print_failed();
-      
-    mainw->cancelled=CANCEL_NONE;
-    mainw->error=FALSE;
-    unlink (cfile->info_file);
-
-    com=lives_strdup_printf("%s cancel_audio \"%s\"",prefs->backend,cfile->handle);
-
-    mainw->com_failed=FALSE;
-    lives_system(com,FALSE);
-    lives_free(com);
-
-    if (!mainw->com_failed) do_auto_dialog(_("Cancelling"),0);
-
-    cfile->arate=cfile->undo_arate;
-    cfile->achans=cfile->undo_achans;
-    cfile->asampsize=cfile->undo_asampsize;
-    cfile->signed_endian=cfile->undo_signed_endian;
-    cfile->arps=cfile->undo_arps;
-    cfile->undo_start=oundo_start;
-    cfile->undo_end=oundo_end;
-    sensitize();
-    reget_afilesize(mainw->current_file);
-    get_play_times();
-    mainw->noswitch=FALSE;
-    return;
-  }
-
-  cfile->changed=TRUE;
-  d_print_done();
-
-  mesg=lives_strdup_printf(P_("New audio: %d Hz %d channel %d bps\n","New audio: %d Hz %d channels %d bps\n",cfile->achans),
-		       cfile->arate,cfile->achans,cfile->asampsize);
-  d_print(mesg);
-  lives_free(mesg);
-
-  mainw->com_failed=FALSE;
-  mainw->cancelled=CANCEL_NONE;
-  mainw->error=FALSE;
-  unlink (cfile->info_file);
-
-  com=lives_strdup_printf("%s commit_audio \"%s\" %d",prefs->backend,cfile->handle,israw);
-  lives_system(com,FALSE);
-  lives_free(com);
-
-  if (mainw->com_failed) {
-    cfile->arate=cfile->undo_arate;
-    cfile->achans=cfile->undo_achans;
-    cfile->asampsize=cfile->undo_asampsize;
-    cfile->signed_endian=cfile->undo_signed_endian;
-    cfile->arps=cfile->undo_arps;
-    cfile->undo_start=oundo_start;
-    cfile->undo_end=oundo_end;
-    sensitize();
-    reget_afilesize(mainw->current_file);
-    get_play_times();
-    mainw->noswitch=FALSE;
-    return;
-  }
-
-  if (!do_auto_dialog(_("Committing audio"),0)) {
-    //cfile->may_be_damaged=TRUE;
-    d_print_failed();
-    return;
-  }
-
-
-  if (prefs->save_directories) {
-    set_pref ("audio_dir",mainw->audio_dir);
-  }
-  if (!prefs->conserve_space) {
-    cfile->undo_action=UNDO_NEW_AUDIO;
-    set_undoable (_("New Audio"),TRUE);
-  }
-
-  asigned=!(cfile->signed_endian&AFORM_UNSIGNED);
-  aendian=cfile->signed_endian&AFORM_BIG_ENDIAN;
-
-  save_clip_value(mainw->current_file,CLIP_DETAILS_ARATE,&cfile->arps);
-  if (mainw->com_failed||mainw->write_failed) bad_header=TRUE;
-  save_clip_value(mainw->current_file,CLIP_DETAILS_PB_ARATE,&cfile->arate);
-  if (mainw->com_failed||mainw->write_failed) bad_header=TRUE;
-  save_clip_value(mainw->current_file,CLIP_DETAILS_ACHANS,&cfile->achans);
-  if (mainw->com_failed||mainw->write_failed) bad_header=TRUE;
-  save_clip_value(mainw->current_file,CLIP_DETAILS_ASAMPS,&cfile->asampsize);
-  if (mainw->com_failed||mainw->write_failed) bad_header=TRUE;
-  save_clip_value(mainw->current_file,CLIP_DETAILS_AENDIAN,&aendian);
-  if (mainw->com_failed||mainw->write_failed) bad_header=TRUE;
-  save_clip_value(mainw->current_file,CLIP_DETAILS_ASIGNED,&asigned);
-  if (mainw->com_failed||mainw->write_failed) bad_header=TRUE;
-
-  if (bad_header) do_header_write_error(mainw->current_file);
-
-  switch_to_file (mainw->current_file,mainw->current_file);
-
-  mainw->noswitch=FALSE;
-}
 
 
 void end_fs_preview(void) {
@@ -8236,6 +7966,9 @@ void on_erase_subs_activate (LiVESMenuItem *menuitem, livespointer user_data) {
 
 
 void on_load_audio_activate (LiVESMenuItem *menuitem, livespointer user_data) {
+  LiVESWidget *chooser;
+  int resp;
+
   if (mainw->multitrack!=NULL) {
     if (mainw->multitrack->idlefunc>0) {
       lives_source_remove(mainw->multitrack->idlefunc);
@@ -8246,8 +7979,316 @@ void on_load_audio_activate (LiVESMenuItem *menuitem, livespointer user_data) {
     lives_widget_set_sensitive (mainw->m_playbutton, TRUE);
   }
 
-  choose_file_with_preview(strlen(mainw->audio_dir)?mainw->audio_dir:NULL,_ ("LiVES: - Select Audio File"),2);
+  chooser=choose_file_with_preview(strlen(mainw->audio_dir)?mainw->audio_dir:NULL,_ ("LiVES: - Select Audio File"),
+				   LIVES_FILE_SELECTION_AUDIO_ONLY);
+
+  resp=lives_dialog_run(LIVES_DIALOG(chooser));
+
+  end_fs_preview();
+
+  if (resp!=LIVES_RESPONSE_ACCEPT) on_cancel_button1_clicked(chooser,NULL);
+  else on_open_new_audio_clicked(LIVES_FILE_CHOOSER(chooser),NULL);
+
 }
+
+
+
+void on_open_new_audio_clicked (LiVESFileChooser *chooser, livespointer user_data) {
+  // open audio file
+  // also called from osc.c
+
+  gchar *a_type;
+  gchar *com,*mesg,*tmp;
+  gchar **array;
+
+  int oundo_start;
+  int oundo_end;
+  int israw=1;
+  int asigned,aendian;
+
+  boolean has_lmap_error=FALSE;
+  boolean bad_header=FALSE;
+  boolean preparse=FALSE;
+
+  if (!(prefs->warning_mask&WARN_MASK_LAYOUT_DELETE_AUDIO)) {
+    if ((mainw->xlays=layout_audio_is_affected(mainw->current_file,0.))!=NULL) {
+      if (!do_warning_dialog(_("\nLoading new audio may cause missing audio in some multitrack layouts.\nAre you sure you wish to continue ?\n."))) {
+	lives_list_free_strings(mainw->xlays);
+	lives_list_free(mainw->xlays);
+	mainw->xlays=NULL;
+	return;
+      }
+      add_lmap_error(LMAP_ERROR_DELETE_AUDIO,cfile->name,(livespointer)cfile->layout_map,mainw->current_file,0,0.,
+		     cfile->stored_layout_frame>0.);
+      has_lmap_error=TRUE;
+      lives_list_free_strings(mainw->xlays);
+      lives_list_free(mainw->xlays);
+      mainw->xlays=NULL;
+    }
+  }
+
+  if (!has_lmap_error&&!(prefs->warning_mask&WARN_MASK_LAYOUT_ALTER_AUDIO)&&
+      (mainw->xlays=layout_audio_is_affected(mainw->current_file,0.))) {
+    if (!do_layout_alter_audio_warning()) {
+      lives_list_free_strings(mainw->xlays);
+      lives_list_free(mainw->xlays);
+      mainw->xlays=NULL;
+      return;
+    }
+    add_lmap_error(LMAP_ERROR_ALTER_AUDIO,cfile->name,(livespointer)cfile->layout_map,mainw->current_file,0,0.,
+		   cfile->stored_layout_audio>0.);
+    has_lmap_error=TRUE;
+    lives_list_free_strings(mainw->xlays);
+    lives_list_free(mainw->xlays);
+    mainw->xlays=NULL;
+  }
+
+  mainw->noswitch=TRUE;
+
+  cfile->undo_arate=cfile->arate;
+  cfile->undo_achans=cfile->achans;
+  cfile->undo_asampsize=cfile->asampsize;
+  cfile->undo_signed_endian=cfile->signed_endian;
+  cfile->undo_arps=cfile->arps;
+
+  oundo_start=cfile->undo_start;
+  oundo_end=cfile->undo_end;
+
+  if (user_data==NULL) {
+    gchar *filename=lives_file_chooser_get_filename(chooser);
+    lives_snprintf(file_name,PATH_MAX,"%s",(tmp=lives_filename_to_utf8(filename,-1,NULL,NULL,NULL)));
+    lives_free(filename);
+    lives_free(tmp);
+  }
+  else lives_snprintf(file_name,PATH_MAX,"%s",(char *)user_data);
+
+  lives_snprintf(mainw->audio_dir,PATH_MAX,"%s",file_name);
+  get_dirname(mainw->audio_dir);
+  end_fs_preview();
+  lives_widget_destroy(LIVES_WIDGET(chooser));
+  lives_widget_context_update();
+  mainw->fs_playarea=NULL;
+
+  a_type=file_name+strlen(file_name)-3;
+
+  if (!lives_ascii_strncasecmp(a_type,".it",3)||
+      !lives_ascii_strncasecmp(a_type,"mp3",3)||
+      !lives_ascii_strncasecmp(a_type,"ogg",3)||
+      !lives_ascii_strncasecmp(a_type,"wav",3)||
+      !lives_ascii_strncasecmp(a_type,"mod",3)||
+      !lives_ascii_strncasecmp(a_type,".xm",3)) {
+    com=lives_strdup_printf("%s audioopen \"%s\" \"%s\"",prefs->backend,cfile->handle,
+			(tmp=lives_filename_from_utf8(file_name,-1,NULL,NULL,NULL)));
+    lives_free(tmp);
+  }
+  else {
+    do_audio_import_error();
+    mainw->noswitch=FALSE;
+    return;
+  }
+
+  if (!lives_ascii_strncasecmp(a_type,"wav",3)) israw=0;
+
+  if (capable->has_mplayer||capable->has_mplayer2) {
+    if (read_file_details (file_name,TRUE)) {
+      array=lives_strsplit(mainw->msg,"|",15);
+      cfile->arate=atoi(array[9]);
+      cfile->achans=atoi(array[10]);
+      cfile->asampsize=atoi(array[11]);
+      cfile->signed_endian=get_signed_endian(atoi (array[12]), atoi (array[13]));
+      lives_strfreev(array);
+      preparse=TRUE;
+    }
+  }
+
+  if (!preparse) {
+    // TODO !!! - need some way to identify audio without invoking mplayer
+    cfile->arate=cfile->arps=DEFAULT_AUDIO_RATE;
+    cfile->achans=DEFAULT_AUDIO_CHANS;
+    cfile->asampsize=DEFAULT_AUDIO_SAMPS;
+    cfile->signed_endian=mainw->endian;
+  }
+
+  if (cfile->undo_arate>0) cfile->arps=cfile->undo_arps/cfile->undo_arate*cfile->arate;
+  else cfile->arps=cfile->arate;
+
+  mesg=lives_strdup_printf(_ ("Opening audio %s, type %s..."),file_name,a_type);
+  d_print(""); // force switchtext
+  d_print(mesg);
+  lives_free(mesg);
+
+  unlink(cfile->info_file);
+  mainw->com_failed=FALSE;
+  lives_system(com,FALSE);
+  lives_free(com);
+
+  if (mainw->com_failed) {
+    cfile->arate=cfile->undo_arate;
+    cfile->achans=cfile->undo_achans;
+    cfile->asampsize=cfile->undo_asampsize;
+    cfile->signed_endian=cfile->undo_signed_endian;
+    cfile->arps=cfile->undo_arps;
+    cfile->undo_start=oundo_start;
+    cfile->undo_end=oundo_end;
+    sensitize();
+    reget_afilesize(mainw->current_file);
+    get_play_times();
+    mainw->noswitch=FALSE;
+    return;
+  }
+
+  cfile->opening=cfile->opening_audio=cfile->opening_only_audio=TRUE;
+
+  cfile->undo_start=1;
+  cfile->undo_end=cfile->frames;
+  
+  // show audio [opening...] in main window
+  get_play_times();
+
+  if (!(do_progress_dialog(TRUE,TRUE,_ ("Opening audio")))) {
+    lives_widget_queue_draw(mainw->LiVES);
+    lives_widget_context_update();
+    mainw->cancelled=CANCEL_NONE;
+    mainw->error=FALSE;
+    mainw->com_failed=FALSE;
+    unlink (cfile->info_file);
+    com=lives_strdup_printf("%s cancel_audio \"%s\"",prefs->backend,cfile->handle);
+    lives_system(com,FALSE);
+    do_auto_dialog(_("Cancelling"),0);
+    lives_free(com);
+    cfile->opening_audio=cfile->opening=cfile->opening_only_audio=FALSE;
+    cfile->arate=cfile->undo_arate;
+    cfile->achans=cfile->undo_achans;
+    cfile->asampsize=cfile->undo_asampsize;
+    cfile->signed_endian=cfile->undo_signed_endian;
+    cfile->arps=cfile->undo_arps;
+    cfile->undo_start=oundo_start;
+    cfile->undo_end=oundo_end;
+    sensitize();
+    reget_afilesize(mainw->current_file);
+    get_play_times();
+    mainw->noswitch=FALSE;
+    if (mainw->error) d_print_failed();
+    return;
+  }
+
+  cfile->opening_audio=cfile->opening=cfile->opening_only_audio=FALSE;
+
+  lives_widget_queue_draw(mainw->LiVES);
+  lives_widget_context_update();
+
+  cfile->afilesize=0;
+  if (get_token_count(mainw->msg,'|')>6) {
+    array=lives_strsplit(mainw->msg,"|",7);
+    cfile->arate=atoi(array[1]);
+    cfile->achans=atoi(array[2]);
+    cfile->asampsize=atoi(array[3]);
+    cfile->signed_endian=get_signed_endian(atoi (array[4]), atoi (array[5]));
+    cfile->afilesize=strtol(array[6],NULL,10);
+    lives_strfreev(array);
+  }
+
+  if (cfile->afilesize==0) {
+    d_print_failed();
+      
+    mainw->cancelled=CANCEL_NONE;
+    mainw->error=FALSE;
+    unlink (cfile->info_file);
+
+    com=lives_strdup_printf("%s cancel_audio \"%s\"",prefs->backend,cfile->handle);
+
+    mainw->com_failed=FALSE;
+    lives_system(com,FALSE);
+    lives_free(com);
+
+    if (!mainw->com_failed) do_auto_dialog(_("Cancelling"),0);
+
+    cfile->arate=cfile->undo_arate;
+    cfile->achans=cfile->undo_achans;
+    cfile->asampsize=cfile->undo_asampsize;
+    cfile->signed_endian=cfile->undo_signed_endian;
+    cfile->arps=cfile->undo_arps;
+    cfile->undo_start=oundo_start;
+    cfile->undo_end=oundo_end;
+    sensitize();
+    reget_afilesize(mainw->current_file);
+    get_play_times();
+    mainw->noswitch=FALSE;
+    return;
+  }
+
+  cfile->changed=TRUE;
+  d_print_done();
+
+  mesg=lives_strdup_printf(P_("New audio: %d Hz %d channel %d bps\n","New audio: %d Hz %d channels %d bps\n",cfile->achans),
+		       cfile->arate,cfile->achans,cfile->asampsize);
+  d_print(mesg);
+  lives_free(mesg);
+
+  mainw->com_failed=FALSE;
+  mainw->cancelled=CANCEL_NONE;
+  mainw->error=FALSE;
+  unlink (cfile->info_file);
+
+  com=lives_strdup_printf("%s commit_audio \"%s\" %d",prefs->backend,cfile->handle,israw);
+  lives_system(com,FALSE);
+  lives_free(com);
+
+  if (mainw->com_failed) {
+    cfile->arate=cfile->undo_arate;
+    cfile->achans=cfile->undo_achans;
+    cfile->asampsize=cfile->undo_asampsize;
+    cfile->signed_endian=cfile->undo_signed_endian;
+    cfile->arps=cfile->undo_arps;
+    cfile->undo_start=oundo_start;
+    cfile->undo_end=oundo_end;
+    sensitize();
+    reget_afilesize(mainw->current_file);
+    get_play_times();
+    mainw->noswitch=FALSE;
+    return;
+  }
+
+  if (!do_auto_dialog(_("Committing audio"),0)) {
+    //cfile->may_be_damaged=TRUE;
+    d_print_failed();
+    return;
+  }
+
+
+  if (prefs->save_directories) {
+    set_pref ("audio_dir",mainw->audio_dir);
+  }
+  if (!prefs->conserve_space) {
+    cfile->undo_action=UNDO_NEW_AUDIO;
+    set_undoable (_("New Audio"),TRUE);
+  }
+
+  asigned=!(cfile->signed_endian&AFORM_UNSIGNED);
+  aendian=cfile->signed_endian&AFORM_BIG_ENDIAN;
+
+  save_clip_value(mainw->current_file,CLIP_DETAILS_ARATE,&cfile->arps);
+  if (mainw->com_failed||mainw->write_failed) bad_header=TRUE;
+  save_clip_value(mainw->current_file,CLIP_DETAILS_PB_ARATE,&cfile->arate);
+  if (mainw->com_failed||mainw->write_failed) bad_header=TRUE;
+  save_clip_value(mainw->current_file,CLIP_DETAILS_ACHANS,&cfile->achans);
+  if (mainw->com_failed||mainw->write_failed) bad_header=TRUE;
+  save_clip_value(mainw->current_file,CLIP_DETAILS_ASAMPS,&cfile->asampsize);
+  if (mainw->com_failed||mainw->write_failed) bad_header=TRUE;
+  save_clip_value(mainw->current_file,CLIP_DETAILS_AENDIAN,&aendian);
+  if (mainw->com_failed||mainw->write_failed) bad_header=TRUE;
+  save_clip_value(mainw->current_file,CLIP_DETAILS_ASIGNED,&asigned);
+  if (mainw->com_failed||mainw->write_failed) bad_header=TRUE;
+
+  if (bad_header) do_header_write_error(mainw->current_file);
+
+  switch_to_file (mainw->current_file,mainw->current_file);
+
+  mainw->noswitch=FALSE;
+}
+
+
+
 
 
 void
@@ -8560,7 +8601,7 @@ on_load_cdtrack_ok_clicked                (LiVESButton     *button,
   lives_widget_set_sensitive(mainw->loop_video,TRUE);
   mainw->noswitch=FALSE;
 
-  lives_notify(LIVES_NOTIFY_CLIP_OPENED,"");
+  lives_notify(LIVES_OSC_NOTIFY_CLIP_OPENED,"");
 
 }
 
@@ -9750,6 +9791,8 @@ boolean on_mouse_scroll (LiVESWidget *widget, LiVESXEventScroll *event, livespoi
   LiVESXModifierType kstate;
   uint32_t type=1;
 
+  if (!mainw->interactive) return FALSE;
+
   if (!prefs->mouse_scroll_clips||mainw->noswitch) return FALSE;
 
   if (mainw->multitrack!=NULL) {
@@ -9771,11 +9814,10 @@ boolean on_mouse_scroll (LiVESWidget *widget, LiVESXEventScroll *event, livespoi
 
 
 // next few functions are for the timer bars
-boolean
-on_mouse_sel_update           (LiVESWidget       *widget,
-			       LiVESXEventMotion  *event,
-			       livespointer         user_data)
-{
+boolean on_mouse_sel_update (LiVESWidget *widget, LiVESXEventMotion *event, livespointer user_data) {
+
+  if (!mainw->interactive) return FALSE;
+
   if (mainw->current_file>-1&&mainw->sel_start>0) {
     int x,sel_current;
 
@@ -9812,11 +9854,10 @@ on_mouse_sel_update           (LiVESWidget       *widget,
 }
 
 
-boolean
-on_mouse_sel_reset           (LiVESWidget       *widget,
-			      LiVESXEventButton  *event,
-			      livespointer         user_data)
-{
+boolean on_mouse_sel_reset (LiVESWidget *widget, LiVESXEventButton *event, livespointer user_data) {
+
+  if (!mainw->interactive) return FALSE;
+
   if (mainw->current_file<=0) return FALSE;
   mainw->sel_start=0;
   if (!mainw->mouse_blocked) {
@@ -9827,12 +9868,11 @@ on_mouse_sel_reset           (LiVESWidget       *widget,
 }
 
 
-boolean
-on_mouse_sel_start           (LiVESWidget       *widget,
-			      LiVESXEventButton  *event,
-			      livespointer         user_data)
-{
+boolean on_mouse_sel_start (LiVESWidget *widget, LiVESXEventButton *event, livespointer user_data) {
   int x;
+
+  if (!mainw->interactive) return FALSE;
+
   if (mainw->current_file<=0) return FALSE;
 
   lives_widget_get_pointer((LiVESXDevice *)mainw->mgeom[prefs->gui_monitor>0?prefs->gui_monitor-1:0].mouse_device, 
@@ -9911,6 +9951,8 @@ on_mouse_sel_start           (LiVESWidget       *widget,
 
 
 boolean on_hrule_enter (LiVESWidget *widget, LiVESXEventCrossing *event, livespointer user_data) {
+  if (!mainw->interactive) return FALSE;
+
   if (mainw->cursor_style!=LIVES_CURSOR_NORMAL) return FALSE;
   lives_set_cursor_style(LIVES_CURSOR_CENTER_PTR,widget);
   return FALSE;
@@ -9919,6 +9961,9 @@ boolean on_hrule_enter (LiVESWidget *widget, LiVESXEventCrossing *event, livespo
 
 boolean on_hrule_update (LiVESWidget *widget, LiVESXEventMotion *event, livespointer user_data) {
   int x;
+
+  if (!mainw->interactive) return FALSE;
+
   if (mainw->current_file<=0) return FALSE;
 
   lives_widget_get_pointer((LiVESXDevice *)mainw->mgeom[prefs->gui_monitor>0?prefs->gui_monitor-1:0].mouse_device, 
@@ -9941,6 +9986,9 @@ boolean on_hrule_update (LiVESWidget *widget, LiVESXEventMotion *event, livespoi
 boolean on_hrule_reset (LiVESWidget *widget, LiVESXEventButton  *event, livespointer user_data) {
   //button release
   int x;
+
+  if (!mainw->interactive) return FALSE;
+
   if (mainw->current_file<=0) return FALSE;
 
   lives_widget_get_pointer((LiVESXDevice *)mainw->mgeom[prefs->gui_monitor>0?prefs->gui_monitor-1:0].mouse_device, 
@@ -9984,6 +10032,8 @@ boolean on_hrule_set (LiVESWidget *widget, LiVESXEventButton *event, livespointe
   int x;
   int frame;
 
+  if (!mainw->interactive) return FALSE;
+
   if (mainw->current_file<=0) return FALSE;
 
   lives_widget_get_pointer((LiVESXDevice *)mainw->mgeom[prefs->gui_monitor>0?prefs->gui_monitor-1:0].mouse_device, 
@@ -10019,6 +10069,8 @@ boolean frame_context (LiVESWidget *widget, LiVESXEventButton *event, livespoint
 
   LiVESWidget *save_frame_as;
   LiVESWidget *menu;
+
+  if (!mainw->interactive) return FALSE;
 
   // check if a file is loaded
   if (mainw->current_file<=0) return FALSE;
@@ -10301,6 +10353,8 @@ boolean storeclip_callback (LiVESAccelGroup *group, LiVESObject *obj, uint32_t k
   // ctrl-fn key will store a clip for higher switching
   int clip=LIVES_POINTER_TO_INT (clip_number)-1;
   register int i;
+
+  if (!mainw->interactive) return TRUE;
 
   if (clip>=FN_KEYS-1) {
     // last fn key will clear all
@@ -10761,6 +10815,16 @@ void on_export_audio_activate (LiVESMenuItem *menuitem, livespointer user_data) 
 
 
 void on_append_audio_activate (LiVESMenuItem *menuitem, livespointer user_data) {
+  LiVESWidget *chooser;
+
+  char *com,*tmp,*tmp2;
+  char *a_type;
+
+  int asigned=!(cfile->signed_endian&AFORM_UNSIGNED);
+  int aendian=!(cfile->signed_endian&AFORM_BIG_ENDIAN);
+
+  int resp;
+
   if (!(prefs->warning_mask&WARN_MASK_LAYOUT_ALTER_AUDIO)&&
       (mainw->xlays=layout_audio_is_affected(mainw->current_file,0.))!=NULL) {
     if (!do_layout_alter_audio_warning()) {
@@ -10776,26 +10840,22 @@ void on_append_audio_activate (LiVESMenuItem *menuitem, livespointer user_data) 
     mainw->xlays=NULL;
   }
 
-  choose_file_with_preview(strlen(mainw->audio_dir)?mainw->audio_dir:NULL,_ ("LiVES: - Append Audio File"),4);
+  chooser=choose_file_with_preview(strlen(mainw->audio_dir)?mainw->audio_dir:NULL,_ ("LiVES: - Append Audio File"),
+				   LIVES_FILE_SELECTION_AUDIO_ONLY);
 
-}
-
-
-
-
-void on_ok_append_audio_clicked (LiVESFileChooser *chooser, livespointer user_data) {
-
-  gchar *com,*tmp,*tmp2;
-  gchar *a_type;
-
-  int asigned=!(cfile->signed_endian&AFORM_UNSIGNED);
-  int aendian=!(cfile->signed_endian&AFORM_BIG_ENDIAN);
-
-  lives_snprintf(file_name,PATH_MAX,"%s",(tmp=lives_filename_to_utf8((tmp2=lives_file_chooser_get_filename(chooser)),
-							     -1,NULL,NULL,NULL)));
-  lives_free(tmp); lives_free(tmp2);
+  resp=lives_dialog_run(LIVES_DIALOG(chooser));
 
   end_fs_preview();
+
+  if (resp!=LIVES_RESPONSE_ACCEPT) {
+    on_cancel_button1_clicked(chooser,NULL);
+    return;
+  }
+  
+  lives_snprintf(file_name,PATH_MAX,"%s",(tmp=lives_filename_to_utf8((tmp2=lives_file_chooser_get_filename(LIVES_FILE_CHOOSER(chooser))),
+								     -1,NULL,NULL,NULL)));
+  lives_free(tmp); lives_free(tmp2);
+
   lives_widget_destroy(LIVES_WIDGET(chooser));
 
   lives_widget_queue_draw(mainw->LiVES);
@@ -11485,7 +11545,7 @@ void on_recaudclip_ok_clicked (LiVESButton *button, livespointer user_data) {
     lives_snprintf(cfile->type,40,"Audio");
     add_to_clipmenu();
 
-    lives_notify(LIVES_NOTIFY_CLIP_OPENED,"");
+    lives_notify(LIVES_OSC_NOTIFY_CLIP_OPENED,"");
 
   }
 

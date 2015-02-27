@@ -7585,10 +7585,10 @@ LiVESWidget *lives_standard_dialog_new(const char *title, boolean add_std_button
 
   if (title!=NULL)
     lives_window_set_title (LIVES_WINDOW (dialog), title);
-
+  
   lives_window_set_deletable(LIVES_WINDOW(dialog), FALSE);
   lives_window_set_resizable (LIVES_WINDOW (dialog), FALSE);
-
+  
   lives_widget_set_hexpand(dialog,TRUE);
   lives_widget_set_vexpand(dialog,TRUE);
 
@@ -7632,8 +7632,9 @@ LiVESWidget *lives_standard_dialog_new(const char *title, boolean add_std_button
   // must do this before setting modal !
   if (!widget_opts.no_gui) {
     lives_widget_show(dialog);
-    lives_window_center(LIVES_WINDOW(dialog));
   }
+
+  lives_window_center(LIVES_WINDOW(dialog));
 
   if (!widget_opts.non_modal)
     lives_window_set_modal (LIVES_WINDOW (dialog), TRUE);

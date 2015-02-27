@@ -164,6 +164,7 @@ typedef gint (*LiVESCompareFunc) (gconstpointer a, gconstpointer b);
 
 #define lives_printerr(args...) g_printerr(args)
 #define lives_strdup_printf(args...) g_strdup_printf(args)
+#define lives_strndup_printf(args...) g_strndup_printf(args)
 #define lives_strndup(a,b) g_strndup(a,b)
 #define lives_snprintf(a,b,args...) g_snprintf(a,b,args)
 #define lives_strsplit(a,b,c) g_strsplit(a,b,c)
@@ -194,6 +195,7 @@ typedef gint (*LiVESCompareFunc) (gconstpointer a, gconstpointer b);
 #define lives_list_remove_link(list,data) g_list_remove_link(list,data)
 #define lives_list_concat(list,data) g_list_concat(list,data)
 #define lives_list_insert(list,data,pos) g_list_insert(list,data,pos)
+#define lives_list_index(list,data) g_list_index(list,data)
 #define lives_list_find_custom(list,data,func) g_list_find_custom(list,data,func)
 
 #define lives_slist_free(list) g_slist_free(list)

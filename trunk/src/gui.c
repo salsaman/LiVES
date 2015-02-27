@@ -3069,6 +3069,75 @@ void create_LiVES (void) {
 }
 
 
+void set_interactive(boolean interactive) {
+  LiVESList *list;
+
+  if (!interactive) {
+    lives_object_ref(mainw->menubar);
+    lives_widget_unparent(mainw->menubar);
+    lives_widget_hide(mainw->btoolbar);
+    lives_widget_set_sensitive(mainw->menubar,FALSE);
+    lives_widget_set_sensitive(mainw->btoolbar,FALSE);
+    if (mainw->multitrack!=NULL) {
+      lives_object_ref(mainw->multitrack->menubar);
+      lives_widget_unparent(mainw->multitrack->menubar);
+      lives_widget_set_sensitive(mainw->multitrack->menubar,FALSE);
+      lives_widget_set_sensitive(mainw->multitrack->spinbutton_start,FALSE);
+      lives_widget_set_sensitive(mainw->multitrack->spinbutton_end,FALSE);
+      lives_widget_set_sensitive(mainw->m_playbutton,FALSE);
+      lives_widget_set_sensitive(mainw->m_stopbutton,FALSE);
+      lives_widget_set_sensitive(mainw->m_loopbutton,FALSE);
+      lives_widget_set_sensitive(mainw->m_rewindbutton,FALSE);
+      lives_widget_set_sensitive(mainw->m_sepwinbutton,FALSE);
+      lives_widget_set_sensitive(mainw->multitrack->btoolbar,FALSE);
+      lives_widget_set_sensitive(mainw->multitrack->btoolbar2,FALSE);
+      lives_widget_set_sensitive(mainw->multitrack->btoolbar3,FALSE);
+      lives_widget_set_sensitive(mainw->multitrack->insa_checkbutton,FALSE);
+      lives_widget_set_sensitive(mainw->multitrack->snapo_checkbutton,FALSE);
+      list=mainw->multitrack->cb_list;
+      while (list!=NULL) {
+	lives_widget_set_sensitive((LiVESWidget *)list->data,FALSE);
+	list=list->next;
+      }
+    }
+    lives_widget_set_sensitive(mainw->spinbutton_start,FALSE);
+    lives_widget_set_sensitive(mainw->spinbutton_end,FALSE);
+  }
+  else {
+    lives_box_pack_start (LIVES_BOX (mainw->menu_hbox), mainw->menubar, FALSE, FALSE, 0);
+    lives_widget_show(mainw->btoolbar);
+    lives_widget_set_sensitive(mainw->menubar,TRUE);
+    lives_widget_set_sensitive(mainw->btoolbar,TRUE);
+    if (mainw->multitrack!=NULL) {
+      lives_box_pack_start (LIVES_BOX (mainw->multitrack->menu_hbox), mainw->multitrack->menubar, FALSE, FALSE, 0);
+      lives_widget_show_all(mainw->multitrack->menubar);
+      lives_widget_set_sensitive(mainw->multitrack->menubar,TRUE);
+      lives_widget_set_sensitive(mainw->multitrack->spinbutton_start,TRUE);
+      lives_widget_set_sensitive(mainw->multitrack->spinbutton_end,TRUE);
+      lives_widget_set_sensitive(mainw->m_playbutton,TRUE);
+      lives_widget_set_sensitive(mainw->m_stopbutton,TRUE);
+      lives_widget_set_sensitive(mainw->m_loopbutton,TRUE);
+      lives_widget_set_sensitive(mainw->m_rewindbutton,TRUE);
+      lives_widget_set_sensitive(mainw->m_sepwinbutton,TRUE);
+      lives_widget_set_sensitive(mainw->multitrack->btoolbar,TRUE);
+      lives_widget_set_sensitive(mainw->multitrack->btoolbar2,TRUE);
+      lives_widget_set_sensitive(mainw->multitrack->btoolbar3,TRUE);
+      lives_widget_set_sensitive(mainw->multitrack->insa_checkbutton,TRUE);
+      lives_widget_set_sensitive(mainw->multitrack->snapo_checkbutton,TRUE);
+      list=mainw->multitrack->cb_list;
+      while (list!=NULL) {
+	lives_widget_set_sensitive((LiVESWidget *)list->data,TRUE);
+	list=list->next;
+      }
+    }
+    lives_widget_set_sensitive(mainw->spinbutton_start,TRUE);
+    lives_widget_set_sensitive(mainw->spinbutton_end,TRUE);
+  }
+
+}
+
+
+
 
 void fade_background(void) {
 
@@ -3812,7 +3881,7 @@ void make_play_window(void) {
   } 
   
   mainw->play_window = lives_window_new (LIVES_WINDOW_TOPLEVEL);
-  lives_window_set_hide_titlebar_when_maximized(LIVES_WINDOW(mainw->LiVES),TRUE);
+  //  lives_window_set_hide_titlebar_when_maximized(LIVES_WINDOW(mainw->LiVES),TRUE);
 
   lives_widget_set_events (mainw->play_window, LIVES_SCROLL_MASK);
 

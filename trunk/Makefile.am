@@ -37,6 +37,9 @@ sharedir = "$(prefix)/share"
 if HAVE_DOXYGEN
 docs-doxygen:
 	$(DOXYGEN) LiVES.doxygen
+if BUILD_LIBLIVES
+	$(DOXYGEN) liblives.doxygen
+endif
 else
 docs-doxygen:
 	@echo "Doxygen not installed, skipping sourcecode documentation"
@@ -67,6 +70,11 @@ EXTRA_DIST = \
 	menu-entries/lives.png \
 	menu-entries/lives.xpm \
 	LiVES.doxygen \
+	liblives.doxygen \
+	src/liblives.cpp \
+	src/liblives.hpp \
+	src/lbindigs.c \
+	src/lbindings.h \
 	$(doc_DATA)
 
 
@@ -86,6 +94,10 @@ install-data-local:
 if HAVE_DOXYGEN
 	$(MKDIR_P) "$(DESTDIR)$(docdir)/html/LiVES"
 	cp -rf "$(srcdir)/docs/doxygen/html/"* "$(DESTDIR)$(docdir)/html/LiVES"
+if BUILD_LIBLIVES
+	$(MKDIR_P) "$(DESTDIR)$(docdir)/html/liblives"
+	cp -rf "$(srcdir)/docs/doxygen/liblives/html/"* "$(DESTDIR)$(docdir)/html/liblives"
+endif
 #NOTE - if packaging libweed separately, this should go in libweed/Makefile.am
 	$(MKDIR_P) "$(DESTDIR)$(docdir)/html/libweed"
 

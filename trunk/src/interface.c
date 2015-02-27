@@ -100,19 +100,15 @@ void widget_add_preview(LiVESWidget *widget, LiVESBox *for_preview, LiVESBox *fo
   mainw->fs_playarea = lives_event_box_new ();
 
   if (preview_type==LIVES_PREVIEW_TYPE_VIDEO_AUDIO||preview_type==LIVES_PREVIEW_TYPE_RANGE) {
-
-    lives_widget_show (mainw->fs_playframe);
-    lives_widget_show (mainw->fs_playalign);
-
     lives_container_set_border_width (LIVES_CONTAINER(mainw->fs_playframe), widget_opts.border_width);
 
     widget_opts.justify=LIVES_JUSTIFY_RIGHT;
     fs_label = lives_standard_label_new (_ ("Preview"));
     widget_opts.justify=LIVES_JUSTIFY_DEFAULT;
-    lives_widget_show (fs_label);
     lives_frame_set_label_widget (LIVES_FRAME (mainw->fs_playframe), fs_label);
 
     lives_box_pack_start (for_preview, mainw->fs_playframe, FALSE, FALSE, 0);
+
     lives_widget_set_size_request (mainw->fs_playarea, DEFAULT_FRAME_HSIZE, DEFAULT_FRAME_VSIZE);
 
     lives_container_add (LIVES_CONTAINER (mainw->fs_playframe), mainw->fs_playalign);
@@ -122,9 +118,9 @@ void widget_add_preview(LiVESWidget *widget, LiVESBox *for_preview, LiVESBox *fo
     lives_widget_set_bg_color (mainw->fs_playframe, LIVES_WIDGET_STATE_NORMAL, &palette->black);
     lives_widget_set_bg_color (mainw->fs_playalign, LIVES_WIDGET_STATE_NORMAL, &palette->black);
 
-    lives_widget_show(mainw->fs_playarea);
    }
 
+      
   if (preview_type==LIVES_PREVIEW_TYPE_VIDEO_AUDIO) {
     preview_button = lives_button_new_with_mnemonic (_ ("Click here to _Preview any selected video, image or audio file"));
   }
@@ -134,26 +130,24 @@ void widget_add_preview(LiVESWidget *widget, LiVESBox *for_preview, LiVESBox *fo
   else if (preview_type==LIVES_PREVIEW_TYPE_RANGE) {
     preview_button = lives_button_new_with_mnemonic (_ ("Click here to _Preview the video"));
   }
-
-  lives_widget_show (preview_button);
+  
 
   lives_box_pack_start (for_button, preview_button, FALSE, FALSE, widget_opts.packing_width);
 
   if (preview_type==LIVES_PREVIEW_TYPE_VIDEO_AUDIO||preview_type==LIVES_PREVIEW_TYPE_RANGE) {
-    add_deinterlace_checkbox(for_deint);
+     add_deinterlace_checkbox(for_deint);
   }
 
-
   lives_signal_connect (LIVES_GUI_OBJECT (preview_button), LIVES_WIDGET_CLICKED_EVENT,
-		    LIVES_GUI_CALLBACK (on_fs_preview_clicked),
-		    LIVES_INT_TO_POINTER (preview_type));
+  LIVES_GUI_CALLBACK (on_fs_preview_clicked),
+  LIVES_INT_TO_POINTER (preview_type));
 
   if (LIVES_IS_FILE_CHOOSER(widget)) {
     lives_widget_set_sensitive(preview_button,FALSE);
     
     lives_signal_connect (LIVES_GUI_OBJECT (widget), LIVES_WIDGET_SELECTION_CHANGED_EVENT,
-		      LIVES_GUI_CALLBACK (pv_sel_changed),
-		      (livespointer)preview_button);
+    		      LIVES_GUI_CALLBACK (pv_sel_changed),
+    		      (livespointer)preview_button);
   }
 
 }
@@ -991,7 +985,11 @@ LiVESWidget *create_opensel_dialog (void) {
   LiVESWidget *cancelbutton;
   LiVESWidget *okbutton;
 
+  boolean no_gui=widget_opts.no_gui;
+
+  widget_opts.no_gui=TRUE; // work around bugs in gtk+
   opensel_dialog = lives_standard_dialog_new (_("LiVES: - Open Selection"),FALSE);
+  widget_opts.no_gui=no_gui;
 
   if (prefs->show_gui) {
     if (mainw->multitrack==NULL) lives_window_set_transient_for(LIVES_WINDOW(opensel_dialog),LIVES_WINDOW(mainw->LiVES));
@@ -1058,9 +1056,11 @@ LiVESWidget *create_opensel_dialog (void) {
   lives_signal_connect (LIVES_GUI_OBJECT (cancelbutton), LIVES_WIDGET_CLICKED_EVENT,
 		    LIVES_GUI_CALLBACK (on_cancel_opensel_clicked),
 		    NULL);
+
   lives_signal_connect (LIVES_GUI_OBJECT (okbutton), LIVES_WIDGET_CLICKED_EVENT,
 		    LIVES_GUI_CALLBACK (on_opensel_range_ok_clicked),
 		    NULL);
+
 
   lives_widget_show_all(opensel_dialog);
 
@@ -1482,7 +1482,7 @@ static void rb_tvcarddef_toggled(LiVESToggleButton *tbut, livespointer user_data
 static void after_dialog_combo_changed (LiVESWidget *combo, livespointer user_data) {
   LiVESList *list=(LiVESList *)user_data;
   gchar *etext=lives_combo_get_active_text(LIVES_COMBO(combo));
-  mainw->fx1_val=lives_list_index(list,etext);
+  mainw->fx1_val=lives_list_strcmp_index(list,etext);
   lives_free(etext);
 }
 
@@ -2340,54 +2340,25 @@ char *choose_file(const char *dir, const char *fname, char ** const filt, LiVESF
 }
 
 
-static void chooser_response(LiVESDialog *dialog, int response, livespointer user_data) {
-  int type=LIVES_POINTER_TO_INT(user_data);
-
-  if (response!=LIVES_RESPONSE_CANCEL) {
-    switch (type) {
-    case 1:
-      on_ok_filesel_open_clicked(LIVES_FILE_CHOOSER(dialog),NULL);
-      break;
-    case 2:
-      on_open_new_audio_clicked(LIVES_FILE_CHOOSER(dialog),NULL);
-      break;
-    case 3:
-      on_ok_file_open_clicked(LIVES_FILE_CHOOSER(dialog),NULL);
-      break;
-    case 4:
-      //on_xmms_ok_clicked(LIVES_FILE_CHOOSER(dialog),NULL);
-      break;
-    case 5:
-      on_ok_append_audio_clicked(LIVES_FILE_CHOOSER(dialog),NULL);
-      break;
-    default:
-      end_fs_preview();
-      break;
-    }
-  }
-  else on_cancel_button1_clicked(LIVES_WIDGET(dialog),NULL);
-}
-
-
-
 
 LiVESWidget *choose_file_with_preview (const char *dir, const char *title, int preview_type) {
   // preview_type 1 - video and audio open (single - opensel)
+  //LIVES_FILE_SELECTION_VIDEO_AUDIO
+
   // preview type 2 - import audio
+  // LIVES_FILE_SELECTION_AUDIO_ONLY
+
   // preview_type 3 - video and audio open (multiple)
-  // preview_type 4 - append audio
-  
-  // preview type 16 - generic video/audio
-  // preview type 17 - generic audio
+  //LIVES_FILE_SELECTION_VIDEO_AUDIO_MULTI
 
-  // type 128 - locate missing clip
-
+  // type 4
+  // LIVES_FILE_SELECTION_VIDEO_RANGE
 
   LiVESWidget *chooser;
 
   chooser=(LiVESWidget *)choose_file(dir,NULL,NULL,LIVES_FILE_CHOOSER_ACTION_OPEN,title,mainw->LiVES);
   
-  if (preview_type==3) {
+  if (preview_type==LIVES_FILE_SELECTION_VIDEO_AUDIO_MULTI) {
 #ifdef GUI_GTK
     gtk_file_chooser_set_select_multiple(LIVES_FILE_CHOOSER(chooser),TRUE);
 #endif
@@ -2400,7 +2371,8 @@ LiVESWidget *choose_file_with_preview (const char *dir, const char *title, int p
   widget_add_preview(chooser,LIVES_BOX(lives_dialog_get_content_area(LIVES_DIALOG(chooser))),
 		     LIVES_BOX(lives_dialog_get_content_area(LIVES_DIALOG(chooser))),
 		     LIVES_BOX(lives_dialog_get_action_area(LIVES_DIALOG(chooser))),
-		     (preview_type==1||preview_type==3||preview_type==128||preview_type==16)?LIVES_PREVIEW_TYPE_VIDEO_AUDIO:
+		     (preview_type==LIVES_FILE_SELECTION_VIDEO_AUDIO||
+		      preview_type==LIVES_FILE_SELECTION_VIDEO_AUDIO_MULTI)?LIVES_PREVIEW_TYPE_VIDEO_AUDIO:
 		     LIVES_PREVIEW_TYPE_AUDIO_ONLY);
 
   if (prefs->fileselmax) {
@@ -2411,9 +2383,6 @@ LiVESWidget *choose_file_with_preview (const char *dir, const char *title, int p
   }
 
   lives_widget_show_all(chooser);
-
-  lives_signal_connect (chooser, LIVES_WIDGET_RESPONSE_EVENT, 
-			LIVES_GUI_CALLBACK (chooser_response), LIVES_INT_TO_POINTER(preview_type));
 
   return chooser;
 }

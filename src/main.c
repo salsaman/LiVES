@@ -437,6 +437,7 @@ static boolean pre_init(void) {
   mainw->threaded_dialog=FALSE;
   clear_mainw_msg();
 
+  mainw->interactive=TRUE;
   
 #ifdef IS_MINGW
   // TODO - for mingw we will get from the registry, whatever was set at install time
@@ -2048,7 +2049,7 @@ void set_palette_colours (void) {
 }
 
 
-static boolean is_big_endian() {
+boolean is_big_endian() {
   int32_t testint = 0x12345678;
   char *pMem;
   pMem = (char *) &testint;
@@ -2386,10 +2387,11 @@ void print_opthelp(void) {
   lives_printerr("%s",_("-noset           : do not load any set on startup\n"));
   lives_printerr("%s",_("-norecover       : force no-loading of crash recovery\n"));
   lives_printerr("%s",_("-recover         : force loading of crash recovery\n"));
-  lives_printerr("%s",_("-nothreaddialog  : doe nothing - retained for backwards compatibility\n"));
+  lives_printerr("%s",_("-nothreaddialog  : does nothing - retained for backwards compatibility\n"));
   lives_printerr("%s",_("-nogui           : do not show the gui\n"));
   lives_printerr("%s",_("-nosplash        : do not show the splash window\n"));
   lives_printerr("%s",_("-noplaywin       : do not show the play window\n"));
+  lives_printerr("%s",_("-noninteractive  : disable menu interactivity\n"));
   lives_printerr("%s",_("-startup-ce      : start in clip editor mode\n"));
   lives_printerr("%s",_("-startup-mt      : start in multitrack mode\n"));
   lives_printerr("%s",_("-fxmodesmax <n>  : allow <n> modes per effect key (minimum is 1, default is 8)\n"));
@@ -2445,6 +2447,8 @@ static boolean lives_startup(livespointer data) {
   if (palette->style&STYLE_1) widget_opts.apply_theme=TRUE;
   create_LiVES ();
   widget_opts.apply_theme=FALSE;
+
+  set_interactive(mainw->interactive);
 
 #ifdef GUI_GTK
   icon=lives_build_filename(prefs->prefix_dir,DESKTOP_ICON_DIR,"lives.png",NULL);
@@ -2662,7 +2666,7 @@ static boolean lives_startup(livespointer data) {
     prefs->startup_phase=0;
   }
 
-  // splash_end() will start up mulitrack if in STARTUP_MT mode
+  // splash_end() will start up multirack if in STARTUP_MT mode
   if (strlen (start_file)&&strcmp(start_file,"-")) {
     splash_end();
     deduce_file(start_file,start,end);
@@ -2723,7 +2727,7 @@ static boolean lives_startup(livespointer data) {
 
   mainw->go_away=FALSE;
 
-  lives_notify(LIVES_NOTIFY_MODE_CHANGED,(tmp=lives_strdup_printf("%d",STARTUP_CE)));
+  lives_notify(LIVES_OSC_NOTIFY_MODE_CHANGED,(tmp=lives_strdup_printf("%d",STARTUP_CE)));
   lives_free(tmp);
 
   return FALSE;
@@ -2833,7 +2837,7 @@ int real_main (int argc, char *argv[], ulong id) {
 #ifdef GUI_GTK
 #ifdef LIVES_NO_DEBUG
   // don't crash on GTK+ fatals
-  g_log_set_always_fatal ((GLogLevelFlags)0);
+  //g_log_set_always_fatal ((GLogLevelFlags)0);
 #endif
 
   g_log_set_default_handler(lives_log_handler,NULL);
@@ -2907,6 +2911,7 @@ int real_main (int argc, char *argv[], ulong id) {
 	{"nogui", 0, 0, 0},
 	{"nosplash", 0, 0, 0},
 	{"noplaywin", 0, 0, 0},
+	{"noninteractive", 0, 0, 0},
 	{"startup-ce", 0, 0, 0},
 	{"startup-mt", 0, 0, 0},
 	{"debug", 0, 0, 0},
@@ -3054,6 +3059,11 @@ int real_main (int argc, char *argv[], ulong id) {
 	if (!strcmp(charopt,"noplaywin")) {
 	  // do not show the play window
 	  prefs->show_playwin=FALSE;
+	  continue;
+	}
+	if (!strcmp(charopt,"noninteractive")) {
+	  // disable menu/toolbar interactivity
+	  mainw->interactive=FALSE;
 	  continue;
 	}
 	if (!strcmp(charopt,"nothreaddialog")) {
@@ -3347,8 +3357,10 @@ void sensitize(void) {
     lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_start),cfile->start);
     lives_signal_handler_unblock(mainw->spinbutton_start,mainw->spin_start_func);
 
-    lives_widget_set_sensitive(mainw->spinbutton_start,TRUE);
-    lives_widget_set_sensitive(mainw->spinbutton_end,TRUE);
+    if (mainw->interactive) {
+      lives_widget_set_sensitive(mainw->spinbutton_start,TRUE);
+      lives_widget_set_sensitive(mainw->spinbutton_end,TRUE);
+    }
 
     if (mainw->play_window!=NULL&&(mainw->prv_link==PRV_START||mainw->prv_link==PRV_END)) {
       // unblock spinbutton in play window
@@ -5777,7 +5789,7 @@ void load_frame_image(int frame) {
 	if (framecount!=NULL) lives_free(framecount);
 	
 	// format is now msg|timecode|fgclip|fgframe|fgfps|
-	lives_notify(LIVES_NOTIFY_FRAME_SYNCH,(const gchar *)
+	lives_notify(LIVES_OSC_NOTIFY_FRAME_SYNCH,(const gchar *)
 		     (tmp=lives_strdup_printf("%.8f|%d|%d|%.3f|",(double)mainw->currticks/U_SEC,
 					      mainw->current_file,mainw->actual_frame,cfile->pb_fps)));
 	lives_free(tmp);
@@ -6048,7 +6060,7 @@ void load_frame_image(int frame) {
 	if (framecount!=NULL) lives_free(framecount);
       
 	// format is now msg|timecode|fgclip|fgframe|fgfps|
-	lives_notify(LIVES_NOTIFY_FRAME_SYNCH,(const gchar *)
+	lives_notify(LIVES_OSC_NOTIFY_FRAME_SYNCH,(const gchar *)
 		     (tmp=lives_strdup_printf("%.8f|%d|%d|%.3f|",(double)mainw->currticks/U_SEC,
 					      mainw->current_file,mainw->actual_frame,cfile->pb_fps)));
 	lives_free(tmp);
@@ -6171,7 +6183,7 @@ void load_frame_image(int frame) {
     if (pixbuf!=NULL) lives_object_unref(pixbuf);
     
     // format is now msg|timecode|fgclip|fgframe|fgfps|
-    lives_notify(LIVES_NOTIFY_FRAME_SYNCH,(const gchar *)
+    lives_notify(LIVES_OSC_NOTIFY_FRAME_SYNCH,(const gchar *)
 		 (tmp=lives_strdup_printf("%.8f|%d|%d|%.3f|",(double)mainw->currticks/U_SEC,
 					  mainw->current_file,mainw->actual_frame,cfile->pb_fps)));
     lives_free(tmp);
@@ -6380,7 +6392,7 @@ void close_current_file(int file_to_switch_to) {
       d_print ((tmp=lives_strdup_printf(_ ("Closed file %s\n"),cfile->file_name)));
       lives_free(tmp);
 
-      lives_notify(LIVES_NOTIFY_CLIP_CLOSED,"");
+      lives_notify(LIVES_OSC_NOTIFY_CLIP_CLOSED,"");
 
     }
     

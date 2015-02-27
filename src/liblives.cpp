@@ -4,6 +4,11 @@
 // Released under the GPL 3 or later
 // see file ../COPYING for licensing details
 
+/** \file liblives.cpp
+    liblives interface
+ */
+
+#ifndef DOXYGEN_SKIP
 extern "C" {
 #include <libOSC/libosc.h>
 #include <libOSC/OSC-client.h>
@@ -12,20 +17,18 @@ extern "C" {
 }
 
 
-#include <string.h>
 #include <stdlib.h>
 #include <pthread.h>
 #include <unistd.h>
-
 #include <iostream>
 
-#define HAVE_OSC_TT
+
 #include "liblives.hpp"
-
-
 
 extern "C" {
   int real_main(int argc, char *argv[], ulong id);
+
+  bool is_big_endian(void);
 
   bool lives_osc_cb_quit(void *context, int arglen, const void *vargs, OSCTimeTag when, void * ra);
   bool lives_osc_cb_play(void *context, int arglen, const void *vargs, OSCTimeTag when, void * ra);
@@ -39,8 +42,7 @@ extern "C" {
 }
 
 
-
-static int pad4(int val) {
+inline int pad4(int val) {
   return (int)((val+4)/4)*4;
 }
 
@@ -99,7 +101,7 @@ static volatile bool spinning;
 static ulong blocking_id;
 static char *private_response;
 
-static bool private_cb(lives::privateInfo *info, void *data) {
+static bool private_cb(lives::_privateInfo *info, void *data) {
   if (info->id == blocking_id) {
     private_response = strdup(info->response);
     spinning = false;
@@ -109,10 +111,17 @@ static bool private_cb(lives::privateInfo *info, void *data) {
   return true;
 }
 
+#endif // doxygen_skip
 
 //////////////////////////////////////////////////
 
 namespace lives {
+
+#ifndef DOXYGEN_SKIP
+  typedef struct {
+    ulong id;
+    livesApp *app;
+  } livesAppCtx;
 
   static list<livesAppCtx> appMgr;
 
@@ -127,6 +136,7 @@ namespace lives {
     return NULL;
   }
 
+#endif
 
   void livesApp::init(int argc, char *oargv[]) {
     char **argv;
@@ -141,36 +151,32 @@ namespace lives {
       argv[i]=strdup(oargv[i-1]);
     }
 
-    uint64_t id = lives_random();
+    ulong id = lives_random();
     livesAppCtx ctx;
 
     ctx.id = id;
     ctx.app = this;
     appMgr.push_back(ctx);
 
-    m_id = id;
     real_main(argc, argv, id);
     free(argv);
+    m_id = id;
   }
 
 
-  livesApp::livesApp() : m_set(this) {
+  livesApp::livesApp() : m_set(this), m_id(0l) {
     if (appMgr.empty())
       init(0,NULL);
-    else 
-      m_id = 0;
   }
 
-  livesApp::livesApp(int argc, char *argv[]) : m_set(this) {
+  livesApp::livesApp(int argc, char *argv[]) : m_set(this), m_id(0l) {
     if (appMgr.empty())
       init(argc,argv);
-    else 
-      m_id = 0;
   }
 
 
   livesApp::~livesApp() {
-    if (!m_id) return;
+    if (!isValid()) return;
 
     int arglen = 1;
     char **vargs=(char **)lives_malloc(sizeof(char *));
@@ -178,12 +184,12 @@ namespace lives {
     arglen = padup(vargs, arglen);
 
     // call object destructor callback
-    binding_cb (LIVES_NOTIFY_OBJECT_DESTROYED, NULL, (uint64_t)this);
+    binding_cb (LIVES_CALLBACK_OBJECT_DESTROYED, NULL, (ulong)this);
     
-    list<closure *>::iterator it = m_closures.begin();
+    closureListIterator it = m_closures.begin();
     while (it != m_closures.end()) {
       delete *it;
-      m_closures.erase(it++);
+      it = m_closures.erase(it);
     }
 
     appMgr.clear();
@@ -193,103 +199,156 @@ namespace lives {
   }
 
 
-  set livesApp::currentSet() {
+  bool livesApp::isValid() {
+    return m_id != 0l;
+  }
+
+  const set& livesApp::currentSet() {
     return m_set;
   }
 
-  void livesApp::appendClosure(int msgnum, callback_f func, void *data) {
+  ulong livesApp::appendClosure(lives_callback_t cb_type, callback_f func, void *data) {
     closure *cl = new closure;
+    cl->id = lives_random();
     cl->object = this;
-    cl->msgnum = msgnum;
+    cl->cb_type = cb_type;
     cl->func = (callback_f)func;
     cl->data = data;
     m_closures.push_back(cl);
+    return cl->id;
   }
 
-  bool livesApp::addCallback(int msgnum, modeChanged_callback_f func, void *data) {
-    if (msgnum != LIVES_NOTIFY_MODE_CHANGED) return false;
-    appendClosure(msgnum, (callback_f)func, data);
-    return true;
+  ulong livesApp::addCallback(lives_callback_t cb_type, modeChanged_callback_f func, void *data) {
+    if (cb_type != LIVES_CALLBACK_MODE_CHANGED) return 0l;
+    return appendClosure(cb_type, (callback_f)func, data);
   }
 
 
-  bool livesApp::addCallback(int msgnum, private_callback_f func, void *data) {
-    if (msgnum != LIVES_NOTIFY_PRIVATE) return false;
-    appendClosure(msgnum, (callback_f)func, data);
-    return true;
+  ulong livesApp::addCallback(lives_callback_t cb_type, private_callback_f func, void *data) {
+    if (cb_type != LIVES_CALLBACK_PRIVATE) return 0l;
+    return appendClosure(cb_type, (callback_f)func, data);
   }
 
-  bool livesApp::addCallback(int msgnum, objectDestroyed_callback_f func, void *data) {
-    if (msgnum != LIVES_NOTIFY_OBJECT_DESTROYED) return false;
-    appendClosure(msgnum, (callback_f)func, data);
-    return true;
+  ulong livesApp::addCallback(lives_callback_t cb_type, objectDestroyed_callback_f func, void *data) {
+    if (cb_type != LIVES_CALLBACK_OBJECT_DESTROYED) return 0l;
+    return appendClosure(cb_type, (callback_f)func, data);
+  }
+
+  bool livesApp::removeCallback(ulong id) {
+    closureListIterator it = m_closures.begin();
+    while (it != m_closures.end()) {
+      if ((*it)->id == id) {
+	delete *it;
+	m_closures.erase(it);
+	return true;
+      }
+      ++it;
+    }
+    return false;
   }
 
 
   void livesApp::play() {
-    if (!m_id) return;
+    if (!isValid()) return;
     play_thread(NULL);
   }
 
   bool livesApp::stop() {
-    if (!m_id) return FALSE;
+    if (!isValid()) return FALSE;
     // return false if we are not playing
     return lives_osc_cb_stop(NULL, 0, NULL, OSCTT_CurrentTime(), NULL);
   }
 
 
   int livesApp::showInfo(const char *text, bool blocking) {
-    if (!m_id) return 0;
+    int ret=LIVES_RESPONSE_INVALID;
+    if (!isValid()) return ret;
     // if blocking wait for response
     if (blocking) {
       spinning = true;
       blocking_id = lives_random();
-      addCallback(LIVES_NOTIFY_PRIVATE, private_cb, NULL); 
-      idle_show_info(text,blocking,blocking_id);
-      while (spinning) usleep(100);
-      int ret = atoi(private_response);
-      lives_free(private_response);
+      ulong cbid = addCallback(LIVES_CALLBACK_PRIVATE, private_cb, NULL); 
+      if (!idle_show_info(text,blocking,blocking_id)) {
+	spinning = false;
+	removeCallback(cbid);
+      }
+      else {
+	while (spinning) usleep(100);
+	ret = atoi(private_response);
+	lives_free(private_response);
+      }
       return ret;
     }
-    idle_show_info(text,blocking,0);
-    return 0;
+    if (idle_show_info(text,blocking,0))
+      return LIVES_RESPONSE_NONE;
+    return ret;
   }
 
-  char *livesApp::chooseFileWithPreview(const char *dirname, const char *title, int preview_type) {
+  char *livesApp::chooseFileWithPreview(const char *dirname, lives_filechooser_t preview_type, const char *title) {
+    if (!isValid()) return NULL;
+    if (preview_type != LIVES_FILE_CHOOSER_VIDEO_AUDIO && preview_type != LIVES_FILE_CHOOSER_AUDIO_ONLY) return NULL;
     spinning = true;
     blocking_id = lives_random();
-    addCallback(LIVES_NOTIFY_PRIVATE, private_cb, NULL); 
-    idle_choose_file_with_preview(dirname,title,preview_type,blocking_id);
-    while (spinning) usleep(100);
-    char *ret = strdup(private_response);
-    lives_free(private_response);
+    ulong cbid = addCallback(LIVES_CALLBACK_PRIVATE, private_cb, NULL);
+    char *ret = NULL;
+    if (!idle_choose_file_with_preview(dirname,title,preview_type,blocking_id)) {
+      spinning = false;
+      removeCallback(cbid);
+    }
+    else {
+      while (spinning) usleep(100);
+      // last 2 chars are " " and %d (deinterlace choice)
+      ret = strndup(private_response,strlen(private_response - 2));
+      m_deinterlace = (bool)atoi(private_response + strlen(private_response) - 2);
+      lives_free(private_response);
+    }
     return ret;
   }
 
 
-  char *livesApp::chooseFileWithPreview(const char *dirname, int preview_type) {
-    return chooseFileWithPreview(dirname,NULL,preview_type);
-  }
-
-  clip *livesApp::openFile(const char *fname, double stime, int frames) {
-    if (fname == NULL) return NULL;
+  clip livesApp::openFile(const char *fname, bool with_audio, double stime, int frames, bool deinterlace) {
+    if (!isValid()) return clip(0);
+    if (fname == NULL) return clip(0);
     spinning = true;
     blocking_id = lives_random();
-    addCallback(LIVES_NOTIFY_PRIVATE, private_cb, NULL); 
-    idle_open_file(fname, stime, frames, blocking_id);
-    while (spinning) usleep(100);
-    ulong cid = strtoul(private_response, NULL, 10);
-    lives_free(private_response);
-    clip *c = NULL;
-    if (cid != 0l) {
-      c = new clip(cid);
+    ulong cbid = addCallback(LIVES_CALLBACK_PRIVATE, private_cb, NULL);
+    ulong cid = 0l;
+    if (!idle_open_file(fname, stime, frames, blocking_id)) {
+      spinning = false;
+      removeCallback(cbid);
     }
-    return c;
+    else {
+      while (spinning) usleep(100);
+      cid = strtoul(private_response, NULL, 10);
+      lives_free(private_response);
+    }
+    return clip(cid);
+  }
+
+  bool livesApp::deinterlaceOption() {
+    return m_deinterlace;
   }
 
 
-  list<closure*> livesApp::closures() {
+  closureList livesApp::closures() {
     return m_closures;
+  }
+
+
+  bool livesApp::interactive() {
+    return mainw->interactive;
+  }
+
+
+  void livesApp::setInteractive(bool setting) {
+    spinning = true;
+    blocking_id = lives_random();
+    ulong cbid = addCallback(LIVES_CALLBACK_PRIVATE, private_cb, NULL); 
+    if (!idle_set_interactive(setting, blocking_id)) {
+      spinning = false;
+      removeCallback(cbid);
+    }
+    while (spinning) usleep(100);
   }
 
 
@@ -300,17 +359,26 @@ namespace lives {
     m_name = NULL;
   }
 
+  set::set() {
+    m_lives = NULL;
+    m_name = NULL;
+  }
+
+  bool set::isValid() {
+    return m_lives != NULL;
+  }
+
   set::~set() {
     if (m_name != NULL) lives_free(m_name);
 
-    clipList::iterator it = m_clips.begin();
+    clipListIterator it = m_clips.begin();
     while (it != m_clips.end()) {
       delete *it;
-      m_clips.erase(it++);
+      it = m_clips.erase(it);
     }
   }
 
-  char *set::name() {
+  const char *set::name() {
     setName(get_set_name());
     return m_name;
   }
@@ -325,10 +393,6 @@ namespace lives {
     else m_name = strdup(name);
   }
 
-  bool set::save(const char *name) {
-    save(name, false);
-  }
-
 
   bool set::save(const char *name, bool force_append) {
     int arglen = 3;
@@ -341,14 +405,20 @@ namespace lives {
     spinning = true;
     blocking_id = lives_random();
 
-    m_lives->addCallback(LIVES_NOTIFY_PRIVATE, private_cb, NULL); 
+    ulong cbid = m_lives->addCallback(LIVES_CALLBACK_PRIVATE, private_cb, NULL); 
 
-    idle_save_set(name,arglen,(const void *)(*vargs),blocking_id);
+    bool ret = false;
 
-    while (spinning) usleep(100);
+    if (!idle_save_set(name,arglen,(const void *)(*vargs),blocking_id)) {
+      spinning = false;
+      m_lives->removeCallback(cbid);
+    }
+    else {
+      while (spinning) usleep(100);
+      ret = (bool)(atoi(private_response));
+      lives_free(private_response);
+    }
     lives_free(*vargs);
-    bool ret = (bool)(atoi(private_response));
-    lives_free(private_response);
     return ret;
   }
 
@@ -357,10 +427,10 @@ namespace lives {
     ulong *ids = get_unique_ids();
     // clear old cliplist
 
-    clipList::iterator it = m_clips.begin();
+    clipListIterator it = m_clips.begin();
     while (it != m_clips.end()) {
       delete *it;
-      m_clips.erase(it++);
+      it = m_clips.erase(it);
     }
 
     for (int i=0; ids[i] != 0l; i++) {
@@ -374,13 +444,21 @@ namespace lives {
 
   /////////////// clip ////////////////
 
-  clip::clip(uint64_t uid) {
+  clip::clip() {
+    m_uid=0l;
+  }
+
+  clip::clip(ulong uid) {
     m_uid = uid;
+  }
+
+  bool clip::isValid() {
+    return (cnum_for_uid(m_uid) != -1);
   }
 
   int clip::frames() {
     int cnum = cnum_for_uid(m_uid);
-    if (mainw->files[cnum]!=NULL) return mainw->files[cnum]->frames;
+    if (cnum > -1 && mainw->files[cnum] != NULL) return mainw->files[cnum]->frames;
     return -1;
   }
   
@@ -413,40 +491,44 @@ namespace lives {
 }
 
 
-void binding_cb (int msgnumber, const char *msgstring, uint64_t id) {
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+#ifndef DOXYGEN_SKIP
+
+void binding_cb (lives_callback_t cb_type, const char *msgstring, ulong id) {
   bool ret;
   lives::livesApp *lapp;
 
-  if (msgnumber == LIVES_NOTIFY_OBJECT_DESTROYED) lapp = (lives::livesApp *)id;
+  if (cb_type == LIVES_CALLBACK_OBJECT_DESTROYED) lapp = (lives::livesApp *)id;
   else lapp = lives::find_instance_for_id(id);
 
   if (lapp == NULL) return;
 
-  list <lives::closure *> cl = lapp->closures();
+  lives::closureList cl = lapp->closures();
 
-  list<lives::closure *>::iterator it = cl.begin();
+  lives::closureListIterator it = cl.begin();
   while (it != cl.end()) {
 
-    if ((*it)->msgnum == msgnumber) {
-      switch (msgnumber) {
-      case LIVES_NOTIFY_MODE_CHANGED:
+    if ((*it)->cb_type == cb_type) {
+      switch (cb_type) {
+      case LIVES_CALLBACK_MODE_CHANGED:
 	{
 	  lives::modeChangedInfo info;
-	  info.mode = atoi(msgstring);
+	  info.mode = (lives_mode_t)atoi(msgstring);
 	  lives::modeChanged_callback_f fn = (lives::modeChanged_callback_f)((*it)->func);
 	  ret = (fn)((*it)->object, &info, (*it)->data);
 	}
 	break;
-      case LIVES_NOTIFY_OBJECT_DESTROYED:
+      case LIVES_CALLBACK_OBJECT_DESTROYED:
 	{
 	  lives::objectDestroyed_callback_f fn = (lives::objectDestroyed_callback_f)((*it)->func);
 	  ret = (fn)((*it)->object, (*it)->data);
 	}
 	break;
-      case LIVES_NOTIFY_PRIVATE:
+      case LIVES_CALLBACK_PRIVATE:
 	{
 	  // private event type
-	  lives::privateInfo info;
+	  lives::_privateInfo info;
 	  char **msgtok = lives_strsplit(msgstring, " ", -1);
 	  info.id = strtoul(msgtok[0],NULL,10);
 	  if (get_token_count(msgstring,' ')==1) info.response=NULL;
@@ -460,7 +542,8 @@ void binding_cb (int msgnumber, const char *msgstring, uint64_t id) {
 	continue;
       }
       if (!ret) {
-	cl.erase(it++);
+	//delete *it;
+	it = cl.erase(it);
 	continue;
       }
     }
@@ -468,3 +551,4 @@ void binding_cb (int msgnumber, const char *msgstring, uint64_t id) {
   }
 }
 
+#endif // doxygen_skip

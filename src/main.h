@@ -1061,6 +1061,7 @@ void set_record (void);
 
 //gui.c
 void  create_LiVES (void);
+void set_interactive(boolean interactive);
 void enable_record (void);
 void toggle_record (void);
 void disable_record (void);
@@ -1248,7 +1249,7 @@ const char *get_image_ext_for_type(lives_image_type_t imgtype);
 uint32_t fastrand(void);
 void fastsrand(uint32_t seed);
 
-int lives_list_index (LiVESList *list, livesconstpointer data);
+int lives_list_strcmp_index (LiVESList *list, livesconstpointer data);
 
 lives_cancel_t check_for_bad_ffmpeg(void);
 

@@ -5630,9 +5630,8 @@ static boolean recover_files(gchar *recovery_file, boolean auto_recover) {
       memset(buff+strlen(buff)-2,0,1);
       last_was_normal_file=FALSE;
       if (!is_legal_set_name(buff,TRUE)) continue;
-      lives_snprintf(mainw->set_name,128,"%s",buff);
 
-      if (!on_load_set_ok()) {
+      if (!reload_set(buff)) {
 	fclose(rfile);
 	end_threaded_dialog();
 

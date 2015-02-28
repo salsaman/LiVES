@@ -1189,8 +1189,6 @@ static void lives_init(_ign_opts *ign_opts) {
 
     prefs->acodec_list=NULL;
 
-    prefs->collate_images=TRUE;
-    
     prefs->render_audio=TRUE;
     prefs->normalise_audio=TRUE;
 

@@ -40,7 +40,6 @@ typedef struct {
 
   gchar tmpdir[PATH_MAX];  ///< kept in locale encoding
 
-  // TODO - also use cur_vid_load_dir, etc.
   // utf8 encoding
   gchar def_vid_load_dir[PATH_MAX];
   gchar def_vid_save_dir[PATH_MAX];
@@ -227,8 +226,6 @@ typedef struct {
   boolean show_playwin;
 
   boolean osc_start;
-
-  boolean collate_images;
 
   int virt_height; ///< n screens vert.
 
@@ -621,6 +618,13 @@ void prefsw_set_astream_settings(_vid_playback_plugin *);
 void prefsw_set_rec_after_settings(_vid_playback_plugin *);
 
 void apply_button_set_enabled(LiVESWidget *widget, livespointer func_data);
+
+
+// factories
+#define PREF_REC_EXT_AUDIO 1
+
+void pref_factory_bool(int prefidx, boolean newval);
+void pref_factory_int(int prefidx, int newval);
 
 
 // permissions

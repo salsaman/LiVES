@@ -38,7 +38,7 @@ typedef enum {
 */
 typedef enum {
   LIVES_STATUS_INVALID=-1, ///< livesApp instance is invalid
-  LIVES_STATUS_NOTREADY, ///< application is staring up, not ready
+  LIVES_STATUS_NOTREADY, ///< application is starting up; not ready
   LIVES_STATUS_READY, ///< application is ready for commands
   LIVES_STATUS_PLAYING, ///< application is playing, only player commands will be responded to
   LIVES_STATUS_PROCESSING, ///< application is processing, commands will be ignored
@@ -78,7 +78,7 @@ typedef enum {
   LIVES_CALLBACK_CLIPSET_OPENED = 256, ///< sent after a clip set is opened
   LIVES_CALLBACK_CLIPSET_SAVED = 257, ///< sent after a clip set is closed
 
-  LIVES_CALLBACK_MODE_CHANGED = 4096,
+  LIVES_CALLBACK_MODE_CHANGED = 4096, ///< sent when interface mode changes
 
   LIVES_CALLBACK_OBJECT_DESTROYED = 16384, ///< sent when livesApp object is deleted
 
@@ -99,61 +99,58 @@ typedef enum {
   //LIVES_CHAR_ENCODING_UTF16, ///< UTF-16 char encoding
 } lives_char_encoding_t;
 
+/**
+   Default character encoding
+*/
+#define LIVES_CHAR_ENCODING_DEFAULT LIVES_CHAR_ENCODING_UTF8
 
 /**
    Dialog response values
 */
 typedef enum {
 // positive values for custom responses
-  LIVES_DIALOG_RESPONSE_INVALID=-1,
-  LIVES_DIALOG_RESPONSE_NONE=0,
-  LIVES_DIALOG_RESPONSE_OK,
-  LIVES_DIALOG_RESPONSE_RETRY,
-  LIVES_DIALOG_RESPONSE_ABORT,
-  LIVES_DIALOG_RESPONSE_RESET,
-  LIVES_DIALOG_RESPONSE_SHOW_DETAILS,
-  LIVES_DIALOG_RESPONSE_CANCEL,
-  LIVES_DIALOG_RESPONSE_ACCEPT,
-  LIVES_DIALOG_RESPONSE_YES,
-  LIVES_DIALOG_RESPONSE_NO
+  LIVES_DIALOG_RESPONSE_INVALID=-1, ///< INVALID response
+  LIVES_DIALOG_RESPONSE_NONE=0, ///< Response not obtained
+  LIVES_DIALOG_RESPONSE_OK, ///< OK button clicked
+  LIVES_DIALOG_RESPONSE_RETRY, ///< Retry button clicked
+  LIVES_DIALOG_RESPONSE_ABORT, ///< Abort button clicked
+  LIVES_DIALOG_RESPONSE_RESET, ///< Reset button clicked
+  LIVES_DIALOG_RESPONSE_SHOW_DETAILS, ///< Show details button clicked
+  LIVES_DIALOG_RESPONSE_CANCEL, ///< Cancel button clicked
+  LIVES_DIALOG_RESPONSE_ACCEPT, ///< Accept button clicked
+  LIVES_DIALOG_RESPONSE_YES, ///< Yes button clicked
+  LIVES_DIALOG_RESPONSE_NO ///< No button clicked
 } lives_dialog_response_t;
 
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+/**
+   Audio sources
+*/
+typedef enum {
+  LIVES_AUDIO_SOURCE_INTERNAL, ///< Audio source is internal to LiVES
+  LIVES_AUDIO_SOURCE_EXTERNAL ///< Audio source is external to LiVES
+} lives_audio_source_t;
+
+
+/**
+   Audio players
+*/
+typedef enum {
+  LIVES_AUDIO_PLAYER_PULSE, ///< Audio playback is through PulseAudio
+  LIVES_AUDIO_PLAYER_JACK, ///< Audio playback is thorugh Jack
+  LIVES_AUDIO_PLAYER_SOX, ///< Audio playback is through Sox
+  LIVES_AUDIO_PLAYER_MPLAYER, ///< Audio playback is through mplayer
+  LIVES_AUDIO_PLAYER_MPLAYER2 ///< Audio playback is through mplayer2
+} lives_audio_player_t;
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 #ifdef __cplusplus
 
-#ifndef DOXYGEN_SKIP
-
-#if defined _WIN32 || defined __CYGWIN__
-  #ifdef BUILDING_DLL
-    #ifdef __GNUC__
-      #define LIVES_DLL_PUBLIC __attribute__ ((dllexport))
-    #else
-      #define LIVES_DLL_PUBLIC __declspec(dllexport) // Note: actually gcc seems to also supports this syntax.
-    #endif
-  #else
-    #ifdef __GNUC__
-      #define LIVES_DLL_PUBLIC __attribute__ ((dllimport))
-    #else
-      #define LIVES_DLL_PUBLIC __declspec(dllimport) // Note: actually gcc seems to also supports this syntax.
-    #endif
-  #endif
-  #define DLL_LOCAL
-#else
-  #if __GNUC__ >= 4
-    #define LIVES_DLL_PUBLIC __attribute__ ((visibility ("default")))
-    #define LIVES_DLL_LOCAL  __attribute__ ((visibility ("hidden")))
-  #else
-    #define LIVES_DLL_PUBLIC
-    #define LIVES_DLL_LOCAL
-  #endif
-#endif
-
-#endif
-
-/////////////////////////////////////////////////////////////////////////////////////////////////////
-
+#include <vector>
 #include <list>
+#include <map>
+
 #include <string.h>
 #include <inttypes.h>
 
@@ -204,10 +201,25 @@ namespace lives {
   /**
      typedef
   */
+  typedef class effectKey effectKey;
+
+  /**
+     typedef
+  */
+  typedef class effectKeyMap effectKeyMap;
+
+  /**
+     typedef
+  */
+  typedef class effect effect;
+
+  /**
+     typedef
+  */
   typedef class LiVESString LiVESString;
 
 
-
+  // TODO - layout, block
 
   ///////////////////////////////////////////////////
 
@@ -218,14 +230,15 @@ namespace lives {
   */
   class LiVESString : public std::string {
   public:
-    LiVESString() : m_encoding(LIVES_CHAR_ENCODING_UTF8), std::string() {};
+    LiVESString(lives_char_encoding_t e=LIVES_CHAR_ENCODING_DEFAULT) : m_encoding(e), std::string() {};
     LiVESString(const string& str) : std::string(str) {};
-    LiVESString (const string& str, size_t pos, size_t len = npos) : std::string(str, pos,  len) {};
-    LiVESString(const char* s) : std::string(s) {};
-    LiVESString(const char* s, size_t n) : std::string(s, n) {};
-    LiVESString(size_t n, char c) : std::string(n, c) {};
+    LiVESString(const string& str, size_t pos, size_t len = npos) : std::string(str, pos,  len) {};
+    LiVESString(const char* s, lives_char_encoding_t e=LIVES_CHAR_ENCODING_DEFAULT) : m_encoding(e), std::string(s) {};
+    LiVESString(const char* s, size_t n, lives_char_encoding_t e=LIVES_CHAR_ENCODING_DEFAULT) : m_encoding(e), std::string(s, n) {};
+    LiVESString(size_t n, char c, lives_char_encoding_t e=LIVES_CHAR_ENCODING_DEFAULT) : m_encoding(e), std::string(n, c) {};
     template <class InputIterator>
-    LiVESString  (InputIterator first, InputIterator last) : std::string(first, last) {};
+    LiVESString  (InputIterator first, InputIterator last, 
+		  lives_char_encoding_t e=LIVES_CHAR_ENCODING_DEFAULT) : m_encoding(e), std::string(first, last) {};
 
     /**
        Change the character encoding of the string.
@@ -317,18 +330,14 @@ namespace lives {
   /**
      class "clip". 
      Represents a clip which is open in LiVES.
+     @see set::nthClip()
+     @see livesApp::openFile()
   */
-  class LIVES_DLL_PUBLIC clip {
+  class clip {
     friend livesApp;
     friend set;
 
   public:
-    /**
-       Public constructor. 
-       Creates a clip object which starts off invalid.
-       @see livesApp::openFile().
-    */
-    clip();
 
     /**
        Check if clip is valid. 
@@ -440,6 +449,22 @@ namespace lives {
     int selectionEnd();
 
 
+    /**
+       Switch to this clip as the current foreground clip.
+       Only works if status() is LIVES_STATUS_READY or LIVES_STATUS_PLAYING and mode() is LIVES_INTERFACE_MODE_CLIP_EDITOR.
+       @return true if the switch was successful.
+       @see livesApp::setForegroundClip()
+    */
+    bool switchTo();
+
+    /**
+       Switch to this clip as the current background clip.
+       Only works if status() is LIVES_STATUS_READY or LIVES_STATUS_PLAYING and mode() is LIVES_INTERFACE_MODE_CLIP_EDITOR.
+       @return true if the switch was successful.
+       @see livesApp::setBackgroundClip()
+    */
+    bool setAsBackground();
+
 
     /**
        @return true if the two clips have the same unique_id.
@@ -449,46 +474,33 @@ namespace lives {
     }
 
   protected:
-    clip(ulong uid);
+    clip(ulong uid, livesApp *lives=NULL);
 
   private:
+    livesApp *m_lives;
     ulong m_uid;
 
   };
   
 
 
-/**
-  typedef
-*/
-  typedef list<clip *> clipList;
-
-
-/**
-  typedef
-*/
-  typedef list<clip *>::iterator clipListIterator;
+#ifndef DOXYGEN_SKIP
+  typedef vector<ulong> clipList;
+  typedef vector<ulong>::iterator clipListIterator;
+#endif
 
   ///// set ////////
 
 
   /**
      class "set". 
-     Represents a list of clips and/or layouts which are open in LiVES. May be returned from livesApp::currentSet().
+     Represents a list of clips and/or layouts which are open in LiVES. May be obtained from livesApp::currentSet().
+     @see livesApp::currentSet()
   */
-  class LIVES_DLL_PUBLIC set {
+  class set {
     friend livesApp;
 
   public:
-    /**
-       Creates a set object. 
-       The set begins as invalid until defined from some method.
-       @return an initially invalid set.
-       @see livesApp::currentSet().
-    */
-    set();
-
-    ~set();
 
     /**
        Returns whether the set is valid or not.
@@ -515,27 +527,170 @@ namespace lives {
     bool save(LiVESString name, bool force_append=false);
 
     /**
-       Returns a list of all currently opened clips in the currently opened set.
-       Excercise caution; calling cliplist() a second time will likely invalidate the previous return value and delete all the clip objects in it. 
-       The value should therefore not be stored.
-       @return cliplist for use in e.g. size() or for obtaining a clip via copying.
+       Returns the number of clips in the set. If the set is invalid, returns 0.
+       @return number of clips.
     */
-    clipList cliplist();
+    unsigned int numClips();
+
+
+    /**
+       Returns the nth clip in the set. If n  >= numClips(), returns an invalid clip. If the set is invalid, returns and invalid clip.
+       @return the nth clip in the set.
+       @see indexOf()
+    */
+    clip nthClip(unsigned int n);
+
+    /**
+       Returns the index of a clip in the currentSet. If the clip is not in the current set, then -1 is returned.
+       @return the index of the clip in the set.
+       @see nthClip()
+    */
+    int indexOf(clip c);
+
+
+    /**
+       @return true if the two sets belong to the same livesApp.
+    */
+    inline bool operator==(const set& other) {
+      return other.m_lives == m_lives;
+    }
+
 
   protected:
+    set();
+
     set(livesApp *lives);
     void setName(const char *setname);
 
   private:
     livesApp *m_lives;
-    char *m_name;
     clipList m_clips;
+    
     //list<layout *>layouts;
 
-    set(set const&);              // Don't Implement
-    void operator=(set const&); // Don't implement
+    void update_clip_list(void);
+
 
   };
+
+
+  /**
+     class "effectKey". 
+     Represents a single effect key slot. A valid livesApp will have a map of these (effectKeyMapping()) whose size() is equal to prefs::rteKeysVirtual().
+  */
+  class effectKey {
+  public:
+    effectKey(const effectKey& other);
+    
+    /**
+       Returns whether the effectKey is valid or not.
+       @return true if the effectKey is valid (associated with a valid livesApp instance).
+    */
+    bool isValid();
+
+    /**
+       @return true if the two effectKeys have the same livesApp and key value
+    */
+    inline bool operator==(const effectKey& other) {
+      return other.m_lives == m_lives && other.m_key == m_key;
+    }
+
+  protected:
+    effectKey(livesApp *lives);
+
+  private:
+    int m_key;
+    livesApp *m_lives;
+
+  };
+
+
+
+  /**
+     class "effectKeymapping". 
+     Represents a mapping of effectKey instances to key slots.
+  */
+    class effectKeyMap {
+      friend livesApp;
+    public:
+      /**
+	 Returns whether the effectKeyMap is valid or not.
+	 @return true if the effectKeyMap is valid (associated with a valid livesApp instance).
+      */
+      bool isValid();
+
+      /**
+	 Unmap all effects from effectKey mappings, leaving an empty map.
+	 Only has an effect when status() is LIVES_STATUS_READY.
+	 @return true if all effects were unmapped
+      */
+      bool clear();
+
+      effectKey at(); // TODO
+
+      size_t size(); // TODO
+
+    /**
+       @return true if the two effectKeyMaps have the same livesApp
+    */
+    inline bool operator==(const effectKeyMap& other) {
+      return other.m_lives == m_lives;
+    }
+
+    protected:
+      effectKeyMap(livesApp *lives);
+
+    private:
+      livesApp *m_lives;
+    };
+
+
+
+  /**
+     class "effect". 
+     Represents a single effect.
+  */
+  class effect {
+  public:
+    /**
+       Create a new, initially invalid effect.
+    */
+    effect();
+
+    /**
+       Fill a new effect from a hashname.
+    */
+    effect(LiVESString hashname);
+
+
+    /**
+       Fill a new effect from a template.
+    */
+    effect(const char *package, const char *fxname, const char *author="", int version=0);
+
+    /**
+       Returns whether the effect is valid or not.
+       @return true if the effect is valid.
+    */
+    bool isValid();
+      
+
+    /**
+       @return true if the two effects have the same hashname
+    */
+    inline bool operator==(const effect& other) {
+      return other.m_hashname == m_hashname;
+    }
+
+
+  protected:
+    void invalidate();
+
+  private:
+    LiVESString m_hashname;
+  };
+
+
 
 
 
@@ -544,8 +699,10 @@ namespace lives {
      Represents a single LiVES application. Note that currently only one such instance can be valid at a time, 
      attempting to create a second concurrent instance will return an invalid instance.
   */
-  class LIVES_DLL_PUBLIC livesApp {
+  class livesApp {
     friend set;
+    friend clip;
+    friend effectKeyMap;
 
   public:
     /**
@@ -563,7 +720,7 @@ namespace lives {
 
     /**
        Destructor: closes the LiVES application.
-       Deletes currentSet(). Deletes any callbacks which were set for this instance.
+       Deletes any callbacks which were set for this instance.
     */
     ~livesApp();
 
@@ -574,18 +731,27 @@ namespace lives {
     */
     bool isValid();
 
+
     /**
-       Returns a pointer to the loaded set.
-       Beware, if the livesApp instance is deleted, this is also deleted.
-       @return the current set in LiVES.
+       Returns the current set
+       @return the current set.
     */
-    set * const currentSet();
+    set currentSet();
+
+
+    /**
+       Returns the current effectKeyMap
+       @return the current effectKeyMap.
+    */
+    effectKeyMap currentEffectKeyMap();
+
 
     /**
        Commence playback of video and audio with the currently selected clip.
        Only has an effect when status() is LIVES_STATUS_READY.
+       @return true if playback was started.
     */
-    void play();
+    bool play();
 
     /**
        Stop playback.
@@ -659,6 +825,7 @@ namespace lives {
    /**
       Open a file and return a clip for it.
       Only works when status() is LIVES_STATUS_READY, otherwise an invalid clip is returned.
+      If the file pointed to cannot be opened as a clip, an invalid clip is returned.
       @param fname the full pathname of the file to open
       @param with_audio if true the audio will be loaded as well as the video
       @param stime the time in seconds from which to start loading
@@ -691,8 +858,9 @@ namespace lives {
        Change the interactivity of the GUI application.
        Interactivity is via menus and keyboard accelerators
        @param setting set to true to allow interaction with the GUI.
+       @return the new setting.
     */
-    void setInteractive(bool setting);
+    bool setInteractive(bool setting);
 
     /**
        Returns whether the GUI app is in interactive mode.
@@ -723,28 +891,36 @@ namespace lives {
     lives_status_t status();
 
 
+    bool setForegroundClip(); // TODO
+
+    bool setBackgroundClip(); // TODO
+
+
 #ifndef DOXYGEN_SKIP
     // For internal use only.
-    LIVES_DLL_LOCAL closureList closures();
-    LIVES_DLL_LOCAL void invalidate();
+    closureList closures();
+    void invalidate();
+    
+    bool setPref(int prefidx, bool val);
+    bool setPref(int prefidx, int val);
 #endif
 
-
   protected:
-    LIVES_DLL_LOCAL ulong addCallback(lives_callback_t cb_type, private_callback_f func, void *data);
+    ulong addCallback(lives_callback_t cb_type, private_callback_f func, void *data);
 
 
   private:
     ulong m_id;
-    set m_set;
     closureList m_closures;
+    set m_set;
+    effectKeyMap m_effectKeyMap;
 
     bool m_deinterlace;
 
-    LIVES_DLL_LOCAL ulong appendClosure(lives_callback_t cb_type, callback_f func, void *data);
-    LIVES_DLL_LOCAL void init(int argc, char *argv[]);
+    ulong appendClosure(lives_callback_t cb_type, callback_f func, void *data);
+    void init(int argc, char *argv[]);
 
-    livesApp(livesApp const&);              // Don't Implement
+    //livesApp(livesApp const&);              // Don't Implement
     void operator=(livesApp const&); // Don't implement
 
 
@@ -754,7 +930,32 @@ namespace lives {
      Preferences.
   */
   namespace prefs {
-    LiVESString currentVideoLoadDir(); ///< current video load directory.
+    LiVESString currentVideoLoadDir(livesApp lives); ///< current video load directory.
+
+    LiVESString currentAudioDir(livesApp lives); ///< current audio directory for loading and saving audio.
+
+    LiVESString tmpDir(livesApp lives); ///< Despite the name, this is the working directory for the LiVES application. 
+    ///< The valid list of sets is drawn from this directory, for it is here that they are saved and loaded.
+    ///< The value can only be set at runtime through the GUI preferences window. Otherwise you can override the default value 
+    ///< when the livesApp() is created via argv[] option "-tmpdir", eg: <BR>
+    ///< <BR><BLOCKQUOTE><I>
+    ///<    char *argv[2]; <BR>
+    ///<    argv[0]="-tmpdir"; <BR>
+    ///<    argv[1]="/home/user/tempdir/"; <BR>
+    ///<    livesApp lives(2, argv); <BR>
+    ///< </I></BLOCKQUOTE>
+
+    lives_audio_source_t audioSource(livesApp lives); ///< the current audio source
+
+    /**
+       Set the audio source. Only works if status() is LIVES_STATUS_READY.
+       @param asrc the desired audio source
+       @return true if the audio source could be changed.
+    */
+    bool setAudioSource(lives_audio_source_t asrc);
+
+    lives_audio_player_t audioPlayer(); ///< the current audio player
+
 
   }
 

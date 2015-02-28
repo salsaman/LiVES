@@ -2508,8 +2508,7 @@ void on_assign_rte_keys_activate (LiVESMenuItem *menuitem, livespointer user_dat
   }
   
   rte_window=create_rte_window();
-  //rte_window_set_interactive(mainw->interactive);
-  rte_window_set_interactive(FALSE);
+  rte_window_set_interactive(mainw->interactive);
   lives_widget_show (rte_window);
 }
 

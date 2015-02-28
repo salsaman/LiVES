@@ -2590,6 +2590,7 @@ static boolean lives_startup(livespointer data) {
 
 		  if (prefs->startup_interface!=STARTUP_MT) {
 		    if (prefs->show_gui) {
+		      // mainw->ready gets set here
 		      lives_widget_show (mainw->LiVES);
 		    }
 		  }

@@ -1698,7 +1698,7 @@ boolean lives_osc_cb_getversion(void *context, int arglen, const void *vargs, OS
 }
 
 boolean lives_osc_cb_getstatus(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
-  if (!mainw->is_ready) lives_status_send(get_omc_const("LIVES_STATUS_NOTREADY"));
+  if (mainw->go_away) lives_status_send(get_omc_const("LIVES_STATUS_NOTREADY"));
   if (mainw->playing_file > -1) lives_status_send(get_omc_const("LIVES_STATUS_PLAYING"));
   if (mainw->is_processing) lives_status_send(get_omc_const("LIVES_STATUS_PROCESSING"));
   if (mainw->preview) lives_status_send(get_omc_const("LIVES_STATUS_PREVIEW"));

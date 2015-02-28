@@ -248,7 +248,7 @@ static boolean call_file_choose_with_preview(livespointer data) {
 
 static boolean call_choose_set(livespointer data) {
   udata *ud=(udata *)data;
-  char *setname=on_load_set_activate(NULL,NULL);
+  char *setname=on_load_set_activate(NULL,(livespointer)1);
   ext_caller_return_string(ud->id,setname);
   lives_free(setname);
   lives_free(ud);
@@ -339,6 +339,7 @@ boolean idle_choose_set(ulong id) {
     return FALSE;
   }
   data=(udata *)lives_malloc(sizeof(udata));
+  data->id=id;
   lives_idle_add(call_choose_set,(livespointer)data);
   return TRUE;
 }

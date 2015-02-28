@@ -1258,7 +1258,7 @@ LiVESList *get_external_window_hints(lives_rfx_t *rfx);
 boolean check_encoder_restrictions (boolean get_extension, boolean user_audio, boolean save_all);
 
 //callbacks.c
-void lives_exit (void);
+void lives_exit (int signum);
 void lives_notify(int msgnumber,const char *msgstring);
 const char *get_set_name(void);
 void count_opening_frames(void);

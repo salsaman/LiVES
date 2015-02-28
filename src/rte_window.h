@@ -11,6 +11,8 @@
 #define RTE_INFO_WIDTH ((int)(350.*widget_opts.scale))
 #define RTE_INFO_HEIGHT ((int)(200.*widget_opts.scale))
 
+void rte_window_set_interactive(boolean interactive);
+
 void on_assign_rte_keys_activate (LiVESMenuItem *, livespointer);
 void on_rte_info_clicked (LiVESButton *, livespointer data);
 void load_default_keymap(void);

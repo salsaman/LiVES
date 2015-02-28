@@ -116,7 +116,7 @@ static void start_preview (LiVESButton *button, lives_rfx_t *rfx) {
 void framedraw_connect_spinbutton(lives_special_framedraw_rect_t *framedraw, lives_rfx_t *rfx) {
   framedraw->rfx=rfx;
 
-  lives_signal_connect_after (LIVES_GUI_OBJECT (mainw->framedraw_spinbutton), LIVES_WIDGET_VALUE_CHANGED_EVENT,
+  lives_signal_connect_after (LIVES_GUI_OBJECT (mainw->framedraw_spinbutton), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
 			  LIVES_GUI_CALLBACK (after_framedraw_frame_spinbutton_changed),
 			  framedraw);
 
@@ -128,17 +128,17 @@ void framedraw_connect(lives_special_framedraw_rect_t *framedraw, int width, int
 
 
   // add mouse fn's so we can draw on frames
-  lives_signal_connect (LIVES_GUI_OBJECT (mainw->framedraw), "motion_notify_event",
+  lives_signal_connect (LIVES_GUI_OBJECT (mainw->framedraw), LIVES_WIDGET_MOTION_NOTIFY_EVENT,
 		    LIVES_GUI_CALLBACK (on_framedraw_mouse_update),
 		    framedraw);
-  lives_signal_connect (LIVES_GUI_OBJECT (mainw->framedraw), "button_release_event",
+  lives_signal_connect (LIVES_GUI_OBJECT (mainw->framedraw), LIVES_WIDGET_BUTTON_RELEASE_EVENT,
 		    LIVES_GUI_CALLBACK (on_framedraw_mouse_reset),
 		    framedraw);
   lives_signal_connect (LIVES_GUI_OBJECT (mainw->framedraw), LIVES_WIDGET_BUTTON_PRESS_EVENT,
 		    LIVES_GUI_CALLBACK (on_framedraw_mouse_start),
 		    framedraw);
   lives_signal_connect (LIVES_GUI_OBJECT(mainw->framedraw), LIVES_WIDGET_ENTER_EVENT,LIVES_GUI_CALLBACK (on_framedraw_enter),framedraw);
-  lives_signal_connect (LIVES_GUI_OBJECT(mainw->framedraw), "leave-notify-event",LIVES_GUI_CALLBACK (on_framedraw_leave),framedraw);
+  lives_signal_connect (LIVES_GUI_OBJECT(mainw->framedraw), LIVES_WIDGET_LEAVE_NOTIFY_EVENT,LIVES_GUI_CALLBACK (on_framedraw_leave),framedraw);
 
   framedraw_connect_spinbutton(framedraw,rfx);
 
@@ -172,7 +172,7 @@ void framedraw_add_reset(LiVESVBox *box, lives_special_framedraw_rect_t *framedr
   lives_box_pack_start (LIVES_BOX (hbox_rst), mainw->framedraw_reset, TRUE, FALSE, 0);
   lives_widget_set_sensitive (mainw->framedraw_reset,FALSE);
   
-  lives_signal_connect (mainw->framedraw_reset, LIVES_WIDGET_CLICKED_EVENT,LIVES_GUI_CALLBACK (on_framedraw_reset_clicked),framedraw);
+  lives_signal_connect (mainw->framedraw_reset, LIVES_WIDGET_CLICKED_SIGNAL,LIVES_GUI_CALLBACK (on_framedraw_reset_clicked),framedraw);
 }
 
 
@@ -280,7 +280,7 @@ void widget_add_framedraw (LiVESVBox *box, int start, int end, boolean add_previ
   lives_box_pack_start (LIVES_BOX (hbox), mainw->framedraw_preview, TRUE, FALSE, 0);
   lives_widget_set_sensitive(mainw->framedraw_spinbutton,FALSE);
   lives_widget_set_sensitive(mainw->framedraw_scale,FALSE);
-  lives_signal_connect (mainw->framedraw_preview, LIVES_WIDGET_CLICKED_EVENT,LIVES_GUI_CALLBACK (start_preview),rfx);
+  lives_signal_connect (mainw->framedraw_preview, LIVES_WIDGET_CLICKED_SIGNAL,LIVES_GUI_CALLBACK (start_preview),rfx);
   
   lives_widget_show_all (vbox);
 

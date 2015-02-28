@@ -64,6 +64,45 @@ static char *empty_string="";
 
 //////////////////////////////////////////////////////////////////////////////
 
+static void set_param_and_con_buttons(int key, int mode);
+static void check_clear_all_button (void);
+
+void rte_window_set_interactive(boolean interactive) {
+  register int i,j;
+  int modes=rte_getmodespk();
+  int idx;
+
+  if (!interactive) {
+    lives_widget_set_sensitive(clear_all_button,FALSE);
+    lives_widget_set_sensitive(save_keymap_button,FALSE);
+    lives_widget_set_sensitive(load_keymap_button,FALSE);
+    for (i=0;i<prefs->rte_keys_virtual;i++) {
+      for (j=modes-1;j>=0;j--) {
+	idx=i*modes+j;
+	lives_widget_set_sensitive(conx_buttons[idx],FALSE);
+	lives_widget_set_sensitive(param_buttons[idx],FALSE);
+	lives_widget_set_sensitive(combos[idx],FALSE);
+	lives_widget_set_sensitive(clear_buttons[idx],FALSE);
+	lives_widget_set_sensitive(mode_radios[idx],FALSE);
+      }
+      lives_widget_set_sensitive(key_checks[i],FALSE);
+      lives_widget_set_sensitive(key_grabs[i],FALSE);
+    }
+  }
+  else {
+    for (i=0;i<prefs->rte_keys_virtual;i++) {
+      for (j=modes-1;j>=0;j--) {
+	idx=i*modes+j;
+	set_param_and_con_buttons(i,j);
+      }
+    }
+    check_clear_all_button();
+    lives_widget_set_sensitive(save_keymap_button,TRUE);
+    lives_widget_set_sensitive(load_keymap_button,TRUE);
+  }
+
+}
+
 
 void ret_set_key_check_state(void) {
   // set (delayed) keycheck state
@@ -1761,7 +1800,7 @@ void on_rte_info_clicked (LiVESButton *button, livespointer user_data) {
 
   lives_button_box_set_button_width (LIVES_BUTTON_BOX (hbuttonbox), ok_button, DEF_BUTTON_WIDTH);
 
-  lives_signal_connect (LIVES_GUI_OBJECT (ok_button), LIVES_WIDGET_CLICKED_EVENT,
+  lives_signal_connect (LIVES_GUI_OBJECT (ok_button), LIVES_WIDGET_CLICKED_SIGNAL,
 		    LIVES_GUI_CALLBACK (lives_general_button_clicked),
 		    NULL);
 
@@ -2133,15 +2172,6 @@ static LiVESTreeModel *rte_window_fx_model (void) {
 
 
 
-
-
-
-
-
-
-
-
-
 LiVESWidget * create_rte_window (void) {
   LiVESWidget *rte_window;
   LiVESWidget *table;
@@ -2268,7 +2298,7 @@ LiVESWidget * create_rte_window (void) {
     lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(key_checks[i]),mainw->rte&(GU641<<i));
     lives_widget_object_set_data(LIVES_WIDGET_OBJECT(key_checks[i]),"active",LIVES_INT_TO_POINTER(lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(key_checks[i]))));
 
-    ch_fns[i]=lives_signal_connect_after (LIVES_GUI_OBJECT (key_checks[i]), LIVES_WIDGET_TOGGLED_EVENT,
+    ch_fns[i]=lives_signal_connect_after (LIVES_GUI_OBJECT (key_checks[i]), LIVES_WIDGET_TOGGLED_SIGNAL,
                       LIVES_GUI_CALLBACK (rte_on_off_callback_hook),LIVES_INT_TO_POINTER (i+1));
 
 
@@ -2282,7 +2312,7 @@ LiVESWidget * create_rte_window (void) {
     grab_group = lives_radio_button_get_group (LIVES_RADIO_BUTTON (key_grabs[i]));
     lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(key_grabs[i]),mainw->rte_keys==i);
 
-    gr_fns[i]=lives_signal_connect_after (LIVES_GUI_OBJECT (key_grabs[i]), LIVES_WIDGET_TOGGLED_EVENT,
+    gr_fns[i]=lives_signal_connect_after (LIVES_GUI_OBJECT (key_grabs[i]), LIVES_WIDGET_TOGGLED_SIGNAL,
 				      LIVES_GUI_CALLBACK (grabkeys_callback_hook),LIVES_INT_TO_POINTER (i));
 
     mode_group=NULL;
@@ -2306,7 +2336,7 @@ LiVESWidget * create_rte_window (void) {
 
       if (rte_key_getmode(i+1)==j) lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(mode_radios[idx]),TRUE);
 
-      mode_ra_fns[idx]=lives_signal_connect_after (LIVES_GUI_OBJECT (mode_radios[idx]), LIVES_WIDGET_TOGGLED_EVENT,
+      mode_ra_fns[idx]=lives_signal_connect_after (LIVES_GUI_OBJECT (mode_radios[idx]), LIVES_WIDGET_TOGGLED_SIGNAL,
 					       LIVES_GUI_CALLBACK (rtemode_callback_hook),LIVES_INT_TO_POINTER (idx));
 
       type_labels[idx] = lives_standard_label_new ("");
@@ -2347,19 +2377,19 @@ LiVESWidget * create_rte_window (void) {
       hbox = lives_hbox_new (FALSE, 0);
       lives_box_pack_start (LIVES_BOX (vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
 
-      lives_signal_connect(LIVES_GUI_OBJECT (combo), LIVES_WIDGET_CHANGED_EVENT,
+      lives_signal_connect(LIVES_GUI_OBJECT (combo), LIVES_WIDGET_CHANGED_SIGNAL,
 		       LIVES_GUI_CALLBACK (fx_changed),LIVES_INT_TO_POINTER(i*rte_getmodespk()+j));
       
-      lives_signal_connect (LIVES_GUI_OBJECT (info_buttons[idx]), LIVES_WIDGET_CLICKED_EVENT,
+      lives_signal_connect (LIVES_GUI_OBJECT (info_buttons[idx]), LIVES_WIDGET_CLICKED_SIGNAL,
 			LIVES_GUI_CALLBACK (on_rte_info_clicked),LIVES_INT_TO_POINTER (idx));
 
-      lives_signal_connect (LIVES_GUI_OBJECT (clear_buttons[idx]), LIVES_WIDGET_CLICKED_EVENT,
+      lives_signal_connect (LIVES_GUI_OBJECT (clear_buttons[idx]), LIVES_WIDGET_CLICKED_SIGNAL,
 			LIVES_GUI_CALLBACK (on_clear_clicked),LIVES_INT_TO_POINTER (idx));
 
-      lives_signal_connect (LIVES_GUI_OBJECT (param_buttons[idx]), LIVES_WIDGET_CLICKED_EVENT,
+      lives_signal_connect (LIVES_GUI_OBJECT (param_buttons[idx]), LIVES_WIDGET_CLICKED_SIGNAL,
 			LIVES_GUI_CALLBACK (on_params_clicked),LIVES_INT_TO_POINTER (idx));
 
-      lives_signal_connect (LIVES_GUI_OBJECT (conx_buttons[idx]), LIVES_WIDGET_CLICKED_EVENT,
+      lives_signal_connect (LIVES_GUI_OBJECT (conx_buttons[idx]), LIVES_WIDGET_CLICKED_SIGNAL,
 			LIVES_GUI_CALLBACK (on_datacon_clicked),LIVES_INT_TO_POINTER (idx));
       
       lives_box_pack_start (LIVES_BOX (hbox), type_labels[idx], FALSE, FALSE, widget_opts.packing_width);
@@ -2411,26 +2441,26 @@ LiVESWidget * create_rte_window (void) {
   rtew_accel_group = LIVES_ACCEL_GROUP(lives_accel_group_new ());
   lives_window_add_accel_group (LIVES_WINDOW (rte_window), rtew_accel_group);
 
-  lives_widget_add_accelerator (ok_button, LIVES_WIDGET_CLICKED_EVENT, rtew_accel_group,
+  lives_widget_add_accelerator (ok_button, LIVES_WIDGET_CLICKED_SIGNAL, rtew_accel_group,
                               LIVES_KEY_Escape, (LiVESXModifierType)0, (LiVESAccelFlags)0);
 
   lives_signal_connect (LIVES_GUI_OBJECT (rte_window), LIVES_WIDGET_DELETE_EVENT,
 		    LIVES_GUI_CALLBACK (on_rtew_ok_clicked),
 		    NULL);
 
-  lives_signal_connect (LIVES_GUI_OBJECT (ok_button), LIVES_WIDGET_CLICKED_EVENT,
+  lives_signal_connect (LIVES_GUI_OBJECT (ok_button), LIVES_WIDGET_CLICKED_SIGNAL,
 		    LIVES_GUI_CALLBACK (on_rtew_ok_clicked),
 		    NULL);
 
-  lives_signal_connect (LIVES_GUI_OBJECT (save_keymap_button), LIVES_WIDGET_CLICKED_EVENT,
+  lives_signal_connect (LIVES_GUI_OBJECT (save_keymap_button), LIVES_WIDGET_CLICKED_SIGNAL,
 		    LIVES_GUI_CALLBACK (on_save_keymap_clicked),
 		    NULL);
 
-  lives_signal_connect (LIVES_GUI_OBJECT (load_keymap_button), LIVES_WIDGET_CLICKED_EVENT,
+  lives_signal_connect (LIVES_GUI_OBJECT (load_keymap_button), LIVES_WIDGET_CLICKED_SIGNAL,
 		    LIVES_GUI_CALLBACK (on_load_keymap_clicked),
 		    LIVES_INT_TO_POINTER(1));
 
-  lives_signal_connect (LIVES_GUI_OBJECT (clear_all_button), LIVES_WIDGET_CLICKED_EVENT,
+  lives_signal_connect (LIVES_GUI_OBJECT (clear_all_button), LIVES_WIDGET_CLICKED_SIGNAL,
 		    LIVES_GUI_CALLBACK (on_clear_all_clicked),
 		    LIVES_INT_TO_POINTER(1));
 
@@ -2465,6 +2495,7 @@ LiVESWidget *refresh_rte_window (void) {
     on_rtew_delete_event(NULL,NULL,LIVES_INT_TO_POINTER(1));
     lives_widget_destroy(rte_window);
     rte_window=create_rte_window();
+    rte_window_set_interactive(mainw->interactive);
   }
   return rte_window;
 }
@@ -2477,6 +2508,8 @@ void on_assign_rte_keys_activate (LiVESMenuItem *menuitem, livespointer user_dat
   }
   
   rte_window=create_rte_window();
+  //rte_window_set_interactive(mainw->interactive);
+  rte_window_set_interactive(FALSE);
   lives_widget_show (rte_window);
 }
 

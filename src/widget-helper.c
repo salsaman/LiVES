@@ -7209,15 +7209,9 @@ LiVESWidget *lives_standard_check_button_new(const char *labeltext, boolean use_
   }
 
   if (label!=NULL) {
-#if GTK_CHECK_VERSION(3,0,0)
-    lives_signal_connect_after (LIVES_GUI_OBJECT (checkbutton), "state_flags_changed",
+    lives_signal_connect_after (LIVES_GUI_OBJECT (checkbutton), LIVES_WIDGET_STATE_CHANGED_SIGNAL,
 			    LIVES_GUI_CALLBACK (set_label_state),
 			    label);
-#else
-    lives_signal_connect_after (LIVES_GUI_OBJECT (checkbutton), "state_changed",
-			    LIVES_GUI_CALLBACK (set_label_state),
-			    label);
-#endif
   }
 
 
@@ -7289,15 +7283,9 @@ LiVESWidget *lives_standard_radio_button_new(const char *labeltext, boolean use_
   }
 
   if (label!=NULL) {
-#if GTK_CHECK_VERSION(3,0,0)
-    lives_signal_connect_after (LIVES_GUI_OBJECT (radiobutton), "state_flags_changed",
+    lives_signal_connect_after (LIVES_GUI_OBJECT (radiobutton), LIVES_WIDGET_STATE_CHANGED_SIGNAL,
 			    LIVES_GUI_CALLBACK (set_label_state),
 			    label);
-#else
-    lives_signal_connect_after (LIVES_GUI_OBJECT (radiobutton), "state_changed",
-			    LIVES_GUI_CALLBACK (set_label_state),
-			    label);
-#endif
   }
 
   return radiobutton;
@@ -7393,15 +7381,9 @@ LiVESWidget *lives_standard_spin_button_new(const char *labeltext, boolean use_m
   }
 
   if (label!=NULL) {
-#if GTK_CHECK_VERSION(3,0,0)
-    lives_signal_connect_after (LIVES_GUI_OBJECT (spinbutton), "state_flags_changed",
+    lives_signal_connect_after (LIVES_GUI_OBJECT (spinbutton), LIVES_WIDGET_STATE_CHANGED_SIGNAL,
 			    LIVES_GUI_CALLBACK (set_label_state),
 			    label);
-#else
-    lives_signal_connect_after (LIVES_GUI_OBJECT (spinbutton), "state_changed",
-			    LIVES_GUI_CALLBACK (set_label_state),
-			    label);
-#endif
   }
 
 
@@ -7487,15 +7469,9 @@ LiVESWidget *lives_standard_combo_new (const char *labeltext, boolean use_mnemon
   }
 
   if (label!=NULL) {
-#if GTK_CHECK_VERSION(3,0,0)
-    lives_signal_connect_after (LIVES_GUI_OBJECT (combo), "state_flags_changed",
+    lives_signal_connect_after (LIVES_GUI_OBJECT (combo), LIVES_WIDGET_STATE_CHANGED_SIGNAL,
 			    LIVES_GUI_CALLBACK (set_label_state),
 			    label);
-#else
-    lives_signal_connect_after (LIVES_GUI_OBJECT (combo), "state_changed",
-			    LIVES_GUI_CALLBACK (set_label_state),
-			    label);
-#endif
   }
 
 
@@ -7560,15 +7536,9 @@ LiVESWidget *lives_standard_entry_new(const char *labeltext, boolean use_mnemoni
   }
 
   if (label!=NULL) {
-#if GTK_CHECK_VERSION(3,0,0)
-    lives_signal_connect_after (LIVES_GUI_OBJECT (entry), "state_flags_changed",
+    lives_signal_connect_after (LIVES_GUI_OBJECT (entry), LIVES_WIDGET_STATE_CHANGED_SIGNAL,
 			    LIVES_GUI_CALLBACK (set_label_state),
 			    label);
-#else
-    lives_signal_connect_after (LIVES_GUI_OBJECT (entry), "state_changed",
-			    LIVES_GUI_CALLBACK (set_label_state),
-			    label);
-#endif
   }
 
 
@@ -7614,7 +7584,7 @@ LiVESWidget *lives_standard_dialog_new(const char *title, boolean add_std_button
 
     lives_dialog_add_action_widget (LIVES_DIALOG (dialog), cancelbutton, LIVES_RESPONSE_CANCEL);
 
-    lives_widget_add_accelerator (cancelbutton, LIVES_WIDGET_CLICKED_EVENT, accel_group,
+    lives_widget_add_accelerator (cancelbutton, LIVES_WIDGET_CLICKED_SIGNAL, accel_group,
 				LIVES_KEY_Escape, (LiVESXModifierType)0, (LiVESAccelFlags)0);
 
     lives_widget_set_can_focus_and_default(cancelbutton);

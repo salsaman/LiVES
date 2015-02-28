@@ -275,7 +275,6 @@ install-exec-local:
 	cp -f "$(top_srcdir)/tools/liblives-compile" "$(DESTDIR)$(libexecdir)/$(PACKAGE)/" && \
 	chmod a+rx "$(DESTDIR)$(libexecdir)/$(PACKAGE)/liblives-compile"
 	$(MKDIR_P) "$(DESTDIR)$(includedir)/liblives/"
-	cp -f "$(srcdir)/osc_notify.h" "$(DESTDIR)$(includedir)/liblives/"
 	cp -f "$(srcdir)/liblives.hpp" "$(DESTDIR)$(includedir)/liblives/"
 
 uninstall-local:

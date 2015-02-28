@@ -1079,7 +1079,7 @@ _vppaw *on_vpp_advanced_clicked (LiVESButton *button, livespointer user_data) {
   lives_dialog_add_action_widget (LIVES_DIALOG (vppa->dialog), cancelbutton, LIVES_RESPONSE_CANCEL);
   lives_widget_set_can_focus (cancelbutton,TRUE);
 
-  lives_widget_add_accelerator (cancelbutton, LIVES_WIDGET_CLICKED_EVENT, accel_group,
+  lives_widget_add_accelerator (cancelbutton, LIVES_WIDGET_CLICKED_SIGNAL, accel_group,
                               LIVES_KEY_Escape, (LiVESXModifierType)0, (LiVESAccelFlags)0);
 
 
@@ -1092,15 +1092,15 @@ _vppaw *on_vpp_advanced_clicked (LiVESButton *button, livespointer user_data) {
   lives_dialog_add_action_widget (LIVES_DIALOG (vppa->dialog), okbutton, LIVES_RESPONSE_OK);
   lives_widget_set_can_focus_and_default (okbutton);
 
-  lives_signal_connect (LIVES_GUI_OBJECT (cancelbutton), LIVES_WIDGET_CLICKED_EVENT,
+  lives_signal_connect (LIVES_GUI_OBJECT (cancelbutton), LIVES_WIDGET_CLICKED_SIGNAL,
 		    LIVES_GUI_CALLBACK (on_vppa_cancel_clicked),
 		    vppa);
 
-  lives_signal_connect (LIVES_GUI_OBJECT (savebutton), LIVES_WIDGET_CLICKED_EVENT,
+  lives_signal_connect (LIVES_GUI_OBJECT (savebutton), LIVES_WIDGET_CLICKED_SIGNAL,
 		    LIVES_GUI_CALLBACK (on_vppa_save_clicked),
 		    vppa);
 
-  lives_signal_connect (LIVES_GUI_OBJECT (okbutton), LIVES_WIDGET_CLICKED_EVENT,
+  lives_signal_connect (LIVES_GUI_OBJECT (okbutton), LIVES_WIDGET_CLICKED_SIGNAL,
 		    LIVES_GUI_CALLBACK (on_vppa_ok_clicked),
 		    vppa);
 
@@ -2682,7 +2682,7 @@ void on_decplug_advanced_clicked (LiVESButton *button, livespointer user_data) {
     lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(checkbutton),
 				 lives_list_strcmp_index(future_prefs->disabled_decoders,dpsys->name)==-1);
 
-    lives_signal_connect_after (LIVES_GUI_OBJECT (checkbutton), LIVES_WIDGET_TOGGLED_EVENT,
+    lives_signal_connect_after (LIVES_GUI_OBJECT (checkbutton), LIVES_WIDGET_TOGGLED_SIGNAL,
 			    LIVES_GUI_CALLBACK (on_dpa_cb_toggled),
 			    dpsys->name);
 
@@ -2697,11 +2697,11 @@ void on_decplug_advanced_clicked (LiVESButton *button, livespointer user_data) {
   lives_dialog_add_action_widget (LIVES_DIALOG (dialog), okbutton, LIVES_RESPONSE_OK);
   lives_widget_set_can_focus_and_default (okbutton);
 
-  lives_signal_connect (LIVES_GUI_OBJECT (cancelbutton), LIVES_WIDGET_CLICKED_EVENT,
+  lives_signal_connect (LIVES_GUI_OBJECT (cancelbutton), LIVES_WIDGET_CLICKED_SIGNAL,
 		    LIVES_GUI_CALLBACK (dpa_cancel_clicked),
 		    NULL);
 
-  lives_signal_connect (LIVES_GUI_OBJECT (okbutton), LIVES_WIDGET_CLICKED_EVENT,
+  lives_signal_connect (LIVES_GUI_OBJECT (okbutton), LIVES_WIDGET_CLICKED_SIGNAL,
 		    LIVES_GUI_CALLBACK (dpa_ok_clicked),
 		    NULL);
 

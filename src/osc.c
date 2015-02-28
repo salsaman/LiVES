@@ -243,8 +243,15 @@ static const char *get_omc_const(const char *cname) {
   if (!strcmp(cname,"LIVES_LOOP_CONT")) return "1";
 
   // interface modes
-  if (!strcmp(cname,"LIVES_MODE_CLIPEDIT")) return "0";
-  if (!strcmp(cname,"LIVES_MODE_MULTITRACK")) return "1";
+  if (!strcmp(cname,"LIVES_INTERFACE_MODE_CLIPEDIT")) return "0";
+  if (!strcmp(cname,"LIVES_INTERFACE_MODE_MULTITRACK")) return "1";
+
+  // status
+  if (!strcmp(cname,"LIVES_STATUS_NOTREADY")) return "0";
+  if (!strcmp(cname,"LIVES_STATUS_READY")) return "1";
+  if (!strcmp(cname,"LIVES_STATUS_PLAYING")) return "2";
+  if (!strcmp(cname,"LIVES_STATUS_PROCESSING")) return "3";
+  if (!strcmp(cname,"LIVES_STATUS_PREVIEW")) return "4";
 
   // parameter types
   if (!strcmp(cname,"LIVES_PARAM_TYPE_INTEGER")) 
@@ -1675,7 +1682,7 @@ boolean lives_osc_cb_quit(void *context, int arglen, const void *vargs, OSCTimeT
     on_save_set_activate(NULL,mainw->set_name);
   }
   else mainw->leave_files=FALSE;
-  lives_exit();
+  lives_exit(0);
   return TRUE;
 }
 
@@ -1687,6 +1694,15 @@ boolean lives_osc_cb_getname(void *context, int arglen, const void *vargs, OSCTi
 
 boolean lives_osc_cb_getversion(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
   lives_status_send (VERSION);
+  return TRUE;
+}
+
+boolean lives_osc_cb_getstatus(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
+  if (!mainw->is_ready) lives_status_send(get_omc_const("LIVES_STATUS_NOTREADY"));
+  if (mainw->playing_file > -1) lives_status_send(get_omc_const("LIVES_STATUS_PLAYING"));
+  if (mainw->is_processing) lives_status_send(get_omc_const("LIVES_STATUS_PROCESSING"));
+  if (mainw->preview) lives_status_send(get_omc_const("LIVES_STATUS_PREVIEW"));
+  lives_status_send(get_omc_const("LIVES_STATUS_READY"));
   return TRUE;
 }
 
@@ -6334,7 +6350,7 @@ boolean lives_osc_cb_loadset(void *context, int arglen, const void *vargs, OSCTi
 
   lives_snprintf(mainw->set_name,128,"%s",setname);
 
-  on_load_set_ok(NULL,LIVES_INT_TO_POINTER((int)FALSE));
+  on_load_set_ok();
   return lives_osc_notify_success(NULL);
 
 }
@@ -6540,6 +6556,7 @@ static struct
     { "/clip/background/previous",		"previous",	(osc_cb)lives_osc_cb_bgclip_select_previous,			48	},
     { "/lives/quit",	         "quit",	        (osc_cb)lives_osc_cb_quit,			21	},
     { "/lives/version/get",	         "get",	        (osc_cb)lives_osc_cb_getversion,			24	},
+    { "/lives/status/get",	         "get",	        (osc_cb)lives_osc_cb_getstatus,			122	},
     { "/lives/constant/value/get",	         "get",	        (osc_cb)lives_osc_cb_getconst,			121	},
     { "/app/quit",	         "quit",	           (osc_cb)lives_osc_cb_quit,			22	},
     { "/app/name",	         "name",	           (osc_cb)lives_osc_cb_getname,			22	},
@@ -6697,6 +6714,7 @@ static struct
     {	"/lives/" , 		"lives",	 21, -1,0	},
     {	"/lives/version/" , 		"version",	 24, 21,0	},
     {	"/lives/mode/" , 		"mode",	 103, 21,0	},
+    {	"/lives/status/" , 		"status",	 122, 21,0	},
     {	"/lives/constant/" , 		"constant",	 120, 21,0	},
     {	"/lives/constant/value/" , 		"value",	 121, 120,0	},
     {	"/clipset/" , 		"clipset",	 35, -1,0	},

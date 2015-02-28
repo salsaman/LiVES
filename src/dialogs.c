@@ -116,7 +116,7 @@ void add_warn_check (LiVESBox *box, int warn_mask_number) {
 
   lives_widget_show_all(hbox);
  
-  lives_signal_connect (LIVES_GUI_OBJECT (checkbutton), LIVES_WIDGET_TOGGLED_EVENT,
+  lives_signal_connect (LIVES_GUI_OBJECT (checkbutton), LIVES_WIDGET_TOGGLED_SIGNAL,
 		    LIVES_GUI_CALLBACK (on_warn_mask_toggled),
                       LIVES_INT_TO_POINTER(warn_mask_number));
 }
@@ -128,7 +128,7 @@ static void add_clear_ds_button(LiVESDialog* dialog) {
   lives_button_set_label(LIVES_BUTTON(button),_("_Recover disk space"));
   if (mainw->tried_ds_recover) lives_widget_set_sensitive(button,FALSE);
 
-  lives_signal_connect (LIVES_GUI_OBJECT (button), LIVES_WIDGET_CLICKED_EVENT,
+  lives_signal_connect (LIVES_GUI_OBJECT (button), LIVES_WIDGET_CLICKED_SIGNAL,
 		    LIVES_GUI_CALLBACK (on_cleardisk_activate),
 		    (livespointer)button);
 
@@ -148,7 +148,7 @@ static void add_clear_ds_adv(LiVESBox *box) {
 
   lives_widget_show_all(hbox);
 
-  lives_signal_connect (LIVES_GUI_OBJECT (button), LIVES_WIDGET_CLICKED_EVENT,
+  lives_signal_connect (LIVES_GUI_OBJECT (button), LIVES_WIDGET_CLICKED_SIGNAL,
 		    LIVES_GUI_CALLBACK (on_cleardisk_advanced_clicked),
 		    NULL);
 
@@ -184,7 +184,7 @@ LiVESWidget* create_message_dialog (lives_dialog_t diat, const gchar *text, LiVE
     lives_window_set_title (LIVES_WINDOW (dialog), _("LiVES: - Warning !"));
     okbutton = lives_button_new_from_stock (LIVES_STOCK_OK);
     lives_dialog_add_action_widget (LIVES_DIALOG (dialog), okbutton, LIVES_RESPONSE_OK);
-    lives_signal_connect (LIVES_GUI_OBJECT (okbutton), LIVES_WIDGET_CLICKED_EVENT,
+    lives_signal_connect (LIVES_GUI_OBJECT (okbutton), LIVES_WIDGET_CLICKED_SIGNAL,
 			  LIVES_GUI_CALLBACK (lives_general_button_clicked),
 			  NULL);
 
@@ -195,7 +195,7 @@ LiVESWidget* create_message_dialog (lives_dialog_t diat, const gchar *text, LiVE
     lives_window_set_title (LIVES_WINDOW (dialog), _("LiVES: - Error !"));
     okbutton = lives_button_new_from_stock (LIVES_STOCK_OK);
     lives_dialog_add_action_widget (LIVES_DIALOG (dialog), okbutton, LIVES_RESPONSE_OK);
-    lives_signal_connect (LIVES_GUI_OBJECT (okbutton), LIVES_WIDGET_CLICKED_EVENT,
+    lives_signal_connect (LIVES_GUI_OBJECT (okbutton), LIVES_WIDGET_CLICKED_SIGNAL,
 			  LIVES_GUI_CALLBACK (lives_general_button_clicked),
 			  NULL);
    break;
@@ -205,7 +205,7 @@ LiVESWidget* create_message_dialog (lives_dialog_t diat, const gchar *text, LiVE
     lives_window_set_title (LIVES_WINDOW (dialog), _("LiVES: - Information"));
     okbutton = lives_button_new_from_stock (LIVES_STOCK_OK);
     lives_dialog_add_action_widget (LIVES_DIALOG (dialog), okbutton, LIVES_RESPONSE_OK);
-    lives_signal_connect (LIVES_GUI_OBJECT (okbutton), LIVES_WIDGET_CLICKED_EVENT,
+    lives_signal_connect (LIVES_GUI_OBJECT (okbutton), LIVES_WIDGET_CLICKED_SIGNAL,
 			  LIVES_GUI_CALLBACK (lives_general_button_clicked),
 			  NULL);
     break;
@@ -307,7 +307,7 @@ LiVESWidget* create_message_dialog (lives_dialog_t diat, const gchar *text, LiVE
     LiVESWidget *details_button = lives_button_new_with_mnemonic(_("Show _Details"));
     lives_dialog_add_action_widget (LIVES_DIALOG (dialog), details_button, LIVES_RESPONSE_SHOW_DETAILS);
 
-    lives_signal_connect (LIVES_GUI_OBJECT (details_button), LIVES_WIDGET_CLICKED_EVENT,
+    lives_signal_connect (LIVES_GUI_OBJECT (details_button), LIVES_WIDGET_CLICKED_SIGNAL,
 		      LIVES_GUI_CALLBACK (lives_general_button_clicked),
 		      NULL);
   }
@@ -318,11 +318,11 @@ LiVESWidget* create_message_dialog (lives_dialog_t diat, const gchar *text, LiVE
 
   if (cancelbutton != NULL) {
     lives_widget_set_can_focus (cancelbutton,TRUE);
-    lives_widget_add_accelerator (cancelbutton, LIVES_WIDGET_CLICKED_EVENT, accel_group,
+    lives_widget_add_accelerator (cancelbutton, LIVES_WIDGET_CLICKED_SIGNAL, accel_group,
 				  LIVES_KEY_Escape, (LiVESXModifierType)0, (LiVESAccelFlags)0);
   }
 
-  lives_widget_add_accelerator (okbutton, LIVES_WIDGET_CLICKED_EVENT, accel_group,
+  lives_widget_add_accelerator (okbutton, LIVES_WIDGET_CLICKED_SIGNAL, accel_group,
 			      LIVES_KEY_Return, (LiVESXModifierType)0, (LiVESAccelFlags)0);
 
   if (mainw->iochan==NULL) {
@@ -961,7 +961,7 @@ static void cancel_process(boolean visible) {
     if (accelerators_swapped) {
       if (!mainw->preview) lives_widget_set_tooltip_text( mainw->m_playbutton,_ ("Play all"));
       lives_widget_remove_accelerator (cfile->proc_ptr->preview_button, mainw->accel_group, LIVES_KEY_p, (LiVESXModifierType)0);
-      lives_widget_add_accelerator (mainw->playall, LIVES_WIDGET_ACTIVATE_EVENT, mainw->accel_group, LIVES_KEY_p, (LiVESXModifierType)0, 
+      lives_widget_add_accelerator (mainw->playall, LIVES_WIDGET_ACTIVATE_SIGNAL, mainw->accel_group, LIVES_KEY_p, (LiVESXModifierType)0, 
 				  LIVES_ACCEL_VISIBLE);
     }
     if (cfile->proc_ptr!=NULL) {
@@ -1540,6 +1540,12 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const gchar *te
       lives_widget_show (cfile->proc_ptr->cancel_button);
     }
 
+    if (!mainw->interactive) {
+      lives_widget_set_sensitive(cfile->proc_ptr->cancel_button,FALSE);
+      lives_widget_set_sensitive(cfile->proc_ptr->stop_button,FALSE);
+      lives_widget_set_sensitive(cfile->proc_ptr->pause_button,FALSE);
+      lives_widget_set_sensitive(cfile->proc_ptr->preview_button,FALSE);
+    }
 
     // if we have virtual frames make sure the first FX_FRAME_PUMP_VAL are decoded for the backend
     // as we are processing we will continue to decode 1 frame in time with the backend
@@ -1580,7 +1586,7 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const gchar *te
       if (mainw->preview_box!=NULL) lives_widget_set_tooltip_text( mainw->p_playbutton,_ ("Preview"));
       lives_widget_set_tooltip_text( mainw->m_playbutton,_ ("Preview"));
       lives_widget_remove_accelerator (mainw->playall, mainw->accel_group, LIVES_KEY_p, (LiVESXModifierType)0);
-      lives_widget_add_accelerator (cfile->proc_ptr->preview_button, LIVES_WIDGET_CLICKED_EVENT, mainw->accel_group, LIVES_KEY_p,
+      lives_widget_add_accelerator (cfile->proc_ptr->preview_button, LIVES_WIDGET_CLICKED_SIGNAL, mainw->accel_group, LIVES_KEY_p,
 				  (LiVESXModifierType)0, (LiVESAccelFlags)0);
       accelerators_swapped=TRUE;
     }
@@ -1812,7 +1818,7 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const gchar *te
 	if (mainw->preview_box!=NULL) lives_widget_set_tooltip_text( mainw->p_playbutton,_ ("Preview"));
 	lives_widget_set_tooltip_text( mainw->m_playbutton,_ ("Preview"));
 	lives_widget_remove_accelerator (mainw->playall, mainw->accel_group, LIVES_KEY_p, (LiVESXModifierType)0);
-	lives_widget_add_accelerator (cfile->proc_ptr->preview_button, LIVES_WIDGET_CLICKED_EVENT, mainw->accel_group, LIVES_KEY_p,
+	lives_widget_add_accelerator (cfile->proc_ptr->preview_button, LIVES_WIDGET_CLICKED_SIGNAL, mainw->accel_group, LIVES_KEY_p,
 				    (LiVESXModifierType)0, (LiVESAccelFlags)0);
 	accelerators_swapped=TRUE;
       }
@@ -1884,7 +1890,7 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const gchar *te
     if (accelerators_swapped) {
       if (!mainw->preview) lives_widget_set_tooltip_text( mainw->m_playbutton,_ ("Play all"));
       lives_widget_remove_accelerator (cfile->proc_ptr->preview_button, mainw->accel_group, LIVES_KEY_p, (LiVESXModifierType)0);
-      lives_widget_add_accelerator (mainw->playall, LIVES_WIDGET_ACTIVATE_EVENT, mainw->accel_group, LIVES_KEY_p, (LiVESXModifierType)0,
+      lives_widget_add_accelerator (mainw->playall, LIVES_WIDGET_ACTIVATE_SIGNAL, mainw->accel_group, LIVES_KEY_p, (LiVESXModifierType)0,
 				  LIVES_ACCEL_VISIBLE);
       accelerators_swapped=FALSE;
     }
@@ -2653,7 +2659,7 @@ static void create_threaded_dialog(gchar *text, boolean has_cancel) {
       lives_dialog_add_action_widget (LIVES_DIALOG (procw->processing), enoughbutton, LIVES_RESPONSE_CANCEL);
       lives_widget_set_can_focus_and_default (enoughbutton);
 
-      lives_signal_connect (LIVES_GUI_OBJECT (enoughbutton), LIVES_WIDGET_CLICKED_EVENT,
+      lives_signal_connect (LIVES_GUI_OBJECT (enoughbutton), LIVES_WIDGET_CLICKED_SIGNAL,
 			LIVES_GUI_CALLBACK (on_dth_cancel_clicked),
 			LIVES_INT_TO_POINTER(1));
       
@@ -2663,7 +2669,7 @@ static void create_threaded_dialog(gchar *text, boolean has_cancel) {
     lives_dialog_add_action_widget (LIVES_DIALOG (procw->processing), cancelbutton, LIVES_RESPONSE_CANCEL);
     lives_widget_set_can_focus_and_default (cancelbutton);
 
-    lives_signal_connect (LIVES_GUI_OBJECT (cancelbutton), LIVES_WIDGET_CLICKED_EVENT,
+    lives_signal_connect (LIVES_GUI_OBJECT (cancelbutton), LIVES_WIDGET_CLICKED_SIGNAL,
                       LIVES_GUI_CALLBACK (on_dth_cancel_clicked),
                       LIVES_INT_TO_POINTER(0));
 
@@ -2718,13 +2724,17 @@ void *splash_prog (void) {
 
 
  
-void do_threaded_dialog(gchar *trans_text, boolean has_cancel) {
+void do_threaded_dialog(char *trans_text, boolean has_cancel) {
   // calling this causes a threaded progress dialog to appear
   // until end_threaded_dialog() is called
   //
   // WARNING: if trans_text is a translated string, it will be automatically freed by translations inside this function
 
-  gchar *copy_text=lives_strdup(trans_text);
+  char *copy_text;
+
+  if (mainw->threaded_dialog) return;
+
+  copy_text=lives_strdup(trans_text);
 
   lives_set_cursor_style(LIVES_CURSOR_BUSY,NULL);
 

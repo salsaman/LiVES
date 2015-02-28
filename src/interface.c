@@ -37,7 +37,7 @@ void add_suffix_check(LiVESBox *box, const gchar *ext) {
   checkbutton=lives_standard_check_button_new(ltext,TRUE,box,NULL);
   lives_free(ltext);
   lives_toggle_button_set_active (LIVES_TOGGLE_BUTTON (checkbutton), mainw->fx1_bool);
-  lives_signal_connect_after (LIVES_GUI_OBJECT (checkbutton), LIVES_WIDGET_TOGGLED_EVENT,
+  lives_signal_connect_after (LIVES_GUI_OBJECT (checkbutton), LIVES_WIDGET_TOGGLED_SIGNAL,
 			  LIVES_GUI_CALLBACK (on_boolean_toggled),
 			  &mainw->fx1_bool);
   
@@ -60,7 +60,7 @@ static LiVESWidget *add_deinterlace_checkbox(LiVESBox *for_deint) {
 
   lives_widget_set_can_focus_and_default (checkbutton);
   lives_toggle_button_set_active (LIVES_TOGGLE_BUTTON (checkbutton), mainw->open_deint);
-  lives_signal_connect_after (LIVES_GUI_OBJECT (checkbutton), LIVES_WIDGET_TOGGLED_EVENT,
+  lives_signal_connect_after (LIVES_GUI_OBJECT (checkbutton), LIVES_WIDGET_TOGGLED_SIGNAL,
 			  LIVES_GUI_CALLBACK (on_boolean_toggled),
 			  &mainw->open_deint);
   lives_widget_set_tooltip_text( checkbutton,_("If this is set, frames will be deinterlaced as they are imported."));
@@ -138,14 +138,14 @@ void widget_add_preview(LiVESWidget *widget, LiVESBox *for_preview, LiVESBox *fo
      add_deinterlace_checkbox(for_deint);
   }
 
-  lives_signal_connect (LIVES_GUI_OBJECT (preview_button), LIVES_WIDGET_CLICKED_EVENT,
+  lives_signal_connect (LIVES_GUI_OBJECT (preview_button), LIVES_WIDGET_CLICKED_SIGNAL,
   LIVES_GUI_CALLBACK (on_fs_preview_clicked),
   LIVES_INT_TO_POINTER (preview_type));
 
   if (LIVES_IS_FILE_CHOOSER(widget)) {
     lives_widget_set_sensitive(preview_button,FALSE);
     
-    lives_signal_connect (LIVES_GUI_OBJECT (widget), LIVES_WIDGET_SELECTION_CHANGED_EVENT,
+    lives_signal_connect (LIVES_GUI_OBJECT (widget), LIVES_WIDGET_SELECTION_CHANGED_SIGNAL,
     		      LIVES_GUI_CALLBACK (pv_sel_changed),
     		      (livespointer)preview_button);
   }
@@ -276,29 +276,29 @@ xprocess * create_processing (const gchar *text) {
   lives_dialog_add_action_widget (LIVES_DIALOG (procw->processing), procw->cancel_button, LIVES_RESPONSE_CANCEL);
   lives_widget_set_can_focus_and_default (procw->cancel_button);
 
-  lives_widget_add_accelerator (procw->cancel_button, LIVES_WIDGET_CLICKED_EVENT, accel_group,
+  lives_widget_add_accelerator (procw->cancel_button, LIVES_WIDGET_CLICKED_SIGNAL, accel_group,
                               LIVES_KEY_Escape, (LiVESXModifierType)0, (LiVESAccelFlags)0);
 
-  lives_signal_connect (LIVES_GUI_OBJECT (procw->stop_button), LIVES_WIDGET_CLICKED_EVENT,
+  lives_signal_connect (LIVES_GUI_OBJECT (procw->stop_button), LIVES_WIDGET_CLICKED_SIGNAL,
 		    LIVES_GUI_CALLBACK (on_stop_clicked),
 		    NULL);
 
-  lives_signal_connect (LIVES_GUI_OBJECT (procw->pause_button), LIVES_WIDGET_CLICKED_EVENT,
+  lives_signal_connect (LIVES_GUI_OBJECT (procw->pause_button), LIVES_WIDGET_CLICKED_SIGNAL,
                       LIVES_GUI_CALLBACK (on_effects_paused),
                       NULL);
 
   if (mainw->multitrack!=NULL&&mainw->multitrack->is_rendering) {
-    lives_signal_connect (LIVES_GUI_OBJECT (procw->preview_button), LIVES_WIDGET_CLICKED_EVENT,
+    lives_signal_connect (LIVES_GUI_OBJECT (procw->preview_button), LIVES_WIDGET_CLICKED_SIGNAL,
                       LIVES_GUI_CALLBACK (multitrack_preview_clicked),
                       mainw->multitrack);
   }
   else {
-    lives_signal_connect (LIVES_GUI_OBJECT (procw->preview_button), LIVES_WIDGET_CLICKED_EVENT,
+    lives_signal_connect (LIVES_GUI_OBJECT (procw->preview_button), LIVES_WIDGET_CLICKED_SIGNAL,
                       LIVES_GUI_CALLBACK (on_preview_clicked),
                       NULL);
   }
 
-  lives_signal_connect (LIVES_GUI_OBJECT (procw->cancel_button), LIVES_WIDGET_CLICKED_EVENT,
+  lives_signal_connect (LIVES_GUI_OBJECT (procw->cancel_button), LIVES_WIDGET_CLICKED_SIGNAL,
                       LIVES_GUI_CALLBACK (on_cancel_keep_button_clicked),
                       NULL);
 
@@ -563,14 +563,14 @@ lives_clipinfo_t *create_clip_info_window (int audio_channels, boolean is_mt) {
 
   lives_widget_set_size_request(okbutton,DEF_BUTTON_WIDTH*4,-1);
 
-  lives_signal_connect (LIVES_GUI_OBJECT (okbutton), LIVES_WIDGET_CLICKED_EVENT,
+  lives_signal_connect (LIVES_GUI_OBJECT (okbutton), LIVES_WIDGET_CLICKED_SIGNAL,
                       LIVES_GUI_CALLBACK (lives_general_button_clicked),
                       filew);
 
   accel_group = LIVES_ACCEL_GROUP(lives_accel_group_new ());
   lives_window_add_accel_group (LIVES_WINDOW (filew->dialog), accel_group);
 
-  lives_widget_add_accelerator (okbutton, LIVES_WIDGET_CLICKED_EVENT, accel_group,
+  lives_widget_add_accelerator (okbutton, LIVES_WIDGET_CLICKED_SIGNAL, accel_group,
                               LIVES_KEY_Escape, (LiVESXModifierType)0, (LiVESAccelFlags)0);
 
 
@@ -633,7 +633,7 @@ LiVESWidget* create_encoder_prep_dialog (const gchar *text1, const gchar *text2,
 
     lives_free(labeltext);
     
-    lives_signal_connect_after (LIVES_GUI_OBJECT (checkbutton), LIVES_WIDGET_TOGGLED_EVENT,
+    lives_signal_connect_after (LIVES_GUI_OBJECT (checkbutton), LIVES_WIDGET_TOGGLED_SIGNAL,
 			    LIVES_GUI_CALLBACK (on_boolean_toggled),
 			    &mainw->fx1_bool);
 
@@ -660,12 +660,12 @@ LiVESWidget* create_encoder_prep_dialog (const gchar *text1, const gchar *text2,
     }
     else lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(checkbutton2),prefs->enc_letterbox);
     
-    lives_signal_connect_after (LIVES_GUI_OBJECT (checkbutton2), LIVES_WIDGET_TOGGLED_EVENT,
+    lives_signal_connect_after (LIVES_GUI_OBJECT (checkbutton2), LIVES_WIDGET_TOGGLED_SIGNAL,
 			    LIVES_GUI_CALLBACK (on_boolean_toggled),
 			    &prefs->enc_letterbox);
 
     if (opt_resize) 
-      lives_signal_connect_after (LIVES_GUI_OBJECT (checkbutton), LIVES_WIDGET_TOGGLED_EVENT,
+      lives_signal_connect_after (LIVES_GUI_OBJECT (checkbutton), LIVES_WIDGET_TOGGLED_SIGNAL,
 			      LIVES_GUI_CALLBACK (on_resizecb_toggled),
 			      checkbutton2);
 
@@ -779,11 +779,11 @@ text_window *create_text_window (const gchar *title, const gchar *text, LiVESTex
     lives_dialog_add_action_widget (LIVES_DIALOG (textwindow->dialog), savebutton, LIVES_RESPONSE_YES);
     lives_dialog_add_action_widget (LIVES_DIALOG (textwindow->dialog), okbutton, LIVES_RESPONSE_OK);
     
-    lives_signal_connect (LIVES_GUI_OBJECT (savebutton), LIVES_WIDGET_CLICKED_EVENT,
+    lives_signal_connect (LIVES_GUI_OBJECT (savebutton), LIVES_WIDGET_CLICKED_SIGNAL,
 		      LIVES_GUI_CALLBACK (on_save_textview_clicked),
 		      textwindow->textview);
     
-    lives_signal_connect (LIVES_GUI_OBJECT (okbutton), LIVES_WIDGET_CLICKED_EVENT,
+    lives_signal_connect (LIVES_GUI_OBJECT (okbutton), LIVES_WIDGET_CLICKED_SIGNAL,
 		      LIVES_GUI_CALLBACK (lives_general_button_clicked),
 		      textwindow);
     
@@ -940,29 +940,29 @@ _insertw* create_insert_dialog (void) {
   lives_widget_grab_default(okbutton);
   lives_widget_grab_focus(okbutton);
 
-  lives_signal_connect (LIVES_GUI_OBJECT (insertw->with_sound), LIVES_WIDGET_TOGGLED_EVENT,
+  lives_signal_connect (LIVES_GUI_OBJECT (insertw->with_sound), LIVES_WIDGET_TOGGLED_SIGNAL,
 		    LIVES_GUI_CALLBACK (on_insertwsound_toggled),
 		    NULL);
-  lives_signal_connect (LIVES_GUI_OBJECT (radiobutton), LIVES_WIDGET_TOGGLED_EVENT,
+  lives_signal_connect (LIVES_GUI_OBJECT (radiobutton), LIVES_WIDGET_TOGGLED_SIGNAL,
 		    LIVES_GUI_CALLBACK (on_boolean_toggled),
 		    &mainw->insert_after);
-  lives_signal_connect (LIVES_GUI_OBJECT (cancelbutton), LIVES_WIDGET_CLICKED_EVENT,
+  lives_signal_connect (LIVES_GUI_OBJECT (cancelbutton), LIVES_WIDGET_CLICKED_SIGNAL,
 		    LIVES_GUI_CALLBACK (lives_general_button_clicked),
 		    insertw);
-  lives_signal_connect (LIVES_GUI_OBJECT (okbutton), LIVES_WIDGET_CLICKED_EVENT,
+  lives_signal_connect (LIVES_GUI_OBJECT (okbutton), LIVES_WIDGET_CLICKED_SIGNAL,
 		    LIVES_GUI_CALLBACK (on_insert_activate),
 		    NULL);
-  lives_signal_connect (LIVES_GUI_OBJECT (insertw->fit_checkbutton), LIVES_WIDGET_TOGGLED_EVENT,
+  lives_signal_connect (LIVES_GUI_OBJECT (insertw->fit_checkbutton), LIVES_WIDGET_TOGGLED_SIGNAL,
 		    LIVES_GUI_CALLBACK (on_insfitaudio_toggled),
 		    NULL);
-  lives_signal_connect_after (LIVES_GUI_OBJECT (insertw->spinbutton_times), LIVES_WIDGET_VALUE_CHANGED_EVENT,
+  lives_signal_connect_after (LIVES_GUI_OBJECT (insertw->spinbutton_times), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
 			  LIVES_GUI_CALLBACK (on_spin_value_changed),
 			  LIVES_INT_TO_POINTER (1));
 
-  lives_widget_add_accelerator (cancelbutton, LIVES_WIDGET_CLICKED_EVENT, accel_group,
+  lives_widget_add_accelerator (cancelbutton, LIVES_WIDGET_CLICKED_SIGNAL, accel_group,
                               LIVES_KEY_Escape,  (LiVESXModifierType)0, (LiVESAccelFlags)0);
 
-  lives_widget_add_accelerator (okbutton, LIVES_WIDGET_CLICKED_EVENT, accel_group,
+  lives_widget_add_accelerator (okbutton, LIVES_WIDGET_CLICKED_SIGNAL, accel_group,
                               LIVES_KEY_Return,  (LiVESXModifierType)0, (LiVESAccelFlags)0);
 
   lives_widget_show_all(insertw->insert_dialog);
@@ -1021,7 +1021,7 @@ LiVESWidget *create_opensel_dialog (void) {
 
   spinbutton = lives_standard_spin_button_new (NULL, FALSE, 0., 0., 1000000000., 1., 10., 2, NULL, NULL);
 
-  lives_signal_connect_after (LIVES_GUI_OBJECT (spinbutton), LIVES_WIDGET_VALUE_CHANGED_EVENT,
+  lives_signal_connect_after (LIVES_GUI_OBJECT (spinbutton), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
                             LIVES_GUI_CALLBACK (on_spin_value_changed),
                             LIVES_INT_TO_POINTER (1));
 
@@ -1032,7 +1032,7 @@ LiVESWidget *create_opensel_dialog (void) {
 
   spinbutton = lives_standard_spin_button_new (NULL,FALSE,1000.,1.,(double)LIVES_MAXINT, 1., 10., 0, NULL, NULL);
 
-  lives_signal_connect_after (LIVES_GUI_OBJECT (spinbutton), LIVES_WIDGET_VALUE_CHANGED_EVENT,
+  lives_signal_connect_after (LIVES_GUI_OBJECT (spinbutton), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
 			  LIVES_GUI_CALLBACK (on_spin_value_changed),
 			  LIVES_INT_TO_POINTER (2));
 
@@ -1053,11 +1053,11 @@ LiVESWidget *create_opensel_dialog (void) {
 
   widget_add_preview (opensel_dialog, LIVES_BOX (dialog_vbox), LIVES_BOX (dialog_vbox), LIVES_BOX(dialog_vbox), LIVES_PREVIEW_TYPE_RANGE);
 
-  lives_signal_connect (LIVES_GUI_OBJECT (cancelbutton), LIVES_WIDGET_CLICKED_EVENT,
+  lives_signal_connect (LIVES_GUI_OBJECT (cancelbutton), LIVES_WIDGET_CLICKED_SIGNAL,
 		    LIVES_GUI_CALLBACK (on_cancel_opensel_clicked),
 		    NULL);
 
-  lives_signal_connect (LIVES_GUI_OBJECT (okbutton), LIVES_WIDGET_CLICKED_EVENT,
+  lives_signal_connect (LIVES_GUI_OBJECT (okbutton), LIVES_WIDGET_CLICKED_SIGNAL,
 		    LIVES_GUI_CALLBACK (on_opensel_range_ok_clicked),
 		    NULL);
 
@@ -1143,7 +1143,7 @@ _entryw* create_location_dialog (int type) {
     
     lives_box_pack_start (LIVES_BOX(dialog_vbox), hbox, FALSE, FALSE, widget_opts.packing_height*2);
     
-    lives_signal_connect (LIVES_GUI_OBJECT (checkbutton), LIVES_WIDGET_TOGGLED_EVENT,
+    lives_signal_connect (LIVES_GUI_OBJECT (checkbutton), LIVES_WIDGET_TOGGLED_SIGNAL,
 		      LIVES_GUI_CALLBACK (on_boolean_toggled),
 		      &prefs->no_bandwidth);
     
@@ -1177,7 +1177,7 @@ _entryw* create_location_dialog (int type) {
     locw->name_entry = lives_standard_entry_new (_("Download _File Name : "),TRUE,"",
 						 74.*widget_opts.scale,PATH_MAX,LIVES_BOX(hbox),NULL);
 
-    lives_signal_connect(buttond, LIVES_WIDGET_CLICKED_EVENT, LIVES_GUI_CALLBACK (on_filesel_button_clicked), (livespointer)locw->dir_entry);
+    lives_signal_connect(buttond, LIVES_WIDGET_CLICKED_SIGNAL, LIVES_GUI_CALLBACK (on_filesel_button_clicked), (livespointer)locw->dir_entry);
 
     label=lives_standard_label_new (_(".webm"));
 
@@ -1202,22 +1202,22 @@ _entryw* create_location_dialog (int type) {
   lives_widget_grab_default (okbutton);
 
 
-  lives_signal_connect (LIVES_GUI_OBJECT (cancelbutton), LIVES_WIDGET_CLICKED_EVENT,
+  lives_signal_connect (LIVES_GUI_OBJECT (cancelbutton), LIVES_WIDGET_CLICKED_SIGNAL,
 		    LIVES_GUI_CALLBACK (lives_general_button_clicked),
 		    locw);
 
   if (type==1) 
-    lives_signal_connect (LIVES_GUI_OBJECT (okbutton), LIVES_WIDGET_CLICKED_EVENT,
+    lives_signal_connect (LIVES_GUI_OBJECT (okbutton), LIVES_WIDGET_CLICKED_SIGNAL,
 		      LIVES_GUI_CALLBACK (on_location_select),
 		      NULL);
 
   else if (type==2) 
-    lives_signal_connect (LIVES_GUI_OBJECT (okbutton), LIVES_WIDGET_CLICKED_EVENT,
+    lives_signal_connect (LIVES_GUI_OBJECT (okbutton), LIVES_WIDGET_CLICKED_SIGNAL,
 		      LIVES_GUI_CALLBACK (on_utube_select),
 		      NULL);
 
 
-  lives_widget_add_accelerator (cancelbutton, LIVES_WIDGET_CLICKED_EVENT, accel_group,
+  lives_widget_add_accelerator (cancelbutton, LIVES_WIDGET_CLICKED_SIGNAL, accel_group,
                               LIVES_KEY_Escape, (LiVESXModifierType)0, (LiVESAccelFlags)0);
 
   lives_widget_show_all(locw->dialog);
@@ -1382,7 +1382,7 @@ _entryw* create_rename_dialog (int type) {
     lives_container_add (LIVES_CONTAINER (dirbutton1), dirimage1);
 
     lives_box_pack_start (LIVES_BOX (hbox), dirbutton1, FALSE, TRUE, widget_opts.packing_width);
-    lives_signal_connect(dirbutton1, LIVES_WIDGET_CLICKED_EVENT, LIVES_GUI_CALLBACK (on_filesel_complex_clicked),renamew->entry);
+    lives_signal_connect(dirbutton1, LIVES_WIDGET_CLICKED_SIGNAL, LIVES_GUI_CALLBACK (on_filesel_complex_clicked),renamew->entry);
 
   }
 
@@ -1399,7 +1399,7 @@ _entryw* create_rename_dialog (int type) {
   lives_dialog_add_action_widget (LIVES_DIALOG (renamew->dialog), cancelbutton, LIVES_RESPONSE_CANCEL);
   lives_widget_set_can_focus_and_default (cancelbutton);
 
-  lives_widget_add_accelerator (cancelbutton, LIVES_WIDGET_CLICKED_EVENT, accel_group,
+  lives_widget_add_accelerator (cancelbutton, LIVES_WIDGET_CLICKED_SIGNAL, accel_group,
 			      LIVES_KEY_Escape, (LiVESXModifierType)0, (LiVESAccelFlags)0);
 
   if (type==6) {
@@ -1412,25 +1412,19 @@ _entryw* create_rename_dialog (int type) {
   lives_widget_set_can_focus_and_default (okbutton);
   lives_widget_grab_default (okbutton);
 
-  if (type!=4&&type!=2&&type!=5) {
-    lives_signal_connect (LIVES_GUI_OBJECT (cancelbutton), LIVES_WIDGET_CLICKED_EVENT,
+  if (type!=4&&type!=2&&type!=5&&type!=3) {
+    lives_signal_connect (LIVES_GUI_OBJECT (cancelbutton), LIVES_WIDGET_CLICKED_SIGNAL,
 		      LIVES_GUI_CALLBACK (lives_general_button_clicked),
 		      renamew);
   }
 
   if (type==1) {
-    lives_signal_connect (LIVES_GUI_OBJECT (okbutton), LIVES_WIDGET_CLICKED_EVENT,
+    lives_signal_connect (LIVES_GUI_OBJECT (okbutton), LIVES_WIDGET_CLICKED_SIGNAL,
 		      LIVES_GUI_CALLBACK (on_rename_set_name),
 		      NULL);
   }
-  else if (type==3) {
-    lives_signal_connect (LIVES_GUI_OBJECT (okbutton), LIVES_WIDGET_CLICKED_EVENT,
-		      LIVES_GUI_CALLBACK (on_load_set_ok),
-		      LIVES_INT_TO_POINTER(FALSE));
-  }
 
-
-  lives_widget_add_accelerator (cancelbutton, LIVES_WIDGET_CLICKED_EVENT, accel_group,
+  lives_widget_add_accelerator (cancelbutton, LIVES_WIDGET_CLICKED_SIGNAL, accel_group,
                               LIVES_KEY_Escape, (LiVESXModifierType)0, (LiVESAccelFlags)0);
 
   lives_widget_show_all(renamew->dialog);
@@ -1536,7 +1530,7 @@ LiVESWidget *create_combo_dialog (int type, livespointer user_data) {
 
   lives_combo_set_active_index(LIVES_COMBO(combo), 0);
 
-  lives_signal_connect_after (LIVES_WIDGET_OBJECT (combo), LIVES_WIDGET_CHANGED_EVENT, LIVES_GUI_CALLBACK (after_dialog_combo_changed), list);
+  lives_signal_connect_after (LIVES_WIDGET_OBJECT (combo), LIVES_WIDGET_CHANGED_SIGNAL, LIVES_GUI_CALLBACK (after_dialog_combo_changed), list);
 
   lives_box_pack_start (LIVES_BOX (dialog_vbox), combo, TRUE, TRUE, widget_opts.packing_height*2);
 
@@ -1656,7 +1650,7 @@ LiVESWidget* create_cdtrack_dialog (int type, livespointer user_data) {
 
   lives_free(label_text);
 
-  lives_signal_connect_after (LIVES_GUI_OBJECT (spinbutton), LIVES_WIDGET_VALUE_CHANGED_EVENT,
+  lives_signal_connect_after (LIVES_GUI_OBJECT (spinbutton), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
 			  LIVES_GUI_CALLBACK (on_spin_value_changed),
 			  LIVES_INT_TO_POINTER (1));
 
@@ -1680,7 +1674,7 @@ LiVESWidget* create_cdtrack_dialog (int type, livespointer user_data) {
 
     }
 
-    lives_signal_connect_after (LIVES_GUI_OBJECT (spinbutton), LIVES_WIDGET_VALUE_CHANGED_EVENT,
+    lives_signal_connect_after (LIVES_GUI_OBJECT (spinbutton), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
 			    LIVES_GUI_CALLBACK (on_spin_value_changed),
 			    LIVES_INT_TO_POINTER (2));
 
@@ -1693,7 +1687,7 @@ LiVESWidget* create_cdtrack_dialog (int type, livespointer user_data) {
 						   128., 159., 1., 1., 0, 
 						   LIVES_BOX(hbox),NULL);
 
-      lives_signal_connect_after (LIVES_GUI_OBJECT (spinbutton), LIVES_WIDGET_VALUE_CHANGED_EVENT,
+      lives_signal_connect_after (LIVES_GUI_OBJECT (spinbutton), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
 			      LIVES_GUI_CALLBACK (on_spin_value_changed),
 			      LIVES_INT_TO_POINTER (3));
 
@@ -1767,7 +1761,7 @@ LiVESWidget* create_cdtrack_dialog (int type, livespointer user_data) {
 							     radiobutton_group,LIVES_BOX(hbox),NULL);
     radiobutton_group = lives_radio_button_get_group (LIVES_RADIO_BUTTON (tvcardw->radiobuttond));
     
-    lives_signal_connect_after (LIVES_GUI_OBJECT (tvcardw->radiobuttond), LIVES_WIDGET_TOGGLED_EVENT,
+    lives_signal_connect_after (LIVES_GUI_OBJECT (tvcardw->radiobuttond), LIVES_WIDGET_TOGGLED_SIGNAL,
 			    LIVES_GUI_CALLBACK (rb_tvcarddef_toggled),
 			    (livespointer)tvcardw);
 
@@ -1806,7 +1800,7 @@ LiVESWidget* create_cdtrack_dialog (int type, livespointer user_data) {
     lives_widget_show_all (hbox);
     lives_box_pack_start (LIVES_BOX (tvcardw->adv_vbox), hbox, TRUE, FALSE, 0);
 
-    lives_signal_connect (LIVES_GUI_OBJECT (tvcardw->advbutton), LIVES_WIDGET_CLICKED_EVENT,
+    lives_signal_connect (LIVES_GUI_OBJECT (tvcardw->advbutton), LIVES_WIDGET_CLICKED_SIGNAL,
 		      LIVES_GUI_CALLBACK (on_liveinp_advanced_clicked),
 		      tvcardw);
 
@@ -1828,31 +1822,31 @@ LiVESWidget* create_cdtrack_dialog (int type, livespointer user_data) {
 
   lives_widget_grab_default (okbutton);
 
-  lives_widget_add_accelerator (cancelbutton, LIVES_WIDGET_CLICKED_EVENT, accel_group,
+  lives_widget_add_accelerator (cancelbutton, LIVES_WIDGET_CLICKED_SIGNAL, accel_group,
                               LIVES_KEY_Escape, (LiVESXModifierType)0, (LiVESAccelFlags)0);
 
   
-  lives_widget_add_accelerator (okbutton, LIVES_WIDGET_CLICKED_EVENT, accel_group,
+  lives_widget_add_accelerator (okbutton, LIVES_WIDGET_CLICKED_SIGNAL, accel_group,
                               LIVES_KEY_Return, (LiVESXModifierType)0, (LiVESAccelFlags)0);
 
   if (type!=4&&type!=5) {
-    lives_signal_connect (LIVES_GUI_OBJECT (cancelbutton), LIVES_WIDGET_CLICKED_EVENT,
+    lives_signal_connect (LIVES_GUI_OBJECT (cancelbutton), LIVES_WIDGET_CLICKED_SIGNAL,
 		      LIVES_GUI_CALLBACK (lives_general_button_clicked),
 		      NULL);
   }
 
   if (type==0) {
-    lives_signal_connect (LIVES_GUI_OBJECT (okbutton), LIVES_WIDGET_CLICKED_EVENT,
+    lives_signal_connect (LIVES_GUI_OBJECT (okbutton), LIVES_WIDGET_CLICKED_SIGNAL,
 		      LIVES_GUI_CALLBACK (on_load_cdtrack_ok_clicked),
 		      NULL);
   }
   else if (type==1||type==2)  {
-    lives_signal_connect (LIVES_GUI_OBJECT (okbutton), LIVES_WIDGET_CLICKED_EVENT,
+    lives_signal_connect (LIVES_GUI_OBJECT (okbutton), LIVES_WIDGET_CLICKED_SIGNAL,
 		      LIVES_GUI_CALLBACK (on_load_vcd_ok_clicked),
 		      LIVES_INT_TO_POINTER (type));
   }
   else if (type==3)  {
-    lives_signal_connect (LIVES_GUI_OBJECT (okbutton), LIVES_WIDGET_CLICKED_EVENT,
+    lives_signal_connect (LIVES_GUI_OBJECT (okbutton), LIVES_WIDGET_CLICKED_SIGNAL,
 		      LIVES_GUI_CALLBACK (mt_change_disp_tracks_ok),
 		      user_data);
   }
@@ -1963,7 +1957,7 @@ aud_dialog_t *create_audfade_dialog (int type) {
     rb_aud_sel_pressed(LIVES_BUTTON(rb_sel),(livespointer)audd);
   }
 
-  lives_signal_connect_after (LIVES_GUI_OBJECT (rb_sel), LIVES_WIDGET_TOGGLED_EVENT,
+  lives_signal_connect_after (LIVES_GUI_OBJECT (rb_sel), LIVES_WIDGET_TOGGLED_SIGNAL,
 			  LIVES_GUI_CALLBACK (rb_aud_sel_pressed),
 			  (livespointer)audd);
 
@@ -2072,7 +2066,7 @@ _commentsw* create_comments_dialog (lives_clip_t *sfile, gchar *filename) {
 
     buttond = lives_button_new_with_mnemonic(_("Browse..."));
 
-    lives_signal_connect (buttond, LIVES_WIDGET_CLICKED_EVENT,LIVES_GUI_CALLBACK (on_save_subs_activate),
+    lives_signal_connect (buttond, LIVES_WIDGET_CLICKED_SIGNAL,LIVES_GUI_CALLBACK (on_save_subs_activate),
     		      (livespointer)commentsw->subt_entry);
 
     lives_box_pack_start (LIVES_BOX (hbox), buttond, FALSE, FALSE, widget_opts.packing_width);
@@ -2299,7 +2293,7 @@ char *choose_file(const char *dir, const char *fname, char ** const filt, LiVESF
     else lives_window_set_transient_for(LIVES_WINDOW(chooser),LIVES_WINDOW(mainw->multitrack->window));
   }
 
-  lives_signal_connect (chooser, LIVES_WIDGET_CURRENT_FOLDER_CHANGED_EVENT, LIVES_GUI_CALLBACK (chooser_check_dir), NULL);
+  lives_signal_connect (chooser, LIVES_WIDGET_CURRENT_FOLDER_CHANGED_SIGNAL, LIVES_GUI_CALLBACK (chooser_check_dir), NULL);
 
   lives_widget_grab_focus (chooser);
 
@@ -2479,7 +2473,7 @@ _entryw* create_cds_dialog (int type) {
     
     lives_widget_object_set_data(LIVES_WIDGET_OBJECT(checkbutton),"cdsw",(livespointer)cdsw);
     
-    lives_signal_connect (LIVES_GUI_OBJECT (checkbutton), LIVES_WIDGET_TOGGLED_EVENT,
+    lives_signal_connect (LIVES_GUI_OBJECT (checkbutton), LIVES_WIDGET_TOGGLED_SIGNAL,
 		      LIVES_GUI_CALLBACK (on_autoreload_toggled),
 		      LIVES_INT_TO_POINTER(type));
   }
@@ -2493,7 +2487,7 @@ _entryw* create_cds_dialog (int type) {
 
   cancelbutton = lives_button_new_from_stock (LIVES_STOCK_CANCEL);
   lives_dialog_add_action_widget (LIVES_DIALOG (cdsw->dialog), cancelbutton, 0);
-  lives_widget_add_accelerator (cancelbutton, LIVES_WIDGET_CLICKED_EVENT, accel_group,
+  lives_widget_add_accelerator (cancelbutton, LIVES_WIDGET_CLICKED_SIGNAL, accel_group,
                               LIVES_KEY_Escape, (LiVESXModifierType)0, (LiVESAccelFlags)0);
 
   discardbutton = lives_button_new_from_stock (LIVES_STOCK_DELETE);
@@ -2577,7 +2571,7 @@ LiVESWidget *create_cleardisk_advanced_dialog(void) {
 
   lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(checkbutton), !(prefs->clear_disk_opts & LIVES_CDISK_LEAVE_ORPHAN_SETS));
 
-  lives_signal_connect_after (LIVES_GUI_OBJECT (checkbutton), LIVES_WIDGET_TOGGLED_EVENT,
+  lives_signal_connect_after (LIVES_GUI_OBJECT (checkbutton), LIVES_WIDGET_TOGGLED_SIGNAL,
 			  LIVES_GUI_CALLBACK (flip_cdisk_bit),
 			  LIVES_INT_TO_POINTER(LIVES_CDISK_LEAVE_ORPHAN_SETS));
 
@@ -2588,7 +2582,7 @@ LiVESWidget *create_cleardisk_advanced_dialog(void) {
 
   lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(checkbutton), !(prefs->clear_disk_opts & LIVES_CDISK_LEAVE_BFILES));
 
-  lives_signal_connect_after (LIVES_GUI_OBJECT (checkbutton), LIVES_WIDGET_TOGGLED_EVENT,
+  lives_signal_connect_after (LIVES_GUI_OBJECT (checkbutton), LIVES_WIDGET_TOGGLED_SIGNAL,
 			  LIVES_GUI_CALLBACK (flip_cdisk_bit),
 			  LIVES_INT_TO_POINTER(LIVES_CDISK_LEAVE_BFILES));
 
@@ -2600,7 +2594,7 @@ LiVESWidget *create_cleardisk_advanced_dialog(void) {
   lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(checkbutton), 
 				 (prefs->clear_disk_opts & LIVES_CDISK_REMOVE_ORPHAN_LAYOUTS));
   
-  lives_signal_connect_after (LIVES_GUI_OBJECT (checkbutton), LIVES_WIDGET_TOGGLED_EVENT,
+  lives_signal_connect_after (LIVES_GUI_OBJECT (checkbutton), LIVES_WIDGET_TOGGLED_SIGNAL,
 			  LIVES_GUI_CALLBACK (flip_cdisk_bit),
 			  LIVES_INT_TO_POINTER(LIVES_CDISK_REMOVE_ORPHAN_LAYOUTS));
 

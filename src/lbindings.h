@@ -21,6 +21,7 @@ boolean idle_save_set(const char *name, int arglen, const void *vargs, ulong id)
 boolean idle_choose_file_with_preview(const char *dirname, const char *title, int preview_type, ulong id);
 boolean idle_open_file(const char *fname, double stime, int frames, ulong id);
 boolean idle_set_interactive(boolean setting, ulong id);
+boolean idle_choose_set(ulong id);
 
 ulong *get_unique_ids(void);
 int cnum_for_uid(ulong uid);

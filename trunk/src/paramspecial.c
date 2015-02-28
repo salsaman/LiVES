@@ -198,7 +198,7 @@ void check_for_special (lives_rfx_t *rfx, lives_param_t *param, LiVESBox *pbox) 
     param->special_type_index=0;
     if (framedraw.type==LIVES_PARAM_SPECIAL_TYPE_RECT_DEMASK)
       lives_spin_button_set_value (LIVES_SPIN_BUTTON (param->widgets[0]),0.);
-    lives_signal_connect_after (LIVES_GUI_OBJECT (param->widgets[0]), LIVES_WIDGET_VALUE_CHANGED_EVENT, 
+    lives_signal_connect_after (LIVES_GUI_OBJECT (param->widgets[0]), LIVES_WIDGET_VALUE_CHANGED_SIGNAL, 
 				LIVES_GUI_CALLBACK (after_framedraw_widget_changed), &framedraw);
   }
   if (param==framedraw.ystart_param) {
@@ -206,7 +206,7 @@ void check_for_special (lives_rfx_t *rfx, lives_param_t *param, LiVESBox *pbox) 
     param->special_type_index=1;
     if (framedraw.type==LIVES_PARAM_SPECIAL_TYPE_RECT_DEMASK)
       lives_spin_button_set_value (LIVES_SPIN_BUTTON (param->widgets[0]),0.);
-    lives_signal_connect_after (LIVES_GUI_OBJECT (param->widgets[0]), LIVES_WIDGET_VALUE_CHANGED_EVENT, 
+    lives_signal_connect_after (LIVES_GUI_OBJECT (param->widgets[0]), LIVES_WIDGET_VALUE_CHANGED_SIGNAL, 
 				LIVES_GUI_CALLBACK (after_framedraw_widget_changed), &framedraw);
   }
   if (mainw->current_file>-1) {
@@ -215,7 +215,7 @@ void check_for_special (lives_rfx_t *rfx, lives_param_t *param, LiVESBox *pbox) 
       param->special_type_index=2;
       if (framedraw.type==LIVES_PARAM_SPECIAL_TYPE_RECT_DEMASK)
 	lives_spin_button_set_value (LIVES_SPIN_BUTTON (param->widgets[0]),(double)cfile->hsize);
-      lives_signal_connect_after (LIVES_GUI_OBJECT (param->widgets[0]), LIVES_WIDGET_VALUE_CHANGED_EVENT, 
+      lives_signal_connect_after (LIVES_GUI_OBJECT (param->widgets[0]), LIVES_WIDGET_VALUE_CHANGED_SIGNAL, 
 				  LIVES_GUI_CALLBACK (after_framedraw_widget_changed), &framedraw);
     }
     if (param==framedraw.yend_param) {
@@ -223,7 +223,7 @@ void check_for_special (lives_rfx_t *rfx, lives_param_t *param, LiVESBox *pbox) 
       param->special_type_index=3;
       if (framedraw.type==LIVES_PARAM_SPECIAL_TYPE_RECT_DEMASK)
 	lives_spin_button_set_value (LIVES_SPIN_BUTTON (param->widgets[0]),(double)cfile->vsize);
-      lives_signal_connect_after (LIVES_GUI_OBJECT (param->widgets[0]), LIVES_WIDGET_VALUE_CHANGED_EVENT, 
+      lives_signal_connect_after (LIVES_GUI_OBJECT (param->widgets[0]), LIVES_WIDGET_VALUE_CHANGED_SIGNAL, 
 				  LIVES_GUI_CALLBACK (after_framedraw_widget_changed), &framedraw);
     }
 
@@ -247,13 +247,13 @@ void check_for_special (lives_rfx_t *rfx, lives_param_t *param, LiVESBox *pbox) 
     
     if (param==aspect.width_param) {
       lives_spin_button_set_value (LIVES_SPIN_BUTTON (param->widgets[0]),(double)cfile->hsize);
-      aspect.width_func=lives_signal_connect_after (LIVES_GUI_OBJECT (param->widgets[0]), LIVES_WIDGET_VALUE_CHANGED_EVENT,
+      aspect.width_func=lives_signal_connect_after (LIVES_GUI_OBJECT (param->widgets[0]), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
 						LIVES_GUI_CALLBACK (after_aspect_width_changed),
 						NULL);
     }
     if (param==aspect.height_param) {
       lives_spin_button_set_value (LIVES_SPIN_BUTTON (param->widgets[0]),(double)cfile->vsize);
-      aspect.height_func=lives_signal_connect_after (LIVES_GUI_OBJECT (param->widgets[0]), LIVES_WIDGET_VALUE_CHANGED_EVENT,
+      aspect.height_func=lives_signal_connect_after (LIVES_GUI_OBJECT (param->widgets[0]), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
 						 LIVES_GUI_CALLBACK (after_aspect_height_changed),
 						 NULL);
       
@@ -301,7 +301,7 @@ void check_for_special (lives_rfx_t *rfx, lives_param_t *param, LiVESBox *pbox) 
       buttond = lives_standard_file_button_new (FALSE,lives_get_current_dir());
       lives_box_pack_start(LIVES_BOX(box),buttond,FALSE,FALSE,widget_opts.packing_width);
       lives_box_reorder_child(LIVES_BOX(box),buttond,epos); // insert after label, before textbox
-      lives_signal_connect(buttond, LIVES_WIDGET_CLICKED_EVENT, LIVES_GUI_CALLBACK (on_filesel_button_clicked), (livespointer)param->widgets[0]);
+      lives_signal_connect(buttond, LIVES_WIDGET_CLICKED_SIGNAL, LIVES_GUI_CALLBACK (on_filesel_button_clicked), (livespointer)param->widgets[0]);
 
       if (!lives_widget_is_sensitive(param->widgets[0])) lives_widget_set_sensitive(buttond,FALSE);
 
@@ -345,7 +345,7 @@ void check_for_special (lives_rfx_t *rfx, lives_param_t *param, LiVESBox *pbox) 
       if (!lives_widget_is_sensitive(param->widgets[0])) lives_widget_set_sensitive(checkbutton,FALSE);
       lives_widget_show_all(hbox);
 
-      lives_signal_connect_after (LIVES_GUI_OBJECT (checkbutton), LIVES_WIDGET_TOGGLED_EVENT,
+      lives_signal_connect_after (LIVES_GUI_OBJECT (checkbutton), LIVES_WIDGET_TOGGLED_SIGNAL,
 			      LIVES_GUI_CALLBACK (passwd_toggle_vis),
 			      (livespointer)param->widgets[0]);
 

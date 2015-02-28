@@ -2121,7 +2121,7 @@ void scroll_tracks (lives_mt *mt, int top_track, boolean set_value) {
       lives_signal_connect (LIVES_GUI_OBJECT (mt->audio_draws->data), LIVES_WIDGET_BUTTON_PRESS_EVENT,
 			LIVES_GUI_CALLBACK (on_track_click),
 			(livespointer)mt);
-      lives_signal_connect (LIVES_GUI_OBJECT (mt->audio_draws->data), "button_release_event",
+      lives_signal_connect (LIVES_GUI_OBJECT (mt->audio_draws->data), LIVES_WIDGET_BUTTON_RELEASE_EVENT,
 			LIVES_GUI_CALLBACK (on_track_release),
 			(livespointer)mt);
 
@@ -2260,12 +2260,12 @@ void scroll_tracks (lives_mt *mt, int top_track, boolean set_value) {
 			(LiVESAttachOptions) (LIVES_FILL), 0, 0);
 
       if (!prefs->lamp_buttons) {
-	lives_signal_connect_after (LIVES_GUI_OBJECT (checkbutton), LIVES_WIDGET_TOGGLED_EVENT,
+	lives_signal_connect_after (LIVES_GUI_OBJECT (checkbutton), LIVES_WIDGET_TOGGLED_SIGNAL,
 					      LIVES_GUI_CALLBACK (on_seltrack_toggled),
 					      mt);
       }
       else {
-	lives_signal_connect_after (LIVES_GUI_OBJECT (checkbutton), "mode-changed",
+	lives_signal_connect_after (LIVES_GUI_OBJECT (checkbutton), LIVES_WIDGET_MODE_CHANGED_SIGNAL,
 				LIVES_GUI_CALLBACK (on_seltrack_toggled),
 				mt);
       }
@@ -2284,7 +2284,7 @@ void scroll_tracks (lives_mt *mt, int top_track, boolean set_value) {
       lives_signal_connect (LIVES_GUI_OBJECT (eventbox), LIVES_WIDGET_BUTTON_PRESS_EVENT,
 			LIVES_GUI_CALLBACK (on_track_click),
 			(livespointer)mt);
-      lives_signal_connect (LIVES_GUI_OBJECT (eventbox), "button_release_event",
+      lives_signal_connect (LIVES_GUI_OBJECT (eventbox), LIVES_WIDGET_BUTTON_RELEASE_EVENT,
 			LIVES_GUI_CALLBACK (on_track_release),
 			(livespointer)mt);
 
@@ -2373,7 +2373,7 @@ void scroll_tracks (lives_mt *mt, int top_track, boolean set_value) {
 	  lives_signal_connect (LIVES_GUI_OBJECT (aeventbox), LIVES_WIDGET_BUTTON_PRESS_EVENT,
 			    LIVES_GUI_CALLBACK (on_track_click),
 			    (livespointer)mt);
-	  lives_signal_connect (LIVES_GUI_OBJECT (aeventbox), "button_release_event",
+	  lives_signal_connect (LIVES_GUI_OBJECT (aeventbox), LIVES_WIDGET_BUTTON_RELEASE_EVENT,
 			    LIVES_GUI_CALLBACK (on_track_release),
 			    (livespointer)mt);
 
@@ -3792,7 +3792,7 @@ static void populate_filter_box(LiVESWidget *box, int ninchans, lives_mt *mt) {
 	lives_signal_connect (LIVES_GUI_OBJECT (xeventbox), LIVES_WIDGET_BUTTON_PRESS_EVENT,
 			  LIVES_GUI_CALLBACK (filter_ebox_pressed),
 			  (livespointer)mt);
-	lives_signal_connect (LIVES_GUI_OBJECT (xeventbox), "button_release_event",
+	lives_signal_connect (LIVES_GUI_OBJECT (xeventbox), LIVES_WIDGET_BUTTON_RELEASE_EVENT,
 			  LIVES_GUI_CALLBACK (on_drag_filter_end),
 			  (livespointer)mt);
       }
@@ -4034,7 +4034,7 @@ static void do_clip_context (lives_mt *mt, LiVESXEventButton *event, lives_clip_
 
   if (sfile->frames>0) {
     edit_start_end = lives_menu_item_new_with_mnemonic (_("_Adjust start and end points"));
-    lives_signal_connect (LIVES_GUI_OBJECT (edit_start_end), LIVES_WIDGET_ACTIVATE_EVENT,
+    lives_signal_connect (LIVES_GUI_OBJECT (edit_start_end), LIVES_WIDGET_ACTIVATE_SIGNAL,
 		      LIVES_GUI_CALLBACK (edit_start_end_cb),
 		      (livespointer)mt);
     
@@ -4043,21 +4043,21 @@ static void do_clip_context (lives_mt *mt, LiVESXEventButton *event, lives_clip_
   }
 
   edit_clipedit = lives_menu_item_new_with_mnemonic (_("_Edit/encode in clip editor"));
-  lives_signal_connect (LIVES_GUI_OBJECT (edit_clipedit), LIVES_WIDGET_ACTIVATE_EVENT,
+  lives_signal_connect (LIVES_GUI_OBJECT (edit_clipedit), LIVES_WIDGET_ACTIVATE_SIGNAL,
 		    LIVES_GUI_CALLBACK (multitrack_end_cb),
 		    (livespointer)mt);
 
   lives_container_add (LIVES_CONTAINER (menu), edit_clipedit);
 
   show_clipinfo = lives_menu_item_new_with_mnemonic (_("_Show clip information"));
-  lives_signal_connect (LIVES_GUI_OBJECT (show_clipinfo), LIVES_WIDGET_ACTIVATE_EVENT,
+  lives_signal_connect (LIVES_GUI_OBJECT (show_clipinfo), LIVES_WIDGET_ACTIVATE_SIGNAL,
 		    LIVES_GUI_CALLBACK (show_clipinfo_cb),
 		    (livespointer)mt);
 
   lives_container_add (LIVES_CONTAINER (menu), show_clipinfo);
 
   close_clip = lives_menu_item_new_with_mnemonic (_("_Close this clip"));
-  lives_signal_connect (LIVES_GUI_OBJECT (close_clip), LIVES_WIDGET_ACTIVATE_EVENT,
+  lives_signal_connect (LIVES_GUI_OBJECT (close_clip), LIVES_WIDGET_ACTIVATE_SIGNAL,
 		    LIVES_GUI_CALLBACK (close_clip_cb),
 		    (livespointer)mt);
 
@@ -4303,13 +4303,13 @@ void mt_init_start_end_spins(lives_mt *mt) {
     lives_widget_set_fg_color(mt->btoolbar, LIVES_WIDGET_STATE_INSENSITIVE, &palette->menu_and_bars_fore);
   }
 
-  lives_widget_add_accelerator (mt->amixer_button, LIVES_WIDGET_CLICKED_EVENT, mt->accel_group,
+  lives_widget_add_accelerator (mt->amixer_button, LIVES_WIDGET_CLICKED_SIGNAL, mt->accel_group,
                               LIVES_KEY_m, LIVES_CONTROL_MASK,
                               LIVES_ACCEL_VISIBLE);
 
   if (cfile->achans==0||!mt->opts.pertrack_audio) lives_widget_set_sensitive(mt->amixer_button,FALSE);
 
-  lives_signal_connect (LIVES_GUI_OBJECT (mt->amixer_button), LIVES_WIDGET_CLICKED_EVENT,
+  lives_signal_connect (LIVES_GUI_OBJECT (mt->amixer_button), LIVES_WIDGET_CLICKED_SIGNAL,
 		    LIVES_GUI_CALLBACK (amixer_show),
 		    (livespointer)mt);
 
@@ -4365,11 +4365,11 @@ void mt_init_start_end_spins(lives_mt *mt) {
     lives_widget_set_fg_color(mt->sel_label, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
   }
 
-  mt->spin_start_func=lives_signal_connect_after (LIVES_GUI_OBJECT (mt->spinbutton_start), LIVES_WIDGET_VALUE_CHANGED_EVENT,
+  mt->spin_start_func=lives_signal_connect_after (LIVES_GUI_OBJECT (mt->spinbutton_start), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
 					      LIVES_GUI_CALLBACK (mt_spin_start_value_changed),
 					      (livespointer)mt);
 
-  mt->spin_end_func=lives_signal_connect_after (LIVES_GUI_OBJECT (mt->spinbutton_end), LIVES_WIDGET_VALUE_CHANGED_EVENT,
+  mt->spin_end_func=lives_signal_connect_after (LIVES_GUI_OBJECT (mt->spinbutton_end), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
 					    LIVES_GUI_CALLBACK (mt_spin_end_value_changed),
 					    (livespointer)mt);
 }
@@ -4792,7 +4792,7 @@ static void add_aparam_menuitems(lives_mt *mt) {
       lives_container_add (LIVES_CONTAINER (mt->aparam_submenu), menuitem);
       lives_widget_show(menuitem);
       lives_widget_object_set_data(LIVES_WIDGET_OBJECT(menuitem),"pnum",LIVES_INT_TO_POINTER(i));
-      lives_signal_connect (LIVES_GUI_OBJECT (menuitem), LIVES_WIDGET_ACTIVATE_EVENT,
+      lives_signal_connect (LIVES_GUI_OBJECT (menuitem), LIVES_WIDGET_ACTIVATE_SIGNAL,
 			LIVES_GUI_CALLBACK (mt_aparam_view_toggled),
 			(livespointer)mt);
     }
@@ -5999,7 +5999,7 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
   gtk_drag_dest_set(mt->window,GTK_DEST_DEFAULT_ALL,mainw->target_table,2,
 		    (GdkDragAction)(GDK_ACTION_COPY|GDK_ACTION_MOVE|GDK_ACTION_LINK));
 
-  lives_signal_connect (LIVES_GUI_OBJECT (mt->window), "drag-data-received",
+  lives_signal_connect (LIVES_GUI_OBJECT (mt->window), LIVES_WIDGET_DRAG_DATA_RECEIVED_SIGNAL,
 		    LIVES_GUI_CALLBACK (drag_from_outside),
 		    NULL);
 #endif
@@ -6050,14 +6050,14 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
   menuitem = lives_menu_item_new_with_mnemonic (_("_Open File/Directory"));
   lives_container_add (LIVES_CONTAINER (menuitem_menu2), menuitem);
 
-  lives_signal_connect (LIVES_GUI_OBJECT (menuitem), LIVES_WIDGET_ACTIVATE_EVENT,
+  lives_signal_connect (LIVES_GUI_OBJECT (menuitem), LIVES_WIDGET_ACTIVATE_SIGNAL,
 		    LIVES_GUI_CALLBACK (on_open_activate),
 		    NULL);
 
   menuitem = lives_menu_item_new_with_mnemonic (_("O_pen File Selection..."));
   lives_container_add (LIVES_CONTAINER (menuitem_menu2), menuitem);
 
-  lives_signal_connect (LIVES_GUI_OBJECT (menuitem), LIVES_WIDGET_ACTIVATE_EVENT,
+  lives_signal_connect (LIVES_GUI_OBJECT (menuitem), LIVES_WIDGET_ACTIVATE_SIGNAL,
 		    LIVES_GUI_CALLBACK (on_open_sel_activate),
 		    NULL);
 
@@ -6077,7 +6077,7 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
     menuitem = lives_menu_item_new_with_mnemonic (_("Open _Youtube Clip..."));
     lives_container_add (LIVES_CONTAINER (open_loc_submenu), menuitem);
 
-    lives_signal_connect (LIVES_GUI_OBJECT (menuitem), LIVES_WIDGET_ACTIVATE_EVENT,
+    lives_signal_connect (LIVES_GUI_OBJECT (menuitem), LIVES_WIDGET_ACTIVATE_SIGNAL,
 		      LIVES_GUI_CALLBACK (on_open_utube_activate),
 		      NULL);
 
@@ -6091,7 +6091,7 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
     
 #endif
 
-    lives_signal_connect (LIVES_GUI_OBJECT (menuitem), LIVES_WIDGET_ACTIVATE_EVENT,
+    lives_signal_connect (LIVES_GUI_OBJECT (menuitem), LIVES_WIDGET_ACTIVATE_SIGNAL,
 		      LIVES_GUI_CALLBACK (on_open_loc_activate),
 		      NULL);
     
@@ -6111,7 +6111,7 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
     menuitem = lives_menu_item_new_with_mnemonic (_("Import Selection from _dvd"));
     lives_container_add (LIVES_CONTAINER (vcd_dvd_submenu), menuitem);
     
-    lives_signal_connect (LIVES_GUI_OBJECT (menuitem), LIVES_WIDGET_ACTIVATE_EVENT,
+    lives_signal_connect (LIVES_GUI_OBJECT (menuitem), LIVES_WIDGET_ACTIVATE_SIGNAL,
 		      LIVES_GUI_CALLBACK (on_open_vcd_activate),
 		      LIVES_INT_TO_POINTER (1));
     
@@ -6126,7 +6126,7 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
     lives_container_add (LIVES_CONTAINER (menuitem_menu2), menuitem);
 #endif
     
-    lives_signal_connect (LIVES_GUI_OBJECT (menuitem), LIVES_WIDGET_ACTIVATE_EVENT,
+    lives_signal_connect (LIVES_GUI_OBJECT (menuitem), LIVES_WIDGET_ACTIVATE_SIGNAL,
 		      LIVES_GUI_CALLBACK (on_open_vcd_activate),
 		      LIVES_INT_TO_POINTER (2));
 
@@ -6148,14 +6148,14 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
   lives_container_add (LIVES_CONTAINER (device_submenu), menuitem);
 
 
-  lives_signal_connect (LIVES_GUI_OBJECT (menuitem), LIVES_WIDGET_ACTIVATE_EVENT,
+  lives_signal_connect (LIVES_GUI_OBJECT (menuitem), LIVES_WIDGET_ACTIVATE_SIGNAL,
 		    LIVES_GUI_CALLBACK (on_open_fw_activate),
 		    LIVES_INT_TO_POINTER(CAM_FORMAT_DV));
 
   menuitem = lives_menu_item_new_with_mnemonic (_("Import from _Firewire Device (hdv)"));
   lives_container_add (LIVES_CONTAINER (device_submenu), menuitem);
 
-  lives_signal_connect (LIVES_GUI_OBJECT (menuitem), LIVES_WIDGET_ACTIVATE_EVENT,
+  lives_signal_connect (LIVES_GUI_OBJECT (menuitem), LIVES_WIDGET_ACTIVATE_SIGNAL,
 		    LIVES_GUI_CALLBACK (on_open_fw_activate),
 		    LIVES_INT_TO_POINTER(CAM_FORMAT_HDV));
 #endif
@@ -6164,14 +6164,14 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
   mt->close = lives_menu_item_new_with_mnemonic (_("_Close the selected clip"));
   lives_container_add (LIVES_CONTAINER (menuitem_menu), mt->close);
   
-  lives_signal_connect (LIVES_GUI_OBJECT (mt->close), LIVES_WIDGET_ACTIVATE_EVENT,
+  lives_signal_connect (LIVES_GUI_OBJECT (mt->close), LIVES_WIDGET_ACTIVATE_SIGNAL,
 		    LIVES_GUI_CALLBACK (on_close_activate),
 		    NULL);
 
   lives_widget_set_sensitive(mt->close,FALSE);
 
 
-  lives_widget_add_accelerator (mt->close, LIVES_WIDGET_ACTIVATE_EVENT, mt->accel_group,
+  lives_widget_add_accelerator (mt->close, LIVES_WIDGET_ACTIVATE_SIGNAL, mt->accel_group,
                               LIVES_KEY_w, LIVES_CONTROL_MASK,
                               LIVES_ACCEL_VISIBLE);
 
@@ -6217,16 +6217,16 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
   lives_widget_show (recent_submenu);
 
 
-  lives_signal_connect (LIVES_GUI_OBJECT (mt->recent1), LIVES_WIDGET_ACTIVATE_EVENT,
+  lives_signal_connect (LIVES_GUI_OBJECT (mt->recent1), LIVES_WIDGET_ACTIVATE_SIGNAL,
                       LIVES_GUI_CALLBACK (on_recent_activate),
 		    LIVES_INT_TO_POINTER(1));
-  lives_signal_connect (LIVES_GUI_OBJECT (mt->recent2), LIVES_WIDGET_ACTIVATE_EVENT,
+  lives_signal_connect (LIVES_GUI_OBJECT (mt->recent2), LIVES_WIDGET_ACTIVATE_SIGNAL,
                       LIVES_GUI_CALLBACK (on_recent_activate),
 		    LIVES_INT_TO_POINTER(2));
-  lives_signal_connect (LIVES_GUI_OBJECT (mt->recent3), LIVES_WIDGET_ACTIVATE_EVENT,
+  lives_signal_connect (LIVES_GUI_OBJECT (mt->recent3), LIVES_WIDGET_ACTIVATE_SIGNAL,
                       LIVES_GUI_CALLBACK (on_recent_activate),
 		    LIVES_INT_TO_POINTER(3));
-  lives_signal_connect (LIVES_GUI_OBJECT (mt->recent4), LIVES_WIDGET_ACTIVATE_EVENT,
+  lives_signal_connect (LIVES_GUI_OBJECT (mt->recent4), LIVES_WIDGET_ACTIVATE_SIGNAL,
                       LIVES_GUI_CALLBACK (on_recent_activate),
 		    LIVES_INT_TO_POINTER(4));
 
@@ -6239,7 +6239,7 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
   lives_widget_show (mt->load_set);
   lives_container_add (LIVES_CONTAINER (menuitem_menu), mt->load_set);
 
-  lives_signal_connect (LIVES_GUI_OBJECT (mt->load_set), LIVES_WIDGET_ACTIVATE_EVENT,
+  lives_signal_connect (LIVES_GUI_OBJECT (mt->load_set), LIVES_WIDGET_ACTIVATE_SIGNAL,
 		    LIVES_GUI_CALLBACK (on_load_set_activate),
 		    NULL);
 
@@ -6248,7 +6248,7 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
   lives_widget_set_sensitive (mt->save_set, FALSE);
   lives_container_add (LIVES_CONTAINER (menuitem_menu), mt->save_set);
 
-  lives_signal_connect (LIVES_GUI_OBJECT (mt->save_set), LIVES_WIDGET_ACTIVATE_EVENT,
+  lives_signal_connect (LIVES_GUI_OBJECT (mt->save_set), LIVES_WIDGET_ACTIVATE_SIGNAL,
                       LIVES_GUI_CALLBACK (on_quit_activate),
                       LIVES_INT_TO_POINTER(1));
 
@@ -6260,7 +6260,7 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
   lives_container_add (LIVES_CONTAINER (menuitem_menu), mt->save_event_list);
   lives_widget_set_sensitive (mt->save_event_list, FALSE);
 
-  lives_widget_add_accelerator (mt->save_event_list, LIVES_WIDGET_ACTIVATE_EVENT, mt->accel_group,
+  lives_widget_add_accelerator (mt->save_event_list, LIVES_WIDGET_ACTIVATE_SIGNAL, mt->accel_group,
                               LIVES_KEY_s, LIVES_CONTROL_MASK,
                               LIVES_ACCEL_VISIBLE);
 
@@ -6271,7 +6271,7 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
   mt->clear_event_list = lives_image_menu_item_new_with_mnemonic (_("_Wipe/Delete layout..."));
   lives_container_add (LIVES_CONTAINER (menuitem_menu), mt->clear_event_list);
 
-  lives_widget_add_accelerator (mt->clear_event_list, LIVES_WIDGET_ACTIVATE_EVENT, mt->accel_group,
+  lives_widget_add_accelerator (mt->clear_event_list, LIVES_WIDGET_ACTIVATE_SIGNAL, mt->accel_group,
                               LIVES_KEY_d, LIVES_CONTROL_MASK,
                               LIVES_ACCEL_VISIBLE);
 
@@ -6286,7 +6286,7 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
   lives_widget_show (mt->clear_ds);
   lives_container_add (LIVES_CONTAINER (menuitem_menu), mt->clear_ds);
 
-  lives_signal_connect (LIVES_GUI_OBJECT (mt->clear_ds), LIVES_WIDGET_ACTIVATE_EVENT,
+  lives_signal_connect (LIVES_GUI_OBJECT (mt->clear_ds), LIVES_WIDGET_ACTIVATE_SIGNAL,
                       LIVES_GUI_CALLBACK (on_cleardisk_activate),
                       NULL);
 
@@ -6309,7 +6309,7 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
   mt->quit = lives_image_menu_item_new_from_stock (LIVES_STOCK_LABEL_QUIT, mt->accel_group);
   lives_container_add (LIVES_CONTAINER (menuitem_menu), mt->quit);
 
-  lives_widget_add_accelerator (mt->quit, LIVES_WIDGET_ACTIVATE_EVENT, mt->accel_group,
+  lives_widget_add_accelerator (mt->quit, LIVES_WIDGET_ACTIVATE_SIGNAL, mt->accel_group,
                               LIVES_KEY_q, LIVES_CONTROL_MASK,
                               LIVES_ACCEL_VISIBLE);
 
@@ -6331,7 +6331,7 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
   lives_container_add (LIVES_CONTAINER (menuitem_menu), mt->undo);
   lives_widget_set_sensitive (mt->undo, FALSE);
 
-  lives_widget_add_accelerator (mt->undo, LIVES_WIDGET_ACTIVATE_EVENT, mt->accel_group,
+  lives_widget_add_accelerator (mt->undo, LIVES_WIDGET_ACTIVATE_SIGNAL, mt->accel_group,
                               LIVES_KEY_u, LIVES_CONTROL_MASK,
                               LIVES_ACCEL_VISIBLE);
   
@@ -6347,7 +6347,7 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
     mt_set_undoable(mt,undo->action,undo->extra,TRUE);
   }
 
-  lives_signal_connect (LIVES_GUI_OBJECT (mt->undo), LIVES_WIDGET_ACTIVATE_EVENT,
+  lives_signal_connect (LIVES_GUI_OBJECT (mt->undo), LIVES_WIDGET_ACTIVATE_SIGNAL,
 		    LIVES_GUI_CALLBACK (multitrack_undo),
 		    (livespointer)mt);
 
@@ -6355,7 +6355,7 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
   lives_container_add (LIVES_CONTAINER (menuitem_menu), mt->redo);
   lives_widget_set_sensitive (mt->redo, FALSE);
 
-  lives_widget_add_accelerator (mt->redo, LIVES_WIDGET_ACTIVATE_EVENT, mt->accel_group,
+  lives_widget_add_accelerator (mt->redo, LIVES_WIDGET_ACTIVATE_SIGNAL, mt->accel_group,
                               LIVES_KEY_z, LIVES_CONTROL_MASK,
                               LIVES_ACCEL_VISIBLE);
 
@@ -6371,7 +6371,7 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
     mt_set_redoable(mt,redo->action,redo->extra,TRUE);
   }
 
-  lives_signal_connect (LIVES_GUI_OBJECT (mt->redo), LIVES_WIDGET_ACTIVATE_EVENT,
+  lives_signal_connect (LIVES_GUI_OBJECT (mt->redo), LIVES_WIDGET_ACTIVATE_SIGNAL,
 		    LIVES_GUI_CALLBACK (multitrack_redo),
 		    (livespointer)mt);
 
@@ -6383,7 +6383,7 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
   mt->clipedit = lives_image_menu_item_new_with_mnemonic (_("_CLIP EDITOR"));
   lives_container_add (LIVES_CONTAINER (menuitem_menu), mt->clipedit);
 
-  lives_widget_add_accelerator (mt->clipedit, LIVES_WIDGET_ACTIVATE_EVENT, mt->accel_group,
+  lives_widget_add_accelerator (mt->clipedit, LIVES_WIDGET_ACTIVATE_SIGNAL, mt->accel_group,
                               LIVES_KEY_e, LIVES_CONTROL_MASK,
                               LIVES_ACCEL_VISIBLE);
 
@@ -6395,7 +6395,7 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
   mt->adjust_start_end = lives_image_menu_item_new_with_mnemonic (_("_Adjust selected clip start/end points"));
   lives_container_add (LIVES_CONTAINER (menuitem_menu), mt->adjust_start_end);
 
-  lives_widget_add_accelerator (mt->adjust_start_end, LIVES_WIDGET_ACTIVATE_EVENT, mt->accel_group,
+  lives_widget_add_accelerator (mt->adjust_start_end, LIVES_WIDGET_ACTIVATE_SIGNAL, mt->accel_group,
                               LIVES_KEY_x, LIVES_CONTROL_MASK,
                               LIVES_ACCEL_VISIBLE);
   lives_widget_set_sensitive (mt->adjust_start_end, FALSE);
@@ -6404,10 +6404,10 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
   mt->insert = lives_image_menu_item_new_with_mnemonic (_("_Insert selected clip"));
   lives_container_add (LIVES_CONTAINER (menuitem_menu), mt->insert);
 
-  lives_widget_add_accelerator (mt->insert, LIVES_WIDGET_ACTIVATE_EVENT, mt->accel_group,
+  lives_widget_add_accelerator (mt->insert, LIVES_WIDGET_ACTIVATE_SIGNAL, mt->accel_group,
                               LIVES_KEY_i, (LiVESXModifierType)0,
                               LIVES_ACCEL_VISIBLE);
-  lives_widget_add_accelerator (mt->insert, LIVES_WIDGET_ACTIVATE_EVENT, mt->accel_group,
+  lives_widget_add_accelerator (mt->insert, LIVES_WIDGET_ACTIVATE_SIGNAL, mt->accel_group,
                               LIVES_KEY_i, LIVES_CONTROL_MASK,
                               (LiVESAccelFlags)0);
   lives_widget_set_sensitive (mt->insert, FALSE);
@@ -6416,7 +6416,7 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
   mt->audio_insert = lives_image_menu_item_new_with_mnemonic (_("_Insert selected clip audio"));
   lives_container_add (LIVES_CONTAINER (menuitem_menu), mt->audio_insert);
 
-  lives_widget_add_accelerator (mt->audio_insert, LIVES_WIDGET_ACTIVATE_EVENT, mt->accel_group,
+  lives_widget_add_accelerator (mt->audio_insert, LIVES_WIDGET_ACTIVATE_SIGNAL, mt->accel_group,
                               LIVES_KEY_i, LIVES_CONTROL_MASK,
                               LIVES_ACCEL_VISIBLE);
   lives_widget_set_sensitive (mt->audio_insert, FALSE);
@@ -6426,7 +6426,7 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
   lives_container_add (LIVES_CONTAINER (menuitem_menu), mt->delblock);
   lives_widget_set_sensitive (mt->delblock, FALSE);
 
-  lives_widget_add_accelerator (mt->delblock, LIVES_WIDGET_ACTIVATE_EVENT, mt->accel_group,
+  lives_widget_add_accelerator (mt->delblock, LIVES_WIDGET_ACTIVATE_SIGNAL, mt->accel_group,
                               LIVES_KEY_d, LIVES_CONTROL_MASK,
                               LIVES_ACCEL_VISIBLE);
 
@@ -6434,7 +6434,7 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
   mt->jumpback = lives_image_menu_item_new_with_mnemonic (_("_Jump to previous block boundary"));
   lives_container_add (LIVES_CONTAINER (menuitem_menu), mt->jumpback);
 
-  lives_widget_add_accelerator (mt->jumpback, LIVES_WIDGET_ACTIVATE_EVENT, mt->accel_group,
+  lives_widget_add_accelerator (mt->jumpback, LIVES_WIDGET_ACTIVATE_SIGNAL, mt->accel_group,
                               LIVES_KEY_j, LIVES_CONTROL_MASK,
                               LIVES_ACCEL_VISIBLE);
 
@@ -6443,7 +6443,7 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
   mt->jumpnext = lives_image_menu_item_new_with_mnemonic (_("_Jump to next block boundary"));
   lives_container_add (LIVES_CONTAINER (menuitem_menu), mt->jumpnext);
 
-  lives_widget_add_accelerator (mt->jumpnext, LIVES_WIDGET_ACTIVATE_EVENT, mt->accel_group,
+  lives_widget_add_accelerator (mt->jumpnext, LIVES_WIDGET_ACTIVATE_SIGNAL, mt->accel_group,
                               LIVES_KEY_l, LIVES_CONTROL_MASK,
                               LIVES_ACCEL_VISIBLE);
 
@@ -6479,7 +6479,7 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
   }
 
   mt->playall = lives_image_menu_item_new_with_mnemonic (_("_Play from Timeline Position"));
-  lives_widget_add_accelerator (mt->playall, LIVES_WIDGET_ACTIVATE_EVENT, mt->accel_group,
+  lives_widget_add_accelerator (mt->playall, LIVES_WIDGET_ACTIVATE_SIGNAL, mt->accel_group,
                               LIVES_KEY_p, (LiVESXModifierType)0,
                               LIVES_ACCEL_VISIBLE);
   lives_widget_set_sensitive (mt->playall, FALSE);
@@ -6493,7 +6493,7 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
 #endif
 
   mt->playsel = lives_image_menu_item_new_with_mnemonic (_("Pla_y selected time only"));
-  lives_widget_add_accelerator (mt->playsel, LIVES_WIDGET_ACTIVATE_EVENT, mt->accel_group,
+  lives_widget_add_accelerator (mt->playsel, LIVES_WIDGET_ACTIVATE_SIGNAL, mt->accel_group,
                               LIVES_KEY_y, (LiVESXModifierType)0,
                               LIVES_ACCEL_VISIBLE);
   lives_container_add (LIVES_CONTAINER (menuitem_menu), mt->playsel);
@@ -6502,7 +6502,7 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
   mt->stop = lives_image_menu_item_new_with_mnemonic (_("_Stop"));
   lives_container_add (LIVES_CONTAINER (menuitem_menu), mt->stop);
   lives_widget_set_sensitive (mt->stop, FALSE);
-  lives_widget_add_accelerator (mt->stop, LIVES_WIDGET_ACTIVATE_EVENT, mt->accel_group,
+  lives_widget_add_accelerator (mt->stop, LIVES_WIDGET_ACTIVATE_SIGNAL, mt->accel_group,
                               LIVES_KEY_q, (LiVESXModifierType)0,
                               LIVES_ACCEL_VISIBLE);
 
@@ -6521,7 +6521,7 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
 
   lives_widget_set_sensitive (mt->rewind, FALSE);
 
-  lives_widget_add_accelerator (mt->rewind, LIVES_WIDGET_ACTIVATE_EVENT, mt->accel_group,
+  lives_widget_add_accelerator (mt->rewind, LIVES_WIDGET_ACTIVATE_SIGNAL, mt->accel_group,
                               LIVES_KEY_w, (LiVESXModifierType)0,
                               LIVES_ACCEL_VISIBLE);
 
@@ -6533,7 +6533,7 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
   lives_container_add (LIVES_CONTAINER (menuitem_menu), full_screen);
   lives_check_menu_item_set_active(LIVES_CHECK_MENU_ITEM(full_screen),mainw->fs);
 
-  lives_widget_add_accelerator (full_screen, LIVES_WIDGET_ACTIVATE_EVENT, mt->accel_group,
+  lives_widget_add_accelerator (full_screen, LIVES_WIDGET_ACTIVATE_SIGNAL, mt->accel_group,
                               LIVES_KEY_f, (LiVESXModifierType)0,
                               LIVES_ACCEL_VISIBLE);
 
@@ -6541,7 +6541,7 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
   lives_container_add (LIVES_CONTAINER (menuitem_menu), mt->sepwin);
   lives_check_menu_item_set_active(LIVES_CHECK_MENU_ITEM(mt->sepwin),mainw->sep_win);
 
-  lives_widget_add_accelerator (mt->sepwin, LIVES_WIDGET_ACTIVATE_EVENT, mt->accel_group,
+  lives_widget_add_accelerator (mt->sepwin, LIVES_WIDGET_ACTIVATE_SIGNAL, mt->accel_group,
                               LIVES_KEY_s, (LiVESXModifierType)0,
                               LIVES_ACCEL_VISIBLE);
 
@@ -6549,7 +6549,7 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
   lives_container_add (LIVES_CONTAINER (menuitem_menu), mt->loop_continue);
   lives_check_menu_item_set_active(LIVES_CHECK_MENU_ITEM(mt->loop_continue),mainw->loop_cont);
 
-  lives_widget_add_accelerator (mt->loop_continue, LIVES_WIDGET_ACTIVATE_EVENT, mt->accel_group,
+  lives_widget_add_accelerator (mt->loop_continue, LIVES_WIDGET_ACTIVATE_SIGNAL, mt->accel_group,
                               LIVES_KEY_o, (LiVESXModifierType)0,
                               LIVES_ACCEL_VISIBLE);
 
@@ -6557,7 +6557,7 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
   lives_container_add (LIVES_CONTAINER (menuitem_menu), mt->mute_audio);
   lives_check_menu_item_set_active(LIVES_CHECK_MENU_ITEM(mt->mute_audio),mainw->mute);
 
-  lives_widget_add_accelerator (mt->mute_audio, LIVES_WIDGET_ACTIVATE_EVENT, mt->accel_group,
+  lives_widget_add_accelerator (mt->mute_audio, LIVES_WIDGET_ACTIVATE_SIGNAL, mt->accel_group,
                               LIVES_KEY_z, (LiVESXModifierType)0,
                               LIVES_ACCEL_VISIBLE);
 
@@ -6580,7 +6580,7 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
   lives_container_add (LIVES_CONTAINER (menuitem_menu), mt->move_fx);
   lives_check_menu_item_set_active(LIVES_CHECK_MENU_ITEM(mt->move_fx),mt->opts.move_effects);
 
-  lives_signal_connect_after (LIVES_GUI_OBJECT (mt->move_fx), LIVES_WIDGET_TOGGLED_EVENT,
+  lives_signal_connect_after (LIVES_GUI_OBJECT (mt->move_fx), LIVES_WIDGET_TOGGLED_SIGNAL,
 			  LIVES_GUI_CALLBACK (on_move_fx_changed),
 			  (livespointer)mt);
 
@@ -6856,7 +6856,7 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
 	menuitem = lives_image_menu_item_new_with_label (fxname);
 	lives_container_add (LIVES_CONTAINER (submenu_menu5), menuitem);
 	lives_widget_object_set_data(LIVES_WIDGET_OBJECT(menuitem),"idx",LIVES_INT_TO_POINTER(i));
-	lives_signal_connect (LIVES_GUI_OBJECT (menuitem), LIVES_WIDGET_ACTIVATE_EVENT,
+	lives_signal_connect (LIVES_GUI_OBJECT (menuitem), LIVES_WIDGET_ACTIVATE_SIGNAL,
 			  LIVES_GUI_CALLBACK (mt_add_region_effect),
 			  (livespointer)mt);
       }
@@ -6867,28 +6867,28 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
 	if (!is_pure_audio(filter,FALSE)) {
 	  lives_container_add (LIVES_CONTAINER (submenu_menuv), menuitem);
 	  lives_widget_object_set_data(LIVES_WIDGET_OBJECT(menuitem),"idx",LIVES_INT_TO_POINTER(i));
-	  lives_signal_connect (LIVES_GUI_OBJECT (menuitem), LIVES_WIDGET_ACTIVATE_EVENT,
+	  lives_signal_connect (LIVES_GUI_OBJECT (menuitem), LIVES_WIDGET_ACTIVATE_SIGNAL,
 			    LIVES_GUI_CALLBACK (mt_add_block_effect),
 			    (livespointer)mt);
 
 	  menuitem = lives_image_menu_item_new_with_label (fxname);
 	  lives_container_add (LIVES_CONTAINER (submenu_menu4v), menuitem);
 	  lives_widget_object_set_data(LIVES_WIDGET_OBJECT(menuitem),"idx",LIVES_INT_TO_POINTER(i));
-	  lives_signal_connect (LIVES_GUI_OBJECT (menuitem), LIVES_WIDGET_ACTIVATE_EVENT,
+	  lives_signal_connect (LIVES_GUI_OBJECT (menuitem), LIVES_WIDGET_ACTIVATE_SIGNAL,
 			    LIVES_GUI_CALLBACK (mt_add_region_effect),
 			    (livespointer)mt);
 	}
 	else {
 	  lives_container_add (LIVES_CONTAINER (submenu_menua), menuitem);
 	  lives_widget_object_set_data(LIVES_WIDGET_OBJECT(menuitem),"idx",LIVES_INT_TO_POINTER(i));
-	  lives_signal_connect (LIVES_GUI_OBJECT (menuitem), LIVES_WIDGET_ACTIVATE_EVENT,
+	  lives_signal_connect (LIVES_GUI_OBJECT (menuitem), LIVES_WIDGET_ACTIVATE_SIGNAL,
 			    LIVES_GUI_CALLBACK (mt_add_block_effect),
 			    (livespointer)mt);
 
 	  menuitem = lives_image_menu_item_new_with_label (fxname);
 	  lives_container_add (LIVES_CONTAINER (submenu_menu4a), menuitem);
 	  lives_widget_object_set_data(LIVES_WIDGET_OBJECT(menuitem),"idx",LIVES_INT_TO_POINTER(i));
-	  lives_signal_connect (LIVES_GUI_OBJECT (menuitem), LIVES_WIDGET_ACTIVATE_EVENT,
+	  lives_signal_connect (LIVES_GUI_OBJECT (menuitem), LIVES_WIDGET_ACTIVATE_SIGNAL,
 			    LIVES_GUI_CALLBACK (mt_add_region_effect),
 			    (livespointer)mt);
 	}
@@ -6907,7 +6907,7 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
 	    lives_check_menu_item_set_active(LIVES_CHECK_MENU_ITEM(menuitem2),prefs->atrans_fx==i);
 	    lives_widget_object_set_data(LIVES_WIDGET_OBJECT(menuitem2),"idx",LIVES_INT_TO_POINTER(i));
 
-	    lives_signal_connect (LIVES_GUI_OBJECT (menuitem2), LIVES_WIDGET_ACTIVATE_EVENT,
+	    lives_signal_connect (LIVES_GUI_OBJECT (menuitem2), LIVES_WIDGET_ACTIVATE_SIGNAL,
 			      LIVES_GUI_CALLBACK (mt_set_atrans_effect),
 			      (livespointer)mt);
 
@@ -6921,7 +6921,7 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
 	  }
 	  else lives_container_add (LIVES_CONTAINER (submenu_menu12), menuitem);
 	}
-	lives_signal_connect (LIVES_GUI_OBJECT (menuitem), LIVES_WIDGET_ACTIVATE_EVENT,
+	lives_signal_connect (LIVES_GUI_OBJECT (menuitem), LIVES_WIDGET_ACTIVATE_SIGNAL,
 			  LIVES_GUI_CALLBACK (mt_add_region_effect),
 			  (livespointer)mt);
       }
@@ -6936,7 +6936,7 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
   lives_check_menu_item_set_active(LIVES_CHECK_MENU_ITEM(menuitem2),prefs->atrans_fx==-1);
   lives_menu_shell_prepend(LIVES_MENU_SHELL(mt->submenu_atransfx),menuitem2);
 
-  lives_signal_connect (LIVES_GUI_OBJECT (menuitem2), LIVES_WIDGET_ACTIVATE_EVENT,
+  lives_signal_connect (LIVES_GUI_OBJECT (menuitem2), LIVES_WIDGET_ACTIVATE_SIGNAL,
 		    LIVES_GUI_CALLBACK (mt_set_atrans_effect),
 		    (livespointer)mt);
 
@@ -6965,7 +6965,7 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
   mt->cback_audio = lives_image_menu_item_new_with_mnemonic (_("Make _Backing Audio current track"));
   lives_container_add (LIVES_CONTAINER (menuitem_menu), mt->cback_audio);
 
-  lives_widget_add_accelerator (mt->cback_audio, LIVES_WIDGET_ACTIVATE_EVENT, mt->accel_group,
+  lives_widget_add_accelerator (mt->cback_audio, LIVES_WIDGET_ACTIVATE_SIGNAL, mt->accel_group,
                               LIVES_KEY_b, LIVES_CONTROL_MASK,
                               LIVES_ACCEL_VISIBLE);
 
@@ -6976,7 +6976,7 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
   mt->add_vid_behind = lives_image_menu_item_new_with_mnemonic (_("Add Video Track at _Rear"));
   lives_container_add (LIVES_CONTAINER (menuitem_menu), mt->add_vid_behind);
 
-  lives_widget_add_accelerator (mt->add_vid_behind, LIVES_WIDGET_ACTIVATE_EVENT, mt->accel_group,
+  lives_widget_add_accelerator (mt->add_vid_behind, LIVES_WIDGET_ACTIVATE_SIGNAL, mt->accel_group,
                               LIVES_KEY_t, LIVES_CONTROL_MASK,
                               LIVES_ACCEL_VISIBLE);
 
@@ -6984,7 +6984,7 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
   mt->add_vid_front = lives_image_menu_item_new_with_mnemonic (_("Add Video Track at _Front"));
   lives_container_add (LIVES_CONTAINER (menuitem_menu), mt->add_vid_front);
 
-  lives_widget_add_accelerator (mt->add_vid_front, LIVES_WIDGET_ACTIVATE_EVENT, mt->accel_group,
+  lives_widget_add_accelerator (mt->add_vid_front, LIVES_WIDGET_ACTIVATE_SIGNAL, mt->accel_group,
                               LIVES_KEY_t, (LiVESXModifierType)(LIVES_CONTROL_MASK|LIVES_SHIFT_MASK),
                               LIVES_ACCEL_VISIBLE);
 
@@ -6997,11 +6997,11 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
   menuitem = lives_menu_item_new_with_mnemonic (_("_Split current track at cursor"));
   lives_container_add (LIVES_CONTAINER (menuitem_menu), menuitem);
 
-  lives_signal_connect (LIVES_GUI_OBJECT (menuitem), LIVES_WIDGET_ACTIVATE_EVENT,
+  lives_signal_connect (LIVES_GUI_OBJECT (menuitem), LIVES_WIDGET_ACTIVATE_SIGNAL,
 		    LIVES_GUI_CALLBACK (on_split_curr_activate),
 		    (livespointer)mt);
 
-  lives_widget_add_accelerator (menuitem, LIVES_WIDGET_ACTIVATE_EVENT, mt->accel_group,
+  lives_widget_add_accelerator (menuitem, LIVES_WIDGET_ACTIVATE_SIGNAL, mt->accel_group,
                               LIVES_KEY_s, (LiVESXModifierType)LIVES_CONTROL_MASK,
                               LIVES_ACCEL_VISIBLE);
 
@@ -7010,7 +7010,7 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
   lives_container_add (LIVES_CONTAINER (menuitem_menu), mt->split_sel);
   lives_widget_set_sensitive (mt->split_sel, FALSE);
 
-  lives_signal_connect (LIVES_GUI_OBJECT (mt->split_sel), LIVES_WIDGET_ACTIVATE_EVENT,
+  lives_signal_connect (LIVES_GUI_OBJECT (mt->split_sel), LIVES_WIDGET_ACTIVATE_SIGNAL,
 		    LIVES_GUI_CALLBACK (on_split_sel_activate),
 		    (livespointer)mt);
 
@@ -7023,7 +7023,7 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
   lives_container_add (LIVES_CONTAINER (menuitem_menu), mt->ins_gap_sel);
   lives_widget_set_sensitive (mt->ins_gap_sel, FALSE);
 
-  lives_signal_connect (LIVES_GUI_OBJECT (mt->ins_gap_sel), LIVES_WIDGET_ACTIVATE_EVENT,
+  lives_signal_connect (LIVES_GUI_OBJECT (mt->ins_gap_sel), LIVES_WIDGET_ACTIVATE_SIGNAL,
 		    LIVES_GUI_CALLBACK (on_insgap_sel_activate),
 		    (livespointer)mt);
 
@@ -7031,7 +7031,7 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
   lives_container_add (LIVES_CONTAINER (menuitem_menu), mt->ins_gap_cur);
   lives_widget_set_sensitive (mt->ins_gap_cur, FALSE);
 
-  lives_signal_connect (LIVES_GUI_OBJECT (mt->ins_gap_cur), LIVES_WIDGET_ACTIVATE_EVENT,
+  lives_signal_connect (LIVES_GUI_OBJECT (mt->ins_gap_cur), LIVES_WIDGET_ACTIVATE_SIGNAL,
 		    LIVES_GUI_CALLBACK (on_insgap_cur_activate),
 		    (livespointer)mt);
 
@@ -7042,22 +7042,22 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
   mt->remove_gaps = lives_menu_item_new_with_mnemonic (_("Close all _gaps in selected tracks/time"));
   lives_container_add (LIVES_CONTAINER (menuitem_menu), mt->remove_gaps);
 
-  lives_signal_connect (LIVES_GUI_OBJECT (mt->remove_gaps), LIVES_WIDGET_ACTIVATE_EVENT,
+  lives_signal_connect (LIVES_GUI_OBJECT (mt->remove_gaps), LIVES_WIDGET_ACTIVATE_SIGNAL,
 		    LIVES_GUI_CALLBACK (remove_gaps),
 		    (livespointer)mt);
 
-  lives_widget_add_accelerator (mt->remove_gaps, LIVES_WIDGET_ACTIVATE_EVENT, mt->accel_group,
+  lives_widget_add_accelerator (mt->remove_gaps, LIVES_WIDGET_ACTIVATE_SIGNAL, mt->accel_group,
                               LIVES_KEY_g, LIVES_CONTROL_MASK,
                               LIVES_ACCEL_VISIBLE);
 
   mt->remove_first_gaps = lives_menu_item_new_with_mnemonic ("");
   lives_container_add (LIVES_CONTAINER (menuitem_menu), mt->remove_first_gaps);
 
-  lives_signal_connect (LIVES_GUI_OBJECT (mt->remove_first_gaps), LIVES_WIDGET_ACTIVATE_EVENT,
+  lives_signal_connect (LIVES_GUI_OBJECT (mt->remove_first_gaps), LIVES_WIDGET_ACTIVATE_SIGNAL,
 		    LIVES_GUI_CALLBACK (remove_first_gaps),
 		    (livespointer)mt);
 
-  lives_widget_add_accelerator (mt->remove_first_gaps, LIVES_WIDGET_ACTIVATE_EVENT, mt->accel_group,
+  lives_widget_add_accelerator (mt->remove_first_gaps, LIVES_WIDGET_ACTIVATE_SIGNAL, mt->accel_group,
                               LIVES_KEY_f, LIVES_CONTROL_MASK,
                               LIVES_ACCEL_VISIBLE);
 
@@ -7079,46 +7079,46 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
   mt->select_track = lives_check_menu_item_new_with_mnemonic (_("_Select Current Track"));
   lives_container_add (LIVES_CONTAINER (menuitem_menu), mt->select_track);
 
-  lives_widget_add_accelerator (mt->select_track, LIVES_WIDGET_ACTIVATE_EVENT, mt->accel_group,
+  lives_widget_add_accelerator (mt->select_track, LIVES_WIDGET_ACTIVATE_SIGNAL, mt->accel_group,
                               LIVES_KEY_Space, LIVES_CONTROL_MASK,
                               LIVES_ACCEL_VISIBLE);
 
   menuitem = lives_menu_item_new_with_mnemonic (_("Select _all video tracks"));
   lives_container_add (LIVES_CONTAINER (menuitem_menu), menuitem);
 
-  lives_signal_connect (LIVES_GUI_OBJECT (menuitem), LIVES_WIDGET_ACTIVATE_EVENT,
+  lives_signal_connect (LIVES_GUI_OBJECT (menuitem), LIVES_WIDGET_ACTIVATE_SIGNAL,
 		    LIVES_GUI_CALLBACK (select_all_vid),
 		    (livespointer)mt);
 
   menuitem = lives_menu_item_new_with_mnemonic (_("Select _no video tracks"));
   lives_container_add (LIVES_CONTAINER (menuitem_menu), menuitem);
 
-  lives_signal_connect (LIVES_GUI_OBJECT (menuitem), LIVES_WIDGET_ACTIVATE_EVENT,
+  lives_signal_connect (LIVES_GUI_OBJECT (menuitem), LIVES_WIDGET_ACTIVATE_SIGNAL,
 		    LIVES_GUI_CALLBACK (select_no_vid),
 		    (livespointer)mt);
 
   menuitem = lives_menu_item_new_with_mnemonic (_("Select all _time"));
   lives_container_add (LIVES_CONTAINER (menuitem_menu), menuitem);
 
-  lives_signal_connect (LIVES_GUI_OBJECT (menuitem), LIVES_WIDGET_ACTIVATE_EVENT,
+  lives_signal_connect (LIVES_GUI_OBJECT (menuitem), LIVES_WIDGET_ACTIVATE_SIGNAL,
 		    LIVES_GUI_CALLBACK (select_all_time),
 		    (livespointer)mt);
 
-  lives_widget_add_accelerator (menuitem, LIVES_WIDGET_ACTIVATE_EVENT, mt->accel_group,
+  lives_widget_add_accelerator (menuitem, LIVES_WIDGET_ACTIVATE_SIGNAL, mt->accel_group,
                               LIVES_KEY_a, LIVES_CONTROL_MASK,
                               LIVES_ACCEL_VISIBLE);
 
   menuitem = lives_menu_item_new_with_mnemonic (_("Select from _zero time"));
   lives_container_add (LIVES_CONTAINER (menuitem_menu), menuitem);
 
-  lives_signal_connect (LIVES_GUI_OBJECT (menuitem), LIVES_WIDGET_ACTIVATE_EVENT,
+  lives_signal_connect (LIVES_GUI_OBJECT (menuitem), LIVES_WIDGET_ACTIVATE_SIGNAL,
 		    LIVES_GUI_CALLBACK (select_from_zero_time),
 		    (livespointer)mt);
 
   menuitem = lives_menu_item_new_with_mnemonic (_("Select to _end time"));
   lives_container_add (LIVES_CONTAINER (menuitem_menu), menuitem);
 
-  lives_signal_connect (LIVES_GUI_OBJECT (menuitem), LIVES_WIDGET_ACTIVATE_EVENT,
+  lives_signal_connect (LIVES_GUI_OBJECT (menuitem), LIVES_WIDGET_ACTIVATE_SIGNAL,
 		    LIVES_GUI_CALLBACK (select_to_end_time),
 		    (livespointer)mt);
 
@@ -7136,28 +7136,28 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
   mt->tc_to_rs = lives_menu_item_new_with_mnemonic (_("_Timecode to region start"));
   lives_container_add (LIVES_CONTAINER (selcopy_menu), mt->tc_to_rs);
 
-  lives_signal_connect (LIVES_GUI_OBJECT (mt->tc_to_rs), LIVES_WIDGET_ACTIVATE_EVENT,
+  lives_signal_connect (LIVES_GUI_OBJECT (mt->tc_to_rs), LIVES_WIDGET_ACTIVATE_SIGNAL,
 		    LIVES_GUI_CALLBACK (tc_to_rs),
 		    (livespointer)mt);
 
   mt->tc_to_re = lives_menu_item_new_with_mnemonic (_("_Timecode to region end"));
   lives_container_add (LIVES_CONTAINER (selcopy_menu), mt->tc_to_re);
 
-  lives_signal_connect (LIVES_GUI_OBJECT (mt->tc_to_re), LIVES_WIDGET_ACTIVATE_EVENT,
+  lives_signal_connect (LIVES_GUI_OBJECT (mt->tc_to_re), LIVES_WIDGET_ACTIVATE_SIGNAL,
 		    LIVES_GUI_CALLBACK (tc_to_re),
 		    (livespointer)mt);
 
   mt->rs_to_tc = lives_menu_item_new_with_mnemonic (_("_Region start to timecode"));
   lives_container_add (LIVES_CONTAINER (selcopy_menu), mt->rs_to_tc);
 
-  lives_signal_connect (LIVES_GUI_OBJECT (mt->rs_to_tc), LIVES_WIDGET_ACTIVATE_EVENT,
+  lives_signal_connect (LIVES_GUI_OBJECT (mt->rs_to_tc), LIVES_WIDGET_ACTIVATE_SIGNAL,
 		    LIVES_GUI_CALLBACK (rs_to_tc),
 		    (livespointer)mt);
 
   mt->re_to_tc = lives_menu_item_new_with_mnemonic (_("_Region end to timecode"));
   lives_container_add (LIVES_CONTAINER (selcopy_menu), mt->re_to_tc);
 
-  lives_signal_connect (LIVES_GUI_OBJECT (mt->re_to_tc), LIVES_WIDGET_ACTIVATE_EVENT,
+  lives_signal_connect (LIVES_GUI_OBJECT (mt->re_to_tc), LIVES_WIDGET_ACTIVATE_SIGNAL,
 		    LIVES_GUI_CALLBACK (re_to_tc),
 		    (livespointer)mt);
 
@@ -7171,11 +7171,11 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
   mt->seldesel_menuitem = lives_menu_item_new_with_mnemonic (_("Select/deselect block at current track/time"));
   lives_container_add (LIVES_CONTAINER (menuitem_menu), mt->seldesel_menuitem);
 
-  lives_signal_connect (LIVES_GUI_OBJECT (mt->seldesel_menuitem), LIVES_WIDGET_ACTIVATE_EVENT,
+  lives_signal_connect (LIVES_GUI_OBJECT (mt->seldesel_menuitem), LIVES_WIDGET_ACTIVATE_SIGNAL,
 		    LIVES_GUI_CALLBACK (mt_selblock),
 		    (livespointer)mt);
 
-  lives_widget_add_accelerator (mt->seldesel_menuitem, LIVES_WIDGET_ACTIVATE_EVENT, mt->accel_group,
+  lives_widget_add_accelerator (mt->seldesel_menuitem, LIVES_WIDGET_ACTIVATE_SIGNAL, mt->accel_group,
                               LIVES_KEY_Return, LIVES_CONTROL_MASK,
                               LIVES_ACCEL_VISIBLE);
 
@@ -7197,7 +7197,7 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
   lives_widget_show (mt->change_vals);
   lives_container_add (LIVES_CONTAINER (menuitem_menu), mt->change_vals);
 
-  lives_signal_connect (LIVES_GUI_OBJECT (mt->change_vals), LIVES_WIDGET_ACTIVATE_EVENT,
+  lives_signal_connect (LIVES_GUI_OBJECT (mt->change_vals), LIVES_WIDGET_ACTIVATE_SIGNAL,
                       LIVES_GUI_CALLBACK (mt_change_vals_activate),
                       (livespointer)mt);
 
@@ -7221,7 +7221,7 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
   lives_container_add (LIVES_CONTAINER (menuitem_menu), mt->capture);
 
 
-  lives_signal_connect (LIVES_GUI_OBJECT (mt->capture), LIVES_WIDGET_ACTIVATE_EVENT,
+  lives_signal_connect (LIVES_GUI_OBJECT (mt->capture), LIVES_WIDGET_ACTIVATE_SIGNAL,
                       LIVES_GUI_CALLBACK (on_capture_activate),
                       NULL);
 
@@ -7234,7 +7234,7 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
   menuitem = lives_image_menu_item_new_with_mnemonic (_("_Preferences..."));
   lives_widget_show (menuitem);
   lives_container_add (LIVES_CONTAINER (menuitem_menu), menuitem);
-  lives_widget_add_accelerator (menuitem, LIVES_WIDGET_ACTIVATE_EVENT, mt->accel_group,
+  lives_widget_add_accelerator (menuitem, LIVES_WIDGET_ACTIVATE_SIGNAL, mt->accel_group,
                               LIVES_KEY_p, LIVES_CONTROL_MASK,
                               LIVES_ACCEL_VISIBLE);
 
@@ -7244,7 +7244,7 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
   lives_image_menu_item_set_image (LIVES_IMAGE_MENU_ITEM (menuitem), image);
 #endif
 
-  lives_signal_connect (LIVES_GUI_OBJECT (menuitem), LIVES_WIDGET_ACTIVATE_EVENT,
+  lives_signal_connect (LIVES_GUI_OBJECT (menuitem), LIVES_WIDGET_ACTIVATE_SIGNAL,
                       LIVES_GUI_CALLBACK (on_preferences_activate),
                       NULL);
 
@@ -7267,7 +7267,7 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
   lives_container_add (LIVES_CONTAINER (menuitem_menu), mt->render);
   lives_widget_set_sensitive (mt->render, FALSE);
 
-  lives_widget_add_accelerator (mt->render, LIVES_WIDGET_ACTIVATE_EVENT, mt->accel_group,
+  lives_widget_add_accelerator (mt->render, LIVES_WIDGET_ACTIVATE_SIGNAL, mt->accel_group,
                               LIVES_KEY_r, LIVES_CONTROL_MASK,
                               LIVES_ACCEL_VISIBLE);
 
@@ -7324,14 +7324,14 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
   mt->view_clips = lives_menu_item_new_with_mnemonic (_("_Clips"));
   lives_container_add (LIVES_CONTAINER (menuitem_menu), mt->view_clips);
 
-  lives_widget_add_accelerator (mt->view_clips, LIVES_WIDGET_ACTIVATE_EVENT, mt->accel_group,
+  lives_widget_add_accelerator (mt->view_clips, LIVES_WIDGET_ACTIVATE_SIGNAL, mt->accel_group,
                               LIVES_KEY_c, (LiVESXModifierType)0,
                               LIVES_ACCEL_VISIBLE);
 
   mt->view_in_out = lives_menu_item_new_with_mnemonic (_("Block _In/out points"));
   lives_container_add (LIVES_CONTAINER (menuitem_menu), mt->view_in_out);
 
-  lives_widget_add_accelerator (mt->view_in_out, LIVES_WIDGET_ACTIVATE_EVENT, mt->accel_group,
+  lives_widget_add_accelerator (mt->view_in_out, LIVES_WIDGET_ACTIVATE_SIGNAL, mt->accel_group,
                               LIVES_KEY_n, (LiVESXModifierType)0,
                               LIVES_ACCEL_VISIBLE);
 
@@ -7340,7 +7340,7 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
   mt->view_effects = lives_menu_item_new_with_mnemonic (_("_Effects at current"));
   lives_container_add (LIVES_CONTAINER (menuitem_menu), mt->view_effects);
 
-  lives_widget_add_accelerator (mt->view_effects, LIVES_WIDGET_ACTIVATE_EVENT, mt->accel_group,
+  lives_widget_add_accelerator (mt->view_effects, LIVES_WIDGET_ACTIVATE_SIGNAL, mt->accel_group,
                               LIVES_KEY_e, (LiVESXModifierType)0,
                               LIVES_ACCEL_VISIBLE);
 
@@ -7374,7 +7374,7 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
   lives_check_menu_item_set_active(LIVES_CHECK_MENU_ITEM(view_ctx), mt->opts.show_ctx);
   lives_container_add (LIVES_CONTAINER (menuitem_menu), view_ctx);
 
-  lives_widget_add_accelerator (view_ctx, LIVES_WIDGET_ACTIVATE_EVENT, mt->accel_group,
+  lives_widget_add_accelerator (view_ctx, LIVES_WIDGET_ACTIVATE_SIGNAL, mt->accel_group,
                               LIVES_KEY_d, (LiVESXModifierType)0,
                               LIVES_ACCEL_VISIBLE);
 
@@ -7392,25 +7392,25 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
   ccursor = lives_menu_item_new_with_mnemonic (_("_Center on cursor"));
   lives_container_add (LIVES_CONTAINER (menuitem_menu), ccursor);
 
-  lives_widget_add_accelerator (ccursor, LIVES_WIDGET_ACTIVATE_EVENT, mt->accel_group,
+  lives_widget_add_accelerator (ccursor, LIVES_WIDGET_ACTIVATE_SIGNAL, mt->accel_group,
                               LIVES_KEY_c, (LiVESXModifierType)LIVES_CONTROL_MASK,
                               LIVES_ACCEL_VISIBLE);
 
   zoom_in = lives_menu_item_new_with_mnemonic (_("_Zoom in"));
   lives_container_add (LIVES_CONTAINER (menuitem_menu), zoom_in);
 
-  lives_widget_add_accelerator (zoom_in, LIVES_WIDGET_ACTIVATE_EVENT, mt->accel_group,
+  lives_widget_add_accelerator (zoom_in, LIVES_WIDGET_ACTIVATE_SIGNAL, mt->accel_group,
                               LIVES_KEY_Plus, (LiVESXModifierType)LIVES_CONTROL_MASK,
                               LIVES_ACCEL_VISIBLE);
 
-  lives_widget_add_accelerator (zoom_in, LIVES_WIDGET_ACTIVATE_EVENT, mt->accel_group,
+  lives_widget_add_accelerator (zoom_in, LIVES_WIDGET_ACTIVATE_SIGNAL, mt->accel_group,
                               LIVES_KEY_Equal, (LiVESXModifierType)LIVES_CONTROL_MASK,
                               (LiVESAccelFlags)0);
 
   zoom_out = lives_menu_item_new_with_mnemonic (_("_Zoom out"));
   lives_container_add (LIVES_CONTAINER (menuitem_menu), zoom_out);
 
-  lives_widget_add_accelerator (zoom_out, LIVES_WIDGET_ACTIVATE_EVENT, mt->accel_group,
+  lives_widget_add_accelerator (zoom_out, LIVES_WIDGET_ACTIVATE_SIGNAL, mt->accel_group,
                               LIVES_KEY_Minus, (LiVESXModifierType)LIVES_CONTROL_MASK,
                               LIVES_ACCEL_VISIBLE);
 
@@ -7530,7 +7530,7 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
   lives_container_add (LIVES_CONTAINER(submenu), mt->mm_move);
   lives_check_menu_item_set_active(LIVES_CHECK_MENU_ITEM(mt->mm_move),mt->opts.mouse_mode==MOUSE_MODE_MOVE);
 
-  mt->mm_move_func=lives_signal_connect (LIVES_GUI_OBJECT (mt->mm_move), LIVES_WIDGET_TOGGLED_EVENT,
+  mt->mm_move_func=lives_signal_connect (LIVES_GUI_OBJECT (mt->mm_move), LIVES_WIDGET_TOGGLED_SIGNAL,
 				     LIVES_GUI_CALLBACK (on_mouse_mode_changed),
 				     (livespointer)mt);
 
@@ -7538,7 +7538,7 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
   lives_container_add (LIVES_CONTAINER(submenu), mt->mm_select);
   lives_check_menu_item_set_active(LIVES_CHECK_MENU_ITEM(mt->mm_select),mt->opts.mouse_mode==MOUSE_MODE_SELECT);
 
-  mt->mm_select_func=lives_signal_connect (LIVES_GUI_OBJECT (mt->mm_select), LIVES_WIDGET_TOGGLED_EVENT,
+  mt->mm_select_func=lives_signal_connect (LIVES_GUI_OBJECT (mt->mm_select), LIVES_WIDGET_TOGGLED_SIGNAL,
 				       LIVES_GUI_CALLBACK (on_mouse_mode_changed),
 				       (livespointer)mt);
 
@@ -7568,202 +7568,202 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
 
   lives_check_menu_item_set_active(LIVES_CHECK_MENU_ITEM(mt->ins_normal),mt->opts.insert_mode==INSERT_MODE_NORMAL);
 
-  mt->ins_normal_func=lives_signal_connect (LIVES_GUI_OBJECT (mt->ins_normal), LIVES_WIDGET_TOGGLED_EVENT,
+  mt->ins_normal_func=lives_signal_connect (LIVES_GUI_OBJECT (mt->ins_normal), LIVES_WIDGET_TOGGLED_SIGNAL,
 				      LIVES_GUI_CALLBACK (on_insert_mode_changed),
 				      (livespointer)mt);
 
 
 
-  lives_signal_connect (LIVES_GUI_OBJECT (mt->quit), LIVES_WIDGET_ACTIVATE_EVENT,
+  lives_signal_connect (LIVES_GUI_OBJECT (mt->quit), LIVES_WIDGET_ACTIVATE_SIGNAL,
 		    LIVES_GUI_CALLBACK (mt_quit_activate),
 		    (livespointer)mt);
-  lives_signal_connect (LIVES_GUI_OBJECT (mt->load_vals), LIVES_WIDGET_ACTIVATE_EVENT,
+  lives_signal_connect (LIVES_GUI_OBJECT (mt->load_vals), LIVES_WIDGET_ACTIVATE_SIGNAL,
 		    LIVES_GUI_CALLBACK (mt_load_vals_toggled),
 		    (livespointer)mt);
-  lives_signal_connect (LIVES_GUI_OBJECT (mt->ac_audio_check), LIVES_WIDGET_ACTIVATE_EVENT,
+  lives_signal_connect (LIVES_GUI_OBJECT (mt->ac_audio_check), LIVES_WIDGET_ACTIVATE_SIGNAL,
 		    LIVES_GUI_CALLBACK (mt_ac_audio_toggled),
 		    (livespointer)mt);
-  lives_signal_connect (LIVES_GUI_OBJECT (mt->aload_subs), LIVES_WIDGET_ACTIVATE_EVENT,
+  lives_signal_connect (LIVES_GUI_OBJECT (mt->aload_subs), LIVES_WIDGET_ACTIVATE_SIGNAL,
 		    LIVES_GUI_CALLBACK (on_boolean_toggled),
 		    &prefs->autoload_subs);
-  lives_signal_connect (LIVES_GUI_OBJECT (mt->clipedit), LIVES_WIDGET_ACTIVATE_EVENT,
+  lives_signal_connect (LIVES_GUI_OBJECT (mt->clipedit), LIVES_WIDGET_ACTIVATE_SIGNAL,
 		    LIVES_GUI_CALLBACK (multitrack_end_cb),
 		    (livespointer)mt);
-  lives_signal_connect (LIVES_GUI_OBJECT (mt->playall), LIVES_WIDGET_ACTIVATE_EVENT,
+  lives_signal_connect (LIVES_GUI_OBJECT (mt->playall), LIVES_WIDGET_ACTIVATE_SIGNAL,
 		    LIVES_GUI_CALLBACK (on_playall_activate),
 		    NULL);
-  lives_signal_connect (LIVES_GUI_OBJECT (mt->playsel), LIVES_WIDGET_ACTIVATE_EVENT,
+  lives_signal_connect (LIVES_GUI_OBJECT (mt->playsel), LIVES_WIDGET_ACTIVATE_SIGNAL,
 		    LIVES_GUI_CALLBACK (multitrack_play_sel),
 		    (livespointer)mt);
-  lives_signal_connect (LIVES_GUI_OBJECT (mt->insert), LIVES_WIDGET_ACTIVATE_EVENT,
+  lives_signal_connect (LIVES_GUI_OBJECT (mt->insert), LIVES_WIDGET_ACTIVATE_SIGNAL,
 		    LIVES_GUI_CALLBACK (multitrack_insert),
 		    (livespointer)mt);
-  lives_signal_connect (LIVES_GUI_OBJECT (mt->audio_insert), LIVES_WIDGET_ACTIVATE_EVENT,
+  lives_signal_connect (LIVES_GUI_OBJECT (mt->audio_insert), LIVES_WIDGET_ACTIVATE_SIGNAL,
 		    LIVES_GUI_CALLBACK (multitrack_audio_insert),
 		    (livespointer)mt);
-  lives_signal_connect (LIVES_GUI_OBJECT (mt->adjust_start_end), LIVES_WIDGET_ACTIVATE_EVENT,
+  lives_signal_connect (LIVES_GUI_OBJECT (mt->adjust_start_end), LIVES_WIDGET_ACTIVATE_SIGNAL,
 		    LIVES_GUI_CALLBACK (multitrack_adj_start_end),
 		    (livespointer)mt);
-  lives_signal_connect (LIVES_GUI_OBJECT (mt->view_events), LIVES_WIDGET_ACTIVATE_EVENT,
+  lives_signal_connect (LIVES_GUI_OBJECT (mt->view_events), LIVES_WIDGET_ACTIVATE_SIGNAL,
 		    LIVES_GUI_CALLBACK (multitrack_view_events),
 		    (livespointer)mt);
-  lives_signal_connect (LIVES_GUI_OBJECT (mt->view_sel_events), LIVES_WIDGET_ACTIVATE_EVENT,
+  lives_signal_connect (LIVES_GUI_OBJECT (mt->view_sel_events), LIVES_WIDGET_ACTIVATE_SIGNAL,
 		    LIVES_GUI_CALLBACK (multitrack_view_sel_events),
 		    (livespointer)mt);
-  lives_signal_connect (LIVES_GUI_OBJECT (mt->clear_marks), LIVES_WIDGET_ACTIVATE_EVENT,
+  lives_signal_connect (LIVES_GUI_OBJECT (mt->clear_marks), LIVES_WIDGET_ACTIVATE_SIGNAL,
 		    LIVES_GUI_CALLBACK (multitrack_clear_marks),
 		    (livespointer)mt);
-  lives_signal_connect (LIVES_GUI_OBJECT (view_mt_details), LIVES_WIDGET_ACTIVATE_EVENT,
+  lives_signal_connect (LIVES_GUI_OBJECT (view_mt_details), LIVES_WIDGET_ACTIVATE_SIGNAL,
 		    LIVES_GUI_CALLBACK (multitrack_view_details),
 		    (livespointer)mt);
-  lives_signal_connect (LIVES_GUI_OBJECT (mt->show_layout_errors), LIVES_WIDGET_ACTIVATE_EVENT,
+  lives_signal_connect (LIVES_GUI_OBJECT (mt->show_layout_errors), LIVES_WIDGET_ACTIVATE_SIGNAL,
 		    LIVES_GUI_CALLBACK (popup_lmap_errors),
 		    NULL);
-  lives_signal_connect (LIVES_GUI_OBJECT (mt->view_clips), LIVES_WIDGET_ACTIVATE_EVENT,
+  lives_signal_connect (LIVES_GUI_OBJECT (mt->view_clips), LIVES_WIDGET_ACTIVATE_SIGNAL,
 		    LIVES_GUI_CALLBACK (multitrack_view_clips),
 		    (livespointer)mt);
-  lives_signal_connect (LIVES_GUI_OBJECT (mt->view_in_out), LIVES_WIDGET_ACTIVATE_EVENT,
+  lives_signal_connect (LIVES_GUI_OBJECT (mt->view_in_out), LIVES_WIDGET_ACTIVATE_SIGNAL,
 		    LIVES_GUI_CALLBACK (multitrack_view_in_out),
 		    (livespointer)mt);
-  lives_signal_connect (LIVES_GUI_OBJECT (show_messages), LIVES_WIDGET_ACTIVATE_EVENT,
+  lives_signal_connect (LIVES_GUI_OBJECT (show_messages), LIVES_WIDGET_ACTIVATE_SIGNAL,
 		    LIVES_GUI_CALLBACK (on_show_messages_activate),
 		    NULL);
-  lives_signal_connect (LIVES_GUI_OBJECT (mt->stop), LIVES_WIDGET_ACTIVATE_EVENT,
+  lives_signal_connect (LIVES_GUI_OBJECT (mt->stop), LIVES_WIDGET_ACTIVATE_SIGNAL,
 		    LIVES_GUI_CALLBACK (on_stop_activate),
 		    NULL);
-  lives_signal_connect (LIVES_GUI_OBJECT (mt->rewind), LIVES_WIDGET_ACTIVATE_EVENT,
+  lives_signal_connect (LIVES_GUI_OBJECT (mt->rewind), LIVES_WIDGET_ACTIVATE_SIGNAL,
 		    LIVES_GUI_CALLBACK (on_rewind_activate),
 		    NULL);
-  mt->sepwin_func=lives_signal_connect (LIVES_GUI_OBJECT (mt->sepwin), LIVES_WIDGET_ACTIVATE_EVENT,
+  mt->sepwin_func=lives_signal_connect (LIVES_GUI_OBJECT (mt->sepwin), LIVES_WIDGET_ACTIVATE_SIGNAL,
 				    LIVES_GUI_CALLBACK (on_sepwin_activate),
 				    NULL);
-  lives_signal_connect (LIVES_GUI_OBJECT (full_screen), LIVES_WIDGET_ACTIVATE_EVENT,
+  lives_signal_connect (LIVES_GUI_OBJECT (full_screen), LIVES_WIDGET_ACTIVATE_SIGNAL,
 		    LIVES_GUI_CALLBACK (on_full_screen_activate),
 		    NULL);
-  mt->loop_cont_func=lives_signal_connect (LIVES_GUI_OBJECT (mt->loop_continue), LIVES_WIDGET_ACTIVATE_EVENT,
+  mt->loop_cont_func=lives_signal_connect (LIVES_GUI_OBJECT (mt->loop_continue), LIVES_WIDGET_ACTIVATE_SIGNAL,
 				       LIVES_GUI_CALLBACK (on_loop_cont_activate),
 				       NULL);
-  mt->mute_audio_func=lives_signal_connect (LIVES_GUI_OBJECT (mt->mute_audio), LIVES_WIDGET_ACTIVATE_EVENT,
+  mt->mute_audio_func=lives_signal_connect (LIVES_GUI_OBJECT (mt->mute_audio), LIVES_WIDGET_ACTIVATE_SIGNAL,
 					LIVES_GUI_CALLBACK (on_mute_activate),
 					NULL);
-  lives_signal_connect (LIVES_GUI_OBJECT (mt->rename_track), LIVES_WIDGET_ACTIVATE_EVENT,
+  lives_signal_connect (LIVES_GUI_OBJECT (mt->rename_track), LIVES_WIDGET_ACTIVATE_SIGNAL,
 		    LIVES_GUI_CALLBACK (on_rename_track_activate),
 		    (livespointer)mt);
-  lives_signal_connect (LIVES_GUI_OBJECT (mt->cback_audio), LIVES_WIDGET_ACTIVATE_EVENT,
+  lives_signal_connect (LIVES_GUI_OBJECT (mt->cback_audio), LIVES_WIDGET_ACTIVATE_SIGNAL,
 		    LIVES_GUI_CALLBACK (on_cback_audio_activate),
 		    (livespointer)mt);
-  lives_signal_connect (LIVES_GUI_OBJECT (mt->add_vid_behind), LIVES_WIDGET_ACTIVATE_EVENT,
+  lives_signal_connect (LIVES_GUI_OBJECT (mt->add_vid_behind), LIVES_WIDGET_ACTIVATE_SIGNAL,
 		    LIVES_GUI_CALLBACK (add_video_track_behind),
 		    (livespointer)mt);
-  lives_signal_connect (LIVES_GUI_OBJECT (mt->add_vid_front), LIVES_WIDGET_ACTIVATE_EVENT,
+  lives_signal_connect (LIVES_GUI_OBJECT (mt->add_vid_front), LIVES_WIDGET_ACTIVATE_SIGNAL,
 		    LIVES_GUI_CALLBACK (add_video_track_front),
 		    (livespointer)mt);
-  lives_signal_connect (LIVES_GUI_OBJECT (mt->render), LIVES_WIDGET_ACTIVATE_EVENT,
+  lives_signal_connect (LIVES_GUI_OBJECT (mt->render), LIVES_WIDGET_ACTIVATE_SIGNAL,
 		    LIVES_GUI_CALLBACK (on_render_activate),
 		    (livespointer)mt);
-  lives_signal_connect (LIVES_GUI_OBJECT (mt->prerender_aud), LIVES_WIDGET_ACTIVATE_EVENT,
+  lives_signal_connect (LIVES_GUI_OBJECT (mt->prerender_aud), LIVES_WIDGET_ACTIVATE_SIGNAL,
 		    LIVES_GUI_CALLBACK (on_prerender_aud_activate),
 		    (livespointer)mt);
-  lives_signal_connect (LIVES_GUI_OBJECT (mt->jumpback), LIVES_WIDGET_ACTIVATE_EVENT,
+  lives_signal_connect (LIVES_GUI_OBJECT (mt->jumpback), LIVES_WIDGET_ACTIVATE_SIGNAL,
 		    LIVES_GUI_CALLBACK (on_jumpback_activate),
 		    (livespointer)mt);
-  lives_signal_connect (LIVES_GUI_OBJECT (mt->jumpnext), LIVES_WIDGET_ACTIVATE_EVENT,
+  lives_signal_connect (LIVES_GUI_OBJECT (mt->jumpnext), LIVES_WIDGET_ACTIVATE_SIGNAL,
 		    LIVES_GUI_CALLBACK (on_jumpnext_activate),
 		    (livespointer)mt);
-  lives_signal_connect (LIVES_GUI_OBJECT (mt->delblock), LIVES_WIDGET_ACTIVATE_EVENT,
+  lives_signal_connect (LIVES_GUI_OBJECT (mt->delblock), LIVES_WIDGET_ACTIVATE_SIGNAL,
 		    LIVES_GUI_CALLBACK (on_delblock_activate),
 		    (livespointer)mt);
-  lives_signal_connect (LIVES_GUI_OBJECT (mt->save_event_list), LIVES_WIDGET_ACTIVATE_EVENT,
+  lives_signal_connect (LIVES_GUI_OBJECT (mt->save_event_list), LIVES_WIDGET_ACTIVATE_SIGNAL,
 		    LIVES_GUI_CALLBACK (on_save_event_list_activate),
 		    (livespointer)mt);
-  lives_signal_connect (LIVES_GUI_OBJECT (mt->load_event_list), LIVES_WIDGET_ACTIVATE_EVENT,
+  lives_signal_connect (LIVES_GUI_OBJECT (mt->load_event_list), LIVES_WIDGET_ACTIVATE_SIGNAL,
 		    LIVES_GUI_CALLBACK (on_load_event_list_activate),
 		    (livespointer)mt);
-  lives_signal_connect (LIVES_GUI_OBJECT (mt->clear_event_list), LIVES_WIDGET_ACTIVATE_EVENT,
+  lives_signal_connect (LIVES_GUI_OBJECT (mt->clear_event_list), LIVES_WIDGET_ACTIVATE_SIGNAL,
 		    LIVES_GUI_CALLBACK (on_clear_event_list_activate),
 		    (livespointer)mt);
-  lives_signal_connect (LIVES_GUI_OBJECT (mt->view_audio), LIVES_WIDGET_ACTIVATE_EVENT,
+  lives_signal_connect (LIVES_GUI_OBJECT (mt->view_audio), LIVES_WIDGET_ACTIVATE_SIGNAL,
                       LIVES_GUI_CALLBACK (mt_view_audio_toggled),
                       (livespointer)mt);
-  lives_signal_connect (LIVES_GUI_OBJECT (view_ctx), LIVES_WIDGET_ACTIVATE_EVENT,
+  lives_signal_connect (LIVES_GUI_OBJECT (view_ctx), LIVES_WIDGET_ACTIVATE_SIGNAL,
                       LIVES_GUI_CALLBACK (mt_view_ctx_toggled),
                       (livespointer)mt);
-  lives_signal_connect (LIVES_GUI_OBJECT (mt->change_max_disp), LIVES_WIDGET_ACTIVATE_EVENT,
+  lives_signal_connect (LIVES_GUI_OBJECT (mt->change_max_disp), LIVES_WIDGET_ACTIVATE_SIGNAL,
                       LIVES_GUI_CALLBACK (mt_change_max_disp_tracks),
                       (livespointer)mt);
-  lives_signal_connect (LIVES_GUI_OBJECT (mt->render_vid), LIVES_WIDGET_ACTIVATE_EVENT,
+  lives_signal_connect (LIVES_GUI_OBJECT (mt->render_vid), LIVES_WIDGET_ACTIVATE_SIGNAL,
                       LIVES_GUI_CALLBACK (mt_render_vid_toggled),
                       (livespointer)mt);
-  lives_signal_connect (LIVES_GUI_OBJECT (mt->render_aud), LIVES_WIDGET_ACTIVATE_EVENT,
+  lives_signal_connect (LIVES_GUI_OBJECT (mt->render_aud), LIVES_WIDGET_ACTIVATE_SIGNAL,
                       LIVES_GUI_CALLBACK (mt_render_aud_toggled),
                       (livespointer)mt);
-  lives_signal_connect (LIVES_GUI_OBJECT (mt->normalise_aud), LIVES_WIDGET_ACTIVATE_EVENT,
+  lives_signal_connect (LIVES_GUI_OBJECT (mt->normalise_aud), LIVES_WIDGET_ACTIVATE_SIGNAL,
                       LIVES_GUI_CALLBACK (mt_norm_aud_toggled),
                       (livespointer)mt);
-  lives_signal_connect (LIVES_GUI_OBJECT (ign_ins_sel), LIVES_WIDGET_ACTIVATE_EVENT,
+  lives_signal_connect (LIVES_GUI_OBJECT (ign_ins_sel), LIVES_WIDGET_ACTIVATE_SIGNAL,
                       LIVES_GUI_CALLBACK (mt_ign_ins_sel_toggled),
                       (livespointer)mt);
-  lives_signal_connect (LIVES_GUI_OBJECT (show_frame_events), LIVES_WIDGET_ACTIVATE_EVENT,
+  lives_signal_connect (LIVES_GUI_OBJECT (show_frame_events), LIVES_WIDGET_ACTIVATE_SIGNAL,
                       LIVES_GUI_CALLBACK (show_frame_events_activate),
                       NULL);
-  lives_signal_connect (LIVES_GUI_OBJECT (ccursor), LIVES_WIDGET_ACTIVATE_EVENT,
+  lives_signal_connect (LIVES_GUI_OBJECT (ccursor), LIVES_WIDGET_ACTIVATE_SIGNAL,
                       LIVES_GUI_CALLBACK (mt_center_on_cursor),
                       (livespointer)mt);
-  lives_signal_connect (LIVES_GUI_OBJECT (mt->follow_play), LIVES_WIDGET_ACTIVATE_EVENT,
+  lives_signal_connect (LIVES_GUI_OBJECT (mt->follow_play), LIVES_WIDGET_ACTIVATE_SIGNAL,
                       LIVES_GUI_CALLBACK (mt_fplay_toggled),
                       (livespointer)mt);
-  lives_signal_connect (LIVES_GUI_OBJECT (zoom_in), LIVES_WIDGET_ACTIVATE_EVENT,
+  lives_signal_connect (LIVES_GUI_OBJECT (zoom_in), LIVES_WIDGET_ACTIVATE_SIGNAL,
                       LIVES_GUI_CALLBACK (mt_zoom_in),
                       (livespointer)mt);
-  lives_signal_connect (LIVES_GUI_OBJECT (zoom_out), LIVES_WIDGET_ACTIVATE_EVENT,
+  lives_signal_connect (LIVES_GUI_OBJECT (zoom_out), LIVES_WIDGET_ACTIVATE_SIGNAL,
                       LIVES_GUI_CALLBACK (mt_zoom_out),
                       (livespointer)mt);
-  mt->seltrack_func=lives_signal_connect (LIVES_GUI_OBJECT (mt->select_track), LIVES_WIDGET_ACTIVATE_EVENT,
+  mt->seltrack_func=lives_signal_connect (LIVES_GUI_OBJECT (mt->select_track), LIVES_WIDGET_ACTIVATE_SIGNAL,
 				      LIVES_GUI_CALLBACK (on_seltrack_activate),
 				      (livespointer)mt);
 
-  lives_signal_connect (LIVES_GUI_OBJECT (show_manual), LIVES_WIDGET_ACTIVATE_EVENT,
+  lives_signal_connect (LIVES_GUI_OBJECT (show_manual), LIVES_WIDGET_ACTIVATE_SIGNAL,
 		    LIVES_GUI_CALLBACK (show_manual_activate),
 		    NULL);
 
-  lives_signal_connect (LIVES_GUI_OBJECT (email_author), LIVES_WIDGET_ACTIVATE_EVENT,
+  lives_signal_connect (LIVES_GUI_OBJECT (email_author), LIVES_WIDGET_ACTIVATE_SIGNAL,
 		    LIVES_GUI_CALLBACK (email_author_activate),
 		    NULL);
 
-  lives_signal_connect (LIVES_GUI_OBJECT (donate), LIVES_WIDGET_ACTIVATE_EVENT,
+  lives_signal_connect (LIVES_GUI_OBJECT (donate), LIVES_WIDGET_ACTIVATE_SIGNAL,
 		    LIVES_GUI_CALLBACK (donate_activate),
 		    NULL);
 
-  lives_signal_connect (LIVES_GUI_OBJECT (report_bug), LIVES_WIDGET_ACTIVATE_EVENT,
+  lives_signal_connect (LIVES_GUI_OBJECT (report_bug), LIVES_WIDGET_ACTIVATE_SIGNAL,
 		    LIVES_GUI_CALLBACK (report_bug_activate),
 		    NULL);
 
-  lives_signal_connect (LIVES_GUI_OBJECT (suggest_feature), LIVES_WIDGET_ACTIVATE_EVENT,
+  lives_signal_connect (LIVES_GUI_OBJECT (suggest_feature), LIVES_WIDGET_ACTIVATE_SIGNAL,
 		    LIVES_GUI_CALLBACK (suggest_feature_activate),
 		    NULL);
 
-  lives_signal_connect (LIVES_GUI_OBJECT (help_translate), LIVES_WIDGET_ACTIVATE_EVENT,
+  lives_signal_connect (LIVES_GUI_OBJECT (help_translate), LIVES_WIDGET_ACTIVATE_SIGNAL,
 		    LIVES_GUI_CALLBACK (help_translate_activate),
 		    NULL);
 
-  lives_signal_connect (LIVES_GUI_OBJECT (about), LIVES_WIDGET_ACTIVATE_EVENT,
+  lives_signal_connect (LIVES_GUI_OBJECT (about), LIVES_WIDGET_ACTIVATE_SIGNAL,
                       LIVES_GUI_CALLBACK (on_about_activate),
                       NULL);
 
-  lives_signal_connect (LIVES_GUI_OBJECT (mt->troubleshoot), LIVES_WIDGET_ACTIVATE_EVENT,
+  lives_signal_connect (LIVES_GUI_OBJECT (mt->troubleshoot), LIVES_WIDGET_ACTIVATE_SIGNAL,
 		    LIVES_GUI_CALLBACK (on_troubleshoot_activate),
 		    NULL);
 
-  lives_signal_connect (LIVES_GUI_OBJECT (show_mt_keys), LIVES_WIDGET_ACTIVATE_EVENT,
+  lives_signal_connect (LIVES_GUI_OBJECT (show_mt_keys), LIVES_WIDGET_ACTIVATE_SIGNAL,
                       LIVES_GUI_CALLBACK (on_mt_showkeys_activate),
                       NULL);
-  lives_signal_connect (LIVES_GUI_OBJECT (mt->fx_delete), LIVES_WIDGET_ACTIVATE_EVENT,
+  lives_signal_connect (LIVES_GUI_OBJECT (mt->fx_delete), LIVES_WIDGET_ACTIVATE_SIGNAL,
                       LIVES_GUI_CALLBACK (on_mt_delfx_activate),
                       (livespointer)mt);
-  lives_signal_connect (LIVES_GUI_OBJECT (mt->fx_edit), LIVES_WIDGET_ACTIVATE_EVENT,
+  lives_signal_connect (LIVES_GUI_OBJECT (mt->fx_edit), LIVES_WIDGET_ACTIVATE_SIGNAL,
                       LIVES_GUI_CALLBACK (on_mt_fx_edit_activate),
                       (livespointer)mt);
-  lives_signal_connect (LIVES_GUI_OBJECT (mt->view_effects), LIVES_WIDGET_ACTIVATE_EVENT,
+  lives_signal_connect (LIVES_GUI_OBJECT (mt->view_effects), LIVES_WIDGET_ACTIVATE_SIGNAL,
                       LIVES_GUI_CALLBACK (on_mt_list_fx_activate),
                       (livespointer)mt);
 
@@ -7852,7 +7852,7 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
   lives_widget_add_events(mt->timecode,LIVES_FOCUS_CHANGE_MASK);
   lives_widget_set_sensitive(mt->timecode,FALSE);
 
-  mt->tc_func=lives_signal_connect_after (LIVES_WIDGET_OBJECT (mt->timecode),"focus_out_event", 
+  mt->tc_func=lives_signal_connect_after (LIVES_WIDGET_OBJECT (mt->timecode),LIVES_WIDGET_FOCUS_OUT_EVENT, 
 					  LIVES_GUI_CALLBACK (after_timecode_changed), (livespointer) mt);
 
   lives_widget_set_bg_color(mt->timecode, LIVES_WIDGET_STATE_NORMAL, &palette->black);
@@ -7865,7 +7865,7 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
 
   lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(mt->insa_checkbutton),mt->opts.insert_audio);
 
-  lives_signal_connect_after (LIVES_GUI_OBJECT (mt->insa_checkbutton), LIVES_WIDGET_TOGGLED_EVENT,
+  lives_signal_connect_after (LIVES_GUI_OBJECT (mt->insa_checkbutton), LIVES_WIDGET_TOGGLED_SIGNAL,
 			  LIVES_GUI_CALLBACK (on_insa_toggled),
 			  mt);
 
@@ -7904,7 +7904,7 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
 
   lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(mt->snapo_checkbutton),mt->opts.snap_over);
 
-  lives_signal_connect_after (LIVES_GUI_OBJECT (mt->snapo_checkbutton), LIVES_WIDGET_TOGGLED_EVENT,
+  lives_signal_connect_after (LIVES_GUI_OBJECT (mt->snapo_checkbutton), LIVES_WIDGET_TOGGLED_SIGNAL,
 			  LIVES_GUI_CALLBACK (on_snapo_toggled),
 			  mt);
 
@@ -7960,7 +7960,7 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
 
   lives_toolbar_insert(LIVES_TOOLBAR(btoolbar),LIVES_TOOL_ITEM(mt->eview_button),-1);
 
-  lives_signal_connect (LIVES_GUI_OBJECT (mt->eview_button), LIVES_WIDGET_CLICKED_EVENT,
+  lives_signal_connect (LIVES_GUI_OBJECT (mt->eview_button), LIVES_WIDGET_CLICKED_SIGNAL,
 		    LIVES_GUI_CALLBACK (on_comp_exp),
 		    (livespointer)view_ctx);
 
@@ -8003,7 +8003,7 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
 
   lives_check_menu_item_set_active(LIVES_CHECK_MENU_ITEM(mt->grav_normal),mt->opts.grav_mode==GRAV_MODE_NORMAL);
 
-  mt->grav_normal_func=lives_signal_connect (LIVES_GUI_OBJECT (mt->grav_normal), LIVES_WIDGET_TOGGLED_EVENT,
+  mt->grav_normal_func=lives_signal_connect (LIVES_GUI_OBJECT (mt->grav_normal), LIVES_WIDGET_TOGGLED_SIGNAL,
 					 LIVES_GUI_CALLBACK (on_grav_mode_changed),
 					 (livespointer)mt);
   if (palette->style&STYLE_1) {
@@ -8016,7 +8016,7 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
 
   lives_check_menu_item_set_active(LIVES_CHECK_MENU_ITEM(mt->grav_left),mt->opts.grav_mode==GRAV_MODE_LEFT);
 
-  mt->grav_left_func=lives_signal_connect (LIVES_GUI_OBJECT (mt->grav_left), LIVES_WIDGET_TOGGLED_EVENT,
+  mt->grav_left_func=lives_signal_connect (LIVES_GUI_OBJECT (mt->grav_left), LIVES_WIDGET_TOGGLED_SIGNAL,
 				       LIVES_GUI_CALLBACK (on_grav_mode_changed),
 				       (livespointer)mt);
 
@@ -8036,7 +8036,7 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
     lives_widget_set_fg_color(lives_bin_get_child(LIVES_BIN(mt->grav_right)), LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars_fore);
   }
 
-  mt->grav_right_func=lives_signal_connect (LIVES_GUI_OBJECT (mt->grav_right), LIVES_WIDGET_TOGGLED_EVENT,
+  mt->grav_right_func=lives_signal_connect (LIVES_GUI_OBJECT (mt->grav_right), LIVES_WIDGET_TOGGLED_SIGNAL,
 					LIVES_GUI_CALLBACK (on_grav_mode_changed),
 					(livespointer)mt);
 
@@ -8126,10 +8126,10 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
 
   lives_widget_add_events (eventbox, LIVES_BUTTON1_MOTION_MASK | LIVES_BUTTON_RELEASE_MASK | LIVES_BUTTON_PRESS_MASK | LIVES_ENTER_NOTIFY_MASK);
 
-  lives_signal_connect (LIVES_GUI_OBJECT (eventbox), "motion_notify_event",
+  lives_signal_connect (LIVES_GUI_OBJECT (eventbox), LIVES_WIDGET_MOTION_NOTIFY_EVENT,
 		    LIVES_GUI_CALLBACK (on_framedraw_mouse_update),
 		    NULL);
-  lives_signal_connect (LIVES_GUI_OBJECT (eventbox), "button_release_event",
+  lives_signal_connect (LIVES_GUI_OBJECT (eventbox), LIVES_WIDGET_BUTTON_RELEASE_EVENT,
 		    LIVES_GUI_CALLBACK (on_framedraw_mouse_reset),
 		    NULL);
   lives_signal_connect (LIVES_GUI_OBJECT (eventbox), LIVES_WIDGET_BUTTON_PRESS_EVENT,
@@ -8141,7 +8141,7 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
   mt->hpaned=lives_hpaned_new();
   lives_box_pack_start (LIVES_BOX (mt->hbox), mt->hpaned, TRUE, TRUE, 0);
 
-  lives_signal_connect (LIVES_GUI_OBJECT (mt->hpaned), "accept_position",
+  lives_signal_connect (LIVES_GUI_OBJECT (mt->hpaned), LIVES_WIDGET_ACCEPT_POSITION_SIGNAL,
 		    LIVES_GUI_CALLBACK (hpaned_pos),
 		    (livespointer)mt);
 
@@ -8378,7 +8378,7 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
   mt->apply_fx_button = lives_button_new_with_mnemonic (_("_Apply"));
   lives_box_pack_start (LIVES_BOX (hbox), mt->apply_fx_button, FALSE, FALSE, 0);
   
-  lives_signal_connect (LIVES_GUI_OBJECT (mt->apply_fx_button), LIVES_WIDGET_CLICKED_EVENT,
+  lives_signal_connect (LIVES_GUI_OBJECT (mt->apply_fx_button), LIVES_WIDGET_CLICKED_SIGNAL,
 		    LIVES_GUI_CALLBACK (on_set_pvals_clicked),
 		    (livespointer)mt);
   
@@ -8389,7 +8389,7 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
   lives_scale_set_draw_value(LIVES_SCALE(mt->node_scale),FALSE);
   mt->node_spinbutton = lives_spin_button_new (LIVES_ADJUSTMENT (mt->node_adj), 0, 3);
 
-  lives_signal_connect_after (LIVES_GUI_OBJECT (mt->node_spinbutton), LIVES_WIDGET_VALUE_CHANGED_EVENT,
+  lives_signal_connect_after (LIVES_GUI_OBJECT (mt->node_spinbutton), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
 			  LIVES_GUI_CALLBACK (on_node_spin_value_changed),
 			  (livespointer)mt);
   
@@ -8415,7 +8415,7 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
   lives_box_pack_end (LIVES_BOX (hbox), mt->del_node_button, FALSE, FALSE, 0);
   lives_widget_set_sensitive(mt->del_node_button,FALSE);
   
-  lives_signal_connect (LIVES_GUI_OBJECT (mt->del_node_button), LIVES_WIDGET_CLICKED_EVENT,
+  lives_signal_connect (LIVES_GUI_OBJECT (mt->del_node_button), LIVES_WIDGET_CLICKED_SIGNAL,
 		    LIVES_GUI_CALLBACK (on_del_node_clicked),
 		    (livespointer)mt);
   
@@ -8423,7 +8423,7 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
   lives_box_pack_end (LIVES_BOX (hbox), mt->next_node_button, FALSE, FALSE, 0);
   lives_widget_set_sensitive(mt->next_node_button,FALSE);
 
-  lives_signal_connect (LIVES_GUI_OBJECT (mt->next_node_button), LIVES_WIDGET_CLICKED_EVENT,
+  lives_signal_connect (LIVES_GUI_OBJECT (mt->next_node_button), LIVES_WIDGET_CLICKED_SIGNAL,
 		    LIVES_GUI_CALLBACK (on_next_node_clicked),
 		    (livespointer)mt);
   
@@ -8431,7 +8431,7 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
   lives_box_pack_end (LIVES_BOX (hbox), mt->prev_node_button, FALSE, FALSE, 0);
   lives_widget_set_sensitive(mt->prev_node_button,FALSE);
   
-  lives_signal_connect (LIVES_GUI_OBJECT (mt->prev_node_button), LIVES_WIDGET_CLICKED_EVENT,
+  lives_signal_connect (LIVES_GUI_OBJECT (mt->prev_node_button), LIVES_WIDGET_CLICKED_SIGNAL,
 		    LIVES_GUI_CALLBACK (on_prev_node_clicked),
 		    (livespointer)mt);
   
@@ -8466,7 +8466,7 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
     }
   }
 
-  mt->check_avel_rev_func=lives_signal_connect_after (LIVES_GUI_OBJECT (mt->checkbutton_avel_reverse), LIVES_WIDGET_TOGGLED_EVENT,
+  mt->check_avel_rev_func=lives_signal_connect_after (LIVES_GUI_OBJECT (mt->checkbutton_avel_reverse), LIVES_WIDGET_TOGGLED_SIGNAL,
 						  LIVES_GUI_CALLBACK (avel_reverse_toggled),
 						  mt);
 
@@ -8479,7 +8479,7 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
   mt->spinbutton_avel = lives_standard_spin_button_new (_("_Velocity  "),TRUE,1.,0.5,2.,.1,1.,2,
 							LIVES_BOX(hbox),NULL);
 
-  mt->spin_avel_func=lives_signal_connect_after (LIVES_GUI_OBJECT (mt->spinbutton_avel), LIVES_WIDGET_VALUE_CHANGED_EVENT,
+  mt->spin_avel_func=lives_signal_connect_after (LIVES_GUI_OBJECT (mt->spinbutton_avel), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
 					     LIVES_GUI_CALLBACK (avel_spin_changed),
 					     mt);
 
@@ -8515,7 +8515,7 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
   lives_signal_connect (LIVES_GUI_OBJECT (eventbox), LIVES_WIDGET_BUTTON_PRESS_EVENT,
 		    LIVES_GUI_CALLBACK (in_out_ebox_pressed),
 		    (livespointer)mt);
-  lives_signal_connect (LIVES_GUI_OBJECT (eventbox), "button_release_event",
+  lives_signal_connect (LIVES_GUI_OBJECT (eventbox), LIVES_WIDGET_BUTTON_RELEASE_EVENT,
 		    LIVES_GUI_CALLBACK (on_drag_clip_end),
 		    (livespointer)mt);
 
@@ -8553,11 +8553,11 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
 
   add_fill_to_box(LIVES_BOX(hbox));
   
-  mt->spin_in_func=lives_signal_connect_after (LIVES_GUI_OBJECT (mt->spinbutton_in), LIVES_WIDGET_VALUE_CHANGED_EVENT,
+  mt->spin_in_func=lives_signal_connect_after (LIVES_GUI_OBJECT (mt->spinbutton_in), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
 					   LIVES_GUI_CALLBACK (in_out_start_changed),
 					   mt);
 
-  mt->check_start_func=lives_signal_connect_after (LIVES_GUI_OBJECT (mt->checkbutton_start_anchored), LIVES_WIDGET_TOGGLED_EVENT,
+  mt->check_start_func=lives_signal_connect_after (LIVES_GUI_OBJECT (mt->checkbutton_start_anchored), LIVES_WIDGET_TOGGLED_SIGNAL,
 					    LIVES_GUI_CALLBACK (in_anchor_toggled),
 					    mt);
 
@@ -8584,7 +8584,7 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
   lives_signal_connect (LIVES_GUI_OBJECT (eventbox), LIVES_WIDGET_BUTTON_PRESS_EVENT,
 		    LIVES_GUI_CALLBACK (in_out_ebox_pressed),
 		    (livespointer)mt);
-  lives_signal_connect (LIVES_GUI_OBJECT (eventbox), "button_release_event",
+  lives_signal_connect (LIVES_GUI_OBJECT (eventbox), LIVES_WIDGET_BUTTON_RELEASE_EVENT,
 		    LIVES_GUI_CALLBACK (on_drag_clip_end),
 		    (livespointer)mt);
 
@@ -8619,11 +8619,11 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
 
   lives_free(tmp); lives_free(tmp2);
 
-  mt->spin_out_func=lives_signal_connect_after (LIVES_GUI_OBJECT (mt->spinbutton_out), LIVES_WIDGET_VALUE_CHANGED_EVENT,
+  mt->spin_out_func=lives_signal_connect_after (LIVES_GUI_OBJECT (mt->spinbutton_out), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
 					    LIVES_GUI_CALLBACK (in_out_end_changed),
 					    mt);
 
-  mt->check_end_func=lives_signal_connect_after (LIVES_GUI_OBJECT (mt->checkbutton_end_anchored), LIVES_WIDGET_TOGGLED_EVENT,
+  mt->check_end_func=lives_signal_connect_after (LIVES_GUI_OBJECT (mt->checkbutton_end_anchored), LIVES_WIDGET_TOGGLED_SIGNAL,
 					     LIVES_GUI_CALLBACK (out_anchor_toggled),
 					     mt);
 
@@ -8636,7 +8636,7 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
   lives_widget_show_all(mt->in_out_box);
   lives_widget_show_all(mt->nb);
 
-  lives_signal_connect (LIVES_GUI_OBJECT (mt->nb), "switch_page",
+  lives_signal_connect (LIVES_GUI_OBJECT (mt->nb), LIVES_WIDGET_SWITCH_PAGE_SIGNAL,
 		    LIVES_GUI_CALLBACK (notebook_page),
 		    (livespointer)mt);
 
@@ -8702,7 +8702,7 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
     }
   }
 
-  lives_signal_connect (LIVES_GUI_OBJECT (mt->vpaned), "accept_position",
+  lives_signal_connect (LIVES_GUI_OBJECT (mt->vpaned), LIVES_WIDGET_ACCEPT_POSITION_SIGNAL,
 		    LIVES_GUI_CALLBACK (paned_pos),
 		    (livespointer)mt);
 
@@ -8733,12 +8733,12 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
 		    LIVES_GUI_CALLBACK (on_track_header_click),
 		    (livespointer)mt);
 
-  lives_signal_connect (LIVES_GUI_OBJECT (eventbox), "button_release_event",
+  lives_signal_connect (LIVES_GUI_OBJECT (eventbox), LIVES_WIDGET_BUTTON_RELEASE_EVENT,
 		    LIVES_GUI_CALLBACK (on_track_header_release),
 		    (livespointer)mt);
 
   lives_widget_add_events (eventbox, LIVES_BUTTON1_MOTION_MASK | LIVES_BUTTON_RELEASE_MASK | LIVES_BUTTON_PRESS_MASK);
-  mt->mouse_mot1=lives_signal_connect (LIVES_GUI_OBJECT (eventbox), "motion_notify_event",
+  mt->mouse_mot1=lives_signal_connect (LIVES_GUI_OBJECT (eventbox), LIVES_WIDGET_MOTION_NOTIFY_EVENT,
 				   LIVES_GUI_CALLBACK (on_track_header_move),
 				   (livespointer)mt);
   lives_signal_handler_block (eventbox,mt->mouse_mot1);
@@ -8761,7 +8761,7 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
   mt->vadjustment = (LiVESObject *)lives_adjustment_new (0.0,0.0,1.0,1.0,mt->max_disp_vtracks,1.0);
   mt->scrollbar=lives_vscrollbar_new(LIVES_ADJUSTMENT(mt->vadjustment));
 
-  lives_signal_connect_after (LIVES_GUI_OBJECT (mt->scrollbar), LIVES_WIDGET_VALUE_CHANGED_EVENT,
+  lives_signal_connect_after (LIVES_GUI_OBJECT (mt->scrollbar), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
 			  LIVES_GUI_CALLBACK (scroll_track_by_scrollbar),
 			  (livespointer)mt);
 
@@ -8783,13 +8783,13 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
 		    LIVES_GUI_CALLBACK (on_track_between_click),
 		    (livespointer)mt);
 
-  lives_signal_connect (LIVES_GUI_OBJECT (mt->tl_eventbox), "button_release_event",
+  lives_signal_connect (LIVES_GUI_OBJECT (mt->tl_eventbox), LIVES_WIDGET_BUTTON_RELEASE_EVENT,
 		    LIVES_GUI_CALLBACK (on_track_between_release),
 		    (livespointer)mt);
 
 
   lives_widget_add_events (mt->tl_eventbox, LIVES_BUTTON1_MOTION_MASK | LIVES_BUTTON_RELEASE_MASK | LIVES_BUTTON_PRESS_MASK| LIVES_SCROLL_MASK);
-  mt->mouse_mot2=lives_signal_connect (LIVES_GUI_OBJECT (mt->tl_eventbox), "motion_notify_event",
+  mt->mouse_mot2=lives_signal_connect (LIVES_GUI_OBJECT (mt->tl_eventbox), LIVES_WIDGET_MOTION_NOTIFY_EVENT,
 				  LIVES_GUI_CALLBACK (on_track_move),
 				  (livespointer)mt);
 
@@ -8829,7 +8829,7 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
 
   lives_box_pack_start (LIVES_BOX (hbox), mt->time_scrollbar, TRUE, TRUE, widget_opts.packing_width);
 
-  lives_signal_connect (LIVES_GUI_OBJECT (mt->time_scrollbar), LIVES_WIDGET_VALUE_CHANGED_EVENT,
+  lives_signal_connect (LIVES_GUI_OBJECT (mt->time_scrollbar), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
 		    LIVES_GUI_CALLBACK (scroll_time_by_scrollbar),
 		    (livespointer)mt);
 
@@ -9638,15 +9638,15 @@ void mt_init_tracks (lives_mt *mt, boolean set_min_max) {
     lives_signal_connect (LIVES_GUI_OBJECT(mt->timeline_eb), LIVES_WIDGET_ENTER_EVENT,LIVES_GUI_CALLBACK (on_tleb_enter),(livespointer)mt);
     lives_signal_connect (LIVES_GUI_OBJECT(mt->timeline_reg), LIVES_WIDGET_ENTER_EVENT,LIVES_GUI_CALLBACK (on_tlreg_enter),(livespointer)mt);
     
-    lives_signal_connect (LIVES_GUI_OBJECT (mt->timeline), "motion_notify_event",
+    lives_signal_connect (LIVES_GUI_OBJECT (mt->timeline), LIVES_WIDGET_MOTION_NOTIFY_EVENT,
 		      LIVES_GUI_CALLBACK (return_true),
 		      NULL);
 
-    lives_signal_connect (LIVES_GUI_OBJECT (mt->timeline_eb), "motion_notify_event",
+    lives_signal_connect (LIVES_GUI_OBJECT (mt->timeline_eb), LIVES_WIDGET_MOTION_NOTIFY_EVENT,
 		      LIVES_GUI_CALLBACK (on_timeline_update),
 		      (livespointer)mt);
 
-    lives_signal_connect (LIVES_GUI_OBJECT (mt->timeline_eb), "button_release_event",
+    lives_signal_connect (LIVES_GUI_OBJECT (mt->timeline_eb), LIVES_WIDGET_BUTTON_RELEASE_EVENT,
 		      LIVES_GUI_CALLBACK (on_timeline_release),
 		      (livespointer)mt);
     
@@ -9654,11 +9654,11 @@ void mt_init_tracks (lives_mt *mt, boolean set_min_max) {
 		      LIVES_GUI_CALLBACK (on_timeline_press),
 		      (livespointer)mt);
 
-    lives_signal_connect (LIVES_GUI_OBJECT (mt->timeline_reg), "motion_notify_event",
+    lives_signal_connect (LIVES_GUI_OBJECT (mt->timeline_reg), LIVES_WIDGET_MOTION_NOTIFY_EVENT,
 		      LIVES_GUI_CALLBACK (on_timeline_update),
 		      (livespointer)mt);
     
-    lives_signal_connect (LIVES_GUI_OBJECT (mt->timeline_reg), "button_release_event",
+    lives_signal_connect (LIVES_GUI_OBJECT (mt->timeline_reg), LIVES_WIDGET_BUTTON_RELEASE_EVENT,
 		      LIVES_GUI_CALLBACK (on_timeline_release),
 		      (livespointer)mt);
     
@@ -10460,7 +10460,7 @@ void do_effect_context (lives_mt *mt, LiVESXEventButton *event) {
   }
   lives_container_add (LIVES_CONTAINER (menu), edit_effect);
   
-  lives_signal_connect (LIVES_GUI_OBJECT (edit_effect), LIVES_WIDGET_ACTIVATE_EVENT,
+  lives_signal_connect (LIVES_GUI_OBJECT (edit_effect), LIVES_WIDGET_ACTIVATE_SIGNAL,
 		    LIVES_GUI_CALLBACK (on_mt_fx_edit_activate),
 		    (livespointer)mt);
 
@@ -10468,7 +10468,7 @@ void do_effect_context (lives_mt *mt, LiVESXEventButton *event) {
   if (mt->selected_init_event!=mt->avol_init_event) {
     lives_container_add (LIVES_CONTAINER (menu), delete_effect);
   
-    lives_signal_connect (LIVES_GUI_OBJECT (delete_effect), LIVES_WIDGET_ACTIVATE_EVENT,
+    lives_signal_connect (LIVES_GUI_OBJECT (delete_effect), LIVES_WIDGET_ACTIVATE_SIGNAL,
 		      LIVES_GUI_CALLBACK (on_mt_delfx_activate),
 		      (livespointer)mt);
   }
@@ -10853,7 +10853,7 @@ void mt_init_clips (lives_mt *mt, int orig_file, boolean add) {
       lives_signal_connect (LIVES_GUI_OBJECT (eventbox), LIVES_WIDGET_BUTTON_PRESS_EVENT,
 			LIVES_GUI_CALLBACK (clip_ebox_pressed),
 			(livespointer)mt);
-      lives_signal_connect (LIVES_GUI_OBJECT (eventbox), "button_release_event",
+      lives_signal_connect (LIVES_GUI_OBJECT (eventbox), LIVES_WIDGET_BUTTON_RELEASE_EVENT,
 			LIVES_GUI_CALLBACK (on_drag_clip_end),
 			(livespointer)mt);
       
@@ -12970,7 +12970,7 @@ void polymorph (lives_mt *mt, lives_mt_poly_state_t poly) {
     lives_widget_set_sensitive(mt->prev_fm_button,(prev_fm_event=get_prev_fm(mt,mt->current_track,frame_event))!=NULL&&
 			     (get_event_timecode(prev_fm_event)!=(get_event_timecode(frame_event))));
     
-    lives_signal_connect (LIVES_GUI_OBJECT (mt->prev_fm_button), LIVES_WIDGET_CLICKED_EVENT,
+    lives_signal_connect (LIVES_GUI_OBJECT (mt->prev_fm_button), LIVES_WIDGET_CLICKED_SIGNAL,
 		      LIVES_GUI_CALLBACK (on_prev_fm_clicked),
 		      (livespointer)mt);
 
@@ -12981,7 +12981,7 @@ void polymorph (lives_mt *mt, lives_mt_poly_state_t poly) {
 			       get_event_timecode(mt->fm_edit_event)==get_event_timecode(frame_event)&&
 			       mt->selected_init_event!=NULL);
       
-      lives_signal_connect (LIVES_GUI_OBJECT (mt->fx_ibefore_button), LIVES_WIDGET_CLICKED_EVENT,
+      lives_signal_connect (LIVES_GUI_OBJECT (mt->fx_ibefore_button), LIVES_WIDGET_CLICKED_SIGNAL,
 			LIVES_GUI_CALLBACK (on_fx_insb_clicked),
 			(livespointer)mt);
       
@@ -12991,7 +12991,7 @@ void polymorph (lives_mt *mt, lives_mt_poly_state_t poly) {
 			       get_event_timecode(mt->fm_edit_event)==get_event_timecode(frame_event)&&
 			       mt->selected_init_event!=NULL);
       
-      lives_signal_connect (LIVES_GUI_OBJECT (mt->fx_iafter_button), LIVES_WIDGET_CLICKED_EVENT,
+      lives_signal_connect (LIVES_GUI_OBJECT (mt->fx_iafter_button), LIVES_WIDGET_CLICKED_SIGNAL,
 			LIVES_GUI_CALLBACK (on_fx_insa_clicked),
 			(livespointer)mt);
       
@@ -13006,7 +13006,7 @@ void polymorph (lives_mt *mt, lives_mt_poly_state_t poly) {
     lives_widget_set_sensitive(mt->next_fm_button,(next_fm_event=get_next_fm(mt,mt->current_track,frame_event))!=NULL&&
 			     (get_event_timecode(next_fm_event)>get_event_timecode(frame_event)));
 
-    lives_signal_connect (LIVES_GUI_OBJECT (mt->next_fm_button), LIVES_WIDGET_CLICKED_EVENT,
+    lives_signal_connect (LIVES_GUI_OBJECT (mt->next_fm_button), LIVES_WIDGET_CLICKED_SIGNAL,
 		      LIVES_GUI_CALLBACK (on_next_fm_clicked),
 		      (livespointer)mt);
 
@@ -13287,7 +13287,7 @@ void do_block_context (lives_mt *mt, LiVESXEventButton *event, track_rect *block
   selblock = lives_menu_item_new_with_mnemonic (_("_Select this block"));
   lives_container_add (LIVES_CONTAINER (menu), selblock);
 
-  lives_signal_connect (LIVES_GUI_OBJECT (selblock), LIVES_WIDGET_ACTIVATE_EVENT,
+  lives_signal_connect (LIVES_GUI_OBJECT (selblock), LIVES_WIDGET_ACTIVATE_SIGNAL,
 		    LIVES_GUI_CALLBACK (selblock_cb),
 		    (livespointer)mt);
 
@@ -13297,7 +13297,7 @@ void do_block_context (lives_mt *mt, LiVESXEventButton *event, track_rect *block
     split_here = lives_menu_item_new_with_mnemonic (_("_Split block here"));
     lives_container_add (LIVES_CONTAINER (menu), split_here);
     
-    lives_signal_connect (LIVES_GUI_OBJECT (split_here), LIVES_WIDGET_ACTIVATE_EVENT,
+    lives_signal_connect (LIVES_GUI_OBJECT (split_here), LIVES_WIDGET_ACTIVATE_SIGNAL,
 		      LIVES_GUI_CALLBACK (on_split_activate),
 		      (livespointer)mt);
   }
@@ -13305,7 +13305,7 @@ void do_block_context (lives_mt *mt, LiVESXEventButton *event, track_rect *block
   list_fx_here = lives_menu_item_new_with_mnemonic (_("List _effects here"));
   lives_container_add (LIVES_CONTAINER (menu), list_fx_here);
 
-  lives_signal_connect (LIVES_GUI_OBJECT (list_fx_here), LIVES_WIDGET_ACTIVATE_EVENT,
+  lives_signal_connect (LIVES_GUI_OBJECT (list_fx_here), LIVES_WIDGET_ACTIVATE_SIGNAL,
 		    LIVES_GUI_CALLBACK (list_fx_here_cb),
 		    (livespointer)mt);
 
@@ -13317,7 +13317,7 @@ void do_block_context (lives_mt *mt, LiVESXEventButton *event, track_rect *block
     lives_free(text);
     lives_container_add (LIVES_CONTAINER (menu), avol);
 
-    lives_signal_connect (LIVES_GUI_OBJECT (avol), LIVES_WIDGET_ACTIVATE_EVENT,
+    lives_signal_connect (LIVES_GUI_OBJECT (avol), LIVES_WIDGET_ACTIVATE_SIGNAL,
 		      LIVES_GUI_CALLBACK (mt_avol_quick),
 		      (livespointer)mt);
     
@@ -13330,7 +13330,7 @@ void do_block_context (lives_mt *mt, LiVESXEventButton *event, track_rect *block
   lives_container_add (LIVES_CONTAINER (menu), delete_block);
   if (mt->is_rendering) lives_widget_set_sensitive(delete_block,FALSE);
 
-  lives_signal_connect (LIVES_GUI_OBJECT (delete_block), LIVES_WIDGET_ACTIVATE_EVENT,
+  lives_signal_connect (LIVES_GUI_OBJECT (delete_block), LIVES_WIDGET_ACTIVATE_SIGNAL,
 		    LIVES_GUI_CALLBACK (delete_block_cb),
 		    (livespointer)mt);
 
@@ -13372,13 +13372,13 @@ void do_track_context (lives_mt *mt, LiVESXEventButton *event, double timesecs, 
 			    (track>=0&&mainw->files[mt->file_selected]->frames>0))) {
     if (track>=0) {
       insert_here = lives_menu_item_new_with_mnemonic (_("_Insert here"));
-      lives_signal_connect (LIVES_GUI_OBJECT (insert_here), LIVES_WIDGET_ACTIVATE_EVENT,
+      lives_signal_connect (LIVES_GUI_OBJECT (insert_here), LIVES_WIDGET_ACTIVATE_SIGNAL,
 			LIVES_GUI_CALLBACK (insert_at_ctx_cb),
 			(livespointer)mt);
     }
     else {
       insert_here = lives_menu_item_new_with_mnemonic (_("_Insert audio here"));
-      lives_signal_connect (LIVES_GUI_OBJECT (insert_here), LIVES_WIDGET_ACTIVATE_EVENT,
+      lives_signal_connect (LIVES_GUI_OBJECT (insert_here), LIVES_WIDGET_ACTIVATE_SIGNAL,
 			LIVES_GUI_CALLBACK (insert_audio_at_ctx_cb),
 			(livespointer)mt);
     }
@@ -13396,7 +13396,7 @@ void do_track_context (lives_mt *mt, LiVESXEventButton *event, double timesecs, 
     lives_free(text);
     lives_container_add (LIVES_CONTAINER (menu), avol);
 
-    lives_signal_connect (LIVES_GUI_OBJECT (avol), LIVES_WIDGET_ACTIVATE_EVENT,
+    lives_signal_connect (LIVES_GUI_OBJECT (avol), LIVES_WIDGET_ACTIVATE_SIGNAL,
 		      LIVES_GUI_CALLBACK (mt_avol_quick),
 		      (livespointer)mt);
 
@@ -13411,7 +13411,7 @@ void do_track_context (lives_mt *mt, LiVESXEventButton *event, double timesecs, 
     lives_widget_show_all (menu);
     lives_menu_popup (LIVES_MENU(menu), event);
 
-    lives_signal_connect (LIVES_GUI_OBJECT (menu), "unmap",
+    lives_signal_connect (LIVES_GUI_OBJECT (menu), LIVES_WIDGET_UNMAP_SIGNAL,
 		      LIVES_GUI_CALLBACK (rdrw_cb),
 		      (livespointer)mt);
 
@@ -19373,7 +19373,7 @@ void on_save_event_list_activate (LiVESMenuItem *menuitem, livespointer user_dat
   ar_checkbutton = lives_standard_check_button_new (_("_Autoreload each time"),TRUE,LIVES_BOX(hbox),NULL);
 
   lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(ar_checkbutton),prefs->ar_layout);
-  lives_signal_connect (LIVES_GUI_OBJECT (ar_checkbutton), LIVES_WIDGET_TOGGLED_EVENT,
+  lives_signal_connect (LIVES_GUI_OBJECT (ar_checkbutton), LIVES_WIDGET_TOGGLED_SIGNAL,
 		    LIVES_GUI_CALLBACK (on_autoreload_toggled),
 		    LIVES_INT_TO_POINTER(2));
 
@@ -20997,7 +20997,7 @@ weed_plant_t *load_event_list(lives_mt *mt, gchar *eload_file) {
     lives_widget_show_all(hbox);
     
     lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(ar_checkbutton),prefs->ar_layout);
-    lives_signal_connect (LIVES_GUI_OBJECT (ar_checkbutton), LIVES_WIDGET_TOGGLED_EVENT,
+    lives_signal_connect (LIVES_GUI_OBJECT (ar_checkbutton), LIVES_WIDGET_TOGGLED_SIGNAL,
 		      LIVES_GUI_CALLBACK (on_autoreload_toggled),
 		      LIVES_INT_TO_POINTER(2));
     eload_file=choose_file(startdir,NULL,filt,LIVES_FILE_CHOOSER_ACTION_OPEN,NULL,hbox);
@@ -22087,7 +22087,7 @@ LiVESWidget * amixer_add_channel_slider (lives_mt *mt, int i) {
   lives_widget_object_set_data(LIVES_WIDGET_OBJECT(amixer->ch_sliders[i]),"adj",adj);
   lives_widget_object_set_data(LIVES_WIDGET_OBJECT(adj),"layer",LIVES_INT_TO_POINTER(i));
     
-  amixer->ch_slider_fns[i]=lives_signal_connect_after (LIVES_GUI_OBJECT (adj), LIVES_WIDGET_VALUE_CHANGED_EVENT,
+  amixer->ch_slider_fns[i]=lives_signal_connect_after (LIVES_GUI_OBJECT (adj), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
 						   LIVES_GUI_CALLBACK (on_amixer_slider_changed),
 						   (livespointer)mt);
   
@@ -22204,7 +22204,7 @@ void amixer_show (LiVESButton *button, livespointer user_data) {
   lives_button_box_set_button_width (LIVES_BUTTON_BOX (hbuttonbox), reset_button, DEF_BUTTON_WIDTH*4);
   lives_button_box_set_button_width (LIVES_BUTTON_BOX (hbuttonbox), close_button, DEF_BUTTON_WIDTH*4);
 
-  lives_widget_add_accelerator (close_button, LIVES_WIDGET_CLICKED_EVENT, accel_group,
+  lives_widget_add_accelerator (close_button, LIVES_WIDGET_CLICKED_SIGNAL, accel_group,
                               LIVES_KEY_m, LIVES_CONTROL_MASK,
                               (LiVESAccelFlags)0);
 
@@ -22235,7 +22235,7 @@ void amixer_show (LiVESButton *button, livespointer user_data) {
     lives_widget_set_bg_color(amixer->inv_checkbutton, LIVES_WIDGET_STATE_ACTIVE, &palette->light_green);
     lives_widget_set_bg_color(amixer->inv_checkbutton, LIVES_WIDGET_STATE_NORMAL, &palette->dark_red);
 
-    lives_signal_connect_after (LIVES_GUI_OBJECT (amixer->inv_checkbutton), LIVES_WIDGET_TOGGLED_EVENT,
+    lives_signal_connect_after (LIVES_GUI_OBJECT (amixer->inv_checkbutton), LIVES_WIDGET_TOGGLED_SIGNAL,
 			    LIVES_GUI_CALLBACK (after_amixer_inv_toggled),
 			    (livespointer)amixer);
 
@@ -22327,20 +22327,20 @@ void amixer_show (LiVESButton *button, livespointer user_data) {
     lives_box_pack_start (LIVES_BOX (amixer->main_hbox), vbox, FALSE, FALSE, widget_opts.packing_width);
   }
 
-  lives_signal_connect (LIVES_GUI_OBJECT (close_button), LIVES_WIDGET_CLICKED_EVENT,
+  lives_signal_connect (LIVES_GUI_OBJECT (close_button), LIVES_WIDGET_CLICKED_SIGNAL,
 		    LIVES_GUI_CALLBACK (on_amixer_close_clicked),
 		    (livespointer)mt);
 
-  lives_signal_connect (LIVES_GUI_OBJECT (reset_button), LIVES_WIDGET_CLICKED_EVENT,
+  lives_signal_connect (LIVES_GUI_OBJECT (reset_button), LIVES_WIDGET_CLICKED_SIGNAL,
 		    LIVES_GUI_CALLBACK (on_amixer_reset_clicked),
 		    (livespointer)mt);
 
-  lives_widget_add_accelerator (close_button, LIVES_WIDGET_CLICKED_EVENT, accel_group,
+  lives_widget_add_accelerator (close_button, LIVES_WIDGET_CLICKED_SIGNAL, accel_group,
                               LIVES_KEY_Escape, (LiVESXModifierType)0, (LiVESAccelFlags)0);
 
 
 
-  lives_signal_connect_after (LIVES_GUI_OBJECT (amixer->gang_checkbutton), LIVES_WIDGET_TOGGLED_EVENT,
+  lives_signal_connect_after (LIVES_GUI_OBJECT (amixer->gang_checkbutton), LIVES_WIDGET_TOGGLED_SIGNAL,
 			  LIVES_GUI_CALLBACK (after_amixer_gang_toggled),
 			  (livespointer)amixer);
 

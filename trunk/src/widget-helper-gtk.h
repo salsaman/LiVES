@@ -243,6 +243,10 @@ typedef gint (*LiVESCompareFunc) (gconstpointer a, gconstpointer b);
 #define U82L(String) ( g_locale_from_utf8 (String,-1,NULL,NULL,NULL) ) 
 #define L2U8(String) ( g_locale_to_utf8 (String,-1,NULL,NULL,NULL) ) 
 
+#define U82F(String) ( g_filename_from_utf8 (String,-1,NULL,NULL,NULL) ) 
+#define F2U8(String) ( g_filename_to_utf8 (String,-1,NULL,NULL,NULL) )
+
+
 #define LIVES_FILE_TEST_EXISTS G_FILE_TEST_EXISTS
 #define LIVES_FILE_TEST_IS_DIR G_FILE_TEST_IS_DIR
 #define LIVES_FILE_TEST_IS_REGULAR G_FILE_TEST_IS_REGULAR
@@ -308,21 +312,42 @@ typedef GdkFilterReturn LiVESFilterReturn;
 #define LIVES_FILTER_REMOVE GDK_FILTER_REMOVE
 #define LIVES_FILTER_CONTINUE GDK_FILTER_CONTINUE
 
-
+// events
 #define LIVES_WIDGET_SCROLL_EVENT "scroll-event"
 #define LIVES_WIDGET_CONFIGURE_EVENT "configure-event"
 #define LIVES_WIDGET_ENTER_EVENT "enter-notify-event"
 #define LIVES_WIDGET_BUTTON_PRESS_EVENT "button-press-event"
+#define LIVES_WIDGET_BUTTON_RELEASE_EVENT "button-release-event"
+#define LIVES_WIDGET_MOTION_NOTIFY_EVENT "motion-notify-event"
+#define LIVES_WIDGET_LEAVE_NOTIFY_EVENT "leave-notify-event"
+#define LIVES_WIDGET_FOCUS_OUT_EVENT "focus-out-event"
 #define LIVES_WIDGET_DELETE_EVENT "delete-event"
 
-#define LIVES_WIDGET_CLICKED_EVENT "clicked"
-#define LIVES_WIDGET_TOGGLED_EVENT "toggled"
-#define LIVES_WIDGET_CHANGED_EVENT "changed"
-#define LIVES_WIDGET_ACTIVATE_EVENT "activate"
-#define LIVES_WIDGET_VALUE_CHANGED_EVENT "value-changed"
-#define LIVES_WIDGET_SELECTION_CHANGED_EVENT "selection-changed"
-#define LIVES_WIDGET_CURRENT_FOLDER_CHANGED_EVENT "current-folder-changed"
-#define LIVES_WIDGET_RESPONSE_EVENT "response"
+// signals
+#define LIVES_WIDGET_CLICKED_SIGNAL "clicked"
+#define LIVES_WIDGET_TOGGLED_SIGNAL "toggled"
+#define LIVES_WIDGET_CHANGED_SIGNAL "changed"
+#define LIVES_WIDGET_ACTIVATE_SIGNAL "activate"
+#define LIVES_WIDGET_VALUE_CHANGED_SIGNAL "value-changed"
+#define LIVES_WIDGET_SELECTION_CHANGED_SIGNAL "selection-changed"
+#define LIVES_WIDGET_CURRENT_FOLDER_CHANGED_SIGNAL "current-folder-changed"
+#define LIVES_WIDGET_RESPONSE_SIGNAL "response"
+#define LIVES_WIDGET_DRAG_DATA_RECEIVED_SIGNAL "drag-data-received"
+#define LIVES_WIDGET_SIZE_PREPARED_SIGNAL "size-prepared"
+#define LIVES_WIDGET_MODE_CHANGED_SIGNAL "mode-changed"
+#define LIVES_WIDGET_ACCEPT_POSITION_SIGNAL "accept-position"
+#define LIVES_WIDGET_SWITCH_PAGE_SIGNAL "switch-page"
+#define LIVES_WIDGET_UNMAP_SIGNAL "unmap"
+#define LIVES_WIDGET_EDITED_SIGNAL "edited"
+#define LIVES_WIDGET_COLOR_SET_SIGNAL "color-set"
+#define LIVES_WIDGET_SET_FOCUS_CHILD_SIGNAL "set-focus-child"
+
+#if GTK_CHECK_VERSION(3,0,0)
+#define LIVES_WIDGET_STATE_CHANGED_SIGNAL "state-flags-changed"
+#else
+#define LIVES_WIDGET_STATE_CHANGED_SIGNAL "state-changed"
+#endif
+
 
 typedef GtkWidget                         LiVESWidget;
 typedef GtkWindow                         LiVESWindow;

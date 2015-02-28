@@ -215,7 +215,7 @@ void catch_sigint(int signum) {
       mainw->leave_recovery=mainw->leave_files=TRUE;
       
       mainw->only_close=FALSE;
-      lives_exit();
+      lives_exit(signum);
     }
   }
   exit(signum);
@@ -708,7 +708,7 @@ static void replace_with_delegates (void) {
       
     }
     // connect new menu entry
-    mainw->fx_candidates[FX_CANDIDATE_RESIZER].func=lives_signal_connect (LIVES_GUI_OBJECT (mainw->resize_menuitem), LIVES_WIDGET_ACTIVATE_EVENT,
+    mainw->fx_candidates[FX_CANDIDATE_RESIZER].func=lives_signal_connect (LIVES_GUI_OBJECT (mainw->resize_menuitem), LIVES_WIDGET_ACTIVATE_SIGNAL,
 								      LIVES_GUI_CALLBACK (on_render_fx_pre_activate),
 								      (livespointer)rfx);
     mainw->fx_candidates[FX_CANDIDATE_RESIZER].rfx=rfx;
@@ -1648,7 +1648,7 @@ static void lives_init(_ign_opts *ign_opts) {
 	splash_end();
 	// get initial tempdir
 	if (!do_tempdir_query()) {
-	  lives_exit();
+	  lives_exit(0);
 	}
 	prefs->startup_phase=2;
 	set_int_pref("startup_phase",2);
@@ -1658,7 +1658,7 @@ static void lives_init(_ign_opts *ign_opts) {
       if (prefs->startup_phase>0&&prefs->startup_phase<3) {
 	splash_end();
 	if (!do_startup_tests(FALSE)) {
-	  lives_exit();
+	  lives_exit(0);
 	}
 	prefs->startup_phase=3;
 	set_int_pref("startup_phase",3);
@@ -1675,7 +1675,7 @@ static void lives_init(_ign_opts *ign_opts) {
 	if (prefs->startup_phase>0&&prefs->startup_phase<=4) {
 	  splash_end();
 	  if (!do_audio_choice_dialog(prefs->startup_phase)) {
-	    lives_exit();
+	    lives_exit(0);
 	  }
 	  if (prefs->audio_player==AUD_PLAYER_JACK) future_prefs->jack_opts=prefs->jack_opts=JACK_OPTS_START_ASERVER;
 	  else future_prefs->jack_opts=prefs->jack_opts=0;
@@ -1701,7 +1701,7 @@ static void lives_init(_ign_opts *ign_opts) {
 	    }
 	    future_prefs->jack_opts=0; // jack is causing hassle, get rid of it
 	    set_int_pref("jack_opts",0);
-	    lives_exit();
+	    lives_exit(0);
 	  }
 	}
 
@@ -1734,7 +1734,7 @@ static void lives_init(_ign_opts *ign_opts) {
 		do_jack_noopen_warn2();
 	      }
 	      else do_jack_noopen_warn4();
-	      lives_exit();
+	      lives_exit(0);
 	    }
 
 	    mainw->jackd->whentostop=&mainw->whentostop;
@@ -1759,7 +1759,7 @@ static void lives_init(_ign_opts *ign_opts) {
 
 	  if (!lives_pulse_init(prefs->startup_phase)) {
 	    if (prefs->startup_phase==4) {
-	      lives_exit();
+	      lives_exit(0);
 	    }
 	  }
 	  else {
@@ -2684,7 +2684,7 @@ static boolean lives_startup(livespointer data) {
     splash_msg(msg,1.);
     lives_free(msg);
     lives_snprintf(mainw->set_name,128,"%s",prefs->ar_clipset_name);
-    on_load_set_ok(NULL,LIVES_INT_TO_POINTER(FALSE));
+    on_load_set_ok();
     if (mainw->current_file==-1) {
       set_pref("ar_clipset","");
       prefs->ar_clipset=FALSE;
@@ -3158,7 +3158,7 @@ boolean startup_message_fatal(const gchar *msg) {
   splash_end();
   do_blocking_error_dialog (msg);
   mainw->startup_error=TRUE;
-  lives_exit();
+  lives_exit(0);
   return TRUE;
 }
 
@@ -3936,7 +3936,7 @@ void load_end_image(int frame) {
 #ifndef IS_LIBLIVES
 int main (int argc, char *argv[]) {
   // call any hooks here
-  return real_main(argc, argv, 0);
+  return real_main(argc, argv, 0l);
 }
 #endif
 
@@ -4327,7 +4327,7 @@ static boolean weed_layer_new_from_file_progressive(weed_plant_t *layer,
   else if (!strcmp(img_ext,"jpg")) pbload=gdk_pixbuf_loader_new_with_type("jpeg",gerror);
   else pbload=gdk_pixbuf_loader_new();
 
-  lives_signal_connect (LIVES_WIDGET_OBJECT (pbload), "size_prepared",
+  lives_signal_connect (LIVES_WIDGET_OBJECT (pbload), LIVES_WIDGET_SIZE_PREPARED_SIGNAL,
                       LIVES_GUI_CALLBACK (pbsize_set),
                       NULL);
 

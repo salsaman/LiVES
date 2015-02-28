@@ -11,6 +11,8 @@
 void start_ce_thumb_mode(void);
 void end_ce_thumb_mode(void);
 
+void ce_thumbs_set_interactive(boolean interactive);
+
 void ce_thumbs_set_keych (int key, boolean on);
 void ce_thumbs_set_mode_combo (int key, int mode);
 

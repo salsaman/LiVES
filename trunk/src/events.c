@@ -2087,7 +2087,7 @@ LiVESWidget *events_rec_dialog (boolean allow_mt) {
 
   lives_toggle_button_set_active (LIVES_TOGGLE_BUTTON (radiobutton),TRUE);
 
-  lives_signal_connect (LIVES_GUI_OBJECT (radiobutton), LIVES_WIDGET_TOGGLED_EVENT,
+  lives_signal_connect (LIVES_GUI_OBJECT (radiobutton), LIVES_WIDGET_TOGGLED_SIGNAL,
 		    LIVES_GUI_CALLBACK (set_render_choice),
 		    LIVES_INT_TO_POINTER (RENDER_CHOICE_PREVIEW));
 
@@ -2099,7 +2099,7 @@ LiVESWidget *events_rec_dialog (boolean allow_mt) {
     radiobutton = lives_standard_radio_button_new (_ ("Render events to _same clip"),TRUE,radiobutton_group,LIVES_BOX(hbox),NULL);
     radiobutton_group = lives_radio_button_get_group (LIVES_RADIO_BUTTON (radiobutton));
 
-    lives_signal_connect (LIVES_GUI_OBJECT (radiobutton), LIVES_WIDGET_TOGGLED_EVENT,
+    lives_signal_connect (LIVES_GUI_OBJECT (radiobutton), LIVES_WIDGET_TOGGLED_SIGNAL,
                       LIVES_GUI_CALLBACK (set_render_choice),
                       LIVES_INT_TO_POINTER (RENDER_CHOICE_SAME_CLIP));
   }
@@ -2111,7 +2111,7 @@ LiVESWidget *events_rec_dialog (boolean allow_mt) {
   radiobutton = lives_standard_radio_button_new (_ ("Render events to _new clip"),TRUE,radiobutton_group,LIVES_BOX(hbox),NULL);
   radiobutton_group = lives_radio_button_get_group (LIVES_RADIO_BUTTON (radiobutton));
     
-  lives_signal_connect (LIVES_GUI_OBJECT (radiobutton), LIVES_WIDGET_TOGGLED_EVENT,
+  lives_signal_connect (LIVES_GUI_OBJECT (radiobutton), LIVES_WIDGET_TOGGLED_SIGNAL,
 		    LIVES_GUI_CALLBACK (set_render_choice),
 		    LIVES_INT_TO_POINTER (RENDER_CHOICE_NEW_CLIP));
   
@@ -2123,7 +2123,7 @@ LiVESWidget *events_rec_dialog (boolean allow_mt) {
   radiobutton = lives_standard_radio_button_new (_ ("View/edit events in _multitrack window (test)"),TRUE,radiobutton_group,LIVES_BOX(hbox),NULL);
   radiobutton_group = lives_radio_button_get_group (LIVES_RADIO_BUTTON (radiobutton));
 
-  lives_signal_connect (LIVES_GUI_OBJECT (radiobutton), LIVES_WIDGET_TOGGLED_EVENT,
+  lives_signal_connect (LIVES_GUI_OBJECT (radiobutton), LIVES_WIDGET_TOGGLED_SIGNAL,
 		    LIVES_GUI_CALLBACK (set_render_choice),
 		    LIVES_INT_TO_POINTER (RENDER_CHOICE_MULTITRACK));
 
@@ -2137,7 +2137,7 @@ LiVESWidget *events_rec_dialog (boolean allow_mt) {
   radiobutton = lives_standard_radio_button_new (_ ("View/edit events in _event window"),TRUE,radiobutton_group,LIVES_BOX(hbox),NULL);
   radiobutton_group = lives_radio_button_get_group (LIVES_RADIO_BUTTON (radiobutton));
 
-  lives_signal_connect (LIVES_GUI_OBJECT (radiobutton), LIVES_WIDGET_TOGGLED_EVENT,
+  lives_signal_connect (LIVES_GUI_OBJECT (radiobutton), LIVES_WIDGET_TOGGLED_SIGNAL,
 		    LIVES_GUI_CALLBACK (set_render_choice),
 		    LIVES_INT_TO_POINTER (RENDER_CHOICE_EVENT_LIST));
 
@@ -2146,12 +2146,12 @@ LiVESWidget *events_rec_dialog (boolean allow_mt) {
 
   lives_dialog_add_action_widget (LIVES_DIALOG (e_rec_dialog), cancelbutton, LIVES_RESPONSE_CANCEL);
 
-  lives_signal_connect (LIVES_GUI_OBJECT (cancelbutton), LIVES_WIDGET_CLICKED_EVENT,
+  lives_signal_connect (LIVES_GUI_OBJECT (cancelbutton), LIVES_WIDGET_CLICKED_SIGNAL,
 		    LIVES_GUI_CALLBACK (set_render_choice_button),
 		    LIVES_INT_TO_POINTER (RENDER_CHOICE_DISCARD));
 
   accel_group = LIVES_ACCEL_GROUP(lives_accel_group_new ());
-  lives_widget_add_accelerator (cancelbutton, LIVES_WIDGET_CLICKED_EVENT, accel_group,
+  lives_widget_add_accelerator (cancelbutton, LIVES_WIDGET_CLICKED_SIGNAL, accel_group,
                               LIVES_KEY_Escape, (LiVESXModifierType)0, (LiVESAccelFlags)0);
 
   lives_window_add_accel_group (LIVES_WINDOW (e_rec_dialog), accel_group);
@@ -4963,11 +4963,11 @@ LiVESWidget *create_event_list_dialog (weed_plant_t *event_list, weed_timecode_t
   lives_widget_set_can_focus_and_default (ok_button);
   lives_widget_grab_default (ok_button);
  
-  lives_signal_connect (LIVES_GUI_OBJECT (ok_button), LIVES_WIDGET_CLICKED_EVENT,
+  lives_signal_connect (LIVES_GUI_OBJECT (ok_button), LIVES_WIDGET_CLICKED_SIGNAL,
 		    LIVES_GUI_CALLBACK (response_ok),
 		    NULL);
 
-  lives_widget_add_accelerator (ok_button, LIVES_WIDGET_CLICKED_EVENT, accel_group,
+  lives_widget_add_accelerator (ok_button, LIVES_WIDGET_CLICKED_SIGNAL, accel_group,
 			      LIVES_KEY_Escape,  (LiVESXModifierType)0, (LiVESAccelFlags)0);
 
   if (prefs->gui_monitor!=0) {
@@ -5138,7 +5138,7 @@ render_details *create_render_details (int type) {
   rdet->spinbutton_width = lives_standard_spin_button_new 
     (_("_Width"),TRUE,rdet->width,2.,MAX_FRAME_WIDTH,1.,16.,0,LIVES_BOX(hbox),NULL);
   
-  lives_signal_connect_after (LIVES_GUI_OBJECT (rdet->spinbutton_width), LIVES_WIDGET_VALUE_CHANGED_EVENT,
+  lives_signal_connect_after (LIVES_GUI_OBJECT (rdet->spinbutton_width), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
 			  LIVES_GUI_CALLBACK (rdetw_spinw_changed),
 			  rdet);
   
@@ -5146,7 +5146,7 @@ render_details *create_render_details (int type) {
   rdet->spinbutton_height = lives_standard_spin_button_new 
     (_("_Height"),TRUE,rdet->height,2.,MAX_FRAME_WIDTH,1.,16.,0,LIVES_BOX(hbox),NULL);
   
-  lives_signal_connect_after (LIVES_GUI_OBJECT (rdet->spinbutton_height), LIVES_WIDGET_VALUE_CHANGED_EVENT,
+  lives_signal_connect_after (LIVES_GUI_OBJECT (rdet->spinbutton_height), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
 			  LIVES_GUI_CALLBACK (rdetw_spinh_changed),
 			  rdet);
 
@@ -5172,7 +5172,7 @@ render_details *create_render_details (int type) {
   
   if (type==4&&mainw->multitrack->event_list!=NULL) lives_widget_set_sensitive(rdet->spinbutton_fps,FALSE);
   
-  lives_signal_connect_after (LIVES_GUI_OBJECT (rdet->spinbutton_fps), LIVES_WIDGET_VALUE_CHANGED_EVENT,
+  lives_signal_connect_after (LIVES_GUI_OBJECT (rdet->spinbutton_fps), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
 			  LIVES_GUI_CALLBACK (rdetw_spinf_changed),
 			  rdet);
   
@@ -5257,7 +5257,7 @@ render_details *create_render_details (int type) {
 
   rdet->encoder_combo = lives_standard_combo_new(NULL,FALSE,encoders,LIVES_BOX(top_vbox),NULL);
 
-  rdet->encoder_name_fn = lives_signal_connect_after(LIVES_COMBO(rdet->encoder_combo), LIVES_WIDGET_CHANGED_EVENT,
+  rdet->encoder_name_fn = lives_signal_connect_after(LIVES_COMBO(rdet->encoder_combo), LIVES_WIDGET_CHANGED_SIGNAL,
 						 LIVES_GUI_CALLBACK(on_encoder_entry_changed), rdet);
 
   lives_signal_handler_block(rdet->encoder_combo, rdet->encoder_name_fn);
@@ -5308,7 +5308,7 @@ render_details *create_render_details (int type) {
   lives_list_free_strings(ofmt);
   lives_list_free(ofmt);
   
-  rdet->encoder_ofmt_fn=lives_signal_connect_after (LIVES_COMBO(rdet->ofmt_combo), LIVES_WIDGET_CHANGED_EVENT, 
+  rdet->encoder_ofmt_fn=lives_signal_connect_after (LIVES_COMBO(rdet->ofmt_combo), LIVES_WIDGET_CHANGED_SIGNAL, 
 						LIVES_GUI_CALLBACK (on_encoder_ofmt_changed), rdet);
 
 
@@ -5383,7 +5383,7 @@ render_details *create_render_details (int type) {
   lives_widget_set_can_focus_and_default (rdet->okbutton);
   lives_widget_grab_default (rdet->okbutton);
 
-  lives_widget_add_accelerator (cancelbutton, LIVES_WIDGET_CLICKED_EVENT, rdet_accel_group,
+  lives_widget_add_accelerator (cancelbutton, LIVES_WIDGET_CLICKED_SIGNAL, rdet_accel_group,
                               LIVES_KEY_Escape, (LiVESXModifierType)0, (LiVESAccelFlags)0);
 
 
@@ -5398,7 +5398,7 @@ render_details *create_render_details (int type) {
     do_encoder_img_ftm_error(rdet);
   }
 
-  lives_signal_connect_after(LIVES_COMBO(rdet->acodec_combo), LIVES_WIDGET_CHANGED_EVENT, LIVES_GUI_CALLBACK (rdet_acodec_changed), rdet);
+  lives_signal_connect_after(LIVES_COMBO(rdet->acodec_combo), LIVES_WIDGET_CHANGED_SIGNAL, LIVES_GUI_CALLBACK (rdet_acodec_changed), rdet);
 
   return rdet;
 }

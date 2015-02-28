@@ -5632,7 +5632,7 @@ static boolean recover_files(gchar *recovery_file, boolean auto_recover) {
       if (!is_legal_set_name(buff,TRUE)) continue;
       lives_snprintf(mainw->set_name,128,"%s",buff);
 
-      if (!on_load_set_ok(NULL,LIVES_INT_TO_POINTER(TRUE))) {
+      if (!on_load_set_ok()) {
 	fclose(rfile);
 	end_threaded_dialog();
 

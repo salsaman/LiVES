@@ -218,12 +218,11 @@ void on_open_sel_ok_button_clicked (LiVESButton *, livespointer user_data);
 
 void on_save_textview_clicked (LiVESButton *, livespointer);
 
-void on_cancel_button1_clicked (LiVESWidget *, livespointer data_to_free);
+
+void on_filechooser_cancel_clicked (LiVESWidget *);
 
 
-void
-on_full_screen_pressed (LiVESButton *button,
-			livespointer user_data);
+void on_full_screen_pressed (LiVESButton *button, livespointer user_data);
 
 void
 on_full_screen_activate               (LiVESMenuItem     *menuitem,
@@ -627,9 +626,9 @@ boolean on_save_set_activate (LiVESMenuItem *, livespointer );
 
 void on_save_set_ok (void);
 
-void on_load_set_activate (LiVESMenuItem *, livespointer );
+char *on_load_set_activate (LiVESMenuItem *, livespointer );
 
-boolean on_load_set_ok (LiVESButton *, livespointer skip_threaded_dialog);
+boolean on_load_set_ok (void);
 
 void on_open_vcd_activate (LiVESMenuItem *, livespointer int_type);
 

@@ -57,7 +57,7 @@ struct _dvgrabw *create_camwindow (s_cam *cam, int type) {
   lives_free(tmp);
 
 
-  lives_signal_connect(buttond, LIVES_WIDGET_CLICKED_EVENT, LIVES_GUI_CALLBACK (on_filesel_button_clicked), (livespointer)direntry);
+  lives_signal_connect(buttond, LIVES_WIDGET_CLICKED_SIGNAL, LIVES_GUI_CALLBACK (on_filesel_button_clicked), (livespointer)direntry);
 
 
   //////////////////
@@ -161,12 +161,12 @@ struct _dvgrabw *create_camwindow (s_cam *cam, int type) {
 
   //////////////////////////////////////////////////////////////////////////////////////////
 
-  lives_signal_connect (button3, LIVES_WIDGET_CLICKED_EVENT,LIVES_GUI_CALLBACK (on_camrew_clicked),(livespointer)cam);
-  lives_signal_connect (button4, LIVES_WIDGET_CLICKED_EVENT,LIVES_GUI_CALLBACK (on_camff_clicked),(livespointer)cam);
-  lives_signal_connect (dvgrabw->stop, LIVES_WIDGET_CLICKED_EVENT,LIVES_GUI_CALLBACK (on_camstop_clicked),(livespointer)cam);
-  lives_signal_connect (dvgrabw->play, LIVES_WIDGET_CLICKED_EVENT,LIVES_GUI_CALLBACK (on_camplay_clicked),(livespointer)cam);
-  lives_signal_connect (dvgrabw->grab, LIVES_WIDGET_CLICKED_EVENT,LIVES_GUI_CALLBACK (on_camgrab_clicked),(livespointer)cam);
-  lives_signal_connect (dvgrabw->quit, LIVES_WIDGET_CLICKED_EVENT,LIVES_GUI_CALLBACK (on_camquit_clicked),(livespointer)cam);
+  lives_signal_connect (button3, LIVES_WIDGET_CLICKED_SIGNAL,LIVES_GUI_CALLBACK (on_camrew_clicked),(livespointer)cam);
+  lives_signal_connect (button4, LIVES_WIDGET_CLICKED_SIGNAL,LIVES_GUI_CALLBACK (on_camff_clicked),(livespointer)cam);
+  lives_signal_connect (dvgrabw->stop, LIVES_WIDGET_CLICKED_SIGNAL,LIVES_GUI_CALLBACK (on_camstop_clicked),(livespointer)cam);
+  lives_signal_connect (dvgrabw->play, LIVES_WIDGET_CLICKED_SIGNAL,LIVES_GUI_CALLBACK (on_camplay_clicked),(livespointer)cam);
+  lives_signal_connect (dvgrabw->grab, LIVES_WIDGET_CLICKED_SIGNAL,LIVES_GUI_CALLBACK (on_camgrab_clicked),(livespointer)cam);
+  lives_signal_connect (dvgrabw->quit, LIVES_WIDGET_CLICKED_SIGNAL,LIVES_GUI_CALLBACK (on_camquit_clicked),(livespointer)cam);
 
 
   lives_widget_show_all(dvgrabw->dialog);

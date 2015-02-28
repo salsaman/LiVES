@@ -66,7 +66,7 @@ static void switch_fx_state(int okey, int hotkey) {
 
 void override_if_active_input(int hotkey) {
   // if we have a connection from oparam -1 to iparam -1 for key/mode then set autoscale to TRUE
-  // this allows user override of LIVES_WIDGET_CLICKED_EVENT when connected from another filter's "activated"
+  // this allows user override of LIVES_WIDGET_CLICKED_SIGNAL when connected from another filter's "activated"
 
   lives_pconnect_t *pconx=mainw->pconx;
 
@@ -3960,11 +3960,11 @@ static void ptable_row_add_variable_widgets(lives_conx_w *conxwp, int idx, int r
 		      (LiVESAttachOptions) (0), 0, 0);
 
 
-  lives_signal_connect(LIVES_GUI_OBJECT (conxwp->pfxcombo[idx]), LIVES_WIDGET_CHANGED_EVENT,
+  lives_signal_connect(LIVES_GUI_OBJECT (conxwp->pfxcombo[idx]), LIVES_WIDGET_CHANGED_SIGNAL,
 		   LIVES_GUI_CALLBACK (dfxp_changed),(livespointer)conxwp);
 
 
-  conxwp->dpp_func[idx]=lives_signal_connect(LIVES_GUI_OBJECT (conxwp->pcombo[idx]), LIVES_WIDGET_CHANGED_EVENT,
+  conxwp->dpp_func[idx]=lives_signal_connect(LIVES_GUI_OBJECT (conxwp->pcombo[idx]), LIVES_WIDGET_CHANGED_SIGNAL,
 					 LIVES_GUI_CALLBACK (dpp_changed),(livespointer)conxwp);
 
 
@@ -4001,7 +4001,7 @@ static void ptable_row_add_variable_widgets(lives_conx_w *conxwp, int idx, int r
     lives_widget_set_sensitive(conxwp->acheck[idx],FALSE);
     lives_widget_object_set_data(LIVES_WIDGET_OBJECT(conxwp->acheck[idx]),"available",LIVES_INT_TO_POINTER(hasrange));
 
-    conxwp->acheck_func[idx]=lives_signal_connect_after (LIVES_GUI_OBJECT (conxwp->acheck[idx]), LIVES_WIDGET_TOGGLED_EVENT,
+    conxwp->acheck_func[idx]=lives_signal_connect_after (LIVES_GUI_OBJECT (conxwp->acheck[idx]), LIVES_WIDGET_TOGGLED_SIGNAL,
 						     LIVES_GUI_CALLBACK (on_acheck_toggled),
 						     (livespointer)conxwp);
 
@@ -4056,11 +4056,11 @@ static void ctable_row_add_variable_widgets(lives_conx_w *conxwp, int idx, int r
 		      (LiVESAttachOptions) (0), 0, 0);
 
 
-  lives_signal_connect(LIVES_GUI_OBJECT (conxwp->cfxcombo[idx]), LIVES_WIDGET_CHANGED_EVENT,
+  lives_signal_connect(LIVES_GUI_OBJECT (conxwp->cfxcombo[idx]), LIVES_WIDGET_CHANGED_SIGNAL,
 		   LIVES_GUI_CALLBACK (dfxc_changed),(livespointer)conxwp);
 
 
-  conxwp->dpc_func[idx]=lives_signal_connect(LIVES_GUI_OBJECT (conxwp->ccombo[idx]), LIVES_WIDGET_CHANGED_EVENT,
+  conxwp->dpc_func[idx]=lives_signal_connect(LIVES_GUI_OBJECT (conxwp->ccombo[idx]), LIVES_WIDGET_CHANGED_SIGNAL,
 					 LIVES_GUI_CALLBACK (dpc_changed),(livespointer)conxwp);
 
 
@@ -4094,7 +4094,7 @@ static void ptable_row_add_standard_widgets(lives_conx_w *conxwp, int idx) {
 		      (LiVESAttachOptions) (0),
 		      (LiVESAttachOptions) (0), 0, 0);
   
-  lives_signal_connect (LIVES_GUI_OBJECT (conxwp->add_button[idx]), LIVES_WIDGET_CLICKED_EVENT,
+  lives_signal_connect (LIVES_GUI_OBJECT (conxwp->add_button[idx]), LIVES_WIDGET_CLICKED_SIGNAL,
 		    LIVES_GUI_CALLBACK (padd_clicked),
 		    (livespointer)conxwp);
 
@@ -4110,7 +4110,7 @@ static void ptable_row_add_standard_widgets(lives_conx_w *conxwp, int idx) {
 		      (LiVESAttachOptions) (0),
 		      (LiVESAttachOptions) (0), 0, 0);
 
-  lives_signal_connect (LIVES_GUI_OBJECT (conxwp->del_button[idx]), LIVES_WIDGET_CLICKED_EVENT,
+  lives_signal_connect (LIVES_GUI_OBJECT (conxwp->del_button[idx]), LIVES_WIDGET_CLICKED_SIGNAL,
 		    LIVES_GUI_CALLBACK (pdel_clicked),
 		    (livespointer)conxwp);
 
@@ -4143,7 +4143,7 @@ static void ctable_row_add_standard_widgets(lives_conx_w *conxwp, int idx) {
 		      (LiVESAttachOptions) (0),
 		      (LiVESAttachOptions) (0), 0, 0);
   
-  lives_signal_connect (LIVES_GUI_OBJECT (conxwp->add_button[idx]), LIVES_WIDGET_CLICKED_EVENT,
+  lives_signal_connect (LIVES_GUI_OBJECT (conxwp->add_button[idx]), LIVES_WIDGET_CLICKED_SIGNAL,
 		    LIVES_GUI_CALLBACK (cadd_clicked),
 		    (livespointer)conxwp);
 
@@ -4159,7 +4159,7 @@ static void ctable_row_add_standard_widgets(lives_conx_w *conxwp, int idx) {
 		      (LiVESAttachOptions) (0),
 		      (LiVESAttachOptions) (0), 0, 0);
 
-  lives_signal_connect (LIVES_GUI_OBJECT (conxwp->del_button[idx]), LIVES_WIDGET_CLICKED_EVENT,
+  lives_signal_connect (LIVES_GUI_OBJECT (conxwp->del_button[idx]), LIVES_WIDGET_CLICKED_SIGNAL,
 		    LIVES_GUI_CALLBACK (cdel_clicked),
 		    (livespointer)conxwp);
 
@@ -4339,7 +4339,7 @@ static LiVESWidget *conx_scroll_new(lives_conx_w *conxwp) {
 
     lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(conxwp->allcheckc),TRUE);
 
-    lives_signal_connect_after (LIVES_GUI_OBJECT (conxwp->allcheckc), LIVES_WIDGET_TOGGLED_EVENT,
+    lives_signal_connect_after (LIVES_GUI_OBJECT (conxwp->allcheckc), LIVES_WIDGET_TOGGLED_SIGNAL,
 			    LIVES_GUI_CALLBACK (on_allcheck_toggled),
 			    (livespointer)conxwp);
 
@@ -4787,7 +4787,7 @@ LiVESWidget *make_datacon_window(int key, int mode) {
     lives_box_pack_start (LIVES_BOX (abox), conxw.acbutton, FALSE, FALSE, widget_opts.packing_width);
     lives_widget_set_sensitive(conxw.acbutton,FALSE);
 
-    lives_signal_connect (LIVES_GUI_OBJECT (conxw.acbutton), LIVES_WIDGET_CLICKED_EVENT,
+    lives_signal_connect (LIVES_GUI_OBJECT (conxw.acbutton), LIVES_WIDGET_CLICKED_SIGNAL,
 		      LIVES_GUI_CALLBACK (acbutton_clicked),
 		      (livespointer)&conxw);
 
@@ -4799,7 +4799,7 @@ LiVESWidget *make_datacon_window(int key, int mode) {
     lives_box_pack_start (LIVES_BOX (abox), conxw.apbutton, FALSE, FALSE, widget_opts.packing_width);
     lives_widget_set_sensitive(conxw.apbutton,FALSE);
 
-    lives_signal_connect (LIVES_GUI_OBJECT (conxw.apbutton), LIVES_WIDGET_CLICKED_EVENT,
+    lives_signal_connect (LIVES_GUI_OBJECT (conxw.apbutton), LIVES_WIDGET_CLICKED_SIGNAL,
 		      LIVES_GUI_CALLBACK (apbutton_clicked),
 		      (livespointer)&conxw);
 
@@ -4809,7 +4809,7 @@ LiVESWidget *make_datacon_window(int key, int mode) {
   lives_box_pack_start (LIVES_BOX (abox), conxw.disconbutton, FALSE, FALSE, widget_opts.packing_width);
   lives_widget_set_sensitive(conxw.disconbutton,FALSE);
 
-  lives_signal_connect (LIVES_GUI_OBJECT (conxw.disconbutton), LIVES_WIDGET_CLICKED_EVENT,
+  lives_signal_connect (LIVES_GUI_OBJECT (conxw.disconbutton), LIVES_WIDGET_CLICKED_SIGNAL,
 		    LIVES_GUI_CALLBACK (disconbutton_clicked),
 		    (livespointer)&conxw);
 
@@ -4839,16 +4839,16 @@ LiVESWidget *make_datacon_window(int key, int mode) {
   lives_widget_set_can_focus_and_default (okbutton);
   lives_widget_grab_default(okbutton);
 
-  lives_widget_add_accelerator (cancelbutton, LIVES_WIDGET_CLICKED_EVENT, accel_group,
+  lives_widget_add_accelerator (cancelbutton, LIVES_WIDGET_CLICKED_SIGNAL, accel_group,
 				LIVES_KEY_Escape,  (LiVESXModifierType)0, (LiVESAccelFlags)0);
 
 
-  lives_signal_connect (LIVES_GUI_OBJECT (cancelbutton), LIVES_WIDGET_CLICKED_EVENT,
+  lives_signal_connect (LIVES_GUI_OBJECT (cancelbutton), LIVES_WIDGET_CLICKED_SIGNAL,
 		    LIVES_GUI_CALLBACK (conxw_cancel_clicked),
 		    (livespointer)&conxw);
 
 
-  lives_signal_connect (LIVES_GUI_OBJECT (okbutton), LIVES_WIDGET_CLICKED_EVENT,
+  lives_signal_connect (LIVES_GUI_OBJECT (okbutton), LIVES_WIDGET_CLICKED_SIGNAL,
 		    LIVES_GUI_CALLBACK (conxw_ok_clicked),
 		    (livespointer)&conxw);
 

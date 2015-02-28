@@ -43,10 +43,31 @@ static void ce_thumbs_remove_param_boxes(boolean remove_pinned);
 static void ce_thumbs_remove_param_box(int key);
 
 
+void ce_thumbs_set_interactive(boolean interactive) {
+  register int i;
+
+  if (!interactive) {
+    for (i=0;i<rte_keys_virtual;i++) {
+      lives_widget_set_sensitive(fxcombos[i],FALSE);
+      lives_widget_set_sensitive(key_checks[i],FALSE);
+    }
+  }
+  else {
+    for (i=0;i<rte_keys_virtual;i++) {
+      lives_widget_set_sensitive(fxcombos[i],TRUE);
+      if (rte_key_getmaxmode(i+1)>0) {
+	lives_widget_set_sensitive(key_checks[i],TRUE);
+      }
+    }
+  }
+
+}
+
 #if LIVES_HAS_GRID_WIDGET
 static boolean switch_clip_cb (LiVESWidget *eventbox, LiVESXEventButton *event, livespointer user_data) {
   int i=LIVES_POINTER_TO_INT(user_data);
   if (mainw->playing_file==-1) return FALSE;
+  if (!mainw->interactive) return FALSE;
   switch_clip (0,i);
   return FALSE;
 }
@@ -73,7 +94,8 @@ void ce_thumbs_set_key_check_state(void) {
   register int i;
   for (i=0;i<prefs->rte_keys_virtual;i++) {
     lives_signal_handler_block(key_checks[i],ch_fns[i]);
-    lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(key_checks[i]),LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(key_checks[i]),"active")));
+    lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(key_checks[i]),
+				   LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(key_checks[i]),"active")));
     if (!lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(key_checks[i]))&&pscrolls[i]!=NULL) ce_thumbs_remove_param_box(i);
     lives_signal_handler_unblock(key_checks[i],ch_fns[i]);
   }
@@ -223,9 +245,10 @@ void start_ce_thumb_mode(void) {
     lives_free(tmp);
 
     lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(key_checks[i]),mainw->rte&(GU641<<i));
-    lives_widget_object_set_data(LIVES_WIDGET_OBJECT(key_checks[i]),"active",LIVES_INT_TO_POINTER(lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(key_checks[i]))));
+    lives_widget_object_set_data(LIVES_WIDGET_OBJECT(key_checks[i]),"active",
+				 LIVES_INT_TO_POINTER(lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(key_checks[i]))));
 
-    ch_fns[i]=lives_signal_connect_after (LIVES_GUI_OBJECT (key_checks[i]), LIVES_WIDGET_TOGGLED_EVENT,
+    ch_fns[i]=lives_signal_connect_after (LIVES_GUI_OBJECT (key_checks[i]), LIVES_WIDGET_TOGGLED_SIGNAL,
 				      LIVES_GUI_CALLBACK (rte_on_off_callback_hook),LIVES_INT_TO_POINTER (i+1));
 
 
@@ -244,7 +267,7 @@ void start_ce_thumb_mode(void) {
  
     lives_entry_set_editable (LIVES_ENTRY (combo_entries[i]), FALSE);
       
-    combo_fns[i]=lives_signal_connect(LIVES_GUI_OBJECT (fxcombos[i]), LIVES_WIDGET_CHANGED_EVENT,
+    combo_fns[i]=lives_signal_connect(LIVES_GUI_OBJECT (fxcombos[i]), LIVES_WIDGET_CHANGED_SIGNAL,
 				  LIVES_GUI_CALLBACK (ce_thumbs_fx_changed),LIVES_INT_TO_POINTER(i));
 
   }
@@ -316,7 +339,7 @@ void start_ce_thumb_mode(void) {
     rb_clip_areas_group = lives_radio_button_get_group (LIVES_RADIO_BUTTON (rb_clip_areas[i]));
     lives_free(tmp);
 
-    rb_clip_fns[i]=lives_signal_connect (LIVES_GUI_OBJECT (rb_clip_areas[i]), LIVES_WIDGET_TOGGLED_EVENT, LIVES_GUI_CALLBACK (clip_area_toggled), LIVES_INT_TO_POINTER(i));
+    rb_clip_fns[i]=lives_signal_connect (LIVES_GUI_OBJECT (rb_clip_areas[i]), LIVES_WIDGET_TOGGLED_SIGNAL, LIVES_GUI_CALLBACK (clip_area_toggled), LIVES_INT_TO_POINTER(i));
 
   }
 
@@ -514,7 +537,7 @@ void ce_thumbs_add_param_box(int key, boolean remove) {
   pin_check=lives_standard_check_button_new((tmp=lives_strdup(_("_Pin"))),TRUE,LIVES_BOX(hbox),(tmp2=lives_strdup(_("Pin the parameter box to the window"))));
   lives_free(tmp); lives_free(tmp2);
 
-  lives_signal_connect_after (LIVES_GUI_OBJECT (pin_check), LIVES_WIDGET_TOGGLED_EVENT,
+  lives_signal_connect_after (LIVES_GUI_OBJECT (pin_check), LIVES_WIDGET_TOGGLED_SIGNAL,
 			  LIVES_GUI_CALLBACK (pin_toggled),LIVES_INT_TO_POINTER (key));
 
 

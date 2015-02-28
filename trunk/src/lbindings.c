@@ -7,6 +7,7 @@
 #include "main.h"
 #include "interface.h"
 #include "callbacks.h"
+#include "rte_window.h"
 #include "liblives.hpp"
 
 
@@ -55,6 +56,24 @@ typedef struct {
 } udata;
 
 
+typedef struct {
+  // boolean pref
+  ulong id;
+  int prefidx;
+  boolean val;
+} bpref;
+
+
+typedef struct {
+  // int pref
+  ulong id;
+  int prefidx;
+  int val;
+} ipref;
+
+
+
+
 /////////////////////////////////////////
 /// extern functions with no headers
 
@@ -95,8 +114,9 @@ ulong *get_unique_ids(void) {
   // return array of unique_id (ulong) for all "real" clips
   int i=0;
   ulong *uids;
+  LiVESList *list;
   pthread_mutex_lock(&mainw->clip_list_mutex);
-  LiVESList *list=mainw->cliplist;
+  list=mainw->cliplist;
   uids=(ulong *)lives_malloc((lives_list_length(mainw->cliplist) + 1)*sizeof(ulong));
   while (list!=NULL) {
     int uid=0;
@@ -113,11 +133,15 @@ ulong *get_unique_ids(void) {
 
 
 int cnum_for_uid(ulong uid) {
+  LiVESList *list;
   pthread_mutex_lock(&mainw->clip_list_mutex);
-  LiVESList *list=mainw->cliplist;
+  list=mainw->cliplist;
   while (list!=NULL) {
     int cnum=LIVES_POINTER_TO_INT(list->data);
-    if (mainw->files[cnum]!=NULL && uid==mainw->files[cnum]->unique_id) return cnum;
+    if (mainw->files[cnum]!=NULL && uid==mainw->files[cnum]->unique_id) {
+      pthread_mutex_unlock(&mainw->clip_list_mutex);
+      return cnum;
+    }
     list=list->next;
   }
   pthread_mutex_unlock(&mainw->clip_list_mutex);
@@ -291,8 +315,43 @@ static boolean call_set_interactive(livespointer data) {
   sintdata *sint = (sintdata *)data;
   mainw->interactive=sint->setting;
   set_interactive(mainw->interactive);
-  ext_caller_return_int(sint->id,0);
+  ext_caller_return_int(sint->id,TRUE);
   lives_free(sint);
+  return FALSE;
+}
+
+
+static boolean call_set_pref_bool(livespointer data) {
+  bpref *bdata=(bpref *)data;
+  pref_factory_bool(bdata->prefidx, bdata->val);
+  ext_caller_return_int(bdata->id,TRUE);
+  lives_free(bdata);
+  return FALSE;
+}
+
+
+static boolean call_set_pref_int(livespointer data) {
+  ipref *idata=(ipref *)data;
+  pref_factory_int(idata->prefidx, idata->val);
+  ext_caller_return_int(idata->id,TRUE);
+  lives_free(idata);
+  return FALSE;
+}
+
+
+static boolean call_switch_clip(livespointer data) {
+  ipref *idata=(ipref *)data;
+  switch_clip(idata->prefidx,idata->val);
+  ext_caller_return_int(idata->id,TRUE);
+  lives_free(idata);
+  return FALSE;
+}
+
+
+static boolean call_unmap_effects(livespointer data) {
+  ulong id=(ulong)data;
+  on_clear_all_clicked(NULL,NULL);
+  ext_caller_return_int(id,TRUE);
   return FALSE;
 }
 
@@ -301,7 +360,7 @@ static boolean call_set_interactive(livespointer data) {
 
 
 boolean idle_show_info(const char *text, boolean blocking, ulong id) {
-  if (mainw->preview||mainw->is_processing||mainw->playing_file>-1) {
+  if (mainw->preview||mainw->go_away||mainw->is_processing||mainw->playing_file>-1) {
     return FALSE;
   }
   if (text==NULL) return FALSE;
@@ -316,8 +375,38 @@ boolean idle_show_info(const char *text, boolean blocking, ulong id) {
 }
 
 
+boolean idle_switch_clip(int type, int cnum, ulong id) {
+  ipref *info;
+
+  if (mainw->preview||mainw->go_away||mainw->is_processing) {
+    return FALSE;
+  }
+
+  if (mainw->multitrack!=NULL) return FALSE;
+
+  info = (ipref *)lives_malloc(sizeof(ipref));
+  info->id = id;
+  info->val = cnum;
+  info->prefidx = type;
+  lives_idle_add(call_switch_clip,(livespointer)info);
+  return TRUE;
+}
+
+
+boolean idle_unmap_effects(ulong id) {
+
+  if (mainw->preview||mainw->go_away||mainw->is_processing) {
+    return FALSE;
+  }
+
+  lives_idle_add(call_unmap_effects,(livespointer)id);
+
+  return TRUE;
+}
+
+
 boolean idle_save_set(const char *name, int arglen, const void *vargs, ulong id) {
-  if (mainw->preview||mainw->is_processing||mainw->playing_file>-1) {
+  if (mainw->preview||mainw->go_away||mainw->is_processing||mainw->playing_file>-1) {
     return FALSE;
   }
   else {
@@ -334,7 +423,7 @@ boolean idle_save_set(const char *name, int arglen, const void *vargs, ulong id)
 boolean idle_choose_file_with_preview(const char *dirname, const char *title, int preview_type, ulong id) {
   fprev *data;
 
-  if (mainw->preview||mainw->is_processing||mainw->playing_file>-1) {
+  if (mainw->preview||mainw->go_away||mainw->is_processing||mainw->playing_file>-1) {
     return FALSE;
   }
 
@@ -355,7 +444,7 @@ boolean idle_choose_file_with_preview(const char *dirname, const char *title, in
 
 boolean idle_choose_set(ulong id) {
   udata *data;
-  if (mainw->preview||mainw->is_processing||mainw->playing_file>-1) {
+  if (mainw->preview||mainw->go_away||mainw->is_processing||mainw->playing_file>-1) {
     return FALSE;
   }
   if (mainw->was_set) return FALSE;
@@ -369,7 +458,7 @@ boolean idle_choose_set(ulong id) {
 boolean idle_open_file(const char *fname, double stime, int frames, ulong id) {
   opfidata *data;
 
-  if (mainw->preview||mainw->is_processing||mainw->playing_file>-1) {
+  if (mainw->preview||mainw->go_away||mainw->is_processing||mainw->playing_file>-1) {
     return FALSE;
   }
 
@@ -389,7 +478,7 @@ boolean idle_open_file(const char *fname, double stime, int frames, ulong id) {
 boolean idle_reload_set(const char *setname, ulong id) {
   msginfo *data;
 
-  if (mainw->preview||mainw->is_processing||mainw->playing_file>-1) {
+  if (mainw->preview||mainw->go_away||mainw->is_processing||mainw->playing_file>-1) {
     return FALSE;
   }
   if (mainw->was_set) return FALSE;
@@ -413,5 +502,37 @@ boolean idle_set_interactive(boolean setting, ulong id) {
   data->id=id;
   data->setting=setting;
   lives_idle_add(call_set_interactive,(livespointer)data);
+  return TRUE;
+}
+
+
+boolean idle_set_pref_bool(int prefidx, boolean val, ulong id) {
+  bpref *data;
+
+  if (mainw->preview||mainw->go_away||mainw->is_processing||mainw->playing_file>-1) {
+    return FALSE;
+  }
+
+  data=(bpref *)lives_malloc(sizeof(bpref));
+  data->id=id;
+  data->prefidx=prefidx;
+  data->val=val;
+  lives_idle_add(call_set_pref_bool,(livespointer)data);
+  return TRUE;
+}
+
+
+boolean idle_set_pref_int(int prefidx, int val, ulong id) {
+  ipref *data;
+
+  if (mainw->preview||mainw->go_away||mainw->is_processing||mainw->playing_file>-1) {
+    return FALSE;
+  }
+
+  data=(ipref *)lives_malloc(sizeof(ipref));
+  data->id=id;
+  data->prefidx=prefidx;
+  data->val=val;
+  lives_idle_add(call_set_pref_int,(livespointer)data);
   return TRUE;
 }

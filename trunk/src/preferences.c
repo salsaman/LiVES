@@ -431,6 +431,46 @@ static void set_temp_label_text(LiVESLabel *label) {
 
 
 
+void pref_factory_bool(int prefidx, boolean newval) {
+
+  if (prefidx==PREF_REC_EXT_AUDIO) {
+    boolean rec_ext_audio=newval;
+    if (rec_ext_audio&&prefs->audio_src==AUDIO_SRC_INT) {
+      prefs->audio_src=AUDIO_SRC_EXT;
+      set_int_pref("audio_src",AUDIO_SRC_EXT);
+
+      if (mainw->playing_file==-1) {
+	if (prefs->audio_player==AUD_PLAYER_JACK) {
+#ifdef ENABLE_JACK
+	  if (prefs->perm_audio_reader) {
+	    // create reader connection now, if permanent
+	    jack_rec_audio_to_clip(-1,-1,RECA_EXTERNAL);
+	  }
+#endif
+	}
+	if (prefs->audio_player==AUD_PLAYER_PULSE) {
+#ifdef HAVE_PULSE_AUDIO
+	  if (prefs->perm_audio_reader) {
+	    // create reader connection now, if permanent
+	    pulse_rec_audio_to_clip(-1,-1,RECA_EXTERNAL);
+	  }
+#endif
+	}
+      }
+      
+    }
+    else if (!rec_ext_audio&&prefs->audio_src==AUDIO_SRC_EXT) {
+      prefs->audio_src=AUDIO_SRC_INT;
+      set_int_pref("audio_src",AUDIO_SRC_INT);
+    }
+  }
+}
+
+
+void pref_factory_int(int prefidx, int newval) {
+  // TODO
+}
+
 
 boolean apply_prefs(boolean skip_warn) {
   // set current prefs from prefs dialog
@@ -681,35 +721,7 @@ lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_warn_yuv4
     set_int_pref("record_opts",prefs->rec_opts);
   }
 
-  if (rec_ext_audio&&prefs->audio_src==AUDIO_SRC_INT) {
-    prefs->audio_src=AUDIO_SRC_EXT;
-    set_int_pref("audio_src",AUDIO_SRC_EXT);
-
-    if (mainw->playing_file==-1) {
-      if (prefs->audio_player==AUD_PLAYER_JACK) {
-#ifdef ENABLE_JACK
-	if (prefs->perm_audio_reader) {
-	  // create reader connection now, if permanent
-	  jack_rec_audio_to_clip(-1,-1,RECA_EXTERNAL);
-	}
-#endif
-      }
-      if (prefs->audio_player==AUD_PLAYER_PULSE) {
-#ifdef HAVE_PULSE_AUDIO
-	if (prefs->perm_audio_reader) {
-	  // create reader connection now, if permanent
-	  pulse_rec_audio_to_clip(-1,-1,RECA_EXTERNAL);
-	}
-#endif
-      }
-    }
-
-  }
-  else if (!rec_ext_audio&&prefs->audio_src==AUDIO_SRC_EXT) {
-    prefs->audio_src=AUDIO_SRC_INT;
-    set_int_pref("audio_src",AUDIO_SRC_INT);
-  }
-
+  pref_factory_bool(PREF_REC_EXT_AUDIO, rec_ext_audio);
 
   warn_mask=!warn_fps*WARN_MASK_FPS+!warn_save_set*WARN_MASK_SAVE_SET+!warn_fsize*WARN_MASK_FSIZE+!warn_mplayer*
     WARN_MASK_NO_MPLAYER+!warn_rendered_fx*WARN_MASK_RENDERED_FX+!warn_encoders*

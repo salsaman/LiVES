@@ -23,6 +23,10 @@ boolean idle_open_file(const char *fname, double stime, int frames, ulong id);
 boolean idle_set_interactive(boolean setting, ulong id);
 boolean idle_choose_set(ulong id);
 boolean idle_reload_set(const char *setname, ulong id);
+boolean idle_set_pref_bool(int prefidx, boolean val, ulong id);
+boolean idle_set_pref_int(int prefidx, int val, ulong id);
+boolean idle_switch_clip(int type, int cnum, ulong id);
+boolean idle_unmap_effects(ulong id);
 
 ulong *get_unique_ids(void);
 int cnum_for_uid(ulong uid);

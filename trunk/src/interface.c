@@ -1260,7 +1260,7 @@ _entryw* create_rename_dialog (int type) {
     title=lives_strdup(_("LiVES: - Rename Clip"));
   }
   else if (type==2||type==4||type==5) {
-    title=lives_strdup(_("LiVES: - Enter Set Name"));
+    title=lives_strdup(_("LiVES: - Enter Set Name to Save as"));
   }
   else if (type==3) {
     title=lives_strdup(_("LiVES: - Enter a Set Name to Reload"));

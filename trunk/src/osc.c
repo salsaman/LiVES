@@ -450,7 +450,6 @@ boolean lives_osc_cb_play (void *context, int arglen, const void *vargs, OSCTime
   if (!lives_osc_check_arguments (arglen,vargs,"ff",FALSE)) {
     if (!lives_osc_check_arguments (arglen,vargs,"f",FALSE)) {
       if (!lives_osc_check_arguments (arglen,vargs,"",FALSE)) {
-	g_print("pt a15\n");
 	return lives_osc_notify_failure();
       }
     }

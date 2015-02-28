@@ -41,7 +41,6 @@ extern "C" {
 
 }
 
-
 inline int pad4(int val) {
   return (int)((val+4)/4)*4;
 }
@@ -87,14 +86,14 @@ static int add_string_arg(char **str, int arglen, const char *val) {
 }
 
 
-static void *play_thread(void *) {
+static bool play_thread() {
   int arglen = 1;
   char **vargs=(char **)lives_malloc(sizeof(char *));
   *vargs = strdup(",");
   arglen = padup(vargs, arglen);
-  lives_osc_cb_play(NULL, arglen, (const void *)(*vargs), OSCTT_CurrentTime(), NULL);
+  bool ret = lives_osc_cb_play(NULL, arglen, (const void *)(*vargs), OSCTT_CurrentTime(), NULL);
   lives_free(*vargs);
-  return NULL;
+  return ret;
 }
 
 static volatile bool spinning;
@@ -222,12 +221,12 @@ namespace lives {
   }
 
 
-  livesApp::livesApp() : m_set(this), m_id(0l) {
+  livesApp::livesApp() : m_set(this), m_effectKeyMap(this), m_id(0l) {
     if (appMgr.empty())
       init(0,NULL);
   }
 
-  livesApp::livesApp(int argc, char *argv[]) : m_set(this), m_id(0l) {
+  livesApp::livesApp(int argc, char *argv[]) : m_set(this), m_effectKeyMap(this), m_id(0l) {
     if (appMgr.empty())
       init(argc,argv);
   }
@@ -261,9 +260,11 @@ namespace lives {
     return m_id != 0l;
   }
 
-  set * const livesApp::currentSet() {
-    return &m_set;
+
+  set livesApp::currentSet() {
+    return m_set;
   }
+
 
   ulong livesApp::appendClosure(lives_callback_t cb_type, callback_f func, void *data) {
     closure *cl = new closure;
@@ -310,9 +311,9 @@ namespace lives {
   }
 
 
-  void livesApp::play() {
-    if (!isValid()) return;
-    play_thread(NULL);
+  bool livesApp::play() {
+    if (!isValid()) return false;
+    return play_thread();
   }
 
   bool livesApp::stop() {
@@ -336,8 +337,10 @@ namespace lives {
       }
       else {
 	while (spinning) usleep(100);
-	ret = (lives_dialog_response_t)atoi(private_response);
-	lives_free(private_response);
+	if (isValid()) {
+	  ret = (lives_dialog_response_t)atoi(private_response);
+	  lives_free(private_response);
+	}
       }
       return ret;
     }
@@ -355,18 +358,21 @@ namespace lives {
     msg_id = lives_random();
     ulong cbid = addCallback(LIVES_CALLBACK_PRIVATE, private_cb, NULL);
     char *ret = NULL;
-    if (!idle_choose_file_with_preview(dirname.c_str(),title.c_str(),preview_type,msg_id)) {
+    if (!idle_choose_file_with_preview(dirname.toEncoding(LIVES_CHAR_ENCODING_FILESYSTEM).c_str(),
+				       title.toEncoding(LIVES_CHAR_ENCODING_UTF8).c_str(),
+				       preview_type,msg_id)) {
       spinning = false;
       removeCallback(cbid);
     }
     else {
       while (spinning) usleep(100);
-      // last 2 chars are " " and %d (deinterlace choice)
-      LiVESString str(private_response, strlen(private_response - 2));
-      str.setEncoding(LIVES_CHAR_ENCODING_FILESYSTEM);
-      m_deinterlace = (bool)atoi(private_response + strlen(private_response) - 2);
-      lives_free(private_response);
-      return str;
+      if (isValid()) {
+	// last 2 chars are " " and %d (deinterlace choice)
+	LiVESString str(private_response, strlen(private_response - 2), LIVES_CHAR_ENCODING_FILESYSTEM);
+	m_deinterlace = (bool)atoi(private_response + strlen(private_response) - 2);
+	lives_free(private_response);
+	return str;
+      }
     }
     return emptystr;
   }
@@ -385,10 +391,11 @@ namespace lives {
     }
     else {
       while (spinning) usleep(100);
-      LiVESString str(private_response);
-      str.setEncoding(LIVES_CHAR_ENCODING_FILESYSTEM);
-      lives_free(private_response);
-      return str;
+      if (isValid()) {
+	LiVESString str(private_response, LIVES_CHAR_ENCODING_FILESYSTEM);
+	lives_free(private_response);
+	return str;
+      }
     }
     return emptystr;
   }
@@ -408,10 +415,12 @@ namespace lives {
     }
     else {
       while (spinning) usleep(100);
-      cid = strtoul(private_response, NULL, 10);
-      lives_free(private_response);
+      if (isValid()) {
+	cid = strtoul(private_response, NULL, 10);
+	lives_free(private_response);
+      }
     }
-    return clip(cid);
+    return clip(cid, this);
   }
 
 
@@ -428,9 +437,12 @@ namespace lives {
       return false;
     }
     while (spinning) usleep(100);
-    bool ret = (bool)atoi(private_response);
-    lives_free(private_response);
-    return ret;
+    if (isValid()) {
+      bool ret = (bool)atoi(private_response);
+      lives_free(private_response);
+      return ret;
+    }
+    return false;
   }
 
 
@@ -466,7 +478,7 @@ namespace lives {
   }
 
 
-  void livesApp::setInteractive(bool setting) {
+  bool livesApp::setInteractive(bool setting) {
     spinning = true;
     msg_id = lives_random();
     ulong cbid = addCallback(LIVES_CALLBACK_PRIVATE, private_cb, NULL); 
@@ -475,50 +487,100 @@ namespace lives {
       removeCallback(cbid);
     }
     while (spinning) usleep(100);
+    if (isValid()) {
+      lives_free(private_response);
+    }
+    return setting;
   }
 
+
+
+  effectKeyMap livesApp::currentEffectKeyMap() {
+    return m_effectKeyMap;
+  }
+
+
+#ifndef DOXYGEN_SKIP
+  bool livesApp::setPref(int prefidx, bool val) {
+    spinning = true;
+    msg_id = lives_random();
+    ulong cbid = addCallback(LIVES_CALLBACK_PRIVATE, private_cb, NULL); 
+    if (!idle_set_pref_bool(prefidx, val, msg_id)) {
+      spinning = false;
+      removeCallback(cbid);
+      return false;
+    }
+    while (spinning) usleep(100);
+    if (isValid()) {
+      lives_free(private_response);
+    }
+    return true;
+  }
+
+  bool livesApp::setPref(int prefidx, int val) {
+    spinning = true;
+    msg_id = lives_random();
+    ulong cbid = addCallback(LIVES_CALLBACK_PRIVATE, private_cb, NULL); 
+    if (!idle_set_pref_int(prefidx, val, msg_id)) {
+      spinning = false;
+      removeCallback(cbid);
+      return false;
+    }
+    while (spinning) usleep(100);
+    if (isValid()) {
+      lives_free(private_response);
+    }
+    return true;
+  }
+#endif
 
   //////////////// set ////////////////////
 
   set::set(livesApp *lives) {
     m_lives = lives;
-    m_name = NULL;
   }
 
   set::set() {
     m_lives = NULL;
-    m_name = NULL;
   }
 
   bool set::isValid() {
     return m_lives != NULL && m_lives->isValid();
   }
 
-  set::~set() {
-    if (m_name != NULL) lives_free(m_name);
-
-    clipListIterator it = m_clips.begin();
-    while (it != m_clips.end()) {
-      delete *it;
-      it = m_clips.erase(it);
-    }
-  }
 
   LiVESString set::name() {
-    if (!isValid()) return NULL;
-    setName(get_set_name());
-    return LiVESString(m_name);
+    if (!isValid()) return LiVESString("");
+    return LiVESString(get_set_name(), LIVES_CHAR_ENCODING_UTF8);
   }
 
-  void set::setName(const char *name) {
-    char noname[] = "";
-    if (m_name != NULL) {
-      if (!strcmp(m_name, name)) return;
-      lives_free(m_name);
-    }
-    if (name == NULL) m_name = strdup(noname);
-    else m_name = strdup(name);
+
+  unsigned int set::numClips() {
+    if (!isValid()) return 0;
+    update_clip_list();
+    return m_clips.size();
   }
+
+
+  clip set::nthClip(unsigned int n) {
+    if (!isValid()) return clip(0l);
+    update_clip_list();
+    if (n >= m_clips.size()) return clip(0l);
+    return clip(m_clips[n], m_lives);
+  }
+
+
+  int set::indexOf(clip c) {
+    if (!isValid()) return -1;
+    if (!c.isValid()) return -1;
+    update_clip_list();
+    int i;
+    for (i = 0; i < m_clips.size(); i++) {
+      if (m_clips[i] == c.m_uid) return i;
+    }
+    return -1;
+  }
+
 
 
   bool set::save(LiVESString name, bool force_append) {
@@ -544,135 +606,296 @@ namespace lives {
     }
     else {
       while (spinning) usleep(100);
-      ret = (bool)(atoi(private_response));
-      lives_free(private_response);
+      if (isValid()) {
+	ret = (bool)(atoi(private_response));
+	lives_free(private_response);
+      }
     }
     lives_free(*vargs);
     return ret;
   }
 
 
-  clipList set::cliplist() {
+  void set::update_clip_list() {
     // clear old cliplist
     clipListIterator it = m_clips.begin();
     while (it != m_clips.end()) {
-      delete *it;
       it = m_clips.erase(it);
     }
     if (isValid()) {
       ulong *ids = get_unique_ids();
 
       for (int i=0; ids[i] != 0l; i++) {
-	clip *c = new clip(ids[i]);
-	m_clips.push_back(c);
+	m_clips.push_back(ids[i]);
       }
       lives_free(ids);
     }
-
-    return m_clips;
   }
 
 
   /////////////// clip ////////////////
 
-  clip::clip() {
-    m_uid=0l;
-  }
 
-  clip::clip(ulong uid) {
+  clip::clip(ulong uid, livesApp *lives) {
     m_uid = uid;
+    m_lives = lives;
   }
 
   bool clip::isValid() {
-    return (cnum_for_uid(m_uid) != -1);
+    return (m_lives->isValid() && cnum_for_uid(m_uid) != -1);
   }
 
   int clip::frames() {
-    int cnum = cnum_for_uid(m_uid);
-    if (cnum > -1 && mainw->files[cnum] != NULL) return mainw->files[cnum]->frames;
+    if (isValid()) {
+      int cnum = cnum_for_uid(m_uid);
+      if (cnum > -1 && mainw->files[cnum] != NULL) return mainw->files[cnum]->frames;
+    }
     return -1;
   }
 
   int clip::width() {
-    int cnum = cnum_for_uid(m_uid);
-    if (cnum > -1 && mainw->files[cnum] != NULL) return mainw->files[cnum]->hsize;
+    if (isValid()) {
+      int cnum = cnum_for_uid(m_uid);
+      if (cnum > -1 && mainw->files[cnum] != NULL) return mainw->files[cnum]->hsize;
+    }
     return -1;
   }
 
   int clip::height() {
-    int cnum = cnum_for_uid(m_uid);
-    if (cnum > -1 && mainw->files[cnum] != NULL) return mainw->files[cnum]->vsize;
+    if (isValid()) {
+      int cnum = cnum_for_uid(m_uid);
+      if (cnum > -1 && mainw->files[cnum] != NULL) return mainw->files[cnum]->vsize;
+    }
     return -1;
   }
 
   double clip::fps() {
-    int cnum = cnum_for_uid(m_uid);
-    if (cnum > -1 && mainw->files[cnum] != NULL) return mainw->files[cnum]->fps;
+    if (isValid()) {
+      int cnum = cnum_for_uid(m_uid);
+      if (cnum > -1 && mainw->files[cnum] != NULL) return mainw->files[cnum]->fps;
+    }
     return -1.;
   }
 
   int clip::audioRate() {
-    int cnum = cnum_for_uid(m_uid);
-    if (cnum > -1 && mainw->files[cnum] != NULL) return mainw->files[cnum]->arate;
+    if (isValid()) {
+      int cnum = cnum_for_uid(m_uid);
+      if (cnum > -1 && mainw->files[cnum] != NULL) return mainw->files[cnum]->arate;
+    }
     return -1;
   }
 
   int clip::audioChannels() {
-    int cnum = cnum_for_uid(m_uid);
-    if (cnum > -1 && mainw->files[cnum] != NULL) return mainw->files[cnum]->achans;
+    if (isValid()) {
+      int cnum = cnum_for_uid(m_uid);
+      if (cnum > -1 && mainw->files[cnum] != NULL) return mainw->files[cnum]->achans;
+    }
     return -1;
   }
 
   int clip::audioSampleSize() {
-    int cnum = cnum_for_uid(m_uid);
-    if (cnum > -1 && mainw->files[cnum] != NULL) return mainw->files[cnum]->asampsize;
+    if (isValid()) {
+      int cnum = cnum_for_uid(m_uid);
+      if (cnum > -1 && mainw->files[cnum] != NULL) return mainw->files[cnum]->asampsize;
+    }
     return -1;
   }
 
   bool clip::audioSigned() {
-    int cnum = cnum_for_uid(m_uid);
-    if (cnum > -1 && mainw->files[cnum] != NULL) return !(mainw->files[cnum]->signed_endian & AFORM_UNSIGNED);
+    if (isValid()) {
+      int cnum = cnum_for_uid(m_uid);
+      if (cnum > -1 && mainw->files[cnum] != NULL) return !(mainw->files[cnum]->signed_endian & AFORM_UNSIGNED);
+    }
     return true;
   }
 
   lives_endian_t clip::audioEndian() {
-    int cnum = cnum_for_uid(m_uid);
-    if (cnum > -1 && mainw->files[cnum] != NULL) {
-      if (mainw->files[cnum]->signed_endian & AFORM_BIG_ENDIAN) return LIVES_BIGENDIAN;
+    if (isValid()) {
+      int cnum = cnum_for_uid(m_uid);
+      if (cnum > -1 && mainw->files[cnum] != NULL) {
+	if (mainw->files[cnum]->signed_endian & AFORM_BIG_ENDIAN) return LIVES_BIGENDIAN;
+      }
     }
     return LIVES_LITTLEENDIAN;
   }
 
   LiVESString clip::name() {
-    int cnum = cnum_for_uid(m_uid);
-    if (cnum > -1 && mainw->files[cnum] != NULL) return LiVESString(mainw->files[cnum]->name);
+    if (isValid()) {
+      int cnum = cnum_for_uid(m_uid);
+      if (cnum > -1 && mainw->files[cnum] != NULL) return LiVESString(mainw->files[cnum]->name, LIVES_CHAR_ENCODING_UTF8);
+    }
     LiVESString emptystr;
     return emptystr;
   }
 
   int clip::selectionStart() {
-    int cnum = cnum_for_uid(m_uid);
-    if (cnum > -1 && mainw->files[cnum] != NULL) return mainw->files[cnum]->start;
+    if (isValid()) {
+      int cnum = cnum_for_uid(m_uid);
+      if (cnum > -1 && mainw->files[cnum] != NULL) return mainw->files[cnum]->start;
+    }
     return -1;
   }
 
   int clip::selectionEnd() {
-    int cnum = cnum_for_uid(m_uid);
-    if (cnum > -1 && mainw->files[cnum] != NULL) return mainw->files[cnum]->end;
+    if (isValid()) {
+      int cnum = cnum_for_uid(m_uid);
+      if (cnum > -1 && mainw->files[cnum] != NULL) return mainw->files[cnum]->end;
+    }
     return -1;
   }
 
+  
+  bool clip::switchTo() {
+    if (!isValid()) return false;
+    spinning = true;
+    msg_id = lives_random();
+    ulong cbid = m_lives->addCallback(LIVES_CALLBACK_PRIVATE, private_cb, NULL);
+    
+    int cnum = cnum_for_uid(m_uid);
+    if (!idle_switch_clip(1,cnum, msg_id)) {
+      spinning = false;
+      m_lives->removeCallback(cbid);
+      return false;
+    }
+    while (spinning) usleep(100);
+    if (isValid()) {
+      bool ret = (bool)atoi(private_response);
+      lives_free(private_response);
+      return ret;
+    }
+    return false;
+  }
 
 
+  bool clip::setAsBackground() {
+    if (!isValid()) return false;
+    spinning = true;
+    msg_id = lives_random();
+    ulong cbid = m_lives->addCallback(LIVES_CALLBACK_PRIVATE, private_cb, NULL);
+    
+    int cnum = cnum_for_uid(m_uid);
+    if (!idle_switch_clip(2,cnum, msg_id)) {
+      spinning = false;
+      m_lives->removeCallback(cbid);
+      return false;
+    }
+    while (spinning) usleep(100);
+    if (isValid()) {
+      bool ret = (bool)atoi(private_response);
+      lives_free(private_response);
+      return ret;
+    }
+    return false;
+  }
+
+  //////////////////////////////////////////////
+
+  //// effectKeyMap
+  effectKeyMap::effectKeyMap(livesApp *lives) {
+    m_lives = lives;
+  }
+
+
+  bool effectKeyMap::isValid() {
+    return m_lives->isValid();
+  }
+
+
+  bool effectKeyMap::clear() {
+    if (!isValid()) return false;
+    spinning = true;
+    msg_id = lives_random();
+    ulong cbid = m_lives->addCallback(LIVES_CALLBACK_PRIVATE, private_cb, NULL);
+    
+    if (!idle_unmap_effects(msg_id)) {
+      spinning = false;
+      m_lives->removeCallback(cbid);
+      return false;
+    }
+    while (spinning) usleep(100);
+    if (isValid()) {
+      bool ret = (bool)atoi(private_response);
+      lives_free(private_response);
+      return ret;
+    }
+    return false;
+  }
+
+
+  /////////////////////////////////////////////////
+
+  /// effectKey
+  effectKey::effectKey(livesApp *lives) {
+    m_lives = lives;
+  }
+
+  bool effectKey::isValid() {
+    return m_lives->isValid();
+  }
+  
+
+  //// effect
+  effect::effect() {
+    m_hashname = NULL;
+  }
+
+  effect::effect(LiVESString hashname) {
+    m_hashname = hashname;
+  }
+
+  effect::effect(const char *package, const char *fxname, const char *author, int version) {
+    // TODO
+  }
+
+  void effect::invalidate() {
+    m_hashname.clear();
+  }
+
+  bool effect::isValid() {
+    return (!m_hashname.empty());
+  }
+
+
+  ////// prefs
   
 
   namespace prefs {
-    LiVESString currentVideoLoadDir() {
-      return LiVESString(mainw->vid_load_dir);
+    LiVESString currentVideoLoadDir(livesApp lives) {
+      LiVESString str(mainw->vid_load_dir, LIVES_CHAR_ENCODING_UTF8);
+      return str;
+    }
+
+    LiVESString currentAudioDir(livesApp lives) {
+      LiVESString str(mainw->audio_dir, LIVES_CHAR_ENCODING_UTF8);
+      return str;
+    }
+
+    LiVESString tmpDir(livesApp lives) {
+      LiVESString str(::prefs->tmpdir, LIVES_CHAR_ENCODING_FILESYSTEM);
+      return str;
+    }
+
+    lives_audio_source_t audioSource(livesApp lives) {
+      if (::prefs->audio_src == AUDIO_SRC_EXT) return LIVES_AUDIO_SOURCE_EXTERNAL;
+      return LIVES_AUDIO_SOURCE_INTERNAL;
+    }
+
+    bool setAudioSource(livesApp lives, lives_audio_source_t asrc) {
+      return lives.setPref(PREF_REC_EXT_AUDIO, (bool)(asrc==LIVES_AUDIO_SOURCE_EXTERNAL));
+    }
+
+    lives_audio_player_t audioPlayer(livesApp lives) {
+      if (::prefs->audio_player == AUD_PLAYER_SOX) return LIVES_AUDIO_PLAYER_SOX;
+      if (::prefs->audio_player == AUD_PLAYER_JACK) return LIVES_AUDIO_PLAYER_JACK;
+      if (::prefs->audio_player == AUD_PLAYER_PULSE) return LIVES_AUDIO_PLAYER_PULSE;
+      if (::prefs->audio_player == AUD_PLAYER_MPLAYER) return LIVES_AUDIO_PLAYER_MPLAYER;
+      if (::prefs->audio_player == AUD_PLAYER_MPLAYER2) return LIVES_AUDIO_PLAYER_MPLAYER2;
     }
 
 
+
   }
+
 
 }
 
@@ -712,6 +935,7 @@ void binding_cb (lives_callback_t cb_type, const char *msgstring, ulong id) {
 	  lives::appQuit_callback_f fn = (lives::appQuit_callback_f)((*it)->func);
 	  lapp->invalidate();
 	  ret = (fn)((*it)->object, &info, (*it)->data);
+	  spinning = false;
 	}
 	break;
       case LIVES_CALLBACK_OBJECT_DESTROYED:

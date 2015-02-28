@@ -218,20 +218,33 @@ namespace lives {
   */
   class LiVESString : public std::string {
   public:
-    LiVESString() : m_encoding(LIVES_CHAR_ENCODING_UTF8) {};
-    LiVESString(const string& str) {};
-    LiVESString (const string& str, size_t pos, size_t len = npos);
-    LiVESString(const char* s) {};
-    LiVESString(const char* s, size_t n) {};
-    LiVESString(size_t n, char c) {};
+    LiVESString() : m_encoding(LIVES_CHAR_ENCODING_UTF8), std::string() {};
+    LiVESString(const string& str) : std::string(str) {};
+    LiVESString (const string& str, size_t pos, size_t len = npos) : std::string(str, pos,  len) {};
+    LiVESString(const char* s) : std::string(s) {};
+    LiVESString(const char* s, size_t n) : std::string(s, n) {};
+    LiVESString(size_t n, char c) : std::string(n, c) {};
     template <class InputIterator>
-    LiVESString  (InputIterator first, InputIterator last);
+    LiVESString  (InputIterator first, InputIterator last) : std::string(first, last) {};
 
     /**
        Change the character encoding of the string.
        @param enc the character encoding to convert to.
+       @return either the same string if no conversion is needed, or a new string if conversion is needed
     */
-    void toEncoding(lives_char_encoding_t enc);
+    LiVESString toEncoding(lives_char_encoding_t enc);
+
+    /**
+       Define the character encoding of the string.
+       @param enc the character encoding the string is in.
+    */
+    void setEncoding(lives_char_encoding_t enc);
+
+    /**
+       Return the encoding that the string was declared as.
+       @return the character encoding the string is in.
+    */
+    lives_char_encoding_t encoding();
 
   private:
     lives_char_encoding_t m_encoding;
@@ -312,7 +325,7 @@ namespace lives {
   public:
     /**
        Public constructor. 
-       Creates a clip instance which starts off invalid.
+       Creates a clip object which starts off invalid.
        @see livesApp::openFile().
     */
     clip();
@@ -468,9 +481,10 @@ namespace lives {
 
   public:
     /**
-       Creates a set. 
-       The set begins as invalid until returned from some method.
+       Creates a set object. 
+       The set begins as invalid until defined from some method.
        @return an initially invalid set.
+       @see livesApp::currentSet().
     */
     set();
 
@@ -478,7 +492,7 @@ namespace lives {
 
     /**
        Returns whether the set is valid or not.
-       @return true if the set is valid (connected to a livesApp instance).
+       @return true if the set is valid (associated with a valid livesApp instance).
     */
     bool isValid();
 
@@ -502,8 +516,9 @@ namespace lives {
 
     /**
        Returns a list of all currently opened clips in the currently opened set.
-       Be careful, calling cliplist() a second time may invalidate the previous return value and all the clips in it.
-       @ return cliplist for use in e.g. size() or for obtaining a clip via copying.
+       Excercise caution; calling cliplist() a second time will likely invalidate the previous return value and delete all the clip objects in it. 
+       The value should therefore not be stored.
+       @return cliplist for use in e.g. size() or for obtaining a clip via copying.
     */
     clipList cliplist();
 
@@ -560,7 +575,7 @@ namespace lives {
     bool isValid();
 
     /**
-       Returns the loaded set.
+       Returns a pointer to the loaded set.
        Beware, if the livesApp instance is deleted, this is also deleted.
        @return the current set in LiVES.
     */
@@ -574,7 +589,7 @@ namespace lives {
 
     /**
        Stop playback.
-       If LiVES is not playing, nothing happens.
+       If status() is not LIVES_STATUS_PLAYING, nothing happens.
        @return true if playback was stopped.
     */
     bool stop();

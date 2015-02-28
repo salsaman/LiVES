@@ -138,33 +138,60 @@ namespace lives {
 
 #endif
 
-  void LiVESString::toEncoding(lives_char_encoding_t enc) {
+  void LiVESString::setEncoding(lives_char_encoding_t enc) {
+    m_encoding = enc;
+  }
+
+  lives_char_encoding_t LiVESString::encoding() {
+    return m_encoding;
+  }
+
+  LiVESString LiVESString::toEncoding(lives_char_encoding_t enc) {
     if (enc == LIVES_CHAR_ENCODING_UTF8) {
       if (m_encoding == LIVES_CHAR_ENCODING_LOCAL8BIT) {
-	assign(L2U8(this->c_str()));
+	LiVESString str(L2U8(this->c_str()));
+	str.setEncoding(LIVES_CHAR_ENCODING_UTF8);
+	return str;
       }
+#ifndef IS_MINGW
       else if (m_encoding == LIVES_CHAR_ENCODING_FILESYSTEM) {
-	assign(F2U8(this->c_str()));
+	LiVESString str(F2U8(this->c_str()));
+	str.setEncoding(LIVES_CHAR_ENCODING_UTF8);
+	return str;
       }
+#endif
     }
     else if (enc == LIVES_CHAR_ENCODING_FILESYSTEM) {
+#ifndef IS_MINGW
       if (m_encoding == LIVES_CHAR_ENCODING_UTF8) {
-	assign(U82F(this->c_str()));
+	LiVESString str(U82F(this->c_str()));
+	str.setEncoding(LIVES_CHAR_ENCODING_FILESYSTEM);
+	return str;
       }
+#else
       if (m_encoding == LIVES_CHAR_ENCODING_LOCAL8BIT) {
-	assign(L2U8(this->c_str()));
-	assign(U82F(this->c_str()));
+	LiVESString str(U82L(this->c_str()));
+	str.setEncoding(LIVES_CHAR_ENCODING_FILESYSTEM);
+	return str;
       }
+#endif
     }
     else if (enc == LIVES_CHAR_ENCODING_LOCAL8BIT) {
       if (m_encoding == LIVES_CHAR_ENCODING_UTF8) {
-	assign(U82L(this->c_str()));
+	LiVESString str(U82L(this->c_str()));
+	str.setEncoding(LIVES_CHAR_ENCODING_LOCAL8BIT);
+	return str;
       }
+#ifndef IS_MINGW
       if (m_encoding == LIVES_CHAR_ENCODING_FILESYSTEM) {
-	assign(F2U8(this->c_str()));
-	assign(U82L(this->c_str()));
+	LiVESString str(F2U8(this->c_str()));
+	str.assign(U82L(str.c_str()));
+	str.setEncoding(LIVES_CHAR_ENCODING_LOCAL8BIT);
+	return str;
       }
+#endif
     }
+    return *this;
   }
   
 
@@ -335,7 +362,7 @@ namespace lives {
       while (spinning) usleep(100);
       // last 2 chars are " " and %d (deinterlace choice)
       LiVESString str(private_response, strlen(private_response - 2));
-      str.toEncoding(LIVES_CHAR_ENCODING_FILESYSTEM);
+      str.setEncoding(LIVES_CHAR_ENCODING_FILESYSTEM);
       m_deinterlace = (bool)atoi(private_response + strlen(private_response) - 2);
       lives_free(private_response);
       return str;
@@ -357,9 +384,8 @@ namespace lives {
     }
     else {
       while (spinning) usleep(100);
-      // last 2 chars are " " and %d (deinterlace choice)
       LiVESString str(private_response);
-      str.toEncoding(LIVES_CHAR_ENCODING_FILESYSTEM);
+      str.setEncoding(LIVES_CHAR_ENCODING_FILESYSTEM);
       lives_free(private_response);
       return str;
     }
@@ -375,8 +401,8 @@ namespace lives {
     ulong cbid = addCallback(LIVES_CALLBACK_PRIVATE, private_cb, NULL);
     ulong cid = 0l;
     LiVESString ffname = LiVESString(fname);
-    ffname.toEncoding(LIVES_CHAR_ENCODING_FILESYSTEM);
-    if (!idle_open_file(ffname.c_str(), stime, frames, msg_id)) {
+    
+    if (!idle_open_file(ffname.toEncoding(LIVES_CHAR_ENCODING_FILESYSTEM).c_str(), stime, frames, msg_id)) {
       spinning = false;
       removeCallback(cbid);
     }
@@ -400,7 +426,7 @@ namespace lives {
 
   lives_status_t livesApp::status() {
     if (!isValid()) return LIVES_STATUS_INVALID;
-    if (!mainw->is_ready) return LIVES_STATUS_NOTREADY;
+    if (mainw->go_away) return LIVES_STATUS_NOTREADY;
     if (mainw->playing_file > -1) return LIVES_STATUS_PLAYING;
     if (mainw->is_processing) return LIVES_STATUS_PROCESSING;
     if (mainw->preview) return LIVES_STATUS_PREVIEW;

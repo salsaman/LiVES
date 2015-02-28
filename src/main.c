@@ -2684,9 +2684,7 @@ static boolean lives_startup(livespointer data) {
     d_print(msg);
     splash_msg(msg,1.);
     lives_free(msg);
-    lives_snprintf(mainw->set_name,128,"%s",prefs->ar_clipset_name);
-    on_load_set_ok();
-    if (mainw->current_file==-1) {
+    if (!reload_set(prefs->ar_clipset_name) || mainw->current_file==-1) {
       set_pref("ar_clipset","");
       prefs->ar_clipset=FALSE;
     }

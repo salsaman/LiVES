@@ -6348,9 +6348,7 @@ boolean lives_osc_cb_loadset(void *context, int arglen, const void *vargs, OSCTi
   }
   mainw->osc_auto=0;
 
-  lives_snprintf(mainw->set_name,128,"%s",setname);
-
-  on_load_set_ok();
+  reload_set(setname);
   return lives_osc_notify_success(NULL);
 
 }

@@ -628,7 +628,7 @@ void on_save_set_ok (void);
 
 char *on_load_set_activate (LiVESMenuItem *, livespointer );
 
-boolean on_load_set_ok (void);
+boolean reload_set (const char *set_name);
 
 void on_open_vcd_activate (LiVESMenuItem *, livespointer int_type);
 

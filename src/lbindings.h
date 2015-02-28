@@ -22,6 +22,7 @@ boolean idle_choose_file_with_preview(const char *dirname, const char *title, in
 boolean idle_open_file(const char *fname, double stime, int frames, ulong id);
 boolean idle_set_interactive(boolean setting, ulong id);
 boolean idle_choose_set(ulong id);
+boolean idle_reload_set(const char *setname, ulong id);
 
 ulong *get_unique_ids(void);
 int cnum_for_uid(ulong uid);

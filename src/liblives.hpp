@@ -664,6 +664,7 @@ namespace lives {
       @param stime the time in seconds from which to start loading
       @param frames number of frames to open (0 means all frames)
       @param deinterlace set to true to force deinterlacing
+      @return a clip.
     */
     clip openFile(LiVESString fname, bool with_audio=true, double stime=0., int frames=0, bool deinterlace=false);
 
@@ -672,9 +673,19 @@ namespace lives {
        Only has an effect when status() is LIVES_STATUS_READY, and there are no currently open clips, 
        otherwise returns an empty string.
        If the user cancels, an empty string is returned.
+       The valid list of sets depends on the setting of prefs::tmpDir().
        @return the name of the set selected.
     */
     LiVESString chooseSet();
+
+   /**
+      Reload an existing clip set.
+      Only works when status() is LIVES_STATUS_READY, otherwise false is returned.
+      A set may not be accessed concurrently by more than one copy of LiVES.
+      The valid list of sets depends on the setting of prefs::tmpDir().
+      @param setname the name of the set to reload.
+    */
+    bool reloadSet(LiVESString setname);
 
     /**
        Change the interactivity of the GUI application.

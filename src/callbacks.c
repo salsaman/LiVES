@@ -49,7 +49,7 @@ void lives_notify(int msgnumber,const char *msgstring) {
 #endif
 }
 
-const char *get_set_name() {
+LIVES_INLINE const char *get_set_name() {
   return mainw->set_name;
 }
 
@@ -1423,8 +1423,7 @@ on_import_proj_activate                      (LiVESMenuItem     *menuitem,
 
   d_print_done();
 
-  lives_snprintf(mainw->set_name,128,"%s",new_set);
-  on_load_set_ok();
+  reload_set(new_set);
   lives_free(new_set);
 }
 
@@ -4942,7 +4941,7 @@ boolean on_save_set_activate (LiVESMenuItem *menuitem, livespointer user_data) {
 
 char *on_load_set_activate (LiVESMenuItem *menuitem, livespointer user_data) {
   // get set name (use a modified rename window)
-  char *ret=NULL;
+  char *set_name=NULL;
   int resp;
 
   if (mainw->multitrack!=NULL) {
@@ -4954,30 +4953,38 @@ char *on_load_set_activate (LiVESMenuItem *menuitem, livespointer user_data) {
   }
 
   renamew=create_rename_dialog(3);
-  lives_widget_show(renamew->dialog);
 
   resp=lives_dialog_run(LIVES_DIALOG(renamew->dialog));
 
-  if (user_data != NULL) {
-    // request to return set name
-    if (resp==LIVES_RESPONSE_OK) {
-      ret=lives_strdup(lives_entry_get_text(LIVES_ENTRY(renamew->entry)));
-    }
-  }
-  else if (resp==LIVES_RESPONSE_OK) {
-    on_load_set_ok();
-    return NULL;
+  if (resp==LIVES_RESPONSE_OK) {
+    set_name=lives_strdup(lives_entry_get_text(LIVES_ENTRY(renamew->entry)));
   }
 
+  // need to clean up renamew
   lives_widget_destroy(renamew->dialog);
   lives_widget_context_update();
   lives_free(renamew);
   renamew=NULL;
-  return ret;
+
+  if (resp==LIVES_RESPONSE_OK) {
+    if (!is_legal_set_name(set_name,TRUE)) {
+      lives_free(set_name);
+      set_name=NULL;
+    }
+    else {
+      if (user_data==NULL) {
+	reload_set(set_name);
+	lives_free(set_name);
+	return NULL;
+      }
+    }
+  }
+
+  return set_name;
 }
 
 
-boolean on_load_set_ok (void) {
+boolean reload_set (const char *set_name) {
   // this is the main clip set loader
 
   // CLIP SET LOADER
@@ -4989,7 +4996,6 @@ boolean on_load_set_ok (void) {
   char *ordfile;
   char *subfname;
   char vid_open_dir[PATH_MAX];
-  char set_name[128];
   char *cwd;
 
   boolean added_recovery=FALSE;
@@ -5000,47 +5006,17 @@ boolean on_load_set_ok (void) {
   int current_file=mainw->current_file;
   int clipnum=0;
 
-  // renamew is create_rename_dialog(3);
+  memset(mainw->set_name,0,1);
 
-
-  if (!strlen(mainw->set_name)) {
-    // get new set name from user
-
-    lives_snprintf(set_name,128,"%s",lives_entry_get_text(LIVES_ENTRY(renamew->entry)));
-
-    // ensure name is valid
-    if (!is_legal_set_name(set_name,TRUE)) return FALSE;
-
-    // set_name length is max 128
-    lives_snprintf(mainw->set_name,128,"%s",set_name);
-
-    // need to clean up renamew
-    lives_widget_destroy(renamew->dialog);
-    lives_widget_context_update();
-    lives_free(renamew);
-    renamew=NULL;
-  }
-  else {
-    // here if we already have a set_name
-
-    if (renamew!=NULL) {
-      lives_widget_destroy(renamew->dialog);
-      lives_widget_context_update();
-      lives_free(renamew);
-      renamew=NULL;
+  // check if set is locked
+  if (!check_for_lock_file(set_name,0)) {
+    d_print_failed();
+    if (mainw->multitrack!=NULL) {
+      mainw->current_file=mainw->multitrack->render_file;
+      mt_sensitise(mainw->multitrack);
+      mainw->multitrack->idlefunc=mt_idle_add(mainw->multitrack);
     }
-
-    // check if set is locked
-    if (!check_for_lock_file(mainw->set_name,0)) {
-      memset(mainw->set_name,0,1);
-      d_print_failed();
-      if (mainw->multitrack!=NULL) {
-	mainw->current_file=mainw->multitrack->render_file;
-	mt_sensitise(mainw->multitrack);
-	mainw->multitrack->idlefunc=mt_idle_add(mainw->multitrack);
-      }
-      return FALSE;
-    }
+    return FALSE;
   }
 
   lives_snprintf (mainw->msg,256,"none");
@@ -5049,14 +5025,13 @@ boolean on_load_set_ok (void) {
   // check if we already have a threaded dialog running (i.e. we are called from startup)
   if (mainw->threaded_dialog) keep_threaded_dialog=TRUE;
 
-
   if (prefs->show_gui && !keep_threaded_dialog) {
-    msg=lives_strdup_printf(_("Loading clips from set %s"),mainw->set_name);
+    msg=lives_strdup_printf(_("Loading clips from set %s"),set_name);
     do_threaded_dialog(msg,FALSE);
     lives_free(msg);
   }
 
-  ordfile=lives_build_filename(prefs->tmpdir,mainw->set_name,"order",NULL);
+  ordfile=lives_build_filename(prefs->tmpdir,set_name,"order",NULL);
   orderfile=fopen(ordfile,"r"); // no we can't assert this, because older sets did not have this file
   lives_free(ordfile);
 
@@ -5081,7 +5056,7 @@ boolean on_load_set_ok (void) {
     if (orderfile==NULL) {
       // old style (pre 0.9.6)
       com=lives_strdup_printf ("%s get_next_in_set \"%s\" \"%s\" %d",prefs->backend_sync,mainw->msg,
-			   mainw->set_name,capable->mainpid);
+			   set_name,capable->mainpid);
       lives_system (com,FALSE);
       lives_free (com);
 
@@ -5130,8 +5105,7 @@ boolean on_load_set_ok (void) {
       }
 
       if (clipnum==0) {
-	do_set_noclips_error(mainw->set_name);
-	memset (mainw->set_name,0,1);
+	do_set_noclips_error(set_name);
       }
       else {
 	reset_clipmenu();
@@ -5140,9 +5114,11 @@ boolean on_load_set_ok (void) {
 	recover_layout_map(MAX_FILES);
 
 	msg=lives_strdup_printf (_ ("%d clips and %d layouts were recovered from set (%s).\n"),
-			     clipnum,lives_list_length(mainw->current_layouts_map),mainw->set_name);
+			     clipnum,lives_list_length(mainw->current_layouts_map),set_name);
 	d_print (msg);
 	lives_free (msg);
+	
+	lives_snprintf(mainw->set_name,128,"%s",set_name);
 
 	lives_notify(LIVES_OSC_NOTIFY_CLIPSET_OPENED,mainw->set_name);
 
@@ -5174,7 +5150,7 @@ boolean on_load_set_ok (void) {
     mainw->was_set=TRUE;
 
     if (prefs->crash_recovery&&!added_recovery) {
-      char *recovery_entry=lives_build_filename(mainw->set_name,"*",NULL);
+      char *recovery_entry=lives_build_filename(set_name,"*",NULL);
       add_to_recovery_file(recovery_entry);
       lives_free(recovery_entry);
       added_recovery=TRUE;
@@ -5215,9 +5191,9 @@ boolean on_load_set_ok (void) {
 
       // lock the set
 #ifndef IS_MINGW
-      com=lives_strdup_printf("/bin/touch \"%s/%s/lock.%d\"",prefs->tmpdir,mainw->set_name,capable->mainpid);
+      com=lives_strdup_printf("/bin/touch \"%s/%s/lock.%d\"",prefs->tmpdir,set_name,capable->mainpid);
 #else
-      com=lives_strdup_printf("touch.exe \"%s\\%s\\lock.%d\"",prefs->tmpdir,mainw->set_name,capable->mainpid);
+      com=lives_strdup_printf("touch.exe \"%s\\%s\\lock.%d\"",prefs->tmpdir,set_name,capable->mainpid);
 #endif
       lives_system(com,FALSE);
       lives_free(com);
@@ -5253,7 +5229,7 @@ boolean on_load_set_ok (void) {
     last_file=new_file;
 
     // read the playback fps, play frame, and name
-    open_set_file (mainw->set_name,++clipnum);
+    open_set_file (set_name,++clipnum);
     threaded_dialog_spin();
 
     if (needs_update) {

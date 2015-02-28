@@ -330,7 +330,7 @@ namespace lives {
       spinning = true;
       msg_id = lives_random();
       ulong cbid = addCallback(LIVES_CALLBACK_PRIVATE, private_cb, NULL); 
-      if (!idle_show_info(text.c_str(),blocking,msg_id)) {
+      if (!idle_show_info(text.toEncoding(LIVES_CHAR_ENCODING_UTF8).c_str(),blocking,msg_id)) {
 	spinning = false;
 	removeCallback(cbid);
       }
@@ -341,10 +341,11 @@ namespace lives {
       }
       return ret;
     }
-    if (idle_show_info(text.c_str(),blocking,0))
+    if (idle_show_info(text.toEncoding(LIVES_CHAR_ENCODING_UTF8).c_str(),blocking,0))
       return LIVES_DIALOG_RESPONSE_NONE;
     return ret;
   }
+
 
   LiVESString livesApp::chooseFileWithPreview(LiVESString dirname, lives_filechooser_t preview_type, LiVESString title) {
     LiVESString emptystr;
@@ -400,9 +401,8 @@ namespace lives {
     msg_id = lives_random();
     ulong cbid = addCallback(LIVES_CALLBACK_PRIVATE, private_cb, NULL);
     ulong cid = 0l;
-    LiVESString ffname = LiVESString(fname);
     
-    if (!idle_open_file(ffname.toEncoding(LIVES_CHAR_ENCODING_FILESYSTEM).c_str(), stime, frames, msg_id)) {
+    if (!idle_open_file(fname.toEncoding(LIVES_CHAR_ENCODING_FILESYSTEM).c_str(), stime, frames, msg_id)) {
       spinning = false;
       removeCallback(cbid);
     }
@@ -413,6 +413,26 @@ namespace lives {
     }
     return clip(cid);
   }
+
+
+  bool livesApp::reloadSet(LiVESString setname) {
+    if (!isValid()) return false;
+    if (setname.empty()) return false;
+    spinning = true;
+    msg_id = lives_random();
+    ulong cbid = addCallback(LIVES_CALLBACK_PRIVATE, private_cb, NULL);
+    
+    if (!idle_reload_set(setname.toEncoding(LIVES_CHAR_ENCODING_FILESYSTEM).c_str(),msg_id)) {
+      spinning = false;
+      removeCallback(cbid);
+      return false;
+    }
+    while (spinning) usleep(100);
+    bool ret = (bool)atoi(private_response);
+    lives_free(private_response);
+    return ret;
+  }
+
 
   bool livesApp::deinterlaceOption() {
     return m_deinterlace;

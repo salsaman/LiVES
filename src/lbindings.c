@@ -49,6 +49,7 @@ typedef struct {
   boolean setting;
 } sintdata;
 
+
 typedef struct {
   ulong id;
 } udata;
@@ -249,13 +250,12 @@ static boolean call_file_choose_with_preview(livespointer data) {
 static boolean call_choose_set(livespointer data) {
   udata *ud=(udata *)data;
   char *setname=on_load_set_activate(NULL,(livespointer)1);
+  if (setname==NULL) setname=lives_strdup("");
   ext_caller_return_string(ud->id,setname);
   lives_free(setname);
   lives_free(ud);
   return FALSE;
 }
-
-
 
 
 static boolean call_open_file(livespointer data) {
@@ -266,6 +266,26 @@ static boolean call_open_file(livespointer data) {
   lives_free(opfi);
   return FALSE;
 }
+
+
+static boolean call_reload_set(livespointer data) {
+  msginfo *mdata = (msginfo *)data;
+  boolean resp;
+  mainw->osc_auto=1;
+  if (!is_legal_set_name(mdata->msg,TRUE)) {
+    mainw->osc_auto=0;
+    resp=FALSE;
+  }
+  else {
+    mainw->osc_auto=0;
+    resp=reload_set(mdata->msg);
+  }
+  lives_free(mdata->msg);
+  ext_caller_return_int(mdata->id,resp);
+  lives_free(mdata);
+  return FALSE;
+}
+
 
 static boolean call_set_interactive(livespointer data) {
   sintdata *sint = (sintdata *)data;
@@ -338,6 +358,7 @@ boolean idle_choose_set(ulong id) {
   if (mainw->preview||mainw->is_processing||mainw->playing_file>-1) {
     return FALSE;
   }
+  if (mainw->was_set) return FALSE;
   data=(udata *)lives_malloc(sizeof(udata));
   data->id=id;
   lives_idle_add(call_choose_set,(livespointer)data);
@@ -361,6 +382,27 @@ boolean idle_open_file(const char *fname, double stime, int frames, ulong id) {
   data->frames=frames;
 
   lives_idle_add(call_open_file,(livespointer)data);
+  return TRUE;
+}
+
+
+boolean idle_reload_set(const char *setname, ulong id) {
+  msginfo *data;
+
+  if (mainw->preview||mainw->is_processing||mainw->playing_file>-1) {
+    return FALSE;
+  }
+  if (mainw->was_set) return FALSE;
+
+  if (setname==NULL || strlen(setname)==0) return FALSE;
+
+  if (!is_legal_set_name(setname,TRUE)) return FALSE;
+
+  data=(msginfo *)lives_malloc(sizeof(msginfo));
+  data->id=id;
+  data->msg=strdup(setname);
+
+  lives_idle_add(call_reload_set,(livespointer)data);
   return TRUE;
 }
 

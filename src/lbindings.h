@@ -30,6 +30,7 @@ boolean idle_unmap_effects(ulong id);
 
 ulong *get_unique_ids(void);
 int cnum_for_uid(ulong uid);
+int get_first_fx_matched(const char *package, const char *fxname, const char *author, int version);
 
 
 #endif //HAS_LIVES_LBINDINGS_H

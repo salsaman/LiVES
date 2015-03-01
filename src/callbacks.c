@@ -5186,6 +5186,7 @@ boolean reload_set (const char *set_name) {
       }
       mainw->current_file=new_file;
       cfile=(lives_clip_t *)(lives_malloc(sizeof(lives_clip_t)));
+      cfile->cb_src=-1;
       lives_snprintf(cfile->handle,256,"%s",mainw->msg);
       cfile->clip_type=CLIP_TYPE_DISK; // the default
 
@@ -5195,6 +5196,7 @@ boolean reload_set (const char *set_name) {
 #else
       com=lives_strdup_printf("touch.exe \"%s\\%s\\lock.%d\"",prefs->tmpdir,set_name,capable->mainpid);
 #endif
+
       lives_system(com,FALSE);
       lives_free(com);
     }

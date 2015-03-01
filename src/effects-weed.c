@@ -5525,7 +5525,8 @@ static void load_compound_plugin(char *plugin_name, char *plugin_path) {
 
 	xfilt=atoi(array[0]); // sub filter number
 	if (xfilt<-1||xfilt>=nfilts) {
-	  d_print((tmp=lives_strdup_printf(_("Invalid out filter %d for link params found in compound effect %s, line %d\n"),xfilt,plugin_name,line)));
+	  d_print((tmp=lives_strdup_printf(_("Invalid out filter %d for link params found in compound effect %s, line %d\n"),
+					   xfilt,plugin_name,line)));
 	  LIVES_ERROR(tmp);
 	  lives_free(tmp);
 	  ok=FALSE;
@@ -5543,7 +5544,8 @@ static void load_compound_plugin(char *plugin_name, char *plugin_path) {
 	  else nparams=0;
 
 	  if (pnum>=nparams) {
-	    d_print((tmp=lives_strdup_printf(_("Invalid out param %d for link params found in compound effect %s, line %d\n"),pnum,plugin_name,line)));
+	    d_print((tmp=lives_strdup_printf(_("Invalid out param %d for link params found in compound effect %s, line %d\n"),
+					     pnum,plugin_name,line)));
 	    LIVES_ERROR(tmp);
 	    lives_free(tmp);
 	    ok=FALSE;
@@ -5566,7 +5568,8 @@ static void load_compound_plugin(char *plugin_name, char *plugin_path) {
 
 	xfilt2=atoi(array[3]); // sub filter number
 	if (xfilt>=nfilts) {
-	  d_print((tmp=lives_strdup_printf(_("Invalid in filter %d for link params found in compound effect %s, line %d\n"),xfilt2,plugin_name,line)));
+	  d_print((tmp=lives_strdup_printf(_("Invalid in filter %d for link params found in compound effect %s, line %d\n"),
+					   xfilt2,plugin_name,line)));
 	  LIVES_ERROR(tmp);
 	  lives_free(tmp);
 	  ok=FALSE;
@@ -5580,7 +5583,8 @@ static void load_compound_plugin(char *plugin_name, char *plugin_path) {
 	pnum2=atoi(array[4]);
 	
 	if (pnum2>=nparams) {
-	  d_print((tmp=lives_strdup_printf(_("Invalid in param %d for link params found in compound effect %s, line %d\n"),pnum2,plugin_name,line)));
+	  d_print((tmp=lives_strdup_printf(_("Invalid in param %d for link params found in compound effect %s, line %d\n"),
+					   pnum2,plugin_name,line)));
 	  LIVES_ERROR(tmp);
 	  lives_free(tmp);
 	  ok=FALSE;
@@ -5619,7 +5623,8 @@ static void load_compound_plugin(char *plugin_name, char *plugin_path) {
 
 	xfilt=atoi(array[0]); // sub filter number
 	if (xfilt<0||xfilt>=nfilts) {
-	  d_print((tmp=lives_strdup_printf(_("Invalid out filter %d for link channels found in compound effect %s, line %d\n"),xfilt,plugin_name,line)));
+	  d_print((tmp=lives_strdup_printf(_("Invalid out filter %d for link channels found in compound effect %s, line %d\n"),
+					   xfilt,plugin_name,line)));
 	  LIVES_ERROR(tmp);
 	  lives_free(tmp);
 	  ok=FALSE;
@@ -5637,7 +5642,8 @@ static void load_compound_plugin(char *plugin_name, char *plugin_path) {
 	cnum=atoi(array[1]);
 
 	if (cnum>=nchans) {
-	  d_print((tmp=lives_strdup_printf(_("Invalid out channel %d for link params found in compound effect %s, line %d\n"),cnum,plugin_name,line)));
+	  d_print((tmp=lives_strdup_printf(_("Invalid out channel %d for link params found in compound effect %s, line %d\n"),
+					   cnum,plugin_name,line)));
 	  LIVES_ERROR(tmp);
 	  lives_free(tmp);
 	  ok=FALSE;
@@ -5647,7 +5653,8 @@ static void load_compound_plugin(char *plugin_name, char *plugin_path) {
 
 	xfilt2=atoi(array[2]); // sub filter number
 	if (xfilt2<=xfilt||xfilt>=nfilts) {
-	  d_print((tmp=lives_strdup_printf(_("Invalid in filter %d for link channels found in compound effect %s, line %d\n"),xfilt2,plugin_name,line)));
+	  d_print((tmp=lives_strdup_printf(_("Invalid in filter %d for link channels found in compound effect %s, line %d\n"),
+					   xfilt2,plugin_name,line)));
 	  LIVES_ERROR(tmp);
 	  lives_free(tmp);
 	  ok=FALSE;
@@ -5665,7 +5672,8 @@ static void load_compound_plugin(char *plugin_name, char *plugin_path) {
 	cnum2=atoi(array[3]);
 	
 	if (cnum2>=nchans) {
-	  d_print((tmp=lives_strdup_printf(_("Invalid in channel %d for link params found in compound effect %s, line %d\n"),cnum2,plugin_name,line)));
+	  d_print((tmp=lives_strdup_printf(_("Invalid in channel %d for link params found in compound effect %s, line %d\n"),
+					   cnum2,plugin_name,line)));
 	  LIVES_ERROR(tmp);
 	  lives_free(tmp);
 	  ok=FALSE;
@@ -9918,9 +9926,9 @@ gchar *make_weed_hashname(int filter_idx, boolean fullname, boolean use_extra_au
 
 
 
-int weed_get_idx_for_hashname (const gchar *hashname, boolean fullname) {
-  int i;
-  gchar *chashname;
+int weed_get_idx_for_hashname (const char *hashname, boolean fullname) {
+  register int i;
+  char *chashname;
 
   for (i=0;i<num_weed_filters;i++) {
     chashname=make_weed_hashname(i,fullname,FALSE);
@@ -9938,6 +9946,91 @@ int weed_get_idx_for_hashname (const gchar *hashname, boolean fullname) {
   }
   return -1;
 }
+
+
+
+static boolean check_match(weed_plant_t *filter, const char *pkg, const char *fxname, const char *auth, int version) {
+  // perform template matching for a function, see weed_get_indices_from_template()
+
+  weed_plant_t *plugin_info;
+  char plugin_fname[PATH_MAX];
+  char *plugin_name,*filter_name,*filter_author;
+  int filter_version;
+  int error;
+
+  if (weed_plant_has_leaf(filter,"plugin_info")) {
+    plugin_info=weed_get_plantptr_value(filter,"plugin_info",&error);
+    plugin_name=weed_get_string_value(plugin_info,"name",&error);
+    
+    lives_snprintf(plugin_fname,PATH_MAX,"%s",plugin_name);
+    lives_free(plugin_name);
+    get_filename(plugin_fname,TRUE);
+  }
+  else memset(plugin_fname,0,1);
+
+  if (pkg != NULL && strlen(pkg)) if (lives_ascii_strcasecmp(pkg,plugin_fname)) return FALSE;
+
+  filter_name=weed_get_string_value(filter,"name",&error);
+
+  if (fxname != NULL && strlen(fxname)) if (lives_ascii_strcasecmp(fxname,filter_name)) return FALSE;
+
+  filter_author=weed_get_string_value(filter,"author",&error);
+
+  if (auth != NULL && strlen(auth)) if (lives_ascii_strcasecmp(auth,filter_author)) return FALSE;
+  lives_free(filter_author);
+ 
+  filter_version=weed_get_int_value(filter,"version",&error);
+  if (version>0 && version!=filter_version) return FALSE;
+
+  return TRUE;
+}
+
+
+
+int *weed_get_indices_from_template(const char *pkg, const char *fxname, const char *auth, int version) {
+  // generate a list of filter indices from a given template. Char values may be NULL or "" to signify match-any.
+  // version may be 0 to signify match-any
+  // otherwise values must match those specified
+
+  // returns: a list of int indices, with the last value == -1
+  // return value should be freed after use
+
+  weed_plant_t *filter;
+  int *rvals;
+
+  int count=1,count2=0;
+
+  register int i;
+
+  // count number of return values
+  for (i=0;i<num_weed_filters;i++) {
+    filter=weed_filters[i];
+
+    if (check_match(filter,pkg,fxname,auth,version)) {
+      count++;
+    }
+  }
+
+  // allocate storage space
+  rvals=(int *)lives_malloc(count*sizint);
+  i=0;
+
+  // get return values
+  while (count2 < count-1) {
+    filter=weed_filters[i++];
+
+    if (check_match(filter,pkg,fxname,auth,version)) {
+      rvals[count2++]=i;
+    }
+  }
+
+  // end-of-array indicator
+  rvals[count2]=-1;
+
+  return rvals;
+}
+
+
 
 weed_plant_t *get_weed_filter(int idx) {
   if (idx>-1&&idx<num_weed_filters) return weed_filters[idx];

@@ -151,6 +151,8 @@ typedef enum {
 #include <list>
 #include <map>
 
+#include <tr1/memory>
+
 #include <string.h>
 #include <inttypes.h>
 
@@ -222,6 +224,10 @@ namespace lives {
   // TODO - layout, block
 
   ///////////////////////////////////////////////////
+
+
+  typedef std::tr1::shared_ptr<livesApp> livesAppPtr;
+
 
 
   /**
@@ -327,372 +333,6 @@ namespace lives {
   typedef bool (*objectDestroyed_callback_f)(livesApp *lives, void *);
 
 
-  /**
-     class "clip". 
-     Represents a clip which is open in LiVES.
-     @see set::nthClip()
-     @see livesApp::openFile()
-  */
-  class clip {
-    friend livesApp;
-    friend set;
-
-  public:
-
-    /**
-       Check if clip is valid. 
-       @see livesApp::openFile().
-       @return true if the clip is valid.
-    */
-    bool isValid();
-
-    /**
-       Number of frames in this clip. 
-       If the clip is audio only, 0 is returned.
-       If clip is not valid then -1 is returned.
-       @return int number of frames, or -1 if clip is not valid.
-    */
-    int frames();
-
-    /**
-       Width of the clip in pixels.
-       If the clip is audio only, 0 is returned.
-       If clip is not valid then -1 is returned.
-       @return int width in pixels, or -1 if clip is not valid.
-    */
-    int width();
-
-    /**
-       Height of the clip in pixels.
-       If the clip is audio only, 0 is returned.
-       If clip is not valid then -1 is returned.
-       @return int height in pixels, or -1 if clip is not valid.
-    */
-    int height();
-
-
-    /**
-       Framerate (frames per second) of the clip.
-       If the clip is audio only, 0.0 is returned.
-       If clip is not valid then -1.0 is returned.
-       @return double framerate of the clip, or -1.0 if clip is not valid.
-    */
-    double fps();
-
-
-    /**
-       Human readable name of the clip.
-       If clip is not valid then empty string is returned.
-       @return LiVESString name, or empty string if clip is not valid.
-    */
-    LiVESString name();
-
-
-    /**
-       Audio rate for this clip. 
-       If the clip is video only, 0 is returned.
-       If clip is not valid then -1 is returned.
-       @return int audio rate, or -1 if clip is not valid.
-    */
-    int audioRate();
-
-
-    /**
-       Number of audio channels (eg. left, right) for this clip. 
-       If the clip is video only, 0 is returned.
-       If clip is not valid then -1 is returned.
-       @return int audio channels, or -1 if clip is not valid.
-    */
-    int audioChannels();
-
-
-    /**
-       Size in bits of audio samples (eg. 8, 16, 32) for this clip. 
-       If the clip is video only, 0 is returned.
-       If clip is not valid then -1 is returned.
-       @return int audio sample size, or -1 if clip is not valid.
-    */
-    int audioSampleSize();
-
-
-    /**
-       Returns whether the audio is signed (true) or unsigned (false).
-       If clip is video only or not valid then the return value is undefined.
-       @return bool audio signed.
-    */
-    bool audioSigned();
-
-
-    /**
-       Returns the endianness of the audio.
-       If clip is video only or not valid then the return value is undefined.
-       @return bool audio signed.
-    */
-    lives_endian_t audioEndian();
-
-
-    /**
-       Start of the selected frame region.
-       If the clip is audio only, 0 is returned.
-       If clip is not valid then -1 is returned.
-       @return int frame selection start, or -1 if clip is not valid.
-    */
-    int selectionStart();
-
-
-    /**
-       End of the selected frame region.
-       If the clip is audio only, 0 is returned.
-       If clip is not valid then -1 is returned.
-       @return int frame selection end, or -1 if clip is not valid.
-    */
-    int selectionEnd();
-
-
-    /**
-       Switch to this clip as the current foreground clip.
-       Only works if status() is LIVES_STATUS_READY or LIVES_STATUS_PLAYING and mode() is LIVES_INTERFACE_MODE_CLIP_EDITOR.
-       @return true if the switch was successful.
-       @see livesApp::setForegroundClip()
-    */
-    bool switchTo();
-
-    /**
-       Switch to this clip as the current background clip.
-       Only works if status() is LIVES_STATUS_READY or LIVES_STATUS_PLAYING and mode() is LIVES_INTERFACE_MODE_CLIP_EDITOR.
-       @return true if the switch was successful.
-       @see livesApp::setBackgroundClip()
-    */
-    bool setAsBackground();
-
-
-    /**
-       @return true if the two clips have the same unique_id.
-    */
-    inline bool operator==(const clip& other) {
-      return other.m_uid == m_uid;
-    }
-
-  protected:
-    clip(ulong uid, livesApp *lives=NULL);
-
-  private:
-    livesApp *m_lives;
-    ulong m_uid;
-
-  };
-  
-
-
-#ifndef DOXYGEN_SKIP
-  typedef vector<ulong> clipList;
-  typedef vector<ulong>::iterator clipListIterator;
-#endif
-
-  ///// set ////////
-
-
-  /**
-     class "set". 
-     Represents a list of clips and/or layouts which are open in LiVES. May be obtained from livesApp::currentSet().
-     @see livesApp::currentSet()
-  */
-  class set {
-    friend livesApp;
-
-  public:
-
-    /**
-       Returns whether the set is valid or not.
-       @return true if the set is valid (associated with a valid livesApp instance).
-    */
-    bool isValid();
-
-    /**
-       Returns the current name of the set. 
-       If it has not been defined, an empty string is returned. If the set is invalid, an empty string is returned.
-       @return LiVESString name.
-    */
-    LiVESString name();
-
-    /**
-       Save the set, and close all open clips and layouts. 
-       If the set name is empty, the user can choose the name via the GUI. 
-       If the name is defined, and it points to a different, existing set, the set will not be saved and false will be returned, 
-       unless force_append is set to true, in which case the current clips and layouts will be appended to the other set.
-       @param name name to save set as, or empty string to let the user choose a name.
-       @param force_append set to true to force appending to another existing set.
-       @return true if the set was saved.
-    */
-    bool save(LiVESString name, bool force_append=false);
-
-    /**
-       Returns the number of clips in the set. If the set is invalid, returns 0.
-       @return number of clips.
-    */
-    unsigned int numClips();
-
-
-    /**
-       Returns the nth clip in the set. If n  >= numClips(), returns an invalid clip. If the set is invalid, returns and invalid clip.
-       @return the nth clip in the set.
-       @see indexOf()
-    */
-    clip nthClip(unsigned int n);
-
-    /**
-       Returns the index of a clip in the currentSet. If the clip is not in the current set, then -1 is returned.
-       @return the index of the clip in the set.
-       @see nthClip()
-    */
-    int indexOf(clip c);
-
-
-    /**
-       @return true if the two sets belong to the same livesApp.
-    */
-    inline bool operator==(const set& other) {
-      return other.m_lives == m_lives;
-    }
-
-
-  protected:
-    set();
-
-    set(livesApp *lives);
-    void setName(const char *setname);
-
-  private:
-    livesApp *m_lives;
-    clipList m_clips;
-    
-    //list<layout *>layouts;
-
-    void update_clip_list(void);
-
-
-  };
-
-
-  /**
-     class "effectKey". 
-     Represents a single effect key slot. A valid livesApp will have a map of these (effectKeyMapping()) whose size() is equal to prefs::rteKeysVirtual().
-  */
-  class effectKey {
-  public:
-    effectKey(const effectKey& other);
-    
-    /**
-       Returns whether the effectKey is valid or not.
-       @return true if the effectKey is valid (associated with a valid livesApp instance).
-    */
-    bool isValid();
-
-    /**
-       @return true if the two effectKeys have the same livesApp and key value
-    */
-    inline bool operator==(const effectKey& other) {
-      return other.m_lives == m_lives && other.m_key == m_key;
-    }
-
-  protected:
-    effectKey(livesApp *lives);
-
-  private:
-    int m_key;
-    livesApp *m_lives;
-
-  };
-
-
-
-  /**
-     class "effectKeymapping". 
-     Represents a mapping of effectKey instances to key slots.
-  */
-    class effectKeyMap {
-      friend livesApp;
-    public:
-      /**
-	 Returns whether the effectKeyMap is valid or not.
-	 @return true if the effectKeyMap is valid (associated with a valid livesApp instance).
-      */
-      bool isValid();
-
-      /**
-	 Unmap all effects from effectKey mappings, leaving an empty map.
-	 Only has an effect when status() is LIVES_STATUS_READY.
-	 @return true if all effects were unmapped
-      */
-      bool clear();
-
-      effectKey at(); // TODO
-
-      size_t size(); // TODO
-
-    /**
-       @return true if the two effectKeyMaps have the same livesApp
-    */
-    inline bool operator==(const effectKeyMap& other) {
-      return other.m_lives == m_lives;
-    }
-
-    protected:
-      effectKeyMap(livesApp *lives);
-
-    private:
-      livesApp *m_lives;
-    };
-
-
-
-  /**
-     class "effect". 
-     Represents a single effect.
-  */
-  class effect {
-  public:
-    /**
-       Create a new, initially invalid effect.
-    */
-    effect();
-
-    /**
-       Fill a new effect from a hashname.
-    */
-    effect(LiVESString hashname);
-
-
-    /**
-       Fill a new effect from a template.
-    */
-    effect(const char *package, const char *fxname, const char *author="", int version=0);
-
-    /**
-       Returns whether the effect is valid or not.
-       @return true if the effect is valid.
-    */
-    bool isValid();
-      
-
-    /**
-       @return true if the two effects have the same hashname
-    */
-    inline bool operator==(const effect& other) {
-      return other.m_hashname == m_hashname;
-    }
-
-
-  protected:
-    void invalidate();
-
-  private:
-    LiVESString m_hashname;
-  };
-
-
-
-
 
   /**
      class "livesApp". 
@@ -736,14 +376,14 @@ namespace lives {
        Returns the current set
        @return the current set.
     */
-    set currentSet();
+    const set& currentSet();
 
 
     /**
        Returns the current effectKeyMap
        @return the current effectKeyMap.
     */
-    effectKeyMap currentEffectKeyMap();
+    const effectKeyMap& currentEffectKeyMap();
 
 
     /**
@@ -912,8 +552,8 @@ namespace lives {
   private:
     ulong m_id;
     closureList m_closures;
-    set m_set;
-    effectKeyMap m_effectKeyMap;
+    set * m_set;
+    effectKeyMap * m_effectKeyMap;
 
     bool m_deinterlace;
 
@@ -925,6 +565,379 @@ namespace lives {
 
 
   };
+
+
+
+
+  /**
+     class "clip". 
+     Represents a clip which is open in LiVES.
+     @see set::nthClip()
+     @see livesApp::openFile()
+  */
+  class clip {
+    friend livesApp;
+    friend set;
+
+  public:
+
+    /**
+       Check if clip is valid. 
+       @see livesApp::openFile().
+       @return true if the clip is valid.
+    */
+    bool isValid();
+
+    /**
+       Number of frames in this clip. 
+       If the clip is audio only, 0 is returned.
+       If clip is not valid then -1 is returned.
+       @return int number of frames, or -1 if clip is not valid.
+    */
+    int frames();
+
+    /**
+       Width of the clip in pixels.
+       If the clip is audio only, 0 is returned.
+       If clip is not valid then -1 is returned.
+       @return int width in pixels, or -1 if clip is not valid.
+    */
+    int width();
+
+    /**
+       Height of the clip in pixels.
+       If the clip is audio only, 0 is returned.
+       If clip is not valid then -1 is returned.
+       @return int height in pixels, or -1 if clip is not valid.
+    */
+    int height();
+
+
+    /**
+       Framerate (frames per second) of the clip.
+       If the clip is audio only, 0.0 is returned.
+       If clip is not valid then -1.0 is returned.
+       @return double framerate of the clip, or -1.0 if clip is not valid.
+    */
+    double fps();
+
+
+    /**
+       Human readable name of the clip.
+       If clip is not valid then empty string is returned.
+       @return LiVESString name, or empty string if clip is not valid.
+    */
+    LiVESString name();
+
+
+    /**
+       Audio rate for this clip. 
+       If the clip is video only, 0 is returned.
+       If clip is not valid then -1 is returned.
+       @return int audio rate, or -1 if clip is not valid.
+    */
+    int audioRate();
+
+
+    /**
+       Number of audio channels (eg. left, right) for this clip. 
+       If the clip is video only, 0 is returned.
+       If clip is not valid then -1 is returned.
+       @return int audio channels, or -1 if clip is not valid.
+    */
+    int audioChannels();
+
+
+    /**
+       Size in bits of audio samples (eg. 8, 16, 32) for this clip. 
+       If the clip is video only, 0 is returned.
+       If clip is not valid then -1 is returned.
+       @return int audio sample size, or -1 if clip is not valid.
+    */
+    int audioSampleSize();
+
+
+    /**
+       Returns whether the audio is signed (true) or unsigned (false).
+       If clip is video only or not valid then the return value is undefined.
+       @return bool audio signed.
+    */
+    bool audioSigned();
+
+
+    /**
+       Returns the endianness of the audio.
+       If clip is video only or not valid then the return value is undefined.
+       @return bool audio signed.
+    */
+    lives_endian_t audioEndian();
+
+
+    /**
+       Start of the selected frame region.
+       If the clip is audio only, 0 is returned.
+       If clip is not valid then -1 is returned.
+       @return int frame selection start, or -1 if clip is not valid.
+    */
+    int selectionStart();
+
+
+    /**
+       End of the selected frame region.
+       If the clip is audio only, 0 is returned.
+       If clip is not valid then -1 is returned.
+       @return int frame selection end, or -1 if clip is not valid.
+    */
+    int selectionEnd();
+
+
+    /**
+       Switch to this clip as the current foreground clip.
+       Only works if status() is LIVES_STATUS_READY or LIVES_STATUS_PLAYING and mode() is LIVES_INTERFACE_MODE_CLIP_EDITOR.
+       @return true if the switch was successful.
+       @see livesApp::setForegroundClip()
+    */
+    bool switchTo();
+
+    /**
+       Switch to this clip as the current background clip.
+       Only works if status() is LIVES_STATUS_READY or LIVES_STATUS_PLAYING and mode() is LIVES_INTERFACE_MODE_CLIP_EDITOR.
+       @return true if the switch was successful.
+       @see livesApp::setBackgroundClip()
+    */
+    bool setAsBackground();
+
+
+    /**
+       @return true if the two clips have the same unique_id, and belong to the same livesApp.
+    */
+    inline bool operator==(const clip& other) {
+      return other.m_uid == m_uid && m_lives.get() == other.m_lives.get();
+    }
+
+  protected:
+    clip(ulong uid, livesApp *lives=NULL);
+
+  private:
+    livesAppPtr m_lives;
+    ulong m_uid;
+
+  };
+  
+
+
+#ifndef DOXYGEN_SKIP
+  typedef vector<ulong> clipList;
+  typedef vector<ulong>::iterator clipListIterator;
+#endif
+
+  ///// set ////////
+
+
+  /**
+     class "set". 
+     Represents a list of clips and/or layouts which are open in LiVES. May be obtained from livesApp::currentSet().
+     @see livesApp::currentSet()
+  */
+  class set {
+    friend livesApp;
+
+  public:
+
+    /**
+       Returns whether the set is valid or not.
+       @return true if the set is valid (associated with a valid livesApp instance).
+    */
+    bool isValid();
+
+    /**
+       Returns the current name of the set. 
+       If it has not been defined, an empty string is returned. If the set is invalid, an empty string is returned.
+       @return LiVESString name.
+    */
+    LiVESString name();
+
+    /**
+       Save the set, and close all open clips and layouts. 
+       If the set name is empty, the user can choose the name via the GUI. 
+       If the name is defined, and it points to a different, existing set, the set will not be saved and false will be returned, 
+       unless force_append is set to true, in which case the current clips and layouts will be appended to the other set.
+       @param name name to save set as, or empty string to let the user choose a name.
+       @param force_append set to true to force appending to another existing set.
+       @return true if the set was saved.
+    */
+    bool save(LiVESString name, bool force_append=false);
+
+    /**
+       Returns the number of clips in the set. If the set is invalid, returns 0.
+       @return number of clips.
+    */
+    unsigned int numClips();
+
+
+    /**
+       Returns the nth clip in the set. If n  >= numClips(), returns an invalid clip. If the set is invalid, returns and invalid clip.
+       @return the nth clip in the set.
+       @see indexOf()
+    */
+    clip nthClip(unsigned int n);
+
+    /**
+       Returns the index of a clip in the currentSet. If the clip is not in the current set, then -1 is returned.
+       @return the index of the clip in the set.
+       @see nthClip()
+    */
+    int indexOf(clip c);
+
+
+    /**
+       @return true if the two sets belong to the same livesApp.
+    */
+    inline bool operator==(const set& other) {
+      return other.m_lives.get() == m_lives.get();
+    }
+
+
+  protected:
+    set();
+
+    set(livesApp *lives);
+    void setName(const char *setname);
+
+  private:
+    livesAppPtr m_lives;
+    clipList m_clips;
+    
+    //list<layout *>layouts;
+
+    void update_clip_list(void);
+
+
+  };
+
+
+  /**
+     class "effectKey". 
+     Represents a single effect key slot. A valid livesApp will have a map of these (effectKeyMapping()) whose size() is equal to prefs::rteKeysVirtual().
+  */
+  class effectKey {
+  public:
+    effectKey(const effectKey& other);
+    
+    /**
+       Returns whether the effectKey is valid or not.
+       @return true if the effectKey is valid (associated with a valid livesApp instance).
+    */
+    bool isValid();
+
+    /**
+       @return true if the two effectKeys have the same livesApp and key value and belong to the same livesApp
+    */
+    inline bool operator==(const effectKey& other) {
+      return other.m_key == m_key && m_lives.get() == other.m_lives.get();
+    }
+
+  protected:
+    effectKey(livesApp *lives);
+
+  private:
+    int m_key;
+    livesAppPtr m_lives;
+
+  };
+
+
+
+  /**
+     class "effectKeymapping". 
+     Represents a mapping of effectKey instances to key slots.
+  */
+    class effectKeyMap {
+      friend livesApp;
+    public:
+      /**
+	 Returns whether the effectKeyMap is valid or not.
+	 @return true if the effectKeyMap is valid (associated with a valid livesApp instance).
+      */
+      bool isValid();
+
+      /**
+	 Unmap all effects from effectKey mappings, leaving an empty map.
+	 Only has an effect when status() is LIVES_STATUS_READY.
+	 @return true if all effects were unmapped
+      */
+      bool clear();
+
+      effectKey at(); // TODO
+
+      size_t size(); // TODO
+
+    /**
+       @return true if the two effectKeyMaps have the same livesApp
+    */
+    inline bool operator==(const effectKeyMap& other) {
+      return other.m_lives.get() == m_lives.get();
+    }
+
+    protected:
+      effectKeyMap(livesApp *lives);
+
+    private:
+      livesAppPtr m_lives;
+    };
+
+
+
+  /**
+     class "effect". 
+     Represents a single effect.
+  */
+  class effect {
+  public:
+    /**
+       Create a new, initially invalid effect.
+    */
+    effect();
+
+    /**
+       Fill a new effect from a hashname.
+    */
+    effect(livesApp& lives, LiVESString hashname);
+
+
+    /**
+       Fill a new effect from a template.
+    */
+    effect(livesApp& lives, const char *package, const char *fxname, const char *author="", int version=0);
+
+    /**
+       Returns whether the effect is valid or not.
+       @return true if the effect is valid.
+    */
+    bool isValid();
+      
+
+    /**
+       @return true if the two effects have the same index and the same livesApp owner
+    */
+    inline bool operator==(const effect& other) {
+      return other.m_idx == m_idx && m_lives.get() == other.m_lives.get();
+    }
+
+
+  protected:
+    void invalidate();
+
+  private:
+    int m_idx;
+    livesAppPtr m_lives;
+
+  };
+
+
+
+
+
 
   /**
      Preferences.
@@ -944,7 +957,6 @@ namespace lives {
     ///<    argv[1]="/home/user/tempdir/"; <BR>
     ///<    livesApp lives(2, argv); <BR>
     ///< </I></BLOCKQUOTE>
-
     lives_audio_source_t audioSource(livesApp lives); ///< the current audio source
 
     /**

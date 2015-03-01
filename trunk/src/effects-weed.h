@@ -52,6 +52,7 @@ char *weed_filter_idx_get_name(int filter_idx) WARN_UNUSED;
 char *weed_instance_get_filter_name(weed_plant_t *inst, boolean get_compound_parent) WARN_UNUSED;
 char *make_weed_hashname(int filter_idx, boolean fullname, boolean use_extra_authors) WARN_UNUSED;  ///< fullname includes author and version
 int weed_get_idx_for_hashname (const char *hashname, boolean fullname); ///< fullname includes author and version
+int *weed_get_indices_from_template(const char *package_name, const char *filter_name, const char *author, int version);
 int enabled_in_channels (weed_plant_t *plant, boolean count_repeats);
 int enabled_out_channels (weed_plant_t *plant, boolean count_repeats);
 weed_plant_t *get_enabled_channel (weed_plant_t *inst, int which, boolean is_in); ///< for FILTER_INST

@@ -215,18 +215,21 @@ namespace lives {
     ctx.app = this;
     appMgr.push_back(ctx);
 
+    m_set = new set(this);
+    m_effectKeyMap = new effectKeyMap(this);
+
     real_main(argc, argv, id);
     free(argv);
     m_id = id;
   }
 
 
-  livesApp::livesApp() : m_set(this), m_effectKeyMap(this), m_id(0l) {
+  livesApp::livesApp() : m_id(0l) {
     if (appMgr.empty())
       init(0,NULL);
   }
 
-  livesApp::livesApp(int argc, char *argv[]) : m_set(this), m_effectKeyMap(this), m_id(0l) {
+  livesApp::livesApp(int argc, char *argv[]) : m_id(0l) {
     if (appMgr.empty())
       init(argc,argv);
   }
@@ -261,8 +264,8 @@ namespace lives {
   }
 
 
-  set livesApp::currentSet() {
-    return m_set;
+  const set& livesApp::currentSet() {
+    return *m_set;
   }
 
 
@@ -495,8 +498,8 @@ namespace lives {
 
 
 
-  effectKeyMap livesApp::currentEffectKeyMap() {
-    return m_effectKeyMap;
+  const effectKeyMap& livesApp::currentEffectKeyMap() {
+    return *m_effectKeyMap;
   }
 
 
@@ -536,16 +539,19 @@ namespace lives {
 
   //////////////// set ////////////////////
 
-  set::set(livesApp *lives) {
-    m_lives = lives;
+  set::set() {
+
+
   }
 
-  set::set() {
-    m_lives = NULL;
+  set::set(livesApp *lives) {
+    // make shared ptr
+    m_lives = livesAppPtr(lives);
   }
+
 
   bool set::isValid() {
-    return m_lives != NULL && m_lives->isValid();
+    return m_lives.use_count() > 0 && m_lives->isValid();
   }
 
 
@@ -566,7 +572,7 @@ namespace lives {
     if (!isValid()) return clip(0l);
     update_clip_list();
     if (n >= m_clips.size()) return clip(0l);
-    return clip(m_clips[n], m_lives);
+    return clip(m_clips[n], m_lives.get());
   }
 
 
@@ -638,7 +644,7 @@ namespace lives {
 
   clip::clip(ulong uid, livesApp *lives) {
     m_uid = uid;
-    m_lives = lives;
+    m_lives = livesAppPtr(lives);
   }
 
   bool clip::isValid() {
@@ -792,7 +798,7 @@ namespace lives {
 
   //// effectKeyMap
   effectKeyMap::effectKeyMap(livesApp *lives) {
-    m_lives = lives;
+    m_lives = livesAppPtr(lives);
   }
 
 
@@ -826,7 +832,7 @@ namespace lives {
 
   /// effectKey
   effectKey::effectKey(livesApp *lives) {
-    m_lives = lives;
+    m_lives = livesAppPtr(lives);
   }
 
   bool effectKey::isValid() {
@@ -834,25 +840,29 @@ namespace lives {
   }
   
 
+  ////////////////////////////////////////////////////////
+
   //// effect
   effect::effect() {
-    m_hashname = NULL;
+    m_idx = -1;
   }
 
-  effect::effect(LiVESString hashname) {
-    m_hashname = hashname;
-  }
-
-  effect::effect(const char *package, const char *fxname, const char *author, int version) {
+  effect::effect(livesApp& lives, LiVESString hashname) {
     // TODO
+    m_lives = livesAppPtr(&lives);
+  }
+
+  effect::effect(livesApp& lives, const char *package, const char *fxname, const char *author, int version) {
+    m_idx = get_first_fx_matched(package, fxname, author, version);
+    m_lives = livesAppPtr(&lives);
   }
 
   void effect::invalidate() {
-    m_hashname.clear();
+    m_idx = -1;
   }
 
   bool effect::isValid() {
-    return (!m_hashname.empty());
+    return (m_idx != -1 && m_lives->isValid());
   }
 
 
@@ -930,6 +940,7 @@ void binding_cb (lives_callback_t cb_type, const char *msgstring, ulong id) {
 	break;
       case LIVES_CALLBACK_APP_QUIT:
 	{
+	  cout << "got app quit !" << endl;
 	  lives::appQuitInfo info;
 	  info.signum = atoi(msgstring);
 	  lives::appQuit_callback_f fn = (lives::appQuit_callback_f)((*it)->func);

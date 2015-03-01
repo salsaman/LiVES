@@ -8,6 +8,7 @@
 #include "interface.h"
 #include "callbacks.h"
 #include "rte_window.h"
+#include "effects-weed.h"
 #include "liblives.hpp"
 
 
@@ -203,6 +204,14 @@ int trans_constant(int consta, int domain) {
 
 
   return consta;
+}
+
+
+int get_first_fx_matched(const char *package, const char *fxname, const char *author, int version) {
+  int *allvals=weed_get_indices_from_template(package,fxname,author,version);
+  int fval=allvals[0];
+  lives_free(allvals);
+  return fval;
 }
 
 

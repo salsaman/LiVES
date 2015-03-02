@@ -133,8 +133,8 @@ boolean weed_parameter_has_variable_elements_strict(weed_plant_t *inst, weed_pla
 boolean interpolate_param(weed_plant_t *inst, int i, void *pchain, weed_timecode_t tc);
 boolean interpolate_params(weed_plant_t *inst, void **pchains, weed_timecode_t tc);
 
-void filter_mutex_lock(int key);
-void filter_mutex_unlock(int key);
+void filter_mutex_lock(int key);  // 0 based key
+void filter_mutex_unlock(int key); // 0 based key
 
 boolean weed_plant_serialise(int fd, weed_plant_t *plant, unsigned char **mem);
 weed_plant_t *weed_plant_deserialise(int fd, unsigned char **mem);
@@ -148,8 +148,8 @@ int set_copy_to(weed_plant_t *inst, int pnum, boolean update);
 
 weed_plant_t *get_textparm();
 
-void weed_set_blend_factor(int hotkey);
-int weed_get_blend_factor(int hotkey);
+void weed_set_blend_factor(int hotkey);  // 0 based key
+int weed_get_blend_factor(int hotkey); // 0 based key
 
 void weed_memory_init(void); ///< call weed_init() with mem functions
 
@@ -169,7 +169,7 @@ void weed_apply_audio_effects_rt(float **abuf, int nchans, int64_t nsamps, doubl
 lives_filter_error_t weed_apply_audio_instance (weed_plant_t *init_event, float **abuf, int nbtracks, int nchans, int64_t nsamps, 
 						double arate, weed_timecode_t tc, double *vis);
 
-boolean weed_generator_start (weed_plant_t *inst, int key); // key starts at 0
+boolean weed_generator_start (weed_plant_t *inst, int key); // 0 based key
 weed_plant_t *weed_layer_new_from_generator (weed_plant_t *inst, weed_timecode_t tc);
 void weed_generator_end (weed_plant_t *inst);
 boolean weed_playback_gen_start (void);
@@ -214,6 +214,7 @@ boolean rte_key_setmode (int key, int newmode); ///< set mode for a given key; i
 ///< returns -1 if the filter is not found; it will match the first name found - returns -2 if you try to switch a generator/non-generator
 int rte_switch_keymode (int key, int mode, const gchar *hashname);
 
+boolean rte_key_is_enabled(int key);
 
 
 
@@ -235,7 +236,7 @@ boolean has_key_defaults(void);
 
 
 //////////////////////////////////////////////////////
-
+// 0 based keys
 void rte_swap_fg_bg (void);
 
 

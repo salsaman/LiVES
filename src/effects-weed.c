@@ -932,6 +932,10 @@ boolean weed_parameter_has_variable_elements_strict(weed_plant_t *inst, weed_pla
 }
 
 
+LIVES_INLINE boolean rte_key_is_enabled(int key) {
+  key--;
+  return (mainw->rte&(GU641<<key));
+}
 
 
 static void create_filter_map (uint64_t rteval) {
@@ -7205,7 +7209,7 @@ void weed_deinit_all(boolean shutdown) {
   }
 
   mainw->rte_keys=-1;
-  mainw->last_grabable_effect=-1;
+  mainw->last_grabbable_effect=-1;
 
   for (i=0;i<FX_KEYS_MAX_VIRTUAL;i++) {
     if (rte_key_valid(i+1,TRUE)) {
@@ -7349,6 +7353,7 @@ weed_plant_t *weed_layer_new_from_generator (weed_plant_t *inst, weed_timecode_t
 
 
 boolean weed_generator_start (weed_plant_t *inst, int key) {
+  // key here is zero based
   // make an "ephemeral clip"
 
   // cf. yuv4mpeg.c
@@ -7517,7 +7522,7 @@ boolean weed_generator_start (weed_plant_t *inst, int key) {
     new_rte=GU641<<key;
     if (!(mainw->rte&new_rte)) mainw->rte|=new_rte;
 
-    mainw->last_grabable_effect=key;
+    mainw->last_grabbable_effect=key;
     if (rte_window!=NULL) rtew_set_keych(key,TRUE);
     if (mainw->ce_thumbs) {
       ce_thumbs_set_keych(key,TRUE);
@@ -8953,7 +8958,7 @@ int weed_add_effectkey (int key, const gchar *hashname, boolean fullname) {
 
 
 
-int rte_switch_keymode (int key, int mode, const gchar *hashname) {
+int rte_switch_keymode (int key, int mode, const char *hashname) {
   // this is called when we switch the filter_class bound to an effect_key/mode
 
   int oldkeymode=key_modes[--key];
@@ -10020,7 +10025,7 @@ int *weed_get_indices_from_template(const char *pkg, const char *fxname, const c
     filter=weed_filters[i++];
 
     if (check_match(filter,pkg,fxname,auth,version)) {
-      rvals[count2++]=i;
+      rvals[count2++]=i-1;
     }
   }
 

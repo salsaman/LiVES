@@ -57,6 +57,12 @@ static boolean osc_playall(livespointer data) {
   return FALSE;
 }
 
+static boolean osc_init_generator(livespointer data) {
+  // do this via an idle function, as it will trigger playback and hang
+  rte_on_off_callback_hook(NULL,data);
+}
+
+
 /* convert a big endian 32 bit string to an int for internal use */
 
 static int toInt(const char* b) {
@@ -852,34 +858,28 @@ boolean lives_osc_cb_fx_enable(void *context, int arglen, const void *vargs, OSC
   boolean new_timer_added=FALSE;
   int count;
   int effect_key;
-  int grab=mainw->last_grabable_effect;
+  int grab=mainw->last_grabbable_effect;
 
   if (mainw->multitrack!=NULL) return lives_osc_notify_failure();
   if (!lives_osc_check_arguments (arglen,vargs,"i",TRUE)) return lives_osc_notify_failure();
   lives_osc_parse_int_argument(vargs,&effect_key);
 
-  if (!(mainw->rte&(GU641<<(effect_key-1)))) {
-    weed_plant_t *filter=rte_keymode_get_filter(effect_key,rte_key_getmode(effect_key));
-    if (filter==NULL) return lives_osc_notify_failure();
-    count=enabled_in_channels(filter, FALSE);
-    if (mainw->playing_file==-1&&via_shortcut&&count!=0) return lives_osc_notify_failure(); // is no generator
+  if (!mainw->osc_block) {
+    if (!(mainw->rte&(GU641<<(effect_key-1)))) {
+      weed_plant_t *filter=rte_keymode_get_filter(effect_key,rte_key_getmode(effect_key));
+      if (filter==NULL) return lives_osc_notify_failure();
+      count=enabled_in_channels(filter, FALSE);
+      if (mainw->playing_file==-1&&via_shortcut&&count!=0) return lives_osc_notify_failure(); // is no generator
     
-    if (!mainw->osc_block) {
       if (mainw->playing_file==-1&&count==0) {
-	// re - add the timer, as we hang here if a generator is started, and we want to receive messages still during playback
-	lives_timer_remove (mainw->kb_timer);
-	mainw->kb_timer=lives_timer_add(KEY_RPT_INTERVAL,&ext_triggers_poll,NULL);
-	new_timer_added=TRUE;
+	lives_idle_add(osc_init_generator,LIVES_INT_TO_POINTER(effect_key));
       }
-      // TODO ***
-      //mainw->osc_auto=1; ///< request early notifiction of success
-      rte_on_off_callback_hook(NULL,LIVES_INT_TO_POINTER(effect_key));
-      mainw->osc_auto=0;
-      if (new_timer_added)
-	mainw->kb_timer_end=TRUE;
+      else {
+	rte_on_off_callback_hook(NULL,LIVES_INT_TO_POINTER(effect_key));
+	mainw->last_grabbable_effect=grab;
+      }
     }
-  }
-  mainw->last_grabable_effect=grab;
+  } else return lives_osc_notify_failure();
 
   return lives_osc_notify_success(NULL);
 }

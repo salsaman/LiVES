@@ -215,6 +215,13 @@ namespace lives {
   */
   typedef class effect effect;
 
+
+  /**
+     typedef
+  */
+  typedef class player player;
+
+
   /**
      typedef
   */
@@ -226,13 +233,13 @@ namespace lives {
   ///////////////////////////////////////////////////
 
 
-  typedef std::tr1::shared_ptr<livesApp> livesAppPtr;
+  typedef std::tr1::shared_ptr<livesApp> livesAppSharedPtr;
 
 
 
   /**
      class "LiVESString". 
-     A string type which handles different character encodings.
+     A subclass of std::string which automatically handles various character encodings.
   */
   class LiVESString : public std::string {
   public:
@@ -343,6 +350,8 @@ namespace lives {
     friend set;
     friend clip;
     friend effectKeyMap;
+    friend effectKey;
+    friend player;
 
   public:
     /**
@@ -387,18 +396,11 @@ namespace lives {
 
 
     /**
-       Commence playback of video and audio with the currently selected clip.
-       Only has an effect when status() is LIVES_STATUS_READY.
-       @return true if playback was started.
+       Returns the player for this livesApp.
+       @return the player for this livesApp.
     */
-    bool play();
+    const player& currentPlayer();
 
-    /**
-       Stop playback.
-       If status() is not LIVES_STATUS_PLAYING, nothing happens.
-       @return true if playback was stopped.
-    */
-    bool stop();
 
     /**
        Remove a previously added callback.
@@ -531,11 +533,6 @@ namespace lives {
     lives_status_t status();
 
 
-    bool setForegroundClip(); // TODO
-
-    bool setBackgroundClip(); // TODO
-
-
 #ifndef DOXYGEN_SKIP
     // For internal use only.
     closureList closures();
@@ -553,6 +550,7 @@ namespace lives {
     ulong m_id;
     closureList m_closures;
     set * m_set;
+    player *m_player;
     effectKeyMap * m_effectKeyMap;
 
     bool m_deinterlace;
@@ -695,7 +693,7 @@ namespace lives {
        Switch to this clip as the current foreground clip.
        Only works if status() is LIVES_STATUS_READY or LIVES_STATUS_PLAYING and mode() is LIVES_INTERFACE_MODE_CLIP_EDITOR.
        @return true if the switch was successful.
-       @see livesApp::setForegroundClip()
+       @see player::setForegroundClip()
     */
     bool switchTo();
 
@@ -703,7 +701,7 @@ namespace lives {
        Switch to this clip as the current background clip.
        Only works if status() is LIVES_STATUS_READY or LIVES_STATUS_PLAYING and mode() is LIVES_INTERFACE_MODE_CLIP_EDITOR.
        @return true if the switch was successful.
-       @see livesApp::setBackgroundClip()
+       @see player::setBackgroundClip()
     */
     bool setAsBackground();
 
@@ -719,7 +717,7 @@ namespace lives {
     clip(ulong uid, livesApp *lives=NULL);
 
   private:
-    livesAppPtr m_lives;
+    livesAppSharedPtr m_lives;
     ulong m_uid;
 
   };
@@ -805,7 +803,7 @@ namespace lives {
     void setName(const char *setname);
 
   private:
-    livesAppPtr m_lives;
+    livesAppSharedPtr m_lives;
     clipList m_clips;
     
     //list<layout *>layouts;
@@ -816,11 +814,72 @@ namespace lives {
   };
 
 
+
+
+
+  /**
+     class "player". 
+     Represents a media player associated with a livesApp.
+     @see livesApp::player()
+  */
+  class player {
+    friend livesApp;
+
+  public:
+
+    /**
+       Returns whether the set is valid or not.
+       @return true if the set is valid (associated with a valid livesApp instance).
+    */
+    bool isValid();
+
+    /**
+       Commence playback of video and audio with the currently selected clip.
+       Only has an effect when status() is LIVES_STATUS_READY.
+       @return true if playback was started.
+    */
+    bool play();
+
+    /**
+       Stop playback.
+       If status() is not LIVES_STATUS_PLAYING, nothing happens.
+       @return true if playback was stopped.
+    */
+    bool stop();
+
+
+    bool setForegroundClip(); // TODO
+
+    bool setBackgroundClip(); // TODO
+
+
+    /**
+       @return true if the two players belong to the same livesApp.
+    */
+    inline bool operator==(const player& other) {
+      return other.m_lives.get() == m_lives.get();
+    }
+
+
+  protected:
+    player();
+    player(livesApp *lives);
+
+  private:
+    livesAppSharedPtr m_lives;
+
+  };
+
+  /////////////////////////////////////////////////////
+
   /**
      class "effectKey". 
-     Represents a single effect key slot. A valid livesApp will have a map of these (effectKeyMapping()) whose size() is equal to prefs::rteKeysVirtual().
+     Represents a single effect key slot. A valid livesApp will have a map of these (effectKeyMapping()) whose size() is equal to 
+     prefs::rteKeysVirtual().
+     @see effectKeyMap::operator[]
   */
   class effectKey {
+    friend effectKeyMap;
   public:
     effectKey(const effectKey& other);
     
@@ -830,6 +889,75 @@ namespace lives {
     */
     bool isValid();
 
+    
+    /**
+       Return the number of modes for this effectKey slot. Modes run from 0 to numModes() - 1.
+       Effects can be mapped to modes in ascending order, but only one mode is the active mode for the effectKey.
+       If the effectKey is invalid, 0 will be returned.
+       @return the number of modes for this effectKey.
+    */
+    int numModes();
+
+
+    /**
+       Return the number of mapped modes for this effectKey slot. Modes run from 0 to numModes() - 1.
+       When numMappedModes() == numModes() for an effectKey, no more effects may be mapped to it until a mapping is erased.
+       If the effectKey is invalid, 0 will be returned.
+       @return the number of modes for this effectKey.
+    */
+    int numMappedModes();
+
+
+    /**
+       Set the current mode this effectKey.
+       Only works if the effecKey is valid, a valid effect is mapped to the mode, and livesApp::status() is 
+       LIVES_STATUS_PLAYING or LIVES_STATUS_READY.
+       @param mode the mode to switch to.
+       @return the new mode of the effectKey.
+    */
+    int setMode(int mode);
+
+
+    /**
+       Get the current mode for this effectKey.
+       If the effectKey is invalid, the current mode is -1.
+       @return the current mode of the effectKey.
+    */
+    int mode();
+
+
+    /**
+       Enable an effect mapped to this effectKey, mode().
+       Only works if the effecKey is valid, a valid effect is mapped to the mode, and livesApp::status() is 
+       LIVES_STATUS_PLAYING or LIVES_STATUS_READY.
+       @return the new state of the effectKey
+    */
+    bool setEnabled(bool setting);
+
+
+    /**
+       Return a value to indicate whether the effect mapped to this effectKey, mode() is active. 
+       If the effectKey is invalid, returns false.
+       @return true if the effect mapped at mode() is enabled.
+    */
+    bool enabled();
+
+
+
+    /**
+       Map an effect to the next unused mode for the effectKey.
+       Will only work if the livesApp::status() is LIVES_STATUS_PLAYING or LIVES_STATUS_READY.
+       The effectKey and the effect must share the same owner livesApp, and both must be valid.
+       @return the mode number the effect was mapped to, or -1 if the mapping failed.
+       @see prefs::rteKeysVirtual()
+    */
+    int appendMapping(effect fx);
+
+
+    bool removeMapping(int mode);
+
+
+
     /**
        @return true if the two effectKeys have the same livesApp and key value and belong to the same livesApp
     */
@@ -838,26 +966,29 @@ namespace lives {
     }
 
   protected:
-    effectKey(livesApp *lives);
+    effectKey(livesApp *lives, int key);
+    effectKey(livesAppSharedPtr lives, int key);
 
   private:
     int m_key;
-    livesAppPtr m_lives;
+    livesAppSharedPtr m_lives;
 
   };
 
 
 
   /**
-     class "effectKeymapping". 
-     Represents a mapping of effectKey instances to key slots.
+     class "effectKeyMap". 
+     Represents a mapping of effectKey instances to key slots. Real time effects are always applied in order of ascending index value 
+     (with the exception of generator effects, which are applied first).
   */
     class effectKeyMap {
       friend livesApp;
     public:
       /**
 	 Returns whether the effectKeyMap is valid or not.
-	 @return true if the effectKeyMap is valid (associated with a valid livesApp instance).
+	 @return true if the effectKeyMap is associated with a valid livesApp instance,
+	 and the index is 1 <= i <= prefs::rteKeysVirtual().
       */
       bool isValid();
 
@@ -868,22 +999,49 @@ namespace lives {
       */
       bool clear();
 
-      effectKey at(); // TODO
+      /**
+	 Returns the ith effect key for this key map.
+	 Valid range for i is 1 <= i <= prefs::rteKeysVirtual().
+	 For values of i outside this range, an invalid effectKey is returned.
+	 @return an effectKey with index i.
+	 @see effectKey::operator[]
+      */
+      effectKey at(int i);
 
-      size_t size(); // TODO
 
-    /**
-       @return true if the two effectKeyMaps have the same livesApp
-    */
-    inline bool operator==(const effectKeyMap& other) {
-      return other.m_lives.get() == m_lives.get();
-    }
+      /**
+	 Returns the number of key slots (indices) in the effectKeyMap.
+	 The valid range of keys is 1 <= key <= size().
+	 Equivalent to prefs::rteKeysVirtual(), except that if the effectKeyMap is invalid, returns 0.
+	 @return the number of key slots.
+	 @see prefs::rteKeysVirtual()
+      */
+      size_t size();
+
+
+      /**
+	 @return true if the two effectKeyMaps have the same livesApp
+      */
+      inline bool operator==(const effectKeyMap& other) {
+	return other.m_lives.get() == m_lives.get();
+      }
+
+      /**
+	 Returns an effect key with index i for this key map. The value of i may be chosen freely, but if it is outside the range 
+	 1 <= i <= size() then the effectKey will be considered invalid.
+	 @return an effectKey with index i for this key map.
+	 @see at()
+      */
+      inline effectKey operator [] (int i) {
+	return effectKey(m_lives, i);
+      }
+
 
     protected:
       effectKeyMap(livesApp *lives);
 
     private:
-      livesAppPtr m_lives;
+      livesAppSharedPtr m_lives;
     };
 
 
@@ -893,20 +1051,20 @@ namespace lives {
      Represents a single effect.
   */
   class effect {
+    friend effectKey;
   public:
-    /**
-       Create a new, initially invalid effect.
-    */
-    effect();
-
-    /**
-       Fill a new effect from a hashname.
-    */
-    effect(livesApp& lives, LiVESString hashname);
+    effect(livesApp& lives, LiVESString hashname); // TODO
 
 
     /**
-       Fill a new effect from a template.
+       Create a new effect from a template. In case of multiple matches, only the first match is returned. 
+       In the case of no matches, an invalid effect is returned.
+       @param lives a livesApp instance
+       @param package a package name (e.g. "frei0r", "LADSPA"), or "" to match any package.
+       @param fxname the name of an effect (e.g. "chroma blend") or "" to match any effect name.
+       @param author the name of the principle author of the effect (e.g. "jsmith") or "" to match any author.
+       @param version the number of a version to match, or 0 to match any version.
+       @return an effect.
     */
     effect(livesApp& lives, const char *package, const char *fxname, const char *author="", int version=0);
 
@@ -926,11 +1084,11 @@ namespace lives {
 
 
   protected:
-    void invalidate();
+    effect();
+    livesAppSharedPtr m_lives;
+    int m_idx;
 
   private:
-    int m_idx;
-    livesAppPtr m_lives;
 
   };
 
@@ -943,11 +1101,13 @@ namespace lives {
      Preferences.
   */
   namespace prefs {
-    LiVESString currentVideoLoadDir(livesApp lives); ///< current video load directory.
+    LiVESString currentVideoLoadDir(livesApp &lives); ///< current video load directory.
+    ///< @param lives a reference to a livesApp instance
 
-    LiVESString currentAudioDir(livesApp lives); ///< current audio directory for loading and saving audio.
+    LiVESString currentAudioDir(livesApp &lives); ///< current audio directory for loading and saving audio.
+    ///< @param lives a reference to a livesApp instance
 
-    LiVESString tmpDir(livesApp lives); ///< Despite the name, this is the working directory for the LiVES application. 
+    LiVESString tmpDir(livesApp &lives); ///< Despite the name, this is the working directory for the LiVES application. 
     ///< The valid list of sets is drawn from this directory, for it is here that they are saved and loaded.
     ///< The value can only be set at runtime through the GUI preferences window. Otherwise you can override the default value 
     ///< when the livesApp() is created via argv[] option "-tmpdir", eg: <BR>
@@ -957,17 +1117,19 @@ namespace lives {
     ///<    argv[1]="/home/user/tempdir/"; <BR>
     ///<    livesApp lives(2, argv); <BR>
     ///< </I></BLOCKQUOTE>
-    lives_audio_source_t audioSource(livesApp lives); ///< the current audio source
+    ///< @param lives a reference to a livesApp instance
+    lives_audio_source_t audioSource(livesApp &lives); ///< the current audio source
 
-    /**
-       Set the audio source. Only works if status() is LIVES_STATUS_READY.
-       @param asrc the desired audio source
-       @return true if the audio source could be changed.
-    */
-    bool setAudioSource(lives_audio_source_t asrc);
+    bool setAudioSource(livesApp &lives, lives_audio_source_t asrc); ///< Set the audio source. Only works if status() is LIVES_STATUS_READY.
+    ///< @param lives a reference to a livesApp instance
+    ///< @param asrc the desired audio source
+    ///< @return true if the audio source could be changed.
 
-    lives_audio_player_t audioPlayer(); ///< the current audio player
+    lives_audio_player_t audioPlayer(livesApp &lives); ///< the current audio player
+    ///< @param lives a reference to a livesApp instance
 
+    int rteKeysVirtual(livesApp &lives); ///< maximum value for effectKey indices
+    ///< @param lives a reference to a livesApp instance
 
   }
 

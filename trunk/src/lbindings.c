@@ -9,6 +9,8 @@
 #include "callbacks.h"
 #include "rte_window.h"
 #include "effects-weed.h"
+#include "effects.h"
+
 #include "liblives.hpp"
 
 
@@ -287,10 +289,16 @@ static boolean call_file_choose_with_preview(livespointer data) {
   else preview_type=LIVES_FILE_SELECTION_AUDIO_ONLY;
   chooser=choose_file_with_preview(fdata->dir, fdata->title, preview_type);
   response=lives_dialog_run(LIVES_DIALOG(chooser));
+  end_fs_preview();
+  mainw->fs_playarea=NULL;
+
   if (response == LIVES_RESPONSE_ACCEPT) {
     fname=lives_file_chooser_get_filename (LIVES_FILE_CHOOSER(chooser));
-    lives_widget_destroy(chooser);
   }
+  if (fname==NULL) fname=lives_strdup("");
+  
+  on_filechooser_cancel_clicked(chooser);
+
   if (fdata->dir!=NULL) lives_free(fdata->dir);
   if (fdata->title!=NULL) lives_free(fdata->title);
 
@@ -299,6 +307,7 @@ static boolean call_file_choose_with_preview(livespointer data) {
   ext_caller_return_string(fdata->id,rstr);
   lives_free(rstr);
   lives_free(fdata);
+  if (fname!=NULL) free(fname);
   return FALSE;
 }
 
@@ -409,7 +418,7 @@ static boolean call_fx_setmode(livespointer data) {
 static boolean call_fx_enable(livespointer data) {
   fxmapdata *fxdata=(fxmapdata *)data;
   boolean nstate=(boolean)fxdata->mode;
-  boolean ret;
+  boolean ret=TRUE;
 
   int grab=mainw->last_grabbable_effect;
 

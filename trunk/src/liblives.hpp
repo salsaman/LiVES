@@ -233,25 +233,21 @@ namespace lives {
   ///////////////////////////////////////////////////
 
 
-  typedef std::tr1::shared_ptr<livesApp> livesAppSharedPtr;
-
-
-
   /**
      class "LiVESString". 
      A subclass of std::string which automatically handles various character encodings.
   */
   class LiVESString : public std::string {
   public:
-    LiVESString(lives_char_encoding_t e=LIVES_CHAR_ENCODING_DEFAULT) : m_encoding(e), std::string() {};
-    LiVESString(const string& str) : std::string(str) {};
-    LiVESString(const string& str, size_t pos, size_t len = npos) : std::string(str, pos,  len) {};
-    LiVESString(const char* s, lives_char_encoding_t e=LIVES_CHAR_ENCODING_DEFAULT) : m_encoding(e), std::string(s) {};
-    LiVESString(const char* s, size_t n, lives_char_encoding_t e=LIVES_CHAR_ENCODING_DEFAULT) : m_encoding(e), std::string(s, n) {};
-    LiVESString(size_t n, char c, lives_char_encoding_t e=LIVES_CHAR_ENCODING_DEFAULT) : m_encoding(e), std::string(n, c) {};
+    LiVESString(lives_char_encoding_t e=LIVES_CHAR_ENCODING_DEFAULT) : m_encoding(e), std::string() {}
+    LiVESString(const string& str) : std::string(str) {}
+    LiVESString(const string& str, size_t pos, size_t len = npos) : std::string(str, pos,  len) {}
+    LiVESString(const char* s, lives_char_encoding_t e=LIVES_CHAR_ENCODING_DEFAULT) : m_encoding(e), std::string(s) {}
+    LiVESString(const char* s, size_t n, lives_char_encoding_t e=LIVES_CHAR_ENCODING_DEFAULT) : m_encoding(e), std::string(s, n) {}
+    LiVESString(size_t n, char c, lives_char_encoding_t e=LIVES_CHAR_ENCODING_DEFAULT) : m_encoding(e), std::string(n, c) {}
     template <class InputIterator>
     LiVESString  (InputIterator first, InputIterator last, 
-		  lives_char_encoding_t e=LIVES_CHAR_ENCODING_DEFAULT) : m_encoding(e), std::string(first, last) {};
+		  lives_char_encoding_t e=LIVES_CHAR_ENCODING_DEFAULT) : m_encoding(e), std::string(first, last) {}
 
     /**
        Change the character encoding of the string.
@@ -535,8 +531,9 @@ namespace lives {
 
 #ifndef DOXYGEN_SKIP
     // For internal use only.
-    closureList closures();
+    closureList& closures();
     void invalidate();
+    void setClosures(closureList cl);
     
     bool setPref(int prefidx, bool val);
     bool setPref(int prefidx, int val);
@@ -544,7 +541,6 @@ namespace lives {
 
   protected:
     ulong addCallback(lives_callback_t cb_type, private_callback_f func, void *data);
-
 
   private:
     ulong m_id;
@@ -578,6 +574,11 @@ namespace lives {
     friend set;
 
   public:
+
+    /**
+       Creates a new, invalid clip
+    */
+    clip();
 
     /**
        Check if clip is valid. 
@@ -710,14 +711,14 @@ namespace lives {
        @return true if the two clips have the same unique_id, and belong to the same livesApp.
     */
     inline bool operator==(const clip& other) {
-      return other.m_uid == m_uid && m_lives.get() == other.m_lives.get();
+      return other.m_uid == m_uid && m_lives == other.m_lives;
     }
 
   protected:
     clip(ulong uid, livesApp *lives=NULL);
 
   private:
-    livesAppSharedPtr m_lives;
+    livesApp *m_lives;
     ulong m_uid;
 
   };
@@ -792,7 +793,7 @@ namespace lives {
        @return true if the two sets belong to the same livesApp.
     */
     inline bool operator==(const set& other) {
-      return other.m_lives.get() == m_lives.get();
+      return other.m_lives == m_lives;
     }
 
 
@@ -803,7 +804,7 @@ namespace lives {
     void setName(const char *setname);
 
   private:
-    livesAppSharedPtr m_lives;
+    livesApp *m_lives;
     clipList m_clips;
     
     //list<layout *>layouts;
@@ -857,7 +858,7 @@ namespace lives {
        @return true if the two players belong to the same livesApp.
     */
     inline bool operator==(const player& other) {
-      return other.m_lives.get() == m_lives.get();
+      return other.m_lives == m_lives;
     }
 
 
@@ -866,7 +867,7 @@ namespace lives {
     player(livesApp *lives);
 
   private:
-    livesAppSharedPtr m_lives;
+    livesApp *m_lives;
 
   };
 
@@ -962,16 +963,15 @@ namespace lives {
        @return true if the two effectKeys have the same livesApp and key value and belong to the same livesApp
     */
     inline bool operator==(const effectKey& other) {
-      return other.m_key == m_key && m_lives.get() == other.m_lives.get();
+      return other.m_key == m_key && m_lives == other.m_lives;
     }
 
   protected:
     effectKey(livesApp *lives, int key);
-    effectKey(livesAppSharedPtr lives, int key);
 
   private:
     int m_key;
-    livesAppSharedPtr m_lives;
+    livesApp *m_lives;
 
   };
 
@@ -1023,7 +1023,7 @@ namespace lives {
 	 @return true if the two effectKeyMaps have the same livesApp
       */
       inline bool operator==(const effectKeyMap& other) {
-	return other.m_lives.get() == m_lives.get();
+	return other.m_lives == m_lives;
       }
 
       /**
@@ -1041,7 +1041,7 @@ namespace lives {
       effectKeyMap(livesApp *lives);
 
     private:
-      livesAppSharedPtr m_lives;
+      livesApp *m_lives;
     };
 
 
@@ -1079,13 +1079,13 @@ namespace lives {
        @return true if the two effects have the same index and the same livesApp owner
     */
     inline bool operator==(const effect& other) {
-      return other.m_idx == m_idx && m_lives.get() == other.m_lives.get();
+      return other.m_idx == m_idx && m_lives == other.m_lives;
     }
 
 
   protected:
     effect();
-    livesAppSharedPtr m_lives;
+    livesApp *m_lives;
     int m_idx;
 
   private:

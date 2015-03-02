@@ -656,7 +656,13 @@ void on_open_sel_activate (LiVESMenuItem *menuitem, livespointer user_data) {
 
   fname=lives_file_chooser_get_filename (LIVES_FILE_CHOOSER(chooser));
 
-  if (fname==NULL) return;
+  if (fname==NULL) {
+    if (mainw->multitrack!=NULL) {
+      mt_sensitise(mainw->multitrack);
+      mainw->multitrack->idlefunc=mt_idle_add(mainw->multitrack);
+    }
+    return;
+  }
 
   lives_snprintf(file_name,PATH_MAX,"%s",(tmp=lives_filename_to_utf8(fname,-1,NULL,NULL,NULL)));
   lives_free(tmp); lives_free(fname);
@@ -7974,9 +7980,9 @@ void on_open_new_audio_clicked (LiVESFileChooser *chooser, livespointer user_dat
   // open audio file
   // also called from osc.c
 
-  gchar *a_type;
-  gchar *com,*mesg,*tmp;
-  gchar **array;
+  char *a_type;
+  char *com,*mesg,*tmp;
+  char **array;
 
   int oundo_start;
   int oundo_end;
@@ -7993,6 +7999,10 @@ void on_open_new_audio_clicked (LiVESFileChooser *chooser, livespointer user_dat
 	lives_list_free_strings(mainw->xlays);
 	lives_list_free(mainw->xlays);
 	mainw->xlays=NULL;
+	if (mainw->multitrack!=NULL) {
+	  mt_sensitise(mainw->multitrack);
+	  mainw->multitrack->idlefunc=mt_idle_add(mainw->multitrack);
+	}
 	return;
       }
       add_lmap_error(LMAP_ERROR_DELETE_AUDIO,cfile->name,(livespointer)cfile->layout_map,mainw->current_file,0,0.,
@@ -8010,6 +8020,10 @@ void on_open_new_audio_clicked (LiVESFileChooser *chooser, livespointer user_dat
       lives_list_free_strings(mainw->xlays);
       lives_list_free(mainw->xlays);
       mainw->xlays=NULL;
+      if (mainw->multitrack!=NULL) {
+	mt_sensitise(mainw->multitrack);
+	mainw->multitrack->idlefunc=mt_idle_add(mainw->multitrack);
+      }
       return;
     }
     add_lmap_error(LMAP_ERROR_ALTER_AUDIO,cfile->name,(livespointer)cfile->layout_map,mainw->current_file,0,0.,
@@ -8032,7 +8046,7 @@ void on_open_new_audio_clicked (LiVESFileChooser *chooser, livespointer user_dat
   oundo_end=cfile->undo_end;
 
   if (user_data==NULL) {
-    gchar *filename=lives_file_chooser_get_filename(chooser);
+    char *filename=lives_file_chooser_get_filename(chooser);
     lives_snprintf(file_name,PATH_MAX,"%s",(tmp=lives_filename_to_utf8(filename,-1,NULL,NULL,NULL)));
     lives_free(filename);
     lives_free(tmp);
@@ -8061,6 +8075,10 @@ void on_open_new_audio_clicked (LiVESFileChooser *chooser, livespointer user_dat
   else {
     do_audio_import_error();
     mainw->noswitch=FALSE;
+    if (mainw->multitrack!=NULL) {
+      mt_sensitise(mainw->multitrack);
+      mainw->multitrack->idlefunc=mt_idle_add(mainw->multitrack);
+    }
     return;
   }
 
@@ -8108,6 +8126,10 @@ void on_open_new_audio_clicked (LiVESFileChooser *chooser, livespointer user_dat
     cfile->undo_start=oundo_start;
     cfile->undo_end=oundo_end;
     sensitize();
+    if (mainw->multitrack!=NULL) {
+      mt_sensitise(mainw->multitrack);
+      mainw->multitrack->idlefunc=mt_idle_add(mainw->multitrack);
+    }
     reget_afilesize(mainw->current_file);
     get_play_times();
     mainw->noswitch=FALSE;
@@ -8142,6 +8164,10 @@ void on_open_new_audio_clicked (LiVESFileChooser *chooser, livespointer user_dat
     cfile->undo_start=oundo_start;
     cfile->undo_end=oundo_end;
     sensitize();
+    if (mainw->multitrack!=NULL) {
+      mt_sensitise(mainw->multitrack);
+      mainw->multitrack->idlefunc=mt_idle_add(mainw->multitrack);
+    }
     reget_afilesize(mainw->current_file);
     get_play_times();
     mainw->noswitch=FALSE;
@@ -8188,6 +8214,10 @@ void on_open_new_audio_clicked (LiVESFileChooser *chooser, livespointer user_dat
     cfile->undo_start=oundo_start;
     cfile->undo_end=oundo_end;
     sensitize();
+    if (mainw->multitrack!=NULL) {
+      mt_sensitise(mainw->multitrack);
+      mainw->multitrack->idlefunc=mt_idle_add(mainw->multitrack);
+    }
     reget_afilesize(mainw->current_file);
     get_play_times();
     mainw->noswitch=FALSE;
@@ -8220,6 +8250,10 @@ void on_open_new_audio_clicked (LiVESFileChooser *chooser, livespointer user_dat
     cfile->undo_start=oundo_start;
     cfile->undo_end=oundo_end;
     sensitize();
+    if (mainw->multitrack!=NULL) {
+      mt_sensitise(mainw->multitrack);
+      mainw->multitrack->idlefunc=mt_idle_add(mainw->multitrack);
+    }
     reget_afilesize(mainw->current_file);
     get_play_times();
     mainw->noswitch=FALSE;
@@ -8229,6 +8263,10 @@ void on_open_new_audio_clicked (LiVESFileChooser *chooser, livespointer user_dat
   if (!do_auto_dialog(_("Committing audio"),0)) {
     //cfile->may_be_damaged=TRUE;
     d_print_failed();
+    if (mainw->multitrack!=NULL) {
+      mt_sensitise(mainw->multitrack);
+      mainw->multitrack->idlefunc=mt_idle_add(mainw->multitrack);
+    }
     return;
   }
 
@@ -8262,8 +8300,13 @@ void on_open_new_audio_clicked (LiVESFileChooser *chooser, livespointer user_dat
   switch_to_file (mainw->current_file,mainw->current_file);
 
   mainw->noswitch=FALSE;
-}
 
+  if (mainw->multitrack!=NULL) {
+    mt_sensitise(mainw->multitrack);
+    mainw->multitrack->idlefunc=mt_idle_add(mainw->multitrack);
+  }
+
+}
 
 
 
@@ -10854,6 +10897,10 @@ void on_append_audio_activate (LiVESMenuItem *menuitem, livespointer user_data) 
   }
   else {
     do_audio_import_error();
+    if (mainw->multitrack!=NULL) {
+      mt_sensitise(mainw->multitrack);
+      mainw->multitrack->idlefunc=mt_idle_add(mainw->multitrack);
+    }
     return;
   }
 
@@ -10866,7 +10913,13 @@ void on_append_audio_activate (LiVESMenuItem *menuitem, livespointer user_data) 
   lives_system (com,FALSE);
   lives_free (com);
 
-  if (mainw->com_failed) return;
+  if (mainw->com_failed) {
+    if (mainw->multitrack!=NULL) {
+      mt_sensitise(mainw->multitrack);
+      mainw->multitrack->idlefunc=mt_idle_add(mainw->multitrack);
+    }
+    return;
+  }
 
   if (!do_progress_dialog (TRUE, TRUE,_ ("Appending audio"))) {
     lives_widget_queue_draw(mainw->LiVES);
@@ -10885,6 +10938,10 @@ void on_append_audio_activate (LiVESMenuItem *menuitem, livespointer user_data) 
     reget_afilesize(mainw->current_file);
     get_play_times();
     if (mainw->error) d_print_failed();
+    if (mainw->multitrack!=NULL) {
+      mt_sensitise(mainw->multitrack);
+      mainw->multitrack->idlefunc=mt_idle_add(mainw->multitrack);
+    }
     return;
   }
 
@@ -10905,6 +10962,10 @@ void on_append_audio_activate (LiVESMenuItem *menuitem, livespointer user_data) 
 
     if (mainw->com_failed) {
       d_print_failed();
+      if (mainw->multitrack!=NULL) {
+	mt_sensitise(mainw->multitrack);
+	mainw->multitrack->idlefunc=mt_idle_add(mainw->multitrack);
+      }
       return;
     }
 
@@ -10925,6 +10986,11 @@ void on_append_audio_activate (LiVESMenuItem *menuitem, livespointer user_data) 
   }
   cfile->undo_action=UNDO_APPEND_AUDIO;
   set_undoable (_("Append Audio"),!prefs->conserve_space);
+
+  if (mainw->multitrack!=NULL) {
+    mt_sensitise(mainw->multitrack);
+    mainw->multitrack->idlefunc=mt_idle_add(mainw->multitrack);
+  }
 }
 
 

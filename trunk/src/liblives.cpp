@@ -216,6 +216,7 @@ namespace lives {
     appMgr.push_back(ctx);
 
     m_set = new set(this);
+    m_player = new player(this);
     m_effectKeyMap = new effectKeyMap(this);
 
     real_main(argc, argv, id);
@@ -269,6 +270,11 @@ namespace lives {
   }
 
 
+  const player& livesApp::currentPlayer() {
+    return *m_player;
+  }
+
+
   ulong livesApp::appendClosure(lives_callback_t cb_type, callback_f func, void *data) {
     closure *cl = new closure;
     cl->id = lives_random();
@@ -311,18 +317,6 @@ namespace lives {
       ++it;
     }
     return false;
-  }
-
-
-  bool livesApp::play() {
-    if (!isValid()) return false;
-    return play_thread();
-  }
-
-  bool livesApp::stop() {
-    if (!isValid()) return FALSE;
-    // return false if we are not playing
-    return lives_osc_cb_stop(NULL, 0, NULL, OSCTT_CurrentTime(), NULL);
   }
 
 
@@ -537,21 +531,44 @@ namespace lives {
   }
 #endif
 
+  //////////////// player ////////////////////
+
+  player::player(livesApp *lives) {
+    // make shared ptr
+    m_lives = livesAppSharedPtr(lives);
+  }
+
+
+  bool player::isValid() {
+    return m_lives->isValid();
+  }
+
+
+  bool player::play() {
+    if (!isValid()) return false;
+    return play_thread();
+  }
+
+  bool player::stop() {
+    if (!isValid()) return FALSE;
+    // return false if we are not playing
+    return lives_osc_cb_stop(NULL, 0, NULL, OSCTT_CurrentTime(), NULL);
+  }
+
+
+
+
   //////////////// set ////////////////////
 
-  set::set() {
-
-
-  }
 
   set::set(livesApp *lives) {
     // make shared ptr
-    m_lives = livesAppPtr(lives);
+    m_lives = livesAppSharedPtr(lives);
   }
 
 
   bool set::isValid() {
-    return m_lives.use_count() > 0 && m_lives->isValid();
+    return m_lives->isValid();
   }
 
 
@@ -644,7 +661,7 @@ namespace lives {
 
   clip::clip(ulong uid, livesApp *lives) {
     m_uid = uid;
-    m_lives = livesAppPtr(lives);
+    m_lives = livesAppSharedPtr(lives);
   }
 
   bool clip::isValid() {
@@ -798,7 +815,7 @@ namespace lives {
 
   //// effectKeyMap
   effectKeyMap::effectKeyMap(livesApp *lives) {
-    m_lives = livesAppPtr(lives);
+    m_lives = livesAppSharedPtr(lives);
   }
 
 
@@ -806,6 +823,15 @@ namespace lives {
     return m_lives->isValid();
   }
 
+
+  effectKey effectKeyMap::at(int i) {
+    return (*this)[i];
+  }
+
+  size_t effectKeyMap::size() {
+    if (!isValid()) return 0;
+    return (size_t) prefs::rteKeysVirtual(*(m_lives.get()));
+  }
 
   bool effectKeyMap::clear() {
     if (!isValid()) return false;
@@ -831,34 +857,127 @@ namespace lives {
   /////////////////////////////////////////////////
 
   /// effectKey
-  effectKey::effectKey(livesApp *lives) {
-    m_lives = livesAppPtr(lives);
+  effectKey::effectKey(livesApp *lives, int key) {
+    m_lives = livesAppSharedPtr(lives);
+    m_key = key;
+  }
+
+  effectKey::effectKey(livesAppSharedPtr lives, int key) {
+    m_lives = lives;
+    m_key = key;
   }
 
   bool effectKey::isValid() {
-    return m_lives->isValid();
+    return m_lives->isValid() && m_key >= 1 && m_key <= prefs::rteKeysVirtual(*(m_lives.get()));
   }
   
 
-  ////////////////////////////////////////////////////////
-
-  //// effect
-  effect::effect() {
-    m_idx = -1;
+  int effectKey::numModes() {
+    if (!isValid()) return 0;
+    return ::prefs->max_modes_per_key;
   }
+
+  int effectKey::numMappedModes() {
+    if (!isValid()) return 0;
+    return get_num_mapped_modes_for_key(m_key);
+  }
+
+
+  int effectKey::mode() {
+    if (!isValid()) return -1;
+    return get_current_mode_for_key(m_key);
+  }
+
+  bool effectKey::enabled() {
+    if (!isValid()) return false;
+    return get_rte_key_is_enabled(m_key);
+  }
+
+
+  int effectKey::setMode(int new_mode) {
+    if (!isValid()) return -1;
+    if (new_mode < 0 || new_mode >= numMappedModes()) return mode();
+
+    if (new_mode == mode()) return new_mode;
+
+    spinning = true;
+    msg_id = lives_random();
+    ulong cbid = m_lives->addCallback(LIVES_CALLBACK_PRIVATE, private_cb, NULL);
+    
+    if (!idle_fx_setmode(m_key, new_mode, msg_id)) {
+      spinning = false;
+      m_lives->removeCallback(cbid);
+      return mode();
+    }
+    while (spinning) usleep(100);
+    if (isValid()) {
+      bool ret = (bool)atoi(private_response);
+      lives_free(private_response);
+    }
+    return mode();
+  }
+
+
+
+  bool effectKey::setEnabled(bool setting) {
+    if (!isValid()) return false;
+
+    spinning = true;
+    msg_id = lives_random();
+    ulong cbid = m_lives->addCallback(LIVES_CALLBACK_PRIVATE, private_cb, NULL);
+    
+    if (!idle_fx_enable(m_key, setting,  msg_id)) {
+      spinning = false;
+      m_lives->removeCallback(cbid);
+      return enabled();
+    }
+    while (spinning) usleep(100);
+    if (isValid()) {
+      bool ret = (bool)atoi(private_response);
+      lives_free(private_response);
+    }
+    return enabled();
+  }
+
+
+
+  int effectKey::appendMapping(effect fx) {
+    if (!isValid()) return -1;
+    if (!fx.isValid()) return -1;
+
+    if (fx.m_lives.get() != m_lives.get()) return -1;
+
+    int mode = numMappedModes();
+    if (mode == numModes()) return -1;
+
+    spinning = true;
+    msg_id = lives_random();
+    ulong cbid = m_lives->addCallback(LIVES_CALLBACK_PRIVATE, private_cb, NULL);
+    
+    if (!idle_map_fx(m_key, mode, fx.m_idx, msg_id)) {
+      spinning = false;
+      m_lives->removeCallback(cbid);
+      return -1;
+    }
+    while (spinning) usleep(100);
+    if (isValid()) {
+      bool ret = (bool)atoi(private_response);
+      lives_free(private_response);
+      if (ret) return mode;
+    }
+    return -1;
+  }
+
+  ////////////////////////////////////////////////////////
 
   effect::effect(livesApp& lives, LiVESString hashname) {
     // TODO
-    m_lives = livesAppPtr(&lives);
+    m_lives = livesAppSharedPtr(&lives);
   }
 
   effect::effect(livesApp& lives, const char *package, const char *fxname, const char *author, int version) {
     m_idx = get_first_fx_matched(package, fxname, author, version);
-    m_lives = livesAppPtr(&lives);
-  }
-
-  void effect::invalidate() {
-    m_idx = -1;
+    m_lives = livesAppSharedPtr(&lives);
   }
 
   bool effect::isValid() {
@@ -870,31 +989,31 @@ namespace lives {
   
 
   namespace prefs {
-    LiVESString currentVideoLoadDir(livesApp lives) {
+    LiVESString currentVideoLoadDir(livesApp &lives) {
       LiVESString str(mainw->vid_load_dir, LIVES_CHAR_ENCODING_UTF8);
       return str;
     }
 
-    LiVESString currentAudioDir(livesApp lives) {
+    LiVESString currentAudioDir(livesApp &lives) {
       LiVESString str(mainw->audio_dir, LIVES_CHAR_ENCODING_UTF8);
       return str;
     }
 
-    LiVESString tmpDir(livesApp lives) {
+    LiVESString tmpDir(livesApp &lives) {
       LiVESString str(::prefs->tmpdir, LIVES_CHAR_ENCODING_FILESYSTEM);
       return str;
     }
 
-    lives_audio_source_t audioSource(livesApp lives) {
+    lives_audio_source_t audioSource(livesApp &lives) {
       if (::prefs->audio_src == AUDIO_SRC_EXT) return LIVES_AUDIO_SOURCE_EXTERNAL;
       return LIVES_AUDIO_SOURCE_INTERNAL;
     }
 
-    bool setAudioSource(livesApp lives, lives_audio_source_t asrc) {
+    bool setAudioSource(livesApp &lives, lives_audio_source_t asrc) {
       return lives.setPref(PREF_REC_EXT_AUDIO, (bool)(asrc==LIVES_AUDIO_SOURCE_EXTERNAL));
     }
 
-    lives_audio_player_t audioPlayer(livesApp lives) {
+    lives_audio_player_t audioPlayer(livesApp &lives) {
       if (::prefs->audio_player == AUD_PLAYER_SOX) return LIVES_AUDIO_PLAYER_SOX;
       if (::prefs->audio_player == AUD_PLAYER_JACK) return LIVES_AUDIO_PLAYER_JACK;
       if (::prefs->audio_player == AUD_PLAYER_PULSE) return LIVES_AUDIO_PLAYER_PULSE;
@@ -902,7 +1021,9 @@ namespace lives {
       if (::prefs->audio_player == AUD_PLAYER_MPLAYER2) return LIVES_AUDIO_PLAYER_MPLAYER2;
     }
 
-
+    int rteKeysVirtual(livesApp &lives) {
+      return ::prefs->rte_keys_virtual;
+    }
 
   }
 

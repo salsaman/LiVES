@@ -810,7 +810,7 @@ static void lives_init(_ign_opts *ign_opts) {
   mainw->internal_messaging=FALSE;
   mainw->progress_fn=NULL;
 
-  mainw->last_grabable_effect=-1;
+  mainw->last_grabbable_effect=-1;
   mainw->blend_file=-1;
 
   mainw->pre_src_file=-2;

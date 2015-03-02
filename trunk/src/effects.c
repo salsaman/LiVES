@@ -1081,7 +1081,7 @@ boolean rte_on_off_callback (LiVESAccelGroup *group, LiVESObject *obj, uint32_t 
       if (!mainw->gen_started_play) {
 	if (!(mainw->rte&new_rte)) mainw->rte|=new_rte;
 
-	mainw->last_grabable_effect=key-1;
+	mainw->last_grabbable_effect=key-1;
 	if (rte_window!=NULL) rtew_set_keych(key-1,TRUE);
 	if (mainw->ce_thumbs) {
 	  ce_thumbs_set_keych(key-1,TRUE);
@@ -1138,8 +1138,8 @@ boolean rte_on_off_callback_hook (LiVESToggleButton *button, livespointer user_d
 
 
 boolean grabkeys_callback (LiVESAccelGroup *group, LiVESObject *obj, uint32_t keyval, LiVESXModifierType mod, livespointer user_data) {
-  // assign the keys to the last key-grabable effect 
-  mainw->rte_keys=mainw->last_grabable_effect;
+  // assign the keys to the last key-grabbable effect 
+  mainw->rte_keys=mainw->last_grabbable_effect;
   mainw->osc_block=TRUE;
   if (rte_window!=NULL) {
     if (group!=NULL) rtew_set_keygr(mainw->rte_keys);
@@ -1161,7 +1161,7 @@ boolean textparm_callback (LiVESAccelGroup *group, LiVESObject *obj, uint32_t ke
 
 boolean grabkeys_callback_hook (LiVESToggleButton *button, livespointer user_data) {
   if (!lives_toggle_button_get_active(button)) return TRUE;
-  mainw->last_grabable_effect=LIVES_POINTER_TO_INT(user_data);
+  mainw->last_grabbable_effect=LIVES_POINTER_TO_INT(user_data);
   grabkeys_callback (NULL, NULL, 0, (LiVESXModifierType)0, user_data);
   return TRUE;
 }

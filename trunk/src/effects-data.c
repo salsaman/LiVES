@@ -52,7 +52,7 @@ static gchar *lctext;
 
 static void switch_fx_state(int okey, int hotkey) {
   // switch effect state when a connection to ACTIVATE is present
-  uint32_t last_grabable_effect=mainw->last_grabable_effect;
+  uint32_t last_grabbable_effect=mainw->last_grabbable_effect;
   // use -hotkey to indicate auto
 
   filter_mutex_unlock(hotkey-1);
@@ -60,7 +60,7 @@ static void switch_fx_state(int okey, int hotkey) {
 
   rte_on_off_callback_hook(NULL,LIVES_INT_TO_POINTER(-hotkey));
 
-  mainw->last_grabable_effect=last_grabable_effect;
+  mainw->last_grabbable_effect=last_grabbable_effect;
 
 }
 

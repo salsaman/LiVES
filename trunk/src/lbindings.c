@@ -58,6 +58,14 @@ typedef struct {
 
 
 typedef struct {
+  ulong id;
+  int key;
+  int mode;
+  int idx;
+} fxmapdata;
+
+
+typedef struct {
   // boolean pref
   ulong id;
   int prefidx;
@@ -215,6 +223,21 @@ int get_first_fx_matched(const char *package, const char *fxname, const char *au
 }
 
 
+// 1 based key here
+int get_num_mapped_modes_for_key(int key) {
+  return rte_key_getmaxmode(key)+1;
+}
+
+
+int get_current_mode_for_key(int key) {
+  return rte_key_getmode(key);
+}
+
+
+boolean get_rte_key_is_enabled(int key) {
+  return rte_key_is_enabled(key);
+}
+
 
 //// interface callers
 
@@ -361,6 +384,65 @@ static boolean call_unmap_effects(livespointer data) {
   ulong id=(ulong)data;
   on_clear_all_clicked(NULL,NULL);
   ext_caller_return_int(id,TRUE);
+  return FALSE;
+}
+
+
+static boolean call_map_effect(livespointer data) {
+  fxmapdata *fxdata=(fxmapdata *)data;
+  char *hashname=make_weed_hashname(fxdata->idx,TRUE,FALSE);
+  int error=rte_switch_keymode(fxdata->key,fxdata->mode,hashname);
+  ext_caller_return_int(fxdata->id,(error==0));
+  return FALSE;
+}
+
+
+static boolean call_fx_setmode(livespointer data) {
+  fxmapdata *fxdata=(fxmapdata *)data;
+  boolean ret=rte_key_setmode(fxdata->key,fxdata->mode);
+  ext_caller_return_int(fxdata->id,(int)ret);
+  return FALSE;
+}
+
+
+
+static boolean call_fx_enable(livespointer data) {
+  fxmapdata *fxdata=(fxmapdata *)data;
+  boolean nstate=(boolean)fxdata->mode;
+  boolean ret;
+
+  int grab=mainw->last_grabbable_effect;
+
+  int effect_key=fxdata->key;
+
+  if (nstate) {
+    // fx is on
+    if (!(mainw->rte&(GU641<<(effect_key-1)))) {
+      weed_plant_t *filter=rte_keymode_get_filter(effect_key,rte_key_getmode(effect_key));
+      if (filter==NULL) ret=FALSE;
+      else {
+	int count=enabled_in_channels(filter, FALSE);
+	if (mainw->playing_file==-1&&count==0) {
+	  // return value first because...
+	  ext_caller_return_int(fxdata->id,(int)TRUE);
+	  // ...we are going to hang here until playback ends
+	  ret=rte_on_off_callback_hook(NULL,LIVES_INT_TO_POINTER(effect_key));
+	  return FALSE;
+	}
+	else {
+	  ret=rte_on_off_callback_hook(NULL,LIVES_INT_TO_POINTER(effect_key));
+	  mainw->last_grabbable_effect=grab;
+	}
+      }
+    }
+  }
+  else {
+    if (mainw->rte&(GU641<<(effect_key-1))) {
+      ret=rte_on_off_callback_hook(NULL,LIVES_INT_TO_POINTER(effect_key));
+    }
+  }
+
+  ext_caller_return_int(fxdata->id,(int)ret);
   return FALSE;
 }
 
@@ -513,6 +595,59 @@ boolean idle_set_interactive(boolean setting, ulong id) {
   lives_idle_add(call_set_interactive,(livespointer)data);
   return TRUE;
 }
+
+
+
+boolean idle_map_fx(int key, int mode, int idx, ulong id) {
+  fxmapdata *data=(fxmapdata *)lives_malloc(sizeof(fxmapdata));
+
+  if (mainw->preview||mainw->go_away||mainw->is_processing) {
+    return FALSE;
+  }
+
+  data->key=key;
+  data->mode=mode;
+  data->idx=idx;
+  data->id=id;
+  lives_idle_add(call_map_effect,(livespointer)data);
+  return TRUE;
+}
+
+
+
+boolean idle_fx_setmode(int key, int mode, ulong id) {
+  fxmapdata *data=(fxmapdata *)lives_malloc(sizeof(fxmapdata));
+
+  if (mainw->preview||mainw->go_away||mainw->is_processing) {
+    return FALSE;
+  }
+
+  data->key=key;
+  data->mode=mode;
+  data->id=id;
+
+  lives_idle_add(call_fx_setmode,(livespointer)data);
+  return TRUE;
+}
+
+
+
+boolean idle_fx_enable(int key, boolean setting, ulong id) {
+  fxmapdata *data=(fxmapdata *)lives_malloc(sizeof(fxmapdata));
+
+  if (mainw->preview||mainw->go_away||mainw->is_processing) {
+    return FALSE;
+  }
+
+  data->key=key;
+  data->mode=setting;
+  data->id=id;
+
+  lives_idle_add(call_fx_enable,(livespointer)data);
+  return TRUE;
+}
+
+
 
 
 boolean idle_set_pref_bool(int prefidx, boolean val, ulong id) {

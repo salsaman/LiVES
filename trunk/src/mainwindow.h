@@ -401,7 +401,7 @@ typedef struct {
 
   uint64_t rte; ///< current max for VJ mode == 64 effects on fg clip
 
-  uint32_t last_grabable_effect;
+  uint32_t last_grabbable_effect;
   int rte_keys; ///< which effect is bound to keyboard
   int num_tr_applied; ///< number of transitions active
   double blend_factor; ///< keyboard control parameter

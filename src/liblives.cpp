@@ -286,6 +286,11 @@ namespace lives {
     return cl->id;
   }
 
+  void livesApp::setClosures(closureList cl) {
+    m_closures = cl;
+  }
+
+
   ulong livesApp::addCallback(lives_callback_t cb_type, modeChanged_callback_f func, void *data) {
     if (cb_type != LIVES_CALLBACK_MODE_CHANGED) return 0l;
     return appendClosure(cb_type, (callback_f)func, data);
@@ -365,7 +370,7 @@ namespace lives {
       while (spinning) usleep(100);
       if (isValid()) {
 	// last 2 chars are " " and %d (deinterlace choice)
-	LiVESString str(private_response, strlen(private_response - 2), LIVES_CHAR_ENCODING_FILESYSTEM);
+	LiVESString str(private_response, strlen(private_response) - 2, LIVES_CHAR_ENCODING_FILESYSTEM);
 	m_deinterlace = (bool)atoi(private_response + strlen(private_response) - 2);
 	lives_free(private_response);
 	return str;
@@ -462,7 +467,7 @@ namespace lives {
     return LIVES_STATUS_READY;
   }
 
-  closureList livesApp::closures() {
+  closureList& livesApp::closures() {
     return m_closures;
   }
 
@@ -535,7 +540,7 @@ namespace lives {
 
   player::player(livesApp *lives) {
     // make shared ptr
-    m_lives = livesAppSharedPtr(lives);
+    m_lives = lives;
   }
 
 
@@ -563,7 +568,7 @@ namespace lives {
 
   set::set(livesApp *lives) {
     // make shared ptr
-    m_lives = livesAppSharedPtr(lives);
+    m_lives = lives;
   }
 
 
@@ -589,7 +594,7 @@ namespace lives {
     if (!isValid()) return clip(0l);
     update_clip_list();
     if (n >= m_clips.size()) return clip(0l);
-    return clip(m_clips[n], m_lives.get());
+    return clip(m_clips[n], m_lives);
   }
 
 
@@ -659,9 +664,11 @@ namespace lives {
   /////////////// clip ////////////////
 
 
+  clip::clip() : m_uid(0l) {};
+
   clip::clip(ulong uid, livesApp *lives) {
     m_uid = uid;
-    m_lives = livesAppSharedPtr(lives);
+    m_lives = lives;
   }
 
   bool clip::isValid() {
@@ -815,7 +822,7 @@ namespace lives {
 
   //// effectKeyMap
   effectKeyMap::effectKeyMap(livesApp *lives) {
-    m_lives = livesAppSharedPtr(lives);
+    m_lives = lives;
   }
 
 
@@ -830,7 +837,7 @@ namespace lives {
 
   size_t effectKeyMap::size() {
     if (!isValid()) return 0;
-    return (size_t) prefs::rteKeysVirtual(*(m_lives.get()));
+    return (size_t) prefs::rteKeysVirtual(*m_lives);
   }
 
   bool effectKeyMap::clear() {
@@ -858,17 +865,12 @@ namespace lives {
 
   /// effectKey
   effectKey::effectKey(livesApp *lives, int key) {
-    m_lives = livesAppSharedPtr(lives);
-    m_key = key;
-  }
-
-  effectKey::effectKey(livesAppSharedPtr lives, int key) {
     m_lives = lives;
     m_key = key;
   }
 
   bool effectKey::isValid() {
-    return m_lives->isValid() && m_key >= 1 && m_key <= prefs::rteKeysVirtual(*(m_lives.get()));
+    return m_lives->isValid() && m_key >= 1 && m_key <= prefs::rteKeysVirtual(*(m_lives));
   }
   
 
@@ -945,7 +947,7 @@ namespace lives {
     if (!isValid()) return -1;
     if (!fx.isValid()) return -1;
 
-    if (fx.m_lives.get() != m_lives.get()) return -1;
+    if (fx.m_lives != m_lives) return -1;
 
     int mode = numMappedModes();
     if (mode == numModes()) return -1;
@@ -972,12 +974,12 @@ namespace lives {
 
   effect::effect(livesApp& lives, LiVESString hashname) {
     // TODO
-    m_lives = livesAppSharedPtr(&lives);
+    m_lives = &lives;
   }
 
   effect::effect(livesApp& lives, const char *package, const char *fxname, const char *author, int version) {
     m_idx = get_first_fx_matched(package, fxname, author, version);
-    m_lives = livesAppSharedPtr(&lives);
+    m_lives = &lives;
   }
 
   bool effect::isValid() {
@@ -1061,7 +1063,7 @@ void binding_cb (lives_callback_t cb_type, const char *msgstring, ulong id) {
 	break;
       case LIVES_CALLBACK_APP_QUIT:
 	{
-	  cout << "got app quit !" << endl;
+	  // TODO !! test
 	  lives::appQuitInfo info;
 	  info.signum = atoi(msgstring);
 	  lives::appQuit_callback_f fn = (lives::appQuit_callback_f)((*it)->func);
@@ -1080,11 +1082,9 @@ void binding_cb (lives_callback_t cb_type, const char *msgstring, ulong id) {
 	{
 	  // private event type
 	  lives::_privateInfo info;
-	  char **msgtok = lives_strsplit(msgstring, " ", -1);
-	  info.id = strtoul(msgtok[0],NULL,10);
-	  if (get_token_count(msgstring,' ')==1) info.response=NULL;
-	  else info.response = strdup(msgtok[1]);
-	  lives_strfreev(msgtok);
+	  char *endptr;
+	  info.id = strtoul(msgstring,&endptr,10);
+	  info.response = endptr+1;
 	  lives::private_callback_f fn = (lives::private_callback_f)((*it)->func);
 	  ret = (fn)(&info, (*it)->data);
 	}
@@ -1093,8 +1093,12 @@ void binding_cb (lives_callback_t cb_type, const char *msgstring, ulong id) {
 	continue;
       }
       if (!ret) {
-	//delete *it;
+	delete *it;
 	it = cl.erase(it);
+
+	// for some really bizarre reason cl is only a reference to m_closures and we have to write it back
+	// even though closures() is supposed to be "pass-by-value"...
+	lapp->setClosures(cl);
 	continue;
       }
     }

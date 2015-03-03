@@ -7,6 +7,7 @@
 #include <dlfcn.h>
 #include <errno.h>
 
+
 #ifdef HAVE_SYSTEM_WEED
 #include <weed/weed.h>
 #include <weed/weed-palettes.h>

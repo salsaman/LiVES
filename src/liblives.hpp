@@ -492,6 +492,7 @@ namespace lives {
     */
     bool reloadSet(LiVESString setname);
 
+
     /**
        Change the interactivity of the GUI application.
        Interactivity is via menus and keyboard accelerators
@@ -516,14 +517,24 @@ namespace lives {
 
 
     /**
-       Get the current interface mode of LiVES.
+       Get the current interface mode of the livesApp.
+       If the livesApp is invalid, returns LIVES_INTERFACE_MODE_INVALID.
        @return current mode.
     */
     lives_interface_mode_t mode();
 
 
     /**
-       Get the current operational status of LiVES.
+       Set the current interface mode of the livesApp.
+       Only works if status() is LIVES_STATUS_READY.
+       If the livesApp is invalid, returns LIVES_INTERFACE_MODE_INVALID.
+       @return the new mode.
+    */
+    lives_interface_mode_t setMode(lives_interface_mode_t mode);//, livesMultitrackSettings settings=NULL);
+
+
+    /**
+       Get the current operational status of the livesApp.
        @return current status.
     */
     lives_status_t status();
@@ -833,6 +844,33 @@ namespace lives {
        @return true if the set is valid (associated with a valid livesApp instance).
     */
     bool isValid();
+
+
+    /**
+       Set playback in a detached window.
+       @see setFS
+    */
+    void setSepWin(bool setting);
+
+
+    /**
+       Set playback fullscreen.
+       @see setFS
+    */
+    void setFullScreen(bool setting);
+
+
+    bool sepWin();
+    bool fullScreen();
+
+
+    /**
+       Combines the functionality of setSepWin() and setFullScreen.
+       @see setSepWin()
+       @see setFullScreen()
+    */
+    void setFS(bool setting);
+
 
     /**
        Commence playback of video and audio with the currently selected clip.

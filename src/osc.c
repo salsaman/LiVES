@@ -60,6 +60,7 @@ static boolean osc_playall(livespointer data) {
 static boolean osc_init_generator(livespointer data) {
   // do this via an idle function, as it will trigger playback and hang
   rte_on_off_callback_hook(NULL,data);
+  return FALSE;
 }
 
 
@@ -855,7 +856,6 @@ boolean lives_osc_cb_fx_map(void *context, int arglen, const void *vargs, OSCTim
 
 boolean lives_osc_cb_fx_enable(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
   // if via_shortcut and not playing, we ignore unless a generator starts (which starts playback)
-  boolean new_timer_added=FALSE;
   int count;
   int effect_key;
   int grab=mainw->last_grabbable_effect;

@@ -3,6 +3,9 @@ Version 2.2.9
 Code cleanup.
 Fix timeline start position for gtkgrid widget in multitrack.
 Fix "fade background mode" (b) so it looks nice again.
+Stability fix for expose event during startup.
+Stability fix for mkv_decoder with broken end frames.
+Implement C++ language bindings (liblives).
 
 
 

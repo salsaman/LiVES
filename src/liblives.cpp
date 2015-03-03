@@ -9,23 +9,20 @@
  */
 
 #ifndef DOXYGEN_SKIP
-extern "C" {
-#include <libOSC/libosc.h>
-#include <libOSC/OSC-client.h>
-#include "main.h"
-#include "lbindings.h"
-}
 
+#include "liblives.hpp"
 
 #include <stdlib.h>
 #include <pthread.h>
 #include <unistd.h>
 #include <iostream>
 
-
-#include "liblives.hpp"
-
 extern "C" {
+#include <libOSC/libosc.h>
+#include <libOSC/OSC-client.h>
+#include "main.h"
+#include "lbindings.h"
+
   int real_main(int argc, char *argv[], ulong id);
 
   bool is_big_endian(void);
@@ -222,6 +219,7 @@ namespace lives {
     real_main(argc, argv, id);
     free(argv);
     m_id = id;
+
   }
 
 
@@ -458,6 +456,30 @@ namespace lives {
     return LIVES_INTERFACE_MODE_CLIPEDIT;
   }
 
+
+  lives_interface_mode_t livesApp::setMode(lives_interface_mode_t newmode) {
+    if (!isValid()) return LIVES_INTERFACE_MODE_INVALID;
+    spinning = true;
+    msg_id = lives_random();
+    ulong cbid = addCallback(LIVES_CALLBACK_PRIVATE, private_cb, NULL);
+    
+    if (!idle_set_if_mode(newmode,msg_id)) {
+      spinning = false;
+      removeCallback(cbid);
+      return mode();
+    }
+    while (spinning) usleep(100);
+    if (isValid()) {
+      bool ret = (bool)atoi(private_response);
+      lives_free(private_response);
+    }
+    return mode();
+  }
+
+
+
+
+
   lives_status_t livesApp::status() {
     if (!isValid()) return LIVES_STATUS_INVALID;
     if (mainw->go_away) return LIVES_STATUS_NOTREADY;
@@ -561,6 +583,54 @@ namespace lives {
   }
 
 
+  void player::setSepWin(bool setting) {
+    spinning = true;
+    msg_id = lives_random();
+    ulong cbid = m_lives->addCallback(LIVES_CALLBACK_PRIVATE, private_cb, NULL); 
+    if (!idle_set_sepwin(setting, msg_id)) {
+      spinning = false;
+      m_lives->removeCallback(cbid);
+      return;// false;
+    }
+    while (spinning) usleep(100);
+    if (isValid()) {
+      lives_free(private_response);
+    }
+    return;// true;
+  }
+
+
+  void player::setFullScreen(bool setting) {
+    spinning = true;
+    msg_id = lives_random();
+    ulong cbid = m_lives->addCallback(LIVES_CALLBACK_PRIVATE, private_cb, NULL); 
+    if (!idle_set_fullscreen(setting, msg_id)) {
+      spinning = false;
+      m_lives->removeCallback(cbid);
+      return;// false;
+    }
+    while (spinning) usleep(100);
+    if (isValid()) {
+      lives_free(private_response);
+    }
+    return;// true;
+  }
+
+  void player::setFS(bool setting) {
+    spinning = true;
+    msg_id = lives_random();
+    ulong cbid = m_lives->addCallback(LIVES_CALLBACK_PRIVATE, private_cb, NULL); 
+    if (!idle_set_fullscreen_sepwin(setting, msg_id)) {
+      spinning = false;
+      m_lives->removeCallback(cbid);
+      return;// false;
+    }
+    while (spinning) usleep(100);
+    if (isValid()) {
+      lives_free(private_response);
+    }
+    return;// true;
+  }
 
 
   //////////////// set ////////////////////

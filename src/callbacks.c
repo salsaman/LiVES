@@ -6279,8 +6279,7 @@ void on_open_activate (LiVESMenuItem *menuitem, livespointer user_data) {
     
 
   if (resp==LIVES_RESPONSE_ACCEPT) on_ok_file_open_clicked(LIVES_FILE_CHOOSER(chooser),NULL);
-
-  on_filechooser_cancel_clicked(chooser);
+  else on_filechooser_cancel_clicked(chooser);
 }
 
 

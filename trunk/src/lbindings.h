@@ -30,6 +30,10 @@ boolean idle_unmap_effects(ulong id);
 boolean idle_map_fx(int key, int mode, int idx, ulong id);
 boolean idle_fx_setmode(int key, int mode, ulong id);
 boolean idle_fx_enable(int key, boolean setting, ulong id);
+boolean idle_set_fullscreen_sepwin(boolean setting, ulong id);
+boolean idle_set_fullscreen(boolean setting, ulong id);
+boolean idle_set_sepwin(boolean setting, ulong id);
+boolean idle_set_if_mode(lives_interface_mode_t mode, ulong id);
 
 ulong *get_unique_ids(void);
 int cnum_for_uid(ulong uid);

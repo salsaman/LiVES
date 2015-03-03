@@ -80,6 +80,7 @@
 #endif
 
 
+
 ////////////////////////////////
 capability *capable;
 _palette *palette;
@@ -2834,7 +2835,7 @@ int real_main (int argc, char *argv[], ulong id) {
 #ifdef GUI_GTK
 #ifdef LIVES_NO_DEBUG
   // don't crash on GTK+ fatals
-  g_log_set_always_fatal ((GLogLevelFlags)0);
+  //g_log_set_always_fatal ((GLogLevelFlags)0);
 #endif
 
   g_log_set_default_handler(lives_log_handler,NULL);

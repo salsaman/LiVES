@@ -19,6 +19,8 @@ typedef boolean Boolean;
 #include <libOSC/libosc.h>
 #include <libOSC/OSC-client.h>
 
+
+
 typedef struct {
   ulong id;
   char *msg;
@@ -362,6 +364,41 @@ static boolean call_set_interactive(livespointer data) {
 }
 
 
+static boolean call_set_sepwin(livespointer data) {
+  sintdata *sint = (sintdata *)data;
+  if (mainw->sep_win!=sint->setting)
+    on_sepwin_pressed(NULL,NULL);
+  ext_caller_return_int(sint->id,TRUE);
+  lives_free(sint);
+  return FALSE;
+}
+
+
+
+static boolean call_set_fullscreen(livespointer data) {
+  sintdata *sint = (sintdata *)data;
+  mainw->interactive=sint->setting;
+  if (mainw->fs!=sint->setting)
+    on_full_screen_pressed(NULL,NULL);
+  ext_caller_return_int(sint->id,TRUE);
+  lives_free(sint);
+  return FALSE;
+}
+
+
+static boolean call_set_fullscreen_sepwin(livespointer data) {
+  sintdata *sint = (sintdata *)data;
+  mainw->interactive=sint->setting;
+  if (mainw->sep_win!=sint->setting)
+    on_sepwin_pressed(NULL,NULL);
+  if (mainw->fs!=sint->setting)
+    on_full_screen_pressed(NULL,NULL);
+  ext_caller_return_int(sint->id,TRUE);
+  lives_free(sint);
+  return FALSE;
+}
+
+
 static boolean call_set_pref_bool(livespointer data) {
   bpref *bdata=(bpref *)data;
   pref_factory_bool(bdata->prefidx, bdata->val);
@@ -374,6 +411,20 @@ static boolean call_set_pref_bool(livespointer data) {
 static boolean call_set_pref_int(livespointer data) {
   ipref *idata=(ipref *)data;
   pref_factory_int(idata->prefidx, idata->val);
+  ext_caller_return_int(idata->id,TRUE);
+  lives_free(idata);
+  return FALSE;
+}
+
+
+static boolean call_set_if_mode(livespointer data) {
+  ipref *idata=(ipref *)data;
+  if (idata->val==LIVES_INTERFACE_MODE_CLIPEDIT&&mainw->multitrack!=NULL) {
+    multitrack_delete(mainw->multitrack,FALSE);
+  }
+  if (idata->val==LIVES_INTERFACE_MODE_MULTITRACK&&mainw->multitrack==NULL) {
+    on_multitrack_activate(NULL,NULL);
+  }
   ext_caller_return_int(idata->id,TRUE);
   lives_free(idata);
   return FALSE;
@@ -606,6 +657,33 @@ boolean idle_set_interactive(boolean setting, ulong id) {
 }
 
 
+boolean idle_set_sepwin(boolean setting, ulong id) {
+  sintdata *data=(sintdata *)lives_malloc(sizeof(sintdata));
+  data->id=id;
+  data->setting=setting;
+  lives_idle_add(call_set_sepwin,(livespointer)data);
+  return TRUE;
+}
+
+
+boolean idle_set_fullscreen(boolean setting, ulong id) {
+  sintdata *data=(sintdata *)lives_malloc(sizeof(sintdata));
+  data->id=id;
+  data->setting=setting;
+  lives_idle_add(call_set_fullscreen,(livespointer)data);
+  return TRUE;
+}
+
+
+boolean idle_set_fullscreen_sepwin(boolean setting, ulong id) {
+  sintdata *data=(sintdata *)lives_malloc(sizeof(sintdata));
+  data->id=id;
+  data->setting=setting;
+  lives_idle_add(call_set_fullscreen_sepwin,(livespointer)data);
+  return TRUE;
+}
+
+
 
 boolean idle_map_fx(int key, int mode, int idx, ulong id) {
   fxmapdata *data=(fxmapdata *)lives_malloc(sizeof(fxmapdata));
@@ -687,5 +765,20 @@ boolean idle_set_pref_int(int prefidx, int val, ulong id) {
   data->prefidx=prefidx;
   data->val=val;
   lives_idle_add(call_set_pref_int,(livespointer)data);
+  return TRUE;
+}
+
+
+boolean idle_set_if_mode(lives_interface_mode_t mode, ulong id) {
+  ipref *data;
+
+  if (mainw->preview||mainw->go_away||mainw->is_processing||mainw->playing_file>-1) {
+    return FALSE;
+  }
+
+  data=(ipref *)lives_malloc(sizeof(ipref));
+  data->id=id;
+  data->val=(int)mode;
+  lives_idle_add(call_set_if_mode,(livespointer)data);
   return TRUE;
 }

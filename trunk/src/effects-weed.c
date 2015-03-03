@@ -43,6 +43,7 @@ using namespace cv;
 
 ////////////////////////////////////////////////////////////////////////
 
+
 struct _procvals {
   weed_plant_t *inst;
   weed_timecode_t tc;
@@ -205,6 +206,7 @@ weed_memset_f weedmemset;
 weed_plant_t *weed_bootstrap_func (weed_default_getter_f *value, int num_versions, int *plugin_versions) {
   int host_api_versions_supported[]={131}; // must be ordered in ascending order
   int host_api_version;
+
   weed_plant_t *host_info=weed_plant_new(WEED_PLANT_HOST_INFO);
 
   // these functions are defined in weed-host.h and set in weed_init()

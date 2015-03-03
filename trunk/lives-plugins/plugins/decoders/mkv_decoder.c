@@ -1928,6 +1928,8 @@ static boolean attach_stream(lives_clip_data_t *cdata, boolean isclone) {
   while (!got_picture&&!got_eof) {
     matroska_read_packet(cdata,&priv->avpkt);
     
+    if (got_eof) break;
+
 #if LIBAVCODEC_VERSION_MAJOR >= 52
     avcodec_decode_video2(ctx, priv->picture, &got_picture, &priv->avpkt );
 #else 
@@ -1952,12 +1954,14 @@ static boolean attach_stream(lives_clip_data_t *cdata, boolean isclone) {
 
   matroska_read_packet(cdata,&priv->avpkt);
 
+  if (!got_eof) {
 #if LIBAVCODEC_VERSION_MAJOR >= 52
-  avcodec_decode_video2(ctx, priv->picture, &got_picture, &priv->avpkt );
+    avcodec_decode_video2(ctx, priv->picture, &got_picture, &priv->avpkt );
 #else 
-  avcodec_decode_video(ctx, priv->picture, &got_picture, priv->avpkt.data, priv->avpkt.size );
+    avcodec_decode_video(ctx, priv->picture, &got_picture, priv->avpkt.data, priv->avpkt.size );
 #endif
-  
+  }
+
   if (got_picture) {
     pts=priv->avpkt.pts-pts;
     dts=priv->avpkt.dts-dts;
@@ -2758,6 +2762,7 @@ static index_entry * matroska_read_seek(const lives_clip_data_t *cdata,
   idx=get_idx_for_pts(cdata,timestamp);
 
   matroska_clear_queue(matroska);
+
   priv->input_position=idx->offs;
   lseek(priv->fd,priv->input_position,SEEK_SET);
 
@@ -2870,6 +2875,7 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstride
       idx=matroska_read_seek(cdata,target_pts);
       pthread_mutex_unlock(&priv->idxc->mutex);
       nextframe=dts_to_frame(cdata,idx->dts);
+      if (got_eof) return FALSE; 
       avcodec_flush_buffers (priv->ctx);
 #ifdef DEBUG_KFRAMES
       if (idx!=NULL) printf("got kframe %ld for frame %ld\n",dts_to_frame(cdata,idx->dts),tframe);

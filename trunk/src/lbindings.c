@@ -22,12 +22,14 @@ typedef boolean Boolean;
 
 
 typedef struct {
+  // c
   ulong id;
   char *msg;
 } msginfo;
 
 
 typedef struct {
+  // i,v
   ulong id;
   int arglen;
   const void *vargs;
@@ -35,6 +37,7 @@ typedef struct {
 
 
 typedef struct {
+  // c, d, i
   ulong id;
   char *fname;
   double stime;
@@ -43,6 +46,7 @@ typedef struct {
 
 
 typedef struct {
+  // c, c, i
   ulong id;
   char *dir;
   char *title;
@@ -51,6 +55,7 @@ typedef struct {
 
 
 typedef struct {
+  // b
   ulong id;
   boolean setting;
 } sintdata;
@@ -62,6 +67,7 @@ typedef struct {
 
 
 typedef struct {
+  // i, i, i
   ulong id;
   int key;
   int mode;
@@ -70,6 +76,7 @@ typedef struct {
 
 
 typedef struct {
+  // i, b
   // boolean pref
   ulong id;
   int prefidx;
@@ -78,6 +85,7 @@ typedef struct {
 
 
 typedef struct {
+  // i, i
   // int pref
   ulong id;
   int prefidx;
@@ -85,6 +93,13 @@ typedef struct {
 } ipref;
 
 
+typedef struct {
+  // i, b, b
+  ulong id;
+  int clip;
+  boolean ign_sel;
+  boolean with_audio;
+} iblock;
 
 
 /////////////////////////////////////////
@@ -465,6 +480,35 @@ static boolean call_fx_setmode(livespointer data) {
 }
 
 
+static boolean call_insert_block(livespointer data) {
+  iblock *idata=(iblock *)data;
+  boolean ins_audio;
+  boolean ign_ins_sel;
+
+  ulong block_uid;
+
+  //TODO - check if multitrack still valid
+
+  mainw->multitrack->clip_selected=idata->clip-1;
+  mt_clip_select(mainw->multitrack,TRUE);
+
+  ins_audio=mainw->multitrack->opts.insert_audio;
+  ign_ins_sel=mainw->multitrack->opts.ign_ins_sel;
+
+  mainw->multitrack->opts.insert_audio=idata->with_audio;
+  mainw->multitrack->opts.ign_ins_sel=idata->ign_sel;
+
+  multitrack_insert(NULL,mainw->multitrack);
+
+  mainw->multitrack->opts.ign_ins_sel=ign_ins_sel;
+  mainw->multitrack->opts.insert_audio=ins_audio;
+
+  block_uid=mt_get_last_block_uid(mainw->multitrack);
+  ext_caller_return_ulong(idata->id,block_uid);
+  return FALSE;
+}
+
+
 
 static boolean call_fx_enable(livespointer data) {
   fxmapdata *fxdata=(fxmapdata *)data;
@@ -780,5 +824,24 @@ boolean idle_set_if_mode(lives_interface_mode_t mode, ulong id) {
   data->id=id;
   data->val=(int)mode;
   lives_idle_add(call_set_if_mode,(livespointer)data);
+  return TRUE;
+}
+
+
+boolean idle_insert_block(int clipno, boolean ign_sel, boolean with_audio, ulong id) {
+  iblock *data;
+
+  if (mainw->preview||mainw->go_away||mainw->is_processing||mainw->playing_file>-1) {
+    return FALSE;
+  }
+
+  if (mainw->multitrack==NULL) return FALSE;
+
+  data=(iblock *)lives_malloc(sizeof(iblock));
+  data->id=id;
+  data->clip=clipno;
+  data->ign_sel=ign_sel;
+  data->with_audio=with_audio;
+  lives_idle_add(call_insert_block,(livespointer)data);
   return TRUE;
 }

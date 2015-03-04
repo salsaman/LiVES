@@ -36,6 +36,8 @@ extern "C" {
   bool lives_osc_record_toggle(void *context, int arglen, const void *vargs, OSCTimeTag when, void * ra);
   bool lives_osc_cb_saveset(void *context, int arglen, const void *vargs, OSCTimeTag when, void * ra);
 
+  track_rect *find_block_by_uid(lives_mt *mt, ulong uid);
+
 }
 
 inline int pad4(int val) {
@@ -215,6 +217,7 @@ namespace lives {
     m_set = new set(this);
     m_player = new player(this);
     m_effectKeyMap = new effectKeyMap(this);
+    m_layout = new layout(this);
 
     real_main(argc, argv, id);
     free(argv);
@@ -263,12 +266,12 @@ namespace lives {
   }
 
 
-  const set& livesApp::currentSet() {
+  const set& livesApp::getSet() {
     return *m_set;
   }
 
 
-  const player& livesApp::currentPlayer() {
+  const player& livesApp::getPlayer() {
     return *m_player;
   }
 
@@ -519,7 +522,7 @@ namespace lives {
 
 
 
-  const effectKeyMap& livesApp::currentEffectKeyMap() {
+  const effectKeyMap& livesApp::getEffectKeyMap() {
     return *m_effectKeyMap;
   }
 
@@ -679,6 +682,16 @@ namespace lives {
     return -1;
   }
 
+
+  int set::numLayouts() {
+    return lives_list_length(mainw->current_layouts_map);
+  }
+
+
+  LiVESString set::nthLayoutName(unsigned int n) {
+    if (n < numLayouts()) return LiVESString((const char *)lives_list_nth_data(mainw->current_layouts_map, n), LIVES_CHAR_ENCODING_UTF8);
+    return LiVESString("");
+  }
 
 
   bool set::save(LiVESString name, bool force_append) {
@@ -867,7 +880,7 @@ namespace lives {
   }
 
 
-  bool clip::setAsBackground() {
+  bool clip::setIsBackground() {
     if (!isValid()) return false;
     spinning = true;
     msg_id = lives_random();
@@ -1056,6 +1069,96 @@ namespace lives {
     return (m_idx != -1 && m_lives->isValid());
   }
 
+  ///////////////////////////////
+  //// block
+
+  block::block(ulong uid) : m_uid(uid) {}
+
+
+  block::block(int track, double time) {
+    if (mainw->multitrack == NULL) m_uid = 0l;
+    else {
+      track_rect *tr = get_block_from_track_and_time(mainw->multitrack, track, time);
+      if (tr == NULL) m_uid = 0l;
+      else m_uid = tr->uid;
+    }
+  }
+
+  bool block::isValid() {
+    if (find_block_by_uid(mainw->multitrack, m_uid) == NULL) return false;
+    return true;
+  }
+
+  double block::startTime() {
+    track_rect *tr = find_block_by_uid(mainw->multitrack, m_uid);
+    if (tr == NULL) return -1.;
+    return (double)get_event_timecode(tr->start_event)/U_SEC;
+  }
+
+  double block::length() {
+    track_rect *tr = find_block_by_uid(mainw->multitrack, m_uid);
+    if (tr == NULL) return -1.;
+    return (double)get_event_timecode(tr->start_event)/U_SEC - 
+      (double)get_event_timecode(tr->end_event)/U_SEC + 1./mainw->multitrack->fps;
+  }
+
+  clip block::clipSource() {
+    track_rect *tr = find_block_by_uid(mainw->multitrack, m_uid);
+    if (tr == NULL) return clip(0l);
+    int cnum = get_clip_for_block(tr);
+    if (cnum == -1) return clip(0l);
+    return clip(mainw->files[cnum]->unique_id);
+  }
+
+  int block::track() {
+    track_rect *tr = find_block_by_uid(mainw->multitrack, m_uid);
+    if (tr == NULL) return 0;
+    return get_track_for_block(tr);
+  }
+
+
+
+  ///////////////////////////////////////////////////////////////////
+  /// layout
+
+  layout::layout(livesApp *lives) {
+    m_lives = lives;
+  }
+
+  bool layout::isValid() {
+    return m_lives->m_id != 0l;
+  }
+
+
+  block layout::insertBlock(clip c, bool ign_sel, bool with_audio) {
+    if (mainw->multitrack == NULL) return block(0l);
+    if (!c.isValid()) return block(0l);
+
+    int clipno = cnum_for_uid(c.m_uid);
+
+    spinning = true;
+    msg_id = lives_random();
+    ulong cbid = m_lives->addCallback(LIVES_CALLBACK_PRIVATE, private_cb, NULL); 
+    if (!idle_insert_block(clipno, ign_sel, with_audio, msg_id)) {
+      spinning = false;
+      m_lives->removeCallback(cbid);
+      return block(0l);
+    }
+    while (spinning) usleep(100);
+    if (isValid()) {
+      ulong uid = strtoul(private_response, NULL, 10);
+      lives_free(private_response);
+      return block(uid);
+   }
+    return block(0l);
+  }
+
+
+
+
+
+
+  //////////////////////////////////////////////
 
   ////// prefs
   

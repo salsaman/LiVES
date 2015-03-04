@@ -34,6 +34,8 @@ boolean idle_set_fullscreen_sepwin(boolean setting, ulong id);
 boolean idle_set_fullscreen(boolean setting, ulong id);
 boolean idle_set_sepwin(boolean setting, ulong id);
 boolean idle_set_if_mode(lives_interface_mode_t mode, ulong id);
+boolean idle_insert_block(int clipno, boolean ign_sel, boolean with_audio, ulong id);
+
 
 ulong *get_unique_ids(void);
 int cnum_for_uid(ulong uid);

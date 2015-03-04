@@ -2000,17 +2000,28 @@ boolean lives_osc_cb_blockcount(void *context, int arglen, const void *vargs, OS
 
 
 boolean lives_osc_cb_blockinsert(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
+  boolean ins_audio,oins_audio;
+  boolean ign_ins_sel,oign_ins_sel;
+
   int clip;
-  int opt;
 
   char *tmp;
 
   if (mainw->playing_file>-1||mainw->preview||mainw->is_processing||mainw->multitrack==NULL) return lives_osc_notify_failure();
 
+  oins_audio=ins_audio=mainw->multitrack->opts.insert_audio;
+  oign_ins_sel=ign_ins_sel=mainw->multitrack->opts.ign_ins_sel;
+  
+  if (lives_osc_check_arguments (arglen,vargs,"iii",FALSE)) { 
+    lives_osc_check_arguments (arglen,vargs,"iii",TRUE);
+    lives_osc_parse_int_argument(vargs,&clip);
+    lives_osc_parse_int_argument(vargs,&ign_ins_sel);
+    lives_osc_parse_int_argument(vargs,&ins_audio);
+  }
   if (lives_osc_check_arguments (arglen,vargs,"ii",FALSE)) { 
     lives_osc_check_arguments (arglen,vargs,"ii",TRUE);
     lives_osc_parse_int_argument(vargs,&clip);
-    lives_osc_parse_int_argument(vargs,&opt);
+    lives_osc_parse_int_argument(vargs,&ign_ins_sel);
   }
   else if (lives_osc_check_arguments (arglen,vargs,"i",TRUE)) { 
     lives_osc_parse_int_argument(vargs,&clip);
@@ -2022,10 +2033,16 @@ boolean lives_osc_cb_blockinsert(void *context, int arglen, const void *vargs, O
 
   mainw->multitrack->clip_selected=clip-1;
   mt_clip_select(mainw->multitrack,TRUE);
+
+  mainw->multitrack->opts.insert_audio=ins_audio;
+  mainw->multitrack->opts.ign_ins_sel=ign_ins_sel;
+
   multitrack_insert(NULL,mainw->multitrack);
 
-  tmp=lives_strdup_printf("%d|%d",mainw->multitrack->current_track, 
-		      mt_get_last_block_number(mainw->multitrack, mainw->multitrack->current_track));
+  mainw->multitrack->opts.insert_audio=oins_audio;
+  mainw->multitrack->opts.ign_ins_sel=oign_ins_sel;
+
+  tmp=lives_strdup_printf("%ul",mt_get_last_block_uid(mainw->multitrack));
 
   lives_osc_notify_success(tmp);
   lives_free(tmp);

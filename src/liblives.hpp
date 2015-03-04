@@ -225,6 +225,18 @@ namespace lives {
   /**
      typedef
   */
+  typedef class layout layout;
+
+
+  /**
+     typedef
+  */
+  typedef class block block;
+
+
+  /**
+     typedef
+  */
   typedef class LiVESString LiVESString;
 
 
@@ -348,6 +360,8 @@ namespace lives {
     friend effectKeyMap;
     friend effectKey;
     friend player;
+    friend layout;
+    friend block;
 
   public:
     /**
@@ -381,21 +395,28 @@ namespace lives {
        Returns the current set
        @return the current set.
     */
-    const set& currentSet();
+    const set& getSet();
 
 
     /**
        Returns the current effectKeyMap
        @return the current effectKeyMap.
     */
-    const effectKeyMap& currentEffectKeyMap();
+    const effectKeyMap& getEffectKeyMap();
 
 
     /**
        Returns the player for this livesApp.
        @return the player for this livesApp.
     */
-    const player& currentPlayer();
+    const player& getPlayer();
+
+
+    /**
+       Returns the current layout for this livesApp.
+       @return the current layout for this livesApp.
+    */
+    const layout& getCurrentLayout();
 
 
     /**
@@ -493,6 +514,32 @@ namespace lives {
     bool reloadSet(LiVESString setname);
 
 
+
+    LiVESString chooseLayout();
+
+
+    layout reloadLayout(LiVESString filename);
+
+
+    //////////////////// mt type methods /////
+
+    bool setCurrentTrack(int track);
+
+
+    int currentTrack();
+
+
+    LiVESString trackLabel(int track);
+
+
+    int gravity();
+
+
+    int setGravity(int grav); // TODO - use lives_gravity_t
+
+    /////////////////////////////////////////////
+
+
     /**
        Change the interactivity of the GUI application.
        Interactivity is via menus and keyboard accelerators
@@ -559,6 +606,7 @@ namespace lives {
     set * m_set;
     player *m_player;
     effectKeyMap * m_effectKeyMap;
+    layout *m_layout;
 
     bool m_deinterlace;
 
@@ -583,6 +631,8 @@ namespace lives {
   class clip {
     friend livesApp;
     friend set;
+    friend block;
+    friend layout;
 
   public:
 
@@ -701,6 +751,17 @@ namespace lives {
     int selectionEnd();
 
 
+    void selectAll();
+
+
+    bool setSelectionStart(unsigned int start);
+
+
+    bool setSelectionEnd(unsigned int end);
+
+
+
+
     /**
        Switch to this clip as the current foreground clip.
        Only works if status() is LIVES_STATUS_READY or LIVES_STATUS_PLAYING and mode() is LIVES_INTERFACE_MODE_CLIP_EDITOR.
@@ -715,7 +776,7 @@ namespace lives {
        @return true if the switch was successful.
        @see player::setBackgroundClip()
     */
-    bool setAsBackground();
+    bool setIsBackground();
 
 
     /**
@@ -727,10 +788,10 @@ namespace lives {
 
   protected:
     clip(ulong uid, livesApp *lives=NULL);
+    ulong m_uid;
 
   private:
     livesApp *m_lives;
-    ulong m_uid;
 
   };
   
@@ -746,8 +807,8 @@ namespace lives {
 
   /**
      class "set". 
-     Represents a list of clips and/or layouts which are open in LiVES. May be obtained from livesApp::currentSet().
-     @see livesApp::currentSet()
+     Represents a list of clips and/or layouts which are open in LiVES. May be obtained from livesApp::getSet().
+     @see livesApp::getSet()
   */
   class set {
     friend livesApp;
@@ -784,9 +845,8 @@ namespace lives {
     */
     unsigned int numClips();
 
-
     /**
-       Returns the nth clip in the set. If n  >= numClips(), returns an invalid clip. If the set is invalid, returns and invalid clip.
+       Returns the nth clip in the set. If n  >= numClips(), returns an invalid clip. If the set is invalid, returns an invalid clip.
        @return the nth clip in the set.
        @see indexOf()
     */
@@ -794,11 +854,25 @@ namespace lives {
 
     /**
        Returns the index of a clip in the currentSet. If the clip is not in the current set, then -1 is returned.
+       If the set is invalid or the clip is invalid, returns -1.
        @return the index of the clip in the set.
        @see nthClip()
     */
     int indexOf(clip c);
 
+    /**
+       Returns the number of layouts in the set. If the set is invalid, returns -1.
+       @return the number of layouts in the set.
+       @see livesApp::getCurrentLayout().
+    */
+    int numLayouts();
+
+    /**
+       Returns the filename of the nth layout for this set. If n >= numLayouts() or the set is invalid, returns an empty string. 
+       @return the filename of the nth layout for this set.
+       @see livesApp::reloadLayout().
+    */
+    LiVESString nthLayoutName(unsigned int n);
 
     /**
        @return true if the two sets belong to the same livesApp.
@@ -817,8 +891,6 @@ namespace lives {
   private:
     livesApp *m_lives;
     clipList m_clips;
-    
-    //list<layout *>layouts;
 
     void update_clip_list(void);
 
@@ -832,7 +904,7 @@ namespace lives {
   /**
      class "player". 
      Represents a media player associated with a livesApp.
-     @see livesApp::player()
+     @see livesApp::getPlayer()
   */
   class player {
     friend livesApp;
@@ -845,13 +917,11 @@ namespace lives {
     */
     bool isValid();
 
-
     /**
        Set playback in a detached window.
        @see setFS
     */
     void setSepWin(bool setting);
-
 
     /**
        Set playback fullscreen.
@@ -892,6 +962,26 @@ namespace lives {
     bool setBackgroundClip(); // TODO
 
 
+    double setCurrentTime(double time);
+
+
+    double currentTime();
+
+
+    double setCurrentAudioTime(double time);
+
+
+    double currentAudioTime();
+
+
+    double setCurrentFps(double time);
+
+
+    double currentFps();
+
+
+
+
     /**
        @return true if the two players belong to the same livesApp.
     */
@@ -928,7 +1018,6 @@ namespace lives {
     */
     bool isValid();
 
-    
     /**
        Return the number of modes for this effectKey slot. Modes run from 0 to numModes() - 1.
        Effects can be mapped to modes in ascending order, but only one mode is the active mode for the effectKey.
@@ -937,7 +1026,6 @@ namespace lives {
     */
     int numModes();
 
-
     /**
        Return the number of mapped modes for this effectKey slot. Modes run from 0 to numModes() - 1.
        When numMappedModes() == numModes() for an effectKey, no more effects may be mapped to it until a mapping is erased.
@@ -945,7 +1033,6 @@ namespace lives {
        @return the number of modes for this effectKey.
     */
     int numMappedModes();
-
 
     /**
        Set the current mode this effectKey.
@@ -956,14 +1043,12 @@ namespace lives {
     */
     int setMode(int mode);
 
-
     /**
        Get the current mode for this effectKey.
        If the effectKey is invalid, the current mode is -1.
        @return the current mode of the effectKey.
     */
     int mode();
-
 
     /**
        Enable an effect mapped to this effectKey, mode().
@@ -973,15 +1058,12 @@ namespace lives {
     */
     bool setEnabled(bool setting);
 
-
     /**
        Return a value to indicate whether the effect mapped to this effectKey, mode() is active. 
        If the effectKey is invalid, returns false.
        @return true if the effect mapped at mode() is enabled.
     */
     bool enabled();
-
-
 
     /**
        Map an effect to the next unused mode for the effectKey.
@@ -1019,6 +1101,7 @@ namespace lives {
      class "effectKeyMap". 
      Represents a mapping of effectKey instances to key slots. Real time effects are always applied in order of ascending index value 
      (with the exception of generator effects, which are applied first).
+     @see livesApp::getEffectKeyMap()
   */
     class effectKeyMap {
       friend livesApp;
@@ -1046,7 +1129,6 @@ namespace lives {
       */
       effectKey at(int i);
 
-
       /**
 	 Returns the number of key slots (indices) in the effectKeyMap.
 	 The valid range of keys is 1 <= key <= size().
@@ -1055,7 +1137,6 @@ namespace lives {
 	 @see prefs::rteKeysVirtual()
       */
       size_t size();
-
 
       /**
 	 @return true if the two effectKeyMaps have the same livesApp
@@ -1110,8 +1191,7 @@ namespace lives {
        Returns whether the effect is valid or not.
        @return true if the effect is valid.
     */
-    bool isValid();
-      
+    bool isValid();      
 
     /**
        @return true if the two effects have the same index and the same livesApp owner
@@ -1127,6 +1207,146 @@ namespace lives {
     int m_idx;
 
   private:
+
+  };
+
+
+
+  /**
+     class "block". 
+     Represents a single block of frames which forms part of a layout. This is an abstracted level, since layouts are fundamentally formed of "events" which may span multiple blocks.
+  */
+  class block {
+    friend layout;
+
+  public:
+
+    /**
+       returns whether the block is valid or not. A block may become invalid if it is deleted from a layout for example. 
+       Undoing a deletion does not cause a block to become valid again, you need to search for it again by time and track number.
+       If the livesApp::mode() is changed from LIVES_INTERFACE_MODE_MULTITRACK, then all existing blocks become invalid.
+       @return whether the block is contained in the current layout.
+    */
+    bool isValid();
+
+    /**
+       Returns the block on the specified track at the specified time. If no such block exists, returns an invalid block.
+       @param track the track number. Values < 0 indicate backing audio tracks.
+       @param time the time in seconds on the timeline.
+       @return the block on the given track at the given time.
+    */
+    block(int track, double time);
+
+    /**
+       Returns the start time in seconds of the block.
+       If the block is invalid, returns -1.
+       @return start time in seconds.
+    */
+    double startTime();
+    
+    /**
+       Returns the duration in seconds of the block.
+       If the block is invalid, returns -1.
+       @return duration in seconds.
+    */
+    double length();
+
+    /**
+       Returns the clip which is the source of frames for this block.
+       If the block is invalid, returns an invalid clip.
+       @return the clip which is the source of frames for this block.
+    */
+    clip clipSource();
+
+    /**
+       Returns the track number to which this block is currently attached.
+       A track number < 0 indicates a backing audio track.
+       If the block is invalid, returns 0.
+       @return the current track number for this clip.
+    */
+    int track();
+
+
+
+    bool remove();
+
+
+
+    bool moveTo(int track, double time);
+
+
+
+  protected:
+    block(ulong uid);
+
+
+  private:
+    ulong m_uid;
+
+  };
+
+
+
+  /**
+     class "layout". 
+     Represents a single layout which can be edited in Multitrack interface mode.
+  */
+  class layout {
+    friend livesApp;
+
+  public:
+
+    /**
+       returns whether the layout is valid or not. A valid layout is one which is owned by a valid livesApp.
+       @return whether the layout is valid
+    */
+    bool isValid();
+
+    /**
+       Insert frames from clip c into livesApp::currentTrack() at player::currentTime()
+       If ignore_selection_limits is true, then all frames from the clip will be inserted, 
+       otherwise (the default) only frames from clip::selectionStart() to clip::selectionEnd() will be used.
+       If without_audio is false (the default), audio is also inserted.
+       Frames are automatically resampled to fit layout::fps().
+       Depending on the insertion mode, it may not be possible to do the insertion. In case of failure an invalid block is returned.
+       If the current track is a backing audio track, then only audio is inserted; 
+       in this case if without_audio is true an invalid block is returned.
+       Only works if livesApp::status() is LIVES_STATUS_READY and livesApp::mode() is LIVES_INTERFACE_MODE_MULTITRACK.
+       Note: the actual place where the block ends up depends on various factors such as the livesApp::gravity() setting 
+       and the location of other blocks in the layout.
+       @param c the clip to insert from
+       @param ignore_selection_limits if true then all frames from the clip will be inserted
+       @param without_audio if false then audio is also inserted
+       @return the newly inserted block.
+       @see livesApp::setCurrentTrack().
+       @see player::setCurrentTime().
+       @see clip::setSelectionStart().
+       @see clip::setSelectionEnd().
+    */
+    block insertBlock(clip c, bool ignore_selection_limits=false, bool without_audio=false);
+
+
+    bool wipe();
+
+
+    clip render(bool render_audio=true);
+
+
+    bool setAutoTransition(effect autotrans);
+
+
+    bool setAutoTransitionEnabled(bool setting);
+
+
+    bool save(LiVESString name);
+
+
+  protected:
+    //layout();
+    layout(livesApp *lives);
+
+  private:
+    livesApp *m_lives;
 
   };
 

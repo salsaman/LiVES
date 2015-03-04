@@ -635,6 +635,8 @@ struct _lives_amixer_t {
 ///
 /// start and end events MUST be FRAME events
 struct _track_rect {
+  ulong uid;
+
   track_rect *next;
   track_rect *prev;
   weed_plant_t *start_event;
@@ -756,10 +758,15 @@ void avel_reverse_toggled (LiVESToggleButton *, livespointer mt);
 void avel_spin_changed (LiVESSpinButton *, livespointer mt);
 
 // block API functions
-int mt_get_last_block_number(lives_mt *, int ntrack); ///< get index of last inserted (wallclock time) block for track
+ulong mt_get_last_block_uid(lives_mt *mt); ///< get index of last inserted (wallclock time) block for track
 int mt_get_block_count(lives_mt *, int ntrack); ///< count blocks in track
 double mt_get_block_sttime(lives_mt *, int ntrack, int iblock); /// get timeline start time of block
 double mt_get_block_entime(lives_mt *, int ntrack, int iblock); /// get timeline end time of block
+
+track_rect *get_block_from_track_and_time(lives_mt *mt, int track, double time);
+
+int get_track_for_block(track_rect *block);
+int get_clip_for_block(track_rect *block);
 
 
 // timeline functions

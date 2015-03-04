@@ -184,7 +184,7 @@ static LIVES_INLINE int mt_clip_from_file(lives_mt *mt, int file) {
 }
 
 /// return track number for a given block
-static LIVES_INLINE int get_track_for_block(track_rect *block) {
+int get_track_for_block(track_rect *block) {
   return LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(block->eventbox),"layer_number"));  
 }
 
@@ -891,15 +891,16 @@ LIVES_INLINE void set_params_unchanged(lives_rfx_t *rfx) {
   for (i=0;i<rfx->num_params;i++) rfx->params[i].changed=FALSE;
 }
 
+
 static int get_track_height(lives_mt *mt) {
   LiVESWidget *eventbox;
-  LiVESList *glist=mt->video_draws;
+  LiVESList *list=mt->video_draws;
 
-  while (glist!=NULL) {
-    eventbox=(LiVESWidget *)glist->data;
+  while (list!=NULL) {
+    eventbox=(LiVESWidget *)list->data;
     if (LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(eventbox),"hidden"))==0) 
       return lives_widget_get_allocation_height(eventbox);
-    glist=glist->next;
+    list=list->next;
   }
 
   return 0;
@@ -9475,6 +9476,7 @@ static track_rect *add_block_start_point (LiVESWidget *eventbox, weed_timecode_t
   track_rect *block=(track_rect *)lives_widget_object_get_data (LIVES_WIDGET_OBJECT(eventbox), "blocks");
   track_rect *new_block=(track_rect *)lives_malloc (sizeof(track_rect));
 
+  new_block->uid=lives_random();
   new_block->next=new_block->prev=NULL;
   new_block->state=BLOCK_UNSELECTED;
   new_block->start_anchored=new_block->end_anchored=FALSE;
@@ -18920,7 +18922,7 @@ LiVESList *load_layout_map(void) {
   // load in a layout "map" for the set, [create mainw->current_layouts_map]
 
   // the layout.map file maps clip "unique_id" and "handle" stored in the header.lives file and matches it with
-  // the track numbers in the any layout file (.lay) file for that set
+  // the clip numbers in each layout file (.lay) file for that set
 
   // [thus a layout could be transferred to another set and the unique_id's/handles altered, 
   // one could use a layout.map and a layout file as a template for
@@ -18930,17 +18932,17 @@ LiVESList *load_layout_map(void) {
   // this is called from recover_layout_map() in saveplay.c, where the map entries are assigned
   // to files (clips)
 
-  gchar **array;
+  char **array;
   LiVESList *lmap=NULL;
   layout_map *lmap_entry;
   uint64_t unique_id;
   ssize_t bytes;
 
-  gchar *lmap_name=lives_build_filename(prefs->tmpdir,mainw->set_name,"layouts","layout.map",NULL);
-  gchar *handle;
-  gchar *entry;
-  gchar *string;
-  gchar *name;
+  char *lmap_name=lives_build_filename(prefs->tmpdir,mainw->set_name,"layouts","layout.map",NULL);
+  char *handle;
+  char *entry;
+  char *string;
+  char *name;
 
   int len,nm,i;
   int fd;
@@ -18990,12 +18992,23 @@ LiVESList *load_layout_map(void) {
 	  break;
 	}
 	
+	////////////////////////////////////////////////////////////
+	// this is one mapping entry (actually only the unique id matters)
 	lmap_entry=(layout_map *)lives_malloc(sizeof(layout_map));
 	lmap_entry->handle=handle;
 	lmap_entry->unique_id=unique_id;
 	lmap_entry->name=name;
 	lmap_entry->list=NULL;
-	
+	///////////////////////////////////////////
+
+	//////////////////////////////////////////////
+	// now we read in a list of layouts this clip is used in, and create mainw->current_layouts_map
+
+	// format is:
+	// layout_file_filename|clip_number|max_frame_used|clip fps|max audio time|audio rate
+
+	// here we only add layout_file_filename
+
 	for (i=0;i<nm;i++) {
 	  bytes=lives_read_le_buffered(fd,&len,4,TRUE);
 	  if (bytes<sizint) {
@@ -19021,6 +19034,8 @@ LiVESList *load_layout_map(void) {
 	lmap=lives_list_append(lmap,lmap_entry);
       }
     }
+
+    ////////////////////////////////////////////////////////////////////////////
 
     if (fd>=0) lives_close_buffered(fd);
 
@@ -19048,7 +19063,7 @@ void save_layout_map (int *lmap, double *lmap_audio, const gchar *file, const gc
   // this was knocked together very hastily, so it could probably be improved upon
 
 
-  // layout_file_file_name|clip_number|max_frame_used|clip fps|max audio time|audio rate
+  // layout_file_filename|clip_number|max_frame_used|clip fps|max audio time|audio rate
 
 
   // when we save this to a file, we use the (int32)data_length data
@@ -19064,12 +19079,16 @@ void save_layout_map (int *lmap, double *lmap_audio, const gchar *file, const gc
 
   // where data is simply a text dump of the above memory format
 
+
+  // lmap[] and lmap_audio[] hold the highest frame numbers and highest audio time respectively
+  // when we save a layout we update these from the current layout
+
   LiVESList *map,*map_next;
 
-  gchar *new_entry;
-  gchar *map_name,*ldir;
-  gchar *string;
-  gchar *com;
+  char *new_entry;
+  char *map_name,*ldir;
+  char *string;
+  char *com;
 
   uint32_t size=0;
 
@@ -22360,8 +22379,10 @@ void on_mt_showkeys_activate (LiVESMenuItem *menuitem, livespointer user_data) {
   do_mt_keys_window();
 }
 
-static LiVESWidget *get_eventbox_for_track(lives_mt *mt, int ntrack) {
+
+LiVESWidget *get_eventbox_for_track(lives_mt *mt, int ntrack) {
   LiVESWidget *eventbox;
+  if (mt==NULL) return NULL;
   if (mt_track_is_video(mt,ntrack)) {
     eventbox=(LiVESWidget *)lives_list_nth_data(mt->video_draws, ntrack);
   }
@@ -22390,7 +22411,40 @@ static track_rect *get_nth_block_for_track(lives_mt *mt, int itrack, int iblock)
 
 
 
+
 // remote API helpers
+
+
+track_rect *find_block_by_uid(lives_mt *mt, ulong uid) {
+  LiVESList *list;
+  track_rect *block;
+
+  if (mt == NULL) return NULL;
+
+  list = mt->video_draws;
+
+  while (list!=NULL) {
+    block=(track_rect *)lives_widget_object_get_data (LIVES_WIDGET_OBJECT(list->data), "blocks");
+    while(block!=NULL) {
+      if (block->uid==uid) return block;
+      block=block->next;
+    }
+  }
+
+  list = mt->audio_draws;
+
+  while (list!=NULL) {
+    block=(track_rect *)lives_widget_object_get_data (LIVES_WIDGET_OBJECT(list->data), "blocks");
+    while(block!=NULL) {
+      if (block->uid==uid) return block;
+      block=block->next;
+    }
+  }
+
+  return NULL;
+
+}
+
 
 boolean mt_track_is_video(lives_mt *mt, int ntrack) {
   if (ntrack>=0&&mt->video_draws!=NULL&&ntrack<lives_list_length(mt->video_draws)) return TRUE;
@@ -22403,27 +22457,15 @@ boolean mt_track_is_audio(lives_mt *mt, int ntrack) {
   return FALSE;
 }
 
-/*
-boolean mt_track_is_valid(lives_mt *mt, int itrack) {
-  if (!mt_track_is_video(itrack)&&!mt_track_is_audio(itrack)) return FALSE;
-  return TRUE;
-  }*/
 
-int mt_get_last_block_number(lives_mt *mt, int ntrack) {
-  int count=0;
-  track_rect *block,*lastblock;
-  LiVESWidget *eventbox=get_eventbox_for_track(mt,ntrack);
-  if (eventbox==NULL) return -1; //<invalid track
+ulong mt_get_last_block_uid(lives_mt *mt) {
+  int track=mt->current_track;
+  track_rect *lastblock;
+  LiVESWidget *eventbox=get_eventbox_for_track(mt,track);
+  if (eventbox==NULL) return 0l; //<invalid track
   lastblock=(track_rect *)lives_widget_object_get_data (LIVES_WIDGET_OBJECT(eventbox),"block_last");
-  if (lastblock==NULL) return -1; ///< no blocks in track
-  block=(track_rect *)lives_widget_object_get_data (LIVES_WIDGET_OBJECT(eventbox), "blocks");
-  while(block!=NULL) {
-    if (block==lastblock) break;
-    block=block->next;
-    count++;
-  }
-
-  return count;
+  if (lastblock==NULL) return 0l; ///< no blocks in track
+  return lastblock->uid;
 }
 
 
@@ -22460,6 +22502,25 @@ double mt_get_block_entime(lives_mt *mt, int ntrack, int iblock) {
   if (block==NULL) return -1; ///< invalid track or block number
   return (double)get_event_timecode(block->end_event)/U_SEC+1./mt->fps;
 }
+
+
+
+track_rect *get_block_from_track_and_time(lives_mt *mt, int track, double time) {
+  LiVESWidget *ebox;
+  if (mt==NULL) return NULL;
+  ebox=get_eventbox_for_track(mt,track);
+  return get_block_from_time(ebox, time, mt);
+}
+
+
+int get_clip_for_block(track_rect *block) {
+  int track;
+  if (block==NULL) return -1;
+  track=get_track_for_block(block);
+  return get_frame_event_clip(block->start_event, track);
+}
+
+
 
 
 

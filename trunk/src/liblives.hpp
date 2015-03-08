@@ -144,7 +144,11 @@ typedef enum {
 } lives_audio_player_t;
 
 
+
+
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 #ifdef __cplusplus
 
 #include <vector>
@@ -974,7 +978,7 @@ namespace lives {
     double currentAudioTime();
 
 
-    double setCurrentFps(double time);
+    double setCurrentFps(double fps);
 
 
     double currentFps();

@@ -21,7 +21,6 @@
 #include "../libweed/weed-host.h"
 #endif
 
-
 #ifdef __cplusplus
 #ifdef HAVE_OPENCV
 #include "opencv2/core/core.hpp"
@@ -4768,10 +4767,10 @@ static void load_weed_plugin (gchar *plugin_name, gchar *plugin_path, gchar *dir
 }
 
 
-
 void weed_memory_init(void) {
-  weed_init(110,(weed_malloc_f)_lives_malloc,(weed_free_f)_lives_free_normal,(weed_memcpy_f)lives_memcpy,
-	    (weed_memset_f)lives_memset);
+#ifndef IS_LIBLIVES
+  weed_init(110,(weed_malloc_f)_lives_malloc,(weed_free_f)_lives_free_normal,(weed_memcpy_f)lives_memcpy,(weed_memset_f)lives_memset);
+#endif
 }
 
 

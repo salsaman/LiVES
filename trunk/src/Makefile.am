@@ -104,7 +104,6 @@ alsa_CFLAGS = @ALSA_CFLAGS@ -DALSA_MIDI=1
 endif
 
 
-
 if DISABLE_GLSLICE
 if HAVE_SYSTEM_WEED
 libweed_LDADD = @WEED_LIBS@ @WEED_UTILS_LIBS@
@@ -120,6 +119,7 @@ else
 libweed_LDADD = $(abs_top_srcdir)/libweed/libweed_slice.la $(abs_top_srcdir)/libweed/libweed-utils.la
 endif
 endif
+
 
 
 if HAVE_SYSTEM_WEED_COMPAT
@@ -249,26 +249,30 @@ endif
 
 liblivesdir = $(libdir)
 
-extra_LDFLAGS = -lweed_slice -lweed-utils \
-	@X11_LIBS@ @MJPEGTOOLS_LIBS@ \
+extra_LDFLAGS = @X11_LIBS@ @MJPEGTOOLS_LIBS@ \
         $(jack_LDADD) $(ldvgrab_LDADD) \
 	$(alsa_LDADD) $(pulse_LDADD) $(png_LDADD) $(swscale_LDADD) $(pthread_LDADD) \
 	$(giw_LDADD) $(v4l1_LDADD) @UNICAP_LIBS@ $(gtk_LIBFLAGS) $(oil_LIBFLAGS)
 
 
-liblives_la_LDFLAGS =  $(extra_LDFLAGS)
+if HAVE_SYSTEM_WEED
+libweed_scripting_LDADD = -lweed_slice_scripting -lweed_utils_scripting
+libweed_scripting_CFLAGS = @WEED_CFLAGS@ -DHAVE_SYSTEM_WEED=1 -D_WEED_VISIBLE_FUNCTIONS_
+else
+libweed_scripting_LDADD = $(abs_top_srcdir)/libweed/libweed_slice_scripting.la $(abs_top_srcdir)/libweed/libweed-utils_scripting.la
+libweed_scripting_CFLAGS = -D_WEED_VISIBLE_FUNCTIONS_
+endif
 
-liblives_la_CFLAGS += $(AM_CFLAGS) -Wno-unused-function -DIS_LIBLIVES
+liblives_la_LDFLAGS =  $(extra_LDFLAGS)  $(libweed_scripting_LDADD)
+
+liblives_la_CFLAGS += $(AM_CFLAGS) $(libweed_scripting_CFLAGS) -Wno-unused-function -DIS_LIBLIVES
 
 
 all-local: 
-	@echo -n "g++ \$$1 $(DESTDIR)$(libdir)/liblives.a -lOSC -lOSC_client -I$(DESTDIR)$(includedir)/liblives " \
+	@echo -n "g++ \$$1 -llives -lOSC -lOSC_client -I$(DESTDIR)$(includedir)/liblives " \
 	> ../tools/liblives-compile
 	@echo -n $(extra_LDFLAGS) >> ../tools/liblives-compile
 	@echo " -ldl \$${@:2}" >> ../tools/liblives-compile
-	@sed -i s/weed_slice/weed_slice_static/g ../tools/liblives-compile
-	@sed -i s/weed-utils/weed-utils_static/g ../tools/liblives-compile
-
 
 install-exec-local:
 	$(MKDIR_P) "$(DESTDIR)$(libexecdir)/$(PACKAGE)/"

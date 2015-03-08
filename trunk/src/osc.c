@@ -2042,7 +2042,7 @@ boolean lives_osc_cb_blockinsert(void *context, int arglen, const void *vargs, O
   mainw->multitrack->opts.insert_audio=oins_audio;
   mainw->multitrack->opts.ign_ins_sel=oign_ins_sel;
 
-  tmp=lives_strdup_printf("%ul",mt_get_last_block_uid(mainw->multitrack));
+  tmp=lives_strdup_printf("%lu",mt_get_last_block_uid(mainw->multitrack));
 
   lives_osc_notify_success(tmp);
   lives_free(tmp);

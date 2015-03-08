@@ -24,8 +24,8 @@ docs-doxygen:
 	@echo "Doxygen not installed, skipping sourcecode documentation"
 endif
 
-WEED_SO_VERSION = 0:6:0
-WEED_PSO_VERSION = 0:12:0
+WEED_SO_VERSION = 0:8:0
+WEED_PSO_VERSION = 0:13:0
 
 LIBS =
 
@@ -39,7 +39,7 @@ extra_ldflags = -fPIC -DPIC
 extra_cflags = -fPIC -DPIC
 endif
 
-lib_LTLIBRARIES = libweed.la libweed_slice.la libweed-utils.la libweed_static.la libweed_slice_static.la libweed-utils_static.la
+lib_LTLIBRARIES = libweed.la libweed_slice.la libweed-utils.la libweed_slice_scripting.la libweed-utils_scripting.la
 
 EXTRA_DIST = libweed.doxygen libweed.pc libweed-plugin.pc libweed_slice.pc libweed-utils.pc libweed-compat.pc
 
@@ -49,11 +49,10 @@ libweed_slice_la_SOURCES = weed-gslice.c
 
 libweed_utils_la_SOURCES = weed-utils.c 
 
-libweed_static_la_SOURCES = weed.c
 
-libweed_slice_static_la_SOURCES = weed-gslice.c
+libweed_slice_scripting_la_SOURCES = weed-gslice_scripting.c
 
-libweed_utils_static_la_SOURCES = weed-utils.c 
+libweed_utils_scripting_la_SOURCES = weed-utils_scripting.c 
 
 
 libweedinclude_HEADERS = weed.h weed-host.h weed-plugin.h weed-utils.h weed-events.h weed-palettes.h weed-effects.h \
@@ -62,30 +61,31 @@ libweedinclude_HEADERS = weed.h weed-host.h weed-plugin.h weed-utils.h weed-even
 libweedincludedir = "$(includedir)/weed"
 
 libweed_ladir = "$(libdir)/weed"
-libweed_static_ladir = "$(libdir)/weed"
+libweed_scripting_ladir = "$(libdir)/weed"
 
 
 libweed_la_CFLAGS = -fvisibility=hidden
-libweed_la_static_CFLAGS = -FPIC -DPIC
 
 shared_LDFLAGS = -shared --tag=disable-static
 
-static_LDFLAGS = -static -FPIC -DPIC
-
 libweed_la_LDFLAGS = -version-info $(WEED_SO_VERSION) $(shared_LDFLAGS)
-libweed_static_la_LDFLAGS = -version-info $(WEED_SO_VERSION) $(static_LDFLAGS)
 
 libweed_slice_la_CFLAGS = @GLIB_CFLAGS@ $(libweed_la_CFLAGS)
-libweed_slice_static_la_CFLAGS = @GLIB_CFLAGS@ -FPIC -DPIC
 
 libweed_slice_la_LDFLAGS = @GLIB_LIBS@ -version-info $(WEED_SO_VERSION) $(shared_LDFLAGS)
-libweed_slice_static_la_LDFLAGS = @GLIB_LIBS@ -version-info $(WEED_SO_VERSION) $(static_LDFLAGS)
 
 libweed_utils_la_CFLAGS = $(extra_cflags)
-libweed_utils_static_la_CFLAGS = -FPIC -DPIC
 
 libweed_utils_la_LDFLAGS = $(extra_ldflags) -version-info $(WEED_SO_VERSION) $(shared_LDFLAGS)
-libweed_utils_static_la_LDFLAGS = $(extra_ldflags) -version-info $(WEED_SO_VERSION) $(static_LDFLAGS)
+
+
+libweed_slice_scripting_la_CFLAGS = @GLIB_CFLAGS@ $(libweed_la_CFLAGS)
+
+libweed_slice_scripting_la_LDFLAGS = @GLIB_LIBS@ -version-info $(WEED_SO_VERSION) $(shared_LDFLAGS)
+
+libweed_utils_scripting_la_CFLAGS = $(extra_cflags) @GLIB_CFLAGS@
+
+libweed_utils_scripting_la_LDFLAGS = $(extra_ldflags) -version-info $(WEED_SO_VERSION) $(shared_LDFLAGS) @GLIB_LIBS@
 
 
 uninstall-local:

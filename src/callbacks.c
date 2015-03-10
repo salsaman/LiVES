@@ -1596,7 +1596,7 @@ void mt_memory_free(void) {
 
 
 void on_quit_activate (LiVESMenuItem *menuitem, livespointer user_data) {
-  gchar *com,*esave_dir,*msg;
+  char *com,*esave_dir,*msg;
 
   boolean has_layout_map=FALSE;
   boolean had_clips=FALSE,legal_set_name;
@@ -1646,7 +1646,7 @@ void on_quit_activate (LiVESMenuItem *menuitem, livespointer user_data) {
   if (mainw->ascrap_file>-1) close_ascrap_file();
 
   if (mainw->clips_available>0) {
-    gchar *set_name;
+    char *set_name;
     _entryw *cdsw=create_cds_dialog(1);
     int resp;
     had_clips=TRUE;
@@ -1654,7 +1654,7 @@ void on_quit_activate (LiVESMenuItem *menuitem, livespointer user_data) {
       legal_set_name=TRUE;
       lives_widget_show(cdsw->dialog);
       resp=lives_dialog_run(LIVES_DIALOG(cdsw->dialog));
-      if (resp==0) {
+      if (resp==LIVES_RESPONSE_CANCEL) {
 	lives_widget_destroy(cdsw->dialog);
 	lives_free(cdsw);
 	if (mainw->multitrack!=NULL) {
@@ -1775,8 +1775,8 @@ void on_quit_activate (LiVESMenuItem *menuitem, livespointer user_data) {
 
 // TODO - split into undo.c
 void on_undo_activate (LiVESMenuItem *menuitem, livespointer user_data) {
-  gchar *com;
-  gchar msg[256];
+  char *com;
+  char msg[256];
 
   boolean bad_header=FALSE;
   boolean retvalb;
@@ -4146,7 +4146,7 @@ on_rewind_activate                    (LiVESMenuItem     *menuitem,
 				       livespointer         user_data)
 {
   if (mainw->multitrack!=NULL) {
-    mt_tl_move(mainw->multitrack,-lives_ruler_get_value(LIVES_RULER (mainw->multitrack->timeline)));
+    mt_tl_move(mainw->multitrack,0.);
     return;
   }
 
@@ -4163,7 +4163,7 @@ void on_stop_activate (LiVESMenuItem *menuitem, livespointer user_data) {
   if (mainw->multitrack!=NULL&&mainw->multitrack->is_paused&&mainw->playing_file==-1) {
     mainw->multitrack->is_paused=FALSE;
     mainw->multitrack->playing_sel=FALSE;
-    mt_tl_move(mainw->multitrack,mainw->multitrack->ptr_time-lives_ruler_get_value(LIVES_RULER (mainw->multitrack->timeline)));
+    mt_tl_move(mainw->multitrack,mainw->multitrack->ptr_time);
     lives_widget_set_sensitive (mainw->stop, FALSE);
     lives_widget_set_sensitive (mainw->m_stopbutton, FALSE);
     return;

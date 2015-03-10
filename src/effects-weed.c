@@ -6588,6 +6588,8 @@ boolean weed_init_effect(int hotkey) {
   int error;
   int idx;
 
+  mainw->error=FALSE;
+
   if (hotkey<0) {
     is_modeswitch=TRUE;
     hotkey=-hotkey-1;
@@ -6597,9 +6599,13 @@ boolean weed_init_effect(int hotkey) {
     fg_modeswitch=TRUE;
   }
 
-  if (hotkey>=FX_KEYS_MAX) return FALSE;
+  if (hotkey>=FX_KEYS_MAX) {
+    mainw->error=TRUE;
+    return FALSE;
+  }
 
   if (!rte_key_valid (hotkey+1,FALSE)) {
+    mainw->error=TRUE;
     return FALSE;
   }
 
@@ -6620,6 +6626,7 @@ boolean weed_init_effect(int hotkey) {
       gchar *fxname=weed_filter_idx_get_name(idx);
       gchar *msg=lives_strdup_printf(_("Effect %s cannot be used with this audio player.\n"),fxname);
       d_print(msg);
+      mainw->error=TRUE;
       return FALSE;
     }
 
@@ -6657,7 +6664,10 @@ boolean weed_init_effect(int hotkey) {
 
   if (mainw->current_file>0&&cfile->clip_type==CLIP_TYPE_GENERATOR&&
       (fg_modeswitch||(inc_count==0&&outc_count>0&&mainw->num_tr_applied==0))&&!is_audio_gen) {
-    if (mainw->noswitch||mainw->is_processing||mainw->preview) return FALSE; // stopping fg gen will cause clip to switch
+    if (mainw->noswitch||mainw->is_processing||mainw->preview) {
+      mainw->error=TRUE;
+      return FALSE; // stopping fg gen will cause clip to switch
+    }
     if (mainw->playing_file>-1&&mainw->whentostop==STOP_ON_VID_END&&inc_count!=0) {
       mainw->cancelled=CANCEL_GENERATOR_END;
     }
@@ -6693,8 +6703,10 @@ boolean weed_init_effect(int hotkey) {
       fg_generator_mode=key_modes[hotkey];
       gen_start=TRUE;
     }
-    else if (!fg_modeswitch&&mainw->num_tr_applied==0&&(mainw->noswitch||mainw->is_processing||mainw->preview)) 
+    else if (!fg_modeswitch&&mainw->num_tr_applied==0&&(mainw->noswitch||mainw->is_processing||mainw->preview))  {
+      mainw->error=TRUE;
       return FALSE;
+    }
   }
 
   filter=weed_filters[idx];
@@ -6799,6 +6811,7 @@ boolean weed_init_effect(int hotkey) {
 	lives_chdir(cwd,FALSE);
 	lives_free(cwd);
 	if (is_audio_gen) mainw->agen_needs_reinit=FALSE;
+	mainw->error=TRUE;
 	return FALSE;
       }
       set_param_gui_readonly(inst);
@@ -6840,7 +6853,7 @@ boolean weed_init_effect(int hotkey) {
     if (!weed_generator_start(new_instance,hotkey)) {
       // TODO - be more descriptive with error
       int weed_error;
-      gchar *filter_name=weed_get_string_value(filter,"name",&weed_error),*tmp;
+      char *filter_name=weed_get_string_value(filter,"name",&weed_error),*tmp;
       d_print ((tmp=lives_strdup_printf (_ ("Unable to start generator %s\n"),filter_name)));
       lives_free(tmp);
       lives_free(filter_name);
@@ -6858,6 +6871,7 @@ boolean weed_init_effect(int hotkey) {
 	switch_to_file(mainw->current_file=0,current_file);
       }
 
+      mainw->error=TRUE;
       return FALSE;
     }
 

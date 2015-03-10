@@ -157,7 +157,6 @@ typedef enum {
 
 #include <tr1/memory>
 
-#include <string.h>
 #include <inttypes.h>
 
 #include <string>
@@ -229,7 +228,7 @@ namespace lives {
   /**
      typedef
   */
-  typedef class layout layout;
+  typedef class multitrack multitrack;
 
 
   /**
@@ -243,8 +242,6 @@ namespace lives {
   */
   typedef class LiVESString LiVESString;
 
-
-  // TODO - layout, block
 
   ///////////////////////////////////////////////////
 
@@ -364,7 +361,7 @@ namespace lives {
     friend effectKeyMap;
     friend effectKey;
     friend player;
-    friend layout;
+    friend multitrack;
     friend block;
 
   public:
@@ -394,6 +391,21 @@ namespace lives {
     */
     bool isValid();
 
+    /**
+       Equivalent to status() == LIVES_STATUS_READY.
+       @return true if status() == LIVES_STATUS_READY.
+       @see status().
+    */
+    bool isReady();
+
+
+    /**
+       Equivalent to status() == LIVES_STATUS_PLAYING.
+       @return true if status() == LIVES_STATUS_PLAYING.
+       @see status().
+    */
+    bool isPlaying();
+
 
     /**
        Returns the current set
@@ -417,10 +429,10 @@ namespace lives {
 
 
     /**
-       Returns the current layout for this livesApp.
-       @return the current layout for this livesApp.
+       Returns the multitrack object for this livesApp.
+       @return the multitrack object for this livesApp.
     */
-    const layout& getCurrentLayout();
+    const multitrack& getMultitrack();
 
 
     /**
@@ -437,6 +449,7 @@ namespace lives {
        @param data data to be passed to callback function
        @return unsigned long callback_id
        @see LIVES_CALLBACK_MODE_CHANGED
+       @see removeCallback().
     */
     ulong addCallback(lives_callback_t cb_type, modeChanged_callback_f func, void *data);
 
@@ -448,6 +461,7 @@ namespace lives {
        @param data data to be passed to callback function
        @return unsigned long callback_id
        @see LIVES_CALLBACK_APP_QUIT
+       @see removeCallback().
     */
     ulong addCallback(lives_callback_t cb_type, appQuit_callback_f func, void *data);
 
@@ -458,6 +472,7 @@ namespace lives {
        @param data data to be passed to callback function
        @return unsigned long callback_id
        @see LIVES_CALLBACK_OBJECT_DESTROYED
+       @see removeCallback().
     */
     ulong addCallback(lives_callback_t cb_type, objectDestroyed_callback_f func, void *data);
 
@@ -482,6 +497,7 @@ namespace lives {
        @param chooser_type must be either LIVES_FILE_CHOOSER_VIDEO_AUDIO or LIVES_FILE_CHOOSER_AUDIO_ONLY.
        @param title title of window to display, or NULL to use a default title.
        @return the name of the file selected.
+       @see openFile().
     */
     LiVESString chooseFileWithPreview(LiVESString dirname, lives_filechooser_t chooser_type, LiVESString title=LiVESString(""));
 
@@ -495,6 +511,8 @@ namespace lives {
       @param frames number of frames to open (0 means all frames)
       @param deinterlace set to true to force deinterlacing
       @return a clip.
+      @see chooseFileWithPreview().
+      @see deinterlaceOption().
     */
     clip openFile(LiVESString fname, bool with_audio=true, double stime=0., int frames=0, bool deinterlace=false);
 
@@ -505,6 +523,7 @@ namespace lives {
        If the user cancels, an empty string is returned.
        The valid list of sets depends on the setting of prefs::tmpDir().
        @return the name of the set selected.
+       @see reloadSet().
     */
     LiVESString chooseSet();
 
@@ -514,34 +533,13 @@ namespace lives {
       A set may not be accessed concurrently by more than one copy of LiVES.
       The valid list of sets depends on the setting of prefs::tmpDir().
       @param setname the name of the set to reload.
+      @see chooseSet().
     */
     bool reloadSet(LiVESString setname);
 
 
-
-    LiVESString chooseLayout();
-
-
-    layout reloadLayout(LiVESString filename);
-
-
     //////////////////// mt type methods /////
 
-    bool setCurrentTrack(int track);
-
-
-    int currentTrack();
-
-
-    LiVESString trackLabel(int track);
-
-
-    int gravity();
-
-
-    int setGravity(int grav); // TODO - use lives_gravity_t
-
-    /////////////////////////////////////////////
 
 
     /**
@@ -549,12 +547,14 @@ namespace lives {
        Interactivity is via menus and keyboard accelerators
        @param setting set to true to allow interaction with the GUI.
        @return the new setting.
+       @see interactive().
     */
     bool setInteractive(bool setting);
 
     /**
        Returns whether the GUI app is in interactive mode.
        @return true if GUI interactivity via menus and keyboard accelerators is enabled.
+       @see setInteractive().
     */
     bool interactive();
 
@@ -563,6 +563,7 @@ namespace lives {
        Returns last setting of deinterlace by user.
        @return value that the user selected during the last filechooser with preview operation.
        This value may be passed into openFile().
+       @see openFile().
     */
     bool deinterlaceOption();
 
@@ -571,6 +572,7 @@ namespace lives {
        Get the current interface mode of the livesApp.
        If the livesApp is invalid, returns LIVES_INTERFACE_MODE_INVALID.
        @return current mode.
+       @see setMode().
     */
     lives_interface_mode_t mode();
 
@@ -580,6 +582,7 @@ namespace lives {
        Only works if status() is LIVES_STATUS_READY.
        If the livesApp is invalid, returns LIVES_INTERFACE_MODE_INVALID.
        @return the new mode.
+       @see mode().
     */
     lives_interface_mode_t setMode(lives_interface_mode_t mode);//, livesMultitrackSettings settings=NULL);
 
@@ -610,7 +613,7 @@ namespace lives {
     set * m_set;
     player *m_player;
     effectKeyMap * m_effectKeyMap;
-    layout *m_layout;
+    multitrack *m_multitrack;
 
     bool m_deinterlace;
 
@@ -636,7 +639,7 @@ namespace lives {
     friend livesApp;
     friend set;
     friend block;
-    friend layout;
+    friend multitrack;
 
   public:
 
@@ -823,14 +826,14 @@ namespace lives {
        Returns whether the set is valid or not.
        @return true if the set is valid (associated with a valid livesApp instance).
     */
-    bool isValid();
+    bool isValid() const;
 
     /**
        Returns the current name of the set. 
        If it has not been defined, an empty string is returned. If the set is invalid, an empty string is returned.
        @return LiVESString name.
     */
-    LiVESString name();
+    LiVESString name() const;
 
     /**
        Save the set, and close all open clips and layouts. 
@@ -841,47 +844,52 @@ namespace lives {
        @param force_append set to true to force appending to another existing set.
        @return true if the set was saved.
     */
-    bool save(LiVESString name, bool force_append=false);
+    bool save(LiVESString name, bool force_append=false) const;
 
     /**
        Returns the number of clips in the set. If the set is invalid, returns 0.
        @return number of clips.
+       @see indexOf().
+       @see nthClip().
     */
-    unsigned int numClips();
+    unsigned int numClips() const;
 
     /**
        Returns the nth clip in the set. If n  >= numClips(), returns an invalid clip. If the set is invalid, returns an invalid clip.
        @return the nth clip in the set.
-       @see indexOf()
+       @see indexOf().
+       @see numClips().
     */
-    clip nthClip(unsigned int n);
+    clip nthClip(unsigned int n) const;
 
     /**
        Returns the index of a clip in the currentSet. If the clip is not in the current set, then -1 is returned.
        If the set is invalid or the clip is invalid, returns -1.
        @return the index of the clip in the set.
-       @see nthClip()
+       @see nthClip().
+       @see numClips().
     */
-    int indexOf(clip c);
+    int indexOf(clip c) const;
 
     /**
        Returns the number of layouts in the set. If the set is invalid, returns -1.
        @return the number of layouts in the set.
        @see livesApp::getCurrentLayout().
     */
-    int numLayouts();
+    int numLayouts() const;
 
     /**
        Returns the filename of the nth layout for this set. If n >= numLayouts() or the set is invalid, returns an empty string. 
        @return the filename of the nth layout for this set.
        @see livesApp::reloadLayout().
+       @see numLayouts().
     */
-    LiVESString nthLayoutName(unsigned int n);
+    LiVESString nthLayoutName(unsigned int n) const;
 
     /**
        @return true if the two sets belong to the same livesApp.
     */
-    inline bool operator==(const set& other) {
+    inline bool operator==(const set& other) const {
       return other.m_lives == m_lives;
     }
 
@@ -919,23 +927,25 @@ namespace lives {
        Returns whether the set is valid or not.
        @return true if the set is valid (associated with a valid livesApp instance).
     */
-    bool isValid();
+    bool isValid() const;
 
     /**
        Set playback in a detached window.
-       @see setFS
+       @see setFS().
+       @see sepWin().
     */
-    void setSepWin(bool setting);
+    void setSepWin(bool setting) const;
 
     /**
        Set playback fullscreen.
-       @see setFS
+       @see setFS().
+       @see fullscreen().
     */
-    void setFullScreen(bool setting);
+    void setFullScreen(bool setting) const;
 
 
-    bool sepWin();
-    bool fullScreen();
+    bool sepWin() const;
+    bool fullScreen() const;
 
 
     /**
@@ -943,7 +953,7 @@ namespace lives {
        @see setSepWin()
        @see setFullScreen()
     */
-    void setFS(bool setting);
+    void setFS(bool setting) const;
 
 
     /**
@@ -951,37 +961,61 @@ namespace lives {
        Only has an effect when status() is LIVES_STATUS_READY.
        @return true if playback was started.
     */
-    bool play();
+    bool play() const;
 
     /**
        Stop playback.
        If status() is not LIVES_STATUS_PLAYING, nothing happens.
        @return true if playback was stopped.
     */
-    bool stop();
+    bool stop() const;
 
 
-    bool setForegroundClip(); // TODO
+    bool setForegroundClip() const; // TODO
 
-    bool setBackgroundClip(); // TODO
+    bool setBackgroundClip() const; // TODO
 
-
-    double setCurrentTime(double time);
-
-
-    double currentTime();
-
-
-    double setCurrentAudioTime(double time);
-
-
-    double currentAudioTime();
-
-
-    double setCurrentFps(double fps);
+    /**
+       Set the current playback start time in seconds (this is also the insertion point in multitrack mode).
+       Only works if the livesApp::status() is LIVES_STATUS_READY. If livesApp::mode() is LIVES_INTERFACE_MODE_CLIP_EDITOR, 
+       the start time may not be set beyond the end of the current clip (video and audio). 
+       If livesApp::mode() is LIVES_INTERFACE_MODE_MULITRACK, setting the current time may cause the timeline to stretch visually 
+       (i.e zoom out). 
+       The miminum value is 0.0 in every mode. Values < 0. will be ignored.
+       @param time the time in seconds to set playback start time to.
+       @returns the new playback start time.
+       @see currentTime().
+    */
+    double setPlaybackTime(double time) const;
 
 
-    double currentFps();
+    /**
+       Return the current clip playback time in seconds. If livesApp::mode() is LIVES_INTERFACE_MODE_CLIPEDIT, then this returns 
+       the current playback time for video in the current foreground clip.
+       If livesApp::mode() is LIVES_INTERFACE_MODE_MULTITRACK, then this returns the current player time in the multitrack timeline 
+       (equivalent to elapsedTime()).
+       This function works in livesApp::status() LIVE_STATUS_READY and LIVES_STATUS_PLAYING.
+       @returns the current clip playback time.
+       @see setCurrentTime().
+       @see currentAudioTime().
+       @see elapsedTime().
+    */
+    double playbackTime() const;
+
+
+    double setAudioPlaybackTime(double time) const;
+
+
+    double audioPlaybackTime() const;
+
+
+    double elapsedTime() const;
+
+
+    double setCurrentFps(double fps) const;
+
+
+    double currentFps() const;
 
 
 
@@ -989,7 +1023,7 @@ namespace lives {
     /**
        @return true if the two players belong to the same livesApp.
     */
-    inline bool operator==(const player& other) {
+    inline bool operator==(const player& other) const {
       return other.m_lives == m_lives;
     }
 
@@ -1018,7 +1052,8 @@ namespace lives {
     
     /**
        Returns whether the effectKey is valid or not.
-       @return true if the effectKey is valid (associated with a valid livesApp instance).
+       @return true if th
+e effectKey is valid (associated with a valid livesApp instance).
     */
     bool isValid();
 
@@ -1044,6 +1079,8 @@ namespace lives {
        LIVES_STATUS_PLAYING or LIVES_STATUS_READY.
        @param mode the mode to switch to.
        @return the new mode of the effectKey.
+       @see mode().
+       @see numMappedModes().
     */
     int setMode(int mode);
 
@@ -1051,6 +1088,7 @@ namespace lives {
        Get the current mode for this effectKey.
        If the effectKey is invalid, the current mode is -1.
        @return the current mode of the effectKey.
+       @see setMode().
     */
     int mode();
 
@@ -1059,6 +1097,7 @@ namespace lives {
        Only works if the effecKey is valid, a valid effect is mapped to the mode, and livesApp::status() is 
        LIVES_STATUS_PLAYING or LIVES_STATUS_READY.
        @return the new state of the effectKey
+       @see enabled().
     */
     bool setEnabled(bool setting);
 
@@ -1066,6 +1105,7 @@ namespace lives {
        Return a value to indicate whether the effect mapped to this effectKey, mode() is active. 
        If the effectKey is invalid, returns false.
        @return true if the effect mapped at mode() is enabled.
+       @see setEnabled().
     */
     bool enabled();
 
@@ -1115,14 +1155,14 @@ namespace lives {
 	 @return true if the effectKeyMap is associated with a valid livesApp instance,
 	 and the index is 1 <= i <= prefs::rteKeysVirtual().
       */
-      bool isValid();
+      bool isValid() const;
 
       /**
 	 Unmap all effects from effectKey mappings, leaving an empty map.
 	 Only has an effect when status() is LIVES_STATUS_READY.
 	 @return true if all effects were unmapped
       */
-      bool clear();
+      bool clear() const;
 
       /**
 	 Returns the ith effect key for this key map.
@@ -1131,7 +1171,7 @@ namespace lives {
 	 @return an effectKey with index i.
 	 @see effectKey::operator[]
       */
-      effectKey at(int i);
+      effectKey at(int i) const;
 
       /**
 	 Returns the number of key slots (indices) in the effectKeyMap.
@@ -1140,12 +1180,12 @@ namespace lives {
 	 @return the number of key slots.
 	 @see prefs::rteKeysVirtual()
       */
-      size_t size();
+      size_t size() const;
 
       /**
 	 @return true if the two effectKeyMaps have the same livesApp
       */
-      inline bool operator==(const effectKeyMap& other) {
+      inline bool operator==(const effectKeyMap& other) const {
 	return other.m_lives == m_lives;
       }
 
@@ -1155,7 +1195,7 @@ namespace lives {
 	 @return an effectKey with index i for this key map.
 	 @see at()
       */
-      inline effectKey operator [] (int i) {
+      inline effectKey operator [] (int i) const {
 	return effectKey(m_lives, i);
       }
 
@@ -1221,7 +1261,7 @@ namespace lives {
      Represents a single block of frames which forms part of a layout. This is an abstracted level, since layouts are fundamentally formed of "events" which may span multiple blocks.
   */
   class block {
-    friend layout;
+    friend multitrack;
 
   public:
 
@@ -1292,22 +1332,93 @@ namespace lives {
 
 
   /**
-     class "layout". 
-     Represents a single layout which can be edited in Multitrack interface mode.
+     class "multitrack". 
+     Represents the multitrack object in a livesApp.
   */
-  class layout {
+  class multitrack {
     friend livesApp;
 
   public:
 
     /**
-       returns whether the layout is valid or not. A valid layout is one which is owned by a valid livesApp.
-       @return whether the layout is valid
+       returns whether the multitrack is valid or not. A valid multitrack is one which is owned by a valid livesApp.
+       @return whether the multitrack is valid
     */
-    bool isValid();
+    bool isValid() const;
 
     /**
-       Insert frames from clip c into livesApp::currentTrack() at player::currentTime()
+       returns whether the multitrack is active or not. This is equivent to livesApp::mode() == LIVES_INTERFACE_MODE_MULTITRACK.
+       @return whether the multitrack is active or not.
+    */
+    bool isActive() const;
+
+    /**
+       Set the current track if isActive() is true.
+       Only works when livesApp::status() is LIVES_STATUS_READY or LIVES_STATUS_PLAYING.
+       @param track a value >= 0 represents a video track, a value < 0 represents a backing audio track.
+       @return true if the track setting was successful.
+       @see currentTrack().
+    */
+    bool setCurrentTrack(int track) const;
+
+    /**
+       If isActive() is true, then this method returns the current active track.
+       The active track defines the insertion point for video and audio, along with the currentTime().
+       If isActive() is false, or the livesApp::status is not LIVES_STATUS_READY or LIVES_STATUS_PLAYING 
+       then the return value is undefined.
+       @return the current active track in multitrack mode. A value >= 0 represents a video track, a value < 0 represents a backing audio track.
+       @see setCurrentTrack().
+    */
+    int currentTrack() const;
+
+    /**
+       Set the current playback start time in seconds. This is also the insertion point for insertBlock().
+       Only works if the livesApp::status() is LIVES_STATUS_READY and isActive() is true.
+       Setting the current time may cause the timeline to stretch visually (i.e zoom out). 
+       The miminum value is 0.0; values < 0.0 will be ignored.
+       This function is synonymous with player::setPlaybackTime().
+       @param time the time in seconds to set playback start time to.
+       @returns the new playback start time.
+       @see currentTime().
+    */
+    double setCurrentTime(double time) const;
+
+    /**
+       Return the current playback time in seconds. If isActive() is true this returns the current player time in the multitrack timeline 
+       (equivalent to to player::playbackTime(), and during playback, equivalent to player::elapsedTime()).
+       This function works when livesApp::status() is LIVE_STATUS_READY or LIVES_STATUS_PLAYING.
+       @returns the current clip playback time.
+       @see setCurrentTime().
+       @see currentAudioTime().
+       @see elapsedTime().
+    */
+    double currentTime() const;
+
+    /**
+       If isActive() is true, then this method returns the label for a track.
+       @param track the track number. A value >= 0 represents a video track, a value < 0 represents a backing audio track.
+       @return the track label, or empty string if the specified track does not exist.
+    */
+    LiVESString trackLabel(int track) const;
+
+
+    bool setTrackLabel(int track) const;
+
+
+    int gravity() const;
+
+
+    int setGravity(int grav) const; // TODO - use lives_gravity_t
+
+
+    int numVideoTracks() const;
+
+
+    int numAudioTracks() const;
+
+
+    /**
+       Insert frames from clip c into currentTrack() at currentTime()
        If ignore_selection_limits is true, then all frames from the clip will be inserted, 
        otherwise (the default) only frames from clip::selectionStart() to clip::selectionEnd() will be used.
        If without_audio is false (the default), audio is also inserted.
@@ -1315,39 +1426,58 @@ namespace lives {
        Depending on the insertion mode, it may not be possible to do the insertion. In case of failure an invalid block is returned.
        If the current track is a backing audio track, then only audio is inserted; 
        in this case if without_audio is true an invalid block is returned.
-       Only works if livesApp::status() is LIVES_STATUS_READY and livesApp::mode() is LIVES_INTERFACE_MODE_MULTITRACK.
-       Note: the actual place where the block ends up depends on various factors such as the livesApp::gravity() setting 
+       Only works if livesApp::status() is LIVES_STATUS_READY and isActive() is true.
+       Note: the actual place where the block ends up depends on various factors such as the gravity() setting 
        and the location of other blocks in the layout.
        @param c the clip to insert from
        @param ignore_selection_limits if true then all frames from the clip will be inserted
        @param without_audio if false then audio is also inserted
        @return the newly inserted block.
-       @see livesApp::setCurrentTrack().
-       @see player::setCurrentTime().
+       @see setCurrentTrack().
+       @see setCurrentTime().
        @see clip::setSelectionStart().
        @see clip::setSelectionEnd().
+       @see setGravity().
     */
-    block insertBlock(clip c, bool ignore_selection_limits=false, bool without_audio=false);
+    block insertBlock(clip c, bool ignore_selection_limits=false, bool without_audio=false) const;
 
 
-    bool wipe();
+    /**
+       Wipe the current layout, leaving a blank layout.
+       If force is false, then the user will have a chance to cancel (if livesApp::interactive() is true), 
+       or to save the layout.
+       If isActive() is false, the layout will not be wiped, and an empty string will be returned.
+       @param force set to true to force the layout to be wiped.
+       @return the name which the layout was saved to, or empty string if it was not saved.
+    */
+    LiVESString wipeLayout(bool force=false) const;
+
+    LiVESString chooseLayout() const;
+
+    bool reloadLayout(LiVESString filename) const;
+
+    bool saveLayout(LiVESString name) const;
+
+    clip render(bool render_audio=true) const;
 
 
-    clip render(bool render_audio=true);
+    bool setAutoTransition(effect autotrans) const;
 
 
-    bool setAutoTransition(effect autotrans);
+    bool setAutoTransitionEnabled(bool setting) const;
 
 
-    bool setAutoTransitionEnabled(bool setting);
-
-
-    bool save(LiVESString name);
+    /**
+       @return true if the two layouts have the same livesApp owner
+    */
+    inline bool operator==(const multitrack& other) const {
+      return m_lives == other.m_lives;
+    }
 
 
   protected:
     //layout();
-    layout(livesApp *lives);
+    multitrack(livesApp *lives);
 
   private:
     livesApp *m_lives;

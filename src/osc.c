@@ -484,6 +484,8 @@ boolean lives_osc_cb_play (void *context, int arglen, const void *vargs, OSCTime
 
   lives_idle_add(osc_playall,NULL);
 
+  while (mainw->playing_file<0) lives_usleep(prefs->sleep_time);
+
   return lives_osc_notify_success(NULL);
 }
 
@@ -540,6 +542,7 @@ boolean lives_osc_cb_play_forward (void *context, int arglen, const void *vargs,
 
   if (mainw->playing_file==-1&&mainw->current_file>0) {
     lives_idle_add(osc_playall,NULL);
+    while (mainw->playing_file<0) lives_usleep(prefs->sleep_time);
     return lives_osc_notify_success(NULL);
   }
   else if (mainw->current_file>0) {
@@ -563,6 +566,7 @@ boolean lives_osc_cb_play_backward (void *context, int arglen, const void *vargs
   if (mainw->playing_file==-1&&mainw->current_file>0) {
     mainw->reverse_pb=TRUE;
     lives_idle_add(osc_playall,NULL);
+    while (mainw->playing_file<0) lives_usleep(prefs->sleep_time);
     return lives_osc_notify_success(NULL);
   }
   else if (mainw->current_file>0) {
@@ -872,7 +876,9 @@ boolean lives_osc_cb_fx_enable(void *context, int arglen, const void *vargs, OSC
       if (mainw->playing_file==-1&&via_shortcut&&count!=0) return lives_osc_notify_failure(); // is no generator
     
       if (mainw->playing_file==-1&&count==0) {
+	mainw->error=FALSE;
 	lives_idle_add(osc_init_generator,LIVES_INT_TO_POINTER(effect_key));
+	while (mainw->playing_file==-1 && !mainw->error) lives_usleep(prefs->sleep_time);
       }
       else {
 	rte_on_off_callback_hook(NULL,LIVES_INT_TO_POINTER(effect_key));
@@ -2064,7 +2070,7 @@ boolean lives_osc_cb_mtctimeset(void *context, int arglen, const void *vargs, OS
   if (time<0.) return lives_osc_notify_failure();
 
   time=q_dbl(time,mainw->multitrack->fps)/U_SEC;
-  mt_tl_move(mainw->multitrack,time-lives_ruler_get_value(LIVES_RULER(mainw->multitrack->timeline)));
+  mt_tl_move(mainw->multitrack,time);
 
   msg=lives_strdup_printf("%.8f",lives_ruler_get_value(LIVES_RULER(mainw->multitrack->timeline)));
   lives_osc_notify_success(msg);

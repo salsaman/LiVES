@@ -2388,6 +2388,14 @@ LiVESWidget *choose_file_with_preview (const char *dir, const char *title, int p
 
 //cancel/discard/save dialog
 _entryw* create_cds_dialog (int type) {
+  // values for type are:
+  // 0 == leave multitrack, user pref is warn when leave multitrack
+  // 1 == exit from LiVES, or save set
+  // 2 == ?
+  // 3 == wipe layout confirmation
+  // 4 == prompt for render after recording / viewing in mt
+
+
   LiVESWidget *dialog_vbox;
   LiVESWidget *dialog_action_area;
   LiVESWidget *cancelbutton;
@@ -2486,11 +2494,12 @@ _entryw* create_cds_dialog (int type) {
   lives_button_box_set_layout (LIVES_BUTTON_BOX (dialog_action_area), LIVES_BUTTONBOX_END);
 
   cancelbutton = lives_button_new_from_stock (LIVES_STOCK_CANCEL);
-  lives_dialog_add_action_widget (LIVES_DIALOG (cdsw->dialog), cancelbutton, 0);
+  lives_dialog_add_action_widget (LIVES_DIALOG (cdsw->dialog), cancelbutton, LIVES_RESPONSE_CANCEL);
   lives_widget_add_accelerator (cancelbutton, LIVES_WIDGET_CLICKED_SIGNAL, accel_group,
                               LIVES_KEY_Escape, (LiVESXModifierType)0, (LiVESAccelFlags)0);
 
   discardbutton = lives_button_new_from_stock (LIVES_STOCK_DELETE);
+
   lives_dialog_add_action_widget (LIVES_DIALOG (cdsw->dialog), discardbutton, 1+(type==2));
   lives_button_set_use_underline(LIVES_BUTTON(discardbutton),TRUE);
   if ((type==0&&strlen(mainw->multitrack->layout_name)==0)||type==3||type==4) 
@@ -2513,6 +2522,8 @@ _entryw* create_cds_dialog (int type) {
   if (type==1) {
     lives_widget_grab_focus(cdsw->entry);
   }
+
+  if (!mainw->interactive) lives_widget_set_sensitive(cancelbutton,FALSE);
 
   return cdsw;
 }

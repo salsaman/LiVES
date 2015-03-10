@@ -1124,6 +1124,7 @@ static void lives_init(_ign_opts *ign_opts) {
   mainw->audio_frame_buffer=NULL;
   mainw->afbuffer_clients=0;
 
+  memset(mainw->recent_file,0,1);
   /////////////////////////////////////////////////// add new stuff just above here ^^
 
 
@@ -2836,7 +2837,7 @@ int real_main (int argc, char *argv[], ulong id) {
 #ifdef GUI_GTK
 #ifdef LIVES_NO_DEBUG
   // don't crash on GTK+ fatals
-  //g_log_set_always_fatal ((GLogLevelFlags)0);
+  g_log_set_always_fatal ((GLogLevelFlags)0);
 #endif
 
   g_log_set_default_handler(lives_log_handler,NULL);

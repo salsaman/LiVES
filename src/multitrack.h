@@ -727,6 +727,7 @@ boolean track_arrow_pressed (LiVESWidget *ahbox, LiVESXEventButton *, livespoint
 void track_select (lives_mt *); ///< must call after setting mt->current_track
 boolean mt_track_is_audio(lives_mt *, int ntrack); ///< return TRUE if ntrack is a valid backing audio track
 boolean mt_track_is_video(lives_mt *, int ntrack); ///< return TRUE if ntrack is a valid video track
+char *get_track_name(lives_mt *mt, int track_num, boolean is_audio);
 
 void mt_do_autotransition(lives_mt *, track_rect *block); ///< call this on a block to apply autotransition on it
 
@@ -770,7 +771,8 @@ int get_clip_for_block(track_rect *block);
 
 
 // timeline functions
-void mt_tl_move(lives_mt *, double pos_rel);
+void mt_tl_move_relative(lives_mt *, double pos_rel);
+void mt_tl_move(lives_mt *, double pos_abs);
 void set_timeline_end_secs (lives_mt *, double secs);
 boolean on_timeline_press (LiVESWidget *, LiVESXEventButton *, livespointer mt);
 boolean on_timeline_release (LiVESWidget *, LiVESXEventButton *, livespointer mt);

@@ -267,13 +267,14 @@ typedef struct {
   int current_file;
   int first_free_file;
   lives_clip_t *files[MAX_FILES+1]; ///< +1 for the clipboard
-  gchar vid_load_dir[PATH_MAX];
-  gchar vid_save_dir[PATH_MAX];
-  gchar vid_dl_dir[PATH_MAX];
-  gchar audio_dir[PATH_MAX];
-  gchar image_dir[PATH_MAX];
-  gchar proj_load_dir[PATH_MAX];
-  gchar proj_save_dir[PATH_MAX];
+  char vid_load_dir[PATH_MAX];
+  char vid_save_dir[PATH_MAX];
+  char vid_dl_dir[PATH_MAX];
+  char audio_dir[PATH_MAX];
+  char image_dir[PATH_MAX];
+  char proj_load_dir[PATH_MAX];
+  char proj_save_dir[PATH_MAX];
+  char recent_file[PATH_MAX];
   int untitled_number;
   int cap_number;
   int clips_available;
@@ -414,7 +415,7 @@ typedef struct {
   int ascrap_file; ///< scrap file for recording audio scraps
 
   /// which number file we are playing (or -1)
-  int playing_file;
+  volatile int playing_file;
 
   int pre_src_file; ///< video file we were playing before any ext input started
   int pre_src_audio_file; ///< audio file we were playing before any ext input started

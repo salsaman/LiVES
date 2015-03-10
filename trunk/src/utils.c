@@ -1872,9 +1872,7 @@ void d_print(const char *text) {
     if (mainw->current_file!=mainw->last_dprint_file&&mainw->current_file!=0&&mainw->multitrack==NULL&&
 	(mainw->current_file==-1||cfile->clip_type!=CLIP_TYPE_GENERATOR)&&!mainw->no_switch_dprint) {
       if (mainw->current_file>0) {
-	switchtext=lives_strdup_printf (_ ("\n==============================\nSwitched to clip %s\n"),
-				    cfile->clip_type!=CLIP_TYPE_VIDEODEV?(tmp=lives_path_get_basename(cfile->name)):
-				    (tmp=lives_strdup(cfile->name)));
+	switchtext=lives_strdup_printf (_ ("\n==============================\nSwitched to clip %s\n"),tmp=get_menu_name(cfile));
 	lives_free(tmp);
       }
       else {

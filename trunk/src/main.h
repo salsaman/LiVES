@@ -1062,6 +1062,7 @@ void set_record (void);
 //gui.c
 void  create_LiVES (void);
 void set_interactive(boolean interactive);
+char *get_menu_name(lives_clip_t *sfile);
 void enable_record (void);
 void toggle_record (void);
 void disable_record (void);

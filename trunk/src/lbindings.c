@@ -331,10 +331,13 @@ static boolean call_file_choose_with_preview(livespointer data) {
 
 static boolean call_choose_set(livespointer data) {
   udata *ud=(udata *)data;
-  char *setname=on_load_set_activate(NULL,(livespointer)1);
-  if (setname==NULL) setname=lives_strdup("");
-  ext_caller_return_string(ud->id,setname);
-  lives_free(setname);
+  if (!mainw->was_set) {
+    char *setname=on_load_set_activate(NULL,(livespointer)1);
+    if (setname==NULL) setname=lives_strdup("");
+    ext_caller_return_string(ud->id,setname);
+    lives_free(setname);
+  }
+  else ext_caller_return_string(ud->id,"");
   lives_free(ud);
   return FALSE;
 }
@@ -432,6 +435,20 @@ static boolean call_set_pref_int(livespointer data) {
 }
 
 
+static boolean call_mt_set_track(livespointer data) {
+  ipref *idata=(ipref *)data;
+  if (mainw->multitrack!=NULL && (mt_track_is_video(mainw->multitrack, idata->val) 
+				  || mt_track_is_audio(mainw->multitrack, idata->val))) {
+    mainw->multitrack->current_track=idata->val;
+    track_select(mainw->multitrack);
+    ext_caller_return_int(idata->id,TRUE);
+  }
+  else ext_caller_return_int(idata->id,FALSE);
+  lives_free(idata);
+  return FALSE;
+}
+
+
 static boolean call_set_if_mode(livespointer data) {
   ipref *idata=(ipref *)data;
   if (idata->val==LIVES_INTERFACE_MODE_CLIPEDIT&&mainw->multitrack!=NULL) {
@@ -439,6 +456,7 @@ static boolean call_set_if_mode(livespointer data) {
   }
   if (idata->val==LIVES_INTERFACE_MODE_MULTITRACK&&mainw->multitrack==NULL) {
     on_multitrack_activate(NULL,NULL);
+    while (mainw->multitrack==NULL || !mainw->multitrack->is_ready) lives_usleep(prefs->sleep_time);
   }
   ext_caller_return_int(idata->id,TRUE);
   lives_free(idata);
@@ -449,6 +467,28 @@ static boolean call_set_if_mode(livespointer data) {
 static boolean call_switch_clip(livespointer data) {
   ipref *idata=(ipref *)data;
   switch_clip(idata->prefidx,idata->val);
+  ext_caller_return_int(idata->id,TRUE);
+  lives_free(idata);
+  return FALSE;
+}
+
+
+static boolean call_set_current_time(livespointer data) {
+  opfidata *idata=(opfidata *)data;
+  if (mainw->multitrack!=NULL) {
+    if (idata->stime >=0.) {
+      if (idata->stime>mainw->multitrack->end_secs) set_timeline_end_secs(mainw->multitrack,idata->stime);
+      mt_tl_move(mainw->multitrack,idata->stime);
+    }
+  }
+  else {
+    if (mainw->current_file>0 && idata->stime>=0. && idata->stime<=cfile->total_time) {
+      cfile->pointer_time=idata->stime;
+      lives_ruler_set_value(LIVES_RULER (mainw->hruler),cfile->pointer_time);
+      lives_widget_queue_draw (mainw->hruler);
+      get_play_times();
+    }
+  }
   ext_caller_return_int(idata->id,TRUE);
   lives_free(idata);
   return FALSE;
@@ -480,6 +520,29 @@ static boolean call_fx_setmode(livespointer data) {
 }
 
 
+static boolean call_wipe_layout(livespointer data) {
+  iblock *fxdata=(iblock *)data;
+  boolean force=fxdata->ign_sel;
+  char *lname=lives_strdup("");
+
+  if (force) {
+    wipe_layout(mainw->multitrack);
+  }
+  else {
+    memset(mainw->recent_file,0,1);
+    check_for_layout_del(mainw->multitrack, FALSE);
+    if (strlen(mainw->recent_file)) {
+      lives_free(lname);
+      lname=strdup(mainw->recent_file);
+    }
+  }
+
+  ext_caller_return_string(fxdata->id,lname);
+  lives_free(lname);
+  return FALSE;
+}
+
+
 static boolean call_insert_block(livespointer data) {
   iblock *idata=(iblock *)data;
   boolean ins_audio;
@@ -487,24 +550,25 @@ static boolean call_insert_block(livespointer data) {
 
   ulong block_uid;
 
-  //TODO - check if multitrack still valid
+  if (mainw->multitrack!=NULL) {
+    mainw->multitrack->clip_selected=idata->clip-1;
+    mt_clip_select(mainw->multitrack,TRUE);
 
-  mainw->multitrack->clip_selected=idata->clip-1;
-  mt_clip_select(mainw->multitrack,TRUE);
+    ins_audio=mainw->multitrack->opts.insert_audio;
+    ign_ins_sel=mainw->multitrack->opts.ign_ins_sel;
 
-  ins_audio=mainw->multitrack->opts.insert_audio;
-  ign_ins_sel=mainw->multitrack->opts.ign_ins_sel;
+    mainw->multitrack->opts.insert_audio=idata->with_audio;
+    mainw->multitrack->opts.ign_ins_sel=idata->ign_sel;
 
-  mainw->multitrack->opts.insert_audio=idata->with_audio;
-  mainw->multitrack->opts.ign_ins_sel=idata->ign_sel;
+    multitrack_insert(NULL,mainw->multitrack);
 
-  multitrack_insert(NULL,mainw->multitrack);
+    mainw->multitrack->opts.ign_ins_sel=ign_ins_sel;
+    mainw->multitrack->opts.insert_audio=ins_audio;
 
-  mainw->multitrack->opts.ign_ins_sel=ign_ins_sel;
-  mainw->multitrack->opts.insert_audio=ins_audio;
-
-  block_uid=mt_get_last_block_uid(mainw->multitrack);
-  ext_caller_return_ulong(idata->id,block_uid);
+    block_uid=mt_get_last_block_uid(mainw->multitrack);
+    ext_caller_return_ulong(idata->id,block_uid);
+  }
+  else ext_caller_return_ulong(idata->id,0l);
   return FALSE;
 }
 
@@ -584,6 +648,38 @@ boolean idle_switch_clip(int type, int cnum, ulong id) {
   info->val = cnum;
   info->prefidx = type;
   lives_idle_add(call_switch_clip,(livespointer)info);
+  return TRUE;
+}
+
+
+boolean idle_mt_set_track(int tnum, ulong id) {
+  ipref *info;
+
+  if (mainw->preview||mainw->go_away||mainw->is_processing) {
+    return FALSE;
+  }
+
+  if (mainw->multitrack==NULL) return FALSE;
+
+  info = (ipref *)lives_malloc(sizeof(ipref));
+  info->id = id;
+  info->val = tnum;
+  lives_idle_add(call_mt_set_track,(livespointer)info);
+  return TRUE;
+}
+
+
+boolean idle_set_current_time(double time, ulong id) {
+  opfidata *info;
+
+  if (mainw->preview||mainw->go_away||mainw->is_processing) {
+    return FALSE;
+  }
+
+  info = (opfidata *)lives_malloc(sizeof(opfidata));
+  info->id = id;
+  info->stime=time;
+  lives_idle_add(call_set_current_time,(livespointer)info);
   return TRUE;
 }
 
@@ -828,6 +924,7 @@ boolean idle_set_if_mode(lives_interface_mode_t mode, ulong id) {
 }
 
 
+
 boolean idle_insert_block(int clipno, boolean ign_sel, boolean with_audio, ulong id) {
   iblock *data;
 
@@ -843,5 +940,22 @@ boolean idle_insert_block(int clipno, boolean ign_sel, boolean with_audio, ulong
   data->ign_sel=ign_sel;
   data->with_audio=with_audio;
   lives_idle_add(call_insert_block,(livespointer)data);
+  return TRUE;
+}
+
+
+boolean idle_wipe_layout(boolean force, ulong id) {
+  iblock *data;
+
+  if (mainw->preview||mainw->go_away||mainw->is_processing||mainw->playing_file>-1) {
+    return FALSE;
+  }
+
+  if (mainw->multitrack==NULL) return FALSE;
+
+  data=(iblock *)lives_malloc(sizeof(iblock));
+  data->ign_sel=force;
+  data->id=id;
+  lives_idle_add(call_wipe_layout,(livespointer)data);
   return TRUE;
 }

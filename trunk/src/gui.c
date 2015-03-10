@@ -4382,14 +4382,17 @@ LIVES_INLINE void frame_size_update(void) {
 }
 
 
+char *get_menu_name(lives_clip_t *sfile) {
+  if (sfile==NULL) return NULL;
+  return sfile->clip_type!=CLIP_TYPE_VIDEODEV?lives_path_get_basename(sfile->name):lives_strdup(sfile->name);
+}
+
 
 void add_to_clipmenu(void) {
   // TODO - indicate "opening"
-  gchar *tmp;
+  char *tmp;
 
-  cfile->menuentry = lives_radio_menu_item_new_with_label(mainw->clips_group, cfile->clip_type!=CLIP_TYPE_VIDEODEV?
-							  (tmp=lives_path_get_basename(cfile->name)):
-							  (tmp=lives_strdup(cfile->name)));
+  cfile->menuentry = lives_radio_menu_item_new_with_label(mainw->clips_group, tmp=get_menu_name(cfile));
   lives_free(tmp);
 
   mainw->clips_group=lives_radio_menu_item_get_group(LIVES_RADIO_MENU_ITEM(cfile->menuentry));

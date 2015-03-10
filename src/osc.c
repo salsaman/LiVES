@@ -6380,6 +6380,9 @@ boolean lives_osc_cb_saveset(void *context, int arglen, const void *vargs, OSCTi
   boolean ret;
   int force_append=0;
   char setname[OSC_STRING_SIZE];
+
+  // setname should be in filesystem encoding
+
   lives_memset(setname,0,1);
 
   if (mainw->preview||mainw->is_processing||mainw->multitrack!=NULL) return lives_osc_notify_failure();

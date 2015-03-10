@@ -261,7 +261,7 @@ typedef struct {
 
 /// mainw->
 typedef struct {
-  gchar msg[512];
+  char msg[512];
 
   // files
   int current_file;
@@ -285,7 +285,7 @@ typedef struct {
   LiVESSList *clips_group;
 
   /// sets
-  gchar set_name[256];   // actually 128 is the limit now
+  char set_name[256];   // actually 128 is the limit now, filesystem encoding
 
   // playback
   boolean faded;
@@ -333,7 +333,7 @@ typedef struct {
   boolean stored_event_list_changed;
   boolean stored_event_list_auto_changed;
   boolean stored_layout_save_all_vals;
-  gchar stored_layout_name[PATH_MAX];
+  char stored_layout_name[PATH_MAX];
 
   LiVESList *stored_layout_undos;
   size_t sl_undo_buffer_used;
@@ -382,7 +382,7 @@ typedef struct {
   int foreign_width;
   int foreign_height;
   int foreign_bpp;
-  gchar *foreign_visual;
+  char *foreign_visual;
 
   /// some VJ effects
   boolean nervous;
@@ -460,12 +460,12 @@ typedef struct {
   /////////////////////////////////////////////////
 
   // end of static-ish info
-  gchar first_info_file[PATH_MAX];
+  char first_info_file[PATH_MAX];
   boolean leave_files;
   boolean was_set;
 
   /// extra parameters for opening special files
-  gchar *file_open_params;
+  char *file_open_params;
   boolean open_deint;
 
   int last_dprint_file;
@@ -953,7 +953,7 @@ typedef struct {
   /// immediately (to be) affected layout maps
   LiVESList *xlays;
 
-  gchar *recovery_file;  ///< the filename of our recover file
+  char *recovery_file;  ///< the filename of our recover file
   boolean leave_recovery;
 
   boolean unordered_blocks; ///< are we recording unordered blocks ?
@@ -1005,12 +1005,12 @@ typedef struct {
 
   boolean no_recurse; ///< flag to prevent recursive function calls
 
-  gchar *string_constants[NUM_LIVES_STRING_CONSTANTS];
-  gchar *any_string;  ///< localised text saying "Any", for encoder and output format
-  gchar *none_string;  ///< localised text saying "None", for playback plugin name, etc.
-  gchar *recommended_string;  ///< localised text saying "recommended", for encoder and output format
-  gchar *disabled_string;  ///< localised text saying "disabled !", for playback plugin name, etc.
-  gchar *cl_string; ///< localised text saying "*The current layout*", for layout warnings
+  char *string_constants[NUM_LIVES_STRING_CONSTANTS];
+  char *any_string;  ///< localised text saying "Any", for encoder and output format
+  char *none_string;  ///< localised text saying "None", for playback plugin name, etc.
+  char *recommended_string;  ///< localised text saying "recommended", for encoder and output format
+  char *disabled_string;  ///< localised text saying "disabled !", for playback plugin name, etc.
+  char *cl_string; ///< localised text saying "*The current layout*", for layout warnings
 
   int opening_frames; ///< count of frames so far opened, updated after preview (currently)
 
@@ -1079,16 +1079,16 @@ typedef struct {
   boolean go_away;
   boolean debug; ///< debug crashes and asserts
 
-  gchar *subt_save_file; ///< name of file to save subtitles to
+  char *subt_save_file; ///< name of file to save subtitles to
 
-  gchar **fonts_array;
+  char **fonts_array;
   int nfonts;
 
   LiVESTargetEntry *target_table; ///< drag and drop target table
 
   LiVESList *videodevs;
 
-  gchar vpp_defs_file[PATH_MAX];
+  char vpp_defs_file[PATH_MAX];
 
   int log_fd;
 
@@ -1126,9 +1126,9 @@ typedef struct {
   int ce_frame_height;
   int ce_frame_width;
 
-  gchar *read_failed_file;
-  gchar *write_failed_file;
-  gchar *bad_aud_file;
+  char *read_failed_file;
+  char *write_failed_file;
+  char *bad_aud_file;
 
   lives_render_error_t render_error;
 

@@ -2763,13 +2763,17 @@ void end_threaded_dialog(void) {
     }
     else lives_widget_queue_draw(mainw->multitrack->window);
   }
-  else lives_set_cursor_style(LIVES_CURSOR_NORMAL,mainw->splash_window);
+  else {
+    lives_set_cursor_style(LIVES_CURSOR_NORMAL,mainw->splash_window);
+    mainw->splash_window=NULL; // need to do this before calling lives_widget_context_update()
+  }
   if (procw!=NULL) {
     lives_free(procw);
     procw=NULL;
   }
   mainw->cancel_type=CANCEL_KILL;
   mainw->threaded_dialog=FALSE;
+
   lives_widget_context_update();
 }
 

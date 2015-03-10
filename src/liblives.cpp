@@ -437,6 +437,19 @@ namespace lives {
   }
 
 
+  livesStringList livesApp::availableSets() {
+    livesStringList list;
+    LiVESList *setlist=get_set_list(::prefs->tmpdir, true), *slist=setlist;
+    while (slist != NULL) {
+      list.push_back(livesString((const char *)slist->data, LIVES_CHAR_ENCODING_UTF8));
+      lives_free(slist->data);
+      slist = slist->next;
+    }
+    lives_list_free(setlist);
+    return list;
+  }
+
+
   clip livesApp::openFile(livesString fname, bool with_audio, double stime, int frames, bool deinterlace) {
     if (!isValid()) return clip(0);
     if (fname.empty()) return clip(0);
@@ -786,7 +799,7 @@ namespace lives {
     if (!isValid()) return FALSE;
     int arglen = 3;
     char **vargs=(char **)lives_malloc(sizeof(char *));
-    const char *cname = name.c_str();
+    const char *cname = name.toEncoding(LIVES_CHAR_ENCODING_FILESYSTEM).c_str();
     *vargs = strdup(",si");
     arglen = padup(vargs, arglen);
     arglen = add_string_arg(vargs, arglen, cname);

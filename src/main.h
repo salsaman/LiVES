@@ -1237,7 +1237,7 @@ LiVESList *lives_list_copy_strings(LiVESList *list);
 boolean string_lists_differ(LiVESList *, LiVESList *);
 
 
-LiVESList *get_set_list(const char *dir);
+LiVESList *get_set_list(const char *dir, boolean utf8);
 
 char *subst (const char *string, const char *from, const char *to);
 char *insert_newlines(const char *text, int maxwidth);

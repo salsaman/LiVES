@@ -4563,12 +4563,12 @@ void splash_end(void) {
   if (mainw->foreign) return;
     
   if (mainw->splash_window!=NULL) {
+    LiVESWidget *splash_window=mainw->splash_window; // end_threaded_dialog() will set mainw->splash_window to NULL
 
     end_threaded_dialog();
     
-    lives_widget_destroy(mainw->splash_window);
+    lives_widget_destroy(splash_window);
     
-    mainw->splash_window=NULL;
   }
 
   if (prefs->startup_interface==STARTUP_MT&&prefs->startup_phase==0&&mainw->multitrack==NULL) 

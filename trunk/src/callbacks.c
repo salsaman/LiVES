@@ -1596,7 +1596,7 @@ void mt_memory_free(void) {
 
 
 void on_quit_activate (LiVESMenuItem *menuitem, livespointer user_data) {
-  char *com,*esave_dir,*msg;
+  char *com,*esave_dir,*msg,*tmp;
 
   boolean has_layout_map=FALSE;
   boolean had_clips=FALSE,legal_set_name;
@@ -1673,7 +1673,8 @@ void on_quit_activate (LiVESMenuItem *menuitem, livespointer user_data) {
 	  else set_pref("ar_clipset","");
 	  mainw->no_exit=FALSE;
 	  mainw->leave_recovery=FALSE;
-	  on_save_set_activate(NULL,set_name);
+	  on_save_set_activate(NULL,(tmp=U82F(set_name)));
+	  lives_free(tmp);
 
 	  if (mainw->multitrack!=NULL) {
 	    mt_sensitise(mainw->multitrack);
@@ -4563,6 +4564,7 @@ boolean on_save_set_activate (LiVESMenuItem *menuitem, livespointer user_data) {
 
   // also handles migration and merging of sets
 
+  // new_set_name can be passed in userdata, it should be in filename encoding
 
   // TODO - caller to do end_threaded_dialog()
 
@@ -4995,6 +4997,8 @@ boolean reload_set (const char *set_name) {
 
   // CLIP SET LOADER
 
+  // setname should be in filesystem encoding
+
   FILE *orderfile;
 
   char *msg;
@@ -5027,14 +5031,15 @@ boolean reload_set (const char *set_name) {
 
   lives_snprintf (mainw->msg,256,"none");
 
-
   // check if we already have a threaded dialog running (i.e. we are called from startup)
   if (mainw->threaded_dialog) keep_threaded_dialog=TRUE;
 
   if (prefs->show_gui && !keep_threaded_dialog) {
-    msg=lives_strdup_printf(_("Loading clips from set %s"),set_name);
+    char *tmp;
+    msg=lives_strdup_printf(_("Loading clips from set %s"),(tmp=F2U8(set_name)));
     do_threaded_dialog(msg,FALSE);
     lives_free(msg);
+    lives_free(tmp);
   }
 
   ordfile=lives_build_filename(prefs->tmpdir,set_name,"order",NULL);
@@ -5114,15 +5119,17 @@ boolean reload_set (const char *set_name) {
 	do_set_noclips_error(set_name);
       }
       else {
+	char *tmp;
 	reset_clipmenu();
 	lives_widget_set_sensitive (mainw->vj_load_set, FALSE);
 	
 	recover_layout_map(MAX_FILES);
 
 	msg=lives_strdup_printf (_ ("%d clips and %d layouts were recovered from set (%s).\n"),
-			     clipnum,lives_list_length(mainw->current_layouts_map),set_name);
+				 clipnum,lives_list_length(mainw->current_layouts_map),(tmp=F2U8(set_name)));
 	d_print (msg);
 	lives_free (msg);
+	lives_free(tmp);
 	
 	lives_snprintf(mainw->set_name,128,"%s",set_name);
 

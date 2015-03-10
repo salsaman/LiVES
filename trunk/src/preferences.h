@@ -38,7 +38,7 @@ typedef struct {
 #define Q_FILL 1
 #define Q_SMOOTH 1
 
-  gchar tmpdir[PATH_MAX];  ///< kept in locale encoding
+  char tmpdir[PATH_MAX];  ///< kept in locale encoding
 
   // utf8 encoding
   gchar def_vid_load_dir[PATH_MAX];
@@ -216,8 +216,8 @@ typedef struct {
   boolean ar_clipset;
   boolean ar_layout;
 
-  gchar ar_clipset_name[128]; ///< utf8 (not converted (to locale?))
-  gchar ar_layout_name[PATH_MAX];  ///< utf8 (not converted) 
+  char ar_clipset_name[128]; ///< locale
+  char ar_layout_name[PATH_MAX];  ///< locale
 
   boolean rec_desktop_audio;
 

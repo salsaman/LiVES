@@ -520,18 +520,25 @@ namespace lives {
     */
     clip openFile(livesString fname, bool with_audio=true, double stime=0., int frames=0, bool deinterlace=false);
 
-
+    /**
+       Returns a list of available sets. The list returned depends on the setting of prefs::tmpDir().
+       This may be an expensive operation as it requires accessing the underlying filesystem.
+       If the set is invalid, an empty list is returned.
+       @return a list<livesString> of set names.
+       @see reloadSet().
+       @see set::save().
+    */
     livesStringList availableSets();
 
-
    /**
-       Allow the user choose set to open.
+       Allow the user to choose a set to open.
        Only has an effect when status() is LIVES_STATUS_READY, and there are no currently open clips, 
        otherwise returns an empty string.
        If the user cancels, an empty string is returned.
-       The valid list of sets depends on the setting of prefs::tmpDir().
+       The valid list of sets to choose from will be equivalent to the list returned by availableSets().
        @return the name of the set selected.
        @see reloadSet().
+       @see availableSets().
     */
     livesString chooseSet();
 
@@ -539,9 +546,10 @@ namespace lives {
       Reload an existing clip set.
       Only works when status() is LIVES_STATUS_READY, otherwise false is returned.
       A set may not be accessed concurrently by more than one copy of LiVES.
-      The valid list of sets depends on the setting of prefs::tmpDir().
+      The valid list of sets is equivalent to the list returned by availableSets().
       @param setname the name of the set to reload.
       @see chooseSet().
+      @see availableSets().
     */
     bool reloadSet(livesString setname);
 

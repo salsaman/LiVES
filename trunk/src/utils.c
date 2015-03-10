@@ -4860,8 +4860,10 @@ void save_clip_value(int which, lives_clip_details_t what, void *val) {
 
 
 
-LiVESList *get_set_list(const char *dir) {
+LiVESList *get_set_list(const char *dir, boolean utf8) {
   // get list of sets in top level dir
+  // values will be in filename encoding
+
   LiVESList *setlist=NULL;
   DIR *tldir,*subdir;
   struct dirent *tdirent,*subdirent;
@@ -4905,7 +4907,10 @@ LiVESList *get_set_list(const char *dir) {
       }
 
       if (!strcmp(subdirent->d_name,"order")) {
-	setlist=lives_list_append(setlist,lives_strdup(tdirent->d_name));
+	if (!utf8) 
+	  setlist=lives_list_append(setlist,lives_strdup(tdirent->d_name));
+	else 
+	  setlist=lives_list_append(setlist,F2U8(tdirent->d_name));
 	break;
       }
     }

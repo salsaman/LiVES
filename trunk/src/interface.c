@@ -1341,7 +1341,7 @@ _entryw* create_rename_dialog (int type) {
 
     set_combo=lives_combo_new();
 
-    renamew->setlist=get_set_list(prefs->tmpdir);
+    renamew->setlist=get_set_list(prefs->tmpdir,TRUE);
 
     lives_combo_populate(LIVES_COMBO(set_combo),renamew->setlist);
 
@@ -1358,16 +1358,19 @@ _entryw* create_rename_dialog (int type) {
 
   }
   else {
+    char *tmp;
     renamew->entry = lives_entry_new();
     lives_entry_set_max_length (LIVES_ENTRY(renamew->entry),type==6?PATH_MAX:type==7?16:128);
     if (type==2&&strlen (mainw->set_name)) {
-      lives_entry_set_text (LIVES_ENTRY (renamew->entry),mainw->set_name);
+      lives_entry_set_text (LIVES_ENTRY (renamew->entry),(tmp=F2U8(mainw->set_name)));
+      lives_free(tmp);
     }
     if (type==6) {
       gchar *tmpdir;
       if (prefs->startup_phase==-1) tmpdir=lives_build_filename(capable->home_dir,LIVES_TMP_NAME,NULL);
       else tmpdir=lives_strdup(prefs->tmpdir);
-      lives_entry_set_text (LIVES_ENTRY (renamew->entry),tmpdir);
+      lives_entry_set_text (LIVES_ENTRY (renamew->entry),(tmp=F2U8(tmpdir)));
+      lives_free(tmp);
       lives_free(tmpdir);
     }
     lives_box_pack_start (LIVES_BOX (hbox), renamew->entry, TRUE, TRUE, 0);

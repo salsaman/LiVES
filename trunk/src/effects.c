@@ -1042,6 +1042,8 @@ boolean rte_on_off_callback (LiVESAccelGroup *group, LiVESObject *obj, uint32_t 
   int key=LIVES_POINTER_TO_INT(user_data);
   uint64_t new_rte;
 
+  if (!mainw->interactive && group!=NULL) return TRUE;
+
   mainw->fx_is_auto=FALSE;
 
   mainw->osc_block=TRUE;

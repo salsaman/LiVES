@@ -145,6 +145,15 @@ typedef enum {
 
 
 
+/**
+   Multitrack gravity
+*/
+typedef enum {
+  LIVES_GRAVITY_NONE,
+  LIVES_GRAVITY_LEFT,
+  LIVES_GRAVITY_RIGHT
+} lives_gravity_t;
+
 
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -240,26 +249,29 @@ namespace lives {
   /**
      typedef
   */
-  typedef class LiVESString LiVESString;
+  typedef class livesString livesString;
+
+
+  typedef list<livesString> livesStringList;
 
 
   ///////////////////////////////////////////////////
 
 
   /**
-     class "LiVESString". 
+     class "livesString". 
      A subclass of std::string which automatically handles various character encodings.
   */
-  class LiVESString : public std::string {
+  class livesString : public std::string {
   public:
-    LiVESString(lives_char_encoding_t e=LIVES_CHAR_ENCODING_DEFAULT) : m_encoding(e), std::string() {}
-    LiVESString(const string& str) : std::string(str) {}
-    LiVESString(const string& str, size_t pos, size_t len = npos) : std::string(str, pos,  len) {}
-    LiVESString(const char* s, lives_char_encoding_t e=LIVES_CHAR_ENCODING_DEFAULT) : m_encoding(e), std::string(s) {}
-    LiVESString(const char* s, size_t n, lives_char_encoding_t e=LIVES_CHAR_ENCODING_DEFAULT) : m_encoding(e), std::string(s, n) {}
-    LiVESString(size_t n, char c, lives_char_encoding_t e=LIVES_CHAR_ENCODING_DEFAULT) : m_encoding(e), std::string(n, c) {}
+    livesString(lives_char_encoding_t e=LIVES_CHAR_ENCODING_DEFAULT) : m_encoding(e), std::string() {}
+    livesString(const string& str) : std::string(str) {}
+    livesString(const string& str, size_t pos, size_t len = npos) : std::string(str, pos,  len) {}
+    livesString(const char* s, lives_char_encoding_t e=LIVES_CHAR_ENCODING_DEFAULT) : m_encoding(e), std::string(s) {}
+    livesString(const char* s, size_t n, lives_char_encoding_t e=LIVES_CHAR_ENCODING_DEFAULT) : m_encoding(e), std::string(s, n) {}
+    livesString(size_t n, char c, lives_char_encoding_t e=LIVES_CHAR_ENCODING_DEFAULT) : m_encoding(e), std::string(n, c) {}
     template <class InputIterator>
-    LiVESString  (InputIterator first, InputIterator last, 
+    livesString  (InputIterator first, InputIterator last, 
 		  lives_char_encoding_t e=LIVES_CHAR_ENCODING_DEFAULT) : m_encoding(e), std::string(first, last) {}
 
     /**
@@ -267,7 +279,7 @@ namespace lives {
        @param enc the character encoding to convert to.
        @return either the same string if no conversion is needed, or a new string if conversion is needed
     */
-    LiVESString toEncoding(lives_char_encoding_t enc);
+    livesString toEncoding(lives_char_encoding_t enc);
 
     /**
        Define the character encoding of the string.
@@ -398,7 +410,6 @@ namespace lives {
     */
     bool isReady();
 
-
     /**
        Equivalent to status() == LIVES_STATUS_PLAYING.
        @return true if status() == LIVES_STATUS_PLAYING.
@@ -406,13 +417,11 @@ namespace lives {
     */
     bool isPlaying();
 
-
     /**
        Returns the current set
        @return the current set.
     */
     const set& getSet();
-
 
     /**
        Returns the current effectKeyMap
@@ -420,20 +429,17 @@ namespace lives {
     */
     const effectKeyMap& getEffectKeyMap();
 
-
     /**
        Returns the player for this livesApp.
        @return the player for this livesApp.
     */
     const player& getPlayer();
 
-
     /**
        Returns the multitrack object for this livesApp.
        @return the multitrack object for this livesApp.
     */
     const multitrack& getMultitrack();
-
 
     /**
        Remove a previously added callback.
@@ -452,7 +458,6 @@ namespace lives {
        @see removeCallback().
     */
     ulong addCallback(lives_callback_t cb_type, modeChanged_callback_f func, void *data);
-
 
     /**
        Add an appQuit callback.
@@ -476,7 +481,6 @@ namespace lives {
     */
     ulong addCallback(lives_callback_t cb_type, objectDestroyed_callback_f func, void *data);
 
-
     /**
        Show Info dialog in the LiVES GUI.
        Only has an effect when status() is LIVES_STATUS_READY.
@@ -484,7 +488,7 @@ namespace lives {
        @param blocking if true then function will block until the user presses "OK"
        @return if blocking, returns the response code from the dialog.
     */
-    lives_dialog_response_t showInfo(LiVESString text, bool blocking=true);
+    lives_dialog_response_t showInfo(livesString text, bool blocking=true);
 
    /**
        Allow the user choose a file via a fileselector.
@@ -499,7 +503,7 @@ namespace lives {
        @return the name of the file selected.
        @see openFile().
     */
-    LiVESString chooseFileWithPreview(LiVESString dirname, lives_filechooser_t chooser_type, LiVESString title=LiVESString(""));
+    livesString chooseFileWithPreview(livesString dirname, lives_filechooser_t chooser_type, livesString title=livesString(""));
 
    /**
       Open a file and return a clip for it.
@@ -514,7 +518,11 @@ namespace lives {
       @see chooseFileWithPreview().
       @see deinterlaceOption().
     */
-    clip openFile(LiVESString fname, bool with_audio=true, double stime=0., int frames=0, bool deinterlace=false);
+    clip openFile(livesString fname, bool with_audio=true, double stime=0., int frames=0, bool deinterlace=false);
+
+
+    livesStringList availableSets();
+
 
    /**
        Allow the user choose set to open.
@@ -525,7 +533,7 @@ namespace lives {
        @return the name of the set selected.
        @see reloadSet().
     */
-    LiVESString chooseSet();
+    livesString chooseSet();
 
    /**
       Reload an existing clip set.
@@ -535,12 +543,7 @@ namespace lives {
       @param setname the name of the set to reload.
       @see chooseSet().
     */
-    bool reloadSet(LiVESString setname);
-
-
-    //////////////////// mt type methods /////
-
-
+    bool reloadSet(livesString setname);
 
     /**
        Change the interactivity of the GUI application.
@@ -558,7 +561,6 @@ namespace lives {
     */
     bool interactive();
 
-
     /**
        Returns last setting of deinterlace by user.
        @return value that the user selected during the last filechooser with preview operation.
@@ -567,7 +569,6 @@ namespace lives {
     */
     bool deinterlaceOption();
 
-
     /**
        Get the current interface mode of the livesApp.
        If the livesApp is invalid, returns LIVES_INTERFACE_MODE_INVALID.
@@ -575,7 +576,6 @@ namespace lives {
        @see setMode().
     */
     lives_interface_mode_t mode();
-
 
     /**
        Set the current interface mode of the livesApp.
@@ -586,10 +586,11 @@ namespace lives {
     */
     lives_interface_mode_t setMode(lives_interface_mode_t mode);//, livesMultitrackSettings settings=NULL);
 
-
     /**
        Get the current operational status of the livesApp.
        @return current status.
+       @see isReady().
+       @see isPlaying().
     */
     lives_status_t status();
 
@@ -620,7 +621,6 @@ namespace lives {
     ulong appendClosure(lives_callback_t cb_type, callback_f func, void *data);
     void init(int argc, char *argv[]);
 
-    //livesApp(livesApp const&);              // Don't Implement
     void operator=(livesApp const&); // Don't implement
 
 
@@ -679,7 +679,6 @@ namespace lives {
     */
     int height();
 
-
     /**
        Framerate (frames per second) of the clip.
        If the clip is audio only, 0.0 is returned.
@@ -688,14 +687,12 @@ namespace lives {
     */
     double fps();
 
-
     /**
        Human readable name of the clip.
        If clip is not valid then empty string is returned.
-       @return LiVESString name, or empty string if clip is not valid.
+       @return livesString name, or empty string if clip is not valid.
     */
-    LiVESString name();
-
+    livesString name();
 
     /**
        Audio rate for this clip. 
@@ -705,7 +702,6 @@ namespace lives {
     */
     int audioRate();
 
-
     /**
        Number of audio channels (eg. left, right) for this clip. 
        If the clip is video only, 0 is returned.
@@ -714,7 +710,6 @@ namespace lives {
     */
     int audioChannels();
 
-
     /**
        Size in bits of audio samples (eg. 8, 16, 32) for this clip. 
        If the clip is video only, 0 is returned.
@@ -722,7 +717,6 @@ namespace lives {
        @return int audio sample size, or -1 if clip is not valid.
     */
     int audioSampleSize();
-
 
     /**
        Returns whether the audio is signed (true) or unsigned (false).
@@ -739,7 +733,6 @@ namespace lives {
     */
     lives_endian_t audioEndian();
 
-
     /**
        Start of the selected frame region.
        If the clip is audio only, 0 is returned.
@@ -747,7 +740,6 @@ namespace lives {
        @return int frame selection start, or -1 if clip is not valid.
     */
     int selectionStart();
-
 
     /**
        End of the selected frame region.
@@ -766,9 +758,6 @@ namespace lives {
 
     bool setSelectionEnd(unsigned int end);
 
-
-
-
     /**
        Switch to this clip as the current foreground clip.
        Only works if status() is LIVES_STATUS_READY or LIVES_STATUS_PLAYING and mode() is LIVES_INTERFACE_MODE_CLIP_EDITOR.
@@ -784,7 +773,6 @@ namespace lives {
        @see player::setBackgroundClip()
     */
     bool setIsBackground();
-
 
     /**
        @return true if the two clips have the same unique_id, and belong to the same livesApp.
@@ -831,9 +819,9 @@ namespace lives {
     /**
        Returns the current name of the set. 
        If it has not been defined, an empty string is returned. If the set is invalid, an empty string is returned.
-       @return LiVESString name.
+       @return livesString name.
     */
-    LiVESString name() const;
+    livesString name() const;
 
     /**
        Save the set, and close all open clips and layouts. 
@@ -844,7 +832,7 @@ namespace lives {
        @param force_append set to true to force appending to another existing set.
        @return true if the set was saved.
     */
-    bool save(LiVESString name, bool force_append=false) const;
+    bool save(livesString name, bool force_append=false) const;
 
     /**
        Returns the number of clips in the set. If the set is invalid, returns 0.
@@ -872,19 +860,11 @@ namespace lives {
     int indexOf(clip c) const;
 
     /**
-       Returns the number of layouts in the set. If the set is invalid, returns -1.
-       @return the number of layouts in the set.
-       @see livesApp::getCurrentLayout().
-    */
-    int numLayouts() const;
-
-    /**
-       Returns the filename of the nth layout for this set. If n >= numLayouts() or the set is invalid, returns an empty string. 
-       @return the filename of the nth layout for this set.
+       Returns a list of layout names for this set. If the set is invalid, returns an empty list.
+       @return a list of layout names for this set.
        @see livesApp::reloadLayout().
-       @see numLayouts().
     */
-    LiVESString nthLayoutName(unsigned int n) const;
+    livesStringList layoutNames(unsigned int n) const;
 
     /**
        @return true if the two sets belong to the same livesApp.
@@ -949,12 +929,11 @@ namespace lives {
 
 
     /**
-       Combines the functionality of setSepWin() and setFullScreen.
+       Combines the functionality of setSepWin() and setFullScreen().
        @see setSepWin()
        @see setFullScreen()
     */
     void setFS(bool setting) const;
-
 
     /**
        Commence playback of video and audio with the currently selected clip.
@@ -987,7 +966,6 @@ namespace lives {
        @see currentTime().
     */
     double setPlaybackTime(double time) const;
-
 
     /**
        Return the current clip playback time in seconds. If livesApp::mode() is LIVES_INTERFACE_MODE_CLIPEDIT, then this returns 
@@ -1048,14 +1026,27 @@ namespace lives {
   class effectKey {
     friend effectKeyMap;
   public:
-    effectKey(const effectKey& other);
-    
+    /**
+       Creates a new, invalid effect key
+    */
+    effectKey();
+
     /**
        Returns whether the effectKey is valid or not.
-       @return true if th
-e effectKey is valid (associated with a valid livesApp instance).
+       @return true if the effectKey is valid (associated with a valid livesApp instance).
     */
     bool isValid();
+
+
+    /**
+       Return the (physical or virtual) key associated with this effectKey.
+       Effects (apart from generators) are applied in ascending key order.
+       Physical keys (1 - 9) can also be toggled from the keyboard, provided livesApp::interactive() is true.
+       If the effectKey is invalid, 0 is returned.
+       @return the physical or virtual key associated with this effectKey.
+    */
+    int key();
+
 
     /**
        Return the number of modes for this effectKey slot. Modes run from 0 to numModes() - 1.
@@ -1216,7 +1207,7 @@ e effectKey is valid (associated with a valid livesApp instance).
   class effect {
     friend effectKey;
   public:
-    effect(livesApp& lives, LiVESString hashname); // TODO
+    effect(livesApp& lives, livesString hashname); // TODO
 
 
     /**
@@ -1399,16 +1390,16 @@ e effectKey is valid (associated with a valid livesApp instance).
        @param track the track number. A value >= 0 represents a video track, a value < 0 represents a backing audio track.
        @return the track label, or empty string if the specified track does not exist.
     */
-    LiVESString trackLabel(int track) const;
+    livesString trackLabel(int track) const;
 
 
     bool setTrackLabel(int track) const;
 
 
-    int gravity() const;
+    lives_gravity_t gravity() const;
 
 
-    int setGravity(int grav) const; // TODO - use lives_gravity_t
+    lives_gravity_t setGravity(lives_gravity_t grav) const;
 
 
     int numVideoTracks() const;
@@ -1450,13 +1441,13 @@ e effectKey is valid (associated with a valid livesApp instance).
        @param force set to true to force the layout to be wiped.
        @return the name which the layout was saved to, or empty string if it was not saved.
     */
-    LiVESString wipeLayout(bool force=false) const;
+    livesString wipeLayout(bool force=false) const;
 
-    LiVESString chooseLayout() const;
+    livesString chooseLayout() const;
 
-    bool reloadLayout(LiVESString filename) const;
+    bool reloadLayout(livesString filename) const;
 
-    bool saveLayout(LiVESString name) const;
+    bool saveLayout(livesString name) const;
 
     clip render(bool render_audio=true) const;
 
@@ -1493,13 +1484,13 @@ e effectKey is valid (associated with a valid livesApp instance).
      Preferences.
   */
   namespace prefs {
-    LiVESString currentVideoLoadDir(livesApp &lives); ///< current video load directory.
+    livesString currentVideoLoadDir(livesApp &lives); ///< current video load directory.
     ///< @param lives a reference to a livesApp instance
 
-    LiVESString currentAudioDir(livesApp &lives); ///< current audio directory for loading and saving audio.
+    livesString currentAudioDir(livesApp &lives); ///< current audio directory for loading and saving audio.
     ///< @param lives a reference to a livesApp instance
 
-    LiVESString tmpDir(livesApp &lives); ///< Despite the name, this is the working directory for the LiVES application. 
+    livesString tmpDir(livesApp &lives); ///< Despite the name, this is the working directory for the LiVES application. 
     ///< The valid list of sets is drawn from this directory, for it is here that they are saved and loaded.
     ///< The value can only be set at runtime through the GUI preferences window. Otherwise you can override the default value 
     ///< when the livesApp() is created via argv[] option "-tmpdir", eg: <BR>

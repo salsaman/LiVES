@@ -139,24 +139,24 @@ namespace lives {
 
 #endif
 
-  void LiVESString::setEncoding(lives_char_encoding_t enc) {
+  void livesString::setEncoding(lives_char_encoding_t enc) {
     m_encoding = enc;
   }
 
-  lives_char_encoding_t LiVESString::encoding() {
+  lives_char_encoding_t livesString::encoding() {
     return m_encoding;
   }
 
-  LiVESString LiVESString::toEncoding(lives_char_encoding_t enc) {
+  livesString livesString::toEncoding(lives_char_encoding_t enc) {
     if (enc == LIVES_CHAR_ENCODING_UTF8) {
       if (m_encoding == LIVES_CHAR_ENCODING_LOCAL8BIT) {
-	LiVESString str(L2U8(this->c_str()));
+	livesString str(L2U8(this->c_str()));
 	str.setEncoding(LIVES_CHAR_ENCODING_UTF8);
 	return str;
       }
 #ifndef IS_MINGW
       else if (m_encoding == LIVES_CHAR_ENCODING_FILESYSTEM) {
-	LiVESString str(F2U8(this->c_str()));
+	livesString str(F2U8(this->c_str()));
 	str.setEncoding(LIVES_CHAR_ENCODING_UTF8);
 	return str;
       }
@@ -165,13 +165,13 @@ namespace lives {
     else if (enc == LIVES_CHAR_ENCODING_FILESYSTEM) {
 #ifndef IS_MINGW
       if (m_encoding == LIVES_CHAR_ENCODING_UTF8) {
-	LiVESString str(U82F(this->c_str()));
+	livesString str(U82F(this->c_str()));
 	str.setEncoding(LIVES_CHAR_ENCODING_FILESYSTEM);
 	return str;
       }
 #else
       if (m_encoding == LIVES_CHAR_ENCODING_LOCAL8BIT) {
-	LiVESString str(U82L(this->c_str()));
+	livesString str(U82L(this->c_str()));
 	str.setEncoding(LIVES_CHAR_ENCODING_FILESYSTEM);
 	return str;
       }
@@ -179,13 +179,13 @@ namespace lives {
     }
     else if (enc == LIVES_CHAR_ENCODING_LOCAL8BIT) {
       if (m_encoding == LIVES_CHAR_ENCODING_UTF8) {
-	LiVESString str(U82L(this->c_str()));
+	livesString str(U82L(this->c_str()));
 	str.setEncoding(LIVES_CHAR_ENCODING_LOCAL8BIT);
 	return str;
       }
 #ifndef IS_MINGW
       if (m_encoding == LIVES_CHAR_ENCODING_FILESYSTEM) {
-	LiVESString str(F2U8(this->c_str()));
+	livesString str(F2U8(this->c_str()));
 	str.assign(U82L(str.c_str()));
 	str.setEncoding(LIVES_CHAR_ENCODING_LOCAL8BIT);
 	return str;
@@ -350,7 +350,7 @@ namespace lives {
   }
 
 
-  lives_dialog_response_t livesApp::showInfo(LiVESString text, bool blocking) {
+  lives_dialog_response_t livesApp::showInfo(livesString text, bool blocking) {
     lives_dialog_response_t ret=LIVES_DIALOG_RESPONSE_INVALID;
     if (!isValid()) return ret;
     // if blocking wait for response
@@ -380,8 +380,8 @@ namespace lives {
   }
 
 
-  LiVESString livesApp::chooseFileWithPreview(LiVESString dirname, lives_filechooser_t preview_type, LiVESString title) {
-    LiVESString emptystr;
+  livesString livesApp::chooseFileWithPreview(livesString dirname, lives_filechooser_t preview_type, livesString title) {
+    livesString emptystr;
     if (!isValid()) return emptystr;
     if (preview_type != LIVES_FILE_CHOOSER_VIDEO_AUDIO && preview_type != LIVES_FILE_CHOOSER_AUDIO_ONLY) return emptystr;
     spinning = true;
@@ -401,7 +401,7 @@ namespace lives {
       pthread_mutex_unlock(&spin_mutex);
       if (isValid()) {
 	// last 2 chars are " " and %d (deinterlace choice)
-	LiVESString str(private_response, strlen(private_response) - 2, LIVES_CHAR_ENCODING_FILESYSTEM);
+	livesString str(private_response, strlen(private_response) - 2, LIVES_CHAR_ENCODING_FILESYSTEM);
 	m_deinterlace = (bool)atoi(private_response + strlen(private_response) - 2);
 	lives_free(private_response);
 	return str;
@@ -411,8 +411,8 @@ namespace lives {
   }
 
 
-  LiVESString livesApp::chooseSet() {
-    LiVESString emptystr;
+  livesString livesApp::chooseSet() {
+    livesString emptystr;
     if (!isValid()) return emptystr;
     spinning = true;
     msg_id = lives_random();
@@ -428,7 +428,7 @@ namespace lives {
       while (spinning) pthread_cond_wait(&condA, &spin_mutex);
       pthread_mutex_unlock(&spin_mutex);
       if (isValid()) {
-	LiVESString str(private_response, LIVES_CHAR_ENCODING_FILESYSTEM);
+	livesString str(private_response, LIVES_CHAR_ENCODING_FILESYSTEM);
 	lives_free(private_response);
 	return str;
       }
@@ -437,7 +437,7 @@ namespace lives {
   }
 
 
-  clip livesApp::openFile(LiVESString fname, bool with_audio, double stime, int frames, bool deinterlace) {
+  clip livesApp::openFile(livesString fname, bool with_audio, double stime, int frames, bool deinterlace) {
     if (!isValid()) return clip(0);
     if (fname.empty()) return clip(0);
     spinning = true;
@@ -463,7 +463,7 @@ namespace lives {
   }
 
 
-  bool livesApp::reloadSet(LiVESString setname) {
+  bool livesApp::reloadSet(livesString setname) {
     if (!isValid()) return false;
     if (setname.empty()) return false;
     spinning = true;
@@ -749,9 +749,9 @@ namespace lives {
   }
 
 
-  LiVESString set::name() const {
-    if (!isValid()) return LiVESString("");
-    return LiVESString(get_set_name(), LIVES_CHAR_ENCODING_UTF8);
+  livesString set::name() const {
+    if (!isValid()) return livesString("");
+    return livesString(get_set_name(), LIVES_CHAR_ENCODING_UTF8);
   }
 
 
@@ -782,18 +782,7 @@ namespace lives {
   }
 
 
-  int set::numLayouts() const {
-    return lives_list_length(mainw->current_layouts_map);
-  }
-
-
-  LiVESString set::nthLayoutName(unsigned int n) const {
-    if (n < numLayouts()) return LiVESString((const char *)lives_list_nth_data(mainw->current_layouts_map, n), LIVES_CHAR_ENCODING_UTF8);
-    return LiVESString("");
-  }
-
-
-  bool set::save(LiVESString name, bool force_append) const {
+  bool set::save(livesString name, bool force_append) const {
     if (!isValid()) return FALSE;
     int arglen = 3;
     char **vargs=(char **)lives_malloc(sizeof(char *));
@@ -933,12 +922,12 @@ namespace lives {
     return LIVES_LITTLEENDIAN;
   }
 
-  LiVESString clip::name() {
+  livesString clip::name() {
     if (isValid()) {
       int cnum = cnum_for_uid(m_uid);
-      if (cnum > -1 && mainw->files[cnum] != NULL) return LiVESString(get_menu_name(mainw->files[cnum]), LIVES_CHAR_ENCODING_UTF8);
+      if (cnum > -1 && mainw->files[cnum] != NULL) return livesString(get_menu_name(mainw->files[cnum]), LIVES_CHAR_ENCODING_UTF8);
     }
-    LiVESString emptystr;
+    livesString emptystr;
     return emptystr;
   }
 
@@ -1057,6 +1046,10 @@ namespace lives {
   /////////////////////////////////////////////////
 
   /// effectKey
+  effectKey::effectKey() {
+    m_key = 0;
+  }
+
   effectKey::effectKey(livesApp *lives, int key) {
     m_lives = lives;
     m_key = key;
@@ -1066,6 +1059,10 @@ namespace lives {
     return m_lives->isValid() && m_key >= 1 && m_key <= prefs::rteKeysVirtual(*(m_lives));
   }
   
+  int effectKey::key() {
+    return m_key;
+  }
+
 
   int effectKey::numModes() {
     if (!isValid()) return 0;
@@ -1173,7 +1170,7 @@ namespace lives {
 
   ////////////////////////////////////////////////////////
 
-  effect::effect(livesApp& lives, LiVESString hashname) {
+  effect::effect(livesApp& lives, livesString hashname) {
     // TODO
     m_lives = &lives;
   }
@@ -1291,8 +1288,8 @@ namespace lives {
 
 
 
-  LiVESString multitrack::wipeLayout(bool force) const {
-    if (!isActive()) return LiVESString("");
+  livesString multitrack::wipeLayout(bool force) const {
+    if (!isActive()) return livesString("");
 
     spinning = true;
     msg_id = lives_random();
@@ -1303,16 +1300,16 @@ namespace lives {
       pthread_mutex_unlock(&spin_mutex);
       spinning = false;
       m_lives->removeCallback(cbid);
-      return LiVESString("");
+      return livesString("");
     }
     while (spinning) pthread_cond_wait(&condA, &spin_mutex);
     pthread_mutex_unlock(&spin_mutex);
     if (isValid()) {
-      LiVESString str = LiVESString(private_response, LIVES_CHAR_ENCODING_UTF8);
+      livesString str = livesString(private_response, LIVES_CHAR_ENCODING_UTF8);
       lives_free(private_response);
       return str;
     }
-    return LiVESString("");
+    return livesString("");
   }
 
 
@@ -1354,19 +1351,19 @@ namespace lives {
   }
 
 
-  LiVESString multitrack::trackLabel(int track) const {
+  livesString multitrack::trackLabel(int track) const {
     if (mainw->go_away) {
-      return LiVESString("");
+      return livesString("");
     }
 
-    if (mainw->multitrack==NULL) return LiVESString("");
+    if (mainw->multitrack==NULL) return livesString("");
 
     if (mt_track_is_video(mainw->multitrack, track)) 
-      return LiVESString(get_track_name(mainw->multitrack, track, FALSE), LIVES_CHAR_ENCODING_UTF8); 
+      return livesString(get_track_name(mainw->multitrack, track, FALSE), LIVES_CHAR_ENCODING_UTF8); 
     if (mt_track_is_audio(mainw->multitrack, track)) 
-      return LiVESString(get_track_name(mainw->multitrack, track, TRUE), LIVES_CHAR_ENCODING_UTF8); 
+      return livesString(get_track_name(mainw->multitrack, track, TRUE), LIVES_CHAR_ENCODING_UTF8); 
 
-    return LiVESString("");
+    return livesString("");
   }
 
 
@@ -1380,18 +1377,18 @@ namespace lives {
   
 
   namespace prefs {
-    LiVESString currentVideoLoadDir(livesApp &lives) {
-      LiVESString str(mainw->vid_load_dir, LIVES_CHAR_ENCODING_UTF8);
+    livesString currentVideoLoadDir(livesApp &lives) {
+      livesString str(mainw->vid_load_dir, LIVES_CHAR_ENCODING_UTF8);
       return str;
     }
 
-    LiVESString currentAudioDir(livesApp &lives) {
-      LiVESString str(mainw->audio_dir, LIVES_CHAR_ENCODING_UTF8);
+    livesString currentAudioDir(livesApp &lives) {
+      livesString str(mainw->audio_dir, LIVES_CHAR_ENCODING_UTF8);
       return str;
     }
 
-    LiVESString tmpDir(livesApp &lives) {
-      LiVESString str(::prefs->tmpdir, LIVES_CHAR_ENCODING_FILESYSTEM);
+    livesString tmpDir(livesApp &lives) {
+      livesString str(::prefs->tmpdir, LIVES_CHAR_ENCODING_FILESYSTEM);
       return str;
     }
 

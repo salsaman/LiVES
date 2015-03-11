@@ -156,6 +156,17 @@ typedef enum {
 
 
 
+/**
+   Player looping modes (bitmap)
+*/
+typedef enum {
+  LIVES_LOOP_MODE_NONE=0, ///< no looping
+  LIVES_LOOP_MODE_CONTINUOUS=1, ///< both video and audio loop continuously
+  LIVES_LOOP_MODE_FIT_AUDIO=2 ///< video keeps looping until audio playback finishes
+} lives_loop_mode_t;
+
+
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 #ifdef __cplusplus
@@ -163,8 +174,6 @@ typedef enum {
 #include <vector>
 #include <list>
 #include <map>
-
-#include <tr1/memory>
 
 #include <inttypes.h>
 
@@ -509,6 +518,7 @@ namespace lives {
       Open a file and return a clip for it.
       Only works when status() is LIVES_STATUS_READY, otherwise an invalid clip is returned.
       If the file pointed to cannot be opened as a clip, an invalid clip is returned.
+      If interactive() is true, the user may cancel the load, or choose to load only part of the file.
       @param fname the full pathname of the file to open
       @param with_audio if true the audio will be loaded as well as the video
       @param stime the time in seconds from which to start loading
@@ -642,12 +652,15 @@ namespace lives {
      Represents a clip which is open in LiVES.
      @see set::nthClip()
      @see livesApp::openFile()
+     @see player::foregroundClip()
+     @see player::backgroundClip()
   */
   class clip {
     friend livesApp;
     friend set;
     friend block;
     friend multitrack;
+    friend player;
 
   public:
 
@@ -693,7 +706,11 @@ namespace lives {
        If clip is not valid then -1.0 is returned.
        @return double framerate of the clip, or -1.0 if clip is not valid.
     */
-    double fps();
+    double FPS();
+
+
+    double playbackFPS();
+
 
     /**
        Human readable name of the clip.
@@ -706,9 +723,15 @@ namespace lives {
        Audio rate for this clip. 
        If the clip is video only, 0 is returned.
        If clip is not valid then -1 is returned.
+       Note this is not necessarily the same as the soundcard audio rate which can be obtained via prefs::audioPlayerRate().
        @return int audio rate, or -1 if clip is not valid.
     */
     int audioRate();
+
+
+
+    int playbackAudioRate();
+
 
     /**
        Number of audio channels (eg. left, right) for this clip. 
@@ -758,17 +781,36 @@ namespace lives {
     int selectionEnd();
 
 
-    void selectAll();
+    /**
+       Select all frames in the clip. if the clip is invalid does nothing.
+       Only works is livesApp::status() is LIVES_STATUS_READY or LIVES_STATUS_PLAYING.
+       @return true if the operation was successful.
+    */
+    bool selectAll();
 
-
+    /**
+       Set the selection start frame for the clip. If the new start is > selectionEnd() then selection end will be set to the new start.
+       If the clip is invalid there is no effect.
+       Only functions if livesApp::status() is LIVES_STATUS_READY or LIVES_STATUS_PLAYING.
+       @param start the selection start frame which must be in range 1 <= start <= frames().
+       @see setSelectionEnd().
+    */
     bool setSelectionStart(unsigned int start);
 
-
+    /**
+       Set the selection end frame for the clip. If the new end is < selectionStart() then selection start will be set to the new end.
+       If the clip is invalid there is no effect.
+       Only functions if livesApp::status() is LIVES_STATUS_READY or LIVES_STATUS_PLAYING.
+       @param end the selection end frame which must be in range 1 <= end <= frames().
+       @see setSelectionStart().
+    */
     bool setSelectionEnd(unsigned int end);
 
     /**
        Switch to this clip as the current foreground clip.
-       Only works if status() is LIVES_STATUS_READY or LIVES_STATUS_PLAYING and mode() is LIVES_INTERFACE_MODE_CLIP_EDITOR.
+       Only works if livesApp::status() is LIVES_STATUS_READY or LIVES_STATUS_PLAYING and livesApp::mode() is LIVES_INTERFACE_MODE_CLIP_EDITOR.
+       If clips are switched during playback, the application acts as if livesApp::loopMode() were set to LIVES_LOOP_MODE_CONTINUOUS.
+       If the clip is invalid, nothing happens and false is returned.
        @return true if the switch was successful.
        @see player::setForegroundClip()
     */
@@ -776,14 +818,15 @@ namespace lives {
 
     /**
        Switch to this clip as the current background clip.
-       Only works if status() is LIVES_STATUS_READY or LIVES_STATUS_PLAYING and mode() is LIVES_INTERFACE_MODE_CLIP_EDITOR.
+       Only works if livesApp::status() is LIVES_STATUS_READY or LIVES_STATUS_PLAYING and livesApp::mode() is LIVES_INTERFACE_MODE_CLIP_EDITOR.
+       If the clip is invalid, nothing happens and false is returned.
        @return true if the switch was successful.
        @see player::setBackgroundClip()
     */
     bool setIsBackground();
 
     /**
-       @return true if the two clips have the same unique_id, and belong to the same livesApp.
+       @return true if the two clips have the same internal id, and belong to the same livesApp.
     */
     inline bool operator==(const clip& other) {
       return other.m_uid == m_uid && m_lives == other.m_lives;
@@ -836,6 +879,7 @@ namespace lives {
        If the set name is empty, the user can choose the name via the GUI. 
        If the name is defined, and it points to a different, existing set, the set will not be saved and false will be returned, 
        unless force_append is set to true, in which case the current clips and layouts will be appended to the other set.
+       Saving a set with a new name is an expensive operation as it requires moving files in the underlying filesystem.
        @param name name to save set as, or empty string to let the user choose a name.
        @param force_append set to true to force appending to another existing set.
        @return true if the set was saved.
@@ -918,6 +962,11 @@ namespace lives {
     bool isValid() const;
 
     /**
+       Returns true if the livesApp::status() is LIVES_STATUS_PLAYING.
+    */
+    bool isActive() const;
+
+    /**
        Set playback in a detached window.
        @see setFS().
        @see sepWin().
@@ -925,16 +974,23 @@ namespace lives {
     void setSepWin(bool setting) const;
 
     /**
-       Set playback fullscreen.
+       @return true if playback is in a separate window from the main GUI.
+       @see setSepWin().
+    */
+    bool sepWin() const;
+
+    /**
+       Set playback fullscreen. Use of setFS() is recommended instead.
        @see setFS().
-       @see fullscreen().
+       @see fullScreen().
     */
     void setFullScreen(bool setting) const;
 
-
-    bool sepWin() const;
+    /**
+       @return true if playback is full screen.
+       @see setFullScreen().
+    */
     bool fullScreen() const;
-
 
     /**
        Combines the functionality of setSepWin() and setFullScreen().
@@ -957,21 +1013,60 @@ namespace lives {
     */
     bool stop() const;
 
+    /**
+       Set the foreground clip for the player. Equivalent to clip::switchTo() except that it only functions when 
+       livesApp::status() is LIVES_STATUS_PLAYING and the livesApp::mode() is LIVES_INTERFACE_MODE_CLIPEDIT.
+       If the clip is invalid, or isActive() is false, nothing happens and false is returned.
+       @param c the clip to set as foreground.
+       @return true if the function was successful.
+       @see foregroundClip().
+       @see setBackgroundClip().
+    */
+    bool setForegroundClip(clip c) const;
 
-    bool setForegroundClip() const; // TODO
+    /**
+       Returns the current foreground clip of the player. If isActive() is false, returns an invalid clip.
+       If the livesApp::mode() is not LIVES_INTERFACE_MODE_CLIPEDIT, returns an invalid clip.
+       @return the current foreground clip.
+       @see setForegroundClip().
+       @see backgroundClip().
+    */
+    clip foregroundClip() const;
 
-    bool setBackgroundClip() const; // TODO
+    /**
+       Set the background clip for the player. Equivalent to clip::setIsBackground() except that it only functions when 
+       livesApp::status() is LIVES_STATUS_PLAYING and the livesApp::mode() is LIVES_INTERFACE_MODE_CLIPEDIT.
+       Only works if there is one or more transition effects active.
+       If the clip is invalid, or isActive() is false, nothing happens and false is returned.
+       @return true if the function was successful.
+       @see backgroundClip().
+       @see setForegroundClip().
+    */
+    bool setBackgroundClip(clip c) const;
+
+    /**
+       Returns the current background clip of the player. If isActive() is false, returns an invalid clip.
+       If the livesApp::mode() is not LIVES_INTERFACE_MODE_CLIPEDIT, returns an invalid clip.
+       @return the current background clip.
+       @see setBackgroundClip().
+       @see foregroundClip().
+    */
+    clip backgroundClip() const;
 
     /**
        Set the current playback start time in seconds (this is also the insertion point in multitrack mode).
        Only works if the livesApp::status() is LIVES_STATUS_READY. If livesApp::mode() is LIVES_INTERFACE_MODE_CLIP_EDITOR, 
        the start time may not be set beyond the end of the current clip (video and audio). 
+       The outcome of setting playback beyond the end of video but not of audio and vice-versa depends on the value of loopMode().
        If livesApp::mode() is LIVES_INTERFACE_MODE_MULITRACK, setting the current time may cause the timeline to stretch visually 
        (i.e zoom out). 
        The miminum value is 0.0 in every mode. Values < 0. will be ignored.
+       If isValid() is false, nothing happens and 0. is returned.
        @param time the time in seconds to set playback start time to.
        @returns the new playback start time.
-       @see currentTime().
+       @see playbackTime().
+       @see setAudioPlaybackTime().
+       @see multitrack::setCurrentTime().
     */
     double setPlaybackTime(double time) const;
 
@@ -981,29 +1076,101 @@ namespace lives {
        If livesApp::mode() is LIVES_INTERFACE_MODE_MULTITRACK, then this returns the current player time in the multitrack timeline 
        (equivalent to elapsedTime()).
        This function works in livesApp::status() LIVE_STATUS_READY and LIVES_STATUS_PLAYING.
+       If isValid() is false, 0. is returned.
        @returns the current clip playback time.
-       @see setCurrentTime().
-       @see currentAudioTime().
+       @see setPlaybackTime().
+       @see audioPlaybackTime().
        @see elapsedTime().
+       @see multitrack::currentTime().
     */
     double playbackTime() const;
+    
 
-
-    double setAudioPlaybackTime(double time) const;
-
-
+    //    double setAudioPlaybackTime(double time) const;
+       
+    /**
+       Return the current clip audio playback time in seconds. If livesApp::mode() is LIVES_INTERFACE_MODE_CLIPEDIT, then this returns 
+       the current playback time for audio in the current foreground clip.
+       If livesApp::mode() is LIVES_INTERFACE_MODE_MULTITRACK, then this returns the current player time in the multitrack timeline 
+       (equivalent to elapsedTime()).
+       This function works with livesApp::status() of LIVE_STATUS_READY and LIVES_STATUS_PLAYING.
+       If isValid() is false, 0. is returned.
+       @returns the current clip audio playback time.
+       @see playbackTime().
+       @see elapsedTime().
+       @see multitrack::currentTime().
+    */
     double audioPlaybackTime() const;
 
-
+    /**
+       Return the elapsed time, i.e. total time in seconds since playback began.
+       If livesApp::status() is not LIVES_STATUS_PLAYING, 0. is returned.
+       @return the time in seconds since playback began.
+       @see playbackTime().
+       @see audioPlaybackTime().
+       @see multitrack::currentTime().
+    */
     double elapsedTime() const;
 
 
-    double setCurrentFps(double fps) const;
+    /**
+       Set the current playback framerate in frames per second. Only works if livesApp::mode() is LIVES_INTERFACE_MODE_CLIPEDIT and
+       livesApp::status() is either LIVES_STATUS_READY or LIVES_STATUS_PLAYING.
+       Allowed values range from -prefs::maxFPS to +prefs::maxFPS.
+       If prefs::audioFollowsVideoChanges() is true, then the audio playback rate will change proportionally.
+       If isValid() is false, nothing happens and 0. is returned.
+       @param fps the framerate to set
+       @return the new framerate
+       @see currentFPS().
+     */
+    double setCurrentFPS(double fps) const;
+
+    /**
+       Return the current playback framerate in frames per second of the player.
+       If isValid() is false, returns 0. If livesApp::status is neither LIVES_STATUS_READY nor LIVES_STATUS_PLAYING, returns 0.
+       Otherwise, this is equivalent to foregroundClip::playbackFPS().
+       @return the current or potential playback rate in frames per second.
+       @see setCurrentFPS().
+       @see clip::playbackFPS().
+    */
+    double currentFPS() const;
+
+    /**
+       Return the current audio rate of the player.
+       If isValid() is false, returns 0. If livesApp::status is neither LIVES_STATUS_READY nor LIVES_STATUS_PLAYING, returns 0.
+       Otherwise, this is equivalent to foregroundClip::playbackAudioRate().
+       Note this is not necessarily the same as the soundcard audio rate which can be obtained via prefs::audioPlayerRate().
+       @return the current or potential audio rate in Hz.
+       @see clip::playbackAudioRate().
+    */
+    int currentAudioRate() const;
+
+    /**
+       Set the loop mode for the player. The value is a bitmap, however LIVES_LOOP_MODE_FIT_AUDIO 
+       only has meaning when livesApp::mode() is LIVES_INTERFACE_MODE_CLIPEDIT.
+       If isValid() is false, nothing happens.
+       @param the desired loop mode
+       @return the new loop mode
+       @see loopMode().
+    */
+    lives_loop_mode_t setLoopMode(lives_loop_mode_t loopMode) const;
+
+    /**
+       Return the loop mode of the player.
+       If isValid() is false, returns LIVES_LOOP_MODE_NONE.
+       @return the current loop mode of the player
+       @see setLoopMode().
+    */
+    lives_loop_mode_t loopMode() const;
 
 
-    double currentFps() const;
+    bool setPingPong(bool pingPong) const;
 
 
+    bool pingPong() const;
+
+
+    void resyncFPS() const;
 
 
     /**
@@ -1045,7 +1212,6 @@ namespace lives {
     */
     bool isValid();
 
-
     /**
        Return the (physical or virtual) key associated with this effectKey.
        Effects (apart from generators) are applied in ascending key order.
@@ -1054,7 +1220,6 @@ namespace lives {
        @return the physical or virtual key associated with this effectKey.
     */
     int key();
-
 
     /**
        Return the number of modes for this effectKey slot. Modes run from 0 to numModes() - 1.
@@ -1384,7 +1549,7 @@ namespace lives {
 
     /**
        Return the current playback time in seconds. If isActive() is true this returns the current player time in the multitrack timeline 
-       (equivalent to to player::playbackTime(), and during playback, equivalent to player::elapsedTime()).
+       (equivalent to to player::playbackTime(), and during playback, equivalent to player::elapsedTime() plus a constant offset).
        This function works when livesApp::status() is LIVE_STATUS_READY or LIVES_STATUS_PLAYING.
        @returns the current clip playback time.
        @see setCurrentTime().
@@ -1519,8 +1684,16 @@ namespace lives {
     lives_audio_player_t audioPlayer(livesApp &lives); ///< the current audio player
     ///< @param lives a reference to a livesApp instance
 
+    int audioPlayerRate(livesApp &lives);
+
     int rteKeysVirtual(livesApp &lives); ///< maximum value for effectKey indices
     ///< @param lives a reference to a livesApp instance
+
+    double maxFPS(livesApp &lives);
+
+    bool audioFollowsVideoChanges(livesApp &lives);
+
+    bool setAudioFollowsVideoChanges(livesApp &lives, bool setting);
 
   }
 

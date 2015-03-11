@@ -3753,10 +3753,7 @@ void on_delete_activate (LiVESMenuItem *menuitem, livespointer user_data) {
 
 
 
-void
-on_select_all_activate                (LiVESMenuItem     *menuitem,
-				       livespointer         user_data)
-{
+void on_select_all_activate (LiVESMenuItem *menuitem, livespointer user_data) {
   if (mainw->current_file==-1) return;
 
   if (mainw->selwidth_locked) {
@@ -7466,20 +7463,15 @@ void on_boolean_toggled(LiVESObject *obj, livespointer user_data) {
 }
 
 
-void
-on_loop_video_activate                (LiVESMenuItem     *menuitem,
-				       livespointer         user_data)
-{
+void on_loop_video_activate (LiVESMenuItem *menuitem, livespointer user_data) {
   if (mainw->current_file==0) return;
   mainw->loop=!mainw->loop;
   lives_widget_set_sensitive (mainw->playclip, mainw->playing_file==-1&&clipboard!=NULL);
   if (mainw->current_file>-1) find_when_to_stop();
 }
 
-void
-on_loop_button_activate                (LiVESMenuItem     *menuitem,
-					livespointer         user_data)
-{
+
+void on_loop_button_activate (LiVESMenuItem *menuitem, livespointer user_data) {
   if (mainw->multitrack!=NULL) {
     lives_signal_handler_block (mainw->multitrack->loop_continue, mainw->multitrack->loop_cont_func);
     lives_check_menu_item_set_active(LIVES_CHECK_MENU_ITEM(mainw->multitrack->loop_continue),!mainw->loop_cont);
@@ -8944,10 +8936,8 @@ on_prv_link_toggled                (LiVESToggleButton *togglebutton,
   lives_widget_grab_focus (mainw->preview_spinbutton);
 }
 
-void
-on_spinbutton_start_value_changed          (LiVESSpinButton   *spinbutton,
-					    livespointer         user_data)
-{
+
+void on_spinbutton_start_value_changed (LiVESSpinButton *spinbutton, livespointer user_data) {
   int start,ostart=cfile->start;
 
   if (mainw->playing_file==-1&&mainw->current_file==0) return;
@@ -8993,10 +8983,7 @@ on_spinbutton_start_value_changed          (LiVESSpinButton   *spinbutton,
 
 
 
-void
-on_spinbutton_end_value_changed          (LiVESSpinButton   *spinbutton,
-					  livespointer         user_data)
-{
+void on_spinbutton_end_value_changed (LiVESSpinButton *spinbutton, livespointer user_data) {
   int end,oend=cfile->end;
 
   if (mainw->playing_file==-1&&mainw->current_file==0) return;

@@ -149,9 +149,9 @@ typedef enum {
    Multitrack gravity
 */
 typedef enum {
-  LIVES_GRAVITY_NONE,
-  LIVES_GRAVITY_LEFT,
-  LIVES_GRAVITY_RIGHT
+  LIVES_GRAVITY_NONE, ///< no gravity
+  LIVES_GRAVITY_LEFT, ///< inserted blocks gravitate to the left
+  LIVES_GRAVITY_RIGHT ///< inserted blocks gravitate to the right
 } lives_gravity_t;
 
 
@@ -273,9 +273,9 @@ namespace lives {
   */
   class livesString : public std::string {
   public:
-    livesString(lives_char_encoding_t e=LIVES_CHAR_ENCODING_DEFAULT) : m_encoding(e), std::string() {}
-    livesString(const string& str) : std::string(str) {}
-    livesString(const string& str, size_t pos, size_t len = npos) : std::string(str, pos,  len) {}
+    livesString(const string& str="", lives_char_encoding_t e=LIVES_CHAR_ENCODING_DEFAULT) : m_encoding(e), std::string(str) {}
+    livesString(const string& str, size_t pos, size_t len = npos, lives_char_encoding_t e=LIVES_CHAR_ENCODING_DEFAULT) : m_encoding(e),
+      std::string(str, pos, len) {}
     livesString(const char* s, lives_char_encoding_t e=LIVES_CHAR_ENCODING_DEFAULT) : m_encoding(e), std::string(s) {}
     livesString(const char* s, size_t n, lives_char_encoding_t e=LIVES_CHAR_ENCODING_DEFAULT) : m_encoding(e), std::string(s, n) {}
     livesString(size_t n, char c, lives_char_encoding_t e=LIVES_CHAR_ENCODING_DEFAULT) : m_encoding(e), std::string(n, c) {}
@@ -709,6 +709,15 @@ namespace lives {
     double FPS();
 
 
+    /**
+       Framerate (frames per second) that the clip is/will be played back at.
+       This may vary from the normal FPS(). During playback it will be equivalent to player::FPS().
+       If livesApp::mode() is LIVES_INTERFACE_MODE_MULTITRACK then this will return multitrack::FPS().
+       IF the clip is invalid, 0. is returned.
+       @return the playback framerate
+       @see player::setCurrentFPS().
+       @see player::FPS().
+    */
     double playbackFPS();
 
 
@@ -927,9 +936,7 @@ namespace lives {
 
 
   protected:
-    set();
-
-    set(livesApp *lives);
+    set(livesApp *lives=NULL);
     void setName(const char *setname);
 
   private:
@@ -1112,7 +1119,6 @@ namespace lives {
     */
     double elapsedTime() const;
 
-
     /**
        Set the current playback framerate in frames per second. Only works if livesApp::mode() is LIVES_INTERFACE_MODE_CLIPEDIT and
        livesApp::status() is either LIVES_STATUS_READY or LIVES_STATUS_PLAYING.
@@ -1182,8 +1188,7 @@ namespace lives {
 
 
   protected:
-    player();
-    player(livesApp *lives);
+    player(livesApp *lives=NULL);
 
   private:
     livesApp *m_lives;
@@ -1443,7 +1448,7 @@ namespace lives {
        @param time the time in seconds on the timeline.
        @return the block on the given track at the given time.
     */
-    block(int track, double time);
+    block(multitrack m, int track, double time);
 
     /**
        Returns the start time in seconds of the block.
@@ -1485,12 +1490,12 @@ namespace lives {
 
 
   protected:
-    block(ulong uid);
+    block(multitrack *m=NULL, ulong uid=0l);
 
 
   private:
     ulong m_uid;
-
+    livesApp *m_lives;
   };
 
 
@@ -1501,6 +1506,7 @@ namespace lives {
   */
   class multitrack {
     friend livesApp;
+    friend block;
 
   public:
 
@@ -1581,6 +1587,8 @@ namespace lives {
     int numAudioTracks() const;
 
 
+    double FPS() const;
+
     /**
        Insert frames from clip c into currentTrack() at currentTime()
        If ignore_selection_limits is true, then all frames from the clip will be inserted, 
@@ -1640,11 +1648,9 @@ namespace lives {
 
 
   protected:
-    //layout();
-    multitrack(livesApp *lives);
-
-  private:
+    multitrack(livesApp *lives=NULL);
     livesApp *m_lives;
+
 
   };
 
@@ -1657,13 +1663,13 @@ namespace lives {
      Preferences.
   */
   namespace prefs {
-    livesString currentVideoLoadDir(livesApp &lives); ///< current video load directory.
+    livesString currentVideoLoadDir(livesApp lives); ///< current video load directory.
     ///< @param lives a reference to a livesApp instance
 
-    livesString currentAudioDir(livesApp &lives); ///< current audio directory for loading and saving audio.
+    livesString currentAudioDir(livesApp lives); ///< current audio directory for loading and saving audio.
     ///< @param lives a reference to a livesApp instance
 
-    livesString tmpDir(livesApp &lives); ///< Despite the name, this is the working directory for the LiVES application. 
+    livesString tmpDir(livesApp lives); ///< Despite the name, this is the working directory for the LiVES application. 
     ///< The valid list of sets is drawn from this directory, for it is here that they are saved and loaded.
     ///< The value can only be set at runtime through the GUI preferences window. Otherwise you can override the default value 
     ///< when the livesApp() is created via argv[] option "-tmpdir", eg: <BR>
@@ -1674,26 +1680,26 @@ namespace lives {
     ///<    livesApp lives(2, argv); <BR>
     ///< </I></BLOCKQUOTE>
     ///< @param lives a reference to a livesApp instance
-    lives_audio_source_t audioSource(livesApp &lives); ///< the current audio source
+    lives_audio_source_t audioSource(livesApp lives); ///< the current audio source
 
-    bool setAudioSource(livesApp &lives, lives_audio_source_t asrc); ///< Set the audio source. Only works if status() is LIVES_STATUS_READY.
+    bool setAudioSource(livesApp lives, lives_audio_source_t asrc); ///< Set the audio source. Only works if status() is LIVES_STATUS_READY.
     ///< @param lives a reference to a livesApp instance
     ///< @param asrc the desired audio source
     ///< @return true if the audio source could be changed.
 
-    lives_audio_player_t audioPlayer(livesApp &lives); ///< the current audio player
+    lives_audio_player_t audioPlayer(livesApp lives); ///< the current audio player
     ///< @param lives a reference to a livesApp instance
 
-    int audioPlayerRate(livesApp &lives);
+    int audioPlayerRate(livesApp lives);
 
-    int rteKeysVirtual(livesApp &lives); ///< maximum value for effectKey indices
+    int rteKeysVirtual(livesApp lives); ///< maximum value for effectKey indices
     ///< @param lives a reference to a livesApp instance
 
-    double maxFPS(livesApp &lives);
+    double maxFPS(livesApp lives);
 
-    bool audioFollowsVideoChanges(livesApp &lives);
+    bool audioFollowsVideoChanges(livesApp lives);
 
-    bool setAudioFollowsVideoChanges(livesApp &lives, bool setting);
+    bool setAudioFollowsVideoChanges(livesApp lives, bool setting);
 
   }
 

@@ -38,6 +38,11 @@ boolean idle_insert_block(int clipno, boolean ign_sel, boolean with_audio, ulong
 boolean idle_mt_set_track(int tnum, ulong id);
 boolean idle_set_current_time(double time, ulong id);
 boolean idle_wipe_layout(boolean force, ulong id);
+boolean idle_select_all(int cnum, ulong id);
+boolean idle_select_start(int cnum, int frame, ulong id);
+boolean idle_select_end(int cnum, int frame, ulong id);
+boolean idle_set_current_fps(double fps, ulong id);
+boolean idle_set_loop_mode(int mode, ulong id);
 
 
 ulong *get_unique_ids(void);

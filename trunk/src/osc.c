@@ -245,9 +245,9 @@ static LIVES_INLINE const char *get_value_of(const int what) {
 static const char *get_omc_const(const char *cname) {
 
   // looping modes
-  if (!strcmp(cname,"LIVES_LOOP_NONE")) return "0";
-  if (!strcmp(cname,"LIVES_LOOP_FIT")) return "2";
-  if (!strcmp(cname,"LIVES_LOOP_CONT")) return "1";
+  if (!strcmp(cname,"LIVES_LOOP_MODE_NONE")) return "0";
+  if (!strcmp(cname,"LIVES_LOOP_MODE_CONTINUOUS")) return "1";
+  if (!strcmp(cname,"LIVES_LOOP_MODE_FIT_AUDIO")) return "2";
 
   // interface modes
   if (!strcmp(cname,"LIVES_INTERFACE_MODE_CLIPEDIT")) return "0";
@@ -684,20 +684,20 @@ boolean lives_osc_cb_set_loop(void *context, int arglen, const void *vargs, OSCT
   }
   else return lives_osc_notify_failure();
 
-  if (lmode==atoi(get_omc_const("LIVES_LOOP_NONE"))) {
-    if (mainw->loop_cont) on_loop_cont_activate(NULL,NULL);
-    if (mainw->loop) on_loop_video_activate(NULL,NULL);
+  if (lmode==atoi(get_omc_const("LIVES_LOOP_MODE_NONE"))) {
+    if (mainw->loop_cont) on_loop_button_activate(NULL,NULL);
+    if (mainw->loop) lives_check_menu_item_set_active(LIVES_CHECK_MENU_ITEM(mainw->loop_video),!mainw->loop);
   }
   else {
-    if (lmode & atoi(get_omc_const("LIVES_LOOP_CONT"))) {
-      if (!mainw->loop_cont) on_loop_cont_activate(NULL,NULL);
+    if (lmode & atoi(get_omc_const("LIVES_LOOP_MODE_CONTINUOUS"))) {
+      if (!mainw->loop_cont) on_loop_button_activate(NULL,NULL);
     }
-    else if (mainw->loop_cont) on_loop_cont_activate(NULL,NULL);
+    else if (mainw->loop_cont) on_loop_button_activate(NULL,NULL);
 
-    if (lmode & atoi(get_omc_const("LIVES_LOOP_FIT"))) {
-      if (mainw->loop) on_loop_video_activate(NULL,NULL);
+    if (lmode & atoi(get_omc_const("LIVES_LOOP_MODE_FIT_AUDIO"))) {
+      if (mainw->loop) lives_check_menu_item_set_active(LIVES_CHECK_MENU_ITEM(mainw->loop_video),!mainw->loop);
     }
-    else if (!mainw->loop) on_loop_video_activate(NULL,NULL);
+    else if (!mainw->loop) lives_check_menu_item_set_active(LIVES_CHECK_MENU_ITEM(mainw->loop_video),!mainw->loop);
   }
 
   return lives_osc_notify_success(NULL);
@@ -711,8 +711,8 @@ boolean lives_osc_cb_get_loop(void *context, int arglen, const void *vargs, OSCT
   int lmode=0;
   char *lmodes;
 
-  if (mainw->loop) lmode|=atoi(get_omc_const("LIVES_LOOP_FIT"));
-  if (mainw->loop_cont) lmode|=atoi(get_omc_const("LIVES_LOOP_CONT"));
+  if (mainw->loop) lmode|=atoi(get_omc_const("LIVES_LOOP_MODE_FIT_AUDIO"));
+  if (mainw->loop_cont) lmode|=atoi(get_omc_const("LIVES_LOOP_MODE_CONTINUOUS"));
 
   lmodes=lives_strdup_printf("%d",lmode);
   lives_status_send(lmodes);
@@ -2245,7 +2245,10 @@ boolean lives_osc_cb_clip_set_start(void *context, int arglen, const void *vargs
   int clip=current_file;
   int frame;
 
+  boolean selwidth_locked=mainw->selwidth_locked;
+
   lives_clip_t *sfile;
+
 
   if (mainw->current_file<1||mainw->preview||mainw->is_processing) return lives_osc_notify_failure();
   if (mainw->multitrack!=NULL) return lives_osc_notify_failure();
@@ -2268,8 +2271,13 @@ boolean lives_osc_cb_clip_set_start(void *context, int arglen, const void *vargs
 
   if (frame>sfile->frames) frame=sfile->frames;
 
+  mainw->selwidth_locked=FALSE;
   if (clip==mainw->current_file) lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_start),frame);
-  else sfile->start=frame;
+  else {
+    if (sfile->end<frame) sfile->end=frame;
+    sfile->start=frame;
+  }
+  mainw->selwidth_locked=selwidth_locked;
 
   msg=lives_strdup_printf("%d",frame);
   lives_osc_notify_success(msg);
@@ -2312,6 +2320,8 @@ boolean lives_osc_cb_clip_set_end(void *context, int arglen, const void *vargs, 
   int clip=current_file;
   int frame;
 
+  boolean selwidth_locked=mainw->selwidth_locked;
+
   lives_clip_t *sfile;
 
   if (mainw->current_file<1||mainw->preview||mainw->is_processing) return lives_osc_notify_failure();
@@ -2335,8 +2345,13 @@ boolean lives_osc_cb_clip_set_end(void *context, int arglen, const void *vargs, 
 
   if (frame>sfile->frames) frame=sfile->frames;
 
+  mainw->selwidth_locked=FALSE;
   if (clip==mainw->current_file) lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_end),frame);
-  else sfile->end=frame;
+  else {
+    if (sfile->start>frame) sfile->start=frame;
+    sfile->end=frame;
+  }
+  mainw->selwidth_locked=selwidth_locked;
 
   msg=lives_strdup_printf("%d",frame);
   lives_osc_notify_success(msg);
@@ -2344,6 +2359,7 @@ boolean lives_osc_cb_clip_set_end(void *context, int arglen, const void *vargs, 
 
   return TRUE;
 }
+
 
 boolean lives_osc_cb_clip_get_end(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
   int current_file=mainw->current_file;
@@ -2537,11 +2553,15 @@ boolean lives_osc_cb_clip_save_frame(void *context, int arglen, const void *varg
 
 
 boolean lives_osc_cb_clip_select_all(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
+  boolean selwidth_locked=mainw->selwidth_locked;
 
   if (mainw->current_file<1||mainw->preview||mainw->is_processing) return lives_osc_notify_failure();
   if ((cfile->clip_type!=CLIP_TYPE_DISK&&cfile->clip_type!=CLIP_TYPE_FILE)||!cfile->frames) return lives_osc_notify_failure();
 
+  mainw->selwidth_locked=FALSE;
   on_select_all_activate (NULL,NULL);
+  mainw->selwidth_locked=selwidth_locked;
+
   return lives_osc_notify_success(NULL);
 }
 

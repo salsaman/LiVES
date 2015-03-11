@@ -543,6 +543,93 @@ static boolean call_wipe_layout(livespointer data) {
 }
 
 
+
+static boolean call_set_current_fps(livespointer data) {
+  opfidata *idata=(opfidata *)data;
+
+  if (mainw->playing_file>-1) {
+    lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_pb_fps),idata->stime);
+    ext_caller_return_int(idata->id,(int)TRUE);
+  }
+  else ext_caller_return_int(idata->id,(int)FALSE);
+
+  return FALSE;
+}
+
+
+static boolean call_select_all(livespointer data) {
+  ipref *idata=(ipref *)data;
+  int cnum = idata->val;
+  lives_clip_t *sfile=mainw->files[cnum];
+  boolean selwidth_locked=mainw->selwidth_locked;
+
+  if (sfile!=NULL) {
+    mainw->selwidth_locked=FALSE;
+    if (cnum==mainw->current_file) on_select_all_activate(NULL,NULL);
+    else {
+      sfile->start=sfile->frames>0?1:0;
+      sfile->end=sfile->frames;
+    }
+    mainw->selwidth_locked=selwidth_locked;
+    ext_caller_return_int(idata->id,(int)TRUE);
+  }
+  else ext_caller_return_int(idata->id,(int)FALSE);
+  return FALSE;
+}
+
+
+
+static boolean call_select_start(livespointer data) {
+  ipref *idata=(ipref *)data;
+
+  int cnum = idata->val;
+  int frame=idata->prefidx;
+  lives_clip_t *sfile=mainw->files[cnum];
+
+  boolean selwidth_locked=mainw->selwidth_locked;
+
+  if (sfile!=NULL) {
+    mainw->selwidth_locked=FALSE;
+    if (cnum==mainw->current_file) lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_start),frame);
+    else {
+      if (frame>sfile->frames) frame=sfile->frames;
+      if (sfile->end<frame) sfile->end=frame;
+      sfile->start=frame;
+    }
+    mainw->selwidth_locked=selwidth_locked;
+    ext_caller_return_int(idata->id,(int)TRUE);
+  }
+  else ext_caller_return_int(idata->id,(int)FALSE);
+  return FALSE;
+}
+
+
+static boolean call_select_end(livespointer data) {
+  ipref *idata=(ipref *)data;
+
+  int cnum = idata->val;
+  int frame=idata->prefidx;
+  lives_clip_t *sfile=mainw->files[cnum];
+
+  boolean selwidth_locked=mainw->selwidth_locked;
+
+  if (sfile!=NULL) {
+    mainw->selwidth_locked=FALSE;
+    if (cnum==mainw->current_file) lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_end),frame);
+    else {
+      if (frame>sfile->frames) frame=sfile->frames;
+      if (sfile->start>frame) sfile->start=frame;
+      sfile->end=frame;
+    }
+    mainw->selwidth_locked=selwidth_locked;
+    ext_caller_return_int(idata->id,(int)TRUE);
+  }
+  else ext_caller_return_int(idata->id,(int)FALSE);
+  return FALSE;
+}
+
+
+
 static boolean call_insert_block(livespointer data) {
   iblock *idata=(iblock *)data;
   boolean ins_audio;
@@ -615,6 +702,31 @@ static boolean call_fx_enable(livespointer data) {
 }
 
 
+static boolean call_set_loop_mode(livespointer data) {
+  ipref *idata=(ipref *)data;
+  int lmode=idata->val;
+
+  if (lmode==LIVES_LOOP_MODE_NONE) {
+    if (mainw->loop_cont) on_loop_button_activate(NULL,NULL);
+    if (mainw->loop) lives_check_menu_item_set_active(LIVES_CHECK_MENU_ITEM(mainw->loop_video),!mainw->loop);
+  }
+  else {
+    if (lmode & LIVES_LOOP_MODE_CONTINUOUS) {
+      if (!mainw->loop_cont) on_loop_button_activate(NULL,NULL);
+    }
+    else if (mainw->loop_cont) on_loop_button_activate(NULL,NULL);
+
+    if (lmode & LIVES_LOOP_MODE_FIT_AUDIO) {
+      if (mainw->loop) lives_check_menu_item_set_active(LIVES_CHECK_MENU_ITEM(mainw->loop_video),!mainw->loop);
+    }
+    else if (!mainw->loop) lives_check_menu_item_set_active(LIVES_CHECK_MENU_ITEM(mainw->loop_video),!mainw->loop);
+  }
+
+  ext_caller_return_int(idata->id,(int)TRUE);
+
+  return FALSE;
+}
+
 /// idlefunc hooks
 
 
@@ -672,7 +784,7 @@ boolean idle_mt_set_track(int tnum, ulong id) {
 boolean idle_set_current_time(double time, ulong id) {
   opfidata *info;
 
-  if (mainw->preview||mainw->go_away||mainw->is_processing) {
+  if (mainw->preview||mainw->go_away||mainw->is_processing||mainw->playing_file>-1) {
     return FALSE;
   }
 
@@ -959,3 +1071,82 @@ boolean idle_wipe_layout(boolean force, ulong id) {
   lives_idle_add(call_wipe_layout,(livespointer)data);
   return TRUE;
 }
+
+
+boolean idle_select_all(int cnum, ulong id) {
+  ipref *data;
+
+  if ((mainw->preview&&mainw->multitrack==NULL)||mainw->go_away||mainw->is_processing) {
+    return FALSE;
+  }
+
+  data=(ipref *)lives_malloc(sizeof(ipref));
+  data->id=id;
+  data->val=cnum;
+  lives_idle_add(call_select_all,(livespointer)data);
+  return TRUE;
+}
+
+
+boolean idle_select_start(int cnum, int frame, ulong id) {
+  ipref *data;
+
+  if ((mainw->preview&&mainw->multitrack==NULL)||mainw->go_away||mainw->is_processing) {
+    return FALSE;
+  }
+
+  data=(ipref *)lives_malloc(sizeof(ipref));
+  data->id=id;
+  data->val=cnum;
+  data->prefidx=frame;
+  lives_idle_add(call_select_start,(livespointer)data);
+  return TRUE;
+}
+
+
+
+boolean idle_select_end(int cnum, int frame, ulong id) {
+  ipref *data;
+
+  if ((mainw->preview&&mainw->multitrack==NULL)||mainw->go_away||mainw->is_processing) {
+    return FALSE;
+  }
+
+  data=(ipref *)lives_malloc(sizeof(ipref));
+  data->id=id;
+  data->val=cnum;
+  data->prefidx=frame;
+  lives_idle_add(call_select_end,(livespointer)data);
+  return TRUE;
+}
+
+
+
+boolean idle_set_current_fps(double fps, ulong id) {
+  opfidata *data;
+
+  if (mainw->playing_file == -1) return FALSE;
+
+  if (mainw->multitrack != NULL) return FALSE;
+
+  data=(opfidata *)lives_malloc(sizeof(opfidata));
+  data->id=id;
+  data->stime=fps;
+  lives_idle_add(call_set_current_fps,(livespointer)data);
+  return TRUE;
+}
+
+
+
+boolean idle_set_loop_mode(int mode, ulong id) {
+  ipref *data;
+
+  if (mainw->go_away) return FALSE;
+
+  data=(ipref *)lives_malloc(sizeof(ipref));
+  data->id=id;
+  data->val=mode;
+  lives_idle_add(call_set_loop_mode,(livespointer)data);
+  return TRUE;
+}
+

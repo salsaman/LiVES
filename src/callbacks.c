@@ -4449,8 +4449,11 @@ boolean fps_reset_callback (LiVESAccelGroup *group, LiVESObject *obj, uint32_t k
   // reset playback fps (cfile->pb_fps) to normal fps (cfile->fps)
   // also resync the audio
 
-
   if (mainw->playing_file==-1) return TRUE;
+
+  if (prefs->audio_opts&AUDIO_OPTS_FOLLOW_FPS) {
+    resync_audio(cfile->frameno);
+  }
 
   // change play direction
   if (cfile->play_paused) {
@@ -4466,10 +4469,6 @@ boolean fps_reset_callback (LiVESAccelGroup *group, LiVESObject *obj, uint32_t k
 
   // make sure this is called, sometimes we switch clips too soon...
   changed_fps_during_pb (LIVES_SPIN_BUTTON(mainw->spinbutton_pb_fps), NULL);
-
-  if (prefs->audio_opts&AUDIO_OPTS_FOLLOW_FPS) {
-    resync_audio(cfile->frameno);
-  }
 
   return TRUE;
 }
@@ -6559,7 +6558,7 @@ void on_cancel_opensel_clicked (LiVESButton  *button, livespointer user_data) {
 
 void on_cancel_keep_button_clicked (LiVESButton *button, livespointer user_data) {
   // Cancel/Keep from progress dialog
-  gchar *com=NULL;
+  char *com=NULL;
   uint32_t keep_frames=0;
   FILE *infofile;
 

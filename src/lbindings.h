@@ -43,7 +43,9 @@ boolean idle_select_start(int cnum, int frame, ulong id);
 boolean idle_select_end(int cnum, int frame, ulong id);
 boolean idle_set_current_fps(double fps, ulong id);
 boolean idle_set_loop_mode(int mode, ulong id);
-
+boolean idle_set_ping_pong(boolean setting, ulong id);
+boolean idle_resync_fps(ulong id);
+boolean idle_cancel_proc(ulong id);
 
 ulong *get_unique_ids(void);
 int cnum_for_uid(ulong uid);

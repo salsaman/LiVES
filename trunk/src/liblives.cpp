@@ -222,6 +222,8 @@ namespace lives {
     m_effectKeyMap = new effectKeyMap(this);
     m_multitrack = new multitrack(this);
 
+    m_deinterlace = false;
+
     real_main(argc, argv, id);
     free(argv);
     m_id = id;
@@ -351,7 +353,7 @@ namespace lives {
 
   lives_dialog_response_t livesApp::showInfo(livesString text, bool blocking) {
     lives_dialog_response_t ret=LIVES_DIALOG_RESPONSE_INVALID;
-    if (!isValid()) return ret;
+    if (!isValid() || status() == LIVES_STATUS_NOTREADY) return ret;
     // if blocking wait for response
     if (blocking) {
       spinning = true;
@@ -381,7 +383,7 @@ namespace lives {
 
   livesString livesApp::chooseFileWithPreview(livesString dirname, lives_filechooser_t preview_type, livesString title) {
     livesString emptystr;
-    if (!isValid()) return emptystr;
+    if (!isValid() || status() == LIVES_STATUS_NOTREADY) return emptystr;
     if (preview_type != LIVES_FILE_CHOOSER_VIDEO_AUDIO && preview_type != LIVES_FILE_CHOOSER_AUDIO_ONLY) return emptystr;
     spinning = true;
     msg_id = lives_random();
@@ -411,7 +413,7 @@ namespace lives {
 
   livesString livesApp::chooseSet() {
     livesString emptystr;
-    if (!isValid()) return emptystr;
+    if (!isValid() || status() == LIVES_STATUS_NOTREADY) return emptystr;
     spinning = true;
     msg_id = lives_random();
     ulong cbid = addCallback(LIVES_CALLBACK_PRIVATE, private_cb, NULL);
@@ -436,6 +438,7 @@ namespace lives {
 
   livesStringList livesApp::availableSets() {
     livesStringList list;
+    if (!isValid() || status() == LIVES_STATUS_NOTREADY) return list;
     LiVESList *setlist=get_set_list(::prefs->tmpdir, true), *slist=setlist;
     while (slist != NULL) {
       list.push_back(livesString((const char *)slist->data, LIVES_CHAR_ENCODING_UTF8));
@@ -448,7 +451,7 @@ namespace lives {
 
 
   clip livesApp::openFile(livesString fname, bool with_audio, double stime, int frames, bool deinterlace) {
-    if (!isValid()) return clip();
+    if (!isValid() || status() == LIVES_STATUS_NOTREADY) return clip();
     if (fname.empty()) return clip();
     spinning = true;
     msg_id = lives_random();
@@ -474,7 +477,7 @@ namespace lives {
 
 
   bool livesApp::reloadSet(livesString setname) {
-    if (!isValid()) return false;
+    if (!isValid() || status() == LIVES_STATUS_NOTREADY) return false;
     if (setname.empty()) return false;
     spinning = true;
     msg_id = lives_random();
@@ -503,14 +506,14 @@ namespace lives {
   }
 
   lives_interface_mode_t livesApp::mode() {
-    if (!isValid() || mainw->go_away) return LIVES_INTERFACE_MODE_INVALID;
+    if (!isValid() || status() == LIVES_STATUS_NOTREADY) return LIVES_INTERFACE_MODE_INVALID;
     if (m_multitrack->isActive()) return LIVES_INTERFACE_MODE_MULTITRACK;
     return LIVES_INTERFACE_MODE_CLIPEDIT;
   }
 
 
   lives_interface_mode_t livesApp::setMode(lives_interface_mode_t newmode) {
-    if (!isValid()) return LIVES_INTERFACE_MODE_INVALID;
+    if (!isValid() || status() == LIVES_STATUS_NOTREADY) return LIVES_INTERFACE_MODE_INVALID;
     spinning = true;
     msg_id = lives_random();
     ulong cbid = addCallback(LIVES_CALLBACK_PRIVATE, private_cb, NULL);
@@ -532,9 +535,6 @@ namespace lives {
   }
 
 
-
-
-
   lives_status_t livesApp::status() {
     if (!isValid()) return LIVES_STATUS_INVALID;
     if (mainw->go_away) return LIVES_STATUS_NOTREADY;
@@ -543,6 +543,33 @@ namespace lives {
     if (mainw->playing_file > -1 || mainw->preview) return LIVES_STATUS_PLAYING;
     return LIVES_STATUS_READY;
   }
+
+
+
+  bool livesApp::cancel() {
+    if (!isValid()) return false;
+    if (status() != LIVES_STATUS_PROCESSING) return false;
+    bool ret = false;
+    spinning = true;
+    msg_id = lives_random();
+    ulong cbid = addCallback(LIVES_CALLBACK_PRIVATE, private_cb, NULL);
+    
+    pthread_mutex_lock(&spin_mutex);
+    if (!idle_cancel_proc(msg_id)) {
+      pthread_mutex_unlock(&spin_mutex);
+      spinning = false;
+      removeCallback(cbid);
+      return false;
+    }
+    while (spinning) pthread_cond_wait(&cond_done, &spin_mutex);
+    pthread_mutex_unlock(&spin_mutex);
+    if (isValid()) {
+      ret = (bool)atoi(private_response);
+      lives_free(private_response);
+    }
+    return ret;
+  }
+
 
   closureList& livesApp::closures() {
     return m_closures;
@@ -558,6 +585,7 @@ namespace lives {
 
 
   bool livesApp::setInteractive(bool setting) {
+    if (!isValid() || status() == LIVES_STATUS_NOTREADY) return mainw->interactive;
     spinning = true;
     msg_id = lives_random();
     ulong cbid = addCallback(LIVES_CALLBACK_PRIVATE, private_cb, NULL); 
@@ -584,6 +612,7 @@ namespace lives {
 
 #ifndef DOXYGEN_SKIP
   bool livesApp::setPref(int prefidx, bool val) {
+    if (!isValid() || status() == LIVES_STATUS_NOTREADY) return false;
     spinning = true;
     msg_id = lives_random();
     ulong cbid = addCallback(LIVES_CALLBACK_PRIVATE, private_cb, NULL); 
@@ -603,6 +632,7 @@ namespace lives {
   }
 
   bool livesApp::setPref(int prefidx, int val) {
+    if (!isValid() || status() == LIVES_STATUS_NOTREADY) return false;
     spinning = true;
     msg_id = lives_random();
     ulong cbid = addCallback(LIVES_CALLBACK_PRIVATE, private_cb, NULL); 
@@ -631,28 +661,29 @@ namespace lives {
 
 
   bool player::isValid() const {
-    return m_lives != NULL && m_lives->isValid();
+    return m_lives != NULL && m_lives->isValid() && m_lives->status() != LIVES_STATUS_NOTREADY;
   }
 
 
-  bool player::isActive() const {
-    return isValid() && m_lives->status() == LIVES_STATUS_PLAYING;
+  bool player::isPlaying() const {
+    return isValid() && m_lives->isPlaying();
   }
 
 
   bool player::play() const {
-    if (!isValid()) return false;
+    if (!isValid() || !m_lives->isReady()) return false;
     return play_thread();
   }
 
   bool player::stop() const {
-    if (!isValid()) return FALSE;
+    if (!isPlaying()) return false;
     // return false if we are not playing
     return lives_osc_cb_stop(NULL, 0, NULL, OSCTT_CurrentTime(), NULL);
   }
 
 
   void player::setSepWin(bool setting) const {
+    if (!isValid()) return;
     spinning = true;
     msg_id = lives_random();
     ulong cbid = m_lives->addCallback(LIVES_CALLBACK_PRIVATE, private_cb, NULL); 
@@ -661,18 +692,19 @@ namespace lives {
       pthread_mutex_unlock(&spin_mutex);
       spinning = false;
       m_lives->removeCallback(cbid);
-      return;// false;
+      return;
     }
     while (spinning) pthread_cond_wait(&cond_done, &spin_mutex);
     pthread_mutex_unlock(&spin_mutex);
     if (isValid()) {
       lives_free(private_response);
     }
-    return;// true;
+    return;
   }
 
 
   void player::setFullScreen(bool setting) const {
+    if (!isValid()) return;
     spinning = true;
     msg_id = lives_random();
     ulong cbid = m_lives->addCallback(LIVES_CALLBACK_PRIVATE, private_cb, NULL); 
@@ -681,53 +713,56 @@ namespace lives {
       pthread_mutex_unlock(&spin_mutex);
       spinning = false;
       m_lives->removeCallback(cbid);
-      return;// false;
+      return;
     }
     while (spinning) pthread_cond_wait(&cond_done, &spin_mutex);
     pthread_mutex_unlock(&spin_mutex);
     if (isValid()) {
       lives_free(private_response);
     }
-    return;// true;
+    return;
   }
 
 
   bool player::sepWin() const {
+    if (!isValid()) return false;
     return mainw->sep_win;
   }
 
 
   bool player::fullScreen() const {
+    if (!isValid()) return false;
     return mainw->fs;
   }
 
 
   bool player::setForegroundClip(clip c) const {
-    if (!isActive()) return false;
+    if (!isPlaying()) return false;
     return c.switchTo();
   }
 
 
   bool player::setBackgroundClip(clip c) const {
-    if (!isActive()) return false;
+    if (!isPlaying()) return false;
     return c.setIsBackground();
   }
 
   clip player::foregroundClip() const {
-    if (!isActive()) return clip();
+    if (!isPlaying()) return clip();
     if (m_lives->m_multitrack->isActive()) return clip();
     if (mainw->files[mainw->playing_file] != NULL) return clip(mainw->files[mainw->playing_file]->unique_id, m_lives);
     return clip();
   }
 
   clip player::backgroundClip() const {
-    if (!isActive()) return clip();
+    if (!isPlaying()) return clip();
     if (m_lives->m_multitrack->isActive()) return clip();
     if (mainw->files[mainw->blend_file] != NULL) return clip(mainw->files[mainw->blend_file]->unique_id, m_lives);
     return clip();
   }
 
   void player::setFS(bool setting) const {
+    if (!isValid()) return;
     spinning = true;
     msg_id = lives_random();
     ulong cbid = m_lives->addCallback(LIVES_CALLBACK_PRIVATE, private_cb, NULL); 
@@ -750,9 +785,7 @@ namespace lives {
   double player::playbackTime() const {
     if (!isValid()) return 0;
 
-    if (m_lives->status() == LIVES_STATUS_NOTREADY || m_lives->status() == LIVES_STATUS_PROCESSING) {
-      return 0.;
-    }
+    if (m_lives->status() == LIVES_STATUS_NOTREADY || m_lives->status() == LIVES_STATUS_PROCESSING) return 0.;
 
     if (!m_lives->m_multitrack->isActive()) {
       if (mainw->current_file==-1) return 0.;
@@ -768,9 +801,7 @@ namespace lives {
   double player::audioPlaybackTime() const {
     if (!isValid()) return 0;
 
-    if (m_lives->status() == LIVES_STATUS_NOTREADY || m_lives->status() == LIVES_STATUS_PROCESSING) {
-      return 0.;
-    }
+    if (m_lives->status() == LIVES_STATUS_NOTREADY || m_lives->status() == LIVES_STATUS_PROCESSING) return 0.;
 
     if (!m_lives->m_multitrack->isActive()) {
       if (mainw->current_file==-1) return 0.;
@@ -807,9 +838,7 @@ namespace lives {
 
 
   double player::elapsedTime() const {
-    if (mainw->playing_file == -1) {
-      return 0.;
-    }
+    if (!isPlaying()) return 0.;
     return mainw->currticks/U_SEC;
   }
 
@@ -823,8 +852,7 @@ namespace lives {
 
 
   double player::setCurrentFPS(double fps) const {
-    if (!isValid()) return 0.;
-    if (mainw->playing_file == -1) return false;
+    if (!isPlaying()) return 0.;
 
     spinning = true;
     msg_id = lives_random();
@@ -855,7 +883,7 @@ namespace lives {
 
 
   lives_loop_mode_t player::setLoopMode(lives_loop_mode_t mode) const {
-    if (!isValid() || mainw->go_away) return loopMode();
+    if (!isValid()) return loopMode();
     spinning = true;
     msg_id = lives_random();
     ulong cbid = m_lives->addCallback(LIVES_CALLBACK_PRIVATE, private_cb, NULL);
@@ -888,6 +916,57 @@ namespace lives {
 
 
 
+  bool player::setPingPong(bool setting) const {
+    if (!isValid()) return pingPong();
+    spinning = true;
+    msg_id = lives_random();
+    ulong cbid = m_lives->addCallback(LIVES_CALLBACK_PRIVATE, private_cb, NULL);
+    pthread_mutex_lock(&spin_mutex);
+    if (!idle_set_ping_pong(setting, msg_id)) {
+      pthread_mutex_unlock(&spin_mutex);
+      spinning = false;
+      m_lives->removeCallback(cbid);
+    }
+    else {
+      while (spinning) pthread_cond_wait(&cond_done, &spin_mutex);
+      pthread_mutex_unlock(&spin_mutex);
+      if (isValid()) {
+	lives_free(private_response);
+      }
+    }
+    return pingPong();
+  }
+
+
+  bool player::pingPong() const {
+    if (!isValid()) return false;
+    return mainw->ping_pong;
+  }
+
+
+  bool player::resyncFPS() const {
+    if (!isPlaying()) return false;
+    spinning = true;
+    msg_id = lives_random();
+    ulong cbid = m_lives->addCallback(LIVES_CALLBACK_PRIVATE, private_cb, NULL);
+    pthread_mutex_lock(&spin_mutex);
+    if (!idle_resync_fps(msg_id)) {
+      pthread_mutex_unlock(&spin_mutex);
+      spinning = false;
+      m_lives->removeCallback(cbid);
+    }
+    else {
+      while (spinning) pthread_cond_wait(&cond_done, &spin_mutex);
+      pthread_mutex_unlock(&spin_mutex);
+      if (isValid()) {
+	lives_free(private_response);
+      }
+    }
+    return true;
+  }
+
+
+
   //////////////// set ////////////////////
 
 
@@ -897,7 +976,7 @@ namespace lives {
 
 
   bool set::isValid() const {
-    return m_lives != NULL && m_lives->isValid();
+    return m_lives != NULL && m_lives->isValid() && m_lives->status() != LIVES_STATUS_NOTREADY;
   }
 
 
@@ -997,7 +1076,7 @@ namespace lives {
   }
 
   bool clip::isValid() {
-    return (m_lives != NULL && m_lives->isValid() && cnum_for_uid(m_uid) != -1);
+    return (m_lives != NULL && m_lives->isValid() && m_lives->status() != LIVES_STATUS_NOTREADY && cnum_for_uid(m_uid) != -1);
   }
 
   int clip::frames() {
@@ -1052,6 +1131,23 @@ namespace lives {
     }
     return -1;
   }
+
+
+  int clip::playbackAudioRate() {
+    int arps = -1;
+    if (isValid()) {
+      if (!m_lives->m_multitrack->isActive()) {
+	int cnum = cnum_for_uid(m_uid);
+	if (cnum > -1 && mainw->files[cnum] != NULL) {
+	  arps = mainw->files[cnum]->arps;
+	  arps *= mainw->files[cnum]->pb_fps / mainw->files[cnum]->fps;
+	}
+      }
+      else arps = mainw->files[mainw->multitrack->render_file]->arate;
+    }
+    return arps;
+  }
+
 
   int clip::audioChannels() {
     if (isValid()) {
@@ -1113,7 +1209,7 @@ namespace lives {
 
 
   bool clip::selectAll() {
-    if (!isValid()) return false;
+    if (!isValid() || m_lives->status() == LIVES_STATUS_NOTREADY) return false;
     spinning = true;
     msg_id = lives_random();
     ulong cbid = m_lives->addCallback(LIVES_CALLBACK_PRIVATE, private_cb, NULL);
@@ -1248,7 +1344,7 @@ namespace lives {
 
 
   bool effectKeyMap::isValid() const {
-    return m_lives != NULL && m_lives->isValid();
+    return m_lives != NULL && m_lives->isValid() && m_lives->status() != LIVES_STATUS_NOTREADY;
   }
 
 
@@ -1298,7 +1394,8 @@ namespace lives {
   }
 
   bool effectKey::isValid() {
-    return m_lives != NULL && m_lives->isValid() && m_key >= 1 && m_key <= prefs::rteKeysVirtual(*(m_lives));
+    return m_lives != NULL && m_lives->isValid() && m_lives->status() != LIVES_STATUS_NOTREADY && 
+      m_key >= 1 && m_key <= prefs::rteKeysVirtual(*(m_lives));
   }
   
   int effectKey::key() {
@@ -1423,7 +1520,7 @@ namespace lives {
   }
 
   bool effect::isValid() {
-    return (m_idx != -1 && m_lives != NULL && m_lives->isValid());
+    return (m_idx != -1 && m_lives != NULL && m_lives->isValid() && m_lives->status() != LIVES_STATUS_NOTREADY);
   }
 
   ///////////////////////////////
@@ -1488,21 +1585,23 @@ namespace lives {
   }
 
   bool multitrack::isValid() const {
-    return m_lives != NULL && m_lives->m_id != 0l;
+    return m_lives != NULL && m_lives->m_id != 0l && m_lives->status() != LIVES_STATUS_NOTREADY;
   }
 
 
   bool multitrack::isActive() const {
-    return (m_lives->status() != LIVES_STATUS_NOTREADY && mainw->multitrack != NULL);
+    return (isValid() && mainw->multitrack != NULL);
   }
 
 
   double multitrack::currentTime() const {
+    if (!isActive()) return -1.;
     return m_lives->m_player->playbackTime();
   }
 
 
   double multitrack::setCurrentTime(double time) const {
+    if (!isActive() || !m_lives->isReady()) return currentTime();
     return m_lives->m_player->setPlaybackTime(time);
   }
 
@@ -1510,6 +1609,7 @@ namespace lives {
   block multitrack::insertBlock(clip c, bool ign_sel, bool with_audio) const {
     if (!isActive()) return block();
     if (!c.isValid()) return block();
+    if (!m_lives->isReady()) return block();
 
     int clipno = cnum_for_uid(c.m_uid);
 
@@ -1538,6 +1638,7 @@ namespace lives {
   livesString multitrack::wipeLayout(bool force) const {
     livesString emptystr;
     if (!isActive()) return emptystr;
+    if (!m_lives->isReady()) return emptystr;
 
     spinning = true;
     msg_id = lives_random();
@@ -1561,21 +1662,16 @@ namespace lives {
   }
 
 
-
-
-
   int multitrack::currentTrack() const {
-    if (m_lives->status() == LIVES_STATUS_NOTREADY || m_lives->status() == LIVES_STATUS_PROCESSING) {
-      return 0;
-    }
-
-    if (!m_lives->m_multitrack->isActive()) return 0;
-
+    if (!isActive()) return 0;
     return mainw->multitrack->current_track;
   }
 
 
   bool multitrack::setCurrentTrack(int track) const {
+    if (m_lives->status() == LIVES_STATUS_PROCESSING) return false;
+    if (!isActive()) return false;
+
     spinning = true;
     msg_id = lives_random();
     ulong cbid = m_lives->addCallback(LIVES_CALLBACK_PRIVATE, private_cb, NULL);
@@ -1601,11 +1697,7 @@ namespace lives {
 
   livesString multitrack::trackLabel(int track) const {
     livesString emptystr;
-    if (m_lives->status() == LIVES_STATUS_NOTREADY) {
-      return emptystr;
-    }
-
-    if (!m_lives->m_multitrack->isActive()) return emptystr;
+    if (!isActive()) return emptystr;
 
     if (mt_track_is_video(mainw->multitrack, track)) 
       return livesString(get_track_name(mainw->multitrack, track, FALSE), LIVES_CHAR_ENCODING_UTF8); 

@@ -730,7 +730,8 @@ boolean lives_osc_cb_set_pingpong(void *context, int arglen, const void *vargs, 
   }
   else return lives_osc_notify_failure();
 
-  if ((lmode && !mainw->ping_pong) || (!lmode && mainw->ping_pong)) on_ping_pong_activate(NULL,NULL);
+  if ((lmode && !mainw->ping_pong) || (!lmode && mainw->ping_pong)) 
+    lives_check_menu_item_set_active(LIVES_CHECK_MENU_ITEM(mainw->loop_ping_pong),!mainw->ping_pong);
 
   return lives_osc_notify_success(NULL);
 }

@@ -613,6 +613,14 @@ namespace lives {
     lives_status_t status();
 
 
+    /**
+       If status() is LIVES_STATUS_PROCESSING, cancel the current processing if possible.
+       @return true if the processing was cancelled.
+    */
+    bool cancel();
+
+
+
 #ifndef DOXYGEN_SKIP
     // For internal use only.
     closureList& closures();
@@ -671,6 +679,7 @@ namespace lives {
 
     /**
        Check if clip is valid. 
+       A clip is valid if it is loaded in a valid livesApp instance, and the livesApp::status() is not LIVES_STATUS_NOTREADY. 
        @see livesApp::openFile().
        @return true if the clip is valid.
     */
@@ -734,13 +743,20 @@ namespace lives {
        If clip is not valid then -1 is returned.
        Note this is not necessarily the same as the soundcard audio rate which can be obtained via prefs::audioPlayerRate().
        @return int audio rate, or -1 if clip is not valid.
+       @see playbackAudioRate()
     */
     int audioRate();
 
-
-
+    /**
+       The current playback audio rate for this clip, which may differ from audioRate(). 
+       If the clip is video only, 0 is returned.
+       If clip is not valid then -1 is returned.
+       Note this is not necessarily the same as the soundcard audio rate which can be obtained via prefs::audioPlayerRate().
+       If livesApp::mode() is LIVES_INTERFACE_MODE_MULTITRACK then this will return multitrack::audioRate().
+       @return int playback audio rate, or -1 if clip is not valid.
+       @see audiorate().
+    */
     int playbackAudioRate();
-
 
     /**
        Number of audio channels (eg. left, right) for this clip. 
@@ -872,6 +888,7 @@ namespace lives {
 
     /**
        Returns whether the set is valid or not.
+       The set is valid if belongs to a valid livesApp, and the livesApp::status() is not LIVES_STATUS_NOTREADY.
        @return true if the set is valid (associated with a valid livesApp instance).
     */
     bool isValid() const;
@@ -963,15 +980,16 @@ namespace lives {
   public:
 
     /**
-       Returns whether the set is valid or not.
-       @return true if the set is valid (associated with a valid livesApp instance).
+       Returns whether the player is valid or not.
+       A valid player belongs to a valid livesApp, and the livesApp::status() is not LIVES_STATUS_NOTREADY.
+       @return true if the player is valid.
     */
     bool isValid() const;
 
     /**
        Returns true if the livesApp::status() is LIVES_STATUS_PLAYING.
     */
-    bool isActive() const;
+    bool isPlaying() const;
 
     /**
        Set playback in a detached window.
@@ -1008,14 +1026,14 @@ namespace lives {
 
     /**
        Commence playback of video and audio with the currently selected clip.
-       Only has an effect when status() is LIVES_STATUS_READY.
+       Only has an effect when livesApp::status() is LIVES_STATUS_READY.
        @return true if playback was started.
     */
     bool play() const;
 
     /**
        Stop playback.
-       If status() is not LIVES_STATUS_PLAYING, nothing happens.
+       If livesApp::status() is not LIVES_STATUS_PLAYING, nothing happens.
        @return true if playback was stopped.
     */
     bool stop() const;
@@ -1121,10 +1139,11 @@ namespace lives {
 
     /**
        Set the current playback framerate in frames per second. Only works if livesApp::mode() is LIVES_INTERFACE_MODE_CLIPEDIT and
-       livesApp::status() is either LIVES_STATUS_READY or LIVES_STATUS_PLAYING.
+       livesApp::status() is LIVES_STATUS_PLAYING.
        Allowed values range from -prefs::maxFPS to +prefs::maxFPS.
        If prefs::audioFollowsVideoChanges() is true, then the audio playback rate will change proportionally.
-       If isValid() is false, nothing happens and 0. is returned.
+       If isPlaying() is false, nothing happens and 0. is returned.
+       Note, the setting only applies to the current clip; if the clip being played is switched then currentFPS() may change.
        @param fps the framerate to set
        @return the new framerate
        @see currentFPS().
@@ -1169,14 +1188,36 @@ namespace lives {
     */
     lives_loop_mode_t loopMode() const;
 
-
+    /**
+       Set ping pong mode. If pingPong is true then rather than looping forward, video and audio will "bounce" 
+       forwards and backwards off their end points, provided the mode() is LIVES_INTERFACE_MODE_CLIPEDIT.
+       If mode() is LIVES_INTERFACE_MODE_MULTITRACK, then the value is ignored.
+       @param the desired value
+       @return the new value
+       @see pingPong().
+       @see loopMode().
+    */
     bool setPingPong(bool pingPong) const;
 
-
+    /**
+       Return ping pong mode. If pingPong is true then rather than looping forward, video and audio will "bounce" 
+       forwards and backwards off their end points, provided the mode() is LIVES_INTERFACE_MODE_CLIPEDIT.
+       If mode() is LIVES_INTERFACE_MODE_MULTITRACK, then the value is ignored.
+       If the player is invalid, false is returned.
+       @return the current value.
+       @see setPingPong().
+       @see loopMode().
+    */
     bool pingPong() const;
 
-
-    void resyncFPS() const;
+    /**
+       Resets the clip::playbackFPS() for the current foreground clip, so it is equal to the clip::FPS().
+       Resets the clip::playbackAudioRate so it is equal to the clip::audioRate().
+       If possible equalizes the audioPlaybackTime() with the playbackTime() so video and audio are in sync.
+       Only works if isPlaying() is true.
+       @return true if the method succeeded.
+    */
+    bool resyncFPS() const;
 
 
     /**
@@ -1213,7 +1254,9 @@ namespace lives {
 
     /**
        Returns whether the effectKey is valid or not.
-       @return true if the effectKey is valid (associated with a valid livesApp instance).
+       An effect key is valid if it is owned by a valid livesApp, and the livesApp::status() is not LIVES_STATUS_NOTREADY, 
+       and the key value is in the range 1 <= key <= prefs::rteKeysVirtual.
+       @return true if the effectKey is valid.
     */
     bool isValid();
 
@@ -1321,14 +1364,15 @@ namespace lives {
     public:
       /**
 	 Returns whether the effectKeyMap is valid or not.
-	 @return true if the effectKeyMap is associated with a valid livesApp instance,
-	 and the index is 1 <= i <= prefs::rteKeysVirtual().
+	 A valid effectKeyMap is owned by a valid livesApp, the livesApp::status() is not LIVES_STATUS_NOTREADY, 
+	 and the index is 1 <= i <= prefs::rteKeysVirtual(). 
+	 @return true if the effectKeyMap is valid.
       */
       bool isValid() const;
 
       /**
 	 Unmap all effects from effectKey mappings, leaving an empty map.
-	 Only has an effect when status() is LIVES_STATUS_READY.
+	 Only has an effect when livesApp::status() is LIVES_STATUS_READY.
 	 @return true if all effects were unmapped
       */
       bool clear() const;
@@ -1402,6 +1446,7 @@ namespace lives {
 
     /**
        Returns whether the effect is valid or not.
+       A valid effect is owned by a valid livesApp, whose livesApp::status() is not LIVES_STATUS_NOTREADY, and which references an existing effect plugin.
        @return true if the effect is valid.
     */
     bool isValid();      
@@ -1438,7 +1483,7 @@ namespace lives {
        returns whether the block is valid or not. A block may become invalid if it is deleted from a layout for example. 
        Undoing a deletion does not cause a block to become valid again, you need to search for it again by time and track number.
        If the livesApp::mode() is changed from LIVES_INTERFACE_MODE_MULTITRACK, then all existing blocks become invalid.
-       @return whether the block is contained in the current layout.
+       @return whether the block is contained in an active multitrack instance.
     */
     bool isValid();
 
@@ -1511,7 +1556,8 @@ namespace lives {
   public:
 
     /**
-       returns whether the multitrack is valid or not. A valid multitrack is one which is owned by a valid livesApp.
+       returns whether the multitrack is valid or not. A valid multitrack is one which is owned by a valid livesApp, 
+       whose livesApp::status() is not LIVES_STATUS_NOTREADY.
        @return whether the multitrack is valid
     */
     bool isValid() const;
@@ -1557,6 +1603,7 @@ namespace lives {
        Return the current playback time in seconds. If isActive() is true this returns the current player time in the multitrack timeline 
        (equivalent to to player::playbackTime(), and during playback, equivalent to player::elapsedTime() plus a constant offset).
        This function works when livesApp::status() is LIVE_STATUS_READY or LIVES_STATUS_PLAYING.
+       If isActive() is false, -1. is returned.
        @returns the current clip playback time.
        @see setCurrentTime().
        @see currentAudioTime().
@@ -1618,7 +1665,8 @@ namespace lives {
        Wipe the current layout, leaving a blank layout.
        If force is false, then the user will have a chance to cancel (if livesApp::interactive() is true), 
        or to save the layout.
-       If isActive() is false, the layout will not be wiped, and an empty string will be returned.
+       Only works if livesApp::status() is LIVES_STATUS_READY and isActive() is true.
+       Otherwise, the layout will not be wiped, and an empty string will be returned.
        @param force set to true to force the layout to be wiped.
        @return the name which the layout was saved to, or empty string if it was not saved.
     */
@@ -1682,7 +1730,7 @@ namespace lives {
     ///< @param lives a reference to a livesApp instance
     lives_audio_source_t audioSource(livesApp lives); ///< the current audio source
 
-    bool setAudioSource(livesApp lives, lives_audio_source_t asrc); ///< Set the audio source. Only works if status() is LIVES_STATUS_READY.
+    bool setAudioSource(livesApp lives, lives_audio_source_t asrc); ///< Set the audio source. Only works if livesApp::status() is LIVES_STATUS_READY.
     ///< @param lives a reference to a livesApp instance
     ///< @param asrc the desired audio source
     ///< @return true if the audio source could be changed.

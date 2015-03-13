@@ -5339,7 +5339,6 @@ void load_frame_image(int frame) {
       get_max_opsize(&opwidth,&opheight);
     }
 
-
     ////////////////////////////////////////////////////////////
     // load a frame from disk buffer
 

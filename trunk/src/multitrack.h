@@ -704,7 +704,7 @@ void edit_start_end_cb (LiVESMenuItem *, livespointer mt);
 void close_clip_cb (LiVESMenuItem *, livespointer mt);
 void show_clipinfo_cb (LiVESMenuItem *, livespointer mt);
 
-void multitrack_insert (LiVESMenuItem *, livespointer mt);
+boolean multitrack_insert (LiVESMenuItem *, livespointer mt);
 
 // event_list functions
 weed_plant_t *add_blank_frames_up_to (weed_plant_t *event_list, weed_plant_t *start_event, weed_timecode_t end_tc, double fps);

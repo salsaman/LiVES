@@ -358,7 +358,7 @@ lives_clipinfo_t *create_clip_info_window (int audio_channels, boolean is_mt) {
 
   lives_clipinfo_t *filew=(lives_clipinfo_t *)(lives_malloc(sizeof(lives_clipinfo_t)));
 
-  gchar *title;
+  char *title;
 
   if (mainw->multitrack==NULL)
     title=lives_strdup_printf(_("LiVES: - %s"),cfile->name);
@@ -2557,7 +2557,9 @@ LiVESWidget *create_cleardisk_advanced_dialog(void) {
   LiVESWidget *okbutton;
   LiVESWidget *resetbutton;
 
-  gchar *tmp,*tmp2;
+  boolean woat=widget_opts.apply_theme;
+
+  char *tmp,*tmp2;
 
   dialog = lives_standard_dialog_new (_("LiVES: - Disk Recovery Options"),FALSE);
 
@@ -2571,7 +2573,9 @@ LiVESWidget *create_cleardisk_advanced_dialog(void) {
   vbox = lives_vbox_new (FALSE, 0);
   lives_container_set_border_width (LIVES_CONTAINER (vbox), widget_opts.border_width*2);
 
+  widget_opts.apply_theme=FALSE;
   scrollw = lives_standard_scrolled_window_new (450.*widget_opts.scale,300.*widget_opts.scale,vbox);
+  widget_opts.apply_theme=woat;
 
   lives_container_add (LIVES_CONTAINER (dialog_vbox), scrollw);
    

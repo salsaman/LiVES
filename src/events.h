@@ -66,6 +66,8 @@ weed_plant_t *get_prev_frame_event (weed_plant_t *event);
 weed_plant_t *get_frame_event_at (weed_plant_t *event_list, weed_timecode_t tc, weed_plant_t *shortcut, boolean exact);
 weed_plant_t *get_frame_event_at_or_before (weed_plant_t *event_list, weed_timecode_t tc, weed_plant_t *shortcut);
 
+weed_plant_t *get_audio_block_start(weed_plant_t *event_list, int track, weed_timecode_t tc, boolean seek_back);
+
 boolean filter_map_after_frame(weed_plant_t *fmap);
 boolean init_event_is_relevant(weed_plant_t *init_event, int ctrack);
 
@@ -121,7 +123,7 @@ typedef struct {
   gulong encoder_name_fn;
   gulong encoder_ofmt_fn;
   boolean enc_changed;
-  gchar *encoder_name;
+  char *encoder_name;
   boolean suggestion_followed;
 
   boolean is_encoding;
@@ -206,14 +208,14 @@ boolean is_init_pchange(weed_plant_t *init_event, weed_plant_t *pchange_event);
 void free_pchains(int key);
 
 // audio
-/// returns clip number for track layer (layer==-1 is backing audio)
-int get_audio_frame_clip (weed_plant_t *event, int layer);
+/// returns clip number for track (track==-1 is backing audio)
+int get_audio_frame_clip (weed_plant_t *event, int track);
  
-/// returns velocity for track layer (layer==-1 is backing audio)
-double get_audio_frame_vel (weed_plant_t *event, int layer);
+/// returns velocity for track (track==-1 is backing audio)
+double get_audio_frame_vel (weed_plant_t *event, int track);
 
-/// returns velocity for track layer (layer==-1 is backing audio)
-double get_audio_frame_seek (weed_plant_t *event, int layer);
+/// returns velocity for track (track==-1 is backing audio)
+double get_audio_frame_seek (weed_plant_t *event, int track);
 
 
 // playback

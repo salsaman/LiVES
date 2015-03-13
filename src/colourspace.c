@@ -10337,6 +10337,7 @@ boolean resize_layer (weed_plant_t *layer, int width, int height, LiVESInterpTyp
   LiVESPixbuf *new_pixbuf=NULL;
 
   boolean keep_in_pixel_data=FALSE;
+  boolean is_contiguous=FALSE;
   boolean retval=TRUE;
 
   int error;
@@ -10402,6 +10403,10 @@ boolean resize_layer (weed_plant_t *layer, int width, int height, LiVESInterpTyp
   if (weed_plant_has_leaf(layer,"host_orig_pdata")&&weed_get_boolean_value(layer,"host_orig_pdata",&error)==WEED_TRUE) {
     keep_in_pixel_data=TRUE;
   }
+
+  if (weed_plant_has_leaf(layer,"host_pixel_data_contiguous") &&
+      weed_get_boolean_value(layer,"host_pixel_data_contiguous",&error)==WEED_TRUE)
+    is_contiguous=TRUE;
 
   // if we cannot scale YUV888 (unclamped) or YUVA8888 (unclamped) directly, pretend they are RGB24 and RGBA32
   if (palette==WEED_PALETTE_YUV888&&iclamped==WEED_YUV_CLAMPING_UNCLAMPED
@@ -10504,7 +10509,13 @@ boolean resize_layer (weed_plant_t *layer, int width, int height, LiVESInterpTyp
 	if (store_ctx) swscale_add_context(iwidth,iheight,width,height,ipixfmt,opixfmt,flags,swscale);
       }
 
-      if (!keep_in_pixel_data) lives_free(*in_pixel_data);
+      if (!keep_in_pixel_data) {
+	for (i=0;i<weed_palette_get_numplanes(palette);i++) {
+	  //g_print("free %p\n",in_pixel_data[i]);
+	  lives_free(in_pixel_data[i]);
+	  if (is_contiguous) break;
+	}
+      }
       else weed_leaf_delete(layer,"host_orig_pdata");
 
       lives_free(out_pixel_data);
@@ -11284,6 +11295,7 @@ void weed_layer_pixel_data_free(weed_plant_t *layer) {
 	  }
 
 	  for (i=0;i<pd_elements;i++) {
+	    //g_print("2free %p\n",pixel_data[i]);
 	    if (pixel_data[i]!=NULL) lives_free(pixel_data[i]);
 	  }
 

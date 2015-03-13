@@ -1,12 +1,13 @@
 Version 2.4.0
 -------------
-Code cleanup.
+Fix threading crash in multitrack.
 Fix timeline start position for gtkgrid widget in multitrack.
 Fix "fade background mode" (b) so it looks nice again.
 Fix event list viewer window size (regression).
 Stability fix for expose event during startup.
 Stability fix for mkv_decoder with broken end frames.
 Implement C++ language bindings (liblives).
+Code cleanup.
 
 
 

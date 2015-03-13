@@ -422,6 +422,8 @@ static boolean pre_init(void) {
 
   pthread_mutex_init(&mainw->clip_list_mutex,NULL);
 
+  pthread_mutex_init(&mainw->free_fn_mutex,NULL);
+
   for (i=0;i<FX_KEYS_MAX;i++) {
     pthread_mutex_init(&mainw->data_mutex[i],&mattr); // because audio filters can enable/disable video filters and vice-versa
   }
@@ -4387,6 +4389,9 @@ static boolean weed_layer_new_from_file_progressive(weed_plant_t *layer,
 
   do_not_free=pixbuf_to_layer(layer,pixbuf);
 
+
+  // might be threaded here so we need a mutex to stop other thread resetting free_fn
+  pthread_mutex_lock(&mainw->free_fn_mutex);
   if (do_not_free) {
     mainw->do_not_free=(livespointer)lives_pixbuf_get_pixels_readonly(pixbuf);
     mainw->free_fn=_lives_free_with_check;
@@ -4395,6 +4400,7 @@ static boolean weed_layer_new_from_file_progressive(weed_plant_t *layer,
   if (pixbuf!=NULL) lives_object_unref(pixbuf);
   mainw->do_not_free=NULL;
   mainw->free_fn=_lives_free_normal;
+  pthread_mutex_unlock(&mainw->free_fn_mutex);
 
   return TRUE;
 

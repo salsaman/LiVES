@@ -10080,6 +10080,7 @@ LiVESPixbuf *layer_to_pixbuf (weed_plant_t *layer) {
       pixel_data+=irowstride;
     }
     if (!weed_plant_has_leaf(layer,"host_orig_pdata") || weed_get_boolean_value(layer,"host_orig_pdata",&error)==WEED_FALSE) {
+      // host_orig_pdata is set if this is an alpha channel we "stole" from another layer
       lives_free(orig_pixel_data);
     }
     pixel_data=NULL;
@@ -10401,6 +10402,7 @@ boolean resize_layer (weed_plant_t *layer, int width, int height, LiVESInterpTyp
 #endif
 
   if (weed_plant_has_leaf(layer,"host_orig_pdata")&&weed_get_boolean_value(layer,"host_orig_pdata",&error)==WEED_TRUE) {
+    // host_orig_pdata is set if this is an alpha channel we "stole" from another layer
     keep_in_pixel_data=TRUE;
   }
 
@@ -10511,7 +10513,6 @@ boolean resize_layer (weed_plant_t *layer, int width, int height, LiVESInterpTyp
 
       if (!keep_in_pixel_data) {
 	for (i=0;i<weed_palette_get_numplanes(palette);i++) {
-	  //g_print("free %p\n",in_pixel_data[i]);
 	  lives_free(in_pixel_data[i]);
 	  if (is_contiguous) break;
 	}
@@ -10549,6 +10550,9 @@ boolean resize_layer (weed_plant_t *layer, int width, int height, LiVESInterpTyp
       weed_set_int_value(layer,"rowstrides",lives_pixbuf_get_rowstride(new_pixbuf));
     }
 
+    // might be threaded here so we need a mutex to stop other thread resetting free_fn
+    pthread_mutex_lock(&mainw->free_fn_mutex);
+
     if (weed_get_voidptr_value(layer,"pixel_data",&error)!=NULL && keep_in_pixel_data) {
       // we created a shared layer/pixbuf, and we need to preserve the data
       mainw->do_not_free=(livespointer)lives_pixbuf_get_pixels_readonly(pixbuf);
@@ -10558,6 +10562,8 @@ boolean resize_layer (weed_plant_t *layer, int width, int height, LiVESInterpTyp
     lives_object_unref(pixbuf);
     mainw->do_not_free=NULL;
     mainw->free_fn=_lives_free_normal;
+
+    pthread_mutex_unlock(&mainw->free_fn_mutex);
 
     break;
   default:
@@ -10576,6 +10582,8 @@ boolean resize_layer (weed_plant_t *layer, int width, int height, LiVESInterpTyp
       weed_leaf_delete(layer,"host_orig_pdata");
   }
 
+  // might be threaded here so we need a mutex to stop other thread resetting free_fn
+  pthread_mutex_lock(&mainw->free_fn_mutex);
 
   if (new_pixbuf!=NULL) {
     if (pixbuf_to_layer(layer,new_pixbuf)) {
@@ -10588,6 +10596,7 @@ boolean resize_layer (weed_plant_t *layer, int width, int height, LiVESInterpTyp
     mainw->free_fn=_lives_free_normal;
   }
 
+  pthread_mutex_unlock(&mainw->free_fn_mutex);
 
   return retval;
 }
@@ -10894,15 +10903,23 @@ boolean pixbuf_to_layer(weed_plant_t *layer, LiVESPixbuf *pixbuf) {
 
   /* code example:
 
+  boolean needs_unlock=FALSE;
+
   if (pixbuf!=NULL) {
     if (pixbuf_to_layer(layer,pixbuf)) {
       mainw->do_not_free=(livespointer)lives_pixbuf_get_pixels_readonly(pixbuf);
+      pthread_mutex_lock(&mainw->free_fn_mutex);
+      needs_unlock=TRUE;
       mainw->free_fn=_lives_free_with_check;
     }
     lives_object_unref(pixbuf);
     mainw->do_not_free=NULL;
     mainw->free_fn=_lives_free_normal;
+    if (needs_unlock) pthread_mutex_unlock(&mainw->free_fn_mutex);
+
   }
+
+
   */
 
   int rowstride;
@@ -11295,7 +11312,6 @@ void weed_layer_pixel_data_free(weed_plant_t *layer) {
 	  }
 
 	  for (i=0;i<pd_elements;i++) {
-	    //g_print("2free %p\n",pixel_data[i]);
 	    if (pixel_data[i]!=NULL) lives_free(pixel_data[i]);
 	  }
 

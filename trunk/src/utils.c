@@ -536,7 +536,7 @@ ssize_t lives_read_le(int fd, void *buf, size_t count, boolean allow_less) {
 
 
 static ssize_t file_buffer_flush(lives_file_buffer_t *fbuff) {
-  ssize_t res;
+  ssize_t res=0;
 
   if (fbuff->buffer!=NULL) res=lives_write(fbuff->fd,fbuff->buffer,fbuff->bytes,fbuff->allow_fail);
 

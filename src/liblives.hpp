@@ -717,7 +717,6 @@ namespace lives {
     */
     double FPS();
 
-
     /**
        Framerate (frames per second) that the clip is/will be played back at.
        This may vary from the normal FPS(). During playback it will be equivalent to player::FPS().
@@ -728,7 +727,6 @@ namespace lives {
        @see player::FPS().
     */
     double playbackFPS();
-
 
     /**
        Human readable name of the clip.
@@ -780,7 +778,6 @@ namespace lives {
        @return bool audio signed.
     */
     bool audioSigned();
-
 
     /**
        Returns the endianness of the audio.
@@ -993,6 +990,8 @@ namespace lives {
 
     /**
        Set playback in a detached window.
+       If the livesApp::mode() is LIVES_INTERFACE_MODE_CLIPEDIT and prefs::sepWinSticky() is true, the window appears straight away;
+       otherwise it appears only when isPlaying() is true.
        @see setFS().
        @see sepWin().
     */
@@ -1019,6 +1018,8 @@ namespace lives {
 
     /**
        Combines the functionality of setSepWin() and setFullScreen().
+       If the livesApp::mode() is LIVES_INTERFACE_MODE_CLIPEDIT and prefs::sepWinSticky() is true, the window appears straight away,
+       but it will only fill the screen when isPlaying() is true; otherwise it appears only when isPlaying() is true.
        @see setSepWin()
        @see setFullScreen()
     */
@@ -1291,18 +1292,18 @@ namespace lives {
        LIVES_STATUS_PLAYING or LIVES_STATUS_READY.
        @param mode the mode to switch to.
        @return the new mode of the effectKey.
-       @see mode().
+       @see currentMode().
        @see numMappedModes().
     */
-    int setMode(int mode);
+    int setCurrentMode(int mode);
 
     /**
        Get the current mode for this effectKey.
        If the effectKey is invalid, the current mode is -1.
        @return the current mode of the effectKey.
-       @see setMode().
+       @see setCurrentMode().
     */
-    int mode();
+    int currentMode();
 
     /**
        Enable an effect mapped to this effectKey, mode().
@@ -1326,14 +1327,30 @@ namespace lives {
        Will only work if the livesApp::status() is LIVES_STATUS_PLAYING or LIVES_STATUS_READY.
        The effectKey and the effect must share the same owner livesApp, and both must be valid.
        @return the mode number the effect was mapped to, or -1 if the mapping failed.
-       @see prefs::rteKeysVirtual()
+       @see removeMapping().
     */
     int appendMapping(effect fx);
 
-
+    /**
+       Remove an effect from being mapped to this key.
+       Will only work if the livesApp::status() is LIVES_STATUS_PLAYING or LIVES_STATUS_READY.
+       If the effectKey is invalid, or if no effect is mapped to the mode, false is returned and nothing happens.
+       If an effect is removed, effects mapped to higher mode numbers on the same effectKey will move down a mode to close the gap.
+       Note: the currentMode() does not change unless this is the last mapped effect for this effectKey, 
+       so this may cause the currently enabled effect to change.
+       @param mode the mode to remove the effect from.
+       @return true if an effect was unmapped.
+       @see appendMapping().
+    */
     bool removeMapping(int mode);
 
-
+    /**
+       Returns the effect mapped to the key at the specified mode.
+       If the effectKey is invalid, or if no effect is mapped to the mode, an invalid effect is returned.
+       @param mode the specified mode.
+       @return the effect mapped to the key at the specified mode.
+    */
+    effect at(int mode);
 
     /**
        @return true if the two effectKeys have the same livesApp and key value and belong to the same livesApp
@@ -1460,7 +1477,7 @@ namespace lives {
 
 
   protected:
-    effect();
+    effect(livesApp *lives=NULL, int idx=-1);
     livesApp *m_lives;
     int m_idx;
 
@@ -1488,7 +1505,7 @@ namespace lives {
     bool isValid();
 
     /**
-       Returns the block on the specified track at the specified time. If no such block exists, returns an invalid block.
+       Returns a reference to the block on the specified track at the specified time. If no such block exists, returns an invalid block.
        @param track the track number. Values < 0 indicate backing audio tracks.
        @param time the time in seconds on the timeline.
        @return the block on the given track at the given time.
@@ -1520,16 +1537,31 @@ namespace lives {
        Returns the track number to which this block is currently attached.
        A track number < 0 indicates a backing audio track.
        If the block is invalid, returns 0.
-       @return the current track number for this clip.
+       @return the current track number for this block.
     */
     int track();
 
 
-
+    /**
+       Removes a block from the multitrack timeline. Upon being removed, the block becomes invalid.
+       Undoing the operation does not cause the block to become valid again, although it can be searched for using the constructor.
+       If the block is invalid, nothing happens and false is returned.
+       Only works if livesApp::status() is LIVES_STATUS_READY.
+       May cause other blocks to move, depending on the setting of multitrack::gravity().
+       @returns true if the block was removed.
+       @see multitrack::insertBlock().
+    */
     bool remove();
 
 
-
+    /**
+       Move the block to a new track at a new timeline time.
+       Depending on the space available it may not be possible to move the block.
+       If the block is invalid, nothing happens and false is returned.
+       @param track the new track to move to.
+       @param time the timeline time in seconds to move to.
+       @return true if the block could be moved.
+    */
     bool moveTo(int track, double time);
 
 
@@ -1541,6 +1573,8 @@ namespace lives {
   private:
     ulong m_uid;
     livesApp *m_lives;
+
+    void invalidate();
   };
 
 
@@ -1657,6 +1691,7 @@ namespace lives {
        @see clip::setSelectionStart().
        @see clip::setSelectionEnd().
        @see setGravity().
+       @see block::remove().
     */
     block insertBlock(clip c, bool ignore_selection_limits=false, bool without_audio=false) const;
 
@@ -1748,6 +1783,11 @@ namespace lives {
     bool audioFollowsVideoChanges(livesApp lives);
 
     bool setAudioFollowsVideoChanges(livesApp lives, bool setting);
+
+    bool sepWinSticky(livesApp lives);
+
+    bool setSepWinSticky(livesApp lives, bool setting);
+
 
   }
 

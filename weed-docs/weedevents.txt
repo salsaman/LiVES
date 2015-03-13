@@ -188,7 +188,8 @@ equal.
  * "audio_clips" : WEED_SEED_INT : array of audio clips as pairs:
 		 track_number, clip_number. Track number can be used to link the
 		 audio track visually and functionally with a video track (e.g. 0 =
-		 linked to first video track, <0 = "floating" audio track). 
+		 linked to first video track, <0 = "floating" audio track). In addition if new values appear on the same 
+		 track as a previous audio event, the previous audio should be stopped (as if velocity 0.0 were sent). 
 		 Clip number is the clip number where the audio is taken from. Clip
 		 number <=0 means ignore the value. This is useful
 		 if leaves cannot be deleted. To create an ignore event, e.g. use values
@@ -224,6 +225,9 @@ equal.
 
 Audio and video frames should be combined where possible. I.e. there
 should only be one frame event at a particular timecode.
+
+Note that audio events take place at the start of the video frame. Thus to ensure that all audio is turned off at the end of timeline it 
+may be necessary to add an additional blank frame.
 
 
 

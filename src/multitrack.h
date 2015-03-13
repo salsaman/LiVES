@@ -759,6 +759,7 @@ void avel_reverse_toggled (LiVESToggleButton *, livespointer mt);
 void avel_spin_changed (LiVESSpinButton *, livespointer mt);
 
 // block API functions
+track_rect *find_block_by_uid(lives_mt *mt, ulong uid);
 ulong mt_get_last_block_uid(lives_mt *mt); ///< get index of last inserted (wallclock time) block for track
 int mt_get_block_count(lives_mt *, int ntrack); ///< count blocks in track
 double mt_get_block_sttime(lives_mt *, int ntrack, int iblock); /// get timeline start time of block

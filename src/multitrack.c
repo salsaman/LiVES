@@ -128,7 +128,7 @@ void on_render_activate (LiVESMenuItem *, livespointer mt);
 void on_prerender_aud_activate (LiVESMenuItem *, livespointer mt);
 void on_jumpnext_activate (LiVESMenuItem *, livespointer mt);
 void on_jumpback_activate (LiVESMenuItem *, livespointer mt);
-void on_delblock_activate (LiVESMenuItem *, livespointer mt);
+static void on_delblock_activate (LiVESMenuItem *, livespointer mt);
 void on_seltrack_activate (LiVESMenuItem *, livespointer mt);
 void multitrack_view_details (LiVESMenuItem *, livespointer mt);
 void mt_add_region_effect (LiVESMenuItem *, livespointer mt);
@@ -11275,11 +11275,17 @@ static track_rect *get_block_after (LiVESWidget *eventbox, double time, boolean 
 }
 
 
+
 static track_rect *move_block (lives_mt *mt, track_rect *block, double timesecs, int old_track, int new_track) {
   weed_timecode_t new_start_tc,end_tc;
   weed_timecode_t start_tc=get_event_timecode(block->start_event);
+
+  ulong uid=block->uid;
+
   LiVESWidget *eventbox,*oeventbox;
+
   int clip,current_track=-1;
+
   boolean did_backup=mt->did_backup;
 
   if (!did_backup&&mt->idlefunc>0) {
@@ -11287,10 +11293,6 @@ static track_rect *move_block (lives_mt *mt, track_rect *block, double timesecs,
     mt->idlefunc=0;
   }
 
-  if (!did_backup) {
-    if (old_track==-1) mt_backup(mt,MT_UNDO_MOVE_AUDIO_BLOCK,0);
-    else mt_backup(mt,MT_UNDO_MOVE_BLOCK,0);
-  }
 
   if (is_audio_eventbox(mt,block->eventbox)&&(oeventbox=
 					      (LiVESWidget *)lives_widget_object_get_data
@@ -11301,7 +11303,33 @@ static track_rect *move_block (lives_mt *mt, track_rect *block, double timesecs,
 
   mt->block_selected=block;
   end_tc=get_event_timecode(block->end_event);
-  
+
+  /*
+  if (mt->opts.insert_mode=INSERT_MODE_NORMAL) {
+    // first check if there is space to move the block to, otherwise we will abort the move
+    weed_plant_t *event=NULL;
+    weed_timecode_t tc=start_tc;
+    while (tc<=end_tc) {
+      event=get_frame_event_at(mt->event_list,q_gint64(tc+timesecs*U_SEC),event,TRUE);
+      if (event==NULL) break;
+      if (new_track>=0) {
+	if (get_frame_event_clip(event,new_track)!=-1) return NULL;
+      }
+      else {
+	if (tc==start_tc&&audio_block_start(mt->event_list,new_track,q_gint64(tc+timesecs*U_SEC),TRUE)!=NULL) return NULL;
+	if (audio_block_start(mt->event_list,new_track,q_gint64(tc+timesecs*U_SEC),FALSE)!=NULL) return NULL;
+      }
+      tc+=U_SEC/mt->fps;
+    }
+    }*/
+
+
+  if (!did_backup) {
+    if (old_track<0) mt_backup(mt,MT_UNDO_MOVE_AUDIO_BLOCK,0);
+    else mt_backup(mt,MT_UNDO_MOVE_BLOCK,0);
+  }
+
+
   mt->specific_event=get_prev_event(block->start_event);
   while (mt->specific_event!=NULL&&get_event_timecode(mt->specific_event)==start_tc) {
     mt->specific_event=get_prev_event(mt->specific_event);
@@ -11414,6 +11442,9 @@ static track_rect *move_block (lives_mt *mt, track_rect *block, double timesecs,
 				get_event_timecode(mt->init_event),mt->fps);
     get_track_index(mt,tc);
   }
+
+  // give the new block the same uid as the old one
+  block->uid=uid;
 
   if (!did_backup) mt->idlefunc=mt_idle_add(mt);
 
@@ -16401,7 +16432,7 @@ void on_split_sel_activate (LiVESMenuItem *menuitem, livespointer user_data) {
 
 
 
-void on_delblock_activate (LiVESMenuItem *menuitem, livespointer user_data) {
+static void on_delblock_activate (LiVESMenuItem *menuitem, livespointer user_data) {
   lives_mt *mt=(lives_mt *)user_data;
   track_rect *block,*blockprev,*blocknext;
   weed_plant_t *event,*prevevent;

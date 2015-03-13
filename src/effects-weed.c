@@ -8580,12 +8580,14 @@ boolean weed_delete_effectkey (int key, int mode) {
   // also moves the active mode if applicable
   // returns FALSE if there was no effect bound to key/mode
 
+  char *tmp;
+
+  boolean was_started=FALSE;
+
   int oldkeymode=key_modes[--key];
   int orig_mode=mode;
-  boolean was_started=FALSE;
   int modekey=key;
-  gchar *tmp;
-  
+
   if (key_to_fx[key][mode]==-1) return FALSE;
 
   if (key<FX_KEYS_MAX_VIRTUAL) free_key_defaults(key,mode);

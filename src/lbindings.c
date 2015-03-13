@@ -1232,12 +1232,12 @@ boolean idle_remove_block(ulong uid, ulong id) {
   track_rect *tr;
 
   if (mainw==NULL||mainw->preview||mainw->go_away||mainw->is_processing||mainw->playing_file>-1) return FALSE;
-  if (mainw->multitrack==NULL||tr==NULL) return FALSE;
+  if (mainw->multitrack==NULL) return FALSE;
 
   tr=find_block_by_uid(mainw->multitrack, uid);
   if (tr==NULL) return FALSE;
 
-  data=(iblock *)lives_malloc(sizeof(iblock));
+  data=(rblockdata *)lives_malloc(sizeof(iblock));
   data->id=id;
   data->block=tr;
   lives_idle_add(call_remove_block,(livespointer)data);

@@ -659,6 +659,8 @@ void load_framedraw_image(LiVESPixbuf *pixbuf) {
 
   weed_timecode_t tc;
 
+  boolean needs_unlock=FALSE;
+
   if (mainw->framedraw_frame>cfile->frames) mainw->framedraw_frame=cfile->frames;
 
   if (pixbuf==NULL) {
@@ -682,11 +684,15 @@ void load_framedraw_image(LiVESPixbuf *pixbuf) {
 
     if (pixbuf_to_layer(mainw->fd_layer_orig,pixbuf)) {
       mainw->do_not_free=(livespointer)lives_pixbuf_get_pixels_readonly(pixbuf);
+      // might be threaded here so we need a mutex to stop other thread resetting free_fn
+      pthread_mutex_lock(&mainw->free_fn_mutex);
+      needs_unlock=TRUE;
       mainw->free_fn=_lives_free_with_check;
     }
     lives_object_unref(pixbuf);
     mainw->do_not_free=NULL;
     mainw->free_fn=_lives_free_normal;
+    if (needs_unlock) pthread_mutex_lock(&mainw->free_fn_mutex);
 
   }
 
@@ -702,6 +708,8 @@ void load_framedraw_image(LiVESPixbuf *pixbuf) {
 void redraw_framedraw_image(void) {
   lives_painter_t *cr;
   LiVESPixbuf *pixbuf;
+
+  boolean needs_unlock=FALSE;
 
   int fd_width=lives_widget_get_allocation_width(mainw->framedraw);
   int fd_height=lives_widget_get_allocation_height(mainw->framedraw);
@@ -743,12 +751,15 @@ void redraw_framedraw_image(void) {
   // convert pixbuf back to layer (layer_to_pixbuf destroys it)
   if (pixbuf_to_layer(mainw->fd_layer,pixbuf)) {
     mainw->do_not_free=(livespointer)lives_pixbuf_get_pixels_readonly(pixbuf);
+    pthread_mutex_lock(&mainw->free_fn_mutex);
+    needs_unlock=TRUE;
     mainw->free_fn=_lives_free_with_check;
   }
 
   lives_object_unref(pixbuf);
   mainw->do_not_free=NULL;
   mainw->free_fn=_lives_free_normal;
+  if (needs_unlock) pthread_mutex_lock(&mainw->free_fn_mutex);
 
 
 }

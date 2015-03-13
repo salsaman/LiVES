@@ -107,10 +107,10 @@ boolean has_frame_event_at(weed_plant_t *event_list, weed_timecode_t tc, weed_pl
 
 
 int get_audio_frame_clip (weed_plant_t *event, int track) {
-  int numaclips,aclipnum=0;
+  int numaclips,aclipnum=-1;
   int *aclips,error,i;
   if (get_event_hint (event)!=WEED_EVENT_HINT_FRAME) return -2;
-  if (!weed_plant_has_leaf(event,"audio_clips")) return -1;
+  if (!weed_plant_has_leaf(event,"audio_clips")) return -3;
   numaclips=weed_leaf_num_elements (event,"audio_clips");
   aclips=weed_get_int_array(event,"audio_clips",&error);
   for (i=0;i<numaclips;i+=2) {
@@ -126,6 +126,7 @@ int get_audio_frame_clip (weed_plant_t *event, int track) {
 
 double get_audio_frame_vel (weed_plant_t *event, int track) {
   // vel of 0. is OFF
+  // warning - check for the clip >0 first
   int numaclips;
   int *aclips,error,i;
   double *aseeks,avel=1.;
@@ -148,6 +149,7 @@ double get_audio_frame_vel (weed_plant_t *event, int track) {
 
 
 double get_audio_frame_seek (weed_plant_t *event, int track) {
+  // warning - check for the clip >0 first
   int numaclips;
   int *aclips,error,i;
   double *aseeks,aseek=0.;
@@ -310,11 +312,11 @@ weed_plant_t *get_audio_block_start(weed_plant_t *event_list, int track, weed_ti
   // otherwise just check the current frame event
 
   weed_plant_t *event=get_frame_event_at_or_before(event_list,tc,NULL);
-  if (get_audio_frame_vel(event,track)!=0.) return event;
+  if (get_audio_frame_clip(event,track)>-1&&get_audio_frame_vel(event,track)!=0.) return event;
   if (!seek_back) return NULL;
 
   while ((event=get_prev_frame_event(event))!=NULL) {
-    if (get_audio_frame_vel(event,track)!=0.) return event;
+    if (get_audio_frame_clip(event,track)>-1&&get_audio_frame_vel(event,track)!=0.) return event;
   }
 
   return NULL;

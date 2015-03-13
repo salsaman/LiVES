@@ -116,12 +116,14 @@ static uint32_t last_press_time=0;
 
 static int ce_sepwin_type;
 
+static boolean needs_clear;
+
 ////////////////////////////
 
 // menuitem callbacks - TODO : make static
 void on_add_video_track_activate (LiVESMenuItem *, livespointer mt);
 void multitrack_adj_start_end (LiVESMenuItem *, livespointer mt);
-void multitrack_audio_insert (LiVESMenuItem *, livespointer mt);
+boolean multitrack_audio_insert (LiVESMenuItem *, livespointer mt);
 void multitrack_view_events (LiVESMenuItem *, livespointer mt);
 void multitrack_view_sel_events (LiVESMenuItem *, livespointer mt);
 void on_render_activate (LiVESMenuItem *, livespointer mt);
@@ -2871,11 +2873,10 @@ static weed_timecode_t set_play_position(lives_mt *mt) {
 
  
  
- 
 void mt_show_current_frame(lives_mt *mt, boolean return_layer) {
   // show preview of current frame in play_box and/or play_window
 
-  // or, if return_layer is TRUE, we just set mainw->frame_layer
+  // or, if return_layer is TRUE, we just set mainw->frame_layer (used when we want to save the frame, e.g right click context)
 
   weed_timecode_t curr_tc;
 
@@ -2933,6 +2934,7 @@ void mt_show_current_frame(lives_mt *mt, boolean return_layer) {
 #if GTK_CHECK_VERSION(3,0,0)
       if (mt->frame_pixbuf==NULL||mt->frame_pixbuf!=mainw->imframe) {
 	if (mt->frame_pixbuf!=NULL) lives_object_unref(mt->frame_pixbuf);
+	// set frame_pixbuf, this gets painted in in expose_event
 	mt->frame_pixbuf=mainw->imframe;
       }
 #else
@@ -3033,6 +3035,16 @@ void mt_show_current_frame(lives_mt *mt, boolean return_layer) {
   mt->outheight=cfile->vsize;
   calc_maxspect(mt->play_width,mt->play_height,&mt->outwidth,&mt->outheight);
 
+  if (lives_widget_get_allocation_width(mainw->play_image)-widget_opts.border_width*2>0) {
+    // make sure we are consistent with main.c
+    if (mt->outwidth>lives_widget_get_allocation_width(mainw->play_image)-widget_opts.border_width*2) 
+      mt->outwidth=lives_widget_get_allocation_width(mainw->play_image)-widget_opts.border_width*2;
+    if (mt->outheight>lives_widget_get_allocation_height(mainw->play_image)-widget_opts.border_width*2) 
+      mt->outheight=lives_widget_get_allocation_height(mainw->play_image)-widget_opts.border_width*2;
+    needs_clear=FALSE;
+  }
+  else needs_clear=TRUE;
+
   if (mainw->frame_layer!=NULL) {
     LiVESPixbuf *pixbuf;
     int weed_error;
@@ -3053,6 +3065,7 @@ void mt_show_current_frame(lives_mt *mt, boolean return_layer) {
     if (mt->framedraw!=NULL) pixbuf=mt_framedraw(mt,pixbuf);
 
 #if GTK_CHECK_VERSION(3,0,0)
+    // set frame_pixbuf, this gets painted in in expose_event
       mt->frame_pixbuf=pixbuf;
 #else
       set_ce_frame_from_pixbuf(LIVES_IMAGE(mainw->play_image),pixbuf,NULL);
@@ -3063,6 +3076,7 @@ void mt_show_current_frame(lives_mt *mt, boolean return_layer) {
   else {
     // no frame - show blank
 #if GTK_CHECK_VERSION(3,0,0)
+    // set frame_pixbuf, this gets painted in in expose_event
     mt->frame_pixbuf=mainw->imframe;
 #else
     set_ce_frame_from_pixbuf(LIVES_IMAGE(mainw->play_image),mainw->imframe,NULL);
@@ -6432,10 +6446,13 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
   lives_container_add (LIVES_CONTAINER (menuitem_menu), mt->delblock);
   lives_widget_set_sensitive (mt->delblock, FALSE);
 
+
+  // TODO
+  /*
   lives_widget_add_accelerator (mt->delblock, LIVES_WIDGET_ACTIVATE_SIGNAL, mt->accel_group,
                               LIVES_KEY_d, LIVES_CONTROL_MASK,
                               LIVES_ACCEL_VISIBLE);
-
+  */
 
   mt->jumpback = lives_image_menu_item_new_with_mnemonic (_("_Jump to previous block boundary"));
   lives_container_add (LIVES_CONTAINER (menuitem_menu), mt->jumpback);
@@ -10913,6 +10930,11 @@ static void set_audio_mixer_vols(lives_mt *mt, weed_plant_t *elist) {
 }
 
 
+static boolean mt_idle_show_current_frame(livespointer mt) {
+  mt_show_current_frame((lives_mt *)mt,FALSE);
+  return FALSE;
+}
+
 
 boolean on_multitrack_activate (LiVESMenuItem *menuitem, weed_plant_t *event_list) {
   //returns TRUE if we go into mt mode
@@ -11195,9 +11217,7 @@ boolean on_multitrack_activate (LiVESMenuItem *menuitem, weed_plant_t *event_lis
     lives_window_maximize (LIVES_WINDOW(multi->window));
   }
 
-  multi->is_ready=FALSE;
-  mt_show_current_frame(multi,FALSE);
-  multi->is_ready=TRUE;
+  lives_idle_add(mt_idle_show_current_frame,(livespointer)multi);
 
   if (transfer_focus) lives_window_present(LIVES_WINDOW(multi->window));
 
@@ -11308,18 +11328,24 @@ static track_rect *move_block (lives_mt *mt, track_rect *block, double timesecs,
   if (mt->opts.insert_mode==INSERT_MODE_NORMAL) {
     // first check if there is space to move the block to, otherwise we will abort the move
     weed_plant_t *event=NULL;
-    weed_timecode_t tc=start_tc;
-    while (tc<=end_tc) {
-      event=get_frame_event_at(mt->event_list,q_gint64(tc+timesecs*U_SEC,mt->fps),event,TRUE);
-      if (event==NULL) break;
+    weed_timecode_t tc=0,tcnow;
+    weed_timecode_t tclen=end_tc-start_tc;
+    while (tc<=tclen) {
+      tcnow=q_gint64(tc+timesecs*U_SEC,mt->fps);
+      tc+=U_SEC/mt->fps;
+      if (old_track==new_track&&tcnow>=start_tc&&tcnow<=end_tc) continue; // ignore ourself !
+      event=get_frame_event_at(mt->event_list,tcnow,event,TRUE);
+      if (event==NULL) break; // must be end of timeline
       if (new_track>=0) {
-	if (get_frame_event_clip(event,new_track)!=-1) return NULL;
+	// is video track, if we have a non-blank frame, abort
+	if (get_frame_event_clip(event,new_track)>=0) return NULL;
       }
       else {
-	if (tc==start_tc&&get_audio_block_start(mt->event_list,new_track,q_gint64(tc+timesecs*U_SEC,mt->fps),TRUE)!=NULL) return NULL;
-	if (get_audio_block_start(mt->event_list,new_track,q_gint64(tc+timesecs*U_SEC,mt->fps),FALSE)!=NULL) return NULL;
+	// is audio track, see if we are in an audio block
+	if (tc==start_tc&&get_audio_block_start(mt->event_list,new_track,tcnow,TRUE)!=NULL) return NULL;
+	// or if one starts here
+	if (get_audio_block_start(mt->event_list,new_track,tcnow,FALSE)!=NULL) return NULL;
       }
-      tc+=U_SEC/mt->fps;
     }
   }
 
@@ -11444,7 +11470,7 @@ static track_rect *move_block (lives_mt *mt, track_rect *block, double timesecs,
   }
 
   // give the new block the same uid as the old one
-  block->uid=uid;
+  if (block!=NULL) block->uid=uid;
 
   if (!did_backup) mt->idlefunc=mt_idle_add(mt);
 
@@ -14341,9 +14367,8 @@ mt_view_audio_toggled                (LiVESMenuItem     *menuitem,
   track_select(mt);
 }
 
-void
-mt_view_ctx_toggled                (LiVESMenuItem     *menuitem,
-				    livespointer         user_data) {
+
+void mt_view_ctx_toggled (LiVESMenuItem *menuitem, livespointer user_data) {
   // toggle between compact view and expanded view
 
   lives_mt *mt=(lives_mt *)user_data;
@@ -14402,6 +14427,8 @@ mt_view_ctx_toggled                (LiVESMenuItem     *menuitem,
 
   mt->play_window_width=lives_widget_get_allocation_width(mt->play_box);
   mt->play_window_height=lives_widget_get_allocation_height(mt->play_box);
+
+  mt_show_current_frame(mt,FALSE);
 }
 
 
@@ -17035,6 +17062,11 @@ void multitrack_playall (lives_mt *mt) {
     }
   }
 
+  if (needs_clear) {
+    set_ce_frame_from_pixbuf(LIVES_IMAGE(mainw->play_image),NULL,NULL);
+    needs_clear=FALSE;
+  }
+
   if (mt->is_rendering) {
     // preview during rendering
     boolean had_audio=mt->has_audio_file;
@@ -17120,7 +17152,7 @@ void multitrack_adj_start_end (LiVESMenuItem *menuitem, livespointer user_data) 
 
 
 
-void multitrack_insert (LiVESMenuItem *menuitem, livespointer user_data) {
+boolean multitrack_insert (LiVESMenuItem *menuitem, livespointer user_data) {
   lives_mt *mt=(lives_mt *)user_data;
   lives_clip_t *sfile=mainw->files[mt->file_selected];
 
@@ -17135,12 +17167,9 @@ void multitrack_insert (LiVESMenuItem *menuitem, livespointer user_data) {
 
   track_rect *block;
 
-  if (mt->current_track==-1) {
-    multitrack_audio_insert(menuitem,user_data);
-    return;
-  }
+  if (mt->current_track<0) return multitrack_audio_insert(menuitem,user_data);
 
-  if (sfile->frames==0) return;
+  if (sfile->frames==0) return FALSE;
 
   if (!did_backup&&mt->idlefunc>0) {
     lives_source_remove(mt->idlefunc);
@@ -17154,7 +17183,6 @@ void multitrack_insert (LiVESMenuItem *menuitem, livespointer user_data) {
   }
 
   eventbox=(LiVESWidget *)lives_list_nth_data(mt->video_draws,mt->current_track);
-  if (!did_backup) mt_backup(mt,MT_UNDO_INSERT_BLOCK,0);
 
   if (mt->opts.ign_ins_sel) {
     // ignore selection limits
@@ -17167,6 +17195,24 @@ void multitrack_insert (LiVESMenuItem *menuitem, livespointer user_data) {
     ins_start=mt->insert_start;
     ins_end=mt->insert_end;
   }
+
+  if (mt->opts.insert_mode==INSERT_MODE_NORMAL) {
+    // first check if there is space to insert the block to, otherwise we will abort the insert
+    weed_plant_t *event=NULL;
+    weed_timecode_t tc=0,tcnow;
+    weed_timecode_t tclen=ins_end-ins_start;
+
+    while (tc<=tclen) {
+      tcnow=q_gint64(tc+secs*U_SEC,mt->fps);
+      tc+=U_SEC/mt->fps;
+      event=get_frame_event_at(mt->event_list,tcnow,event,TRUE);
+      if (event==NULL) break; // must be end of timeline
+      // is video track, if we have a non-blank frame, abort
+      if (get_frame_event_clip(event,mt->current_track)>=0) return FALSE;
+    }
+  }
+
+  if (!did_backup) mt_backup(mt,MT_UNDO_INSERT_BLOCK,0);
 
   insert_frames (mt->file_selected,ins_start,ins_end,secs*U_SECL,DIRECTION_POSITIVE,eventbox,mt,NULL);
 
@@ -17234,14 +17280,14 @@ void multitrack_insert (LiVESMenuItem *menuitem, livespointer user_data) {
   }
 
   mt_tl_move_relative(mt,0.);
-  //mt_show_current_frame(mt, FALSE);
 
   if (!did_backup) mt->idlefunc=mt_idle_add(mt);
 
+  return TRUE;
 }
 
 
-void multitrack_audio_insert (LiVESMenuItem *menuitem, livespointer user_data) {
+boolean multitrack_audio_insert (LiVESMenuItem *menuitem, livespointer user_data) {
   lives_mt *mt=(lives_mt *)user_data;
   lives_clip_t *sfile=mainw->files[mt->file_selected];
   double secs=lives_ruler_get_value(LIVES_RULER(mt->timeline));
@@ -17253,7 +17299,7 @@ void multitrack_audio_insert (LiVESMenuItem *menuitem, livespointer user_data) {
   gchar *text,*tmp;
   lives_direction_t dir;
 
-  if (mt->current_track!=-1||sfile->achans==0) return;
+  if (mt->current_track!=-1||sfile->achans==0) return FALSE;
 
   if (!did_backup&&mt->idlefunc>0) {
     lives_source_remove(mt->idlefunc);
@@ -17272,14 +17318,12 @@ void multitrack_audio_insert (LiVESMenuItem *menuitem, livespointer user_data) {
   }
 
   if (ins_start>q_gint64(sfile->laudio_time*U_SEC,mt->fps)) {
-    return;
+    return FALSE;
   }
 
   if (ins_end>q_gint64(sfile->laudio_time*U_SEC,mt->fps)) {
     ins_end=q_gint64(sfile->laudio_time*U_SEC,mt->fps);
   }
-  
-  if (!did_backup) mt_backup(mt,MT_UNDO_INSERT_AUDIO_BLOCK,0);
 
   if (mt->insert_start!=-1) {
     ins_start=mt->insert_start;
@@ -17288,6 +17332,28 @@ void multitrack_audio_insert (LiVESMenuItem *menuitem, livespointer user_data) {
 
   if (mt->insert_avel>0.) dir=DIRECTION_POSITIVE;
   else dir=DIRECTION_NEGATIVE;
+
+  if (mt->opts.insert_mode==INSERT_MODE_NORMAL) {
+    // first check if there is space to insert the block to, otherwise we will abort the insert
+    weed_plant_t *event=NULL;
+    weed_timecode_t tc=0,tcnow;
+    weed_timecode_t tclen=ins_end-ins_start;
+
+    //if (dir==DIRECTION_NEGATIVE) tc+=U_SEC/mt->fps; // TODO - check if we need this
+
+    while (tc<=tclen) {
+      tcnow=q_gint64(tc+secs*U_SEC,mt->fps);
+      tc+=U_SEC/mt->fps;
+      event=get_frame_event_at(mt->event_list,tcnow,event,TRUE);
+      if (event==NULL) break; // must be end of timeline
+      // is audio track, see if we are in an audio block
+      if (tc==0&&get_audio_block_start(mt->event_list,mt->current_track,tcnow,TRUE)!=NULL) return FALSE;
+      // or if one starts here
+      if (get_audio_block_start(mt->event_list,mt->current_track,tcnow,FALSE)!=NULL) return FALSE;
+    }
+  }
+
+  if (!did_backup) mt_backup(mt,MT_UNDO_INSERT_AUDIO_BLOCK,0);
 
   insert_audio (mt->file_selected,ins_start,ins_end,secs*U_SECL,mt->insert_avel,dir,eventbox,mt,NULL);
 
@@ -17368,6 +17434,7 @@ void multitrack_audio_insert (LiVESMenuItem *menuitem, livespointer user_data) {
 
   if (!did_backup) mt->idlefunc=mt_idle_add(mt);
 
+  return TRUE;
 }
 
  
@@ -17390,22 +17457,31 @@ void insert_frames (int filenum, weed_timecode_t offset_start, weed_timecode_t o
 
   // TODO - handle case where frames are overwritten
 
-  int numframes,i;
-  int render_file=mainw->current_file;
-  boolean isfirst=TRUE;
   lives_clip_t *sfile=mainw->files[filenum];
-  int track=LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(eventbox),"layer_number"));
+
   weed_timecode_t last_tc=0,offset_start_tc,start_tc,last_offset;
+  weed_timecode_t orig_st=offset_start,orig_end=offset_end;
+
   int *clips=NULL,*frames=NULL,*rep_clips,*rep_frames,error;
+
   weed_plant_t *last_frame_event=NULL;
   weed_plant_t *event,*shortcut1=NULL,*shortcut2=NULL;
-  int frame=((double)(offset_start/U_SEC)*mt->fps+1.4999);
+
   track_rect *new_block=NULL;
-  gchar *text;
-  weed_timecode_t orig_st=offset_start,orig_end=offset_end;
+
   LiVESWidget *aeventbox=NULL;
+
   double aseek;
   double end_secs;
+
+  char *text;
+
+  boolean isfirst=TRUE;
+
+  int frame=((double)(offset_start/U_SEC)*mt->fps+1.4999);
+  int track=LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(eventbox),"layer_number"));
+  int numframes,i;
+  int render_file=mainw->current_file;
 
   mt_desensitise(mt);
 
@@ -17591,7 +17667,7 @@ void insert_frames (int filenum, weed_timecode_t offset_start, weed_timecode_t o
     gchar *tmp,*tmp1;
     text=lives_strdup_printf(_("Inserted frames %d to %d from clip %s into track %s from time %.4f to %.4f\n"),
 			 sfile->start,sfile->end,(tmp1=lives_path_get_basename(sfile->name)),
-			 (tmp=get_track_name(mt,mt->current_track,mt->aud_track_selected)),
+			 (tmp=get_track_name(mt,mt->current_track,FALSE)),
 			 (orig_st+start_tc)/U_SEC,(orig_end+start_tc)/U_SEC);
     lives_free(tmp);
     lives_free(tmp1);

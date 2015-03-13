@@ -538,7 +538,7 @@ ssize_t lives_read_le(int fd, void *buf, size_t count, boolean allow_less) {
 static ssize_t file_buffer_flush(lives_file_buffer_t *fbuff) {
   ssize_t res;
 
-  res=lives_write(fbuff->fd,fbuff->buffer,fbuff->bytes,fbuff->allow_fail);
+  if (fbuff->buffer!=NULL) res=lives_write(fbuff->fd,fbuff->buffer,fbuff->bytes,fbuff->allow_fail);
 
   if (!fbuff->allow_fail&&res<fbuff->bytes) {
     lives_close_buffered(-fbuff->fd); // use -fd as lives_write will have closed
@@ -599,8 +599,10 @@ int lives_close_buffered(int fd) {
     boolean allow_fail=fbuff->allow_fail;
     size_t bytes=fbuff->bytes;
 
-    ret=file_buffer_flush(fbuff);
-    if (!allow_fail&&ret<bytes) return ret; // this is correct, as flush will have called close again with should_close=FALSE;
+    if (bytes>0) {
+      ret=file_buffer_flush(fbuff);
+      if (!allow_fail&&ret<bytes) return ret; // this is correct, as flush will have called close again with should_close=FALSE;
+    }
   }
 
   if (should_close && fbuff->fd>=0) ret=close(fbuff->fd);

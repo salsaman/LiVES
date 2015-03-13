@@ -340,7 +340,7 @@ LiVESPixbuf *make_thumb (lives_mt *mt, int file, int width, int height, int fram
 
     if (tried_all) noblanks=FALSE;
 
-    if (noblanks&&!lives_pixbuf_is_all_black(thumbnail)) noblanks=FALSE;
+    if (noblanks&&thumbnail!=NULL&&!lives_pixbuf_is_all_black(thumbnail)) noblanks=FALSE;
     if (noblanks) {
       nframe=frame+mainw->files[file]->frames/10.;
       if (nframe==frame) nframe++;
@@ -5900,7 +5900,7 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
 
   mt->last_fx_type=MT_LAST_FX_NONE;
 
-  mt->display=mainw->mgeom[prefs->gui_monitor-1].disp;
+  mt->display=mainw->mgeom[prefs->gui_monitor==0?0:prefs->gui_monitor-1].disp;
 
   mt->moving_block=FALSE;
 
@@ -11304,24 +11304,24 @@ static track_rect *move_block (lives_mt *mt, track_rect *block, double timesecs,
   mt->block_selected=block;
   end_tc=get_event_timecode(block->end_event);
 
-  /*
-  if (mt->opts.insert_mode=INSERT_MODE_NORMAL) {
+
+  if (mt->opts.insert_mode==INSERT_MODE_NORMAL) {
     // first check if there is space to move the block to, otherwise we will abort the move
     weed_plant_t *event=NULL;
     weed_timecode_t tc=start_tc;
     while (tc<=end_tc) {
-      event=get_frame_event_at(mt->event_list,q_gint64(tc+timesecs*U_SEC),event,TRUE);
+      event=get_frame_event_at(mt->event_list,q_gint64(tc+timesecs*U_SEC,mt->fps),event,TRUE);
       if (event==NULL) break;
       if (new_track>=0) {
 	if (get_frame_event_clip(event,new_track)!=-1) return NULL;
       }
       else {
-	if (tc==start_tc&&audio_block_start(mt->event_list,new_track,q_gint64(tc+timesecs*U_SEC),TRUE)!=NULL) return NULL;
-	if (audio_block_start(mt->event_list,new_track,q_gint64(tc+timesecs*U_SEC),FALSE)!=NULL) return NULL;
+	if (tc==start_tc&&get_audio_block_start(mt->event_list,new_track,q_gint64(tc+timesecs*U_SEC,mt->fps),TRUE)!=NULL) return NULL;
+	if (get_audio_block_start(mt->event_list,new_track,q_gint64(tc+timesecs*U_SEC,mt->fps),FALSE)!=NULL) return NULL;
       }
       tc+=U_SEC/mt->fps;
     }
-    }*/
+  }
 
 
   if (!did_backup) {

@@ -106,7 +106,7 @@ boolean has_frame_event_at(weed_plant_t *event_list, weed_timecode_t tc, weed_pl
 }
 
 
-int get_audio_frame_clip (weed_plant_t *event, int layer) {
+int get_audio_frame_clip (weed_plant_t *event, int track) {
   int numaclips,aclipnum=0;
   int *aclips,error,i;
   if (get_event_hint (event)!=WEED_EVENT_HINT_FRAME) return -2;
@@ -114,7 +114,7 @@ int get_audio_frame_clip (weed_plant_t *event, int layer) {
   numaclips=weed_leaf_num_elements (event,"audio_clips");
   aclips=weed_get_int_array(event,"audio_clips",&error);
   for (i=0;i<numaclips;i+=2) {
-    if (aclips[i]==layer) {
+    if (aclips[i]==track) {
       aclipnum=aclips[i+1];
       break;
     }
@@ -124,7 +124,7 @@ int get_audio_frame_clip (weed_plant_t *event, int layer) {
 }
 
 
-double get_audio_frame_vel (weed_plant_t *event, int layer) {
+double get_audio_frame_vel (weed_plant_t *event, int track) {
   // vel of 0. is OFF
   int numaclips;
   int *aclips,error,i;
@@ -136,7 +136,7 @@ double get_audio_frame_vel (weed_plant_t *event, int layer) {
   aclips=weed_get_int_array(event,"audio_clips",&error);
   aseeks=weed_get_double_array(event,"audio_seeks",&error);
   for (i=0;i<numaclips;i+=2) {
-    if (aclips[i]==layer) {
+    if (aclips[i]==track) {
       avel=aseeks[i+1];
       break;
     }
@@ -147,18 +147,18 @@ double get_audio_frame_vel (weed_plant_t *event, int layer) {
 }
 
 
-double get_audio_frame_seek (weed_plant_t *event, int layer) {
+double get_audio_frame_seek (weed_plant_t *event, int track) {
   int numaclips;
   int *aclips,error,i;
   double *aseeks,aseek=0.;
 
-  if (get_event_hint (event)!=WEED_EVENT_HINT_FRAME) return -2;
-  if (!weed_plant_has_leaf(event,"audio_clips")) return -1;
+  if (get_event_hint (event)!=WEED_EVENT_HINT_FRAME) return -2000000;
+  if (!weed_plant_has_leaf(event,"audio_clips")) return -1000000;
   numaclips=weed_leaf_num_elements (event,"audio_clips");
   aclips=weed_get_int_array(event,"audio_clips",&error);
   aseeks=weed_get_double_array(event,"audio_seeks",&error);
   for (i=0;i<numaclips;i+=2) {
-    if (aclips[i]==layer) {
+    if (aclips[i]==track) {
       aseek=aseeks[i];
       break;
     }
@@ -309,11 +309,15 @@ weed_plant_t *get_audio_block_start(weed_plant_t *event_list, int track, weed_ti
   // if seek_back is true we go back in time to find a possible start
   // otherwise just check the current frame event
 
-  /*  if (!seek_back) {
-    if (get_audio_frame_vel(event)
-  */
+  weed_plant_t *event=get_frame_event_at_or_before(event_list,tc,NULL);
+  if (get_audio_frame_vel(event,track)!=0.) return event;
+  if (!seek_back) return NULL;
 
+  while ((event=get_prev_frame_event(event))!=NULL) {
+    if (get_audio_frame_vel(event,track)!=0.) return event;
+  }
 
+  return NULL;
 }
 
 
@@ -4655,10 +4659,14 @@ LiVESWidget *create_event_list_dialog (weed_plant_t *event_list, weed_timecode_t
   LiVESTreeStore *treestore;
   LiVESTreeIter iter1,iter2,iter3;
 
-  gchar **string=NULL;
+  gchar **string=NULL
+;
   int *intval=NULL;
+
   void **voidval=NULL;
+
   double *doubval=NULL;
+
   int64_t *int64val=NULL;
 
   weed_plant_t *event;
@@ -4679,9 +4687,11 @@ LiVESWidget *create_event_list_dialog (weed_plant_t *event_list, weed_timecode_t
 
   char **propnames;
 
-  gchar *strval=NULL;
-  gchar *text;
-  gchar *oldval=NULL,*final=NULL;
+  char *strval=NULL;
+  char *text;
+  char *oldval=NULL,*final=NULL;
+
+  boolean woat=widget_opts.apply_theme;
 
   int winsize_h,scr_width=mainw->scr_width;
   int winsize_v,scr_height=mainw->scr_height;
@@ -4701,8 +4711,8 @@ LiVESWidget *create_event_list_dialog (weed_plant_t *event_list, weed_timecode_t
     scr_height=mainw->mgeom[prefs->gui_monitor-1].height;
   }
 
-  winsize_h=scr_width-100;
-  winsize_v=scr_height-180;
+  winsize_h=scr_width-SCR_WIDTH_SAFETY;
+  winsize_v=scr_height-SCR_HEIGHT_SAFETY;
  
   event_dialog = lives_standard_dialog_new (_("LiVES: Event list"),FALSE);
   lives_widget_set_size_request (event_dialog, winsize_h, winsize_v);
@@ -4918,7 +4928,7 @@ LiVESWidget *create_event_list_dialog (weed_plant_t *event_list, weed_timecode_t
 			(LiVESAttachOptions) (0), 0, 0);
      
       // event id
-      text=lives_strdup_printf(("Event id=%p"),(void *)event);
+      text=lives_strdup_printf(_("Event id=%p"),(void *)event);
       label = lives_standard_label_new (text);
       lives_free(text);
 
@@ -4958,20 +4968,23 @@ LiVESWidget *create_event_list_dialog (weed_plant_t *event_list, weed_timecode_t
      
       lives_table_attach (LIVES_TABLE (table), tree, 3, 6, currow, currow+1,
 			(LiVESAttachOptions) (LIVES_FILL|LIVES_EXPAND),
-			(LiVESAttachOptions) (0), 0, 0);
+			(LiVESAttachOptions) (LIVES_FILL|LIVES_EXPAND), 0, 0);
      
       currow++;
     }
     event=get_next_event(event);
   }
 
+  widget_opts.apply_theme=FALSE;
   scrolledwindow = lives_standard_scrolled_window_new (winsize_h, winsize_v, table);
-  lives_box_pack_start (LIVES_BOX (top_vbox), scrolledwindow, TRUE, TRUE, 0);
+  widget_opts.apply_theme=woat;
+
+  lives_box_pack_start (LIVES_BOX (top_vbox), scrolledwindow, TRUE, TRUE, widget_opts.packing_height);
 
   hbuttonbox = lives_hbutton_box_new ();
   lives_widget_show (hbuttonbox);
 
-  lives_box_pack_start (LIVES_BOX (top_vbox), hbuttonbox, FALSE, TRUE, 0);
+  lives_box_pack_start (LIVES_BOX (top_vbox), hbuttonbox, FALSE, TRUE, widget_opts.packing_height);
 
   lives_button_box_set_layout (LIVES_BUTTON_BOX (hbuttonbox), LIVES_BUTTONBOX_SPREAD);
 

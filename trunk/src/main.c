@@ -436,6 +436,8 @@ static boolean pre_init(void) {
 
   mainw->splash_window=NULL;
 
+  prefs->present=FALSE;
+
   mainw->threaded_dialog=FALSE;
   clear_mainw_msg();
 
@@ -1238,8 +1240,6 @@ static void lives_init(_ign_opts *ign_opts) {
     prefs->auto_trim_audio=get_boolean_pref("auto_trim_pad_audio");
 
     prefs->force64bit=FALSE;
-
-    prefs->present=FALSE;
 
 #if LIVES_HAS_GRID_WIDGET
     prefs->ce_thumb_mode=get_boolean_pref("ce_thumb_mode");
@@ -2837,7 +2837,7 @@ int real_main (int argc, char *argv[], ulong id) {
 #ifdef GUI_GTK
 #ifdef LIVES_NO_DEBUG
   // don't crash on GTK+ fatals
-  g_log_set_always_fatal ((GLogLevelFlags)0);
+  //g_log_set_always_fatal ((GLogLevelFlags)0);
 #endif
 
   g_log_set_default_handler(lives_log_handler,NULL);

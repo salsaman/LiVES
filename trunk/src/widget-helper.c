@@ -5299,7 +5299,7 @@ LIVES_INLINE boolean lives_list_store_set(LiVESListStore *lstore, LiVESTreeIter 
 
 LIVES_INLINE boolean lives_list_store_insert(LiVESListStore *lstore, LiVESTreeIter *titer, int position) {
 #ifdef GUI_GTK
-  gtk_list_store_set(lstore,titer,position);
+  gtk_list_store_insert(lstore,titer,position);
   return TRUE;
 #endif
 #ifdef GUI_QT

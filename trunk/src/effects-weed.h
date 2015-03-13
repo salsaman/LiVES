@@ -185,7 +185,8 @@ void restore_weed_instances(void);
 // WARNING !! "key" here starts at 1, "mode" starts at 0
 
 boolean rte_key_valid (int key, boolean is_userkey); ///< returns TRUE if there is a filter bound to active mode of hotkey
-boolean rte_keymode_valid (int key, int mode, boolean is_userkey); ///< returns TRUE if a filter_class is bound to key/mode
+boolean rte_keymode_valid (int key, int mode, boolean is_userkey); ///< returns TRUE if a filter_class is bound to key/mode, is_userkey should be
+///< set to TRUE
 int rte_keymode_get_filter_idx(int key, int mode); ///< returns filter_class index of key/mode (or -1 if no filter bound)
 gchar *rte_keymode_get_filter_name (int key, int mode) WARN_UNUSED; ///< returns name of filter_class bound to key/mode (or "")
 gchar *rte_keymode_get_plugin_name(int key, int mode) WARN_UNUSED; ///< returns name of plugin package containing filter_class (or "")

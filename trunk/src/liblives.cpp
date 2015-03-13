@@ -23,6 +23,7 @@ extern "C" {
 #include <libOSC/OSC-client.h>
 #include "main.h"
 #include "lbindings.h"
+#include "effects-weed.h"
 
   int real_main(int argc, char *argv[], ulong id);
 
@@ -1414,7 +1415,7 @@ namespace lives {
   }
 
 
-  int effectKey::mode() {
+  int effectKey::currentMode() {
     if (!isValid()) return -1;
     return get_current_mode_for_key(m_key);
   }
@@ -1425,11 +1426,11 @@ namespace lives {
   }
 
 
-  int effectKey::setMode(int new_mode) {
+  int effectKey::setCurrentMode(int new_mode) {
     if (!isValid()) return -1;
-    if (new_mode < 0 || new_mode >= numMappedModes()) return mode();
+    if (new_mode < 0 || new_mode >= numMappedModes()) return currentMode();
 
-    if (new_mode == mode()) return new_mode;
+    if (new_mode == currentMode()) return currentMode();
 
     spinning = true;
     msg_id = lives_random();
@@ -1440,7 +1441,7 @@ namespace lives {
       pthread_mutex_unlock(&spin_mutex);
       spinning = false;
       m_lives->removeCallback(cbid);
-      return mode();
+      return currentMode();
     }
     while (spinning) pthread_cond_wait(&cond_done, &spin_mutex);
     pthread_mutex_unlock(&spin_mutex);
@@ -1448,7 +1449,7 @@ namespace lives {
       bool ret = (bool)atoi(private_response);
       lives_free(private_response);
     }
-    return mode();
+    return currentMode();
   }
 
 
@@ -1483,6 +1484,8 @@ namespace lives {
 
     if (fx.m_lives != m_lives) return -1;
 
+    if (!m_lives->isReady() && !m_lives->isPlaying()) return -1;
+
     int mode = numMappedModes();
     if (mode == numModes()) return -1;
 
@@ -1507,6 +1510,43 @@ namespace lives {
     return -1;
   }
 
+
+  bool effectKey::removeMapping(int mode) {
+    if (!isValid()) return false;
+
+    if (!m_lives->isReady() && !m_lives->isPlaying()) return false;
+
+    if (mode >= numMappedModes()) return false;
+
+    spinning = true;
+    msg_id = lives_random();
+    ulong cbid = m_lives->addCallback(LIVES_CALLBACK_PRIVATE, private_cb, NULL);
+    
+    pthread_mutex_lock(&spin_mutex);
+    if (!idle_unmap_fx(m_key, mode, msg_id)) {
+      pthread_mutex_unlock(&spin_mutex);
+      spinning = false;
+      m_lives->removeCallback(cbid);
+      return false;
+    }
+    while (spinning) pthread_cond_wait(&cond_done, &spin_mutex);
+    pthread_mutex_unlock(&spin_mutex);
+    if (isValid()) {
+      bool ret = (bool)atoi(private_response);
+      lives_free(private_response);
+      return ret;
+    }
+    return false;
+  }
+
+
+  effect effectKey::at(int mode) {
+    int idx = rte_keymode_get_filter_idx(m_key, mode);
+    if (idx == -1) return effect();
+    return effect(m_lives, idx);
+  }
+
+
   ////////////////////////////////////////////////////////
 
   effect::effect(livesApp& lives, livesString hashname) {
@@ -1522,6 +1562,11 @@ namespace lives {
   bool effect::isValid() {
     return (m_idx != -1 && m_lives != NULL && m_lives->isValid() && m_lives->status() != LIVES_STATUS_NOTREADY);
   }
+
+
+  effect::effect(livesApp *lives, int idx) : m_lives(lives), m_idx(idx) {}
+
+
 
   ///////////////////////////////
   //// block
@@ -1543,9 +1588,13 @@ namespace lives {
   }
 
   bool block::isValid() {
-    if (m_lives == NULL || !m_lives->isValid() || !m_lives->m_multitrack->isActive() || 
+    if (m_lives == NULL || !m_lives->isValid() || !m_lives->m_multitrack->isActive() || m_uid == 0l || 
 	find_block_by_uid(mainw->multitrack, m_uid) == NULL) return false;
     return true;
+  }
+
+  void block::invalidate() {
+    m_uid = 0l;
   }
 
   double block::startTime() {
@@ -1573,6 +1622,35 @@ namespace lives {
     track_rect *tr = find_block_by_uid(mainw->multitrack, m_uid);
     if (tr == NULL) return 0;
     return get_track_for_block(tr);
+  }
+
+
+  bool block::remove() {
+    if (!isValid()) return false;
+    if (!m_lives->isReady()) return false;
+
+    track_rect *tr = find_block_by_uid(mainw->multitrack, m_uid);
+    if (tr == NULL) return -1.;
+
+    spinning = true;
+    msg_id = lives_random();
+    ulong cbid = m_lives->addCallback(LIVES_CALLBACK_PRIVATE, private_cb, NULL); 
+    pthread_mutex_lock(&spin_mutex);
+    if (!idle_remove_block(m_uid, msg_id)) {
+      pthread_mutex_unlock(&spin_mutex);
+      spinning = false;
+      m_lives->removeCallback(cbid);
+      return false;
+    }
+    while (spinning) pthread_cond_wait(&cond_done, &spin_mutex);
+    pthread_mutex_unlock(&spin_mutex);
+    if (isValid()) {
+      bool ret=(bool)atoi(private_response);
+      lives_free(private_response);
+      if (ret) invalidate();
+      return ret;
+   }
+    return false;
   }
 
 

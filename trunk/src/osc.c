@@ -854,9 +854,30 @@ boolean lives_osc_cb_fx_map(void *context, int arglen, const void *vargs, OSCTim
   if (!lives_osc_check_arguments (arglen,vargs,"is",TRUE)) return lives_osc_notify_failure();
   lives_osc_parse_int_argument(vargs,&effect_key);
   lives_osc_parse_string_argument(vargs,effect_name);
-  if (!mainw->osc_block) weed_add_effectkey(effect_key,effect_name,FALSE); // allow partial matches
-  return lives_osc_notify_success(NULL);
+  if (!mainw->osc_block) {
+    weed_add_effectkey(effect_key,effect_name,FALSE); // allow partial matches
+    return lives_osc_notify_success(NULL);
+  }
+  return lives_osc_notify_failure();
 }
+
+
+boolean lives_osc_cb_fx_unmap(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
+  int effect_key;
+  int mode;
+
+  if (!lives_osc_check_arguments (arglen,vargs,"ii",TRUE)) return lives_osc_notify_failure();
+  lives_osc_parse_int_argument(vargs,&effect_key);
+  lives_osc_parse_int_argument(vargs,&mode);
+  mode--;
+  if (!mainw->osc_block && rte_keymode_valid(effect_key,mode,TRUE)) {
+    int idx=effect_key*rte_getmodespk()+mode;
+    on_clear_clicked(NULL,LIVES_INT_TO_POINTER(idx));
+    return lives_osc_notify_success(NULL);
+  }
+  return lives_osc_notify_failure();
+}
+
 
 
 boolean lives_osc_cb_fx_enable(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
@@ -4795,7 +4816,7 @@ boolean lives_osc_cb_rte_getnchannels(void *context, int arglen, const void *var
     lives_osc_check_arguments (arglen,vargs,"ii",TRUE);
     lives_osc_parse_int_argument(vargs,&effect_key);
     lives_osc_parse_int_argument(vargs,&mode);
-    if (mode<1||mode>rte_key_getmaxmode(effect_key)+1) return lives_osc_notify_failure();
+    if (mode<0||mode>rte_key_getmaxmode(effect_key)+1) return lives_osc_notify_failure();
     mode--;
   }
 
@@ -6511,6 +6532,7 @@ static struct
     { "/video/freeze/toggle",		"toggle", (osc_cb)lives_osc_cb_freeze,		37	},
     { "/effects/realtime/name/get",		"get",	(osc_cb)lives_osc_cb_fx_getname,			115	},
     { "/effect_key/map",		"map",	(osc_cb)lives_osc_cb_fx_map,			25	},
+    { "/effect_key/unmap",		"unmap",	(osc_cb)lives_osc_cb_fx_unmap,			25	},
     { "/effect_key/map/clear",		"clear",	(osc_cb)lives_osc_cb_fx_map_clear,			32	},
     { "/effect_key/reset",		"reset",	(osc_cb)lives_osc_cb_fx_reset,			25	},
     { "/effect_key/enable",		"enable",	(osc_cb)lives_osc_cb_fx_enable,		        25	},

@@ -33,6 +33,8 @@ void rte_set_key_defs (LiVESButton *, lives_rfx_t *);
 void on_save_rte_defs_activate (LiVESMenuItem *, livespointer);
 boolean on_clear_all_clicked (LiVESButton *, livespointer user_data);
 
+void on_clear_clicked (LiVESButton *button, livespointer user_data);
+
 LiVESWidget *rte_window;
 
 

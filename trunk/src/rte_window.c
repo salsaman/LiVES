@@ -1838,44 +1838,49 @@ void on_clear_clicked (LiVESButton *button, livespointer user_data) {
   cconx_delete(FX_DATA_WILDCARD,0,0,key,mode,FX_DATA_WILDCARD);
   cconx_delete(key,mode,FX_DATA_WILDCARD,FX_DATA_WILDCARD,0,0);
 
-
   newmode=rte_key_getmode(key+1);
 
-  rtew_set_mode_radio(key,newmode);
   if (mainw->ce_thumbs) ce_thumbs_set_mode_combo(key,newmode);
-    
-  for (i=mode;i<rte_getmodespk()-1;i++) {
-    int fx_idx=rte_keymode_get_filter_idx(key,mode);
 
-    idx=key*modes+i;
-    lives_entry_set_text (LIVES_ENTRY(combo_entries[idx]),lives_entry_get_text(LIVES_ENTRY(combo_entries[idx+1])));
-    type_label_set_text(key,i);
+  if (rte_window!=NULL) {
+    rtew_set_mode_radio(key,newmode);
+  }
+
+  for (i=mode;i<rte_getmodespk()-1;i++) {
     pconx_remap_mode(key,i+1,i);
     cconx_remap_mode(key,i+1,i);
 
-    if (fx_idx!=-1) {
-      gchar *hashname=(gchar *)lives_list_nth_data(hash_list,fx_idx);
-      lives_widget_object_set_data(LIVES_WIDGET_OBJECT(combos[idx]),"hashname",hashname);
+    if (rte_window!=NULL) {
+      int fx_idx=rte_keymode_get_filter_idx(key,mode);
+      idx=key*modes+i;
+      lives_entry_set_text (LIVES_ENTRY(combo_entries[idx]),lives_entry_get_text(LIVES_ENTRY(combo_entries[idx+1])));
+      type_label_set_text(key,i);
+
+      if (fx_idx!=-1) {
+	char *hashname=(char *)lives_list_nth_data(hash_list,fx_idx);
+	lives_widget_object_set_data(LIVES_WIDGET_OBJECT(combos[idx]),"hashname",hashname);
+      }
+      else lives_widget_object_set_data(LIVES_WIDGET_OBJECT(combos[idx]),"hashname",empty_string);
+
+      // set parameters button sensitive/insensitive
+      set_param_and_con_buttons(key,i);
     }
-    else lives_widget_object_set_data(LIVES_WIDGET_OBJECT(combos[idx]),"hashname",empty_string);
+  }
+  idx++;
+
+  if (rte_window!=NULL) {
+    lives_entry_set_text (LIVES_ENTRY(combo_entries[idx]),"");
+    lives_widget_object_set_data(LIVES_WIDGET_OBJECT(combos[idx]),"hashname",empty_string);
 
     // set parameters button sensitive/insensitive
     set_param_and_con_buttons(key,i);
-    
   }
-  idx++;
-  lives_entry_set_text (LIVES_ENTRY(combo_entries[idx]),"");
-
-  lives_widget_object_set_data(LIVES_WIDGET_OBJECT(combos[idx]),"hashname",empty_string);
-
-  // set parameters button sensitive/insensitive
-  set_param_and_con_buttons(key,i);
 
   if (!rte_keymode_valid(key+1,0,TRUE)) {
-    rtew_set_keych(key,FALSE);
+    if (rte_window!=NULL) rtew_set_keych(key,FALSE);
     if (mainw->ce_thumbs) ce_thumbs_set_keych(key,FALSE);
   }
-  check_clear_all_button();
+  if (rte_window!=NULL) check_clear_all_button();
 
   if (mainw->ce_thumbs) ce_thumbs_reset_combo(key);
 }

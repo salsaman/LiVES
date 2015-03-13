@@ -110,6 +110,7 @@ int get_audio_frame_clip (weed_plant_t *event, int layer) {
   int numaclips,aclipnum=0;
   int *aclips,error,i;
   if (get_event_hint (event)!=WEED_EVENT_HINT_FRAME) return -2;
+  if (!weed_plant_has_leaf(event,"audio_clips")) return -1;
   numaclips=weed_leaf_num_elements (event,"audio_clips");
   aclips=weed_get_int_array(event,"audio_clips",&error);
   for (i=0;i<numaclips;i+=2) {
@@ -124,11 +125,13 @@ int get_audio_frame_clip (weed_plant_t *event, int layer) {
 
 
 double get_audio_frame_vel (weed_plant_t *event, int layer) {
+  // vel of 0. is OFF
   int numaclips;
   int *aclips,error,i;
   double *aseeks,avel=1.;
 
   if (get_event_hint (event)!=WEED_EVENT_HINT_FRAME) return -2;
+  if (!weed_plant_has_leaf(event,"audio_clips")) return -1;
   numaclips=weed_leaf_num_elements (event,"audio_clips");
   aclips=weed_get_int_array(event,"audio_clips",&error);
   aseeks=weed_get_double_array(event,"audio_seeks",&error);
@@ -150,6 +153,7 @@ double get_audio_frame_seek (weed_plant_t *event, int layer) {
   double *aseeks,aseek=0.;
 
   if (get_event_hint (event)!=WEED_EVENT_HINT_FRAME) return -2;
+  if (!weed_plant_has_leaf(event,"audio_clips")) return -1;
   numaclips=weed_leaf_num_elements (event,"audio_clips");
   aclips=weed_get_int_array(event,"audio_clips",&error);
   aseeks=weed_get_double_array(event,"audio_seeks",&error);
@@ -298,6 +302,21 @@ weed_plant_t *get_last_frame_event (weed_plant_t *event_list) {
   }
   return NULL;
 }
+
+
+weed_plant_t *get_audio_block_start(weed_plant_t *event_list, int track, weed_timecode_t tc, boolean seek_back) {
+  // find any event which starts an audio block on track at timecode tc
+  // if seek_back is true we go back in time to find a possible start
+  // otherwise just check the current frame event
+
+  /*  if (!seek_back) {
+    if (get_audio_frame_vel(event)
+  */
+
+
+}
+
+
 
 
 void *find_init_event_by_id(void *init_event, weed_plant_t *event) {
@@ -4686,6 +4705,7 @@ LiVESWidget *create_event_list_dialog (weed_plant_t *event_list, weed_timecode_t
   winsize_v=scr_height-180;
  
   event_dialog = lives_standard_dialog_new (_("LiVES: Event list"),FALSE);
+  lives_widget_set_size_request (event_dialog, winsize_h, winsize_v);
 
   accel_group = LIVES_ACCEL_GROUP(lives_accel_group_new ());
   lives_window_add_accel_group (LIVES_WINDOW (event_dialog), accel_group);
@@ -4951,7 +4971,7 @@ LiVESWidget *create_event_list_dialog (weed_plant_t *event_list, weed_timecode_t
   hbuttonbox = lives_hbutton_box_new ();
   lives_widget_show (hbuttonbox);
 
-  lives_box_pack_start (LIVES_BOX (top_vbox), hbuttonbox, TRUE, TRUE, 0);
+  lives_box_pack_start (LIVES_BOX (top_vbox), hbuttonbox, FALSE, TRUE, 0);
 
   lives_button_box_set_layout (LIVES_BUTTON_BOX (hbuttonbox), LIVES_BUTTONBOX_SPREAD);
 

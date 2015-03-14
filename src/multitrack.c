@@ -980,6 +980,7 @@ static void draw_block (lives_mt *mt, lives_painter_t *cairo,
   lives_widget_get_bg_color(mt->window,&bgcolor);
 
   track=LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(eventbox),"layer_number"));
+  is_audio=LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(eventbox),"is_audio"));  
   if (track<0) is_audio=TRUE;
 
   if (!is_audio) filenum=get_frame_event_clip(block->start_event,track);
@@ -1355,11 +1356,10 @@ static boolean expose_track_event (LiVESWidget *eventbox, LiVESXEventExpose *eve
  draw1:
 
   if (LIVES_POINTER_TO_INT(lives_widget_object_get_data (LIVES_WIDGET_OBJECT(eventbox), "drawn"))) {
-    // seems to not always work in gtk+ 3.10.x
     if (bgimage!=NULL&&lives_painter_image_surface_get_width(bgimage)>0) {
       lives_painter_set_source_surface (cr, bgimage, startx, starty);
       lives_painter_rectangle(cr,startx,starty,width,height);
-      lives_painter_paint (cr);
+      lives_painter_fill (cr);
  
       if (mt->block_selected!=NULL&&mt->block_selected->eventbox==eventbox) {
 	draw_block(mt,cr,NULL,mt->block_selected,-1,-1);
@@ -10085,6 +10085,7 @@ LiVESWidget *add_audio_track (lives_mt *mt, int track, boolean behind) {
   lives_widget_object_set_data (LIVES_WIDGET_OBJECT(audio_draw), "hidden", LIVES_INT_TO_POINTER(0));
   lives_widget_object_set_data (LIVES_WIDGET_OBJECT(audio_draw), "expanded",LIVES_INT_TO_POINTER(FALSE));
   lives_widget_object_set_data (LIVES_WIDGET_OBJECT(audio_draw), "bgimg", NULL);
+  lives_widget_object_set_data (LIVES_WIDGET_OBJECT(audio_draw),"is_audio",LIVES_INT_TO_POINTER(TRUE));
 
   lives_adjustment_set_upper(LIVES_ADJUSTMENT(mt->vadjustment),(double)mt->num_video_tracks);
   lives_adjustment_set_page_size(LIVES_ADJUSTMENT(mt->vadjustment),(double)(max_disp_vtracks>mt->num_video_tracks?
@@ -10332,6 +10333,7 @@ void add_video_track (lives_mt *mt, boolean behind) {
       lives_widget_object_set_data (LIVES_WIDGET_OBJECT(xeventbox),"layer_number",LIVES_INT_TO_POINTER(i+1));
       lives_widget_object_set_data (LIVES_WIDGET_OBJECT(xcheckbutton),"layer_number",LIVES_INT_TO_POINTER(i+1));
       lives_widget_object_set_data (LIVES_WIDGET_OBJECT(xarrow),"layer_number",LIVES_INT_TO_POINTER(i+1));
+      lives_widget_object_set_data (LIVES_WIDGET_OBJECT(xeventbox),"is_audio",LIVES_INT_TO_POINTER(FALSE));
 
 
       set_track_label(LIVES_EVENT_BOX(xeventbox),i+1);
@@ -10345,6 +10347,7 @@ void add_video_track (lives_mt *mt, boolean behind) {
 	lives_widget_object_set_data (LIVES_WIDGET_OBJECT(aeventbox),"track_name",lives_strdup_printf(_("Layer %d audio"),i+1));
 	newtext=lives_strdup_printf(_(" %s"),lives_widget_object_get_data(LIVES_WIDGET_OBJECT(aeventbox),"track_name"));
 	lives_label_set_text(LIVES_LABEL(label),newtext);
+	lives_widget_object_set_data (LIVES_WIDGET_OBJECT(aeventbox),"is_audio",LIVES_INT_TO_POINTER(TRUE));
       }
     }
     // add a -1,0 in all frame events
@@ -16648,9 +16651,11 @@ static void on_delblock_activate (LiVESMenuItem *menuitem, livespointer user_dat
     get_track_index(mt,tc);
   }
 
-  redraw_eventbox(mt,eventbox);
-
-  if (!mt->moving_block) mt_show_current_frame(mt, FALSE);
+  if (!mt->moving_block) {
+    redraw_eventbox(mt,eventbox);
+    paint_lines(mt,lives_ruler_get_value(LIVES_RULER (mt->timeline)),TRUE);
+    mt_show_current_frame(mt, FALSE);
+  }
 
   if (!did_backup) mt->idlefunc=mt_idle_add(mt);
 
@@ -18107,7 +18112,7 @@ static boolean mt_expose_audtrack_event (LiVESWidget *ebox, LiVESXEventExpose *e
     if (bgimage!=NULL&&lives_painter_image_surface_get_width(bgimage)>0) {
       lives_painter_set_source_surface (cr, bgimage, startx, starty);
       lives_painter_rectangle(cr,startx,starty,width,height);
-      lives_painter_paint (cr);
+      lives_painter_fill (cr);
       if (cairo==NULL) lives_painter_destroy(cr);
       return TRUE;
     }

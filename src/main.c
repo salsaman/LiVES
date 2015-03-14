@@ -3570,7 +3570,6 @@ void set_ce_frame_from_pixbuf(LiVESImage *image, LiVESPixbuf *pixbuf, lives_pain
     lives_painter_rectangle(cr,cx,cy,
 			    width,
 			    height);
-    lives_painter_fill(cr);
   }
   else {
     lives_painter_set_source_to_bg(cr,LIVES_WIDGET(image));
@@ -3578,8 +3577,8 @@ void set_ce_frame_from_pixbuf(LiVESImage *image, LiVESPixbuf *pixbuf, lives_pain
     lives_painter_rectangle(cr,0,0,
 			    rwidth,
 			    rheight);
-    lives_painter_fill(cr);
   }
+  lives_painter_fill(cr);
   if (cairo==NULL) lives_painter_destroy(cr);
 #else
   lives_image_set_from_pixbuf(image,pixbuf);

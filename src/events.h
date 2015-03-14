@@ -31,7 +31,7 @@ weed_plant_t *insert_blank_frame_event_at (weed_plant_t *event_list, weed_timeco
 					   weed_plant_t **shortcut) WARN_UNUSED;
 
 void remove_frame_from_event (weed_plant_t *event_list, weed_plant_t *event, int track);
-void remove_end_blank_frames (weed_plant_t *event_list);
+void remove_end_blank_frames (weed_plant_t *event_list, boolean remove_filter_inits);
 void remove_filter_from_event_list(weed_plant_t *event_list, weed_plant_t *init_event);
 
 weed_plant_t *process_events (weed_plant_t *next_event, boolean process_audio, weed_timecode_t curr_tc); ///< RT playback

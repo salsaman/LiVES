@@ -4139,10 +4139,7 @@ boolean record_toggle_callback (LiVESAccelGroup *group, LiVESObject *obj, uint32
 
 
 
-void
-on_rewind_activate                    (LiVESMenuItem     *menuitem,
-				       livespointer         user_data)
-{
+void on_rewind_activate (LiVESMenuItem *menuitem, livespointer user_data) {
   if (mainw->multitrack!=NULL) {
     mt_tl_move(mainw->multitrack,0.);
     return;
@@ -5284,6 +5281,15 @@ boolean reload_set (const char *set_name) {
     cfile->changed=TRUE;
     unlink (cfile->info_file);
     set_main_title(cfile->name,0);
+
+    if (mainw->multitrack==NULL) {
+      if (mainw->current_file>0) {
+	resize(1);
+	load_start_image (cfile->start);
+	load_end_image (cfile->end);
+	lives_widget_context_update();
+      }
+    }
 
     if (mainw->multitrack!=NULL&&mainw->multitrack->is_ready) {
       mainw->current_file=mainw->multitrack->render_file;

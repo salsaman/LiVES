@@ -5817,6 +5817,15 @@ static boolean recover_files(char *recovery_file, boolean auto_recover) {
 	unlink (cfile->info_file);
 	set_main_title(cfile->name,0);
 
+	if (mainw->multitrack==NULL) {
+	  if (mainw->current_file>0) {
+	    resize(1);
+	    load_start_image (cfile->start);
+	    load_end_image (cfile->end);
+	    lives_widget_context_update();
+	  }
+	}
+
 	if (mainw->multitrack!=NULL) {
 	  int current_file=mainw->current_file;
 	  lives_mt *multi=mainw->multitrack;

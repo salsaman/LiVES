@@ -469,6 +469,8 @@ struct _mt {
 
   boolean moving_block; ///< moving block flag
 
+  double pb_start_time; ///< playback start time in seconds. If play is stopped (not paused) we return to here.
+
   //////////////////////////////
 
   int sel_x;

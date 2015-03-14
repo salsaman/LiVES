@@ -7305,7 +7305,7 @@ void resize (double scale) {
   mainw->ce_frame_width=hsize;
   mainw->ce_frame_height=vsize;
 
-  if (!mainw->is_ready) return;
+  //if (!mainw->is_ready) return;
 
   lives_widget_set_size_request (mainw->playframe, (int)hsize*scale+H_RESIZE_ADJUST, (int)vsize*scale+V_RESIZE_ADJUST);
 

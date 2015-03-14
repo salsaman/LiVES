@@ -30,12 +30,13 @@ static boolean  omute,  osepwin,  ofs,  ofaded,  odouble;
 
 typedef struct {
   int fd;
-  size_t bytes;
+  ssize_t bytes;
   boolean eof;
   uint8_t *ptr;
   uint8_t *buffer;
   boolean read;
   boolean allow_fail;
+  off_t offset;
 } lives_file_buffer_t;
 
 
@@ -539,6 +540,7 @@ static ssize_t file_buffer_flush(lives_file_buffer_t *fbuff) {
   ssize_t res=0;
 
   if (fbuff->buffer!=NULL) res=lives_write(fbuff->fd,fbuff->buffer,fbuff->bytes,fbuff->allow_fail);
+  if (res>0) fbuff->offset+=res;
 
   if (!fbuff->allow_fail&&res<fbuff->bytes) {
     lives_close_buffered(-fbuff->fd); // use -fd as lives_write will have closed
@@ -559,6 +561,7 @@ static int lives_open_real_buffered(const char *pathname, int flags, int mode, b
     fbuff->ptr=NULL;
     fbuff->buffer=NULL;
     fbuff->read=isread;
+    fbuff->offset=0;
     mainw->file_buffers=lives_list_append(mainw->file_buffers,(livespointer)fbuff);
   }
 
@@ -622,6 +625,7 @@ static ssize_t file_buffer_fill(lives_file_buffer_t *fbuff) {
 
   res=lives_read(fbuff->fd,fbuff->buffer,BUFFER_FILL_BYTES,TRUE);
 
+
   if (res<0) {
     lives_close_buffered(-fbuff->fd); // use -fd as lives_read will have closed
     return res;
@@ -629,6 +633,7 @@ static ssize_t file_buffer_fill(lives_file_buffer_t *fbuff) {
 
   fbuff->bytes=res;
   fbuff->ptr=fbuff->buffer;
+  fbuff->offset+=res;
 
   if (res<BUFFER_FILL_BYTES) fbuff->eof=TRUE;
   else fbuff->eof=FALSE;
@@ -650,8 +655,13 @@ off_t lives_lseek_buffered_rdonly(int fd, off_t offset) {
   fbuff->ptr+=offset;
   fbuff->bytes-=offset;
 
-  if (fbuff->bytes<=0||fbuff->bytes>BUFFER_FILL_BYTES) {
+  fbuff->offset+=offset;
+
+  if (fbuff->offset<0) fbuff->offset=0;
+
+  if (fbuff->bytes<=0||fbuff->ptr<fbuff->buffer) {
     fbuff->bytes=0;
+    if (fbuff->ptr<fbuff->buffer) fbuff->eof=FALSE;
   }
 
   return lseek(fd,offset,SEEK_CUR);

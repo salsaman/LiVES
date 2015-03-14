@@ -40,7 +40,7 @@ static boolean check_zero_buff(size_t check_size) {
 }
 
 boolean lives_jack_init (void) {
-  gchar *jt_client=lives_strdup_printf("LiVES-%d",capable->mainpid);
+  char *jt_client=lives_strdup_printf("LiVES-%d",capable->mainpid);
   const char *server_name="default";
   jack_options_t options=JackServerName;
   jack_status_t status;
@@ -52,7 +52,7 @@ boolean lives_jack_init (void) {
     setenv ("JACK_START_SERVER","1",0);
 
     if (!lives_file_test(prefs->jack_aserver,LIVES_FILE_TEST_EXISTS)) {
-      gchar *com;
+      char *com;
       char jackd_loc[PATH_MAX];
       get_location("jackd",jackd_loc,PATH_MAX);
       if (strlen(jackd_loc)) {
@@ -1714,7 +1714,7 @@ int jack_audio_read_init(void) {
 
 volatile aserver_message_t *jack_get_msgq(jack_driver_t *jackd) {
   // force update - "volatile" doesn't seem to work...
-  gchar *tmp=lives_strdup_printf("%p %d",jackd->msgq,jackd->jackd_died);
+  char *tmp=lives_strdup_printf("%p %d",jackd->msgq,jackd->jackd_died);
   lives_free(tmp);
   if (jackd->jackd_died||mainw->aplayer_broken) return NULL;
   return jackd->msgq;
@@ -1856,7 +1856,7 @@ void jack_aud_pb_ready(int fileno) {
   // - set vals
 
   // called at pb start and rec stop (after rec_ext_audio)
-  gchar *tmpfilename=NULL;
+  char *tmpfilename=NULL;
   lives_clip_t *sfile=mainw->files[fileno];
   int asigned=!(sfile->signed_endian&AFORM_UNSIGNED);
   int aendian=!(sfile->signed_endian&AFORM_BIG_ENDIAN);

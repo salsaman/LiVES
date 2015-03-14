@@ -389,29 +389,29 @@ struct _mt {
 
   LiVESList *cb_list;
 
-  gulong spin_in_func;
-  gulong spin_out_func;
-  gulong spin_avel_func;
-  gulong check_start_func;
-  gulong check_end_func;
-  gulong check_avel_rev_func;
+  ulong spin_in_func;
+  ulong spin_out_func;
+  ulong spin_avel_func;
+  ulong check_start_func;
+  ulong check_end_func;
+  ulong check_avel_rev_func;
 
-  gulong mm_move_func;
-  gulong mm_select_func;
+  ulong mm_move_func;
+  ulong mm_select_func;
 
-  gulong ins_normal_func;
+  ulong ins_normal_func;
 
-  gulong grav_normal_func;
-  gulong grav_left_func;
-  gulong grav_right_func;
+  ulong grav_normal_func;
+  ulong grav_left_func;
+  ulong grav_right_func;
   
-  gulong sepwin_func;
-  gulong mute_audio_func;
-  gulong loop_cont_func;
+  ulong sepwin_func;
+  ulong mute_audio_func;
+  ulong loop_cont_func;
 
-  gulong seltrack_func;
+  ulong seltrack_func;
 
-  gulong tc_func;
+  ulong tc_func;
 
   weed_plant_t *event_list;
 
@@ -461,7 +461,7 @@ struct _mt {
 
   lives_rfx_t *current_rfx;
 
-  gchar layout_name[PATH_MAX];
+  char layout_name[PATH_MAX];
 
   // cursor warping for mouse move mode
   double hotspot_x;
@@ -474,8 +474,8 @@ struct _mt {
   int sel_x;
   int sel_y;
 
-  gulong mouse_mot1;
-  gulong mouse_mot2;
+  ulong mouse_mot1;
+  ulong mouse_mot2;
 
   boolean tl_selecting; ///< for mouse select mode
 
@@ -492,8 +492,8 @@ struct _mt {
   int undo_offset;
   boolean did_backup;
 
-  gchar undo_text[32];
-  gchar redo_text[32];
+  char undo_text[32];
+  char redo_text[32];
 
   boolean undoable;
   boolean redoable;
@@ -525,8 +525,8 @@ struct _mt {
   int avol_fx; ///< index of audio volume filter, delegated by user from audio volume candidates
   weed_plant_t *avol_init_event;
 
-  gulong spin_start_func;
-  gulong spin_end_func;
+  ulong spin_start_func;
+  ulong spin_end_func;
 
   boolean layout_prompt; ///< on occasion, prompt user if they want to correct layout on disk or not
   boolean layout_set_properties;
@@ -620,7 +620,7 @@ struct _lives_amixer_t {
   LiVESWidget **ch_sliders;
   LiVESWidget *gang_checkbutton;
   LiVESWidget *inv_checkbutton;
-  gulong *ch_slider_fns;
+  ulong *ch_slider_fns;
   int nchans;
   lives_mt *mt;
 };
@@ -663,9 +663,9 @@ typedef struct {
 
 /* clip->layout use mapping, from layout.map lives_clip_t */
 typedef struct {
-  gchar *handle;
+  char *handle;
   int64_t unique_id;
-  gchar *name;
+  char *name;
   LiVESList *list;
 } layout_map;
 
@@ -793,7 +793,7 @@ void mt_clear_timeline(lives_mt *mt);
 
 // context box text
 void clear_context (lives_mt *);
-void add_context_label (lives_mt *, const gchar *text);
+void add_context_label (lives_mt *, const char *text);
 void mouse_mode_context(lives_mt *);
 void do_sel_context (lives_mt *);
 void do_fx_list_context (lives_mt *, int fxcount);
@@ -847,18 +847,18 @@ void update_filter_events(lives_mt *, weed_plant_t *first_event, weed_timecode_t
 void mt_fixup_events(lives_mt *, weed_plant_t *old_event, weed_plant_t *new_event);
 
 // event_list load/save
-weed_plant_t *load_event_list(lives_mt *, gchar *eload_file);
+weed_plant_t *load_event_list(lives_mt *, char *eload_file);
 
 
 // layouts and layout maps
 LiVESList *load_layout_map(void);
 void add_markers(lives_mt *, weed_plant_t *event_list);
 void remove_markers(weed_plant_t *event_list);
-void save_layout_map (int *lmap, double *lmap_audio, const gchar *file, const gchar *dir);
+void save_layout_map (int *lmap, double *lmap_audio, const char *file, const char *dir);
 
 void wipe_layout(lives_mt *);
 
-void migrate_layouts (const gchar *old_set_name, const gchar *new_set_name);
+void migrate_layouts (const char *old_set_name, const char *new_set_name);
 
 LiVESList *layout_frame_is_affected(int clipno, int frame);
 LiVESList *layout_audio_is_affected(int clipno, double time);
@@ -886,7 +886,7 @@ LiVESWidget * amixer_add_channel_slider (lives_mt *, int i);
 // misc
 void mt_change_disp_tracks_ok (LiVESButton *, livespointer mt);
 void mt_swap_play_pause (lives_mt *, boolean put_pause);
-gchar *set_values_from_defs(lives_mt *, boolean from_prefs);
+char *set_values_from_defs(lives_mt *, boolean from_prefs);
 
 
 // clip boxes

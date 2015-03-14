@@ -27,8 +27,8 @@ extern void multitrack_preview_clicked  (LiVESButton *, livespointer user_data);
 extern void mt_change_disp_tracks_ok (LiVESButton *, livespointer user_data);
 
 
-void add_suffix_check(LiVESBox *box, const gchar *ext) {
-  gchar *ltext;
+void add_suffix_check(LiVESBox *box, const char *ext) {
+  char *ltext;
 
   LiVESWidget *checkbutton;
 
@@ -76,7 +76,7 @@ static void pv_sel_changed(LiVESFileChooser *chooser, livespointer user_data) {
   LiVESWidget *pbutton=(LiVESWidget *)user_data;
 
   if (slist==NULL||lives_slist_nth_data(slist,0)==NULL||lives_slist_length(slist)>1||
-      !(lives_file_test((gchar *)lives_slist_nth_data(slist,0),LIVES_FILE_TEST_IS_REGULAR))) {
+      !(lives_file_test((char *)lives_slist_nth_data(slist,0),LIVES_FILE_TEST_IS_REGULAR))) {
     lives_widget_set_sensitive(pbutton,FALSE);
   }
   else lives_widget_set_sensitive(pbutton,TRUE);
@@ -153,7 +153,7 @@ void widget_add_preview(LiVESWidget *widget, LiVESBox *for_preview, LiVESBox *fo
 }
 
 
-xprocess * create_processing (const gchar *text) {
+xprocess * create_processing (const char *text) {
 
   LiVESWidget *dialog_vbox;
   LiVESWidget *vbox2;
@@ -165,7 +165,7 @@ xprocess * create_processing (const gchar *text) {
 
   xprocess *procw=(xprocess*)(lives_malloc(sizeof(xprocess)));
 
-  gchar tmp_label[256];
+  char tmp_label[256];
 
   widget_opts.non_modal=TRUE;
   procw->processing = lives_standard_dialog_new (_("LiVES: - Processing..."),FALSE);
@@ -596,7 +596,7 @@ static void on_resizecb_toggled (LiVESToggleButton *t, livespointer user_data) {
 
 
 
-LiVESWidget* create_encoder_prep_dialog (const gchar *text1, const gchar *text2, boolean opt_resize) {
+LiVESWidget* create_encoder_prep_dialog (const char *text1, const char *text2, boolean opt_resize) {
   LiVESWidget *dialog;
   LiVESWidget *dialog_vbox;
   LiVESWidget *dialog_action_area;
@@ -607,7 +607,7 @@ LiVESWidget* create_encoder_prep_dialog (const gchar *text1, const gchar *text2,
   LiVESWidget *label;
   LiVESWidget *hbox;
 
-  gchar *labeltext,*tmp,*tmp2;
+  char *labeltext,*tmp,*tmp2;
 
   dialog = lives_standard_dialog_new (_("LiVES: - Encoding options"),FALSE);
 
@@ -703,7 +703,7 @@ LiVESWidget* create_encoder_prep_dialog (const gchar *text1, const gchar *text2,
 // the type of message box here is with a single OK button
 // if 2 or more buttons (e.g. OK/CANCEL, YES/NO, ABORT/RETRY/CANCEL) are needed, use create_message_dialog() in dialogs.c
 
-LiVESWidget* create_info_error_dialog (lives_dialog_t info_type, const gchar *text, LiVESWindow *transient, int mask, boolean is_blocking) {
+LiVESWidget* create_info_error_dialog (lives_dialog_t info_type, const char *text, LiVESWindow *transient, int mask, boolean is_blocking) {
   LiVESWidget *dialog;
 
   if (!prefs->show_gui) {
@@ -719,16 +719,16 @@ LiVESWidget* create_info_error_dialog (lives_dialog_t info_type, const gchar *te
 
 
 
-text_window *create_text_window (const gchar *title, const gchar *text, LiVESTextBuffer *textbuffer) {
+text_window *create_text_window (const char *title, const char *text, LiVESTextBuffer *textbuffer) {
   // general text window
   LiVESWidget *dialog_vbox;
   LiVESWidget *scrolledwindow;
   LiVESWidget *dialog_action_area;
   LiVESWidget *okbutton;
 
-  gchar *mytitle=lives_strdup(title);
-  gchar *mytext=NULL;
-  gchar *tmp;
+  char *mytitle=lives_strdup(title);
+  char *mytext=NULL;
+  char *tmp;
 
   boolean woat;
 
@@ -816,7 +816,7 @@ _insertw* create_insert_dialog (void) {
 
   LiVESAccelGroup *accel_group=LIVES_ACCEL_GROUP(lives_accel_group_new ());
 
-  gchar *tmp,*tmp2;
+  char *tmp,*tmp2;
 
   _insertw *insertw=(_insertw*)(lives_malloc(sizeof(_insertw)));
 
@@ -1088,7 +1088,7 @@ _entryw* create_location_dialog (int type) {
 
   LiVESAccelGroup *accel_group=LIVES_ACCEL_GROUP(lives_accel_group_new ());
 
-  gchar *title,*tmp,*tmp2;
+  char *title,*tmp,*tmp2;
 
   if (type==1) 
     title=lives_strdup(_("LiVES: - Open Location"));
@@ -1250,7 +1250,7 @@ _entryw* create_rename_dialog (int type) {
 
   LiVESAccelGroup *accel_group=LIVES_ACCEL_GROUP(lives_accel_group_new ());
 
-  gchar *title=NULL;
+  char *title=NULL;
 
   _entryw *renamew=(_entryw*)(lives_malloc(sizeof(_entryw)));
 
@@ -1366,7 +1366,7 @@ _entryw* create_rename_dialog (int type) {
       lives_free(tmp);
     }
     if (type==6) {
-      gchar *tmpdir;
+      char *tmpdir;
       if (prefs->startup_phase==-1) tmpdir=lives_build_filename(capable->home_dir,LIVES_TMP_NAME,NULL);
       else tmpdir=lives_strdup(prefs->tmpdir);
       lives_entry_set_text (LIVES_ENTRY (renamew->entry),(tmp=F2U8(tmpdir)));
@@ -1478,7 +1478,7 @@ static void rb_tvcarddef_toggled(LiVESToggleButton *tbut, livespointer user_data
 
 static void after_dialog_combo_changed (LiVESWidget *combo, livespointer user_data) {
   LiVESList *list=(LiVESList *)user_data;
-  gchar *etext=lives_combo_get_active_text(LIVES_COMBO(combo));
+  char *etext=lives_combo_get_active_text(LIVES_COMBO(combo));
   mainw->fx1_val=lives_list_strcmp_index(list,etext);
   lives_free(etext);
 }
@@ -1494,7 +1494,7 @@ LiVESWidget *create_combo_dialog (int type, livespointer user_data) {
   LiVESWidget *label;
   LiVESWidget *combo;
 
-  gchar *label_text=NULL,*title=NULL;
+  char *label_text=NULL,*title=NULL;
 
   LiVESList *list=(LiVESList *)user_data;
 
@@ -1577,7 +1577,7 @@ LiVESWidget* create_cdtrack_dialog (int type, livespointer user_data) {
   
   LiVESSList *radiobutton_group=NULL;
 
-  gchar *label_text=NULL,*title;
+  char *label_text=NULL,*title;
  
 
   if (type==0) {
@@ -1884,7 +1884,7 @@ aud_dialog_t *create_audfade_dialog (int type) {
   LiVESWidget *rb_sel;
   LiVESWidget *label;
 
-  gchar *label_text=NULL,*label_text2=NULL,*title;
+  char *label_text=NULL,*label_text2=NULL,*title;
 
   double max;
 
@@ -1977,7 +1977,7 @@ aud_dialog_t *create_audfade_dialog (int type) {
 
 
 
-_commentsw* create_comments_dialog (lives_clip_t *sfile, gchar *filename) {
+_commentsw* create_comments_dialog (lives_clip_t *sfile, char *filename) {
   LiVESWidget *dialog_vbox;
   LiVESWidget *table;
   LiVESWidget *label;
@@ -2082,8 +2082,8 @@ _commentsw* create_comments_dialog (lives_clip_t *sfile, gchar *filename) {
       lives_widget_set_sensitive(buttond,FALSE);
     }
     else {
-      gchar xfilename[512];
-      gchar *osubfname=NULL;
+      char xfilename[512];
+      char *osubfname=NULL;
 
       lives_snprintf(xfilename,512,"%s",filename);
       get_filename(xfilename,FALSE); // strip extension
@@ -2218,7 +2218,7 @@ char *choose_file(const char *dir, const char *fname, char ** const filt, LiVESF
   if (fname!=NULL) {
     gtk_file_chooser_set_current_name(LIVES_FILE_CHOOSER(chooser),fname); // utf-8
     if (fname!=NULL&&dir!=NULL) {
-      gchar *ffname=lives_build_filename(dir,fname,NULL);
+      char *ffname=lives_build_filename(dir,fname,NULL);
       gtk_file_chooser_select_filename(LIVES_FILE_CHOOSER(chooser),ffname); // must be dir and file
       lives_free(ffname);
     }
@@ -2315,7 +2315,7 @@ char *choose_file(const char *dir, const char *fname, char ** const filt, LiVESF
  rundlg:
   
   if ((response=lives_dialog_run(LIVES_DIALOG(chooser)))!=LIVES_RESPONSE_CANCEL) {
-    gchar *tmp;
+    char *tmp;
     filename=lives_filename_to_utf8((tmp=lives_file_chooser_get_filename(LIVES_FILE_CHOOSER(chooser))),-1,NULL,NULL,NULL);
     lives_free(tmp);
   }

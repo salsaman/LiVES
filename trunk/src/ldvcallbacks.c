@@ -12,7 +12,7 @@
 
 
 void on_camgrab_clicked (LiVESButton *button, livespointer user_data) {
-  gchar *msg;
+  char *msg;
   s_cam *cam=(s_cam *)user_data;
   if (dvgrabw->filename!=NULL) lives_free(dvgrabw->filename);
   dvgrabw->filename=find_free_camfile(cam->format);

@@ -44,10 +44,10 @@ static void instopen_toggled (LiVESToggleButton *t1, LiVESWidget *button) {
 }
 
 
-void get_pref(const gchar *key, gchar *val, int maxlen) {
+void get_pref(const char *key, char *val, int maxlen) {
   FILE *valfile;
-  gchar *vfile;
-  gchar *com;
+  char *vfile;
+  char *com;
   int retval;
   int alarm_handle;
   boolean timeout;
@@ -55,7 +55,7 @@ void get_pref(const gchar *key, gchar *val, int maxlen) {
   memset(val,0,maxlen);
 
   if (mainw->cached_list!=NULL) {
-    gchar *prefval=get_val_from_cached_list(key,maxlen);
+    char *prefval=get_val_from_cached_list(key,maxlen);
     if (prefval!=NULL) {
       lives_snprintf(val,maxlen,"%s",prefval);
       lives_free(prefval);
@@ -122,9 +122,9 @@ void get_pref(const gchar *key, gchar *val, int maxlen) {
 
 
 
-void get_pref_utf8(const gchar *key, gchar *val, int maxlen) {
+void get_pref_utf8(const char *key, char *val, int maxlen) {
   // get a pref in locale encoding, then convert it to utf8
-  gchar *tmp;
+  char *tmp;
   get_pref(key,val,maxlen);
   tmp=lives_filename_to_utf8(val,-1,NULL,NULL,NULL);
   lives_snprintf(val,maxlen,"%s",tmp);
@@ -133,10 +133,10 @@ void get_pref_utf8(const gchar *key, gchar *val, int maxlen) {
 
 
 
-LiVESList *get_list_pref(const gchar *key) {
+LiVESList *get_list_pref(const char *key) {
   // get a list of values from a preference
-  gchar **array;
-  gchar buf[65536];
+  char **array;
+  char buf[65536];
   int nvals,i;
 
   LiVESList *retlist=NULL;
@@ -159,10 +159,10 @@ LiVESList *get_list_pref(const gchar *key) {
 
 
 
-void get_pref_default(const gchar *key, gchar *val, int maxlen) {
+void get_pref_default(const char *key, char *val, int maxlen) {
   FILE *valfile;
-  gchar *vfile;
-  gchar *com=lives_strdup_printf("%s get_pref_default \"%s\"",prefs->backend_sync,key);
+  char *vfile;
+  char *com=lives_strdup_printf("%s get_pref_default \"%s\"",prefs->backend_sync,key);
 
   int retval;
   int alarm_handle;
@@ -228,46 +228,37 @@ void get_pref_default(const gchar *key, gchar *val, int maxlen) {
 }
 
 
-boolean get_boolean_pref(const gchar *key) {
-  gchar buffer[16];
+boolean get_boolean_pref(const char *key) {
+  char buffer[16];
   get_pref(key,buffer,16);
   if (!strcmp(buffer,"true")) return TRUE;
   return FALSE;
 }
 
-int get_int_pref(const gchar *key) {
-  gchar buffer[64];
+int get_int_pref(const char *key) {
+  char buffer[64];
   get_pref(key,buffer,64);
   if (strlen(buffer)==0) return 0;
   return atoi(buffer);
 }
 
-double get_double_pref(const gchar *key) {
-  gchar buffer[64];
+double get_double_pref(const char *key) {
+  char buffer[64];
   get_pref(key,buffer,64);
   if (strlen(buffer)==0) return 0.;
   return strtod(buffer,NULL);
 }
 
-void delete_pref(const gchar *key) {
-  gchar *com=lives_strdup_printf("%s delete_pref \"%s\"",prefs->backend_sync,key);
+void delete_pref(const char *key) {
+  char *com=lives_strdup_printf("%s delete_pref \"%s\"",prefs->backend_sync,key);
   if (system(com)) {
     tempdir_warning();
   }
   lives_free(com);
 }
 
-void set_pref(const gchar *key, const gchar *value) {
-  gchar *com=lives_strdup_printf("%s set_pref \"%s\" \"%s\"",prefs->backend_sync,key,value);
-  if (system(com)) {
-    tempdir_warning();
-  }
-  lives_free(com);
-}
-
-
-void set_int_pref(const gchar *key, int value) {
-  gchar *com=lives_strdup_printf("%s set_pref \"%s\" %d",prefs->backend_sync,key,value);
+void set_pref(const char *key, const char *value) {
+  char *com=lives_strdup_printf("%s set_pref \"%s\" \"%s\"",prefs->backend_sync,key,value);
   if (system(com)) {
     tempdir_warning();
   }
@@ -275,8 +266,8 @@ void set_int_pref(const gchar *key, int value) {
 }
 
 
-void set_int64_pref(const gchar *key, int64_t value) {
-  gchar *com=lives_strdup_printf("%s set_pref \"%s\" %"PRId64,prefs->backend_sync,key,value);
+void set_int_pref(const char *key, int value) {
+  char *com=lives_strdup_printf("%s set_pref \"%s\" %d",prefs->backend_sync,key,value);
   if (system(com)) {
     tempdir_warning();
   }
@@ -284,8 +275,8 @@ void set_int64_pref(const gchar *key, int64_t value) {
 }
 
 
-void set_double_pref(const gchar *key, double value) {
-  gchar *com=lives_strdup_printf("%s set_pref \"%s\" %.3f",prefs->backend_sync,key,value);
+void set_int64_pref(const char *key, int64_t value) {
+  char *com=lives_strdup_printf("%s set_pref \"%s\" %"PRId64,prefs->backend_sync,key,value);
   if (system(com)) {
     tempdir_warning();
   }
@@ -293,8 +284,17 @@ void set_double_pref(const gchar *key, double value) {
 }
 
 
-void set_boolean_pref(const gchar *key, boolean value) {
-  gchar *com;
+void set_double_pref(const char *key, double value) {
+  char *com=lives_strdup_printf("%s set_pref \"%s\" %.3f",prefs->backend_sync,key,value);
+  if (system(com)) {
+    tempdir_warning();
+  }
+  lives_free(com);
+}
+
+
+void set_boolean_pref(const char *key, boolean value) {
+  char *com;
 
   if (value) {
     com=lives_strdup_printf("%s set_pref \"%s\" true",prefs->backend_sync,key);
@@ -313,12 +313,12 @@ void set_boolean_pref(const gchar *key, boolean value) {
 void set_list_pref(const char *key, LiVESList *values) {
   // set pref from a list of values
   LiVESList *xlist=values;
-  gchar *string=NULL,*tmp;
+  char *string=NULL,*tmp;
 
   while (xlist!=NULL) {
-    if (string==NULL) string=lives_strdup((gchar *)xlist->data);
+    if (string==NULL) string=lives_strdup((char *)xlist->data);
     else {
-      tmp=lives_strdup_printf("%s\n%s",string,(gchar *)xlist->data);
+      tmp=lives_strdup_printf("%s\n%s",string,(char *)xlist->data);
       lives_free(string);
       string=tmp;
     }
@@ -397,9 +397,9 @@ void set_vpp(boolean set_in_prefs) {
 
 
 static void set_temp_label_text(LiVESLabel *label) {
-  gchar *free_ds;
-  gchar *tmpx1,*tmpx2;
-  gchar *dir=future_prefs->tmpdir;
+  char *free_ds;
+  char *tmpx1,*tmpx2;
+  char *dir=future_prefs->tmpdir;
   char *markup;
 
   // use lives_strdup* since the translation string is auto-freed() 
@@ -474,22 +474,22 @@ void pref_factory_int(int prefidx, int newval) {
 
 boolean apply_prefs(boolean skip_warn) {
   // set current prefs from prefs dialog
-  const gchar *video_open_command=lives_entry_get_text(LIVES_ENTRY(prefsw->video_open_entry));
-  const gchar *audio_play_command=lives_entry_get_text(LIVES_ENTRY(prefsw->audio_command_entry));
-  const gchar *def_vid_load_dir=lives_entry_get_text(LIVES_ENTRY(prefsw->vid_load_dir_entry));
-  const gchar *def_vid_save_dir=lives_entry_get_text(LIVES_ENTRY(prefsw->vid_save_dir_entry));
-  const gchar *def_audio_dir=lives_entry_get_text(LIVES_ENTRY(prefsw->audio_dir_entry));
-  const gchar *def_image_dir=lives_entry_get_text(LIVES_ENTRY(prefsw->image_dir_entry));
-  const gchar *def_proj_dir=lives_entry_get_text(LIVES_ENTRY(prefsw->proj_dir_entry));
-  const gchar *wp_path=lives_entry_get_text(LIVES_ENTRY(prefsw->wpp_entry));
-  const gchar *frei0r_path=lives_entry_get_text(LIVES_ENTRY(prefsw->frei0r_entry));
-  const gchar *ladspa_path=lives_entry_get_text(LIVES_ENTRY(prefsw->ladspa_entry));
+  const char *video_open_command=lives_entry_get_text(LIVES_ENTRY(prefsw->video_open_entry));
+  const char *audio_play_command=lives_entry_get_text(LIVES_ENTRY(prefsw->audio_command_entry));
+  const char *def_vid_load_dir=lives_entry_get_text(LIVES_ENTRY(prefsw->vid_load_dir_entry));
+  const char *def_vid_save_dir=lives_entry_get_text(LIVES_ENTRY(prefsw->vid_save_dir_entry));
+  const char *def_audio_dir=lives_entry_get_text(LIVES_ENTRY(prefsw->audio_dir_entry));
+  const char *def_image_dir=lives_entry_get_text(LIVES_ENTRY(prefsw->image_dir_entry));
+  const char *def_proj_dir=lives_entry_get_text(LIVES_ENTRY(prefsw->proj_dir_entry));
+  const char *wp_path=lives_entry_get_text(LIVES_ENTRY(prefsw->wpp_entry));
+  const char *frei0r_path=lives_entry_get_text(LIVES_ENTRY(prefsw->frei0r_entry));
+  const char *ladspa_path=lives_entry_get_text(LIVES_ENTRY(prefsw->ladspa_entry));
 
-  gchar tmpdir[PATH_MAX];
-  gchar *theme = lives_combo_get_active_text( LIVES_COMBO(prefsw->theme_combo) );
-  gchar *audp = lives_combo_get_active_text( LIVES_COMBO(prefsw->audp_combo) );
-  gchar *audio_codec=NULL;
-  gchar *pb_quality = lives_combo_get_active_text( LIVES_COMBO(prefsw->pbq_combo) );
+  char tmpdir[PATH_MAX];
+  char *theme = lives_combo_get_active_text( LIVES_COMBO(prefsw->theme_combo) );
+  char *audp = lives_combo_get_active_text( LIVES_COMBO(prefsw->audp_combo) );
+  char *audio_codec=NULL;
+  char *pb_quality = lives_combo_get_active_text( LIVES_COMBO(prefsw->pbq_combo) );
 
   int pbq=PB_QUALITY_MED;
   int idx;
@@ -649,13 +649,13 @@ lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_warn_yuv4
 #ifdef ENABLE_OSC
 #ifdef OMC_JS_IMPL
   boolean omc_js_enable=lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_omc_js));
-  const gchar *omc_js_fname=lives_entry_get_text(LIVES_ENTRY(prefsw->omc_js_entry));
+  const char *omc_js_fname=lives_entry_get_text(LIVES_ENTRY(prefsw->omc_js_entry));
 #endif
 
 
 #ifdef OMC_MIDI_IMPL
   boolean omc_midi_enable=lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_omc_midi));
-  const gchar *omc_midi_fname=lives_entry_get_text(LIVES_ENTRY(prefsw->omc_midi_entry));
+  const char *omc_midi_fname=lives_entry_get_text(LIVES_ENTRY(prefsw->omc_midi_entry));
   int midicr=lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(prefsw->spinbutton_midicr));
   int midirpt=lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(prefsw->spinbutton_midirpt));
 
@@ -668,7 +668,7 @@ lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_warn_yuv4
 
   int rec_gb=lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(prefsw->spinbutton_rec_gb));
 
-  gchar audio_player[256];
+  char audio_player[256];
   int listlen=lives_list_length (prefs->acodec_list);
   int rec_opts=rec_frames*REC_FRAMES+rec_fps*REC_FPS+rec_effects*REC_EFFECTS+rec_clips*REC_CLIPS+rec_audio*REC_AUDIO+rec_after_pb*REC_AFTER_PB;
   uint32_t warn_mask;
@@ -684,14 +684,14 @@ lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_warn_yuv4
 #endif
 #endif
 
-  gchar *tmp;
+  char *tmp;
 
-  gchar *cdplay_device=lives_filename_from_utf8((char *)lives_entry_get_text(LIVES_ENTRY(prefsw->cdplay_entry)),-1,NULL,NULL,NULL);
+  char *cdplay_device=lives_filename_from_utf8((char *)lives_entry_get_text(LIVES_ENTRY(prefsw->cdplay_entry)),-1,NULL,NULL,NULL);
 
   if (capable->has_encoder_plugins) {
     audio_codec = lives_combo_get_active_text( LIVES_COMBO(prefsw->acodec_combo) );
 
-    for (idx=0;idx<listlen&&strcmp((gchar *)lives_list_nth_data (prefs->acodec_list,idx),audio_codec);idx++);
+    for (idx=0;idx<listlen&&strcmp((char *)lives_list_nth_data (prefs->acodec_list,idx),audio_codec);idx++);
     lives_free(audio_codec);
 
     if (idx==listlen) future_prefs->encoder.audio_codec=0;
@@ -799,7 +799,7 @@ lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_warn_yuv4
       lives_strappend (tmpdir,PATH_MAX,LIVES_TMP_NAME"/");
 
     if (strcmp(prefs->tmpdir,tmpdir)||strcmp (future_prefs->tmpdir,tmpdir)) {
-      gchar *msg;
+      char *msg;
 
       if (!check_dir_access (tmpdir)) {
 	tmp=lives_filename_to_utf8(tmpdir,-1,NULL,NULL,NULL);
@@ -887,7 +887,7 @@ lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_warn_yuv4
 
   if (capable->nmonitors>1) {
     if (gui_monitor!=prefs->gui_monitor||play_monitor!=prefs->play_monitor) {
-      gchar *str=lives_strdup_printf("%d,%d",gui_monitor,play_monitor);
+      char *str=lives_strdup_printf("%d,%d",gui_monitor,play_monitor);
       set_pref("monitors",str);
       prefs->gui_monitor=gui_monitor;
       prefs->play_monitor=play_monitor;
@@ -994,9 +994,9 @@ lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_warn_yuv4
   }
 
   // pb quality
-  if (!strcmp(pb_quality,(gchar *)lives_list_nth_data(prefsw->pbq_list,0))) pbq=PB_QUALITY_LOW;
-  if (!strcmp(pb_quality,(gchar *)lives_list_nth_data(prefsw->pbq_list,1))) pbq=PB_QUALITY_MED;
-  if (!strcmp(pb_quality,(gchar *)lives_list_nth_data(prefsw->pbq_list,2))) pbq=PB_QUALITY_HIGH;
+  if (!strcmp(pb_quality,(char *)lives_list_nth_data(prefsw->pbq_list,0))) pbq=PB_QUALITY_LOW;
+  if (!strcmp(pb_quality,(char *)lives_list_nth_data(prefsw->pbq_list,1))) pbq=PB_QUALITY_MED;
+  if (!strcmp(pb_quality,(char *)lives_list_nth_data(prefsw->pbq_list,2))) pbq=PB_QUALITY_HIGH;
 
   lives_free(pb_quality);
 
@@ -1474,7 +1474,7 @@ void rdet_acodec_changed (LiVESCombo *acodec_combo, livespointer user_data) {
     return;
   }
 
-  for (idx=0;idx<listlen&&strcmp((gchar *)lives_list_nth_data (prefs->acodec_list,idx),audio_codec);idx++);
+  for (idx=0;idx<listlen&&strcmp((char *)lives_list_nth_data (prefs->acodec_list,idx),audio_codec);idx++);
   lives_free(audio_codec);
 
   if (idx==listlen) future_prefs->encoder.audio_codec=0;
@@ -1554,7 +1554,7 @@ void set_acodec_list_from_allowed (_prefsw *prefsw, render_details *rdet) {
 
 
 void after_vpp_changed (LiVESWidget *vpp_combo, livespointer advbutton) {
-  gchar *newvpp=lives_combo_get_active_text(LIVES_COMBO(vpp_combo));
+  char *newvpp=lives_combo_get_active_text(LIVES_COMBO(vpp_combo));
   _vid_playback_plugin *tmpvpp;
 
   if (!lives_ascii_strcasecmp(newvpp,mainw->string_constants[LIVES_STRING_CONSTANT_NONE])) {
@@ -1665,7 +1665,7 @@ static void on_alsa_midi_toggled (LiVESToggleButton *tbutton, livespointer user_
 
 
 static void on_audp_entry_changed (LiVESWidget *audp_combo, livespointer ptr) {
-  gchar *audp = lives_combo_get_active_text(LIVES_COMBO(audp_combo));
+  char *audp = lives_combo_get_active_text(LIVES_COMBO(audp_combo));
 
   if (!strlen(audp)||!strcmp(audp,prefsw->audp_name)) {
     lives_free(audp);
@@ -1740,10 +1740,10 @@ static void stream_audio_toggled(LiVESToggleButton *togglebutton, livespointer u
       FILE *rfile;
       size_t rlen;
 
-      gchar buf[1024];
-      gchar *com;
+      char buf[1024];
+      char *com;
 
-      gchar *astreamer=lives_build_filename(prefs->lib_dir,PLUGIN_EXEC_DIR,PLUGIN_AUDIO_STREAM,"audiostreamer.pl",NULL);
+      char *astreamer=lives_build_filename(prefs->lib_dir,PLUGIN_EXEC_DIR,PLUGIN_AUDIO_STREAM,"audiostreamer.pl",NULL);
       
       com=lives_strdup_printf("\"%s\" check %d",astreamer,tmpvpp->audio_codec);
       lives_free(astreamer);
@@ -1835,7 +1835,7 @@ static void pref_init_list(LiVESWidget *list) {
 /*
  * Adds entry to preferences dialog list 
  */
-static void prefs_add_to_list(LiVESWidget *list, LiVESPixbuf *pix, const gchar *str, uint32_t idx) {
+static void prefs_add_to_list(LiVESWidget *list, LiVESPixbuf *pix, const char *str, uint32_t idx) {
   LiVESListStore *store;
   LiVESTreeIter iter;
 
@@ -2004,7 +2004,7 @@ _prefsw *create_prefs_dialog (void) {
   LiVESPixbuf *pixbuf_net;
   LiVESPixbuf *pixbuf_jack;
   LiVESPixbuf *pixbuf_midi;
-  gchar *icon;
+  char *icon;
 
   LiVESWidget *ins_resample;
   LiVESWidget *hbox;
@@ -2065,9 +2065,9 @@ _prefsw *create_prefs_dialog (void) {
   LiVESList *encoders = NULL;
   LiVESList *vid_playback_plugins = NULL;
   
-  gchar **array;
-  gchar *tmp,*tmp2,*tmp3;
-  gchar *theme;
+  char **array;
+  char *tmp,*tmp2,*tmp3;
+  char *theme;
 
   boolean pfsm;
   boolean has_ap_rec = FALSE;
@@ -3095,8 +3095,8 @@ _prefsw *create_prefs_dialog (void) {
     // reqest formats from the encoder plugin
     if ((ofmt_all=plugin_request_by_line(PLUGIN_ENCODERS,prefs->encoder.name,"get_formats"))!=NULL) {
       for (i=0;i<lives_list_length(ofmt_all);i++) {
-	if (get_token_count ((gchar *)lives_list_nth_data (ofmt_all,i),'|')>2) {
-	  array=lives_strsplit ((gchar *)lives_list_nth_data (ofmt_all,i),"|",-1);
+	if (get_token_count ((char *)lives_list_nth_data (ofmt_all,i),'|')>2) {
+	  array=lives_strsplit ((char *)lives_list_nth_data (ofmt_all,i),"|",-1);
 	  if (!strcmp(array[0],prefs->encoder.of_name)) {
 	    prefs->encoder.of_allowed_acodecs=atoi(array[2]);
 	  } 

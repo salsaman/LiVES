@@ -201,12 +201,6 @@ LIVES_INLINE livespointer lives_try_malloc0_n(size_t nmemb, size_t nmemb_bytes) 
 
 
 
-typedef char gchar; // TODO
-typedef int                               gint;
-typedef uchar                             guchar;
-typedef ulong                             gulong;
-
-
 #define NO_GTK
 #include "support.h"
 

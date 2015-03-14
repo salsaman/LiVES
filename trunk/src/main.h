@@ -484,10 +484,10 @@ typedef struct {
 
   /////////////////
   int frames;
-  gchar title[256];
-  gchar author[256];
-  gchar comment[256];
-  gchar keywords[256];
+  char title[256];
+  char author[256];
+  char comment[256];
+  char keywords[256];
   ////////////////
 
   lives_interlace_t interlace; ///< interlace type (if known - none, topfirst, bottomfirst or : see plugins.h)
@@ -502,17 +502,17 @@ typedef struct {
   /// the processing window
   xprocess *proc_ptr;
 
-  gchar handle[256];
+  char handle[256];
   int ohsize;
   int ovsize;
   int64_t f_size;
   int64_t afilesize;
   int old_frames; ///< for deordering, etc.
-  gchar file_name[PATH_MAX]; ///< input file
-  gchar info_file[PATH_MAX];
-  gchar name[256];  ///< the display name
-  gchar save_file_name[PATH_MAX];
-  gchar type[40];
+  char file_name[PATH_MAX]; ///< input file
+  char info_file[PATH_MAX];
+  char name[256];  ///< the display name
+  char save_file_name[PATH_MAX];
+  char type[40];
   int start;
   int end;
   int insert_start;
@@ -521,7 +521,7 @@ typedef struct {
   int progress_end;
   boolean changed;
   LiVESWidget *menuentry;
-  gulong menuentry_func;
+  ulong menuentry_func;
   boolean orig_file_name;
   boolean was_renamed;
   boolean is_untitled;
@@ -575,8 +575,8 @@ typedef struct {
 
   int undo_start;
   int undo_end;
-  gchar undo_text[32];
-  gchar redo_text[32];
+  char undo_text[32];
+  char redo_text[32];
   boolean undoable;
   boolean redoable;
 
@@ -622,7 +622,7 @@ typedef struct {
 
   // decoder data
 
-  gchar mime_type[256];
+  char mime_type[256];
 
 
   boolean deinterlace; ///< auto deinterlace
@@ -637,7 +637,7 @@ typedef struct {
 
   lives_subtitles_t *subt;
 
-  gchar *op_dir;
+  char *op_dir;
   uint64_t op_ds_warn_level; ///< current disk space warning level for any output directory
 
   boolean no_proc_sys_errors; ///< skip system error dialogs in processing
@@ -683,15 +683,15 @@ typedef struct {
   boolean has_xdg_screensaver;
 
   /// home directory - default location for config file - locale encoding
-  gchar home_dir[PATH_MAX];
+  char home_dir[PATH_MAX];
 
   /// system tempdir (e.g /tmp for linux, C:\TEMP for win32)
-  gchar system_tmpdir[PATH_MAX];  ///< kept in locale encoding
+  char system_tmpdir[PATH_MAX];  ///< kept in locale encoding
 
-  gchar *rcfile;
+  char *rcfile;
 
   /// used for returning startup messages from the backend
-  gchar startup_msg[256];
+  char startup_msg[256];
 
   // plugins
   boolean has_encoder_plugins;
@@ -702,8 +702,8 @@ typedef struct {
   short cpu_bits;
   
 
-  gchar *myname_full;
-  gchar *myname;
+  char *myname_full;
+  char *myname;
 
   boolean has_stderr;
 
@@ -806,7 +806,7 @@ typedef enum {
 // some useful functions
 
 // interface.c
-xprocess* create_processing (const gchar *text);
+xprocess* create_processing (const char *text);
 void add_to_clipmenu(void);
 void remove_from_clipmenu(void);
 void make_play_window(void);
@@ -819,36 +819,36 @@ LiVESWidget* create_cdtrack_dialog (int type, livespointer user_data);
 LiVESTextView *create_output_textview(void);
 char *choose_file(const char *dir, const char *fname, char ** const filt, LiVESFileChooserAction act, const char *title, LiVESWidget *extra);
 LiVESWidget *choose_file_with_preview (const char *dir, const char *title, int preview_type);
-void add_suffix_check(LiVESBox *box, const gchar *ext);
+void add_suffix_check(LiVESBox *box, const char *ext);
 
 
 // dialogs.c
-boolean do_progress_dialog(boolean visible, boolean cancellable, const gchar *text);
-boolean do_warning_dialog(const gchar *text);
-boolean do_warning_dialog_with_check(const gchar *text, int warn_mask_number);
-boolean do_warning_dialog_with_check_transient(const gchar *text, int warn_mask_number, LiVESWindow *transient);
-boolean do_yesno_dialog(const gchar *text);
-boolean do_yesno_dialog_with_check (const gchar *text, int warn_mask_number);
-boolean do_yesno_dialog_with_check_transient(const gchar *text, int warn_mask_number, LiVESWindow *transient);
-boolean do_yesno_dialog_with_check(const gchar *text, int warn_mask_number);
-boolean do_yesno_dialog_with_check_transient(const gchar *text, int warn_mask_number, LiVESWindow *transient);
-int do_abort_cancel_retry_dialog(const gchar *text, LiVESWindow *transient) WARN_UNUSED;
-int do_error_dialog(const gchar *text);
-int do_info_dialog(const gchar *text);
-int do_error_dialog_with_check(const gchar *text, int warn_mask_number);
-int do_blocking_error_dialog(const gchar *text);
-int do_blocking_info_dialog(const gchar *text);
-int do_error_dialog_with_check_transient(const gchar *text, boolean is_blocking, int warn_mask_number, 
+boolean do_progress_dialog(boolean visible, boolean cancellable, const char *text);
+boolean do_warning_dialog(const char *text);
+boolean do_warning_dialog_with_check(const char *text, int warn_mask_number);
+boolean do_warning_dialog_with_check_transient(const char *text, int warn_mask_number, LiVESWindow *transient);
+boolean do_yesno_dialog(const char *text);
+boolean do_yesno_dialog_with_check (const char *text, int warn_mask_number);
+boolean do_yesno_dialog_with_check_transient(const char *text, int warn_mask_number, LiVESWindow *transient);
+boolean do_yesno_dialog_with_check(const char *text, int warn_mask_number);
+boolean do_yesno_dialog_with_check_transient(const char *text, int warn_mask_number, LiVESWindow *transient);
+int do_abort_cancel_retry_dialog(const char *text, LiVESWindow *transient) WARN_UNUSED;
+int do_error_dialog(const char *text);
+int do_info_dialog(const char *text);
+int do_error_dialog_with_check(const char *text, int warn_mask_number);
+int do_blocking_error_dialog(const char *text);
+int do_blocking_info_dialog(const char *text);
+int do_error_dialog_with_check_transient(const char *text, boolean is_blocking, int warn_mask_number, 
 					 LiVESWindow *transient);
-int do_info_dialog_with_transient(const gchar *text, boolean is_blocking, LiVESWindow *transient);
-LiVESWidget* create_message_dialog (lives_dialog_t diat, const gchar *text, LiVESWindow *transient, 
+int do_info_dialog_with_transient(const char *text, boolean is_blocking, LiVESWindow *transient);
+LiVESWidget* create_message_dialog (lives_dialog_t diat, const char *text, LiVESWindow *transient, 
 				    int warn_mask_number, boolean is_blocking);
 
 
 void do_system_failed_error(const char *com, int retval, const char *addinfo);
-int do_write_failed_error_s_with_retry(const gchar *fname, const gchar *errtext, LiVESWindow *transient) WARN_UNUSED;
+int do_write_failed_error_s_with_retry(const char *fname, const char *errtext, LiVESWindow *transient) WARN_UNUSED;
 void do_write_failed_error_s(const char *filename, const char *addinfo);
-int do_read_failed_error_s_with_retry(const gchar *fname, const gchar *errtext, LiVESWindow *transient) WARN_UNUSED;
+int do_read_failed_error_s_with_retry(const char *fname, const char *errtext, LiVESWindow *transient) WARN_UNUSED;
 void do_read_failed_error_s(const char *filename, const char *addinfo);
 boolean do_header_write_error(int clip);
 int do_header_read_error_with_retry(int clip) WARN_UNUSED;
@@ -858,12 +858,12 @@ void handle_backend_errors(void);
 boolean check_backend_return(lives_clip_t *sfile);
 
 /** warn about disk space */
-gchar *ds_critical_msg(const gchar *dir, uint64_t dsval);
-gchar *ds_warning_msg(const gchar *dir, uint64_t dsval, uint64_t cwarn, uint64_t nwarn);
+char *ds_critical_msg(const char *dir, uint64_t dsval);
+char *ds_warning_msg(const char *dir, uint64_t dsval, uint64_t cwarn, uint64_t nwarn);
 boolean check_storage_space(lives_clip_t *sfile, boolean is_processing);
 
-gchar *get_upd_msg(void);
-gchar *get_new_install_msg(void);
+char *get_upd_msg(void);
+char *get_new_install_msg(void);
 
 boolean ask_permission_dialog(int what);
 boolean do_abort_check(void);
@@ -877,8 +877,8 @@ void do_mt_backup_space_error(lives_mt *, int memreq_mb);
 boolean do_clipboard_fps_warning(void);
 void perf_mem_warning(void);
 void do_dvgrab_error(void);
-boolean do_comments_dialog (lives_clip_t *sfile, gchar *filename);
-boolean do_auto_dialog(const gchar *text, int type);
+boolean do_comments_dialog (lives_clip_t *sfile, char *filename);
+boolean do_auto_dialog(const char *text, int type);
 void do_encoder_acodec_error (void);
 void do_encoder_sox_error(void);
 boolean rdet_suggest_values (int width, int height, double fps, int fps_num, int fps_denom, int arate, 
@@ -896,8 +896,8 @@ void do_rendered_fx_dialog(void);
 void do_layout_scrap_file_error(void);
 void do_layout_ascrap_file_error(void);
 void do_set_load_lmap_error(void);
-boolean do_set_duplicate_warning (const gchar *new_set);
-boolean do_set_rename_old_layouts_warning(const gchar *new_set);
+boolean do_set_duplicate_warning (const char *new_set);
+boolean do_set_rename_old_layouts_warning(const char *new_set);
 boolean do_layout_alter_frames_warning(void);
 boolean do_layout_alter_audio_warning(void);
 boolean do_yuv4m_open_warning(void);
@@ -915,26 +915,26 @@ void do_vpp_palette_error (void);
 void do_vpp_fps_error (void);
 void do_decoder_palette_error (void);
 void do_rmem_max_error (int size);
-boolean do_original_lost_warning(const gchar *fname);
-void do_no_decoder_error(const gchar *fname);
+boolean do_original_lost_warning(const char *fname);
+void do_no_decoder_error(const char *fname);
 void do_jack_noopen_warn(void);
 void do_jack_noopen_warn2(void);
 void do_jack_noopen_warn3(void);
 void do_jack_noopen_warn4(void);
-void do_file_perm_error(const gchar *file_name);
-void do_dir_perm_error(const gchar *dir_name);
-void do_dir_perm_access_error(const gchar *dir_name);
+void do_file_perm_error(const char *file_name);
+void do_dir_perm_error(const char *dir_name);
+void do_dir_perm_access_error(const char *dir_name);
 void do_encoder_img_ftm_error(render_details *rdet);
 void do_after_crash_warning (void);
 void do_bad_layout_error(void);
 void do_card_in_use_error(void);
-void do_dev_busy_error(const gchar *devstr);
+void do_dev_busy_error(const char *devstr);
 boolean do_existing_subs_warning(void);
 void do_invalid_subs_error(void);
 boolean do_erase_subs_warning(void);
-boolean do_sub_type_warning(const gchar *ext, const gchar *type_ext);
+boolean do_sub_type_warning(const char *ext, const char *type_ext);
 boolean do_move_tmpdir_dialog(void);
-void do_set_locked_warning (const gchar *setname);
+void do_set_locked_warning (const char *setname);
 void do_no_in_vdevs_error(void);
 void do_locked_in_vdevs_error(void);
 void do_do_not_close_d (void);
@@ -945,7 +945,7 @@ void do_pulse_lost_conn_error(void);
 void do_jack_lost_conn_error(void);
 
 boolean process_one (boolean visible);
-void do_threaded_dialog(gchar *translated_text, boolean has_cancel);
+void do_threaded_dialog(char *translated_text, boolean has_cancel);
 void end_threaded_dialog(void);
 void threaded_dialog_spin (void);
 void response_ok (LiVESButton *button, livespointer user_data);
@@ -961,36 +961,36 @@ void d_print_done(void);
 void d_print_file_error_failed(void);
 
 // general
-void do_text_window (const gchar *title, const gchar *text);
+void do_text_window (const char *title, const char *text);
 
 // saveplay.c
-boolean read_file_details(const gchar *file_name, boolean only_check_for_audio);
-boolean add_file_info(const gchar *check_handle, boolean aud_only);
+boolean read_file_details(const char *file_name, boolean only_check_for_audio);
+boolean add_file_info(const char *check_handle, boolean aud_only);
 boolean save_file_comments (int fileno);
 boolean reload_clip(int fileno);
 void reget_afilesize (int fileno);
 ulong deduce_file(const char *filename, double start_time, int end);
 ulong open_file (const char *filename);
-ulong open_file_sel(const gchar *file_name, double start_time, int frames);
+ulong open_file_sel(const char *file_name, double start_time, int frames);
 void open_fw_device (void);
-boolean get_new_handle(int index, const gchar *name);
+boolean get_new_handle(int index, const char *name);
 boolean get_temp_handle(int index, boolean create);
 boolean get_handle_from_info_file(int index);
 void create_cfile(void);
 void save_file (int clip, int start, int end, const char *filename);
 void play_file (void);
 void save_frame (LiVESMenuItem *menuitem, livespointer user_data);
-boolean save_frame_inner(int clip, int frame, const gchar *file_name, int width, int height, boolean from_osc);
-void wait_for_stop (const gchar *stop_command);
+boolean save_frame_inner(int clip, int frame, const char *file_name, int width, int height, boolean from_osc);
+void wait_for_stop (const char *stop_command);
 boolean save_clip_values(int which_file);
-void add_to_recovery_file (const gchar *handle);
+void add_to_recovery_file (const char *handle);
 void rewrite_recovery_file(void);
 boolean check_for_recovery_files (boolean auto_recover);
 void recover_layout_map(int numclips);
-const gchar *get_deinterlace_string(void);
+const char *get_deinterlace_string(void);
 
 // saveplay.c backup
-void backup_file(int clip, int start, int end, const gchar *filename);
+void backup_file(int clip, int start, int end, const char *filename);
 int save_event_frames(void);
 boolean write_headers (lives_clip_t *file);
 
@@ -999,7 +999,7 @@ ulong restore_file(const char *filename);
 boolean read_headers(const char *file_name);
 
 // saveplay.c sets
-void open_set_file (const gchar *set_name, int clipnum);
+void open_set_file (const char *set_name, int clipnum);
 
 
 // saveplay.c scrap file
@@ -1017,10 +1017,10 @@ typedef void (*SignalHandlerPointer)(int);
 void set_signal_handlers(SignalHandlerPointer sigfunc);
 void catch_sigint(int signum);
 void defer_sigint(int signum);
-boolean startup_message_fatal(const gchar *msg);
-boolean startup_message_nonfatal(const gchar *msg);
-boolean startup_message_info(const gchar *msg);
-boolean startup_message_nonfatal_dismissable(const gchar *msg, int warning_mask);
+boolean startup_message_fatal(const char *msg);
+boolean startup_message_nonfatal(const char *msg);
+boolean startup_message_info(const char *msg);
+boolean startup_message_nonfatal_dismissable(const char *msg, int warning_mask);
 capability *get_capabilities(void);
 void get_monitors(void);
 void set_ce_frame_from_pixbuf(LiVESImage *image, LiVESPixbuf *pixbuf, lives_painter_t *);
@@ -1028,16 +1028,16 @@ void load_start_image(int frame);
 void load_end_image(int frame);
 void load_preview_image(boolean update_always);
 
-boolean pull_frame(weed_plant_t *layer, const gchar *image_ext, weed_timecode_t tc);
+boolean pull_frame(weed_plant_t *layer, const char *image_ext, weed_timecode_t tc);
 void pull_frame_threaded (weed_plant_t *layer, const char *img_ext, weed_timecode_t tc);
 void check_layer_ready(weed_plant_t *layer);
-boolean pull_frame_at_size (weed_plant_t *layer, const gchar *image_ext, weed_timecode_t tc, 
+boolean pull_frame_at_size (weed_plant_t *layer, const char *image_ext, weed_timecode_t tc, 
 			    int width, int height, int target_palette);
 LiVESPixbuf *pull_lives_pixbuf_at_size(int clip, int frame, const char *image_ext, weed_timecode_t tc, 
 				       int width, int height, LiVESInterpType interp);
 LiVESPixbuf *pull_lives_pixbuf(int clip, int frame, const char *image_ext, weed_timecode_t tc);
 
-LiVESError * lives_pixbuf_save(LiVESPixbuf *pixbuf, gchar *fname, lives_image_type_t imgtype, 
+LiVESError * lives_pixbuf_save(LiVESPixbuf *pixbuf, char *fname, lives_image_type_t imgtype, 
 			   int quality, boolean do_chmod, LiVESError **gerrorptr);
 
 void init_track_decoders(void);
@@ -1056,7 +1056,7 @@ void switch_audio_clip(int new_file, boolean activate);
 void resize (double scale);
 void do_start_messages(void);
 void set_palette_colours (void);
-void set_main_title(const gchar *filename, int or_untitled_number);
+void set_main_title(const char *filename, int or_untitled_number);
 void set_record (void);
 
 //gui.c
@@ -1074,7 +1074,7 @@ void unblock_expose (void);
 void frame_size_update(void);
 void splash_init(void);
 void splash_end(void);
-void splash_msg(const gchar *msg, double pct);
+void splash_msg(const char *msg, double pct);
 void add_message_scroller(LiVESWidget *conter);
 void resize_widgets_for_monitor(boolean get_play_times);
 #if GTK_CHECK_VERSION(3,0,0)
@@ -1278,19 +1278,19 @@ void on_details_button_clicked (void);
 
 
 //preferences.c
-void get_pref(const gchar *key, gchar *val, int maxlen);
-void get_pref_utf8(const gchar *key, gchar *val, int maxlen);
-void get_pref_default(const gchar *key, gchar *val, int maxlen);
-boolean get_boolean_pref(const gchar *key);
-double get_double_pref(const gchar *key);
-int get_int_pref(const gchar *key);
-LiVESList *get_list_pref(const gchar *key);
-void set_pref (const gchar *key, const gchar *value);
-void delete_pref (const gchar *key);
-void set_boolean_pref(const gchar *key, boolean value);
-void set_double_pref(const gchar *key, double value);
-void set_int_pref(const gchar *key, int value);
-void set_int64_pref(const gchar *key, int64_t value);
+void get_pref(const char *key, char *val, int maxlen);
+void get_pref_utf8(const char *key, char *val, int maxlen);
+void get_pref_default(const char *key, char *val, int maxlen);
+boolean get_boolean_pref(const char *key);
+double get_double_pref(const char *key);
+int get_int_pref(const char *key);
+LiVESList *get_list_pref(const char *key);
+void set_pref (const char *key, const char *value);
+void delete_pref (const char *key);
+void set_boolean_pref(const char *key, boolean value);
+void set_double_pref(const char *key, double value);
+void set_int_pref(const char *key, int value);
+void set_int64_pref(const char *key, int64_t value);
 void set_list_pref(const char *key, LiVESList *values);
 boolean apply_prefs(boolean skip_warnings);
 void save_future_prefs(void);
@@ -1331,7 +1331,7 @@ boolean lives_osc_init(uint32_t osc_udp_port);
 boolean lives_osc_poll(livespointer data);
 void lives_osc_end(void);
 boolean lives_osc_notify(int msgtype, const char *msgstring);
-boolean lives_osc_notify_success (const gchar *msg);
+boolean lives_osc_notify_success (const char *msg);
 boolean lives_osc_notify_failure (void);
 void lives_osc_notify_cancel (void);
 #include "osc_notify.h"
@@ -1359,7 +1359,7 @@ void on_open_fw_activate (LiVESMenuItem *menuitem, livespointer format);
 #define CEIL(a,b) ((int)(((double)a+(double)b-.000000001)/((double)b))*b)
 
 
-gchar *dummychar;
+char *dummychar;
 
 void break_me(void);
 

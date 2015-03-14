@@ -51,7 +51,7 @@ static void pulse_server_cb(pa_context *c,const pa_server_info *info, void *user
 
 boolean lives_pulse_init (short startup_phase) {
   // startup pulse audio server
-  gchar *msg,*msg2;
+  char *msg,*msg2;
 
   int64_t ntime=0,stime;
 
@@ -194,7 +194,7 @@ static void pulse_audio_write_process (pa_stream *pstream, size_t nbytes, void *
 
    int64_t seek,xseek;
    int new_file;
-   gchar *filename;
+   char *filename;
    boolean from_memory=FALSE;
 
    uint8_t *buffer;
@@ -1076,8 +1076,8 @@ void set_process_callback_pulse(pulse_driver_t *pdriver, boolean activate) {
 
 int pulse_driver_activate(pulse_driver_t *pdriver) {
 // create a new client and connect it to pulse server
-  gchar *pa_clientname;
-  gchar *mypid;
+  char *pa_clientname;
+  char *mypid;
 
   pa_sample_spec pa_spec;
   pa_channel_map pa_map;
@@ -1228,7 +1228,7 @@ pulse_driver_t *pulse_get_driver(boolean is_output) {
 
 volatile aserver_message_t *pulse_get_msgq(pulse_driver_t *pulsed) {
   // force update - "volatile" doesn't seem to work...
-  gchar *tmp=lives_strdup_printf("%p %d",pulsed->msgq,pulsed->pulsed_died);
+  char *tmp=lives_strdup_printf("%p %d",pulsed->msgq,pulsed->pulsed_died);
   lives_free(tmp);
   if (pulsed->pulsed_died||mainw->aplayer_broken) return NULL;
   return pulsed->msgq;
@@ -1377,7 +1377,7 @@ void pulse_aud_pb_ready(int fileno) {
   // - set loop mode
   // - check if we need to reconnect
   // - set vals
-  gchar *tmpfilename=NULL;
+  char *tmpfilename=NULL;
   lives_clip_t *sfile=mainw->files[fileno];
   int asigned=!(sfile->signed_endian&AFORM_UNSIGNED);
   int aendian=!(sfile->signed_endian&AFORM_BIG_ENDIAN);

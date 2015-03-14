@@ -12,10 +12,10 @@
 #define PREFS_PANED_POS ((int)(200.*widget_opts.scale))
 
 typedef struct {
-  gchar bgcolour[256];
+  char bgcolour[256];
   boolean stop_screensaver;
   boolean open_maximised;
-  gchar theme[64];  ///< the theme name
+  char theme[64];  ///< the theme name
 
   short pb_quality;
 #define PB_QUALITY_LOW 1
@@ -31,7 +31,7 @@ typedef struct {
 #define AUD_PLAYER_PULSE 4
 #define AUD_PLAYER_MPLAYER2 5
 
-  gchar aplayer[512]; // name, eg. "jack","pulse","sox","mplayer","mplayer2"
+  char aplayer[512]; // name, eg. "jack","pulse","sox","mplayer","mplayer2"
 
   /// frame quantisation type
   short q_type;
@@ -41,18 +41,18 @@ typedef struct {
   char tmpdir[PATH_MAX];  ///< kept in locale encoding
 
   // utf8 encoding
-  gchar def_vid_load_dir[PATH_MAX];
-  gchar def_vid_save_dir[PATH_MAX];
-  gchar def_audio_dir[PATH_MAX];
-  gchar def_image_dir[PATH_MAX];
-  gchar def_proj_dir[PATH_MAX];
+  char def_vid_load_dir[PATH_MAX];
+  char def_vid_save_dir[PATH_MAX];
+  char def_audio_dir[PATH_MAX];
+  char def_image_dir[PATH_MAX];
+  char def_proj_dir[PATH_MAX];
 
   // locale encoding
-  gchar prefix_dir[PATH_MAX];
-  gchar lib_dir[PATH_MAX];
+  char prefix_dir[PATH_MAX];
+  char lib_dir[PATH_MAX];
 
 
-  gchar image_ext[16];
+  char image_ext[16];
 
   uint32_t warning_mask;
   // if these bits are set, we do not show the warning
@@ -102,10 +102,10 @@ typedef struct {
 
 #define WARN_MASK_LAYOUT_WIPE (1<<26)
 
-  gchar effect_command[256];
-  gchar video_open_command[256];
-  gchar audio_play_command[256];
-  gchar cdplay_device[PATH_MAX];  ///< locale encoding
+  char effect_command[256];
+  char video_open_command[256];
+  char audio_play_command[256];
+  char cdplay_device[PATH_MAX];  ///< locale encoding
   double default_fps;
   int bar_height;
   boolean pause_effect_during_preview;
@@ -152,7 +152,7 @@ typedef struct {
   boolean omc_events; ///< send other events
 
   short startup_phase; ///< -1 = fresh install, 1 = tmpdir set, 2, pre-audio start, 3, pre-tests, 100 = all tests passed
-  gchar *wm; ///<window manager name
+  char *wm; ///<window manager name
   int ocp; ///< open_compression_percent : get/set in prefs
 
   boolean antialias;
@@ -172,12 +172,12 @@ typedef struct {
 #define JACK_OPTS_TIMEBASE_MASTER (1<<7)   ///< timebase master (not implemented yet)
 #define JACK_OPTS_NO_READ_AUTOCON (1<<8)   ///< do not auto connect read clients when playing ext audio
 
-  gchar jack_tserver[256];
-  gchar jack_aserver[256];
+  char jack_tserver[256];
+  char jack_aserver[256];
 
-  gchar *fxdefsfile;
-  gchar *fxsizesfile;
-  gchar *vppdefaultsfile;
+  char *fxdefsfile;
+  char *fxsizesfile;
+  char *vppdefaultsfile;
 
   LiVESList *acodec_list;
   int acodec_list_to_format[AUDIO_CODEC_NONE];
@@ -251,8 +251,8 @@ typedef struct {
 #define OMC_DEV_FORCE_RAW_MIDI 1<<2
   uint32_t omc_dev_opts;
 
-  gchar omc_js_fname[PATH_MAX];  ///< utf8
-  gchar omc_midi_fname[PATH_MAX]; ///< utf8
+  char omc_js_fname[PATH_MAX];  ///< utf8
+  char omc_midi_fname[PATH_MAX]; ///< utf8
   
   boolean mouse_scroll_clips;
 
@@ -281,7 +281,7 @@ typedef struct {
 
   // autotransitioning in mt
   int atrans_fx;
-  gchar def_autotrans[256];
+  char def_autotrans[256];
 
   int nfx_threads;
 
@@ -322,7 +322,7 @@ typedef struct {
   uint32_t clear_disk_opts;
 
 #ifdef HAVE_YUV4MPEG
-  gchar yuvin[PATH_MAX];
+  char yuvin[PATH_MAX];
 #endif
 
   LiVESList *disabled_decoders;
@@ -378,8 +378,8 @@ enum {
 
 /// prefs window
 typedef struct {
-  gulong encoder_ofmt_fn;
-  gulong encoder_name_fn;
+  ulong encoder_ofmt_fn;
+  ulong encoder_name_fn;
   LiVESWidget *prefs_dialog;
   
   LiVESWidget *prefs_list;
@@ -524,9 +524,9 @@ typedef struct {
   LiVESWidget *forcesmon;
   LiVESWidget *forcesmon_hbox;
   LiVESList *pbq_list;
-  gchar *audp_name;
-  gchar *orig_audp_name;
-  gulong audp_entry_func;
+  char *audp_name;
+  char *orig_audp_name;
+  ulong audp_entry_func;
   LiVESWidget *checkbutton_omc_js;
   LiVESWidget *checkbutton_omc_midi;
   LiVESWidget *omc_js_entry;
@@ -561,9 +561,9 @@ typedef struct {
 } _ign_opts;
 
 typedef struct {
-  gchar tmpdir[PATH_MAX];
-  gchar theme[64];
-  gchar vpp_name[64]; ///< new video playback plugin
+  char tmpdir[PATH_MAX];
+  char theme[64];
+  char vpp_name[64]; ///< new video playback plugin
   int vpp_fixed_fps_numer;
   int vpp_fixed_fps_denom;
   double vpp_fixed_fpsd;
@@ -572,7 +572,7 @@ typedef struct {
   int vpp_fwidth;
   int vpp_fheight;
   int vpp_argc;
-  gchar **vpp_argv;
+  char **vpp_argv;
 
   _encoder encoder;
   boolean show_recent;
@@ -612,7 +612,7 @@ void on_prefDomainChanged(LiVESTreeSelection *, livespointer);
 
 void populate_combo_box(LiVESCombo *, LiVESList *data);
 
-void set_combo_box_active_string(LiVESCombo *, gchar *active_str);
+void set_combo_box_active_string(LiVESCombo *, char *active_str);
 
 void prefsw_set_astream_settings(_vid_playback_plugin *);
 void prefsw_set_rec_after_settings(_vid_playback_plugin *);

@@ -25,7 +25,7 @@
 
 
 typedef struct y4data {
-  const gchar *filename;
+  const char *filename;
   lives_yuv4m_t *yuv4mpeg;
 
   int fd;
@@ -125,7 +125,7 @@ static boolean lives_yuv_stream_start_read (lives_clip_t *sfile) {
 
   pthread_t y4thread;
 
-  gchar *filename=yuv4mpeg->filename,*tmp;
+  char *filename=yuv4mpeg->filename,*tmp;
 
   int alarm_handle=0;
 
@@ -212,7 +212,7 @@ static boolean lives_yuv_stream_start_read (lives_clip_t *sfile) {
   i=thread_data.i;
 
   if (i != Y4M_OK) {
-    gchar *tmp;
+    char *tmp;
     d_print ((tmp=lives_strdup_printf ("yuv4mpeg: %s\n", y4m_strerr (i))));
     lives_free(tmp);
     return FALSE;
@@ -330,7 +330,7 @@ void weed_layer_set_from_yuv4m (weed_plant_t *layer, lives_clip_t *sfile) {
 
 
 
-static boolean open_yuv4m_inner(const gchar *filename, const gchar *fname, int new_file, int type, int cardno) {
+static boolean open_yuv4m_inner(const char *filename, const char *fname, int new_file, int type, int cardno) {
   // create a virtual clip
   int old_file=mainw->current_file;
 
@@ -376,11 +376,11 @@ void on_open_yuv4m_activate (LiVESMenuItem *menuitem, livespointer user_data) {
   // start "playing" but open frames in yuv4mpeg format on stdin
 
   int old_file=mainw->current_file,new_file=mainw->first_free_file;
-  gchar *tmp;
-  gchar *filename;
-  gchar *fname;
+  char *tmp;
+  char *filename;
+  char *fname;
 
-  gchar *audio_real,*audio_fake;
+  char *audio_real,*audio_fake;
 
   if (menuitem && !do_yuv4m_open_warning()) return;
 
@@ -487,7 +487,7 @@ void on_open_yuv4m_activate (LiVESMenuItem *menuitem, livespointer user_data) {
 // write functions - not used currently
 
 
-boolean lives_yuv_stream_start_write (lives_yuv4m_t * yuv4mpeg, const gchar *filename, int hsize, int vsize, double fps) {
+boolean lives_yuv_stream_start_write (lives_yuv4m_t * yuv4mpeg, const char *filename, int hsize, int vsize, double fps) {
   int i;
 
   if (mainw->fixed_fpsd>-1.&&mainw->fixed_fpsd!=fps) {
@@ -526,7 +526,7 @@ boolean lives_yuv_stream_write_frame (lives_yuv4m_t *yuv4mpeg, void *pixel_data)
   // pixel_data is planar yuv420 data
   int i;
 
-  guchar *planes[3];
+  uint8_t *planes[3];
   uint8_t *pixels=(uint8_t *)pixel_data;
 
   planes[0]=&(pixels[0]);
@@ -586,13 +586,13 @@ void on_live_tvcard_activate (LiVESMenuItem *menuitem, livespointer user_data) {
 
   int response;
 
-  gchar *com,*tmp;
-  gchar *fifofile=lives_strdup_printf("%s/tvpic.%d",prefs->tmpdir,capable->mainpid);
+  char *com,*tmp;
+  char *fifofile=lives_strdup_printf("%s/tvpic.%d",prefs->tmpdir,capable->mainpid);
 
-  gchar *chanstr;
-  gchar *devstr;
+  char *chanstr;
+  char *devstr;
 
-  gchar *fname;
+  char *fname;
 
   LiVESWidget *card_dialog;
 
@@ -664,7 +664,7 @@ void on_live_tvcard_activate (LiVESMenuItem *menuitem, livespointer user_data) {
   }
   else {
     double fps=0.;
-    gchar *driver=NULL,*outfmt=NULL;
+    char *driver=NULL,*outfmt=NULL;
     int width=0,height=0;
     int input=lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(tvcardw->spinbuttoni));
     
@@ -724,7 +724,7 @@ void on_live_tvcard_activate (LiVESMenuItem *menuitem, livespointer user_data) {
 
 void on_live_fw_activate (LiVESMenuItem *menuitem, livespointer user_data) {
 
-  gchar *com,*tmp;
+  char *com,*tmp;
   int cardno;
   int cache=1024;
 
@@ -732,8 +732,8 @@ void on_live_fw_activate (LiVESMenuItem *menuitem, livespointer user_data) {
 
   int response;
 
-  gchar *fifofile=lives_strdup_printf("%s/firew.%d",prefs->tmpdir,capable->mainpid);
-  gchar *fname;
+  char *fifofile=lives_strdup_printf("%s/firew.%d",prefs->tmpdir,capable->mainpid);
+  char *fname;
 
   LiVESWidget *card_dialog;
 

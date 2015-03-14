@@ -14,12 +14,12 @@
 
 
 
-static boolean prompt_existing_dir(gchar *dirname, uint64_t freespace, boolean wrtable) {
-  gchar *msg;
+static boolean prompt_existing_dir(char *dirname, uint64_t freespace, boolean wrtable) {
+  char *msg;
   boolean res=FALSE;
 
   if (wrtable) {
-    gchar *fspstr=lives_format_storage_space_string(freespace);
+    char *fspstr=lives_format_storage_space_string(freespace);
     msg=lives_strdup_printf
       (_("A directory named\n%s\nalready exists. Do you wish to use this directory ?\n\n(Free space = %s)\n"),dirname,fspstr);
     lives_free(fspstr);
@@ -40,11 +40,11 @@ static boolean prompt_existing_dir(gchar *dirname, uint64_t freespace, boolean w
 
 
 
-static boolean prompt_new_dir(gchar *dirname, uint64_t freespace, boolean wrtable) {
+static boolean prompt_new_dir(char *dirname, uint64_t freespace, boolean wrtable) {
   boolean res=FALSE;
-  gchar *msg;
+  char *msg;
   if (wrtable) {
-    gchar *fspstr=lives_format_storage_space_string(freespace);
+    char *fspstr=lives_format_storage_space_string(freespace);
     msg=lives_strdup_printf(_("\nCreate the directory\n%s\n?\n\n(Free space = %s)"),dirname,fspstr);
     lives_free(fspstr);
     res=do_warning_dialog(msg);
@@ -68,9 +68,9 @@ boolean do_tempdir_query(void) {
   int response;
   boolean ok=FALSE;
 
-  gchar *dirname;
+  char *dirname;
 #ifndef IS_MINGW
-  gchar *com;
+  char *com;
 #endif
 
  top:
@@ -86,7 +86,7 @@ boolean do_tempdir_query(void) {
     dirname=lives_strdup(lives_entry_get_text(LIVES_ENTRY(tdentry->entry)));
 
     if (strcmp(dirname+strlen(dirname)-1,LIVES_DIR_SEPARATOR_S)) {
-      gchar *tmp=lives_strdup_printf("%s%s",dirname,LIVES_DIR_SEPARATOR_S);
+      char *tmp=lives_strdup_printf("%s%s",dirname,LIVES_DIR_SEPARATOR_S);
       lives_free(dirname);
       dirname=tmp;
     }
@@ -214,7 +214,7 @@ boolean do_audio_choice_dialog(short startup_phase) {
 
   LiVESSList *radiobutton_group = NULL;
 
-  gchar *txt0,*txt1,*txt2,*txt3,*txt4,*txt5,*txt6,*txt7,*msg;
+  char *txt0,*txt1,*txt2,*txt3,*txt4,*txt5,*txt6,*txt7,*msg;
 
   int response;
 
@@ -432,7 +432,7 @@ boolean do_audio_choice_dialog(short startup_phase) {
 }
 
 
-static void add_test(LiVESWidget *table, int row, gchar *ttext, boolean noskip) {
+static void add_test(LiVESWidget *table, int row, char *ttext, boolean noskip) {
   LiVESWidget *label=lives_standard_label_new(ttext);
 
   lives_table_attach (LIVES_TABLE (table), label, 0, 1, row, row+1, (LiVESAttachOptions)0, (LiVESAttachOptions)0, 10, 10);
@@ -475,7 +475,7 @@ static boolean pass_test(LiVESWidget *table, int row) {
 }
 
 
-static boolean fail_test(LiVESWidget *table, int row, gchar *ftext) {
+static boolean fail_test(LiVESWidget *table, int row, char *ftext) {
   LiVESWidget *label;
 #if GTK_CHECK_VERSION(3,10,0)
   LiVESWidget *image=lives_image_new_from_stock(LIVES_STOCK_REMOVE,LIVES_ICON_SIZE_LARGE_TOOLBAR);
@@ -503,7 +503,7 @@ static boolean fail_test(LiVESWidget *table, int row, gchar *ftext) {
 }
 
 
-LIVES_INLINE gchar *get_resource(gchar *fname) {
+LIVES_INLINE char *get_resource(char *fname) {
   return lives_strdup_printf("%s%sresources/%s",prefs->prefix_dir,DATA_DIR,fname);
 }
 
@@ -520,9 +520,9 @@ boolean do_startup_tests(boolean tshoot) {
 
   LiVESAccelGroup *accel_group;
 
-  gchar *com,*rname,*afile,*tmp;
-  gchar *image_ext=lives_strdup(prefs->image_ext);
-  gchar *title;
+  char *com,*rname,*afile,*tmp;
+  char *image_ext=lives_strdup(prefs->image_ext);
+  char *title;
 
   uint8_t *abuff;
 
@@ -943,7 +943,7 @@ void do_startup_interface_query(void) {
   LiVESWidget *okbutton;
   LiVESWidget *hbox;
   LiVESSList *radiobutton_group = NULL;
-  gchar *txt1,*txt2,*txt3,*msg;
+  char *txt1,*txt2,*txt3,*msg;
 
   txt1=lives_strdup(_("\n\nFinally, you can choose the default startup interface for LiVES.\n"));
   txt2=lives_strdup(_("\n\nLiVES has two main interfaces and you can start up with either of them.\n"));

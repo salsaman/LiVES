@@ -47,9 +47,9 @@ static LiVESWidget *load_keymap_button;
 
 static LiVESWidget *datacon_dialog=NULL;
 
-static gulong *ch_fns;
-static gulong *gr_fns;
-static gulong *mode_ra_fns;
+static ulong *ch_fns;
+static ulong *gr_fns;
+static ulong *mode_ra_fns;
 
 static int keyw=-1,modew=-1;
 
@@ -119,7 +119,7 @@ void ret_set_key_check_state(void) {
 void type_label_set_text (int key, int mode) {
   int modes=rte_getmodespk();
   int idx=key*modes+mode;
-  gchar *type=rte_keymode_get_type(key+1,mode);
+  char *type=rte_keymode_get_type(key+1,mode);
 
   if (strlen(type)) {
     lives_label_set_text (LIVES_LABEL(type_labels[idx]),lives_strdup_printf(_("Type: %s"),type));
@@ -179,7 +179,7 @@ boolean on_clear_all_clicked (LiVESButton *button, livespointer user_data) {
 }
 
 
-static boolean save_keymap2_file(gchar *kfname) {
+static boolean save_keymap2_file(char *kfname) {
   // save perkey defaults
   int slen;
   int version=1;
@@ -188,7 +188,7 @@ static boolean save_keymap2_file(gchar *kfname) {
   int retval;
   int i,j;
 
-  gchar *hashname,*tmp;
+  char *hashname,*tmp;
 
   do {
     retval=0;
@@ -233,10 +233,10 @@ static boolean save_keymap2_file(gchar *kfname) {
 
 
 
-static boolean save_keymap3_file(gchar *kfname) {
+static boolean save_keymap3_file(char *kfname) {
   // save data connections
 
-  gchar *hashname;
+  char *hashname;
 
   int version=1;
 
@@ -450,10 +450,10 @@ static boolean on_save_keymap_clicked (LiVESButton *button, livespointer user_da
   FILE *kfile;
   LiVESList *list=NULL;
 
-  gchar *msg,*tmp;
-  gchar *keymap_file=lives_build_filename(capable->home_dir,LIVES_CONFIG_DIR,"default.keymap",NULL);
-  gchar *keymap_file2=lives_build_filename(capable->home_dir,LIVES_CONFIG_DIR,"default.keymap2",NULL);
-  gchar *keymap_file3=lives_build_filename(capable->home_dir,LIVES_CONFIG_DIR,"default.keymap3",NULL);
+  char *msg,*tmp;
+  char *keymap_file=lives_build_filename(capable->home_dir,LIVES_CONFIG_DIR,"default.keymap",NULL);
+  char *keymap_file2=lives_build_filename(capable->home_dir,LIVES_CONFIG_DIR,"default.keymap2",NULL);
+  char *keymap_file3=lives_build_filename(capable->home_dir,LIVES_CONFIG_DIR,"default.keymap3",NULL);
 
   boolean update=FALSE;
 
@@ -503,7 +503,7 @@ static boolean on_save_keymap_clicked (LiVESButton *button, livespointer user_da
       }
       else {
 	for (i=0;i<lives_list_length(list);i++) {
-	  lives_fputs((gchar *)lives_list_nth_data(list,i),kfile);
+	  lives_fputs((char *)lives_list_nth_data(list,i),kfile);
 	}
       }
       
@@ -553,7 +553,7 @@ void on_save_rte_defs_activate (LiVESMenuItem *menuitem, livespointer user_data)
   int fd,i;
   int retval;
   int numfx;
-  gchar *msg;
+  char *msg;
 
   if (prefs->fxdefsfile==NULL) {
     prefs->fxdefsfile=lives_build_filename(capable->home_dir,LIVES_CONFIG_DIR,"fxdefs",NULL);
@@ -649,7 +649,7 @@ void on_save_rte_defs_activate (LiVESMenuItem *menuitem, livespointer user_data)
 void load_rte_defs (void) {
   int fd;
   int retval;
-  gchar *msg,*msg2;
+  char *msg,*msg2;
   void *buf;
   ssize_t bytes;
 
@@ -677,7 +677,7 @@ void load_rte_defs (void) {
 	buf=lives_malloc(strlen(msg));
 	bytes=lives_read_buffered(fd,buf,strlen(msg),TRUE);
       
-	if (bytes==strlen(msg)&&!strncmp((gchar *)buf,msg,strlen(msg))) {
+	if (bytes==strlen(msg)&&!strncmp((char *)buf,msg,strlen(msg))) {
 	  if (read_filter_defaults(fd)) {
 	    d_print_done();
 	  }
@@ -725,7 +725,7 @@ void load_rte_defs (void) {
 	msg=lives_strdup("LiVES generator default sizes file version 2\n");
 	buf=lives_malloc(strlen(msg));
 	bytes=lives_read_buffered(fd,buf,strlen(msg),TRUE);
-	if (bytes==strlen(msg)&&!strncmp((gchar *)buf,msg,strlen(msg))) {
+	if (bytes==strlen(msg)&&!strncmp((char *)buf,msg,strlen(msg))) {
 	  if (read_generator_sizes(fd)) {
 	    d_print_done();
 	  }
@@ -792,14 +792,14 @@ static boolean read_perkey_defaults(int kfd, int key, int mode, int version) {
 
 
 
-static boolean load_datacons(const gchar *fname, uint8_t **badkeymap) {
+static boolean load_datacons(const char *fname, uint8_t **badkeymap) {
   weed_plant_t **ochans,**ichans,**iparams;
 
   weed_plant_t *filter;
 
   ssize_t bytes;
 
-  gchar *hashname;
+  char *hashname;
 
   boolean ret=TRUE;
   boolean is_valid,is_valid2;
@@ -870,7 +870,7 @@ static boolean load_datacons(const gchar *fname, uint8_t **badkeymap) {
 	  break;
 	}
 	  
-	hashname=(gchar *)lives_try_malloc(hlen+1);
+	hashname=(char *)lives_try_malloc(hlen+1);
 
 	if (hashname==NULL) {
 	  eof=TRUE;
@@ -900,7 +900,7 @@ static boolean load_datacons(const gchar *fname, uint8_t **badkeymap) {
 	  int fidx=rte_keymode_get_filter_idx(okey+1,omode);
 	  if (fidx==-1) is_valid=FALSE;
 	  else {
-	    gchar *hashname2=make_weed_hashname(fidx,TRUE,FALSE);
+	    char *hashname2=make_weed_hashname(fidx,TRUE,FALSE);
 	    if (strcmp(hashname,hashname2)) is_valid=FALSE;
 	    lives_free(hashname2);
 	    if (!is_valid) {
@@ -963,7 +963,7 @@ static boolean load_datacons(const gchar *fname, uint8_t **badkeymap) {
 	      break;
 	    }
 	      
-	    hashname=(gchar *)lives_try_malloc(hlen+1);
+	    hashname=(char *)lives_try_malloc(hlen+1);
 
 	    if (hashname==NULL) {
 	      eof=TRUE;
@@ -993,7 +993,7 @@ static boolean load_datacons(const gchar *fname, uint8_t **badkeymap) {
 	      int fidx=rte_keymode_get_filter_idx(ikey+1,imode);
 	      if (fidx==-1) is_valid2=FALSE;
 	      else {
-		gchar *hashname2=make_weed_hashname(fidx,TRUE,FALSE);
+		char *hashname2=make_weed_hashname(fidx,TRUE,FALSE);
 		if (strcmp(hashname,hashname2)) is_valid2=FALSE;
 		lives_free(hashname2);
 		if (!is_valid2) {
@@ -1076,7 +1076,7 @@ static boolean load_datacons(const gchar *fname, uint8_t **badkeymap) {
 	  break;
 	}
 
-	hashname=(gchar *)lives_try_malloc(hlen+1);
+	hashname=(char *)lives_try_malloc(hlen+1);
 
 	if (hashname==NULL) {
 	  eof=TRUE;
@@ -1107,7 +1107,7 @@ static boolean load_datacons(const gchar *fname, uint8_t **badkeymap) {
 	  int fidx=rte_keymode_get_filter_idx(okey+1,omode);
 	  if (fidx==-1) is_valid=FALSE;
 	  else {
-	    gchar *hashname2=make_weed_hashname(fidx,TRUE,FALSE);
+	    char *hashname2=make_weed_hashname(fidx,TRUE,FALSE);
 	    if (strcmp(hashname,hashname2)) is_valid=FALSE;
 	    lives_free(hashname2);
 	    if (!is_valid) {
@@ -1165,7 +1165,7 @@ static boolean load_datacons(const gchar *fname, uint8_t **badkeymap) {
 	      break;
 	    }
 	      
-	    hashname=(gchar *)lives_try_malloc(hlen+1);
+	    hashname=(char *)lives_try_malloc(hlen+1);
 
 	    if (hashname==NULL) {
 	      eof=TRUE;
@@ -1194,7 +1194,7 @@ static boolean load_datacons(const gchar *fname, uint8_t **badkeymap) {
 	      int fidx=rte_keymode_get_filter_idx(ikey+1,imode);
 	      if (fidx==-1) is_valid2=FALSE;
 	      else {
-		gchar *hashname2=make_weed_hashname(fidx,TRUE,FALSE);
+		char *hashname2=make_weed_hashname(fidx,TRUE,FALSE);
 		if (strcmp(hashname,hashname2)) is_valid2=FALSE;
 		lives_free(hashname2);
 		if (!is_valid2) {
@@ -1301,17 +1301,17 @@ boolean on_load_keymap_clicked (LiVESButton *button, livespointer user_data) {
   size_t linelen;
   ssize_t bytes;
 
-  gchar buff[65536];
-  gchar *msg,*tmp;
-  gchar *whole=lives_strdup (""),*whole2;
-  gchar *hashname,*hashname_new=NULL;
+  char buff[65536];
+  char *msg,*tmp;
+  char *whole=lives_strdup (""),*whole2;
+  char *hashname,*hashname_new=NULL;
 
-  gchar *line=NULL;
-  gchar *whashname;
+  char *line=NULL;
+  char *whashname;
 
-  gchar *keymap_file=lives_build_filename(capable->home_dir,LIVES_CONFIG_DIR,"default.keymap",NULL);
-  gchar *keymap_file2=lives_build_filename(capable->home_dir,LIVES_CONFIG_DIR,"default.keymap2",NULL);
-  gchar *keymap_file3=lives_build_filename(capable->home_dir,LIVES_CONFIG_DIR,"default.keymap3",NULL);
+  char *keymap_file=lives_build_filename(capable->home_dir,LIVES_CONFIG_DIR,"default.keymap",NULL);
+  char *keymap_file2=lives_build_filename(capable->home_dir,LIVES_CONFIG_DIR,"default.keymap2",NULL);
+  char *keymap_file3=lives_build_filename(capable->home_dir,LIVES_CONFIG_DIR,"default.keymap3",NULL);
 
   int *def_modes;
   uint8_t **badkeymap;
@@ -1415,9 +1415,9 @@ boolean on_load_keymap_clicked (LiVESButton *button, livespointer user_data) {
     }
     fclose (kfile);
 
-    if (!strcmp((gchar *)lives_list_nth_data(list,0),"LiVES keymap file version 2")||
-	!strcmp((gchar *)lives_list_nth_data(list,0),"LiVES keymap file version 1")) update=1;
-    if (!strcmp((gchar *)lives_list_nth_data(list,0),"LiVES keymap file version 3")) update=2;
+    if (!strcmp((char *)lives_list_nth_data(list,0),"LiVES keymap file version 2")||
+	!strcmp((char *)lives_list_nth_data(list,0),"LiVES keymap file version 1")) update=1;
+    if (!strcmp((char *)lives_list_nth_data(list,0),"LiVES keymap file version 3")) update=2;
   }
   else {
     // newer style
@@ -1432,12 +1432,12 @@ boolean on_load_keymap_clicked (LiVESButton *button, livespointer user_data) {
   lives_free (whole);
 
   for (i=1;(keymap_file2==NULL&&i<lives_list_length(list))||(keymap_file2!=NULL&&!eof);i++) {
-    gchar **array;
+    char **array;
 
     if (keymap_file2==NULL) {
       // old style
 
-      line=(gchar *)lives_list_nth_data(list,i);
+      line=(char *)lives_list_nth_data(list,i);
     
       if (get_token_count(line,'|')<2) {
 	d_print((tmp=lives_strdup_printf(_("Invalid line %d in %s\n"),i,keymap_file)));
@@ -1496,7 +1496,7 @@ boolean on_load_keymap_clicked (LiVESButton *button, livespointer user_data) {
 	break;
       }
 
-      hashname=(gchar *)lives_try_malloc(hlen+1);
+      hashname=(char *)lives_try_malloc(hlen+1);
 
       if (hashname==NULL) {
 	eof=TRUE;
@@ -1602,7 +1602,7 @@ boolean on_load_keymap_clicked (LiVESButton *button, livespointer user_data) {
       lives_free(tmp);
 
       if (fx_idx!=-1) {
-	hashname=(gchar *)lives_list_nth_data(hash_list,fx_idx);
+	hashname=(char *)lives_list_nth_data(hash_list,fx_idx);
 	lives_widget_object_set_data(LIVES_WIDGET_OBJECT(combos[idx]),"hashname",hashname);
       }
       else lives_widget_object_set_data(LIVES_WIDGET_OBJECT(combos[idx]),"hashname",empty_string);
@@ -1690,13 +1690,13 @@ void on_rte_info_clicked (LiVESButton *button, livespointer user_data) {
   LiVESWidget *hbuttonbox;
   LiVESWidget *ok_button;
 
-  gchar *filter_name;
-  gchar *filter_author;
-  gchar *filter_extra_authors=NULL;
-  gchar *filter_description;
-  gchar *tmp;
-  gchar *type;
-  gchar *plugin_name;
+  char *filter_name;
+  char *filter_author;
+  char *filter_extra_authors=NULL;
+  char *filter_description;
+  char *tmp;
+  char *type;
+  char *plugin_name;
 
   boolean has_desc=FALSE;
 
@@ -2022,10 +2022,10 @@ void fx_changed (LiVESCombo *combo, livespointer user_data) {
   LiVESTreeIter iter1;
   LiVESTreeModel *model;
 
-  gchar *txt;
-  gchar *tmp;
-  gchar *hashname1;
-  gchar *hashname2=(gchar *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(combo),"hashname");
+  char *txt;
+  char *tmp;
+  char *hashname1;
+  char *hashname2=(char *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(combo),"hashname");
 
   int key_mode=LIVES_POINTER_TO_INT(user_data);
   int modes=rte_getmodespk();
@@ -2112,12 +2112,12 @@ static LiVESTreeModel *rte_window_fx_model (void) {
 
   int error;
 
-  gchar *pkg=NULL,*pkgstring,*fxname;
+  char *pkg=NULL,*pkgstring,*fxname;
 
   tstore=lives_tree_store_new (NUM_COLUMNS, LIVES_COL_TYPE_STRING, LIVES_COL_TYPE_STRING, LIVES_COL_TYPE_STRING);
 
   while (list!=NULL) {
-    weed_plant_t *filter=get_weed_filter(weed_get_idx_for_hashname((gchar *)lives_list_nth_data(hash_list,fx_idx),TRUE));
+    weed_plant_t *filter=get_weed_filter(weed_get_idx_for_hashname((char *)lives_list_nth_data(hash_list,fx_idx),TRUE));
     int filter_flags=weed_get_int_value(filter,"flags",&error);
     if ((weed_plant_has_leaf(filter,"plugin_unstable")&&weed_get_boolean_value(filter,"plugin_unstable",&error)==
 	 WEED_TRUE&&!prefs->unstable_fx)||((enabled_in_channels(filter,FALSE)>1&&
@@ -2131,7 +2131,7 @@ static LiVESTreeModel *rte_window_fx_model (void) {
     }
 
 
-    fxname=lives_strdup((gchar *)lives_list_nth_data(name_list,fx_idx));
+    fxname=lives_strdup((char *)lives_list_nth_data(name_list,fx_idx));
 
     if ((pkgstring=strstr(fxname,": "))!=NULL) {
       // package effect
@@ -2200,7 +2200,7 @@ LiVESWidget * create_rte_window (void) {
 
   LiVESTreeModel *model;
 
-  gchar *tmp,*tmp2;
+  char *tmp,*tmp2;
 
   int modes=rte_getmodespk();
 
@@ -2249,9 +2249,9 @@ LiVESWidget * create_rte_window (void) {
   nlabels=(LiVESWidget **)lives_malloc((prefs->rte_keys_virtual)*modes*sizeof(LiVESWidget *));
   type_labels=(LiVESWidget **)lives_malloc((prefs->rte_keys_virtual)*modes*sizeof(LiVESWidget *));
 
-  ch_fns=(gulong *)lives_malloc((prefs->rte_keys_virtual)*sizeof(gulong));
-  gr_fns=(gulong *)lives_malloc((prefs->rte_keys_virtual)*sizeof(gulong));
-  mode_ra_fns=(gulong *)lives_malloc((prefs->rte_keys_virtual)*modes*sizeof(gulong));
+  ch_fns=(ulong *)lives_malloc((prefs->rte_keys_virtual)*sizeof(ulong));
+  gr_fns=(ulong *)lives_malloc((prefs->rte_keys_virtual)*sizeof(ulong));
+  mode_ra_fns=(ulong *)lives_malloc((prefs->rte_keys_virtual)*modes*sizeof(ulong));
 
   rte_window = lives_window_new (LIVES_WINDOW_TOPLEVEL);
   if (palette->style&STYLE_1) {
@@ -2678,7 +2678,7 @@ void rte_set_defs_ok (LiVESButton *button, lives_rfx_t *rfx) {
 	update_weed_color_value(filter,i,rgbp->red,rgbp->green,rgbp->blue,0);
 	break;
       case LIVES_PARAM_STRING:
-	weed_set_string_value(ptmpl,"host_default",(gchar *)rfx->params[i].value);
+	weed_set_string_value(ptmpl,"host_default",(char *)rfx->params[i].value);
 	break;
       case LIVES_PARAM_STRING_LIST:
 	weed_set_int_array(ptmpl,"host_default",1,(int *)rfx->params[i].value);
@@ -2844,10 +2844,10 @@ void rte_reset_defs_clicked (LiVESButton *button, lives_rfx_t *rfx) {
 
 void load_default_keymap(void) {
   // called on startup
-  gchar *dir=lives_build_filename(capable->home_dir,LIVES_CONFIG_DIR,NULL);
-  gchar *keymap_file=lives_build_filename(dir,"default.keymap",NULL);
-  gchar *keymap_template=lives_build_filename(prefs->prefix_dir,DATA_DIR,"default.keymap",NULL);
-  gchar *com,*tmp;
+  char *dir=lives_build_filename(capable->home_dir,LIVES_CONFIG_DIR,NULL);
+  char *keymap_file=lives_build_filename(dir,"default.keymap",NULL);
+  char *keymap_template=lives_build_filename(prefs->prefix_dir,DATA_DIR,"default.keymap",NULL);
+  char *com,*tmp;
 
   int retval;
 

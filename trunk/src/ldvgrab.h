@@ -32,7 +32,7 @@ void cameject (s_cam *cam);
 
 void close_raw1394(raw1394handle_t handle);
 
-gchar *find_free_camfile(int format);
+char *find_free_camfile(int format);
 
 
 struct _dvgrabw {
@@ -46,8 +46,8 @@ struct _dvgrabw {
   LiVESWidget *split;
   LiVESXCursor *cursor;
   boolean playing;
-  gchar *dirname;
-  gchar *filename;
+  char *dirname;
+  char *filename;
   s_cam *cam;
 };
 

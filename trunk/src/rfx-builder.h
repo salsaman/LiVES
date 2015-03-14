@@ -214,10 +214,10 @@ typedef struct {
   char *script_name;
   char *oname;
 
-  gulong min_spin_f;
-  gulong max_spin_f;
-  gulong def_spin_f;
-  gulong step_spin_f;
+  ulong min_spin_f;
+  ulong max_spin_f;
+  ulong def_spin_f;
+  ulong step_spin_f;
 
   char *rfx_version;
   int plugin_version;

@@ -23,15 +23,15 @@
 
 
 #ifdef OMC_JS_IMPL
-gchar *js_mangle(void);
+char *js_mangle(void);
 boolean js_open(void);
 void js_close(void);
-const gchar *get_js_filename(void);
+const char *get_js_filename(void);
 #endif
 
 #ifdef OMC_MIDI_IMPL
-gchar *midi_mangle(void);
-const gchar *get_midi_filename(void);
+char *midi_mangle(void);
+const char *get_midi_filename(void);
 boolean midi_open(void);
 void midi_close(void);
 #endif
@@ -42,14 +42,14 @@ void midi_close(void);
 #define OMC_PARAM_SPECIAL 128 ///< can be int or double, depending on effect type
 
 typedef struct {
-  gchar *msg;   ///< OSC message
-  gchar *macro_text;  ///< macro text
-  gchar *info_text;  ///< descriptive text
-  gchar *stype_tags;   ///< setter type tags
+  char *msg;   ///< OSC message
+  char *macro_text;  ///< macro text
+  char *info_text;  ///< descriptive text
+  char *stype_tags;   ///< setter type tags
 
   int nparams;
 
-  gchar **pname;
+  char **pname;
 
   int *ptypes;
 
@@ -68,7 +68,7 @@ typedef struct {
 
 
 typedef struct {
-  gchar *srch; ///< string to match
+  char *srch; ///< string to match
   int macro; ///< macro number this is linked to (or -1)
 
   int nvars; ///< number of params
@@ -151,7 +151,7 @@ void on_midi_learn_activate (LiVESMenuItem *, livespointer);
 
 /// process a string (i.e. convert to an OSC message and pass to OSC subsys)
 /// only need to set omclw if learn is TRUE
-boolean omc_process_string(int supertype, const gchar *string, boolean learn, omclearn_w *omclw);
+boolean omc_process_string(int supertype, const char *string, boolean learn, omclearn_w *omclw);
 
 
 
@@ -168,7 +168,7 @@ void on_midi_load_activate (LiVESMenuItem *, livespointer);
 #define OSC_MAX_TYPETAGS 64 
 
 /// decode learnt behaviours
-OSCbuf *omc_learner_decode(int type, int index, const gchar *string);
+OSCbuf *omc_learner_decode(int type, int index, const char *string);
 
 
 #endif // HAS_LIVES_OMC_LEARN_H

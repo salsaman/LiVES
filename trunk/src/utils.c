@@ -1417,7 +1417,7 @@ LIVES_INLINE float LEFloat_to_BEFloat(float f) {
   char *b=(char *)(&f);
   if (capable->byte_order==LIVES_LITTLE_ENDIAN) {
     float fl;
-    guchar rev[4];
+    uint8_t rev[4];
     rev[0]=b[3];
     rev[1]=b[2];
     rev[2]=b[1];
@@ -5281,7 +5281,7 @@ LiVESList *lives_list_copy_strings(LiVESList *list) {
   LiVESList *xlist=NULL,*olist=list;
 
   while (olist!=NULL) {
-    xlist=lives_list_append(xlist,lives_strdup((gchar *)olist->data));
+    xlist=lives_list_append(xlist,lives_strdup((char *)olist->data));
     olist=olist->next;
   }
 

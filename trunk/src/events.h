@@ -120,8 +120,8 @@ typedef struct {
   LiVESWidget *backaudio_checkbutton;
   LiVESWidget *always_checkbutton;
   LiVESWidget *always_hbox;
-  gulong encoder_name_fn;
-  gulong encoder_ofmt_fn;
+  ulong encoder_name_fn;
+  ulong encoder_ofmt_fn;
   boolean enc_changed;
   char *encoder_name;
   boolean suggestion_followed;

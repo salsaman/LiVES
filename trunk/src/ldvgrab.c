@@ -105,7 +105,7 @@ void camdest(s_cam *cam) {
 }
 
 s_cam *camready (void) {
-  gchar *msg;
+  char *msg;
   rom1394_directory rom_dir;
   int i,j;
 
@@ -212,10 +212,10 @@ void cameject (s_cam *cam) {
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
-gchar *find_free_camfile(int format) {
-  gchar *filename=lives_strdup(lives_entry_get_text(LIVES_ENTRY(dvgrabw->filent)));
+char *find_free_camfile(int format) {
+  char *filename=lives_strdup(lives_entry_get_text(LIVES_ENTRY(dvgrabw->filent)));
   int i;
-  gchar *fname,*tmp=NULL,*tmp2,*tmp3;
+  char *fname,*tmp=NULL,*tmp2,*tmp3;
 
   if (format==CAM_FORMAT_HDV) {
     for (i=1;i<10000;i++) {
@@ -251,8 +251,8 @@ gchar *find_free_camfile(int format) {
 boolean rec(s_cam *cam) {
   // returns filename of file being written
 
-  gchar *tmp2,*tmp3,*com;
-  gchar *splits;
+  char *tmp2,*tmp3,*com;
+  char *splits;
 
   if (cam->pgid!=0) return FALSE;
 

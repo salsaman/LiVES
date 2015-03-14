@@ -6912,7 +6912,7 @@ LIVES_INLINE lives_display_t lives_widget_get_display_type(LiVESWidget *widget) 
 }
 
 
-LIVES_INLINE uint64_t lives_widget_get_xwinid(LiVESWidget *widget, const gchar *msg) {
+LIVES_INLINE uint64_t lives_widget_get_xwinid(LiVESWidget *widget, const char *msg) {
   uint64_t xwin=-1;
 #ifdef GUI_GTK
 #ifdef GDK_WINDOWING_X11
@@ -7057,7 +7057,7 @@ void lives_painter_set_source_to_bg(lives_painter_t *cr, LiVESWidget *widget) {
 void lives_tooltips_copy(LiVESWidget *dest, LiVESWidget *source) {
 #ifdef GUI_GTK
 #if GTK_CHECK_VERSION(2,12,0)
-  gchar *text=gtk_widget_get_tooltip_text(source);
+  char *text=gtk_widget_get_tooltip_text(source);
   lives_widget_set_tooltip_text(dest,text);
   lives_free(text);
 #else
@@ -7853,7 +7853,7 @@ boolean lives_entry_set_completion_from_list(LiVESEntry *entry, LiVESList *xlist
   while (xlist != NULL) {
     LiVESTreeIter iter;
     gtk_list_store_append (store, &iter);
-    gtk_list_store_set (store, &iter, 0, (gchar *)xlist->data, -1);
+    gtk_list_store_set (store, &iter, 0, (char *)xlist->data, -1);
     xlist=xlist->next;
   }
     
@@ -7958,7 +7958,7 @@ char *lives_text_view_get_text(LiVESTextView *textview) {
 }
 
 
-boolean lives_text_view_set_text(LiVESTextView *textview, const gchar *text, int len) {
+boolean lives_text_view_set_text(LiVESTextView *textview, const char *text, int len) {
   LiVESTextBuffer *textbuf=lives_text_view_get_buffer (textview);
   if (textbuf!=NULL)
     return lives_text_buffer_set_text(textbuf,text,len);

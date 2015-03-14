@@ -62,7 +62,7 @@ void pconx_remap_mode(int key, int omode, int nmode);
 boolean pconx_chain_data(int key, int mode);
 
 // return list of in keys/modes/params/autoscale
-gchar *pconx_list(int okey, int omode, int opnum);
+char *pconx_list(int okey, int omode, int opnum);
 
 // special version for compound fx internal connections
 boolean pconx_chain_data_internal(weed_plant_t *inst);
@@ -118,7 +118,7 @@ void cconx_remap_mode(int key, int omode, int nmode);
 boolean cconx_chain_data(int key, int mode);
 
 // return list of in chaannels/modes/params
-gchar *cconx_list(int okey, int omode, int ocnum);
+char *cconx_list(int okey, int omode, int ocnum);
 
 boolean cconx_chain_data_internal(weed_plant_t *ichan);
 
@@ -174,9 +174,9 @@ typedef struct {
   int *imodes;
   int *idx;
 
-  gulong *dpc_func;
-  gulong *dpp_func;
-  gulong *acheck_func;
+  ulong *dpc_func;
+  ulong *dpp_func;
+  ulong *acheck_func;
 
 } lives_conx_w;
 

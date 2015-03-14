@@ -478,7 +478,7 @@ weed_plant_t *event_copy_and_insert (weed_plant_t *in_event, weed_plant_t *event
   int error;
   weed_plant_t *event_after=NULL;
   weed_plant_t *event_before=NULL;
-  gchar *filter_hash;
+  char *filter_hash;
   int idx,num_params;
   weed_plant_t *filter;
   void **in_pchanges;
@@ -797,7 +797,7 @@ void **get_init_events_before(weed_plant_t *event, weed_plant_t *init_event, boo
 	}
 
 	if (add) {
-	  gchar *fhash;
+	  char *fhash;
 	  weed_plant_t *filter;
 	  int k,l,tflags;
 	  // add before any "process_last" events
@@ -1587,7 +1587,7 @@ static boolean is_in_hints(weed_plant_t *event,void **hints) {
 boolean init_event_is_process_last(weed_plant_t *event) {
   int error;
   boolean res=FALSE;
-  gchar *hashname;
+  char *hashname;
   weed_plant_t *filter;
 
   if (event==NULL) return FALSE;
@@ -2591,7 +2591,7 @@ weed_plant_t *append_filter_init_event (weed_plant_t *event_list, weed_timecode_
   weed_plant_t **ctmpl;
   weed_plant_t *event,*prev,*filter,*chan;
 
-  gchar *tmp;
+  char *tmp;
 
   int e_in_channels,e_out_channels,e_ins,e_outs;
   int total_in_channels=0;
@@ -2763,7 +2763,7 @@ weed_plant_t *append_filter_deinit_event (weed_plant_t *event_list, weed_timecod
 
   if (pchain!=NULL) {
     int error;
-    gchar *filter_hash=weed_get_string_value((weed_plant_t *)init_event,"filter",&error);
+    char *filter_hash=weed_get_string_value((weed_plant_t *)init_event,"filter",&error);
     int idx=weed_get_idx_for_hashname(filter_hash,TRUE);
     weed_plant_t *filter=get_weed_filter(idx);
     int num_params=num_in_params(filter,FALSE,FALSE);
@@ -3225,7 +3225,7 @@ weed_plant_t *process_events (weed_plant_t *next_event, boolean process_audio, w
 	  set_param_gui_readwrite(inst);
 	  update_host_info(inst);
 	  if (init_func!=NULL) {
-	    gchar *cwd=cd_to_plugin_dir(filter);
+	    char *cwd=cd_to_plugin_dir(filter);
 	    (*init_func)(inst);
 	    lives_chdir(cwd,FALSE);
 	    lives_free(cwd);
@@ -3306,7 +3306,7 @@ lives_render_error_t render_events (boolean reset) {
   // this is called repeatedly when we are rendering effect changes and/or clip switches
   // if we have clip switches we will resize and build a new clip
   
-  gchar oname[PATH_MAX];
+  char oname[PATH_MAX];
   LiVESError *error=NULL;
 
   weed_timecode_t tc;
@@ -3358,10 +3358,10 @@ lives_render_error_t render_events (boolean reset) {
 
   static lives_render_error_t read_write_error;
 
-  gchar *blabel=NULL;
-  gchar *nlabel;
-  gchar *key_string,*com;
-  gchar *filter_name;
+  char *blabel=NULL;
+  char *nlabel;
+  char *key_string,*com;
+  char *filter_name;
 
   if (reset) {
     progress=frame=1;
@@ -3561,7 +3561,7 @@ lives_render_error_t render_events (boolean reset) {
 	  
 	  if (mainw->write_failed) {
 	    int outfile=(mainw->multitrack!=NULL?mainw->multitrack->render_file:mainw->current_file);
-	    gchar *outfilename=lives_build_filename(prefs->tmpdir,mainw->files[outfile]->handle,"audio",NULL);
+	    char *outfilename=lives_build_filename(prefs->tmpdir,mainw->files[outfile]->handle,"audio",NULL);
 	    do_write_failed_error_s(outfilename,NULL);
 	    read_write_error=LIVES_RENDER_ERROR_WRITE_AUDIO;
 	  }
@@ -3637,7 +3637,7 @@ lives_render_error_t render_events (boolean reset) {
 
 		if (mainw->write_failed) {
 		  int outfile=(mainw->multitrack!=NULL?mainw->multitrack->render_file:mainw->current_file);
-		  gchar *outfilename=lives_build_filename(prefs->tmpdir,mainw->files[outfile]->handle,"audio",NULL);
+		  char *outfilename=lives_build_filename(prefs->tmpdir,mainw->files[outfile]->handle,"audio",NULL);
 		  do_write_failed_error_s(outfilename,NULL);
 		  read_write_error=LIVES_RENDER_ERROR_WRITE_AUDIO;
 		}
@@ -3814,7 +3814,7 @@ lives_render_error_t render_events (boolean reset) {
 	  set_param_gui_readwrite(inst);
 	  update_host_info(inst);
 	  if (init_func!=NULL) {
-	    gchar *cwd=cd_to_plugin_dir(filter);
+	    char *cwd=cd_to_plugin_dir(filter);
 	    (*init_func)(inst);
 	    lives_chdir(cwd,FALSE);
 	    lives_free(cwd);
@@ -4090,7 +4090,7 @@ boolean has_audio_frame(weed_plant_t *event_list) {
 
 boolean render_to_clip (boolean new_clip) {
   // this function is called to actually start rendering mainw->event_list to a new/current clip
-  gchar *com;
+  char *com;
 
   boolean retval=TRUE;
   boolean rendaud=TRUE;
@@ -4244,7 +4244,7 @@ boolean render_to_clip (boolean new_clip) {
     }
     mainw->event_list=NULL;
     if (new_clip) {
-      gchar *tmp;
+      char *tmp;
       int old_file=current_file;
       cfile->start=1;
       cfile->end=cfile->frames;
@@ -4558,7 +4558,7 @@ double *get_track_visibility_at_tc(weed_plant_t *event_list, int ntracks, int nb
 	    weed_get_boolean_value(ievent,"host_audio_transition",&error)==WEED_TRUE) {
 	  int *in_tracks=weed_get_int_array(ievent,"in_tracks",&error);
 	  int *out_tracks=weed_get_int_array(ievent,"out_tracks",&error);
-	  gchar *filter_hash=weed_get_string_value(ievent,"filter",&error);
+	  char *filter_hash=weed_get_string_value(ievent,"filter",&error);
 	  int idx;
 	  if ((idx=weed_get_idx_for_hashname(filter_hash,TRUE))!=-1) {
 	    weed_plant_t *filter=get_weed_filter(idx);
@@ -4661,7 +4661,7 @@ LiVESWidget *create_event_list_dialog (weed_plant_t *event_list, weed_timecode_t
   LiVESTreeStore *treestore;
   LiVESTreeIter iter1,iter2,iter3;
 
-  gchar **string=NULL
+  char **string=NULL
 ;
   int *intval=NULL;
 
@@ -4821,9 +4821,9 @@ LiVESWidget *create_event_list_dialog (weed_plant_t *event_list, weed_timecode_t
 	    if (!(strncmp(propnames[i],"init_event",10))) {
 	      weed_plant_t *ievent=(weed_plant_t *)voidval[j];
 	      if (ievent!=NULL) {
-		gchar *iname=weed_get_string_value(ievent,"filter",&error);
+		char *iname=weed_get_string_value(ievent,"filter",&error);
 		if (iname!=NULL) {
-		  gchar *fname=weed_filter_idx_get_name(weed_get_idx_for_hashname(iname,TRUE));
+		  char *fname=weed_filter_idx_get_name(weed_get_idx_for_hashname(iname,TRUE));
 		  strval=lives_strdup_printf("%p (%s)",voidval[j],fname);
 		  lives_free(fname);
 		}
@@ -5071,10 +5071,10 @@ render_details *create_render_details (int type) {
   LiVESList *ofmt=NULL;
   LiVESList *encoders=NULL;
 
-  gchar **array;
+  char **array;
 
-  gchar *tmp,*tmp2;
-  gchar *title;
+  char *tmp,*tmp2;
+  char *title;
 
   boolean specified=FALSE;
   boolean needs_new_encoder=FALSE;
@@ -5316,8 +5316,8 @@ render_details *create_render_details (int type) {
       // reqest formats from the encoder plugin
       if ((ofmt_all=plugin_request_by_line(PLUGIN_ENCODERS,prefs->encoder.name,"get_formats"))!=NULL) {
 	for (i=0;i<lives_list_length(ofmt_all);i++) {
-	  if (get_token_count ((gchar *)lives_list_nth_data (ofmt_all,i),'|')>2) {
-	    array=lives_strsplit ((gchar *)lives_list_nth_data (ofmt_all,i),"|",-1);
+	  if (get_token_count ((char *)lives_list_nth_data (ofmt_all,i),'|')>2) {
+	    array=lives_strsplit ((char *)lives_list_nth_data (ofmt_all,i),"|",-1);
 	    if (!strcmp(array[0],prefs->encoder.of_name)) {
 	      prefs->encoder.of_allowed_acodecs=atoi(array[2]);
 	    }

@@ -23,12 +23,12 @@
 
 #define L2L_PACKET_LEN 1024
 
-static gchar pckbuf[L2L_PACKET_LEN*2];
+static char pckbuf[L2L_PACKET_LEN*2];
 static int pckoffs=0;
 static size_t pcksize=0;
 
 static boolean has_last_delta_ticks;
-static gchar *hdr=NULL;
+static char *hdr=NULL;
 static boolean fps_can_change;
 
 static LIVES_INLINE G_GNUC_CONST int64_t abs64(int64_t a) {
@@ -255,10 +255,10 @@ static void l2l_get_packet_sync(lives_vstream_t *lstream) {
 }
 
 
-static gchar *l2l_get_packet_header(lives_vstream_t *lstream) {
+static char *l2l_get_packet_header(lives_vstream_t *lstream) {
   size_t hdrsize=0,csize;
 
-  gchar hdr_buf[1024];
+  char hdr_buf[1024];
 
   boolean sync=FALSE;
 
@@ -378,7 +378,7 @@ static gchar *l2l_get_packet_header(lives_vstream_t *lstream) {
 
 
 static boolean l2l_parse_packet_header(lives_vstream_t *lstream, int strtype, int strid) {
-  gchar **array=lives_strsplit(hdr," ",-1);
+  char **array=lives_strsplit(hdr," ",-1);
   int pid=-1,ptype=-1;
   
   if (hdr==NULL||array==NULL||array[0]==NULL||array[1]==NULL||array[2]==NULL||array[3]==NULL) {
@@ -424,12 +424,12 @@ static boolean l2l_parse_packet_header(lives_vstream_t *lstream, int strtype, in
 
 
 
-void lives2lives_read_stream(const gchar *host, int port) {
+void lives2lives_read_stream(const char *host, int port) {
   lives_vstream_t *lstream=(lives_vstream_t *)lives_malloc(sizeof(lives_vstream_t));
 
-  gchar *tmp,*tmp2;
-  gchar *msg;
-  gchar *hostname;
+  char *tmp,*tmp2;
+  char *msg;
+  char *hostname;
 
 #ifdef USE_STRMBUF
   pthread_t stthread;
@@ -747,7 +747,7 @@ void weed_layer_set_from_lives2lives(weed_plant_t *layer, int clip, lives_vstrea
 	hdr=NULL;
 
 	if (lstream->fps!=mainw->fixed_fpsd&&fps_can_change) {
-	  gchar *tmp,*tmp2;
+	  char *tmp,*tmp2;
 	  d_print(_("Detected new framerate for stream:\n"));
 	  mainw->files[clip]->fps=mainw->fixed_fpsd=lstream->fps;
 	  d_print ((tmp=lives_strdup_printf (_("Syncing to external framerate of %s frames per second.\n"),(tmp2=remove_trailing_zeroes(mainw->fixed_fpsd)))));
@@ -801,7 +801,7 @@ void weed_layer_set_from_lives2lives(weed_plant_t *layer, int clip, lives_vstrea
 
     if (lstream->hsize!=width||lstream->vsize!=height) {
       // frame size changed...
-      gchar *msg=lives_strdup_printf((_("Detected frame size change to %d x %d\n")),lstream->hsize,lstream->vsize);
+      char *msg=lives_strdup_printf((_("Detected frame size change to %d x %d\n")),lstream->hsize,lstream->vsize);
       d_print(msg);
       lives_free(msg);
       
@@ -1004,8 +1004,8 @@ void weed_layer_set_from_lives2lives(weed_plant_t *layer, int clip, lives_vstrea
 void on_send_lives2lives_activate (LiVESMenuItem *menuitem, livespointer user_data) {
   _vppaw *vppa;
 
-  gchar *orig_name=lives_strdup(mainw->string_constants[LIVES_STRING_CONSTANT_NONE]);
-  gchar *tmp;
+  char *orig_name=lives_strdup(mainw->string_constants[LIVES_STRING_CONSTANT_NONE]);
+  char *tmp;
 
   int resp;
 
@@ -1041,7 +1041,7 @@ void on_send_lives2lives_activate (LiVESMenuItem *menuitem, livespointer user_da
 void on_open_lives2lives_activate (LiVESMenuItem *menuitem, livespointer user_data) {
   lives_pandh_w *pandh=create_pandh_dialog(0);
 
-  gchar *host=NULL;
+  char *host=NULL;
 
   int port=0;
   int response=lives_dialog_run (LIVES_DIALOG (pandh->dialog));
@@ -1102,7 +1102,7 @@ lives_pandh_w* create_pandh_dialog (int type) {
 
   lives_pandh_w *pandhw=(lives_pandh_w *)(lives_malloc(sizeof(lives_pandh_w)));
 
-  gchar *tmp,*tmp2;
+  char *tmp,*tmp2;
 
   pandhw->dialog = lives_standard_dialog_new (_("LiVES: - Receive LiVES stream"),TRUE);
 

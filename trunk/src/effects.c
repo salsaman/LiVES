@@ -51,7 +51,7 @@ static boolean apply_audio_fx;
 // generic
 
 
-gchar *lives_fx_cat_to_text(lives_fx_cat_t cat, boolean plural) {
+char *lives_fx_cat_to_text(lives_fx_cat_t cat, boolean plural) {
 
   // return value should be free'd after use
   switch (cat) {
@@ -151,18 +151,18 @@ boolean do_effect(lives_rfx_t *rfx, boolean is_preview) {
 
   int oundo_start=cfile->undo_start;
   int oundo_end=cfile->undo_end;
-  gchar effectstring[128];
+  char effectstring[128];
   double old_pb_fps=cfile->pb_fps;
 
-  gchar *text;
-  gchar *fxcommand=NULL,*cmd;
+  char *text;
+  char *fxcommand=NULL,*cmd;
   int current_file=mainw->current_file;
 
   int new_file=current_file;
   int ldfile;
 
   boolean got_no_frames=FALSE;
-  gchar *tmp;
+  char *tmp;
 
   if (rfx->num_in_channels==0&&!is_preview) current_file=mainw->pre_src_file;
 
@@ -177,8 +177,8 @@ boolean do_effect(lives_rfx_t *rfx, boolean is_preview) {
   }
 
   if (!mainw->internal_messaging&&!mainw->keep_pre) {
-    gchar *pdefault;
-    gchar *plugin_name;
+    char *pdefault;
+    char *plugin_name;
 
     if (rfx->status==RFX_STATUS_BUILTIN) plugin_name=lives_build_filename(prefs->lib_dir,PLUGIN_EXEC_DIR,
 								      PLUGIN_RENDERED_EFFECTS_BUILTIN,rfx->name,NULL);
@@ -397,7 +397,7 @@ boolean do_effect(lives_rfx_t *rfx, boolean is_preview) {
       int numtok=get_token_count (mainw->msg,'|');
       
       if (numtok>1) {
-	gchar **array=lives_strsplit(mainw->msg,"|",numtok);
+	char **array=lives_strsplit(mainw->msg,"|",numtok);
 	// [0] is "completed"
 	cfile->hsize=atoi (array[1]);
 	cfile->vsize=atoi (array[2]);
@@ -441,7 +441,7 @@ boolean do_effect(lives_rfx_t *rfx, boolean is_preview) {
 
   if (mainw->keep_pre) {
     // this comes from a preview which then turned into processing
-    gchar *com=lives_strdup_printf("%s mv_pre \"%s\" %d %d \"%s\"",prefs->backend_sync, cfile->handle,cfile->progress_start,
+    char *com=lives_strdup_printf("%s mv_pre \"%s\" %d %d \"%s\"",prefs->backend_sync, cfile->handle,cfile->progress_start,
 			       cfile->progress_end,get_image_ext_for_type(cfile->img_type));
 
     unlink(cfile->info_file);
@@ -484,7 +484,7 @@ boolean do_effect(lives_rfx_t *rfx, boolean is_preview) {
   if (rfx->num_in_channels==0) {
     if (rfx->props&RFX_PROPS_BATCHG) {
       // batch mode generators need some extra processing
-      gchar *imgdir=lives_strdup_printf("%s%s",prefs->tmpdir,cfile->handle);
+      char *imgdir=lives_strdup_printf("%s%s",prefs->tmpdir,cfile->handle);
       int img_file=mainw->current_file;
       
       mainw->suppress_dprint=TRUE;
@@ -509,7 +509,7 @@ boolean do_effect(lives_rfx_t *rfx, boolean is_preview) {
       if (!got_no_frames) mainw->current_file=new_file;
     }
     else {
-      gchar *tfile=lives_strdup_printf("%s/%s/%08d.%s",prefs->tmpdir,cfile->handle,cfile->frames,prefs->image_ext);
+      char *tfile=lives_strdup_printf("%s/%s/%08d.%s",prefs->tmpdir,cfile->handle,cfile->frames,prefs->image_ext);
 
       if (!lives_file_test (tfile, LIVES_FILE_TEST_EXISTS)) {
 	get_frame_count(mainw->current_file);
@@ -612,7 +612,7 @@ lives_render_error_t realfx_progress (boolean reset) {
 
   LiVESError *error=NULL;
 
-  gchar oname[PATH_MAX];
+  char oname[PATH_MAX];
 
   LiVESPixbuf *pixbuf;
 
@@ -620,7 +620,7 @@ lives_render_error_t realfx_progress (boolean reset) {
 
   weed_plant_t *layer;
 
-  gchar *com;
+  char *com;
 
   static int i;
 
@@ -816,7 +816,7 @@ boolean on_realfx_activate_inner(int type, lives_rfx_t *rfx) {
     else {
       if (has_new_audio) cfile->achans=cfile->asampsize=cfile->arate=cfile->arps=0;
       else {
-      	gchar *com=lives_strdup_printf("%s undo_audio %s",prefs->backend_sync,cfile->handle);
+      	char *com=lives_strdup_printf("%s undo_audio %s",prefs->backend_sync,cfile->handle);
 	mainw->com_failed=FALSE;
 	unlink (cfile->info_file);
 	lives_system(com,FALSE);

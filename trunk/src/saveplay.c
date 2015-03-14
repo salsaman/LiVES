@@ -35,7 +35,7 @@
 
 
 boolean save_clip_values(int which) {
-  gchar *lives_header;
+  char *lives_header;
 
   int asigned;
   int endian;
@@ -151,7 +151,7 @@ boolean save_clip_values(int which) {
 }
 
 
-boolean read_file_details(const gchar *file_name, boolean is_audio) {
+boolean read_file_details(const char *file_name, boolean is_audio) {
   // get preliminary details
 
   // is_audio set to TRUE prevents us from checking for images, and deleting the (existing) first frame
@@ -161,7 +161,7 @@ boolean read_file_details(const gchar *file_name, boolean is_audio) {
   int alarm_handle;
   int retval;
   boolean timeout;
-  gchar *tmp,*com=lives_strdup_printf("%s get_details \"%s\" \"%s\" \"%s\" %d %d",prefs->backend_sync,cfile->handle,
+  char *tmp,*com=lives_strdup_printf("%s get_details \"%s\" \"%s\" \"%s\" %d %d",prefs->backend_sync,cfile->handle,
 				  (tmp=lives_filename_from_utf8(file_name,-1,NULL,NULL,NULL)),
 				  get_image_ext_for_type(cfile->img_type),mainw->opening_loc,is_audio);
   lives_free(tmp);
@@ -213,13 +213,13 @@ boolean read_file_details(const gchar *file_name, boolean is_audio) {
   return TRUE;
 }
 
-const gchar *get_deinterlace_string(void) {
+const char *get_deinterlace_string(void) {
   if (mainw->open_deint) return "-vf pp=ci";
   else return "";
 }
 
 
-ulong deduce_file(const gchar *file_name, double start, int end) {
+ulong deduce_file(const char *file_name, double start, int end) {
   // this is a utility function to deduce whether we are dealing with a file, 
   // a selection, a backup, or a location
   char short_file_name[PATH_MAX];
@@ -282,7 +282,7 @@ static boolean rip_audio_cancelled(int old_file, weed_plant_t *mt_pb_start_event
 
 #define AUDIO_FRAMES_TO_READ 100
 
-ulong open_file_sel(const gchar *file_name, double start, int frames) {
+ulong open_file_sel(const char *file_name, double start, int frames) {
   char msg[256],loc[256];
   char *tmp=NULL;
   char *isubfname=NULL;
@@ -345,8 +345,8 @@ ulong open_file_sel(const gchar *file_name, double start, int frames) {
     
     if (prefs->instant_open) {
       // cd to clip directory - so decoder plugins can write temp files
-      gchar *ppath=lives_build_filename(prefs->tmpdir,cfile->handle,NULL);
-      gchar *cwd=lives_get_current_dir();
+      char *ppath=lives_build_filename(prefs->tmpdir,cfile->handle,NULL);
+      char *cwd=lives_get_current_dir();
       lives_chdir(ppath,FALSE);
       lives_free(ppath);
 	
@@ -394,7 +394,7 @@ ulong open_file_sel(const gchar *file_name, double start, int frames) {
 	  int64_t stframe=cfile->fps*start+.5;
 	  int64_t maxframe=stframe+(frames==0)?cfile->frames:frames;
 	  int64_t nframes=AUDIO_FRAMES_TO_READ;
-	  gchar *afile=lives_strdup_printf("%s/%s/audiodump.pcm",prefs->tmpdir,cfile->handle);
+	  char *afile=lives_strdup_printf("%s/%s/audiodump.pcm",prefs->tmpdir,cfile->handle);
 
 	  msgstr=lives_strdup_printf(_("Opening audio for %s"),file_name);
 
@@ -670,8 +670,8 @@ ulong open_file_sel(const gchar *file_name, double start, int frames) {
       }
     
       if (cfile->f_size>prefs->warn_file_size*1000000.&&mainw->is_ready&&frames==0) {
-	gchar *fsize_ds=lives_format_storage_space_string((uint64_t)cfile->f_size);
-	gchar *warn=lives_strdup_printf(_ ("\nLiVES is not currently optimised for larger file sizes.\nYou are advised (for now) to start with a smaller file, or to use the 'Open File Selection' option.\n(Filesize=%s)\n\nAre you sure you wish to continue ?"),fsize_ds);
+	char *fsize_ds=lives_format_storage_space_string((uint64_t)cfile->f_size);
+	char *warn=lives_strdup_printf(_ ("\nLiVES is not currently optimised for larger file sizes.\nYou are advised (for now) to start with a smaller file, or to use the 'Open File Selection' option.\n(Filesize=%s)\n\nAre you sure you wish to continue ?"),fsize_ds);
 	lives_free(fsize_ds);
 	if (!do_warning_dialog_with_check(warn,WARN_MASK_FSIZE)) {
 	  lives_free(warn);
@@ -846,8 +846,8 @@ ulong open_file_sel(const gchar *file_name, double start, int frames) {
   }
 
   if (cfile->ext_src!=NULL&&cfile->achans>0) {
-    gchar *afile=lives_strdup_printf("%s/%s/audiodump.pcm",prefs->tmpdir,cfile->handle);
-    gchar *ofile=lives_strdup_printf("%s/%s/audio",prefs->tmpdir,cfile->handle);
+    char *afile=lives_strdup_printf("%s/%s/audiodump.pcm",prefs->tmpdir,cfile->handle);
+    char *ofile=lives_strdup_printf("%s/%s/audio",prefs->tmpdir,cfile->handle);
     rename(afile,ofile);
     lives_free(afile);
     lives_free(ofile);
@@ -885,8 +885,8 @@ ulong open_file_sel(const gchar *file_name, double start, int frames) {
 
   else {
     if (prefs->autoload_subs) {
-      gchar filename[512];
-      gchar *subfname;
+      char filename[512];
+      char *subfname;
       lives_subtitle_type_t subtype=SUBTITLE_TYPE_NONE;
 
       lives_snprintf(filename,512,"%s",file_name);
@@ -931,7 +931,7 @@ ulong open_file_sel(const gchar *file_name, double start, int frames) {
   if (cfile->ext_src==NULL) add_file_info(cfile->handle,FALSE);
   else {
     add_file_info(NULL,FALSE);
-    cfile->f_size=sget_file_size((gchar *)file_name);
+    cfile->f_size=sget_file_size((char *)file_name);
   }
 
   if (cfile->frames<=0) {
@@ -1074,8 +1074,8 @@ load_done:
 
 
 
-static void save_subs_to_file(lives_clip_t *sfile, gchar *fname) {
-  gchar *msg,*ext;
+static void save_subs_to_file(lives_clip_t *sfile, char *fname) {
+  char *msg,*ext;
   lives_subtitle_type_t otype,itype;
 
   if (sfile->subt==NULL) return;
@@ -1180,8 +1180,8 @@ boolean get_handle_from_info_file(int index) {
 void save_frame (LiVESMenuItem *menuitem, livespointer user_data) {
   int frame;
   // save a single frame from a clip
-  gchar *filt[2];
-  gchar *ttl;
+  char *filt[2];
+  char *ttl;
   char *filename;
 
   filt[0]=lives_strdup_printf ("*.%s",get_image_ext_for_type(cfile->img_type));
@@ -1209,7 +1209,7 @@ void save_frame (LiVESMenuItem *menuitem, livespointer user_data) {
   lives_snprintf(mainw->image_dir,PATH_MAX,"%s",filename);
   get_dirname(mainw->image_dir);
   if (prefs->save_directories) {
-    gchar *tmp;
+    char *tmp;
     set_pref ("image_dir",(tmp=lives_filename_from_utf8(mainw->image_dir,-1,NULL,NULL,NULL)));
     lives_free(tmp);
   }
@@ -1222,13 +1222,13 @@ static void save_log_file(const char *prefix) {
 
   // save the logfile in tempdir
 #ifndef IS_MINGW
-  gchar *logfile=lives_strdup_printf("%s/%s_%d_%d.txt",prefs->tmpdir,prefix,lives_getuid(),lives_getgid());
+  char *logfile=lives_strdup_printf("%s/%s_%d_%d.txt",prefs->tmpdir,prefix,lives_getuid(),lives_getgid());
   if ((logfd=creat(logfile,S_IRUSR|S_IWUSR|S_IRGRP|S_IWGRP|S_IROTH|S_IWOTH))!=-1) {
 #else
-    gchar *logfile=lives_strdup_printf("%s\\%s_%d_%d.txt",prefs->tmpdir,prefix,lives_getuid(),lives_getgid());
+    char *logfile=lives_strdup_printf("%s\\%s_%d_%d.txt",prefs->tmpdir,prefix,lives_getuid(),lives_getgid());
     if ((logfd=creat(logfile,S_IRUSR|S_IWUSR))!=-1) {
 #endif
-      gchar *btext=lives_text_view_get_text(mainw->optextview);
+      char *btext=lives_text_view_get_text(mainw->optextview);
       lives_write(logfd,btext,strlen(btext),TRUE);  // not really important if it fails
       lives_free(btext);
       close (logfd);
@@ -1246,18 +1246,18 @@ void save_file (int clip, int start, int end, const char *filename) {
   double aud_start=0.,aud_end=0.;
 
   const char *n_file_name;
-  gchar *fps_string;
-  gchar *extra_params=NULL;
+  char *fps_string;
+  char *extra_params=NULL;
 #ifndef IS_MINGW
-  gchar *redir=lives_strdup("1>&2 2>/dev/null");
+  char *redir=lives_strdup("1>&2 2>/dev/null");
 #else
-  gchar *redir=lives_strdup("1>&2 2>NUL");
+  char *redir=lives_strdup("1>&2 2>NUL");
 #endif
-  gchar *new_stderr_name=NULL;
-  gchar *mesg,*bit,*tmp;
-  gchar *com;
-  gchar *full_file_name=NULL;
-  gchar *enc_exec_name,*cmd;
+  char *new_stderr_name=NULL;
+  char *mesg,*bit,*tmp;
+  char *com;
+  char *full_file_name=NULL;
+  char *enc_exec_name,*cmd;
 
   int new_stderr=-1;
   int retval;
@@ -1322,7 +1322,7 @@ void save_file (int clip, int start, int end, const char *filename) {
   lives_widget_show_all(hbox);
 
   if (filename==NULL) {
-    gchar *ttl=lives_strdup (_("LiVES: Save Clip as..."));
+    char *ttl=lives_strdup (_("LiVES: Save Clip as..."));
     do {
       n_file_name=choose_file(mainw->vid_save_dir,NULL,NULL,LIVES_FILE_CHOOSER_ACTION_SAVE,ttl,hbox);
       if (n_file_name==NULL) return;
@@ -1390,7 +1390,7 @@ void save_file (int clip, int start, int end, const char *filename) {
     }
   }
   else if (!mainw->osc_auto&&sfile->orig_file_name) {
-    gchar *warn=lives_strdup(_("Saving your video could lead to a loss of quality !\nYou are strongly advised to 'Save As' to a new file.\n\nDo you still wish to continue ?"));
+    char *warn=lives_strdup(_("Saving your video could lead to a loss of quality !\nYou are strongly advised to 'Save As' to a new file.\n\nDo you still wish to continue ?"));
     if (!do_yesno_dialog_with_check(warn,WARN_MASK_SAVE_QUALITY)) {
 	lives_free(warn);
 	lives_free(full_file_name);
@@ -1917,7 +1917,7 @@ void save_file (int clip, int start, int end, const char *filename) {
 
 
   if (!mainw->error) {
-    gchar *pluginstr;
+    char *pluginstr;
 
     not_cancelled=do_progress_dialog(TRUE,TRUE,_ ("Saving [can take a long time]"));
     mesg=lives_strdup (mainw->msg);
@@ -2194,7 +2194,7 @@ void save_file (int clip, int start, int end, const char *filename) {
   }
 
   if (not_cancelled) {
-    gchar *fsize_ds;
+    char *fsize_ds;
     mainw->no_switch_dprint=TRUE;
     d_print_done();
 
@@ -2241,15 +2241,15 @@ void play_file (void) {
   uint64_t awinid=-1;
 #endif
 
-  gchar *com;
-  gchar *com2=lives_strdup (" ");
-  gchar *com3=lives_strdup (" ");
-  gchar *stopcom=NULL;
-  gchar *msg;
-  gchar *stfile;
-  gchar *xtrabit,*title;
+  char *com;
+  char *com2=lives_strdup (" ");
+  char *com3=lives_strdup (" ");
+  char *stopcom=NULL;
+  char *msg;
+  char *stfile;
+  char *xtrabit,*title;
 #ifdef GDK_WINDOWING_X11
-  gchar *tmp;
+  char *tmp;
 #endif
 
   boolean mute;
@@ -2483,7 +2483,7 @@ void play_file (void) {
 	}
 
 	if (mainw->multitrack==NULL||mainw->fs) {
-	  gchar *xtrabit,*title;
+	  char *xtrabit,*title;
 	  resize_play_window();
 	  if (mainw->sepwin_scale!=100.) xtrabit=lives_strdup_printf(_(" (%d %% scale)"),(int)mainw->sepwin_scale);
 	  else xtrabit=lives_strdup("");
@@ -2518,7 +2518,7 @@ void play_file (void) {
       if (mainw->vpp!=NULL&&!(mainw->vpp->capabilities&VPP_LOCAL_DISPLAY)&&mainw->fs) 
 	lives_window_set_title (LIVES_WINDOW (mainw->play_window),_("LiVES: - Streaming"));
       else {
-	gchar *title,*xtrabit;
+	char *title,*xtrabit;
 	if (mainw->sepwin_scale!=100.) xtrabit=lives_strdup_printf(_(" (%d %% scale)"),(int)mainw->sepwin_scale);
 	else xtrabit=lives_strdup("");
 	title=lives_strdup_printf(_("LiVES: - Play Window%s"),xtrabit);
@@ -2586,14 +2586,14 @@ void play_file (void) {
     com2=lives_strdup("xset s off 2>/dev/null; xset -dpms 2>/dev/null ;");
     
     if (capable->has_gconftool_2) {
-      gchar *xnew=lives_strdup(" gconftool-2 --set --type bool /apps/gnome-screensaver/idle_activation_enabled false 2>/dev/null ;");
+      char *xnew=lives_strdup(" gconftool-2 --set --type bool /apps/gnome-screensaver/idle_activation_enabled false 2>/dev/null ;");
       tmp=lives_strconcat (com2,xnew,NULL);
       lives_free(com2);
       lives_free(xnew);
       com2=tmp;
     }
     if (capable->has_xdg_screensaver&&awinid!=-1) {
-      gchar *xnew=lives_strdup_printf(" xdg-screensaver suspend %"PRIu64" 2>/dev/null ;",awinid);
+      char *xnew=lives_strdup_printf(" xdg-screensaver suspend %"PRIu64" 2>/dev/null ;",awinid);
       tmp=lives_strconcat (com2,xnew,NULL);
       lives_free(com2);
       lives_free(xnew);
@@ -3044,14 +3044,14 @@ void play_file (void) {
     com=lives_strdup("xset s on 2>/dev/null; xset +dpms 2>/dev/null ;");
     
     if (capable->has_gconftool_2) {
-      gchar *xnew=lives_strdup(" gconftool-2 --set --type bool /apps/gnome-screensaver/idle_activation_enabled true 2>/dev/null ;");
+      char *xnew=lives_strdup(" gconftool-2 --set --type bool /apps/gnome-screensaver/idle_activation_enabled true 2>/dev/null ;");
       tmp=lives_strconcat (com,xnew,NULL);
       lives_free(com);
       lives_free(xnew);
       com=tmp;
     }
     if (capable->has_xdg_screensaver&&awinid!=-1) {
-      gchar *xnew=lives_strdup_printf(" xdg-screensaver resume %"PRIu64" 2>/dev/null ;",awinid);
+      char *xnew=lives_strdup_printf(" xdg-screensaver resume %"PRIu64" 2>/dev/null ;",awinid);
       tmp=lives_strconcat (com,xnew,NULL);
       lives_free(com);
       lives_free(xnew);
@@ -3247,7 +3247,7 @@ void play_file (void) {
 
 	  lives_widget_context_update();
 	  if (mainw->play_window!=NULL) {
-	    gchar *title,*xtrabit;
+	    char *title,*xtrabit;
 	    
 	    //load_preview_image(FALSE);
 	    
@@ -3431,7 +3431,7 @@ boolean get_temp_handle(int index, boolean create) {
   // WARNING: this function changes mainw->current_file, unless it returns FALSE (could not create cfile)
 
 
-  gchar *com;
+  char *com;
   boolean is_unique;
   int current_file=mainw->current_file;
 
@@ -3464,7 +3464,7 @@ boolean get_temp_handle(int index, boolean create) {
     mainw->current_file=index;
 
     if (strlen(mainw->set_name)>0) {
-      gchar *setclipdir=lives_build_filename(prefs->tmpdir,mainw->set_name,"clips",cfile->handle,NULL);
+      char *setclipdir=lives_build_filename(prefs->tmpdir,mainw->set_name,"clips",cfile->handle,NULL);
       if (lives_file_test(setclipdir,LIVES_FILE_TEST_IS_DIR)) is_unique=FALSE;
       lives_free(setclipdir);
     }
@@ -3575,14 +3575,14 @@ void create_cfile(void) {
 }
 
 
-boolean get_new_handle (int index, const gchar *name) {
+boolean get_new_handle (int index, const char *name) {
   // here is where we first initialize for the clipboard
   // and for paste_as_new, and restore
   // pass in name as NULL or "" and it will be set with an untitled number
 
   // this function *does not* change mainw->current_file, or add to the menu
   // or update mainw->clips_available
-  gchar *xname;
+  char *xname;
 
   int current_file=mainw->current_file;
   if (!get_temp_handle(index,TRUE)) return FALSE;
@@ -3608,16 +3608,16 @@ boolean get_new_handle (int index, const gchar *name) {
 
 
 
-boolean add_file_info(const gchar *check_handle, boolean aud_only) {
+boolean add_file_info(const char *check_handle, boolean aud_only) {
   // file information has been retrieved, set struct cfile with details
   // contained in mainw->msg. We do this twice, once before opening the file, once again after.
   // The first time, frames and afilesize may not be correct.
   int pieces;
 
-  gchar *mesg,*mesg1;
-  gchar **array;
-  gchar *test_fps_string1;
-  gchar *test_fps_string2;
+  char *mesg,*mesg1;
+  char **array;
+  char *test_fps_string1;
+  char *test_fps_string2;
 
  
   if (!strcmp(mainw->msg,"killed")) {
@@ -3805,7 +3805,7 @@ boolean save_file_comments (int fileno) {
   // save the comments etc for smogrify
   int retval;
   int comment_fd;
-  gchar *comment_file=lives_strdup_printf ("%s/%s/.comment",prefs->tmpdir,cfile->handle);
+  char *comment_file=lives_strdup_printf ("%s/%s/.comment",prefs->tmpdir,cfile->handle);
   lives_clip_t *sfile=mainw->files[fileno];
 
   unlink (comment_file);
@@ -3845,7 +3845,7 @@ boolean save_file_comments (int fileno) {
 
 
 void
-wait_for_stop (const gchar *stop_command) {
+wait_for_stop (const char *stop_command) {
   FILE *infofile;
 
   // only used for audio player mplayer or audio player sox
@@ -3878,13 +3878,13 @@ wait_for_stop (const gchar *stop_command) {
 }
 
 
-boolean save_frame_inner(int clip, int frame, const gchar *file_name, int width, int height, boolean from_osc) {
+boolean save_frame_inner(int clip, int frame, const char *file_name, int width, int height, boolean from_osc) {
   // save 1 frame as an image (uses imagemagick to convert)
   // width==-1, height==-1 to use "natural" values
 
   lives_clip_t *sfile=mainw->files[clip];
-  gchar full_file_name[PATH_MAX];
-  gchar *com,*tmp;
+  char full_file_name[PATH_MAX];
+  char *com,*tmp;
 
   boolean allow_over=FALSE;
   int result;
@@ -3969,14 +3969,14 @@ boolean save_frame_inner(int clip, int frame, const gchar *file_name, int width,
 }
 
 
-void backup_file(int clip, int start, int end, const gchar *file_name) {
+void backup_file(int clip, int start, int end, const char *file_name) {
   lives_clip_t *sfile=mainw->files[clip];
-  gchar **array;
+  char **array;
 
-  gchar title[256];
-  gchar full_file_name[PATH_MAX];
+  char title[256];
+  char full_file_name[PATH_MAX];
 
-  gchar *com,*tmp;
+  char *com,*tmp;
 
   boolean with_perf=FALSE;
   boolean retval,allow_over;
@@ -4119,7 +4119,7 @@ boolean write_headers (lives_clip_t *file) {
 
   int retval;
   int header_fd;
-  gchar *hdrfile;
+  char *hdrfile;
 
   // save the file details
   hdrfile=lives_build_filename(prefs->tmpdir,file->handle,"header",NULL);
@@ -4190,15 +4190,15 @@ boolean write_headers (lives_clip_t *file) {
 }
 
 
-boolean read_headers(const gchar *file_name) {
+boolean read_headers(const char *file_name) {
   // file_name is only used to get the file size on the disk
   FILE *infofile;
-  gchar **array;
-  gchar buff[1024];
-  gchar version[32];
-  gchar *com,*tmp;
-  gchar *old_hdrfile=lives_build_filename(prefs->tmpdir,cfile->handle,"header",NULL);
-  gchar *lives_header=lives_build_filename(prefs->tmpdir,cfile->handle,"header.lives",NULL);
+  char **array;
+  char buff[1024];
+  char version[32];
+  char *com,*tmp;
+  char *old_hdrfile=lives_build_filename(prefs->tmpdir,cfile->handle,"header",NULL);
+  char *lives_header=lives_build_filename(prefs->tmpdir,cfile->handle,"header.lives",NULL);
 
   int header_size;
   int version_hash;
@@ -4229,7 +4229,7 @@ boolean read_headers(const gchar *file_name) {
       detail=CLIP_DETAILS_FRAMES;
       if (get_clip_value(mainw->current_file,detail,&cfile->frames,0)) {
 	int asigned,aendian;
-	gchar *tmp;
+	char *tmp;
 	int alarm_handle;
 
 	// use new style header (LiVES 0.9.6+)
@@ -4570,8 +4570,8 @@ boolean read_headers(const gchar *file_name) {
 }
 
 
-void open_set_file (const gchar *set_name, int clipnum) {
-  gchar name[256];
+void open_set_file (const char *set_name, int clipnum) {
+  char name[256];
   boolean needs_update=FALSE;
 
   if (mainw->current_file<1) return;
@@ -4615,7 +4615,7 @@ void open_set_file (const gchar *set_name, int clipnum) {
     int set_fd;
     int pb_fps;
     int retval;
-    gchar *setfile=lives_strdup_printf("%s/%s/set.%s",prefs->tmpdir,cfile->handle,set_name);
+    char *setfile=lives_strdup_printf("%s/%s/set.%s",prefs->tmpdir,cfile->handle,set_name);
 
     do {
       retval=0;
@@ -4651,7 +4651,7 @@ void open_set_file (const gchar *set_name, int clipnum) {
 
 
 
-ulong restore_file(const gchar *file_name) {
+ulong restore_file(const char *file_name) {
   char *com=lives_strdup("dummy");
   char *mesg,*mesg1,*tmp;
   boolean is_OK=TRUE;
@@ -4812,7 +4812,7 @@ int save_event_frames(void) {
 
   // here we also update the frame_index for clips of type CLIP_TYPE_FILE
 
-  gchar *hdrfile=lives_strdup_printf("%s/%s/event.frames",prefs->tmpdir,cfile->handle);
+  char *hdrfile=lives_strdup_printf("%s/%s/event.frames",prefs->tmpdir,cfile->handle);
 
   int header_fd,i=0;
   int retval;
@@ -4951,8 +4951,8 @@ boolean open_ascrap_file (void) {
   int current_file=mainw->current_file;
   int new_file=mainw->first_free_file;
   
-  gchar *dir;
-  gchar *ascrap_handle;
+  char *dir;
+  char *ascrap_handle;
 
   if (!get_temp_handle (new_file,TRUE)) return FALSE;
   get_next_free_file();
@@ -5006,7 +5006,7 @@ boolean load_from_scrap_file(weed_plant_t *layer, int frame) {
 
   int i,fd;
 
-  gchar *oname=lives_strdup_printf ("%s/%s/%08d.scrap",prefs->tmpdir,mainw->files[mainw->scrap_file]->handle,frame);
+  char *oname=lives_strdup_printf ("%s/%s/%08d.scrap",prefs->tmpdir,mainw->files[mainw->scrap_file]->handle,frame);
 
 
   ssize_t bytes;
@@ -5131,10 +5131,10 @@ int save_to_scrap_file (weed_plant_t *layer) {
 
   void **pdata;
 
-  gchar *oname=lives_strdup_printf ("%s/%s/%08d.scrap",prefs->tmpdir,mainw->files[mainw->scrap_file]->handle,
+  char *oname=lives_strdup_printf ("%s/%s/%08d.scrap",prefs->tmpdir,mainw->files[mainw->scrap_file]->handle,
 				mainw->files[mainw->scrap_file]->frames+1);
 
-  gchar *framecount;
+  char *framecount;
 
   struct stat filestat;
 
@@ -5213,7 +5213,7 @@ int save_to_scrap_file (weed_plant_t *layer) {
 
   // check free space every 1000 frames or every 10 MB of audio (TODO ****)
   if (mainw->files[mainw->scrap_file]->frames%1000==0) {
-    gchar *dir=lives_build_filename(prefs->tmpdir,mainw->files[mainw->scrap_file]->handle,NULL);
+    char *dir=lives_build_filename(prefs->tmpdir,mainw->files[mainw->scrap_file]->handle,NULL);
     free_mb=(double)get_fs_free(dir)/1000000.;
     if (free_mb==0) wrtable=is_writeable_dir(dir);
     lives_free(dir);
@@ -5248,7 +5248,7 @@ int save_to_scrap_file (weed_plant_t *layer) {
   // check if we have enough free space left on the volume
   if ((int64_t)(((double)free_mb-(scrap_mb+ascrap_mb))/1000.)<prefs->rec_stop_gb) {
     // check free space again
-    gchar *dir=lives_build_filename(prefs->tmpdir,mainw->files[mainw->scrap_file]->handle,NULL);
+    char *dir=lives_build_filename(prefs->tmpdir,mainw->files[mainw->scrap_file]->handle,NULL);
     free_mb=(double)get_fs_free(dir)/1000000.;
     if (free_mb==0) wrtable=is_writeable_dir(dir);
     else wrtable=TRUE;
@@ -5256,7 +5256,7 @@ int save_to_scrap_file (weed_plant_t *layer) {
     if (wrtable) {
       if ((int64_t)(((double)free_mb-(scrap_mb+ascrap_mb))/1000.)<prefs->rec_stop_gb) {
 	if (mainw->record&&!mainw->record_paused) {
-	  gchar *msg=lives_strdup_printf(_("\nRECORDING WAS PAUSED BECAUSE FREE DISK SPACE in %s IS BELOW %d GB !\nRecord stop level can be set in Preferences.\n"),dir,prefs->rec_stop_gb);
+	  char *msg=lives_strdup_printf(_("\nRECORDING WAS PAUSED BECAUSE FREE DISK SPACE in %s IS BELOW %d GB !\nRecord stop level can be set in Preferences.\n"),dir,prefs->rec_stop_gb);
 	  d_print(msg);
 	  lives_free(msg);
 	  on_record_perf_activate(NULL,NULL);
@@ -5315,8 +5315,8 @@ void recover_layout_map(int numclips) {
 
   layout_map *lmap_entry;
 
-  gchar **array;
-  gchar *check_handle;
+  char **array;
+  char *check_handle;
   
   if (numclips>MAX_FILES) numclips=MAX_FILES;
 
@@ -5346,7 +5346,7 @@ void recover_layout_map(int numclips) {
 	  lmap_entry_list=lmap_entry->list;
 	  while (lmap_entry_list!=NULL) {
 	    lmap_entry_list_next=lmap_entry_list->next;
-	    array=lives_strsplit((gchar *)lmap_entry_list->data,"|",-1);
+	    array=lives_strsplit((char *)lmap_entry_list->data,"|",-1);
 	    if (!lives_file_test(array[0],LIVES_FILE_TEST_EXISTS)) {
 	      // layout file has been deleted, remove this entry
 	      if (lmap_entry_list->prev!=NULL) lmap_entry_list->prev->next=lmap_entry_list_next;
@@ -5396,7 +5396,7 @@ void recover_layout_map(int numclips) {
 
    lives_clip_t *sfile=mainw->files[fileno];
 
-   gchar *ppath=lives_build_filename(prefs->tmpdir,sfile->handle,NULL);
+   char *ppath=lives_build_filename(prefs->tmpdir,sfile->handle,NULL);
 
    const lives_clip_data_t *cdata=NULL;
 
@@ -5418,7 +5418,7 @@ void recover_layout_map(int numclips) {
        if (mainw->error) {
 	 if (do_original_lost_warning(sfile->file_name)) {
 	   int resp;
-	   gchar fname[PATH_MAX],dirname[PATH_MAX],*newname;
+	   char fname[PATH_MAX],dirname[PATH_MAX],*newname;
 	   LiVESWidget *chooser;
 
 	   lives_snprintf(dirname,PATH_MAX,"%s",sfile->file_name);
@@ -5439,7 +5439,7 @@ void recover_layout_map(int numclips) {
 
 	     if (newname!=NULL) {
 	       if (strlen(newname)) {
-		 gchar *tmp;
+		 char *tmp;
 		 lives_snprintf(sfile->file_name,PATH_MAX,"%s",(tmp=lives_filename_to_utf8(newname,-1,NULL,NULL,NULL)));
 		 lives_free(tmp);
 	       }
@@ -5528,12 +5528,12 @@ void recover_layout_map(int numclips) {
  }
 
 
-static boolean recover_files(gchar *recovery_file, boolean auto_recover) {
+static boolean recover_files(char *recovery_file, boolean auto_recover) {
   FILE *rfile;
 
-  gchar buff[256],*buffptr;
-  gchar *clipdir;
-  gchar *cwd=lives_get_current_dir();
+  char buff[256],*buffptr;
+  char *clipdir;
+  char *cwd=lives_get_current_dir();
 
   int retval;
   int new_file,clipnum=0;
@@ -5685,7 +5685,7 @@ static boolean recover_files(gchar *recovery_file, boolean auto_recover) {
       }
       // TODO - dirsep
       if (strstr(buffptr,"/clips/")) {
-	gchar **array;
+	char **array;
 	threaded_dialog_spin();
 	array=lives_strsplit(buffptr,"/clips/",-1);
 	mainw->was_set=TRUE;
@@ -5891,11 +5891,11 @@ static boolean recover_files(gchar *recovery_file, boolean auto_recover) {
 
 
 
-void add_to_recovery_file (const gchar *handle) {
+void add_to_recovery_file (const char *handle) {
 #ifndef IS_MINGW
-  gchar *com=lives_strdup_printf("/bin/echo \"%s\" >> \"%s\"",handle,mainw->recovery_file);
+  char *com=lives_strdup_printf("/bin/echo \"%s\" >> \"%s\"",handle,mainw->recovery_file);
 #else
-  gchar *com=lives_strdup_printf("echo.exe \"%s\" >> \"%s\"",handle,mainw->recovery_file);
+  char *com=lives_strdup_printf("echo.exe \"%s\" >> \"%s\"",handle,mainw->recovery_file);
 #endif
   mainw->com_failed=FALSE;
   lives_system(com,FALSE);
@@ -5915,7 +5915,7 @@ void add_to_recovery_file (const gchar *handle) {
 void rewrite_recovery_file(void) {
   // part of the crash recovery system
   LiVESList *clist=mainw->cliplist;
-  gchar *recovery_entry;
+  char *recovery_entry;
 
   boolean opened=FALSE;
 
@@ -5970,9 +5970,9 @@ boolean check_for_recovery_files (boolean auto_recover) {
 
   ssize_t bytes;
 
-  gchar *recovery_file,*recovery_numbering_file;
-  gchar *info_file=lives_strdup_printf("%s/.recovery.%d",prefs->tmpdir,capable->mainpid);
-  gchar *com;
+  char *recovery_file,*recovery_numbering_file;
+  char *info_file=lives_strdup_printf("%s/.recovery.%d",prefs->tmpdir,capable->mainpid);
+  char *com;
 
   boolean retval=FALSE;
 

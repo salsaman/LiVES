@@ -60,7 +60,7 @@
 
 
 static OSCbuf obuf;
-static gchar byarr[OSC_BUF_SIZE];
+static char byarr[OSC_BUF_SIZE];
 static lives_omc_macro_t omc_macros[N_OMC_MACROS];
 static LiVESSList *omc_node_list;
 static boolean omc_macros_inited=FALSE;
@@ -117,18 +117,18 @@ static void remove_all_nodes(boolean every, omclearn_w *omclw) {
 }
 
 
-static LIVES_INLINE int js_index(const gchar *string) {
+static LIVES_INLINE int js_index(const char *string) {
   // js index, or midi channel number
-  gchar **array=lives_strsplit(string," ",-1);
+  char **array=lives_strsplit(string," ",-1);
   int res=atoi(array[1]);
   lives_strfreev(array);
   return res;
 }
 
 
-static LIVES_INLINE int midi_index(const gchar *string) {
+static LIVES_INLINE int midi_index(const char *string) {
   // midi controller number
-  gchar **array;
+  char **array;
   int res;
   if (get_token_count(string,' ')<3) return -1;
 
@@ -148,8 +148,8 @@ static int js_fd;
 
 
 #ifndef IS_MINGW
-const gchar * get_js_filename(void) {
-  gchar *js_fname;
+const char * get_js_filename(void) {
+  char *js_fname;
 
   // OPEN DEVICE FILE
   // first try to open /dev/input/js
@@ -174,7 +174,7 @@ const gchar * get_js_filename(void) {
 
 
 boolean js_open(void) {
-  gchar *msg;
+  char *msg;
 
   if (!(prefs->omc_dev_opts&OMC_DEV_JS)) return TRUE;
 
@@ -183,7 +183,7 @@ boolean js_open(void) {
     if (js_fd < 0) return FALSE;
   }
   else {
-    const gchar *tmp=get_js_filename();
+    const char *tmp=get_js_filename();
     if (tmp!=NULL) {
       lives_snprintf(prefs->omc_js_fname,256,"%s",tmp);
     }
@@ -208,11 +208,11 @@ void js_close(void) {
 }
 
 
-gchar *js_mangle(void) {
+char *js_mangle(void) {
   // get js event and process it
   struct js_event jse;
   size_t bytes;
-  gchar *ret;
+  char *ret;
   int type=0;
 
   bytes = read(js_fd, &jse, sizeof(jse));
@@ -235,7 +235,7 @@ gchar *js_mangle(void) {
 }
 
 
-static LIVES_INLINE int js_msg_type(const gchar *string) {
+static LIVES_INLINE int js_msg_type(const char *string) {
   return atoi(string);
 }
 
@@ -251,8 +251,8 @@ static int midi_fd;
 #ifndef IS_MINGW
 
 
-const gchar *get_midi_filename(void) {
-gchar *midi_fname;
+const char *get_midi_filename(void) {
+char *midi_fname;
 
   // OPEN DEVICE FILE
   midi_fname = "/dev/midi";
@@ -277,7 +277,7 @@ gchar *midi_fname;
 boolean midi_open(void) {
 
 #ifndef IS_MINGW  
-  gchar *msg;
+  char *msg;
 #endif
 
   if (!(prefs->omc_dev_opts&OMC_DEV_MIDI)) return TRUE;
@@ -314,7 +314,7 @@ boolean midi_open(void) {
     if (midi_fd < 0) return FALSE;
   }
   else {
-    const gchar *tmp=get_midi_filename();
+    const char *tmp=get_midi_filename();
     if (tmp!=NULL) {
       lives_snprintf(prefs->omc_midi_fname,256,"%s",tmp);
     }
@@ -377,7 +377,7 @@ static int get_midi_len(int msgtype) {
 }
 
 
-static int midi_msg_type(const gchar *string) {
+static int midi_msg_type(const char *string) {
   int type=atoi(string);
 
   if ((type&0XF0)==0X90) return OMC_MIDI_NOTE;
@@ -402,15 +402,15 @@ static int midi_msg_type(const gchar *string) {
 
 
 
-gchar *midi_mangle(void) {
+char *midi_mangle(void) {
   // get MIDI event and process it
-  gchar *string=NULL;
+  char *string=NULL;
 
   ssize_t bytes,tot=0,allowed=prefs->midi_rpt;
   unsigned char midbuf[4],xbuf[4];
   int target=1,mtype=0,idx;
   boolean got_target=FALSE;
-  gchar *str;
+  char *str;
 
 #ifdef ALSA_MIDI
   int npfd=0;
@@ -533,10 +533,10 @@ gchar *midi_mangle(void) {
 
 
 
-static LIVES_INLINE gchar *cut_string_elems(const gchar *string, int nelems) {
+static LIVES_INLINE char *cut_string_elems(const char *string, int nelems) {
   // remove elements after nelems
 
-  gchar *retval=lives_strdup(string);
+  char *retval=lives_strdup(string);
   register int i;
   size_t slen=strlen(string);
 
@@ -559,7 +559,7 @@ static LIVES_INLINE gchar *cut_string_elems(const gchar *string, int nelems) {
 
 
 
-static gchar *omc_learn_get_pname(int type, int idx) {
+static char *omc_learn_get_pname(int type, int idx) {
   switch (type) {
   case OMC_MIDI_CONTROLLER:
   case OMC_MIDI_PITCH_BEND:
@@ -578,8 +578,8 @@ static gchar *omc_learn_get_pname(int type, int idx) {
 
 
 
-static int omc_learn_get_pvalue(int type, int idx, const gchar *string) {
-  gchar **array=lives_strsplit(string," ",-1);
+static int omc_learn_get_pvalue(int type, int idx, const char *string) {
+  char **array=lives_strsplit(string," ",-1);
   int res;
 
   switch (type) {
@@ -597,7 +597,7 @@ static int omc_learn_get_pvalue(int type, int idx, const gchar *string) {
 
 
 
-static void cell1_edited_callback (LiVESCellRenderer *spinbutton, const gchar *path_string, const gchar *new_text, livespointer user_data) {
+static void cell1_edited_callback (LiVESCellRenderer *spinbutton, const char *path_string, const char *new_text, livespointer user_data) {
   lives_omc_match_node_t *mnode=(lives_omc_match_node_t *)user_data;
 
   lives_omc_macro_t omacro=omc_macros[mnode->macro];
@@ -657,8 +657,8 @@ static void omc_macro_row_add_params(lives_omc_match_node_t *mnode, int row, omc
 
   LiVESObject *spinadj;
 
-  gchar *strval=NULL,*vname;
-  gchar *oldval=NULL,*final=NULL;
+  char *strval=NULL,*vname;
+  char *oldval=NULL,*final=NULL;
 
   int mfrom;
   register int i;
@@ -851,11 +851,11 @@ static void on_omc_combo_entry_changed (LiVESCombo *combo, livespointer ptr) {
 
 
 
-static void cell_toggled_callback (LiVESCellRenderer *toggle, const gchar *path_string, livespointer user_data) {
+static void cell_toggled_callback (LiVESCellRenderer *toggle, const char *path_string, livespointer user_data) {
   lives_omc_match_node_t *mnode=(lives_omc_match_node_t *)user_data;
   int row;
 
-  gchar *txt;
+  char *txt;
 
   int *indices;
 
@@ -894,7 +894,7 @@ static void cell_toggled_callback (LiVESCellRenderer *toggle, const gchar *path_
 
 
 
-static void cell_edited_callback (LiVESCellRenderer *spinbutton, const gchar *path_string, const gchar *new_text, livespointer user_data) {
+static void cell_edited_callback (LiVESCellRenderer *spinbutton, const char *path_string, const char *new_text, livespointer user_data) {
   lives_omc_match_node_t *mnode=(lives_omc_match_node_t *)user_data;
 
   int col=LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(spinbutton),"colnum"));
@@ -976,7 +976,7 @@ static LiVESWidget *create_omc_macro_combo(lives_omc_match_node_t *mnode, int ro
 
 
 
-static void omc_learner_add_row(int type, int detail, lives_omc_match_node_t *mnode, const gchar *string, omclearn_w *omclw) {
+static void omc_learner_add_row(int type, int detail, lives_omc_match_node_t *mnode, const char *string, omclearn_w *omclw) {
    LiVESWidget *label,*combo;
    LiVESObject *spinadj;
 
@@ -985,9 +985,9 @@ static void omc_learner_add_row(int type, int detail, lives_omc_match_node_t *mn
   
    LiVESTreeIter iter1,iter2;
 
-   gchar *strval,*strval2,*strval3,*strval4,*vname,*valstr;
-   gchar *oldval=NULL,*final=NULL;
-   gchar *labelt=NULL;
+   char *strval,*strval2,*strval3,*strval4,*vname,*valstr;
+   char *oldval=NULL,*final=NULL;
+   char *labelt=NULL;
 
    int chan,val;
    register int i;
@@ -1220,7 +1220,7 @@ static void show_existing(omclearn_w *omclw) {
   LiVESSList *slist=omc_node_list;
   lives_omc_match_node_t *mnode;
   int type,supertype;
-  gchar **array,*srch;
+  char **array,*srch;
   int idx;
 
   while (slist!=NULL) {
@@ -1233,7 +1233,7 @@ static void show_existing(omclearn_w *omclw) {
 #ifdef OMC_MIDI_IMPL
     if (supertype==OMC_MIDI) {
       size_t blen;
-      gchar *tmp;
+      char *tmp;
 
       type=midi_msg_type(array[1]);
       if (get_token_count(srch,' ')>3) idx=atoi(array[3]);
@@ -1526,7 +1526,7 @@ static void init_omc_macros(void) {
 	omc_macros[i].mind=(double *)lives_malloc(omc_macros[i].nparams*sizdbl);
 	omc_macros[i].maxd=(double *)lives_malloc(omc_macros[i].nparams*sizdbl);
 	omc_macros[i].vald=(double *)lives_malloc(omc_macros[i].nparams*sizdbl);
-	omc_macros[i].pname=(gchar **)lives_malloc(omc_macros[i].nparams*sizeof(gchar *));
+	omc_macros[i].pname=(char **)lives_malloc(omc_macros[i].nparams*sizeof(char *));
 
       }
     }
@@ -1647,7 +1647,7 @@ static void init_omc_macros(void) {
 }
 
 
-static int get_nfixed(int type, const gchar *string) {
+static int get_nfixed(int type, const char *string) {
   int nfixed=0;
 
   switch (type) {
@@ -1677,9 +1677,9 @@ static int get_nfixed(int type, const gchar *string) {
 
 
 
-static boolean match_filtered_params(lives_omc_match_node_t *mnode, const gchar *sig, int nfixed) {
+static boolean match_filtered_params(lives_omc_match_node_t *mnode, const char *sig, int nfixed) {
   int i;
-  gchar **array=lives_strsplit(sig," ",-1);
+  char **array=lives_strsplit(sig," ",-1);
 
   for (i=0;i<mnode->nvars;i++) {
     if (mnode->matchp[i]) {
@@ -1698,9 +1698,9 @@ static boolean match_filtered_params(lives_omc_match_node_t *mnode, const gchar 
 
 
 
-static lives_omc_match_node_t *omc_match_sig(int type, int index, const gchar *sig) {
+static lives_omc_match_node_t *omc_match_sig(int type, int index, const char *sig) {
   LiVESSList *nlist=omc_node_list;
-  gchar *srch,*cnodex;
+  char *srch,*cnodex;
   lives_omc_match_node_t *cnode;
   int nfixed;
 
@@ -1734,8 +1734,8 @@ static lives_omc_match_node_t *omc_match_sig(int type, int index, const gchar *s
 
 
 /* not used yet */
-/*static gchar *omclearn_request_min(int type) {
-  gchar *msg=NULL;
+/*static char *omclearn_request_min(int type) {
+  char *msg=NULL;
 
   switch (type) {
   case OMC_JS_AXIS:
@@ -1758,7 +1758,7 @@ static lives_omc_match_node_t *omc_match_sig(int type, int index, const gchar *s
 
 
 
-static LIVES_INLINE int omclearn_get_fixed_elems(const gchar *string1, const gchar *string2) {
+static LIVES_INLINE int omclearn_get_fixed_elems(const char *string1, const char *string2) {
   // count how many (non-space) elements match
   // e.g "a b c" and "a b d" returns 2
 
@@ -1780,8 +1780,8 @@ static LIVES_INLINE int omclearn_get_fixed_elems(const gchar *string1, const gch
 
 
 
-static LIVES_INLINE int get_nth_elem(const gchar *string, int idx) {
-  gchar **array=lives_strsplit(string," ",-1);
+static LIVES_INLINE int get_nth_elem(const char *string, int idx) {
+  char **array=lives_strsplit(string," ",-1);
   int retval=atoi(array[idx]);
   lives_strfreev(array);
   return retval;
@@ -1791,10 +1791,10 @@ static LIVES_INLINE int get_nth_elem(const gchar *string, int idx) {
 
 
 
-static lives_omc_match_node_t *lives_omc_match_node_new(int str_type, int index, const gchar *string, int nfixed) {
+static lives_omc_match_node_t *lives_omc_match_node_new(int str_type, int index, const char *string, int nfixed) {
   int i;
-  gchar *tmp;
-  gchar *srch_str;
+  char *tmp;
+  char *srch_str;
   lives_omc_match_node_t *mnode=(lives_omc_match_node_t *)lives_malloc(sizeof(lives_omc_match_node_t));
 
   if (str_type==OMC_MIDI) {
@@ -1839,7 +1839,7 @@ static lives_omc_match_node_t *lives_omc_match_node_new(int str_type, int index,
 
 
 
-static int *omclearn_get_values(const gchar *string, int nfixed) {
+static int *omclearn_get_values(const char *string, int nfixed) {
   register int i,j;
   size_t slen,tslen;
   int *retvals,count=0,nvars;
@@ -1853,7 +1853,7 @@ static int *omclearn_get_values(const gchar *string, int nfixed) {
   for (i=0;i<slen;i++) {
     if (!strncmp((string+i)," ",1)) {
       if (--nfixed<=0) {
-	gchar *tmp=lives_strdup(string+i+1);
+	char *tmp=lives_strdup(string+i+1);
 	tslen=strlen(tmp);
 	for (j=0;j<tslen;j++) {
 	  if (!strncmp((tmp+j)," ",1)) {
@@ -1880,7 +1880,7 @@ static int *omclearn_get_values(const gchar *string, int nfixed) {
 
 
 
-void omclearn_match_control (lives_omc_match_node_t *mnode, int str_type, int index, const gchar *string, int nfixed, omclearn_w *omclw) {
+void omclearn_match_control (lives_omc_match_node_t *mnode, int str_type, int index, const char *string, int nfixed, omclearn_w *omclw) {
 
   if (nfixed==-1) {
     // already there : allow user to update
@@ -1903,7 +1903,7 @@ void omclearn_match_control (lives_omc_match_node_t *mnode, int str_type, int in
 
 
 
-lives_omc_match_node_t *omc_learn(const gchar *string, int str_type, int idx, omclearn_w *omclw) {
+lives_omc_match_node_t *omc_learn(const char *string, int str_type, int idx, omclearn_w *omclw) {
   // here we come with a string, which must be a sequence of integers
   // separated by single spaces
 
@@ -2033,7 +2033,7 @@ lives_omc_match_node_t *omc_learn(const gchar *string, int str_type, int idx, om
 
 // in playback mode, we match the string with our database, and then convert/append the variables
 
-boolean omc_process_string(int supertype, const gchar *string, boolean learn, omclearn_w *omclw) {
+boolean omc_process_string(int supertype, const char *string, boolean learn, omclearn_w *omclw) {
   // only need to set omclw if learn is TRUE
   
   // returns TRUE if we learn new, or if we carry out an action
@@ -2103,7 +2103,7 @@ boolean omc_process_string(int supertype, const gchar *string, boolean learn, om
 
 void on_midi_learn_activate (LiVESMenuItem *menuitem, livespointer user_data) {
   omclearn_w *omclw=create_omclearn_dialog();
-  gchar *string=NULL;
+  char *string=NULL;
 
   if (!omc_macros_inited) {
     init_omc_macros();
@@ -2175,7 +2175,7 @@ void on_midi_learn_activate (LiVESMenuItem *menuitem, livespointer user_data) {
 
 
 
-static void write_fx_tag(const gchar *string, int nfixed, lives_omc_match_node_t *mnode, lives_omc_macro_t *omacro, gchar *typetags) {
+static void write_fx_tag(const char *string, int nfixed, lives_omc_match_node_t *mnode, lives_omc_macro_t *omacro, char *typetags) {
   // get typetag for a filter parameter
 
   int i,j,k;
@@ -2252,7 +2252,7 @@ static void write_fx_tag(const gchar *string, int nfixed, lives_omc_match_node_t
 
 
 
-OSCbuf *omc_learner_decode(int type, int idx, const gchar *string) {
+OSCbuf *omc_learner_decode(int type, int idx, const char *string) {
   int macro,nfixed;
   lives_omc_match_node_t *mnode;
   lives_omc_macro_t omacro;
@@ -2263,7 +2263,7 @@ OSCbuf *omc_learner_decode(int type, int idx, const gchar *string) {
 
   int *vals;
 
-  gchar typetags[OSC_MAX_TYPETAGS];
+  char typetags[OSC_MAX_TYPETAGS];
 
   mnode=omc_match_sig(type,idx,string);
 
@@ -2431,8 +2431,8 @@ void on_midi_save_activate (LiVESMenuItem *menuitem, livespointer user_data) {
   lives_omc_match_node_t *mnode;
   lives_omc_macro_t omacro;
 
-  gchar *msg;
-  gchar *save_file;
+  char *msg;
+  char *save_file;
 
   int nnodes;
   int retval;
@@ -2528,15 +2528,15 @@ static void omc_node_list_free(LiVESSList *slist) {
 }
 
 
-static void do_midi_load_error(const gchar *fname) {
-  gchar *msg=lives_strdup_printf (_("\n\nError parsing file\n%s\n"),fname);
+static void do_midi_load_error(const char *fname) {
+  char *msg=lives_strdup_printf (_("\n\nError parsing file\n%s\n"),fname);
   do_blocking_error_dialog (msg);
   lives_free (msg);
   d_print_failed();
 }
 
-static void do_midi_version_error(const gchar *fname) {
-  gchar *msg=lives_strdup_printf (_("\n\nInvalid version in file\n%s\n"),fname);
+static void do_midi_version_error(const char *fname) {
+  char *msg=lives_strdup_printf (_("\n\nInvalid version in file\n%s\n"),fname);
   do_blocking_error_dialog (msg);
   lives_free (msg);
   d_print_failed();
@@ -2551,11 +2551,11 @@ void on_midi_load_activate (LiVESMenuItem *menuitem, livespointer user_data) {
 
   ssize_t bytes;
 
-  gchar tstring[512];
+  char tstring[512];
 
-  gchar *load_file=NULL;
-  gchar *srch;
-  gchar *msg;
+  char *load_file=NULL;
+  char *srch;
+  char *msg;
 
   uint32_t srchlen,nnodes,macro,nvars,supertype;
   int idx=-1;
@@ -2565,11 +2565,11 @@ void on_midi_load_activate (LiVESMenuItem *menuitem, livespointer user_data) {
 
 #ifdef OMC_MIDI_IMPL
   size_t blen;
-  gchar *tmp;
+  char *tmp;
 #endif 
 
   if (user_data==NULL) load_file=choose_file(NULL,NULL,NULL,LIVES_FILE_CHOOSER_ACTION_OPEN,NULL,NULL);
-  else load_file=lives_strdup((gchar *)user_data);
+  else load_file=lives_strdup((char *)user_data);
 
   if (load_file==NULL||!strlen(load_file)) return;
 
@@ -2630,7 +2630,7 @@ void on_midi_load_activate (LiVESMenuItem *menuitem, livespointer user_data) {
       return;
     }
     
-    srch=(gchar *)lives_malloc(srchlen+1);
+    srch=(char *)lives_malloc(srchlen+1);
 
     bytes=read(fd,srch,srchlen);
     if (bytes<srchlen) {

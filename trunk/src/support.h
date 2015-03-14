@@ -20,9 +20,9 @@
  */
 #ifdef ENABLE_NLS
 
-gchar *trString;
-gchar *translate(const char *String);
-gchar *translate_with_plural(const char *String, const char *StringPlural, unsigned long int n);
+char *trString;
+char *translate(const char *String);
+char *translate_with_plural(const char *String, const char *StringPlural, unsigned long int n);
 
 #  include <libintl.h>
 #  undef _

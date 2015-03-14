@@ -2534,6 +2534,7 @@ void multitrack_view_in_out (LiVESMenuItem *menuitem, livespointer user_data) {
   lives_mt *mt=(lives_mt *)user_data;
   if (mt->block_selected==NULL) return;
   if (!nb_ignore) polymorph (mt,POLY_IN_OUT);
+  g_print("PT A\n");
 }
 
 
@@ -10495,8 +10496,7 @@ void do_effect_context (lives_mt *mt, LiVESXEventButton *event) {
 
 
 
-static boolean
-fx_ebox_pressed (LiVESWidget *eventbox, LiVESXEventButton *event, livespointer user_data) {
+static boolean fx_ebox_pressed (LiVESWidget *eventbox, LiVESXEventButton *event, livespointer user_data) {
   lives_mt *mt=(lives_mt *)user_data;
   LiVESList *children,*xlist;
   weed_plant_t *osel=mt->selected_init_event;
@@ -14302,29 +14302,20 @@ void select_no_vid (LiVESMenuItem *menuitem, livespointer user_data) {
 }
 
 
-void
-mt_fplay_toggled                (LiVESMenuItem     *menuitem,
-				 livespointer         user_data)
-{
+void mt_fplay_toggled (LiVESMenuItem *menuitem, livespointer user_data) {
   lives_mt *mt=(lives_mt *)user_data;
   mt->opts.follow_playback=!mt->opts.follow_playback;
   lives_widget_set_sensitive(mt->follow_play,mt->opts.follow_playback);
 }
 
-void
-mt_render_vid_toggled                (LiVESMenuItem     *menuitem,
-				      livespointer         user_data)
-{
+void mt_render_vid_toggled (LiVESMenuItem *menuitem, livespointer user_data) {
   lives_mt *mt=(lives_mt *)user_data;
   mt->render_vidp=!mt->render_vidp;
   lives_widget_set_sensitive(mt->render_aud,mt->render_vidp);
 }
 
 
-void
-mt_render_aud_toggled                (LiVESMenuItem     *menuitem,
-				      livespointer         user_data)
-{
+void mt_render_aud_toggled (LiVESMenuItem *menuitem, livespointer user_data) {
   lives_mt *mt=(lives_mt *)user_data;
   mt->render_audp=!mt->render_audp;
   lives_widget_set_sensitive(mt->render_vid,mt->render_audp);
@@ -14332,20 +14323,14 @@ mt_render_aud_toggled                (LiVESMenuItem     *menuitem,
 }
 
 
-void
-mt_norm_aud_toggled                (LiVESMenuItem     *menuitem,
-				    livespointer         user_data)
-{
+void mt_norm_aud_toggled (LiVESMenuItem *menuitem, livespointer user_data) {
   lives_mt *mt=(lives_mt *)user_data;
   mt->normalise_audp=!mt->normalise_audp;
 }
 
 
 
-void
-mt_view_audio_toggled                (LiVESMenuItem     *menuitem,
-				      livespointer         user_data)
-{
+void mt_view_audio_toggled (LiVESMenuItem *menuitem, livespointer user_data) {
   lives_mt *mt=(lives_mt *)user_data;
   mt->opts.show_audio=lives_check_menu_item_get_active(LIVES_CHECK_MENU_ITEM(menuitem));
 
@@ -15027,10 +15012,7 @@ void on_insgap_cur_activate (LiVESMenuItem     *menuitem,
 
 
 
-void
-multitrack_undo            (LiVESMenuItem     *menuitem,
-			    livespointer         user_data) {
-
+void multitrack_undo (LiVESMenuItem *menuitem, livespointer user_data) {
   lives_mt *mt=(lives_mt *)user_data;
   size_t space_avail=(size_t)(prefs->mt_undo_buf*1024*1024)-mt->undo_buffer_used;
   size_t space_needed;
@@ -15242,10 +15224,7 @@ multitrack_undo            (LiVESMenuItem     *menuitem,
 }
 
 
-void
-multitrack_redo            (LiVESMenuItem     *menuitem,
-			    livespointer         user_data) {
-
+void multitrack_redo (LiVESMenuItem *menuitem, livespointer user_data) {
   lives_mt *mt=(lives_mt *)user_data;
   mt_undo *last_redo=(mt_undo *)lives_list_nth_data(mt->undos,lives_list_length(mt->undos)+1-mt->undo_offset);
   unsigned char *memblock,*mem_end;

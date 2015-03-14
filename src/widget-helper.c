@@ -531,7 +531,7 @@ LIVES_INLINE void lives_object_ref_sink(livespointer object) {
   GtkObject *gtkobject;
   //assert(GTK_IS_OBJECT(object));
   gtkobject=(GtkObject *)object;
-  gtk_object_sink (object);
+  gtk_object_sink (gtkobject);
 }
 #endif
 #endif

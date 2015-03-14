@@ -4,14 +4,15 @@ Welcome to LiVES, the open source video editor for Linux.
 FAQ
 ---
  Does LiVES require a working copy of mplayer ?
-It is no longer a requirement to run LiVES, but without it you will not be able to open any movie clips* or see previews if the file open dialog.
+It is no longer a requirement to run LiVES, but without it you will not be able to open SOME movie clips* or see previews in the file open dialog.
 
-* that is no longer quite the case. dv files can now be opened without player, provided lives is compiled with libdv support. ogg/theora files can be opened without mplayer if LiVES is compiled with libogg and libtheora support.
-
+* in current versions of LiVES almost all clips can be opened instantly via plugins, howver mplayer is used as a fallback in cases 
+where the plugins fail.
 
 
 
  LiVES complains "Unable to open either video or audio". What is the problem ?
+This means the decoder plugins failed and the fallback of using mplayer also failed.
 Most likely your problem is in your mplayer setup. First, can you preview/play the file in mplayer ?
 If not then you probably need to add extra libraries to mplayer.
 
@@ -34,20 +35,23 @@ No, LiVES makes a copy of each source material when you open it. The
 only way you can damage your original material is by saving over it,
 but LiVES will warn you if you try to do this.
 
-* this is no longer always true. For files which are opened instantly (dv or ogg/theora), the original file is required until all frames have been chenged or copied.
+* this is no longer always true. For files which are opened instantly (dv or ogg/theora), 
+the original file is required until all frames have been chenged or copied.
 
 
 
  How do I set the encoder in LiVES ?
-The encoder plugin and output format can be set in Tools/Preferences/Encoding. 
-Depending on the encoder/format selected, you may need to install additional libraries or programs. You will also be prompted when Encoding a clip.
+The encoder plugin and output format can be set in Tools/Preferences/Encoding. You can also set it when encoding a clip.
+Depending on the encoder/format selected, you may need to install additional libraries or programs. 
+You will also be prompted when Encoding a clip.
 
 
  How do I change the temporary directory in LiVES ?
-The first time you start LiVES, you should change its temporary directory to a 
+The first time you start LiVES, you should set its temporary directory to a 
 partition with plenty of free space (approximately 5 times the size of all the 
 video files you want to have open at one time).
-To do this, go to Tools in the menu bar, and click on Preferences. Go to the 
+
+To change it later, go to Tools in the menu bar, and click on Preferences. Go to the 
 directory tab and change the temporary directory setting and click Apply, then 
 OK. LiVES will then exit and you will have to restart it. You should check in 
 Preferences afterwards that the directory has been updated.
@@ -66,10 +70,6 @@ The default directories are the directories LiVES will first look in after you r
 should remember the last directory you used and default to that instead.
 
 
- Why are sound and video synchronisation sometimes poor in LiVES ?
-This is fixed now if you make use of the "jack" audio player in LiVES.
-
-
  What is the difference between 'Backup' and 'Encode' ?
 Backup will save all of the current clip without loss of quality. You can later restore this backup and continue working exactly where you left off. See the LiVES manual for more information.
 
@@ -85,12 +85,11 @@ We are doing everything we can to optimise your experience, maybe you need a fas
 
 
  How can I contribute to the LiVES project ?
-You can join the LiVES mailing list at 
-http://groups.yahoo.com/group/lives-video.
+You can join the LiVES mailing list at: https://lists.sourceforge.net/lists/listinfo/lives-users
 
 Donations (of any kind) are also very welcome.
 
-You can contact the author at: salsaman@xs4all.nl or salsaman@gmail.com
+You can contact the author at: salsaman@gmail.com
  
 
 

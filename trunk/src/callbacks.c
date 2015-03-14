@@ -6004,7 +6004,7 @@ void on_fs_preview_clicked (LiVESWidget *widget, livespointer user_data) {
 
 	cr = lives_painter_create_from_widget (mainw->fs_playarea);
 	lives_painter_set_source_pixbuf (cr, blank, 0, 0);
-	lives_painter_paint (cr);
+	lives_painter_fill (cr);
 	lives_painter_destroy (cr);
 	lives_object_unref(blank);
 
@@ -6016,7 +6016,7 @@ void on_fs_preview_clicked (LiVESWidget *widget, livespointer user_data) {
 
 	cr = lives_painter_create_from_widget (mainw->fs_playarea);
 	lives_painter_set_source_pixbuf (cr, pixbuf, offs_x, offs_y);
-	lives_painter_paint (cr);
+	lives_painter_fill (cr);
 	lives_painter_destroy (cr);
       }	
       else {
@@ -6179,7 +6179,7 @@ void on_fs_preview_clicked (LiVESWidget *widget, livespointer user_data) {
       
       cr = lives_painter_create_from_widget (mainw->fs_playarea);
       lives_painter_set_source_pixbuf (cr, blank, 0, 0);
-      lives_painter_paint (cr);
+      lives_painter_fill (cr);
       lives_painter_destroy (cr);
       lives_object_unref(blank);
       
@@ -9096,7 +9096,7 @@ boolean expose_vid_event (LiVESWidget *widget, LiVESXEventExpose *event) {
 
   lives_painter_set_source_surface (cr, mainw->video_drawable,0.,0.);
   lives_painter_rectangle (cr,ex,ey,ew,eh);
-  lives_painter_paint(cr);
+  lives_painter_fill(cr);
 
   if (dest_cr) lives_painter_destroy(cr);
 
@@ -9148,7 +9148,7 @@ static void redraw_laudio(lives_painter_t *cr, int ex, int ey, int ew, int eh) {
 
   lives_painter_set_source_surface (cr, mainw->laudio_drawable,0.,0.);
   lives_painter_rectangle (cr,ex,ey,ew,eh);
-  lives_painter_paint(cr);
+  lives_painter_fill(cr);
 
 }
 
@@ -9198,7 +9198,7 @@ static void redraw_raudio(lives_painter_t *cr, int ex, int ey, int ew, int eh) {
 
   lives_painter_set_source_surface (cr, mainw->raudio_drawable, 0., 0.);
   lives_painter_rectangle (cr,ex,ey,ew,eh);
-  lives_painter_paint(cr);
+  lives_painter_fill(cr);
 
   if (1||mainw->current_file==-1) mainw->blank_raudio_drawable=mainw->raudio_drawable;
   else cfile->raudio_drawable=mainw->raudio_drawable;

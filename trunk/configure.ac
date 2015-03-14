@@ -1006,10 +1006,5 @@ echo ""
 echo "Remember to do \"sudo ldconfig\" or equivalent after installing."
 echo  "*******************************************************************"
 
-if test "$GTK310_WARN" = "true"; then
-echo
-echo "******************************************************************************************"
-echo "WARNING: GTK+ 3.10.x is known to be buggy with LiVES. This version of gtk+ should be avoided."
-echo "******************************************************************************************"
-fi
+
 

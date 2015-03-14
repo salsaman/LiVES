@@ -1,5 +1,6 @@
 Version 2.4.0
 -------------
+Implement workaround for expose event problems in gtk+ 3.10.
 Fix threading crash in multitrack.
 Fix timeline start position for gtkgrid widget in multitrack.
 Fix "fade background mode" (b) so it looks nice again.

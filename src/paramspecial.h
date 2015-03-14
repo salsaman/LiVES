@@ -34,8 +34,8 @@ typedef struct {
   lives_param_t *height_param;
   lives_param_t *width_param;
   LiVESWidget *checkbutton;
-  gulong width_func;
-  gulong height_func;
+  ulong width_func;
+  ulong height_func;
 } lives_special_aspect_t;
 
 
@@ -48,7 +48,7 @@ typedef struct {
 
 void init_special (void);
 
-void add_to_special (const gchar *special_string, lives_rfx_t *);
+void add_to_special (const char *special_string, lives_rfx_t *);
 
 void check_for_special (lives_rfx_t *, lives_param_t *param, LiVESBox *);
 

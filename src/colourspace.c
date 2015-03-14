@@ -1108,13 +1108,13 @@ const char *weed_yuv_subspace_get_name(int subspace) {
 }
 
 
-gchar *weed_palette_get_name_full(int pal, int clamped, int subspace) {
-  const gchar *pname=weed_palette_get_name(pal);
+char *weed_palette_get_name_full(int pal, int clamped, int subspace) {
+  const char *pname=weed_palette_get_name(pal);
 
   if (!weed_palette_is_yuv_palette(pal)) return lives_strdup(pname);
   else {
-    const gchar *clamp=weed_yuv_clamping_get_name(clamped);
-    const gchar *sspace=weed_yuv_subspace_get_name(subspace);
+    const char *clamp=weed_yuv_clamping_get_name(clamped);
+    const char *sspace=weed_yuv_subspace_get_name(subspace);
     return lives_strdup_printf("%s:%s (%s)",pname,sspace,clamp);
   }
 }
@@ -8249,7 +8249,7 @@ boolean convert_layer_palette_full(weed_plant_t *layer, int outpl, int osamtype,
 
   //#define DEBUG_PCONV
 #ifdef DEBUG_PCONV
-  gchar *tmp2,*tmp3;
+  char *tmp2,*tmp3;
   g_print("converting palette %s(%s - %d) to %s(%s - %d)\n",weed_palette_get_name(inpl),
 	  (tmp2=lives_strdup(weed_yuv_clamping_get_name(!iclamped))),!iclamped,weed_palette_get_name(outpl),
 	  (tmp3=lives_strdup(weed_yuv_clamping_get_name(!oclamping))),!oclamping);
@@ -8295,7 +8295,7 @@ boolean convert_layer_palette_full(weed_plant_t *layer, int outpl, int osamtype,
       switch_yuv_sampling(layer);
     }
     else {
-      gchar *tmp2=lives_strdup_printf("Switch sampling types (%d %d) or subspace(%d %d): (%d) conversion not yet written !\n",
+      char *tmp2=lives_strdup_printf("Switch sampling types (%d %d) or subspace(%d %d): (%d) conversion not yet written !\n",
 				  isamtype,osamtype,isubspace,osubspace,inpl);
       LIVES_DEBUG(tmp2);
       lives_free(tmp2);

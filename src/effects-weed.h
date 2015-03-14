@@ -87,7 +87,7 @@ lives_fx_cat_t weed_filter_subcategorise (weed_plant_t *pl, lives_fx_cat_t categ
 boolean has_audio_filters(lives_af_t af_type);
 #endif
 
-gchar* weed_seed_type_to_text(int seed_type);
+char* weed_seed_type_to_text(int seed_type);
 
 boolean has_usable_palette(weed_plant_t *chantmpl);
 int check_weed_palette_list (int *palette_list, int num_palettes, int palette);
@@ -95,7 +95,7 @@ int check_weed_palette_list (int *palette_list, int num_palettes, int palette);
 int weed_call_init_func(weed_plant_t *instance);
 int weed_call_deinit_func(weed_plant_t *instance);
 
-gchar *cd_to_plugin_dir(weed_plant_t *filter);
+char *cd_to_plugin_dir(weed_plant_t *filter);
 boolean weed_init_effect(int hotkey); ///< hotkey starts at 1
 void weed_deinit_effect(int hotkey); ///< hotkey starts at 1
 weed_plant_t *weed_instance_from_filter(weed_plant_t *filter);
@@ -188,9 +188,9 @@ boolean rte_key_valid (int key, boolean is_userkey); ///< returns TRUE if there 
 boolean rte_keymode_valid (int key, int mode, boolean is_userkey); ///< returns TRUE if a filter_class is bound to key/mode, is_userkey should be
 ///< set to TRUE
 int rte_keymode_get_filter_idx(int key, int mode); ///< returns filter_class index of key/mode (or -1 if no filter bound)
-gchar *rte_keymode_get_filter_name (int key, int mode) WARN_UNUSED; ///< returns name of filter_class bound to key/mode (or "")
-gchar *rte_keymode_get_plugin_name(int key, int mode) WARN_UNUSED; ///< returns name of plugin package containing filter_class (or "")
-gchar *rte_keymode_get_type (int key, int mode) WARN_UNUSED; ///< returns a string filter/instance type (or "")
+char *rte_keymode_get_filter_name (int key, int mode) WARN_UNUSED; ///< returns name of filter_class bound to key/mode (or "")
+char *rte_keymode_get_plugin_name(int key, int mode) WARN_UNUSED; ///< returns name of plugin package containing filter_class (or "")
+char *rte_keymode_get_type (int key, int mode) WARN_UNUSED; ///< returns a string filter/instance type (or "")
 
 #ifdef HAS_LIVES_EFFECTS_H
 lives_fx_cat_t rte_keymode_get_category (int key, int mode);
@@ -200,7 +200,7 @@ weed_plant_t *rte_keymode_get_instance(int key, int mode); ///< returns filter_i
 weed_plant_t *rte_keymode_get_filter(int key, int mode); ///< returns filter_class bound to key/mode (or NULL)
 
 boolean weed_delete_effectkey (int key, int mode); ///< unbinds a filter_class from a key/mode
-int weed_add_effectkey (int key, const gchar *hashname, boolean fullname); ///< bind a filter_class to key/mode using its hashname
+int weed_add_effectkey (int key, const char *hashname, boolean fullname); ///< bind a filter_class to key/mode using its hashname
 
 int weed_add_effectkey_by_idx (int key, int idx); ///< see description
 
@@ -213,7 +213,7 @@ weed_plant_t *get_new_inst_for_keymode(int key, int mode); ///< get new inst (du
 boolean rte_key_setmode (int key, int newmode); ///< set mode for a given key; if key==0 then the active key is used
 
 ///< returns -1 if the filter is not found; it will match the first name found - returns -2 if you try to switch a generator/non-generator
-int rte_switch_keymode (int key, int mode, const gchar *hashname);
+int rte_switch_keymode (int key, int mode, const char *hashname);
 
 boolean rte_key_is_enabled(int key);
 
@@ -251,7 +251,7 @@ int rte_fg_gen_mode (void);
 
 ////////////////////////////////////////////////////////////////////////
 
-gchar *get_weed_display_string (weed_plant_t *inst, int pnum);
+char *get_weed_display_string (weed_plant_t *inst, int pnum);
 weed_plant_t *add_filter_deinit_events (weed_plant_t *event_list);
 weed_plant_t *add_filter_init_events (weed_plant_t *event_list, weed_timecode_t tc);
 void deinit_render_effects (void);

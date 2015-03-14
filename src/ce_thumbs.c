@@ -28,10 +28,10 @@ static LiVESWidget **rb_clip_areas;
 static LiVESWidget **clip_boxes;
 static LiVESWidget *param_hbox;
 static LiVESWidget *top_hbox;
-static gulong *ch_fns;
-static gulong *combo_fns;
-static gulong *rb_clip_fns;
-static gulong *rb_fx_fns;
+static ulong *ch_fns;
+static ulong *combo_fns;
+static ulong *rb_clip_fns;
+static ulong *rb_fx_fns;
 
 static int rte_keys_virtual;
 static int n_screen_areas;
@@ -218,10 +218,10 @@ void start_ce_thumb_mode(void) {
 
   clip_boxes=(LiVESWidget **)lives_malloc((n_clip_boxes)*modes*sizeof(LiVESWidget *));
 
-  ch_fns=(gulong *)lives_malloc((rte_keys_virtual)*sizeof(gulong));
-  combo_fns=(gulong *)lives_malloc((rte_keys_virtual)*sizeof(gulong));
-  rb_clip_fns=(gulong *)lives_malloc((n_screen_areas)*sizeof(gulong));
-  rb_fx_fns=(gulong *)lives_malloc((n_screen_areas)*sizeof(gulong));
+  ch_fns=(ulong *)lives_malloc((rte_keys_virtual)*sizeof(ulong));
+  combo_fns=(ulong *)lives_malloc((rte_keys_virtual)*sizeof(ulong));
+  rb_clip_fns=(ulong *)lives_malloc((n_screen_areas)*sizeof(ulong));
+  rb_fx_fns=(ulong *)lives_malloc((n_screen_areas)*sizeof(ulong));
 
   for (i=0;i<n_clip_boxes;i++) {
     clip_boxes[i]=NULL;

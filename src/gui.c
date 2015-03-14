@@ -55,7 +55,7 @@ void load_theme (void) {
   // load the theme images
   // TODO - set palette in here ?
   LiVESError *error=NULL;
-  gchar *tmp=lives_build_filename(prefs->prefix_dir,THEME_DIR,prefs->theme,"main.jpg",NULL);
+  char *tmp=lives_build_filename(prefs->prefix_dir,THEME_DIR,prefs->theme,"main.jpg",NULL);
   mainw->imsep=lives_pixbuf_new_from_file(tmp,&error);
   lives_free(tmp);
   
@@ -78,7 +78,7 @@ void load_theme (void) {
 
 void add_message_scroller(LiVESWidget *conter) {
   LiVESTextBuffer *tbuff=NULL;
-  gchar *all_text=NULL;
+  char *all_text=NULL;
 
   if (mainw->textview1!=NULL) {
     all_text=lives_text_view_get_text(LIVES_TEXT_VIEW(mainw->textview1));
@@ -225,10 +225,10 @@ void create_LiVES (void) {
 
   LiVESPixbuf *pixbuf;
 
-  gchar buff[32768];
+  char buff[32768];
 
-  gchar *tmp;
-  gchar *fnamex;
+  char *tmp;
+  char *fnamex;
 
   int dpw;
   boolean woat;
@@ -3582,9 +3582,9 @@ void make_preview_box (void) {
 
   LiVESSList *radiobutton_group = NULL;
 
-  gchar buff[PATH_MAX];
-  gchar *fnamex;
-  gchar *tmp,*tmp2;
+  char buff[PATH_MAX];
+  char *fnamex;
+  char *tmp,*tmp2;
 
   mainw->preview_box = lives_vbox_new (FALSE, 0);
   lives_object_ref(mainw->preview_box);
@@ -3829,8 +3829,8 @@ void disable_record (void) {
 
 
 void play_window_set_title(void) {
-  gchar *xtrabit;
-  gchar *title;
+  char *xtrabit;
+  char *title;
 
   if (mainw->sepwin_scale!=100.) xtrabit=lives_strdup_printf(_(" (%d %% scale)"),(int)mainw->sepwin_scale);
   else xtrabit=lives_strdup("");
@@ -4459,7 +4459,7 @@ void splash_init(void) {
   LiVESPixbuf *splash_pix;
 
   LiVESError *error=NULL;
-  gchar *tmp=lives_strdup_printf("%s/%s/lives-splash.png",prefs->prefix_dir,THEME_DIR);
+  char *tmp=lives_strdup_printf("%s/%s/lives-splash.png",prefs->prefix_dir,THEME_DIR);
 
   lives_window_set_auto_startup_notification(FALSE);
 
@@ -4540,7 +4540,7 @@ void splash_init(void) {
 
 
 
-void splash_msg(const gchar *msg, double pct) {
+void splash_msg(const char *msg, double pct) {
 
   if (mainw->foreign||mainw->splash_window==NULL) return;
 

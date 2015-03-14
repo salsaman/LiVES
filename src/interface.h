@@ -7,9 +7,9 @@
 #ifndef HAS_LIVES_INTERFACE_H
 #define HAS_LIVES_INTERFACE_H
 
-LiVESWidget* create_info_error_dialog (lives_dialog_t info_type, const gchar *text, LiVESWindow *transient, int mask, boolean is_blocking);
+LiVESWidget* create_info_error_dialog (lives_dialog_t info_type, const char *text, LiVESWindow *transient, int mask, boolean is_blocking);
 LiVESWidget* create_opensel_dialog (void);
-LiVESWidget* create_encoder_prep_dialog (const gchar *text1, const gchar *text2, boolean opt_resize);
+LiVESWidget* create_encoder_prep_dialog (const char *text1, const char *text2, boolean opt_resize);
 
 void widget_add_preview(LiVESWidget *widget, LiVESBox *for_preview, LiVESBox *for_button, 
 			LiVESBox *for_deinterlace, int preview_type);  ///< for fileselector preview
@@ -70,7 +70,7 @@ typedef struct __commentsw {
   LiVESWidget *subt_entry;
 } _commentsw;
 
-_commentsw* create_comments_dialog (lives_clip_t *sfile, gchar *filename);
+_commentsw* create_comments_dialog (lives_clip_t *sfile, char *filename);
 
 
 typedef struct {
@@ -80,7 +80,7 @@ typedef struct {
   LiVESWidget *textview;
 } text_window;
 
-text_window* create_text_window (const gchar *title_part, const gchar *text, LiVESTextBuffer *);
+text_window* create_text_window (const char *title_part, const char *text, LiVESTextBuffer *);
 
 
 typedef struct {

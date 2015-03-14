@@ -42,7 +42,7 @@ void create_merge_dialog (void) {
 
   LiVESAccelGroup *accel_group;
 
-  gchar *txt;
+  char *txt;
 
   int idx=0;
 
@@ -333,7 +333,7 @@ void
 on_merge_ok_clicked                   (LiVESButton       *button,
 				       livespointer         user_data)
 {
-  gchar *msg;
+  char *msg;
   int start,end;
 
   int cb_start=1;

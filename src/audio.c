@@ -29,7 +29,7 @@
 
 // keep first 16 audio_in filesysten handles open - multitrack only
 #define NSTOREDFDS 16
-static gchar *storedfnames[NSTOREDFDS];
+static char *storedfnames[NSTOREDFDS];
 static int storedfds[NSTOREDFDS];
 static boolean storedfdsset=FALSE;
 
@@ -966,7 +966,7 @@ int64_t render_audio_segment(int nfiles, int *from_files, int to_file, double *a
   boolean in_reverse_endian[nfiles],out_reverse_endian=FALSE;
 
   off64_t seekstart[nfiles];
-  gchar *infilename,*outfilename;
+  char *infilename,*outfilename;
 
   weed_timecode_t tc=tc_start;
 
@@ -1397,12 +1397,12 @@ LIVES_INLINE void aud_fade(int fileno, double startt, double endt, double startv
   render_audio_segment(1,&fileno,fileno,&vel,&startt,startt*U_SECL,endt*U_SECL,&vol,startv,endv,NULL);
 
   if (mainw->write_failed) {
-    gchar *outfilename=lives_build_filename(prefs->tmpdir,mainw->files[fileno]->handle,"audio",NULL);
+    char *outfilename=lives_build_filename(prefs->tmpdir,mainw->files[fileno]->handle,"audio",NULL);
     do_write_failed_error_s(outfilename,NULL);
   }
   
   if (mainw->read_failed) {
-    gchar *infilename=lives_build_filename(prefs->tmpdir,mainw->files[fileno]->handle,"audio",NULL);
+    char *infilename=lives_build_filename(prefs->tmpdir,mainw->files[fileno]->handle,"audio",NULL);
     do_read_failed_error_s(infilename,NULL);
   }
 
@@ -1437,7 +1437,7 @@ void jack_rec_audio_to_clip(int fileno, int old_file, lives_rec_audio_type_t rec
   outfile=mainw->files[fileno];
   
   if (mainw->aud_rec_fd==-1) {
-    gchar *outfilename=lives_build_filename(prefs->tmpdir,outfile->handle,"audio",NULL);
+    char *outfilename=lives_build_filename(prefs->tmpdir,outfile->handle,"audio",NULL);
     do {
       retval=0;
       mainw->aud_rec_fd=open(outfilename,O_WRONLY|O_CREAT|O_APPEND,S_IRUSR|S_IWUSR);
@@ -1595,7 +1595,7 @@ void pulse_rec_audio_to_clip(int fileno, int old_file, lives_rec_audio_type_t re
   outfile=mainw->files[fileno];
 
   if (mainw->aud_rec_fd==-1) {
-    gchar *outfilename=lives_build_filename(prefs->tmpdir,outfile->handle,"audio",NULL);
+    char *outfilename=lives_build_filename(prefs->tmpdir,outfile->handle,"audio",NULL);
     do {
       retval=0;
       mainw->aud_rec_fd=open(outfilename,O_WRONLY|O_CREAT|O_APPEND,S_IRUSR|S_IWUSR);
@@ -2746,7 +2746,7 @@ off64_t audio_pos;
 weed_timecode_t aud_tc;
 
 boolean apply_rte_audio_init(void) {
-  gchar *com;
+  char *com;
 
   if (!prefs->conserve_space) {
     mainw->error=FALSE;
@@ -3089,15 +3089,15 @@ boolean push_audio_to_channel(weed_plant_t *achan, lives_audio_buf_t *abuf) {
 lives_pgid_t astream_pgid=0;
 
 boolean start_audio_stream(void) {
-  const gchar *playername="audiostreamer.pl";
-  gchar *astream_name=NULL;
-  gchar *astream_name_out=NULL;
+  const char *playername="audiostreamer.pl";
+  char *astream_name=NULL;
+  char *astream_name_out=NULL;
 
   // playback plugin wants an audio stream - so fork and run the stream
   // player
-  gchar *astname=lives_strdup_printf("livesaudio-%d.pcm",capable->mainpid);
-  gchar *astname_out=lives_strdup_printf("livesaudio-%d.stream",capable->mainpid);
-  gchar *astreamer,*com;
+  char *astname=lives_strdup_printf("livesaudio-%d.pcm",capable->mainpid);
+  char *astname_out=lives_strdup_printf("livesaudio-%d.stream",capable->mainpid);
+  char *astreamer,*com;
 
   int arate=0;
   int afd;
@@ -3177,15 +3177,15 @@ boolean start_audio_stream(void) {
 void stop_audio_stream(void) {
   if (astream_pgid>0) {
     // if we were streaming audio, kill it
-    const gchar *playername="audiostreamer.pl";
-    gchar *astname=lives_strdup_printf("livesaudio-%d.pcm",capable->mainpid);
-    gchar *astname_out=lives_strdup_printf("livesaudio-%d.stream",capable->mainpid);
-    gchar *astreamer=lives_build_filename(prefs->lib_dir,PLUGIN_EXEC_DIR,PLUGIN_AUDIO_STREAM,playername,NULL);
+    const char *playername="audiostreamer.pl";
+    char *astname=lives_strdup_printf("livesaudio-%d.pcm",capable->mainpid);
+    char *astname_out=lives_strdup_printf("livesaudio-%d.stream",capable->mainpid);
+    char *astreamer=lives_build_filename(prefs->lib_dir,PLUGIN_EXEC_DIR,PLUGIN_AUDIO_STREAM,playername,NULL);
 
-    gchar *astream_name=lives_build_filename(prefs->tmpdir,astname,NULL);
-    gchar *astream_name_out=lives_build_filename(prefs->tmpdir,astname_out,NULL);
+    char *astream_name=lives_build_filename(prefs->tmpdir,astname,NULL);
+    char *astream_name_out=lives_build_filename(prefs->tmpdir,astname_out,NULL);
 
-    gchar *com;
+    char *com;
 
     lives_free(astname);
     lives_free(astname_out);
@@ -3221,10 +3221,10 @@ void stop_audio_stream(void) {
 
 void clear_audio_stream(void) {
   // remove raw and cooked streams
-  gchar *astname=lives_strdup_printf("livesaudio-%d.pcm",capable->mainpid);
-  gchar *astream_name=lives_build_filename(prefs->tmpdir,astname,NULL);
-  gchar *astname_out=lives_strdup_printf("livesaudio-%d.stream",capable->mainpid);
-  gchar *astream_name_out=lives_build_filename(prefs->tmpdir,astname_out,NULL);
+  char *astname=lives_strdup_printf("livesaudio-%d.pcm",capable->mainpid);
+  char *astream_name=lives_build_filename(prefs->tmpdir,astname,NULL);
+  char *astname_out=lives_strdup_printf("livesaudio-%d.stream",capable->mainpid);
+  char *astream_name_out=lives_build_filename(prefs->tmpdir,astname_out,NULL);
   unlink(astream_name);
   unlink(astream_name_out);
   lives_free(astname);

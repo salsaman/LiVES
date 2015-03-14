@@ -22,8 +22,8 @@ typedef struct {
   y4m_frame_info_t frameinfo;
   y4m_ratio_t sar;
   y4m_ratio_t dar;
-  gchar *name;
-  gchar *filename;
+  char *name;
+  char *filename;
   int fd;
   int hsize;
   int vsize;
@@ -42,7 +42,7 @@ void lives_yuv_stream_stop_read (lives_yuv4m_t *);
 
 
 /// not used
-boolean lives_yuv_stream_start_write (lives_yuv4m_t *, const gchar *filename, int hsize, int vsize, double fps);
+boolean lives_yuv_stream_start_write (lives_yuv4m_t *, const char *filename, int hsize, int vsize, double fps);
 boolean lives_yuv_stream_write_frame (lives_yuv4m_t *, void *pixel_data);
 void lives_yuv_stream_stop_write (lives_yuv4m_t *);
 

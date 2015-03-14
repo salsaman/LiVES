@@ -19,7 +19,7 @@
 
 // generic plugins
 
-LiVESList *get_plugin_list (const gchar *plugin_type, boolean allow_nonex, const gchar *plugdir, const gchar *filter_ext);
+LiVESList *get_plugin_list (const char *plugin_type, boolean allow_nonex, const char *plugdir, const char *filter_ext);
 #define PLUGIN_ENCODERS "encoders"
 #define PLUGIN_DECODERS "decoders"
 #define PLUGIN_VID_PLAYBACK "playback/video"
@@ -33,11 +33,11 @@ LiVESList *get_plugin_list (const gchar *plugin_type, boolean allow_nonex, const
 #define PLUGIN_WEED_FX_BUILTIN "effects/realtime/weed"
 
 
-LiVESList *plugin_request (const gchar *plugin_type, const gchar *plugin_name, const gchar *request);
-LiVESList *plugin_request_with_blanks (const gchar *plugin_type, const gchar *plugin_name, const gchar *request);
-LiVESList *plugin_request_by_line (const gchar *plugin_type, const gchar *plugin_name, const gchar *request);
-LiVESList *plugin_request_by_space (const gchar *plugin_type, const gchar *plugin_name, const gchar *request);
-LiVESList *plugin_request_common (const gchar *plugin_type, const gchar *plugin_name, const gchar *request, const gchar *delim, boolean allow_blanks);
+LiVESList *plugin_request (const char *plugin_type, const char *plugin_name, const char *request);
+LiVESList *plugin_request_with_blanks (const char *plugin_type, const char *plugin_name, const char *request);
+LiVESList *plugin_request_by_line (const char *plugin_type, const char *plugin_name, const char *request);
+LiVESList *plugin_request_by_space (const char *plugin_type, const char *plugin_name, const char *request);
+LiVESList *plugin_request_common (const char *plugin_type, const char *plugin_name, const char *request, const char *delim, boolean allow_blanks);
 
 #ifndef  __WEED_EFFECTS_H__
 typedef weed_plant_t *(*weed_bootstrap_f) (weed_default_getter_f *value, int num_versions, int *plugin_versions);
@@ -49,7 +49,7 @@ typedef boolean (*plugin_keyfunc) (boolean down, uint16_t unicode, uint16_t keym
 
 typedef struct {
   // playback
-  gchar name[64];
+  char name[64];
   void *handle;
 
   // mandatory
@@ -65,10 +65,10 @@ typedef struct {
 			    weed_plant_t **play_params);
 
   // optional
-  boolean (*init_screen) (int width, int height, boolean fullscreen, uint64_t window_id, int argc, gchar **argv);
+  boolean (*init_screen) (int width, int height, boolean fullscreen, uint64_t window_id, int argc, char **argv);
   void (*exit_screen) (uint16_t mouse_x, uint16_t mouse_y);
   void (*module_unload) (void);
-  const gchar *(*get_fps_list) (int palette);
+  const char *(*get_fps_list) (int palette);
   boolean (*set_fps) (double fps);
   
   const char *(*get_init_rfx) (void);
@@ -112,7 +112,7 @@ typedef struct {
   double fixed_fpsd;
 
   int extra_argc;
-  gchar **extra_argv;
+  char **extra_argv;
 
   const weed_plant_t **play_paramtmpls;
   weed_plant_t **play_params;
@@ -126,12 +126,12 @@ typedef struct {
 #define DEF_VPP_HSIZE 320.
 #define DEF_VPP_VSIZE 240.
 
-_vid_playback_plugin *open_vid_playback_plugin (const gchar *name, boolean in_use);
+_vid_playback_plugin *open_vid_playback_plugin (const char *name, boolean in_use);
 void vid_playback_plugin_exit (void);
 void close_vid_playback_plugin(_vid_playback_plugin *);
 int64_t get_best_audio(_vid_playback_plugin *);
-void save_vpp_defaults(_vid_playback_plugin *, gchar *file);
-void load_vpp_defaults(_vid_playback_plugin *, gchar *file);
+void save_vpp_defaults(_vid_playback_plugin *, char *file);
+void load_vpp_defaults(_vid_playback_plugin *, char *file);
 
 
 const weed_plant_t *pp_get_param(weed_plant_t **pparams, int idx);
@@ -139,12 +139,12 @@ const weed_plant_t *pp_get_chan(weed_plant_t **pparams, int idx);
 
 // encoder plugins
 
-void do_plugin_encoder_error(const gchar *plugin_name_or_null);
+void do_plugin_encoder_error(const char *plugin_name_or_null);
 
-LiVESList *filter_encoders_by_img_ext(LiVESList *encoders, const gchar *img_ext);
+LiVESList *filter_encoders_by_img_ext(LiVESList *encoders, const char *img_ext);
 
 typedef struct {
-  gchar name[51];
+  char name[51];
   uint32_t audio_codec;
   // match with bitmaps in the encoder plugins
   // and also anames array in plugins.c (see below)
@@ -174,11 +174,11 @@ typedef struct {
 #define ENCODER_NON_NATIVE 1<<3
 
   // current output format
-  gchar of_name[51];
-  gchar of_desc[128];
+  char of_name[51];
+  char of_desc[128];
   int of_allowed_acodecs;
-  gchar of_restrict[1024];
-  gchar of_def_ext[16];
+  char of_restrict[1024];
+  char of_def_ext[16];
 }
 _encoder;
 
@@ -202,10 +202,10 @@ extern const char *anames[AUDIO_CODEC_MAX];
 // must be exactly the same as in decplugin.h
 
 typedef struct {
-  gchar *URI; ///< the URI of this cdata
+  char *URI; ///< the URI of this cdata
 
   int nclips; ///< number of clips (titles) in container
-  gchar container_name[512]; ///< name of container, e.g. "ogg" or NULL
+  char container_name[512]; ///< name of container, e.g. "ogg" or NULL
 
   char title[256];
   char author[256];
@@ -241,7 +241,7 @@ typedef struct {
   int YUV_sampling;
   int YUV_clamping;
   int YUV_subspace;
-  gchar video_name[512]; ///< name of video codec, e.g. "theora" or NULL
+  char video_name[512]; ///< name of video codec, e.g. "theora" or NULL
 
   /* audio data */
   int arate;
@@ -249,7 +249,7 @@ typedef struct {
   int asamps;
   boolean asigned;
   boolean ainterleaf;
-  gchar audio_name[512]; ///< name of audio codec, e.g. "vorbis" or NULL
+  char audio_name[512]; ///< name of audio codec, e.g. "vorbis" or NULL
 
   int seek_flag;
 
@@ -272,7 +272,7 @@ typedef struct {
 
 typedef struct {
   // playback
-  gchar *name; ///< plugin name
+  char *name; ///< plugin name
   void *handle; ///< may be shared between several instances
 
   // mandatory
@@ -319,8 +319,8 @@ typedef struct {
 
 const lives_clip_data_t *get_decoder_cdata(int fileno, LiVESList *disabled, const lives_clip_data_t *fake_cdata);
 void close_decoder_plugin (lives_decoder_t *);
-lives_decoder_sys_t *open_decoder_plugin(const gchar *plname);
-void get_mime_type(gchar *text, int maxlen, const lives_clip_data_t *);
+lives_decoder_sys_t *open_decoder_plugin(const char *plname);
+void get_mime_type(char *text, int maxlen, const lives_clip_data_t *);
 void unload_decoder_plugins(void);
 
 boolean decplugin_supports_palette (const lives_decoder_t *dplug, int palette);
@@ -399,10 +399,10 @@ typedef enum {
 
 typedef struct {
   // weed style part
-  gchar *name;
-  gchar *desc;
+  char *name;
+  char *desc;
 
-  gchar *label;
+  char *label;
   int flags;
   boolean use_mnemonic;
   fn_ptr interp_func;
@@ -478,9 +478,9 @@ typedef enum {
 
 
 typedef struct {
-  gchar *name;  ///< the name of the executable (so we can run it !)
-  gchar *menu_text; ///< for Weed, this is the filter_class "name"
-  gchar *action_desc; ///< for Weed "Applying $s"
+  char *name;  ///< the name of the executable (so we can run it !)
+  char *menu_text; ///< for Weed, this is the filter_class "name"
+  char *action_desc; ///< for Weed "Applying $s"
   int min_frames; ///< for Weed, 1
   int num_in_channels;
   lives_rfx_status_t status;
@@ -503,7 +503,7 @@ typedef struct {
   lives_rfx_source_t source_type;
   void *source;  ///< points to the source (e.g. a weed_plant_t)
   void *extra;  ///< for future use
-  gchar delim[2];
+  char delim[2];
   boolean is_template;
 
 } lives_rfx_t;
@@ -513,11 +513,11 @@ boolean check_rfx_for_lives (lives_rfx_t *);
 
 void do_rfx_cleanup(lives_rfx_t *);
 
-void render_fx_get_params (lives_rfx_t *, const gchar *plugin_name, short status);
+void render_fx_get_params (lives_rfx_t *, const char *plugin_name, short status);
 
 void sort_rfx_array (lives_rfx_t *in_array, int num_elements);
 
-int find_rfx_plugin_by_name (const gchar *name, short status);
+int find_rfx_plugin_by_name (const char *name, short status);
 
 void rfx_copy (lives_rfx_t *src, lives_rfx_t *dest, boolean full);
 
@@ -533,7 +533,7 @@ void param_copy (lives_param_t *src, lives_param_t *dest, boolean full);
 typedef struct {
   LiVESList *list; ///< list of filter_idx from which user can delegate
   int delegate; ///< offset in list of current delegate
-  gulong func; ///< menuitem activation function for current delegate
+  ulong func; ///< menuitem activation function for current delegate
   lives_rfx_t *rfx; ///< pointer to rfx for current delegate (or NULL)
 } lives_fx_candidate_t;
 
@@ -565,12 +565,12 @@ void **store_rfx_params (lives_rfx_t *);
 void set_rfx_params_from_store (lives_rfx_t *rfx, void **store);
 void rfx_params_store_free (lives_rfx_t *, void **store);
 
-LiVESList *array_to_string_list (gchar **array, int offset, int len);
+LiVESList *array_to_string_list (char **array, int offset, int len);
 
 lives_rfx_t *weed_to_rfx (weed_plant_t *plant, boolean show_reinits);
 lives_param_t *weed_params_to_rfx(int npar, weed_plant_t *instance, boolean show_reinits);
 
-gchar *plugin_run_param_window(const gchar *get_com, LiVESVBox *vbox, lives_rfx_t **ret_rfx);
+char *plugin_run_param_window(const char *get_com, LiVESVBox *vbox, lives_rfx_t **ret_rfx);
 
 //////////////////////////////////////////////////////////////////////////////////////////
 /// video playback plugin window - fixed part

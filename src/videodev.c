@@ -463,8 +463,8 @@ void on_open_vdev_activate (LiVESMenuItem *menuitem, livespointer user_data) {
 
   LiVESWidget *card_dialog;
 
-  gchar *tmp;
-  gchar *fname;
+  char *tmp;
+  char *fname;
 
   int devno=0;
 
@@ -543,7 +543,7 @@ void on_open_vdev_activate (LiVESMenuItem *menuitem, livespointer user_data) {
   d_print(""); ///< force switchtext
 
   if (!open_vdev_inner(&devices[devno])) {
-    gchar *msg=lives_strdup_printf(_("Unable to open device %s\n"),fname);
+    char *msg=lives_strdup_printf(_("Unable to open device %s\n"),fname);
     d_print(msg);
     lives_free(msg);
     lives_free(fname);

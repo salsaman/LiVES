@@ -570,24 +570,24 @@ typedef struct {
   uint32_t kb_timer;
 
   //function pointers
-  gulong config_func;
-  gulong pb_fps_func;
-  gulong spin_start_func;
-  gulong spin_end_func;
-  gulong record_perf_func;
-  gulong vidbar_func;
-  gulong laudbar_func;
-  gulong raudbar_func;
-  gulong hrule_func;
-  gulong toy_func_none;
-  gulong toy_func_random_frames;
-  gulong toy_func_lives_tv;
-  gulong toy_func_autolives;
-  gulong hnd_id;
-  gulong loop_cont_func;
-  gulong mute_audio_func;
-  gulong fullscreen_cb_func;
-  gulong sepwin_cb_func;
+  ulong config_func;
+  ulong pb_fps_func;
+  ulong spin_start_func;
+  ulong spin_end_func;
+  ulong record_perf_func;
+  ulong vidbar_func;
+  ulong laudbar_func;
+  ulong raudbar_func;
+  ulong hrule_func;
+  ulong toy_func_none;
+  ulong toy_func_random_frames;
+  ulong toy_func_lives_tv;
+  ulong toy_func_autolives;
+  ulong hnd_id;
+  ulong loop_cont_func;
+  ulong mute_audio_func;
+  ulong fullscreen_cb_func;
+  ulong sepwin_cb_func;
 
   // for jack transport
   boolean jack_can_stop;
@@ -596,7 +596,7 @@ typedef struct {
   volatile boolean video_seek_ready;
 
   // selection pointers
-  gulong mouse_fn1;
+  ulong mouse_fn1;
   boolean mouse_blocked;
   boolean hrule_blocked;
 
@@ -799,7 +799,7 @@ typedef struct {
   LiVESWidget *preview_spinbutton;
   LiVESWidget *preview_scale;
   int preview_frame;
-  gulong preview_spin_func;
+  ulong preview_spin_func;
   int prv_link;
 #define PRV_FREE 0
 #define PRV_START 1
@@ -921,7 +921,7 @@ typedef struct {
   boolean only_close; ///< only close clips - do not exit
   volatile boolean is_exiting; ///< set during shutdown (inverse of only_close then)
 
-  gulong pw_scroll_func;
+  ulong pw_scroll_func;
 
 #ifdef ENABLE_JACK
   jack_driver_t *jackd; ///< jack audio playback device
@@ -1185,7 +1185,7 @@ typedef struct {
 extern _palette *palette;
 
 typedef struct {
-  gulong ins_frame_function;
+  ulong ins_frame_function;
 
   LiVESWidget *merge_dialog;
   LiVESWidget *ins_frame_button;

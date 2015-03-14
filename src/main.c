@@ -93,7 +93,7 @@ mainwindow *mainw;
 
 static boolean no_recover=FALSE,auto_recover=FALSE;
 static boolean upgrade_error=FALSE;
-static gchar start_file[PATH_MAX];
+static char start_file[PATH_MAX];
 static double start=0.;
 static int end=0;
 
@@ -122,7 +122,7 @@ LiVESTargetEntry target_table[]  = {
 #ifdef NO_COMPILE // never compile this
 void tr_msg(void) {
   // TRANSLATORS: do not translate this message
-  gchar *msg=(_("Attention Translators !\nThis message is intended for you, so please do not translate it.\n\nAll translators should read the LiVES translation notes at\nhttp://lives.sourceforge.net/TRANS-README.txt"));
+  char *msg=(_("Attention Translators !\nThis message is intended for you, so please do not translate it.\n\nAll translators should read the LiVES translation notes at\nhttp://lives.sourceforge.net/TRANS-README.txt"));
 }
 #endif
 
@@ -143,7 +143,7 @@ void *gtk_thread_wrapper(void *data) {
 
 #ifdef USE_GLIB
 static void lives_log_handler (const char *domain, LiVESLogLevelFlags level, const char *message,  livespointer data) {
-  gchar *msg;
+  char *msg;
 
 #ifdef LIVES_NO_DEBUG
   if (level>=LIVES_LOG_LEVEL_WARNING ) return;
@@ -226,7 +226,7 @@ void catch_sigint(int signum) {
 
 
 void get_monitors(void) {
-  gchar buff[256];
+  char buff[256];
 
 #ifdef GUI_GTK
   GSList *dlist,*dislist;
@@ -346,7 +346,7 @@ void get_monitors(void) {
       prefs->play_monitor=2;
     }
     else {
-      gchar **array=lives_strsplit(buff,",",2);
+      char **array=lives_strsplit(buff,",",2);
       prefs->gui_monitor=atoi(array[0]);
       prefs->play_monitor=atoi(array[1]);
       lives_strfreev(array);
@@ -374,7 +374,7 @@ static boolean pre_init(void) {
 
   pthread_mutexattr_t mattr;
 
-  gchar buff[256];
+  char buff[256];
 
   boolean needs_update=FALSE;
 
@@ -609,7 +609,7 @@ static boolean pre_init(void) {
 #ifdef OMC_JS_IMPL
 #ifndef IS_MINGW
   if (strlen(prefs->omc_js_fname)==0) {
-    const gchar *tmp=get_js_filename();
+    const char *tmp=get_js_filename();
     if (tmp!=NULL) {
       lives_snprintf(prefs->omc_js_fname,256,"%s",tmp);
       }
@@ -623,7 +623,7 @@ static boolean pre_init(void) {
 #ifdef OMC_MIDI_IMPL
 #ifndef IS_MINGW
   if (strlen(prefs->omc_midi_fname)==0) {
-    const gchar *tmp=get_midi_filename();
+    const char *tmp=get_midi_filename();
     if (tmp!=NULL) {
       lives_snprintf(prefs->omc_midi_fname,256,"%s",tmp);
     }
@@ -673,7 +673,7 @@ static void replace_with_delegates (void) {
   int resize_fx;
   weed_plant_t *filter;
   lives_rfx_t *rfx;
-  gchar mtext[256];
+  char mtext[256];
   int i;
 
   int deint_idx;
@@ -740,14 +740,14 @@ static void lives_init(_ign_opts *ign_opts) {
   boolean needs_free;
 
   ssize_t randres;
-  gchar buff[256];
+  char buff[256];
   uint32_t rseed;
   LiVESList *encoders=NULL;
   LiVESList *encoder_capabilities=NULL;
 
-  gchar *weed_plugin_path;
-  gchar *frei0r_path;
-  gchar *ladspa_path;
+  char *weed_plugin_path;
+  char *frei0r_path;
+  char *ladspa_path;
 
 
   for (i=0;i<=MAX_FILES;mainw->files[i++]=NULL);
@@ -1399,7 +1399,7 @@ static void lives_init(_ign_opts *ign_opts) {
 
       if ((prefs->startup_phase==1||prefs->startup_phase==-1)&&capable->has_encoder_plugins&&capable->has_python) {
 	LiVESList *ofmt_all=NULL;
-	gchar **array;
+	char **array;
 	lives_snprintf(prefs->encoder.name,52,"%s","multi_encoder");
 
 	// need to change the output format
@@ -1409,8 +1409,8 @@ static void lives_init(_ign_opts *ign_opts) {
 	  set_pref("encoder",prefs->encoder.name);
 
 	  for (i=0;i<lives_list_length(ofmt_all);i++) {
-	    if (get_token_count ((gchar *)lives_list_nth_data (ofmt_all,i),'|')>2) {
-	      array=lives_strsplit ((gchar *)lives_list_nth_data (ofmt_all,i),"|",-1);
+	    if (get_token_count ((char *)lives_list_nth_data (ofmt_all,i),'|')>2) {
+	      array=lives_strsplit ((char *)lives_list_nth_data (ofmt_all,i),"|",-1);
 
 	      if (!strcmp(array[0],"hi-theora")) {
 		lives_snprintf(prefs->encoder.of_name,51,"%s",array[0]);
@@ -1456,7 +1456,7 @@ static void lives_init(_ign_opts *ign_opts) {
       memset (prefs->encoder.of_restrict,0,1);
 
       if (capable->has_encoder_plugins) {
-	gchar **array;
+	char **array;
 	int numtok;
 	LiVESList *ofmt_all,*dummy_list;
 
@@ -1466,14 +1466,14 @@ static void lives_init(_ign_opts *ign_opts) {
 	  lives_list_free(dummy_list);
 	}
 	if (!((encoder_capabilities=plugin_request(PLUGIN_ENCODERS,prefs->encoder.name,"get_capabilities"))==NULL)) {
-	  prefs->encoder.capabilities=atoi ((gchar *)lives_list_nth_data (encoder_capabilities,0));
+	  prefs->encoder.capabilities=atoi ((char *)lives_list_nth_data (encoder_capabilities,0));
 	  lives_list_free_strings (encoder_capabilities);
 	  lives_list_free (encoder_capabilities);
 	  if ((ofmt_all=plugin_request_by_line(PLUGIN_ENCODERS,prefs->encoder.name,"get_formats"))!=NULL) {
 	    // get any restrictions for the current format
 	    for (i=0;i<lives_list_length(ofmt_all);i++) {
-	      if ((numtok=get_token_count ((gchar *)lives_list_nth_data (ofmt_all,i),'|'))>2) {
-		array=lives_strsplit ((gchar *)lives_list_nth_data (ofmt_all,i),"|",-1);
+	      if ((numtok=get_token_count ((char *)lives_list_nth_data (ofmt_all,i),'|'))>2) {
+		array=lives_strsplit ((char *)lives_list_nth_data (ofmt_all,i),"|",-1);
 		if (!strcmp(array[0],prefs->encoder.of_name)) {
 		  if (numtok>1) {
 		    lives_snprintf(prefs->encoder.of_desc,128,"%s",array[1]);
@@ -1717,13 +1717,13 @@ static void lives_init(_ign_opts *ign_opts) {
 
 	    if (mainw->jackd==NULL&&prefs->startup_phase==0) {
 #ifdef HAVE_PULSE_AUDIO
-	      gchar *otherbit=lives_strdup("\"lives -aplayer pulse\".");
+	      char *otherbit=lives_strdup("\"lives -aplayer pulse\".");
 #else
-	      gchar *otherbit=lives_strdup("\"lives -aplayer sox\".");
+	      char *otherbit=lives_strdup("\"lives -aplayer sox\".");
 #endif
-	      gchar *tmp;
+	      char *tmp;
 
-	      gchar *msg=lives_strdup_printf(_("\n\nManual start of jackd required. Please make sure jackd is running, \nor else change the value of <jack_opts> in %s to 16\nand restart LiVES.\n\nAlternatively, try to start lives with either \"lives -jackopts 16\", or "),(tmp=lives_filename_to_utf8(capable->rcfile,-1,NULL,NULL,NULL)));
+	      char *msg=lives_strdup_printf(_("\n\nManual start of jackd required. Please make sure jackd is running, \nor else change the value of <jack_opts> in %s to 16\nand restart LiVES.\n\nAlternatively, try to start lives with either \"lives -jackopts 16\", or "),(tmp=lives_filename_to_utf8(capable->rcfile,-1,NULL,NULL,NULL)));
 	      lives_printerr("%s%s\n\n",msg,otherbit);
 	      lives_free(msg);
 	      lives_free(tmp);
@@ -1786,7 +1786,7 @@ static void lives_init(_ign_opts *ign_opts) {
 
     
     if (prefs->startup_phase!=0) {
-      gchar *txt;
+      char *txt;
 
       splash_end();
       set_int_pref("startup_phase",5);
@@ -1823,7 +1823,7 @@ static void lives_init(_ign_opts *ign_opts) {
 
 
 void do_start_messages(void) {
-  gchar *endian;
+  char *endian;
 
   d_print("\n");
   d_print(_("Checking optional dependencies:"));
@@ -2063,15 +2063,15 @@ boolean is_big_endian() {
 
 capability *get_capabilities (void) {
   // get capabilities of backend system
-  gchar *safer_bfile;
-  gchar **array;
+  char *safer_bfile;
+  char **array;
   
-  gchar buffer[4096+PATH_MAX];
+  char buffer[4096+PATH_MAX];
   FILE *bootfile;
-  gchar string[256];
+  char string[256];
   int err;
   int numtok;
-  gchar *tmp;
+  char *tmp;
 
 #ifdef IS_DARWIN
   processor_info_array_t processorInfo;
@@ -2255,7 +2255,7 @@ capability *get_capabilities (void) {
 
   if (numtok>3&&strlen (array[3])) {
     if (!strcmp(array[3],"!updmsg")) {
-      gchar *text=get_upd_msg();
+      char *text=get_upd_msg();
       lives_snprintf(capable->startup_msg,256,"%s\n\n",text);
       lives_free(text);
 
@@ -2434,11 +2434,11 @@ static boolean open_yuv4m_startup(livespointer data) {
 static boolean lives_startup(livespointer data) {
 #ifdef GUI_GTK
   LiVESError *gerr=NULL;
-  gchar *icon;
+  char *icon;
 #endif
 
   boolean got_files=FALSE;
-  gchar *tmp;
+  char *tmp;
 
   if (!mainw->foreign) {
     if (prefs->show_splash) splash_init();
@@ -2469,8 +2469,8 @@ static boolean lives_startup(livespointer data) {
   if (capable->smog_version_correct) {
     if (theme_expected&&palette->style==STYLE_PLAIN&&!mainw->foreign) {
       // non-fatal errors
-      gchar *tmp2;
-      gchar *err=lives_strdup_printf(_ ("\n\nThe theme you requested could not be located. Please make sure you have the themes installed in\n%s/%s.\n(Maybe you need to change the value of <prefix_dir> in your %s file)\n"),(tmp=lives_filename_to_utf8(prefs->prefix_dir,-1,NULL,NULL,NULL)),THEME_DIR,(tmp2=lives_filename_to_utf8(capable->rcfile,-1,NULL,NULL,NULL)));
+      char *tmp2;
+      char *err=lives_strdup_printf(_ ("\n\nThe theme you requested could not be located. Please make sure you have the themes installed in\n%s/%s.\n(Maybe you need to change the value of <prefix_dir> in your %s file)\n"),(tmp=lives_filename_to_utf8(prefs->prefix_dir,-1,NULL,NULL,NULL)),THEME_DIR,(tmp2=lives_filename_to_utf8(capable->rcfile,-1,NULL,NULL,NULL)));
       lives_free(tmp2);
       lives_free(tmp);
       startup_message_nonfatal (err);
@@ -2489,28 +2489,28 @@ static boolean lives_startup(livespointer data) {
     }
     else {
       if (!capable->has_smogrify) {
-	gchar *err=lives_strdup (_ ("\n`smogrify` must be in your path, and be executable\n\nPlease review the README file which came with this package\nbefore running LiVES.\n"));
+	char *err=lives_strdup (_ ("\n`smogrify` must be in your path, and be executable\n\nPlease review the README file which came with this package\nbefore running LiVES.\n"));
 	startup_message_fatal(err);
 	lives_free(err);
       }
       else {
 	if (!capable->can_read_from_config) {
-	  gchar *err=lives_strdup_printf(_ ("\nLiVES was unable to read from its configuration file\n%s\n\nPlease check the file permissions for this file and try again.\n"),(tmp=lives_filename_to_utf8(capable->rcfile,-1,NULL,NULL,NULL)));
+	  char *err=lives_strdup_printf(_ ("\nLiVES was unable to read from its configuration file\n%s\n\nPlease check the file permissions for this file and try again.\n"),(tmp=lives_filename_to_utf8(capable->rcfile,-1,NULL,NULL,NULL)));
 	  lives_free(tmp);
 	  startup_message_fatal(err);
 	  lives_free(err);
 	}
 	else {
 	  if (!capable->can_write_to_config) {
-	    gchar *err=lives_strdup_printf(_ ("\nLiVES was unable to write to its configuration file\n%s\n\nPlease check the file permissions for this file and directory\nand try again.\n"),(tmp=lives_filename_to_utf8(capable->rcfile,-1,NULL,NULL,NULL)));
+	    char *err=lives_strdup_printf(_ ("\nLiVES was unable to write to its configuration file\n%s\n\nPlease check the file permissions for this file and directory\nand try again.\n"),(tmp=lives_filename_to_utf8(capable->rcfile,-1,NULL,NULL,NULL)));
 	    lives_free(tmp);
 	    startup_message_fatal(err);
 	    lives_free(err);
 	  }
 	  else {
 	    if (!capable->can_write_to_tempdir) {
-	      gchar *extrabit;
-	      gchar *err;
+	      char *extrabit;
+	      char *err;
 	      if (!mainw->has_session_tmpdir) {
 		extrabit=lives_strdup_printf(_("Please check the <tempdir> setting in \n%s\nand try again.\n"),
 				  (tmp=lives_filename_to_utf8(capable->rcfile,-1,NULL,NULL,NULL)));
@@ -2558,7 +2558,7 @@ static boolean lives_startup(livespointer data) {
 		      startup_message_nonfatal_dismissable (_ ("\nLiVES was unable to locate 'sox'. Some audio features may not work. You should install 'sox'.\n"),WARN_MASK_NO_MPLAYER);
 		    }
 		    if (!capable->has_encoder_plugins) {
-		      gchar *err=lives_strdup_printf(_ ("\nLiVES was unable to find any encoder plugins.\nPlease check that you have them installed correctly in\n%s%s%s/\nYou will not be able to 'Save' without them.\nYou may need to change the value of <lib_dir> in %s\n"),prefs->lib_dir,PLUGIN_EXEC_DIR,PLUGIN_ENCODERS,(tmp=lives_filename_to_utf8(capable->rcfile,-1,NULL,NULL,NULL)));
+		      char *err=lives_strdup_printf(_ ("\nLiVES was unable to find any encoder plugins.\nPlease check that you have them installed correctly in\n%s%s%s/\nYou will not be able to 'Save' without them.\nYou may need to change the value of <lib_dir> in %s\n"),prefs->lib_dir,PLUGIN_EXEC_DIR,PLUGIN_ENCODERS,(tmp=lives_filename_to_utf8(capable->rcfile,-1,NULL,NULL,NULL)));
 		      lives_free(tmp);
 		      startup_message_nonfatal_dismissable (err,WARN_MASK_NO_ENCODERS);
 		      lives_free(err);
@@ -2569,7 +2569,7 @@ static boolean lives_startup(livespointer data) {
 		      uint64_t dsval;
 		      lives_storage_status_t ds=get_storage_status(prefs->tmpdir,mainw->next_ds_warn_level,&dsval);
 		      if (ds==LIVES_STORAGE_STATUS_WARNING) {
-			gchar *err;
+			char *err;
 			uint64_t curr_ds_warn=mainw->next_ds_warn_level;
 			mainw->next_ds_warn_level>>=1;
 			if (mainw->next_ds_warn_level>(dsval>>1)) mainw->next_ds_warn_level=dsval>>1;
@@ -2581,7 +2581,7 @@ static boolean lives_startup(livespointer data) {
 			lives_free(err);
 		      }
 		      else if (ds==LIVES_STORAGE_STATUS_CRITICAL) {
-			gchar *err;
+			char *err;
 			tmp=ds_critical_msg(prefs->tmpdir,dsval);
 			err=lives_strdup_printf("\n%s\n",tmp);
 			lives_free(tmp);
@@ -2683,7 +2683,7 @@ static boolean lives_startup(livespointer data) {
   if (prefs->crash_recovery&&!no_recover) got_files=check_for_recovery_files(auto_recover);
 
   if (!mainw->foreign&&!got_files&&prefs->ar_clipset) {
-    gchar *msg=lives_strdup_printf(_("Autoloading set %s..."),prefs->ar_clipset_name);
+    char *msg=lives_strdup_printf(_("Autoloading set %s..."),prefs->ar_clipset_name);
     d_print(msg);
     splash_msg(msg,1.);
     lives_free(msg);
@@ -2785,7 +2785,7 @@ int real_main (int argc, char *argv[], ulong id) {
 #endif
 #endif
   ssize_t mynsize;
-  gchar fbuff[PATH_MAX];
+  char fbuff[PATH_MAX];
 
 #ifdef GUI_QT
   qapp = new QApplication(argc,argv);
@@ -3011,7 +3011,7 @@ int real_main (int argc, char *argv[], ulong id) {
           continue;
         }
 	if (!strcmp(charopt,"aplayer")) {
-	  gchar buff[256];
+	  char buff[256];
 	  boolean apl_valid=FALSE;
 
 	  lives_snprintf(buff,256,"%s",optarg);
@@ -3156,7 +3156,7 @@ int real_main (int argc, char *argv[], ulong id) {
 
 
 
-boolean startup_message_fatal(const gchar *msg) {
+boolean startup_message_fatal(const char *msg) {
   splash_end();
   do_blocking_error_dialog (msg);
   mainw->startup_error=TRUE;
@@ -3164,21 +3164,21 @@ boolean startup_message_fatal(const gchar *msg) {
   return TRUE;
 }
 
-boolean startup_message_nonfatal(const gchar *msg) {
+boolean startup_message_nonfatal(const char *msg) {
   if (palette->style&STYLE_1) widget_opts.apply_theme=TRUE;
   do_error_dialog (msg);
   widget_opts.apply_theme=FALSE;
   return TRUE;
 }
 
-boolean startup_message_info(const gchar *msg) {
+boolean startup_message_info(const char *msg) {
   if (palette->style&STYLE_1) widget_opts.apply_theme=TRUE;
   do_info_dialog (msg);
   widget_opts.apply_theme=FALSE;
   return TRUE;
 }
 
-boolean startup_message_nonfatal_dismissable(const gchar *msg, int warning_mask) {
+boolean startup_message_nonfatal_dismissable(const char *msg, int warning_mask) {
   if (palette->style&STYLE_1) widget_opts.apply_theme=TRUE;
   do_error_dialog_with_check (msg, warning_mask);
   widget_opts.apply_theme=FALSE;
@@ -3186,9 +3186,9 @@ boolean startup_message_nonfatal_dismissable(const gchar *msg, int warning_mask)
 }
 
 
-void set_main_title(const gchar *file, int untitled) {
-  gchar *title,*tmp;
-  gchar short_file[256];
+void set_main_title(const char *file, int untitled) {
+  char *title,*tmp;
+  char short_file[256];
 
   if (file!=NULL) {
     if (untitled) title=lives_strdup_printf(_ ("LiVES-%s: <Untitled%d> %dx%d : %d frames %d bpp %.3f fps"),LiVES_VERSION,untitled,
@@ -3614,7 +3614,7 @@ void load_start_image(int frame) {
   if (mainw->current_file>-1&&cfile!=NULL&&(cfile->clip_type==CLIP_TYPE_YUV4MPEG||cfile->clip_type==CLIP_TYPE_VIDEODEV)) {
     if (mainw->camframe==NULL) {
       LiVESError *error=NULL;
-      gchar *tmp=lives_build_filename(prefs->prefix_dir,THEME_DIR,"camera","frame.jpg",NULL);
+      char *tmp=lives_build_filename(prefs->prefix_dir,THEME_DIR,"camera","frame.jpg",NULL);
       mainw->camframe=lives_pixbuf_new_from_file(tmp,&error);
       if (mainw->camframe!=NULL) lives_pixbuf_saturate_and_pixelate(mainw->camframe,mainw->camframe,0.0,FALSE);
       lives_free(tmp);
@@ -3785,7 +3785,7 @@ void load_end_image(int frame) {
   if (mainw->current_file>-1&&cfile!=NULL&&(cfile->clip_type==CLIP_TYPE_YUV4MPEG||cfile->clip_type==CLIP_TYPE_VIDEODEV)) {
     if (mainw->camframe==NULL) {
       LiVESError *error=NULL;
-      gchar *tmp=lives_build_filename(prefs->prefix_dir,THEME_DIR,"camera","frame.jpg",NULL);
+      char *tmp=lives_build_filename(prefs->prefix_dir,THEME_DIR,"camera","frame.jpg",NULL);
       mainw->camframe=lives_pixbuf_new_from_file(tmp,&error);
       if (mainw->camframe!=NULL) lives_pixbuf_saturate_and_pixelate(mainw->camframe,mainw->camframe,0.0,FALSE);
       lives_free(tmp);
@@ -3960,7 +3960,7 @@ void load_preview_image(boolean update_always) {
   if (mainw->current_file>-1&&cfile!=NULL&&(cfile->clip_type==CLIP_TYPE_YUV4MPEG||cfile->clip_type==CLIP_TYPE_VIDEODEV)) {
     if (mainw->camframe==NULL) {
       LiVESError *error=NULL;
-      gchar *tmp=lives_strdup_printf("%s/%s/camera/frame.jpg",prefs->prefix_dir,THEME_DIR);
+      char *tmp=lives_strdup_printf("%s/%s/camera/frame.jpg",prefs->prefix_dir,THEME_DIR);
       mainw->camframe=lives_pixbuf_new_from_file(tmp,&error);
       if (mainw->camframe!=NULL) lives_pixbuf_saturate_and_pixelate(mainw->camframe,mainw->camframe,0.0,FALSE);
       lives_free(tmp);
@@ -4447,7 +4447,7 @@ static weed_plant_t *render_subs_from_file(lives_clip_t *sfile, double xtime, we
     col_black_a.alpha=20480;
     
     if (sfile->subt->text!=NULL) {
-      gchar *tmp;
+      char *tmp;
       layer=render_text_to_layer(layer,(tmp=lives_strdup_printf(" %s ",sfile->subt->text)),sfont,size,
 				 LIVES_TEXT_MODE_FOREGROUND_AND_BACKGROUND,&col_white,&col_black_a,TRUE,TRUE,0.);
       lives_free(tmp);
@@ -4459,7 +4459,7 @@ static weed_plant_t *render_subs_from_file(lives_clip_t *sfile, double xtime, we
 
 
 
-boolean pull_frame_at_size (weed_plant_t *layer, const gchar *image_ext, weed_timecode_t tc, int width, int height, 
+boolean pull_frame_at_size (weed_plant_t *layer, const char *image_ext, weed_timecode_t tc, int width, int height, 
 			    int target_palette) {
   // pull a frame from an external source into a layer
   // the "clip" and "frame" leaves must be set in layer
@@ -4625,7 +4625,7 @@ boolean pull_frame_at_size (weed_plant_t *layer, const gchar *image_ext, weed_ti
       else {
 	// pull frame from decoded images
 	boolean ret;
-	gchar *fname=lives_strdup_printf("%s/%s/%08d.%s",prefs->tmpdir,sfile->handle,frame,image_ext);
+	char *fname=lives_strdup_printf("%s/%s/%08d.%s",prefs->tmpdir,sfile->handle,frame,image_ext);
 	if (height*width==0) {
 	  ret=weed_layer_new_from_file_progressive(layer,fname,0,0,image_ext,&gerror);
 	}
@@ -4696,7 +4696,7 @@ boolean pull_frame_at_size (weed_plant_t *layer, const gchar *image_ext, weed_ti
 }
 
 
-boolean pull_frame (weed_plant_t *layer, const gchar *image_ext, weed_timecode_t tc) {
+boolean pull_frame (weed_plant_t *layer, const char *image_ext, weed_timecode_t tc) {
   // pull a frame from an external source into a layer
   // the "clip" and "frame" leaves must be set in layer
   // tc is used instead of "frame" for some sources (e.g. generator plugins)
@@ -5020,9 +5020,9 @@ void load_frame_image(int frame) {
 
   LiVESPixbuf *pixbuf=NULL;
 
-  gchar *framecount=NULL,*tmp;
-  gchar *fname_next=NULL,*info_file=NULL;
-  const gchar *img_ext=NULL;
+  char *framecount=NULL,*tmp;
+  char *fname_next=NULL,*info_file=NULL;
+  const char *img_ext=NULL;
 
   LiVESInterpType interp;
 
@@ -5794,7 +5794,7 @@ void load_frame_image(int frame) {
 	if (framecount!=NULL) lives_free(framecount);
 	
 	// format is now msg|timecode|fgclip|fgframe|fgfps|
-	lives_notify(LIVES_OSC_NOTIFY_FRAME_SYNCH,(const gchar *)
+	lives_notify(LIVES_OSC_NOTIFY_FRAME_SYNCH,(const char *)
 		     (tmp=lives_strdup_printf("%.8f|%d|%d|%.3f|",(double)mainw->currticks/U_SEC,
 					      mainw->current_file,mainw->actual_frame,cfile->pb_fps)));
 	lives_free(tmp);
@@ -6065,7 +6065,7 @@ void load_frame_image(int frame) {
 	if (framecount!=NULL) lives_free(framecount);
       
 	// format is now msg|timecode|fgclip|fgframe|fgfps|
-	lives_notify(LIVES_OSC_NOTIFY_FRAME_SYNCH,(const gchar *)
+	lives_notify(LIVES_OSC_NOTIFY_FRAME_SYNCH,(const char *)
 		     (tmp=lives_strdup_printf("%.8f|%d|%d|%.3f|",(double)mainw->currticks/U_SEC,
 					      mainw->current_file,mainw->actual_frame,cfile->pb_fps)));
 	lives_free(tmp);
@@ -6188,7 +6188,7 @@ void load_frame_image(int frame) {
     if (pixbuf!=NULL) lives_object_unref(pixbuf);
     
     // format is now msg|timecode|fgclip|fgframe|fgfps|
-    lives_notify(LIVES_OSC_NOTIFY_FRAME_SYNCH,(const gchar *)
+    lives_notify(LIVES_OSC_NOTIFY_FRAME_SYNCH,(const char *)
 		 (tmp=lives_strdup_printf("%.8f|%d|%d|%.3f|",(double)mainw->currticks/U_SEC,
 					  mainw->current_file,mainw->actual_frame,cfile->pb_fps)));
     lives_free(tmp);
@@ -6199,7 +6199,7 @@ void load_frame_image(int frame) {
 
   // record external window
   if (mainw->record_foreign) {
-    gchar fname[PATH_MAX];
+    char fname[PATH_MAX];
     int xwidth,xheight;
     LiVESError *gerror=NULL;
     lives_painter_t *cr = lives_painter_create_from_widget (mainw->playarea);
@@ -6275,7 +6275,7 @@ void load_frame_image(int frame) {
 
 /** Save a pixbuf to a file using the specified imgtype and the specified quality/compression value */
 
-LiVESError *lives_pixbuf_save(LiVESPixbuf *pixbuf, gchar *fname, lives_image_type_t imgtype, int quality, boolean do_chmod, 
+LiVESError *lives_pixbuf_save(LiVESPixbuf *pixbuf, char *fname, lives_image_type_t imgtype, int quality, boolean do_chmod, 
 			      LiVESError **gerrorptr) {
   // CALLER should check for errors
 
@@ -6292,7 +6292,7 @@ LiVESError *lives_pixbuf_save(LiVESPixbuf *pixbuf, gchar *fname, lives_image_typ
 #endif
 
   if (imgtype==IMG_TYPE_JPEG) {
-    gchar *qstr=lives_strdup_printf("%d",quality);
+    char *qstr=lives_strdup_printf("%d",quality);
 #ifdef GUI_GTK
     gdk_pixbuf_save (pixbuf, fname, "jpeg", gerrorptr, "quality", qstr, NULL);
 #endif
@@ -6302,7 +6302,7 @@ LiVESError *lives_pixbuf_save(LiVESPixbuf *pixbuf, gchar *fname, lives_image_typ
     lives_free(qstr);
   }
   else if (imgtype==IMG_TYPE_PNG) {
-    gchar *cstr=lives_strdup_printf("%d",(int)((100.-(double)quality+5.)/10.));
+    char *cstr=lives_strdup_printf("%d",(int)((100.-(double)quality+5.)/10.));
 #ifdef GUI_GTK
     gdk_pixbuf_save (pixbuf, fname, "png", gerrorptr, "compression", cstr, NULL);
 #endif
@@ -6328,7 +6328,7 @@ LiVESError *lives_pixbuf_save(LiVESPixbuf *pixbuf, gchar *fname, lives_image_typ
 
 void close_current_file(int file_to_switch_to) {
   // close the current file, and free the file struct and all sub storage
-  gchar *com;
+  char *com;
   LiVESList *list_index;
   int index=-1;
   int old_file=mainw->current_file;
@@ -6391,7 +6391,7 @@ void close_current_file(int file_to_switch_to) {
   //update the bar text
   if (mainw->current_file>-1) {
     int i;
-    gchar *tmp;
+    char *tmp;
     if (cfile->clip_type!=CLIP_TYPE_GENERATOR&&mainw->current_file!=mainw->scrap_file&&
 	(mainw->multitrack==NULL||mainw->current_file!=mainw->multitrack->render_file)) {
       d_print ((tmp=lives_strdup_printf(_ ("Closed file %s\n"),cfile->file_name)));
@@ -6671,7 +6671,7 @@ void close_current_file(int file_to_switch_to) {
   
 void switch_to_file(int old_file, int new_file) {
   // this function is used for full clip switching (during non-playback or non fs)
-  gchar title[256];
+  char title[256];
   int orig_file=mainw->current_file;
 
   // should use close_current_file
@@ -6716,7 +6716,7 @@ void switch_to_file(int old_file, int new_file) {
 
       //      if (old_file>0&&mainw->files[old_file]!=NULL&&mainw->files[old_file]->menuentry!=NULL&&
       //  (mainw->files[old_file]->clip_type==CLIP_TYPE_DISK||mainw->files[old_file]->clip_type==CLIP_TYPE_FILE)) {
-	//gchar menutext[32768];
+	//char menutext[32768];
 	//get_menu_text_long(mainw->files[old_file]->menuentry,menutext);
 
 	//set_menu_text(mainw->files[old_file]->menuentry,menutext,FALSE);
@@ -6782,7 +6782,7 @@ void switch_to_file(int old_file, int new_file) {
 
   if (cfile->menuentry!=NULL) {
     // TODO - indicate "opening"
-    //gchar menutext[32768];
+    //char menutext[32768];
     //get_menu_text_long(cfile->menuentry,menutext);
     lives_signal_handler_block (cfile->menuentry, cfile->menuentry_func);
     lives_check_menu_item_set_active(LIVES_CHECK_MENU_ITEM(cfile->menuentry),TRUE);
@@ -7133,7 +7133,7 @@ void do_quick_switch (int new_file) {
 
   // reset old info file
   if (cfile!=NULL) {
-    gchar *tmp;
+    char *tmp;
 #ifndef IS_MINGW
       tmp=lives_build_filename(prefs->tmpdir,cfile->handle,".status",NULL);
 #else
@@ -7177,7 +7177,7 @@ void do_quick_switch (int new_file) {
     if (!mainw->sep_win) {
       if (mainw->faded&&mainw->double_size) resize(2);
       if (cfile->menuentry!=NULL) {
-	gchar title[256];
+	char title[256];
 	get_menu_text(cfile->menuentry,title);
 	set_main_title(title,0);
       }
@@ -7195,7 +7195,7 @@ void do_quick_switch (int new_file) {
   mainw->play_end=cfile->frames;
 
   if (mainw->play_window!=NULL) {
-    gchar *title=lives_strdup(_("LiVES: - Play Window"));
+    char *title=lives_strdup(_("LiVES: - Play Window"));
     lives_window_set_title (LIVES_WINDOW (mainw->play_window), title);
     lives_free(title);
     if (mainw->double_size&&!mainw->fs&&(ohsize!=cfile->hsize||ovsize!=cfile->vsize)) {
@@ -7324,7 +7324,7 @@ void resize (double scale) {
       if (cfile->clip_type==CLIP_TYPE_YUV4MPEG||cfile->clip_type==CLIP_TYPE_VIDEODEV) {
 	if (mainw->camframe==NULL) {
 	  LiVESError *error=NULL;
-	  gchar *tmp=lives_build_filename(prefs->prefix_dir,THEME_DIR,"camera","frame.jpg",NULL);
+	  char *tmp=lives_build_filename(prefs->prefix_dir,THEME_DIR,"camera","frame.jpg",NULL);
 	  mainw->camframe=lives_pixbuf_new_from_file(tmp,&error);
 	  if (mainw->camframe!=NULL) lives_pixbuf_saturate_and_pixelate(mainw->camframe,mainw->camframe,0.0,FALSE);
 	  lives_free(tmp);

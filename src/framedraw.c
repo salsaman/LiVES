@@ -47,7 +47,7 @@ static double calc_fd_scale(int width, int height) {
 
 static void start_preview (LiVESButton *button, lives_rfx_t *rfx) {
   int i;
-  gchar *com;
+  char *com;
 
   lives_widget_set_sensitive(mainw->framedraw_preview,FALSE);
   lives_widget_context_update();
@@ -584,7 +584,7 @@ void load_rfx_preview(lives_rfx_t *rfx) {
     else {
       int numtok=get_token_count (mainw->msg,'|');
       if (numtok>4) {
-	gchar **array=lives_strsplit(mainw->msg,"|",numtok);
+	char **array=lives_strsplit(mainw->msg,"|",numtok);
 	max_frame=atoi(array[0]);
 	cfile->hsize=atoi(array[1]);
 	cfile->vsize=atoi(array[2]);
@@ -625,7 +625,7 @@ void load_rfx_preview(lives_rfx_t *rfx) {
   }
 
   tc=((mainw->framedraw_frame-1.))/cfile->fps*U_SECL;
-  pixbuf=pull_lives_pixbuf_at_size(mainw->current_file,mainw->framedraw_frame,(gchar *)img_ext,
+  pixbuf=pull_lives_pixbuf_at_size(mainw->current_file,mainw->framedraw_frame,(char *)img_ext,
 				   tc,(double)cfile->hsize,
 				   (double)cfile->vsize,LIVES_INTERP_BEST);
 
@@ -664,7 +664,7 @@ void load_framedraw_image(LiVESPixbuf *pixbuf) {
   if (mainw->framedraw_frame>cfile->frames) mainw->framedraw_frame=cfile->frames;
 
   if (pixbuf==NULL) {
-    const gchar *img_ext=get_image_ext_for_type(cfile->img_type);
+    const char *img_ext=get_image_ext_for_type(cfile->img_type);
 
     // can happen if we preview for rendered generators
     if ((mainw->multitrack==NULL||mainw->current_file!=mainw->multitrack->render_file)&&mainw->framedraw_frame==0) return;

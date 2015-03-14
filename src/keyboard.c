@@ -40,7 +40,7 @@ static void handle_omc_events(void) {
 
 #ifdef OMC_JS_IMPL
     if (mainw->ext_cntl[EXT_CNTL_JS]) {
-      gchar *string=js_mangle();
+      char *string=js_mangle();
       if (string!=NULL) {
 	omc_process_string(OMC_JS,string,FALSE,NULL);
 	lives_free(string);
@@ -58,7 +58,7 @@ static void handle_omc_events(void) {
       do {
 	gotone=FALSE;
 	for (i=0;i<midi_check_rate;i++) {
-	  gchar *string=midi_mangle();
+	  char *string=midi_mangle();
 	  if (string!=NULL) {
 	    omc_process_string(OMC_MIDI,string,FALSE,NULL);
 	    lives_free(string);

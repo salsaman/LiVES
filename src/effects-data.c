@@ -49,7 +49,7 @@ static weed_plant_t *active_dummy=NULL;
 static LiVESTreeModel *pmodel;
 static LiVESTreeModel *cmodel;
 
-static gchar *lctext;
+static char *lctext;
 
 static void switch_fx_state(int okey, int hotkey) {
   // switch effect state when a connection to ACTIVATE is present
@@ -221,8 +221,8 @@ static lives_pconnect_t *pconx_copy(lives_pconnect_t *spconx) {
 
 
 
-gchar *pconx_list(int okey, int omode, int opnum) {
-  gchar *st1=lives_strdup(""),*st2;
+char *pconx_list(int okey, int omode, int opnum) {
+  char *st1=lives_strdup(""),*st2;
   lives_pconnect_t *pconx=mainw->pconx;
 
   int totcons=0;
@@ -1592,8 +1592,8 @@ static lives_cconnect_t *cconx_copy(lives_cconnect_t *scconx) {
 }
 
 
-gchar *cconx_list(int okey, int omode, int ocnum) {
-  gchar *st1=lives_strdup(""),*st2;
+char *cconx_list(int okey, int omode, int ocnum) {
+  char *st1=lives_strdup(""),*st2;
   lives_cconnect_t *cconx=mainw->cconx;
 
   int totcons=0;
@@ -2163,8 +2163,8 @@ boolean cconx_chain_data_internal(weed_plant_t *ichan) {
 
 boolean feeds_to_video_filters(int okey, int omode) {
   weed_plant_t *filter;
-  gchar **array;
-  gchar *chlist;
+  char **array;
+  char *chlist;
   int nparams,niparams;
   int ikey,imode;
 
@@ -2216,8 +2216,8 @@ boolean feeds_to_video_filters(int okey, int omode) {
 
 boolean feeds_to_audio_filters(int okey, int omode) {
   weed_plant_t *filter;
-  gchar **array;
-  gchar *chlist;
+  char **array;
+  char *chlist;
   int nparams,niparams;
   int ikey,imode;
 
@@ -2578,8 +2578,8 @@ static void padd_clicked(LiVESWidget *button, livespointer user_data) {
   conxwp->pfxcombo=(LiVESWidget **)lives_realloc(conxwp->pfxcombo,totparams*sizeof(LiVESWidget *));
   conxwp->pcombo=(LiVESWidget **)lives_realloc(conxwp->pcombo,totparams*sizeof(LiVESWidget *));
 
-  conxwp->dpp_func=(gulong *)lives_realloc(conxwp->dpp_func,totparams*sizeof(gulong));
-  conxwp->acheck_func=(gulong *)lives_realloc(conxwp->acheck_func,totparams*sizeof(gulong));
+  conxwp->dpp_func=(ulong *)lives_realloc(conxwp->dpp_func,totparams*sizeof(ulong));
+  conxwp->acheck_func=(ulong *)lives_realloc(conxwp->acheck_func,totparams*sizeof(ulong));
 
   conxwp->acheck=(LiVESWidget **)lives_realloc(conxwp->acheck,totparams*sizeof(LiVESWidget *));
 
@@ -2833,8 +2833,8 @@ static void pdel_clicked(LiVESWidget *button, livespointer user_data) {
   conxwp->pfxcombo=(LiVESWidget **)lives_realloc(conxwp->pfxcombo,totparams*sizeof(LiVESWidget *));
   conxwp->pcombo=(LiVESWidget **)lives_realloc(conxwp->pcombo,totparams*sizeof(LiVESWidget *));
 
-  conxwp->dpp_func=(gulong *)lives_realloc(conxwp->dpp_func,totparams*sizeof(gulong));
-  conxwp->acheck_func=(gulong *)lives_realloc(conxwp->acheck_func,totparams*sizeof(gulong));
+  conxwp->dpp_func=(ulong *)lives_realloc(conxwp->dpp_func,totparams*sizeof(ulong));
+  conxwp->acheck_func=(ulong *)lives_realloc(conxwp->acheck_func,totparams*sizeof(ulong));
 
   conxwp->acheck=(LiVESWidget **)lives_realloc(conxwp->acheck,totparams*sizeof(LiVESWidget *));
 
@@ -2887,7 +2887,7 @@ static void cadd_clicked(LiVESWidget *button, livespointer user_data) {
   conxwp->cfxcombo=(LiVESWidget **)lives_realloc(conxwp->cfxcombo,totchans*sizeof(LiVESWidget *));
   conxwp->ccombo=(LiVESWidget **)lives_realloc(conxwp->ccombo,totchans*sizeof(LiVESWidget *));
 
-  conxwp->dpc_func=(gulong *)lives_realloc(conxwp->dpc_func,totchans*sizeof(gulong));
+  conxwp->dpc_func=(ulong *)lives_realloc(conxwp->dpc_func,totchans*sizeof(ulong));
 
   conxwp->trowsc++;
 
@@ -3111,7 +3111,7 @@ static void cdel_clicked(LiVESWidget *button, livespointer user_data) {
   conxwp->cfxcombo=(LiVESWidget **)lives_realloc(conxwp->cfxcombo,totchans*sizeof(LiVESWidget *));
   conxwp->ccombo=(LiVESWidget **)lives_realloc(conxwp->ccombo,totchans*sizeof(LiVESWidget *));
 
-  conxwp->dpc_func=(gulong *)lives_realloc(conxwp->dpc_func,totchans*sizeof(gulong));
+  conxwp->dpc_func=(ulong *)lives_realloc(conxwp->dpc_func,totchans*sizeof(ulong));
 
 
 }
@@ -3130,7 +3130,7 @@ static void dfxc_changed(LiVESWidget *combo, livespointer user_data) {
 
   LiVESList *clist=NULL;
 
-  gchar *channame;
+  char *channame;
 
   int fidx,cidx,key,mode;
   int nichans,nchans;
@@ -3210,10 +3210,10 @@ static void dfxp_changed(LiVESWidget *combo, livespointer user_data) {
 
   LiVESList *plist=NULL;
 
-  gchar *paramname;
+  char *paramname;
 
-  gchar *ptype,*range;
-  gchar *array_type,*text;
+  char *ptype,*range;
+  char *array_type,*text;
 
   int defelems,pflags,stype;
 
@@ -3433,7 +3433,7 @@ static void dpp_changed(LiVESWidget *combo, livespointer user_data) {
 
   LiVESTreeIter iter;
 
-  gchar *paramname;
+  char *paramname;
 
   boolean hasone=FALSE;
   boolean setup=LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(combo),"setup"));
@@ -3639,7 +3639,7 @@ static void dpc_changed(LiVESWidget *combo, livespointer user_data) {
 
   LiVESWidget *fxcombo;
 
-  gchar *channame;
+  char *channame;
 
   boolean hasone=FALSE;
   boolean setup=LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(combo),"setup"));
@@ -3847,7 +3847,7 @@ static LiVESTreeModel *inparam_fx_model (boolean is_chans, int key) {
 
   weed_plant_t *filter;
 
-  gchar *fxname,*keystr,*text;
+  char *fxname,*keystr,*text;
 
   boolean key_added;
 
@@ -4179,9 +4179,9 @@ static LiVESWidget *conx_scroll_new(lives_conx_w *conxwp) {
   LiVESWidget *hbox;
   LiVESWidget *scrolledwindow;
 
-  gchar *channame,*pname,*fname;
-  gchar *ptype,*range;
-  gchar *array_type,*text,*tmp;
+  char *channame,*pname,*fname;
+  char *ptype,*range;
+  char *array_type,*text,*tmp;
 
   boolean isfirst;
 
@@ -4236,7 +4236,7 @@ static LiVESWidget *conx_scroll_new(lives_conx_w *conxwp) {
 
     weed_plant_t **ochans=weed_get_plantptr_array(conxwp->filter,"out_channel_templates",&error);
 
-    conxwp->dpc_func=(gulong *)lives_malloc(totchans*sizeof(gulong));
+    conxwp->dpc_func=(ulong *)lives_malloc(totchans*sizeof(ulong));
 
     conxwp->cfxcombo=(LiVESWidget **)lives_malloc(totchans*sizeof(LiVESWidget *));
 
@@ -4310,8 +4310,8 @@ static LiVESWidget *conx_scroll_new(lives_conx_w *conxwp) {
     conxwp->pfxcombo=(LiVESWidget **)lives_malloc(totparams*sizeof(LiVESWidget *));
     conxwp->pcombo=(LiVESWidget **)lives_malloc(totparams*sizeof(LiVESWidget *));
 
-    conxwp->dpp_func=(gulong *)lives_malloc(totparams*sizeof(gulong));
-    conxwp->acheck_func=(gulong *)lives_malloc(totparams*sizeof(gulong));
+    conxwp->dpp_func=(ulong *)lives_malloc(totparams*sizeof(ulong));
+    conxwp->acheck_func=(ulong *)lives_malloc(totparams*sizeof(ulong));
 
     conxwp->acheck=(LiVESWidget **)lives_malloc(totparams*sizeof(LiVESWidget *));
 

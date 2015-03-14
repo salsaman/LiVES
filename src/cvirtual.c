@@ -46,7 +46,7 @@ void create_frame_index(int fileno, boolean init, int start_offset, int nframes)
 boolean save_frame_index(int fileno) {
   int fd,i;
   int retval;
-  gchar *fname;
+  char *fname;
   lives_clip_t *sfile=mainw->files[fileno];
 
   if (fileno==0) return TRUE;
@@ -94,7 +94,7 @@ boolean save_frame_index(int fileno) {
 boolean load_frame_index(int fileno) {
   int fd,i;
   int retval;
-  gchar *fname;
+  char *fname;
   lives_clip_t *sfile=mainw->files[fileno];
 
   if (sfile==NULL||sfile->frame_index!=NULL) return FALSE;
@@ -155,8 +155,8 @@ void del_frame_index(lives_clip_t *sfile) {
   // physically delete the frame_index for a clip
   // only done once all
 
-  gchar *idxfile;
-  gchar *com;
+  char *idxfile;
+  char *com;
 
   register int i;
 
@@ -215,7 +215,7 @@ boolean check_clip_integrity(int fileno, const lives_clip_data_t *cdata) {
   for (i=0;i<sfile->frames;i++) {
     if (sfile->frame_index[i]==-1) {
       // this is a non-virtual frame
-      gchar *frame=lives_strdup_printf("%s/%s/%08d.png",prefs->tmpdir,sfile->handle,i+1);
+      char *frame=lives_strdup_printf("%s/%s/%08d.png",prefs->tmpdir,sfile->handle,i+1);
       if (lives_file_test(frame,LIVES_FILE_TEST_EXISTS)) empirical_img_type=IMG_TYPE_PNG;
       else empirical_img_type=IMG_TYPE_JPEG;
       lives_free(frame);
@@ -527,7 +527,7 @@ void clean_images_from_virtual (lives_clip_t *sfile, int oldframes) {
   // should be threadsafe
 
   register int i;
-  gchar *iname=NULL,*com;
+  char *iname=NULL,*com;
 
   if (sfile==NULL||sfile->frame_index==NULL) return;
 

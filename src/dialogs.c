@@ -92,7 +92,7 @@ static void add_xlays_widget(LiVESBox *box) {
   lives_text_buffer_insert_at_cursor(textbuffer,"\n",strlen("\n"));
   
   while (xlist!=NULL) {
-    lives_text_buffer_insert_at_cursor(textbuffer,(const gchar *)xlist->data,strlen((char *)xlist->data));
+    lives_text_buffer_insert_at_cursor(textbuffer,(const char *)xlist->data,strlen((char *)xlist->data));
     lives_text_buffer_insert_at_cursor(textbuffer,"\n",strlen("\n"));
     xlist=xlist->next;
   }
@@ -163,7 +163,7 @@ static void add_clear_ds_adv(LiVESBox *box) {
 // the type of message box here is with 2 or more buttons (e.g. OK/CANCEL, YES/NO, ABORT/CANCEL/RETRY)
 // if a single OK button is needed, use create_info_error_dialog() in inteface.c instead
 
-LiVESWidget* create_message_dialog (lives_dialog_t diat, const gchar *text, LiVESWindow *transient, 
+LiVESWidget* create_message_dialog (lives_dialog_t diat, const char *text, LiVESWindow *transient, 
 				    int warn_mask_number, boolean is_blocking) {
   LiVESWidget *dialog;
   LiVESWidget *dialog_vbox;
@@ -348,12 +348,12 @@ LiVESWidget* create_message_dialog (lives_dialog_t diat, const gchar *text, LiVE
 
 
 
-boolean do_warning_dialog(const gchar *text) {
+boolean do_warning_dialog(const char *text) {
   return do_warning_dialog_with_check(text, 0);
 }
 
 
-boolean do_warning_dialog_with_check (const gchar *text, int warn_mask_number) {
+boolean do_warning_dialog_with_check (const char *text, int warn_mask_number) {
   if (!prefs->show_gui) {
     return do_warning_dialog_with_check_transient(text,warn_mask_number,NULL);
   } else {
@@ -365,7 +365,7 @@ boolean do_warning_dialog_with_check (const gchar *text, int warn_mask_number) {
 }
 
 
-boolean do_yesno_dialog_with_check (const gchar *text, int warn_mask_number) {
+boolean do_yesno_dialog_with_check (const char *text, int warn_mask_number) {
   if (!prefs->show_gui) {
     return do_yesno_dialog_with_check_transient(text,warn_mask_number,NULL);
   } else {
@@ -378,11 +378,11 @@ boolean do_yesno_dialog_with_check (const gchar *text, int warn_mask_number) {
 
 
 
-boolean do_warning_dialog_with_check_transient(const gchar *text, int warn_mask_number, LiVESWindow *transient) {
+boolean do_warning_dialog_with_check_transient(const char *text, int warn_mask_number, LiVESWindow *transient) {
   // show OK/CANCEL, returns FALSE if cancelled
   LiVESWidget *warning;
   int response=1;
-  gchar *mytext;
+  char *mytext;
 
   if (prefs->warning_mask&warn_mask_number) {
     return TRUE;
@@ -404,11 +404,11 @@ boolean do_warning_dialog_with_check_transient(const gchar *text, int warn_mask_
 
 
 
-boolean do_yesno_dialog_with_check_transient(const gchar *text, int warn_mask_number, LiVESWindow *transient) {
+boolean do_yesno_dialog_with_check_transient(const char *text, int warn_mask_number, LiVESWindow *transient) {
   // show YES/NO, returns TRUE for YES
   LiVESWidget *warning;
   int response=1;
-  gchar *mytext;
+  char *mytext;
 
   if (prefs->warning_mask&warn_mask_number) {
     return TRUE;
@@ -429,11 +429,11 @@ boolean do_yesno_dialog_with_check_transient(const gchar *text, int warn_mask_nu
 }
 
 
-boolean do_yesno_dialog(const gchar *text) {
+boolean do_yesno_dialog(const char *text) {
   // show Yes/No, returns TRUE if Yes
   LiVESWidget *warning;
   int response;
-  gchar *mytext;
+  char *mytext;
   LiVESWindow *transient=NULL;
 
   if (prefs->show_gui) {
@@ -455,9 +455,9 @@ boolean do_yesno_dialog(const gchar *text) {
 
 
 // returns LIVES_RESPONSE_CANCEL or LIVES_RESPONSE_RETRY
-int do_abort_cancel_retry_dialog(const gchar *text, LiVESWindow *transient) {
+int do_abort_cancel_retry_dialog(const char *text, LiVESWindow *transient) {
   int response;
-  gchar *mytext;
+  char *mytext;
   LiVESWidget *warning;
 
   if (!prefs->show_gui) {
@@ -483,7 +483,7 @@ int do_abort_cancel_retry_dialog(const gchar *text, LiVESWindow *transient) {
       if (do_abort_check()) {
 	if (mainw->current_file>-1) {
 	  if (cfile->handle!=NULL) {
-	    gchar *com;
+	    char *com;
 	    // stop any processing processing
 #ifndef IS_MINGW
 	    com=lives_strdup_printf("%s stopsubsub \"%s\" 2>/dev/null",prefs->backend_sync,cfile->handle);
@@ -520,7 +520,7 @@ int do_abort_cancel_retry_dialog(const gchar *text, LiVESWindow *transient) {
 
 
 
-int do_error_dialog(const gchar *text) {
+int do_error_dialog(const char *text) {
   int ret;
 
   // show error box
@@ -538,7 +538,7 @@ int do_error_dialog(const gchar *text) {
 }
 
 
-int do_info_dialog(const gchar *text) {
+int do_info_dialog(const char *text) {
   // show info box
   int ret;
 
@@ -556,7 +556,7 @@ int do_info_dialog(const gchar *text) {
 }
 
 
-int do_error_dialog_with_check(const gchar *text, int warn_mask_number) {
+int do_error_dialog_with_check(const char *text, int warn_mask_number) {
   // show warning box
   int ret;
 
@@ -570,7 +570,7 @@ int do_error_dialog_with_check(const gchar *text, int warn_mask_number) {
 }
 
 
-int do_blocking_error_dialog(const gchar *text) {
+int do_blocking_error_dialog(const char *text) {
   // show error box - blocks until OK is pressed
   int ret;
 
@@ -584,7 +584,7 @@ int do_blocking_error_dialog(const gchar *text) {
 }
 
 
-int do_blocking_info_dialog(const gchar *text) {
+int do_blocking_info_dialog(const char *text) {
   // show info box - blocks until OK is pressed
   int ret;
 
@@ -599,11 +599,11 @@ int do_blocking_info_dialog(const gchar *text) {
 
 
 
-int do_error_dialog_with_check_transient(const gchar *text, boolean is_blocking, int warn_mask_number, LiVESWindow *transient) {
+int do_error_dialog_with_check_transient(const char *text, boolean is_blocking, int warn_mask_number, LiVESWindow *transient) {
   // show error box
 
   LiVESWidget *err_box;
-  gchar *mytext;
+  char *mytext;
 
   int ret=LIVES_RESPONSE_NONE;
 
@@ -624,7 +624,7 @@ int do_error_dialog_with_check_transient(const gchar *text, boolean is_blocking,
 
 
 
-int do_info_dialog_with_transient(const gchar *text, boolean is_blocking, LiVESWindow *transient) {
+int do_info_dialog_with_transient(const char *text, boolean is_blocking, LiVESWindow *transient) {
   // info box
 
   LiVESWidget *info_box;
@@ -648,12 +648,12 @@ int do_info_dialog_with_transient(const gchar *text, boolean is_blocking, LiVESW
 
 
 
-gchar *ds_critical_msg(const gchar *dir, uint64_t dsval) {
-  gchar *msg;
-  gchar *msgx;
-  gchar *tmp;
-  gchar *dscr=lives_format_storage_space_string(prefs->ds_crit_level); ///< crit level
-  gchar *dscu=lives_format_storage_space_string(dsval); ///< current level
+char *ds_critical_msg(const char *dir, uint64_t dsval) {
+  char *msg;
+  char *msgx;
+  char *tmp;
+  char *dscr=lives_format_storage_space_string(prefs->ds_crit_level); ///< crit level
+  char *dscu=lives_format_storage_space_string(dsval); ///< current level
   msg=lives_strdup_printf(_("FREE SPACE IN THE PARTITION CONTAINING\n%s\nHAS FALLEN BELOW THE CRITICAL LEVEL OF %s\nCURRENT FREE SPACE IS %s\n\n(Disk warning levels can be configured in Preferences.)"),
 			  (tmp=lives_filename_to_utf8(dir,-1,NULL,NULL,NULL)),dscr,dscu);
   msgx=insert_newlines(msg,MAX_MSG_WIDTH_CHARS);
@@ -665,13 +665,13 @@ gchar *ds_critical_msg(const gchar *dir, uint64_t dsval) {
 }
 
 
-gchar *ds_warning_msg(const gchar *dir, uint64_t dsval, uint64_t cwarn, uint64_t nwarn) {
-  gchar *msg;
-  gchar *msgx;
-  gchar *tmp;
-  gchar *dscw=lives_format_storage_space_string(cwarn); ///< warn level
-  gchar *dscu=lives_format_storage_space_string(dsval); ///< current level
-  gchar *dscn=lives_format_storage_space_string(nwarn); ///< next warn level
+char *ds_warning_msg(const char *dir, uint64_t dsval, uint64_t cwarn, uint64_t nwarn) {
+  char *msg;
+  char *msgx;
+  char *tmp;
+  char *dscw=lives_format_storage_space_string(cwarn); ///< warn level
+  char *dscu=lives_format_storage_space_string(dsval); ///< current level
+  char *dscn=lives_format_storage_space_string(nwarn); ///< next warn level
   msg=lives_strdup_printf(_("Free space in the partition containing\n%s\nhas fallen below the warning level of %s\nCurrent free space is %s\n\n(Next warning will be shown at %s. Disk warning levels can be configured in Preferences.)"),
 			  (tmp=lives_filename_to_utf8(dir,-1,NULL,NULL,NULL)),dscw,dscu,dscn);
   msgx=insert_newlines(msg,MAX_MSG_WIDTH_CHARS);
@@ -699,8 +699,8 @@ void handle_backend_errors(void) {
 
   int i;
   int pxstart=1;
-  gchar **array;
-  gchar *addinfo;
+  char **array;
+  char *addinfo;
   int numtok;
 
   if (mainw->cancelled) return; // if the user/system cancelled we can expect errors !
@@ -814,8 +814,8 @@ boolean check_storage_space(lives_clip_t *sfile, boolean is_processing) {
 
   lives_storage_status_t ds;
 
-  gchar *msg,*tmp;
-  gchar *pausstr=lives_strdup(_("Processing has been paused."));
+  char *msg,*tmp;
+  char *pausstr=lives_strdup(_("Processing has been paused."));
 
   do {
     ds=get_storage_status(prefs->tmpdir,mainw->next_ds_warn_level,&dsval);
@@ -988,7 +988,7 @@ static void cancel_process(boolean visible) {
 
 static void disp_fraction(int done, int start, int end, double timesofar, xprocess *proc) {
   // display fraction done and estimated time remaining
-  gchar *prog_label;
+  char *prog_label;
   double est_time;
   double fraction_done=(done-start)/(end-start+1.);
 
@@ -1373,7 +1373,7 @@ boolean process_one (boolean visible) {
     }
     else {
       double fraction_done,timesofar;
-      gchar *prog_label;
+      char *prog_label;
 
       if (LIVES_IS_SPIN_BUTTON(mainw->framedraw_spinbutton)) 
 	lives_spin_button_set_range(LIVES_SPIN_BUTTON(mainw->framedraw_spinbutton),1,cfile->proc_ptr->frames_done);
@@ -1460,7 +1460,7 @@ boolean process_one (boolean visible) {
 }
 
 
-boolean do_progress_dialog(boolean visible, boolean cancellable, const gchar *text) {
+boolean do_progress_dialog(boolean visible, boolean cancellable, const char *text) {
   // monitor progress, return FALSE if the operation was cancelled
 
   // this is the outer loop for playback and all kinds of processing
@@ -1470,7 +1470,7 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const gchar *te
 
 
   FILE *infofile=NULL;
-  gchar *mytext=NULL;
+  char *mytext=NULL;
 
   int frames_done;
 
@@ -1835,7 +1835,7 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const gchar *te
 	int numtok=get_token_count (mainw->msg,'|');
 	// get progress count from backend
 	if (numtok>1) {
-	  gchar **array=lives_strsplit(mainw->msg,"|",numtok);
+	  char **array=lives_strsplit(mainw->msg,"|",numtok);
 	  cfile->proc_ptr->frames_done=atoi(array[0]);
 	  if (numtok==2&&strlen(array[1])>0) cfile->progress_end=atoi(array[1]);
 	  else if (numtok==5&&strlen(array[4])>0) {
@@ -1895,14 +1895,14 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const gchar *te
       accelerators_swapped=FALSE;
     }
     if (cfile->proc_ptr!=NULL) {
-      const gchar *btext=NULL;
+      const char *btext=NULL;
       if (mainw->iochan!=NULL) btext=lives_text_view_get_text(mainw->optextview); 
       if (cfile->proc_ptr->processing!=NULL) lives_widget_destroy(cfile->proc_ptr->processing);
       lives_free(cfile->proc_ptr);
       cfile->proc_ptr=NULL;
       if (btext!=NULL) {
 	lives_text_view_set_text(mainw->optextview,btext,-1);
-	lives_free((gchar *)btext);
+	lives_free((char *)btext);
       }
     }
     mainw->is_processing=FALSE;
@@ -1945,7 +1945,7 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const gchar *te
 
 #define MIN_FLASH_TIME 100000000
 
-boolean do_auto_dialog (const gchar *text, int type) {
+boolean do_auto_dialog (const char *text, int type) {
   // type 0 = normal auto_dialog
   // type 1 = countdown dialog for audio recording
   // type 2 = normal with cancel
@@ -1956,8 +1956,8 @@ boolean do_auto_dialog (const gchar *text, int type) {
 
   xprocess *proc_ptr;
 
-  gchar *label_text;
-  gchar *mytext=lives_strdup(text);
+  char *label_text;
+  char *mytext=lives_strdup(text);
 
   int time_rem,last_time_rem=10000000;
   int alarm_handle=0;
@@ -2057,13 +2057,13 @@ boolean do_auto_dialog (const gchar *text, int type) {
 
 
 void too_many_files(void) {
-  gchar *warn=lives_strdup_printf(_ ("\nSorry, LiVES can only open %d files at once.\nPlease close a file and then try again."),MAX_FILES);
+  char *warn=lives_strdup_printf(_ ("\nSorry, LiVES can only open %d files at once.\nPlease close a file and then try again."),MAX_FILES);
   do_error_dialog(warn);
   lives_free(warn);
 }
 
 void tempdir_warning (void) {
-  gchar *tmp,*com=lives_strdup_printf(_ ("LiVES was unable to write to its temporary directory.\n\nThe current temporary directory is:\n\n%s\n\nPlease make sure you can write to this directory."),
+  char *tmp,*com=lives_strdup_printf(_ ("LiVES was unable to write to its temporary directory.\n\nThe current temporary directory is:\n\n%s\n\nPlease make sure you can write to this directory."),
 				  (tmp=lives_filename_to_utf8(prefs->tmpdir,-1,NULL,NULL,NULL)));
   lives_free(tmp);
   if (mainw!=NULL&&mainw->is_ready) {
@@ -2108,15 +2108,15 @@ boolean rdet_suggest_values (int width, int height, double fps, int fps_num, int
 			     boolean swap_endian, boolean anr, boolean ignore_fps) {
   LiVESWidget *prep_dialog;
 
-  gchar *msg1=lives_strdup_printf (_ ("\n\nDue to restrictions in the %s format\n"),prefs->encoder.of_desc);
-  gchar *msg2=lives_strdup ("");
-  gchar *msg3=lives_strdup ("");
-  gchar *msg4=lives_strdup ("");
-  gchar *msg5=lives_strdup ("");
-  gchar *msg6=lives_strdup ("");
-  gchar *msg7=lives_strdup ("");
-  gchar *msg8=lives_strdup ("");
-  gchar *msg_a;
+  char *msg1=lives_strdup_printf (_ ("\n\nDue to restrictions in the %s format\n"),prefs->encoder.of_desc);
+  char *msg2=lives_strdup ("");
+  char *msg3=lives_strdup ("");
+  char *msg4=lives_strdup ("");
+  char *msg5=lives_strdup ("");
+  char *msg6=lives_strdup ("");
+  char *msg7=lives_strdup ("");
+  char *msg8=lives_strdup ("");
+  char *msg_a;
 
   boolean ochange=FALSE;
   boolean ret;
@@ -2131,8 +2131,8 @@ boolean rdet_suggest_values (int width, int height, double fps, int fps_num, int
     msg2=lives_strdup (_ ("LiVES recommends the following settings:\n\n"));
     if (swap_endian||(asigned==1&&rdet->aendian==AFORM_UNSIGNED)||(asigned==2&&rdet->aendian==AFORM_SIGNED)
 	||(arate>0&&arate!=rdet->arate)) {
-      gchar *sstring;
-      gchar *estring;
+      char *sstring;
+      char *estring;
 
       if (asigned==1&&rdet->aendian==AFORM_UNSIGNED) sstring=lives_strdup(_(", signed"));
       else if (asigned==2&&rdet->aendian==AFORM_SIGNED) sstring=lives_strdup(_(", unsigned"));
@@ -2206,14 +2206,14 @@ boolean do_encoder_restrict_dialog (int width, int height, double fps, int fps_n
 				    boolean swap_endian, boolean anr, boolean save_all) {
   LiVESWidget *prep_dialog;
 
-  gchar *msg1=lives_strdup_printf (_ ("\n\nDue to restrictions in the %s format\n"),prefs->encoder.of_desc);
-  gchar *msg2=lives_strdup ("");
-  gchar *msg3=lives_strdup ("");
-  gchar *msg4=lives_strdup ("");
-  gchar *msg5=lives_strdup ("");
-  gchar *msg6=lives_strdup ("");
-  gchar *msg7=lives_strdup ("");
-  gchar *msg_a,*msg_b=NULL;
+  char *msg1=lives_strdup_printf (_ ("\n\nDue to restrictions in the %s format\n"),prefs->encoder.of_desc);
+  char *msg2=lives_strdup ("");
+  char *msg3=lives_strdup ("");
+  char *msg4=lives_strdup ("");
+  char *msg5=lives_strdup ("");
+  char *msg6=lives_strdup ("");
+  char *msg7=lives_strdup ("");
+  char *msg_a,*msg_b=NULL;
 
   double cfps;
 
@@ -2241,8 +2241,8 @@ boolean do_encoder_restrict_dialog (int width, int height, double fps, int fps_n
     lives_free (msg2);
     msg2=lives_strdup (_ ("LiVES must:\n"));
     if (swap_endian||asigned!=0||(arate>0&&arate!=carate)) {
-      gchar *sstring;
-      gchar *estring;
+      char *sstring;
+      char *estring;
       if (asigned==1) sstring=lives_strdup(_(", signed"));
       else if (asigned==2) sstring=lives_strdup(_(", unsigned"));
       else sstring=lives_strdup("");
@@ -2317,7 +2317,7 @@ boolean do_clipboard_fps_warning(void) {
 }
 
 boolean do_yuv4m_open_warning(void) {
-  gchar *msg;
+  char *msg;
   boolean resp;
   if (prefs->warning_mask&WARN_MASK_OPEN_YUV4M) {
     return TRUE;
@@ -2330,7 +2330,7 @@ boolean do_yuv4m_open_warning(void) {
 
 
 
-boolean do_comments_dialog (lives_clip_t *sfile, gchar *filename) {
+boolean do_comments_dialog (lives_clip_t *sfile, char *filename) {
   boolean response;
   boolean ok=FALSE;
   boolean encoding=FALSE;
@@ -2348,7 +2348,7 @@ boolean do_comments_dialog (lives_clip_t *sfile, gchar *filename) {
       lives_snprintf (sfile->comment,256,"%s",lives_entry_get_text (LIVES_ENTRY (commentsw->comment_entry)));
       
       if (encoding&&sfile->subt!=NULL&&lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(commentsw->subt_checkbutton))) {
-	gchar *ext=get_extension(lives_entry_get_text(LIVES_ENTRY(commentsw->subt_entry)));
+	char *ext=get_extension(lives_entry_get_text(LIVES_ENTRY(commentsw->subt_entry)));
 	if (strcmp(ext,"sub")&&strcmp(ext,"srt")) {
 	  if (!do_sub_type_warning(ext,sfile->subt->type==SUBTITLE_TYPE_SRT?"srt":"sub")) {
 	    lives_entry_set_text(LIVES_ENTRY(commentsw->subt_entry),mainw->subt_save_file);
@@ -2374,7 +2374,7 @@ boolean do_comments_dialog (lives_clip_t *sfile, gchar *filename) {
 
 
 void do_keys_window (void) {
-  gchar *tmp=lives_strdup(_ ("Show Keys"));
+  char *tmp=lives_strdup(_ ("Show Keys"));
   do_text_window (tmp,_ ("You can use the following keys during playback to control LiVES:-\n\nRecordable keys (press 'r' before playback to make a recording)\n-----------------------\nctrl-left                     skip back\nctrl-right                   skip forwards\nctrl-up                      faster/increase effect\nctrl-down                 slower/decrease effect\nctrl-enter                    reset frame rate\nctrl-space                reverse direction\nctrl-backspace         freeze frame\nn                             nervous\nctrl-page up            previous clip\nctrl-page down        next clip\n\nctrl-1                       toggle real-time effect 1\nctrl-2                       toggle real-time effect 2\n                                          ...etc...\nctrl-0                       real-time effects off\n\nk           grab keyboard for last activated effect\nm         switch effect mode (when effect has keyboard grab)\nx                     swap background/foreground\nf1                           store/switch to clip mnemonic 1\nf2                           store/switch to clip mnemonic 2\n                                          ...etc...\nf12                          clear function keys\n\n\n Other playback keys\n-----------------------------\np                             play all\ny                             play selection\nq                             stop\nf                               fullscreen\ns                              separate window\nd                             double size\ng                             ping pong loops\n"));
   lives_free(tmp);
 }
@@ -2382,7 +2382,7 @@ void do_keys_window (void) {
 
 
 void do_mt_keys_window (void) {
-  gchar *tmp=lives_strdup(_ ("Multitrack Keys"));
+  char *tmp=lives_strdup(_ ("Multitrack Keys"));
   do_text_window (tmp,_ ("You can use the following keys to control the multitrack window:-\n\nctrl-left-arrow              move timeline cursor left 1 second\nctrl-right-arrow            move timeline cursor right 1 second\nshift-left-arrow            move timeline cursor left 1 frame\nshift-right-arrow          move timeline cursor right 1 frame\nctrl-up-arrow               move current track up\nctrl-down-arrow           move current track down\nctrl-page-up                select previous clip\nctrl-page-down            select next clip\nctrl-space                    select/deselect current track\nctrl-plus                       zoom in\nctrl-minus                    zoom out\nm                                 make a mark on the timeline (during playback)\nw                                 rewind to play start.\n\nFor other keys, see the menus.\n"));
   lives_free(tmp);
 }
@@ -2390,21 +2390,21 @@ void do_mt_keys_window (void) {
 
 
 void do_messages_window (void) {
-  gchar *text=lives_text_view_get_text(LIVES_TEXT_VIEW(mainw->textview1));
+  char *text=lives_text_view_get_text(LIVES_TEXT_VIEW(mainw->textview1));
   do_text_window (_ ("Message History"),text);
   lives_free(text);
 }
 
 
-void do_text_window (const gchar *title, const gchar *text) {
+void do_text_window (const char *title, const char *text) {
   create_text_window (title,text,NULL);
 }
 
 
 
 void do_upgrade_error_dialog (void) {
-  gchar *tmp;
-  gchar *msg=lives_strdup_printf (_("After upgrading/installing, you may need to adjust the <prefix_dir> setting in your %s file"),
+  char *tmp;
+  char *msg=lives_strdup_printf (_("After upgrading/installing, you may need to adjust the <prefix_dir> setting in your %s file"),
 				  (tmp=lives_filename_to_utf8(capable->rcfile,-1,NULL,NULL,NULL)));
   startup_message_info (msg);
   lives_free(msg);
@@ -2413,8 +2413,8 @@ void do_upgrade_error_dialog (void) {
 
 
 void do_rendered_fx_dialog(void) {
-  gchar *tmp;
-  gchar *msg=lives_strdup_printf(_("\n\nLiVES could not find any rendered effect plugins.\nPlease make sure you have them installed in\n%s%s%s\nor change the value of <lib_dir> in %s\n"),prefs->lib_dir,PLUGIN_EXEC_DIR,PLUGIN_RENDERED_EFFECTS_BUILTIN,(tmp=lives_filename_to_utf8(capable->rcfile,-1,NULL,NULL,NULL)));
+  char *tmp;
+  char *msg=lives_strdup_printf(_("\n\nLiVES could not find any rendered effect plugins.\nPlease make sure you have them installed in\n%s%s%s\nor change the value of <lib_dir> in %s\n"),prefs->lib_dir,PLUGIN_EXEC_DIR,PLUGIN_RENDERED_EFFECTS_BUILTIN,(tmp=lives_filename_to_utf8(capable->rcfile,-1,NULL,NULL,NULL)));
   do_error_dialog_with_check(msg,WARN_MASK_RENDERED_FX);
   lives_free(msg);
   lives_free(tmp);
@@ -2432,8 +2432,8 @@ boolean prompt_remove_layout_files(void) {
 }
 
 
-boolean do_set_duplicate_warning (const gchar *new_set) {
-  gchar *msg=lives_strdup_printf(_("\nA set entitled %s already exists.\nClick OK to add the current clips and layouts to the existing set.\nClick Cancel to pick a new name.\n"),new_set);
+boolean do_set_duplicate_warning (const char *new_set) {
+  char *msg=lives_strdup_printf(_("\nA set entitled %s already exists.\nClick OK to add the current clips and layouts to the existing set.\nClick Cancel to pick a new name.\n"),new_set);
   boolean retcode=do_warning_dialog_with_check(msg,WARN_MASK_DUPLICATE_SET);
   lives_free(msg);
   return retcode;
@@ -2447,15 +2447,15 @@ boolean do_layout_alter_audio_warning(void) {
   return do_warning_dialog(_("\nAudio from this clip is used in some multitrack layouts.\nAre you sure you wish to continue ?\n."));
 }
 
-boolean do_original_lost_warning(const gchar *fname) {
-  gchar *msg=lives_strdup_printf(_("\nThe original file\n%s\ncould not be found.\nIf this file has been moved, click 'OK' to browse to the new location.\nOtherwise click Cancel to skip loading this file.\n"),fname);
+boolean do_original_lost_warning(const char *fname) {
+  char *msg=lives_strdup_printf(_("\nThe original file\n%s\ncould not be found.\nIf this file has been moved, click 'OK' to browse to the new location.\nOtherwise click Cancel to skip loading this file.\n"),fname);
   boolean retcode=do_warning_dialog(msg);
   lives_free(msg);
   return retcode;
 }
 
-void do_no_decoder_error(const gchar *fname) {
-  gchar *msg=lives_strdup_printf(_("\n\nLiVES could not find a required decoder plugin for the clip\n%s\nThe clip could not be loaded.\n"),fname);
+void do_no_decoder_error(const char *fname) {
+  char *msg=lives_strdup_printf(_("\n\nLiVES could not find a required decoder plugin for the clip\n%s\nThe clip could not be loaded.\n"),fname);
     do_error_dialog(msg);
     lives_free(msg);
 }
@@ -2477,11 +2477,11 @@ void do_jack_noopen_warn3(void) {
 
 void do_jack_noopen_warn4(void) {
 #ifdef HAVE_PULSE_AUDIO
-  const gchar *otherbit="\"lives -aplayer pulse\"";
+  const char *otherbit="\"lives -aplayer pulse\"";
 #else
-  const gchar *otherbit="\"lives -aplayer sox\"";
+  const char *otherbit="\"lives -aplayer sox\"";
 #endif
-  gchar *msg=lives_strdup_printf(_("\nAlternatively, try to start lives with either:\n\n\"lives -jackopts 16\", or\n\n%s\n"),otherbit);
+  char *msg=lives_strdup_printf(_("\nAlternatively, try to start lives with either:\n\n\"lives -jackopts 16\", or\n\n%s\n"),otherbit);
   do_blocking_info_dialog(msg);
   lives_free(msg);
 }
@@ -2493,13 +2493,13 @@ void do_jack_noopen_warn2(void) {
 
 
 void do_mt_backup_space_error(lives_mt *mt, int memreq_mb) {
-  gchar *msg=lives_strdup_printf(_("\n\nLiVES needs more backup space for this layout.\nYou can increase the value in Preferences/Multitrack.\nIt is recommended to increase it to at least %d MB"),memreq_mb);
+  char *msg=lives_strdup_printf(_("\n\nLiVES needs more backup space for this layout.\nYou can increase the value in Preferences/Multitrack.\nIt is recommended to increase it to at least %d MB"),memreq_mb);
     do_error_dialog_with_check_transient(msg,TRUE,WARN_MASK_MT_BACKUP_SPACE,LIVES_WINDOW(mt->window));
     lives_free(msg);
 }
 
-boolean do_set_rename_old_layouts_warning(const gchar *new_set) {
-  gchar *msg=lives_strdup_printf(_("\nSome old layouts for the set %s already exist.\nIt is recommended that you delete them.\nDo you wish to delete them ?\n"),new_set);
+boolean do_set_rename_old_layouts_warning(const char *new_set) {
+  char *msg=lives_strdup_printf(_("\nSome old layouts for the set %s already exist.\nIt is recommended that you delete them.\nDo you wish to delete them ?\n"),new_set);
   boolean retcode=do_yesno_dialog(msg);
   lives_free(msg);
   return retcode;
@@ -2514,10 +2514,10 @@ void do_mt_undo_buf_error(void) {
 }
 
 void do_mt_set_mem_error(boolean has_mt, boolean trans) {
-  gchar *msg1=(_("\nLiVES was unable to reserve enough memory for the multitrack undo buffer.\n"));
-  gchar *msg2;
-  gchar *msg3=(_("or enter a smaller value.\n"));
-  gchar *msg;
+  char *msg1=(_("\nLiVES was unable to reserve enough memory for the multitrack undo buffer.\n"));
+  char *msg2;
+  char *msg3=(_("or enter a smaller value.\n"));
+  char *msg;
   if (has_mt) msg2=(_("Try again from the clip editor, try closing some other applications\n"));
   else msg2=(_("Try closing some other applications\n"));
 
@@ -2596,7 +2596,7 @@ static void on_dth_cancel_clicked (LiVESButton *button, livespointer user_data) 
 
 
 void do_rmem_max_error (int size) {
-  gchar *msg=lives_strdup_printf((_("Stream frame size is too large for your network buffers.\nYou should do the following as root:\n\necho %d > /proc/sys/net/core/rmem_max\n")),size);
+  char *msg=lives_strdup_printf((_("Stream frame size is too large for your network buffers.\nYou should do the following as root:\n\necho %d > /proc/sys/net/core/rmem_max\n")),size);
   do_error_dialog(msg);
   lives_free(msg);
 }
@@ -2604,11 +2604,11 @@ void do_rmem_max_error (int size) {
 static xprocess *procw=NULL;
 
 
-static void create_threaded_dialog(gchar *text, boolean has_cancel) {
+static void create_threaded_dialog(char *text, boolean has_cancel) {
 
   LiVESWidget *dialog_vbox;
   LiVESWidget *vbox;
-  gchar tmp_label[256];
+  char tmp_label[256];
  
   procw=(xprocess*)(lives_calloc(1,sizeof(xprocess)));
 
@@ -2812,13 +2812,13 @@ LIVES_INLINE void d_print_file_error_failed(void) {
 
 
 void do_system_failed_error(const char *com, int retval, const char *addinfo) {
-  gchar *msg,*tmp,*emsg,*msgx;
-  gchar *bit;
-  gchar *retstr=lives_strdup_printf("%d",retval>>8);
-  gchar *bit2=(retval>255)?lives_strdup(""):lives_strdup_printf("[%s]",lives_strerror(retval));
-  gchar *addbit;
-  gchar *dsmsg1=lives_strdup("");
-  gchar *dsmsg2=lives_strdup("");
+  char *msg,*tmp,*emsg,*msgx;
+  char *bit;
+  char *retstr=lives_strdup_printf("%d",retval>>8);
+  char *bit2=(retval>255)?lives_strdup(""):lives_strdup_printf("[%s]",lives_strerror(retval));
+  char *addbit;
+  char *dsmsg1=lives_strdup("");
+  char *dsmsg2=lives_strdup("");
 
   uint64_t dsval1,dsval2;
 
@@ -2868,12 +2868,12 @@ void do_system_failed_error(const char *com, int retval, const char *addinfo) {
 
 
 void do_write_failed_error_s(const char *s, const char *addinfo) {
-  gchar *msg,*emsg;
-  gchar *addbit,*tmp;
-  gchar *dsmsg=lives_strdup("");
+  char *msg,*emsg;
+  char *addbit,*tmp;
+  char *dsmsg=lives_strdup("");
 
-  gchar dirname[PATH_MAX];
-  gchar *sutf=lives_filename_to_utf8(s,-1,NULL,NULL,NULL);
+  char dirname[PATH_MAX];
+  char *sutf=lives_filename_to_utf8(s,-1,NULL,NULL,NULL);
 
   uint64_t dsval;
 
@@ -2910,9 +2910,9 @@ void do_write_failed_error_s(const char *s, const char *addinfo) {
 
 
 void do_read_failed_error_s(const char *s, const char *addinfo) {
-  gchar *msg,*emsg;
-  gchar *addbit;
-  gchar *sutf=lives_filename_to_utf8(s,-1,NULL,NULL,NULL);
+  char *msg,*emsg;
+  char *addbit;
+  char *sutf=lives_filename_to_utf8(s,-1,NULL,NULL,NULL);
 
   if (addinfo!=NULL) addbit=lives_strdup_printf(_("Additional info: %s\n"),addinfo);
   else addbit=lives_strdup("");
@@ -2932,17 +2932,17 @@ void do_read_failed_error_s(const char *s, const char *addinfo) {
 
 
 
-int do_write_failed_error_s_with_retry(const gchar *fname, const gchar *errtext, LiVESWindow *transient) {
+int do_write_failed_error_s_with_retry(const char *fname, const char *errtext, LiVESWindow *transient) {
   // err can be errno from open/fopen etc.
 
   // return same as do_abort_cancel_retry_dialog() - LIVES_RESPONSE_CANCEL or LIVES_RESPONSE_RETRY (both non-zero)
 
   int ret;
-  gchar *msg,*emsg,*tmp;
-  gchar *sutf=lives_filename_to_utf8(fname,-1,NULL,NULL,NULL);
-  gchar *dsmsg=lives_strdup("");
+  char *msg,*emsg,*tmp;
+  char *sutf=lives_filename_to_utf8(fname,-1,NULL,NULL,NULL);
+  char *dsmsg=lives_strdup("");
 
-  gchar dirname[PATH_MAX];
+  char dirname[PATH_MAX];
 
   uint64_t dsval;
 
@@ -2985,14 +2985,14 @@ int do_write_failed_error_s_with_retry(const gchar *fname, const gchar *errtext,
 
 
 
-int do_read_failed_error_s_with_retry(const gchar *fname, const gchar *errtext, LiVESWindow *transient) {
+int do_read_failed_error_s_with_retry(const char *fname, const char *errtext, LiVESWindow *transient) {
   // err can be errno from open/fopen etc.
 
   // return same as do_abort_cancel_retry_dialog() - LIVES_RESPONSE_CANCEL or LIVES_RESPONSE_RETRY (both non-zero)
 
   int ret;
-  gchar *msg,*emsg;
-  gchar *sutf=lives_filename_to_utf8(fname,-1,NULL,NULL,NULL);
+  char *msg,*emsg;
+  char *sutf=lives_filename_to_utf8(fname,-1,NULL,NULL,NULL);
 
   if (errtext==NULL) {
     emsg=lives_strdup_printf("Unable to read from file %s",fname);
@@ -3020,7 +3020,7 @@ int do_read_failed_error_s_with_retry(const gchar *fname, const gchar *errtext, 
 
 int do_header_read_error_with_retry(int clip) {
   int ret;
-  gchar *hname;
+  char *hname;
   if (mainw->files[clip]==NULL) return 0;
 
   hname=lives_build_filename(prefs->tmpdir,mainw->files[clip]->handle,"header.lives",NULL);
@@ -3036,7 +3036,7 @@ int do_header_read_error_with_retry(int clip) {
 boolean do_header_write_error(int clip) {
   // returns TRUE if we manage to clear the error
 
-  gchar *hname;
+  char *hname;
   int retval;
 
   if (mainw->files[clip]==NULL) return TRUE;
@@ -3053,7 +3053,7 @@ boolean do_header_write_error(int clip) {
 
 int do_header_missing_detail_error(int clip, lives_clip_details_t detail) {
   int ret;
-  gchar *hname,*key,*msg;
+  char *hname,*key,*msg;
   if (mainw->files[clip]==NULL) return 0;
 
   hname=lives_build_filename(prefs->tmpdir,mainw->files[clip]->handle,"header.lives",NULL);
@@ -3080,9 +3080,9 @@ int do_header_missing_detail_error(int clip, lives_clip_details_t detail) {
 
 
 void do_chdir_failed_error(const char *dir) {
-  gchar *msg;
-  gchar *dutf;
-  gchar *emsg=lives_strdup_printf("Failed directory change to\n%s",dir);
+  char *msg;
+  char *dutf;
+  char *emsg=lives_strdup_printf("Failed directory change to\n%s",dir);
   LIVES_ERROR(emsg);
   lives_free(emsg);
   dutf=lives_filename_to_utf8(dir,-1,NULL,NULL,NULL);
@@ -3094,22 +3094,22 @@ void do_chdir_failed_error(const char *dir) {
 
 
 
-void do_file_perm_error(const gchar *file_name) {
-  gchar *msg=lives_strdup_printf(_("\nLiVES was unable to write to the file:\n%s\nPlease check the file permissions and try again."),file_name);
+void do_file_perm_error(const char *file_name) {
+  char *msg=lives_strdup_printf(_("\nLiVES was unable to write to the file:\n%s\nPlease check the file permissions and try again."),file_name);
   do_blocking_error_dialog(msg);
   lives_free(msg);
 }
 
 
-void do_dir_perm_error(const gchar *dir_name) {
-  gchar *msg=lives_strdup_printf(_("\nLiVES was unable to either create or write to the directory:\n%s\nPlease check the directory permissions and try again."),dir_name);
+void do_dir_perm_error(const char *dir_name) {
+  char *msg=lives_strdup_printf(_("\nLiVES was unable to either create or write to the directory:\n%s\nPlease check the directory permissions and try again."),dir_name);
   do_blocking_error_dialog(msg);
   lives_free(msg);
 }
 
 
-void do_dir_perm_access_error(const gchar *dir_name) {
-  gchar *msg=lives_strdup_printf(_("\nLiVES was unable to read from the directory:\n%s\n"),dir_name);
+void do_dir_perm_access_error(const char *dir_name) {
+  char *msg=lives_strdup_printf(_("\nLiVES was unable to read from the directory:\n%s\n"),dir_name);
   do_blocking_error_dialog(msg);
   lives_free(msg);
 }
@@ -3122,7 +3122,7 @@ boolean do_abort_check(void) {
 
 
 void do_encoder_img_ftm_error(render_details *rdet) {
-  gchar *msg=lives_strdup_printf(_("\nThe %s cannot encode clips with image type %s.\nPlease select another encoder from the list.\n"),prefs->encoder.name,get_image_ext_for_type(cfile->img_type));
+  char *msg=lives_strdup_printf(_("\nThe %s cannot encode clips with image type %s.\nPlease select another encoder from the list.\n"),prefs->encoder.name,get_image_ext_for_type(cfile->img_type));
 
   do_error_dialog_with_check_transient(msg,TRUE,0,LIVES_WINDOW(rdet->dialog));
 
@@ -3135,8 +3135,8 @@ void do_card_in_use_error(void) {
 }
 
 
-void do_dev_busy_error(const gchar *devstr) {
-  gchar *msg=lives_strdup_printf(_("\nThe device %s is in use or unavailable.\n- Check the device permissions\n- Check if this device is in use by another program.\n- Check if the device actually exists.\n"),devstr);
+void do_dev_busy_error(const char *devstr) {
+  char *msg=lives_strdup_printf(_("\nThe device %s is in use or unavailable.\n- Check the device permissions\n- Check if this device is in use by another program.\n- Check if the device actually exists.\n"),devstr);
   do_blocking_error_dialog(msg);
   lives_free(msg);
 }
@@ -3155,9 +3155,9 @@ boolean do_erase_subs_warning(void) {
 }
 
 
-boolean do_sub_type_warning(const gchar *ext, const gchar *type_ext) {
+boolean do_sub_type_warning(const char *ext, const char *type_ext) {
   boolean ret;
-  gchar *msg=lives_strdup_printf(_("\nLiVES does not recognise the subtitle file type \"%s\".\nClick Cancel to set another file name\nor OK to continue and save as type \"%s\"\n"),ext,type_ext);
+  char *msg=lives_strdup_printf(_("\nLiVES does not recognise the subtitle file type \"%s\".\nClick Cancel to set another file name\nor OK to continue and save as type \"%s\"\n"),ext,type_ext);
   ret=do_warning_dialog(msg);
   lives_free(msg);
   return ret;
@@ -3167,8 +3167,8 @@ boolean do_move_tmpdir_dialog(void) {
   return do_yesno_dialog(_("\nDo you wish to move the current clip sets to the new directory ?\n(If unsure, click Yes)\n"));
 }
 
-void do_set_locked_warning (const gchar *setname) {
-  gchar *msg=lives_strdup_printf(_("\nWarning - the set %s\nis in use by another copy of LiVES.\nYou are strongly advised to close the other copy before clicking OK to continue\n."),setname);
+void do_set_locked_warning (const char *setname) {
+  char *msg=lives_strdup_printf(_("\nWarning - the set %s\nis in use by another copy of LiVES.\nYou are strongly advised to close the other copy before clicking OK to continue\n."),setname);
   do_warning_dialog(msg);
   lives_free(msg);
 }
@@ -3182,31 +3182,31 @@ void do_locked_in_vdevs_error(void) {
 }
 
 void do_do_not_close_d (void) {
-  gchar *msg=lives_strdup(_("\n\nCLEANING AND COPYING FILES. THIS MAY TAKE SOME TIME.\nDO NOT SHUT DOWN OR CLOSE LIVES !\n"));
+  char *msg=lives_strdup(_("\n\nCLEANING AND COPYING FILES. THIS MAY TAKE SOME TIME.\nDO NOT SHUT DOWN OR CLOSE LIVES !\n"));
   create_info_error_dialog(LIVES_DIALOG_WARN,msg,NULL,0,FALSE);
   lives_free(msg);
 }
 
 
 void do_set_noclips_error(const char *setname) {
-  gchar *msg=lives_strdup_printf (_ ("No clips were recovered for set (%s).\nPlease check the spelling of the set name and try again.\n"),setname);
+  char *msg=lives_strdup_printf (_ ("No clips were recovered for set (%s).\nPlease check the spelling of the set name and try again.\n"),setname);
   d_print (msg);
   lives_free (msg);
 }
 
 
-gchar * get_upd_msg(void) {
+char * get_upd_msg(void) {
   LIVES_DEBUG("upd msg !");
   // TRANSLATORS: make sure the menu text matches what is in gui.c
-  gchar *msg=lives_strdup_printf(_("\nWelcome to LiVES version %s\n\nAfter upgrading, you are *strongly* advised to run:\n\nFile -> Clean up Diskspace\n"),LiVES_VERSION);
+  char *msg=lives_strdup_printf(_("\nWelcome to LiVES version %s\n\nAfter upgrading, you are *strongly* advised to run:\n\nFile -> Clean up Diskspace\n"),LiVES_VERSION);
   return msg;
 }
 
 
-gchar * get_new_install_msg(void) {
+char * get_new_install_msg(void) {
   LIVES_DEBUG("upd msg !");
   // TRANSLATORS: make sure the menu text matches what is in gui.c
-  gchar *msg=lives_strdup_printf(_("\n\nWelcome to LiVES version %s !\n\n"),LiVES_VERSION);
+  char *msg=lives_strdup_printf(_("\n\nWelcome to LiVES version %s !\n\n"),LiVES_VERSION);
   return msg;
 }
 
@@ -3230,7 +3230,7 @@ void do_pulse_lost_conn_error(void) {
 
 
 boolean ask_permission_dialog(int what) {
-  gchar *msg;
+  char *msg;
   boolean ret;
 
   if (!prefs->show_gui) return FALSE;

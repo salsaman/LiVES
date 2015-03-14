@@ -39,10 +39,10 @@ static boolean list_plugins;
 // command-line plugins
 
 
-static LiVESList *get_plugin_result (const gchar *command, const gchar *delim, boolean allow_blanks) {
+static LiVESList *get_plugin_result (const char *command, const char *delim, boolean allow_blanks) {
 
   LiVESList *list=NULL;
-  gchar **array;
+  char **array;
   ssize_t bytes=0;
   int pieces;
   int outfile_fd,i;
@@ -51,11 +51,11 @@ static LiVESList *get_plugin_result (const gchar *command, const gchar *delim, b
   int error;
   boolean timeout;
 
-  gchar *msg,*buf;
+  char *msg,*buf;
 
-  gchar *outfile;
-  gchar *com;
-  gchar buffer[65536];
+  char *outfile;
+  char *com;
+  char buffer[65536];
 
   threaded_dialog_spin();
 
@@ -73,7 +73,7 @@ static LiVESList *get_plugin_result (const gchar *command, const gchar *delim, b
 
   if ((error=system (com))!=0&&error!=126*256&&error!=256) {
     if (!list_plugins) {
-      gchar *msg2;
+      char *msg2;
       lives_free (com);
       if (mainw->is_ready) {
 	if ((outfile_fd=open(outfile,O_RDONLY))>-1) {
@@ -179,27 +179,27 @@ static LiVESList *get_plugin_result (const gchar *command, const gchar *delim, b
 }
 
 
-LiVESList * plugin_request_with_blanks (const gchar *plugin_type, const gchar *plugin_name, const gchar *request) {
+LiVESList * plugin_request_with_blanks (const char *plugin_type, const char *plugin_name, const char *request) {
   // allow blanks in a list
   return plugin_request_common(plugin_type, plugin_name, request, "|", TRUE);
 }
 
-LiVESList * plugin_request (const gchar *plugin_type, const gchar *plugin_name, const gchar *request) {
+LiVESList * plugin_request (const char *plugin_type, const char *plugin_name, const char *request) {
   return plugin_request_common(plugin_type, plugin_name, request, "|", FALSE);
 }
 
-LiVESList * plugin_request_by_line (const gchar *plugin_type, const gchar *plugin_name, const gchar *request) {
+LiVESList * plugin_request_by_line (const char *plugin_type, const char *plugin_name, const char *request) {
   return plugin_request_common(plugin_type, plugin_name, request, "\n", FALSE);
 }
 
-LiVESList * plugin_request_by_space (const gchar *plugin_type, const gchar *plugin_name, const gchar *request) {
+LiVESList * plugin_request_by_space (const char *plugin_type, const char *plugin_name, const char *request) {
   return plugin_request_common(plugin_type, plugin_name, request, " ", FALSE);
 }
 
 
 
-LiVESList * plugin_request_common (const gchar *plugin_type, const gchar *plugin_name, const gchar *request, 
-			       const gchar *delim, boolean allow_blanks) {
+LiVESList * plugin_request_common (const char *plugin_type, const char *plugin_name, const char *request, 
+			       const char *delim, boolean allow_blanks) {
   // returns a LiVESList of responses to -request, or NULL on error
   // by_line says whether we split on '\n' or on '|'
 
@@ -208,10 +208,10 @@ LiVESList * plugin_request_common (const gchar *plugin_type, const gchar *plugin
   // e.g. by calling param_marshall()
 
   LiVESList *reslist=NULL;
-  gchar *com,*comfile;
+  char *com,*comfile;
 
 #ifdef IS_MINGW
-  gchar *ext,*cmd;
+  char *ext,*cmd;
 #endif
 
   if (plugin_type!=NULL) {
@@ -348,7 +348,7 @@ LiVESList *get_plugin_list (const char *plugin_type, boolean allow_nonex, const 
 // video plugins
 
 
-void save_vpp_defaults(_vid_playback_plugin *vpp, gchar *vpp_file) {
+void save_vpp_defaults(_vid_playback_plugin *vpp, char *vpp_file) {
   // format is:
   // nbytes (string) : LiVES vpp defaults file version 2\n
   // for each video playback plugin:
@@ -373,9 +373,9 @@ void save_vpp_defaults(_vid_playback_plugin *vpp, gchar *vpp_file) {
 
   int fd;
   int32_t len;
-  const gchar *version;
+  const char *version;
   int i;
-  gchar *msg;
+  char *msg;
   int intzero=0;
   double dblzero=0.;
 
@@ -437,14 +437,14 @@ void save_vpp_defaults(_vid_playback_plugin *vpp, gchar *vpp_file) {
 }
 
 
-void load_vpp_defaults(_vid_playback_plugin *vpp, gchar *vpp_file) {
+void load_vpp_defaults(_vid_playback_plugin *vpp, char *vpp_file) {
   int fd;
   ssize_t len;
-  const gchar *version;
-  gchar buf[512];
+  const char *version;
+  char buf[512];
   int i;
   int retval;
-  gchar *msg;
+  char *msg;
 
   if (!lives_file_test(vpp_file,LIVES_FILE_TEST_EXISTS)) {
     return;
@@ -546,12 +546,12 @@ void load_vpp_defaults(_vid_playback_plugin *vpp, gchar *vpp_file) {
 	  lives_free(vpp->extra_argv);
 	}
 	
-	mainw->vpp->extra_argv=(char **)lives_malloc((mainw->vpp->extra_argc+1)*(sizeof(gchar *)));
+	mainw->vpp->extra_argv=(char **)lives_malloc((mainw->vpp->extra_argc+1)*(sizeof(char *)));
 	
 	for (i=0;i<mainw->vpp->extra_argc;i++) {
 	  lives_read_le(fd,&len,4,FALSE);
 	  if (mainw->read_failed) break;
-	  mainw->vpp->extra_argv[i]=(gchar *)lives_malloc(len+1);
+	  mainw->vpp->extra_argv[i]=(char *)lives_malloc(len+1);
 	  lives_read(fd,mainw->vpp->extra_argv[i],len,FALSE);
 	  if (mainw->read_failed) break;
 	  memset((mainw->vpp->extra_argv[i])+len,0,1);
@@ -607,9 +607,9 @@ void on_vppa_cancel_clicked (LiVESButton *button, livespointer user_data) {
 
 void on_vppa_ok_clicked (LiVESButton *button, livespointer user_data) {
   _vppaw *vppw=(_vppaw *)user_data;
-  const gchar *fixed_fps=NULL;
-  gchar *cur_pal=NULL;
-  const gchar *tmp;
+  const char *fixed_fps=NULL;
+  char *cur_pal=NULL;
+  const char *tmp;
   int *pal_list,i=0;
 
   uint64_t xwinid=0;
@@ -624,8 +624,8 @@ void on_vppa_ok_clicked (LiVESButton *button, livespointer user_data) {
       cur_pal=lives_strdup(lives_entry_get_text(LIVES_ENTRY(vppw->pal_entry)));
 
       if (get_token_count(cur_pal,' ')>1) {
-	gchar **array=lives_strsplit(cur_pal," ",2);
-	gchar *clamping=lives_strdup(array[1]+1);
+	char **array=lives_strsplit(cur_pal," ",2);
+	char *clamping=lives_strdup(array[1]+1);
 	lives_free(cur_pal);
 	cur_pal=lives_strdup(array[0]);
 	memset(clamping+strlen(clamping)-1,0,1);
@@ -648,12 +648,12 @@ void on_vppa_ok_clicked (LiVESButton *button, livespointer user_data) {
 	mainw->vpp->fixed_fps_numer=0;
       }
       else {
-	if (get_token_count ((gchar *)fixed_fps,':')>1) {
-	  gchar **array=lives_strsplit(fixed_fps,":",2);
+	if (get_token_count ((char *)fixed_fps,':')>1) {
+	  char **array=lives_strsplit(fixed_fps,":",2);
 	  mainw->vpp->fixed_fps_numer=atoi(array[0]);
 	  mainw->vpp->fixed_fps_denom=atoi(array[1]);
 	  lives_strfreev(array);
-	  mainw->vpp->fixed_fpsd=get_ratio_fps((gchar *)fixed_fps);
+	  mainw->vpp->fixed_fpsd=get_ratio_fps((char *)fixed_fps);
 	}
 	else {
 	  mainw->vpp->fixed_fpsd=lives_strtod(fixed_fps,NULL);
@@ -761,8 +761,8 @@ void on_vppa_ok_clicked (LiVESButton *button, livespointer user_data) {
       cur_pal=lives_strdup(lives_entry_get_text(LIVES_ENTRY(vppw->pal_entry)));
 
       if (get_token_count(cur_pal,' ')>1) {
-	gchar **array=lives_strsplit(cur_pal," ",2);
-	gchar *clamping=lives_strdup(array[1]+1);
+	char **array=lives_strsplit(cur_pal," ",2);
+	char *clamping=lives_strdup(array[1]+1);
 	lives_free(cur_pal);
 	cur_pal=lives_strdup(array[0]);
 	memset(clamping+strlen(clamping)-1,0,1);
@@ -780,12 +780,12 @@ void on_vppa_ok_clicked (LiVESButton *button, livespointer user_data) {
     }
 
     if (fixed_fps!=NULL) {
-      if (get_token_count ((gchar *)fixed_fps,':')>1) {
-	gchar **array=lives_strsplit(fixed_fps,":",2);
+      if (get_token_count ((char *)fixed_fps,':')>1) {
+	char **array=lives_strsplit(fixed_fps,":",2);
 	future_prefs->vpp_fixed_fps_numer=atoi(array[0]);
 	future_prefs->vpp_fixed_fps_denom=atoi(array[1]);
 	lives_strfreev(array);
-	future_prefs->vpp_fixed_fpsd=get_ratio_fps((gchar *)fixed_fps);
+	future_prefs->vpp_fixed_fpsd=get_ratio_fps((char *)fixed_fps);
       }
       else {
 	future_prefs->vpp_fixed_fpsd=lives_strtod(fixed_fps,NULL);
@@ -837,8 +837,8 @@ void on_vppa_ok_clicked (LiVESButton *button, livespointer user_data) {
 void on_vppa_save_clicked (LiVESButton *button, livespointer user_data) {
   _vppaw *vppw=(_vppaw *)user_data;
   _vid_playback_plugin *vpp=vppw->plugin;
-  gchar *save_file;
-  gchar *msg;
+  char *save_file;
+  char *msg;
 
   // apply
   mainw->error=FALSE;
@@ -886,17 +886,17 @@ _vppaw *on_vpp_advanced_clicked (LiVESButton *button, livespointer user_data) {
   LiVESList *fps_list_strings=NULL;
   LiVESList *pal_list_strings=NULL;
 
-  const gchar *string;
-  const gchar *pversion;
-  const gchar *desc;
+  const char *string;
+  const char *pversion;
+  const char *desc;
   const char *fps_list;
 
-  gchar *title;
-  gchar *tmp,*tmp2;
+  char *title;
+  char *tmp,*tmp2;
 
-  gchar *ctext=NULL;
+  char *ctext=NULL;
 
-  gchar *com;
+  char *com;
   
   // TODO - set default values from tmpvpp
 
@@ -947,9 +947,9 @@ _vppaw *on_vpp_advanced_clicked (LiVESButton *button, livespointer user_data) {
 
   if (tmpvpp->get_fps_list!=NULL&&(fps_list=(*tmpvpp->get_fps_list)(tmpvpp->palette))!=NULL) {
     int nfps,i;
-    gchar **array=lives_strsplit (fps_list,"|",-1);
+    char **array=lives_strsplit (fps_list,"|",-1);
 
-    nfps=get_token_count((gchar *)fps_list,'|');
+    nfps=get_token_count((char *)fps_list,'|');
     for (i=0;i<nfps;i++) {
       if (strlen(array[i])&&strcmp(array[i],"\n")) {
 	if (get_token_count(array[i],':')==0) {
@@ -975,12 +975,12 @@ _vppaw *on_vpp_advanced_clicked (LiVESButton *button, livespointer user_data) {
     lives_strfreev (array);
 
     if (tmpvpp->fixed_fps_numer>0) {
-      gchar *tmp=lives_strdup_printf("%d:%d",tmpvpp->fixed_fps_numer,tmpvpp->fixed_fps_denom);
+      char *tmp=lives_strdup_printf("%d:%d",tmpvpp->fixed_fps_numer,tmpvpp->fixed_fps_denom);
       lives_entry_set_text(LIVES_ENTRY(vppa->fps_entry),tmp);
       lives_free(tmp);
     }
     else {
-      gchar *tmp=remove_trailing_zeroes(tmpvpp->fixed_fpsd);
+      char *tmp=remove_trailing_zeroes(tmpvpp->fixed_fpsd);
       lives_entry_set_text(LIVES_ENTRY(vppa->fps_entry),tmp);
       lives_free(tmp);
     }
@@ -1020,7 +1020,7 @@ _vppaw *on_vpp_advanced_clicked (LiVESButton *button, livespointer user_data) {
       if (weed_palette_is_yuv_palette(pal_list[i])&&tmpvpp->get_yuv_palette_clamping!=NULL) {
        	int *clampings=(*tmpvpp->get_yuv_palette_clamping)(pal_list[i]);
 	while (clampings[j]!=-1) {
-	  gchar *string2=lives_strdup_printf("%s (%s)",string,weed_yuv_clamping_get_name(clampings[j]));
+	  char *string2=lives_strdup_printf("%s (%s)",string,weed_yuv_clamping_get_name(clampings[j]));
 	  pal_list_strings=lives_list_append (pal_list_strings, string2);
 	  j++;
 	}
@@ -1180,7 +1180,7 @@ const weed_plant_t *pp_get_chan(weed_plant_t **pparams, int idx) {
 
 
 
-_vid_playback_plugin *open_vid_playback_plugin (const gchar *name, boolean in_use) {
+_vid_playback_plugin *open_vid_playback_plugin (const char *name, boolean in_use) {
   // this is called on startup or when the user selects a new playback plugin
 
   // if in_use is TRUE, it is our active vpp
@@ -1189,22 +1189,22 @@ _vid_playback_plugin *open_vid_playback_plugin (const gchar *name, boolean in_us
   // TODO - dirsep
 
 #ifndef IS_MINGW
-  gchar *plugname=lives_strdup_printf ("%s%s%s/%s.so",prefs->lib_dir,PLUGIN_EXEC_DIR,PLUGIN_VID_PLAYBACK,name);
+  char *plugname=lives_strdup_printf ("%s%s%s/%s.so",prefs->lib_dir,PLUGIN_EXEC_DIR,PLUGIN_VID_PLAYBACK,name);
 #else
-  gchar *plugname=lives_strdup_printf ("%s%s%s/%s.dll",prefs->lib_dir,PLUGIN_EXEC_DIR,PLUGIN_VID_PLAYBACK,name);
+  char *plugname=lives_strdup_printf ("%s%s%s/%s.dll",prefs->lib_dir,PLUGIN_EXEC_DIR,PLUGIN_VID_PLAYBACK,name);
 #endif
   void *handle=dlopen(plugname,RTLD_LAZY);
   boolean OK=TRUE;
-  gchar *msg,*tmp;
-  gchar **array;
-  const gchar *fps_list;
-  const gchar *pl_error;
+  char *msg,*tmp;
+  char **array;
+  const char *fps_list;
+  const char *pl_error;
   int i;
   int *palette_list;
   _vid_playback_plugin *vpp;
 
   if (handle==NULL) {
-    gchar *msg=lives_strdup_printf (_("\n\nFailed to open playback plugin %s\nError was %s\n"),plugname,dlerror());
+    char *msg=lives_strdup_printf (_("\n\nFailed to open playback plugin %s\nError was %s\n"),plugname,dlerror());
     if (prefsw!=NULL) do_error_dialog_with_check_transient(msg,TRUE,0,prefsw!=NULL?LIVES_WINDOW(prefsw->prefs_dialog):
 							   LIVES_WINDOW(mainw->LiVES));
     else do_error_dialog(msg);
@@ -1241,7 +1241,7 @@ _vid_playback_plugin *open_vid_playback_plugin (const gchar *name, boolean in_us
        dlsym (handle,"render_frame"))==NULL) {
     OK=FALSE;
   }
-  if ((vpp->get_fps_list=(const gchar* (*)(int))dlsym (handle,"get_fps_list"))!=NULL) {
+  if ((vpp->get_fps_list=(const char* (*)(int))dlsym (handle,"get_fps_list"))!=NULL) {
     if ((vpp->set_fps=(boolean (*)(double))dlsym (handle,"set_fps"))==NULL) {
       OK=FALSE;
     }
@@ -1249,7 +1249,7 @@ _vid_playback_plugin *open_vid_playback_plugin (const gchar *name, boolean in_us
 
 
   if (!OK) {
-    gchar *msg=lives_strdup_printf 
+    char *msg=lives_strdup_printf 
       (_("\n\nPlayback module %s\nis missing a mandatory function.\nUnable to use it.\n"),plugname);
     set_pref ("vid_playback_plugin","none");
     do_error_dialog_with_check_transient(msg,TRUE,0,prefsw!=NULL?LIVES_WINDOW(prefsw->prefs_dialog):
@@ -1284,7 +1284,7 @@ _vid_playback_plugin *open_vid_playback_plugin (const gchar *name, boolean in_us
   vpp->set_yuv_palette_clamping=(int (*)(int))dlsym (handle,"set_yuv_palette_clamping");
   vpp->send_keycodes=(boolean (*)(plugin_keyfunc))dlsym (handle,"send_keycodes");
   vpp->get_audio_fmts=(int* (*)())dlsym (handle,"get_audio_fmts");
-  vpp->init_screen=(boolean (*)(int, int, boolean, uint64_t, int, gchar**))dlsym (handle,"init_screen");
+  vpp->init_screen=(boolean (*)(int, int, boolean, uint64_t, int, char**))dlsym (handle,"init_screen");
   vpp->exit_screen=(void (*)(uint16_t, uint16_t))dlsym (handle,"exit_screen");
   vpp->module_unload=(void (*)())dlsym (handle,"module_unload");
 
@@ -1345,18 +1345,18 @@ _vid_playback_plugin *open_vid_playback_plugin (const gchar *name, boolean in_us
 
   if (future_prefs->vpp_argv!=NULL) {
     vpp->extra_argc=future_prefs->vpp_argc;
-    vpp->extra_argv=(gchar **)lives_malloc((vpp->extra_argc+1)*(sizeof(gchar *)));
+    vpp->extra_argv=(char **)lives_malloc((vpp->extra_argc+1)*(sizeof(char *)));
     for (i=0;i<=vpp->extra_argc;i++) vpp->extra_argv[i]=lives_strdup(future_prefs->vpp_argv[i]);
   }
   else {
     if (!in_use&&mainw->vpp!=NULL&&!(strcmp(name,mainw->vpp->name))) {
     vpp->extra_argc=mainw->vpp->extra_argc;
-    vpp->extra_argv=(gchar **)lives_malloc((mainw->vpp->extra_argc+1)*(sizeof(gchar *)));
+    vpp->extra_argv=(char **)lives_malloc((mainw->vpp->extra_argc+1)*(sizeof(char *)));
     for (i=0;i<=vpp->extra_argc;i++) vpp->extra_argv[i]=lives_strdup(mainw->vpp->extra_argv[i]);
     }
     else {
       vpp->extra_argc=0;
-      vpp->extra_argv=(gchar **)lives_malloc(sizeof(gchar *));
+      vpp->extra_argv=(char **)lives_malloc(sizeof(char *));
       vpp->extra_argv[0]=NULL;
     }
   }
@@ -1368,7 +1368,7 @@ _vid_playback_plugin *open_vid_playback_plugin (const gchar *name, boolean in_us
     if ((fps_list=(*vpp->get_fps_list)(vpp->palette))!=NULL) {
       array=lives_strsplit (fps_list,"|",-1);
       if (get_token_count (array[0],':')>1) {
-	gchar **array2=lives_strsplit(array[0],":",2);
+	char **array2=lives_strsplit(array[0],":",2);
 	vpp->fixed_fps_numer=atoi(array2[0]);
 	vpp->fixed_fps_denom=atoi(array2[1]);
 	lives_strfreev(array2);
@@ -1513,9 +1513,9 @@ int64_t get_best_audio(_vid_playback_plugin *vpp) {
   int ret=AUDIO_CODEC_NONE;
   int i,j=0,nfmts;
   size_t rlen;
-  gchar *astreamer,*com,*msg;
-  gchar buf[1024];
-  gchar **array;
+  char *astreamer,*com,*msg;
+  char buf[1024];
+  char **array;
   FILE *rfile;
 
   if (vpp!=NULL&&vpp->get_audio_fmts!=NULL) {
@@ -1610,8 +1610,8 @@ int64_t get_best_audio(_vid_playback_plugin *vpp) {
 
 
 
-void do_plugin_encoder_error(const gchar *plugin_name) {
-  gchar *msg,*tmp;
+void do_plugin_encoder_error(const char *plugin_name) {
+  char *msg,*tmp;
 
   if (plugin_name==NULL) {
     msg=lives_strdup_printf(_("LiVES was unable to find its encoder plugins. Please make sure you have the plugins installed in\n%s%s%s\nor change the value of <lib_dir> in %s\n"),prefs->lib_dir,PLUGIN_EXEC_DIR,PLUGIN_ENCODERS,(tmp=lives_filename_to_utf8(capable->rcfile,-1,NULL,NULL,NULL)));
@@ -1629,12 +1629,12 @@ void do_plugin_encoder_error(const gchar *plugin_name) {
 
 
 boolean check_encoder_restrictions (boolean get_extension, boolean user_audio, boolean save_all) {
-  gchar **checks;
-  gchar **array=NULL;
-  gchar **array2;
+  char **checks;
+  char **array=NULL;
+  char **array2;
   int pieces,numtok;
   boolean calc_aspect=FALSE;
-  gchar aspect_buffer[512];
+  char aspect_buffer[512];
   int hblock=2,vblock=2;
   int i,r,val;
   LiVESList *ofmt_all=NULL;
@@ -1681,8 +1681,8 @@ boolean check_encoder_restrictions (boolean get_extension, boolean user_audio, b
   if (!((ofmt_all=plugin_request_by_line(PLUGIN_ENCODERS,prefs->encoder.name,"get_formats"))==NULL)) {
     // get any restrictions for the current format
     for (i=0;i<lives_list_length(ofmt_all);i++) {
-      if ((numtok=get_token_count ((gchar *)lives_list_nth_data (ofmt_all,i),'|'))>2) {
-	array=lives_strsplit ((gchar *)lives_list_nth_data (ofmt_all,i),"|",-1);
+      if ((numtok=get_token_count ((char *)lives_list_nth_data (ofmt_all,i),'|'))>2) {
+	array=lives_strsplit ((char *)lives_list_nth_data (ofmt_all,i),"|",-1);
 	if (!strcmp(array[0],prefs->encoder.of_name)) {
 	  if (numtok>4) {
 	    lives_snprintf(prefs->encoder.of_def_ext,16,"%s",array[4]);
@@ -1763,7 +1763,7 @@ boolean check_encoder_restrictions (boolean get_extension, boolean user_audio, b
 	double allowed_fps;
 	int mbest_num=0,mbest_denom=0;
 	int numparts;
-	gchar *fixer;
+	char *fixer;
 	
 	best_fps_delta=1000000000.;
 	array=lives_strsplit(checks[r],"=",2);
@@ -1772,7 +1772,7 @@ boolean check_encoder_restrictions (boolean get_extension, boolean user_audio, b
 	for (i=0;i<numtok;i++) {
 	  mbest_num=mbest_denom=0;
 	  if ((numparts=get_token_count (array2[i],':'))>1) {
-	    gchar **array3=lives_strsplit(array2[i],":",2);
+	    char **array3=lives_strsplit(array2[i],":",2);
 	    mbest_num=atoi (array3[0]);
 	    mbest_denom=atoi (array3[1]);
 	    lives_strfreev (array3);
@@ -1973,7 +1973,7 @@ boolean check_encoder_restrictions (boolean get_extension, boolean user_audio, b
     
     if (!mainw->osc_auto&&calc_aspect&&!sizer) {
       // we calculate this last, after getting hblock and vblock sizes
-      gchar **array3;
+      char **array3;
       double allowed_aspect;
       int xwidth=width;
       int xheight=height;
@@ -2047,7 +2047,7 @@ boolean check_encoder_restrictions (boolean get_extension, boolean user_audio, b
       
 	if (rdet_suggest_values(width,height,best_fps,best_fps_num,best_fps_denom,best_arate,asigned,swap_endian,
 				allow_aspect_override,(best_fps_delta==0.))) {
-	  gchar *arate_string;
+	  char *arate_string;
 	  rdet->width=width;
 	  rdet->height=height;
 	  if (best_arate!=-1) rdet->arate=best_arate;
@@ -2106,7 +2106,7 @@ boolean check_encoder_restrictions (boolean get_extension, boolean user_audio, b
 
 
 
-LiVESList *filter_encoders_by_img_ext(LiVESList *encoders, const gchar *img_ext) {
+LiVESList *filter_encoders_by_img_ext(LiVESList *encoders, const char *img_ext) {
   LiVESList *encoder_capabilities=NULL;
   LiVESList *list=encoders,*listnext;
   int caps;
@@ -2147,7 +2147,7 @@ LiVESList *filter_encoders_by_img_ext(LiVESList *encoders, const gchar *img_ext)
       continue;
     }
 
-    if ((encoder_capabilities=plugin_request(PLUGIN_ENCODERS,(gchar *)list->data,"get_capabilities"))==NULL) {
+    if ((encoder_capabilities=plugin_request(PLUGIN_ENCODERS,(char *)list->data,"get_capabilities"))==NULL) {
       lives_free((livespointer)list->data);
       encoders=lives_list_delete_link(encoders,list);
     }
@@ -2189,7 +2189,7 @@ LIVES_INLINE boolean decplugin_supports_palette (const lives_decoder_t *dplug, i
 
 static LiVESList *load_decoders(void) {
   lives_decoder_sys_t *dplug;
-  gchar *decplugdir=lives_strdup_printf("%s%s%s",prefs->lib_dir,PLUGIN_EXEC_DIR,PLUGIN_DECODERS);
+  char *decplugdir=lives_strdup_printf("%s%s%s",prefs->lib_dir,PLUGIN_EXEC_DIR,PLUGIN_DECODERS);
   LiVESList *dlist=NULL;
 #ifndef IS_MINGW
   LiVESList *decoder_plugins_o=get_plugin_list (PLUGIN_DECODERS,TRUE,decplugdir,"-so");
@@ -2219,7 +2219,7 @@ static LiVESList *load_decoders(void) {
       }
     }
     if (!skip) {
-      dplug=open_decoder_plugin((gchar *)decoder_plugins->data);
+      dplug=open_decoder_plugin((char *)decoder_plugins->data);
       if (dplug!=NULL) dlist=lives_list_append(dlist,(livespointer)dplug);
     }
     lives_free((livespointer)decoder_plugins->data);
@@ -2229,7 +2229,7 @@ static LiVESList *load_decoders(void) {
   lives_list_free(decoder_plugins_o);
 
   if (dlist==NULL) {
-    gchar *msg=lives_strdup_printf(_("\n\nNo decoders found in %s !\n"),decplugdir);
+    char *msg=lives_strdup_printf(_("\n\nNo decoders found in %s !\n"),decplugdir);
     LIVES_WARN(msg);
     d_print(msg);
     lives_free(msg);
@@ -2471,12 +2471,12 @@ void unload_decoder_plugins(void) {
 
 
 
-lives_decoder_sys_t *open_decoder_plugin(const gchar *plname) {
+lives_decoder_sys_t *open_decoder_plugin(const char *plname) {
   lives_decoder_sys_t *dplug;
 
-  gchar *plugname;
+  char *plugname;
   boolean OK=TRUE;
-  const gchar *err;
+  const char *err;
 
   if (!strcmp(plname,"ogg_theora_decoder")) {
     // no longer compatible
@@ -2497,7 +2497,7 @@ lives_decoder_sys_t *open_decoder_plugin(const gchar *plname) {
   lives_free (plugname);
 
   if (dplug->handle==NULL) {
-    gchar *msg=lives_strdup_printf (_("\n\nFailed to open decoder plugin %s\nError was %s\n"),plname,dlerror());
+    char *msg=lives_strdup_printf (_("\n\nFailed to open decoder plugin %s\nError was %s\n"),plname,dlerror());
     d_print(msg);
     lives_free (msg);
     lives_free (dplug);
@@ -2520,7 +2520,7 @@ lives_decoder_sys_t *open_decoder_plugin(const gchar *plname) {
   }
 
   if (!OK) {
-    gchar *msg=lives_strdup_printf (_("\n\nDecoder plugin %s\nis missing a mandatory function.\nUnable to use it.\n"),plname);
+    char *msg=lives_strdup_printf (_("\n\nDecoder plugin %s\nis missing a mandatory function.\nUnable to use it.\n"),plname);
     d_print(msg);
     lives_free (msg);
     unload_decoder_plugin(dplug);
@@ -2554,8 +2554,8 @@ lives_decoder_sys_t *open_decoder_plugin(const gchar *plname) {
 
 
 
-void get_mime_type(gchar *text, int maxlen, const lives_clip_data_t *cdata) {
-  gchar *audname;
+void get_mime_type(char *text, int maxlen, const lives_clip_data_t *cdata) {
+  char *audname;
   
   if (cdata->container_name==NULL||!strlen(cdata->container_name)) lives_snprintf(text,40,"%s",_("unknown"));
   else lives_snprintf(text,40,"%s",cdata->container_name);
@@ -2564,7 +2564,7 @@ void get_mime_type(gchar *text, int maxlen, const lives_clip_data_t *cdata) {
 
   if (cdata->video_name==NULL) lives_strappend(text,40,_("/unknown"));
   else {
-    gchar *vidname=lives_strdup_printf("/%s",cdata->video_name);
+    char *vidname=lives_strdup_printf("/%s",cdata->video_name);
     lives_strappend(text,40,vidname);
     lives_free(vidname);
   }
@@ -2617,7 +2617,7 @@ static void dpa_cancel_clicked (LiVESButton *button, livespointer user_data) {
 
 }
 
-static void on_dpa_cb_toggled(LiVESToggleButton *button, gchar *decname) {
+static void on_dpa_cb_toggled(LiVESToggleButton *button, char *decname) {
   if (!lives_toggle_button_get_active(button))
     // unchecked is disabled
     future_prefs->disabled_decoders_new=lives_list_append(future_prefs->disabled_decoders_new,lives_strdup(decname));
@@ -2639,8 +2639,8 @@ void on_decplug_advanced_clicked (LiVESButton *button, livespointer user_data) {
   LiVESWidget *cancelbutton;
   LiVESWidget *okbutton;
 
-  gchar *ltext;
-  gchar *decplugdir=lives_strdup_printf("%s%s%s",prefs->lib_dir,PLUGIN_EXEC_DIR,PLUGIN_DECODERS);
+  char *ltext;
+  char *decplugdir=lives_strdup_printf("%s%s%s",prefs->lib_dir,PLUGIN_EXEC_DIR,PLUGIN_DECODERS);
 
   if (!mainw->decoders_loaded) {
     mainw->decoder_list=load_decoders();
@@ -2723,7 +2723,7 @@ void on_decplug_advanced_clicked (LiVESButton *button, livespointer user_data) {
 boolean check_rfx_for_lives (lives_rfx_t *rfx) {
   // check that an RFX is suitable for loading (cf. check_for_lives in effects-weed.c)
   if (rfx->num_in_channels==2&&rfx->props&RFX_PROPS_MAY_RESIZE) {
-    gchar *tmp;
+    char *tmp;
     d_print ((tmp=lives_strdup_printf (_ ("Failed to load %s, transitions may not resize.\n"),rfx->name)));
     lives_free(tmp);
     return FALSE;
@@ -2732,8 +2732,8 @@ boolean check_rfx_for_lives (lives_rfx_t *rfx) {
 }
 
 void do_rfx_cleanup(lives_rfx_t *rfx) {
-  gchar *com;
-  gchar *dir=NULL;
+  char *com;
+  char *dir=NULL;
 
   if (rfx==&mainw->rendered_fx[0]) return;
 
@@ -2771,13 +2771,13 @@ void do_rfx_cleanup(lives_rfx_t *rfx) {
 
 
 
-void render_fx_get_params (lives_rfx_t *rfx, const gchar *plugin_name, short status) {
+void render_fx_get_params (lives_rfx_t *rfx, const char *plugin_name, short status) {
   // create lives_param_t array from plugin supplied values
   LiVESList *parameter_list;
   int param_idx,i;
   lives_param_t *cparam;
-  gchar **param_array;
-  gchar *line;
+  char **param_array;
+  char *line;
   int len;
 
   switch (status) {
@@ -2807,7 +2807,7 @@ void render_fx_get_params (lives_rfx_t *rfx, const gchar *plugin_name, short sta
   
   for (param_idx=0;param_idx<rfx->num_params;param_idx++) {
  
-    line=(gchar *)lives_list_nth_data(parameter_list,param_idx);
+    line=(char *)lives_list_nth_data(parameter_list,param_idx);
 
     len=get_token_count (line,(unsigned int)rfx->delim[0]);
 
@@ -2953,11 +2953,11 @@ void render_fx_get_params (lives_rfx_t *rfx, const gchar *plugin_name, short sta
 }
 
 
-LiVESList *array_to_string_list (gchar **array, int offset, int len) {
+LiVESList *array_to_string_list (char **array, int offset, int len) {
   // build a LiVESList from an array.
   int i;
 
-  gchar *string,*tmp;
+  char *string,*tmp;
   LiVESList *slist=NULL;
 
   for (i=offset+1;i<len;i++) {
@@ -3158,7 +3158,7 @@ void param_copy (lives_param_t *src, lives_param_t *dest, boolean full) {
     lives_memcpy (dest->def,src->def,sizeof(lives_colRGB24_t));
     break;
   case LIVES_PARAM_STRING:
-    dest->def=lives_strdup ((gchar *)src->def);
+    dest->def=lives_strdup ((char *)src->def);
     break;
   case LIVES_PARAM_STRING_LIST:
     dest->def=lives_malloc (sizint);
@@ -3242,7 +3242,7 @@ void set_colRGBA32_param(void *value, short red, short green, short blue, short 
 
 
 
-int find_rfx_plugin_by_name (const gchar *name, short status) {
+int find_rfx_plugin_by_name (const char *name, short status) {
   int i;
   for (i=1;i<mainw->num_rendered_effects_builtin+mainw->num_rendered_effects_custom+
 	 mainw->num_rendered_effects_test;i++) {
@@ -3261,7 +3261,7 @@ lives_param_t *weed_params_to_rfx(int npar, weed_plant_t *inst, boolean show_rei
   int param_hint;
   char **list;
   LiVESList *gtk_list=NULL;
-  gchar *string;
+  char *string;
   int error;
   int vali;
   double vald;
@@ -3638,7 +3638,7 @@ lives_rfx_t *weed_to_rfx (weed_plant_t *plant, boolean show_reinits) {
   int error;
   weed_plant_t *filter,*inst;
 
-  gchar *string;
+  char *string;
   lives_rfx_t *rfx=(lives_rfx_t *)lives_malloc(sizeof(lives_rfx_t));
   rfx->is_template=FALSE;
   if (weed_get_int_value(plant,"type",&error)==WEED_PLANT_FILTER_INSTANCE) {
@@ -3747,7 +3747,7 @@ LiVESList *get_external_window_hints(lives_rfx_t *rfx) {
 
 
 
-gchar *plugin_run_param_window(const gchar *get_com, LiVESVBox *vbox, lives_rfx_t **ret_rfx) {
+char *plugin_run_param_window(const char *get_com, LiVESVBox *vbox, lives_rfx_t **ret_rfx) {
 
   // here we create an rfx script from some fixed values and values from the plugin; 
   // we will then compile the script to an rfx scrap and use the scrap to get info
@@ -3770,14 +3770,14 @@ gchar *plugin_run_param_window(const gchar *get_com, LiVESVBox *vbox, lives_rfx_
 
   FILE *sfile;
   lives_rfx_t *rfx=(lives_rfx_t *)lives_malloc(sizeof(lives_rfx_t));
-  gchar *string;
-  gchar *rfx_scrapname=lives_strdup_printf("rfx.%d",capable->mainpid);
-  gchar *rfxfile=lives_strdup_printf ("%s/.%s.script",prefs->tmpdir,rfx_scrapname);
+  char *string;
+  char *rfx_scrapname=lives_strdup_printf("rfx.%d",capable->mainpid);
+  char *rfxfile=lives_strdup_printf ("%s/.%s.script",prefs->tmpdir,rfx_scrapname);
   int res;
-  gchar *com;
-  gchar *fnamex;
-  gchar *res_string=NULL;
-  gchar buff[32];
+  char *com;
+  char *fnamex;
+  char *res_string=NULL;
+  char buff[32];
   int retval;
 
   string=lives_strdup_printf("<name>\n%s\n</name>\n",rfx_scrapname);

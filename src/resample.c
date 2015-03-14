@@ -60,7 +60,7 @@ boolean auto_resample_resize (int width,int height,double fps,int fps_num,int fp
 			       int asigned, boolean swap_endian) {
   // do a block atomic: resample audio, then resample video/resize or joint resample/resize
 
-  gchar *com,*msg=NULL;
+  char *com,*msg=NULL;
   int current_file=mainw->current_file;
   boolean audio_resampled=FALSE;
   boolean video_resampled=FALSE;
@@ -628,7 +628,7 @@ quantise_events (weed_plant_t *in_list, double qfps, boolean allow_gap) {
 
 
 static void on_reorder_activate (int rwidth, int rheight) {
-  gchar *msg;
+  char *msg;
   boolean has_lmap_error=FALSE;
 
   if (!(prefs->warning_mask&WARN_MASK_LAYOUT_ALTER_FRAMES)&&(mainw->xlays=layout_frame_is_affected(mainw->current_file,1))!=NULL) {
@@ -718,7 +718,7 @@ void
 on_resaudio_ok_clicked                      (LiVESButton *button,
 					     LiVESEntry *entry)
 {
-  gchar *com,*msg;  
+  char *com,*msg;  
   int arate,achans,asampsize,arps;
   int asigned=1,aendian=1;
   int cur_signed,cur_endian;
@@ -877,7 +877,7 @@ on_resaudio_ok_clicked                      (LiVESButton *button,
 
 static void on_resaudw_achans_changed (LiVESWidget *widg, livespointer user_data) {
   _resaudw *resaudw=(_resaudw *)user_data;
-  gchar *tmp;
+  char *tmp;
 
   if (!lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(widg))) {
     lives_widget_set_sensitive (resaudw->rb_signed,FALSE);
@@ -966,7 +966,7 @@ void on_resample_vid_ok (LiVESButton *button, LiVESEntry *entry) {
   int ostart=cfile->start;
   int oend=cfile->end;
   double oundo1_dbl=cfile->undo1_dbl;
-  gchar *msg;
+  char *msg;
   weed_timecode_t in_time=0;
   double old_fps=cfile->fps;
   boolean ratio_fps;
@@ -1148,7 +1148,7 @@ _resaudw *create_resaudw (short type, render_details *rdet, LiVESWidget *top_vbo
 
   double secs=0.;
 
-  gchar *tmp;
+  char *tmp;
 
   int hours=0,mins=0;
   int aendian;
@@ -1187,7 +1187,7 @@ _resaudw *create_resaudw (short type, render_details *rdet, LiVESWidget *top_vbo
   rate = lives_list_append (rate, (livespointer)"128000");
 
   if (type<3||type>4) {
-    gchar *title=NULL;
+    char *title=NULL;
 
     if (type==1) {
       title=lives_strdup(_("LiVES: - Resample Audio"));
@@ -1663,9 +1663,9 @@ void create_new_pb_speed (short type) {
 
   LiVESSList *rbgroup = NULL;
 
-  gchar label_text[256];
+  char label_text[256];
 
-  gchar *title=NULL;
+  char *title=NULL;
 
   if (type==1) {
     title=lives_strdup( _("LiVES: - Change playback speed"));
@@ -1826,7 +1826,7 @@ on_change_speed_activate                (LiVESMenuItem     *menuitem,
 
 void on_change_speed_ok_clicked (LiVESButton *button, livespointer user_data) {
   double arate=cfile->arate/cfile->fps;
-  gchar *msg;
+  char *msg;
   boolean has_lmap_error=FALSE;
   boolean bad_header=FALSE;
 
@@ -1982,8 +1982,8 @@ void on_change_speed_ok_clicked (LiVESButton *button, livespointer user_data) {
 int reorder_frames(int rwidth, int rheight) {
   int new_frames=cfile->old_frames;
   int cur_frames=cfile->frames;
-  gchar **array;
-  gchar *com;
+  char **array;
+  char *com;
 
   if (rwidth*rheight==0) com=lives_strdup_printf("%s reorder \"%s\" \"%s\" %d 0 0 %d %d",prefs->backend,cfile->handle,
 					     get_image_ext_for_type(cfile->img_type),!mainw->endian,
@@ -2075,7 +2075,7 @@ int reorder_frames(int rwidth, int rheight) {
 
 
 int deorder_frames(int old_frames, boolean leave_bak) {
-  gchar *com;
+  char *com;
   weed_timecode_t time_start;
   int perf_start,perf_end;
   
@@ -2122,7 +2122,7 @@ int deorder_frames(int old_frames, boolean leave_bak) {
 boolean resample_clipboard(double new_fps) {
   // resample the clipboard video - if we already did it once, it is
   // quicker the second time
-  gchar *msg,*com;
+  char *msg,*com;
   int current_file=mainw->current_file;
 
   mainw->no_switch_dprint=TRUE;

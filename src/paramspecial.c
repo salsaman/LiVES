@@ -49,8 +49,8 @@ void init_special (void) {
 
 
 
-void add_to_special (const gchar *sp_string, lives_rfx_t *rfx) {
-  gchar **array=lives_strsplit (sp_string,"|",-1);
+void add_to_special (const char *sp_string, lives_rfx_t *rfx) {
+  char **array=lives_strsplit (sp_string,"|",-1);
   int num_widgets=get_token_count(sp_string,'|')-2;
   int pnum;
 
@@ -189,7 +189,7 @@ void check_for_special (lives_rfx_t *rfx, lives_param_t *param, LiVESBox *pbox) 
   LiVESList *slist;
 
 
-  gchar *tmp,*tmp2;
+  char *tmp,*tmp2;
 
   // check if this parameter is part of a special window
   // as we are drawing the paramwindow

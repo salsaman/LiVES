@@ -51,7 +51,7 @@ typedef enum {
 } lives_af_t;
 
 
-gchar *lives_fx_cat_to_text(lives_fx_cat_t cat, boolean plural) WARN_UNUSED;
+char *lives_fx_cat_to_text(lives_fx_cat_t cat, boolean plural) WARN_UNUSED;
 
 
 #include "effects-weed.h"

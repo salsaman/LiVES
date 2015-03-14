@@ -9971,7 +9971,7 @@ void mt_init_tracks (lives_mt *mt, boolean set_min_max) {
       }
       event=get_next_event(event);
     }
-    if (!mt->was_undo_redo) remove_end_blank_frames(mt->event_list);
+    if (!mt->was_undo_redo) remove_end_blank_frames(mt->event_list,TRUE);
     if (block_marker_tracks!=NULL) lives_free(block_marker_tracks);
     if (block_marker_uo_tracks!=NULL) lives_free(block_marker_uo_tracks);
 
@@ -11382,15 +11382,17 @@ static track_rect *move_block (lives_mt *mt, track_rect *block, double timesecs,
   mt->insert_start=mt->insert_end=-1;
 
   new_start_tc=q_gint64(timesecs*U_SEC,mt->fps);
+
+  remove_end_blank_frames(mt->event_list,FALSE); // leave filter inits
   if (mt->opts.move_effects) update_filter_events(mt,mt->specific_event,start_tc,end_tc,old_track,new_start_tc,mt->current_track);
+
+  remove_end_blank_frames(mt->event_list, TRUE); // remove filter inits
   mt->moving_block=FALSE;
   mt->specific_event=NULL;
 
   if (new_track!=-1) eventbox=(LiVESWidget *)lives_list_nth_data(mt->video_draws,mt->current_track);
   else eventbox=(LiVESWidget *)mt->audio_draws->data;
   block = (track_rect *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(eventbox),"block_last");
-  
-  remove_end_blank_frames(mt->event_list);
 
   if (block!=NULL&&(mt->opts.grav_mode==GRAV_MODE_LEFT||(mt->opts.grav_mode==GRAV_MODE_RIGHT&&block->next!=NULL))&&!did_backup) {
     double oldr_start=mt->region_start;
@@ -12084,7 +12086,7 @@ void in_out_end_changed (LiVESWidget *widget, livespointer user_data) {
 	  if (WEED_EVENT_IS_FRAME(event)) start_event=event;
 	}
       }
-      remove_end_blank_frames(mt->event_list);
+      remove_end_blank_frames(mt->event_list,TRUE);
     }
     else {
       // end increased, not anchored
@@ -12326,7 +12328,7 @@ void avel_spin_changed (LiVESSpinButton *spinbutton, livespointer user_data) {
       lives_signal_handler_unblock (mt->spinbutton_out,mt->spin_out_func);
       lives_spin_button_set_value(LIVES_SPIN_BUTTON(mt->spinbutton_out),orig_end_val);
 
-      remove_end_blank_frames(mt->event_list);
+      remove_end_blank_frames(mt->event_list,TRUE);
 
       if (mt->avol_fx!=-1&&block->next==NULL) {
 	apply_avol_filter(mt);
@@ -15796,7 +15798,7 @@ void on_mt_delfx_activate (LiVESMenuItem *menuitem, livespointer user_data) {
   if (!did_backup) mt_backup(mt,MT_UNDO_DELETE_FILTER,0);
 
   remove_filter_from_event_list(mt->event_list,mt->selected_init_event);
-  remove_end_blank_frames(mt->event_list);
+  remove_end_blank_frames(mt->event_list,TRUE);
 
   d_print(text);
   lives_free(text);
@@ -16225,39 +16227,67 @@ void on_prerender_aud_activate (LiVESMenuItem *menuitem, livespointer user_data)
 void update_filter_events(lives_mt *mt, weed_plant_t *first_event, weed_timecode_t start_tc, weed_timecode_t end_tc, 
 			  int track, weed_timecode_t new_start_tc, int new_track) {
   // move/remove filter_inits param_change and filter_deinits after deleting/moving a block
-  weed_plant_t *event,*event_next;
-  boolean was_moved;
-  int error;
-  weed_plant_t *init_event,*deinit_event;
-  LiVESList *moved_events=NULL;
-  boolean leave_event;
-  int i;
 
+  // first_event: event just before block which is removed
+
+  // start_tc, end_tc start and end timecodes of block on track
+
+  // new_start_tc, new_track: new positions
+
+  LiVESList *moved_events=NULL;
+
+  weed_plant_t *event,*event_next;
+  weed_plant_t *init_event,*deinit_event;
+
+  weed_timecode_t last_frame_tc=0,event_tc;
+
+  boolean was_moved;
+  boolean leave_event;
+
+  int nins;
+  int error;
+
+  register int i;
+
+  event=get_last_frame_event(mt->event_list);
+  if (event!=NULL) last_frame_tc=get_event_timecode(event);
+
+  // find first event inside old block
   if (first_event==NULL) event=get_first_event(mt->event_list);
   else event=get_next_event(first_event);
   while (event!=NULL&&get_event_timecode(event)<start_tc) event=get_next_event(event);
 
   while (event!=NULL&&get_event_timecode(event)<=end_tc) {
+    // step through all events in old block
     event_next=get_next_event(event);
     was_moved=FALSE;
+
     if (WEED_EVENT_IS_FILTER_INIT(event)) {
+      // filter init event
       if (event==mt->avol_init_event) {
 	event=event_next;
 	continue;  // we move our audio volume effect using a separate mechanism
       }
       if (mt->opts.move_effects&&mt->moving_block) {
+	// move effects
+
 	if (weed_plant_has_leaf(event,"deinit_event")&&weed_plant_has_leaf(event,"in_tracks")&&
 	    weed_leaf_num_elements(event,"in_tracks")==1&&weed_get_int_value(event,"in_tracks",&error)==track) {
+	  // this effect has a deinit_event, it has one in_track, which is this one
+
 	  deinit_event=(weed_plant_t *)weed_get_voidptr_value(event,"deinit_event",&error);
 	  if (get_event_timecode(deinit_event)<=end_tc) {
+	    //if the effect also ends within the block, we will move it to the new block
+
 	    if (lives_list_index(moved_events,event)==-1) {
 	      // update owners,in_tracks and out_tracks
-	      weed_set_int_value(event,"in_tracks",new_track);
+	      weed_set_int_value(event,"in_tracks",new_track); // update the in_track to the new one
 
 	      if (weed_plant_has_leaf(event,"out_tracks")) {
 		int *out_tracks=weed_get_int_array(event,"out_tracks",&error);
 		int num_tracks=weed_leaf_num_elements(event,"out_tracks");
 		for (i=0;i<num_tracks;i++) {
+		  // update the out_track to the new one
 		  if (out_tracks[i]==track) out_tracks[i]=new_track;
 		}
 		weed_set_int_array(event,"out_tracks",num_tracks,out_tracks);
@@ -16266,6 +16296,8 @@ void update_filter_events(lives_mt *mt, weed_plant_t *first_event, weed_timecode
 
 	      // move to new position
 	      if (new_start_tc<start_tc) {
+		// if moving earlier, we need to move the init_event first, then the deinit_event
+		// this will also update the filter_maps, and param_changes
 		move_filter_init_event(mt->event_list,get_event_timecode(event)+new_start_tc-start_tc,event,mt->fps);
 		move_filter_deinit_event(mt->event_list,get_event_timecode(deinit_event)+new_start_tc-start_tc,
 					 deinit_event,mt->fps,TRUE);
@@ -16273,43 +16305,76 @@ void update_filter_events(lives_mt *mt, weed_plant_t *first_event, weed_timecode
 		was_moved=TRUE;
 	      }
 	      else if (new_start_tc>start_tc) {
+		// if moving later, we need to move the deinit_event first, then the init_event
+		// this will also update the filter_maps, and param_changes
 		move_filter_deinit_event(mt->event_list,get_event_timecode(deinit_event)+new_start_tc-start_tc,
 					 deinit_event,mt->fps,TRUE);
 		move_filter_init_event(mt->event_list,get_event_timecode(event)+new_start_tc-start_tc,event,mt->fps);
 		if (event==first_event) first_event=NULL;
 		was_moved=TRUE;
 	      }
+	      // add this effect to our list of moved_events, so we don't end up moving it multiple times
 	      moved_events=lives_list_prepend(moved_events,event);
 	    }
 	  }
 	}
       }
-      if (lives_list_index(moved_events,event)==-1&&event!=mt->avol_init_event&&!was_moved&&
-	  !move_event_right(mt->event_list,event,TRUE,mt->fps)) {
-	was_moved=TRUE;
-	if (event==first_event) first_event=NULL;
+      if (lives_list_index(moved_events,event)==-1&&event!=mt->avol_init_event&&!was_moved) {
+	if (weed_plant_has_leaf(event,"deinit_event")&&weed_plant_has_leaf(event,"in_tracks")&&
+	    (nins=weed_leaf_num_elements(event,"in_tracks"))<=2) {
+
+	  int *in_tracks=weed_get_int_array(event,"in_tracks",&error);
+	  if (in_tracks[0]==track||(nins==2&&in_tracks[1]==track)) {
+	    // if the event wasnt moved (either because user chose not to, or block was deleted, or it had 2 tracks)
+	    // move the init_event to the right until we find frames from all tracks. If we pass the deinit_event then
+	    // the effect is removed.
+	    // Effects with one in_track which is other, or effects with >2 in tracks, do not suffer this fate.
+	    if (!move_event_right(mt->event_list,event,TRUE,mt->fps)) {
+	      // moved event right until it hits a frame from all tracks, if it passed the deinit_event it is removed
+	      // param_change events are also scaled in time
+	      was_moved=TRUE;
+	      if (event==first_event) first_event=NULL;
+	    }
+	  }
+	  lives_free(in_tracks);
+	}
       }
     }
     else {
       leave_event=TRUE;
       if (WEED_EVENT_IS_FILTER_DEINIT(event)) {
+	// check filter deinit
 	if (mt->opts.move_effects&&mt->moving_block) {
 	  if (weed_plant_has_leaf(event,"init_event")) {
 	    init_event=(weed_plant_t *)weed_get_voidptr_value(event,"init_event",&error);
-	    if (lives_list_index(moved_events,init_event)==-1&&!(weed_plant_has_leaf(event,"in_tracks")&&
-							     weed_leaf_num_elements(event,"in_tracks")==1&&
-							     weed_get_int_value(event,"in_tracks",&error)==track)&&
-		init_event!=mt->avol_init_event) {
-	      leave_event=FALSE;
+	    event_tc=get_event_timecode(event);
+	    if (init_event!=mt->avol_init_event&&
+		(event_tc>last_frame_tc||
+		 (lives_list_index(moved_events,init_event)==-1&&
+		  weed_plant_has_leaf(event,"in_tracks")&&(nins=weed_leaf_num_elements(event,"in_tracks"))<=2))) {
+	      // move it if: it is not avol event, and either it is after all frames or init_event was not moved
+	      // and it has one or two tracks, one of which is our track
+	      if (event_tc<=last_frame_tc) {
+		int *in_tracks=weed_get_int_array(event,"in_tracks",&error);
+		if (in_tracks[0]==track||(nins==2&&in_tracks[1]==track)) {
+		  leave_event=FALSE;
+		}
+		lives_free(in_tracks);
+	      }
+	      else leave_event=FALSE;
 	    }
 	  }
 	}
 	if (!leave_event&&!move_event_left(mt->event_list,event,TRUE,mt->fps)) {
+	  // move the event left until it hits a frame from all tracks
+	  // if it passes the init_event, it is removed
+	  // param change events are also scaled in time
 	  was_moved=TRUE;
 	}
       }
     }
     if (was_moved) {
+      // if we moved an event, re-scan from the start of the old block
       if (first_event==NULL) event=get_first_event(mt->event_list);
       else event=get_next_event(first_event);
       while (event!=NULL&&get_event_timecode(event)<start_tc) event=get_next_event(event);
@@ -16522,16 +16587,6 @@ static void on_delblock_activate (LiVESMenuItem *menuitem, livespointer user_dat
     if (xeventbox!=NULL) lives_widget_queue_draw (xeventbox);
   }
 
-  if (!mt->opts.move_effects||!mt->moving_block) {
-    update_filter_events(mt,first_event,start_tc,end_tc,track,start_tc,track);
-    remove_end_blank_frames(mt->event_list);
-    if (mt->block_selected==block) {
-      mt->block_selected=NULL;
-      unselect_all(mt);
-    }
-    mt_sensitise(mt);
-  }
-
   if ((mt->opts.grav_mode==GRAV_MODE_LEFT||mt->opts.grav_mode==GRAV_MODE_RIGHT)&&!mt->moving_block&&!did_backup) {
     // gravity left - remove first gap from old block start to end time
     // gravity right - remove last gap from 0 to old block end time
@@ -16567,7 +16622,18 @@ static void on_delblock_activate (LiVESMenuItem *menuitem, livespointer user_dat
     mt_sensitise(mt);
   }
 
-  remove_end_blank_frames(mt->event_list);
+  remove_end_blank_frames(mt->event_list,FALSE); // leave filter_inits
+
+  if (!mt->opts.move_effects||!mt->moving_block) {
+    update_filter_events(mt,first_event,start_tc,end_tc,track,start_tc,track);
+    if (mt->block_selected==block) {
+      mt->block_selected=NULL;
+      unselect_all(mt);
+    }
+    mt_sensitise(mt);
+  }
+
+  remove_end_blank_frames(mt->event_list,TRUE); // remove filter inits
 
   if ((!mt->moving_block||get_first_frame_event(mt->event_list)==NULL)&&mt->avol_fx!=-1&&blocknext==NULL&&
       mt->audio_draws!=NULL&&get_first_event(mt->event_list)!=NULL) {
@@ -20922,7 +20988,7 @@ boolean event_list_rectify(lives_mt *mt, weed_plant_t *event_list) {
   if (last_filter_map!=NULL) ebuf=add_null_filter_map(event_list,last_filter_map,last_tc,ebuf);
 
   last_event=get_last_event(event_list);
-  remove_end_blank_frames(event_list);
+  remove_end_blank_frames(event_list,TRUE);
 
   if (get_last_event(event_list)!=last_event) {
     last_event=get_last_event(event_list);

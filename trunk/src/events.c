@@ -396,7 +396,7 @@ boolean is_blank_frame (weed_plant_t *event, boolean count_audio) {
 }
 
 
-void remove_end_blank_frames (weed_plant_t *event_list) {
+void remove_end_blank_frames (weed_plant_t *event_list, boolean remove_filter_inits) {
   // remove blank frames from end of event list
   weed_plant_t *event=get_last_event(event_list),*prevevent;
   while (event!=NULL) {
@@ -405,7 +405,7 @@ void remove_end_blank_frames (weed_plant_t *event_list) {
       event=prevevent;
       continue;
     }
-    if (WEED_EVENT_IS_FILTER_INIT(event)) remove_filter_from_event_list(event_list,event);
+    if (remove_filter_inits&&WEED_EVENT_IS_FILTER_INIT(event)) remove_filter_from_event_list(event_list,event);
     else {
       if (!is_blank_frame(event,TRUE)) break;
       delete_event(event_list,event);
@@ -1919,13 +1919,19 @@ boolean move_event_right(weed_plant_t *event_list, weed_plant_t *event, boolean 
   // move a filter_init or param_change to the right
   // this can happen for two reasons: - we are rectifying an event_list, or a block was deleted or moved
 
-  int *owners;
-  int error;
-  int num_owners=0,num_clips;
+  // if can_stay is FALSE, event is forced to move. This is used only during event list rectification.
+
   weed_timecode_t tc=get_event_timecode(event),new_tc=tc;
   weed_plant_t *xevent=event;
+
+  int *owners;
+
   boolean all_ok=FALSE;
-  int i;
+
+  int error;
+  int num_owners=0,num_clips;
+
+  register int i;
   
   if (WEED_EVENT_IS_FILTER_INIT(event)) {
     if (weed_plant_has_leaf(event,"in_tracks")) num_owners=weed_leaf_num_elements(event,"in_tracks");
@@ -1968,7 +1974,8 @@ boolean move_event_right(weed_plant_t *event_list, weed_plant_t *event, boolean 
   if (WEED_EVENT_IS_FILTER_INIT(event)) {
     weed_plant_t *deinit_event=(weed_plant_t *)weed_get_voidptr_value(event,"deinit_event",&error);
     if (xevent==NULL||get_event_timecode(deinit_event)<new_tc) {
-      // if we are moving a filter_init past its deinit event, remove it, remove deinit, remove param_change events, remove from all filter_maps, and check for duplicate filter maps
+      // if we are moving a filter_init past its deinit event, remove it, remove deinit, remove param_change events, 
+      // remove from all filter_maps, and check for duplicate filter maps
       remove_filter_from_event_list(event_list,event);
       return FALSE;
     }
@@ -1994,6 +2001,8 @@ boolean move_event_left(weed_plant_t *event_list, weed_plant_t *event, boolean c
   // move a filter_deinit to the left
   // this can happen for two reasons: - we are rectifying an event_list, or a block was deleted or moved
 
+  // if can_stay is FALSE, event is forced to move. This is used only during event list rectification.
+
   weed_timecode_t tc=get_event_timecode(event),new_tc=tc;
   weed_plant_t *xevent=event;
   weed_plant_t *init_event;
@@ -2004,6 +2013,7 @@ boolean move_event_left(weed_plant_t *event_list, weed_plant_t *event, boolean c
 
   int error;
   int num_owners=0,num_clips;
+
   register int i;
 
   if (WEED_EVENT_IS_FILTER_DEINIT(event)) init_event=(weed_plant_t *)weed_get_voidptr_value(event,"init_event",&error);
@@ -2046,12 +2056,14 @@ boolean move_event_left(weed_plant_t *event_list, weed_plant_t *event, boolean c
   if (can_stay&&(new_tc==tc)&&all_ok) return TRUE;
 
   if (get_event_timecode(init_event)>new_tc) {
-    // if we are moving a filter_deinit past its init event, remove it, remove init, remove param_change events, remove from all filter_maps, and check for duplicate filter maps
+    // if we are moving a filter_deinit past its init event, remove it, remove init, remove param_change events, 
+    // remove from all filter_maps, and check for duplicate filter maps
     remove_filter_from_event_list(event_list,init_event);
     return FALSE;
   }
 
-  // otherwise, go from old pos to new pos, remove mention of it from filter maps, possibly add/update filter map as last event at new_tc, remove duplicate filter_maps, update param_change events
+  // otherwise, go from old pos to new pos, remove mention of it from filter maps, possibly add/update filter map as last event at new_tc, 
+  // remove duplicate filter_maps, update param_change events
 
   move_filter_deinit_event(event_list,new_tc,event,fps,TRUE);
 

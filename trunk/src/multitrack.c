@@ -2543,16 +2543,20 @@ boolean track_arrow_pressed (LiVESWidget *ebox, LiVESXEventButton *event, livesp
 
 void multitrack_view_clips (LiVESMenuItem *menuitem, livespointer user_data) {
   lives_mt *mt=(lives_mt *)user_data;
-  polymorph (mt,POLY_CLIPS);
+  polymorph(mt,POLY_CLIPS);
 }
 
 
 void multitrack_view_in_out (LiVESMenuItem *menuitem, livespointer user_data) {
   lives_mt *mt=(lives_mt *)user_data;
   if (mt->block_selected==NULL) return;
-  if (!nb_ignore) polymorph (mt,POLY_IN_OUT);
+  if (!nb_ignore) {
+    // workaround for...you guessed it....the wonderful gtk+
+    polymorph(mt,POLY_IN_OUT);
+    polymorph(mt,POLY_CLIPS);
+    polymorph(mt,POLY_IN_OUT);
+  }
 }
-
 
 static void time_to_string (lives_mt *mt, double secs, int length) {
   int hours,mins,rest;
@@ -3886,12 +3890,18 @@ void mt_center_on_cursor (LiVESMenuItem *menuitem, livespointer user_data) {
 void mt_zoom_in (LiVESMenuItem *menuitem, livespointer user_data) {
   lives_mt *mt=(lives_mt *)user_data;
   mt_zoom(mt,-0.5);
+  if (mainw->playing_file>-1&&mt->opts.follow_playback) {
+    mt_zoom(mt,1.);
+  }
   paint_lines(mt,mt->ptr_time,TRUE);
 }
 
 void mt_zoom_out (LiVESMenuItem *menuitem, livespointer user_data) {
   lives_mt *mt=(lives_mt *)user_data;
   mt_zoom(mt,-2.);
+  if (mainw->playing_file>-1&&mt->opts.follow_playback) {
+    mt_zoom(mt,1.);
+  }
   paint_lines(mt,mt->ptr_time,TRUE);
 }
 
@@ -5896,7 +5906,7 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
     mt->opts.show_audio=TRUE;
     mt->opts.show_ctx=TRUE;
     mt->opts.ign_ins_sel=FALSE;
-    mt->opts.follow_playback=FALSE;
+    mt->opts.follow_playback=TRUE;
     mt->opts.grav_mode=GRAV_MODE_NORMAL;
     mt->opts.insert_mode=INSERT_MODE_NORMAL;
     mt->opts.autocross_audio=TRUE;
@@ -8591,7 +8601,7 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
  
   dpw=widget_opts.packing_width;
   widget_opts.packing_width=0;
-  mt->spinbutton_in = lives_standard_spin_button_new (NULL,FALSE,0.,0.,0.,1./mt->fps,1.,2,
+  mt->spinbutton_in = lives_standard_spin_button_new (NULL,FALSE,0.,0.,1000000.,1./mt->fps,1.,2,
 						      LIVES_BOX(mt->in_hbox),NULL);
   widget_opts.packing_width=dpw;
 
@@ -8610,11 +8620,6 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
   mt->check_start_func=lives_signal_connect_after (LIVES_GUI_OBJECT (mt->checkbutton_start_anchored), LIVES_WIDGET_TOGGLED_SIGNAL,
 					    LIVES_GUI_CALLBACK (in_anchor_toggled),
 					    mt);
-
-
-  mt->start_in_label=lives_standard_label_new(_("Start frame"));
-  lives_box_pack_start (LIVES_BOX (mt->in_hbox), mt->start_in_label, FALSE, FALSE, widget_opts.packing_width);
-
 
 
 
@@ -8660,7 +8665,7 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
 
   dpw=widget_opts.packing_width;
   widget_opts.packing_width=0;
-  mt->spinbutton_out = lives_standard_spin_button_new (NULL,FALSE,0.,0.,0.,1./mt->fps,1.,2,
+  mt->spinbutton_out = lives_standard_spin_button_new (NULL,FALSE,0.,0.,1000000.,1./mt->fps,1.,2,
 						       LIVES_BOX(mt->out_hbox),NULL);
   widget_opts.packing_width=dpw;
 
@@ -8677,8 +8682,6 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
 					     LIVES_GUI_CALLBACK (out_anchor_toggled),
 					     mt);
 
-  mt->end_out_label=lives_standard_label_new(_("End frame"));
-  lives_box_pack_start (LIVES_BOX (mt->out_hbox), mt->end_out_label, FALSE, FALSE, widget_opts.packing_width);
 
   lives_signal_handler_block (mt->spinbutton_in,mt->spin_in_func);
   lives_signal_handler_block (mt->spinbutton_out,mt->spin_out_func);
@@ -11413,6 +11416,7 @@ static track_rect *move_block (lives_mt *mt, track_rect *block, double timesecs,
   mt_tl_move(mt,timesecs);
 
   if (new_track!=-1) insert_here_cb(NULL,(livespointer)mt);
+
   else {
     insert_audio_here_cb(NULL,(livespointer)mt);
     mt->insert_avel=1.;
@@ -11484,6 +11488,9 @@ static track_rect *move_block (lives_mt *mt, track_rect *block, double timesecs,
   // get this again because it could have moved
   block = (track_rect *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(eventbox),"block_last");
 
+  // apply autotransition
+  if (prefs->atrans_fx!=-1) mt_do_autotransition(mt, block);
+
   if (!did_backup) {
     if (mt->avol_fx!=-1&&(block==NULL||block->next==NULL)&&mt->audio_draws!=NULL&&
 	mt->audio_draws->data!=NULL&&get_first_event(mt->event_list)!=NULL) {
@@ -11546,7 +11553,7 @@ void unselect_all (lives_mt *mt) {
   lives_widget_set_sensitive (mt->fx_block, FALSE);
   lives_widget_set_sensitive (mt->fx_blocka, FALSE);
   lives_widget_set_sensitive (mt->fx_blockv, FALSE);
-  if (!nb_ignore&&mt->poly_state!=POLY_FX_STACK) polymorph (mt,POLY_CLIPS);
+  if (!nb_ignore&&mt->poly_state!=POLY_FX_STACK) polymorph(mt,POLY_CLIPS);
 }
 
 
@@ -12587,7 +12594,9 @@ void polymorph (lives_mt *mt, lives_mt_poly_state_t poly) {
 
   register int i,j;
 
-  if (poly==mt->poly_state&&poly!=POLY_PARAMS&&poly!=POLY_FX_STACK) return;
+  if (poly==mt->poly_state&&poly!=POLY_PARAMS&&poly!=POLY_FX_STACK) {
+    return;
+  }
 
   if (lives_widget_get_allocation_width(mt->poly_box)>1&&lives_widget_get_allocation_height(mt->poly_box)>1) {
     calc_maxspect(lives_widget_get_allocation_width(mt->poly_box)/2-widget_opts.packing_width,
@@ -12761,8 +12770,6 @@ void polymorph (lives_mt *mt, lives_mt_poly_state_t poly) {
 				  mainw->files[filenum]->frames,1.,100.);
       lives_spin_button_configure(LIVES_SPIN_BUTTON(mt->spinbutton_out),mainw->files[filenum]->end,1.,
 				  mainw->files[filenum]->frames,1.,100.);
-      lives_widget_show(mt->start_in_label);
-      lives_widget_show(mt->end_out_label);
     }
     else {
       lives_widget_show(mt->checkbutton_start_anchored);
@@ -12771,8 +12778,6 @@ void polymorph (lives_mt *mt, lives_mt_poly_state_t poly) {
       lives_spin_button_set_digits(LIVES_SPIN_BUTTON(mt->spinbutton_out),2);
       lives_spin_button_configure(LIVES_SPIN_BUTTON(mt->spinbutton_in),0.,0.,0.,1./mt->fps,1.);
       lives_spin_button_configure(LIVES_SPIN_BUTTON(mt->spinbutton_out),0.,0.,0.,1./mt->fps,1.);
-      lives_widget_hide(mt->start_in_label);
-      lives_widget_hide(mt->end_out_label);
     }
 
     if (avel>0.) {
@@ -16384,11 +16389,28 @@ void update_filter_events(lives_mt *mt, weed_plant_t *first_event, weed_timecode
 	    // move the init_event to the right until we find frames from all tracks. If we pass the deinit_event then
 	    // the effect is removed.
 	    // Effects with one in_track which is other, or effects with >2 in tracks, do not suffer this fate.
-	    if (!move_event_right(mt->event_list,event,TRUE,mt->fps)) {
-	      // moved event right until it hits a frame from all tracks, if it passed the deinit_event it is removed
-	      // param_change events are also scaled in time
-	      was_moved=TRUE;
-	      if (event==first_event) first_event=NULL;
+
+	    if (nins==2) {
+	      // remove any transition effects which start and end in this block
+	      // because we will add autotransition
+	      deinit_event=(weed_plant_t *)weed_get_voidptr_value(event,"deinit_event",&error);
+	      g_print("cf %ld and %ld\n",get_event_timecode(deinit_event),end_tc);
+
+	      if (get_event_timecode(deinit_event)<=end_tc) {
+
+		g_print("remove event %p\n",event);
+		remove_filter_from_event_list(mt->event_list,event);
+		was_moved=TRUE;
+	      }
+	    }
+
+	    if (!was_moved) {
+	      if (!move_event_right(mt->event_list,event,TRUE,mt->fps)) {
+		// moved event right until it hits a frame from all tracks, if it passed the deinit_event it is removed
+		// param_change events are also scaled in time
+		was_moved=TRUE;
+		if (event==first_event) first_event=NULL;
+	      }
 	    }
 	  }
 	  lives_free(in_tracks);
@@ -17244,7 +17266,7 @@ void multitrack_play_sel (LiVESMenuItem *menuitem, livespointer user_data) {
 void multitrack_adj_start_end (LiVESMenuItem *menuitem, livespointer user_data) {
   lives_mt *mt=(lives_mt *)user_data;
   unselect_all(mt);
-  polymorph (mt,POLY_IN_OUT);
+  polymorph(mt,POLY_IN_OUT);
 }
 
 
@@ -17352,7 +17374,7 @@ boolean multitrack_insert (LiVESMenuItem *menuitem, livespointer user_data) {
   // get this again because it could have moved
   block=(track_rect *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(eventbox),"block_last");
 
-  if (prefs->atrans_fx!=-1) mt_do_autotransition(mt, block);
+  if (!mt->moving_block&&prefs->atrans_fx!=-1) mt_do_autotransition(mt, block);
 
   mt->did_backup=did_backup;
 

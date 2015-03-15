@@ -692,7 +692,7 @@ void load_framedraw_image(LiVESPixbuf *pixbuf) {
     lives_object_unref(pixbuf);
     mainw->do_not_free=NULL;
     mainw->free_fn=_lives_free_normal;
-    if (needs_unlock) pthread_mutex_lock(&mainw->free_fn_mutex);
+    if (needs_unlock) pthread_mutex_unlock(&mainw->free_fn_mutex);
 
   }
 
@@ -759,7 +759,7 @@ void redraw_framedraw_image(void) {
   lives_object_unref(pixbuf);
   mainw->do_not_free=NULL;
   mainw->free_fn=_lives_free_normal;
-  if (needs_unlock) pthread_mutex_lock(&mainw->free_fn_mutex);
+  if (needs_unlock) pthread_mutex_unlock(&mainw->free_fn_mutex);
 
 
 }

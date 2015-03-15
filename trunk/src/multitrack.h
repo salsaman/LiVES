@@ -331,8 +331,6 @@ struct _mt {
   LiVESWidget *amixer_button;
   LiVESWidget *view_sel_events;
   LiVESWidget *adjust_start_end;
-  LiVESWidget *start_in_label;
-  LiVESWidget *end_out_label;
   LiVESWidget *context_frame;
   LiVESWidget *nb;
   LiVESWidget *nb_label;

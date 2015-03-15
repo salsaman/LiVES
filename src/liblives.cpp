@@ -1899,9 +1899,6 @@ void binding_cb (lives_callback_t cb_type, const char *msgstring, ulong id) {
       if (!ret) {
 	delete *it;
 	it = cl.erase(it);
-
-	// for some really bizarre reason cl is only a reference to m_closures and we have to write it back
-	// even though closures() is supposed to be "pass-by-value"...
 	lapp->setClosures(cl);
 	continue;
       }

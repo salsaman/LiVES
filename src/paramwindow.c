@@ -743,6 +743,8 @@ void on_fx_pre_activate (lives_rfx_t *rfx, int didx, LiVESWidget *pbox) {
 
   boolean has_param;
 
+  int scrw,scrh;
+
   if (didx==0&&!check_storage_space((mainw->current_file>-1)?cfile:NULL,FALSE)) return;
 
   // TODO - remove this and check in rfx / realfx activate
@@ -836,9 +838,24 @@ void on_fx_pre_activate (lives_rfx_t *rfx, int didx, LiVESWidget *pbox) {
 
 
   if (pbox==NULL) {
+
+    if (prefs->gui_monitor!=0) {
+      scrw=mainw->mgeom[prefs->gui_monitor-1].width;
+      scrh=mainw->mgeom[prefs->gui_monitor-1].height;
+    }
+    else {
+      scrw=mainw->scr_width;
+      scrh=mainw->scr_height;
+    }
+
+    scrh-=SCR_HEIGHT_SAFETY;
+    scrw-=SCR_WIDTH_SAFETY;
+
+    if (rfx->status==RFX_STATUS_WEED||no_process||(rfx->num_in_channels==0&&rfx->props&RFX_PROPS_BATCHG)) scrw=RFX_WINSIZE_H;
+
     txt=lives_strdup_printf ("LiVES: - %s",_(rfx->menu_text));
     widget_opts.non_modal=TRUE;
-    fx_dialog[didx] = lives_standard_dialog_new (txt,FALSE);
+    fx_dialog[didx] = lives_standard_dialog_new (txt,FALSE,scrw,RFX_WINSIZE_V);
     widget_opts.non_modal=FALSE;
     lives_free (txt);
   }
@@ -871,9 +888,8 @@ void on_fx_pre_activate (lives_rfx_t *rfx, int didx, LiVESWidget *pbox) {
     lives_widget_set_hexpand(hbox,TRUE);
     lives_widget_set_vexpand(hbox,TRUE);
 
-
     pbox = lives_vbox_new (FALSE, 0);
-    lives_box_pack_start (LIVES_BOX (hbox), pbox, FALSE, FALSE, 0);
+    lives_box_pack_start (LIVES_BOX (hbox), pbox, TRUE, TRUE, 0);
 
     lives_widget_set_hexpand(pbox,TRUE);
     lives_widget_set_vexpand(pbox,TRUE);

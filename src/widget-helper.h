@@ -714,7 +714,7 @@ LiVESWidget *lives_standard_combo_new (const char *labeltext, boolean use_mnemon
 LiVESWidget *lives_standard_entry_new(const char *labeltext, boolean use_mnemonic, const char *txt, int dispwidth, int maxchars, LiVESBox *, 
 				      const char *tooltip);
 
-LiVESWidget *lives_standard_dialog_new(const char *title, boolean add_std_buttons);
+LiVESWidget *lives_standard_dialog_new(const char *title, boolean add_std_buttons, int width, int height);
 
 LiVESWidget *lives_standard_hruler_new(void);
 

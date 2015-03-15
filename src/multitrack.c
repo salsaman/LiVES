@@ -1,6 +1,6 @@
 // multitrack.c
 // LiVES
-// (c) G. Finch 2005 - 2014 <salsaman@gmail.com>
+// (c) G. Finch 2005 - 2015 <salsaman@gmail.com>
 // released under the GNU GPL 3 or later
 // see file ../COPYING for licensing details
 
@@ -9101,7 +9101,7 @@ static double *update_layout_map_audio(weed_plant_t *event_list) {
 
   while (event!=NULL) {
     if (WEED_EVENT_IS_FRAME(event)) {
-      if (weed_plant_has_leaf(event,"audio_clips")) {
+      if (WEED_EVENT_IS_AUDIO_FRAME(event)) {
 	int numatracks=weed_leaf_num_elements(event,"audio_clips");
 	int i,error;
 	int *aclip_index=weed_get_int_array(event,"audio_clips",&error);
@@ -9940,7 +9940,7 @@ void mt_init_tracks (lives_mt *mt, boolean set_min_max) {
 	lives_free(new_frame_index);
 
 
-	if (weed_plant_has_leaf(event,"audio_clips")) {
+	if (WEED_EVENT_IS_AUDIO_FRAME(event)) {
 	  // audio starts or stops here
 	  num_aclips=weed_leaf_num_elements(event,"audio_clips");
 	  aclips=weed_get_int_array(event,"audio_clips",&error);
@@ -14829,7 +14829,7 @@ static void insgap_inner (lives_mt *mt, int tnum, boolean is_sel, int passnm) {
 
 	}
 
-	if (weed_plant_has_leaf(event,"audio_clips")) {
+	if (WEED_EVENT_IS_AUDIO_FRAME(event)) {
 	  if ((new_event=get_frame_event_at(mt->event_list,new_tc,event,TRUE))==NULL) {
 	    last_frame_event=get_last_frame_event(mt->event_list);
 	    mt->event_list=add_blank_frames_up_to(mt->event_list,last_frame_event,q_gint64(new_tc,mt->fps),mt->fps);
@@ -14994,7 +14994,6 @@ void on_insgap_sel_activate (LiVESMenuItem     *menuitem,
   LiVESList *slist=mt->selected_tracks;
   int track;
   boolean did_backup=mt->did_backup;
-  char *msg;
 
   if (!did_backup&&mt->idlefunc>0) {
     lives_source_remove(mt->idlefunc);
@@ -15015,10 +15014,8 @@ void on_insgap_sel_activate (LiVESMenuItem     *menuitem,
 
   mt->did_backup=did_backup;
   mt_show_current_frame(mt, FALSE);
-  msg=lives_strdup_printf(_("Inserted gap in selected tracks from time %.4f to %.4f\n"),mt->region_start,mt->region_end);
 
-  d_print(msg);
-  lives_free(msg);
+  d_print(_("Inserted gap in selected tracks from time %.4f to %.4f\n"),mt->region_start,mt->region_end);
 
   if (!did_backup) mt->idlefunc=mt_idle_add(mt);
 
@@ -15030,7 +15027,7 @@ void on_insgap_cur_activate (LiVESMenuItem     *menuitem,
 			     livespointer         user_data) {
   lives_mt *mt=(lives_mt *)user_data;
   boolean did_backup=mt->did_backup;
-  char *msg,*tname;
+  char *tname;
 
   if (!did_backup&&mt->idlefunc>0) {
     lives_source_remove(mt->idlefunc);
@@ -15049,11 +15046,8 @@ void on_insgap_cur_activate (LiVESMenuItem     *menuitem,
   mt_show_current_frame(mt, FALSE);
 
   tname=get_track_name(mt,mt->current_track,FALSE);
-  msg=lives_strdup_printf(_("Inserted gap in track %s from time %.4f to %.4f\n"),tname,mt->region_start,mt->region_end);
+  d_print(_("Inserted gap in track %s from time %.4f to %.4f\n"),tname,mt->region_start,mt->region_end);
   lives_free(tname);
-
-  d_print(msg);
-  lives_free(msg);
 
   if (!did_backup) mt->idlefunc=mt_idle_add(mt);
 
@@ -15075,7 +15069,7 @@ void multitrack_undo (LiVESMenuItem *menuitem, livespointer user_data) {
   int num_tracks;
   boolean block_is_selected=FALSE;
   boolean avoid_fx_list=FALSE;
-  char *msg,*utxt,*tmp;
+  char *utxt,*tmp;
   char *txt;
 
   double end_secs;
@@ -15249,10 +15243,8 @@ void multitrack_undo (LiVESMenuItem *menuitem, livespointer user_data) {
   utxt=lives_utf8_strdown((tmp=get_undo_text(last_undo->action,last_undo->extra)),-1);
   lives_free(tmp);
 
-  msg=lives_strdup_printf(_("Undid %s\n"),utxt);
-  d_print(msg);
+  d_print(_("Undid %s\n"),utxt);
   lives_free(utxt);
-  lives_free(msg);
 
   if (last_undo->action<=1024&&block_is_selected) mt_selblock(NULL, (livespointer)mt);
 
@@ -15291,7 +15283,7 @@ void multitrack_redo (LiVESMenuItem *menuitem, livespointer user_data) {
   unsigned char *memblock,*mem_end;
 
   char *txt;
-  char *msg,*utxt,*tmp;
+  char *utxt,*tmp;
 
   double ptr_time;
   double end_secs;
@@ -15453,10 +15445,8 @@ void multitrack_redo (LiVESMenuItem *menuitem, livespointer user_data) {
   utxt=lives_utf8_strdown((tmp=get_undo_text(last_redo->action,last_redo->extra)),-1);
   lives_free(tmp);
 
-  msg=lives_strdup_printf(_("Redid %s\n"),utxt);
-  d_print(msg);
+  d_print(_("Redid %s\n"),utxt);
   lives_free(utxt);
-  lives_free(msg);
 
   mt_desensitise(mt);
   mt_sensitise(mt);
@@ -15676,7 +15666,7 @@ void mt_add_region_effect (LiVESMenuItem *menuitem, livespointer user_data) {
   weed_timecode_t last_frame_tc=0;
 
   char *filter_name;
-  char *text,*tname,*track_desc;
+  char *tname,*track_desc;
   char *tmp,*tmp1;
 
   int numtracks=lives_list_length(mt->selected_tracks);
@@ -15734,9 +15724,9 @@ void mt_add_region_effect (LiVESMenuItem *menuitem, livespointer user_data) {
     track_desc=lives_strdup(_("selected tracks"));
     break;
   }  lives_free(tracks);
-  text=lives_strdup_printf(_("Added %s %s to %s from %.4f to %.4f\n"),tname,filter_name,track_desc,start_tc/U_SEC,q_gint64(end_tc+U_SEC/mt->fps,mt->fps)/U_SEC);
-  d_print(text);
-  lives_free(text);
+
+  d_print(_("Added %s %s to %s from %.4f to %.4f\n"),tname,filter_name,track_desc,start_tc/U_SEC,q_gint64(end_tc+U_SEC/mt->fps,mt->fps)/U_SEC);
+
   lives_free(filter_name);
   lives_free(tname);
   lives_free(track_desc);
@@ -15756,7 +15746,6 @@ void mt_add_block_effect (LiVESMenuItem *menuitem, livespointer user_data) {
   weed_timecode_t start_tc=get_event_timecode(start_event);
   weed_timecode_t end_tc=get_event_timecode(end_event);
   char *filter_name;
-  char *text;
   int selected_track;
   char *tmp;
 
@@ -15768,12 +15757,12 @@ void mt_add_block_effect (LiVESMenuItem *menuitem, livespointer user_data) {
   add_effect_inner(mt,1,&selected_track,1,&selected_track,start_event,end_event);
 
   filter_name=weed_filter_idx_get_name(mt->current_fx);
-  text=lives_strdup_printf(_("Added effect %s to track %s from %.4f to %.4f\n"),filter_name,
-		       (tmp=get_track_name(mt,selected_track,mt->aud_track_selected)),
-		       start_tc/U_SEC,q_gint64(end_tc+U_SEC/mt->fps,mt->fps)/U_SEC);
+
+  d_print(_("Added effect %s to track %s from %.4f to %.4f\n"),filter_name,
+	  (tmp=get_track_name(mt,selected_track,mt->aud_track_selected)),
+	  start_tc/U_SEC,q_gint64(end_tc+U_SEC/mt->fps,mt->fps)/U_SEC);
+
   lives_free(tmp);
-  d_print(text);
-  lives_free(text);
   lives_free(filter_name);
 }
   
@@ -15799,7 +15788,7 @@ void on_mt_delfx_activate (LiVESMenuItem *menuitem, livespointer user_data) {
 
   int *tracks;
 
-  char *fhash,*filter_name,*text;
+  char *fhash,*filter_name;
   char *tname,*track_desc;
   char *tmp,*tmp1;
 
@@ -15849,16 +15838,13 @@ void on_mt_delfx_activate (LiVESMenuItem *menuitem, livespointer user_data) {
 
   lives_free(tracks);
 
-  text=lives_strdup_printf(_("Deleted %s %s from %s from %.4f to %.4f\n"),tname,filter_name,track_desc,start_tc/U_SEC,end_tc/U_SEC);
-  lives_free(filter_name); lives_free(track_desc);
-
   if (!did_backup) mt_backup(mt,MT_UNDO_DELETE_FILTER,0);
 
   remove_filter_from_event_list(mt->event_list,mt->selected_init_event);
   remove_end_blank_frames(mt->event_list,TRUE);
 
-  d_print(text);
-  lives_free(text);
+  d_print(_("Deleted %s %s from %s from %.4f to %.4f\n"),tname,filter_name,track_desc,start_tc/U_SEC,end_tc/U_SEC);
+  lives_free(filter_name); lives_free(track_desc);
   
   mt->selected_init_event=NULL;
   mt->current_fx=-1;
@@ -15991,18 +15977,22 @@ void on_cback_audio_activate (LiVESMenuItem *menuitem, livespointer user_data) {
 void on_render_activate (LiVESMenuItem *menuitem, livespointer user_data) {
   lives_mt *mt=(lives_mt *)user_data;
 
+  char *com;
+
+  boolean had_audio=FALSE;
+  boolean post_reset_ba=FALSE;
+  boolean post_reset_ca=FALSE;
+
   // save these values, because reget_afilesize() can reset them
   int arate=cfile->arate;
   int arps=cfile->arps;
   int asampsize=cfile->asampsize;
   int achans=cfile->achans;
   int signed_endian=cfile->signed_endian;
+
   int orig_file;
-  int i;
-  char *com,*tmp;
-  boolean had_audio=FALSE;
-  boolean post_reset_ba=FALSE;
-  boolean post_reset_ca=FALSE;
+  register int i;
+
 
   if (mt->idlefunc>0) {
     lives_source_remove(mt->idlefunc);
@@ -16156,8 +16146,7 @@ void on_render_activate (LiVESMenuItem *menuitem, livespointer user_data) {
     cfile->changed=TRUE;
     add_to_clipmenu();
     mt->file_selected=orig_file=mainw->current_file;
-    d_print ((tmp=lives_strdup_printf (_ ("rendered %d frames to new clip.\n"),cfile->frames)));
-    lives_free(tmp);
+    d_print (_ ("rendered %d frames to new clip.\n"),cfile->frames);
     if (mainw->scrap_file!=-1||mainw->ascrap_file!=-1) mt->changed=FALSE;
     mt->is_rendering=FALSE;
     prefs->render_audio=TRUE;
@@ -16394,11 +16383,7 @@ void update_filter_events(lives_mt *mt, weed_plant_t *first_event, weed_timecode
 	      // remove any transition effects which start and end in this block
 	      // because we will add autotransition
 	      deinit_event=(weed_plant_t *)weed_get_voidptr_value(event,"deinit_event",&error);
-	      g_print("cf %ld and %ld\n",get_event_timecode(deinit_event),end_tc);
-
 	      if (get_event_timecode(deinit_event)<=end_tc) {
-
-		g_print("remove event %p\n",event);
 		remove_filter_from_event_list(mt->event_list,event);
 		was_moved=TRUE;
 	      }
@@ -17411,13 +17396,20 @@ boolean multitrack_insert (LiVESMenuItem *menuitem, livespointer user_data) {
 boolean multitrack_audio_insert (LiVESMenuItem *menuitem, livespointer user_data) {
   lives_mt *mt=(lives_mt *)user_data;
   lives_clip_t *sfile=mainw->files[mt->file_selected];
+
   double secs=mt->ptr_time;
+
   LiVESWidget *eventbox=(LiVESWidget *)mt->audio_draws->data;
+
   weed_timecode_t ins_start=q_gint64((sfile->start-1.)/sfile->fps*U_SEC,mt->fps);
   weed_timecode_t ins_end=q_gint64((double)sfile->end/sfile->fps*U_SEC,mt->fps);
+
   boolean did_backup=mt->did_backup;
+
   track_rect *block;
-  char *text,*tmp;
+
+  char *tmp;
+
   lives_direction_t dir;
 
   if (mt->current_track!=-1||sfile->achans==0) return FALSE;
@@ -17514,11 +17506,10 @@ boolean multitrack_audio_insert (LiVESMenuItem *menuitem, livespointer user_data
 
   mt->did_backup=did_backup;
   
-  text=lives_strdup_printf(_("Inserted audio %.4f to %.4f from clip %s into backing audio from time %.4f to %.4f\n"),
+  d_print(_("Inserted audio %.4f to %.4f from clip %s into backing audio from time %.4f to %.4f\n"),
 		       ins_start/U_SEC,ins_end/U_SEC,(tmp=lives_path_get_basename(sfile->name)),secs,secs+(ins_end-ins_start)/U_SEC);
-  d_print(text);
   lives_free(tmp);
-  lives_free(text);
+
 
   if (!resize_timeline(mt)&&!did_backup) {
     lives_painter_surface_t *bgimage=(lives_painter_surface_t *)lives_widget_object_get_data (LIVES_WIDGET_OBJECT(eventbox), "bgimg");
@@ -17594,8 +17585,6 @@ void insert_frames (int filenum, weed_timecode_t offset_start, weed_timecode_t o
 
   double aseek;
   double end_secs;
-
-  char *text;
 
   boolean isfirst=TRUE;
 
@@ -17786,14 +17775,13 @@ void insert_frames (int filenum, weed_timecode_t offset_start, weed_timecode_t o
 
   if (in_block==NULL) {
     char *tmp,*tmp1;
-    text=lives_strdup_printf(_("Inserted frames %d to %d from clip %s into track %s from time %.4f to %.4f\n"),
+    d_print(_("Inserted frames %d to %d from clip %s into track %s from time %.4f to %.4f\n"),
 			 sfile->start,sfile->end,(tmp1=lives_path_get_basename(sfile->name)),
 			 (tmp=get_track_name(mt,mt->current_track,FALSE)),
 			 (orig_st+start_tc)/U_SEC,(orig_end+start_tc)/U_SEC);
     lives_free(tmp);
     lives_free(tmp1);
-    d_print(text);
-    lives_free(text);
+
   }
 
   end_secs=event_list_get_end_secs(mt->event_list);
@@ -18875,14 +18863,24 @@ void on_prev_node_clicked  (LiVESWidget *button, livespointer user_data) {
 
 void on_del_node_clicked  (LiVESWidget *button, livespointer user_data) {
   lives_mt *mt=(lives_mt *)user_data;
-  int i,error;
-  weed_plant_t *event;
-  weed_timecode_t ev_tc;
-  weed_timecode_t tc=q_gint64(lives_spin_button_get_value(LIVES_SPIN_BUTTON(mt->node_spinbutton))*U_SEC+get_event_timecode(mt->init_event),mt->fps);
-  weed_plant_t *prev_pchange,*next_pchange;
-  char *filter_name,*text;
-  int num_params=num_in_params((weed_plant_t *)mt->current_rfx->source,FALSE,FALSE);
+
+  int error;
+
   weed_plant_t **in_params=weed_get_plantptr_array((weed_plant_t *)mt->current_rfx->source,"in_parameters",&error);
+
+  weed_plant_t *event;
+  weed_plant_t *prev_pchange,*next_pchange;
+
+  weed_timecode_t ev_tc;
+  weed_timecode_t tc=q_gint64(lives_spin_button_get_value(LIVES_SPIN_BUTTON(mt->node_spinbutton))*U_SEC+
+			      get_event_timecode(mt->init_event),mt->fps);
+
+  char *filter_name;
+
+  int num_params=num_in_params((weed_plant_t *)mt->current_rfx->source,FALSE,FALSE);
+
+  register int i;
+
 
   for (i=0;i<num_params;i++) {
     event=(weed_plant_t *)pchain[i];
@@ -18924,9 +18922,7 @@ void on_del_node_clicked  (LiVESWidget *button, livespointer user_data) {
 
   filter_name=weed_filter_idx_get_name(mt->current_fx);
 
-  text=lives_strdup_printf(_("Removed parameter values for effect %s at time %.4f\n"),filter_name,tc);
-  d_print(text);
-  lives_free(text);
+  d_print(_("Removed parameter values for effect %s at time %.4f\n"),filter_name,tc);
   lives_free(filter_name);
   mt->block_tl_move=TRUE;
   on_node_spin_value_changed(LIVES_SPIN_BUTTON(mt->node_spinbutton),(livespointer)mt);
@@ -19040,18 +19036,27 @@ void activate_mt_preview(lives_mt *mt) {
 
 void on_set_pvals_clicked  (LiVESWidget *button, livespointer user_data) {
   lives_mt *mt=(lives_mt *)user_data;
+
   weed_plant_t *inst=(weed_plant_t *)mt->current_rfx->source;
   weed_plant_t *param,*pchange,*at_event;
-  char *filter_name,*text;
-  char *tname,*track_desc;
-  int i,error;
-  weed_timecode_t tc=q_gint64(lives_spin_button_get_value(LIVES_SPIN_BUTTON(mt->node_spinbutton))*U_SEC+get_event_timecode(mt->init_event),mt->fps);
-  int numtracks;
+
+  int error;
+
+  weed_timecode_t tc=q_gint64(lives_spin_button_get_value(LIVES_SPIN_BUTTON(mt->node_spinbutton))*U_SEC+
+			      get_event_timecode(mt->init_event),mt->fps);
+
   int *tracks;
   int *ign;
+
+  char *tmp,*tmp2;
+  char *filter_name;
+  char *tname,*track_desc;
+
   boolean has_multi=FALSE;
   boolean was_changed=FALSE;
-  char *tmp,*tmp2;
+
+  int numtracks;
+  register int i;
 
   if (mt->idlefunc>0) {
     lives_source_remove(mt->idlefunc);
@@ -19132,9 +19137,8 @@ void on_set_pvals_clicked  (LiVESWidget *button, livespointer user_data) {
     lives_free(tname);
     tname=lives_strdup(_("audio"));
   }
-  text=lives_strdup_printf(_("Set parameter values for %s %s on %s at time %.4f\n"),tname,filter_name,track_desc,tc/U_SEC);
-  d_print(text);
-  lives_free(text);
+
+  d_print(_("Set parameter values for %s %s on %s at time %.4f\n"),tname,filter_name,track_desc,tc/U_SEC);
   lives_free(filter_name);
   lives_free(tname);
   lives_free(track_desc);
@@ -19543,26 +19547,33 @@ void on_save_event_list_activate (LiVESMenuItem *menuitem, livespointer user_dat
 
   // loading an event list is simply the reverse of this process
 
-  int fd;
   lives_mt *mt=(lives_mt *)user_data;
-  char *esave_dir;
-  char *esave_file;
-  char *msg;
-  boolean response;
-  boolean retval=TRUE;
+
   char *filt[]={"*.lay",NULL};
-  boolean was_set=mainw->was_set;
-  char *com;
+
   int *layout_map;
-  int retval2;
+
   double *layout_map_audio;
+
   LiVESWidget *ar_checkbutton;
   LiVESWidget *hbox;
-  boolean orig_ar_layout=prefs->ar_layout,ar_layout;
+
   weed_plant_t *event_list;
+
   char *layout_name;
+  char *esave_dir;
+  char *esave_file;
+  char *com;
+
   char xlayout_name[PATH_MAX];
 
+  boolean orig_ar_layout=prefs->ar_layout,ar_layout;
+  boolean was_set=mainw->was_set;
+  boolean response;
+  boolean retval=TRUE;
+
+  int retval2;
+  int fd;
 
   if (mt==NULL) {
     event_list=mainw->stored_event_list;
@@ -19732,9 +19743,7 @@ void on_save_event_list_activate (LiVESMenuItem *menuitem, livespointer user_dat
 
   if (retval2!=LIVES_RESPONSE_CANCEL) {
     lives_snprintf(mainw->recent_file,PATH_MAX,"%s",xlayout_name);
-    msg=lives_strdup_printf(_("Saved layout to %s\n"),esave_file);
-    d_print(msg);
-    lives_free(msg);
+    d_print(_("Saved layout to %s\n"),esave_file);
   }
 
   // save layout map
@@ -20942,7 +20951,7 @@ boolean event_list_rectify(lives_mt *mt, weed_plant_t *event_list) {
 	lives_free(new_frame_index);
 	lives_free(frame_index);
 
-	if (weed_plant_has_leaf(event,"audio_clips")) {
+	if (WEED_EVENT_IS_AUDIO_FRAME(event)) {
 	  // check audio clips
 	  num_atracks=weed_leaf_num_elements (event,"audio_clips");
 	  if (num_atracks%2!=0) {
@@ -21331,11 +21340,9 @@ weed_plant_t *load_event_list(lives_mt *mt, char *eload_file) {
     mt_clear_timeline(mt);
   }
 
-  msg=lives_strdup_printf(_("Loading layout from %s..."),eload_name);
   mainw->no_switch_dprint=TRUE;
-  d_print(msg);
+  d_print(_("Loading layout from %s..."),eload_name);
   mainw->no_switch_dprint=FALSE;
-  lives_free(msg);
 
   mt_desensitise(mt);
 
@@ -21365,9 +21372,7 @@ weed_plant_t *load_event_list(lives_mt *mt, char *eload_file) {
 
   d_print_done();
 
-  msg=lives_strdup_printf(_("Got %d events...processing..."),num_events);
-  d_print(msg);
-  lives_free(msg);
+  d_print(_("Got %d events...processing..."),num_events);
 
   mt->auto_changed=mt->changed=mainw->recoverable_layout;
 
@@ -21404,9 +21409,7 @@ weed_plant_t *load_event_list(lives_mt *mt, char *eload_file) {
   }
 
   if (event_list!=NULL) {
-    msg=lives_strdup_printf(_("%d errors detected.\n"),elist_errors);
-    d_print(msg);
-    lives_free(msg);
+    d_print(_("%d errors detected.\n"),elist_errors);
     if (!mt->auto_reloading) {
       if (!mt->layout_prompt||do_mt_rect_prompt()) {
 

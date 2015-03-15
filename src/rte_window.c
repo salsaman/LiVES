@@ -469,15 +469,13 @@ static boolean on_save_keymap_clicked (LiVESButton *button, livespointer user_da
       lives_free(keymap_file);
       return FALSE;
     }
-    d_print ((tmp=lives_strdup_printf(_("Saving keymap to %s\n"),keymap_file)));
-    lives_free(tmp);
+    d_print (_("Saving keymap to %s\n"),keymap_file);
   }
   else {
     update=TRUE;
     list=(LiVESList *)user_data;
     if (list==NULL) return FALSE;
-    d_print ((tmp=lives_strdup_printf(_("\nUpdating keymap file %s..."),keymap_file)));
-    lives_free(tmp);
+    d_print (_("\nUpdating keymap file %s..."),keymap_file);
   }
 
   do {
@@ -550,10 +548,13 @@ static boolean on_save_keymap_clicked (LiVESButton *button, livespointer user_da
 
 
 void on_save_rte_defs_activate (LiVESMenuItem *menuitem, livespointer user_data) {
-  int fd,i;
+  char *msg;
+
+  int fd;
   int retval;
   int numfx;
-  char *msg;
+
+  register int i;
 
   if (prefs->fxdefsfile==NULL) {
     prefs->fxdefsfile=lives_build_filename(capable->home_dir,LIVES_CONFIG_DIR,"fxdefs",NULL);
@@ -563,9 +564,7 @@ void on_save_rte_defs_activate (LiVESMenuItem *menuitem, livespointer user_data)
     prefs->fxsizesfile=lives_build_filename(capable->home_dir,LIVES_CONFIG_DIR,"fxsizes",NULL);
   }
 
-  msg=lives_strdup_printf(_("Saving real time effect defaults to %s..."),prefs->fxdefsfile);
-  d_print(msg);
-  lives_free(msg);
+  d_print(_("Saving real time effect defaults to %s..."),prefs->fxdefsfile);
 
   numfx=rte_get_numfilters(FALSE);
 
@@ -647,11 +646,13 @@ void on_save_rte_defs_activate (LiVESMenuItem *menuitem, livespointer user_data)
 
 
 void load_rte_defs (void) {
+  ssize_t bytes;
+  void *buf;
+
+  char *msg;
+
   int fd;
   int retval;
-  char *msg,*msg2;
-  void *buf;
-  ssize_t bytes;
 
   if (prefs->fxdefsfile==NULL) {
     prefs->fxdefsfile=lives_build_filename(capable->home_dir,LIVES_CONFIG_DIR,"fxdefs",NULL);
@@ -669,9 +670,7 @@ void load_rte_defs (void) {
 	setmode(fd, O_BINARY);
 #endif
 	mainw->read_failed=FALSE;
-	msg2=lives_strdup_printf(_("Loading real time effect defaults from %s..."),prefs->fxdefsfile);
-	d_print(msg2);
-	lives_free(msg2);
+	d_print(_("Loading real time effect defaults from %s..."),prefs->fxdefsfile);
       
 	msg=lives_strdup("LiVES filter defaults file version 1.1\n");
 	buf=lives_malloc(strlen(msg));
@@ -718,9 +717,7 @@ void load_rte_defs (void) {
 #ifdef IS_MINGW
 	setmode(fd, O_BINARY);
 #endif
-	msg2=lives_strdup_printf(_("Loading generator default sizes from %s..."),prefs->fxsizesfile);
-	d_print(msg2);
-	lives_free(msg2);
+	d_print(_("Loading generator default sizes from %s..."),prefs->fxsizesfile);
 	
 	msg=lives_strdup("LiVES generator default sizes file version 2\n");
 	buf=lives_malloc(strlen(msg));
@@ -1343,9 +1340,7 @@ boolean on_load_keymap_clicked (LiVESButton *button, livespointer user_data) {
     keymap_file2=NULL;
   }
 
-  msg=lives_strdup_printf(_("Loading default keymap from %s..."),keymap_file);
-  d_print(msg);
-  lives_free(msg);
+  d_print(_("Loading default keymap from %s..."),keymap_file);
 
   do {
     retval=0;
@@ -1440,8 +1435,7 @@ boolean on_load_keymap_clicked (LiVESButton *button, livespointer user_data) {
       line=(char *)lives_list_nth_data(list,i);
     
       if (get_token_count(line,'|')<2) {
-	d_print((tmp=lives_strdup_printf(_("Invalid line %d in %s\n"),i,keymap_file)));
-	lives_free(tmp);
+	d_print(_("Invalid line %d in %s\n"),i,keymap_file);
 	continue;
       }
       
@@ -1640,9 +1634,7 @@ boolean on_load_keymap_clicked (LiVESButton *button, livespointer user_data) {
   if (update==0) {
     if (lives_file_test(keymap_file3,LIVES_FILE_TEST_EXISTS)) {
 
-      msg=lives_strdup_printf(_("Loading data connection map from %s..."),keymap_file3);
-      d_print(msg);
-      lives_free(msg);
+      d_print(_("Loading data connection map from %s..."),keymap_file3);
 
       if (load_datacons(keymap_file3,badkeymap)) d_print_done();
     }
@@ -2066,8 +2058,7 @@ void fx_changed (LiVESCombo *combo, livespointer user_data) {
 
     if (error==-2) do_mix_error();
     if (error==-1) {
-      d_print((tmp=lives_strdup_printf(_("LiVES could not locate the effect %s.\n"),rte_keymode_get_filter_name(key+1,mode))));
-      lives_free(tmp);
+      d_print(_("LiVES could not locate the effect %s.\n"),rte_keymode_get_filter_name(key+1,mode));
     }
     return;
   }
@@ -2312,7 +2303,7 @@ LiVESWidget * create_rte_window (void) {
     hbox2 = lives_hbox_new (FALSE, 0);
     lives_box_pack_start (LIVES_BOX (hbox), hbox2, FALSE, FALSE, widget_opts.packing_width);
 
-    key_grabs[i]=lives_standard_radio_button_new((tmp=lives_strdup(_ ("Key grab"))),FALSE,grab_group,LIVES_BOX(hbox2),
+    key_grabs[i]=lives_standard_radio_button_new((tmp=lives_strdup(_("Key grab"))),FALSE,grab_group,LIVES_BOX(hbox2),
 						 (tmp2=lives_strdup(_("Grab keyboard for this effect key"))));
     lives_free(tmp); lives_free(tmp2);
     grab_group = lives_radio_button_get_group (LIVES_RADIO_BUTTON (key_grabs[i]));
@@ -2337,7 +2328,7 @@ LiVESWidget * create_rte_window (void) {
       hbox2 = lives_hbox_new (FALSE, 0);
       lives_box_pack_start (LIVES_BOX (hbox), hbox2, FALSE, FALSE, widget_opts.packing_width);
       
-      mode_radios[idx]=lives_standard_radio_button_new(_ ("Mode active"),FALSE,mode_group,LIVES_BOX(hbox2),NULL);
+      mode_radios[idx]=lives_standard_radio_button_new(_("Mode active"),FALSE,mode_group,LIVES_BOX(hbox2),NULL);
       mode_group = lives_radio_button_get_group (LIVES_RADIO_BUTTON (mode_radios[idx]));
 
       if (rte_key_getmode(i+1)==j) lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(mode_radios[idx]),TRUE);

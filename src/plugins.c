@@ -85,7 +85,7 @@ static LiVESList *get_plugin_result (const char *command, const char *delim, boo
 	}
 	msg=lives_strdup_printf (_("\nPlugin error: %s failed with code %d"),command,error/256);
 	if (bytes) {
-	  msg2=lives_strconcat (msg,lives_strdup_printf (_ (" : message was %s\n"),buffer),NULL);
+	  msg2=lives_strconcat (msg,lives_strdup_printf (_(" : message was %s\n"),buffer),NULL);
 	  lives_snprintf(mainw->msg,512,"%s",buffer);
 	}
 	else {
@@ -438,21 +438,23 @@ void save_vpp_defaults(_vid_playback_plugin *vpp, char *vpp_file) {
 
 
 void load_vpp_defaults(_vid_playback_plugin *vpp, char *vpp_file) {
-  int fd;
   ssize_t len;
   const char *version;
+
   char buf[512];
-  int i;
-  int retval;
+
   char *msg;
+
+  int retval;
+  int fd;
+
+  register int i;
 
   if (!lives_file_test(vpp_file,LIVES_FILE_TEST_EXISTS)) {
     return;
   }
 
-  msg=lives_strdup_printf(_("Loading video playback plugin defaults from %s..."),vpp_file);
-  d_print(msg);
-  lives_free(msg);
+  d_print(_("Loading video playback plugin defaults from %s..."),vpp_file);
 
   do {
     retval=0;
@@ -592,7 +594,7 @@ void on_vppa_cancel_clicked (LiVESButton *button, livespointer user_data) {
   }
 
   if (vppw->rfx!=NULL) {
-    rfx_free(vppw->rfx);
+    //rfx_free(vppw->rfx); // **** TODO !!!!! FIXME
     lives_free(vppw->rfx);
   }
 
@@ -838,7 +840,6 @@ void on_vppa_save_clicked (LiVESButton *button, livespointer user_data) {
   _vppaw *vppw=(_vppaw *)user_data;
   _vid_playback_plugin *vpp=vppw->plugin;
   char *save_file;
-  char *msg;
 
   // apply
   mainw->error=FALSE;
@@ -853,9 +854,7 @@ void on_vppa_save_clicked (LiVESButton *button, livespointer user_data) {
   if (save_file==NULL) return;
 
   // save
-  msg=lives_strdup_printf(_("Saving playback plugin defaults to %s..."),save_file);
-  d_print(msg);
-  lives_free(msg);
+  d_print(_("Saving playback plugin defaults to %s..."),save_file);
   save_vpp_defaults(vpp, save_file);
   d_print_done();
   lives_free(save_file);
@@ -919,7 +918,7 @@ _vppaw *on_vpp_advanced_clicked (LiVESButton *button, livespointer user_data) {
 
   title=lives_strdup_printf("LiVES: - %s",pversion);
 
-  vppa->dialog = lives_standard_dialog_new (title,FALSE);
+  vppa->dialog = lives_standard_dialog_new (title,FALSE,DEF_DIALOG_WIDTH,DEF_DIALOG_HEIGHT);
   lives_free(title);
 
   accel_group = LIVES_ACCEL_GROUP(lives_accel_group_new ());
@@ -1463,12 +1462,11 @@ _vid_playback_plugin *open_vid_playback_plugin (const char *name, boolean in_use
   }
 
   cached_key=cached_mod=0;
-  msg=lives_strdup_printf(_("*** Using %s plugin for fs playback, agreed to use palette type %d ( %s ). ***\n"),name,
+
+  d_print(_("*** Using %s plugin for fs playback, agreed to use palette type %d ( %s ). ***\n"),name,
 		      vpp->palette,(tmp=weed_palette_get_name_full(vpp->palette,vpp->YUV_clamping,
 								   WEED_YUV_SUBSPACE_YCBCR)));
   lives_free(tmp);
-  d_print (msg);
-  lives_free (msg);
   lives_free(plugname);
 
   while (mainw->noswitch) {
@@ -1513,7 +1511,7 @@ int64_t get_best_audio(_vid_playback_plugin *vpp) {
   int ret=AUDIO_CODEC_NONE;
   int i,j=0,nfmts;
   size_t rlen;
-  char *astreamer,*com,*msg;
+  char *astreamer,*com;
   char buf[1024];
   char **array;
   FILE *rfile;
@@ -1569,17 +1567,13 @@ int64_t get_best_audio(_vid_playback_plugin *vpp) {
 	  if (i==0&&prefsw!=NULL) { 
 	    do_error_dialog_with_check_transient 
 	      (buf,TRUE,0,LIVES_WINDOW(prefsw->prefs_dialog));
-	    msg=lives_strdup_printf(_("Audio stream unable to use preferred format '%s'\n"),anames[fmts[i]]);
-	    d_print(msg);
-	    lives_free(msg);
+	    d_print(_("Audio stream unable to use preferred format '%s'\n"),anames[fmts[i]]);
 	  }
 	  continue;
 	}
 
 	if (i>0&&prefsw!=NULL) { 
-	  msg=lives_strdup_printf(_("Using format '%s' instead.\n"),anames[fmts[i]]);
-	  d_print(msg);
-	  lives_free(msg);
+	  d_print(_("Using format '%s' instead.\n"),anames[fmts[i]]);
 	}
 	ret=fmts[i];
 	break;
@@ -2030,7 +2024,7 @@ boolean check_encoder_restrictions (boolean get_extension, boolean user_audio, b
 	  height=oheight;
 	}
 	else {
-	  do_error_dialog (_ ("Unable to resize, please install imageMagick\n"));
+	  do_error_dialog (_("Unable to resize, please install imageMagick\n"));
 	  return FALSE;
 	}
       }
@@ -2352,7 +2346,6 @@ const lives_clip_data_t *get_decoder_cdata(int fileno, LiVESList *disabled, cons
   lives_clip_t *sfile=mainw->files[fileno];
 
   char decplugname[PATH_MAX];
-  char *msg;
 
   mainw->error=FALSE;
 
@@ -2413,9 +2406,7 @@ const lives_clip_data_t *get_decoder_cdata(int fileno, LiVESList *disabled, cons
   lives_set_cursor_style(LIVES_CURSOR_NORMAL,NULL);
 
   if (dplug!=NULL) {
-    msg=lives_strdup_printf(_(" using %s"),dplug->decoder->version());
-    d_print(msg);
-    lives_free(msg);
+    d_print(_(" using %s"),dplug->decoder->version());
     sfile->ext_src=dplug;
     return dplug->cdata;
   }
@@ -2497,9 +2488,7 @@ lives_decoder_sys_t *open_decoder_plugin(const char *plname) {
   lives_free (plugname);
 
   if (dplug->handle==NULL) {
-    char *msg=lives_strdup_printf (_("\n\nFailed to open decoder plugin %s\nError was %s\n"),plname,dlerror());
-    d_print(msg);
-    lives_free (msg);
+    d_print(_("\n\nFailed to open decoder plugin %s\nError was %s\n"),plname,dlerror());
     lives_free (dplug);
     return NULL;
   }
@@ -2520,9 +2509,7 @@ lives_decoder_sys_t *open_decoder_plugin(const char *plname) {
   }
 
   if (!OK) {
-    char *msg=lives_strdup_printf (_("\n\nDecoder plugin %s\nis missing a mandatory function.\nUnable to use it.\n"),plname);
-    d_print(msg);
-    lives_free (msg);
+    d_print(_("\n\nDecoder plugin %s\nis missing a mandatory function.\nUnable to use it.\n"),plname);
     unload_decoder_plugin(dplug);
     lives_free(dplug);
     return NULL;
@@ -2649,7 +2636,7 @@ void on_decplug_advanced_clicked (LiVESButton *button, livespointer user_data) {
 
   decoder_plugin=mainw->decoder_list;
 
-  dialog = lives_standard_dialog_new (_("LiVES: - Decoder Plugins"),FALSE);
+  dialog = lives_standard_dialog_new (_("LiVES: - Decoder Plugins"),FALSE,DEF_DIALOG_WIDTH,DEF_DIALOG_HEIGHT);
 
   if (prefs->show_gui) {
     if (prefsw!=NULL) lives_window_set_transient_for(LIVES_WINDOW(dialog),LIVES_WINDOW(prefsw->prefs_dialog));
@@ -2723,9 +2710,7 @@ void on_decplug_advanced_clicked (LiVESButton *button, livespointer user_data) {
 boolean check_rfx_for_lives (lives_rfx_t *rfx) {
   // check that an RFX is suitable for loading (cf. check_for_lives in effects-weed.c)
   if (rfx->num_in_channels==2&&rfx->props&RFX_PROPS_MAY_RESIZE) {
-    char *tmp;
-    d_print ((tmp=lives_strdup_printf (_ ("Failed to load %s, transitions may not resize.\n"),rfx->name)));
-    lives_free(tmp);
+    d_print(_("Failed to load %s, transitions may not resize.\n"),rfx->name);
     return FALSE;
   }
   return TRUE;
@@ -2894,8 +2879,8 @@ void render_fx_get_params (lives_rfx_t *rfx, const char *plugin_name, short stat
     }
     else if (cparam->type==LIVES_PARAM_STRING) {
       if (len<4) continue;
-      cparam->value=lives_strdup(_ (param_array[3]));
-      cparam->def=lives_strdup(_ (param_array[3]));
+      cparam->value=lives_strdup(_(param_array[3]));
+      cparam->def=lives_strdup(_(param_array[3]));
       if (len>4) cparam->max=(double)atoi (param_array[4]);
       if (cparam->max==0.||cparam->max>RFX_MAXSTRINGLEN) cparam->max=RFX_MAXSTRINGLEN;
     }

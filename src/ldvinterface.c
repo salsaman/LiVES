@@ -28,7 +28,7 @@ struct _dvgrabw *create_camwindow (s_cam *cam, int type) {
 
   dvgrabw->filename=NULL;
 
-  dvgrabw->dialog = lives_standard_dialog_new (_("LiVES: DVGrab"),FALSE);
+  dvgrabw->dialog = lives_standard_dialog_new (_("LiVES: DVGrab"),FALSE,-1,-1);
   dvgrabw->playing=FALSE;
 
   lives_container_set_border_width (LIVES_CONTAINER (dvgrabw->dialog), widget_opts.border_width*2);

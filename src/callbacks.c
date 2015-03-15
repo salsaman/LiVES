@@ -207,10 +207,7 @@ void lives_exit (int signum) {
     else if (!mainw->only_close) lives_snprintf(future_prefs->tmpdir,256,"NULL");
 
     if (mainw->leave_files&&!mainw->fatal) {
-      char *msg;
-      msg=lives_strdup_printf(_("Saving as set %s..."),mainw->set_name);
-      d_print(msg);
-      lives_free(msg);
+      d_print(_("Saving as set %s..."),mainw->set_name);
     }
 
     cwd=lives_get_current_dir();
@@ -853,7 +850,6 @@ void on_utube_select (LiVESButton *button, livespointer user_data) {
   char *dirname;
   char *dfile;
   char *com;
-  char *msg;
   int current_file=mainw->current_file;
 
   if (!strlen(fname)) {
@@ -891,9 +887,7 @@ void on_utube_select (LiVESButton *button, livespointer user_data) {
 
   mainw->error=FALSE;
 
-  msg=lives_strdup_printf(_("Downloading %s to %s..."),url,dfile);
-  d_print(msg);
-  lives_free(msg);
+  d_print(_("Downloading %s to %s..."),url,dfile);
 
   if (current_file==-1) {
     if (!get_temp_handle(mainw->first_free_file,TRUE)) {
@@ -1141,9 +1135,9 @@ void on_close_activate (LiVESMenuItem *menuitem, livespointer user_data) {
       if (strlen(title)>128) lives_snprintf(title,32,"%s",(_("This file")));
       if (acurrent) extra=lives_strdup(_(",\n - including the current layout - "));
       else extra=lives_strdup("");
-      if (!only_current) warn=lives_strdup_printf(_ ("\n%s\nis used in some multitrack layouts%s.\n\nReally close it ?"),
+      if (!only_current) warn=lives_strdup_printf(_("\n%s\nis used in some multitrack layouts%s.\n\nReally close it ?"),
 					      title,extra);
-      else warn=lives_strdup_printf(_ ("\n%s\nis used in the current layout.\n\nReally close it ?"),title);
+      else warn=lives_strdup_printf(_("\n%s\nis used in the current layout.\n\nReally close it ?"),title);
       lives_free(extra);
       if (!do_warning_dialog(warn)) {
 	lives_free(warn);
@@ -1174,7 +1168,7 @@ void on_close_activate (LiVESMenuItem *menuitem, livespointer user_data) {
     if (cfile->changed) {
       get_menu_text(cfile->menuentry,title);
       if (strlen(title)>128) lives_snprintf(title,32,"%s",(_("This file")));
-      warn=lives_strdup(_ ("Changes made to this clip have not been saved or backed up.\n\nReally close it ?"));
+      warn=lives_strdup(_("Changes made to this clip have not been saved or backed up.\n\nReally close it ?"));
       if (!do_warning_dialog(warn)) {
 	lives_free(warn);
 
@@ -1390,9 +1384,7 @@ on_import_proj_activate                      (LiVESMenuItem     *menuitem,
 
   lives_free(set_dir);
 
-  msg=lives_strdup_printf(_("Importing the project %s as set %s..."),proj_file,new_set);
-  d_print(msg);
-  lives_free(msg);
+  d_print(_("Importing the project %s as set %s..."),proj_file,new_set);
 
   if (!get_temp_handle(mainw->first_free_file,TRUE)) {
     d_print_failed();
@@ -1442,7 +1434,6 @@ on_export_proj_activate                      (LiVESMenuItem     *menuitem,
   char *filt[]={"*.lv2",NULL};
   char *def_file;
   char *proj_file;
-  char *msg;
   char *com,*tmp;
 
   if (strlen(mainw->set_name)==0) {
@@ -1495,9 +1486,7 @@ on_export_proj_activate                      (LiVESMenuItem     *menuitem,
     return;
   }
 
-  msg=lives_strdup_printf(_("Exporting project %s..."),proj_file);
-  d_print(msg);
-  lives_free(msg);
+  d_print(_("Exporting project %s..."),proj_file);
 
   com=lives_strdup_printf("%s export_project \"%s\" \"%s\" \"%s\"",prefs->backend,cfile->handle,mainw->set_name,proj_file);
   mainw->com_failed=FALSE;
@@ -1529,7 +1518,7 @@ on_export_proj_activate                      (LiVESMenuItem     *menuitem,
 void on_backup_activate (LiVESMenuItem *menuitem, livespointer user_data) {
   char *filt[]={"*.lv1",NULL};
   char *file_name = choose_file (strlen(mainw->proj_save_dir)?mainw->proj_save_dir:NULL,NULL,filt,
-				  LIVES_FILE_CHOOSER_ACTION_SAVE,_ ("Backup as .lv1 file"),NULL);
+				  LIVES_FILE_CHOOSER_ACTION_SAVE,_("Backup as .lv1 file"),NULL);
 
   if (file_name==NULL) return;
 
@@ -1545,7 +1534,7 @@ void on_backup_activate (LiVESMenuItem *menuitem, livespointer user_data) {
 void on_restore_activate (LiVESMenuItem *menuitem, livespointer user_data) {
   char *filt[]={"*.lv1",NULL};
   char *file_name = choose_file (strlen(mainw->proj_load_dir)?mainw->proj_load_dir:NULL,NULL,filt,
-				  LIVES_FILE_CHOOSER_ACTION_OPEN,_ ("Restore .lv1 file"),NULL);
+				  LIVES_FILE_CHOOSER_ACTION_OPEN,_("Restore .lv1 file"),NULL);
 
   if (file_name==NULL) return;
 
@@ -1763,9 +1752,7 @@ void on_quit_activate (LiVESMenuItem *menuitem, livespointer user_data) {
   prefs->crash_recovery=TRUE;
 
   if (strlen(mainw->set_name)>0) {
-    msg=lives_strdup_printf(_("Set %s was permanently deleted from the disk.\n"),mainw->set_name);
-    d_print(msg);
-    lives_free(msg);
+    d_print(_("Set %s was permanently deleted from the disk.\n"),mainw->set_name);
     memset(mainw->set_name,0,1);
   }
 
@@ -1947,7 +1934,7 @@ void on_undo_activate (LiVESMenuItem *menuitem, livespointer user_data) {
     // show a progress dialog, not cancellable
     cfile->progress_start=cfile->undo_start;
     cfile->progress_end=cfile->undo_end;
-    do_progress_dialog(TRUE,FALSE,_ ("Undoing"));
+    do_progress_dialog(TRUE,FALSE,_("Undoing"));
 
     if (cfile->undo_action!=UNDO_ATOMIC_RESAMPLE_RESIZE) {
       audfile=lives_strdup_printf("%s/%s/audio.bak",prefs->tmpdir,cfile->handle);
@@ -2009,7 +1996,7 @@ void on_undo_activate (LiVESMenuItem *menuitem, livespointer user_data) {
       if (mainw->com_failed) return;
 
       // show a progress dialog, not cancellable
-      do_progress_dialog(TRUE,FALSE,_ ("Deleting excess frames"));
+      do_progress_dialog(TRUE,FALSE,_("Deleting excess frames"));
       
       if (cfile->clip_type==CLIP_TYPE_FILE) {
 	delete_frames_from_virtual (mainw->current_file, cfile->old_frames+1, cfile->frames);
@@ -2253,11 +2240,11 @@ void on_undo_activate (LiVESMenuItem *menuitem, livespointer user_data) {
     if (bad_header) do_header_write_error(mainw->current_file);
 
     if (mainw->current_file>0) {
-      com=lives_strdup_printf(_ ("Length of video is now %d frames at %.3f frames per second.\n"),cfile->frames,cfile->fps);
+      com=lives_strdup_printf(_("Length of video is now %d frames at %.3f frames per second.\n"),cfile->frames,cfile->fps);
     }
     else {
       mainw->no_switch_dprint=TRUE;
-      com=lives_strdup_printf(_ ("Clipboard was resampled to %d frames.\n"),cfile->frames);
+      com=lives_strdup_printf(_("Clipboard was resampled to %d frames.\n"),cfile->frames);
     }
     d_print(com);
     lives_free(com);
@@ -2418,7 +2405,7 @@ void on_redo_activate (LiVESMenuItem *menuitem, livespointer user_data) {
     }
 
     // show a progress dialog, not cancellable
-    do_progress_dialog(TRUE,FALSE,_ ("Redoing"));
+    do_progress_dialog(TRUE,FALSE,_("Redoing"));
 
     if (mainw->error) {
       d_print_failed();
@@ -2447,7 +2434,7 @@ void on_redo_activate (LiVESMenuItem *menuitem, livespointer user_data) {
   cfile->progress_end=cfile->undo_end;
 
   // show a progress dialog, not cancellable
-  do_progress_dialog(TRUE,FALSE,_ ("Redoing"));
+  do_progress_dialog(TRUE,FALSE,_("Redoing"));
 
   if (mainw->error) {
     d_print_failed();
@@ -2485,10 +2472,7 @@ void on_redo_activate (LiVESMenuItem *menuitem, livespointer user_data) {
 //////////////////////////////////////////////////
 
 void on_copy_activate (LiVESMenuItem *menuitem, livespointer user_data) {
-  char *com;
-  char *text=lives_strdup_printf(_ ("Copying frames %d to %d%s to the clipboard..."),cfile->start,cfile->end,
-			      mainw->ccpd_with_sound&&cfile->achans>0?" (with sound)":"");
-
+  gchar *com;
 
   int current_file=mainw->current_file;
   int start,end;
@@ -2496,8 +2480,11 @@ void on_copy_activate (LiVESMenuItem *menuitem, livespointer user_data) {
   desensitize();
 
   d_print(""); // force switchtext
-  d_print(text);
-  lives_free(text);
+
+  if (mainw->ccpd_with_sound&&cfile->achans>0) 
+    d_print(_("Copying frames %d to %d (with sound) to the clipboard..."),cfile->start,cfile->end);
+  else 
+    d_print(lives_strdup_printf(_("Copying frames %d to %d to the clipboard..."),cfile->start,cfile->end));
 
   init_clipboard();
 
@@ -2549,7 +2536,7 @@ void on_copy_activate (LiVESMenuItem *menuitem, livespointer user_data) {
 
   // stop the 'preview' and 'pause' buttons from appearing
   cfile->nopreview=TRUE;
-  if (!do_progress_dialog(TRUE,TRUE,_ ("Copying to the clipboard"))) {
+  if (!do_progress_dialog(TRUE,TRUE,_("Copying to the clipboard"))) {
 #ifdef IS_MINGW
     // kill any active processes: for other OSes the backend does this
     // get pid from backend
@@ -2632,7 +2619,6 @@ void on_cut_activate (LiVESMenuItem *menuitem, livespointer user_data) {
 
 void on_paste_as_new_activate (LiVESMenuItem *menuitem, livespointer user_data) {
   char *com;
-  char *msg;
   int old_file=mainw->current_file,current_file;
 
   if (clipboard==NULL) return;
@@ -2678,9 +2664,7 @@ void on_paste_as_new_activate (LiVESMenuItem *menuitem, livespointer user_data) 
   }
 
   mainw->no_switch_dprint=TRUE;
-  msg=lives_strdup_printf (_ ("Pasting %d frames to new clip %s..."),cfile->frames,cfile->name);
-  d_print (msg);
-  lives_free (msg);
+  d_print (_("Pasting %d frames to new clip %s..."),cfile->frames,cfile->name);
   mainw->no_switch_dprint=FALSE;
 
   com=lives_strdup_printf("%s insert \"%s\" \"%s\" 0 1 %d \"%s\" %d 0 0 0 %.3f %d %d %d %d %d",
@@ -2702,7 +2686,7 @@ void on_paste_as_new_activate (LiVESMenuItem *menuitem, livespointer user_data) 
   cfile->nopreview=TRUE;
 
   // show a progress dialog, not cancellable
-  if (!do_progress_dialog(TRUE,TRUE,_ ("Pasting"))) {
+  if (!do_progress_dialog(TRUE,TRUE,_("Pasting"))) {
 
     if (mainw->error) d_print_failed();
 
@@ -2756,7 +2740,7 @@ void on_insert_activate (LiVESButton *button, livespointer user_data) {
   double times_to_insert=mainw->fx1_val;
   double audio_stretch;
 
-  char *msg,*com;
+  char *com;
 
   boolean with_sound=mainw->fx2_bool;
   boolean has_lmap_error=FALSE;
@@ -2800,7 +2784,7 @@ void on_insert_activate (LiVESButton *button, livespointer user_data) {
 		    (cfile->img_type==clipboard->img_type))) hsize=vsize=0;
   else {
     if (!capable->has_convert) {
-      do_error_dialog(_ ("This operation requires resizing or converting of frames.\nPlease install 'convert' from the Image-magick package, and then restart LiVES.\n"));
+      do_error_dialog(_("This operation requires resizing or converting of frames.\nPlease install 'convert' from the Image-magick package, and then restart LiVES.\n"));
       mainw->error=TRUE;
       if (button!=NULL) {
 	lives_widget_destroy(insertw->insert_dialog);
@@ -2817,7 +2801,7 @@ void on_insert_activate (LiVESButton *button, livespointer user_data) {
   }
 
   if (times_to_insert<0.&&(mainw->fx1_bool)) {
-    do_error_dialog(_ ("\n\nVideo is longer than audio.\nTry selecting all frames, and then using \nthe 'Trim Audio' function from the Audio menu."));
+    do_error_dialog(_("\n\nVideo is longer than audio.\nTry selecting all frames, and then using \nthe 'Trim Audio' function from the Audio menu."));
     mainw->error=TRUE;
     if (button!=NULL) {
       lives_widget_destroy(insertw->insert_dialog);
@@ -2841,7 +2825,7 @@ void on_insert_activate (LiVESButton *button, livespointer user_data) {
 							 cfile->arate!=clipboard->arate)) {
       if (!(capable->has_sox_sox)) {
 	if (cfile->arps!=clipboard->arps) {
-	  do_error_dialog(_ ("LiVES cannot insert because the audio rates do not match.\nPlease install 'sox', and try again."));
+	  do_error_dialog(_("LiVES cannot insert because the audio rates do not match.\nPlease install 'sox', and try again."));
 	  mainw->error=TRUE;
 	  return;
 	}
@@ -3018,7 +3002,7 @@ void on_insert_activate (LiVESButton *button, livespointer user_data) {
 
 	    mainw->current_file=0;
 	    mainw->error=FALSE;
-	    do_progress_dialog (TRUE,FALSE,_ ("Resampling clipboard audio"));
+	    do_progress_dialog (TRUE,FALSE,_("Resampling clipboard audio"));
 	    mainw->current_file=current_file;
 	    if (mainw->error) {
 	      d_print_failed();
@@ -3047,7 +3031,7 @@ void on_insert_activate (LiVESButton *button, livespointer user_data) {
 	  }
 
 	  mainw->current_file=0;
-	  do_progress_dialog (TRUE,FALSE,_ ("Resampling clipboard audio"));
+	  do_progress_dialog (TRUE,FALSE,_("Resampling clipboard audio"));
 	  mainw->current_file=current_file;
 
 	  if (mainw->error) {
@@ -3063,7 +3047,7 @@ void on_insert_activate (LiVESButton *button, livespointer user_data) {
 	    clipboard->achans=clipboard->arate=clipboard->asampsize=0;
 	    with_sound=FALSE;
 	    do_error_dialog 
-	      (_ ("\n\nLiVES was unable to resample the clipboard audio. \nClipboard audio has been erased.\n"));
+	      (_("\n\nLiVES was unable to resample the clipboard audio. \nClipboard audio has been erased.\n"));
 	  }
 	  else {
 	    unlink (clipboard->info_file);
@@ -3159,10 +3143,8 @@ void on_insert_activate (LiVESButton *button, livespointer user_data) {
   if (virtual_ins) end=-end;
 
   if (!mainw->insert_after&&remainder_frames>0) {
-    msg=lives_strdup_printf(_ ("Inserting %d%s frames from the clipboard..."),remainder_frames,
+    d_print(_("Inserting %d%s frames from the clipboard..."),remainder_frames,
 			times_to_insert>1.?" remainder":"");
-    d_print(msg);
-    lives_free(msg);
 
     com=lives_strdup_printf("%s insert \"%s\" \"%s\" %d %d %d \"%s\" %d %d %d %d %.3f %d %d %d %d %d",
 			prefs->backend,cfile->handle, 
@@ -3184,7 +3166,7 @@ void on_insert_activate (LiVESButton *button, livespointer user_data) {
     cfile->progress_start=1;
     cfile->progress_end=remainder_frames;
 
-    do_progress_dialog(TRUE,FALSE,_ ("Inserting"));
+    do_progress_dialog(TRUE,FALSE,_("Inserting"));
 
     if (mainw->error) {
       d_print_failed();
@@ -3215,18 +3197,14 @@ void on_insert_activate (LiVESButton *button, livespointer user_data) {
 
   // inserts of whole clipboard
   if ((int)times_to_insert>1) {
-    msg=lives_strdup_printf(_ ("Inserting %d times from the clipboard%s..."),(int)times_to_insert,with_sound?
-			" (with sound)":"");
     d_print("");
-    d_print(msg);
-    lives_free(msg);
+    d_print(_("Inserting %d times from the clipboard%s..."),(int)times_to_insert,with_sound?
+	    " (with sound)":"");
   }
   else if ((int)times_to_insert>0) {
-    msg=lives_strdup_printf(_ ("Inserting %d frames from the clipboard%s..."),cb_end-cb_start+1,with_sound?
-			" (with sound)":"");
     d_print("");
-    d_print(msg);
-    lives_free(msg);
+    d_print(_("Inserting %d frames from the clipboard%s..."),cb_end-cb_start+1,with_sound?
+	    " (with sound)":"");
   }
   
   if (virtual_ins) cb_end=-cb_end;
@@ -3258,7 +3236,7 @@ void on_insert_activate (LiVESButton *button, livespointer user_data) {
 
   // show a progress dialog
   cfile->nopreview=TRUE;
-  if (!do_progress_dialog(TRUE,TRUE,_ ("Inserting"))) {
+  if (!do_progress_dialog(TRUE,TRUE,_("Inserting"))) {
     // cancelled
 
     cfile->nopreview=FALSE;
@@ -3333,10 +3311,8 @@ void on_insert_activate (LiVESButton *button, livespointer user_data) {
   // last remainder frames
 
   if (mainw->insert_after&&remainder_frames>0) {
-    msg=lives_strdup_printf(_ ("Inserting %d%s frames from the clipboard..."),remainder_frames,
-			times_to_insert>1.?" remainder":"");
-    d_print(msg);
-    lives_free(msg);
+    d_print(_("Inserting %d%s frames from the clipboard..."),remainder_frames,
+	    times_to_insert>1.?" remainder":"");
 
     if (virtual_ins) remainder_frames=-remainder_frames;
 
@@ -3361,7 +3337,7 @@ void on_insert_activate (LiVESButton *button, livespointer user_data) {
     cfile->progress_start=1;
     cfile->progress_end=remainder_frames;
 
-    do_progress_dialog(TRUE,FALSE,_ ("Inserting"));
+    do_progress_dialog(TRUE,FALSE,_("Inserting"));
 
     if (mainw->error) {
       d_print_failed();
@@ -3633,11 +3609,9 @@ void on_delete_activate (LiVESMenuItem *menuitem, livespointer user_data) {
   cfile->undo1_boolean=mainw->ccpd_with_sound;
 
   if (menuitem!=NULL||mainw->osc_auto) {
-    com=lives_strdup_printf(_ ("Deleting frames %d to %d%s..."),cfile->start,cfile->end,
-			mainw->ccpd_with_sound&&cfile->achans>0?" (with sound)":"");
     d_print(""); // force switchtext
-    d_print(com);
-    lives_free(com);
+    d_print(_("Deleting frames %d to %d%s..."),cfile->start,cfile->end,
+	    mainw->ccpd_with_sound&&cfile->achans>0?" (with sound)":"");
   }
 
   com=lives_strdup_printf("%s cut \"%s\" %d %d %d %d \"%s\" %.3f %d %d %d",
@@ -3658,7 +3632,7 @@ void on_delete_activate (LiVESMenuItem *menuitem, livespointer user_data) {
   cfile->progress_end=cfile->frames;
 
   // show a progress dialog, not cancellable
-  do_progress_dialog(TRUE,FALSE,_ ("Deleting"));
+  do_progress_dialog(TRUE,FALSE,_("Deleting"));
 
   if (cfile->clip_type==CLIP_TYPE_FILE) {
     delete_frames_from_virtual (mainw->current_file, cfile->start, cfile->end);
@@ -3757,7 +3731,7 @@ void on_select_all_activate (LiVESMenuItem *menuitem, livespointer user_data) {
   if (mainw->current_file==-1) return;
 
   if (mainw->selwidth_locked) {
-    if (menuitem!=NULL) do_error_dialog(_ ("\n\nSelection is locked.\n"));
+    if (menuitem!=NULL) do_error_dialog(_("\n\nSelection is locked.\n"));
     return;
   }
 
@@ -4109,7 +4083,7 @@ void on_record_perf_activate (LiVESMenuItem *menuitem, livespointer user_data) {
   if (!mainw->record) {
 
     // TODO - change message depending on rec_opts
-    d_print(_ ("Ready to record. Use 'control' and cursor keys during playback to record your performance.\n(To cancel, press 'r' or click on Play|Record Performance again before you play.)\n"));
+    d_print(_("Ready to record. Use 'control' and cursor keys during playback to record your performance.\n(To cancel, press 'r' or click on Play|Record Performance again before you play.)\n"));
     mainw->record=TRUE;
     toggle_record();
     get_play_times();
@@ -4251,7 +4225,7 @@ void on_encoder_entry_changed (LiVESCombo *combo, livespointer ptr) {
   // initialise new plugin
   if ((dummy_list = plugin_request(PLUGIN_ENCODERS, new_encoder_name, "init")) == NULL) {
     if (strlen (mainw->msg)) {
-      msg = lives_strdup_printf (_ ("\n\nThe '%s' plugin reports:\n%s\n"), new_encoder_name, mainw->msg);
+      msg = lives_strdup_printf (_("\n\nThe '%s' plugin reports:\n%s\n"), new_encoder_name, mainw->msg);
     }
     else {
       msg = lives_strdup_printf 
@@ -4662,7 +4636,7 @@ boolean on_save_set_activate (LiVESMenuItem *menuitem, livespointer user_data) {
       if (lives_file_test(layout_map_file,LIVES_FILE_TEST_EXISTS)) {
 	if (do_set_rename_old_layouts_warning(mainw->set_name)) {
 	  // user answered "yes" - delete
-	  // clear _old_ layout maps
+	  // clear _old_layout maps
 	  char *dfile=lives_build_filename(prefs->tmpdir,mainw->set_name,"layouts",NULL);
 #ifndef IS_MINGW
 	  com=lives_strdup_printf("/bin/rm -r \"%s/\" 2>/dev/null",dfile);
@@ -5118,10 +5092,8 @@ boolean reload_set (const char *set_name) {
 	
 	recover_layout_map(MAX_FILES);
 
-	msg=lives_strdup_printf (_ ("%d clips and %d layouts were recovered from set (%s).\n"),
-				 clipnum,lives_list_length(mainw->current_layouts_map),(tmp=F2U8(set_name)));
-	d_print (msg);
-	lives_free (msg);
+	d_print (_("%d clips and %d layouts were recovered from set (%s).\n"),
+		 clipnum,lives_list_length(mainw->current_layouts_map),(tmp=F2U8(set_name)));
 	lives_free(tmp);
 	
 	lives_snprintf(mainw->set_name,128,"%s",set_name);
@@ -5330,12 +5302,12 @@ void on_cleardisk_activate (LiVESWidget *widget, livespointer user_data) {
   mainw->tried_ds_recover=TRUE; ///< indicates we tried ds recovery already
 
   mainw->add_clear_ds_adv=TRUE; ///< auto reset by do_warning_dialog()
-  if (!do_warning_dialog (_ ("LiVES will attempt to recover some disk space.\nYou should ONLY run this if you have no other copies of LiVES running on this machine.\nClick OK to proceed.\n"))) {
+  if (!do_warning_dialog (_("LiVES will attempt to recover some disk space.\nYou should ONLY run this if you have no other copies of LiVES running on this machine.\nClick OK to proceed.\n"))) {
     mainw->next_ds_warn_level=ds_warn_level;;
     return;
   }
 
-  d_print(_ ("Cleaning up disk space..."));
+  d_print(_("Cleaning up disk space..."));
 
   // get a temporary clip for receiving data from backend
   if (!get_temp_handle(mainw->first_free_file,TRUE)) {
@@ -5556,7 +5528,7 @@ void on_show_file_info_activate (LiVESMenuItem *menuitem, livespointer user_data
     lives_text_view_set_text (LIVES_TEXT_VIEW (filew->textview26),buff, -1);
     // frames
     if ((cfile->opening&&!cfile->opening_audio&&cfile->frames==0)||cfile->frames==123456789) {
-      lives_snprintf(buff,512,"%s",_ ("\n  Opening..."));
+      lives_snprintf(buff,512,"%s",_("\n  Opening..."));
     }
     else {
       lives_snprintf(buff,512,"\n  %d",cfile->frames);
@@ -5575,7 +5547,7 @@ void on_show_file_info_activate (LiVESMenuItem *menuitem, livespointer user_data
     lives_text_view_set_text (LIVES_TEXT_VIEW (filew->textview27),buff, -1);
     // video time
     if ((cfile->opening&&!cfile->opening_audio&&cfile->frames==0)||cfile->frames==123456789) {
-      lives_snprintf(buff,512,"%s",_ ("\n  Opening..."));
+      lives_snprintf(buff,512,"%s",_("\n  Opening..."));
     }
     else {
       lives_snprintf(buff,512,_("\n  %.2f sec."),cfile->video_time);
@@ -5587,13 +5559,13 @@ void on_show_file_info_activate (LiVESMenuItem *menuitem, livespointer user_data
       lives_snprintf(buff,512,"\n  %s",file_ds);
       lives_free(file_ds);
     }
-    else lives_snprintf(buff,512,"%s",_ ("\n  Unknown"));
+    else lives_snprintf(buff,512,"%s",_("\n  Unknown"));
     lives_text_view_set_text (LIVES_TEXT_VIEW (filew->textview29),buff, -1);
   }
 
   if (cfile->achans>0) {
     if (cfile->opening) {
-      lives_snprintf(buff,512,"%s",_ ("\n  Opening..."));
+      lives_snprintf(buff,512,"%s",_("\n  Opening..."));
     }
     else {
       lives_snprintf(buff,512,_("\n  %.2f sec."),cfile->laudio_time);
@@ -5627,7 +5599,7 @@ void on_show_file_info_activate (LiVESMenuItem *menuitem, livespointer user_data
     lives_free(ends);
     
     if (cfile->opening) {
-      lives_snprintf(buff,512,"%s",_ ("\n  Opening..."));
+      lives_snprintf(buff,512,"%s",_("\n  Opening..."));
     }
     else {
       lives_snprintf(buff,512,_("\n  %.2f sec."),cfile->raudio_time);
@@ -5776,7 +5748,7 @@ on_about_activate                     (LiVESMenuItem     *menuitem,
 #endif
 
   char *mesg;
-  mesg=lives_strdup_printf(_ ("LiVES Version %s\n(c) G. Finch (salsaman) %s\n\nReleased under the GPL 3 or later (http://www.gnu.org/licenses/gpl.txt)\nLiVES is distributed WITHOUT WARRANTY\n\nContact the author at:\nsalsaman@gmail.com\nHomepage: http://lives.sourceforge.net"),LiVES_VERSION,"2002-2015");
+  mesg=lives_strdup_printf(_("LiVES Version %s\n(c) G. Finch (salsaman) %s\n\nReleased under the GPL 3 or later (http://www.gnu.org/licenses/gpl.txt)\nLiVES is distributed WITHOUT WARRANTY\n\nContact the author at:\nsalsaman@gmail.com\nHomepage: http://lives.sourceforge.net"),LiVES_VERSION,"2002-2015");
   do_error_dialog(mesg);
   lives_free(mesg);
   
@@ -6055,10 +6027,10 @@ void on_fs_preview_clicked (LiVESWidget *widget, livespointer user_data) {
     if (!capable->has_mplayer&&!capable->has_mplayer2) {
       char *msg;
       if (capable->has_identify) {
-	msg=lives_strdup(_ ("\n\nYou need to install mplayer or mplayer2 to be able to preview this file.\n"));
+	msg=lives_strdup(_("\n\nYou need to install mplayer or mplayer2 to be able to preview this file.\n"));
       }
       else {
-	msg=lives_strdup(_ ("\n\nYou need to install mplayer, mplayer2 or imageMagick to be able to preview this file.\n"));
+	msg=lives_strdup(_("\n\nYou need to install mplayer, mplayer2 or imageMagick to be able to preview this file.\n"));
       }
       do_blocking_error_dialog(msg);
       lives_free(msg);
@@ -6678,9 +6650,8 @@ void on_cancel_keep_button_clicked (LiVESButton *button, livespointer user_data)
     }
     else keep_frames=cfile->frames+1;
     if (keep_frames>mainw->internal_messaging) {
-      char *msg=lives_strdup_printf(_ ("%d frames are enough !\n"),keep_frames-cfile->start);
-      d_print(msg);
-      lives_free(msg);
+      d_print(P_("%d frame is enough !\n","%d frames are enough !\n",keep_frames-cfile->start),
+	      keep_frames-cfile->start);
 
       lives_set_cursor_style(LIVES_CURSOR_BUSY,NULL);
       if (!mainw->internal_messaging) {
@@ -7746,7 +7717,7 @@ void on_rev_clipboard_activate (LiVESMenuItem *menuitem, livespointer user_data)
     }
   }
 
-  d_print(_ ("Reversing clipboard..."));
+  d_print(_("Reversing clipboard..."));
   com=lives_strdup_printf("%s reverse \"%s\" %d %d \"%s\"",prefs->backend,clipboard->handle,1,clipboard->frames,
 		      get_image_ext_for_type(cfile->img_type));
 
@@ -7760,7 +7731,7 @@ void on_rev_clipboard_activate (LiVESMenuItem *menuitem, livespointer user_data)
     cfile->progress_end=cfile->frames;
 
     // show a progress dialog, not cancellable
-    do_progress_dialog(TRUE,FALSE,_ ("Reversing clipboard"));
+    do_progress_dialog(TRUE,FALSE,_("Reversing clipboard"));
   }
 
   if (mainw->com_failed||mainw->error) d_print_failed();
@@ -7782,7 +7753,7 @@ void on_load_subs_activate (LiVESMenuItem *menuitem, livespointer user_data) {
   char *subfile;
   char *filt[]={"*.srt","*.sub",NULL};
   char filename[512];
-  char *subfname,*isubfname,*com,*tmp;
+  char *subfname,*isubfname,*com;
   lives_subtitle_type_t subtype=SUBTITLE_TYPE_NONE;
   char *lfile_name;
   char *ttl;
@@ -7859,9 +7830,8 @@ void on_load_subs_activate (LiVESMenuItem *menuitem, livespointer user_data) {
   // force update
   switch_to_file(0,mainw->current_file);
   
-  tmp=lives_strdup_printf(_("Loaded subtitle file: %s\n"),isubfname);
-  d_print(tmp);
-  lives_free(tmp);
+  d_print(_("Loaded subtitle file: %s\n"),isubfname);
+
   lives_free(isubfname);
   lives_free(lfile_name);
 }
@@ -7950,7 +7920,7 @@ void on_load_audio_activate (LiVESMenuItem *menuitem, livespointer user_data) {
     lives_widget_set_sensitive (mainw->m_playbutton, TRUE);
   }
 
-  chooser=choose_file_with_preview(strlen(mainw->audio_dir)?mainw->audio_dir:NULL,_ ("LiVES: - Select Audio File"),
+  chooser=choose_file_with_preview(strlen(mainw->audio_dir)?mainw->audio_dir:NULL,_("LiVES: - Select Audio File"),
 				   LIVES_FILE_SELECTION_AUDIO_ONLY);
 
   resp=lives_dialog_run(LIVES_DIALOG(chooser));
@@ -7970,7 +7940,7 @@ void on_open_new_audio_clicked (LiVESFileChooser *chooser, livespointer user_dat
   // also called from osc.c
 
   char *a_type;
-  char *com,*mesg,*tmp;
+  char *com,*tmp;
   char **array;
 
   int oundo_start;
@@ -8096,10 +8066,8 @@ void on_open_new_audio_clicked (LiVESFileChooser *chooser, livespointer user_dat
   if (cfile->undo_arate>0) cfile->arps=cfile->undo_arps/cfile->undo_arate*cfile->arate;
   else cfile->arps=cfile->arate;
 
-  mesg=lives_strdup_printf(_ ("Opening audio %s, type %s..."),file_name,a_type);
   d_print(""); // force switchtext
-  d_print(mesg);
-  lives_free(mesg);
+  d_print(_("Opening audio %s, type %s..."),file_name,a_type);
 
   unlink(cfile->info_file);
   mainw->com_failed=FALSE;
@@ -8133,7 +8101,7 @@ void on_open_new_audio_clicked (LiVESFileChooser *chooser, livespointer user_dat
   // show audio [opening...] in main window
   get_play_times();
 
-  if (!(do_progress_dialog(TRUE,TRUE,_ ("Opening audio")))) {
+  if (!(do_progress_dialog(TRUE,TRUE,_("Opening audio")))) {
     lives_widget_queue_draw(mainw->LiVES);
     lives_widget_context_update();
     mainw->cancelled=CANCEL_NONE;
@@ -8216,10 +8184,8 @@ void on_open_new_audio_clicked (LiVESFileChooser *chooser, livespointer user_dat
   cfile->changed=TRUE;
   d_print_done();
 
-  mesg=lives_strdup_printf(P_("New audio: %d Hz %d channel %d bps\n","New audio: %d Hz %d channels %d bps\n",cfile->achans),
-		       cfile->arate,cfile->achans,cfile->asampsize);
-  d_print(mesg);
-  lives_free(mesg);
+  d_print(P_("New audio: %d Hz %d channel %d bps\n","New audio: %d Hz %d channels %d bps\n",cfile->achans),
+	  cfile->arate,cfile->achans,cfile->asampsize);
 
   mainw->com_failed=FALSE;
   mainw->cancelled=CANCEL_NONE;
@@ -8307,7 +8273,7 @@ on_load_cdtrack_activate                (LiVESMenuItem     *menuitem,
   LiVESWidget *cdtrack_dialog;
   
   if (!strlen(prefs->cdplay_device)) {
-    do_error_dialog(_ ("Please set your CD play device in Tools | Preferences | Misc\n"));
+    do_error_dialog(_("Please set your CD play device in Tools | Preferences | Misc\n"));
     return;
   }
 
@@ -8333,7 +8299,7 @@ void
 on_load_cdtrack_ok_clicked                (LiVESButton     *button,
 					   livespointer         user_data)
 {
-  char *com,*mesg;
+  char *com;
   char **array;
   boolean was_new=FALSE;
   int new_file=mainw->first_free_file;
@@ -8378,12 +8344,10 @@ on_load_cdtrack_ok_clicked                (LiVESButton     *button,
     }
   }
 
-  mesg=lives_strdup_printf(_ ("Opening CD track %d from %s..."),(int)mainw->fx1_val,prefs->cdplay_device);
-  d_print(mesg);
-  lives_free(mesg);
+  d_print(_("Opening CD track %d from %s..."),(int)mainw->fx1_val,prefs->cdplay_device);
 
   if (mainw->current_file==-1) {
-    if (!get_new_handle(new_file,lives_strdup_printf (_ ("CD track %d"),(int)mainw->fx1_val))) {
+    if (!get_new_handle(new_file,lives_strdup_printf (_("CD track %d"),(int)mainw->fx1_val))) {
       return;
     }
 
@@ -8430,7 +8394,7 @@ on_load_cdtrack_ok_clicked                (LiVESButton     *button,
   }
 
 
-  if (!(do_progress_dialog(TRUE,TRUE,_ ("Opening CD track...")))) {
+  if (!(do_progress_dialog(TRUE,TRUE,_("Opening CD track...")))) {
     lives_widget_queue_draw(mainw->LiVES);
     lives_widget_context_update();
 
@@ -8472,7 +8436,7 @@ on_load_cdtrack_ok_clicked                (LiVESButton     *button,
   lives_widget_context_update();
 
   if (mainw->error) {
-    d_print(_ ("Error loading CD track\n"));
+    d_print(_("Error loading CD track\n"));
 
     lives_widget_queue_draw(mainw->LiVES);
     lives_widget_context_update();
@@ -8518,7 +8482,7 @@ on_load_cdtrack_ok_clicked                (LiVESButton     *button,
   endian=cfile->signed_endian&AFORM_BIG_ENDIAN;
 
   if (cfile->afilesize==0l) {
-    d_print(_ ("Error loading CD track\n"));
+    d_print(_("Error loading CD track\n"));
   
     if (!was_new) {
       com=lives_strdup_printf("%s cancel_audio \"%s\"",prefs->backend,cfile->handle);
@@ -8595,10 +8559,8 @@ on_load_cdtrack_ok_clicked                (LiVESButton     *button,
   get_play_times();
   cfile->changed=TRUE;
   d_print_done();
-  mesg=lives_strdup_printf(P_("New audio: %d Hz %d channel %d bps\n","New audio: %d Hz %d channels %d bps\n",cfile->achans),
-		       cfile->arate,cfile->achans,cfile->asampsize);
-  d_print(mesg);
-  lives_free(mesg);
+  d_print(P_("New audio: %d Hz %d channel %d bps\n","New audio: %d Hz %d channels %d bps\n",cfile->achans),
+	  cfile->arate,cfile->achans,cfile->asampsize);
   
   if (!was_new) {
     if (!prefs->conserve_space) {
@@ -9393,9 +9355,9 @@ void on_effects_paused (LiVESButton *button, livespointer user_data) {
       com=NULL;
 
       if (!cfile->opening) {
-	lives_button_set_label(LIVES_BUTTON(button),_ ("Resume"));
-	lives_label_set_text(LIVES_LABEL(cfile->proc_ptr->label2),_ ("\nPaused\n(click Resume to continue processing)"));
-	d_print(_ ("paused..."));
+	lives_button_set_label(LIVES_BUTTON(button),_("Resume"));
+	lives_label_set_text(LIVES_LABEL(cfile->proc_ptr->label2),_("\nPaused\n(click Resume to continue processing)"));
+	d_print(_("paused..."));
       }
     }
 
@@ -9422,9 +9384,9 @@ void on_effects_paused (LiVESButton *button, livespointer user_data) {
       com=NULL;
 
       if (!cfile->opening) {
-	lives_button_set_label(LIVES_BUTTON(button),_ ("Paus_e"));
-	lives_label_set_text(LIVES_LABEL(cfile->proc_ptr->label2),_ ("\nPlease Wait"));
-	d_print(_ ("resumed..."));
+	lives_button_set_label(LIVES_BUTTON(button),_("Paus_e"));
+	lives_label_set_text(LIVES_LABEL(cfile->proc_ptr->label2),_("\nPlease Wait"));
+	d_print(_("resumed..."));
       }
     }
   }
@@ -9438,7 +9400,7 @@ void on_effects_paused (LiVESButton *button, livespointer user_data) {
       mainw->timeout_ticks-=xticks;
       com=lives_strdup_printf("%s pause \"%s\"",prefs->backend_sync,cfile->handle);
       if (!mainw->preview) {
-	lives_button_set_label(LIVES_BUTTON(button),_ ("Resume"));
+	lives_button_set_label(LIVES_BUTTON(button),_("Resume"));
 	if (!cfile->nokeep) {
 	  char *tmp,*ltext;
 
@@ -9456,7 +9418,7 @@ void on_effects_paused (LiVESButton *button, livespointer user_data) {
 	  lives_free(tmp);
 	  lives_free(ltext);
 	}
-	d_print(_ ("paused..."));
+	d_print(_("paused..."));
       }
 #ifdef RT_AUDIO
       if ((mainw->jackd!=NULL&&mainw->jackd_read!=NULL&&mainw->jackd_read->in_use)
@@ -9467,11 +9429,11 @@ void on_effects_paused (LiVESButton *button, livespointer user_data) {
       mainw->timeout_ticks+=xticks;
       com=lives_strdup_printf("%s resume \"%s\"",prefs->backend_sync,cfile->handle);
       if (!mainw->preview) {
-	if (cfile->opening||!cfile->nokeep) lives_button_set_label(LIVES_BUTTON(button),_ ("Pause/_Enough"));
-	else lives_button_set_label(LIVES_BUTTON(button),_ ("Paus_e"));
+	if (cfile->opening||!cfile->nokeep) lives_button_set_label(LIVES_BUTTON(button),_("Pause/_Enough"));
+	else lives_button_set_label(LIVES_BUTTON(button),_("Paus_e"));
 	lives_button_set_label(LIVES_BUTTON(cfile->proc_ptr->cancel_button), _("Cancel"));
-	lives_label_set_text(LIVES_LABEL(cfile->proc_ptr->label2),_ ("\nPlease Wait"));
-	d_print(_ ("resumed..."));
+	lives_label_set_text(LIVES_LABEL(cfile->proc_ptr->label2),_("\nPlease Wait"));
+	d_print(_("resumed..."));
       }
 #ifdef RT_AUDIO
       if ((mainw->jackd!=NULL&&mainw->jackd_read!=NULL&&mainw->jackd_read->in_use)
@@ -9673,7 +9635,7 @@ void on_preview_clicked (LiVESButton *button, livespointer user_data) {
     if (cfile->proc_ptr!=NULL) {
       // proc_ptr can be NULL if we finished loading with a bg generator running
       lives_widget_show (cfile->proc_ptr->processing);
-      lives_button_set_label(LIVES_BUTTON(button),_ ("Preview"));
+      lives_button_set_label(LIVES_BUTTON(button),_("Preview"));
       lives_widget_set_sensitive(cfile->proc_ptr->pause_button,TRUE);
       lives_widget_set_sensitive(cfile->proc_ptr->cancel_button,TRUE);
     }
@@ -10309,7 +10271,6 @@ boolean nervous_callback (LiVESAccelGroup *group, LiVESObject *obj, uint32_t key
 
 boolean show_sync_callback (LiVESAccelGroup *group, LiVESObject *obj, uint32_t keyval, LiVESXModifierType mod, livespointer clip_number) {
   double avsync;
-  char *msg;
 
   int last_dprint_file;
 
@@ -10340,14 +10301,12 @@ boolean show_sync_callback (LiVESAccelGroup *group, LiVESObject *obj, uint32_t k
 
   avsync-=(mainw->actual_frame-1.)/cfile->fps;
 
-  msg=lives_strdup_printf(_("Audio is ahead of video by %.4f secs. at frame %d, with fps %.4f\n"),
-		      avsync,mainw->actual_frame,cfile->pb_fps);
   last_dprint_file=mainw->last_dprint_file;
   mainw->no_switch_dprint=TRUE;
-  d_print(msg);
+  d_print(_("Audio is ahead of video by %.4f secs. at frame %d, with fps %.4f\n"),
+	  avsync,mainw->actual_frame,cfile->pb_fps);
   mainw->no_switch_dprint=FALSE;
   mainw->last_dprint_file=last_dprint_file;
-  lives_free(msg);
   return TRUE;
 }
 
@@ -10391,7 +10350,6 @@ void on_toolbar_hide (LiVESButton *button, livespointer user_data) {
 
 void on_capture_activate (LiVESMenuItem *menuitem, livespointer user_data) {
   int curr_file=mainw->current_file;
-  char *msg;
   char *com;
   char **array;
   int response;
@@ -10492,12 +10450,12 @@ void on_capture_activate (LiVESMenuItem *menuitem, livespointer user_data) {
   if (mainw->multitrack==NULL) lives_widget_hide(mainw->LiVES);
   else lives_widget_hide(mainw->multitrack->window);
 
-  if (!(do_warning_dialog(_ ("Capture an External Window:\n\nClick on 'OK', then click on any window to capture it\nClick 'Cancel' to cancel\n\n")))) {
+  if (!(do_warning_dialog(_("Capture an External Window:\n\nClick on 'OK', then click on any window to capture it\nClick 'Cancel' to cancel\n\n")))) {
     if (prefs->show_gui) {
       if (mainw->multitrack==NULL) lives_widget_show(mainw->LiVES);
       else lives_widget_show(mainw->multitrack->window);
     }
-    d_print (_ ("External window was released.\n"));
+    d_print (_("External window was released.\n"));
     if (mainw->multitrack!=NULL) {
       mt_sensitise(mainw->multitrack);
       mainw->multitrack->idlefunc=mt_idle_add(mainw->multitrack);
@@ -10531,7 +10489,7 @@ void on_capture_activate (LiVESMenuItem *menuitem, livespointer user_data) {
     return;
   }
 
-  do_progress_dialog(TRUE,FALSE,_ ("Click on a Window to Capture it\nPress 'q' to stop recording"));
+  do_progress_dialog(TRUE,FALSE,_("Click on a Window to Capture it\nPress 'q' to stop recording"));
 
   if (get_token_count(mainw->msg,'|')<6) {
     if (prefs->show_gui) lives_widget_show(mainw->LiVES);
@@ -10565,10 +10523,8 @@ void on_capture_activate (LiVESMenuItem *menuitem, livespointer user_data) {
   mainw->current_file=curr_file;
   ////////////////////////////////////////
 
-  msg=lives_strdup_printf(_ ("\nExternal window captured. Width=%d, height=%d, bpp=%d. *Do not resize*\n\nStop or 'q' to finish.\n(Default of %.3f frames per second will be used.)\n"),
-		      mainw->foreign_width,mainw->foreign_height,mainw->foreign_bpp,mainw->rec_fps);
-  d_print(msg);
-  lives_free (msg);
+  d_print(_("\nExternal window captured. Width=%d, height=%d, bpp=%d. *Do not resize*\n\nStop or 'q' to finish.\n(Default of %.3f frames per second will be used.)\n"),
+	  mainw->foreign_width,mainw->foreign_height,mainw->foreign_bpp,mainw->rec_fps);
 
   // start another copy of LiVES and wait for it to return values
   com=lives_strdup_printf("%s -capture %d %u %d %d %s %d %d %.4f %d %d %d %d \"%s\"",capable->myname_full,capable->mainpid,
@@ -10591,7 +10547,7 @@ void on_capture_activate (LiVESMenuItem *menuitem, livespointer user_data) {
   mainw->noswitch=FALSE;
 
   if (!after_foreign_play()&&mainw->cancelled==CANCEL_NONE) {
-    do_error_dialog(_ ("LiVES was unable to capture this window. Sorry.\n"));
+    do_error_dialog(_("LiVES was unable to capture this window. Sorry.\n"));
     sensitize();
   }
 
@@ -10751,11 +10707,11 @@ void on_export_audio_activate (LiVESMenuItem *menuitem, livespointer user_data) 
 
   if (cfile->end>0&&!LIVES_POINTER_TO_INT (user_data)) {
     filename = choose_file (strlen(mainw->audio_dir)?mainw->audio_dir:NULL,NULL,
-			    filt,LIVES_FILE_CHOOSER_ACTION_SAVE,_ ("Export Selected Audio as..."),NULL);
+			    filt,LIVES_FILE_CHOOSER_ACTION_SAVE,_("Export Selected Audio as..."),NULL);
   }
   else {
     filename = choose_file (strlen(mainw->audio_dir)?mainw->audio_dir:NULL,NULL,
-			    filt,LIVES_FILE_CHOOSER_ACTION_SAVE,_ ("Export Audio as..."),NULL);
+			    filt,LIVES_FILE_CHOOSER_ACTION_SAVE,_("Export Audio as..."),NULL);
   }
 
   if (filename==NULL) return;
@@ -10770,18 +10726,18 @@ void on_export_audio_activate (LiVESMenuItem *menuitem, livespointer user_data) 
   // warn if arps!=arate
   if ((prefs->audio_player==AUD_PLAYER_SOX||prefs->audio_player==AUD_PLAYER_JACK||
        prefs->audio_player==AUD_PLAYER_PULSE)&&cfile->arate!=cfile->arps) {
-    if (do_warning_dialog(_ ("\n\nThe audio playback speed has been altered for this clip.\nClick 'OK' to export at the new speed, or 'Cancel' to export at the original rate.\n"))) {
+    if (do_warning_dialog(_("\n\nThe audio playback speed has been altered for this clip.\nClick 'OK' to export at the new speed, or 'Cancel' to export at the original rate.\n"))) {
       nrate=cfile->arate;
     }
   }
   
   if (cfile->start*cfile->end>0&&!LIVES_POINTER_TO_INT (user_data)) {
-    lives_snprintf (mainw->msg,256,_ ("Exporting audio frames %d to %d as %s..."),cfile->start,cfile->end,file_name);
+    lives_snprintf (mainw->msg,256,_("Exporting audio frames %d to %d as %s..."),cfile->start,cfile->end,file_name);
     start=calc_time_from_frame (mainw->current_file,cfile->start);
     end=calc_time_from_frame (mainw->current_file,cfile->end);
   }
   else {
-    lives_snprintf (mainw->msg,256,_ ("Exporting audio as %s..."),file_name);
+    lives_snprintf (mainw->msg,256,_("Exporting audio as %s..."),file_name);
     start=0.;
     end=0.;
   }
@@ -10848,7 +10804,7 @@ void on_append_audio_activate (LiVESMenuItem *menuitem, livespointer user_data) 
     mainw->xlays=NULL;
   }
 
-  chooser=choose_file_with_preview(strlen(mainw->audio_dir)?mainw->audio_dir:NULL,_ ("LiVES: - Append Audio File"),
+  chooser=choose_file_with_preview(strlen(mainw->audio_dir)?mainw->audio_dir:NULL,_("LiVES: - Append Audio File"),
 				   LIVES_FILE_SELECTION_AUDIO_ONLY);
 
   resp=lives_dialog_run(LIVES_DIALOG(chooser));
@@ -10892,7 +10848,7 @@ void on_append_audio_activate (LiVESMenuItem *menuitem, livespointer user_data) 
     return;
   }
 
-  lives_snprintf (mainw->msg,256,_ ("Appending audio file %s..."),file_name);
+  lives_snprintf (mainw->msg,256,_("Appending audio file %s..."),file_name);
   d_print(""); // force switchtext
   d_print (mainw->msg);
  
@@ -10909,7 +10865,7 @@ void on_append_audio_activate (LiVESMenuItem *menuitem, livespointer user_data) 
     return;
   }
 
-  if (!do_progress_dialog (TRUE, TRUE,_ ("Appending audio"))) {
+  if (!do_progress_dialog (TRUE, TRUE,_("Appending audio"))) {
     lives_widget_queue_draw(mainw->LiVES);
     lives_widget_context_update();
     mainw->cancelled=CANCEL_NONE;
@@ -11039,9 +10995,9 @@ void on_trim_audio_activate (LiVESMenuItem *menuitem, livespointer user_data) {
   }
 
   if (end>cfile->laudio_time&&end>cfile->raudio_time)
-    msg=lives_strdup_printf(_ ("Padding audio to %.2f seconds..."),end);
+    msg=lives_strdup_printf(_("Padding audio to %.2f seconds..."),end);
   else
-    msg=lives_strdup_printf(_ ("Trimming audio from %.2f to %.2f seconds..."),start,end);
+    msg=lives_strdup_printf(_("Trimming audio from %.2f to %.2f seconds..."),start,end);
 
   d_print(msg);
   lives_free(msg);
@@ -11281,16 +11237,16 @@ boolean on_del_audio_activate (LiVESMenuItem *menuitem, livespointer user_data) 
       }
 
       if (!cfile->frames) {
-	if (do_warning_dialog(_ ("\nDeleting all audio will close this file.\nAre you sure ?"))) close_current_file(0);
+	if (do_warning_dialog(_("\nDeleting all audio will close this file.\nAre you sure ?"))) close_current_file(0);
 	return FALSE;
       }
-      msg=lives_strdup(_ ("Deleting all audio..."));
+      msg=lives_strdup(_("Deleting all audio..."));
       start=end=0.;
     }
     else {
       start=calc_time_from_frame (mainw->current_file,cfile->start);
       end=calc_time_from_frame (mainw->current_file,cfile->end+1);
-      msg=lives_strdup_printf(_ ("Deleting audio from %.2f to %.2f seconds..."),start,end);
+      msg=lives_strdup_printf(_("Deleting audio from %.2f to %.2f seconds..."),start,end);
       start*=(double)cfile->arate/(double)cfile->arps;
       end*=(double)cfile->arate/(double)cfile->arps;
 
@@ -11377,7 +11333,7 @@ boolean on_del_audio_activate (LiVESMenuItem *menuitem, livespointer user_data) 
     return FALSE;
   }
 
-  do_progress_dialog(TRUE, FALSE, _ ("Deleting Audio"));
+  do_progress_dialog(TRUE, FALSE, _("Deleting Audio"));
 
   if (mainw->error) {
     if (menuitem!=NULL) d_print_failed();
@@ -11736,7 +11692,7 @@ void on_recaudclip_ok_clicked (LiVESButton *button, livespointer user_data) {
 
 boolean on_ins_silence_activate (LiVESMenuItem *menuitem, livespointer user_data) {
   double start=0,end=0;
-  char *com,*msg;
+  char *com;
   boolean has_lmap_error=FALSE;
   boolean has_new_audio=FALSE;
 
@@ -11805,10 +11761,8 @@ boolean on_ins_silence_activate (LiVESMenuItem *menuitem, livespointer user_data
       mainw->xlays=NULL;
     }
 
-    msg=lives_strdup_printf(_ ("Inserting silence from %.2f to %.2f seconds..."),start,end);
     d_print(""); // force switchtext
-    d_print(msg);
-    lives_free(msg);
+    d_print(_("Inserting silence from %.2f to %.2f seconds..."),start,end);
   }
 
   cfile->undo1_dbl=start;

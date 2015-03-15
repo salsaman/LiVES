@@ -63,6 +63,9 @@ weed_plant_t *get_first_frame_event (weed_plant_t *event_list);
 weed_plant_t *get_next_frame_event (weed_plant_t *event);
 weed_plant_t *get_prev_frame_event (weed_plant_t *event);
 
+weed_plant_t *get_next_audio_frame_event (weed_plant_t *event);
+weed_plant_t *get_prev_audio_frame_event (weed_plant_t *event);
+
 weed_plant_t *get_frame_event_at (weed_plant_t *event_list, weed_timecode_t tc, weed_plant_t *shortcut, boolean exact);
 weed_plant_t *get_frame_event_at_or_before (weed_plant_t *event_list, weed_timecode_t tc, weed_plant_t *shortcut);
 
@@ -231,10 +234,11 @@ boolean has_frame_event_at(weed_plant_t *event_list, weed_timecode_t tc, weed_pl
 #define EVENT_MARKER_RECORD_START 1024
 #define EVENT_MARKER_RECORD_END 1025
 
-#define WEED_PLANT_IS_EVENT(plant) (weed_get_plant_type(plant)==WEED_PLANT_EVENT?1:0)
-#define WEED_PLANT_IS_EVENT_LIST(plant) (weed_get_plant_type(plant)==WEED_PLANT_EVENT_LIST?1:0)
+#define WEED_PLANT_IS_EVENT(plant) ((plant!=NULL&&weed_get_plant_type(plant)==WEED_PLANT_EVENT)?1:0)
+#define WEED_PLANT_IS_EVENT_LIST(plant) ((plant!=NULL&&weed_get_plant_type(plant)==WEED_PLANT_EVENT_LIST)?1:0)
 
 #define WEED_EVENT_IS_FRAME(event) (get_event_hint(event)==WEED_EVENT_HINT_FRAME?1:0)
+#define WEED_EVENT_IS_AUDIO_FRAME(event) ((get_event_hint(event)==WEED_EVENT_HINT_FRAME&&weed_plant_has_leaf(event,"audio_clips"))?1:0)
 #define WEED_EVENT_IS_FILTER_INIT(event) (get_event_hint(event)==WEED_EVENT_HINT_FILTER_INIT?1:0)
 #define WEED_EVENT_IS_FILTER_DEINIT(event) (get_event_hint(event)==WEED_EVENT_HINT_FILTER_DEINIT?1:0)
 #define WEED_EVENT_IS_FILTER_MAP(event) (get_event_hint(event)==WEED_EVENT_HINT_FILTER_MAP?1:0)

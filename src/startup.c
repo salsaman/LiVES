@@ -277,7 +277,7 @@ boolean do_audio_choice_dialog(short startup_phase) {
   lives_free(txt6);
   lives_free(txt7);
 
-  dialog = lives_standard_dialog_new (_("LiVES: - Choose an audio player"),FALSE);
+  dialog = lives_standard_dialog_new (_("LiVES: - Choose an audio player"),FALSE,-1,-1);
 
   accel_group = LIVES_ACCEL_GROUP(lives_accel_group_new ());
   lives_window_add_accel_group (LIVES_WINDOW (dialog), accel_group);
@@ -555,7 +555,7 @@ boolean do_startup_tests(boolean tshoot) {
   }
 
 
-  dialog = lives_standard_dialog_new (title,FALSE);
+  dialog = lives_standard_dialog_new (title,FALSE,-1,-1);
 
   accel_group = LIVES_ACCEL_GROUP(lives_accel_group_new ());
   lives_window_add_accel_group (LIVES_WINDOW (dialog), accel_group);
@@ -957,7 +957,7 @@ void do_startup_interface_query(void) {
   lives_free(txt2);
   lives_free(txt3);
 
-  dialog = lives_standard_dialog_new (_("LiVES: - Choose the startup interface"),FALSE);
+  dialog = lives_standard_dialog_new (_("LiVES: - Choose the startup interface"),FALSE,-1,-1);
 
   dialog_vbox = lives_dialog_get_content_area(LIVES_DIALOG(dialog));
   

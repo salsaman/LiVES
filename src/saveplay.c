@@ -176,7 +176,7 @@ boolean read_file_details(const char *file_name, boolean is_audio) {
   }
 
   if (mainw->opening_loc) 
-    return do_progress_dialog(TRUE,TRUE,_ ("Examining file header"));
+    return do_progress_dialog(TRUE,TRUE,_("Examining file header"));
 
 
   threaded_dialog_spin();
@@ -315,10 +315,10 @@ ulong open_file_sel(const char *file_name, double start, int frames) {
     lives_widget_context_update();
 
     if (frames==0) {
-      com=lives_strdup_printf(_ ("Opening %s"),file_name);
+      com=lives_strdup_printf(_("Opening %s"),file_name);
     }
     else {
-      com=lives_strdup_printf(_ ("Opening %s start time %.2f sec. frames %d"),file_name,start,frames);
+      com=lives_strdup_printf(_("Opening %s start time %.2f sec. frames %d"),file_name,start,frames);
     }
     d_print(""); // exhaust "switch" message
 
@@ -326,7 +326,7 @@ ulong open_file_sel(const char *file_name, double start, int frames) {
     lives_free(com);
     
     if (!mainw->save_with_sound) {
-      d_print(_ (" without sound"));
+      d_print(_(" without sound"));
       withsound=0;
     }
     
@@ -557,9 +557,7 @@ ulong open_file_sel(const char *file_name, double start, int frames) {
 		  if (cdata->sync_hint&SYNC_HINT_AUDIO_TRIM_START) {
 		    cfile->undo1_dbl=0.;
 		    cfile->undo2_dbl=cfile->total_time-cfile->video_time;
-		    msgstr=lives_strdup_printf(_ ("Auto trimming %.2f seconds of audio at start..."),cfile->undo2_dbl);
-		    d_print(msgstr);
-		    lives_free(msgstr);
+		    d_print(_("Auto trimming %.2f seconds of audio at start..."),cfile->undo2_dbl);
 		    if (on_del_audio_activate(NULL,NULL)) d_print_done();
 		    else d_print("\n");
 		    cfile->changed=FALSE;
@@ -567,9 +565,7 @@ ulong open_file_sel(const char *file_name, double start, int frames) {
 		  if (cdata->sync_hint&SYNC_HINT_AUDIO_TRIM_END) {
 		    cfile->undo1_dbl=cfile->laudio_time;
 		    cfile->undo2_dbl=cfile->total_time-cfile->video_time;
-		    msgstr=lives_strdup_printf(_ ("Auto trimming %.2f seconds of audio at end..."),cfile->undo2_dbl);
-		    d_print(msgstr);
-		    lives_free(msgstr);
+		    d_print(_("Auto trimming %.2f seconds of audio at end..."),cfile->undo2_dbl);
 		    if (on_del_audio_activate(NULL,NULL)) d_print_done();
 		    else d_print("\n");
 		    cfile->changed=FALSE;
@@ -584,9 +580,7 @@ ulong open_file_sel(const char *file_name, double start, int frames) {
 		    cfile->undo_achans=cfile->achans;
 		    cfile->undo_asampsize=cfile->asampsize;
 		    cfile->undo_arps=cfile->arps;
-		    msgstr=lives_strdup_printf(_ ("Auto padding with %.2f seconds of silence at start..."),cfile->undo2_dbl);
-		    d_print(msgstr);
-		    lives_free(msgstr);
+		    d_print(_("Auto padding with %.2f seconds of silence at start..."),cfile->undo2_dbl);
 		    if (on_ins_silence_activate(NULL,NULL)) d_print_done();
 		    else d_print("\n");
 		    cfile->changed=FALSE;
@@ -599,9 +593,7 @@ ulong open_file_sel(const char *file_name, double start, int frames) {
 		    cfile->undo_achans=cfile->achans;
 		    cfile->undo_asampsize=cfile->asampsize;
 		    cfile->undo_arps=cfile->arps;
-		    msgstr=lives_strdup_printf(_ ("Auto padding with %.2f seconds of silence at end..."),cfile->undo2_dbl);
-		    d_print(msgstr);
-		    lives_free(msgstr);
+		    d_print(_("Auto padding with %.2f seconds of silence at end..."),cfile->undo2_dbl);
 		    if (on_ins_silence_activate(NULL,NULL)) d_print_done();
 		    else d_print("\n");
 		    cfile->changed=FALSE;
@@ -671,7 +663,7 @@ ulong open_file_sel(const char *file_name, double start, int frames) {
     
       if (cfile->f_size>prefs->warn_file_size*1000000.&&mainw->is_ready&&frames==0) {
 	char *fsize_ds=lives_format_storage_space_string((uint64_t)cfile->f_size);
-	char *warn=lives_strdup_printf(_ ("\nLiVES is not currently optimised for larger file sizes.\nYou are advised (for now) to start with a smaller file, or to use the 'Open File Selection' option.\n(Filesize=%s)\n\nAre you sure you wish to continue ?"),fsize_ds);
+	char *warn=lives_strdup_printf(_("\nLiVES is not currently optimised for larger file sizes.\nYou are advised (for now) to start with a smaller file, or to use the 'Open File Selection' option.\n(Filesize=%s)\n\nAre you sure you wish to continue ?"),fsize_ds);
 	lives_free(fsize_ds);
 	if (!do_warning_dialog_with_check(warn,WARN_MASK_FSIZE)) {
 	  lives_free(warn);
@@ -685,7 +677,7 @@ ulong open_file_sel(const char *file_name, double start, int frames) {
 	  return 0;
 	}
 	lives_free(warn);
-	d_print(_ (" - please be patient."));
+	d_print(_(" - please be patient."));
       }
       
       d_print("\n");
@@ -937,10 +929,10 @@ ulong open_file_sel(const char *file_name, double start, int frames) {
   if (cfile->frames<=0) {
     if (cfile->afilesize==0l) {
       // we got neither video nor audio...
-      lives_snprintf (msg,256,"%s",_ 
+      lives_snprintf (msg,256,"%s",_
 		  ("\n\nLiVES was unable to extract either video or audio.\nPlease check the terminal window for more details.\n"));
       if (!capable->has_mplayer&&!capable->has_mplayer2) {
-	lives_strappend (msg,256,_ ("\n\nYou may need to install mplayer to open this file.\n"));
+	lives_strappend (msg,256,_("\n\nYou may need to install mplayer to open this file.\n"));
       }
       else {
 	if (capable->has_mplayer) {
@@ -948,7 +940,7 @@ ulong open_file_sel(const char *file_name, double start, int frames) {
 	}
 	else get_location ("mplayer2",loc,256);
 	if (strcmp (prefs->video_open_command,loc)) {
-	  lives_strappend (msg,256,_ ("\n\nPlease check the setting of Video open command in\nTools|Preferences|Decoding\n"));
+	  lives_strappend (msg,256,_("\n\nPlease check the setting of Video open command in\nTools|Preferences|Decoding\n"));
 	}
       }
       do_error_dialog(msg);
@@ -970,9 +962,7 @@ ulong open_file_sel(const char *file_name, double start, int frames) {
   current_file=mainw->current_file;
 
   if (isubfname!=NULL) {
-    tmp=lives_strdup_printf(_("Loaded subtitle file: %s\n"),isubfname);
-    d_print(tmp);
-    lives_free(tmp);
+    d_print(_("Loaded subtitle file: %s\n"),isubfname);
     lives_free(isubfname);
   }
 
@@ -1075,7 +1065,7 @@ load_done:
 
 
 static void save_subs_to_file(lives_clip_t *sfile, char *fname) {
-  char *msg,*ext;
+  char *ext;
   lives_subtitle_type_t otype,itype;
 
   if (sfile->subt==NULL) return;
@@ -1106,9 +1096,7 @@ static void save_subs_to_file(lives_clip_t *sfile, char *fname) {
     return;
   }
 
-  msg=lives_strdup_printf(_("Subtitles were saved as %s\n"),mainw->subt_save_file);
-  d_print(msg);
-  lives_free(msg);
+  d_print(_("Subtitles were saved as %s\n"),mainw->subt_save_file);
 }
 
 
@@ -1779,18 +1767,18 @@ void save_file (int clip, int start, int end, const char *filename) {
 
 
   if (!mainw->save_with_sound||prefs->encoder.of_allowed_acodecs==0) {
-    bit=lives_strdup(_ (" (with no sound)\n"));
+    bit=lives_strdup(_(" (with no sound)\n"));
   }
   else {
     bit=lives_strdup("\n");
   }
 
   if (!save_all) {
-    mesg=lives_strdup_printf(_ ("Saving frames %d to %d%s as \"%s\" : encoder = %s : format = %s..."),
+    mesg=lives_strdup_printf(_("Saving frames %d to %d%s as \"%s\" : encoder = %s : format = %s..."),
 			 start,end,bit,full_file_name,prefs->encoder.name,prefs->encoder.of_desc);
   } // end selection
   else {
-    mesg=lives_strdup_printf(_ ("Saving frames 1 to %d%s as \"%s\" : encoder %s : format = %s..."),
+    mesg=lives_strdup_printf(_("Saving frames 1 to %d%s as \"%s\" : encoder %s : format = %s..."),
 			 sfile->frames,bit,full_file_name,prefs->encoder.name,prefs->encoder.of_desc);
   }
   lives_free (bit);
@@ -1919,7 +1907,7 @@ void save_file (int clip, int start, int end, const char *filename) {
   if (!mainw->error) {
     char *pluginstr;
 
-    not_cancelled=do_progress_dialog(TRUE,TRUE,_ ("Saving [can take a long time]"));
+    not_cancelled=do_progress_dialog(TRUE,TRUE,_("Saving [can take a long time]"));
     mesg=lives_strdup (mainw->msg);
     
     if (mainw->iochan!=NULL) {
@@ -2076,7 +2064,7 @@ void save_file (int clip, int start, int end, const char *filename) {
       }
 
       switch_to_file(mainw->current_file,current_file);
-      retval=do_blocking_error_dialog(_ ("\n\nEncoder error - output file was not created !\n"));
+      retval=do_blocking_error_dialog(_("\n\nEncoder error - output file was not created !\n"));
 
       if (retval==LIVES_RESPONSE_SHOW_DETAILS) {
 	// show iochan (encoder) details
@@ -2113,7 +2101,7 @@ void save_file (int clip, int start, int end, const char *filename) {
 	unlink(sfile->info_file);
 	lives_system(com,FALSE);
 
-	do_progress_dialog(TRUE,FALSE,_ ("Clearing letterbox"));
+	do_progress_dialog(TRUE,FALSE,_("Clearing letterbox"));
 
 	if (mainw->error) {
 	  //	  cfile->may_be_damaged=TRUE;
@@ -2202,10 +2190,8 @@ void save_file (int clip, int start, int end, const char *filename) {
 
     fsize=sget_file_size(full_file_name);
     fsize_ds=lives_format_storage_space_string(fsize);
-    mesg=lives_strdup_printf(_("File size was %s\n"),fsize_ds);
+    d_print(_("File size was %s\n"),fsize_ds);
     lives_free(fsize_ds);
-    d_print(mesg);
-    lives_free(mesg);
 
     if (mainw->subt_save_file!=NULL) {
       save_subs_to_file(sfile,mainw->subt_save_file);
@@ -2245,7 +2231,6 @@ void play_file (void) {
   char *com2=lives_strdup (" ");
   char *com3=lives_strdup (" ");
   char *stopcom=NULL;
-  char *msg;
   char *stfile;
   char *xtrabit,*title;
 #ifdef GDK_WINDOWING_X11
@@ -2302,14 +2287,14 @@ void play_file (void) {
   if (mainw->record) {
     if (mainw->preview) {
       mainw->record=FALSE;
-      d_print (_ ("recording aborted by preview.\n"));
+      d_print (_("recording aborted by preview.\n"));
     }
     else if (mainw->current_file==0) {
       mainw->record=FALSE;
-      d_print (_ ("recording aborted by clipboard playback.\n"));
+      d_print (_("recording aborted by clipboard playback.\n"));
     }
     else {
-      d_print(_ ("Recording performance..."));
+      d_print(_("Recording performance..."));
       mainw->clip_switched=FALSE;
       // TODO
       if (mainw->current_file>0&&(cfile->undo_action==UNDO_RESAMPLE||cfile->undo_action==UNDO_RENDER)) {
@@ -2354,10 +2339,10 @@ void play_file (void) {
 
   if (mainw->multitrack==NULL) {
     if (!mainw->preview) {
-      lives_frame_set_label(LIVES_FRAME(mainw->playframe),_ ("Play"));
+      lives_frame_set_label(LIVES_FRAME(mainw->playframe),_("Play"));
     }
     else {
-      lives_frame_set_label(LIVES_FRAME(mainw->playframe),_ ("Preview"));
+      lives_frame_set_label(LIVES_FRAME(mainw->playframe),_("Preview"));
     }
     
     if (palette->style&STYLE_1) {
@@ -3151,7 +3136,7 @@ void play_file (void) {
     lives_widget_show(mainw->eventbox3);
     lives_widget_show(mainw->eventbox4);
     lives_widget_show(mainw->sep_image);
-    lives_frame_set_label(LIVES_FRAME(mainw->playframe),_ ("Preview"));
+    lives_frame_set_label(LIVES_FRAME(mainw->playframe),_("Preview"));
     lives_container_set_border_width (LIVES_CONTAINER (mainw->playframe), widget_opts.border_width);
     resize(1);
     lives_widget_show(mainw->t_bckground);
@@ -3306,13 +3291,11 @@ void play_file (void) {
   }
   if (prefs->show_player_stats) {
     if (mainw->fps_measure>0.) {
-      msg=lives_strdup_printf (_ ("Average FPS was %.4f\n"),mainw->fps_measure);
-      d_print (msg);
-      lives_free (msg);
+      d_print (_("Average FPS was %.4f\n"),mainw->fps_measure);
     }
   }
   if (mainw->size_warn) {
-    do_error_dialog (_ ("\n\nSome frames in this clip are wrongly sized.\nYou should click on Tools--->Resize All\nand resize all frames to the current size.\n"));
+    do_error_dialog (_("\n\nSome frames in this clip are wrongly sized.\nYou should click on Tools--->Resize All\nand resize all frames to the current size.\n"));
     mainw->size_warn=FALSE;
   }
   mainw->is_processing=mainw->preview;
@@ -3485,7 +3468,7 @@ void create_cfile(void) {
   cfile->menuentry=NULL;
   cfile->start=cfile->end=0;
   cfile->old_frames=cfile->frames=0;
-  lives_snprintf(cfile->type,40,"%s",_ ("Unknown"));
+  lives_snprintf(cfile->type,40,"%s",_("Unknown"));
   cfile->f_size=0l;
   cfile->achans=0;
   cfile->arate=0;
@@ -3556,8 +3539,8 @@ void create_cfile(void) {
   memset (cfile->keywords,0,1);
 
   cfile->signed_endian=AFORM_UNKNOWN;
-  lives_snprintf(cfile->undo_text,32,"%s",_ ("_Undo"));
-  lives_snprintf(cfile->redo_text,32,"%s",_ ("_Redo"));
+  lives_snprintf(cfile->undo_text,32,"%s",_("_Undo"));
+  lives_snprintf(cfile->redo_text,32,"%s",_("_Redo"));
 
 #ifndef IS_MINGW
   stfile=lives_build_filename(prefs->tmpdir,cfile->handle,".status",NULL);
@@ -3594,7 +3577,7 @@ boolean get_new_handle (int index, const char *name) {
 
   if (name==NULL||!strlen(name)) {
     cfile->is_untitled=TRUE;
-    xname=lives_strdup_printf(_ ("Untitled%d"),mainw->untitled_number++);
+    xname=lives_strdup_printf(_("Untitled%d"),mainw->untitled_number++);
   }
   else xname=lives_strdup(name);
 
@@ -3624,9 +3607,7 @@ boolean add_file_info(const char *check_handle, boolean aud_only) {
     get_frame_count(mainw->current_file);
     cfile->frames--; // just in case last frame is damaged
     reget_afilesize(mainw->current_file);
-    mesg=lives_strdup_printf(_("%d frames are enough !\n"),cfile->frames);
-    d_print(mesg);
-    lives_free(mesg);
+    d_print(_("%d frames are enough !\n"),cfile->frames);
   }
   else {
     if (check_handle!=NULL) {
@@ -3729,9 +3710,8 @@ boolean add_file_info(const char *check_handle, boolean aud_only) {
 
     if (!(cfile->afilesize*cfile->asampsize*cfile->arate*cfile->achans)||cfile->frames<2) {
       if (cfile->frames!=1) {
-      mesg=lives_strdup_printf(_ ("\nPlayback speed not found or invalid ! Using default fps of %.3f fps. \nDefault can be set in Tools | Preferences | Misc.\n"),prefs->default_fps);
-      d_print(mesg);
-      lives_free(mesg);
+      d_print(_("\nPlayback speed not found or invalid ! Using default fps of %.3f fps. \nDefault can be set in Tools | Preferences | Misc.\n"),
+	      prefs->default_fps);
       }
       cfile->pb_fps=cfile->fps=prefs->default_fps;
     }
@@ -3741,9 +3721,7 @@ boolean add_file_info(const char *check_handle, boolean aud_only) {
       if (cfile->fps>FPS_MAX||cfile->fps<1.) {
 	cfile->pb_fps=cfile->fps=prefs->default_fps;
       }
-      mesg=lives_strdup_printf(_ ("Playback speed was adjusted to %.3f frames per second to fit audio.\n"),cfile->fps);
-      d_print(mesg);
-      lives_free(mesg);
+      d_print(_("Playback speed was adjusted to %.3f frames per second to fit audio.\n"),cfile->fps);
     }
 
     if (xduration>0.) {
@@ -3760,20 +3738,20 @@ boolean add_file_info(const char *check_handle, boolean aud_only) {
   if (cfile->opening) return TRUE;
 
   if (cfile->bpp==256) {
-    mesg1=lives_strdup_printf(_ ("Frames=%d type=%s size=%dx%d *bpp=Greyscale* fps=%.3f\nAudio:"),cfile->frames,
+    mesg1=lives_strdup_printf(_("Frames=%d type=%s size=%dx%d *bpp=Greyscale* fps=%.3f\nAudio:"),cfile->frames,
 			      cfile->type,cfile->hsize,cfile->vsize,cfile->fps);
   }
   else {
     if (cfile->bpp!=32) cfile->bpp=24; // assume RGB24  *** TODO - check
-    mesg1=lives_strdup_printf(_ ("Frames=%d type=%s size=%dx%d bpp=%d fps=%.3f\nAudio:"),cfile->frames,
+    mesg1=lives_strdup_printf(_("Frames=%d type=%s size=%dx%d bpp=%d fps=%.3f\nAudio:"),cfile->frames,
 			      cfile->type,cfile->hsize,cfile->vsize,cfile->bpp,cfile->fps);
   }
 
   if (cfile->achans==0) {
-    mesg=lives_strdup_printf (_ ("%s none\n"),mesg1);
+    mesg=lives_strdup_printf (_("%s none\n"),mesg1);
   }
   else {
-    mesg=lives_strdup_printf(P_ ("%s %d Hz %d channel %d bps\n","%s %d Hz %d channels %d bps\n",cfile->achans),
+    mesg=lives_strdup_printf(P_("%s %d Hz %d channel %d bps\n","%s %d Hz %d channels %d bps\n",cfile->achans),
 			 mesg1,cfile->arate,cfile->achans,cfile->asampsize);
   }
   d_print(mesg);
@@ -3782,19 +3760,13 @@ boolean add_file_info(const char *check_handle, boolean aud_only) {
 
   // get the author,title,comments
   if (strlen (cfile->author)) {
-    mesg=lives_strdup_printf(_ (" - Author: %s\n"),cfile->author);
-    d_print(mesg);
-    lives_free(mesg);
+    d_print(_(" - Author: %s\n"),cfile->author);
   }
   if (strlen (cfile->title)) {
-    mesg=lives_strdup_printf(_ (" - Title: %s\n"),cfile->title);
-    d_print(mesg);
-    lives_free(mesg);
+    d_print(_(" - Title: %s\n"),cfile->title);
   }
   if (strlen (cfile->comment)) {
-    mesg=lives_strdup_printf(_ (" - Comment: %s\n"),cfile->comment);
-    d_print(mesg);
-    lives_free(mesg);
+    d_print(_(" - Comment: %s\n"),cfile->comment);
   }
 
   return TRUE;
@@ -3905,9 +3877,7 @@ boolean save_frame_inner(int clip, int frame, const char *file_name, int width, 
   tmp=lives_filename_from_utf8 (full_file_name,-1,NULL,NULL,NULL);
 
   if (mainw->multitrack==NULL) {
-    com=lives_strdup_printf(_ ("Saving frame %d as %s..."),frame,full_file_name);
-    d_print(com);
-    lives_free(com);
+    d_print(_("Saving frame %d as %s..."),frame,full_file_name);
     
     if (sfile->clip_type==CLIP_TYPE_FILE) {
       boolean resb=virtual_to_images(clip,frame,frame,FALSE,NULL);
@@ -4004,12 +3974,10 @@ void backup_file(int clip, int start, int end, const char *file_name) {
 
   //...and backup
   get_menu_text(sfile->menuentry,title);
-  com=lives_strdup_printf(_ ("Backing up %s to %s"),title,full_file_name);
-  d_print(com);
-  lives_free(com);
+  d_print(_("Backing up %s to %s"),title,full_file_name);
 
   if (!mainw->save_with_sound) {
-    d_print(_ (" without sound"));
+    d_print(_(" without sound"));
     withsound=0;
   }
 
@@ -4057,7 +4025,7 @@ void backup_file(int clip, int start, int end, const char *file_name) {
   cfile->op_dir=lives_filename_from_utf8((tmp=get_dir(full_file_name)),-1,NULL,NULL,NULL);
   lives_free(tmp);
 
-  if (!(do_progress_dialog(TRUE,TRUE,_ ("Backing up")))||mainw->error) {
+  if (!(do_progress_dialog(TRUE,TRUE,_("Backing up")))||mainw->error) {
     if (mainw->error) {
       d_print_failed();
     }
@@ -4091,7 +4059,7 @@ void backup_file(int clip, int start, int end, const char *file_name) {
   }
 
   if (with_perf) {
-    d_print(_ ("performance data was backed up..."));
+    d_print(_("performance data was backed up..."));
   }
 
   array=lives_strsplit(mainw->msg,"|",3);
@@ -4593,7 +4561,7 @@ void open_set_file (const char *set_name, int clipnum) {
 
     retval=get_clip_value(mainw->current_file,CLIP_DETAILS_CLIPNAME,name,256);
     if (!retval) {
-      lives_snprintf(name,256,_ ("Untitled%d"),mainw->untitled_number++);
+      lives_snprintf(name,256,_("Untitled%d"),mainw->untitled_number++);
       needs_update=TRUE;
     }
     retval=get_clip_value(mainw->current_file,CLIP_DETAILS_UNIQUE_ID,&cfile->unique_id,0);
@@ -4668,10 +4636,7 @@ ulong restore_file(const char *file_name) {
     return 0;
   }
   
-
-  mesg=lives_strdup_printf(_ ("Restoring %s..."),file_name);
-  d_print(mesg);
-  lives_free(mesg);
+  d_print(_("Restoring %s..."),file_name);
   
   mainw->current_file=new_file;
   
@@ -4700,7 +4665,7 @@ ulong restore_file(const char *file_name) {
   }
 
   cfile->restoring=TRUE;
-  not_cancelled=do_progress_dialog(TRUE,TRUE,_ ("Restoring"));
+  not_cancelled=do_progress_dialog(TRUE,TRUE,_("Restoring"));
   cfile->restoring=FALSE;
 
   if (mainw->error||!not_cancelled) {
@@ -4722,7 +4687,7 @@ ulong restore_file(const char *file_name) {
   }
 
   if (!is_OK) {
-    mesg=lives_strdup_printf(_ ("\n\nThe file %s is corrupt.\nLiVES was unable to restore it.\n"),file_name);
+    mesg=lives_strdup_printf(_("\n\nThe file %s is corrupt.\nLiVES was unable to restore it.\n"),file_name);
     do_blocking_error_dialog(mesg);
     lives_free(mesg);
     
@@ -4770,15 +4735,15 @@ ulong restore_file(const char *file_name) {
   }
 
   lives_snprintf(cfile->type,40,"Frames");
-  mesg1=lives_strdup_printf(_ ("Frames=%d type=%s size=%dx%d bpp=%d fps=%.3f\nAudio:"),cfile->frames,cfile->type,
+  mesg1=lives_strdup_printf(_("Frames=%d type=%s size=%dx%d bpp=%d fps=%.3f\nAudio:"),cfile->frames,cfile->type,
 			    cfile->hsize,cfile->vsize,cfile->bpp,cfile->fps);
 
   if (cfile->afilesize==0l) {
     cfile->achans=0;
-    mesg=lives_strdup_printf (_ ("%s none\n"),mesg1);
+    mesg=lives_strdup_printf (_("%s none\n"),mesg1);
   }
   else {
-    mesg=lives_strdup_printf(P_ ("%s %d Hz %d channel %d bps\n","%s %d Hz %d channels %d bps\n",cfile->achans),
+    mesg=lives_strdup_printf(P_("%s %d Hz %d channel %d bps\n","%s %d Hz %d channels %d bps\n",cfile->achans),
 			 mesg1,cfile->arate,cfile->achans,cfile->asampsize);
   }
   d_print(mesg);
@@ -5256,9 +5221,8 @@ int save_to_scrap_file (weed_plant_t *layer) {
     if (wrtable) {
       if ((int64_t)(((double)free_mb-(scrap_mb+ascrap_mb))/1000.)<prefs->rec_stop_gb) {
 	if (mainw->record&&!mainw->record_paused) {
-	  char *msg=lives_strdup_printf(_("\nRECORDING WAS PAUSED BECAUSE FREE DISK SPACE in %s IS BELOW %d GB !\nRecord stop level can be set in Preferences.\n"),dir,prefs->rec_stop_gb);
-	  d_print(msg);
-	  lives_free(msg);
+	  d_print(_("\nRECORDING WAS PAUSED BECAUSE FREE DISK SPACE in %s IS BELOW %d GB !\nRecord stop level can be set in Preferences.\n"),
+		  dir,prefs->rec_stop_gb);
 	  on_record_perf_activate(NULL,NULL);
 	}
       }

@@ -138,7 +138,7 @@ typedef int lives_pgid_t;
 #endif
 
 #include <stdint.h>
-
+#include <stdarg.h>
 
 #define QUOTEME(x) #x
 
@@ -1146,7 +1146,7 @@ void get_filename(char *filename, boolean strip_dir);
 char *get_extension(const char *filename);
 uint64_t get_version_hash(const char *exe, const char *sep, int piece);
 uint64_t make_version_hash(const char *ver);
-void d_print(const char *text);
+void d_print(const char *fmt, ...);
 void init_clipboard(void);
 boolean cache_file_contents(const char *filename);
 char *get_val_from_cached_list(const char *key, size_t maxlen);

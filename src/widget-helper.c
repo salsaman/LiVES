@@ -4712,6 +4712,7 @@ LIVES_INLINE boolean lives_tree_model_get(LiVESTreeModel *tmod, LiVESTreeIter *t
       qv = titer->data(colnum, Qt::DisplayRole);
       *cattr = strdup(qv.value<QString>().toUtf8().constData());
     }
+    attribute=va_arg(argList, char *);
   }
 
 #endif
@@ -7547,17 +7548,20 @@ LiVESWidget *lives_standard_entry_new(const char *labeltext, boolean use_mnemoni
 
 
 
-LiVESWidget *lives_standard_dialog_new(const char *title, boolean add_std_buttons) {
+LiVESWidget *lives_standard_dialog_new(const char *title, boolean add_std_buttons, int width, int height) {
   LiVESWidget *dialog=NULL;
 
-
   dialog = lives_dialog_new ();
+
+  lives_widget_set_size_request (dialog, width, height);
 
   if (title!=NULL)
     lives_window_set_title (LIVES_WINDOW (dialog), title);
   
   lives_window_set_deletable(LIVES_WINDOW(dialog), FALSE);
-  lives_window_set_resizable (LIVES_WINDOW (dialog), FALSE);
+
+  if (!widget_opts.non_modal)
+   lives_window_set_resizable (LIVES_WINDOW (dialog), FALSE);
   
   lives_widget_set_hexpand(dialog,TRUE);
   lives_widget_set_vexpand(dialog,TRUE);

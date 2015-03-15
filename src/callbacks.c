@@ -6555,7 +6555,7 @@ void on_cancel_keep_button_clicked (LiVESButton *button, livespointer user_data)
   }
   lives_widget_context_update();
 
-  if ((!mainw->effects_paused||cfile->nokeep)&&(!mainw->is_rendering||
+  if ((!mainw->effects_paused||cfile->nokeep)&&(mainw->multitrack==NULL||
 						(mainw->multitrack!=NULL&&(!mainw->multitrack->is_rendering||
 									   !mainw->preview)))) {
     // Cancel

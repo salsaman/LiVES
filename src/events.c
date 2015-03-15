@@ -4161,8 +4161,6 @@ boolean render_to_clip (boolean new_clip) {
   int xachans=0,xarate=0,xasamps=0,xse=0;
   int current_file=mainw->current_file;
 
-  if (mainw->multitrack!=NULL&&mainw->multitrack->pr_audio) d_print(_("Pre-rendering audio..."));
-  else d_print(_("Rendering..."));
 
   if (new_clip) {
 
@@ -4209,7 +4207,7 @@ boolean render_to_clip (boolean new_clip) {
       }
 
     }
-  
+
     if (mainw->current_file>-1&&cfile!=NULL&&cfile->clip_type==CLIP_TYPE_GENERATOR) {
       weed_generator_end ((weed_plant_t *)cfile->ext_src);
     }
@@ -4285,6 +4283,9 @@ boolean render_to_clip (boolean new_clip) {
     end_threaded_dialog();
   }
 
+  if (mainw->multitrack!=NULL&&mainw->multitrack->pr_audio) d_print(_("Pre-rendering audio..."));
+  else d_print(_("Rendering..."));
+
   cfile->old_frames=cfile->frames;
   cfile->changed=TRUE;
   mainw->effects_paused=FALSE;
@@ -4318,6 +4319,7 @@ boolean render_to_clip (boolean new_clip) {
 	mainw->effects_paused=FALSE;
 	deinit_render_effects();
 	audio_free_fnames();
+	d_print_failed();
 	return FALSE;
       }
       if (prefs->crash_recovery) add_to_recovery_file(cfile->handle);
@@ -5197,7 +5199,7 @@ render_details *create_render_details (int type) {
 
   height=scrh-SCR_HEIGHT_SAFETY;
   width=scrw-SCR_WIDTH_SAFETY;
-
+  
   rdet->dialog = lives_standard_dialog_new (title,FALSE,width,height);
 
   lives_free(title);
@@ -5470,7 +5472,7 @@ render_details *create_render_details (int type) {
     lives_dialog_add_action_widget (LIVES_DIALOG (rdet->dialog), cancelbutton, LIVES_RESPONSE_CANCEL);
 
     if (!specified) {
-      lives_button_box_set_button_width (LIVES_BUTTON_BOX (daa), rdet->okbutton, DEF_BUTTON_WIDTH*4);
+      lives_button_box_set_button_width (LIVES_BUTTON_BOX (daa), cancelbutton, DEF_BUTTON_WIDTH*4);
     }
   }
   else add_fill_to_box(LIVES_BOX (daa));

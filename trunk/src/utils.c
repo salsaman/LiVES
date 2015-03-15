@@ -1851,7 +1851,7 @@ void init_clipboard(void) {
     cfile->progress_start=cfile->start;
     cfile->progress_end=cfile->end;
     // show a progress dialog, not cancellable
-    do_progress_dialog(TRUE,FALSE,_ ("Clearing the clipboard"));
+    do_progress_dialog(TRUE,FALSE,_("Clearing the clipboard"));
   }
 
   clipboard->cb_src=current_file;
@@ -1860,10 +1860,8 @@ void init_clipboard(void) {
 
 
 
-void d_print(const char *text) {
+void d_print(const char *fmt, ...) {
   // print out output in the main message area (and info log)
-
-  
 
   // there are several small tweaks for this:
 
@@ -1871,24 +1869,32 @@ void d_print(const char *text) {
   // mainw->no_switch_dprint :: TRUE - disable printing of switch message when maine->current_file changes
 
   // mainw->last_dprint_file :: clip number of last mainw->current_file;
-  char *switchtext,*tmp;
-
   LiVESTextBuffer *tbuf=lives_text_view_get_buffer(LIVES_TEXT_VIEW(mainw->textview1));
+
+  va_list xargs;
+
+  char *switchtext,*tmp,*text;
 
   if (!capable->smog_version_correct) return;
 
   if (mainw->suppress_dprint) return;
+
+  va_start(xargs,fmt);
+
+  text=lives_strdup_vprintf(fmt,xargs);
+
+  va_end(xargs);
 
   if (LIVES_IS_TEXT_VIEW (mainw->textview1)) {
     lives_text_buffer_insert_at_end(tbuf,text);
     if (mainw->current_file!=mainw->last_dprint_file&&mainw->current_file!=0&&mainw->multitrack==NULL&&
 	(mainw->current_file==-1||cfile->clip_type!=CLIP_TYPE_GENERATOR)&&!mainw->no_switch_dprint) {
       if (mainw->current_file>0) {
-	switchtext=lives_strdup_printf (_ ("\n==============================\nSwitched to clip %s\n"),tmp=get_menu_name(cfile));
+	switchtext=lives_strdup_printf (_("\n==============================\nSwitched to clip %s\n"),tmp=get_menu_name(cfile));
 	lives_free(tmp);
       }
       else {
-	switchtext=lives_strdup (_ ("\n==============================\nSwitched to empty clip\n"));
+	switchtext=lives_strdup (_("\n==============================\nSwitched to empty clip\n"));
       }
       lives_text_buffer_insert_at_end(tbuf,switchtext);
       lives_free (switchtext);
@@ -1897,6 +1903,8 @@ void d_print(const char *text) {
 	(!mainw->no_switch_dprint||mainw->current_file!=0)) mainw->last_dprint_file=mainw->current_file;
     lives_text_view_scroll_onscreen(LIVES_TEXT_VIEW (mainw->textview1));
   }
+
+  lives_free(text);
 }
 
 
@@ -2532,13 +2540,18 @@ void remove_layout_files(LiVESList *map) {
 
   // called after, for example: a clip is removed or altered and the user opts to remove all associated layouts
 
-  char *com,*msg;
-  char *fname,*fdir;
-  char **array;
   LiVESList *lmap,*lmap_next,*cmap,*cmap_next,*map_next;
+
   size_t maplen;
-  int i;
+
+  char **array;
+
+  char *com;
+  char *fname,*fdir;
+
   boolean is_current;
+
+  register int i;
 
   while (map!=NULL) {
     map_next=map->next;
@@ -2569,10 +2582,7 @@ void remove_layout_files(LiVESList *map) {
       }
 
       // fname should now hold the layout name on disk
-
-      msg=lives_strdup_printf(_("Removing layout %s\n"),fname);
-      d_print(msg);
-      lives_free(msg);
+      d_print(_("Removing layout %s\n"),fname);
 
       if (!is_current) {
 #ifndef IS_MINGW
@@ -3018,41 +3028,41 @@ void get_play_times(void) {
     }
 
     if (cfile->opening_loc||(cfile->frames==123456789&&cfile->opening)) {
-      tmpstr=lives_strdup(_ ("Video [opening...]"));
+      tmpstr=lives_strdup(_("Video [opening...]"));
     }
     else {
       if (cfile->video_time>0.) {
-	tmpstr=lives_strdup_printf(_ ("Video [%.2f sec]"),cfile->video_time);
+	tmpstr=lives_strdup_printf(_("Video [%.2f sec]"),cfile->video_time);
       }
       else {
 	if (cfile->video_time<=0.&&cfile->frames>0) {
-	  tmpstr=lives_strdup (_ ("(Undefined)"));
+	  tmpstr=lives_strdup (_("(Undefined)"));
 	}
 	else {
-	  tmpstr=lives_strdup (_ ("(No video)"));
+	  tmpstr=lives_strdup (_("(No video)"));
 	}
       }
     }
     lives_label_set_text(LIVES_LABEL(mainw->vidbar),tmpstr);
     lives_free(tmpstr);
     if (cfile->achans==0) {
-      tmpstr=lives_strdup (_ ("(No audio)"));
+      tmpstr=lives_strdup (_("(No audio)"));
     }
     else {
       if (cfile->opening_audio) {
 	if (cfile->achans==1) {
-	  tmpstr=lives_strdup (_ ("Mono  [opening...]"));
+	  tmpstr=lives_strdup (_("Mono  [opening...]"));
 	}
 	else {
-	  tmpstr=lives_strdup (_ ("Left Audio [opening...]"));
+	  tmpstr=lives_strdup (_("Left Audio [opening...]"));
 	}
       }
       else {
 	if (cfile->achans==1) {
-	  tmpstr=lives_strdup_printf(_ ("Mono [%.2f sec]"),cfile->laudio_time);
+	  tmpstr=lives_strdup_printf(_("Mono [%.2f sec]"),cfile->laudio_time);
 	}
 	else {
-	  tmpstr=lives_strdup_printf(_ ("Left Audio [%.2f sec]"),cfile->laudio_time);
+	  tmpstr=lives_strdup_printf(_("Left Audio [%.2f sec]"),cfile->laudio_time);
 	}
       }
     }
@@ -3060,10 +3070,10 @@ void get_play_times(void) {
     lives_free(tmpstr);
     if (cfile->achans>1) {
       if (cfile->opening_audio) {
-	tmpstr=lives_strdup (_ ("Right Audio [opening...]"));
+	tmpstr=lives_strdup (_("Right Audio [opening...]"));
       }
       else {
-	tmpstr=lives_strdup_printf(_ ("Right Audio [%.2f sec]"),cfile->raudio_time);
+	tmpstr=lives_strdup_printf(_("Right Audio [%.2f sec]"),cfile->raudio_time);
       }
       lives_label_set_text(LIVES_LABEL(mainw->raudbar),tmpstr);
       lives_widget_show (mainw->raudbar);
@@ -3510,7 +3520,7 @@ void switch_aud_to_mplayer(boolean set_in_prefs) {
   for (i=1;i<MAX_FILES;i++) {
     if (mainw->files[i]!=NULL) {
       if (i!=mainw->current_file&&mainw->files[i]->opening) {
-	do_error_dialog(_ ("LiVES cannot switch to mplayer whilst clips are loading."));
+	do_error_dialog(_("LiVES cannot switch to mplayer whilst clips are loading."));
 	return;
       }
     }
@@ -3563,7 +3573,7 @@ void switch_aud_to_mplayer2(boolean set_in_prefs) {
   for (i=1;i<MAX_FILES;i++) {
     if (mainw->files[i]!=NULL) {
       if (i!=mainw->current_file&&mainw->files[i]->opening) {
-	do_error_dialog(_ ("LiVES cannot switch to mplayer2 whilst clips are loading."));
+	do_error_dialog(_("LiVES cannot switch to mplayer2 whilst clips are loading."));
 	return;
       }
     }
@@ -3813,7 +3823,7 @@ boolean after_foreign_play(void) {
 
 
 	  cfile->nopreview=TRUE;
-	  if (!mainw->com_failed&&do_progress_dialog(TRUE,TRUE,_ ("Cleaning up clip"))) {
+	  if (!mainw->com_failed&&do_progress_dialog(TRUE,TRUE,_("Cleaning up clip"))) {
 	    get_next_free_file();
 	  }
 	  else {
@@ -3915,7 +3925,7 @@ boolean check_file(const char *file_name, boolean check_existing) {
   // check if file exists
   if (lives_file_test (lfile_name, LIVES_FILE_TEST_EXISTS)) {
     if (check_existing) {
-      msg=lives_strdup_printf (_ ("\n%s\nalready exists.\n\nOverwrite ?\n"),file_name);
+      msg=lives_strdup_printf (_("\n%s\nalready exists.\n\nOverwrite ?\n"),file_name);
       if (!do_warning_dialog(msg)) {
 	lives_free (msg);
 	lives_free(lfile_name);
@@ -4305,15 +4315,15 @@ void set_undoable (const char *what, boolean sensitive) {
     cfile->undoable=sensitive;
     if (!(what==NULL)) {
       char *what_safe=lives_strdelimit (lives_strdup (what),"_",' ');
-      lives_snprintf(cfile->undo_text,32,_ ("_Undo %s"),what_safe);
-      lives_snprintf(cfile->redo_text,32,_ ("_Redo %s"),what_safe);
+      lives_snprintf(cfile->undo_text,32,_("_Undo %s"),what_safe);
+      lives_snprintf(cfile->redo_text,32,_("_Redo %s"),what_safe);
       lives_free (what_safe);
     }
     else {
       cfile->undoable=FALSE;
       cfile->undo_action=UNDO_NONE;
-      lives_snprintf(cfile->undo_text,32,"%s",_ ("_Undo"));
-      lives_snprintf(cfile->redo_text,32,"%s",_ ("_Redo"));
+      lives_snprintf(cfile->undo_text,32,"%s",_("_Undo"));
+      lives_snprintf(cfile->redo_text,32,"%s",_("_Redo"));
     }
     set_menu_text(mainw->undo,cfile->undo_text,TRUE);
     set_menu_text(mainw->redo,cfile->redo_text,TRUE);
@@ -4336,15 +4346,15 @@ void set_redoable (const char *what, boolean sensitive) {
     cfile->redoable=sensitive;
     if (!(what==NULL)) {
       char *what_safe=lives_strdelimit (lives_strdup (what),"_",' ');
-      lives_snprintf(cfile->undo_text,32,_ ("_Undo %s"),what_safe);
-      lives_snprintf(cfile->redo_text,32,_ ("_Redo %s"),what_safe);
+      lives_snprintf(cfile->undo_text,32,_("_Undo %s"),what_safe);
+      lives_snprintf(cfile->redo_text,32,_("_Redo %s"),what_safe);
       lives_free (what_safe);
     }
     else {
       cfile->redoable=FALSE;
       cfile->undo_action=UNDO_NONE;
-      lives_snprintf(cfile->undo_text,32,"%s",_ ("_Undo"));
-      lives_snprintf(cfile->redo_text,32,"%s",_ ("_Redo"));
+      lives_snprintf(cfile->undo_text,32,"%s",_("_Undo"));
+      lives_snprintf(cfile->redo_text,32,"%s",_("_Redo"));
     }
     set_menu_text(mainw->undo,cfile->undo_text,TRUE);
     set_menu_text(mainw->redo,cfile->redo_text,TRUE);
@@ -4362,7 +4372,7 @@ set_sel_label (LiVESWidget *sel_label) {
   char *sy,*sz;
 
   if (mainw->current_file==-1||!cfile->frames||mainw->multitrack!=NULL) {
-    lives_label_set_text(LIVES_LABEL(sel_label),_ ("-------------Selection------------"));
+    lives_label_set_text(LIVES_LABEL(sel_label),_("-------------Selection------------"));
   }
   else {
     tstr=lives_strdup_printf ("%.2f",calc_time_from_frame (mainw->current_file,cfile->end+1)-

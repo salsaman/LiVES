@@ -136,7 +136,7 @@ rfx_build_window_t *make_rfx_build_window (const char *script_name, lives_rfx_st
     title=lives_strdup(_("LiVES: - Edit Test RFX"));
   }
 
-  rfxbuilder->dialog = lives_standard_dialog_new (title,FALSE);
+  rfxbuilder->dialog = lives_standard_dialog_new (title,FALSE,-1,-1);
   lives_free(title);
 
   if (prefs->show_gui) {
@@ -200,7 +200,7 @@ rfx_build_window_t *make_rfx_build_window (const char *script_name, lives_rfx_st
 
   rfxbuilder->spinbutton_version = lives_standard_spin_button_new ((tmp=lives_strdup(_("Version:       "))),FALSE,
 								   rfxbuilder->plugin_version, rfxbuilder->plugin_version, 1000000., 1., 1., 0,
-								   LIVES_BOX(hbox),(tmp2=lives_strdup(_ ("The script version.")))
+								   LIVES_BOX(hbox),(tmp2=lives_strdup(_("The script version.")))
 								   );
   lives_free(tmp); lives_free(tmp2);
 
@@ -257,38 +257,38 @@ rfx_build_window_t *make_rfx_build_window (const char *script_name, lives_rfx_st
 
   add_hsep_to_box(LIVES_BOX(top_vbox));
 
-  rfxbuilder->requirements_button=lives_button_new_with_mnemonic (_ ("_Requirements..."));
+  rfxbuilder->requirements_button=lives_button_new_with_mnemonic (_("_Requirements..."));
   lives_box_pack_start (LIVES_BOX (top_vbox), rfxbuilder->requirements_button, TRUE, TRUE, 0);
   lives_widget_set_tooltip_text( rfxbuilder->requirements_button,
-			(_ ("Enter any binaries required by the plugin.")));
+			(_("Enter any binaries required by the plugin.")));
 
   add_hsep_to_box(LIVES_BOX(top_vbox));
 
-  rfxbuilder->properties_button=lives_button_new_with_mnemonic (_ ("_Properties..."));
+  rfxbuilder->properties_button=lives_button_new_with_mnemonic (_("_Properties..."));
   lives_box_pack_start (LIVES_BOX (top_vbox), rfxbuilder->properties_button, TRUE, TRUE, 0);
   lives_widget_set_tooltip_text( rfxbuilder->properties_button,
-			(_ ("Set properties for the plugin. Optional.")));
+			(_("Set properties for the plugin. Optional.")));
 
   add_hsep_to_box(LIVES_BOX(top_vbox));
 
-  rfxbuilder->params_button=lives_button_new_with_mnemonic (_ ("_Parameters..."));
+  rfxbuilder->params_button=lives_button_new_with_mnemonic (_("_Parameters..."));
   lives_box_pack_start (LIVES_BOX (top_vbox), rfxbuilder->params_button, TRUE, TRUE, 0);
   lives_widget_set_tooltip_text( rfxbuilder->params_button,
-			(_ ("Set up parameters used in pre/loop/post/trigger code. Optional.")));
+			(_("Set up parameters used in pre/loop/post/trigger code. Optional.")));
 
   add_hsep_to_box(LIVES_BOX(top_vbox));
 
-  rfxbuilder->param_window_button=lives_button_new_with_mnemonic (_ ("Parameter _Window Hints..."));
+  rfxbuilder->param_window_button=lives_button_new_with_mnemonic (_("Parameter _Window Hints..."));
   lives_box_pack_start (LIVES_BOX (top_vbox), rfxbuilder->param_window_button, TRUE, TRUE, 0);
   lives_widget_set_tooltip_text( rfxbuilder->param_window_button,
-			(_ ("Set hints about how to lay out the parameter window. Optional.")));
+			(_("Set hints about how to lay out the parameter window. Optional.")));
 
   add_hsep_to_box(LIVES_BOX(top_vbox));
 
   langc = lives_list_append (langc, (livespointer)"0xF0 - LiVES-Perl");
 
   rfxbuilder->langc_combo = lives_standard_combo_new ((tmp=lives_strdup(_("_Language code:"))),TRUE,langc,LIVES_BOX(top_vbox),
-						      (tmp2=lives_strdup(_ ("Language for pre/loop/post/triggers. Optional."))));
+						      (tmp2=lives_strdup(_("Language for pre/loop/post/triggers. Optional."))));
 
   lives_free(tmp);
   lives_free(tmp2);
@@ -297,31 +297,31 @@ rfx_build_window_t *make_rfx_build_window (const char *script_name, lives_rfx_st
 
   add_hsep_to_box(LIVES_BOX(top_vbox));
 
-  rfxbuilder->pre_button=lives_button_new_with_mnemonic (_ ("_Pre loop code..."));
+  rfxbuilder->pre_button=lives_button_new_with_mnemonic (_("_Pre loop code..."));
   lives_box_pack_start (LIVES_BOX (top_vbox), rfxbuilder->pre_button, TRUE, TRUE, 0);
   lives_widget_set_tooltip_text( rfxbuilder->pre_button,
-			(_ ("Code to be executed before the loop. Optional.")));
+			(_("Code to be executed before the loop. Optional.")));
 
   add_hsep_to_box(LIVES_BOX(top_vbox));
 
-  rfxbuilder->loop_button=lives_button_new_with_mnemonic (_ ("_Loop code..."));
+  rfxbuilder->loop_button=lives_button_new_with_mnemonic (_("_Loop code..."));
   lives_box_pack_start (LIVES_BOX (top_vbox), rfxbuilder->loop_button, TRUE, TRUE, 0);
   lives_widget_set_tooltip_text( rfxbuilder->loop_button,
-			(_ ("Loop code to be applied to each frame.")));
+			(_("Loop code to be applied to each frame.")));
 
   add_hsep_to_box(LIVES_BOX(top_vbox));
 
-  rfxbuilder->post_button=lives_button_new_with_mnemonic (_ ("_Post loop code..."));
+  rfxbuilder->post_button=lives_button_new_with_mnemonic (_("_Post loop code..."));
   lives_box_pack_start (LIVES_BOX (top_vbox), rfxbuilder->post_button, TRUE, TRUE, 0);
   lives_widget_set_tooltip_text( rfxbuilder->post_button,
-			(_ ("Code to be executed after the loop. Optional.")));
+			(_("Code to be executed after the loop. Optional.")));
 
   add_hsep_to_box(LIVES_BOX(top_vbox));
 
-  rfxbuilder->trigger_button=lives_button_new_with_mnemonic (_ ("_Trigger code..."));
+  rfxbuilder->trigger_button=lives_button_new_with_mnemonic (_("_Trigger code..."));
   lives_box_pack_start (LIVES_BOX (top_vbox), rfxbuilder->trigger_button, TRUE, TRUE, 0);
   lives_widget_set_tooltip_text( rfxbuilder->trigger_button,
-			(_ ("Set trigger code for when the parameter window is shown, or when a parameter is changed. Optional (except for Utilities).")));
+			(_("Set trigger code for when the parameter window is shown, or when a parameter is changed. Optional (except for Utilities).")));
 
 
   dialog_action_area = lives_dialog_get_action_area(LIVES_DIALOG (rfxbuilder->dialog));
@@ -418,7 +418,7 @@ rfx_build_window_t *make_rfx_build_window (const char *script_name, lives_rfx_st
     break;
     }
     if (!script_to_rfxbuilder (rfxbuilder,script_file)) {
-      char *msg=lives_strdup_printf (_ ("\n\nUnable to parse the script file:\n%s\n%s\n"),script_file,mainw->msg);
+      char *msg=lives_strdup_printf (_("\n\nUnable to parse the script file:\n%s\n%s\n"),script_file,mainw->msg);
       // must use blocking error dialogs as the scriptname window is modal
       do_blocking_error_dialog (msg);
       lives_free (msg);
@@ -557,7 +557,7 @@ void on_list_table_clicked (LiVESButton *button, livespointer user_data) {
     rfxbuilder->onum_triggers=rfxbuilder->num_triggers;
   }
 
-  dialog = lives_standard_dialog_new (title,FALSE);
+  dialog = lives_standard_dialog_new (title,FALSE,-1,-1);
   if (title!=NULL) lives_free(title);
 
   lives_window_add_accel_group (LIVES_WINDOW (dialog), accel_group);
@@ -619,20 +619,20 @@ void on_list_table_clicked (LiVESButton *button, livespointer user_data) {
   button_box=lives_vbutton_box_new();
   lives_box_pack_start (LIVES_BOX (hbox), button_box, FALSE, FALSE, 0);
 
-  rfxbuilder->new_entry_button=lives_button_new_with_mnemonic (_ ("_New Entry"));
+  rfxbuilder->new_entry_button=lives_button_new_with_mnemonic (_("_New Entry"));
   lives_box_pack_start (LIVES_BOX (button_box), rfxbuilder->new_entry_button, FALSE, FALSE, 0);
 
-  rfxbuilder->edit_entry_button=lives_button_new_with_mnemonic (_ ("_Edit Entry"));
+  rfxbuilder->edit_entry_button=lives_button_new_with_mnemonic (_("_Edit Entry"));
   lives_box_pack_start (LIVES_BOX (button_box), rfxbuilder->edit_entry_button, FALSE, FALSE, 0);
 
-  rfxbuilder->remove_entry_button=lives_button_new_with_mnemonic (_ ("_Remove Entry"));
+  rfxbuilder->remove_entry_button=lives_button_new_with_mnemonic (_("_Remove Entry"));
   lives_box_pack_start (LIVES_BOX (button_box), rfxbuilder->remove_entry_button, FALSE, FALSE, 0);
 
   if (rfxbuilder->table_type==RFX_TABLE_TYPE_PARAM_WINDOW) {
-    rfxbuilder->move_up_button=lives_button_new_with_mnemonic (_ ("Move _Up"));
+    rfxbuilder->move_up_button=lives_button_new_with_mnemonic (_("Move _Up"));
     lives_box_pack_start (LIVES_BOX (button_box), rfxbuilder->move_up_button, FALSE, FALSE, 0);
     
-    rfxbuilder->move_down_button=lives_button_new_with_mnemonic (_ ("Move _Down"));
+    rfxbuilder->move_down_button=lives_button_new_with_mnemonic (_("Move _Down"));
     lives_box_pack_start (LIVES_BOX (button_box), rfxbuilder->move_down_button, FALSE, FALSE, 0);
 
 
@@ -1001,7 +1001,7 @@ void on_properties_clicked (LiVESButton *button, livespointer user_data) {
 
   rfx_build_window_t *rfxbuilder=(rfx_build_window_t *)user_data;
 
-  dialog = lives_standard_dialog_new (_("LiVES: - RFX Properties"),FALSE);
+  dialog = lives_standard_dialog_new (_("LiVES: - RFX Properties"),FALSE,-1,-1);
   lives_window_add_accel_group (LIVES_WINDOW (dialog), accel_group);
 
   if (prefs->show_gui) {
@@ -1829,7 +1829,7 @@ void on_table_delete_row (LiVESButton *button, livespointer user_data) {
       }
       else if (!(lives_widget_get_state(rfxbuilder->entry[i])&LIVES_WIDGET_STATE_INSENSITIVE)) {
 	if (rfxbuilder->copy_params[i].onchange) {
-	  do_blocking_error_dialog(_ ("\n\nCannot remove this parameter as it has a trigger.\nPlease remove the trigger first.\n\n"));
+	  do_blocking_error_dialog(_("\n\nCannot remove this parameter as it has a trigger.\nPlease remove the trigger first.\n\n"));
 	  return;
 	}
 
@@ -1873,7 +1873,7 @@ void on_table_delete_row (LiVESButton *button, livespointer user_data) {
       triggers_adjusted=TRUE;
     }
     if (triggers_adjusted) {
-      do_blocking_error_dialog (_ ("\n\nSome triggers were adjusted.\nPlease check the trigger code.\n"));
+      do_blocking_error_dialog (_("\n\nSome triggers were adjusted.\nPlease check the trigger code.\n"));
     }
     break;
 
@@ -1998,7 +1998,7 @@ LiVESWidget * make_param_dialog (int pnum, rfx_build_window_t *rfxbuilder) {
     title=lives_strdup(_("LiVES: - Edit RFX Parameter"));
   }
 
-  dialog = lives_standard_dialog_new (title,TRUE);
+  dialog = lives_standard_dialog_new (title,TRUE,-1,-1);
   lives_free(title);
 
   lives_window_add_accel_group (LIVES_WINDOW (dialog), accel_group);
@@ -2038,7 +2038,7 @@ LiVESWidget * make_param_dialog (int pnum, rfx_build_window_t *rfxbuilder) {
   typelist = lives_list_append (typelist, (livespointer)"string_list");
 
   rfxbuilder->param_type_combo = lives_standard_combo_new ((tmp=lives_strdup(_("_Type:         "))),TRUE,typelist,
-							   LIVES_BOX(dialog_vbox),(tmp2=lives_strdup(_ ("Parameter type (select from list)."))));
+							   LIVES_BOX(dialog_vbox),(tmp2=lives_strdup(_("Parameter type (select from list)."))));
   lives_free(tmp);
   lives_free(tmp2);
   lives_list_free(typelist);
@@ -2170,7 +2170,7 @@ LiVESWidget * make_param_dialog (int pnum, rfx_build_window_t *rfxbuilder) {
   lives_box_pack_start (LIVES_BOX (dialog_vbox), rfxbuilder->param_wrap_hbox, TRUE, TRUE, widget_opts.packing_height);
 
   rfxbuilder->param_wrap_checkbutton = lives_standard_check_button_new ((tmp=lives_strdup(_("_Wrap value"))),TRUE,LIVES_BOX(rfxbuilder->param_wrap_hbox),
-									(tmp2=lives_strdup(_ ("Whether the value wraps max->min and min->max."))));
+									(tmp2=lives_strdup(_("Whether the value wraps max->min and min->max."))));
 
   lives_free(tmp); lives_free(tmp2);
 
@@ -2538,8 +2538,8 @@ void on_param_type_changed (LiVESCombo *param_type_combo, livespointer user_data
       
       lives_button_set_label (LIVES_BUTTON (rfxbuilder->param_strdef_button),(_("Set _default")));
       lives_widget_show (rfxbuilder->param_strdef_hbox);
-      lives_label_set_text (LIVES_LABEL (rfxbuilder->param_def_label),(_ ("Default value:  ")));
-      lives_label_set_text (LIVES_LABEL (rfxbuilder->param_max_label),(_ ("Maximum length (chars): ")));
+      lives_label_set_text (LIVES_LABEL (rfxbuilder->param_def_label),(_("Default value:  ")));
+      lives_label_set_text (LIVES_LABEL (rfxbuilder->param_max_label),(_("Maximum length (chars): ")));
       lives_spin_button_set_range(LIVES_SPIN_BUTTON(rfxbuilder->spinbutton_param_max),1,RFX_MAXSTRINGLEN);
       if (pnum<0) lives_spin_button_set_value(LIVES_SPIN_BUTTON(rfxbuilder->spinbutton_param_max),RFX_TEXT_MAGIC);
       lives_spin_button_set_digits (LIVES_SPIN_BUTTON (rfxbuilder->spinbutton_param_def),0);
@@ -2580,7 +2580,7 @@ LiVESWidget * make_param_window_dialog (int pnum, rfx_build_window_t *rfxbuilder
     title=lives_strdup(_("LiVES: - Edit RFX Parameter Window Hint"));
   }
 
-  dialog = lives_standard_dialog_new (title,TRUE);
+  dialog = lives_standard_dialog_new (title,TRUE,-1,-1);
   lives_free(title);
 
   if (prefs->show_gui) {
@@ -2781,7 +2781,7 @@ LiVESWidget * make_trigger_dialog (int tnum, rfx_build_window_t *rfxbuilder) {
     title=lives_strdup(_("LiVES: - Edit RFX Trigger"));
   }
 
-  dialog = lives_standard_dialog_new (title,TRUE);
+  dialog = lives_standard_dialog_new (title,TRUE,-1,-1);
   lives_free(title);
 
   if (prefs->show_gui) {
@@ -2861,7 +2861,7 @@ void on_code_clicked (LiVESButton *button, livespointer user_data) {
 
   char *tmpx;
 
-  dialog = lives_standard_dialog_new (NULL,FALSE);
+  dialog = lives_standard_dialog_new (NULL,FALSE,-1,-1);
 
   if (prefs->show_gui) {
     lives_window_set_transient_for(LIVES_WINDOW(dialog),LIVES_WINDOW(mainw->LiVES));
@@ -3053,28 +3053,28 @@ boolean perform_rfxbuilder_checks (rfx_build_window_t *rfxbuilder) {
   char *name=lives_strdup (lives_entry_get_text (LIVES_ENTRY (rfxbuilder->name_entry)));
 
   if (!strlen (name)) {
-    do_blocking_error_dialog (_ ("\n\nName must not be blank.\n"));
+    do_blocking_error_dialog (_("\n\nName must not be blank.\n"));
     lives_free (name);
     return FALSE;
   }
   if (get_token_count (name,' ')>1) {
-    do_blocking_error_dialog (_ ("\n\nName must not contain spaces.\n"));
+    do_blocking_error_dialog (_("\n\nName must not contain spaces.\n"));
     lives_free (name);
     return FALSE;
   }
   if (!strlen(lives_entry_get_text (LIVES_ENTRY (rfxbuilder->menu_text_entry)))) {
-    do_blocking_error_dialog (_ ("\n\nMenu text must not be blank.\n"));
+    do_blocking_error_dialog (_("\n\nMenu text must not be blank.\n"));
     lives_free (name);
     return FALSE;
   }
   if (!strlen(lives_entry_get_text (LIVES_ENTRY (rfxbuilder->action_desc_entry)))&&
       rfxbuilder->type!=RFX_BUILD_TYPE_UTILITY) {
-    do_blocking_error_dialog (_ ("\n\nAction description must not be blank.\n"));
+    do_blocking_error_dialog (_("\n\nAction description must not be blank.\n"));
     lives_free (name);
     return FALSE;
   }
   if (!strlen(lives_entry_get_text (LIVES_ENTRY (rfxbuilder->author_entry)))) {
-    do_blocking_error_dialog (_ ("\n\nAuthor must not be blank.\n"));
+    do_blocking_error_dialog (_("\n\nAuthor must not be blank.\n"));
     lives_free (name);
     return FALSE;
   }
@@ -3083,7 +3083,7 @@ boolean perform_rfxbuilder_checks (rfx_build_window_t *rfxbuilder) {
 						!strcmp (rfxbuilder->oname,name))) {
     if (find_rfx_plugin_by_name (name,RFX_STATUS_TEST)>-1||find_rfx_plugin_by_name 
 	(name,RFX_STATUS_CUSTOM)>-1||find_rfx_plugin_by_name (name,RFX_STATUS_BUILTIN)>-1) {
-      do_blocking_error_dialog (_ ("\n\nThere is already a plugin with this name.\nName must be unique.\n"));
+      do_blocking_error_dialog (_("\n\nThere is already a plugin with this name.\nName must be unique.\n"));
       lives_free (name);
       return FALSE;
     }
@@ -3096,7 +3096,7 @@ boolean perform_rfxbuilder_checks (rfx_build_window_t *rfxbuilder) {
   }
 
   if (rfxbuilder->num_triggers==0&&rfxbuilder->type==RFX_BUILD_TYPE_UTILITY) {
-    do_blocking_error_dialog (_ ("\n\nTrigger code should not be blank for a utility.\n"));
+    do_blocking_error_dialog (_("\n\nTrigger code should not be blank for a utility.\n"));
     lives_free (name);
     return FALSE;
   }
@@ -3109,7 +3109,7 @@ boolean perform_param_checks (rfx_build_window_t *rfxbuilder, int index, int row
   register int i;
 
   if (!strlen(lives_entry_get_text (LIVES_ENTRY (rfxbuilder->param_name_entry)))) {
-    do_blocking_error_dialog (_ ("\n\nParameter name must not be blank.\n"));
+    do_blocking_error_dialog (_("\n\nParameter name must not be blank.\n"));
     return FALSE;
   }
   for (i=0;i<rows;i++) {
@@ -3138,7 +3138,6 @@ boolean rfxbuilder_to_script (rfx_build_window_t *rfxbuilder) {
   char *script_name=lives_strdup_printf ("%s.%s",name,RFXBUILDER_SCRIPT_SUFFIX);
   char *new_name;
   char *buf;
-  char *msg;
   char *tmp,*tmp2;
 
   int retval;
@@ -3168,9 +3167,8 @@ boolean rfxbuilder_to_script (rfx_build_window_t *rfxbuilder) {
   script_file=lives_strdup_printf ("%s%s",script_file_dir,script_name);
   lives_free (script_file_dir);
   lives_free (script_name);
-  msg=lives_strdup_printf (_ ("Writing script file %s..."),script_file);
-  d_print (msg);
-  lives_free (msg);
+
+  d_print(_("Writing script file %s..."),script_file);
 
   if (!check_file (script_file,TRUE)) {
     lives_free (script_file);
@@ -3183,7 +3181,6 @@ boolean rfxbuilder_to_script (rfx_build_window_t *rfxbuilder) {
     if (!(sfile=fopen(script_file,"w"))) {
       retval=do_write_failed_error_s_with_retry(script_file,lives_strerror(errno),LIVES_WINDOW(rfxbuilder->dialog));
       if (retval==LIVES_RESPONSE_CANCEL) {
-	lives_free (msg);
 	lives_free (script_file);
 	d_print_failed();
 	return FALSE;
@@ -3865,7 +3862,7 @@ void on_rebuild_rfx_activate (LiVESMenuItem *menuitem, livespointer user_data) {
 		      prefs->lib_dir,PLUGIN_EXEC_DIR,PLUGIN_RENDERED_EFFECTS_BUILTIN,prefs->prefix_dir);
   lives_system(com,TRUE);
   lives_free(com);
-  d_print (_ ("custom...")); 
+  d_print (_("custom...")); 
   com=lives_strdup_printf("%s build_rfx_plugins custom",prefs->backend_sync);
   lives_system(com,FALSE);
   lives_free(com);
@@ -3948,7 +3945,7 @@ void on_delete_rfx_activate (LiVESMenuItem *menuitem, livespointer user_data) {
     lives_free (script_name);
 
     // double check with user
-    msg=lives_strdup_printf (_ ("\n\nReally delete RFX script\n%s ?\n\n"),rfx_script_file);
+    msg=lives_strdup_printf (_("\n\nReally delete RFX script\n%s ?\n\n"),rfx_script_file);
     if (!do_warning_dialog (msg)) {
       lives_free (msg);
       lives_free (rfx_script_file);
@@ -3957,9 +3954,9 @@ void on_delete_rfx_activate (LiVESMenuItem *menuitem, livespointer user_data) {
     }
     lives_free (msg);
 
-    msg=lives_strdup_printf (_ ("Deleting rfx script %s..."),rfx_script_file);
-    d_print (msg);
-    lives_free (msg);
+
+    d_print (_("Deleting rfx script %s..."),rfx_script_file);
+
     if (!(ret=unlink (rfx_script_file))) {
       char *com;
 #ifndef IS_MINGW
@@ -3977,7 +3974,7 @@ void on_delete_rfx_activate (LiVESMenuItem *menuitem, livespointer user_data) {
     }
     else {
       d_print_failed();
-       msg=lives_strdup_printf(_ ("\n\nFailed to delete the script\n%s\nError code was %d\n"),rfx_script_file,ret);
+       msg=lives_strdup_printf(_("\n\nFailed to delete the script\n%s\nError code was %d\n"),rfx_script_file,ret);
       do_error_dialog (msg);
       lives_free (msg);
     }
@@ -4013,7 +4010,7 @@ void on_promote_rfx_activate (LiVESMenuItem *menuitem, livespointer user_data) {
     rfx_script_to=lives_build_filename (rfx_dir_to,script_name,NULL);
 
     if (lives_file_test (rfx_script_to, LIVES_FILE_TEST_EXISTS)) {
-      char *msg=lives_strdup_printf (_ ("\nCustom script file:\n%s\nalready exists.\nPlease delete it first, or rename the test script.\n"),script_name);
+      char *msg=lives_strdup_printf (_("\nCustom script file:\n%s\nalready exists.\nPlease delete it first, or rename the test script.\n"),script_name);
       do_blocking_error_dialog (msg);
       lives_free (msg);
       lives_free (rfx_dir_from);
@@ -4024,10 +4021,8 @@ void on_promote_rfx_activate (LiVESMenuItem *menuitem, livespointer user_data) {
       return;
     }
 
-    msg=lives_strdup_printf (_ ("Promoting rfx test plugin %s to custom..."),script_name);
-    d_print (msg);
+    d_print (_("Promoting rfx test plugin %s to custom..."),script_name);
     lives_free (script_name);
-    lives_free (msg);
 
     lives_mkdir_with_parents(rfx_dir_to,S_IRWXU);
 
@@ -4041,7 +4036,7 @@ void on_promote_rfx_activate (LiVESMenuItem *menuitem, livespointer user_data) {
   if (failed) {
     rmdir(rfx_dir_to);
     d_print_failed();
-    msg=lives_strdup_printf(_ ("\n\nFailed to move the plugin script from\n%s to\n%s\nReturn code was %d (%s)\n"),
+    msg=lives_strdup_printf(_("\n\nFailed to move the plugin script from\n%s to\n%s\nReturn code was %d (%s)\n"),
 			rfx_script_from,rfx_script_to,errno,strerror(errno));
     do_error_dialog (msg);
     lives_free (msg);
@@ -4063,20 +4058,19 @@ void on_export_rfx_activate (LiVESMenuItem *menuitem, livespointer user_data) {
 
   char *script_name=prompt_for_script_name (NULL,status);
   char *rfx_script_from,*filename;
-  char *com,*msg,*tmp,*tmp2;
+  char *com,*tmp,*tmp2;
   
   if (script_name==NULL||!strlen(script_name)) return;  // user cancelled
 
-  filename = choose_file (NULL,script_name,NULL,LIVES_FILE_CHOOSER_ACTION_SAVE,_ ("LiVES: - Export Script to..."),NULL);
+  filename = choose_file (NULL,script_name,NULL,LIVES_FILE_CHOOSER_ACTION_SAVE,_("LiVES: - Export Script to..."),NULL);
 
   if (filename==NULL) return;
   
   rfx_script_from=lives_build_filename (capable->home_dir,LIVES_CONFIG_DIR,
 				    PLUGIN_RENDERED_EFFECTS_CUSTOM_SCRIPTS,script_name,NULL);
 
-  msg=lives_strdup_printf(_ ("Copying %s to %s..."),rfx_script_from,filename);
-  d_print(msg);
-  lives_free(msg);
+  d_print(_("Copying %s to %s..."),rfx_script_from,filename);
+
 #ifndef IS_MINGW
   com=lives_strdup_printf("/bin/cp \"%s\" \"%s\"",(tmp=lives_filename_from_utf8 (rfx_script_from,-1,NULL,NULL,NULL)),
 		      (tmp2=lives_filename_from_utf8 (filename,-1,NULL,NULL,NULL)));
@@ -4099,10 +4093,10 @@ void on_import_rfx_activate (LiVESMenuItem *menuitem, livespointer user_data) {
 
   short status=(short)LIVES_POINTER_TO_INT (user_data);
   char *rfx_script_to,*rfx_dir_to;
-  char *com,*msg,*tmp,*tmp2,*tmpx;
+  char *com,*tmp,*tmp2,*tmpx;
   char basename[PATH_MAX];
 
-  char *filename=choose_file(NULL,NULL,NULL,LIVES_FILE_CHOOSER_ACTION_OPEN,_ ("LiVES: Import Script from..."),NULL);
+  char *filename=choose_file(NULL,NULL,NULL,LIVES_FILE_CHOOSER_ACTION_OPEN,_("LiVES: Import Script from..."),NULL);
 
   if (filename==NULL) return;
 
@@ -4152,10 +4146,8 @@ void on_import_rfx_activate (LiVESMenuItem *menuitem, livespointer user_data) {
     return;
   }
 
+  d_print(_("Copying %s to %s..."),filename,rfx_script_to);
 
-  msg=lives_strdup_printf(_ ("Copying %s to %s..."),filename,rfx_script_to);
-  d_print(msg);
-  lives_free(msg);
 #ifndef IS_MINGW
   com=lives_strdup_printf("/bin/cp \"%s\" \"%s\"",(tmp=lives_filename_from_utf8(filename,-1,NULL,NULL,NULL)),
 		      (tmp2=lives_filename_from_utf8(rfx_script_to,-1,NULL,NULL,NULL)));
@@ -4224,7 +4216,7 @@ char *prompt_for_script_name(const char *sname, lives_rfx_status_t status) {
     status_list = lives_list_append (status_list, lives_strdup(mainw->string_constants[LIVES_STRING_CONSTANT_TEST]));
   }
 
-  dialog = lives_standard_dialog_new (NULL,FALSE);
+  dialog = lives_standard_dialog_new (NULL,FALSE,-1,-1);
 
   if (prefs->show_gui) {
     lives_window_set_transient_for(LIVES_WINDOW(dialog),LIVES_WINDOW(mainw->LiVES));
@@ -4248,14 +4240,14 @@ char *prompt_for_script_name(const char *sname, lives_rfx_status_t status) {
   if (copy_mode) {
     lives_window_set_title (LIVES_WINDOW (dialog), _("LiVES: - Copy RFX Script"));
 
-    status_combo = lives_standard_combo_new (_ ("_From type:    "),TRUE,status_list,LIVES_BOX(hbox),NULL);
+    status_combo = lives_standard_combo_new (_("_From type:    "),TRUE,status_list,LIVES_BOX(hbox),NULL);
 
     status_combo_entry = lives_combo_get_entry(LIVES_COMBO(status_combo));
 
     lives_list_free_strings (status_list);
     lives_list_free (status_list);
 
-    label = lives_standard_label_new (_ ("   Script:    "));
+    label = lives_standard_label_new (_("   Script:    "));
     lives_widget_show (label);
     lives_box_pack_start (LIVES_BOX (hbox), label, FALSE, FALSE, widget_opts.packing_width);
     if (palette->style&STYLE_1) {
@@ -4265,13 +4257,13 @@ char *prompt_for_script_name(const char *sname, lives_rfx_status_t status) {
   else {
     if (status==RFX_STATUS_RENAME) {
       lives_window_set_title (LIVES_WINDOW (dialog), _("LiVES: - Rename test RFX Script"));
-      label = lives_standard_label_new (_ ("From script: "));
+      label = lives_standard_label_new (_("From script: "));
       rename_mode=TRUE;
       status=RFX_STATUS_TEST;
     }
     else {
       lives_window_set_title (LIVES_WINDOW (dialog), _("LiVES: - RFX Script name"));
-      label = lives_standard_label_new (_ ("Script name: "));
+      label = lives_standard_label_new (_("Script name: "));
     }
     lives_box_pack_start (LIVES_BOX (hbox), label, FALSE, FALSE, 0);
   }
@@ -4291,10 +4283,10 @@ char *prompt_for_script_name(const char *sname, lives_rfx_status_t status) {
     if (copy_mode) {
       lives_signal_connect (LIVES_GUI_OBJECT(status_combo),LIVES_WIDGET_CHANGED_SIGNAL,LIVES_GUI_CALLBACK (on_script_status_changed),
 			(livespointer)script_combo);
-      label = lives_standard_label_new (_ ("New name: "));
+      label = lives_standard_label_new (_("New name: "));
     }
     if (rename_mode) {
-      label = lives_standard_label_new (_ ("New script name: "));
+      label = lives_standard_label_new (_("New script name: "));
     }
     if (copy_mode||rename_mode) {
       hbox = lives_hbox_new (FALSE, 0);
@@ -4336,7 +4328,7 @@ char *prompt_for_script_name(const char *sname, lives_rfx_status_t status) {
 	if (find_rfx_plugin_by_name (name,RFX_STATUS_TEST)>-1||
 	    find_rfx_plugin_by_name (name,RFX_STATUS_CUSTOM)>-1||
 	    find_rfx_plugin_by_name (name,RFX_STATUS_BUILTIN)>-1) {
-	  do_blocking_error_dialog (_ ("\n\nThere is already a plugin with this name.\nName must be unique.\n"));
+	  do_blocking_error_dialog (_("\n\nThere is already a plugin with this name.\nName must be unique.\n"));
 	  OK=FALSE;
 	}
 	//copy selected script to test
@@ -4369,7 +4361,7 @@ char *prompt_for_script_name(const char *sname, lives_rfx_status_t status) {
 	char *xname=ensure_extension(name,".script");
 
 	if (name !=NULL&&lives_list_find ((nmlist=get_script_list (status)),xname)!=NULL) {
-	  do_blocking_error_dialog (_ ("\n\nThere is already a test script with this name.\nScript name must be unique.\n"));
+	  do_blocking_error_dialog (_("\n\nThere is already a test script with this name.\nScript name must be unique.\n"));
 	  OK=FALSE;
 	}
 	else {
@@ -4381,13 +4373,12 @@ char *prompt_for_script_name(const char *sname, lives_rfx_status_t status) {
 					    PLUGIN_RENDERED_EFFECTS_TEST_SCRIPTS,from_name,NULL);
 	  rfx_script_to=lives_build_filename (capable->home_dir,LIVES_CONFIG_DIR,
 					  PLUGIN_RENDERED_EFFECTS_TEST_SCRIPTS,xname,NULL);
-	  d_print ((tmp=lives_strdup_printf (_ ("Renaming RFX test script %s to %s..."),from_name,xname)));
-	  lives_free(tmp);
+	  d_print (_("Renaming RFX test script %s to %s..."),from_name,xname);
 	  lives_free (from_name);
 
 	  if ((ret=rename (rfx_script_from,rfx_script_to))) {
 	    d_print_failed();
-	    do_error_dialog ((tmp=lives_strdup_printf(_ ("\n\nFailed to move the plugin script from\n%s to\n%s\nReturn code was %d\n"),rfx_script_from,rfx_script_to,ret)));
+	    do_error_dialog ((tmp=lives_strdup_printf(_("\n\nFailed to move the plugin script from\n%s to\n%s\nReturn code was %d\n"),rfx_script_from,rfx_script_to,ret)));
 	    lives_free(tmp);
 	  }
 	  else {

@@ -2644,7 +2644,6 @@ boolean lives_osc_cb_op_fps_set(void *context, int arglen, const void *vargs, OS
   int fps;
   float fpsf;
   double fpsd;
-  char *tmp;
 
   if (mainw->fixed_fpsd>0.) return lives_osc_notify_failure();
   if (!lives_osc_check_arguments (arglen,vargs,"f",FALSE)) {
@@ -2659,8 +2658,7 @@ boolean lives_osc_cb_op_fps_set(void *context, int arglen, const void *vargs, OS
   }
   if (fpsd>0.&&fpsd<=FPS_MAX) {
     mainw->fixed_fpsd=fpsd;
-    d_print ((tmp=lives_strdup_printf (_("Syncing to external framerate of %.8f frames per second.\n"),fpsd)));
-    lives_free(tmp);
+    d_print (_("Syncing to external framerate of %.8f frames per second.\n"),fpsd);
   }
   else if (fpsd==0.) mainw->fixed_fpsd=-1.; ///< 0. to release
   else lives_osc_notify_failure();
@@ -6886,7 +6884,6 @@ int lives_osc_attach_methods( lives_osc *o ) {
 /* initialization, setup a UDP socket and invoke OSC magic */
 lives_osc* lives_osc_allocate(int port_id) {
   lives_osc *o;
-  char *tmp;
 
   if (livesOSC==NULL) {
     o = (lives_osc*)lives_malloc(sizeof(lives_osc));
@@ -6905,7 +6902,7 @@ lives_osc* lives_osc_allocate(int port_id) {
     o->t.RealTimeMemoryAllocator = lives_size_malloc;
     
     if(!OSCInitReceive( &(o->rt))) {
-      d_print( _ ("Cannot initialize OSC receiver\n"));
+      d_print(_("Cannot initialize OSC receiver\n"));
       return NULL;
     } 
     o->packet = OSCAllocPacketBuffer();
@@ -6929,13 +6926,10 @@ lives_osc* lives_osc_allocate(int port_id) {
 
   if (port_id>0) {
     if(NetworkStartUDPServer( o->packet, port_id) != TRUE) {
-      tmp=lives_strdup_printf (_ ("WARNING: Cannot start OSC server at UDP port %d\n"),port_id);
-      d_print( tmp);
-      lives_free(tmp);
+      d_print(_("WARNING: Cannot start OSC server at UDP port %d\n"),port_id);
     }
     else {
-      d_print( (tmp=lives_strdup_printf (_ ("Started OSC server at UDP port %d\n"),port_id)));
-      lives_free(tmp);
+      d_print(_("Started OSC server at UDP port %d\n"),port_id);
     }
   }
   
@@ -7040,7 +7034,6 @@ void lives_osc_free(lives_osc *c) {
 
 
 boolean lives_osc_init(uint32_t udp_port) {
-  char *tmp;
 
   if (livesOSC!=NULL&&udp_port!=0) {
     /*  OSCPacketBuffer packet=livesOSC->packet;
@@ -7049,8 +7042,7 @@ boolean lives_osc_init(uint32_t udp_port) {
 	}
     */
     if (NetworkStartUDPServer( livesOSC->packet, udp_port) != TRUE) {
-      d_print( (tmp=lives_strdup_printf (_ ("Cannot start OSC/UDP server at port %d \n"),udp_port)));
-      lives_free(tmp);
+      d_print(_("Cannot start OSC/UDP server at port %d \n"),udp_port);
     }
   }
   else { 

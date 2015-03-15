@@ -2612,7 +2612,7 @@ static void create_threaded_dialog(char *text, boolean has_cancel) {
  
   procw=(xprocess*)(lives_calloc(1,sizeof(xprocess)));
 
-  procw->processing = lives_standard_dialog_new (_("LiVES: - Processing..."),FALSE);
+  procw->processing = lives_standard_dialog_new (_("LiVES: - Processing..."),FALSE,-1,-1);
 
   lives_window_add_accel_group (LIVES_WINDOW (procw->processing), mainw->accel_group);
 

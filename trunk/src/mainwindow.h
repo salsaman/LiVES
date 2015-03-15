@@ -92,6 +92,10 @@
 
 #define DEF_BUTTON_WIDTH ((int)(80.*widget_opts.scale))
 
+#define DEF_DIALOG_WIDTH 640
+#define DEF_DIALOG_HEIGHT 480
+
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 /// number of function keys

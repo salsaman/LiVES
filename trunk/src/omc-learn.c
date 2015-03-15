@@ -1,6 +1,6 @@
 // omc-learn.c
 // LiVES (lives-exe)
-// (c) G. Finch 2008 - 2013
+// (c) G. Finch 2008 - 2015
 // Released under the GPL 3 or later
 // see file ../COPYING for licensing details
 
@@ -174,7 +174,6 @@ const char * get_js_filename(void) {
 
 
 boolean js_open(void) {
-  char *msg;
 
   if (!(prefs->omc_dev_opts&OMC_DEV_JS)) return TRUE;
 
@@ -191,9 +190,7 @@ boolean js_open(void) {
   if (prefs->omc_js_fname==NULL) return FALSE;
 
   mainw->ext_cntl[EXT_CNTL_JS]=TRUE;
-  msg=lives_strdup_printf(_("Responding to joystick events from %s\n"),prefs->omc_js_fname);
-  d_print(msg);
-  lives_free(msg);
+  d_print(_("Responding to joystick events from %s\n"),prefs->omc_js_fname);
 
   return TRUE;
 }
@@ -276,10 +273,6 @@ char *midi_fname;
 
 boolean midi_open(void) {
 
-#ifndef IS_MINGW  
-  char *msg;
-#endif
-
   if (!(prefs->omc_dev_opts&OMC_DEV_MIDI)) return TRUE;
 
 #ifdef ALSA_MIDI
@@ -321,9 +314,7 @@ boolean midi_open(void) {
   }
   if (prefs->omc_midi_fname==NULL) return FALSE;
 
-  msg=lives_strdup_printf(_("Responding to MIDI events from %s\n"),prefs->omc_midi_fname);
-  d_print(msg);
-  lives_free(msg);
+  d_print(_("Responding to MIDI events from %s\n"),prefs->omc_midi_fname);
 #endif
 
 #ifdef ALSA_MIDI
@@ -1318,9 +1309,9 @@ static omclearn_w *create_omclearn_dialog(void) {
   }
   
   winsize_h=scr_width-SCR_WIDTH_SAFETY;
-  winsize_v=scr_height-SCR_HEIGHT_SAFETY*2;
+  winsize_v=scr_height-SCR_HEIGHT_SAFETY;
   
-  omclw->dialog = lives_standard_dialog_new (_("LiVES: OMC learner"),FALSE);
+  omclw->dialog = lives_standard_dialog_new (_("LiVES: OMC learner"),FALSE,winsize_h,winsize_v);
   
   omclw->top_vbox = lives_dialog_get_content_area(LIVES_DIALOG(omclw->dialog));
 
@@ -1328,7 +1319,7 @@ static omclearn_w *create_omclearn_dialog(void) {
 
   lives_table_set_col_spacings(LIVES_TABLE(omclw->table),widget_opts.packing_width*2);
 
-  scrolledwindow = lives_standard_scrolled_window_new (winsize_h, winsize_v, omclw->table);
+  scrolledwindow = lives_standard_scrolled_window_new (winsize_h, winsize_v-SCR_HEIGHT_SAFETY, omclw->table);
 
   lives_box_pack_start (LIVES_BOX (omclw->top_vbox), scrolledwindow, TRUE, TRUE, 0);
 
@@ -2431,7 +2422,6 @@ void on_midi_save_activate (LiVESMenuItem *menuitem, livespointer user_data) {
   lives_omc_match_node_t *mnode;
   lives_omc_macro_t omacro;
 
-  char *msg;
   char *save_file;
 
   int nnodes;
@@ -2445,9 +2435,7 @@ void on_midi_save_activate (LiVESMenuItem *menuitem, livespointer user_data) {
 
   if (save_file==NULL||!strlen(save_file)) return;
 
-  msg=lives_strdup_printf(_("Saving device mapping to file %s..."),save_file);
-  d_print(msg);
-  lives_free(msg);
+  d_print(_("Saving device mapping to file %s..."),save_file);
 
   do {
     retval=0;
@@ -2555,7 +2543,6 @@ void on_midi_load_activate (LiVESMenuItem *menuitem, livespointer user_data) {
 
   char *load_file=NULL;
   char *srch;
-  char *msg;
 
   uint32_t srchlen,nnodes,macro,nvars,supertype;
   int idx=-1;
@@ -2573,12 +2560,10 @@ void on_midi_load_activate (LiVESMenuItem *menuitem, livespointer user_data) {
 
   if (load_file==NULL||!strlen(load_file)) return;
 
-  msg=lives_strdup_printf(_("Loading device mapping from file %s..."),load_file);
-  d_print(msg);
-  lives_free(msg);
+  d_print(_("Loading device mapping from file %s..."),load_file);
 
   if ((fd=open(load_file,O_RDONLY))<0) {
-    msg=lives_strdup_printf (_("\n\nUnable to open file\n%s\nError code %d\n"),load_file,errno);
+    char *msg=lives_strdup_printf (_("\n\nUnable to open file\n%s\nError code %d\n"),load_file,errno);
     do_blocking_error_dialog (msg);
     lives_free (msg);
     lives_free (load_file);

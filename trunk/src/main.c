@@ -6389,12 +6389,10 @@ void close_current_file(int file_to_switch_to) {
   }
   //update the bar text
   if (mainw->current_file>-1) {
-    int i;
-    char *tmp;
+    register int i;
     if (cfile->clip_type!=CLIP_TYPE_GENERATOR&&mainw->current_file!=mainw->scrap_file&&
 	(mainw->multitrack==NULL||mainw->current_file!=mainw->multitrack->render_file)) {
-      d_print ((tmp=lives_strdup_printf(_ ("Closed file %s\n"),cfile->file_name)));
-      lives_free(tmp);
+      d_print (_ ("Closed file %s\n"),cfile->file_name);
 
       lives_notify(LIVES_OSC_NOTIFY_CLIP_CLOSED,"");
 

@@ -2,9 +2,9 @@ Version 2.4.0
 -------------
 Implement workaround for expose event problems in gtk+ 3.10.
 Fix threading crash in multitrack.
+Fix sizes of scrolled windows inside dialog boxes (regression).
 Fix timeline start position for gtkgrid widget in multitrack.
 Fix "fade background mode" (b) so it looks nice again.
-Fix event list viewer window size (regression).
 Stability fix for expose event during startup.
 Stability fix for mkv_decoder with broken end frames.
 Implement C++ language bindings (liblives).

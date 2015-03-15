@@ -1845,7 +1845,7 @@ lives_audio_track_state_t *get_audio_and_effects_state_at(weed_plant_t *event_li
 	process_events(event,TRUE,get_event_timecode(event));
       }
     }
-    else if (get_audstate&&weed_plant_has_leaf(event,"audio_clips")) {
+    else if (get_audstate&&WEED_EVENT_IS_AUDIO_FRAME(event)) {
 
       atstate=aframe_to_atstate(event);
 
@@ -2000,7 +2000,7 @@ void fill_abuffer_from(lives_audio_buf_t *abuf, weed_plant_t *event_list, weed_p
   // continue until either we have a full buffer, or we reach next audio frame
   while (event!=NULL&&get_event_timecode(event)<=fill_tc) {
     if (!is_cont) event=get_next_frame_event(event);
-    if (event!=NULL&&weed_plant_has_leaf(event,"audio_clips")) {
+    if (WEED_EVENT_IS_AUDIO_FRAME(event)) {
       // got next audio frame
       weed_timecode_t tc=get_event_timecode(event);
       if (tc>=fill_tc) break;

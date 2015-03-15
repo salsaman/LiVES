@@ -1,5 +1,5 @@
 // LiVES - videodev input
-// (c) G. Finch 2010 - 2013 <salsaman@gmail.com>
+// (c) G. Finch 2010 - 2015 <salsaman@gmail.com>
 // released under the GNU GPL 3 or later
 // see file COPYING or www.gnu.org for details
 
@@ -463,7 +463,6 @@ void on_open_vdev_activate (LiVESMenuItem *menuitem, livespointer user_data) {
 
   LiVESWidget *card_dialog;
 
-  char *tmp;
   char *fname;
 
   int devno=0;
@@ -473,9 +472,10 @@ void on_open_vdev_activate (LiVESMenuItem *menuitem, livespointer user_data) {
 
   int response;
 
-  int i,dev_count;
+  int dev_count;
   int status = STATUS_SUCCESS;
 
+  register int i;
 
   mainw->open_deint=FALSE;
 
@@ -543,9 +543,7 @@ void on_open_vdev_activate (LiVESMenuItem *menuitem, livespointer user_data) {
   d_print(""); ///< force switchtext
 
   if (!open_vdev_inner(&devices[devno])) {
-    char *msg=lives_strdup_printf(_("Unable to open device %s\n"),fname);
-    d_print(msg);
-    lives_free(msg);
+    d_print(_("Unable to open device %s\n"),fname);
     lives_free(fname);
     close_current_file(old_file);
     return;
@@ -560,11 +558,10 @@ void on_open_vdev_activate (LiVESMenuItem *menuitem, livespointer user_data) {
 
   lives_snprintf(cfile->type,40,"%s",fname);
 
-  d_print ((tmp=lives_strdup_printf (_("Opened device %s\n"),devices[devno].identifier)));
+  d_print (_("Opened device %s\n"),devices[devno].identifier);
 
   switch_to_file((mainw->current_file=old_file),new_file);
 
-  lives_free(tmp);
   lives_free(fname);
 
 }

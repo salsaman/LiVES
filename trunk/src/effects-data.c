@@ -4773,8 +4773,7 @@ LiVESWidget *make_datacon_window(int key, int mode) {
   winsize_h=scr_width-200;
   winsize_v=scr_height-200;
 
-  conxw.conx_dialog=lives_standard_dialog_new(_("LiVES: - Parameter and Alpha Channel Connections"),FALSE);
-  lives_widget_set_size_request (conxw.conx_dialog, winsize_h, winsize_v);
+  conxw.conx_dialog=lives_standard_dialog_new(_("LiVES: - Parameter and Alpha Channel Connections"),FALSE,winsize_h,winsize_v);
 
   accel_group = LIVES_ACCEL_GROUP(lives_accel_group_new ());
   lives_window_add_accel_group (LIVES_WINDOW (conxw.conx_dialog), accel_group);

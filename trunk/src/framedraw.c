@@ -217,14 +217,12 @@ void widget_add_framedraw (LiVESVBox *box, int start, int end, boolean add_previ
  
   hbox = lives_hbox_new (FALSE, 0);
   lives_box_pack_start (LIVES_BOX (vbox), hbox, FALSE, FALSE, 0);
-  add_fill_to_box(LIVES_BOX(hbox));
 
   fbord_eventbox=lives_event_box_new();
   lives_container_set_border_width(LIVES_CONTAINER(fbord_eventbox),widget_opts.border_width);
 
   frame = lives_frame_new (NULL);
 
-  add_fill_to_box(LIVES_BOX(hbox));
   lives_box_pack_start (LIVES_BOX (hbox), frame, FALSE, FALSE, 0);
 
   if (palette->style&STYLE_1) {

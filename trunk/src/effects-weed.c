@@ -4729,12 +4729,12 @@ static void load_weed_plugin (char *plugin_name, char *plugin_path, char *dir) {
 	    key_to_fx[key][kmode++]=idx;
 #ifdef DEBUG_WEED
 	    if (!pdup&&key<FX_KEYS_PHYSICAL&&kmode<prefs->max_modes_per_key) 
-	      d_print(lives_strdup_printf("Loaded filter \"%s\" in plugin \"%s\"; assigned to key ctrl-%d, mode %d.\n",
-				      filter_name,plugin_name,key+1,kmode));
+	      d_print("Loaded filter \"%s\" in plugin \"%s\"; assigned to key ctrl-%d, mode %d.\n",
+		      filter_name,plugin_name,key+1,kmode);
 
 	  }
 	  else {
-	    d_print(lives_strdup_printf("Loaded filter \"%s\" in plugin \"%s\", no key assigned\n",filter_name,plugin_name));
+	    d_print("Loaded filter \"%s\" in plugin \"%s\", no key assigned\n",filter_name,plugin_name);
 #endif
 	  }
 	  if (!pdup) idx++;
@@ -4892,7 +4892,6 @@ void weed_load_all (void) {
   char *subdir_path,*subdir_name,*plugin_path,*plugin_name;
   int numdirs;
   char **dirs;
-  char *msg;
 
   int listlen;
 
@@ -5031,9 +5030,8 @@ void weed_load_all (void) {
   lives_strfreev(dirs);
   lives_free(weed_plugin_path);
 
-  msg=lives_strdup_printf(_ ("Successfully loaded %d Weed filters\n"),num_weed_filters);
-  d_print(msg);
-  lives_free(msg);
+  d_print(_ ("Successfully loaded %d Weed filters\n"),num_weed_filters);
+
   threaded_dialog_spin();
   load_compound_fx();
   threaded_dialog_spin();
@@ -5745,7 +5743,7 @@ void load_compound_fx(void) {
 
   int plugin_idx,onum_filters=num_weed_filters;
 
-  char *lives_compound_plugin_path,*plugin_name,*plugin_path,*msg;
+  char *lives_compound_plugin_path,*plugin_name,*plugin_path;
 
   threaded_dialog_spin();
 
@@ -5785,9 +5783,7 @@ void load_compound_fx(void) {
   }
 
   if (num_weed_filters>onum_filters) {
-    msg=lives_strdup_printf(_ ("Successfully loaded %d compound filters\n"),num_weed_filters-onum_filters);
-    d_print(msg);
-    lives_free(msg);
+    d_print(_ ("Successfully loaded %d compound filters\n"),num_weed_filters-onum_filters);
   }
 
   lives_free(lives_compound_plugin_path);
@@ -6624,8 +6620,8 @@ boolean weed_init_effect(int hotkey) {
     if (prefs->audio_player!=AUD_PLAYER_JACK&&prefs->audio_player!=AUD_PLAYER_PULSE) {
       // audio fx only with realtime players
       char *fxname=weed_filter_idx_get_name(idx);
-      char *msg=lives_strdup_printf(_("Effect %s cannot be used with this audio player.\n"),fxname);
-      d_print(msg);
+      d_print(_("Effect %s cannot be used with this audio player.\n"),fxname);
+      lives_free(fxname);
       mainw->error=TRUE;
       return FALSE;
     }
@@ -6772,12 +6768,11 @@ boolean weed_init_effect(int hotkey) {
       set_param_gui_readwrite(inst);
       if (init_func!=NULL&&(error=(*init_func)(inst))!=WEED_NO_ERROR) {
 	int weed_error;
-	char *filter_name,*tmp;
+	char *filter_name;
 	filter=weed_filters[idx];
 	filter_name=weed_get_string_value(filter,"name",&weed_error);
 	set_param_gui_readonly(inst);
-	d_print ((tmp=lives_strdup_printf (_ ("Failed to start instance %s, error code %d\n"),filter_name,error)));
-	lives_free(tmp);
+	d_print (_ ("Failed to start instance %s, error code %d\n"),filter_name,error);
 	lives_free(filter_name);
 	filter_mutex_lock(hotkey);
 	key_to_instance[hotkey][key_modes[hotkey]]=NULL;
@@ -6853,9 +6848,8 @@ boolean weed_init_effect(int hotkey) {
     if (!weed_generator_start(new_instance,hotkey)) {
       // TODO - be more descriptive with error
       int weed_error;
-      char *filter_name=weed_get_string_value(filter,"name",&weed_error),*tmp;
-      d_print ((tmp=lives_strdup_printf (_ ("Unable to start generator %s\n"),filter_name)));
-      lives_free(tmp);
+      char *filter_name=weed_get_string_value(filter,"name",&weed_error);
+      d_print (_ ("Unable to start generator %s\n"),filter_name);
       lives_free(filter_name);
       if (mainw->num_tr_applied&&mainw->current_file>-1) {
 	bg_gen_to_start=bg_generator_key=bg_generator_mode=-1;
@@ -7660,11 +7654,9 @@ boolean weed_playback_gen_start (void) {
 	  inst=key_to_instance[fg_gen_to_start][key_modes[fg_gen_to_start]];
 	  key_to_instance[fg_gen_to_start][key_modes[fg_gen_to_start]]=NULL;
 	  if (inst!=NULL) {
-	    char *tmp;
 	    filter=weed_instance_get_filter(inst,TRUE);
 	    filter_name=weed_get_string_value(filter,"name",&weed_error);
-	    d_print ((tmp=lives_strdup_printf (_ ("Failed to start generator %s\n"),filter_name)));
-	    lives_free(tmp);
+	    d_print (_ ("Failed to start generator %s\n"),filter_name);
 	    lives_free(filter_name);
 	    
 	  deinit4:
@@ -7757,11 +7749,9 @@ boolean weed_playback_gen_start (void) {
       
       if (error!=WEED_NO_ERROR) {
 	if (inst!=NULL) {
-	  char *tmp;
 	  filter=weed_instance_get_filter(inst,TRUE);
 	  filter_name=weed_get_string_value(filter,"name",&weed_error);
-	  d_print ((tmp=lives_strdup_printf (_ ("Failed to start generator %s, error %d\n"),filter_name,error)));
-	  lives_free(tmp);
+	  d_print (_ ("Failed to start generator %s, error %d\n"),filter_name,error);
 	  lives_free(filter_name);
 
 	deinit5:

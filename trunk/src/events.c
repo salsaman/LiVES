@@ -36,6 +36,8 @@
 
 static int render_choice;
 
+static weed_timecode_t flush_audio_tc=0;
+
 static void **pchains[FX_KEYS_MAX]; // each pchain is an array of void *, these are parameter changes used for rendering
 ///////////////////////////////////////////////////////
 
@@ -111,8 +113,7 @@ boolean has_frame_event_at(weed_plant_t *event_list, weed_timecode_t tc, weed_pl
 int get_audio_frame_clip (weed_plant_t *event, int track) {
   int numaclips,aclipnum=-1;
   int *aclips,error,i;
-  if (get_event_hint (event)!=WEED_EVENT_HINT_FRAME) return -2;
-  if (!weed_plant_has_leaf(event,"audio_clips")) return -3;
+  if (!WEED_EVENT_IS_AUDIO_FRAME(event)) return -2;
   numaclips=weed_leaf_num_elements (event,"audio_clips");
   aclips=weed_get_int_array(event,"audio_clips",&error);
   for (i=0;i<numaclips;i+=2) {
@@ -133,8 +134,7 @@ double get_audio_frame_vel (weed_plant_t *event, int track) {
   int *aclips,error,i;
   double *aseeks,avel=1.;
 
-  if (get_event_hint (event)!=WEED_EVENT_HINT_FRAME) return -2;
-  if (!weed_plant_has_leaf(event,"audio_clips")) return -1;
+  if (!WEED_EVENT_IS_AUDIO_FRAME(event)) return -2;
   numaclips=weed_leaf_num_elements (event,"audio_clips");
   aclips=weed_get_int_array(event,"audio_clips",&error);
   aseeks=weed_get_double_array(event,"audio_seeks",&error);
@@ -156,8 +156,7 @@ double get_audio_frame_seek (weed_plant_t *event, int track) {
   int *aclips,error,i;
   double *aseeks,aseek=0.;
 
-  if (get_event_hint (event)!=WEED_EVENT_HINT_FRAME) return -2000000;
-  if (!weed_plant_has_leaf(event,"audio_clips")) return -1000000;
+  if (!WEED_EVENT_IS_AUDIO_FRAME(event)) return -1000000;
   numaclips=weed_leaf_num_elements (event,"audio_clips");
   aclips=weed_get_int_array(event,"audio_clips",&error);
   aseeks=weed_get_double_array(event,"audio_seeks",&error);
@@ -176,7 +175,7 @@ double get_audio_frame_seek (weed_plant_t *event, int track) {
 int get_frame_event_clip (weed_plant_t *event, int layer) {
   int numclips,clipnum;
   int *clips,error;
-  if (get_event_hint (event)!=WEED_EVENT_HINT_FRAME) return -2;
+  if (!WEED_EVENT_IS_FRAME(event)) return -2;
   numclips=weed_leaf_num_elements (event,"clips");
   clips=weed_get_int_array(event,"clips",&error);
   if (numclips<=layer) return -3;
@@ -188,7 +187,7 @@ int get_frame_event_clip (weed_plant_t *event, int layer) {
 int get_frame_event_frame (weed_plant_t *event, int layer) {
   int numframes,framenum;
   int *frames,error;
-  if (get_event_hint (event)!=WEED_EVENT_HINT_FRAME) return -2;
+  if (!WEED_EVENT_IS_FRAME(event)) return -2;
   numframes=weed_leaf_num_elements (event,"frames");
   frames=weed_get_int_array(event,"frames",&error);
   if (numframes<=layer) return -3;
@@ -273,6 +272,30 @@ weed_plant_t *get_prev_frame_event (weed_plant_t *event) {
   prev=get_prev_event(event);
   while (prev!=NULL) {
     if (WEED_EVENT_IS_FRAME(prev)) return prev;
+    prev=get_prev_event(prev);
+  }
+  return NULL;
+}
+
+
+weed_plant_t *get_next_audio_frame_event (weed_plant_t *event) {
+  weed_plant_t *next;
+  if (event==NULL) return NULL;
+  next=get_next_event(event);
+  while (next!=NULL) {
+    if (WEED_EVENT_IS_AUDIO_FRAME(next)) return next;
+    next=get_next_event(next);
+  }
+  return NULL;
+}
+
+
+weed_plant_t *get_prev_audio_frame_event (weed_plant_t *event) {
+  weed_plant_t *prev;
+  if (event==NULL) return NULL;
+  prev=get_prev_event(event);
+  while (prev!=NULL) {
+    if (WEED_EVENT_IS_AUDIO_FRAME(prev)) return prev;
     prev=get_prev_event(prev);
   }
   return NULL;
@@ -367,7 +390,7 @@ void remove_frame_from_event (weed_plant_t *event_list, weed_plant_t *event, int
   // if stack is empty, we will replace with a blank frame
   for (i=0;i<numframes&&clips[i]<1;i++);
   if (i==numframes) {
-    if (event==get_last_event(event_list)&&!weed_plant_has_leaf(event,"audio_clips")) delete_event(event_list,event);
+    if (event==get_last_event(event_list)&&!WEED_EVENT_IS_AUDIO_FRAME(event)) delete_event(event_list,event);
     else event_list=insert_blank_frame_event_at (event_list,tc,&event);
   }
   else event_list=insert_frame_event_at (event_list,tc,numframes,clips,frames,&event);
@@ -380,7 +403,7 @@ void remove_frame_from_event (weed_plant_t *event_list, weed_plant_t *event, int
 boolean is_blank_frame (weed_plant_t *event, boolean count_audio) {
   int clip,frame,numframes,error;
   if (!WEED_EVENT_IS_FRAME(event)) return FALSE;
-  if (count_audio&&weed_plant_has_leaf(event,"audio_clips")) {
+  if (count_audio&&WEED_EVENT_IS_AUDIO_FRAME(event)) {
     int *aclips=weed_get_int_array(event,"audio_clips",&error);
     if (aclips[1]>0) {
       lives_free(aclips);
@@ -664,7 +687,7 @@ weed_plant_t *get_filter_map_after(weed_plant_t *event, int ctrack) {
   weed_plant_t *init_event;
 
   while (event!=NULL) {
-    if (get_event_hint(event)==WEED_EVENT_HINT_FILTER_MAP) {
+    if (WEED_EVENT_IS_FILTER_MAP(event)) {
       if (ctrack==-1000000) return event;
       if (!weed_plant_has_leaf(event,"init_events")) {
 	event=get_next_event(event);
@@ -751,7 +774,7 @@ weed_plant_t *get_filter_map_before(weed_plant_t *event, int ctrack, weed_plant_
   weed_plant_t *init_event;
 
   while (event!=stop_event&&event!=NULL) {
-    if (get_event_hint(event)==WEED_EVENT_HINT_FILTER_MAP) {
+    if (WEED_EVENT_IS_FILTER_MAP(event)) {
       if (ctrack==-1000000) return event;
       if (!weed_plant_has_leaf(event,"init_events")) {
 	event=get_prev_event(event);
@@ -785,7 +808,7 @@ void **get_init_events_before(weed_plant_t *event, weed_plant_t *init_event, boo
   int error,num_init_events=0,i,j=0;
 
   while (event!=NULL) {
-    if (get_event_hint(event)==WEED_EVENT_HINT_FILTER_MAP) {
+    if (WEED_EVENT_IS_FILTER_MAP(event)) {
       if (weed_plant_has_leaf(event,"init_events")&&
 	  (init_events=weed_get_voidptr_array(event,"init_events",&error))!=NULL) {
 	num_init_events=weed_leaf_num_elements(event,"init_events");
@@ -1115,7 +1138,7 @@ void insert_audio_event_at(weed_plant_t *event_list, weed_plant_t *event, int tr
 
   arv=(double)(myround(vel*10000.))/10000.;
 
-  if (weed_plant_has_leaf(event,"audio_clips")) {
+  if (WEED_EVENT_IS_AUDIO_FRAME(event)) {
     int num_aclips=weed_leaf_num_elements(event,"audio_clips");
     int *aclips=weed_get_int_array(event,"audio_clips",&error);
     double *aseeks=weed_get_double_array(event,"audio_seeks",&error);
@@ -2106,7 +2129,7 @@ LiVESWidget *events_rec_dialog (boolean allow_mt) {
 
   render_choice=RENDER_CHOICE_PREVIEW;
 
-  e_rec_dialog = lives_standard_dialog_new (_("LiVES: - Events recorded"),FALSE);
+  e_rec_dialog = lives_standard_dialog_new (_("LiVES: - Events recorded"),FALSE,-1,-1);
 
   if (prefs->show_gui) lives_window_set_transient_for(LIVES_WINDOW(e_rec_dialog),LIVES_WINDOW(mainw->LiVES));
 
@@ -2257,7 +2280,7 @@ boolean event_list_to_block (weed_plant_t *event_list, int num_events) {
   event=get_first_event(event_list);
 
   while (event!=NULL) {
-    if (get_event_hint(event)==WEED_EVENT_HINT_FRAME) {
+    if (WEED_EVENT_IS_FRAME(event)) {
       (cfile->events[i++])->value=weed_get_int_value (event,"frames",&error);
     }
     event=get_next_event(event);
@@ -3020,7 +3043,7 @@ weed_plant_t *process_events (weed_plant_t *next_event, boolean process_audio, w
   mainw->cevent_tc=tc;
 
   return_event=get_next_event(next_event);
-  hint=get_event_hint (next_event);
+  hint=get_event_hint(next_event);
   switch (hint) {
   case WEED_EVENT_HINT_FRAME:
 
@@ -3029,116 +3052,116 @@ weed_plant_t *process_events (weed_plant_t *next_event, boolean process_audio, w
 #endif
 
 
-  if (mainw->multitrack==NULL&&prefs->audio_player==AUD_PLAYER_JACK&&weed_plant_has_leaf(next_event,"audio_clips")) {
-    // keep track of current seek position, for animating playback pointers
-    int *aclips=weed_get_int_array(next_event,"audio_clips",&error);
-    double *aseeks=weed_get_double_array(next_event,"audio_seeks",&error);
+    if (mainw->multitrack==NULL&&prefs->audio_player==AUD_PLAYER_JACK&&WEED_EVENT_IS_AUDIO_FRAME(next_event)) {
+      // keep track of current seek position, for animating playback pointers
+      int *aclips=weed_get_int_array(next_event,"audio_clips",&error);
+      double *aseeks=weed_get_double_array(next_event,"audio_seeks",&error);
 
-    if (aclips[1]>0) {
-      aseek_tc=aseeks[0]*U_SEC;
-      stored_avel=aseeks[1];
-    }
-    
-    lives_free(aclips);
-    lives_free(aseeks);
-  }
-
-
-  if ((next_frame_event=get_next_frame_event (next_event))!=NULL) {
-    next_tc=get_event_timecode (next_frame_event);
-    // drop frame if it is too far behind
-    if (mainw->playing_file>-1&&!mainw->noframedrop&&next_tc<=curr_tc) break;
-    if (!mainw->fs&&prefs->show_framecount) {
-      lives_signal_handler_block(mainw->spinbutton_pb_fps,mainw->pb_fps_func);
-      lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_pb_fps),cfile->pb_fps);
-      lives_signal_handler_unblock(mainw->spinbutton_pb_fps,mainw->pb_fps_func);
-    }
-  }
-
-  mainw->num_tracks=weed_leaf_num_elements (next_event,"clips");
-    
-  if (mainw->clip_index!=NULL) lives_free(mainw->clip_index);
-  if (mainw->frame_index!=NULL) lives_free(mainw->frame_index);
-
-  mainw->clip_index=weed_get_int_array (next_event,"clips",&error);
-  mainw->frame_index=weed_get_int_array (next_event,"frames",&error);
-
-  // if we are in multitrack mode, we will just set up NULL layers and let the effects pull our frames
-  if (mainw->multitrack!=NULL) {
-    if ((mainw->fixed_fpsd<=0.&&(mainw->vpp==NULL||mainw->vpp->fixed_fpsd<=0.||!mainw->ext_playback))
-	||(mainw->fixed_fpsd>0.&&(curr_tc-mainw->last_display_ticks)/U_SEC>=1./mainw->fixed_fpsd)||
-	(mainw->vpp!=NULL&&mainw->vpp->fixed_fpsd>0.&&mainw->ext_playback&&
-	 (curr_tc-mainw->last_display_ticks)/U_SEC>=1./mainw->vpp->fixed_fpsd)) {
-      mainw->pchains=pchains;
-      load_frame_image (cfile->frameno);
-      if (mainw->last_display_ticks==0) mainw->last_display_ticks=curr_tc;
-      else {
-	if (mainw->vpp!=NULL&&mainw->ext_playback&&mainw->vpp->fixed_fpsd>0.) 
-	  mainw->last_display_ticks+=U_SEC/mainw->vpp->fixed_fpsd;
-	else if (mainw->fixed_fpsd>0.) 
-	  mainw->last_display_ticks+=U_SEC/mainw->fixed_fpsd;
-	else mainw->last_display_ticks=curr_tc;
+      if (aclips[1]>0) {
+	aseek_tc=aseeks[0]*U_SEC;
+	stored_avel=aseeks[1];
       }
-      mainw->pchains=NULL;
+    
+      lives_free(aclips);
+      lives_free(aseeks);
     }
-  }
-  else {
-    if (mainw->num_tracks>1) {
-      mainw->blend_file=mainw->clip_index[1];
-      if (mainw->blend_file>-1) mainw->files[mainw->blend_file]->frameno=mainw->frame_index[1];
-    }
-    else mainw->blend_file=-1;
 
-    new_file=-1;
-    for (i=0;i<mainw->num_tracks&&new_file==-1;i++) new_file=mainw->clip_index[i];
-    if (i==2) mainw->blend_file=-1;
+
+    if ((next_frame_event=get_next_frame_event (next_event))!=NULL) {
+      next_tc=get_event_timecode (next_frame_event);
+      // drop frame if it is too far behind
+      if (mainw->playing_file>-1&&!mainw->noframedrop&&next_tc<=curr_tc) break;
+      if (!mainw->fs&&prefs->show_framecount) {
+	lives_signal_handler_block(mainw->spinbutton_pb_fps,mainw->pb_fps_func);
+	lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_pb_fps),cfile->pb_fps);
+	lives_signal_handler_unblock(mainw->spinbutton_pb_fps,mainw->pb_fps_func);
+      }
+    }
+
+    mainw->num_tracks=weed_leaf_num_elements (next_event,"clips");
+    
+    if (mainw->clip_index!=NULL) lives_free(mainw->clip_index);
+    if (mainw->frame_index!=NULL) lives_free(mainw->frame_index);
+
+    mainw->clip_index=weed_get_int_array (next_event,"clips",&error);
+    mainw->frame_index=weed_get_int_array (next_event,"frames",&error);
+
+    // if we are in multitrack mode, we will just set up NULL layers and let the effects pull our frames
+    if (mainw->multitrack!=NULL) {
+      if ((mainw->fixed_fpsd<=0.&&(mainw->vpp==NULL||mainw->vpp->fixed_fpsd<=0.||!mainw->ext_playback))
+	  ||(mainw->fixed_fpsd>0.&&(curr_tc-mainw->last_display_ticks)/U_SEC>=1./mainw->fixed_fpsd)||
+	  (mainw->vpp!=NULL&&mainw->vpp->fixed_fpsd>0.&&mainw->ext_playback&&
+	   (curr_tc-mainw->last_display_ticks)/U_SEC>=1./mainw->vpp->fixed_fpsd)) {
+	mainw->pchains=pchains;
+	load_frame_image (cfile->frameno);
+	if (mainw->last_display_ticks==0) mainw->last_display_ticks=curr_tc;
+	else {
+	  if (mainw->vpp!=NULL&&mainw->ext_playback&&mainw->vpp->fixed_fpsd>0.) 
+	    mainw->last_display_ticks+=U_SEC/mainw->vpp->fixed_fpsd;
+	  else if (mainw->fixed_fpsd>0.) 
+	    mainw->last_display_ticks+=U_SEC/mainw->fixed_fpsd;
+	  else mainw->last_display_ticks=curr_tc;
+	}
+	mainw->pchains=NULL;
+      }
+    }
+    else {
+      if (mainw->num_tracks>1) {
+	mainw->blend_file=mainw->clip_index[1];
+	if (mainw->blend_file>-1) mainw->files[mainw->blend_file]->frameno=mainw->frame_index[1];
+      }
+      else mainw->blend_file=-1;
+
+      new_file=-1;
+      for (i=0;i<mainw->num_tracks&&new_file==-1;i++) new_file=mainw->clip_index[i];
+      if (i==2) mainw->blend_file=-1;
 
 #ifdef DEBUG_EVENTS
-    g_print ("event: front frame is %d tc %"PRId64" curr_tc=%"PRId64"\n",mainw->frame_index[0],tc,curr_tc);
+      g_print ("event: front frame is %d tc %"PRId64" curr_tc=%"PRId64"\n",mainw->frame_index[0],tc,curr_tc);
 #endif
 
-    // handle case where new_file==-1: we must somehow create a blank frame in load_frame_image
-    if (new_file==-1) new_file=mainw->current_file;
+      // handle case where new_file==-1: we must somehow create a blank frame in load_frame_image
+      if (new_file==-1) new_file=mainw->current_file;
       
-    if (new_file!=mainw->current_file) {
-      mainw->files[new_file]->frameno=mainw->frame_index[i-1];
+      if (new_file!=mainw->current_file) {
+	mainw->files[new_file]->frameno=mainw->frame_index[i-1];
 	
-      if (new_file!=mainw->scrap_file) {
-	// switch to a new file
-	mainw->noswitch=FALSE;
-	do_quick_switch (new_file);
-	mainw->noswitch=TRUE;
-	cfile->next_event=return_event;
-	return_event=NULL;
+	if (new_file!=mainw->scrap_file) {
+	  // switch to a new file
+	  mainw->noswitch=FALSE;
+	  do_quick_switch (new_file);
+	  mainw->noswitch=TRUE;
+	  cfile->next_event=return_event;
+	  return_event=NULL;
+	}
+	else {
+	  mainw->files[new_file]->hsize=cfile->hsize; // set size of scrap file
+	  mainw->files[new_file]->vsize=cfile->vsize;
+	  current_file=mainw->current_file;
+	  mainw->current_file=new_file;
+	  mainw->aframeno=(double)(aseek_tc/U_SEC)*cfile->fps;
+	  mainw->pchains=pchains;
+	  load_frame_image (cfile->frameno);
+	  mainw->pchains=NULL;
+	  if (mainw->playing_file>-1) lives_widget_context_update();
+	  mainw->current_file=current_file;
+	}
+	break;
       }
       else {
-	mainw->files[new_file]->hsize=cfile->hsize; // set size of scrap file
-	mainw->files[new_file]->vsize=cfile->vsize;
-	current_file=mainw->current_file;
-	mainw->current_file=new_file;
+	if (mainw->multitrack!=NULL&&new_file==mainw->multitrack->render_file) {
+	  cfile->frameno=0; // will force blank frame creation
+	}
+	else cfile->frameno=mainw->frame_index[i-1];
 	mainw->aframeno=(double)(aseek_tc/U_SEC)*cfile->fps;
 	mainw->pchains=pchains;
 	load_frame_image (cfile->frameno);
 	mainw->pchains=NULL;
-	if (mainw->playing_file>-1) lives_widget_context_update();
-	mainw->current_file=current_file;
       }
-      break;
     }
-    else {
-      if (mainw->multitrack!=NULL&&new_file==mainw->multitrack->render_file) {
-	cfile->frameno=0; // will force blank frame creation
-      }
-      else cfile->frameno=mainw->frame_index[i-1];
-      mainw->aframeno=(double)(aseek_tc/U_SEC)*cfile->fps;
-      mainw->pchains=pchains;
-      load_frame_image (cfile->frameno);
-      mainw->pchains=NULL;
-    }
-  }
-  if (mainw->playing_file>-1) lives_widget_context_update();
-  cfile->next_event=get_next_event(next_event);
-  break;
+    if (mainw->playing_file>-1) lives_widget_context_update();
+    cfile->next_event=get_next_event(next_event);
+    break;
   case WEED_EVENT_HINT_FILTER_INIT:
     // effect init
     //  bind the weed_fx to next free key/0
@@ -3319,13 +3342,14 @@ weed_plant_t *process_events (weed_plant_t *next_event, boolean process_audio, w
 lives_render_error_t render_events (boolean reset) {
   // this is called repeatedly when we are rendering effect changes and/or clip switches
   // if we have clip switches we will resize and build a new clip
+
+  // call with flush_audio_tc set to non-zero to render audio up to that tc
   
   char oname[PATH_MAX];
   LiVESError *error=NULL;
 
   weed_timecode_t tc;
   weed_timecode_t next_tc=0,next_out_tc;
-  weed_timecode_t flush_audio_tc=0;
 
   void *init_event;
 
@@ -3412,10 +3436,14 @@ lives_render_error_t render_events (boolean reset) {
   mainw->rowstride_alignment=mainw->rowstride_alignment_hint;
   mainw->rowstride_alignment_hint=1;
 
+  if (flush_audio_tc!=0) {
+    event=get_next_audio_frame_event(event);
+  }
+
   if (event!=NULL) {
     eventnext=get_next_event(event);
 
-    hint=get_event_hint (event);
+    hint=get_event_hint(event);
 
     switch (hint) {
     case WEED_EVENT_HINT_FRAME:
@@ -3559,7 +3587,7 @@ lives_render_error_t render_events (boolean reset) {
       else {
 	// reached end of event_list
 
-	if (has_audio&&!weed_plant_has_leaf(event,"audio_clips")) {
+	if (has_audio&&!WEED_EVENT_IS_AUDIO_FRAME(event)) {
 	  // pad to end with silence
 	  cfile->achans=cfile->undo_achans;
 	  cfile->arate=cfile->undo_arate;
@@ -3575,7 +3603,6 @@ lives_render_error_t render_events (boolean reset) {
 	  mainw->read_failed=mainw->write_failed=FALSE;
 	  if (mainw->read_failed_file!=NULL) lives_free(mainw->read_failed_file);
 	  mainw->read_failed_file=NULL;
-
 	  render_audio_segment(0, NULL, mainw->multitrack!=NULL?mainw->multitrack->render_file:mainw->current_file,
 			       NULL, NULL, atime*U_SEC, q_gint64(tc+(U_SEC/cfile->fps*!is_blank),cfile->fps), 
 			       chvols, 1., 1., NULL);
@@ -3605,7 +3632,7 @@ lives_render_error_t render_events (boolean reset) {
 	if ((mainw->multitrack==NULL&&prefs->render_audio)||(mainw->multitrack!=NULL&&mainw->multitrack->render_audp)) {
 	  if (firstframe) {
 	    // see if audio needs appending
-	    if (weed_plant_has_leaf(event,"audio_clips")) {
+	    if (WEED_EVENT_IS_AUDIO_FRAME(event)) {
 	      int num_aclips=weed_leaf_num_elements(event,"audio_clips");
 	      int *aclips=weed_get_int_array(event,"audio_clips",&weed_error);
 	      double *aseeks=weed_get_double_array(event,"audio_seeks",&weed_error);
@@ -3634,7 +3661,7 @@ lives_render_error_t render_events (boolean reset) {
 		chvols[0]=1.;
 	      }
 
-	      if (q_gint64(tc,cfile->fps)/U_SEC>atime) {
+	      if (flush_audio_tc>0||q_gint64(tc,cfile->fps)/U_SEC>atime) {
 		cfile->achans=cfile->undo_achans;
 		cfile->arate=cfile->undo_arate;
 		cfile->arps=cfile->undo_arps;
@@ -3947,6 +3974,8 @@ boolean start_render_effect_events (weed_plant_t *event_list) {
 
   // return FALSE in case of serious error
 
+  lives_mt *multi=mainw->multitrack;
+
   double old_pb_fps=cfile->pb_fps;
   int oundo_start=cfile->undo_start;
   int oundo_end=cfile->undo_end;
@@ -3992,6 +4021,18 @@ boolean start_render_effect_events (weed_plant_t *event_list) {
     return FALSE;
   }
 
+  if (mainw->effects_paused) {
+    // pressed "Keep", render audio to end of segment
+    mainw->effects_paused=FALSE;
+    flush_audio_tc=q_gint64((double)cfile->undo_end/cfile->fps*U_SEC,cfile->fps);
+    
+    render_events(FALSE);
+    flush_audio_tc=0;
+    mainw->multitrack=NULL;  // allow setting of audio filesize now
+    reget_afilesize(mainw->current_file);
+    mainw->multitrack=multi;
+  }
+
   mainw->cancel_type=CANCEL_KILL;
   mainw->cancelled=CANCEL_NONE;
   cfile->changed=TRUE;
@@ -4024,8 +4065,7 @@ int count_events (weed_plant_t *event_list, boolean all_events, weed_timecode_t 
 
   while (event!=NULL) {
     tc=get_event_timecode(event);
-    if ((all_events||(get_event_hint(event)==WEED_EVENT_HINT_FRAME&&
-		      !weed_plant_has_leaf(event,"audio_clips")))&&
+    if ((all_events||(WEED_EVENT_IS_FRAME(event)&&!WEED_EVENT_IS_AUDIO_FRAME(event)))&&
 	(end_tc==0||(tc>=start_tc&&tc<end_tc))) i++;
     event=get_next_event(event);
   }
@@ -4100,7 +4140,7 @@ double event_list_get_start_secs (weed_plant_t *event_list) {
 boolean has_audio_frame(weed_plant_t *event_list) {
   weed_plant_t *event=get_first_frame_event(event_list);
   while (event!=NULL) {
-    if (weed_plant_has_leaf(event,"audio_clips")) return TRUE;
+    if (WEED_EVENT_IS_AUDIO_FRAME(event)) return TRUE;
     event=get_next_frame_event(event);
   }
   return FALSE;
@@ -4738,8 +4778,7 @@ LiVESWidget *create_event_list_dialog (weed_plant_t *event_list, weed_timecode_t
   winsize_h=scr_width-SCR_WIDTH_SAFETY;
   winsize_v=scr_height-SCR_HEIGHT_SAFETY;
  
-  event_dialog = lives_standard_dialog_new (_("LiVES: Event list"),FALSE);
-  lives_widget_set_size_request (event_dialog, winsize_h, winsize_v);
+  event_dialog = lives_standard_dialog_new (_("LiVES: Event list"),FALSE,winsize_h,winsize_v);
 
   accel_group = LIVES_ACCEL_GROUP(lives_accel_group_new ());
   lives_window_add_accel_group (LIVES_WINDOW (event_dialog), accel_group);
@@ -4760,7 +4799,7 @@ LiVESWidget *create_event_list_dialog (weed_plant_t *event_list, weed_timecode_t
       if (tc>=end_tc) break;
     }
 
-    if ((prefs->event_window_show_frame_events||!WEED_EVENT_IS_FRAME(event))||weed_plant_has_leaf(event,"audio_clips")) {
+    if ((prefs->event_window_show_frame_events||!WEED_EVENT_IS_FRAME(event))||WEED_EVENT_IS_AUDIO_FRAME(event)) {
       if (!prefs->event_window_show_frame_events&&WEED_EVENT_IS_FRAME(event)) {
 	// TODO - opts should be all frames, only audio frames, no frames
 	// or even better, filter for any event types
@@ -4921,7 +4960,7 @@ LiVESWidget *create_event_list_dialog (weed_plant_t *event_list, weed_timecode_t
 			(LiVESAttachOptions) (0), 0, 0);
      
       // event type
-      hint=get_event_hint (event);
+      hint=get_event_hint(event);
       switch (hint) {
       case WEED_EVENT_HINT_FRAME:
 	label = lives_standard_label_new ("Frame");
@@ -5101,6 +5140,9 @@ render_details *create_render_details (int type) {
   boolean specified=FALSE;
   boolean needs_new_encoder=FALSE;
 
+  int width;
+  int height;
+
   int scrw,scrh;
   int dbw;
 
@@ -5137,11 +5179,26 @@ render_details *create_render_details (int type) {
 
   rdet->enc_changed=FALSE;
 
-  if (type==3||type==4) title=lives_strdup(_("LiVES: Multitrack details"));
+  if (prefs->gui_monitor!=0) {
+    scrw=mainw->mgeom[prefs->gui_monitor-1].width;
+    scrh=mainw->mgeom[prefs->gui_monitor-1].height;
+  }
+  else {
+    scrw=mainw->scr_width;
+    scrh=mainw->scr_height;
+  }
+
+
+  if (type==3||type==4) {
+    title=lives_strdup(_("LiVES: Multitrack details"));
+  }
   else if (type==1) title=lives_strdup(_("LiVES: Encoding details"));
   else title=lives_strdup(_("LiVES: New clip details"));
 
-  rdet->dialog = lives_standard_dialog_new (title,FALSE);
+  height=scrh-SCR_HEIGHT_SAFETY;
+  width=scrw-SCR_WIDTH_SAFETY;
+
+  rdet->dialog = lives_standard_dialog_new (title,FALSE,width,height);
 
   lives_free(title);
 
@@ -5152,17 +5209,7 @@ render_details *create_render_details (int type) {
 
   dialog_vbox = lives_dialog_get_content_area(LIVES_DIALOG(rdet->dialog));
 
-  if (prefs->gui_monitor!=0) {
-    scrw=mainw->mgeom[prefs->gui_monitor-1].width;
-    scrh=mainw->mgeom[prefs->gui_monitor-1].height;
-  }
-  else {
-    scrw=mainw->scr_width;
-    scrh=mainw->scr_height;
-  }
-
   top_vbox = lives_vbox_new (FALSE, 0);
-
 
   if (!specified) {
     dbw=widget_opts.border_width;
@@ -5422,6 +5469,9 @@ render_details *create_render_details (int type) {
   if (!(prefs->startup_interface==STARTUP_MT&&!mainw->is_ready)) {
     lives_dialog_add_action_widget (LIVES_DIALOG (rdet->dialog), cancelbutton, LIVES_RESPONSE_CANCEL);
 
+    if (!specified) {
+      lives_button_box_set_button_width (LIVES_BUTTON_BOX (daa), rdet->okbutton, DEF_BUTTON_WIDTH*4);
+    }
   }
   else add_fill_to_box(LIVES_BOX (daa));
 

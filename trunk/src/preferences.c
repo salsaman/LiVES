@@ -2083,11 +2083,10 @@ _prefsw *create_prefs_dialog (void) {
   mainw->prefs_need_restart = FALSE;
 
   // Create new modal dialog window and set some attributes
-  prefsw->prefs_dialog = lives_standard_dialog_new (_("LiVES: - Preferences"),FALSE);
+  prefsw->prefs_dialog = lives_standard_dialog_new (_("LiVES: - Preferences"),FALSE,PREF_WIN_WIDTH, PREF_WIN_HEIGHT);
   lives_window_add_accel_group (LIVES_WINDOW (prefsw->prefs_dialog), accel_group);
 
   lives_window_set_default_size (LIVES_WINDOW (prefsw->prefs_dialog), PREF_WIN_WIDTH, PREF_WIN_HEIGHT);
-  lives_widget_set_size_request (prefsw->prefs_dialog, PREF_WIN_WIDTH, PREF_WIN_HEIGHT);
 
   if (prefs->show_gui) {
     if (mainw->multitrack==NULL) lives_window_set_transient_for(LIVES_WINDOW(prefsw->prefs_dialog),LIVES_WINDOW(mainw->LiVES));

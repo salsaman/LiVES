@@ -1,6 +1,6 @@
 // merge.c
 // LiVES (lives-exe)
-// (c) G. Finch 2003 - 2013 (salsaman@gmail.com)
+// (c) G. Finch 2003 - 2015 (salsaman@gmail.com)
 // Released under the GPL 3 or later
 // see file ../COPYING for licensing details
 
@@ -46,6 +46,8 @@ void create_merge_dialog (void) {
 
   int idx=0;
 
+  int scrw,scrh,width,height;
+
   int cb_frames=clipboard->frames;
   int defstart=0;
 
@@ -82,7 +84,19 @@ void create_merge_dialog (void) {
     return;
   }
 
-  merge_opts->merge_dialog = lives_standard_dialog_new (_("LiVES: - Merge"),FALSE);
+  if (prefs->gui_monitor!=0) {
+    scrw=mainw->mgeom[prefs->gui_monitor-1].width;
+    scrh=mainw->mgeom[prefs->gui_monitor-1].height;
+  }
+  else {
+    scrw=mainw->scr_width;
+    scrh=mainw->scr_height;
+  }
+
+  height=scrh-SCR_HEIGHT_SAFETY;
+  width=scrw-SCR_WIDTH_SAFETY;
+
+  merge_opts->merge_dialog = lives_standard_dialog_new (_("LiVES: - Merge"),FALSE,width,height);
 
   accel_group = LIVES_ACCEL_GROUP(lives_accel_group_new ());
   lives_window_add_accel_group (LIVES_WINDOW (merge_opts->merge_dialog), accel_group);
@@ -291,10 +305,7 @@ void on_trans_method_changed (LiVESCombo *combo, livespointer user_data) {
 
 
 
-void
-on_merge_activate                     (LiVESMenuItem     *menuitem,
-                                        livespointer         user_data)
-{
+void on_merge_activate (LiVESMenuItem *menuitem, livespointer user_data) {
   create_merge_dialog();
 
   merge_opts->loop_to_fit=mainw->last_transition_loop_to_fit;
@@ -306,10 +317,7 @@ on_merge_activate                     (LiVESMenuItem     *menuitem,
 
 
 
-void
-on_merge_cancel_clicked                   (LiVESButton       *button,
-					   livespointer         user_data)
-{
+void on_merge_cancel_clicked (LiVESButton *button, livespointer user_data) {
   lives_rfx_t *rfx=(lives_rfx_t *)user_data;
   on_paramwindow_cancel_clicked (NULL,rfx);
   if (merge_opts->spinbutton_loops!=NULL) 
@@ -329,11 +337,7 @@ on_merge_cancel_clicked                   (LiVESButton       *button,
 
 
 
-void
-on_merge_ok_clicked                   (LiVESButton       *button,
-				       livespointer         user_data)
-{
-  char *msg;
+void on_merge_ok_clicked (LiVESButton *button, livespointer user_data) {
   int start,end;
 
   int cb_start=1;
@@ -391,9 +395,7 @@ on_merge_ok_clicked                   (LiVESButton       *button,
     times_to_loop=1;
   }
 
-  msg=lives_strdup(_ ("Merging clipboard with selection..."));
-  d_print(msg);
-  lives_free(msg);
+  d_print(_ ("Merging clipboard with selection..."));
 
   excess_frames=clipboard->frames-(cfile->end-cfile->start+1);
   if (excess_frames<0) excess_frames=0;
@@ -413,9 +415,7 @@ on_merge_ok_clicked                   (LiVESButton       *button,
   // insert pre-frames
   if (!mainw->last_transition_align_start&&excess_frames>0&&mainw->last_transition_ins_frames) {
     mainw->insert_after=FALSE;
-    msg=lives_strdup_printf(P_ ("inserting %d extra frame before merge\n","inserting %d extra frames before merge\n",excess_frames),excess_frames);
-    d_print(msg);
-    lives_free(msg);
+    d_print(P_ ("inserting %d extra frame before merge\n","inserting %d extra frames before merge\n",excess_frames),excess_frames);
   
     // fx1_start and fx2_start indicate the clipboard start/end values, fx2_bool is insert_with_audio
     // TODO - allow this to be cancelled
@@ -532,10 +532,7 @@ on_merge_ok_clicked                   (LiVESButton       *button,
   // insert any post frames
   if (mainw->last_transition_align_start&&excess_frames>0&&mainw->last_transition_ins_frames) {
     mainw->insert_after=TRUE;
-    msg=lives_strdup_printf(P_ ("now inserting %d extra frame\n","now inserting %d extra frames\n",excess_frames),excess_frames);
-    d_print(msg);
-    lives_free(msg);
-    
+    d_print(P_ ("now inserting %d extra frame\n","now inserting %d extra frames\n",excess_frames),excess_frames);
       
     // fx1_start and fx2_start hold the clipboard start/end values
     mainw->fx1_start=clipboard->frames-excess_frames+1;

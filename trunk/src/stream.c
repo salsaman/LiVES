@@ -1,6 +1,6 @@
 // stream.c
 // LiVES
-// (c) G. Finch 2008 - 2013 <salsaman@gmail.com>
+// (c) G. Finch 2008 - 2015 <salsaman@gmail.com>
 // released under the GNU GPL 3 or later
 // see file ../COPYING for licensing details
 
@@ -427,8 +427,7 @@ static boolean l2l_parse_packet_header(lives_vstream_t *lstream, int strtype, in
 void lives2lives_read_stream(const char *host, int port) {
   lives_vstream_t *lstream=(lives_vstream_t *)lives_malloc(sizeof(lives_vstream_t));
 
-  char *tmp,*tmp2;
-  char *msg;
+  char *tmp;
   char *hostname;
 
 #ifdef USE_STRMBUF
@@ -449,9 +448,7 @@ void lives2lives_read_stream(const char *host, int port) {
     return;
   }
 
-  msg=lives_strdup_printf(_("Waiting for LiVES stream on port %d..."),port);
-  d_print(msg);
-  lives_free(msg);
+  d_print(_("Waiting for LiVES stream on port %d..."),port);
 
   mainw->cancelled=CANCEL_NONE;
   do_threaded_dialog(_("\nWaiting for stream"),TRUE);
@@ -562,7 +559,7 @@ void lives2lives_read_stream(const char *host, int port) {
   else fps_can_change=FALSE;
 
   if (mainw->fixed_fpsd>0.&&(cfile->fps!=mainw->fixed_fpsd)) {
-    do_error_dialog (_ ("\n\nUnable to open stream, framerate does not match fixed rate.\n"));
+    do_error_dialog (_("\n\nUnable to open stream, framerate does not match fixed rate.\n"));
 #ifdef USE_STRMBUF
     buffering=FALSE;
     pthread_join(stthread,NULL);
@@ -633,23 +630,19 @@ void lives2lives_read_stream(const char *host, int port) {
   if (!strcmp(host,"INADDR_ANY")) hostname=lives_strdup(_("any host"));
   else hostname=lives_strdup(_("host %d"));
 
-  d_print ((tmp=lives_strdup_printf (_("Opened LiVES to LiVES stream from %s on port %d"),hostname,port)));
-  lives_free(tmp);
+  d_print(_("Opened LiVES to LiVES stream from %s on port %d"),hostname,port);
   lives_free(hostname);
-  d_print ((tmp=lives_strdup_printf(_ (" size=%dx%d bpp=%d fps=%.3f\nAudio: "),cfile->hsize,cfile->vsize,cfile->bpp,cfile->fps)));
-  lives_free(tmp);
+  d_print(_(" size=%dx%d bpp=%d fps=%.3f\nAudio: "),cfile->hsize,cfile->vsize,cfile->bpp,cfile->fps);
 
   if (cfile->achans==0) {
-    d_print (_ ("none\n"));
+    d_print (_("none\n"));
   }
   else {
-    d_print ((tmp=lives_strdup_printf(P_("%d Hz %d channel %d bps\n","%d Hz %d channels %d bps\n",cfile->achans),cfile->arate,cfile->achans,cfile->asampsize)));
-    lives_free(tmp);
+    d_print(P_("%d Hz %d channel %d bps\n","%d Hz %d channels %d bps\n",cfile->achans),cfile->arate,cfile->achans,cfile->asampsize);
   }
 
-  d_print ((tmp=lives_strdup_printf (_("Syncing to external framerate of %s frames per second.\n"),(tmp2=remove_trailing_zeroes(mainw->fixed_fpsd)))));
+  d_print (_("Syncing to external framerate of %s frames per second.\n"),(tmp=remove_trailing_zeroes(mainw->fixed_fpsd)));
   lives_free(tmp);
-  lives_free(tmp2);
 
   has_last_delta_ticks=FALSE;
 
@@ -747,12 +740,11 @@ void weed_layer_set_from_lives2lives(weed_plant_t *layer, int clip, lives_vstrea
 	hdr=NULL;
 
 	if (lstream->fps!=mainw->fixed_fpsd&&fps_can_change) {
-	  char *tmp,*tmp2;
+	  char *tmp;
 	  d_print(_("Detected new framerate for stream:\n"));
 	  mainw->files[clip]->fps=mainw->fixed_fpsd=lstream->fps;
-	  d_print ((tmp=lives_strdup_printf (_("Syncing to external framerate of %s frames per second.\n"),(tmp2=remove_trailing_zeroes(mainw->fixed_fpsd)))));
+	  d_print (_("Syncing to external framerate of %s frames per second.\n"),(tmp=remove_trailing_zeroes(mainw->fixed_fpsd)));
 	  lives_free(tmp);
-	  lives_free(tmp2);
 	  has_last_delta_ticks=FALSE;
 	  if (clip==mainw->current_file) set_main_title(cfile->file_name,0);
 	}
@@ -801,9 +793,7 @@ void weed_layer_set_from_lives2lives(weed_plant_t *layer, int clip, lives_vstrea
 
     if (lstream->hsize!=width||lstream->vsize!=height) {
       // frame size changed...
-      char *msg=lives_strdup_printf((_("Detected frame size change to %d x %d\n")),lstream->hsize,lstream->vsize);
-      d_print(msg);
-      lives_free(msg);
+      d_print(_("Detected frame size change to %d x %d\n"),lstream->hsize,lstream->vsize);
       
       mainw->files[clip]->hsize=lstream->hsize;
       mainw->files[clip]->vsize=lstream->vsize;
@@ -1104,7 +1094,7 @@ lives_pandh_w* create_pandh_dialog (int type) {
 
   char *tmp,*tmp2;
 
-  pandhw->dialog = lives_standard_dialog_new (_("LiVES: - Receive LiVES stream"),TRUE);
+  pandhw->dialog = lives_standard_dialog_new (_("LiVES: - Receive LiVES stream"),TRUE,-1,-1);
 
   if (prefs->show_gui) {
     lives_window_set_transient_for(LIVES_WINDOW(pandhw->dialog),LIVES_WINDOW(mainw->LiVES));

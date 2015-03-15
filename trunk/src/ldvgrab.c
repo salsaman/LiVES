@@ -143,18 +143,14 @@ s_cam *camready (void) {
   for ( j = 0; j < n_ports && cam->device == -1; j++ ) {
 
     if (raw1394_set_port(cam->handle, j) < 0) {
-      msg=lives_strdup_printf(_("\nraw1394 - couldn't set port %d !\n"),j);
-      d_print(msg);
-      lives_free(msg);
+      d_print(_("\nraw1394 - couldn't set port %d !\n"),j);
       continue;
     }
     
     for (i=0; i < raw1394_get_nodecount(cam->handle); ++i) {
 
       if (rom1394_get_directory(cam->handle, i, &rom_dir) < 0) {
-	msg=lives_strdup_printf(_("error reading config rom directory for node %d\n"), i);
-	d_print(msg);
-	lives_free(msg);
+	d_print(_("error reading config rom directory for node %d\n"), i);
 	continue;
       }
 

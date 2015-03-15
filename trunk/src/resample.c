@@ -359,7 +359,7 @@ boolean auto_resample_resize (int width,int height,double fps,int fps_num,int fp
 	if (audio_resampled) cfile->undo_action=UNDO_ATOMIC_RESAMPLE_RESIZE;
 	else {
 	  cfile->undo_action=UNDO_RESIZABLE;
-	  set_undoable (_ ("Resize"),TRUE);
+	  set_undoable (_("Resize"),TRUE);
 	}
 	cfile->fx_frame_pump=0;
 	on_undo_activate (NULL,NULL);
@@ -383,7 +383,7 @@ boolean auto_resample_resize (int width,int height,double fps,int fps_num,int fp
       if (audio_resampled) cfile->undo_action=UNDO_ATOMIC_RESAMPLE_RESIZE;
       else {
 	cfile->undo_action=UNDO_RESIZABLE;
-	set_undoable (_ ("Resize"),TRUE);
+	set_undoable (_("Resize"),TRUE);
       }
       video_resized=TRUE;
       switch_to_file ((mainw->current_file=0),current_file);
@@ -393,7 +393,7 @@ boolean auto_resample_resize (int width,int height,double fps,int fps_num,int fp
   if (cfile->undo_action==UNDO_ATOMIC_RESAMPLE_RESIZE) {
     // just in case we missed anything...
     
-    set_undoable (_ ("Resample/Resize"),TRUE);
+    set_undoable (_("Resample/Resize"),TRUE);
     if (!video_resized) {
       cfile->ohsize=cfile->hsize;
       cfile->ovsize=cfile->vsize;
@@ -476,7 +476,7 @@ quantise_events (weed_plant_t *in_list, double qfps, boolean allow_gap) {
   while ((out_tc+tl)<=tc_end) {
     // walk list of in events
 
-    while (event!=NULL&&get_event_hint(event)!=WEED_EVENT_HINT_FRAME) {
+    while (event!=NULL&&!WEED_EVENT_IS_FRAME(event)) {
       // copy non-FRAME events
       if (event_copy_and_insert (event,out_list)==NULL) {
 	do_memory_error_dialog();
@@ -489,7 +489,7 @@ quantise_events (weed_plant_t *in_list, double qfps, boolean allow_gap) {
 
     // now we are dealing with a FRAME event
     if (event!=NULL) {
-      if (last_audio_event!=event&&weed_plant_has_leaf(event,"audio_clips")) {
+      if (last_audio_event!=event&&WEED_EVENT_IS_AUDIO_FRAME(event)) {
 	last_audio_event=event;
 	needs_audio=TRUE;
 	if (aclips!=NULL) lives_free(aclips);
@@ -582,9 +582,9 @@ quantise_events (weed_plant_t *in_list, double qfps, boolean allow_gap) {
     }
   }
 
-  if (event!=NULL&&get_event_hint(event)==WEED_EVENT_HINT_FRAME) event=get_next_event(event);
+  if (event!=NULL&&WEED_EVENT_IS_FRAME(event)) event=get_next_event(event);
 
-  while (event!=NULL&&get_event_hint(event)!=WEED_EVENT_HINT_FRAME) {
+  while (event!=NULL&&!WEED_EVENT_IS_FRAME(event)) {
     // copy remaining non-FRAME events
     if (event_copy_and_insert (event,out_list)==NULL) {
       do_memory_error_dialog();
@@ -678,10 +678,10 @@ static void on_reorder_activate (int rwidth, int rheight) {
   switch_to_file(mainw->current_file,mainw->current_file);
   if (mainw->current_file>0) {
     d_print_done();
-    msg=lives_strdup_printf(_ ("Length of video is now %d frames.\n"),cfile->frames);
+    msg=lives_strdup_printf(_("Length of video is now %d frames.\n"),cfile->frames);
   }
   else {
-    msg=lives_strdup_printf(_ ("Clipboard was resampled to %d frames.\n"),cfile->frames);
+    msg=lives_strdup_printf(_("Clipboard was resampled to %d frames.\n"),cfile->frames);
   }
 
   d_print(msg);
@@ -700,10 +700,7 @@ static void on_reorder_activate (int rwidth, int rheight) {
 
 
 
-void
-on_resample_audio_activate (LiVESMenuItem     *menuitem,
-			    livespointer         user_data)
-{
+void on_resample_audio_activate (LiVESMenuItem *menuitem, livespointer user_data) {
    // show the playback rate - real audio rate is cfile->arps
   mainw->fx1_val=cfile->arate;
   mainw->fx2_val=cfile->achans;
@@ -711,19 +708,19 @@ on_resample_audio_activate (LiVESMenuItem     *menuitem,
   mainw->fx4_val=cfile->signed_endian;
   resaudw=create_resaudw(1,NULL,NULL);
   lives_widget_show (resaudw->dialog);
-
 }
 
-void
-on_resaudio_ok_clicked                      (LiVESButton *button,
-					     LiVESEntry *entry)
-{
-  char *com,*msg;  
+
+
+void on_resaudio_ok_clicked (LiVESButton *button, LiVESEntry *entry) {
+  char *com;
+  
+  boolean noswitch=mainw->noswitch;
+  boolean has_lmap_error=FALSE;
+
   int arate,achans,asampsize,arps;
   int asigned=1,aendian=1;
   int cur_signed,cur_endian;
-  boolean noswitch=mainw->noswitch;
-  boolean has_lmap_error=FALSE;
 
   if (button!=NULL) {
     arps=arate=(int)atoi (lives_entry_get_text(LIVES_ENTRY(resaudw->entry_arate)));
@@ -743,7 +740,7 @@ on_resaudio_ok_clicked                      (LiVESButton *button,
     lives_free (resaudw);
     
     if (arate<=0) {
-      do_error_dialog (_ ("\n\nNew rate must be greater than 0\n"));
+      do_error_dialog (_("\n\nNew rate must be greater than 0\n"));
       return;
     }
   }
@@ -795,7 +792,7 @@ on_resaudio_ok_clicked                      (LiVESButton *button,
       mainw->com_failed=FALSE;
       lives_system (com,FALSE);
       if (mainw->com_failed) return;
-      do_progress_dialog (TRUE,FALSE,_ ("Resampling audio")); // TODO - allow cancel ??
+      do_progress_dialog (TRUE,FALSE,_("Resampling audio")); // TODO - allow cancel ??
       lives_free (com);
       cfile->arate=cfile->arps=arps;
     }
@@ -811,7 +808,7 @@ on_resaudio_ok_clicked                      (LiVESButton *button,
       lives_system (com,FALSE);
       check_backend_return(cfile);
       if (mainw->com_failed) return;
-      do_progress_dialog (TRUE,FALSE,_ ("Resampling audio"));
+      do_progress_dialog (TRUE,FALSE,_("Resampling audio"));
       lives_free (com);
 
     }
@@ -829,7 +826,7 @@ on_resaudio_ok_clicked                      (LiVESButton *button,
   reget_afilesize(mainw->current_file);
 
   if (cfile->afilesize==0l) {
-    do_error_dialog (_ ("LiVES was unable to resample the audio as requested.\n"));
+    do_error_dialog (_("LiVES was unable to resample the audio as requested.\n"));
     on_undo_activate (NULL,NULL);
     set_undoable (_("Resample Audio"),FALSE);
     mainw->error=TRUE;
@@ -843,23 +840,22 @@ on_resaudio_ok_clicked                      (LiVESButton *button,
 
   d_print("");  // force printing of switch message
 
-  msg=lives_strdup_printf (_ ("Audio was resampled to %d Hz, %d channels, %d bit"),arate,achans,asampsize);
-  d_print (msg);
-  lives_free (msg);
+  d_print (_("Audio was resampled to %d Hz, %d channels, %d bit"),arate,achans,asampsize);
+
   if (cur_signed!=asigned) {
     if (asigned==1) {
-      d_print (_ (", signed"));
+      d_print (_(", signed"));
     }
     else {
-      d_print (_ (", unsigned"));
+      d_print (_(", unsigned"));
     }
   }
   if (cur_endian!=aendian) {
     if (aendian==1) {
-      d_print (_ (", little-endian"));
+      d_print (_(", little-endian"));
     }
     else {
-      d_print (_ (", big-endian"));
+      d_print (_(", big-endian"));
     }
   }
   d_print ("\n");
@@ -1032,10 +1028,10 @@ void on_resample_vid_ok (LiVESButton *button, LiVESEntry *entry) {
 
   if (ratio_fps) {
     // got a ratio
-    msg=lives_strdup_printf(_ ("Resampling video at %.8f frames per second..."),mainw->fx1_val);
+    msg=lives_strdup_printf(_("Resampling video at %.8f frames per second..."),mainw->fx1_val);
   }
   else {
-    msg=lives_strdup_printf(_ ("Resampling video at %.3f frames per second..."),mainw->fx1_val);
+    msg=lives_strdup_printf(_("Resampling video at %.3f frames per second..."),mainw->fx1_val);
   }
   if (mainw->current_file>0) {
     d_print(msg);
@@ -1202,7 +1198,7 @@ _resaudw *create_resaudw (short type, render_details *rdet, LiVESWidget *top_vbo
       title=lives_strdup(_("LiVES: - External Clip Settings"));
     }
 
-    resaudw->dialog = lives_standard_dialog_new (title,FALSE);
+    resaudw->dialog = lives_standard_dialog_new (title,FALSE,-1,-1);
     lives_free(title);
 
     accel_group = LIVES_ACCEL_GROUP(lives_accel_group_new ());
@@ -1674,7 +1670,7 @@ void create_new_pb_speed (short type) {
     title=lives_strdup(_("LiVES: - Resample Video"));
   }
 
-  new_pb_speed = lives_standard_dialog_new (title,FALSE);
+  new_pb_speed = lives_standard_dialog_new (title,FALSE,-1,-1);
   lives_free(title);
 
   lives_container_set_border_width (LIVES_CONTAINER (new_pb_speed), widget_opts.border_width*2);
@@ -1945,13 +1941,13 @@ void on_change_speed_ok_clicked (LiVESButton *button, livespointer user_data) {
   cfile->pb_fps=cfile->fps=mainw->fx1_val;
   if (mainw->fx1_bool) {
     cfile->arate=(int)(arate*cfile->fps+.5);
-    msg=lives_strdup_printf (_ ("Changed playback speed to %.3f frames per second and audio to %d Hz.\n"),cfile->fps,cfile->arate);
+    msg=lives_strdup_printf (_("Changed playback speed to %.3f frames per second and audio to %d Hz.\n"),cfile->fps,cfile->arate);
   }
   else {
-    msg=lives_strdup_printf (_ ("Changed playback speed to %.3f frames per second.\n"),cfile->fps);
+    msg=lives_strdup_printf (_("Changed playback speed to %.3f frames per second.\n"),cfile->fps);
   }
-  d_print (msg);
-  lives_free (msg);
+  d_print(msg);
+  lives_free(msg);
 
   cfile->ratio_fps=FALSE;
 
@@ -2033,19 +2029,19 @@ int reorder_frames(int rwidth, int rheight) {
   if (cfile->undo_action==UNDO_RESAMPLE) {
     if (mainw->current_file>0) {
       cfile->nopreview=cfile->nokeep=TRUE;
-      if (!do_progress_dialog(TRUE,TRUE,_ ("Resampling video"))) {
+      if (!do_progress_dialog(TRUE,TRUE,_("Resampling video"))) {
 	cfile->nopreview=cfile->nokeep=FALSE;
 	return cur_frames;
       }
       cfile->nopreview=cfile->nokeep=FALSE;
     }
     else {
-      do_progress_dialog(TRUE,FALSE,_ ("Resampling clipboard video"));
+      do_progress_dialog(TRUE,FALSE,_("Resampling clipboard video"));
     }
   }
   else {
     cfile->nopreview=cfile->nokeep=TRUE;
-    if (!do_progress_dialog(TRUE,TRUE,_ ("Reordering frames"))) {
+    if (!do_progress_dialog(TRUE,TRUE,_("Reordering frames"))) {
       cfile->nopreview=cfile->nokeep=FALSE;
       return cur_frames;
     }
@@ -2054,7 +2050,7 @@ int reorder_frames(int rwidth, int rheight) {
   lives_free(com);
   
   if (mainw->error) {
-    if (mainw->cancelled!=CANCEL_ERROR) do_error_dialog (_ ("\n\nLiVES was unable to reorder the frames."));
+    if (mainw->cancelled!=CANCEL_ERROR) do_error_dialog (_("\n\nLiVES was unable to reorder the frames."));
     deorder_frames(new_frames,FALSE);
     new_frames=-new_frames;
   }
@@ -2102,7 +2098,7 @@ int deorder_frames(int old_frames, boolean leave_bak) {
   lives_system(com,TRUE);
   if (mainw->com_failed) return cfile->frames;
 
-  do_progress_dialog(TRUE,FALSE,_ ("Deordering frames"));
+  do_progress_dialog(TRUE,FALSE,_("Deordering frames"));
   lives_free(com);
 
 
@@ -2158,13 +2154,13 @@ boolean resample_clipboard(double new_fps) {
     cfile->progress_end=new_frames;
     cfile->old_frames=cfile->frames;
     // show a progress dialog, not cancellable
-    do_progress_dialog(TRUE,FALSE,_ ("Resampling clipboard video"));
+    do_progress_dialog(TRUE,FALSE,_("Resampling clipboard video"));
     lives_free(com);
     cfile->frames=new_frames;
     cfile->undo_action=UNDO_RESAMPLE;
     cfile->fps=cfile->undo1_dbl;
     cfile->undo1_dbl=old_fps;
-    msg=lives_strdup_printf(_ ("Clipboard was resampled to %d frames.\n"),cfile->frames);
+    msg=lives_strdup_printf(_("Clipboard was resampled to %d frames.\n"),cfile->frames);
     d_print(msg);
     lives_free(msg);
     mainw->current_file=current_file;
@@ -2180,7 +2176,7 @@ boolean resample_clipboard(double new_fps) {
       cfile->progress_start=old_frames+1;
       cfile->progress_end=cfile->frames;
       // show a progress dialog, not cancellable
-      do_progress_dialog(TRUE,FALSE,_ ("Resampling clipboard video"));
+      do_progress_dialog(TRUE,FALSE,_("Resampling clipboard video"));
       lives_free(com);
     }
 
@@ -2197,7 +2193,7 @@ boolean resample_clipboard(double new_fps) {
     on_resample_vid_ok(NULL,NULL);
     mainw->current_file=current_file;
     if (clipboard->fps!=new_fps) {
-      d_print (_ ("resampling error..."));
+      d_print(_("resampling error..."));
       mainw->error=1;
       mainw->no_switch_dprint=FALSE;
       return FALSE;

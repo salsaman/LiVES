@@ -279,7 +279,7 @@ void on_trans_method_changed (LiVESCombo *combo, livespointer user_data) {
   lives_container_foreach (LIVES_CONTAINER(merge_opts->param_vbox),bang,NULL);
   on_paramwindow_cancel_clicked (NULL,rfx);
 
-  idx=lives_list_index(merge_opts->trans_list,txt);
+  idx=lives_list_strcmp_index(merge_opts->trans_list,txt);
 
   lives_free(txt);
 

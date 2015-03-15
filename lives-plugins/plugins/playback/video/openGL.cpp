@@ -35,7 +35,7 @@
 
 ////////////////////////////////////////////////////////////////////////////////////
 
-static char plugin_version[64]="LiVES openGL trickery playback engine version 1.0";
+static char plugin_version[64]="LiVES openGL playback engine version 1.1";
 static char error[256];
 
 static boolean (*render_fn)(int hsize, int vsize, void **pixel_data, void **return_data);
@@ -272,7 +272,7 @@ const char *get_init_rfx (void) {
 0xF0\\n\
 </language_code>\\n\
 <params> \\n\
-mode|_Mode|string_list|0|Flat|Triangle|Rotating|Wobbler|Landscape|Insider|Cube|Turning|Tunnel|Particles|Dissolve\\n\
+mode|_Mode|string_list|0|Normal|Triangle|Rotating|Wobbler|Landscape|Insider|Cube|Turning|Tunnel|Particles|Dissolve\\n\
 tfps|Target _Framerate|num2|50.|1.|200.\\n\
 nbuf|Number of _buffered frames|num0|32|1|256\\n\
 dbuf|Use _double buffering|bool|1|0 \\n\

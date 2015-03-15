@@ -594,7 +594,7 @@ void on_vppa_cancel_clicked (LiVESButton *button, livespointer user_data) {
   }
 
   if (vppw->rfx!=NULL) {
-    //rfx_free(vppw->rfx); // **** TODO !!!!! FIXME
+    rfx_free(vppw->rfx);
     lives_free(vppw->rfx);
   }
 
@@ -1065,7 +1065,8 @@ _vppaw *on_vpp_advanced_clicked (LiVESButton *button, livespointer user_data) {
     if (tmpvpp->extra_argv!=NULL&&tmpvpp->extra_argc>0) {
       // update with defaults
       LiVESList *plist=argv_to_marshalled_list(vppa->rfx,tmpvpp->extra_argc,tmpvpp->extra_argv);
-      param_demarshall(vppa->rfx,plist,FALSE,TRUE);
+      param_demarshall(vppa->rfx,plist,FALSE,FALSE); // set defaults
+      param_demarshall(vppa->rfx,plist,FALSE,TRUE); // update widgets
       lives_list_free_strings(plist);
       lives_list_free(plist);
     }
@@ -2840,7 +2841,7 @@ void render_fx_get_params (lives_rfx_t *rfx, const char *plugin_name, short stat
     else if (!strncmp (param_array[2],"string",8)) {
       cparam->type=LIVES_PARAM_STRING;
     }
-    else if (!strncmp (param_array[2],"strinlives_list",8)) {
+    else if (!strncmp (param_array[2],"string_list",8)) {
       cparam->type=LIVES_PARAM_STRING_LIST;
     }
     else continue;
@@ -3754,15 +3755,18 @@ char *plugin_run_param_window(const char *get_com, LiVESVBox *vbox, lives_rfx_t 
 
 
   FILE *sfile;
+
   lives_rfx_t *rfx=(lives_rfx_t *)lives_malloc(sizeof(lives_rfx_t));
+
   char *string;
   char *rfx_scrapname=lives_strdup_printf("rfx.%d",capable->mainpid);
   char *rfxfile=lives_strdup_printf ("%s/.%s.script",prefs->tmpdir,rfx_scrapname);
-  int res;
   char *com;
   char *fnamex;
   char *res_string=NULL;
   char buff[32];
+
+  int res;
   int retval;
 
   string=lives_strdup_printf("<name>\n%s\n</name>\n",rfx_scrapname);

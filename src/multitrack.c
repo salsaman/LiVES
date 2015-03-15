@@ -14254,7 +14254,7 @@ void multitrack_clear_marks (LiVESMenuItem *menuitem, livespointer user_data) {
 void select_all_time (LiVESMenuItem *menuitem, livespointer user_data) {
   lives_mt *mt=(lives_mt *)user_data;
   mt->region_start=0.;
-  mt->region_end=mt->end_secs;
+  mt->region_end=get_event_timecode(get_last_event(mt->event_list));
   on_timeline_release(mt->timeline_reg,NULL,mt);
 }
 
@@ -14269,7 +14269,7 @@ void select_from_zero_time (LiVESMenuItem *menuitem, livespointer user_data) {
 void select_to_end_time (LiVESMenuItem *menuitem, livespointer user_data) {
   lives_mt *mt=(lives_mt *)user_data;
   if (mt->region_start==0.&&mt->region_end==0.) mt->region_start=mt->ptr_time;
-  mt->region_end=mt->end_secs;
+  mt->region_end=get_event_timecode(get_last_event(mt->event_list));
   on_timeline_release(mt->timeline_reg,NULL,mt);
 }
 

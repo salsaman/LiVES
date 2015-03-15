@@ -47,6 +47,7 @@ G_GNUC_PURE void ***get_event_pchains(void) {
 LIVES_INLINE weed_timecode_t get_event_timecode (weed_plant_t *plant) {
   weed_timecode_t tc;
   int error;
+  if (plant==NULL) return (weed_timecode_t)0;
   tc=weed_get_int64_value (plant,"timecode",&error);
   return tc;
 }
@@ -54,6 +55,7 @@ LIVES_INLINE weed_timecode_t get_event_timecode (weed_plant_t *plant) {
 LIVES_INLINE int get_event_hint (weed_plant_t *plant) {
   int hint;
   int error;
+  if (plant==NULL) return 0;
   hint=weed_get_int_value (plant,"hint",&error);
   return hint;
 }
@@ -3323,6 +3325,7 @@ lives_render_error_t render_events (boolean reset) {
 
   weed_timecode_t tc;
   weed_timecode_t next_tc=0,next_out_tc;
+  weed_timecode_t flush_audio_tc=0;
 
   void *init_event;
 
@@ -3413,143 +3416,149 @@ lives_render_error_t render_events (boolean reset) {
     eventnext=get_next_event(event);
 
     hint=get_event_hint (event);
+
     switch (hint) {
     case WEED_EVENT_HINT_FRAME:
-      tc=get_event_timecode (event);
+      if (flush_audio_tc==0) {
+	tc=get_event_timecode (event);
 
-      if ((mainw->multitrack==NULL||(mainw->multitrack->render_vidp&&!mainw->multitrack->pr_audio))&&
-	  !(!mainw->clip_switched&&cfile->hsize*cfile->vsize==0)) {
-	int scrap_track=-1;
+	if ((mainw->multitrack==NULL||(mainw->multitrack->render_vidp&&!mainw->multitrack->pr_audio))&&
+	    !(!mainw->clip_switched&&cfile->hsize*cfile->vsize==0)) {
+	  int scrap_track=-1;
 	  
-	num_tracks=weed_leaf_num_elements (event,"clips");
-	clip_index=weed_get_int_array (event,"clips",&weed_error);
-	frame_index=weed_get_int_array (event,"frames",&weed_error);
+	  num_tracks=weed_leaf_num_elements (event,"clips");
+	  clip_index=weed_get_int_array (event,"clips",&weed_error);
+	  frame_index=weed_get_int_array (event,"frames",&weed_error);
 	
-	if (mainw->scrap_file!=-1) {
-	  for (i=0;i<num_tracks;i++) {
-	    if (clip_index[i]!=mainw->scrap_file) {
-	      scrap_track=-1;
-	      break;
-	    }
-	    if (scrap_track==-1) scrap_track=i;
-	  }
-	}
-
-	if (scrap_track!=-1) {
-	  // do not apply fx, just pull frame
-	  layer=weed_plant_new(WEED_PLANT_CHANNEL);
-	  weed_set_int_value(layer,"clip",clip_index[scrap_track]);
-	  weed_set_int_value(layer,"frame",frame_index[scrap_track]);
-	  if (!pull_frame(layer,prefs->image_ext,tc)) {
-	    weed_plant_free(layer);
-	    layer=NULL;
-	  }
-	}
-	else {
-	  int oclip,nclip;
-
-	  layers=(weed_plant_t **)lives_malloc((num_tracks+1)*sizeof(weed_plant_t *));
-
-	  // get list of active tracks from mainw->filter map
-	  get_active_track_list(mainw->clip_index,mainw->num_tracks,mainw->filter_map);
-	  for (i=0;i<mainw->num_tracks;i++) {
-	    oclip=mainw->old_active_track_list[i];
-	    mainw->ext_src_used[oclip]=FALSE;
-	    if (oclip>0&&oclip==(nclip=mainw->active_track_list[i])) {
-	      if (mainw->track_decoders[i]==mainw->files[oclip]->ext_src) mainw->ext_src_used[oclip]=TRUE;
+	  if (mainw->scrap_file!=-1) {
+	    for (i=0;i<num_tracks;i++) {
+	      if (clip_index[i]!=mainw->scrap_file) {
+		scrap_track=-1;
+		break;
+	      }
+	      if (scrap_track==-1) scrap_track=i;
 	    }
 	  }
 
-	  for (i=0;i<num_tracks;i++) {
-	    if (clip_index[i]>0&&frame_index[i]>0&&mainw->multitrack!=NULL) is_blank=FALSE;
-	    layers[i]=weed_plant_new(WEED_PLANT_CHANNEL);
-	    weed_set_int_value(layers[i],"clip",clip_index[i]);
-	    weed_set_int_value(layers[i],"frame",frame_index[i]);
-	    weed_set_voidptr_value(layers[i],"pixel_data",NULL);
+	  if (scrap_track!=-1) {
+	    // do not apply fx, just pull frame
+	    layer=weed_plant_new(WEED_PLANT_CHANNEL);
+	    weed_set_int_value(layer,"clip",clip_index[scrap_track]);
+	    weed_set_int_value(layer,"frame",frame_index[scrap_track]);
+	    if (!pull_frame(layer,prefs->image_ext,tc)) {
+	      weed_plant_free(layer);
+	      layer=NULL;
+	    }
+	  }
+	  else {
+	    int oclip,nclip;
 
-	    if ((oclip=mainw->old_active_track_list[i])!=(nclip=mainw->active_track_list[i])) {
-	      // now using threading, we want to start pulling all pixel_data for all active layers here
-	      // however, we may have more than one copy of the same clip - in this case we want to create clones of the decoder plugin
-	      // this is to prevent constant seeking between different frames in the clip
+	    layers=(weed_plant_t **)lives_malloc((num_tracks+1)*sizeof(weed_plant_t *));
 
-	      // check if ext_src survives old->new
+	    // get list of active tracks from mainw->filter map
+	    get_active_track_list(mainw->clip_index,mainw->num_tracks,mainw->filter_map);
+	    for (i=0;i<mainw->num_tracks;i++) {
+	      oclip=mainw->old_active_track_list[i];
+	      mainw->ext_src_used[oclip]=FALSE;
+	      if (oclip>0&&oclip==(nclip=mainw->active_track_list[i])) {
+		if (mainw->track_decoders[i]==mainw->files[oclip]->ext_src) mainw->ext_src_used[oclip]=TRUE;
+	      }
+	    }
+
+	    for (i=0;i<num_tracks;i++) {
+	      if (clip_index[i]>0&&frame_index[i]>0&&mainw->multitrack!=NULL) is_blank=FALSE;
+	      layers[i]=weed_plant_new(WEED_PLANT_CHANNEL);
+	      weed_set_int_value(layers[i],"clip",clip_index[i]);
+	      weed_set_int_value(layers[i],"frame",frame_index[i]);
+	      weed_set_voidptr_value(layers[i],"pixel_data",NULL);
+
+	      if ((oclip=mainw->old_active_track_list[i])!=(nclip=mainw->active_track_list[i])) {
+		// now using threading, we want to start pulling all pixel_data for all active layers here
+		// however, we may have more than one copy of the same clip - in this case we want to create clones of the decoder plugin
+		// this is to prevent constant seeking between different frames in the clip
+
+		// check if ext_src survives old->new
 
 
-	      ////
-	      if (oclip>0) {
-		if (mainw->files[oclip]->clip_type==CLIP_TYPE_FILE) {
-		  if (mainw->track_decoders[i]!=(lives_decoder_t *)mainw->files[oclip]->ext_src) {
-		    // remove the clone for oclip
-		    close_decoder_plugin(mainw->track_decoders[i]);
+		////
+		if (oclip>0) {
+		  if (mainw->files[oclip]->clip_type==CLIP_TYPE_FILE) {
+		    if (mainw->track_decoders[i]!=(lives_decoder_t *)mainw->files[oclip]->ext_src) {
+		      // remove the clone for oclip
+		      close_decoder_plugin(mainw->track_decoders[i]);
+		    }
+		    mainw->track_decoders[i]=NULL;
 		  }
-		  mainw->track_decoders[i]=NULL;
+		}
+
+		if (nclip>0) {
+		  if (mainw->files[nclip]->clip_type==CLIP_TYPE_FILE) {
+		    if (!mainw->ext_src_used[nclip]) {
+		      mainw->track_decoders[i]=(lives_decoder_t *)mainw->files[nclip]->ext_src;
+		      mainw->ext_src_used[nclip]=TRUE;
+		    }
+		    else {
+		      // add new clone for nclip
+		      mainw->track_decoders[i]=clone_decoder(nclip);
+		    }
+		  }
 		}
 	      }
+
+	      mainw->old_active_track_list[i]=mainw->active_track_list[i];
 
 	      if (nclip>0) {
-		if (mainw->files[nclip]->clip_type==CLIP_TYPE_FILE) {
-		  if (!mainw->ext_src_used[nclip]) {
-		    mainw->track_decoders[i]=(lives_decoder_t *)mainw->files[nclip]->ext_src;
-		    mainw->ext_src_used[nclip]=TRUE;
-		  }
-		  else {
-		    // add new clone for nclip
-		    mainw->track_decoders[i]=clone_decoder(nclip);
-		  }
-		}
+		const char *img_ext=get_image_ext_for_type(mainw->files[nclip]->img_type);
+		// set alt src in layer
+		weed_set_voidptr_value(layers[i],"host_decoder",(void *)mainw->track_decoders[i]);
+		pull_frame_threaded(layers[i],img_ext,(weed_timecode_t)mainw->currticks);
+	      }
+	      else {
+		weed_set_voidptr_value(layers[i],"pixel_data",NULL);
 	      }
 	    }
-
-	    mainw->old_active_track_list[i]=mainw->active_track_list[i];
-
-	    if (nclip>0) {
-	      const char *img_ext=get_image_ext_for_type(mainw->files[nclip]->img_type);
-	      // set alt src in layer
-	      weed_set_voidptr_value(layers[i],"host_decoder",(void *)mainw->track_decoders[i]);
-	      pull_frame_threaded(layers[i],img_ext,(weed_timecode_t)mainw->currticks);
-	    }
-	    else {
-	      weed_set_voidptr_value(layers[i],"pixel_data",NULL);
-	    }
-	  }
-	  layers[i]=NULL;
+	    layers[i]=NULL;
 	  
-	  layer=weed_apply_effects(layers,mainw->filter_map,tc,0,0,pchains);
+	    layer=weed_apply_effects(layers,mainw->filter_map,tc,0,0,pchains);
 	  
-	  for (i=0;layers[i]!=NULL;i++) {
-	    if (layer!=layers[i]) {
-	      check_layer_ready(layers[i]);
-	      weed_plant_free(layers[i]);
+	    for (i=0;layers[i]!=NULL;i++) {
+	      if (layer!=layers[i]) {
+		check_layer_ready(layers[i]);
+		weed_plant_free(layers[i]);
+	      }
 	    }
+	    lives_free(layers);
 	  }
-	  lives_free(layers);
+
+	  lives_free(clip_index);
+	  lives_free(frame_index);
+
+	  if (layer!=NULL) {
+	    layer_palette=weed_layer_get_palette(layer);
+	    if (cfile->img_type==IMG_TYPE_JPEG&&layer_palette!=WEED_PALETTE_RGB24&&layer_palette!=WEED_PALETTE_RGBA32) 
+	      layer_palette=WEED_PALETTE_RGB24;
+
+	    else if (cfile->img_type==IMG_TYPE_PNG&&layer_palette!=WEED_PALETTE_RGBA32) 
+	      layer_palette=WEED_PALETTE_RGBA32;
+
+	    resize_layer(layer,cfile->hsize,cfile->vsize,LIVES_INTERP_BEST,layer_palette,0);
+	    convert_layer_palette(layer,layer_palette,0);
+	    pixbuf=layer_to_pixbuf(layer);
+	    weed_plant_free(layer);
+	  }
+
+	  mainw->blend_file=blend_file;
 	}
-
-	lives_free(clip_index);
-	lives_free(frame_index);
-
-	if (layer!=NULL) {
-	  layer_palette=weed_layer_get_palette(layer);
-	  if (cfile->img_type==IMG_TYPE_JPEG&&layer_palette!=WEED_PALETTE_RGB24&&layer_palette!=WEED_PALETTE_RGBA32) 
-	    layer_palette=WEED_PALETTE_RGB24;
-
-	  else if (cfile->img_type==IMG_TYPE_PNG&&layer_palette!=WEED_PALETTE_RGBA32) 
-	    layer_palette=WEED_PALETTE_RGBA32;
-
-	  resize_layer(layer,cfile->hsize,cfile->vsize,LIVES_INTERP_BEST,layer_palette,0);
-	  convert_layer_palette(layer,layer_palette,0);
-	  pixbuf=layer_to_pixbuf(layer);
-	  weed_plant_free(layer);
-	}
-
-	mainw->blend_file=blend_file;
       }
+      else tc=flush_audio_tc;
 
       next_frame_event=get_next_frame_event (event);
 
       // get tc of next frame event
       if (next_frame_event!=NULL) next_tc=get_event_timecode (next_frame_event);
       else {
+	// reached end of event_list
+
 	if (has_audio&&!weed_plant_has_leaf(event,"audio_clips")) {
 	  // pad to end with silence
 	  cfile->achans=cfile->undo_achans;
@@ -3707,7 +3716,8 @@ lives_render_error_t render_events (boolean reset) {
 
 	if (prefs->ocp==-1) prefs->ocp=get_int_pref ("open_compression_percent");
 
-	if (cfile->old_frames==0) lives_snprintf(oname,PATH_MAX,"%s/%s/%08d.%s",prefs->tmpdir,cfile->handle,out_frame,get_image_ext_for_type(cfile->img_type));
+	if (cfile->old_frames==0) lives_snprintf(oname,PATH_MAX,"%s/%s/%08d.%s",prefs->tmpdir,cfile->handle,
+						 out_frame,get_image_ext_for_type(cfile->img_type));
 
 	do {
 	  retval=0;

@@ -9422,7 +9422,7 @@ void on_effects_paused (LiVESButton *button, livespointer user_data) {
       com=NULL;
 
       if (!cfile->opening) {
-	lives_button_set_label(LIVES_BUTTON(button),_ ("Pause"));
+	lives_button_set_label(LIVES_BUTTON(button),_ ("Paus_e"));
 	lives_label_set_text(LIVES_LABEL(cfile->proc_ptr->label2),_ ("\nPlease Wait"));
 	d_print(_ ("resumed..."));
       }
@@ -9450,9 +9450,9 @@ void on_effects_paused (LiVESButton *button, livespointer user_data) {
 	  }
 	  lives_button_set_label(LIVES_BUTTON(cfile->proc_ptr->cancel_button),ltext);
 	  lives_label_set_text(LIVES_LABEL(cfile->proc_ptr->label2),
-			       (tmp=lives_strdup_printf(
-						    _ ("\nPaused\n(click %s to keep what you have and stop)\n(click Resume to continue processing)"),
-						    ltext)));
+			       (tmp=lives_strdup_printf
+				(_("\nPaused\n(click %s to keep what you have and stop)\n(click Resume to continue processing)"),
+				 ltext)));
 	  lives_free(tmp);
 	  lives_free(ltext);
 	}
@@ -9467,8 +9467,8 @@ void on_effects_paused (LiVESButton *button, livespointer user_data) {
       mainw->timeout_ticks+=xticks;
       com=lives_strdup_printf("%s resume \"%s\"",prefs->backend_sync,cfile->handle);
       if (!mainw->preview) {
-	if (cfile->opening) lives_button_set_label(LIVES_BUTTON(button),_ ("Pause/_Enough"));
-	else lives_button_set_label(LIVES_BUTTON(button),_ ("Pause"));
+	if (cfile->opening||!cfile->nokeep) lives_button_set_label(LIVES_BUTTON(button),_ ("Pause/_Enough"));
+	else lives_button_set_label(LIVES_BUTTON(button),_ ("Paus_e"));
 	lives_button_set_label(LIVES_BUTTON(cfile->proc_ptr->cancel_button), _("Cancel"));
 	lives_label_set_text(LIVES_LABEL(cfile->proc_ptr->label2),_ ("\nPlease Wait"));
 	d_print(_ ("resumed..."));

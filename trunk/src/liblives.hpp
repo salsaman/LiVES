@@ -1566,8 +1566,6 @@ namespace lives {
        Move the block to a new track at a new timeline time.
        Depending on the value of multitrack::insertMode(), it may not be possible to do the insertion. 
        In case of failure an invalid block is returned.
-       If the current track is a backing audio track, then only audio is inserted; 
-       in this case if without_audio is true an invalid block is returned.
        Only works if livesApp::status() is LIVES_STATUS_READY and isActive() is true.
        Note: the actual place where the block ends up, and its final size depends on various factors such as the gravity() setting, 
        the insertMode() setting, and the location of other blocks in the layout.

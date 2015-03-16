@@ -917,6 +917,13 @@ AM_CONDITIONAL(BUILD_EXPERIMENTAL,false)
 
 AC_ARG_ENABLE( liblives, [  --enable-liblives     Build additional liblives static library.] , liblives=yes, liblives=no)
 
+if test "$liblives" = "yes"; then
+if test "$disable_glslice" = "yes" ; then
+AC_MSG_ERROR("cannot disable glib-slice when building liblives")
+fi
+fi
+ 
+
 AM_CONDITIONAL(BUILD_LIBLIVES, test $liblives != no)
 
 

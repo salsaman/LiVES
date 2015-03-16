@@ -23,7 +23,7 @@ else
 AM_CPPFLAGS = -I "$(top_srcdir)" -I "$(top_srcdir)/libOSC" -I "$(includedir)"
 endif
 
-libOSC_la_CFLAGS = $(DEBUG_CFLAGS) $(solaris_CFLAGS) $(mingw_CFLAGS) -Wstrict-aliasing=0
+libOSC_la_CFLAGS = $(DEBUG_CFLAGS) $(solaris_CFLAGS) $(mingw_CFLAGS) -Wstrict-aliasing=0 -fPIC -DPIC
 
 if ENABLE_OSC
 libOSC_la_SOURCES = OSC-address-space.c OSC-address-space.h\
@@ -45,5 +45,5 @@ libOSC_la_SOURCES = OSC-address-space.c OSC-address-space.h\
 endif
 
 
-libOSC_la_LDFLAGS = $(ALL_LIB_OPTS) $(mingw_LIBFLAGS) -DDYNAMIC -O2 -Wall -rdynamic
+libOSC_la_LDFLAGS = $(ALL_LIB_OPTS) $(mingw_LIBFLAGS) -DDYNAMIC -O2 -Wall -rdynamic -fPIC -DPIC
 

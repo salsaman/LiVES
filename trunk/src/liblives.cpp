@@ -1786,8 +1786,10 @@ namespace lives {
   }
 
 
-
-
+  double multitrack::FPS() const {
+    if (!isActive()) return 0.;
+    return mainw->multitrack->fps;
+  }
 
 
   //////////////////////////////////////////////

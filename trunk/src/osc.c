@@ -1,7 +1,6 @@
-
 // osc.c
 // LiVES (lives-exe)
-// (c) G. Finch 2004 - 2013 <salsaman@gmail.com>
+// (c) G. Finch 2004 - 2015 <salsaman@gmail.com>
 // Released under the GPL 3 or later
 // see file ../COPYING for licensing details
 
@@ -1931,7 +1930,7 @@ boolean lives_osc_cb_bgget_fps_ratio(void *context, int arglen, const void *varg
     lives_status_send ((tmp=lives_strdup_printf ("%.4f",0.)));
   else if (mainw->preview||mainw->playing_file<1) lives_status_send ((tmp=lives_strdup_printf ("%.4f",1.)));
   else lives_status_send ((tmp=lives_strdup_printf ("%.4f",mainw->files[mainw->blend_file]->pb_fps/
-						mainw->files[mainw->blend_file]->fps)));
+						    mainw->files[mainw->blend_file]->fps)));
   lives_free(tmp);
   return TRUE;
 }
@@ -3599,7 +3598,7 @@ static boolean setfx (weed_plant_t *plant, weed_plant_t *tparam, int pnum, int n
 
 
 boolean lives_osc_cb_rte_getparamtype(void *context, int arglen, const void *vargs, OSCTimeTag when, 
-				   NetworkReturnAddressPtr ra) {
+				      NetworkReturnAddressPtr ra) {
   weed_plant_t *filter;
   weed_plant_t *ptmpl;
   int hint,error;
@@ -3657,7 +3656,7 @@ boolean lives_osc_cb_rte_getparamtype(void *context, int arglen, const void *var
 
 
 boolean lives_osc_cb_rte_getoparamtype(void *context, int arglen, const void *vargs, OSCTimeTag when, 
-				    NetworkReturnAddressPtr ra) {
+				       NetworkReturnAddressPtr ra) {
   weed_plant_t *filter;
   weed_plant_t **out_ptmpls;
   weed_plant_t *ptmpl;
@@ -3716,7 +3715,7 @@ boolean lives_osc_cb_rte_getoparamtype(void *context, int arglen, const void *va
 
 
 boolean lives_osc_cb_rte_getpparamtype(void *context, int arglen, const void *vargs, OSCTimeTag when, 
-				    NetworkReturnAddressPtr ra) {
+				       NetworkReturnAddressPtr ra) {
   // playback plugin params
   weed_plant_t *ptmpl,*param;
   int hint,error;
@@ -3754,7 +3753,7 @@ boolean lives_osc_cb_rte_getpparamtype(void *context, int arglen, const void *va
 
 
 boolean lives_osc_cb_rte_getnparamtype(void *context, int arglen, const void *vargs, OSCTimeTag when, 
-				    NetworkReturnAddressPtr ra) {
+				       NetworkReturnAddressPtr ra) {
   weed_plant_t *filter;
   weed_plant_t **in_ptmpls;
   weed_plant_t *ptmpl;
@@ -3796,7 +3795,7 @@ boolean lives_osc_cb_rte_getnparamtype(void *context, int arglen, const void *va
 
 
 boolean lives_osc_cb_rte_getparamcspace(void *context, int arglen, const void *vargs, OSCTimeTag when, 
-				     NetworkReturnAddressPtr ra) {
+					NetworkReturnAddressPtr ra) {
   weed_plant_t *filter;
   weed_plant_t *ptmpl;
   int hint,error;
@@ -3914,7 +3913,7 @@ boolean lives_osc_cb_rte_getparamgrp(void *context, int arglen, const void *varg
 
 
 boolean lives_osc_cb_rte_getoparamcspace(void *context, int arglen, const void *vargs, OSCTimeTag when, 
-				     NetworkReturnAddressPtr ra) {
+					 NetworkReturnAddressPtr ra) {
   weed_plant_t *filter;
   weed_plant_t **out_ptmpls;
   weed_plant_t *ptmpl;
@@ -3984,7 +3983,7 @@ boolean lives_osc_cb_rte_getoparamcspace(void *context, int arglen, const void *
 
 
 boolean lives_osc_cb_rte_getpparamcspace(void *context, int arglen, const void *vargs, OSCTimeTag when, 
-				      NetworkReturnAddressPtr ra) {
+					 NetworkReturnAddressPtr ra) {
   // playback plugin params
   weed_plant_t *ptmpl,*param;
   int hint,error;
@@ -4030,7 +4029,7 @@ boolean lives_osc_cb_rte_getpparamcspace(void *context, int arglen, const void *
 
 
 boolean lives_osc_cb_rte_getparamflags(void *context, int arglen, const void *vargs, OSCTimeTag when, 
-				    NetworkReturnAddressPtr ra) {
+				       NetworkReturnAddressPtr ra) {
   weed_plant_t *filter;
   weed_plant_t *ptmpl;
   int error;
@@ -4080,7 +4079,7 @@ boolean lives_osc_cb_rte_getparamflags(void *context, int arglen, const void *va
 
 
 boolean lives_osc_cb_rte_getpparamflags(void *context, int arglen, const void *vargs, OSCTimeTag when, 
-				     NetworkReturnAddressPtr ra) {
+					NetworkReturnAddressPtr ra) {
   weed_plant_t *ptmpl,*param;
   int error;
   int pnum,flags=0;
@@ -4110,7 +4109,7 @@ boolean lives_osc_cb_rte_getpparamflags(void *context, int arglen, const void *v
 
 
 boolean lives_osc_cb_rte_getparamname(void *context, int arglen, const void *vargs, OSCTimeTag when, 
-				   NetworkReturnAddressPtr ra) {
+				      NetworkReturnAddressPtr ra) {
   weed_plant_t *filter;
   weed_plant_t *ptmpl;
   int error;
@@ -4159,7 +4158,7 @@ boolean lives_osc_cb_rte_getparamname(void *context, int arglen, const void *var
 
 
 boolean lives_osc_cb_rte_getoparamname(void *context, int arglen, const void *vargs, OSCTimeTag when, 
-				   NetworkReturnAddressPtr ra) {
+				       NetworkReturnAddressPtr ra) {
   weed_plant_t *filter;
   weed_plant_t **out_ptmpls;
   weed_plant_t *ptmpl;
@@ -4212,7 +4211,7 @@ boolean lives_osc_cb_rte_getoparamname(void *context, int arglen, const void *va
 
 
 boolean lives_osc_cb_rte_getpparamname(void *context, int arglen, const void *vargs, OSCTimeTag when, 
-				    NetworkReturnAddressPtr ra) {
+				       NetworkReturnAddressPtr ra) {
   weed_plant_t *ptmpl,*param;
   int error;
   int pnum;
@@ -4243,7 +4242,7 @@ boolean lives_osc_cb_rte_getpparamname(void *context, int arglen, const void *va
 
 
 boolean lives_osc_cb_rte_getnparamname(void *context, int arglen, const void *vargs, OSCTimeTag when, 
-				    NetworkReturnAddressPtr ra) {
+				       NetworkReturnAddressPtr ra) {
   weed_plant_t *filter;
   weed_plant_t **in_ptmpls;
   weed_plant_t *ptmpl;
@@ -4284,7 +4283,7 @@ boolean lives_osc_cb_rte_getnparamname(void *context, int arglen, const void *va
 
 
 boolean lives_osc_cb_rte_setparam(void *context, int arglen, const void *vargs, OSCTimeTag when, 
-			       NetworkReturnAddressPtr ra) {
+				  NetworkReturnAddressPtr ra) {
 
   weed_plant_t *inst,*filter;
   weed_plant_t *tparam;
@@ -4344,7 +4343,7 @@ boolean lives_osc_cb_rte_setparam(void *context, int arglen, const void *vargs, 
 
 
 boolean lives_osc_cb_rte_setparamdef(void *context, int arglen, const void *vargs, OSCTimeTag when, 
-				  NetworkReturnAddressPtr ra) {
+				     NetworkReturnAddressPtr ra) {
 
   weed_plant_t *filter;
   weed_plant_t *tptmpl;
@@ -4401,7 +4400,7 @@ boolean lives_osc_cb_rte_setparamdef(void *context, int arglen, const void *varg
 
 
 boolean lives_osc_cb_rte_setpparam(void *context, int arglen, const void *vargs, OSCTimeTag when, 
-				NetworkReturnAddressPtr ra) {
+				   NetworkReturnAddressPtr ra) {
   // set playback plugin param
   weed_plant_t *param;
   int pnum,nargs;
@@ -4432,7 +4431,7 @@ boolean lives_osc_cb_rte_setpparam(void *context, int arglen, const void *vargs,
 
 
 boolean lives_osc_cb_rte_setnparam(void *context, int arglen, const void *vargs, OSCTimeTag when, 
-				NetworkReturnAddressPtr ra) {
+				   NetworkReturnAddressPtr ra) {
 
   int effect_key;
   int pnum,i,nargs;
@@ -4479,7 +4478,7 @@ boolean lives_osc_cb_rte_setnparam(void *context, int arglen, const void *vargs,
 
 
 boolean lives_osc_cb_rte_setnparamdef(void *context, int arglen, const void *vargs, OSCTimeTag when, 
-				  NetworkReturnAddressPtr ra) {
+				      NetworkReturnAddressPtr ra) {
 
   weed_plant_t *filter;
   weed_plant_t *tptmpl;
@@ -4654,10 +4653,10 @@ boolean lives_osc_cb_rte_getinpal(void *context, int arglen, const void *vargs, 
   }
 
   if (weed_plant_has_leaf(ctmpl,"is_audio")) {
-      msg=lives_strdup_printf("%d",WEED_PALETTE_END);
-      lives_status_send(msg);
-      lives_free(msg);
-      return TRUE;
+    msg=lives_strdup_printf("%d",WEED_PALETTE_END);
+    lives_status_send(msg);
+    lives_free(msg);
+    return TRUE;
   }
 
   if (inst!=NULL) {
@@ -4719,10 +4718,10 @@ boolean lives_osc_cb_rte_getoutpal(void *context, int arglen, const void *vargs,
   }
 
   if (weed_plant_has_leaf(ctmpl,"is_audio")) {
-      msg=lives_strdup_printf("%d",WEED_PALETTE_END);
-      lives_status_send(msg);
-      lives_free(msg);
-      return TRUE;
+    msg=lives_strdup_printf("%d",WEED_PALETTE_END);
+    lives_status_send(msg);
+    lives_free(msg);
+    return TRUE;
   }
 
   if (inst!=NULL) {
@@ -4742,7 +4741,7 @@ boolean lives_osc_cb_rte_getoutpal(void *context, int arglen, const void *vargs,
 
 
 boolean lives_osc_cb_rte_pparamcount(void *context, int arglen, const void *vargs, OSCTimeTag when,
-				  NetworkReturnAddressPtr ra) {
+				     NetworkReturnAddressPtr ra) {
   // return num playback plugin params
   int count=0;
   char *msg;
@@ -4763,7 +4762,7 @@ boolean lives_osc_cb_rte_pparamcount(void *context, int arglen, const void *varg
 
 
 boolean lives_osc_cb_rte_nparamcount(void *context, int arglen, const void *vargs, OSCTimeTag when, 
-				  NetworkReturnAddressPtr ra) {
+				     NetworkReturnAddressPtr ra) {
 
   int effect_key;
   int count=-1,i;
@@ -4796,7 +4795,7 @@ boolean lives_osc_cb_rte_nparamcount(void *context, int arglen, const void *varg
 
 
 boolean lives_osc_cb_rte_getnchannels(void *context, int arglen, const void *vargs, OSCTimeTag when, 
-				   NetworkReturnAddressPtr ra) {
+				      NetworkReturnAddressPtr ra) {
 
   int effect_key,mode;
   int count;
@@ -4805,7 +4804,7 @@ boolean lives_osc_cb_rte_getnchannels(void *context, int arglen, const void *var
 
   char *msg;
   
- if (!lives_osc_check_arguments (arglen,vargs,"ii",FALSE)) {
+  if (!lives_osc_check_arguments (arglen,vargs,"ii",FALSE)) {
     if (!lives_osc_check_arguments (arglen,vargs,"i",TRUE)) return lives_osc_notify_failure();
     lives_osc_parse_int_argument(vargs,&effect_key);
     mode=rte_key_getmode(effect_key);
@@ -4833,7 +4832,7 @@ boolean lives_osc_cb_rte_getnchannels(void *context, int arglen, const void *var
 
 
 boolean lives_osc_cb_rte_getnochannels(void *context, int arglen, const void *vargs, OSCTimeTag when, 
-				    NetworkReturnAddressPtr ra) {
+				       NetworkReturnAddressPtr ra) {
 
   int effect_key;
   int count;
@@ -4866,7 +4865,7 @@ boolean lives_osc_cb_rte_getnochannels(void *context, int arglen, const void *va
 
 
 boolean lives_osc_cb_rte_getparammin(void *context, int arglen, const void *vargs, OSCTimeTag when, 
-				  NetworkReturnAddressPtr ra) {
+				     NetworkReturnAddressPtr ra) {
 
   int effect_key;
   int mode;
@@ -4919,7 +4918,7 @@ boolean lives_osc_cb_rte_getparammin(void *context, int arglen, const void *varg
 
 
 boolean lives_osc_cb_rte_getoparammin(void *context, int arglen, const void *vargs, OSCTimeTag when, 
-				   NetworkReturnAddressPtr ra) {
+				      NetworkReturnAddressPtr ra) {
 
   int effect_key;
   int mode;
@@ -4978,7 +4977,7 @@ boolean lives_osc_cb_rte_getoparammin(void *context, int arglen, const void *var
 
 
 boolean lives_osc_cb_rte_getohasparammin(void *context, int arglen, const void *vargs, OSCTimeTag when, 
-				      NetworkReturnAddressPtr ra) {
+					 NetworkReturnAddressPtr ra) {
 
   int effect_key;
   int mode;
@@ -5028,7 +5027,7 @@ boolean lives_osc_cb_rte_getohasparammin(void *context, int arglen, const void *
 
 
 boolean lives_osc_cb_rte_getpparammin(void *context, int arglen, const void *vargs, OSCTimeTag when, 
-				   NetworkReturnAddressPtr ra) {
+				      NetworkReturnAddressPtr ra) {
 
   int pnum;
 
@@ -5219,7 +5218,7 @@ boolean lives_osc_cb_rte_getohasparammax(void *context, int arglen, const void *
 
 
 boolean lives_osc_cb_rte_getpparammax(void *context, int arglen, const void *vargs, OSCTimeTag when, 
-				   NetworkReturnAddressPtr ra) {
+				      NetworkReturnAddressPtr ra) {
   // playback plugin param max
 
   int pnum;
@@ -5254,7 +5253,7 @@ boolean lives_osc_cb_rte_getpparammax(void *context, int arglen, const void *var
 
 
 boolean lives_osc_cb_rte_getparamdef(void *context, int arglen, const void *vargs, OSCTimeTag when, 
-				  NetworkReturnAddressPtr ra) {
+				     NetworkReturnAddressPtr ra) {
 
   int effect_key;
   int mode;
@@ -5314,7 +5313,7 @@ boolean lives_osc_cb_rte_getparamdef(void *context, int arglen, const void *varg
 
 
 boolean lives_osc_cb_rte_getoparamdef(void *context, int arglen, const void *vargs, OSCTimeTag when, 
-				   NetworkReturnAddressPtr ra) {
+				      NetworkReturnAddressPtr ra) {
 
   int effect_key;
   int mode;
@@ -5383,7 +5382,7 @@ boolean lives_osc_cb_rte_getoparamdef(void *context, int arglen, const void *var
 
 
 boolean lives_osc_cb_rte_gethasparamdef(void *context, int arglen, const void *vargs, OSCTimeTag when, 
-				      NetworkReturnAddressPtr ra) {
+					NetworkReturnAddressPtr ra) {
 
   int effect_key;
   int mode;
@@ -5433,7 +5432,7 @@ boolean lives_osc_cb_rte_gethasparamdef(void *context, int arglen, const void *v
 
 
 boolean lives_osc_cb_rte_getohasparamdef(void *context, int arglen, const void *vargs, OSCTimeTag when, 
-				      NetworkReturnAddressPtr ra) {
+					 NetworkReturnAddressPtr ra) {
 
   int effect_key;
   int mode;
@@ -5484,7 +5483,7 @@ boolean lives_osc_cb_rte_getohasparamdef(void *context, int arglen, const void *
 
 
 boolean lives_osc_cb_rte_getpparamdef(void *context, int arglen, const void *vargs, OSCTimeTag when, 
-				   NetworkReturnAddressPtr ra) {
+				      NetworkReturnAddressPtr ra) {
   // default for playback plugin param
 
   int pnum,nvals;
@@ -5526,7 +5525,7 @@ boolean lives_osc_cb_rte_getpparamdef(void *context, int arglen, const void *var
 
 
 boolean lives_osc_cb_rte_getparamval(void *context, int arglen, const void *vargs, OSCTimeTag when, 
-				  NetworkReturnAddressPtr ra) {
+				     NetworkReturnAddressPtr ra) {
 
   int effect_key;
   int pnum,st=0,end=1,hint,cspace;
@@ -5588,7 +5587,7 @@ boolean lives_osc_cb_rte_getparamval(void *context, int arglen, const void *varg
 
 
 boolean lives_osc_cb_rte_getoparamval(void *context, int arglen, const void *vargs, OSCTimeTag when, 
-				   NetworkReturnAddressPtr ra) {
+				      NetworkReturnAddressPtr ra) {
 
   int effect_key;
   int pnum,st=0,end=1,hint,cspace;
@@ -5658,7 +5657,7 @@ boolean lives_osc_cb_rte_getoparamval(void *context, int arglen, const void *var
 
 
 boolean lives_osc_cb_rte_getpparamval(void *context, int arglen, const void *vargs, OSCTimeTag when, 
-				   NetworkReturnAddressPtr ra) {
+				      NetworkReturnAddressPtr ra) {
   // playback plugin param value
   int pnum,st=0,end=1,hint,cspace;
 
@@ -6823,12 +6822,12 @@ int lives_osc_build_cont(lives_osc *o) {
 	{
 	  if (osc_cont[i].att == - 1) {
 	    lives_printerr("Cannot create container %d (%s) \n",
-		       i, osc_cont[i].name);
+			   i, osc_cont[i].name);
 	    return 0;
 	  }
 	  else {
 	    lives_printerr("Cannot add branch %s to  container %d)\n",
-		       osc_cont[i].name, osc_cont[i].att);  
+			   osc_cont[i].name, osc_cont[i].att);  
 	    return 0;
 	  }
 	}
@@ -6844,13 +6843,13 @@ int lives_osc_build_cont(lives_osc *o) {
 	sprintf(name, "N%d", j);	
 	sprintf(comment, "<%d>", j);
 	lives_printerr("Try cont.%d  '%s', %d %d\n", j, name,
-		   base + j, base);	
+		       base + j, base);	
 	o->cqinfo.comment = comment;
 	if ((o->leaves[ base + j ] = OSCNewContainer(name,
 						     o->leaves[ osc_cont[i].att ],
 						     &(o->cqinfo) ) ) == 0) {
 	  lives_printerr("Cannot auto numerate container %s \n",
-		     osc_cont[i].name);
+			 osc_cont[i].name);
 	  return 0;
 		  
 	}
@@ -7038,7 +7037,7 @@ boolean lives_osc_init(uint32_t udp_port) {
   if (livesOSC!=NULL&&udp_port!=0) {
     /*  OSCPacketBuffer packet=livesOSC->packet;
 	if (shutdown (packet->returnAddr->sockfd,SHUT_RDWR)) {
-	d_print( lives_strdup_printf (_ ("Cannot shut down OSC/UDP server\n"));
+	d_print( lives_strdup_printf (_("Cannot shut down OSC/UDP server\n"));
 	}
     */
     if (NetworkStartUDPServer( livesOSC->packet, udp_port) != TRUE) {

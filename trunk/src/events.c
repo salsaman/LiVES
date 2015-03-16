@@ -5472,7 +5472,7 @@ render_details *create_render_details (int type) {
     lives_dialog_add_action_widget (LIVES_DIALOG (rdet->dialog), cancelbutton, LIVES_RESPONSE_CANCEL);
 
     if (!specified) {
-      lives_button_box_set_button_width (LIVES_BUTTON_BOX (daa), cancelbutton, DEF_BUTTON_WIDTH*4);
+      lives_button_box_set_button_width (LIVES_BUTTON_BOX (daa), cancelbutton, DEF_BUTTON_WIDTH*2);
     }
   }
   else add_fill_to_box(LIVES_BOX (daa));
@@ -5482,7 +5482,7 @@ render_details *create_render_details (int type) {
 
   if (!specified) {
     rdet->okbutton = lives_button_new_from_stock (LIVES_STOCK_OK);
-    lives_button_box_set_button_width (LIVES_BUTTON_BOX (daa), rdet->okbutton, DEF_BUTTON_WIDTH*4);
+    lives_button_box_set_button_width (LIVES_BUTTON_BOX (daa), rdet->okbutton, DEF_BUTTON_WIDTH*2);
   }
   else  {
     rdet->okbutton = lives_button_new_from_stock (LIVES_STOCK_GO_FORWARD);

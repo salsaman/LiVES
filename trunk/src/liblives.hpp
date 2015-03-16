@@ -146,6 +146,15 @@ typedef enum {
 
 
 /**
+   Multitrack insert modes
+*/
+typedef enum {
+  LIVES_INSERT_MODE_NORMAL
+} lives_insert_mode_t;
+
+
+
+/**
    Multitrack gravity
 */
 typedef enum {
@@ -164,7 +173,6 @@ typedef enum {
   LIVES_LOOP_MODE_CONTINUOUS=1, ///< both video and audio loop continuously
   LIVES_LOOP_MODE_FIT_AUDIO=2 ///< video keeps looping until audio playback finishes
 } lives_loop_mode_t;
-
 
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1556,7 +1564,14 @@ namespace lives {
 
     /**
        Move the block to a new track at a new timeline time.
-       Depending on the space available it may not be possible to move the block.
+       Depending on the value of multitrack::insertMode(), it may not be possible to do the insertion. 
+       In case of failure an invalid block is returned.
+       If the current track is a backing audio track, then only audio is inserted; 
+       in this case if without_audio is true an invalid block is returned.
+       Only works if livesApp::status() is LIVES_STATUS_READY and isActive() is true.
+       Note: the actual place where the block ends up, and its final size depends on various factors such as the gravity() setting, 
+       the insertMode() setting, and the location of other blocks in the layout.
+       The insertion may cause other blocks to relocate.
        If the block is invalid, nothing happens and false is returned.
        @param track the new track to move to.
        @param time the timeline time in seconds to move to.
@@ -1668,6 +1683,11 @@ namespace lives {
     int numAudioTracks() const;
 
 
+    /**
+       Return the framerate of the multitrack in frames per second.
+       If isActive() is false, returns 0. Otherwise when the livesAPP::status() is LIVES_STATUS_PLAYING, player::FPS() takes this value.
+       @return the framerate of the multitrack in frames per second.
+    */
     double FPS() const;
 
     /**
@@ -1676,12 +1696,13 @@ namespace lives {
        otherwise (the default) only frames from clip::selectionStart() to clip::selectionEnd() will be used.
        If without_audio is false (the default), audio is also inserted.
        Frames are automatically resampled to fit layout::fps().
-       Depending on the insertion mode, it may not be possible to do the insertion. In case of failure an invalid block is returned.
+       Depending on the insertMode(), it may not be possible to do the insertion. In case of failure an invalid block is returned.
        If the current track is a backing audio track, then only audio is inserted; 
        in this case if without_audio is true an invalid block is returned.
        Only works if livesApp::status() is LIVES_STATUS_READY and isActive() is true.
-       Note: the actual place where the block ends up depends on various factors such as the gravity() setting 
-       and the location of other blocks in the layout.
+       Note: the actual place where the block ends up, and its final size depends on various factors such as the gravity() setting, 
+       the insertMode() setting, and the location of other blocks in the layout.
+       The insertion may cause other blocks to relocate.
        @param c the clip to insert from
        @param ignore_selection_limits if true then all frames from the clip will be inserted
        @param without_audio if false then audio is also inserted

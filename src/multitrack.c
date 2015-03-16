@@ -11427,6 +11427,8 @@ static track_rect *move_block (lives_mt *mt, track_rect *block, double timesecs,
   new_start_tc=q_gint64(timesecs*U_SEC,mt->fps);
 
   remove_end_blank_frames(mt->event_list,FALSE); // leave filter inits
+
+  // if !move_effects we deleted fx in delete_block, here we move them
   if (mt->opts.move_effects) update_filter_events(mt,mt->specific_event,start_tc,end_tc,old_track,new_start_tc,mt->current_track);
 
   remove_end_blank_frames(mt->event_list, TRUE); // remove filter inits
@@ -11780,6 +11782,8 @@ void in_out_start_changed (LiVESWidget *widget, livespointer user_data) {
   }
 
   tl_start=get_event_timecode(event);
+
+  // get the audio block (if exists)
   if (track>=0) {
     if (!mt->aud_track_selected) {
       if (mt->opts.pertrack_audio) {
@@ -12007,6 +12011,7 @@ void in_out_end_changed (LiVESWidget *widget, livespointer user_data) {
 
   tl_end=get_event_timecode(event);
 
+  // get the audio block (if exists)
   if (track>=0) {
     if (!mt->aud_track_selected) {
       if (mt->opts.pertrack_audio) {
@@ -12197,6 +12202,8 @@ void in_out_end_changed (LiVESWidget *widget, livespointer user_data) {
 			(get_event_timecode(block->end_event)-get_event_timecode(block->start_event)),mt->fps);
 
     mt->opts.insert_mode=INSERT_MODE_OVERWRITE;
+
+    // note: audio blocks end at the timecode, video blocks end at tc + U_SEC/mt->fps
     if (track>=0) insert_frames (filenum,offset_end,offset_start,tl_end+
 				 (weed_timecode_t)((double)(track>=0&&!mt->aud_track_selected)*U_SEC/mt->fps),
 				 DIRECTION_NEGATIVE,block->eventbox,mt,block);
@@ -12478,6 +12485,7 @@ void in_anchor_toggled (LiVESToggleButton *togglebutton, livespointer user_data)
     LiVESWidget *xeventbox;
     track_rect *xblock;
 
+    // if video, find the audio track, and vice-versa
     if (mt->aud_track_selected) {
       xeventbox=(LiVESWidget *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(block->eventbox),"owner");
     }
@@ -12490,6 +12498,7 @@ void in_anchor_toggled (LiVESToggleButton *togglebutton, livespointer user_data)
     }
   }
 }
+
 
 void out_anchor_toggled (LiVESToggleButton *togglebutton, livespointer user_data) {
   lives_mt *mt=(lives_mt *)user_data;
@@ -12528,6 +12537,7 @@ void out_anchor_toggled (LiVESToggleButton *togglebutton, livespointer user_data
     LiVESWidget *xeventbox;
     track_rect *xblock;
 
+    // if video, find the audio track, and vice-versa
     if (mt->aud_track_selected) {
       xeventbox=(LiVESWidget *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(block->eventbox),"owner");
     }
@@ -16283,6 +16293,22 @@ void update_filter_events(lives_mt *mt, weed_plant_t *first_event, weed_timecode
 
   // new_start_tc, new_track: new positions
 
+  //if block is being deleted, or moved and move_effects is FALSE, this is called during block_delete to remove effects
+
+  //if block is being moved and move_effects is TRUE, this is called after block was deleted and reinserted
+
+  // filters which do not have our deleted block as an input, and filters with >2 in channels are not affected
+
+  // filters with 1 in track (ours) are moved to the new block, if the option is set
+
+  // other filters which are affected are deleted if their init/deinit reside entirely in the old block:
+  // otherwise,
+  // if their init_event is within the old block it moves right until we hit a frame
+  // on the same track (+ the second track if applicable). If we pass the deinit_event, the filter is removed.
+
+  // then, if the deinit event is within the old block, it is moved left until we find the frames for it similarly
+
+
   LiVESList *moved_events=NULL;
 
   weed_plant_t *event,*event_next;
@@ -16368,7 +16394,8 @@ void update_filter_events(lives_mt *mt, weed_plant_t *first_event, weed_timecode
 	  }
 	}
       }
-      if (lives_list_index(moved_events,event)==-1&&event!=mt->avol_init_event&&!was_moved) {
+
+      if (lives_list_index(moved_events,event)==-1&&event!=mt->avol_init_event) {
 	if (weed_plant_has_leaf(event,"deinit_event")&&weed_plant_has_leaf(event,"in_tracks")&&
 	    (nins=weed_leaf_num_elements(event,"in_tracks"))<=2) {
 
@@ -16379,17 +16406,14 @@ void update_filter_events(lives_mt *mt, weed_plant_t *first_event, weed_timecode
 	    // the effect is removed.
 	    // Effects with one in_track which is other, or effects with >2 in tracks, do not suffer this fate.
 
-	    if (nins==2) {
-	      // remove any transition effects which start and end in this block
-	      // because we will add autotransition
-	      deinit_event=(weed_plant_t *)weed_get_voidptr_value(event,"deinit_event",&error);
-	      if (get_event_timecode(deinit_event)<=end_tc) {
-		remove_filter_from_event_list(mt->event_list,event);
-		was_moved=TRUE;
-	      }
-	    }
+	    deinit_event=(weed_plant_t *)weed_get_voidptr_value(event,"deinit_event",&error);
 
-	    if (!was_moved) {
+	    if (get_event_timecode(deinit_event)<=end_tc) {
+	      remove_filter_from_event_list(mt->event_list,event);
+	      was_moved=TRUE;
+	      if (event==first_event) first_event=NULL;
+	    }
+	    else {
 	      if (!move_event_right(mt->event_list,event,TRUE,mt->fps)) {
 		// moved event right until it hits a frame from all tracks, if it passed the deinit_event it is removed
 		// param_change events are also scaled in time
@@ -16815,6 +16839,7 @@ void on_seltrack_toggled (LiVESWidget *checkbutton, livespointer user_data) {
   if (!mainw->interactive) return;
 
   mt->current_track=track;
+
   if (track>-1) mt->aud_track_selected=FALSE;
   else mt->aud_track_selected=TRUE;
 

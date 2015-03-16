@@ -263,7 +263,7 @@ libweed_scripting_LDADD = $(abs_top_srcdir)/libweed/libweed_slice_scripting.la $
 libweed_scripting_CFLAGS = -D_WEED_VISIBLE_FUNCTIONS_
 endif
 
-liblives_la_LDFLAGS =  $(extra_LDFLAGS)  $(libweed_scripting_LDADD)
+liblives_la_LDFLAGS =  $(extra_LDFLAGS)  $(libweed_scripting_LDADD) $(osc_LDADD)
 
 liblives_la_CFLAGS += $(AM_CFLAGS) $(libweed_scripting_CFLAGS) -Wno-unused-function -DIS_LIBLIVES
 

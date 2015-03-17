@@ -16,6 +16,8 @@ void binding_cb (int msgnumber, const char *msgstring, ulong myid);
 
 #endif
 
+boolean start_player(void);
+
 boolean idle_show_info(const char *text, boolean blocking, ulong id);
 boolean idle_save_set(const char *name, int arglen, const void *vargs, ulong id);
 boolean idle_choose_file_with_preview(const char *dirname, const char *title, int preview_type, ulong id);

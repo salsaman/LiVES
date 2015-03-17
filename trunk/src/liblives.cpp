@@ -30,19 +30,13 @@ extern "C" {
   bool is_big_endian(void);
 
   bool lives_osc_cb_quit(void *context, int arglen, const void *vargs, OSCTimeTag when, void * ra);
-  bool lives_osc_cb_play(void *context, int arglen, const void *vargs, OSCTimeTag when, void * ra);
   bool lives_osc_cb_stop(void *context, int arglen, const void *vargs, OSCTimeTag when, void * ra);
-  bool lives_osc_cb_fgclip_select(void *context, int arglen, const void *vargs, OSCTimeTag when, void * ra);
-  bool lives_osc_record_start(void *context, int arglen, const void *vargs, OSCTimeTag when, void * ra);
-  bool lives_osc_record_stop(void *context, int arglen, const void *vargs, OSCTimeTag when, void * ra);
-  bool lives_osc_record_toggle(void *context, int arglen, const void *vargs, OSCTimeTag when, void * ra);
-  bool lives_osc_cb_saveset(void *context, int arglen, const void *vargs, OSCTimeTag when, void * ra);
 
   track_rect *find_block_by_uid(lives_mt *mt, ulong uid);
 
 }
 
-inline int pad4(int val) {
+LIVES_INLINE int pad4(int val) {
   return (int)((val+4)/4)*4;
 }
 
@@ -86,16 +80,6 @@ static int add_string_arg(char **str, int arglen, const char *val) {
   return newlen;
 }
 
-
-static bool play_thread() {
-  int arglen = 1;
-  char **vargs=(char **)lives_malloc(sizeof(char *));
-  *vargs = strdup(",");
-  arglen = padup(vargs, arglen);
-  bool ret = lives_osc_cb_play(NULL, arglen, (const void *)(*vargs), OSCTT_CurrentTime(), NULL);
-  lives_free(*vargs);
-  return ret;
-}
 
 static volatile bool spinning;
 static ulong msg_id;
@@ -673,7 +657,7 @@ namespace lives {
 
   bool player::play() const {
     if (!isValid() || !m_lives->isReady()) return false;
-    return play_thread();
+    return start_player();
   }
 
   bool player::stop() const {
@@ -1472,6 +1456,10 @@ namespace lives {
     if (isValid()) {
       bool ret = (bool)atoi(private_response);
       lives_free(private_response);
+
+      // TODO: if it was a generator, wait for playing or error
+
+
     }
     return enabled();
   }

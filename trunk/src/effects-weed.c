@@ -4601,7 +4601,7 @@ static void load_weed_plugin (char *plugin_name, char *plugin_path, char *dir) {
   mainw->chdir_failed=FALSE;
 
   // walk list and create fx structures
-  //#define DEBUG_WEED
+  //  #define DEBUG_WEED
 #ifdef DEBUG_WEED
   lives_printerr("Checking plugin %s\n",plugin_path);
 #endif
@@ -4727,6 +4727,7 @@ static void load_weed_plugin (char *plugin_name, char *plugin_path, char *dir) {
 	      (!weed_plant_has_leaf(filter,"host_menu_hide")||
 	       (weed_get_boolean_value(filter,"host_menu_hide",&error)==WEED_FALSE))) {
 	    key_to_fx[key][kmode++]=idx;
+
 #ifdef DEBUG_WEED
 	    if (!pdup&&key<FX_KEYS_PHYSICAL&&kmode<prefs->max_modes_per_key) 
 	      d_print("Loaded filter \"%s\" in plugin \"%s\"; assigned to key ctrl-%d, mode %d.\n",
@@ -4739,9 +4740,11 @@ static void load_weed_plugin (char *plugin_name, char *plugin_path, char *dir) {
 	  }
 	  if (!pdup) idx++;
 
+
+
 	}
 #ifdef DEBUG_WEED
-	else lives_printerr(lives_strdup_printf("Unsuitable filter \"%s\" in plugin \"%s\", reason code %d\n",filter_name,plugin_name,reason));
+	else lives_printerr("Unsuitable filter \"%s\" in plugin \"%s\", reason code %d\n",filter_name,plugin_name,reason);
 #endif
 	lives_free(filter_name);
       }
@@ -7121,9 +7124,9 @@ void weed_deinit_effect(int hotkey) {
   key_to_instance[hotkey][key_modes[hotkey]]=NULL;
   filter_mutex_unlock(hotkey);
 
-  if (mainw->whentostop==STOP_ON_VID_END&&mainw->current_file>-1&&(cfile->frames==0
-								   ||(mainw->loop&&cfile->achans>0&&!mainw->is_rendering&&(mainw->audio_end/cfile->fps)
-								      <MAX (cfile->laudio_time,cfile->raudio_time)))) mainw->whentostop=STOP_ON_AUD_END;
+  if (mainw->whentostop==STOP_ON_VID_END&&mainw->current_file>-1&&
+      (cfile->frames==0||(mainw->loop&&cfile->achans>0&&!mainw->is_rendering&&(mainw->audio_end/cfile->fps)
+			  <MAX (cfile->laudio_time,cfile->raudio_time)))) mainw->whentostop=STOP_ON_AUD_END;
 
   if (num_in_chans==2) {
     was_transition=TRUE;

@@ -48,6 +48,8 @@ static int package_version=1; // version of this package
 
 #include <pthread.h>
 
+#include <limits.h>
+
 #include "projectM-ConfigFile.h"
 #include "projectM-getConfigFilename.h"
 
@@ -387,6 +389,8 @@ static int projectM_init (weed_plant_t *inst) {
     weed_set_string_array(iparamgui,"choices",sd->nprs,(char **)sd->prnames);
   }
 
+  sd->nprs--;
+
   sd->rendering=true;
 
   weed_set_voidptr_value(inst,"plugin_internal",sd);
@@ -446,7 +450,14 @@ static int projectM_process (weed_plant_t *inst, weed_timecode_t timestamp) {
 
   if (sd->update_size||sd->fbuffer==NULL) return WEED_NO_ERROR;
 
-  sd->pidx=weed_get_int_value(inparam,"value",&error)-1;
+  // ex. nprs = 10, we have 10 programs 0 - 9 and -1 is random
+  // 0 - 10, we just subtract 1
+  // else (val - 1) % nprs .e.g 11 - 1 = 10, 10 % 10 = 0
+
+  sd->pidx=weed_get_int_value(inparam,"value",&error);
+
+  if (sd->pidx<=sd->nprs) sd->pidx--;
+  else sd->pidx=(sd->pidx-1) % sd->nprs;
 
   if (0) {
     projectMEvent evt;
@@ -535,6 +546,8 @@ weed_plant_t *weed_setup (weed_bootstrap_f weed_boot) {
 						      &projectM_process,&projectM_deinit,in_chantmpls,out_chantmpls,in_params,NULL);
 
     //weed_set_int_value(in_params[0],"flags",WEED_PARAMETER_REINIT_ON_VALUE_CHANGE);
+
+    weed_set_int_value(in_params[0],"max",INT_MAX);
 
     weed_set_int_value(in_chantmpls[0],"audio_channels",1);
     weed_set_boolean_value(in_chantmpls[0],"audio_interleaf",WEED_TRUE);

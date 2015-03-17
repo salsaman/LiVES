@@ -75,11 +75,6 @@ static int toInt(const char* b) {
 }
 
 
-// wrapper for correct typing
-static LIVES_INLINE void *lives_size_malloc(int size) {
-  return lives_malloc((size_t)size);
-}
-
 static boolean using_types;
 static int osc_header_len;
 static int offset;
@@ -159,14 +154,8 @@ static void lives_osc_parse_float_argument(const void *vargs, float *arguments)
 
 
 /* memory allocation functions of libOMC_dirty (OSC) */
-
-
-void *_lives_osc_time_malloc(int num_bytes) {
-  return lives_malloc( num_bytes );
-}
-
-void *_lives_osc_rt_malloc(int num_bytes) {
-  return lives_malloc( num_bytes );
+void *lives_osc_malloc(int num_bytes) {
+  return _lives_malloc( num_bytes );
 }
 
 
@@ -175,6 +164,7 @@ void *_lives_osc_rt_malloc(int num_bytes) {
 boolean lives_status_send (const char *msg) {
   if (status_socket==NULL) return FALSE;
   else {
+    // note we send the terminating \nul
     boolean retval = lives_stream_out (status_socket,strlen (msg)+1,(void *)msg);
     return retval;
   }
@@ -483,8 +473,6 @@ boolean lives_osc_cb_play (void *context, int arglen, const void *vargs, OSCTime
 
   lives_idle_add(osc_playall,NULL);
 
-  while (mainw->playing_file<0) lives_usleep(prefs->sleep_time);
-
   return lives_osc_notify_success(NULL);
 }
 
@@ -541,7 +529,6 @@ boolean lives_osc_cb_play_forward (void *context, int arglen, const void *vargs,
 
   if (mainw->playing_file==-1&&mainw->current_file>0) {
     lives_idle_add(osc_playall,NULL);
-    while (mainw->playing_file<0) lives_usleep(prefs->sleep_time);
     return lives_osc_notify_success(NULL);
   }
   else if (mainw->current_file>0) {
@@ -565,7 +552,6 @@ boolean lives_osc_cb_play_backward (void *context, int arglen, const void *vargs
   if (mainw->playing_file==-1&&mainw->current_file>0) {
     mainw->reverse_pb=TRUE;
     lives_idle_add(osc_playall,NULL);
-    while (mainw->playing_file<0) lives_usleep(prefs->sleep_time);
     return lives_osc_notify_success(NULL);
   }
   else if (mainw->current_file>0) {
@@ -899,7 +885,6 @@ boolean lives_osc_cb_fx_enable(void *context, int arglen, const void *vargs, OSC
       if (mainw->playing_file==-1&&count==0) {
 	mainw->error=FALSE;
 	lives_idle_add(osc_init_generator,LIVES_INT_TO_POINTER(effect_key));
-	while (mainw->playing_file==-1 && !mainw->error) lives_usleep(prefs->sleep_time);
       }
       else {
 	rte_on_off_callback_hook(NULL,LIVES_INT_TO_POINTER(effect_key));
@@ -4157,6 +4142,134 @@ boolean lives_osc_cb_rte_getparamname(void *context, int arglen, const void *var
 }
 
 
+
+boolean lives_osc_cb_pgui_countchoices(void *context, int arglen, const void *vargs, OSCTimeTag when, 
+				       NetworkReturnAddressPtr ra) {
+
+  weed_plant_t *filter;
+  weed_plant_t *ptmpl;
+
+  int nparams;
+  int effect_key;
+  int mode;
+  int pnum;
+  int val=0;
+
+  char *retval;
+
+  if (!lives_osc_check_arguments (arglen,vargs,"iii",FALSE)) {
+    if (!lives_osc_check_arguments (arglen,vargs,"ii",TRUE)) return lives_osc_notify_failure();
+    lives_osc_parse_int_argument(vargs,&effect_key);
+    lives_osc_parse_int_argument(vargs,&pnum);
+    mode=rte_key_getmode(effect_key);
+  }
+  else {
+    lives_osc_check_arguments (arglen,vargs,"iii",TRUE);
+    lives_osc_parse_int_argument(vargs,&effect_key);
+    lives_osc_parse_int_argument(vargs,&mode);
+    lives_osc_parse_int_argument(vargs,&pnum);
+    if (mode<1||mode>rte_key_getmaxmode(effect_key)+1) return lives_osc_notify_failure();
+    mode--;
+  }
+
+  if (effect_key<1||effect_key>FX_MAX) return lives_osc_notify_failure();
+  //g_print("key %d pnum %d",effect_key,pnum);
+
+  filter=rte_keymode_get_filter(effect_key,mode);
+  if (filter==NULL) return lives_osc_notify_failure();
+
+  nparams=num_in_params(filter,FALSE,TRUE);
+  if (nparams==0) return lives_osc_notify_failure();
+  if (pnum<0||pnum>=nparams) return lives_osc_notify_failure();
+  
+  ptmpl=weed_filter_in_paramtmpl(filter,pnum,TRUE);
+
+  if (weed_plant_has_leaf(ptmpl,"choices")) val=weed_leaf_num_elements(ptmpl,"choices");
+
+  retval=lives_strdup_printf("%d",val);
+
+  lives_status_send (retval);
+
+  lives_free(retval);
+  return TRUE;
+
+}
+
+
+
+boolean lives_osc_cb_pgui_getchoice(void *context, int arglen, const void *vargs, OSCTimeTag when, 
+				    NetworkReturnAddressPtr ra) {
+
+
+  weed_plant_t *filter;
+  weed_plant_t *ptmpl;
+
+  boolean ret=FALSE;
+
+  int error;
+  int nparams;
+  int effect_key;
+  int mode;
+  int pnum;
+  int cc;
+
+  char *retval=lives_strdup("");
+
+  if (!lives_osc_check_arguments (arglen,vargs,"iiii",FALSE)) {
+    if (!lives_osc_check_arguments (arglen,vargs,"iii",TRUE)) return lives_osc_notify_failure();
+    lives_osc_parse_int_argument(vargs,&effect_key);
+    lives_osc_parse_int_argument(vargs,&pnum);
+    lives_osc_parse_int_argument(vargs,&cc);
+    mode=rte_key_getmode(effect_key);
+  }
+  else {
+    lives_osc_check_arguments (arglen,vargs,"iiii",TRUE);
+    lives_osc_parse_int_argument(vargs,&effect_key);
+    lives_osc_parse_int_argument(vargs,&mode);
+    lives_osc_parse_int_argument(vargs,&pnum);
+    lives_osc_parse_int_argument(vargs,&cc);
+    if (mode<1||mode>rte_key_getmaxmode(effect_key)+1) return lives_osc_notify_failure();
+    mode--;
+  }
+
+  if (effect_key<1||effect_key>FX_MAX) return lives_osc_notify_failure();
+  //g_print("key %d pnum %d",effect_key,pnum);
+
+  filter=rte_keymode_get_filter(effect_key,mode);
+  if (filter==NULL) return lives_osc_notify_failure();
+
+  nparams=num_in_params(filter,FALSE,TRUE);
+  if (nparams==0) return lives_osc_notify_failure();
+  if (pnum<0||pnum>=nparams) return lives_osc_notify_failure();
+  
+  ptmpl=weed_filter_in_paramtmpl(filter,pnum,TRUE);
+
+  if (weed_plant_has_leaf(ptmpl,"choices")) {
+    int nc=weed_leaf_num_elements(ptmpl,"choices");
+    if (cc<nc) {
+      char **choices=weed_get_string_array(ptmpl,"choices",&error);
+      register int i;
+      for (i=0;i<nc;i++) {
+	if (i==cc) {
+	  lives_free(retval);
+	  retval=choices[i];
+	  ret=TRUE;
+	}
+	else lives_free(choices[i]);
+      }
+      lives_free(choices);
+    }
+  }
+
+  lives_status_send (retval);
+  lives_free(retval);
+
+  return ret;
+}
+
+
+
+
 boolean lives_osc_cb_rte_getoparamname(void *context, int arglen, const void *vargs, OSCTimeTag when, 
 				       NetworkReturnAddressPtr ra) {
   weed_plant_t *filter;
@@ -6551,6 +6664,8 @@ static struct
     { "/effect_key/parameter/default/get",		"get",	(osc_cb)lives_osc_cb_rte_getparamdef,		        77	},
     { "/effect_key/parameter/default/set",		"set",	(osc_cb)lives_osc_cb_rte_setparamdef,		        77	},
     { "/effect_key/parameter/group/get",		"get",	(osc_cb)lives_osc_cb_rte_getparamgrp,		        78	},
+    { "/effect_key/parameter/gui/choices/count",	"count",	(osc_cb)lives_osc_cb_pgui_countchoices,		        181	},
+    { "/effect_key/parameter/gui/choices/get",	"get",	        (osc_cb)lives_osc_cb_pgui_getchoice,		        181	},
     { "/effect_key/outparameter/min/get",		"get",	(osc_cb)lives_osc_cb_rte_getoparammin,		        156	},
     { "/effect_key/outparameter/max/get",		"get",	(osc_cb)lives_osc_cb_rte_getoparammax,		        157	},
     { "/effect_key/outparameter/default/get",		"get",	(osc_cb)lives_osc_cb_rte_getoparamdef,		        158	},
@@ -6749,6 +6864,8 @@ static struct
     {	"/effect_key/parameter/max/" ,"max",	 76, 41,0	},
     {	"/effect_key/parameter/default/" ,"default",	 77, 41,0	},
     {	"/effect_key/parameter/group/" ,"group",	 78, 41,0	},
+    {	"/effect_key/parameter/gui/" ,"gui",	 180, 41,0	},
+    {	"/effect_key/parameter/gui/choices" ,"choices",	 181, 180,0	},
     {	"/effect_key/nparameter/" , 	"nparameter",	 91, 25,0	},
     {	"/effect_key/nparameter/name/" ,"name",	 72, 91,0	},
     {	"/effect_key/nparameter/value/" ,"value",	 92, 91,0	},
@@ -6888,8 +7005,8 @@ lives_osc* lives_osc_allocate(int port_id) {
     o = (lives_osc*)lives_malloc(sizeof(lives_osc));
     //o->osc_args = (osc_arg*)lives_malloc(50 * sizeof(*o->osc_args));
     o->osc_args=NULL;
-    o->rt.InitTimeMemoryAllocator = _lives_osc_time_malloc;
-    o->rt.RealTimeMemoryAllocator = _lives_osc_rt_malloc;
+    o->rt.InitTimeMemoryAllocator = lives_osc_malloc;
+    o->rt.RealTimeMemoryAllocator = lives_osc_malloc;
     o->rt.receiveBufferSize = 1024;
     o->rt.numReceiveBuffers = 100;
     o->rt.numQueuedObjects = 100;
@@ -6897,8 +7014,8 @@ lives_osc* lives_osc_allocate(int port_id) {
     o->leaves = (OSCcontainer*) lives_malloc(sizeof(OSCcontainer) * 1000);
     o->t.initNumContainers = 1000;
     o->t.initNumMethods = 2000;
-    o->t.InitTimeMemoryAllocator = lives_size_malloc;
-    o->t.RealTimeMemoryAllocator = lives_size_malloc;
+    o->t.InitTimeMemoryAllocator = lives_osc_malloc;
+    o->t.RealTimeMemoryAllocator = lives_osc_malloc;
     
     if(!OSCInitReceive( &(o->rt))) {
       d_print(_("Cannot initialize OSC receiver\n"));

@@ -108,11 +108,25 @@ typedef struct {
 } rblockdata;
 
 
+LIVES_INLINE int pad4(int val) {
+  return (int)((val+4)/4)*4;
+}
+
+static int padup(char **str, int arglen) {
+  int newlen = pad4(arglen);
+  char *ostr = *str;
+  *str = (char *)lives_calloc(1,newlen);
+  lives_memcpy(*str, ostr, arglen);
+  lives_free(ostr);
+  return newlen;
+}
+
 
 /////////////////////////////////////////
 /// extern functions with no headers
 
 boolean lives_osc_cb_saveset(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra);
+boolean lives_osc_cb_play (void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra);
 
 
 /////////// value return functions ///////////////////////
@@ -185,6 +199,25 @@ int cnum_for_uid(ulong uid) {
     pthread_mutex_unlock(&mainw->clip_list_mutex);
   }
   return -1;
+}
+
+
+boolean start_player(void) {
+  boolean ret;
+  int arglen = 1;
+  char **vargs=(char **)lives_malloc(sizeof(char *));
+  *vargs = strdup(",");
+  arglen = padup(vargs, arglen);
+
+  // this will set our idlefunc and return
+  ret = lives_osc_cb_play(NULL, arglen, (const void *)(*vargs), OSCTT_CurrentTime(), NULL);
+  if (ret) {
+    while (!mainw->error && mainw->playing_file < 0) usleep(prefs->sleep_time);
+    if (mainw->error) ret=FALSE;
+  }
+
+  lives_free(*vargs);
+  return ret;
 }
 
 

@@ -4060,16 +4060,14 @@ void show_manual_section (const char *lang, const char *section) {
 }
 
 
-uint64_t
-get_file_size(int fd) {
+uint64_t get_file_size(int fd) {
   // get the size of file fd
   struct stat filestat;
   fstat(fd,&filestat);
   return (uint64_t)(filestat.st_size);
 }
 
-uint64_t
-sget_file_size(const char *name) {
+uint64_t sget_file_size(const char *name) {
   // get the size of file fd
   struct stat filestat;
   int fd;

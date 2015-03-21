@@ -1642,6 +1642,35 @@ namespace lives {
   }
 
 
+  bool block::moveTo(int track, double time) {
+    if (!isValid()) return false;
+    if (!m_lives->isReady()) return false;
+
+    track_rect *tr = find_block_by_uid(mainw->multitrack, m_uid);
+    if (tr == NULL) return -1.;
+
+    spinning = true;
+    msg_id = lives_random();
+    ulong cbid = m_lives->addCallback(LIVES_CALLBACK_PRIVATE, private_cb, NULL); 
+    pthread_mutex_lock(&spin_mutex);
+    if (!idle_move_block(m_uid, track, time, msg_id)) {
+      pthread_mutex_unlock(&spin_mutex);
+      spinning = false;
+      m_lives->removeCallback(cbid);
+      return false;
+    }
+    while (spinning) pthread_cond_wait(&cond_done, &spin_mutex);
+    pthread_mutex_unlock(&spin_mutex);
+    if (isValid()) {
+      bool ret=(bool)atoi(private_response);
+      lives_free(private_response);
+      if (ret) invalidate();
+      return ret;
+   }
+    return false;
+  }
+
+
 
   ///////////////////////////////////////////////////////////////////
   /// multitrack
@@ -1777,6 +1806,33 @@ namespace lives {
   double multitrack::FPS() const {
     if (!isActive()) return 0.;
     return mainw->multitrack->fps;
+  }
+
+
+
+  bool multitrack::setTrackLabel(int track, livesString label) const {
+    if (m_lives->status() == LIVES_STATUS_PROCESSING) return false;
+    if (!isActive()) return false;
+
+    spinning = true;
+    msg_id = lives_random();
+    ulong cbid = m_lives->addCallback(LIVES_CALLBACK_PRIVATE, private_cb, NULL);
+    pthread_mutex_lock(&spin_mutex);
+    if (!idle_set_track_label(track, label.toEncoding(LIVES_CHAR_ENCODING_UTF8).c_str(),msg_id)) {
+      pthread_mutex_unlock(&spin_mutex);
+      spinning = false;
+      m_lives->removeCallback(cbid);
+    }
+    else {
+      while (spinning) pthread_cond_wait(&cond_done, &spin_mutex);
+      pthread_mutex_unlock(&spin_mutex);
+      if (isValid()) {
+	bool ret=(bool)(atoi(private_response));
+	lives_free(private_response);
+	return ret;
+      }
+    }
+    return false;
   }
 
 

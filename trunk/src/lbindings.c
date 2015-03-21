@@ -29,6 +29,14 @@ typedef struct {
 
 
 typedef struct {
+  // i, c
+  ulong id;
+  int val;
+  char *string;
+} lset;
+
+
+typedef struct {
   // i,v
   ulong id;
   int arglen;
@@ -105,7 +113,9 @@ typedef struct {
 typedef struct {
   ulong id;
   track_rect *block;
-} rblockdata;
+  int track;
+  double time;
+} mblockdata;
 
 
 LIVES_INLINE int pad4(int val) {
@@ -322,10 +332,10 @@ static boolean call_osc_show_blocking_info(livespointer data) {
   msginfo *minfo = (msginfo *)data;
   if (mainw!=NULL&&!mainw->go_away&&!mainw->is_processing) {
     ret=do_blocking_info_dialog(minfo->msg);
-    lives_free(minfo->msg);
     ret=trans_constant(ret,const_domain_notify);
   }
   ext_caller_return_int(minfo->id,ret);
+  lives_free(minfo->msg);
   lives_free(minfo);
   return FALSE;
 }
@@ -404,6 +414,7 @@ static boolean call_open_file(livespointer data) {
     if (opfi->fname!=NULL) lives_free(opfi->fname);
   }
   ext_caller_return_ulong(opfi->id,uid);
+  lives_free(opfi->fname);
   lives_free(opfi);
   return FALSE;
 }
@@ -538,6 +549,28 @@ static boolean call_mt_set_track(livespointer data) {
 }
 
 
+static boolean call_mt_set_track_label(livespointer data) {
+  lset *ldata=(lset *)data;
+  if (mainw!=NULL&&!mainw->go_away&&mainw->multitrack!=NULL && (mt_track_is_video(mainw->multitrack, ldata->val) 
+								|| mt_track_is_audio(mainw->multitrack, ldata->val))) {
+    if (ldata->string==NULL) {
+      int current_track=mainw->multitrack->current_track;
+      mainw->multitrack->current_track=ldata->val;
+      on_rename_track_activate(NULL,(livespointer)mainw->multitrack);
+      mainw->multitrack->current_track=current_track;
+    }
+    else {
+      set_track_label_string(mainw->multitrack,ldata->val,ldata->string);
+    }
+    ext_caller_return_int(ldata->id,TRUE);
+  }
+  else ext_caller_return_int(ldata->id,FALSE);
+  if (ldata->string!=NULL) lives_free(ldata->string);
+  lives_free(data);
+  return FALSE;
+}
+
+
 static boolean call_set_if_mode(livespointer data) {
   ipref *idata=(ipref *)data;
   if (mainw!=NULL&&!mainw->go_away&&!mainw->is_processing) {
@@ -551,7 +584,7 @@ static boolean call_set_if_mode(livespointer data) {
     ext_caller_return_int(idata->id,TRUE);
   }
   else ext_caller_return_int(idata->id,FALSE);
-  lives_free(idata);
+  lives_free(data);
   return FALSE;
 }
 
@@ -563,7 +596,7 @@ static boolean call_switch_clip(livespointer data) {
     ext_caller_return_int(idata->id,TRUE);
   }
   else ext_caller_return_int(idata->id,FALSE);
-  lives_free(idata);
+  lives_free(data);
   return FALSE;
 }
 
@@ -588,7 +621,7 @@ static boolean call_set_current_time(livespointer data) {
     ext_caller_return_int(idata->id,TRUE);
   }
   else ext_caller_return_int(idata->id,FALSE);
-  lives_free(idata);
+  lives_free(data);
   return FALSE;
 }
 
@@ -798,7 +831,7 @@ static boolean call_insert_block(livespointer data) {
 
 
 static boolean call_remove_block(livespointer data) {
-  rblockdata *rdata=(rblockdata *)data;
+  mblockdata *rdata=(mblockdata *)data;
 
   if (mainw!=NULL&&!mainw->go_away&&!mainw->is_processing&&mainw->playing_file==-1&&mainw->multitrack!=NULL) {
     track_rect *oblock=mainw->multitrack->block_selected;
@@ -808,6 +841,27 @@ static boolean call_remove_block(livespointer data) {
     ext_caller_return_int(rdata->id,(int)TRUE);
   }
   else ext_caller_return_int(rdata->id,(int)FALSE);
+  lives_free(data);
+  return FALSE;
+}
+
+
+
+static boolean call_move_block(livespointer data) {
+  mblockdata *mdata=(mblockdata *)data;
+
+  if (mainw!=NULL&&!mainw->go_away&&!mainw->is_processing&&mainw->playing_file==-1&&mainw->multitrack!=NULL) {
+    track_rect *bsel=mainw->multitrack->block_selected;
+    int track=get_track_for_block(mdata->block);
+    ulong block_uid=mdata->block->uid;
+    track_rect *nblock=move_block(mainw->multitrack,mdata->block,mdata->time,track,mdata->track);
+    mainw->multitrack->block_selected=bsel;
+    if (nblock==NULL) ext_caller_return_int(mdata->id,(int)FALSE);
+    else {
+      nblock->uid=block_uid;
+      ext_caller_return_int(mdata->id,(int)TRUE);
+    }
+  }
   lives_free(data);
   return FALSE;
 }
@@ -959,6 +1013,22 @@ boolean idle_mt_set_track(int tnum, ulong id) {
   info->id = id;
   info->val = tnum;
   lives_idle_add(call_mt_set_track,(livespointer)info);
+  return TRUE;
+}
+
+
+boolean idle_set_track_label(int tnum, const char *label, ulong id) {
+  lset *data;
+
+  if (mainw==NULL||mainw->preview||mainw->go_away||mainw->is_processing) return FALSE;
+  if (mainw->multitrack==NULL) return FALSE;
+
+  data = (lset *)lives_malloc(sizeof(lset));
+  data->id = id;
+  data->val=tnum;
+  if (label!=NULL) data->string=lives_strdup(label);
+  else data->string=NULL;
+  lives_idle_add(call_mt_set_track_label,(livespointer)data);
   return TRUE;
 }
 
@@ -1261,7 +1331,7 @@ boolean idle_insert_block(int clipno, boolean ign_sel, boolean with_audio, ulong
 
 
 boolean idle_remove_block(ulong uid, ulong id) {
-  rblockdata *data;
+  mblockdata *data;
   track_rect *tr;
 
   if (mainw==NULL||mainw->preview||mainw->go_away||mainw->is_processing||mainw->playing_file>-1) return FALSE;
@@ -1270,10 +1340,34 @@ boolean idle_remove_block(ulong uid, ulong id) {
   tr=find_block_by_uid(mainw->multitrack, uid);
   if (tr==NULL) return FALSE;
 
-  data=(rblockdata *)lives_malloc(sizeof(iblock));
+  data=(mblockdata *)lives_malloc(sizeof(mblockdata));
   data->id=id;
   data->block=tr;
   lives_idle_add(call_remove_block,(livespointer)data);
+  return TRUE;
+}
+
+
+boolean idle_move_block(ulong uid, int track, double time, ulong id) {
+  mblockdata *data;
+  track_rect *tr;
+
+  if (mainw==NULL||mainw->preview||mainw->go_away||mainw->is_processing||mainw->playing_file>-1) return FALSE;
+  if (mainw->multitrack==NULL) return FALSE;
+
+  tr=find_block_by_uid(mainw->multitrack, uid);
+  if (tr==NULL) return FALSE;
+
+  if (track>=lives_list_length(mainw->multitrack->video_draws)||track<-mainw->multitrack->opts.back_audio_tracks) return FALSE;
+
+  if (time<0.) return FALSE;
+
+  data=(mblockdata *)lives_malloc(sizeof(mblockdata));
+  data->id=id;
+  data->block=tr;
+  data->track=track;
+  data->time=time;
+  lives_idle_add(call_move_block,(livespointer)data);
   return TRUE;
 }
 

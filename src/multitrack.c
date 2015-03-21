@@ -70,8 +70,6 @@ static boolean expose_timeline_reg_event (LiVESWidget *, LiVESXEventExpose *, li
 static boolean mt_expose_audtrack_event (LiVESWidget *ebox, LiVESXEventExpose *, livespointer mt);
 #endif
 
-static void on_rename_track_activate (LiVESMenuItem *, livespointer mt);
-
 static boolean mt_add_block_effect_idle (livespointer mt);
 static boolean mt_add_region_effect_idle (livespointer mt);
 static boolean mt_fx_edit_idle (livespointer mt);
@@ -209,7 +207,20 @@ void set_mixer_track_vol(lives_mt *mt, int trackno, double vol) {
 
 static boolean save_event_list_inner(lives_mt *mt, int fd, weed_plant_t *event_list, unsigned char **mem) {
   weed_plant_t *event;
+
+  void **ievs=NULL;
+
+  void *next,*prev;
+
+  int64_t *uievs;
+
+  int64_t iev=0l;
+
   int count=0;
+  int nivs=0;
+
+  int error;
+
   register int i;
 
   if (event_list==NULL) return TRUE;
@@ -224,9 +235,7 @@ static boolean save_event_list_inner(lives_mt *mt, int fd, weed_plant_t *event_l
   weed_set_int_value(event_list,"audio_rate",cfile->arate);
   weed_set_int_value(event_list,"audio_sample_size",cfile->asampsize);
 
-  // new: save sizeof(void *) - for conversion to/from 8/16 bit systems
-  weed_set_int_value(event_list,"ptrsize",8);
-
+  weed_set_int_value(event_list,"weed_event_api_version",WEED_EVENT_API_VERSION);
 
   if (cfile->signed_endian&AFORM_UNSIGNED) weed_set_boolean_value(event_list,"audio_signed",WEED_FALSE);
   else weed_set_boolean_value(event_list,"audio_signed",WEED_TRUE);
@@ -235,9 +244,12 @@ static boolean save_event_list_inner(lives_mt *mt, int fd, weed_plant_t *event_l
   
   if (mt!=NULL&&mt->audio_vols!=NULL&&mt->audio_draws!=NULL) {
     int natracks=lives_list_length(mt->audio_draws);
+
     int *atracks=(int *)lives_malloc(natracks*sizint);
     double *avols;
+
     int navols;
+
     for (i=0;i<natracks;i++) {
       atracks[i]=i-mt->opts.back_audio_tracks;
     }
@@ -255,6 +267,29 @@ static boolean save_event_list_inner(lives_mt *mt, int fd, weed_plant_t *event_l
     lives_free(avols);
   }
 
+
+  if (mt!=NULL) {
+    int nvtracks=lives_list_length(mt->video_draws);
+
+    int *vtracks=(int *)lives_malloc(nvtracks*sizint);
+    char ** const labels=(char **)lives_malloc(nvtracks*sizeof(char *));
+
+    for (i=0;i<nvtracks;i++) {
+      LiVESWidget *ebox=get_eventbox_for_track(mt,i);
+      const char *tname=(const char *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(ebox),"track_name");
+      labels[i]=(char *)tname;
+      vtracks[i]=i;
+    }
+
+    weed_set_int_array(event_list,"track_label_tracks",nvtracks,vtracks);
+    lives_free(vtracks);
+
+    weed_set_string_array(event_list,"track_label_values",nvtracks,labels);
+
+    lives_free(labels);
+    
+  }
+
   if (mem==NULL&&fd<0) return TRUE;
 
   threaded_dialog_spin();
@@ -262,11 +297,52 @@ static boolean save_event_list_inner(lives_mt *mt, int fd, weed_plant_t *event_l
   mainw->write_failed=FALSE;
   weed_plant_serialise(fd,event_list,mem);
   while (!mainw->write_failed&&event!=NULL) {
+
+    next=weed_get_voidptr_value(event,"next",&error);
+    weed_leaf_delete(event,"next");
+
+    prev=weed_get_voidptr_value(event,"prev",&error);
+    weed_leaf_delete(event,"prev");
+
     if (WEED_EVENT_IS_FILTER_INIT(event)) {
       weed_leaf_delete(event,"event_id");
-      weed_set_voidptr_value(event,"event_id",(void *)event);
+      weed_set_int64_value(event,"event_id",(int64_t)(uint64_t)((void *)event));
     }
+    else if (WEED_EVENT_IS_FILTER_DEINIT(event)||WEED_EVENT_IS_PARAM_CHANGE(event)) {
+      iev=(int64_t)(uint64_t)weed_get_voidptr_value(event,"init_event",&error);
+      weed_leaf_delete(event,"init_event");
+      weed_set_int64_value(event,"init_event",iev);
+    }
+    else if (WEED_EVENT_IS_FILTER_MAP(event)) {
+      nivs=weed_leaf_num_elements(event,"init_events");
+      ievs=weed_get_voidptr_array(event,"init_events",&error);
+      uievs=(int64_t *)lives_malloc(nivs*8);
+      for (i=0;i<nivs;i++) {
+	uievs[i]=(int64_t)(uint64_t)ievs[i];
+      }
+      weed_leaf_delete(event,"init_events");
+      weed_set_int64_array(event,"init_events",nivs,uievs);
+      lives_free(uievs);
+    }
+
     weed_plant_serialise(fd,event,mem);
+
+    if (WEED_EVENT_IS_FILTER_INIT(event)) {
+      weed_leaf_delete(event,"event_id");
+    }
+    if (WEED_EVENT_IS_FILTER_DEINIT(event)||WEED_EVENT_IS_PARAM_CHANGE(event)) {
+      weed_leaf_delete(event,"init_event");
+      weed_set_voidptr_value(event,"init_event",(void *)iev);
+    }
+    else if (WEED_EVENT_IS_FILTER_MAP(event)) {
+      weed_leaf_delete(event,"init_events");
+      weed_set_voidptr_array(event,"init_events",nivs,ievs);
+      lives_free(ievs);
+    }
+
+    weed_set_voidptr_value(event,"next",next);
+    weed_set_voidptr_value(event,"prev",prev);
+
     event=get_next_event(event);
     if (++count==100) {
       count=0;
@@ -4239,7 +4315,7 @@ static boolean on_drag_clip_end (LiVESWidget *widget, LiVESXEventButton *event, 
       track_select(mt);
       
       if (mainw->playing_file==-1) {
-	lives_ruler_set_value(LIVES_RULER (mt->timeline),timesecs);
+	mt->ptr_time=lives_ruler_set_value(LIVES_RULER (mt->timeline),timesecs);
 	if (!mt->is_paused) {
 	  if (mt->poly_state==POLY_FX_STACK) {
 	    polymorph(mt,POLY_FX_STACK);
@@ -4258,7 +4334,7 @@ static boolean on_drag_clip_end (LiVESWidget *widget, LiVESXEventButton *event, 
 				    (mainw->files[mt->file_selected]->laudio_time>0.&&mt->opts.ign_ins_sel))) 
 	insert_audio_here_cb(NULL,(livespointer)mt);
       lives_set_cursor_style(LIVES_CURSOR_NORMAL,NULL);
-      if (mt->is_paused) lives_ruler_set_value(LIVES_RULER (mt->timeline),osecs);
+      if (mt->is_paused) mt->ptr_time=lives_ruler_set_value(LIVES_RULER (mt->timeline),osecs);
       return FALSE;
     }
   }
@@ -4280,7 +4356,7 @@ static boolean on_drag_clip_end (LiVESWidget *widget, LiVESXEventButton *event, 
       track_select(mt);
 
       if (mainw->playing_file==-1) {
-	lives_ruler_set_value(LIVES_RULER (mt->timeline),timesecs);
+	mt->ptr_time=lives_ruler_set_value(LIVES_RULER (mt->timeline),timesecs);
 	if (!mt->is_paused) {
 	  mt_show_current_frame(mt, FALSE);
 	  if (timesecs>0.) {
@@ -4295,7 +4371,8 @@ static boolean on_drag_clip_end (LiVESWidget *widget, LiVESXEventButton *event, 
     }
   }
 
-  if (mt->is_paused) lives_ruler_set_value(LIVES_RULER (mt->timeline),osecs);
+  if (mt->is_paused) mt->ptr_time=lives_ruler_set_value(LIVES_RULER (mt->timeline),osecs);
+
   lives_set_cursor_style(LIVES_CURSOR_NORMAL,NULL);
 
   return FALSE;
@@ -5175,8 +5252,13 @@ static weed_plant_t *load_event_list_inner (lives_mt *mt, int fd, boolean show_e
   // force 64 bit ptrs when reading layouts (for compatibility)
   prefs->force64bit=FALSE;
 
-  if (weed_plant_has_leaf(event_list,"ptrsize")) {
-    if (weed_get_int_value(event_list,"ptrsize",&error)==8) prefs->force64bit=TRUE;
+  if (weed_plant_has_leaf(event_list,"weed_event_api_version")) {
+    if (weed_get_int_value(event_list,"weed_event_api_version",&error)>=110) prefs->force64bit=TRUE;
+  }
+  else {
+    if (weed_plant_has_leaf(event_list,"ptrsize")) {
+      if (weed_get_int_value(event_list,"ptrsize",&error)==8) prefs->force64bit=TRUE;
+    }
   }
 
   do {
@@ -9604,8 +9686,30 @@ static void reset_renumbering(lives_mt *mt) {
 
 
 
+static void set_track_labels(lives_mt *mt) {
+  int error;
+  register int i;
 
+  if (weed_plant_has_leaf(mt->event_list,"track_label_tracks")) {
+    int navs=weed_leaf_num_elements(mt->event_list,"track_label_tracks");
+    int *navals=weed_get_int_array(mt->event_list,"track_label_tracks",&error);
 
+    int nlabs=weed_leaf_num_elements(mt->event_list,"track_label_values");
+    char **labs=weed_get_string_array(mt->event_list,"track_label_values",&error);
+
+    if (nlabs<navs) navs=nlabs;
+    
+    for (i=0;i<navs;i++) {
+      int nt=navals[i];
+      if (nt<mt->num_video_tracks) {
+	set_track_label_string(mt,nt,labs[i]);
+      }
+    }
+
+    lives_free(labs);
+    lives_free(navals);
+  }
+}
 
 
 void mt_init_tracks (lives_mt *mt, boolean set_min_max) {
@@ -10038,6 +10142,9 @@ void mt_init_tracks (lives_mt *mt, boolean set_min_max) {
   set_timeline_end_secs(mt,mt->end_secs);
 
   if (!mt->was_undo_redo) {
+
+    set_track_labels(mt);
+
     if (mt->is_ready) {
       if (mt->current_track!=0) {
 	mt->current_track=0;
@@ -10298,6 +10405,14 @@ static void set_track_label(LiVESEventBox *xeventbox, int tnum) {
 }
 
 
+void set_track_label_string(lives_mt *mt, int track, const char *label) {
+  LiVESWidget *ebox=get_eventbox_for_track(mt,track);
+  if (ebox==NULL) return;
+  lives_widget_object_set_data (LIVES_WIDGET_OBJECT(ebox),"track_name",(livespointer)label);
+  set_track_label(LIVES_EVENT_BOX(ebox),track);
+}
+
+
 void add_video_track (lives_mt *mt, boolean behind) {
   // add another video track to our timeline_table
   LiVESWidget *label;
@@ -10413,8 +10528,10 @@ void add_video_track (lives_mt *mt, boolean behind) {
   }
 
   widget_opts.justify=LIVES_JUSTIFY_LEFT;
-  label=lives_label_new ((tmp=lives_strdup_printf(_("%s (layer %d)"),lives_widget_object_get_data (LIVES_WIDGET_OBJECT(eventbox),"track_name"),
-					    LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(eventbox),"layer_number")))));
+  label=lives_label_new ((tmp=lives_strdup_printf(_("%s (layer %d)"),
+						  lives_widget_object_get_data (LIVES_WIDGET_OBJECT(eventbox),"track_name"),
+						  LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(eventbox),
+												    "layer_number")))));
   widget_opts.justify=widget_opts.default_justify;
   
   lives_free(tmp);
@@ -11328,7 +11445,7 @@ static track_rect *get_block_after (LiVESWidget *eventbox, double time, boolean 
 
 
 
-static track_rect *move_block (lives_mt *mt, track_rect *block, double timesecs, int old_track, int new_track) {
+track_rect *move_block (lives_mt *mt, track_rect *block, double timesecs, int old_track, int new_track) {
   weed_timecode_t new_start_tc,end_tc;
   weed_timecode_t start_tc=get_event_timecode(block->start_event);
 
@@ -15939,7 +16056,7 @@ void on_jumpnext_activate (LiVESMenuItem *menuitem, livespointer user_data) {
 
 
 
-static void on_rename_track_activate (LiVESMenuItem *menuitem, livespointer user_data) {
+void on_rename_track_activate (LiVESMenuItem *menuitem, livespointer user_data) {
   lives_mt *mt=(lives_mt *)user_data;
   _entryw *rnentry;
   LiVESWidget *xeventbox;
@@ -17256,7 +17373,7 @@ void multitrack_play_sel (LiVESMenuItem *menuitem, livespointer user_data) {
   ptr_time=mt->ptr_time;
 
   if (ptr_time<mt->region_start||ptr_time>=mt->region_end) {
-    lives_ruler_set_value(LIVES_RULER(mt->timeline),mt->region_start);
+    mt->ptr_time=lives_ruler_set_value(LIVES_RULER(mt->timeline),mt->region_start);
   }
 
   // set loop start point to region start, and pb_start to current position
@@ -19469,8 +19586,8 @@ void save_layout_map (int *lmap, double *lmap_audio, const char *file, const cha
   } while (retval==LIVES_RESPONSE_RETRY);
 
   if (retval!=LIVES_RESPONSE_CANCEL) {
-    size=get_file_size(fd);
     lives_close_buffered(fd);
+    size=sget_file_size(map_name);
 
     if (size==0||!written) {
       LIVES_DEBUG("Removing layout map file: ");
@@ -22130,7 +22247,7 @@ uint32_t event_list_get_byte_size(lives_mt *mt, weed_plant_t *event_list,int *nu
   save_event_list_inner(mt,-1,event_list,NULL);
 
   while (event!=NULL) {
-    if (WEED_EVENT_IS_FILTER_INIT(event)) weed_set_voidptr_value(event,"event_id",(void *)event);
+    if (WEED_EVENT_IS_FILTER_INIT(event)) weed_set_int64_value(event,"event_id",(uint64_t)((void *)event));
     tot_events++;
     leaves=weed_plant_list_leaves(event);
     tot+=sizint; //number of leaves
@@ -22657,15 +22774,15 @@ void on_mt_showkeys_activate (LiVESMenuItem *menuitem, livespointer user_data) {
 
 
 LiVESWidget *get_eventbox_for_track(lives_mt *mt, int ntrack) {
-  LiVESWidget *eventbox;
-  if (mt==NULL) return NULL;
-  if (mt_track_is_video(mt,ntrack)) {
-    eventbox=(LiVESWidget *)lives_list_nth_data(mt->video_draws, ntrack);
+  LiVESWidget *eventbox=NULL;
+  if (mt!=NULL) {
+    if (mt_track_is_video(mt,ntrack)) {
+      eventbox=(LiVESWidget *)lives_list_nth_data(mt->video_draws, ntrack);
+    }
+    else if (mt_track_is_audio(mt,ntrack)) {
+      eventbox=(LiVESWidget *)lives_list_nth_data(mt->audio_draws, 1-ntrack);
+    }
   }
-  else if (mt_track_is_audio(mt,ntrack)) {
-    eventbox=(LiVESWidget *)lives_list_nth_data(mt->audio_draws, 1-ntrack);
-  }
-  else return NULL;
   return eventbox;
 }
 

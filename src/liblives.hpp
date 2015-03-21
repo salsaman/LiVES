@@ -1497,7 +1497,8 @@ namespace lives {
 
   /**
      class "block". 
-     Represents a single block of frames which forms part of a layout. This is an abstracted level, since layouts are fundamentally formed of "events" which may span multiple blocks.
+     Represents a sequence of frames from the same clip on the same track which forms part of a layout. 
+     This is an abstracted level, since layouts are fundamentally formed of "events" which may span multiple tracks.
   */
   class block {
     friend multitrack;
@@ -1662,17 +1663,31 @@ namespace lives {
        If isActive() is true, then this method returns the label for a track.
        @param track the track number. A value >= 0 represents a video track, a value < 0 represents a backing audio track.
        @return the track label, or empty string if the specified track does not exist.
+       @see setTrackLabel().
     */
     livesString trackLabel(int track) const;
 
 
-    bool setTrackLabel(int track) const;
+    /**
+       Set the label for a track. This is for display purposes only and has no other effect.
+       If isActive() is false, the track label is not changed, and false is returned.
+       If the label is not provided, or is an empty string, the user will be prompted to enter a name at runtime.
+       @param track the track number. Must be >= 0.
+       @param label a livesString containing the text to label the track with.
+       @return true if it was possible to change the label.
+       @see trackLabel().
+    */
+    bool setTrackLabel(int track, livesString label=livesString()) const;
+
 
 
     lives_gravity_t gravity() const;
 
 
     lives_gravity_t setGravity(lives_gravity_t grav) const;
+
+
+    bool addVideoTrack(bool in_front) const;
 
 
     int numVideoTracks() const;
@@ -1734,11 +1749,11 @@ namespace lives {
 
     clip render(bool render_audio=true) const;
 
+    effect autoTransition() const;
+
+    bool setAutoTransition() const;
 
     bool setAutoTransition(effect autotrans) const;
-
-
-    bool setAutoTransitionEnabled(bool setting) const;
 
 
     /**

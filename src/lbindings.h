@@ -39,6 +39,7 @@ boolean idle_set_sepwin(boolean setting, ulong id);
 boolean idle_set_if_mode(lives_interface_mode_t mode, ulong id);
 boolean idle_insert_block(int clipno, boolean ign_sel, boolean with_audio, ulong id);
 boolean idle_remove_block(ulong block_id, ulong id);
+boolean idle_move_block(ulong block_uid, int track, double time, ulong id);
 boolean idle_mt_set_track(int tnum, ulong id);
 boolean idle_set_current_time(double time, ulong id);
 boolean idle_wipe_layout(boolean force, ulong id);
@@ -50,6 +51,7 @@ boolean idle_set_loop_mode(int mode, ulong id);
 boolean idle_set_ping_pong(boolean setting, ulong id);
 boolean idle_resync_fps(ulong id);
 boolean idle_cancel_proc(ulong id);
+boolean idle_set_track_label(int tnum, const char *label, ulong id);
 
 ulong *get_unique_ids(void);
 int cnum_for_uid(ulong uid);

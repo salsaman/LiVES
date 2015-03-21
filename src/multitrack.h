@@ -705,6 +705,8 @@ void close_clip_cb (LiVESMenuItem *, livespointer mt);
 void show_clipinfo_cb (LiVESMenuItem *, livespointer mt);
 
 boolean multitrack_insert (LiVESMenuItem *, livespointer mt);
+track_rect *move_block (lives_mt *mt, track_rect *block, double timesecs, int old_track, int new_track);
+
 
 // event_list functions
 weed_plant_t *add_blank_frames_up_to (weed_plant_t *event_list, weed_plant_t *start_event, weed_timecode_t end_tc, double fps);
@@ -730,6 +732,11 @@ boolean mt_track_is_video(lives_mt *, int ntrack); ///< return TRUE if ntrack is
 char *get_track_name(lives_mt *mt, int track_num, boolean is_audio);
 
 void mt_do_autotransition(lives_mt *, track_rect *block); ///< call this on a block to apply autotransition on it
+
+void set_track_label_string(lives_mt *mt, int track, const char *label);
+
+LiVESWidget *get_eventbox_for_track(lives_mt *mt, int ntrack);
+void on_rename_track_activate (LiVESMenuItem *menuitem, livespointer mt);
 
 
 // track mouse movement

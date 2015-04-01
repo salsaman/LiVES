@@ -2507,7 +2507,7 @@ uint64_t make_version_hash(const char *ver) {
 char *repl_tmpdir(const char *entry, boolean fwd) {
   // replace prefs->tmpdir with string tmpdir or vice-versa. This allows us to relocate tmpdir if necessary.
   // used for layout.map file
-  // return value should be lives_free()'d
+  // return value should be freed
 
   // fwd TRUE replaces "/tmp/foo" with "tmpdir"
   // fwd FALSE replaces "tmpdir" with "/tmp/foo"

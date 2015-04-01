@@ -463,13 +463,12 @@ namespace lives {
 
   bool livesApp::reloadSet(livesString setname) {
     if (!isValid() || status() == LIVES_STATUS_NOTREADY) return false;
-    if (setname.empty()) return false;
     spinning = true;
     msg_id = lives_random();
     ulong cbid = addCallback(LIVES_CALLBACK_PRIVATE, private_cb, NULL);
     
     pthread_mutex_lock(&spin_mutex);
-    if (!idle_reload_set(setname.toEncoding(LIVES_CHAR_ENCODING_FILESYSTEM).c_str(),msg_id)) {
+    if (!idle_reload_set(setname.toEncoding(LIVES_CHAR_ENCODING_FILESYSTEM).c_str(), msg_id)) {
       pthread_mutex_unlock(&spin_mutex);
       spinning = false;
       removeCallback(cbid);
@@ -1757,6 +1756,128 @@ namespace lives {
   }
 
 
+
+  livesString multitrack::chooseLayout() const {
+    livesString emptystr;
+    if (!isActive()) return emptystr;
+    if (!m_lives->isReady()) return emptystr;
+
+    spinning = true;
+    msg_id = lives_random();
+    ulong cbid = m_lives->addCallback(LIVES_CALLBACK_PRIVATE, private_cb, NULL);
+    
+    pthread_mutex_lock(&spin_mutex);
+    if (!idle_choose_layout(msg_id)) {
+      pthread_mutex_unlock(&spin_mutex);
+      spinning = false;
+      m_lives->removeCallback(cbid);
+      return emptystr;
+    }
+    while (spinning) pthread_cond_wait(&cond_done, &spin_mutex);
+    pthread_mutex_unlock(&spin_mutex);
+    if (isValid()) {
+      livesString str(private_response, LIVES_CHAR_ENCODING_UTF8);
+      lives_free(private_response);
+      return str;
+    }
+    return emptystr;
+  }
+
+
+  livesStringList multitrack::availableLayouts() const {
+    livesStringList list;
+    if (!isValid()) return list;
+    LiVESList *layoutlist=mainw->current_layouts_map;
+    while (layoutlist != NULL) {
+      char *data=repl_tmpdir((const char *)layoutlist->data, FALSE);
+      list.push_back(livesString(data, LIVES_CHAR_ENCODING_FILESYSTEM).toEncoding(LIVES_CHAR_ENCODING_UTF8));
+      lives_free(data);
+      layoutlist = layoutlist->next;
+    }
+    return list;
+  }
+
+
+  bool multitrack::reloadLayout(livesString layoutname) const {
+    if (!isActive()) return false;
+    if (!m_lives->isReady()) return false;
+
+    spinning = true;
+    msg_id = lives_random();
+    ulong cbid = m_lives->addCallback(LIVES_CALLBACK_PRIVATE, private_cb, NULL);
+    
+    pthread_mutex_lock(&spin_mutex);
+    if (!idle_reload_layout(layoutname.toEncoding(LIVES_CHAR_ENCODING_FILESYSTEM).c_str(), msg_id)) {
+      pthread_mutex_unlock(&spin_mutex);
+      spinning = false;
+      m_lives->removeCallback(cbid);
+      return false;
+    }
+    while (spinning) pthread_cond_wait(&cond_done, &spin_mutex);
+    pthread_mutex_unlock(&spin_mutex);
+    if (isValid()) {
+      bool ret = (bool)atoi(private_response);
+      lives_free(private_response);
+      return ret;
+    }
+    return false;
+  }
+
+
+  livesString multitrack::saveLayout(livesString name) const {
+    livesString emptystr;
+    if (!isActive()) return emptystr;
+    if (!m_lives->isReady()) return emptystr;
+
+    spinning = true;
+    msg_id = lives_random();
+    ulong cbid = m_lives->addCallback(LIVES_CALLBACK_PRIVATE, private_cb, NULL);
+    
+    pthread_mutex_lock(&spin_mutex);
+    if (!idle_save_layout(name.toEncoding(LIVES_CHAR_ENCODING_FILESYSTEM).c_str(), msg_id)) {
+      pthread_mutex_unlock(&spin_mutex);
+      spinning = false;
+      m_lives->removeCallback(cbid);
+      return emptystr;
+    }
+    while (spinning) pthread_cond_wait(&cond_done, &spin_mutex);
+    pthread_mutex_unlock(&spin_mutex);
+    if (isValid()) {
+      char *lname = strdup(private_response);
+      lives_free(private_response);
+      return livesString(lname).toEncoding(LIVES_CHAR_ENCODING_UTF8);
+    }
+    return emptystr;
+  }
+
+
+  livesString multitrack::saveLayout() const {
+    livesString emptystr;
+    if (!isActive()) return emptystr;
+    if (!m_lives->isReady()) return emptystr;
+
+    spinning = true;
+    msg_id = lives_random();
+    ulong cbid = m_lives->addCallback(LIVES_CALLBACK_PRIVATE, private_cb, NULL);
+    
+    pthread_mutex_lock(&spin_mutex);
+    if (!idle_save_layout(NULL, msg_id)) {
+      pthread_mutex_unlock(&spin_mutex);
+      spinning = false;
+      m_lives->removeCallback(cbid);
+      return emptystr;
+    }
+    while (spinning) pthread_cond_wait(&cond_done, &spin_mutex);
+    pthread_mutex_unlock(&spin_mutex);
+    if (isValid()) {
+      char *lname = strdup(private_response);
+      lives_free(private_response);
+      return livesString(lname).toEncoding(LIVES_CHAR_ENCODING_UTF8);
+    }
+    return emptystr;
+  }
+
+
   int multitrack::currentTrack() const {
     if (!isActive()) return 0;
     return mainw->multitrack->current_track;
@@ -1833,6 +1954,74 @@ namespace lives {
       }
     }
     return false;
+  }
+
+
+  lives_gravity_t multitrack::gravity() const {
+    if (!isActive()) return LIVES_GRAVITY_NORMAL;
+    switch (mainw->multitrack->opts.grav_mode) {
+    case GRAV_MODE_LEFT: return LIVES_GRAVITY_LEFT;
+    case GRAV_MODE_RIGHT: return LIVES_GRAVITY_RIGHT;
+    default: return LIVES_GRAVITY_NORMAL;
+    }
+
+  }
+
+
+  lives_gravity_t multitrack::setGravity(lives_gravity_t grav) const {
+    if (m_lives->status() == LIVES_STATUS_PROCESSING) return gravity();
+    if (!isActive()) return gravity();
+
+    spinning = true;
+    msg_id = lives_random();
+    ulong cbid = m_lives->addCallback(LIVES_CALLBACK_PRIVATE, private_cb, NULL);
+    pthread_mutex_lock(&spin_mutex);
+    if (!idle_set_gravity((int)grav,msg_id)) {
+      pthread_mutex_unlock(&spin_mutex);
+      spinning = false;
+      m_lives->removeCallback(cbid);
+    }
+    else {
+      while (spinning) pthread_cond_wait(&cond_done, &spin_mutex);
+      pthread_mutex_unlock(&spin_mutex);
+      if (isValid()) {
+	lives_free(private_response);
+      }
+    }
+    return gravity();
+  }
+
+
+  lives_insert_mode_t multitrack::insertMode() const {
+    if (!isActive()) return LIVES_INSERT_MODE_NORMAL;
+    switch (mainw->multitrack->opts.insert_mode) {
+    default: return LIVES_INSERT_MODE_NORMAL;
+    }
+
+  }
+
+
+  lives_insert_mode_t multitrack::setInsertMode(lives_insert_mode_t mode) const {
+    if (m_lives->status() == LIVES_STATUS_PROCESSING) return insertMode();
+    if (!isActive()) return insertMode();
+
+    spinning = true;
+    msg_id = lives_random();
+    ulong cbid = m_lives->addCallback(LIVES_CALLBACK_PRIVATE, private_cb, NULL);
+    pthread_mutex_lock(&spin_mutex);
+    if (!idle_set_insert_mode((int)mode,msg_id)) {
+      pthread_mutex_unlock(&spin_mutex);
+      spinning = false;
+      m_lives->removeCallback(cbid);
+    }
+    else {
+      while (spinning) pthread_cond_wait(&cond_done, &spin_mutex);
+      pthread_mutex_unlock(&spin_mutex);
+      if (isValid()) {
+	lives_free(private_response);
+      }
+    }
+    return insertMode();
   }
 
 

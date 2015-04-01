@@ -133,8 +133,6 @@ void on_seltrack_activate (LiVESMenuItem *, livespointer mt);
 void multitrack_view_details (LiVESMenuItem *, livespointer mt);
 void mt_add_region_effect (LiVESMenuItem *, livespointer mt);
 void mt_add_block_effect (LiVESMenuItem *, livespointer mt);
-void on_save_event_list_activate (LiVESMenuItem *, livespointer mt);
-void on_load_event_list_activate (LiVESMenuItem *, livespointer mt);
 void on_clear_event_list_activate (LiVESMenuItem *, livespointer mt);
 void show_frame_events_activate (LiVESMenuItem *, livespointer);
 void mt_save_vals_toggled (LiVESMenuItem *, livespointer mt);
@@ -4536,6 +4534,16 @@ void mouse_mode_context(lives_mt *mt) {
 }
 
 
+void update_insert_mode (lives_mt *mt) {
+  if (mt->opts.insert_mode==INSERT_MODE_NORMAL) {
+    set_menu_text(mt->ins_menuitem,_("_Insert mode: Normal"),TRUE);
+  }
+
+  lives_signal_handler_block(mt->ins_normal,mt->ins_normal_func);
+  lives_check_menu_item_set_active(LIVES_CHECK_MENU_ITEM(mt->ins_normal),mt->opts.insert_mode==INSERT_MODE_NORMAL);
+  lives_signal_handler_unblock(mt->ins_normal,mt->ins_normal_func);
+}
+
 
 
 static void on_insert_mode_changed (LiVESMenuItem *menuitem, livespointer user_data) {
@@ -4544,15 +4552,9 @@ static void on_insert_mode_changed (LiVESMenuItem *menuitem, livespointer user_d
   if (!mainw->interactive) return;
 
   if (menuitem==(LiVESMenuItem *)mt->ins_normal) {
-    set_menu_text(mt->ins_menuitem,_("_Insert mode: Normal"),TRUE);
     mt->opts.insert_mode=INSERT_MODE_NORMAL;
   }
-
-  lives_signal_handler_block(mt->ins_normal,mt->ins_normal_func);
-  lives_check_menu_item_set_active(LIVES_CHECK_MENU_ITEM(mt->ins_normal),mt->opts.insert_mode==INSERT_MODE_NORMAL);
-  lives_signal_handler_unblock(mt->ins_normal,mt->ins_normal_func);
-
-
+  update_insert_mode(mt);
 }
 
 
@@ -4585,23 +4587,18 @@ static void on_mouse_mode_changed (LiVESMenuItem *menuitem, livespointer user_da
 
 
 
-static void on_grav_mode_changed (LiVESMenuItem *menuitem, livespointer user_data) {
-  lives_mt *mt=(lives_mt *)user_data;
+void update_grav_mode (lives_mt *mt) {
+  // update GUI after grav mode change
 
-  if (!mainw->interactive) return;
-
-  if (menuitem==(LiVESMenuItem *)mt->grav_normal) {
+  if (mt->opts.grav_mode==GRAV_MODE_NORMAL) {
     lives_label_set_text(LIVES_LABEL(mt->grav_label),_("Gravity: Normal"));
-    mt->opts.grav_mode=GRAV_MODE_NORMAL;
   }
-  else if (menuitem==(LiVESMenuItem *)mt->grav_left) {
+  else if (mt->opts.grav_mode==GRAV_MODE_LEFT) {
     lives_label_set_text(LIVES_LABEL(mt->grav_label),_("Gravity: Left"));
-    mt->opts.grav_mode=GRAV_MODE_LEFT;
   }
 
-  if (menuitem==(LiVESMenuItem *)mt->grav_right) {
+  if (mt->opts.grav_mode==GRAV_MODE_RIGHT) {
     lives_label_set_text(LIVES_LABEL(mt->grav_menuitem),_("Gravity: Right"));
-    mt->opts.grav_mode=GRAV_MODE_RIGHT;
     set_menu_text(mt->remove_first_gaps,_("Close _last gap(s) in selected tracks/time"),TRUE);
   }
   else {
@@ -4620,9 +4617,27 @@ static void on_grav_mode_changed (LiVESMenuItem *menuitem, livespointer user_dat
   lives_check_menu_item_set_active(LIVES_CHECK_MENU_ITEM(mt->grav_right),mt->opts.grav_mode==GRAV_MODE_RIGHT);
   lives_signal_handler_unblock(mt->grav_right,mt->grav_right_func);
 
-
-
 }
+
+
+
+static void on_grav_mode_changed (LiVESMenuItem *menuitem, livespointer user_data) {
+  lives_mt *mt=(lives_mt *)user_data;
+
+  if (!mainw->interactive) return;
+
+  if (menuitem==(LiVESMenuItem *)mt->grav_normal) {
+    mt->opts.grav_mode=GRAV_MODE_NORMAL;
+  }
+  else if (menuitem==(LiVESMenuItem *)mt->grav_left) {
+    mt->opts.grav_mode=GRAV_MODE_LEFT;
+  }
+  else if (menuitem==(LiVESMenuItem *)mt->grav_right) {
+    mt->opts.grav_mode=GRAV_MODE_RIGHT;
+  }
+  update_grav_mode(mt);
+}
+
 
 
 static size_t estimate_space(lives_mt *mt, int undo_type) {
@@ -5966,6 +5981,8 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
   mt->tl_mouse=FALSE;
 
   mt->clip_labels=NULL;
+
+  mt->force_load_name=NULL;
 
   if (mainw->multi_opts.set) {
     mt->opts.move_effects=mainw->multi_opts.move_effects;
@@ -19680,7 +19697,7 @@ void add_markers(lives_mt *mt, weed_plant_t *event_list) {
 
 
 
-void on_save_event_list_activate (LiVESMenuItem *menuitem, livespointer user_data) {
+boolean on_save_event_list_activate (LiVESMenuItem *menuitem, livespointer user_data) {
   //  here we save a layout list (*.lay) file
 
   // we dump (serialise) the event_list plant, followed by all of its events
@@ -19738,7 +19755,7 @@ void on_save_event_list_activate (LiVESMenuItem *menuitem, livespointer user_dat
     lives_free(layout_map_audio);
     mainw->cancelled=CANCEL_USER;
     if (mt!=NULL) mt_sensitise(mt);
-    return;
+    return FALSE;
   }
 
   if (mainw->ascrap_file!=-1&&layout_map[mainw->ascrap_file]!=0) {
@@ -19748,7 +19765,7 @@ void on_save_event_list_activate (LiVESMenuItem *menuitem, livespointer user_dat
     lives_free(layout_map_audio);
     mainw->cancelled=CANCEL_USER;
     if (mt!=NULL) mt_sensitise(mt);
-    return;
+    return FALSE;
   }
 
   if (mt!=NULL&&mt->idlefunc>0) {
@@ -19759,7 +19776,7 @@ void on_save_event_list_activate (LiVESMenuItem *menuitem, livespointer user_dat
   if (strlen(mainw->set_name)>0) {
     weed_set_string_value(event_list,"needs_set",mainw->set_name);
   }
-  else {
+  else if (mainw->interactive) {
     char new_set_name[128];
     do {
       // prompt for a set name, advise user to save set
@@ -19775,7 +19792,7 @@ void on_save_event_list_activate (LiVESMenuItem *menuitem, livespointer user_dat
 	  mt->idlefunc=mt_idle_add(mt);
 	  mt_sensitise(mt);
 	}
-	return;
+	return FALSE;
       }
       lives_snprintf(new_set_name,128,"%s",lives_entry_get_text (LIVES_ENTRY (renamew->entry)));
       lives_widget_destroy(renamew->dialog);
@@ -19784,7 +19801,8 @@ void on_save_event_list_activate (LiVESMenuItem *menuitem, livespointer user_dat
     } while (!is_legal_set_name(new_set_name,FALSE));
     lives_snprintf(mainw->set_name,128,"%s",new_set_name);
   }
-  
+  else return FALSE;
+
   esave_dir=lives_build_filename(prefs->tmpdir,mainw->set_name,"layouts",LIVES_DIR_SEPARATOR_S,NULL);
   lives_mkdir_with_parents(esave_dir,S_IRWXU);
 
@@ -19842,7 +19860,7 @@ void on_save_event_list_activate (LiVESMenuItem *menuitem, livespointer user_dat
       mt->idlefunc=mt_idle_add(mt);
       mt_sensitise(mt);
     }
-    return;
+    return FALSE;
   }
 
   esave_file=ensure_extension(esave_file,".lay");
@@ -19878,7 +19896,7 @@ void on_save_event_list_activate (LiVESMenuItem *menuitem, livespointer user_dat
 	  mt->idlefunc=mt_idle_add(mt);
 	  mt_sensitise(mt);
 	}
-	return;
+	return FALSE;
       }
     }
   } while (retval2==LIVES_RESPONSE_RETRY);
@@ -19917,6 +19935,8 @@ void on_save_event_list_activate (LiVESMenuItem *menuitem, livespointer user_dat
     mt->idlefunc=mt_idle_add(mt);
     mt_sensitise(mt);
   }
+
+  return TRUE;
 }
 
 // next functions are mainly to do with event_list manipulation
@@ -21359,74 +21379,59 @@ boolean event_list_rectify(lives_mt *mt, weed_plant_t *event_list) {
 
 
 
-weed_plant_t *load_event_list(lives_mt *mt, char *eload_file) {
-  // load (deserialise) a serialised event_list
-  // after loading we perform sophisticated checks on it to detect
-  // and try to repair any errors in it
-  weed_plant_t *event_list=NULL;
 
-  LiVESWidget *ar_checkbutton;
+char *get_eload_filename(lives_mt *mt, boolean allow_auto_reload) {
   LiVESWidget *hbox;
+  LiVESWidget *ar_checkbutton;
 
   char *filt[]={"*.lay",NULL};
-  char *startdir=NULL;
+
   char *eload_dir;
-  char *msg;
+  char *eload_file;
+  char *startdir=NULL;
   char *com;
-  char *eload_name;
 
-  boolean free_eload_file=TRUE;
-  boolean orig_ar_layout=prefs->ar_layout,ar_layout;
-  boolean retval=TRUE;
+  boolean needs_idlefunc=FALSE;
 
-  int num_events=0;
-  int retval2;
-  int old_avol_fx=mt->avol_fx;
-  int fd;
+  if (!strlen(mainw->set_name)) {
+    LIVES_ERROR("Loading event list for unknown set");
+    return NULL;
+  }
+
+  eload_dir=lives_build_filename(prefs->tmpdir,mainw->set_name,"layouts",LIVES_DIR_SEPARATOR_S,NULL);
+
+  mainw->com_failed=FALSE;
+  lives_mkdir_with_parents(eload_dir,S_IRWXU);
+
+  if (!mainw->recoverable_layout&&!lives_file_test(eload_dir,LIVES_FILE_TEST_IS_DIR)) {
+    lives_free(eload_dir);
+    return NULL;
+  }
+
+  startdir=lives_strdup(eload_dir);
+
+  hbox = lives_hbox_new (FALSE, 0);
+
+  if (allow_auto_reload) {
+    ar_checkbutton = lives_standard_check_button_new (_("_Autoreload each time"),TRUE,LIVES_BOX(hbox),NULL);
+
+    lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(ar_checkbutton),prefs->ar_layout);
+    lives_signal_connect (LIVES_GUI_OBJECT (ar_checkbutton), LIVES_WIDGET_TOGGLED_SIGNAL,
+			  LIVES_GUI_CALLBACK (on_autoreload_toggled),
+			  LIVES_INT_TO_POINTER(2));
+  }
 
   if (mt->idlefunc>0) {
     lives_source_remove(mt->idlefunc);
     mt->idlefunc=0;
+    needs_idlefunc=TRUE;
   }
 
-  if (eload_file==NULL) {
-    if (!strlen(mainw->set_name)) {
-      LIVES_ERROR("Loading event list for unknown set");
-      mt->idlefunc=mt_idle_add(mt);
-      return NULL;
-    }
+  lives_widget_show_all(hbox);
 
-    eload_dir=lives_build_filename(prefs->tmpdir,mainw->set_name,"layouts",LIVES_DIR_SEPARATOR_S,NULL);
+  eload_file=choose_file(startdir,NULL,filt,LIVES_FILE_CHOOSER_ACTION_OPEN,NULL,hbox);
 
-    mainw->com_failed=FALSE;
-    lives_mkdir_with_parents(eload_dir,S_IRWXU);
-
-    if (!mainw->recoverable_layout&&!lives_file_test(eload_dir,LIVES_FILE_TEST_IS_DIR)) {
-      lives_free(eload_dir);
-      mt->idlefunc=mt_idle_add(mt);
-      return NULL;
-    }
-
-    startdir=lives_strdup(eload_dir);
-
-    hbox = lives_hbox_new (FALSE, 0);
-
-    ar_checkbutton = lives_standard_check_button_new (_("_Autoreload each time"),TRUE,LIVES_BOX(hbox),NULL);
-
-    lives_widget_show_all(hbox);
-    
-    lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(ar_checkbutton),prefs->ar_layout);
-    lives_signal_connect (LIVES_GUI_OBJECT (ar_checkbutton), LIVES_WIDGET_TOGGLED_SIGNAL,
-		      LIVES_GUI_CALLBACK (on_autoreload_toggled),
-		      LIVES_INT_TO_POINTER(2));
-    eload_file=choose_file(startdir,NULL,filt,LIVES_FILE_CHOOSER_ACTION_OPEN,NULL,hbox);
-
-    lives_free(startdir);
-  }
-  else free_eload_file=FALSE;
-
-  ar_layout=prefs->ar_layout;
-  prefs->ar_layout=orig_ar_layout;
+  lives_free(startdir);
 
   if (eload_file==NULL) {
     // if the user cancelled see if we can clear the directories
@@ -21449,13 +21454,53 @@ weed_plant_t *load_event_list(lives_mt *mt, char *eload_file) {
 #endif
     lives_system(com,TRUE);
     lives_free(com);
-
-    lives_free(eload_dir);
-    mt->idlefunc=mt_idle_add(mt);
-    return NULL;
   }
 
-  if (free_eload_file) lives_free(eload_dir);
+  lives_free(eload_dir);
+
+  if (needs_idlefunc) 
+    mt->idlefunc=mt_idle_add(mt);
+
+  return eload_file;
+}
+
+
+
+
+weed_plant_t *load_event_list(lives_mt *mt, char *eload_file) {
+  // load (deserialise) a serialised event_list
+  // after loading we perform sophisticated checks on it to detect
+  // and try to repair any errors in it
+  weed_plant_t *event_list=NULL;
+
+  char *msg;
+  char *eload_name;
+
+  boolean free_eload_file=TRUE;
+  boolean orig_ar_layout=prefs->ar_layout,ar_layout;
+  boolean retval=TRUE;
+
+  int num_events=0;
+  int retval2;
+  int old_avol_fx=mt->avol_fx;
+  int fd;
+
+  if (mt->idlefunc>0) {
+    lives_source_remove(mt->idlefunc);
+    mt->idlefunc=0;
+  }
+
+  if (eload_file==NULL) {
+    eload_file=get_eload_filename(mt,TRUE);
+    if (eload_file==NULL) {
+      mt->idlefunc=mt_idle_add(mt);
+      return NULL;
+    }
+  }
+  else free_eload_file=FALSE;
+
+  ar_layout=prefs->ar_layout;
+  prefs->ar_layout=orig_ar_layout;
 
   if (!mainw->recoverable_layout) eload_name=lives_strdup(eload_file);
   else eload_name=lives_strdup(_("auto backup"));
@@ -21472,7 +21517,6 @@ weed_plant_t *load_event_list(lives_mt *mt, char *eload_file) {
 #ifdef IS_MINGW
   setmode(fd, O_BINARY);
 #endif
-
 
   event_list_free_undos(mt);
 
@@ -21773,28 +21817,27 @@ void on_clear_event_list_activate (LiVESMenuItem *menuitem, livespointer user_da
 
 
 
-void on_load_event_list_activate (LiVESMenuItem *menuitem, livespointer user_data) {
+boolean on_load_event_list_activate (LiVESMenuItem *menuitem, livespointer user_data) {
   int i;
   lives_mt *mt=(lives_mt *)user_data;
   weed_plant_t *new_event_list;
-  char *eload_file=NULL;
 
-  if (!check_for_layout_del(mt,FALSE)) return;
+  if (mainw->interactive) 
+    if (!check_for_layout_del(mt,FALSE)) return FALSE;
 
   if (mt->idlefunc>0) {
     lives_source_remove(mt->idlefunc);
     mt->idlefunc=0;
   }
 
-  new_event_list=load_event_list(mt,eload_file);
-  if (eload_file!=NULL) lives_free(eload_file);
+  new_event_list=load_event_list(mt,mt->force_load_name);
 
   if (mainw->was_set) recover_layout_cancelled(FALSE);
 
   if (new_event_list==NULL) {
     mt_sensitise(mt);
     mt->idlefunc=mt_idle_add(mt);
-    return;
+    return FALSE;
   }
 
   if (mt->event_list!=NULL) event_list_free(mt->event_list);
@@ -21839,6 +21882,8 @@ void on_load_event_list_activate (LiVESMenuItem *menuitem, livespointer user_dat
   mt_show_current_frame(mt, FALSE);
 
   mt->idlefunc=mt_idle_add(mt);
+
+  return TRUE;
 }
 
 
@@ -21858,7 +21903,7 @@ void migrate_layouts (const char *old_set_name, const char *new_set_name) {
 
 
 
-  // load each event_list in mainw->layout_map_list
+  // load each event_list in mainw->current_layouts_map
   LiVESList *map=mainw->current_layouts_map;
   int fd;
   int i;

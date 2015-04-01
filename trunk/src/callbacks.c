@@ -742,8 +742,9 @@ void on_open_utube_activate (LiVESMenuItem *menuitem, livespointer user_data) {
 
 
 void on_autoreload_toggled (LiVESToggleButton *togglebutton, livespointer user_data) {
+  // type==0, autoreload layout
   // type==1, autoreload clipset
-  // type==2, autoreload layout
+  // type==2, autoreload layout (from choose layout name and ...)
 
   int type=LIVES_POINTER_TO_INT(user_data);
   if (type==0) {

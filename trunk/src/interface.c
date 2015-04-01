@@ -2181,18 +2181,25 @@ char *choose_file(const char *dir, const char *fname, char ** const filt, LiVESF
 
 #ifdef GUI_GTK
 
-  if (act!=LIVES_FILE_CHOOSER_ACTION_SAVE) 
-    chooser=gtk_file_chooser_dialog_new(mytitle,LIVES_WINDOW(mainw->LiVES),(LiVESFileChooserAction)act, 
-					LIVES_STOCK_LABEL_CANCEL, LIVES_RESPONSE_CANCEL,
-					LIVES_STOCK_LABEL_OPEN, LIVES_RESPONSE_ACCEPT,
-					NULL);
-
+  if (act!=LIVES_FILE_CHOOSER_ACTION_SAVE) {
+    if (mainw->interactive)
+      chooser=gtk_file_chooser_dialog_new(mytitle,LIVES_WINDOW(mainw->LiVES),(LiVESFileChooserAction)act, 
+					  LIVES_STOCK_LABEL_CANCEL, LIVES_RESPONSE_CANCEL,
+					  LIVES_STOCK_LABEL_OPEN, LIVES_RESPONSE_ACCEPT,
+					  NULL);
+    else 
+      chooser=gtk_file_chooser_dialog_new(mytitle,LIVES_WINDOW(mainw->LiVES),(LiVESFileChooserAction)act, 
+					  LIVES_STOCK_LABEL_OPEN, LIVES_RESPONSE_ACCEPT,
+					  NULL);
+  }
   else {
     chooser=gtk_file_chooser_dialog_new(mytitle,LIVES_WINDOW(mainw->LiVES),(LiVESFileChooserAction)act, 
 					LIVES_STOCK_LABEL_CANCEL, LIVES_RESPONSE_CANCEL,
 					LIVES_STOCK_LABEL_SAVE, LIVES_RESPONSE_ACCEPT,
 					NULL);
+
   }
+
 
   gtk_file_chooser_set_local_only(LIVES_FILE_CHOOSER(chooser),TRUE);
 

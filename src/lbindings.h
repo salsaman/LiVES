@@ -43,6 +43,9 @@ boolean idle_move_block(ulong block_uid, int track, double time, ulong id);
 boolean idle_mt_set_track(int tnum, ulong id);
 boolean idle_set_current_time(double time, ulong id);
 boolean idle_wipe_layout(boolean force, ulong id);
+boolean idle_choose_layout(ulong id);
+boolean idle_save_layout(const char *lname, ulong id);
+boolean idle_reload_layout(const char *lname, ulong id);
 boolean idle_select_all(int cnum, ulong id);
 boolean idle_select_start(int cnum, int frame, ulong id);
 boolean idle_select_end(int cnum, int frame, ulong id);
@@ -52,6 +55,8 @@ boolean idle_set_ping_pong(boolean setting, ulong id);
 boolean idle_resync_fps(ulong id);
 boolean idle_cancel_proc(ulong id);
 boolean idle_set_track_label(int tnum, const char *label, ulong id);
+boolean idle_set_gravity(int grav, ulong id);
+boolean idle_set_insert_mode(int mode, ulong id);
 
 ulong *get_unique_ids(void);
 int cnum_for_uid(ulong uid);

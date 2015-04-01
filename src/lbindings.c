@@ -230,9 +230,12 @@ boolean start_player(void) {
   return ret;
 }
 
-
-#define const_domain_notify 1
-#define const_domain_response 1
+enum {
+  const_domain_notify,
+  const_domain_response,
+  const_domain_grav,
+  const_domain_insert_mode
+};
 
 inline int trans_rev(int consta, int a, int b) {
   if (consta==a) return b;
@@ -283,6 +286,16 @@ int trans_constant(int consta, int domain) {
     if (consta==LIVES_RESPONSE_SHOW_DETAILS) return LIVES_DIALOG_RESPONSE_SHOW_DETAILS;
   }
 
+  if (domain==const_domain_grav) {
+    if (consta==LIVES_GRAVITY_NORMAL) return GRAV_MODE_NORMAL;
+    if (consta==LIVES_GRAVITY_LEFT) return GRAV_MODE_LEFT;
+    if (consta==LIVES_GRAVITY_RIGHT) return GRAV_MODE_RIGHT;
+  }
+
+
+  if (domain==const_domain_insert_mode) {
+    if (consta==LIVES_INSERT_MODE_NORMAL) return INSERT_MODE_NORMAL;
+  }
 
   return consta;
 }
@@ -422,9 +435,14 @@ static boolean call_open_file(livespointer data) {
 
 static boolean call_reload_set(livespointer data) {
   msginfo *mdata = (msginfo *)data;
-  boolean resp=LIVES_RESPONSE_INVALID;
+  boolean resp=FALSE;
   if (mainw!=NULL&&!mainw->go_away&&!mainw->is_processing) {
     mainw->osc_auto=1;
+    if (!strlen(mdata->msg)) {
+      lives_free(mdata->msg);
+      mdata->msg=on_load_set_activate(NULL,(livespointer)1);
+      if (mdata->msg==NULL) mdata->msg=lives_strdup("");
+    }
     if (!is_legal_set_name(mdata->msg,TRUE)) {
       mainw->osc_auto=0;
       resp=FALSE;
@@ -528,6 +546,32 @@ static boolean call_set_pref_int(livespointer data) {
   if (mainw!=NULL&&!mainw->go_away) {
     pref_factory_int(idata->prefidx, idata->val);
     ext_caller_return_int(idata->id,TRUE);
+  }
+  else ext_caller_return_int(idata->id,FALSE);
+  lives_free(idata);
+  return FALSE;
+}
+
+
+static boolean call_set_gravity(livespointer data) {
+  ipref *idata=(ipref *)data;
+  if (mainw!=NULL&&!mainw->go_away&&mainw->multitrack!=NULL) {
+    lives_mt_grav_mode_t grav=trans_constant(idata->val,const_domain_grav);
+    mainw->multitrack->opts.grav_mode=grav;
+    update_grav_mode(mainw->multitrack);
+  }
+  else ext_caller_return_int(idata->id,FALSE);
+  lives_free(idata);
+  return FALSE;
+}
+
+
+static boolean call_set_insert_mode(livespointer data) {
+  ipref *idata=(ipref *)data;
+  if (mainw!=NULL&&!mainw->go_away&&mainw->multitrack!=NULL) {
+    lives_mt_insert_mode_t mode=trans_constant(idata->val,const_domain_insert_mode);
+    mainw->multitrack->opts.insert_mode=mode;
+    update_insert_mode(mainw->multitrack);
   }
   else ext_caller_return_int(idata->id,FALSE);
   lives_free(idata);
@@ -699,6 +743,73 @@ static boolean call_wipe_layout(livespointer data) {
   return FALSE;
 }
 
+
+
+
+static boolean call_choose_layout(livespointer data) {
+  iblock *fxdata=(iblock *)data;
+  char *lname=lives_strdup("");
+  if (mainw!=NULL&&!mainw->go_away&&!mainw->is_processing&&mainw->multitrack!=NULL&&strlen(mainw->set_name)>0) {
+    lives_free(lname);
+    lname=get_eload_filename(mainw->multitrack,FALSE);
+    if (lname==NULL) lname=lives_strdup("");
+  }
+  ext_caller_return_string(fxdata->id,lname);
+  lives_free(lname);
+  lives_free(data);
+  return FALSE;
+}
+
+
+
+
+static boolean call_reload_layout(livespointer data) {
+  msginfo *mdata = (msginfo *)data;
+  boolean resp=FALSE;
+  if (mainw!=NULL&&!mainw->go_away&&!mainw->is_processing&&mainw->multitrack!=NULL&&strlen(mainw->set_name)>0) {
+    if (!strlen(mdata->msg)) {
+      lives_free(mdata->msg);
+      mdata->msg=get_eload_filename(mainw->multitrack,FALSE);
+      if (mdata->msg==NULL) mdata->msg=lives_strdup("");
+    }
+    if (strlen(mainw->msg)) {
+      mainw->multitrack->force_load_name=mainw->msg;
+      resp=on_load_event_list_activate(NULL,mainw->multitrack);
+      mainw->multitrack->force_load_name=NULL;
+    }
+  }
+  lives_free(mdata->msg);
+  ext_caller_return_int(mdata->id,resp);
+  lives_free(mdata);
+  return resp;
+}
+
+
+
+static boolean call_save_layout(livespointer data) {
+  msginfo *mdata = (msginfo *)data;
+  boolean resp=FALSE;
+
+  char *lname=lives_strdup("");
+
+  if (mainw!=NULL&&!mainw->go_away&&!mainw->is_processing) {
+    if (mdata->msg!=NULL) {
+      if (mainw->multitrack!=NULL) lives_snprintf(mainw->multitrack->layout_name,PATH_MAX,"%s",mdata->msg);
+      else lives_snprintf(mainw->stored_layout_name,PATH_MAX,"%s",mdata->msg);
+    }
+    resp=on_save_event_list_activate(NULL,mainw->multitrack);
+    if (resp) {
+      lives_free(lname);
+      lname=lives_strdup(mainw->recent_file);
+    }
+  }
+
+  lives_free(mdata->msg);
+  ext_caller_return_string(mdata->id,lname);
+  lives_free(lname);
+  lives_free(mdata);
+  return resp;
+}
 
 
 static boolean call_set_current_fps(livespointer data) {
@@ -1125,9 +1236,9 @@ boolean idle_reload_set(const char *setname, ulong id) {
   if (mainw==NULL||mainw->preview||mainw->go_away||mainw->is_processing||mainw->playing_file>-1) return FALSE;
   if (mainw->was_set) return FALSE;
 
-  if (setname==NULL || strlen(setname)==0) return FALSE;
+  if (setname==NULL) return FALSE;
 
-  if (!is_legal_set_name(setname,TRUE)) return FALSE;
+  if (strlen(setname)&&!is_legal_set_name(setname,TRUE)) return FALSE;
 
   data=(msginfo *)lives_malloc(sizeof(msginfo));
   data->id=id;
@@ -1201,6 +1312,33 @@ boolean idle_set_ping_pong(boolean setting, ulong id) {
   data->id=id;
   data->setting=setting;
   lives_idle_add(call_set_ping_pong,(livespointer)data);
+  return TRUE;
+}
+
+
+
+boolean idle_set_gravity(int grav, ulong id) {
+  ipref *data;
+  
+  if (mainw==NULL||mainw->go_away) return FALSE;
+
+  data=(ipref *)lives_malloc(sizeof(ipref));
+  data->id=id;
+  data->val=grav;
+  lives_idle_add(call_set_gravity,(livespointer)data);
+  return TRUE;
+}
+
+
+boolean idle_set_insert_mode(int mode, ulong id) {
+  ipref *data;
+  
+  if (mainw==NULL||mainw->go_away) return FALSE;
+
+  data=(ipref *)lives_malloc(sizeof(ipref));
+  data->id=id;
+  data->val=mode;
+  lives_idle_add(call_set_insert_mode,(livespointer)data);
   return TRUE;
 }
 
@@ -1382,6 +1520,51 @@ boolean idle_wipe_layout(boolean force, ulong id) {
   data->ign_sel=force;
   data->id=id;
   lives_idle_add(call_wipe_layout,(livespointer)data);
+  return TRUE;
+}
+
+
+
+boolean idle_choose_layout(ulong id) {
+  iblock *data;
+
+  if (mainw==NULL||mainw->preview||mainw->go_away||mainw->is_processing||mainw->playing_file>-1) return FALSE;
+  if (mainw->multitrack==NULL) return FALSE;
+
+  data=(iblock *)lives_malloc(sizeof(iblock));
+  data->id=id;
+  lives_idle_add(call_choose_layout,(livespointer)data);
+  return TRUE;
+}
+
+
+
+boolean idle_reload_layout(const char *lname, ulong id) {
+  msginfo*data;
+
+  if (mainw==NULL||mainw->preview||mainw->go_away||mainw->is_processing||mainw->playing_file>-1) return FALSE;
+  if (mainw->multitrack==NULL) return FALSE;
+
+  data=(msginfo *)lives_malloc(sizeof(msginfo));
+  data->id=id;
+  data->msg=lives_strdup(lname);
+  lives_idle_add(call_reload_layout,(livespointer)data);
+  return TRUE;
+}
+
+
+
+boolean idle_save_layout(const char *lname, ulong id) {
+  msginfo*data;
+
+  if (mainw==NULL||mainw->preview||mainw->go_away||mainw->is_processing||mainw->playing_file>-1) return FALSE;
+  if (mainw->multitrack==NULL) return FALSE;
+
+  data=(msginfo *)lives_malloc(sizeof(msginfo));
+  data->id=id;
+  if (lname!=NULL) data->msg=lives_strdup(lname);
+  else data->msg=NULL;
+  lives_idle_add(call_save_layout,(livespointer)data);
   return TRUE;
 }
 

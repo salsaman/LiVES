@@ -23,6 +23,8 @@
 #include "../../libweed/weed-effects.h"
 #endif
 
+#include <stdio.h>
+
 ///////////////////////////////////////////////////////////////////
 
 static int num_versions=2; // number of different weed api versions supported

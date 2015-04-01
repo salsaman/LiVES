@@ -66,9 +66,8 @@ typedef enum {
 
   // not implemented yet
   INSERT_MODE_OVERWRITE, ///< overwite existing blocks
-  INSERT_MODE_EXPAND, ///< repeat to fill gap
-  INSERT_MODE_FILL_START, ///< insert enough to fill gap (from selection start)
-  INSERT_MODE_FILL_END ///< insert enough to fill gap (to selection end)
+  INSERT_MODE_FLEX, ///< stretch first gap to fit block
+  INSERT_MODE_FILL, ///< insert enough to fill gap (from selection start or end depending on gravity)
 } lives_mt_insert_mode_t;
 
 
@@ -602,6 +601,9 @@ struct _mt {
 
   boolean is_atrans; /// < force some visual changes when applying autotrans
 
+  char *force_load_name; ///< pointer to a string which contains a filename to be force loaded when load_event_list_activate() is called.
+  ///< Normally NULL except when called from language bindings.
+
 };  // lives_mt
 
 
@@ -705,7 +707,10 @@ void close_clip_cb (LiVESMenuItem *, livespointer mt);
 void show_clipinfo_cb (LiVESMenuItem *, livespointer mt);
 
 boolean multitrack_insert (LiVESMenuItem *, livespointer mt);
-track_rect *move_block (lives_mt *mt, track_rect *block, double timesecs, int old_track, int new_track);
+track_rect *move_block (lives_mt *, track_rect *block, double timesecs, int old_track, int new_track);
+
+void update_grav_mode (lives_mt *);
+void update_insert_mode (lives_mt *);
 
 
 // event_list functions
@@ -854,7 +859,9 @@ void update_filter_events(lives_mt *, weed_plant_t *first_event, weed_timecode_t
 void mt_fixup_events(lives_mt *, weed_plant_t *old_event, weed_plant_t *new_event);
 
 // event_list load/save
+char *get_eload_filename(lives_mt *mt, boolean allow_auto_reload);
 weed_plant_t *load_event_list(lives_mt *, char *eload_file);
+boolean on_save_event_list_activate (LiVESMenuItem *, livespointer mt);
 
 
 // layouts and layout maps
@@ -871,6 +878,8 @@ LiVESList *layout_frame_is_affected(int clipno, int frame);
 LiVESList *layout_audio_is_affected(int clipno, double time);
 
 boolean check_for_layout_del (lives_mt *, boolean exiting);
+
+boolean on_load_event_list_activate (LiVESMenuItem *, livespointer mt);
 
 void stored_event_list_free_all(boolean wiped);
 void stored_event_list_free_undos(void);

@@ -158,7 +158,7 @@ typedef enum {
    Multitrack gravity
 */
 typedef enum {
-  LIVES_GRAVITY_NONE, ///< no gravity
+  LIVES_GRAVITY_NORMAL, ///< no gravity
   LIVES_GRAVITY_LEFT, ///< inserted blocks gravitate to the left
   LIVES_GRAVITY_RIGHT ///< inserted blocks gravitate to the right
 } lives_gravity_t;
@@ -509,11 +509,11 @@ namespace lives {
 
    /**
        Allow the user choose a file via a fileselector.
-       Only has an effect when status() is LIVES_STATUS_READY, otherwise returns an empty string.
+       Only has an effect when status() is LIVES_STATUS_READY, otherwise returns an empty livesString.
        After returning, the setting that the user selected for deinterlace may be obtained by calling 
        deinterlaceOption(). This value can the be passed into openFile().
        Chooser type will direct the user towards the type of file to choose, however there is no guarantee 
-       that a file of the "correct" type will be returned. If the user cancels then an empty filename will be returned.
+       that a file of the "correct" type will be returned. If the user cancels then an empty livesString will be returned.
        @param dirname directory name to start in (or NULL)
        @param chooser_type must be either LIVES_FILE_CHOOSER_VIDEO_AUDIO or LIVES_FILE_CHOOSER_AUDIO_ONLY.
        @param title title of window to display, or NULL to use a default title.
@@ -541,7 +541,7 @@ namespace lives {
     /**
        Returns a list of available sets. The list returned depends on the setting of prefs::tmpDir().
        This may be an expensive operation as it requires accessing the underlying filesystem.
-       If the set is invalid, an empty list is returned.
+       If the set is invalid, an empty livesStringList is returned.
        @return a list<livesString> of set names.
        @see reloadSet().
        @see set::save().
@@ -551,8 +551,8 @@ namespace lives {
    /**
        Allow the user to choose a set to open.
        Only has an effect when status() is LIVES_STATUS_READY, and there are no currently open clips, 
-       otherwise returns an empty string.
-       If the user cancels, an empty string is returned.
+       otherwise returns an empty livesString.
+       If the user cancels, an empty livesString is returned.
        The valid list of sets to choose from will be equivalent to the list returned by availableSets().
        @return the name of the set selected.
        @see reloadSet().
@@ -565,6 +565,7 @@ namespace lives {
       Only works when status() is LIVES_STATUS_READY, otherwise false is returned.
       A set may not be accessed concurrently by more than one copy of LiVES.
       The valid list of sets is equivalent to the list returned by availableSets().
+      If setname is an empty livesString, chooseSet() will be called first to get a set name.
       @param setname the name of the set to reload.
       @see chooseSet().
       @see availableSets().
@@ -738,8 +739,8 @@ namespace lives {
 
     /**
        Human readable name of the clip.
-       If clip is not valid then empty string is returned.
-       @return livesString name, or empty string if clip is not valid.
+       If clip is not valid then empty livesString is returned.
+       @return livesString name, or empty livesString if clip is not valid.
     */
     livesString name();
 
@@ -900,18 +901,23 @@ namespace lives {
 
     /**
        Returns the current name of the set. 
-       If it has not been defined, an empty string is returned. If the set is invalid, an empty string is returned.
+       If it has not been defined, an empty livesString is returned. If the set is invalid, an empty livesString is returned.
        @return livesString name.
     */
     livesString name() const;
 
+
+
+    bool setName(livesString name);
+
+
     /**
        Save the set, and close all open clips and layouts. 
-       If the set name is empty, the user can choose the name via the GUI. 
+       If the set name is empty, the user can choose the name via the GUI. If livesApp::interactive() is false, the user may not cancel.
        If the name is defined, and it points to a different, existing set, the set will not be saved and false will be returned, 
        unless force_append is set to true, in which case the current clips and layouts will be appended to the other set.
        Saving a set with a new name is an expensive operation as it requires moving files in the underlying filesystem.
-       @param name name to save set as, or empty string to let the user choose a name.
+       @param name name to save set as, or empty livesString to let the user choose a name.
        @param force_append set to true to force appending to another existing set.
        @return true if the set was saved.
     */
@@ -943,7 +949,7 @@ namespace lives {
     int indexOf(clip c) const;
 
     /**
-       Returns a list of layout names for this set. If the set is invalid, returns an empty list.
+       Returns a list of layout names for this set. If the set is invalid, returns an empty livesStringList.
        @return a list of layout names for this set.
        @see livesApp::reloadLayout().
     */
@@ -1456,7 +1462,6 @@ namespace lives {
   public:
     effect(livesApp& lives, livesString hashname); // TODO
 
-
     /**
        Create a new effect from a template. In case of multiple matches, only the first match is returned. 
        In the case of no matches, an invalid effect is returned.
@@ -1550,7 +1555,6 @@ namespace lives {
     */
     int track();
 
-
     /**
        Removes a block from the multitrack timeline. Upon being removed, the block becomes invalid.
        Undoing the operation does not cause the block to become valid again, although it can be searched for using the constructor.
@@ -1562,14 +1566,13 @@ namespace lives {
     */
     bool remove();
 
-
     /**
        Move the block to a new track at a new timeline time.
        Depending on the value of multitrack::insertMode(), it may not be possible to do the insertion. 
        In case of failure an invalid block is returned.
        Only works if livesApp::status() is LIVES_STATUS_READY and isActive() is true.
-       Note: the actual place where the block ends up, and its final size depends on various factors such as the gravity() setting, 
-       the insertMode() setting, and the location of other blocks in the layout.
+       Note: the actual place where the block ends up, and its final size depends on various factors such as the multitrack::gravity() setting, 
+       the multitrack::insertMode() setting, and the location of other blocks in the layout.
        The insertion may cause other blocks to relocate.
        If the block is invalid, nothing happens and false is returned.
        @param track the new track to move to.
@@ -1662,16 +1665,15 @@ namespace lives {
     /**
        If isActive() is true, then this method returns the label for a track.
        @param track the track number. A value >= 0 represents a video track, a value < 0 represents a backing audio track.
-       @return the track label, or empty string if the specified track does not exist.
+       @return the track label, or empty livesString if the specified track does not exist.
        @see setTrackLabel().
     */
     livesString trackLabel(int track) const;
 
-
     /**
        Set the label for a track. This is for display purposes only and has no other effect.
        If isActive() is false, the track label is not changed, and false is returned.
-       If the label is not provided, or is an empty string, the user will be prompted to enter a name at runtime.
+       If the label is not provided, or is an empty livesString, the user will be prompted to enter a name at runtime.
        @param track the track number. Must be >= 0.
        @param label a livesString containing the text to label the track with.
        @return true if it was possible to change the label.
@@ -1679,12 +1681,41 @@ namespace lives {
     */
     bool setTrackLabel(int track, livesString label=livesString()) const;
 
-
-
+    /**
+       Returns the value of the multitrack gravity. This value, together with the insertMode() defines what happens when a block is inserted, 
+       moved or deleted.
+       If isActive() is false, the return value is undefined.
+       @return the multitrack gravity.
+       @see insertMode().
+    */
     lives_gravity_t gravity() const;
 
-
+    /**
+       Set the gravity mode for multitrack. If isActive() is false, nothing happens and an undefined value is returned, 
+       otherwise if livesApp::status() is not LIVES_STATUS_READY or LIVES_STATUS_PLAYING, nothing happens.
+       @param the new gravity mode to set.
+       @return the new gravity mode.
+       @see gravity().
+    */
     lives_gravity_t setGravity(lives_gravity_t grav) const;
+
+    /**
+       Returns the value of the multitrack insert mode. This value, together with gravity() defines what happens when a block is inserted, 
+       moved or deleted.
+       If isActive() is false, the return value is undefined.
+       @return the multitrack insert mode.
+       @see gravity().
+    */
+    lives_insert_mode_t insertMode() const;
+
+    /**
+       Set the gravity mode for multitrack. If isActive() is false, nothing happens and an undefined value is returned, 
+       otherwise if livesApp::status() is not LIVES_STATUS_READY or LIVES_STATUS_PLAYING, nothing happens.
+       @param the new insert mode to set.
+       @return the new insert mode.
+       @see insertMode().
+    */
+    lives_insert_mode_t setInsertMode(lives_insert_mode_t imode) const;
 
 
     bool addVideoTrack(bool in_front) const;
@@ -1729,29 +1760,88 @@ namespace lives {
     */
     block insertBlock(clip c, bool ignore_selection_limits=false, bool without_audio=false) const;
 
-
     /**
        Wipe the current layout, leaving a blank layout.
        If force is false, then the user will have a chance to cancel (if livesApp::interactive() is true), 
        or to save the layout.
        Only works if livesApp::status() is LIVES_STATUS_READY and isActive() is true.
-       Otherwise, the layout will not be wiped, and an empty string will be returned.
+       Otherwise, the layout will not be wiped, and an empty livesString will be returned.
        @param force set to true to force the layout to be wiped.
-       @return the name which the layout was saved to, or empty string if it was not saved.
+       @return the name which the layout was saved to, or empty livesString if it was not saved.
     */
     livesString wipeLayout(bool force=false) const;
 
+    /**
+       Allow the user to graphically choose a layout to load for the set.
+       Only works if livesApp::status() is LIVES_STATUS_READY and isActive() is true, otherwise an empty livesString is returned.
+       @return the name of the layout selected.
+       @see reloadLayout().
+       @see availableLayouts().
+    */
     livesString chooseLayout() const;
 
+    /**
+       Return a list of the available layouts for the currently loaded set.
+       If livesApp::isReady() is false, or if no set is loaded, then an empty livesStringList is returned.
+       @return list of available layouts for the currently loaded set
+       @see reloadLayout().
+    */
+    livesStringList availableLayouts() const;
+
+    /**
+       Reload the selected layout, replacing the current multitrack layout.
+       Only works if livesApp::status() is LIVES_STATUS_READY and isActive() is true.
+       The layout must be "owned" by the currently loaded set, otherwise an error may be shown and it will not be loaded.
+       If filename is an empty livesString, chooseLayout() will be called first to get the layout name.
+       If livesApp::interactive() is true, the user will have a chance to save the current layout (if any) first.
+       @param the filename of the layout to load
+       @return true if the specified layout could be loaded
+       @see chooseLayout().
+       @see availableLayouts().
+       @see saveLayout().
+    */
     bool reloadLayout(livesString filename) const;
 
-    bool saveLayout(livesString name) const;
+    /**
+       Save the current layout using the name supplied. The layout will be saved in the layouts directory for the 
+       currently loaded set, so the name should not include any directory component.
+       Only works if the livesApp::status() is LIVES_STATUS_READY, and the current layout is not empty, 
+       otherwise an empty livesString is returned. Note that this WILL work even if isActive() is false.
+       If livesApp::interactive() is true, the user may choose to cancel the operation.
+       If the layout name is empty, the user will be prompted graphically to enter a name. If the set name is empty, the user will be 
+       prompted to enter a set name (if livesApp::interactive() is true; otherwise this will fail and an empty string will be returned).
+       Rarely it will not be possible to save a layout (if it was generated by recording events, and it contains generated audio or video).
+       @param the name to save the layout
+       @return the filename the set was saved to, or empty livesString if saving failed.
+       @see wipeLayout().
+       @see reloadLayout();
+       @see set::setName().
+    */
+    livesString saveLayout(livesString name) const;
+
+
+    /**
+       Save the current layout using the current layout name.
+       Only works if the livesApp::status() is LIVES_STATUS_READY, and the current layout is not empty, 
+       otherwise an empty livesString is returned. Note that this WILL work even if isActive() is false.
+       If livesApp::interactive() is true, the user may choose to cancel the operation.
+       If the layout name has not been previously set, the user will be prompted graphically to enter a name. 
+       If the set name is empty, the user will be 
+       prompted to enter a set name (if livesApp::interactive() is true; otherwise this will fail and an empty string will be returned).
+       Rarely it will not be possible to save a layout (if it was generated by recording events, and it contains generated audio or video).
+       @param the name to save the layout
+       @return the filename the set was saved to, or empty livesString if saving failed.
+       @see wipeLayout().
+       @see reloadLayout();
+       @see set::setName().
+    */
+    livesString saveLayout() const;
 
     clip render(bool render_audio=true) const;
 
     effect autoTransition() const;
 
-    bool setAutoTransition() const;
+    bool disableAutoTransition() const;
 
     bool setAutoTransition(effect autotrans) const;
 

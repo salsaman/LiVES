@@ -6906,6 +6906,8 @@ void switch_audio_clip(int new_file, boolean activate) {
       int alarm_handle=lives_alarm_set(LIVES_ACONNECT_TIMEOUT);
       if (!activate) mainw->jackd->in_use=FALSE;
 
+      if (mainw->jackd->playing_file==new_file) return;
+
       while (!(timeout=lives_alarm_get(alarm_handle))&&jack_get_msgq(mainw->jackd)!=NULL) {
 	sched_yield(); // wait for seek
       }
@@ -7000,7 +7002,12 @@ void switch_audio_clip(int new_file, boolean activate) {
 #ifdef HAVE_PULSE_AUDIO
     if (mainw->pulsed!=NULL) {
       boolean timeout;
-      int alarm_handle=lives_alarm_set(LIVES_ACONNECT_TIMEOUT);
+      int alarm_handle;
+
+      if (mainw->pulsed->playing_file==new_file) return;
+
+      alarm_handle=lives_alarm_set(LIVES_ACONNECT_TIMEOUT);
+
       while (!(timeout=lives_alarm_get(alarm_handle))&&pulse_get_msgq(mainw->pulsed)!=NULL) {
 	sched_yield(); // wait for seek
       }
@@ -7144,8 +7151,8 @@ void do_quick_switch (int new_file) {
   mainw->osc_block=TRUE;
  
   // switch audio clip
-  if ((prefs->audio_player==AUD_PLAYER_JACK||prefs->audio_player==AUD_PLAYER_PULSE)&&(prefs->audio_opts&AUDIO_OPTS_FOLLOW_CLIPS)&&!mainw->is_rendering&&
-      (mainw->preview||!(mainw->agen_key!=0||prefs->audio_src==AUDIO_SRC_EXT))) {
+  if ((prefs->audio_player==AUD_PLAYER_JACK||prefs->audio_player==AUD_PLAYER_PULSE)&&(prefs->audio_opts&AUDIO_OPTS_FOLLOW_CLIPS)
+      &&!mainw->is_rendering&&(mainw->preview||!(mainw->agen_key!=0||prefs->audio_src==AUDIO_SRC_EXT))) {
     switch_audio_clip(new_file,TRUE);
   }
 

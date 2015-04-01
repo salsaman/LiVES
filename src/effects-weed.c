@@ -7567,6 +7567,13 @@ boolean weed_generator_start (weed_plant_t *inst, int key) {
 
       if (new_file!=old_file) {
 	do_quick_switch (new_file);
+
+	// switch audio clip
+	if ((prefs->audio_player==AUD_PLAYER_JACK||prefs->audio_player==AUD_PLAYER_PULSE)&&(prefs->audio_opts&AUDIO_OPTS_FOLLOW_CLIPS)
+	    &&!mainw->is_rendering&&(mainw->preview||!(mainw->agen_key!=0||prefs->audio_src==AUDIO_SRC_EXT))) {
+	  switch_audio_clip(new_file,TRUE);
+	}
+
 	if (mainw->files[mainw->new_blend_file]!=NULL) mainw->blend_file=mainw->new_blend_file;
 	if (!is_bg&&blend_file!=-1&&mainw->files[blend_file]!=NULL) mainw->blend_file=blend_file;
 	mainw->new_blend_file=-1;
@@ -7578,7 +7585,13 @@ boolean weed_generator_start (weed_plant_t *inst, int key) {
       //if (old_file==-1) mainw->whentostop=STOP_ON_VID_END;
     }
     else {
-      if (mainw->current_file==-1) mainw->current_file=new_file;
+      if (mainw->current_file==-1) {
+	mainw->current_file=new_file;
+	if ((prefs->audio_player==AUD_PLAYER_JACK||prefs->audio_player==AUD_PLAYER_PULSE)&&(prefs->audio_opts&AUDIO_OPTS_FOLLOW_CLIPS)
+	    &&!mainw->is_rendering&&(mainw->preview||!(mainw->agen_key!=0||prefs->audio_src==AUDIO_SRC_EXT))) {
+	  switch_audio_clip(new_file,TRUE);
+	}
+      }
       else mainw->blend_file=new_file;
       if (mainw->ce_thumbs&&(mainw->active_sa_clips==SCREEN_AREA_BACKGROUND||mainw->active_sa_clips==SCREEN_AREA_FOREGROUND)) 
 	ce_thumbs_highlight_current_clip();

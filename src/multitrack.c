@@ -124,7 +124,6 @@ void multitrack_adj_start_end (LiVESMenuItem *, livespointer mt);
 boolean multitrack_audio_insert (LiVESMenuItem *, livespointer mt);
 void multitrack_view_events (LiVESMenuItem *, livespointer mt);
 void multitrack_view_sel_events (LiVESMenuItem *, livespointer mt);
-void on_render_activate (LiVESMenuItem *, livespointer mt);
 void on_prerender_aud_activate (LiVESMenuItem *, livespointer mt);
 void on_jumpnext_activate (LiVESMenuItem *, livespointer mt);
 void on_jumpback_activate (LiVESMenuItem *, livespointer mt);
@@ -2376,7 +2375,6 @@ void scroll_tracks (lives_mt *mt, int top_track, boolean set_value) {
       lives_signal_connect (LIVES_GUI_OBJECT (eventbox), LIVES_WIDGET_EXPOSE_EVENT,
 			LIVES_GUI_CALLBACK (expose_track_event),
 			(livespointer)mt);
-      lives_widget_set_app_paintable(eventbox,TRUE);
 
       lives_signal_connect (LIVES_GUI_OBJECT (eventbox), LIVES_WIDGET_BUTTON_PRESS_EVENT,
 			LIVES_GUI_CALLBACK (on_track_click),
@@ -2420,26 +2418,49 @@ void scroll_tracks (lives_mt *mt, int top_track, boolean set_value) {
 	  lives_widget_set_bg_color(LIVES_WIDGET(aeventbox), LIVES_WIDGET_STATE_NORMAL, &palette->white);
 	  
 	  if (palette->style&STYLE_1) {
-	    lives_widget_set_bg_color (labelbox, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
-	    lives_widget_set_fg_color (labelbox, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
+
+	    if (labelbox!=NULL) {
+	      lives_widget_set_bg_color (labelbox, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
+	      lives_widget_set_fg_color (labelbox, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
+	    }
+	    if (ahbox!=NULL) {
+	      lives_widget_set_bg_color (ahbox, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
+	      lives_widget_set_fg_color (ahbox, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
+	    }
+	    lives_widget_set_fg_color (label, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
+	    lives_widget_set_fg_color (arrow, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
+	    lives_widget_set_bg_color (label, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
+	    lives_widget_set_bg_color (arrow, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
 	    if (palette->style&STYLE_3) {
-	      lives_widget_set_bg_color (labelbox, LIVES_WIDGET_STATE_PRELIGHT, &palette->menu_and_bars);
-	      lives_widget_set_bg_color (ahbox, LIVES_WIDGET_STATE_PRELIGHT, &palette->menu_and_bars);
-	      lives_widget_set_fg_color (labelbox, LIVES_WIDGET_STATE_PRELIGHT, &palette->menu_and_bars_fore);
-	      lives_widget_set_fg_color (ahbox, LIVES_WIDGET_STATE_PRELIGHT, &palette->menu_and_bars_fore);
+	      if (labelbox!=NULL) {
+		lives_widget_set_bg_color (labelbox, LIVES_WIDGET_STATE_PRELIGHT, &palette->menu_and_bars);
+		lives_widget_set_fg_color (labelbox, LIVES_WIDGET_STATE_PRELIGHT, &palette->menu_and_bars_fore);
+	      }
+	      if (ahbox!=NULL) {
+		lives_widget_set_bg_color (ahbox, LIVES_WIDGET_STATE_PRELIGHT, &palette->menu_and_bars);
+		lives_widget_set_fg_color (ahbox, LIVES_WIDGET_STATE_PRELIGHT, &palette->menu_and_bars_fore);
+	      }
+	      lives_widget_set_bg_color (label, LIVES_WIDGET_STATE_PRELIGHT, &palette->menu_and_bars);
+	      lives_widget_set_bg_color (arrow, LIVES_WIDGET_STATE_PRELIGHT, &palette->menu_and_bars);
 	      lives_widget_set_fg_color (label, LIVES_WIDGET_STATE_PRELIGHT, &palette->menu_and_bars_fore);
 	      lives_widget_set_fg_color (arrow, LIVES_WIDGET_STATE_PRELIGHT, &palette->menu_and_bars_fore);
 	    }
 	    else {
-	      lives_widget_set_bg_color (labelbox, LIVES_WIDGET_STATE_PRELIGHT, &palette->normal_back);
-	      lives_widget_set_bg_color (ahbox, LIVES_WIDGET_STATE_PRELIGHT, &palette->normal_back);
-	      lives_widget_set_fg_color (labelbox, LIVES_WIDGET_STATE_PRELIGHT, &palette->normal_fore);
-	      lives_widget_set_fg_color (ahbox, LIVES_WIDGET_STATE_PRELIGHT, &palette->normal_fore);
+	      if (labelbox!=NULL) {
+		lives_widget_set_bg_color (labelbox, LIVES_WIDGET_STATE_PRELIGHT, &palette->normal_back);
+		lives_widget_set_fg_color (labelbox, LIVES_WIDGET_STATE_PRELIGHT, &palette->normal_fore);
+	      }
+	      if (ahbox!=NULL) {
+		lives_widget_set_bg_color (ahbox, LIVES_WIDGET_STATE_PRELIGHT, &palette->normal_back);
+		lives_widget_set_fg_color (ahbox, LIVES_WIDGET_STATE_PRELIGHT, &palette->normal_fore);
+	      }
 	      lives_widget_set_fg_color (label, LIVES_WIDGET_STATE_PRELIGHT, &palette->normal_fore);
 	      lives_widget_set_fg_color (arrow, LIVES_WIDGET_STATE_PRELIGHT, &palette->normal_fore);
+	      lives_widget_set_bg_color (label, LIVES_WIDGET_STATE_PRELIGHT, &palette->normal_back);
+	      lives_widget_set_bg_color (arrow, LIVES_WIDGET_STATE_PRELIGHT, &palette->normal_back);
 	    }
 	  }
-	  
+
 	  lives_container_add (LIVES_CONTAINER (labelbox), hbox);
 	  lives_box_pack_start (LIVES_BOX (hbox), label, FALSE, FALSE, 0);
 	  lives_container_add (LIVES_CONTAINER (ahbox), arrow);
@@ -5996,6 +6017,8 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
     mt->opts.ign_ins_sel=mainw->multi_opts.ign_ins_sel;
     mt->opts.follow_playback=mainw->multi_opts.follow_playback;
     mt->opts.autocross_audio=mainw->multi_opts.autocross_audio;
+    mt->opts.render_audp=mainw->multi_opts.render_audp;
+    mt->opts.normalise_audp=mainw->multi_opts.normalise_audp;
   }
   else {
     mt->opts.move_effects=TRUE;
@@ -6009,9 +6032,12 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
     mt->opts.grav_mode=GRAV_MODE_NORMAL;
     mt->opts.insert_mode=INSERT_MODE_NORMAL;
     mt->opts.autocross_audio=TRUE;
+    mt->opts.render_audp=TRUE;
+    mt->opts.normalise_audp=TRUE;
   }
 
   mt->opts.insert_audio=TRUE;
+  mt->opts.render_vidp=TRUE;
 
   mt->opts.pertrack_audio=prefs->mt_pertrack_audio;
   mt->opts.audio_bleedthru=FALSE;
@@ -6080,10 +6106,6 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
   mt->ignore_load_vals=FALSE;
 
   mt->exact_preview=0;
-
-  mt->render_vidp=TRUE;
-  mt->render_audp=prefs->render_audio;
-  mt->normalise_audp=prefs->normalise_audio;
 
   mt->context_time=-1.;
   mt->use_context=FALSE;
@@ -7443,7 +7465,7 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
   lives_container_add (LIVES_CONTAINER (menuitem_menu), mt->render_vid);
 
   mt->render_aud = lives_check_menu_item_new_with_mnemonic (_("Render _audio"));
-  lives_check_menu_item_set_active(LIVES_CHECK_MENU_ITEM(mt->render_aud), mt->render_audp);
+  lives_check_menu_item_set_active(LIVES_CHECK_MENU_ITEM(mt->render_aud), mt->opts.render_audp);
 
   lives_container_add (LIVES_CONTAINER (menuitem_menu), mt->render_aud);
 
@@ -7453,7 +7475,7 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
   lives_widget_set_sensitive (sep, FALSE);
 
   mt->normalise_aud = lives_check_menu_item_new_with_mnemonic (_("_Normalise rendered audio"));
-  lives_check_menu_item_set_active(LIVES_CHECK_MENU_ITEM(mt->normalise_aud), mt->normalise_audp);
+  lives_check_menu_item_set_active(LIVES_CHECK_MENU_ITEM(mt->normalise_aud), mt->opts.normalise_audp);
 
   lives_container_add (LIVES_CONTAINER (menuitem_menu), mt->normalise_aud);
 
@@ -9377,6 +9399,9 @@ boolean multitrack_delete (lives_mt *mt, boolean save_layout) {
   mainw->multi_opts.ign_ins_sel=mt->opts.ign_ins_sel;
   mainw->multi_opts.follow_playback=mt->opts.follow_playback;
   mainw->multi_opts.autocross_audio=mt->opts.autocross_audio;
+
+  mainw->multi_opts.render_audp=mt->opts.render_audp;
+  mainw->multi_opts.normalise_audp=mt->opts.normalise_audp;
 
   if (mt->poly_state==POLY_PARAMS) polymorph(mt,POLY_CLIPS);
 
@@ -14503,22 +14528,22 @@ void mt_fplay_toggled (LiVESMenuItem *menuitem, livespointer user_data) {
 
 void mt_render_vid_toggled (LiVESMenuItem *menuitem, livespointer user_data) {
   lives_mt *mt=(lives_mt *)user_data;
-  mt->render_vidp=!mt->render_vidp;
-  lives_widget_set_sensitive(mt->render_aud,mt->render_vidp);
+  mt->opts.render_vidp=!mt->opts.render_vidp;
+  lives_widget_set_sensitive(mt->render_aud,mt->opts.render_vidp);
 }
 
 
 void mt_render_aud_toggled (LiVESMenuItem *menuitem, livespointer user_data) {
   lives_mt *mt=(lives_mt *)user_data;
-  mt->render_audp=!mt->render_audp;
-  lives_widget_set_sensitive(mt->render_vid,mt->render_audp);
-  lives_widget_set_sensitive(mt->normalise_aud,mt->render_audp);
+  mt->opts.render_audp=!mt->opts.render_audp;
+  lives_widget_set_sensitive(mt->render_vid,mt->opts.render_audp);
+  lives_widget_set_sensitive(mt->normalise_aud,mt->opts.render_audp);
 }
 
 
 void mt_norm_aud_toggled (LiVESMenuItem *menuitem, livespointer user_data) {
   lives_mt *mt=(lives_mt *)user_data;
-  mt->normalise_audp=!mt->normalise_audp;
+  mt->opts.normalise_audp=!mt->opts.normalise_audp;
 }
 
 
@@ -16118,7 +16143,7 @@ void on_cback_audio_activate (LiVESMenuItem *menuitem, livespointer user_data) {
 
 
 
-void on_render_activate (LiVESMenuItem *menuitem, livespointer user_data) {
+boolean on_render_activate (LiVESMenuItem *menuitem, livespointer user_data) {
   lives_mt *mt=(lives_mt *)user_data;
 
   char *com;
@@ -16126,6 +16151,8 @@ void on_render_activate (LiVESMenuItem *menuitem, livespointer user_data) {
   boolean had_audio=FALSE;
   boolean post_reset_ba=FALSE;
   boolean post_reset_ca=FALSE;
+
+  boolean retval=FALSE;
 
   // save these values, because reget_afilesize() can reset them
   int arate=cfile->arate;
@@ -16137,13 +16164,13 @@ void on_render_activate (LiVESMenuItem *menuitem, livespointer user_data) {
   int orig_file;
   register int i;
 
-
   if (mt->idlefunc>0) {
     lives_source_remove(mt->idlefunc);
     mt->idlefunc=0;
   }
 
   if (menuitem==NULL) {
+    // pre-render audio (not used currently)
     mt->pr_audio=TRUE;
     had_audio=mt->has_audio_file;
     if (had_audio) {
@@ -16154,14 +16181,12 @@ void on_render_activate (LiVESMenuItem *menuitem, livespointer user_data) {
       lives_system(com,FALSE);
       lives_free(com);
       check_backend_return(cfile);
-      if (mainw->error) return;
+      if (mainw->error) return FALSE;
     }
     mt->has_audio_file=TRUE;
   }
   else {
     mt->pr_audio=FALSE;
-    prefs->render_audio=!mt->render_audp; // mt->render_audp sense is reversed
-    prefs->normalise_audio=mt->normalise_audp; // mt->normalised_audp sense is reversed
   }
 
   mt_desensitise(mt);
@@ -16177,7 +16202,7 @@ void on_render_activate (LiVESMenuItem *menuitem, livespointer user_data) {
 
   mt->pb_start_event=get_first_event(mainw->event_list);
 
-  if (prefs->normalise_audio) {
+  if (mt->opts.normalise_audp) {
     // Normalise audio (preference)
 
     // TODO - in future we could also check the pb volume levels and adjust to prevent clipping
@@ -16277,7 +16302,7 @@ void on_render_activate (LiVESMenuItem *menuitem, livespointer user_data) {
       lives_widget_set_sensitive(mt->render_aud,TRUE);
       lives_widget_set_sensitive(mt->normalise_aud,TRUE);
       mt->idlefunc=mt_idle_add(mt);
-      return;
+      return FALSE;
     }
 #endif
 
@@ -16293,8 +16318,7 @@ void on_render_activate (LiVESMenuItem *menuitem, livespointer user_data) {
     d_print (_ ("rendered %d frames to new clip.\n"),cfile->frames);
     if (mainw->scrap_file!=-1||mainw->ascrap_file!=-1) mt->changed=FALSE;
     mt->is_rendering=FALSE;
-    prefs->render_audio=TRUE;
-    prefs->normalise_audio=TRUE;
+
     save_clip_values(orig_file);
 
     if (prefs->crash_recovery) add_to_recovery_file(cfile->handle);
@@ -16328,7 +16352,7 @@ void on_render_activate (LiVESMenuItem *menuitem, livespointer user_data) {
       mainw->current_file=orig_file;
       if (!multitrack_end(NULL,user_data)) switch_to_file ((mainw->current_file=0),orig_file);
       mt->idlefunc=mt_idle_add(mt);
-      return;
+      return FALSE;
     }
 
     cfile->hsize=mainw->files[orig_file]->hsize;
@@ -16353,7 +16377,7 @@ void on_render_activate (LiVESMenuItem *menuitem, livespointer user_data) {
     mt->render_file=mainw->current_file;
 
     if (prefs->mt_exit_render) {
-      if (multitrack_end(menuitem,user_data)) return;
+      if (multitrack_end(menuitem,user_data)) return TRUE;
     }
 
     mt_init_clips(mt,orig_file,TRUE);
@@ -16361,15 +16385,16 @@ void on_render_activate (LiVESMenuItem *menuitem, livespointer user_data) {
     mt->idlefunc=0;
     lives_widget_context_update();
     mt_clip_select(mt,TRUE);
+
+    retval=TRUE;
   }
   else {
-    boolean render_audio=prefs->render_audio;
     char *curtmpdir;
     // rendering failed - clean up
 
     cfile->frames=cfile->start=cfile->end=0;
     mt->is_rendering=FALSE;
-    prefs->render_audio=TRUE;
+
     mainw->event_list=NULL;
     if (mt->pr_audio) {
       com=lives_strdup_printf("%s undo_audio \"%s\"",prefs->backend_sync,cfile->handle);
@@ -16394,7 +16419,6 @@ void on_render_activate (LiVESMenuItem *menuitem, livespointer user_data) {
       end_threaded_dialog();
     }
 
-    prefs->render_audio=render_audio;
   }
 
   // enable GUI for next rendering
@@ -16405,6 +16429,7 @@ void on_render_activate (LiVESMenuItem *menuitem, livespointer user_data) {
 
   mt->idlefunc=mt_idle_add(mt);
 
+  return retval;
 }
 
 

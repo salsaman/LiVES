@@ -178,6 +178,10 @@ typedef gint (*LiVESCompareFunc) (gconstpointer a, gconstpointer b);
 #define lives_strstr_len(a,b,c) g_strstr_len(a,b,c)
 #define lives_strdelimit(a,b,c) g_strdelimit(a,b,c)
 
+#define LIVES_NORMALIZE_DEFAULT G_NORMALIZE_DEFAULT
+
+#define lives_utf8_normalize(a,b,c) g_utf8_normalize(a,b,c)
+
 
 #define lives_list_nth_data(list,i) g_list_nth_data(list,i)
 #define lives_list_nth(list,i) g_list_nth(list,i)

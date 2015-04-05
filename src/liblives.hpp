@@ -1459,27 +1459,44 @@ namespace lives {
   */
   class effect {
     friend effectKey;
+    friend multitrack;
   public:
-    effect(livesApp& lives, livesString hashname); // TODO
+    /**
+       Create a new effect from a hashname. In case of multiple matches, only the first match is returned. 
+       The hashname should be in utf-8 format, and matching is case insensitive.
+       In the case of no matches, an invalid effect is returned.
+       If livesApp::isInvalid() is true, or livesApp::status() is LIVES_STATUS_NOTREADY, an invalid effect will be returned.
+       @param lives a livesApp instance
+       @param hashname the hashname of an effect, a concatenation of package name, filter name, and if match_full is true, 
+       author and version string. If the filter has "extra_authors" these are also checked.
+       @param match_full if true then author and version string must match, otherwise only package name and filter name are matched.
+       If false then the hashname and the target must be equivalent strings.
+       @return an effect.
+    */
+    effect(livesApp lives, livesString hashname, bool match_full=false);
 
     /**
        Create a new effect from a template. In case of multiple matches, only the first match is returned. 
        In the case of no matches, an invalid effect is returned.
+       LiVESStrings here should be in utf-8 format and matching is case insensitive.
+       If livesApp::isInvalid() is true, or livesApp::status() is LIVES_STATUS_NOTREADY, an invalid effect will be returned.
        @param lives a livesApp instance
        @param package a package name (e.g. "frei0r", "LADSPA"), or "" to match any package.
-       @param fxname the name of an effect (e.g. "chroma blend") or "" to match any effect name.
-       @param author the name of the principle author of the effect (e.g. "jsmith") or "" to match any author.
+       @param fxname the name of a filter (e.g. "chroma blend") or "" to match any filter name.
+       @param author the name of the author of the effect (e.g. "jsmith") or "" to match any author. If the plugin has "extra_authors" 
+       this value is also permitted as a match.
        @param version the number of a version to match, or 0 to match any version.
        @return an effect.
     */
-    effect(livesApp& lives, const char *package, const char *fxname, const char *author="", int version=0);
+    effect(livesApp lives, livesString package, livesString fxname, livesString author=livesString(), int version=0);
 
     /**
        Returns whether the effect is valid or not.
-       A valid effect is owned by a valid livesApp, whose livesApp::status() is not LIVES_STATUS_NOTREADY, and which references an existing effect plugin.
+       A valid effect is owned by a valid livesApp, whose livesApp::status() is not LIVES_STATUS_NOTREADY, 
+       and which references an existing effect plugin.
        @return true if the effect is valid.
     */
-    bool isValid();      
+    bool isValid();
 
     /**
        @return true if the two effects have the same index and the same livesApp owner
@@ -1490,7 +1507,8 @@ namespace lives {
 
 
   protected:
-    effect(livesApp *lives=NULL, int idx=-1);
+    effect();
+    effect(livesApp *m_lives, int idx);
     livesApp *m_lives;
     int m_idx;
 
@@ -1819,7 +1837,6 @@ namespace lives {
     */
     livesString saveLayout(livesString name) const;
 
-
     /**
        Save the current layout using the current layout name.
        Only works if the livesApp::status() is LIVES_STATUS_READY, and the current layout is not empty, 
@@ -1837,8 +1854,23 @@ namespace lives {
     */
     livesString saveLayout() const;
 
-    clip render(bool render_audio=true) const;
+    /**
+       Render the current layout to a new clip and return it.
+       Only works if isActive() is true, and livesApp::status() is LIVES_STATUS_READY, and the current layout is not empty.
+       If livesApp::interactive() is true, the user may choose to cancel the operation, or to render fewer than all frames.
+       After rendering, if prefs::mtExitRender() is true, the livesApp::mode() will change to LIVES_INTERFACE_MODE_CLIPEDIT, 
+       and isActive() will change to false. 
+       @param render_audio true if audio should be rendered in addition to video.
+       @param normalise_audio if true then the audio volume is normalized (backing audio gets half volume, video tracks get half volume)
+       @return clip a new clip which contains the rendered video, or an invalid clip in case of failure.
+    */
+    clip render(bool render_audio=true, bool normalise_audio=true) const;
 
+    /**
+       Returns the current autotransition effect for multitrack mode.
+       If no effect is set, returns an invalid effect.
+       @return the autotransition effect for multitrack.
+    */
     effect autoTransition() const;
 
     bool disableAutoTransition() const;
@@ -1911,6 +1943,10 @@ namespace lives {
     bool sepWinSticky(livesApp lives);
 
     bool setSepWinSticky(livesApp lives, bool setting);
+
+    bool mtExitRender(livesApp lives);
+
+    bool setMtExitRender(livesApp lives, bool setting);
 
 
   }

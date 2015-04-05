@@ -3450,7 +3450,7 @@ lives_render_error_t render_events (boolean reset) {
       if (flush_audio_tc==0) {
 	tc=get_event_timecode (event);
 
-	if ((mainw->multitrack==NULL||(mainw->multitrack->render_vidp&&!mainw->multitrack->pr_audio))&&
+	if ((mainw->multitrack==NULL||(mainw->multitrack->opts.render_vidp&&!mainw->multitrack->pr_audio))&&
 	    !(!mainw->clip_switched&&cfile->hsize*cfile->vsize==0)) {
 	  int scrap_track=-1;
 	  
@@ -3629,7 +3629,7 @@ lives_render_error_t render_events (boolean reset) {
       }
 
       while (cfile->fps>0.) {
-	if ((mainw->multitrack==NULL&&prefs->render_audio)||(mainw->multitrack!=NULL&&mainw->multitrack->render_audp)) {
+	if ((mainw->multitrack==NULL&&prefs->render_audio)||(mainw->multitrack!=NULL&&mainw->multitrack->opts.render_audp)) {
 	  if (firstframe) {
 	    // see if audio needs appending
 	    if (WEED_EVENT_IS_AUDIO_FRAME(event)) {
@@ -4184,6 +4184,7 @@ boolean render_to_clip (boolean new_clip) {
       xachans=(int)atoi (lives_entry_get_text(LIVES_ENTRY(resaudw->entry_achans)));
       xasamps=(int)atoi (lives_entry_get_text(LIVES_ENTRY(resaudw->entry_asamps)));
 
+      // do we render audio ?
       rendaud=lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(resaudw->aud_checkbutton));
 
       if (lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(resaudw->rb_unsigned))) {
@@ -4289,6 +4290,7 @@ boolean render_to_clip (boolean new_clip) {
   cfile->old_frames=cfile->frames;
   cfile->changed=TRUE;
   mainw->effects_paused=FALSE;
+
   prefs->render_audio=rendaud;
 
   init_track_decoders();

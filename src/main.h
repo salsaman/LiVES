@@ -1124,6 +1124,8 @@ boolean lives_setenv(const char *name, const char *value);
 boolean lives_fsync(int fd);
 void lives_sync(void);
 
+int lives_utf8_strcasecmp(const char *s1, const char *s2);
+
 char *filename_from_fd(char *val, int fd);
 
 float LEFloat_to_BEFloat(float f);

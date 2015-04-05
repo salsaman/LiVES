@@ -763,6 +763,34 @@ static boolean call_choose_layout(livespointer data) {
 
 
 
+static boolean call_render_layout(livespointer data) {
+  iblock *bdata=(iblock *)data;
+  ulong uid=0l;
+  boolean ret;
+
+  if (mainw!=NULL&&!mainw->go_away&&!mainw->is_processing&&mainw->multitrack!=NULL) {
+    ulong new_uid=mainw->files[mainw->multitrack->render_file]->unique_id;
+    boolean ra=mainw->multitrack->opts.render_audp;
+    boolean rn=mainw->multitrack->opts.normalise_audp;
+
+    mainw->multitrack->opts.render_audp=bdata->with_audio;
+    mainw->multitrack->opts.normalise_audp=bdata->ign_sel;
+
+    ret=on_render_activate(LIVES_MENU_ITEM(1),mainw->multitrack);
+    if (ret) uid=new_uid;
+
+    mainw->multitrack->opts.render_audp=ra;
+    mainw->multitrack->opts.normalise_audp=rn;
+
+  }
+  ext_caller_return_ulong(bdata->id,uid);
+  lives_free(data);
+  return FALSE;
+}
+
+
+
+
 static boolean call_reload_layout(livespointer data) {
   msginfo *mdata = (msginfo *)data;
   boolean resp=FALSE;
@@ -810,6 +838,8 @@ static boolean call_save_layout(livespointer data) {
   lives_free(mdata);
   return resp;
 }
+
+
 
 
 static boolean call_set_current_fps(livespointer data) {
@@ -1540,7 +1570,7 @@ boolean idle_choose_layout(ulong id) {
 
 
 boolean idle_reload_layout(const char *lname, ulong id) {
-  msginfo*data;
+  msginfo *data;
 
   if (mainw==NULL||mainw->preview||mainw->go_away||mainw->is_processing||mainw->playing_file>-1) return FALSE;
   if (mainw->multitrack==NULL) return FALSE;
@@ -1555,7 +1585,7 @@ boolean idle_reload_layout(const char *lname, ulong id) {
 
 
 boolean idle_save_layout(const char *lname, ulong id) {
-  msginfo*data;
+  msginfo *data;
 
   if (mainw==NULL||mainw->preview||mainw->go_away||mainw->is_processing||mainw->playing_file>-1) return FALSE;
   if (mainw->multitrack==NULL) return FALSE;
@@ -1567,6 +1597,23 @@ boolean idle_save_layout(const char *lname, ulong id) {
   lives_idle_add(call_save_layout,(livespointer)data);
   return TRUE;
 }
+
+
+
+boolean idle_render_layout(boolean with_aud, boolean normalise_aud, ulong id) {
+  iblock *data;
+
+  if (mainw==NULL||mainw->preview||mainw->go_away||mainw->is_processing||mainw->playing_file>-1) return FALSE;
+  if (mainw->multitrack==NULL) return FALSE;
+
+  data=(iblock *)lives_malloc(sizeof(iblock));
+  data->with_audio=with_aud;
+  data->ign_sel=normalise_aud;
+  data->id=id;
+  lives_idle_add(call_render_layout,(livespointer)data);
+  return TRUE;
+}
+
 
 
 boolean idle_select_all(int cnum, ulong id) {

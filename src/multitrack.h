@@ -172,6 +172,9 @@ struct _mt_opts {
   boolean gang_audio; ///< gang layer audio volume levels
   boolean autocross_audio; ///< crossfade audio with autotransitions
   int back_audio_tracks; ///< number of backing audio tracks (currently 0 or 1)
+  boolean render_vidp; ///< render video
+  boolean render_audp; ///< render audio
+  boolean normalise_audp; ///< normalise audio
 };
 
 
@@ -539,10 +542,6 @@ struct _mt {
   int user_asamps;
   int user_signed_endian;
 
-  boolean render_vidp;
-  boolean render_audp;
-  boolean normalise_audp;
-
   int exact_preview;
 
 
@@ -711,6 +710,9 @@ track_rect *move_block (lives_mt *, track_rect *block, double timesecs, int old_
 
 void update_grav_mode (lives_mt *);
 void update_insert_mode (lives_mt *);
+
+
+boolean on_render_activate (LiVESMenuItem *, livespointer mt);
 
 
 // event_list functions

@@ -46,6 +46,7 @@ boolean idle_wipe_layout(boolean force, ulong id);
 boolean idle_choose_layout(ulong id);
 boolean idle_save_layout(const char *lname, ulong id);
 boolean idle_reload_layout(const char *lname, ulong id);
+boolean idle_render_layout(boolean with_aud, boolean normalise_aud, ulong id);
 boolean idle_select_all(int cnum, ulong id);
 boolean idle_select_start(int cnum, int frame, ulong id);
 boolean idle_select_end(int cnum, int frame, ulong id);

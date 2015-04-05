@@ -3920,7 +3920,7 @@ boolean check_file(const char *file_name, boolean check_existing) {
   boolean exists=FALSE;
   char *msg;
   // file_name should be in utf8
-  char *lfile_name=lives_filename_from_utf8(file_name,-1,NULL,NULL,NULL);
+  char *lfile_name=U82F(file_name);
 
   // check if file exists
   if (lives_file_test (lfile_name, LIVES_FILE_TEST_EXISTS)) {
@@ -4067,6 +4067,7 @@ uint64_t get_file_size(int fd) {
   return (uint64_t)(filestat.st_size);
 }
 
+
 uint64_t sget_file_size(const char *name) {
   // get the size of file fd
   struct stat filestat;
@@ -4114,11 +4115,7 @@ void reget_afilesize (int fileno) {
 
 
 
-
-
-
-boolean
-create_event_space(int length) {
+boolean create_event_space(int length) {
   // try to create desired events
   // if we run out of memory, all events requested are freed, and we return FALSE
   // otherwise we return TRUE
@@ -4155,11 +4152,7 @@ int lives_list_strcmp_index (LiVESList *list, livesconstpointer data) {
 
 
 
-
-
-
-void 
-add_to_recent(const char *filename, double start, int frames, const char *extra_params) {
+void add_to_recent(const char *filename, double start, int frames, const char *extra_params) {
   char buff[PATH_MAX];
   char *file,*tmp;
 
@@ -4182,24 +4175,24 @@ add_to_recent(const char *filename, double start, int frames, const char *extra_
 	get_menu_text(mainw->recent3,buff);
 	set_menu_text(mainw->recent4,buff,FALSE);
 	if (mainw->multitrack!=NULL) set_menu_text(mainw->multitrack->recent4,buff,FALSE);
-	set_pref("recent4",(tmp=lives_filename_from_utf8(buff,-1,NULL,NULL,NULL)));
+	set_pref("recent4",(tmp=U82F(buff)));
 	lives_free(tmp);
 
 	get_menu_text(mainw->recent2,buff);
 	set_menu_text(mainw->recent3,buff,FALSE);
 	if (mainw->multitrack!=NULL) set_menu_text(mainw->multitrack->recent3,buff,FALSE);
-	set_pref("recent3",(tmp=lives_filename_from_utf8(buff,-1,NULL,NULL,NULL)));
+	set_pref("recent3",(tmp=U82F(buff)));
 	lives_free(tmp);
 
 	get_menu_text(mainw->recent1,buff);
 	set_menu_text(mainw->recent2,buff,FALSE);
 	if (mainw->multitrack!=NULL) set_menu_text(mainw->multitrack->recent2,buff,FALSE);
-	set_pref("recent2",(tmp=lives_filename_from_utf8(buff,-1,NULL,NULL,NULL)));
+	set_pref("recent2",(tmp=U82F(buff)));
 	lives_free(tmp);
 	
 	set_menu_text(mainw->recent1,file,FALSE);
 	if (mainw->multitrack!=NULL) set_menu_text(mainw->multitrack->recent1,file,FALSE);
-	set_pref("recent1",(tmp=lives_filename_from_utf8(file,-1,NULL,NULL,NULL)));
+	set_pref("recent1",(tmp=U82F(file)));
 	lives_free(tmp);
       }
       else {
@@ -4207,18 +4200,18 @@ add_to_recent(const char *filename, double start, int frames, const char *extra_
 	get_menu_text(mainw->recent2,buff);
 	set_menu_text(mainw->recent3,buff,FALSE);
 	if (mainw->multitrack!=NULL) set_menu_text(mainw->multitrack->recent3,buff,FALSE);
-	set_pref("recent3",(tmp=lives_filename_from_utf8(buff,-1,NULL,NULL,NULL)));
+	set_pref("recent3",(tmp=U82F(buff)));
 	lives_free(tmp);
 	
 	get_menu_text(mainw->recent1,buff);
 	set_menu_text(mainw->recent2,buff,FALSE);
 	if (mainw->multitrack!=NULL) set_menu_text(mainw->multitrack->recent2,buff,FALSE);
-	set_pref("recent2",(tmp=lives_filename_from_utf8(buff,-1,NULL,NULL,NULL)));
+	set_pref("recent2",(tmp=U82F(buff)));
 	lives_free(tmp);
 
 	set_menu_text(mainw->recent1,file,FALSE);
 	if (mainw->multitrack!=NULL) set_menu_text(mainw->multitrack->recent1,file,FALSE);
-	set_pref("recent1",(tmp=lives_filename_from_utf8(file,-1,NULL,NULL,NULL)));
+	set_pref("recent1",(tmp=U82F(file)));
 	lives_free(tmp);
       }
     }
@@ -4227,12 +4220,12 @@ add_to_recent(const char *filename, double start, int frames, const char *extra_
       get_menu_text(mainw->recent1,buff);
       set_menu_text(mainw->recent2,buff,FALSE);
       if (mainw->multitrack!=NULL) set_menu_text(mainw->multitrack->recent2,buff,FALSE);
-      set_pref("recent2",(tmp=lives_filename_from_utf8(buff,-1,NULL,NULL,NULL)));
+      set_pref("recent2",(tmp=U82F(buff)));
       lives_free(tmp);
 	
       set_menu_text(mainw->recent1,file,FALSE);
       if (mainw->multitrack!=NULL) set_menu_text(mainw->multitrack->recent1,file,FALSE);
-      set_pref("recent1",(tmp=lives_filename_from_utf8(file,-1,NULL,NULL,NULL)));
+      set_pref("recent1",(tmp=U82F(file)));
       lives_free(tmp);
     }
   }
@@ -4263,8 +4256,7 @@ add_to_recent(const char *filename, double start, int frames, const char *extra_
 
 
 
-int 
-verhash (char *version) {
+int verhash (char *version) {
   char *s;
   int major=0;
   int minor=0;
@@ -4378,7 +4370,9 @@ set_sel_label (LiVESWidget *sel_label) {
     frstr=lives_strdup_printf ("%d",cfile->end-cfile->start+1);
 
     // TRANSLATORS: - try to keep the text of the middle part the same length, by deleting "-" if necessary
-    lives_label_set_text(LIVES_LABEL(sel_label),(tmp=lives_strconcat ("---------- [ ",tstr,(sy=(lives_strdup(_(" sec ] ----------Selection---------- [ ")))),frstr,(sz=lives_strdup(_(" frames ] ----------"))),NULL)));
+    lives_label_set_text(LIVES_LABEL(sel_label),
+			 (tmp=lives_strconcat ("---------- [ ",tstr,(sy=(lives_strdup(_(" sec ] ----------Selection---------- [ ")))),
+					       frstr,(sz=lives_strdup(_(" frames ] ----------"))),NULL)));
     lives_free(sy);
     lives_free(sz);
 
@@ -4738,7 +4732,7 @@ boolean get_clip_value(int which, lives_clip_details_t what, void *retval, size_
     break;
   case CLIP_DETAILS_FILENAME:
   case CLIP_DETAILS_DECODER_NAME:
-    lives_snprintf((char *)retval,maxlen,"%s",(tmp=lives_filename_to_utf8(val,-1,NULL,NULL,NULL)));
+    lives_snprintf((char *)retval,maxlen,"%s",(tmp=F2U8(val)));
     lives_free(tmp);
     break;
   }
@@ -4837,10 +4831,10 @@ void save_clip_value(int which, lives_clip_details_t what, void *val) {
     myval=lives_strdup((char *)val);
     break;
   case CLIP_DETAILS_FILENAME:
-    myval=lives_filename_from_utf8((const char *)val,-1,NULL,NULL,NULL);
+    myval=U82F((const char *)val);
     break;
   case CLIP_DETAILS_DECODER_NAME:
-    myval=lives_filename_from_utf8((const char *)val,-1,NULL,NULL,NULL);
+    myval=U82F((const char *)val);
     break;
   case CLIP_DETAILS_HEADER_VERSION:
     myval=lives_strdup_printf("%d",*(int *)val);
@@ -5032,6 +5026,16 @@ int get_token_count (const char *string, int delim) {
   return pieces;
 }
 
+
+
+int lives_utf8_strcasecmp(const char *s1, const char *s2) {
+  char *s1u=lives_utf8_normalize(s1,strlen(s1),LIVES_NORMALIZE_DEFAULT);
+  char *s2u=lives_utf8_normalize(s1,strlen(s1),LIVES_NORMALIZE_DEFAULT);
+  int ret=strcmp(s1,s2);
+  lives_free(s1u);
+  lives_free(s2u);
+  return ret;
+}
 
 
 char *subst (const char *string, const char *from, const char *to) {

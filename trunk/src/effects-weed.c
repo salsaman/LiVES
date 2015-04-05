@@ -4667,7 +4667,7 @@ static void load_weed_plugin (char *plugin_name, char *plugin_path, char *dir) {
 
 	  for (i=0;i<idx;i++) {
 	    if (i>oidx) {
-	      if (!strcmp(phashnames[phashes-1],phashnames[i-oidx-1])) {
+	      if (!lives_utf8_strcasecmp(phashnames[phashes-1],phashnames[i-oidx-1])) {
 		//g_print("partial dupe: %s and %s\n",phashnames[phashes-1],phashnames[i-oidx-1]);
 		// found a partial match: author and/or version differ
 		// if in the same plugin, we will use the highest version no., others become dupes
@@ -4697,7 +4697,7 @@ static void load_weed_plugin (char *plugin_name, char *plugin_path, char *dir) {
 		break;
 	      }
 	    }
-	    if (!strcmp(hashnames[idx],hashnames[i])) {
+	    if (!lives_utf8_strcasecmp(hashnames[idx],hashnames[i])) {
 	      // skip dups
 	      char *msg=lives_strdup_printf(_("Found duplicate plugin %s"),hashnames[idx]);
 	      LIVES_INFO(msg);
@@ -9908,9 +9908,12 @@ char *make_weed_hashname(int filter_idx, boolean fullname, boolean use_extra_aut
   // (for reverse compatibility)
 
   weed_plant_t *filter,*plugin_info;
-  char *plugin_name,*filter_name,*filter_author,*filter_version,*hashname;
-  int error,version;
+
   char plugin_fname[PATH_MAX];
+
+  char *plugin_name,*filter_name,*filter_author,*filter_version,*hashname,*filename;
+
+  int error,version;
 
   if (filter_idx<0||filter_idx>=num_weed_filters) return lives_strdup("");
 
@@ -9931,7 +9934,11 @@ char *make_weed_hashname(int filter_idx, boolean fullname, boolean use_extra_aut
 
   filter_name=weed_get_string_value(filter,"name",&error);
 
+  // should we really use utf-8 here ? (needs checking)
+  filename=F2U8(plugin_fname);
+
   if (fullname) {
+
     if (!use_extra_authors||!weed_plant_has_leaf(filter,"extra_authors"))
       filter_author=weed_get_string_value(filter,"author",&error);
     else 
@@ -9940,12 +9947,13 @@ char *make_weed_hashname(int filter_idx, boolean fullname, boolean use_extra_aut
     version=weed_get_int_value(filter,"version",&error);
     filter_version=lives_strdup_printf("%d",version);
 
-    hashname=lives_strconcat(plugin_fname,filter_name,filter_author,filter_version,NULL);
+    hashname=lives_strconcat(filename,filter_name,filter_author,filter_version,NULL);
     lives_free(filter_author);
     lives_free(filter_version);
   }
-  else hashname=lives_strconcat(plugin_fname,filter_name,NULL);
+  else hashname=lives_strconcat(filename,filter_name,NULL);
   lives_free(filter_name);
+  lives_free(filename);
 
   //g_print("added filter %s\n",hashname);
 
@@ -9960,17 +9968,19 @@ int weed_get_idx_for_hashname (const char *hashname, boolean fullname) {
 
   for (i=0;i<num_weed_filters;i++) {
     chashname=make_weed_hashname(i,fullname,FALSE);
-    if (!strcmp(hashname,chashname)) {
+    if (!lives_utf8_strcasecmp(hashname,chashname)) {
       lives_free(chashname);
       return i;
     }
     lives_free(chashname);
-    chashname=make_weed_hashname(i,fullname,TRUE);
-    if (!strcmp(hashname,chashname)) {
+    if (fullname) {
+      chashname=make_weed_hashname(i,fullname,TRUE);
+      if (!lives_utf8_strcasecmp(hashname,chashname)) {
+	lives_free(chashname);
+	return i;
+      }
       lives_free(chashname);
-      return i;
     }
-    lives_free(chashname);
   }
   return -1;
 }
@@ -9981,34 +9991,69 @@ static boolean check_match(weed_plant_t *filter, const char *pkg, const char *fx
   // perform template matching for a function, see weed_get_indices_from_template()
 
   weed_plant_t *plugin_info;
+
   char plugin_fname[PATH_MAX];
   char *plugin_name,*filter_name,*filter_author;
+
   int filter_version;
   int error;
 
-  if (weed_plant_has_leaf(filter,"plugin_info")) {
-    plugin_info=weed_get_plantptr_value(filter,"plugin_info",&error);
-    plugin_name=weed_get_string_value(plugin_info,"name",&error);
+  if (pkg != NULL && strlen(pkg)) {
+    char *filename;
+
+    if (weed_plant_has_leaf(filter,"plugin_info")) {
+      plugin_info=weed_get_plantptr_value(filter,"plugin_info",&error);
+      plugin_name=weed_get_string_value(plugin_info,"name",&error);
     
-    lives_snprintf(plugin_fname,PATH_MAX,"%s",plugin_name);
-    lives_free(plugin_name);
-    get_filename(plugin_fname,TRUE);
+      lives_snprintf(plugin_fname,PATH_MAX,"%s",plugin_name);
+      lives_free(plugin_name);
+      get_filename(plugin_fname,TRUE);
+    }
+    else memset(plugin_fname,0,1);
+
+    filename=F2U8(plugin_fname);
+
+    if (lives_utf8_strcasecmp(pkg,filename)) {
+      lives_free(filename);
+      return FALSE;
+    }
+    lives_free(filename);
   }
-  else memset(plugin_fname,0,1);
 
-  if (pkg != NULL && strlen(pkg)) if (lives_ascii_strcasecmp(pkg,plugin_fname)) return FALSE;
 
-  filter_name=weed_get_string_value(filter,"name",&error);
+  if (fxname != NULL && strlen(fxname)) {
+    filter_name=weed_get_string_value(filter,"name",&error);
+    if (lives_utf8_strcasecmp(fxname,filter_name)) {
+      lives_free(filter_name);
+      return FALSE;
+    }
+    lives_free(filter_name);
+  }
 
-  if (fxname != NULL && strlen(fxname)) if (lives_ascii_strcasecmp(fxname,filter_name)) return FALSE;
+  if (auth != NULL && strlen(auth)) {
+    filter_author=weed_get_string_value(filter,"author",&error);
+      if (lives_utf8_strcasecmp(auth,filter_author)) {
+	if (weed_plant_has_leaf(filter,"extra_authors")) {
+	  lives_free(filter_author);
+	  filter_author=weed_get_string_value(filter,"extra_authors",&error);
+	  if (lives_utf8_strcasecmp(auth,filter_author)) {
+	    lives_free(filter_author);
+	    return FALSE;
+	  }
+	}
+	else {
+	  lives_free(filter_author);
+	  return FALSE;
+	}
+      }
+      lives_free(filter_author);
+  }
 
-  filter_author=weed_get_string_value(filter,"author",&error);
-
-  if (auth != NULL && strlen(auth)) if (lives_ascii_strcasecmp(auth,filter_author)) return FALSE;
-  lives_free(filter_author);
  
-  filter_version=weed_get_int_value(filter,"version",&error);
-  if (version>0 && version!=filter_version) return FALSE;
+  if (version>0) {
+    filter_version=weed_get_int_value(filter,"version",&error);
+    if (version!=filter_version) return FALSE;
+  }
 
   return TRUE;
 }

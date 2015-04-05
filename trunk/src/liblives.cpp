@@ -1528,28 +1528,42 @@ namespace lives {
 
 
   effect effectKey::at(int mode) {
+    effect e;
+    if (!isValid()) return e;
     int idx = rte_keymode_get_filter_idx(m_key, mode);
-    if (idx == -1) return effect();
-    return effect(m_lives, idx);
+    if (idx == -1) return e;
+    e = effect(m_lives, idx);
+    return e;
   }
 
 
   ////////////////////////////////////////////////////////
 
-  effect::effect(livesApp& lives, livesString hashname) {
-    // TODO
+  effect::effect(livesApp lives, livesString hashname, bool match_full) {
+    m_idx = -1;
     m_lives = &lives;
+    if (m_lives != NULL && m_lives->isValid() && m_lives->status() != LIVES_STATUS_NOTREADY) {
+      m_idx = weed_get_idx_for_hashname(hashname.toEncoding(LIVES_CHAR_ENCODING_UTF8).c_str(), match_full);
+    }
   }
 
-  effect::effect(livesApp& lives, const char *package, const char *fxname, const char *author, int version) {
-    m_idx = get_first_fx_matched(package, fxname, author, version);
+  effect::effect(livesApp lives, livesString package, livesString fxname, livesString author, int version) {
+    m_idx = -1;
     m_lives = &lives;
+    if (m_lives != NULL && m_lives->isValid() && m_lives->status() != LIVES_STATUS_NOTREADY) {
+      m_idx = get_first_fx_matched(package.toEncoding(LIVES_CHAR_ENCODING_UTF8).c_str(), 
+				   fxname.toEncoding(LIVES_CHAR_ENCODING_UTF8).c_str(), 
+				   author.toEncoding(LIVES_CHAR_ENCODING_UTF8).c_str(), 
+				   version);
+    }
   }
 
   bool effect::isValid() {
     return (m_idx != -1 && m_lives != NULL && m_lives->isValid() && m_lives->status() != LIVES_STATUS_NOTREADY);
   }
 
+
+  effect::effect() : m_lives(NULL), m_idx(-1) {}
 
   effect::effect(livesApp *lives, int idx) : m_lives(lives), m_idx(idx) {}
 
@@ -1875,6 +1889,44 @@ namespace lives {
       return livesString(lname).toEncoding(LIVES_CHAR_ENCODING_UTF8);
     }
     return emptystr;
+  }
+
+
+  clip multitrack::render(bool with_audio, bool normalise_audio) const {
+    clip c;
+    if (!isActive()) return c;
+    if (!m_lives->isReady()) return c;
+
+    spinning = true;
+    msg_id = lives_random();
+    ulong cbid = m_lives->addCallback(LIVES_CALLBACK_PRIVATE, private_cb, NULL);
+    
+    pthread_mutex_lock(&spin_mutex);
+    if (!idle_render_layout(with_audio, normalise_audio, msg_id)) {
+      pthread_mutex_unlock(&spin_mutex);
+      spinning = false;
+      m_lives->removeCallback(cbid);
+      return c;
+    }
+    while (spinning) pthread_cond_wait(&cond_done, &spin_mutex);
+    pthread_mutex_unlock(&spin_mutex);
+    if (isValid()) {
+      ulong uid = strtoul(private_response,NULL,10);
+      c = clip(uid, m_lives);
+      lives_free(private_response);
+    }
+    return c;
+  }
+
+
+  effect multitrack::autoTransition() const {
+    effect e;
+    if (!m_lives->isValid() || m_lives->status()==LIVES_STATUS_NOTREADY) return e;
+    if (::prefs->atrans_fx == -1) return e;
+    char *hashname = make_weed_hashname(::prefs->atrans_fx, FALSE, FALSE);
+    e = effect(*m_lives, hashname);
+    lives_free(hashname);
+    return e;
   }
 
 

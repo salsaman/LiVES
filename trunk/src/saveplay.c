@@ -2255,7 +2255,7 @@ void play_file (void) {
   int loop=0;
 
 
-  if (audio_player!=AUD_PLAYER_JACK&&audio_player!=AUD_PLAYER_PULSE) mainw->aud_file_to_kill=mainw->current_file;
+  if (!is_realtime_aplayer(audio_player)) mainw->aud_file_to_kill=mainw->current_file;
   else mainw->aud_file_to_kill=-1;
 
 
@@ -2371,7 +2371,7 @@ void play_file (void) {
 
   mute=mainw->mute;
 
-  if (audio_player!=AUD_PLAYER_JACK&&audio_player!=AUD_PLAYER_PULSE) {
+  if (!is_realtime_aplayer(audio_player)) {
     if (cfile->achans==0||mainw->is_rendering) mainw->mute=TRUE;
     if (mainw->mute&&!cfile->opening_only_audio) arate=arate?-arate:-1;
   }
@@ -2427,15 +2427,14 @@ void play_file (void) {
 
   lives_widget_set_sensitive (mainw->m_playselbutton, FALSE);
   lives_widget_set_sensitive (mainw->m_rewindbutton, FALSE);
-  lives_widget_set_sensitive (mainw->m_mutebutton, (audio_player==AUD_PLAYER_JACK||audio_player==AUD_PLAYER_PULSE||
-						  mainw->multitrack!=NULL));
+  lives_widget_set_sensitive (mainw->m_mutebutton, is_realtime_aplayer(audio_player)||mainw->multitrack!=NULL);
 
   lives_widget_set_sensitive (mainw->m_loopbutton, (!cfile->achans||mainw->mute||mainw->multitrack!=NULL||
-						  mainw->loop_cont||audio_player==AUD_PLAYER_JACK||
-						  audio_player==AUD_PLAYER_PULSE)&&mainw->current_file>0);
+						    mainw->loop_cont||is_realtime_aplayer(audio_player))
+			      &&mainw->current_file>0);
   lives_widget_set_sensitive (mainw->loop_continue, (!cfile->achans||mainw->mute||mainw->loop_cont||
-						   audio_player==AUD_PLAYER_JACK||audio_player==AUD_PLAYER_PULSE)
-			    &&mainw->current_file>0);
+						     is_realtime_aplayer(audio_player))
+			      &&mainw->current_file>0);
 
   if (cfile->frames==0&&mainw->multitrack==NULL) {
     if (mainw->preview_box!=NULL&&lives_widget_get_parent(mainw->preview_box)!=NULL) {
@@ -2998,7 +2997,7 @@ void play_file (void) {
   }
   else {
 #endif
-    if (audio_player!=AUD_PLAYER_JACK&&audio_player!=AUD_PLAYER_PULSE&&stopcom!=NULL) {
+    if (!is_realtime_aplayer(audio_player)&&stopcom!=NULL) {
       // kill sound(if still playing)
       lives_system(stopcom,TRUE);
       mainw->aud_file_to_kill=-1;
@@ -3062,7 +3061,7 @@ void play_file (void) {
   // we could have started by playing a generator, which could've been closed
   if (mainw->files[current_file]==NULL) current_file=mainw->current_file;
 
-  if (audio_player!=AUD_PLAYER_JACK&&audio_player!=AUD_PLAYER_PULSE) {
+  if (!is_realtime_aplayer(audio_player)) {
     // wait for audio_ended...
     if (cfile->achans>0&&com2!=NULL) {
       wait_for_stop(com2);
@@ -3167,7 +3166,7 @@ void play_file (void) {
     lives_container_set_border_width (LIVES_CONTAINER (mainw->playframe), widget_opts.border_width);
   }
 
-  if (audio_player!=AUD_PLAYER_JACK&&audio_player!=AUD_PLAYER_PULSE) mainw->mute=mute;
+  if (!is_realtime_aplayer(audio_player)) mainw->mute=mute;
 
   if (!mainw->preview||!cfile->opening) {
     sensitize();

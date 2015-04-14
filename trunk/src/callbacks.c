@@ -101,8 +101,7 @@ void lives_exit (int signum) {
       }
       
       // tell non-realtime audio players (sox or mplayer) to stop
-      if (prefs->audio_player!=AUD_PLAYER_JACK&&prefs->audio_player!=AUD_PLAYER_PULSE&&mainw->aud_file_to_kill>-1&&
-	  mainw->files[mainw->aud_file_to_kill]!=NULL) {
+      if (!is_realtime_aplayer(prefs->audio_player)&&mainw->aud_file_to_kill>-1&&mainw->files[mainw->aud_file_to_kill]!=NULL) {
 	char *lsname=lives_build_filename(prefs->tmpdir,mainw->files[mainw->aud_file_to_kill]->handle,NULL);
 #ifndef IS_MINGW
 	com=lives_strdup_printf ("/bin/touch \"%s\" 2>/dev/null",lsname);
@@ -4053,7 +4052,7 @@ void on_record_perf_activate (LiVESMenuItem *menuitem, livespointer user_data) {
       pthread_mutex_lock(&mainw->event_list_mutex);
 
 #ifdef RT_AUDIO
-      if ((prefs->audio_player==AUD_PLAYER_JACK||prefs->audio_player==AUD_PLAYER_PULSE)&&(prefs->rec_opts&REC_AUDIO)) {
+      if (is_realtime_aplayer(prefs->audio_player)&&(prefs->rec_opts&REC_AUDIO)) {
 	weed_plant_t *last_frame=get_last_frame_event(mainw->event_list);
 	insert_audio_event_at(mainw->event_list, last_frame, -1, mainw->rec_aclip, 0., 0.);
       }
@@ -10725,8 +10724,7 @@ void on_export_audio_activate (LiVESMenuItem *menuitem, livespointer user_data) 
   }
 
   // warn if arps!=arate
-  if ((prefs->audio_player==AUD_PLAYER_SOX||prefs->audio_player==AUD_PLAYER_JACK||
-       prefs->audio_player==AUD_PLAYER_PULSE)&&cfile->arate!=cfile->arps) {
+  if ((prefs->audio_player==AUD_PLAYER_SOX||is_realtime_aplayer(prefs->audio_player))&&cfile->arate!=cfile->arps) {
     if (do_warning_dialog(_("\n\nThe audio playback speed has been altered for this clip.\nClick 'OK' to export at the new speed, or 'Cancel' to export at the original rate.\n"))) {
       nrate=cfile->arate;
     }
@@ -11389,7 +11387,7 @@ void on_rb_audrec_time_toggled (LiVESToggleButton *togglebutton, livespointer us
 
 void on_recaudclip_activate (LiVESMenuItem *menuitem, livespointer user_data) {
 
-  if (prefs->audio_player!=AUD_PLAYER_JACK&&prefs->audio_player!=AUD_PLAYER_PULSE) {
+  if (!is_realtime_aplayer(prefs->audio_player)) {
     do_nojack_rec_error();
     return;
   }
@@ -11409,7 +11407,7 @@ static boolean has_lmap_error_recsel;
 
 void on_recaudsel_activate (LiVESMenuItem *menuitem, livespointer user_data) {
 
-  if (prefs->audio_player!=AUD_PLAYER_JACK&&prefs->audio_player!=AUD_PLAYER_PULSE) {
+  if (!is_realtime_aplayer(prefs->audio_player)) {
     do_nojack_rec_error();
     return;
   }

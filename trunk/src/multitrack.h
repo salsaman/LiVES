@@ -714,6 +714,8 @@ void update_insert_mode (lives_mt *);
 
 boolean on_render_activate (LiVESMenuItem *, livespointer mt);
 
+void mt_set_autotrans(int idx);
+
 
 // event_list functions
 weed_plant_t *add_blank_frames_up_to (weed_plant_t *event_list, weed_plant_t *start_event, weed_timecode_t end_tc, double fps);
@@ -759,8 +761,10 @@ boolean on_track_move (LiVESWidget *widget, LiVESXEventMotion *event, livespoint
 boolean on_track_header_move (LiVESWidget *widget, LiVESXEventMotion *event, livespointer mt);
 
 void unselect_all (lives_mt *); ///< unselect all blocks
-void insert_frames (int filenum, weed_timecode_t offset_start, weed_timecode_t offset_end, weed_timecode_t tc, lives_direction_t direction, LiVESWidget *eventbox, lives_mt *, track_rect *in_block);
-void insert_audio (int filenum, weed_timecode_t offset_start, weed_timecode_t offset_end, weed_timecode_t tc, double avel, lives_direction_t direction, LiVESWidget *eventbox, lives_mt *, track_rect *in_block);
+void insert_frames (int filenum, weed_timecode_t offset_start, weed_timecode_t offset_end, weed_timecode_t tc, 
+		    lives_direction_t direction, LiVESWidget *eventbox, lives_mt *, track_rect *in_block);
+void insert_audio (int filenum, weed_timecode_t offset_start, weed_timecode_t offset_end, weed_timecode_t tc, 
+		   double avel, lives_direction_t direction, LiVESWidget *eventbox, lives_mt *, track_rect *in_block);
 void on_seltrack_toggled (LiVESWidget *, livespointer mt);
 void scroll_track_by_scrollbar (LiVESScrollbar *sbar, livespointer mt);
 
@@ -856,8 +860,10 @@ boolean used_in_current_layout(lives_mt *, int file);
 
 // event_list utilities
 boolean compare_filter_maps(weed_plant_t *fm1, weed_plant_t *fm2, int ctrack); ///< ctrack can be -1 to compare all events, else we cf for ctrack
-void move_init_in_filter_map(lives_mt *, weed_plant_t *event_list, weed_plant_t *fmap, weed_plant_t *ifrom, weed_plant_t *ito, int track, boolean after);
-void update_filter_events(lives_mt *, weed_plant_t *first_event, weed_timecode_t start_tc, weed_timecode_t end_tc, int track, weed_timecode_t new_start_tc, int new_track);
+void move_init_in_filter_map(lives_mt *, weed_plant_t *event_list, weed_plant_t *fmap, weed_plant_t *ifrom, 
+			     weed_plant_t *ito, int track, boolean after);
+void update_filter_events(lives_mt *, weed_plant_t *first_event, weed_timecode_t start_tc, weed_timecode_t end_tc, 
+			  int track, weed_timecode_t new_start_tc, int new_track);
 void mt_fixup_events(lives_mt *, weed_plant_t *old_event, weed_plant_t *new_event);
 
 // event_list load/save

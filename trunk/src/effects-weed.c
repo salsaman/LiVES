@@ -6620,7 +6620,7 @@ boolean weed_init_effect(int hotkey) {
       has_audio_chans_out(weed_filters[idx],FALSE)&&
       !has_video_chans_out(weed_filters[idx],TRUE)) {
 
-    if (prefs->audio_player!=AUD_PLAYER_JACK&&prefs->audio_player!=AUD_PLAYER_PULSE) {
+    if (!is_realtime_aplayer(prefs->audio_player)) {
       // audio fx only with realtime players
       char *fxname=weed_filter_idx_get_name(idx);
       d_print(_("Effect %s cannot be used with this audio player.\n"),fxname);
@@ -6798,6 +6798,7 @@ boolean weed_init_effect(int hotkey) {
 	}
 
 	if (is_trans) {
+	  // TODO: - do we need this ? is_trans is always FALSE !
 	  mainw->num_tr_applied--;
 	  if (mainw->num_tr_applied==0) {
 	    if (mainw->ce_thumbs) ce_thumbs_liberate_clip_area_register(SCREEN_AREA_FOREGROUND);
@@ -6806,6 +6807,8 @@ boolean weed_init_effect(int hotkey) {
 	    }
 	  }
 	}
+
+
 	lives_chdir(cwd,FALSE);
 	lives_free(cwd);
 	if (is_audio_gen) mainw->agen_needs_reinit=FALSE;
@@ -7113,7 +7116,7 @@ void weed_deinit_effect(int hotkey) {
     }
     else if (mainw->playing_file>0) {
       // for internal, continue where we should
-      if (prefs->audio_player==AUD_PLAYER_JACK||prefs->audio_player==AUD_PLAYER_PULSE) {
+      if (is_realtime_aplayer(prefs->audio_player)) {
 	if (prefs->audio_opts&AUDIO_OPTS_FOLLOW_CLIPS) switch_audio_clip(mainw->playing_file,TRUE);
 	else switch_audio_clip(mainw->pre_src_audio_file,TRUE);
       }
@@ -7569,7 +7572,7 @@ boolean weed_generator_start (weed_plant_t *inst, int key) {
 	do_quick_switch (new_file);
 
 	// switch audio clip
-	if ((prefs->audio_player==AUD_PLAYER_JACK||prefs->audio_player==AUD_PLAYER_PULSE)&&(prefs->audio_opts&AUDIO_OPTS_FOLLOW_CLIPS)
+	if (is_realtime_aplayer(prefs->audio_player)&&(prefs->audio_opts&AUDIO_OPTS_FOLLOW_CLIPS)
 	    &&!mainw->is_rendering&&(mainw->preview||!(mainw->agen_key!=0||prefs->audio_src==AUDIO_SRC_EXT))) {
 	  switch_audio_clip(new_file,TRUE);
 	}
@@ -7587,7 +7590,7 @@ boolean weed_generator_start (weed_plant_t *inst, int key) {
     else {
       if (mainw->current_file==-1) {
 	mainw->current_file=new_file;
-	if ((prefs->audio_player==AUD_PLAYER_JACK||prefs->audio_player==AUD_PLAYER_PULSE)&&(prefs->audio_opts&AUDIO_OPTS_FOLLOW_CLIPS)
+	if (is_realtime_aplayer(prefs->audio_player)&&(prefs->audio_opts&AUDIO_OPTS_FOLLOW_CLIPS)
 	    &&!mainw->is_rendering&&(mainw->preview||!(mainw->agen_key!=0||prefs->audio_src==AUDIO_SRC_EXT))) {
 	  switch_audio_clip(new_file,TRUE);
 	}

@@ -127,6 +127,7 @@ typedef enum {
    Audio sources
 */
 typedef enum {
+  LIVES_AUDIO_SOURCE_UNKNOWN, ///< Unknown / invalid
   LIVES_AUDIO_SOURCE_INTERNAL, ///< Audio source is internal to LiVES
   LIVES_AUDIO_SOURCE_EXTERNAL ///< Audio source is external to LiVES
 } lives_audio_source_t;
@@ -136,6 +137,7 @@ typedef enum {
    Audio players
 */
 typedef enum {
+  LIVES_AUDIO_PLAYER_UNKNOWN, ///< Unknown / invalid
   LIVES_AUDIO_PLAYER_PULSE, ///< Audio playback is through PulseAudio
   LIVES_AUDIO_PLAYER_JACK, ///< Audio playback is thorugh Jack
   LIVES_AUDIO_PLAYER_SOX, ///< Audio playback is through Sox
@@ -360,14 +362,14 @@ namespace lives {
      @see LIVES_CALLBACK_MODE_CHANGED
      @see livesApp::addCallback(lives_callback_t cb_type, modeChanged_callback_f func, void *data)
   */
-  typedef bool (*modeChanged_callback_f)(livesApp *lives, modeChangedInfo *, void *);
+  typedef bool (*modeChanged_callback_f)(livesApp *, modeChangedInfo *, void *);
 
   /**
      Type of callback function for LIVES_CALLBACK_APP_QUIT.
      @see LIVES_CALLBACK_APP_QUIT
      @see livesApp::addCallback(lives_callback_t cb_type, appQuit_callback_f func, void *data)
   */
-  typedef bool (*appQuit_callback_f)(livesApp *lives, appQuitInfo *, void *);
+  typedef bool (*appQuit_callback_f)(livesApp *, appQuitInfo *, void *);
 
 
   /**
@@ -375,7 +377,7 @@ namespace lives {
      @see LIVES_CALLBACK_OBJECT_DESTROYED
      @see livesApp::addCallback(lives_callback_t cb_type, objectDestroyed_callback_f func, void *data)
   */
-  typedef bool (*objectDestroyed_callback_f)(livesApp *lives, void *);
+  typedef bool (*objectDestroyed_callback_f)(livesApp *, void *);
 
 
 
@@ -433,6 +435,13 @@ namespace lives {
        @see status().
     */
     bool isPlaying();
+
+
+
+    int versionMajor();
+    int versionMinor();
+    int versionMicro();
+
 
     /**
        Returns the current set
@@ -575,11 +584,11 @@ namespace lives {
     /**
        Change the interactivity of the GUI application.
        Interactivity is via menus and keyboard accelerators
-       @param setting set to true to allow interaction with the GUI.
+       @param set to true to allow interaction with the GUI.
        @return the new setting.
        @see interactive().
     */
-    bool setInteractive(bool setting);
+    bool setInteractive(bool);
 
     /**
        Returns whether the GUI app is in interactive mode.
@@ -608,10 +617,11 @@ namespace lives {
        Set the current interface mode of the livesApp.
        Only works if status() is LIVES_STATUS_READY.
        If the livesApp is invalid, returns LIVES_INTERFACE_MODE_INVALID.
+       @param the mode to set to
        @return the new mode.
        @see mode().
     */
-    lives_interface_mode_t setMode(lives_interface_mode_t mode);//, livesMultitrackSettings settings=NULL);
+    lives_interface_mode_t setMode(lives_interface_mode_t);//, livesMultitrackSettings settings=NULL);
 
     /**
        Get the current operational status of the livesApp.
@@ -638,6 +648,8 @@ namespace lives {
     
     bool setPref(int prefidx, bool val);
     bool setPref(int prefidx, int val);
+    bool setPref(int prefidx, int bitfield, bool val);
+
 #endif
 
   protected:
@@ -1006,10 +1018,11 @@ namespace lives {
        Set playback in a detached window.
        If the livesApp::mode() is LIVES_INTERFACE_MODE_CLIPEDIT and prefs::sepWinSticky() is true, the window appears straight away;
        otherwise it appears only when isPlaying() is true.
+       @param the value to set to
        @see setFS().
        @see sepWin().
     */
-    void setSepWin(bool setting) const;
+    void setSepWin(bool) const;
 
     /**
        @return true if playback is in a separate window from the main GUI.
@@ -1019,10 +1032,11 @@ namespace lives {
 
     /**
        Set playback fullscreen. Use of setFS() is recommended instead.
+       @param the value to set to
        @see setFS().
        @see fullScreen().
     */
-    void setFullScreen(bool setting) const;
+    void setFullScreen(bool) const;
 
     /**
        @return true if playback is full screen.
@@ -1034,10 +1048,11 @@ namespace lives {
        Combines the functionality of setSepWin() and setFullScreen().
        If the livesApp::mode() is LIVES_INTERFACE_MODE_CLIPEDIT and prefs::sepWinSticky() is true, the window appears straight away,
        but it will only fill the screen when isPlaying() is true; otherwise it appears only when isPlaying() is true.
+       @param the value to set to
        @see setSepWin()
        @see setFullScreen()
     */
-    void setFS(bool setting) const;
+    void setFS(bool) const;
 
     /**
        Commence playback of video and audio with the currently selected clip.
@@ -1156,7 +1171,7 @@ namespace lives {
        Set the current playback framerate in frames per second. Only works if livesApp::mode() is LIVES_INTERFACE_MODE_CLIPEDIT and
        livesApp::status() is LIVES_STATUS_PLAYING.
        Allowed values range from -prefs::maxFPS to +prefs::maxFPS.
-       If prefs::audioFollowsVideoChanges() is true, then the audio playback rate will change proportionally.
+       If prefs::audioFollowsVideoFPSChanges() is true, then the audio playback rate will change proportionally.
        If isPlaying() is false, nothing happens and 0. is returned.
        Note, the setting only applies to the current clip; if the clip being played is switched then currentFPS() may change.
        @param fps the framerate to set
@@ -1193,7 +1208,7 @@ namespace lives {
        @return the new loop mode
        @see loopMode().
     */
-    lives_loop_mode_t setLoopMode(lives_loop_mode_t loopMode) const;
+    lives_loop_mode_t setLoopMode(lives_loop_mode_t) const;
 
     /**
        Return the loop mode of the player.
@@ -1212,7 +1227,7 @@ namespace lives {
        @see pingPong().
        @see loopMode().
     */
-    bool setPingPong(bool pingPong) const;
+    bool setPingPong(bool) const;
 
     /**
        Return ping pong mode. If pingPong is true then rather than looping forward, video and audio will "bounce" 
@@ -1323,10 +1338,11 @@ namespace lives {
        Enable an effect mapped to this effectKey, mode().
        Only works if the effecKey is valid, a valid effect is mapped to the mode, and livesApp::status() is 
        LIVES_STATUS_PLAYING or LIVES_STATUS_READY.
+       @param the value to set to
        @return the new state of the effectKey
        @see enabled().
     */
-    bool setEnabled(bool setting);
+    bool setEnabled(bool);
 
     /**
        Return a value to indicate whether the effect mapped to this effectKey, mode() is active. 
@@ -1340,6 +1356,7 @@ namespace lives {
        Map an effect to the next unused mode for the effectKey.
        Will only work if the livesApp::status() is LIVES_STATUS_PLAYING or LIVES_STATUS_READY.
        The effectKey and the effect must share the same owner livesApp, and both must be valid.
+       @param the effect to append
        @return the mode number the effect was mapped to, or -1 if the mapping failed.
        @see removeMapping().
     */
@@ -1412,6 +1429,7 @@ namespace lives {
 	 Returns the ith effect key for this key map.
 	 Valid range for i is 1 <= i <= prefs::rteKeysVirtual().
 	 For values of i outside this range, an invalid effectKey is returned.
+	 @param the index value
 	 @return an effectKey with index i.
 	 @see effectKey::operator[]
       */
@@ -1538,6 +1556,7 @@ namespace lives {
 
     /**
        Returns a reference to the block on the specified track at the specified time. If no such block exists, returns an invalid block.
+       @param the multitrack object
        @param track the track number. Values < 0 indicate backing audio tracks.
        @param time the time in seconds on the timeline.
        @return the block on the given track at the given time.
@@ -1715,7 +1734,7 @@ namespace lives {
        @return the new gravity mode.
        @see gravity().
     */
-    lives_gravity_t setGravity(lives_gravity_t grav) const;
+    lives_gravity_t setGravity(lives_gravity_t) const;
 
     /**
        Returns the value of the multitrack insert mode. This value, together with gravity() defines what happens when a block is inserted, 
@@ -1733,7 +1752,7 @@ namespace lives {
        @return the new insert mode.
        @see insertMode().
     */
-    lives_insert_mode_t setInsertMode(lives_insert_mode_t imode) const;
+    lives_insert_mode_t setInsertMode(lives_insert_mode_t) const;
 
 
     bool addVideoTrack(bool in_front) const;
@@ -1869,14 +1888,33 @@ namespace lives {
     /**
        Returns the current autotransition effect for multitrack mode.
        If no effect is set, returns an invalid effect.
+       If the owning livesApp::isInvalid() is true, or if livesApp::Status() is LIVES_STATUS_NOTREADY, returns an invalid effect.
        @return the autotransition effect for multitrack.
+       @see setAutoTransition().
+       @see disableAutoTransition().
     */
     effect autoTransition() const;
 
+    /**
+       Set the current autotransition effect for multitrack mode to "None" (no effect).
+       If the livesApp::status() is not LIVES_STATUS_READY or LIVES_STATUS_PLAYING, returns false and nothing happens.
+       @return true if the autotransition was disabled.
+       @see autoTransition().
+       @see setAutoTransition().
+    */
     bool disableAutoTransition() const;
 
+    /**
+       Set the current autotransition effect for multitrack mode.
+       If the livesApp::status() is not LIVES_STATUS_READY or LIVES_STATUS_PLAYING, returns false and nothing happens.
+       If the effect is not a transition, false is returned and nothing happens.
+       If the effect is invalid, this is the same as calling disableAutoTransition().
+       @param the new autotransition effect for multitrack.
+       @return true if the autotransition was changed.
+       @see autoTransition().
+       @see disableAutoTransition().
+    */
     bool setAutoTransition(effect autotrans) const;
-
 
     /**
        @return true if the two layouts have the same livesApp owner
@@ -1899,54 +1937,148 @@ namespace lives {
 
 
   /**
-     Preferences.
+     Preferences. Valid values are only returned if the livesApp::isValid() is true, and livesApp::status() is not LIVES_STATUS_NOTREADY.
   */
   namespace prefs {
-    livesString currentVideoLoadDir(livesApp lives); ///< current video load directory.
-    ///< @param lives a reference to a livesApp instance
+    /**
+      @param lives a reference to a valid livesApp instance
+      @return the currently preferred directory for loading video clips.
+    */
+    livesString currentVideoLoadDir(livesApp lives); 
 
-    livesString currentAudioDir(livesApp lives); ///< current audio directory for loading and saving audio.
-    ///< @param lives a reference to a livesApp instance
+    /**
+       @param lives a reference to a valid livesApp instance
+       @return the currently preferred directory for loading and saving audio.
+       */
+    livesString currentAudioDir(livesApp lives); 
 
-    livesString tmpDir(livesApp lives); ///< Despite the name, this is the working directory for the LiVES application. 
-    ///< The valid list of sets is drawn from this directory, for it is here that they are saved and loaded.
-    ///< The value can only be set at runtime through the GUI preferences window. Otherwise you can override the default value 
-    ///< when the livesApp() is created via argv[] option "-tmpdir", eg: <BR>
-    ///< <BR><BLOCKQUOTE><I>
-    ///<    char *argv[2]; <BR>
-    ///<    argv[0]="-tmpdir"; <BR>
-    ///<    argv[1]="/home/user/tempdir/"; <BR>
-    ///<    livesApp lives(2, argv); <BR>
-    ///< </I></BLOCKQUOTE>
-    ///< @param lives a reference to a livesApp instance
-    lives_audio_source_t audioSource(livesApp lives); ///< the current audio source
+    /**
+       Despite the name, this is the working directory for the LiVES application. 
+       The valid list of sets is drawn from this directory, for it is here that they are saved and loaded.
+       The value can only be set at runtime through the GUI preferences window. Otherwise you can override the default value 
+       when the livesApp() is created via argv[] option "-tmpdir", eg: <BR>
+       <BR><BLOCKQUOTE><I>
+       char *argv[2]; <BR>
+       argv[0]="-tmpdir"; <BR>
+       argv[1]="/home/user/tempdir/"; <BR>
+       livesApp lives(2, argv); <BR>
+       </I></BLOCKQUOTE>
+       @param lives a reference to a valid livesApp instance
+       @return the LiVES working directory
+    */
+    livesString tmpDir(livesApp lives);
 
-    bool setAudioSource(livesApp lives, lives_audio_source_t asrc); ///< Set the audio source. Only works if livesApp::status() is LIVES_STATUS_READY.
-    ///< @param lives a reference to a livesApp instance
-    ///< @param asrc the desired audio source
-    ///< @return true if the audio source could be changed.
+    /**
+       @param lives a reference to a valid livesApp instance
+       @return the current audio source
+       @see setAudioSource().
+     */
+    lives_audio_source_t audioSource(livesApp lives);
 
-    lives_audio_player_t audioPlayer(livesApp lives); ///< the current audio player
-    ///< @param lives a reference to a livesApp instance
+    /**
+       Set the audio source. Only works if livesApp::status() is LIVES_STATUS_READY.
+       @param lives a reference to a valid livesApp instance
+       @param asrc the desired audio source
+       @return true if the audio source could be changed.
+    */
+    bool setAudioSource(livesApp, lives_audio_source_t); 
 
-    int audioPlayerRate(livesApp lives);
+    /**
+       @param lives a reference to a livesApp instance
+       @return the current audio player
+    */
+    lives_audio_player_t audioPlayer(livesApp);
 
-    int rteKeysVirtual(livesApp lives); ///< maximum value for effectKey indices
-    ///< @param lives a reference to a livesApp instance
+    /**
+       Returns the audio rate for the player. Note this may be different from the clip audio rate.
+       Only valid if isRealtimeAudioPlayer(lives.audioPlayer()) is true.
+       @param lives a reference to a livesApp instance
+       @return the current audio player rate in Hz.
+       @see isRealtime()
+    */
+    int audioPlayerRate(livesApp);
 
-    double maxFPS(livesApp lives);
+    /**
+       @param an audio player type
+       @return true if the audio player type is realtime controllable
+    */
+    bool isRealtimeAudioPlayer(lives_audio_player_t);
 
-    bool audioFollowsVideoChanges(livesApp lives);
+    /**
+       @param lives a reference to a valid livesApp instance
+       @return the maximum value for effectKey indices
+    */
+    int rteKeysVirtual(livesApp);
 
-    bool setAudioFollowsVideoChanges(livesApp lives, bool setting);
+    /**
+       @param lives a reference to a valid livesApp instance
+       @return the maximum allowed framerate for a clip
+    */
+    double maxFPS(livesApp);
 
+    /**
+       @param lives a reference to a valid livesApp instance
+       @return true if the audio clip changes to match video clip changes during playback
+       @see setAudioFollowsVideoClipChanges().
+    */
+    bool audioFollowsVideoClipChanges(livesApp lives);
+
+    /**
+       @param lives a reference to a valid livesApp instance
+       @return true if the clip audio playback rate changes to match video clip framerate changes during playback
+       @see setAudioFollowsVideoFPSChanges().
+    */
+    bool audioFollowsVideoFPSChanges(livesApp lives);
+
+    /**
+       @param lives a reference to a valid livesApp instance
+       @param the new setting
+       @return true if the preference was updated
+       @see audioFollowsVideoFPSChanges
+    */
+    bool setAudioFollowsVideoFPSChanges(livesApp lives, bool);
+
+    /**
+       @param lives a reference to a valid livesApp instance
+       @param the new setting
+       @return true if the preference was updated
+       @see audioFollowsVideoFPSChanges
+    */
+    bool setAudioFollowsVideoClipChanges(livesApp lives, bool);
+
+    /**
+       @param lives a reference to a valid livesApp instance
+       @return true if the separate playback window is shown even when livesApp::isPlaying() is false.
+       @see setSepWinSticky()
+       @see player::sepWin()
+    */
     bool sepWinSticky(livesApp lives);
 
-    bool setSepWinSticky(livesApp lives, bool setting);
+    /**
+       @param lives a reference to a valid livesApp instance
+       @param the new setting
+       @return true if the preference was updated
+       @see sepWinSticky()
+       @see player::sepWin()
+    */
+    bool setSepWinSticky(livesApp lives, bool);
 
+    /**
+       @param lives a reference to a valid livesApp instance
+       @return true if the livesApp::mode() switches to LIVES_INTERFACE_MODE_CLIPEDIT after calling multitrack::render()
+       @see setMtExitRender()
+       @see multitrack::render()
+    */
     bool mtExitRender(livesApp lives);
 
-    bool setMtExitRender(livesApp lives, bool setting);
+    /**
+       @param lives a reference to a valid livesApp instance
+       @param the new setting
+       @return true if the preference was updated
+       @see mtExitRender().
+       @see multitrack::render().
+    */
+    bool setMtExitRender(livesApp lives, bool);
 
 
   }

@@ -27,6 +27,7 @@ boolean idle_choose_set(ulong id);
 boolean idle_reload_set(const char *setname, ulong id);
 boolean idle_set_pref_bool(int prefidx, boolean val, ulong id);
 boolean idle_set_pref_int(int prefidx, int val, ulong id);
+boolean idle_set_pref_bitmapped(int prefidx, int bitfield, boolean val, ulong id);
 boolean idle_switch_clip(int type, int cnum, ulong id);
 boolean idle_unmap_effects(ulong id);
 boolean idle_map_fx(int key, int mode, int idx, ulong id);

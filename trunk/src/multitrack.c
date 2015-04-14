@@ -5682,18 +5682,25 @@ static void cmi_set_inactive(LiVESWidget *widget, livespointer data) {
   g_object_thaw_notify(LIVES_WIDGET_OBJECT(widget));
 }
 
-static void mt_set_atrans_effect (LiVESMenuItem *menuitem, livespointer user_data) {
-  lives_mt *mt=(lives_mt *)user_data;
-  char *atrans_hash;
 
-  if (!lives_check_menu_item_get_active(LIVES_CHECK_MENU_ITEM(menuitem))) return;
-  lives_container_foreach(LIVES_CONTAINER(mt->submenu_atransfx),cmi_set_inactive,menuitem);
-  prefs->atrans_fx=LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(menuitem),"idx"));
+void mt_set_autotrans(int idx) {
+  char *atrans_hash;
+  prefs->atrans_fx=idx;
 
   // set pref
   atrans_hash=make_weed_hashname(prefs->atrans_fx,FALSE,FALSE);
   set_pref("current_autotrans",atrans_hash);
   lives_free(atrans_hash);
+}
+
+
+static void mt_set_atrans_effect (LiVESMenuItem *menuitem, livespointer user_data) {
+  lives_mt *mt=(lives_mt *)user_data;
+
+  if (!lives_check_menu_item_get_active(LIVES_CHECK_MENU_ITEM(menuitem))) return;
+  lives_container_foreach(LIVES_CONTAINER(mt->submenu_atransfx),cmi_set_inactive,menuitem);
+
+  mt_set_autotrans(LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(menuitem),"idx")));
 }
 
 
@@ -11341,7 +11348,7 @@ boolean on_multitrack_activate (LiVESMenuItem *menuitem, weed_plant_t *event_lis
     multi->opts.pertrack_audio=FALSE;
   }
 
-  if (prefs->audio_player!=AUD_PLAYER_JACK&&prefs->audio_player!=AUD_PLAYER_PULSE) {
+  if (!is_realtime_aplayer(prefs->audio_player)) {
     lives_widget_hide(mainw->vol_toolitem);
     if (mainw->vol_label!=NULL) lives_widget_hide(mainw->vol_label);
   }
@@ -11390,7 +11397,7 @@ boolean on_multitrack_activate (LiVESMenuItem *menuitem, weed_plant_t *event_lis
   d_print (_ ("\n==============================\nSwitched to Multitrack mode\n"));
 
 
-  if (cfile->achans>0&&prefs->audio_player!=AUD_PLAYER_JACK&&prefs->audio_player!=AUD_PLAYER_PULSE) {
+  if (cfile->achans>0&&!is_realtime_aplayer(prefs->audio_player)) {
     do_mt_no_jack_error(WARN_MASK_MT_NO_JACK);
   }
 

@@ -1471,6 +1471,10 @@ LIVES_INLINE int calc_frame_from_time3 (int filenum, double time) {
 
 
 
+boolean is_realtime_aplayer(int ptype) {
+  if (ptype==AUD_PLAYER_JACK||ptype==AUD_PLAYER_PULSE) return TRUE;
+  return FALSE;
+}
 
 
 static boolean check_for_audio_stop (int fileno, int first_frame, int last_frame) {
@@ -2782,10 +2786,10 @@ void get_play_times(void) {
   }
   if (cfile->achans>0) {
     if (mainw->playing_file>-1) {
-      offset_left=((mainw->playing_sel&&(prefs->audio_player==AUD_PLAYER_JACK||prefs->audio_player==AUD_PLAYER_PULSE))?
+      offset_left=((mainw->playing_sel&&is_realtime_aplayer(prefs->audio_player))?
 		   cfile->start-1.:mainw->audio_start-1.)/cfile->fps/cfile->total_time*allocwidth;
       if (mainw->audio_end&&!mainw->loop) {
-	offset_right=(((prefs->audio_player==AUD_PLAYER_JACK||prefs->audio_player==AUD_PLAYER_PULSE))?
+	offset_right=((is_realtime_aplayer(prefs->audio_player))?
 		      cfile->end:mainw->audio_end)/cfile->fps/cfile->total_time*allocwidth;
       }
       else {
@@ -2896,8 +2900,7 @@ void get_play_times(void) {
       lives_widget_queue_draw (mainw->hruler);
     }
     if (cfile->achans>0&&cfile->is_loaded&&prefs->audio_src!=AUDIO_SRC_EXT) {
-      if ((prefs->audio_player==AUD_PLAYER_JACK||prefs->audio_player==AUD_PLAYER_PULSE)&&
-	  (mainw->event_list==NULL||!mainw->preview)) {
+      if (is_realtime_aplayer(prefs->audio_player)&&(mainw->event_list==NULL||!mainw->preview)) {
 #ifdef ENABLE_JACK
 	if (mainw->jackd!=NULL&&prefs->audio_player==AUD_PLAYER_JACK) {
 	  offset=allocwidth*((double)mainw->jackd->seek_pos/cfile->arate/cfile->achans/

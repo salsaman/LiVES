@@ -634,6 +634,26 @@ namespace lives {
     }
     return true;
   }
+
+  bool livesApp::setPref(int prefidx, int bitfield, bool val) {
+    if (!isValid() || status() == LIVES_STATUS_NOTREADY) return false;
+    spinning = true;
+    msg_id = lives_random();
+    ulong cbid = addCallback(LIVES_CALLBACK_PRIVATE, private_cb, NULL); 
+    pthread_mutex_lock(&spin_mutex);
+    if (!idle_set_pref_bitmapped(prefidx, bitfield, val, msg_id)) {
+      pthread_mutex_unlock(&spin_mutex);
+      spinning = false;
+      removeCallback(cbid);
+      return false;
+    }
+    while (spinning) pthread_cond_wait(&cond_done, &spin_mutex);
+    pthread_mutex_unlock(&spin_mutex);
+    if (isValid()) {
+      lives_free(private_response);
+    }
+    return true;
+  }
 #endif
 
   //////////////// player ////////////////////
@@ -1921,12 +1941,31 @@ namespace lives {
 
   effect multitrack::autoTransition() const {
     effect e;
-    if (!m_lives->isValid() || m_lives->status()==LIVES_STATUS_NOTREADY) return e;
+    if (!m_lives->isValid() || m_lives->status() == LIVES_STATUS_NOTREADY) return e;
     if (::prefs->atrans_fx == -1) return e;
-    char *hashname = make_weed_hashname(::prefs->atrans_fx, FALSE, FALSE);
-    e = effect(*m_lives, hashname);
-    lives_free(hashname);
+    e = effect(m_lives, ::prefs->atrans_fx);
     return e;
+  }
+
+
+  bool multitrack::setAutoTransition(effect autotrans) const {
+    if (!m_lives->isValid()) return false;
+    if (!autotrans.isValid()) return disableAutoTransition();
+
+    // check if is transition
+    if (get_transition_param(get_weed_filter(autotrans.m_idx), FALSE) == -1) return false;
+
+    if (m_lives->status() != LIVES_STATUS_READY && m_lives->status() != LIVES_STATUS_PLAYING) return false;
+    mt_set_autotrans(autotrans.m_idx);
+    return true;
+  }
+
+
+  bool multitrack::disableAutoTransition() const {
+    if (!m_lives->isValid()) return false;
+    if (m_lives->status() != LIVES_STATUS_READY && m_lives->status() != LIVES_STATUS_PLAYING) return false;
+    mt_set_autotrans(-1);
+    return true;
   }
 
 
@@ -2084,27 +2123,33 @@ namespace lives {
 
   namespace prefs {
     livesString currentVideoLoadDir(livesApp lives) {
+      if (!lives.isValid() || lives.status() == LIVES_STATUS_NOTREADY) return livesString();
       return livesString(mainw->vid_load_dir, LIVES_CHAR_ENCODING_UTF8);
     }
 
     livesString currentAudioDir(livesApp lives) {
+      if (!lives.isValid() || lives.status() == LIVES_STATUS_NOTREADY) return livesString();
       return livesString(mainw->audio_dir, LIVES_CHAR_ENCODING_UTF8);
     }
 
     livesString tmpDir(livesApp lives) {
+      if (!lives.isValid() || lives.status() == LIVES_STATUS_NOTREADY) return livesString();
       return livesString(::prefs->tmpdir, LIVES_CHAR_ENCODING_FILESYSTEM);
     }
 
     lives_audio_source_t audioSource(livesApp lives) {
+      if (!lives.isValid() || lives.status() == LIVES_STATUS_NOTREADY) return LIVES_AUDIO_SOURCE_UNKNOWN;
       if (::prefs->audio_src == AUDIO_SRC_EXT) return LIVES_AUDIO_SOURCE_EXTERNAL;
       return LIVES_AUDIO_SOURCE_INTERNAL;
     }
 
     bool setAudioSource(livesApp lives, lives_audio_source_t asrc) {
+      if (!lives.isReady()) return false;
       return lives.setPref(PREF_REC_EXT_AUDIO, (bool)(asrc==LIVES_AUDIO_SOURCE_EXTERNAL));
     }
 
     lives_audio_player_t audioPlayer(livesApp lives) {
+      if (!lives.isValid() || lives.status() == LIVES_STATUS_NOTREADY) return LIVES_AUDIO_PLAYER_UNKNOWN;
       if (::prefs->audio_player == AUD_PLAYER_SOX) return LIVES_AUDIO_PLAYER_SOX;
       if (::prefs->audio_player == AUD_PLAYER_JACK) return LIVES_AUDIO_PLAYER_JACK;
       if (::prefs->audio_player == AUD_PLAYER_PULSE) return LIVES_AUDIO_PLAYER_PULSE;
@@ -2112,9 +2157,79 @@ namespace lives {
       if (::prefs->audio_player == AUD_PLAYER_MPLAYER2) return LIVES_AUDIO_PLAYER_MPLAYER2;
     }
 
+    int audioPlayerRate(livesApp lives) {
+      if (!lives.isValid() || lives.status() == LIVES_STATUS_NOTREADY) return -1;
+#ifdef ENABLE_JACK
+      if (::prefs->audio_player == AUD_PLAYER_JACK && mainw->jackd != NULL) return mainw->jackd->sample_out_rate;
+#endif
+#ifdef HAVE_PULSE_AUDIO
+      if (::prefs->audio_player == AUD_PLAYER_PULSE && mainw->pulsed != NULL) return mainw->pulsed->out_arate;
+#endif
+      return -1;
+    }
+
+    bool isRealtimeAudioPlayer(lives_audio_player_t player_type) {
+      int ptype;
+      if (player_type == LIVES_AUDIO_PLAYER_SOX) ptype = AUD_PLAYER_SOX;
+      else if (player_type == LIVES_AUDIO_PLAYER_JACK) ptype = AUD_PLAYER_JACK;
+      else if (player_type == LIVES_AUDIO_PLAYER_PULSE) ptype = AUD_PLAYER_PULSE;
+      else if (player_type == LIVES_AUDIO_PLAYER_MPLAYER) ptype = AUD_PLAYER_MPLAYER;
+      else if (player_type == LIVES_AUDIO_PLAYER_MPLAYER2) ptype = AUD_PLAYER_MPLAYER2;
+      return is_realtime_aplayer(ptype);
+    }
+
     int rteKeysVirtual(livesApp lives) {
+      if (!lives.isValid() || lives.status() == LIVES_STATUS_NOTREADY) return -1;
       return ::prefs->rte_keys_virtual;
     }
+
+    double maxFPS(livesApp lives) {
+      if (!lives.isValid() || lives.status() == LIVES_STATUS_NOTREADY) return -1.;
+      return FPS_MAX;
+    }
+
+    bool audioFollowsVideoChanges(livesApp lives) {
+      if (!lives.isValid() || lives.status() == LIVES_STATUS_NOTREADY) return false;
+      return ::prefs->audio_opts & AUDIO_OPTS_FOLLOW_CLIPS;
+    }
+
+    bool audioFollowsFPSChanges(livesApp lives) {
+      if (!lives.isValid() || lives.status() == LIVES_STATUS_NOTREADY) return false;
+      return ::prefs->audio_opts & AUDIO_OPTS_FOLLOW_FPS;
+    }
+
+    bool setAudioFollowsVideoChanges(livesApp lives, bool setting) {
+      if (!lives.isValid() || lives.status() == LIVES_STATUS_NOTREADY) return false;
+      return lives.setPref(PREF_AUDIO_OPTS, AUDIO_OPTS_FOLLOW_CLIPS, setting);
+    }
+
+    bool setAudioFollowsFPSChanges(livesApp lives, bool setting) {
+      if (!lives.isValid() || lives.status() == LIVES_STATUS_NOTREADY) return false;
+      return lives.setPref(PREF_AUDIO_OPTS, AUDIO_OPTS_FOLLOW_FPS, setting);
+    }
+
+    bool sepWinSticky(livesApp lives) {
+      if (!lives.isValid() || lives.status() == LIVES_STATUS_NOTREADY) return false;
+      return ::prefs->sepwin_type==SEPWIN_TYPE_STICKY;
+    }
+
+    bool setSepWinSticky(livesApp lives, bool setting) {
+      if (!lives.isValid() || lives.status() == LIVES_STATUS_NOTREADY) return false;
+      return lives.setPref(PREF_SEPWIN_STICKY, setting);
+    }
+
+    bool mtExitRender(livesApp lives) {
+      if (!lives.isValid() || lives.status() == LIVES_STATUS_NOTREADY) return false;
+      return ::prefs->mt_exit_render;
+    }
+
+    bool setMtExitRender(livesApp lives, bool setting) {
+      if (!lives.isValid() || lives.status() == LIVES_STATUS_NOTREADY) return false;
+      return lives.setPref(PREF_MT_EXIT_RENDER, setting);
+    }
+
+    
+
 
   }
 

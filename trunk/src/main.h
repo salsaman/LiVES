@@ -1238,6 +1238,7 @@ LiVESList *lives_list_delete_string(LiVESList *, char *string) WARN_UNUSED;
 LiVESList *lives_list_copy_strings(LiVESList *list);
 boolean string_lists_differ(LiVESList *, LiVESList *);
 
+boolean is_realtime_aplayer(int ptype);
 
 LiVESList *get_set_list(const char *dir, boolean utf8);
 

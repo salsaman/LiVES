@@ -3439,10 +3439,8 @@ void desensitize(void) {
   lives_widget_set_sensitive (mainw->fade_aud_in, FALSE);
   lives_widget_set_sensitive (mainw->fade_aud_out, FALSE);
   lives_widget_set_sensitive (mainw->ins_silence, FALSE);
-  lives_widget_set_sensitive (mainw->loop_video, (prefs->audio_player==AUD_PLAYER_JACK||
-						prefs->audio_player==AUD_PLAYER_PULSE));
-  if (prefs->audio_player!=AUD_PLAYER_JACK&&prefs->audio_player!=AUD_PLAYER_PULSE) 
-    lives_widget_set_sensitive (mainw->mute_audio, FALSE);
+  lives_widget_set_sensitive (mainw->loop_video, is_realtime_aplayer(prefs->audio_player==AUD_PLAYER_JACK));
+  if (!is_realtime_aplayer(prefs->audio_player)) lives_widget_set_sensitive (mainw->mute_audio, FALSE);
   lives_widget_set_sensitive (mainw->load_audio, FALSE);
   lives_widget_set_sensitive (mainw->load_subs, FALSE);
   lives_widget_set_sensitive (mainw->erase_subs, FALSE);
@@ -7151,7 +7149,7 @@ void do_quick_switch (int new_file) {
   mainw->osc_block=TRUE;
  
   // switch audio clip
-  if ((prefs->audio_player==AUD_PLAYER_JACK||prefs->audio_player==AUD_PLAYER_PULSE)&&(prefs->audio_opts&AUDIO_OPTS_FOLLOW_CLIPS)
+  if (is_realtime_aplayer(prefs->audio_player)&&(prefs->audio_opts&AUDIO_OPTS_FOLLOW_CLIPS)
       &&!mainw->is_rendering&&(mainw->preview||!(mainw->agen_key!=0||prefs->audio_src==AUDIO_SRC_EXT))) {
     switch_audio_clip(new_file,TRUE);
   }

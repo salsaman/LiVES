@@ -3272,8 +3272,7 @@ void fade_background(void) {
       lives_accel_group_connect (LIVES_ACCEL_GROUP (mainw->accel_group), LIVES_KEY_s, (LiVESXModifierType)0, (LiVESAccelFlags)0, 
 			       (sepwin_closure=lives_cclosure_new (LIVES_GUI_CALLBACK (sepwin_callback),NULL,NULL)));
 
-      if (!cfile->achans||mainw->mute||mainw->loop_cont||prefs->audio_player==AUD_PLAYER_JACK||
-	  prefs->audio_player==AUD_PLAYER_PULSE) {
+      if (!cfile->achans||mainw->mute||mainw->loop_cont||is_realtime_aplayer(prefs->audio_player)) {
 	lives_widget_remove_accelerator (mainw->loop_video, mainw->accel_group, LIVES_KEY_l, (LiVESXModifierType)0);
 	lives_accel_group_connect (LIVES_ACCEL_GROUP (mainw->accel_group), LIVES_KEY_l, (LiVESXModifierType)0, (LiVESAccelFlags)0, 
 				 (loop_closure=lives_cclosure_new (LIVES_GUI_CALLBACK (loop_callback),NULL,NULL)));
@@ -3420,8 +3419,7 @@ void unfade_background(void) {
 				LIVES_KEY_g, (LiVESXModifierType)0,
 				LIVES_ACCEL_VISIBLE);
 
-    if (!cfile->achans||mainw->mute||mainw->loop_cont||prefs->audio_player==AUD_PLAYER_JACK||
-	prefs->audio_player==AUD_PLAYER_PULSE) {
+    if (!cfile->achans||mainw->mute||mainw->loop_cont||is_realtime_aplayer(prefs->audio_player)) {
       lives_accel_group_disconnect (LIVES_ACCEL_GROUP (mainw->accel_group), loop_closure);
       lives_widget_add_accelerator (mainw->loop_video, LIVES_WIDGET_ACTIVATE_SIGNAL, mainw->accel_group,
 				  LIVES_KEY_l, (LiVESXModifierType)0,

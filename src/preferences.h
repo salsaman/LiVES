@@ -621,10 +621,16 @@ void apply_button_set_enabled(LiVESWidget *widget, livespointer func_data);
 
 
 // factories
-#define PREF_REC_EXT_AUDIO 1
+enum {
+  PREF_REC_EXT_AUDIO,
+  PREF_AUDIO_OPTS,
+  PREF_SEPWIN_STICKY,
+  PREF_MT_EXIT_RENDER
+};
 
 void pref_factory_bool(int prefidx, boolean newval);
 void pref_factory_int(int prefidx, int newval);
+void pref_factory_bitmapped(int prefidx, int bitfield, boolean newval);
 
 
 // permissions

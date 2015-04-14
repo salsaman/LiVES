@@ -433,7 +433,8 @@ static void set_temp_label_text(LiVESLabel *label) {
 
 void pref_factory_bool(int prefidx, boolean newval) {
 
-  if (prefidx==PREF_REC_EXT_AUDIO) {
+  switch (prefidx) {
+  case PREF_REC_EXT_AUDIO: {
     boolean rec_ext_audio=newval;
     if (rec_ext_audio&&prefs->audio_src==AUDIO_SRC_INT) {
       prefs->audio_src=AUDIO_SRC_EXT;
@@ -463,6 +464,23 @@ void pref_factory_bool(int prefidx, boolean newval) {
       prefs->audio_src=AUDIO_SRC_INT;
       set_int_pref("audio_src",AUDIO_SRC_INT);
     }
+    if (prefsw!=NULL) 
+      lives_toggle_button_set_active (LIVES_TOGGLE_BUTTON (prefsw->rextaudio),prefs->audio_src==AUDIO_SRC_EXT);
+
+  }
+    break;
+  case PREF_SEPWIN_STICKY: {
+    lives_check_menu_item_set_active(LIVES_CHECK_MENU_ITEM(mainw->sticky),newval);
+  }
+    break;
+  case PREF_MT_EXIT_RENDER: {
+    prefs->mt_exit_render=newval;
+    if (prefsw!=NULL) 
+      lives_toggle_button_set_active (LIVES_TOGGLE_BUTTON (prefsw->checkbutton_mt_exit_render), prefs->mt_exit_render);
+  }
+    break;
+  default:
+    break;
   }
 }
 
@@ -470,6 +488,27 @@ void pref_factory_bool(int prefidx, boolean newval) {
 void pref_factory_int(int prefidx, int newval) {
   // TODO
 }
+
+
+
+void pref_factory_bitmapped(int prefidx, int bitfield, boolean newval) {
+  switch (prefidx) {
+  case PREF_AUDIO_OPTS: {
+    if (newval&&!(prefs->audio_opts&bitfield)) prefs->audio_opts&=bitfield;
+    else if (!newval&&(prefs->audio_opts&bitfield)) prefs->audio_opts^=bitfield;
+    if (prefsw!=NULL) {
+      if (bitfield==AUDIO_OPTS_FOLLOW_FPS) 
+	lives_toggle_button_set_active (LIVES_TOGGLE_BUTTON (prefsw->checkbutton_afollow),(prefs->audio_opts&AUDIO_OPTS_FOLLOW_FPS)?TRUE:FALSE);
+      else if (bitfield==AUDIO_OPTS_FOLLOW_CLIPS)
+	lives_toggle_button_set_active (LIVES_TOGGLE_BUTTON (prefsw->checkbutton_aclips),(prefs->audio_opts&AUDIO_OPTS_FOLLOW_CLIPS)?TRUE:FALSE);
+    }
+  }
+    break;
+  default:
+    break;
+  }
+}
+
 
 
 boolean apply_prefs(boolean skip_warn) {
@@ -2859,7 +2898,7 @@ _prefsw *create_prefs_dialog (void) {
 
 
   // get from prefs
-  if (prefs->audio_player!=AUD_PLAYER_JACK&&prefs->audio_player!=AUD_PLAYER_PULSE) 
+  if (!is_realtime_aplayer(prefs->audio_player)) 
     lives_entry_set_text(LIVES_ENTRY(prefsw->audio_command_entry),prefs->audio_play_command);
   else {
     lives_entry_set_text(LIVES_ENTRY(prefsw->audio_command_entry),(_("- internal -")));
@@ -2874,7 +2913,7 @@ _prefsw *create_prefs_dialog (void) {
   prefsw->checkbutton_afollow = lives_standard_check_button_new(_("Audio follows video _rate/direction"),TRUE,LIVES_BOX(hbox),NULL);
 
   lives_toggle_button_set_active (LIVES_TOGGLE_BUTTON (prefsw->checkbutton_afollow),(prefs->audio_opts&AUDIO_OPTS_FOLLOW_FPS)?TRUE:FALSE);
-  lives_widget_set_sensitive(prefsw->checkbutton_afollow,prefs->audio_player==AUD_PLAYER_JACK||prefs->audio_player==AUD_PLAYER_PULSE);
+  lives_widget_set_sensitive(prefsw->checkbutton_afollow,is_realtime_aplayer(prefs->audio_player));
 
   add_fill_to_box(LIVES_BOX(hbox));
 
@@ -2882,7 +2921,7 @@ _prefsw *create_prefs_dialog (void) {
   prefsw->checkbutton_aclips = lives_standard_check_button_new(_("Audio follows _clip switches"),TRUE,LIVES_BOX(hbox),NULL);
 
   lives_toggle_button_set_active (LIVES_TOGGLE_BUTTON (prefsw->checkbutton_aclips),(prefs->audio_opts&AUDIO_OPTS_FOLLOW_CLIPS)?TRUE:FALSE);
-  lives_widget_set_sensitive(prefsw->checkbutton_aclips,prefs->audio_player==AUD_PLAYER_JACK||prefs->audio_player==AUD_PLAYER_PULSE);
+  lives_widget_set_sensitive(prefsw->checkbutton_aclips,is_realtime_aplayer(prefs->audio_player));
 
   hbox = lives_hbox_new(FALSE, 0);
   lives_box_pack_start (LIVES_BOX (vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
@@ -2905,7 +2944,7 @@ _prefsw *create_prefs_dialog (void) {
     lives_widget_set_sensitive (prefsw->rextaudio,FALSE);
   }
 
-  if (prefs->audio_player!=AUD_PLAYER_JACK&&prefs->audio_player!=AUD_PLAYER_PULSE){
+  if (!is_realtime_aplayer(prefs->audio_player)) {
     lives_widget_set_sensitive (prefsw->rextaudio,FALSE);
   }
 
@@ -3035,7 +3074,7 @@ _prefsw *create_prefs_dialog (void) {
     lives_widget_set_sensitive (prefsw->raudio,FALSE);
   }
 
-  if (prefs->audio_player!=AUD_PLAYER_JACK&&prefs->audio_player!=AUD_PLAYER_PULSE){
+  if (!is_realtime_aplayer(prefs->audio_player)) {
     lives_widget_set_sensitive (prefsw->raudio,FALSE);
   }
 

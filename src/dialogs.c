@@ -1739,8 +1739,7 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const char *tex
   // from the mainw->progress_fn function
   while (1) {
     while (!mainw->internal_messaging&&(((!visible&&(mainw->whentostop!=STOP_ON_AUD_END||
-						    prefs->audio_player==AUD_PLAYER_JACK||
-						     prefs->audio_player==AUD_PLAYER_PULSE)))||
+						     is_realtime_aplayer(prefs->audio_player))))||
 					!lives_file_test(cfile->info_file,LIVES_FILE_TEST_EXISTS))) {
 
 
@@ -1758,9 +1757,7 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const char *tex
       }
 
       // normal playback, wth realtime audio player
-      if (!visible&&(mainw->whentostop!=STOP_ON_AUD_END||
-		     prefs->audio_player==AUD_PLAYER_JACK||
-		     prefs->audio_player==AUD_PLAYER_PULSE)) continue;
+      if (!visible&&(mainw->whentostop!=STOP_ON_AUD_END||is_realtime_aplayer(prefs->audio_player))) continue;
 
       if (mainw->iochan!=NULL&&progress_count==0) {
 	// pump data from stdout to textbuffer

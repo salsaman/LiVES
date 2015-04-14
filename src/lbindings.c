@@ -93,6 +93,16 @@ typedef struct {
 
 
 typedef struct {
+  // i, i, b
+  // bitmapped pref
+  ulong id;
+  int prefidx;
+  int bitfield;
+  boolean val;
+} bmpref;
+
+
+typedef struct {
   // i, i
   // int pref
   ulong id;
@@ -349,7 +359,7 @@ static boolean call_osc_show_blocking_info(livespointer data) {
   }
   ext_caller_return_int(minfo->id,ret);
   lives_free(minfo->msg);
-  lives_free(minfo);
+  lives_free(data);
   return FALSE;
 }
 
@@ -362,7 +372,7 @@ static boolean call_osc_save_set(livespointer data) {
     ret=lives_osc_cb_saveset(NULL, oscd->arglen, oscd->vargs, OSCTT_CurrentTime(), NULL);
   }
   ext_caller_return_int(oscd->id,(int)ret);
-  lives_free(oscd);
+  lives_free(data);
   return FALSE;
 }
 
@@ -414,7 +424,7 @@ static boolean call_choose_set(livespointer data) {
     lives_free(setname);
   }
   else ext_caller_return_string(ud->id,"");
-  lives_free(ud);
+  lives_free(data);
   return FALSE;
 }
 
@@ -428,7 +438,7 @@ static boolean call_open_file(livespointer data) {
   }
   ext_caller_return_ulong(opfi->id,uid);
   lives_free(opfi->fname);
-  lives_free(opfi);
+  lives_free(data);
   return FALSE;
 }
 
@@ -454,7 +464,7 @@ static boolean call_reload_set(livespointer data) {
   }
   lives_free(mdata->msg);
   ext_caller_return_int(mdata->id,resp);
-  lives_free(mdata);
+  lives_free(data);
   return FALSE;
 }
 
@@ -467,7 +477,7 @@ static boolean call_set_interactive(livespointer data) {
     ext_caller_return_int(sint->id,TRUE);
   }
   else ext_caller_return_int(sint->id,FALSE);
-  lives_free(sint);
+  lives_free(data);
   return FALSE;
 }
 
@@ -480,7 +490,7 @@ static boolean call_set_sepwin(livespointer data) {
     ext_caller_return_int(sint->id,TRUE);
   }
   else ext_caller_return_int(sint->id,FALSE);
-  lives_free(sint);
+  lives_free(data);
   return FALSE;
 }
 
@@ -495,7 +505,7 @@ static boolean call_set_fullscreen(livespointer data) {
     ext_caller_return_int(sint->id,TRUE);
   }
   else ext_caller_return_int(sint->id,FALSE);
-  lives_free(sint);
+  lives_free(data);
   return FALSE;
 }
 
@@ -511,7 +521,7 @@ static boolean call_set_fullscreen_sepwin(livespointer data) {
     ext_caller_return_int(sint->id,TRUE);
   }
   else ext_caller_return_int(sint->id,FALSE);
-  lives_free(sint);
+  lives_free(data);
   return FALSE;
 }
 
@@ -524,7 +534,7 @@ static boolean call_set_ping_pong(livespointer data) {
     ext_caller_return_int(sint->id,TRUE);
   }
   else ext_caller_return_int(sint->id,FALSE);
-  lives_free(sint);
+  lives_free(data);
   return FALSE;
 }
 
@@ -536,7 +546,7 @@ static boolean call_set_pref_bool(livespointer data) {
     ext_caller_return_int(bdata->id,TRUE);
   }
   else ext_caller_return_int(bdata->id,FALSE);
-  lives_free(bdata);
+  lives_free(data);
   return FALSE;
 }
 
@@ -548,7 +558,20 @@ static boolean call_set_pref_int(livespointer data) {
     ext_caller_return_int(idata->id,TRUE);
   }
   else ext_caller_return_int(idata->id,FALSE);
-  lives_free(idata);
+  lives_free(data);
+  return FALSE;
+}
+
+
+
+static boolean call_set_pref_bitmapped(livespointer data) {
+  bmpref *bmdata=(bmpref *)data;
+  if (mainw!=NULL&&!mainw->go_away) {
+    pref_factory_bitmapped(bmdata->prefidx, bmdata->bitfield, bmdata->val);
+    ext_caller_return_int(bmdata->id,TRUE);
+  }
+  else ext_caller_return_int(bmdata->id,FALSE);
+  lives_free(data);
   return FALSE;
 }
 
@@ -1439,11 +1462,10 @@ boolean idle_fx_enable(int key, boolean setting, ulong id) {
 
 
 
-
 boolean idle_set_pref_bool(int prefidx, boolean val, ulong id) {
   bpref *data;
 
-  if (mainw==NULL||mainw->preview||mainw->go_away||mainw->is_processing||mainw->playing_file>-1) return FALSE;
+  if (mainw==NULL||mainw->preview||mainw->go_away) return FALSE;
 
   data=(bpref *)lives_malloc(sizeof(bpref));
   data->id=id;
@@ -1457,7 +1479,7 @@ boolean idle_set_pref_bool(int prefidx, boolean val, ulong id) {
 boolean idle_set_pref_int(int prefidx, int val, ulong id) {
   ipref *data;
 
-  if (mainw==NULL||mainw->preview||mainw->go_away||mainw->is_processing||mainw->playing_file>-1) return FALSE;
+  if (mainw==NULL||mainw->preview||mainw->go_away) return FALSE;
 
   data=(ipref *)lives_malloc(sizeof(ipref));
   data->id=id;
@@ -1466,6 +1488,22 @@ boolean idle_set_pref_int(int prefidx, int val, ulong id) {
   lives_idle_add(call_set_pref_int,(livespointer)data);
   return TRUE;
 }
+
+
+boolean idle_set_pref_bitmapped(int prefidx, int bitfield, boolean val, ulong id) {
+  bmpref *data;
+
+  if (mainw==NULL||mainw->preview||mainw->go_away) return FALSE;
+
+  data=(bmpref *)lives_malloc(sizeof(bmpref));
+  data->id=id;
+  data->prefidx=prefidx;
+  data->bitfield=bitfield;
+  data->val=val;
+  lives_idle_add(call_set_pref_bitmapped,(livespointer)data);
+  return TRUE;
+}
+
 
 
 boolean idle_set_if_mode(lives_interface_mode_t mode, ulong id) {

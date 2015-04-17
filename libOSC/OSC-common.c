@@ -1,5 +1,5 @@
 /*
-Copyright © 1998. The Regents of the University of California (Regents). 
+Copyright © 1998. The Regents of the University of California (Regents).
 All Rights Reserved.
 
 Written by Matt Wright, The Center for New Music and Audio Technologies,
@@ -22,7 +22,7 @@ PURPOSE. THE SOFTWARE AND ACCOMPANYING DOCUMENTATION, IF ANY, PROVIDED
 HEREUNDER IS PROVIDED "AS IS". REGENTS HAS NO OBLIGATION TO PROVIDE
 MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 
-The OpenSound Control WWW page is 
+The OpenSound Control WWW page is
     http://www.cnmat.berkeley.edu/OpenSoundControl
 */
 
@@ -55,29 +55,29 @@ The OpenSound Control WWW page is
 
 
 void fatal_error(char *s, ...) {
-    va_list ap;
-    fprintf(stderr, "Fatal error: ");
-    va_start(ap, s);
-    vfprintf(stderr, s, ap);
-    fprintf(stderr, "\n");
-    va_end(ap);
-    exit(-321);
+  va_list ap;
+  fprintf(stderr, "Fatal error: ");
+  va_start(ap, s);
+  vfprintf(stderr, s, ap);
+  fprintf(stderr, "\n");
+  va_end(ap);
+  exit(-321);
 }
 
 void OSCProblem(char *s, ...) {
-    va_list ap;
-    fprintf(stderr, "OSC Problem: ");
-    va_start(ap, s);
-    vfprintf(stderr, s, ap);
-    fprintf(stderr, "\n");
-    va_end(ap);
+  va_list ap;
+  fprintf(stderr, "OSC Problem: ");
+  va_start(ap, s);
+  vfprintf(stderr, s, ap);
+  fprintf(stderr, "\n");
+  va_end(ap);
 }
 
 void OSCWarning(char *s, ...) {
-    va_list ap;
-    fprintf(stderr, "OSC Warning: ");
-    va_start(ap, s);
-    vfprintf(stderr, s, ap);
-    fprintf(stderr, "\n");
-    va_end(ap);
+  va_list ap;
+  fprintf(stderr, "OSC Warning: ");
+  va_start(ap, s);
+  vfprintf(stderr, s, ap);
+  fprintf(stderr, "\n");
+  va_end(ap);
 }

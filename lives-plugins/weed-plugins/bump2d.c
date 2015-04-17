@@ -20,7 +20,7 @@
 ///////////////////////////////////////////////////////////////////
 
 static int num_versions=2; // number of different weed api versions supported
-static int api_versions[]={131,100}; // array of weed api versions supported in plugin, in order of preference (most preferred first)
+static int api_versions[]= {131,100}; // array of weed api versions supported in plugin, in order of preference (most preferred first)
 
 static int package_version=1; // version of this package
 
@@ -46,8 +46,7 @@ typedef struct {
   uint16_t sin_index2;
 } _sdata;
 
-typedef struct
-{
+typedef struct {
   short x, y;
 } BUMP;
 
@@ -62,17 +61,15 @@ static int Y_G[256];
 static int Y_B[256];
 
 
-static int myround(double n)
-{
-  if (n >= 0) 
+static int myround(double n) {
+  if (n >= 0)
     return (int)(n + 0.5);
   else
     return (int)(n - 0.5);
 }
 
 
-static void init_RGB_to_YCbCr_tables(void)
-{
+static void init_RGB_to_YCbCr_tables(void) {
   int i;
 
   /*
@@ -82,29 +79,29 @@ static void init_RGB_to_YCbCr_tables(void)
    * to one of each, add the following:
    *             + (fixed-pogint-factor / 2)         --- for rounding later
    *             + (Q-offset * fixed-pogint-factor)  --- to add the offset
-   *             
+   *
    */
   for (i = 0; i < 256; i++) {
-    Y_R[i] = myround(0.299 * (double)i 
-		     * 219.0 / 255.0 * (double)(1<<FP_BITS));
-    Y_G[i] = myround(0.587 * (double)i 
-		     * 219.0 / 255.0 * (double)(1<<FP_BITS));
-    Y_B[i] = myround((0.114 * (double)i 
-		      * 219.0 / 255.0 * (double)(1<<FP_BITS))
-		     + (double)(1<<(FP_BITS-1))
-		     + (16.0 * (double)(1<<FP_BITS)));
+    Y_R[i] = myround(0.299 * (double)i
+                     * 219.0 / 255.0 * (double)(1<<FP_BITS));
+    Y_G[i] = myround(0.587 * (double)i
+                     * 219.0 / 255.0 * (double)(1<<FP_BITS));
+    Y_B[i] = myround((0.114 * (double)i
+                      * 219.0 / 255.0 * (double)(1<<FP_BITS))
+                     + (double)(1<<(FP_BITS-1))
+                     + (16.0 * (double)(1<<FP_BITS)));
 
   }
 }
 
 
-static inline uint8_t 
-calc_luma (uint8_t *pixel) {
+static inline uint8_t
+calc_luma(uint8_t *pixel) {
   return (Y_R[pixel[2]] + Y_G[pixel[1]]+ Y_B[pixel[0]]) >> FP_BITS;
 }
 
 
-int bumpmap_init (weed_plant_t *inst) {
+int bumpmap_init(weed_plant_t *inst) {
   _sdata *sdata=(_sdata *)weed_malloc(sizeof(_sdata));
   if (sdata==NULL) return WEED_ERROR_MEMORY_ALLOCATION;
 
@@ -116,7 +113,7 @@ int bumpmap_init (weed_plant_t *inst) {
 }
 
 
-int bumpmap_deinit (weed_plant_t *inst) {
+int bumpmap_deinit(weed_plant_t *inst) {
   int error;
   _sdata *sdata=weed_get_voidptr_value(inst,"plugin_internal",&error);
   if (sdata!=NULL) {
@@ -128,9 +125,10 @@ int bumpmap_deinit (weed_plant_t *inst) {
 }
 
 
-int bumpmap_process (weed_plant_t *inst, weed_timecode_t timestamp) {
+int bumpmap_process(weed_plant_t *inst, weed_timecode_t timestamp) {
   int error;
-  weed_plant_t *in_channel=weed_get_plantptr_value(inst,"in_channels",&error),*out_channel=weed_get_plantptr_value(inst,"out_channels",&error);
+  weed_plant_t *in_channel=weed_get_plantptr_value(inst,"in_channels",&error),*out_channel=weed_get_plantptr_value(inst,"out_channels",
+                           &error);
   unsigned char *src=weed_get_voidptr_value(in_channel,"pixel_data",&error);
   unsigned char *dst=weed_get_voidptr_value(out_channel,"pixel_data",&error);
   int width=weed_get_int_value(in_channel,"width",&error);
@@ -156,13 +154,13 @@ int bumpmap_process (weed_plant_t *inst, weed_timecode_t timestamp) {
 
   lightx = aSin[sdata->sin_index];
   lighty = aSin[sdata->sin_index2];
-  
+
   weed_memset(dst,0,orowstride);
   s1 = dst + orowstride;
-  
+
   orowstride-=width3-3;
 
-  for (y = 1; y < height - 1; ++y) {    
+  for (y = 1; y < height - 1; ++y) {
     temp = lighty - y;
     weed_memset(s1,0,3);
     s1+=3;
@@ -170,16 +168,16 @@ int bumpmap_process (weed_plant_t *inst, weed_timecode_t timestamp) {
     for (x = 1; x < width - 1; x++) {
       normalx = bumpmap[x][y].x + lightx - x;
       normaly = bumpmap[x][y].y + temp;
-      
+
       if (normalx < 0)
-	normalx = 0;
+        normalx = 0;
       else if (normalx > 255)
-	normalx = 0;
+        normalx = 0;
       if (normaly < 0)
-	normaly = 0;
+        normaly = 0;
       else if (normaly > 255)
-	normaly = 0;	  
-      
+        normaly = 0;
+
       weed_memset(s1,reflectionmap[normalx][normaly],3);
       s1+=3;
     }
@@ -188,7 +186,7 @@ int bumpmap_process (weed_plant_t *inst, weed_timecode_t timestamp) {
   }
 
   weed_memset(s1,0,orowstride+width3-3);
-  
+
   sdata->sin_index += 3;
   sdata->sin_index &= 511;
   sdata->sin_index2 += 5;
@@ -198,48 +196,45 @@ int bumpmap_process (weed_plant_t *inst, weed_timecode_t timestamp) {
 }
 
 
-void bumpmap_x_init(void)
-{
+void bumpmap_x_init(void) {
   int i;
   short x, y;
   float rad;
-  
+
   /*create sin lookup table */
-  for (i = 0; i < 512; i++)
-    {
-      rad =  (float)i * 0.0174532 * 0.703125; 
-      aSin[i] = (short)((sin(rad) * 100.0) + 256.0);
-    }
-  
+  for (i = 0; i < 512; i++) {
+    rad = (float)i * 0.0174532 * 0.703125;
+    aSin[i] = (short)((sin(rad) * 100.0) + 256.0);
+  }
+
   /* create reflection map */
-  
-  for (x = 0; x < 256; ++x)
-    {
-      for (y = 0; y < 256; ++y)
-	{
-	  float X = (x - 128) / 128.0;
-	  float Y = (y - 128) / 128.0;
-	  float Z =  1.0 - sqrt(X * X + Y * Y);
-	  Z *= 255.0;
-	  if (Z < 0.0)
-	    Z = 0.0;
-	  reflectionmap[x][y] = Z;
-	}
+
+  for (x = 0; x < 256; ++x) {
+    for (y = 0; y < 256; ++y) {
+      float X = (x - 128) / 128.0;
+      float Y = (y - 128) / 128.0;
+      float Z =  1.0 - sqrt(X * X + Y * Y);
+      Z *= 255.0;
+      if (Z < 0.0)
+        Z = 0.0;
+      reflectionmap[x][y] = Z;
     }
-  
+  }
+
 }
 
 
-weed_plant_t *weed_setup (weed_bootstrap_f weed_boot) {
+weed_plant_t *weed_setup(weed_bootstrap_f weed_boot) {
   weed_plant_t *plugin_info=weed_plugin_info_init(weed_boot,num_versions,api_versions);
   if (plugin_info!=NULL) {
-    int palette_list[]={WEED_PALETTE_BGR24,WEED_PALETTE_RGB24,WEED_PALETTE_END};
+    int palette_list[]= {WEED_PALETTE_BGR24,WEED_PALETTE_RGB24,WEED_PALETTE_END};
 
-    weed_plant_t *in_chantmpls[]={weed_channel_template_init("in channel 0",0,palette_list),NULL};
-    weed_plant_t *out_chantmpls[]={weed_channel_template_init("out channel 0",WEED_CHANNEL_CAN_DO_INPLACE,palette_list),NULL};
-    weed_plant_t *filter_class=weed_filter_class_init("bumpmap","salsaman",1,0,&bumpmap_init,&bumpmap_process,&bumpmap_deinit,in_chantmpls,out_chantmpls,NULL,NULL);
+    weed_plant_t *in_chantmpls[]= {weed_channel_template_init("in channel 0",0,palette_list),NULL};
+    weed_plant_t *out_chantmpls[]= {weed_channel_template_init("out channel 0",WEED_CHANNEL_CAN_DO_INPLACE,palette_list),NULL};
+    weed_plant_t *filter_class=weed_filter_class_init("bumpmap","salsaman",1,0,&bumpmap_init,&bumpmap_process,&bumpmap_deinit,in_chantmpls,
+                               out_chantmpls,NULL,NULL);
 
-    weed_plugin_info_add_filter_class (plugin_info,filter_class);
+    weed_plugin_info_add_filter_class(plugin_info,filter_class);
 
     weed_set_int_value(plugin_info,"version",package_version);
 

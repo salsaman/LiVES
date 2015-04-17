@@ -94,18 +94,18 @@ static pthread_mutex_t indices_mutex;
 ////////////////////////////////////////////////////////////////////////////
 
 static double lives_int2dbl(int64_t v) {
-    if((uint64_t)v+v > 0xFFEULL<<52)
-        return NAN;
-    return ldexp(((v&((1LL<<52)-1)) + (1LL<<52)) * (v>>63|1), (v>>52&0x7FF)-1075);
+  if ((uint64_t)v+v > 0xFFEULL<<52)
+    return NAN;
+  return ldexp(((v&((1LL<<52)-1)) + (1LL<<52)) * (v>>63|1), (v>>52&0x7FF)-1075);
 }
 
 static float lives_int2flt(int32_t v) {
-    if((uint32_t)v+v > 0xFF000000U)
-        return NAN;
-    return ldexp(((v&0x7FFFFF) + (1<<23)) * (v>>31|1), (v>>23&0xFF)-150);
+  if ((uint32_t)v+v > 0xFF000000U)
+    return NAN;
+  return ldexp(((v&0x7FFFFF) + (1<<23)) * (v>>31|1), (v>>23&0xFF)-150);
 }
 
-const uint8_t ff_log2_tab[256]={
+const uint8_t ff_log2_tab[256]= {
   0,0,1,1,2,2,2,2,3,3,3,3,3,3,3,3,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,
   5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,
   6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,
@@ -117,18 +117,17 @@ const uint8_t ff_log2_tab[256]={
 };
 
 
-static enum CodecID ff_codec_get_id(const AVCodecTag *tags, unsigned int tag)
-{
+static enum CodecID ff_codec_get_id(const AVCodecTag *tags, unsigned int tag) {
   int i;
-  for(i=0; tags[i].id != CODEC_ID_NONE;i++) {
-    if(tag == tags[i].tag)
+  for (i=0; tags[i].id != CODEC_ID_NONE; i++) {
+    if (tag == tags[i].tag)
       return tags[i].id;
   }
-  for(i=0; tags[i].id != CODEC_ID_NONE; i++) {
-    if(   toupper((tag >> 0)&0xFF) == toupper((tags[i].tag >> 0)&0xFF)
-	  && toupper((tag >> 8)&0xFF) == toupper((tags[i].tag >> 8)&0xFF)
-	  && toupper((tag >>16)&0xFF) == toupper((tags[i].tag >>16)&0xFF)
-	  && toupper((tag >>24)&0xFF) == toupper((tags[i].tag >>24)&0xFF))
+  for (i=0; tags[i].id != CODEC_ID_NONE; i++) {
+    if (toupper((tag >> 0)&0xFF) == toupper((tags[i].tag >> 0)&0xFF)
+        && toupper((tag >> 8)&0xFF) == toupper((tags[i].tag >> 8)&0xFF)
+        && toupper((tag >>16)&0xFF) == toupper((tags[i].tag >>16)&0xFF)
+        && toupper((tag >>24)&0xFF) == toupper((tags[i].tag >>24)&0xFF))
       return tags[i].id;
   }
   return CODEC_ID_NONE;
@@ -148,16 +147,16 @@ static const char *matroska_doctypes[] = { "matroska", "webm" };
 static void lives_dynarray_add(void *tab_ptr, int *nb_ptr, void *elem) {
   int nb, nb_alloc;
   intptr_t *tab;
-  
+
   nb = *nb_ptr;
-  tab = *(intptr_t**)tab_ptr;
+  tab = *(intptr_t **)tab_ptr;
   if ((nb & (nb - 1)) == 0) {
     if (nb == 0)
       nb_alloc = 1;
     else
       nb_alloc = nb * 2;
     tab = av_realloc(tab, nb_alloc * sizeof(intptr_t));
-    *(intptr_t**)tab_ptr = tab;
+    *(intptr_t **)tab_ptr = tab;
   }
   tab[nb++] = (intptr_t)elem;
   *nb_ptr = nb;
@@ -197,7 +196,7 @@ static int ebml_level_end(const lives_clip_data_t *cdata) {
  * number.
  * Returns: number of bytes read, < 0 on error
  */
-static int ebml_read_num(const lives_clip_data_t *cdata, uint8_t * data,
+static int ebml_read_num(const lives_clip_data_t *cdata, uint8_t *data,
                          int max_size, uint64_t *number) {
   lives_mkv_priv_t *priv=cdata->priv;
 
@@ -209,20 +208,19 @@ static int ebml_read_num(const lives_clip_data_t *cdata, uint8_t * data,
   /* The first byte tells us the length in bytes - avio_r8() can normally
    * return 0, but since that's not a valid first ebmlID byte, we can
    * use it safely here to catch EOS. */
-  
+
   if (data==NULL) {
-    if (read (priv->fd, buffer, 1) < 1) {
+    if (read(priv->fd, buffer, 1) < 1) {
       if (!priv->expect_eof)
-	fprintf(stderr, "mkv_decoder: error in stream header for %s\n",cdata->URI);
+        fprintf(stderr, "mkv_decoder: error in stream header for %s\n",cdata->URI);
       got_eof=TRUE;
       return 0;
     }
-  
+
     priv->input_position+=1;
-  
+
     total=*buffer;
-  }
-  else {
+  } else {
     total=data[0];
   }
 
@@ -231,12 +229,12 @@ static int ebml_read_num(const lives_clip_data_t *cdata, uint8_t * data,
   bread = 8 - ff_log2_tab[total];
 
   if (bread > max_size) {
-    fprintf(stderr,    
-	    "mkv_decoder: Invalid EBML number\n");
+    fprintf(stderr,
+            "mkv_decoder: Invalid EBML number\n");
     errval=-1;
     return 0;
   }
-  
+
   /* read out length */
   total ^= 1 << ff_log2_tab[total];
 
@@ -244,18 +242,17 @@ static int ebml_read_num(const lives_clip_data_t *cdata, uint8_t * data,
   while (n++ < bread) {
 
     if (data==NULL) {
-      if (read (priv->fd, buffer, 1) < 1) {
-	if (!priv->expect_eof)
-	  fprintf(stderr, "mkv_decoder: error in stream header for %s\n",cdata->URI);
-	got_eof=TRUE;
-	return 0;
+      if (read(priv->fd, buffer, 1) < 1) {
+        if (!priv->expect_eof)
+          fprintf(stderr, "mkv_decoder: error in stream header for %s\n",cdata->URI);
+        got_eof=TRUE;
+        return 0;
       }
-      
+
       priv->input_position+=1;
-      
+
       val8=(uint8_t)*buffer;
-    }
-    else {
+    } else {
       val8=data[n-1];
     }
 
@@ -297,20 +294,20 @@ static int ebml_read_uint(const lives_clip_data_t *cdata, int size, uint64_t *nu
   /* big-endian ordering; build up number */
   *num = 0;
   while (n++ < size) {
-    if (read (priv->fd, buffer, 1) < 1) {
+    if (read(priv->fd, buffer, 1) < 1) {
       if (!priv->expect_eof)
-	fprintf(stderr, "mkv_decoder: error in stream header for %s\n",cdata->URI);
+        fprintf(stderr, "mkv_decoder: error in stream header for %s\n",cdata->URI);
       got_eof=TRUE;
       return -ERR_EOF;
     }
-    
+
     priv->input_position+=1;
-    
+
     val8=(uint8_t)*buffer;
-    
+
     *num = (*num << 8) | val8;
   }
-  
+
   return 0;
 }
 
@@ -327,10 +324,10 @@ static int ebml_read_float(const lives_clip_data_t *cdata, int size, double *num
   if (size == 0) {
     *num = 0;
   } else if (size == 4) {
-    
+
     if (read(priv->fd,buffer,4)<4) {
       if (!priv->expect_eof)
-	fprintf(stderr, "mkv_decoder: read error in %s\n",cdata->URI);
+        fprintf(stderr, "mkv_decoder: read error in %s\n",cdata->URI);
       got_eof=TRUE;
       return -ERR_EOF;
     }
@@ -341,11 +338,11 @@ static int ebml_read_float(const lives_clip_data_t *cdata, int size, double *num
 
     *num= lives_int2flt(val32);
 
-  } else if(size==8){
+  } else if (size==8) {
 
     if (read(priv->fd,buffer,8)<8) {
       if (!priv->expect_eof)
-	fprintf(stderr, "mkv_decoder: read error in %s\n",cdata->URI);
+        fprintf(stderr, "mkv_decoder: read error in %s\n",cdata->URI);
       got_eof=TRUE;
       return -ERR_EOF;
     }
@@ -359,7 +356,7 @@ static int ebml_read_float(const lives_clip_data_t *cdata, int size, double *num
     errval=ERR_INVALID_DATA;
     return -errval;
   }
-  
+
   return 0;
 }
 
@@ -378,14 +375,14 @@ static int ebml_read_ascii(const lives_clip_data_t *cdata, int size, char **str)
     return -errval;
   }
 
-  if (read (priv->fd, (uint8_t *) *str, size) < size) {
+  if (read(priv->fd, (uint8_t *) *str, size) < size) {
     if (!priv->expect_eof)
       fprintf(stderr, "mkv_decoder: error in stream header for %s\n",cdata->URI);
     av_freep(str);
     got_eof=TRUE;
     return -ERR_EOF;
   }
-  
+
   priv->input_position+=size;
 
   (*str)[size] = '\0';
@@ -406,11 +403,11 @@ static int ebml_read_binary(const lives_clip_data_t *cdata, int length, EbmlBin 
     errval=ERR_NOMEM;
     return -errval;
   }
-  
+
   bin->size = length;
   bin->pos  = priv->input_position;
-  
-  if (read (priv->fd, bin->data, length) < length) {
+
+  if (read(priv->fd, bin->data, length) < length) {
     if (!priv->expect_eof)
       fprintf(stderr, "mkv_decoder: error in stream header for %s\n",cdata->URI);
     av_freep(&bin->data);
@@ -419,7 +416,7 @@ static int ebml_read_binary(const lives_clip_data_t *cdata, int length, EbmlBin 
   }
 
   priv->input_position+=length;
-  
+
   return 0;
 }
 
@@ -431,20 +428,20 @@ static int ebml_read_binary(const lives_clip_data_t *cdata, int length, EbmlBin 
 static int ebml_read_master(const lives_clip_data_t *cdata, uint64_t length) {
   lives_mkv_priv_t *priv=cdata->priv;
   MatroskaDemuxContext *matroska=&priv->matroska;
-  
+
   MatroskaLevel *level;
-  
+
   if (matroska->num_levels >= EBML_MAX_DEPTH) {
     //av_log(matroska->ctx, AV_LOG_ERROR,
     //       "File moves beyond max. allowed depth (%d)\n", EBML_MAX_DEPTH);
     errval=ERR_MAX_DEPTH;
     return -errval;
   }
-  
+
   level = &matroska->levels[matroska->num_levels++];
   level->start = priv->input_position;
   level->length = length;
-  
+
   return 0;
 }
 
@@ -464,20 +461,19 @@ static int matroska_ebmlnum_sint(const lives_clip_data_t *cdata,
                                  uint8_t *data, uint32_t size, int64_t *num) {
   uint64_t unum;
   int res;
-  
+
   /* read as unsigned number first */
   if ((res = matroska_ebmlnum_uint(cdata, data, size, &unum)) < 0)
     return res;
-  
+
   /* make signed (weird way) */
   *num = unum - ((1LL << (7*res - 1)) - 1);
-  
+
   return res;
 }
 
 static int ebml_parse_id(const lives_clip_data_t *cdata, EbmlSyntax *syntax,
-                         uint32_t id, void *data)
-{
+                         uint32_t id, void *data) {
   lives_mkv_priv_t *priv=cdata->priv;
   MatroskaDemuxContext *matroska=&priv->matroska;
   int reso;
@@ -500,19 +496,18 @@ static int ebml_parse_id(const lives_clip_data_t *cdata, EbmlSyntax *syntax,
 }
 
 static int ebml_parse(const lives_clip_data_t *cdata, EbmlSyntax *syntax,
-                      void *data)
-{
+                      void *data) {
   int res;
   lives_mkv_priv_t *priv=cdata->priv;
   MatroskaDemuxContext *matroska=&priv->matroska;
   if (!matroska->current_id) {
     uint64_t id;
-    
+
     int res = ebml_read_num(cdata, NULL, 4, &id);
 
     if (res < 0)
       return res;
-    
+
     matroska->current_id = id | 1 << 7*res;
 
     if (matroska->current_id!=163) {
@@ -521,13 +516,12 @@ static int ebml_parse(const lives_clip_data_t *cdata, EbmlSyntax *syntax,
 
   }
   res=ebml_parse_id(cdata, syntax, matroska->current_id, data);
-  
+
   return res;
 }
 
 static int ebml_parse_nest(const lives_clip_data_t *cdata, EbmlSyntax *syntax,
-                           void *data)
-{
+                           void *data) {
   int i, res = 0;
 
   for (i=0; syntax[i].id; i++)
@@ -536,11 +530,11 @@ static int ebml_parse_nest(const lives_clip_data_t *cdata, EbmlSyntax *syntax,
       *(uint64_t *)((char *)data+syntax[i].data_offset) = syntax[i].def.u;
       break;
     case EBML_FLOAT:
-      *(double   *)((char *)data+syntax[i].data_offset) = syntax[i].def.f;
+      *(double *)((char *)data+syntax[i].data_offset) = syntax[i].def.f;
       break;
     case EBML_STR:
     case EBML_UTF8:
-      *(char    **)((char *)data+syntax[i].data_offset) = av_strdup(syntax[i].def.s);
+      *(char **)((char *)data+syntax[i].data_offset) = av_strdup(syntax[i].def.s);
       break;
     default:
       break;
@@ -552,8 +546,7 @@ static int ebml_parse_nest(const lives_clip_data_t *cdata, EbmlSyntax *syntax,
   return res;
 }
 
-static int ebml_parse_elem(const lives_clip_data_t *cdata, EbmlSyntax *syntax, void *data)
-{
+static int ebml_parse_elem(const lives_clip_data_t *cdata, EbmlSyntax *syntax, void *data) {
   lives_mkv_priv_t *priv=cdata->priv;
   MatroskaDemuxContext *matroska=&priv->matroska;
 
@@ -583,7 +576,7 @@ static int ebml_parse_elem(const lives_clip_data_t *cdata, EbmlSyntax *syntax, v
       return -errval;
     }
     list->elem = newelem;
-    data = (char*)list->elem + list->nb_elem*syntax->list_elem_size;
+    data = (char *)list->elem + list->nb_elem*syntax->list_elem_size;
     memset(data, 0, syntax->list_elem_size);
     list->nb_elem++;
   }
@@ -599,19 +592,30 @@ static int ebml_parse_elem(const lives_clip_data_t *cdata, EbmlSyntax *syntax, v
   }
 
   switch (syntax->type) {
-  case EBML_UINT:  res = ebml_read_uint  (cdata, length, data);  break;
-  case EBML_FLOAT: res = ebml_read_float (cdata, length, data);  break;
+  case EBML_UINT:
+    res = ebml_read_uint(cdata, length, data);
+    break;
+  case EBML_FLOAT:
+    res = ebml_read_float(cdata, length, data);
+    break;
   case EBML_STR:
-  case EBML_UTF8:  res = ebml_read_ascii (cdata, length, data);  break;
-  case EBML_BIN:   res = ebml_read_binary(cdata, length, data);  break;
-  case EBML_NEST:  if ((res=ebml_read_master(cdata, length)) < 0)
+  case EBML_UTF8:
+    res = ebml_read_ascii(cdata, length, data);
+    break;
+  case EBML_BIN:
+    res = ebml_read_binary(cdata, length, data);
+    break;
+  case EBML_NEST:
+    if ((res=ebml_read_master(cdata, length)) < 0)
       return res;
     if (id == MATROSKA_ID_SEGMENT)
       matroska->segment_start = priv->input_position;
     return ebml_parse_nest(cdata, syntax->def.n, data);
-  case EBML_PASS:  return ebml_parse_id(cdata, syntax->def.n, id, data);
-  case EBML_STOP:  return 1;
-  default:        
+  case EBML_PASS:
+    return ebml_parse_id(cdata, syntax->def.n, id, data);
+  case EBML_STOP:
+    return 1;
+  default:
     // skip length bytes
     priv->input_position+=length;
     lseek(priv->fd, priv->input_position, SEEK_SET);
@@ -628,25 +632,29 @@ static int ebml_parse_elem(const lives_clip_data_t *cdata, EbmlSyntax *syntax, v
 }
 
 
-static void ebml_free(EbmlSyntax *syntax, void *data)
-{
+static void ebml_free(EbmlSyntax *syntax, void *data) {
   int i, j;
   for (i=0; syntax[i].id; i++) {
     void *data_off = (char *)data + syntax[i].data_offset;
     switch (syntax[i].type) {
     case EBML_STR:
-    case EBML_UTF8: av_freep(data_off);                      break;
-    case EBML_BIN:  av_freep(&((EbmlBin *)data_off)->data);  break;
+    case EBML_UTF8:
+      av_freep(data_off);
+      break;
+    case EBML_BIN:
+      av_freep(&((EbmlBin *)data_off)->data);
+      break;
     case EBML_NEST:
       if (syntax[i].list_elem_size) {
-	EbmlList *list = data_off;
-	char *ptr = list->elem;
-	for (j=0; j<list->nb_elem; j++, ptr+=syntax[i].list_elem_size)
-	  ebml_free(syntax[i].def.n, ptr);
-	free(list->elem);
+        EbmlList *list = data_off;
+        char *ptr = list->elem;
+        for (j=0; j<list->nb_elem; j++, ptr+=syntax[i].list_elem_size)
+          ebml_free(syntax[i].def.n, ptr);
+        free(list->elem);
       } else
-	ebml_free(syntax[i].def.n, data_off);
-    default:  break;
+        ebml_free(syntax[i].def.n, data_off);
+    default:
+      break;
     }
   }
 }
@@ -677,54 +685,54 @@ static boolean lives_mkv_probe(const lives_clip_data_t *cdata, unsigned char *p)
   uint64_t total = 0;
   int len_mask = 0x80, size = 1, n = 1, i;
   unsigned char nextbytes[1024];
-  
+
   /* EBML header? */
   if (AV_RB32(p) != EBML_ID_HEADER) {
     return FALSE;
   }
-  
+
   /* length of header */
   total = p[4];
-  
+
   while (size <= 8 && !(total & len_mask)) {
     size++;
     len_mask >>= 1;
   }
-  
+
   total &= (len_mask - 1);
-  
+
   while (n < size) {
     if (read(priv->fd,nextbytes,1)!=1) {
       return FALSE;
-      
+
     }
     total = (total << 8) | nextbytes[0]; // nextbyte is after p[4]
     n++;
     priv->input_position++;
   }
-  
+
   // read "total" bytes
-  
+
   if (read(priv->fd,nextbytes,total)!=total) {
     return FALSE;
   }
-  
+
   priv->input_position+=total;
-  
+
   /* The header should contain a known document type. For now,
    * we don't parse the whole header but simply check for the
    * availability of that array of characters inside the header.
    * Not fully fool-proof, but good enough. */
-  
+
   for (i = 0; i < 2; i++) {
     int probelen = strlen(matroska_doctypes[i]);
     if (total < probelen)
       continue;
     for (n = 0; n <= total-probelen; n++)
       if (!memcmp(nextbytes + n, matroska_doctypes[i], probelen))
-	return TRUE;
+        return TRUE;
   }
-  
+
   // probably valid EBML header but no recognized doctype
   return FALSE;
 }
@@ -732,13 +740,12 @@ static boolean lives_mkv_probe(const lives_clip_data_t *cdata, unsigned char *p)
 
 
 static MatroskaTrack *matroska_find_track_by_num(MatroskaDemuxContext *matroska,
-                                                 int num)
-{
+    int num) {
   MatroskaTrack *tracks = matroska->tracks.elem;
   int i;
 
   for (i=0; i < matroska->tracks.nb_elem; i++) {
-    if (tracks[i].num == num) 
+    if (tracks[i].num == num)
       return &tracks[i];
   }
   //av_log(matroska->ctx, AV_LOG_ERROR, "Invalid track number %d\n", num);
@@ -748,13 +755,12 @@ static MatroskaTrack *matroska_find_track_by_num(MatroskaDemuxContext *matroska,
 
 
 
-static int matroska_decode_buffer(uint8_t** buf, int* buf_size,
-                                  MatroskaTrack *track)
-{
+static int matroska_decode_buffer(uint8_t **buf, int *buf_size,
+                                  MatroskaTrack *track) {
   MatroskaTrackEncoding *encodings = track->encodings.elem;
-  uint8_t* data = *buf;
+  uint8_t *data = *buf;
   int isize = *buf_size;
-  uint8_t* pkt_data = NULL;
+  uint8_t *pkt_data = NULL;
   int pkt_size = isize;
   int result = 0;
   int olen;
@@ -786,16 +792,16 @@ static int matroska_decode_buffer(uint8_t** buf, int* buf_size,
       pkt_size *= 3;
       newpktdata = av_realloc(pkt_data, pkt_size);
       if (!newpktdata) {
-	inflateEnd(&zstream);
-	goto failed;
+        inflateEnd(&zstream);
+        goto failed;
       }
       pkt_data = newpktdata;
       zstream.avail_out = pkt_size - zstream.total_out;
       zstream.next_out = pkt_data + zstream.total_out;
       if (pkt_data) {
-	result = inflate(&zstream, Z_NO_FLUSH);
+        result = inflate(&zstream, Z_NO_FLUSH);
       } else
-	result = Z_MEM_ERROR;
+        result = Z_MEM_ERROR;
     } while (result==Z_OK && pkt_size<10000000);
     pkt_size = zstream.total_out;
     inflateEnd(&zstream);
@@ -815,16 +821,16 @@ static int matroska_decode_buffer(uint8_t** buf, int* buf_size,
       pkt_size *= 3;
       newpktdata = av_realloc(pkt_data, pkt_size);
       if (!newpktdata) {
-	BZ2_bzDecompressEnd(&bzstream);
-	goto failed;
+        BZ2_bzDecompressEnd(&bzstream);
+        goto failed;
       }
       pkt_data = newpktdata;
       bzstream.avail_out = pkt_size - bzstream.total_out_lo32;
       bzstream.next_out = pkt_data + bzstream.total_out_lo32;
       if (pkt_data) {
-	result = BZ2_bzDecompress(&bzstream);
+        result = BZ2_bzDecompress(&bzstream);
       } else
-	result = BZ_MEM_ERROR;
+        result = BZ_MEM_ERROR;
     } while (result==BZ_OK && pkt_size<10000000);
     pkt_size = bzstream.total_out_lo32;
     BZ2_bzDecompressEnd(&bzstream);
@@ -840,7 +846,7 @@ static int matroska_decode_buffer(uint8_t** buf, int* buf_size,
   *buf = pkt_data;
   *buf_size = pkt_size;
   return 0;
- failed:
+failed:
   av_free(pkt_data);
   return -1;
 }
@@ -849,8 +855,7 @@ static int matroska_decode_buffer(uint8_t** buf, int* buf_size,
 
 
 static void matroska_fix_ass_packet(MatroskaDemuxContext *matroska,
-                                    AVPacket *pkt, uint64_t display_duration)
-{
+                                    AVPacket *pkt, uint64_t display_duration) {
   char *line;
   unsigned char *layer;
   unsigned char *ptr = pkt->data;
@@ -865,26 +870,31 @@ static void matroska_fix_ass_packet(MatroskaDemuxContext *matroska,
     int sc = matroska->time_scale * pkt->pts / 10000000;
     int ec = matroska->time_scale * end_pts  / 10000000;
     int sh, sm, ss, eh, em, es, len;
-    sh = sc/360000;  sc -= 360000*sh;
-    sm = sc/  6000;  sc -=   6000*sm;
-    ss = sc/   100;  sc -=    100*ss;
-    eh = ec/360000;  ec -= 360000*eh;
-    em = ec/  6000;  ec -=   6000*em;
-    es = ec/   100;  ec -=    100*es;
+    sh = sc/360000;
+    sc -= 360000*sh;
+    sm = sc/  6000;
+    sc -=   6000*sm;
+    ss = sc/   100;
+    sc -=    100*ss;
+    eh = ec/360000;
+    ec -= 360000*eh;
+    em = ec/  6000;
+    ec -=   6000*em;
+    es = ec/   100;
+    ec -=    100*es;
     *ptr++ = '\0';
     len = 50 + end-ptr + FF_INPUT_BUFFER_PADDING_SIZE;
     if (!(line = malloc(len)))
       return;
     snprintf(line,len,"Dialogue: %s,%d:%02d:%02d.%02d,%d:%02d:%02d.%02d,%s\r\n",
-	     layer, sh, sm, ss, sc, eh, em, es, ec, ptr);
+             layer, sh, sm, ss, sc, eh, em, es, ec, ptr);
     av_free(pkt->data);
     pkt->data = (unsigned char *)line;
     pkt->size = strlen(line);
   }
 }
 
-static int matroska_merge_packets(AVPacket *out, AVPacket *in)
-{
+static int matroska_merge_packets(AVPacket *out, AVPacket *in) {
   void *newdata = av_realloc(out->data, out->size+in->size);
   if (!newdata)
     return AVERROR(ENOMEM);
@@ -909,7 +919,7 @@ static int matroska_parse_seekhead_entry(const lives_clip_data_t *cdata, int idx
   MatroskaLevel level;
   int64_t offset;
   int ret = 0;
-  
+
   if (idx >= seekhead_list->nb_elem
       || seekhead[idx].id == MATROSKA_ID_SEEKHEAD
       || seekhead[idx].id == MATROSKA_ID_CLUSTER)
@@ -925,7 +935,7 @@ static int matroska_parse_seekhead_entry(const lives_clip_data_t *cdata, int idx
 
   priv->input_position=offset;
   lseek(priv->fd,priv->input_position,SEEK_SET);
-  
+
   /* We don't want to lose our seekhead level, so we add
    * a dummy. This is a crude hack. */
   if (matroska->num_levels == EBML_MAX_DEPTH) {
@@ -938,24 +948,24 @@ static int matroska_parse_seekhead_entry(const lives_clip_data_t *cdata, int idx
     matroska->levels[matroska->num_levels] = level;
     matroska->num_levels++;
     matroska->current_id = 0;
-    
+
     ret = ebml_parse(cdata, matroska_segment, matroska);
-    
+
     /* remove dummy level */
     while (matroska->num_levels) {
       uint64_t length = matroska->levels[--matroska->num_levels].length;
       if (length == (uint64_t)-1)
-	break;
+        break;
     }
   }
 
   /* seek back */
   priv->input_position=before_pos;
   lseek(priv->fd, priv->input_position, SEEK_SET);
-  
+
   matroska->level_up = level_up;
   matroska->current_id = saved_id;
-  
+
   return ret;
 }
 
@@ -987,10 +997,10 @@ static void matroska_add_index_entries(const lives_clip_data_t *cdata) {
     for (j = 0; j < pos_list->nb_elem; j++) {
       MatroskaTrack *track = matroska_find_track_by_num(matroska, pos[j].track);
       if (track && track->stream && track->stream==priv->vidst) {
-	pthread_mutex_lock(&priv->idxc->mutex);
-	lives_add_idx(cdata, pos[j].pos + matroska->segment_start, (uint32_t)(index[i].time/index_scale));
-	pthread_mutex_unlock(&priv->idxc->mutex);
-	//printf("ADD INDEX %ld %ld\n", pos[j].pos + matroska->segment_start, index[i].time/index_scale);
+        pthread_mutex_lock(&priv->idxc->mutex);
+        lives_add_idx(cdata, pos[j].pos + matroska->segment_start, (uint32_t)(index[i].time/index_scale));
+        pthread_mutex_unlock(&priv->idxc->mutex);
+        //printf("ADD INDEX %ld %ld\n", pos[j].pos + matroska->segment_start, index[i].time/index_scale);
       }
     }
   }
@@ -1004,12 +1014,12 @@ static void matroska_parse_cues(const lives_clip_data_t *cdata) {
   EbmlList *seekhead_list = &matroska->seekhead;
   MatroskaSeekhead *seekhead = seekhead_list->elem;
   int i;
-  
+
   for (i = 0; i < seekhead_list->nb_elem; i++)
     if (seekhead[i].id == MATROSKA_ID_CUES)
       break;
   //assert(i <= seekhead_list->nb_elem);
-  
+
   matroska_parse_seekhead_entry(cdata, i);
   matroska_add_index_entries(cdata);
 }
@@ -1024,7 +1034,7 @@ static void matroska_execute_seekhead(const lives_clip_data_t *cdata) {
   MatroskaSeekhead *seekhead = seekhead_list->elem;
   int64_t before_pos = priv->data_start;
   int i;
-  
+
   /*  // we should not do any seeking in the streaming case
       if (!matroska->ctx->pb->seekable ||
       (matroska->ctx->flags & AVFMT_FLAG_IGNIDX))
@@ -1110,11 +1120,11 @@ static int get_last_video_dts(lives_clip_data_t *cdata) {
     }
 
 #if LIBAVCODEC_VERSION_MAJOR >= 52
-    avcodec_decode_video2(priv->ctx, priv->picture, &got_picture, &priv->avpkt );
-#else 
-    avcodec_decode_video(priv->ctx, priv->picture, &got_picture, priv->avpkt.data, priv->avpkt.size );
+    avcodec_decode_video2(priv->ctx, priv->picture, &got_picture, &priv->avpkt);
+#else
+    avcodec_decode_video(priv->ctx, priv->picture, &got_picture, priv->avpkt.data, priv->avpkt.size);
 #endif
-  
+
     if (got_picture) {
       frames++;
     }
@@ -1182,11 +1192,11 @@ static uint32_t calc_dts_delta(const lives_clip_data_t *cdata) {
     if (priv->avpkt.pos>=idx->offs) break;
 
 #if LIBAVCODEC_VERSION_MAJOR >= 52
-    avcodec_decode_video2(priv->ctx, priv->picture, &got_picture, &priv->avpkt );
-#else 
-    avcodec_decode_video(priv->ctx, priv->picture, &got_picture, priv->avpkt.data, priv->avpkt.size );
+    avcodec_decode_video2(priv->ctx, priv->picture, &got_picture, &priv->avpkt);
+#else
+    avcodec_decode_video(priv->ctx, priv->picture, &got_picture, priv->avpkt.data, priv->avpkt.size);
 #endif
-  
+
     if (got_picture) {
       frames++;
     }
@@ -1227,12 +1237,12 @@ static void index_free(index_entry *idx) {
 
 static index_entry *index_walk(index_entry *idx, uint32_t pts) {
   index_entry *xidx=idx;
-  while(xidx!=NULL) {
+  while (xidx!=NULL) {
     if (xidx->next==NULL || (pts>=xidx->dts && pts<xidx->next->dts)) return xidx;
     xidx=xidx->next;
   }
   /// oops. something went wrong
-  return NULL; 
+  return NULL;
 }
 
 
@@ -1311,16 +1321,16 @@ static int lives_mkv_read_header(lives_clip_data_t *cdata) {
       || ebml.version > EBML_VERSION       || ebml.max_size > sizeof(uint64_t)
       || ebml.id_length > sizeof(uint32_t) || ebml.doctype_version > 3) {
     printf(
-	   "EBML %d header using unsupported features\n"
-	   "(EBML version %"PRIu64", doctype %s, doc version %"PRIu64")\n", res,
-	   ebml.version, ebml.doctype, ebml.doctype_version);
+      "EBML %d header using unsupported features\n"
+      "(EBML version %"PRIu64", doctype %s, doc version %"PRIu64")\n", res,
+      ebml.version, ebml.doctype, ebml.doctype_version);
     ebml_free(ebml_syntax, &ebml);
     return -19;// AVERROR_PATCHWELCOME;
   } else if (ebml.doctype_version == 3) {
     /*        av_log(matroska->ctx, AV_LOG_WARNING,
-	      "EBML header using unsupported features\n"
-	      "(EBML version %"PRIu64", doctype %s, doc version %"PRIu64")\n",
-	      ebml.version, ebml.doctype, ebml.doctype_version);*/
+        "EBML header using unsupported features\n"
+        "(EBML version %"PRIu64", doctype %s, doc version %"PRIu64")\n",
+        ebml.version, ebml.doctype, ebml.doctype_version);*/
   }
 
   for (i = 0; i < FF_ARRAY_ELEMS(matroska_doctypes); i++)
@@ -1346,7 +1356,7 @@ static int lives_mkv_read_header(lives_clip_data_t *cdata) {
     matroska->time_scale = 1000000;
   if (matroska->duration)
     matroska->ctx->duration = matroska->duration * matroska->time_scale
-      * 1000 / AV_TIME_BASE;
+                              * 1000 / AV_TIME_BASE;
   av_dict_set(&s->metadata, "title", matroska->title, 0);
 
   tracks = matroska->tracks.elem;
@@ -1364,8 +1374,8 @@ static int lives_mkv_read_header(lives_clip_data_t *cdata) {
 
     /* Apply some sanity checks. */
     if (track->type != MATROSKA_TRACK_TYPE_VIDEO &&
-	track->type != MATROSKA_TRACK_TYPE_AUDIO &&
-	track->type != MATROSKA_TRACK_TYPE_SUBTITLE) {
+        track->type != MATROSKA_TRACK_TYPE_AUDIO &&
+        track->type != MATROSKA_TRACK_TYPE_SUBTITLE) {
       continue;
     }
     if (track->codec_id == NULL)
@@ -1375,9 +1385,9 @@ static int lives_mkv_read_header(lives_clip_data_t *cdata) {
 
       if (priv->has_video) {
 #ifdef DEBUG
-	fprintf(stderr,"mkv_decoder: duplicate video streams found\n");
+        fprintf(stderr,"mkv_decoder: duplicate video streams found\n");
 #endif
-	//continue;
+        //continue;
       }
 
       priv->vididx=i;
@@ -1385,28 +1395,29 @@ static int lives_mkv_read_header(lives_clip_data_t *cdata) {
       priv->has_video=TRUE;
 
       if (!track->default_duration)
-	track->default_duration = 1000000000/track->video.frame_rate;
+        track->default_duration = 1000000000/track->video.frame_rate;
 
       if (cdata->fps==0.) cdata->fps=track->video.frame_rate;
 
       if (!track->video.display_width)
-	track->video.display_width = track->video.pixel_width;
+        track->video.display_width = track->video.pixel_width;
 
       cdata->width=track->video.pixel_width;
 
       if (!track->video.display_height)
-	track->video.display_height = track->video.pixel_height;
-      
+        track->video.display_height = track->video.pixel_height;
+
       cdata->height=track->video.pixel_height;
 
       if (track->video.color_space.size == 4)
-	fourcc = AV_RL32(track->video.color_space.data);
+        fourcc = AV_RL32(track->video.color_space.data);
 
       cdata->frame_width=track->video.display_width;
       cdata->frame_height=track->video.display_height;
 
       if (cdata->width!=cdata->frame_width||cdata->height!=cdata->frame_height)
-	fprintf(stderr,"mkv_decoder: info frame size=%d x %d, pixel size=%d x %d\n",cdata->frame_width,cdata->frame_height,cdata->width,cdata->height);
+        fprintf(stderr,"mkv_decoder: info frame size=%d x %d, pixel size=%d x %d\n",cdata->frame_width,cdata->frame_height,cdata->width,
+                cdata->height);
 
       if (track->video.flag_interlaced) cdata->interlace=LIVES_INTERLACE_BOTTOM_FIRST;
 
@@ -1417,81 +1428,81 @@ static int lives_mkv_read_header(lives_clip_data_t *cdata) {
       fprintf(stderr,"mkv_decoder: Multiple combined encodings not supported\n");
       return -1;
     }
- 
+
     if (encodings_list->nb_elem == 1) {
       if (encodings[0].type ||
-	  (encodings[0].compression.algo != MATROSKA_TRACK_ENCODING_COMP_HEADERSTRIP &&
+          (encodings[0].compression.algo != MATROSKA_TRACK_ENCODING_COMP_HEADERSTRIP &&
 #if CONFIG_ZLIB
-	   encodings[0].compression.algo != MATROSKA_TRACK_ENCODING_COMP_ZLIB &&
+           encodings[0].compression.algo != MATROSKA_TRACK_ENCODING_COMP_ZLIB &&
 #endif
 #if CONFIG_BZLIB
-	   encodings[0].compression.algo != MATROSKA_TRACK_ENCODING_COMP_BZLIB &&
+           encodings[0].compression.algo != MATROSKA_TRACK_ENCODING_COMP_BZLIB &&
 #endif
-	   encodings[0].compression.algo != MATROSKA_TRACK_ENCODING_COMP_LZO)) {
-	encodings[0].scope = 0;
+           encodings[0].compression.algo != MATROSKA_TRACK_ENCODING_COMP_LZO)) {
+        encodings[0].scope = 0;
 
 
-	fprintf(stderr,"mkv_decoder: Unsupported encoding type\n");
-	return -2;
+        fprintf(stderr,"mkv_decoder: Unsupported encoding type\n");
+        return -2;
 
       } else if (track->codec_priv.size && encodings[0].scope&2) {
-	uint8_t *codec_priv = track->codec_priv.data;
-	int offset = matroska_decode_buffer(&track->codec_priv.data,
-					    &track->codec_priv.size,
-					    track);
-	if (offset < 0) {
-	  track->codec_priv.data = NULL;
-	  track->codec_priv.size = 0;
+        uint8_t *codec_priv = track->codec_priv.data;
+        int offset = matroska_decode_buffer(&track->codec_priv.data,
+                                            &track->codec_priv.size,
+                                            track);
+        if (offset < 0) {
+          track->codec_priv.data = NULL;
+          track->codec_priv.size = 0;
 
 
-	  fprintf(stderr,
-		  "mkv_decoder: Failed to decode codec private data\n");
-	  return -3;
+          fprintf(stderr,
+                  "mkv_decoder: Failed to decode codec private data\n");
+          return -3;
 
 
-	} else if (offset > 0) {
-	  track->codec_priv.data = malloc(track->codec_priv.size + offset);
-	  memcpy(track->codec_priv.data,
-		 encodings[0].compression.settings.data, offset);
-	  memcpy(track->codec_priv.data+offset, codec_priv,
-		 track->codec_priv.size);
-	  track->codec_priv.size += offset;
-	}
-	if (codec_priv != track->codec_priv.data)
-	  free(codec_priv);
+        } else if (offset > 0) {
+          track->codec_priv.data = malloc(track->codec_priv.size + offset);
+          memcpy(track->codec_priv.data,
+                 encodings[0].compression.settings.data, offset);
+          memcpy(track->codec_priv.data+offset, codec_priv,
+                 track->codec_priv.size);
+          track->codec_priv.size += offset;
+        }
+        if (codec_priv != track->codec_priv.data)
+          free(codec_priv);
       }
     }
 
-    for(j=0; ff_mkv_codec_tags[j].id != CODEC_ID_NONE; j++){
-      if(!strncmp(ff_mkv_codec_tags[j].str, track->codec_id,
-		  strlen(ff_mkv_codec_tags[j].str))){
-	codec_id= ff_mkv_codec_tags[j].id;
-	break;
+    for (j=0; ff_mkv_codec_tags[j].id != CODEC_ID_NONE; j++) {
+      if (!strncmp(ff_mkv_codec_tags[j].str, track->codec_id,
+                   strlen(ff_mkv_codec_tags[j].str))) {
+        codec_id= ff_mkv_codec_tags[j].id;
+        break;
       }
     }
 
     st = track->stream = av_new_stream(s, 0);
     if (st == NULL) {
       fprintf(stderr,
-	      "mkv_decoder: Out of memory\n");
+              "mkv_decoder: Out of memory\n");
       return -4;
     }
 
 
     if (!strcmp(track->codec_id, "V_MS/VFW/FOURCC")
-	&& track->codec_priv.size >= 40
-	&& track->codec_priv.data != NULL) {
+        && track->codec_priv.size >= 40
+        && track->codec_priv.data != NULL) {
       track->ms_compat = 1;
       fourcc = AV_RL32(track->codec_priv.data + 16);
       codec_id = ff_codec_get_id(codec_bmp_tags, fourcc);
       extradata_offset = 40;
     } else if (!strcmp(track->codec_id, "V_QUICKTIME")
-	       && (track->codec_priv.size >= 86)
-	       && (track->codec_priv.data != NULL)) {
+               && (track->codec_priv.size >= 86)
+               && (track->codec_priv.data != NULL)) {
       fourcc = AV_RL32(track->codec_priv.data);
       codec_id = ff_codec_get_id(codec_movvideo_tags, fourcc);
     } else if (codec_id == CODEC_ID_RV10 || codec_id == CODEC_ID_RV20 ||
-	       codec_id == CODEC_ID_RV30 || codec_id == CODEC_ID_RV40) {
+               codec_id == CODEC_ID_RV30 || codec_id == CODEC_ID_RV40) {
       extradata_offset = 26;
     }
 
@@ -1500,7 +1511,7 @@ static int lives_mkv_read_header(lives_clip_data_t *cdata) {
 
     if (codec_id == CODEC_ID_NONE) {
       fprintf(stderr,
-	      "mkv_decoder: Unknown video codec\n");
+              "mkv_decoder: Unknown video codec\n");
       return -42;
     }
 
@@ -1514,8 +1525,8 @@ static int lives_mkv_read_header(lives_clip_data_t *cdata) {
 
 
     /*    if (strcmp(track->language, "und"))
-	  av_dict_set(&st->metadata, "language", track->language, 0);
-	  av_dict_set(&st->metadata, "title", track->name, 0);
+    av_dict_set(&st->metadata, "language", track->language, 0);
+    av_dict_set(&st->metadata, "title", track->name, 0);
     */
 
     if (track->flag_default)
@@ -1528,22 +1539,22 @@ static int lives_mkv_read_header(lives_clip_data_t *cdata) {
     //		track->default_duration, 1000000000, 30000);
 
     if (!st->codec->extradata) {
-      if(extradata){
-	st->codec->extradata = extradata;
-	st->codec->extradata_size = extradata_size;
-      } else if(track->codec_priv.data && track->codec_priv.size > 0){
-	st->codec->extradata = calloc(track->codec_priv.size +
-				      FF_INPUT_BUFFER_PADDING_SIZE,1);
-	if(st->codec->extradata == NULL){
-	  fprintf(stderr,
-		  "mkv_decoder: Out of memory\n");
-	  return -4;
-	}
+      if (extradata) {
+        st->codec->extradata = extradata;
+        st->codec->extradata_size = extradata_size;
+      } else if (track->codec_priv.data && track->codec_priv.size > 0) {
+        st->codec->extradata = calloc(track->codec_priv.size +
+                                      FF_INPUT_BUFFER_PADDING_SIZE,1);
+        if (st->codec->extradata == NULL) {
+          fprintf(stderr,
+                  "mkv_decoder: Out of memory\n");
+          return -4;
+        }
 
-	st->codec->extradata_size = track->codec_priv.size;
-	memcpy(st->codec->extradata,
-	       track->codec_priv.data + extradata_offset,
-	       track->codec_priv.size);
+        st->codec->extradata_size = track->codec_priv.size;
+        memcpy(st->codec->extradata,
+               track->codec_priv.data + extradata_offset,
+               track->codec_priv.size);
       }
     }
 
@@ -1556,38 +1567,37 @@ static int lives_mkv_read_header(lives_clip_data_t *cdata) {
       st->codec->width  = track->video.pixel_width;
       st->codec->height = track->video.pixel_height;
       av_reduce(&st->sample_aspect_ratio.num,
-		&st->sample_aspect_ratio.den,
-		st->codec->height * track->video.display_width,
-		st->codec-> width * track->video.display_height,
-		255);
+                &st->sample_aspect_ratio.den,
+                st->codec->height * track->video.display_width,
+                st->codec-> width * track->video.display_height,
+                255);
       if (st->codec->codec_id != CODEC_ID_H264)
-	st->need_parsing = AVSTREAM_PARSE_HEADERS;
+        st->need_parsing = AVSTREAM_PARSE_HEADERS;
       if (track->default_duration)
-	st->avg_frame_rate = av_d2q(1000000000.0/track->default_duration, INT_MAX);
+        st->avg_frame_rate = av_d2q(1000000000.0/track->default_duration, INT_MAX);
 
       if (cdata->fps==0.) cdata->fps=(float)st->avg_frame_rate.num/(float)st->avg_frame_rate.den;
 
       /*
-	if (track->video.stereo_mode && track->video.stereo_mode < MATROSKA_VIDEO_STEREO_MODE_COUNT)
-	av_dict_set(&st->metadata, "stereo_mode", matroska_video_stereo_mode[track->video.stereo_mode], 0);
+      if (track->video.stereo_mode && track->video.stereo_mode < MATROSKA_VIDEO_STEREO_MODE_COUNT)
+      av_dict_set(&st->metadata, "stereo_mode", matroska_video_stereo_mode[track->video.stereo_mode], 0);
       */
 
       /* if we have virtual track, mark the real tracks */
       for (j=0; j < track->operation.combine_planes.nb_elem; j++) {
-	char buf[32];
-	if (planes[j].type >= MATROSKA_VIDEO_STEREO_PLANE_COUNT)
-	  continue;
-	snprintf(buf, sizeof(buf), "%s_%d",
-		 matroska_video_stereo_plane[planes[j].type], i);
-	for (k=0; k < matroska->tracks.nb_elem; k++)
-	  if (planes[j].uid == tracks[k].uid) {
-	    av_dict_set(&s->streams[k]->metadata,
-			"stereo_mode", buf, 0);
-	    break;
-	  }
+        char buf[32];
+        if (planes[j].type >= MATROSKA_VIDEO_STEREO_PLANE_COUNT)
+          continue;
+        snprintf(buf, sizeof(buf), "%s_%d",
+                 matroska_video_stereo_plane[planes[j].type], i);
+        for (k=0; k < matroska->tracks.nb_elem; k++)
+          if (planes[j].uid == tracks[k].uid) {
+            av_dict_set(&s->streams[k]->metadata,
+                        "stereo_mode", buf, 0);
+            break;
+          }
       }
-    }
-    else {
+    } else {
       avcodec_close(st->codec);
     }
   }
@@ -1607,28 +1617,60 @@ static int lives_mkv_read_header(lives_clip_data_t *cdata) {
     return -6;
   }
 
-  switch (priv->vidst->codec->codec_id) { 	 
-  case CODEC_ID_VP8  : sprintf(cdata->video_name,"%s","vp8"); break; 	 
-  case CODEC_ID_THEORA  : sprintf(cdata->video_name,"%s","theora"); break;
+  switch (priv->vidst->codec->codec_id) {
+  case CODEC_ID_VP8  :
+    sprintf(cdata->video_name,"%s","vp8");
+    break;
+  case CODEC_ID_THEORA  :
+    sprintf(cdata->video_name,"%s","theora");
+    break;
 
 #if FF_API_SNOW
-  case CODEC_ID_SNOW  : sprintf(cdata->video_name,"%s","snow"); break; 	 
+  case CODEC_ID_SNOW  :
+    sprintf(cdata->video_name,"%s","snow");
+    break;
 #endif
 
-  case CODEC_ID_DIRAC  : sprintf(cdata->video_name,"%s","dirac"); break; 	 
-  case CODEC_ID_MJPEG  : sprintf(cdata->video_name,"%s","mjpeg"); break; 	 
-  case CODEC_ID_MPEG1VIDEO  : sprintf(cdata->video_name,"%s","mpeg1"); break; 	 
-  case CODEC_ID_MPEG2VIDEO  : sprintf(cdata->video_name,"%s","mpeg2"); break; 	 
-  case CODEC_ID_MPEG4  : sprintf(cdata->video_name,"%s","mpeg4"); break; 	 
-  case CODEC_ID_H264  : sprintf(cdata->video_name,"%s","h264"); break; 	 
-  case CODEC_ID_MSMPEG4V3  : sprintf(cdata->video_name,"%s","msmpeg4"); break; 	 
-  case CODEC_ID_RV10  : sprintf(cdata->video_name,"%s","rv10"); break; 	 
-  case CODEC_ID_RV20  : sprintf(cdata->video_name,"%s","rv20"); break; 	 
-  case CODEC_ID_RV30  : sprintf(cdata->video_name,"%s","rv30"); break; 	 
-  case CODEC_ID_RV40  : sprintf(cdata->video_name,"%s","rv40"); break; 	 
-  case CODEC_ID_RAWVIDEO  : sprintf(cdata->video_name,"%s","raw"); break; 	 
-  default  : sprintf(cdata->video_name,"%s","unknown"); break; 	 
- }
+  case CODEC_ID_DIRAC  :
+    sprintf(cdata->video_name,"%s","dirac");
+    break;
+  case CODEC_ID_MJPEG  :
+    sprintf(cdata->video_name,"%s","mjpeg");
+    break;
+  case CODEC_ID_MPEG1VIDEO  :
+    sprintf(cdata->video_name,"%s","mpeg1");
+    break;
+  case CODEC_ID_MPEG2VIDEO  :
+    sprintf(cdata->video_name,"%s","mpeg2");
+    break;
+  case CODEC_ID_MPEG4  :
+    sprintf(cdata->video_name,"%s","mpeg4");
+    break;
+  case CODEC_ID_H264  :
+    sprintf(cdata->video_name,"%s","h264");
+    break;
+  case CODEC_ID_MSMPEG4V3  :
+    sprintf(cdata->video_name,"%s","msmpeg4");
+    break;
+  case CODEC_ID_RV10  :
+    sprintf(cdata->video_name,"%s","rv10");
+    break;
+  case CODEC_ID_RV20  :
+    sprintf(cdata->video_name,"%s","rv20");
+    break;
+  case CODEC_ID_RV30  :
+    sprintf(cdata->video_name,"%s","rv30");
+    break;
+  case CODEC_ID_RV40  :
+    sprintf(cdata->video_name,"%s","rv40");
+    break;
+  case CODEC_ID_RAWVIDEO  :
+    sprintf(cdata->video_name,"%s","raw");
+    break;
+  default  :
+    sprintf(cdata->video_name,"%s","unknown");
+    break;
+  }
 
 
   return 0;
@@ -1645,9 +1687,9 @@ static index_container_t *idxc_for(lives_clip_data_t *cdata) {
 
   pthread_mutex_lock(&indices_mutex);
 
-  for (i=0;i<nidxc;i++) {
+  for (i=0; i<nidxc; i++) {
     if (indices[i]->clients[0]->current_clip==cdata->current_clip&&
-	!strcmp(indices[i]->clients[0]->URI,cdata->URI)) {
+        !strcmp(indices[i]->clients[0]->URI,cdata->URI)) {
       idxc=indices[i];
       // append cdata to clients
       idxc->clients=(lives_clip_data_t **)realloc(idxc->clients,(idxc->nclients+1)*sizeof(lives_clip_data_t *));
@@ -1694,33 +1736,31 @@ static void idxc_release(lives_clip_data_t *cdata) {
     // remove this index
     index_free(idxc->idxhh);
     free(idxc->clients);
-    for (i=0;i<nidxc;i++) {
+    for (i=0; i<nidxc; i++) {
       if (indices[i]==idxc) {
-	nidxc--;
-	for (j=i;j<nidxc;j++) {
-	  indices[j]=indices[j+1];
-	}
-	free(idxc);
-	if (nidxc==0) {
-	  free(indices);
-	  indices=NULL;
-	}
-	else indices=(index_container_t **)realloc(indices,nidxc*sizeof(index_container_t *));
-	break;
+        nidxc--;
+        for (j=i; j<nidxc; j++) {
+          indices[j]=indices[j+1];
+        }
+        free(idxc);
+        if (nidxc==0) {
+          free(indices);
+          indices=NULL;
+        } else indices=(index_container_t **)realloc(indices,nidxc*sizeof(index_container_t *));
+        break;
       }
     }
-  }
-  else {
+  } else {
     // reduce client count by 1
-    for (i=0;i<idxc->nclients;i++) {
+    for (i=0; i<idxc->nclients; i++) {
       if (idxc->clients[i]==cdata) {
-	// remove this entry
-	idxc->nclients--;
-	for (j=i;j<idxc->nclients;j++) {
-	  idxc->clients[j]=idxc->clients[j+1];
-	}
-	idxc->clients=(lives_clip_data_t **)realloc(idxc->clients,idxc->nclients*sizeof(lives_clip_data_t *));
-	break;
+        // remove this entry
+        idxc->nclients--;
+        for (j=i; j<idxc->nclients; j++) {
+          idxc->clients[j]=idxc->clients[j+1];
+        }
+        idxc->clients=(lives_clip_data_t **)realloc(idxc->clients,idxc->nclients*sizeof(lives_clip_data_t *));
+        break;
       }
     }
   }
@@ -1733,7 +1773,7 @@ static void idxc_release(lives_clip_data_t *cdata) {
 static void idxc_release_all(void) {
   register int i;
 
-  for (i=0;i<nidxc;i++) {
+  for (i=0; i<nidxc; i++) {
     index_free(indices[i]->idxhh);
     free(indices[i]->clients);
     free(indices[i]);
@@ -1742,7 +1782,7 @@ static void idxc_release_all(void) {
 }
 
 
-static void detach_stream (lives_clip_data_t *cdata) {
+static void detach_stream(lives_clip_data_t *cdata) {
   // close the file, free the decoder
   lives_mkv_priv_t *priv=cdata->priv;
 
@@ -1825,7 +1865,7 @@ static boolean attach_stream(lives_clip_data_t *cdata, boolean isclone) {
 
   if (isclone) goto skip_probe;
 
-  if ((err=read (priv->fd, header, MKV_PROBE_SIZE)) < MKV_PROBE_SIZE) {
+  if ((err=read(priv->fd, header, MKV_PROBE_SIZE)) < MKV_PROBE_SIZE) {
     // for example, might be a directory
 #ifdef DEBUG
     fprintf(stderr, "mkv_decoder: unable to read header %d %d for %s\n",err,MKV_PROBE_SIZE,cdata->URI);
@@ -1844,7 +1884,7 @@ static boolean attach_stream(lives_clip_data_t *cdata, boolean isclone) {
     close(priv->fd);
     return FALSE;
   }
-  
+
   if (!is_partial_clone) cdata->fps=0.;
   cdata->width=cdata->frame_width=cdata->height=cdata->frame_height=0;
   cdata->offs_x=cdata->offs_y=0;
@@ -1858,7 +1898,7 @@ static boolean attach_stream(lives_clip_data_t *cdata, boolean isclone) {
 
   sprintf(cdata->audio_name,"%s","");
 
- skip_probe:
+skip_probe:
 
   priv->idxc=idxc_for(cdata);
   priv->inited=TRUE;
@@ -1895,13 +1935,13 @@ static boolean attach_stream(lives_clip_data_t *cdata, boolean isclone) {
   //#define DEBUG
 #ifdef DEBUG
   fprintf(stderr,"video type is %f %s %d x %d (%d x %d +%d +%d)\n",duration,cdata->video_name,
-	  cdata->width,cdata->height,cdata->frame_width,cdata->frame_height,cdata->offs_x,cdata->offs_y);
+          cdata->width,cdata->height,cdata->frame_width,cdata->frame_height,cdata->offs_x,cdata->offs_y);
 #endif
 
   codec = avcodec_find_decoder(priv->vidst->codec->codec_id);
 
   if (!codec) {
-    if (strlen(cdata->video_name)>0) 
+    if (strlen(cdata->video_name)>0)
       fprintf(stderr, "mkv_decoder: Could not find avcodec codec for video type %s\n",cdata->video_name);
     detach_stream(cdata);
     return FALSE;
@@ -1931,13 +1971,13 @@ static boolean attach_stream(lives_clip_data_t *cdata, boolean isclone) {
 
   while (!got_picture&&!got_eof) {
     matroska_read_packet(cdata,&priv->avpkt);
-    
+
     if (got_eof) break;
 
 #if LIBAVCODEC_VERSION_MAJOR >= 52
-    avcodec_decode_video2(ctx, priv->picture, &got_picture, &priv->avpkt );
-#else 
-    avcodec_decode_video(ctx, priv->picture, &got_picture, priv->avpkt.data, priv->avpkt.size );
+    avcodec_decode_video2(ctx, priv->picture, &got_picture, &priv->avpkt);
+#else
+    avcodec_decode_video(ctx, priv->picture, &got_picture, priv->avpkt.data, priv->avpkt.size);
 #endif
   }
 
@@ -1960,17 +2000,16 @@ static boolean attach_stream(lives_clip_data_t *cdata, boolean isclone) {
 
   if (!got_eof) {
 #if LIBAVCODEC_VERSION_MAJOR >= 52
-    avcodec_decode_video2(ctx, priv->picture, &got_picture, &priv->avpkt );
-#else 
-    avcodec_decode_video(ctx, priv->picture, &got_picture, priv->avpkt.data, priv->avpkt.size );
+    avcodec_decode_video2(ctx, priv->picture, &got_picture, &priv->avpkt);
+#else
+    avcodec_decode_video(ctx, priv->picture, &got_picture, priv->avpkt.data, priv->avpkt.size);
 #endif
   }
 
   if (got_picture) {
     pts=priv->avpkt.pts-pts;
     dts=priv->avpkt.dts-dts;
-  }
-  else pts=dts=0;
+  } else pts=dts=0;
 
   if (priv->avpkt.data!=NULL) {
     free(priv->avpkt.data);
@@ -1989,7 +2028,7 @@ static boolean attach_stream(lives_clip_data_t *cdata, boolean isclone) {
 
 
   cdata->palettes[0]=avi_pix_fmt_to_weed_palette(ctx->pix_fmt,
-						 &cdata->YUV_clamping);
+                     &cdata->YUV_clamping);
 
   if (cdata->palettes[0]==WEED_PALETTE_END) {
     fprintf(stderr, "mkv_decoder: Could not find a usable palette for (%d) %s\n",ctx->pix_fmt,cdata->URI);
@@ -2004,7 +2043,7 @@ static boolean attach_stream(lives_clip_data_t *cdata, boolean isclone) {
 
   if (cdata->width==0) cdata->width=ctx->width-cdata->offs_x*2;
   if (cdata->height==0) cdata->height=ctx->height-cdata->offs_y*2;
-  
+
   if (cdata->width*cdata->height==0) {
     fprintf(stderr, "mkv_decoder: invalid width and height (%d X %d)\n",cdata->width,cdata->height);
     detach_stream(cdata);
@@ -2013,7 +2052,7 @@ static boolean attach_stream(lives_clip_data_t *cdata, boolean isclone) {
 
 #ifdef DEBUG
   fprintf(stderr,"using palette %d, size %d x %d\n",
-	  cdata->current_palette,cdata->width,cdata->height);
+          cdata->current_palette,cdata->width,cdata->height);
 #endif
 
   cdata->par=(double)ctx->sample_aspect_ratio.num/(double)ctx->sample_aspect_ratio.den;
@@ -2040,9 +2079,9 @@ static boolean attach_stream(lives_clip_data_t *cdata, boolean isclone) {
     snprintf(cmd,1024,"LANGUAGE=en LANG=en mplayer \"%s\" -identify -frames 0 2>/dev/null | grep ID_VIDEO_FPS > %s",cdata->URI,tmpfname);
 #else
     snprintf(cmd,1024,"mplayer.exe \"%s\" -identify -frames 0 2>NUL | grep.exe ID_VIDEO_FPS > %s",cdata->URI,tmpfname);
-#endif 
+#endif
     res=system(cmd);
-      
+
     if (!res) {
       char buffer[1024];
       ssize_t bytes;
@@ -2050,14 +2089,14 @@ static boolean attach_stream(lives_clip_data_t *cdata, boolean isclone) {
       if (ofd>-1) {
 
 #ifdef IS_MINGW
-	setmode(ofd,O_BINARY);
+        setmode(ofd,O_BINARY);
 #endif
-	bytes=read(ofd,buffer,1024);
-	memset(buffer+bytes,0,1);
-	if (!(strncmp(buffer,"ID_VIDEO_FPS=",13))) {
-	  cdata->fps=strtod (buffer+13,NULL);
-	}
-	close(ofd);
+        bytes=read(ofd,buffer,1024);
+        memset(buffer+bytes,0,1);
+        if (!(strncmp(buffer,"ID_VIDEO_FPS=",13))) {
+          cdata->fps=strtod(buffer+13,NULL);
+        }
+        close(ofd);
       }
     }
     unlink(tmpfname);
@@ -2074,7 +2113,7 @@ static boolean attach_stream(lives_clip_data_t *cdata, boolean isclone) {
     detach_stream(cdata);
     return FALSE;
   }
-  
+
   if (ctx->ticks_per_frame==2) {
     // TODO - needs checking
     cdata->fps/=2.;
@@ -2094,7 +2133,7 @@ static boolean attach_stream(lives_clip_data_t *cdata, boolean isclone) {
     detach_stream(cdata);
     return FALSE;
   }
-  
+
   cdata->nframes=dts_to_frame(cdata,ldts)+2;
 
   // double check, sometimes we can be out by one or two frames
@@ -2137,12 +2176,12 @@ const char *version(void) {
 
 
 
-static lives_clip_data_t *init_cdata (void) {
+static lives_clip_data_t *init_cdata(void) {
   lives_mkv_priv_t *priv;
   lives_clip_data_t *cdata=(lives_clip_data_t *)malloc(sizeof(lives_clip_data_t));
 
   cdata->URI=NULL;
-  
+
   cdata->priv=priv=malloc(sizeof(lives_mkv_priv_t));
 
   cdata->seek_flag=0;
@@ -2169,7 +2208,7 @@ static lives_clip_data_t *init_cdata (void) {
 
   got_eof=FALSE;
   errval=0;
-  
+
   memset(cdata->author,0,1);
   memset(cdata->title,0,1);
   memset(cdata->comment,0,1);
@@ -2363,7 +2402,7 @@ static size_t write_black_pixel(unsigned char *idst, int pal, int npixels, int y
   unsigned char *dst=idst;
   register int i;
 
-  for (i=0;i<npixels;i++) {
+  for (i=0; i<npixels; i++) {
     switch (pal) {
     case WEED_PALETTE_RGBA32:
     case WEED_PALETTE_BGRA32:
@@ -2401,7 +2440,8 @@ static size_t write_black_pixel(unsigned char *idst, int pal, int npixels, int y
       dst[0]=dst[3]=128;
       dst[1]=dst[2]=dst[4]=dst[5]=y_black;
       dst+=6;
-    default: break;
+    default:
+      break;
     }
   }
   return idst-dst;
@@ -2424,11 +2464,11 @@ static int matroska_deliver_packet(const lives_clip_data_t *cdata, AVPacket *pkt
     if (matroska->num_packets > 1) {
       void *newpackets;
       memmove(&matroska->packets[0], &matroska->packets[1],
-	      (matroska->num_packets - 1) * sizeof(AVPacket *));
+              (matroska->num_packets - 1) * sizeof(AVPacket *));
       newpackets = av_realloc(matroska->packets,
-			      (matroska->num_packets - 1) * sizeof(AVPacket *));
+                              (matroska->num_packets - 1) * sizeof(AVPacket *));
       if (newpackets)
-	matroska->packets = newpackets;
+        matroska->packets = newpackets;
     } else {
       av_freep(&matroska->packets);
     }
@@ -2445,8 +2485,7 @@ static int matroska_deliver_packet(const lives_clip_data_t *cdata, AVPacket *pkt
 /*
  * Free all packets in our internal queue.
  */
-static void matroska_clear_queue(MatroskaDemuxContext *matroska)
-{
+static void matroska_clear_queue(MatroskaDemuxContext *matroska) {
   if (matroska->packets) {
     int n;
     for (n = 0; n < matroska->num_packets; n++) {
@@ -2461,8 +2500,7 @@ static void matroska_clear_queue(MatroskaDemuxContext *matroska)
 static int matroska_parse_block(const lives_clip_data_t *cdata, uint8_t *data,
                                 int size, int64_t pos, uint64_t cluster_time,
                                 uint64_t duration, int is_keyframe,
-                                int64_t cluster_pos)
-{
+                                int64_t cluster_pos) {
 
   lives_mkv_priv_t *priv=cdata->priv;
   MatroskaDemuxContext *matroska=&priv->matroska;
@@ -2485,7 +2523,7 @@ static int matroska_parse_block(const lives_clip_data_t *cdata, uint8_t *data,
   }
   data += n;
   size -= n;
-  
+
   track = matroska_find_track_by_num(matroska, num);
 
   if (!track || !track->stream) {
@@ -2518,12 +2556,12 @@ static int matroska_parse_block(const lives_clip_data_t *cdata, uint8_t *data,
     timecode = cluster_time + block_time;
 
     if (track->type == MATROSKA_TRACK_TYPE_SUBTITLE
-	&& timecode < track->end_timecode)
+        && timecode < track->end_timecode)
       is_keyframe = 0;  /* overlapping subtitles are not key frame */
 
     track->end_timecode = FFMAX(track->end_timecode, timecode+duration);
   }
-  
+
   if (matroska->skip_to_keyframe && track->type != MATROSKA_TRACK_TYPE_SUBTITLE) {
     if (!is_keyframe || timecode < matroska->skip_to_timecode) {
       return res;
@@ -2549,23 +2587,23 @@ static int matroska_parse_block(const lives_clip_data_t *cdata, uint8_t *data,
     lace_size = calloc(laces,sizeof(int));
 
     switch ((flags & 0x06) >> 1) {
-    case 0x1: /* Xiph lacing */ {
+    case 0x1: { /* Xiph lacing */
       uint8_t temp;
       uint32_t total = 0;
       for (n = 0; res == 0 && n < laces - 1; n++) {
-	while (1) {
-	  if (size == 0) {
-	    res = -1;
-	    break;
-	  }
-	  temp = *data;
-	  lace_size[n] += temp;
-	  data += 1;
-	  size -= 1;
-	  if (temp != 0xff)
-	    break;
-	}
-	total += lace_size[n];
+        while (1) {
+          if (size == 0) {
+            res = -1;
+            break;
+          }
+          temp = *data;
+          lace_size[n] += temp;
+          data += 1;
+          size -= 1;
+          if (temp != 0xff)
+            break;
+        }
+        total += lace_size[n];
       }
       lace_size[n] = size - total;
       break;
@@ -2573,33 +2611,33 @@ static int matroska_parse_block(const lives_clip_data_t *cdata, uint8_t *data,
 
     case 0x2: /* fixed-size lacing */
       for (n = 0; n < laces; n++)
-	lace_size[n] = size / laces;
+        lace_size[n] = size / laces;
       break;
 
-    case 0x3: /* EBML lacing */ {
+    case 0x3: { /* EBML lacing */
       uint32_t total;
       n = matroska_ebmlnum_uint(cdata, data, size, &num);
       if (n < 0) {
-	//  av_log(matroska->ctx, AV_LOG_INFO,
-	//         "EBML block data error\n");
-	break;
+        //  av_log(matroska->ctx, AV_LOG_INFO,
+        //         "EBML block data error\n");
+        break;
       }
       data += n;
       size -= n;
       total = lace_size[0] = num;
       for (n = 1; res == 0 && n < laces - 1; n++) {
-	int64_t snum;
-	int r;
-	r = matroska_ebmlnum_sint(cdata, data, size, &snum);
-	if (r < 0) {
-	  // av_log(matroska->ctx, AV_LOG_INFO,
-	  //        "EBML block data error\n");
-	  break;
-	}
-	data += r;
-	size -= r;
-	lace_size[n] = lace_size[n - 1] + snum;
-	total += lace_size[n];
+        int64_t snum;
+        int r;
+        r = matroska_ebmlnum_sint(cdata, data, size, &snum);
+        if (r < 0) {
+          // av_log(matroska->ctx, AV_LOG_INFO,
+          //        "EBML block data error\n");
+          break;
+        }
+        data += r;
+        size -= r;
+        lace_size[n] = lace_size[n - 1] + snum;
+        total += lace_size[n];
       }
       lace_size[laces - 1] = size - total;
       break;
@@ -2612,70 +2650,70 @@ static int matroska_parse_block(const lives_clip_data_t *cdata, uint8_t *data,
     for (n = 0; n < laces; n++) {
 
       {
-	MatroskaTrackEncoding *encodings = track->encodings.elem;
-	int offset = 0, pkt_size = lace_size[n];
-	uint8_t *pkt_data = data;
+        MatroskaTrackEncoding *encodings = track->encodings.elem;
+        int offset = 0, pkt_size = lace_size[n];
+        uint8_t *pkt_data = data;
 
-	if (pkt_size > size) {
-	  //av_log(matroska->ctx, AV_LOG_ERROR, "Invalid packet size\n");
-	  break;
-	}
+        if (pkt_size > size) {
+          //av_log(matroska->ctx, AV_LOG_ERROR, "Invalid packet size\n");
+          break;
+        }
 
-	if (encodings && encodings->scope & 1) {
-	  offset = matroska_decode_buffer(&pkt_data,&pkt_size, track);
-	  if (offset < 0)
-	    continue;
-	}
+        if (encodings && encodings->scope & 1) {
+          offset = matroska_decode_buffer(&pkt_data,&pkt_size, track);
+          if (offset < 0)
+            continue;
+        }
 
-	pkt = calloc(sizeof(AVPacket),1);
-	/* XXX: prevent data copy... */
-	if (av_new_packet(pkt, pkt_size+offset) < 0) {
-	  free(pkt);
-	  res = AVERROR(ENOMEM);
-	  break;
-	}
-	if (offset)
-	  memcpy (pkt->data, encodings->compression.settings.data, offset);
+        pkt = calloc(sizeof(AVPacket),1);
+        /* XXX: prevent data copy... */
+        if (av_new_packet(pkt, pkt_size+offset) < 0) {
+          free(pkt);
+          res = AVERROR(ENOMEM);
+          break;
+        }
+        if (offset)
+          memcpy(pkt->data, encodings->compression.settings.data, offset);
 
-	memcpy (pkt->data+offset, pkt_data, pkt_size);
+        memcpy(pkt->data+offset, pkt_data, pkt_size);
 
-	if (pkt_data != data)
-	  free(pkt_data);
+        if (pkt_data != data)
+          free(pkt_data);
 
-	if (n == 0)
-	  pkt->flags = is_keyframe;
-	pkt->stream_index = st->index;
+        if (n == 0)
+          pkt->flags = is_keyframe;
+        pkt->stream_index = st->index;
 
-	if (track->ms_compat)
-	  pkt->dts = timecode;
-	else
-	  pkt->pts = timecode;
-	pkt->pos = pos;
+        if (track->ms_compat)
+          pkt->dts = timecode;
+        else
+          pkt->pts = timecode;
+        pkt->pos = pos;
 
-	if (st->codec->codec_id == CODEC_ID_TEXT)
-	  pkt->convergence_duration = duration;
+        if (st->codec->codec_id == CODEC_ID_TEXT)
+          pkt->convergence_duration = duration;
 
-	else if (track->type != MATROSKA_TRACK_TYPE_SUBTITLE)
-	  pkt->duration = duration;
+        else if (track->type != MATROSKA_TRACK_TYPE_SUBTITLE)
+          pkt->duration = duration;
 
-	if (st->codec->codec_id == CODEC_ID_SSA)
-	  matroska_fix_ass_packet(matroska, pkt, duration);
+        if (st->codec->codec_id == CODEC_ID_SSA)
+          matroska_fix_ass_packet(matroska, pkt, duration);
 
-	if (matroska->prev_pkt &&
-	    timecode != AV_NOPTS_VALUE &&
-	    matroska->prev_pkt->pts == timecode &&
-	    matroska->prev_pkt->stream_index == st->index &&
-	    st->codec->codec_id == CODEC_ID_SSA)
-	  matroska_merge_packets(matroska->prev_pkt, pkt);
-	else {
-	  lives_dynarray_add(&matroska->packets,&matroska->num_packets,pkt);
-	  matroska->prev_pkt = pkt;
-	}
+        if (matroska->prev_pkt &&
+            timecode != AV_NOPTS_VALUE &&
+            matroska->prev_pkt->pts == timecode &&
+            matroska->prev_pkt->stream_index == st->index &&
+            st->codec->codec_id == CODEC_ID_SSA)
+          matroska_merge_packets(matroska->prev_pkt, pkt);
+        else {
+          lives_dynarray_add(&matroska->packets,&matroska->num_packets,pkt);
+          matroska->prev_pkt = pkt;
+        }
 
       }
 
       if (timecode != AV_NOPTS_VALUE)
-	timecode = duration ? timecode + duration : AV_NOPTS_VALUE;
+        timecode = duration ? timecode + duration : AV_NOPTS_VALUE;
       data += lace_size[n];
       size -= lace_size[n];
     }
@@ -2686,8 +2724,7 @@ static int matroska_parse_block(const lives_clip_data_t *cdata, uint8_t *data,
 }
 
 
-static int matroska_parse_cluster(const lives_clip_data_t *cdata)
-{
+static int matroska_parse_cluster(const lives_clip_data_t *cdata) {
 
   lives_mkv_priv_t *priv=cdata->priv;
   MatroskaDemuxContext *matroska=&priv->matroska;
@@ -2711,10 +2748,10 @@ static int matroska_parse_cluster(const lives_clip_data_t *cdata)
     if (blocks[i].bin.size > 0 && blocks[i].bin.data) {
       int is_keyframe = blocks[i].non_simple ? !blocks[i].reference : -1;
       res=matroska_parse_block(cdata,
-			       blocks[i].bin.data, blocks[i].bin.size,
-			       blocks[i].bin.pos,  cluster.timecode,
-			       blocks[i].duration, is_keyframe,
-			       pos);
+                               blocks[i].bin.data, blocks[i].bin.size,
+                               blocks[i].bin.pos,  cluster.timecode,
+                               blocks[i].duration, is_keyframe,
+                               pos);
     }
   }
   ebml_free(matroska_cluster, &cluster);
@@ -2733,16 +2770,15 @@ static boolean matroska_read_packet(const lives_clip_data_t *cdata, AVPacket *pk
     if (matroska->done||got_eof) return FALSE;
     matroska_parse_cluster(cdata);
   }
-  
+
   return TRUE;
 }
 
 
 
 
-static index_entry * matroska_read_seek(const lives_clip_data_t *cdata,
-					uint32_t timestamp)
-{
+static index_entry *matroska_read_seek(const lives_clip_data_t *cdata,
+                                       uint32_t timestamp) {
 
   lives_mkv_priv_t *priv=cdata->priv;
   MatroskaDemuxContext *matroska=&priv->matroska;
@@ -2822,7 +2858,7 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstride
   int y_black=(cdata->YUV_clamping==WEED_YUV_CLAMPING_CLAMPED)?16:0;
   boolean got_picture=FALSE;
   unsigned char *dst,*src;
-  unsigned char black[4]={0,0,0,255};
+  unsigned char black[4]= {0,0,0,255};
   index_entry *idx;
   register int i,p;
 
@@ -2839,32 +2875,31 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstride
       nplanes=3;
       black[0]=y_black;
       black[1]=black[2]=128;
-    }
-    else if (pal==WEED_PALETTE_YUVA4444P) {
+    } else if (pal==WEED_PALETTE_YUVA4444P) {
       nplanes=4;
       black[0]=y_black;
       black[1]=black[2]=128;
       black[3]=255;
     }
-    
+
     if (pal==WEED_PALETTE_RGB24||pal==WEED_PALETTE_BGR24) psize=3;
-    
+
     if (pal==WEED_PALETTE_RGBA32||pal==WEED_PALETTE_BGRA32||pal==WEED_PALETTE_ARGB32||pal==WEED_PALETTE_UYVY8888||
-	pal==WEED_PALETTE_YUYV8888||pal==WEED_PALETTE_YUV888||pal==WEED_PALETTE_YUVA8888) psize=4;
-    
+        pal==WEED_PALETTE_YUYV8888||pal==WEED_PALETTE_YUV888||pal==WEED_PALETTE_YUVA8888) psize=4;
+
     if (pal==WEED_PALETTE_YUV411) psize=6;
-    
+
     if (pal==WEED_PALETTE_A1) dstwidth>>=3;
-    
+
     dstwidth*=psize;
-    
+
     if (cdata->frame_height > cdata->height && height == cdata->height) {
       // host ignores vertical border
       btop=0;
       xheight=cdata->height;
       bbot=xheight-1;
     }
-    
+
     if (cdata->frame_width > cdata->width && rowstrides[0] < cdata->frame_width*psize) {
       // host ignores horizontal border
       bleft=bright=0;
@@ -2879,13 +2914,12 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstride
       idx=matroska_read_seek(cdata,target_pts);
       pthread_mutex_unlock(&priv->idxc->mutex);
       nextframe=dts_to_frame(cdata,idx->dts);
-      if (got_eof) return FALSE; 
-      avcodec_flush_buffers (priv->ctx);
+      if (got_eof) return FALSE;
+      avcodec_flush_buffers(priv->ctx);
 #ifdef DEBUG_KFRAMES
       if (idx!=NULL) printf("got kframe %ld for frame %ld\n",dts_to_frame(cdata,idx->dts),tframe);
 #endif
-    }
-    else {
+    } else {
       nextframe=priv->last_frame+1;
     }
 
@@ -2903,20 +2937,20 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstride
 
       while (!got_picture) {
 
-	if (priv->avpkt.data!=NULL) {
-	  free(priv->avpkt.data);
-	  priv->avpkt.data=NULL;
-	  priv->avpkt.size=0;
-	}
+        if (priv->avpkt.data!=NULL) {
+          free(priv->avpkt.data);
+          priv->avpkt.data=NULL;
+          priv->avpkt.size=0;
+        }
 
-	matroska_read_packet(cdata,&priv->avpkt);
+        matroska_read_packet(cdata,&priv->avpkt);
 
-	if (got_eof) return FALSE;
+        if (got_eof) return FALSE;
 
 #if LIBAVCODEC_VERSION_MAJOR >= 52
-	avcodec_decode_video2(priv->ctx, priv->picture, &got_picture, &priv->avpkt );
-#else 
-	avcodec_decode_video(priv->ctx, priv->picture, &got_picture, priv->avpkt.data, priv->avpkt.size );
+        avcodec_decode_video2(priv->ctx, priv->picture, &got_picture, &priv->avpkt);
+#else
+        avcodec_decode_video(priv->ctx, priv->picture, &got_picture, priv->avpkt.data, priv->avpkt.size);
 #endif
       }
 
@@ -2930,42 +2964,39 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstride
   }
 
   if (priv->picture==NULL||pixel_data==NULL) return TRUE;
-  
-  for (p=0;p<nplanes;p++) {
+
+  for (p=0; p<nplanes; p++) {
     dst=pixel_data[p];
     src=priv->picture->data[p];
 
-    for (i=0;i<xheight;i++) {
+    for (i=0; i<xheight; i++) {
       if (i<btop||i>bbot) {
-	// top or bottom border, copy black row
-	if (pal==WEED_PALETTE_YUV420P||pal==WEED_PALETTE_YVU420P||pal==WEED_PALETTE_YUV422P||
-	    pal==WEED_PALETTE_YUV444P||pal==WEED_PALETTE_YUVA4444P||pal==WEED_PALETTE_RGB24||pal==WEED_PALETTE_BGR24) {
-	  memset(dst,black[p],dstwidth+(bleft+bright)*psize);
-	  dst+=dstwidth+(bleft+bright)*psize;
-	}
-	else dst+=write_black_pixel(dst,pal,dstwidth/psize+bleft+bright,y_black);
-	continue;
+        // top or bottom border, copy black row
+        if (pal==WEED_PALETTE_YUV420P||pal==WEED_PALETTE_YVU420P||pal==WEED_PALETTE_YUV422P||
+            pal==WEED_PALETTE_YUV444P||pal==WEED_PALETTE_YUVA4444P||pal==WEED_PALETTE_RGB24||pal==WEED_PALETTE_BGR24) {
+          memset(dst,black[p],dstwidth+(bleft+bright)*psize);
+          dst+=dstwidth+(bleft+bright)*psize;
+        } else dst+=write_black_pixel(dst,pal,dstwidth/psize+bleft+bright,y_black);
+        continue;
       }
 
       if (bleft>0) {
-	if (pal==WEED_PALETTE_YUV420P||pal==WEED_PALETTE_YVU420P||pal==WEED_PALETTE_YUV422P||pal==WEED_PALETTE_YUV444P||
-	    pal==WEED_PALETTE_YUVA4444P||pal==WEED_PALETTE_RGB24||pal==WEED_PALETTE_BGR24) {
-	  memset(dst,black[p],bleft*psize);
-	  dst+=bleft*psize;
-	}
-	else dst+=write_black_pixel(dst,pal,bleft,y_black);
+        if (pal==WEED_PALETTE_YUV420P||pal==WEED_PALETTE_YVU420P||pal==WEED_PALETTE_YUV422P||pal==WEED_PALETTE_YUV444P||
+            pal==WEED_PALETTE_YUVA4444P||pal==WEED_PALETTE_RGB24||pal==WEED_PALETTE_BGR24) {
+          memset(dst,black[p],bleft*psize);
+          dst+=bleft*psize;
+        } else dst+=write_black_pixel(dst,pal,bleft,y_black);
       }
 
       memcpy(dst,src,dstwidth);
       dst+=dstwidth;
 
       if (bright>0) {
-	if (pal==WEED_PALETTE_YUV420P||pal==WEED_PALETTE_YVU420P||pal==WEED_PALETTE_YUV422P||pal==WEED_PALETTE_YUV444P||
-	    pal==WEED_PALETTE_YUVA4444P||pal==WEED_PALETTE_RGB24||pal==WEED_PALETTE_BGR24) {
-	  memset(dst,black[p],bright*psize);
-	  dst+=bright*psize;
-	}
-	else dst+=write_black_pixel(dst,pal,bright,y_black);
+        if (pal==WEED_PALETTE_YUV420P||pal==WEED_PALETTE_YVU420P||pal==WEED_PALETTE_YUV422P||pal==WEED_PALETTE_YUV444P||
+            pal==WEED_PALETTE_YUVA4444P||pal==WEED_PALETTE_RGB24||pal==WEED_PALETTE_BGR24) {
+          memset(dst,black[p],bright*psize);
+          dst+=bright*psize;
+        } else dst+=write_black_pixel(dst,pal,bright,y_black);
       }
 
       src+=priv->picture->linesize[p];
@@ -2981,7 +3012,7 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstride
       bbot>>=1;
     }
   }
-  
+
   return TRUE;
 }
 

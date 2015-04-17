@@ -25,15 +25,15 @@ static size_t frame_size;
 static jack_port_t *output_port;
 static jack_client_t *client;
 
-int server_process (jack_nframes_t nframes, void *arg) {
+int server_process(jack_nframes_t nframes, void *arg) {
   // jack calls this
-  uint8_t* in;
+  uint8_t *in;
 
   if (rb==NULL) return 0;
 
-  in = jack_port_get_buffer (output_port, nframes);
-  while ( jack_ringbuffer_read_space(rb) >= frame_size) {
-    jack_ringbuffer_read (rb, (void *) in, frame_size);
+  in = jack_port_get_buffer(output_port, nframes);
+  while (jack_ringbuffer_read_space(rb) >= frame_size) {
+    jack_ringbuffer_read(rb, (void *) in, frame_size);
   }
   return 0;
 }
@@ -52,60 +52,60 @@ const char *module_check_init(void) {
   const char *server_name=NULL; // set to "video0" if running with audio on "default"
 
   // connect to vjack
-  client = jack_client_open (client_name, options, &status, server_name);
+  client = jack_client_open(client_name, options, &status, server_name);
   if (client == NULL) {
-    fprintf (stderr, "jack_client_open() failed, "
-	     "status = 0x%2.0x\n", status);
+    fprintf(stderr, "jack_client_open() failed, "
+            "status = 0x%2.0x\n", status);
     if (status & JackServerFailed) {
-      fprintf (stderr, "vjack_output: Unable to connect to JACK server\n");
+      fprintf(stderr, "vjack_output: Unable to connect to JACK server\n");
     }
     return "unable to connect";
   }
   if (status & JackServerStarted) {
-    fprintf (stderr, "JACK server started\n");
+    fprintf(stderr, "JACK server started\n");
   }
   if (status & JackNameNotUnique) {
     client_name = jack_get_client_name(client);
-    fprintf (stderr, "unique name `%s' assigned\n", client_name);
+    fprintf(stderr, "unique name `%s' assigned\n", client_name);
   }
 
-  fprintf (stderr,"engine sample rate: %" PRIu32 "\n",
-	   jack_get_sample_rate (client));
+  fprintf(stderr,"engine sample rate: %" PRIu32 "\n",
+          jack_get_sample_rate(client));
 
-  output_port = jack_port_register (client, 
-				    "video_out",
-				    JACK_DEFAULT_VIDEO_TYPE,
-				    JackPortIsOutput, 
-				    0);
-  
+  output_port = jack_port_register(client,
+                                   "video_out",
+                                   JACK_DEFAULT_VIDEO_TYPE,
+                                   JackPortIsOutput,
+                                   0);
+
   if (output_port==NULL) {
     fprintf(stderr, "vjack_output: no more JACK ports available\n");
     return "no jack ports available";
   }
 
-  rb = NULL; 
+  rb = NULL;
 
   // set process callback and start
-  jack_set_process_callback (client, server_process, NULL);  
+  jack_set_process_callback(client, server_process, NULL);
 
   // and start the processing
-  if (jack_activate (client)) {
-    fprintf (stderr, "vjack_output: cannot activate client\n");
+  if (jack_activate(client)) {
+    fprintf(stderr, "vjack_output: cannot activate client\n");
     return "cannot activate client";
   }
 
   return NULL;
 }
 
-const char *version (void) {
+const char *version(void) {
   return plugin_version;
 }
 
-const char *get_description (void) {
+const char *get_description(void) {
   return "The vjack_output plugin allows sending frames to videojack.\nThis is an experimental plugin\n";
 }
 
-uint64_t get_capabilities (int palette) {
+uint64_t get_capabilities(int palette) {
   return 0;
 }
 
@@ -115,7 +115,7 @@ int *get_palette_list(void) {
   return palette_list;
 }
 
-boolean set_palette (int palette) {
+boolean set_palette(int palette) {
   if (palette==WEED_PALETTE_RGBA32) {
     mypalette=palette;
     return TRUE;
@@ -124,31 +124,31 @@ boolean set_palette (int palette) {
   return FALSE;
 }
 
-boolean init_screen (int width, int height, boolean fullscreen, uint64_t window_id, int argc, char **argv) {
+boolean init_screen(int width, int height, boolean fullscreen, uint64_t window_id, int argc, char **argv) {
   jack_video_set_width_and_height(client,output_port,width,height);
   frame_size=width*height*4;
-  rb = jack_ringbuffer_create ( 16 * frame_size);
+  rb = jack_ringbuffer_create(16 * frame_size);
   return TRUE;
 }
 
-boolean render_frame (int hsize, int vsize, int64_t tc, void **pixel_data, void **return_data) {
+boolean render_frame(int hsize, int vsize, int64_t tc, void **pixel_data, void **return_data) {
   // hsize and vsize are in pixels (n-byte)
 
-  jack_ringbuffer_write (rb, pixel_data[0], frame_size);
+  jack_ringbuffer_write(rb, pixel_data[0], frame_size);
   return TRUE;
 }
 
-void exit_screen (int16_t mouse_x, int16_t mouse_y) {
+void exit_screen(int16_t mouse_x, int16_t mouse_y) {
   if (rb!=NULL) jack_ringbuffer_free(rb);
   rb=NULL;
 }
 
 void module_unload(void) {
-  if (jack_deactivate (client)) {
-    fprintf (stderr, "vjack_output error: cannot deactivate client\n");
+  if (jack_deactivate(client)) {
+    fprintf(stderr, "vjack_output error: cannot deactivate client\n");
   }
 
   // disconnect from vjack
-  jack_client_close (client);
+  jack_client_close(client);
   fprintf(stderr, "vjack_output: jack port unregistered\n");
 }

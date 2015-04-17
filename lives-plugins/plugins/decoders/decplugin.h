@@ -32,7 +32,7 @@ extern "C"
 #endif
 
 
-  typedef int boolean;
+typedef int boolean;
 #undef TRUE
 #undef FALSE
 #define TRUE 1
@@ -44,10 +44,10 @@ typedef enum {
   LIVES_INTERLACE_TOP_FIRST=2
 } lives_interlace_t;
 
-  /// good
+/// good
 #define LIVES_SEEK_FAST (1<<0)
 
-  /// not so good
+/// not so good
 #define LIVES_SEEK_NEEDS_CALCULATION (1<<1)
 #define LIVES_SEEK_QUALITY_LOSS (1<<2)
 
@@ -84,11 +84,11 @@ typedef struct {
 
   float fps;
 
-  int *palettes; ///< list of palettes which the format supports, terminated with WEED_PALETTE_END 
+  int *palettes; ///< list of palettes which the format supports, terminated with WEED_PALETTE_END
 
   /// plugin should init this to palettes[0] if URI changes
   int current_palette;  ///< current palette [rw host]; must be contained in palettes
-  
+
   int YUV_sampling;
   int YUV_clamping;
   int YUV_subspace;
@@ -125,7 +125,7 @@ typedef struct {
 const char *version(void);
 
 
-/// pass in NULL clip_data for the first call, subsequent calls (if the URI, current_clip or current_palette changes) 
+/// pass in NULL clip_data for the first call, subsequent calls (if the URI, current_clip or current_palette changes)
 /// should reuse the previous value. If URI or current_clip are invalid, clip_data will be freed and NULL returned.
 ///
 /// plugin may or may not check current_palette to see if it is valid
@@ -148,7 +148,7 @@ const char *module_check_init(void);
 
 boolean set_palette(lives_clip_data_t *);
 
-int64_t rip_audio (const lives_clip_data_t *, const char *fname, int64_t stframe, int64_t nframes, unsigned char **abuff);
+int64_t rip_audio(const lives_clip_data_t *, const char *fname, int64_t stframe, int64_t nframes, unsigned char **abuff);
 void rip_audio_cleanup(const lives_clip_data_t *);
 
 void module_unload(void);

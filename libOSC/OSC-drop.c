@@ -1,5 +1,5 @@
 /*
-Copyright © 1998. The Regents of the University of California (Regents). 
+Copyright © 1998. The Regents of the University of California (Regents).
 All Rights Reserved.
 
 Written by Matt Wright, The Center for New Music and Audio Technologies,
@@ -22,13 +22,13 @@ PURPOSE. THE SOFTWARE AND ACCOMPANYING DOCUMENTATION, IF ANY, PROVIDED
 HEREUNDER IS PROVIDED "AS IS". REGENTS HAS NO OBLIGATION TO PROVIDE
 MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 
-The OpenSound Control WWW page is 
+The OpenSound Control WWW page is
     http://www.cnmat.berkeley.edu/OpenSoundControl
 */
 
 
 /* OSC-drop.c
-   
+
    This implementation just prints a warning.
 
    Matt Wright, 3/16/98
@@ -43,14 +43,14 @@ The OpenSound Control WWW page is
 
 
 void DropPacket(OSCPacketBuffer p) {
-    OSCWarning("Packet dropped.");
+  OSCWarning("Packet dropped.");
 }
-    
+
 void DropBundle(char *buf, int n, OSCPacketBuffer p) {
-    OSCWarning("Bundle dropped.");
+  OSCWarning("Bundle dropped.");
 }
 
 void DropMessage(char *buf, int n, OSCPacketBuffer p) {
-    OSCWarning("Message dropped.");
+  OSCWarning("Message dropped.");
 }
-    
+

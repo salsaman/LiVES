@@ -19,7 +19,7 @@
 ///////////////////////////////////////////////////////////////////
 
 static int num_versions=2; // number of different weed api versions supported
-static int api_versions[]={131,100}; // array of weed api versions supported in plugin, in order of preference (most preferred first)
+static int api_versions[]= {131,100}; // array of weed api versions supported in plugin, in order of preference (most preferred first)
 
 static int package_version=1; // version of this package
 
@@ -53,7 +53,7 @@ typedef struct _sdata {
 
 
 static int myround(double n) {
-  if (n >= 0) 
+  if (n >= 0)
     return (int)(n + 0.5);
   else
     return (int)(n - 0.5);
@@ -65,22 +65,22 @@ static void init_RGB_to_YCbCr_tables(void) {
   register int i;
 
   for (i = 0; i < 256; i++) {
-    Y_R[i] = myround(0.299 * (double)i 
-		     * 219.0 / 255.0 * (double)(1<<FP_BITS));
-    Y_G[i] = myround(0.587 * (double)i 
-		     * 219.0 / 255.0 * (double)(1<<FP_BITS));
-    Y_B[i] = myround((0.114 * (double)i 
-		      * 219.0 / 255.0 * (double)(1<<FP_BITS))
-		     + (double)(1<<(FP_BITS-1))
-		     + (16.0 * (double)(1<<FP_BITS)));
+    Y_R[i] = myround(0.299 * (double)i
+                     * 219.0 / 255.0 * (double)(1<<FP_BITS));
+    Y_G[i] = myround(0.587 * (double)i
+                     * 219.0 / 255.0 * (double)(1<<FP_BITS));
+    Y_B[i] = myround((0.114 * (double)i
+                      * 219.0 / 255.0 * (double)(1<<FP_BITS))
+                     + (double)(1<<(FP_BITS-1))
+                     + (16.0 * (double)(1<<FP_BITS)));
 
   }
   conv_RY_inited = 1;
 }
 
 
-static inline unsigned char 
-calc_luma (unsigned char *pixel) {
+static inline unsigned char
+calc_luma(unsigned char *pixel) {
   // TODO - RGB
   return (Y_R[pixel[2]] + Y_G[pixel[1]]+ Y_B[pixel[0]]) >> FP_BITS;
 }
@@ -90,8 +90,8 @@ calc_luma (unsigned char *pixel) {
 void make_blend_table(_sdata *sdata, unsigned char bf, unsigned char bfn) {
   register int i,j;
 
-  for (i=0;i<256;i++) {
-    for (j=0;j<256;j++) {
+  for (i=0; i<256; i++) {
+    for (j=0; j<256; j++) {
       sdata->blend[i][j]=(unsigned char)((bf*i+bfn*j)>>8);
     }
   }
@@ -101,11 +101,11 @@ void make_blend_table(_sdata *sdata, unsigned char bf, unsigned char bfn) {
 
 /////////////////////////////////////////////////////////////////////////
 
-int chroma_init (weed_plant_t *inst) {
+int chroma_init(weed_plant_t *inst) {
   _sdata *sdata;
 
   sdata=weed_malloc(sizeof(_sdata));
-  if (sdata == NULL ) return WEED_ERROR_MEMORY_ALLOCATION;
+  if (sdata == NULL) return WEED_ERROR_MEMORY_ALLOCATION;
 
   sdata->obf=0;
   make_blend_table(sdata,0,255);
@@ -130,11 +130,12 @@ static int chroma_deinit(weed_plant_t *inst) {
 
 
 
-static int common_process (int type, weed_plant_t *inst, weed_timecode_t timecode) {
+static int common_process(int type, weed_plant_t *inst, weed_timecode_t timecode) {
   _sdata *sdata=NULL;
   int error;
 
-  weed_plant_t **in_channels=weed_get_plantptr_array(inst,"in_channels",&error),*out_channel=weed_get_plantptr_value(inst,"out_channels",&error);
+  weed_plant_t **in_channels=weed_get_plantptr_array(inst,"in_channels",&error),*out_channel=weed_get_plantptr_value(inst,"out_channels",
+                             &error);
   weed_plant_t *in_param;
 
   unsigned char *src1=weed_get_voidptr_value(in_channels[0],"pixel_data",&error);
@@ -190,30 +191,30 @@ static int common_process (int type, weed_plant_t *inst, weed_timecode_t timecod
     dst+=offset*orowstride;
   }
 
-  for (;src1<end;src1+=irowstride1) {
-    for (j=start;j<width;j+=psize) {
+  for (; src1<end; src1+=irowstride1) {
+    for (j=start; j<width; j+=psize) {
       switch (type) {
       case 0:
-	// chroma blend
-	dst[j]=sdata->blend[src2[j]][src1[j]];
-	dst[j+1]=sdata->blend[src2[j+1]][src1[j+1]];
-	dst[j+2]=sdata->blend[src2[j+2]][src1[j+2]];
-	break;
+        // chroma blend
+        dst[j]=sdata->blend[src2[j]][src1[j]];
+        dst[j+1]=sdata->blend[src2[j+1]][src1[j+1]];
+        dst[j+2]=sdata->blend[src2[j+2]][src1[j+2]];
+        break;
       case 1:
-	// luma overlay (bang !!)
-	if (calc_luma (&src1[j])<(blend_factor)) weed_memcpy(&dst[j],&src2[j],3);
-	else if (!inplace) weed_memcpy(&dst[j],&src1[j],3);
-	break;	
+        // luma overlay (bang !!)
+        if (calc_luma(&src1[j])<(blend_factor)) weed_memcpy(&dst[j],&src2[j],3);
+        else if (!inplace) weed_memcpy(&dst[j],&src1[j],3);
+        break;
       case 2:
-	// luma underlay
-	if (calc_luma (&src2[j])>(blendneg)) weed_memcpy(&dst[j],&src2[j],3);
-	else if (!inplace) weed_memcpy(&dst[j],&src1[j],3);
-	break;	
+        // luma underlay
+        if (calc_luma(&src2[j])>(blendneg)) weed_memcpy(&dst[j],&src2[j],3);
+        else if (!inplace) weed_memcpy(&dst[j],&src1[j],3);
+        break;
       case 3:
-	// neg lum overlay
-	if (calc_luma (&src1[j])>(blendneg)) weed_memcpy(&dst[j],&src2[j],3);
-	else if (!inplace) weed_memcpy(&dst[j],&src1[j],3);
-	break;
+        // neg lum overlay
+        if (calc_luma(&src1[j])>(blendneg)) weed_memcpy(&dst[j],&src2[j],3);
+        else if (!inplace) weed_memcpy(&dst[j],&src1[j],3);
+        break;
       }
     }
     src2+=irowstride2;
@@ -225,69 +226,70 @@ static int common_process (int type, weed_plant_t *inst, weed_timecode_t timecod
 
 
 
-int chroma_process (weed_plant_t *inst, weed_timecode_t timestamp) {
+int chroma_process(weed_plant_t *inst, weed_timecode_t timestamp) {
   return common_process(0,inst,timestamp);
 }
 
-int lumo_process (weed_plant_t *inst, weed_timecode_t timestamp) {
+int lumo_process(weed_plant_t *inst, weed_timecode_t timestamp) {
   return common_process(1,inst,timestamp);
 }
 
-int lumu_process (weed_plant_t *inst, weed_timecode_t timestamp) {
+int lumu_process(weed_plant_t *inst, weed_timecode_t timestamp) {
   return common_process(2,inst,timestamp);
 }
 
-int nlumo_process (weed_plant_t *inst, weed_timecode_t timestamp) {
+int nlumo_process(weed_plant_t *inst, weed_timecode_t timestamp) {
   return common_process(3,inst,timestamp);
 }
 
 
-weed_plant_t *weed_setup (weed_bootstrap_f weed_boot) {
+weed_plant_t *weed_setup(weed_bootstrap_f weed_boot) {
   weed_plant_t *plugin_info=weed_plugin_info_init(weed_boot,num_versions,api_versions);
   weed_plant_t **clone1,**clone2,**clone3;
 
   if (plugin_info!=NULL) {
-    int palette_list[]={WEED_PALETTE_BGR24,WEED_PALETTE_RGB24,WEED_PALETTE_RGBA32,WEED_PALETTE_BGRA32,WEED_PALETTE_ARGB32,WEED_PALETTE_END};
-    weed_plant_t *in_chantmpls[]={weed_channel_template_init("in channel 0",0,palette_list),
-				  weed_channel_template_init("in channel 1",0,palette_list),NULL};
-    weed_plant_t *out_chantmpls[]={weed_channel_template_init("out channel 0",WEED_CHANNEL_CAN_DO_INPLACE,palette_list),NULL};
-    weed_plant_t *in_params1[]={weed_integer_init("amount","Blend _amount",128,0,255),NULL};
-    weed_plant_t *in_params2[]={weed_integer_init("threshold","luma _threshold",64,0,255),NULL};
+    int palette_list[]= {WEED_PALETTE_BGR24,WEED_PALETTE_RGB24,WEED_PALETTE_RGBA32,WEED_PALETTE_BGRA32,WEED_PALETTE_ARGB32,WEED_PALETTE_END};
+    weed_plant_t *in_chantmpls[]= {weed_channel_template_init("in channel 0",0,palette_list),
+                                   weed_channel_template_init("in channel 1",0,palette_list),NULL
+                                  };
+    weed_plant_t *out_chantmpls[]= {weed_channel_template_init("out channel 0",WEED_CHANNEL_CAN_DO_INPLACE,palette_list),NULL};
+    weed_plant_t *in_params1[]= {weed_integer_init("amount","Blend _amount",128,0,255),NULL};
+    weed_plant_t *in_params2[]= {weed_integer_init("threshold","luma _threshold",64,0,255),NULL};
 
     weed_plant_t *filter_class=weed_filter_class_init("chroma blend","salsaman",1,WEED_FILTER_HINT_MAY_THREAD,&chroma_init,
-						      &chroma_process,&chroma_deinit,in_chantmpls,out_chantmpls,in_params1,NULL);
+                               &chroma_process,&chroma_deinit,in_chantmpls,out_chantmpls,in_params1,NULL);
 
     weed_set_boolean_value(in_params1[0],"transition",WEED_TRUE);
     weed_set_boolean_value(in_params2[0],"transition",WEED_TRUE);
 
-    weed_plugin_info_add_filter_class (plugin_info,filter_class);
+    weed_plugin_info_add_filter_class(plugin_info,filter_class);
 
     filter_class=weed_filter_class_init("luma overlay","salsaman",1,WEED_FILTER_HINT_MAY_THREAD,NULL,
-					&lumo_process,NULL,(clone1=weed_clone_plants(in_chantmpls)),
-					(clone2=weed_clone_plants(out_chantmpls)),in_params2,NULL);
-    weed_plugin_info_add_filter_class (plugin_info,filter_class);
+                                        &lumo_process,NULL,(clone1=weed_clone_plants(in_chantmpls)),
+                                        (clone2=weed_clone_plants(out_chantmpls)),in_params2,NULL);
+    weed_plugin_info_add_filter_class(plugin_info,filter_class);
     weed_free(clone1);
     weed_free(clone2);
 
     filter_class=weed_filter_class_init("luma underlay","salsaman",1,WEED_FILTER_HINT_MAY_THREAD,NULL,
-					&lumu_process,NULL,(clone1=weed_clone_plants(in_chantmpls)),
-					(clone2=weed_clone_plants(out_chantmpls)),(clone3=weed_clone_plants(in_params2)),NULL);
-    weed_plugin_info_add_filter_class (plugin_info,filter_class);
+                                        &lumu_process,NULL,(clone1=weed_clone_plants(in_chantmpls)),
+                                        (clone2=weed_clone_plants(out_chantmpls)),(clone3=weed_clone_plants(in_params2)),NULL);
+    weed_plugin_info_add_filter_class(plugin_info,filter_class);
     weed_free(clone1);
     weed_free(clone2);
     weed_free(clone3);
 
     filter_class=weed_filter_class_init("negative luma overlay","salsaman",1,WEED_FILTER_HINT_MAY_THREAD,
-					NULL,&nlumo_process,NULL,(clone1=weed_clone_plants(in_chantmpls)),
-					(clone2=weed_clone_plants(out_chantmpls)),(clone3=weed_clone_plants(in_params2)),NULL);
+                                        NULL,&nlumo_process,NULL,(clone1=weed_clone_plants(in_chantmpls)),
+                                        (clone2=weed_clone_plants(out_chantmpls)),(clone3=weed_clone_plants(in_params2)),NULL);
 
-    weed_plugin_info_add_filter_class (plugin_info,filter_class);
+    weed_plugin_info_add_filter_class(plugin_info,filter_class);
     weed_free(clone1);
     weed_free(clone2);
     weed_free(clone3);
 
     weed_set_int_value(plugin_info,"version",package_version);
-  
+
     init_RGB_to_YCbCr_tables();
   }
   return plugin_info;

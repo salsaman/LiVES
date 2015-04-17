@@ -1,5 +1,5 @@
 /*
-Copyright © 1998. The Regents of the University of California (Regents). 
+Copyright © 1998. The Regents of the University of California (Regents).
 All Rights Reserved.
 
 Written by Matt Wright, The Center for New Music and Audio Technologies,
@@ -22,7 +22,7 @@ PURPOSE. THE SOFTWARE AND ACCOMPANYING DOCUMENTATION, IF ANY, PROVIDED
 HEREUNDER IS PROVIDED "AS IS". REGENTS HAS NO OBLIGATION TO PROVIDE
 MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 
-The OpenSound Control WWW page is 
+The OpenSound Control WWW page is
     http://www.cnmat.berkeley.edu/OpenSoundControl
 */
 
@@ -62,135 +62,135 @@ void OSCQueuePrint(OSCQueue q);
 
 
 struct OSCQueueStruct {
-    OSCSchedulableObject list[CAPACITY];
-    int n;
-    int scanIndex;
+  OSCSchedulableObject list[CAPACITY];
+  int n;
+  int scanIndex;
 };
 
 
 OSCQueue OSCNewQueue(int maxItems, void *(*InitTimeMalloc)(int numBytes)) {
-    OSCQueue result;
+  OSCQueue result;
 
-    if (maxItems > CAPACITY) fatal_error("Increase CAPACITY in OSC-priority-queue.c");
+  if (maxItems > CAPACITY) fatal_error("Increase CAPACITY in OSC-priority-queue.c");
 
-    result = (*InitTimeMalloc)(sizeof(*result));
-    if (result == 0) return 0;
+  result = (*InitTimeMalloc)(sizeof(*result));
+  if (result == 0) return 0;
 
-    result->n = 0;
+  result->n = 0;
 
 #ifdef DEBUG_OSC_PRIORITY_QUEUE
-    OSCQueuePrint(result);
+  OSCQueuePrint(result);
 #endif
-    return result;
+  return result;
 }
 
 Boolean OSCQueueInsert(OSCQueue q, OSCSchedulableObject new) {
-    if (q->n == CAPACITY) return FALSE;
+  if (q->n == CAPACITY) return FALSE;
 
-    q->list[q->n] = new;
-    ++(q->n);
+  q->list[q->n] = new;
+  ++(q->n);
 #ifdef DEBUG_OSC_PRIORITY_QUEUE
-    printf("OSCQueueInsert: just inserted %p\n", new);
-    OSCQueuePrint(q);
+  printf("OSCQueueInsert: just inserted %p\n", new);
+  OSCQueuePrint(q);
 #endif
-    return TRUE;
+  return TRUE;
 }
 
 
 OSCTimeTag OSCQueueEarliestTimeTag(OSCQueue q) {
-    int i;
-    OSCTimeTag smallest = OSCTT_BiggestPossibleTimeTag();
+  int i;
+  OSCTimeTag smallest = OSCTT_BiggestPossibleTimeTag();
 
-    for (i = 0; i < q->n; ++i) {
-	if (OSCTT_Compare(smallest, q->list[i]->timetag) > 0) {
-	    smallest = q->list[i]->timetag;
-	}
+  for (i = 0; i < q->n; ++i) {
+    if (OSCTT_Compare(smallest, q->list[i]->timetag) > 0) {
+      smallest = q->list[i]->timetag;
     }
+  }
 
 #ifdef DEBUG_OSC_PRIORITY_QUEUE
-    printf("OSCQueueEarliestTimeTag: about to return %llx\n", smallest);
-    OSCQueuePrint(q);
+  printf("OSCQueueEarliestTimeTag: about to return %llx\n", smallest);
+  OSCQueuePrint(q);
 #endif
-    return smallest;
+  return smallest;
 }
 
 
 static void RemoveElement(int goner, OSCQueue q) {
-    int i;
-    --(q->n);
+  int i;
+  --(q->n);
 
-    for (i = goner; i < q->n; ++i) {
-	q->list[i] = q->list[i+1];
-    }
+  for (i = goner; i < q->n; ++i) {
+    q->list[i] = q->list[i+1];
+  }
 }
 
 OSCSchedulableObject OSCQueueRemoveEarliest(OSCQueue q) {
-    OSCSchedulableObject result;
-    int i, smallestIndex;
+  OSCSchedulableObject result;
+  int i, smallestIndex;
 
-		if (q->n == 0) {
+  if (q->n == 0) {
 #ifndef SUPPRESS_WARNING
-		  OSCWarning("OSCQueueRemoveEarliest: empty queue");
+    OSCWarning("OSCQueueRemoveEarliest: empty queue");
 #endif
-		  return NULL;
-		}
+    return NULL;
+  }
 
 #ifdef DEBUG_OSC_PRIORITY_QUEUE
-    printf("OSCQueueRemoveEarliest: begin\n");
-    OSCQueuePrint(q);
+  printf("OSCQueueRemoveEarliest: begin\n");
+  OSCQueuePrint(q);
 #endif
 
-    smallestIndex = 0;
-    for (i = 1; i < q->n; ++i) {
-        if (OSCTT_Compare(q->list[smallestIndex]->timetag, q->list[i]->timetag) > 0) {
-					smallestIndex = i;
-				}
+  smallestIndex = 0;
+  for (i = 1; i < q->n; ++i) {
+    if (OSCTT_Compare(q->list[smallestIndex]->timetag, q->list[i]->timetag) > 0) {
+      smallestIndex = i;
     }
+  }
 
-    result = q->list[smallestIndex];
+  result = q->list[smallestIndex];
 
-    RemoveElement(smallestIndex, q);
+  RemoveElement(smallestIndex, q);
 
 #ifdef DEBUG_OSC_PRIORITY_QUEUE
-    printf("OSCQueueRemoveEarliest: done\n");
-    OSCQueuePrint(q);
+  printf("OSCQueueRemoveEarliest: done\n");
+  OSCQueuePrint(q);
 #endif
-    return result;
+  return result;
 }
 
 #ifdef PRINT_PRIORITY_QUEUE
 
 void OSCQueuePrint(OSCQueue q) {
-    int i;
-    printf("OSC Priority queue at %p has %d elements:\n", q, q->n);
+  int i;
+  printf("OSC Priority queue at %p has %d elements:\n", q, q->n);
 
-    for (i = 0; i < q->n; ++i) {
-      printf("   list[%2d] is %p, timetag = %"PRIu64"\n", i, q->list[i], *(uint64_t *)&(q->list[i]->timetag));
-    }
-    printf("\n\n");
+  for (i = 0; i < q->n; ++i) {
+    printf("   list[%2d] is %p, timetag = %"PRIu64"\n", i, q->list[i], *(uint64_t *)&(q->list[i]->timetag));
+  }
+  printf("\n\n");
 }
 
 #endif
 
 
 void OSCQueueScanStart(OSCQueue q) {
-    q->scanIndex = 0;
+  q->scanIndex = 0;
 }
 
 OSCSchedulableObject OSCQueueScanNext(OSCQueue q) {
-    if (q->scanIndex >= q->n) return 0;
+  if (q->scanIndex >= q->n) return 0;
 
-    return (q->list[(q->scanIndex)++]);
+  return (q->list[(q->scanIndex)++]);
 }
 
 void OSCQueueRemoveCurrentScanItem(OSCQueue q) {
-    /* Remember that q->scanIndex is the index of the *next*
-       item that will be returned, so the "current" item, i.e.,
-       the one most recently returned by OSCQueueScanNext(),
-       is q->scanIndex-1. */
-   
-    RemoveElement(q->scanIndex-1, q);
-    --(q->scanIndex);
+  /* Remember that q->scanIndex is the index of the *next*
+     item that will be returned, so the "current" item, i.e.,
+     the one most recently returned by OSCQueueScanNext(),
+     is q->scanIndex-1. */
+
+  RemoveElement(q->scanIndex-1, q);
+  --(q->scanIndex);
 }
 
 void CheckWholeQueue(void) {

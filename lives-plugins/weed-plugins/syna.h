@@ -52,14 +52,14 @@ typedef struct {
   float   *aalto[WAVES];
 
   int  *instr[INSTR],*echo[INSTR],vol[INSTR],pola[INSTR],
-    prev[INSTR],pan[INSTR],off[INSTR],plus[INSTR],slide[INSTR];
+       prev[INSTR],pan[INSTR],off[INSTR],plus[INSTR],slide[INSTR];
 
-// an addition for Syna Live -Antti
+  // an addition for Syna Live -Antti
   int	live_row[INSTR];
   int	new_live_row[INSTR];
 
   int  global,slen,update,new_update,trak[INSTR][PTLEN],ptn[MAXR][PTLEN],
-            ti[INSTR],pi[INSTR],len[INSTR],ekolen;
+       ti[INSTR],pi[INSTR],len[INSTR],ekolen;
 
   char *module,eko[INSTR];
 
@@ -73,23 +73,25 @@ typedef struct {
 } _sdata;
 
 
-static char *notes[]={
-            "c1","C1","d1","D1", "e1","f1","F1","g1", "G1","a1","A1","b1",
-            "c2","C2","d2","D2", "e2","f2","F2","g2", "G2","a2","A2","b2",
-            "c3","C3","d3","D3", "e3","f3","F3","g3", "G3","a3","A3","b3",
-            "c4","C4","d4","D4", "e4","f4","F4","g4", "G4","a4","A4","b4",
-            "c5","C5","d5","D5", "e5","f5","F5","g5", "G5","a5","A5","b5",
-            "c6","C6","d6","D6", "e6","f6","F6","g6", "G6","a6","A6","b6",
-            "echo1","echo0","stop","vol","sld","0"};
+static char *notes[]= {
+  "c1","C1","d1","D1", "e1","f1","F1","g1", "G1","a1","A1","b1",
+  "c2","C2","d2","D2", "e2","f2","F2","g2", "G2","a2","A2","b2",
+  "c3","C3","d3","D3", "e3","f3","F3","g3", "G3","a3","A3","b3",
+  "c4","C4","d4","D4", "e4","f4","F4","g4", "G4","a4","A4","b4",
+  "c5","C5","d5","D5", "e5","f5","F5","g5", "G5","a5","A5","b5",
+  "c6","C6","d6","D6", "e6","f6","F6","g6", "G6","a6","A6","b6",
+  "echo1","echo0","stop","vol","sld","0"
+};
 
-static int notei[]={
-            0,0,0,0, 0,0,0,0, 0,0,0,0,
-            0,0,0,0, 0,0,0,0, 0,0,0,0,
-            0,0,0,0, 0,0,0,0, 0,0,0,0,
-            0,0,0,0, 0,0,0,0, 0,0,0,0,
-            0,0,0,0, 0,0,0,0, 0,0,0,0,
-            1047,1109,1175,1245, 1319,1397,1480,1568, 1661,1760,1864,1976,
-            ECHON,ECHOFF,STOP,VOL,SLIDE,0};
+static int notei[]= {
+  0,0,0,0, 0,0,0,0, 0,0,0,0,
+  0,0,0,0, 0,0,0,0, 0,0,0,0,
+  0,0,0,0, 0,0,0,0, 0,0,0,0,
+  0,0,0,0, 0,0,0,0, 0,0,0,0,
+  0,0,0,0, 0,0,0,0, 0,0,0,0,
+  1047,1109,1175,1245, 1319,1397,1480,1568, 1661,1760,1864,1976,
+  ECHON,ECHOFF,STOP,VOL,SLIDE,0
+};
 
 
 static void adsr(_sdata *, int a, int d, int s, int r, int mod, int swp, int ins, int wave, int wave_mod);
@@ -105,7 +107,7 @@ static int syna_init(_sdata *, int freq);
 
 #if 0
 // Change all the live rows.
-static void set_live_rows(_sdata *, int * the_rows);
+static void set_live_rows(_sdata *, int *the_rows);
 #endif
 
 // Change just one live row.

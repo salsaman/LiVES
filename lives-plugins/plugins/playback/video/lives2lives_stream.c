@@ -21,9 +21,9 @@ static int clampings[3];
 
 static char plugin_version[64]="LiVES to LiVES streaming engine version 1.1";
 
-static boolean (*render_fn)(int hsize, int vsize, int64_t tc, void **pixel_data);
-boolean render_frame_stream (int hsize, int vsize, int64_t tc, void **pixel_data);
-boolean render_frame_unknown (int hsize, int vsize, int64_t tc, void **pixel_data);
+static boolean(*render_fn)(int hsize, int vsize, int64_t tc, void **pixel_data);
+boolean render_frame_stream(int hsize, int vsize, int64_t tc, void **pixel_data);
+boolean render_frame_unknown(int hsize, int vsize, int64_t tc, void **pixel_data);
 
 /////////////////////////////////////////////////////////////////////////
 
@@ -60,8 +60,8 @@ typedef struct {
 } desc;
 
 
-lives_stream_t *lstream_alloc (void) {
-  lives_stream_t *lstream = (lives_stream_t *) malloc (sizeof(lives_stream_t));
+lives_stream_t *lstream_alloc(void) {
+  lives_stream_t *lstream = (lives_stream_t *) malloc(sizeof(lives_stream_t));
   if (!lstream) return NULL;
   lstream->handle=NULL;
   lstream->YUV_clamping=WEED_YUV_CLAMPING_CLAMPED;
@@ -82,16 +82,16 @@ void *OpenHTMSocket(char *host, int portnumber) {
   o->len = sizeof(cl_addr);
   memset((char *)&o->serv_addr, 0, sizeof(o->serv_addr));
   o->serv_addr.sin_family = AF_INET;
-  
+
   hostsEntry = gethostbyname(host);
   if (hostsEntry == NULL) {
     herror(NULL);
     return NULL;
   }
-    
+
   address = *((uint64_t *) hostsEntry->h_addr_list[0]);
   o->serv_addr.sin_addr.s_addr = address;
-  
+
   o->serv_addr.sin_port = htons(portnumber);
   o->addr = &(o->serv_addr);
 
@@ -100,20 +100,18 @@ void *OpenHTMSocket(char *host, int portnumber) {
     cl_addr.sin_family = AF_INET;
     cl_addr.sin_addr.s_addr = htonl(INADDR_ANY);
     cl_addr.sin_port = htons(0);
-    
-    if(bind(sockfd, (struct sockaddr *) &cl_addr, sizeof(cl_addr)) < 0) {
+
+    if (bind(sockfd, (struct sockaddr *) &cl_addr, sizeof(cl_addr)) < 0) {
       fprintf(stderr,"could not bind\n");
       close(sockfd);
       sockfd = -1;
     }
-  }
-  else fprintf(stderr,"unable to make socket\n");
+  } else fprintf(stderr,"unable to make socket\n");
 
-  if(sockfd<0) {
+  if (sockfd<0) {
     free(o);
     o = NULL;
-  }
-  else o->sockfd = sockfd;
+  } else o->sockfd = sockfd;
 
   if (o!=NULL&&strcmp(host,"INADDR_ANY")) {
     connect(sockfd, o->addr, sizeof(cl_addr));
@@ -132,12 +130,10 @@ static boolean sendudp(const struct sockaddr *sp, int sockfd, int length, size_t
     if (mcount>count) mcount=count;
     if ((res=sendto(sockfd, b, mcount, 0, sp, length))==-1) {
       if (errno==EMSGSIZE) {
-	mcount>>=1;
-	lstream->mtu=mcount;
-      }
-      else return FALSE;
-    }
-    else {
+        mcount>>=1;
+        lstream->mtu=mcount;
+      } else return FALSE;
+    } else {
       count-=res;
       b+=res;
     }
@@ -170,11 +166,11 @@ const char *module_check_init(void) {
 }
 
 
-const char *version (void) {
+const char *version(void) {
   return plugin_version;
 }
 
-const char *get_description (void) {
+const char *get_description(void) {
   return "The LiVES 2 LiVES stream plugin allows streaming to another copy of LiVES.\n";
 }
 
@@ -190,8 +186,7 @@ const int *get_yuv_palette_clamping(int palette) {
     clampings[0]=WEED_YUV_CLAMPING_UNCLAMPED;
     clampings[1]=WEED_YUV_CLAMPING_CLAMPED;
     clampings[2]=-1;
-  }
-  else clampings[0]=-1;
+  } else clampings[0]=-1;
   return clampings;
 }
 
@@ -205,12 +200,12 @@ boolean set_yuv_palette_clamping(int clamping_type) {
 }
 
 
-uint64_t get_capabilities (int palette) {
+uint64_t get_capabilities(int palette) {
   return 0;
 }
 
 
-boolean set_palette (int palette) {
+boolean set_palette(int palette) {
   if (!lstream) return FALSE;
   if (palette==WEED_PALETTE_YUV420P||palette==WEED_PALETTE_RGB24) {
     lstream->palette=palette;
@@ -221,9 +216,9 @@ boolean set_palette (int palette) {
   return FALSE;
 }
 
-const char *get_init_rfx (void) {
+const char *get_init_rfx(void) {
   return \
-"<define>\\n\
+         "<define>\\n\
 |1.7\\n\
 </define>\\n\
 <language_code>\\n\
@@ -249,17 +244,17 @@ layout|p4|fill\\n\
 ";
 }
 
-const char * get_fps_list (int palette) {
+const char *get_fps_list(int palette) {
   return "8|12|16|24|25|30|50|60";
 }
 
 
-boolean set_fps (double in_fps) {
+boolean set_fps(double in_fps) {
   lstream->fps=in_fps;
   return TRUE;
 }
 
-boolean init_screen (int width, int height, boolean fullscreen, uint64_t window_id, int argc, char **argv) {
+boolean init_screen(int width, int height, boolean fullscreen, uint64_t window_id, int argc, char **argv) {
   char host[16];
   int port;
 
@@ -284,12 +279,12 @@ boolean init_screen (int width, int height, boolean fullscreen, uint64_t window_
 }
 
 
-boolean render_frame (int hsize, int vsize, int64_t tc, void **pixel_data, void **rd, void **pp) {
+boolean render_frame(int hsize, int vsize, int64_t tc, void **pixel_data, void **rd, void **pp) {
   // call the function which was set in set_palette
-  return render_fn (hsize,vsize,tc,pixel_data);
+  return render_fn(hsize,vsize,tc,pixel_data);
 }
 
-boolean render_frame_stream (int hsize, int vsize, int64_t tc, void **pixel_data) {
+boolean render_frame_stream(int hsize, int vsize, int64_t tc, void **pixel_data) {
   char hdrstr[128];
   size_t hdrstrlen;
   int mcount;
@@ -321,7 +316,8 @@ boolean render_frame_stream (int hsize, int vsize, int64_t tc, void **pixel_data
   mcount=dsize*4;
   setsockopt(((desc *)(lstream->handle))->sockfd, SOL_SOCKET, SO_SNDBUF, (void *) &mcount, sizeof(mcount));
 
-  snprintf(hdrstr,128,"1 0 0 %d %"PRId64" %d %d %.8f %d 1 %d 0 0 ", dsize, tc, hsize, vsize, lstream->fps, lstream->palette, lstream->YUV_clamping);
+  snprintf(hdrstr,128,"1 0 0 %d %"PRId64" %d %d %.8f %d 1 %d 0 0 ", dsize, tc, hsize, vsize, lstream->fps, lstream->palette,
+           lstream->YUV_clamping);
 
   hdrstrlen=strlen(hdrstr);
 
@@ -333,8 +329,7 @@ boolean render_frame_stream (int hsize, int vsize, int64_t tc, void **pixel_data
     lives_stream_out(pixel_data[0],hsize*vsize);
     lives_stream_out(pixel_data[1],(hsize*vsize)>>2);
     lives_stream_out(pixel_data[2],(hsize*vsize)>>2);
-  }
-  else if (lstream->palette==WEED_PALETTE_RGB24) {
+  } else if (lstream->palette==WEED_PALETTE_RGB24) {
     lives_stream_out(pixel_data[0],dsize);
   }
 
@@ -342,7 +337,7 @@ boolean render_frame_stream (int hsize, int vsize, int64_t tc, void **pixel_data
 }
 
 
-boolean render_frame_unknown (int hsize, int vsize, int64_t tc, void **pixel_data) {
+boolean render_frame_unknown(int hsize, int vsize, int64_t tc, void **pixel_data) {
   if (lstream->palette==WEED_PALETTE_END) {
     fprintf(stderr,"lives2lives_stream plugin error: No palette was set !\n");
     return 0;
@@ -350,7 +345,7 @@ boolean render_frame_unknown (int hsize, int vsize, int64_t tc, void **pixel_dat
   return FALSE;
 }
 
-void exit_screen (int16_t mouse_x, int16_t mouse_y) {
+void exit_screen(int16_t mouse_x, int16_t mouse_y) {
   if (lstream!=NULL&&lstream->handle!=NULL) {
     lives_stream_out("STREND",6);
     lstream_close_socket(lstream);
@@ -361,7 +356,7 @@ void exit_screen (int16_t mouse_x, int16_t mouse_y) {
 
 void module_unload(void) {
   if (lstream!=NULL) {
-    free (lstream);
+    free(lstream);
     lstream=NULL;
   }
 }

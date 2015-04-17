@@ -19,7 +19,7 @@
 ///////////////////////////////////////////////////////////////////
 
 static int num_versions=2; // number of different weed api versions supported
-static int api_versions[]={131,100}; // array of weed api versions supported in plugin, in order of preference (most preferred first)
+static int api_versions[]= {131,100}; // array of weed api versions supported in plugin, in order of preference (most preferred first)
 
 static int package_version=1; // version of this package
 
@@ -50,8 +50,7 @@ typedef struct {
 } _sdata;
 
 
-static inline uint32_t fastrand(_sdata *sdata)
-{
+static inline uint32_t fastrand(_sdata *sdata) {
 #define rand_a 1073741789L
 #define rand_c 32749L
 
@@ -68,7 +67,7 @@ static unsigned short Y_B[256];
 static void init_luma_arrays(void) {
   register int i;
 
-  for (i=0;i<256;i++) {
+  for (i=0; i<256; i++) {
     Y_R[i]=.299*(float)i*256.;
     Y_G[i]=.587*(float)i*256.;
     Y_B[i]=.114*(float)i*256.;
@@ -82,7 +81,7 @@ int haip_init(weed_plant_t *inst) {
   int i;
   sdata=weed_malloc(sizeof(_sdata));
 
-  if (sdata == NULL ) return WEED_ERROR_MEMORY_ALLOCATION;
+  if (sdata == NULL) return WEED_ERROR_MEMORY_ALLOCATION;
 
   sdata->x=sdata->y=-1;
 
@@ -93,7 +92,7 @@ int haip_init(weed_plant_t *inst) {
   sdata->py=weed_malloc(NUM_WRMS*sizeof(int));
   sdata->wt=weed_malloc(NUM_WRMS*sizeof(int));
 
-  for (i=0;i<NUM_WRMS;i++) {
+  for (i=0; i<NUM_WRMS; i++) {
     sdata->px[i]=sdata->py[i]=-1;
   }
 
@@ -127,7 +126,7 @@ inline int calc_luma(unsigned char *pt) {
 static int make_eight_table(unsigned char *pt, int row, int luma, int adj) {
   int n=0;
 
-  for (n=0;n<8;n++) ress[n]=-1;
+  for (n=0; n<8; n++) ress[n]=-1;
 
   n=0;
 
@@ -173,7 +172,7 @@ static int select_dir(_sdata *sdata) {
   int i;
   int mychoice;
 
-  for (i=0;i<8;i++) {
+  for (i=0; i<8; i++) {
     if (ress[i]!=-1) num_choices++;
   }
 
@@ -182,7 +181,7 @@ static int select_dir(_sdata *sdata) {
   sdata->fastrand_val=fastrand(sdata);
   mychoice=(int)(((sdata->fastrand_val>>24)/255.*num_choices));
 
-  switch(ress[mychoice]) {
+  switch (ress[mychoice]) {
   case 0:
     sdata->x=sdata->x-1;
     sdata->y=sdata->y-1;
@@ -215,24 +214,27 @@ static int select_dir(_sdata *sdata) {
   return 0;
 }
 
-static inline void 
-nine_fill (unsigned char *new_data, int row, unsigned char *old_data) {
+static inline void
+nine_fill(unsigned char *new_data, int row, unsigned char *old_data) {
   // fill nine pixels with the centre colour
-  new_data[-row-3]=new_data[-row]=new_data[-row+3]=new_data[-3]=new_data[0]=new_data[3]=new_data[row-3]=new_data[row]=new_data[row+3]=old_data[0];
-  new_data[-row-2]=new_data[-row+1]=new_data[-row+4]=new_data[-2]=new_data[1]=new_data[4]=new_data[row-2]=new_data[row+1]=new_data[row+4]=old_data[1];
-  new_data[-row-1]=new_data[-row+2]=new_data[-row+5]=new_data[-1]=new_data[2]=new_data[5]=new_data[row-1]=new_data[row+2]=new_data[row+5]=old_data[2];
+  new_data[-row-3]=new_data[-row]=new_data[-row+3]=new_data[-3]=new_data[0]=new_data[3]=new_data[row-3]=new_data[row]=new_data[row+3]=
+                                    old_data[0];
+  new_data[-row-2]=new_data[-row+1]=new_data[-row+4]=new_data[-2]=new_data[1]=new_data[4]=new_data[row-2]=new_data[row+1]=new_data[row+4]=
+                                      old_data[1];
+  new_data[-row-1]=new_data[-row+2]=new_data[-row+5]=new_data[-1]=new_data[2]=new_data[5]=new_data[row-1]=new_data[row+2]=new_data[row+5]=
+                                      old_data[2];
 }
 
-static inline void 
-black_fill (unsigned char *new_data, int row) {
+static inline void
+black_fill(unsigned char *new_data, int row) {
   // fill nine pixels with the centre colour
   new_data[-row-3]=new_data[-row]=new_data[-row+3]=new_data[-3]=new_data[0]=new_data[3]=new_data[row-3]=new_data[row]=new_data[row+3]=0;
   new_data[-row-2]=new_data[-row+1]=new_data[-row+4]=new_data[-2]=new_data[1]=new_data[4]=new_data[row-2]=new_data[row+1]=new_data[row+4]=0;
   new_data[-row-1]=new_data[-row+2]=new_data[-row+5]=new_data[-1]=new_data[2]=new_data[5]=new_data[row-1]=new_data[row+2]=new_data[row+5]=0;
 }
 
-static inline void 
-white_fill (unsigned char *new_data, int row) {
+static inline void
+white_fill(unsigned char *new_data, int row) {
   // fill nine pixels with the centre colour
   new_data[-row-3]=new_data[-row]=new_data[-row+3]=new_data[-3]=new_data[0]=new_data[3]=new_data[row-3]=new_data[row]=new_data[row+3]=255;
   new_data[-row-2]=new_data[-row+1]=new_data[-row+4]=new_data[-2]=new_data[1]=new_data[4]=new_data[row-2]=new_data[row+1]=new_data[row+4]=255;
@@ -242,7 +244,7 @@ white_fill (unsigned char *new_data, int row) {
 
 static void proc_pt(unsigned char *dest, unsigned char *src, int x, int y, int orows, int irows, int wt) {
   //nine_fill(&dest[rows*y+x*3],rows,&src[rows*y+x*3]);
-  switch(wt) {
+  switch (wt) {
   case 0:
     black_fill(&dest[orows*y+x*3],orows);
     break;
@@ -255,10 +257,11 @@ static void proc_pt(unsigned char *dest, unsigned char *src, int x, int y, int o
   }
 }
 
-int haip_process (weed_plant_t *inst, weed_timecode_t timestamp) {
+int haip_process(weed_plant_t *inst, weed_timecode_t timestamp) {
   _sdata *sdata;
   int error;
-  weed_plant_t *in_channel=weed_get_plantptr_value(inst,"in_channels",&error),*out_channel=weed_get_plantptr_value(inst,"out_channels",&error);
+  weed_plant_t *in_channel=weed_get_plantptr_value(inst,"in_channels",&error),*out_channel=weed_get_plantptr_value(inst,"out_channels",
+                           &error);
   unsigned char *src=weed_get_voidptr_value(in_channel,"pixel_data",&error);
   unsigned char *dst=weed_get_voidptr_value(out_channel,"pixel_data",&error);
   int width=weed_get_int_value(in_channel,"width",&error),width3=width*3;
@@ -277,7 +280,7 @@ int haip_process (weed_plant_t *inst, weed_timecode_t timestamp) {
   sdata=weed_get_voidptr_value(inst,"plugin_internal",&error);
 
 
-  for (i=0;i<height;i++) {
+  for (i=0; i<height; i++) {
     weed_memcpy(&dst[i*orowstride],&src[i*irowstride],width3);
   }
 
@@ -289,7 +292,7 @@ int haip_process (weed_plant_t *inst, weed_timecode_t timestamp) {
   scalex=(float)width/(float)sdata->old_width;
   scaley=(float)height/(float)sdata->old_height;
 
-  for (i=0;i<NUM_WRMS;i++) {
+  for (i=0; i<NUM_WRMS; i++) {
     count=1000;
     if (sdata->px[i]==-1) {
       sdata->fastrand_val=fastrand(sdata);
@@ -337,16 +340,17 @@ int haip_process (weed_plant_t *inst, weed_timecode_t timestamp) {
 
 
 
-weed_plant_t *weed_setup (weed_bootstrap_f weed_boot) {
+weed_plant_t *weed_setup(weed_bootstrap_f weed_boot) {
   weed_plant_t *plugin_info=weed_plugin_info_init(weed_boot,num_versions,api_versions);
   if (plugin_info!=NULL) {
-    int palette_list[]={WEED_PALETTE_BGR24,WEED_PALETTE_RGB24,WEED_PALETTE_END};
+    int palette_list[]= {WEED_PALETTE_BGR24,WEED_PALETTE_RGB24,WEED_PALETTE_END};
 
-    weed_plant_t *in_chantmpls[]={weed_channel_template_init("in channel 0",0,palette_list),NULL};
-    weed_plant_t *out_chantmpls[]={weed_channel_template_init("out channel 0",0,palette_list),NULL};
-    weed_plant_t *filter_class=weed_filter_class_init("haip","salsaman",1,0,&haip_init,&haip_process,&haip_deinit,in_chantmpls,out_chantmpls,NULL,NULL);
+    weed_plant_t *in_chantmpls[]= {weed_channel_template_init("in channel 0",0,palette_list),NULL};
+    weed_plant_t *out_chantmpls[]= {weed_channel_template_init("out channel 0",0,palette_list),NULL};
+    weed_plant_t *filter_class=weed_filter_class_init("haip","salsaman",1,0,&haip_init,&haip_process,&haip_deinit,in_chantmpls,out_chantmpls,
+                               NULL,NULL);
 
-    weed_plugin_info_add_filter_class (plugin_info,filter_class);
+    weed_plugin_info_add_filter_class(plugin_info,filter_class);
 
     weed_set_int_value(plugin_info,"version",package_version);
     init_luma_arrays();

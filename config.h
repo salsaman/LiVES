@@ -291,7 +291,7 @@
 #define HAVE___FSETLOCKING 1
 
 /* Define as const if the declaration of iconv() needs const. */
-#define ICONV_CONST 
+#define ICONV_CONST
 
 /* Define if integer division by zero raises signal SIGFPE. */
 #define INTDIV0_RAISES_SIGFPE 1
@@ -336,7 +336,8 @@
 /* Define if <inttypes.h> exists and defines unusable PRI* macros. */
 /* #undef PRI_MACROS_BROKEN */
 
-/* Define to necessary symbol if this constant uses a non-standard name on
+/* Define to necessary symbol if this constant
+ uses a non-standard name on
    your system. */
 /* #undef PTHREAD_CREATE_JOINABLE */
 

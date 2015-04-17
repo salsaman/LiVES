@@ -17,7 +17,7 @@
 ///////////////////////////////////////////////////////////////////
 
 static int num_versions=1; // number of different weed api versions supported
-static int api_versions[]={131}; // array of weed api versions supported in plugin, in order of preference (most preferred first)
+static int api_versions[]= {131}; // array of weed api versions supported in plugin, in order of preference (most preferred first)
 
 static int package_version=1; // version of this package
 
@@ -61,7 +61,7 @@ static int twopow(int i) {
   // return 2**(i+1)
   register int j,x=2;
 
-  for (j=0;j<i;j++) x*=2;
+  for (j=0; j<i; j++) x*=2;
 
   return x;
 }
@@ -70,20 +70,20 @@ static int twopow(int i) {
 static int create_plans(void) {
   register int i,nsamps;
 
-  for (i=0;i<MAXPLANS;i++) {
+  for (i=0; i<MAXPLANS; i++) {
     // create fftw plan
     nsamps=twopow(i);
 
-    ins[i] = (float*) fftwf_malloc(nsamps*sizeof(float));
+    ins[i] = (float *) fftwf_malloc(nsamps*sizeof(float));
     if (ins[i]==NULL) {
       return WEED_ERROR_MEMORY_ALLOCATION;
     }
-    
-    outs[i] = (fftwf_complex*) fftwf_malloc(nsamps*sizeof(fftwf_complex));
+
+    outs[i] = (fftwf_complex *) fftwf_malloc(nsamps*sizeof(fftwf_complex));
     if (outs[i]==NULL) {
       return WEED_ERROR_MEMORY_ALLOCATION;
     }
-    
+
     plans[i] = fftwf_plan_dft_r2c_1d(nsamps, ins[i], outs[i], i<13?FFTW_MEASURE:FFTW_ESTIMATE);
   }
   return WEED_NO_ERROR;
@@ -96,7 +96,7 @@ static int create_plans(void) {
 
 
 
-int fftw_process (weed_plant_t *inst, weed_timecode_t tc) {
+int fftw_process(weed_plant_t *inst, weed_timecode_t tc) {
 
   int error;
   int chans,nsamps,onsamps,base,inter,rate,k;
@@ -146,7 +146,7 @@ int fftw_process (weed_plant_t *inst, weed_timecode_t tc) {
   chans=weed_get_int_value(in_channel,"audio_channels",&error);
   inter=weed_get_boolean_value(in_channel,"audio_interleaf",&error);
 
-  for (i=0;i<chans;i++) {
+  for (i=0; i<chans; i++) {
     // do transform for each channel
 
     // copy in data to sdata->in
@@ -154,11 +154,10 @@ int fftw_process (weed_plant_t *inst, weed_timecode_t tc) {
       // non-interleaved
       weed_memcpy(ins[base],src,nsamps*sizf);
       src+=onsamps;
-    }
-    else {
+    } else {
       // interleaved
-      for (j=0;j<nsamps;j++) {
-	ins[base][j]=src[j*chans];
+      for (j=0; j<nsamps; j++) {
+        ins[base][j]=src[j*chans];
       }
       src++;
     }
@@ -183,22 +182,22 @@ int fftw_process (weed_plant_t *inst, weed_timecode_t tc) {
 
 
 
-weed_plant_t *weed_setup (weed_bootstrap_f weed_boot) {
+weed_plant_t *weed_setup(weed_bootstrap_f weed_boot) {
   weed_plant_t *plugin_info;
 
   if (create_plans()!=WEED_NO_ERROR) return NULL;
   plugin_info=weed_plugin_info_init(weed_boot,num_versions,api_versions);
   if (plugin_info!=NULL) {
-    weed_plant_t *in_chantmpls[]={weed_audio_channel_template_init("in channel 0",0),NULL};
-    weed_plant_t *in_params[]={weed_float_init("freq","_Frequency",2000.,0.0,22000.0),NULL};
-    weed_plant_t *out_params[]={weed_out_param_float_init("value",0.,0.,1.),NULL};
+    weed_plant_t *in_chantmpls[]= {weed_audio_channel_template_init("in channel 0",0),NULL};
+    weed_plant_t *in_params[]= {weed_float_init("freq","_Frequency",2000.,0.0,22000.0),NULL};
+    weed_plant_t *out_params[]= {weed_out_param_float_init("value",0.,0.,1.),NULL};
     weed_plant_t *filter_class=weed_filter_class_init("audio fft analyser","salsaman",1,0,NULL,&fftw_process,
-						      NULL,in_chantmpls,NULL,in_params,out_params);
-    
-    weed_plugin_info_add_filter_class (plugin_info,filter_class);
+                               NULL,in_chantmpls,NULL,in_params,out_params);
+
+    weed_plugin_info_add_filter_class(plugin_info,filter_class);
 
     weed_set_string_value(filter_class,"description","Fast Fourier Transform for audio");
-    
+
     weed_set_int_value(plugin_info,"version",package_version);
   }
   return plugin_info;
@@ -207,7 +206,7 @@ weed_plant_t *weed_setup (weed_bootstrap_f weed_boot) {
 
 void weed_desetup(void) {
   register int i;
-  for (i=0;i<MAXPLANS;i++) {
+  for (i=0; i<MAXPLANS; i++) {
     fftwf_destroy_plan(plans[i]);
     fftwf_free(ins[i]);
     fftwf_free(outs[i]);

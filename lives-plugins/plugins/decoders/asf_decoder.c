@@ -67,18 +67,17 @@ const char *plugin_version="LiVES asf/wmv decoder version 1.1";
 #include "dec_helper.h"
 #include "asf_decoder.h"
 
-static enum CodecID ff_codec_get_id(const AVCodecTag *tags, unsigned int tag)
-{
+static enum CodecID ff_codec_get_id(const AVCodecTag *tags, unsigned int tag) {
   int i;
-  for(i=0; tags[i].id != CODEC_ID_NONE;i++) {
-    if(tag == tags[i].tag)
+  for (i=0; tags[i].id != CODEC_ID_NONE; i++) {
+    if (tag == tags[i].tag)
       return tags[i].id;
   }
-  for(i=0; tags[i].id != CODEC_ID_NONE; i++) {
-    if(   toupper((tag >> 0)&0xFF) == toupper((tags[i].tag >> 0)&0xFF)
-	  && toupper((tag >> 8)&0xFF) == toupper((tags[i].tag >> 8)&0xFF)
-	  && toupper((tag >>16)&0xFF) == toupper((tags[i].tag >>16)&0xFF)
-	  && toupper((tag >>24)&0xFF) == toupper((tags[i].tag >>24)&0xFF))
+  for (i=0; tags[i].id != CODEC_ID_NONE; i++) {
+    if (toupper((tag >> 0)&0xFF) == toupper((tags[i].tag >> 0)&0xFF)
+        && toupper((tag >> 8)&0xFF) == toupper((tags[i].tag >> 8)&0xFF)
+        && toupper((tag >>16)&0xFF) == toupper((tags[i].tag >>16)&0xFF)
+        && toupper((tag >>24)&0xFF) == toupper((tags[i].tag >>24)&0xFF))
       return tags[i].id;
   }
   return CODEC_ID_NONE;
@@ -97,7 +96,7 @@ static pthread_mutexattr_t mattr;
 /*
   static void convert_quad_chroma(guchar *src, int width, int height, guchar *dest) {
   // width and height here are width and height of dest chroma planes, in bytes
-  
+
   // double the chroma samples vertically and horizontally, with interpolation, eg. 420p to 444p
 
   // output to planes
@@ -168,7 +167,9 @@ static boolean guidcmp(const void *v1, const void *v2) {
   uint8_t *g1=(uint8_t *)v1;
   uint8_t *g2=(uint8_t *)v2;
   if (res==0) {
-    printf("check %0X %0X %0X %0X %0X %0X %0X %0X %0X %0X %0X %0X %0X %0X %0X %0X\n",(uint8_t)g1[0],(uint8_t)g1[1],(uint8_t)g1[2],(uint8_t)g1[3],(uint8_t)g1[4],(uint8_t)g1[5],(uint8_t)g1[6],(uint8_t)g1[7],(uint8_t)g1[8],(uint8_t)g1[9],(uint8_t)g1[10],(uint8_t)g1[11],(uint8_t)g1[12],(uint8_t)g1[13],(uint8_t)g1[14],(uint8_t)g1[15]);
+    printf("check %0X %0X %0X %0X %0X %0X %0X %0X %0X %0X %0X %0X %0X %0X %0X %0X\n",(uint8_t)g1[0],(uint8_t)g1[1],(uint8_t)g1[2],
+           (uint8_t)g1[3],(uint8_t)g1[4],(uint8_t)g1[5],(uint8_t)g1[6],(uint8_t)g1[7],(uint8_t)g1[8],(uint8_t)g1[9],(uint8_t)g1[10],(uint8_t)g1[11],
+           (uint8_t)g1[12],(uint8_t)g1[13],(uint8_t)g1[14],(uint8_t)g1[15]);
   }
 #endif
 
@@ -176,16 +177,15 @@ static boolean guidcmp(const void *v1, const void *v2) {
 }
 
 
-static void get_str16_nolen(unsigned char *inbuf, int len, char *buf, int buf_size)
-{
+static void get_str16_nolen(unsigned char *inbuf, int len, char *buf, int buf_size) {
   int i=0;
-  char* q = buf;
+  char *q = buf;
   while (len > 1) {
     uint8_t tmp;
     uint32_t ch;
 
     GET_UTF16(ch, (len -= 2) >= 0 ? get_le16int(&inbuf[i]) : 0, break;)
-      PUT_UTF8(ch, tmp, if (q - buf < buf_size - 1) *q++ = tmp;)
+    PUT_UTF8(ch, tmp, if (q - buf < buf_size - 1) *q++ = tmp;)
       i+=2;
   }
   *q = '\0';
@@ -201,12 +201,12 @@ static boolean check_eof(const lives_clip_data_t *cdata) {
 }
 
 
-static int get_value(const lives_clip_data_t *cdata, int type){
+static int get_value(const lives_clip_data_t *cdata, int type) {
   unsigned char buffer[4096];
   lives_asf_priv_t *priv=cdata->priv;
-  switch(type){
-  case 2: 
-  case 3: 
+  switch (type) {
+  case 2:
+  case 3:
     if (read(priv->fd,buffer,4)<4) {
       fprintf(stderr, "asf_decoder: read error getting value\n");
       close(priv->fd);
@@ -214,7 +214,7 @@ static int get_value(const lives_clip_data_t *cdata, int type){
     }
     priv->input_position+=4;
     return get_le32int(buffer);
-  case 4: 
+  case 4:
     if (read(priv->fd,buffer,8)<8) {
       fprintf(stderr, "asf_decoder: read error getting value\n");
       close(priv->fd);
@@ -222,7 +222,7 @@ static int get_value(const lives_clip_data_t *cdata, int type){
     }
     priv->input_position+=8;
     return get_le64int(buffer);
-  case 5: 
+  case 5:
     if (read(priv->fd,buffer,2)<2) {
       fprintf(stderr, "asf_decoder: read error getting value\n");
       close(priv->fd);
@@ -230,14 +230,14 @@ static int get_value(const lives_clip_data_t *cdata, int type){
     }
     priv->input_position+=2;
     return get_le16int(buffer);
-  default:return INT_MIN;
+  default:
+    return INT_MIN;
   }
 }
 
 
 
-static boolean get_tag(const lives_clip_data_t *cdata, AVFormatContext *s, const char *key, int type, int len)
-{
+static boolean get_tag(const lives_clip_data_t *cdata, AVFormatContext *s, const char *key, int type, int len) {
   char *value;
   unsigned char buffer[4096];
   lives_asf_priv_t *priv=cdata->priv;
@@ -273,8 +273,7 @@ static boolean get_tag(const lives_clip_data_t *cdata, AVFormatContext *s, const
 }
 
 
-static void asf_reset_header(AVFormatContext *s)
-{
+static void asf_reset_header(AVFormatContext *s) {
   ASFContext *asf = s->priv_data;
   ASFStream *asf_st;
   int i;
@@ -299,7 +298,7 @@ static void asf_reset_header(AVFormatContext *s)
   asf->packet_time_delta = 0;
   asf->packet_time_start = 0;
 
-  for(i=0; i<s->nb_streams; i++){
+  for (i=0; i<s->nb_streams; i++) {
     asf_st= s->streams[i]->priv_data;
     av_free_packet(&asf_st->pkt);
     asf_st->frag_offset=0;
@@ -313,21 +312,21 @@ static void get_sync(lives_asf_priv_t *priv) {
   unsigned char buffer;
 
   while (1) {
-    if (read (priv->fd, &buffer, 1) < 1) return;
+    if (read(priv->fd, &buffer, 1) < 1) return;
     priv->input_position++;
     if (buffer==0x82) goto got_82;
     else continue;
 
-  got_82:
-    if (read (priv->fd, &buffer, 1) < 1) return;
+got_82:
+    if (read(priv->fd, &buffer, 1) < 1) return;
     priv->input_position++;
 
     if (buffer==0x82) goto got_82;
     if (buffer==0) goto got_0;
     else continue;
 
-  got_0:
-    if (read (priv->fd, &buffer, 1) < 1) return;
+got_0:
+    if (read(priv->fd, &buffer, 1) < 1) return;
     priv->input_position++;
     if (buffer==0) return; // OK
     if (buffer==0x82) goto got_82;
@@ -462,65 +461,65 @@ static int get_next_video_packet(const lives_clip_data_t *cdata, int tfrag, int6
       priv->hdr_start=priv->input_position-3;
 
       if (read(priv->fd, buffer, 2)<2) return -2;
-      
+
       priv->input_position+=2;
-      
+
       asf->packet_flags    = buffer[0];
       asf->packet_property = buffer[1];
-      
+
       rsize+=3;
-      
+
       DO_2BITS(asf->packet_flags >> 5, packet_length, s->packet_size);
       DO_2BITS(asf->packet_flags >> 1, padsize, 0); // sequence ignored
       DO_2BITS(asf->packet_flags >> 3, padsize, 0); // padding length
-      
+
       if (read(priv->fd,buffer,4)<4) {
-	fprintf(stderr, "asf_decoder: read error getting value\n");
-	return -5;
+        fprintf(stderr, "asf_decoder: read error getting value\n");
+        return -5;
       }
-      
+
       priv->input_position+=4;
-      
+
       asf->packet_timestamp = get_le32int(buffer);  // send time
-      
+
       //the following checks prevent overflows and infinite loops
-      if(!packet_length || packet_length >= (1U<<29)){
-	fprintf(stderr, "invalid packet_length %d at:%"PRId64"\n", packet_length, priv->input_position);
-	return -3;
+      if (!packet_length || packet_length >= (1U<<29)) {
+        fprintf(stderr, "invalid packet_length %d at:%"PRId64"\n", packet_length, priv->input_position);
+        return -3;
       }
-      if(padsize >= packet_length){
-	fprintf(stderr, "invalid padsize %d at:%"PRId64"\n", padsize, priv->input_position);
-	return -4;
+      if (padsize >= packet_length) {
+        fprintf(stderr, "invalid padsize %d at:%"PRId64"\n", padsize, priv->input_position);
+        return -4;
       }
 
       if (read(priv->fd,buffer,2)<2) {
-	fprintf(stderr, "asf_decoder: read error getting value\n");
-	return -2;
+        fprintf(stderr, "asf_decoder: read error getting value\n");
+        return -2;
       }
       priv->input_position+=2;
-      
+
       //duration = get_le16int(buffer);
-      
+
       // rsize has at least 11 bytes which have to be present
-      
+
       if (asf->packet_flags & 0x01) {
-	// multi segments
-	if (read(priv->fd,buffer,1)<1) {
-	  fprintf(stderr, "asf_decoder: read error getting value\n");
-	  return -2;
-	}
-	priv->input_position++;
-	asf->packet_segsizetype = buffer[0];
-	rsize++;
-	asf->packet_segments = asf->packet_segsizetype & 0x3f;
+        // multi segments
+        if (read(priv->fd,buffer,1)<1) {
+          fprintf(stderr, "asf_decoder: read error getting value\n");
+          return -2;
+        }
+        priv->input_position++;
+        asf->packet_segsizetype = buffer[0];
+        rsize++;
+        asf->packet_segments = asf->packet_segsizetype & 0x3f;
       } else {
-	// single segment
-	asf->packet_segments = 1;
-	asf->packet_segsizetype = 0x80;
+        // single segment
+        asf->packet_segments = 1;
+        asf->packet_segsizetype = 0x80;
       }
-      
+
       asf->packet_size_left = packet_length - padsize - rsize;
-      
+
       if (packet_length < asf->hdr.min_pktsize)
         padsize += asf->hdr.min_pktsize - packet_length;
 
@@ -539,20 +538,20 @@ static int get_next_video_packet(const lives_clip_data_t *cdata, int tfrag, int6
 
     do {
       // read frame header for fragment to get stream
-   
+
       lseek(priv->fd, priv->input_position, SEEK_SET);
       frag_start=priv->input_position;
 
       if (read(priv->fd,buffer,1)<1) {
-	fprintf(stderr, "asf_decoder: read error getting value\n");
-	return -2;
+        fprintf(stderr, "asf_decoder: read error getting value\n");
+        return -2;
       }
 
       priv->input_position++;
 
       num=buffer[0];
       asf->packet_key_frame = num >> 7;
-    
+
       streamid = num&0x7f;
 
 #ifdef DEBUG
@@ -561,181 +560,182 @@ static int get_next_video_packet(const lives_clip_data_t *cdata, int tfrag, int6
       rsize=1;
 
       if (asf->packet_time_start==0) {
-	asf->asf_st = s->streams[asf->stream_index]->priv_data;
-  
-	// read rest of frame header
+        asf->asf_st = s->streams[asf->stream_index]->priv_data;
 
-	DO_2BITS(asf->packet_property >> 4, asf->packet_seq, 0);
-	DO_2BITS(asf->packet_property >> 2, asf->packet_frag_offset, 0);
-	DO_2BITS(asf->packet_property, asf->packet_replic_size, 0);
+        // read rest of frame header
 
-	if (asf->packet_replic_size >= 8) {
+        DO_2BITS(asf->packet_property >> 4, asf->packet_seq, 0);
+        DO_2BITS(asf->packet_property >> 2, asf->packet_frag_offset, 0);
+        DO_2BITS(asf->packet_property, asf->packet_replic_size, 0);
 
-	  if (read(priv->fd,buffer,4)<4) {
-	    fprintf(stderr, "asf_decoder: read error getting value\n");
-	    return -2;
-	  }
-	  priv->input_position+=4;
-	  asf->packet_obj_size = get_le32int(buffer);
+        if (asf->packet_replic_size >= 8) {
 
-	  if(asf->packet_obj_size >= (1<<24) || asf->packet_obj_size <= 0){
-	    if (streamid==vidindex) {
-	      fprintf(stderr, "asf_decoder: packet_obj_size invalid\n");
-	      return -9;
-	    }
-	  }
+          if (read(priv->fd,buffer,4)<4) {
+            fprintf(stderr, "asf_decoder: read error getting value\n");
+            return -2;
+          }
+          priv->input_position+=4;
+          asf->packet_obj_size = get_le32int(buffer);
 
-	  if (read(priv->fd,buffer,4)<4) {
-	    fprintf(stderr, "asf_decoder: read error getting value\n");
-	    return -2;
-	  }
-	  priv->input_position+=4;
+          if (asf->packet_obj_size >= (1<<24) || asf->packet_obj_size <= 0) {
+            if (streamid==vidindex) {
+              fprintf(stderr, "asf_decoder: packet_obj_size invalid\n");
+              return -9;
+            }
+          }
 
-	  asf->packet_frag_timestamp = get_le32int(buffer); // timestamp
+          if (read(priv->fd,buffer,4)<4) {
+            fprintf(stderr, "asf_decoder: read error getting value\n");
+            return -2;
+          }
+          priv->input_position+=4;
 
-	  if(asf->packet_replic_size >= 8+38+4){
+          asf->packet_frag_timestamp = get_le32int(buffer); // timestamp
 
-	    priv->input_position+=10;
-	    lseek(priv->fd,10,SEEK_CUR);
+          if (asf->packet_replic_size >= 8+38+4) {
 
-	    if (read(priv->fd,buffer,8)<8) {
-	      fprintf(stderr, "asf_decoder: read error getting value\n");
-	      return -2;
-	    }
-	    priv->input_position+=8;
-	    ts0= get_le64int(buffer);
-	
-	    priv->input_position+=asf->packet_replic_size + 16 - 38 - 4;
-	    lseek(priv->fd,asf->packet_replic_size + 16 - 38 - 4,SEEK_CUR);
-    
-	    if(ts0!= -1) asf->packet_frag_timestamp= ts0/10000;
-	    else         asf->packet_frag_timestamp= AV_NOPTS_VALUE;
-	  }else {
-	    priv->input_position+=asf->packet_replic_size - 8;
-	    lseek(priv->fd,asf->packet_replic_size - 8,SEEK_CUR);
-	  }
-	  rsize += asf->packet_replic_size; // FIXME - check validity
-	} else if (asf->packet_replic_size==1){
-	  // single packet ? - frag_offset is beginning timestamp
-	  asf->packet_time_start = asf->packet_frag_offset;
-	  asf->packet_frag_offset = 0;
-	  asf->packet_frag_timestamp = asf->packet_timestamp;
+            priv->input_position+=10;
+            lseek(priv->fd,10,SEEK_CUR);
 
-	  if (read(priv->fd,buffer,1)<1) {
-	    fprintf(stderr, "asf_decoder: read error getting value\n");
-	    return -2;
-	  }
-	  priv->input_position+=1;
+            if (read(priv->fd,buffer,8)<8) {
+              fprintf(stderr, "asf_decoder: read error getting value\n");
+              return -2;
+            }
+            priv->input_position+=8;
+            ts0= get_le64int(buffer);
 
-	  asf->packet_time_delta = buffer[0];
-      
-	  rsize++;
-	}else if(asf->packet_replic_size!=0){
-	  if (check_eof(cdata)) {
-	    // could also be EOF in DO_2_BITS
-	    fprintf(stderr, "asf_decoder: EOF");
-	    return -2;
-	  }
-	  fprintf(stderr, "unexpected packet_replic_size of %d\n", asf->packet_replic_size);
-	  return -1;
-	}
-      
-	if (asf->packet_flags & 0x01) {
-	  // multi fragments
-	  DO_2BITS(asf->packet_segsizetype >> 6, asf->packet_frag_size, 0); // 0 is illegal
-	  if(asf->packet_frag_size > asf->packet_size_left - rsize){
-	    fprintf(stderr,"asf_decoder: packet_frag_size is invalid (%d > %d) %d %d\n",asf->packet_frag_size,asf->packet_size_left - rsize,asf->packet_padsize,rsize);
-	    
+            priv->input_position+=asf->packet_replic_size + 16 - 38 - 4;
+            lseek(priv->fd,asf->packet_replic_size + 16 - 38 - 4,SEEK_CUR);
+
+            if (ts0!= -1) asf->packet_frag_timestamp= ts0/10000;
+            else         asf->packet_frag_timestamp= AV_NOPTS_VALUE;
+          } else {
+            priv->input_position+=asf->packet_replic_size - 8;
+            lseek(priv->fd,asf->packet_replic_size - 8,SEEK_CUR);
+          }
+          rsize += asf->packet_replic_size; // FIXME - check validity
+        } else if (asf->packet_replic_size==1) {
+          // single packet ? - frag_offset is beginning timestamp
+          asf->packet_time_start = asf->packet_frag_offset;
+          asf->packet_frag_offset = 0;
+          asf->packet_frag_timestamp = asf->packet_timestamp;
+
+          if (read(priv->fd,buffer,1)<1) {
+            fprintf(stderr, "asf_decoder: read error getting value\n");
+            return -2;
+          }
+          priv->input_position+=1;
+
+          asf->packet_time_delta = buffer[0];
+
+          rsize++;
+        } else if (asf->packet_replic_size!=0) {
+          if (check_eof(cdata)) {
+            // could also be EOF in DO_2_BITS
+            fprintf(stderr, "asf_decoder: EOF");
+            return -2;
+          }
+          fprintf(stderr, "unexpected packet_replic_size of %d\n", asf->packet_replic_size);
+          return -1;
+        }
+
+        if (asf->packet_flags & 0x01) {
+          // multi fragments
+          DO_2BITS(asf->packet_segsizetype >> 6, asf->packet_frag_size, 0); // 0 is illegal
+          if (asf->packet_frag_size > asf->packet_size_left - rsize) {
+            fprintf(stderr,"asf_decoder: packet_frag_size is invalid (%d > %d) %d %d\n",asf->packet_frag_size,asf->packet_size_left - rsize,
+                    asf->packet_padsize,rsize);
+
 #ifdef DEBUG
-	    printf("skipping %d %ld\n",asf->packet_size_left + asf->packet_padsize - 2, asf->packet_padsize);
-#endif	    
-
-	    lseek(priv->fd, asf->packet_size_left + asf->packet_padsize - 2 - rsize, SEEK_CUR);
-	    priv->input_position+=asf->packet_size_left + asf->packet_padsize - 2 - rsize;
-	    asf->packet_segments=0;
-	    asf->packet_size_left=0;
-    
-	    return -1;
-	  }
-#ifdef DEBUG
-	  printf("Fragsize %d nsegs %d\n", asf->packet_frag_size,asf->packet_segments);
+            printf("skipping %d %ld\n",asf->packet_size_left + asf->packet_padsize - 2, asf->packet_padsize);
 #endif
-	} else {
-	  asf->packet_frag_size = asf->packet_size_left - rsize;
+
+            lseek(priv->fd, asf->packet_size_left + asf->packet_padsize - 2 - rsize, SEEK_CUR);
+            priv->input_position+=asf->packet_size_left + asf->packet_padsize - 2 - rsize;
+            asf->packet_segments=0;
+            asf->packet_size_left=0;
+
+            return -1;
+          }
 #ifdef DEBUG
-	  printf("Using rest  %d %d %d\n", asf->packet_frag_size, asf->packet_size_left, rsize);
+          printf("Fragsize %d nsegs %d\n", asf->packet_frag_size,asf->packet_segments);
 #endif
-	}
+        } else {
+          asf->packet_frag_size = asf->packet_size_left - rsize;
+#ifdef DEBUG
+          printf("Using rest  %d %d %d\n", asf->packet_frag_size, asf->packet_size_left, rsize);
+#endif
+        }
       }
 
       if (streamid == vidindex) {
 #ifdef DEBUG
-	printf("got vid fragment in packet !\n");
+        printf("got vid fragment in packet !\n");
 #endif
 
-	if (asf->packet_key_frame&&asf->packet_frag_offset==0&&priv->have_start_dts) {
-	  pthread_mutex_lock(&priv->idxc->mutex);
-	  priv->kframe=add_keyframe(cdata,priv->hdr_start,priv->fragnum,asf->packet_frag_timestamp-priv->start_dts);
-	  pthread_mutex_unlock(&priv->idxc->mutex);
+        if (asf->packet_key_frame&&asf->packet_frag_offset==0&&priv->have_start_dts) {
+          pthread_mutex_lock(&priv->idxc->mutex);
+          priv->kframe=add_keyframe(cdata,priv->hdr_start,priv->fragnum,asf->packet_frag_timestamp-priv->start_dts);
+          pthread_mutex_unlock(&priv->idxc->mutex);
 
 #ifdef DEBUG
-	  printf("and is keyframe !\n");
+          printf("and is keyframe !\n");
 #endif
-	}
+        }
 
-	if (tdts>=0 && (asf->packet_frag_timestamp>=tdts)) {
-	  // reached target dts
-	  return 0;
-	}
+        if (tdts>=0 && (asf->packet_frag_timestamp>=tdts)) {
+          // reached target dts
+          return 0;
+        }
 
-	
-	if (asf->packet_frag_offset==0) {
-	  if (pack_fill==0) priv->frame_dts=asf->packet_frag_timestamp;
-	  else if (tdts==-1) {
-	    // got complete AV video packet
-	    priv->input_position=frag_start;
-	    priv->avpkt.size=pack_fill;
-	    return 0;
-	  }
-	}
 
-	priv->fragnum++;
+        if (asf->packet_frag_offset==0) {
+          if (pack_fill==0) priv->frame_dts=asf->packet_frag_timestamp;
+          else if (tdts==-1) {
+            // got complete AV video packet
+            priv->input_position=frag_start;
+            priv->avpkt.size=pack_fill;
+            return 0;
+          }
+        }
 
-	if (tfrag<=0 && tdts==-1) {
+        priv->fragnum++;
 
-	  if (asf->packet_frag_offset!=0 && pack_fill==0) {
-	    // we reached our target, but it has a non-zero offset, which is not allowed
-	    // So skip this packet;
-	    // - this could happen if we have broken fragments at the start of the clip.
-	    priv->input_position+=asf->packet_frag_size;
-	    continue;
-	  }
+        if (tfrag<=0 && tdts==-1) {
 
-	  while (asf->packet_frag_offset+asf->packet_frag_size>priv->avpkt.size) {
-	    fprintf(stderr, "asf_decoder: buffer overflow reading vid packet (%d + %d > %d),\n increasing buffer size\n",
-		    asf->packet_frag_offset,asf->packet_frag_size,priv->avpkt.size);
+          if (asf->packet_frag_offset!=0 && pack_fill==0) {
+            // we reached our target, but it has a non-zero offset, which is not allowed
+            // So skip this packet;
+            // - this could happen if we have broken fragments at the start of the clip.
+            priv->input_position+=asf->packet_frag_size;
+            continue;
+          }
 
-	    priv->avpkt.data=realloc(priv->avpkt.data,priv->def_packet_size*2+FF_INPUT_BUFFER_PADDING_SIZE);
-	    memset(priv->avpkt.data+priv->avpkt.size,0,priv->def_packet_size);
-	    priv->def_packet_size*=2;
-	    priv->avpkt.size=priv->def_packet_size+FF_INPUT_BUFFER_PADDING_SIZE;
-	  }
+          while (asf->packet_frag_offset+asf->packet_frag_size>priv->avpkt.size) {
+            fprintf(stderr, "asf_decoder: buffer overflow reading vid packet (%d + %d > %d),\n increasing buffer size\n",
+                    asf->packet_frag_offset,asf->packet_frag_size,priv->avpkt.size);
 
-	  if (read(priv->fd,priv->avpkt.data+asf->packet_frag_offset,asf->packet_frag_size)
-	      <asf->packet_frag_size) {
-	    fprintf(stderr, "asf_decoder: EOF error reading vid packet\n");
-	    return -2;
-	  }
-	  pack_fill=asf->packet_frag_offset+asf->packet_frag_size;
-	}
+            priv->avpkt.data=realloc(priv->avpkt.data,priv->def_packet_size*2+FF_INPUT_BUFFER_PADDING_SIZE);
+            memset(priv->avpkt.data+priv->avpkt.size,0,priv->def_packet_size);
+            priv->def_packet_size*=2;
+            priv->avpkt.size=priv->def_packet_size+FF_INPUT_BUFFER_PADDING_SIZE;
+          }
 
-	priv->input_position+=asf->packet_frag_size;
+          if (read(priv->fd,priv->avpkt.data+asf->packet_frag_offset,asf->packet_frag_size)
+              <asf->packet_frag_size) {
+            fprintf(stderr, "asf_decoder: EOF error reading vid packet\n");
+            return -2;
+          }
+          pack_fill=asf->packet_frag_offset+asf->packet_frag_size;
+        }
 
-	tfrag--;
+        priv->input_position+=asf->packet_frag_size;
+
+        tfrag--;
 
       } else {
-	// fragment is for another stream
-	priv->input_position+=asf->packet_frag_size;
+        // fragment is for another stream
+        priv->input_position+=asf->packet_frag_size;
       }
 
       asf->packet_size_left -= asf->packet_frag_size + rsize;
@@ -808,9 +808,9 @@ static index_container_t *idxc_for(lives_clip_data_t *cdata) {
 
   pthread_mutex_lock(&indices_mutex);
 
-  for (i=0;i<nidxc;i++) {
+  for (i=0; i<nidxc; i++) {
     if (indices[i]->clients[0]->current_clip==cdata->current_clip&&
-	!strcmp(indices[i]->clients[0]->URI,cdata->URI)) {
+        !strcmp(indices[i]->clients[0]->URI,cdata->URI)) {
       idxc=indices[i];
       // append cdata to clients
       idxc->clients=(lives_clip_data_t **)realloc(idxc->clients,(idxc->nclients+1)*sizeof(lives_clip_data_t *));
@@ -857,33 +857,31 @@ static void idxc_release(lives_clip_data_t *cdata) {
     // remove this index
     index_free(idxc->idx);
     free(idxc->clients);
-    for (i=0;i<nidxc;i++) {
+    for (i=0; i<nidxc; i++) {
       if (indices[i]==idxc) {
-	nidxc--;
-	for (j=i;j<nidxc;j++) {
-	  indices[j]=indices[j+1];
-	}
-	free(idxc);
-	if (nidxc==0) {
-	  free(indices);
-	  indices=NULL;
-	}
-	else indices=(index_container_t **)realloc(indices,nidxc*sizeof(index_container_t *));
-	break;
+        nidxc--;
+        for (j=i; j<nidxc; j++) {
+          indices[j]=indices[j+1];
+        }
+        free(idxc);
+        if (nidxc==0) {
+          free(indices);
+          indices=NULL;
+        } else indices=(index_container_t **)realloc(indices,nidxc*sizeof(index_container_t *));
+        break;
       }
     }
-  }
-  else {
+  } else {
     // reduce client count by 1
-    for (i=0;i<idxc->nclients;i++) {
+    for (i=0; i<idxc->nclients; i++) {
       if (idxc->clients[i]==cdata) {
-	// remove this entry
-	idxc->nclients--;
-	for (j=i;j<idxc->nclients;j++) {
-	  idxc->clients[j]=idxc->clients[j+1];
-	}
-	idxc->clients=(lives_clip_data_t **)realloc(idxc->clients,idxc->nclients*sizeof(lives_clip_data_t *));
-	break;
+        // remove this entry
+        idxc->nclients--;
+        for (j=i; j<idxc->nclients; j++) {
+          idxc->clients[j]=idxc->clients[j+1];
+        }
+        idxc->clients=(lives_clip_data_t **)realloc(idxc->clients,idxc->nclients*sizeof(lives_clip_data_t *));
+        break;
       }
     }
   }
@@ -896,7 +894,7 @@ static void idxc_release(lives_clip_data_t *cdata) {
 static void idxc_release_all(void) {
   register int i;
 
-  for (i=0;i<nidxc;i++) {
+  for (i=0; i<nidxc; i++) {
     index_free(indices[i]->idx);
     free(indices[i]->clients);
     free(indices[i]);
@@ -905,7 +903,7 @@ static void idxc_release_all(void) {
 }
 
 
-static void detach_stream (lives_clip_data_t *cdata) {
+static void detach_stream(lives_clip_data_t *cdata) {
   // close the file, free the decoder
   lives_asf_priv_t *priv=cdata->priv;
 
@@ -924,7 +922,7 @@ static void detach_stream (lives_clip_data_t *cdata) {
 
   priv->ctx=NULL;
   priv->picture=NULL;
-  
+
   if (cdata->palettes!=NULL) free(cdata->palettes);
   cdata->palettes=NULL;
 
@@ -1005,7 +1003,7 @@ static boolean attach_stream(lives_clip_data_t *cdata, boolean isclone) {
     goto seek_skip;
   }
 
-  if (read (priv->fd, header, ASF_PROBE_SIZE) < ASF_PROBE_SIZE) {
+  if (read(priv->fd, header, ASF_PROBE_SIZE) < ASF_PROBE_SIZE) {
     // for example, might be a directory
 #ifdef DEBUG
     fprintf(stderr, "asf_decoder: unable to read header for %s\n",cdata->URI);
@@ -1048,7 +1046,7 @@ static boolean attach_stream(lives_clip_data_t *cdata, boolean isclone) {
   fstat(priv->fd,&sb);
   priv->filesize=sb.st_size;
 
- seek_skip:
+seek_skip:
 
   priv->idxc=idxc_for(cdata);
 
@@ -1063,9 +1061,9 @@ static boolean attach_stream(lives_clip_data_t *cdata, boolean isclone) {
   priv->asf_st=NULL;
   priv->ctx=NULL;
 
-  for (i=0;i<128;i++) dar[i].num=dar[i].den=0;
+  for (i=0; i<128; i++) dar[i].num=dar[i].den=0;
 
-  for(;;) {
+  for (;;) {
     int64_t gpos=priv->input_position;
 
     get_guid(priv->fd, &g);
@@ -1084,9 +1082,9 @@ static boolean attach_stream(lives_clip_data_t *cdata, boolean isclone) {
     if (!guidcmp(&g, &lives_asf_data_header)) {
       priv->asf->data_object_offset = priv->input_position;
       if (!(priv->asf->hdr.flags & 0x01) && gsize >= 100) {
-	priv->asf->data_object_size = gsize - 24;
+        priv->asf->data_object_size = gsize - 24;
       } else {
-	priv->asf->data_object_size = (uint64_t)-1;
+        priv->asf->data_object_size = (uint64_t)-1;
       }
       break;
     }
@@ -1104,11 +1102,11 @@ static boolean attach_stream(lives_clip_data_t *cdata, boolean isclone) {
       priv->input_position+=sizeof(lives_asf_guid);
 
       if (read(priv->fd,buffer,8)<8) {
-	fprintf(stderr, "asf_decoder: read error in %s\n",cdata->URI);
-	detach_stream(cdata);
-	return FALSE;
+        fprintf(stderr, "asf_decoder: read error in %s\n",cdata->URI);
+        detach_stream(cdata);
+        return FALSE;
       }
-      
+
       priv->input_position+=8;
       priv->asf->hdr.file_size          = get_le64int(buffer);
 
@@ -1117,20 +1115,20 @@ static boolean attach_stream(lives_clip_data_t *cdata, boolean isclone) {
 #endif
 
       if (read(priv->fd,buffer,8)<8) {
-	fprintf(stderr, "asf_decoder: read error in %s\n",cdata->URI);
-	detach_stream(cdata);
-	return FALSE;
+        fprintf(stderr, "asf_decoder: read error in %s\n",cdata->URI);
+        detach_stream(cdata);
+        return FALSE;
       }
-      
+
       priv->input_position+=8;
       priv->asf->hdr.create_time        = get_le64int(buffer);
-      
+
       if (read(priv->fd,buffer,8)<8) {
-	fprintf(stderr, "asf_decoder: read error in %s\n",cdata->URI);
-	detach_stream(cdata);
-	return FALSE;
+        fprintf(stderr, "asf_decoder: read error in %s\n",cdata->URI);
+        detach_stream(cdata);
+        return FALSE;
       }
-      
+
       priv->input_position+=8;
       priv->asf->nb_packets             = get_le64int(buffer);
 
@@ -1139,11 +1137,11 @@ static boolean attach_stream(lives_clip_data_t *cdata, boolean isclone) {
 #endif
 
       if (read(priv->fd,buffer,8)<8) {
-	fprintf(stderr, "asf_decoder: read error in %s\n",cdata->URI);
-	detach_stream(cdata);
-	return FALSE;
+        fprintf(stderr, "asf_decoder: read error in %s\n",cdata->URI);
+        detach_stream(cdata);
+        return FALSE;
       }
-      
+
       priv->input_position+=8;
       priv->asf->hdr.play_time          = get_le64int(buffer);
 
@@ -1152,11 +1150,11 @@ static boolean attach_stream(lives_clip_data_t *cdata, boolean isclone) {
 #endif
 
       if (read(priv->fd,buffer,8)<8) {
-	fprintf(stderr, "asf_decoder: read error in %s\n",cdata->URI);
-	detach_stream(cdata);
-	return FALSE;
+        fprintf(stderr, "asf_decoder: read error in %s\n",cdata->URI);
+        detach_stream(cdata);
+        return FALSE;
       }
-      
+
       priv->input_position+=8;
       // seems to be the duration
       priv->asf->hdr.send_time = get_le64int(buffer);
@@ -1166,11 +1164,11 @@ static boolean attach_stream(lives_clip_data_t *cdata, boolean isclone) {
 #endif
 
       if (read(priv->fd,buffer,4)<4) {
-	fprintf(stderr, "asf_decoder: read error in %s\n",cdata->URI);
-	detach_stream(cdata);
-	return FALSE;
+        fprintf(stderr, "asf_decoder: read error in %s\n",cdata->URI);
+        detach_stream(cdata);
+        return FALSE;
       }
-     
+
       priv->input_position+=4;
       priv->asf->hdr.preroll            = get_le32int(buffer);
 
@@ -1179,47 +1177,47 @@ static boolean attach_stream(lives_clip_data_t *cdata, boolean isclone) {
 #endif
 
       if (read(priv->fd,buffer,4)<4) {
-	fprintf(stderr, "asf_decoder: read error in %s\n",cdata->URI);
-	detach_stream(cdata);
-	return FALSE;
+        fprintf(stderr, "asf_decoder: read error in %s\n",cdata->URI);
+        detach_stream(cdata);
+        return FALSE;
       }
-      
+
       priv->input_position+=4;
       priv->asf->hdr.ignore             = get_le32int(buffer);
 
       if (read(priv->fd,buffer,4)<4) {
-	fprintf(stderr, "asf_decoder: read error in %s\n",cdata->URI);
-	detach_stream(cdata);
-	return FALSE;
+        fprintf(stderr, "asf_decoder: read error in %s\n",cdata->URI);
+        detach_stream(cdata);
+        return FALSE;
       }
-      
+
       priv->input_position+=4;
       priv->asf->hdr.flags              = get_le32int(buffer);
 
       if (read(priv->fd,buffer,4)<4) {
-	fprintf(stderr, "asf_decoder: read error in %s\n",cdata->URI);
-	detach_stream(cdata);
-	return FALSE;
+        fprintf(stderr, "asf_decoder: read error in %s\n",cdata->URI);
+        detach_stream(cdata);
+        return FALSE;
       }
-      
+
       priv->input_position+=4;
       priv->asf->hdr.min_pktsize        = get_le32int(buffer);
 
       if (read(priv->fd,buffer,4)<4) {
-	fprintf(stderr, "asf_decoder: read error in %s\n",cdata->URI);
-	detach_stream(cdata);
-	return FALSE;
+        fprintf(stderr, "asf_decoder: read error in %s\n",cdata->URI);
+        detach_stream(cdata);
+        return FALSE;
       }
-      
+
       priv->input_position+=4;
       priv->asf->hdr.max_pktsize        = get_le32int(buffer);
 
       if (read(priv->fd,buffer,4)<4) {
-	fprintf(stderr, "asf_decoder: read error in %s\n",cdata->URI);
-	detach_stream(cdata);
-	return FALSE;
+        fprintf(stderr, "asf_decoder: read error in %s\n",cdata->URI);
+        detach_stream(cdata);
+        return FALSE;
       }
-      
+
       priv->input_position+=4;
       priv->asf->hdr.max_bitrate        = get_le32int(buffer);
 
@@ -1242,9 +1240,9 @@ static boolean attach_stream(lives_clip_data_t *cdata, boolean isclone) {
       priv->st = av_new_stream(priv->s, 0);
 
       if (!priv->st) {
-	fprintf(stderr, "asf_decoder: Unable to create new stream for %s\n",cdata->URI);
-	detach_stream(cdata);
-	return FALSE;
+        fprintf(stderr, "asf_decoder: Unable to create new stream for %s\n",cdata->URI);
+        detach_stream(cdata);
+        return FALSE;
       }
 
       av_set_pts_info(priv->st, 32, 1, 1000); /* 32 bit pts in ms */
@@ -1254,9 +1252,9 @@ static boolean attach_stream(lives_clip_data_t *cdata, boolean isclone) {
       memset(priv->asf_st, 0, (sizeof(ASFStream)));
 
       if (!priv->asf_st) {
-	fprintf(stderr, "asf_decoder: Unable to create asf stream for %s\n",cdata->URI);
-	detach_stream(cdata);
-	return FALSE;
+        fprintf(stderr, "asf_decoder: Unable to create asf stream for %s\n",cdata->URI);
+        detach_stream(cdata);
+        return FALSE;
       }
 
       priv->st->priv_data = priv->asf_st;
@@ -1264,9 +1262,9 @@ static boolean attach_stream(lives_clip_data_t *cdata, boolean isclone) {
 
       priv->asf_st->stream_language_index = 128; // invalid stream index means no language info
 
-      if(!(priv->asf->hdr.flags & 0x01)) { // if we aren't streaming...
-	priv->st->duration = priv->asf->hdr.play_time /
-	  (10000000 / 1000) - start_time;
+      if (!(priv->asf->hdr.flags & 0x01)) { // if we aren't streaming...
+        priv->st->duration = priv->asf->hdr.play_time /
+                             (10000000 / 1000) - start_time;
       }
 
       get_guid(priv->fd, &g);
@@ -1274,50 +1272,50 @@ static boolean attach_stream(lives_clip_data_t *cdata, boolean isclone) {
 
       test_for_ext_stream_audio = 0;
       if (!guidcmp(&g, &lives_asf_audio_stream)) {
-	type = LIVES_MEDIA_TYPE_AUDIO;
+        type = LIVES_MEDIA_TYPE_AUDIO;
       } else if (!guidcmp(&g, &lives_asf_video_stream)) {
-	type = LIVES_MEDIA_TYPE_VIDEO;
+        type = LIVES_MEDIA_TYPE_VIDEO;
       } else if (!guidcmp(&g, &lives_asf_command_stream)) {
-	type = LIVES_MEDIA_TYPE_DATA;
+        type = LIVES_MEDIA_TYPE_DATA;
       } else if (!guidcmp(&g, &lives_asf_ext_stream_embed_stream_header)) {
-	test_for_ext_stream_audio = 1;
-	type = LIVES_MEDIA_TYPE_UNKNOWN;
+        test_for_ext_stream_audio = 1;
+        type = LIVES_MEDIA_TYPE_UNKNOWN;
       } else {
-	return -1;
+        return -1;
       }
 
       get_guid(priv->fd, &g);
       priv->input_position+=sizeof(lives_asf_guid);
 
       if (read(priv->fd,buffer,8)<8) {
-	fprintf(stderr, "asf_decoder: read error in %s\n",cdata->URI);
-	detach_stream(cdata);
-	return FALSE;
+        fprintf(stderr, "asf_decoder: read error in %s\n",cdata->URI);
+        detach_stream(cdata);
+        return FALSE;
       }
-      
+
       priv->input_position+=8;
 
       //      total_size = get_le64int(buffer);
 
       if (read(priv->fd,buffer,4)<4) {
-	fprintf(stderr, "asf_decoder: read error in %s\n",cdata->URI);
-	detach_stream(cdata);
-	return FALSE;
+        fprintf(stderr, "asf_decoder: read error in %s\n",cdata->URI);
+        detach_stream(cdata);
+        return FALSE;
       }
-      
+
       priv->input_position+=4;
 
       //type_specific_size = get_le32int(buffer);
-      
+
       lseek(priv->fd, 4, SEEK_CUR);
       priv->input_position+=4;
 
       if (read(priv->fd,buffer,2)<2) {
-	fprintf(stderr, "asf_decoder: read error in %s\n",cdata->URI);
-	detach_stream(cdata);
-	return FALSE;
+        fprintf(stderr, "asf_decoder: read error in %s\n",cdata->URI);
+        detach_stream(cdata);
+        return FALSE;
       }
-      
+
       priv->input_position+=2;
 
       priv->st->id = get_le16int(buffer) & 0x7f; /* stream id */
@@ -1328,146 +1326,144 @@ static boolean attach_stream(lives_clip_data_t *cdata, boolean isclone) {
       priv->input_position+=4;
 
       if (test_for_ext_stream_audio) {
-	get_guid(priv->fd, &g);
-	priv->input_position+=sizeof(lives_asf_guid);
-	
-	if (!guidcmp(&g, &lives_asf_ext_stream_audio_stream)) {
-	  type = LIVES_MEDIA_TYPE_AUDIO;
-	  //is_dvr_ms_audio=1;
-	  get_guid(priv->fd, &g);
-	  priv->input_position+=sizeof(lives_asf_guid);
+        get_guid(priv->fd, &g);
+        priv->input_position+=sizeof(lives_asf_guid);
 
-	  lseek(priv->fd, 12, SEEK_CUR);
-	  priv->input_position+=12;
+        if (!guidcmp(&g, &lives_asf_ext_stream_audio_stream)) {
+          type = LIVES_MEDIA_TYPE_AUDIO;
+          //is_dvr_ms_audio=1;
+          get_guid(priv->fd, &g);
+          priv->input_position+=sizeof(lives_asf_guid);
 
-	  get_guid(priv->fd, &g);
-	  priv->input_position+=sizeof(lives_asf_guid);
+          lseek(priv->fd, 12, SEEK_CUR);
+          priv->input_position+=12;
 
-	  lseek(priv->fd, 4, SEEK_CUR);
-	  priv->input_position+=4;
-	}
+          get_guid(priv->fd, &g);
+          priv->input_position+=sizeof(lives_asf_guid);
+
+          lseek(priv->fd, 4, SEEK_CUR);
+          priv->input_position+=4;
+        }
       }
 
 
       if (type == LIVES_MEDIA_TYPE_AUDIO) {
-	priv->st->codec->codec_type = AVMEDIA_TYPE_AUDIO;
+        priv->st->codec->codec_type = AVMEDIA_TYPE_AUDIO;
 
       } else if (type == LIVES_MEDIA_TYPE_VIDEO) {
-	priv->st->codec->codec_type = AVMEDIA_TYPE_VIDEO;
-	if (vidindex!=-1&&vidindex!=priv->st->id) {
-	  fprintf(stderr, "asf_decoder: unhandled multiple vidstreams %d and %d in %s\n",vidindex,priv->st->id,cdata->URI);
-	  got_vidst=TRUE;
-	  detach_stream(cdata);
-	  return FALSE;
-	}
-	else {
-	  vidst=priv->st;
-	  vidindex=vidst->id;
-	  priv->asf->stream_index=priv->asf->asfid2avid[vidindex];
-	}
+        priv->st->codec->codec_type = AVMEDIA_TYPE_VIDEO;
+        if (vidindex!=-1&&vidindex!=priv->st->id) {
+          fprintf(stderr, "asf_decoder: unhandled multiple vidstreams %d and %d in %s\n",vidindex,priv->st->id,cdata->URI);
+          got_vidst=TRUE;
+          detach_stream(cdata);
+          return FALSE;
+        } else {
+          vidst=priv->st;
+          vidindex=vidst->id;
+          priv->asf->stream_index=priv->asf->asfid2avid[vidindex];
+        }
 
-	lseek(priv->fd, 9, SEEK_CUR);
-	priv->input_position+=9;
+        lseek(priv->fd, 9, SEEK_CUR);
+        priv->input_position+=9;
 
-	if (read(priv->fd,buffer,2)<2) {
-	  fprintf(stderr, "asf_decoder: read error in %s\n",cdata->URI);
-	  detach_stream(cdata);
-	  return FALSE;
-	}
-      
-	priv->input_position+=2;
+        if (read(priv->fd,buffer,2)<2) {
+          fprintf(stderr, "asf_decoder: read error in %s\n",cdata->URI);
+          detach_stream(cdata);
+          return FALSE;
+        }
 
-	size = get_le16int(buffer); /* size */
+        priv->input_position+=2;
 
-	if (read(priv->fd,buffer,4)<4) {
-	  fprintf(stderr, "asf_decoder: read error in %s\n",cdata->URI);
-	  detach_stream(cdata);
-	  return FALSE;
-	}
-      
-	priv->input_position+=4;
-	sizeX= get_le32int(buffer); /* size */
+        size = get_le16int(buffer); /* size */
 
-	if (read(priv->fd,buffer,4)<4) {
-	  fprintf(stderr, "asf_decoder: read error in %s\n",cdata->URI);
-	  detach_stream(cdata);
-	  return FALSE;
-	}
-      
-	priv->input_position+=4;
+        if (read(priv->fd,buffer,4)<4) {
+          fprintf(stderr, "asf_decoder: read error in %s\n",cdata->URI);
+          detach_stream(cdata);
+          return FALSE;
+        }
 
-	if (!got_vidst) cdata->width = priv->st->codec->width = get_le32int(buffer);
+        priv->input_position+=4;
+        sizeX= get_le32int(buffer); /* size */
 
-	if (read(priv->fd,buffer,4)<4) {
-	  fprintf(stderr, "asf_decoder: read error in %s\n",cdata->URI);
-	  detach_stream(cdata);
-	  return FALSE;
-	}
-      
-	priv->input_position+=4;
-	if (!got_vidst) cdata->height = priv->st->codec->height = get_le32int(buffer);
+        if (read(priv->fd,buffer,4)<4) {
+          fprintf(stderr, "asf_decoder: read error in %s\n",cdata->URI);
+          detach_stream(cdata);
+          return FALSE;
+        }
 
-	/* not available for asf */
-	lseek(priv->fd, 2, SEEK_CUR); // panes
-	priv->input_position+=2;
+        priv->input_position+=4;
+
+        if (!got_vidst) cdata->width = priv->st->codec->width = get_le32int(buffer);
+
+        if (read(priv->fd,buffer,4)<4) {
+          fprintf(stderr, "asf_decoder: read error in %s\n",cdata->URI);
+          detach_stream(cdata);
+          return FALSE;
+        }
+
+        priv->input_position+=4;
+        if (!got_vidst) cdata->height = priv->st->codec->height = get_le32int(buffer);
+
+        /* not available for asf */
+        lseek(priv->fd, 2, SEEK_CUR); // panes
+        priv->input_position+=2;
 
 
-	if (read(priv->fd,buffer,2)<2) {
-	  fprintf(stderr, "asf_decoder: read error in %s\n",cdata->URI);
-	  detach_stream(cdata);
-	  return FALSE;
-	}
-      
-	priv->input_position+=2;
+        if (read(priv->fd,buffer,2)<2) {
+          fprintf(stderr, "asf_decoder: read error in %s\n",cdata->URI);
+          detach_stream(cdata);
+          return FALSE;
+        }
 
-	if (!got_vidst) priv->st->codec->bits_per_coded_sample = get_le16int(buffer); /* depth */
+        priv->input_position+=2;
 
-	if (read(priv->fd,buffer,4)<4) {
-	  fprintf(stderr, "asf_decoder: read error in %s\n",cdata->URI);
-	  detach_stream(cdata);
-	  return FALSE;
-	}
-      
-	priv->input_position+=4;
-	tag1 = get_le32int(buffer);
+        if (!got_vidst) priv->st->codec->bits_per_coded_sample = get_le16int(buffer); /* depth */
 
-	lseek(priv->fd, 20, SEEK_CUR);
-	priv->input_position+=20;
+        if (read(priv->fd,buffer,4)<4) {
+          fprintf(stderr, "asf_decoder: read error in %s\n",cdata->URI);
+          detach_stream(cdata);
+          return FALSE;
+        }
 
-	size= sizeX;
+        priv->input_position+=4;
+        tag1 = get_le32int(buffer);
 
-	if (size > 40) {
-	  if (!got_vidst) {
-	    priv->st->codec->extradata_size = size - 40;
+        lseek(priv->fd, 20, SEEK_CUR);
+        priv->input_position+=20;
 
-	    priv->st->codec->extradata = malloc(priv->st->codec->extradata_size + FF_INPUT_BUFFER_PADDING_SIZE);
-	    memset(priv->st->codec->extradata, 0, priv->st->codec->extradata_size + FF_INPUT_BUFFER_PADDING_SIZE);
+        size= sizeX;
 
-	    if (read(priv->fd,priv->st->codec->extradata,
-		     priv->st->codec->extradata_size)<priv->st->codec->extradata_size) {
-	      fprintf(stderr, "asf_decoder: read error in %s\n",cdata->URI);
-	      detach_stream(cdata);
-	      return FALSE;
-	    }
-	  }
-	  else lseek(priv->fd,size - 40, SEEK_CUR);
-	  priv->input_position+=priv->st->codec->extradata_size;
+        if (size > 40) {
+          if (!got_vidst) {
+            priv->st->codec->extradata_size = size - 40;
 
-	}
+            priv->st->codec->extradata = malloc(priv->st->codec->extradata_size + FF_INPUT_BUFFER_PADDING_SIZE);
+            memset(priv->st->codec->extradata, 0, priv->st->codec->extradata_size + FF_INPUT_BUFFER_PADDING_SIZE);
+
+            if (read(priv->fd,priv->st->codec->extradata,
+                     priv->st->codec->extradata_size)<priv->st->codec->extradata_size) {
+              fprintf(stderr, "asf_decoder: read error in %s\n",cdata->URI);
+              detach_stream(cdata);
+              return FALSE;
+            }
+          } else lseek(priv->fd,size - 40, SEEK_CUR);
+          priv->input_position+=priv->st->codec->extradata_size;
+
+        }
 
         /* Extract palette from extradata if bpp <= 8 */
         /* This code assumes that extradata contains only palette */
         /* This is true for all paletted codecs implemented in ffmpeg */
 
-	if (!got_vidst) {
-	  if (priv->st->codec->extradata_size && (priv->st->codec->bits_per_coded_sample <= 8)) {
+        if (!got_vidst) {
+          if (priv->st->codec->extradata_size && (priv->st->codec->bits_per_coded_sample <= 8)) {
 
 
 #if !defined (IS_MINGW) && !defined (IS_SOLARIS) && !defined (__FreeBSD__)
 # if __BYTE_ORDER == __BIG_ENDIAN
             int i;
             for (i = 0; i < FFMIN(priv->st->codec->extradata_size, AVPALETTE_SIZE)/4; i++)
-                priv->asf_st->palette[i] = av_bswap32(((uint32_t*)priv->st->codec->extradata)[i]);
+              priv->asf_st->palette[i] = av_bswap32(((uint32_t *)priv->st->codec->extradata)[i]);
 #else
             memcpy(priv->asf_st->palette, priv->st->codec->extradata,
                    FFMIN(priv->st->codec->extradata_size, AVPALETTE_SIZE));
@@ -1478,14 +1474,14 @@ static boolean attach_stream(lives_clip_data_t *cdata, boolean isclone) {
 #endif
 
             priv->asf_st->palette_changed = 1;
+          }
+
+          priv->st->codec->codec_tag = tag1;
+          priv->st->codec->codec_id = ff_codec_get_id((const AVCodecTag *)(codec_bmp_tags), tag1);
+
+          if (tag1 == MK_FOURCC('D', 'V', 'R', ' '))
+            priv->st->need_parsing = AVSTREAM_PARSE_FULL;
         }
-
-	  priv->st->codec->codec_tag = tag1;
-	  priv->st->codec->codec_id = ff_codec_get_id((const AVCodecTag*)(codec_bmp_tags), tag1);
-
-	  if(tag1 == MK_FOURCC('D', 'V', 'R', ' '))
-	    priv->st->need_parsing = AVSTREAM_PARSE_FULL;
-	}
       }
 
       pos2 = priv->input_position;
@@ -1498,58 +1494,58 @@ static boolean attach_stream(lives_clip_data_t *cdata, boolean isclone) {
       int len1, len2, len3, len4, len5;
 
       if (read(priv->fd,buffer,2)<2) {
-	fprintf(stderr, "asf_decoder: read error in %s\n",cdata->URI);
-	detach_stream(cdata);
-	return FALSE;
+        fprintf(stderr, "asf_decoder: read error in %s\n",cdata->URI);
+        detach_stream(cdata);
+        return FALSE;
       }
-    
+
       priv->input_position+=2;
 
       len1 = get_le16int(buffer);
 
       if (read(priv->fd,buffer,2)<2) {
-	fprintf(stderr, "asf_decoder: read error in %s\n",cdata->URI);
-	detach_stream(cdata);
-	return FALSE;
+        fprintf(stderr, "asf_decoder: read error in %s\n",cdata->URI);
+        detach_stream(cdata);
+        return FALSE;
       }
-      
+
       priv->input_position+=2;
 
       len2 = get_le16int(buffer);
 
       if (read(priv->fd,buffer,2)<2) {
-	fprintf(stderr, "asf_decoder: read error in %s\n",cdata->URI);
-	detach_stream(cdata);
-	return FALSE;
+        fprintf(stderr, "asf_decoder: read error in %s\n",cdata->URI);
+        detach_stream(cdata);
+        return FALSE;
       }
-      
+
       priv->input_position+=2;
 
       len3 = get_le16int(buffer);
       if (read(priv->fd,buffer,2)<2) {
-	fprintf(stderr, "asf_decoder: read error in %s\n",cdata->URI);
-	detach_stream(cdata);
-	return FALSE;
+        fprintf(stderr, "asf_decoder: read error in %s\n",cdata->URI);
+        detach_stream(cdata);
+        return FALSE;
       }
-      
+
       priv->input_position+=2;
 
       len4 = get_le16int(buffer);
 
       if (read(priv->fd,buffer,2)<2) {
-	fprintf(stderr, "asf_decoder: read error in %s\n",cdata->URI);
-	detach_stream(cdata);
-	return FALSE;
+        fprintf(stderr, "asf_decoder: read error in %s\n",cdata->URI);
+        detach_stream(cdata);
+        return FALSE;
       }
-    
+
       priv->input_position+=2;
 
       len5 = get_le16int(buffer);
 
       /*    get_tag(s, "title"    , 0, len1);
-	    get_tag(s, "author"   , 0, len2);
-	    get_tag(s, "copyright", 0, len3);
-	    get_tag(s, "comment"  , 0, len4); */
+      get_tag(s, "author"   , 0, len2);
+      get_tag(s, "copyright", 0, len3);
+      get_tag(s, "comment"  , 0, len4); */
 
       lseek(priv->fd, len1+len2+len3+len4+len5, SEEK_CUR);
       priv->input_position+=len1+len2+len3+len4+len5;
@@ -1563,227 +1559,227 @@ static boolean attach_stream(lives_clip_data_t *cdata, boolean isclone) {
       int j;
 
       if (read(priv->fd,buffer,2)<2) {
-	fprintf(stderr, "asf_decoder: read error in %s\n",cdata->URI);
-	detach_stream(cdata);
-	return FALSE;
+        fprintf(stderr, "asf_decoder: read error in %s\n",cdata->URI);
+        detach_stream(cdata);
+        return FALSE;
       }
-    
+
       priv->input_position+=2;
 
       stream_count = get_le16int(buffer);
 
-      for(j = 0; j < stream_count; j++) {
-	int flags, bitrate, stream_id;
+      for (j = 0; j < stream_count; j++) {
+        int flags, bitrate, stream_id;
 
-	if (read(priv->fd,buffer,2)<2) {
-	  fprintf(stderr, "asf_decoder: read error in %s\n",cdata->URI);
-	  detach_stream(cdata);
-	  return FALSE;
-	}
-    
-	priv->input_position+=2;
+        if (read(priv->fd,buffer,2)<2) {
+          fprintf(stderr, "asf_decoder: read error in %s\n",cdata->URI);
+          detach_stream(cdata);
+          return FALSE;
+        }
 
-	flags = get_le16int(buffer);
+        priv->input_position+=2;
 
-	if (read(priv->fd,buffer,4)<4) {
-	  fprintf(stderr, "asf_decoder: read error in %s\n",cdata->URI);
-	  detach_stream(cdata);
-	  return FALSE;
-	}
-	
-	priv->input_position+=4;
-	bitrate= get_le32int(buffer);
-	stream_id= (flags & 0x7f);
-	priv->asf->stream_bitrates[stream_id]= bitrate;
+        flags = get_le16int(buffer);
+
+        if (read(priv->fd,buffer,4)<4) {
+          fprintf(stderr, "asf_decoder: read error in %s\n",cdata->URI);
+          detach_stream(cdata);
+          return FALSE;
+        }
+
+        priv->input_position+=4;
+        bitrate= get_le32int(buffer);
+        stream_id= (flags & 0x7f);
+        priv->asf->stream_bitrates[stream_id]= bitrate;
       }
     } else if (!guidcmp(&g, &lives_asf_language_guid)) {
       int j;
       int stream_count = get_le16int(buffer);
-      for(j = 0; j < stream_count; j++) {
-	char lang[6];
-	unsigned int lang_len;
+      for (j = 0; j < stream_count; j++) {
+        char lang[6];
+        unsigned int lang_len;
 
-	if (read(priv->fd,buffer,1)<1) {
-	  fprintf(stderr, "asf_decoder: read error in %s\n",cdata->URI);
-	  detach_stream(cdata);
-	  return FALSE;
-	}
-	
-	priv->input_position+=1;
+        if (read(priv->fd,buffer,1)<1) {
+          fprintf(stderr, "asf_decoder: read error in %s\n",cdata->URI);
+          detach_stream(cdata);
+          return FALSE;
+        }
 
-	lang_len = buffer[0];
+        priv->input_position+=1;
 
-	if (read(priv->fd,buffer,lang_len)<lang_len) {
-	  fprintf(stderr, "asf_decoder: read error in %s\n",cdata->URI);
-	  detach_stream(cdata);
-	  return FALSE;
-	}
-	
-	get_str16_nolen(buffer, lang_len, lang, sizeof(lang));
-	priv->input_position+=lang_len;
+        lang_len = buffer[0];
 
-	if (j < 128)
-	  av_strlcpy(priv->asf->stream_languages[j], lang, sizeof(*priv->asf->stream_languages));
+        if (read(priv->fd,buffer,lang_len)<lang_len) {
+          fprintf(stderr, "asf_decoder: read error in %s\n",cdata->URI);
+          detach_stream(cdata);
+          return FALSE;
+        }
+
+        get_str16_nolen(buffer, lang_len, lang, sizeof(lang));
+        priv->input_position+=lang_len;
+
+        if (j < 128)
+          av_strlcpy(priv->asf->stream_languages[j], lang, sizeof(*priv->asf->stream_languages));
       }
     } else if (!guidcmp(&g, &lives_asf_extended_content_header)) {
       int desc_count, i;
 
       if (read(priv->fd,buffer,2)<2) {
-	fprintf(stderr, "asf_decoder: read error in %s\n",cdata->URI);
-	detach_stream(cdata);
-	return FALSE;
+        fprintf(stderr, "asf_decoder: read error in %s\n",cdata->URI);
+        detach_stream(cdata);
+        return FALSE;
       }
-    
+
       priv->input_position+=2;
 
       desc_count = get_le16int(buffer);
 
-      for(i=0;i<desc_count;i++) {
-	int name_len,value_type,value_len;
-	char name[1024];
-	
-	if (read(priv->fd,buffer,2)<2) {
-	  fprintf(stderr, "asf_decoder: read error in %s\n",cdata->URI);
-	  detach_stream(cdata);
-	  return FALSE;
-	}
-    
-	priv->input_position+=2;
-	
-	name_len = get_le16int(buffer);
+      for (i=0; i<desc_count; i++) {
+        int name_len,value_type,value_len;
+        char name[1024];
 
-	if (name_len%2)     // must be even, broken lavf versions wrote len-1
-	  name_len += 1;
+        if (read(priv->fd,buffer,2)<2) {
+          fprintf(stderr, "asf_decoder: read error in %s\n",cdata->URI);
+          detach_stream(cdata);
+          return FALSE;
+        }
 
-	if (read(priv->fd,buffer,name_len)<name_len) {
-	  fprintf(stderr, "asf_decoder: read error in %s\n",cdata->URI);
-	  detach_stream(cdata);
-	  return FALSE;
-	}
+        priv->input_position+=2;
 
-	get_str16_nolen(buffer, name_len, name, sizeof(name));
+        name_len = get_le16int(buffer);
 
-	priv->input_position+=name_len;
+        if (name_len%2)     // must be even, broken lavf versions wrote len-1
+          name_len += 1;
 
-	if (read(priv->fd,buffer,2)<2) {
-	  fprintf(stderr, "asf_decoder: read error in %s\n",cdata->URI);
-	  detach_stream(cdata);
-	  return FALSE;
-	}
-    
-	priv->input_position+=2;
+        if (read(priv->fd,buffer,name_len)<name_len) {
+          fprintf(stderr, "asf_decoder: read error in %s\n",cdata->URI);
+          detach_stream(cdata);
+          return FALSE;
+        }
 
-	value_type = get_le16int(buffer);
+        get_str16_nolen(buffer, name_len, name, sizeof(name));
 
-	if (read(priv->fd,buffer,2)<2) {
-	  fprintf(stderr, "asf_decoder: read error in %s\n",cdata->URI);
-	  detach_stream(cdata);
-	  return FALSE;
-	}
-    
-	priv->input_position+=2;
+        priv->input_position+=name_len;
 
-	value_len  = get_le16int(buffer);
-	if (!value_type && value_len%2)
-	  value_len += 1;
-	if (!get_tag(cdata, priv->s, name, value_type, value_len)) return FALSE;
+        if (read(priv->fd,buffer,2)<2) {
+          fprintf(stderr, "asf_decoder: read error in %s\n",cdata->URI);
+          detach_stream(cdata);
+          return FALSE;
+        }
+
+        priv->input_position+=2;
+
+        value_type = get_le16int(buffer);
+
+        if (read(priv->fd,buffer,2)<2) {
+          fprintf(stderr, "asf_decoder: read error in %s\n",cdata->URI);
+          detach_stream(cdata);
+          return FALSE;
+        }
+
+        priv->input_position+=2;
+
+        value_len  = get_le16int(buffer);
+        if (!value_type && value_len%2)
+          value_len += 1;
+        if (!get_tag(cdata, priv->s, name, value_type, value_len)) return FALSE;
       }
-  
+
     } else if (!guidcmp(&g, &lives_asf_metadata_header)) {
       int n, stream_num, name_len, value_len, value_num;
 
       if (read(priv->fd,buffer,2)<2) {
-	fprintf(stderr, "asf_decoder: read error in %s\n",cdata->URI);
-	detach_stream(cdata);
-	return FALSE;
+        fprintf(stderr, "asf_decoder: read error in %s\n",cdata->URI);
+        detach_stream(cdata);
+        return FALSE;
       }
-      
+
       priv->input_position+=2;
-	
+
       n = get_le16int(buffer);
-	
-      for(i=0;i<n;i++) {
-	char name[1024];
 
-	lseek(priv->fd, 2, SEEK_CUR); // lang_list_index
-	priv->input_position+=2;
-	  
-	if (read(priv->fd,buffer,2)<2) {
-	  fprintf(stderr, "asf_decoder: read error in %s\n",cdata->URI);
-	  detach_stream(cdata);
-	  return FALSE;
-	}
-	  
-	priv->input_position+=2;
+      for (i=0; i<n; i++) {
+        char name[1024];
 
-	stream_num= get_le16int(buffer);
+        lseek(priv->fd, 2, SEEK_CUR); // lang_list_index
+        priv->input_position+=2;
 
-	if (read(priv->fd,buffer,2)<2) {
-	  fprintf(stderr, "asf_decoder: read error in %s\n",cdata->URI);
-	  detach_stream(cdata);
-	  return FALSE;
-	}
-    
-	priv->input_position+=2;
+        if (read(priv->fd,buffer,2)<2) {
+          fprintf(stderr, "asf_decoder: read error in %s\n",cdata->URI);
+          detach_stream(cdata);
+          return FALSE;
+        }
 
-	name_len=   get_le16int(buffer);
+        priv->input_position+=2;
 
-	if (read(priv->fd,buffer,2)<2) {
-	  fprintf(stderr, "asf_decoder: read error in %s\n",cdata->URI);
-	  detach_stream(cdata);
-	  return FALSE;
-	}
-	  
-	priv->input_position+=2;
-	
-	//value_type= get_le16int(buffer);
+        stream_num= get_le16int(buffer);
 
-	if (read(priv->fd,buffer,4)<4) {
-	  fprintf(stderr, "asf_decoder: read error in %s\n",cdata->URI);
-	  detach_stream(cdata);
-	  return FALSE;
-	}
-	  
-	priv->input_position+=4;
+        if (read(priv->fd,buffer,2)<2) {
+          fprintf(stderr, "asf_decoder: read error in %s\n",cdata->URI);
+          detach_stream(cdata);
+          return FALSE;
+        }
 
-	value_len=  get_le32int(buffer);
+        priv->input_position+=2;
 
-	if (read(priv->fd,buffer,name_len)<name_len) {
-	  fprintf(stderr, "asf_decoder: read error in %s\n",cdata->URI);
-	  detach_stream(cdata);
-	  return FALSE;
-	}
+        name_len=   get_le16int(buffer);
 
-	get_str16_nolen(buffer, name_len, name, sizeof(name));
+        if (read(priv->fd,buffer,2)<2) {
+          fprintf(stderr, "asf_decoder: read error in %s\n",cdata->URI);
+          detach_stream(cdata);
+          return FALSE;
+        }
 
-	priv->input_position+=name_len;
+        priv->input_position+=2;
 
-	if (read(priv->fd,buffer,2)<2) {
-	  fprintf(stderr, "asf_decoder: read error in %s\n",cdata->URI);
-	  detach_stream(cdata);
-	  return FALSE;
-	}
-	  
-	priv->input_position+=2;
-	  
-	value_num= get_le16int(buffer);
+        //value_type= get_le16int(buffer);
 
-	// check this
-	priv->input_position+=value_len-2;
-	lseek(priv->fd, value_len+2, SEEK_CUR);
+        if (read(priv->fd,buffer,4)<4) {
+          fprintf(stderr, "asf_decoder: read error in %s\n",cdata->URI);
+          detach_stream(cdata);
+          return FALSE;
+        }
+
+        priv->input_position+=4;
+
+        value_len=  get_le32int(buffer);
+
+        if (read(priv->fd,buffer,name_len)<name_len) {
+          fprintf(stderr, "asf_decoder: read error in %s\n",cdata->URI);
+          detach_stream(cdata);
+          return FALSE;
+        }
+
+        get_str16_nolen(buffer, name_len, name, sizeof(name));
+
+        priv->input_position+=name_len;
+
+        if (read(priv->fd,buffer,2)<2) {
+          fprintf(stderr, "asf_decoder: read error in %s\n",cdata->URI);
+          detach_stream(cdata);
+          return FALSE;
+        }
+
+        priv->input_position+=2;
+
+        value_num= get_le16int(buffer);
+
+        // check this
+        priv->input_position+=value_len-2;
+        lseek(priv->fd, value_len+2, SEEK_CUR);
 
 
-	if(stream_num<128){
-	  if     (!strcmp(name, "AspectRatioX")) dar[stream_num].num= 
-						   value_num;
-	  else if(!strcmp(name, "AspectRatioY")) dar[stream_num].den= 
-						   value_num;
+        if (stream_num<128) {
+          if (!strcmp(name, "AspectRatioX")) dar[stream_num].num=
+              value_num;
+          else if (!strcmp(name, "AspectRatioY")) dar[stream_num].den=
+              value_num;
 
-	  // i think PAR == 1/DAR (gf)
-	  if (cdata->par==1.&&dar[stream_num].num!=0&&dar[stream_num].den!=0) 
-	    cdata->par=(float)dar[stream_num].den/(float)dar[stream_num].num;
+          // i think PAR == 1/DAR (gf)
+          if (cdata->par==1.&&dar[stream_num].num!=0&&dar[stream_num].den!=0)
+            cdata->par=(float)dar[stream_num].den/(float)dar[stream_num].num;
 
-	}
+        }
       }
     } else if (!guidcmp(&g, &lives_asf_ext_stream_header)) {
       int ext_len, payload_ext_ct, stream_ct;
@@ -1794,72 +1790,72 @@ static boolean attach_stream(lives_clip_data_t *cdata, boolean isclone) {
       priv->input_position+=16;
 
       if (read(priv->fd,buffer,4)<4) {
-	fprintf(stderr, "asf_decoder: read error in %s\n",cdata->URI);
-	detach_stream(cdata);
-	return FALSE;
+        fprintf(stderr, "asf_decoder: read error in %s\n",cdata->URI);
+        detach_stream(cdata);
+        return FALSE;
       }
-	    
+
       priv->input_position+=4;
 
       leak_rate = get_le32int(buffer); // leak-datarate
 
       /*            get_le32int(buffer); // bucket-datasize
-		    get_le32int(buffer); // init-bucket-fullness
-		    get_le32int(buffer); // alt-leak-datarate
-		    get_le32int(buffer); // alt-bucket-datasize
-		    get_le32int(buffer); // alt-init-bucket-fullness
-		    get_le32int(buffer); // max-object-size
+        get_le32int(buffer); // init-bucket-fullness
+        get_le32int(buffer); // alt-leak-datarate
+        get_le32int(buffer); // alt-bucket-datasize
+        get_le32int(buffer); // alt-init-bucket-fullness
+        get_le32int(buffer); // max-object-size
       */
 
       lseek(priv->fd, 20, SEEK_CUR);
       priv->input_position+=20;
 
       if (read(priv->fd,buffer,4)<4) {
-	fprintf(stderr, "asf_decoder: read error in %s\n",cdata->URI);
-	detach_stream(cdata);
-	return FALSE;
+        fprintf(stderr, "asf_decoder: read error in %s\n",cdata->URI);
+        detach_stream(cdata);
+        return FALSE;
       }
-	    
+
       priv->input_position+=4;
 
       flags = get_le32int(buffer); // flags (reliable,seekable,no_cleanpoints?,resend-live-cleanpoints, rest of bits reserved)
 
       if (!(flags&0x02)) {
 #ifndef RELEASE
-	fprintf(stderr, "asf_decoder: NON-SEEKABLE FILE, falling back to default open.\n");
+        fprintf(stderr, "asf_decoder: NON-SEEKABLE FILE, falling back to default open.\n");
 #endif
-	detach_stream(cdata);
-	return FALSE;
+        detach_stream(cdata);
+        return FALSE;
       }
 
       if (read(priv->fd,buffer,2)<2) {
-	fprintf(stderr, "asf_decoder: read error in %s\n",cdata->URI);
-	detach_stream(cdata);
-	return FALSE;
+        fprintf(stderr, "asf_decoder: read error in %s\n",cdata->URI);
+        detach_stream(cdata);
+        return FALSE;
       }
-	    
+
       priv->input_position+=2;
 
       stream_num = get_le16int(buffer); // stream-num
 
       if (read(priv->fd,buffer,2)<2) {
-	fprintf(stderr, "asf_decoder: read error in %s\n",cdata->URI);
-	detach_stream(cdata);
-	return FALSE;
+        fprintf(stderr, "asf_decoder: read error in %s\n",cdata->URI);
+        detach_stream(cdata);
+        return FALSE;
       }
-	    
+
       priv->input_position+=2;
 
       stream_languageid_index = get_le16int(buffer); // stream-language-id-index
       if (stream_num < 128)
-	priv->asf->streams[stream_num].stream_language_index = stream_languageid_index;
-	    
+        priv->asf->streams[stream_num].stream_language_index = stream_languageid_index;
+
       if (read(priv->fd,buffer,8)<8) {
-	fprintf(stderr, "asf_decoder: read error in %s\n",cdata->URI);
-	detach_stream(cdata);
-	return FALSE;
+        fprintf(stderr, "asf_decoder: read error in %s\n",cdata->URI);
+        detach_stream(cdata);
+        return FALSE;
       }
-	    
+
       priv->input_position+=8;
 
       ftime = get_le64int(buffer); // avg frametime in 100ns units
@@ -1867,68 +1863,68 @@ static boolean attach_stream(lives_clip_data_t *cdata, boolean isclone) {
       if (cdata->fps==0.) cdata->fps = (double)100000000./(double)ftime;
 
       if (read(priv->fd,buffer,2)<2) {
-	fprintf(stderr, "asf_decoder: read error in %s\n",cdata->URI);
-	detach_stream(cdata);
-	return FALSE;
+        fprintf(stderr, "asf_decoder: read error in %s\n",cdata->URI);
+        detach_stream(cdata);
+        return FALSE;
       }
-	    
+
       priv->input_position+=2;
       stream_ct = get_le16int(buffer); //stream-name-count
 
       if (read(priv->fd,buffer,2)<2) {
-	fprintf(stderr, "asf_decoder: read error in %s\n",cdata->URI);
-	detach_stream(cdata);
-	return FALSE;
+        fprintf(stderr, "asf_decoder: read error in %s\n",cdata->URI);
+        detach_stream(cdata);
+        return FALSE;
       }
-	    
+
       priv->input_position+=2;
       payload_ext_ct = get_le16int(buffer); //payload-extension-system-count
 
       if (stream_num < 128)
-	bitrate[stream_num] = leak_rate;
+        bitrate[stream_num] = leak_rate;
 
-      for (i=0; i<stream_ct; i++){
-	lseek(priv->fd, 2, SEEK_CUR);
-	priv->input_position+=2;
+      for (i=0; i<stream_ct; i++) {
+        lseek(priv->fd, 2, SEEK_CUR);
+        priv->input_position+=2;
 
-	if (read(priv->fd,buffer,2)<2) {
-	  fprintf(stderr, "asf_decoder: read error in %s\n",cdata->URI);
-	  detach_stream(cdata);
-	  return FALSE;
-	}
-    
-	priv->input_position+=2;
-	ext_len = get_le16int(buffer);
+        if (read(priv->fd,buffer,2)<2) {
+          fprintf(stderr, "asf_decoder: read error in %s\n",cdata->URI);
+          detach_stream(cdata);
+          return FALSE;
+        }
 
-	lseek(priv->fd, ext_len, SEEK_CUR);
-	priv->input_position+=ext_len;
+        priv->input_position+=2;
+        ext_len = get_le16int(buffer);
+
+        lseek(priv->fd, ext_len, SEEK_CUR);
+        priv->input_position+=ext_len;
       }
 
-      for (i=0; i<payload_ext_ct; i++){
-	get_guid(priv->fd, &g);
-	priv->input_position+=sizeof(lives_asf_guid);
+      for (i=0; i<payload_ext_ct; i++) {
+        get_guid(priv->fd, &g);
+        priv->input_position+=sizeof(lives_asf_guid);
 
-	if (read(priv->fd,buffer,2)<2) {
-	  fprintf(stderr, "asf_decoder: read error in %s\n",cdata->URI);
-	  detach_stream(cdata);
-	  return FALSE;
-	}
-	      
-	priv->input_position+=2;
-	      
-	//ext_d=get_le16int(buffer);
-	      
-	if (read(priv->fd,buffer,4)<4) {
-	  fprintf(stderr, "asf_decoder: read error in %s\n",cdata->URI);
-	  detach_stream(cdata);
-	  return FALSE;
-	}
-	      
-	priv->input_position+=4;
-	      
-	ext_len=get_le32int(buffer);
-	      
-	lseek(priv->fd, ext_len, SEEK_CUR);
+        if (read(priv->fd,buffer,2)<2) {
+          fprintf(stderr, "asf_decoder: read error in %s\n",cdata->URI);
+          detach_stream(cdata);
+          return FALSE;
+        }
+
+        priv->input_position+=2;
+
+        //ext_d=get_le16int(buffer);
+
+        if (read(priv->fd,buffer,4)<4) {
+          fprintf(stderr, "asf_decoder: read error in %s\n",cdata->URI);
+          detach_stream(cdata);
+          return FALSE;
+        }
+
+        priv->input_position+=4;
+
+        ext_len=get_le32int(buffer);
+
+        lseek(priv->fd, ext_len, SEEK_CUR);
       }
 
       // there could be a optional stream properties object to follow
@@ -1952,11 +1948,11 @@ static boolean attach_stream(lives_clip_data_t *cdata, boolean isclone) {
       priv->input_position+=16;
 
       if (read(priv->fd,buffer,4)<4) {
-	fprintf(stderr, "asf_decoder: read error in %s\n",cdata->URI);
-	detach_stream(cdata);
-	return FALSE;
+        fprintf(stderr, "asf_decoder: read error in %s\n",cdata->URI);
+        detach_stream(cdata);
+        return FALSE;
       }
-      
+
       priv->input_position+=4;
 
       cdata->nclips = count = get_le32int(buffer);    // markers count
@@ -1965,56 +1961,56 @@ static boolean attach_stream(lives_clip_data_t *cdata, boolean isclone) {
       priv->input_position+=2;
 
       if (read(priv->fd,buffer,2)<2) {
-	fprintf(stderr, "asf_decoder: read error in %s\n",cdata->URI);
-	detach_stream(cdata);
-	return FALSE;
+        fprintf(stderr, "asf_decoder: read error in %s\n",cdata->URI);
+        detach_stream(cdata);
+        return FALSE;
       }
-    
+
       priv->input_position+=2;
-      
+
       name_len = get_le16int(buffer); // name length
       lseek(priv->fd, name_len, SEEK_CUR);
       priv->input_position+=name_len;
 
-      for(i=0;i<count;i++){
-	//	int64_t pres_time;
-	int name_len;
-	
-	lseek(priv->fd, 8, SEEK_CUR);
-	priv->input_position+=8;
+      for (i=0; i<count; i++) {
+        //	int64_t pres_time;
+        int name_len;
 
-	if (read(priv->fd,buffer,8)<8) {
-	  fprintf(stderr, "asf_decoder: read error in %s\n",cdata->URI);
-	  detach_stream(cdata);
-	  return FALSE;
-	}
-    
-	priv->input_position+=8;
+        lseek(priv->fd, 8, SEEK_CUR);
+        priv->input_position+=8;
 
-	//pres_time = get_le64int(buffer); // presentation time
-	
-	lseek(priv->fd, 10, SEEK_CUR);
-	priv->input_position+=10;
+        if (read(priv->fd,buffer,8)<8) {
+          fprintf(stderr, "asf_decoder: read error in %s\n",cdata->URI);
+          detach_stream(cdata);
+          return FALSE;
+        }
 
-	if (read(priv->fd,buffer,4)<4) {
-	  fprintf(stderr, "asf_decoder: read error in %s\n",cdata->URI);
-	  detach_stream(cdata);
-	  return FALSE;
-	}
-    
-	priv->input_position+=4;
-	
-	name_len = get_le32int(buffer);  // name length
+        priv->input_position+=8;
 
-	if (read(priv->fd,buffer,name_len)<name_len) {
-	  fprintf(stderr, "asf_decoder: read error in %s\n",cdata->URI);
-	  detach_stream(cdata);
-	  return FALSE;
-	}
+        //pres_time = get_le64int(buffer); // presentation time
 
-	get_str16_nolen(buffer, name_len * 2, name, sizeof(name));
-	//ff_new_chapter(s, i, (AVRational){1, 10000000}, pres_time, AV_NOPTS_VALUE, name );
-	priv->input_position+=name_len;
+        lseek(priv->fd, 10, SEEK_CUR);
+        priv->input_position+=10;
+
+        if (read(priv->fd,buffer,4)<4) {
+          fprintf(stderr, "asf_decoder: read error in %s\n",cdata->URI);
+          detach_stream(cdata);
+          return FALSE;
+        }
+
+        priv->input_position+=4;
+
+        name_len = get_le32int(buffer);  // name length
+
+        if (read(priv->fd,buffer,name_len)<name_len) {
+          fprintf(stderr, "asf_decoder: read error in %s\n",cdata->URI);
+          detach_stream(cdata);
+          return FALSE;
+        }
+
+        get_str16_nolen(buffer, name_len * 2, name, sizeof(name));
+        //ff_new_chapter(s, i, (AVRational){1, 10000000}, pres_time, AV_NOPTS_VALUE, name );
+        priv->input_position+=name_len;
       }
 
 
@@ -2024,25 +2020,25 @@ static boolean attach_stream(lives_clip_data_t *cdata, boolean isclone) {
       return FALSE;
     } else {
       if (!priv->s->keylen) {
-	if (!guidcmp(&g, &lives_asf_content_encryption)||
-	    !guidcmp(&g, &lives_asf_ext_content_encryption) ||
-	    !guidcmp(&g, &lives_asf_digital_signature)) {
-	  fprintf(stderr, "asf_decoder: encrypted/signed content in %s\n",cdata->URI);
-	  detach_stream(cdata);
-	  return FALSE;
-	}
+        if (!guidcmp(&g, &lives_asf_content_encryption)||
+            !guidcmp(&g, &lives_asf_ext_content_encryption) ||
+            !guidcmp(&g, &lives_asf_digital_signature)) {
+          fprintf(stderr, "asf_decoder: encrypted/signed content in %s\n",cdata->URI);
+          detach_stream(cdata);
+          return FALSE;
+        }
       }
     }
 
     lseek(priv->fd, gpos + gsize, SEEK_SET);
-    if(priv->input_position != gpos + gsize)
+    if (priv->input_position != gpos + gsize)
 #ifdef DEBUG
       fprintf(stderr, "gpos mismatch our pos=%"PRIu64", end=%"PRIu64"\n", priv->input_position-gpos, gsize);
 #endif
     priv->input_position=gpos+gsize;
   } // end for
 
-  
+
   if (vidindex==-1) {
     fprintf(stderr, "asf_decoder: no video stream found in %s\n",cdata->URI);
     detach_stream(cdata);
@@ -2064,28 +2060,28 @@ static boolean attach_stream(lives_clip_data_t *cdata, boolean isclone) {
   priv->data_start = priv->input_position;
   priv->asf->packet_size_left = 0;
 
-  for(i=0; i<128; i++){
+  for (i=0; i<128; i++) {
     int stream_num= priv->asf->asfid2avid[i];
-    if(stream_num>=0){
+    if (stream_num>=0) {
       AVStream *st = priv->s->streams[stream_num];
       if (!st||!priv->st->codec) continue;
       if (!priv->st->codec->bit_rate)
-	priv->st->codec->bit_rate = bitrate[i];
+        priv->st->codec->bit_rate = bitrate[i];
       if (dar[i].num > 0 && dar[i].den > 0)
-	av_reduce(&priv->st->sample_aspect_ratio.num,
-		  &priv->st->sample_aspect_ratio.den,
-		  dar[i].num, dar[i].den, INT_MAX);
-      
+        av_reduce(&priv->st->sample_aspect_ratio.num,
+                  &priv->st->sample_aspect_ratio.den,
+                  dar[i].num, dar[i].den, INT_MAX);
+
       // copy and convert language codes to the frontend
       /*      if (priv->asf->streams[i].stream_language_index < 128) {
-	      const char *rfc1766 = priv->asf->stream_languages[priv->asf->streams[i].stream_language_index];
-	      if (rfc1766 && strlen(rfc1766) > 1) {
-	      const char primary_tag[3] = { rfc1766[0], rfc1766[1], '\0' }; // ignore country code if any
-	      const char *iso6392 = av_convert_lang_to(primary_tag, AV_LANG_ISO639_2_BIBL);
-	      if (iso6392)
-	      av_dict_set(&priv->stmetadata, "language", iso6392, 0);
-	      }
-	      }*/
+        const char *rfc1766 = priv->asf->stream_languages[priv->asf->streams[i].stream_language_index];
+        if (rfc1766 && strlen(rfc1766) > 1) {
+        const char primary_tag[3] = { rfc1766[0], rfc1766[1], '\0' }; // ignore country code if any
+        const char *iso6392 = av_convert_lang_to(primary_tag, AV_LANG_ISO639_2_BIBL);
+        if (iso6392)
+        av_dict_set(&priv->stmetadata, "language", iso6392, 0);
+        }
+        }*/
     }
   }
 
@@ -2110,37 +2106,47 @@ static boolean attach_stream(lives_clip_data_t *cdata, boolean isclone) {
     return TRUE;
   }
 
-  switch(vidst->codec->codec_id) {
+  switch (vidst->codec->codec_id) {
   case CODEC_ID_WMV1:
-    snprintf(cdata->video_name,16,"wmv1"); break;
+    snprintf(cdata->video_name,16,"wmv1");
+    break;
   case CODEC_ID_WMV2:
-    snprintf(cdata->video_name,16,"wmv2"); break;
+    snprintf(cdata->video_name,16,"wmv2");
+    break;
   case CODEC_ID_WMV3:
-    snprintf(cdata->video_name,16,"wmv3"); break;
+    snprintf(cdata->video_name,16,"wmv3");
+    break;
   case CODEC_ID_DVVIDEO:
-    snprintf(cdata->video_name,16,"dv"); break;
+    snprintf(cdata->video_name,16,"dv");
+    break;
   case CODEC_ID_MPEG4:
-    snprintf(cdata->video_name,16,"mpeg4"); break;
+    snprintf(cdata->video_name,16,"mpeg4");
+    break;
   case CODEC_ID_H264:
-    snprintf(cdata->video_name,16,"h264"); break;
+    snprintf(cdata->video_name,16,"h264");
+    break;
   case CODEC_ID_MPEG1VIDEO:
-    snprintf(cdata->video_name,16,"mpeg1"); break;
+    snprintf(cdata->video_name,16,"mpeg1");
+    break;
   case CODEC_ID_MPEG2VIDEO:
-    snprintf(cdata->video_name,16,"mpeg2"); break;
+    snprintf(cdata->video_name,16,"mpeg2");
+    break;
   default:
-    snprintf(cdata->video_name,16,"unknown"); break;
-    fprintf(stderr,"add video format %d\n",vidst->codec->codec_id); break;
+    snprintf(cdata->video_name,16,"unknown");
+    break;
+    fprintf(stderr,"add video format %d\n",vidst->codec->codec_id);
+    break;
   }
 
 
 #ifdef DEBUG
   fprintf(stderr,"video type is %s %d x %d (%d x %d +%d +%d)\n",cdata->video_name,
-	  cdata->width,cdata->height,cdata->frame_width,cdata->frame_height,cdata->offs_x,cdata->offs_y);
+          cdata->width,cdata->height,cdata->frame_width,cdata->frame_height,cdata->offs_x,cdata->offs_y);
 #endif
 
 
   if (!vidst->codec) {
-    if (strlen(cdata->video_name)>0) 
+    if (strlen(cdata->video_name)>0)
       fprintf(stderr, "asf_decoder: Could not find avcodec codec for video type %s\n",cdata->video_name);
     detach_stream(cdata);
     return FALSE;
@@ -2173,7 +2179,7 @@ static boolean attach_stream(lives_clip_data_t *cdata, boolean isclone) {
       return FALSE; // eof
     }
   } while (retval<0);
-  
+
   if (priv->asf->packet_time_delta!=0) {
     fprintf(stderr, "asf_decoder: packet time delta of (%d) not understood\n",priv->asf->packet_time_delta);
     detach_stream(cdata);
@@ -2181,9 +2187,9 @@ static boolean attach_stream(lives_clip_data_t *cdata, boolean isclone) {
   }
 
 #if LIBAVCODEC_VERSION_MAJOR >= 52
-  len=avcodec_decode_video2(vidst->codec, priv->picture, &got_picture, &priv->avpkt );
-#else 
-  len=avcodec_decode_video(vidst->codec, priv->picture, &got_picture, priv->avpkt.data, priv->avpkt.size );
+  len=avcodec_decode_video2(vidst->codec, priv->picture, &got_picture, &priv->avpkt);
+#else
+  len=avcodec_decode_video(vidst->codec, priv->picture, &got_picture, priv->avpkt.data, priv->avpkt.size);
 #endif
   priv->avpkt.size-=len;
 
@@ -2207,7 +2213,7 @@ static boolean attach_stream(lives_clip_data_t *cdata, boolean isclone) {
   //#define DEBUG
 #ifdef DEBUG
   printf("first pts is %ld\n",pts);
-#endif  
+#endif
 
   if (pts==AV_NOPTS_VALUE) {
     fprintf(stderr, "asf_decoder: No timestamps for frames, not decoding.\n");
@@ -2219,32 +2225,32 @@ static boolean attach_stream(lives_clip_data_t *cdata, boolean isclone) {
   do {
     free(priv->avpkt.data);
     retval = get_next_video_packet(cdata,-1,-1);
-      
+
     // try to get dts of second frame
     if (retval!=-2) { // eof
       if (retval==0) {
 
-	if (priv->frame_dts==AV_NOPTS_VALUE) {
-	  fprintf(stderr, "asf_decoder: No timestamp for second frame, aborting.\n");
-	  detach_stream(cdata);
-	  return FALSE;
-	}
+        if (priv->frame_dts==AV_NOPTS_VALUE) {
+          fprintf(stderr, "asf_decoder: No timestamp for second frame, aborting.\n");
+          detach_stream(cdata);
+          return FALSE;
+        }
 
-	if (priv->asf->packet_time_delta!=0) {
-	  fprintf(stderr, "asf_decoder: packet time delta of (%d) not understood\n",priv->asf->packet_time_delta);
-	  detach_stream(cdata);
-	  return FALSE;
-	}
+        if (priv->asf->packet_time_delta!=0) {
+          fprintf(stderr, "asf_decoder: packet time delta of (%d) not understood\n",priv->asf->packet_time_delta);
+          detach_stream(cdata);
+          return FALSE;
+        }
 
-	pts=priv->frame_dts-pts;
-	pts2=priv->frame_dts;
+        pts=priv->frame_dts-pts;
+        pts2=priv->frame_dts;
 
 #ifdef DEBUG
-	printf("delta pts is %ld %ld\n",pts,priv->frame_dts);
+        printf("delta pts is %ld %ld\n",pts,priv->frame_dts);
 #endif
-      
-	if (pts>0) cdata->fps=1000./(double)pts;
-	gotframe2=TRUE;
+
+        if (pts>0) cdata->fps=1000./(double)pts;
+        gotframe2=TRUE;
       }
     }
   } while (retval<0&&retval!=-2);
@@ -2254,35 +2260,35 @@ static boolean attach_stream(lives_clip_data_t *cdata, boolean isclone) {
     do {
       free(priv->avpkt.data);
       retval = get_next_video_packet(cdata,-1,-1);
-      
+
       // try to get dts of second frame
       if (retval!=-2) { // eof
-	if (retval==0) {
+        if (retval==0) {
 
-	  if (priv->frame_dts==AV_NOPTS_VALUE) {
-	    break;
-	  }
+          if (priv->frame_dts==AV_NOPTS_VALUE) {
+            break;
+          }
 
-	  if (priv->asf->packet_time_delta!=0) {
-	    fprintf(stderr, "asf_decoder: packet time delta of (%d) not understood\n",priv->asf->packet_time_delta);
-	    detach_stream(cdata);
-	    return FALSE;
-	  }
+          if (priv->asf->packet_time_delta!=0) {
+            fprintf(stderr, "asf_decoder: packet time delta of (%d) not understood\n",priv->asf->packet_time_delta);
+            detach_stream(cdata);
+            return FALSE;
+          }
 
-	  if (priv->frame_dts-pts2!=pts) {
-	    // 2->3 delta can be more accurate than 1 - 2 delta
-	    pts=priv->frame_dts-pts2;
-	    if (pts>0) cdata->fps=1000./(double)pts;
-	    priv->start_dts=pts2-pts;
-	    priv->have_start_dts=TRUE;
-	    cdata->video_start_time=(double)priv->start_dts/10000.;
-	  }
+          if (priv->frame_dts-pts2!=pts) {
+            // 2->3 delta can be more accurate than 1 - 2 delta
+            pts=priv->frame_dts-pts2;
+            if (pts>0) cdata->fps=1000./(double)pts;
+            priv->start_dts=pts2-pts;
+            priv->have_start_dts=TRUE;
+            cdata->video_start_time=(double)priv->start_dts/10000.;
+          }
 
 #ifdef DEBUG
-	  printf("3delta pts is %ld %ld\n",pts,priv->frame_dts);
+          printf("3delta pts is %ld %ld\n",pts,priv->frame_dts);
 #endif
-      
-	}
+
+        }
       }
     } while (retval<0&&retval!=-2);
   }
@@ -2304,7 +2310,7 @@ static boolean attach_stream(lives_clip_data_t *cdata, boolean isclone) {
 
 
   cdata->palettes[0]=avi_pix_fmt_to_weed_palette(ctx->pix_fmt,
-						 &cdata->YUV_clamping);
+                     &cdata->YUV_clamping);
 
   if (cdata->palettes[0]==WEED_PALETTE_END) {
     fprintf(stderr, "asf_decoder: Could not find a usable palette for (%d) %s\n",ctx->pix_fmt,cdata->URI);
@@ -2319,7 +2325,7 @@ static boolean attach_stream(lives_clip_data_t *cdata, boolean isclone) {
 
   if (cdata->width==0) cdata->width=ctx->width-cdata->offs_x*2;
   if (cdata->height==0) cdata->height=ctx->height-cdata->offs_y*2;
-  
+
   if (cdata->width*cdata->height==0) {
     fprintf(stderr, "asf_decoder: invalid width and height (%d X %d)\n",cdata->width,cdata->height);
     detach_stream(cdata);
@@ -2328,7 +2334,7 @@ static boolean attach_stream(lives_clip_data_t *cdata, boolean isclone) {
 
 #ifdef DEBUG
   fprintf(stderr,"using palette %d, size %d x %d\n",
-	  cdata->current_palette,cdata->width,cdata->height);
+          cdata->current_palette,cdata->width,cdata->height);
 #endif
 
   cdata->par=(double)ctx->sample_aspect_ratio.num/(double)ctx->sample_aspect_ratio.den;
@@ -2356,17 +2362,17 @@ static boolean attach_stream(lives_clip_data_t *cdata, boolean isclone) {
       res=system(cmd);
 
       if (res) {
-	snprintf(cmd,1024,"LANGUAGE=en LANG=en mplayer2 \"%s\" -identify -frames 0 2>/dev/null | grep ID_VIDEO_FPS > %s",cdata->URI,tmpfname);
-	res=system(cmd);
+        snprintf(cmd,1024,"LANGUAGE=en LANG=en mplayer2 \"%s\" -identify -frames 0 2>/dev/null | grep ID_VIDEO_FPS > %s",cdata->URI,tmpfname);
+        res=system(cmd);
       }
-      
+
       if (!res) {
-	char buffer[1024];
-	ssize_t bytes=read(ofd,buffer,1024);
-	memset(buffer+bytes,0,1);
-	if (!(strncmp(buffer,"ID_VIDEO_FPS=",13))) {
-	  cdata->fps=strtod (buffer+13,NULL);
-	}
+        char buffer[1024];
+        ssize_t bytes=read(ofd,buffer,1024);
+        memset(buffer+bytes,0,1);
+        if (!(strncmp(buffer,"ID_VIDEO_FPS=",13))) {
+          cdata->fps=strtod(buffer+13,NULL);
+        }
       }
 
       close(ofd);
@@ -2385,7 +2391,7 @@ static boolean attach_stream(lives_clip_data_t *cdata, boolean isclone) {
     detach_stream(cdata);
     return FALSE;
   }
-  
+
   if (ctx->ticks_per_frame==2) {
     // TODO - needs checking
     cdata->fps/=2.;
@@ -2408,7 +2414,8 @@ static boolean attach_stream(lives_clip_data_t *cdata, boolean isclone) {
   }
 
   if (cdata->width!=cdata->frame_width||cdata->height!=cdata->frame_height)
-    fprintf(stderr,"asf_decoder: info frame size=%d x %d, pixel size=%d x %d\n",cdata->frame_width,cdata->frame_height,cdata->width,cdata->height);
+    fprintf(stderr,"asf_decoder: info frame size=%d x %d, pixel size=%d x %d\n",cdata->frame_width,cdata->frame_height,cdata->width,
+            cdata->height);
 
 
   return TRUE;
@@ -2426,7 +2433,7 @@ const char *module_check_init(void) {
   nidxc=0;
 
   pthread_mutexattr_init(&mattr);
-  pthread_mutexattr_settype(&mattr,PTHREAD_MUTEX_RECURSIVE); 
+  pthread_mutexattr_settype(&mattr,PTHREAD_MUTEX_RECURSIVE);
 
   pthread_mutex_init(&indices_mutex,NULL);
   return NULL;
@@ -2439,12 +2446,12 @@ const char *version(void) {
 
 
 
-static lives_clip_data_t *init_cdata (void) {
+static lives_clip_data_t *init_cdata(void) {
   lives_asf_priv_t *priv;
   lives_clip_data_t *cdata=(lives_clip_data_t *)malloc(sizeof(lives_clip_data_t));
 
   cdata->URI=NULL;
-  
+
   cdata->priv=priv=malloc(sizeof(lives_asf_priv_t));
 
   cdata->seek_flag=0;
@@ -2456,7 +2463,7 @@ static lives_clip_data_t *init_cdata (void) {
   cdata->palettes[1]=WEED_PALETTE_END;
 
   priv->idxc=NULL;
-  
+
   priv->inited=FALSE;
 
   cdata->sync_hint=0;
@@ -2534,8 +2541,7 @@ static lives_clip_data_t *asf_clone(lives_clip_data_t *cdata) {
 
     dpriv->last_frame=-1;
     dpriv->black_fill=FALSE;
-  }
-  else {  
+  } else {
     clone->nclips=1;
 
     ///////////////////////////////////////////////////////////
@@ -2645,7 +2651,7 @@ static size_t write_black_pixel(unsigned char *idst, int pal, int npixels, int y
   unsigned char *dst=idst;
   register int i;
 
-  for (i=0;i<npixels;i++) {
+  for (i=0; i<npixels; i++) {
     switch (pal) {
     case WEED_PALETTE_RGBA32:
     case WEED_PALETTE_BGRA32:
@@ -2683,7 +2689,8 @@ static size_t write_black_pixel(unsigned char *idst, int pal, int npixels, int y
       dst[0]=dst[3]=128;
       dst[1]=dst[2]=dst[4]=dst[5]=y_black;
       dst+=6;
-    default: break;
+    default:
+      break;
     }
   }
   return idst-dst;
@@ -2699,7 +2706,7 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstride
   int64_t target_pts=frame_to_dts(cdata,tframe);
 
   unsigned char *dst,*src;
-  unsigned char black[4]={0,0,0,255};
+  unsigned char black[4]= {0,0,0,255};
 
   boolean got_picture=FALSE;
   boolean hit_target=FALSE;
@@ -2718,39 +2725,38 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstride
 #endif
 
   if (pixel_data!=NULL) {
-    
+
     // calc frame width and height, including any border
-    
+
     if (pal==WEED_PALETTE_YUV420P||pal==WEED_PALETTE_YVU420P||pal==WEED_PALETTE_YUV422P||pal==WEED_PALETTE_YUV444P) {
       nplanes=3;
       black[0]=y_black;
       black[1]=black[2]=128;
-    }
-    else if (pal==WEED_PALETTE_YUVA4444P) {
+    } else if (pal==WEED_PALETTE_YUVA4444P) {
       nplanes=4;
       black[0]=y_black;
       black[1]=black[2]=128;
       black[3]=255;
     }
-    
+
     if (pal==WEED_PALETTE_RGB24||pal==WEED_PALETTE_BGR24) psize=3;
-    
+
     if (pal==WEED_PALETTE_RGBA32||pal==WEED_PALETTE_BGRA32||pal==WEED_PALETTE_ARGB32||pal==WEED_PALETTE_UYVY8888||
-	pal==WEED_PALETTE_YUYV8888||pal==WEED_PALETTE_YUV888||pal==WEED_PALETTE_YUVA8888) psize=4;
-    
+        pal==WEED_PALETTE_YUYV8888||pal==WEED_PALETTE_YUV888||pal==WEED_PALETTE_YUVA8888) psize=4;
+
     if (pal==WEED_PALETTE_YUV411) psize=6;
-    
+
     if (pal==WEED_PALETTE_A1) dstwidth>>=3;
-    
+
     dstwidth*=psize;
-    
+
     if (cdata->frame_height > cdata->height && height == cdata->height) {
       // host ignores vertical border
       btop=0;
       xheight=cdata->height;
       bbot=xheight-1;
     }
-    
+
     if (cdata->frame_width > cdata->width && rowstrides[0] < cdata->frame_width*psize) {
       // host ignores horizontal border
       bleft=bright=0;
@@ -2772,26 +2778,24 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstride
 
       pthread_mutex_lock(&priv->idxc->mutex);
       if ((priv->kframe=get_idx_for_pts(cdata,target_pts-priv->start_dts))!=NULL) {
-	priv->input_position=priv->kframe->offs;
-	nextframe=dts_to_frame(cdata,priv->kframe->dts+priv->start_dts);
-	tfrag=priv->kframe->frag;
-      }
-      else priv->input_position=priv->data_start;
+        priv->input_position=priv->kframe->offs;
+        nextframe=dts_to_frame(cdata,priv->kframe->dts+priv->start_dts);
+        tfrag=priv->kframe->frag;
+      } else priv->input_position=priv->data_start;
       pthread_mutex_unlock(&priv->idxc->mutex);
-	
+
       // we are now at the kframe before or at target - parse packets until we hit target
-      
+
       //#define DEBUG_KFRAMES
 #ifdef DEBUG_KFRAMES
       if (priv->kframe!=NULL) printf("got kframe %ld frag %d for frame %ld\n",
-				     dts_to_frame(cdata,priv->kframe->dts+priv->start_dts),priv->kframe->frag,tframe);
+                                       dts_to_frame(cdata,priv->kframe->dts+priv->start_dts),priv->kframe->frag,tframe);
 #endif
 
-      avcodec_flush_buffers (priv->ctx);
+      avcodec_flush_buffers(priv->ctx);
       asf_reset_header(priv->s);
       priv->black_fill=FALSE;
-    }
-    else {
+    } else {
       nextframe=priv->last_frame+1;
       tfrag=-1;
     }
@@ -2799,7 +2803,7 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstride
     //priv->ctx->skip_frame=AVDISCARD_NONREF;
 
     priv->last_frame=tframe;
- 
+
     // do this until we reach target frame //////////////
 
 
@@ -2807,20 +2811,20 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstride
       int ret;
 
       if (priv->avpkt.size==0) {
-	ret = get_next_video_packet(cdata,tfrag,-1);
-	if (ret<0) {
-	  free(priv->avpkt.data);
-	  priv->avpkt.data=NULL;
-	  priv->avpkt.size=0;
-	  if (ret==-2) {
-	    // EOF
-	    if (pixel_data==NULL) return FALSE;
-	    priv->black_fill=TRUE;
-	    break;
-	  }
-	  fprintf(stderr,"asf_decoder: got frame decode error %d at frame %ld\n",ret,nextframe+1);
-	  continue;
-	}
+        ret = get_next_video_packet(cdata,tfrag,-1);
+        if (ret<0) {
+          free(priv->avpkt.data);
+          priv->avpkt.data=NULL;
+          priv->avpkt.size=0;
+          if (ret==-2) {
+            // EOF
+            if (pixel_data==NULL) return FALSE;
+            priv->black_fill=TRUE;
+            break;
+          }
+          fprintf(stderr,"asf_decoder: got frame decode error %d at frame %ld\n",ret,nextframe+1);
+          continue;
+        }
       }
 
 
@@ -2828,9 +2832,9 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstride
       if (priv->picture==NULL) priv->picture=av_frame_alloc();
 
 #if LIBAVCODEC_VERSION_MAJOR >= 53
-      avcodec_decode_video2( priv->ctx, priv->picture, &got_picture, &priv->avpkt );
-#else 
-      avcodec_decode_video( priv->ctx, priv->picture, &got_picture, priv->avpkt.data, priv->avpkt.size );
+      avcodec_decode_video2(priv->ctx, priv->picture, &got_picture, &priv->avpkt);
+#else
+      avcodec_decode_video(priv->ctx, priv->picture, &got_picture, priv->avpkt.data, priv->avpkt.size);
 #endif
 
       free(priv->avpkt.data);
@@ -2843,10 +2847,10 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstride
 
       // otherwise discard this frame
       if (got_picture) {
-	av_frame_free(&priv->picture);
-	priv->picture=NULL;
-	tfrag=-1;
-	nextframe++;
+        av_frame_free(&priv->picture);
+        priv->picture=NULL;
+        tfrag=-1;
+        nextframe++;
       }
     }
   }
@@ -2856,41 +2860,38 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstride
 
   if (priv->black_fill) btop=cdata->frame_height;
 
-  for (p=0;p<nplanes;p++) {
+  for (p=0; p<nplanes; p++) {
     dst=pixel_data[p];
     src=priv->picture->data[p];
 
-    for (i=0;i<xheight;i++) {
+    for (i=0; i<xheight; i++) {
       if (i<btop||i>bbot) {
-	// top or bottom border, copy black row
-	if (pal==WEED_PALETTE_YUV420P||pal==WEED_PALETTE_YVU420P||pal==WEED_PALETTE_YUV422P||pal==WEED_PALETTE_YUV444P||
-	    pal==WEED_PALETTE_YUVA4444P||pal==WEED_PALETTE_RGB24||pal==WEED_PALETTE_BGR24) {
-	  memset(dst,black[p],dstwidth+(bleft+bright)*psize);
-	  dst+=dstwidth+(bleft+bright)*psize;
-	}
-	else dst+=write_black_pixel(dst,pal,dstwidth/psize+bleft+bright,y_black);
-	continue;
+        // top or bottom border, copy black row
+        if (pal==WEED_PALETTE_YUV420P||pal==WEED_PALETTE_YVU420P||pal==WEED_PALETTE_YUV422P||pal==WEED_PALETTE_YUV444P||
+            pal==WEED_PALETTE_YUVA4444P||pal==WEED_PALETTE_RGB24||pal==WEED_PALETTE_BGR24) {
+          memset(dst,black[p],dstwidth+(bleft+bright)*psize);
+          dst+=dstwidth+(bleft+bright)*psize;
+        } else dst+=write_black_pixel(dst,pal,dstwidth/psize+bleft+bright,y_black);
+        continue;
       }
 
       if (bleft>0) {
-	if (pal==WEED_PALETTE_YUV420P||pal==WEED_PALETTE_YVU420P||pal==WEED_PALETTE_YUV422P||pal==WEED_PALETTE_YUV444P||
-	    pal==WEED_PALETTE_YUVA4444P||pal==WEED_PALETTE_RGB24||pal==WEED_PALETTE_BGR24) {
-	  memset(dst,black[p],bleft*psize);
-	  dst+=bleft*psize;
-	}
-	else dst+=write_black_pixel(dst,pal,bleft,y_black);
+        if (pal==WEED_PALETTE_YUV420P||pal==WEED_PALETTE_YVU420P||pal==WEED_PALETTE_YUV422P||pal==WEED_PALETTE_YUV444P||
+            pal==WEED_PALETTE_YUVA4444P||pal==WEED_PALETTE_RGB24||pal==WEED_PALETTE_BGR24) {
+          memset(dst,black[p],bleft*psize);
+          dst+=bleft*psize;
+        } else dst+=write_black_pixel(dst,pal,bleft,y_black);
       }
 
       memcpy(dst,src,dstwidth);
       dst+=dstwidth;
 
       if (bright>0) {
-	if (pal==WEED_PALETTE_YUV420P||pal==WEED_PALETTE_YVU420P||pal==WEED_PALETTE_YUV422P||pal==WEED_PALETTE_YUV444P||
-	    pal==WEED_PALETTE_YUVA4444P||pal==WEED_PALETTE_RGB24||pal==WEED_PALETTE_BGR24) {
-	  memset(dst,black[p],bright*psize);
-	  dst+=bright*psize;
-	}
-	else dst+=write_black_pixel(dst,pal,bright,y_black);
+        if (pal==WEED_PALETTE_YUV420P||pal==WEED_PALETTE_YVU420P||pal==WEED_PALETTE_YUV422P||pal==WEED_PALETTE_YUV444P||
+            pal==WEED_PALETTE_YUVA4444P||pal==WEED_PALETTE_RGB24||pal==WEED_PALETTE_BGR24) {
+          memset(dst,black[p],bright*psize);
+          dst+=bright*psize;
+        } else dst+=write_black_pixel(dst,pal,bright,y_black);
       }
 
       src+=priv->picture->linesize[p];
@@ -2919,7 +2920,7 @@ void clip_data_free(lives_clip_data_t *cdata) {
   if (cdata->palettes!=NULL) free(cdata->palettes);
   cdata->palettes=NULL;
 
-  if (priv->idxc!=NULL) 
+  if (priv->idxc!=NULL)
     idxc_release(cdata);
 
   priv->idxc=NULL;

@@ -29,16 +29,15 @@ extern void dv_parse_audio_header(dv_decoder_t *, uint8_t *);
 static void dv_dec_set_header(lives_clip_data_t *cdata, uint8_t *data) {
   lives_dv_priv_t *priv=cdata->priv;
 
-  if((data[3] & 0x80) == 0) {      /* DSF flag */
+  if ((data[3] & 0x80) == 0) {     /* DSF flag */
     // NTSC
 
     priv->frame_size = 120000;
     priv->is_pal = 0;
     cdata->height=480;
     cdata->fps=30000./1001.;
-    
-  }
-  else {
+
+  } else {
     // PAL
 
     priv->frame_size = 144000;
@@ -89,7 +88,7 @@ static boolean attach_stream(lives_clip_data_t *cdata, boolean isclone) {
 #endif
 
 
-  if (read (priv->fd, header, DV_HEADER_SIZE) < DV_HEADER_SIZE) {
+  if (read(priv->fd, header, DV_HEADER_SIZE) < DV_HEADER_SIZE) {
     fprintf(stderr, "dv_decoder: unable to read header for %s\n",cdata->URI);
     close(priv->fd);
     return FALSE;
@@ -105,7 +104,7 @@ static boolean attach_stream(lives_clip_data_t *cdata, boolean isclone) {
 
   lseek64(priv->fd,0,SEEK_SET);
   fbuffer=malloc(priv->frame_size);
-  if (read (priv->fd, fbuffer, priv->frame_size) < priv->frame_size) {
+  if (read(priv->fd, fbuffer, priv->frame_size) < priv->frame_size) {
     fprintf(stderr, "dv_decoder: unable to read first frame for %s\n",cdata->URI);
     free(fbuffer);
     close(priv->fd);
@@ -155,7 +154,7 @@ static boolean attach_stream(lives_clip_data_t *cdata, boolean isclone) {
   cdata->video_start_time=0.;
 
   priv->dv_dec->quality=DV_QUALITY_BEST;
-  
+
 
   if (!isclone&&!is_partial_clone) {
     fstat(priv->fd,&sb);
@@ -163,13 +162,13 @@ static boolean attach_stream(lives_clip_data_t *cdata, boolean isclone) {
   }
 
   //priv.dv_dec->add_ntsc_setup=TRUE;
-    
+
   return TRUE;
 }
 
 
 
-static void detach_stream (lives_clip_data_t *cdata) {
+static void detach_stream(lives_clip_data_t *cdata) {
   // close the file, free the decoder
   lives_dv_priv_t *priv=cdata->priv;
   close(priv->fd);
@@ -196,33 +195,33 @@ const char *version(void) {
 
 
 
-static lives_clip_data_t *init_cdata (void) {
+static lives_clip_data_t *init_cdata(void) {
   register int i;
   lives_dv_priv_t *priv;
   lives_clip_data_t *cdata=(lives_clip_data_t *)malloc(sizeof(lives_clip_data_t));
-  
+
   cdata->palettes=malloc(4*sizeof(int));
-  
+
   // plugin allows a choice of palettes; we set these in order of preference
   cdata->palettes[0]=WEED_PALETTE_YUYV8888;
   cdata->palettes[1]=WEED_PALETTE_RGB24;
   cdata->palettes[2]=WEED_PALETTE_BGR24;
   cdata->palettes[3]=WEED_PALETTE_END;
-  
+
   cdata->URI=NULL;
-  
+
   cdata->priv=priv=malloc(sizeof(lives_dv_priv_t));
 
-  for (i=0;i<4;i++) {
+  for (i=0; i<4; i++) {
     priv->audio_buffers[i]=NULL;
   }
-  
+
   priv->audio=NULL;
   priv->audio_fd=-1;
   priv->inited=FALSE;
 
   cdata->seek_flag=LIVES_SEEK_FAST;
-  
+
   cdata->sync_hint=0;
 
   memset(cdata->author,0,1);
@@ -271,7 +270,7 @@ static lives_clip_data_t *dv_clone(lives_clip_data_t *cdata) {
   snprintf(clone->title,256,"%s",cdata->title);
   snprintf(clone->comment,256,"%s",cdata->comment);
 
-    // create "priv" elements
+  // create "priv" elements
   dpriv=clone->priv;
   spriv=cdata->priv;
 
@@ -327,7 +326,7 @@ lives_clip_data_t *get_clip_data(const char *URI, lives_clip_data_t *cdata) {
       clip_data_free(cdata);
       return NULL;
     }
-   }
+  }
 
 
   return cdata;
@@ -351,20 +350,20 @@ static boolean dv_pad_with_silence(int fd, unsigned char **abuff, size_t offs, i
       free(silencebuf);
       return FALSE;
     }
-    
+
     free(silencebuf);
   }
 
   if (abuff!=NULL) {
     // write to memory
-    for (j=0;j<nchans;j++) {
+    for (j=0; j<nchans; j++) {
       // write 0
       if (xoffs<0) memset(&(abuff[j][offs]),0,nsamps);
       else {
-	// or copy last bytes
-	for (i=0;i<nsamps;i+=2) {
-	  memcpy(&(abuff[j][offs+i]),&(abuff[j][xoffs]),2);
-	}
+        // or copy last bytes
+        for (i=0; i<nsamps; i+=2) {
+          memcpy(&(abuff[j][offs+i]),&(abuff[j][xoffs]),2);
+        }
       }
     }
   }
@@ -377,7 +376,7 @@ void rip_audio_cleanup(const lives_clip_data_t *cdata) {
   register int i;
   lives_dv_priv_t *priv=cdata->priv;
 
-  for (i=0;i<4;i++) {
+  for (i=0; i<4; i++) {
     if (priv->audio_buffers[i]!=NULL) free(priv->audio_buffers[i]);
     priv->audio_buffers[i]=NULL;
   }
@@ -385,14 +384,14 @@ void rip_audio_cleanup(const lives_clip_data_t *cdata) {
   if (priv->audio!=NULL) free(priv->audio);
   priv->audio=NULL;
 
-  if (priv->audio_fd!=-1) close (priv->audio_fd);
+  if (priv->audio_fd!=-1) close(priv->audio_fd);
 
 }
 
 
 
-int64_t rip_audio (const lives_clip_data_t *cdata, const char *fname, int64_t stframe, int64_t nframes, 
-		   unsigned char **abuff) {
+int64_t rip_audio(const lives_clip_data_t *cdata, const char *fname, int64_t stframe, int64_t nframes,
+                  unsigned char **abuff) {
   // rip audio from (video) frame stframe, length nframes (video) frames from cdata
   // to file fname *
 
@@ -405,7 +404,7 @@ int64_t rip_audio (const lives_clip_data_t *cdata, const char *fname, int64_t st
   // sometimes we get fewer samples than expected, so we do two passes and set
   // scale on the first pass. This is then used to resample on the second pass)
 
-  // note: host can kill this function with SIGUSR1 at any point after we start writing the 
+  // note: host can kill this function with SIGUSR1 at any point after we start writing the
   //       output file
 
   // note: host will call rip_audio_cleanup() after calling here
@@ -434,20 +433,20 @@ int64_t rip_audio (const lives_clip_data_t *cdata, const char *fname, int64_t st
 
   xframes=nframes;
 
-  for (i=0;i<4;i++) {
+  for (i=0; i<4; i++) {
     if (priv->audio_buffers[i]==NULL) {
       if (!(priv->audio_buffers[i] = (int16_t *)malloc(DV_AUDIO_MAX_SAMPLES * 2 * sizeof(int16_t)))) {
-	fprintf(stderr, "dv_decoder: out of memory\n");
-	return 0;
+        fprintf(stderr, "dv_decoder: out of memory\n");
+        return 0;
       }
     }
   }
 
   if (priv->audio==NULL) {
-    if(!(priv->audio = malloc(DV_AUDIO_MAX_SAMPLES * 8 * sizeof(int16_t)))) {
-      for (i=0;i<4;i++) {
-	free(priv->audio_buffers[i]);
-	priv->audio_buffers[i]=NULL;
+    if (!(priv->audio = malloc(DV_AUDIO_MAX_SAMPLES * 8 * sizeof(int16_t)))) {
+      for (i=0; i<4; i++) {
+        free(priv->audio_buffers[i]);
+        priv->audio_buffers[i]=NULL;
       }
       fprintf(stderr, "dv_decoder: out of memory\n");
       return 0;
@@ -478,7 +477,7 @@ int64_t rip_audio (const lives_clip_data_t *cdata, const char *fname, int64_t st
   while (1) {
     // decode frame headers and total number of samples
 
-    if (read (priv->fd, buf, priv->frame_size) < priv->frame_size) break;
+    if (read(priv->fd, buf, priv->frame_size) < priv->frame_size) break;
     dv_parse_header(priv->dv_dec, buf);
 
     samples  = priv->dv_dec->audio->samples_this_frame;
@@ -502,60 +501,60 @@ int64_t rip_audio (const lives_clip_data_t *cdata, const char *fname, int64_t st
 
     samps_out=0;
 
-    if (read (priv->fd, buf, priv->frame_size) < priv->frame_size) break;
+    if (read(priv->fd, buf, priv->frame_size) < priv->frame_size) break;
     dv_parse_header(priv->dv_dec, buf);
-    
+
     samples  = priv->dv_dec->audio->samples_this_frame;
-    
+
     dv_decode_full_audio(priv->dv_dec, buf, priv->audio_buffers);
 
     j=0;
 
     // interleave the audio into a single buffer
-    for (i=0;i<samples&&samps_expected;i++) {
-      
-      for (ch=0;ch<channels;ch++) {
-	if (fname!=NULL) priv->audio[j++] = priv->audio_buffers[ch][i];
-	else {
-	  // copy a 16 bit sample
-	  memcpy(&(abuff[ch][k]),&(priv->audio_buffers[ch][i]),2);
-	}
+    for (i=0; i<samples&&samps_expected; i++) {
+
+      for (ch=0; ch<channels; ch++) {
+        if (fname!=NULL) priv->audio[j++] = priv->audio_buffers[ch][i];
+        else {
+          // copy a 16 bit sample
+          memcpy(&(abuff[ch][k]),&(priv->audio_buffers[ch][i]),2);
+        }
       }
 
       k+=2;
-      
+
       offset_f+=scale;
 
       if (offset_f<=-1.&&i>0) {
-	// slipped back a whole sample, process same i
-	offset_f+=1.;
-	i--;
+        // slipped back a whole sample, process same i
+        offset_f+=1.;
+        i--;
       }
-      
-      
+
+
       if (offset_f>=1.) {
-	// slipped forward a whole sample, process i+2
-	offset_f-=1.;
-	i++;
+        // slipped forward a whole sample, process i+2
+        offset_f-=1.;
+        i++;
       }
 
       samps_expected--;
       samps_out++;
     }
-    
+
     bytes = samps_out*channels*2;
-    
+
     tot_samples+=samps_out;
 
     // write out
     if (fname!=NULL) {
-      if (write(priv->audio_fd, (char*) priv->audio, bytes) != bytes) {
-	free(buf);
-	fprintf(stderr, "dv_decoder: audio write error %s\n",fname);
-	return tot_samples;
+      if (write(priv->audio_fd, (char *) priv->audio, bytes) != bytes) {
+        free(buf);
+        fprintf(stderr, "dv_decoder: audio write error %s\n",fname);
+        return tot_samples;
       }
     }
-    
+
     if (--nframes==0) break;
   }
 
@@ -584,17 +583,17 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstride
   lives_dv_priv_t *priv=cdata->priv;
 
   uint8_t fbuffer[priv->frame_size];
-  
+
   int64_t frame=tframe;
   off64_t bytes=frame*priv->frame_size;
-  
+
   lseek64(priv->fd,bytes,SEEK_SET);
-    
-  if (read (priv->fd, fbuffer, priv->frame_size) < priv->frame_size) return FALSE;
-  
+
+  if (read(priv->fd, fbuffer, priv->frame_size) < priv->frame_size) return FALSE;
+
   dv_parse_header(priv->dv_dec, fbuffer);
   dv_set_error_log(priv->dv_dec,nulfile);
-  
+
   switch (cdata->current_palette) {
   case WEED_PALETTE_RGB24:
     dv_decode_full_frame(priv->dv_dec,fbuffer,e_dv_color_rgb,(uint8_t **)pixel_data,rowstrides);

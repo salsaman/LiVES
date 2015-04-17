@@ -29,7 +29,7 @@
 ///////////////////////////////////////////////////////////////////
 
 static int num_versions=2; // number of different weed api versions supported
-static int api_versions[]={131,100}; // array of weed api versions supported in plugin, in order of preference (most preferred first)
+static int api_versions[]= {131,100}; // array of weed api versions supported in plugin, in order of preference (most preferred first)
 
 static int package_version=1; // version of this package
 
@@ -89,8 +89,7 @@ struct _sdata {
 
 
 
-static void image_bgset_y(RGB32 *src, int width, int height, int rowstride, struct _sdata *sdata)
-{
+static void image_bgset_y(RGB32 *src, int width, int height, int rowstride, struct _sdata *sdata) {
   register int i,j;
   int R, G, B;
   RGB32 *p;
@@ -100,8 +99,8 @@ static void image_bgset_y(RGB32 *src, int width, int height, int rowstride, stru
 
   p = src;
   q = sdata->background;
-  for(i=0; i<height; i++) {
-    for (j=0;j<width;j++) {
+  for (i=0; i<height; i++) {
+    for (j=0; j<width; j++) {
       R = ((*p)&0xff0000)>>(16-1);
       G = ((*p)&0xff00)>>(8-2);
       B = (*p)&0xff;
@@ -122,21 +121,21 @@ static void image_bgsubtract_update_y(RGB32 *src, int width, int height, int row
   short *q;
   unsigned char *r;
   int v;
-  
+
   rowstride-=width;
 
   p = src;
   q = sdata->background;
   r = sdata->diff;
-  for(i=0; i<height; i++) {
-    for (j=0;j<width;j++) {
+  for (i=0; i<height; i++) {
+    for (j=0; j<width; j++) {
       R = ((*p)&0xff0000)>>(16-1);
       G = ((*p)&0xff00)>>(8-2);
       B = (*p)&0xff;
       v = (R + G + B) - (int)(*q);
       *q = (short)(R + G + B);
       *r = ((v + sdata->threshold)>>24) | ((sdata->threshold - v)>>24);
-      
+
       p++;
       q++;
       r++;
@@ -148,8 +147,7 @@ static void image_bgsubtract_update_y(RGB32 *src, int width, int height, int row
 
 /////////////////////////////////////////////////////
 
-static inline uint32_t fastrand(struct _sdata *sdata)
-{
+static inline uint32_t fastrand(struct _sdata *sdata) {
 #define rand_a 1073741789L
 #define rand_c 32749L
 
@@ -157,30 +155,28 @@ static inline uint32_t fastrand(struct _sdata *sdata)
 }
 
 
-static void setTable(void)
-{
+static void setTable(void) {
   int i;
-  
-  for(i=0; i<128; i++) {
+
+  for (i=0; i<128; i++) {
     sqrtable[i] = i*i;
   }
-  for(i=1; i<=128; i++) {
+  for (i=1; i<=128; i++) {
     sqrtable[256-i] = -i*i;
   }
 }
 
-static int setBackground(RGB32 *src, int width, int height, int rowstride, struct _sdata *sdata)
-{
+static int setBackground(RGB32 *src, int width, int height, int rowstride, struct _sdata *sdata) {
   image_bgset_y(src, width, height, rowstride, sdata);
   sdata->bgIsSet = 1;
-  
+
   return 0;
 }
 
 
 /////////////////////////////////////////////////////////////
 
-int ripple_init (weed_plant_t *inst) {
+int ripple_init(weed_plant_t *inst) {
   int map_h;
   int map_w;
   struct _sdata *sdata;
@@ -189,7 +185,7 @@ int ripple_init (weed_plant_t *inst) {
   int error;
 
   sdata=weed_malloc(sizeof(struct _sdata));
-  if(sdata == NULL) return WEED_ERROR_MEMORY_ALLOCATION;
+  if (sdata == NULL) return WEED_ERROR_MEMORY_ALLOCATION;
 
   in_channel=weed_get_plantptr_value(inst,"in_channels",&error);
 
@@ -197,25 +193,25 @@ int ripple_init (weed_plant_t *inst) {
   map_w=weed_get_int_value(in_channel,"width",&error);
 
   sdata->map = (int *)weed_malloc(map_h*map_w*3*sizeof(int));
-  if(sdata->map == NULL ) {
+  if (sdata->map == NULL) {
     weed_free(sdata);
     return WEED_ERROR_MEMORY_ALLOCATION;
   }
   sdata->vtable = (signed char *)weed_malloc(map_h*map_w*2*sizeof(signed char));
-  if(sdata->vtable == NULL ) {
+  if (sdata->vtable == NULL) {
     weed_free(sdata->map);
     weed_free(sdata);
     return WEED_ERROR_MEMORY_ALLOCATION;
   }
   sdata->background = (short *)weed_malloc(map_h*map_w*sizeof(short));
-  if(sdata->background == NULL ) {
+  if (sdata->background == NULL) {
     weed_free(sdata->vtable);
     weed_free(sdata->map);
     weed_free(sdata);
     return WEED_ERROR_MEMORY_ALLOCATION;
   }
   sdata->diff = (unsigned char *)weed_malloc(map_h*map_w * 4 * sizeof(unsigned char));
-  if(sdata->diff == NULL ) {
+  if (sdata->diff == NULL) {
     weed_free(sdata->background);
     weed_free(sdata->vtable);
     weed_free(sdata->map);
@@ -239,7 +235,7 @@ int ripple_init (weed_plant_t *inst) {
 }
 
 
-int ripple_deinit (weed_plant_t *inst) {
+int ripple_deinit(weed_plant_t *inst) {
   int error;
   struct _sdata *sdata;
 
@@ -256,14 +252,13 @@ int ripple_deinit (weed_plant_t *inst) {
 }
 
 
-static void motiondetect(RGB32 *src, int width, int height, int rowstride, struct _sdata *sdata)
-{
+static void motiondetect(RGB32 *src, int width, int height, int rowstride, struct _sdata *sdata) {
   unsigned char *diff;
   int *p, *q;
   register int x, y;
   int h;
-  
-  if(!sdata->bgIsSet) {
+
+  if (!sdata->bgIsSet) {
     setBackground(src,width,height,rowstride,sdata);
   }
   image_bgsubtract_update_y(src,width,height,rowstride,sdata);
@@ -273,12 +268,12 @@ static void motiondetect(RGB32 *src, int width, int height, int rowstride, struc
   q = sdata->map2+width+1;
   diff += width+2;
 
-  for(y=height-2; y>0; y--) {
-    for(x=width-2; x>0; x--) {
+  for (y=height-2; y>0; y--) {
+    for (x=width-2; x>0; x--) {
       h = (int)*diff + (int)*(diff+1) + (int)*(diff+width) + (int)*(diff+width+1);
-      if(h>0) {
-	*p = h<<(point + impact - 8);
-	*q = *p;
+      if (h>0) {
+        *p = h<<(point + impact - 8);
+        *q = *p;
       }
       p++;
       q++;
@@ -292,8 +287,7 @@ static void motiondetect(RGB32 *src, int width, int height, int rowstride, struc
 
 
 
-static inline void drop(int power, int width, int height, struct _sdata *sdata)
-{
+static inline void drop(int power, int width, int height, struct _sdata *sdata) {
   int x, y;
   int *p, *q;
 
@@ -309,13 +303,12 @@ static inline void drop(int power, int width, int height, struct _sdata *sdata)
   *(q-width-1) = *(q-width+1) = *(q+width-1) = *(p+width+1) = power/4;
 }
 
-static void raindrop(int width, int height, struct _sdata *sdata)
-{
-  
+static void raindrop(int width, int height, struct _sdata *sdata) {
+
   int i;
-  
-  if(period == 0) {
-    switch(rain_stat) {
+
+  if (period == 0) {
+    switch (rain_stat) {
     case 0:
       period = (fastrand(sdata)>>23)+100;
       drop_prob = 0;
@@ -354,13 +347,13 @@ static void raindrop(int width, int height, struct _sdata *sdata)
       break;
     }
   }
-  switch(rain_stat) {
+  switch (rain_stat) {
   default:
   case 0:
     break;
   case 1:
   case 5:
-    if((fastrand(sdata)>>8)<drop_prob) {
+    if ((fastrand(sdata)>>8)<drop_prob) {
       drop(drop_power,width,height,sdata);
     }
     drop_prob += drop_prob_increment;
@@ -368,7 +361,7 @@ static void raindrop(int width, int height, struct _sdata *sdata)
   case 2:
   case 3:
   case 4:
-    for(i=drops_per_frame/16; i>0; i--) {
+    for (i=drops_per_frame/16; i>0; i--) {
       drop(drop_power,width,height,sdata);
     }
     drops_per_frame += drop_prob_increment;
@@ -379,7 +372,7 @@ static void raindrop(int width, int height, struct _sdata *sdata)
 
 
 
-int ripple_process (weed_plant_t *inst, weed_timecode_t timestamp) {
+int ripple_process(weed_plant_t *inst, weed_timecode_t timestamp) {
   register int x, y, i;
   int dx, dy;
   int h, v;
@@ -415,47 +408,47 @@ int ripple_process (weed_plant_t *inst, weed_timecode_t timestamp) {
   mode=weed_get_int_value(in_param,"value",&error);
 
   /* impact from the motion or rain drop */
-  if(mode) {
+  if (mode) {
     raindrop(width,height,sdata);
   } else {
     motiondetect(src,width,height,irowstride,sdata);
   }
-  
+
   /* simulate surface wave */
-	
+
   /* This function is called only 30 times per second. To increase a speed
    * of wave, iterates this loop several times. */
-  for(i=loopnum; i>0; i--) {
+  for (i=loopnum; i>0; i--) {
     /* wave simulation */
     p = sdata->map1 + width + 1;
     q = sdata->map2 + width + 1;
     r = sdata->map3 + width + 1;
-    for(y=height-2; y>0; y--) {
-      for(x=width-2; x>0; x--) {
-	h = *(p-width-1) + *(p-width+1) + *(p+width-1) + *(p+width+1)
-	  + *(p-width) + *(p-1) + *(p+1) + *(p+width) - (*p)*9;
-	h = h >> 3;
-	v = *p - *q;
-	v += h - (v >> decay);
-	*r = v + *p;
-	p++;
-	q++;
-	r++;
+    for (y=height-2; y>0; y--) {
+      for (x=width-2; x>0; x--) {
+        h = *(p-width-1) + *(p-width+1) + *(p+width-1) + *(p+width+1)
+            + *(p-width) + *(p-1) + *(p+1) + *(p+width) - (*p)*9;
+        h = h >> 3;
+        v = *p - *q;
+        v += h - (v >> decay);
+        *r = v + *p;
+        p++;
+        q++;
+        r++;
       }
       p += 2;
       q += 2;
       r += 2;
     }
-    
+
     /* low pass filter */
     p = sdata->map3 + width + 1;
     q = sdata->map2 + width + 1;
-    for(y=height-2; y>0; y--) {
-      for(x=width-2; x>0; x--) {
-	h = *(p-width) + *(p-1) + *(p+1) + *(p+width) + (*p)*60;
-	*q = h >> 6;
-	p++;
-	q++;
+    for (y=height-2; y>0; y--) {
+      for (x=width-2; x>0; x--) {
+        h = *(p-width) + *(p-1) + *(p+1) + *(p+width) + (*p)*60;
+        *q = h >> 6;
+        p++;
+        q++;
       }
       p+=2;
       q+=2;
@@ -468,44 +461,44 @@ int ripple_process (weed_plant_t *inst, weed_timecode_t timestamp) {
 
   vp = sdata->vtable;
   p = sdata->map1;
-  for(y=height-1; y>0; y--) {
-    for(x=width-1; x>0; x--) {
+  for (y=height-1; y>0; y--) {
+    for (x=width-1; x>0; x--) {
       /* difference of the height between two voxel. They are twiced to
        * emphasise the wave. */
-      vp[0] = sqrtable[((p[0] - p[1])>>(point-1))&0xff]; 
-      vp[1] = sqrtable[((p[0] - p[width])>>(point-1))&0xff]; 
+      vp[0] = sqrtable[((p[0] - p[1])>>(point-1))&0xff];
+      vp[1] = sqrtable[((p[0] - p[width])>>(point-1))&0xff];
       p++;
       vp+=2;
     }
     p++;
     vp+=2;
   }
-  
+
   vp = sdata->vtable;
 
   /* draw refracted image. The vector table is stretched. */
-  for(y=0; y<height-2; y+=2) {
-    for(x=0; x<width; x+=2) {
+  for (y=0; y<height-2; y+=2) {
+    for (x=0; x<width; x+=2) {
       h = (int)vp[0];
       v = (int)vp[1];
       dx = x + h;
       dy = y + v;
-      if(dx<0) dx=0;
-      if(dy<0) dy=0;
-      if(dx>=width) dx=width-1;
-      if(dy>=height) dy=height-1;
+      if (dx<0) dx=0;
+      if (dy<0) dy=0;
+      if (dx>=width) dx=width-1;
+      if (dy>=height) dy=height-1;
       dest[0] = src[dy*irowstride+dx];
-      
+
       i = dx;
-      
+
       dx = x + 1 + (h+(int)vp[2])/2;
-      if(dx<0) dx=0;
-      if(dx>=width) dx=width-1;
+      if (dx<0) dx=0;
+      if (dx>=width) dx=width-1;
       dest[1] = src[dy*irowstride+dx];
-      
+
       dy = y + 1 + (v+(int)vp[width*2+1])/2;
-      if(dy<0) dy=0;
-      if(dy>=height) dy=height-1;
+      if (dy<0) dy=0;
+      if (dy>=height) dy=height-1;
       dest[orowstride] = src[dy*irowstride+i];
 
       dest[orowstride+1] = src[dy*irowstride+dx];
@@ -522,20 +515,21 @@ int ripple_process (weed_plant_t *inst, weed_timecode_t timestamp) {
 /////////////////////////////////////////////////////////////////////////
 
 
-weed_plant_t *weed_setup (weed_bootstrap_f weed_boot) {
+weed_plant_t *weed_setup(weed_bootstrap_f weed_boot) {
   weed_plant_t *plugin_info=weed_plugin_info_init(weed_boot,num_versions,api_versions);
 
   if (plugin_info!=NULL) {
-    const char *modes[]={"ripples","rain",NULL};
-    int palette_list[]={WEED_PALETTE_RGBA32,WEED_PALETTE_END};
-    weed_plant_t *in_chantmpls[]={weed_channel_template_init("in channel 0",WEED_CHANNEL_REINIT_ON_SIZE_CHANGE,palette_list),NULL};
-    weed_plant_t *out_chantmpls[]={weed_channel_template_init("out channel 0",0,palette_list),NULL};
-    weed_plant_t *in_params[]={weed_string_list_init("mode","Ripple _mode",0,modes),NULL};
+    const char *modes[]= {"ripples","rain",NULL};
+    int palette_list[]= {WEED_PALETTE_RGBA32,WEED_PALETTE_END};
+    weed_plant_t *in_chantmpls[]= {weed_channel_template_init("in channel 0",WEED_CHANNEL_REINIT_ON_SIZE_CHANGE,palette_list),NULL};
+    weed_plant_t *out_chantmpls[]= {weed_channel_template_init("out channel 0",0,palette_list),NULL};
+    weed_plant_t *in_params[]= {weed_string_list_init("mode","Ripple _mode",0,modes),NULL};
 
-    weed_plant_t *filter_class=weed_filter_class_init("rippleTV","effectTV",1,0,&ripple_init,&ripple_process,&ripple_deinit,in_chantmpls,out_chantmpls,in_params,NULL);
-    
-    weed_plugin_info_add_filter_class (plugin_info,filter_class);
-    
+    weed_plant_t *filter_class=weed_filter_class_init("rippleTV","effectTV",1,0,&ripple_init,&ripple_process,&ripple_deinit,in_chantmpls,
+                               out_chantmpls,in_params,NULL);
+
+    weed_plugin_info_add_filter_class(plugin_info,filter_class);
+
     weed_set_int_value(plugin_info,"version",package_version);
 
     setTable();

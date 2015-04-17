@@ -1,5 +1,5 @@
 /*
-Copyright © 1998. The Regents of the University of California (Regents). 
+Copyright © 1998. The Regents of the University of California (Regents).
 All Rights Reserved.
 
 Written by Matt Wright, The Center for New Music and Audio Technologies,
@@ -22,17 +22,17 @@ PURPOSE. THE SOFTWARE AND ACCOMPANYING DOCUMENTATION, IF ANY, PROVIDED
 HEREUNDER IS PROVIDED "AS IS". REGENTS HAS NO OBLIGATION TO PROVIDE
 MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 
-The OpenSound Control WWW page is 
+The OpenSound Control WWW page is
     http://www.cnmat.berkeley.edu/OpenSoundControl
 */
 
 
 /* OSC-drop.h
-   
+
    These procedures will be called on a packet, bundle, or message that's
    being dropped for whatever reason.  They can do nothing, print (or
    otherwise inform the user of) a warning, save the offending data somewhere,
-   etc. 
+   etc.
 
    Matt Wright, 3/16/98
 */

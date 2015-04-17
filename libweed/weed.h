@@ -85,11 +85,11 @@ extern "C"
 #define WEED_SEED_VOIDPTR  65
 #define WEED_SEED_PLANTPTR 66
 
-  // these function types are fixed, and must be defined in the host
-typedef void *(*weed_malloc_f) (size_t size);
-typedef void (*weed_free_f) (void *ptr);
-typedef void *(*weed_memset_f) (void *s, int c, size_t n);
-typedef void *(*weed_memcpy_f) (void *dest, const void *src, size_t n);
+// these function types are fixed, and must be defined in the host
+typedef void *(*weed_malloc_f)(size_t size);
+typedef void (*weed_free_f)(void *ptr);
+typedef void *(*weed_memset_f)(void *s, int c, size_t n);
+typedef void *(*weed_memcpy_f)(void *dest, const void *src, size_t n);
 
 #ifndef HAVE_WEED_PLANT_T
 #define HAVE_WEED_PLANT_T
@@ -99,7 +99,7 @@ typedef struct weed_data weed_data_t;
 typedef weed_leaf_t weed_plant_t;
 typedef size_t weed_size_t; // may be set to uint32_t or uint64_t
 
-  /* private data - these fields must NOT be accessed directly ! */
+/* private data - these fields must NOT be accessed directly ! */
 struct weed_leaf {
   const char *key;
   int seed_type;
@@ -118,10 +118,10 @@ struct weed_data {
 
 typedef int64_t weed_timecode_t;
 
-  /** this is fixed for ever, set in bootstrap_func */
+/** this is fixed for ever, set in bootstrap_func */
 typedef int (*weed_default_getter_f)(weed_plant_t *plant, const char *key, int idx, void *value);
 
-  /* host and plugin functions, may be changed depending on API level */
+/* host and plugin functions, may be changed depending on API level */
 typedef weed_plant_t *(*weed_plant_new_f)(int plant_type);
 typedef char **(*weed_plant_list_leaves_f)(weed_plant_t *plant);
 typedef int (*weed_leaf_set_f)(weed_plant_t *plant, const char *key, int seed_type, int num_elems, void *value);

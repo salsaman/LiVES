@@ -1,5 +1,5 @@
 /*
-Copyright © 1998. The Regents of the University of California (Regents). 
+Copyright © 1998. The Regents of the University of California (Regents).
 All Rights Reserved.
 
 Written by Matt Wright, The Center for New Music and Audio Technologies,
@@ -22,7 +22,7 @@ PURPOSE. THE SOFTWARE AND ACCOMPANYING DOCUMENTATION, IF ANY, PROVIDED
 HEREUNDER IS PROVIDED "AS IS". REGENTS HAS NO OBLIGATION TO PROVIDE
 MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 
-The OpenSound Control WWW page is 
+The OpenSound Control WWW page is
     http://www.cnmat.berkeley.edu/OpenSoundControl
 */
 
@@ -46,8 +46,8 @@ Boolean OSCSendInternalMessage(char *address, int arglen, void *args);
 
 
 /* Same thing, but with a return address supplied. */
-Boolean OSCSendInternalMessageWithRSVP(char *address, int arglen,  void *args, 
-				       NetworkReturnAddressPtr returnAddr);
+Boolean OSCSendInternalMessageWithRSVP(char *address, int arglen,  void *args,
+                                       NetworkReturnAddressPtr returnAddr);
 
 
 /* Schedule some messages to occur at a given time.  This allocates one of the
@@ -57,7 +57,7 @@ Boolean OSCSendInternalMessageWithRSVP(char *address, int arglen,  void *args,
    numReceiveBuffers argument to OSCInitReceive().
 
    This provides an less general interface than OSC's bundle mechanism, because
-   the bundle of messages you provide cannot include subbundles. 
+   the bundle of messages you provide cannot include subbundles.
 
    The addresses, arglens, and args arguments are arrays of size numMessages.
 
@@ -65,6 +65,6 @@ Boolean OSCSendInternalMessageWithRSVP(char *address, int arglen,  void *args,
    return address for later use.
 */
 
-Boolean OSCScheduleInternalMessages(OSCTimeTag when, int numMessages, 
-				    char **addresses, int *arglens,
-				    void **args);
+Boolean OSCScheduleInternalMessages(OSCTimeTag when, int numMessages,
+                                    char **addresses, int *arglens,
+                                    void **args);

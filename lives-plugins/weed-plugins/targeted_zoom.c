@@ -18,7 +18,7 @@
 ///////////////////////////////////////////////////////////////////
 
 static int num_versions=2; // number of different weed api versions supported
-static int api_versions[]={131,100}; // array of weed api versions supported in plugin, in order of preference (most preferred first)
+static int api_versions[]= {131,100}; // array of weed api versions supported in plugin, in order of preference (most preferred first)
 
 static int package_version=1; // version of this package
 
@@ -36,7 +36,7 @@ static int package_version=1; // version of this package
 /////////////////////////////////////////////////////////////
 
 
-int tzoom_process (weed_plant_t *inst, weed_timecode_t timecode) {
+int tzoom_process(weed_plant_t *inst, weed_timecode_t timecode) {
   int error;
   weed_plant_t *in_channel=weed_get_plantptr_value(inst,"in_channels",&error);
   weed_plant_t *out_channel=weed_get_plantptr_value(inst,"out_channels",&error);
@@ -93,12 +93,12 @@ int tzoom_process (weed_plant_t *inst, weed_timecode_t timecode) {
     dheight=weed_get_int_value(out_channel,"height",&error);
   }
 
-  for (y=offset;y<dheight+offset;y++) {
+  for (y=offset; y<dheight+offset; y++) {
     dy=(int)((double)y-offsy)/scale+offsy;
     sy=dy*irowstride;
     dr=y*orowstride;
 
-    for (x=0;x<width;x++) {
+    for (x=0; x<width; x++) {
       dx=(int)((double)x-offsx)/scale+offsx;
       weed_memcpy(dst+dr+x*psize,src+sy+dx*psize,psize);
     }
@@ -109,29 +109,30 @@ int tzoom_process (weed_plant_t *inst, weed_timecode_t timecode) {
 
 
 
-weed_plant_t *weed_setup (weed_bootstrap_f weed_boot) {
+weed_plant_t *weed_setup(weed_bootstrap_f weed_boot) {
   weed_plant_t *plugin_info=weed_plugin_info_init(weed_boot,num_versions,api_versions);
   if (plugin_info!=NULL) {
     // all planar palettes
-    int palette_list[]={WEED_PALETTE_BGR24,WEED_PALETTE_RGB24,WEED_PALETTE_YUV888,WEED_PALETTE_YUVA8888,WEED_PALETTE_RGBA32,WEED_PALETTE_ARGB32,WEED_PALETTE_BGRA32,WEED_PALETTE_UYVY,WEED_PALETTE_YUYV,WEED_PALETTE_END};
+    int palette_list[]= {WEED_PALETTE_BGR24,WEED_PALETTE_RGB24,WEED_PALETTE_YUV888,WEED_PALETTE_YUVA8888,WEED_PALETTE_RGBA32,WEED_PALETTE_ARGB32,WEED_PALETTE_BGRA32,WEED_PALETTE_UYVY,WEED_PALETTE_YUYV,WEED_PALETTE_END};
 
-    weed_plant_t *in_chantmpls[]={weed_channel_template_init("in channel 0",0,palette_list),NULL};
-    weed_plant_t *out_chantmpls[]={weed_channel_template_init("out channel 0",0,palette_list),NULL};
+    weed_plant_t *in_chantmpls[]= {weed_channel_template_init("in channel 0",0,palette_list),NULL};
+    weed_plant_t *out_chantmpls[]= {weed_channel_template_init("out channel 0",0,palette_list),NULL};
 
-    weed_plant_t *in_params[]={weed_float_init("scale","_Scale",1.,1.,16.),weed_float_init("xoffs","_X offset",0.5,0.,1.),weed_float_init("yoffs","_Y offset",0.5,0.,1.),NULL};
+    weed_plant_t *in_params[]= {weed_float_init("scale","_Scale",1.,1.,16.),weed_float_init("xoffs","_X offset",0.5,0.,1.),weed_float_init("yoffs","_Y offset",0.5,0.,1.),NULL};
 
-    weed_plant_t *filter_class=weed_filter_class_init("targeted zoom","salsaman",1,WEED_FILTER_HINT_MAY_THREAD,NULL,&tzoom_process,NULL,in_chantmpls,out_chantmpls,in_params,NULL);
+    weed_plant_t *filter_class=weed_filter_class_init("targeted zoom","salsaman",1,WEED_FILTER_HINT_MAY_THREAD,NULL,&tzoom_process,NULL,
+                               in_chantmpls,out_chantmpls,in_params,NULL);
 
     weed_plant_t *gui=weed_filter_class_get_gui(filter_class);
 
     // define RFX layout
-    char *rfx_strings[]={"layout|p0|","layout|p1|p2|","special|framedraw|singlepoint|1|2|"};
+    char *rfx_strings[]= {"layout|p0|","layout|p1|p2|","special|framedraw|singlepoint|1|2|"};
 
     weed_set_string_value(gui,"layout_scheme","RFX");
     weed_set_string_value(gui,"rfx_delim","|");
     weed_set_string_array(gui,"rfx_strings",3,rfx_strings);
 
-    weed_plugin_info_add_filter_class (plugin_info,filter_class);
+    weed_plugin_info_add_filter_class(plugin_info,filter_class);
 
     weed_set_int_value(plugin_info,"version",package_version);
 

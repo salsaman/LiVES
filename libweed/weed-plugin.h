@@ -57,7 +57,7 @@ extern "C"
 #endif /* __cplusplus */
 
 #ifndef __WEED_INTERNAL__
- /// functions defined as static so as not to overwrite the host versions
+/// functions defined as static so as not to overwrite the host versions
 
 static weed_leaf_set_f weed_leaf_set;
 static weed_leaf_get_f weed_leaf_get;

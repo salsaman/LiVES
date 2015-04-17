@@ -16,10 +16,10 @@
 static char plugin_version[64]="LiVES SDL playback engine version 1.2";
 static char error[256];
 
-static boolean (*render_fn)(int hsize, int vsize, void **pixel_data);
-static boolean render_frame_rgb (int hsize, int vsize, void **pixel_data);
-static boolean render_frame_yuv (int hsize, int vsize, void **pixel_data);
-static boolean render_frame_unknown (int hsize, int vsize, void **pixel_data);
+static boolean(*render_fn)(int hsize, int vsize, void **pixel_data);
+static boolean render_frame_rgb(int hsize, int vsize, void **pixel_data);
+static boolean render_frame_yuv(int hsize, int vsize, void **pixel_data);
+static boolean render_frame_unknown(int hsize, int vsize, void **pixel_data);
 
 static int palette_list[6];
 static int mypalette;
@@ -67,8 +67,9 @@ static boolean my_setenv(const char *name, const char *value) {
 
 
 const char *module_check_init(void) {
-  if (getenv ("HAVE_SDL")==NULL&&system ("which sdl-config >/dev/null 2>&1")==256) {
-    snprintf (error,256,"\n\nUnable to find sdl-config in your path.\nPlease make sure you have SDL installed correctly to use this plugin.\nYou can override this with 'export HAVE_SDL=1'\n");
+  if (getenv("HAVE_SDL")==NULL&&system("which sdl-config >/dev/null 2>&1")==256) {
+    snprintf(error,256,
+             "\n\nUnable to find sdl-config in your path.\nPlease make sure you have SDL installed correctly to use this plugin.\nYou can override this with 'export HAVE_SDL=1'\n");
     return error;
   }
 
@@ -79,31 +80,31 @@ const char *module_check_init(void) {
   ov_vsize=ov_hsize=0;
 
   mypalette=WEED_PALETTE_END;
-  rect=(SDL_Rect *)malloc (sizeof(SDL_Rect));
+  rect=(SDL_Rect *)malloc(sizeof(SDL_Rect));
 
   return NULL;
 }
 
 
 
-const char *version (void) {
+const char *version(void) {
   return plugin_version;
 }
 
-const char *get_description (void) {
+const char *get_description(void) {
   return "The SDL plugin allows faster playback.\n";
 }
 
-uint64_t get_capabilities (int palette) {
+uint64_t get_capabilities(int palette) {
   if (palette==WEED_PALETTE_UYVY8888) {
     return VPP_CAN_RESIZE|VPP_LOCAL_DISPLAY;
   }
   return VPP_LOCAL_DISPLAY;
 }
 
-const char *get_init_rfx (void) {
+const char *get_init_rfx(void) {
   return \
-"<define>\\n\
+         "<define>\\n\
 |1.7\\n\
 </define>\\n\
 <language_code>\\n\
@@ -137,13 +138,12 @@ const int *get_palette_list(void) {
 }
 
 
-boolean set_palette (int palette) {
+boolean set_palette(int palette) {
   if (palette==WEED_PALETTE_RGB24) {
     render_fn=&render_frame_rgb;
     mypalette=palette;
     return TRUE;
-  }
-  else if (palette==WEED_PALETTE_UYVY8888||palette==WEED_PALETTE_YUYV8888||palette==WEED_PALETTE_YUV420P||palette==WEED_PALETTE_YVU420P) {
+  } else if (palette==WEED_PALETTE_UYVY8888||palette==WEED_PALETTE_YUYV8888||palette==WEED_PALETTE_YUV420P||palette==WEED_PALETTE_YVU420P) {
     render_fn=&render_frame_yuv;
     mypalette=palette;
     return TRUE;
@@ -165,7 +165,7 @@ const int *get_yuv_palette_clamping(int palette) {
 
 
 
-boolean init_screen (int width, int height, boolean fullscreen, uint64_t window_id, int argc, char **argv) {
+boolean init_screen(int width, int height, boolean fullscreen, uint64_t window_id, int argc, char **argv) {
   // screen size is in RGB pixels
   int hwaccel=1;
   int yuvdir=1;
@@ -193,39 +193,39 @@ boolean init_screen (int width, int height, boolean fullscreen, uint64_t window_
   }
 
   snprintf(tmp,32,"%d",yuvdir);
-  my_setenv ("SDL_VIDEO_YUV_DIRECT", tmp);
+  my_setenv("SDL_VIDEO_YUV_DIRECT", tmp);
 
   snprintf(tmp,32,"%d",yuvhwa);
-  my_setenv ("SDL_VIDEO_YUV_HWACCEL", tmp);
+  my_setenv("SDL_VIDEO_YUV_HWACCEL", tmp);
 
   snprintf(tmp,32,"%"PRIu64,window_id);
-  if (!fullscreen) my_setenv ("SDL_WINDOWID", tmp);
+  if (!fullscreen) my_setenv("SDL_WINDOWID", tmp);
 
   if (fsover) fullscreen=FALSE;
 
-  if((SDL_Init (SDL_INIT_VIDEO)==-1)) {
-    fprintf (stderr,"SDL player : Could not initialize SDL: %s.\n", SDL_GetError());
+  if ((SDL_Init(SDL_INIT_VIDEO)==-1)) {
+    fprintf(stderr,"SDL player : Could not initialize SDL: %s.\n", SDL_GetError());
     return FALSE;
   }
 
   modeopts=(SDL_HWSURFACE*hws)|(SDL_DOUBLEBUF*dblbuf)|(SDL_HWACCEL*hwaccel);
 
-  SDL_ShowCursor (FALSE);
-  screen = SDL_SetVideoMode (width, height, 24, modeopts | (fullscreen?SDL_FULLSCREEN:0) | SDL_NOFRAME);
-  if ( screen == NULL ) {
-    fprintf (stderr,"SDL player : Couldn't set %dx%dx24 video mode: %s\n", width, height,
-	     SDL_GetError());
+  SDL_ShowCursor(FALSE);
+  screen = SDL_SetVideoMode(width, height, 24, modeopts | (fullscreen?SDL_FULLSCREEN:0) | SDL_NOFRAME);
+  if (screen == NULL) {
+    fprintf(stderr,"SDL player : Couldn't set %dx%dx24 video mode: %s\n", width, height,
+            SDL_GetError());
     // do we need SDL_ShowCursor/SDL_quit here ?
     return FALSE;
   }
 
   /* Enable Unicode translation */
-  SDL_EnableUNICODE ( 1 );
+  SDL_EnableUNICODE(1);
 
   // if palette is RGB, create RGB surface the same size as the screen
   if (mypalette==WEED_PALETTE_RGB24) {
     RGBimage = SDL_CreateRGBSurface(SDL_HWSURFACE, width, height, 24,
-				    0x0000FF, 0x00FF00, 0xFF0000, 0x00);
+                                    0x0000FF, 0x00FF00, 0xFF0000, 0x00);
     if (RGBimage == NULL) {
       fprintf(stderr,"SDL player: Can't create: %s\n", SDL_GetError());
       return FALSE;
@@ -240,12 +240,12 @@ boolean init_screen (int width, int height, boolean fullscreen, uint64_t window_
 }
 
 
-boolean render_frame (int hsize, int vsize, int64_t tc, void **pixel_data, void **rd, void **pp) {
+boolean render_frame(int hsize, int vsize, int64_t tc, void **pixel_data, void **rd, void **pp) {
   // call the function which was set in set_palette
-  return render_fn (hsize,vsize,pixel_data);
+  return render_fn(hsize,vsize,pixel_data);
 }
 
-boolean render_frame_rgb (int hsize, int vsize, void **pixel_data) {
+boolean render_frame_rgb(int hsize, int vsize, void **pixel_data) {
   // broken - crashes
   // hsize and vsize are in pixels (n-byte)
   SDL_LockSurface(RGBimage);
@@ -258,19 +258,17 @@ boolean render_frame_rgb (int hsize, int vsize, void **pixel_data) {
 }
 
 
-boolean render_frame_yuv (int hsize, int vsize, void **pixel_data) {
+boolean render_frame_yuv(int hsize, int vsize, void **pixel_data) {
   // hsize may be in uyvy-macropixels (2 real pixels per 4 byte macropixel !)
   uint32_t ovtype=SDL_IYUV_OVERLAY;
 
   if (mypalette==WEED_PALETTE_UYVY8888) {
     ovtype=SDL_UYVY_OVERLAY;
     hsize*=2;
-  }
-  else if (mypalette==WEED_PALETTE_YUYV8888) {
+  } else if (mypalette==WEED_PALETTE_YUYV8888) {
     ovtype=SDL_YUY2_OVERLAY;
     hsize*=2;
-  }
-  else if (mypalette==WEED_PALETTE_YVU420P) ovtype=SDL_YV12_OVERLAY;
+  } else if (mypalette==WEED_PALETTE_YVU420P) ovtype=SDL_YV12_OVERLAY;
 
 
   if ((ov_hsize!=hsize||ov_vsize!=vsize)&&(overlay!=NULL)) {
@@ -279,47 +277,46 @@ boolean render_frame_yuv (int hsize, int vsize, void **pixel_data) {
   }
 
   if (overlay==NULL) {
-    overlay=SDL_CreateYUVOverlay (hsize, vsize, ovtype, screen);
+    overlay=SDL_CreateYUVOverlay(hsize, vsize, ovtype, screen);
     ov_hsize=hsize;
     ov_vsize=vsize;
   }
 
-  SDL_LockYUVOverlay (overlay);
+  SDL_LockYUVOverlay(overlay);
 
-  if (mypalette==WEED_PALETTE_UYVY||mypalette==WEED_PALETTE_YUYV) memcpy (overlay->pixels[0],pixel_data[0],hsize*vsize*2);
+  if (mypalette==WEED_PALETTE_UYVY||mypalette==WEED_PALETTE_YUYV) memcpy(overlay->pixels[0],pixel_data[0],hsize*vsize*2);
   else {
-    memcpy (overlay->pixels[0],pixel_data[0],hsize*vsize);
-    memcpy (overlay->pixels[1],pixel_data[1],hsize*vsize>>2);
-    memcpy (overlay->pixels[2],pixel_data[2],hsize*vsize>>2);
+    memcpy(overlay->pixels[0],pixel_data[0],hsize*vsize);
+    memcpy(overlay->pixels[1],pixel_data[1],hsize*vsize>>2);
+    memcpy(overlay->pixels[2],pixel_data[2],hsize*vsize>>2);
   }
 
-  SDL_UnlockYUVOverlay (overlay);
-  SDL_DisplayYUVOverlay (overlay,rect);
+  SDL_UnlockYUVOverlay(overlay);
+  SDL_DisplayYUVOverlay(overlay,rect);
   is_ready=TRUE;
   return TRUE;
 }
 
 
-boolean render_frame_unknown (int hsize, int vsize, void **pixel_data) {
+boolean render_frame_unknown(int hsize, int vsize, void **pixel_data) {
   fprintf(stderr,"SDL plugin error: No palette was set !\n");
   return FALSE;
 }
 
 
-void exit_screen (int16_t mouse_x, int16_t mouse_y) {
+void exit_screen(int16_t mouse_x, int16_t mouse_y) {
   if (mypalette==WEED_PALETTE_RGB24) {
     if (RGBimage!=NULL) {
-      SDL_FreeSurface (RGBimage);
+      SDL_FreeSurface(RGBimage);
       RGBimage=NULL;
     }
-  }
-  else if (overlay!=NULL) {
+  } else if (overlay!=NULL) {
     SDL_FreeYUVOverlay(overlay);
     overlay=NULL;
   }
   if (mouse_x>=0&&mouse_y>=0) {
-    SDL_ShowCursor (TRUE);
-    SDL_WarpMouse ((int16_t)mouse_x, (int16_t)mouse_y);
+    SDL_ShowCursor(TRUE);
+    SDL_WarpMouse((int16_t)mouse_x, (int16_t)mouse_y);
   }
   SDL_Quit();
   is_ready=FALSE;
@@ -327,44 +324,44 @@ void exit_screen (int16_t mouse_x, int16_t mouse_y) {
 
 
 void module_unload(void) {
-  free (rect);
+  free(rect);
 }
 
 
 
 
-boolean send_keycodes (keyfunc host_key_fn) {
+boolean send_keycodes(keyfunc host_key_fn) {
   // poll for keyboard events, pass them back to the caller
   // return FALSE on error
   uint16_t mod_mask,scancode=0;
 
   if (host_key_fn==NULL) return FALSE;
 
-  while(is_ready && SDL_PollEvent (&event)) {
+  while (is_ready && SDL_PollEvent(&event)) {
     mod_mask=0;
     if (event.type==SDL_KEYDOWN||event.type==SDL_KEYUP) {
       mod=event.key.keysym.mod;
 
       if (mod&KMOD_CTRL) {
-	mod_mask|=MOD_CONTROL_MASK;
+        mod_mask|=MOD_CONTROL_MASK;
       }
       if (mod&KMOD_ALT) {
-	mod_mask|=MOD_ALT_MASK;
+        mod_mask|=MOD_ALT_MASK;
       }
       if (event.type==SDL_KEYDOWN) {
-	if (!mod_mask) {
-	  scancode=event.key.keysym.unicode;
-	}
-	if (!scancode) {
-	  scancode=(uint16_t)event.key.keysym.scancode;
-	  mod_mask|=MOD_NEEDS_TRANSLATION;
-	}
-	host_key_fn (TRUE,scancode,mod_mask);
+        if (!mod_mask) {
+          scancode=event.key.keysym.unicode;
+        }
+        if (!scancode) {
+          scancode=(uint16_t)event.key.keysym.scancode;
+          mod_mask|=MOD_NEEDS_TRANSLATION;
+        }
+        host_key_fn(TRUE,scancode,mod_mask);
       }
-      
+
       else {
-	// key up - no unicode :-(
-	host_key_fn (FALSE,(uint16_t)event.key.keysym.scancode,(mod_mask|MOD_NEEDS_TRANSLATION));
+        // key up - no unicode :-(
+        host_key_fn(FALSE,(uint16_t)event.key.keysym.scancode,(mod_mask|MOD_NEEDS_TRANSLATION));
       }
     }
   }

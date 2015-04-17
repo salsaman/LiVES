@@ -28,7 +28,7 @@
 ///////////////////////////////////////////////////////////////////
 
 static int num_versions=2; // number of different weed api versions supported
-static int api_versions[]={131,100}; // array of weed api versions supported in plugin, in order of preference (most preferred first)
+static int api_versions[]= {131,100}; // array of weed api versions supported in plugin, in order of preference (most preferred first)
 
 static int package_version=1; // version of this package
 
@@ -69,8 +69,7 @@ struct _sdata {
 
 //////////////////////////////////////////////////////
 
-inline uint32_t fastrand(struct _sdata *sdata)
-{
+inline uint32_t fastrand(struct _sdata *sdata) {
 #define rand_a 1073741789L
 #define rand_c 32749L
 
@@ -79,10 +78,9 @@ inline uint32_t fastrand(struct _sdata *sdata)
 
 
 
-static void HSItoRGB(double H, double S, double I, int *r, int *g, int *b)
-{
+static void HSItoRGB(double H, double S, double I, int *r, int *g, int *b) {
   double T,Rv,Gv,Bv;
-  
+
   T=H;
   Rv=1+S*sin(T-2*M_PI/3);
   Gv=1+S*sin(T);
@@ -94,20 +92,21 @@ static void HSItoRGB(double H, double S, double I, int *r, int *g, int *b)
 }
 
 
-static void makePalette()
-{
+static void makePalette() {
   int i, r, g, b;
 
-  for(i=0; i<MaxColor; i++) {
+  for (i=0; i<MaxColor; i++) {
     HSItoRGB(4.6-1.5*i/MaxColor, (double)i/MaxColor, (double)i/MaxColor, &r, &g, &b);
     palette[i] = ((r<<16)|(g<<8)|b)&0xffffff;
   }
-  for(i=MaxColor; i<256; i++) {
-    if(r<255)r++;if(r<255)r++;if(r<255)r++;
-    if(g<255)g++;
-    if(g<255)g++;
-    if(b<255)b++;
-    if(b<255)b++;
+  for (i=MaxColor; i<256; i++) {
+    if (r<255)r++;
+    if (r<255)r++;
+    if (r<255)r++;
+    if (g<255)g++;
+    if (g<255)g++;
+    if (b<255)b++;
+    if (b<255)b++;
     palette[i] = ((r<<16)|(g<<8)|b)&0xffffff;
   }
 }
@@ -120,21 +119,21 @@ static void image_bgsubtract_y(RGB32 *src, int width, int height, int rowstride,
   short *q;
   unsigned char *r;
   int v;
-  
+
   rowstride-=width;
 
   p = src;
   q = sdata->background;
   r = sdata->diff;
-  for(i=0; i<height; i++) {
-    for (j=0;j<width;j++) {
+  for (i=0; i<height; i++) {
+    for (j=0; j<width; j++) {
       R = ((*p)&0xff0000)>>(16-1);
       G = ((*p)&0xff00)>>(8-2);
       B = (*p)&0xff;
       v = (R + G + B) - (int)(*q);
       *q = (short)(R + G + B);
       *r = ((v + sdata->threshold)>>24) | ((sdata->threshold - v)>>24);
-      
+
       p++;
       q++;
       r++;
@@ -142,7 +141,7 @@ static void image_bgsubtract_y(RGB32 *src, int width, int height, int rowstride,
     p+=rowstride;
   }
 
-  
+
   /* The origin of subtraction function is;
    * diff(src, dest) = (abs(src - dest) > threshold) ? 0xff : 0;
    *
@@ -158,7 +157,7 @@ static void image_bgsubtract_y(RGB32 *src, int width, int height, int rowstride,
 
 
 
-int fire_init (weed_plant_t *inst) {
+int fire_init(weed_plant_t *inst) {
   int error;
   int map_h;
   int map_w;
@@ -167,7 +166,7 @@ int fire_init (weed_plant_t *inst) {
   weed_plant_t *in_channel;
 
   sdata=weed_malloc(sizeof(struct _sdata));
-  if(sdata == NULL) return WEED_ERROR_MEMORY_ALLOCATION;
+  if (sdata == NULL) return WEED_ERROR_MEMORY_ALLOCATION;
 
   in_channel=weed_get_plantptr_value(inst,"in_channels",&error);
 
@@ -175,18 +174,18 @@ int fire_init (weed_plant_t *inst) {
   map_w=weed_get_int_value(in_channel,"width",&error);
 
   sdata->buffer = (unsigned char *)weed_malloc(map_h*map_w*sizeof(unsigned char));
-  if(sdata->buffer == NULL ) {
+  if (sdata->buffer == NULL) {
     weed_free(sdata);
     return WEED_ERROR_MEMORY_ALLOCATION;
   }
   sdata->background = (short *)weed_malloc(map_h*map_w*sizeof(short));
-  if(sdata->background == NULL ) {
+  if (sdata->background == NULL) {
     weed_free(sdata->buffer);
     weed_free(sdata);
     return WEED_ERROR_MEMORY_ALLOCATION;
   }
   sdata->diff = (unsigned char *)weed_malloc(map_h*map_w * sizeof(unsigned char));
-  if(sdata->diff == NULL ) {
+  if (sdata->diff == NULL) {
     weed_free(sdata->background);
     weed_free(sdata->buffer);
     weed_free(sdata);
@@ -201,7 +200,7 @@ int fire_init (weed_plant_t *inst) {
 }
 
 
-int fire_deinit (weed_plant_t *inst) {
+int fire_deinit(weed_plant_t *inst) {
   int error;
   struct _sdata *sdata;
 
@@ -217,7 +216,7 @@ int fire_deinit (weed_plant_t *inst) {
 }
 
 
-int fire_process (weed_plant_t *inst, weed_timecode_t timestamp) {
+int fire_process(weed_plant_t *inst, weed_timecode_t timestamp) {
   struct _sdata *sdata;
 
   unsigned char v;
@@ -250,22 +249,22 @@ int fire_process (weed_plant_t *inst, weed_timecode_t timestamp) {
 
   image_bgsubtract_y(src,video_width,video_height,irow,sdata);
 
-  for(i=0; i<video_area-video_width; i++) {
+  for (i=0; i<video_area-video_width; i++) {
     sdata->buffer[i] |= sdata->diff[i];
   }
-  for(x=1; x<video_width-1; x++) {
+  for (x=1; x<video_width-1; x++) {
     i = video_width + x;
-    for(y=1; y<video_height; y++) {
+    for (y=1; y<video_height; y++) {
       v = sdata->buffer[i];
-      if(v<Decay)
-	sdata->buffer[i-video_width] = 0;
+      if (v<Decay)
+        sdata->buffer[i-video_width] = 0;
       else
-      sdata->buffer[i-video_width+fastrand(sdata)%3-1] = v - (fastrand(sdata)&Decay);
+        sdata->buffer[i-video_width+fastrand(sdata)%3-1] = v - (fastrand(sdata)&Decay);
       i += video_width;
     }
   }
-  for(y=0; y<video_height; y++) {
-    for(x=1; x<video_width-1; x++) {
+  for (y=0; y<video_height; y++) {
+    for (x=1; x<video_width-1; x++) {
       dest[y*orow+x] = (src[y*irow+x]&0xff000000)|palette[sdata->buffer[y*video_width+x]];
     }
   }
@@ -276,18 +275,19 @@ int fire_process (weed_plant_t *inst, weed_timecode_t timestamp) {
 
 
 
-weed_plant_t *weed_setup (weed_bootstrap_f weed_boot) {
+weed_plant_t *weed_setup(weed_bootstrap_f weed_boot) {
   weed_plant_t *plugin_info=weed_plugin_info_init(weed_boot,num_versions,api_versions);
 
   if (plugin_info!=NULL) {
-    int palette_list[]={WEED_PALETTE_BGRA32,WEED_PALETTE_END};
-    weed_plant_t *in_chantmpls[]={weed_channel_template_init("in channel 0",WEED_CHANNEL_REINIT_ON_SIZE_CHANGE,palette_list),NULL};
-    weed_plant_t *out_chantmpls[]={weed_channel_template_init("out channel 0",0,palette_list),NULL};
-    
-    weed_plant_t *filter_class=weed_filter_class_init("fireTV","effectTV",1,0,&fire_init,&fire_process,&fire_deinit,in_chantmpls,out_chantmpls,NULL,NULL);
-    
-    weed_plugin_info_add_filter_class (plugin_info,filter_class);
-    
+    int palette_list[]= {WEED_PALETTE_BGRA32,WEED_PALETTE_END};
+    weed_plant_t *in_chantmpls[]= {weed_channel_template_init("in channel 0",WEED_CHANNEL_REINIT_ON_SIZE_CHANGE,palette_list),NULL};
+    weed_plant_t *out_chantmpls[]= {weed_channel_template_init("out channel 0",0,palette_list),NULL};
+
+    weed_plant_t *filter_class=weed_filter_class_init("fireTV","effectTV",1,0,&fire_init,&fire_process,&fire_deinit,in_chantmpls,out_chantmpls,
+                               NULL,NULL);
+
+    weed_plugin_info_add_filter_class(plugin_info,filter_class);
+
     weed_set_int_value(plugin_info,"version",package_version);
 
     makePalette();

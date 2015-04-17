@@ -19,7 +19,7 @@
 ///////////////////////////////////////////////////////////////////
 
 static int num_versions=1; // number of different weed api versions supported
-static int api_versions[]={131}; // array of weed api versions supported in plugin, in order of preference (most preferred first)
+static int api_versions[]= {131}; // array of weed api versions supported in plugin, in order of preference (most preferred first)
 
 static int package_version=1; // version of this package
 
@@ -55,7 +55,7 @@ static int resample(float **inbuf, float *outbuf, int nsamps, int nchans, int in
   // resample (time stretch) nsamps samples from inbuf at irate to outbuf at outrate
   // return how many samples in in were consumed
 
-  // we maintain the same number of channels and interleave if necessary 
+  // we maintain the same number of channels and interleave if necessary
 
   register size_t offs=0;
   register float src_offset_f=0.f;
@@ -65,18 +65,17 @@ static int resample(float **inbuf, float *outbuf, int nsamps, int nchans, int in
 
   scale=(double)irate/(double)orate;
 
-  for (i=0;i<nsamps;i++) {
+  for (i=0; i<nsamps; i++) {
     // process each sample
 
     if (inter) {
-      for (j=0;j<nchans;j++) {
-	outbuf[offs]=inbuf[j][src_offset_i];
-	offs++;
+      for (j=0; j<nchans; j++) {
+        outbuf[offs]=inbuf[j][src_offset_i];
+        offs++;
       }
-    }
-    else {
-      for (j=0;j<nchans;j++) {
-	outbuf[offs+(j*nsamps)]=inbuf[j][src_offset_i];
+    } else {
+      for (j=0; j<nchans; j++) {
+        outbuf[offs+(j*nsamps)]=inbuf[j][src_offset_i];
       }
       offs++;
     }
@@ -138,7 +137,7 @@ int scgen_init(weed_plant_t *inst) {
 
   // get audio rate from jack
   //fd=popen("jack_samplerate 2>/dev/null","r");
-  
+
 
 
   // now we want to connect the jack client to a jack filewriter to a fifo
@@ -165,7 +164,7 @@ int scgen_init(weed_plant_t *inst) {
 
 
 
-int scgen_process (weed_plant_t *inst, weed_timecode_t timestamp) {
+int scgen_process(weed_plant_t *inst, weed_timecode_t timestamp) {
   // here we will send OSC to scsynth
   // and read from ring buffer
 
@@ -194,7 +193,7 @@ int scgen_process (weed_plant_t *inst, weed_timecode_t timestamp) {
 
 
 
-#define TEST  
+#define TEST
 #ifdef TEST
   // fill with audio at TRATE
   trate=freq*mult;
@@ -208,25 +207,25 @@ int scgen_process (weed_plant_t *inst, weed_timecode_t timestamp) {
 
   nrsamps=((double)nsamps/(double)rate*trate+.5);
   buff=weed_malloc(chans*sizeof(float *));
-  for (i=0;i<chans;i++) {
+  for (i=0; i<chans; i++) {
     buff[i]=weed_malloc(nrsamps*sizeof(float));
   }
 
-  for (i=0;i<nrsamps;i++) {
-    for (j=0;j<chans;j++) {
+  for (i=0; i<nrsamps; i++) {
+    for (j=0; j<chans; j++) {
       buff[j][i]=1.;
     }
     i++;
     if (i<nrsamps) {
-      for (j=0;j<chans;j++) {
-	buff[j][i]=-1.;
+      for (j=0; j<chans; j++) {
+        buff[j][i]=-1.;
       }
     }
   }
 
   resample(buff,dst,nsamps,chans,inter,trate,rate);
 
-  for (i=0;i<chans;i++) {
+  for (i=0; i<chans; i++) {
     weed_free(buff[i]);
   }
 
@@ -240,14 +239,15 @@ int scgen_process (weed_plant_t *inst, weed_timecode_t timestamp) {
 
 
 
-weed_plant_t *weed_setup (weed_bootstrap_f weed_boot) {
+weed_plant_t *weed_setup(weed_bootstrap_f weed_boot) {
   weed_plant_t *plugin_info=weed_plugin_info_init(weed_boot,num_versions,api_versions);
   if (plugin_info!=NULL) {
-    weed_plant_t *out_chantmpls[]={weed_audio_channel_template_init("out channel 0",0),NULL};
-    weed_plant_t *in_params[]={weed_float_init("freq","_Frequency",7500.,0.0,48000.0),weed_float_init("multiplier","Frequency _Multiplier",1.,.01,1000.),NULL};
-    weed_plant_t *filter_class=weed_filter_class_init("supercollider audiogen","salsaman",1,0,&scgen_init,&scgen_process,NULL,NULL,out_chantmpls,in_params,NULL);
+    weed_plant_t *out_chantmpls[]= {weed_audio_channel_template_init("out channel 0",0),NULL};
+    weed_plant_t *in_params[]= {weed_float_init("freq","_Frequency",7500.,0.0,48000.0),weed_float_init("multiplier","Frequency _Multiplier",1.,.01,1000.),NULL};
+    weed_plant_t *filter_class=weed_filter_class_init("supercollider audiogen","salsaman",1,0,&scgen_init,&scgen_process,NULL,NULL,
+                               out_chantmpls,in_params,NULL);
 
-    weed_plugin_info_add_filter_class (plugin_info,filter_class);
+    weed_plugin_info_add_filter_class(plugin_info,filter_class);
 
     weed_set_int_value(plugin_info,"version",package_version);
   }

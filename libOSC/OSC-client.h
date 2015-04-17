@@ -1,7 +1,7 @@
 /*
 Written by Matt Wright, The Center for New Music and Audio Technologies,
 University of California, Berkeley.  Copyright (c) 1996,97,98,99,2000,01,02,03
-The Regents of the University of California (Regents).  
+The Regents of the University of California (Regents).
 
 Permission to use, copy, modify, distribute, and distribute modified versions
 of this software and its documentation without fee and without a signed
@@ -21,7 +21,7 @@ HEREUNDER IS PROVIDED "AS IS". REGENTS HAS NO OBLIGATION TO PROVIDE
 MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 */
 
-/* 
+/*
 
    OSC-client.h: library for constructing OpenSoundControl messages.
    Derived from SynthControl.h
@@ -58,15 +58,15 @@ MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 /* The int4byte type has to be a 4-byte integer.  You may have to
    change this to long or something else on your system.  */
 #ifdef __MWERKS__
-  /* In Metrowerks you can set ints to be 2 or 4 bytes on 68K, but long is
-     always 4 bytes */
-    typedef long int4byte;
+/* In Metrowerks you can set ints to be 2 or 4 bytes on 68K, but long is
+   always 4 bytes */
+typedef long int4byte;
 #else
-    typedef int int4byte;
+typedef int int4byte;
 #endif
 
 /* The maximum depth of bundles within bundles within bundles within...
-   This is the size of a static array.  If you exceed this limit you'll 
+   This is the size of a static array.  If you exceed this limit you'll
    get an error message. */
 #define MAX_BUNDLE_NESTING 32
 
@@ -77,20 +77,20 @@ MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
    be allocated.) */
 
 typedef struct OSCbuf_struct {
-    char *buffer;            /* The buffer to hold the OSC packet */
-    int size;                /* Size of the buffer */
-    char *bufptr;            /* Current position as we fill the buffer */
-    int state;		     /* State of partially-constructed message */
-    int4byte *thisMsgSize;   /* Pointer to count field before 
+  char *buffer;            /* The buffer to hold the OSC packet */
+  int size;                /* Size of the buffer */
+  char *bufptr;            /* Current position as we fill the buffer */
+  int state;		     /* State of partially-constructed message */
+  int4byte *thisMsgSize;   /* Pointer to count field before
 			        currently-being-written message */
-    int4byte *prevCounts[MAX_BUNDLE_NESTING];
-			     /* Pointers to count field before each currently
-			        open bundle */
-    int bundleDepth;	     /* How many sub-sub-bundles are we in now? */
-	OSCTimeTag *outerMostTimeStamp;    /* Pointer to highest-level enclosing timestamp */
-    char *typeStringPtr;    /* This pointer advances through the type
+  int4byte *prevCounts[MAX_BUNDLE_NESTING];
+  /* Pointers to count field before each currently
+     open bundle */
+  int bundleDepth;	     /* How many sub-sub-bundles are we in now? */
+  OSCTimeTag *outerMostTimeStamp;    /* Pointer to highest-level enclosing timestamp */
+  char *typeStringPtr;    /* This pointer advances through the type
 			       tag string as you add arguments. */
-    int gettingFirstUntypedArg;	/* nonzero if this message doesn't have
+  int gettingFirstUntypedArg;	/* nonzero if this message doesn't have
 				   a type tag and we're waiting for the 1st arg */
 } OSCbuf;
 
@@ -134,12 +134,12 @@ int ChangeOutermostTimestamp(OSCbuf *buf, OSCTimeTag tt);
 
     - Make sure the OSCbuf has been initialized with OSC_initBuffer().
 
-    - To open a bundle, call OSC_openBundle().  You can then write 
+    - To open a bundle, call OSC_openBundle().  You can then write
       messages or open new bundles within the bundle you opened.
       Call OSC_closeBundle() to close the bundle.  Note that a packet
-      does not have to have a bundle; it can instead consist of just a 
+      does not have to have a bundle; it can instead consist of just a
       single message.
-								  
+
 
     - For each message you want to send:
 
@@ -150,7 +150,7 @@ int ChangeOutermostTimestamp(OSCbuf *buf, OSCTimeTag tt);
         - Alternately, call OSC_writeAddressAndTypes() with the name of
           your message and with a type string listing the types of all the
           arguments you will be putting in this message.
-	
+
 	- Now write each of the arguments into the buffer, by calling one of:
 	    OSC_writeFloatArg()
 	    OSC_writeFloatArgs()
@@ -176,5 +176,5 @@ extern char *OSC_errorMessage;
 
 /* How many bytes will be needed in the OSC format to hold the given
    string?  The length of the string, plus the null char, plus any padding
-   needed for 4-byte alignment. */ 
+   needed for 4-byte alignment. */
 int OSC_effectiveStringLength(char *string);

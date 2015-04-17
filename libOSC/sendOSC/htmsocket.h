@@ -1,7 +1,7 @@
 /*
 Written by Adrian Freed, The Center for New Music and Audio Technologies,
 University of California, Berkeley.  Copyright (c) 1992,93,94,95,96,97,98,99,2000,01,02,03,04
-The Regents of the University of California (Regents).  
+The Regents of the University of California (Regents).
 
 Permission to use, copy, modify, distribute, and distribute modified versions
 of this software and its documentation without fee and without a signed
@@ -25,11 +25,11 @@ The OSC webpage is http://cnmat.cnmat.berkeley.edu/OpenSoundControl
 */
 
 
- /* htmparam.h
+/* htmparam.h
 
-	Adrian Freed
- 	send parameters to htm servers by udp or UNIX protocol
- */
+Adrian Freed
+	send parameters to htm servers by udp or UNIX protocol
+*/
 #ifndef TRUE
 #define TRUE 1
 #define FALSE 0

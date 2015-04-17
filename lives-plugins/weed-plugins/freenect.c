@@ -18,7 +18,7 @@
 ///////////////////////////////////////////////////////////////////
 
 static int num_versions=2; // number of different weed api versions supported
-static int api_versions[]={131,100}; // array of weed api versions supported in plugin, in order of preference (most preferred first)
+static int api_versions[]= {131,100}; // array of weed api versions supported in plugin, in order of preference (most preferred first)
 
 static int package_version=1; // version of this package
 
@@ -80,7 +80,7 @@ static void rgb_cb(freenect_device *dev, void *rgb, uint32_t timestamp) {
   // swap buffers
   sd->rgb_back = sd->rgb_front;
   freenect_set_video_buffer(dev, sd->rgb_back);
-  sd->rgb_front = (uint8_t*)rgb;
+  sd->rgb_front = (uint8_t *)rgb;
 
   //got_rgb++;
   pthread_mutex_unlock(&sd->backbuf_mutex);
@@ -96,7 +96,7 @@ static void depth_cb(freenect_device *dev, void *v_depth, uint32_t timestamp) {
   // swap buffers
   sd->depth_back = sd->depth_front;
   freenect_set_depth_buffer(dev, sd->depth_back);
-  sd->depth_front = (uint16_t*)v_depth;
+  sd->depth_front = (uint16_t *)v_depth;
 
   pthread_mutex_unlock(&sd->backbuf_mutex);
 }
@@ -116,8 +116,8 @@ static int lives_freenect_prep(_sdata *sdata) {
   freenect_set_log_level(sdata->f_ctx, FREENECT_LOG_WARNING);
   freenect_select_subdevices(sdata->f_ctx, (freenect_device_flags)(FREENECT_DEVICE_CAMERA));
 
-  nr_devices = freenect_num_devices (sdata->f_ctx);
-  fprintf (stderr,"Freenect: Number of devices found: %d\n", nr_devices);
+  nr_devices = freenect_num_devices(sdata->f_ctx);
+  fprintf(stderr,"Freenect: Number of devices found: %d\n", nr_devices);
 
   /*  if (argc > 1)
     user_device_number = atoi(argv[1]);
@@ -141,24 +141,24 @@ static int lives_freenect_prep(_sdata *sdata) {
 
 
 
-static int lives_freenect_init (weed_plant_t *inst) {
+static int lives_freenect_init(weed_plant_t *inst) {
   _sdata *sd=(_sdata *)weed_malloc(sizeof(_sdata));
   if (sd==NULL) return WEED_ERROR_MEMORY_ALLOCATION;
 
-  sd->depth_back = (uint16_t*)weed_malloc(640*480*2);
+  sd->depth_back = (uint16_t *)weed_malloc(640*480*2);
   if (sd->depth_back==NULL) {
     weed_free(sd);
     return WEED_ERROR_MEMORY_ALLOCATION;
   }
 
-  sd->depth_front = (uint16_t*)weed_malloc(640*480*2);
+  sd->depth_front = (uint16_t *)weed_malloc(640*480*2);
   if (sd->depth_front==NULL) {
     weed_free(sd->depth_back);
     weed_free(sd);
     return WEED_ERROR_MEMORY_ALLOCATION;
   }
 
-  sd->rgb_back = (uint8_t*)weed_malloc(640*480*3);
+  sd->rgb_back = (uint8_t *)weed_malloc(640*480*3);
   if (sd->rgb_back==NULL) {
     weed_free(sd->depth_back);
     weed_free(sd->depth_front);
@@ -166,7 +166,7 @@ static int lives_freenect_init (weed_plant_t *inst) {
     return WEED_ERROR_MEMORY_ALLOCATION;
   }
 
-  sd->rgb_front = (uint8_t*)weed_malloc(640*480*3);
+  sd->rgb_front = (uint8_t *)weed_malloc(640*480*3);
   if (sd->rgb_front==NULL) {
     weed_free(sd->depth_back);
     weed_free(sd->depth_front);
@@ -187,7 +187,7 @@ static int lives_freenect_init (weed_plant_t *inst) {
   }
 
   pthread_mutex_init(&sd->backbuf_mutex,NULL);
-  
+
   freenect_set_depth_callback(sd->f_dev, depth_cb);
   freenect_set_video_callback(sd->f_dev, rgb_cb);
 
@@ -196,7 +196,7 @@ static int lives_freenect_init (weed_plant_t *inst) {
 
   freenect_set_video_buffer(sd->f_dev, sd->rgb_back);
   freenect_set_depth_buffer(sd->f_dev, sd->depth_back);
-  
+
   freenect_start_depth(sd->f_dev);
   freenect_start_video(sd->f_dev);
 
@@ -210,7 +210,7 @@ static int lives_freenect_init (weed_plant_t *inst) {
 
 
 
-static int lives_freenect_deinit (weed_plant_t *inst) {
+static int lives_freenect_deinit(weed_plant_t *inst) {
   int error;
   _sdata *sd=weed_get_voidptr_value(inst,"plugin_internal",&error);
 
@@ -238,7 +238,7 @@ static int lives_freenect_deinit (weed_plant_t *inst) {
 
 
 
-static int lives_freenect_process (weed_plant_t *inst, weed_timecode_t timestamp) {
+static int lives_freenect_process(weed_plant_t *inst, weed_timecode_t timestamp) {
   int error;
   weed_plant_t **in_params=weed_get_plantptr_array(inst,"in_parameters",&error);
 
@@ -290,27 +290,26 @@ static int lives_freenect_process (weed_plant_t *inst, weed_timecode_t timestamp
   fprintf(stderr,"min %d max %d\n",cmin,cmax);
 
   pthread_mutex_lock(&sd->backbuf_mutex);
-  for (i=0;i<height;i++) {
-    for (j=0;j<width;j++) {
+  for (i=0; i<height; i++) {
+    for (j=0; j<width; j++) {
 
       if (*depth>=cmax||*depth<cmin) {
-	dst[red]=ccol[0];
-	dst[green]=ccol[1];
-	dst[blue]=ccol[2];
-	if (psize==4) dst[alpha]=0;
-      }
-      else {
-	dst[red]=rgb[0];
-	dst[green]=rgb[1];
-	dst[blue]=rgb[2];
-	if (psize==4) dst[alpha]=255;
+        dst[red]=ccol[0];
+        dst[green]=ccol[1];
+        dst[blue]=ccol[2];
+        if (psize==4) dst[alpha]=0;
+      } else {
+        dst[red]=rgb[0];
+        dst[green]=rgb[1];
+        dst[blue]=rgb[2];
+        if (psize==4) dst[alpha]=255;
       }
 
       dst+=psize;
       rgb+=3;
 
       if (dsta!=NULL) {
-	*(dsta++)=(float)*depth;
+        *(dsta++)=(float)*depth;
       }
 
       depth++;
@@ -330,24 +329,26 @@ static int lives_freenect_process (weed_plant_t *inst, weed_timecode_t timestamp
 
 
 
-weed_plant_t *weed_setup (weed_bootstrap_f weed_boot) {
+weed_plant_t *weed_setup(weed_bootstrap_f weed_boot) {
   weed_plant_t *plugin_info=weed_plugin_info_init(weed_boot,num_versions,api_versions);
   if (plugin_info!=NULL) {
-    int palette_list[]={WEED_PALETTE_RGB24,WEED_PALETTE_BGR24,WEED_PALETTE_RGBA32,WEED_PALETTE_BGRA32,WEED_PALETTE_ARGB32,WEED_PALETTE_END};
-    int apalette_list[]={WEED_PALETTE_AFLOAT,WEED_PALETTE_END};
+    int palette_list[]= {WEED_PALETTE_RGB24,WEED_PALETTE_BGR24,WEED_PALETTE_RGBA32,WEED_PALETTE_BGRA32,WEED_PALETTE_ARGB32,WEED_PALETTE_END};
+    int apalette_list[]= {WEED_PALETTE_AFLOAT,WEED_PALETTE_END};
 
-    weed_plant_t *out_chantmpls[]={weed_channel_template_init("out channel 0",0,palette_list),
-				   weed_channel_template_init("depth",0,apalette_list),NULL};
+    weed_plant_t *out_chantmpls[]= {weed_channel_template_init("out channel 0",0,palette_list),
+                                    weed_channel_template_init("depth",0,apalette_list),NULL
+                                   };
 
-    weed_plant_t *in_params[]={weed_integer_init("minthresh","Cut depth (cm) <",0,0,65535),
-			       weed_integer_init("maxthresh","Cut depth (cm) >=",65536,0,65536),
-			       weed_colRGBi_init("ccol","_Replace with colour",0,0,0),
-			       NULL};
+    weed_plant_t *in_params[]= {weed_integer_init("minthresh","Cut depth (cm) <",0,0,65535),
+                                weed_integer_init("maxthresh","Cut depth (cm) >=",65536,0,65536),
+                                weed_colRGBi_init("ccol","_Replace with colour",0,0,0),
+                                NULL
+                               };
 
     weed_plant_t *filter_class=weed_filter_class_init("freenect","salsaman",1,0,&lives_freenect_init,
-						      &lives_freenect_process,
-						      &lives_freenect_deinit,
-						      NULL,out_chantmpls,in_params,NULL);
+                               &lives_freenect_process,
+                               &lives_freenect_deinit,
+                               NULL,out_chantmpls,in_params,NULL);
 
     weed_set_int_value(out_chantmpls[0],"width",640);
     weed_set_int_value(out_chantmpls[0],"height",480);
@@ -356,7 +357,7 @@ weed_plant_t *weed_setup (weed_bootstrap_f weed_boot) {
 
     weed_set_double_value(filter_class,"target_fps",25.);
 
-    weed_plugin_info_add_filter_class (plugin_info,filter_class);
+    weed_plugin_info_add_filter_class(plugin_info,filter_class);
 
     weed_set_int_value(plugin_info,"version",package_version);
   }

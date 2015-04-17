@@ -19,7 +19,7 @@
 ///////////////////////////////////////////////////////////////////
 
 static int num_versions=1; // number of different weed api versions supported
-static int api_versions[]={131}; // array of weed api versions supported in plugin, in order of preference (most preferred first)
+static int api_versions[]= {131}; // array of weed api versions supported in plugin, in order of preference (most preferred first)
 
 static int package_version=1; // version of this package
 
@@ -81,14 +81,15 @@ static void add_bg_row(unsigned char *ptr, int xwidth, int pal, int clamping, in
   register int i;
   int psize=4;
   if (pal==WEED_PALETTE_RGB24||pal==WEED_PALETTE_BGR24||pal==WEED_PALETTE_YUV888) psize=3;
-  for (i=0;i<xwidth;i+=psize) add_bg_pixel(ptr+i,pal,clamping,trans);
+  for (i=0; i<xwidth; i+=psize) add_bg_pixel(ptr+i,pal,clamping,trans);
 }
 
 
 
-int shift_process (weed_plant_t *inst, weed_timecode_t timestamp) {
+int shift_process(weed_plant_t *inst, weed_timecode_t timestamp) {
   int error;
-  weed_plant_t *in_channel=weed_get_plantptr_value(inst,"in_channels",&error),*out_channel=weed_get_plantptr_value(inst,"out_channels",&error);
+  weed_plant_t *in_channel=weed_get_plantptr_value(inst,"in_channels",&error),*out_channel=weed_get_plantptr_value(inst,"out_channels",
+                           &error);
   weed_plant_t **in_params=weed_get_plantptr_array(inst,"in_parameters",&error);
 
   unsigned char *src=(unsigned char *)weed_get_voidptr_value(in_channel,"pixel_data",&error);
@@ -129,12 +130,12 @@ int shift_process (weed_plant_t *inst, weed_timecode_t timestamp) {
   }
 
   dend=dst+dheight*orowstride;
-  
+
   ypos=(offset-1)*irowstride;
 
   if (pal==WEED_PALETTE_RGB24||pal==WEED_PALETTE_BGR24||pal==WEED_PALETTE_YUV888) psize=3;
 
-  if (pal==WEED_PALETTE_YUV888||pal==WEED_PALETTE_YUVA8888) 
+  if (pal==WEED_PALETTE_YUV888||pal==WEED_PALETTE_YUVA8888)
     clamping=weed_get_int_value(in_channel,"YUV_clamping",&error);
 
   x*=psize;
@@ -145,15 +146,14 @@ int shift_process (weed_plant_t *inst, weed_timecode_t timestamp) {
     istart=0;
     iend=width+x;
     if (iend<0) iend=0;
-  }
-  else {
+  } else {
     // shift right
     if (x>=width) x=width;
     istart=x;
     iend=width;
   }
 
-  for (;dst<dend;dst+=orowstride) {
+  for (; dst<dend; dst+=orowstride) {
     ypos+=irowstride;
     sy=ypos-y;
 
@@ -165,8 +165,7 @@ int shift_process (weed_plant_t *inst, weed_timecode_t timestamp) {
     if (x>0) {
       add_bg_row(dst,x,pal,clamping,trans);
       sx=0;
-    }
-    else sx=-x;
+    } else sx=-x;
 
     if (istart<iend) {
       weed_memcpy(&dst[istart],src+sy+sx,iend-istart);
@@ -183,24 +182,26 @@ int shift_process (weed_plant_t *inst, weed_timecode_t timestamp) {
 
 
 
-weed_plant_t *weed_setup (weed_bootstrap_f weed_boot) {
+weed_plant_t *weed_setup(weed_bootstrap_f weed_boot) {
   weed_plant_t *plugin_info=weed_plugin_info_init(weed_boot,num_versions,api_versions);
   if (plugin_info!=NULL) {
-    int palette_list[]={WEED_PALETTE_BGR24,WEED_PALETTE_RGB24,WEED_PALETTE_RGBA32,WEED_PALETTE_BGRA32,WEED_PALETTE_ARGB32,
-			WEED_PALETTE_YUV888,WEED_PALETTE_YUVA8888,WEED_PALETTE_END};
+    int palette_list[]= {WEED_PALETTE_BGR24,WEED_PALETTE_RGB24,WEED_PALETTE_RGBA32,WEED_PALETTE_BGRA32,WEED_PALETTE_ARGB32,
+                         WEED_PALETTE_YUV888,WEED_PALETTE_YUVA8888,WEED_PALETTE_END
+                        };
 
-    weed_plant_t *in_chantmpls[]={weed_channel_template_init("in channel 0",0,palette_list),NULL};
-    weed_plant_t *out_chantmpls[]={weed_channel_template_init("out channel 0",0,palette_list),NULL};
-    weed_plant_t *in_params[]={weed_float_init("xshift","_X shift (ratio)",0.,-1.,1.),
-			       weed_float_init("yshift","_Y shift (ratio)",0.,-1.,1.),
-			       weed_switch_init("transbg","_Transparent edges",WEED_FALSE),
-			       NULL};
+    weed_plant_t *in_chantmpls[]= {weed_channel_template_init("in channel 0",0,palette_list),NULL};
+    weed_plant_t *out_chantmpls[]= {weed_channel_template_init("out channel 0",0,palette_list),NULL};
+    weed_plant_t *in_params[]= {weed_float_init("xshift","_X shift (ratio)",0.,-1.,1.),
+                                weed_float_init("yshift","_Y shift (ratio)",0.,-1.,1.),
+                                weed_switch_init("transbg","_Transparent edges",WEED_FALSE),
+                                NULL
+                               };
 
     weed_plant_t *filter_class=weed_filter_class_init("shift","salsaman",1,WEED_FILTER_HINT_MAY_THREAD,NULL,&shift_process,NULL,
-						      in_chantmpls,out_chantmpls,in_params,NULL);
+                               in_chantmpls,out_chantmpls,in_params,NULL);
 
 
-    weed_plugin_info_add_filter_class (plugin_info,filter_class);
+    weed_plugin_info_add_filter_class(plugin_info,filter_class);
 
     weed_set_int_value(plugin_info,"version",package_version);
   }

@@ -22,7 +22,7 @@
 ///////////////////////////////////////////////////////////////////
 
 static int num_versions=2; // number of different weed api versions supported
-static int api_versions[]={131,100}; // array of weed api versions supported in plugin, in order of preference (most preferred first)
+static int api_versions[]= {131,100}; // array of weed api versions supported in plugin, in order of preference (most preferred first)
 
 static int package_version=1; // version of this package
 
@@ -39,7 +39,7 @@ static int package_version=1; // version of this package
 
 /////////////////////////////////////////////////////////////
 
-static uint32_t sqrti (uint32_t n) {
+static uint32_t sqrti(uint32_t n) {
   register uint32_t root=0, remainder=n, place=0x40000000, tmp;
 
   while (place > remainder) place>>=2;
@@ -56,24 +56,25 @@ static uint32_t sqrti (uint32_t n) {
 
 
 
-static void cp_chroma (unsigned char *dst, unsigned char *src, int irowstride, int orowstride, int width, int height) {
+static void cp_chroma(unsigned char *dst, unsigned char *src, int irowstride, int orowstride, int width, int height) {
 
   if (irowstride==orowstride&&irowstride==width) weed_memcpy(dst,src,width*height);
   else {
     register int i;
-    for (i=0;i<height;i++) {
+    for (i=0; i<height; i++) {
       weed_memcpy(dst,src,width);
       src+=irowstride;
       dst+=orowstride;
     }
   }
 }
-  
 
 
-static int softlight_process (weed_plant_t *inst, weed_timecode_t timestamp) {
+
+static int softlight_process(weed_plant_t *inst, weed_timecode_t timestamp) {
   int error;
-  weed_plant_t *in_channel=weed_get_plantptr_value(inst,"in_channels",&error),*out_channel=weed_get_plantptr_value(inst,"out_channels",&error);
+  weed_plant_t *in_channel=weed_get_plantptr_value(inst,"in_channels",&error),*out_channel=weed_get_plantptr_value(inst,"out_channels",
+                           &error);
   uint8_t **srcp=(uint8_t **)weed_get_voidptr_array(in_channel,"pixel_data",&error);
   uint8_t **dstp=(uint8_t **)weed_get_voidptr_array(out_channel,"pixel_data",&error);
   int width=weed_get_int_value(in_channel,"width",&error);
@@ -110,8 +111,7 @@ static int softlight_process (weed_plant_t *inst, weed_timecode_t timestamp) {
   if (clamping==WEED_YUV_CLAMPING_UNCLAMPED) {
     ymin=0;
     ymax=255;
-  }
-  else {
+  } else {
     ymin=16;
     ymax=235;
   }
@@ -120,20 +120,21 @@ static int softlight_process (weed_plant_t *inst, weed_timecode_t timestamp) {
   width--;
 
   // process each row
-  for (;src<end;src+=(irowstride-width-1)) {
+  for (; src<end; src+=(irowstride-width-1)) {
 
     // skip leftmost pixel
     *(dst++)=*src;
     src++;
 
     // process all pixels except leftmost and rightmost
-    for (i=1;i<width;i++) {
+    for (i=1; i<width; i++) {
 
       // do edge detect and convolve
-      row0=( *(src+irowstride-1) - *(src-irowstride-1) ) + ( ( *(src+irowstride) - *(src-irowstride) ) << 1 ) + ( *(src+irowstride+1) - *(src+irowstride-1) );
-      row1=( *(src-irowstride+1) - *(src-irowstride-1) ) + ( ( *(src+1) - *(src-1) ) << 1) + ( *(src+irowstride+1) + *(src+irowstride-1) );
-      
-      sum= ( ( 3 * sqrti( row0 * row0 + row1 *row1 ) / 2 ) * scale ) >>8;
+      row0=(*(src+irowstride-1) - *(src-irowstride-1)) + ((*(src+irowstride) - *(src-irowstride)) << 1) + (*(src+irowstride+1) - *
+           (src+irowstride-1));
+      row1=(*(src-irowstride+1) - *(src-irowstride-1)) + ((*(src+1) - *(src-1)) << 1) + (*(src+irowstride+1) + *(src+irowstride-1));
+
+      sum= ((3 * sqrti(row0 * row0 + row1 *row1) / 2) * scale) >>8;
 
       // clamp
       sum=(sum<ymin?ymin:sum>ymax?ymax:sum);
@@ -165,7 +166,7 @@ static int softlight_process (weed_plant_t *inst, weed_timecode_t timestamp) {
   if (palette==WEED_PALETTE_YUVA4444P) nplanes=4;
   else nplanes=3;
 
-  for (i=1;i<nplanes;i++) {
+  for (i=1; i<nplanes; i++) {
     cp_chroma(dstp[i],srcp[i],irowstrides[i],orowstrides[i],width,height);
   }
 
@@ -180,19 +181,20 @@ static int softlight_process (weed_plant_t *inst, weed_timecode_t timestamp) {
 
 
 
-weed_plant_t *weed_setup (weed_bootstrap_f weed_boot) {
+weed_plant_t *weed_setup(weed_bootstrap_f weed_boot) {
   weed_plant_t *plugin_info=weed_plugin_info_init(weed_boot,num_versions,api_versions);
   if (plugin_info!=NULL) {
-    int palette_list[]={WEED_PALETTE_YUV444P,WEED_PALETTE_YUVA4444P,WEED_PALETTE_YUV422P,WEED_PALETTE_YUV420P,WEED_PALETTE_YVU420P,WEED_PALETTE_END};
+    int palette_list[]= {WEED_PALETTE_YUV444P,WEED_PALETTE_YUVA4444P,WEED_PALETTE_YUV422P,WEED_PALETTE_YUV420P,WEED_PALETTE_YVU420P,WEED_PALETTE_END};
 
-    weed_plant_t *in_chantmpls[]={weed_channel_template_init("in channel 0",0,palette_list),NULL};
-    weed_plant_t *out_chantmpls[]={weed_channel_template_init("out channel 0",0,palette_list),NULL};
-    weed_plant_t *filter_class=weed_filter_class_init("softlight","salsaman",1,0,NULL,&softlight_process,NULL,in_chantmpls,out_chantmpls,NULL,NULL);
+    weed_plant_t *in_chantmpls[]= {weed_channel_template_init("in channel 0",0,palette_list),NULL};
+    weed_plant_t *out_chantmpls[]= {weed_channel_template_init("out channel 0",0,palette_list),NULL};
+    weed_plant_t *filter_class=weed_filter_class_init("softlight","salsaman",1,0,NULL,&softlight_process,NULL,in_chantmpls,out_chantmpls,NULL,
+                               NULL);
 
     // set preference of unclamped
     weed_set_int_value(in_chantmpls[0],"YUV_clamping",WEED_YUV_CLAMPING_UNCLAMPED);
 
-    weed_plugin_info_add_filter_class (plugin_info,filter_class);
+    weed_plugin_info_add_filter_class(plugin_info,filter_class);
 
     weed_set_int_value(plugin_info,"version",package_version);
   }

@@ -37,11 +37,11 @@ $gid=~ s/\W.*//;
 if ($^O eq "MSWin32") {
 #TODO - get this from the registry when needed
 #only if we installed perl ourselves
-    $installdir="C:\\Program Files\\LiVES";
+$installdir="C:\\Program Files\\LiVES";
 
-    push @INC,"$installdir\\lib";
+push @INC,"$installdir\\lib";
 
-    use File::Path qw(make_path);
+use File::Path qw(make_path);
 
 #TODO - get this from the registry when needed
     $login = getlogin;

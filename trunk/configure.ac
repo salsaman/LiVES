@@ -40,7 +40,11 @@ AM_PROG_AS
 dnl AC_DEFINE([LiVES_VERSION],[],[Description])
 dnl AC_CONFIG_HEADERS(config.h)
 
-ACX_PTHREAD(PTHREAD_OK=true,PTHREAD_OK=false)
+PTHREAD_OK=false
+ACX_PTHREAD
+if test "$THREAD_SUPPORT" = "yes"; then
+    PTHREAD_OK=true
+fi
 
 IS_DARWIN="false"
 IS_IRIX="false"

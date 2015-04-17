@@ -429,6 +429,18 @@ static boolean call_choose_set(livespointer data) {
 }
 
 
+static boolean call_set_set_name(livespointer data) {
+  ulong uid=(ulong)data;
+  boolean ret=FALSE;
+
+  if (mainw!=NULL&&!mainw->go_away&&!mainw->is_processing&&mainw->playing_file==-1) {
+    ret=set_new_set_name(mainw->multitrack);
+  }
+  else ext_caller_return_int(uid,(int)ret);
+  return FALSE;
+}
+
+
 static boolean call_open_file(livespointer data) {
   opfidata *opfi = (opfidata *)data;
   ulong uid=0l;
@@ -1266,6 +1278,14 @@ boolean idle_choose_set(ulong id) {
 }
 
 
+
+boolean idle_set_set_name(ulong id) {
+  if (mainw==NULL||mainw->preview||mainw->go_away||mainw->is_processing||mainw->playing_file) return FALSE;
+  lives_idle_add(call_set_set_name,(livespointer)id);
+  return TRUE;
+}
+
+
 boolean idle_open_file(const char *fname, double stime, int frames, ulong id) {
   opfidata *data;
 
@@ -1619,6 +1639,7 @@ boolean idle_reload_layout(const char *lname, ulong id) {
   lives_idle_add(call_reload_layout,(livespointer)data);
   return TRUE;
 }
+
 
 
 

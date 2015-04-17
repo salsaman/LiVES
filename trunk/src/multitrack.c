@@ -19725,8 +19725,53 @@ void add_markers(lives_mt *mt, weed_plant_t *event_list) {
 }
 
 
+boolean set_new_set_name(lives_mt *mt) {
+  char new_set_name[128];
 
+  char *tmp;
 
+  boolean needs_idlefunc=FALSE;
+  boolean response;
+
+  if (mt!=NULL&&mt->idlefunc>0) {
+    lives_source_remove(mt->idlefunc);
+    mt->idlefunc=0;
+    needs_idlefunc=TRUE;
+  }
+
+  do {
+    // prompt for a set name, advise user to save set
+    renamew=create_rename_dialog(4);
+    lives_widget_show(renamew->dialog);
+    response=lives_dialog_run(LIVES_DIALOG(renamew->dialog));
+    if (response==LIVES_RESPONSE_CANCEL) {
+      lives_widget_destroy(renamew->dialog);
+      lives_free(renamew);
+      mainw->cancelled=CANCEL_USER;
+      if (mt!=NULL) {
+	mt->idlefunc=0;
+	mt->idlefunc=mt_idle_add(mt);
+	mt_sensitise(mt);
+      }
+      return FALSE;
+    }
+    lives_snprintf(new_set_name,128,"%s",(tmp=U82F(lives_entry_get_text (LIVES_ENTRY (renamew->entry)))));
+    lives_widget_destroy(renamew->dialog);
+    lives_free(renamew);
+    lives_free(tmp);
+    lives_widget_context_update();
+  } while (!is_legal_set_name(new_set_name,FALSE));
+
+  lives_snprintf(mainw->set_name,128,"%s",new_set_name);
+
+  if (needs_idlefunc) {
+    mt->idlefunc=0;
+    mt->idlefunc=mt_idle_add(mt);
+    mt_sensitise(mt);
+  }
+
+  return TRUE;
+}
 
 
 boolean on_save_event_list_activate (LiVESMenuItem *menuitem, livespointer user_data) {
@@ -19760,7 +19805,6 @@ boolean on_save_event_list_activate (LiVESMenuItem *menuitem, livespointer user_
 
   boolean orig_ar_layout=prefs->ar_layout,ar_layout;
   boolean was_set=mainw->was_set;
-  boolean response;
   boolean retval=TRUE;
 
   int retval2;
@@ -19809,29 +19853,7 @@ boolean on_save_event_list_activate (LiVESMenuItem *menuitem, livespointer user_
     weed_set_string_value(event_list,"needs_set",mainw->set_name);
   }
   else if (mainw->interactive) {
-    char new_set_name[128];
-    do {
-      // prompt for a set name, advise user to save set
-      renamew=create_rename_dialog(4);
-      lives_widget_show(renamew->dialog);
-      response=lives_dialog_run(LIVES_DIALOG(renamew->dialog));
-      if (response==LIVES_RESPONSE_CANCEL) {
-	lives_widget_destroy(renamew->dialog);
-	lives_free(renamew);
-	mainw->cancelled=CANCEL_USER;
-	if (mt!=NULL) {
-	  mt->idlefunc=0;
-	  mt->idlefunc=mt_idle_add(mt);
-	  mt_sensitise(mt);
-	}
-	return FALSE;
-      }
-      lives_snprintf(new_set_name,128,"%s",lives_entry_get_text (LIVES_ENTRY (renamew->entry)));
-      lives_widget_destroy(renamew->dialog);
-      lives_free(renamew);
-      lives_widget_context_update();
-    } while (!is_legal_set_name(new_set_name,FALSE));
-    lives_snprintf(mainw->set_name,128,"%s",new_set_name);
+    set_new_set_name(mt);
   }
   else return FALSE;
 

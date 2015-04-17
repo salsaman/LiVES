@@ -858,6 +858,9 @@ void **mt_get_pchain(void);
 void event_list_free_undos(lives_mt *);
 boolean used_in_current_layout(lives_mt *, int file);
 
+boolean set_new_set_name(lives_mt *);
+
+
 // event_list utilities
 boolean compare_filter_maps(weed_plant_t *fm1, weed_plant_t *fm2, int ctrack); ///< ctrack can be -1 to compare all events, else we cf for ctrack
 void move_init_in_filter_map(lives_mt *, weed_plant_t *event_list, weed_plant_t *fmap, weed_plant_t *ifrom, 

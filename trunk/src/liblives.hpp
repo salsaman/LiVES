@@ -11,6 +11,27 @@
 #ifndef HAS_LIBLIVES_H
 #define HAS_LIBLIVES_H
 
+/**
+   Version number major
+*/
+#define LIVES_VERSION_MAJOR 2
+
+/**
+   Version number minor
+*/
+#define LIVES_VERSION_MINOR 4
+
+/**
+   Version number micro
+*/
+#define LIVES_VERSION_MICRO 0
+
+/**
+   Macro to check if livesApp version is >= major.minor.micro
+*/
+#define LIVES_CHECK_VERSION(major, minor, micro) (major > LIVES_VERSION_MAJOR || (major == LIVES_VERSION_MAJOR && (minor > LIVES_VERSION_MINOR || (minor == LIVES_VERSION_MINOR && micro >= LIVES_VERSION_MICRO)))) ///< 
+
+
 // defs shared with lbindings.c
 
 /**
@@ -435,13 +456,6 @@ namespace lives {
        @see status().
     */
     bool isPlaying();
-
-
-
-    int versionMajor();
-    int versionMinor();
-    int versionMicro();
-
 
     /**
        Returns the current set
@@ -918,10 +932,17 @@ namespace lives {
     */
     livesString name() const;
 
-
-
-    bool setName(livesString name);
-
+    /**
+       Set the name of the current set. Only works if there are clips loaded, and the livesApp::status() is LIVES_STATUS_READY.
+       Can only be done if the current set has no name. You need to do this before saving a layout if the current set has no name.
+       If name is an empty string, the user can choose the name at runtime. If livesApp::interactive() is false, the user can cancel.
+       Valid set names may not be empty, begin with a "." or contain spaces or the characters / \ * or ". The set name must not be in use by 
+       another copy of LiVES. The maximum length of a set name is 128 characters.
+       @param the name of the set
+       @return true if the name was set.
+       @see name().
+    */
+    bool setName(livesString name=livesString()) const;
 
     /**
        Save the set, and close all open clips and layouts. 
@@ -929,11 +950,19 @@ namespace lives {
        If the name is defined, and it points to a different, existing set, the set will not be saved and false will be returned, 
        unless force_append is set to true, in which case the current clips and layouts will be appended to the other set.
        Saving a set with a new name is an expensive operation as it requires moving files in the underlying filesystem.
+       See setName() for the rules on valid set names.
        @param name name to save set as, or empty livesString to let the user choose a name.
        @param force_append set to true to force appending to another existing set.
        @return true if the set was saved.
     */
     bool save(livesString name, bool force_append=false) const;
+
+    /**
+       Save the set, and close all open clips and layouts. 
+       The current set name() is used. If the set name is not defined, the user will be prompted to enter it at runtime.
+       @return true if the set was saved.
+    */
+    bool save() const;
 
     /**
        Returns the number of clips in the set. If the set is invalid, returns 0.
@@ -977,7 +1006,6 @@ namespace lives {
 
   protected:
     set(livesApp *lives=NULL);
-    void setName(const char *setname);
 
   private:
     livesApp *m_lives;
@@ -1758,9 +1786,18 @@ namespace lives {
     bool addVideoTrack(bool in_front) const;
 
 
+    /**
+       Returns the number of video tracks for multitrack. If isActive() is false, 0 is returned.
+       @return the number of video tracks
+       @see addVideoTrack()
+    */
     int numVideoTracks() const;
 
 
+    /**
+       Returns the number of audio backing tracks for multitrack. If isActive() is false, 0 is returned.
+       @return the number of audio tracks
+    */
     int numAudioTracks() const;
 
 

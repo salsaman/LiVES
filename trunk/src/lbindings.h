@@ -25,6 +25,7 @@ boolean idle_open_file(const char *fname, double stime, int frames, ulong id);
 boolean idle_set_interactive(boolean setting, ulong id);
 boolean idle_choose_set(ulong id);
 boolean idle_reload_set(const char *setname, ulong id);
+boolean idle_set_set_name(ulong id);
 boolean idle_set_pref_bool(int prefidx, boolean val, ulong id);
 boolean idle_set_pref_int(int prefidx, int val, ulong id);
 boolean idle_set_pref_bitmapped(int prefidx, int bitfield, boolean val, ulong id);

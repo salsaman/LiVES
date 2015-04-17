@@ -1322,10 +1322,7 @@ void on_close_activate (LiVESMenuItem *menuitem, livespointer user_data) {
 }
 
 
-void
-on_import_proj_activate                      (LiVESMenuItem     *menuitem,
-					      livespointer         user_data)
-{
+void on_import_proj_activate (LiVESMenuItem *menuitem, livespointer user_data) {
   char *com;
   char *filt[]={"*.lv2",NULL};
   char *proj_file=choose_file(NULL,NULL,filt,LIVES_FILE_CHOOSER_ACTION_OPEN,NULL,NULL);
@@ -1427,10 +1424,7 @@ on_import_proj_activate                      (LiVESMenuItem     *menuitem,
 
 
 
-void
-on_export_proj_activate                      (LiVESMenuItem     *menuitem,
-					      livespointer         user_data)
-{
+void on_export_proj_activate (LiVESMenuItem *menuitem, livespointer user_data) {
   char *filt[]={"*.lv2",NULL};
   char *def_file;
   char *proj_file;
@@ -1450,9 +1444,10 @@ on_export_proj_activate                      (LiVESMenuItem     *menuitem,
 	mainw->cancelled=CANCEL_USER;
 	return;
       }
-      lives_snprintf(new_set_name,128,"%s",lives_entry_get_text (LIVES_ENTRY (renamew->entry)));
+      lives_snprintf(new_set_name,128,"%s",(tmp=U82F(lives_entry_get_text (LIVES_ENTRY (renamew->entry)))));
       lives_widget_destroy(renamew->dialog);
       lives_free(renamew);
+      lives_free(tmp);
       lives_widget_context_update();
     } while (!is_legal_set_name(new_set_name,FALSE));
     lives_snprintf(mainw->set_name,128,"%s",new_set_name);
@@ -1654,7 +1649,7 @@ void on_quit_activate (LiVESMenuItem *menuitem, livespointer user_data) {
       }
       if (resp==2) {
 	// save set
-	if ((legal_set_name=is_legal_set_name((set_name=lives_strdup(lives_entry_get_text(LIVES_ENTRY(cdsw->entry)))),TRUE))) {
+	if ((legal_set_name=is_legal_set_name((set_name=U82F(lives_entry_get_text(LIVES_ENTRY(cdsw->entry)))),TRUE))) {
 	  lives_widget_destroy(cdsw->dialog);
 	  lives_free(cdsw);
 
@@ -4537,16 +4532,17 @@ boolean on_save_set_activate (LiVESMenuItem *menuitem, livespointer user_data) {
 
   LiVESList *cliplist;
 
+  char new_handle[256];
+  char new_set_name[128];
+
   char *old_set=lives_strdup(mainw->set_name);
   char *layout_map_file,*layout_map_dir,*new_clips_dir,*current_clips_dir;
   char *com,*tmp;
-  char new_handle[256];
   char *text;
   char *new_dir;
   char *cwd;
   char *ordfile;
   char *ord_entry;
-  char new_set_name[128];
   char *msg,*extra;
   char *dfile,*osetn,*nsetn;
 
@@ -4594,7 +4590,7 @@ boolean on_save_set_activate (LiVESMenuItem *menuitem, livespointer user_data) {
 	lives_free(renamew);
 	return FALSE;
       }
-      lives_snprintf(new_set_name,128,"%s",lives_entry_get_text (LIVES_ENTRY (renamew->entry)));
+      lives_snprintf(new_set_name,128,"%s",(tmp=U82F(lives_entry_get_text (LIVES_ENTRY (renamew->entry)))));
       lives_widget_destroy(renamew->dialog);
       lives_free(renamew);
       lives_widget_context_update();
@@ -4932,7 +4928,7 @@ char *on_load_set_activate (LiVESMenuItem *menuitem, livespointer user_data) {
   resp=lives_dialog_run(LIVES_DIALOG(renamew->dialog));
 
   if (resp==LIVES_RESPONSE_OK) {
-    set_name=lives_strdup(lives_entry_get_text(LIVES_ENTRY(renamew->entry)));
+    set_name=U82F(lives_entry_get_text(LIVES_ENTRY(renamew->entry)));
   }
 
   // need to clean up renamew
@@ -8651,20 +8647,13 @@ void popup_lmap_errors(LiVESMenuItem *menuitem, livespointer user_data) {
 
 
 
-void
-on_rename_activate                    (LiVESMenuItem     *menuitem,
-				       livespointer         user_data)
-{
+void on_rename_activate (LiVESMenuItem *menuitem, livespointer user_data) {
   renamew=create_rename_dialog(1);
   lives_widget_show(renamew->dialog);
-
 }
 
 
-void
-on_rename_set_name                   (LiVESButton       *button,
-				      livespointer         user_data)
-{
+void on_rename_set_name (LiVESButton *button, livespointer user_data) {
   char title[256];
   boolean bad_header=FALSE;
 

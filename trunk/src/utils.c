@@ -2191,6 +2191,8 @@ boolean is_legal_set_name(const char *set_name, boolean allow_dupes) {
   // -  may not start with a .
   // -  may not contain ..
 
+  // should be in FILESYSTEM encoding
+
   // may not be longer than 128 chars
 
   // iff allow_dupes is FALSE then we disallow the name of any existing set (has a subdirectory in the working directory)

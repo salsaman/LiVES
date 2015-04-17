@@ -49,7 +49,7 @@ POSSIBILITY OF SUCH DAMAGES.
 // - Salsaman
 
 
-// note: preferred coding style is: astyle --style=java -H -Y -s2 -U -k3 -W3 -xC140 -xL 
+// note: preferred coding style is: astyle --style=java -H -Y -s2 -U -k3 -W3 -xC140 -xL
 
 #ifndef HAS_LIVES_MAIN_H
 #define HAS_LIVES_MAIN_H

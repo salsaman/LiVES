@@ -22,7 +22,7 @@
 ///////////////////////////////////////////////////////////////////
 
 static int num_versions=1; // number of different weed api versions supported
-static int api_versions[]={131}; // array of weed api versions supported in plugin, in order of preference (most preferred first)
+static int api_versions[]= {131}; // array of weed api versions supported in plugin, in order of preference (most preferred first)
 
 static int package_version=1; // version of this package
 
@@ -54,7 +54,7 @@ typedef struct {
 
 #define NGAUSS 4
 
-static double drand (double max) {
+static double drand(double max) {
   double denom=(double)(2ul<<30)/max;
   double num=(double)lrand48();
   return (double)(num/denom);
@@ -95,9 +95,9 @@ int nnprog_init(weed_plant_t *inst) {
 
   seed_rand();
 
-  for (i=0;i<MAXNODES*2;i++) {
+  for (i=0; i<MAXNODES*2; i++) {
     if (i<MAXNODES) sdata->constvals[i]=drand(2.)-1.;
-    for (j=0;j<MAXNODES;j++) {
+    for (j=0; j<MAXNODES; j++) {
       sdata->vals[i*MAXNODES+j]=drand(2.)-1.;
     }
   }
@@ -109,7 +109,7 @@ int nnprog_init(weed_plant_t *inst) {
 
 
 
-int nnprog_process (weed_plant_t *inst, weed_timecode_t timestamp) {
+int nnprog_process(weed_plant_t *inst, weed_timecode_t timestamp) {
   int error;
   weed_plant_t **in_params=weed_get_plantptr_array(inst,"in_parameters",&error);
   weed_plant_t **out_params=weed_get_plantptr_array(inst,"out_parameters",&error);
@@ -134,33 +134,33 @@ int nnprog_process (weed_plant_t *inst, weed_timecode_t timestamp) {
   weed_free(in_params);
 
   // adjust values according to fitness
-  
-  for (i=0;i<hnodes+outnodes;i++) {
+
+  for (i=0; i<hnodes+outnodes; i++) {
     if (i<MAXNODES) {
       rval=0.;
-      for (z=0;z<NGAUSS;z++) {
-	rval+=(drand(2.)-1.)*fit;
+      for (z=0; z<NGAUSS; z++) {
+        rval+=(drand(2.)-1.)*fit;
       }
 
       if (rval>0.)
-	sdata->constvals[i]+=(1.-sdata->constvals[i])*rval;
-      else 
-	sdata->constvals[i]+=(1.+sdata->constvals[i])*rval;
+        sdata->constvals[i]+=(1.-sdata->constvals[i])*rval;
+      else
+        sdata->constvals[i]+=(1.+sdata->constvals[i])*rval;
 
       if (sdata->constvals[i]<-1.) sdata->constvals[i]=-1.;
       if (sdata->constvals[i]>1.) sdata->constvals[i]=1.;
     }
-    for (j=0;j<MAXNODES;j++) {
+    for (j=0; j<MAXNODES; j++) {
 
       rval=0.;
-      for (z=0;z<NGAUSS;z++) {
-	rval+=(drand(2.)-1.)*fit;
+      for (z=0; z<NGAUSS; z++) {
+        rval+=(drand(2.)-1.)*fit;
       }
 
       if (rval>0.)
-	sdata->vals[idx]+=(1.-sdata->vals[idx])*rval;
-      else 
-	sdata->vals[idx]+=(1.+sdata->vals[idx])*rval;
+        sdata->vals[idx]+=(1.-sdata->vals[idx])*rval;
+      else
+        sdata->vals[idx]+=(1.+sdata->vals[idx])*rval;
 
       if (sdata->vals[idx]<-1.) sdata->vals[idx]=-1.;
       if (sdata->vals[idx]>1.) sdata->vals[idx]=1.;
@@ -168,14 +168,14 @@ int nnprog_process (weed_plant_t *inst, weed_timecode_t timestamp) {
       idx++;
     }
   }
-  
-  
-  // create strings for hidden nodes (store values) 
-  
-  for (i=0;i<hnodes;i++) {
+
+
+  // create strings for hidden nodes (store values)
+
+  for (i=0; i<hnodes; i++) {
     snprintf(tmp,MAXSTRLEN,"s[%d]=%f",i,sdata->constvals[i]);
     ptr=tmp+strlen(tmp);
-    for (j=0;j<innodes;j++) {
+    for (j=0; j<innodes; j++) {
       snprintf(ptr,MAXSTRLEN,"+%f*i[%d]",sdata->vals[i*MAXNODES+j],j);
       ptr=tmp+strlen(tmp);
     }
@@ -184,12 +184,12 @@ int nnprog_process (weed_plant_t *inst, weed_timecode_t timestamp) {
 
   k=i;
 
-  // create strings for output nodes (store values) 
+  // create strings for output nodes (store values)
 
-  for (i=0;i<outnodes;i++) {
+  for (i=0; i<outnodes; i++) {
     snprintf(tmp,MAXSTRLEN,"o[%d]=",i);
     ptr=tmp+strlen(tmp);
-    for (j=0;j<hnodes;j++) {
+    for (j=0; j<hnodes; j++) {
       snprintf(ptr,MAXSTRLEN,"+%f*s[%d]",sdata->vals[(k+i)*MAXNODES+j],j);
       ptr=tmp+strlen(tmp);
     }
@@ -197,7 +197,7 @@ int nnprog_process (weed_plant_t *inst, weed_timecode_t timestamp) {
   }
 
 
-  for (i=0;i<hnodes+outnodes;i++) {
+  for (i=0; i<hnodes+outnodes; i++) {
     weed_set_string_value(out_params[i],"value",strings[i]);
 #ifdef DEBUG
     if (strlen(strings[i])) printf("eqn %d: %s\n",i,strings[i]);
@@ -227,20 +227,20 @@ int nnprog_deinit(weed_plant_t *inst) {
 
 
 
-weed_plant_t *weed_setup (weed_bootstrap_f weed_boot) {
+weed_plant_t *weed_setup(weed_bootstrap_f weed_boot) {
   weed_plant_t *plugin_info=weed_plugin_info_init(weed_boot,num_versions,api_versions);
 
   if (plugin_info!=NULL) {
     weed_plant_t *filter_class,*gui;
 
-    weed_plant_t *in_params[]={weed_float_init("fitness","_Fitness",0.,0.,1.),weed_integer_init("innodes","Number of _Input Nodes",1,1,256),weed_integer_init("outnodes","Number of _Output Nodes",1,1,128),weed_integer_init("hnodes","Number of _Hidden Nodes",1,1,128),NULL};
+    weed_plant_t *in_params[]= {weed_float_init("fitness","_Fitness",0.,0.,1.),weed_integer_init("innodes","Number of _Input Nodes",1,1,256),weed_integer_init("outnodes","Number of _Output Nodes",1,1,128),weed_integer_init("hnodes","Number of _Hidden Nodes",1,1,128),NULL};
     weed_plant_t *out_params[MAXNODES*2+1];
 
     register int i;
 
     char name[256];
 
-    for (i=0;i<MAXNODES*2;i++) {
+    for (i=0; i<MAXNODES*2; i++) {
       snprintf(name,256,"Equation%03d",i);
       out_params[i]=weed_out_param_text_init(name,"");
     }
@@ -248,15 +248,15 @@ weed_plant_t *weed_setup (weed_bootstrap_f weed_boot) {
     out_params[i]=NULL;
 
     filter_class=weed_filter_class_init("nn_programmer","salsaman",1,0,&nnprog_init,&nnprog_process,
-					&nnprog_deinit,NULL,NULL,in_params,out_params);
+                                        &nnprog_deinit,NULL,NULL,in_params,out_params);
 
     gui=weed_filter_class_get_gui(filter_class);
     weed_set_boolean_value(gui,"hidden",WEED_TRUE);
 
-    for (i=1;i<4;i++) 
+    for (i=1; i<4; i++)
       weed_set_int_value(in_params[i],"flags",WEED_PARAMETER_REINIT_ON_VALUE_CHANGE);
 
-    weed_plugin_info_add_filter_class (plugin_info,filter_class);
+    weed_plugin_info_add_filter_class(plugin_info,filter_class);
 
     weed_set_int_value(plugin_info,"version",package_version);
   }

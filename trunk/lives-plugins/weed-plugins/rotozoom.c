@@ -20,7 +20,7 @@
 ///////////////////////////////////////////////////////////////////
 
 static int num_versions=2; // number of different weed api versions supported
-static int api_versions[]={131,100}; // array of weed api versions supported in plugin, in order of preference (most preferred first)
+static int api_versions[]= {131,100}; // array of weed api versions supported in plugin, in order of preference (most preferred first)
 
 static int package_version=1; // version of this package
 
@@ -44,9 +44,9 @@ static int roto2[256];
 
 /////////////////////////////////////////////////////////////
 
-static void draw_tile(int stepx, int stepy, int zoom, unsigned char *src, unsigned char *dst, 
-		      int video_width, int irowstride, int orowstride, int video_height,
-		      int dheight, int offset, int psize) {
+static void draw_tile(int stepx, int stepy, int zoom, unsigned char *src, unsigned char *dst,
+                      int video_width, int irowstride, int orowstride, int video_height,
+                      int dheight, int offset, int psize) {
   int x, y, xd, yd, a, b, sx=0, sy=0;
 
   int origin;
@@ -58,7 +58,7 @@ static void draw_tile(int stepx, int stepy, int zoom, unsigned char *src, unsign
 
   xd = (stepx * zoom) >> 12;
   yd = (stepy * zoom) >> 12;
-  
+
   sx = -yd*offset;
   sy = xd*offset;
 
@@ -75,7 +75,8 @@ static void draw_tile(int stepx, int stepy, int zoom, unsigned char *src, unsign
    */
 
   for (j = 0; j < dheight; j++) {
-    x = sx; y = sy;   
+    x = sx;
+    y = sy;
     for (i = 0; i < video_width; i++) {
       a=((x>>12&255)*video_width)>>8;
       b=((y>>12&255)*video_height)>>8;
@@ -86,17 +87,19 @@ static void draw_tile(int stepx, int stepy, int zoom, unsigned char *src, unsign
 
       weed_memcpy(dst,&src[origin],psize);
       dst+=psize;
-      x += xd; y += yd;
+      x += xd;
+      y += yd;
     }
     dst+=orowstride;
-    sx -= yd; sy += xd;
+    sx -= yd;
+    sy += xd;
   }
 }
 
 //////////////////////////////////////////////////////////
 
 
-int rotozoom_init (weed_plant_t *inst) {
+int rotozoom_init(weed_plant_t *inst) {
   weed_set_int_value(inst,"plugin_path",0);
   weed_set_int_value(inst,"plugin_zpath",0);
 
@@ -104,12 +107,12 @@ int rotozoom_init (weed_plant_t *inst) {
 }
 
 
-int rotozoom_deinit (weed_plant_t *inst) {
+int rotozoom_deinit(weed_plant_t *inst) {
   return WEED_NO_ERROR;
 }
 
 
-int rotozoom_process (weed_plant_t *inst, weed_timecode_t timestamp) {
+int rotozoom_process(weed_plant_t *inst, weed_timecode_t timestamp) {
   unsigned char *src,*dst;
   int error;
   weed_plant_t *in_channel,*out_channel;
@@ -143,13 +146,11 @@ int rotozoom_process (weed_plant_t *inst, weed_timecode_t timestamp) {
     offset=weed_get_int_value(out_channel,"offset",&error);
     dheight=weed_get_int_value(out_channel,"height",&error);
     dst+=offset*orowstride;
-  }
-  else dheight=height;
+  } else dheight=height;
 
   if (autozoom==WEED_TRUE) {
     weed_set_int_value(inst,"plugin_zpath",(zpath + 1) & 255);
-  }
-  else {
+  } else {
     zpath=weed_get_int_value(in_params[0],"value",&error);
     weed_set_int_value(inst,"plugin_zpath",zpath);
   }
@@ -174,26 +175,27 @@ int rotozoom_process (weed_plant_t *inst, weed_timecode_t timestamp) {
 
 
 
-weed_plant_t *weed_setup (weed_bootstrap_f weed_boot) {
+weed_plant_t *weed_setup(weed_bootstrap_f weed_boot) {
   weed_plant_t *plugin_info=weed_plugin_info_init(weed_boot,num_versions,api_versions);
   if (plugin_info!=NULL) {
     int i;
-    int palette_list[]={WEED_PALETTE_RGB24,WEED_PALETTE_BGR24,WEED_PALETTE_RGBA32,WEED_PALETTE_BGRA32,
-			WEED_PALETTE_ARGB32,WEED_PALETTE_UYVY,WEED_PALETTE_YUYV,WEED_PALETTE_YUV888,WEED_PALETTE_YUVA8888,WEED_PALETTE_END};
-    
-    weed_plant_t *in_chantmpls[]={weed_channel_template_init("in channel 0",0,palette_list),NULL};
-    weed_plant_t *out_chantmpls[]={weed_channel_template_init("out channel 0",0,palette_list),NULL};
-    weed_plant_t *in_params[]={weed_integer_init("zoom","_Zoom value",128,0,255),weed_switch_init("autozoom","_Auto zoom",WEED_TRUE),NULL};
+    int palette_list[]= {WEED_PALETTE_RGB24,WEED_PALETTE_BGR24,WEED_PALETTE_RGBA32,WEED_PALETTE_BGRA32,
+                         WEED_PALETTE_ARGB32,WEED_PALETTE_UYVY,WEED_PALETTE_YUYV,WEED_PALETTE_YUV888,WEED_PALETTE_YUVA8888,WEED_PALETTE_END
+                        };
+
+    weed_plant_t *in_chantmpls[]= {weed_channel_template_init("in channel 0",0,palette_list),NULL};
+    weed_plant_t *out_chantmpls[]= {weed_channel_template_init("out channel 0",0,palette_list),NULL};
+    weed_plant_t *in_params[]= {weed_integer_init("zoom","_Zoom value",128,0,255),weed_switch_init("autozoom","_Auto zoom",WEED_TRUE),NULL};
     weed_plant_t *filter_class=weed_filter_class_init("rotozoom","effectTV",1,WEED_FILTER_HINT_MAY_THREAD,rotozoom_init,
-						      rotozoom_process,rotozoom_deinit,in_chantmpls,out_chantmpls,in_params,NULL);
-    
-    weed_plugin_info_add_filter_class (plugin_info,filter_class);
-    
+                               rotozoom_process,rotozoom_deinit,in_chantmpls,out_chantmpls,in_params,NULL);
+
+    weed_plugin_info_add_filter_class(plugin_info,filter_class);
+
     weed_set_int_value(plugin_info,"version",package_version);
-    
+
     // static data for all instances
     for (i = 0; i < 256; i++) {
-      float rad =  (float)i * 1.41176 * 0.0174532;
+      float rad = (float)i * 1.41176 * 0.0174532;
       float c = sin(rad);
       roto[i] = (c + 0.8) * 4096.0;
       roto2[i] = (2.0 * c) * 4096.0;

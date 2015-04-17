@@ -59,7 +59,7 @@ static void lives_avcodec_unlock(void) {
 
 
 static int stream_peek(int fd, unsigned char *str, size_t len) {
-  off_t cpos=lseek(fd,0,SEEK_CUR); // get current posn 
+  off_t cpos=lseek(fd,0,SEEK_CUR); // get current posn
   int rv= pread(fd,str,len,cpos); // read len bytes without changing cpos
 
   if (rv==-1) {
@@ -158,63 +158,62 @@ static int64_t get_real_last_frame(lives_clip_data_t *cdata, boolean allow_longe
 #ifdef DEBUG_RLF
     fprintf(stderr,"will check frame %ld of %ld...",lframe+1,cdata->nframes);
 #endif
-    
+
     timex=get_current_ticks();
     if (!get_frame(cdata,lframe,NULL,0,NULL)) {
       timex=get_current_ticks()-timex;
 
       if (timex>no_seek_limit) {
-	//#ifdef DEBUG_RLF
-	fprintf(stderr,"avcodec_decoder: seek was %ld, longer than limit of %d; giving up.\n",timex,NO_SEEK_LIMIT);
-	//#endif
-	return -1;
+        //#ifdef DEBUG_RLF
+        fprintf(stderr,"avcodec_decoder: seek was %ld, longer than limit of %d; giving up.\n",timex,NO_SEEK_LIMIT);
+        //#endif
+        return -1;
       }
 
 #ifdef DEBUG_RLF
       fprintf(stderr,"no (%ld)\n",timex);
 #endif
       if (diff==1) {
-	tottime/=nseeks;
+        tottime/=nseeks;
 #ifdef DEBUG_RLF
-	fprintf(stderr,"av positive seek was %ld\n",tottime);
+        fprintf(stderr,"av positive seek was %ld\n",tottime);
 #endif
-	return lframe-1;
+        return lframe-1;
       }
       if (diff<0) diff*=2;
       else if (diff==0) diff=-1;
       else diff/=2;
       lframe=olframe+diff;
       if (lframe<0) {
-	diff=olframe;
-	lframe=0;
-	if (diff==0) diff=1;
+        diff=olframe;
+        lframe=0;
+        if (diff==0) diff=1;
       }
-    }
-    else {
+    } else {
       timex=get_current_ticks()-timex;
 
       if (timex>NO_SEEK_LIMIT) {
-	//#ifdef DEBUG_RLF
-	fprintf(stderr,"avcodec_decoder: seek was %ld, longer than limit of %d; giving up.\n",timex,NO_SEEK_LIMIT);
-	//#endif
-	return -1;
+        //#ifdef DEBUG_RLF
+        fprintf(stderr,"avcodec_decoder: seek was %ld, longer than limit of %d; giving up.\n",timex,NO_SEEK_LIMIT);
+        //#endif
+        return -1;
       }
 
       if (timex>FAST_SEEK_LIMIT)
-	cdata->seek_flag=LIVES_SEEK_NEEDS_CALCULATION;
+        cdata->seek_flag=LIVES_SEEK_NEEDS_CALCULATION;
 
       tottime+=timex;
 #ifdef DEBUG_RLF
       fprintf(stderr,"yes ! (%ld)\n",timex);
 #endif
       if (diff<2&&diff>-4) {
-	tottime/=nseeks;
+        tottime/=nseeks;
 #ifdef DEBUG_RLF
-	fprintf(stderr,"av seek was %ld\n",tottime);
+        fprintf(stderr,"av seek was %ld\n",tottime);
 #endif
-	if (tottime>FAST_SEEK_LIMIT)
-	  cdata->seek_flag|=LIVES_SEEK_NEEDS_CALCULATION;
-	return lframe;
+        if (tottime>FAST_SEEK_LIMIT)
+          cdata->seek_flag|=LIVES_SEEK_NEEDS_CALCULATION;
+        return lframe;
       }
       diff/=2;
       if (diff<0) diff=-diff/2;
@@ -256,47 +255,47 @@ static boolean attach_stream(lives_clip_data_t *cdata, boolean isclone) {
   }
 
   if (isclone) goto skip_probe;
-  
+
   pd.filename=cdata->URI;
 
   pd.buf=calloc(128,32);
 
   if ((pd.buf_size=stream_peek(priv->fd,pd.buf,2261))<2261) {
-    fprintf(stderr, "couldn't peek stream %d\n",pd.buf_size );
+    fprintf(stderr, "couldn't peek stream %d\n",pd.buf_size);
     return FALSE;
   }
 
-  if( !( fmt = av_probe_input_format( &pd, TRUE ) ) ) {
-    fprintf(stderr, "couldn't guess format\n" );
+  if (!(fmt = av_probe_input_format(&pd, TRUE))) {
+    fprintf(stderr, "couldn't guess format\n");
     return FALSE;
   }
 
   free(pd.buf);
 
-  if (!strcmp( fmt->name, "redir" ) ||
-      !strcmp( fmt->name, "sdp" ) ) {
+  if (!strcmp(fmt->name, "redir") ||
+      !strcmp(fmt->name, "sdp")) {
     return FALSE;
   }
 
   /* Don't trigger false alarms on bin files */
-  if( ! strcmp( fmt->name, "psxstr" ) ) {
+  if (! strcmp(fmt->name, "psxstr")) {
     int i_len;
-    i_len = strlen( cdata->URI );
-    if( i_len < 4 ) return FALSE;
-      
-    if( strcasecmp( &cdata->URI[i_len - 4], ".str" ) &&
-	strcasecmp( &cdata->URI[i_len - 4], ".xai" ) &&
-	strcasecmp( &cdata->URI[i_len - 3], ".xa" ) ) {
+    i_len = strlen(cdata->URI);
+    if (i_len < 4) return FALSE;
+
+    if (strcasecmp(&cdata->URI[i_len - 4], ".str") &&
+        strcasecmp(&cdata->URI[i_len - 4], ".xai") &&
+        strcasecmp(&cdata->URI[i_len - 3], ".xa")) {
       return FALSE;
     }
   }
-  
-  fprintf( stderr, "avformat detected format: %s\n", fmt->name );
+
+  fprintf(stderr, "avformat detected format: %s\n", fmt->name);
 
   priv->fmt=fmt;
   priv->inited=TRUE;
 
- skip_probe:
+skip_probe:
 
   priv->ic=NULL;
 
@@ -304,21 +303,21 @@ static boolean attach_stream(lives_clip_data_t *cdata, boolean isclone) {
 
   priv->last_frame=-1;
   priv->black_fill=FALSE;
-  
+
   /* Open it */
-  if( avformat_open_input( &priv->ic, cdata->URI, priv->fmt, NULL ) ) {
-    fprintf( stderr, "avformat_open_input failed\n" );
+  if (avformat_open_input(&priv->ic, cdata->URI, priv->fmt, NULL)) {
+    fprintf(stderr, "avformat_open_input failed\n");
     return FALSE;
   }
-  
+
   if (!priv->ic->pb->seekable) {
-    fprintf( stderr, "avformat stream non-seekable\n" );
+    fprintf(stderr, "avformat stream non-seekable\n");
     return FALSE;
   }
 
   lives_avcodec_lock(); /* avformat calls avcodec behind our back!!! */
-  if( avformat_find_stream_info( priv->ic, NULL ) < 0 ) {
-    fprintf( stderr, "avformat_find_stream_info failed\n" );
+  if (avformat_find_stream_info(priv->ic, NULL) < 0) {
+    fprintf(stderr, "avformat_find_stream_info failed\n");
   }
   lives_avcodec_unlock();
 
@@ -327,7 +326,7 @@ static boolean attach_stream(lives_clip_data_t *cdata, boolean isclone) {
     goto skip_init;
   }
 
-  
+
   // fill cdata
 
   cdata->nclips=1;
@@ -355,23 +354,23 @@ static boolean attach_stream(lives_clip_data_t *cdata, boolean isclone) {
   cdata->asigned=FALSE;
   cdata->ainterleaf=TRUE;
 
-  for (i = 0; i < priv->ic->nb_streams; i++ ) {
+  for (i = 0; i < priv->ic->nb_streams; i++) {
 
-  skip_init:
+skip_init:
     s = priv->ic->streams[i];
     cc = s->codec;
- 
+
     // vlc_fourcc_t fcc;
     //const char *psz_type = "unknown";
 
     /*      if( !GetVlcFourcc( cc->codec_id, NULL, &fcc, NULL ) )
-	    fcc = VLC_FOURCC( 'u', 'n', 'd', 'f' );*/
+      fcc = VLC_FOURCC( 'u', 'n', 'd', 'f' );*/
 
-    switch( cc->codec_type ) {
+    switch (cc->codec_type) {
     case AVMEDIA_TYPE_AUDIO:
       if (priv->astream!=-1) {
-	fprintf(stderr, "Warning - got multiple audio streams\n");
-	break;
+        fprintf(stderr, "Warning - got multiple audio streams\n");
+        break;
       }
 
       cdata->achans = cc->channels;
@@ -394,8 +393,8 @@ static boolean attach_stream(lives_clip_data_t *cdata, boolean isclone) {
     case AVMEDIA_TYPE_VIDEO:
 
       if (!isclone && priv->vstream!=-1) {
-	fprintf(stderr, "Warning - got multiple video streams\n");
-	break;
+        fprintf(stderr, "Warning - got multiple video streams\n");
+        break;
       }
 
       vdecoder=avcodec_find_decoder(cc->codec_id);
@@ -408,12 +407,12 @@ static boolean attach_stream(lives_clip_data_t *cdata, boolean isclone) {
 
 
       /*if( cc->palctrl )
-	{
-	fmt.video.p_palette = malloc( sizeof(video_palette_t) );
-	*fmt.video.p_palette = *(video_palette_t *)cc->palctrl;
-	}*/
-	    
-	    
+      {
+      fmt.video.p_palette = malloc( sizeof(video_palette_t) );
+      *fmt.video.p_palette = *(video_palette_t *)cc->palctrl;
+      }*/
+
+
       cdata->YUV_subspace=WEED_YUV_SUBSPACE_YCBCR;
       cdata->YUV_sampling=WEED_YUV_SAMPLING_DEFAULT;
 
@@ -428,32 +427,33 @@ static boolean attach_stream(lives_clip_data_t *cdata, boolean isclone) {
       priv->fps_avg=FALSE;
 
       if (cdata->fps==0.) {
-	cdata->fps=s->time_base.den/s->time_base.num;
-	if (cdata->fps>=1000.||cdata->fps==0.) {
-	  cdata->fps=(float)s->avg_frame_rate.num/(float)s->avg_frame_rate.den;
-	  priv->fps_avg=TRUE;
-	  if (isnan(cdata->fps)) {
-	    cdata->fps=s->time_base.den/s->time_base.num;
-	    priv->fps_avg=FALSE;
-	  }
-	}
+        cdata->fps=s->time_base.den/s->time_base.num;
+        if (cdata->fps>=1000.||cdata->fps==0.) {
+          cdata->fps=(float)s->avg_frame_rate.num/(float)s->avg_frame_rate.den;
+          priv->fps_avg=TRUE;
+          if (isnan(cdata->fps)) {
+            cdata->fps=s->time_base.den/s->time_base.num;
+            priv->fps_avg=FALSE;
+          }
+        }
       }
 
       priv->ctx=cc;
-	    
+
       if (priv->ctx->ticks_per_frame==2) {
-	// needs checking
-	cdata->interlace=LIVES_INTERLACE_BOTTOM_FIRST;
+        // needs checking
+        cdata->interlace=LIVES_INTERLACE_BOTTOM_FIRST;
       }
 
 #ifdef DEBUG
-      fprintf(stderr,"fps is %.4f %d %d %d %d %d\n",cdata->fps,s->time_base.den,s->time_base.num,cc->time_base.den,cc->time_base.num,priv->ctx->ticks_per_frame);
+      fprintf(stderr,"fps is %.4f %d %d %d %d %d\n",cdata->fps,s->time_base.den,s->time_base.num,cc->time_base.den,cc->time_base.num,
+              priv->ctx->ticks_per_frame);
 #endif
 
       if (cdata->nframes==0) {
-	if (priv->ic->duration!=(int64_t)AV_NOPTS_VALUE)
-	  cdata->nframes=((double)priv->ic->duration/(double)AV_TIME_BASE * cdata->fps -  .5);
-	if ((cdata->nframes==0||cdata->fps==1000.)&&s->nb_frames>1) cdata->nframes=s->nb_frames;
+        if (priv->ic->duration!=(int64_t)AV_NOPTS_VALUE)
+          cdata->nframes=((double)priv->ic->duration/(double)AV_TIME_BASE * cdata->fps -  .5);
+        if ((cdata->nframes==0||cdata->fps==1000.)&&s->nb_frames>1) cdata->nframes=s->nb_frames;
       }
 
       priv->vstream=i;
@@ -464,152 +464,152 @@ static boolean attach_stream(lives_clip_data_t *cdata, boolean isclone) {
 
 
 
-		if( strncmp( p_sys->ic->iformat->name, "matroska", 8 ) == 0 &&
+      if( strncmp( p_sys->ic->iformat->name, "matroska", 8 ) == 0 &&
                 cc->codec_id == CODEC_ID_DVD_SUBTITLE &&
                 cc->extradata != NULL &&
                 cc->extradata_size > 0 )
-		{
+      {
                 char *psz_start;
                 char *psz_buf = malloc( cc->extradata_size + 1);
                 if( psz_buf != NULL )
                 {
-		memcpy( psz_buf, cc->extradata , cc->extradata_size );
-		psz_buf[cc->extradata_size] = '\0';
+      memcpy( psz_buf, cc->extradata , cc->extradata_size );
+      psz_buf[cc->extradata_size] = '\0';
 
-		psz_start = strstr( psz_buf, "size:" );
-		if( psz_start &&
-		vobsub_size_parse( psz_start,
-		&fmt.subs.spu.i_original_frame_width,
-		&fmt.subs.spu.i_original_frame_height ) == VLC_SUCCESS )
-		{
-		msg_Dbg( p_demux, "original frame size: %dx%d",
-		fmt.subs.spu.i_original_frame_width,
-		fmt.subs.spu.i_original_frame_height );
-		}
-		else
-		{
-		msg_Warn( p_demux, "reading original frame size failed" );
-		}
+      psz_start = strstr( psz_buf, "size:" );
+      if( psz_start &&
+      vobsub_size_parse( psz_start,
+      &fmt.subs.spu.i_original_frame_width,
+      &fmt.subs.spu.i_original_frame_height ) == VLC_SUCCESS )
+      {
+      msg_Dbg( p_demux, "original frame size: %dx%d",
+      fmt.subs.spu.i_original_frame_width,
+      fmt.subs.spu.i_original_frame_height );
+      }
+      else
+      {
+      msg_Warn( p_demux, "reading original frame size failed" );
+      }
 
-		psz_start = strstr( psz_buf, "palette:" );
-		if( psz_start &&
-		vobsub_palette_parse( psz_start, &fmt.subs.spu.palette[1] ) == VLC_SUCCESS )
-		{
-		fmt.subs.spu.palette[0] =  0xBeef;
-		msg_Dbg( p_demux, "vobsub palette read" );
-		}
-		else
-		{
-		msg_Warn( p_demux, "reading original palette failed" );
-		}
-		free( psz_buf );
+      psz_start = strstr( psz_buf, "palette:" );
+      if( psz_start &&
+      vobsub_palette_parse( psz_start, &fmt.subs.spu.palette[1] ) == VLC_SUCCESS )
+      {
+      fmt.subs.spu.palette[0] =  0xBeef;
+      msg_Dbg( p_demux, "vobsub palette read" );
+      }
+      else
+      {
+      msg_Warn( p_demux, "reading original palette failed" );
+      }
+      free( psz_buf );
                 }
-		}
+      }
 
-		psz_type = "subtitle";
-		break;
+      psz_type = "subtitle";
+      break;
       */
 
       //        default:
 
       /*
-	#ifdef HAVE_FFMPEG_CODEC_ATTACHMENT
-	if( cc->codec_type == CODEC_TYPE_ATTACHMENT )
-	{
-	input_attachment_t *p_attachment;
-	psz_type = "attachment";
-	if( cc->codec_id == CODEC_ID_TTF )
-	{
-	p_attachment = vlc_input_attachment_New( s->filename, "application/x-truetype-font", NULL,
-	cc->extradata, (int)cc->extradata_size );
-	TAB_APPEND( p_sys->i_attachments, p_sys->attachments, p_attachment );
-	}
-	else msg_Warn( p_demux, "unsupported attachment type in ffmpeg demux" );
-	}
-	break;
-	#endif
+      #ifdef HAVE_FFMPEG_CODEC_ATTACHMENT
+      if( cc->codec_type == CODEC_TYPE_ATTACHMENT )
+      {
+      input_attachment_t *p_attachment;
+      psz_type = "attachment";
+      if( cc->codec_id == CODEC_ID_TTF )
+      {
+      p_attachment = vlc_input_attachment_New( s->filename, "application/x-truetype-font", NULL,
+      cc->extradata, (int)cc->extradata_size );
+      TAB_APPEND( p_sys->i_attachments, p_sys->attachments, p_attachment );
+      }
+      else msg_Warn( p_demux, "unsupported attachment type in ffmpeg demux" );
+      }
+      break;
+      #endif
 
-	if( cc->codec_type == CODEC_TYPE_DATA )
-	psz_type = "data";
+      if( cc->codec_type == CODEC_TYPE_DATA )
+      psz_type = "data";
 
-	msg_Warn( p_demux, "unsupported track type in ffmpeg demux" );
-	break;
+      msg_Warn( p_demux, "unsupported track type in ffmpeg demux" );
+      break;
         }
         fmt.psz_language = strdup( s->language );
         if( s->disposition & AV_DISPOSITION_DEFAULT )
-	fmt.i_priority = 1000;
+      fmt.i_priority = 1000;
 
-	#ifdef HAVE_FFMPEG_CODEC_ATTACHMENT
+      #ifdef HAVE_FFMPEG_CODEC_ATTACHMENT
         if( cc->codec_type != CODEC_TYPE_ATTACHMENT )
-	#endif
+      #endif
         {
-	const bool    b_ogg = !strcmp( p_sys->fmt->name, "ogg" );
-	const uint8_t *p_extra = cc->extradata;
-	unsigned      i_extra  = cc->extradata_size;
+      const bool    b_ogg = !strcmp( p_sys->fmt->name, "ogg" );
+      const uint8_t *p_extra = cc->extradata;
+      unsigned      i_extra  = cc->extradata_size;
 
-	if( cc->codec_id == CODEC_ID_THEORA && b_ogg )
-	{
-	unsigned pi_size[3];
-	void     *pp_data[3];
-	unsigned i_count;
-	for( i_count = 0; i_count < 3; i_count++ )
-	{
-	if( i_extra < 2 )
-	break;
-	pi_size[i_count] = GetWBE( p_extra );
-	pp_data[i_count] = (uint8_t*)&p_extra[2];
-	if( i_extra < pi_size[i_count] + 2 )
-	break;
+      if( cc->codec_id == CODEC_ID_THEORA && b_ogg )
+      {
+      unsigned pi_size[3];
+      void     *pp_data[3];
+      unsigned i_count;
+      for( i_count = 0; i_count < 3; i_count++ )
+      {
+      if( i_extra < 2 )
+      break;
+      pi_size[i_count] = GetWBE( p_extra );
+      pp_data[i_count] = (uint8_t*)&p_extra[2];
+      if( i_extra < pi_size[i_count] + 2 )
+      break;
 
-	p_extra += 2 + pi_size[i_count];
-	i_extra -= 2 + pi_size[i_count];
-	}
-	if( i_count > 0 && xiph_PackHeaders( &fmt.i_extra, &fmt.p_extra,
-	pi_size, pp_data, i_count ) )
-	{
-	fmt.i_extra = 0;
-	fmt.p_extra = NULL;
-	}
-	}
-	else if( cc->codec_id == CODEC_ID_SPEEX && b_ogg )
-	{
-	uint8_t p_dummy_comment[] = {
-	0, 0, 0, 0,
-	0, 0, 0, 0,
-	};
-	unsigned pi_size[2];
-	void     *pp_data[2];
+      p_extra += 2 + pi_size[i_count];
+      i_extra -= 2 + pi_size[i_count];
+      }
+      if( i_count > 0 && xiph_PackHeaders( &fmt.i_extra, &fmt.p_extra,
+      pi_size, pp_data, i_count ) )
+      {
+      fmt.i_extra = 0;
+      fmt.p_extra = NULL;
+      }
+      }
+      else if( cc->codec_id == CODEC_ID_SPEEX && b_ogg )
+      {
+      uint8_t p_dummy_comment[] = {
+      0, 0, 0, 0,
+      0, 0, 0, 0,
+      };
+      unsigned pi_size[2];
+      void     *pp_data[2];
 
-	pi_size[0] = i_extra;
-	pp_data[0] = (uint8_t*)p_extra;
+      pi_size[0] = i_extra;
+      pp_data[0] = (uint8_t*)p_extra;
 
-	pi_size[1] = sizeof(p_dummy_comment);
-	pp_data[1] = p_dummy_comment;
+      pi_size[1] = sizeof(p_dummy_comment);
+      pp_data[1] = p_dummy_comment;
 
-	if( pi_size[0] > 0 && xiph_PackHeaders( &fmt.i_extra, &fmt.p_extra,
-	pi_size, pp_data, 2 ) )
-	{
-	fmt.i_extra = 0;
-	fmt.p_extra = NULL;
-	}
-	}
-	else if( cc->extradata_size > 0 )
-	{
-	fmt.p_extra = malloc( i_extra );
-	if( fmt.p_extra )
-	{
-	fmt.i_extra = i_extra;
-	memcpy( fmt.p_extra, p_extra, i_extra );
-	}
-	}
+      if( pi_size[0] > 0 && xiph_PackHeaders( &fmt.i_extra, &fmt.p_extra,
+      pi_size, pp_data, 2 ) )
+      {
+      fmt.i_extra = 0;
+      fmt.p_extra = NULL;
+      }
+      }
+      else if( cc->extradata_size > 0 )
+      {
+      fmt.p_extra = malloc( i_extra );
+      if( fmt.p_extra )
+      {
+      fmt.i_extra = i_extra;
+      memcpy( fmt.p_extra, p_extra, i_extra );
+      }
+      }
         }
         es = es_out_Add( p_demux->out, &fmt );
         if( s->disposition & AV_DISPOSITION_DEFAULT )
-	es_out_Control( p_demux->out, ES_OUT_SET_ES_DEFAULT, es );
+      es_out_Control( p_demux->out, ES_OUT_SET_ES_DEFAULT, es );
         es_format_Clean( &fmt );
 
         msg_Dbg( p_demux, "adding es: %s codec = %4.4s",
-	psz_type, (char*)&fcc );
+      psz_type, (char*)&fcc );
         TAB_APPEND( p_sys->i_tk, p_sys->tk, es );
       */
     default:
@@ -624,41 +624,41 @@ static boolean attach_stream(lives_clip_data_t *cdata, boolean isclone) {
   }
 
 
-  if( priv->ic->start_time != (int64_t)AV_NOPTS_VALUE )
+  if (priv->ic->start_time != (int64_t)AV_NOPTS_VALUE)
     i_start_time = priv->ic->start_time * 1000000 / AV_TIME_BASE;
 
 
 
 
-  fprintf( stderr, "AVFormat supported stream\n" );
-  fprintf( stderr, "    - format = %s (%s)\n",
-	   priv->fmt->name, priv->fmt->long_name );
-  fprintf( stderr, "    - start time = %"PRId64"\n", i_start_time );
-  fprintf( stderr, "    - duration = %"PRId64"\n",
-	   ( priv->ic->duration != (int64_t)AV_NOPTS_VALUE ) ?
-	   priv->ic->duration * 1000000 / AV_TIME_BASE : -1 );
+  fprintf(stderr, "AVFormat supported stream\n");
+  fprintf(stderr, "    - format = %s (%s)\n",
+          priv->fmt->name, priv->fmt->long_name);
+  fprintf(stderr, "    - start time = %"PRId64"\n", i_start_time);
+  fprintf(stderr, "    - duration = %"PRId64"\n",
+          (priv->ic->duration != (int64_t)AV_NOPTS_VALUE) ?
+          priv->ic->duration * 1000000 / AV_TIME_BASE : -1);
 
 
 
 #ifdef HAVE_FFMPEG_CHAPTERS
   /*    if( p_sys->ic->nb_chapters > 0 )
         p_sys->p_title = vlc_input_title_New();
-	for( i = 0; i < p_sys->ic->nb_chapters; i++ )
-	{
+  for( i = 0; i < p_sys->ic->nb_chapters; i++ )
+  {
         seekpoint_t *s = vlc_seekpoint_New();
 
         if( p_sys->ic->chapters[i]->title )
         {
-	s->psz_name = strdup( p_sys->ic->chapters[i]->title );
-	EnsureUTF8( s->psz_name );
-	msg_Dbg( p_demux, "    - chapter %d: %s", i, s->psz_name );
+  s->psz_name = strdup( p_sys->ic->chapters[i]->title );
+  EnsureUTF8( s->psz_name );
+  msg_Dbg( p_demux, "    - chapter %d: %s", i, s->psz_name );
         }
         s->i_time_offset = p_sys->ic->chapters[i]->start * 1000000 *
-	p_sys->ic->chapters[i]->time_base.num /
-	p_sys->ic->chapters[i]->time_base.den -
-	(i_start_time != -1 ? i_start_time : 0 );
+  p_sys->ic->chapters[i]->time_base.num /
+  p_sys->ic->chapters[i]->time_base.den -
+  (i_start_time != -1 ? i_start_time : 0 );
         TAB_APPEND( p_sys->p_title->i_seekpoint, p_sys->p_title->seekpoint, s );
-	}*/
+  }*/
 #endif
 
 
@@ -667,7 +667,7 @@ static boolean attach_stream(lives_clip_data_t *cdata, boolean isclone) {
 
 
 
-static void detach_stream (lives_clip_data_t *cdata) {
+static void detach_stream(lives_clip_data_t *cdata) {
   // close the file, free the decoder
   lives_av_priv_t *priv=cdata->priv;
   close(priv->fd);
@@ -712,16 +712,16 @@ const char *version(void) {
 
 
 
-static lives_clip_data_t *init_cdata (void) {
+static lives_clip_data_t *init_cdata(void) {
   lives_av_priv_t *priv;
   lives_clip_data_t *cdata=(lives_clip_data_t *)malloc(sizeof(lives_clip_data_t));
-  
+
   cdata->palettes=malloc(2*sizeof(int));
-  
+
   cdata->palettes[1]=WEED_PALETTE_END;
-  
+
   cdata->URI=NULL;
-  
+
   cdata->priv=priv=malloc(sizeof(lives_av_priv_t));
 
   priv->fd=-1;
@@ -816,7 +816,7 @@ static lives_clip_data_t *avf_clone(lives_clip_data_t *cdata) {
     dpriv->last_frame=1000000000;
   }
 
- dpriv->pFrame=NULL;
+  dpriv->pFrame=NULL;
 
   return clone;
 }
@@ -871,14 +871,15 @@ lives_clip_data_t *get_clip_data(const char *URI, lives_clip_data_t *cdata) {
     priv->pFrame=NULL;
   }
 
- rescan:
+rescan:
   priv=cdata->priv;
 
   real_frames=get_real_last_frame(cdata,priv->longer_seek)+1;
 
   if (cdata->nframes>100&&real_frames<cdata->nframes*SEEK_SUCCESS_MIN_RATIO) {
-    fprintf(stderr,"avformat_decoder: ERROR - could only seek to %ld frames out of %ld\navformat_decoder: I will pass on this file as it may be broken.\n",
-	    real_frames,cdata->nframes);
+    fprintf(stderr,
+            "avformat_decoder: ERROR - could only seek to %ld frames out of %ld\navformat_decoder: I will pass on this file as it may be broken.\n",
+            real_frames,cdata->nframes);
     detach_stream(cdata);
     free(cdata->URI);
     cdata->URI=NULL;
@@ -914,7 +915,7 @@ static size_t write_black_pixel(unsigned char *idst, int pal, int npixels, int y
   unsigned char *dst=idst;
   register int i;
 
-  for (i=0;i<npixels;i++) {
+  for (i=0; i<npixels; i++) {
     switch (pal) {
     case WEED_PALETTE_RGBA32:
     case WEED_PALETTE_BGRA32:
@@ -952,7 +953,8 @@ static size_t write_black_pixel(unsigned char *idst, int pal, int npixels, int y
       dst[0]=dst[3]=128;
       dst[1]=dst[2]=dst[4]=dst[5]=y_black;
       dst+=6;
-    default: break;
+    default:
+      break;
     }
   }
   return idst-dst;
@@ -979,7 +981,7 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstride
   int64_t timex;
 
   unsigned char *dst, *src;
-  unsigned char black[4]={0,0,0,255};
+  unsigned char black[4]= {0,0,0,255};
 
   boolean hit_target=FALSE;
 
@@ -1000,39 +1002,38 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstride
   timex=get_current_ticks();
 
   if (pixel_data!=NULL) {
-    
+
     // calc frame width and height, including any border
-    
+
     if (pal==WEED_PALETTE_YUV420P||pal==WEED_PALETTE_YVU420P||pal==WEED_PALETTE_YUV422P||pal==WEED_PALETTE_YUV444P) {
       nplanes=3;
       black[0]=y_black;
       black[1]=black[2]=128;
-    }
-    else if (pal==WEED_PALETTE_YUVA4444P) {
+    } else if (pal==WEED_PALETTE_YUVA4444P) {
       nplanes=4;
       black[0]=y_black;
       black[1]=black[2]=128;
       black[3]=255;
     }
-    
+
     if (pal==WEED_PALETTE_RGB24||pal==WEED_PALETTE_BGR24) psize=3;
-    
+
     if (pal==WEED_PALETTE_RGBA32||pal==WEED_PALETTE_BGRA32||pal==WEED_PALETTE_ARGB32||pal==WEED_PALETTE_UYVY8888||
-	pal==WEED_PALETTE_YUYV8888||pal==WEED_PALETTE_YUV888||pal==WEED_PALETTE_YUVA8888) psize=4;
-    
+        pal==WEED_PALETTE_YUYV8888||pal==WEED_PALETTE_YUV888||pal==WEED_PALETTE_YUVA8888) psize=4;
+
     if (pal==WEED_PALETTE_YUV411) psize=6;
-    
+
     if (pal==WEED_PALETTE_A1) dstwidth>>=3;
-    
+
     dstwidth*=psize;
-    
+
     if (cdata->frame_height > cdata->height && height == cdata->height) {
       // host ignores vertical border
       btop=0;
       xheight=cdata->height;
       bbot=xheight-1;
     }
-    
+
     if (cdata->frame_width > cdata->width && rowstrides[0] < cdata->frame_width*psize) {
       // host ignores horizontal border
       bleft=bright=0;
@@ -1050,28 +1051,27 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstride
     priv->pFrame=NULL;
 
     time=(double)tframe/cdata->fps;
-  
+
     target_pts = time * (double)AV_TIME_BASE;
-  
+
     if (cdata->seek_flag&LIVES_SEEK_FAST) jump_frames=JUMP_FRAMES_FAST;
     else jump_frames=JUMP_FRAMES_SLOW;
 
-    if (tframe < priv->last_frame || tframe-priv->last_frame > jump_frames ) {
+    if (tframe < priv->last_frame || tframe-priv->last_frame > jump_frames) {
       int64_t xtarget_pts;
       // seek to new frame
 
       // try to seek straight to keyframe
-      if (!(cdata->seek_flag&LIVES_SEEK_FAST)&&tframe<priv->last_frame&&priv->found_pts!=-1&&target_pts>priv->found_pts) 
-	xtarget_pts=priv->found_pts;
+      if (!(cdata->seek_flag&LIVES_SEEK_FAST)&&tframe<priv->last_frame&&priv->found_pts!=-1&&target_pts>priv->found_pts)
+        xtarget_pts=priv->found_pts;
       else xtarget_pts=target_pts;
 
       seek_target=av_rescale_q(xtarget_pts, AV_TIME_BASE_Q, s->time_base);
-      av_seek_frame( priv->ic, priv->vstream, seek_target, AVSEEK_FLAG_BACKWARD);
+      av_seek_frame(priv->ic, priv->vstream, seek_target, AVSEEK_FLAG_BACKWARD);
       avcodec_flush_buffers(cc);
       priv->black_fill=FALSE;
       MyPts=-1;
-    }
-    else {
+    } else {
       MyPts=(priv->last_frame+1.)/cdata->fps*(double)AV_TIME_BASE;
     }
 
@@ -1079,27 +1079,27 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstride
 
     while (1) {
       do {
-	int ret;
+        int ret;
 
-	ret=av_read_frame( priv->ic, &priv->packet );
+        ret=av_read_frame(priv->ic, &priv->packet);
 
 #ifdef DEBUG
-	fprintf(stderr,"ret was %d for tframe %ld\n",ret,tframe);
+        fprintf(stderr,"ret was %d for tframe %ld\n",ret,tframe);
 #endif
-	if (ret<0) {
-	  av_free_packet(&priv->packet);
-	  priv->last_frame=tframe;
-	  if (pixel_data==NULL) return FALSE;
-	  priv->black_fill=TRUE;
-	  goto framedone;
-	}
+        if (ret<0) {
+          av_free_packet(&priv->packet);
+          priv->last_frame=tframe;
+          if (pixel_data==NULL) return FALSE;
+          priv->black_fill=TRUE;
+          goto framedone;
+        }
 
       } while (priv->packet.stream_index!=priv->vstream);
 
       if (MyPts==-1) {
-	MyPts = priv->packet.pts;
-	MyPts = av_rescale_q( MyPts, s->time_base, AV_TIME_BASE_Q)-priv->ic->start_time;
-	priv->found_pts=MyPts;
+        MyPts = priv->packet.pts;
+        MyPts = av_rescale_q(MyPts, s->time_base, AV_TIME_BASE_Q)-priv->ic->start_time;
+        priv->found_pts=MyPts;
       }
 
 #ifdef DEBUG
@@ -1110,9 +1110,9 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstride
 
 
 #if LIBAVCODEC_VERSION_MAJOR >= 53
-      avcodec_decode_video2( cc, priv->pFrame, &gotFrame, &priv->packet );
-#else 
-      avcodec_decode_video( cc, priv->pFrame, &gotFrame, priv->packet.data, priv->packet.size );
+      avcodec_decode_video2(cc, priv->pFrame, &gotFrame, &priv->packet);
+#else
+      avcodec_decode_video(cc, priv->pFrame, &gotFrame, priv->packet.data, priv->packet.size);
 #endif
 #ifdef DEBUG
       fprintf(stderr,"pt 1 %ld %d %ld\n",tframe,gotFrame,MyPts);
@@ -1120,25 +1120,26 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstride
 
       av_free_packet(&priv->packet);
 
-      if (MyPts >= target_pts - 100 ) hit_target=TRUE;
+      if (MyPts >= target_pts - 100) hit_target=TRUE;
 
       if (hit_target&&gotFrame) break;
 
       // otherwise discard this frame
       if (gotFrame) {
-	MyPts+=(double)AV_TIME_BASE/cdata->fps;
-	av_frame_free(&priv->pFrame);
-	priv->pFrame=NULL;
+        MyPts+=(double)AV_TIME_BASE/cdata->fps;
+        av_frame_free(&priv->pFrame);
+        priv->pFrame=NULL;
       }
 
 
-    } while (!(hit_target&&gotFrame));
+    }
+    while (!(hit_target&&gotFrame));
   }
 
- framedone:
+framedone:
   timex=get_current_ticks()-timex;
-  if (timex>FAST_SEEK_LIMIT) ((lives_clip_data_t *)cdata)->seek_flag=LIVES_SEEK_NEEDS_CALCULATION;
-    
+  if (timex>FAST_SEEK_LIMIT)((lives_clip_data_t *)cdata)->seek_flag=LIVES_SEEK_NEEDS_CALCULATION;
+
   priv->last_frame=tframe;
 
   if (priv->pFrame==NULL||pixel_data==NULL) return TRUE;
@@ -1147,41 +1148,38 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstride
 
   if (priv->black_fill) btop=cdata->frame_height;
 
-  for (p=0;p<nplanes;p++) {
+  for (p=0; p<nplanes; p++) {
     dst=pixel_data[p];
     src=priv->pFrame->data[p];
 
-    for (i=0;i<xheight;i++) {
+    for (i=0; i<xheight; i++) {
       if (i<btop||i>bbot) {
-	// top or bottom border, copy black row
-	if (pal==WEED_PALETTE_YUV420P||pal==WEED_PALETTE_YVU420P||pal==WEED_PALETTE_YUV422P||pal==WEED_PALETTE_YUV444P||
-	    pal==WEED_PALETTE_YUVA4444P||pal==WEED_PALETTE_RGB24||pal==WEED_PALETTE_BGR24) {
-	  memset(dst,black[p],dstwidth+(bleft+bright)*psize);
-	  dst+=dstwidth+(bleft+bright)*psize;
-	}
-	else dst+=write_black_pixel(dst,pal,dstwidth/psize+bleft+bright,y_black);
-	continue;
+        // top or bottom border, copy black row
+        if (pal==WEED_PALETTE_YUV420P||pal==WEED_PALETTE_YVU420P||pal==WEED_PALETTE_YUV422P||pal==WEED_PALETTE_YUV444P||
+            pal==WEED_PALETTE_YUVA4444P||pal==WEED_PALETTE_RGB24||pal==WEED_PALETTE_BGR24) {
+          memset(dst,black[p],dstwidth+(bleft+bright)*psize);
+          dst+=dstwidth+(bleft+bright)*psize;
+        } else dst+=write_black_pixel(dst,pal,dstwidth/psize+bleft+bright,y_black);
+        continue;
       }
 
       if (bleft>0) {
-	if (pal==WEED_PALETTE_YUV420P||pal==WEED_PALETTE_YVU420P||pal==WEED_PALETTE_YUV422P||pal==WEED_PALETTE_YUV444P||
-	    pal==WEED_PALETTE_YUVA4444P||pal==WEED_PALETTE_RGB24||pal==WEED_PALETTE_BGR24) {
-	  memset(dst,black[p],bleft*psize);
-	  dst+=bleft*psize;
-	}
-	else dst+=write_black_pixel(dst,pal,bleft,y_black);
+        if (pal==WEED_PALETTE_YUV420P||pal==WEED_PALETTE_YVU420P||pal==WEED_PALETTE_YUV422P||pal==WEED_PALETTE_YUV444P||
+            pal==WEED_PALETTE_YUVA4444P||pal==WEED_PALETTE_RGB24||pal==WEED_PALETTE_BGR24) {
+          memset(dst,black[p],bleft*psize);
+          dst+=bleft*psize;
+        } else dst+=write_black_pixel(dst,pal,bleft,y_black);
       }
 
       memcpy(dst,src,dstwidth);
       dst+=dstwidth;
 
       if (bright>0) {
-	if (pal==WEED_PALETTE_YUV420P||pal==WEED_PALETTE_YVU420P||pal==WEED_PALETTE_YUV422P||pal==WEED_PALETTE_YUV444P||
-	    pal==WEED_PALETTE_YUVA4444P||pal==WEED_PALETTE_RGB24||pal==WEED_PALETTE_BGR24) {
-	  memset(dst,black[p],bright*psize);
-	  dst+=bright*psize;
-	}
-	else dst+=write_black_pixel(dst,pal,bright,y_black);
+        if (pal==WEED_PALETTE_YUV420P||pal==WEED_PALETTE_YVU420P||pal==WEED_PALETTE_YUV422P||pal==WEED_PALETTE_YUV444P||
+            pal==WEED_PALETTE_YUVA4444P||pal==WEED_PALETTE_RGB24||pal==WEED_PALETTE_BGR24) {
+          memset(dst,black[p],bright*psize);
+          dst+=bright*psize;
+        } else dst+=write_black_pixel(dst,pal,bright,y_black);
       }
 
       src+=priv->pFrame->linesize[p];

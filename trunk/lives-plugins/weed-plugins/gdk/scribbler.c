@@ -19,7 +19,7 @@
 ///////////////////////////////////////////////////////////////////
 
 static int num_versions=2; // number of different weed api versions supported
-static int api_versions[]={131,100}; // array of weed api versions supported in plugin, in order of preference (most preferred first)
+static int api_versions[]= {131,100}; // array of weed api versions supported in plugin, in order of preference (most preferred first)
 
 static int package_version=2; // version of this package
 
@@ -81,9 +81,9 @@ static void init_unal(void) {
   // premult to postmult and vice-versa
 
   register int i,j;
-  
-  for (i=0;i<256;i++) { //alpha val
-    for (j=0;j<256;j++) { // val to be converted
+
+  for (i=0; i<256; i++) { //alpha val
+    for (j=0; j<256; j++) { // val to be converted
       unal[i][j]=(float)j*255./(float)i;
       al[i][j]=(float)j*(float)i/255.;
     }
@@ -113,23 +113,22 @@ static void alpha_unpremult(guchar *ptr, int width, int height, int rowstride, i
   }
 
   if (un) {
-    for (i=0;i<height;i++) {
-      for (j=0;j<width;j+=psize) {
-	alpha=ptr[j+aoffs];
-	for (p=coffs;p<psizel;p++) {
-	  ptr[j+p]=unal[alpha][ptr[j+p]];
-	}
+    for (i=0; i<height; i++) {
+      for (j=0; j<width; j+=psize) {
+        alpha=ptr[j+aoffs];
+        for (p=coffs; p<psizel; p++) {
+          ptr[j+p]=unal[alpha][ptr[j+p]];
+        }
       }
       ptr+=rowstride;
     }
-  }
-  else {
-    for (i=0;i<height;i++) {
-      for (j=0;j<width;j+=psize) {
-	alpha=ptr[j+aoffs];
-	for (p=coffs;p<psizel;p++) {
-	  ptr[j+p]=al[alpha][ptr[j+p]];
-	}
+  } else {
+    for (i=0; i<height; i++) {
+      for (j=0; j<width; j+=psize) {
+        alpha=ptr[j+aoffs];
+        for (p=coffs; p<psizel; p++) {
+          ptr[j+p]=al[alpha][ptr[j+p]];
+        }
       }
       ptr+=rowstride;
     }
@@ -178,10 +177,9 @@ static cairo_t *channel_to_cairo(weed_plant_t *channel) {
 
   if (irowstride==orowstride) {
     weed_memcpy((void *)pixel_data,(void *)src,irowstride*height);
-  }
-  else {
+  } else {
     dst=pixel_data;
-    for (i=0;i<height;i++) {
+    for (i=0; i<height; i++) {
       weed_memcpy((void *)dst,(void *)src,widthx);
       weed_memset((void *)(dst+widthx),0,widthx-orowstride);
       dst+=orowstride;
@@ -196,9 +194,9 @@ static cairo_t *channel_to_cairo(weed_plant_t *channel) {
   }
 
   surf=cairo_image_surface_create_for_data(pixel_data,
-					   cform, 
-					   width, height,
-					   orowstride);
+       cform,
+       width, height,
+       orowstride);
 
   if (surf==NULL) {
     weed_free(pixel_data);
@@ -233,18 +231,17 @@ static void cairo_to_channel(cairo_t *cairo, weed_plant_t *channel) {
   register int i;
 
   // flush to ensure all writing to the image was done
-  cairo_surface_flush (surface);
+  cairo_surface_flush(surface);
 
-  src = cairo_image_surface_get_data (surface);
+  src = cairo_image_surface_get_data(surface);
 
   irowstride=cairo_format_stride_for_width(cform,width);
 
   if (irowstride==orowstride) {
     weed_memcpy((void *)pixel_data,(void *)src,irowstride*height);
-  }
-  else {
+  } else {
     dst=pixel_data;
-    for (i=0;i<height;i++) {
+    for (i=0; i<height; i++) {
       weed_memcpy((void *)dst,(void *)src,widthx);
       weed_memset((void *)(dst+widthx),0,widthx-orowstride);
       dst+=orowstride;
@@ -296,29 +293,27 @@ int scribbler_init(weed_plant_t *inst) {
   return WEED_NO_ERROR;
 }
 
-static void getxypos(PangoLayout *layout, double *px, double *py, int width, int height, int cent, double *pw, double *ph)
-{
+static void getxypos(PangoLayout *layout, double *px, double *py, int width, int height, int cent, double *pw, double *ph) {
   int w_, h_;
   double d;
   pango_layout_get_size(layout, &w_, &h_);
-  if(pw)
+  if (pw)
     *pw = ((double)w_)/PANGO_SCALE;
-  if(ph)
+  if (ph)
     *ph = ((double)h_)/PANGO_SCALE;
 
-  if(cent) {
+  if (cent) {
     d = ((double)w_)/PANGO_SCALE;
     d /= 2.0;
     d = (width>>1) - d;
-  }
-  else
+  } else
     d = 0.0;
-  if(px)
+  if (px)
     *px = d;
-  
+
   d = ((double)h_)/PANGO_SCALE;
   d = height - d;
-  if(py)
+  if (py)
     *py = d;
 }
 
@@ -333,7 +328,7 @@ static void fill_bckg(cairo_t *cr, double x, double y, double dx, double dy) {
 //
 //
 
-int scribbler_process (weed_plant_t *inst, weed_timecode_t timestamp) {
+int scribbler_process(weed_plant_t *inst, weed_timecode_t timestamp) {
   int error;
 
   weed_plant_t **in_params=weed_get_plantptr_array(inst,"in_parameters",&error);
@@ -366,7 +361,7 @@ int scribbler_process (weed_plant_t *inst, weed_timecode_t timestamp) {
   text=weed_get_string_value(in_params[P_TEXT],"value",&error);
   mode=weed_get_int_value(in_params[P_MODE],"value",&error);
   fontnum=weed_get_int_value(in_params[P_FONT],"value",&error);
-  
+
   fg=(rgb_t *)weed_get_int_array(in_params[P_FOREGROUND],"value",&error);
   bg=(rgb_t *)weed_get_int_array(in_params[P_BACKGROUND],"value",&error);
 
@@ -382,7 +377,7 @@ int scribbler_process (weed_plant_t *inst, weed_timecode_t timestamp) {
   weed_free(in_params); // must weed free because we got an array
 
   // THINGS TO TO WITH TEXTS AND PANGO
-  if((!in_channel) || (in_channel == out_channel))
+  if ((!in_channel) || (in_channel == out_channel))
     cairo = channel_to_cairo(out_channel);
   else
     cairo = channel_to_cairo(in_channel);
@@ -390,23 +385,23 @@ int scribbler_process (weed_plant_t *inst, weed_timecode_t timestamp) {
   if (cairo) {
     // do cairo and pango things
     PangoLayout *layout = pango_cairo_create_layout(cairo);
-    if (layout) { 
+    if (layout) {
       PangoFontDescription *font;
       double x_pos, y_pos;
       double x_text, y_text;
-      
+
       font = pango_font_description_new();
       if ((num_fonts_available) && (fontnum >= 0) && (fontnum < num_fonts_available) && (fonts_available[fontnum]))
-	pango_font_description_set_family(font, fonts_available[fontnum]);
-      
+        pango_font_description_set_family(font, fonts_available[fontnum]);
+
       pango_font_description_set_size(font, font_size*PANGO_SCALE);
-      
+
       pango_layout_set_font_description(layout, font);
       pango_layout_set_text(layout, text, -1);
       getxypos(layout, &x_pos, &y_pos, width, height, cent, &dwidth, &dheight);
 
       if (!rise)
-	y_pos = y_text = height*top;
+        y_pos = y_text = height*top;
 
       x_text = x_pos;
       y_text = y_pos;
@@ -417,23 +412,23 @@ int scribbler_process (weed_plant_t *inst, weed_timecode_t timestamp) {
 
       switch (mode) {
       case 1:
-	cairo_set_source_rgba(cairo,(double)bg->red/255.0, (double)bg->green/255.0, (double)bg->blue/255.0, b_alpha);
-	fill_bckg(cairo, x_pos, y_pos, dwidth, dheight);
-	cairo_move_to(cairo, x_text, y_text);
-	cairo_set_source_rgba(cairo,(double)fg->red/255.0, (double)fg->green/255.0, (double)fg->blue/255.0, f_alpha);
-	pango_layout_set_text(layout, text, -1);
-	break;
+        cairo_set_source_rgba(cairo,(double)bg->red/255.0, (double)bg->green/255.0, (double)bg->blue/255.0, b_alpha);
+        fill_bckg(cairo, x_pos, y_pos, dwidth, dheight);
+        cairo_move_to(cairo, x_text, y_text);
+        cairo_set_source_rgba(cairo,(double)fg->red/255.0, (double)fg->green/255.0, (double)fg->blue/255.0, f_alpha);
+        pango_layout_set_text(layout, text, -1);
+        break;
       case 2:
-	cairo_set_source_rgba(cairo,(double)bg->red/255.0, (double)bg->green/255.0, (double)bg->blue/255.0, b_alpha);
-	fill_bckg(cairo, x_pos, y_pos, dwidth, dheight);
-	cairo_move_to(cairo, x_pos, y_pos);
-	cairo_set_source_rgba(cairo,(double)fg->red/255.0, (double)fg->green/255.0, (double)fg->blue/255.0, f_alpha);
-	pango_layout_set_text(layout, "", -1);
-	break;
+        cairo_set_source_rgba(cairo,(double)bg->red/255.0, (double)bg->green/255.0, (double)bg->blue/255.0, b_alpha);
+        fill_bckg(cairo, x_pos, y_pos, dwidth, dheight);
+        cairo_move_to(cairo, x_pos, y_pos);
+        cairo_set_source_rgba(cairo,(double)fg->red/255.0, (double)fg->green/255.0, (double)fg->blue/255.0, f_alpha);
+        pango_layout_set_text(layout, "", -1);
+        break;
       case 0:
       default:
-	cairo_set_source_rgba(cairo,(double)fg->red/255.0, (double)fg->green/255.0, (double)fg->blue/255.0, f_alpha);
-	break;
+        cairo_set_source_rgba(cairo,(double)fg->red/255.0, (double)fg->green/255.0, (double)fg->blue/255.0, f_alpha);
+        break;
       }
 
       pango_cairo_show_layout(cairo, layout);
@@ -453,7 +448,7 @@ int scribbler_process (weed_plant_t *inst, weed_timecode_t timestamp) {
 }
 
 
-static int font_compare(const void *p1, const void *p2) {  
+static int font_compare(const void *p1, const void *p2) {
   const char *s1 = (const char *)(*(char **)p1);
   const char *s2 = (const char *)(*(char **)p2);
   char *u1 = g_utf8_casefold(s1, -1);
@@ -465,13 +460,13 @@ static int font_compare(const void *p1, const void *p2) {
 }
 
 
-weed_plant_t *weed_setup (weed_bootstrap_f weed_boot) {
+weed_plant_t *weed_setup(weed_bootstrap_f weed_boot) {
   weed_plant_t *plugin_info=weed_plugin_info_init(weed_boot,num_versions,api_versions);
   weed_plant_t **clone1,**clone2;
 
   const char *def_fonts[] = {"serif", NULL};
   if (plugin_info!=NULL) {
-    const char *modes[]={"foreground only","foreground and background","background only",NULL};
+    const char *modes[]= {"foreground only","foreground and background","background only",NULL};
     // removed palettes with alpha channel
     int palette_list[2];
     weed_plant_t *in_chantmpls[2];
@@ -483,7 +478,7 @@ weed_plant_t *weed_setup (weed_bootstrap_f weed_boot) {
 
     if (is_big_endian())
       palette_list[0]=WEED_PALETTE_ARGB32;
-    else 
+    else
       palette_list[0]=WEED_PALETTE_BGRA32;
 
     palette_list[1]=WEED_PALETTE_END;
@@ -502,19 +497,19 @@ weed_plant_t *weed_setup (weed_bootstrap_f weed_boot) {
     fonts_available = NULL;
 
     ctx = gdk_pango_context_get();
-    if(ctx) {
+    if (ctx) {
       PangoFontMap *pfm = pango_context_get_font_map(ctx);
-      if(pfm) {
+      if (pfm) {
         int num = 0;
         PangoFontFamily **pff = NULL;
         pango_font_map_list_families(pfm, &pff, &num);
-        if(num > 0) {
+        if (num > 0) {
           // we should reserve num+1 for a final NULL pointer
           fonts_available = (const char **)weed_malloc((num+1)*sizeof(char *));
-          if(fonts_available) {
+          if (fonts_available) {
             register int i;
             num_fonts_available = num;
-            for(i = 0; i < num; ++i) {
+            for (i = 0; i < num; ++i) {
               fonts_available[i] = strdup(pango_font_family_get_name(pff[i]));
             }
             // don't forget this thing
@@ -524,19 +519,19 @@ weed_plant_t *weed_setup (weed_bootstrap_f weed_boot) {
           }
         }
         g_free(pff);
-      } 
+      }
       g_object_unref(ctx);
     }
 
 
     in_params[P_TEXT]=weed_text_init("text","_Text","");
     in_params[P_MODE]=weed_string_list_init("mode","Colour _mode",0,modes);
-    if (weed_plant_has_leaf(in_params[P_MODE],"flags")) 
+    if (weed_plant_has_leaf(in_params[P_MODE],"flags"))
       flags=weed_get_int_value(in_params[P_MODE],"flags",&error);
     flags|=WEED_PARAMETER_REINIT_ON_VALUE_CHANGE;
     weed_set_int_value(in_params[P_MODE],"flags",flags);
 
-    if(fonts_available)
+    if (fonts_available)
       in_params[P_FONT]=weed_string_list_init("font","_Font",0,fonts_available);
     else
       in_params[P_FONT]=weed_string_list_init("font","_Font",0, def_fonts);
@@ -549,22 +544,24 @@ weed_plant_t *weed_setup (weed_bootstrap_f weed_boot) {
     in_params[P_RISE]=weed_switch_init("rising","_Rising text",WEED_TRUE);
     in_params[P_TOP]=weed_float_init("top","_Top",0.0,0.0,1.0);
     in_params[P_END]=NULL;
-    
+
     pgui=weed_parameter_template_get_gui(in_params[P_TEXT]);
     weed_set_int_value(pgui,"maxchars",65536);
 
     pgui=weed_parameter_template_get_gui(in_params[P_FGALPHA]);
     weed_set_int_value(pgui,"copy_value_to",P_BGALPHA);
 
-    filter_class=weed_filter_class_init("scribbler","Aleksej Penkov",1,0,&scribbler_init,&scribbler_process,NULL,in_chantmpls,out_chantmpls,in_params,NULL);
+    filter_class=weed_filter_class_init("scribbler","Aleksej Penkov",1,0,&scribbler_init,&scribbler_process,NULL,in_chantmpls,out_chantmpls,
+                                        in_params,NULL);
 
-    weed_plugin_info_add_filter_class (plugin_info,filter_class);
+    weed_plugin_info_add_filter_class(plugin_info,filter_class);
 
-    filter_class=weed_filter_class_init("scribbler_generator","Aleksej Penkov",1,0,&scribbler_init,&scribbler_process,NULL,NULL,(clone1=weed_clone_plants(out_chantmpls)),(clone2=weed_clone_plants(in_params)),NULL);
+    filter_class=weed_filter_class_init("scribbler_generator","Aleksej Penkov",1,0,&scribbler_init,&scribbler_process,NULL,NULL,
+                                        (clone1=weed_clone_plants(out_chantmpls)),(clone2=weed_clone_plants(in_params)),NULL);
     weed_free(clone1);
     weed_free(clone2);
 
-    weed_plugin_info_add_filter_class (plugin_info,filter_class);
+    weed_plugin_info_add_filter_class(plugin_info,filter_class);
     weed_set_double_value(filter_class,"target_fps",25.); // set reasonable default fps
 
     weed_set_int_value(plugin_info,"version",package_version);
@@ -578,13 +575,13 @@ weed_plant_t *weed_setup (weed_bootstrap_f weed_boot) {
 
 void weed_desetup(void) {
   // clean up what we reserve for font family names
-  if(num_fonts_available && fonts_available) {
+  if (num_fonts_available && fonts_available) {
     int i;
-    for(i = 0; i < num_fonts_available; ++i) {
+    for (i = 0; i < num_fonts_available; ++i) {
       free((void *)fonts_available[i]);
     }
     weed_free((void *)fonts_available);
-  }    
+  }
   num_fonts_available = 0;
   fonts_available = NULL;
 }

@@ -279,12 +279,12 @@ typedef struct {
 
 
   int64_t last_indexed_pts;
-  ASFIndex* index_ptr;
+  ASFIndex *index_ptr;
   uint32_t nb_index_count;
   uint32_t nb_index_memory_alloc;
   uint16_t maximum_packet;
 
-  ASFStream* asf_st;                   ///< currently decoded stream
+  ASFStream *asf_st;                   ///< currently decoded stream
 } ASFContext;
 
 
@@ -347,7 +347,7 @@ typedef struct {
 	  val += (hi<<10) + 0x10000;		\
     }						\
   }						\
-
+ 
 
 #define PUT_UTF8(val, tmp, PUT_BYTE)			\
   {							\

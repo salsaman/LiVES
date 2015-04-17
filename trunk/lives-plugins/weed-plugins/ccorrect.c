@@ -18,7 +18,7 @@
 ///////////////////////////////////////////////////////////////////
 
 static int num_versions=2; // number of different weed api versions supported
-static int api_versions[]={131,100}; // array of weed api versions supported in plugin, in order of preference (most preferred first)
+static int api_versions[]= {131,100}; // array of weed api versions supported in plugin, in order of preference (most preferred first)
 
 static int package_version=1; // version of this package
 
@@ -48,7 +48,7 @@ typedef struct _sdata {
 static void make_table(unsigned char *tab, double val) {
   unsigned int ival;
   register int i;
-  for (i=0;i<256;i++) {
+  for (i=0; i<256; i++) {
     ival=(val*i+.5);
     tab[i]=ival>255?(unsigned char)255:(unsigned char)ival;
   }
@@ -63,9 +63,9 @@ static int ccorrect_init(weed_plant_t *inst) {
 
   sdata=weed_malloc(sizeof(_sdata));
 
-  if (sdata == NULL ) return WEED_ERROR_MEMORY_ALLOCATION;
-  
-  for (i=0;i<256;i++) {
+  if (sdata == NULL) return WEED_ERROR_MEMORY_ALLOCATION;
+
+  for (i=0; i<256; i++) {
     sdata->r[i]=sdata->g[i]=sdata->b[i]=0;
   }
   sdata->ored=sdata->ogreen=sdata->oblue=0.;
@@ -88,10 +88,11 @@ static int ccorrect_deinit(weed_plant_t *inst) {
 }
 
 
-static int ccorrect_process (weed_plant_t *inst, weed_timecode_t timestamp) {
+static int ccorrect_process(weed_plant_t *inst, weed_timecode_t timestamp) {
   int error;
   _sdata *sdata;
-  weed_plant_t *in_channel=weed_get_plantptr_value(inst,"in_channels",&error),*out_channel=weed_get_plantptr_value(inst,"out_channels",&error);
+  weed_plant_t *in_channel=weed_get_plantptr_value(inst,"in_channels",&error),*out_channel=weed_get_plantptr_value(inst,"out_channels",
+                           &error);
   unsigned char *src=weed_get_voidptr_value(in_channel,"pixel_data",&error);
   unsigned char *dst=weed_get_voidptr_value(out_channel,"pixel_data",&error);
 
@@ -143,43 +144,43 @@ static int ccorrect_process (weed_plant_t *inst, weed_timecode_t timestamp) {
   if (palette==WEED_PALETTE_RGB24||palette==WEED_PALETTE_BGR24) psize=3;
   if (palette==WEED_PALETTE_ARGB32) offs=1;
 
-  for (;src<end;src+=irowstride) {
-    for (i=0;i<width;i+=psize) {
+  for (; src<end; src+=irowstride) {
+    for (i=0; i<width; i+=psize) {
       if (palette==WEED_PALETTE_BGR24||palette==WEED_PALETTE_BGRA32) {
-	dst[i]=sdata->b[src[i]];
-	dst[i+1]=sdata->g[src[i+1]];
-	dst[i+2]=sdata->r[src[i+2]];
-	if (!inplace&&palette==WEED_PALETTE_BGRA32) dst[i+3]=src[i+3];
-      }
-      else {
-	if (!inplace&&palette==WEED_PALETTE_ARGB32) dst[i]=src[i];
-	dst[i+offs]=sdata->r[src[i+offs]];
-	dst[i+1+offs]=sdata->g[src[i+1+offs]];
-	dst[i+2+offs]=sdata->b[src[i+2+offs]];
-	if (!inplace&&palette==WEED_PALETTE_RGBA32) dst[i+3]=src[i+3];
+        dst[i]=sdata->b[src[i]];
+        dst[i+1]=sdata->g[src[i+1]];
+        dst[i+2]=sdata->r[src[i+2]];
+        if (!inplace&&palette==WEED_PALETTE_BGRA32) dst[i+3]=src[i+3];
+      } else {
+        if (!inplace&&palette==WEED_PALETTE_ARGB32) dst[i]=src[i];
+        dst[i+offs]=sdata->r[src[i+offs]];
+        dst[i+1+offs]=sdata->g[src[i+1+offs]];
+        dst[i+2+offs]=sdata->b[src[i+2+offs]];
+        if (!inplace&&palette==WEED_PALETTE_RGBA32) dst[i+3]=src[i+3];
       }
     }
     dst+=orowstride;
-  } 
+  }
   return WEED_NO_ERROR;
 }
 
 
 
 
-weed_plant_t *weed_setup (weed_bootstrap_f weed_boot) {
+weed_plant_t *weed_setup(weed_bootstrap_f weed_boot) {
   weed_plant_t *plugin_info=weed_plugin_info_init(weed_boot,num_versions,api_versions);
   if (plugin_info!=NULL) {
-    int palette_list[]={WEED_PALETTE_BGR24,WEED_PALETTE_RGB24,WEED_PALETTE_RGBA32,WEED_PALETTE_BGRA32,WEED_PALETTE_ARGB32,WEED_PALETTE_END};
+    int palette_list[]= {WEED_PALETTE_BGR24,WEED_PALETTE_RGB24,WEED_PALETTE_RGBA32,WEED_PALETTE_BGRA32,WEED_PALETTE_ARGB32,WEED_PALETTE_END};
 
-    weed_plant_t *in_chantmpls[]={weed_channel_template_init("in channel 0",0,palette_list),NULL};
-    weed_plant_t *out_chantmpls[]={weed_channel_template_init("out channel 0",WEED_CHANNEL_CAN_DO_INPLACE,palette_list),NULL};
+    weed_plant_t *in_chantmpls[]= {weed_channel_template_init("in channel 0",0,palette_list),NULL};
+    weed_plant_t *out_chantmpls[]= {weed_channel_template_init("out channel 0",WEED_CHANNEL_CAN_DO_INPLACE,palette_list),NULL};
 
-    weed_plant_t *in_params[]={weed_float_init("red","_Red factor",1.0,0.0,2.0),weed_float_init("green","_Green factor",1.0,0.0,2.0),weed_float_init("blue","_Blue factor",1.0,0.0,2.0),NULL};
+    weed_plant_t *in_params[]= {weed_float_init("red","_Red factor",1.0,0.0,2.0),weed_float_init("green","_Green factor",1.0,0.0,2.0),weed_float_init("blue","_Blue factor",1.0,0.0,2.0),NULL};
 
-    weed_plant_t *filter_class=weed_filter_class_init("colour correction","salsaman",1,WEED_FILTER_HINT_MAY_THREAD,&ccorrect_init,&ccorrect_process,&ccorrect_deinit,in_chantmpls,out_chantmpls,in_params,NULL);
+    weed_plant_t *filter_class=weed_filter_class_init("colour correction","salsaman",1,WEED_FILTER_HINT_MAY_THREAD,&ccorrect_init,
+                               &ccorrect_process,&ccorrect_deinit,in_chantmpls,out_chantmpls,in_params,NULL);
 
-    weed_plugin_info_add_filter_class (plugin_info,filter_class);
+    weed_plugin_info_add_filter_class(plugin_info,filter_class);
 
     weed_set_int_value(plugin_info,"version",package_version);
   }

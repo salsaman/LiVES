@@ -24,7 +24,7 @@
 ///////////////////////////////////////////////////////////////////
 
 static int num_versions=1; // number of different weed api versions supported
-static int api_versions[]={131}; // array of weed api versions supported in plugin, in order of preference (most preferred first)
+static int api_versions[]= {131}; // array of weed api versions supported in plugin, in order of preference (most preferred first)
 
 static int package_version=1; // version of this package
 
@@ -42,7 +42,7 @@ static int package_version=1; // version of this package
 /////////////////////////////////////////////////////////////
 
 
-int logsig_process (weed_plant_t *inst, weed_timecode_t timestamp) {
+int logsig_process(weed_plant_t *inst, weed_timecode_t timestamp) {
   int error;
   weed_plant_t **in_params=weed_get_plantptr_array(inst,"in_parameters",&error);
   weed_plant_t **out_params=weed_get_plantptr_array(inst,"out_parameters",&error);
@@ -50,7 +50,7 @@ int logsig_process (weed_plant_t *inst, weed_timecode_t timestamp) {
 
   register int i;
 
-  for (i=0;i<256;i++) {
+  for (i=0; i<256; i++) {
     if (weed_plant_has_leaf(in_params[i],"value")) {
       fval=weed_get_double_value(in_params[i],"value",&error);
       weed_set_double_value(out_params[i],"value",1./(1.+exp(-fval)));
@@ -64,7 +64,7 @@ int logsig_process (weed_plant_t *inst, weed_timecode_t timestamp) {
 }
 
 
-weed_plant_t *weed_setup (weed_bootstrap_f weed_boot) {
+weed_plant_t *weed_setup(weed_bootstrap_f weed_boot) {
   weed_plant_t *plugin_info=weed_plugin_info_init(weed_boot,num_versions,api_versions);
 
   if (plugin_info!=NULL) {
@@ -78,7 +78,7 @@ weed_plant_t *weed_setup (weed_bootstrap_f weed_boot) {
     char name[256];
     char label[256];
 
-    for (i=0;i<256;i++) {
+    for (i=0; i<256; i++) {
       snprintf(name,256,"input%03d",i);
       snprintf(label,256,"Input %03d",i);
       in_params[i]=weed_float_init(name,label,0.,-1000000000000.,1000000000000.);
@@ -90,11 +90,11 @@ weed_plant_t *weed_setup (weed_bootstrap_f weed_boot) {
     out_params[i]=NULL;
 
     filter_class=weed_filter_class_init("log_sig","salsaman",1,0,NULL,&logsig_process,
-					NULL,NULL,NULL,in_params,out_params);
+                                        NULL,NULL,NULL,in_params,out_params);
 
     weed_set_string_value(filter_class,"description","Scales float values between -1.0 and 1.0 using a log-sig function");
 
-    weed_plugin_info_add_filter_class (plugin_info,filter_class);
+    weed_plugin_info_add_filter_class(plugin_info,filter_class);
 
     weed_set_int_value(plugin_info,"version",package_version);
   }

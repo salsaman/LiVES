@@ -1,5 +1,5 @@
 /*
-Copyright © 1998. The Regents of the University of California (Regents). 
+Copyright © 1998. The Regents of the University of California (Regents).
 All Rights Reserved.
 
 Written by Matt Wright, The Center for New Music and Audio Technologies,
@@ -22,7 +22,7 @@ PURPOSE. THE SOFTWARE AND ACCOMPANYING DOCUMENTATION, IF ANY, PROVIDED
 HEREUNDER IS PROVIDED "AS IS". REGENTS HAS NO OBLIGATION TO PROVIDE
 MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 
-The OpenSound Control WWW page is 
+The OpenSound Control WWW page is
     http://www.cnmat.berkeley.edu/OpenSoundControl
 */
 
@@ -39,61 +39,63 @@ The OpenSound Control WWW page is
 
 static const char *theWholePattern;	/* Just for warning messages */
 
-static Boolean MatchBrackets (const char *pattern, const char *test);
-static Boolean MatchList (const char *pattern, const char *test);
+static Boolean MatchBrackets(const char *pattern, const char *test);
+static Boolean MatchList(const char *pattern, const char *test);
 
-Boolean PatternMatch (const char *  pattern, const char * test) {
+Boolean PatternMatch(const char   *pattern, const char *test) {
   theWholePattern = pattern;
-  
+
   if (pattern == 0 || pattern[0] == 0) {
     return test[0] == 0;
-  } 
-  
+  }
+
   if (test[0] == 0) {
     if (pattern[0] == '*')
-      return PatternMatch (pattern+1,test);
+      return PatternMatch(pattern+1,test);
     else
       return FALSE;
   }
 
   switch (pattern[0]) {
-    case 0      : return test[0] == 0;
-    case '?'    : return PatternMatch (pattern + 1, test + 1);
-    case '*'    : 
-      if (PatternMatch (pattern+1, test)) {
-        return TRUE;
-      } else {
-	return PatternMatch (pattern, test+1);
-      }
-    case ']'    :
-    case '}'    :
-      OSCWarning("Spurious %c in pattern \".../%s/...\"",pattern[0], theWholePattern);
+  case 0      :
+    return test[0] == 0;
+  case '?'    :
+    return PatternMatch(pattern + 1, test + 1);
+  case '*'    :
+    if (PatternMatch(pattern+1, test)) {
+      return TRUE;
+    } else {
+      return PatternMatch(pattern, test+1);
+    }
+  case ']'    :
+  case '}'    :
+    OSCWarning("Spurious %c in pattern \".../%s/...\"",pattern[0], theWholePattern);
+    return FALSE;
+  case '['    :
+    return MatchBrackets(pattern,test);
+  case '{'    :
+    return MatchList(pattern,test);
+  case '\\'   :
+    if (pattern[1] == 0) {
+      return test[0] == 0;
+    } else if (pattern[1] == test[0]) {
+      return PatternMatch(pattern+2,test+1);
+    } else {
       return FALSE;
-    case '['    :
-      return MatchBrackets (pattern,test);
-    case '{'    :
-      return MatchList (pattern,test);
-    case '\\'   :  
-      if (pattern[1] == 0) {
-	return test[0] == 0;
-      } else if (pattern[1] == test[0]) {
-	return PatternMatch (pattern+2,test+1);
-      } else {
-	return FALSE;
-      }
-    default     :
-      if (pattern[0] == test[0]) {
-	return PatternMatch (pattern+1,test+1);
-      } else {
-	return FALSE;
-      }
+    }
+  default     :
+    if (pattern[0] == test[0]) {
+      return PatternMatch(pattern+1,test+1);
+    } else {
+      return FALSE;
+    }
   }
 }
 
 
 /* we know that pattern[0] == '[' and test[0] != 0 */
 
-static Boolean MatchBrackets (const char *pattern, const char *test) {
+static Boolean MatchBrackets(const char *pattern, const char *test) {
   Boolean result;
   Boolean negated = FALSE;
   const char *p = pattern;
@@ -115,8 +117,8 @@ static Boolean MatchBrackets (const char *pattern, const char *test) {
     }
     if (p[1] == '-' && p[2] != 0) {
       if (test[0] >= p[0] && test[0] <= p[2]) {
-	result = !negated;
-	goto advance;
+        result = !negated;
+        goto advance;
       }
     }
     if (p[0] == test[0]) {
@@ -141,50 +143,50 @@ advance:
     p++;
   }
 
-  return PatternMatch (p+1,test+1);
+  return PatternMatch(p+1,test+1);
 }
 
-static Boolean MatchList (const char *pattern, const char *test) {
+static Boolean MatchList(const char *pattern, const char *test) {
 
- const char *restOfPattern, *tp = test;
-
-
- for(restOfPattern = pattern; *restOfPattern != '}'; restOfPattern++) {
-   if (*restOfPattern == 0) {
-     OSCWarning("Unterminated { in pattern \".../%s/...\"", theWholePattern);
-     return FALSE;
-   }
- }
-
- restOfPattern++; /* skip close curly brace */
+  const char *restOfPattern, *tp = test;
 
 
- pattern++; /* skip open curly brace */
+  for (restOfPattern = pattern; *restOfPattern != '}'; restOfPattern++) {
+    if (*restOfPattern == 0) {
+      OSCWarning("Unterminated { in pattern \".../%s/...\"", theWholePattern);
+      return FALSE;
+    }
+  }
 
- while (1) {
-   
-   if (*pattern == ',') {
-     if (PatternMatch (restOfPattern, tp)) {
-       return TRUE;
-     } else {
-       tp = test;
-       ++pattern;
-     }
-   } else if (*pattern == '}') {
-     return PatternMatch (restOfPattern, tp);
-   } else if (*pattern == *tp) {
-     ++pattern;
-     ++tp;
-   } else {
-     tp = test;
-     while (*pattern != ',' && *pattern != '}') {
-       pattern++;
-     }
-     if (*pattern == ',') {
-       pattern++;
-     }
-   }
- }
+  restOfPattern++; /* skip close curly brace */
+
+
+  pattern++; /* skip open curly brace */
+
+  while (1) {
+
+    if (*pattern == ',') {
+      if (PatternMatch(restOfPattern, tp)) {
+        return TRUE;
+      } else {
+        tp = test;
+        ++pattern;
+      }
+    } else if (*pattern == '}') {
+      return PatternMatch(restOfPattern, tp);
+    } else if (*pattern == *tp) {
+      ++pattern;
+      ++tp;
+    } else {
+      tp = test;
+      while (*pattern != ',' && *pattern != '}') {
+        pattern++;
+      }
+      if (*pattern == ',') {
+        pattern++;
+      }
+    }
+  }
 
 }
 

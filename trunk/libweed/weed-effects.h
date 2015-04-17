@@ -56,11 +56,11 @@ extern "C"
 {
 #endif /* __cplusplus */
 
-  /* API version * 131 */
+/* API version * 131 */
 #define WEED_API_VERSION 131
 #define WEED_API_VERSION_131
 
-  /* plant types */
+/* plant types */
 #define WEED_PLANT_PLUGIN_INFO 1
 #define WEED_PLANT_FILTER_CLASS 2
 #define WEED_PLANT_FILTER_INSTANCE 3
@@ -107,7 +107,7 @@ extern "C"
 #define WEED_CHANNEL_SIZE_CAN_VARY            (1<<3)
 #define WEED_CHANNEL_PALETTE_CAN_VARY         (1<<4)
 
-  
+
 /* Channel flags */
 #define WEED_CHANNEL_ALPHA_PREMULT (1<<0)
 
@@ -125,22 +125,22 @@ extern "C"
 #define WEED_ERROR_INIT_ERROR 8
 #define WEED_ERROR_PLUGIN_INVALID 64
 
-  /* host bootstrap function */
-typedef weed_plant_t *(*weed_bootstrap_f) (weed_default_getter_f *value, int num_versions, int *plugin_versions);
+/* host bootstrap function */
+typedef weed_plant_t *(*weed_bootstrap_f)(weed_default_getter_f *value, int num_versions, int *plugin_versions);
 
-  /* plugin only functions */
+/* plugin only functions */
 typedef weed_plant_t *(*weed_setup_f)(weed_bootstrap_f weed_boot);
 typedef void (*weed_desetup_f)(void);
-typedef int (*weed_init_f) (weed_plant_t *filter_instance);
-typedef int (*weed_process_f) (weed_plant_t *filter_instance, weed_timecode_t timestamp);
-typedef int (*weed_deinit_f) (weed_plant_t *filter_instance);
+typedef int (*weed_init_f)(weed_plant_t *filter_instance);
+typedef int (*weed_process_f)(weed_plant_t *filter_instance, weed_timecode_t timestamp);
+typedef int (*weed_deinit_f)(weed_plant_t *filter_instance);
 
-  /* special plugin functions */
+/* special plugin functions */
 typedef void (*weed_display_f)(weed_plant_t *parameter);
 typedef int (*weed_interpolate_f)(weed_plant_t **in_values, weed_plant_t *out_value);
 
-  /* prototype here */
-  weed_plant_t *weed_setup (weed_bootstrap_f weed_boot);
+/* prototype here */
+weed_plant_t *weed_setup(weed_bootstrap_f weed_boot);
 
 #ifdef __cplusplus
 }

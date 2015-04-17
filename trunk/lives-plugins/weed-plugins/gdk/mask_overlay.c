@@ -19,7 +19,7 @@
 ///////////////////////////////////////////////////////////////////
 
 static int num_versions=1; // number of different weed api versions supported
-static int api_versions[]={131,100}; // array of weed api versions supported in plugin, in order of preference (most preferred first)
+static int api_versions[]= {131,100}; // array of weed api versions supported in plugin, in order of preference (most preferred first)
 
 static int package_version=1; // version of this package
 
@@ -48,7 +48,7 @@ typedef struct _sdata {
 
 
 //inline int calc_luma(unsigned char *pt) {
-  // return luma 0<=x<=256
+// return luma 0<=x<=256
 //  return 0.21*(float)pt[0]+0.587*(float)pt[1]+0.114*(float)pt[2];
 //}
 
@@ -78,14 +78,14 @@ static void make_mask(GdkPixbuf *pbuf, int mode, int owidth, int oheight, int *x
   if (mode==1) {
     // get bounds
 
-    for (i=0;i<oheight;i++) {
-      for (j=0;j<owidth;j++) {
-	if ( *(pdata + (int)(i * yscale) * stride + (int)(j * xscale) * psize + 1) == 0) {
-	  if (top==-1) top=i;
-	  if (j<left||left==-1) left=j;
-	  if (j>right) right=j;
-	  if (i>bot) bot=i;
-	}
+    for (i=0; i<oheight; i++) {
+      for (j=0; j<owidth; j++) {
+        if (*(pdata + (int)(i * yscale) * stride + (int)(j * xscale) * psize + 1) == 0) {
+          if (top==-1) top=i;
+          if (j<left||left==-1) left=j;
+          if (j>right) right=j;
+          if (i>bot) bot=i;
+        }
       }
     }
 
@@ -93,46 +93,43 @@ static void make_mask(GdkPixbuf *pbuf, int mode, int owidth, int oheight, int *x
 
     tline=(top+bot)>>1;
 
-    for (j=0;j<owidth;j++) {
-      if ( *(pdata + (int)(tline * yscale) * stride + (int)(j * xscale) * psize + 1) == 0) xwidth++;
+    for (j=0; j<owidth; j++) {
+      if (*(pdata + (int)(tline * yscale) * stride + (int)(j * xscale) * psize + 1) == 0) xwidth++;
     }
-    
+
     yscale2=(double)oheight/(double)(bot-top);
     xscale2=(double)owidth/(double)xwidth;
 
     // map center row as template for other rows
-    for (j=0;j<owidth;j++) {
-      if ( *(pdata + (int)(tline * yscale) * stride + (int)(j * xscale) * psize + 1) == 0) {
-	// map front frame
-	xmap[tline*owidth+j]=(int)xpos;
-	xpos+=xscale2;
-      }
-      else {
-	xmap[tline*owidth+j]=-1;
+    for (j=0; j<owidth; j++) {
+      if (*(pdata + (int)(tline * yscale) * stride + (int)(j * xscale) * psize + 1) == 0) {
+        // map front frame
+        xmap[tline*owidth+j]=(int)xpos;
+        xpos+=xscale2;
+      } else {
+        xmap[tline*owidth+j]=-1;
       }
     }
   }
 
-  for (i=0;i<oheight;i++) {
+  for (i=0; i<oheight; i++) {
 
-    for (j=0;j<owidth;j++) {
-      if ( *(pdata + (int)(i * yscale) * stride + (int)(j * xscale) * psize + 1) == 0) {
-	// map front frame
+    for (j=0; j<owidth; j++) {
+      if (*(pdata + (int)(i * yscale) * stride + (int)(j * xscale) * psize + 1) == 0) {
+        // map front frame
 
-	if (mode==0) {
-	  // no re-mapping of front frame
-	  xmap[i*owidth+j]=j;
-	  ymap[i*owidth+j]=i;
-	}
-	else {
-	  xmap[i*owidth+j]=xmap[tline*owidth+j];
-	  ymap[i*owidth+j]=(int)ypos;
-	}
+        if (mode==0) {
+          // no re-mapping of front frame
+          xmap[i*owidth+j]=j;
+          ymap[i*owidth+j]=i;
+        } else {
+          xmap[i*owidth+j]=xmap[tline*owidth+j];
+          ymap[i*owidth+j]=(int)ypos;
+        }
 
-      }
-      else {
-	// map back frame
-	xmap[i*owidth+j]=ymap[i*owidth+j]=-1;
+      } else {
+        // map back frame
+        xmap[i*owidth+j]=ymap[i*owidth+j]=-1;
       }
 
     }
@@ -161,7 +158,7 @@ int masko_init(weed_plant_t *inst) {
 
   sdata=weed_malloc(sizeof(struct _sdata));
 
-  if (sdata == NULL ) return WEED_ERROR_MEMORY_ALLOCATION;
+  if (sdata == NULL) return WEED_ERROR_MEMORY_ALLOCATION;
 
   video_height=weed_get_int_value(in_channel,"height",&error);
   video_width=weed_get_int_value(in_channel,"width",&error);
@@ -170,14 +167,14 @@ int masko_init(weed_plant_t *inst) {
 
   sdata->xmap=(int *)weed_malloc(video_area*sizeof(int));
 
-  if (sdata->xmap == NULL ) {
+  if (sdata->xmap == NULL) {
     weed_free(sdata);
     return WEED_ERROR_MEMORY_ALLOCATION;
   }
 
   sdata->ymap=(int *)weed_malloc(video_area*sizeof(int));
 
-  if (sdata->ymap == NULL ) {
+  if (sdata->ymap == NULL) {
     weed_free(sdata->xmap);
     weed_free(sdata);
     return WEED_ERROR_MEMORY_ALLOCATION;
@@ -195,8 +192,7 @@ int masko_init(weed_plant_t *inst) {
     weed_free(sdata->ymap);
     g_object_unref(gerr);
     sdata->xmap=sdata->ymap=NULL;
-  }
-  else {
+  } else {
     make_mask(pbuf,mode,video_width,video_height,sdata->xmap,sdata->ymap);
     g_object_unref(pbuf);
   }
@@ -230,9 +226,10 @@ int masko_deinit(weed_plant_t *inst) {
 
 
 
-int masko_process (weed_plant_t *inst, weed_timecode_t timestamp) {
+int masko_process(weed_plant_t *inst, weed_timecode_t timestamp) {
   int error;
-  weed_plant_t **in_channels=weed_get_plantptr_array(inst,"in_channels",&error),*out_channel=weed_get_plantptr_value(inst,"out_channels",&error);
+  weed_plant_t **in_channels=weed_get_plantptr_array(inst,"in_channels",&error),*out_channel=weed_get_plantptr_value(inst,"out_channels",
+                             &error);
 
   int palette=weed_get_int_value(out_channel,"current_palette",&error);
   int width=weed_get_int_value(out_channel,"width",&error);
@@ -274,15 +271,14 @@ int masko_process (weed_plant_t *inst, weed_timecode_t timestamp) {
   orow-=width*psize;
   irow1-=width*psize;
 
-  for (i=offset;i<height;i++) {
-    for (j=0;j<width;j++) {
+  for (i=offset; i<height; i++) {
+    for (j=0; j<width; j++) {
       if (sdata->xmap[pos]==-1||sdata->ymap[pos]==-1) {
-	// map bg pixel to dst
-	weed_memcpy(dst,src1,psize);
-      }
-      else {
-	// remap fg pixel
-	weed_memcpy(dst,src0+sdata->ymap[pos]*irow0+sdata->xmap[pos]*psize,psize);
+        // map bg pixel to dst
+        weed_memcpy(dst,src1,psize);
+      } else {
+        // remap fg pixel
+        weed_memcpy(dst,src0+sdata->ymap[pos]*irow0+sdata->xmap[pos]*psize,psize);
       }
       dst+=psize;
       src1+=psize;
@@ -300,18 +296,18 @@ int masko_process (weed_plant_t *inst, weed_timecode_t timestamp) {
 
 
 
-weed_plant_t *weed_setup (weed_bootstrap_f weed_boot) {
+weed_plant_t *weed_setup(weed_bootstrap_f weed_boot) {
   weed_plant_t *plugin_info=weed_plugin_info_init(weed_boot,num_versions,api_versions);
   if (plugin_info!=NULL) {
-    int palette_list[]={WEED_PALETTE_BGR24,WEED_PALETTE_RGB24,WEED_PALETTE_RGBA32,WEED_PALETTE_BGRA32,WEED_PALETTE_ARGB32,WEED_PALETTE_YUV888,WEED_PALETTE_YUVA8888,WEED_PALETTE_END};
+    int palette_list[]= {WEED_PALETTE_BGR24,WEED_PALETTE_RGB24,WEED_PALETTE_RGBA32,WEED_PALETTE_BGRA32,WEED_PALETTE_ARGB32,WEED_PALETTE_YUV888,WEED_PALETTE_YUVA8888,WEED_PALETTE_END};
 
-    weed_plant_t *in_chantmpls[]={weed_channel_template_init("in channel 0",0,palette_list),weed_channel_template_init("in channel 1",0,palette_list),NULL};
+    weed_plant_t *in_chantmpls[]= {weed_channel_template_init("in channel 0",0,palette_list),weed_channel_template_init("in channel 1",0,palette_list),NULL};
 
-    weed_plant_t *out_chantmpls[]={weed_channel_template_init("out channel 0",WEED_CHANNEL_REINIT_ON_SIZE_CHANGE,palette_list),NULL};
+    weed_plant_t *out_chantmpls[]= {weed_channel_template_init("out channel 0",WEED_CHANNEL_REINIT_ON_SIZE_CHANGE,palette_list),NULL};
     weed_plant_t *filter_class;
     weed_plant_t *in_params[3],*gui;
-    char *rfx_strings[]={"special|fileread|0|"};
-    const char *modes[]={"normal","stretch",NULL};
+    char *rfx_strings[]= {"special|fileread|0|"};
+    const char *modes[]= {"normal","stretch",NULL};
 
     char *defmaskfile=g_build_filename(g_get_home_dir(), "mask.png", NULL);
     int flags,error;
@@ -320,14 +316,14 @@ weed_plant_t *weed_setup (weed_bootstrap_f weed_boot) {
     gui=weed_parameter_template_get_gui(in_params[0]);
     weed_set_int_value(gui,"maxchars",80); // for display only - fileread will override this
     flags=0;
-    if (weed_plant_has_leaf(in_params[0],"flags")) 
+    if (weed_plant_has_leaf(in_params[0],"flags"))
       flags=weed_get_int_value(in_params[0],"flags",&error);
     flags|=WEED_PARAMETER_REINIT_ON_VALUE_CHANGE;
     weed_set_int_value(in_params[0],"flags",flags);
 
     in_params[1]=weed_string_list_init("mode","Effect _mode",0,modes);
     flags=0;
-    if (weed_plant_has_leaf(in_params[1],"flags")) 
+    if (weed_plant_has_leaf(in_params[1],"flags"))
       flags=weed_get_int_value(in_params[1],"flags",&error);
     flags|=WEED_PARAMETER_REINIT_ON_VALUE_CHANGE;
     weed_set_int_value(in_params[1],"flags",flags);
@@ -335,14 +331,15 @@ weed_plant_t *weed_setup (weed_bootstrap_f weed_boot) {
 
     g_free(defmaskfile);
 
-    filter_class=weed_filter_class_init("mask_overlay","salsaman",1,WEED_FILTER_HINT_MAY_THREAD,&masko_init,&masko_process,&masko_deinit,in_chantmpls,out_chantmpls,in_params,NULL);
-    
+    filter_class=weed_filter_class_init("mask_overlay","salsaman",1,WEED_FILTER_HINT_MAY_THREAD,&masko_init,&masko_process,&masko_deinit,
+                                        in_chantmpls,out_chantmpls,in_params,NULL);
+
     gui=weed_filter_class_get_gui(filter_class);
     weed_set_string_value(gui,"layout_scheme","RFX");
     weed_set_string_value(gui,"rfx_delim","|");
     weed_set_string_array(gui,"rfx_strings",1,rfx_strings);
 
-    weed_plugin_info_add_filter_class (plugin_info,filter_class);
+    weed_plugin_info_add_filter_class(plugin_info,filter_class);
 
     weed_set_int_value(plugin_info,"version",package_version);
 

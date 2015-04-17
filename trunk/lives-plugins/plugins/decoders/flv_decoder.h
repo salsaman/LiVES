@@ -28,8 +28,8 @@
 
 // system header flags
 enum {
-    FLV_HEADER_FLAG_HASVIDEO = 1,
-    FLV_HEADER_FLAG_HASAUDIO = 4,
+  FLV_HEADER_FLAG_HASVIDEO = 1,
+  FLV_HEADER_FLAG_HASAUDIO = 4,
 };
 
 // packet flag masks
@@ -44,39 +44,39 @@ enum {
 
 // amf data types for metadata
 typedef enum {
-    AMF_DATA_TYPE_NUMBER      = 0x00,
-    AMF_DATA_TYPE_BOOL        = 0x01,
-    AMF_DATA_TYPE_STRING      = 0x02,
-    AMF_DATA_TYPE_OBJECT      = 0x03,
-    AMF_DATA_TYPE_NULL        = 0x05,
-    AMF_DATA_TYPE_UNDEFINED   = 0x06,
-    AMF_DATA_TYPE_REFERENCE   = 0x07,
-    AMF_DATA_TYPE_MIXEDARRAY  = 0x08,
-    AMF_DATA_TYPE_OBJECT_END  = 0x09,
-    AMF_DATA_TYPE_ARRAY       = 0x0a,
-    AMF_DATA_TYPE_DATE        = 0x0b,
-    AMF_DATA_TYPE_LONG_STRING = 0x0c,
-    AMF_DATA_TYPE_UNSUPPORTED = 0x0d,
+  AMF_DATA_TYPE_NUMBER      = 0x00,
+  AMF_DATA_TYPE_BOOL        = 0x01,
+  AMF_DATA_TYPE_STRING      = 0x02,
+  AMF_DATA_TYPE_OBJECT      = 0x03,
+  AMF_DATA_TYPE_NULL        = 0x05,
+  AMF_DATA_TYPE_UNDEFINED   = 0x06,
+  AMF_DATA_TYPE_REFERENCE   = 0x07,
+  AMF_DATA_TYPE_MIXEDARRAY  = 0x08,
+  AMF_DATA_TYPE_OBJECT_END  = 0x09,
+  AMF_DATA_TYPE_ARRAY       = 0x0a,
+  AMF_DATA_TYPE_DATE        = 0x0b,
+  AMF_DATA_TYPE_LONG_STRING = 0x0c,
+  AMF_DATA_TYPE_UNSUPPORTED = 0x0d,
 } AMFDataType;
 
 
 // video codecs
 enum {
-    FLV_CODECID_H263    = 2,
-    FLV_CODECID_SCREEN  = 3,
-    FLV_CODECID_VP6     = 4,
-    FLV_CODECID_VP6A    = 5,
-    FLV_CODECID_SCREEN2 = 6,
-    FLV_CODECID_H264    = 7,
+  FLV_CODECID_H263    = 2,
+  FLV_CODECID_SCREEN  = 3,
+  FLV_CODECID_VP6     = 4,
+  FLV_CODECID_VP6A    = 5,
+  FLV_CODECID_SCREEN2 = 6,
+  FLV_CODECID_H264    = 7,
 };
 
 
 // packet tags
 enum {
-    FLV_TAG_TYPE_ERROR = 0x00,
-    FLV_TAG_TYPE_AUDIO = 0x08,
-    FLV_TAG_TYPE_VIDEO = 0x09,
-    FLV_TAG_TYPE_META  = 0x12,
+  FLV_TAG_TYPE_ERROR = 0x00,
+  FLV_TAG_TYPE_AUDIO = 0x08,
+  FLV_TAG_TYPE_VIDEO = 0x09,
+  FLV_TAG_TYPE_META  = 0x12,
 };
 
 

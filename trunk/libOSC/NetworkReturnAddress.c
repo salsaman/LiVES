@@ -1,5 +1,5 @@
 /*
-Copyright © 1998. The Regents of the University of California (Regents). 
+Copyright © 1998. The Regents of the University of California (Regents).
 All Rights Reserved.
 
 Written by Matt Wright, The Center for New Music and Audio Technologies,
@@ -22,7 +22,7 @@ PURPOSE. THE SOFTWARE AND ACCOMPANYING DOCUMENTATION, IF ANY, PROVIDED
 HEREUNDER IS PROVIDED "AS IS". REGENTS HAS NO OBLIGATION TO PROVIDE
 MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 
-The OpenSound Control WWW page is 
+The OpenSound Control WWW page is
     http://www.cnmat.berkeley.edu/OpenSoundControl
 */
 
@@ -31,7 +31,7 @@ The OpenSound Control WWW page is
 
   This version implements UDP return addresses on SGI
 
-  Matt Wright, 
+  Matt Wright,
   9/11/98
 */
 
@@ -46,13 +46,13 @@ The OpenSound Control WWW page is
 
 
 int SizeOfNetworkReturnAddress(void) {
-    return sizeof(struct NetworkReturnAddressStruct);
+  return sizeof(struct NetworkReturnAddressStruct);
 }
 
 Boolean NetworkSendReturnMessage(NetworkReturnAddressPtr addr,
-				 int n,
-				 void *buf) {
-    if (addr == 0) return FALSE;
+                                 int n,
+                                 void *buf) {
+  if (addr == 0) return FALSE;
 
-    return n == sendto(addr->sockfd, buf, n, 0, &(addr->cl_addr), addr->clilen);
+  return n == sendto(addr->sockfd, buf, n, 0, &(addr->cl_addr), addr->clilen);
 }

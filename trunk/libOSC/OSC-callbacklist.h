@@ -1,5 +1,5 @@
 /*
-Copyright © 1998. The Regents of the University of California (Regents). 
+Copyright © 1998. The Regents of the University of California (Regents).
 All Rights Reserved.
 
 Written by Matt Wright, The Center for New Music and Audio Technologies,
@@ -22,7 +22,7 @@ PURPOSE. THE SOFTWARE AND ACCOMPANYING DOCUMENTATION, IF ANY, PROVIDED
 HEREUNDER IS PROVIDED "AS IS". REGENTS HAS NO OBLIGATION TO PROVIDE
 MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 
-The OpenSound Control WWW page is 
+The OpenSound Control WWW page is
     http://www.cnmat.berkeley.edu/OpenSoundControl
 */
 
@@ -41,8 +41,8 @@ The OpenSound Control WWW page is
 /* Call this before you call anything else. */
 Boolean InitCallbackListNodes(int numNodes, void *(*InitTimeMalloc)(int numBytes));
 
-callbackList AllocCallbackListNode(methodCallback callback, void *context, 
-				   struct callbackListNode *next);
+callbackList AllocCallbackListNode(methodCallback callback, void *context,
+                                   struct callbackListNode *next);
 
 void FreeCallbackListNode(callbackList);
 

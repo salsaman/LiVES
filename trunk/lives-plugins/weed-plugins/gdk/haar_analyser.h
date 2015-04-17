@@ -54,11 +54,10 @@ gint myround(gdouble n) {
 }
 
 /* signature structure */
-typedef struct valStruct_{
+typedef struct valStruct_ {
   Unit d;			/* [f]abs(a[i]) */
   int i;			/* index i of a[i] */
-  bool operator< (const valStruct_ &right) const
-  {
+  bool operator< (const valStruct_ &right) const {
     return d > right.d;
   }
 } valStruct;
@@ -70,13 +69,13 @@ typedef std::priority_queue < valStruct > valqueue;
 
 void initImgBin();
 
-void transform(Unit* a, Unit* b, Unit* c);
+void transform(Unit *a, Unit *b, Unit *c);
 
-void transformChar(unsigned char* c1, unsigned char* c2, unsigned char* c3,
-		   Unit* a, Unit* b, Unit* c);
+void transformChar(unsigned char *c1, unsigned char *c2, unsigned char *c3,
+                   Unit *a, Unit *b, Unit *c);
 
-int calcHaar(Unit* cdata1, Unit* cdata2, Unit* cdata3,
-	     Idx* sig1, Idx* sig2, Idx* sig3, double * avgl);
+int calcHaar(Unit *cdata1, Unit *cdata2, Unit *cdata3,
+             Idx *sig1, Idx *sig2, Idx *sig3, double *avgl);
 
 double *new_darray(int size) ;
 

@@ -19,7 +19,7 @@
 ///////////////////////////////////////////////////////////////////
 
 static int num_versions=2; // number of different weed api versions supported
-static int api_versions[]={131,110}; // array of weed api versions supported in plugin, in order of preference (most preferred first)
+static int api_versions[]= {131,110}; // array of weed api versions supported in plugin, in order of preference (most preferred first)
 
 static int package_version=1; // version of this package
 
@@ -47,15 +47,14 @@ int avol_init(weed_plant_t *inst) {
   weed_plant_t *gui=weed_parameter_template_get_gui(paramt);
   weed_plant_t *paramt2=weed_get_plantptr_value(in_params[2],"template",&error);
   weed_plant_t *gui2=weed_parameter_template_get_gui(paramt2);
-  
+
   weed_free(in_params);
 
   // hide the "pan" and "swap" controls if we are using mono audio
   if (chans!=2) {
     weed_set_boolean_value(gui,"hidden",WEED_TRUE);
     weed_set_boolean_value(gui2,"hidden",WEED_TRUE);
-  }
-  else {
+  } else {
     weed_set_boolean_value(gui,"hidden",WEED_FALSE);
     weed_set_boolean_value(gui2,"hidden",WEED_FALSE);
   }
@@ -65,9 +64,10 @@ int avol_init(weed_plant_t *inst) {
 
 
 
-int avol_process (weed_plant_t *inst, weed_timecode_t timestamp) {
+int avol_process(weed_plant_t *inst, weed_timecode_t timestamp) {
   int error;
-  weed_plant_t **in_channels=weed_get_plantptr_array(inst,"in_channels",&error),*out_channel=weed_get_plantptr_value(inst,"out_channels",&error);
+  weed_plant_t **in_channels=weed_get_plantptr_array(inst,"in_channels",&error),*out_channel=weed_get_plantptr_value(inst,"out_channels",
+                             &error);
   float *src;
   float *odst=weed_get_voidptr_value(out_channel,"audio_data",&error),*dst=odst;
 
@@ -109,44 +109,41 @@ int avol_process (weed_plant_t *inst, weed_timecode_t timestamp) {
   if (chans==2) {
     if (swapchans==WEED_FALSE) {
       while (nsamps--) {
-	*(dst++)=voll*(*(src++));
-	if (inter) *(dst++)=volr*(*(src++));
+        *(dst++)=voll*(*(src++));
+        if (inter) *(dst++)=volr*(*(src++));
       }
       if (!inter) {
-	nsamps=orig_nsamps;
-	while (nsamps--) {
-	  *(dst++)=volr*(*(src++));
-	}
+        nsamps=orig_nsamps;
+        while (nsamps--) {
+          *(dst++)=volr*(*(src++));
+        }
       }
-    } 
-    else {
+    } else {
       // swap l/r channels
       if (!inter) src+=nsamps;
       else src++;
       while (nsamps--) {
-	if (inter) {
-	  *(dst++)=voll*(*(src--));
-	  *(dst++)=volr*(*(src++));
-	  src++;
-	}
-	else *(dst++)=voll*(*(src++));
+        if (inter) {
+          *(dst++)=voll*(*(src--));
+          *(dst++)=volr*(*(src++));
+          src++;
+        } else *(dst++)=voll*(*(src++));
       }
       if (!inter) {
-	nsamps=orig_nsamps;
-	src-=nsamps*2;
-	while (nsamps--) {
-	  *(dst++)=volr*(*(src++));
-	}
+        nsamps=orig_nsamps;
+        src-=nsamps*2;
+        while (nsamps--) {
+          *(dst++)=volr*(*(src++));
+        }
       }
     }
-  }
-  else if (chans==1) {
+  } else if (chans==1) {
     while (nsamps--) {
       *(dst++)=vol[0]*(*(src++));
     }
   }
 
-  for (i=1;i<ntracks;i++) {
+  for (i=1; i<ntracks; i++) {
     if (weed_plant_has_leaf(in_channels[i],"disabled")&&weed_get_boolean_value(in_channels[i],"disabled",&error)==WEED_TRUE) continue;
     if (vol[i]==0.) continue;
     dst=odst;
@@ -157,9 +154,9 @@ int avol_process (weed_plant_t *inst, weed_timecode_t timestamp) {
 
     chans=weed_get_int_value(in_channels[i],"audio_channels",&error);
 
-    
+
     voll=volr=vol[i];
-    
+
     if (chans==2) {
       if (pan[i]<0.) volr*=(1.+pan[i]);
       else voll*=(1.-pan[i]);
@@ -167,19 +164,18 @@ int avol_process (weed_plant_t *inst, weed_timecode_t timestamp) {
 
     if (chans==2) {
       while (nsamps--) {
-	*(dst++)+=voll*(*(src++));
-	if (inter) *(dst++)+=volr*(*(src++));
+        *(dst++)+=voll*(*(src++));
+        if (inter) *(dst++)+=volr*(*(src++));
       }
       if (!inter) {
-	nsamps=orig_nsamps;
-	while (nsamps--) {
-	  *(dst++)+=volr*(*(src++));
-	}
+        nsamps=orig_nsamps;
+        while (nsamps--) {
+          *(dst++)+=volr*(*(src++));
+        }
       }
-    }
-    else if (chans==1) {
+    } else if (chans==1) {
       while (nsamps--) {
-	*(dst++)+=vol[i]*(*(src++));
+        *(dst++)+=vol[i]*(*(src++));
       }
     }
   }
@@ -194,13 +190,14 @@ int avol_process (weed_plant_t *inst, weed_timecode_t timestamp) {
 
 
 
-weed_plant_t *weed_setup (weed_bootstrap_f weed_boot) {
+weed_plant_t *weed_setup(weed_bootstrap_f weed_boot) {
   weed_plant_t *plugin_info=weed_plugin_info_init(weed_boot,num_versions,api_versions);
   if (plugin_info!=NULL) {
-    weed_plant_t *in_chantmpls[]={weed_audio_channel_template_init("in channel 0",0),NULL};
-    weed_plant_t *out_chantmpls[]={weed_audio_channel_template_init("out channel 0",WEED_CHANNEL_CAN_DO_INPLACE),NULL};
-    weed_plant_t *in_params[]={weed_float_init("volume","_Volume",1.0,0.0,1.0),weed_float_init("pan","_Pan",0.,-1.,1.),weed_switch_init("swap","_Swap left and right channels",WEED_FALSE),NULL};
-    weed_plant_t *filter_class=weed_filter_class_init("audio volume and pan","salsaman",1,WEED_FILTER_IS_CONVERTER,&avol_init,&avol_process,NULL,in_chantmpls,out_chantmpls,in_params,NULL);
+    weed_plant_t *in_chantmpls[]= {weed_audio_channel_template_init("in channel 0",0),NULL};
+    weed_plant_t *out_chantmpls[]= {weed_audio_channel_template_init("out channel 0",WEED_CHANNEL_CAN_DO_INPLACE),NULL};
+    weed_plant_t *in_params[]= {weed_float_init("volume","_Volume",1.0,0.0,1.0),weed_float_init("pan","_Pan",0.,-1.,1.),weed_switch_init("swap","_Swap left and right channels",WEED_FALSE),NULL};
+    weed_plant_t *filter_class=weed_filter_class_init("audio volume and pan","salsaman",1,WEED_FILTER_IS_CONVERTER,&avol_init,&avol_process,
+                               NULL,in_chantmpls,out_chantmpls,in_params,NULL);
     int error;
     weed_plant_t *host_info=weed_get_plantptr_value(plugin_info,"host_info",&error);
     int api=weed_get_int_value(host_info,"api_version",&error);
@@ -220,7 +217,7 @@ weed_plant_t *weed_setup (weed_bootstrap_f weed_boot) {
 
     if (api>=131) weed_set_int_value(filter_class,"flags",WEED_FILTER_PROCESS_LAST|WEED_FILTER_IS_CONVERTER);
 
-    weed_plugin_info_add_filter_class (plugin_info,filter_class);
+    weed_plugin_info_add_filter_class(plugin_info,filter_class);
 
     weed_set_int_value(plugin_info,"version",package_version);
   }

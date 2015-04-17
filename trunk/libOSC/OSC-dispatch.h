@@ -1,5 +1,5 @@
 /*
-Copyright © 1998. The Regents of the University of California (Regents). 
+Copyright © 1998. The Regents of the University of California (Regents).
 All Rights Reserved.
 
 Written by Matt Wright, The Center for New Music and Audio Technologies,
@@ -22,14 +22,14 @@ PURPOSE. THE SOFTWARE AND ACCOMPANYING DOCUMENTATION, IF ANY, PROVIDED
 HEREUNDER IS PROVIDED "AS IS". REGENTS HAS NO OBLIGATION TO PROVIDE
 MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 
-The OpenSound Control WWW page is 
+The OpenSound Control WWW page is
     http://www.cnmat.berkeley.edu/OpenSoundControl
 */
 
 
 /* OSC-dispatch.h
 
-   Given an OSC message pattern from an incoming message, match the 
+   Given an OSC message pattern from an incoming message, match the
    pattern against the OSC address space and produce a list of the
    callbacks corresponding to all the addresses that were matched.
 
@@ -39,13 +39,13 @@ The OpenSound Control WWW page is
 /***************************** Dispatching  *****************************/
 
 typedef struct callbackListNode {
-    methodCallback callback;
-    void *context;
-    struct callbackListNode *next;
+  methodCallback callback;
+  void *context;
+  struct callbackListNode *next;
 } *callbackList;
 
 
-/* Given an OSC message pattern from an incoming message, match the 
+/* Given an OSC message pattern from an incoming message, match the
    pattern against the OSC address space and produce a list of the
    callbacks corresponding to all the addresses that were matched. */
 callbackList OSCDispatchMessage(char *pattern);

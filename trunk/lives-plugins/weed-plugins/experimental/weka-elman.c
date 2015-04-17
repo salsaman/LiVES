@@ -22,7 +22,7 @@
 ///////////////////////////////////////////////////////////////////
 
 static int num_versions=1; // number of different weed api versions supported
-static int api_versions[]={131}; // array of weed api versions supported in plugin, in order of preference (most preferred first)
+static int api_versions[]= {131}; // array of weed api versions supported in plugin, in order of preference (most preferred first)
 
 static int package_version=1; // version of this package
 
@@ -80,7 +80,7 @@ static void make_floatdata(double *data, int ndata, int tclass) {
 
   memset(floatdata,0,1024);
 
-  for (i=0;i<ndata;i++) {
+  for (i=0; i<ndata; i++) {
     snprintf(tmp,1024,"%8f ",data[i]);
     strncat(floatdata,tmp,1024);
   }
@@ -97,7 +97,7 @@ static int parse_output(const char *sout) {
 
   register int i;
 
-  for (i=0;i<NCLASSES;i++) {
+  for (i=0; i<NCLASSES; i++) {
     val=strtod(sptr,&sptr);
     if (val>max) maxi=i;
   }
@@ -135,12 +135,10 @@ int weka_init(weed_plant_t *inst) {
     mode=MODE_LIVE;
     rc=cjProxyLoadModelString(&proxy,savefile,sout);
     weed_set_boolean_value(gui,"hidden",WEED_TRUE); // hide Class in param
-  }
-  else if (mode==MODE_LIVE && train) {
+  } else if (mode==MODE_LIVE && train) {
     mode=MODE_STORE;
     weed_set_boolean_value(gui,"hidden",WEED_FALSE); // show Class in param
-  }
-  else if (mode==MODE_LIVE) {
+  } else if (mode==MODE_LIVE) {
     rc=cjProxyResetModelString(&proxy,"",sout);
   }
 
@@ -211,7 +209,7 @@ int weka_process(weed_plant_t *inst, weed_timecode_t timestamp) {
 
 
 
-weed_plant_t *weed_setup (weed_bootstrap_f weed_boot) {
+weed_plant_t *weed_setup(weed_bootstrap_f weed_boot) {
   weed_plant_t *plugin_info=weed_plugin_info_init(weed_boot,num_versions,api_versions);
   if (plugin_info!=NULL) {
     int rc;
@@ -220,12 +218,14 @@ weed_plant_t *weed_setup (weed_bootstrap_f weed_boot) {
     char *args[] = {"-Djava.class.path=./data:/home/gabriel/masters/jni/java/src/main/java:/home/gabriel/masters/jni/java/", "-Xms256m", "-Xmx512m"};
 
 
-    weed_plant_t *in_params[]={weed_float_init("data","_Data",0.,-1000000000.,1000000000.),weed_switch_init("train","_Training mode",WEED_TRUE),
-			       weed_integer_init("class","_Class",0,0,NCLASSES-1),NULL};
+    weed_plant_t *in_params[]= {weed_float_init("data","_Data",0.,-1000000000.,1000000000.),weed_switch_init("train","_Training mode",WEED_TRUE),
+                                weed_integer_init("class","_Class",0,0,NCLASSES-1),NULL
+                               };
 
-    weed_plant_t *out_params[]={weed_out_param_integer_init("class",0,0,NCLASSES-1),NULL};
+    weed_plant_t *out_params[]= {weed_out_param_integer_init("class",0,0,NCLASSES-1),NULL};
 
-    weed_plant_t *filter_class=weed_filter_class_init("weka-elman","salsaman",1,0,&weka_init,&weka_process,&weka_deinit,NULL,NULL,in_params,out_params);
+    weed_plant_t *filter_class=weed_filter_class_init("weka-elman","salsaman",1,0,&weka_init,&weka_process,&weka_deinit,NULL,NULL,in_params,
+                               out_params);
 
     weed_set_int_value(in_params[0],"flags",WEED_PARAMETER_VARIABLE_ELEMENTS);
     weed_set_int_value(in_params[1],"flags",WEED_PARAMETER_REINIT_ON_VALUE_CHANGE);
@@ -236,22 +236,22 @@ weed_plant_t *weed_setup (weed_bootstrap_f weed_boot) {
     memset(&jvm, 0, sizeof(cjJVM_t));
     memset(&proxyClass, 0, sizeof(cjClass_t));
     memset(&proxy, 0, sizeof(cjObject_t));
-    
+
     jvm.argc = 3;
     jvm.argv = args;
     rc = cjJVMConnect(&jvm);
     if (rc!=CJ_ERR_SUCCESS) return NULL;
-    
+
     rc = cjProxyClassCreate(&proxyClass, "CJWeka", &jvm);
     if (rc!=CJ_ERR_SUCCESS) return NULL;
-    
+
     proxy.clazz = &proxyClass;
     rc = cjProxyCreate(&proxy);
     if (rc!=CJ_ERR_SUCCESS) return NULL;
 
-    weed_plugin_info_add_filter_class (plugin_info,filter_class);
+    weed_plugin_info_add_filter_class(plugin_info,filter_class);
     weed_set_int_value(plugin_info,"version",package_version);
-    
+
     mode=MODE_STORE;
 
   }

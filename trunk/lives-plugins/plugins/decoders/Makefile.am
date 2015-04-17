@@ -103,7 +103,7 @@ endif
 flv_libs = flv_decoder.la
 FLVDEC_LIBS = @LIBAVCODEC_LIBS@ @LIBAVFORMAT_LIBS@
 FLVDEC_CFLAGS = @LIBAVFORMAT_CFLAGS@ @LIBAVCODEC_CFLAGS@ -Wno-deprecated-declarations
-flv_decoder_la_SOURCES = flv_decoder.c flv_decoder.h
+flv_decoder_la_SOURCES = flv_decoder.c flv_decoder.h dec_helper.c dec_helper.h
 flv_decoder_la_CFLAGS = $(libav_cflags) $(shared_cflags) $(weed_cflags) $(FLVDEC_CFLAGS)
 flv_decoder_la_LDFLAGS = $(shared_ldflags) $(FLVDEC_LIBS)
 
@@ -111,7 +111,7 @@ flv_decoder_la_LDFLAGS = $(shared_ldflags) $(FLVDEC_LIBS)
 asf_libs = asf_decoder.la
 ASFDEC_LIBS = @LIBAVCODEC_LIBS@ @LIBAVFORMAT_LIBS@
 ASFDEC_CFLAGS = @LIBAVFORMAT_CFLAGS@ @LIBAVCODEC_CFLAGS@ -Wno-deprecated-declarations
-asf_decoder_la_SOURCES = asf_decoder.c asf_decoder.h
+asf_decoder_la_SOURCES = asf_decoder.c asf_decoder.h dec_helper.c dec_helper.h
 asf_decoder_la_CFLAGS = $(libav_cflags) $(shared_cflags) $(weed_cflags) $(ASFDEC_CFLAGS)
 asf_decoder_la_LDFLAGS = $(shared_ldflags) $(ASFDEC_LIBS)
 
@@ -131,7 +131,7 @@ mpegts_libs = mpegts_decoder.la
 MPEGTSDEC_LIBS = @LIBAVCODEC_LIBS@ @LIBAVFORMAT_LIBS@ @LIBAVUTIL_LIBS@
 MPEGTSDEC_CFLAGS = @LIBAVFORMAT_CFLAGS@ @LIBAVCODEC_CFLAGS@ @LIBAVUTIL_CFLAGS@ \
 	-Wno-deprecated-declarations
-mpegts_decoder_la_SOURCES = mpegts_decoder.c mpegts_decoder.h
+mpegts_decoder_la_SOURCES = mpegts_decoder.c mpegts_decoder.h dec_helper.c dec_helper.h
 mpegts_decoder_la_CFLAGS = $(libav_cflags) $(shared_cflags) $(weed_cflags) $(MPEGTSDEC_CFLAGS)
 mpegts_decoder_la_LDFLAGS = $(shared_ldflags) $(MPEGTSDEC_LIBS)
 

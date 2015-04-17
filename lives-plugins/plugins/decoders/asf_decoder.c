@@ -64,6 +64,7 @@ const char *plugin_version="LiVES asf/wmv decoder version 1.1";
 #include "decplugin.h"
 #include "libav_helper.h"
 
+#include "dec_helper.h"
 #include "asf_decoder.h"
 
 static enum CodecID ff_codec_get_id(const AVCodecTag *tags, unsigned int tag)

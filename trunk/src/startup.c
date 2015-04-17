@@ -21,17 +21,15 @@ static boolean prompt_existing_dir(char *dirname, uint64_t freespace, boolean wr
   if (wrtable) {
     char *fspstr=lives_format_storage_space_string(freespace);
     msg=lives_strdup_printf
-      (_("A directory named\n%s\nalready exists. Do you wish to use this directory ?\n\n(Free space = %s)\n"),dirname,fspstr);
+        (_("A directory named\n%s\nalready exists. Do you wish to use this directory ?\n\n(Free space = %s)\n"),dirname,fspstr);
     lives_free(fspstr);
     res=do_yesno_dialog(msg);
+  } else {
+    msg=lives_strdup_printf
+        (_("A directory named\n%s\nalready exists.\nLiVES could not write to this directory or read its free space.\nPlease select another location.\n"),
+         dirname);
+    do_error_dialog(msg);
   }
-  else
-    {
-      msg=lives_strdup_printf
-	(_("A directory named\n%s\nalready exists.\nLiVES could not write to this directory or read its free space.\nPlease select another location.\n"),
-	 dirname);
-      do_error_dialog(msg);
-    }
   lives_free(msg);
   return res;
 }
@@ -48,8 +46,7 @@ static boolean prompt_new_dir(char *dirname, uint64_t freespace, boolean wrtable
     msg=lives_strdup_printf(_("\nCreate the directory\n%s\n?\n\n(Free space = %s)"),dirname,fspstr);
     lives_free(fspstr);
     res=do_warning_dialog(msg);
-  }
-  else {
+  } else {
     msg=lives_strdup_printf(_("\nLiVES could not write to the directory\n%s\nPlease try again and choose a different location.\n"),dirname);
     do_error_dialog(msg);
   }
@@ -73,7 +70,7 @@ boolean do_tempdir_query(void) {
   char *com;
 #endif
 
- top:
+top:
 
   tdentry=create_rename_dialog(6);
 
@@ -106,34 +103,31 @@ boolean do_tempdir_query(void) {
 
     if (lives_file_test(dirname,LIVES_FILE_TEST_IS_DIR)) {
       if (is_writeable_dir(dirname)) {
-	freesp=get_fs_free(dirname);
-	if (!prompt_existing_dir(dirname,freesp,TRUE)) {
-	  lives_free(dirname);
-	  continue;
-	}
+        freesp=get_fs_free(dirname);
+        if (!prompt_existing_dir(dirname,freesp,TRUE)) {
+          lives_free(dirname);
+          continue;
+        }
+      } else {
+        if (!prompt_existing_dir(dirname,0,FALSE)) {
+          lives_free(dirname);
+          continue;
+        }
       }
-      else {
-	if (!prompt_existing_dir(dirname,0,FALSE)) {
-	  lives_free(dirname);
-	  continue;
-	}
-      }
-    }
-    else {
+    } else {
       if (is_writeable_dir(dirname)) {
-	freesp=get_fs_free(dirname);
-	if (!prompt_new_dir(dirname,freesp,TRUE)) {
-	  rmdir(dirname);
-	  lives_free(dirname);
-	  continue;
-	}
-      }
-      else {
-	if (!prompt_new_dir(dirname,0,FALSE)) {
-	  rmdir(dirname);
-	  lives_free(dirname);
-	  continue;
-	}
+        freesp=get_fs_free(dirname);
+        if (!prompt_new_dir(dirname,freesp,TRUE)) {
+          rmdir(dirname);
+          lives_free(dirname);
+          continue;
+        }
+      } else {
+        if (!prompt_new_dir(dirname,0,FALSE)) {
+          rmdir(dirname);
+          lives_free(dirname);
+          continue;
+        }
       }
     }
 
@@ -150,9 +144,9 @@ boolean do_tempdir_query(void) {
   }
 
 #ifndef IS_MINGW
-  com=lives_strdup_printf ("/bin/chmod 777 \"%s\" 2>/dev/null",dirname);
-  lives_system (com,FALSE);
-  lives_free (com);
+  com=lives_strdup_printf("/bin/chmod 777 \"%s\" 2>/dev/null",dirname);
+  lives_system(com,FALSE);
+  lives_free(com);
 #endif
 
   lives_snprintf(prefs->tmpdir,PATH_MAX,"%s",dirname);
@@ -175,7 +169,7 @@ boolean do_tempdir_query(void) {
 
 
 
-static void on_init_aplayer_toggled (LiVESToggleButton *tbutton, livespointer user_data) {
+static void on_init_aplayer_toggled(LiVESToggleButton *tbutton, livespointer user_data) {
   int audp=LIVES_POINTER_TO_INT(user_data);
 
   if (!lives_toggle_button_get_active(tbutton)) return;
@@ -220,8 +214,7 @@ boolean do_audio_choice_dialog(short startup_phase) {
 
   if (startup_phase==2) {
     txt0=lives_strdup(_("LiVES FAILED TO START YOUR SELECTED AUDIO PLAYER !\n\n"));
-  }
-  else {
+  } else {
     prefs->audio_player=-1;
     txt0=lives_strdup("");
   }
@@ -232,9 +225,9 @@ boolean do_audio_choice_dialog(short startup_phase) {
   txt2=lives_strdup(_(", but this version of LiVES was not compiled with pulse audio support.\n\n"));
 #else
   if (!capable->has_pulse_audio) {
-    txt2=lives_strdup(_(", but you do not have pulse audio installed on your system.\n You are advised to install pulse audio first before running LiVES.\n\n"));
-  }
-  else txt2=lives_strdup(".\n\n");
+    txt2=lives_strdup(
+           _(", but you do not have pulse audio installed on your system.\n You are advised to install pulse audio first before running LiVES.\n\n"));
+  } else txt2=lives_strdup(".\n\n");
 #endif
 
   txt3=lives_strdup(_("JACK audio is recommended for pro users"));
@@ -244,9 +237,9 @@ boolean do_audio_choice_dialog(short startup_phase) {
 #else
   if (!capable->has_jackd) {
     txt4=lives_strdup(_(", but you do not have jackd installed. You may wish to install jackd first before running LiVES.\n\n"));
-  }
-  else {
-    txt4=lives_strdup(_(", but may prevent LiVES from starting on some systems.\nIf LiVES will not start with jack, you can restart and try with another audio player instead.\n\n"));
+  } else {
+    txt4=lives_strdup(
+           _(", but may prevent LiVES from starting on some systems.\nIf LiVES will not start with jack, you can restart and try with another audio player instead.\n\n"));
   }
 #endif
 
@@ -254,15 +247,13 @@ boolean do_audio_choice_dialog(short startup_phase) {
 
   if (capable->has_sox_play) {
     txt6=lives_strdup(_("but some audio features will be disabled.\n\n"));
-  }
-  else {
+  } else {
     txt6=lives_strdup(_("but you do not have sox installed.\nYou are advised to install it before running LiVES.\n\n"));
   }
 
   if (capable->has_mplayer||capable->has_mplayer2) {
     txt7=lives_strdup(_("The MPLAYER/MPLAYER2 audio player is only recommended for testing purposes.\n\n"));
-  }
-  else {
+  } else {
     txt7=lives_strdup("");
   }
 
@@ -277,25 +268,25 @@ boolean do_audio_choice_dialog(short startup_phase) {
   lives_free(txt6);
   lives_free(txt7);
 
-  dialog = lives_standard_dialog_new (_("LiVES: - Choose an audio player"),FALSE,-1,-1);
+  dialog = lives_standard_dialog_new(_("LiVES: - Choose an audio player"),FALSE,-1,-1);
 
-  accel_group = LIVES_ACCEL_GROUP(lives_accel_group_new ());
-  lives_window_add_accel_group (LIVES_WINDOW (dialog), accel_group);
+  accel_group = LIVES_ACCEL_GROUP(lives_accel_group_new());
+  lives_window_add_accel_group(LIVES_WINDOW(dialog), accel_group);
 
   dialog_vbox = lives_dialog_get_content_area(LIVES_DIALOG(dialog));
-  
+
   label=lives_standard_label_new(msg);
-  lives_container_add (LIVES_CONTAINER (dialog_vbox), label);
+  lives_container_add(LIVES_CONTAINER(dialog_vbox), label);
   lives_free(msg);
 
 
 
 #ifdef HAVE_PULSE_AUDIO
-  hbox = lives_hbox_new (FALSE, 0);
-  lives_box_pack_start (LIVES_BOX (dialog_vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
+  hbox = lives_hbox_new(FALSE, 0);
+  lives_box_pack_start(LIVES_BOX(dialog_vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
 
-  radiobutton0 = lives_standard_radio_button_new ( _("Use _pulse audio player"),TRUE,radiobutton_group,LIVES_BOX(hbox),NULL);
-  radiobutton_group = lives_radio_button_get_group (LIVES_RADIO_BUTTON (radiobutton0));
+  radiobutton0 = lives_standard_radio_button_new(_("Use _pulse audio player"),TRUE,radiobutton_group,LIVES_BOX(hbox),NULL);
+  radiobutton_group = lives_radio_button_get_group(LIVES_RADIO_BUTTON(radiobutton0));
 
   if (prefs->audio_player==-1) prefs->audio_player=AUD_PLAYER_PULSE;
 
@@ -304,20 +295,20 @@ boolean do_audio_choice_dialog(short startup_phase) {
     set_pref("audio_player","pulse");
   }
 
-  lives_signal_connect (LIVES_GUI_OBJECT (radiobutton0), LIVES_WIDGET_TOGGLED_SIGNAL,
-                      LIVES_GUI_CALLBACK (on_init_aplayer_toggled),
-                      LIVES_INT_TO_POINTER(AUD_PLAYER_PULSE));
+  lives_signal_connect(LIVES_GUI_OBJECT(radiobutton0), LIVES_WIDGET_TOGGLED_SIGNAL,
+                       LIVES_GUI_CALLBACK(on_init_aplayer_toggled),
+                       LIVES_INT_TO_POINTER(AUD_PLAYER_PULSE));
 
 
 #endif
 
 
 #ifdef ENABLE_JACK
-  hbox = lives_hbox_new (FALSE, 0);
-  lives_box_pack_start (LIVES_BOX (dialog_vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
+  hbox = lives_hbox_new(FALSE, 0);
+  lives_box_pack_start(LIVES_BOX(dialog_vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
 
   radiobutton1 = lives_standard_radio_button_new(_("Use _jack audio player"),TRUE,radiobutton_group,LIVES_BOX(hbox),NULL);
-  radiobutton_group = lives_radio_button_get_group (LIVES_RADIO_BUTTON (radiobutton1));
+  radiobutton_group = lives_radio_button_get_group(LIVES_RADIO_BUTTON(radiobutton1));
 
   if (prefs->audio_player==AUD_PLAYER_JACK||!capable->has_pulse_audio||prefs->audio_player==-1) {
     prefs->audio_player=AUD_PLAYER_JACK;
@@ -325,19 +316,19 @@ boolean do_audio_choice_dialog(short startup_phase) {
     set_pref("audio_player","jack");
   }
 
-  lives_signal_connect (LIVES_GUI_OBJECT (radiobutton1), LIVES_WIDGET_TOGGLED_SIGNAL,
-                      LIVES_GUI_CALLBACK (on_init_aplayer_toggled),
-                      LIVES_INT_TO_POINTER(AUD_PLAYER_JACK));
+  lives_signal_connect(LIVES_GUI_OBJECT(radiobutton1), LIVES_WIDGET_TOGGLED_SIGNAL,
+                       LIVES_GUI_CALLBACK(on_init_aplayer_toggled),
+                       LIVES_INT_TO_POINTER(AUD_PLAYER_JACK));
 
 
 #endif
 
   if (capable->has_sox_play) {
-    hbox = lives_hbox_new (FALSE, 0);
-    lives_box_pack_start (LIVES_BOX (dialog_vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
+    hbox = lives_hbox_new(FALSE, 0);
+    lives_box_pack_start(LIVES_BOX(dialog_vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
 
-    radiobutton2 = lives_standard_radio_button_new (_("Use _sox audio player"),TRUE,radiobutton_group,LIVES_BOX(hbox),NULL);
-    radiobutton_group = lives_radio_button_get_group (LIVES_RADIO_BUTTON (radiobutton2));
+    radiobutton2 = lives_standard_radio_button_new(_("Use _sox audio player"),TRUE,radiobutton_group,LIVES_BOX(hbox),NULL);
+    radiobutton_group = lives_radio_button_get_group(LIVES_RADIO_BUTTON(radiobutton2));
 
     if (prefs->audio_player==-1) prefs->audio_player=AUD_PLAYER_SOX;
 
@@ -346,18 +337,18 @@ boolean do_audio_choice_dialog(short startup_phase) {
       set_pref("audio_player","sox");
     }
 
-    lives_signal_connect (LIVES_GUI_OBJECT (radiobutton2), LIVES_WIDGET_TOGGLED_SIGNAL,
-                      LIVES_GUI_CALLBACK (on_init_aplayer_toggled),
-                      LIVES_INT_TO_POINTER(AUD_PLAYER_SOX));
+    lives_signal_connect(LIVES_GUI_OBJECT(radiobutton2), LIVES_WIDGET_TOGGLED_SIGNAL,
+                         LIVES_GUI_CALLBACK(on_init_aplayer_toggled),
+                         LIVES_INT_TO_POINTER(AUD_PLAYER_SOX));
 
 
   }
 
   if (capable->has_mplayer) {
-    hbox = lives_hbox_new (FALSE, 0);
-    lives_box_pack_start (LIVES_BOX (dialog_vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
+    hbox = lives_hbox_new(FALSE, 0);
+    lives_box_pack_start(LIVES_BOX(dialog_vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
 
-    radiobutton3 = lives_standard_radio_button_new (_("Use _mplayer audio player"),TRUE,radiobutton_group,LIVES_BOX(hbox),NULL);
+    radiobutton3 = lives_standard_radio_button_new(_("Use _mplayer audio player"),TRUE,radiobutton_group,LIVES_BOX(hbox),NULL);
 
     if (prefs->audio_player==-1) prefs->audio_player=AUD_PLAYER_MPLAYER;
 
@@ -365,46 +356,46 @@ boolean do_audio_choice_dialog(short startup_phase) {
       lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(radiobutton3),TRUE);
       set_pref("audio_player","mplayer");
     }
-						    
-    lives_signal_connect (LIVES_GUI_OBJECT (radiobutton3), LIVES_WIDGET_TOGGLED_SIGNAL,
-		      LIVES_GUI_CALLBACK (on_init_aplayer_toggled),
-                      LIVES_INT_TO_POINTER(AUD_PLAYER_MPLAYER));
+
+    lives_signal_connect(LIVES_GUI_OBJECT(radiobutton3), LIVES_WIDGET_TOGGLED_SIGNAL,
+                         LIVES_GUI_CALLBACK(on_init_aplayer_toggled),
+                         LIVES_INT_TO_POINTER(AUD_PLAYER_MPLAYER));
 
 
   }
 
   if (capable->has_mplayer2) {
-    hbox = lives_hbox_new (FALSE, 0);
-    lives_box_pack_start (LIVES_BOX (dialog_vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
+    hbox = lives_hbox_new(FALSE, 0);
+    lives_box_pack_start(LIVES_BOX(dialog_vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
 
-    radiobutton4 = lives_standard_radio_button_new (_("Use _mplayer2 audio player"),TRUE,radiobutton_group,LIVES_BOX(hbox),NULL);
+    radiobutton4 = lives_standard_radio_button_new(_("Use _mplayer2 audio player"),TRUE,radiobutton_group,LIVES_BOX(hbox),NULL);
 
     if (prefs->audio_player==-1) prefs->audio_player=AUD_PLAYER_MPLAYER2;
 
     if (prefs->audio_player==AUD_PLAYER_MPLAYER2) {
-      lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(radiobutton4),TRUE); 
+      lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(radiobutton4),TRUE);
       set_pref("audio_player","mplayer2");
     }
-						    
-    lives_signal_connect (LIVES_GUI_OBJECT (radiobutton4), LIVES_WIDGET_TOGGLED_SIGNAL,
-		      LIVES_GUI_CALLBACK (on_init_aplayer_toggled),
-                      LIVES_INT_TO_POINTER(AUD_PLAYER_MPLAYER2));
+
+    lives_signal_connect(LIVES_GUI_OBJECT(radiobutton4), LIVES_WIDGET_TOGGLED_SIGNAL,
+                         LIVES_GUI_CALLBACK(on_init_aplayer_toggled),
+                         LIVES_INT_TO_POINTER(AUD_PLAYER_MPLAYER2));
 
 
   }
 
-  cancelbutton = lives_button_new_from_stock (LIVES_STOCK_CANCEL);
-  lives_widget_show (cancelbutton);
-  lives_dialog_add_action_widget (LIVES_DIALOG (dialog), cancelbutton, LIVES_RESPONSE_CANCEL);
+  cancelbutton = lives_button_new_from_stock(LIVES_STOCK_CANCEL);
+  lives_widget_show(cancelbutton);
+  lives_dialog_add_action_widget(LIVES_DIALOG(dialog), cancelbutton, LIVES_RESPONSE_CANCEL);
 
-  lives_widget_add_accelerator (cancelbutton, LIVES_WIDGET_CLICKED_SIGNAL, accel_group,
-                              LIVES_KEY_Escape, (LiVESXModifierType)0, (LiVESAccelFlags)0);
+  lives_widget_add_accelerator(cancelbutton, LIVES_WIDGET_CLICKED_SIGNAL, accel_group,
+                               LIVES_KEY_Escape, (LiVESXModifierType)0, (LiVESAccelFlags)0);
 
-  okbutton = lives_button_new_from_stock (LIVES_STOCK_GO_FORWARD);
+  okbutton = lives_button_new_from_stock(LIVES_STOCK_GO_FORWARD);
   lives_button_set_label(LIVES_BUTTON(okbutton),_("_Next"));
-  lives_widget_show (okbutton);
-  lives_dialog_add_action_widget (LIVES_DIALOG (dialog), okbutton, LIVES_RESPONSE_OK);
-  lives_widget_set_can_focus_and_default (okbutton);
+  lives_widget_show(okbutton);
+  lives_dialog_add_action_widget(LIVES_DIALOG(dialog), okbutton, LIVES_RESPONSE_OK);
+  lives_widget_set_can_focus_and_default(okbutton);
   lives_widget_grab_default(okbutton);
   lives_widget_grab_focus(okbutton);
 
@@ -423,7 +414,7 @@ boolean do_audio_choice_dialog(short startup_phase) {
   if (prefs->audio_player==AUD_PLAYER_SOX||prefs->audio_player==AUD_PLAYER_MPLAYER||prefs->audio_player==AUD_PLAYER_MPLAYER2) {
     lives_widget_hide(mainw->vol_toolitem);
     if (mainw->vol_label!=NULL) lives_widget_hide(mainw->vol_label);
-    lives_widget_hide (mainw->recaudio_submenu);
+    lives_widget_hide(mainw->recaudio_submenu);
   }
 
   lives_widget_context_update();
@@ -435,7 +426,7 @@ boolean do_audio_choice_dialog(short startup_phase) {
 static void add_test(LiVESWidget *table, int row, char *ttext, boolean noskip) {
   LiVESWidget *label=lives_standard_label_new(ttext);
 
-  lives_table_attach (LIVES_TABLE (table), label, 0, 1, row, row+1, (LiVESAttachOptions)0, (LiVESAttachOptions)0, 10, 10);
+  lives_table_attach(LIVES_TABLE(table), label, 0, 1, row, row+1, (LiVESAttachOptions)0, (LiVESAttachOptions)0, 10, 10);
   lives_widget_show(label);
 
   if (!noskip) {
@@ -443,10 +434,10 @@ static void add_test(LiVESWidget *table, int row, char *ttext, boolean noskip) {
     // TRANSLATORS - as in "skipped test"
     label=lives_standard_label_new(_("Skipped"));
 
-    lives_table_attach (LIVES_TABLE (table), label, 1, 2, row, row+1, (LiVESAttachOptions)0, (LiVESAttachOptions)0, 10, 10);
+    lives_table_attach(LIVES_TABLE(table), label, 1, 2, row, row+1, (LiVESAttachOptions)0, (LiVESAttachOptions)0, 10, 10);
     lives_widget_show(label);
 
-    lives_table_attach (LIVES_TABLE (table), image, 2, 3, row, row+1, (LiVESAttachOptions)0, (LiVESAttachOptions)0, 0, 10);
+    lives_table_attach(LIVES_TABLE(table), image, 2, 3, row, row+1, (LiVESAttachOptions)0, (LiVESAttachOptions)0, 0, 10);
     lives_widget_show(image);
   }
 
@@ -464,10 +455,10 @@ static boolean pass_test(LiVESWidget *table, int row) {
   LiVESWidget *image=lives_image_new_from_stock(LIVES_STOCK_APPLY,LIVES_ICON_SIZE_LARGE_TOOLBAR);
 #endif
 
-  lives_table_attach (LIVES_TABLE (table), label, 1, 2, row, row+1, (LiVESAttachOptions)0, (LiVESAttachOptions)0, 10, 10);
+  lives_table_attach(LIVES_TABLE(table), label, 1, 2, row, row+1, (LiVESAttachOptions)0, (LiVESAttachOptions)0, 10, 10);
   lives_widget_show(label);
 
-  lives_table_attach (LIVES_TABLE (table), image, 2, 3, row, row+1, (LiVESAttachOptions)0, (LiVESAttachOptions)0, 0, 10);
+  lives_table_attach(LIVES_TABLE(table), image, 2, 3, row, row+1, (LiVESAttachOptions)0, (LiVESAttachOptions)0, 0, 10);
   lives_widget_show(image);
 
   lives_widget_context_update();
@@ -485,20 +476,20 @@ static boolean fail_test(LiVESWidget *table, int row, char *ftext) {
 
   label=lives_standard_label_new(ftext);
 
-  lives_table_attach (LIVES_TABLE (table), label, 3, 4, row, row+1, (LiVESAttachOptions)0, (LiVESAttachOptions)0, 10, 10);
+  lives_table_attach(LIVES_TABLE(table), label, 3, 4, row, row+1, (LiVESAttachOptions)0, (LiVESAttachOptions)0, 10, 10);
   lives_widget_show(label);
-  
+
   // TRANSLATORS - as in "failed test"
   label=lives_standard_label_new(_("Failed"));
 
-  lives_table_attach (LIVES_TABLE (table), label, 1, 2, row, row+1, (LiVESAttachOptions)0, (LiVESAttachOptions)0, 10, 10);
+  lives_table_attach(LIVES_TABLE(table), label, 1, 2, row, row+1, (LiVESAttachOptions)0, (LiVESAttachOptions)0, 10, 10);
   lives_widget_show(label);
 
-  lives_table_attach (LIVES_TABLE (table), image, 2, 3, row, row+1, (LiVESAttachOptions)0, (LiVESAttachOptions)0, 0, 10);
+  lives_table_attach(LIVES_TABLE(table), image, 2, 3, row, row+1, (LiVESAttachOptions)0, (LiVESAttachOptions)0, 0, 10);
   lives_widget_show(image);
 
   lives_widget_context_update();
-  
+
   return FALSE;
 }
 
@@ -549,39 +540,37 @@ boolean do_startup_tests(boolean tshoot) {
 
   if (!tshoot) {
     title=lives_strdup(_("LiVES: - Testing Configuration"));
-  }
-  else {
+  } else {
     title=lives_strdup(_("LiVES: - Troubleshoot"));
   }
 
 
-  dialog = lives_standard_dialog_new (title,FALSE,-1,-1);
+  dialog = lives_standard_dialog_new(title,FALSE,-1,-1);
 
-  accel_group = LIVES_ACCEL_GROUP(lives_accel_group_new ());
-  lives_window_add_accel_group (LIVES_WINDOW (dialog), accel_group);
+  accel_group = LIVES_ACCEL_GROUP(lives_accel_group_new());
+  lives_window_add_accel_group(LIVES_WINDOW(dialog), accel_group);
 
   lives_free(title);
 
   dialog_vbox = lives_dialog_get_content_area(LIVES_DIALOG(dialog));
 
   label=lives_standard_label_new(_("LiVES will now run some basic configuration tests\n"));
-  lives_container_add (LIVES_CONTAINER (dialog_vbox), label);
+  lives_container_add(LIVES_CONTAINER(dialog_vbox), label);
 
-  cancelbutton = lives_button_new_from_stock (LIVES_STOCK_CANCEL);
-  lives_widget_show (cancelbutton);
-  lives_dialog_add_action_widget (LIVES_DIALOG (dialog), cancelbutton, LIVES_RESPONSE_CANCEL);
+  cancelbutton = lives_button_new_from_stock(LIVES_STOCK_CANCEL);
+  lives_widget_show(cancelbutton);
+  lives_dialog_add_action_widget(LIVES_DIALOG(dialog), cancelbutton, LIVES_RESPONSE_CANCEL);
 
-  lives_widget_add_accelerator (cancelbutton, LIVES_WIDGET_CLICKED_SIGNAL, accel_group,
-                              LIVES_KEY_Escape, (LiVESXModifierType)0, (LiVESAccelFlags)0);
+  lives_widget_add_accelerator(cancelbutton, LIVES_WIDGET_CLICKED_SIGNAL, accel_group,
+                               LIVES_KEY_Escape, (LiVESXModifierType)0, (LiVESAccelFlags)0);
 
   if (!tshoot) {
-    okbutton = lives_button_new_from_stock (LIVES_STOCK_GO_FORWARD);
+    okbutton = lives_button_new_from_stock(LIVES_STOCK_GO_FORWARD);
     lives_button_set_label(LIVES_BUTTON(okbutton),_("_Next"));
-  }
-  else okbutton = lives_button_new_from_stock (LIVES_STOCK_OK);
-  lives_widget_show (okbutton);
-  lives_dialog_add_action_widget (LIVES_DIALOG (dialog), okbutton, LIVES_RESPONSE_OK);
-  lives_widget_set_can_focus_and_default (okbutton);
+  } else okbutton = lives_button_new_from_stock(LIVES_STOCK_OK);
+  lives_widget_show(okbutton);
+  lives_dialog_add_action_widget(LIVES_DIALOG(dialog), okbutton, LIVES_RESPONSE_OK);
+  lives_widget_set_can_focus_and_default(okbutton);
   lives_widget_grab_default(okbutton);
   lives_widget_grab_focus(okbutton);
 
@@ -589,8 +578,8 @@ boolean do_startup_tests(boolean tshoot) {
   lives_widget_set_sensitive(okbutton,FALSE);
 
 
-  table = lives_table_new (10, 4, FALSE);
-  lives_container_add (LIVES_CONTAINER (dialog_vbox), table);
+  table = lives_table_new(10, 4, FALSE);
+  lives_container_add(LIVES_CONTAINER(dialog_vbox), table);
 
   lives_widget_show_all(dialog);
 
@@ -605,21 +594,20 @@ boolean do_startup_tests(boolean tshoot) {
   if (!capable->has_sox_sox) {
     success=fail_test(table,0,_("You should install sox to be able to use all the audio features in LiVES"));
 
-  }
-  else {
+  } else {
     success=pass_test(table,0);
   }
 
   // test if sox can convert raw 44100 -> wav 22050
   add_test(table,1,_("Checking if sox can convert audio"),success);
-  
+
   if (!tshoot) set_pref("default_image_format","png");
-  lives_snprintf (prefs->image_ext,16,"%s","png");
+  lives_snprintf(prefs->image_ext,16,"%s","png");
 
   get_temp_handle(mainw->first_free_file,TRUE);
 
   if (success) {
-    
+
     info_fd=-1;
 
     unlink(cfile->info_file);
@@ -634,17 +622,16 @@ boolean do_startup_tests(boolean tshoot) {
     if (!mainw->write_failed) {
       abuff=(uint8_t *)lives_calloc(44100,4);
       if (!abuff) {
-	tmp=lives_strdup(_("Unable to allocate 176400 bytes memory."));
-	fail_test(table,1,tmp);
-	lives_free(tmp);
-      }
-      else {
+        tmp=lives_strdup(_("Unable to allocate 176400 bytes memory."));
+        fail_test(table,1,tmp);
+        lives_free(tmp);
+      } else {
 #ifdef IS_MINGW
-	setmode(out_fd, O_BINARY);
+        setmode(out_fd, O_BINARY);
 #endif
-	lives_write (out_fd,abuff,176400,TRUE);
-	close(out_fd);
-	lives_free(abuff);
+        lives_write(out_fd,abuff,176400,TRUE);
+        close(out_fd);
+        lives_free(abuff);
       }
     }
 
@@ -658,43 +645,43 @@ boolean do_startup_tests(boolean tshoot) {
 
     if (!mainw->write_failed) {
       afile=lives_build_filename(prefs->tmpdir,cfile->handle,"testout.wav",NULL);
-    
+
       mainw->com_failed=FALSE;
       com=lives_strdup_printf("%s export_audio \"%s\" 0. 0. 44100 2 16 0 22050 \"%s\"",prefs->backend_sync,cfile->handle,afile);
       lives_system(com,TRUE);
       if (mainw->com_failed) {
-	tmp=lives_strdup_printf(_("Command failed: %s"),com);
-	fail_test(table,1,tmp);
-	lives_free(tmp);
+        tmp=lives_strdup_printf(_("Command failed: %s"),com);
+        fail_test(table,1,tmp);
+        lives_free(tmp);
       }
-      
+
       lives_free(com);
 
       while (mainw->cancelled==CANCEL_NONE&&(info_fd=open(cfile->info_file,O_RDONLY))==-1) {
-	lives_usleep(prefs->sleep_time);
-	lives_widget_context_update();
+        lives_usleep(prefs->sleep_time);
+        lives_widget_context_update();
       }
-      
+
       if (info_fd!=-1) {
-	close(info_fd);
-	
-	lives_sync();
-	
-	fsize=sget_file_size(afile);
-	unlink(afile);
-	lives_free(afile);
-	
-	if (fsize==0) {
-	  fail_test(table,1,_("You should install sox_fmt_all or similar"));
-	}
-	
-	else pass_test(table,1);
+        close(info_fd);
+
+        lives_sync();
+
+        fsize=sget_file_size(afile);
+        unlink(afile);
+        lives_free(afile);
+
+        if (fsize==0) {
+          fail_test(table,1,_("You should install sox_fmt_all or similar"));
+        }
+
+        else pass_test(table,1);
 
       }
     }
   }
 
-  if (tshoot) lives_snprintf (prefs->image_ext,16,"%s",image_ext);
+  if (tshoot) lives_snprintf(prefs->image_ext,16,"%s",image_ext);
 
   if (mainw->cancelled!=CANCEL_NONE) {
     mainw->cancelled=CANCEL_NONE;
@@ -727,14 +714,13 @@ boolean do_startup_tests(boolean tshoot) {
       mainw->suppress_dprint=FALSE;
 
       if (mainw->multitrack!=NULL) {
-	mt_sensitise(mainw->multitrack);
-	mainw->multitrack->idlefunc=mt_idle_add(mainw->multitrack);
+        mt_sensitise(mainw->multitrack);
+        mainw->multitrack->idlefunc=mt_idle_add(mainw->multitrack);
       }
 
       return FALSE;
     }
-  }
-  else {
+  } else {
     success2=pass_test(table,2);
   }
 
@@ -749,21 +735,19 @@ boolean do_startup_tests(boolean tshoot) {
     if (capable->has_mplayer) {
 #ifndef IS_MINGW
       res=system("LANG=en LANGUAGE=en mplayer -ao help | grep pcm >/dev/null 2>&1");
-#else    
+#else
       res=system("mplayer -ao help | grep pcm >NUL 2>&1");
 #endif
-    }
-    else {
+    } else {
 #ifndef IS_MINGW
       res=system("LANG=en LANGUAGE=en mplayer2 -ao help | grep pcm >/dev/null 2>&1");
-#else    
+#else
       res=system("mplayer2 -ao help | grep pcm >NUL 2>&1");
 #endif
     }
     if (res==0) {
       pass_test(table,3);
-    }
-    else {
+    } else {
       fail_test(table,3,_("You should install mplayer or mplayer2 with pcm/wav support"));
     }
   }
@@ -775,8 +759,7 @@ boolean do_startup_tests(boolean tshoot) {
   if (!lives_file_test(rname,LIVES_FILE_TEST_IS_DIR)) {
     /// oops, no resources dir
     success4=FALSE;
-  }
-  else success4=TRUE;
+  } else success4=TRUE;
 
 
   lives_free(rname);
@@ -796,7 +779,7 @@ boolean do_startup_tests(boolean tshoot) {
     rname=get_resource("vidtest.avi");
 
     com=lives_strdup_printf("%s open_test \"%s\" \"%s\" 0 png",prefs->backend_sync,cfile->handle,
-			(tmp=lives_filename_from_utf8 (rname,-1,NULL,NULL,NULL)));
+                            (tmp=lives_filename_from_utf8(rname,-1,NULL,NULL,NULL)));
     lives_free(tmp);
     lives_free(rname);
 
@@ -813,23 +796,23 @@ boolean do_startup_tests(boolean tshoot) {
     while (mainw->cancelled==CANCEL_NONE&&(info_fd=open(cfile->info_file,O_RDONLY))==-1) {
       lives_usleep(prefs->sleep_time);
     }
-    
+
     if (info_fd!=-1) {
 
       close(info_fd);
-      
+
       lives_sync();
-      
+
       cfile->img_type=IMG_TYPE_PNG;
       get_frame_count(mainw->current_file);
-      
+
       if (cfile->frames==0) {
-	fail_test(table,4,_("You may wish to upgrade mplayer to a newer version"));
+        fail_test(table,4,_("You may wish to upgrade mplayer to a newer version"));
       }
-      
+
       else {
-	pass_test(table,4);
-	success3=TRUE;
+        pass_test(table,4);
+        success3=TRUE;
       }
     }
   }
@@ -847,7 +830,7 @@ boolean do_startup_tests(boolean tshoot) {
 
     return FALSE;
   }
-  
+
   // check if mplayer can decode to jpeg
 
   add_test(table,5,_("Checking if mplayer can decode to jpeg"),success2);
@@ -857,14 +840,13 @@ boolean do_startup_tests(boolean tshoot) {
     if (capable->has_mplayer) {
 #ifndef IS_MINGW
       res=system("LANG=en LANGUAGE=en mplayer -vo help | grep -i \"jpeg file\" >/dev/null 2>&1");
-#else    
+#else
       res=system("mplayer -vo help | grep -i \"jpeg file\" >NUL 2>&1");
 #endif
-    }
-    else {
+    } else {
 #ifndef IS_MINGW
       res=system("LANG=en LANGUAGE=en mplayer2 -vo help | grep -i \"jpeg file\" >/dev/null 2>&1");
-#else    
+#else
       res=system("mplayer2 -vo help | grep -i \"jpeg file\" >NUL 2>&1");
 #endif
     }
@@ -872,17 +854,16 @@ boolean do_startup_tests(boolean tshoot) {
     if (res==0) {
       pass_test(table,5);
       if (!success3) {
-	if (!strcmp(prefs->image_ext,"png")) imgext_switched=TRUE;
-	set_pref("default_image_format","jpeg");
-	lives_snprintf (prefs->image_ext,16,"%s","jpg");
+        if (!strcmp(prefs->image_ext,"png")) imgext_switched=TRUE;
+        set_pref("default_image_format","jpeg");
+        lives_snprintf(prefs->image_ext,16,"%s","jpg");
       }
-    }
-    else {
+    } else {
       if (!success3) fail_test(table,5,_("You should install mplayer with either png/alpha or jpeg support"));
       else fail_test(table,5,_("You may wish to add jpeg output support to mplayer"));
     }
   }
-  
+
   // TODO - check each enabled decoder plugin in turn
 
 
@@ -893,8 +874,7 @@ boolean do_startup_tests(boolean tshoot) {
 
   if (!capable->has_convert) {
     success=fail_test(table,8,_("Install imageMagick to be able to use all of the rendered effects"));
-  }
-  else {
+  } else {
     success=pass_test(table,8);
   }
 
@@ -903,16 +883,16 @@ boolean do_startup_tests(boolean tshoot) {
 
   lives_widget_set_sensitive(okbutton,TRUE);
   if (tshoot) {
-    lives_widget_hide(cancelbutton); 
+    lives_widget_hide(cancelbutton);
     if (imgext_switched) {
-      label=lives_standard_label_new(_("\n\n    Image decoding type has been switched to jpeg. You can revert this in Preferences/Decoding.    \n"));
-      lives_container_add (LIVES_CONTAINER (dialog_vbox), label);
+      label=lives_standard_label_new(
+              _("\n\n    Image decoding type has been switched to jpeg. You can revert this in Preferences/Decoding.    \n"));
+      lives_container_add(LIVES_CONTAINER(dialog_vbox), label);
     }
     lives_widget_show(label);
-  }
-  else {
+  } else {
     label=lives_standard_label_new(_("\n\n    Click Cancel to exit and install any missing components, or Next to continue    \n"));
-    lives_container_add (LIVES_CONTAINER (dialog_vbox), label);
+    lives_container_add(LIVES_CONTAINER(dialog_vbox), label);
     lives_widget_show(label);
   }
 
@@ -957,42 +937,42 @@ void do_startup_interface_query(void) {
   lives_free(txt2);
   lives_free(txt3);
 
-  dialog = lives_standard_dialog_new (_("LiVES: - Choose the startup interface"),FALSE,-1,-1);
+  dialog = lives_standard_dialog_new(_("LiVES: - Choose the startup interface"),FALSE,-1,-1);
 
   dialog_vbox = lives_dialog_get_content_area(LIVES_DIALOG(dialog));
-  
+
   label=lives_standard_label_new(msg);
-  lives_container_add (LIVES_CONTAINER (dialog_vbox), label);
+  lives_container_add(LIVES_CONTAINER(dialog_vbox), label);
   lives_free(msg);
 
 
-  hbox = lives_hbox_new (FALSE, 0);
-  lives_box_pack_start (LIVES_BOX (dialog_vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
-  radiobutton0 = lives_standard_radio_button_new (_("Start in _Clip Edit mode"),TRUE,radiobutton_group,LIVES_BOX(hbox),NULL);
-  radiobutton_group = lives_radio_button_get_group (LIVES_RADIO_BUTTON (radiobutton0));
+  hbox = lives_hbox_new(FALSE, 0);
+  lives_box_pack_start(LIVES_BOX(dialog_vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
+  radiobutton0 = lives_standard_radio_button_new(_("Start in _Clip Edit mode"),TRUE,radiobutton_group,LIVES_BOX(hbox),NULL);
+  radiobutton_group = lives_radio_button_get_group(LIVES_RADIO_BUTTON(radiobutton0));
 
   label=lives_standard_label_new(_("This is the best choice for simple editing tasks and for VJs\n"));
 
-  lives_box_pack_start (LIVES_BOX (dialog_vbox), label, FALSE, FALSE, widget_opts.packing_height);
+  lives_box_pack_start(LIVES_BOX(dialog_vbox), label, FALSE, FALSE, widget_opts.packing_height);
 
-  hbox = lives_hbox_new (FALSE, 0);
-  lives_box_pack_start (LIVES_BOX (dialog_vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
-  radiobutton1 = lives_standard_radio_button_new (_("Start in _Multitrack mode"),TRUE,radiobutton_group,LIVES_BOX(hbox),NULL);
+  hbox = lives_hbox_new(FALSE, 0);
+  lives_box_pack_start(LIVES_BOX(dialog_vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
+  radiobutton1 = lives_standard_radio_button_new(_("Start in _Multitrack mode"),TRUE,radiobutton_group,LIVES_BOX(hbox),NULL);
 
   label=lives_standard_label_new(_("This is a better choice for complex editing tasks involving multiple clips.\n"));
 
-  lives_box_pack_start (LIVES_BOX (dialog_vbox), label, FALSE, FALSE, widget_opts.packing_height);
+  lives_box_pack_start(LIVES_BOX(dialog_vbox), label, FALSE, FALSE, widget_opts.packing_height);
 
   if (prefs->startup_interface==STARTUP_MT) {
     lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(radiobutton1),TRUE);
   }
 
-  okbutton = lives_button_new_from_stock (LIVES_STOCK_GO_FORWARD);
+  okbutton = lives_button_new_from_stock(LIVES_STOCK_GO_FORWARD);
   lives_button_set_label(LIVES_BUTTON(okbutton),_("_Finish"));
 
-  lives_widget_show (okbutton);
-  lives_dialog_add_action_widget (LIVES_DIALOG (dialog), okbutton, LIVES_RESPONSE_OK);
-  lives_widget_set_can_focus_and_default (okbutton);
+  lives_widget_show(okbutton);
+  lives_dialog_add_action_widget(LIVES_DIALOG(dialog), okbutton, LIVES_RESPONSE_OK);
+  lives_widget_set_can_focus_and_default(okbutton);
   lives_widget_grab_default(okbutton);
   lives_widget_grab_focus(okbutton);
 
@@ -1002,9 +982,9 @@ void do_startup_interface_query(void) {
   lives_dialog_run(LIVES_DIALOG(dialog));
 
 
-  if (lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(radiobutton1))) 
+  if (lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(radiobutton1)))
     future_prefs->startup_interface=prefs->startup_interface=STARTUP_MT;
-  
+
   set_int_pref("startup_interface",prefs->startup_interface);
 
   lives_widget_destroy(dialog);
@@ -1015,6 +995,6 @@ void do_startup_interface_query(void) {
 
 
 
-void on_troubleshoot_activate (LiVESMenuItem *menuitem, livespointer user_data) {
+void on_troubleshoot_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   do_startup_tests(TRUE);
 }

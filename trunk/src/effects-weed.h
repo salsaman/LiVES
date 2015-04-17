@@ -45,19 +45,20 @@ typedef enum {
 
 
 /// bootstrap function for weed plugins
-weed_plant_t *weed_bootstrap_func (weed_default_getter_f *value, int num_versions, int *plugin_versions);
+weed_plant_t *weed_bootstrap_func(weed_default_getter_f *value, int num_versions, int *plugin_versions);
 
 weed_plant_t *get_weed_filter(int filter_idx);
 char *weed_filter_idx_get_name(int filter_idx) WARN_UNUSED;
 char *weed_instance_get_filter_name(weed_plant_t *inst, boolean get_compound_parent) WARN_UNUSED;
-char *make_weed_hashname(int filter_idx, boolean fullname, boolean use_extra_authors) WARN_UNUSED;  ///< fullname includes author and version
-int weed_get_idx_for_hashname (const char *hashname, boolean fullname); ///< fullname includes author and version
+char *make_weed_hashname(int filter_idx, boolean fullname,
+                         boolean use_extra_authors) WARN_UNUSED;  ///< fullname includes author and version
+int weed_get_idx_for_hashname(const char *hashname, boolean fullname);  ///< fullname includes author and version
 int *weed_get_indices_from_template(const char *package_name, const char *filter_name, const char *author, int version);
-int enabled_in_channels (weed_plant_t *plant, boolean count_repeats);
-int enabled_out_channels (weed_plant_t *plant, boolean count_repeats);
-weed_plant_t *get_enabled_channel (weed_plant_t *inst, int which, boolean is_in); ///< for FILTER_INST
-weed_plant_t *get_enabled_audio_channel (weed_plant_t *inst, int which, boolean is_in); ///< for FILTER_INST
-weed_plant_t *get_mandatory_channel (weed_plant_t *filter, int which, boolean is_in); ///< for FILTER_CLASS
+int enabled_in_channels(weed_plant_t *plant, boolean count_repeats);
+int enabled_out_channels(weed_plant_t *plant, boolean count_repeats);
+weed_plant_t *get_enabled_channel(weed_plant_t *inst, int which, boolean is_in);  ///< for FILTER_INST
+weed_plant_t *get_enabled_audio_channel(weed_plant_t *inst, int which, boolean is_in);  ///< for FILTER_INST
+weed_plant_t *get_mandatory_channel(weed_plant_t *filter, int which, boolean is_in);  ///< for FILTER_CLASS
 boolean weed_filter_is_resizer(weed_plant_t *filt);
 boolean weed_instance_is_resizer(weed_plant_t *filt);
 weed_plant_t *weed_instance_get_filter(weed_plant_t *inst, boolean get_compound_parent);
@@ -65,7 +66,8 @@ weed_plant_t *weed_instance_get_filter(weed_plant_t *inst, boolean get_compound_
 #define PLUGIN_COMPOUND_EFFECTS_BUILTIN "effects/compound/"
 #define PLUGIN_COMPOUND_EFFECTS_CUSTOM "plugins/effects/compound/"
 
-int num_compound_fx(weed_plant_t *plant); ///< return number of filters in a compound fx (1 if it is not compound) - works for filter or inst
+int num_compound_fx(weed_plant_t
+                    *plant); ///< return number of filters in a compound fx (1 if it is not compound) - works for filter or inst
 void load_compound_fx(void);
 
 boolean has_non_alpha_palette(weed_plant_t *ctmpl);
@@ -82,15 +84,15 @@ boolean is_pure_audio(weed_plant_t *filter_or_instance, boolean count_opt); ///<
 boolean has_video_filters(boolean analysers_only);
 
 #ifdef HAS_LIVES_EFFECTS_H
-lives_fx_cat_t weed_filter_categorise (weed_plant_t *pl, int in_channels, int out_channels);
-lives_fx_cat_t weed_filter_subcategorise (weed_plant_t *pl, lives_fx_cat_t category, boolean count_opt);
+lives_fx_cat_t weed_filter_categorise(weed_plant_t *pl, int in_channels, int out_channels);
+lives_fx_cat_t weed_filter_subcategorise(weed_plant_t *pl, lives_fx_cat_t category, boolean count_opt);
 boolean has_audio_filters(lives_af_t af_type);
 #endif
 
-char* weed_seed_type_to_text(int seed_type);
+char *weed_seed_type_to_text(int seed_type);
 
 boolean has_usable_palette(weed_plant_t *chantmpl);
-int check_weed_palette_list (int *palette_list, int num_palettes, int palette);
+int check_weed_palette_list(int *palette_list, int num_palettes, int palette);
 
 int weed_call_init_func(weed_plant_t *instance);
 int weed_call_deinit_func(weed_plant_t *instance);
@@ -101,10 +103,10 @@ void weed_deinit_effect(int hotkey); ///< hotkey starts at 1
 weed_plant_t *weed_instance_from_filter(weed_plant_t *filter);
 void weed_instance_ref(weed_plant_t *inst);
 void weed_instance_unref(weed_plant_t *inst);
-void weed_in_parameters_free (weed_plant_t *inst);
+void weed_in_parameters_free(weed_plant_t *inst);
 void weed_in_params_free(weed_plant_t **parameters, int num_parameters);
 void add_param_connections(weed_plant_t *inst);
-lives_filter_error_t weed_reinit_effect (weed_plant_t *inst, boolean reinit_compound);
+lives_filter_error_t weed_reinit_effect(weed_plant_t *inst, boolean reinit_compound);
 void weed_reinit_all(void);
 
 
@@ -114,14 +116,14 @@ int num_alpha_channels(weed_plant_t *filter, boolean out);
 
 int num_in_params(weed_plant_t *, boolean skip_hidden, boolean skip_internal);
 int num_out_params(weed_plant_t *);
-weed_plant_t *weed_inst_in_param (weed_plant_t *inst, int param_num, boolean skip_hidden, boolean skip_internal);
-weed_plant_t *weed_inst_out_param (weed_plant_t *inst, int param_num);
-weed_plant_t *weed_filter_in_paramtmpl (weed_plant_t *filter, int param_num, boolean skip_internal);
-weed_plant_t *weed_filter_out_paramtmpl (weed_plant_t *filter, int param_num);
+weed_plant_t *weed_inst_in_param(weed_plant_t *inst, int param_num, boolean skip_hidden, boolean skip_internal);
+weed_plant_t *weed_inst_out_param(weed_plant_t *inst, int param_num);
+weed_plant_t *weed_filter_in_paramtmpl(weed_plant_t *filter, int param_num, boolean skip_internal);
+weed_plant_t *weed_filter_out_paramtmpl(weed_plant_t *filter, int param_num);
 boolean is_hidden_param(weed_plant_t *, int i);
 int get_nth_simple_param(weed_plant_t *, int pnum);
 int count_simple_params(weed_plant_t *);
-weed_plant_t **weed_params_create (weed_plant_t *filter, boolean in);
+weed_plant_t **weed_params_create(weed_plant_t *filter, boolean in);
 int get_transition_param(weed_plant_t *filter, boolean skip_internal);
 int get_master_vol_param(weed_plant_t *filter, boolean skip_internal);
 boolean is_perchannel_multiw(weed_plant_t *param);
@@ -153,27 +155,28 @@ int weed_get_blend_factor(int hotkey); // 0 based key
 
 void weed_memory_init(void); ///< call weed_init() with mem functions
 
-void weed_load_all (void); ///< load effects
+void weed_load_all(void);  ///< load effects
 void weed_unload_all(void); ///< unload all effects
 int get_next_free_key(void); ///< next free "key" for the multitrack system
 
 void weed_deinit_all(boolean shutdown); ///< deinit all active effects
 
-weed_plant_t *weed_apply_effects (weed_plant_t **layers, weed_plant_t *filter_map, weed_timecode_t tc, int opwidth, int opheight, void ***pchains);
-lives_filter_error_t weed_apply_instance (weed_plant_t *inst, weed_plant_t *init_event, weed_plant_t **layers, 
-					  int opwidth, int opheight, weed_timecode_t tc);
-void weed_apply_audio_effects (weed_plant_t *filter_map, float **abuf, int nbtracks, int nchans, int64_t nsamps, double arate, 
-			       weed_timecode_t tc, double *vis);
+weed_plant_t *weed_apply_effects(weed_plant_t **layers, weed_plant_t *filter_map, weed_timecode_t tc, int opwidth, int opheight,
+                                 void ***pchains);
+lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_event, weed_plant_t **layers,
+    int opwidth, int opheight, weed_timecode_t tc);
+void weed_apply_audio_effects(weed_plant_t *filter_map, float **abuf, int nbtracks, int nchans, int64_t nsamps, double arate,
+                              weed_timecode_t tc, double *vis);
 void weed_apply_audio_effects_rt(float **abuf, int nchans, int64_t nsamps, double arate, weed_timecode_t tc, boolean analysers_only);
 
-lives_filter_error_t weed_apply_audio_instance (weed_plant_t *init_event, float **abuf, int nbtracks, int nchans, int64_t nsamps, 
-						double arate, weed_timecode_t tc, double *vis);
+lives_filter_error_t weed_apply_audio_instance(weed_plant_t *init_event, float **abuf, int nbtracks, int nchans, int64_t nsamps,
+    double arate, weed_timecode_t tc, double *vis);
 
-boolean weed_generator_start (weed_plant_t *inst, int key); // 0 based key
-weed_plant_t *weed_layer_new_from_generator (weed_plant_t *inst, weed_timecode_t tc);
-void weed_generator_end (weed_plant_t *inst);
-boolean weed_playback_gen_start (void);
-void weed_bg_generator_end (weed_plant_t *inst);
+boolean weed_generator_start(weed_plant_t *inst, int key);  // 0 based key
+weed_plant_t *weed_layer_new_from_generator(weed_plant_t *inst, weed_timecode_t tc);
+void weed_generator_end(weed_plant_t *inst);
+boolean weed_playback_gen_start(void);
+void weed_bg_generator_end(weed_plant_t *inst);
 void wge_inner(weed_plant_t *inst); ///< deinit instance(s) for generator
 
 /// for multitrack
@@ -184,36 +187,37 @@ void restore_weed_instances(void);
 //////////////////////////////////////////////////////////
 // WARNING !! "key" here starts at 1, "mode" starts at 0
 
-boolean rte_key_valid (int key, boolean is_userkey); ///< returns TRUE if there is a filter bound to active mode of hotkey
-boolean rte_keymode_valid (int key, int mode, boolean is_userkey); ///< returns TRUE if a filter_class is bound to key/mode, is_userkey should be
+boolean rte_key_valid(int key, boolean is_userkey);  ///< returns TRUE if there is a filter bound to active mode of hotkey
+boolean rte_keymode_valid(int key, int mode,
+                          boolean is_userkey);  ///< returns TRUE if a filter_class is bound to key/mode, is_userkey should be
 ///< set to TRUE
 int rte_keymode_get_filter_idx(int key, int mode); ///< returns filter_class index of key/mode (or -1 if no filter bound)
-char *rte_keymode_get_filter_name (int key, int mode) WARN_UNUSED; ///< returns name of filter_class bound to key/mode (or "")
+char *rte_keymode_get_filter_name(int key, int mode) WARN_UNUSED;  ///< returns name of filter_class bound to key/mode (or "")
 char *rte_keymode_get_plugin_name(int key, int mode) WARN_UNUSED; ///< returns name of plugin package containing filter_class (or "")
-char *rte_keymode_get_type (int key, int mode) WARN_UNUSED; ///< returns a string filter/instance type (or "")
+char *rte_keymode_get_type(int key, int mode) WARN_UNUSED;  ///< returns a string filter/instance type (or "")
 
 #ifdef HAS_LIVES_EFFECTS_H
-lives_fx_cat_t rte_keymode_get_category (int key, int mode);
+lives_fx_cat_t rte_keymode_get_category(int key, int mode);
 #endif
 
 weed_plant_t *rte_keymode_get_instance(int key, int mode); ///< returns filter_instance bound to key/mode (or NULL)
 weed_plant_t *rte_keymode_get_filter(int key, int mode); ///< returns filter_class bound to key/mode (or NULL)
 
-boolean weed_delete_effectkey (int key, int mode); ///< unbinds a filter_class from a key/mode
-int weed_add_effectkey (int key, const char *hashname, boolean fullname); ///< bind a filter_class to key/mode using its hashname
+boolean weed_delete_effectkey(int key, int mode);  ///< unbinds a filter_class from a key/mode
+int weed_add_effectkey(int key, const char *hashname, boolean fullname);  ///< bind a filter_class to key/mode using its hashname
 
-int weed_add_effectkey_by_idx (int key, int idx); ///< see description
+int weed_add_effectkey_by_idx(int key, int idx);  ///< see description
 
-int rte_key_getmode (int key); ///< returns current active mode for a key (or -1)
+int rte_key_getmode(int key);  ///< returns current active mode for a key (or -1)
 int rte_key_getmaxmode(int key); ///< returns highest mode which is set
 
 weed_plant_t *get_new_inst_for_keymode(int key, int mode); ///< get new inst (during recording playback)
 
 
-boolean rte_key_setmode (int key, int newmode); ///< set mode for a given key; if key==0 then the active key is used
+boolean rte_key_setmode(int key, int newmode);  ///< set mode for a given key; if key==0 then the active key is used
 
 ///< returns -1 if the filter is not found; it will match the first name found - returns -2 if you try to switch a generator/non-generator
-int rte_switch_keymode (int key, int mode, const char *hashname);
+int rte_switch_keymode(int key, int mode, const char *hashname);
 
 boolean rte_key_is_enabled(int key);
 
@@ -221,8 +225,8 @@ boolean rte_key_is_enabled(int key);
 
 /////////////////////////////////////////////////////////////
 
-int rte_getmodespk (void);
-LiVESList *weed_get_all_names (lives_fx_list_t list_type);
+int rte_getmodespk(void);
+LiVESList *weed_get_all_names(lives_fx_list_t list_type);
 int rte_get_numfilters(boolean inc_dupes);
 
 /////////////////////////////////////////////////////////
@@ -238,41 +242,41 @@ boolean has_key_defaults(void);
 
 //////////////////////////////////////////////////////
 // 0 based keys
-void rte_swap_fg_bg (void);
+void rte_swap_fg_bg(void);
 
 
-int rte_bg_gen_key (void);
-int rte_fg_gen_key (void);
+int rte_bg_gen_key(void);
+int rte_fg_gen_key(void);
 
-int rte_bg_gen_mode (void);
-int rte_fg_gen_mode (void);
+int rte_bg_gen_mode(void);
+int rte_fg_gen_mode(void);
 
 
 
 ////////////////////////////////////////////////////////////////////////
 
-char *get_weed_display_string (weed_plant_t *inst, int pnum);
-weed_plant_t *add_filter_deinit_events (weed_plant_t *event_list);
-weed_plant_t *add_filter_init_events (weed_plant_t *event_list, weed_timecode_t tc);
-void deinit_render_effects (void);
+char *get_weed_display_string(weed_plant_t *inst, int pnum);
+weed_plant_t *add_filter_deinit_events(weed_plant_t *event_list);
+weed_plant_t *add_filter_init_events(weed_plant_t *event_list, weed_timecode_t tc);
+void deinit_render_effects(void);
 
-boolean write_filter_defaults (int fd, int idx);
+boolean write_filter_defaults(int fd, int idx);
 boolean read_filter_defaults(int fd);
 
-boolean write_generator_sizes (int fd, int idx);
+boolean write_generator_sizes(int fd, int idx);
 boolean read_generator_sizes(int fd);
 
 int step_val(int val, int step);
 
-void set_param_gui_readwrite (weed_plant_t *inst);
-void set_param_gui_readonly (weed_plant_t *inst);
+void set_param_gui_readwrite(weed_plant_t *inst);
+void set_param_gui_readonly(weed_plant_t *inst);
 
-void weed_add_plant_flags (weed_plant_t *plant, int flags);
+void weed_add_plant_flags(weed_plant_t *plant, int flags);
 
-void update_host_info (weed_plant_t *inst);
+void update_host_info(weed_plant_t *inst);
 
 /// add default filler values to a parameter or pchange.
-void fill_param_vals_to (weed_plant_t *param, weed_plant_t *ptmpl, int fill_slot);
+void fill_param_vals_to(weed_plant_t *param, weed_plant_t *ptmpl, int fill_slot);
 
 
 // some general utilities

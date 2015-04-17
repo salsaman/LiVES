@@ -122,7 +122,8 @@ LiVESTargetEntry target_table[]  = {
 #ifdef NO_COMPILE // never compile this
 void tr_msg(void) {
   // TRANSLATORS: do not translate this message
-  char *msg=(_("Attention Translators !\nThis message is intended for you, so please do not translate it.\n\nAll translators should read the LiVES translation notes at\nhttp://lives.sourceforge.net/TRANS-README.txt"));
+  char *msg=
+    (_("Attention Translators !\nThis message is intended for you, so please do not translate it.\n\nAll translators should read the LiVES translation notes at\nhttp://lives.sourceforge.net/TRANS-README.txt"));
 }
 #endif
 
@@ -142,17 +143,17 @@ void *gtk_thread_wrapper(void *data) {
 #endif
 
 #ifdef USE_GLIB
-static void lives_log_handler (const char *domain, LiVESLogLevelFlags level, const char *message,  livespointer data) {
+static void lives_log_handler(const char *domain, LiVESLogLevelFlags level, const char *message,  livespointer data) {
   char *msg;
 
 #ifdef LIVES_NO_DEBUG
-  if (level>=LIVES_LOG_LEVEL_WARNING ) return;
+  if (level>=LIVES_LOG_LEVEL_WARNING) return;
 #else
-  if ((level&LIVES_LOG_LEVEL_MASK)==LIVES_LOG_LEVEL_WARNING) 
+  if ((level&LIVES_LOG_LEVEL_MASK)==LIVES_LOG_LEVEL_WARNING)
     msg=lives_strdup_printf(_("%s Warning: %s\n"),domain,message);
 #endif
   else {
-    if ((level&LIVES_LOG_LEVEL_MASK)==LIVES_LOG_LEVEL_CRITICAL) 
+    if ((level&LIVES_LOG_LEVEL_MASK)==LIVES_LOG_LEVEL_CRITICAL)
       msg=lives_strdup_printf(_("%s Critical error: %s\n"),domain,message);
     else msg=lives_strdup_printf(_("%s Fatal error: %s\n"),domain,message);
   }
@@ -180,42 +181,43 @@ void defer_sigint(int signum) {
 }
 
 void catch_sigint(int signum) {
-  // trap for ctrl-C and others 
+  // trap for ctrl-C and others
   if (mainw!=NULL) {
     if (mainw->LiVES!=NULL) {
       if (mainw->foreign) {
-	exit (signum);
+        exit(signum);
       }
 
       if (mainw->multitrack!=NULL) mainw->multitrack->idlefunc=0;
       mainw->fatal=TRUE;
 
       if (signum==LIVES_SIGABRT||signum==LIVES_SIGSEGV) {
-	signal (LIVES_SIGSEGV, SIG_DFL);
-	signal (LIVES_SIGABRT, SIG_DFL);
-	lives_printerr("%s",_("\nUnfortunately LiVES crashed.\nPlease report this bug at http://sourceforge.net/tracker/?group_id=64341&atid=507139\nThanks. Recovery should be possible if you restart LiVES.\n"));
-	lives_printerr("%s",_("\n\nWhen reporting crashes, please include details of your operating system, distribution, and the LiVES version (" LiVES_VERSION ")\n"));
+        signal(LIVES_SIGSEGV, SIG_DFL);
+        signal(LIVES_SIGABRT, SIG_DFL);
+        lives_printerr("%s",
+                       _("\nUnfortunately LiVES crashed.\nPlease report this bug at http://sourceforge.net/tracker/?group_id=64341&atid=507139\nThanks. Recovery should be possible if you restart LiVES.\n"));
+        lives_printerr("%s",_("\n\nWhen reporting crashes, please include details of your operating system, distribution, and the LiVES version ("
+                              LiVES_VERSION ")\n"));
 
-	if (capable->has_gdb) {
-	  if (mainw->debug) lives_printerr("%s",_("and any information shown below:\n\n"));
-	  else lives_printerr("%s","Please try running LiVES with the -debug option to collect more information.\n\n");
-	}
-	else {
-	  lives_printerr("%s",_("Please install gdb and then run LiVES with the -debug option to collect more information.\n\n"));
-	}
-	if (mainw->debug) {
+        if (capable->has_gdb) {
+          if (mainw->debug) lives_printerr("%s",_("and any information shown below:\n\n"));
+          else lives_printerr("%s","Please try running LiVES with the -debug option to collect more information.\n\n");
+        } else {
+          lives_printerr("%s",_("Please install gdb and then run LiVES with the -debug option to collect more information.\n\n"));
+        }
+        if (mainw->debug) {
 #ifdef USE_GLIB
-	  g_on_error_stack_trace(capable->myname_full);
+          g_on_error_stack_trace(capable->myname_full);
 #endif
-	}
+        }
       }
-      
+
       if (mainw->was_set) {
-	lives_printerr ("%s",_("Preserving set.\n"));
+        lives_printerr("%s",_("Preserving set.\n"));
       }
 
       mainw->leave_recovery=mainw->leave_files=TRUE;
-      
+
       mainw->only_close=FALSE;
       lives_exit(signum);
     }
@@ -255,7 +257,7 @@ void get_monitors(void) {
 
     // get screens
     nscreens=lives_display_get_n_screens(disp);
-    for (i=0;i<nscreens;i++) {
+    for (i=0; i<nscreens; i++) {
       screen=gdk_display_get_screen(disp,i);
       capable->nmonitors+=gdk_screen_get_n_monitors(screen);
     }
@@ -275,32 +277,32 @@ void get_monitors(void) {
 #endif
     // get screens
     nscreens=lives_display_get_n_screens(disp);
-    for (i=0;i<nscreens;i++) {
+    for (i=0; i<nscreens; i++) {
       screen=gdk_display_get_screen(disp,i);
       nmonitors=gdk_screen_get_n_monitors(screen);
-      for (j=0;j<nmonitors;j++) {
-	GdkRectangle rect;
-	gdk_screen_get_monitor_geometry(screen,j,&(rect));
-	mainw->mgeom[idx].x=rect.x;
-	mainw->mgeom[idx].y=rect.y;
-	mainw->mgeom[idx].width=rect.width;
-	mainw->mgeom[idx].height=rect.height;
-	mainw->mgeom[idx].mouse_device=NULL;
+      for (j=0; j<nmonitors; j++) {
+        GdkRectangle rect;
+        gdk_screen_get_monitor_geometry(screen,j,&(rect));
+        mainw->mgeom[idx].x=rect.x;
+        mainw->mgeom[idx].y=rect.y;
+        mainw->mgeom[idx].width=rect.width;
+        mainw->mgeom[idx].height=rect.height;
+        mainw->mgeom[idx].mouse_device=NULL;
 #if LIVES_HAS_DEVICE_MANAGER
-	// get (virtual) mouse device for this screen
-	for (k=0;k<lives_list_length(devlist);k++) {
-	  GdkDevice *device=(GdkDevice *)lives_list_nth_data(devlist,k);
-	  if (gdk_device_get_display(device)==disp&&
-	      gdk_device_get_source(device)==GDK_SOURCE_MOUSE) { 
-	    mainw->mgeom[idx].mouse_device=device;
-	    break;
-	  }
-	}
+        // get (virtual) mouse device for this screen
+        for (k=0; k<lives_list_length(devlist); k++) {
+          GdkDevice *device=(GdkDevice *)lives_list_nth_data(devlist,k);
+          if (gdk_device_get_display(device)==disp&&
+              gdk_device_get_source(device)==GDK_SOURCE_MOUSE) {
+            mainw->mgeom[idx].mouse_device=device;
+            break;
+          }
+        }
 #endif
-	mainw->mgeom[idx].disp=disp;
-	mainw->mgeom[idx].screen=screen;
-	idx++;
-	if (idx>=capable->nmonitors) break;
+        mainw->mgeom[idx].disp=disp;
+        mainw->mgeom[idx].screen=screen;
+        idx++;
+        if (idx>=capable->nmonitors) break;
       }
     }
 #if LIVES_HAS_DEVICE_MANAGER
@@ -344,8 +346,7 @@ void get_monitors(void) {
     if (strlen(buff)==0||get_token_count(buff,',')==1) {
       prefs->gui_monitor=1;
       prefs->play_monitor=2;
-    }
-    else {
+    } else {
       char **array=lives_strsplit(buff,",",2);
       prefs->gui_monitor=atoi(array[0]);
       prefs->play_monitor=atoi(array[1]);
@@ -385,7 +386,7 @@ static boolean pre_init(void) {
   sizdbl=sizeof(double);
   sizshrt=sizeof(short);
 
-  mainw=(mainwindow*)(calloc(1,sizeof(mainwindow)));  // must not use lives_malloc() yet !
+  mainw=(mainwindow *)(calloc(1,sizeof(mainwindow))); // must not use lives_malloc() yet !
   mainw->is_ready=mainw->fatal=FALSE;
 
   mainw->free_fn=_lives_free_normal;
@@ -407,7 +408,7 @@ static boolean pre_init(void) {
 
   // set to allow multiple locking by the same thread
   pthread_mutexattr_init(&mattr);
-  pthread_mutexattr_settype(&mattr,PTHREAD_MUTEX_RECURSIVE); 
+  pthread_mutexattr_settype(&mattr,PTHREAD_MUTEX_RECURSIVE);
   pthread_mutex_init(&mainw->gtk_mutex,&mattr);
 
   pthread_mutex_init(&mainw->interp_mutex,&mattr);
@@ -424,7 +425,7 @@ static boolean pre_init(void) {
 
   pthread_mutex_init(&mainw->free_fn_mutex,NULL);
 
-  for (i=0;i<FX_KEYS_MAX;i++) {
+  for (i=0; i<FX_KEYS_MAX; i++) {
     pthread_mutex_init(&mainw->data_mutex[i],&mattr); // because audio filters can enable/disable video filters and vice-versa
   }
 
@@ -444,16 +445,16 @@ static boolean pre_init(void) {
   clear_mainw_msg();
 
   mainw->interactive=TRUE;
-  
+
 #ifdef IS_MINGW
   // TODO - for mingw we will get from the registry, whatever was set at install time
-  lives_snprintf (prefs->prefix_dir,PATH_MAX,"%s",PREFIX_DEFAULT);
+  lives_snprintf(prefs->prefix_dir,PATH_MAX,"%s",PREFIX_DEFAULT);
 #endif
 
   // check the backend is there, get some system details and prefs
   capable=get_capabilities();
 
-  palette=(_palette*)(lives_malloc(sizeof(_palette)));
+  palette=(_palette *)(lives_malloc(sizeof(_palette)));
 
   widget_helper_init();
 
@@ -503,21 +504,20 @@ static boolean pre_init(void) {
     lives_snprintf(prefs->theme,64,"none");
   }
   // get some prefs we need to set menu options
-  future_prefs->show_recent=prefs->show_recent=get_boolean_pref ("show_recent_files");
+  future_prefs->show_recent=prefs->show_recent=get_boolean_pref("show_recent_files");
 
-#ifndef IS_MINGW  
-  get_pref ("prefix_dir",prefs->prefix_dir,PATH_MAX);
-  
-  if (!strlen (prefs->prefix_dir)) {
-    if (strcmp (PREFIX,"NONE")) {
-      lives_snprintf (prefs->prefix_dir,PATH_MAX,"%s",PREFIX);
-    }
-    else {
-      lives_snprintf (prefs->prefix_dir,PATH_MAX,"%s",PREFIX_DEFAULT);
+#ifndef IS_MINGW
+  get_pref("prefix_dir",prefs->prefix_dir,PATH_MAX);
+
+  if (!strlen(prefs->prefix_dir)) {
+    if (strcmp(PREFIX,"NONE")) {
+      lives_snprintf(prefs->prefix_dir,PATH_MAX,"%s",PREFIX);
+    } else {
+      lives_snprintf(prefs->prefix_dir,PATH_MAX,"%s",PREFIX_DEFAULT);
     }
     needs_update=TRUE;
   }
-  
+
   if (ensure_isdir(prefs->prefix_dir)) needs_update=TRUE;
 
 
@@ -525,11 +525,11 @@ static boolean pre_init(void) {
 
   needs_update=FALSE;
 
-  get_pref ("lib_dir",prefs->lib_dir,PATH_MAX);
-  
-  if (!strlen (prefs->lib_dir)) {
+  get_pref("lib_dir",prefs->lib_dir,PATH_MAX);
 
-    lives_snprintf (prefs->lib_dir,PATH_MAX,"%s",LIVES_LIBDIR);
+  if (!strlen(prefs->lib_dir)) {
+
+    lives_snprintf(prefs->lib_dir,PATH_MAX,"%s",LIVES_LIBDIR);
     needs_update=TRUE;
   }
 
@@ -537,9 +537,9 @@ static boolean pre_init(void) {
   if (needs_update) set_pref("lib_dir",prefs->lib_dir);
 
 #else
-    lives_snprintf (prefs->lib_dir,PATH_MAX,"%s",prefs->prefix_dir);
+  lives_snprintf(prefs->lib_dir,PATH_MAX,"%s",prefs->prefix_dir);
 #endif
-  
+
   needs_update=FALSE;
 
   set_palette_colours();
@@ -564,10 +564,9 @@ static boolean pre_init(void) {
     prefs->audio_player=AUD_PLAYER_PULSE;
     lives_snprintf(prefs->aplayer,512,"%s","pulse");
     set_pref("audio_player","pulse");
-  }
-  else {
+  } else {
 #endif
-  
+
 
 
 #ifdef ENABLE_JACK
@@ -592,14 +591,14 @@ static boolean pre_init(void) {
 
   get_monitors();
 
-  for (i=0;i<MAX_FX_CANDIDATE_TYPES;i++) {
+  for (i=0; i<MAX_FX_CANDIDATE_TYPES; i++) {
     mainw->fx_candidates[i].delegate=-1;
     mainw->fx_candidates[i].list=NULL;
     mainw->fx_candidates[i].func=0l;
     mainw->fx_candidates[i].rfx=NULL;
   }
 
-  for (i=0;i<MAX_EXT_CNTL;i++) mainw->ext_cntl[i]=FALSE;
+  for (i=0; i<MAX_EXT_CNTL; i++) mainw->ext_cntl[i]=FALSE;
 
   prefs->omc_dev_opts=get_int_pref("omc_dev_opts");
 
@@ -612,12 +611,12 @@ static boolean pre_init(void) {
     const char *tmp=get_js_filename();
     if (tmp!=NULL) {
       lives_snprintf(prefs->omc_js_fname,256,"%s",tmp);
-      }
+    }
   }
 #endif
 #endif
 #endif
-  
+
   get_pref_utf8("omc_midi_fname",prefs->omc_midi_fname,256);
 #ifdef ENABLE_OSC
 #ifdef OMC_MIDI_IMPL
@@ -633,10 +632,10 @@ static boolean pre_init(void) {
 #endif
 
 #ifdef ALSA_MIDI
-    prefs->use_alsa_midi=TRUE;
-    mainw->seq_handle=NULL;
+  prefs->use_alsa_midi=TRUE;
+  mainw->seq_handle=NULL;
 
-    if (prefs->omc_dev_opts&OMC_DEV_FORCE_RAW_MIDI) prefs->use_alsa_midi=FALSE;
+  if (prefs->omc_dev_opts&OMC_DEV_FORCE_RAW_MIDI) prefs->use_alsa_midi=FALSE;
 
 #endif
 
@@ -655,7 +654,7 @@ static boolean pre_init(void) {
 
   mainw->next_free_alarm=0;
 
-  for (i=0;i<LIVES_MAX_ALARMS;i++) {
+  for (i=0; i<LIVES_MAX_ALARMS; i++) {
     mainw->alarms[i]=LIVES_NO_ALARM_TICKS;
   }
 
@@ -669,7 +668,7 @@ static boolean pre_init(void) {
 
 
 
-static void replace_with_delegates (void) {
+static void replace_with_delegates(void) {
   int resize_fx;
   weed_plant_t *filter;
   lives_rfx_t *rfx;
@@ -679,12 +678,12 @@ static void replace_with_delegates (void) {
   int deint_idx;
 
   if (mainw->fx_candidates[FX_CANDIDATE_RESIZER].delegate!=-1) {
-    
+
     resize_fx=LIVES_POINTER_TO_INT(lives_list_nth_data(mainw->fx_candidates[FX_CANDIDATE_RESIZER].list,
-					      mainw->fx_candidates[FX_CANDIDATE_RESIZER].delegate));
+                                   mainw->fx_candidates[FX_CANDIDATE_RESIZER].delegate));
     filter=get_weed_filter(resize_fx);
     rfx=weed_to_rfx(filter,TRUE);
-    
+
     rfx->is_template=FALSE;
     rfx->props|=RFX_PROPS_MAY_RESIZE;
 
@@ -699,33 +698,33 @@ static void replace_with_delegates (void) {
       rfx->menu_text=lives_strdup(_("_Resize All Frames"));
       mainw->resize_menuitem = lives_menu_item_new_with_mnemonic(rfx->menu_text);
       lives_widget_show(mainw->resize_menuitem);
-      lives_menu_shell_insert (LIVES_MENU_SHELL (mainw->tools_menu), mainw->resize_menuitem, RFX_TOOL_MENU_POSN);
-    }
-    else {
+      lives_menu_shell_insert(LIVES_MENU_SHELL(mainw->tools_menu), mainw->resize_menuitem, RFX_TOOL_MENU_POSN);
+    } else {
       get_menu_text(mainw->resize_menuitem,mtext);
-      
+
       // remove trailing dots
-      for (i=strlen(mtext)-1;i>0&&!strncmp(&mtext[i],".",1);i--) memset(&mtext[i],0,1);
-      
+      for (i=strlen(mtext)-1; i>0&&!strncmp(&mtext[i],".",1); i--) memset(&mtext[i],0,1);
+
       rfx->menu_text=lives_strdup(mtext);
 
       // disconnect old menu entry
       lives_signal_handler_disconnect(mainw->resize_menuitem,mainw->fx_candidates[FX_CANDIDATE_RESIZER].func);
-      
+
     }
     // connect new menu entry
-    mainw->fx_candidates[FX_CANDIDATE_RESIZER].func=lives_signal_connect (LIVES_GUI_OBJECT (mainw->resize_menuitem), LIVES_WIDGET_ACTIVATE_SIGNAL,
-								      LIVES_GUI_CALLBACK (on_render_fx_pre_activate),
-								      (livespointer)rfx);
+    mainw->fx_candidates[FX_CANDIDATE_RESIZER].func=lives_signal_connect(LIVES_GUI_OBJECT(mainw->resize_menuitem), LIVES_WIDGET_ACTIVATE_SIGNAL,
+        LIVES_GUI_CALLBACK(on_render_fx_pre_activate),
+        (livespointer)rfx);
     mainw->fx_candidates[FX_CANDIDATE_RESIZER].rfx=rfx;
   }
 
   deint_idx=weed_get_idx_for_hashname("deinterlacedeinterlace",FALSE);
   if (deint_idx>-1) {
-    mainw->fx_candidates[FX_CANDIDATE_DEINTERLACE].list=lives_list_append(mainw->fx_candidates[FX_CANDIDATE_DEINTERLACE].list,LIVES_INT_TO_POINTER(deint_idx));
+    mainw->fx_candidates[FX_CANDIDATE_DEINTERLACE].list=lives_list_append(mainw->fx_candidates[FX_CANDIDATE_DEINTERLACE].list,
+        LIVES_INT_TO_POINTER(deint_idx));
     mainw->fx_candidates[FX_CANDIDATE_DEINTERLACE].delegate=0;
   }
-  
+
 
 }
 
@@ -750,7 +749,7 @@ static void lives_init(_ign_opts *ign_opts) {
   char *ladspa_path;
 
 
-  for (i=0;i<=MAX_FILES;mainw->files[i++]=NULL);
+  for (i=0; i<=MAX_FILES; mainw->files[i++]=NULL);
   mainw->fs=FALSE;
   mainw->prefs_changed=FALSE;
   mainw->last_dprint_file=mainw->current_file=mainw->playing_file=-1;
@@ -785,8 +784,7 @@ static void lives_init(_ign_opts *ign_opts) {
   mainw->aframeno=0;
   if (capable->byte_order==LIVES_LITTLE_ENDIAN) {
     mainw->endian=0;
-  }
-  else {
+  } else {
     mainw->endian=AFORM_BIG_ENDIAN;
   }
 
@@ -794,7 +792,7 @@ static void lives_init(_ign_opts *ign_opts) {
   mainw->was_set=FALSE;
   mainw->toy_go_wild=FALSE;
 
-  for (i=0;i<FN_KEYS-1;i++) {
+  for (i=0; i<FN_KEYS-1; i++) {
     mainw->clipstore[i]=0;
   }
 
@@ -864,10 +862,9 @@ static void lives_init(_ign_opts *ign_opts) {
     prefs->osc_udp_port=0;
 #ifdef ENABLE_OSC
     if (!mainw->foreign) {
-      prefs->osc_udp_port=get_int_pref ("osc_port");
+      prefs->osc_udp_port=get_int_pref("osc_port");
       future_prefs->osc_start=prefs->osc_start=get_boolean_pref("osc_start");
-    }
-    else {
+    } else {
       future_prefs->osc_start=prefs->osc_start=FALSE;
     }
 #endif
@@ -1069,9 +1066,9 @@ static void lives_init(_ign_opts *ign_opts) {
   mainw->bad_aud_file=NULL;
 
   mainw->render_error=LIVES_RENDER_ERROR_NONE;
-  
+
   mainw->is_exiting=FALSE;
-  
+
   mainw->add_clear_ds_button=FALSE;
   mainw->add_clear_ds_adv=FALSE;
   mainw->tried_ds_recover=FALSE;
@@ -1132,7 +1129,7 @@ static void lives_init(_ign_opts *ign_opts) {
   /////////////////////////////////////////////////// add new stuff just above here ^^
 
 
-  memset (mainw->set_name,0,1);
+  memset(mainw->set_name,0,1);
   mainw->clips_available=0;
 
   prefs->pause_effect_during_preview=FALSE;
@@ -1140,7 +1137,7 @@ static void lives_init(_ign_opts *ign_opts) {
   if (capable->smog_version_correct&&capable->can_write_to_tempdir) {
 
     int pb_quality=get_int_pref("pb_quality");
-    
+
     prefs->pb_quality=PB_QUALITY_MED;
     if (pb_quality==PB_QUALITY_LOW) prefs->pb_quality=PB_QUALITY_LOW;
     else if (pb_quality==PB_QUALITY_HIGH) prefs->pb_quality=PB_QUALITY_HIGH;
@@ -1149,12 +1146,12 @@ static void lives_init(_ign_opts *ign_opts) {
     mainw->ext_playback=mainw->ext_keyboard=FALSE;
 
     get_pref("default_image_format",buff,256);
-    if (!strcmp(buff,"jpeg")) lives_snprintf (prefs->image_ext,16,"%s","jpg");
-    else lives_snprintf (prefs->image_ext,16,"%s",buff);
+    if (!strcmp(buff,"jpeg")) lives_snprintf(prefs->image_ext,16,"%s","jpg");
+    else lives_snprintf(prefs->image_ext,16,"%s",buff);
 
     prefs->loop_recording=TRUE;
     prefs->no_bandwidth=FALSE;
-    prefs->ocp=get_int_pref ("open_compression_percent");
+    prefs->ocp=get_int_pref("open_compression_percent");
 
     lives_widget_color_copy(&palette->fade_colour,&palette->black);
 
@@ -1165,14 +1162,14 @@ static void lives_init(_ign_opts *ign_opts) {
     prefs->stop_screensaver=get_boolean_pref("stop_screensaver");
     prefs->open_maximised=get_boolean_pref("open_maximised");
     future_prefs->show_tool=prefs->show_tool=get_boolean_pref("show_toolbar");
-    memset (future_prefs->vpp_name,0,64);
+    memset(future_prefs->vpp_name,0,64);
     future_prefs->vpp_argv=NULL;
 
     if (prefs->gui_monitor!=0) {
       int xcen=mainw->mgeom[prefs->gui_monitor-1].x+(mainw->mgeom[prefs->gui_monitor-1].width-
-						     lives_widget_get_allocation_width(mainw->LiVES))/2;
+               lives_widget_get_allocation_width(mainw->LiVES))/2;
       int ycen=mainw->mgeom[prefs->gui_monitor-1].y+(mainw->mgeom[prefs->gui_monitor-1].height-
-						     lives_widget_get_allocation_height(mainw->LiVES))/2;
+               lives_widget_get_allocation_height(mainw->LiVES))/2;
       lives_window_set_screen(LIVES_WINDOW(mainw->LiVES),mainw->mgeom[prefs->gui_monitor-1].screen);
       lives_window_move(LIVES_WINDOW(mainw->LiVES),xcen,ycen);
 
@@ -1180,7 +1177,7 @@ static void lives_init(_ign_opts *ign_opts) {
 
 
     if (prefs->open_maximised&&prefs->show_gui) {
-      lives_window_maximize (LIVES_WINDOW(mainw->LiVES));
+      lives_window_maximize(LIVES_WINDOW(mainw->LiVES));
     }
 
     prefs->default_fps=get_double_pref("default_fps");
@@ -1265,15 +1262,15 @@ static void lives_init(_ign_opts *ign_opts) {
 
       // try to get randomness from /dev/urandom
       randfd=open("/dev/urandom",O_RDONLY);
- 
-     if (randfd>-1) {
-	randres=read(randfd,&rseed,sizint);
-	close(randfd);
+
+      if (randfd>-1) {
+        randres=read(randfd,&rseed,sizint);
+        close(randfd);
       }
 
       if (randres!=sizint) {
-	gettimeofday(&tv,NULL);
-	rseed=tv.tv_sec+tv.tv_usec;
+        gettimeofday(&tv,NULL);
+        rseed=tv.tv_sec+tv.tv_usec;
       }
 
       lives_srandom(rseed);
@@ -1283,52 +1280,52 @@ static void lives_init(_ign_opts *ign_opts) {
       randfd=open("/dev/urandom",O_RDONLY);
 
       if (randfd>-1) {
-	randres=read(randfd,&rseed,sizint);
-	close(randfd);
+        randres=read(randfd,&rseed,sizint);
+        close(randfd);
       }
       if (randres!=sizint) {
-	gettimeofday(&tv,NULL);
-	rseed=tv.tv_sec+tv.tv_usec;
+        gettimeofday(&tv,NULL);
+        rseed=tv.tv_sec+tv.tv_usec;
       }
 
       fastsrand(rseed);
 
       prefs->midi_check_rate=get_int_pref("midi_check_rate");
       if (prefs->midi_check_rate==0) prefs->midi_check_rate=DEF_MIDI_CHECK_RATE;
-      
+
       if (prefs->midi_check_rate<1) prefs->midi_check_rate=1;
-      
+
       prefs->midi_rpt=get_int_pref("midi_rpt");
       if (prefs->midi_rpt==0) prefs->midi_rpt=DEF_MIDI_RPT;
 
       prefs->mouse_scroll_clips=get_boolean_pref("mouse_scroll_clips");
-      
+
       prefs->mt_auto_back=get_int_pref("mt_auto_back");
 
-      get_pref ("vid_playback_plugin",buff,256);
-      if (strlen (buff)&&strcmp (buff,"(null)")&&strcmp(buff,"none")) {
-	mainw->vpp=open_vid_playback_plugin (buff,TRUE);
+      get_pref("vid_playback_plugin",buff,256);
+      if (strlen(buff)&&strcmp(buff,"(null)")&&strcmp(buff,"none")) {
+        mainw->vpp=open_vid_playback_plugin(buff,TRUE);
       }
 
       get_pref("video_open_command",prefs->video_open_command,256);
 
       if (!ign_opts->ign_aplayer) {
-	get_pref("audio_play_command",prefs->audio_play_command,256);
+        get_pref("audio_play_command",prefs->audio_play_command,256);
       }
 
       if (!strlen(prefs->video_open_command)&&capable->has_mplayer) {
-	get_location("mplayer",prefs->video_open_command,256);
-	set_pref("video_open_command",prefs->video_open_command);
+        get_location("mplayer",prefs->video_open_command,256);
+        set_pref("video_open_command",prefs->video_open_command);
       }
-      
+
       if (!strlen(prefs->video_open_command)&&capable->has_mplayer2) {
-	get_location("mplayer2",prefs->video_open_command,256);
-	set_pref("video_open_command",prefs->video_open_command);
+        get_location("mplayer2",prefs->video_open_command,256);
+        set_pref("video_open_command",prefs->video_open_command);
       }
-      
+
       prefs->warn_file_size=get_int_pref("warn_file_size");
       if (prefs->warn_file_size==0) {
-	prefs->warn_file_size=WARN_FILE_SIZE;
+        prefs->warn_file_size=WARN_FILE_SIZE;
       }
 
       prefs->rte_keys_virtual=get_int_pref("rte_keys_virtual");
@@ -1368,9 +1365,9 @@ static void lives_init(_ign_opts *ign_opts) {
       prefs->auto_nobord=get_boolean_pref("auto_cut_borders");
 
       if (!ign_opts->ign_clipset) {
-	get_pref("ar_clipset",prefs->ar_clipset_name,128);
-	if (strlen(prefs->ar_clipset_name)) prefs->ar_clipset=TRUE;
-	else prefs->ar_clipset=FALSE;
+        get_pref("ar_clipset",prefs->ar_clipset_name,128);
+        if (strlen(prefs->ar_clipset_name)) prefs->ar_clipset=TRUE;
+        else prefs->ar_clipset=FALSE;
       }
 
       get_pref("ar_layout",prefs->ar_layout_name,PATH_MAX);
@@ -1381,125 +1378,122 @@ static void lives_init(_ign_opts *ign_opts) {
 
       future_prefs->startup_interface=get_int_pref("startup_interface");
       if (!ign_opts->ign_stmode) {
-	prefs->startup_interface=future_prefs->startup_interface;
+        prefs->startup_interface=future_prefs->startup_interface;
       }
 
       // scan for encoder plugins
 #ifndef IS_MINGW
-      if ((encoders=get_plugin_list (PLUGIN_ENCODERS,FALSE,NULL,NULL))!=NULL) {
+      if ((encoders=get_plugin_list(PLUGIN_ENCODERS,FALSE,NULL,NULL))!=NULL) {
 #else
-      if ((encoders=get_plugin_list (PLUGIN_ENCODERS,TRUE,NULL,NULL))!=NULL) {
+      if ((encoders=get_plugin_list(PLUGIN_ENCODERS,TRUE,NULL,NULL))!=NULL) {
 #endif
-	capable->has_encoder_plugins=TRUE;
-	lives_list_free_strings (encoders);
-	lives_list_free (encoders);
+        capable->has_encoder_plugins=TRUE;
+        lives_list_free_strings(encoders);
+        lives_list_free(encoders);
       }
-      
+
       memset(prefs->encoder.of_name,0,1);
 
       if ((prefs->startup_phase==1||prefs->startup_phase==-1)&&capable->has_encoder_plugins&&capable->has_python) {
-	LiVESList *ofmt_all=NULL;
-	char **array;
-	lives_snprintf(prefs->encoder.name,52,"%s","multi_encoder");
+        LiVESList *ofmt_all=NULL;
+        char **array;
+        lives_snprintf(prefs->encoder.name,52,"%s","multi_encoder");
 
-	// need to change the output format
+        // need to change the output format
 
-	if ((ofmt_all=plugin_request_by_line(PLUGIN_ENCODERS,prefs->encoder.name,"get_formats"))!=NULL) {
-	  
-	  set_pref("encoder",prefs->encoder.name);
+        if ((ofmt_all=plugin_request_by_line(PLUGIN_ENCODERS,prefs->encoder.name,"get_formats"))!=NULL) {
 
-	  for (i=0;i<lives_list_length(ofmt_all);i++) {
-	    if (get_token_count ((char *)lives_list_nth_data (ofmt_all,i),'|')>2) {
-	      array=lives_strsplit ((char *)lives_list_nth_data (ofmt_all,i),"|",-1);
+          set_pref("encoder",prefs->encoder.name);
 
-	      if (!strcmp(array[0],"hi-theora")) {
-		lives_snprintf(prefs->encoder.of_name,51,"%s",array[0]);
-		lives_strfreev (array);
-		break;
-	      }
-	      if (!strcmp(array[0],"hi-mpeg")) {
-		lives_snprintf(prefs->encoder.of_name,51,"%s",array[0]);
-	      }
-	      else if (!strcmp(array[0],"hi_h-mkv")&&strcmp(prefs->encoder.of_name,"hi-mpeg")) {
-		lives_snprintf(prefs->encoder.of_name,51,"%s",array[0]);
-	      }
-	      else if (!strcmp(array[0],"hi_h-avi")&&strcmp(prefs->encoder.of_name,"hi-mpeg")&&strcmp(prefs->encoder.of_name,"hi_h-mkv")) {
-		lives_snprintf(prefs->encoder.of_name,51,"%s",array[0]);
-	      }
-	      else if (!strlen(prefs->encoder.of_name)) {
-		lives_snprintf(prefs->encoder.of_name,51,"%s",array[0]);
-	      }
+          for (i=0; i<lives_list_length(ofmt_all); i++) {
+            if (get_token_count((char *)lives_list_nth_data(ofmt_all,i),'|')>2) {
+              array=lives_strsplit((char *)lives_list_nth_data(ofmt_all,i),"|",-1);
 
-	      lives_strfreev (array);
-	    }
-	  }
+              if (!strcmp(array[0],"hi-theora")) {
+                lives_snprintf(prefs->encoder.of_name,51,"%s",array[0]);
+                lives_strfreev(array);
+                break;
+              }
+              if (!strcmp(array[0],"hi-mpeg")) {
+                lives_snprintf(prefs->encoder.of_name,51,"%s",array[0]);
+              } else if (!strcmp(array[0],"hi_h-mkv")&&strcmp(prefs->encoder.of_name,"hi-mpeg")) {
+                lives_snprintf(prefs->encoder.of_name,51,"%s",array[0]);
+              } else if (!strcmp(array[0],"hi_h-avi")&&strcmp(prefs->encoder.of_name,"hi-mpeg")&&strcmp(prefs->encoder.of_name,"hi_h-mkv")) {
+                lives_snprintf(prefs->encoder.of_name,51,"%s",array[0]);
+              } else if (!strlen(prefs->encoder.of_name)) {
+                lives_snprintf(prefs->encoder.of_name,51,"%s",array[0]);
+              }
 
-	  set_pref("output_type",prefs->encoder.of_name);
+              lives_strfreev(array);
+            }
+          }
 
-	  lives_list_free_strings (ofmt_all);
-	  lives_list_free (ofmt_all);
-	}
+          set_pref("output_type",prefs->encoder.of_name);
+
+          lives_list_free_strings(ofmt_all);
+          lives_list_free(ofmt_all);
+        }
       }
 
       if (!strlen(prefs->encoder.of_name)) {
-	get_pref("encoder",prefs->encoder.name,51);
-	get_pref("output_type",prefs->encoder.of_name,51);	
+        get_pref("encoder",prefs->encoder.name,51);
+        get_pref("output_type",prefs->encoder.of_name,51);
       }
-      
+
       future_prefs->encoder.audio_codec=prefs->encoder.audio_codec=get_int_pref("encoder_acodec");
       prefs->encoder.capabilities=0;
       prefs->encoder.of_allowed_acodecs=AUDIO_CODEC_UNKNOWN;
 
       lives_snprintf(future_prefs->encoder.name,52,"%s",prefs->encoder.name);
 
-      memset (future_prefs->encoder.of_restrict,0,1);
-      memset (prefs->encoder.of_restrict,0,1);
+      memset(future_prefs->encoder.of_restrict,0,1);
+      memset(prefs->encoder.of_restrict,0,1);
 
       if (capable->has_encoder_plugins) {
-	char **array;
-	int numtok;
-	LiVESList *ofmt_all,*dummy_list;
+        char **array;
+        int numtok;
+        LiVESList *ofmt_all,*dummy_list;
 
-	dummy_list=plugin_request("encoders",prefs->encoder.name,"init");
-	if (dummy_list!=NULL) {
-	  lives_list_free_strings(dummy_list);
-	  lives_list_free(dummy_list);
-	}
-	if (!((encoder_capabilities=plugin_request(PLUGIN_ENCODERS,prefs->encoder.name,"get_capabilities"))==NULL)) {
-	  prefs->encoder.capabilities=atoi ((char *)lives_list_nth_data (encoder_capabilities,0));
-	  lives_list_free_strings (encoder_capabilities);
-	  lives_list_free (encoder_capabilities);
-	  if ((ofmt_all=plugin_request_by_line(PLUGIN_ENCODERS,prefs->encoder.name,"get_formats"))!=NULL) {
-	    // get any restrictions for the current format
-	    for (i=0;i<lives_list_length(ofmt_all);i++) {
-	      if ((numtok=get_token_count ((char *)lives_list_nth_data (ofmt_all,i),'|'))>2) {
-		array=lives_strsplit ((char *)lives_list_nth_data (ofmt_all,i),"|",-1);
-		if (!strcmp(array[0],prefs->encoder.of_name)) {
-		  if (numtok>1) {
-		    lives_snprintf(prefs->encoder.of_desc,128,"%s",array[1]);
-		  }
-		  lives_strfreev(array);
-		  break;
-		}
-		lives_strfreev(array);
-	      }
-	    }
-	    lives_list_free_strings(ofmt_all);
-	    lives_list_free (ofmt_all);
-	  }
-	}
+        dummy_list=plugin_request("encoders",prefs->encoder.name,"init");
+        if (dummy_list!=NULL) {
+          lives_list_free_strings(dummy_list);
+          lives_list_free(dummy_list);
+        }
+        if (!((encoder_capabilities=plugin_request(PLUGIN_ENCODERS,prefs->encoder.name,"get_capabilities"))==NULL)) {
+          prefs->encoder.capabilities=atoi((char *)lives_list_nth_data(encoder_capabilities,0));
+          lives_list_free_strings(encoder_capabilities);
+          lives_list_free(encoder_capabilities);
+          if ((ofmt_all=plugin_request_by_line(PLUGIN_ENCODERS,prefs->encoder.name,"get_formats"))!=NULL) {
+            // get any restrictions for the current format
+            for (i=0; i<lives_list_length(ofmt_all); i++) {
+              if ((numtok=get_token_count((char *)lives_list_nth_data(ofmt_all,i),'|'))>2) {
+                array=lives_strsplit((char *)lives_list_nth_data(ofmt_all,i),"|",-1);
+                if (!strcmp(array[0],prefs->encoder.of_name)) {
+                  if (numtok>1) {
+                    lives_snprintf(prefs->encoder.of_desc,128,"%s",array[1]);
+                  }
+                  lives_strfreev(array);
+                  break;
+                }
+                lives_strfreev(array);
+              }
+            }
+            lives_list_free_strings(ofmt_all);
+            lives_list_free(ofmt_all);
+          }
+        }
       }
 
       get_pref_utf8("vid_load_dir",prefs->def_vid_load_dir,PATH_MAX);
       if (!strlen(prefs->def_vid_load_dir)) {
 #ifdef USE_GLIB
 #if GLIB_CHECK_VERSION(2,14,0)
-	lives_snprintf(prefs->def_vid_load_dir,PATH_MAX,"%s",g_get_user_special_dir(G_USER_DIRECTORY_VIDEOS));
+        lives_snprintf(prefs->def_vid_load_dir,PATH_MAX,"%s",g_get_user_special_dir(G_USER_DIRECTORY_VIDEOS));
 #else
-	lives_snprintf(prefs->def_vid_load_dir,PATH_MAX,"%s",capable->home_dir);
+        lives_snprintf(prefs->def_vid_load_dir,PATH_MAX,"%s",capable->home_dir);
 #endif
 #endif
-	set_pref("vid_load_dir",prefs->def_vid_load_dir);
+        set_pref("vid_load_dir",prefs->def_vid_load_dir);
       }
       lives_snprintf(mainw->vid_load_dir,PATH_MAX,"%s",prefs->def_vid_load_dir);
       ensure_isdir(mainw->vid_load_dir);
@@ -1508,79 +1502,79 @@ static void lives_init(_ign_opts *ign_opts) {
       if (!strlen(prefs->def_vid_save_dir)) {
 #ifdef USE_GLIB
 #if GLIB_CHECK_VERSION(2,14,0)
-	lives_snprintf(prefs->def_vid_save_dir,PATH_MAX,"%s",g_get_user_special_dir(G_USER_DIRECTORY_VIDEOS));
+        lives_snprintf(prefs->def_vid_save_dir,PATH_MAX,"%s",g_get_user_special_dir(G_USER_DIRECTORY_VIDEOS));
 #else
-	lives_snprintf(prefs->def_vid_save_dir,PATH_MAX,"%s",capable->home_dir);
+        lives_snprintf(prefs->def_vid_save_dir,PATH_MAX,"%s",capable->home_dir);
 #endif
 #endif
-	set_pref("vid_save_dir",prefs->def_vid_save_dir);
+        set_pref("vid_save_dir",prefs->def_vid_save_dir);
       }
       lives_snprintf(mainw->vid_save_dir,PATH_MAX,"%s",prefs->def_vid_save_dir);
       ensure_isdir(mainw->vid_save_dir);
 
       lives_snprintf(mainw->vid_dl_dir,PATH_MAX,"%s",mainw->vid_save_dir);
-      
+
       get_pref_utf8("audio_dir",prefs->def_audio_dir,PATH_MAX);
       if (!strlen(prefs->def_audio_dir)) {
 #ifdef USE_GLIB
 #if GLIB_CHECK_VERSION(2,14,0)
-	lives_snprintf(prefs->def_audio_dir,PATH_MAX,"%s",g_get_user_special_dir(G_USER_DIRECTORY_MUSIC));
+        lives_snprintf(prefs->def_audio_dir,PATH_MAX,"%s",g_get_user_special_dir(G_USER_DIRECTORY_MUSIC));
 #else
-	lives_snprintf(prefs->def_audio_dir,PATH_MAX,"%s",capable->home_dir);
+        lives_snprintf(prefs->def_audio_dir,PATH_MAX,"%s",capable->home_dir);
 #endif
 #endif
-	set_pref("audio_dir",prefs->def_audio_dir);
+        set_pref("audio_dir",prefs->def_audio_dir);
       }
       lives_snprintf(mainw->audio_dir,PATH_MAX,"%s",prefs->def_audio_dir);
       ensure_isdir(mainw->audio_dir);
-      
+
       get_pref_utf8("image_dir",prefs->def_image_dir,PATH_MAX);
       if (!strlen(prefs->def_image_dir)) {
 #ifdef USE_GLIB
 #if GLIB_CHECK_VERSION(2,14,0)
-	lives_snprintf(prefs->def_image_dir,PATH_MAX,"%s",g_get_user_special_dir(G_USER_DIRECTORY_PICTURES));
+        lives_snprintf(prefs->def_image_dir,PATH_MAX,"%s",g_get_user_special_dir(G_USER_DIRECTORY_PICTURES));
 #else
-	lives_snprintf(prefs->def_image_dir,PATH_MAX,"%s",capable->home_dir);
+        lives_snprintf(prefs->def_image_dir,PATH_MAX,"%s",capable->home_dir);
 #endif
 #endif
-	set_pref("image_dir",prefs->def_image_dir);
+        set_pref("image_dir",prefs->def_image_dir);
       }
       lives_snprintf(mainw->image_dir,PATH_MAX,"%s",prefs->def_image_dir);
       ensure_isdir(mainw->image_dir);
 
       get_pref_utf8("proj_dir",prefs->def_proj_dir,PATH_MAX);
       if (!strlen(prefs->def_proj_dir)) {
-	lives_snprintf(prefs->def_proj_dir,PATH_MAX,"%s",capable->home_dir);
-	set_pref("proj_dir",prefs->def_proj_dir);
+        lives_snprintf(prefs->def_proj_dir,PATH_MAX,"%s",capable->home_dir);
+        set_pref("proj_dir",prefs->def_proj_dir);
       }
       lives_snprintf(mainw->proj_load_dir,PATH_MAX,"%s",prefs->def_proj_dir);
       ensure_isdir(mainw->proj_load_dir);
       lives_snprintf(mainw->proj_save_dir,PATH_MAX,"%s",mainw->proj_load_dir);
-      
-      prefs->show_player_stats=get_boolean_pref ("show_player_stats");
-      
-      prefs->dl_bandwidth=get_int_pref ("dl_bandwidth_K");
+
+      prefs->show_player_stats=get_boolean_pref("show_player_stats");
+
+      prefs->dl_bandwidth=get_int_pref("dl_bandwidth_K");
       prefs->fileselmax=get_boolean_pref("filesel_maximised");
 
-      prefs->midisynch=get_boolean_pref ("midisynch");
+      prefs->midisynch=get_boolean_pref("midisynch");
       if (prefs->midisynch&&!capable->has_midistartstop) {
-	set_boolean_pref("midisynch",FALSE);
-	prefs->midisynch=FALSE;
+        set_boolean_pref("midisynch",FALSE);
+        prefs->midisynch=FALSE;
       }
-      
+
 
       prefs->discard_tv=FALSE;
-      
+
       // conserve disk space ?
-      prefs->conserve_space=get_boolean_pref ("conserve_space");
-      prefs->ins_resample=get_boolean_pref ("insert_resample");
-      
+      prefs->conserve_space=get_boolean_pref("conserve_space");
+      prefs->ins_resample=get_boolean_pref("insert_resample");
+
       // need better control of audio channels first
       prefs->pause_during_pb=FALSE;
 
       // should we always use the last directory ?
       // TODO - add to GUI
-      prefs->save_directories=get_boolean_pref ("save_directories");
+      prefs->save_directories=get_boolean_pref("save_directories");
       prefs->antialias=get_boolean_pref("antialias");
 
       prefs->concat_images=get_boolean_pref("concat_images");
@@ -1589,39 +1583,40 @@ static void lives_init(_ign_opts *ign_opts) {
 
       prefs->fxdefsfile=NULL;
       prefs->fxsizesfile=NULL;
-      
+
       needs_free=FALSE;
       weed_plugin_path=getenv("WEED_PLUGIN_PATH");
       if (weed_plugin_path==NULL) {
-	get_pref("weed_plugin_path",prefs->weed_plugin_path,PATH_MAX);
-	if (strlen(prefs->weed_plugin_path)==0) weed_plugin_path=lives_build_filename(prefs->lib_dir,PLUGIN_EXEC_DIR,PLUGIN_WEED_FX_BUILTIN,NULL);
-	else weed_plugin_path=lives_strdup(prefs->weed_plugin_path);
-	lives_setenv("WEED_PLUGIN_PATH",weed_plugin_path);
-	needs_free=TRUE;
+        get_pref("weed_plugin_path",prefs->weed_plugin_path,PATH_MAX);
+        if (strlen(prefs->weed_plugin_path)==0) weed_plugin_path=lives_build_filename(prefs->lib_dir,PLUGIN_EXEC_DIR,PLUGIN_WEED_FX_BUILTIN,NULL);
+        else weed_plugin_path=lives_strdup(prefs->weed_plugin_path);
+        lives_setenv("WEED_PLUGIN_PATH",weed_plugin_path);
+        needs_free=TRUE;
       }
       snprintf(prefs->weed_plugin_path,PATH_MAX,"%s",weed_plugin_path);
       if (needs_free) lives_free(weed_plugin_path);
-      
+
       needs_free=FALSE;
       frei0r_path=getenv("FREI0R_PATH");
       if (frei0r_path==NULL) {
-	get_pref("frei0r_path",prefs->frei0r_path,PATH_MAX);
-	if (strlen(prefs->frei0r_path)==0) frei0r_path=lives_strdup_printf("/usr/lib/frei0r-1:/usr/local/lib/frei0r-1:%s/frei0r-1",capable->home_dir);
-	else frei0r_path=lives_strdup(prefs->frei0r_path);
-	lives_setenv("FREI0R_PATH",frei0r_path);
-	needs_free=TRUE;
+        get_pref("frei0r_path",prefs->frei0r_path,PATH_MAX);
+        if (strlen(prefs->frei0r_path)==0) frei0r_path=lives_strdup_printf("/usr/lib/frei0r-1:/usr/local/lib/frei0r-1:%s/frei0r-1",
+              capable->home_dir);
+        else frei0r_path=lives_strdup(prefs->frei0r_path);
+        lives_setenv("FREI0R_PATH",frei0r_path);
+        needs_free=TRUE;
       }
       snprintf(prefs->frei0r_path,PATH_MAX,"%s",frei0r_path);
       if (needs_free) lives_free(frei0r_path);
-      
+
       needs_free=FALSE;
       ladspa_path=getenv("LADSPA_PATH");
       if (ladspa_path==NULL||strlen(ladspa_path)==0) {
-	get_pref("ladspa_path",prefs->ladspa_path,PATH_MAX);
-	if (strlen(prefs->ladspa_path)==0) ladspa_path=lives_build_filename(prefs->lib_dir,"ladspa",NULL);
-	else ladspa_path=lives_strdup(prefs->ladspa_path);
-	lives_setenv("LADSPA_PATH",ladspa_path);
-	needs_free=TRUE;
+        get_pref("ladspa_path",prefs->ladspa_path,PATH_MAX);
+        if (strlen(prefs->ladspa_path)==0) ladspa_path=lives_build_filename(prefs->lib_dir,"ladspa",NULL);
+        else ladspa_path=lives_strdup(prefs->ladspa_path);
+        lives_setenv("LADSPA_PATH",ladspa_path);
+        needs_free=TRUE;
       }
       snprintf(prefs->ladspa_path,PATH_MAX,"%s",ladspa_path);
       if (needs_free) lives_free(ladspa_path);
@@ -1648,23 +1643,23 @@ static void lives_init(_ign_opts *ign_opts) {
       else prefs->atrans_fx=weed_get_idx_for_hashname(buff,FALSE);
 
       if ((prefs->startup_phase==1||prefs->startup_phase==-1)) {
-	splash_end();
-	// get initial tempdir
-	if (!do_tempdir_query()) {
-	  lives_exit(0);
-	}
-	prefs->startup_phase=2;
-	set_int_pref("startup_phase",2);
+        splash_end();
+        // get initial tempdir
+        if (!do_tempdir_query()) {
+          lives_exit(0);
+        }
+        prefs->startup_phase=2;
+        set_int_pref("startup_phase",2);
       }
 
 
       if (prefs->startup_phase>0&&prefs->startup_phase<3) {
-	splash_end();
-	if (!do_startup_tests(FALSE)) {
-	  lives_exit(0);
-	}
-	prefs->startup_phase=3;
-	set_int_pref("startup_phase",3);
+        splash_end();
+        if (!do_startup_tests(FALSE)) {
+          lives_exit(0);
+        }
+        prefs->startup_phase=3;
+        set_int_pref("startup_phase",3);
       }
 
 
@@ -1675,116 +1670,117 @@ static void lives_init(_ign_opts *ign_opts) {
       if (capable->has_mplayer2) naudp++;
 
       if (naudp>1) {
-	if (prefs->startup_phase>0&&prefs->startup_phase<=4) {
-	  splash_end();
-	  if (!do_audio_choice_dialog(prefs->startup_phase)) {
-	    lives_exit(0);
-	  }
-	  if (prefs->audio_player==AUD_PLAYER_JACK) future_prefs->jack_opts=prefs->jack_opts=JACK_OPTS_START_ASERVER;
-	  else future_prefs->jack_opts=prefs->jack_opts=0;
-	  set_int_pref("jack_opts",prefs->jack_opts);
+        if (prefs->startup_phase>0&&prefs->startup_phase<=4) {
+          splash_end();
+          if (!do_audio_choice_dialog(prefs->startup_phase)) {
+            lives_exit(0);
+          }
+          if (prefs->audio_player==AUD_PLAYER_JACK) future_prefs->jack_opts=prefs->jack_opts=JACK_OPTS_START_ASERVER;
+          else future_prefs->jack_opts=prefs->jack_opts=0;
+          set_int_pref("jack_opts",prefs->jack_opts);
 
-	  prefs->startup_phase=4;
-	  set_int_pref("startup_phase",4);
-	}
+          prefs->startup_phase=4;
+          set_int_pref("startup_phase",4);
+        }
 
 #ifdef ENABLE_JACK
-	if (prefs->jack_opts&JACK_OPTS_TRANSPORT_MASTER||prefs->jack_opts&JACK_OPTS_TRANSPORT_CLIENT||prefs->jack_opts&JACK_OPTS_START_ASERVER||prefs->jack_opts&JACK_OPTS_START_TSERVER) {
-	  // start jack transport polling
-	  if (prefs->jack_opts&JACK_OPTS_START_ASERVER) splash_msg(_("Starting jack audio server..."),.8);
-	  else {
-	    if (prefs->jack_opts&JACK_OPTS_START_TSERVER) splash_msg(_("Starting jack transport server..."),.8);
-	    else splash_msg(_("Connecting to jack transport server..."),.8);
-	  }
-	  if (!lives_jack_init()) {
-	    if ((prefs->jack_opts&JACK_OPTS_START_ASERVER)||(prefs->jack_opts&JACK_OPTS_START_TSERVER)) do_jack_noopen_warn();
-	    else do_jack_noopen_warn3();
-	    if (prefs->startup_phase==4) {
-	      do_jack_noopen_warn2();
-	    }
-	    future_prefs->jack_opts=0; // jack is causing hassle, get rid of it
-	    set_int_pref("jack_opts",0);
-	    lives_exit(0);
-	  }
-	}
+        if (prefs->jack_opts&JACK_OPTS_TRANSPORT_MASTER||prefs->jack_opts&JACK_OPTS_TRANSPORT_CLIENT||prefs->jack_opts&JACK_OPTS_START_ASERVER||
+            prefs->jack_opts&JACK_OPTS_START_TSERVER) {
+          // start jack transport polling
+          if (prefs->jack_opts&JACK_OPTS_START_ASERVER) splash_msg(_("Starting jack audio server..."),.8);
+          else {
+            if (prefs->jack_opts&JACK_OPTS_START_TSERVER) splash_msg(_("Starting jack transport server..."),.8);
+            else splash_msg(_("Connecting to jack transport server..."),.8);
+          }
+          if (!lives_jack_init()) {
+            if ((prefs->jack_opts&JACK_OPTS_START_ASERVER)||(prefs->jack_opts&JACK_OPTS_START_TSERVER)) do_jack_noopen_warn();
+            else do_jack_noopen_warn3();
+            if (prefs->startup_phase==4) {
+              do_jack_noopen_warn2();
+            }
+            future_prefs->jack_opts=0; // jack is causing hassle, get rid of it
+            set_int_pref("jack_opts",0);
+            lives_exit(0);
+          }
+        }
 
-	if (prefs->audio_player==AUD_PLAYER_JACK) {
-	  jack_audio_init();
-	  jack_audio_read_init();
-	  mainw->jackd=jack_get_driver(0,TRUE);
-	  if (mainw->jackd!=NULL) {
-	    if (jack_open_device(mainw->jackd)) mainw->jackd=NULL;
+        if (prefs->audio_player==AUD_PLAYER_JACK) {
+          jack_audio_init();
+          jack_audio_read_init();
+          mainw->jackd=jack_get_driver(0,TRUE);
+          if (mainw->jackd!=NULL) {
+            if (jack_open_device(mainw->jackd)) mainw->jackd=NULL;
 
-	    if (mainw->jackd==NULL&&prefs->startup_phase==0) {
+            if (mainw->jackd==NULL&&prefs->startup_phase==0) {
 #ifdef HAVE_PULSE_AUDIO
-	      char *otherbit=lives_strdup("\"lives -aplayer pulse\".");
+              char *otherbit=lives_strdup("\"lives -aplayer pulse\".");
 #else
-	      char *otherbit=lives_strdup("\"lives -aplayer sox\".");
+              char *otherbit=lives_strdup("\"lives -aplayer sox\".");
 #endif
-	      char *tmp;
+              char *tmp;
 
-	      char *msg=lives_strdup_printf(_("\n\nManual start of jackd required. Please make sure jackd is running, \nor else change the value of <jack_opts> in %s to 16\nand restart LiVES.\n\nAlternatively, try to start lives with either \"lives -jackopts 16\", or "),(tmp=lives_filename_to_utf8(capable->rcfile,-1,NULL,NULL,NULL)));
-	      lives_printerr("%s%s\n\n",msg,otherbit);
-	      lives_free(msg);
-	      lives_free(tmp);
-	      lives_free(otherbit);
+              char *msg=lives_strdup_printf(
+                          _("\n\nManual start of jackd required. Please make sure jackd is running, \nor else change the value of <jack_opts> in %s to 16\nand restart LiVES.\n\nAlternatively, try to start lives with either \"lives -jackopts 16\", or "),
+                          (tmp=lives_filename_to_utf8(capable->rcfile,-1,NULL,NULL,NULL)));
+              lives_printerr("%s%s\n\n",msg,otherbit);
+              lives_free(msg);
+              lives_free(tmp);
+              lives_free(otherbit);
 
-	    }
+            }
 
-	    if (mainw->jackd==NULL) {
-	      do_jack_noopen_warn3();
-	      if (prefs->startup_phase==4) {
-		do_jack_noopen_warn2();
-	      }
-	      else do_jack_noopen_warn4();
-	      lives_exit(0);
-	    }
+            if (mainw->jackd==NULL) {
+              do_jack_noopen_warn3();
+              if (prefs->startup_phase==4) {
+                do_jack_noopen_warn2();
+              } else do_jack_noopen_warn4();
+              lives_exit(0);
+            }
 
-	    mainw->jackd->whentostop=&mainw->whentostop;
-	    mainw->jackd->cancelled=&mainw->cancelled;
-	    mainw->jackd->in_use=FALSE;
-	    mainw->jackd->play_when_stopped=(prefs->jack_opts&JACK_OPTS_NOPLAY_WHEN_PAUSED)?FALSE:TRUE;
+            mainw->jackd->whentostop=&mainw->whentostop;
+            mainw->jackd->cancelled=&mainw->cancelled;
+            mainw->jackd->in_use=FALSE;
+            mainw->jackd->play_when_stopped=(prefs->jack_opts&JACK_OPTS_NOPLAY_WHEN_PAUSED)?FALSE:TRUE;
 
-	    if (prefs->perm_audio_reader&&prefs->audio_src==AUDIO_SRC_EXT) {
-	      // create reader connection now, if permanent
-	      jack_rec_audio_to_clip(-1,-1,RECA_EXTERNAL);
-	    }
+            if (prefs->perm_audio_reader&&prefs->audio_src==AUDIO_SRC_EXT) {
+              // create reader connection now, if permanent
+              jack_rec_audio_to_clip(-1,-1,RECA_EXTERNAL);
+            }
 
-	  }
-	}
+          }
+        }
 #endif
       }
 
 
 #ifdef HAVE_PULSE_AUDIO
-	if (prefs->audio_player==AUD_PLAYER_PULSE) {
-	  splash_msg(_("Starting pulse audio server..."),.8);
+      if (prefs->audio_player==AUD_PLAYER_PULSE) {
+        splash_msg(_("Starting pulse audio server..."),.8);
 
-	  if (!lives_pulse_init(prefs->startup_phase)) {
-	    if (prefs->startup_phase==4) {
-	      lives_exit(0);
-	    }
-	  }
-	  else {
-	    pulse_audio_init();
-	    pulse_audio_read_init();
-	    mainw->pulsed=pulse_get_driver(TRUE);
-	    
-	    mainw->pulsed->whentostop=&mainw->whentostop;
-	    mainw->pulsed->cancelled=&mainw->cancelled;
-	    mainw->pulsed->in_use=FALSE;
-	    if (prefs->perm_audio_reader&&prefs->audio_src==AUDIO_SRC_EXT) {
-	      // create reader connection now, if permanent
-	      pulse_rec_audio_to_clip(-1,-1,RECA_EXTERNAL);
-	    }
+        if (!lives_pulse_init(prefs->startup_phase)) {
+          if (prefs->startup_phase==4) {
+            lives_exit(0);
+          }
+        } else {
+          pulse_audio_init();
+          pulse_audio_read_init();
+          mainw->pulsed=pulse_get_driver(TRUE);
 
-	  }
-	}
+          mainw->pulsed->whentostop=&mainw->whentostop;
+          mainw->pulsed->cancelled=&mainw->cancelled;
+          mainw->pulsed->in_use=FALSE;
+          if (prefs->perm_audio_reader&&prefs->audio_src==AUDIO_SRC_EXT) {
+            // create reader connection now, if permanent
+            pulse_rec_audio_to_clip(-1,-1,RECA_EXTERNAL);
+          }
+
+        }
+      }
 #endif
 
     }
 
-    
+
     if (prefs->startup_phase!=0) {
       char *txt;
 
@@ -1803,21 +1799,21 @@ static void lives_init(_ign_opts *ign_opts) {
     if (mainw->vpp!=NULL&&mainw->vpp->get_audio_fmts!=NULL) mainw->vpp->audio_codec=get_best_audio(mainw->vpp);
 
     // toolbar buttons
-    lives_widget_set_bg_color (mainw->tb_hbox, LIVES_WIDGET_STATE_NORMAL, &palette->fade_colour);
-    lives_widget_set_bg_color (mainw->toolbar, LIVES_WIDGET_STATE_NORMAL, &palette->fade_colour);
-    lives_widget_set_bg_color (mainw->t_stopbutton, LIVES_WIDGET_STATE_PRELIGHT, &palette->fade_colour);
-    lives_widget_set_bg_color (mainw->t_bckground, LIVES_WIDGET_STATE_PRELIGHT, &palette->fade_colour);
-    lives_widget_set_bg_color (mainw->t_sepwin, LIVES_WIDGET_STATE_PRELIGHT, &palette->fade_colour);
-    lives_widget_set_bg_color (mainw->t_double, LIVES_WIDGET_STATE_PRELIGHT, &palette->fade_colour);
-    lives_widget_set_bg_color (mainw->t_fullscreen, LIVES_WIDGET_STATE_PRELIGHT, &palette->fade_colour);
-    lives_widget_set_bg_color (mainw->t_faster, LIVES_WIDGET_STATE_PRELIGHT, &palette->fade_colour);
-    lives_widget_set_bg_color (mainw->t_slower, LIVES_WIDGET_STATE_PRELIGHT, &palette->fade_colour);
-    lives_widget_set_bg_color (mainw->t_forward, LIVES_WIDGET_STATE_PRELIGHT, &palette->fade_colour);
-    lives_widget_set_bg_color (mainw->t_back, LIVES_WIDGET_STATE_PRELIGHT, &palette->fade_colour);
-    lives_widget_set_bg_color (mainw->t_infobutton, LIVES_WIDGET_STATE_PRELIGHT, &palette->fade_colour);
-    
+    lives_widget_set_bg_color(mainw->tb_hbox, LIVES_WIDGET_STATE_NORMAL, &palette->fade_colour);
+    lives_widget_set_bg_color(mainw->toolbar, LIVES_WIDGET_STATE_NORMAL, &palette->fade_colour);
+    lives_widget_set_bg_color(mainw->t_stopbutton, LIVES_WIDGET_STATE_PRELIGHT, &palette->fade_colour);
+    lives_widget_set_bg_color(mainw->t_bckground, LIVES_WIDGET_STATE_PRELIGHT, &palette->fade_colour);
+    lives_widget_set_bg_color(mainw->t_sepwin, LIVES_WIDGET_STATE_PRELIGHT, &palette->fade_colour);
+    lives_widget_set_bg_color(mainw->t_double, LIVES_WIDGET_STATE_PRELIGHT, &palette->fade_colour);
+    lives_widget_set_bg_color(mainw->t_fullscreen, LIVES_WIDGET_STATE_PRELIGHT, &palette->fade_colour);
+    lives_widget_set_bg_color(mainw->t_faster, LIVES_WIDGET_STATE_PRELIGHT, &palette->fade_colour);
+    lives_widget_set_bg_color(mainw->t_slower, LIVES_WIDGET_STATE_PRELIGHT, &palette->fade_colour);
+    lives_widget_set_bg_color(mainw->t_forward, LIVES_WIDGET_STATE_PRELIGHT, &palette->fade_colour);
+    lives_widget_set_bg_color(mainw->t_back, LIVES_WIDGET_STATE_PRELIGHT, &palette->fade_colour);
+    lives_widget_set_bg_color(mainw->t_infobutton, LIVES_WIDGET_STATE_PRELIGHT, &palette->fade_colour);
 
-    }
+
+  }
 }
 
 
@@ -1827,31 +1823,31 @@ void do_start_messages(void) {
 
   d_print("\n");
   d_print(_("Checking optional dependencies:"));
-  if (capable->has_mplayer) d_print(_ ("mplayer...detected..."));
-  else d_print(_ ("mplayer...NOT DETECTED..."));
-  if (capable->has_mplayer2) d_print(_ ("mplayer2...detected..."));
-  else d_print(_ ("mplayer2...NOT DETECTED..."));
-  if (capable->has_convert) d_print(_ ("convert...detected..."));
-  else d_print(_ ("convert...NOT DETECTED..."));
-  if (capable->has_composite) d_print(_ ("composite...detected..."));
-  else d_print(_ ("composite...NOT DETECTED..."));
-  if (capable->has_sox_sox) d_print(_ ("sox...detected\n"));
-  else d_print(_ ("sox...NOT DETECTED\n"));
-  if (capable->has_cdda2wav) d_print(_ ("cdda2wav...detected..."));
-  else d_print(_ ("cdda2wav...NOT DETECTED..."));
-  if (capable->has_jackd) d_print(_ ("jackd...detected..."));
-  else d_print(_ ("jackd...NOT DETECTED..."));
-  if (capable->has_pulse_audio) d_print(_ ("pulse audio...detected..."));
-  else d_print(_ ("pulse audio...NOT DETECTED..."));
-  if (capable->has_python) d_print(_ ("python...detected..."));
-  else d_print(_ ("python...NOT DETECTED..."));
-  if (capable->has_dvgrab) d_print(_ ("dvgrab...detected..."));
-  else d_print(_ ("dvgrab...NOT DETECTED..."));
-  if (capable->has_xwininfo) d_print(_ ("xwininfo...detected..."));
-  else d_print(_ ("xwininfo...NOT DETECTED..."));
+  if (capable->has_mplayer) d_print(_("mplayer...detected..."));
+  else d_print(_("mplayer...NOT DETECTED..."));
+  if (capable->has_mplayer2) d_print(_("mplayer2...detected..."));
+  else d_print(_("mplayer2...NOT DETECTED..."));
+  if (capable->has_convert) d_print(_("convert...detected..."));
+  else d_print(_("convert...NOT DETECTED..."));
+  if (capable->has_composite) d_print(_("composite...detected..."));
+  else d_print(_("composite...NOT DETECTED..."));
+  if (capable->has_sox_sox) d_print(_("sox...detected\n"));
+  else d_print(_("sox...NOT DETECTED\n"));
+  if (capable->has_cdda2wav) d_print(_("cdda2wav...detected..."));
+  else d_print(_("cdda2wav...NOT DETECTED..."));
+  if (capable->has_jackd) d_print(_("jackd...detected..."));
+  else d_print(_("jackd...NOT DETECTED..."));
+  if (capable->has_pulse_audio) d_print(_("pulse audio...detected..."));
+  else d_print(_("pulse audio...NOT DETECTED..."));
+  if (capable->has_python) d_print(_("python...detected..."));
+  else d_print(_("python...NOT DETECTED..."));
+  if (capable->has_dvgrab) d_print(_("dvgrab...detected..."));
+  else d_print(_("dvgrab...NOT DETECTED..."));
+  if (capable->has_xwininfo) d_print(_("xwininfo...detected..."));
+  else d_print(_("xwininfo...NOT DETECTED..."));
 
 #ifdef GDK_WINDOWING_X11
-  prefs->wm=lives_strdup(gdk_x11_screen_get_window_manager_name (gdk_screen_get_default()));
+  prefs->wm=lives_strdup(gdk_x11_screen_get_window_manager_name(gdk_screen_get_default()));
 #else
 #ifdef IS_MINGW
   prefs->wm=lives_strdup_printf(_("Windows version %04X"),WINVER);
@@ -1860,7 +1856,7 @@ void do_start_messages(void) {
 #endif
 #endif
 
-  lives_snprintf(mainw->msg,512,_ ("\n\nWindow manager reports as \"%s\"; "),prefs->wm);
+  lives_snprintf(mainw->msg,512,_("\n\nWindow manager reports as \"%s\"; "),prefs->wm);
   d_print(mainw->msg);
 
   lives_snprintf(mainw->msg,512,_("number of monitors detected: %d\n"),capable->nmonitors);
@@ -1881,22 +1877,22 @@ void do_start_messages(void) {
 #ifdef GUI_GTK
   lives_snprintf(mainw->msg,512,_("GTK+ "
 #if GTK_CHECK_VERSION(3,0,0)
-"version %d.%d.%d ("
+                                  "version %d.%d.%d ("
 #endif
-"compiled with %d.%d.%d"
+                                  "compiled with %d.%d.%d"
 #if GTK_CHECK_VERSION(3,0,0)
-")"
+                                  ")"
 #endif
-),
+                                 ),
 #if GTK_CHECK_VERSION(3,0,0)
-	     gtk_get_major_version(),
-	     gtk_get_minor_version(),
-	     gtk_get_micro_version(),
+                 gtk_get_major_version(),
+                 gtk_get_minor_version(),
+                 gtk_get_micro_version(),
 #endif
-	     GTK_MAJOR_VERSION,
-	     GTK_MINOR_VERSION,
-	     GTK_MICRO_VERSION
-	     );
+                 GTK_MAJOR_VERSION,
+                 GTK_MINOR_VERSION,
+                 GTK_MICRO_VERSION
+                );
   d_print(mainw->msg);
 #endif
 
@@ -1908,7 +1904,7 @@ void do_start_messages(void) {
   lives_snprintf(mainw->msg,512,"\n");
   d_print(mainw->msg);
 
-  lives_snprintf(mainw->msg,512,_ ("Temp directory is %s\n"),prefs->tmpdir);
+  lives_snprintf(mainw->msg,512,_("Temp directory is %s\n"),prefs->tmpdir);
   d_print(mainw->msg);
 
 #ifndef RT_AUDIO
@@ -1922,7 +1918,7 @@ void do_start_messages(void) {
 #endif
 #endif
 
-  lives_snprintf(mainw->msg,512,_ ("Welcome to LiVES version %s.\n\n"),LiVES_VERSION);
+  lives_snprintf(mainw->msg,512,_("Welcome to LiVES version %s.\n\n"),LiVES_VERSION);
   d_print(mainw->msg);
 
 }
@@ -1931,43 +1927,42 @@ void do_start_messages(void) {
 
 
 // TODO - allow user definable themes
-void set_palette_colours (void) {
+void set_palette_colours(void) {
 
   // set configurable colours and theme colours for the app
-  lives_color_parse ("black", &palette->black);
-  lives_color_parse ("white", &palette->white);
-  lives_color_parse ("SeaGreen3", &palette->light_green);
-  lives_color_parse ("dark red", &palette->dark_red);
-  lives_color_parse ("light blue", &palette->light_blue);
-  lives_color_parse ("light yellow", &palette->light_yellow);
-  lives_color_parse ("grey10", &palette->grey20);
-  lives_color_parse ("grey25", &palette->grey25);
-  lives_color_parse ("grey45", &palette->grey45);
-  lives_color_parse ("grey60", &palette->grey60);
-  lives_color_parse ("pink", &palette->pink);
-  lives_color_parse ("salmon", &palette->light_red);
-  lives_color_parse ("DarkOrange4", &palette->dark_orange);
+  lives_color_parse("black", &palette->black);
+  lives_color_parse("white", &palette->white);
+  lives_color_parse("SeaGreen3", &palette->light_green);
+  lives_color_parse("dark red", &palette->dark_red);
+  lives_color_parse("light blue", &palette->light_blue);
+  lives_color_parse("light yellow", &palette->light_yellow);
+  lives_color_parse("grey10", &palette->grey20);
+  lives_color_parse("grey25", &palette->grey25);
+  lives_color_parse("grey45", &palette->grey45);
+  lives_color_parse("grey60", &palette->grey60);
+  lives_color_parse("pink", &palette->pink);
+  lives_color_parse("salmon", &palette->light_red);
+  lives_color_parse("DarkOrange4", &palette->dark_orange);
 
   lives_widget_color_copy(&palette->banner_fade_text,&palette->white);
   palette->style=STYLE_PLAIN;
 
   // STYLE_PLAIN will overwrite this
   if (!(strcmp(prefs->theme,"pinks"))) {
-    
+
     palette->normal_back.red=LIVES_WIDGET_COLOR_SCALE_255(228.);
     palette->normal_back.green=LIVES_WIDGET_COLOR_SCALE_255(196.);
     palette->normal_back.blue=LIVES_WIDGET_COLOR_SCALE_255(196.);
 #if LIVES_WIDGET_COLOR_HAS_ALPHA
     palette->normal_back.alpha=1.;
-#endif      
+#endif
     lives_widget_color_copy(&palette->normal_fore,&palette->black);
     lives_widget_color_copy(&palette->menu_and_bars,&palette->pink);
     lives_widget_color_copy(&palette->info_text,&palette->normal_fore);
     lives_widget_color_copy(&palette->info_base,&palette->normal_back);
     palette->style=STYLE_1|STYLE_2|STYLE_3|STYLE_4|STYLE_5;
     lives_widget_color_copy(&palette->menu_and_bars_fore,&palette->normal_fore);
-  }
-  else {
+  } else {
     if (!(strcmp(prefs->theme,"cutting_room"))) {
 
       palette->normal_back.red=LIVES_WIDGET_COLOR_SCALE_255(224.);
@@ -1975,80 +1970,80 @@ void set_palette_colours (void) {
       palette->normal_back.blue=LIVES_WIDGET_COLOR_SCALE_255(128.);
 #if LIVES_WIDGET_COLOR_HAS_ALPHA
       palette->normal_back.alpha=1.;
-#endif      
-	  
+#endif
+
       lives_widget_color_copy(&palette->normal_fore,&palette->black);
       lives_widget_color_copy(&palette->menu_and_bars,&palette->white);
       lives_widget_color_copy(&palette->info_text,&palette->normal_fore);
       lives_widget_color_copy(&palette->info_base,&palette->white);
       lives_widget_color_copy(&palette->menu_and_bars_fore,&palette->normal_fore);
       palette->style=STYLE_1|STYLE_2|STYLE_3|STYLE_4;
-    }
-    else {
+    } else {
       if (!(strcmp(prefs->theme,"camera"))) {
 
-	palette->normal_back.red=LIVES_WIDGET_COLOR_SCALE_255(30.);
-	palette->normal_back.green=LIVES_WIDGET_COLOR_SCALE_255(144.);
-	palette->normal_back.blue=LIVES_WIDGET_COLOR_SCALE_255(232.);
+        palette->normal_back.red=LIVES_WIDGET_COLOR_SCALE_255(30.);
+        palette->normal_back.green=LIVES_WIDGET_COLOR_SCALE_255(144.);
+        palette->normal_back.blue=LIVES_WIDGET_COLOR_SCALE_255(232.);
 #if LIVES_WIDGET_COLOR_HAS_ALPHA
-	palette->normal_back.alpha=1.;
-#endif      
-	  
-	lives_widget_color_copy(&palette->normal_fore,&palette->black);
-	lives_widget_color_copy(&palette->menu_and_bars,&palette->white);
-	lives_widget_color_copy(&palette->info_base,&palette->normal_back);
-	lives_widget_color_copy(&palette->info_text,&palette->normal_fore);
-	lives_widget_color_copy(&palette->menu_and_bars_fore,&palette->normal_fore);
-	palette->style=STYLE_1|STYLE_2|STYLE_3|STYLE_4;
+        palette->normal_back.alpha=1.;
+#endif
+
+        lives_widget_color_copy(&palette->normal_fore,&palette->black);
+        lives_widget_color_copy(&palette->menu_and_bars,&palette->white);
+        lives_widget_color_copy(&palette->info_base,&palette->normal_back);
+        lives_widget_color_copy(&palette->info_text,&palette->normal_fore);
+        lives_widget_color_copy(&palette->menu_and_bars_fore,&palette->normal_fore);
+        palette->style=STYLE_1|STYLE_2|STYLE_3|STYLE_4;
+      } else {
+        if (!(strcmp(prefs->theme,"editor"))) {
+          lives_widget_color_copy(&palette->normal_back,&palette->grey25);
+          lives_widget_color_copy(&palette->normal_fore,&palette->white);
+          lives_widget_color_copy(&palette->menu_and_bars,&palette->grey60);
+          lives_widget_color_copy(&palette->info_base,&palette->grey20);
+          lives_widget_color_copy(&palette->info_text,&palette->white);
+          lives_widget_color_copy(&palette->menu_and_bars_fore,&palette->normal_fore);
+          palette->style=STYLE_1|STYLE_2|STYLE_3|STYLE_4|STYLE_5;
+        } else {
+          if (!(strcmp(prefs->theme,"crayons-bright"))) {
+            lives_widget_color_copy(&palette->normal_back,&palette->black);
+            lives_widget_color_copy(&palette->normal_fore,&palette->white);
+
+            palette->menu_and_bars.red=LIVES_WIDGET_COLOR_SCALE_255(225.);
+            palette->menu_and_bars.green=LIVES_WIDGET_COLOR_SCALE_255(160.);
+            palette->menu_and_bars.blue=LIVES_WIDGET_COLOR_SCALE_255(80.);
+#if LIVES_WIDGET_COLOR_HAS_ALPHA
+            palette->menu_and_bars.alpha=1.;
+#endif
+
+            palette->info_base.red=LIVES_WIDGET_COLOR_SCALE_255(200.);
+            palette->info_base.green=LIVES_WIDGET_COLOR_SCALE_255(190.);
+            palette->info_base.blue=LIVES_WIDGET_COLOR_SCALE_255(52.);
+#if LIVES_WIDGET_COLOR_HAS_ALPHA
+            palette->info_base.alpha=1.;
+#endif
+
+            lives_widget_color_copy(&palette->info_text,&palette->black);
+            lives_widget_color_copy(&palette->menu_and_bars_fore,&palette->normal_fore);
+
+            palette->style=STYLE_1|STYLE_2|STYLE_3|STYLE_4;
+          } else {
+            if (!(strcmp(prefs->theme,"crayons"))) {
+              lives_widget_color_copy(&palette->normal_back,&palette->grey25);
+              lives_widget_color_copy(&palette->normal_fore,&palette->white);
+              lives_widget_color_copy(&palette->menu_and_bars,&palette->grey60);
+              lives_widget_color_copy(&palette->info_base,&palette->grey20);
+              lives_widget_color_copy(&palette->info_text,&palette->white);
+              lives_widget_color_copy(&palette->menu_and_bars_fore,&palette->normal_fore);
+              palette->style=STYLE_1|STYLE_2|STYLE_3|STYLE_4|STYLE_5;
+
+            } else {
+              palette->style=STYLE_PLAIN;
+            }
+          }
+        }
       }
-      else {
-	if (!(strcmp(prefs->theme,"editor"))) {
-	  lives_widget_color_copy(&palette->normal_back,&palette->grey25);
-	  lives_widget_color_copy(&palette->normal_fore,&palette->white);
-	  lives_widget_color_copy(&palette->menu_and_bars,&palette->grey60);
-	  lives_widget_color_copy(&palette->info_base,&palette->grey20);
-	  lives_widget_color_copy(&palette->info_text,&palette->white);
-	  lives_widget_color_copy(&palette->menu_and_bars_fore,&palette->normal_fore);
-	  palette->style=STYLE_1|STYLE_2|STYLE_3|STYLE_4|STYLE_5;
-	}
-	else {
-	  if (!(strcmp(prefs->theme,"crayons-bright"))) {
-	    lives_widget_color_copy(&palette->normal_back,&palette->black);
-	    lives_widget_color_copy(&palette->normal_fore,&palette->white);
-
-	    palette->menu_and_bars.red=LIVES_WIDGET_COLOR_SCALE_255(225.);
-	    palette->menu_and_bars.green=LIVES_WIDGET_COLOR_SCALE_255(160.);
-	    palette->menu_and_bars.blue=LIVES_WIDGET_COLOR_SCALE_255(80.);
-#if LIVES_WIDGET_COLOR_HAS_ALPHA
-	    palette->menu_and_bars.alpha=1.;
-#endif      
-
-	    palette->info_base.red=LIVES_WIDGET_COLOR_SCALE_255(200.);
-	    palette->info_base.green=LIVES_WIDGET_COLOR_SCALE_255(190.);
-	    palette->info_base.blue=LIVES_WIDGET_COLOR_SCALE_255(52.);
-#if LIVES_WIDGET_COLOR_HAS_ALPHA
-	    palette->info_base.alpha=1.;
-#endif      
-	      
-	    lives_widget_color_copy(&palette->info_text,&palette->black);
-	    lives_widget_color_copy(&palette->menu_and_bars_fore,&palette->normal_fore);
-
-	    palette->style=STYLE_1|STYLE_2|STYLE_3|STYLE_4;
-	  }
-	  else {
-	    if (!(strcmp(prefs->theme,"crayons"))) {
-	      lives_widget_color_copy(&palette->normal_back,&palette->grey25);
-	      lives_widget_color_copy(&palette->normal_fore,&palette->white);
-	      lives_widget_color_copy(&palette->menu_and_bars,&palette->grey60);
-	      lives_widget_color_copy(&palette->info_base,&palette->grey20);
-	      lives_widget_color_copy(&palette->info_text,&palette->white);
-	      lives_widget_color_copy(&palette->menu_and_bars_fore,&palette->normal_fore);
-	      palette->style=STYLE_1|STYLE_2|STYLE_3|STYLE_4|STYLE_5;
-
-	    }
-	    else {
-	      palette->style=STYLE_PLAIN;
-	    }}}}}}
+    }
+  }
 }
 
 
@@ -2061,11 +2056,11 @@ boolean is_big_endian() {
 }
 
 
-capability *get_capabilities (void) {
+capability *get_capabilities(void) {
   // get capabilities of backend system
   char *safer_bfile;
   char **array;
-  
+
   char buffer[4096+PATH_MAX];
   FILE *bootfile;
   char string[256];
@@ -2093,9 +2088,9 @@ capability *get_capabilities (void) {
   if (sizeof(void *)==8) capable->cpu_bits=64;
 
   // _runtime_ byte order
-  if (is_big_endian()) 
+  if (is_big_endian())
     capable->byte_order=LIVES_BIG_ENDIAN;
-  else 
+  else
     capable->byte_order=LIVES_LITTLE_ENDIAN;
 
   capable->has_smogrify=FALSE;
@@ -2118,7 +2113,7 @@ capability *get_capabilities (void) {
   lives_snprintf(capable->home_dir,PATH_MAX,"%s\\Application Data\\LiVES",g_get_home_dir());
 #endif
 
-  g_snprintf(capable->system_tmpdir,PATH_MAX,"%s",g_get_tmp_dir()); 
+  g_snprintf(capable->system_tmpdir,PATH_MAX,"%s",g_get_tmp_dir());
 
 #endif
 
@@ -2160,32 +2155,32 @@ capability *get_capabilities (void) {
 #else
   safer_bfile=lives_strdup_printf("%s"LIVES_DIR_SEPARATOR_S"smogrify.%d.%d",capable->system_tmpdir,lives_getuid(),lives_getgid());
 #endif
-  unlink (safer_bfile);
+  unlink(safer_bfile);
 
   // check that we can write to /tmp
-  if (!check_file (safer_bfile,FALSE)) return capable;
+  if (!check_file(safer_bfile,FALSE)) return capable;
   capable->can_write_to_tmp=TRUE;
 
 #ifndef IS_MINGW
   lives_snprintf(prefs->backend_sync,PATH_MAX,"%s","smogrify");
   lives_snprintf(prefs->backend,PATH_MAX,"%s","smogrify");
-  if ((tmp=lives_find_program_in_path ("smogrify"))==NULL) return capable;
+  if ((tmp=lives_find_program_in_path("smogrify"))==NULL) return capable;
   lives_free(tmp);
 
   lives_snprintf(string,256,"%s report \"%s\" 2>/dev/null",prefs->backend_sync,
-	     (tmp=lives_filename_from_utf8 (safer_bfile,-1,NULL,NULL,NULL)));
+                 (tmp=lives_filename_from_utf8(safer_bfile,-1,NULL,NULL,NULL)));
 
   lives_free(tmp);
 
   lives_snprintf(string,256,"%s report \"%s\" 2>/dev/null",prefs->backend_sync,
-	     (tmp=lives_filename_from_utf8 (safer_bfile,-1,NULL,NULL,NULL)));
+                 (tmp=lives_filename_from_utf8(safer_bfile,-1,NULL,NULL,NULL)));
 #else
 
   lives_snprintf(prefs->backend_sync,PATH_MAX,"perl \"%s\\smogrify\"",prefs->prefix_dir);
   lives_snprintf(prefs->backend,PATH_MAX,"START /MIN /B perl \"%s\\smogrify\"",prefs->prefix_dir);
 
   lives_snprintf(string,256,"%s report \"%s\" 2>NUL",prefs->backend_sync,
-	     (tmp=lives_filename_from_utf8 (safer_bfile,-1,NULL,NULL,NULL)));
+                 (tmp=lives_filename_from_utf8(safer_bfile,-1,NULL,NULL,NULL)));
 
 #endif
 
@@ -2197,7 +2192,7 @@ capability *get_capabilities (void) {
   if (err==32512||err==32256) {
     return capable;
   }
-  
+
   capable->has_smogrify=TRUE;
 
   if (err==512) {
@@ -2230,13 +2225,13 @@ capability *get_capabilities (void) {
   lives_fgets(buffer,8192,bootfile);
   fclose(bootfile);
 
-  unlink (safer_bfile);
+  unlink(safer_bfile);
   lives_free(safer_bfile);
 
   if (mainw->read_failed) return capable;
 
   // get backend version, tempdir, and any startup message
-  numtok=get_token_count (buffer,'|');
+  numtok=get_token_count(buffer,'|');
   array=lives_strsplit(buffer,"|",numtok);
 
   lives_snprintf(string,256,"%s",array[0]);
@@ -2251,22 +2246,21 @@ capability *get_capabilities (void) {
   lives_snprintf(prefs->tmpdir,PATH_MAX,"%s",array[1]);
   lives_snprintf(future_prefs->tmpdir,PATH_MAX,"%s",prefs->tmpdir);
 
-  prefs->startup_phase=atoi (array[2]);
+  prefs->startup_phase=atoi(array[2]);
 
-  if (numtok>3&&strlen (array[3])) {
+  if (numtok>3&&strlen(array[3])) {
     if (!strcmp(array[3],"!updmsg")) {
       char *text=get_upd_msg();
       lives_snprintf(capable->startup_msg,256,"%s\n\n",text);
       lives_free(text);
 
-      if (numtok>4&&strlen (array[4])) {
-	lives_strappend (capable->startup_msg,256,array[4]);
+      if (numtok>4&&strlen(array[4])) {
+        lives_strappend(capable->startup_msg,256,array[4]);
       }
-    }
-    else {
+    } else {
       lives_snprintf(capable->startup_msg,256,"%s\n\n",array[3]);
-      if (numtok>4&&strlen (array[4])) {
-	lives_strappend (capable->startup_msg,256,array[4]);
+      if (numtok>4&&strlen(array[4])) {
+        lives_strappend(capable->startup_msg,256,array[4]);
       }
     }
   }
@@ -2409,12 +2403,14 @@ void print_opthelp(void) {
 #endif
 #ifdef ENABLE_JACK
   lives_printerr("%s",_(", sox or jack\n"));
-  lives_printerr("%s",_("-jackopts <opts>    : opts is a bitmap of jack startup options [1 = jack transport client, 2 = jack transport master, 4 = start jack transport server, 8 = pause audio when video paused, 16 = start jack audio server] \n"));
+  lives_printerr("%s",
+                 _("-jackopts <opts>    : opts is a bitmap of jack startup options [1 = jack transport client, 2 = jack transport master, 4 = start jack transport server, 8 = pause audio when video paused, 16 = start jack audio server] \n"));
 #else
   lives_printerr("%s",_(" or sox\n"));
 #endif
   lives_printerr("%s",_("-devicemap <mapname>          : autoload devicemap\n"));
-  lives_printerr("%s",_("-vppdefaults <file>          : load video playback plugin defaults from <file> (Note: only sets the settings, not the plugin type)\n"));
+  lives_printerr("%s",
+                 _("-vppdefaults <file>          : load video playback plugin defaults from <file> (Note: only sets the settings, not the plugin type)\n"));
   lives_printerr("%s",_("-debug            : try to debug crashes (requires 'gdb' installed)\n"));
 
   lives_printerr("%s","\n");
@@ -2448,7 +2444,7 @@ static boolean lives_startup(livespointer data) {
   splash_msg(_("Starting GUI..."),0.);
 
   if (palette->style&STYLE_1) widget_opts.apply_theme=TRUE;
-  create_LiVES ();
+  create_LiVES();
   widget_opts.apply_theme=FALSE;
 
   set_interactive(mainw->interactive);
@@ -2470,10 +2466,13 @@ static boolean lives_startup(livespointer data) {
     if (theme_expected&&palette->style==STYLE_PLAIN&&!mainw->foreign) {
       // non-fatal errors
       char *tmp2;
-      char *err=lives_strdup_printf(_ ("\n\nThe theme you requested could not be located. Please make sure you have the themes installed in\n%s/%s.\n(Maybe you need to change the value of <prefix_dir> in your %s file)\n"),(tmp=lives_filename_to_utf8(prefs->prefix_dir,-1,NULL,NULL,NULL)),THEME_DIR,(tmp2=lives_filename_to_utf8(capable->rcfile,-1,NULL,NULL,NULL)));
+      char *err=lives_strdup_printf(
+                  _("\n\nThe theme you requested could not be located. Please make sure you have the themes installed in\n%s/%s.\n(Maybe you need to change the value of <prefix_dir> in your %s file)\n"),
+                  (tmp=lives_filename_to_utf8(prefs->prefix_dir,-1,NULL,NULL,NULL)),THEME_DIR,(tmp2=lives_filename_to_utf8(capable->rcfile,-1,NULL,NULL,
+                      NULL)));
       lives_free(tmp2);
       lives_free(tmp);
-      startup_message_nonfatal (err);
+      startup_message_nonfatal(err);
       lives_free(err);
       lives_snprintf(prefs->theme,64,"none");
       upgrade_error=TRUE;
@@ -2484,120 +2483,137 @@ static boolean lives_startup(livespointer data) {
   if (!mainw->foreign) {
     // fatal errors
     if (!capable->can_write_to_tmp) {
-      startup_message_fatal((tmp=lives_strdup_printf(_ ("\nLiVES was unable to write a small file to %s\nPlease make sure you have write access to %s and try again.\n"),capable->system_tmpdir)));
+      startup_message_fatal((tmp=lives_strdup_printf(
+                                   _("\nLiVES was unable to write a small file to %s\nPlease make sure you have write access to %s and try again.\n"),
+                                   capable->system_tmpdir)));
       lives_free(tmp);
-    }
-    else {
+    } else {
       if (!capable->has_smogrify) {
-	char *err=lives_strdup (_ ("\n`smogrify` must be in your path, and be executable\n\nPlease review the README file which came with this package\nbefore running LiVES.\n"));
-	startup_message_fatal(err);
-	lives_free(err);
+        char *err=lives_strdup(
+                    _("\n`smogrify` must be in your path, and be executable\n\nPlease review the README file which came with this package\nbefore running LiVES.\n"));
+        startup_message_fatal(err);
+        lives_free(err);
+      } else {
+        if (!capable->can_read_from_config) {
+          char *err=lives_strdup_printf(
+                      _("\nLiVES was unable to read from its configuration file\n%s\n\nPlease check the file permissions for this file and try again.\n"),
+                      (tmp=lives_filename_to_utf8(capable->rcfile,-1,NULL,NULL,NULL)));
+          lives_free(tmp);
+          startup_message_fatal(err);
+          lives_free(err);
+        } else {
+          if (!capable->can_write_to_config) {
+            char *err=lives_strdup_printf(
+                        _("\nLiVES was unable to write to its configuration file\n%s\n\nPlease check the file permissions for this file and directory\nand try again.\n"),
+                        (tmp=lives_filename_to_utf8(capable->rcfile,-1,NULL,NULL,NULL)));
+            lives_free(tmp);
+            startup_message_fatal(err);
+            lives_free(err);
+          } else {
+            if (!capable->can_write_to_tempdir) {
+              char *extrabit;
+              char *err;
+              if (!mainw->has_session_tmpdir) {
+                extrabit=lives_strdup_printf(_("Please check the <tempdir> setting in \n%s\nand try again.\n"),
+                                             (tmp=lives_filename_to_utf8(capable->rcfile,-1,NULL,NULL,NULL)));
+                lives_free(tmp);
+              } else
+                extrabit=lives_strdup("");
+
+              err=lives_strdup_printf(_("\nLiVES was unable to use the temporary directory\n%s\n\n%s"),
+                                      prefs->tmpdir,extrabit);
+              lives_free(extrabit);
+              startup_message_fatal(err);
+              lives_free(err);
+            } else {
+              if (!capable->smog_version_correct) {
+                startup_message_fatal(
+                  _("\nAn incorrect version of smogrify was found in your path.\n\nPlease review the README file which came with this package\nbefore running LiVES.\n\nThankyou.\n"));
+              } else {
+#ifndef IS_MINGW
+                if ((!capable->has_sox_sox||!capable->has_sox_play)&&!capable->has_mplayer&&!capable->has_mplayer2) {
+                  startup_message_fatal(
+                    _("\nLiVES currently requires 'mplayer', 'mplayer2' or 'sox' to function. Please install one or other of these, and try again.\n"));
+                }
+#else
+                if (!capable->has_sox_sox||(!capable->has_mplayer&&!capable->has_mplayer2)) {
+                  startup_message_fatal(
+                    _("\nLiVES currently requires both 'mplayer' or 'mplayer2' and 'sox' to function. Please install these, and try again.\n"));
+                }
+#endif
+                else {
+                  if (strlen(capable->startup_msg)) {
+                    startup_message_nonfatal(capable->startup_msg);
+                  } else {
+                    // non-fatal errors
+                    if (!capable->has_mplayer&&!capable->has_mplayer2&&!(prefs->warning_mask&WARN_MASK_NO_MPLAYER)) {
+                      startup_message_nonfatal_dismissable(
+                        _("\nLiVES was unable to locate 'mplayer' or 'mplayer2'. You may wish to install either one to use LiVES more fully.\n"),
+                        WARN_MASK_NO_MPLAYER);
+                    }
+                    if (!capable->has_convert) {
+                      startup_message_nonfatal_dismissable(
+                        _("\nLiVES was unable to locate 'convert'. You should install convert and image-magick if you want to use rendered effects.\n"),
+                        WARN_MASK_NO_MPLAYER);
+                    }
+                    if (!capable->has_composite) {
+                      startup_message_nonfatal_dismissable(
+                        _("\nLiVES was unable to locate 'composite'. You should install composite and image-magick if you want to use the merge function.\n"),
+                        WARN_MASK_NO_MPLAYER);
+                    }
+                    if (!capable->has_sox_sox) {
+                      startup_message_nonfatal_dismissable(_("\nLiVES was unable to locate 'sox'. Some audio features may not work. You should install 'sox'.\n"),
+                                                           WARN_MASK_NO_MPLAYER);
+                    }
+                    if (!capable->has_encoder_plugins) {
+                      char *err=lives_strdup_printf(
+                                  _("\nLiVES was unable to find any encoder plugins.\nPlease check that you have them installed correctly in\n%s%s%s/\nYou will not be able to 'Save' without them.\nYou may need to change the value of <lib_dir> in %s\n"),
+                                  prefs->lib_dir,PLUGIN_EXEC_DIR,PLUGIN_ENCODERS,(tmp=lives_filename_to_utf8(capable->rcfile,-1,NULL,NULL,NULL)));
+                      lives_free(tmp);
+                      startup_message_nonfatal_dismissable(err,WARN_MASK_NO_ENCODERS);
+                      lives_free(err);
+                      upgrade_error=TRUE;
+                    }
+
+                    if (mainw->next_ds_warn_level>0) {
+                      uint64_t dsval;
+                      lives_storage_status_t ds=get_storage_status(prefs->tmpdir,mainw->next_ds_warn_level,&dsval);
+                      if (ds==LIVES_STORAGE_STATUS_WARNING) {
+                        char *err;
+                        uint64_t curr_ds_warn=mainw->next_ds_warn_level;
+                        mainw->next_ds_warn_level>>=1;
+                        if (mainw->next_ds_warn_level>(dsval>>1)) mainw->next_ds_warn_level=dsval>>1;
+                        if (mainw->next_ds_warn_level<prefs->ds_crit_level) mainw->next_ds_warn_level=prefs->ds_crit_level;
+                        tmp=ds_warning_msg(prefs->tmpdir,dsval,curr_ds_warn,mainw->next_ds_warn_level);
+                        err=lives_strdup_printf("\n%s\n",tmp);
+                        lives_free(tmp);
+                        startup_message_nonfatal(err);
+                        lives_free(err);
+                      } else if (ds==LIVES_STORAGE_STATUS_CRITICAL) {
+                        char *err;
+                        tmp=ds_critical_msg(prefs->tmpdir,dsval);
+                        err=lives_strdup_printf("\n%s\n",tmp);
+                        lives_free(tmp);
+                        startup_message_fatal(err);
+                        lives_free(err);
+                      }
+                    }
+                  }
+
+                  if (prefs->startup_interface!=STARTUP_MT) {
+                    if (prefs->show_gui) {
+                      // mainw->ready gets set here
+                      lives_widget_show(mainw->LiVES);
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
       }
-      else {
-	if (!capable->can_read_from_config) {
-	  char *err=lives_strdup_printf(_ ("\nLiVES was unable to read from its configuration file\n%s\n\nPlease check the file permissions for this file and try again.\n"),(tmp=lives_filename_to_utf8(capable->rcfile,-1,NULL,NULL,NULL)));
-	  lives_free(tmp);
-	  startup_message_fatal(err);
-	  lives_free(err);
-	}
-	else {
-	  if (!capable->can_write_to_config) {
-	    char *err=lives_strdup_printf(_ ("\nLiVES was unable to write to its configuration file\n%s\n\nPlease check the file permissions for this file and directory\nand try again.\n"),(tmp=lives_filename_to_utf8(capable->rcfile,-1,NULL,NULL,NULL)));
-	    lives_free(tmp);
-	    startup_message_fatal(err);
-	    lives_free(err);
-	  }
-	  else {
-	    if (!capable->can_write_to_tempdir) {
-	      char *extrabit;
-	      char *err;
-	      if (!mainw->has_session_tmpdir) {
-		extrabit=lives_strdup_printf(_("Please check the <tempdir> setting in \n%s\nand try again.\n"),
-				  (tmp=lives_filename_to_utf8(capable->rcfile,-1,NULL,NULL,NULL)));
-		lives_free(tmp);
-	      }
-	      else 
-		extrabit=lives_strdup("");
-
-	      err=lives_strdup_printf(_ ("\nLiVES was unable to use the temporary directory\n%s\n\n%s"),
-				  prefs->tmpdir,extrabit);
-	      lives_free(extrabit);
-	      startup_message_fatal(err);
-	      lives_free(err);
-	    }
-	    else {
-	      if (!capable->smog_version_correct) {
-		startup_message_fatal(_ ("\nAn incorrect version of smogrify was found in your path.\n\nPlease review the README file which came with this package\nbefore running LiVES.\n\nThankyou.\n"));
-	      }
-	      else {
-		#ifndef IS_MINGW
-		if ((!capable->has_sox_sox||!capable->has_sox_play)&&!capable->has_mplayer&&!capable->has_mplayer2){
-		  startup_message_fatal(_ ("\nLiVES currently requires 'mplayer', 'mplayer2' or 'sox' to function. Please install one or other of these, and try again.\n"));
-		}
-		#else
-		if (!capable->has_sox_sox||(!capable->has_mplayer&&!capable->has_mplayer2)){
-		  startup_message_fatal(_ ("\nLiVES currently requires both 'mplayer' or 'mplayer2' and 'sox' to function. Please install these, and try again.\n"));
-		}
-		#endif
-		else {
-		  if (strlen(capable->startup_msg)) {
-		    startup_message_nonfatal (capable->startup_msg);
-		  }
-		  else {
-		    // non-fatal errors
-		    if (!capable->has_mplayer&&!capable->has_mplayer2&&!(prefs->warning_mask&WARN_MASK_NO_MPLAYER)) {
-		      startup_message_nonfatal_dismissable (_ ("\nLiVES was unable to locate 'mplayer' or 'mplayer2'. You may wish to install either one to use LiVES more fully.\n"),WARN_MASK_NO_MPLAYER);
-		    }
-		    if (!capable->has_convert) {
-		      startup_message_nonfatal_dismissable (_ ("\nLiVES was unable to locate 'convert'. You should install convert and image-magick if you want to use rendered effects.\n"),WARN_MASK_NO_MPLAYER);
-		    }
-		    if (!capable->has_composite) {
-		      startup_message_nonfatal_dismissable (_ ("\nLiVES was unable to locate 'composite'. You should install composite and image-magick if you want to use the merge function.\n"),WARN_MASK_NO_MPLAYER);
-		    }
-		    if (!capable->has_sox_sox) {
-		      startup_message_nonfatal_dismissable (_ ("\nLiVES was unable to locate 'sox'. Some audio features may not work. You should install 'sox'.\n"),WARN_MASK_NO_MPLAYER);
-		    }
-		    if (!capable->has_encoder_plugins) {
-		      char *err=lives_strdup_printf(_ ("\nLiVES was unable to find any encoder plugins.\nPlease check that you have them installed correctly in\n%s%s%s/\nYou will not be able to 'Save' without them.\nYou may need to change the value of <lib_dir> in %s\n"),prefs->lib_dir,PLUGIN_EXEC_DIR,PLUGIN_ENCODERS,(tmp=lives_filename_to_utf8(capable->rcfile,-1,NULL,NULL,NULL)));
-		      lives_free(tmp);
-		      startup_message_nonfatal_dismissable (err,WARN_MASK_NO_ENCODERS);
-		      lives_free(err);
-		      upgrade_error=TRUE;
-		    }
-
-		    if (mainw->next_ds_warn_level>0) {
-		      uint64_t dsval;
-		      lives_storage_status_t ds=get_storage_status(prefs->tmpdir,mainw->next_ds_warn_level,&dsval);
-		      if (ds==LIVES_STORAGE_STATUS_WARNING) {
-			char *err;
-			uint64_t curr_ds_warn=mainw->next_ds_warn_level;
-			mainw->next_ds_warn_level>>=1;
-			if (mainw->next_ds_warn_level>(dsval>>1)) mainw->next_ds_warn_level=dsval>>1;
-			if (mainw->next_ds_warn_level<prefs->ds_crit_level) mainw->next_ds_warn_level=prefs->ds_crit_level;
-			tmp=ds_warning_msg(prefs->tmpdir,dsval,curr_ds_warn,mainw->next_ds_warn_level);
-			err=lives_strdup_printf("\n%s\n",tmp);
-			lives_free(tmp);
-			startup_message_nonfatal(err);
-			lives_free(err);
-		      }
-		      else if (ds==LIVES_STORAGE_STATUS_CRITICAL) {
-			char *err;
-			tmp=ds_critical_msg(prefs->tmpdir,dsval);
-			err=lives_strdup_printf("\n%s\n",tmp);
-			lives_free(tmp);
-			startup_message_fatal(err);
-			lives_free(err);
-		      }
-		    }
-		  }
-
-		  if (prefs->startup_interface!=STARTUP_MT) {
-		    if (prefs->show_gui) {
-		      // mainw->ready gets set here
-		      lives_widget_show (mainw->LiVES);
-		    }
-		  }
-		}}}}}}}}
+    }
+  }
 
   else {
     // capture mode
@@ -2623,8 +2639,8 @@ static boolean lives_startup(livespointer data) {
     if (zargc>14) {
       mainw->foreign_visual=lives_strdup(zargv[14]);
       if (!strcmp(mainw->foreign_visual,"(null)")) {
-	lives_free(mainw->foreign_visual);
-	mainw->foreign_visual=NULL;
+        lives_free(mainw->foreign_visual);
+        mainw->foreign_visual=NULL;
       }
     }
 
@@ -2640,13 +2656,13 @@ static boolean lives_startup(livespointer data) {
       pulse_audio_read_init();
     }
 #endif
-    lives_widget_show (mainw->LiVES);
+    lives_widget_show(mainw->LiVES);
     on_capture2_activate();  // exits
   }
 
 #ifdef NOTTY
   if (!mainw->foreign) {
-    close (2);
+    close(2);
     capable->has_stderr=FALSE;
   }
 #endif
@@ -2671,7 +2687,7 @@ static boolean lives_startup(livespointer data) {
   }
 
   // splash_end() will start up multirack if in STARTUP_MT mode
-  if (strlen (start_file)&&strcmp(start_file,"-")) {
+  if (strlen(start_file)&&strcmp(start_file,"-")) {
     splash_end();
     deduce_file(start_file,start,end);
     got_files=TRUE;
@@ -2754,14 +2770,14 @@ void set_signal_handlers(SignalHandlerPointer sigfunc) {
   sact.sa_mask=smask;
 
 
-  sigaction (LIVES_SIGINT, &sact, NULL);
-  sigaction (LIVES_SIGTERM, &sact, NULL);
-  sigaction (LIVES_SIGSEGV, &sact, NULL);
-  sigaction (LIVES_SIGABRT, &sact, NULL);
+  sigaction(LIVES_SIGINT, &sact, NULL);
+  sigaction(LIVES_SIGTERM, &sact, NULL);
+  sigaction(LIVES_SIGSEGV, &sact, NULL);
+  sigaction(LIVES_SIGABRT, &sact, NULL);
 
 #else
   SignalHandlerPointer previousHandler;
-  
+
   previousHandler = signal(LIVES_SIGINT, (SignalHandlerPointer)catch_sigint);
   previousHandler = signal(LIVES_SIGTERM, (SignalHandlerPointer)catch_sigint);
   previousHandler = signal(LIVES_SIGSEGV, (SignalHandlerPointer)catch_sigint);
@@ -2777,7 +2793,7 @@ void set_signal_handlers(SignalHandlerPointer sigfunc) {
 }
 
 
-int real_main (int argc, char *argv[], ulong id) {
+int real_main(int argc, char *argv[], ulong id) {
 #ifdef ENABLE_OSC
 #ifdef IS_MINGW
   WSADATA wsaData;
@@ -2801,7 +2817,7 @@ int real_main (int argc, char *argv[], ulong id) {
 #ifdef ENABLE_OIL
   oil_init();
 #endif
-  
+
   zargc=argc;
   zargv=argv;
 
@@ -2809,15 +2825,15 @@ int real_main (int argc, char *argv[], ulong id) {
 
 #ifdef ENABLE_NLS
   trString=NULL;
-  bindtextdomain (GETTEXT_PACKAGE, PACKAGE_LOCALE_DIR);
+  bindtextdomain(GETTEXT_PACKAGE, PACKAGE_LOCALE_DIR);
 #ifdef UTF8_CHARSET
-  bind_textdomain_codeset (GETTEXT_PACKAGE, "UTF-8");
+  bind_textdomain_codeset(GETTEXT_PACKAGE, "UTF-8");
 #endif
-  textdomain (GETTEXT_PACKAGE);
+  textdomain(GETTEXT_PACKAGE);
 #endif
 
   // force decimal point to be a "."
-  putenv ("LC_NUMERIC=C");
+  putenv("LC_NUMERIC=C");
 
 #ifdef ENABLE_OSC
 #ifdef IS_MINGW
@@ -2826,20 +2842,20 @@ int real_main (int argc, char *argv[], ulong id) {
   iResult = WSAStartup(MAKEWORD(2,2), &wsaData);
   if (iResult != 0) {
     printf("WSAStartup failed: %d\n", iResult);
-    exit (1);
+    exit(1);
 
   }
 #endif
 #endif
 
 #ifdef GUI_GTK
-  gtk_init (&argc, &argv);
+  gtk_init(&argc, &argv);
 #endif
 
 #ifdef GUI_GTK
 #ifdef LIVES_NO_DEBUG
   // don't crash on GTK+ fatals
-  g_log_set_always_fatal ((GLogLevelFlags)0);
+  g_log_set_always_fatal((GLogLevelFlags)0);
 #endif
 
   g_log_set_default_handler(lives_log_handler,NULL);
@@ -2849,7 +2865,7 @@ int real_main (int argc, char *argv[], ulong id) {
 
   // mainw->foreign is set if we are grabbing an external window
   mainw->foreign=FALSE;
-  memset (start_file,0,1);
+  memset(start_file,0,1);
   mainw->has_session_tmpdir=FALSE;
 
   mainw->id=id;
@@ -2887,116 +2903,112 @@ int real_main (int argc, char *argv[], ulong id) {
     if (!strcmp(argv[1],"-capture")) {
       // special mode for grabbing external window
       mainw->foreign=TRUE;
-    }
-    else if (!strcmp(argv[1],"-help")||!strcmp(argv[1],"--help")) {
+    } else if (!strcmp(argv[1],"-help")||!strcmp(argv[1],"--help")) {
       print_opthelp();
-      exit (0);
-    }
-    else if (!strcmp(argv[1],"-version")||!strcmp(argv[1],"--version")) {
+      exit(0);
+    } else if (!strcmp(argv[1],"-version")||!strcmp(argv[1],"--version")) {
       print_notice();
-      exit (0);
-    }
-    else {
+      exit(0);
+    } else {
       struct option longopts[] = {
-	{"aplayer", 1, 0, 0},
-	{"tmpdir", 1, 0, 0},
-	{"yuvin", 1, 0, 0},
-	{"set", 1, 0, 0},
-	{"noset", 0, 0, 0},
+        {"aplayer", 1, 0, 0},
+        {"tmpdir", 1, 0, 0},
+        {"yuvin", 1, 0, 0},
+        {"set", 1, 0, 0},
+        {"noset", 0, 0, 0},
 #ifdef ENABLE_OSC
         {"devicemap", 1, 0, 0},
 #endif
         {"vppdefaults", 1, 0, 0},
-	{"recover", 0, 0, 0},
-	{"norecover", 0, 0, 0},
-	{"nothreaddialog", 0, 0, 0},
-	{"nogui", 0, 0, 0},
-	{"nosplash", 0, 0, 0},
-	{"noplaywin", 0, 0, 0},
-	{"noninteractive", 0, 0, 0},
-	{"startup-ce", 0, 0, 0},
-	{"startup-mt", 0, 0, 0},
-	{"debug", 0, 0, 0},
-	{"bigendbug", 1, 0, 0},
-	{"fxmodesmax", 1, 0, 0},
+        {"recover", 0, 0, 0},
+        {"norecover", 0, 0, 0},
+        {"nothreaddialog", 0, 0, 0},
+        {"nogui", 0, 0, 0},
+        {"nosplash", 0, 0, 0},
+        {"noplaywin", 0, 0, 0},
+        {"noninteractive", 0, 0, 0},
+        {"startup-ce", 0, 0, 0},
+        {"startup-mt", 0, 0, 0},
+        {"debug", 0, 0, 0},
+        {"bigendbug", 1, 0, 0},
+        {"fxmodesmax", 1, 0, 0},
 #ifdef ENABLE_OSC
-	{"oscstart", 1, 0, 0},
-	{"nooscstart", 0, 0, 0},
+        {"oscstart", 1, 0, 0},
+        {"nooscstart", 0, 0, 0},
 #endif
 #ifdef ENABLE_JACK
-	{"jackopts", 1, 0, 0},
+        {"jackopts", 1, 0, 0},
 #endif
-	{0, 0, 0, 0}
+        {0, 0, 0, 0}
       };
       int option_index=0;
       const char *charopt;
       int c;
 
       while (1) {
-	c=getopt_long_only(argc,argv,"",longopts,&option_index);
-	if (c==-1) break; // end of options
-	charopt=longopts[option_index].name;
-	if (!strcmp(charopt,"norecover")) {
-	  // auto no-recovery
-	  no_recover=TRUE;
-	  continue;
-	}
-	if (!strcmp(charopt,"debug")) {
-	  // debug crashes
-	  mainw->debug=TRUE;
-	  continue;
-	}
-	if (!strcmp(charopt,"recover")) {
-	  // auto recovery
-	  auto_recover=TRUE;
-	  continue;
-	}
-	if (!strcmp(charopt,"tmpdir")) {
-	  mainw->has_session_tmpdir=TRUE;
-	  // override tempdir setting
-	  lives_snprintf(prefs->tmpdir,PATH_MAX,"%s",optarg);
-	  lives_snprintf(future_prefs->tmpdir,PATH_MAX,"%s",prefs->tmpdir);
-	  set_pref("session_tempdir",prefs->tmpdir);
+        c=getopt_long_only(argc,argv,"",longopts,&option_index);
+        if (c==-1) break; // end of options
+        charopt=longopts[option_index].name;
+        if (!strcmp(charopt,"norecover")) {
+          // auto no-recovery
+          no_recover=TRUE;
+          continue;
+        }
+        if (!strcmp(charopt,"debug")) {
+          // debug crashes
+          mainw->debug=TRUE;
+          continue;
+        }
+        if (!strcmp(charopt,"recover")) {
+          // auto recovery
+          auto_recover=TRUE;
+          continue;
+        }
+        if (!strcmp(charopt,"tmpdir")) {
+          mainw->has_session_tmpdir=TRUE;
+          // override tempdir setting
+          lives_snprintf(prefs->tmpdir,PATH_MAX,"%s",optarg);
+          lives_snprintf(future_prefs->tmpdir,PATH_MAX,"%s",prefs->tmpdir);
+          set_pref("session_tempdir",prefs->tmpdir);
 
-	  if (lives_mkdir_with_parents(prefs->tmpdir,S_IRWXU)==-1) {
-	    if (!check_dir_access(prefs->tmpdir)) {
-	      // abort if we cannot create the new subdir
-	      LIVES_ERROR("Could not create directory");
-	      LIVES_ERROR(prefs->tmpdir);
-	    }
-	    capable->can_write_to_tempdir=FALSE;
-	  }
-	  else {
-	    LIVES_INFO("Created directory");
-	    LIVES_INFO(prefs->tmpdir);
-	  }
-	  mainw->com_failed=FALSE;
-	  continue;
-	}
-	if (!strcmp(charopt,"yuvin")) {
+          if (lives_mkdir_with_parents(prefs->tmpdir,S_IRWXU)==-1) {
+            if (!check_dir_access(prefs->tmpdir)) {
+              // abort if we cannot create the new subdir
+              LIVES_ERROR("Could not create directory");
+              LIVES_ERROR(prefs->tmpdir);
+            }
+            capable->can_write_to_tempdir=FALSE;
+          } else {
+            LIVES_INFO("Created directory");
+            LIVES_INFO(prefs->tmpdir);
+          }
+          mainw->com_failed=FALSE;
+          continue;
+        }
+        if (!strcmp(charopt,"yuvin")) {
 #ifdef HAVE_YUV4MPEG
-	  lives_snprintf(prefs->yuvin,PATH_MAX,"%s",optarg);
-	  prefs->startup_interface=STARTUP_CE;
-	  ign_opts.ign_stmode=TRUE;
+          lives_snprintf(prefs->yuvin,PATH_MAX,"%s",optarg);
+          prefs->startup_interface=STARTUP_CE;
+          ign_opts.ign_stmode=TRUE;
 #else
-	  LIVES_ERROR("Must have mjpegtools installed for yuvin to work");
+          LIVES_ERROR("Must have mjpegtools installed for yuvin to work");
 #endif
-	  continue;
-	}
-	if (!strcmp(charopt,"noset")) {
-	  // override clipset loading
-	  memset(prefs->ar_clipset_name,0,1);
-	  prefs->ar_clipset=FALSE;
-	  ign_opts.ign_clipset=TRUE;
-	  continue;
-	}
-	if (!strcmp(charopt,"set")&&optarg!=NULL) {
-	  // force clipset loading
-	  lives_snprintf(prefs->ar_clipset_name,128,"%s",optarg);
-	  prefs->ar_clipset=TRUE;
-	  ign_opts.ign_clipset=TRUE;
-	  continue;
-	}
+          continue;
+        }
+        if (!strcmp(charopt,"noset")) {
+          // override clipset loading
+          memset(prefs->ar_clipset_name,0,1);
+          prefs->ar_clipset=FALSE;
+          ign_opts.ign_clipset=TRUE;
+          continue;
+        }
+        if (!strcmp(charopt,"set")&&optarg!=NULL) {
+          // force clipset loading
+          lives_snprintf(prefs->ar_clipset_name,128,"%s",optarg);
+          prefs->ar_clipset=TRUE;
+          ign_opts.ign_clipset=TRUE;
+          continue;
+        }
 #ifdef ENABLE_OSC
         if (!strcmp(charopt,"devicemap")&&optarg!=NULL) {
           // force devicemap loading
@@ -3006,141 +3018,142 @@ int real_main (int argc, char *argv[], ulong id) {
 #endif
         if (!strcmp(charopt,"vppdefaults")&&optarg!=NULL) {
           // load alternate vpp file
-	  lives_snprintf(mainw->vpp_defs_file,PATH_MAX,"%s",optarg);
-	  ign_opts.ign_vppdefs=TRUE;
+          lives_snprintf(mainw->vpp_defs_file,PATH_MAX,"%s",optarg);
+          ign_opts.ign_vppdefs=TRUE;
           continue;
         }
-	if (!strcmp(charopt,"aplayer")) {
-	  char buff[256];
-	  boolean apl_valid=FALSE;
+        if (!strcmp(charopt,"aplayer")) {
+          char buff[256];
+          boolean apl_valid=FALSE;
 
-	  lives_snprintf(buff,256,"%s",optarg);
-	  // override aplayer default
-	  if (!strcmp(buff,"sox")) {
-	    switch_aud_to_sox(TRUE);
-	    apl_valid=TRUE;
-	  }
-	  if (!strcmp(buff,"mplayer")) {
-	    switch_aud_to_mplayer(TRUE);
-	    apl_valid=TRUE;
-	  }
-	  if (!strcmp(buff,"mplayer2")) {
-	    switch_aud_to_mplayer2(TRUE);
-	    apl_valid=TRUE;
-	  }
-	  if (!strcmp(buff,"jack")) {
+          lives_snprintf(buff,256,"%s",optarg);
+          // override aplayer default
+          if (!strcmp(buff,"sox")) {
+            switch_aud_to_sox(TRUE);
+            apl_valid=TRUE;
+          }
+          if (!strcmp(buff,"mplayer")) {
+            switch_aud_to_mplayer(TRUE);
+            apl_valid=TRUE;
+          }
+          if (!strcmp(buff,"mplayer2")) {
+            switch_aud_to_mplayer2(TRUE);
+            apl_valid=TRUE;
+          }
+          if (!strcmp(buff,"jack")) {
 #ifdef ENABLE_JACK
-	    prefs->audio_player=AUD_PLAYER_JACK;
-	    lives_snprintf(prefs->aplayer,512,"%s","jack");
-	    set_pref("audio_player","jack");
-	    apl_valid=TRUE;
+            prefs->audio_player=AUD_PLAYER_JACK;
+            lives_snprintf(prefs->aplayer,512,"%s","jack");
+            set_pref("audio_player","jack");
+            apl_valid=TRUE;
 #endif
-	  }
-	  if (!strcmp(buff,"pulse")) {
+          }
+          if (!strcmp(buff,"pulse")) {
 #ifdef HAVE_PULSE_AUDIO
-	    prefs->audio_player=AUD_PLAYER_PULSE;
-	    set_pref("audio_player","pulse");
-	    lives_snprintf(prefs->aplayer,512,"%s","pulse");
-	    apl_valid=TRUE;
+            prefs->audio_player=AUD_PLAYER_PULSE;
+            set_pref("audio_player","pulse");
+            lives_snprintf(prefs->aplayer,512,"%s","pulse");
+            apl_valid=TRUE;
 #endif
-	  }
-	  if (apl_valid) ign_opts.ign_aplayer=TRUE;
-	  else lives_printerr(_("Invalid audio player %s\n"),buff);
-	  continue;
-	}
-	if (!strcmp(charopt,"nogui")) {
-	  // force headless mode
-	  prefs->show_gui=FALSE;
-	  continue;
-	}
-	if (!strcmp(charopt,"nosplash")) {
-	  // do not show splash
-	  prefs->show_splash=FALSE;
-	  continue;
-	}
-	if (!strcmp(charopt,"noplaywin")) {
-	  // do not show the play window
-	  prefs->show_playwin=FALSE;
-	  continue;
-	}
-	if (!strcmp(charopt,"noninteractive")) {
-	  // disable menu/toolbar interactivity
-	  mainw->interactive=FALSE;
-	  continue;
-	}
-	if (!strcmp(charopt,"nothreaddialog")) {
-	  // disable threaded dialog (does nothing now)
-	  continue;
-	}
-	if (!strcmp(charopt,"fxmodesmax")&&optarg!=NULL) {
-	  // set number of fx modes
-	  prefs->max_modes_per_key=atoi(optarg);
-	  if (prefs->max_modes_per_key<1) prefs->max_modes_per_key=1;
-	  ign_opts.ign_osc=TRUE;
-	  continue;
-	}
-	if (!strcmp(charopt,"bigendbug")) {
-	  if (optarg!=NULL) {
-	    // set bigendbug
-	    prefs->bigendbug=atoi(optarg);
-	  }
-	  else prefs->bigendbug=1;
-	  continue;
-	}
+          }
+          if (apl_valid) ign_opts.ign_aplayer=TRUE;
+          else lives_printerr(_("Invalid audio player %s\n"),buff);
+          continue;
+        }
+        if (!strcmp(charopt,"nogui")) {
+          // force headless mode
+          prefs->show_gui=FALSE;
+          continue;
+        }
+        if (!strcmp(charopt,"nosplash")) {
+          // do not show splash
+          prefs->show_splash=FALSE;
+          continue;
+        }
+        if (!strcmp(charopt,"noplaywin")) {
+          // do not show the play window
+          prefs->show_playwin=FALSE;
+          continue;
+        }
+        if (!strcmp(charopt,"noninteractive")) {
+          // disable menu/toolbar interactivity
+          mainw->interactive=FALSE;
+          continue;
+        }
+        if (!strcmp(charopt,"nothreaddialog")) {
+          // disable threaded dialog (does nothing now)
+          continue;
+        }
+        if (!strcmp(charopt,"fxmodesmax")&&optarg!=NULL) {
+          // set number of fx modes
+          prefs->max_modes_per_key=atoi(optarg);
+          if (prefs->max_modes_per_key<1) prefs->max_modes_per_key=1;
+          ign_opts.ign_osc=TRUE;
+          continue;
+        }
+        if (!strcmp(charopt,"bigendbug")) {
+          if (optarg!=NULL) {
+            // set bigendbug
+            prefs->bigendbug=atoi(optarg);
+          } else prefs->bigendbug=1;
+          continue;
+        }
 #ifdef ENABLE_OSC
-	if (!strcmp(charopt,"oscstart")&&optarg!=NULL) {
-	  // force OSC start
-	  prefs->osc_udp_port=atoi(optarg);
-	  prefs->osc_start=TRUE;
-	  ign_opts.ign_osc=TRUE;
-	  continue;
-	}
-	if (!strcmp(charopt,"nooscstart")) {
-	  // force no OSC start
-	  prefs->osc_start=FALSE;
-	  ign_opts.ign_osc=TRUE;
-	  continue;
-	}
+        if (!strcmp(charopt,"oscstart")&&optarg!=NULL) {
+          // force OSC start
+          prefs->osc_udp_port=atoi(optarg);
+          prefs->osc_start=TRUE;
+          ign_opts.ign_osc=TRUE;
+          continue;
+        }
+        if (!strcmp(charopt,"nooscstart")) {
+          // force no OSC start
+          prefs->osc_start=FALSE;
+          ign_opts.ign_osc=TRUE;
+          continue;
+        }
 #endif
 
 #ifdef ENABLE_JACK
-	if (!strcmp(charopt,"jackopts")&&optarg!=NULL) {
-	  // override jackopts in config file
-	  prefs->jack_opts=atoi(optarg);
-	  continue;
-	}
+        if (!strcmp(charopt,"jackopts")&&optarg!=NULL) {
+          // override jackopts in config file
+          prefs->jack_opts=atoi(optarg);
+          continue;
+        }
 #endif
-	if (!strcmp(charopt,"startup-ce")) {
-	  // force start in clip editor mode
-	  if (!ign_opts.ign_stmode) {
-	    prefs->startup_interface=STARTUP_CE;
-	    ign_opts.ign_stmode=TRUE;
-	  }
-	  continue;
-	}
-	if (!strcmp(charopt,"startup-mt")) {
-	  // force start in multitrack mode
-	  if (!ign_opts.ign_stmode) {
-	    prefs->startup_interface=STARTUP_MT;
-	    ign_opts.ign_stmode=TRUE;
-	  }
-	  continue;
-	}
+        if (!strcmp(charopt,"startup-ce")) {
+          // force start in clip editor mode
+          if (!ign_opts.ign_stmode) {
+            prefs->startup_interface=STARTUP_CE;
+            ign_opts.ign_stmode=TRUE;
+          }
+          continue;
+        }
+        if (!strcmp(charopt,"startup-mt")) {
+          // force start in multitrack mode
+          if (!ign_opts.ign_stmode) {
+            prefs->startup_interface=STARTUP_MT;
+            ign_opts.ign_stmode=TRUE;
+          }
+          continue;
+        }
 
       }
       if (optind<argc) {
-	// remaining opts are filename [start_time] [end_frame]
-	lives_snprintf(start_file,PATH_MAX,"%s",argv[optind++]); // filename
-	if (optind<argc) start=lives_strtod(argv[optind++],NULL); // start time (seconds)
-	if (optind<argc) end=atoi(argv[optind++]); // number of frames
-      }}}
+        // remaining opts are filename [start_time] [end_frame]
+        lives_snprintf(start_file,PATH_MAX,"%s",argv[optind++]); // filename
+        if (optind<argc) start=lives_strtod(argv[optind++],NULL); // start time (seconds)
+        if (optind<argc) end=atoi(argv[optind++]); // number of frames
+      }
+    }
+  }
 
 
   lives_idle_add(lives_startup,NULL);
 
 #ifndef IS_LIBLIVES
 #ifdef GUI_GTK
-  gtk_main ();
+  gtk_main();
 #endif
 #else
   pthread_create(&gtk_thread,NULL,gtk_thread_wrapper,NULL);
@@ -3158,7 +3171,7 @@ int real_main (int argc, char *argv[], ulong id) {
 
 boolean startup_message_fatal(const char *msg) {
   splash_end();
-  do_blocking_error_dialog (msg);
+  do_blocking_error_dialog(msg);
   mainw->startup_error=TRUE;
   lives_exit(0);
   return TRUE;
@@ -3166,21 +3179,21 @@ boolean startup_message_fatal(const char *msg) {
 
 boolean startup_message_nonfatal(const char *msg) {
   if (palette->style&STYLE_1) widget_opts.apply_theme=TRUE;
-  do_error_dialog (msg);
+  do_error_dialog(msg);
   widget_opts.apply_theme=FALSE;
   return TRUE;
 }
 
 boolean startup_message_info(const char *msg) {
   if (palette->style&STYLE_1) widget_opts.apply_theme=TRUE;
-  do_info_dialog (msg);
+  do_info_dialog(msg);
   widget_opts.apply_theme=FALSE;
   return TRUE;
 }
 
 boolean startup_message_nonfatal_dismissable(const char *msg, int warning_mask) {
   if (palette->style&STYLE_1) widget_opts.apply_theme=TRUE;
-  do_error_dialog_with_check (msg, warning_mask);
+  do_error_dialog_with_check(msg, warning_mask);
   widget_opts.apply_theme=FALSE;
   return TRUE;
 }
@@ -3191,27 +3204,25 @@ void set_main_title(const char *file, int untitled) {
   char short_file[256];
 
   if (file!=NULL) {
-    if (untitled) title=lives_strdup_printf(_ ("LiVES-%s: <Untitled%d> %dx%d : %d frames %d bpp %.3f fps"),LiVES_VERSION,untitled,
-					cfile->hsize,cfile->vsize,cfile->frames,cfile->bpp,cfile->fps);
+    if (untitled) title=lives_strdup_printf(_("LiVES-%s: <Untitled%d> %dx%d : %d frames %d bpp %.3f fps"),LiVES_VERSION,untitled,
+                                              cfile->hsize,cfile->vsize,cfile->frames,cfile->bpp,cfile->fps);
     else {
       lives_snprintf(short_file,256,"%s",file);
       if (cfile->restoring||(cfile->opening&&cfile->frames==123456789)) {
-	title=lives_strdup_printf(_("LiVES-%s: <%s> %dx%d : ??? frames ??? bpp %.3f fps"),LiVES_VERSION,
-			      (tmp=lives_path_get_basename(file)),cfile->hsize,cfile->vsize,cfile->fps);
-      }
-      else {
-	title=lives_strdup_printf(_ ("LiVES-%s: <%s> %dx%d : %d frames %d bpp %.3f fps"),LiVES_VERSION,
-			      cfile->clip_type!=CLIP_TYPE_VIDEODEV?(tmp=lives_path_get_basename(file))
-			      :(tmp=lives_strdup(file)),cfile->hsize,cfile->vsize,cfile->frames,cfile->bpp,cfile->fps);
+        title=lives_strdup_printf(_("LiVES-%s: <%s> %dx%d : ??? frames ??? bpp %.3f fps"),LiVES_VERSION,
+                                  (tmp=lives_path_get_basename(file)),cfile->hsize,cfile->vsize,cfile->fps);
+      } else {
+        title=lives_strdup_printf(_("LiVES-%s: <%s> %dx%d : %d frames %d bpp %.3f fps"),LiVES_VERSION,
+                                  cfile->clip_type!=CLIP_TYPE_VIDEODEV?(tmp=lives_path_get_basename(file))
+                                  :(tmp=lives_strdup(file)),cfile->hsize,cfile->vsize,cfile->frames,cfile->bpp,cfile->fps);
       }
       lives_free(tmp);
     }
-  }
-  else {
-    title=lives_strdup_printf(_ ("LiVES-%s: <No File>"),LiVES_VERSION);
+  } else {
+    title=lives_strdup_printf(_("LiVES-%s: <No File>"),LiVES_VERSION);
   }
 
-  lives_window_set_title (LIVES_WINDOW (mainw->LiVES), title);
+  lives_window_set_title(LIVES_WINDOW(mainw->LiVES), title);
 
   if (mainw->playing_file==-1&&mainw->play_window!=NULL) lives_window_set_title(LIVES_WINDOW(mainw->play_window),title);
 
@@ -3226,134 +3237,132 @@ void sensitize(void) {
 
   if (mainw->multitrack!=NULL) return;
 
-  lives_widget_set_sensitive (mainw->open, TRUE);
-  lives_widget_set_sensitive (mainw->open_sel, TRUE);
-  lives_widget_set_sensitive (mainw->open_vcd_menu, TRUE);
+  lives_widget_set_sensitive(mainw->open, TRUE);
+  lives_widget_set_sensitive(mainw->open_sel, TRUE);
+  lives_widget_set_sensitive(mainw->open_vcd_menu, TRUE);
 #ifdef HAVE_WEBM
-  lives_widget_set_sensitive (mainw->open_loc_menu, TRUE);
+  lives_widget_set_sensitive(mainw->open_loc_menu, TRUE);
 #else
-  lives_widget_set_sensitive (mainw->open_loc, TRUE);
+  lives_widget_set_sensitive(mainw->open_loc, TRUE);
 #endif
-  lives_widget_set_sensitive (mainw->open_device_menu, TRUE);
-  lives_widget_set_sensitive (mainw->restore, TRUE);
-  lives_widget_set_sensitive (mainw->recent_menu, TRUE);
-  lives_widget_set_sensitive (mainw->save_as, mainw->current_file>0&&capable->has_encoder_plugins);
-  lives_widget_set_sensitive (mainw->backup, mainw->current_file>0);
-  lives_widget_set_sensitive (mainw->save_selection, mainw->current_file>0&&cfile->frames>0&&capable->has_encoder_plugins);
-  lives_widget_set_sensitive (mainw->clear_ds, TRUE);
-  lives_widget_set_sensitive (mainw->playsel, mainw->current_file>0&&cfile->frames>0);
-  lives_widget_set_sensitive (mainw->copy, mainw->current_file>0&&cfile->frames>0);
-  lives_widget_set_sensitive (mainw->cut, mainw->current_file>0&&cfile->frames>0);
-  lives_widget_set_sensitive (mainw->rev_clipboard, !(clipboard==NULL));
-  lives_widget_set_sensitive (mainw->playclip, !(clipboard==NULL));
-  lives_widget_set_sensitive (mainw->paste_as_new, !(clipboard==NULL));
-  lives_widget_set_sensitive (mainw->insert, !(clipboard==NULL));
-  lives_widget_set_sensitive (mainw->merge,(clipboard!=NULL&&cfile->frames>0));
-  lives_widget_set_sensitive (mainw->xdelete, mainw->current_file>0&&cfile->frames>0);
-  lives_widget_set_sensitive (mainw->playall, mainw->current_file>0);
-  lives_widget_set_sensitive (mainw->m_playbutton, mainw->current_file>0);
-  lives_widget_set_sensitive (mainw->m_playselbutton, mainw->current_file>0&&cfile->frames>0);
-  lives_widget_set_sensitive (mainw->m_rewindbutton, mainw->current_file>0&&cfile->pointer_time>0.);
-  lives_widget_set_sensitive (mainw->m_loopbutton, TRUE);
-  lives_widget_set_sensitive (mainw->m_mutebutton, TRUE);
+  lives_widget_set_sensitive(mainw->open_device_menu, TRUE);
+  lives_widget_set_sensitive(mainw->restore, TRUE);
+  lives_widget_set_sensitive(mainw->recent_menu, TRUE);
+  lives_widget_set_sensitive(mainw->save_as, mainw->current_file>0&&capable->has_encoder_plugins);
+  lives_widget_set_sensitive(mainw->backup, mainw->current_file>0);
+  lives_widget_set_sensitive(mainw->save_selection, mainw->current_file>0&&cfile->frames>0&&capable->has_encoder_plugins);
+  lives_widget_set_sensitive(mainw->clear_ds, TRUE);
+  lives_widget_set_sensitive(mainw->playsel, mainw->current_file>0&&cfile->frames>0);
+  lives_widget_set_sensitive(mainw->copy, mainw->current_file>0&&cfile->frames>0);
+  lives_widget_set_sensitive(mainw->cut, mainw->current_file>0&&cfile->frames>0);
+  lives_widget_set_sensitive(mainw->rev_clipboard, !(clipboard==NULL));
+  lives_widget_set_sensitive(mainw->playclip, !(clipboard==NULL));
+  lives_widget_set_sensitive(mainw->paste_as_new, !(clipboard==NULL));
+  lives_widget_set_sensitive(mainw->insert, !(clipboard==NULL));
+  lives_widget_set_sensitive(mainw->merge,(clipboard!=NULL&&cfile->frames>0));
+  lives_widget_set_sensitive(mainw->xdelete, mainw->current_file>0&&cfile->frames>0);
+  lives_widget_set_sensitive(mainw->playall, mainw->current_file>0);
+  lives_widget_set_sensitive(mainw->m_playbutton, mainw->current_file>0);
+  lives_widget_set_sensitive(mainw->m_playselbutton, mainw->current_file>0&&cfile->frames>0);
+  lives_widget_set_sensitive(mainw->m_rewindbutton, mainw->current_file>0&&cfile->pointer_time>0.);
+  lives_widget_set_sensitive(mainw->m_loopbutton, TRUE);
+  lives_widget_set_sensitive(mainw->m_mutebutton, TRUE);
   if (mainw->preview_box!=NULL) {
-    lives_widget_set_sensitive (mainw->p_playbutton, mainw->current_file>0);
-    lives_widget_set_sensitive (mainw->p_playselbutton, mainw->current_file>0&&cfile->frames>0);
-    lives_widget_set_sensitive (mainw->p_rewindbutton, mainw->current_file>0&&cfile->pointer_time>0.);
-    lives_widget_set_sensitive (mainw->p_loopbutton, TRUE);
-    lives_widget_set_sensitive (mainw->p_mutebutton, TRUE);
+    lives_widget_set_sensitive(mainw->p_playbutton, mainw->current_file>0);
+    lives_widget_set_sensitive(mainw->p_playselbutton, mainw->current_file>0&&cfile->frames>0);
+    lives_widget_set_sensitive(mainw->p_rewindbutton, mainw->current_file>0&&cfile->pointer_time>0.);
+    lives_widget_set_sensitive(mainw->p_loopbutton, TRUE);
+    lives_widget_set_sensitive(mainw->p_mutebutton, TRUE);
   }
 
-  lives_widget_set_sensitive (mainw->rewind, mainw->current_file>0&&cfile->pointer_time>0.);
-  lives_widget_set_sensitive (mainw->show_file_info, mainw->current_file>0);
-  lives_widget_set_sensitive (mainw->show_file_comments, mainw->current_file>0);
-  lives_widget_set_sensitive (mainw->full_screen, TRUE);
-  lives_widget_set_sensitive (mainw->mt_menu, TRUE);
-  lives_widget_set_sensitive (mainw->add_live_menu,TRUE);
-  lives_widget_set_sensitive (mainw->export_proj, mainw->current_file>0);
-  lives_widget_set_sensitive (mainw->import_proj, mainw->current_file==-1);
-  
+  lives_widget_set_sensitive(mainw->rewind, mainw->current_file>0&&cfile->pointer_time>0.);
+  lives_widget_set_sensitive(mainw->show_file_info, mainw->current_file>0);
+  lives_widget_set_sensitive(mainw->show_file_comments, mainw->current_file>0);
+  lives_widget_set_sensitive(mainw->full_screen, TRUE);
+  lives_widget_set_sensitive(mainw->mt_menu, TRUE);
+  lives_widget_set_sensitive(mainw->add_live_menu,TRUE);
+  lives_widget_set_sensitive(mainw->export_proj, mainw->current_file>0);
+  lives_widget_set_sensitive(mainw->import_proj, mainw->current_file==-1);
+
   if (!mainw->foreign) {
-    for (i=1;i<=mainw->num_rendered_effects_builtin+mainw->num_rendered_effects_custom+
-	   mainw->num_rendered_effects_test;i++) 
-      if (mainw->rendered_fx[i].menuitem!=NULL&&mainw->rendered_fx[i].min_frames>=0) 
-	lives_widget_set_sensitive(mainw->rendered_fx[i].menuitem,mainw->current_file>0&&cfile->frames>0);
+    for (i=1; i<=mainw->num_rendered_effects_builtin+mainw->num_rendered_effects_custom+
+         mainw->num_rendered_effects_test; i++)
+      if (mainw->rendered_fx[i].menuitem!=NULL&&mainw->rendered_fx[i].min_frames>=0)
+        lives_widget_set_sensitive(mainw->rendered_fx[i].menuitem,mainw->current_file>0&&cfile->frames>0);
 
     if (mainw->current_file>0&&((has_video_filters(FALSE)&&!has_video_filters(TRUE))||
-				(cfile->achans>0&&prefs->audio_src==AUDIO_SRC_INT&&has_audio_filters(AF_TYPE_ANY))||
-				mainw->agen_key!=0)) {
-      
+                                (cfile->achans>0&&prefs->audio_src==AUDIO_SRC_INT&&has_audio_filters(AF_TYPE_ANY))||
+                                mainw->agen_key!=0)) {
+
       lives_widget_set_sensitive(mainw->rendered_fx[0].menuitem,TRUE);
-    }
-    else lives_widget_set_sensitive(mainw->rendered_fx[0].menuitem,FALSE);
+    } else lives_widget_set_sensitive(mainw->rendered_fx[0].menuitem,FALSE);
   }
-  
-  lives_widget_set_sensitive (mainw->record_perf, TRUE);
-  lives_widget_set_sensitive (mainw->export_submenu, mainw->current_file>0&&(cfile->achans>0));
-  lives_widget_set_sensitive (mainw->recaudio_submenu, TRUE);
-  lives_widget_set_sensitive (mainw->recaudio_sel, mainw->current_file>0&&cfile->frames>0);
-  lives_widget_set_sensitive (mainw->append_audio, mainw->current_file>0&&cfile->achans>0);
-  lives_widget_set_sensitive (mainw->trim_submenu, mainw->current_file>0&&cfile->achans>0);
-  lives_widget_set_sensitive (mainw->fade_aud_in, mainw->current_file>0&&cfile->achans>0);
-  lives_widget_set_sensitive (mainw->fade_aud_out, mainw->current_file>0&&cfile->achans>0);
-  lives_widget_set_sensitive (mainw->trim_audio, mainw->current_file>0&&(cfile->achans*cfile->frames>0));
-  lives_widget_set_sensitive (mainw->trim_to_pstart, mainw->current_file>0&&(cfile->achans&&cfile->pointer_time>0.));
-  lives_widget_set_sensitive (mainw->delaudio_submenu, mainw->current_file>0&&cfile->achans>0);
-  lives_widget_set_sensitive (mainw->delsel_audio, mainw->current_file>0&&cfile->frames>0);
-  lives_widget_set_sensitive (mainw->resample_audio, mainw->current_file>0&&(cfile->achans>0&&capable->has_sox_sox));
-  lives_widget_set_sensitive (mainw->dsize, !(mainw->fs));
-  lives_widget_set_sensitive (mainw->fade, !(mainw->fs));
-  lives_widget_set_sensitive (mainw->mute_audio, TRUE);
-  lives_widget_set_sensitive (mainw->loop_video, mainw->current_file>0&&(cfile->achans>0&&cfile->frames>0));
-  lives_widget_set_sensitive (mainw->loop_continue, TRUE);
-  lives_widget_set_sensitive (mainw->load_audio, TRUE);
-  lives_widget_set_sensitive (mainw->load_subs, mainw->current_file>0);
-  lives_widget_set_sensitive (mainw->erase_subs, mainw->current_file>0&&cfile->subt!=NULL);
-  if (capable->has_cdda2wav&&strlen (prefs->cdplay_device)) lives_widget_set_sensitive (mainw->load_cdtrack, TRUE);
-  lives_widget_set_sensitive (mainw->rename, mainw->current_file>0&&!cfile->opening);
-  lives_widget_set_sensitive (mainw->change_speed, mainw->current_file>0);
-  lives_widget_set_sensitive (mainw->resample_video, mainw->current_file>0&&cfile->frames>0);
-  lives_widget_set_sensitive (mainw->ins_silence, mainw->current_file>0&&cfile->frames>0);
-  lives_widget_set_sensitive (mainw->close, mainw->current_file>0);
-  lives_widget_set_sensitive (mainw->select_submenu, mainw->current_file>0&&!mainw->selwidth_locked&&cfile->frames>0);
-  lives_widget_set_sensitive (mainw->select_all, mainw->current_file>0);
-  lives_widget_set_sensitive (mainw->select_start_only, TRUE);
-  lives_widget_set_sensitive (mainw->select_end_only, TRUE);
-  lives_widget_set_sensitive (mainw->select_from_start, TRUE);
-  lives_widget_set_sensitive (mainw->select_to_end, TRUE);
+
+  lives_widget_set_sensitive(mainw->record_perf, TRUE);
+  lives_widget_set_sensitive(mainw->export_submenu, mainw->current_file>0&&(cfile->achans>0));
+  lives_widget_set_sensitive(mainw->recaudio_submenu, TRUE);
+  lives_widget_set_sensitive(mainw->recaudio_sel, mainw->current_file>0&&cfile->frames>0);
+  lives_widget_set_sensitive(mainw->append_audio, mainw->current_file>0&&cfile->achans>0);
+  lives_widget_set_sensitive(mainw->trim_submenu, mainw->current_file>0&&cfile->achans>0);
+  lives_widget_set_sensitive(mainw->fade_aud_in, mainw->current_file>0&&cfile->achans>0);
+  lives_widget_set_sensitive(mainw->fade_aud_out, mainw->current_file>0&&cfile->achans>0);
+  lives_widget_set_sensitive(mainw->trim_audio, mainw->current_file>0&&(cfile->achans*cfile->frames>0));
+  lives_widget_set_sensitive(mainw->trim_to_pstart, mainw->current_file>0&&(cfile->achans&&cfile->pointer_time>0.));
+  lives_widget_set_sensitive(mainw->delaudio_submenu, mainw->current_file>0&&cfile->achans>0);
+  lives_widget_set_sensitive(mainw->delsel_audio, mainw->current_file>0&&cfile->frames>0);
+  lives_widget_set_sensitive(mainw->resample_audio, mainw->current_file>0&&(cfile->achans>0&&capable->has_sox_sox));
+  lives_widget_set_sensitive(mainw->dsize, !(mainw->fs));
+  lives_widget_set_sensitive(mainw->fade, !(mainw->fs));
+  lives_widget_set_sensitive(mainw->mute_audio, TRUE);
+  lives_widget_set_sensitive(mainw->loop_video, mainw->current_file>0&&(cfile->achans>0&&cfile->frames>0));
+  lives_widget_set_sensitive(mainw->loop_continue, TRUE);
+  lives_widget_set_sensitive(mainw->load_audio, TRUE);
+  lives_widget_set_sensitive(mainw->load_subs, mainw->current_file>0);
+  lives_widget_set_sensitive(mainw->erase_subs, mainw->current_file>0&&cfile->subt!=NULL);
+  if (capable->has_cdda2wav&&strlen(prefs->cdplay_device)) lives_widget_set_sensitive(mainw->load_cdtrack, TRUE);
+  lives_widget_set_sensitive(mainw->rename, mainw->current_file>0&&!cfile->opening);
+  lives_widget_set_sensitive(mainw->change_speed, mainw->current_file>0);
+  lives_widget_set_sensitive(mainw->resample_video, mainw->current_file>0&&cfile->frames>0);
+  lives_widget_set_sensitive(mainw->ins_silence, mainw->current_file>0&&cfile->frames>0);
+  lives_widget_set_sensitive(mainw->close, mainw->current_file>0);
+  lives_widget_set_sensitive(mainw->select_submenu, mainw->current_file>0&&!mainw->selwidth_locked&&cfile->frames>0);
+  lives_widget_set_sensitive(mainw->select_all, mainw->current_file>0);
+  lives_widget_set_sensitive(mainw->select_start_only, TRUE);
+  lives_widget_set_sensitive(mainw->select_end_only, TRUE);
+  lives_widget_set_sensitive(mainw->select_from_start, TRUE);
+  lives_widget_set_sensitive(mainw->select_to_end, TRUE);
 #ifdef HAVE_YUV4MPEG
-  lives_widget_set_sensitive (mainw->open_yuv4m, TRUE);
+  lives_widget_set_sensitive(mainw->open_yuv4m, TRUE);
 #endif
 
-  lives_widget_set_sensitive (mainw->select_new, mainw->current_file>0&&(cfile->insert_start>0));
-  lives_widget_set_sensitive (mainw->select_last, mainw->current_file>0&&(cfile->undo_start>0));
-  lives_widget_set_sensitive (mainw->lock_selwidth, mainw->current_file>0&&cfile->frames>0);
-  lives_widget_set_sensitive (mainw->undo, mainw->current_file>0&&cfile->undoable);
-  lives_widget_set_sensitive (mainw->redo, mainw->current_file>0&&cfile->redoable);
-  lives_widget_set_sensitive (mainw->show_clipboard_info, !(clipboard==NULL));
-  lives_widget_set_sensitive (mainw->capture,TRUE);
-  lives_widget_set_sensitive (mainw->vj_save_set, mainw->current_file>0);
-  lives_widget_set_sensitive (mainw->vj_load_set, !mainw->was_set);
-  lives_widget_set_sensitive (mainw->toy_tv, TRUE);
-  lives_widget_set_sensitive (mainw->toy_autolives, TRUE);
-  lives_widget_set_sensitive (mainw->toy_random_frames, TRUE);
-  lives_widget_set_sensitive (mainw->open_lives2lives, TRUE);
-  lives_widget_set_sensitive (mainw->gens_submenu, TRUE);
-  lives_widget_set_sensitive (mainw->troubleshoot, TRUE);
+  lives_widget_set_sensitive(mainw->select_new, mainw->current_file>0&&(cfile->insert_start>0));
+  lives_widget_set_sensitive(mainw->select_last, mainw->current_file>0&&(cfile->undo_start>0));
+  lives_widget_set_sensitive(mainw->lock_selwidth, mainw->current_file>0&&cfile->frames>0);
+  lives_widget_set_sensitive(mainw->undo, mainw->current_file>0&&cfile->undoable);
+  lives_widget_set_sensitive(mainw->redo, mainw->current_file>0&&cfile->redoable);
+  lives_widget_set_sensitive(mainw->show_clipboard_info, !(clipboard==NULL));
+  lives_widget_set_sensitive(mainw->capture,TRUE);
+  lives_widget_set_sensitive(mainw->vj_save_set, mainw->current_file>0);
+  lives_widget_set_sensitive(mainw->vj_load_set, !mainw->was_set);
+  lives_widget_set_sensitive(mainw->toy_tv, TRUE);
+  lives_widget_set_sensitive(mainw->toy_autolives, TRUE);
+  lives_widget_set_sensitive(mainw->toy_random_frames, TRUE);
+  lives_widget_set_sensitive(mainw->open_lives2lives, TRUE);
+  lives_widget_set_sensitive(mainw->gens_submenu, TRUE);
+  lives_widget_set_sensitive(mainw->troubleshoot, TRUE);
 
   if (mainw->current_file>0&&(cfile->start==1||cfile->end==cfile->frames)&&!(cfile->start==1&&cfile->end==cfile->frames)) {
     lives_widget_set_sensitive(mainw->select_invert,TRUE);
-  }
-  else {
+  } else {
     lives_widget_set_sensitive(mainw->select_invert,FALSE);
   }
- 
+
   if (mainw->current_file>0&&!(cfile->menuentry==NULL)) {
     lives_signal_handler_block(mainw->spinbutton_end,mainw->spin_end_func);
     lives_spin_button_set_range(LIVES_SPIN_BUTTON(mainw->spinbutton_end),1,cfile->frames);
     lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_end),cfile->end);
     lives_signal_handler_unblock(mainw->spinbutton_end,mainw->spin_end_func);
-    
+
     lives_signal_handler_block(mainw->spinbutton_start,mainw->spin_start_func);
     lives_spin_button_set_range(LIVES_SPIN_BUTTON(mainw->spinbutton_start),1,cfile->frames);
     lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_start),cfile->start);
@@ -3369,12 +3378,12 @@ void sensitize(void) {
       lives_widget_set_sensitive(mainw->preview_spinbutton,TRUE);
     }
   }
- 
+
   // clips menu
-  for (i=1;i<MAX_FILES;i++) {
+  for (i=1; i<MAX_FILES; i++) {
     if (!(mainw->files[i]==NULL)) {
       if (!(mainw->files[i]->menuentry==NULL)) {
-	lives_widget_set_sensitive (mainw->files[i]->menuentry, TRUE);
+        lives_widget_set_sensitive(mainw->files[i]->menuentry, TRUE);
       }
     }
   }
@@ -3388,87 +3397,91 @@ void desensitize(void) {
   if (mainw->multitrack!=NULL) return;
 
   //lives_widget_set_sensitive (mainw->open, mainw->playing_file>-1);
-  lives_widget_set_sensitive (mainw->open, FALSE);
-  lives_widget_set_sensitive (mainw->open_sel, FALSE);
-  lives_widget_set_sensitive (mainw->open_vcd_menu, FALSE);
+  lives_widget_set_sensitive(mainw->open, FALSE);
+  lives_widget_set_sensitive(mainw->open_sel, FALSE);
+  lives_widget_set_sensitive(mainw->open_vcd_menu, FALSE);
 #ifdef HAVE_WEBM
-  lives_widget_set_sensitive (mainw->open_loc_menu, FALSE);
+  lives_widget_set_sensitive(mainw->open_loc_menu, FALSE);
 #else
-  lives_widget_set_sensitive (mainw->open_loc, FALSE);
+  lives_widget_set_sensitive(mainw->open_loc, FALSE);
 #endif
-  lives_widget_set_sensitive (mainw->open_device_menu, FALSE);
+  lives_widget_set_sensitive(mainw->open_device_menu, FALSE);
 #ifdef HAVE_YUV4MPEG
-  lives_widget_set_sensitive (mainw->open_yuv4m, FALSE);
+  lives_widget_set_sensitive(mainw->open_yuv4m, FALSE);
 #endif
 
-  lives_widget_set_sensitive (mainw->add_live_menu, FALSE);
+  lives_widget_set_sensitive(mainw->add_live_menu, FALSE);
 
-  lives_widget_set_sensitive (mainw->recent_menu, FALSE);
-  lives_widget_set_sensitive (mainw->restore, FALSE);
-  lives_widget_set_sensitive (mainw->clear_ds, FALSE);
-  lives_widget_set_sensitive (mainw->save_as, FALSE);
-  lives_widget_set_sensitive (mainw->backup, FALSE);
-  lives_widget_set_sensitive (mainw->playsel, FALSE);
-  lives_widget_set_sensitive (mainw->playclip, FALSE);
-  lives_widget_set_sensitive (mainw->copy, FALSE);
-  lives_widget_set_sensitive (mainw->cut, FALSE);
-  lives_widget_set_sensitive (mainw->rev_clipboard, FALSE);
-  lives_widget_set_sensitive (mainw->insert, FALSE);
-  lives_widget_set_sensitive (mainw->merge, FALSE);
-  lives_widget_set_sensitive (mainw->xdelete, FALSE);
+  lives_widget_set_sensitive(mainw->recent_menu, FALSE);
+  lives_widget_set_sensitive(mainw->restore, FALSE);
+  lives_widget_set_sensitive(mainw->clear_ds, FALSE);
+  lives_widget_set_sensitive(mainw->save_as, FALSE);
+  lives_widget_set_sensitive(mainw->backup, FALSE);
+  lives_widget_set_sensitive(mainw->playsel, FALSE);
+  lives_widget_set_sensitive(mainw->playclip, FALSE);
+  lives_widget_set_sensitive(mainw->copy, FALSE);
+  lives_widget_set_sensitive(mainw->cut, FALSE);
+  lives_widget_set_sensitive(mainw->rev_clipboard, FALSE);
+  lives_widget_set_sensitive(mainw->insert, FALSE);
+  lives_widget_set_sensitive(mainw->merge, FALSE);
+  lives_widget_set_sensitive(mainw->xdelete, FALSE);
   if (!prefs->pause_during_pb) {
-    lives_widget_set_sensitive (mainw->playall, FALSE);
+    lives_widget_set_sensitive(mainw->playall, FALSE);
   }
-  lives_widget_set_sensitive (mainw->rewind,FALSE);
+  lives_widget_set_sensitive(mainw->rewind,FALSE);
   if (!mainw->foreign) {
-    for (i=0;i<=mainw->num_rendered_effects_builtin+mainw->num_rendered_effects_custom+
-	   mainw->num_rendered_effects_test;i++) 
+    for (i=0; i<=mainw->num_rendered_effects_builtin+mainw->num_rendered_effects_custom+
+         mainw->num_rendered_effects_test; i++)
       if (mainw->rendered_fx[i].menuitem!=NULL&&mainw->rendered_fx[i].menuitem!=NULL&&
-	  mainw->rendered_fx[i].min_frames>=0) 
-	lives_widget_set_sensitive(mainw->rendered_fx[i].menuitem,FALSE);
+          mainw->rendered_fx[i].min_frames>=0)
+        lives_widget_set_sensitive(mainw->rendered_fx[i].menuitem,FALSE);
   }
 
-  lives_widget_set_sensitive (mainw->export_submenu, FALSE);
-  lives_widget_set_sensitive (mainw->recaudio_submenu, FALSE);
-  lives_widget_set_sensitive (mainw->append_audio, FALSE);
-  lives_widget_set_sensitive (mainw->trim_submenu, FALSE);
-  lives_widget_set_sensitive (mainw->delaudio_submenu, FALSE);
-  lives_widget_set_sensitive (mainw->gens_submenu, FALSE);
-  lives_widget_set_sensitive (mainw->troubleshoot, FALSE);
-  lives_widget_set_sensitive (mainw->resample_audio, FALSE);
-  lives_widget_set_sensitive (mainw->fade_aud_in, FALSE);
-  lives_widget_set_sensitive (mainw->fade_aud_out, FALSE);
-  lives_widget_set_sensitive (mainw->ins_silence, FALSE);
-  lives_widget_set_sensitive (mainw->loop_video, is_realtime_aplayer(prefs->audio_player==AUD_PLAYER_JACK));
-  if (!is_realtime_aplayer(prefs->audio_player)) lives_widget_set_sensitive (mainw->mute_audio, FALSE);
-  lives_widget_set_sensitive (mainw->load_audio, FALSE);
-  lives_widget_set_sensitive (mainw->load_subs, FALSE);
-  lives_widget_set_sensitive (mainw->erase_subs, FALSE);
-  lives_widget_set_sensitive (mainw->save_selection, FALSE);
-  lives_widget_set_sensitive (mainw->close, FALSE);
-  lives_widget_set_sensitive (mainw->change_speed, FALSE);
-  lives_widget_set_sensitive (mainw->resample_video, FALSE);
-  lives_widget_set_sensitive (mainw->undo, FALSE);
-  lives_widget_set_sensitive (mainw->redo, FALSE);
-  lives_widget_set_sensitive (mainw->paste_as_new, FALSE);
-  lives_widget_set_sensitive (mainw->capture, FALSE);
-  lives_widget_set_sensitive (mainw->toy_tv, FALSE);
-  lives_widget_set_sensitive (mainw->vj_save_set, FALSE);
-  lives_widget_set_sensitive (mainw->vj_load_set, FALSE);
-  lives_widget_set_sensitive (mainw->export_proj, FALSE);
-  lives_widget_set_sensitive (mainw->import_proj, FALSE);
-  lives_widget_set_sensitive (mainw->recaudio_sel,FALSE);
-  lives_widget_set_sensitive (mainw->mt_menu,FALSE);
+  lives_widget_set_sensitive(mainw->export_submenu, FALSE);
+  lives_widget_set_sensitive(mainw->recaudio_submenu, FALSE);
+  lives_widget_set_sensitive(mainw->append_audio, FALSE);
+  lives_widget_set_sensitive(mainw->trim_submenu, FALSE);
+  lives_widget_set_sensitive(mainw->delaudio_submenu, FALSE);
+  lives_widget_set_sensitive(mainw->gens_submenu, FALSE);
+  lives_widget_set_sensitive(mainw->troubleshoot, FALSE);
+  lives_widget_set_sensitive(mainw->resample_audio, FALSE);
+  lives_widget_set_sensitive(mainw->fade_aud_in, FALSE);
+  lives_widget_set_sensitive(mainw->fade_aud_out, FALSE);
+  lives_widget_set_sensitive(mainw->ins_silence, FALSE);
+  lives_widget_set_sensitive(mainw->loop_video, is_realtime_aplayer(prefs->audio_player==AUD_PLAYER_JACK));
+  if (!is_realtime_aplayer(prefs->audio_player)) lives_widget_set_sensitive(mainw->mute_audio, FALSE);
+  lives_widget_set_sensitive(mainw->load_audio, FALSE);
+  lives_widget_set_sensitive(mainw->load_subs, FALSE);
+  lives_widget_set_sensitive(mainw->erase_subs, FALSE);
+  lives_widget_set_sensitive(mainw->save_selection, FALSE);
+  lives_widget_set_sensitive(mainw->close, FALSE);
+  lives_widget_set_sensitive(mainw->change_speed, FALSE);
+  lives_widget_set_sensitive(mainw->resample_video, FALSE);
+  lives_widget_set_sensitive(mainw->undo, FALSE);
+  lives_widget_set_sensitive(mainw->redo, FALSE);
+  lives_widget_set_sensitive(mainw->paste_as_new, FALSE);
+  lives_widget_set_sensitive(mainw->capture, FALSE);
+  lives_widget_set_sensitive(mainw->toy_tv, FALSE);
+  lives_widget_set_sensitive(mainw->vj_save_set, FALSE);
+  lives_widget_set_sensitive(mainw->vj_load_set, FALSE);
+  lives_widget_set_sensitive(mainw->export_proj, FALSE);
+  lives_widget_set_sensitive(mainw->import_proj, FALSE);
+  lives_widget_set_sensitive(mainw->recaudio_sel,FALSE);
+  lives_widget_set_sensitive(mainw->mt_menu,FALSE);
 
   if (mainw->current_file>=0&&(mainw->playing_file==-1||mainw->foreign)) {
     //  if (!cfile->opening||mainw->dvgrab_preview||mainw->preview||cfile->opening_only_audio) {
-      // disable the 'clips' menu entries
-      for (i=1;i<MAX_FILES;i++) {
-	if (!(mainw->files[i]==NULL)) {
-	  if (!(mainw->files[i]->menuentry==NULL)) {
-	    if (!(i==mainw->current_file)) {
-	      lives_widget_set_sensitive (mainw->files[i]->menuentry, FALSE);
-	    }}}}}
+    // disable the 'clips' menu entries
+    for (i=1; i<MAX_FILES; i++) {
+      if (!(mainw->files[i]==NULL)) {
+        if (!(mainw->files[i]->menuentry==NULL)) {
+          if (!(i==mainw->current_file)) {
+            lives_widget_set_sensitive(mainw->files[i]->menuentry, FALSE);
+          }
+        }
+      }
+    }
+  }
   //}
 }
 
@@ -3482,24 +3495,24 @@ void procw_desensitize(void) {
 
   if (mainw->current_file>0&&(cfile->menuentry!=NULL||cfile->opening)&&!mainw->preview) {
     // an effect etc,
-    lives_widget_set_sensitive (mainw->loop_video, cfile->achans>0&&cfile->frames>0);
-    lives_widget_set_sensitive (mainw->loop_continue, TRUE);
+    lives_widget_set_sensitive(mainw->loop_video, cfile->achans>0&&cfile->frames>0);
+    lives_widget_set_sensitive(mainw->loop_continue, TRUE);
 
     if (cfile->achans>0&&cfile->frames>0) {
-      mainw->loop=lives_check_menu_item_get_active (LIVES_CHECK_MENU_ITEM (mainw->loop_video));
+      mainw->loop=lives_check_menu_item_get_active(LIVES_CHECK_MENU_ITEM(mainw->loop_video));
     }
     if (cfile->achans>0&&cfile->frames>0) {
-      mainw->mute=lives_check_menu_item_get_active (LIVES_CHECK_MENU_ITEM (mainw->mute_audio));
+      mainw->mute=lives_check_menu_item_get_active(LIVES_CHECK_MENU_ITEM(mainw->mute_audio));
     }
   }
   if (mainw->current_file>0&&cfile->menuentry==NULL) {
-    lives_widget_set_sensitive (mainw->rename, FALSE);
+    lives_widget_set_sensitive(mainw->rename, FALSE);
     if (cfile->opening||cfile->restoring) {
       // loading, restoring etc
-      lives_widget_set_sensitive (mainw->lock_selwidth, FALSE);
-      lives_widget_set_sensitive (mainw->show_file_comments, FALSE);
+      lives_widget_set_sensitive(mainw->lock_selwidth, FALSE);
+      lives_widget_set_sensitive(mainw->show_file_comments, FALSE);
       if (!cfile->opening_only_audio) {
-	lives_widget_set_sensitive (mainw->toy_random_frames, FALSE);
+        lives_widget_set_sensitive(mainw->toy_random_frames, FALSE);
       }
     }
   }
@@ -3526,20 +3539,20 @@ void procw_desensitize(void) {
     lives_widget_set_sensitive(mainw->preview_spinbutton,FALSE);
   }
 
-  lives_widget_set_sensitive (mainw->select_submenu, FALSE);
-  lives_widget_set_sensitive (mainw->toy_tv, FALSE);
-  lives_widget_set_sensitive (mainw->toy_autolives, FALSE);
-  lives_widget_set_sensitive (mainw->trim_submenu, FALSE);
-  lives_widget_set_sensitive (mainw->delaudio_submenu, FALSE);
-  lives_widget_set_sensitive (mainw->load_cdtrack, FALSE);
-  lives_widget_set_sensitive (mainw->open_lives2lives, FALSE);
-  lives_widget_set_sensitive (mainw->record_perf, FALSE);
+  lives_widget_set_sensitive(mainw->select_submenu, FALSE);
+  lives_widget_set_sensitive(mainw->toy_tv, FALSE);
+  lives_widget_set_sensitive(mainw->toy_autolives, FALSE);
+  lives_widget_set_sensitive(mainw->trim_submenu, FALSE);
+  lives_widget_set_sensitive(mainw->delaudio_submenu, FALSE);
+  lives_widget_set_sensitive(mainw->load_cdtrack, FALSE);
+  lives_widget_set_sensitive(mainw->open_lives2lives, FALSE);
+  lives_widget_set_sensitive(mainw->record_perf, FALSE);
 
   if (mainw->current_file>0&&cfile->nopreview) {
-    lives_widget_set_sensitive (mainw->m_playbutton, FALSE);
-    if (mainw->preview_box!=NULL) lives_widget_set_sensitive (mainw->p_playbutton, FALSE);
-    lives_widget_set_sensitive (mainw->m_playselbutton, FALSE);
-    if (mainw->preview_box!=NULL) lives_widget_set_sensitive (mainw->p_playselbutton, FALSE);
+    lives_widget_set_sensitive(mainw->m_playbutton, FALSE);
+    if (mainw->preview_box!=NULL) lives_widget_set_sensitive(mainw->p_playbutton, FALSE);
+    lives_widget_set_sensitive(mainw->m_playselbutton, FALSE);
+    if (mainw->preview_box!=NULL) lives_widget_set_sensitive(mainw->p_playselbutton, FALSE);
   }
 }
 
@@ -3548,13 +3561,13 @@ void procw_desensitize(void) {
 
 void set_ce_frame_from_pixbuf(LiVESImage *image, LiVESPixbuf *pixbuf, lives_painter_t *cairo) {
 #if GTK_CHECK_VERSION(3,0,0)
-  
+
   int rwidth=lives_widget_get_allocation_width(LIVES_WIDGET(image));
   int rheight=lives_widget_get_allocation_height(LIVES_WIDGET(image));
 
   lives_painter_t *cr;
 
-  if (cairo==NULL) cr=lives_painter_create_from_widget (LIVES_WIDGET(image));
+  if (cairo==NULL) cr=lives_painter_create_from_widget(LIVES_WIDGET(image));
   else cr=cairo;
 
   if (cr==NULL) return;
@@ -3564,17 +3577,16 @@ void set_ce_frame_from_pixbuf(LiVESImage *image, LiVESPixbuf *pixbuf, lives_pain
     int cx=(rwidth-width)/2;
     int cy=(rheight-height)/2;
 
-    lives_painter_set_source_pixbuf (cr, pixbuf, cx, cy);
+    lives_painter_set_source_pixbuf(cr, pixbuf, cx, cy);
     lives_painter_rectangle(cr,cx,cy,
-			    width,
-			    height);
-  }
-  else {
+                            width,
+                            height);
+  } else {
     lives_painter_set_source_to_bg(cr,LIVES_WIDGET(image));
 
     lives_painter_rectangle(cr,0,0,
-			    rwidth,
-			    rheight);
+                            rwidth,
+                            rheight);
   }
   lives_painter_fill(cr);
   if (cairo==NULL) lives_painter_destroy(cr);
@@ -3630,8 +3642,7 @@ void load_start_image(int frame) {
     threaded_dialog_spin();
     if (!(mainw->imframe==NULL)) {
       set_ce_frame_from_pixbuf(LIVES_IMAGE(mainw->start_image),mainw->imframe,NULL);
-    }
-    else {
+    } else {
       set_ce_frame_from_pixbuf(LIVES_IMAGE(mainw->start_image),NULL,NULL);
     }
     threaded_dialog_spin();
@@ -3651,8 +3662,8 @@ void load_start_image(int frame) {
     if (mainw->playing_file==-1&&cfile->clip_type==CLIP_TYPE_FILE&&is_virtual_frame(mainw->current_file,frame)&&cfile->ext_src!=NULL) {
       lives_clip_data_t *cdata=((lives_decoder_t *)cfile->ext_src)->cdata;
       if (cdata!=NULL&&!(cdata->seek_flag&LIVES_SEEK_FAST)) {
-	boolean resb=virtual_to_images(mainw->current_file,frame,frame,FALSE,NULL);
-	resb=resb; // dont care (much) if it fails
+        boolean resb=virtual_to_images(mainw->current_file,frame,frame,FALSE,NULL);
+        resb=resb; // dont care (much) if it fails
       }
     }
 
@@ -3660,7 +3671,7 @@ void load_start_image(int frame) {
     weed_set_int_value(layer,"clip",mainw->current_file);
     weed_set_int_value(layer,"frame",frame);
     if (pull_frame_at_size(layer,get_image_ext_for_type(cfile->img_type),tc,cfile->hsize,cfile->vsize,
-			   WEED_PALETTE_RGB24)) {
+                           WEED_PALETTE_RGB24)) {
       interp=get_interp_value(prefs->pb_quality);
       resize_layer(layer,cfile->hsize,cfile->vsize,interp,WEED_PALETTE_RGB24,0);
       convert_layer_palette(layer,WEED_PALETTE_RGB24,0);
@@ -3673,7 +3684,7 @@ void load_start_image(int frame) {
     }
     if (start_pixbuf!=NULL) {
       if (LIVES_IS_WIDGET_OBJECT(start_pixbuf)) {
-	lives_object_unref(start_pixbuf);
+        lives_object_unref(start_pixbuf);
       }
     }
     threaded_dialog_spin();
@@ -3709,9 +3720,9 @@ void load_start_image(int frame) {
     if (mainw->playing_file==-1&&cfile->clip_type==CLIP_TYPE_FILE&&is_virtual_frame(mainw->current_file,frame)&&cfile->ext_src!=NULL) {
       lives_clip_data_t *cdata=((lives_decoder_t *)cfile->ext_src)->cdata;
       if (cdata!=NULL&&!(cdata->seek_flag&LIVES_SEEK_FAST)) {
-	boolean resb=virtual_to_images(mainw->current_file,frame,frame,FALSE,NULL);
-	resb=resb; // dont care (much) if it fails
-	
+        boolean resb=virtual_to_images(mainw->current_file,frame,frame,FALSE,NULL);
+        resb=resb; // dont care (much) if it fails
+
       }
     }
 
@@ -3732,7 +3743,7 @@ void load_start_image(int frame) {
     }
     if (start_pixbuf!=NULL) {
       if (LIVES_IS_WIDGET_OBJECT(start_pixbuf)) {
-	lives_object_unref(start_pixbuf);
+        lives_object_unref(start_pixbuf);
       }
     }
 
@@ -3749,7 +3760,8 @@ void load_start_image(int frame) {
     }
   } while (rwidth!=lives_widget_get_allocation_width(mainw->start_image)||rheight!=lives_widget_get_allocation_height(mainw->start_image));
 #else
-  } while (FALSE);
+  }
+  while (FALSE);
 #endif
   threaded_dialog_spin();
   mainw->noswitch=noswitch;
@@ -3801,8 +3813,7 @@ void load_end_image(int frame) {
     threaded_dialog_spin();
     if (!(mainw->imframe==NULL)) {
       set_ce_frame_from_pixbuf(LIVES_IMAGE(mainw->end_image),mainw->imframe,NULL);
-    }
-    else {
+    } else {
       set_ce_frame_from_pixbuf(LIVES_IMAGE(mainw->end_image),NULL,NULL);
     }
     threaded_dialog_spin();
@@ -3823,8 +3834,8 @@ void load_end_image(int frame) {
     if (mainw->playing_file==-1&&cfile->clip_type==CLIP_TYPE_FILE&&is_virtual_frame(mainw->current_file,frame)&&cfile->ext_src!=NULL) {
       lives_clip_data_t *cdata=((lives_decoder_t *)cfile->ext_src)->cdata;
       if (cdata!=NULL&&!(cdata->seek_flag&LIVES_SEEK_FAST)) {
-	boolean resb=virtual_to_images(mainw->current_file,frame,frame,FALSE,NULL);
-	resb=resb; // dont care (much) if it fails
+        boolean resb=virtual_to_images(mainw->current_file,frame,frame,FALSE,NULL);
+        resb=resb; // dont care (much) if it fails
       }
     }
 
@@ -3833,7 +3844,7 @@ void load_end_image(int frame) {
     weed_set_int_value(layer,"frame",frame);
 
     if (pull_frame_at_size(layer,get_image_ext_for_type(cfile->img_type),tc,cfile->hsize,cfile->vsize,
-			   WEED_PALETTE_RGB24)) {
+                           WEED_PALETTE_RGB24)) {
       interp=get_interp_value(prefs->pb_quality);
       resize_layer(layer,cfile->hsize,cfile->vsize,interp,WEED_PALETTE_RGB24,0);
       convert_layer_palette(layer,WEED_PALETTE_RGB24,0);
@@ -3846,7 +3857,7 @@ void load_end_image(int frame) {
     }
     if (end_pixbuf!=NULL) {
       if (LIVES_IS_WIDGET_OBJECT(end_pixbuf)) {
-	lives_object_unref(end_pixbuf);
+        lives_object_unref(end_pixbuf);
       }
     }
     threaded_dialog_spin();
@@ -3878,8 +3889,8 @@ void load_end_image(int frame) {
     if (mainw->playing_file==-1&&cfile->clip_type==CLIP_TYPE_FILE&&is_virtual_frame(mainw->current_file,frame)&&cfile->ext_src!=NULL) {
       lives_clip_data_t *cdata=((lives_decoder_t *)cfile->ext_src)->cdata;
       if (cdata!=NULL&&!(cdata->seek_flag&LIVES_SEEK_FAST)) {
-	boolean resb=virtual_to_images(mainw->current_file,frame,frame,FALSE,NULL);
-	resb=resb; // dont care (much) if it fails
+        boolean resb=virtual_to_images(mainw->current_file,frame,frame,FALSE,NULL);
+        resb=resb; // dont care (much) if it fails
       }
     }
 
@@ -3890,7 +3901,7 @@ void load_end_image(int frame) {
     if (pull_frame_at_size(layer,get_image_ext_for_type(cfile->img_type),tc,width,height,WEED_PALETTE_RGB24)) {
       interp=get_interp_value(prefs->pb_quality);
       resize_layer(layer,width,height,interp,WEED_PALETTE_RGB24,0);
-      convert_layer_palette(layer,WEED_PALETTE_RGB24,0);  
+      convert_layer_palette(layer,WEED_PALETTE_RGB24,0);
       end_pixbuf=layer_to_pixbuf(layer);
     }
 
@@ -3901,7 +3912,7 @@ void load_end_image(int frame) {
     }
     if (end_pixbuf!=NULL) {
       if (LIVES_IS_WIDGET_OBJECT(end_pixbuf)) {
-	lives_object_unref(end_pixbuf);
+        lives_object_unref(end_pixbuf);
       }
     }
 
@@ -3918,7 +3929,8 @@ void load_end_image(int frame) {
     }
   } while (rwidth!=lives_widget_get_allocation_width(mainw->end_image)||rheight!=lives_widget_get_allocation_height(mainw->end_image));
 #else
-  } while (FALSE);
+  }
+  while (FALSE);
 #endif
 
   threaded_dialog_spin();
@@ -3933,7 +3945,7 @@ void load_end_image(int frame) {
 
 
 #ifndef IS_LIBLIVES
-int main (int argc, char *argv[]) {
+int main(int argc, char *argv[]) {
   // call any hooks here
   return real_main(argc, argv, 0l);
 }
@@ -3979,7 +3991,7 @@ void load_preview_image(boolean update_always) {
   }
 
   if (mainw->current_file<0||cfile==NULL||!cfile->frames||(cfile->clip_type!=CLIP_TYPE_DISK&&
-							   cfile->clip_type!=CLIP_TYPE_FILE)) {
+      cfile->clip_type!=CLIP_TYPE_FILE)) {
 
     mainw->preview_frame=0;
     lives_signal_handler_block(mainw->preview_spinbutton,mainw->preview_spin_func);
@@ -3989,8 +4001,7 @@ void load_preview_image(boolean update_always) {
     if (mainw->imframe!=NULL) {
       lives_widget_set_size_request(mainw->preview_image,lives_pixbuf_get_width(mainw->imframe),lives_pixbuf_get_height(mainw->imframe));
       set_ce_frame_from_pixbuf(LIVES_IMAGE(mainw->preview_image), mainw->imframe, NULL);
-    }
-    else set_ce_frame_from_pixbuf(LIVES_IMAGE(mainw->preview_image), NULL, NULL);
+    } else set_ce_frame_from_pixbuf(LIVES_IMAGE(mainw->preview_image), NULL, NULL);
 #if GTK_CHECK_VERSION(3,0,0)
     lives_signal_handlers_unblock_by_func(mainw->preview_image,(livespointer)expose_pim,NULL);
     lives_signal_stop_emission_by_name(mainw->preview_image,LIVES_WIDGET_EXPOSE_EVENT);
@@ -4001,51 +4012,50 @@ void load_preview_image(boolean update_always) {
   if (!update_always) {
     // set current frame from spins, set range
     // set mainw->preview_frame to 0 before calling to force an update (e.g after a clip switch)
-      switch (mainw->prv_link) {
-      case PRV_END:
-	preview_frame=cfile->end;
-	break;
-      case PRV_PTR:
-	preview_frame=calc_frame_from_time(mainw->current_file,cfile->pointer_time);
-	break;
-      case PRV_START:
-	preview_frame=cfile->start;
-	break;
-      default:
-	preview_frame=mainw->preview_frame>0?mainw->preview_frame:1;
-	if (preview_frame>cfile->frames) preview_frame=cfile->frames;
-	break;
-      }
+    switch (mainw->prv_link) {
+    case PRV_END:
+      preview_frame=cfile->end;
+      break;
+    case PRV_PTR:
+      preview_frame=calc_frame_from_time(mainw->current_file,cfile->pointer_time);
+      break;
+    case PRV_START:
+      preview_frame=cfile->start;
+      break;
+    default:
+      preview_frame=mainw->preview_frame>0?mainw->preview_frame:1;
+      if (preview_frame>cfile->frames) preview_frame=cfile->frames;
+      break;
+    }
 
-      lives_signal_handler_block(mainw->preview_spinbutton,mainw->preview_spin_func);
-      lives_spin_button_set_range(LIVES_SPIN_BUTTON(mainw->preview_spinbutton),1,cfile->frames);
-      lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->preview_spinbutton),preview_frame);
-      lives_signal_handler_unblock(mainw->preview_spinbutton,mainw->preview_spin_func);
+    lives_signal_handler_block(mainw->preview_spinbutton,mainw->preview_spin_func);
+    lives_spin_button_set_range(LIVES_SPIN_BUTTON(mainw->preview_spinbutton),1,cfile->frames);
+    lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->preview_spinbutton),preview_frame);
+    lives_signal_handler_unblock(mainw->preview_spinbutton,mainw->preview_spin_func);
 
-      mainw->preview_frame=preview_frame;
+    mainw->preview_frame=preview_frame;
   }
-  
+
   if (mainw->preview_frame<1||mainw->preview_frame>cfile->frames) {
     pixbuf=lives_pixbuf_scale_simple(mainw->imframe,cfile->hsize,cfile->vsize,LIVES_INTERP_BEST);
-  }
-  else {
+  } else {
     weed_plant_t *layer=weed_plant_new(WEED_PLANT_CHANNEL);
     weed_timecode_t tc=((mainw->preview_frame-1.))/cfile->fps*U_SECL;
 
     // if we are not playing, and it would be slow to seek to the frame, convert it to an image
     if (mainw->playing_file==-1&&cfile->clip_type==CLIP_TYPE_FILE&&
-	is_virtual_frame(mainw->current_file,mainw->preview_frame)&&cfile->ext_src!=NULL) {
+        is_virtual_frame(mainw->current_file,mainw->preview_frame)&&cfile->ext_src!=NULL) {
       lives_clip_data_t *cdata=((lives_decoder_t *)cfile->ext_src)->cdata;
       if (cdata!=NULL&&!(cdata->seek_flag&LIVES_SEEK_FAST)) {
-	boolean resb=virtual_to_images(mainw->current_file,mainw->preview_frame,mainw->preview_frame,FALSE,NULL);
-	resb=resb; // dont care (much) if it fails
+        boolean resb=virtual_to_images(mainw->current_file,mainw->preview_frame,mainw->preview_frame,FALSE,NULL);
+        resb=resb; // dont care (much) if it fails
       }
     }
 
     weed_set_int_value(layer,"clip",mainw->current_file);
     weed_set_int_value(layer,"frame",mainw->preview_frame);
     if (pull_frame_at_size(layer,get_image_ext_for_type(cfile->img_type),tc,mainw->pwidth,mainw->pheight,
-			   WEED_PALETTE_RGB24)) {
+                           WEED_PALETTE_RGB24)) {
       LiVESInterpType interp=get_interp_value(prefs->pb_quality);
       resize_layer(layer,mainw->pwidth,mainw->pheight,interp,WEED_PALETTE_RGB24,0);
       convert_layer_palette(layer,WEED_PALETTE_RGB24,0);
@@ -4065,37 +4075,37 @@ void load_preview_image(boolean update_always) {
       cfile->pointer_time=calc_time_from_frame(mainw->current_file,mainw->preview_frame);
       lives_ruler_set_value(LIVES_RULER(mainw->hruler),cfile->pointer_time);
       if (cfile->pointer_time>0.) {
-	lives_widget_set_sensitive (mainw->rewind, TRUE);
-	lives_widget_set_sensitive (mainw->trim_to_pstart, cfile->achans>0);
-	lives_widget_set_sensitive (mainw->m_rewindbutton, TRUE);
-	if (mainw->preview_box!=NULL) {
-	  lives_widget_set_sensitive (mainw->p_rewindbutton, TRUE);
-	}
-	get_play_times();
+        lives_widget_set_sensitive(mainw->rewind, TRUE);
+        lives_widget_set_sensitive(mainw->trim_to_pstart, cfile->achans>0);
+        lives_widget_set_sensitive(mainw->m_rewindbutton, TRUE);
+        if (mainw->preview_box!=NULL) {
+          lives_widget_set_sensitive(mainw->p_rewindbutton, TRUE);
+        }
+        get_play_times();
       }
       break;
-	
+
     case PRV_START:
       if (cfile->start!=mainw->preview_frame) {
-	lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_start),mainw->preview_frame);
-	get_play_times();
+        lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_start),mainw->preview_frame);
+        get_play_times();
       }
       break;
-      
+
 
     case PRV_END:
       if (cfile->end!=mainw->preview_frame) {
-	lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_end),mainw->preview_frame);
-	get_play_times();
+        lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_end),mainw->preview_frame);
+        get_play_times();
       }
       break;
 
     default:
-      lives_widget_set_sensitive (mainw->rewind, FALSE);
-      lives_widget_set_sensitive (mainw->trim_to_pstart, FALSE);
-      lives_widget_set_sensitive (mainw->m_rewindbutton, FALSE);
+      lives_widget_set_sensitive(mainw->rewind, FALSE);
+      lives_widget_set_sensitive(mainw->trim_to_pstart, FALSE);
+      lives_widget_set_sensitive(mainw->m_rewindbutton, FALSE);
       if (mainw->preview_box!=NULL) {
-	lives_widget_set_sensitive (mainw->p_rewindbutton, FALSE);
+        lives_widget_set_sensitive(mainw->p_rewindbutton, FALSE);
       }
       break;
     }
@@ -4111,7 +4121,7 @@ void load_preview_image(boolean update_always) {
 
 #ifdef USE_LIBPNG
 static void png_row_callback(png_structp png_ptr,
-			     png_uint_32 row, int pass) {
+                             png_uint_32 row, int pass) {
   sched_yield();
 }
 
@@ -4155,31 +4165,30 @@ boolean layer_from_png(FILE *fp, weed_plant_t *layer, boolean prog) {
 
   if (!is_png) return FALSE;
 
-  png_ptr = png_create_read_struct (PNG_LIBPNG_VER_STRING, 
-				      (png_voidp)NULL, NULL, NULL);
-  
+  png_ptr = png_create_read_struct(PNG_LIBPNG_VER_STRING,
+                                   (png_voidp)NULL, NULL, NULL);
+
   if (!png_ptr) return FALSE;
-  
+
   info_ptr = png_create_info_struct(png_ptr);
-  
+
   if (!info_ptr) {
     png_destroy_read_struct(&png_ptr,
-			    (png_infopp)NULL, (png_infopp)NULL);
+                            (png_infopp)NULL, (png_infopp)NULL);
     return FALSE;
   }
 
-  
-  if (setjmp(png_jmpbuf(png_ptr)))
-    {
-      // libpng will longjump to here on error
-      png_destroy_read_struct(&png_ptr, &info_ptr,
-			      (png_infopp)NULL);
-      return FALSE;
-    }
-  
+
+  if (setjmp(png_jmpbuf(png_ptr))) {
+    // libpng will longjump to here on error
+    png_destroy_read_struct(&png_ptr, &info_ptr,
+                            (png_infopp)NULL);
+    return FALSE;
+  }
+
   png_init_io(png_ptr, fp);
   png_set_sig_bytes(png_ptr, bsize);
-  
+
   // progressive read calls png_row_callback on each row
   if (prog) png_set_read_status_fn(png_ptr, png_row_callback);
 
@@ -4190,26 +4199,26 @@ boolean layer_from_png(FILE *fp, weed_plant_t *layer, boolean prog) {
     png_set_gamma(png_ptr, screen_gamma, file_gamma);
   else
     png_set_gamma(png_ptr, screen_gamma, 1.0/screen_gamma);
-  
+
   // read header info
   png_read_info(png_ptr, info_ptr);
 
   // want to convert everything (greyscale, RGB, RGBA64 etc.) to RGBA32
   color_type = png_get_color_type(png_ptr, info_ptr);
   bit_depth = png_get_bit_depth(png_ptr, info_ptr);
-  
+
   if (color_type == PNG_COLOR_TYPE_PALETTE)
     png_set_palette_to_rgb(png_ptr);
-  
+
   if (png_get_valid(png_ptr, info_ptr,
-		    PNG_INFO_tRNS)) png_set_tRNS_to_alpha(png_ptr);
-  
+                    PNG_INFO_tRNS)) png_set_tRNS_to_alpha(png_ptr);
+
   if (color_type == PNG_COLOR_TYPE_GRAY &&
       bit_depth < 8) png_set_expand_gray_1_2_4_to_8(png_ptr);
- 
+
   if (color_type == PNG_COLOR_TYPE_GRAY ||
-        color_type == PNG_COLOR_TYPE_GRAY_ALPHA)
-       png_set_gray_to_rgb(png_ptr);
+      color_type == PNG_COLOR_TYPE_GRAY_ALPHA)
+    png_set_gray_to_rgb(png_ptr);
 
 
   if (bit_depth == 16) {
@@ -4220,8 +4229,8 @@ boolean layer_from_png(FILE *fp, weed_plant_t *layer, boolean prog) {
 #endif
   }
 
-  if (color_type != PNG_COLOR_TYPE_RGB_ALPHA && 
-      color_type !=PNG_COLOR_TYPE_GRAY_ALPHA ) 
+  if (color_type != PNG_COLOR_TYPE_RGB_ALPHA &&
+      color_type !=PNG_COLOR_TYPE_GRAY_ALPHA)
     png_set_add_alpha(png_ptr, 255, PNG_FILLER_AFTER);
 
   png_set_interlace_handling(png_ptr);
@@ -4233,7 +4242,7 @@ boolean layer_from_png(FILE *fp, weed_plant_t *layer, boolean prog) {
   width = png_get_image_width(png_ptr, info_ptr);
   height = png_get_image_height(png_ptr, info_ptr);
   *rowstrides = png_get_rowbytes(png_ptr, info_ptr);
-  
+
 
   weed_set_int_value(layer,"width",width);
   weed_set_int_value(layer,"height",height);
@@ -4249,10 +4258,10 @@ boolean layer_from_png(FILE *fp, weed_plant_t *layer, boolean prog) {
 
   ptr=mem=(unsigned char *)lives_malloc(framesize+64);
   weed_set_voidptr_value(layer, "pixel_data", mem);
-  
+
   // libpng needs pointers to each row
   row_ptrs=(unsigned char **)lives_malloc(height*sizeof(unsigned char *));
-  for (i=0;i<height;i++) {
+  for (i=0; i<height; i++) {
     row_ptrs[i]=ptr;
     ptr+=*rowstrides;
   }
@@ -4262,18 +4271,17 @@ boolean layer_from_png(FILE *fp, weed_plant_t *layer, boolean prog) {
 
   // end read
   png_read_end(png_ptr, (png_infop)NULL);
-  
+
   lives_free(row_ptrs);
 
   png_destroy_read_struct(&png_ptr, &info_ptr,
-			  (png_infopp)NULL);
-  
+                          (png_infopp)NULL);
+
 
   if (prefs->alpha_post) {
     // un-premultiply the alpha
     alpha_unpremult(layer,TRUE);
-  }
-  else {
+  } else {
     int flags=0,error;
     if (weed_plant_has_leaf(layer,"flags"))
       flags=weed_get_int_value(layer,"flags",&error);
@@ -4289,11 +4297,11 @@ boolean layer_from_png(FILE *fp, weed_plant_t *layer, boolean prog) {
 #endif
 
 
-static boolean weed_layer_new_from_file_progressive(weed_plant_t *layer, 
-						    const char *fname, int width, 
-						    int height, 
-						    const char *img_ext, 
-						    LiVESError **gerror) {
+static boolean weed_layer_new_from_file_progressive(weed_plant_t *layer,
+    const char *fname, int width,
+    int height,
+    const char *img_ext,
+    LiVESError **gerror) {
 
 
   LiVESPixbuf *pixbuf=NULL;
@@ -4326,16 +4334,16 @@ static boolean weed_layer_new_from_file_progressive(weed_plant_t *layer,
   else if (!strcmp(img_ext,"jpg")) pbload=gdk_pixbuf_loader_new_with_type("jpeg",gerror);
   else pbload=gdk_pixbuf_loader_new();
 
-  lives_signal_connect (LIVES_WIDGET_OBJECT (pbload), LIVES_WIDGET_SIZE_PREPARED_SIGNAL,
-                      LIVES_GUI_CALLBACK (pbsize_set),
-                      NULL);
+  lives_signal_connect(LIVES_WIDGET_OBJECT(pbload), LIVES_WIDGET_SIZE_PREPARED_SIGNAL,
+                       LIVES_GUI_CALLBACK(pbsize_set),
+                       NULL);
 
 
   while (1) {
     if (!(bsize=fread(buff,1,IMG_BUFF_SIZE,fp))) break;
     sched_yield();
     if (!gdk_pixbuf_loader_write(pbload,buff,bsize,gerror)) {
-      fclose (fp);
+      fclose(fp);
       return FALSE;
     }
     sched_yield();
@@ -4380,8 +4388,7 @@ static boolean weed_layer_new_from_file_progressive(weed_plant_t *layer,
     /* unfortunately gdk pixbuf loader does not preserve the original alpha channel, instead it adds its own. We need to hence reset it back to opaque */
     lives_pixbuf_set_opaque(pixbuf);
     weed_set_int_value(layer,"current_palette",WEED_PALETTE_RGBA32);
-  }
-  else weed_set_int_value(layer,"current_palette",WEED_PALETTE_RGB24);
+  } else weed_set_int_value(layer,"current_palette",WEED_PALETTE_RGB24);
 
 
   do_not_free=pixbuf_to_layer(layer,pixbuf);
@@ -4406,58 +4413,58 @@ static boolean weed_layer_new_from_file_progressive(weed_plant_t *layer,
 
 
 static weed_plant_t *render_subs_from_file(lives_clip_t *sfile, double xtime, weed_plant_t *layer) {
-    // render subtitles from whatever (.srt or .sub) file
-    // uses default values for colours, fonts, size, etc.
+  // render subtitles from whatever (.srt or .sub) file
+  // uses default values for colours, fonts, size, etc.
 
-    // TODO - allow prefs settings for colours, fonts, size, alpha
+  // TODO - allow prefs settings for colours, fonts, size, alpha
 
-    //char *sfont=mainw->font_list[prefs->sub_font];
-    const char *sfont="Sans";
-    lives_colRGBA32_t col_white,col_black_a;
-    
-    int error,size;
+  //char *sfont=mainw->font_list[prefs->sub_font];
+  const char *sfont="Sans";
+  lives_colRGBA32_t col_white,col_black_a;
 
-    xtime-=(double)sfile->subt->offset/sfile->fps;
+  int error,size;
 
-    // round to 2 dp
-    xtime=(double)((int)(xtime*100.+.5))/100.;
+  xtime-=(double)sfile->subt->offset/sfile->fps;
 
-    if (xtime<0.||(sfile->subt->last_time>-1.&&xtime>sfile->subt->last_time)) return layer;
+  // round to 2 dp
+  xtime=(double)((int)(xtime*100.+.5))/100.;
 
-    switch (sfile->subt->type) {
-    case SUBTITLE_TYPE_SRT:
-      get_srt_text(sfile,xtime);
-      break;
-    case SUBTITLE_TYPE_SUB:
-      get_sub_text(sfile,xtime);
-      break;
-    default:
-      return layer;
-    }
+  if (xtime<0.||(sfile->subt->last_time>-1.&&xtime>sfile->subt->last_time)) return layer;
 
-    /////////// use plugin //////////////
-
-    size=weed_get_int_value(layer,"width",&error)/32;
-
-    col_white.red=col_white.green=col_white.blue=col_white.alpha=65535;
-    col_black_a.red=col_black_a.green=col_black_a.blue=0;
-    col_black_a.alpha=20480;
-    
-    if (sfile->subt->text!=NULL) {
-      char *tmp;
-      layer=render_text_to_layer(layer,(tmp=lives_strdup_printf(" %s ",sfile->subt->text)),sfont,size,
-				 LIVES_TEXT_MODE_FOREGROUND_AND_BACKGROUND,&col_white,&col_black_a,TRUE,TRUE,0.);
-      lives_free(tmp);
-    }
-
-
+  switch (sfile->subt->type) {
+  case SUBTITLE_TYPE_SRT:
+    get_srt_text(sfile,xtime);
+    break;
+  case SUBTITLE_TYPE_SUB:
+    get_sub_text(sfile,xtime);
+    break;
+  default:
     return layer;
+  }
+
+  /////////// use plugin //////////////
+
+  size=weed_get_int_value(layer,"width",&error)/32;
+
+  col_white.red=col_white.green=col_white.blue=col_white.alpha=65535;
+  col_black_a.red=col_black_a.green=col_black_a.blue=0;
+  col_black_a.alpha=20480;
+
+  if (sfile->subt->text!=NULL) {
+    char *tmp;
+    layer=render_text_to_layer(layer,(tmp=lives_strdup_printf(" %s ",sfile->subt->text)),sfont,size,
+                               LIVES_TEXT_MODE_FOREGROUND_AND_BACKGROUND,&col_white,&col_black_a,TRUE,TRUE,0.);
+    lives_free(tmp);
+  }
+
+
+  return layer;
 }
 
 
 
-boolean pull_frame_at_size (weed_plant_t *layer, const char *image_ext, weed_timecode_t tc, int width, int height, 
-			    int target_palette) {
+boolean pull_frame_at_size(weed_plant_t *layer, const char *image_ext, weed_timecode_t tc, int width, int height,
+                           int target_palette) {
   // pull a frame from an external source into a layer
   // the "clip" and "frame" leaves must be set in layer
   // tc is used instead of "frame" for some sources (e.g. generator plugins)
@@ -4505,133 +4512,125 @@ boolean pull_frame_at_size (weed_plant_t *layer, const char *image_ext, weed_tim
     if (frame==0) {
       mainw->osc_block=FALSE;
       if ((width==0||height==0)&&weed_plant_has_leaf(layer,"width")&&weed_plant_has_leaf(layer,"height")) {
-	width=weed_get_int_value(layer,"width",&error);
-	height=weed_get_int_value(layer,"height",&error);
+        width=weed_get_int_value(layer,"width",&error);
+        height=weed_get_int_value(layer,"height",&error);
       }
       if (width==0) width=4;
       if (height==0) height=4;
       weed_set_int_value(layer,"width",width);
       weed_set_int_value(layer,"height",height);
       if (!weed_plant_has_leaf(layer,"current_palette")) {
-	if (image_ext==NULL||!strcmp(image_ext,"jpg")) weed_set_int_value(layer,"current_palette",WEED_PALETTE_RGB24);
-	else weed_set_int_value(layer,"current_palette",WEED_PALETTE_RGBA32);
+        if (image_ext==NULL||!strcmp(image_ext,"jpg")) weed_set_int_value(layer,"current_palette",WEED_PALETTE_RGB24);
+        else weed_set_int_value(layer,"current_palette",WEED_PALETTE_RGBA32);
       }
       create_empty_pixel_data(layer,TRUE,TRUE);
       return TRUE;
-    }
-    else if (clip==mainw->scrap_file) {
+    } else if (clip==mainw->scrap_file) {
       return load_from_scrap_file(layer,frame);
-    }
-    else {
+    } else {
       if (sfile->clip_type==CLIP_TYPE_FILE&&sfile->frame_index!=NULL&&frame>0&&
-	  frame<=sfile->frames&&is_virtual_frame(clip,frame)) {
-	// pull frame from video clip
+          frame<=sfile->frames&&is_virtual_frame(clip,frame)) {
+        // pull frame from video clip
 
-	// this could be threaded, so we must not use any gtk functions here
+        // this could be threaded, so we must not use any gtk functions here
 
-	boolean res=TRUE;
+        boolean res=TRUE;
 
-	lives_decoder_t *dplug;
-	if (weed_plant_has_leaf(layer,"host_decoder")) {
-	  dplug=(lives_decoder_t *)weed_get_voidptr_value(layer,"host_decoder",&error);
-	}
-	else dplug=(lives_decoder_t *)sfile->ext_src;
-	if (dplug==NULL||dplug->cdata==NULL) return FALSE;
-	if (target_palette!=dplug->cdata->current_palette) {
-	  // try to switch palette
-	  if (decplugin_supports_palette(dplug,target_palette)) {
-	    // switch palettes and re-read clip_data
-	    int oldpal=dplug->cdata->current_palette;
-	    dplug->cdata->current_palette=target_palette;
-	    if (dplug->decoder->set_palette!=NULL) {
-	      if (!(*dplug->decoder->set_palette)(dplug->cdata)) {
-		dplug->cdata->current_palette=oldpal;
-		(*dplug->decoder->set_palette)(dplug->cdata);
-	      }
-	    }
-	  }
-	  else {
-	    if (dplug->cdata->current_palette!=dplug->cdata->palettes[0]&&
-		((weed_palette_is_rgb_palette(target_palette)&&
-		  weed_palette_is_rgb_palette(dplug->cdata->palettes[0]))||
-		 (weed_palette_is_yuv_palette(target_palette)&&
-		  weed_palette_is_yuv_palette(dplug->cdata->palettes[0])))) {
-	      int oldpal=dplug->cdata->current_palette;
-	      dplug->cdata->current_palette=dplug->cdata->palettes[0];
-	      if (dplug->decoder->set_palette!=NULL) {
-		if (!(*dplug->decoder->set_palette)(dplug->cdata)) {
-		  dplug->cdata->current_palette=oldpal;
-		  (*dplug->decoder->set_palette)(dplug->cdata);
-		}
-	      }
-	    }
-	  }
-	}
-	// TODO *** - check for auto-border : we might use width,height instead of frame_width,frame_height, and handle this in the plugin
+        lives_decoder_t *dplug;
+        if (weed_plant_has_leaf(layer,"host_decoder")) {
+          dplug=(lives_decoder_t *)weed_get_voidptr_value(layer,"host_decoder",&error);
+        } else dplug=(lives_decoder_t *)sfile->ext_src;
+        if (dplug==NULL||dplug->cdata==NULL) return FALSE;
+        if (target_palette!=dplug->cdata->current_palette) {
+          // try to switch palette
+          if (decplugin_supports_palette(dplug,target_palette)) {
+            // switch palettes and re-read clip_data
+            int oldpal=dplug->cdata->current_palette;
+            dplug->cdata->current_palette=target_palette;
+            if (dplug->decoder->set_palette!=NULL) {
+              if (!(*dplug->decoder->set_palette)(dplug->cdata)) {
+                dplug->cdata->current_palette=oldpal;
+                (*dplug->decoder->set_palette)(dplug->cdata);
+              }
+            }
+          } else {
+            if (dplug->cdata->current_palette!=dplug->cdata->palettes[0]&&
+                ((weed_palette_is_rgb_palette(target_palette)&&
+                  weed_palette_is_rgb_palette(dplug->cdata->palettes[0]))||
+                 (weed_palette_is_yuv_palette(target_palette)&&
+                  weed_palette_is_yuv_palette(dplug->cdata->palettes[0])))) {
+              int oldpal=dplug->cdata->current_palette;
+              dplug->cdata->current_palette=dplug->cdata->palettes[0];
+              if (dplug->decoder->set_palette!=NULL) {
+                if (!(*dplug->decoder->set_palette)(dplug->cdata)) {
+                  dplug->cdata->current_palette=oldpal;
+                  (*dplug->decoder->set_palette)(dplug->cdata);
+                }
+              }
+            }
+          }
+        }
+        // TODO *** - check for auto-border : we might use width,height instead of frame_width,frame_height, and handle this in the plugin
 
-	if (!prefs->auto_nobord) {
-	  width=dplug->cdata->frame_width/weed_palette_get_pixels_per_macropixel(dplug->cdata->current_palette);
-	  height=dplug->cdata->frame_height;
-	}
-	else {
-	  width=dplug->cdata->width/weed_palette_get_pixels_per_macropixel(dplug->cdata->current_palette);
-	  height=dplug->cdata->height;
-	}
+        if (!prefs->auto_nobord) {
+          width=dplug->cdata->frame_width/weed_palette_get_pixels_per_macropixel(dplug->cdata->current_palette);
+          height=dplug->cdata->frame_height;
+        } else {
+          width=dplug->cdata->width/weed_palette_get_pixels_per_macropixel(dplug->cdata->current_palette);
+          height=dplug->cdata->height;
+        }
 
-	weed_set_int_value(layer,"width",width);
-	weed_set_int_value(layer,"height",height);
-	weed_set_int_value(layer,"current_palette",dplug->cdata->current_palette);
+        weed_set_int_value(layer,"width",width);
+        weed_set_int_value(layer,"height",height);
+        weed_set_int_value(layer,"current_palette",dplug->cdata->current_palette);
 
-	if (weed_palette_is_yuv_palette(dplug->cdata->current_palette)) {
-	  weed_set_int_value(layer,"YUV_sampling",dplug->cdata->YUV_sampling);
-	  weed_set_int_value(layer,"YUV_clamping",dplug->cdata->YUV_clamping);
-	  weed_set_int_value(layer,"YUV_subspace",dplug->cdata->YUV_subspace);
-	}
+        if (weed_palette_is_yuv_palette(dplug->cdata->current_palette)) {
+          weed_set_int_value(layer,"YUV_sampling",dplug->cdata->YUV_sampling);
+          weed_set_int_value(layer,"YUV_clamping",dplug->cdata->YUV_clamping);
+          weed_set_int_value(layer,"YUV_subspace",dplug->cdata->YUV_subspace);
+        }
 
-	create_empty_pixel_data(layer,FALSE,TRUE);
+        create_empty_pixel_data(layer,FALSE,TRUE);
 
 
-	pixel_data=weed_get_voidptr_array(layer,"pixel_data",&error);
-	rowstrides=weed_get_int_array(layer,"rowstrides",&error);
+        pixel_data=weed_get_voidptr_array(layer,"pixel_data",&error);
+        rowstrides=weed_get_int_array(layer,"rowstrides",&error);
 
-	// try to pull frame from decoder plugin
-	if (!(*dplug->decoder->get_frame)(dplug->cdata,(int64_t)(sfile->frame_index[frame-1]),
-					  rowstrides,sfile->vsize,pixel_data)) {
+        // try to pull frame from decoder plugin
+        if (!(*dplug->decoder->get_frame)(dplug->cdata,(int64_t)(sfile->frame_index[frame-1]),
+                                          rowstrides,sfile->vsize,pixel_data)) {
 
-	  // if get_frame fails, return a black frame
-	  if (!is_thread) {
-	    weed_layer_pixel_data_free(layer);
-	    create_empty_pixel_data(layer,TRUE,TRUE);
-	  }
-	  res=FALSE;
-	}
+          // if get_frame fails, return a black frame
+          if (!is_thread) {
+            weed_layer_pixel_data_free(layer);
+            create_empty_pixel_data(layer,TRUE,TRUE);
+          }
+          res=FALSE;
+        }
 
-	lives_free(pixel_data);
-	lives_free(rowstrides);
+        lives_free(pixel_data);
+        lives_free(rowstrides);
 
         // deinterlace
-	if (sfile->deinterlace||(prefs->auto_deint&&dplug->cdata->interlace!=LIVES_INTERLACE_NONE)) {
-	  if (!is_thread) {
-	    deinterlace_frame(layer,tc);
-	  }
- 	  else weed_set_boolean_value(layer,"host_deinterlace",WEED_TRUE);
-	}
-	mainw->osc_block=FALSE;
-	return res;
-      }
-      else {
-	// pull frame from decoded images
-	boolean ret;
-	char *fname=lives_strdup_printf("%s/%s/%08d.%s",prefs->tmpdir,sfile->handle,frame,image_ext);
-	if (height*width==0) {
-	  ret=weed_layer_new_from_file_progressive(layer,fname,0,0,image_ext,&gerror);
-	}
-	else {
-	  ret=weed_layer_new_from_file_progressive(layer,fname,width,height,image_ext,&gerror);
-	}
-	lives_free(fname);
-	mainw->osc_block=FALSE;
-	if (ret==FALSE) return FALSE;
+        if (sfile->deinterlace||(prefs->auto_deint&&dplug->cdata->interlace!=LIVES_INTERLACE_NONE)) {
+          if (!is_thread) {
+            deinterlace_frame(layer,tc);
+          } else weed_set_boolean_value(layer,"host_deinterlace",WEED_TRUE);
+        }
+        mainw->osc_block=FALSE;
+        return res;
+      } else {
+        // pull frame from decoded images
+        boolean ret;
+        char *fname=lives_strdup_printf("%s/%s/%08d.%s",prefs->tmpdir,sfile->handle,frame,image_ext);
+        if (height*width==0) {
+          ret=weed_layer_new_from_file_progressive(layer,fname,0,0,image_ext,&gerror);
+        } else {
+          ret=weed_layer_new_from_file_progressive(layer,fname,width,height,image_ext,&gerror);
+        }
+        lives_free(fname);
+        mainw->osc_block=FALSE;
+        if (ret==FALSE) return FALSE;
       }
     }
     break;
@@ -4643,9 +4642,8 @@ boolean pull_frame_at_size (weed_plant_t *layer, const char *image_ext, weed_tim
     weed_layer_set_from_yuv4m(layer,sfile);
     if (sfile->deinterlace) {
       if (!is_thread) {
-	deinterlace_frame(layer,tc);
-      }
-      else weed_set_boolean_value(layer,"host_deinterlace",WEED_TRUE);
+        deinterlace_frame(layer,tc);
+      } else weed_set_boolean_value(layer,"host_deinterlace",WEED_TRUE);
     }
     mainw->osc_block=FALSE;
     return TRUE;
@@ -4655,9 +4653,8 @@ boolean pull_frame_at_size (weed_plant_t *layer, const char *image_ext, weed_tim
     weed_layer_set_from_lvdev(layer,sfile,4./cfile->pb_fps);
     if (sfile->deinterlace) {
       if (!is_thread) {
-	deinterlace_frame(layer,tc);
-      }
-      else weed_set_boolean_value(layer,"host_deinterlace",WEED_TRUE);
+        deinterlace_frame(layer,tc);
+      } else weed_set_boolean_value(layer,"host_deinterlace",WEED_TRUE);
     }
     mainw->osc_block=FALSE;
     return TRUE;
@@ -4693,7 +4690,7 @@ boolean pull_frame_at_size (weed_plant_t *layer, const char *image_ext, weed_tim
 }
 
 
-boolean pull_frame (weed_plant_t *layer, const char *image_ext, weed_timecode_t tc) {
+boolean pull_frame(weed_plant_t *layer, const char *image_ext, weed_timecode_t tc) {
   // pull a frame from an external source into a layer
   // the "clip" and "frame" leaves must be set in layer
   // tc is used instead of "frame" for some sources (e.g. generator plugins)
@@ -4717,7 +4714,7 @@ void check_layer_ready(weed_plant_t *layer) {
     pthread_join(*frame_thread,NULL);
     weed_leaf_delete(layer,"host_pthread");
     free(frame_thread);
- 
+
     if (weed_plant_has_leaf(layer,"host_deinterlace")&&weed_get_boolean_value(layer,"host_deinterlace",&error)==WEED_TRUE) {
       int error;
       weed_timecode_t tc=weed_get_int64_value(layer,"host_tc",&error);
@@ -4733,8 +4730,8 @@ void check_layer_ready(weed_plant_t *layer) {
 
       // render subtitles from file
       if (prefs->show_subtitles&&sfile->subt!=NULL&&sfile->subt->tfile!=NULL) {
-	double xtime=(double)(frame-1)/sfile->fps;
-	layer=render_subs_from_file(sfile,xtime,layer);
+        double xtime=(double)(frame-1)/sfile->fps;
+        layer=render_subs_from_file(sfile,xtime,layer);
       }
     }
   }
@@ -4761,7 +4758,7 @@ static void *pft_thread(void *in) {
 
 
 
-void pull_frame_threaded (weed_plant_t *layer, const char *img_ext, weed_timecode_t tc) {
+void pull_frame_threaded(weed_plant_t *layer, const char *img_ext, weed_timecode_t tc) {
   // pull a frame from an external source into a layer
   // the "clip" and "frame" leaves must be set in layer
 
@@ -4789,8 +4786,8 @@ void pull_frame_threaded (weed_plant_t *layer, const char *img_ext, weed_timecod
 }
 
 
-LiVESPixbuf *pull_lives_pixbuf_at_size(int clip, int frame, const char *image_ext, weed_timecode_t tc, 
-				       int width, int height, LiVESInterpType interp) {
+LiVESPixbuf *pull_lives_pixbuf_at_size(int clip, int frame, const char *image_ext, weed_timecode_t tc,
+                                       int width, int height, LiVESInterpType interp) {
   // return a correctly sized (Gdk)Pixbuf (RGB24 for jpeg, RGBA32 for png) for the given clip and frame
   // tc is used instead of "frame" for some sources (e.g. generator plugins)
   // image_ext is used if the source is an image file (eg. "jpg" or "png")
@@ -4812,7 +4809,7 @@ LiVESPixbuf *pull_lives_pixbuf_at_size(int clip, int frame, const char *image_ex
   }
   weed_plant_free(layer);
   if (pixbuf!=NULL&&((width!=0&&lives_pixbuf_get_width(pixbuf)!=width)
-		     ||(height!=0&&lives_pixbuf_get_height(pixbuf)!=height))) {
+                     ||(height!=0&&lives_pixbuf_get_height(pixbuf)!=height))) {
     LiVESPixbuf *pixbuf2;
     threaded_dialog_spin();
     // TODO - could use resize plugin here
@@ -4835,74 +4832,67 @@ static void get_max_opsize(int *opwidth, int *opheight) {
 
   if (mainw->multitrack!=NULL) {
     if (mainw->multitrack->is_rendering) {
-	*opwidth=cfile->hsize;
-	*opheight=cfile->vsize;
-    }
-    else {
+      *opwidth=cfile->hsize;
+      *opheight=cfile->vsize;
+    } else {
       if (!mainw->fs||mainw->play_window==NULL||mainw->ext_playback) {
-	if (mainw->play_window==NULL) {
-	  *opwidth=mainw->files[mainw->multitrack->render_file]->hsize;
-	  *opheight=mainw->files[mainw->multitrack->render_file]->vsize;
-	  calc_maxspect(mainw->multitrack->play_width,mainw->multitrack->play_height,opwidth,opheight);
-	}
-	else {
-	  *opwidth=cfile->hsize;
-	  *opheight=cfile->vsize;
-	}
-	
-	if (!mainw->fs&&mainw->play_window!=NULL&&(mainw->pwidth<*opwidth||mainw->pheight<*opheight)) {
-	  *opwidth=mainw->pwidth;
-	  *opheight=mainw->pheight;
-	}
-      }
-      else {
-	if (prefs->play_monitor==0) {
-	  *opwidth=mainw->scr_width;
-	  *opheight=mainw->scr_height;
-	  if (capable->nmonitors>1) {
-	    // spread over all monitors
-	    *opwidth=lives_screen_get_width(mainw->mgeom[0].screen);
-	    *opheight=lives_screen_get_height(mainw->mgeom[0].screen);
-	  }
-	}
-	else {
-	  if (mainw->play_window!=NULL) pmonitor=prefs->play_monitor;
-	  else pmonitor=prefs->gui_monitor;
-	  *opwidth=mainw->mgeom[pmonitor-1].width;
-	  *opheight=mainw->mgeom[pmonitor-1].height;
-	}
+        if (mainw->play_window==NULL) {
+          *opwidth=mainw->files[mainw->multitrack->render_file]->hsize;
+          *opheight=mainw->files[mainw->multitrack->render_file]->vsize;
+          calc_maxspect(mainw->multitrack->play_width,mainw->multitrack->play_height,opwidth,opheight);
+        } else {
+          *opwidth=cfile->hsize;
+          *opheight=cfile->vsize;
+        }
+
+        if (!mainw->fs&&mainw->play_window!=NULL&&(mainw->pwidth<*opwidth||mainw->pheight<*opheight)) {
+          *opwidth=mainw->pwidth;
+          *opheight=mainw->pheight;
+        }
+      } else {
+        if (prefs->play_monitor==0) {
+          *opwidth=mainw->scr_width;
+          *opheight=mainw->scr_height;
+          if (capable->nmonitors>1) {
+            // spread over all monitors
+            *opwidth=lives_screen_get_width(mainw->mgeom[0].screen);
+            *opheight=lives_screen_get_height(mainw->mgeom[0].screen);
+          }
+        } else {
+          if (mainw->play_window!=NULL) pmonitor=prefs->play_monitor;
+          else pmonitor=prefs->gui_monitor;
+          *opwidth=mainw->mgeom[pmonitor-1].width;
+          *opheight=mainw->mgeom[pmonitor-1].height;
+        }
       }
     }
   }
   if (mainw->ext_playback) {
     if (mainw->vpp->capabilities&VPP_LOCAL_DISPLAY) {
       if (mainw->vpp->capabilities&VPP_CAN_RESIZE) {
-	if (mainw->fs) {
-	  if (prefs->play_monitor==0) {
-	    *opwidth=mainw->scr_width;
-	    *opheight=mainw->scr_height;
-	    if (capable->nmonitors>1) {
-	      // spread over all monitors
-	      *opwidth=lives_screen_get_width(mainw->mgeom[0].screen);
-	      *opheight=lives_screen_get_height(mainw->mgeom[0].screen);
-	    }
-	  }
-	  else {
-	    *opwidth=mainw->mgeom[prefs->play_monitor-1].width;
-	    *opheight=mainw->mgeom[prefs->play_monitor-1].height;
-	  }
-	}
+        if (mainw->fs) {
+          if (prefs->play_monitor==0) {
+            *opwidth=mainw->scr_width;
+            *opheight=mainw->scr_height;
+            if (capable->nmonitors>1) {
+              // spread over all monitors
+              *opwidth=lives_screen_get_width(mainw->mgeom[0].screen);
+              *opheight=lives_screen_get_height(mainw->mgeom[0].screen);
+            }
+          } else {
+            *opwidth=mainw->mgeom[prefs->play_monitor-1].width;
+            *opheight=mainw->mgeom[prefs->play_monitor-1].height;
+          }
+        }
+      } else {
+        // ext plugin can't resize
+        *opwidth=mainw->vpp->fwidth;
+        *opheight=mainw->vpp->fheight;
       }
-      else {
-	// ext plugin can't resize
-	*opwidth=mainw->vpp->fwidth;
-	*opheight=mainw->vpp->fheight;
-      }
-    }
-    else {
+    } else {
       if (!(mainw->vpp->capabilities&VPP_CAN_RESIZE)) {
-	*opwidth=mainw->vpp->fwidth;
-	*opheight=mainw->vpp->fheight;
+        *opwidth=mainw->vpp->fwidth;
+        *opheight=mainw->vpp->fheight;
       }
     }
   }
@@ -4910,63 +4900,57 @@ static void get_max_opsize(int *opwidth, int *opheight) {
     // no playback plugin
     if (mainw->fs&&!mainw->is_rendering) {
       if (!mainw->sep_win) {
-	do {
-	  *opwidth=lives_widget_get_allocation_width(mainw->playframe);
-	  *opheight=lives_widget_get_allocation_height(mainw->playframe);
-	  if (*opwidth * *opheight==0) {
-	    lives_widget_context_update();
-	  }
-	} while (*opwidth * *opheight == 0);
+        do {
+          *opwidth=lives_widget_get_allocation_width(mainw->playframe);
+          *opheight=lives_widget_get_allocation_height(mainw->playframe);
+          if (*opwidth **opheight==0) {
+            lives_widget_context_update();
+          }
+        } while (*opwidth **opheight == 0);
+      } else {
+        if (prefs->play_monitor==0) {
+          if (capable->nmonitors==1) {
+            if (mainw->scr_width>*opwidth) *opwidth=mainw->scr_width;
+            if (mainw->scr_height>*opheight) *opheight=mainw->scr_height;
+          } else {
+            // spread over all monitors
+            if (lives_screen_get_width(mainw->mgeom[0].screen)>*opwidth) *opwidth=lives_screen_get_width(mainw->mgeom[0].screen);
+            if (lives_screen_get_height(mainw->mgeom[0].screen)>*opheight) *opheight=lives_screen_get_height(mainw->mgeom[0].screen);
+          }
+        } else {
+          if (mainw->play_window!=NULL) pmonitor=prefs->play_monitor;
+          else pmonitor=prefs->gui_monitor;
+          if (mainw->mgeom[pmonitor-1].width>*opwidth) *opwidth=mainw->mgeom[pmonitor-1].width;
+          if (mainw->mgeom[pmonitor-1].height>*opheight) *opheight=mainw->mgeom[pmonitor-1].height;
+        }
       }
-      else {
-	if (prefs->play_monitor==0) {
-	  if (capable->nmonitors==1) {
-	    if (mainw->scr_width>*opwidth) *opwidth=mainw->scr_width;
-	    if (mainw->scr_height>*opheight) *opheight=mainw->scr_height;
-	  }
-	  else {
-	    // spread over all monitors
-	    if (lives_screen_get_width(mainw->mgeom[0].screen)>*opwidth) *opwidth=lives_screen_get_width(mainw->mgeom[0].screen);
-	    if (lives_screen_get_height(mainw->mgeom[0].screen)>*opheight) *opheight=lives_screen_get_height(mainw->mgeom[0].screen);
-	  }
-	}
-	else {
-	  if (mainw->play_window!=NULL) pmonitor=prefs->play_monitor;
-	  else pmonitor=prefs->gui_monitor;
-	  if (mainw->mgeom[pmonitor-1].width>*opwidth) *opwidth=mainw->mgeom[pmonitor-1].width;
-	  if (mainw->mgeom[pmonitor-1].height>*opheight) *opheight=mainw->mgeom[pmonitor-1].height;
-	}
-      }
-    }
-    else {
+    } else {
       if (mainw->is_rendering) {
-	if (cfile->hsize>*opwidth) *opwidth=cfile->hsize;
-	if (cfile->vsize>*opheight) *opheight=cfile->vsize;
-      }
-      else {
-	if (!mainw->sep_win) {
+        if (cfile->hsize>*opwidth) *opwidth=cfile->hsize;
+        if (cfile->vsize>*opheight) *opheight=cfile->vsize;
+      } else {
+        if (!mainw->sep_win) {
 #if GTK_CHECK_VERSION(3,0,0)
-	  int rwidth=mainw->ce_frame_width;
-	  int rheight=mainw->ce_frame_height;
-	  *opwidth=cfile->hsize;
-	  *opheight=cfile->vsize;
-	  calc_maxspect(rwidth,rheight,opwidth,opheight);
+          int rwidth=mainw->ce_frame_width;
+          int rheight=mainw->ce_frame_height;
+          *opwidth=cfile->hsize;
+          *opheight=cfile->vsize;
+          calc_maxspect(rwidth,rheight,opwidth,opheight);
 #else
-	  do {
-	    *opwidth=lives_widget_get_allocation_width(mainw->playframe);
-	    *opheight=lives_widget_get_allocation_height(mainw->playframe);
-	    if (*opwidth * *opheight==0) {
-	      lives_widget_context_update();
-	    }
-	  } while (*opwidth * *opheight == 0);
+          do {
+            *opwidth=lives_widget_get_allocation_width(mainw->playframe);
+            *opheight=lives_widget_get_allocation_height(mainw->playframe);
+            if (*opwidth **opheight==0) {
+              lives_widget_context_update();
+            }
+          } while (*opwidth **opheight == 0);
 #endif
-	}
-	else {
-	  if (mainw->pwidth<*opwidth||mainw->pheight<*opheight||*opwidth==0||*opheight==0) {
-	    *opwidth=mainw->pwidth;
-	    *opheight=mainw->pheight;
-	  }
-	}
+        } else {
+          if (mainw->pwidth<*opwidth||mainw->pheight<*opheight||*opwidth==0||*opheight==0) {
+            *opwidth=mainw->pwidth;
+            *opheight=mainw->pheight;
+          }
+        }
       }
     }
   }
@@ -4977,20 +4961,20 @@ static void get_max_opsize(int *opwidth, int *opheight) {
 void init_track_decoders(void) {
   register int i;
 
-  for (i=0;i<MAX_TRACKS;i++) {
+  for (i=0; i<MAX_TRACKS; i++) {
     mainw->track_decoders[i]=NULL;
     mainw->old_active_track_list[i]=mainw->active_track_list[i]=0;
   }
-  for (i=0;i<MAX_FILES;i++) mainw->ext_src_used[i]=FALSE;
+  for (i=0; i<MAX_FILES; i++) mainw->ext_src_used[i]=FALSE;
 }
 
 
 void free_track_decoders(void) {
   register int i;
 
-  for (i=0;i<MAX_TRACKS;i++) {
-    if (mainw->track_decoders[i]!=NULL && 
-	(mainw->active_track_list[i]<=0||mainw->track_decoders[i]!=mainw->files[mainw->active_track_list[i]]->ext_src))
+  for (i=0; i<MAX_TRACKS; i++) {
+    if (mainw->track_decoders[i]!=NULL &&
+        (mainw->active_track_list[i]<=0||mainw->track_decoders[i]!=mainw->files[mainw->active_track_list[i]]->ext_src))
       close_decoder_plugin(mainw->track_decoders[i]);
   }
 }
@@ -5043,11 +5027,12 @@ void load_frame_image(int frame) {
       // add blank frame
       weed_plant_t *event=get_last_event(mainw->event_list);
       weed_plant_t *event_list=insert_blank_frame_event_at(mainw->event_list,mainw->currticks,&event);
-      if (mainw->rec_aclip!=-1&&(prefs->rec_opts&REC_AUDIO)&&!mainw->record_starting&&prefs->audio_src==AUDIO_SRC_INT&&!(has_audio_filters(AF_TYPE_NONA))) {
-	// we are recording, and the audio clip changed; add audio
-	if (mainw->event_list==NULL) mainw->event_list=event_list;
-	insert_audio_event_at(mainw->event_list,event,-1,mainw->rec_aclip,mainw->rec_aseek,mainw->rec_avel);
-	mainw->rec_aclip=-1;
+      if (mainw->rec_aclip!=-1&&(prefs->rec_opts&REC_AUDIO)&&!mainw->record_starting&&prefs->audio_src==AUDIO_SRC_INT&&
+          !(has_audio_filters(AF_TYPE_NONA))) {
+        // we are recording, and the audio clip changed; add audio
+        if (mainw->event_list==NULL) mainw->event_list=event_list;
+        insert_audio_event_at(mainw->event_list,event,-1,mainw->rec_aclip,mainw->rec_aseek,mainw->rec_avel);
+        mainw->rec_aclip=-1;
       }
     }
     get_play_times();
@@ -5068,184 +5053,181 @@ void load_frame_image(int frame) {
       // normal play
 
       if (LIVES_UNLIKELY(mainw->nervous)) {
-	// nervous mode
+        // nervous mode
 
-	if ((mainw->actual_frame+=(-10+(int) (21.*rand()/(RAND_MAX+1.0))))>cfile->frames||
-	    mainw->actual_frame<1) mainw->actual_frame=frame;
-	else {
-	  frame=mainw->actual_frame;
+        if ((mainw->actual_frame+=(-10+(int)(21.*rand()/(RAND_MAX+1.0))))>cfile->frames||
+            mainw->actual_frame<1) mainw->actual_frame=frame;
+        else {
+          frame=mainw->actual_frame;
 #ifdef ENABLE_JACK
-	  if (prefs->audio_player==AUD_PLAYER_JACK&&(prefs->audio_opts&AUDIO_OPTS_FOLLOW_FPS)&&
-	      mainw->jackd!=NULL&&cfile->achans>0 &&
-	      !(prefs->audio_src==AUDIO_SRC_EXT||mainw->agen_key!=0)) {
-	    if (mainw->jackd->playing_file!=-1&&!jack_audio_seek_frame(mainw->jackd,frame)) {
-	      if (jack_try_reconnect()) jack_audio_seek_frame(mainw->jackd,frame);
-	    }
+          if (prefs->audio_player==AUD_PLAYER_JACK&&(prefs->audio_opts&AUDIO_OPTS_FOLLOW_FPS)&&
+              mainw->jackd!=NULL&&cfile->achans>0 &&
+              !(prefs->audio_src==AUDIO_SRC_EXT||mainw->agen_key!=0)) {
+            if (mainw->jackd->playing_file!=-1&&!jack_audio_seek_frame(mainw->jackd,frame)) {
+              if (jack_try_reconnect()) jack_audio_seek_frame(mainw->jackd,frame);
+            }
 
-	    if (!(mainw->record&&!mainw->record_paused)&&has_audio_filters(AF_TYPE_NONA)) {
-	      mainw->rec_aclip=mainw->current_file;
-	      mainw->rec_avel=cfile->pb_fps/cfile->fps;
-	      mainw->rec_aseek=cfile->aseek_pos/(cfile->arate*cfile->achans*cfile->asampsize/8);
-	    }
-	  }
+            if (!(mainw->record&&!mainw->record_paused)&&has_audio_filters(AF_TYPE_NONA)) {
+              mainw->rec_aclip=mainw->current_file;
+              mainw->rec_avel=cfile->pb_fps/cfile->fps;
+              mainw->rec_aseek=cfile->aseek_pos/(cfile->arate*cfile->achans*cfile->asampsize/8);
+            }
+          }
 #endif
 #ifdef HAVE_PULSE_AUDIO
-	  if (prefs->audio_player==AUD_PLAYER_PULSE&&(prefs->audio_opts&AUDIO_OPTS_FOLLOW_FPS)&&
-	      mainw->pulsed!=NULL&&cfile->achans>0 &&
-	      !(prefs->audio_src==AUDIO_SRC_EXT||mainw->agen_key!=0)) {
+          if (prefs->audio_player==AUD_PLAYER_PULSE&&(prefs->audio_opts&AUDIO_OPTS_FOLLOW_FPS)&&
+              mainw->pulsed!=NULL&&cfile->achans>0 &&
+              !(prefs->audio_src==AUDIO_SRC_EXT||mainw->agen_key!=0)) {
 
-	    if (mainw->pulsed->playing_file!=-1&&!pulse_audio_seek_frame(mainw->pulsed,mainw->play_start)) {
-	      if (pulse_try_reconnect()) pulse_audio_seek_frame(mainw->pulsed,mainw->play_start);
-	      else mainw->aplayer_broken=TRUE;
-	    }
+            if (mainw->pulsed->playing_file!=-1&&!pulse_audio_seek_frame(mainw->pulsed,mainw->play_start)) {
+              if (pulse_try_reconnect()) pulse_audio_seek_frame(mainw->pulsed,mainw->play_start);
+              else mainw->aplayer_broken=TRUE;
+            }
 
-	    if (!(mainw->record&&!mainw->record_paused)&&has_audio_filters(AF_TYPE_NONA)) {
-	      mainw->rec_aclip=mainw->current_file;
-	      mainw->rec_avel=cfile->pb_fps/cfile->fps;
-	      mainw->rec_aseek=cfile->aseek_pos/(cfile->arate*cfile->achans*cfile->asampsize/8);
-	    }
-	  }
+            if (!(mainw->record&&!mainw->record_paused)&&has_audio_filters(AF_TYPE_NONA)) {
+              mainw->rec_aclip=mainw->current_file;
+              mainw->rec_avel=cfile->pb_fps/cfile->fps;
+              mainw->rec_aseek=cfile->aseek_pos/(cfile->arate*cfile->achans*cfile->asampsize/8);
+            }
+          }
 #endif
-	}
+        }
       }
       if (mainw->opening_loc||(cfile->clip_type!=CLIP_TYPE_DISK&&cfile->clip_type!=CLIP_TYPE_FILE)) {
-	framecount=lives_strdup_printf("%9d",mainw->actual_frame);
-      }
-      else {
-	framecount=lives_strdup_printf("%9d/%d",mainw->actual_frame,cfile->frames);
+        framecount=lives_strdup_printf("%9d",mainw->actual_frame);
+      } else {
+        framecount=lives_strdup_printf("%9d/%d",mainw->actual_frame,cfile->frames);
       }
 
       mainw->noswitch=TRUE;
 
       /////////////////////////////////////////////////
-      
+
       // record performance
       if ((mainw->record&&!mainw->record_paused)||mainw->record_starting) {
-	int fg_file=mainw->current_file;
-	int fg_frame=mainw->actual_frame;
-	int bg_file=mainw->blend_file>0&&mainw->blend_file!=mainw->current_file&&
-	  mainw->files[mainw->blend_file]!=NULL?mainw->blend_file:-1;
-	int bg_frame=bg_file>0&&bg_file!=mainw->current_file?mainw->files[bg_file]->frameno:0;
-	int numframes;
-	int *clips,*frames;
-	weed_plant_t *event_list;
+        int fg_file=mainw->current_file;
+        int fg_frame=mainw->actual_frame;
+        int bg_file=mainw->blend_file>0&&mainw->blend_file!=mainw->current_file&&
+                    mainw->files[mainw->blend_file]!=NULL?mainw->blend_file:-1;
+        int bg_frame=bg_file>0&&bg_file!=mainw->current_file?mainw->files[bg_file]->frameno:0;
+        int numframes;
+        int *clips,*frames;
+        weed_plant_t *event_list;
 
-	// should we record the output from the playback plugin ?
-	if (mainw->record && (prefs->rec_opts&REC_AFTER_PB) && mainw->ext_playback && 
-	    (mainw->vpp->capabilities&VPP_CAN_RETURN)) {
-	  rec_after_pb=TRUE;
-	}
+        // should we record the output from the playback plugin ?
+        if (mainw->record && (prefs->rec_opts&REC_AFTER_PB) && mainw->ext_playback &&
+            (mainw->vpp->capabilities&VPP_CAN_RETURN)) {
+          rec_after_pb=TRUE;
+        }
 
-	if (rec_after_pb||(cfile->clip_type!=CLIP_TYPE_DISK&&cfile->clip_type!=CLIP_TYPE_FILE)||
-	    (prefs->rec_opts&REC_EFFECTS&&bg_file!=-1&&(mainw->files[bg_file]->clip_type!=CLIP_TYPE_DISK&&
-							mainw->files[bg_file]->clip_type!=CLIP_TYPE_FILE))) {
-	  // TODO - handle non-opening of scrap_file
-	  if (mainw->scrap_file==-1) open_scrap_file();
-	  fg_file=mainw->scrap_file;
-	  fg_frame=mainw->files[mainw->scrap_file]->frames+1;
-	  bg_file=-1;
-	  bg_frame=0;
-	}
+        if (rec_after_pb||(cfile->clip_type!=CLIP_TYPE_DISK&&cfile->clip_type!=CLIP_TYPE_FILE)||
+            (prefs->rec_opts&REC_EFFECTS&&bg_file!=-1&&(mainw->files[bg_file]->clip_type!=CLIP_TYPE_DISK&&
+                mainw->files[bg_file]->clip_type!=CLIP_TYPE_FILE))) {
+          // TODO - handle non-opening of scrap_file
+          if (mainw->scrap_file==-1) open_scrap_file();
+          fg_file=mainw->scrap_file;
+          fg_frame=mainw->files[mainw->scrap_file]->frames+1;
+          bg_file=-1;
+          bg_frame=0;
+        }
 
-	if (mainw->record_starting) {
-	  // mark record start
-	  //pthread_mutex_lock(&mainw->event_list_mutex);
-	  event_list=append_marker_event(mainw->event_list, mainw->currticks, EVENT_MARKER_RECORD_START);
-	  if (mainw->event_list==NULL) mainw->event_list=event_list;
-	  
-	  if (prefs->rec_opts&REC_EFFECTS) {
-	    // add init events and pchanges for all active fx
-	    add_filter_init_events(mainw->event_list,mainw->currticks);
-	  }
-	  //pthread_mutex_unlock(&mainw->event_list_mutex);
+        if (mainw->record_starting) {
+          // mark record start
+          //pthread_mutex_lock(&mainw->event_list_mutex);
+          event_list=append_marker_event(mainw->event_list, mainw->currticks, EVENT_MARKER_RECORD_START);
+          if (mainw->event_list==NULL) mainw->event_list=event_list;
+
+          if (prefs->rec_opts&REC_EFFECTS) {
+            // add init events and pchanges for all active fx
+            add_filter_init_events(mainw->event_list,mainw->currticks);
+          }
+          //pthread_mutex_unlock(&mainw->event_list_mutex);
 
 #ifdef ENABLE_JACK
-	  if (prefs->audio_player==AUD_PLAYER_JACK&&mainw->jackd!=NULL&&
-	      (prefs->rec_opts&REC_AUDIO)&&prefs->audio_src==AUDIO_SRC_INT&&mainw->rec_aclip!=mainw->ascrap_file) {
-	    // get current seek postion
-	    jack_get_rec_avals(mainw->jackd);
-	  }
+          if (prefs->audio_player==AUD_PLAYER_JACK&&mainw->jackd!=NULL&&
+              (prefs->rec_opts&REC_AUDIO)&&prefs->audio_src==AUDIO_SRC_INT&&mainw->rec_aclip!=mainw->ascrap_file) {
+            // get current seek postion
+            jack_get_rec_avals(mainw->jackd);
+          }
 #endif
 #ifdef HAVE_PULSE_AUDIO
-	  if (prefs->audio_player==AUD_PLAYER_PULSE&&mainw->pulsed!=NULL&&
-	      (prefs->rec_opts&REC_AUDIO)&&prefs->audio_src==AUDIO_SRC_INT&&mainw->rec_aclip!=mainw->ascrap_file) {
-	    // get current seek postion
-	    pulse_get_rec_avals(mainw->pulsed);
-	  }
+          if (prefs->audio_player==AUD_PLAYER_PULSE&&mainw->pulsed!=NULL&&
+              (prefs->rec_opts&REC_AUDIO)&&prefs->audio_src==AUDIO_SRC_INT&&mainw->rec_aclip!=mainw->ascrap_file) {
+            // get current seek postion
+            pulse_get_rec_avals(mainw->pulsed);
+          }
 #endif
-	  mainw->record=TRUE;
-	  mainw->record_paused=FALSE;
-	  mainw->record_starting=FALSE;
-	}
+          mainw->record=TRUE;
+          mainw->record_paused=FALSE;
+          mainw->record_starting=FALSE;
+        }
 
-	numframes=(bg_file==-1)?1:2;
-	clips=(int *)lives_malloc(numframes*sizint);
-	frames=(int *)lives_malloc(numframes*sizint);
-	
-	clips[0]=fg_file;
-	frames[0]=fg_frame;
-	if (numframes==2) {
-	  clips[1]=bg_file;
-	  frames[1]=bg_frame;
-	}
-	if (framecount!=NULL) lives_free(framecount);
-	pthread_mutex_lock(&mainw->event_list_mutex);
-	if ((event_list=append_frame_event (mainw->event_list,mainw->currticks,numframes,clips,frames))!=NULL) {
-	  if (mainw->event_list==NULL) mainw->event_list=event_list;
-	  if (mainw->rec_aclip!=-1&&((prefs->rec_opts&REC_AUDIO))) {
-	    weed_plant_t *event=get_last_frame_event(mainw->event_list);
+        numframes=(bg_file==-1)?1:2;
+        clips=(int *)lives_malloc(numframes*sizint);
+        frames=(int *)lives_malloc(numframes*sizint);
 
-	    if (mainw->rec_aclip==mainw->ascrap_file) {
-	      mainw->rec_aseek=(double)mainw->files[mainw->ascrap_file]->aseek_pos/
-		(double)(mainw->files[mainw->ascrap_file]->arps*mainw->files[mainw->ascrap_file]->achans*
-			 mainw->files[mainw->ascrap_file]->asampsize>>3);
+        clips[0]=fg_file;
+        frames[0]=fg_frame;
+        if (numframes==2) {
+          clips[1]=bg_file;
+          frames[1]=bg_frame;
+        }
+        if (framecount!=NULL) lives_free(framecount);
+        pthread_mutex_lock(&mainw->event_list_mutex);
+        if ((event_list=append_frame_event(mainw->event_list,mainw->currticks,numframes,clips,frames))!=NULL) {
+          if (mainw->event_list==NULL) mainw->event_list=event_list;
+          if (mainw->rec_aclip!=-1&&((prefs->rec_opts&REC_AUDIO))) {
+            weed_plant_t *event=get_last_frame_event(mainw->event_list);
 
-	    }
-	    insert_audio_event_at(mainw->event_list,event,-1,mainw->rec_aclip,mainw->rec_aseek,mainw->rec_avel);
-	    mainw->rec_aclip=-1;
-	  }
-	  pthread_mutex_unlock(&mainw->event_list_mutex);
+            if (mainw->rec_aclip==mainw->ascrap_file) {
+              mainw->rec_aseek=(double)mainw->files[mainw->ascrap_file]->aseek_pos/
+                               (double)(mainw->files[mainw->ascrap_file]->arps*mainw->files[mainw->ascrap_file]->achans*
+                                        mainw->files[mainw->ascrap_file]->asampsize>>3);
 
-	  /* TRANSLATORS: rec(ord) */
-	  framecount=lives_strdup_printf(_("rec %9d/%d"),mainw->actual_frame,
-				     cfile->frames>mainw->actual_frame?cfile->frames:mainw->actual_frame);
-	}
-	else {
-	  pthread_mutex_unlock(&mainw->event_list_mutex);
-	  /* TRANSLATORS: out of memory (rec(ord)) */
-	  (framecount=lives_strdup_printf(_("!rec %9d/%d"),mainw->actual_frame,cfile->frames));
-	}
-	lives_free(clips);
-	lives_free(frames);
+            }
+            insert_audio_event_at(mainw->event_list,event,-1,mainw->rec_aclip,mainw->rec_aseek,mainw->rec_avel);
+            mainw->rec_aclip=-1;
+          }
+          pthread_mutex_unlock(&mainw->event_list_mutex);
+
+          /* TRANSLATORS: rec(ord) */
+          framecount=lives_strdup_printf(_("rec %9d/%d"),mainw->actual_frame,
+                                         cfile->frames>mainw->actual_frame?cfile->frames:mainw->actual_frame);
+        } else {
+          pthread_mutex_unlock(&mainw->event_list_mutex);
+          /* TRANSLATORS: out of memory (rec(ord)) */
+          (framecount=lives_strdup_printf(_("!rec %9d/%d"),mainw->actual_frame,cfile->frames));
+        }
+        lives_free(clips);
+        lives_free(frames);
+      } else {
+        if (mainw->toy_type!=LIVES_TOY_NONE) {
+          if (mainw->toy_type==LIVES_TOY_MAD_FRAMES&&!mainw->fs&&(cfile->clip_type==CLIP_TYPE_DISK||
+              cfile->clip_type==CLIP_TYPE_FILE)) {
+            int current_file=mainw->current_file;
+            if (mainw->toy_go_wild) {
+              int i,other_file;
+              for (i=0; i<11; i++) {
+                other_file=(1+(int)((double)(mainw->clips_available)*rand()/(RAND_MAX+1.0)));
+                other_file=LIVES_POINTER_TO_INT(lives_list_nth_data(mainw->cliplist,other_file));
+                if (mainw->files[other_file]!=NULL) {
+                  // steal a frame from another clip
+                  mainw->current_file=other_file;
+                }
+              }
+            }
+            load_start_image(1+(int)((double)cfile->frames*rand()/(RAND_MAX+1.0)));
+            load_end_image(1+(int)((double)cfile->frames*rand()/(RAND_MAX+1.0)));
+            mainw->current_file=current_file;
+          }
+        }
       }
-      else {
-	if (mainw->toy_type!=LIVES_TOY_NONE) {
-	  if (mainw->toy_type==LIVES_TOY_MAD_FRAMES&&!mainw->fs&&(cfile->clip_type==CLIP_TYPE_DISK||
-								  cfile->clip_type==CLIP_TYPE_FILE)) {
-	    int current_file=mainw->current_file;
-	    if (mainw->toy_go_wild) {
-	      int i,other_file;
-	      for (i=0;i<11;i++) {
-		other_file=(1+(int) ((double)(mainw->clips_available)*rand()/(RAND_MAX+1.0)));
-		other_file=LIVES_POINTER_TO_INT(lives_list_nth_data(mainw->cliplist,other_file));
-		if (mainw->files[other_file]!=NULL) {
-		  // steal a frame from another clip
-		  mainw->current_file=other_file;
-		}
-	      }
-	    }
-	    load_start_image (1+(int) ((double)cfile->frames*rand()/(RAND_MAX+1.0)));
-	    load_end_image (1+(int) ((double)cfile->frames*rand()/(RAND_MAX+1.0)));
-	    mainw->current_file=current_file;
-	  }
-	}
-      }
-      
+
       if ((!mainw->fs||prefs->play_monitor!=prefs->gui_monitor||
-	   (mainw->ext_playback&&!(mainw->vpp->capabilities&VPP_LOCAL_DISPLAY)))
-	  &&prefs->show_framecount) {
-	lives_entry_set_text(LIVES_ENTRY(mainw->framecounter),framecount);
-	lives_widget_queue_draw(mainw->framecounter);
+           (mainw->ext_playback&&!(mainw->vpp->capabilities&VPP_LOCAL_DISPLAY)))
+          &&prefs->show_framecount) {
+        lives_entry_set_text(LIVES_ENTRY(mainw->framecounter),framecount);
+        lives_widget_queue_draw(mainw->framecounter);
       }
       lives_free(framecount);
       framecount=NULL;
@@ -5259,80 +5241,75 @@ void load_frame_image(int frame) {
 #endif
       // preview
       if (prefs->safer_preview&&cfile->proc_ptr!=NULL&&cfile->proc_ptr->frames_done>0&&
-	  frame>=(cfile->proc_ptr->frames_done-cfile->progress_start+cfile->start)) {
-	mainw->cancelled=CANCEL_PREVIEW_FINISHED;
-	mainw->noswitch=noswitch;
-	if (framecount!=NULL) lives_free(framecount);
-	return;
+          frame>=(cfile->proc_ptr->frames_done-cfile->progress_start+cfile->start)) {
+        mainw->cancelled=CANCEL_PREVIEW_FINISHED;
+        mainw->noswitch=noswitch;
+        if (framecount!=NULL) lives_free(framecount);
+        return;
       }
 
       // play preview
       if (cfile->opening||(cfile->next_event!=NULL&&cfile->proc_ptr==NULL)) {
 
-	fname_next=lives_strdup_printf("%s/%s/%08d.%s",prefs->tmpdir,cfile->handle,frame+1,prefs->image_ext);
+        fname_next=lives_strdup_printf("%s/%s/%08d.%s",prefs->tmpdir,cfile->handle,frame+1,prefs->image_ext);
 
-	if (!mainw->fs&&prefs->show_framecount&&!mainw->is_rendering) {
-	  if (framecount!=NULL) lives_free(framecount);
-	  if (cfile->frames>0&&cfile->frames!=123456789) {
-	    framecount=lives_strdup_printf("%9d/%d",frame,cfile->frames);
-	  }
-	  else {
-	    framecount=lives_strdup_printf("%9d",frame);
-	  }
-	  lives_entry_set_text(LIVES_ENTRY(mainw->framecounter),framecount);
-	  lives_widget_queue_draw(mainw->framecounter);
-	  lives_free(framecount);
-	  framecount=NULL;
-	}
-	if (mainw->toy_type!=LIVES_TOY_NONE) {
-	  // TODO - move into toys.c
-	  if (mainw->toy_type==LIVES_TOY_MAD_FRAMES&&!mainw->fs) {
-	    if (cfile->opening_only_audio) {
-	      load_start_image  (1+(int) ((double)cfile->frames*rand()/(RAND_MAX+1.0)));
-	      load_end_image (1+(int) ((double)cfile->frames*rand()/(RAND_MAX+1.0)));
-	    }
-	    else {
-	      load_start_image (1+(int) ((double)frame*rand()/(RAND_MAX+1.0)));
-	      load_end_image (1+(int) ((double)frame*rand()/(RAND_MAX+1.0)));
-	    }
-	  }
-	}
-      }
-      else {
-	if (mainw->is_rendering||mainw->is_generating) {
-	  fname_next=lives_strdup_printf("%s/%s/%08d.%s",prefs->tmpdir,cfile->handle,frame+1,prefs->image_ext);
-	}
-	else {
-	  if (!mainw->keep_pre) {
-	    img_ext="mgk";
-	  }
-	  else {
-	    img_ext="pre";
-	  }
-	  fname_next=lives_strdup_printf("%s/%s/%08d.pre",prefs->tmpdir,cfile->handle,frame+1);
-	}
+        if (!mainw->fs&&prefs->show_framecount&&!mainw->is_rendering) {
+          if (framecount!=NULL) lives_free(framecount);
+          if (cfile->frames>0&&cfile->frames!=123456789) {
+            framecount=lives_strdup_printf("%9d/%d",frame,cfile->frames);
+          } else {
+            framecount=lives_strdup_printf("%9d",frame);
+          }
+          lives_entry_set_text(LIVES_ENTRY(mainw->framecounter),framecount);
+          lives_widget_queue_draw(mainw->framecounter);
+          lives_free(framecount);
+          framecount=NULL;
+        }
+        if (mainw->toy_type!=LIVES_TOY_NONE) {
+          // TODO - move into toys.c
+          if (mainw->toy_type==LIVES_TOY_MAD_FRAMES&&!mainw->fs) {
+            if (cfile->opening_only_audio) {
+              load_start_image(1+(int)((double)cfile->frames*rand()/(RAND_MAX+1.0)));
+              load_end_image(1+(int)((double)cfile->frames*rand()/(RAND_MAX+1.0)));
+            } else {
+              load_start_image(1+(int)((double)frame*rand()/(RAND_MAX+1.0)));
+              load_end_image(1+(int)((double)frame*rand()/(RAND_MAX+1.0)));
+            }
+          }
+        }
+      } else {
+        if (mainw->is_rendering||mainw->is_generating) {
+          fname_next=lives_strdup_printf("%s/%s/%08d.%s",prefs->tmpdir,cfile->handle,frame+1,prefs->image_ext);
+        } else {
+          if (!mainw->keep_pre) {
+            img_ext="mgk";
+          } else {
+            img_ext="pre";
+          }
+          fname_next=lives_strdup_printf("%s/%s/%08d.pre",prefs->tmpdir,cfile->handle,frame+1);
+        }
       }
       mainw->actual_frame=frame;
     }
 
     // maybe the performance finished and we weren't looping
     if ((mainw->actual_frame<1||mainw->actual_frame>cfile->frames)&&
-	(cfile->clip_type==CLIP_TYPE_DISK||cfile->clip_type==CLIP_TYPE_FILE)&&!mainw->is_rendering) {
+        (cfile->clip_type==CLIP_TYPE_DISK||cfile->clip_type==CLIP_TYPE_FILE)&&!mainw->is_rendering) {
       mainw->noswitch=noswitch;
       if (framecount!=NULL) lives_free(framecount);
       return;
     }
-  
+
 
     // limit max frame size unless we are saving to disk or rendering
 
-    // frame_layer will in any case be equal to or smaller than this depending on maximum source frame size 
+    // frame_layer will in any case be equal to or smaller than this depending on maximum source frame size
 
     if (!(mainw->record&&!mainw->record_paused&&(prefs->rec_opts&REC_EFFECTS)&&
-	  ((cfile->clip_type!=CLIP_TYPE_DISK&&cfile->clip_type!=CLIP_TYPE_FILE)||
-	   (mainw->blend_file!=-1&&mainw->files[mainw->blend_file]!=NULL&&
-	    mainw->files[mainw->blend_file]->clip_type!=CLIP_TYPE_DISK&&
-	    mainw->files[mainw->blend_file]->clip_type!=CLIP_TYPE_FILE)))) {
+          ((cfile->clip_type!=CLIP_TYPE_DISK&&cfile->clip_type!=CLIP_TYPE_FILE)||
+           (mainw->blend_file!=-1&&mainw->files[mainw->blend_file]!=NULL&&
+            mainw->files[mainw->blend_file]->clip_type!=CLIP_TYPE_DISK&&
+            mainw->files[mainw->blend_file]->clip_type!=CLIP_TYPE_FILE)))) {
       get_max_opsize(&opwidth,&opheight);
     }
 
@@ -5341,224 +5318,214 @@ void load_frame_image(int frame) {
 
     do {
       if (mainw->frame_layer!=NULL) {
-	check_layer_ready(mainw->frame_layer);
-	weed_layer_free(mainw->frame_layer);
-	mainw->frame_layer=NULL;
+        check_layer_ready(mainw->frame_layer);
+        weed_layer_free(mainw->frame_layer);
+        mainw->frame_layer=NULL;
       }
 
       if (mainw->is_rendering&&!(cfile->proc_ptr!=NULL&&mainw->preview)) {
-	// here if we are rendering from multitrack, previewing a recording, or applying realtime effects to a selection
-	weed_timecode_t tc=mainw->cevent_tc;
+        // here if we are rendering from multitrack, previewing a recording, or applying realtime effects to a selection
+        weed_timecode_t tc=mainw->cevent_tc;
 
-	if (mainw->clip_index[0]==mainw->scrap_file&&mainw->clip_index[0]>-1&&mainw->num_tracks==1) {
-	  // do not apply fx, just pull frame
-	  mainw->frame_layer=weed_plant_new(WEED_PLANT_CHANNEL);
-	  weed_set_int_value(mainw->frame_layer,"clip",mainw->clip_index[0]);
-	  weed_set_int_value(mainw->frame_layer,"frame",mainw->frame_index[0]);
-	  if (!pull_frame(mainw->frame_layer,get_image_ext_for_type(cfile->img_type),tc)) {
-	    weed_plant_free(mainw->frame_layer);
-	    mainw->frame_layer=NULL;
-	  }
-	}
-	else {
-	  int oclip,nclip;
-	  register int i;
-	  weed_plant_t **layers=(weed_plant_t **)lives_malloc((mainw->num_tracks+1)*sizeof(weed_plant_t *));
+        if (mainw->clip_index[0]==mainw->scrap_file&&mainw->clip_index[0]>-1&&mainw->num_tracks==1) {
+          // do not apply fx, just pull frame
+          mainw->frame_layer=weed_plant_new(WEED_PLANT_CHANNEL);
+          weed_set_int_value(mainw->frame_layer,"clip",mainw->clip_index[0]);
+          weed_set_int_value(mainw->frame_layer,"frame",mainw->frame_index[0]);
+          if (!pull_frame(mainw->frame_layer,get_image_ext_for_type(cfile->img_type),tc)) {
+            weed_plant_free(mainw->frame_layer);
+            mainw->frame_layer=NULL;
+          }
+        } else {
+          int oclip,nclip;
+          register int i;
+          weed_plant_t **layers=(weed_plant_t **)lives_malloc((mainw->num_tracks+1)*sizeof(weed_plant_t *));
 
-	  // get list of active tracks from mainw->filter map
-	  get_active_track_list(mainw->clip_index,mainw->num_tracks,mainw->filter_map);
-	  for (i=0;i<mainw->num_tracks;i++) {
-	    oclip=mainw->old_active_track_list[i];
-	    mainw->ext_src_used[oclip]=FALSE;
-	    if (oclip>0&&oclip==(nclip=mainw->active_track_list[i])) {
-	      // check if ext_src survives old->new
-	      if (mainw->track_decoders[i]==mainw->files[oclip]->ext_src) mainw->ext_src_used[oclip]=TRUE;
-	    }
-	  }
+          // get list of active tracks from mainw->filter map
+          get_active_track_list(mainw->clip_index,mainw->num_tracks,mainw->filter_map);
+          for (i=0; i<mainw->num_tracks; i++) {
+            oclip=mainw->old_active_track_list[i];
+            mainw->ext_src_used[oclip]=FALSE;
+            if (oclip>0&&oclip==(nclip=mainw->active_track_list[i])) {
+              // check if ext_src survives old->new
+              if (mainw->track_decoders[i]==mainw->files[oclip]->ext_src) mainw->ext_src_used[oclip]=TRUE;
+            }
+          }
 
-	  for (i=0;i<mainw->num_tracks;i++) {
-	    layers[i]=weed_plant_new(WEED_PLANT_CHANNEL);
-	    weed_set_int_value(layers[i],"clip",mainw->clip_index[i]);
-	    weed_set_int_value(layers[i],"frame",mainw->frame_index[i]);
-	    weed_set_int_value(layers[i],"current_palette",(mainw->clip_index[i]==-1||
-							    mainw->files[mainw->clip_index[i]]->img_type==
-							    IMG_TYPE_JPEG)?WEED_PALETTE_RGB24:WEED_PALETTE_RGBA32);
+          for (i=0; i<mainw->num_tracks; i++) {
+            layers[i]=weed_plant_new(WEED_PLANT_CHANNEL);
+            weed_set_int_value(layers[i],"clip",mainw->clip_index[i]);
+            weed_set_int_value(layers[i],"frame",mainw->frame_index[i]);
+            weed_set_int_value(layers[i],"current_palette",(mainw->clip_index[i]==-1||
+                               mainw->files[mainw->clip_index[i]]->img_type==
+                               IMG_TYPE_JPEG)?WEED_PALETTE_RGB24:WEED_PALETTE_RGBA32);
 
-	    if ((oclip=mainw->old_active_track_list[i])!=(nclip=mainw->active_track_list[i])) {
-	      // now using threading, we want to start pulling all pixel_data for all active layers here
-	      // however, we may have more than one copy of the same clip - in this case we want to create clones of the decoder plugin
-	      // this is to prevent constant seeking between different frames in the clip
-	      if (oclip>0) {
-		if (mainw->files[oclip]->clip_type==CLIP_TYPE_FILE) {
-		  if (mainw->track_decoders[i]!=(lives_decoder_t *)mainw->files[oclip]->ext_src) {
-		    // remove the clone for oclip
-		    close_decoder_plugin(mainw->track_decoders[i]);
-		  }
-		  mainw->track_decoders[i]=NULL;
-		}
-	      }
+            if ((oclip=mainw->old_active_track_list[i])!=(nclip=mainw->active_track_list[i])) {
+              // now using threading, we want to start pulling all pixel_data for all active layers here
+              // however, we may have more than one copy of the same clip - in this case we want to create clones of the decoder plugin
+              // this is to prevent constant seeking between different frames in the clip
+              if (oclip>0) {
+                if (mainw->files[oclip]->clip_type==CLIP_TYPE_FILE) {
+                  if (mainw->track_decoders[i]!=(lives_decoder_t *)mainw->files[oclip]->ext_src) {
+                    // remove the clone for oclip
+                    close_decoder_plugin(mainw->track_decoders[i]);
+                  }
+                  mainw->track_decoders[i]=NULL;
+                }
+              }
 
-	      if (nclip>0) {
-		if (mainw->files[nclip]->clip_type==CLIP_TYPE_FILE) {
-		  if (!mainw->ext_src_used[nclip]) {
-		    mainw->track_decoders[i]=(lives_decoder_t *)mainw->files[nclip]->ext_src;
-		    mainw->ext_src_used[nclip]=TRUE;
-		  }
-		  else {
-		    // add new clone for nclip
-		    mainw->track_decoders[i]=clone_decoder(nclip);
-		  }
-		}
-	      }
-	    }
+              if (nclip>0) {
+                if (mainw->files[nclip]->clip_type==CLIP_TYPE_FILE) {
+                  if (!mainw->ext_src_used[nclip]) {
+                    mainw->track_decoders[i]=(lives_decoder_t *)mainw->files[nclip]->ext_src;
+                    mainw->ext_src_used[nclip]=TRUE;
+                  } else {
+                    // add new clone for nclip
+                    mainw->track_decoders[i]=clone_decoder(nclip);
+                  }
+                }
+              }
+            }
 
-	    mainw->old_active_track_list[i]=mainw->active_track_list[i];
+            mainw->old_active_track_list[i]=mainw->active_track_list[i];
 
-	    if (nclip>0) {
-	      img_ext=get_image_ext_for_type(mainw->files[nclip]->img_type);
-	      // set alt src in layer
-	      weed_set_voidptr_value(layers[i],"host_decoder",(void *)mainw->track_decoders[i]);
-	      pull_frame_threaded(layers[i],img_ext,(weed_timecode_t)mainw->currticks);
-	    }
-	    else {
-	      weed_set_voidptr_value(layers[i],"pixel_data",NULL);
-	    }
-	  }
-	  layers[i]=NULL;
+            if (nclip>0) {
+              img_ext=get_image_ext_for_type(mainw->files[nclip]->img_type);
+              // set alt src in layer
+              weed_set_voidptr_value(layers[i],"host_decoder",(void *)mainw->track_decoders[i]);
+              pull_frame_threaded(layers[i],img_ext,(weed_timecode_t)mainw->currticks);
+            } else {
+              weed_set_voidptr_value(layers[i],"pixel_data",NULL);
+            }
+          }
+          layers[i]=NULL;
 
-	  mainw->frame_layer=weed_apply_effects(layers,mainw->filter_map,tc,opwidth,opheight,mainw->pchains);
-	  
-	  for (i=0;layers[i]!=NULL;i++) if (layers[i]!=mainw->frame_layer) {
-	      check_layer_ready(layers[i]);
-	      weed_plant_free(layers[i]);
-	    }
-	  lives_free(layers);
+          mainw->frame_layer=weed_apply_effects(layers,mainw->filter_map,tc,opwidth,opheight,mainw->pchains);
 
-	}
+          for (i=0; layers[i]!=NULL; i++) if (layers[i]!=mainw->frame_layer) {
+              check_layer_ready(layers[i]);
+              weed_plant_free(layers[i]);
+            }
+          lives_free(layers);
 
-	if (mainw->internal_messaging) {
-	  // this happens if we are calling from multitrack, or apply rte.  We get our mainw->frame_layer and exit.
-	  mainw->noswitch=noswitch;
-	  if (framecount!=NULL) lives_free(framecount);
-	  return;
-	}
-      }
-      else {
-	// normal playback in the clip editor, or applying a non-realtime effect
-	if (!mainw->preview||cfile->clip_type==CLIP_TYPE_FILE||lives_file_test(fname_next,LIVES_FILE_TEST_EXISTS)) {
-	  mainw->frame_layer=weed_plant_new(WEED_PLANT_CHANNEL);
-	  weed_set_int_value(mainw->frame_layer,"clip",mainw->current_file);
-	  weed_set_int_value(mainw->frame_layer,"frame",mainw->actual_frame);
-	  if (img_ext==NULL) img_ext=get_image_ext_for_type(cfile->img_type);
+        }
 
-	  if (mainw->preview&&mainw->frame_layer==NULL&&(mainw->event_list==NULL||cfile->opening)) {
-	    if (!pull_frame_at_size(mainw->frame_layer,img_ext,(weed_timecode_t)mainw->currticks,
-				    cfile->hsize,cfile->vsize,WEED_PALETTE_END)) {
-	      if (mainw->frame_layer!=NULL) weed_layer_free(mainw->frame_layer);
-	      mainw->frame_layer=NULL;
+        if (mainw->internal_messaging) {
+          // this happens if we are calling from multitrack, or apply rte.  We get our mainw->frame_layer and exit.
+          mainw->noswitch=noswitch;
+          if (framecount!=NULL) lives_free(framecount);
+          return;
+        }
+      } else {
+        // normal playback in the clip editor, or applying a non-realtime effect
+        if (!mainw->preview||cfile->clip_type==CLIP_TYPE_FILE||lives_file_test(fname_next,LIVES_FILE_TEST_EXISTS)) {
+          mainw->frame_layer=weed_plant_new(WEED_PLANT_CHANNEL);
+          weed_set_int_value(mainw->frame_layer,"clip",mainw->current_file);
+          weed_set_int_value(mainw->frame_layer,"frame",mainw->actual_frame);
+          if (img_ext==NULL) img_ext=get_image_ext_for_type(cfile->img_type);
 
-	      if (cfile->opening && cfile->img_type==IMG_TYPE_PNG && sget_file_size(fname_next)==0) {
-		if (++bad_frame_count>BFC_LIMIT) {
-		  mainw->cancelled=check_for_bad_ffmpeg();
-		  bad_frame_count=0;
-		}
-		else lives_usleep(prefs->sleep_time);
-	      }
-	    }
-	  }
-	  else {
-	    pull_frame_threaded(mainw->frame_layer,img_ext,(weed_timecode_t)mainw->currticks);
-	  }
-	}
-	if ((cfile->next_event==NULL&&mainw->is_rendering&&!mainw->switch_during_pb&&
-	     (mainw->multitrack==NULL||(!mainw->multitrack->is_rendering&&!mainw->is_generating)))||
-	    ((!mainw->is_rendering||(mainw->multitrack!=NULL&&mainw->multitrack->is_rendering))&&
-	     mainw->preview&&mainw->frame_layer==NULL)) {
-	  // preview ended
-	  if (!cfile->opening) mainw->cancelled=CANCEL_NO_MORE_PREVIEW;
-	  if (mainw->cancelled) {
-	    lives_free(fname_next);
-	    lives_free(info_file);
-	    mainw->noswitch=noswitch;
-	    if (framecount!=NULL) lives_free(framecount);
-	    check_layer_ready(mainw->frame_layer);
-	    return;
-	  }
-	  gettimeofday(&tv, NULL);
-	  mainw->currticks=U_SECL*(tv.tv_sec-mainw->origsecs)+tv.tv_usec*U_SEC_RATIO-mainw->origusecs*U_SEC_RATIO;
-	  mainw->startticks=mainw->currticks+mainw->deltaticks;
-	}
-	  
-	img_ext=NULL;
-	
-	if (mainw->internal_messaging) {
-	  mainw->noswitch=noswitch;
-	  if (framecount!=NULL) lives_free(framecount);
-	  check_layer_ready(mainw->frame_layer);
-	  return;
-	}
-	
-	if (mainw->frame_layer==NULL&&(!mainw->preview||(mainw->multitrack!=NULL&&!cfile->opening))) {
-	  mainw->noswitch=noswitch;
-	  if (framecount!=NULL) lives_free(framecount);
-	  return;
-	}
+          if (mainw->preview&&mainw->frame_layer==NULL&&(mainw->event_list==NULL||cfile->opening)) {
+            if (!pull_frame_at_size(mainw->frame_layer,img_ext,(weed_timecode_t)mainw->currticks,
+                                    cfile->hsize,cfile->vsize,WEED_PALETTE_END)) {
+              if (mainw->frame_layer!=NULL) weed_layer_free(mainw->frame_layer);
+              mainw->frame_layer=NULL;
 
-	if (mainw->preview&&mainw->frame_layer==NULL&&(mainw->event_list==NULL||cfile->opening)) {
-	  FILE *fd;
-	  // non-realtime effect preview
-	  // check effect to see if it finished yet
-	  if ((fd=fopen(info_file,"r"))) {
-	    clear_mainw_msg();
-	    do {
-	      retval=0;
-	      mainw->read_failed=FALSE;
-	      lives_fgets(mainw->msg,512,fd);
-	      if (mainw->read_failed) retval=do_read_failed_error_s_with_retry(info_file,NULL,NULL);
-	    } while (retval==LIVES_RESPONSE_RETRY);
-	    fclose(fd);
-	    if (!strncmp(mainw->msg,"completed",9)||!strncmp(mainw->msg,"error",5)) {
-	      // effect completed whilst we were busy playing a preview
-	      if (mainw->preview_box!=NULL) lives_widget_set_tooltip_text( mainw->p_playbutton,_ ("Play"));
-	      lives_widget_set_tooltip_text( mainw->m_playbutton,_ ("Play"));
-	      if (cfile->opening&&!cfile->is_loaded) {
-		if (mainw->toy_type==LIVES_TOY_TV) {
-		  on_toy_activate(NULL,LIVES_INT_TO_POINTER(LIVES_TOY_NONE));
-		}
-	      }
-	      mainw->preview=FALSE;
-	    }
-	    else {
-	      lives_usleep(prefs->sleep_time);
-	    }
-	  }
-	  else {
-	    lives_usleep(prefs->sleep_time);
-	  }
-	  
-	  // or we reached the end of the preview
-	  if ((!cfile->opening&&frame>=(cfile->proc_ptr->frames_done-cfile->progress_start+cfile->start))||
-	      (cfile->opening&&(mainw->toy_type==LIVES_TOY_TV||!mainw->preview||mainw->effects_paused))) {
-	    if (mainw->toy_type==LIVES_TOY_TV) {
-	      // force a loop (set mainw->cancelled to 100 to play selection again)
-	      mainw->cancelled=CANCEL_KEEP_LOOPING;
-	    }
-	    else mainw->cancelled=CANCEL_NO_MORE_PREVIEW;
-	    lives_free(info_file);
-	    lives_free(fname_next);
-	    check_layer_ready(mainw->frame_layer);
-	    if (mainw->frame_layer!=NULL) weed_layer_free(mainw->frame_layer);
-	    mainw->frame_layer=NULL;
-	    mainw->noswitch=noswitch;
-	    if (framecount!=NULL) lives_free(framecount);
-	    return;
-	  }
-	  else if (mainw->preview||cfile->opening) lives_widget_context_update();
-	}
+              if (cfile->opening && cfile->img_type==IMG_TYPE_PNG && sget_file_size(fname_next)==0) {
+                if (++bad_frame_count>BFC_LIMIT) {
+                  mainw->cancelled=check_for_bad_ffmpeg();
+                  bad_frame_count=0;
+                } else lives_usleep(prefs->sleep_time);
+              }
+            }
+          } else {
+            pull_frame_threaded(mainw->frame_layer,img_ext,(weed_timecode_t)mainw->currticks);
+          }
+        }
+        if ((cfile->next_event==NULL&&mainw->is_rendering&&!mainw->switch_during_pb&&
+             (mainw->multitrack==NULL||(!mainw->multitrack->is_rendering&&!mainw->is_generating)))||
+            ((!mainw->is_rendering||(mainw->multitrack!=NULL&&mainw->multitrack->is_rendering))&&
+             mainw->preview&&mainw->frame_layer==NULL)) {
+          // preview ended
+          if (!cfile->opening) mainw->cancelled=CANCEL_NO_MORE_PREVIEW;
+          if (mainw->cancelled) {
+            lives_free(fname_next);
+            lives_free(info_file);
+            mainw->noswitch=noswitch;
+            if (framecount!=NULL) lives_free(framecount);
+            check_layer_ready(mainw->frame_layer);
+            return;
+          }
+          gettimeofday(&tv, NULL);
+          mainw->currticks=U_SECL*(tv.tv_sec-mainw->origsecs)+tv.tv_usec*U_SEC_RATIO-mainw->origusecs*U_SEC_RATIO;
+          mainw->startticks=mainw->currticks+mainw->deltaticks;
+        }
+
+        img_ext=NULL;
+
+        if (mainw->internal_messaging) {
+          mainw->noswitch=noswitch;
+          if (framecount!=NULL) lives_free(framecount);
+          check_layer_ready(mainw->frame_layer);
+          return;
+        }
+
+        if (mainw->frame_layer==NULL&&(!mainw->preview||(mainw->multitrack!=NULL&&!cfile->opening))) {
+          mainw->noswitch=noswitch;
+          if (framecount!=NULL) lives_free(framecount);
+          return;
+        }
+
+        if (mainw->preview&&mainw->frame_layer==NULL&&(mainw->event_list==NULL||cfile->opening)) {
+          FILE *fd;
+          // non-realtime effect preview
+          // check effect to see if it finished yet
+          if ((fd=fopen(info_file,"r"))) {
+            clear_mainw_msg();
+            do {
+              retval=0;
+              mainw->read_failed=FALSE;
+              lives_fgets(mainw->msg,512,fd);
+              if (mainw->read_failed) retval=do_read_failed_error_s_with_retry(info_file,NULL,NULL);
+            } while (retval==LIVES_RESPONSE_RETRY);
+            fclose(fd);
+            if (!strncmp(mainw->msg,"completed",9)||!strncmp(mainw->msg,"error",5)) {
+              // effect completed whilst we were busy playing a preview
+              if (mainw->preview_box!=NULL) lives_widget_set_tooltip_text(mainw->p_playbutton,_("Play"));
+              lives_widget_set_tooltip_text(mainw->m_playbutton,_("Play"));
+              if (cfile->opening&&!cfile->is_loaded) {
+                if (mainw->toy_type==LIVES_TOY_TV) {
+                  on_toy_activate(NULL,LIVES_INT_TO_POINTER(LIVES_TOY_NONE));
+                }
+              }
+              mainw->preview=FALSE;
+            } else {
+              lives_usleep(prefs->sleep_time);
+            }
+          } else {
+            lives_usleep(prefs->sleep_time);
+          }
+
+          // or we reached the end of the preview
+          if ((!cfile->opening&&frame>=(cfile->proc_ptr->frames_done-cfile->progress_start+cfile->start))||
+              (cfile->opening&&(mainw->toy_type==LIVES_TOY_TV||!mainw->preview||mainw->effects_paused))) {
+            if (mainw->toy_type==LIVES_TOY_TV) {
+              // force a loop (set mainw->cancelled to 100 to play selection again)
+              mainw->cancelled=CANCEL_KEEP_LOOPING;
+            } else mainw->cancelled=CANCEL_NO_MORE_PREVIEW;
+            lives_free(info_file);
+            lives_free(fname_next);
+            check_layer_ready(mainw->frame_layer);
+            if (mainw->frame_layer!=NULL) weed_layer_free(mainw->frame_layer);
+            mainw->frame_layer=NULL;
+            mainw->noswitch=noswitch;
+            if (framecount!=NULL) lives_free(framecount);
+            return;
+          } else if (mainw->preview||cfile->opening) lives_widget_context_update();
+        }
       }
     } while (mainw->frame_layer==NULL&&mainw->cancelled==CANCEL_NONE&&cfile->clip_type==CLIP_TYPE_DISK);
 
-    
+
     // from this point onwards we don't need to keep mainw->frame_layer around when we return
 
     if (LIVES_UNLIKELY((mainw->frame_layer==NULL)||mainw->cancelled>0)) {
@@ -5584,37 +5551,35 @@ void load_frame_image(int frame) {
     // OK. Here is the deal now. We have a layer from the current file, current frame.
     // (or at least we sent out a thread to fetch it).
     // We will pass this into the effects, and we will get back a layer.
-    // The palette of the effected layer could be any Weed palette. 
+    // The palette of the effected layer could be any Weed palette.
     // We will pass the layer to all playback plugins.
-    // Finally we may want to end up with a GkdPixbuf (unless the playback plugin is VPP_DISPLAY_LOCAL 
+    // Finally we may want to end up with a GkdPixbuf (unless the playback plugin is VPP_DISPLAY_LOCAL
     // and we are in full screen mode).
 
     if ((mainw->current_file!=mainw->scrap_file||mainw->multitrack!=NULL)&&
-	!(mainw->is_rendering&&!(cfile->proc_ptr!=NULL&&mainw->preview))&&!(mainw->multitrack!=NULL&&cfile->opening)) {
+        !(mainw->is_rendering&&!(cfile->proc_ptr!=NULL&&mainw->preview))&&!(mainw->multitrack!=NULL&&cfile->opening)) {
       boolean size_ok=FALSE;
       if (is_virtual_frame(mainw->current_file,mainw->actual_frame)||(cfile->clip_type!=CLIP_TYPE_DISK&&cfile->clip_type!=CLIP_TYPE_FILE)) {
-	size_ok=TRUE;
-      }
-      else {
-	check_layer_ready(mainw->frame_layer);
-	if ((weed_get_int_value(mainw->frame_layer,"height",&weed_error)==cfile->vsize)&&
-	    (weed_get_int_value(mainw->frame_layer,"width",&weed_error)*
-	     weed_palette_get_pixels_per_macropixel(weed_layer_get_palette(mainw->frame_layer)))==cfile->hsize) {
-	  size_ok=TRUE;
-	}
+        size_ok=TRUE;
+      } else {
+        check_layer_ready(mainw->frame_layer);
+        if ((weed_get_int_value(mainw->frame_layer,"height",&weed_error)==cfile->vsize)&&
+            (weed_get_int_value(mainw->frame_layer,"width",&weed_error)*
+             weed_palette_get_pixels_per_macropixel(weed_layer_get_palette(mainw->frame_layer)))==cfile->hsize) {
+          size_ok=TRUE;
+        }
       }
       if (size_ok) {
-	if ((mainw->rte!=0||mainw->is_rendering)&&(mainw->current_file!=mainw->scrap_file||mainw->multitrack!=NULL)) {
+        if ((mainw->rte!=0||mainw->is_rendering)&&(mainw->current_file!=mainw->scrap_file||mainw->multitrack!=NULL)) {
 
-	  mainw->frame_layer=on_rte_apply (mainw->frame_layer, opwidth, opheight, (weed_timecode_t)mainw->currticks);
+          mainw->frame_layer=on_rte_apply(mainw->frame_layer, opwidth, opheight, (weed_timecode_t)mainw->currticks);
 
-	}
-      }
-      else {
-	if (!mainw->resizing&&!cfile->opening) {
-	  // warn the user after playback that badly sized frames were found
-	  mainw->size_warn=TRUE;
-	}
+        }
+      } else {
+        if (!mainw->resizing&&!cfile->opening) {
+          // warn the user after playback that badly sized frames were found
+          mainw->size_warn=TRUE;
+        }
       }
     }
 
@@ -5625,7 +5590,7 @@ void load_frame_image(int frame) {
       boolean timeout;
       int alarm_handle=lives_alarm_set(LIVES_ACONNECT_TIMEOUT);
       while (!(timeout=lives_alarm_get(alarm_handle))&&jack_get_msgq(mainw->jackd)!=NULL) {
-	sched_yield(); // wait for seek
+        sched_yield(); // wait for seek
       }
       if (timeout) jack_try_reconnect();
 
@@ -5637,7 +5602,7 @@ void load_frame_image(int frame) {
       boolean timeout;
       int alarm_handle=lives_alarm_set(LIVES_ACONNECT_TIMEOUT);
       while (!(timeout=lives_alarm_get(alarm_handle))&&pulse_get_msgq(mainw->pulsed)!=NULL) {
-	sched_yield(); // wait for seek
+        sched_yield(); // wait for seek
       }
 
       if (timeout) pulse_try_reconnect();
@@ -5649,37 +5614,36 @@ void load_frame_image(int frame) {
 
     // save to scrap_file now if we have to
     if (mainw->record&&!rec_after_pb&&!mainw->record_paused&&(prefs->rec_opts&REC_EFFECTS)&&
-	((cfile->clip_type!=CLIP_TYPE_DISK&&cfile->clip_type!=CLIP_TYPE_FILE)||
-	 (mainw->blend_file!=-1&&mainw->files[mainw->blend_file]!=NULL&&
-	  mainw->files[mainw->blend_file]->clip_type!=CLIP_TYPE_DISK&&
-	  mainw->files[mainw->blend_file]->clip_type!=CLIP_TYPE_FILE))) {
+        ((cfile->clip_type!=CLIP_TYPE_DISK&&cfile->clip_type!=CLIP_TYPE_FILE)||
+         (mainw->blend_file!=-1&&mainw->files[mainw->blend_file]!=NULL&&
+          mainw->files[mainw->blend_file]->clip_type!=CLIP_TYPE_DISK&&
+          mainw->files[mainw->blend_file]->clip_type!=CLIP_TYPE_FILE))) {
       if (!rec_after_pb) {
-	check_layer_ready(mainw->frame_layer);
-	save_to_scrap_file (mainw->frame_layer);
+        check_layer_ready(mainw->frame_layer);
+        save_to_scrap_file(mainw->frame_layer);
       }
       get_max_opsize(&opwidth,&opheight);
     }
- 
+
     if (mainw->playing_file>-1&&prefs->letterbox&&mainw->fs&&
-	(mainw->multitrack==NULL||mainw->sep_win)&&
-	(!mainw->ext_playback||(mainw->vpp->capabilities&VPP_LOCAL_DISPLAY))) {
+        (mainw->multitrack==NULL||mainw->sep_win)&&
+        (!mainw->ext_playback||(mainw->vpp->capabilities&VPP_LOCAL_DISPLAY))) {
       // consider letterboxing
       lb_width=cfile->hsize;
       lb_height=cfile->vsize;
 
       if (mainw->multitrack==NULL&&mainw->is_rendering&&
-	  !(cfile->proc_ptr!=NULL&&mainw->preview)&&mainw->clip_index[0]>-1) {
-	if (mainw->clip_index[0]==mainw->scrap_file&&mainw->num_tracks==1) {
-	  // scrap file playback - use original clip size
-	  check_layer_ready(mainw->frame_layer);
-	  lb_width=weed_get_int_value(mainw->frame_layer,"width",&weed_error);
-	  lb_height=weed_get_int_value(mainw->frame_layer,"height",&weed_error);
-	}
-	else {
-	  // playing from event list, use original clip size
-	  lb_width=mainw->files[mainw->clip_index[0]]->hsize;
-	  lb_height=mainw->files[mainw->clip_index[0]]->vsize;
-	}
+          !(cfile->proc_ptr!=NULL&&mainw->preview)&&mainw->clip_index[0]>-1) {
+        if (mainw->clip_index[0]==mainw->scrap_file&&mainw->num_tracks==1) {
+          // scrap file playback - use original clip size
+          check_layer_ready(mainw->frame_layer);
+          lb_width=weed_get_int_value(mainw->frame_layer,"width",&weed_error);
+          lb_height=weed_get_int_value(mainw->frame_layer,"height",&weed_error);
+        } else {
+          // playing from event list, use original clip size
+          lb_width=mainw->files[mainw->clip_index[0]]->hsize;
+          lb_height=mainw->files[mainw->clip_index[0]]->vsize;
+        }
       }
 
       // calc inner frame size
@@ -5690,9 +5654,9 @@ void load_frame_image(int frame) {
     if (mainw->ext_playback&&(mainw->vpp->capabilities&VPP_CAN_RESIZE)&&lb_width==0) {
 
       // here we are outputting video through a video playback plugin which can resize: thus we just send whatever we have
-      // we need only to convert the palette to whatever was agreed with the plugin when we called set_palette() 
+      // we need only to convert the palette to whatever was agreed with the plugin when we called set_palette()
       // in plugins.c
-      // 
+      //
       // if we want letterboxing we do this ourselves, later in code
 
 
@@ -5703,18 +5667,17 @@ void load_frame_image(int frame) {
 
       layer_palette=weed_layer_get_palette(mainw->frame_layer);
 
-      if (!(mainw->vpp->capabilities&VPP_LOCAL_DISPLAY) && 
-	  ((weed_palette_is_rgb_palette(layer_palette) && 
-	    !(weed_palette_is_rgb_palette(mainw->vpp->palette))) || 
-	(weed_palette_is_lower_quality(mainw->vpp->palette,layer_palette)))) {
-	// mainw->frame_layer is RGB and so is our screen, but plugin is YUV
-	// so copy layer and convert, retaining original
-	frame_layer=weed_layer_copy(NULL,mainw->frame_layer);
-      }
-      else frame_layer=mainw->frame_layer;
+      if (!(mainw->vpp->capabilities&VPP_LOCAL_DISPLAY) &&
+          ((weed_palette_is_rgb_palette(layer_palette) &&
+            !(weed_palette_is_rgb_palette(mainw->vpp->palette))) ||
+           (weed_palette_is_lower_quality(mainw->vpp->palette,layer_palette)))) {
+        // mainw->frame_layer is RGB and so is our screen, but plugin is YUV
+        // so copy layer and convert, retaining original
+        frame_layer=weed_layer_copy(NULL,mainw->frame_layer);
+      } else frame_layer=mainw->frame_layer;
 
       convert_layer_palette(frame_layer,mainw->vpp->palette,mainw->vpp->YUV_clamping);
-      
+
       // vid plugin expects compacted rowstrides (i.e. no padding/alignment after pixel row)
       compact_rowstrides(frame_layer);
 
@@ -5723,122 +5686,118 @@ void load_frame_image(int frame) {
       if (mainw->stream_ticks==-1) mainw->stream_ticks=(mainw->currticks);
 
       if (rec_after_pb) {
-	// record output from playback plugin
-	int retwidth=mainw->pwidth/weed_palette_get_pixels_per_macropixel(mainw->vpp->palette);
-	int retheight=mainw->pheight;
+        // record output from playback plugin
+        int retwidth=mainw->pwidth/weed_palette_get_pixels_per_macropixel(mainw->vpp->palette);
+        int retheight=mainw->pheight;
 
-	return_layer=weed_layer_new(retwidth,retheight,NULL,mainw->vpp->palette);
+        return_layer=weed_layer_new(retwidth,retheight,NULL,mainw->vpp->palette);
 
-	if (weed_palette_is_yuv_palette(mainw->vpp->palette)) {
-	  weed_set_int_value(return_layer,"YUV_clamping",mainw->vpp->YUV_clamping);
-	  weed_set_int_value(return_layer,"YUV_subspace",mainw->vpp->YUV_subspace);
-	  weed_set_int_value(return_layer,"YUV_sampling",mainw->vpp->YUV_sampling);
-	}
+        if (weed_palette_is_yuv_palette(mainw->vpp->palette)) {
+          weed_set_int_value(return_layer,"YUV_clamping",mainw->vpp->YUV_clamping);
+          weed_set_int_value(return_layer,"YUV_subspace",mainw->vpp->YUV_subspace);
+          weed_set_int_value(return_layer,"YUV_sampling",mainw->vpp->YUV_sampling);
+        }
 
-	create_empty_pixel_data(return_layer,FALSE,TRUE);
+        create_empty_pixel_data(return_layer,FALSE,TRUE);
 
-	// vid plugin expects compacted rowstrides (i.e. no padding/alignment after pixel row)
-	compact_rowstrides(return_layer);
+        // vid plugin expects compacted rowstrides (i.e. no padding/alignment after pixel row)
+        compact_rowstrides(return_layer);
 
-	retdata=weed_get_voidptr_array(return_layer,"pixel_data",&weed_error);
+        retdata=weed_get_voidptr_array(return_layer,"pixel_data",&weed_error);
 
       }
 
       // chain any data to the playback plugin
       if (!(mainw->preview||mainw->is_rendering)) {
-	// chain any data pipelines
-	if (mainw->pconx!=NULL) {
-	  pconx_chain_data(-2,0);
-	}
-	if (mainw->cconx!=NULL) cconx_chain_data(-2,0);
+        // chain any data pipelines
+        if (mainw->pconx!=NULL) {
+          pconx_chain_data(-2,0);
+        }
+        if (mainw->cconx!=NULL) cconx_chain_data(-2,0);
       }
 
       if (!(*mainw->vpp->render_frame)(weed_get_int_value(frame_layer,"width",&weed_error),
-				       weed_get_int_value(mainw->frame_layer,"height",&weed_error),
-				       mainw->currticks-mainw->stream_ticks,pd_array,retdata,mainw->vpp->play_params)) {
-	vid_playback_plugin_exit();
-	if (return_layer!=NULL) weed_layer_free(return_layer);
-	lives_free(retdata);
-	return_layer=NULL;
+                                       weed_get_int_value(mainw->frame_layer,"height",&weed_error),
+                                       mainw->currticks-mainw->stream_ticks,pd_array,retdata,mainw->vpp->play_params)) {
+        vid_playback_plugin_exit();
+        if (return_layer!=NULL) weed_layer_free(return_layer);
+        lives_free(retdata);
+        return_layer=NULL;
       }
       lives_free(pd_array);
 
       if (frame_layer!=mainw->frame_layer) {
-	weed_layer_free(frame_layer);
+        weed_layer_free(frame_layer);
       }
 
       if (return_layer!=NULL) {
-	int width=MIN(weed_get_int_value(frame_layer,"width",&weed_error),
-		      weed_get_int_value(return_layer,"width",&weed_error));
-	int height=MIN(weed_get_int_value(mainw->frame_layer,"height",&weed_error),
-		       weed_get_int_value(return_layer,"height",&weed_error));
-	resize_layer(return_layer,width,height,LIVES_INTERP_FAST,WEED_PALETTE_END,0); 
+        int width=MIN(weed_get_int_value(frame_layer,"width",&weed_error),
+                      weed_get_int_value(return_layer,"width",&weed_error));
+        int height=MIN(weed_get_int_value(mainw->frame_layer,"height",&weed_error),
+                       weed_get_int_value(return_layer,"height",&weed_error));
+        resize_layer(return_layer,width,height,LIVES_INTERP_FAST,WEED_PALETTE_END,0);
 
-	save_to_scrap_file (return_layer);
-	weed_layer_free(return_layer);
-	lives_free(retdata);
-	return_layer=NULL;
+        save_to_scrap_file(return_layer);
+        weed_layer_free(return_layer);
+        lives_free(retdata);
+        return_layer=NULL;
       }
 
-      if (mainw->vpp->capabilities&VPP_LOCAL_DISPLAY) {      
-	if (mainw->frame_layer!=NULL) weed_layer_free(mainw->frame_layer);
-	mainw->frame_layer=NULL;
-	mainw->noswitch=noswitch;
-	
-	if (!mainw->faded&&(!mainw->fs||prefs->gui_monitor!=prefs->play_monitor)&&
-	    mainw->current_file!=mainw->scrap_file) get_play_times();
-	if (mainw->multitrack!=NULL&&!cfile->opening) animate_multitrack(mainw->multitrack);
-	if (framecount!=NULL) lives_free(framecount);
-	
-	// format is now msg|timecode|fgclip|fgframe|fgfps|
-	lives_notify(LIVES_OSC_NOTIFY_FRAME_SYNCH,(const char *)
-		     (tmp=lives_strdup_printf("%.8f|%d|%d|%.3f|",(double)mainw->currticks/U_SEC,
-					      mainw->current_file,mainw->actual_frame,cfile->pb_fps)));
-	lives_free(tmp);
-	
-	return;
+      if (mainw->vpp->capabilities&VPP_LOCAL_DISPLAY) {
+        if (mainw->frame_layer!=NULL) weed_layer_free(mainw->frame_layer);
+        mainw->frame_layer=NULL;
+        mainw->noswitch=noswitch;
+
+        if (!mainw->faded&&(!mainw->fs||prefs->gui_monitor!=prefs->play_monitor)&&
+            mainw->current_file!=mainw->scrap_file) get_play_times();
+        if (mainw->multitrack!=NULL&&!cfile->opening) animate_multitrack(mainw->multitrack);
+        if (framecount!=NULL) lives_free(framecount);
+
+        // format is now msg|timecode|fgclip|fgframe|fgfps|
+        lives_notify(LIVES_OSC_NOTIFY_FRAME_SYNCH,(const char *)
+                     (tmp=lives_strdup_printf("%.8f|%d|%d|%.3f|",(double)mainw->currticks/U_SEC,
+                                              mainw->current_file,mainw->actual_frame,cfile->pb_fps)));
+        lives_free(tmp);
+
+        return;
       }
 
     }
 
     if ((mainw->multitrack==NULL&&mainw->double_size&&(!prefs->ce_maxspect||mainw->sep_win))||
-	(mainw->fs&&(!mainw->ext_playback||!(mainw->vpp->capabilities&VPP_CAN_RESIZE)))||
-	(mainw->must_resize&&((mainw->multitrack==NULL&&mainw->sep_win)||
-			      (mainw->multitrack!=NULL&&!mainw->sep_win)))) {
+        (mainw->fs&&(!mainw->ext_playback||!(mainw->vpp->capabilities&VPP_CAN_RESIZE)))||
+        (mainw->must_resize&&((mainw->multitrack==NULL&&mainw->sep_win)||
+                              (mainw->multitrack!=NULL&&!mainw->sep_win)))) {
       if (!mainw->ext_playback||(mainw->pwidth!=mainw->vpp->fwidth||mainw->pheight!=mainw->vpp->fheight)) {
-	if (mainw->multitrack!=NULL) {
-	  if (!mainw->fs||mainw->play_window==NULL) {
-	    if (mainw->play_window==NULL) {
-	      mainw->pwidth=mainw->files[mainw->multitrack->render_file]->hsize;
-	      mainw->pheight=mainw->files[mainw->multitrack->render_file]->vsize;
-	      calc_maxspect(mainw->multitrack->play_width,mainw->multitrack->play_height,&mainw->pwidth,&mainw->pheight);
-	    }
-	    else {
-	      mainw->pwidth=cfile->hsize;
-	      mainw->pheight=cfile->vsize;
-	    }
-	  }
-	  else {
-	    if (prefs->play_monitor==0) {
-	      mainw->pwidth=mainw->scr_width;
-	      mainw->pheight=mainw->scr_height;
-	      if (capable->nmonitors>1) {
-		// spread over all monitors
-		mainw->pwidth=lives_screen_get_width(mainw->mgeom[0].screen);
-		mainw->pheight=lives_screen_get_height(mainw->mgeom[0].screen);
-	      }
-	    }
-	    else {
-	      if (mainw->play_window!=NULL) pmonitor=prefs->play_monitor;
-	      else pmonitor=prefs->gui_monitor;
-	      mainw->pwidth=mainw->mgeom[pmonitor-1].width;
-	      mainw->pheight=mainw->mgeom[pmonitor-1].height;
-	    }
-	  }
-	}
+        if (mainw->multitrack!=NULL) {
+          if (!mainw->fs||mainw->play_window==NULL) {
+            if (mainw->play_window==NULL) {
+              mainw->pwidth=mainw->files[mainw->multitrack->render_file]->hsize;
+              mainw->pheight=mainw->files[mainw->multitrack->render_file]->vsize;
+              calc_maxspect(mainw->multitrack->play_width,mainw->multitrack->play_height,&mainw->pwidth,&mainw->pheight);
+            } else {
+              mainw->pwidth=cfile->hsize;
+              mainw->pheight=cfile->vsize;
+            }
+          } else {
+            if (prefs->play_monitor==0) {
+              mainw->pwidth=mainw->scr_width;
+              mainw->pheight=mainw->scr_height;
+              if (capable->nmonitors>1) {
+                // spread over all monitors
+                mainw->pwidth=lives_screen_get_width(mainw->mgeom[0].screen);
+                mainw->pheight=lives_screen_get_height(mainw->mgeom[0].screen);
+              }
+            } else {
+              if (mainw->play_window!=NULL) pmonitor=prefs->play_monitor;
+              else pmonitor=prefs->gui_monitor;
+              mainw->pwidth=mainw->mgeom[pmonitor-1].width;
+              mainw->pheight=mainw->mgeom[pmonitor-1].height;
+            }
+          }
+        }
       }
-    }
-    else {
+    } else {
 
       boolean size_ok=FALSE;
 
@@ -5846,58 +5805,55 @@ void load_frame_image(int frame) {
 
       mainw->pwidth=cfile->hsize;
       mainw->pheight=cfile->vsize;
-   
+
       if (!mainw->is_rendering) {
-	do {
-	  if (pmonitor==0) {
-	    if (mainw->pwidth>mainw->scr_width-SCR_WIDTH_SAFETY||
-		mainw->pheight>mainw->scr_height-SCR_HEIGHT_SAFETY) { 
-	      mainw->pheight=(mainw->pheight>>2)<<1;
-	      mainw->pwidth=(mainw->pwidth>>2)<<1;
-	      mainw->sepwin_scale/=2.;
-	    }
-	    else size_ok=TRUE;
-	  }
-	  else {
-	    if (mainw->pwidth>mainw->mgeom[pmonitor-1].width-SCR_WIDTH_SAFETY||
-		mainw->pheight>mainw->mgeom[pmonitor-1].height-SCR_HEIGHT_SAFETY) {
-	      mainw->pheight=(mainw->pheight>>2)<<1;
-	      mainw->pwidth=(mainw->pwidth>>2)<<1;
-	      mainw->sepwin_scale/=2.;
-	    }
-	    else size_ok=TRUE;
-	  }
-	} while (!size_ok);
+        do {
+          if (pmonitor==0) {
+            if (mainw->pwidth>mainw->scr_width-SCR_WIDTH_SAFETY||
+                mainw->pheight>mainw->scr_height-SCR_HEIGHT_SAFETY) {
+              mainw->pheight=(mainw->pheight>>2)<<1;
+              mainw->pwidth=(mainw->pwidth>>2)<<1;
+              mainw->sepwin_scale/=2.;
+            } else size_ok=TRUE;
+          } else {
+            if (mainw->pwidth>mainw->mgeom[pmonitor-1].width-SCR_WIDTH_SAFETY||
+                mainw->pheight>mainw->mgeom[pmonitor-1].height-SCR_HEIGHT_SAFETY) {
+              mainw->pheight=(mainw->pheight>>2)<<1;
+              mainw->pwidth=(mainw->pwidth>>2)<<1;
+              mainw->sepwin_scale/=2.;
+            } else size_ok=TRUE;
+          }
+        } while (!size_ok);
       }
 
-       if (mainw->multitrack==NULL&&mainw->play_window==NULL&&prefs->ce_maxspect) {
+      if (mainw->multitrack==NULL&&mainw->play_window==NULL&&prefs->ce_maxspect) {
 #if GTK_CHECK_VERSION(3,0,0)
-	int rwidth=mainw->ce_frame_width-H_RESIZE_ADJUST*2;
-	int rheight=mainw->ce_frame_height-V_RESIZE_ADJUST*2;
+        int rwidth=mainw->ce_frame_width-H_RESIZE_ADJUST*2;
+        int rheight=mainw->ce_frame_height-V_RESIZE_ADJUST*2;
 
-	if (mainw->double_size) {
-	  rwidth*=4;
-	  rheight*=4;
-	}
+        if (mainw->double_size) {
+          rwidth*=4;
+          rheight*=4;
+        }
 #else
-	int rwidth=lives_widget_get_allocation_width(mainw->play_image);
-	int rheight=lives_widget_get_allocation_height(mainw->play_image);
+        int rwidth=lives_widget_get_allocation_width(mainw->play_image);
+        int rheight=lives_widget_get_allocation_height(mainw->play_image);
 #endif
-	if (mainw->double_size) {
-	  mainw->pwidth=(mainw->pwidth-H_RESIZE_ADJUST)*4+H_RESIZE_ADJUST;
-	  mainw->pheight=(mainw->pheight-V_RESIZE_ADJUST)*4+H_RESIZE_ADJUST;
+        if (mainw->double_size) {
+          mainw->pwidth=(mainw->pwidth-H_RESIZE_ADJUST)*4+H_RESIZE_ADJUST;
+          mainw->pheight=(mainw->pheight-V_RESIZE_ADJUST)*4+H_RESIZE_ADJUST;
 
-	  if (mainw->pwidth<2) mainw->pwidth=weed_get_int_value(mainw->frame_layer,"width",&weed_error);
-	  if (mainw->pheight<2) mainw->pheight=weed_get_int_value(mainw->frame_layer,"height",&weed_error);
+          if (mainw->pwidth<2) mainw->pwidth=weed_get_int_value(mainw->frame_layer,"width",&weed_error);
+          if (mainw->pheight<2) mainw->pheight=weed_get_int_value(mainw->frame_layer,"height",&weed_error);
 
-	}
+        }
 
-	calc_maxspect(rwidth,rheight,&mainw->pwidth,&mainw->pheight);
+        calc_maxspect(rwidth,rheight,&mainw->pwidth,&mainw->pheight);
 
-	check_layer_ready(mainw->frame_layer);
+        check_layer_ready(mainw->frame_layer);
 
-	if (mainw->pwidth<2) mainw->pwidth=weed_get_int_value(mainw->frame_layer,"width",&weed_error);
-	if (mainw->pheight<2) mainw->pheight=weed_get_int_value(mainw->frame_layer,"height",&weed_error);
+        if (mainw->pwidth<2) mainw->pwidth=weed_get_int_value(mainw->frame_layer,"width",&weed_error);
+        if (mainw->pheight<2) mainw->pheight=weed_get_int_value(mainw->frame_layer,"height",&weed_error);
       }
 
     }
@@ -5907,7 +5863,7 @@ void load_frame_image(int frame) {
       // we must resize to whatever width and height we set when we called init_screen() in the plugin
       // i.e. mainw->vpp->fwidth, mainw->vpp fheight
 
-      // both dimensions are in RGB(A) pixels, so we must adjust here and send 
+      // both dimensions are in RGB(A) pixels, so we must adjust here and send
       // macropixel size in the plugin's render_frame()
 
       // - this is also used if we are letterboxing to fullscreen with an external plugin
@@ -5921,69 +5877,68 @@ void load_frame_image(int frame) {
 
       interp=get_interp_value(prefs->pb_quality);
 
-      if (!(mainw->vpp->capabilities&VPP_LOCAL_DISPLAY) && mainw->vpp->fwidth>0 && mainw->vpp->fheight>0 && 
-	  ((mainw->vpp->fwidth/weed_palette_get_pixels_per_macropixel(layer_palette)<
-	   mainw->pwidth) || 
-	  (mainw->vpp->fheight/weed_palette_get_pixels_per_macropixel(layer_palette)<
-	   mainw->pheight))) {
-	// mainw->frame_layer will be downsized for the plugin but upsized for screen
-	// so copy layer and convert, retaining original
-	frame_layer=weed_layer_copy(NULL,mainw->frame_layer);
-      }
-      else frame_layer=mainw->frame_layer;
+      if (!(mainw->vpp->capabilities&VPP_LOCAL_DISPLAY) && mainw->vpp->fwidth>0 && mainw->vpp->fheight>0 &&
+          ((mainw->vpp->fwidth/weed_palette_get_pixels_per_macropixel(layer_palette)<
+            mainw->pwidth) ||
+           (mainw->vpp->fheight/weed_palette_get_pixels_per_macropixel(layer_palette)<
+            mainw->pheight))) {
+        // mainw->frame_layer will be downsized for the plugin but upsized for screen
+        // so copy layer and convert, retaining original
+        frame_layer=weed_layer_copy(NULL,mainw->frame_layer);
+      } else frame_layer=mainw->frame_layer;
 
-      if (frame_layer==mainw->frame_layer && !(mainw->vpp->capabilities&VPP_LOCAL_DISPLAY) && 
-	  ((weed_palette_is_rgb_palette(layer_palette) && 
-	  !(weed_palette_is_rgb_palette(mainw->vpp->palette))) || 
-	(weed_palette_is_lower_quality(mainw->vpp->palette,layer_palette)))) {
-	// mainw->frame_layer is RGB and so is our screen, but plugin is YUV
-	// so copy layer and convert, retaining original
-	frame_layer=weed_layer_copy(NULL,mainw->frame_layer);
+      if (frame_layer==mainw->frame_layer && !(mainw->vpp->capabilities&VPP_LOCAL_DISPLAY) &&
+          ((weed_palette_is_rgb_palette(layer_palette) &&
+            !(weed_palette_is_rgb_palette(mainw->vpp->palette))) ||
+           (weed_palette_is_lower_quality(mainw->vpp->palette,layer_palette)))) {
+        // mainw->frame_layer is RGB and so is our screen, but plugin is YUV
+        // so copy layer and convert, retaining original
+        frame_layer=weed_layer_copy(NULL,mainw->frame_layer);
       }
 
       if ((mainw->vpp->fwidth>0&&mainw->vpp->fheight>0)&&lb_width==0) {
-	resize_layer(frame_layer,mainw->vpp->fwidth/weed_palette_get_pixels_per_macropixel(layer_palette),
-		     mainw->vpp->fheight,interp,mainw->vpp->palette,mainw->vpp->YUV_clamping);
+        resize_layer(frame_layer,mainw->vpp->fwidth/weed_palette_get_pixels_per_macropixel(layer_palette),
+                     mainw->vpp->fheight,interp,mainw->vpp->palette,mainw->vpp->YUV_clamping);
       }
 
       // resize_layer can change palette
       layer_palette=weed_get_int_value(frame_layer,"current_palette",&weed_error);
-    
-      if (frame_layer==mainw->frame_layer && !(mainw->vpp->capabilities&VPP_LOCAL_DISPLAY) && 
-	  ((weed_palette_is_rgb_palette(layer_palette) && 
-	  !(weed_palette_is_rgb_palette(mainw->vpp->palette))) || 
-	(weed_palette_is_lower_quality(mainw->vpp->palette,layer_palette)))) {
-	// mainw->frame_layer is RGB and so is our screen, but plugin is YUV
-	// so copy layer and convert, retaining original
-	frame_layer=weed_layer_copy(NULL,mainw->frame_layer);
+
+      if (frame_layer==mainw->frame_layer && !(mainw->vpp->capabilities&VPP_LOCAL_DISPLAY) &&
+          ((weed_palette_is_rgb_palette(layer_palette) &&
+            !(weed_palette_is_rgb_palette(mainw->vpp->palette))) ||
+           (weed_palette_is_lower_quality(mainw->vpp->palette,layer_palette)))) {
+        // mainw->frame_layer is RGB and so is our screen, but plugin is YUV
+        // so copy layer and convert, retaining original
+        frame_layer=weed_layer_copy(NULL,mainw->frame_layer);
       }
 
       pwidth=weed_get_int_value(frame_layer,"width",&weed_error)*
-	weed_palette_get_pixels_per_macropixel(layer_palette);
+             weed_palette_get_pixels_per_macropixel(layer_palette);
       pheight=weed_get_int_value(frame_layer,"height",&weed_error);
 
       if (mainw->fs&&(mainw->vpp->capabilities&VPP_LOCAL_DISPLAY)) {
-	mainw->vpp->fwidth=mainw->scr_width;
-	mainw->vpp->fheight=mainw->scr_height;
+        mainw->vpp->fwidth=mainw->scr_width;
+        mainw->vpp->fheight=mainw->scr_height;
       }
 
       convert_layer_palette(frame_layer,mainw->vpp->palette,mainw->vpp->YUV_clamping);
 
       if (mainw->vpp->fwidth!=pwidth||mainw->vpp->fheight!=pheight||lb_width!=0) {
 
-	if (lb_width==0) {
-	  lb_width=pwidth;
-	  lb_height=pheight;
+        if (lb_width==0) {
+          lb_width=pwidth;
+          lb_height=pheight;
 
-	  calc_maxspect(mainw->vpp->fwidth,mainw->vpp->fheight,&lb_width,&lb_height);
-	}
+          calc_maxspect(mainw->vpp->fwidth,mainw->vpp->fheight,&lb_width,&lb_height);
+        }
 
 
-	letterbox_layer(frame_layer,lb_width/
-			weed_palette_get_pixels_per_macropixel(mainw->vpp->palette),
-			lb_height,mainw->vpp->fwidth/
-			weed_palette_get_pixels_per_macropixel(mainw->vpp->palette),
-			mainw->vpp->fheight);
+        letterbox_layer(frame_layer,lb_width/
+                        weed_palette_get_pixels_per_macropixel(mainw->vpp->palette),
+                        lb_height,mainw->vpp->fwidth/
+                        weed_palette_get_pixels_per_macropixel(mainw->vpp->palette),
+                        mainw->vpp->fheight);
 
       }
 
@@ -5993,87 +5948,87 @@ void load_frame_image(int frame) {
       compact_rowstrides(frame_layer);
 
       if (rec_after_pb) {
-	// record output from playback plugin
-	int retwidth=mainw->pwidth/weed_palette_get_pixels_per_macropixel(mainw->vpp->palette);
-	int retheight=mainw->pheight;
-	
-	return_layer=weed_layer_new(retwidth,retheight,NULL,mainw->vpp->palette);
+        // record output from playback plugin
+        int retwidth=mainw->pwidth/weed_palette_get_pixels_per_macropixel(mainw->vpp->palette);
+        int retheight=mainw->pheight;
 
-	if (weed_palette_is_yuv_palette(mainw->vpp->palette)) {
-	  weed_set_int_value(return_layer,"YUV_clamping",mainw->vpp->YUV_clamping);
-	  weed_set_int_value(return_layer,"YUV_subspace",mainw->vpp->YUV_subspace);
-	  weed_set_int_value(return_layer,"YUV_sampling",mainw->vpp->YUV_sampling);
-	}
+        return_layer=weed_layer_new(retwidth,retheight,NULL,mainw->vpp->palette);
 
-	create_empty_pixel_data(return_layer,FALSE,TRUE);
+        if (weed_palette_is_yuv_palette(mainw->vpp->palette)) {
+          weed_set_int_value(return_layer,"YUV_clamping",mainw->vpp->YUV_clamping);
+          weed_set_int_value(return_layer,"YUV_subspace",mainw->vpp->YUV_subspace);
+          weed_set_int_value(return_layer,"YUV_sampling",mainw->vpp->YUV_sampling);
+        }
 
-	// vid plugin expects compacted rowstrides (i.e. no padding/alignment after pixel row)
-	compact_rowstrides(return_layer);
+        create_empty_pixel_data(return_layer,FALSE,TRUE);
 
-	retdata=weed_get_voidptr_array(return_layer,"pixel_data",&weed_error);
+        // vid plugin expects compacted rowstrides (i.e. no padding/alignment after pixel row)
+        compact_rowstrides(return_layer);
+
+        retdata=weed_get_voidptr_array(return_layer,"pixel_data",&weed_error);
       }
 
       // chain any data to the playback plugin
       if (!(mainw->preview||mainw->is_rendering)) {
-	// chain any data pipelines
-	if (mainw->pconx!=NULL) {
-	  pconx_chain_data(-2,0);
-	}
-	if (mainw->cconx!=NULL) cconx_chain_data(-2,0);
+        // chain any data pipelines
+        if (mainw->pconx!=NULL) {
+          pconx_chain_data(-2,0);
+        }
+        if (mainw->cconx!=NULL) cconx_chain_data(-2,0);
       }
 
       if (!(*mainw->vpp->render_frame)(weed_get_int_value(frame_layer,"width",&weed_error),
-				       weed_get_int_value(frame_layer,"height",&weed_error),
-				       mainw->currticks-mainw->stream_ticks,
-				       (pd_array=weed_get_voidptr_array(frame_layer,"pixel_data",&weed_error)),
-				       retdata,mainw->vpp->play_params)) {
-	vid_playback_plugin_exit();
-	if (return_layer!=NULL) {
-	  weed_layer_free(return_layer);
-	  lives_free(retdata);
-	  return_layer=NULL;
-	}
+                                       weed_get_int_value(frame_layer,"height",&weed_error),
+                                       mainw->currticks-mainw->stream_ticks,
+                                       (pd_array=weed_get_voidptr_array(frame_layer,"pixel_data",&weed_error)),
+                                       retdata,mainw->vpp->play_params)) {
+        vid_playback_plugin_exit();
+        if (return_layer!=NULL) {
+          weed_layer_free(return_layer);
+          lives_free(retdata);
+          return_layer=NULL;
+        }
       }
       lives_free(pd_array);
 
       if (frame_layer!=mainw->frame_layer) {
-	weed_layer_free(frame_layer);
+        weed_layer_free(frame_layer);
       }
 
       if (return_layer!=NULL) {
-	int width=MIN(weed_get_int_value(frame_layer,"width",&weed_error),
-		      weed_get_int_value(return_layer,"width",&weed_error));
-	int height=MIN(weed_get_int_value(mainw->frame_layer,"height",&weed_error),
-		       weed_get_int_value(return_layer,"height",&weed_error));
-	resize_layer(return_layer,width,height,LIVES_INTERP_FAST,WEED_PALETTE_END,0); 
+        int width=MIN(weed_get_int_value(frame_layer,"width",&weed_error),
+                      weed_get_int_value(return_layer,"width",&weed_error));
+        int height=MIN(weed_get_int_value(mainw->frame_layer,"height",&weed_error),
+                       weed_get_int_value(return_layer,"height",&weed_error));
+        resize_layer(return_layer,width,height,LIVES_INTERP_FAST,WEED_PALETTE_END,0);
 
-	save_to_scrap_file (return_layer);
-	weed_layer_free(return_layer);
-	lives_free(retdata);
-	return_layer=NULL;
+        save_to_scrap_file(return_layer);
+        weed_layer_free(return_layer);
+        lives_free(retdata);
+        return_layer=NULL;
       }
 
       if (mainw->vpp->capabilities&VPP_LOCAL_DISPLAY) {
-	mainw->noswitch=noswitch;
+        mainw->noswitch=noswitch;
 
-	if (!mainw->faded&&(!mainw->fs||prefs->gui_monitor!=prefs->play_monitor)&&
-	    mainw->current_file!=mainw->scrap_file) get_play_times();
-	if (mainw->multitrack!=NULL&&!cfile->opening) animate_multitrack(mainw->multitrack);
-	if (framecount!=NULL) lives_free(framecount);
-      
-	// format is now msg|timecode|fgclip|fgframe|fgfps|
-	lives_notify(LIVES_OSC_NOTIFY_FRAME_SYNCH,(const char *)
-		     (tmp=lives_strdup_printf("%.8f|%d|%d|%.3f|",(double)mainw->currticks/U_SEC,
-					      mainw->current_file,mainw->actual_frame,cfile->pb_fps)));
-	lives_free(tmp);
-	
-	return;
+        if (!mainw->faded&&(!mainw->fs||prefs->gui_monitor!=prefs->play_monitor)&&
+            mainw->current_file!=mainw->scrap_file) get_play_times();
+        if (mainw->multitrack!=NULL&&!cfile->opening) animate_multitrack(mainw->multitrack);
+        if (framecount!=NULL) lives_free(framecount);
+
+        // format is now msg|timecode|fgclip|fgframe|fgfps|
+        lives_notify(LIVES_OSC_NOTIFY_FRAME_SYNCH,(const char *)
+                     (tmp=lives_strdup_printf("%.8f|%d|%d|%.3f|",(double)mainw->currticks/U_SEC,
+                                              mainw->current_file,mainw->actual_frame,cfile->pb_fps)));
+        lives_free(tmp);
+
+        return;
       }
     }
-  
+
     ////////////////////////////////////////////////////////
-    
-    // local display - either we are playing with no playback plugin, or else the playback plugin has no 
+
+    // local display - either we are playing with no playback plugin, or else the playback plugin has no
     // local display of its own
 
     check_layer_ready(mainw->frame_layer);
@@ -6086,72 +6041,67 @@ void load_frame_image(int frame) {
     if (mainw->fs&&!mainw->ext_playback&&(mainw->multitrack==NULL||mainw->sep_win)) {
       // set again, in case vpp was turned off because of preview conditions
       if (!mainw->sep_win) {
-	do {
-	  mainw->pwidth=lives_widget_get_allocation_width(mainw->playframe);
-	  mainw->pheight=lives_widget_get_allocation_height(mainw->playframe);
-	  if (mainw->pwidth * mainw->pheight==0) {
-	    lives_widget_context_update();
-	  }
-	} while (mainw->pwidth * mainw->pheight == 0);
-      }
-      else {
-	if (prefs->play_monitor==0) {
-	  mainw->pwidth=mainw->scr_width;
-	  mainw->pheight=mainw->scr_height;
-	  if (capable->nmonitors>1) {
-	    // spread over all monitors
-	    mainw->pwidth=lives_screen_get_width(mainw->mgeom[0].screen);
-	    mainw->pheight=lives_screen_get_height(mainw->mgeom[0].screen);
-	  }
-	}
-	else {
-	  if (mainw->play_window!=NULL) pmonitor=prefs->play_monitor;
-	  else pmonitor=prefs->gui_monitor;
-	  mainw->pwidth=mainw->mgeom[pmonitor-1].width;
-	  mainw->pheight=mainw->mgeom[pmonitor-1].height;
-	}
+        do {
+          mainw->pwidth=lives_widget_get_allocation_width(mainw->playframe);
+          mainw->pheight=lives_widget_get_allocation_height(mainw->playframe);
+          if (mainw->pwidth * mainw->pheight==0) {
+            lives_widget_context_update();
+          }
+        } while (mainw->pwidth * mainw->pheight == 0);
+      } else {
+        if (prefs->play_monitor==0) {
+          mainw->pwidth=mainw->scr_width;
+          mainw->pheight=mainw->scr_height;
+          if (capable->nmonitors>1) {
+            // spread over all monitors
+            mainw->pwidth=lives_screen_get_width(mainw->mgeom[0].screen);
+            mainw->pheight=lives_screen_get_height(mainw->mgeom[0].screen);
+          }
+        } else {
+          if (mainw->play_window!=NULL) pmonitor=prefs->play_monitor;
+          else pmonitor=prefs->gui_monitor;
+          mainw->pwidth=mainw->mgeom[pmonitor-1].width;
+          mainw->pheight=mainw->mgeom[pmonitor-1].height;
+        }
       }
     }
 
     if (mainw->play_window!=NULL&&!mainw->fs) {
       mainw->pwidth=lives_widget_get_allocation_width(mainw->play_window);
       mainw->pheight=lives_widget_get_allocation_height(mainw->play_window);
-    }
-    else if (!mainw->fs) {
-      if (mainw->pwidth>lives_widget_get_allocation_width(mainw->play_image)-widget_opts.border_width*2) 
-	mainw->pwidth=lives_widget_get_allocation_width(mainw->play_image)-widget_opts.border_width*2;
-      if (mainw->pheight>lives_widget_get_allocation_height(mainw->play_image)-widget_opts.border_width*2) 
-	mainw->pheight=lives_widget_get_allocation_height(mainw->play_image)-widget_opts.border_width*2;
+    } else if (!mainw->fs) {
+      if (mainw->pwidth>lives_widget_get_allocation_width(mainw->play_image)-widget_opts.border_width*2)
+        mainw->pwidth=lives_widget_get_allocation_width(mainw->play_image)-widget_opts.border_width*2;
+      if (mainw->pheight>lives_widget_get_allocation_height(mainw->play_image)-widget_opts.border_width*2)
+        mainw->pheight=lives_widget_get_allocation_height(mainw->play_image)-widget_opts.border_width*2;
     }
 
     pwidth=weed_get_int_value(mainw->frame_layer,"width",&weed_error)*
-      weed_palette_get_pixels_per_macropixel(layer_palette);
+           weed_palette_get_pixels_per_macropixel(layer_palette);
     pheight=weed_get_int_value(mainw->frame_layer,"height",&weed_error)*
-      weed_palette_get_pixels_per_macropixel(layer_palette);
+            weed_palette_get_pixels_per_macropixel(layer_palette);
 
     if (pwidth!=mainw->pwidth||pheight!=mainw->pheight||lb_width!=0) {
       if (lb_width!=0) {
-	convert_layer_palette(mainw->frame_layer,cpal,0);
+        convert_layer_palette(mainw->frame_layer,cpal,0);
 
-	letterbox_layer(mainw->frame_layer,lb_width/
-			weed_palette_get_pixels_per_macropixel(layer_palette),
-			lb_height,mainw->pwidth/
-			weed_palette_get_pixels_per_macropixel(layer_palette),
-			mainw->pheight);
+        letterbox_layer(mainw->frame_layer,lb_width/
+                        weed_palette_get_pixels_per_macropixel(layer_palette),
+                        lb_height,mainw->pwidth/
+                        weed_palette_get_pixels_per_macropixel(layer_palette),
+                        mainw->pheight);
+      } else {
+        interp=get_interp_value(prefs->pb_quality);
+        resize_layer(mainw->frame_layer,mainw->pwidth/weed_palette_get_pixels_per_macropixel(layer_palette),
+                     mainw->pheight,interp,cpal,0);
+        convert_layer_palette(mainw->frame_layer,cpal,0);
       }
-      else {
-	interp=get_interp_value(prefs->pb_quality);
-	resize_layer(mainw->frame_layer,mainw->pwidth/weed_palette_get_pixels_per_macropixel(layer_palette),
-		     mainw->pheight,interp,cpal,0);
-	convert_layer_palette(mainw->frame_layer,cpal,0);
-      }
-    }
-    else {
-      if (mainw->play_window!=NULL&&LIVES_IS_XWINDOW (lives_widget_get_xwindow(mainw->play_window))) {
-	interp=get_interp_value(prefs->pb_quality);
-	resize_layer(mainw->frame_layer,mainw->pwidth/weed_palette_get_pixels_per_macropixel(layer_palette),
-		     mainw->pheight,interp,cpal,0);
-	convert_layer_palette(mainw->frame_layer,cpal,0);
+    } else {
+      if (mainw->play_window!=NULL&&LIVES_IS_XWINDOW(lives_widget_get_xwindow(mainw->play_window))) {
+        interp=get_interp_value(prefs->pb_quality);
+        resize_layer(mainw->frame_layer,mainw->pwidth/weed_palette_get_pixels_per_macropixel(layer_palette),
+                     mainw->pheight,interp,cpal,0);
+        convert_layer_palette(mainw->frame_layer,cpal,0);
       }
     }
 
@@ -6163,31 +6113,30 @@ void load_frame_image(int frame) {
 
     // internal player, double size or fullscreen, or multitrack
 
-    if (mainw->play_window!=NULL&&LIVES_IS_XWINDOW (lives_widget_get_xwindow(mainw->play_window))) {
+    if (mainw->play_window!=NULL&&LIVES_IS_XWINDOW(lives_widget_get_xwindow(mainw->play_window))) {
       lives_painter_t *cr = lives_painter_create_from_widget(mainw->play_window);
       block_expose();
 
-      lives_painter_set_source_pixbuf (cr, pixbuf, 0, 0);
-      lives_painter_paint (cr);
-      lives_painter_destroy (cr);
+      lives_painter_set_source_pixbuf(cr, pixbuf, 0, 0);
+      lives_painter_paint(cr);
+      lives_painter_destroy(cr);
 
       unblock_expose();
-    }
-    else set_ce_frame_from_pixbuf(LIVES_IMAGE(mainw->play_image),pixbuf,NULL);
+    } else set_ce_frame_from_pixbuf(LIVES_IMAGE(mainw->play_image),pixbuf,NULL);
 
     if (mainw->multitrack!=NULL&&!cfile->opening) animate_multitrack(mainw->multitrack);
 
     else if (!mainw->faded&&(!mainw->fs||prefs->gui_monitor!=prefs->play_monitor||
-			     (mainw->ext_playback&&!(mainw->vpp->capabilities&VPP_LOCAL_DISPLAY)))&&
-			     mainw->current_file!=mainw->scrap_file) 
+                             (mainw->ext_playback&&!(mainw->vpp->capabilities&VPP_LOCAL_DISPLAY)))&&
+             mainw->current_file!=mainw->scrap_file)
       get_play_times();
-    
+
     if (pixbuf!=NULL) lives_object_unref(pixbuf);
-    
+
     // format is now msg|timecode|fgclip|fgframe|fgfps|
     lives_notify(LIVES_OSC_NOTIFY_FRAME_SYNCH,(const char *)
-		 (tmp=lives_strdup_printf("%.8f|%d|%d|%.3f|",(double)mainw->currticks/U_SEC,
-					  mainw->current_file,mainw->actual_frame,cfile->pb_fps)));
+                 (tmp=lives_strdup_printf("%.8f|%d|%d|%.3f|",(double)mainw->currticks/U_SEC,
+                                          mainw->current_file,mainw->actual_frame,cfile->pb_fps)));
     lives_free(tmp);
 
     if (framecount!=NULL) lives_free(framecount);
@@ -6199,17 +6148,16 @@ void load_frame_image(int frame) {
     char fname[PATH_MAX];
     int xwidth,xheight;
     LiVESError *gerror=NULL;
-    lives_painter_t *cr = lives_painter_create_from_widget (mainw->playarea);
+    lives_painter_t *cr = lives_painter_create_from_widget(mainw->playarea);
 
     if (mainw->rec_vid_frames==-1) {
       lives_entry_set_text(LIVES_ENTRY(mainw->framecounter),(tmp=lives_strdup_printf("%9d",frame)));
       lives_widget_queue_draw(mainw->framecounter);
-    }
-    else {
+    } else {
       if (frame>mainw->rec_vid_frames) {
-	mainw->cancelled=CANCEL_KEEP;
-	if (cfile->frames>0) cfile->frames=mainw->rec_vid_frames;
-	return;
+        mainw->cancelled=CANCEL_KEEP;
+        if (cfile->frames>0) cfile->frames=mainw->rec_vid_frames;
+        return;
       }
 
       lives_entry_set_text(LIVES_ENTRY(mainw->framecounter),(tmp=lives_strdup_printf("%9d/%9d",frame,mainw->rec_vid_frames)));
@@ -6221,18 +6169,18 @@ void load_frame_image(int frame) {
 #if GTK_CHECK_VERSION(3,0,0)
     xwidth=gdk_window_get_width(mainw->foreign_window);
     xheight=gdk_window_get_height(mainw->foreign_window);
-    if ((pixbuf=gdk_pixbuf_get_from_window (mainw->foreign_window,
-					      0,0,
-					      xwidth,
-					      xheight
-					      ))!=NULL) {
+    if ((pixbuf=gdk_pixbuf_get_from_window(mainw->foreign_window,
+                                           0,0,
+                                           xwidth,
+                                           xheight
+                                          ))!=NULL) {
 #else
     gdk_window_get_size(mainw->foreign_window,&xwidth,&xheight);
-    if ((pixbuf=gdk_pixbuf_get_from_drawable (NULL,GDK_DRAWABLE(mainw->foreign_window),
-					      mainw->foreign_cmap,0,0,0,0,
-					      xwidth,
-					      xheight
-					      ))!=NULL) {
+    if ((pixbuf=gdk_pixbuf_get_from_drawable(NULL,GDK_DRAWABLE(mainw->foreign_window),
+                mainw->foreign_cmap,0,0,0,0,
+                xwidth,
+                xheight
+                                            ))!=NULL) {
 #endif
 #endif
 #ifdef GUI_QT
@@ -6242,378 +6190,511 @@ void load_frame_image(int frame) {
       QPixmap qp = qscreen->grabWindow(mainw->foreign_id, 0, 0, xwidth, xheight);
       if (0) { // TODO
 #endif
-      lives_snprintf(fname,PATH_MAX,"%s/%s/%08d.%s",prefs->tmpdir,cfile->handle,frame,prefs->image_ext);
-      do {
-	if (gerror!=NULL) lives_error_free(gerror);
-	if (!strcmp(prefs->image_ext,"jpg")) lives_pixbuf_save(pixbuf, fname, IMG_TYPE_JPEG, 100, FALSE, &gerror);
-	else if (!strcmp(prefs->image_ext,"png")) 
-	  lives_pixbuf_save(pixbuf, fname, IMG_TYPE_PNG, 100, FALSE, &gerror);
-      } while (gerror!=NULL);
+        lives_snprintf(fname,PATH_MAX,"%s/%s/%08d.%s",prefs->tmpdir,cfile->handle,frame,prefs->image_ext);
+        do {
+          if (gerror!=NULL) lives_error_free(gerror);
+          if (!strcmp(prefs->image_ext,"jpg")) lives_pixbuf_save(pixbuf, fname, IMG_TYPE_JPEG, 100, FALSE, &gerror);
+          else if (!strcmp(prefs->image_ext,"png"))
+            lives_pixbuf_save(pixbuf, fname, IMG_TYPE_PNG, 100, FALSE, &gerror);
+        } while (gerror!=NULL);
 
 
-      lives_painter_set_source_pixbuf (cr, pixbuf, 0, 0);
-      lives_painter_paint (cr);
-      lives_painter_destroy (cr);
+        lives_painter_set_source_pixbuf(cr, pixbuf, 0, 0);
+        lives_painter_paint(cr);
+        lives_painter_destroy(cr);
 
-      if (pixbuf!=NULL) lives_object_unref(pixbuf);
-      cfile->frames=frame;
+        if (pixbuf!=NULL) lives_object_unref(pixbuf);
+        cfile->frames=frame;
+      } else {
+        do_error_dialog(_("LiVES was unable to capture this image\n\n"));
+        mainw->cancelled=CANCEL_CAPTURE_ERROR;
+      }
+
+      if (frame==mainw->rec_vid_frames) mainw->cancelled=CANCEL_KEEP;
+
     }
-    else {
-      do_error_dialog(_ ("LiVES was unable to capture this image\n\n"));
-      mainw->cancelled=CANCEL_CAPTURE_ERROR;
-    }
-
-    if (frame==mainw->rec_vid_frames) mainw->cancelled=CANCEL_KEEP;
-
-    }
-  if (framecount!=NULL) lives_free(framecount);
-}
+    if (framecount!=NULL) lives_free(framecount);
+  }
 
 
-/** Save a pixbuf to a file using the specified imgtype and the specified quality/compression value */
+  /** Save a pixbuf to a file using the specified imgtype and the specified quality/compression value */
 
-LiVESError *lives_pixbuf_save(LiVESPixbuf *pixbuf, char *fname, lives_image_type_t imgtype, int quality, boolean do_chmod, 
-			      LiVESError **gerrorptr) {
-  // CALLER should check for errors
+  LiVESError *lives_pixbuf_save(LiVESPixbuf *pixbuf, char *fname, lives_image_type_t imgtype, int quality, boolean do_chmod,
+                                LiVESError **gerrorptr) {
+    // CALLER should check for errors
 
-  // fname should be in local charset
+    // fname should be in local charset
 
-  // if do_chmod, we try to set permissions to default
+    // if do_chmod, we try to set permissions to default
 
 #ifndef IS_MINGW
-  mode_t xumask=0;
+    mode_t xumask=0;
 
-  if (do_chmod) {
-    xumask=umask(DEF_FILE_UMASK);
-  }
+    if (do_chmod) {
+      xumask=umask(DEF_FILE_UMASK);
+    }
 #endif
 
-  if (imgtype==IMG_TYPE_JPEG) {
-    char *qstr=lives_strdup_printf("%d",quality);
+    if (imgtype==IMG_TYPE_JPEG) {
+      char *qstr=lives_strdup_printf("%d",quality);
 #ifdef GUI_GTK
-    gdk_pixbuf_save (pixbuf, fname, "jpeg", gerrorptr, "quality", qstr, NULL);
+      gdk_pixbuf_save(pixbuf, fname, "jpeg", gerrorptr, "quality", qstr, NULL);
 #endif
 #ifdef GUI_QT
-    qt_jpeg_save(pixbuf, fname, gerrorptr, quality);
+      qt_jpeg_save(pixbuf, fname, gerrorptr, quality);
 #endif
-    lives_free(qstr);
-  }
-  else if (imgtype==IMG_TYPE_PNG) {
-    char *cstr=lives_strdup_printf("%d",(int)((100.-(double)quality+5.)/10.));
+      lives_free(qstr);
+    } else if (imgtype==IMG_TYPE_PNG) {
+      char *cstr=lives_strdup_printf("%d",(int)((100.-(double)quality+5.)/10.));
 #ifdef GUI_GTK
-    gdk_pixbuf_save (pixbuf, fname, "png", gerrorptr, "compression", cstr, NULL);
+      gdk_pixbuf_save(pixbuf, fname, "png", gerrorptr, "compression", cstr, NULL);
 #endif
 #ifdef GUI_QT
-    qt_png_save(pixbuf, fname, gerrorptr, (int)((100.-(double)quality+5.)/10.));
+      qt_png_save(pixbuf, fname, gerrorptr, (int)((100.-(double)quality+5.)/10.));
 #endif
-    lives_free(cstr);
-  }
-  else {
-    //gdk_pixbuf_save_to_callback(...);
-  }
+      lives_free(cstr);
+    } else {
+      //gdk_pixbuf_save_to_callback(...);
+    }
 
 #ifndef IS_MINGW
-  if (do_chmod) {
-    umask(xumask);
-  }
+    if (do_chmod) {
+      umask(xumask);
+    }
 #endif
 
-  return *gerrorptr;
-}
+    return *gerrorptr;
+  }
 
 
 
-void close_current_file(int file_to_switch_to) {
-  // close the current file, and free the file struct and all sub storage
-  char *com;
-  LiVESList *list_index;
-  int index=-1;
-  int old_file=mainw->current_file;
-  boolean need_new_blend_file=FALSE;
+  void close_current_file(int file_to_switch_to) {
+    // close the current file, and free the file struct and all sub storage
+    char *com;
+    LiVESList *list_index;
+    int index=-1;
+    int old_file=mainw->current_file;
+    boolean need_new_blend_file=FALSE;
 
-  if (mainw->playing_file==-1) {
-    if (mainw->current_file!=mainw->scrap_file) desensitize();
-    lives_widget_set_sensitive (mainw->playall, FALSE);
-    lives_widget_set_sensitive (mainw->m_playbutton, FALSE);
-    lives_widget_set_sensitive (mainw->m_playselbutton, FALSE);
-    lives_widget_set_sensitive (mainw->m_loopbutton, FALSE);
-    lives_widget_set_sensitive (mainw->m_rewindbutton, FALSE);
-    if (mainw->preview_box!=NULL) {
-      lives_widget_set_sensitive (mainw->p_playbutton, FALSE);
-      lives_widget_set_sensitive (mainw->p_playselbutton, FALSE);
-      lives_widget_set_sensitive (mainw->p_loopbutton, FALSE);
-      lives_widget_set_sensitive (mainw->p_rewindbutton, FALSE);
-    }
-    lives_widget_set_sensitive (mainw->rewind, FALSE);
-    lives_widget_set_sensitive (mainw->select_submenu, FALSE);
-    lives_widget_set_sensitive (mainw->trim_submenu, FALSE);
-    lives_widget_set_sensitive (mainw->delaudio_submenu, FALSE);
-    lives_widget_set_sensitive (mainw->lock_selwidth, FALSE);
-    lives_widget_set_sensitive (mainw->show_file_info, FALSE);
-    lives_widget_set_sensitive (mainw->show_file_comments, FALSE);
-    lives_widget_set_sensitive (mainw->rename, FALSE);
-    lives_widget_set_sensitive (mainw->open, TRUE);
-    lives_widget_set_sensitive (mainw->capture, TRUE);
-    lives_widget_set_sensitive (mainw->preferences, TRUE);
-    lives_widget_set_sensitive (mainw->dsize, !mainw->fs);
-    lives_widget_set_sensitive (mainw->rev_clipboard, !(clipboard==NULL));
-    lives_widget_set_sensitive (mainw->show_clipboard_info, !(clipboard==NULL));
-    lives_widget_set_sensitive (mainw->playclip, !(clipboard==NULL));
-    lives_widget_set_sensitive (mainw->paste_as_new, !(clipboard==NULL));
-    lives_widget_set_sensitive (mainw->open_sel, TRUE);
-    lives_widget_set_sensitive (mainw->recaudio_submenu, TRUE);
-    lives_widget_set_sensitive (mainw->open_vcd_menu, TRUE);
-    lives_widget_set_sensitive (mainw->full_screen, TRUE);
+    if (mainw->playing_file==-1) {
+      if (mainw->current_file!=mainw->scrap_file) desensitize();
+      lives_widget_set_sensitive(mainw->playall, FALSE);
+      lives_widget_set_sensitive(mainw->m_playbutton, FALSE);
+      lives_widget_set_sensitive(mainw->m_playselbutton, FALSE);
+      lives_widget_set_sensitive(mainw->m_loopbutton, FALSE);
+      lives_widget_set_sensitive(mainw->m_rewindbutton, FALSE);
+      if (mainw->preview_box!=NULL) {
+        lives_widget_set_sensitive(mainw->p_playbutton, FALSE);
+        lives_widget_set_sensitive(mainw->p_playselbutton, FALSE);
+        lives_widget_set_sensitive(mainw->p_loopbutton, FALSE);
+        lives_widget_set_sensitive(mainw->p_rewindbutton, FALSE);
+      }
+      lives_widget_set_sensitive(mainw->rewind, FALSE);
+      lives_widget_set_sensitive(mainw->select_submenu, FALSE);
+      lives_widget_set_sensitive(mainw->trim_submenu, FALSE);
+      lives_widget_set_sensitive(mainw->delaudio_submenu, FALSE);
+      lives_widget_set_sensitive(mainw->lock_selwidth, FALSE);
+      lives_widget_set_sensitive(mainw->show_file_info, FALSE);
+      lives_widget_set_sensitive(mainw->show_file_comments, FALSE);
+      lives_widget_set_sensitive(mainw->rename, FALSE);
+      lives_widget_set_sensitive(mainw->open, TRUE);
+      lives_widget_set_sensitive(mainw->capture, TRUE);
+      lives_widget_set_sensitive(mainw->preferences, TRUE);
+      lives_widget_set_sensitive(mainw->dsize, !mainw->fs);
+      lives_widget_set_sensitive(mainw->rev_clipboard, !(clipboard==NULL));
+      lives_widget_set_sensitive(mainw->show_clipboard_info, !(clipboard==NULL));
+      lives_widget_set_sensitive(mainw->playclip, !(clipboard==NULL));
+      lives_widget_set_sensitive(mainw->paste_as_new, !(clipboard==NULL));
+      lives_widget_set_sensitive(mainw->open_sel, TRUE);
+      lives_widget_set_sensitive(mainw->recaudio_submenu, TRUE);
+      lives_widget_set_sensitive(mainw->open_vcd_menu, TRUE);
+      lives_widget_set_sensitive(mainw->full_screen, TRUE);
 #ifdef HAVE_WEBM
-    lives_widget_set_sensitive (mainw->open_loc_menu, TRUE);
+      lives_widget_set_sensitive(mainw->open_loc_menu, TRUE);
 #else
-    lives_widget_set_sensitive (mainw->open_loc, TRUE);
+      lives_widget_set_sensitive(mainw->open_loc, TRUE);
 #endif
-    lives_widget_set_sensitive (mainw->open_device_menu, TRUE);
-    lives_widget_set_sensitive (mainw->recent_menu, TRUE);
-    lives_widget_set_sensitive (mainw->restore, TRUE);
-    lives_widget_set_sensitive (mainw->toy_tv, TRUE);
-    lives_widget_set_sensitive (mainw->toy_autolives, TRUE);
-    lives_widget_set_sensitive (mainw->toy_random_frames, TRUE);
-    lives_widget_set_sensitive (mainw->vj_load_set, !mainw->was_set);
-    lives_widget_set_sensitive (mainw->clear_ds, TRUE);
-    lives_widget_set_sensitive (mainw->gens_submenu, TRUE);
-    lives_widget_set_sensitive (mainw->mt_menu, TRUE);
-    lives_widget_set_sensitive (mainw->add_live_menu,TRUE);
-    lives_widget_set_sensitive (mainw->troubleshoot, TRUE);
+      lives_widget_set_sensitive(mainw->open_device_menu, TRUE);
+      lives_widget_set_sensitive(mainw->recent_menu, TRUE);
+      lives_widget_set_sensitive(mainw->restore, TRUE);
+      lives_widget_set_sensitive(mainw->toy_tv, TRUE);
+      lives_widget_set_sensitive(mainw->toy_autolives, TRUE);
+      lives_widget_set_sensitive(mainw->toy_random_frames, TRUE);
+      lives_widget_set_sensitive(mainw->vj_load_set, !mainw->was_set);
+      lives_widget_set_sensitive(mainw->clear_ds, TRUE);
+      lives_widget_set_sensitive(mainw->gens_submenu, TRUE);
+      lives_widget_set_sensitive(mainw->mt_menu, TRUE);
+      lives_widget_set_sensitive(mainw->add_live_menu,TRUE);
+      lives_widget_set_sensitive(mainw->troubleshoot, TRUE);
 #ifdef HAVE_YUV4MPEG
-    lives_widget_set_sensitive (mainw->open_yuv4m, TRUE);
+      lives_widget_set_sensitive(mainw->open_yuv4m, TRUE);
 #endif
-  }
-  //update the bar text
-  if (mainw->current_file>-1) {
-    register int i;
-    if (cfile->clip_type!=CLIP_TYPE_GENERATOR&&mainw->current_file!=mainw->scrap_file&&
-	(mainw->multitrack==NULL||mainw->current_file!=mainw->multitrack->render_file)) {
-      d_print (_ ("Closed file %s\n"),cfile->file_name);
-
-      lives_notify(LIVES_OSC_NOTIFY_CLIP_CLOSED,"");
-
     }
-    
-    // resize frame widgets to default
-    cfile->hsize=mainw->def_width-H_RESIZE_ADJUST;
-    cfile->vsize=mainw->def_height-V_RESIZE_ADJUST;
-    
-    for (i=0;i<FN_KEYS-1;i++) {
-      if (mainw->clipstore[i]==mainw->current_file) mainw->clipstore[i]=0;
-    }
+    //update the bar text
+    if (mainw->current_file>-1) {
+      register int i;
+      if (cfile->clip_type!=CLIP_TYPE_GENERATOR&&mainw->current_file!=mainw->scrap_file&&
+          (mainw->multitrack==NULL||mainw->current_file!=mainw->multitrack->render_file)) {
+        d_print(_("Closed file %s\n"),cfile->file_name);
 
-    // this must all be done last...
-    if (cfile->menuentry!=NULL) {
-      // c.f. on_prevclip_activate
-      list_index=lives_list_find (mainw->cliplist, LIVES_INT_TO_POINTER (mainw->current_file));
-      do {
-	if ((list_index=lives_list_previous(list_index))==NULL) list_index=lives_list_last (mainw->cliplist);
-	index=LIVES_POINTER_TO_INT (lives_list_nth_data(list_index,0));
-      } while ((mainw->files[index]==NULL||mainw->files[index]->opening||mainw->files[index]->restoring||
-		(index==mainw->scrap_file&&index>-1)||(!mainw->files[index]->frames&&mainw->playing_file>-1))&&
-	       index!=mainw->current_file);
-      if (index==mainw->current_file) index=-1;
-      if (mainw->current_file!=mainw->scrap_file) remove_from_clipmenu();
-    }
+        lives_notify(LIVES_OSC_NOTIFY_CLIP_CLOSED,"");
 
-    if ((cfile->clip_type==CLIP_TYPE_FILE||cfile->clip_type==CLIP_TYPE_DISK)&&cfile->ext_src!=NULL) {
-      char *cwd=lives_get_current_dir();
-      char *ppath=lives_build_filename(prefs->tmpdir,cfile->handle,NULL);
-      lives_chdir(ppath,FALSE);
-      lives_free(ppath);
-      close_decoder_plugin((lives_decoder_t *)cfile->ext_src);
-      cfile->ext_src=NULL;
+      }
 
-      lives_chdir(cwd,FALSE);
-      lives_free(cwd);
-    }
-  
-    if (cfile->frame_index!=NULL) lives_free(cfile->frame_index);
-    if (cfile->frame_index_back!=NULL) lives_free(cfile->frame_index_back);
+      // resize frame widgets to default
+      cfile->hsize=mainw->def_width-H_RESIZE_ADJUST;
+      cfile->vsize=mainw->def_height-V_RESIZE_ADJUST;
 
-    if (cfile->op_dir!=NULL) lives_free(cfile->op_dir);
+      for (i=0; i<FN_KEYS-1; i++) {
+        if (mainw->clipstore[i]==mainw->current_file) mainw->clipstore[i]=0;
+      }
 
-    if (cfile->clip_type!=CLIP_TYPE_GENERATOR&&!mainw->only_close) {
+      // this must all be done last...
+      if (cfile->menuentry!=NULL) {
+        // c.f. on_prevclip_activate
+        list_index=lives_list_find(mainw->cliplist, LIVES_INT_TO_POINTER(mainw->current_file));
+        do {
+          if ((list_index=lives_list_previous(list_index))==NULL) list_index=lives_list_last(mainw->cliplist);
+          index=LIVES_POINTER_TO_INT(lives_list_nth_data(list_index,0));
+        } while ((mainw->files[index]==NULL||mainw->files[index]->opening||mainw->files[index]->restoring||
+                  (index==mainw->scrap_file&&index>-1)||(!mainw->files[index]->frames&&mainw->playing_file>-1))&&
+                 index!=mainw->current_file);
+        if (index==mainw->current_file) index=-1;
+        if (mainw->current_file!=mainw->scrap_file) remove_from_clipmenu();
+      }
+
+      if ((cfile->clip_type==CLIP_TYPE_FILE||cfile->clip_type==CLIP_TYPE_DISK)&&cfile->ext_src!=NULL) {
+        char *cwd=lives_get_current_dir();
+        char *ppath=lives_build_filename(prefs->tmpdir,cfile->handle,NULL);
+        lives_chdir(ppath,FALSE);
+        lives_free(ppath);
+        close_decoder_plugin((lives_decoder_t *)cfile->ext_src);
+        cfile->ext_src=NULL;
+
+        lives_chdir(cwd,FALSE);
+        lives_free(cwd);
+      }
+
+      if (cfile->frame_index!=NULL) lives_free(cfile->frame_index);
+      if (cfile->frame_index_back!=NULL) lives_free(cfile->frame_index_back);
+
+      if (cfile->op_dir!=NULL) lives_free(cfile->op_dir);
+
+      if (cfile->clip_type!=CLIP_TYPE_GENERATOR&&!mainw->only_close) {
 #ifdef IS_MINGW
-      // kill any active processes: for other OSes the backend does this
-      // get pid from backend
-      FILE *rfile;
-      ssize_t rlen;
-      char val[16];
-      int pid;
-      com=lives_strdup_printf("%s get_pid_for_handle \"%s\"",prefs->backend_sync,cfile->handle);
-      rfile=popen(com,"r");
-      rlen=fread(val,1,16,rfile);
-      pclose(rfile);
-      memset(val+rlen,0,1);
-      pid=atoi(val);
-      lives_win32_kill_subprocesses(pid,TRUE);
-  
+        // kill any active processes: for other OSes the backend does this
+        // get pid from backend
+        FILE *rfile;
+        ssize_t rlen;
+        char val[16];
+        int pid;
+        com=lives_strdup_printf("%s get_pid_for_handle \"%s\"",prefs->backend_sync,cfile->handle);
+        rfile=popen(com,"r");
+        rlen=fread(val,1,16,rfile);
+        pclose(rfile);
+        memset(val+rlen,0,1);
+        pid=atoi(val);
+        lives_win32_kill_subprocesses(pid,TRUE);
+
 #endif
 
-      com=lives_strdup_printf("%s close \"%s\"",prefs->backend_sync,cfile->handle);
-      lives_system(com,TRUE);
-      lives_free(com); 
+        com=lives_strdup_printf("%s close \"%s\"",prefs->backend_sync,cfile->handle);
+        lives_system(com,TRUE);
+        lives_free(com);
 
-      if (cfile->event_list_back!=NULL) event_list_free (cfile->event_list_back);
-      if (cfile->event_list!=NULL) event_list_free (cfile->event_list);
+        if (cfile->event_list_back!=NULL) event_list_free(cfile->event_list_back);
+        if (cfile->event_list!=NULL) event_list_free(cfile->event_list);
 
-      if (cfile->layout_map!=NULL) {
-	lives_list_free_strings(cfile->layout_map);
-	lives_list_free(cfile->layout_map);
+        if (cfile->layout_map!=NULL) {
+          lives_list_free_strings(cfile->layout_map);
+          lives_list_free(cfile->layout_map);
+        }
+
       }
 
-    }
+      if (cfile->subt!=NULL) subtitles_free(cfile);
 
-    if (cfile->subt!=NULL) subtitles_free(cfile);
-
-    if (cfile->clip_type==CLIP_TYPE_YUV4MPEG) {
+      if (cfile->clip_type==CLIP_TYPE_YUV4MPEG) {
 #ifdef HAVE_YUV4MPEG
-      lives_yuv_stream_stop_read((lives_yuv4m_t *)cfile->ext_src);
-      lives_free (cfile->ext_src);
+        lives_yuv_stream_stop_read((lives_yuv4m_t *)cfile->ext_src);
+        lives_free(cfile->ext_src);
 #endif
-    }
+      }
 
-    if (cfile->clip_type==CLIP_TYPE_VIDEODEV) {
+      if (cfile->clip_type==CLIP_TYPE_VIDEODEV) {
 #ifdef HAVE_UNICAP
-      lives_vdev_free((lives_vdev_t *)cfile->ext_src);
-      lives_free (cfile->ext_src);
+        lives_vdev_free((lives_vdev_t *)cfile->ext_src);
+        lives_free(cfile->ext_src);
 #endif
+      }
+
+      if (cfile->laudio_drawable!=NULL) {
+        lives_painter_surface_destroy(cfile->laudio_drawable);
+      }
+
+      if (cfile->raudio_drawable!=NULL) {
+        lives_painter_surface_destroy(cfile->raudio_drawable);
+      }
+
+      lives_free(cfile);
+      cfile=NULL;
+
+      if (mainw->multitrack!=NULL&&mainw->current_file!=mainw->multitrack->render_file) {
+        mt_delete_clips(mainw->multitrack,mainw->current_file);
+      }
+
+      if (mainw->first_free_file==-1||mainw->first_free_file>mainw->current_file)
+        mainw->first_free_file=mainw->current_file;
+
+      if (!mainw->only_close) {
+        if (file_to_switch_to>0&&mainw->files[file_to_switch_to]!=NULL) {
+          if (mainw->playing_file==-1) {
+            switch_to_file((mainw->current_file=0),file_to_switch_to);
+            d_print("");
+          } else do_quick_switch(file_to_switch_to);
+
+          if (mainw->multitrack!=NULL&&old_file!=mainw->multitrack->render_file) {
+            mt_clip_select(mainw->multitrack,TRUE);
+          }
+
+          return;
+        }
+      }
+
+      if (mainw->current_file==mainw->blend_file) {
+        need_new_blend_file=TRUE;
+      }
+
+      mainw->preview_frame=0;
+
+      if (!mainw->only_close) {
+        // find another clip to switch to
+        if (index>-1) {
+          if (mainw->playing_file==-1) {
+            switch_to_file((mainw->current_file=0),index);
+            d_print("");
+          } else do_quick_switch(index);
+          if (need_new_blend_file) mainw->blend_file=mainw->current_file;
+
+          if (mainw->multitrack!=NULL) {
+            mainw->multitrack->clip_selected=-mainw->multitrack->clip_selected;
+            mt_clip_select(mainw->multitrack,TRUE);
+          }
+
+          return;
+        }
+        if (mainw->clips_available>0) {
+          for (i=mainw->current_file-1; i>0; i--) {
+            if (!(mainw->files[i]==NULL)) {
+              if (mainw->playing_file==-1) {
+                switch_to_file((mainw->current_file=0),i);
+                d_print("");
+              } else do_quick_switch(index);
+              if (need_new_blend_file) mainw->blend_file=mainw->current_file;
+
+              if (mainw->multitrack!=NULL) {
+                mainw->multitrack->clip_selected=-mainw->multitrack->clip_selected;
+                mt_clip_select(mainw->multitrack,TRUE);
+              }
+
+              return;
+            }
+          }
+          for (i=1; i<MAX_FILES; i++) {
+            if (!(mainw->files[i]==NULL)) {
+              if (mainw->playing_file==-1) {
+                switch_to_file((mainw->current_file=0),i);
+                d_print("");
+              } else do_quick_switch(index);
+              if (need_new_blend_file) mainw->blend_file=mainw->current_file;
+
+              if (mainw->multitrack!=NULL) {
+                mainw->multitrack->clip_selected=-mainw->multitrack->clip_selected;
+                mt_clip_select(mainw->multitrack,TRUE);
+              }
+
+              return;
+            }
+          }
+        }
+      }
+
+      // no other clips
+      mainw->current_file=-1;
+      mainw->blend_file=-1;
+      set_main_title(NULL,0);
+
+      lives_widget_set_sensitive(mainw->vj_save_set, FALSE);
+      lives_widget_set_sensitive(mainw->vj_load_set, TRUE);
+      lives_widget_set_sensitive(mainw->export_proj, FALSE);
+      lives_widget_set_sensitive(mainw->import_proj, FALSE);
+
+      if (mainw->multitrack!=NULL) lives_widget_set_sensitive(mainw->multitrack->load_set,TRUE);
+
+      // can't use set_undoable, as we don't have a cfile
+      set_menu_text(mainw->undo,_("_Undo"),TRUE);
+      set_menu_text(mainw->redo,_("_Redo"),TRUE);
+      lives_widget_hide(mainw->redo);
+      lives_widget_show(mainw->undo);
+      lives_widget_set_sensitive(mainw->undo,FALSE);
+
+
+      if (!mainw->is_ready) return;
+
+      if (mainw->playing_file==-1&&mainw->play_window!=NULL) {
+        // if the clip is loaded
+        if (mainw->preview_box==NULL) {
+          // create the preview box that shows frames...
+          make_preview_box();
+        }
+        // add it the play window...
+        if (lives_widget_get_parent(mainw->preview_box)==NULL) {
+          lives_widget_queue_draw(mainw->play_window);
+          lives_container_add(LIVES_CONTAINER(mainw->play_window), mainw->preview_box);
+          lives_widget_grab_focus(mainw->preview_spinbutton);
+        }
+
+        lives_widget_hide(mainw->preview_controls);
+
+        // and resize it
+        resize_play_window();
+
+        play_window_set_title();
+
+        load_preview_image(FALSE);
+      }
+
+      if (mainw->multitrack==NULL) {
+        resize(1);
+        load_start_image(0);
+        load_end_image(0);
+      }
     }
 
-    if (cfile->laudio_drawable!=NULL) {
-      lives_painter_surface_destroy(cfile->laudio_drawable);
+    set_sel_label(mainw->sel_label);
+
+    lives_label_set_text(LIVES_LABEL(mainw->vidbar),_("Video"));
+    lives_label_set_text(LIVES_LABEL(mainw->laudbar),_("Left Audio"));
+    lives_label_set_text(LIVES_LABEL(mainw->raudbar),_("Right Audio"));
+
+    zero_spinbuttons();
+    lives_widget_hide(mainw->hruler);
+    lives_widget_hide(mainw->eventbox5);
+
+    if (palette->style&STYLE_1) {
+      lives_widget_hide(mainw->vidbar);
+      lives_widget_hide(mainw->laudbar);
+      lives_widget_hide(mainw->raudbar);
+    } else {
+      lives_widget_show(mainw->vidbar);
+      lives_widget_show(mainw->laudbar);
+      lives_widget_show(mainw->raudbar);
     }
-
-    if (cfile->raudio_drawable!=NULL) {
-      lives_painter_surface_destroy(cfile->raudio_drawable);
-    }
-
-    lives_free(cfile);
-    cfile=NULL;
-
-    if (mainw->multitrack!=NULL&&mainw->current_file!=mainw->multitrack->render_file) {
-      mt_delete_clips(mainw->multitrack,mainw->current_file);
-    }
-
-    if (mainw->first_free_file==-1||mainw->first_free_file>mainw->current_file) 
-      mainw->first_free_file=mainw->current_file;
-
     if (!mainw->only_close) {
-      if (file_to_switch_to>0&&mainw->files[file_to_switch_to]!=NULL) {
-	if (mainw->playing_file==-1) {
-	  switch_to_file((mainw->current_file=0),file_to_switch_to);
-	  d_print("");
-	}
-	else do_quick_switch(file_to_switch_to);
+      lives_widget_queue_draw(mainw->LiVES);
+      if (mainw->playing_file==-1) d_print("");
 
-	if (mainw->multitrack!=NULL&&old_file!=mainw->multitrack->render_file) {
-	  mt_clip_select(mainw->multitrack,TRUE);
-	}
-
-	return;
-      }
-    }
-    
-    if (mainw->current_file==mainw->blend_file) {
-      need_new_blend_file=TRUE;
-    }
-
-    mainw->preview_frame=0;
-    
-    if (!mainw->only_close) {
-      // find another clip to switch to
-      if (index>-1) {
-	if (mainw->playing_file==-1) {
-	  switch_to_file((mainw->current_file=0),index);
-	  d_print("");
-	}
-	else do_quick_switch(index);
-	if (need_new_blend_file) mainw->blend_file=mainw->current_file;
-
-	if (mainw->multitrack!=NULL) {
-	  mainw->multitrack->clip_selected=-mainw->multitrack->clip_selected;
-	  mt_clip_select(mainw->multitrack,TRUE);
-	}
-
-	return;
-      }
-      if (mainw->clips_available>0) {
-	for (i=mainw->current_file-1;i>0;i--) {
-	  if (!(mainw->files[i]==NULL)) {
-	    if (mainw->playing_file==-1) {
-	      switch_to_file((mainw->current_file=0),i);
-	      d_print("");
-	    }
-	    else do_quick_switch(index);
-	    if (need_new_blend_file) mainw->blend_file=mainw->current_file;
-
-	    if (mainw->multitrack!=NULL) {
-	      mainw->multitrack->clip_selected=-mainw->multitrack->clip_selected;
-	      mt_clip_select(mainw->multitrack,TRUE);
-	    }
-
-	    return;
-	  }
-	}
-	for (i=1;i<MAX_FILES;i++) {
-	  if (!(mainw->files[i]==NULL)) {
-	    if (mainw->playing_file==-1) {
-	      switch_to_file((mainw->current_file=0),i);
-	      d_print("");
-	    }
-	    else do_quick_switch(index);
-	    if (need_new_blend_file) mainw->blend_file=mainw->current_file;
-
-	    if (mainw->multitrack!=NULL) {
-	      mainw->multitrack->clip_selected=-mainw->multitrack->clip_selected;
-	      mt_clip_select(mainw->multitrack,TRUE);
-	    }
-
-	    return;
-	  }
-	}
+      if (mainw->multitrack!=NULL) {
+        mainw->multitrack->clip_selected=-mainw->multitrack->clip_selected;
+        mt_clip_select(mainw->multitrack,TRUE);
       }
     }
 
-    // no other clips
-    mainw->current_file=-1;
-    mainw->blend_file=-1;
-    set_main_title(NULL,0);
-
-    lives_widget_set_sensitive (mainw->vj_save_set, FALSE);
-    lives_widget_set_sensitive (mainw->vj_load_set, TRUE);
-    lives_widget_set_sensitive (mainw->export_proj, FALSE);
-    lives_widget_set_sensitive (mainw->import_proj, FALSE);
-
-    if (mainw->multitrack!=NULL) lives_widget_set_sensitive (mainw->multitrack->load_set,TRUE);
-
-    // can't use set_undoable, as we don't have a cfile
-    set_menu_text(mainw->undo,_ ("_Undo"),TRUE);
-    set_menu_text(mainw->redo,_ ("_Redo"),TRUE);
-    lives_widget_hide(mainw->redo);
-    lives_widget_show(mainw->undo);
-    lives_widget_set_sensitive(mainw->undo,FALSE);
+  }
 
 
-    if (!mainw->is_ready) return;
 
-    if (mainw->playing_file==-1&&mainw->play_window!=NULL) {
+  void switch_to_file(int old_file, int new_file) {
+    // this function is used for full clip switching (during non-playback or non fs)
+    char title[256];
+    int orig_file=mainw->current_file;
+
+    // should use close_current_file
+    if (new_file==-1||new_file>MAX_FILES) {
+      lives_printerr("warning - attempt to switch to invalid clip %d\n",new_file);
+      return;
+    }
+
+    if (mainw->files[new_file]==NULL) return;
+
+    if (cfile!=NULL&&old_file*new_file>0&&cfile->opening) {
+      if (prefs->audio_player==AUD_PLAYER_MPLAYER||prefs->audio_player==AUD_PLAYER_MPLAYER2) {
+        do_error_dialog(
+          _("\n\nLiVES cannot switch clips whilst opening if the audio player is set to mplayer or mplayer2.\nPlease adjust the playback options in Preferences and try again.\n"));
+        return;
+      }
+    }
+
+    mainw->current_file=new_file;
+
+    if (mainw->playing_file==-1&&mainw->multitrack!=NULL) return;
+
+    if (cfile->frames) {
+      mainw->pwidth=cfile->hsize;
+      mainw->pheight=cfile->vsize;
+
+      mainw->play_start=1;
+      mainw->play_end=cfile->frames;
+
+      if (mainw->playing_file>-1) {
+        lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_pb_fps),cfile->pb_fps);
+        changed_fps_during_pb(LIVES_SPIN_BUTTON(mainw->spinbutton_pb_fps), NULL);
+      }
+
+      if ((cfile->clip_type!=CLIP_TYPE_DISK&&cfile->clip_type!=CLIP_TYPE_FILE)||(mainw->event_list!=NULL&&!mainw->record))
+        mainw->play_end=INT_MAX;
+    }
+
+    if (old_file!=new_file) {
+      if (old_file*new_file) mainw->preview_frame=0;
+      if (old_file!=-1) {
+        // TODO - indicate "opening" in clipmenu
+
+        //      if (old_file>0&&mainw->files[old_file]!=NULL&&mainw->files[old_file]->menuentry!=NULL&&
+        //  (mainw->files[old_file]->clip_type==CLIP_TYPE_DISK||mainw->files[old_file]->clip_type==CLIP_TYPE_FILE)) {
+        //char menutext[32768];
+        //get_menu_text_long(mainw->files[old_file]->menuentry,menutext);
+
+        //set_menu_text(mainw->files[old_file]->menuentry,menutext,FALSE);
+        //}
+        lives_widget_set_sensitive(mainw->select_new, (cfile->insert_start>0));
+        lives_widget_set_sensitive(mainw->select_last, (cfile->undo_start>0));
+        if ((cfile->start==1||cfile->end==cfile->frames)&&!(cfile->start==1&&cfile->end==cfile->frames)) {
+          lives_widget_set_sensitive(mainw->select_invert,TRUE);
+        } else {
+          lives_widget_set_sensitive(mainw->select_invert,FALSE);
+        }
+        if (new_file*old_file>0&&mainw->files[old_file]!=NULL&&mainw->files[old_file]->opening) {
+          // switch while opening - come out of processing dialog
+          if (!(mainw->files[old_file]->proc_ptr==NULL)) {
+            lives_widget_destroy(mainw->files[old_file]->proc_ptr->processing);
+            lives_free(mainw->files[old_file]->proc_ptr);
+            mainw->files[old_file]->proc_ptr=NULL;
+          }
+        }
+      }
+    }
+
+    if (!mainw->switch_during_pb&&!cfile->opening) {
+      sensitize();
+    }
+
+    if ((mainw->playing_file==-1&&mainw->play_window!=NULL&&cfile->is_loaded)
+        &&orig_file!=new_file) {
       // if the clip is loaded
       if (mainw->preview_box==NULL) {
-	// create the preview box that shows frames...
-	make_preview_box();
+        // create the preview box that shows frames...
+        make_preview_box();
       }
       // add it the play window...
       if (lives_widget_get_parent(mainw->preview_box)==NULL) {
-	lives_widget_queue_draw(mainw->play_window);
-	lives_container_add (LIVES_CONTAINER (mainw->play_window), mainw->preview_box);
-	lives_widget_grab_focus (mainw->preview_spinbutton);
+        lives_widget_queue_draw(mainw->play_window);
+        lives_container_add(LIVES_CONTAINER(mainw->play_window), mainw->preview_box);
+        lives_widget_grab_focus(mainw->preview_spinbutton);
       }
 
-      lives_widget_hide(mainw->preview_controls);
+      lives_widget_show(mainw->preview_controls);
+      lives_widget_grab_focus(mainw->preview_spinbutton);
 
       // and resize it
       resize_play_window();
@@ -6622,770 +6703,610 @@ void close_current_file(int file_to_switch_to) {
 
       load_preview_image(FALSE);
     }
-      
-    if (mainw->multitrack==NULL) {
-      resize(1);
-      load_start_image (0);
-      load_end_image (0);
+
+    if (new_file>0) {
+      lives_ruler_set_value(LIVES_RULER(mainw->hruler),cfile->pointer_time);
     }
-  }
 
-  set_sel_label(mainw->sel_label);
-
-  lives_label_set_text(LIVES_LABEL(mainw->vidbar),_ ("Video"));
-  lives_label_set_text(LIVES_LABEL(mainw->laudbar),_ ("Left Audio"));
-  lives_label_set_text(LIVES_LABEL(mainw->raudbar),_ ("Right Audio"));
-    
-  zero_spinbuttons();
-  lives_widget_hide (mainw->hruler);
-  lives_widget_hide (mainw->eventbox5);
-
-  if (palette->style&STYLE_1) {
-    lives_widget_hide (mainw->vidbar);
-    lives_widget_hide (mainw->laudbar);
-    lives_widget_hide (mainw->raudbar);
-  }
-  else {
-    lives_widget_show (mainw->vidbar);
-    lives_widget_show (mainw->laudbar);
-    lives_widget_show (mainw->raudbar);
-  }
-  if (!mainw->only_close) {
-    lives_widget_queue_draw (mainw->LiVES);
-    if (mainw->playing_file==-1) d_print("");
-
-    if (mainw->multitrack!=NULL) {
-      mainw->multitrack->clip_selected=-mainw->multitrack->clip_selected;
-      mt_clip_select(mainw->multitrack,TRUE);
+    if (cfile->opening||!(cfile->clip_type==CLIP_TYPE_DISK||cfile->clip_type==CLIP_TYPE_FILE)) {
+      load_start_image(0);
+      load_end_image(0);
+      lives_widget_set_sensitive(mainw->rename, FALSE);
     }
-  }
-
-}
 
 
-  
-void switch_to_file(int old_file, int new_file) {
-  // this function is used for full clip switching (during non-playback or non fs)
-  char title[256];
-  int orig_file=mainw->current_file;
-
-  // should use close_current_file
-  if (new_file==-1||new_file>MAX_FILES) {
-    lives_printerr("warning - attempt to switch to invalid clip %d\n",new_file);
-    return;
-  }
-
-  if (mainw->files[new_file]==NULL) return;
-
-  if (cfile!=NULL&&old_file*new_file>0&&cfile->opening) {
-    if (prefs->audio_player==AUD_PLAYER_MPLAYER||prefs->audio_player==AUD_PLAYER_MPLAYER2) {
-      do_error_dialog(_ ("\n\nLiVES cannot switch clips whilst opening if the audio player is set to mplayer or mplayer2.\nPlease adjust the playback options in Preferences and try again.\n"));
-      return;
+    if (cfile->menuentry!=NULL) {
+      // TODO - indicate "opening"
+      //char menutext[32768];
+      //get_menu_text_long(cfile->menuentry,menutext);
+      lives_signal_handler_block(cfile->menuentry, cfile->menuentry_func);
+      lives_check_menu_item_set_active(LIVES_CHECK_MENU_ITEM(cfile->menuentry),TRUE);
+      lives_signal_handler_unblock(cfile->menuentry, cfile->menuentry_func);
+      //set_menu_text(cfile->menuentry,menutext,FALSE);
     }
-  }
 
-  mainw->current_file=new_file;
 
-  if (mainw->playing_file==-1&&mainw->multitrack!=NULL) return;
+    if (cfile->clip_type==CLIP_TYPE_DISK||cfile->clip_type==CLIP_TYPE_FILE) {
+      reget_afilesize(mainw->current_file);
+    }
 
-  if (cfile->frames) {
-    mainw->pwidth=cfile->hsize;
-    mainw->pheight=cfile->vsize;
 
-    mainw->play_start=1;
-    mainw->play_end=cfile->frames;
+    if (!mainw->switch_during_pb) {
+      // switch on/off loop video if we have/don't have audio
+      if (cfile->achans==0) {
+        mainw->loop=FALSE;
+      } else {
+        mainw->loop=lives_check_menu_item_get_active(LIVES_CHECK_MENU_ITEM(mainw->loop_video));
+      }
+
+      lives_widget_set_sensitive(mainw->undo, cfile->undoable);
+      lives_widget_set_sensitive(mainw->redo, cfile->redoable);
+      lives_widget_set_sensitive(mainw->export_submenu, (cfile->achans>0));
+      lives_widget_set_sensitive(mainw->recaudio_submenu, TRUE);
+      lives_widget_set_sensitive(mainw->recaudio_sel, (cfile->frames>0));
+      lives_widget_set_sensitive(mainw->export_selaudio, (cfile->frames>0));
+      lives_widget_set_sensitive(mainw->append_audio, (cfile->achans>0));
+      lives_widget_set_sensitive(mainw->trim_submenu, (cfile->achans>0));
+      lives_widget_set_sensitive(mainw->trim_audio, mainw->current_file>0&&(cfile->achans*cfile->frames>0));
+      lives_widget_set_sensitive(mainw->trim_to_pstart, (cfile->achans>0&&cfile->pointer_time>0.));
+      lives_widget_set_sensitive(mainw->delaudio_submenu, (cfile->achans>0));
+      lives_widget_set_sensitive(mainw->delsel_audio, (cfile->frames>0));
+      lives_widget_set_sensitive(mainw->resample_audio, (cfile->achans>0&&capable->has_sox_sox));
+      lives_widget_set_sensitive(mainw->fade_aud_in, cfile->achans>0);
+      lives_widget_set_sensitive(mainw->fade_aud_out, cfile->achans>0);
+      lives_widget_set_sensitive(mainw->loop_video, (cfile->achans>0&&cfile->frames>0));
+    }
+
+    set_menu_text(mainw->undo,cfile->undo_text,TRUE);
+    set_menu_text(mainw->redo,cfile->redo_text,TRUE);
+
+    set_sel_label(mainw->sel_label);
+
+    lives_widget_show(mainw->vidbar);
+    lives_widget_show(mainw->laudbar);
+
+    if (cfile->achans<2) {
+      lives_widget_hide(mainw->raudbar);
+    } else {
+      lives_widget_show(mainw->raudbar);
+    }
+
+    if (cfile->redoable) {
+      lives_widget_show(mainw->redo);
+      lives_widget_hide(mainw->undo);
+    } else {
+      lives_widget_hide(mainw->redo);
+      lives_widget_show(mainw->undo);
+    }
+
+    if (new_file>0) {
+      if (cfile->menuentry!=NULL) {
+        get_menu_text(cfile->menuentry,title);
+        set_main_title(title,0);
+      } else set_main_title(cfile->file_name,0);
+    }
+
+    if (cfile->frames==0) {
+      zero_spinbuttons();
+    }
+
+    if (mainw->multitrack==NULL) resize(1);
 
     if (mainw->playing_file>-1) {
-      lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_pb_fps),cfile->pb_fps);
-      changed_fps_during_pb (LIVES_SPIN_BUTTON(mainw->spinbutton_pb_fps), NULL);
-    }
-
-    if ((cfile->clip_type!=CLIP_TYPE_DISK&&cfile->clip_type!=CLIP_TYPE_FILE)||(mainw->event_list!=NULL&&!mainw->record)) 
-      mainw->play_end=INT_MAX;
-  }
-
-  if (old_file!=new_file) {
-    if (old_file*new_file) mainw->preview_frame=0;
-    if (old_file!=-1) {
-      // TODO - indicate "opening" in clipmenu
-
-      //      if (old_file>0&&mainw->files[old_file]!=NULL&&mainw->files[old_file]->menuentry!=NULL&&
-      //  (mainw->files[old_file]->clip_type==CLIP_TYPE_DISK||mainw->files[old_file]->clip_type==CLIP_TYPE_FILE)) {
-	//char menutext[32768];
-	//get_menu_text_long(mainw->files[old_file]->menuentry,menutext);
-
-	//set_menu_text(mainw->files[old_file]->menuentry,menutext,FALSE);
-      //}
-      lives_widget_set_sensitive (mainw->select_new, (cfile->insert_start>0));
-      lives_widget_set_sensitive (mainw->select_last, (cfile->undo_start>0));
-      if ((cfile->start==1||cfile->end==cfile->frames)&&!(cfile->start==1&&cfile->end==cfile->frames)) {
-	lives_widget_set_sensitive(mainw->select_invert,TRUE);
-      }
-      else {
-	lives_widget_set_sensitive(mainw->select_invert,FALSE);
-      }
-      if (new_file*old_file>0&&mainw->files[old_file]!=NULL&&mainw->files[old_file]->opening) {
-	// switch while opening - come out of processing dialog
-	if (!(mainw->files[old_file]->proc_ptr==NULL)) {
-	  lives_widget_destroy (mainw->files[old_file]->proc_ptr->processing);
-	  lives_free (mainw->files[old_file]->proc_ptr);
-	  mainw->files[old_file]->proc_ptr=NULL;
-	}
-      }
-    }
-  }
-
-  if (!mainw->switch_during_pb&&!cfile->opening) {
-    sensitize();
-  }
-
-  if ((mainw->playing_file==-1&&mainw->play_window!=NULL&&cfile->is_loaded)
-      &&orig_file!=new_file) {
-    // if the clip is loaded
-    if (mainw->preview_box==NULL) {
-      // create the preview box that shows frames...
-      make_preview_box();
-    }
-    // add it the play window...
-    if (lives_widget_get_parent(mainw->preview_box)==NULL) {
-      lives_widget_queue_draw(mainw->play_window);
-      lives_container_add (LIVES_CONTAINER (mainw->play_window), mainw->preview_box);
-      lives_widget_grab_focus (mainw->preview_spinbutton);
-    }
-
-    lives_widget_show(mainw->preview_controls);
-    lives_widget_grab_focus (mainw->preview_spinbutton);
-
-    // and resize it
-    resize_play_window();
-
-    play_window_set_title();
-
-    load_preview_image(FALSE);
-  }
-  
-  if (new_file>0) {
-    lives_ruler_set_value (LIVES_RULER(mainw->hruler),cfile->pointer_time);
-  }
-
-  if (cfile->opening||!(cfile->clip_type==CLIP_TYPE_DISK||cfile->clip_type==CLIP_TYPE_FILE)) {
-    load_start_image(0);
-    load_end_image(0);
-    lives_widget_set_sensitive (mainw->rename, FALSE);
-  }
-
-
-  if (cfile->menuentry!=NULL) {
-    // TODO - indicate "opening"
-    //char menutext[32768];
-    //get_menu_text_long(cfile->menuentry,menutext);
-    lives_signal_handler_block (cfile->menuentry, cfile->menuentry_func);
-    lives_check_menu_item_set_active(LIVES_CHECK_MENU_ITEM(cfile->menuentry),TRUE);
-    lives_signal_handler_unblock (cfile->menuentry, cfile->menuentry_func);
-    //set_menu_text(cfile->menuentry,menutext,FALSE);
-  }
-
-
-  if (cfile->clip_type==CLIP_TYPE_DISK||cfile->clip_type==CLIP_TYPE_FILE) {
-    reget_afilesize (mainw->current_file);
-  }
-
-
-  if (!mainw->switch_during_pb) {
-    // switch on/off loop video if we have/don't have audio
-    if (cfile->achans==0) {
-      mainw->loop=FALSE;
-    }
-    else {
-      mainw->loop=lives_check_menu_item_get_active(LIVES_CHECK_MENU_ITEM(mainw->loop_video));
-    }
-    
-    lives_widget_set_sensitive (mainw->undo, cfile->undoable);
-    lives_widget_set_sensitive (mainw->redo, cfile->redoable);
-    lives_widget_set_sensitive (mainw->export_submenu, (cfile->achans>0));
-    lives_widget_set_sensitive (mainw->recaudio_submenu, TRUE);
-    lives_widget_set_sensitive (mainw->recaudio_sel, (cfile->frames>0));
-    lives_widget_set_sensitive (mainw->export_selaudio, (cfile->frames>0));
-    lives_widget_set_sensitive (mainw->append_audio, (cfile->achans>0));
-    lives_widget_set_sensitive (mainw->trim_submenu, (cfile->achans>0));
-    lives_widget_set_sensitive (mainw->trim_audio, mainw->current_file>0&&(cfile->achans*cfile->frames>0));
-    lives_widget_set_sensitive (mainw->trim_to_pstart, (cfile->achans>0&&cfile->pointer_time>0.));
-    lives_widget_set_sensitive (mainw->delaudio_submenu, (cfile->achans>0));
-    lives_widget_set_sensitive (mainw->delsel_audio, (cfile->frames>0));
-    lives_widget_set_sensitive (mainw->resample_audio, (cfile->achans>0&&capable->has_sox_sox));
-    lives_widget_set_sensitive (mainw->fade_aud_in, cfile->achans>0);
-    lives_widget_set_sensitive (mainw->fade_aud_out, cfile->achans>0);
-    lives_widget_set_sensitive (mainw->loop_video, (cfile->achans>0&&cfile->frames>0));
-  }
-
-  set_menu_text(mainw->undo,cfile->undo_text,TRUE);
-  set_menu_text(mainw->redo,cfile->redo_text,TRUE);
-  
-  set_sel_label(mainw->sel_label);
-
-  lives_widget_show(mainw->vidbar);
-  lives_widget_show(mainw->laudbar);
-
-  if (cfile->achans<2) {
-    lives_widget_hide(mainw->raudbar);
-  }
-  else {
-    lives_widget_show(mainw->raudbar);
-  }
-
-  if (cfile->redoable) {
-    lives_widget_show(mainw->redo);
-    lives_widget_hide(mainw->undo);
-  }
-  else {
-    lives_widget_hide(mainw->redo);
-    lives_widget_show(mainw->undo);
-  }
-
-  if (new_file>0) {
-    if (cfile->menuentry!=NULL) {
-      get_menu_text(cfile->menuentry,title);
-      set_main_title(title,0);
-    }
-   else set_main_title(cfile->file_name,0);
-  }
-
-  if (cfile->frames==0) {
-    zero_spinbuttons();
-  }
-
-  if (mainw->multitrack==NULL) resize(1);
-
-  if (mainw->playing_file>-1) {
       if (mainw->fs) {
-	//on_full_screen_activate (NULL,LIVES_INT_TO_POINTER (1));
-      }
-      else {
-	if (!mainw->faded&&cfile->frames>0) {
-	  lives_signal_handler_block(mainw->spinbutton_end,mainw->spin_end_func);
-	  lives_spin_button_set_range(LIVES_SPIN_BUTTON(mainw->spinbutton_end),1,cfile->frames);
-	  lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_end),cfile->end);
-	  lives_signal_handler_unblock(mainw->spinbutton_end,mainw->spin_end_func);
-	  
-	  lives_signal_handler_block(mainw->spinbutton_start,mainw->spin_start_func);
-	  lives_spin_button_set_range(LIVES_SPIN_BUTTON(mainw->spinbutton_start),1,cfile->frames);
-	  lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_start),cfile->start);
-	  lives_signal_handler_unblock(mainw->spinbutton_start,mainw->spin_start_func);
+        //on_full_screen_activate (NULL,LIVES_INT_TO_POINTER (1));
+      } else {
+        if (!mainw->faded&&cfile->frames>0) {
+          lives_signal_handler_block(mainw->spinbutton_end,mainw->spin_end_func);
+          lives_spin_button_set_range(LIVES_SPIN_BUTTON(mainw->spinbutton_end),1,cfile->frames);
+          lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_end),cfile->end);
+          lives_signal_handler_unblock(mainw->spinbutton_end,mainw->spin_end_func);
+
+          lives_signal_handler_block(mainw->spinbutton_start,mainw->spin_start_func);
+          lives_spin_button_set_range(LIVES_SPIN_BUTTON(mainw->spinbutton_start),1,cfile->frames);
+          lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_start),cfile->start);
+          lives_signal_handler_unblock(mainw->spinbutton_start,mainw->spin_start_func);
           load_start_image(cfile->start);
           load_end_image(cfile->end);
-	  load_frame_image(cfile->frameno);
-	}
-	if (mainw->double_size) {
-	  frame_size_update();
-	}
-     }
-  }
-  else {
-    // it is unfortunate that we might resize after this, and our timer bars will then look the wrong width
-    if (mainw->is_ready) {
-      get_play_times();
+          load_frame_image(cfile->frameno);
+        }
+        if (mainw->double_size) {
+          frame_size_update();
+        }
+      }
+    } else {
+      // it is unfortunate that we might resize after this, and our timer bars will then look the wrong width
+      if (mainw->is_ready) {
+        get_play_times();
+      }
+      // ...so we need an expose event in callbacks.c
     }
-    // ...so we need an expose event in callbacks.c
+
+    // if the file was opening, continue...
+    if (cfile->opening) {
+      open_file(cfile->file_name);
+    }
   }
 
-  // if the file was opening, continue...
-  if (cfile->opening) {
-    open_file(cfile->file_name);
-  }
-}
 
+  void switch_audio_clip(int new_file, boolean activate) {
 
-void switch_audio_clip(int new_file, boolean activate) {
-
-  if (prefs->audio_player==AUD_PLAYER_JACK) {
+    if (prefs->audio_player==AUD_PLAYER_JACK) {
 #ifdef ENABLE_JACK
-    if (mainw->jackd!=NULL) {
-      boolean timeout;
-      int alarm_handle=lives_alarm_set(LIVES_ACONNECT_TIMEOUT);
-      if (!activate) mainw->jackd->in_use=FALSE;
+      if (mainw->jackd!=NULL) {
+        boolean timeout;
+        int alarm_handle=lives_alarm_set(LIVES_ACONNECT_TIMEOUT);
+        if (!activate) mainw->jackd->in_use=FALSE;
 
-      if (mainw->jackd->playing_file==new_file) return;
+        if (mainw->jackd->playing_file==new_file) return;
 
-      while (!(timeout=lives_alarm_get(alarm_handle))&&jack_get_msgq(mainw->jackd)!=NULL) {
-	sched_yield(); // wait for seek
+        while (!(timeout=lives_alarm_get(alarm_handle))&&jack_get_msgq(mainw->jackd)!=NULL) {
+          sched_yield(); // wait for seek
+        }
+        if (timeout) jack_try_reconnect();
+        lives_alarm_clear(alarm_handle);
+
+        if (mainw->jackd->playing_file>0) {
+          jack_message.command=ASERVER_CMD_FILE_CLOSE;
+          jack_message.data=NULL;
+          jack_message.next=NULL;
+          mainw->jackd->msgq=&jack_message;
+
+          lives_alarm_set(LIVES_ACONNECT_TIMEOUT);
+          while (!(timeout=lives_alarm_get(alarm_handle))&&jack_get_msgq(mainw->jackd)!=NULL) {
+            sched_yield(); // wait for seek
+          }
+          if (timeout) jack_try_reconnect();
+          lives_alarm_clear(alarm_handle);
+
+        }
+
+        if (new_file<0||mainw->files[new_file]==NULL) {
+          mainw->jackd->in_use=FALSE;
+          return;
+        }
+
+        if (activate) mainw->jackd->in_use=TRUE;
+
+        if (mainw->files[new_file]->achans>0) {
+          int asigned=!(mainw->files[new_file]->signed_endian&AFORM_UNSIGNED);
+          int aendian=!(mainw->files[new_file]->signed_endian&AFORM_BIG_ENDIAN);
+          mainw->jackd->num_input_channels=mainw->files[new_file]->achans;
+          mainw->jackd->bytes_per_channel=mainw->files[new_file]->asampsize/8;
+          if (activate&&(prefs->audio_opts&AUDIO_OPTS_FOLLOW_FPS)) {
+            if (!mainw->files[new_file]->play_paused)
+              mainw->jackd->sample_in_rate=mainw->files[new_file]->arate*mainw->files[new_file]->pb_fps/
+                                           mainw->files[new_file]->fps;
+            else mainw->jackd->sample_in_rate=mainw->files[new_file]->arate*mainw->files[new_file]->freeze_fps/
+                                                mainw->files[new_file]->fps;
+          } else mainw->jackd->sample_in_rate=mainw->files[new_file]->arate;
+          mainw->jackd->usigned=!asigned;
+          mainw->jackd->seek_end=mainw->files[new_file]->afilesize;
+
+          if ((aendian&&(capable->byte_order==LIVES_BIG_ENDIAN))||
+              (!aendian&&(capable->byte_order==LIVES_LITTLE_ENDIAN)))
+            mainw->jackd->reverse_endian=TRUE;
+          else mainw->jackd->reverse_endian=FALSE;
+
+          if (mainw->ping_pong) mainw->jackd->loop=AUDIO_LOOP_PINGPONG;
+          else mainw->jackd->loop=AUDIO_LOOP_FORWARD;
+
+          // tell jack server to open audio file and start playing it
+
+          jack_message.command=ASERVER_CMD_FILE_OPEN;
+
+          jack_message.data=lives_strdup_printf("%d",new_file);
+
+          jack_message2.command=ASERVER_CMD_FILE_SEEK;
+          jack_message.next=&jack_message2;
+          jack_message2.data=lives_strdup_printf("%"PRId64,mainw->files[new_file]->aseek_pos);
+          jack_message2.next=NULL;
+
+          mainw->jackd->msgq=&jack_message;
+          mainw->jackd->in_use=TRUE;
+
+          if (mainw->agen_key==0&&!mainw->agen_needs_reinit) {
+            if (prefs->audio_opts&AUDIO_OPTS_FOLLOW_FPS) {
+              mainw->jackd->is_paused=mainw->files[new_file]->play_paused;
+              mainw->jackd->is_silent=FALSE;
+            }
+
+            mainw->rec_aclip=new_file;
+            mainw->rec_avel=mainw->files[new_file]->pb_fps/mainw->files[new_file]->fps;
+            mainw->rec_aseek=(double)mainw->files[new_file]->aseek_pos/
+                             (double)(mainw->files[new_file]->arate*mainw->files[new_file]->achans*mainw->files[new_file]->asampsize/8);
+          }
+        } else {
+          if (mainw->agen_key==0&&!mainw->agen_needs_reinit) {
+            mainw->rec_aclip=mainw->current_file;
+            mainw->rec_avel=0.;
+            mainw->rec_aseek=0.;
+          }
+        }
       }
-      if (timeout) jack_try_reconnect();
-      lives_alarm_clear(alarm_handle);
-
-      if (mainw->jackd->playing_file>0) {
-	jack_message.command=ASERVER_CMD_FILE_CLOSE;
-	jack_message.data=NULL;
-	jack_message.next=NULL;
-	mainw->jackd->msgq=&jack_message;
-	
-	lives_alarm_set(LIVES_ACONNECT_TIMEOUT);
-	while (!(timeout=lives_alarm_get(alarm_handle))&&jack_get_msgq(mainw->jackd)!=NULL) {
-	  sched_yield(); // wait for seek
-	}
-	if (timeout) jack_try_reconnect();
-	lives_alarm_clear(alarm_handle);
-	
-      }
-
-      if (new_file<0||mainw->files[new_file]==NULL) {
-	mainw->jackd->in_use=FALSE;
-	return;
-      }
-      
-      if (activate) mainw->jackd->in_use=TRUE;
-      
-      if (mainw->files[new_file]->achans>0) { 
-	int asigned=!(mainw->files[new_file]->signed_endian&AFORM_UNSIGNED);
-	int aendian=!(mainw->files[new_file]->signed_endian&AFORM_BIG_ENDIAN);
-	mainw->jackd->num_input_channels=mainw->files[new_file]->achans;
-	mainw->jackd->bytes_per_channel=mainw->files[new_file]->asampsize/8;
-	if (activate&&(prefs->audio_opts&AUDIO_OPTS_FOLLOW_FPS)) {
-	  if (!mainw->files[new_file]->play_paused) 
-	    mainw->jackd->sample_in_rate=mainw->files[new_file]->arate*mainw->files[new_file]->pb_fps/
-	      mainw->files[new_file]->fps;
-	  else mainw->jackd->sample_in_rate=mainw->files[new_file]->arate*mainw->files[new_file]->freeze_fps/
-		 mainw->files[new_file]->fps;
-	}
-	else mainw->jackd->sample_in_rate=mainw->files[new_file]->arate;
-	mainw->jackd->usigned=!asigned;
-	mainw->jackd->seek_end=mainw->files[new_file]->afilesize;
-
-	if ((aendian&&(capable->byte_order==LIVES_BIG_ENDIAN))||
-	    (!aendian&&(capable->byte_order==LIVES_LITTLE_ENDIAN))) 
-	  mainw->jackd->reverse_endian=TRUE;
-	else mainw->jackd->reverse_endian=FALSE;
-
-	if (mainw->ping_pong) mainw->jackd->loop=AUDIO_LOOP_PINGPONG;
-	else mainw->jackd->loop=AUDIO_LOOP_FORWARD;
-
-	// tell jack server to open audio file and start playing it
-
-	jack_message.command=ASERVER_CMD_FILE_OPEN;
-
-	jack_message.data=lives_strdup_printf("%d",new_file);
-
-	jack_message2.command=ASERVER_CMD_FILE_SEEK;
-	jack_message.next=&jack_message2;
-	jack_message2.data=lives_strdup_printf("%"PRId64,mainw->files[new_file]->aseek_pos);
-	jack_message2.next=NULL;
-
-	mainw->jackd->msgq=&jack_message;
-	mainw->jackd->in_use=TRUE;
-
-	if (mainw->agen_key==0&&!mainw->agen_needs_reinit) {
-	  if (prefs->audio_opts&AUDIO_OPTS_FOLLOW_FPS) {
-	    mainw->jackd->is_paused=mainw->files[new_file]->play_paused;
-	    mainw->jackd->is_silent=FALSE;
-	  }
-	  
-	  mainw->rec_aclip=new_file;
-	  mainw->rec_avel=mainw->files[new_file]->pb_fps/mainw->files[new_file]->fps;
-	  mainw->rec_aseek=(double)mainw->files[new_file]->aseek_pos/
-	    (double)(mainw->files[new_file]->arate*mainw->files[new_file]->achans*mainw->files[new_file]->asampsize/8);
-	}
-      }
-      else {
-	if (mainw->agen_key==0&&!mainw->agen_needs_reinit) {
-	  mainw->rec_aclip=mainw->current_file;
-	  mainw->rec_avel=0.;
-	  mainw->rec_aseek=0.;
-	}
-      }
-    }
 #endif
-  }
+    }
 
-  // switch audio clip
- if (prefs->audio_player==AUD_PLAYER_PULSE) {
+    // switch audio clip
+    if (prefs->audio_player==AUD_PLAYER_PULSE) {
 #ifdef HAVE_PULSE_AUDIO
-    if (mainw->pulsed!=NULL) {
-      boolean timeout;
-      int alarm_handle;
+      if (mainw->pulsed!=NULL) {
+        boolean timeout;
+        int alarm_handle;
 
-      if (mainw->pulsed->playing_file==new_file) return;
+        if (mainw->pulsed->playing_file==new_file) return;
 
-      alarm_handle=lives_alarm_set(LIVES_ACONNECT_TIMEOUT);
+        alarm_handle=lives_alarm_set(LIVES_ACONNECT_TIMEOUT);
 
-      while (!(timeout=lives_alarm_get(alarm_handle))&&pulse_get_msgq(mainw->pulsed)!=NULL) {
-	sched_yield(); // wait for seek
+        while (!(timeout=lives_alarm_get(alarm_handle))&&pulse_get_msgq(mainw->pulsed)!=NULL) {
+          sched_yield(); // wait for seek
+        }
+        if (timeout) pulse_try_reconnect();
+        lives_alarm_clear(alarm_handle);
+
+        if (mainw->pulsed->fd>0) {
+          pulse_message.command=ASERVER_CMD_FILE_CLOSE;
+          pulse_message.data=NULL;
+          pulse_message.next=NULL;
+          mainw->pulsed->msgq=&pulse_message;
+
+          lives_alarm_set(LIVES_ACONNECT_TIMEOUT);
+          while (!(timeout=lives_alarm_get(alarm_handle))&&pulse_get_msgq(mainw->pulsed)!=NULL) {
+            sched_yield(); // wait for seek
+          }
+          if (timeout) pulse_try_reconnect();
+          lives_alarm_clear(alarm_handle);
+        }
+
+        if (new_file<0||mainw->files[new_file]==NULL) {
+          mainw->pulsed->in_use=FALSE;
+          return;
+        }
+
+        mainw->pulsed->in_use=TRUE;
+
+        if (mainw->files[new_file]->achans>0) {
+          int asigned=!(mainw->files[new_file]->signed_endian&AFORM_UNSIGNED);
+          int aendian=!(mainw->files[new_file]->signed_endian&AFORM_BIG_ENDIAN);
+          mainw->pulsed->in_achans=mainw->files[new_file]->achans;
+          mainw->pulsed->in_asamps=mainw->files[new_file]->asampsize;
+          if (activate&&(prefs->audio_opts&AUDIO_OPTS_FOLLOW_FPS)) {
+            if (!mainw->files[new_file]->play_paused)
+              mainw->pulsed->in_arate=mainw->files[new_file]->arate*mainw->files[new_file]->pb_fps/
+                                      mainw->files[new_file]->fps;
+            else mainw->pulsed->in_arate=mainw->files[new_file]->arate*mainw->files[new_file]->freeze_fps/
+                                           mainw->files[new_file]->fps;
+          } else mainw->pulsed->in_arate=mainw->files[new_file]->arate;
+          mainw->pulsed->usigned=!asigned;
+          mainw->pulsed->seek_end=mainw->files[new_file]->afilesize;
+          if (mainw->files[new_file]->opening) mainw->pulsed->is_opening=TRUE;
+          else mainw->pulsed->is_opening=FALSE;
+
+          if ((aendian&&(capable->byte_order==LIVES_BIG_ENDIAN))||
+              (!aendian&&(capable->byte_order==LIVES_LITTLE_ENDIAN)))
+            mainw->pulsed->reverse_endian=TRUE;
+          else mainw->pulsed->reverse_endian=FALSE;
+
+          if (mainw->ping_pong) mainw->pulsed->loop=AUDIO_LOOP_PINGPONG;
+          else mainw->pulsed->loop=AUDIO_LOOP_FORWARD;
+
+          // tell pulse server to open audio file and start playing it
+
+          pulse_message.command=ASERVER_CMD_FILE_OPEN;
+
+          if (mainw->files[new_file]->opening) {
+            mainw->pulsed->is_opening=TRUE;
+          }
+          pulse_message.data=lives_strdup_printf("%d",new_file);
+
+          pulse_message2.command=ASERVER_CMD_FILE_SEEK;
+          pulse_message.next=&pulse_message2;
+          pulse_message2.data=lives_strdup_printf("%"PRId64,mainw->files[new_file]->aseek_pos);
+          pulse_message2.next=NULL;
+          mainw->pulsed->msgq=&pulse_message;
+          mainw->pulsed->in_use=TRUE;
+
+          if (mainw->agen_key==0&&!mainw->agen_needs_reinit) {
+            if (prefs->audio_opts&AUDIO_OPTS_FOLLOW_FPS) {
+              mainw->pulsed->is_paused=mainw->files[new_file]->play_paused;
+            }
+
+            mainw->rec_aclip=new_file;
+            mainw->rec_avel=mainw->files[new_file]->pb_fps/mainw->files[new_file]->fps;
+            mainw->rec_aseek=(double)mainw->files[new_file]->aseek_pos/
+                             (double)(mainw->files[new_file]->arate*mainw->files[new_file]->achans*mainw->files[new_file]->asampsize/8);
+          }
+        } else {
+          if (mainw->agen_key==0&&!mainw->agen_needs_reinit) {
+            mainw->rec_aclip=mainw->current_file;
+            mainw->rec_avel=0.;
+            mainw->rec_aseek=0.;
+          }
+        }
       }
-      if (timeout) pulse_try_reconnect();
-      lives_alarm_clear(alarm_handle);
-
-      if (mainw->pulsed->fd>0) {
-	pulse_message.command=ASERVER_CMD_FILE_CLOSE;
-	pulse_message.data=NULL;
-	pulse_message.next=NULL;
-	mainw->pulsed->msgq=&pulse_message;
-
-	lives_alarm_set(LIVES_ACONNECT_TIMEOUT);
-	while (!(timeout=lives_alarm_get(alarm_handle))&&pulse_get_msgq(mainw->pulsed)!=NULL) {
-	  sched_yield(); // wait for seek
-	}
-	if (timeout) pulse_try_reconnect();
-	lives_alarm_clear(alarm_handle);
-      }
-
-      if (new_file<0||mainw->files[new_file]==NULL) {
-	mainw->pulsed->in_use=FALSE;
-	return;
-      }
-
-      mainw->pulsed->in_use=TRUE;
-      
-      if (mainw->files[new_file]->achans>0) { 
-	int asigned=!(mainw->files[new_file]->signed_endian&AFORM_UNSIGNED);
-	int aendian=!(mainw->files[new_file]->signed_endian&AFORM_BIG_ENDIAN);
-	mainw->pulsed->in_achans=mainw->files[new_file]->achans;
-	mainw->pulsed->in_asamps=mainw->files[new_file]->asampsize;
-	if (activate&&(prefs->audio_opts&AUDIO_OPTS_FOLLOW_FPS)) {
-	  if (!mainw->files[new_file]->play_paused) 
-	    mainw->pulsed->in_arate=mainw->files[new_file]->arate*mainw->files[new_file]->pb_fps/
-	      mainw->files[new_file]->fps;
-	  else mainw->pulsed->in_arate=mainw->files[new_file]->arate*mainw->files[new_file]->freeze_fps/
-		 mainw->files[new_file]->fps;
-	}
-	else mainw->pulsed->in_arate=mainw->files[new_file]->arate;
-	mainw->pulsed->usigned=!asigned;
-	mainw->pulsed->seek_end=mainw->files[new_file]->afilesize;
-	if (mainw->files[new_file]->opening) mainw->pulsed->is_opening=TRUE;
-	else mainw->pulsed->is_opening=FALSE;
-
-	if ((aendian&&(capable->byte_order==LIVES_BIG_ENDIAN))||
-	    (!aendian&&(capable->byte_order==LIVES_LITTLE_ENDIAN))) 
-	  mainw->pulsed->reverse_endian=TRUE;
-	else mainw->pulsed->reverse_endian=FALSE;
-
-	if (mainw->ping_pong) mainw->pulsed->loop=AUDIO_LOOP_PINGPONG;
-	else mainw->pulsed->loop=AUDIO_LOOP_FORWARD;
-
-	// tell pulse server to open audio file and start playing it
-
-	pulse_message.command=ASERVER_CMD_FILE_OPEN;
-
-	if (mainw->files[new_file]->opening) {
-	  mainw->pulsed->is_opening=TRUE;
-	}
-	pulse_message.data=lives_strdup_printf("%d",new_file);
-
-	pulse_message2.command=ASERVER_CMD_FILE_SEEK;
-	pulse_message.next=&pulse_message2;
-	pulse_message2.data=lives_strdup_printf("%"PRId64,mainw->files[new_file]->aseek_pos);
-	pulse_message2.next=NULL;
-	mainw->pulsed->msgq=&pulse_message;
-	mainw->pulsed->in_use=TRUE;
-
-	if (mainw->agen_key==0&&!mainw->agen_needs_reinit) {
-	  if (prefs->audio_opts&AUDIO_OPTS_FOLLOW_FPS) {
-	    mainw->pulsed->is_paused=mainw->files[new_file]->play_paused;
-	  }
-	    
-	  mainw->rec_aclip=new_file;
-	  mainw->rec_avel=mainw->files[new_file]->pb_fps/mainw->files[new_file]->fps;
-	  mainw->rec_aseek=(double)mainw->files[new_file]->aseek_pos/
-	    (double)(mainw->files[new_file]->arate*mainw->files[new_file]->achans*mainw->files[new_file]->asampsize/8);
-	}
-      }
-      else {
-	if (mainw->agen_key==0&&!mainw->agen_needs_reinit) {
-	  mainw->rec_aclip=mainw->current_file;
-	  mainw->rec_avel=0.;
-	  mainw->rec_aseek=0.;
-	}
-      }
-    }
 #endif
- }
-}
-
-
-
-void do_quick_switch (int new_file) {
-  // handle clip switching during playback
-
-  int ovsize=mainw->pheight;
-  int ohsize=mainw->pwidth;
-  boolean osc_block;
-
-  if (mainw->current_file<1||mainw->files[new_file]==NULL) return;
-
-  if (mainw->noswitch||(mainw->record&&!mainw->record_paused&&!(prefs->rec_opts&REC_CLIPS))||
-      mainw->foreign||(mainw->preview&&!mainw->is_rendering&&mainw->multitrack==NULL)) return;
-
-  if (!mainw->sep_win&&mainw->multitrack==NULL) {
-    lives_widget_show(mainw->playframe);
-  }
-
-
-  if (new_file==mainw->current_file) {
-    if (!((mainw->fs&&prefs->gui_monitor==prefs->play_monitor)||(mainw->faded&&mainw->double_size)||
-	  mainw->multitrack!=NULL)) {
-      switch_to_file (mainw->current_file=0, new_file);
-      if (mainw->play_window!=NULL&&!mainw->double_size&&!mainw->fs&&mainw->current_file!=-1&&cfile!=NULL&&
-	  (ohsize!=cfile->hsize||ovsize!=cfile->vsize)) {
-	// for single size sepwin, we resize frames to fit the window
-	mainw->must_resize=TRUE;
-	mainw->pheight=ovsize;
-	mainw->pwidth=ohsize;
-      }
-      else if (mainw->multitrack==NULL) mainw->must_resize=FALSE;
     }
-    return;
   }
 
-  // reset old info file
-  if (cfile!=NULL) {
-    char *tmp;
+
+
+  void do_quick_switch(int new_file) {
+    // handle clip switching during playback
+
+    int ovsize=mainw->pheight;
+    int ohsize=mainw->pwidth;
+    boolean osc_block;
+
+    if (mainw->current_file<1||mainw->files[new_file]==NULL) return;
+
+    if (mainw->noswitch||(mainw->record&&!mainw->record_paused&&!(prefs->rec_opts&REC_CLIPS))||
+        mainw->foreign||(mainw->preview&&!mainw->is_rendering&&mainw->multitrack==NULL)) return;
+
+    if (!mainw->sep_win&&mainw->multitrack==NULL) {
+      lives_widget_show(mainw->playframe);
+    }
+
+
+    if (new_file==mainw->current_file) {
+      if (!((mainw->fs&&prefs->gui_monitor==prefs->play_monitor)||(mainw->faded&&mainw->double_size)||
+            mainw->multitrack!=NULL)) {
+        switch_to_file(mainw->current_file=0, new_file);
+        if (mainw->play_window!=NULL&&!mainw->double_size&&!mainw->fs&&mainw->current_file!=-1&&cfile!=NULL&&
+            (ohsize!=cfile->hsize||ovsize!=cfile->vsize)) {
+          // for single size sepwin, we resize frames to fit the window
+          mainw->must_resize=TRUE;
+          mainw->pheight=ovsize;
+          mainw->pwidth=ohsize;
+        } else if (mainw->multitrack==NULL) mainw->must_resize=FALSE;
+      }
+      return;
+    }
+
+    // reset old info file
+    if (cfile!=NULL) {
+      char *tmp;
 #ifndef IS_MINGW
       tmp=lives_build_filename(prefs->tmpdir,cfile->handle,".status",NULL);
 #else
       tmp=lives_build_filename(prefs->tmpdir,cfile->handle,"status",NULL);
 #endif
-    lives_snprintf(cfile->info_file,PATH_MAX,"%s",tmp);
-    lives_free(tmp);
-  }
-
-  osc_block=mainw->osc_block;
-  mainw->osc_block=TRUE;
- 
-  // switch audio clip
-  if (is_realtime_aplayer(prefs->audio_player)&&(prefs->audio_opts&AUDIO_OPTS_FOLLOW_CLIPS)
-      &&!mainw->is_rendering&&(mainw->preview||!(mainw->agen_key!=0||prefs->audio_src==AUDIO_SRC_EXT))) {
-    switch_audio_clip(new_file,TRUE);
-  }
-
-  mainw->whentostop=NEVER_STOP;
-
-  if (cfile!=NULL&&cfile->clip_type==CLIP_TYPE_GENERATOR&&new_file!=mainw->current_file&&
-      new_file!=mainw->blend_file&&!mainw->is_rendering) {
-    if (mainw->files[new_file]->clip_type==CLIP_TYPE_DISK||mainw->files[new_file]->clip_type==CLIP_TYPE_FILE) 
-      mainw->pre_src_file=new_file;
-
-    if (rte_window!=NULL) rtew_set_keych(rte_fg_gen_key(),FALSE);
-    if (mainw->ce_thumbs) ce_thumbs_set_keych(rte_fg_gen_key(),FALSE);
-    if (mainw->current_file==mainw->blend_file) mainw->new_blend_file=new_file;
-    weed_generator_end ((weed_plant_t *)cfile->ext_src);
-    if (mainw->current_file==-1) {
-      mainw->osc_block=osc_block;
-      return;
+      lives_snprintf(cfile->info_file,PATH_MAX,"%s",tmp);
+      lives_free(tmp);
     }
-  }
-  
-  mainw->switch_during_pb=TRUE;
-  mainw->clip_switched=TRUE;
 
-  if (mainw->fs||(mainw->faded&&mainw->double_size)||mainw->multitrack!=NULL) {
-    mainw->current_file=new_file;
-    if (!mainw->sep_win) {
-      if (mainw->faded&&mainw->double_size) resize(2);
-      if (cfile->menuentry!=NULL) {
-	char title[256];
-	get_menu_text(cfile->menuentry,title);
-	set_main_title(title,0);
-      }
-      else set_main_title(cfile->file_name,0);
+    osc_block=mainw->osc_block;
+    mainw->osc_block=TRUE;
+
+    // switch audio clip
+    if (is_realtime_aplayer(prefs->audio_player)&&(prefs->audio_opts&AUDIO_OPTS_FOLLOW_CLIPS)
+        &&!mainw->is_rendering&&(mainw->preview||!(mainw->agen_key!=0||prefs->audio_src==AUDIO_SRC_EXT))) {
+      switch_audio_clip(new_file,TRUE);
     }
-  }
-  else {
-    // force update of labels, prevent widgets becoming sensitized
-    switch_to_file (mainw->current_file, new_file);
-  }
 
-  if (mainw->ce_thumbs&&mainw->active_sa_clips==SCREEN_AREA_FOREGROUND) ce_thumbs_highlight_current_clip();
+    mainw->whentostop=NEVER_STOP;
 
-  mainw->play_start=1;
-  mainw->play_end=cfile->frames;
+    if (cfile!=NULL&&cfile->clip_type==CLIP_TYPE_GENERATOR&&new_file!=mainw->current_file&&
+        new_file!=mainw->blend_file&&!mainw->is_rendering) {
+      if (mainw->files[new_file]->clip_type==CLIP_TYPE_DISK||mainw->files[new_file]->clip_type==CLIP_TYPE_FILE)
+        mainw->pre_src_file=new_file;
 
-  if (mainw->play_window!=NULL) {
-    char *title=lives_strdup(_("LiVES: - Play Window"));
-    lives_window_set_title (LIVES_WINDOW (mainw->play_window), title);
-    lives_free(title);
-    if (mainw->double_size&&!mainw->fs&&(ohsize!=cfile->hsize||ovsize!=cfile->vsize)) {
-      // for single size sepwin, we resize frames to fit the window
-      mainw->must_resize=TRUE;
-      mainw->pheight=ovsize;
-      mainw->pwidth=ohsize;
-    }
-  }
-  else if (mainw->multitrack==NULL) mainw->must_resize=FALSE;
-
-  if ((cfile->clip_type!=CLIP_TYPE_DISK&&cfile->clip_type!=CLIP_TYPE_FILE)||(mainw->event_list!=NULL&&!mainw->record)) 
-    mainw->play_end=INT_MAX;
-
-  // act like we are not playing a selection (but we will try to keep to 
-  // selection bounds)
-  mainw->playing_sel=FALSE;
-  
-  lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_pb_fps),cfile->pb_fps);
-  changed_fps_during_pb (LIVES_SPIN_BUTTON(mainw->spinbutton_pb_fps), NULL);
-
-  if (!cfile->frameno&&cfile->frames) cfile->frameno=1;
-  cfile->last_frameno=cfile->frameno;
-
-  mainw->playing_file=new_file;
-
-  cfile->next_event=NULL;
-  mainw->deltaticks=0;
-  mainw->startticks=mainw->currticks;
-  // force loading of a frame from the new clip
-  if (!mainw->noswitch&&(cfile->clip_type==CLIP_TYPE_DISK||cfile->clip_type==CLIP_TYPE_FILE)) {
-    weed_plant_t *frame_layer=mainw->frame_layer;
-    mainw->frame_layer=NULL;
-    load_frame_image (cfile->frameno);
-    mainw->frame_layer=frame_layer;
-  }
-
-  if (mainw->play_window!=NULL) {
-    lives_window_present (LIVES_WINDOW (mainw->play_window));
-    lives_xwindow_raise(lives_widget_get_xwindow(mainw->play_window));
-  }
-
-  mainw->switch_during_pb=FALSE;
-  mainw->osc_block=osc_block;
-}
-
-
-
-
-
-void resize (double scale) {
-  // resize the frame widgets
-  // set scale<0. to _force_ the playback frame to expand (for external capture)
-
-  LiVESPixbuf *sepbuf;
-
-  double oscale=scale;
-
-  int xsize;
-  int bx,by;
-
-  int hspace=((sepbuf=lives_image_get_pixbuf (LIVES_IMAGE (mainw->sep_image)))!=NULL)?lives_pixbuf_get_height (sepbuf):0;
-
-  // maximum values
-  int hsize,vsize;
-  int w,h,scr_width,scr_height;
-
-  if (!prefs->show_gui||mainw->multitrack!=NULL) return;
-  get_border_size (mainw->LiVES,&bx,&by);
-
-  if (prefs->gui_monitor==0) {
-    scr_width=mainw->scr_width;
-    scr_height=mainw->scr_height;
-  }
-  else {
-    scr_width=mainw->mgeom[prefs->gui_monitor-1].width;
-    scr_height=mainw->mgeom[prefs->gui_monitor-1].height;
-  }
-
-  hsize=(scr_width-(V_RESIZE_ADJUST*2+bx))/3;    // yes this is correct (V_RESIZE_ADJUST)
-  vsize=(scr_height-(CE_FRAME_HSPACE+hspace+by));
-
-  if (scale<0.) {
-    // foreign capture
-    scale=-scale;
-    hsize=(scr_width-H_RESIZE_ADJUST-bx)/scale;
-    vsize=(scr_height-V_RESIZE_ADJUST-by)/scale;
-  }
-
-  if (mainw->current_file==-1||cfile==NULL||cfile->hsize==0) {
-    hsize=mainw->def_width-H_RESIZE_ADJUST;
-  }
-  else {
-    if (cfile->hsize<hsize) {
-      hsize=cfile->hsize;
-    }
-  }
-
-  if (mainw->current_file==-1||cfile==NULL||cfile->vsize==0) {
-    vsize=mainw->def_height-V_RESIZE_ADJUST;
-  }
-  else {
-    if (cfile->hsize>0&&(cfile->vsize*hsize/cfile->hsize<vsize)) {
-      vsize=cfile->vsize*hsize/cfile->hsize;
-    }
-  }
-
-  mainw->ce_frame_width=hsize;
-  mainw->ce_frame_height=vsize;
-
-  //if (!mainw->is_ready) return;
-
-  lives_widget_set_size_request (mainw->playframe, (int)hsize*scale+H_RESIZE_ADJUST, (int)vsize*scale+V_RESIZE_ADJUST);
-
-  if (oscale==2.) {
-    if (hsize*4<scr_width-70) {
-      scale=1.;
-    }
-  }
-
-  if (oscale>0.) {
-    mainw->ce_frame_width=(int)hsize/scale+H_RESIZE_ADJUST;
-    mainw->ce_frame_height=vsize/scale+V_RESIZE_ADJUST;
-
-    if (mainw->current_file>-1&&cfile!=NULL) {
-      if (cfile->clip_type==CLIP_TYPE_YUV4MPEG||cfile->clip_type==CLIP_TYPE_VIDEODEV) {
-	if (mainw->camframe==NULL) {
-	  LiVESError *error=NULL;
-	  char *tmp=lives_build_filename(prefs->prefix_dir,THEME_DIR,"camera","frame.jpg",NULL);
-	  mainw->camframe=lives_pixbuf_new_from_file(tmp,&error);
-	  if (mainw->camframe!=NULL) lives_pixbuf_saturate_and_pixelate(mainw->camframe,mainw->camframe,0.0,FALSE);
-	  lives_free(tmp);
-	}
-	if (mainw->camframe==NULL) {
-	  hsize=mainw->def_width-H_RESIZE_ADJUST;
-	  vsize=mainw->def_height-V_RESIZE_ADJUST;
-	}
-	else {
-	  hsize=lives_pixbuf_get_width(mainw->camframe);
-	  vsize=lives_pixbuf_get_height(mainw->camframe);
-	}
+      if (rte_window!=NULL) rtew_set_keych(rte_fg_gen_key(),FALSE);
+      if (mainw->ce_thumbs) ce_thumbs_set_keych(rte_fg_gen_key(),FALSE);
+      if (mainw->current_file==mainw->blend_file) mainw->new_blend_file=new_file;
+      weed_generator_end((weed_plant_t *)cfile->ext_src);
+      if (mainw->current_file==-1) {
+        mainw->osc_block=osc_block;
+        return;
       }
     }
 
-    lives_widget_set_size_request (mainw->frame1, (int)hsize/scale+H_RESIZE_ADJUST, vsize/scale+V_RESIZE_ADJUST);
-    lives_widget_set_size_request (mainw->eventbox3, (int)hsize/scale+H_RESIZE_ADJUST, vsize+V_RESIZE_ADJUST);
-    lives_widget_set_size_request (mainw->frame2, (int)hsize/scale+H_RESIZE_ADJUST, vsize/scale+V_RESIZE_ADJUST);
-    lives_widget_set_size_request (mainw->eventbox4, (int)hsize/scale+H_RESIZE_ADJUST, vsize+V_RESIZE_ADJUST);
+    mainw->switch_during_pb=TRUE;
+    mainw->clip_switched=TRUE;
 
+    if (mainw->fs||(mainw->faded&&mainw->double_size)||mainw->multitrack!=NULL) {
+      mainw->current_file=new_file;
+      if (!mainw->sep_win) {
+        if (mainw->faded&&mainw->double_size) resize(2);
+        if (cfile->menuentry!=NULL) {
+          char title[256];
+          get_menu_text(cfile->menuentry,title);
+          set_main_title(title,0);
+        } else set_main_title(cfile->file_name,0);
+      }
+    } else {
+      // force update of labels, prevent widgets becoming sensitized
+      switch_to_file(mainw->current_file, new_file);
+    }
+
+    if (mainw->ce_thumbs&&mainw->active_sa_clips==SCREEN_AREA_FOREGROUND) ce_thumbs_highlight_current_clip();
+
+    mainw->play_start=1;
+    mainw->play_end=cfile->frames;
+
+    if (mainw->play_window!=NULL) {
+      char *title=lives_strdup(_("LiVES: - Play Window"));
+      lives_window_set_title(LIVES_WINDOW(mainw->play_window), title);
+      lives_free(title);
+      if (mainw->double_size&&!mainw->fs&&(ohsize!=cfile->hsize||ovsize!=cfile->vsize)) {
+        // for single size sepwin, we resize frames to fit the window
+        mainw->must_resize=TRUE;
+        mainw->pheight=ovsize;
+        mainw->pwidth=ohsize;
+      }
+    } else if (mainw->multitrack==NULL) mainw->must_resize=FALSE;
+
+    if ((cfile->clip_type!=CLIP_TYPE_DISK&&cfile->clip_type!=CLIP_TYPE_FILE)||(mainw->event_list!=NULL&&!mainw->record))
+      mainw->play_end=INT_MAX;
+
+    // act like we are not playing a selection (but we will try to keep to
+    // selection bounds)
+    mainw->playing_sel=FALSE;
+
+    lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_pb_fps),cfile->pb_fps);
+    changed_fps_during_pb(LIVES_SPIN_BUTTON(mainw->spinbutton_pb_fps), NULL);
+
+    if (!cfile->frameno&&cfile->frames) cfile->frameno=1;
+    cfile->last_frameno=cfile->frameno;
+
+    mainw->playing_file=new_file;
+
+    cfile->next_event=NULL;
+    mainw->deltaticks=0;
+    mainw->startticks=mainw->currticks;
+    // force loading of a frame from the new clip
+    if (!mainw->noswitch&&(cfile->clip_type==CLIP_TYPE_DISK||cfile->clip_type==CLIP_TYPE_FILE)) {
+      weed_plant_t *frame_layer=mainw->frame_layer;
+      mainw->frame_layer=NULL;
+      load_frame_image(cfile->frameno);
+      mainw->frame_layer=frame_layer;
+    }
+
+    if (mainw->play_window!=NULL) {
+      lives_window_present(LIVES_WINDOW(mainw->play_window));
+      lives_xwindow_raise(lives_widget_get_xwindow(mainw->play_window));
+    }
+
+    mainw->switch_during_pb=FALSE;
+    mainw->osc_block=osc_block;
   }
 
-  else {
-    xsize=(scr_width-hsize*-oscale-H_RESIZE_ADJUST)/2;
-    if (xsize>0) {
-      lives_widget_set_size_request (mainw->frame1, xsize/scale, vsize+V_RESIZE_ADJUST);
-      lives_widget_set_size_request (mainw->eventbox3, xsize/scale, vsize+V_RESIZE_ADJUST);
-      lives_widget_set_size_request (mainw->frame2, xsize/scale, vsize+V_RESIZE_ADJUST);
-      lives_widget_set_size_request (mainw->eventbox4, xsize/scale, vsize+V_RESIZE_ADJUST);
-      mainw->ce_frame_width=xsize/scale;
-      mainw->ce_frame_height=vsize+V_RESIZE_ADJUST;
+
+
+
+
+  void resize(double scale) {
+    // resize the frame widgets
+    // set scale<0. to _force_ the playback frame to expand (for external capture)
+
+    LiVESPixbuf *sepbuf;
+
+    double oscale=scale;
+
+    int xsize;
+    int bx,by;
+
+    int hspace=((sepbuf=lives_image_get_pixbuf(LIVES_IMAGE(mainw->sep_image)))!=NULL)?lives_pixbuf_get_height(sepbuf):0;
+
+    // maximum values
+    int hsize,vsize;
+    int w,h,scr_width,scr_height;
+
+    if (!prefs->show_gui||mainw->multitrack!=NULL) return;
+    get_border_size(mainw->LiVES,&bx,&by);
+
+    if (prefs->gui_monitor==0) {
+      scr_width=mainw->scr_width;
+      scr_height=mainw->scr_height;
+    } else {
+      scr_width=mainw->mgeom[prefs->gui_monitor-1].width;
+      scr_height=mainw->mgeom[prefs->gui_monitor-1].height;
     }
+
+    hsize=(scr_width-(V_RESIZE_ADJUST*2+bx))/3;    // yes this is correct (V_RESIZE_ADJUST)
+    vsize=(scr_height-(CE_FRAME_HSPACE+hspace+by));
+
+    if (scale<0.) {
+      // foreign capture
+      scale=-scale;
+      hsize=(scr_width-H_RESIZE_ADJUST-bx)/scale;
+      vsize=(scr_height-V_RESIZE_ADJUST-by)/scale;
+    }
+
+    if (mainw->current_file==-1||cfile==NULL||cfile->hsize==0) {
+      hsize=mainw->def_width-H_RESIZE_ADJUST;
+    } else {
+      if (cfile->hsize<hsize) {
+        hsize=cfile->hsize;
+      }
+    }
+
+    if (mainw->current_file==-1||cfile==NULL||cfile->vsize==0) {
+      vsize=mainw->def_height-V_RESIZE_ADJUST;
+    } else {
+      if (cfile->hsize>0&&(cfile->vsize*hsize/cfile->hsize<vsize)) {
+        vsize=cfile->vsize*hsize/cfile->hsize;
+      }
+    }
+
+    mainw->ce_frame_width=hsize;
+    mainw->ce_frame_height=vsize;
+
+    //if (!mainw->is_ready) return;
+
+    lives_widget_set_size_request(mainw->playframe, (int)hsize*scale+H_RESIZE_ADJUST, (int)vsize*scale+V_RESIZE_ADJUST);
+
+    if (oscale==2.) {
+      if (hsize*4<scr_width-70) {
+        scale=1.;
+      }
+    }
+
+    if (oscale>0.) {
+      mainw->ce_frame_width=(int)hsize/scale+H_RESIZE_ADJUST;
+      mainw->ce_frame_height=vsize/scale+V_RESIZE_ADJUST;
+
+      if (mainw->current_file>-1&&cfile!=NULL) {
+        if (cfile->clip_type==CLIP_TYPE_YUV4MPEG||cfile->clip_type==CLIP_TYPE_VIDEODEV) {
+          if (mainw->camframe==NULL) {
+            LiVESError *error=NULL;
+            char *tmp=lives_build_filename(prefs->prefix_dir,THEME_DIR,"camera","frame.jpg",NULL);
+            mainw->camframe=lives_pixbuf_new_from_file(tmp,&error);
+            if (mainw->camframe!=NULL) lives_pixbuf_saturate_and_pixelate(mainw->camframe,mainw->camframe,0.0,FALSE);
+            lives_free(tmp);
+          }
+          if (mainw->camframe==NULL) {
+            hsize=mainw->def_width-H_RESIZE_ADJUST;
+            vsize=mainw->def_height-V_RESIZE_ADJUST;
+          } else {
+            hsize=lives_pixbuf_get_width(mainw->camframe);
+            vsize=lives_pixbuf_get_height(mainw->camframe);
+          }
+        }
+      }
+
+      lives_widget_set_size_request(mainw->frame1, (int)hsize/scale+H_RESIZE_ADJUST, vsize/scale+V_RESIZE_ADJUST);
+      lives_widget_set_size_request(mainw->eventbox3, (int)hsize/scale+H_RESIZE_ADJUST, vsize+V_RESIZE_ADJUST);
+      lives_widget_set_size_request(mainw->frame2, (int)hsize/scale+H_RESIZE_ADJUST, vsize/scale+V_RESIZE_ADJUST);
+      lives_widget_set_size_request(mainw->eventbox4, (int)hsize/scale+H_RESIZE_ADJUST, vsize+V_RESIZE_ADJUST);
+
+    }
+
     else {
-      // this is for foreign capture
-      lives_widget_hide(mainw->frame1);
-      lives_widget_hide(mainw->frame2);
-      lives_widget_hide(mainw->eventbox3);
-      lives_widget_hide(mainw->eventbox4);
-      lives_container_set_border_width (LIVES_CONTAINER (mainw->playframe), 0);
+      xsize=(scr_width-hsize*-oscale-H_RESIZE_ADJUST)/2;
+      if (xsize>0) {
+        lives_widget_set_size_request(mainw->frame1, xsize/scale, vsize+V_RESIZE_ADJUST);
+        lives_widget_set_size_request(mainw->eventbox3, xsize/scale, vsize+V_RESIZE_ADJUST);
+        lives_widget_set_size_request(mainw->frame2, xsize/scale, vsize+V_RESIZE_ADJUST);
+        lives_widget_set_size_request(mainw->eventbox4, xsize/scale, vsize+V_RESIZE_ADJUST);
+        mainw->ce_frame_width=xsize/scale;
+        mainw->ce_frame_height=vsize+V_RESIZE_ADJUST;
+      } else {
+        // this is for foreign capture
+        lives_widget_hide(mainw->frame1);
+        lives_widget_hide(mainw->frame2);
+        lives_widget_hide(mainw->eventbox3);
+        lives_widget_hide(mainw->eventbox4);
+        lives_container_set_border_width(LIVES_CONTAINER(mainw->playframe), 0);
+      }
     }
-  }
 
-  w=lives_widget_get_allocation_width(mainw->LiVES);
-  h=lives_widget_get_allocation_height(mainw->LiVES);
+    w=lives_widget_get_allocation_width(mainw->LiVES);
+    h=lives_widget_get_allocation_height(mainw->LiVES);
 
-  if (prefs->open_maximised||w>scr_width-bx||h>scr_height-by) {
-    lives_window_resize(LIVES_WINDOW(mainw->LiVES),scr_width-bx,scr_height-by);
-    lives_window_maximize (LIVES_WINDOW(mainw->LiVES));
-    lives_widget_queue_resize(mainw->LiVES);
-  }
+    if (prefs->open_maximised||w>scr_width-bx||h>scr_height-by) {
+      lives_window_resize(LIVES_WINDOW(mainw->LiVES),scr_width-bx,scr_height-by);
+      lives_window_maximize(LIVES_WINDOW(mainw->LiVES));
+      lives_widget_queue_resize(mainw->LiVES);
+    }
 
-  if (!mainw->foreign&&mainw->playing_file==-1&&mainw->current_file>0&&cfile!=NULL&&(!cfile->opening||cfile->clip_type==CLIP_TYPE_FILE)) {
+    if (!mainw->foreign&&mainw->playing_file==-1&&mainw->current_file>0&&cfile!=NULL&&(!cfile->opening||cfile->clip_type==CLIP_TYPE_FILE)) {
       lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_start),cfile->start);
       lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_end),cfile->end);
       load_start_image(cfile->start);
       load_end_image(cfile->end);
+    }
+
   }
-  
-}
 
 
 

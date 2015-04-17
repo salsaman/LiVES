@@ -99,15 +99,14 @@ static void remove_all_nodes(boolean every, omclearn_w *omclw) {
 
   while (slist!=NULL) {
     slist_next=slist->next;
-    
+
     mnode=(lives_omc_match_node_t *)slist->data;
-    
+
     if (every||mnode->macro==-1) {
       if (slist_last!=NULL) slist_last->next=slist->next;
       else omc_node_list=slist->next;
       omc_match_node_free(mnode);
-    }
-    else slist_last=slist;
+    } else slist_last=slist;
     slist=slist_next;
   }
 
@@ -148,23 +147,23 @@ static int js_fd;
 
 
 #ifndef IS_MINGW
-const char * get_js_filename(void) {
+const char *get_js_filename(void) {
   char *js_fname;
 
   // OPEN DEVICE FILE
   // first try to open /dev/input/js
-  js_fname = "/dev/input/js"; 
+  js_fname = "/dev/input/js";
   js_fd = open(js_fname, O_RDONLY|O_NONBLOCK);
   if (js_fd < 0) {
     // if it doesn't open, try to open /dev/input/js0
-    js_fname = "/dev/input/js0"; 
+    js_fname = "/dev/input/js0";
     js_fd = open(js_fname, O_RDONLY|O_NONBLOCK);
     if (js_fd < 0) {
       js_fname = "/dev/js0";
       js_fd = open(js_fname, O_RDONLY|O_NONBLOCK);
       // if no device is found
       if (js_fd < 0) {
-	return NULL;
+        return NULL;
       }
     }
   }
@@ -180,8 +179,7 @@ boolean js_open(void) {
   if (prefs->omc_js_fname!=NULL) {
     js_fd = open(prefs->omc_js_fname, O_RDONLY|O_NONBLOCK);
     if (js_fd < 0) return FALSE;
-  }
-  else {
+  } else {
     const char *tmp=get_js_filename();
     if (tmp!=NULL) {
       lives_snprintf(prefs->omc_js_fname,256,"%s",tmp);
@@ -199,7 +197,7 @@ boolean js_open(void) {
 
 void js_close(void) {
   if (mainw->ext_cntl[EXT_CNTL_JS]) {
-    close (js_fd);
+    close(js_fd);
     mainw->ext_cntl[EXT_CNTL_JS]=FALSE;
   }
 }
@@ -249,7 +247,7 @@ static int midi_fd;
 
 
 const char *get_midi_filename(void) {
-char *midi_fname;
+  char *midi_fname;
 
   // OPEN DEVICE FILE
   midi_fname = "/dev/midi";
@@ -261,7 +259,7 @@ char *midi_fname;
       midi_fname = "/dev/midi1";
       midi_fd = open(midi_fname, O_RDONLY|O_NONBLOCK);
       if (midi_fd < 0) {
-	return NULL;
+        return NULL;
       }
     }
   }
@@ -285,36 +283,34 @@ boolean midi_open(void) {
       d_print_failed();
       return FALSE;
     }
-    
+
     snd_seq_set_client_name(mainw->seq_handle, "LiVES");
     if ((mainw->alsa_midi_port = snd_seq_create_simple_port(mainw->seq_handle, "LiVES",
-							    SND_SEQ_PORT_CAP_WRITE|SND_SEQ_PORT_CAP_SUBS_WRITE,
-							    SND_SEQ_PORT_TYPE_APPLICATION|SND_SEQ_PORT_TYPE_PORT|SND_SEQ_PORT_TYPE_SOFTWARE)) < 0) {
-      
+                                 SND_SEQ_PORT_CAP_WRITE|SND_SEQ_PORT_CAP_SUBS_WRITE,
+                                 SND_SEQ_PORT_TYPE_APPLICATION|SND_SEQ_PORT_TYPE_PORT|SND_SEQ_PORT_TYPE_SOFTWARE)) < 0) {
+
       d_print_failed();
       return FALSE;
     }
-    
+
     d_print_done();
-  }
-  else {
+  } else {
 
 #endif
 
-#ifndef IS_MINGW  
-  if (prefs->omc_midi_fname!=NULL) {
-    midi_fd = open(prefs->omc_midi_fname, O_RDONLY|O_NONBLOCK);
-    if (midi_fd < 0) return FALSE;
-  }
-  else {
-    const char *tmp=get_midi_filename();
-    if (tmp!=NULL) {
-      lives_snprintf(prefs->omc_midi_fname,256,"%s",tmp);
+#ifndef IS_MINGW
+    if (prefs->omc_midi_fname!=NULL) {
+      midi_fd = open(prefs->omc_midi_fname, O_RDONLY|O_NONBLOCK);
+      if (midi_fd < 0) return FALSE;
+    } else {
+      const char *tmp=get_midi_filename();
+      if (tmp!=NULL) {
+        lives_snprintf(prefs->omc_midi_fname,256,"%s",tmp);
+      }
     }
-  }
-  if (prefs->omc_midi_fname==NULL) return FALSE;
+    if (prefs->omc_midi_fname==NULL) return FALSE;
 
-  d_print(_("Responding to MIDI events from %s\n"),prefs->omc_midi_fname);
+    d_print(_("Responding to MIDI events from %s\n"),prefs->omc_midi_fname);
 #endif
 
 #ifdef ALSA_MIDI
@@ -337,12 +333,11 @@ void midi_close(void) {
       snd_seq_delete_simple_port(mainw->seq_handle,mainw->alsa_midi_port);
       snd_seq_close(mainw->seq_handle);
       mainw->seq_handle=NULL;
-    }
-    else {
+    } else {
 
 #endif
 
-    close (midi_fd);
+      close(midi_fd);
 
 #ifdef ALSA_MIDI
     }
@@ -415,103 +410,104 @@ char *midi_mangle(void) {
     if (snd_seq_event_input_pending(mainw->seq_handle, 0)==0) {
       // returns number of poll descriptors
       npfd = snd_seq_poll_descriptors_count(mainw->seq_handle, POLLIN);
-      
+
       if (npfd<1) return NULL;
-      
+
       pfd = (struct pollfd *)lives_malloc(npfd * sizeof(struct pollfd));
-      
+
       // fill our poll descriptors
       snd_seq_poll_descriptors(mainw->seq_handle, pfd, npfd, POLLIN);
-    }
-    else hasmore=TRUE; // events remaining from the last call to this function
+    } else hasmore=TRUE; // events remaining from the last call to this function
 
     if (hasmore || poll(pfd, npfd, 0) > 0) {
-      
+
       do {
 
-	if (snd_seq_event_input(mainw->seq_handle, &ev)<0) {
-	  break; // an error occured reading from the port
-	}
+        if (snd_seq_event_input(mainw->seq_handle, &ev)<0) {
+          break; // an error occured reading from the port
+        }
 
-	switch (ev->type) {
-	case SND_SEQ_EVENT_CONTROLLER:   
-	  typeNumber=176;
-	  string=lives_strdup_printf("%d %d %u %d",typeNumber+ev->data.control.channel, ev->data.control.channel, ev->data.control.param,ev->data.control.value);
-	  
-	  break;
-	case SND_SEQ_EVENT_PITCHBEND:
-	  typeNumber=224;
-	  string=lives_strdup_printf("%d %d %d",typeNumber+ev->data.control.channel,ev->data.control.channel, ev->data.control.value);
-	  break;
+        switch (ev->type) {
+        case SND_SEQ_EVENT_CONTROLLER:
+          typeNumber=176;
+          string=lives_strdup_printf("%d %d %u %d",typeNumber+ev->data.control.channel, ev->data.control.channel, ev->data.control.param,
+                                     ev->data.control.value);
 
-	case SND_SEQ_EVENT_NOTEON:
-	  typeNumber=144;
-	  string=lives_strdup_printf("%d %d %d %d",typeNumber+ev->data.note.channel, ev->data.note.channel, ev->data.note.note,ev->data.note.velocity);
-	  
-	  break;        
-	case SND_SEQ_EVENT_NOTEOFF:       
-	  typeNumber=128;
-	  string=lives_strdup_printf("%d %d %d %d",typeNumber+ev->data.note.channel, ev->data.note.channel, ev->data.note.note,ev->data.note.off_velocity);
-	  
-	  break;        
-	case SND_SEQ_EVENT_PGMCHANGE:       
-	  typeNumber=192;
-	  string=lives_strdup_printf("%d %d %d",typeNumber+ev->data.note.channel, ev->data.note.channel, ev->data.control.value);
-	  
-	  break;        
-	  
-	}
-	snd_seq_free_event(ev);
-	
+          break;
+        case SND_SEQ_EVENT_PITCHBEND:
+          typeNumber=224;
+          string=lives_strdup_printf("%d %d %d",typeNumber+ev->data.control.channel,ev->data.control.channel, ev->data.control.value);
+          break;
+
+        case SND_SEQ_EVENT_NOTEON:
+          typeNumber=144;
+          string=lives_strdup_printf("%d %d %d %d",typeNumber+ev->data.note.channel, ev->data.note.channel, ev->data.note.note,
+                                     ev->data.note.velocity);
+
+          break;
+        case SND_SEQ_EVENT_NOTEOFF:
+          typeNumber=128;
+          string=lives_strdup_printf("%d %d %d %d",typeNumber+ev->data.note.channel, ev->data.note.channel, ev->data.note.note,
+                                     ev->data.note.off_velocity);
+
+          break;
+        case SND_SEQ_EVENT_PGMCHANGE:
+          typeNumber=192;
+          string=lives_strdup_printf("%d %d %d",typeNumber+ev->data.note.channel, ev->data.note.channel, ev->data.control.value);
+
+          break;
+
+        }
+        snd_seq_free_event(ev);
+
       } while (snd_seq_event_input_pending(mainw->seq_handle, 0) > 0 && string==NULL);
-      
+
     }
-    
+
     if (pfd!=NULL) lives_free(pfd);
 
-  }
-  else {
+  } else {
 
 #endif
 
-  if (midi_fd==-1) return NULL;
+    if (midi_fd==-1) return NULL;
 
-  while (tot<target) {
-    bytes = read(midi_fd, xbuf, target-tot);
-    
-    if (bytes<1) {
-      if (--allowed<0) return NULL;
-      continue;
+    while (tot<target) {
+      bytes = read(midi_fd, xbuf, target-tot);
+
+      if (bytes<1) {
+        if (--allowed<0) return NULL;
+        continue;
+      }
+
+      str=lives_strdup_printf("%d",xbuf[0]);
+
+      if (!got_target) {
+        target=get_midi_len((mtype=midi_msg_type(str)));
+        got_target=TRUE;
+      }
+
+      lives_free(str);
+
+      //g_print("midi pip %d %02X , tg=%d\n",bytes,xbuf[0],target);
+
+      memcpy(midbuf+tot,xbuf,bytes);
+
+      tot+=bytes;
+
     }
-    
-    str=lives_strdup_printf("%d",xbuf[0]);
 
-    if (!got_target) {
-      target=get_midi_len((mtype=midi_msg_type(str)));
-      got_target=TRUE;
-    }
-    
-    lives_free(str);
+    if (mtype==0) return NULL;
 
-    //g_print("midi pip %d %02X , tg=%d\n",bytes,xbuf[0],target);
+    idx=(midbuf[0]&0x0F);
 
-    memcpy(midbuf+tot,xbuf,bytes);
-
-    tot+=bytes;
-
-  }
-
-  if (mtype==0) return NULL;
-
-  idx=(midbuf[0]&0x0F);
-
-  if (target==2) string=lives_strdup_printf("%u %u %u",midbuf[0],idx,midbuf[1]);
-  else if (target==3) string=lives_strdup_printf("%u %u %u %u",midbuf[0],idx,midbuf[1],midbuf[2]);
-  else string=lives_strdup_printf("%u %u %u %u %u",midbuf[0],idx,midbuf[1],midbuf[2],midbuf[3]);
+    if (target==2) string=lives_strdup_printf("%u %u %u",midbuf[0],idx,midbuf[1]);
+    else if (target==3) string=lives_strdup_printf("%u %u %u %u",midbuf[0],idx,midbuf[1],midbuf[2]);
+    else string=lives_strdup_printf("%u %u %u %u %u",midbuf[0],idx,midbuf[1],midbuf[2],midbuf[3]);
 
 
 #ifdef ALSA_MIDI
-    }
+  }
 #endif
 
   //g_print("got %s\n",string);
@@ -533,11 +529,11 @@ static LIVES_INLINE char *cut_string_elems(const char *string, int nelems) {
 
   if (nelems<0) return retval;
 
-  for (i=0;i<slen;i++) {
+  for (i=0; i<slen; i++) {
     if (!strncmp((string+i)," ",1)) {
       if (--nelems==0) {
-	memset(retval+i,0,1);
-	return retval;
+        memset(retval+i,0,1);
+        return retval;
       }
     }
   }
@@ -588,7 +584,7 @@ static int omc_learn_get_pvalue(int type, int idx, const char *string) {
 
 
 
-static void cell1_edited_callback (LiVESCellRenderer *spinbutton, const char *path_string, const char *new_text, livespointer user_data) {
+static void cell1_edited_callback(LiVESCellRenderer *spinbutton, const char *path_string, const char *new_text, livespointer user_data) {
   lives_omc_match_node_t *mnode=(lives_omc_match_node_t *)user_data;
 
   lives_omc_macro_t omacro=omc_macros[mnode->macro];
@@ -627,13 +623,13 @@ static void cell1_edited_callback (LiVESCellRenderer *spinbutton, const char *pa
     mnode->fvali[row]=vali;
     break;
   case OMC_PARAM_DOUBLE:
-    vald=lives_strtod (new_text,NULL);
+    vald=lives_strtod(new_text,NULL);
     mnode->fvald[row]=vald;
     break;
   }
-  
+
   lives_tree_store_set(mnode->gtkstore2,&iter,VALUE2_COLUMN,new_text,-1);
-  
+
 }
 
 
@@ -643,7 +639,7 @@ static void omc_macro_row_add_params(lives_omc_match_node_t *mnode, int row, omc
 
   LiVESCellRenderer *renderer;
   LiVESTreeViewColumn *column;
-  
+
   LiVESTreeIter iter1,iter2;
 
   LiVESObject *spinadj;
@@ -653,23 +649,23 @@ static void omc_macro_row_add_params(lives_omc_match_node_t *mnode, int row, omc
 
   int mfrom;
   register int i;
-  
 
-  mnode->gtkstore2 = lives_tree_store_new (NUM2_COLUMNS, LIVES_COL_TYPE_STRING, LIVES_COL_TYPE_STRING, LIVES_COL_TYPE_STRING);
+
+  mnode->gtkstore2 = lives_tree_store_new(NUM2_COLUMNS, LIVES_COL_TYPE_STRING, LIVES_COL_TYPE_STRING, LIVES_COL_TYPE_STRING);
 
   if (macro.nparams==0) return;
 
-  lives_tree_store_append (mnode->gtkstore2, &iter1, NULL);  /* Acquire an iterator */
-  lives_tree_store_set (mnode->gtkstore2, &iter1, TITLE2_COLUMN, (_("Params.")), -1);
+  lives_tree_store_append(mnode->gtkstore2, &iter1, NULL);   /* Acquire an iterator */
+  lives_tree_store_set(mnode->gtkstore2, &iter1, TITLE2_COLUMN, (_("Params.")), -1);
 
-  for (i=0;i<macro.nparams;i++) {
-    lives_tree_store_append (mnode->gtkstore2, &iter2, &iter1);  /* Acquire a child iterator */
-       
+  for (i=0; i<macro.nparams; i++) {
+    lives_tree_store_append(mnode->gtkstore2, &iter2, &iter1);   /* Acquire a child iterator */
+
     if (oldval!=NULL) {
       lives_free(oldval);
       oldval=NULL;
     }
-       
+
     if (final!=NULL) {
       lives_free(final);
       final=NULL;
@@ -679,69 +675,69 @@ static void omc_macro_row_add_params(lives_omc_match_node_t *mnode, int row, omc
     else {
       switch (macro.ptypes[i]) {
       case OMC_PARAM_INT:
-	strval=lives_strdup_printf("%d",mnode->fvali[i]);
-	break;
+        strval=lives_strdup_printf("%d",mnode->fvali[i]);
+        break;
       case OMC_PARAM_DOUBLE:
-	strval=lives_strdup_printf("%.*f",OMC_FP_FIX,mnode->fvald[i]);
-	break;
-	
+        strval=lives_strdup_printf("%.*f",OMC_FP_FIX,mnode->fvald[i]);
+        break;
+
       }
     }
 
     vname=macro.pname[i];
 
-    lives_tree_store_set (mnode->gtkstore2, &iter2, TITLE2_COLUMN, vname, VALUE2_COLUMN, strval, -1);
+    lives_tree_store_set(mnode->gtkstore2, &iter2, TITLE2_COLUMN, vname, VALUE2_COLUMN, strval, -1);
   }
 
-  lives_free (strval);
+  lives_free(strval);
 
-  mnode->treev2 = lives_tree_view_new_with_model (LIVES_TREE_MODEL (mnode->gtkstore2));
+  mnode->treev2 = lives_tree_view_new_with_model(LIVES_TREE_MODEL(mnode->gtkstore2));
 
   if (palette->style&STYLE_1) {
     lives_widget_set_base_color(mnode->treev2, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
     lives_widget_set_text_color(mnode->treev2, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars_fore);
   }
 
-  renderer = lives_cell_renderer_text_new ();
-  column = lives_tree_view_column_new_with_attributes (NULL,
-						     renderer,
-						     "text", TITLE2_COLUMN,
-						     NULL);
-  
-  lives_tree_view_append_column (LIVES_TREE_VIEW (mnode->treev2), column);
-  
-  renderer = lives_cell_renderer_spin_new ();
-  
-  spinadj=(LiVESObject *)lives_adjustment_new (0., -100000., 100000., 1., 10., 0);
-  
+  renderer = lives_cell_renderer_text_new();
+  column = lives_tree_view_column_new_with_attributes(NULL,
+           renderer,
+           "text", TITLE2_COLUMN,
+           NULL);
+
+  lives_tree_view_append_column(LIVES_TREE_VIEW(mnode->treev2), column);
+
+  renderer = lives_cell_renderer_spin_new();
+
+  spinadj=(LiVESObject *)lives_adjustment_new(0., -100000., 100000., 1., 10., 0);
+
 #ifdef GUI_GTK
-  g_object_set (renderer, "width-chars", 7, "mode", GTK_CELL_RENDERER_MODE_EDITABLE,
-		"editable", TRUE, "xalign", 1.0, "adjustment", spinadj, NULL);
+  g_object_set(renderer, "width-chars", 7, "mode", GTK_CELL_RENDERER_MODE_EDITABLE,
+               "editable", TRUE, "xalign", 1.0, "adjustment", spinadj, NULL);
 
 #endif
 
   lives_signal_connect(renderer, LIVES_WIDGET_EDITED_SIGNAL, LIVES_GUI_CALLBACK(cell1_edited_callback), mnode);
 
-  
-  
+
+
   //  renderer = lives_cell_renderer_text_new ();
-  column = lives_tree_view_column_new_with_attributes (_("value"),
-						     renderer,
-						     "text", VALUE2_COLUMN,
-						     NULL);
-  lives_tree_view_append_column (LIVES_TREE_VIEW (mnode->treev2), column);
+  column = lives_tree_view_column_new_with_attributes(_("value"),
+           renderer,
+           "text", VALUE2_COLUMN,
+           NULL);
+  lives_tree_view_append_column(LIVES_TREE_VIEW(mnode->treev2), column);
 
 
 
 
 
 
-  lives_widget_show (mnode->treev2);
-  
-  lives_table_attach (LIVES_TABLE (omclw->table), mnode->treev2, 3, 4, row, row+1,
-		    (LiVESAttachOptions) (LIVES_FILL|LIVES_EXPAND),
-		    (LiVESAttachOptions) (0), 0, 0);
-  
+  lives_widget_show(mnode->treev2);
+
+  lives_table_attach(LIVES_TABLE(omclw->table), mnode->treev2, 3, 4, row, row+1,
+                     (LiVESAttachOptions)(LIVES_FILL|LIVES_EXPAND),
+                     (LiVESAttachOptions)(0), 0, 0);
+
 
 
 }
@@ -754,7 +750,7 @@ static void omc_learn_link_params(lives_omc_match_node_t *mnode) {
   int mps=omc_macro.nparams-1;
   int lps=mnode->nvars-1;
   int i;
-  
+
   if (mnode->map!=NULL) lives_free(mnode->map);
   if (mnode->fvali!=NULL) lives_free(mnode->fvali);
   if (mnode->fvald!=NULL) lives_free(mnode->fvald);
@@ -765,18 +761,17 @@ static void omc_learn_link_params(lives_omc_match_node_t *mnode) {
 
   if (lps>mps) lps=mps;
 
-  for (i=mps;i>=0;i--) {
+  for (i=mps; i>=0; i--) {
     if (mnode->matchp[lps]) lps++; // variable is filtered for
   }
 
-  for (i=mps;i>=0;i--) {
+  for (i=mps; i>=0; i--) {
     if (lps<0||lps>=mnode->nvars) {
       //g_print("fixed !\n");
       mnode->map[i]=-1;
       if (omc_macro.ptypes[i]==OMC_PARAM_INT) mnode->fvali[i]=omc_macro.vali[i];
       else mnode->fvald[i]=omc_macro.vald[i];
-    }
-    else {
+    } else {
       //      g_print("varied !\n");
       if (!mnode->matchp[lps]) mnode->map[i]=lps;
       else i++;
@@ -794,11 +789,11 @@ static void omc_learn_link_params(lives_omc_match_node_t *mnode) {
 
 
 
-static void on_omc_combo_entry_changed (LiVESCombo *combo, livespointer ptr) {
+static void on_omc_combo_entry_changed(LiVESCombo *combo, livespointer ptr) {
   char *macro_text;
 
   int i;
-    
+
   lives_omc_match_node_t *mnode=(lives_omc_match_node_t *)ptr;
 
   int row=LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(combo),"row"));
@@ -810,7 +805,7 @@ static void on_omc_combo_entry_changed (LiVESCombo *combo, livespointer ptr) {
     // remove old mapping
     lives_widget_destroy(mnode->treev2);
     mnode->treev2=NULL;
-    
+
     mnode->macro=-1;
 
     lives_free(mnode->map);
@@ -827,7 +822,7 @@ static void on_omc_combo_entry_changed (LiVESCombo *combo, livespointer ptr) {
     return;
   }
 
-  for (i=0;i<=N_OMC_MACROS;i++) {
+  for (i=0; i<=N_OMC_MACROS; i++) {
     if (!strcmp(macro_text,omc_macros[i].macro_text)) break;
   }
 
@@ -842,7 +837,7 @@ static void on_omc_combo_entry_changed (LiVESCombo *combo, livespointer ptr) {
 
 
 
-static void cell_toggled_callback (LiVESCellRenderer *toggle, const char *path_string, livespointer user_data) {
+static void cell_toggled_callback(LiVESCellRenderer *toggle, const char *path_string, livespointer user_data) {
   lives_omc_match_node_t *mnode=(lives_omc_match_node_t *)user_data;
   int row;
 
@@ -885,7 +880,7 @@ static void cell_toggled_callback (LiVESCellRenderer *toggle, const char *path_s
 
 
 
-static void cell_edited_callback (LiVESCellRenderer *spinbutton, const char *path_string, const char *new_text, livespointer user_data) {
+static void cell_edited_callback(LiVESCellRenderer *spinbutton, const char *path_string, const char *new_text, livespointer user_data) {
   lives_omc_match_node_t *mnode=(lives_omc_match_node_t *)user_data;
 
   int col=LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(spinbutton),"colnum"));
@@ -917,19 +912,19 @@ static void cell_edited_callback (LiVESCellRenderer *spinbutton, const char *pat
   case OFFS1_COLUMN:
     vali=atoi(new_text);
     mnode->offs0[row]=vali;
-   break;
+    break;
   case OFFS2_COLUMN:
     vali=atoi(new_text);
     mnode->offs1[row]=vali;
     break;
   case SCALE_COLUMN:
-    vald=lives_strtod (new_text,NULL);
+    vald=lives_strtod(new_text,NULL);
     mnode->scale[row]=vald;
     break;
   }
 
   lives_tree_store_set(mnode->gtkstore,&iter,col,new_text,-1);
- 
+
 }
 
 
@@ -943,10 +938,10 @@ static LiVESWidget *create_omc_macro_combo(lives_omc_match_node_t *mnode, int ro
   int i;
 
   LiVESWidget *combo;
-  
+
   combo=lives_combo_new();
-  
-  for (i=0;i<N_OMC_MACROS;i++) {
+
+  for (i=0; i<N_OMC_MACROS; i++) {
     if (omc_macros[i].msg==NULL) break;
 
     lives_combo_append_text(LIVES_COMBO(combo),omc_macros[i].macro_text);
@@ -954,10 +949,10 @@ static LiVESWidget *create_omc_macro_combo(lives_omc_match_node_t *mnode, int ro
   }
 
   if (mnode->macro!=-1) {
-    lives_combo_set_active_index (LIVES_COMBO(combo),mnode->macro);
+    lives_combo_set_active_index(LIVES_COMBO(combo),mnode->macro);
   }
 
-  lives_signal_connect_after (LIVES_WIDGET_OBJECT (combo), LIVES_WIDGET_CHANGED_SIGNAL, LIVES_GUI_CALLBACK (on_omc_combo_entry_changed), mnode);
+  lives_signal_connect_after(LIVES_WIDGET_OBJECT(combo), LIVES_WIDGET_CHANGED_SIGNAL, LIVES_GUI_CALLBACK(on_omc_combo_entry_changed), mnode);
 
   lives_widget_object_set_data(LIVES_WIDGET_OBJECT(combo),"row",LIVES_INT_TO_POINTER(row));
   lives_widget_object_set_data(LIVES_WIDGET_OBJECT(combo),"omclw",(livespointer)omclw);
@@ -968,236 +963,236 @@ static LiVESWidget *create_omc_macro_combo(lives_omc_match_node_t *mnode, int ro
 
 
 static void omc_learner_add_row(int type, int detail, lives_omc_match_node_t *mnode, const char *string, omclearn_w *omclw) {
-   LiVESWidget *label,*combo;
-   LiVESObject *spinadj;
+  LiVESWidget *label,*combo;
+  LiVESObject *spinadj;
 
-   LiVESCellRenderer *renderer;
-   LiVESTreeViewColumn *column;
-  
-   LiVESTreeIter iter1,iter2;
+  LiVESCellRenderer *renderer;
+  LiVESTreeViewColumn *column;
 
-   char *strval,*strval2,*strval3,*strval4,*vname,*valstr;
-   char *oldval=NULL,*final=NULL;
-   char *labelt=NULL;
+  LiVESTreeIter iter1,iter2;
 
-   int chan,val;
-   register int i;
+  char *strval,*strval2,*strval3,*strval4,*vname,*valstr;
+  char *oldval=NULL,*final=NULL;
+  char *labelt=NULL;
 
-   omclw->tbl_rows++;
-   lives_table_resize(LIVES_TABLE(omclw->table),omclw->tbl_rows,6);
-			
-   mnode->gtkstore = lives_tree_store_new (NUM_COLUMNS, LIVES_COL_TYPE_STRING, LIVES_COL_TYPE_STRING, LIVES_COL_TYPE_BOOLEAN, LIVES_COL_TYPE_STRING, 
-					 LIVES_COL_TYPE_STRING, LIVES_COL_TYPE_STRING, LIVES_COL_TYPE_STRING);
+  int chan,val;
+  register int i;
 
-   lives_tree_store_append (mnode->gtkstore, &iter1, NULL);  /* Acquire an iterator */
-   lives_tree_store_set (mnode->gtkstore, &iter1, TITLE_COLUMN, (_("Vars.")), -1);
+  omclw->tbl_rows++;
+  lives_table_resize(LIVES_TABLE(omclw->table),omclw->tbl_rows,6);
 
-   for (i=0;i<mnode->nvars;i++) {
-     lives_tree_store_append (mnode->gtkstore, &iter2, &iter1);  /* Acquire a child iterator */
-       
-     if (oldval!=NULL) {
-       lives_free(oldval);
-       oldval=NULL;
-     }
-       
-     if (final!=NULL) {
-       lives_free(final);
-       final=NULL;
-     }
+  mnode->gtkstore = lives_tree_store_new(NUM_COLUMNS, LIVES_COL_TYPE_STRING, LIVES_COL_TYPE_STRING, LIVES_COL_TYPE_BOOLEAN,
+                                         LIVES_COL_TYPE_STRING,
+                                         LIVES_COL_TYPE_STRING, LIVES_COL_TYPE_STRING, LIVES_COL_TYPE_STRING);
 
-     strval=lives_strdup_printf("%d - %d",mnode->min[i],mnode->max[i]);
-     strval2=lives_strdup_printf("%d",mnode->offs0[i]);
-     strval3=lives_strdup_printf("%.*f",OMC_FP_FIX,mnode->scale[i]);
-     strval4=lives_strdup_printf("%d",mnode->offs1[i]);
+  lives_tree_store_append(mnode->gtkstore, &iter1, NULL);   /* Acquire an iterator */
+  lives_tree_store_set(mnode->gtkstore, &iter1, TITLE_COLUMN, (_("Vars.")), -1);
 
-     if (type>0) {
-       vname=omc_learn_get_pname(type,i);
-       val=omc_learn_get_pvalue(type,i,string);
+  for (i=0; i<mnode->nvars; i++) {
+    lives_tree_store_append(mnode->gtkstore, &iter2, &iter1);   /* Acquire a child iterator */
 
-       valstr=lives_strdup_printf("%d",val);
-       if (!mnode->matchp[i]) {
-	 mnode->matchi[i]=val;
-       }
-     }
-     else {
-       vname=omc_learn_get_pname(-type,i);
-       if (mnode->matchp[i]) valstr=lives_strdup_printf("%d",mnode->matchi[i]);
-       else valstr=lives_strdup("-");
-     }
+    if (oldval!=NULL) {
+      lives_free(oldval);
+      oldval=NULL;
+    }
 
-     lives_tree_store_set (mnode->gtkstore, &iter2, TITLE_COLUMN, vname, VALUE_COLUMN, valstr, FILTER_COLUMN, mnode->matchp[i], 
-			 RANGE_COLUMN, strval, OFFS1_COLUMN, strval2, SCALE_COLUMN, strval3, OFFS2_COLUMN, strval4, -1);
+    if (final!=NULL) {
+      lives_free(final);
+      final=NULL;
+    }
 
-     lives_free (strval);
-     lives_free (strval2);
-     lives_free (strval3);
-     lives_free (strval4);
-     lives_free(valstr);
-     lives_free(vname);
-   }
+    strval=lives_strdup_printf("%d - %d",mnode->min[i],mnode->max[i]);
+    strval2=lives_strdup_printf("%d",mnode->offs0[i]);
+    strval3=lives_strdup_printf("%.*f",OMC_FP_FIX,mnode->scale[i]);
+    strval4=lives_strdup_printf("%d",mnode->offs1[i]);
 
-   mnode->treev1 = lives_tree_view_new_with_model (LIVES_TREE_MODEL (mnode->gtkstore));
+    if (type>0) {
+      vname=omc_learn_get_pname(type,i);
+      val=omc_learn_get_pvalue(type,i,string);
 
-   if (type<0) type=-type;
+      valstr=lives_strdup_printf("%d",val);
+      if (!mnode->matchp[i]) {
+        mnode->matchi[i]=val;
+      }
+    } else {
+      vname=omc_learn_get_pname(-type,i);
+      if (mnode->matchp[i]) valstr=lives_strdup_printf("%d",mnode->matchi[i]);
+      else valstr=lives_strdup("-");
+    }
 
-   switch (type) {
-   case OMC_MIDI_NOTE:
-     chan=js_index(string);
-     labelt=lives_strdup_printf(_("MIDI ch %d note on"),chan);
-     break;
-   case OMC_MIDI_NOTE_OFF:
-     chan=js_index(string);
-     labelt=lives_strdup_printf(_("MIDI ch %d note off"),chan);
-     break;
-   case OMC_MIDI_CONTROLLER:
-     chan=js_index(string);
-     labelt=lives_strdup_printf(_("MIDI ch %d controller %d"),chan,detail);
-     break;
-   case OMC_MIDI_PITCH_BEND:
-     chan=js_index(string);
-     labelt=lives_strdup_printf(_("MIDI ch %d pitch bend"),chan,detail);
-     break;
-   case OMC_MIDI_PGM_CHANGE:
-     chan=js_index(string);
-     labelt=lives_strdup_printf(_("MIDI ch %d pgm change"),chan);
-     break;
-   case OMC_JS_BUTTON:
-     labelt=lives_strdup_printf(_("Joystick button %d"),detail);
-     break;
-   case OMC_JS_AXIS:
-     labelt=lives_strdup_printf(_("Joystick axis %d"),detail);
-     break;
-   }
+    lives_tree_store_set(mnode->gtkstore, &iter2, TITLE_COLUMN, vname, VALUE_COLUMN, valstr, FILTER_COLUMN, mnode->matchp[i],
+                         RANGE_COLUMN, strval, OFFS1_COLUMN, strval2, SCALE_COLUMN, strval3, OFFS2_COLUMN, strval4, -1);
 
-   label = lives_standard_label_new (labelt);
-   lives_widget_show (label);
-   
-   if (labelt!=NULL) lives_free(labelt);
-     
-   omclw->tbl_currow++;
-   lives_table_attach (LIVES_TABLE (omclw->table), label, 0, 1, omclw->tbl_currow, omclw->tbl_currow+1,
-		     (LiVESAttachOptions) (0),
-		     (LiVESAttachOptions) (0), 0, 0);
+    lives_free(strval);
+    lives_free(strval2);
+    lives_free(strval3);
+    lives_free(strval4);
+    lives_free(valstr);
+    lives_free(vname);
+  }
 
-   // properties
+  mnode->treev1 = lives_tree_view_new_with_model(LIVES_TREE_MODEL(mnode->gtkstore));
+
+  if (type<0) type=-type;
+
+  switch (type) {
+  case OMC_MIDI_NOTE:
+    chan=js_index(string);
+    labelt=lives_strdup_printf(_("MIDI ch %d note on"),chan);
+    break;
+  case OMC_MIDI_NOTE_OFF:
+    chan=js_index(string);
+    labelt=lives_strdup_printf(_("MIDI ch %d note off"),chan);
+    break;
+  case OMC_MIDI_CONTROLLER:
+    chan=js_index(string);
+    labelt=lives_strdup_printf(_("MIDI ch %d controller %d"),chan,detail);
+    break;
+  case OMC_MIDI_PITCH_BEND:
+    chan=js_index(string);
+    labelt=lives_strdup_printf(_("MIDI ch %d pitch bend"),chan,detail);
+    break;
+  case OMC_MIDI_PGM_CHANGE:
+    chan=js_index(string);
+    labelt=lives_strdup_printf(_("MIDI ch %d pgm change"),chan);
+    break;
+  case OMC_JS_BUTTON:
+    labelt=lives_strdup_printf(_("Joystick button %d"),detail);
+    break;
+  case OMC_JS_AXIS:
+    labelt=lives_strdup_printf(_("Joystick axis %d"),detail);
+    break;
+  }
+
+  label = lives_standard_label_new(labelt);
+  lives_widget_show(label);
+
+  if (labelt!=NULL) lives_free(labelt);
+
+  omclw->tbl_currow++;
+  lives_table_attach(LIVES_TABLE(omclw->table), label, 0, 1, omclw->tbl_currow, omclw->tbl_currow+1,
+                     (LiVESAttachOptions)(0),
+                     (LiVESAttachOptions)(0), 0, 0);
+
+  // properties
   if (palette->style&STYLE_1) {
     lives_widget_set_base_color(mnode->treev1, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
     lives_widget_set_text_color(mnode->treev1, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars_fore);
   }
 
-   renderer = lives_cell_renderer_text_new ();
-   column = lives_tree_view_column_new_with_attributes (NULL,
-						      renderer,
-						      "text", TITLE_COLUMN,
-						      NULL);
-  
-   lives_tree_view_append_column (LIVES_TREE_VIEW (mnode->treev1), column);
-  
-   renderer = lives_cell_renderer_text_new ();
-   column = lives_tree_view_column_new_with_attributes (_("value"),
-						      renderer,
-						      "text", VALUE_COLUMN,
-						      NULL);
-   lives_tree_view_append_column (LIVES_TREE_VIEW (mnode->treev1), column);
-  
-  
-   renderer = lives_cell_renderer_toggle_new ();
-   column = lives_tree_view_column_new_with_attributes (_("x"),
-						      renderer,
-						      "active", FILTER_COLUMN,
-						      NULL);
-   lives_tree_view_append_column (LIVES_TREE_VIEW (mnode->treev1), column);
+  renderer = lives_cell_renderer_text_new();
+  column = lives_tree_view_column_new_with_attributes(NULL,
+           renderer,
+           "text", TITLE_COLUMN,
+           NULL);
 
-   lives_signal_connect(renderer, LIVES_WIDGET_TOGGLED_SIGNAL, LIVES_GUI_CALLBACK(cell_toggled_callback), mnode);
+  lives_tree_view_append_column(LIVES_TREE_VIEW(mnode->treev1), column);
 
-   renderer = lives_cell_renderer_text_new ();
-   column = lives_tree_view_column_new_with_attributes (_("range"),
-						      renderer,
-						      "text", RANGE_COLUMN,
-						      NULL);
-   lives_tree_view_append_column (LIVES_TREE_VIEW (mnode->treev1), column);
+  renderer = lives_cell_renderer_text_new();
+  column = lives_tree_view_column_new_with_attributes(_("value"),
+           renderer,
+           "text", VALUE_COLUMN,
+           NULL);
+  lives_tree_view_append_column(LIVES_TREE_VIEW(mnode->treev1), column);
 
 
-   renderer = lives_cell_renderer_spin_new ();
-   lives_widget_object_set_data(LIVES_WIDGET_OBJECT(renderer), "colnum", LIVES_UINT_TO_POINTER(OFFS1_COLUMN));
+  renderer = lives_cell_renderer_toggle_new();
+  column = lives_tree_view_column_new_with_attributes(_("x"),
+           renderer,
+           "active", FILTER_COLUMN,
+           NULL);
+  lives_tree_view_append_column(LIVES_TREE_VIEW(mnode->treev1), column);
 
-   spinadj=(LiVESObject *)lives_adjustment_new (0., -100000., 100000., 1., 10., 0);
+  lives_signal_connect(renderer, LIVES_WIDGET_TOGGLED_SIGNAL, LIVES_GUI_CALLBACK(cell_toggled_callback), mnode);
 
-#ifdef GUI_GTK
-   g_object_set (renderer, "width-chars", 7, "mode", GTK_CELL_RENDERER_MODE_EDITABLE,
-		 "editable", TRUE, "xalign", 1.0, "adjustment", spinadj, NULL);
-#endif
+  renderer = lives_cell_renderer_text_new();
+  column = lives_tree_view_column_new_with_attributes(_("range"),
+           renderer,
+           "text", RANGE_COLUMN,
+           NULL);
+  lives_tree_view_append_column(LIVES_TREE_VIEW(mnode->treev1), column);
 
-   lives_signal_connect(renderer, LIVES_WIDGET_EDITED_SIGNAL, LIVES_GUI_CALLBACK(cell_edited_callback), mnode);
 
+  renderer = lives_cell_renderer_spin_new();
+  lives_widget_object_set_data(LIVES_WIDGET_OBJECT(renderer), "colnum", LIVES_UINT_TO_POINTER(OFFS1_COLUMN));
 
-
-   column = lives_tree_view_column_new_with_attributes (_("+ offset1"),
-						      renderer,
-						       "text", OFFS1_COLUMN,
-						      NULL);
-   lives_tree_view_append_column (LIVES_TREE_VIEW (mnode->treev1), column);
-
-   renderer = lives_cell_renderer_spin_new ();
-
-   spinadj=(LiVESObject *)lives_adjustment_new (1., -100000., 100000., 1., 10., 0);
+  spinadj=(LiVESObject *)lives_adjustment_new(0., -100000., 100000., 1., 10., 0);
 
 #ifdef GUI_GTK
-   g_object_set (renderer, "width-chars", 12, "mode", GTK_CELL_RENDERER_MODE_EDITABLE,
-		 "editable", TRUE, "xalign", 1.0, "adjustment", spinadj, 
-		 "digits", OMC_FP_FIX, NULL);
+  g_object_set(renderer, "width-chars", 7, "mode", GTK_CELL_RENDERER_MODE_EDITABLE,
+               "editable", TRUE, "xalign", 1.0, "adjustment", spinadj, NULL);
 #endif
 
-   lives_widget_object_set_data(LIVES_WIDGET_OBJECT(renderer), "colnum", LIVES_UINT_TO_POINTER(SCALE_COLUMN));
-   lives_signal_connect(renderer, LIVES_WIDGET_EDITED_SIGNAL, LIVES_GUI_CALLBACK(cell_edited_callback), mnode);
+  lives_signal_connect(renderer, LIVES_WIDGET_EDITED_SIGNAL, LIVES_GUI_CALLBACK(cell_edited_callback), mnode);
 
 
-   column = lives_tree_view_column_new_with_attributes (_("* scale"),
-						      renderer,
-						      "text", SCALE_COLUMN,
-						      NULL);
-   lives_tree_view_append_column (LIVES_TREE_VIEW (mnode->treev1), column);
 
-   renderer = lives_cell_renderer_spin_new ();
+  column = lives_tree_view_column_new_with_attributes(_("+ offset1"),
+           renderer,
+           "text", OFFS1_COLUMN,
+           NULL);
+  lives_tree_view_append_column(LIVES_TREE_VIEW(mnode->treev1), column);
 
+  renderer = lives_cell_renderer_spin_new();
 
-   spinadj=(LiVESObject *)lives_adjustment_new (0., -100000., 100000., 1., 10., 0);
+  spinadj=(LiVESObject *)lives_adjustment_new(1., -100000., 100000., 1., 10., 0);
 
 #ifdef GUI_GTK
-   g_object_set (renderer, "width-chars", 7, "mode", GTK_CELL_RENDERER_MODE_EDITABLE,
-		 "editable", TRUE, "xalign", 1.0, "adjustment", spinadj, NULL);
+  g_object_set(renderer, "width-chars", 12, "mode", GTK_CELL_RENDERER_MODE_EDITABLE,
+               "editable", TRUE, "xalign", 1.0, "adjustment", spinadj,
+               "digits", OMC_FP_FIX, NULL);
 #endif
 
-   lives_widget_object_set_data(LIVES_WIDGET_OBJECT(renderer), "colnum", LIVES_UINT_TO_POINTER(OFFS2_COLUMN));
-   lives_signal_connect(renderer, LIVES_WIDGET_EDITED_SIGNAL, LIVES_GUI_CALLBACK(cell_edited_callback), mnode);
+  lives_widget_object_set_data(LIVES_WIDGET_OBJECT(renderer), "colnum", LIVES_UINT_TO_POINTER(SCALE_COLUMN));
+  lives_signal_connect(renderer, LIVES_WIDGET_EDITED_SIGNAL, LIVES_GUI_CALLBACK(cell_edited_callback), mnode);
 
 
-   column = lives_tree_view_column_new_with_attributes (_("+ offset2"),
-						      renderer,
-						      "text", OFFS2_COLUMN,
-						      NULL);
-   lives_tree_view_append_column (LIVES_TREE_VIEW (mnode->treev1), column);
+  column = lives_tree_view_column_new_with_attributes(_("* scale"),
+           renderer,
+           "text", SCALE_COLUMN,
+           NULL);
+  lives_tree_view_append_column(LIVES_TREE_VIEW(mnode->treev1), column);
 
-   lives_widget_show (mnode->treev1);
-  
-   lives_table_attach (LIVES_TABLE (omclw->table), mnode->treev1, 1, 2, omclw->tbl_currow, omclw->tbl_currow+1,
-		     (LiVESAttachOptions) (0),
-		     (LiVESAttachOptions) (0), 0, 0);
+  renderer = lives_cell_renderer_spin_new();
 
-   combo=create_omc_macro_combo(mnode,omclw->tbl_currow,omclw);
 
-   lives_widget_show (combo);
-  
-   lives_table_attach (LIVES_TABLE (omclw->table), combo, 2, 3, omclw->tbl_currow, omclw->tbl_currow+1,
-		     (LiVESAttachOptions) 0,
-		     (LiVESAttachOptions) (0), 0, 0);
+  spinadj=(LiVESObject *)lives_adjustment_new(0., -100000., 100000., 1., 10., 0);
+
+#ifdef GUI_GTK
+  g_object_set(renderer, "width-chars", 7, "mode", GTK_CELL_RENDERER_MODE_EDITABLE,
+               "editable", TRUE, "xalign", 1.0, "adjustment", spinadj, NULL);
+#endif
+
+  lives_widget_object_set_data(LIVES_WIDGET_OBJECT(renderer), "colnum", LIVES_UINT_TO_POINTER(OFFS2_COLUMN));
+  lives_signal_connect(renderer, LIVES_WIDGET_EDITED_SIGNAL, LIVES_GUI_CALLBACK(cell_edited_callback), mnode);
+
+
+  column = lives_tree_view_column_new_with_attributes(_("+ offset2"),
+           renderer,
+           "text", OFFS2_COLUMN,
+           NULL);
+  lives_tree_view_append_column(LIVES_TREE_VIEW(mnode->treev1), column);
+
+  lives_widget_show(mnode->treev1);
+
+  lives_table_attach(LIVES_TABLE(omclw->table), mnode->treev1, 1, 2, omclw->tbl_currow, omclw->tbl_currow+1,
+                     (LiVESAttachOptions)(0),
+                     (LiVESAttachOptions)(0), 0, 0);
+
+  combo=create_omc_macro_combo(mnode,omclw->tbl_currow,omclw);
+
+  lives_widget_show(combo);
+
+  lives_table_attach(LIVES_TABLE(omclw->table), combo, 2, 3, omclw->tbl_currow, omclw->tbl_currow+1,
+                     (LiVESAttachOptions) 0,
+                     (LiVESAttachOptions)(0), 0, 0);
 
 
   if (mnode->macro==-1) lives_widget_set_sensitive(omclw->clear_button,TRUE);
   lives_widget_set_sensitive(omclw->del_all_button,TRUE);
 
 }
-   
+
 
 
 
@@ -1235,8 +1230,7 @@ static void show_existing(omclearn_w *omclw) {
       tmp=lives_strdup(srch+blen+1);
       lives_free(srch);
       srch=tmp;
-    }
-    else {
+    } else {
 #endif
       type=supertype;
       idx=atoi(array[1]);
@@ -1256,11 +1250,11 @@ static void show_existing(omclearn_w *omclw) {
 
 
 
-static void clear_unmatched (LiVESButton *button, livespointer user_data) {
+static void clear_unmatched(LiVESButton *button, livespointer user_data) {
   omclearn_w *omclw=(omclearn_w *)user_data;
 
   // destroy everything in table
-  
+
   lives_container_foreach(LIVES_CONTAINER(omclw->table),killit,NULL);
 
   remove_all_nodes(FALSE,omclw);
@@ -1270,13 +1264,13 @@ static void clear_unmatched (LiVESButton *button, livespointer user_data) {
 }
 
 
-static void del_all (LiVESButton *button, livespointer user_data) {
+static void del_all(LiVESButton *button, livespointer user_data) {
   omclearn_w *omclw=(omclearn_w *)user_data;
 
   if (!do_warning_dialog(_("\nClick OK to delete all entries\n"))) return;
 
   // destroy everything in table
-  
+
   lives_container_foreach(LIVES_CONTAINER(omclw->table),killit,NULL);
 
   remove_all_nodes(TRUE,omclw);
@@ -1285,7 +1279,7 @@ static void del_all (LiVESButton *button, livespointer user_data) {
 
 
 
-static void close_learner_dialog (LiVESButton *button, livespointer user_data) {
+static void close_learner_dialog(LiVESButton *button, livespointer user_data) {
   mainw->cancelled=CANCEL_USER;
 }
 
@@ -1297,7 +1291,7 @@ static omclearn_w *create_omclearn_dialog(void) {
   LiVESWidget *scrolledwindow;
   int winsize_h,scr_width=mainw->scr_width;
   int winsize_v,scr_height=mainw->scr_height;
-  
+
   omclearn_w *omclw=(omclearn_w *)lives_malloc(sizeof(omclearn_w));
 
   omclw->tbl_rows=4;
@@ -1307,84 +1301,84 @@ static omclearn_w *create_omclearn_dialog(void) {
     scr_width=mainw->mgeom[prefs->gui_monitor-1].width;
     scr_height=mainw->mgeom[prefs->gui_monitor-1].height;
   }
-  
+
   winsize_h=scr_width-SCR_WIDTH_SAFETY;
   winsize_v=scr_height-SCR_HEIGHT_SAFETY;
-  
-  omclw->dialog = lives_standard_dialog_new (_("LiVES: OMC learner"),FALSE,winsize_h,winsize_v);
-  
+
+  omclw->dialog = lives_standard_dialog_new(_("LiVES: OMC learner"),FALSE,winsize_h,winsize_v);
+
   omclw->top_vbox = lives_dialog_get_content_area(LIVES_DIALOG(omclw->dialog));
 
-  omclw->table = lives_table_new (omclw->tbl_rows, 4, FALSE);
+  omclw->table = lives_table_new(omclw->tbl_rows, 4, FALSE);
 
   lives_table_set_col_spacings(LIVES_TABLE(omclw->table),widget_opts.packing_width*2);
 
-  scrolledwindow = lives_standard_scrolled_window_new (winsize_h, winsize_v-SCR_HEIGHT_SAFETY, omclw->table);
+  scrolledwindow = lives_standard_scrolled_window_new(winsize_h, winsize_v-SCR_HEIGHT_SAFETY, omclw->table);
 
-  lives_box_pack_start (LIVES_BOX (omclw->top_vbox), scrolledwindow, TRUE, TRUE, 0);
+  lives_box_pack_start(LIVES_BOX(omclw->top_vbox), scrolledwindow, TRUE, TRUE, 0);
 
 
 
   hbuttonbox = lives_dialog_get_action_area(LIVES_DIALOG(omclw->dialog));
-  
-  omclw->clear_button = lives_button_new_with_mnemonic (_("Clear _unmatched"));
 
-  lives_container_add (LIVES_CONTAINER (hbuttonbox), omclw->clear_button);
-  
+  omclw->clear_button = lives_button_new_with_mnemonic(_("Clear _unmatched"));
 
-  lives_signal_connect (LIVES_GUI_OBJECT (omclw->clear_button), LIVES_WIDGET_CLICKED_SIGNAL,
-		    LIVES_GUI_CALLBACK (clear_unmatched),
-		    (livespointer)omclw);
+  lives_container_add(LIVES_CONTAINER(hbuttonbox), omclw->clear_button);
+
+
+  lives_signal_connect(LIVES_GUI_OBJECT(omclw->clear_button), LIVES_WIDGET_CLICKED_SIGNAL,
+                       LIVES_GUI_CALLBACK(clear_unmatched),
+                       (livespointer)omclw);
 
   lives_widget_set_sensitive(omclw->clear_button,FALSE);
 
-  omclw->del_all_button = lives_button_new_with_mnemonic (_("_Delete all"));
+  omclw->del_all_button = lives_button_new_with_mnemonic(_("_Delete all"));
 
-  lives_container_add (LIVES_CONTAINER (hbuttonbox), omclw->del_all_button);
-  
+  lives_container_add(LIVES_CONTAINER(hbuttonbox), omclw->del_all_button);
 
-  lives_signal_connect (LIVES_GUI_OBJECT (omclw->del_all_button), LIVES_WIDGET_CLICKED_SIGNAL,
-		    LIVES_GUI_CALLBACK (del_all),
-		    (livespointer)omclw);
+
+  lives_signal_connect(LIVES_GUI_OBJECT(omclw->del_all_button), LIVES_WIDGET_CLICKED_SIGNAL,
+                       LIVES_GUI_CALLBACK(del_all),
+                       (livespointer)omclw);
 
   lives_widget_set_sensitive(omclw->del_all_button,FALSE);
 
 
-  ok_button = lives_button_new_with_mnemonic (_("Close _window"));
+  ok_button = lives_button_new_with_mnemonic(_("Close _window"));
 
-  lives_container_add (LIVES_CONTAINER (hbuttonbox), ok_button);
-  
-  lives_widget_set_can_focus_and_default (ok_button);
+  lives_container_add(LIVES_CONTAINER(hbuttonbox), ok_button);
 
-  lives_widget_grab_default (ok_button);
+  lives_widget_set_can_focus_and_default(ok_button);
 
-  lives_button_box_set_button_width (LIVES_BUTTON_BOX (hbuttonbox), ok_button, DEF_BUTTON_WIDTH*4);
-  lives_button_box_set_button_width (LIVES_BUTTON_BOX (hbuttonbox), omclw->clear_button, DEF_BUTTON_WIDTH*4);
-  lives_button_box_set_button_width (LIVES_BUTTON_BOX (hbuttonbox), omclw->del_all_button, DEF_BUTTON_WIDTH*4);
+  lives_widget_grab_default(ok_button);
 
-  lives_button_box_set_layout (LIVES_BUTTON_BOX (hbuttonbox), LIVES_BUTTONBOX_SPREAD);
-  
-  
-  lives_signal_connect (LIVES_GUI_OBJECT (ok_button), LIVES_WIDGET_CLICKED_SIGNAL,
-		    LIVES_GUI_CALLBACK (close_learner_dialog),
-		    NULL);
-  
+  lives_button_box_set_button_width(LIVES_BUTTON_BOX(hbuttonbox), ok_button, DEF_BUTTON_WIDTH*4);
+  lives_button_box_set_button_width(LIVES_BUTTON_BOX(hbuttonbox), omclw->clear_button, DEF_BUTTON_WIDTH*4);
+  lives_button_box_set_button_width(LIVES_BUTTON_BOX(hbuttonbox), omclw->del_all_button, DEF_BUTTON_WIDTH*4);
+
+  lives_button_box_set_layout(LIVES_BUTTON_BOX(hbuttonbox), LIVES_BUTTONBOX_SPREAD);
+
+
+  lives_signal_connect(LIVES_GUI_OBJECT(ok_button), LIVES_WIDGET_CLICKED_SIGNAL,
+                       LIVES_GUI_CALLBACK(close_learner_dialog),
+                       NULL);
+
   if (prefs->gui_monitor!=0) {
     int xcen=mainw->mgeom[prefs->gui_monitor-1].x+(mainw->mgeom[prefs->gui_monitor-1].width
-						    -lives_widget_get_allocation_width(omclw->dialog))/2;
+             -lives_widget_get_allocation_width(omclw->dialog))/2;
     int ycen=mainw->mgeom[prefs->gui_monitor-1].y+(mainw->mgeom[prefs->gui_monitor-1].height
-						    -lives_widget_get_allocation_height(omclw->dialog))/2;
+             -lives_widget_get_allocation_height(omclw->dialog))/2;
     lives_window_set_screen(LIVES_WINDOW(omclw->dialog),mainw->mgeom[prefs->gui_monitor-1].screen);
     lives_window_move(LIVES_WINDOW(omclw->dialog),xcen,ycen);
   }
-  
+
   if (prefs->open_maximised) {
-    lives_window_maximize (LIVES_WINDOW(omclw->dialog));
+    lives_window_maximize(LIVES_WINDOW(omclw->dialog));
   }
 
   if (prefs->show_gui)
     lives_widget_show_all(omclw->dialog);
-  
+
   return omclw;
 }
 
@@ -1395,7 +1389,7 @@ static omclearn_w *create_omclearn_dialog(void) {
 static void init_omc_macros(void) {
   int i;
 
-  for (i=0;i<N_OMC_MACROS;i++) {
+  for (i=0; i<N_OMC_MACROS; i++) {
     omc_macros[i].macro_text=NULL;
     omc_macros[i].info_text=NULL;
     omc_macros[i].msg=NULL;
@@ -1443,7 +1437,7 @@ static void init_omc_macros(void) {
   omc_macros[9].macro_text=lives_strdup(_("Set video framerate to <fps>"));
   omc_macros[9].info_text=lives_strdup(_("Set framerate of foreground clip to <float fps>"));
   omc_macros[9].nparams=1;
-  
+
   omc_macros[10].msg=lives_strdup("/record/enable");
   omc_macros[10].macro_text=lives_strdup(_("Start recording"));
 
@@ -1486,7 +1480,7 @@ static void init_omc_macros(void) {
   omc_macros[21].macro_text=lives_strdup(_("Set video framerate to ratio <fps_ratio>"));
   omc_macros[21].info_text=lives_strdup(_("Set framerate ratio of foreground clip to <float fps_ratio>"));
   omc_macros[21].nparams=1;
-  
+
   omc_macros[22].msg=lives_strdup("/clip/foreground/retrigger");
   omc_macros[22].macro_text=lives_strdup(_("Retrigger clip <clipnum>"));
   omc_macros[22].info_text=lives_strdup(_("Switch foreground clip to the nth valid clip, and reset the frame number"));
@@ -1506,18 +1500,18 @@ static void init_omc_macros(void) {
   omc_macros[25].nparams=2;
 
 
-  for (i=0;i<N_OMC_MACROS;i++) {
+  for (i=0; i<N_OMC_MACROS; i++) {
     if (omc_macros[i].msg!=NULL) {
       if (omc_macros[i].nparams>0) {
-	omc_macros[i].ptypes=(int *)lives_malloc(omc_macros[i].nparams*sizint);
-	omc_macros[i].mini=(int *)lives_malloc(omc_macros[i].nparams*sizint);
-	omc_macros[i].maxi=(int *)lives_malloc(omc_macros[i].nparams*sizint);
-	omc_macros[i].vali=(int *)lives_malloc(omc_macros[i].nparams*sizint);
+        omc_macros[i].ptypes=(int *)lives_malloc(omc_macros[i].nparams*sizint);
+        omc_macros[i].mini=(int *)lives_malloc(omc_macros[i].nparams*sizint);
+        omc_macros[i].maxi=(int *)lives_malloc(omc_macros[i].nparams*sizint);
+        omc_macros[i].vali=(int *)lives_malloc(omc_macros[i].nparams*sizint);
 
-	omc_macros[i].mind=(double *)lives_malloc(omc_macros[i].nparams*sizdbl);
-	omc_macros[i].maxd=(double *)lives_malloc(omc_macros[i].nparams*sizdbl);
-	omc_macros[i].vald=(double *)lives_malloc(omc_macros[i].nparams*sizdbl);
-	omc_macros[i].pname=(char **)lives_malloc(omc_macros[i].nparams*sizeof(char *));
+        omc_macros[i].mind=(double *)lives_malloc(omc_macros[i].nparams*sizdbl);
+        omc_macros[i].maxd=(double *)lives_malloc(omc_macros[i].nparams*sizdbl);
+        omc_macros[i].vald=(double *)lives_malloc(omc_macros[i].nparams*sizdbl);
+        omc_macros[i].pname=(char **)lives_malloc(omc_macros[i].nparams*sizeof(char *));
 
       }
     }
@@ -1595,7 +1589,7 @@ static void init_omc_macros(void) {
   omc_macros[21].pname[0]=lives_strdup(_("fps_ratio"));
 
 
-  // clip retrigger 
+  // clip retrigger
   omc_macros[22].ptypes[0]=OMC_PARAM_INT;
   omc_macros[22].mini[0]=omc_macros[22].vali[0]=1;
   omc_macros[22].maxi[0]=100000;
@@ -1672,12 +1666,12 @@ static boolean match_filtered_params(lives_omc_match_node_t *mnode, const char *
   int i;
   char **array=lives_strsplit(sig," ",-1);
 
-  for (i=0;i<mnode->nvars;i++) {
+  for (i=0; i<mnode->nvars; i++) {
     if (mnode->matchp[i]) {
       if (mnode->matchi[i]!=atoi(array[nfixed+i])) {
-	//g_print("data mismatch %d %d %d\n",mnode->matchi[i],atoi(array[nfixed+i]),nfixed);
-	lives_strfreev(array);
-	return FALSE;
+        //g_print("data mismatch %d %d %d\n",mnode->matchi[i],atoi(array[nfixed+i]),nfixed);
+        lives_strfreev(array);
+        return FALSE;
       }
     }
   }
@@ -1698,8 +1692,7 @@ static lives_omc_match_node_t *omc_match_sig(int type, int index, const char *si
   if (type==OMC_MIDI) {
     if (index==-1) srch=lives_strdup_printf("%d %s ",type,sig);
     else srch=lives_strdup_printf("%d %d %s ",type,index,sig);
-  }
-  else srch=lives_strdup_printf("%s ",sig);
+  } else srch=lives_strdup_printf("%s ",sig);
 
   nfixed=get_nfixed(type,sig);
 
@@ -1711,9 +1704,9 @@ static lives_omc_match_node_t *omc_match_sig(int type, int index, const char *si
       // got a possible match
       // now check the data
       if (match_filtered_params(cnode,sig,nfixed)) {
-	lives_free(srch);
-	lives_free(cnodex);
-	return cnode;
+        lives_free(srch);
+        lives_free(cnodex);
+        return cnode;
       }
     }
     nlist=nlist->next;
@@ -1739,7 +1732,7 @@ static lives_omc_match_node_t *omc_match_sig(int type, int index, const char *si
     msg=lives_strdup(_("\n\nPlease release the note\n\n"));
     break;
   }
-  
+
   do_blocking_error_dialog(msg);
   if (msg!=NULL) lives_free(msg);
 
@@ -1760,7 +1753,7 @@ static LIVES_INLINE int omclearn_get_fixed_elems(const char *string1, const char
   int match=0;
   int stlen=MIN(strlen(string1),strlen(string2));
 
-  for (i=0;i<stlen;i++) {
+  for (i=0; i<stlen; i++) {
     if (strcmp((string1+i),(string2+i))) return match;
     if (!strcmp((string1+i)," ")) match++;
   }
@@ -1793,8 +1786,7 @@ static lives_omc_match_node_t *lives_omc_match_node_new(int str_type, int index,
     else srch_str=lives_strdup_printf("%d %s",str_type,(tmp=cut_string_elems(string,nfixed<0?-1:nfixed)));
 
     lives_free(tmp);
-  }
-  else srch_str=lives_strdup(string);
+  } else srch_str=lives_strdup(string);
 
   mnode->srch=srch_str;
   mnode->macro=-1;
@@ -1812,7 +1804,7 @@ static lives_omc_match_node_t *lives_omc_match_node_new(int str_type, int index,
     mnode->matchi=(int *)lives_malloc(mnode->nvars*sizint);
   }
 
-  for (i=0;i<mnode->nvars;i++) {
+  for (i=0; i<mnode->nvars; i++) {
     mnode->offs0[i]=mnode->offs1[i]=0;
     mnode->scale[i]=1.;
     mnode->matchp[i]=FALSE;
@@ -1841,25 +1833,25 @@ static int *omclearn_get_values(const char *string, int nfixed) {
 
   retvals=(int *)lives_malloc(nvars*sizint);
 
-  for (i=0;i<slen;i++) {
+  for (i=0; i<slen; i++) {
     if (!strncmp((string+i)," ",1)) {
       if (--nfixed<=0) {
-	char *tmp=lives_strdup(string+i+1);
-	tslen=strlen(tmp);
-	for (j=0;j<tslen;j++) {
-	  if (!strncmp((tmp+j)," ",1)) {
-	    memset(tmp+j,0,1);
-	    retvals[count++]=atoi(tmp);
-	    lives_free(tmp);
-	    break;
-	  }
-	}
-	if (j==tslen) {
-	  retvals[count++]=atoi(tmp);
-	  lives_free(tmp);
-	  return retvals;
-	}
-	i+=j;
+        char *tmp=lives_strdup(string+i+1);
+        tslen=strlen(tmp);
+        for (j=0; j<tslen; j++) {
+          if (!strncmp((tmp+j)," ",1)) {
+            memset(tmp+j,0,1);
+            retvals[count++]=atoi(tmp);
+            lives_free(tmp);
+            break;
+          }
+        }
+        if (j==tslen) {
+          retvals[count++]=atoi(tmp);
+          lives_free(tmp);
+          return retvals;
+        }
+        i+=j;
       }
     }
   }
@@ -1871,7 +1863,7 @@ static int *omclearn_get_values(const char *string, int nfixed) {
 
 
 
-void omclearn_match_control (lives_omc_match_node_t *mnode, int str_type, int index, const char *string, int nfixed, omclearn_w *omclw) {
+void omclearn_match_control(lives_omc_match_node_t *mnode, int str_type, int index, const char *string, int nfixed, omclearn_w *omclw) {
 
   if (nfixed==-1) {
     // already there : allow user to update
@@ -1907,7 +1899,7 @@ lives_omc_match_node_t *omc_learn(const char *string, int str_type, int idx, omc
 
   // next, we check if signifier is already matched to a macro
 
-  // if not we allow the user to match it to any macro that has n or less parameters, where n is the number of variables in string 
+  // if not we allow the user to match it to any macro that has n or less parameters, where n is the number of variables in string
 
 
   lives_omc_match_node_t *mnode;
@@ -1919,10 +1911,10 @@ lives_omc_match_node_t *omc_learn(const char *string, int str_type, int idx, omc
   case OMC_MIDI_CONTROLLER:
     // display controller and allow it to be matched
     // then request min
-    
+
     mnode=omc_match_sig(OMC_MIDI,idx,string);
     //g_print("autoscale !\n");
-    
+
     if (mnode==NULL||mnode->macro==-1) {
       mnode=lives_omc_match_node_new(OMC_MIDI,idx,string,nfixed);
       mnode->max[0]=127;
@@ -1934,10 +1926,10 @@ lives_omc_match_node_t *omc_learn(const char *string, int str_type, int idx, omc
     break;
   case OMC_MIDI_PGM_CHANGE:
     // display controller and allow it to be matched
-    
+
     mnode=omc_match_sig(OMC_MIDI,idx,string);
     //g_print("autoscale !\n");
-    
+
     if (mnode==NULL||mnode->macro==-1) {
       mnode=lives_omc_match_node_new(OMC_MIDI,idx,string,nfixed);
       mnode->max[0]=127;
@@ -1950,10 +1942,10 @@ lives_omc_match_node_t *omc_learn(const char *string, int str_type, int idx, omc
   case OMC_MIDI_PITCH_BEND:
     // display controller and allow it to be matched
     // then request min
-    
+
     mnode=omc_match_sig(OMC_MIDI,idx,string);
     //g_print("autoscale !\n");
-    
+
     if (mnode==NULL||mnode->macro==-1) {
       mnode=lives_omc_match_node_new(OMC_MIDI,idx,string,nfixed);
       mnode->max[0]=8192;
@@ -1966,7 +1958,7 @@ lives_omc_match_node_t *omc_learn(const char *string, int str_type, int idx, omc
   case OMC_MIDI_NOTE_OFF:
     // display note and allow it to be matched
     mnode=omc_match_sig(OMC_MIDI,idx,string);
-    
+
     if (mnode==NULL||mnode->macro==-1) {
       mnode=lives_omc_match_node_new(OMC_MIDI,idx,string,nfixed);
 
@@ -1984,9 +1976,9 @@ lives_omc_match_node_t *omc_learn(const char *string, int str_type, int idx, omc
   case OMC_JS_AXIS:
     // display axis and allow it to be matched
     // then request min
-    
+
     mnode=omc_match_sig(str_type,idx,string);
-    
+
     if (mnode==NULL||mnode->macro==-1) {
       mnode=lives_omc_match_node_new(str_type,idx,string,nfixed);
 
@@ -2000,7 +1992,7 @@ lives_omc_match_node_t *omc_learn(const char *string, int str_type, int idx, omc
   case OMC_JS_BUTTON:
     // display note and allow it to be matched
     mnode=omc_match_sig(str_type,idx,string);
-     
+
     if (mnode==NULL||mnode->macro==-1) {
       mnode=lives_omc_match_node_new(str_type,idx,string,nfixed);
       omclearn_match_control(mnode,str_type,idx,string,nfixed,omclw);
@@ -2009,7 +2001,7 @@ lives_omc_match_node_t *omc_learn(const char *string, int str_type, int idx, omc
     break;
   default:
     // hmmm....
-    
+
     break;
   }
   return NULL;
@@ -2026,7 +2018,7 @@ lives_omc_match_node_t *omc_learn(const char *string, int str_type, int idx, omc
 
 boolean omc_process_string(int supertype, const char *string, boolean learn, omclearn_w *omclw) {
   // only need to set omclw if learn is TRUE
-  
+
   // returns TRUE if we learn new, or if we carry out an action
   // retruns FALSE otherwise
 
@@ -2055,11 +2047,10 @@ boolean omc_process_string(int supertype, const char *string, boolean learn, omc
       // pass to learner
       mnode=omc_learn(string,type,idx,omclw);
       if (mnode!=NULL) {
-	ret=TRUE;
-	omc_node_list=lives_slist_append(omc_node_list,mnode);
+        ret=TRUE;
+        omc_node_list=lives_slist_append(omc_node_list,mnode);
       }
-    }
-    else {
+    } else {
       OSCbuf *oscbuf=omc_learner_decode(supertype,idx,string);
 
       // if not playing, the only commands we allow are:
@@ -2073,15 +2064,15 @@ boolean omc_process_string(int supertype, const char *string, boolean learn, omc
       // further checks are performed when enabling/toggling an effect to see whether it is a generator
 
       if (oscbuf!=NULL) {
-	if (mainw->playing_file==-1
-	    &&strcmp(oscbuf->buffer,"/video/play")
-	    &&strcmp(oscbuf->buffer,"/clip/foreground/retrigger")
-	    &&strcmp(oscbuf->buffer,"/effect_key/enable")
-	    &&strcmp(oscbuf->buffer,"/effect_key/toggle")
-	    ) return FALSE;
-	
-	lives_osc_act(oscbuf);
-	ret=TRUE;
+        if (mainw->playing_file==-1
+            &&strcmp(oscbuf->buffer,"/video/play")
+            &&strcmp(oscbuf->buffer,"/clip/foreground/retrigger")
+            &&strcmp(oscbuf->buffer,"/effect_key/enable")
+            &&strcmp(oscbuf->buffer,"/effect_key/toggle")
+           ) return FALSE;
+
+        lives_osc_act(oscbuf);
+        ret=TRUE;
       }
     }
   }
@@ -2092,7 +2083,7 @@ boolean omc_process_string(int supertype, const char *string, boolean learn, omc
 
 
 
-void on_midi_learn_activate (LiVESMenuItem *menuitem, livespointer user_data) {
+void on_midi_learn_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   omclearn_w *omclw=create_omclearn_dialog();
   char *string=NULL;
 
@@ -2126,8 +2117,7 @@ void on_midi_learn_activate (LiVESMenuItem *menuitem, livespointer user_data) {
       omc_process_string(OMC_JS,string,TRUE,omclw);
       lives_free(string);
       string=NULL;
-    }
-    else {
+    } else {
 #endif
 
 #ifdef OMC_MIDI_IMPL
@@ -2137,14 +2127,14 @@ void on_midi_learn_activate (LiVESMenuItem *menuitem, livespointer user_data) {
       string=lives_strdup("176 10 0 1");
 #endif
       if (string!=NULL) {
-	omc_process_string(OMC_MIDI,string,TRUE,omclw);
-	lives_free(string);
-	string=NULL;
+        omc_process_string(OMC_MIDI,string,TRUE,omclw);
+        lives_free(string);
+        string=NULL;
       }
 #endif
 
 #ifdef OMC_JS_IMPL
-  }
+    }
 #endif
 
     lives_usleep(prefs->sleep_time);
@@ -2173,61 +2163,58 @@ static void write_fx_tag(const char *string, int nfixed, lives_omc_match_node_t 
   int *vals=omclearn_get_values(string,nfixed);
   int oval0=1,oval1=0;
 
-  for (i=0;i<omacro->nparams;i++) {
+  for (i=0; i<omacro->nparams; i++) {
     // get fixed val or map from
     j=mnode->map[i];
 
     if (j>-1) {
       if (i==2) {
-	// auto scale for fx param
-	int error,ntmpls,hint,flags;
-	int mode=rte_key_getmode(oval0);
-	weed_plant_t *filter;
-	weed_plant_t **ptmpls;
-	weed_plant_t *ptmpl;
-	
-	if (mode==-1) return;
-	
-	filter=rte_keymode_get_filter(oval0,mode);
-	
-	ntmpls=weed_leaf_num_elements(filter,"in_parameter_templates");
+        // auto scale for fx param
+        int error,ntmpls,hint,flags;
+        int mode=rte_key_getmode(oval0);
+        weed_plant_t *filter;
+        weed_plant_t **ptmpls;
+        weed_plant_t *ptmpl;
 
-	ptmpls=weed_get_plantptr_array(filter,"in_parameter_templates",&error);
-	for (k=0;k<ntmpls;k++) {
-	  ptmpl=ptmpls[k];
-	  if (weed_plant_has_leaf(ptmpl,"host_internal_connection")) continue;
-	  hint=weed_get_int_value(ptmpl,"hint",&error);
-	  flags=weed_get_int_value(ptmpl,"flags",&error);
-	  if (flags&WEED_PARAMETER_VARIABLE_ELEMENTS) flags^=WEED_PARAMETER_VARIABLE_ELEMENTS;
-	  if ((hint==WEED_HINT_INTEGER||hint==WEED_HINT_FLOAT)&&flags==0&&weed_leaf_num_elements(ptmpl,"default")==1) {
-	    if (oval1==0) {
-	      if (hint==WEED_HINT_INTEGER) {
-		// **int
-		lives_strappend(typetags,OSC_MAX_TYPETAGS,"i");
-	      }
-	      else {
-		// float
-		lives_strappend(typetags,OSC_MAX_TYPETAGS,"f");
-	      }
-	    }
-	    oval1--;
-	  }
-	}
-	lives_free(ptmpls);
+        if (mode==-1) return;
+
+        filter=rte_keymode_get_filter(oval0,mode);
+
+        ntmpls=weed_leaf_num_elements(filter,"in_parameter_templates");
+
+        ptmpls=weed_get_plantptr_array(filter,"in_parameter_templates",&error);
+        for (k=0; k<ntmpls; k++) {
+          ptmpl=ptmpls[k];
+          if (weed_plant_has_leaf(ptmpl,"host_internal_connection")) continue;
+          hint=weed_get_int_value(ptmpl,"hint",&error);
+          flags=weed_get_int_value(ptmpl,"flags",&error);
+          if (flags&WEED_PARAMETER_VARIABLE_ELEMENTS) flags^=WEED_PARAMETER_VARIABLE_ELEMENTS;
+          if ((hint==WEED_HINT_INTEGER||hint==WEED_HINT_FLOAT)&&flags==0&&weed_leaf_num_elements(ptmpl,"default")==1) {
+            if (oval1==0) {
+              if (hint==WEED_HINT_INTEGER) {
+                // **int
+                lives_strappend(typetags,OSC_MAX_TYPETAGS,"i");
+              } else {
+                // float
+                lives_strappend(typetags,OSC_MAX_TYPETAGS,"f");
+              }
+            }
+            oval1--;
+          }
+        }
+        lives_free(ptmpls);
+      } else {
+        // playback plugin params
+        if (omacro->ptypes[i]==OMC_PARAM_INT) {
+          int oval=myround((double)(vals[j]+mnode->offs0[j])*mnode->scale[j])+mnode->offs1[j];
+          if (i==0) oval0=oval;
+          if (i==1) oval1=oval;
+        }
       }
-      else {
-	// playback plugin params
-	if (omacro->ptypes[i]==OMC_PARAM_INT) {
-	  int oval=myround((double)(vals[j]+mnode->offs0[j])*mnode->scale[j])+mnode->offs1[j];
-	  if (i==0) oval0=oval;
-	  if (i==1) oval1=oval;
-	}
-      }
-    }
-    else {
+    } else {
       if (omacro->ptypes[i]==OMC_PARAM_INT) {
-	if (i==0) oval0=mnode->fvali[i];
-	if (i==1) oval1=mnode->fvali[i];
+        if (i==0) oval0=mnode->fvali[i];
+        if (i==1) oval1=mnode->fvali[i];
       }
     }
   }
@@ -2275,11 +2262,10 @@ OSCbuf *omc_learner_decode(int type, int idx, const char *string) {
   nfixed=get_token_count(string,' ')-mnode->nvars;
 
   // get typetags
-  for (i=0;i<omacro.nparams;i++) {
+  for (i=0; i<omacro.nparams; i++) {
     if (omacro.ptypes[i]==OMC_PARAM_SPECIAL) {
       write_fx_tag(string,nfixed,mnode,&omacro,typetags);
-    }
-    else {
+    } else {
       if (omacro.ptypes[i]==OMC_PARAM_INT) lives_strappend(typetags,OSC_MAX_TYPETAGS,"i");
       else lives_strappend(typetags,OSC_MAX_TYPETAGS,"f");
     }
@@ -2292,109 +2278,102 @@ OSCbuf *omc_learner_decode(int type, int idx, const char *string) {
 
     vals=omclearn_get_values(string,nfixed);
 
-    for (i=0;i<omacro.nparams;i++) {
+    for (i=0; i<omacro.nparams; i++) {
       // get fixed val or map from
       j=mnode->map[i];
 
       if (j>-1) {
 
-	if (macro==25 && i==1 && mainw->vpp!=NULL && mainw->vpp->play_params!=NULL && oval0<mainw->vpp->num_play_params) {
-	  // auto scale for playback plugin params
+        if (macro==25 && i==1 && mainw->vpp!=NULL && mainw->vpp->play_params!=NULL && oval0<mainw->vpp->num_play_params) {
+          // auto scale for playback plugin params
 
-	  weed_plant_t *ptmpl=weed_get_plantptr_value((weed_plant_t *)pp_get_param(mainw->vpp->play_params,oval0),"template",&error);
-	  hint=weed_get_int_value(ptmpl,"hint",&error);
-	  if ((hint==WEED_HINT_INTEGER||hint==WEED_HINT_FLOAT)&&weed_leaf_num_elements(ptmpl,"default")==1) {
-	    if (hint==WEED_HINT_INTEGER) {
-	      int omin=mnode->min[j];
-	      int omax=mnode->max[j];
-	      int mini=weed_get_int_value(ptmpl,"min",&error);
-	      int maxi=weed_get_int_value(ptmpl,"max",&error);
-	      
-	      int oval=(int)((double)(vals[j]-omin)/(double)(omax-omin)*(double)(maxi-mini))+mini;
-	      OSC_writeIntArg(&obuf,oval);
-	    }
-	    else {
-	      // float
-	      int omin=mnode->min[j];
-	      int omax=mnode->max[j];
-	      double minf=weed_get_double_value(ptmpl,"min",&error);
-	      double maxf=weed_get_double_value(ptmpl,"max",&error);
-	      
-	      double oval=(double)(vals[j]-omin)/(double)(omax-omin)*(maxf-minf)+minf;
-	      OSC_writeFloatArg(&obuf,(float)oval);
-	    } // end float
-	  }
-	}
-	else { 
-	  if (macro==18&&i==2) {
-	    // auto scale for fx param
-	    int mode=rte_key_getmode(oval0);
-	    weed_plant_t *filter;
-	    weed_plant_t **ptmpls;
-	    weed_plant_t *ptmpl;
+          weed_plant_t *ptmpl=weed_get_plantptr_value((weed_plant_t *)pp_get_param(mainw->vpp->play_params,oval0),"template",&error);
+          hint=weed_get_int_value(ptmpl,"hint",&error);
+          if ((hint==WEED_HINT_INTEGER||hint==WEED_HINT_FLOAT)&&weed_leaf_num_elements(ptmpl,"default")==1) {
+            if (hint==WEED_HINT_INTEGER) {
+              int omin=mnode->min[j];
+              int omax=mnode->max[j];
+              int mini=weed_get_int_value(ptmpl,"min",&error);
+              int maxi=weed_get_int_value(ptmpl,"max",&error);
 
-	    if (mode==-1) return NULL;
+              int oval=(int)((double)(vals[j]-omin)/(double)(omax-omin)*(double)(maxi-mini))+mini;
+              OSC_writeIntArg(&obuf,oval);
+            } else {
+              // float
+              int omin=mnode->min[j];
+              int omax=mnode->max[j];
+              double minf=weed_get_double_value(ptmpl,"min",&error);
+              double maxf=weed_get_double_value(ptmpl,"max",&error);
 
-	    filter=rte_keymode_get_filter(oval0,mode);
+              double oval=(double)(vals[j]-omin)/(double)(omax-omin)*(maxf-minf)+minf;
+              OSC_writeFloatArg(&obuf,(float)oval);
+            } // end float
+          }
+        } else {
+          if (macro==18&&i==2) {
+            // auto scale for fx param
+            int mode=rte_key_getmode(oval0);
+            weed_plant_t *filter;
+            weed_plant_t **ptmpls;
+            weed_plant_t *ptmpl;
 
-	    ntmpls=weed_leaf_num_elements(filter,"in_parameter_templates");
+            if (mode==-1) return NULL;
 
-	    ptmpls=weed_get_plantptr_array(filter,"in_parameter_templates",&error);
-	    for (k=0;k<ntmpls;k++) {
-	      ptmpl=ptmpls[k];
-	      if (weed_plant_has_leaf(ptmpl,"host_internal_connection")) continue;
-	      hint=weed_get_int_value(ptmpl,"hint",&error);
-	      flags=weed_get_int_value(ptmpl,"flags",&error);
-	      if ((hint==WEED_HINT_INTEGER||hint==WEED_HINT_FLOAT)&&flags==0&&weed_leaf_num_elements(ptmpl,"default")==1) {
-		if (oval1==0) {
-		  if (hint==WEED_HINT_INTEGER) {
-		    int omin=mnode->min[j];
-		    int omax=mnode->max[j];
-		    int mini=weed_get_int_value(ptmpl,"min",&error);
-		    int maxi=weed_get_int_value(ptmpl,"max",&error);
+            filter=rte_keymode_get_filter(oval0,mode);
 
-		    int oval=(int)((double)(vals[j]-omin)/(double)(omax-omin)*(double)(maxi-mini))+mini;
-		    OSC_writeIntArg(&obuf,oval);
-		  }
-		  else {
-		    // float
-		    int omin=mnode->min[j];
-		    int omax=mnode->max[j];
-		    double minf=weed_get_double_value(ptmpl,"min",&error);
-		    double maxf=weed_get_double_value(ptmpl,"max",&error);
+            ntmpls=weed_leaf_num_elements(filter,"in_parameter_templates");
 
-		    double oval=(double)(vals[j]-omin)/(double)(omax-omin)*(maxf-minf)+minf;
-		    OSC_writeFloatArg(&obuf,(float)oval);
-		  } // end float
-		}
-		oval1--;
-	      }
-	    }
-	    lives_free(ptmpls);
-	  }
-	  else {
-	    if (omacro.ptypes[i]==OMC_PARAM_INT) {
-	      int oval=myround((double)(vals[j]+mnode->offs0[j])*mnode->scale[j])+mnode->offs1[j];
-	      if (i==0) oval0=oval;
-	      if (i==1) oval1=oval;
-	      OSC_writeIntArg(&obuf,oval);
-	    }
-	    else {
-	      double oval=(double)(vals[j]+mnode->offs0[j])*mnode->scale[j]+(double)mnode->offs1[j];
-	      OSC_writeFloatArg(&obuf,oval);
-	    }
-	  }
-	}
-      }
-      else {
-	if (omacro.ptypes[i]==OMC_PARAM_INT) {
-	  OSC_writeIntArg(&obuf,mnode->fvali[i]);
-	  if (i==0) oval0=mnode->fvali[i];
-	  if (i==1) oval1=mnode->fvali[i];
-	}
-	else {
-	  OSC_writeFloatArg(&obuf,(float)mnode->fvald[i]);
-	}
+            ptmpls=weed_get_plantptr_array(filter,"in_parameter_templates",&error);
+            for (k=0; k<ntmpls; k++) {
+              ptmpl=ptmpls[k];
+              if (weed_plant_has_leaf(ptmpl,"host_internal_connection")) continue;
+              hint=weed_get_int_value(ptmpl,"hint",&error);
+              flags=weed_get_int_value(ptmpl,"flags",&error);
+              if ((hint==WEED_HINT_INTEGER||hint==WEED_HINT_FLOAT)&&flags==0&&weed_leaf_num_elements(ptmpl,"default")==1) {
+                if (oval1==0) {
+                  if (hint==WEED_HINT_INTEGER) {
+                    int omin=mnode->min[j];
+                    int omax=mnode->max[j];
+                    int mini=weed_get_int_value(ptmpl,"min",&error);
+                    int maxi=weed_get_int_value(ptmpl,"max",&error);
+
+                    int oval=(int)((double)(vals[j]-omin)/(double)(omax-omin)*(double)(maxi-mini))+mini;
+                    OSC_writeIntArg(&obuf,oval);
+                  } else {
+                    // float
+                    int omin=mnode->min[j];
+                    int omax=mnode->max[j];
+                    double minf=weed_get_double_value(ptmpl,"min",&error);
+                    double maxf=weed_get_double_value(ptmpl,"max",&error);
+
+                    double oval=(double)(vals[j]-omin)/(double)(omax-omin)*(maxf-minf)+minf;
+                    OSC_writeFloatArg(&obuf,(float)oval);
+                  } // end float
+                }
+                oval1--;
+              }
+            }
+            lives_free(ptmpls);
+          } else {
+            if (omacro.ptypes[i]==OMC_PARAM_INT) {
+              int oval=myround((double)(vals[j]+mnode->offs0[j])*mnode->scale[j])+mnode->offs1[j];
+              if (i==0) oval0=oval;
+              if (i==1) oval1=oval;
+              OSC_writeIntArg(&obuf,oval);
+            } else {
+              double oval=(double)(vals[j]+mnode->offs0[j])*mnode->scale[j]+(double)mnode->offs1[j];
+              OSC_writeFloatArg(&obuf,oval);
+            }
+          }
+        }
+      } else {
+        if (omacro.ptypes[i]==OMC_PARAM_INT) {
+          OSC_writeIntArg(&obuf,mnode->fvali[i]);
+          if (i==0) oval0=mnode->fvali[i];
+          if (i==1) oval1=mnode->fvali[i];
+        } else {
+          OSC_writeFloatArg(&obuf,(float)mnode->fvald[i]);
+        }
       }
     }
     lives_free(vals);
@@ -2414,7 +2393,7 @@ OSCbuf *omc_learner_decode(int type, int idx, const char *string) {
  */
 
 
-void on_midi_save_activate (LiVESMenuItem *menuitem, livespointer user_data) {
+void on_midi_save_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   LiVESSList *slist=omc_node_list;
 
   size_t srchlen;
@@ -2440,68 +2419,67 @@ void on_midi_save_activate (LiVESMenuItem *menuitem, livespointer user_data) {
   do {
     retval=0;
     if ((fd=open(save_file,O_WRONLY|O_CREAT|O_TRUNC,S_IRUSR|S_IWUSR))<0) {
-      retval=do_write_failed_error_s_with_retry (save_file,lives_strerror(errno),NULL);
+      retval=do_write_failed_error_s_with_retry(save_file,lives_strerror(errno),NULL);
       if (retval==LIVES_RESPONSE_CANCEL) {
-	lives_free (save_file);
-	d_print_failed();
-	return;
+        lives_free(save_file);
+        d_print_failed();
+        return;
       }
-    }
-    else {
+    } else {
       mainw->write_failed=FALSE;
-    
+
       lives_write(fd,OMC_FILE_VSTRING,strlen(OMC_FILE_VSTRING),TRUE);
-      
+
       nnodes=lives_slist_length(omc_node_list);
       lives_write_le(fd,&nnodes,4,TRUE);
-      
+
       while (slist!=NULL) {
-	if (mainw->write_failed) break;
-	mnode=(lives_omc_match_node_t *)slist->data;
-	srchlen=strlen(mnode->srch);
-	
-	lives_write_le(fd,&srchlen,4,TRUE);
-	lives_write(fd,mnode->srch,srchlen,TRUE);
-	
-	lives_write_le(fd,&mnode->macro,4,TRUE);
-	lives_write_le(fd,&mnode->nvars,4,TRUE);
-	
-	for (i=0;i<mnode->nvars;i++) {
-	  if (mainw->write_failed) break;
-	  lives_write_le(fd,&mnode->offs0[i],4,TRUE);
-	  lives_write_le(fd,&mnode->scale[i],8,TRUE);
-	  lives_write_le(fd,&mnode->offs1[i],4,TRUE);
-	  
-	  lives_write_le(fd,&mnode->min[i],4,TRUE);
-	  lives_write_le(fd,&mnode->max[i],4,TRUE);
-	  
-	  lives_write_le(fd,&mnode->matchp[i],4,TRUE);
-	  lives_write_le(fd,&mnode->matchi[i],4,TRUE);
-	}
-	
-	omacro=omc_macros[mnode->macro];
-	
-	for (i=0;i<omacro.nparams;i++) {
-	  if (mainw->write_failed) break;
-	  lives_write_le(fd,&mnode->map[i],4,TRUE);
-	  lives_write_le(fd,&mnode->fvali[i],4,TRUE);
-	  lives_write_le(fd,&mnode->fvald[i],8,TRUE);
-	}
-	slist=slist->next;
+        if (mainw->write_failed) break;
+        mnode=(lives_omc_match_node_t *)slist->data;
+        srchlen=strlen(mnode->srch);
+
+        lives_write_le(fd,&srchlen,4,TRUE);
+        lives_write(fd,mnode->srch,srchlen,TRUE);
+
+        lives_write_le(fd,&mnode->macro,4,TRUE);
+        lives_write_le(fd,&mnode->nvars,4,TRUE);
+
+        for (i=0; i<mnode->nvars; i++) {
+          if (mainw->write_failed) break;
+          lives_write_le(fd,&mnode->offs0[i],4,TRUE);
+          lives_write_le(fd,&mnode->scale[i],8,TRUE);
+          lives_write_le(fd,&mnode->offs1[i],4,TRUE);
+
+          lives_write_le(fd,&mnode->min[i],4,TRUE);
+          lives_write_le(fd,&mnode->max[i],4,TRUE);
+
+          lives_write_le(fd,&mnode->matchp[i],4,TRUE);
+          lives_write_le(fd,&mnode->matchi[i],4,TRUE);
+        }
+
+        omacro=omc_macros[mnode->macro];
+
+        for (i=0; i<omacro.nparams; i++) {
+          if (mainw->write_failed) break;
+          lives_write_le(fd,&mnode->map[i],4,TRUE);
+          lives_write_le(fd,&mnode->fvali[i],4,TRUE);
+          lives_write_le(fd,&mnode->fvald[i],8,TRUE);
+        }
+        slist=slist->next;
       }
-      
-      close (fd);
+
+      close(fd);
 
       if (mainw->write_failed) {
-	retval=do_write_failed_error_s_with_retry(save_file,NULL,NULL);
-	if (retval==LIVES_RESPONSE_CANCEL) d_print_file_error_failed();
+        retval=do_write_failed_error_s_with_retry(save_file,NULL,NULL);
+        if (retval==LIVES_RESPONSE_CANCEL) d_print_file_error_failed();
       }
     }
   } while (retval==LIVES_RESPONSE_RETRY);
 
   if (retval!=LIVES_RESPONSE_CANCEL) d_print_done();
 
-  lives_free (save_file);
+  lives_free(save_file);
 
 }
 
@@ -2517,23 +2495,23 @@ static void omc_node_list_free(LiVESSList *slist) {
 
 
 static void do_midi_load_error(const char *fname) {
-  char *msg=lives_strdup_printf (_("\n\nError parsing file\n%s\n"),fname);
-  do_blocking_error_dialog (msg);
-  lives_free (msg);
+  char *msg=lives_strdup_printf(_("\n\nError parsing file\n%s\n"),fname);
+  do_blocking_error_dialog(msg);
+  lives_free(msg);
   d_print_failed();
 }
 
 static void do_midi_version_error(const char *fname) {
-  char *msg=lives_strdup_printf (_("\n\nInvalid version in file\n%s\n"),fname);
-  do_blocking_error_dialog (msg);
-  lives_free (msg);
+  char *msg=lives_strdup_printf(_("\n\nInvalid version in file\n%s\n"),fname);
+  do_blocking_error_dialog(msg);
+  lives_free(msg);
   d_print_failed();
 }
 
 
 
 
-void on_midi_load_activate (LiVESMenuItem *menuitem, livespointer user_data) {
+void on_midi_load_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   lives_omc_match_node_t *mnode;
   lives_omc_macro_t omacro;
 
@@ -2553,7 +2531,7 @@ void on_midi_load_activate (LiVESMenuItem *menuitem, livespointer user_data) {
 #ifdef OMC_MIDI_IMPL
   size_t blen;
   char *tmp;
-#endif 
+#endif
 
   if (user_data==NULL) load_file=choose_file(NULL,NULL,NULL,LIVES_FILE_CHOOSER_ACTION_OPEN,NULL,NULL);
   else load_file=lives_strdup((char *)user_data);
@@ -2563,10 +2541,10 @@ void on_midi_load_activate (LiVESMenuItem *menuitem, livespointer user_data) {
   d_print(_("Loading device mapping from file %s..."),load_file);
 
   if ((fd=open(load_file,O_RDONLY))<0) {
-    char *msg=lives_strdup_printf (_("\n\nUnable to open file\n%s\nError code %d\n"),load_file,errno);
-    do_blocking_error_dialog (msg);
-    lives_free (msg);
-    lives_free (load_file);
+    char *msg=lives_strdup_printf(_("\n\nUnable to open file\n%s\nError code %d\n"),load_file,errno);
+    do_blocking_error_dialog(msg);
+    lives_free(msg);
+    lives_free(load_file);
     d_print_failed();
     return;
   }
@@ -2580,14 +2558,14 @@ void on_midi_load_activate (LiVESMenuItem *menuitem, livespointer user_data) {
   bytes=read(fd,tstring,strlen(OMC_FILE_VSTRING));
   if (bytes<strlen(OMC_FILE_VSTRING)) {
     do_midi_load_error(load_file);
-    lives_free (load_file);
+    lives_free(load_file);
     close(fd);
     return;
   }
 
   if (strncmp(tstring,OMC_FILE_VSTRING,strlen(OMC_FILE_VSTRING))) {
     do_midi_version_error(load_file);
-    lives_free (load_file);
+    lives_free(load_file);
     close(fd);
     return;
   }
@@ -2595,7 +2573,7 @@ void on_midi_load_activate (LiVESMenuItem *menuitem, livespointer user_data) {
   bytes=lives_read_le(fd,&nnodes,4,TRUE);
   if (bytes<4) {
     do_midi_load_error(load_file);
-    lives_free (load_file);
+    lives_free(load_file);
     close(fd);
     return;
   }
@@ -2605,22 +2583,22 @@ void on_midi_load_activate (LiVESMenuItem *menuitem, livespointer user_data) {
     omc_node_list=NULL;
   }
 
-  for (i=0;i<nnodes;i++) {
+  for (i=0; i<nnodes; i++) {
 
     bytes=lives_read_le(fd,&srchlen,4,TRUE);
     if (bytes<4) {
       do_midi_load_error(load_file);
-      lives_free (load_file);
+      lives_free(load_file);
       close(fd);
       return;
     }
-    
+
     srch=(char *)lives_malloc(srchlen+1);
 
     bytes=read(fd,srch,srchlen);
     if (bytes<srchlen) {
       do_midi_load_error(load_file);
-      lives_free (load_file);
+      lives_free(load_file);
       close(fd);
       return;
     }
@@ -2630,23 +2608,23 @@ void on_midi_load_activate (LiVESMenuItem *menuitem, livespointer user_data) {
     bytes=lives_read_le(fd,&macro,4,TRUE);
     if (bytes<sizint) {
       do_midi_load_error(load_file);
-      lives_free (load_file);
+      lives_free(load_file);
       lives_free(srch);
       close(fd);
       return;
     }
-    
+
     bytes=lives_read_le(fd,&nvars,4,TRUE);
     if (bytes<4) {
       do_midi_load_error(load_file);
-      lives_free (load_file);
+      lives_free(load_file);
       lives_free(srch);
       close(fd);
       return;
     }
-    
+
     supertype=atoi(srch);
-    
+
     switch (supertype) {
 #ifdef OMC_JS_IMPL
     case OMC_JS:
@@ -2678,57 +2656,57 @@ void on_midi_load_activate (LiVESMenuItem *menuitem, livespointer user_data) {
 
     mnode->macro=macro;
 
-    for (j=0;j<nvars;j++) {
+    for (j=0; j<nvars; j++) {
       bytes=lives_read_le(fd,&mnode->offs0[j],4,TRUE);
       if (bytes<4) {
-	do_midi_load_error(load_file);
-	lives_free (load_file);
-	close(fd);
-	return;
+        do_midi_load_error(load_file);
+        lives_free(load_file);
+        close(fd);
+        return;
       }
       bytes=lives_read_le(fd,&mnode->scale[j],8,TRUE);
       if (bytes<8) {
-	do_midi_load_error(load_file);
-	lives_free (load_file);
-	close(fd);
-	return;
+        do_midi_load_error(load_file);
+        lives_free(load_file);
+        close(fd);
+        return;
       }
       bytes=lives_read_le(fd,&mnode->offs1[j],4,TRUE);
       if (bytes<4) {
-	do_midi_load_error(load_file);
-	lives_free (load_file);
-	close(fd);
-	return;
+        do_midi_load_error(load_file);
+        lives_free(load_file);
+        close(fd);
+        return;
       }
-      
+
       bytes=lives_read_le(fd,&mnode->min[j],4,TRUE);
       if (bytes<4) {
-	do_midi_load_error(load_file);
-	lives_free (load_file);
-	close(fd);
-	return;
+        do_midi_load_error(load_file);
+        lives_free(load_file);
+        close(fd);
+        return;
       }
       bytes=lives_read_le(fd,&mnode->max[j],4,TRUE);
       if (bytes<4) {
-	do_midi_load_error(load_file);
-	lives_free (load_file);
-	close(fd);
-	return;
+        do_midi_load_error(load_file);
+        lives_free(load_file);
+        close(fd);
+        return;
       }
-      
+
       bytes=lives_read_le(fd,&mnode->matchp[j],4,TRUE);
       if (bytes<4) {
-	do_midi_load_error(load_file);
-	lives_free (load_file);
-	close(fd);
-	return;
+        do_midi_load_error(load_file);
+        lives_free(load_file);
+        close(fd);
+        return;
       }
       bytes=lives_read_le(fd,&mnode->matchi[j],4,TRUE);
       if (bytes<4) {
-	do_midi_load_error(load_file);
-	lives_free (load_file);
-	close(fd);
-	return;
+        do_midi_load_error(load_file);
+        lives_free(load_file);
+        close(fd);
+        return;
       }
     }
 
@@ -2738,33 +2716,33 @@ void on_midi_load_activate (LiVESMenuItem *menuitem, livespointer user_data) {
     mnode->fvali=(int *)lives_malloc(omacro.nparams*sizint);
     mnode->fvald=(double *)lives_malloc(omacro.nparams*sizdbl);
 
-    for (j=0;j<omacro.nparams;j++) {
+    for (j=0; j<omacro.nparams; j++) {
       bytes=lives_read_le(fd,&mnode->map[j],4,TRUE);
       if (bytes<4) {
-	do_midi_load_error(load_file);
-	lives_free (load_file);
-	close(fd);
-	return;
+        do_midi_load_error(load_file);
+        lives_free(load_file);
+        close(fd);
+        return;
       }
       bytes=lives_read_le(fd,&mnode->fvali[j],4,TRUE);
       if (bytes<4) {
-	do_midi_load_error(load_file);
-	lives_free (load_file);
-	close(fd);
-	return;
+        do_midi_load_error(load_file);
+        lives_free(load_file);
+        close(fd);
+        return;
       }
       bytes=read(fd,&mnode->fvald[j],8);
       if (bytes<8) {
-	do_midi_load_error(load_file);
-	lives_free (load_file);
-	close(fd);
-	return;
+        do_midi_load_error(load_file);
+        lives_free(load_file);
+        close(fd);
+        return;
       }
     }
     omc_node_list=lives_slist_append(omc_node_list,(livespointer)mnode);
   }
 
-  close (fd);
+  close(fd);
   d_print_done();
 
 

@@ -39,13 +39,13 @@ typedef enum {
 
 lives_painter_t *lives_painter_create(lives_painter_surface_t *target);
 lives_painter_t *lives_painter_create_from_widget(LiVESWidget *);
-boolean lives_painter_set_source_pixbuf (lives_painter_t *, const LiVESPixbuf *, double pixbuf_x, double pixbuf_y);
-boolean lives_painter_set_source_surface (lives_painter_t *, lives_painter_surface_t *, double x, double y);
+boolean lives_painter_set_source_pixbuf(lives_painter_t *, const LiVESPixbuf *, double pixbuf_x, double pixbuf_y);
+boolean lives_painter_set_source_surface(lives_painter_t *, lives_painter_surface_t *, double x, double y);
 lives_painter_surface_t *lives_painter_image_surface_create(lives_painter_format_t format, int width, int height);
-lives_painter_surface_t *lives_painter_image_surface_create_for_data(uint8_t *data, lives_painter_format_t, 
-								     int width, int height, int stride);
-lives_painter_surface_t *lives_painter_surface_create_from_widget(LiVESWidget *, lives_painter_content_t, 
-								  int width, int height);
+lives_painter_surface_t *lives_painter_image_surface_create_for_data(uint8_t *data, lives_painter_format_t,
+    int width, int height, int stride);
+lives_painter_surface_t *lives_painter_surface_create_from_widget(LiVESWidget *, lives_painter_content_t,
+    int width, int height);
 boolean lives_painter_surface_flush(lives_painter_surface_t *);
 
 boolean lives_painter_destroy(lives_painter_t *);
@@ -117,18 +117,18 @@ int lives_pixbuf_get_n_channels(const LiVESPixbuf *);
 unsigned char *lives_pixbuf_get_pixels(const LiVESPixbuf *);
 const unsigned char *lives_pixbuf_get_pixels_readonly(const LiVESPixbuf *);
 LiVESPixbuf *lives_pixbuf_new(boolean has_alpha, int width, int height);
-LiVESPixbuf *lives_pixbuf_new_from_data (const unsigned char *buf, boolean has_alpha, int width, int height, 
-					 int rowstride, LiVESPixbufDestroyNotify lives_free_buffer_fn, 
-					 livespointer destroy_fn_data);
+LiVESPixbuf *lives_pixbuf_new_from_data(const unsigned char *buf, boolean has_alpha, int width, int height,
+                                        int rowstride, LiVESPixbufDestroyNotify lives_free_buffer_fn,
+                                        livespointer destroy_fn_data);
 
 LiVESPixbuf *lives_pixbuf_new_from_file(const char *filename, LiVESError **error);
 LiVESWidget *lives_image_new_from_pixbuf(LiVESPixbuf *);
 LiVESPixbuf *lives_pixbuf_new_from_file_at_scale(const char *filename, int width, int height, boolean preserve_aspect_ratio,
-						 LiVESError **error);
+    LiVESError **error);
 
 
-LiVESPixbuf *lives_pixbuf_scale_simple(const LiVESPixbuf *src, int dest_width, int dest_height, 
-				       LiVESInterpType interp_type);
+LiVESPixbuf *lives_pixbuf_scale_simple(const LiVESPixbuf *src, int dest_width, int dest_height,
+                                       LiVESInterpType interp_type);
 
 boolean lives_pixbuf_saturate_and_pixelate(const LiVESPixbuf *src, LiVESPixbuf *dest, float saturation, boolean pixilate);
 
@@ -274,8 +274,8 @@ boolean lives_menu_set_accel_group(LiVESMenu *, LiVESAccelGroup *group);
 
 boolean lives_window_has_toplevel_focus(LiVESWindow *);
 
-LiVESAdjustment *lives_adjustment_new(double value, double lower, double upper, 
-						   double step_increment, double page_increment, double page_size);
+LiVESAdjustment *lives_adjustment_new(double value, double lower, double upper,
+                                      double step_increment, double page_increment, double page_size);
 
 boolean lives_box_reorder_child(LiVESBox *, LiVESWidget *child, int pos);
 boolean lives_box_set_homogeneous(LiVESBox *, boolean homogeneous);
@@ -320,7 +320,7 @@ LiVESWidget *lives_expander_get_label_widget(LiVESExpander *expander);
 boolean lives_label_set_halignment(LiVESLabel *, float yalign);
 
 LiVESWidget *lives_combo_new(void);
-LiVESWidget *lives_combo_new_with_model (LiVESTreeModel *);
+LiVESWidget *lives_combo_new_with_model(LiVESTreeModel *);
 LiVESTreeModel *lives_combo_get_model(LiVESCombo *);
 
 boolean lives_combo_append_text(LiVESCombo *, const char *text);
@@ -363,8 +363,8 @@ boolean lives_text_buffer_get_end_iter(LiVESTextBuffer *, LiVESTextIter *);
 
 boolean lives_text_buffer_place_cursor(LiVESTextBuffer *, LiVESTextIter *);
 
-LiVESTextMark *lives_text_buffer_create_mark(LiVESTextBuffer *, const char *mark_name, 
-					     const LiVESTextIter *where, boolean left_gravity);
+LiVESTextMark *lives_text_buffer_create_mark(LiVESTextBuffer *, const char *mark_name,
+    const LiVESTextIter *where, boolean left_gravity);
 boolean lives_text_buffer_delete_mark(LiVESTextBuffer *, LiVESTextMark *);
 
 boolean lives_text_buffer_delete(LiVESTextBuffer *, LiVESTextIter *start, LiVESTextIter *end);
@@ -426,7 +426,7 @@ boolean lives_toggle_button_set_mode(LiVESToggleButton *, boolean drawind);
 
 boolean lives_has_icon(const char *stock_id, LiVESIconSize size);
 
-void lives_tooltips_set (LiVESWidget *, const char *tip_text);
+void lives_tooltips_set(LiVESWidget *, const char *tip_text);
 
 LiVESSList *lives_radio_button_get_group(LiVESRadioButton *);
 LiVESSList *lives_radio_menu_item_get_group(LiVESRadioMenuItem *);
@@ -485,7 +485,8 @@ boolean lives_tool_button_set_icon_widget(LiVESToolButton *, LiVESWidget *icon);
 boolean lives_tool_button_set_label_widget(LiVESToolButton *, LiVESWidget *label);
 boolean lives_tool_button_set_use_underline(LiVESToolButton *, boolean use_underline);
 
-LiVESWidget *lives_message_dialog_new(LiVESWindow *parent, LiVESDialogFlags flags, LiVESMessageType type, LiVESButtonsType buttons, const char *msg_fmt, ...);
+LiVESWidget *lives_message_dialog_new(LiVESWindow *parent, LiVESDialogFlags flags, LiVESMessageType type, LiVESButtonsType buttons,
+                                      const char *msg_fmt, ...);
 
 double lives_ruler_get_value(LiVESRuler *);
 double lives_ruler_set_value(LiVESRuler *, double value);
@@ -556,16 +557,16 @@ LiVESWidget *lives_table_new(uint32_t rows, uint32_t cols, boolean homogeneous);
 boolean lives_table_set_row_spacings(LiVESTable *, uint32_t spacing);
 boolean lives_table_set_col_spacings(LiVESTable *, uint32_t spacing);
 boolean lives_table_resize(LiVESTable *, uint32_t rows, uint32_t cols);
-boolean lives_table_attach(LiVESTable *, LiVESWidget *child, uint32_t left, uint32_t right, 
-			   uint32_t top, uint32_t bottom, LiVESAttachOptions xoptions, LiVESAttachOptions yoptions,
-			   uint32_t xpad, uint32_t ypad);
+boolean lives_table_attach(LiVESTable *, LiVESWidget *child, uint32_t left, uint32_t right,
+                           uint32_t top, uint32_t bottom, LiVESAttachOptions xoptions, LiVESAttachOptions yoptions,
+                           uint32_t xpad, uint32_t ypad);
 
 #if LIVES_TABLE_IS_GRID
 LiVESWidget *lives_grid_new(void);
 boolean lives_grid_set_row_spacing(LiVESGrid *, uint32_t spacing);
 boolean lives_grid_set_column_spacing(LiVESGrid *, uint32_t spacing);
-boolean lives_grid_attach_next_to(LiVESGrid *, LiVESWidget *child, LiVESWidget *sibling, 
-				  LiVESPositionType side, int width, int height);
+boolean lives_grid_attach_next_to(LiVESGrid *, LiVESWidget *child, LiVESWidget *sibling,
+                                  LiVESPositionType side, int width, int height);
 
 boolean lives_grid_insert_row(LiVESGrid *, int posn);
 boolean lives_grid_remove_row(LiVESGrid *, int posn);
@@ -641,17 +642,18 @@ boolean lives_widget_process_updates(LiVESWidget *, boolean upd_children);
 boolean lives_xwindow_process_all_updates(void);
 
 LiVESAccelGroup *lives_accel_group_new(void);
-boolean lives_accel_group_connect(LiVESAccelGroup *, uint32_t key, LiVESXModifierType mod, LiVESAccelFlags flags, LiVESWidgetClosure *closure);
+boolean lives_accel_group_connect(LiVESAccelGroup *, uint32_t key, LiVESXModifierType mod, LiVESAccelFlags flags,
+                                  LiVESWidgetClosure *closure);
 boolean lives_accel_group_disconnect(LiVESAccelGroup *, LiVESWidgetClosure *closure);
 boolean lives_accel_groups_activate(LiVESObject *object, uint32_t key, LiVESXModifierType mod);
 
 boolean lives_widget_add_accelerator(LiVESWidget *, const char *accel_signal, LiVESAccelGroup *accel_group,
-				  uint32_t accel_key, LiVESXModifierType accel_mods, LiVESAccelFlags accel_flags);
+                                     uint32_t accel_key, LiVESXModifierType accel_mods, LiVESAccelFlags accel_flags);
 
 boolean lives_widget_get_pointer(LiVESXDevice *, LiVESWidget *, int *x, int *y);
-LiVESXWindow *lives_display_get_window_at_pointer (LiVESXDevice *, LiVESXDisplay *, int *win_x, int *win_y);
-boolean lives_display_get_pointer (LiVESXDevice *, LiVESXDisplay *, LiVESXScreen **, int *x, int *y, LiVESXModifierType *mask);
-boolean lives_display_warp_pointer (LiVESXDevice *, LiVESXDisplay *, LiVESXScreen *, int x, int y);
+LiVESXWindow *lives_display_get_window_at_pointer(LiVESXDevice *, LiVESXDisplay *, int *win_x, int *win_y);
+boolean lives_display_get_pointer(LiVESXDevice *, LiVESXDisplay *, LiVESXScreen **, int *x, int *y, LiVESXModifierType *mask);
+boolean lives_display_warp_pointer(LiVESXDevice *, LiVESXDisplay *, LiVESXScreen *, int x, int y);
 
 LiVESXDisplay *lives_widget_get_display(LiVESWidget *);
 lives_display_t lives_widget_get_display_type(LiVESWidget *);
@@ -703,16 +705,16 @@ LiVESWidget *lives_standard_label_new(const char *text);
 LiVESWidget *lives_standard_label_new_with_mnemonic(const char *text, LiVESWidget *mnemonic_widget);
 
 LiVESWidget *lives_standard_check_button_new(const char *labeltext, boolean use_mnemonic, LiVESBox *box, const char *tooltip);
-LiVESWidget *lives_standard_radio_button_new(const char *labeltext, boolean use_mnemonic, LiVESSList *rbgroup, 
-					     LiVESBox *, const char *tooltip);
-LiVESWidget *lives_standard_spin_button_new(const char *labeltext, boolean use_mnemonic, double val, double min, 
-					    double max, double step, double page, int dp, LiVESBox *, 
-					    const char *tooltip);
-LiVESWidget *lives_standard_combo_new (const char *labeltext, boolean use_mnemonic, LiVESList *list, LiVESBox *, 
-				       const char *tooltip);
+LiVESWidget *lives_standard_radio_button_new(const char *labeltext, boolean use_mnemonic, LiVESSList *rbgroup,
+    LiVESBox *, const char *tooltip);
+LiVESWidget *lives_standard_spin_button_new(const char *labeltext, boolean use_mnemonic, double val, double min,
+    double max, double step, double page, int dp, LiVESBox *,
+    const char *tooltip);
+LiVESWidget *lives_standard_combo_new(const char *labeltext, boolean use_mnemonic, LiVESList *list, LiVESBox *,
+                                      const char *tooltip);
 
-LiVESWidget *lives_standard_entry_new(const char *labeltext, boolean use_mnemonic, const char *txt, int dispwidth, int maxchars, LiVESBox *, 
-				      const char *tooltip);
+LiVESWidget *lives_standard_entry_new(const char *labeltext, boolean use_mnemonic, const char *txt, int dispwidth, int maxchars, LiVESBox *,
+                                      const char *tooltip);
 
 LiVESWidget *lives_standard_dialog_new(const char *title, boolean add_std_buttons, int width, int height);
 
@@ -757,24 +759,24 @@ boolean lives_text_view_set_text(LiVESTextView *, const char *text, int len);
 boolean lives_text_buffer_insert_at_end(LiVESTextBuffer *, const char *text);
 boolean lives_text_view_scroll_onscreen(LiVESTextView *);
 
- 
 
 
-void lives_general_button_clicked (LiVESButton *, livespointer data_to_free);
 
-void lives_spin_button_configure(LiVESSpinButton *, double value, double lower, double upper, 
-				 double step_increment, double page_increment);
+void lives_general_button_clicked(LiVESButton *, livespointer data_to_free);
+
+void lives_spin_button_configure(LiVESSpinButton *, double value, double lower, double upper,
+                                 double step_increment, double page_increment);
 
 
 
 size_t calc_spin_button_width(double min, double max, int dp);
 
-int get_box_child_index (LiVESBox *, LiVESWidget *child);
+int get_box_child_index(LiVESBox *, LiVESWidget *child);
 
-boolean label_act_toggle (LiVESWidget *, LiVESXEventButton *, LiVESToggleButton *);
-boolean widget_act_toggle (LiVESWidget *, LiVESToggleButton *);
+boolean label_act_toggle(LiVESWidget *, LiVESXEventButton *, LiVESToggleButton *);
+boolean widget_act_toggle(LiVESWidget *, LiVESToggleButton *);
 
-void toggle_button_toggle (LiVESToggleButton *);
+void toggle_button_toggle(LiVESToggleButton *);
 
 // must retain this fn prototype as a callback
 void set_child_colour(LiVESWidget *widget, livespointer set_all);
@@ -782,12 +784,12 @@ void set_child_colour(LiVESWidget *widget, livespointer set_all);
 void unhide_cursor(LiVESXWindow *);
 void hide_cursor(LiVESXWindow *);
 
-void get_border_size (LiVESWidget *win, int *bx, int *by);
+void get_border_size(LiVESWidget *win, int *bx, int *by);
 
-LiVESWidget *add_hsep_to_box (LiVESBox *);
-LiVESWidget *add_vsep_to_box (LiVESBox *);
+LiVESWidget *add_hsep_to_box(LiVESBox *);
+LiVESWidget *add_vsep_to_box(LiVESBox *);
 
-LiVESWidget *add_fill_to_box (LiVESBox *);
+LiVESWidget *add_fill_to_box(LiVESBox *);
 
 #endif // cplusplus
 
@@ -846,21 +848,21 @@ widget_opts_t widget_opts;
 #ifdef NEED_DEF_WIDGET_OPTS
 
 const widget_opts_t def_widget_opts = {
-    FALSE, // no_gui
-    FALSE, // swap_label
-    FALSE, //pack_end
-    FALSE, // line_wrap
-    FALSE, // non_modal
-    LIVES_EXPAND_DEFAULT, // default expand
-    FALSE, // no themeing
-    1.0, // default scale
-    W_PACKING_WIDTH, // def packing width
-    W_PACKING_HEIGHT, // def packing height
-    W_BORDER_WIDTH, // def border width
-    8, // def fill width (in chars)
-    NULL, // last_label
-    LIVES_JUSTIFY_LEFT, // justify
-    LIVES_JUSTIFY_LEFT // default justify
+  FALSE, // no_gui
+  FALSE, // swap_label
+  FALSE, //pack_end
+  FALSE, // line_wrap
+  FALSE, // non_modal
+  LIVES_EXPAND_DEFAULT, // default expand
+  FALSE, // no themeing
+  1.0, // default scale
+  W_PACKING_WIDTH, // def packing width
+  W_PACKING_HEIGHT, // def packing height
+  W_BORDER_WIDTH, // def border width
+  8, // def fill width (in chars)
+  NULL, // last_label
+  LIVES_JUSTIFY_LEFT, // justify
+  LIVES_JUSTIFY_LEFT // default justify
 };
 
 #else

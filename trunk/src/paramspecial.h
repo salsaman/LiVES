@@ -46,25 +46,25 @@ typedef struct {
 } lives_special_mergealign_t;
 ////////////////////////////////
 
-void init_special (void);
+void init_special(void);
 
-void add_to_special (const char *special_string, lives_rfx_t *);
+void add_to_special(const char *special_string, lives_rfx_t *);
 
-void check_for_special (lives_rfx_t *, lives_param_t *param, LiVESBox *);
+void check_for_special(lives_rfx_t *, lives_param_t *param, LiVESBox *);
 
 void fd_connect_spinbutton(lives_rfx_t *);
 
 void fd_tweak(lives_rfx_t *);
 
-void after_aspect_width_changed (LiVESSpinButton *, livespointer);
+void after_aspect_width_changed(LiVESSpinButton *, livespointer);
 
-void after_aspect_height_changed (LiVESToggleButton *, livespointer);
+void after_aspect_height_changed(LiVESToggleButton *, livespointer);
 
-void special_cleanup (void);
+void special_cleanup(void);
 
-void setmergealign (void);
+void setmergealign(void);
 
-void set_aspect_ratio_widgets (lives_param_t *w, lives_param_t *h);
+void set_aspect_ratio_widgets(lives_param_t *w, lives_param_t *h);
 
 boolean is_perchannel_multi(lives_rfx_t *rfx, int pnum);
 

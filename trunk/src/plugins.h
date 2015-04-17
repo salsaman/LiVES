@@ -19,7 +19,7 @@
 
 // generic plugins
 
-LiVESList *get_plugin_list (const char *plugin_type, boolean allow_nonex, const char *plugdir, const char *filter_ext);
+LiVESList *get_plugin_list(const char *plugin_type, boolean allow_nonex, const char *plugdir, const char *filter_ext);
 #define PLUGIN_ENCODERS "encoders"
 #define PLUGIN_DECODERS "decoders"
 #define PLUGIN_VID_PLAYBACK "playback/video"
@@ -33,18 +33,19 @@ LiVESList *get_plugin_list (const char *plugin_type, boolean allow_nonex, const 
 #define PLUGIN_WEED_FX_BUILTIN "effects/realtime/weed"
 
 
-LiVESList *plugin_request (const char *plugin_type, const char *plugin_name, const char *request);
-LiVESList *plugin_request_with_blanks (const char *plugin_type, const char *plugin_name, const char *request);
-LiVESList *plugin_request_by_line (const char *plugin_type, const char *plugin_name, const char *request);
-LiVESList *plugin_request_by_space (const char *plugin_type, const char *plugin_name, const char *request);
-LiVESList *plugin_request_common (const char *plugin_type, const char *plugin_name, const char *request, const char *delim, boolean allow_blanks);
+LiVESList *plugin_request(const char *plugin_type, const char *plugin_name, const char *request);
+LiVESList *plugin_request_with_blanks(const char *plugin_type, const char *plugin_name, const char *request);
+LiVESList *plugin_request_by_line(const char *plugin_type, const char *plugin_name, const char *request);
+LiVESList *plugin_request_by_space(const char *plugin_type, const char *plugin_name, const char *request);
+LiVESList *plugin_request_common(const char *plugin_type, const char *plugin_name, const char *request, const char *delim,
+                                 boolean allow_blanks);
 
 #ifndef  __WEED_EFFECTS_H__
-typedef weed_plant_t *(*weed_bootstrap_f) (weed_default_getter_f *value, int num_versions, int *plugin_versions);
+typedef weed_plant_t *(*weed_bootstrap_f)(weed_default_getter_f *value, int num_versions, int *plugin_versions);
 #endif
 
 /// video playback plugins
-typedef boolean (*plugin_keyfunc) (boolean down, uint16_t unicode, uint16_t keymod);
+typedef boolean(*plugin_keyfunc)(boolean down, uint16_t unicode, uint16_t keymod);
 
 
 typedef struct {
@@ -54,38 +55,38 @@ typedef struct {
 
   // mandatory
   const char *(*module_check_init)(void);
-  const char *(*version) (void);
-  const char *(*get_description) (void);
+  const char *(*version)(void);
+  const char *(*get_description)(void);
 
-  int *(*get_palette_list) (void);
-  boolean (*set_palette) (int palette);
-  uint64_t (*get_capabilities) (int palette);
+  int *(*get_palette_list)(void);
+  boolean(*set_palette)(int palette);
+  uint64_t (*get_capabilities)(int palette);
 
-  boolean (*render_frame) (int hsize, int vsize, int64_t timecode, void **pixel_data, void **return_data,
-			    weed_plant_t **play_params);
+  boolean(*render_frame)(int hsize, int vsize, int64_t timecode, void **pixel_data, void **return_data,
+                         weed_plant_t **play_params);
 
   // optional
-  boolean (*init_screen) (int width, int height, boolean fullscreen, uint64_t window_id, int argc, char **argv);
-  void (*exit_screen) (uint16_t mouse_x, uint16_t mouse_y);
-  void (*module_unload) (void);
-  const char *(*get_fps_list) (int palette);
-  boolean (*set_fps) (double fps);
-  
-  const char *(*get_init_rfx) (void);
+  boolean(*init_screen)(int width, int height, boolean fullscreen, uint64_t window_id, int argc, char **argv);
+  void (*exit_screen)(uint16_t mouse_x, uint16_t mouse_y);
+  void (*module_unload)(void);
+  const char *(*get_fps_list)(int palette);
+  boolean(*set_fps)(double fps);
+
+  const char *(*get_init_rfx)(void);
 
   ///< optional (but should return a weed plantptr array of paramtmpl and chantmpl, NULL terminated)
-  const weed_plant_t **(*get_play_params) (weed_bootstrap_f f); 
-  
+  const weed_plant_t **(*get_play_params)(weed_bootstrap_f f);
+
   // only for display plugins
-  boolean (*send_keycodes) (plugin_keyfunc);
+  boolean(*send_keycodes)(plugin_keyfunc);
 
   // optional for YUV palettes
-  int *(*get_yuv_palette_sampling) (int palette);
-  int *(*get_yuv_palette_clamping) (int palette);
-  int *(*get_yuv_palette_subspace) (int palette);
-  int (*set_yuv_palette_sampling) (int palette);
-  int (*set_yuv_palette_clamping) (int palette);
-  int (*set_yuv_palette_subspace) (int palette);
+  int *(*get_yuv_palette_sampling)(int palette);
+  int *(*get_yuv_palette_clamping)(int palette);
+  int *(*get_yuv_palette_subspace)(int palette);
+  int (*set_yuv_palette_sampling)(int palette);
+  int (*set_yuv_palette_clamping)(int palette);
+  int (*set_yuv_palette_subspace)(int palette);
 
   // audio streaming
   int *(*get_audio_fmts)(void);
@@ -126,8 +127,8 @@ typedef struct {
 #define DEF_VPP_HSIZE 320.
 #define DEF_VPP_VSIZE 240.
 
-_vid_playback_plugin *open_vid_playback_plugin (const char *name, boolean in_use);
-void vid_playback_plugin_exit (void);
+_vid_playback_plugin *open_vid_playback_plugin(const char *name, boolean in_use);
+void vid_playback_plugin_exit(void);
 void close_vid_playback_plugin(_vid_playback_plugin *);
 int64_t get_best_audio(_vid_playback_plugin *);
 void save_vpp_defaults(_vid_playback_plugin *, char *file);
@@ -191,10 +192,10 @@ extern const char *anames[AUDIO_CODEC_MAX];
 
 // seek_flags is a bitmap
 
-  /// good
+/// good
 #define LIVES_SEEK_FAST (1<<0)
 
-  /// not so good
+/// not so good
 #define LIVES_SEEK_NEEDS_CALCULATION (1<<1)
 #define LIVES_SEEK_QUALITY_LOSS (1<<2)
 
@@ -237,7 +238,7 @@ typedef struct {
 
   /// plugin should init this to palettes[0] if URI changes
   int current_palette;  ///< current palette [rw host]; must be contained in palettes
-  
+
   int YUV_sampling;
   int YUV_clamping;
   int YUV_subspace;
@@ -276,7 +277,7 @@ typedef struct {
   void *handle; ///< may be shared between several instances
 
   // mandatory
-  const char *(*version) (void);
+  const char *(*version)(void);
 
   /// call first time with NULL cdata
   /// subsequent calls should re-use cdata
@@ -290,17 +291,17 @@ typedef struct {
   lives_clip_data_t *(*get_clip_data)(char *URI, const lives_clip_data_t *cdata);
 
   /// frame starts at 0 in these functions; height is height of primary plane
-  boolean (*get_frame)(const lives_clip_data_t *, int64_t frame, int *rowstrides, int height, void **pixel_data);
+  boolean(*get_frame)(const lives_clip_data_t *, int64_t frame, int *rowstrides, int height, void **pixel_data);
 
   /// call this for each cdata before unloading the module
   void (*clip_data_free)(lives_clip_data_t *);
 
   // optional
   const char *(*module_check_init)(void);
-  boolean (*set_palette)(lives_clip_data_t *);
-  int64_t (*rip_audio) (const lives_clip_data_t *, const char *fname, int64_t stframe, int64_t nframes, 
-			unsigned char **abuff);
-  void (*rip_audio_cleanup) (const lives_clip_data_t *cdata);
+  boolean(*set_palette)(lives_clip_data_t *);
+  int64_t (*rip_audio)(const lives_clip_data_t *, const char *fname, int64_t stframe, int64_t nframes,
+                       unsigned char **abuff);
+  void (*rip_audio_cleanup)(const lives_clip_data_t *cdata);
   void (*module_unload)(void);
 
 } lives_decoder_sys_t;
@@ -318,12 +319,12 @@ typedef struct {
 
 
 const lives_clip_data_t *get_decoder_cdata(int fileno, LiVESList *disabled, const lives_clip_data_t *fake_cdata);
-void close_decoder_plugin (lives_decoder_t *);
+void close_decoder_plugin(lives_decoder_t *);
 lives_decoder_sys_t *open_decoder_plugin(const char *plname);
 void get_mime_type(char *text, int maxlen, const lives_clip_data_t *);
 void unload_decoder_plugins(void);
 
-boolean decplugin_supports_palette (const lives_decoder_t *dplug, int palette);
+boolean decplugin_supports_palette(const lives_decoder_t *dplug, int palette);
 
 lives_decoder_t *clone_decoder(int fileno);
 
@@ -367,7 +368,7 @@ typedef enum {
   LIVES_PARAM_COLRGBA32,
 
   LIVES_PARAM_UNDISPLAYABLE=65536
-  
+
 } lives_param_type_t;
 
 
@@ -509,25 +510,25 @@ typedef struct {
 } lives_rfx_t;
 
 
-boolean check_rfx_for_lives (lives_rfx_t *);
+boolean check_rfx_for_lives(lives_rfx_t *);
 
 void do_rfx_cleanup(lives_rfx_t *);
 
-void render_fx_get_params (lives_rfx_t *, const char *plugin_name, short status);
+void render_fx_get_params(lives_rfx_t *, const char *plugin_name, short status);
 
-void sort_rfx_array (lives_rfx_t *in_array, int num_elements);
+void sort_rfx_array(lives_rfx_t *in_array, int num_elements);
 
-int find_rfx_plugin_by_name (const char *name, short status);
+int find_rfx_plugin_by_name(const char *name, short status);
 
-void rfx_copy (lives_rfx_t *src, lives_rfx_t *dest, boolean full);
+void rfx_copy(lives_rfx_t *src, lives_rfx_t *dest, boolean full);
 
 void rfx_params_free(lives_rfx_t *rfx);
 
 void rfx_free(lives_rfx_t *rfx);
 
-void rfx_free_all (void);
+void rfx_free_all(void);
 
-void param_copy (lives_param_t *src, lives_param_t *dest, boolean full);
+void param_copy(lives_param_t *src, lives_param_t *dest, boolean full);
 
 
 typedef struct {
@@ -554,20 +555,20 @@ double get_double_param(void *value);
 void get_colRGB24_param(void *value, lives_colRGB24_t *rgb);
 void get_colRGBA32_param(void *value, lives_colRGBA32_t *rgba);
 
-void set_bool_param(void *value, boolean );
-void set_int_param(void *value, int );
-void set_double_param(void *value, double );
+void set_bool_param(void *value, boolean);
+void set_int_param(void *value, int);
+void set_double_param(void *value, double);
 void set_colRGB24_param(void *value, short red, short green, short blue);
 void set_colRGBA32_param(void *value, short red, short green, short blue, short alpha);
 
 /// return an array of parameter values
-void **store_rfx_params (lives_rfx_t *);
-void set_rfx_params_from_store (lives_rfx_t *rfx, void **store);
-void rfx_params_store_free (lives_rfx_t *, void **store);
+void **store_rfx_params(lives_rfx_t *);
+void set_rfx_params_from_store(lives_rfx_t *rfx, void **store);
+void rfx_params_store_free(lives_rfx_t *, void **store);
 
-LiVESList *array_to_string_list (char **array, int offset, int len);
+LiVESList *array_to_string_list(char **array, int offset, int len);
 
-lives_rfx_t *weed_to_rfx (weed_plant_t *plant, boolean show_reinits);
+lives_rfx_t *weed_to_rfx(weed_plant_t *plant, boolean show_reinits);
 lives_param_t *weed_params_to_rfx(int npar, weed_plant_t *instance, boolean show_reinits);
 
 char *plugin_run_param_window(const char *get_com, LiVESVBox *vbox, lives_rfx_t **ret_rfx);
@@ -584,8 +585,8 @@ typedef struct {
   lives_rfx_t *rfx;
 } _vppaw;
 
-_vppaw *on_vpp_advanced_clicked (LiVESButton *, livespointer);
-void on_decplug_advanced_clicked (LiVESButton *button, livespointer user_data);
+_vppaw *on_vpp_advanced_clicked(LiVESButton *, livespointer);
+void on_decplug_advanced_clicked(LiVESButton *button, livespointer user_data);
 
 
 /// for realtime effects, see effects-weed.h

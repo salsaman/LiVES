@@ -11,7 +11,7 @@
 
 
 
-void on_camgrab_clicked (LiVESButton *button, livespointer user_data) {
+void on_camgrab_clicked(LiVESButton *button, livespointer user_data) {
   char *msg;
   s_cam *cam=(s_cam *)user_data;
   if (dvgrabw->filename!=NULL) lives_free(dvgrabw->filename);
@@ -30,7 +30,7 @@ void on_camgrab_clicked (LiVESButton *button, livespointer user_data) {
 }
 
 
-void on_camstop_clicked (LiVESButton *button, livespointer user_data) {
+void on_camstop_clicked(LiVESButton *button, livespointer user_data) {
   s_cam *cam=(s_cam *)user_data;
   lives_widget_set_sensitive(dvgrabw->stop,FALSE);
   dvgrabw->playing=FALSE;
@@ -48,45 +48,44 @@ void on_camstop_clicked (LiVESButton *button, livespointer user_data) {
 }
 
 
-void on_camplay_clicked (LiVESButton *button, livespointer user_data) {
+void on_camplay_clicked(LiVESButton *button, livespointer user_data) {
   s_cam *cam=(s_cam *)user_data;
   camplay(cam);
   dvgrabw->playing=!dvgrabw->playing;
   if (dvgrabw->playing) {
     lives_button_set_label(LIVES_BUTTON(dvgrabw->play),"gtk-media-pause");
-  }
-  else {
+  } else {
     lives_button_set_label(LIVES_BUTTON(dvgrabw->play),"gtk-media-play");
   }
   lives_widget_set_sensitive(dvgrabw->stop,TRUE);
 }
 
-void on_camrew_clicked (LiVESButton *button, livespointer user_data) {
+void on_camrew_clicked(LiVESButton *button, livespointer user_data) {
   s_cam *cam=(s_cam *)user_data;
   camrew(cam);
   lives_widget_set_sensitive(dvgrabw->stop,TRUE);
 }
 
 
-void on_camff_clicked (LiVESButton *button, livespointer user_data) {
+void on_camff_clicked(LiVESButton *button, livespointer user_data) {
   s_cam *cam=(s_cam *)user_data;
   camff(cam);
   lives_widget_set_sensitive(dvgrabw->stop,TRUE);
 }
 
-void on_cameject_clicked (LiVESButton *button, livespointer user_data) {
+void on_cameject_clicked(LiVESButton *button, livespointer user_data) {
   s_cam *cam=(s_cam *)user_data;
   cameject(cam);
 }
 
 
-boolean on_camdelete_event (LiVESWidget *widget, GdkEvent *event, livespointer user_data) {
+boolean on_camdelete_event(LiVESWidget *widget, GdkEvent *event, livespointer user_data) {
   on_camquit_clicked(NULL,user_data);
   return FALSE;
 }
 
 
-void on_camquit_clicked (LiVESButton *button, livespointer user_data) {
+void on_camquit_clicked(LiVESButton *button, livespointer user_data) {
   s_cam *cam=(s_cam *)user_data;
   on_camstop_clicked(button,user_data);
   //if (cam->format==CAM_FORMAT_HDV) close_raw1394(cam->rec_handle);
@@ -95,8 +94,8 @@ void on_camquit_clicked (LiVESButton *button, livespointer user_data) {
   if (dvgrabw->filename!=NULL) lives_free(dvgrabw->filename);
   if (dvgrabw->dirname!=NULL) lives_free(dvgrabw->dirname);
   if (cam->grabbed_clips) do_error_dialog_with_check
-			    (_("\nClips grabbed from the device can now be loaded with File|Open File/Directory.\n"),
-			     WARN_MASK_AFTER_DVGRAB);
+    (_("\nClips grabbed from the device can now be loaded with File|Open File/Directory.\n"),
+     WARN_MASK_AFTER_DVGRAB);
 
   if (mainw->multitrack!=NULL) {
     mt_sensitise(mainw->multitrack);

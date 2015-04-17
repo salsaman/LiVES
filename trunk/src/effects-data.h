@@ -44,7 +44,7 @@ struct _lives_pconnect_t {
   boolean *autoscale;
 
   lives_pconnect_t *next;
-  
+
 };
 
 
@@ -100,7 +100,7 @@ struct _lives_cconnect_t {
   int *icnum;
 
   lives_cconnect_t *next;
-  
+
 };
 
 
@@ -185,10 +185,12 @@ typedef struct {
 
 LiVESWidget *make_datacon_window(int key, int mode);
 
-int pconx_check_connection(weed_plant_t *ofilter, int opnum, int ikey, int imode, int ipnum, boolean setup, weed_plant_t **iparam_ret, int *idx_ret,
-			   int *okey, int *omode, int *oopnum);
+int pconx_check_connection(weed_plant_t *ofilter, int opnum, int ikey, int imode, int ipnum, boolean setup, weed_plant_t **iparam_ret,
+                           int *idx_ret,
+                           int *okey, int *omode, int *oopnum);
 
-int cconx_check_connection(int ikey, int imode, int icnum, boolean setup, weed_plant_t **ichan_ret, int *idx_ret, int *okey, int *omode, int *ocnum);
+int cconx_check_connection(int ikey, int imode, int icnum, boolean setup, weed_plant_t **ichan_ret, int *idx_ret, int *okey, int *omode,
+                           int *ocnum);
 
 
 

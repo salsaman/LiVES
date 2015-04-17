@@ -26,7 +26,7 @@
 
 #ifdef GUI_GTK
 #include <pango/pangocairo.h>
-static int font_cmp(const void *p1, const void *p2); 
+static int font_cmp(const void *p1, const void *p2);
 #endif
 
 
@@ -47,9 +47,9 @@ static void getxypos(LingoLayout *layout, double *px, double *py, int width, int
   lingo_layout_get_size(layout, &w_, &h_, width, height);
 
   // scale width, height to pixels
-  if(pw)
+  if (pw)
     *pw = ((double)w_)/LINGO_SCALE;
-  if(ph)
+  if (ph)
     *ph = ((double)h_)/LINGO_SCALE;
 
   // xpos (left or centered)
@@ -58,11 +58,10 @@ static void getxypos(LingoLayout *layout, double *px, double *py, int width, int
     d = ((double)w_)/LINGO_SCALE;
     d /= 2.0;
     d = (width>>1) - d;
-  }
-  else d = 0.0;
+  } else d = 0.0;
 
   if (px) *px = d;
-  
+
 
   // ypos (adjusted so text goes to bottom)
 
@@ -86,17 +85,17 @@ char **get_font_list(void) {
 #ifdef GUI_GTK
   PangoContext *ctx;
   ctx = gdk_pango_context_get();
-  if(ctx) {
+  if (ctx) {
     PangoFontMap *pfm;
     pfm = pango_context_get_font_map(ctx);
-    if(pfm) {
+    if (pfm) {
       int num = 0;
       PangoFontFamily **pff = NULL;
       pango_font_map_list_families(pfm, &pff, &num);
-      if(num > 0) {
-        font_list = (char **)lives_malloc((num+1)*sizeof(char*));
-        if(font_list) {
-          for(i = 0; i < num; ++i)
+      if (num > 0) {
+        font_list = (char **)lives_malloc((num+1)*sizeof(char *));
+        if (font_list) {
+          for (i = 0; i < num; ++i)
             font_list[i] = strdup(pango_font_family_get_name(pff[i]));
           font_list[num] = NULL;
           qsort(font_list, num, sizeof(char *), font_cmp);
@@ -122,7 +121,7 @@ char **get_font_list(void) {
 
 
 #ifdef GUI_GTK
-static int font_cmp(const void *p1, const void *p2) {  
+static int font_cmp(const void *p1, const void *p2) {
   const char *s1 = (const char *)(*(char **)p1);
   const char *s2 = (const char *)(*(char **)p2);
   char *u1 = g_utf8_casefold(s1, -1);
@@ -134,11 +133,11 @@ static int font_cmp(const void *p1, const void *p2) {
 }
 #endif
 
-  
 
-LingoLayout *render_text_to_cr (lives_painter_t *cr, const char *text, const char *fontname,
-				double size, lives_text_mode_t mode, lives_colRGBA32_t *fg, lives_colRGBA32_t *bg,
-				boolean center, boolean rising, double top, int offs_x, int width, int height) {
+
+LingoLayout *render_text_to_cr(lives_painter_t *cr, const char *text, const char *fontname,
+                               double size, lives_text_mode_t mode, lives_colRGBA32_t *fg, lives_colRGBA32_t *bg,
+                               boolean center, boolean rising, double top, int offs_x, int width, int height) {
 
   // fontname may be eg. "Sans"
 
@@ -174,7 +173,7 @@ LingoLayout *render_text_to_cr (lives_painter_t *cr, const char *text, const cha
   font = pango_font_description_new();
   pango_font_description_set_family(font, fontname);
   pango_font_description_set_absolute_size(font, size*PANGO_SCALE);
-    
+
   pango_layout_set_font_description(layout, font);
   pango_layout_set_text(layout, text, -1);
 #endif
@@ -184,22 +183,22 @@ LingoLayout *render_text_to_cr (lives_painter_t *cr, const char *text, const cha
 #endif
 
   getxypos(layout, &x_pos, &y_pos, width, height, center, &dwidth, &dheight);
-    
+
   if (!rising) y_pos = y_text = height*top;
 
   if (!center) x_pos+=offs_x;
-    
+
   x_text = x_pos;
   y_text = y_pos;
-    
+
   /*  lives_painter_new_path(cr);
   lives_painter_rectangle(cr,offs_x,0,width,height);
   lives_painter_clip(cr);*/
 
   if (center) lingo_layout_set_alignment(layout, LINGO_ALIGN_CENTER);
   else lingo_layout_set_alignment(layout, LINGO_ALIGN_LEFT);
-    
-  switch(mode) {
+
+  switch (mode) {
   case LIVES_TEXT_MODE_BACKGROUND_ONLY:
     lingo_layout_set_text(layout, "", -1);
   case LIVES_TEXT_MODE_FOREGROUND_AND_BACKGROUND:
@@ -230,8 +229,8 @@ LingoLayout *render_text_to_cr (lives_painter_t *cr, const char *text, const cha
 
 
 weed_plant_t *render_text_to_layer(weed_plant_t *layer, const char *text, const char *fontname,
-  double size, lives_text_mode_t mode, lives_colRGBA32_t *fg_col, lives_colRGBA32_t *bg_col,
-  boolean center, boolean rising, double top) {
+                                   double size, lives_text_mode_t mode, lives_colRGBA32_t *fg_col, lives_colRGBA32_t *bg_col,
+                                   boolean center, boolean rising, double top) {
   // render text to layer and return a new layer, which may have a new "rowstrides", "width" and/or "current_palette"
   // original layer is freed in the process and should not be used
 
@@ -247,7 +246,7 @@ weed_plant_t *render_text_to_layer(weed_plant_t *layer, const char *text, const 
 
   width=weed_get_int_value(layer,"width",&error);
   height=weed_get_int_value(layer,"height",&error);
- 
+
   // do cairo and pango things
 
   cr=layer_to_lives_painter(layer);
@@ -265,7 +264,7 @@ weed_plant_t *render_text_to_layer(weed_plant_t *layer, const char *text, const 
   if (layout) lives_object_unref(layout);
 
   surface=lives_painter_get_target(cr);
-  src=lives_painter_image_surface_get_data (surface);
+  src=lives_painter_image_surface_get_data(surface);
   lives_free(src);
   lives_painter_destroy(cr);
   return layer;
@@ -290,42 +289,41 @@ static char *srt_read_text(FILE *pf, lives_subtitle_t *title) {
 
   int64_t curpos;
 
-  if(!pf || !title)
+  if (!pf || !title)
     return NULL;
 
   curpos=ftell(pf);
 
-  if(fseek(pf, title->textpos, SEEK_SET) == -1)
+  if (fseek(pf, title->textpos, SEEK_SET) == -1)
     return NULL;
 
-  while(fgets(data, sizeof(data)-1, pf)) {
+  while (fgets(data, sizeof(data)-1, pf)) {
     // remove \n \r
     poslf = strstr(data, lf_str);
-    if(poslf)
+    if (poslf)
       *poslf = '\0';
     poscr = strstr(data, cr_str);
-    if(poscr)
+    if (poscr)
       *poscr = '\0';
     curlen = strlen(data);
-    if(!curlen)
+    if (!curlen)
       break;
     strcat(data,"\n");
     curlen = strlen(data);
-    if(!ret) {
+    if (!ret) {
       ret = (char *)lives_malloc(curlen+1);
-      if(ret)
+      if (ret)
         strcpy(ret, data);
       else {
-	fseek(pf, curpos, SEEK_SET);
+        fseek(pf, curpos, SEEK_SET);
         return NULL;
       }
-    }
-    else {
+    } else {
       ret = (char *)lives_realloc(ret, curlen+1+strlen(ret));
-      if(ret)
+      if (ret)
         strcat(ret, data);
       else {
-	fseek(pf, curpos, SEEK_SET);
+        fseek(pf, curpos, SEEK_SET);
         return NULL;
       }
     }
@@ -346,44 +344,43 @@ static char *sub_read_text(FILE *pf, lives_subtitle_t *title) {
 
   int64_t curpos;
 
-  if(!pf || !title)
+  if (!pf || !title)
     return NULL;
 
   curpos=ftell(pf);
 
-  if(fseek(pf, title->textpos, SEEK_SET) == -1)
+  if (fseek(pf, title->textpos, SEEK_SET) == -1)
     return NULL;
 
-  while(fgets(data, sizeof(data)-1, pf)) {
+  while (fgets(data, sizeof(data)-1, pf)) {
     // remove \n \r
     poslf = strstr(data, lf_str);
-    if(poslf)
+    if (poslf)
       *poslf = '\0';
     poscr = strstr(data, cr_str);
-    if(poscr)
+    if (poscr)
       *poscr = '\0';
     curlen = strlen(data);
-    if(!curlen)
+    if (!curlen)
       break;
     strcat(data,"\n");
-    if(!ret) {
+    if (!ret) {
       ret = subst(data,"[br]","\n");
-      if(!ret) {
-	fseek(pf, curpos, SEEK_SET);
+      if (!ret) {
+        fseek(pf, curpos, SEEK_SET);
         return NULL;
       }
-    }
-    else {
+    } else {
       retmore = subst(data,"[br]","\n");
-      if(!retmore) {
-	fseek(pf, curpos, SEEK_SET);
+      if (!retmore) {
+        fseek(pf, curpos, SEEK_SET);
         return NULL;
       }
       ret = (char *)lives_realloc(ret, strlen(retmore)+1+strlen(ret));
-      if(ret)
+      if (ret)
         strcat(ret, retmore);
       else {
-	fseek(pf, curpos, SEEK_SET);
+        fseek(pf, curpos, SEEK_SET);
         lives_free(retmore);
         return NULL;
       }
@@ -420,15 +417,15 @@ boolean get_srt_text(lives_clip_t *sfile, double xtime) {
   FILE *pf = NULL;
   char data[32768];
 
-  if(!sfile)
+  if (!sfile)
     return  FALSE;
 
-  if(!sfile->subt)
+  if (!sfile->subt)
     return  FALSE;
 
   curr = sfile->subt->current;
 
-  if(curr && (curr->start_time <= xtime) && (curr->end_time >= xtime))
+  if (curr && (curr->start_time <= xtime) && (curr->end_time >= xtime))
     return (TRUE);
 
   if (sfile->subt->last_time!=-1. && xtime>sfile->subt->last_time) {
@@ -440,19 +437,19 @@ boolean get_srt_text(lives_clip_t *sfile, double xtime) {
   }
 
 
-  if(curr && (curr->start_time <= xtime))
+  if (curr && (curr->start_time <= xtime))
     index_ptr = index_prev = index = curr;
   else
     index_ptr = index_prev = index = sfile->subt->index;
 
-  while(index_ptr) {
-    if(index_ptr->start_time > xtime) {
+  while (index_ptr) {
+    if (index_ptr->start_time > xtime) {
       if (sfile->subt->text!=NULL) lives_free(sfile->subt->text);
       sfile->subt->text=NULL;
       sfile->subt->current = NULL;
       return (TRUE);
     }
-    if(index_ptr->end_time >= xtime) {
+    if (index_ptr->end_time >= xtime) {
       sfile->subt->current = index_ptr;
       if (sfile->subt->text!=NULL) lives_free(sfile->subt->text);
       sfile->subt->text=srt_read_text(sfile->subt->tfile,sfile->subt->current);
@@ -464,7 +461,7 @@ boolean get_srt_text(lives_clip_t *sfile, double xtime) {
 
   pf = sfile->subt->tfile;
 
-  while(fgets(data,sizeof(data), pf)) {
+  while (fgets(data,sizeof(data), pf)) {
     char *poslf = NULL, *poscr = NULL;
     int hstart, mstart, sstart, fstart;
     int hend, mend, send, fend;
@@ -475,7 +472,7 @@ boolean get_srt_text(lives_clip_t *sfile, double xtime) {
     // data contains subtitle number
     //
 
-    if(!fgets(data,sizeof(data), pf)) {
+    if (!fgets(data,sizeof(data), pf)) {
       // EOF
       if (sfile->subt->text!=NULL) lives_free(sfile->subt->text);
       sfile->subt->text=NULL;
@@ -488,63 +485,62 @@ boolean get_srt_text(lives_clip_t *sfile, double xtime) {
     //
     // remove \n \r
     poslf = strstr(data, lf_str);
-    if(poslf)
+    if (poslf)
       *poslf = '\0';
     poscr = strstr(data, cr_str);
-    if(poscr)
+    if (poscr)
       *poscr = '\0';
 
     // try to parse it (time range)
     i = sscanf(data,"%d:%d:%d,%d --> %d:%d:%d,%d",\
                &hstart, &mstart, &sstart, &fstart,\
                &hend, &mend, &send, &fend);
-    if(i == 8) {
+    if (i == 8) {
       // parsing ok
-        starttime = hstart*3600 + mstart*60 + sstart + fstart/1000.;
-        endtime = hend*3600 + mend*60 + send + fend/1000.;
-        node = (lives_subtitle_t *)lives_malloc(sizeof(lives_subtitle_t));
-        if(node) {
-          node->start_time = starttime;
-          node->end_time = endtime;
-          node->style = NULL;
-          node->next = NULL;
-          node->prev = (lives_subtitle_t *)index_prev;
-	  node->textpos=ftell(pf);
-          if(index_prev)
-            index_prev->next = (lives_subtitle_t *)node;
-          else
-            sfile->subt->index = node;
-          index_prev = (lives_subtitle_t *)node;
-        }
-        while(fgets(data, sizeof(data), pf)) {
-          // read the text and final empty line
-          // remove \n \r
-          poslf = strstr(data, lf_str);
-          if(poslf)
+      starttime = hstart*3600 + mstart*60 + sstart + fstart/1000.;
+      endtime = hend*3600 + mend*60 + send + fend/1000.;
+      node = (lives_subtitle_t *)lives_malloc(sizeof(lives_subtitle_t));
+      if (node) {
+        node->start_time = starttime;
+        node->end_time = endtime;
+        node->style = NULL;
+        node->next = NULL;
+        node->prev = (lives_subtitle_t *)index_prev;
+        node->textpos=ftell(pf);
+        if (index_prev)
+          index_prev->next = (lives_subtitle_t *)node;
+        else
+          sfile->subt->index = node;
+        index_prev = (lives_subtitle_t *)node;
+      }
+      while (fgets(data, sizeof(data), pf)) {
+        // read the text and final empty line
+        // remove \n \r
+        poslf = strstr(data, lf_str);
+        if (poslf)
           *poslf = '\0';
-          poscr = strstr(data, cr_str);
-          if(poscr)
-           *poscr = '\0';
+        poscr = strstr(data, cr_str);
+        if (poscr)
+          *poscr = '\0';
 
-          if (!strlen(data)) break;
-	} // end while
+        if (!strlen(data)) break;
+      } // end while
 
-       if(node) {
-         if(node->start_time > xtime) {
-	   if (sfile->subt->text!=NULL) lives_free(sfile->subt->text);
-	   sfile->subt->text=NULL;
-           sfile->subt->current = NULL;
-	   return TRUE;
-	 }
-         if(node->end_time >= xtime) {
-	   if (sfile->subt->text!=NULL) lives_free(sfile->subt->text);
-           sfile->subt->current = node;
-	   sfile->subt->text=srt_read_text(sfile->subt->tfile,sfile->subt->current);
-	   return TRUE;
-	 }
-       }
-    }
-    else {
+      if (node) {
+        if (node->start_time > xtime) {
+          if (sfile->subt->text!=NULL) lives_free(sfile->subt->text);
+          sfile->subt->text=NULL;
+          sfile->subt->current = NULL;
+          return TRUE;
+        }
+        if (node->end_time >= xtime) {
+          if (sfile->subt->text!=NULL) lives_free(sfile->subt->text);
+          sfile->subt->current = node;
+          sfile->subt->text=srt_read_text(sfile->subt->tfile,sfile->subt->current);
+          return TRUE;
+        }
+      }
+    } else {
       // What to do here ? Probably wrong format
       continue;
     }
@@ -571,15 +567,15 @@ boolean get_sub_text(lives_clip_t *sfile, double xtime) {
   char data[32768];
   boolean starttext;
 
-  if(!sfile)
+  if (!sfile)
     return  FALSE;
 
-  if(!sfile->subt)
+  if (!sfile->subt)
     return  FALSE;
 
   curr = sfile->subt->current;
 
-  if(curr && (curr->start_time <= xtime) && (curr->end_time >= xtime))
+  if (curr && (curr->start_time <= xtime) && (curr->end_time >= xtime))
     return (TRUE);
 
   if (sfile->subt->last_time!=-1. && xtime>sfile->subt->last_time) {
@@ -591,19 +587,19 @@ boolean get_sub_text(lives_clip_t *sfile, double xtime) {
   }
 
 
-  if(curr && (curr->start_time <= xtime))
+  if (curr && (curr->start_time <= xtime))
     index_ptr = index_prev = index = curr;
   else
     index_ptr = index_prev = index = sfile->subt->index;
 
-  while(index_ptr) {
-    if(index_ptr->start_time > xtime) {
+  while (index_ptr) {
+    if (index_ptr->start_time > xtime) {
       if (sfile->subt->text!=NULL) lives_free(sfile->subt->text);
       sfile->subt->text=NULL;
       sfile->subt->current = NULL;
       return (TRUE);
     }
-    if(index_ptr->end_time >= xtime) {
+    if (index_ptr->end_time >= xtime) {
       sfile->subt->current = index_ptr;
       if (sfile->subt->text!=NULL) lives_free(sfile->subt->text);
       sfile->subt->text=sub_read_text(sfile->subt->tfile,sfile->subt->current);
@@ -617,20 +613,20 @@ boolean get_sub_text(lives_clip_t *sfile, double xtime) {
 
   starttext = (sfile->subt->index!=NULL);
 
-  while(fgets(data,sizeof(data), pf)) {
+  while (fgets(data,sizeof(data), pf)) {
     char *poslf = NULL, *poscr = NULL;
     int hstart, mstart, sstart, fstart;
     int hend, mend, send, fend;
     int i;
     double starttime, endtime;
 
-    if(!strncmp(data, "[SUBTITLE]", 10)) {
+    if (!strncmp(data, "[SUBTITLE]", 10)) {
       starttext = TRUE;
     }
 
-    if(!starttext) {
-      if(!strncmp(data,"[DELAY]",7)) {
-	sfile->subt->offset=atoi(data+7);
+    if (!starttext) {
+      if (!strncmp(data,"[DELAY]",7)) {
+        sfile->subt->offset=atoi(data+7);
       }
       continue;
     }
@@ -640,63 +636,62 @@ boolean get_sub_text(lives_clip_t *sfile, double xtime) {
     //
     // remove \n \r
     poslf = strstr(data, lf_str);
-    if(poslf)
+    if (poslf)
       *poslf = '\0';
     poscr = strstr(data, cr_str);
-    if(poscr)
+    if (poscr)
       *poscr = '\0';
 
     // try to parse it (time range)
     i = sscanf(data,"%d:%d:%d.%d,%d:%d:%d.%d",\
                &hstart, &mstart, &sstart, &fstart,\
                &hend, &mend, &send, &fend);
-    if(i == 8) {
+    if (i == 8) {
       // parsing ok
-        starttime = hstart*3600 + mstart*60 + sstart + fstart/100.;
-        endtime = hend*3600 + mend*60 + send + fend/100.;
-        node = (lives_subtitle_t *)lives_malloc(sizeof(lives_subtitle_t));
-        if(node) {
-          node->start_time = starttime;
-          node->end_time = endtime;
-          node->style = NULL;
-          node->next = NULL;
-          node->prev = (lives_subtitle_t *)index_prev;
-	  node->textpos=ftell(pf);
-          if(index_prev)
-            index_prev->next = (lives_subtitle_t *)node;
-          else
-            sfile->subt->index = node;
-          index_prev = (lives_subtitle_t *)node;
-        }
-        while(fgets(data, sizeof(data), pf)) {
-          // read the text and final empty line
-          // remove \n \r
-          poslf = strstr(data, lf_str);
-          if(poslf)
+      starttime = hstart*3600 + mstart*60 + sstart + fstart/100.;
+      endtime = hend*3600 + mend*60 + send + fend/100.;
+      node = (lives_subtitle_t *)lives_malloc(sizeof(lives_subtitle_t));
+      if (node) {
+        node->start_time = starttime;
+        node->end_time = endtime;
+        node->style = NULL;
+        node->next = NULL;
+        node->prev = (lives_subtitle_t *)index_prev;
+        node->textpos=ftell(pf);
+        if (index_prev)
+          index_prev->next = (lives_subtitle_t *)node;
+        else
+          sfile->subt->index = node;
+        index_prev = (lives_subtitle_t *)node;
+      }
+      while (fgets(data, sizeof(data), pf)) {
+        // read the text and final empty line
+        // remove \n \r
+        poslf = strstr(data, lf_str);
+        if (poslf)
           *poslf = '\0';
-          poscr = strstr(data, cr_str);
-          if(poscr)
-           *poscr = '\0';
+        poscr = strstr(data, cr_str);
+        if (poscr)
+          *poscr = '\0';
 
-          if (!strlen(data)) break;
-	} // end while
+        if (!strlen(data)) break;
+      } // end while
 
-       if(node) {
-         if(node->start_time > xtime) {
-	   if (sfile->subt->text!=NULL) lives_free(sfile->subt->text);
-	   sfile->subt->text=NULL;
-           sfile->subt->current = NULL;
-	   return TRUE;
-	 }
-         if(node->end_time >= xtime) {
-	   if (sfile->subt->text!=NULL) lives_free(sfile->subt->text);
-           sfile->subt->current = node;
-	   sfile->subt->text=sub_read_text(sfile->subt->tfile,sfile->subt->current);
-	   return TRUE;
-	 }
-       }
-    }
-    else {
+      if (node) {
+        if (node->start_time > xtime) {
+          if (sfile->subt->text!=NULL) lives_free(sfile->subt->text);
+          sfile->subt->text=NULL;
+          sfile->subt->current = NULL;
+          return TRUE;
+        }
+        if (node->end_time >= xtime) {
+          if (sfile->subt->text!=NULL) lives_free(sfile->subt->text);
+          sfile->subt->current = node;
+          sfile->subt->text=sub_read_text(sfile->subt->tfile,sfile->subt->current);
+          return TRUE;
+        }
+      }
+    } else {
       continue;
     }
   }
@@ -716,25 +711,25 @@ void subtitles_free(lives_clip_t *sfile) {
   if (sfile->subt==NULL) return;
 
   if (sfile->subt->tfile!=NULL) fclose(sfile->subt->tfile);
- 
+
   // remove subt->index entries
-  while(sfile->subt->index) {
+  while (sfile->subt->index) {
     lives_subtitle_t *to_delete = sfile->subt->index;
 
     sfile->subt->index = (lives_subtitle_t *)sfile->subt->index->next;
 
-    if(to_delete->style != NULL) lives_free(to_delete->style);
-    lives_free(to_delete);    
-  } 
+    if (to_delete->style != NULL) lives_free(to_delete->style);
+    lives_free(to_delete);
+  }
 
   if (sfile->subt->text!=NULL) lives_free(sfile->subt->text);
 
-  lives_free (sfile->subt);
+  lives_free(sfile->subt);
   sfile->subt=NULL;
 }
 
 
-boolean subtitles_init(lives_clip_t *sfile, char * fname, lives_subtitle_type_t subtype) {
+boolean subtitles_init(lives_clip_t *sfile, char *fname, lives_subtitle_type_t subtype) {
   // fname is the name of the subtitle file
   FILE *tfile;
 
@@ -772,13 +767,13 @@ static void parse_double_time(double tim, int *ph, int *pmin, int *psec, int *pm
   s = (ntim-h*3600-m*60);
   if (fix==3) ms = (int)((tim-ntim)*1000.0+.5);
   else ms = (int)((tim-ntim)*100.0+.5); // hundredths
-  if(ph)
+  if (ph)
     *ph = h;
-  if(pmin)
+  if (pmin)
     *pmin = m;
-  if(psec)
+  if (psec)
     *psec = s;
-  if(pmsec)
+  if (pmsec)
     *pmsec = ms;
 }
 
@@ -788,36 +783,36 @@ boolean save_srt_subtitles(lives_clip_t *sfile, double start_time, double end_ti
   FILE *pf;
   int num_saves;
   lives_subtitle_t *ptr = NULL;
- 
-  if(!sfile)
+
+  if (!sfile)
     return FALSE;
   subt = sfile->subt;
-  if(!subt)
+  if (!subt)
     return FALSE;
-  if(subt->last_time <= -1.)
+  if (subt->last_time <= -1.)
     get_srt_text(sfile, end_time);
-  if(subt->last_time <= -1.)
+  if (subt->last_time <= -1.)
     savepos = ftell(subt->tfile);
 
   // save the contents
   pf = fopen(filename, "w");
-  if(!pf)
+  if (!pf)
     return FALSE;
   num_saves = 0;
   ptr = subt->index;
-  while(ptr) {
+  while (ptr) {
     char *text = NULL;
-    if(ptr->start_time < end_time && ptr->end_time >= start_time) {
+    if (ptr->start_time < end_time && ptr->end_time >= start_time) {
       text = srt_read_text(subt->tfile, ptr);
-      if(text) {
+      if (text) {
         int h, m, s, ms;
         double dtim;
 
-	if (num_saves>0) fprintf(pf,"\n");
+        if (num_saves>0) fprintf(pf,"\n");
 
         fprintf(pf, "%d\n", ++num_saves);
 
-	dtim = ptr->start_time;
+        dtim = ptr->start_time;
         if (dtim < start_time) dtim=start_time;
         dtim += offset_time;
 
@@ -834,16 +829,15 @@ boolean save_srt_subtitles(lives_clip_t *sfile, double start_time, double end_ti
         fprintf(pf, "%s", text);
         lives_free(text);
       }
-    }
-    else if (ptr->start_time>=end_time) break;
+    } else if (ptr->start_time>=end_time) break;
     ptr = (lives_subtitle_t *)ptr->next;
   }
 
   fclose(pf);
-  if(!num_saves) // don't keep the empty file
+  if (!num_saves) // don't keep the empty file
     unlink(filename);
 
-  if(subt->last_time <= -1.)
+  if (subt->last_time <= -1.)
     fseek(subt->tfile, savepos, SEEK_SET);
 
   return TRUE;
@@ -855,20 +849,20 @@ boolean save_sub_subtitles(lives_clip_t *sfile, double start_time, double end_ti
   FILE *pf;
   int num_saves;
   lives_subtitle_t *ptr = NULL;
- 
-  if(!sfile)
+
+  if (!sfile)
     return FALSE;
   subt = sfile->subt;
-  if(!subt)
+  if (!subt)
     return FALSE;
-  if(subt->last_time <= -1.)
+  if (subt->last_time <= -1.)
     get_sub_text(sfile, end_time);
-  if(subt->last_time <= -1.)
+  if (subt->last_time <= -1.)
     savepos = ftell(subt->tfile);
 
   // save the contents
   pf = fopen(filename, "w");
-  if(!pf)
+  if (!pf)
     return FALSE;
   num_saves = 0;
   ptr = subt->index;
@@ -884,31 +878,31 @@ boolean save_sub_subtitles(lives_clip_t *sfile, double start_time, double end_ti
   fprintf(pf, "[SUBTITLE]\n");
 
 
-  while(ptr) {
+  while (ptr) {
     char *text = NULL;
     char *br_text = NULL;
-    if(ptr->start_time < end_time && ptr->end_time >= start_time) {
+    if (ptr->start_time < end_time && ptr->end_time >= start_time) {
       text = sub_read_text(subt->tfile, ptr);
-      if(text) {
+      if (text) {
         int h, m, s, ms;
         double dtim;
 
-	if (!strncmp(text+strlen(text)-1,"\n",1)) memset(text+strlen(text)-1,0,1);
+        if (!strncmp(text+strlen(text)-1,"\n",1)) memset(text+strlen(text)-1,0,1);
 
         br_text = subst(text, "\n", "[br]");
-        if(br_text) {
-	  if (num_saves>0) fprintf(pf,"\n");
+        if (br_text) {
+          if (num_saves>0) fprintf(pf,"\n");
 
-	  dtim = ptr->start_time;
-	  if (dtim < start_time) dtim=start_time;
-	  dtim += offset_time;
+          dtim = ptr->start_time;
+          if (dtim < start_time) dtim=start_time;
+          dtim += offset_time;
 
           parse_double_time(dtim, &h, &m, &s, &ms, 2);
           fprintf(pf, "%02d:%02d:%02d.%02d,", h, m, s, ms);
 
-	  dtim = ptr->end_time;
-	  if (dtim > end_time) dtim=end_time;
-	  dtim += offset_time;
+          dtim = ptr->end_time;
+          if (dtim > end_time) dtim=end_time;
+          dtim += offset_time;
 
           parse_double_time(dtim, &h, &m, &s, &ms, 2);
           fprintf(pf, "%02d:%02d:%02d.%02d\n", h, m, s, ms);
@@ -918,16 +912,15 @@ boolean save_sub_subtitles(lives_clip_t *sfile, double start_time, double end_ti
         }
         lives_free(text);
       }
-    }
-    else if (ptr->start_time>=end_time) break;
+    } else if (ptr->start_time>=end_time) break;
     ptr = (lives_subtitle_t *)ptr->next;
   }
 
   fclose(pf);
-  if(!num_saves) // don't keep the empty file
+  if (!num_saves) // don't keep the empty file
     unlink(filename);
 
-  if(subt->last_time <= -1.)
+  if (subt->last_time <= -1.)
     fseek(subt->tfile, savepos, SEEK_SET);
 
   return TRUE;

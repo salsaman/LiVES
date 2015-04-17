@@ -23,7 +23,7 @@
 #endif
 
 #include "main.h"
-#include "htmsocket.h"                          
+#include "htmsocket.h"
 
 typedef struct {
   struct sockaddr_in serv_addr;
@@ -50,14 +50,14 @@ void *OpenHTMSocket(const char *host, int portnumber, boolean sender) {
   o->len = sizeof(cl_addr);
   memset((char *)&o->serv_addr, 0, sizeof(o->serv_addr));
   o->serv_addr.sin_family = AF_INET;
-  
+
   if (strcmp(host,"INADDR_ANY")) {
     hostsEntry = gethostbyname(host);
-    
+
     if (hostsEntry == NULL) {
       return NULL;
     }
-    
+
     address = *((uint64_t *) hostsEntry->h_addr_list[0]);
   }
 
@@ -65,8 +65,7 @@ void *OpenHTMSocket(const char *host, int portnumber, boolean sender) {
     // open sender socket
     o->serv_addr.sin_addr.s_addr = address;
     o->serv_addr.sin_port = htons(portnumber);
-  }
-  else {
+  } else {
     // open receiver socket
     if (!strcmp(host,"INADDR_ANY")) o->serv_addr.sin_addr.s_addr = INADDR_ANY;
     else o->serv_addr.sin_addr.s_addr = address;
@@ -86,8 +85,7 @@ void *OpenHTMSocket(const char *host, int portnumber, boolean sender) {
       // bind on all interfaces, any port
       cl_addr.sin_addr.s_addr = INADDR_ANY;
       cl_addr.sin_port = htons(0);
-    }
-    else {
+    } else {
       // bind on all interfaces, specified port
       cl_addr.sin_addr.s_addr = INADDR_ANY;
       cl_addr.sin_port = htons(portnumber);
@@ -97,14 +95,12 @@ void *OpenHTMSocket(const char *host, int portnumber, boolean sender) {
       close(sockfd);
       sockfd = -1;
     }
-  }
-  else lives_printerr("unable to make socket\n");
+  } else lives_printerr("unable to make socket\n");
 
-  if(sockfd<0) {
+  if (sockfd<0) {
     lives_free(o);
     o = NULL;
-  }
-  else {
+  } else {
     int mxsize=1024*1024;
     o->sockfd = sockfd;
     if (!sender) setsockopt(sockfd, SOL_SOCKET, SO_RCVBUF, (void *) &mxsize, sizeof(mxsize));

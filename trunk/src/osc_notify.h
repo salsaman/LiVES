@@ -12,9 +12,9 @@
 //   sendOSC -host localhost 49999 /lives/open_notify_socket,49997
 //
 // LiVES will then send messages of the form:
-//   msg_number|msg_string 
+//   msg_number|msg_string
 // (msg_string may be of 0 length. The message is terminated with \n\0).
-// when various events happen. The event types are enumerated below. 
+// when various events happen. The event types are enumerated below.
 //
 
 #ifndef HAS_LIVES_OSC_NOTIFY_H
@@ -32,7 +32,7 @@ extern "C" {
 #define LIVES_OSC_NOTIFY_PLAYBACK_STARTED 2 ///< sent when a/v playback starts or clip is switched
 #define LIVES_OSC_NOTIFY_PLAYBACK_STOPPED 3 ///< sent when a/v playback ends
 
-/// sent when a/v playback ends and there is recorded data for 
+/// sent when a/v playback ends and there is recorded data for
 /// rendering/previewing
 #define LIVES_OSC_NOTIFY_PLAYBACK_STOPPED_RD 4
 
@@ -53,7 +53,7 @@ extern "C" {
 
 #define LIVES_OSC_NOTIFY_MODE_CHANGED 4096 ///< mode changed to clip editor or to multitrack
 
-  // >= 65536 reserved for custom
+// >= 65536 reserved for custom
 
 
 #ifdef __cplusplus

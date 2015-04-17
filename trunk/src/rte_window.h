@@ -13,27 +13,27 @@
 
 void rte_window_set_interactive(boolean interactive);
 
-void on_assign_rte_keys_activate (LiVESMenuItem *, livespointer);
-void on_rte_info_clicked (LiVESButton *, livespointer data);
+void on_assign_rte_keys_activate(LiVESMenuItem *, livespointer);
+void on_rte_info_clicked(LiVESButton *, livespointer data);
 void load_default_keymap(void);
-void rtew_set_keych (int key, boolean on);
+void rtew_set_keych(int key, boolean on);
 void ret_set_key_check_state(void);
-void rtew_set_keygr (int key);
-void rtew_set_mode_radio (int key, int mode);
-void rtew_set_grab_button (boolean on);
-void redraw_pwindow (int key, int mode);
-void restore_pwindow (lives_rfx_t *);
-void update_pwindow (int key, int i, LiVESList *list);
+void rtew_set_keygr(int key);
+void rtew_set_mode_radio(int key, int mode);
+void rtew_set_grab_button(boolean on);
+void redraw_pwindow(int key, int mode);
+void restore_pwindow(lives_rfx_t *);
+void update_pwindow(int key, int i, LiVESList *list);
 
-void rte_set_defs_activate (LiVESMenuItem *, livespointer user_data);
-void rte_set_defs_cancel (LiVESButton *, lives_rfx_t *);
-void rte_set_defs_ok (LiVESButton *, lives_rfx_t *);
-void rte_reset_defs_clicked (LiVESButton *, lives_rfx_t *rfx);
-void rte_set_key_defs (LiVESButton *, lives_rfx_t *);
-void on_save_rte_defs_activate (LiVESMenuItem *, livespointer);
-boolean on_clear_all_clicked (LiVESButton *, livespointer user_data);
+void rte_set_defs_activate(LiVESMenuItem *, livespointer user_data);
+void rte_set_defs_cancel(LiVESButton *, lives_rfx_t *);
+void rte_set_defs_ok(LiVESButton *, lives_rfx_t *);
+void rte_reset_defs_clicked(LiVESButton *, lives_rfx_t *rfx);
+void rte_set_key_defs(LiVESButton *, lives_rfx_t *);
+void on_save_rte_defs_activate(LiVESMenuItem *, livespointer);
+boolean on_clear_all_clicked(LiVESButton *, livespointer user_data);
 
-void on_clear_clicked (LiVESButton *button, livespointer user_data);
+void on_clear_clicked(LiVESButton *button, livespointer user_data);
 
 LiVESWidget *rte_window;
 

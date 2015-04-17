@@ -6,7 +6,7 @@
 
 #include "ldvgrab.h"
 
-struct _dvgrabw * create_camwindow (s_cam *cam, int type);
+struct _dvgrabw *create_camwindow(s_cam *cam, int type);
 void show_camfilesel(void);
 
 

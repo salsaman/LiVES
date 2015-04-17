@@ -170,8 +170,7 @@ boolean do_effect(lives_rfx_t *rfx, boolean is_preview) {
     // generators start at 1, even though they have no initial frames
     cfile->progress_start=cfile->undo_start=rfx->num_in_channels==0?1:cfile->start;
     cfile->progress_end=cfile->undo_end=cfile->end;
-  }
-  else if (rfx->num_in_channels!=2) {
+  } else if (rfx->num_in_channels!=2) {
     cfile->progress_start=cfile->undo_start=cfile->start;
     cfile->progress_end=cfile->undo_end=cfile->end;
   }
@@ -181,28 +180,26 @@ boolean do_effect(lives_rfx_t *rfx, boolean is_preview) {
     char *plugin_name;
 
     if (rfx->status==RFX_STATUS_BUILTIN) plugin_name=lives_build_filename(prefs->lib_dir,PLUGIN_EXEC_DIR,
-								      PLUGIN_RENDERED_EFFECTS_BUILTIN,rfx->name,NULL);
+          PLUGIN_RENDERED_EFFECTS_BUILTIN,rfx->name,NULL);
     else plugin_name=lives_strdup(rfx->name);
 
     if (rfx->num_in_channels==2) {
       // transition has a few extra bits
-      pdefault=lives_strdup_printf ("%s %d %d %d %d %d %s %s %d \"%s/%s\"",cfile->handle,rfx->status,
-				cfile->progress_start,cfile->progress_end,cfile->hsize,cfile->vsize,
-				get_image_ext_for_type(cfile->img_type),get_image_ext_for_type(clipboard->img_type),
-				clipboard->start,prefs->tmpdir,clipboard->handle);
-    }
-    else {
-      pdefault=lives_strdup_printf ("%s %d %d %d %d %d %s",cfile->handle,rfx->status,cfile->progress_start,
-				cfile->progress_end,cfile->hsize,cfile->vsize,get_image_ext_for_type(cfile->img_type));
+      pdefault=lives_strdup_printf("%s %d %d %d %d %d %s %s %d \"%s/%s\"",cfile->handle,rfx->status,
+                                   cfile->progress_start,cfile->progress_end,cfile->hsize,cfile->vsize,
+                                   get_image_ext_for_type(cfile->img_type),get_image_ext_for_type(clipboard->img_type),
+                                   clipboard->start,prefs->tmpdir,clipboard->handle);
+    } else {
+      pdefault=lives_strdup_printf("%s %d %d %d %d %d %s",cfile->handle,rfx->status,cfile->progress_start,
+                                   cfile->progress_end,cfile->hsize,cfile->vsize,get_image_ext_for_type(cfile->img_type));
     }
     // and append params
     if (is_preview) {
       cmd=lives_strdup("pfxrender");
       mainw->show_procd=FALSE;
-    }
-    else cmd=lives_strdup("fxrender");
-    fxcommand=lives_strconcat (prefs->backend," \"",cmd,"_",plugin_name,"\" ", pdefault, 
-			   (tmp=param_marshall (rfx, FALSE)), NULL);
+    } else cmd=lives_strdup("fxrender");
+    fxcommand=lives_strconcat(prefs->backend," \"",cmd,"_",plugin_name,"\" ", pdefault,
+                              (tmp=param_marshall(rfx, FALSE)), NULL);
 
     lives_free(plugin_name);
     lives_free(cmd);
@@ -218,11 +215,10 @@ boolean do_effect(lives_rfx_t *rfx, boolean is_preview) {
       cfile->frame_index_back=NULL;
     }
     lives_system(fxcommand,FALSE);
-    lives_free (fxcommand);
-  }
-  else {
+    lives_free(fxcommand);
+  } else {
     if (mainw->num_tr_applied>0&&mainw->blend_file>0&&mainw->files[mainw->blend_file]!=NULL&&
-	mainw->files[mainw->blend_file]->clip_type!=CLIP_TYPE_GENERATOR) {
+        mainw->files[mainw->blend_file]->clip_type!=CLIP_TYPE_GENERATOR) {
       mainw->files[mainw->blend_file]->frameno=mainw->files[mainw->blend_file]->start-1;
     }
   }
@@ -236,29 +232,25 @@ boolean do_effect(lives_rfx_t *rfx, boolean is_preview) {
   }
 
   if (rfx->props&RFX_PROPS_MAY_RESIZE) {
-    tmp=lives_strdup(_ ("%s all frames..."));
+    tmp=lives_strdup(_("%s all frames..."));
     text=lives_strdup_printf(tmp,_(rfx->action_desc));
-  }
-  else {
+  } else {
     if (rfx->num_in_channels==2) {
-      tmp=lives_strdup(_ ("%s clipboard into frames %d to %d..."));
+      tmp=lives_strdup(_("%s clipboard into frames %d to %d..."));
       text=lives_strdup_printf(tmp,_(rfx->action_desc),cfile->progress_start,cfile->progress_end);
-    }
-    else {
+    } else {
       if (rfx->num_in_channels==0) {
-	mainw->no_switch_dprint=TRUE;
-	if (mainw->gen_to_clipboard) {
-	  tmp=lives_strdup(_("%s to clipboard..."));
-	  text=lives_strdup_printf(tmp,_(rfx->action_desc));
-	}
-	else {
-	  tmp=lives_strdup(_("%s to new clip..."));
-	  text=lives_strdup_printf(tmp,_(rfx->action_desc));
-	}
-      } 
-      else {
-	tmp=lives_strdup(_ ("%s frames %d to %d..."));
-	text=lives_strdup_printf(tmp,_(rfx->action_desc),cfile->start,cfile->end);
+        mainw->no_switch_dprint=TRUE;
+        if (mainw->gen_to_clipboard) {
+          tmp=lives_strdup(_("%s to clipboard..."));
+          text=lives_strdup_printf(tmp,_(rfx->action_desc));
+        } else {
+          tmp=lives_strdup(_("%s to new clip..."));
+          text=lives_strdup_printf(tmp,_(rfx->action_desc));
+        }
+      } else {
+        tmp=lives_strdup(_("%s frames %d to %d..."));
+        text=lives_strdup_printf(tmp,_(rfx->action_desc),cfile->start,cfile->end);
       }
     }
   }
@@ -272,8 +264,8 @@ boolean do_effect(lives_rfx_t *rfx, boolean is_preview) {
   mainw->last_dprint_file=ldfile;
 
   cfile->redoable=cfile->undoable=FALSE;
-  lives_widget_set_sensitive (mainw->redo, FALSE);
-  lives_widget_set_sensitive (mainw->undo, FALSE);
+  lives_widget_set_sensitive(mainw->redo, FALSE);
+  lives_widget_set_sensitive(mainw->undo, FALSE);
 
   cfile->undo_action=UNDO_EFFECT;
 
@@ -288,33 +280,29 @@ boolean do_effect(lives_rfx_t *rfx, boolean is_preview) {
   cfile->pb_fps=1000000.;
 
   if (rfx->num_in_channels==2) {
-    tmp=lives_strdup(_ ("%s clipboard with selection"));
-    lives_snprintf (effectstring,128,tmp,_ (rfx->action_desc));
-  }
-  else if (rfx->num_in_channels==0) {
+    tmp=lives_strdup(_("%s clipboard with selection"));
+    lives_snprintf(effectstring,128,tmp,_(rfx->action_desc));
+  } else if (rfx->num_in_channels==0) {
     if (mainw->gen_to_clipboard) {
-      tmp=lives_strdup(_ ("%s to clipboard"));
-      lives_snprintf (effectstring,128,tmp,_ (rfx->action_desc));
+      tmp=lives_strdup(_("%s to clipboard"));
+      lives_snprintf(effectstring,128,tmp,_(rfx->action_desc));
+    } else {
+      tmp=lives_strdup(_("%s to new clip"));
+      lives_snprintf(effectstring,128,tmp,_(rfx->action_desc));
     }
-    else {
-      tmp=lives_strdup(_ ("%s to new clip"));
-      lives_snprintf (effectstring,128,tmp,_ (rfx->action_desc));
-    }
-  }
-  else {
-    tmp=lives_strdup(_ ("%s frames %d to %d"));
-    lives_snprintf (effectstring,128,tmp,_ (rfx->action_desc),cfile->undo_start,cfile->undo_end);
+  } else {
+    tmp=lives_strdup(_("%s frames %d to %d"));
+    lives_snprintf(effectstring,128,tmp,_(rfx->action_desc),cfile->undo_start,cfile->undo_end);
   }
   lives_free(tmp);
 
   if (cfile->clip_type==CLIP_TYPE_FILE&&rfx->status!=RFX_STATUS_WEED) {
     // pull a batch of frames for the backend to start processing
     cfile->fx_frame_pump=cfile->start;
-  }
-  else cfile->fx_frame_pump=0;
+  } else cfile->fx_frame_pump=0;
 
   if (rfx->props&RFX_PROPS_MAY_RESIZE||rfx->num_in_channels==0) {
-    if (rfx->status==RFX_STATUS_WEED) { 
+    if (rfx->status==RFX_STATUS_WEED) {
       // set out_channel dimensions for resizers / generators
       int error;
       weed_plant_t *first_out=get_enabled_channel((weed_plant_t *)rfx->source,0,FALSE);
@@ -330,7 +318,7 @@ boolean do_effect(lives_rfx_t *rfx, boolean is_preview) {
     mainw->show_procd=TRUE;
     mainw->keep_pre=FALSE;
     if (mainw->error) {
-      if (mainw->cancelled!=CANCEL_ERROR) do_error_dialog (mainw->msg);
+      if (mainw->cancelled!=CANCEL_ERROR) do_error_dialog(mainw->msg);
       d_print_failed();
       mainw->last_dprint_file=ldfile;
     }
@@ -353,8 +341,7 @@ boolean do_effect(lives_rfx_t *rfx, boolean is_preview) {
       mainw->suppress_dprint=TRUE;
       close_current_file(current_file);
       mainw->suppress_dprint=FALSE;
-    }
-    else {
+    } else {
       mainw->current_file=current_file;
       do_rfx_cleanup(rfx);
     }
@@ -381,40 +368,39 @@ boolean do_effect(lives_rfx_t *rfx, boolean is_preview) {
   cfile->fx_frame_pump=0;
 
   if (!mainw->gen_to_clipboard) {
-    lives_widget_set_sensitive (mainw->undo, TRUE);
+    lives_widget_set_sensitive(mainw->undo, TRUE);
     if (rfx->num_in_channels>0) cfile->undoable=TRUE;
     cfile->pb_fps=old_pb_fps;
     mainw->internal_messaging=FALSE;
-    if (rfx->num_in_channels>0) lives_widget_set_sensitive (mainw->select_last, TRUE);
-    if (rfx->num_in_channels>0) set_undoable (rfx->menu_text,TRUE);
+    if (rfx->num_in_channels>0) lives_widget_set_sensitive(mainw->select_last, TRUE);
+    if (rfx->num_in_channels>0) set_undoable(rfx->menu_text,TRUE);
   }
 
   mainw->show_procd=TRUE;
-  
+
   if (rfx->props&RFX_PROPS_MAY_RESIZE||rfx->num_in_channels==0) {
     // get new frame size
-    if (rfx->status!=RFX_STATUS_WEED) { 
-      int numtok=get_token_count (mainw->msg,'|');
-      
+    if (rfx->status!=RFX_STATUS_WEED) {
+      int numtok=get_token_count(mainw->msg,'|');
+
       if (numtok>1) {
-	char **array=lives_strsplit(mainw->msg,"|",numtok);
-	// [0] is "completed"
-	cfile->hsize=atoi (array[1]);
-	cfile->vsize=atoi (array[2]);
-	if (rfx->num_in_channels==0) {
-	  cfile->fps=cfile->pb_fps=strtod(array[3],NULL);
-	  if (cfile->fps==0.) cfile->fps=cfile->pb_fps=prefs->default_fps;
-	  cfile->end=cfile->frames=atoi(array[4]);
-	  cfile->bpp=cfile->img_type==IMG_TYPE_JPEG?24:32;
-	}
-	lives_strfreev(array);
+        char **array=lives_strsplit(mainw->msg,"|",numtok);
+        // [0] is "completed"
+        cfile->hsize=atoi(array[1]);
+        cfile->vsize=atoi(array[2]);
+        if (rfx->num_in_channels==0) {
+          cfile->fps=cfile->pb_fps=strtod(array[3],NULL);
+          if (cfile->fps==0.) cfile->fps=cfile->pb_fps=prefs->default_fps;
+          cfile->end=cfile->frames=atoi(array[4]);
+          cfile->bpp=cfile->img_type==IMG_TYPE_JPEG?24:32;
+        }
+        lives_strfreev(array);
       }
       if (rfx->num_in_channels==0) {
-	cfile->progress_start=1;
-	cfile->progress_end=cfile->frames;
+        cfile->progress_start=1;
+        cfile->progress_end=cfile->frames;
       }
-    }
-    else {
+    } else {
       int error;
       weed_plant_t *first_out=get_enabled_channel((weed_plant_t *)rfx->source,0,FALSE);
       weed_plant_t *first_ot=weed_get_plantptr_value(first_out,"template",&error);
@@ -425,13 +411,13 @@ boolean do_effect(lives_rfx_t *rfx, boolean is_preview) {
     if (rfx->num_in_channels>0) {
       if (cfile->hsize==cfile->ohsize&&cfile->vsize==cfile->ovsize) cfile->undo_action=UNDO_EFFECT;
       else {
-	boolean bad_header=FALSE;
-	save_clip_value(mainw->current_file,CLIP_DETAILS_WIDTH,&cfile->hsize);
-	if (mainw->com_failed||mainw->write_failed) bad_header=TRUE;
-	save_clip_value(mainw->current_file,CLIP_DETAILS_HEIGHT,&cfile->vsize);
-	if (mainw->com_failed||mainw->write_failed) bad_header=TRUE;
-	cfile->undo_action=UNDO_RESIZABLE;
-	if (bad_header) do_header_write_error(mainw->current_file);
+        boolean bad_header=FALSE;
+        save_clip_value(mainw->current_file,CLIP_DETAILS_WIDTH,&cfile->hsize);
+        if (mainw->com_failed||mainw->write_failed) bad_header=TRUE;
+        save_clip_value(mainw->current_file,CLIP_DETAILS_HEIGHT,&cfile->vsize);
+        if (mainw->com_failed||mainw->write_failed) bad_header=TRUE;
+        cfile->undo_action=UNDO_RESIZABLE;
+        if (bad_header) do_header_write_error(mainw->current_file);
       }
     }
   }
@@ -442,7 +428,7 @@ boolean do_effect(lives_rfx_t *rfx, boolean is_preview) {
   if (mainw->keep_pre) {
     // this comes from a preview which then turned into processing
     char *com=lives_strdup_printf("%s mv_pre \"%s\" %d %d \"%s\"",prefs->backend_sync, cfile->handle,cfile->progress_start,
-			       cfile->progress_end,get_image_ext_for_type(cfile->img_type));
+                                  cfile->progress_end,get_image_ext_for_type(cfile->img_type));
 
     unlink(cfile->info_file);
     mainw->cancelled=CANCEL_NONE;
@@ -454,27 +440,26 @@ boolean do_effect(lives_rfx_t *rfx, boolean is_preview) {
 
     if (mainw->error) {
       if (!mainw->cancelled) {
-	do_info_dialog(_("\nNo frames were generated.\n"));
-	d_print_failed();
-      }
-      else if (mainw->cancelled!=CANCEL_ERROR) d_print_cancelled();
+        do_info_dialog(_("\nNo frames were generated.\n"));
+        d_print_failed();
+      } else if (mainw->cancelled!=CANCEL_ERROR) d_print_cancelled();
       else d_print_failed();
-    
+
       if (rfx->num_in_channels==0) {
-	mainw->is_generating=FALSE;
-	
-	if (mainw->current_file!=current_file) {
-	  mainw->suppress_dprint=TRUE;
-	  close_current_file(current_file);
-	  mainw->suppress_dprint=FALSE;
-	}
-	
-	mainw->current_file=current_file;
-	mainw->last_dprint_file=ldfile;
-	
-	if (mainw->multitrack!=NULL) {
-	  mainw->current_file=mainw->multitrack->render_file;
-	}
+        mainw->is_generating=FALSE;
+
+        if (mainw->current_file!=current_file) {
+          mainw->suppress_dprint=TRUE;
+          close_current_file(current_file);
+          mainw->suppress_dprint=FALSE;
+        }
+
+        mainw->current_file=current_file;
+        mainw->last_dprint_file=ldfile;
+
+        if (mainw->multitrack!=NULL) {
+          mainw->current_file=mainw->multitrack->render_file;
+        }
       }
       mainw->no_switch_dprint=FALSE;
       return FALSE;
@@ -486,34 +471,32 @@ boolean do_effect(lives_rfx_t *rfx, boolean is_preview) {
       // batch mode generators need some extra processing
       char *imgdir=lives_strdup_printf("%s%s",prefs->tmpdir,cfile->handle);
       int img_file=mainw->current_file;
-      
+
       mainw->suppress_dprint=TRUE;
       open_file_sel(imgdir,0,0);
       lives_free(imgdir);
       new_file=mainw->current_file;
-      
+
       if (new_file!=img_file) {
-	mainw->current_file=img_file;
-	
-	lives_snprintf(mainw->files[new_file]->name,256,"%s",cfile->name);
-	lives_snprintf(mainw->files[new_file]->file_name,PATH_MAX,"%s",cfile->file_name);
-	set_menu_text(mainw->files[new_file]->menuentry,cfile->name,FALSE);
-	
-	mainw->files[new_file]->fps=mainw->files[new_file]->pb_fps=cfile->fps;
-      }
-      else got_no_frames=TRUE;
-      
+        mainw->current_file=img_file;
+
+        lives_snprintf(mainw->files[new_file]->name,256,"%s",cfile->name);
+        lives_snprintf(mainw->files[new_file]->file_name,PATH_MAX,"%s",cfile->file_name);
+        set_menu_text(mainw->files[new_file]->menuentry,cfile->name,FALSE);
+
+        mainw->files[new_file]->fps=mainw->files[new_file]->pb_fps=cfile->fps;
+      } else got_no_frames=TRUE;
+
       close_current_file(current_file);
       mainw->suppress_dprint=FALSE;
-      
+
       if (!got_no_frames) mainw->current_file=new_file;
-    }
-    else {
+    } else {
       char *tfile=lives_strdup_printf("%s/%s/%08d.%s",prefs->tmpdir,cfile->handle,cfile->frames,prefs->image_ext);
 
-      if (!lives_file_test (tfile, LIVES_FILE_TEST_EXISTS)) {
-	get_frame_count(mainw->current_file);
-	cfile->end=cfile->frames;
+      if (!lives_file_test(tfile, LIVES_FILE_TEST_EXISTS)) {
+        get_frame_count(mainw->current_file);
+        cfile->end=cfile->frames;
       }
       lives_free(tfile);
     }
@@ -521,14 +504,13 @@ boolean do_effect(lives_rfx_t *rfx, boolean is_preview) {
     if (got_no_frames||cfile->frames==0) {
       mainw->is_generating=FALSE;
       if (!mainw->cancelled) {
-	do_info_dialog(_("\nNo frames were generated.\n"));
-	d_print_failed();
-      }
-      else d_print_cancelled();
+        do_info_dialog(_("\nNo frames were generated.\n"));
+        d_print_failed();
+      } else d_print_cancelled();
       if (!got_no_frames) {
-	mainw->suppress_dprint=TRUE;
-	close_current_file(current_file);
-	mainw->suppress_dprint=FALSE;
+        mainw->suppress_dprint=TRUE;
+        close_current_file(current_file);
+        mainw->suppress_dprint=FALSE;
       }
       mainw->last_dprint_file=ldfile;
       mainw->no_switch_dprint=FALSE;
@@ -539,40 +521,39 @@ boolean do_effect(lives_rfx_t *rfx, boolean is_preview) {
     if (mainw->gen_to_clipboard) {
       // here we will copy all values to the clipboard, including the handle
       // then close the current file without deleting the frames
-      
+
       init_clipboard();
-      
+
       lives_memcpy(clipboard,cfile,sizeof(lives_clip_t));
       cfile->is_loaded=TRUE;
       mainw->suppress_dprint=TRUE;
       mainw->only_close=TRUE;
-      
+
       close_current_file(current_file);
-      
+
       mainw->suppress_dprint=FALSE;
       mainw->only_close=FALSE;
-      
+
       new_file=current_file;
 
       mainw->untitled_number--;
-      
-    }
-    else {
+
+    } else {
       if (!(rfx->props&RFX_PROPS_BATCHG)) {
-	// gen to new file
-	cfile->is_loaded=TRUE;
-	add_to_clipmenu();
-	if (!save_clip_values(new_file)) {
-	  close_current_file(current_file);
-	  return FALSE;
-	}
+        // gen to new file
+        cfile->is_loaded=TRUE;
+        add_to_clipmenu();
+        if (!save_clip_values(new_file)) {
+          close_current_file(current_file);
+          return FALSE;
+        }
 
-	if (prefs->crash_recovery) add_to_recovery_file(cfile->handle);
+        if (prefs->crash_recovery) add_to_recovery_file(cfile->handle);
 
-	if (mainw->multitrack!=NULL) {
-	  mt_init_clips(mainw->multitrack,mainw->current_file,TRUE);
-	  mt_clip_select(mainw->multitrack,TRUE);
-	}
+        if (mainw->multitrack!=NULL) {
+          mt_init_clips(mainw->multitrack,mainw->current_file,TRUE);
+          mt_clip_select(mainw->multitrack,TRUE);
+        }
 
       }
       lives_notify(LIVES_OSC_NOTIFY_CLIP_OPENED,"");
@@ -584,10 +565,9 @@ boolean do_effect(lives_rfx_t *rfx, boolean is_preview) {
   if (mainw->multitrack==NULL) {
     if (new_file!=-1) {
       lives_sync();
-      switch_to_file ((mainw->current_file=0),new_file);
+      switch_to_file((mainw->current_file=0),new_file);
     }
-  }
-  else {
+  } else {
     mainw->current_file=mainw->multitrack->render_file;
     mainw->pre_src_file=-1;
   }
@@ -596,7 +576,7 @@ boolean do_effect(lives_rfx_t *rfx, boolean is_preview) {
   mainw->no_switch_dprint=FALSE;
   mainw->gen_to_clipboard=FALSE;
   mainw->last_dprint_file=ldfile;
-  
+
   return TRUE;
 }
 
@@ -605,9 +585,9 @@ boolean do_effect(lives_rfx_t *rfx, boolean is_preview) {
 // realtime fx
 
 
-  
 
-lives_render_error_t realfx_progress (boolean reset) {
+
+lives_render_error_t realfx_progress(boolean reset) {
   static lives_render_error_t write_error;
 
   LiVESError *error=NULL;
@@ -646,7 +626,7 @@ lives_render_error_t realfx_progress (boolean reset) {
   if (mainw->effects_paused) return LIVES_RENDER_EFFECTS_PAUSED;
 
   // sig_progress...
-  lives_snprintf (mainw->msg,256,"%d",i);
+  lives_snprintf(mainw->msg,256,"%d",i);
   // load, effect, save frame
 
   // skip resizing virtual frames
@@ -670,11 +650,11 @@ lives_render_error_t realfx_progress (boolean reset) {
 
     if (!pull_frame(layer,get_image_ext_for_type(cfile->img_type),frameticks)) {
       // do_read_failed_error_s() cannot be used here as we dont know the filename
-      lives_snprintf (mainw->msg,256,"error|missing image %d",i);
+      lives_snprintf(mainw->msg,256,"error|missing image %d",i);
       return LIVES_RENDER_WARNING_READ_FRAME;
     }
 
-    layer=on_rte_apply (layer, 0, 0, (weed_timecode_t)frameticks);
+    layer=on_rte_apply(layer, 0, 0, (weed_timecode_t)frameticks);
 
     if (!has_video_filters(TRUE)||resize_instance!=NULL) {
       layer_palette=weed_get_int_value(layer,"current_palette",&weed_error);
@@ -682,39 +662,37 @@ lives_render_error_t realfx_progress (boolean reset) {
       if (resize_instance==NULL) resize_layer(layer,cfile->hsize,cfile->vsize,LIVES_INTERP_BEST,layer_palette,0);
 
       if (cfile->img_type==IMG_TYPE_JPEG&&layer_palette!=WEED_PALETTE_RGB24&&layer_palette!=WEED_PALETTE_RGBA32) {
-	convert_layer_palette(layer,WEED_PALETTE_RGB24,0);
-	layer_palette=WEED_PALETTE_RGB24;
+        convert_layer_palette(layer,WEED_PALETTE_RGB24,0);
+        layer_palette=WEED_PALETTE_RGB24;
+      } else if (cfile->img_type==IMG_TYPE_PNG&&layer_palette!=WEED_PALETTE_RGBA32) {
+        convert_layer_palette(layer,WEED_PALETTE_RGBA32,0);
+        layer_palette=WEED_PALETTE_RGBA32;
       }
-      else if (cfile->img_type==IMG_TYPE_PNG&&layer_palette!=WEED_PALETTE_RGBA32) {
-	convert_layer_palette(layer,WEED_PALETTE_RGBA32,0);
-	layer_palette=WEED_PALETTE_RGBA32;
-      }
-      
+
       pixbuf=layer_to_pixbuf(layer);
       weed_plant_free(layer);
-      
-      lives_snprintf(oname,PATH_MAX,"%s/%s/%08d.mgk",prefs->tmpdir,cfile->handle,i);
-      
-      do {
-	retval=0;
-	lives_pixbuf_save (pixbuf, oname, cfile->img_type, 100, TRUE, &error);
 
-	if (error!=NULL) {
-	  retval=do_write_failed_error_s_with_retry(oname,error->message,NULL);
-	  lives_error_free(error);
-	  error=NULL;
-	  if (retval!=LIVES_RESPONSE_RETRY) write_error=LIVES_RENDER_ERROR_WRITE_FRAME;
-	}
+      lives_snprintf(oname,PATH_MAX,"%s/%s/%08d.mgk",prefs->tmpdir,cfile->handle,i);
+
+      do {
+        retval=0;
+        lives_pixbuf_save(pixbuf, oname, cfile->img_type, 100, TRUE, &error);
+
+        if (error!=NULL) {
+          retval=do_write_failed_error_s_with_retry(oname,error->message,NULL);
+          lives_error_free(error);
+          error=NULL;
+          if (retval!=LIVES_RESPONSE_RETRY) write_error=LIVES_RENDER_ERROR_WRITE_FRAME;
+        }
       } while (retval==LIVES_RESPONSE_RETRY);
-    
-      
-      lives_object_unref (pixbuf);
+
+
+      lives_object_unref(pixbuf);
 
       if (cfile->clip_type==CLIP_TYPE_FILE) {
-	cfile->frame_index[i-1]=-1;
+        cfile->frame_index[i-1]=-1;
       }
-    }
-    else weed_plant_free(layer);
+    } else weed_plant_free(layer);
   }
   if (apply_audio_fx) {
     if (!apply_rte_audio((double)cfile->arate/(double)cfile->fps+(double)rand()/.5/(double)(RAND_MAX))) {
@@ -726,25 +704,24 @@ lives_render_error_t realfx_progress (boolean reset) {
     if (resize_instance!=NULL||(has_video_filters(FALSE)&&!has_video_filters(TRUE))) {
       mainw->error=FALSE;
       mainw->cancelled=CANCEL_NONE;
-      com=lives_strdup_printf ("%s mv_mgk \"%s\" %d %d \"%s\"",prefs->backend,cfile->handle,cfile->start,
-			   cfile->end,get_image_ext_for_type(cfile->img_type));
-      lives_system (com,FALSE);
-      lives_free (com);
+      com=lives_strdup_printf("%s mv_mgk \"%s\" %d %d \"%s\"",prefs->backend,cfile->handle,cfile->start,
+                              cfile->end,get_image_ext_for_type(cfile->img_type));
+      lives_system(com,FALSE);
+      lives_free(com);
       mainw->internal_messaging=FALSE;
-      
+
       check_backend_return(cfile);
-      
+
       if (mainw->error) write_error=LIVES_RENDER_ERROR_WRITE_FRAME;
       //cfile->may_be_damaged=TRUE;
       else {
-	if (cfile->clip_type==CLIP_TYPE_FILE) {
-	  if (!check_if_non_virtual(mainw->current_file,1,cfile->frames)) save_frame_index(mainw->current_file);
-	}
-	mainw->rowstride_alignment_hint=1;
-	return LIVES_RENDER_COMPLETE;
+        if (cfile->clip_type==CLIP_TYPE_FILE) {
+          if (!check_if_non_virtual(mainw->current_file,1,cfile->frames)) save_frame_index(mainw->current_file);
+        }
+        mainw->rowstride_alignment_hint=1;
+        return LIVES_RENDER_COMPLETE;
       }
-    }
-    else {
+    } else {
       sprintf(mainw->msg,"%s","completed");
       mainw->rowstride_alignment_hint=1;
       return LIVES_RENDER_COMPLETE;
@@ -775,8 +752,8 @@ boolean on_realfx_activate_inner(int type, lives_rfx_t *rfx) {
 
       if (lives_dialog_run(LIVES_DIALOG(resaudw->dialog))!=LIVES_RESPONSE_OK) return FALSE;
       if (mainw->error) {
-	mainw->error=FALSE;
-	return FALSE;
+        mainw->error=FALSE;
+        return FALSE;
       }
       has_new_audio=TRUE;
     }
@@ -794,33 +771,32 @@ boolean on_realfx_activate_inner(int type, lives_rfx_t *rfx) {
   mainw->rowstride_alignment_hint=1;
 
   mainw->progress_fn=&realfx_progress;
-  mainw->progress_fn (TRUE);
+  mainw->progress_fn(TRUE);
 
   weed_reinit_all();
 
-  retval=do_effect (rfx,FALSE);
+  retval=do_effect(rfx,FALSE);
 
   if (apply_audio_fx) {
     apply_rte_audio_end(!retval);
 
     if (retval) {
       if (!has_video_filters(FALSE)||!has_video_filters(TRUE)) cfile->undo_action=UNDO_NEW_AUDIO;
-      
+
       cfile->undo_achans=cfile->achans;
       cfile->undo_arate=cfile->arate;
       cfile->undo_arps=cfile->arps;
       cfile->undo_asampsize=cfile->asampsize;
       cfile->undo_signed_endian=cfile->signed_endian;
-      
-    }
-    else {
+
+    } else {
       if (has_new_audio) cfile->achans=cfile->asampsize=cfile->arate=cfile->arps=0;
       else {
-      	char *com=lives_strdup_printf("%s undo_audio %s",prefs->backend_sync,cfile->handle);
-	mainw->com_failed=FALSE;
-	unlink (cfile->info_file);
-	lives_system(com,FALSE);
-	lives_free(com);
+        char *com=lives_strdup_printf("%s undo_audio %s",prefs->backend_sync,cfile->handle);
+        mainw->com_failed=FALSE;
+        unlink(cfile->info_file);
+        lives_system(com,FALSE);
+        lives_free(com);
       }
     }
     reget_afilesize(mainw->current_file);
@@ -834,7 +810,7 @@ boolean on_realfx_activate_inner(int type, lives_rfx_t *rfx) {
 
 
 
-void on_realfx_activate (LiVESMenuItem *menuitem, livespointer user_data) {
+void on_realfx_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   int type=1;
 
   boolean has_lmap_error=FALSE;
@@ -846,32 +822,32 @@ void on_realfx_activate (LiVESMenuItem *menuitem, livespointer user_data) {
     type=0;
 
     if (!(prefs->warning_mask&WARN_MASK_LAYOUT_ALTER_FRAMES)&&(mainw->xlays=
-							       layout_frame_is_affected(mainw->current_file,1))!=NULL) {
+          layout_frame_is_affected(mainw->current_file,1))!=NULL) {
       if (!do_layout_alter_frames_warning()) {
-	lives_list_free_strings(mainw->xlays);
-	lives_list_free(mainw->xlays);
-	mainw->xlays=NULL;
-	return;
+        lives_list_free_strings(mainw->xlays);
+        lives_list_free(mainw->xlays);
+        mainw->xlays=NULL;
+        return;
       }
       add_lmap_error(LMAP_ERROR_ALTER_FRAMES,cfile->name,(livespointer)cfile->layout_map,mainw->current_file,0,0.,
-		     cfile->stored_layout_frame>0);
+                     cfile->stored_layout_frame>0);
       lives_list_free_strings(mainw->xlays);
       lives_list_free(mainw->xlays);
       mainw->xlays=NULL;
       has_lmap_error=TRUE;
     }
 
-    
+
     if (!(prefs->warning_mask&WARN_MASK_LAYOUT_ALTER_AUDIO)&&
-	(mainw->xlays=layout_audio_is_affected(mainw->current_file,0.))!=NULL) {
+        (mainw->xlays=layout_audio_is_affected(mainw->current_file,0.))!=NULL) {
       if (!do_layout_alter_audio_warning()) {
-	lives_list_free_strings(mainw->xlays);
-	lives_list_free(mainw->xlays);
-	mainw->xlays=NULL;
-	return;
+        lives_list_free_strings(mainw->xlays);
+        lives_list_free(mainw->xlays);
+        mainw->xlays=NULL;
+        return;
       }
       add_lmap_error(LMAP_ERROR_ALTER_AUDIO,cfile->name,(livespointer)cfile->layout_map,mainw->current_file,0,0.,
-		     cfile->stored_layout_audio>0.);
+                     cfile->stored_layout_audio>0.);
       has_lmap_error=TRUE;
       lives_list_free_strings(mainw->xlays);
       lives_list_free(mainw->xlays);
@@ -890,7 +866,7 @@ void on_realfx_activate (LiVESMenuItem *menuitem, livespointer user_data) {
 
 
 
-weed_plant_t *on_rte_apply (weed_plant_t *layer, int opwidth, int opheight, weed_timecode_t tc) {
+weed_plant_t *on_rte_apply(weed_plant_t *layer, int opwidth, int opheight, weed_timecode_t tc) {
   // realtime effects
   weed_plant_t **layers,*retlayer;
   int i;
@@ -904,9 +880,9 @@ weed_plant_t *on_rte_apply (weed_plant_t *layer, int opwidth, int opheight, weed
   layers[0]=layer;
 
   if (mainw->blend_file>-1&&mainw->num_tr_applied>0&&(mainw->files[mainw->blend_file]==NULL||
-						      (mainw->files[mainw->blend_file]->clip_type==CLIP_TYPE_DISK&&
-						       (!mainw->files[mainw->blend_file]->frames||
-							!mainw->files[mainw->blend_file]->is_loaded)))) {
+      (mainw->files[mainw->blend_file]->clip_type==CLIP_TYPE_DISK&&
+       (!mainw->files[mainw->blend_file]->frames||
+        !mainw->files[mainw->blend_file]->is_loaded)))) {
     // invalid blend file
     mainw->blend_file=mainw->current_file;
   }
@@ -914,8 +890,7 @@ weed_plant_t *on_rte_apply (weed_plant_t *layer, int opwidth, int opheight, weed
   if (mainw->num_tr_applied&&mainw->blend_file!=mainw->current_file&&
       mainw->blend_file!=-1&&mainw->files[mainw->blend_file]!=NULL&&resize_instance==NULL) {
     layers[1]=get_blend_layer(tc);
-  }
-  else layers[1]=NULL;
+  } else layers[1]=NULL;
 
   if (resize_instance!=NULL) {
     lives_filter_error_t filter_error;
@@ -927,13 +902,12 @@ weed_plant_t *on_rte_apply (weed_plant_t *layer, int opwidth, int opheight, weed
     filter_error=filter_error; // stop compiler complaining
     retlayer=layers[0];
     weed_plant_free(init_event);
-  }
-  else {
+  } else {
     retlayer=weed_apply_effects(layers,mainw->filter_map,tc,opwidth,opheight,mainw->pchains);
   }
 
   // all our pixel_data will have been free'd already
-  for (i=0;layers[i]!=NULL;i++) {
+  for (i=0; layers[i]!=NULL; i++) {
     if (layers[i]!=retlayer) weed_plant_free(layers[i]);
   }
   lives_free(layers);
@@ -955,7 +929,7 @@ void deinterlace_frame(weed_plant_t *layer, weed_timecode_t tc) {
   if (mainw->fx_candidates[FX_CANDIDATE_DEINTERLACE].delegate==-1) return;
 
   deint_idx=LIVES_POINTER_TO_INT(lives_list_nth_data(mainw->fx_candidates[FX_CANDIDATE_DEINTERLACE].list,
-					    mainw->fx_candidates[FX_CANDIDATE_DEINTERLACE].delegate));
+                                 mainw->fx_candidates[FX_CANDIDATE_DEINTERLACE].delegate));
 
   deint_filter=get_weed_filter(deint_idx);
 
@@ -966,15 +940,15 @@ void deinterlace_frame(weed_plant_t *layer, weed_timecode_t tc) {
   layers[1]=NULL;
 
   layers[0]=layer;
- 
+
   init_event=weed_plant_new(WEED_PLANT_EVENT);
   weed_set_int_value(init_event,"in_tracks",0);
   weed_set_int_value(init_event,"out_tracks",0);
- 
- deint1:
+
+deint1:
 
   weed_apply_instance(deint_instance,init_event,layers,0,0,tc);
-  
+
   if (weed_plant_has_leaf(deint_instance,"host_next_instance")) next_inst=weed_get_plantptr_value(deint_instance,"host_next_instance",&error);
   else next_inst=NULL;
 
@@ -1013,7 +987,7 @@ weed_plant_t *get_blend_layer(weed_timecode_t tc) {
     mainw->last_blend_file=mainw->blend_file;
     blend_tc=tc;
   }
-  
+
   blend_file->last_frameno=blend_file->frameno;
 
   blend_file->frameno=calc_new_playback_position(mainw->blend_file,blend_tc,(uint64_t *)&ntc);
@@ -1037,8 +1011,8 @@ weed_plant_t *get_blend_layer(weed_timecode_t tc) {
 
 
 
-boolean rte_on_off_callback (LiVESAccelGroup *group, LiVESObject *obj, uint32_t keyval, LiVESXModifierType mod, livespointer user_data) {
-// this is the callback which happens when a rte is keyed
+boolean rte_on_off_callback(LiVESAccelGroup *group, LiVESObject *obj, uint32_t keyval, LiVESXModifierType mod, livespointer user_data) {
+  // this is the callback which happens when a rte is keyed
   int key=LIVES_POINTER_TO_INT(user_data);
   uint64_t new_rte;
 
@@ -1058,8 +1032,7 @@ boolean rte_on_off_callback (LiVESAccelGroup *group, LiVESObject *obj, uint32_t 
   if (key==EFFECT_NONE) {
     // switch up/down keys to default (fps change)
     weed_deinit_all(FALSE);
-  }
-  else {
+  } else {
 
     // the idea here is this gets set if a generator starts play, because in weed_init_effect() we will run playback
     // and then we come out of there and do not wish to set the key on
@@ -1069,32 +1042,31 @@ boolean rte_on_off_callback (LiVESAccelGroup *group, LiVESObject *obj, uint32_t 
       // switch is ON
       // WARNING - if we start playing because a generator was started, we block here
       if (!(weed_init_effect(key-1))) {
-	// ran out of instance slots, no effect assigned, or some other error
-	pthread_mutex_lock(&mainw->event_list_mutex);
-	if (mainw->rte&new_rte) mainw->rte^=new_rte;
-	pthread_mutex_unlock(&mainw->event_list_mutex);
-	if (rte_window!=NULL) rtew_set_keych(key-1,FALSE);
-	if (mainw->ce_thumbs) ce_thumbs_set_keych(key-1,FALSE);
-	mainw->osc_block=FALSE;
-	return TRUE;
+        // ran out of instance slots, no effect assigned, or some other error
+        pthread_mutex_lock(&mainw->event_list_mutex);
+        if (mainw->rte&new_rte) mainw->rte^=new_rte;
+        pthread_mutex_unlock(&mainw->event_list_mutex);
+        if (rte_window!=NULL) rtew_set_keych(key-1,FALSE);
+        if (mainw->ce_thumbs) ce_thumbs_set_keych(key-1,FALSE);
+        mainw->osc_block=FALSE;
+        return TRUE;
       }
 
 
       if (!mainw->gen_started_play) {
-	if (!(mainw->rte&new_rte)) mainw->rte|=new_rte;
+        if (!(mainw->rte&new_rte)) mainw->rte|=new_rte;
 
-	mainw->last_grabbable_effect=key-1;
-	if (rte_window!=NULL) rtew_set_keych(key-1,TRUE);
-	if (mainw->ce_thumbs) {
-	  ce_thumbs_set_keych(key-1,TRUE);
-	  
-	  // if effect was auto (from ACTIVATE data connection), leave all param boxes
-	  // otherwise, remove any which are not "pinned"
-	  if (!mainw->fx_is_auto) ce_thumbs_add_param_box(key-1,!mainw->fx_is_auto);
-	}
+        mainw->last_grabbable_effect=key-1;
+        if (rte_window!=NULL) rtew_set_keych(key-1,TRUE);
+        if (mainw->ce_thumbs) {
+          ce_thumbs_set_keych(key-1,TRUE);
+
+          // if effect was auto (from ACTIVATE data connection), leave all param boxes
+          // otherwise, remove any which are not "pinned"
+          if (!mainw->fx_is_auto) ce_thumbs_add_param_box(key-1,!mainw->fx_is_auto);
+        }
       }
-    }
-    else {
+    } else {
       // effect is OFF
       weed_deinit_effect(key-1);
       pthread_mutex_lock(&mainw->event_list_mutex);
@@ -1109,16 +1081,15 @@ boolean rte_on_off_callback (LiVESAccelGroup *group, LiVESObject *obj, uint32_t 
   mainw->fx_is_auto=FALSE;
 
   if (mainw->current_file>0&&cfile->play_paused&&!mainw->noswitch) {
-    load_frame_image (cfile->frameno);
+    load_frame_image(cfile->frameno);
   }
 
   if (mainw->playing_file==-1&&mainw->current_file>0&&((has_video_filters(FALSE)&&!has_video_filters(TRUE))||
-						       (cfile->achans>0&&prefs->audio_src==AUDIO_SRC_INT&&has_audio_filters(AF_TYPE_ANY))||
-						       mainw->agen_key!=0)) {
+      (cfile->achans>0&&prefs->audio_src==AUDIO_SRC_INT&&has_audio_filters(AF_TYPE_ANY))||
+      mainw->agen_key!=0)) {
 
     lives_widget_set_sensitive(mainw->rendered_fx[0].menuitem,TRUE);
-  }
-  else lives_widget_set_sensitive(mainw->rendered_fx[0].menuitem,FALSE);
+  } else lives_widget_set_sensitive(mainw->rendered_fx[0].menuitem,FALSE);
 
   if (key>0&&!mainw->fx_is_auto) {
     // user override any ACTIVATE data connection
@@ -1133,14 +1104,14 @@ boolean rte_on_off_callback (LiVESAccelGroup *group, LiVESObject *obj, uint32_t 
 
 
 
-boolean rte_on_off_callback_hook (LiVESToggleButton *button, livespointer user_data) {
-  rte_on_off_callback (NULL, NULL, 0, (LiVESXModifierType)0, user_data);
+boolean rte_on_off_callback_hook(LiVESToggleButton *button, livespointer user_data) {
+  rte_on_off_callback(NULL, NULL, 0, (LiVESXModifierType)0, user_data);
   return TRUE;
 }
 
 
-boolean grabkeys_callback (LiVESAccelGroup *group, LiVESObject *obj, uint32_t keyval, LiVESXModifierType mod, livespointer user_data) {
-  // assign the keys to the last key-grabbable effect 
+boolean grabkeys_callback(LiVESAccelGroup *group, LiVESObject *obj, uint32_t keyval, LiVESXModifierType mod, livespointer user_data) {
+  // assign the keys to the last key-grabbable effect
   mainw->rte_keys=mainw->last_grabbable_effect;
   mainw->osc_block=TRUE;
   if (rte_window!=NULL) {
@@ -1153,7 +1124,7 @@ boolean grabkeys_callback (LiVESAccelGroup *group, LiVESObject *obj, uint32_t ke
 
 
 
-boolean textparm_callback (LiVESAccelGroup *group, LiVESObject *obj, uint32_t keyval, LiVESXModifierType mod, livespointer user_data) {
+boolean textparm_callback(LiVESAccelGroup *group, LiVESObject *obj, uint32_t keyval, LiVESXModifierType mod, livespointer user_data) {
   // keyboard linked to first string parameter, until TAB is pressed
   mainw->rte_textparm=get_textparm();
   return TRUE;
@@ -1161,15 +1132,15 @@ boolean textparm_callback (LiVESAccelGroup *group, LiVESObject *obj, uint32_t ke
 
 
 
-boolean grabkeys_callback_hook (LiVESToggleButton *button, livespointer user_data) {
+boolean grabkeys_callback_hook(LiVESToggleButton *button, livespointer user_data) {
   if (!lives_toggle_button_get_active(button)) return TRUE;
   mainw->last_grabbable_effect=LIVES_POINTER_TO_INT(user_data);
-  grabkeys_callback (NULL, NULL, 0, (LiVESXModifierType)0, user_data);
+  grabkeys_callback(NULL, NULL, 0, (LiVESXModifierType)0, user_data);
   return TRUE;
 }
 
 
-boolean rtemode_callback (LiVESAccelGroup *group, LiVESObject *obj, uint32_t keyval, LiVESXModifierType mod, livespointer user_data) {
+boolean rtemode_callback(LiVESAccelGroup *group, LiVESObject *obj, uint32_t keyval, LiVESXModifierType mod, livespointer user_data) {
   // "m" mode key
   if (mainw->rte_keys==-1) return TRUE;
   rte_key_setmode(0,-1);
@@ -1178,7 +1149,7 @@ boolean rtemode_callback (LiVESAccelGroup *group, LiVESObject *obj, uint32_t key
 }
 
 
-boolean rtemode_callback_hook (LiVESToggleButton *button, livespointer user_data) {
+boolean rtemode_callback_hook(LiVESToggleButton *button, livespointer user_data) {
   int key_mode=LIVES_POINTER_TO_INT(user_data);
   int modes=rte_getmodespk();
   int key=(int)(key_mode/modes);
@@ -1191,7 +1162,7 @@ boolean rtemode_callback_hook (LiVESToggleButton *button, livespointer user_data
 }
 
 
-boolean swap_fg_bg_callback (LiVESAccelGroup *group, LiVESObject *obj, uint32_t keyval, LiVESXModifierType mod, livespointer user_data) {
+boolean swap_fg_bg_callback(LiVESAccelGroup *group, LiVESObject *obj, uint32_t keyval, LiVESXModifierType mod, livespointer user_data) {
   int old_file=mainw->current_file;
 
   if (mainw->playing_file<1||mainw->num_tr_applied==0||mainw->noswitch||mainw->blend_file==-1||
@@ -1200,13 +1171,13 @@ boolean swap_fg_bg_callback (LiVESAccelGroup *group, LiVESObject *obj, uint32_t 
     return TRUE;
   }
 
-  do_quick_switch (mainw->blend_file);
+  do_quick_switch(mainw->blend_file);
 
   mainw->blend_file=old_file;
 
   rte_swap_fg_bg();
 
-  if (mainw->ce_thumbs&&(mainw->active_sa_clips==SCREEN_AREA_BACKGROUND||mainw->active_sa_clips==SCREEN_AREA_FOREGROUND)) 
+  if (mainw->ce_thumbs&&(mainw->active_sa_clips==SCREEN_AREA_BACKGROUND||mainw->active_sa_clips==SCREEN_AREA_FOREGROUND))
     ce_thumbs_highlight_current_clip();
 
   return TRUE;

@@ -58,34 +58,34 @@ char *lives_fx_cat_to_text(lives_fx_cat_t cat, boolean plural) WARN_UNUSED;
 
 boolean do_effect(lives_rfx_t *rfx, boolean is_preview); ///< defined as extern in paramwindow.c
 
-void on_render_fx_activate (LiVESMenuItem *menuitem, lives_rfx_t *rfx);
+void on_render_fx_activate(LiVESMenuItem *menuitem, lives_rfx_t *rfx);
 
 ///////////////// real time effects
 
 // render
-void on_realfx_activate (LiVESMenuItem *, livespointer rfx);
+void on_realfx_activate(LiVESMenuItem *, livespointer rfx);
 boolean on_realfx_activate_inner(int type, lives_rfx_t *rfx);
 
-lives_render_error_t realfx_progress (boolean reset);
+lives_render_error_t realfx_progress(boolean reset);
 
 // key callbacks
 
-boolean textparm_callback (LiVESAccelGroup *group, LiVESObject *obj, uint32_t keyval, LiVESXModifierType mod, livespointer user_data);
+boolean textparm_callback(LiVESAccelGroup *group, LiVESObject *obj, uint32_t keyval, LiVESXModifierType mod, livespointer user_data);
 
-boolean grabkeys_callback (LiVESAccelGroup *, LiVESObject *, uint32_t, LiVESXModifierType, livespointer user_data); ///< for accel groups
-boolean grabkeys_callback_hook (LiVESToggleButton *button, livespointer user_data); ///< for widgets
+boolean grabkeys_callback(LiVESAccelGroup *, LiVESObject *, uint32_t, LiVESXModifierType, livespointer user_data);  ///< for accel groups
+boolean grabkeys_callback_hook(LiVESToggleButton *button, livespointer user_data);  ///< for widgets
 
-boolean rte_on_off_callback (LiVESAccelGroup *, LiVESObject *, uint32_t, LiVESXModifierType, livespointer user_data); ///< for accel groups
-boolean rte_on_off_callback_hook (LiVESToggleButton *, livespointer user_data); ///< for widgets
+boolean rte_on_off_callback(LiVESAccelGroup *, LiVESObject *, uint32_t, LiVESXModifierType, livespointer user_data);  ///< for accel groups
+boolean rte_on_off_callback_hook(LiVESToggleButton *, livespointer user_data);  ///< for widgets
 
-boolean rtemode_callback (LiVESAccelGroup *, LiVESObject *, uint32_t, LiVESXModifierType, livespointer user_data); ///< for accel groups
-boolean rtemode_callback_hook (LiVESToggleButton *, livespointer user_data); ///< for widgets
+boolean rtemode_callback(LiVESAccelGroup *, LiVESObject *, uint32_t, LiVESXModifierType, livespointer user_data);  ///< for accel groups
+boolean rtemode_callback_hook(LiVESToggleButton *, livespointer user_data);  ///< for widgets
 
-boolean swap_fg_bg_callback (LiVESAccelGroup *, LiVESObject *, uint32_t, LiVESXModifierType, livespointer user_data);
+boolean swap_fg_bg_callback(LiVESAccelGroup *, LiVESObject *, uint32_t, LiVESXModifierType, livespointer user_data);
 
 weed_plant_t *get_blend_layer(weed_timecode_t tc);
 
-weed_plant_t *on_rte_apply (weed_plant_t *main_layer, int opwidth, int opheight, weed_timecode_t tc);
+weed_plant_t *on_rte_apply(weed_plant_t *main_layer, int opwidth, int opheight, weed_timecode_t tc);
 
 
 void deinterlace_frame(weed_plant_t *layer, weed_timecode_t tc);

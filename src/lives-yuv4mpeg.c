@@ -41,13 +41,13 @@ static int yuvout,hsize_out,vsize_out;
 static LiVESList *fw_cards=NULL;
 
 
-static lives_yuv4m_t *lives_yuv4mpeg_alloc (void) {
-  lives_yuv4m_t *yuv4mpeg = (lives_yuv4m_t *) malloc (sizeof(lives_yuv4m_t));
+static lives_yuv4m_t *lives_yuv4mpeg_alloc(void) {
+  lives_yuv4m_t *yuv4mpeg = (lives_yuv4m_t *) malloc(sizeof(lives_yuv4m_t));
   if (yuv4mpeg==NULL) return NULL;
   yuv4mpeg->sar = y4m_sar_UNKNOWN;
   yuv4mpeg->dar = y4m_dar_4_3;
-  y4m_init_stream_info (&(yuv4mpeg->streaminfo));
-  y4m_init_frame_info (&(yuv4mpeg->frameinfo));
+  y4m_init_stream_info(&(yuv4mpeg->streaminfo));
+  y4m_init_frame_info(&(yuv4mpeg->frameinfo));
   yuv4mpeg->filename=NULL;
   yuv4mpeg->name=NULL;
   yuv4mpeg->fd=-1;
@@ -56,7 +56,7 @@ static lives_yuv4m_t *lives_yuv4mpeg_alloc (void) {
 }
 
 
-static void *y4open_thread (void *arg) {
+static void *y4open_thread(void *arg) {
   y4data *thread_data=(y4data *)arg;
   int fd=open(thread_data->filename,O_RDONLY);
   thread_data->fd=fd;
@@ -64,10 +64,10 @@ static void *y4open_thread (void *arg) {
 }
 
 
-static void *y4header_thread (void *arg) {
+static void *y4header_thread(void *arg) {
   y4data *thread_data=(y4data *)arg;
   lives_yuv4m_t *yuv4mpeg=thread_data->yuv4mpeg;
-  thread_data->i = y4m_read_stream_header (yuv4mpeg->fd, &(yuv4mpeg->streaminfo));
+  thread_data->i = y4m_read_stream_header(yuv4mpeg->fd, &(yuv4mpeg->streaminfo));
   pthread_exit(NULL);
 }
 
@@ -85,7 +85,7 @@ static void fill_read(int fd, char *buf, size_t count) {
 }
 
 
-static void *y4frame_thread (void *arg) {
+static void *y4frame_thread(void *arg) {
   y4data *thread_data=(y4data *)arg;
   lives_yuv4m_t *yuv4mpeg=thread_data->yuv4mpeg;
   char buff[5],bchar;
@@ -118,7 +118,7 @@ static void *y4frame_thread (void *arg) {
 #define YUV4_H_TIME 500000000 // ticks to wait to get stream header
 
 
-static boolean lives_yuv_stream_start_read (lives_clip_t *sfile) {
+static boolean lives_yuv_stream_start_read(lives_clip_t *sfile) {
   double ofps=sfile->fps;
 
   lives_yuv4m_t *yuv4mpeg=(lives_yuv4m_t *)sfile->ext_src;
@@ -156,7 +156,7 @@ static boolean lives_yuv_stream_start_read (lives_clip_t *sfile) {
       lives_usleep(prefs->sleep_time);
       lives_widget_context_update();
     }
-    
+
     if (lives_alarm_get(alarm_handle)) {
       // timeout - kill thread and wait for it to terminate
       pthread_cancel(y4thread);
@@ -169,8 +169,8 @@ static boolean lives_yuv_stream_start_read (lives_clip_t *sfile) {
       yuv4mpeg->fd=thread_data.fd;
 
       if (yuv4mpeg->fd>=0) {
-	close(yuv4mpeg->fd);
-	yuv4mpeg->fd=-1;
+        close(yuv4mpeg->fd);
+        yuv4mpeg->fd=-1;
       }
 
       return FALSE;
@@ -213,31 +213,31 @@ static boolean lives_yuv_stream_start_read (lives_clip_t *sfile) {
 
   if (i != Y4M_OK) {
     char *tmp;
-    d_print ((tmp=lives_strdup_printf ("yuv4mpeg: %s\n", y4m_strerr (i))));
+    d_print((tmp=lives_strdup_printf("yuv4mpeg: %s\n", y4m_strerr(i))));
     lives_free(tmp);
     return FALSE;
   }
 
   d_print(_("got header\n"));
 
-  sfile->hsize = yuv4mpeg->hsize = y4m_si_get_width (&(yuv4mpeg->streaminfo));
-  sfile->vsize = yuv4mpeg->vsize = y4m_si_get_height (&(yuv4mpeg->streaminfo));
+  sfile->hsize = yuv4mpeg->hsize = y4m_si_get_width(&(yuv4mpeg->streaminfo));
+  sfile->vsize = yuv4mpeg->vsize = y4m_si_get_height(&(yuv4mpeg->streaminfo));
 
-  sfile->fps=cfile->pb_fps=lives_strtod (lives_strdup_printf ("%.8f",Y4M_RATIO_DBL 
-						      (y4m_si_get_framerate (&(yuv4mpeg->streaminfo)))),NULL);
+  sfile->fps=cfile->pb_fps=lives_strtod(lives_strdup_printf("%.8f",Y4M_RATIO_DBL
+                                        (y4m_si_get_framerate(&(yuv4mpeg->streaminfo)))),NULL);
 
-  if(!(sfile->hsize*sfile->vsize)){
-      do_error_dialog (lives_strdup_printf (_("Video dimensions: %d x %d are invalid. Stream cannot be opened"), 
-					sfile->hsize,sfile->vsize));
-      return FALSE;
+  if (!(sfile->hsize*sfile->vsize)) {
+    do_error_dialog(lives_strdup_printf(_("Video dimensions: %d x %d are invalid. Stream cannot be opened"),
+                                        sfile->hsize,sfile->vsize));
+    return FALSE;
   }
 
   if (sfile->hsize!=ohsize||sfile->vsize!=ovsize||sfile->fps!=ofps) {
     set_main_title(sfile->file_name,0);
   }
 
-  d_print ((tmp=lives_strdup_printf(_ ("Reset clip values for %s: size=%dx%d fps=%.3f\n"),yuv4mpeg->name,
-				cfile->hsize,yuv4mpeg->vsize,cfile->bpp,cfile->fps)));
+  d_print((tmp=lives_strdup_printf(_("Reset clip values for %s: size=%dx%d fps=%.3f\n"),yuv4mpeg->name,
+                                   cfile->hsize,yuv4mpeg->vsize,cfile->bpp,cfile->fps)));
   lives_free(tmp);
 
   yuv4mpeg->ready=TRUE;
@@ -247,13 +247,13 @@ static boolean lives_yuv_stream_start_read (lives_clip_t *sfile) {
 
 
 
-void lives_yuv_stream_stop_read (lives_yuv4m_t *yuv4mpeg) {
+void lives_yuv_stream_stop_read(lives_yuv4m_t *yuv4mpeg) {
 
-  y4m_fini_stream_info (&(yuv4mpeg->streaminfo));
-  y4m_fini_frame_info (&(yuv4mpeg->frameinfo));
+  y4m_fini_stream_info(&(yuv4mpeg->streaminfo));
+  y4m_fini_frame_info(&(yuv4mpeg->frameinfo));
   yuv4mpeg->sar = y4m_sar_UNKNOWN;
   yuv4mpeg->dar = y4m_dar_4_3;
-  if (yuv4mpeg->fd!=-1) close (yuv4mpeg->fd);
+  if (yuv4mpeg->fd!=-1) close(yuv4mpeg->fd);
 
   if (yuv4mpeg->filename!=NULL) {
     unlink(yuv4mpeg->filename);
@@ -271,7 +271,7 @@ void lives_yuv_stream_stop_read (lives_yuv4m_t *yuv4mpeg) {
 #define YUV4_F_TIME 200000000 // ticks to wait to get stream header
 
 
-void weed_layer_set_from_yuv4m (weed_plant_t *layer, lives_clip_t *sfile) {
+void weed_layer_set_from_yuv4m(weed_plant_t *layer, lives_clip_t *sfile) {
   lives_yuv4m_t *yuv4mpeg=(lives_yuv4m_t *)(sfile->ext_src);
 
   y4data thread_data;
@@ -371,7 +371,7 @@ static boolean open_yuv4m_inner(const char *filename, const char *fname, int new
 
 
 
-void on_open_yuv4m_activate (LiVESMenuItem *menuitem, livespointer user_data) {
+void on_open_yuv4m_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   // open a general yuvmpeg stream
   // start "playing" but open frames in yuv4mpeg format on stdin
 
@@ -394,7 +394,7 @@ void on_open_yuv4m_activate (LiVESMenuItem *menuitem, livespointer user_data) {
   mainw->current_file=new_file;
 
   if (!strlen(prefs->yuvin))
-      filename=lives_build_filename(prefs->tmpdir,"stream.yuv",NULL);
+    filename=lives_build_filename(prefs->tmpdir,"stream.yuv",NULL);
   else
     filename=lives_strdup(prefs->yuvin);
 
@@ -419,18 +419,17 @@ void on_open_yuv4m_activate (LiVESMenuItem *menuitem, livespointer user_data) {
 
   lives_snprintf(cfile->type,40,"%s",_("yu4mpeg stream in"));
 
-  d_print ((tmp=lives_strdup_printf (_("Opened yuv4mpeg stream on %s"),filename)));
+  d_print((tmp=lives_strdup_printf(_("Opened yuv4mpeg stream on %s"),filename)));
   lives_free(tmp);
   lives_free(filename);
 
   d_print(_("Audio: "));
 
   if (cfile->achans==0) {
-    d_print (_ ("none\n"));
-  }
-  else {
-    d_print ((tmp=lives_strdup_printf(P_("%d Hz %d channel %d bps\n","%d Hz %d channels %d bps\n",cfile->achans),
-				  cfile->arate,cfile->achans,cfile->asampsize)));
+    d_print(_("none\n"));
+  } else {
+    d_print((tmp=lives_strdup_printf(P_("%d Hz %d channel %d bps\n","%d Hz %d channels %d bps\n",cfile->achans),
+                                     cfile->arate,cfile->achans,cfile->asampsize)));
     lives_free(tmp);
   }
 
@@ -441,7 +440,7 @@ void on_open_yuv4m_activate (LiVESMenuItem *menuitem, livespointer user_data) {
     // an opening preview . Doesn't work with fifo.
     // and we dont really care if it doesnt work
 
-    // but what it means is, if we have an audio file or stream at 
+    // but what it means is, if we have an audio file or stream at
     // "prefs->tmpdir/audiodump.pcm" we will try to play it
 
 
@@ -454,8 +453,8 @@ void on_open_yuv4m_activate (LiVESMenuItem *menuitem, livespointer user_data) {
 
 #ifndef IS_MINGW
     // fake file will go away when we close the current clip
-    lives_system ((tmp=lives_strdup_printf ("/bin/ln -s \"%s\" \"%s\" >/dev/null 2>&1",
-					audio_real,audio_fake)),TRUE);
+    lives_system((tmp=lives_strdup_printf("/bin/ln -s \"%s\" \"%s\" >/dev/null 2>&1",
+                                          audio_real,audio_fake)),TRUE);
 #else
     // TODO
 #endif
@@ -471,8 +470,8 @@ void on_open_yuv4m_activate (LiVESMenuItem *menuitem, livespointer user_data) {
     mainw->noswitch=FALSE;
   }
   // TODO - else...
-  
-  if (mainw->current_file!=old_file&&mainw->current_file!=new_file) 
+
+  if (mainw->current_file!=old_file&&mainw->current_file!=new_file)
     old_file=mainw->current_file; // we could have rendered to a new file
 
   mainw->current_file=new_file;
@@ -487,7 +486,7 @@ void on_open_yuv4m_activate (LiVESMenuItem *menuitem, livespointer user_data) {
 // write functions - not used currently
 
 
-boolean lives_yuv_stream_start_write (lives_yuv4m_t * yuv4mpeg, const char *filename, int hsize, int vsize, double fps) {
+boolean lives_yuv_stream_start_write(lives_yuv4m_t *yuv4mpeg, const char *filename, int hsize, int vsize, double fps) {
   int i;
 
   if (mainw->fixed_fpsd>-1.&&mainw->fixed_fpsd!=fps) {
@@ -496,24 +495,23 @@ boolean lives_yuv_stream_start_write (lives_yuv4m_t * yuv4mpeg, const char *file
   }
   mainw->fixed_fpsd=fps;
 
-  if (filename==NULL) filename=lives_strdup_printf ("%s/streamout.yuv",prefs->tmpdir);
+  if (filename==NULL) filename=lives_strdup_printf("%s/streamout.yuv",prefs->tmpdir);
 
   // TODO - do_threaded_dialog
-  if ((yuvout=creat (filename,O_CREAT))<0) {
-    do_error_dialog (lives_strdup_printf (_("Unable to open yuv4mpeg out stream %s\n"),filename));
+  if ((yuvout=creat(filename,O_CREAT))<0) {
+    do_error_dialog(lives_strdup_printf(_("Unable to open yuv4mpeg out stream %s\n"),filename));
     return FALSE;
   }
 
   if (mainw->fixed_fpsd>23.9999&&mainw->fixed_fpsd<24.0001) {
     y4m_si_set_framerate(&(yuv4mpeg->streaminfo),y4m_fps_FILM);
-  }
-  else return FALSE;
+  } else return FALSE;
   y4m_si_set_interlace(&(yuv4mpeg->streaminfo), Y4M_ILACE_NONE);
 
   y4m_si_set_width(&(yuv4mpeg->streaminfo), (hsize_out=hsize));
   y4m_si_set_height(&(yuv4mpeg->streaminfo), (vsize_out=vsize));
   y4m_si_set_sampleaspect(&(yuv4mpeg->streaminfo), yuv4mpeg->sar);
-    
+
   i = y4m_write_stream_header(yuvout, &(yuv4mpeg->streaminfo));
 
   if (i != Y4M_OK) return FALSE;
@@ -522,7 +520,7 @@ boolean lives_yuv_stream_start_write (lives_yuv4m_t * yuv4mpeg, const char *file
 }
 
 
-boolean lives_yuv_stream_write_frame (lives_yuv4m_t *yuv4mpeg, void *pixel_data) {
+boolean lives_yuv_stream_write_frame(lives_yuv4m_t *yuv4mpeg, void *pixel_data) {
   // pixel_data is planar yuv420 data
   int i;
 
@@ -534,16 +532,16 @@ boolean lives_yuv_stream_write_frame (lives_yuv4m_t *yuv4mpeg, void *pixel_data)
   planes[2]=&(pixels[hsize_out*vsize_out*5/4]);
 
   i = y4m_write_frame(yuvout, &(yuv4mpeg->streaminfo),
-  		&(yuv4mpeg->frameinfo), (uint8_t **)&planes[0]);
+                      &(yuv4mpeg->frameinfo), (uint8_t **)&planes[0]);
   if (i != Y4M_OK) return FALSE;
   return TRUE;
 }
 
 
-void lives_yuv_stream_stop_write (lives_yuv4m_t *yuv4mpeg) {
+void lives_yuv_stream_stop_write(lives_yuv4m_t *yuv4mpeg) {
   y4m_fini_stream_info(&(yuv4mpeg->streaminfo));
   y4m_fini_frame_info(&(yuv4mpeg->frameinfo));
-  close (yuvout);
+  close(yuvout);
 }
 
 
@@ -579,7 +577,7 @@ void lives_yuv_stream_stop_write (lives_yuv4m_t *yuv4mpeg) {
 
 
 
-void on_live_tvcard_activate (LiVESMenuItem *menuitem, livespointer user_data) {
+void on_live_tvcard_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   int cardno=0;
 
   int new_file=mainw->first_free_file;
@@ -660,14 +658,13 @@ void on_live_tvcard_activate (LiVESMenuItem *menuitem, livespointer user_data) {
 
   if (!tvcardw->use_advanced) {
     com=lives_strdup_printf("%s open_tv_card \"%s\" \"%s\" \"%s\" \"%s\"",prefs->backend,cfile->handle,chanstr,
-			devstr,fifofile);
-  }
-  else {
+                            devstr,fifofile);
+  } else {
     double fps=0.;
     char *driver=NULL,*outfmt=NULL;
     int width=0,height=0;
     int input=lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(tvcardw->spinbuttoni));
-    
+
     if (!lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(tvcardw->radiobuttond))) {
       width=lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(tvcardw->spinbuttonw));
       height=lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(tvcardw->spinbuttonh));
@@ -678,8 +675,8 @@ void on_live_tvcard_activate (LiVESMenuItem *menuitem, livespointer user_data) {
     outfmt=lives_combo_get_active_text(LIVES_COMBO(tvcardw->comboo));
 
     com=lives_strdup_printf("%s open_tv_card \"%s\" \"%s\" \"%s\" \"%s\" %d %d %d %.3f \"%s\" \"%s\"",
-			prefs->backend,cfile->handle,chanstr,
-			devstr,fifofile,input,width,height,fps,driver,outfmt);
+                            prefs->backend,cfile->handle,chanstr,
+                            devstr,fifofile,input,width,height,fps,driver,outfmt);
     lives_free(driver);
     lives_free(outfmt);
 
@@ -699,7 +696,7 @@ void on_live_tvcard_activate (LiVESMenuItem *menuitem, livespointer user_data) {
     lives_free(devstr);
     return;
   }
-			       
+
   if (!open_yuv4m_inner(fifofile,fname,new_file,YUV4_TYPE_TV,cardno)) {
     lives_free(fname);
     lives_free(chanstr);
@@ -707,22 +704,22 @@ void on_live_tvcard_activate (LiVESMenuItem *menuitem, livespointer user_data) {
     lives_free(devstr);
     return;
   }
-			       
+
   lives_snprintf(cfile->type,40,"%s",fname);
-  
-  d_print ((tmp=lives_strdup_printf (_("Opened TV card %d (%s)"),cardno,devstr)));
+
+  d_print((tmp=lives_strdup_printf(_("Opened TV card %d (%s)"),cardno,devstr)));
 
   lives_free(tmp);
   lives_free(fname);
   lives_free(chanstr);
   lives_free(devstr);
   lives_free(fifofile);
-    
+
 }
 
 
 
-void on_live_fw_activate (LiVESMenuItem *menuitem, livespointer user_data) {
+void on_live_fw_activate(LiVESMenuItem *menuitem, livespointer user_data) {
 
   char *com,*tmp;
   int cardno;
@@ -790,10 +787,10 @@ void on_live_fw_activate (LiVESMenuItem *menuitem, livespointer user_data) {
     lives_free(fifofile);
     return;
   }
-			       
+
   lives_snprintf(cfile->type,40,"%s",fname);
-  
-  d_print ((tmp=lives_strdup_printf (_("Opened firewire card %d"),cardno)));
+
+  d_print((tmp=lives_strdup_printf(_("Opened firewire card %d"),cardno)));
 
   lives_free(tmp);
   lives_free(fname);

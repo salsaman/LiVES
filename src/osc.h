@@ -8,7 +8,7 @@
 /* some portions of this file based on libOSC
 Written by Adrian Freed, The Center for New Music and Audio Technologies,
 University of California, Berkeley.  Copyright (c) 1992,93,94,95,96,97,98,99,2000,01,02,03,04
-The Regents of the University of California (Regents).  
+The Regents of the University of California (Regents).
 
 Permission to use, copy, modify, distribute, and distribute modified versions
 of this software and its documentation without fee and without a signed
@@ -28,7 +28,7 @@ HEREUNDER IS PROVIDED "AS IS". REGENTS HAS NO OBLIGATION TO PROVIDE
 MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 
 
-The OSC webpage is http://cnmat.cnmat.berkeley.edu/OpenSoundControl 
+The OSC webpage is http://cnmat.cnmat.berkeley.edu/OpenSoundControl
 */
 
 #ifdef ENABLE_OSC
@@ -51,9 +51,9 @@ extern "C" {
 #endif
 
 typedef struct osc_arg_t {
-    int a;
-    int b;
-    int c;
+  int a;
+  int b;
+  int c;
 } osc_arg;
 
 typedef struct lives_osc_t {

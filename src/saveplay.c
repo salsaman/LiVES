@@ -60,11 +60,11 @@ boolean save_clip_values(int which) {
     if (mainw->clip_header==NULL) {
       retval=do_write_failed_error_s_with_retry(lives_header,lives_strerror(errno),NULL);
       if (retval==LIVES_RESPONSE_CANCEL) {
-	lives_free(lives_header);
+        lives_free(lives_header);
 #ifndef IS_MINGW
-	umask(xumask);
+        umask(xumask);
 #endif
-	return FALSE;
+        return FALSE;
       }
     }
 
@@ -72,71 +72,71 @@ boolean save_clip_values(int which) {
       mainw->files[which]->header_version=LIVES_CLIP_HEADER_VERSION;
 
       do {
-	retval=0;
-	set_signal_handlers((SignalHandlerPointer)defer_sigint);
-	save_clip_value(which,CLIP_DETAILS_HEADER_VERSION,&mainw->files[which]->header_version);
-	if (mainw->com_failed||mainw->write_failed) break;
-	save_clip_value(which,CLIP_DETAILS_BPP,&mainw->files[which]->bpp);
-	if (mainw->com_failed||mainw->write_failed) break;
-	save_clip_value(which,CLIP_DETAILS_FPS,&mainw->files[which]->fps);
-	if (mainw->com_failed||mainw->write_failed) break;
-	save_clip_value(which,CLIP_DETAILS_PB_FPS,&mainw->files[which]->pb_fps);
-	if (mainw->com_failed||mainw->write_failed) break;
-	save_clip_value(which,CLIP_DETAILS_WIDTH,&mainw->files[which]->hsize);
-	if (mainw->com_failed||mainw->write_failed) break;
-	save_clip_value(which,CLIP_DETAILS_HEIGHT,&mainw->files[which]->vsize);
-	if (mainw->com_failed||mainw->write_failed) break;
-	save_clip_value(which,CLIP_DETAILS_INTERLACE,&mainw->files[which]->interlace);
-	if (mainw->com_failed||mainw->write_failed) break;
-	save_clip_value(which,CLIP_DETAILS_UNIQUE_ID,&mainw->files[which]->unique_id);
-	if (mainw->com_failed||mainw->write_failed) break;
-	save_clip_value(which,CLIP_DETAILS_ARATE,&mainw->files[which]->arps);
-	if (mainw->com_failed||mainw->write_failed) break;
-	save_clip_value(which,CLIP_DETAILS_PB_ARATE,&mainw->files[which]->arate);
-	if (mainw->com_failed||mainw->write_failed) break;
-	save_clip_value(which,CLIP_DETAILS_ACHANS,&mainw->files[which]->achans);
-	if (mainw->com_failed||mainw->write_failed) break;
-	save_clip_value(which,CLIP_DETAILS_ASIGNED,&asigned);
-	if (mainw->com_failed||mainw->write_failed) break;
-	save_clip_value(which,CLIP_DETAILS_AENDIAN,&endian);
-	if (mainw->com_failed||mainw->write_failed) break;
-	save_clip_value(which,CLIP_DETAILS_ASAMPS,&mainw->files[which]->asampsize);
-	if (mainw->com_failed||mainw->write_failed) break;
-	save_clip_value(which,CLIP_DETAILS_FRAMES,&mainw->files[which]->frames);
-	if (mainw->com_failed||mainw->write_failed) break;
-	save_clip_value(which,CLIP_DETAILS_TITLE,mainw->files[which]->title);
-	if (mainw->com_failed||mainw->write_failed) break;
-	save_clip_value(which,CLIP_DETAILS_AUTHOR,mainw->files[which]->author);
-	if (mainw->com_failed||mainw->write_failed) break;
-	save_clip_value(which,CLIP_DETAILS_COMMENT,mainw->files[which]->comment);
-	if (mainw->com_failed||mainw->write_failed) break;
-	save_clip_value(which,CLIP_DETAILS_PB_FRAMENO,&mainw->files[which]->frameno);
-	if (mainw->com_failed||mainw->write_failed) break;
-	save_clip_value(which,CLIP_DETAILS_CLIPNAME,mainw->files[which]->name);
-	if (mainw->com_failed||mainw->write_failed) break;
-	save_clip_value(which,CLIP_DETAILS_FILENAME,mainw->files[which]->file_name);
-	if (mainw->com_failed||mainw->write_failed) break;
-	save_clip_value(which,CLIP_DETAILS_KEYWORDS,mainw->files[which]->keywords);
-	if (mainw->com_failed||mainw->write_failed) break;
-	if (cfile->ext_src) {
-	  lives_decoder_t *dplug=(lives_decoder_t *)cfile->ext_src;
-	  save_clip_value(which,CLIP_DETAILS_DECODER_NAME,dplug->decoder->name);
-	  if (mainw->com_failed||mainw->write_failed) break;
-	}
+        retval=0;
+        set_signal_handlers((SignalHandlerPointer)defer_sigint);
+        save_clip_value(which,CLIP_DETAILS_HEADER_VERSION,&mainw->files[which]->header_version);
+        if (mainw->com_failed||mainw->write_failed) break;
+        save_clip_value(which,CLIP_DETAILS_BPP,&mainw->files[which]->bpp);
+        if (mainw->com_failed||mainw->write_failed) break;
+        save_clip_value(which,CLIP_DETAILS_FPS,&mainw->files[which]->fps);
+        if (mainw->com_failed||mainw->write_failed) break;
+        save_clip_value(which,CLIP_DETAILS_PB_FPS,&mainw->files[which]->pb_fps);
+        if (mainw->com_failed||mainw->write_failed) break;
+        save_clip_value(which,CLIP_DETAILS_WIDTH,&mainw->files[which]->hsize);
+        if (mainw->com_failed||mainw->write_failed) break;
+        save_clip_value(which,CLIP_DETAILS_HEIGHT,&mainw->files[which]->vsize);
+        if (mainw->com_failed||mainw->write_failed) break;
+        save_clip_value(which,CLIP_DETAILS_INTERLACE,&mainw->files[which]->interlace);
+        if (mainw->com_failed||mainw->write_failed) break;
+        save_clip_value(which,CLIP_DETAILS_UNIQUE_ID,&mainw->files[which]->unique_id);
+        if (mainw->com_failed||mainw->write_failed) break;
+        save_clip_value(which,CLIP_DETAILS_ARATE,&mainw->files[which]->arps);
+        if (mainw->com_failed||mainw->write_failed) break;
+        save_clip_value(which,CLIP_DETAILS_PB_ARATE,&mainw->files[which]->arate);
+        if (mainw->com_failed||mainw->write_failed) break;
+        save_clip_value(which,CLIP_DETAILS_ACHANS,&mainw->files[which]->achans);
+        if (mainw->com_failed||mainw->write_failed) break;
+        save_clip_value(which,CLIP_DETAILS_ASIGNED,&asigned);
+        if (mainw->com_failed||mainw->write_failed) break;
+        save_clip_value(which,CLIP_DETAILS_AENDIAN,&endian);
+        if (mainw->com_failed||mainw->write_failed) break;
+        save_clip_value(which,CLIP_DETAILS_ASAMPS,&mainw->files[which]->asampsize);
+        if (mainw->com_failed||mainw->write_failed) break;
+        save_clip_value(which,CLIP_DETAILS_FRAMES,&mainw->files[which]->frames);
+        if (mainw->com_failed||mainw->write_failed) break;
+        save_clip_value(which,CLIP_DETAILS_TITLE,mainw->files[which]->title);
+        if (mainw->com_failed||mainw->write_failed) break;
+        save_clip_value(which,CLIP_DETAILS_AUTHOR,mainw->files[which]->author);
+        if (mainw->com_failed||mainw->write_failed) break;
+        save_clip_value(which,CLIP_DETAILS_COMMENT,mainw->files[which]->comment);
+        if (mainw->com_failed||mainw->write_failed) break;
+        save_clip_value(which,CLIP_DETAILS_PB_FRAMENO,&mainw->files[which]->frameno);
+        if (mainw->com_failed||mainw->write_failed) break;
+        save_clip_value(which,CLIP_DETAILS_CLIPNAME,mainw->files[which]->name);
+        if (mainw->com_failed||mainw->write_failed) break;
+        save_clip_value(which,CLIP_DETAILS_FILENAME,mainw->files[which]->file_name);
+        if (mainw->com_failed||mainw->write_failed) break;
+        save_clip_value(which,CLIP_DETAILS_KEYWORDS,mainw->files[which]->keywords);
+        if (mainw->com_failed||mainw->write_failed) break;
+        if (cfile->ext_src) {
+          lives_decoder_t *dplug=(lives_decoder_t *)cfile->ext_src;
+          save_clip_value(which,CLIP_DETAILS_DECODER_NAME,dplug->decoder->name);
+          if (mainw->com_failed||mainw->write_failed) break;
+        }
 
       } while (FALSE);
 
       if (mainw->signal_caught) catch_sigint(mainw->signal_caught);
       set_signal_handlers((SignalHandlerPointer)catch_sigint);
-      
+
       if (mainw->com_failed||mainw->write_failed) {
-	fclose(mainw->clip_header);
-	retval=do_write_failed_error_s_with_retry(lives_header,NULL,NULL);
+        fclose(mainw->clip_header);
+        retval=do_write_failed_error_s_with_retry(lives_header,NULL,NULL);
       }
 
     }
   } while (retval==LIVES_RESPONSE_RETRY);
-  
+
   lives_free(lives_header);
 #ifndef IS_MINGW
   umask(xumask);
@@ -162,8 +162,8 @@ boolean read_file_details(const char *file_name, boolean is_audio) {
   int retval;
   boolean timeout;
   char *tmp,*com=lives_strdup_printf("%s get_details \"%s\" \"%s\" \"%s\" %d %d",prefs->backend_sync,cfile->handle,
-				  (tmp=lives_filename_from_utf8(file_name,-1,NULL,NULL,NULL)),
-				  get_image_ext_for_type(cfile->img_type),mainw->opening_loc,is_audio);
+                                     (tmp=lives_filename_from_utf8(file_name,-1,NULL,NULL,NULL)),
+                                     get_image_ext_for_type(cfile->img_type),mainw->opening_loc,is_audio);
   lives_free(tmp);
 
   mainw->com_failed=FALSE;
@@ -175,7 +175,7 @@ boolean read_file_details(const char *file_name, boolean is_audio) {
     return FALSE;
   }
 
-  if (mainw->opening_loc) 
+  if (mainw->opening_loc)
     return do_progress_dialog(TRUE,TRUE,_("Examining file header"));
 
 
@@ -189,15 +189,15 @@ boolean read_file_details(const char *file_name, boolean is_audio) {
 #define LIVES_LONGER_TIMEOUT  (30 * U_SEC) // 30 second timeout
 
     alarm_handle=lives_alarm_set(LIVES_LONGER_TIMEOUT);
-    
+
     while (!((infofile=fopen(cfile->info_file,"r")) || (timeout=lives_alarm_get(alarm_handle)))) {
       lives_widget_context_update();
       threaded_dialog_spin();
       lives_usleep(prefs->sleep_time);
     }
-    
+
     lives_alarm_clear(alarm_handle);
-    
+
     if (!timeout) {
       mainw->read_failed=FALSE;
       lives_fgets(mainw->msg,512,infofile);
@@ -220,23 +220,21 @@ const char *get_deinterlace_string(void) {
 
 
 ulong deduce_file(const char *file_name, double start, int end) {
-  // this is a utility function to deduce whether we are dealing with a file, 
+  // this is a utility function to deduce whether we are dealing with a file,
   // a selection, a backup, or a location
   char short_file_name[PATH_MAX];
   ulong uid;
   mainw->img_concat_clip=-1;
 
-  if (lives_strrstr(file_name,"://")!=NULL&&strncmp (file_name,"dvd://",6)) {
+  if (lives_strrstr(file_name,"://")!=NULL&&strncmp(file_name,"dvd://",6)) {
     mainw->opening_loc=TRUE;
     uid=open_file(file_name);
     mainw->opening_loc=FALSE;
-  }
-  else {
+  } else {
     lives_snprintf(short_file_name,PATH_MAX,"%s",file_name);
     if (!(strcmp(file_name+strlen(file_name)-4,".lv1"))) {
       uid=restore_file(file_name);
-    }
-    else {
+    } else {
       uid=open_file_sel(file_name,start,end);
     }
   }
@@ -244,15 +242,15 @@ ulong deduce_file(const char *file_name, double start, int end) {
 }
 
 
-ulong open_file (const char *file_name) {
+ulong open_file(const char *file_name) {
   // this function should be called to open a whole file
   return open_file_sel(file_name,0.,0);
 }
 
 
 
-static boolean rip_audio_cancelled(int old_file, weed_plant_t *mt_pb_start_event, 
-				   boolean mt_has_audio_file) {
+static boolean rip_audio_cancelled(int old_file, weed_plant_t *mt_pb_start_event,
+                                   boolean mt_has_audio_file) {
 
   if (mainw->cancelled==CANCEL_KEEP) {
     // user clicked "enough"
@@ -265,7 +263,7 @@ static boolean rip_audio_cancelled(int old_file, weed_plant_t *mt_pb_start_event
   d_print("\n");
   d_print_cancelled();
   close_current_file(old_file);
-  
+
   mainw->noswitch=FALSE;
 
   if (mainw->multitrack!=NULL) {
@@ -273,7 +271,7 @@ static boolean rip_audio_cancelled(int old_file, weed_plant_t *mt_pb_start_event
     mainw->multitrack->has_audio_file=mt_has_audio_file;
   }
 
-  if (mainw->file_open_params!=NULL) lives_free (mainw->file_open_params);
+  if (mainw->file_open_params!=NULL) lives_free(mainw->file_open_params);
   mainw->file_open_params=NULL;
   lives_set_cursor_style(LIVES_CURSOR_NORMAL,NULL);
   return FALSE;
@@ -310,26 +308,25 @@ ulong open_file_sel(const char *file_name, double start, int frames) {
       return 0;
     }
     lives_free(fname);
-    
+
     lives_set_cursor_style(LIVES_CURSOR_BUSY,NULL);
     lives_widget_context_update();
 
     if (frames==0) {
       com=lives_strdup_printf(_("Opening %s"),file_name);
-    }
-    else {
+    } else {
       com=lives_strdup_printf(_("Opening %s start time %.2f sec. frames %d"),file_name,start,frames);
     }
     d_print(""); // exhaust "switch" message
 
     d_print(com);
     lives_free(com);
-    
+
     if (!mainw->save_with_sound) {
       d_print(_(" without sound"));
       withsound=0;
     }
-    
+
     mainw->noswitch=TRUE;
     mainw->current_file=new_file;
 
@@ -342,344 +339,343 @@ ulong open_file_sel(const char *file_name, double start, int frames) {
     }
 
     if (!strcmp(prefs->image_ext,"png")) cfile->img_type=IMG_TYPE_PNG;
-    
+
     if (prefs->instant_open) {
       // cd to clip directory - so decoder plugins can write temp files
       char *ppath=lives_build_filename(prefs->tmpdir,cfile->handle,NULL);
       char *cwd=lives_get_current_dir();
       lives_chdir(ppath,FALSE);
       lives_free(ppath);
-	
+
       cdata=get_decoder_cdata(mainw->current_file,prefs->disabled_decoders,NULL);
 
       lives_chdir(cwd,FALSE);
       lives_free(cwd);
 
       if (cfile->ext_src!=NULL) {
-	lives_decoder_t *dplug=(lives_decoder_t *)cfile->ext_src;
-	cfile->opening=TRUE;
-	cfile->clip_type=CLIP_TYPE_FILE;
-	
-	if (cdata->frame_width>0) {
-	  cfile->hsize=cdata->frame_width;
-	  cfile->vsize=cdata->frame_height;
-	}
-	else {
-	  cfile->hsize=cdata->width;
-	  cfile->vsize=cdata->height;
-	}
+        lives_decoder_t *dplug=(lives_decoder_t *)cfile->ext_src;
+        cfile->opening=TRUE;
+        cfile->clip_type=CLIP_TYPE_FILE;
 
-	cfile->frames=cdata->nframes;
-	
-	snprintf(cfile->author,256,"%s",cdata->author);
-	snprintf(cfile->title,256,"%s",cdata->title);
-	snprintf(cfile->comment,256,"%s",cdata->comment);
+        if (cdata->frame_width>0) {
+          cfile->hsize=cdata->frame_width;
+          cfile->vsize=cdata->frame_height;
+        } else {
+          cfile->hsize=cdata->width;
+          cfile->vsize=cdata->height;
+        }
 
-	if (frames>0&&cfile->frames>frames) cfile->frames=frames;
-	
-	cfile->start=1;
-	cfile->end=cfile->frames;
-	create_frame_index(mainw->current_file,TRUE,cfile->fps*(start==0?0:start-1),frames==0?cfile->frames:frames);
+        cfile->frames=cdata->nframes;
 
-	cfile->arate=cfile->arps=cdata->arate;
-	cfile->achans=cdata->achans;
-	cfile->asampsize=cdata->asamps;
-	
-	cfile->signed_endian=get_signed_endian(cdata->asigned, capable->byte_order==LIVES_LITTLE_ENDIAN);
+        snprintf(cfile->author,256,"%s",cdata->author);
+        snprintf(cfile->title,256,"%s",cdata->title);
+        snprintf(cfile->comment,256,"%s",cdata->comment);
 
-	if (cfile->achans>0&&(dplug->decoder->rip_audio)!=NULL&&withsound==1) {
-	  // call rip_audio() in the decoder plugin
-	  // the plugin gets a chance to do any internal cleanup in rip_audio_cleanup()
+        if (frames>0&&cfile->frames>frames) cfile->frames=frames;
 
-	  int64_t stframe=cfile->fps*start+.5;
-	  int64_t maxframe=stframe+(frames==0)?cfile->frames:frames;
-	  int64_t nframes=AUDIO_FRAMES_TO_READ;
-	  char *afile=lives_strdup_printf("%s/%s/audiodump.pcm",prefs->tmpdir,cfile->handle);
+        cfile->start=1;
+        cfile->end=cfile->frames;
+        create_frame_index(mainw->current_file,TRUE,cfile->fps*(start==0?0:start-1),frames==0?cfile->frames:frames);
 
-	  msgstr=lives_strdup_printf(_("Opening audio for %s"),file_name);
+        cfile->arate=cfile->arps=cdata->arate;
+        cfile->achans=cdata->achans;
+        cfile->asampsize=cdata->asamps;
 
-	  if (mainw->playing_file==-1) resize(1);
+        cfile->signed_endian=get_signed_endian(cdata->asigned, capable->byte_order==LIVES_LITTLE_ENDIAN);
 
-	  mainw->cancelled=CANCEL_NONE;
+        if (cfile->achans>0&&(dplug->decoder->rip_audio)!=NULL&&withsound==1) {
+          // call rip_audio() in the decoder plugin
+          // the plugin gets a chance to do any internal cleanup in rip_audio_cleanup()
 
-	  cfile->opening_only_audio=TRUE;
-	  if (mainw->playing_file==-1) do_threaded_dialog(msgstr,TRUE);
+          int64_t stframe=cfile->fps*start+.5;
+          int64_t maxframe=stframe+(frames==0)?cfile->frames:frames;
+          int64_t nframes=AUDIO_FRAMES_TO_READ;
+          char *afile=lives_strdup_printf("%s/%s/audiodump.pcm",prefs->tmpdir,cfile->handle);
 
-	  do {
-	    if (stframe+nframes>maxframe) nframes=maxframe-stframe;
-	    if (nframes<=0) break;
-	    (dplug->decoder->rip_audio)(cdata,afile,stframe,nframes,NULL);
-	    threaded_dialog_spin();
-	    stframe+=nframes;
-	  } while (mainw->cancelled==CANCEL_NONE);
+          msgstr=lives_strdup_printf(_("Opening audio for %s"),file_name);
 
-	  if (dplug->decoder->rip_audio_cleanup!=NULL) {
-	    (dplug->decoder->rip_audio_cleanup)(cdata);
-	  }
+          if (mainw->playing_file==-1) resize(1);
 
-	  if (mainw->cancelled!=CANCEL_NONE) {
-	    if (!rip_audio_cancelled(old_file,mt_pb_start_event,mt_has_audio_file)) {
-	      lives_free(afile);
-	      return 0;
-	    }
-	  }
+          mainw->cancelled=CANCEL_NONE;
 
-	  end_threaded_dialog();
-	  lives_free(msgstr);
+          cfile->opening_only_audio=TRUE;
+          if (mainw->playing_file==-1) do_threaded_dialog(msgstr,TRUE);
 
-	  cfile->opening_only_audio=FALSE;
-	  lives_free(afile);
-	}
-	else {
-	  cfile->arate=0.;
-	  cfile->achans=cfile->asampsize=0;
-	}
+          do {
+            if (stframe+nframes>maxframe) nframes=maxframe-stframe;
+            if (nframes<=0) break;
+            (dplug->decoder->rip_audio)(cdata,afile,stframe,nframes,NULL);
+            threaded_dialog_spin();
+            stframe+=nframes;
+          } while (mainw->cancelled==CANCEL_NONE);
 
-	cfile->fps=cfile->pb_fps=cdata->fps;
-	d_print("\n");
+          if (dplug->decoder->rip_audio_cleanup!=NULL) {
+            (dplug->decoder->rip_audio_cleanup)(cdata);
+          }
 
-	if (cfile->achans==0&&withsound==1) {
-	  if (0) {
-	  /*if (!capable->has_mplayer) {
-	    do_mplayer_audio_warning();
-	    }*/
-	  }
-	  else {
+          if (mainw->cancelled!=CANCEL_NONE) {
+            if (!rip_audio_cancelled(old_file,mt_pb_start_event,mt_has_audio_file)) {
+              lives_free(afile);
+              return 0;
+            }
+          }
 
-	    mainw->com_failed=FALSE;
+          end_threaded_dialog();
+          lives_free(msgstr);
 
-	    // check if we have audio
-	    read_file_details(file_name,FALSE);
-	    unlink (cfile->info_file);
-	  
-	    if (mainw->com_failed) return 0;
+          cfile->opening_only_audio=FALSE;
+          lives_free(afile);
+        } else {
+          cfile->arate=0.;
+          cfile->achans=cfile->asampsize=0;
+        }
 
-	    if (strlen(mainw->msg)>0) add_file_info (cfile->handle,TRUE);
+        cfile->fps=cfile->pb_fps=cdata->fps;
+        d_print("\n");
 
-	    if (cfile->achans>0) {
-	      // plugin returned no audio, try with mplayer
-	      if (mainw->file_open_params==NULL) mainw->file_open_params=lives_strdup("");
-	      com=lives_strdup_printf("%s open \"%s\" \"%s\" %d \"%s\" %.2f %d \"%s\"",prefs->backend,cfile->handle,
-				  (tmp=lives_filename_from_utf8 (file_name,-1,NULL,NULL,NULL)),-1,
-				  prefs->image_ext,start,frames,mainw->file_open_params);
+        if (cfile->achans==0&&withsound==1) {
+          if (0) {
+            /*if (!capable->has_mplayer) {
+              do_mplayer_audio_warning();
+              }*/
+          } else {
 
-	      lives_free(tmp);
+            mainw->com_failed=FALSE;
+
+            // check if we have audio
+            read_file_details(file_name,FALSE);
+            unlink(cfile->info_file);
+
+            if (mainw->com_failed) return 0;
+
+            if (strlen(mainw->msg)>0) add_file_info(cfile->handle,TRUE);
+
+            if (cfile->achans>0) {
+              // plugin returned no audio, try with mplayer
+              if (mainw->file_open_params==NULL) mainw->file_open_params=lives_strdup("");
+              com=lives_strdup_printf("%s open \"%s\" \"%s\" %d \"%s\" %.2f %d \"%s\"",prefs->backend,cfile->handle,
+                                      (tmp=lives_filename_from_utf8(file_name,-1,NULL,NULL,NULL)),-1,
+                                      prefs->image_ext,start,frames,mainw->file_open_params);
+
+              lives_free(tmp);
 
 
-	      cfile->op_dir=lives_filename_from_utf8((tmp=get_dir(file_name)),-1,NULL,NULL,NULL);
-	      lives_free(tmp);
+              cfile->op_dir=lives_filename_from_utf8((tmp=get_dir(file_name)),-1,NULL,NULL,NULL);
+              lives_free(tmp);
 
-	      unlink (cfile->info_file);
-	      lives_system(com,FALSE);
-	      lives_free(com);
-	      tmp=NULL;
-	    
-	      // if we have a quick-opening file, display the first and last frames now
-	      // for some codecs this can be helpful since we can locate the last frame while audio is loading
-	      if (cfile->clip_type==CLIP_TYPE_FILE&&mainw->playing_file==-1) resize(1);
+              unlink(cfile->info_file);
+              lives_system(com,FALSE);
+              lives_free(com);
+              tmp=NULL;
 
-	      mainw->effects_paused=FALSE; // set to TRUE if user clicks "Enough"
+              // if we have a quick-opening file, display the first and last frames now
+              // for some codecs this can be helpful since we can locate the last frame while audio is loading
+              if (cfile->clip_type==CLIP_TYPE_FILE&&mainw->playing_file==-1) resize(1);
 
-	      msgstr=lives_strdup_printf(_("Opening audio"),file_name);
-	      if (!do_progress_dialog(TRUE,TRUE,msgstr)) {
-		// user cancelled or switched to another clip
-	      
-		lives_free(msgstr);
-	      
-		mainw->opening_frames=-1;
-	      
-		if (mainw->multitrack!=NULL) {
-		  mainw->multitrack->pb_start_event=mt_pb_start_event;
-		  mainw->multitrack->has_audio_file=mt_has_audio_file;
-		}
+              mainw->effects_paused=FALSE; // set to TRUE if user clicks "Enough"
 
-		if (mainw->cancelled==CANCEL_NO_PROPOGATE) {
-		  lives_set_cursor_style(LIVES_CURSOR_NORMAL,NULL);
-		  mainw->cancelled=CANCEL_NONE;
-		  return 0;
-		}
-	      
-		// cancelled
+              msgstr=lives_strdup_printf(_("Opening audio"),file_name);
+              if (!do_progress_dialog(TRUE,TRUE,msgstr)) {
+                // user cancelled or switched to another clip
 
-		if (mainw->cancelled!=CANCEL_ERROR) {
+                lives_free(msgstr);
+
+                mainw->opening_frames=-1;
+
+                if (mainw->multitrack!=NULL) {
+                  mainw->multitrack->pb_start_event=mt_pb_start_event;
+                  mainw->multitrack->has_audio_file=mt_has_audio_file;
+                }
+
+                if (mainw->cancelled==CANCEL_NO_PROPOGATE) {
+                  lives_set_cursor_style(LIVES_CURSOR_NORMAL,NULL);
+                  mainw->cancelled=CANCEL_NONE;
+                  return 0;
+                }
+
+                // cancelled
+
+                if (mainw->cancelled!=CANCEL_ERROR) {
 #ifndef IS_MINGW
-		  // clean up our temp files
-		  com=lives_strdup_printf("%s stopsubsub \"%s\" 2>/dev/null",prefs->backend_sync,cfile->handle);
-		  lives_system(com,TRUE);
+                  // clean up our temp files
+                  com=lives_strdup_printf("%s stopsubsub \"%s\" 2>/dev/null",prefs->backend_sync,cfile->handle);
+                  lives_system(com,TRUE);
 #else
-		  // get pid from backend
-		  FILE *rfile;
-		  ssize_t rlen;
-		  char val[16];
-		  int pid;
-		  com=lives_strdup_printf("%s get_pid_for_handle \"%s\"",prefs->backend_sync,cfile->handle);
-		  rfile=popen(com,"r");
-		  rlen=fread(val,1,16,rfile);
-		  pclose(rfile);
-		  memset(val+rlen,0,1);
-		  pid=atoi(val);
-    
-		  lives_win32_kill_subprocesses(pid,TRUE);
+                  // get pid from backend
+                  FILE *rfile;
+                  ssize_t rlen;
+                  char val[16];
+                  int pid;
+                  com=lives_strdup_printf("%s get_pid_for_handle \"%s\"",prefs->backend_sync,cfile->handle);
+                  rfile=popen(com,"r");
+                  rlen=fread(val,1,16,rfile);
+                  pclose(rfile);
+                  memset(val+rlen,0,1);
+                  pid=atoi(val);
+
+                  lives_win32_kill_subprocesses(pid,TRUE);
 #endif
-		  lives_free(com);
-		}
+                  lives_free(com);
+                }
 
-		if (mainw->file_open_params!=NULL) lives_free (mainw->file_open_params);
-		mainw->file_open_params=NULL;
-		close_current_file(old_file);
-		lives_set_cursor_style(LIVES_CURSOR_NORMAL,NULL);
-		return 0;
-	      }
-	      if (mainw->error==0) add_file_info (cfile->handle,TRUE);
-	      mainw->error=0;
-	      lives_free(msgstr);
+                if (mainw->file_open_params!=NULL) lives_free(mainw->file_open_params);
+                mainw->file_open_params=NULL;
+                close_current_file(old_file);
+                lives_set_cursor_style(LIVES_CURSOR_NORMAL,NULL);
+                return 0;
+              }
+              if (mainw->error==0) add_file_info(cfile->handle,TRUE);
+              mainw->error=0;
+              lives_free(msgstr);
 
-	      cfile->opening=FALSE;
-	      reget_afilesize(mainw->current_file);
-	      get_total_time(cfile);
+              cfile->opening=FALSE;
+              reget_afilesize(mainw->current_file);
+              get_total_time(cfile);
 
-	      if (prefs->auto_trim_audio) {
-		if ((cdata->sync_hint&SYNC_HINT_VIDEO_PAD_START)&&cdata->video_start_time<=1.) {
-		  // pad with blank frames at start
-		  int extra_frames=cdata->video_start_time*cfile->fps+.5;
-		  insert_blank_frames(mainw->current_file,extra_frames,0);
-		  load_start_image(cfile->start);
-		  load_end_image(cfile->end);
-		}
-		if ((cdata->sync_hint&SYNC_HINT_VIDEO_PAD_END)&&(double)cfile->frames/cfile->fps<cfile->laudio_time) {
-		  // pad with blank frames at end
-		  int extra_frames=(cfile->laudio_time-(double)cfile->frames/cfile->fps)*cfile->fps+.5;
-		  insert_blank_frames(mainw->current_file,extra_frames,cfile->frames);
-		  cfile->end=cfile->frames;
-		  load_end_image(cfile->end);
-		}
-		if (cfile->total_time>cfile->video_time) {
-		  if (cdata->sync_hint&SYNC_HINT_AUDIO_TRIM_START) {
-		    cfile->undo1_dbl=0.;
-		    cfile->undo2_dbl=cfile->total_time-cfile->video_time;
-		    d_print(_("Auto trimming %.2f seconds of audio at start..."),cfile->undo2_dbl);
-		    if (on_del_audio_activate(NULL,NULL)) d_print_done();
-		    else d_print("\n");
-		    cfile->changed=FALSE;
-		  }
-		  if (cdata->sync_hint&SYNC_HINT_AUDIO_TRIM_END) {
-		    cfile->undo1_dbl=cfile->laudio_time;
-		    cfile->undo2_dbl=cfile->total_time-cfile->video_time;
-		    d_print(_("Auto trimming %.2f seconds of audio at end..."),cfile->undo2_dbl);
-		    if (on_del_audio_activate(NULL,NULL)) d_print_done();
-		    else d_print("\n");
-		    cfile->changed=FALSE;
-		  }
-		}
-		if (!mainw->effects_paused&&cfile->afilesize>0&&cfile->total_time>cfile->laudio_time) {
-		  if (cdata->sync_hint&SYNC_HINT_AUDIO_PAD_START) {
-		    cfile->undo1_dbl=0.;
-		    cfile->undo2_dbl=cfile->total_time-cfile->laudio_time;
-		    cfile->undo_arate=cfile->arate;
-		    cfile->undo_signed_endian=cfile->signed_endian;
-		    cfile->undo_achans=cfile->achans;
-		    cfile->undo_asampsize=cfile->asampsize;
-		    cfile->undo_arps=cfile->arps;
-		    d_print(_("Auto padding with %.2f seconds of silence at start..."),cfile->undo2_dbl);
-		    if (on_ins_silence_activate(NULL,NULL)) d_print_done();
-		    else d_print("\n");
-		    cfile->changed=FALSE;
-		  }
-		  if (cdata->sync_hint&SYNC_HINT_AUDIO_PAD_END) {
-		    cfile->undo1_dbl=cfile->laudio_time;
-		    cfile->undo2_dbl=cfile->total_time-cfile->laudio_time;
-		    cfile->undo_arate=cfile->arate;
-		    cfile->undo_signed_endian=cfile->signed_endian;
-		    cfile->undo_achans=cfile->achans;
-		    cfile->undo_asampsize=cfile->asampsize;
-		    cfile->undo_arps=cfile->arps;
-		    d_print(_("Auto padding with %.2f seconds of silence at end..."),cfile->undo2_dbl);
-		    if (on_ins_silence_activate(NULL,NULL)) d_print_done();
-		    else d_print("\n");
-		    cfile->changed=FALSE;
-		  }
-		}
-	      }
-	    }
-	  }
-	}
-	get_mime_type(cfile->type,40,cdata);
-	save_frame_index(mainw->current_file);
+              if (prefs->auto_trim_audio) {
+                if ((cdata->sync_hint&SYNC_HINT_VIDEO_PAD_START)&&cdata->video_start_time<=1.) {
+                  // pad with blank frames at start
+                  int extra_frames=cdata->video_start_time*cfile->fps+.5;
+                  insert_blank_frames(mainw->current_file,extra_frames,0);
+                  load_start_image(cfile->start);
+                  load_end_image(cfile->end);
+                }
+                if ((cdata->sync_hint&SYNC_HINT_VIDEO_PAD_END)&&(double)cfile->frames/cfile->fps<cfile->laudio_time) {
+                  // pad with blank frames at end
+                  int extra_frames=(cfile->laudio_time-(double)cfile->frames/cfile->fps)*cfile->fps+.5;
+                  insert_blank_frames(mainw->current_file,extra_frames,cfile->frames);
+                  cfile->end=cfile->frames;
+                  load_end_image(cfile->end);
+                }
+                if (cfile->total_time>cfile->video_time) {
+                  if (cdata->sync_hint&SYNC_HINT_AUDIO_TRIM_START) {
+                    cfile->undo1_dbl=0.;
+                    cfile->undo2_dbl=cfile->total_time-cfile->video_time;
+                    d_print(_("Auto trimming %.2f seconds of audio at start..."),cfile->undo2_dbl);
+                    if (on_del_audio_activate(NULL,NULL)) d_print_done();
+                    else d_print("\n");
+                    cfile->changed=FALSE;
+                  }
+                  if (cdata->sync_hint&SYNC_HINT_AUDIO_TRIM_END) {
+                    cfile->undo1_dbl=cfile->laudio_time;
+                    cfile->undo2_dbl=cfile->total_time-cfile->video_time;
+                    d_print(_("Auto trimming %.2f seconds of audio at end..."),cfile->undo2_dbl);
+                    if (on_del_audio_activate(NULL,NULL)) d_print_done();
+                    else d_print("\n");
+                    cfile->changed=FALSE;
+                  }
+                }
+                if (!mainw->effects_paused&&cfile->afilesize>0&&cfile->total_time>cfile->laudio_time) {
+                  if (cdata->sync_hint&SYNC_HINT_AUDIO_PAD_START) {
+                    cfile->undo1_dbl=0.;
+                    cfile->undo2_dbl=cfile->total_time-cfile->laudio_time;
+                    cfile->undo_arate=cfile->arate;
+                    cfile->undo_signed_endian=cfile->signed_endian;
+                    cfile->undo_achans=cfile->achans;
+                    cfile->undo_asampsize=cfile->asampsize;
+                    cfile->undo_arps=cfile->arps;
+                    d_print(_("Auto padding with %.2f seconds of silence at start..."),cfile->undo2_dbl);
+                    if (on_ins_silence_activate(NULL,NULL)) d_print_done();
+                    else d_print("\n");
+                    cfile->changed=FALSE;
+                  }
+                  if (cdata->sync_hint&SYNC_HINT_AUDIO_PAD_END) {
+                    cfile->undo1_dbl=cfile->laudio_time;
+                    cfile->undo2_dbl=cfile->total_time-cfile->laudio_time;
+                    cfile->undo_arate=cfile->arate;
+                    cfile->undo_signed_endian=cfile->signed_endian;
+                    cfile->undo_achans=cfile->achans;
+                    cfile->undo_asampsize=cfile->asampsize;
+                    cfile->undo_arps=cfile->arps;
+                    d_print(_("Auto padding with %.2f seconds of silence at end..."),cfile->undo2_dbl);
+                    if (on_ins_silence_activate(NULL,NULL)) d_print_done();
+                    else d_print("\n");
+                    cfile->changed=FALSE;
+                  }
+                }
+              }
+            }
+          }
+        }
+        get_mime_type(cfile->type,40,cdata);
+        save_frame_index(mainw->current_file);
       }
     }
 
-    
+
     if (cfile->ext_src!=NULL) {
       if (mainw->open_deint) {
-	// override what the plugin says
-	cfile->deinterlace=TRUE;
-	cfile->interlace=LIVES_INTERLACE_TOP_FIRST; // guessing
-	save_clip_value(mainw->current_file,CLIP_DETAILS_INTERLACE,&cfile->interlace);
-	if (mainw->com_failed||mainw->write_failed) do_header_write_error(mainw->current_file);
+        // override what the plugin says
+        cfile->deinterlace=TRUE;
+        cfile->interlace=LIVES_INTERLACE_TOP_FIRST; // guessing
+        save_clip_value(mainw->current_file,CLIP_DETAILS_INTERLACE,&cfile->interlace);
+        if (mainw->com_failed||mainw->write_failed) do_header_write_error(mainw->current_file);
       }
     }
 
     else {
       // get the file size, etc. (frames is just a guess here)
       if (!read_file_details(file_name,FALSE)) {
-	// user cancelled
-	close_current_file(old_file);
-	mainw->noswitch=FALSE;
-	if (mainw->multitrack!=NULL) {
-	  mainw->multitrack->pb_start_event=mt_pb_start_event;
-	  mainw->multitrack->has_audio_file=mt_has_audio_file;
-	}
-	if (mainw->file_open_params!=NULL) lives_free (mainw->file_open_params);
-	mainw->file_open_params=NULL;
-	lives_set_cursor_style(LIVES_CURSOR_NORMAL,NULL);
-	return 0;
+        // user cancelled
+        close_current_file(old_file);
+        mainw->noswitch=FALSE;
+        if (mainw->multitrack!=NULL) {
+          mainw->multitrack->pb_start_event=mt_pb_start_event;
+          mainw->multitrack->has_audio_file=mt_has_audio_file;
+        }
+        if (mainw->file_open_params!=NULL) lives_free(mainw->file_open_params);
+        mainw->file_open_params=NULL;
+        lives_set_cursor_style(LIVES_CURSOR_NORMAL,NULL);
+        return 0;
       }
-      unlink (cfile->info_file);
+      unlink(cfile->info_file);
 
       // we must set this before calling add_file_info
       cfile->opening=TRUE;
       mainw->opening_frames=-1;
 
-      if (!add_file_info (cfile->handle,FALSE)) {
-	close_current_file(old_file);
-	mainw->noswitch=FALSE;
-	if (mainw->multitrack!=NULL) {
-	  mainw->multitrack->pb_start_event=mt_pb_start_event;
-	  mainw->multitrack->has_audio_file=mt_has_audio_file;
-	}
-	if (mainw->file_open_params!=NULL) lives_free (mainw->file_open_params);
-	mainw->file_open_params=NULL;
-	lives_set_cursor_style(LIVES_CURSOR_NORMAL,NULL);
-	return 0;
+      if (!add_file_info(cfile->handle,FALSE)) {
+        close_current_file(old_file);
+        mainw->noswitch=FALSE;
+        if (mainw->multitrack!=NULL) {
+          mainw->multitrack->pb_start_event=mt_pb_start_event;
+          mainw->multitrack->has_audio_file=mt_has_audio_file;
+        }
+        if (mainw->file_open_params!=NULL) lives_free(mainw->file_open_params);
+        mainw->file_open_params=NULL;
+        lives_set_cursor_style(LIVES_CURSOR_NORMAL,NULL);
+        return 0;
       }
 
       if (frames>0&&cfile->frames>frames) cfile->end=cfile->undo_end=cfile->frames=frames;
-      
+
       // be careful, here we switch from mainw->opening_loc to cfile->opening_loc
       if (mainw->opening_loc) {
-	cfile->opening_loc=TRUE;
-	mainw->opening_loc=FALSE;
+        cfile->opening_loc=TRUE;
+        mainw->opening_loc=FALSE;
       }
-    
+
       if (cfile->f_size>prefs->warn_file_size*1000000.&&mainw->is_ready&&frames==0) {
-	char *fsize_ds=lives_format_storage_space_string((uint64_t)cfile->f_size);
-	char *warn=lives_strdup_printf(_("\nLiVES is not currently optimised for larger file sizes.\nYou are advised (for now) to start with a smaller file, or to use the 'Open File Selection' option.\n(Filesize=%s)\n\nAre you sure you wish to continue ?"),fsize_ds);
-	lives_free(fsize_ds);
-	if (!do_warning_dialog_with_check(warn,WARN_MASK_FSIZE)) {
-	  lives_free(warn);
-	  close_current_file(old_file);
-	  mainw->noswitch=FALSE;
-	  if (mainw->multitrack!=NULL) {
-	    mainw->multitrack->pb_start_event=mt_pb_start_event;
-	    mainw->multitrack->has_audio_file=mt_has_audio_file;
-	  }
-	  lives_set_cursor_style(LIVES_CURSOR_NORMAL,NULL);
-	  return 0;
-	}
-	lives_free(warn);
-	d_print(_(" - please be patient."));
+        char *fsize_ds=lives_format_storage_space_string((uint64_t)cfile->f_size);
+        char *warn=lives_strdup_printf(
+                     _("\nLiVES is not currently optimised for larger file sizes.\nYou are advised (for now) to start with a smaller file, or to use the 'Open File Selection' option.\n(Filesize=%s)\n\nAre you sure you wish to continue ?"),
+                     fsize_ds);
+        lives_free(fsize_ds);
+        if (!do_warning_dialog_with_check(warn,WARN_MASK_FSIZE)) {
+          lives_free(warn);
+          close_current_file(old_file);
+          mainw->noswitch=FALSE;
+          if (mainw->multitrack!=NULL) {
+            mainw->multitrack->pb_start_event=mt_pb_start_event;
+            mainw->multitrack->has_audio_file=mt_has_audio_file;
+          }
+          lives_set_cursor_style(LIVES_CURSOR_NORMAL,NULL);
+          return 0;
+        }
+        lives_free(warn);
+        d_print(_(" - please be patient."));
       }
-      
+
       d_print("\n");
 #if defined DEBUG
       g_print("open_file: dpd in\n");
@@ -709,9 +705,8 @@ ulong open_file_sel(const char *file_name, double start, int frames) {
     current_file=mainw->current_file;
 
     if (mainw->playing_file>-1) {
-      do_quick_switch (current_file);
-    }
-    else {
+      do_quick_switch(current_file);
+    } else {
       switch_to_file((mainw->current_file=(cfile->clip_type!=CLIP_TYPE_FILE)?old_file:current_file),current_file);
     }
 
@@ -742,96 +737,96 @@ ulong open_file_sel(const char *file_name, double start, int frames) {
       tmp=lives_strconcat(mainw->file_open_params,get_deinterlace_string(),NULL);
       lives_free(mainw->file_open_params);
       mainw->file_open_params=tmp;
-      
+
       com=lives_strdup_printf("%s open \"%s\" \"%s\" %d \"%s\" %.2f %d \"%s\"",prefs->backend,cfile->handle,
-			  (tmp=lives_filename_from_utf8 (file_name,-1,NULL,NULL,NULL)),withsound,
-			  prefs->image_ext,start,frames,mainw->file_open_params);
-      unlink (cfile->info_file);
+                              (tmp=lives_filename_from_utf8(file_name,-1,NULL,NULL,NULL)),withsound,
+                              prefs->image_ext,start,frames,mainw->file_open_params);
+      unlink(cfile->info_file);
       lives_system(com,FALSE);
       lives_free(com);
       lives_free(tmp);
-      
+
       if (mainw->toy_type==LIVES_TOY_TV) {
-	// for LiVES TV we do an auto-preview
-	mainw->play_start=cfile->start=cfile->undo_start;
-	mainw->play_end=cfile->end=cfile->undo_end;
-	mainw->preview=TRUE;
-	do {
-	  desensitize();
-	  procw_desensitize();
-	  on_playsel_activate (NULL, NULL);
-	} while (mainw->cancelled==CANCEL_KEEP_LOOPING);
-	mainw->preview=FALSE;
-	on_toy_activate(NULL,LIVES_INT_TO_POINTER(LIVES_TOY_NONE));
-	lives_free (mainw->file_open_params);
-	mainw->file_open_params=NULL;
-	mainw->cancelled=CANCEL_NONE;
-	lives_set_cursor_style(LIVES_CURSOR_NORMAL,NULL);
-	mainw->noswitch=FALSE;
-	return 0;
+        // for LiVES TV we do an auto-preview
+        mainw->play_start=cfile->start=cfile->undo_start;
+        mainw->play_end=cfile->end=cfile->undo_end;
+        mainw->preview=TRUE;
+        do {
+          desensitize();
+          procw_desensitize();
+          on_playsel_activate(NULL, NULL);
+        } while (mainw->cancelled==CANCEL_KEEP_LOOPING);
+        mainw->preview=FALSE;
+        on_toy_activate(NULL,LIVES_INT_TO_POINTER(LIVES_TOY_NONE));
+        lives_free(mainw->file_open_params);
+        mainw->file_open_params=NULL;
+        mainw->cancelled=CANCEL_NONE;
+        lives_set_cursor_style(LIVES_CURSOR_NORMAL,NULL);
+        mainw->noswitch=FALSE;
+        return 0;
       }
     }
 
     //  loading:
 
     // 'entry point' when we switch back
-    
+
     // spin until loading is complete
     // afterwards, mainw->msg will contain file details
     cfile->progress_start=cfile->progress_end=0;
-    
+
     // (also check for cancel)
     msgstr=lives_strdup_printf(_("Opening %s"),file_name);
-    
+
     if (cfile->ext_src==NULL&&mainw->toy_type!=LIVES_TOY_TV) {
       if (!do_progress_dialog(TRUE,TRUE,msgstr)) {
-	// user cancelled or switched to another clip
+        // user cancelled or switched to another clip
 #ifdef IS_MINGW
-	FILE *rfile;
-	ssize_t rlen;
-	char val[16];
-	int pid;
+        FILE *rfile;
+        ssize_t rlen;
+        char val[16];
+        int pid;
 #endif
 
-	lives_free(msgstr);
-	
-	mainw->opening_frames=-1;
-	mainw->effects_paused=FALSE;
-	
-	if (mainw->cancelled==CANCEL_NO_PROPOGATE) {
-	  mainw->cancelled=CANCEL_NONE;
-	  lives_set_cursor_style(LIVES_CURSOR_NORMAL,NULL);
-	  mainw->noswitch=FALSE;
-	  return 0;
-	}
-	
-	// cancelled
-	// clean up our temp files
+        lives_free(msgstr);
+
+        mainw->opening_frames=-1;
+        mainw->effects_paused=FALSE;
+
+        if (mainw->cancelled==CANCEL_NO_PROPOGATE) {
+          mainw->cancelled=CANCEL_NONE;
+          lives_set_cursor_style(LIVES_CURSOR_NORMAL,NULL);
+          mainw->noswitch=FALSE;
+          return 0;
+        }
+
+        // cancelled
+        // clean up our temp files
 #ifndef IS_MINGW
-	com=lives_strdup_printf("%s stopsubsub \"%s\" 2>/dev/null",prefs->backend_sync,cfile->handle);
-	lives_system(com,TRUE);
+        com=lives_strdup_printf("%s stopsubsub \"%s\" 2>/dev/null",prefs->backend_sync,cfile->handle);
+        lives_system(com,TRUE);
 #else
-	// get pid from backend
-	com=lives_strdup_printf("%s get_pid_for_handle \"%s\"",prefs->backend_sync,cfile->handle);
-	rfile=popen(com,"r");
-	rlen=fread(val,1,16,rfile);
-	pclose(rfile);
-	memset(val+rlen,0,1);
-	pid=atoi(val);
-	
-	lives_win32_kill_subprocesses(pid,TRUE);
+        // get pid from backend
+        com=lives_strdup_printf("%s get_pid_for_handle \"%s\"",prefs->backend_sync,cfile->handle);
+        rfile=popen(com,"r");
+        rlen=fread(val,1,16,rfile);
+        pclose(rfile);
+        memset(val+rlen,0,1);
+        pid=atoi(val);
+
+        lives_win32_kill_subprocesses(pid,TRUE);
 #endif
-	lives_free(com);
-	if (mainw->file_open_params!=NULL) lives_free (mainw->file_open_params);
-	mainw->file_open_params=NULL;
-	close_current_file(old_file);
-	if (mainw->multitrack!=NULL) {
-	  mainw->multitrack->pb_start_event=mt_pb_start_event;
-	  mainw->multitrack->has_audio_file=mt_has_audio_file;
-	}
-	mainw->noswitch=FALSE;
-	lives_set_cursor_style(LIVES_CURSOR_NORMAL,NULL);
-	return 0;
+        lives_free(com);
+        if (mainw->file_open_params!=NULL) lives_free(mainw->file_open_params);
+        mainw->file_open_params=NULL;
+        close_current_file(old_file);
+        if (mainw->multitrack!=NULL) {
+          mainw->multitrack->pb_start_event=mt_pb_start_event;
+          mainw->multitrack->has_audio_file=mt_has_audio_file;
+        }
+        mainw->noswitch=FALSE;
+        lives_set_cursor_style(LIVES_CURSOR_NORMAL,NULL);
+        return 0;
       }
     }
     lives_free(msgstr);
@@ -864,7 +859,7 @@ ulong open_file_sel(const char *file_name, double start, int frames) {
     d_print_failed();
     close_current_file(old_file);
     mainw->noswitch=FALSE;
-    if (mainw->file_open_params!=NULL) lives_free (mainw->file_open_params);
+    if (mainw->file_open_params!=NULL) lives_free(mainw->file_open_params);
     mainw->file_open_params=NULL;
     lives_set_cursor_style(LIVES_CURSOR_NORMAL,NULL);
     return 0;
@@ -885,33 +880,31 @@ ulong open_file_sel(const char *file_name, double start, int frames) {
       get_filename(filename,FALSE); // strip extension
       isubfname=lives_strdup_printf("%s.srt",filename);
       if (lives_file_test(isubfname,LIVES_FILE_TEST_EXISTS)) {
-	subfname=lives_build_filename(prefs->tmpdir,cfile->handle,"subs.srt",NULL);
-	subtype=SUBTITLE_TYPE_SRT;
-      }
-      else {
-	lives_free(isubfname);
-	isubfname=lives_strdup_printf("%s.sub",filename);
-	if (lives_file_test(isubfname,LIVES_FILE_TEST_EXISTS)) {
-	  subfname=lives_build_filename(prefs->tmpdir,cfile->handle,"subs.sub",NULL);
-	  subtype=SUBTITLE_TYPE_SUB;
-	}
+        subfname=lives_build_filename(prefs->tmpdir,cfile->handle,"subs.srt",NULL);
+        subtype=SUBTITLE_TYPE_SRT;
+      } else {
+        lives_free(isubfname);
+        isubfname=lives_strdup_printf("%s.sub",filename);
+        if (lives_file_test(isubfname,LIVES_FILE_TEST_EXISTS)) {
+          subfname=lives_build_filename(prefs->tmpdir,cfile->handle,"subs.sub",NULL);
+          subtype=SUBTITLE_TYPE_SUB;
+        }
       }
       if (subtype!=SUBTITLE_TYPE_NONE) {
 #ifndef IS_MINGW
-	com=lives_strdup_printf("/bin/cp \"%s\" \"%s\"",isubfname,subfname);
+        com=lives_strdup_printf("/bin/cp \"%s\" \"%s\"",isubfname,subfname);
 #else
-	com=lives_strdup_printf("cp.exe \"%s\" \"%s\"",isubfname,subfname);
+        com=lives_strdup_printf("cp.exe \"%s\" \"%s\"",isubfname,subfname);
 #endif
-	mainw->com_failed=FALSE;
-	lives_system(com,FALSE);
-	lives_free(com);
-	if (!mainw->com_failed) 
-	  subtitles_init(cfile,subfname,subtype);
-	lives_free(subfname);
-      }
-      else {
-	lives_free(isubfname);
-	isubfname=NULL;
+        mainw->com_failed=FALSE;
+        lives_system(com,FALSE);
+        lives_free(com);
+        if (!mainw->com_failed)
+          subtitles_init(cfile,subfname,subtype);
+        lives_free(subfname);
+      } else {
+        lives_free(isubfname);
+        isubfname=NULL;
       }
     }
   }
@@ -929,29 +922,27 @@ ulong open_file_sel(const char *file_name, double start, int frames) {
   if (cfile->frames<=0) {
     if (cfile->afilesize==0l) {
       // we got neither video nor audio...
-      lives_snprintf (msg,256,"%s",_
-		  ("\n\nLiVES was unable to extract either video or audio.\nPlease check the terminal window for more details.\n"));
+      lives_snprintf(msg,256,"%s",_
+                     ("\n\nLiVES was unable to extract either video or audio.\nPlease check the terminal window for more details.\n"));
       if (!capable->has_mplayer&&!capable->has_mplayer2) {
-	lives_strappend (msg,256,_("\n\nYou may need to install mplayer to open this file.\n"));
-      }
-      else {
-	if (capable->has_mplayer) {
-	  get_location ("mplayer",loc,256);
-	}
-	else get_location ("mplayer2",loc,256);
-	if (strcmp (prefs->video_open_command,loc)) {
-	  lives_strappend (msg,256,_("\n\nPlease check the setting of Video open command in\nTools|Preferences|Decoding\n"));
-	}
+        lives_strappend(msg,256,_("\n\nYou may need to install mplayer to open this file.\n"));
+      } else {
+        if (capable->has_mplayer) {
+          get_location("mplayer",loc,256);
+        } else get_location("mplayer2",loc,256);
+        if (strcmp(prefs->video_open_command,loc)) {
+          lives_strappend(msg,256,_("\n\nPlease check the setting of Video open command in\nTools|Preferences|Decoding\n"));
+        }
       }
       do_error_dialog(msg);
       d_print_failed();
       close_current_file(old_file);
       mainw->noswitch=FALSE;
       if (mainw->multitrack!=NULL) {
-	mainw->multitrack->pb_start_event=mt_pb_start_event;
-	mainw->multitrack->has_audio_file=mt_has_audio_file;
+        mainw->multitrack->pb_start_event=mt_pb_start_event;
+        mainw->multitrack->has_audio_file=mt_has_audio_file;
       }
-      if (mainw->file_open_params!=NULL) lives_free (mainw->file_open_params);
+      if (mainw->file_open_params!=NULL) lives_free(mainw->file_open_params);
       mainw->file_open_params=NULL;
       lives_set_cursor_style(LIVES_CURSOR_NORMAL,NULL);
       return 0;
@@ -971,7 +962,7 @@ ulong open_file_sel(const char *file_name, double start, int frames) {
   if (prefs->show_recent&&!mainw->is_generating) {
     add_to_recent(file_name,start,frames,mainw->file_open_params);
   }
-  if (mainw->file_open_params!=NULL) lives_free (mainw->file_open_params);
+  if (mainw->file_open_params!=NULL) lives_free(mainw->file_open_params);
   mainw->file_open_params=NULL;
 
   if (!strcmp(cfile->type,"Frames")||!strcmp(cfile->type,"jpeg")||!strcmp(cfile->type,"png")||!strcmp(cfile->type,"Audio")) {
@@ -984,15 +975,15 @@ ulong open_file_sel(const char *file_name, double start, int frames) {
       // insert this image into our image clip, close this file
 
       com=lives_strdup_printf("%s insert \"%s\" \"%s\" %d 1 1 \"%s\" 0 %d %d %d",prefs->backend,
-			  mainw->files[mainw->img_concat_clip]->handle,
-			  get_image_ext_for_type(mainw->files[mainw->img_concat_clip]->img_type),
-			  mainw->files[mainw->img_concat_clip]->frames,
-			  cfile->handle,mainw->files[mainw->img_concat_clip]->frames,
-			  mainw->files[mainw->img_concat_clip]->hsize,mainw->files[mainw->img_concat_clip]->vsize);
+                              mainw->files[mainw->img_concat_clip]->handle,
+                              get_image_ext_for_type(mainw->files[mainw->img_concat_clip]->img_type),
+                              mainw->files[mainw->img_concat_clip]->frames,
+                              cfile->handle,mainw->files[mainw->img_concat_clip]->frames,
+                              mainw->files[mainw->img_concat_clip]->hsize,mainw->files[mainw->img_concat_clip]->vsize);
 
       mainw->current_file=mainw->img_concat_clip;
 
-      unlink (cfile->info_file);
+      unlink(cfile->info_file);
 
       mainw->cancelled=CANCEL_NONE;
       mainw->error=FALSE;
@@ -1004,12 +995,12 @@ ulong open_file_sel(const char *file_name, double start, int frames) {
       do_auto_dialog(_("Adding image..."),2);
 
       if (current_file!=mainw->img_concat_clip) {
-	mainw->current_file=current_file;
-	close_current_file(mainw->img_concat_clip);
+        mainw->current_file=current_file;
+        close_current_file(mainw->img_concat_clip);
       }
 
       if (mainw->cancelled||mainw->error) {
-	goto load_done;
+        goto load_done;
       }
 
       cfile->frames++;
@@ -1019,7 +1010,7 @@ ulong open_file_sel(const char *file_name, double start, int frames) {
       lives_spin_button_set_range(LIVES_SPIN_BUTTON(mainw->spinbutton_end),cfile->frames==0?0:1,cfile->frames);
       lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_end),cfile->end);
       lives_signal_handler_unblock(mainw->spinbutton_end,mainw->spin_end_func);
-       
+
       lives_signal_handler_block(mainw->spinbutton_start,mainw->spin_start_func);
       lives_spin_button_set_range(LIVES_SPIN_BUTTON(mainw->spinbutton_start),cfile->frames==0?0:1,cfile->frames);
       lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_start),cfile->start);
@@ -1046,11 +1037,10 @@ load_done:
   if (mainw->multitrack==NULL) {
     // update widgets
     switch_to_file((mainw->current_file=0),current_file);
-  }
-  else {
+  } else {
     lives_mt *multi=mainw->multitrack;
     mainw->multitrack=NULL; // allow getting of afilesize
-    reget_afilesize (mainw->current_file);
+    reget_afilesize(mainw->current_file);
     mainw->multitrack=multi;
     get_total_time(cfile);
     if (!mainw->is_generating) mainw->current_file=mainw->multitrack->render_file;
@@ -1082,17 +1072,17 @@ static void save_subs_to_file(lives_clip_t *sfile, char *fname) {
 
   // TODO - use sfile->subt->save_fn
   switch (otype) {
-    case SUBTITLE_TYPE_SUB:
-      save_sub_subtitles(sfile,(double)(sfile->start-1)/sfile->fps,(double)sfile->end/sfile->fps,
-			 (double)(sfile->start-1)/sfile->fps,fname);
-      break;
+  case SUBTITLE_TYPE_SUB:
+    save_sub_subtitles(sfile,(double)(sfile->start-1)/sfile->fps,(double)sfile->end/sfile->fps,
+                       (double)(sfile->start-1)/sfile->fps,fname);
+    break;
 
-    case SUBTITLE_TYPE_SRT:
-      save_srt_subtitles(sfile,(double)(sfile->start-1)/sfile->fps,(double)sfile->end/sfile->fps,
-			 (double)(sfile->start-1)/sfile->fps,fname);
-      break;
-      
-    default:
+  case SUBTITLE_TYPE_SRT:
+    save_srt_subtitles(sfile,(double)(sfile->start-1)/sfile->fps,(double)sfile->end/sfile->fps,
+                       (double)(sfile->start-1)/sfile->fps,fname);
+    break;
+
+  default:
     return;
   }
 
@@ -1129,7 +1119,7 @@ boolean get_handle_from_info_file(int index) {
     }
 
     lives_alarm_clear(alarm_handle);
-  
+
     if (!timeout) {
       mainw->read_failed=FALSE;
       lives_fgets(mainw->msg,256,infofile);
@@ -1140,7 +1130,7 @@ boolean get_handle_from_info_file(int index) {
       retval=do_read_failed_error_s_with_retry(mainw->first_info_file,NULL,NULL);
     }
   } while (retval==LIVES_RESPONSE_RETRY);
-  
+
   if (retval==LIVES_RESPONSE_CANCEL) {
     mainw->read_failed=FALSE;
     return FALSE;
@@ -1165,29 +1155,29 @@ boolean get_handle_from_info_file(int index) {
 
 
 
-void save_frame (LiVESMenuItem *menuitem, livespointer user_data) {
+void save_frame(LiVESMenuItem *menuitem, livespointer user_data) {
   int frame;
   // save a single frame from a clip
   char *filt[2];
   char *ttl;
   char *filename;
 
-  filt[0]=lives_strdup_printf ("*.%s",get_image_ext_for_type(cfile->img_type));
+  filt[0]=lives_strdup_printf("*.%s",get_image_ext_for_type(cfile->img_type));
   filt[1]=NULL;
 
   frame=LIVES_POINTER_TO_INT(user_data);
 
   if (frame>0)
-    ttl=lives_strdup_printf (_("LiVES: Save Frame %d as..."),frame);
+    ttl=lives_strdup_printf(_("LiVES: Save Frame %d as..."),frame);
 
   else
-    ttl=lives_strdup (_("LiVES: Save Frame as..."));
+    ttl=lives_strdup(_("LiVES: Save Frame as..."));
 
 
   filename=choose_file(strlen(mainw->image_dir)?mainw->image_dir:NULL,NULL,filt,LIVES_FILE_CHOOSER_ACTION_SAVE,ttl,NULL);
 
-  lives_free (filt[0]);
-  lives_free (ttl);
+  lives_free(filt[0]);
+  lives_free(ttl);
 
   if (filename==NULL||!strlen(filename)) return;
 
@@ -1198,7 +1188,7 @@ void save_frame (LiVESMenuItem *menuitem, livespointer user_data) {
   get_dirname(mainw->image_dir);
   if (prefs->save_directories) {
     char *tmp;
-    set_pref ("image_dir",(tmp=lives_filename_from_utf8(mainw->image_dir,-1,NULL,NULL,NULL)));
+    set_pref("image_dir",(tmp=lives_filename_from_utf8(mainw->image_dir,-1,NULL,NULL,NULL)));
     lives_free(tmp);
   }
 
@@ -1213,21 +1203,21 @@ static void save_log_file(const char *prefix) {
   char *logfile=lives_strdup_printf("%s/%s_%d_%d.txt",prefs->tmpdir,prefix,lives_getuid(),lives_getgid());
   if ((logfd=creat(logfile,S_IRUSR|S_IWUSR|S_IRGRP|S_IWGRP|S_IROTH|S_IWOTH))!=-1) {
 #else
-    char *logfile=lives_strdup_printf("%s\\%s_%d_%d.txt",prefs->tmpdir,prefix,lives_getuid(),lives_getgid());
-    if ((logfd=creat(logfile,S_IRUSR|S_IWUSR))!=-1) {
+  char *logfile=lives_strdup_printf("%s\\%s_%d_%d.txt",prefs->tmpdir,prefix,lives_getuid(),lives_getgid());
+  if ((logfd=creat(logfile,S_IRUSR|S_IWUSR))!=-1) {
 #endif
-      char *btext=lives_text_view_get_text(mainw->optextview);
-      lives_write(logfd,btext,strlen(btext),TRUE);  // not really important if it fails
-      lives_free(btext);
-      close (logfd);
-    }
+    char *btext=lives_text_view_get_text(mainw->optextview);
+    lives_write(logfd,btext,strlen(btext),TRUE);  // not really important if it fails
+    lives_free(btext);
+    close(logfd);
+  }
 
   lives_free(logfile);
 }
 
 
 
-void save_file (int clip, int start, int end, const char *filename) {
+void save_file(int clip, int start, int end, const char *filename) {
   // save clip from frame start to frame end
   lives_clip_t *sfile=mainw->files[clip],*nfile=NULL;
 
@@ -1287,30 +1277,30 @@ void save_file (int clip, int start, int end, const char *filename) {
       int response;
       rdet=create_render_details(1); // WARNING !! - rdet is global in events.h
       response=lives_dialog_run(LIVES_DIALOG(rdet->dialog));
-      lives_widget_hide (rdet->dialog);
-      
+      lives_widget_hide(rdet->dialog);
+
       if (response==LIVES_RESPONSE_CANCEL) {
-	lives_widget_destroy (rdet->dialog);
-	lives_free(rdet->encoder_name);
-	lives_free(rdet);
-	rdet=NULL;
-	if (resaudw!=NULL) lives_free(resaudw);
-	resaudw=NULL;
-	return;
+        lives_widget_destroy(rdet->dialog);
+        lives_free(rdet->encoder_name);
+        lives_free(rdet);
+        rdet=NULL;
+        if (resaudw!=NULL) lives_free(resaudw);
+        resaudw=NULL;
+        return;
       }
     }
   }
 
   // get file extension
-  check_encoder_restrictions (TRUE,FALSE,save_all);
+  check_encoder_restrictions(TRUE,FALSE,save_all);
 
-  hbox = lives_hbox_new (FALSE, 0);
+  hbox = lives_hbox_new(FALSE, 0);
   mainw->fx1_bool=TRUE;
   add_suffix_check(LIVES_BOX(hbox),prefs->encoder.of_def_ext);
   lives_widget_show_all(hbox);
 
   if (filename==NULL) {
-    char *ttl=lives_strdup (_("LiVES: Save Clip as..."));
+    char *ttl=lives_strdup(_("LiVES: Save Clip as..."));
     do {
       n_file_name=choose_file(mainw->vid_save_dir,NULL,NULL,LIVES_FILE_CHOOSER_ACTION_SAVE,ttl,hbox);
       if (n_file_name==NULL) return;
@@ -1318,88 +1308,86 @@ void save_file (int clip, int start, int end, const char *filename) {
     lives_snprintf(mainw->vid_save_dir,PATH_MAX,"%s",n_file_name);
     get_dirname(mainw->vid_save_dir);
     if (prefs->save_directories) {
-      set_pref ("vid_save_dir",(tmp=lives_filename_from_utf8(mainw->vid_save_dir,-1,NULL,NULL,NULL)));
+      set_pref("vid_save_dir",(tmp=lives_filename_from_utf8(mainw->vid_save_dir,-1,NULL,NULL,NULL)));
       lives_free(tmp);
     }
     lives_free(ttl);
-  }
-  else n_file_name=filename;
+  } else n_file_name=filename;
 
   //append default extension (if necessary)
-  if (!strlen (prefs->encoder.of_def_ext)) {
+  if (!strlen(prefs->encoder.of_def_ext)) {
     // encoder adds its own extension
     if (strrchr(n_file_name,'.')!=NULL) {
-      memset ((void *)strrchr (n_file_name,'.'),0,1);
+      memset((void *)strrchr(n_file_name,'.'),0,1);
     }
-  }
-  else {
+  } else {
     if (mainw->fx1_bool&&(strlen(n_file_name)<=strlen(prefs->encoder.of_def_ext)||
-			  strncmp(n_file_name+strlen(n_file_name)-strlen(prefs->encoder.of_def_ext)-1,".",1)||
-			  strcmp(n_file_name+strlen(n_file_name)-strlen(prefs->encoder.of_def_ext),
-				 prefs->encoder.of_def_ext))) {
+                          strncmp(n_file_name+strlen(n_file_name)-strlen(prefs->encoder.of_def_ext)-1,".",1)||
+                          strcmp(n_file_name+strlen(n_file_name)-strlen(prefs->encoder.of_def_ext),
+                                 prefs->encoder.of_def_ext))) {
       full_file_name=lives_strconcat(n_file_name,".",prefs->encoder.of_def_ext,NULL);
     }
   }
 
   if (full_file_name==NULL) {
-    full_file_name=lives_strdup (n_file_name);
+    full_file_name=lives_strdup(n_file_name);
   }
 
   if (filename==NULL) {
     if (!check_file(full_file_name,strcmp(full_file_name,n_file_name))) {
       lives_free(full_file_name);
       if (rdet!=NULL) {
-	lives_widget_destroy (rdet->dialog);
-	lives_free(rdet->encoder_name);
-	lives_free(rdet);
-	rdet=NULL;
-	if (resaudw!=NULL) lives_free(resaudw);
-	resaudw=NULL;
+        lives_widget_destroy(rdet->dialog);
+        lives_free(rdet->encoder_name);
+        lives_free(rdet);
+        rdet=NULL;
+        if (resaudw!=NULL) lives_free(resaudw);
+        resaudw=NULL;
       }
       return;
     }
     sfile->orig_file_name=FALSE;
-    if (!strlen (sfile->comment)) {
-      lives_snprintf (sfile->comment,251,"Created with LiVES");
+    if (!strlen(sfile->comment)) {
+      lives_snprintf(sfile->comment,251,"Created with LiVES");
     }
     if (!do_comments_dialog(sfile,full_file_name)) {
-	lives_free(full_file_name);
-	if (rdet!=NULL) {
-	  lives_widget_destroy (rdet->dialog);
-	  lives_free(rdet->encoder_name);
-	  lives_free(rdet);
-	  rdet=NULL;
-	  if (resaudw!=NULL) lives_free(resaudw);
-	  resaudw=NULL;
-	}
-	if (mainw->subt_save_file!=NULL) lives_free(mainw->subt_save_file);
-	mainw->subt_save_file=NULL;
-	return;
+      lives_free(full_file_name);
+      if (rdet!=NULL) {
+        lives_widget_destroy(rdet->dialog);
+        lives_free(rdet->encoder_name);
+        lives_free(rdet);
+        rdet=NULL;
+        if (resaudw!=NULL) lives_free(resaudw);
+        resaudw=NULL;
+      }
+      if (mainw->subt_save_file!=NULL) lives_free(mainw->subt_save_file);
+      mainw->subt_save_file=NULL;
+      return;
     }
-  }
-  else if (!mainw->osc_auto&&sfile->orig_file_name) {
-    char *warn=lives_strdup(_("Saving your video could lead to a loss of quality !\nYou are strongly advised to 'Save As' to a new file.\n\nDo you still wish to continue ?"));
+  } else if (!mainw->osc_auto&&sfile->orig_file_name) {
+    char *warn=lives_strdup(
+                 _("Saving your video could lead to a loss of quality !\nYou are strongly advised to 'Save As' to a new file.\n\nDo you still wish to continue ?"));
     if (!do_yesno_dialog_with_check(warn,WARN_MASK_SAVE_QUALITY)) {
-	lives_free(warn);
-	lives_free(full_file_name);
-	if (rdet!=NULL) {
-	  lives_widget_destroy (rdet->dialog);
-	  lives_free(rdet->encoder_name);
-	  lives_free(rdet);
-	  if (resaudw!=NULL) lives_free(resaudw);
-	  resaudw=NULL;
-	  rdet=NULL;
-	}
-	if (mainw->subt_save_file!=NULL) lives_free(mainw->subt_save_file);
-	mainw->subt_save_file=NULL;
-	return;
+      lives_free(warn);
+      lives_free(full_file_name);
+      if (rdet!=NULL) {
+        lives_widget_destroy(rdet->dialog);
+        lives_free(rdet->encoder_name);
+        lives_free(rdet);
+        if (resaudw!=NULL) lives_free(resaudw);
+        resaudw=NULL;
+        rdet=NULL;
+      }
+      if (mainw->subt_save_file!=NULL) lives_free(mainw->subt_save_file);
+      mainw->subt_save_file=NULL;
+      return;
     }
     lives_free(warn);
   }
 
 
   if (rdet!=NULL) {
-    lives_widget_destroy (rdet->dialog);
+    lives_widget_destroy(rdet->dialog);
     lives_free(rdet->encoder_name);
     lives_free(rdet);
     rdet=NULL;
@@ -1409,18 +1397,17 @@ void save_file (int clip, int start, int end, const char *filename) {
 
 
   if (sfile->arate*sfile->achans) {
-    aud_start=calc_time_from_frame (clip,start*sfile->arps/sfile->arate);
-    aud_end=calc_time_from_frame (clip,(end+1)*sfile->arps/sfile->arate);
+    aud_start=calc_time_from_frame(clip,start*sfile->arps/sfile->arate);
+    aud_end=calc_time_from_frame(clip,(end+1)*sfile->arps/sfile->arate);
   }
 
 
   // get extra params for encoder
 
   if (!sfile->ratio_fps) {
-    fps_string=lives_strdup_printf ("%.3f",sfile->fps);
-  }
-  else {
-    fps_string=lives_strdup_printf ("%.8f",sfile->fps);
+    fps_string=lives_strdup_printf("%.3f",sfile->fps);
+  } else {
+    fps_string=lives_strdup_printf("%.8f",sfile->fps);
   }
 
   enc_exec_name=lives_build_filename(prefs->lib_dir,PLUGIN_EXEC_DIR,PLUGIN_ENCODERS,prefs->encoder.name,NULL);
@@ -1444,27 +1431,26 @@ void save_file (int clip, int start, int end, const char *filename) {
     // pull at least one frame so we know the file ext
     if (sfile->clip_type==CLIP_TYPE_FILE) {
       resb=virtual_to_images(clip,start,end,TRUE,NULL);
-      
+
       if (!resb) {
-	if (mainw->subt_save_file!=NULL) lives_free(mainw->subt_save_file);
-	mainw->subt_save_file=NULL;
-	d_print_file_error_failed();
-	return;
+        if (mainw->subt_save_file!=NULL) lives_free(mainw->subt_save_file);
+        mainw->subt_save_file=NULL;
+        d_print_file_error_failed();
+        return;
       }
     }
 
     if (prefs->encoder.capabilities&ENCODER_NON_NATIVE) {
       com=lives_strdup_printf("%s save get_rfx %s \"%s\" %s \"%s\" %d %d %d %d %d %d %.4f %.4f",prefs->backend,
-			  sfile->handle,enc_exec_name,
-			  fps_string,(tmp=lives_filename_from_utf8(full_file_name,-1,NULL,NULL,NULL)),
-			  start,end,arate,sfile->achans,sfile->asampsize,asigned|aendian,aud_start,aud_end);
+                              sfile->handle,enc_exec_name,
+                              fps_string,(tmp=lives_filename_from_utf8(full_file_name,-1,NULL,NULL,NULL)),
+                              start,end,arate,sfile->achans,sfile->asampsize,asigned|aendian,aud_start,aud_end);
       lives_free(tmp);
-    }
-    else {
+    } else {
       com=lives_strdup_printf("%s\"%s\" save get_rfx %s \"\" %s \"%s\" %d %d %d %d %d %d %.4f %.4f",
-			  cmd, enc_exec_name,sfile->handle,
-			  fps_string,(tmp=lives_filename_from_utf8(full_file_name,-1,NULL,NULL,NULL)),
-			  start,end,arate,sfile->achans,sfile->asampsize,asigned|aendian,aud_start,aud_end);
+                              cmd, enc_exec_name,sfile->handle,
+                              fps_string,(tmp=lives_filename_from_utf8(full_file_name,-1,NULL,NULL,NULL)),
+                              start,end,arate,sfile->achans,sfile->asampsize,asigned|aendian,aud_start,aud_end);
       lives_free(tmp);
     }
     extra_params=plugin_run_param_window(com,NULL,NULL);
@@ -1472,8 +1458,8 @@ void save_file (int clip, int start, int end, const char *filename) {
 
     if (extra_params==NULL) {
       if (fx_dialog[1]!=NULL) {
-	lives_widget_destroy(fx_dialog[1]);
-	fx_dialog[1]=NULL;
+        lives_widget_destroy(fx_dialog[1]);
+        fx_dialog[1]=NULL;
       }
       lives_free(fps_string);
       switch_to_file(mainw->current_file,current_file);
@@ -1495,7 +1481,7 @@ void save_file (int clip, int start, int end, const char *filename) {
     }
 
     // create new clip
-    if (!get_new_handle(new_file,lives_strdup (_("selection")))) {
+    if (!get_new_handle(new_file,lives_strdup(_("selection")))) {
       if (mainw->subt_save_file!=NULL) lives_free(mainw->subt_save_file);
       mainw->subt_save_file=NULL;
       return;
@@ -1508,13 +1494,13 @@ void save_file (int clip, int start, int end, const char *filename) {
       do_threaded_dialog(_("Pulling frames from clip"),TRUE);
       resb=virtual_to_images(clip,start,end,TRUE,NULL);
       end_threaded_dialog();
-      
+
       if (mainw->cancelled!=CANCEL_NONE||!resb) {
-	mainw->cancelled=CANCEL_USER;
-	if (mainw->subt_save_file!=NULL) lives_free(mainw->subt_save_file);
-	mainw->subt_save_file=NULL;
-	if (!resb) d_print_file_error_failed();
-	return;
+        mainw->cancelled=CANCEL_USER;
+        if (mainw->subt_save_file!=NULL) lives_free(mainw->subt_save_file);
+        mainw->subt_save_file=NULL;
+        if (!resb) d_print_file_error_failed();
+        return;
       }
     }
 
@@ -1533,9 +1519,9 @@ void save_file (int clip, int start, int end, const char *filename) {
     nfile->signed_endian=sfile->signed_endian;
     nfile->img_type=sfile->img_type;
 
-    com=lives_strdup_printf ("%s link_frames \"%s\" %d %d %.8f %.8f %d %d %d %d %d \"%s\"",prefs->backend,nfile->handle,
-			 start,end,aud_start,aud_end,nfile->arate,nfile->achans,nfile->asampsize,
-			 !(nfile->signed_endian&AFORM_UNSIGNED),!(nfile->signed_endian&AFORM_BIG_ENDIAN),sfile->handle);
+    com=lives_strdup_printf("%s link_frames \"%s\" %d %d %.8f %.8f %d %d %d %d %d \"%s\"",prefs->backend,nfile->handle,
+                            start,end,aud_start,aud_end,nfile->arate,nfile->achans,nfile->asampsize,
+                            !(nfile->signed_endian&AFORM_UNSIGNED),!(nfile->signed_endian&AFORM_BIG_ENDIAN),sfile->handle);
 
     unlink(nfile->info_file);
     mainw->com_failed=FALSE;
@@ -1559,14 +1545,14 @@ void save_file (int clip, int start, int end, const char *filename) {
       pclose(rfile);
       memset(val+rlen,0,1);
       pid=atoi(val);
-      
+
       lives_win32_kill_subprocesses(pid,TRUE);
 #endif
-      lives_system (lives_strdup_printf("%s close \"%s\"",prefs->backend,cfile->handle),TRUE);
-      lives_free (cfile);
+      lives_system(lives_strdup_printf("%s close \"%s\"",prefs->backend,cfile->handle),TRUE);
+      lives_free(cfile);
       cfile=NULL;
-      if (mainw->first_free_file==-1||mainw->first_free_file>new_file) 
-	mainw->first_free_file=new_file;
+      if (mainw->first_free_file==-1||mainw->first_free_file>new_file)
+        mainw->first_free_file=new_file;
       switch_to_file(mainw->current_file,current_file);
       d_print_cancelled();
       if (mainw->subt_save_file!=NULL) lives_free(mainw->subt_save_file);
@@ -1590,15 +1576,15 @@ void save_file (int clip, int start, int end, const char *filename) {
       pclose(rfile);
       memset(val+rlen,0,1);
       pid=atoi(val);
-      
+
       lives_win32_kill_subprocesses(pid,TRUE);
 #endif
-      lives_system ((tmp=lives_strdup_printf("%s close \"%s\"",prefs->backend,cfile->handle)),TRUE);
+      lives_system((tmp=lives_strdup_printf("%s close \"%s\"",prefs->backend,cfile->handle)),TRUE);
       lives_free(tmp);
-      lives_free (cfile);
+      lives_free(cfile);
       cfile=NULL;
-      if (mainw->first_free_file==-1||mainw->first_free_file>new_file) 
-	mainw->first_free_file=new_file;
+      if (mainw->first_free_file==-1||mainw->first_free_file>new_file)
+        mainw->first_free_file=new_file;
       switch_to_file(mainw->current_file,current_file);
       if (mainw->error) d_print_failed();
       else d_print_cancelled();
@@ -1618,12 +1604,11 @@ void save_file (int clip, int start, int end, const char *filename) {
 
     reget_afilesize(new_file);
 
-    aud_start=calc_time_from_frame (new_file,1)*nfile->arps/nfile->arate;
-    aud_end=calc_time_from_frame (new_file,nfile->frames+1)*nfile->arps/nfile->arate;
+    aud_start=calc_time_from_frame(new_file,1)*nfile->arps/nfile->arate;
+    aud_end=calc_time_from_frame(new_file,nfile->frames+1)*nfile->arps/nfile->arate;
     cfile->nopreview=FALSE;
 
-  }
-  else mainw->current_file=clip; // for encoder restns
+  } else mainw->current_file=clip; // for encoder restns
 
   if (rdet!=NULL) rdet->is_encoding=TRUE;
 
@@ -1643,12 +1628,12 @@ void save_file (int clip, int start, int end, const char *filename) {
       pclose(rfile);
       memset(val+rlen,0,1);
       pid=atoi(val);
-      
+
       lives_win32_kill_subprocesses(pid,TRUE);
 #endif
-      lives_system ((com=lives_strdup_printf("%s close \"%s\"",prefs->backend,nfile->handle)),TRUE);
+      lives_system((com=lives_strdup_printf("%s close \"%s\"",prefs->backend,nfile->handle)),TRUE);
       lives_free(com);
-      lives_free (nfile);
+      lives_free(nfile);
       mainw->files[new_file]=NULL;
       if (mainw->first_free_file==-1||new_file) mainw->first_free_file=new_file;
     }
@@ -1674,19 +1659,19 @@ void save_file (int clip, int start, int end, const char *filename) {
       do_threaded_dialog(_("Pulling frames from clip"),TRUE);
       resb=virtual_to_images(clip,start,end,TRUE,NULL);
       end_threaded_dialog();
-      
+
       if (mainw->cancelled!=CANCEL_NONE||!resb) {
-	mainw->cancelled=CANCEL_USER;
-	if (mainw->subt_save_file!=NULL) lives_free(mainw->subt_save_file);
-	mainw->subt_save_file=NULL;
-	if (!resb) d_print_file_error_failed();
-	return;
+        mainw->cancelled=CANCEL_USER;
+        if (mainw->subt_save_file!=NULL) lives_free(mainw->subt_save_file);
+        mainw->subt_save_file=NULL;
+        if (!resb) d_print_file_error_failed();
+        return;
       }
     }
 
-    com=lives_strdup_printf ("%s link_frames \"%s\" %d %d %.8f %.8f %d %d %d %d %d",prefs->backend,sfile->handle,
-			 start,end,aud_start,aud_end,sfile->arate,sfile->achans,sfile->asampsize,
-			 !(sfile->signed_endian&AFORM_UNSIGNED),!(sfile->signed_endian&AFORM_BIG_ENDIAN));
+    com=lives_strdup_printf("%s link_frames \"%s\" %d %d %.8f %.8f %d %d %d %d %d",prefs->backend,sfile->handle,
+                            start,end,aud_start,aud_end,sfile->arate,sfile->achans,sfile->asampsize,
+                            !(sfile->signed_endian&AFORM_UNSIGNED),!(sfile->signed_endian&AFORM_BIG_ENDIAN));
 
     unlink(sfile->info_file);
     mainw->com_failed=FALSE;
@@ -1703,8 +1688,8 @@ void save_file (int clip, int start, int end, const char *filename) {
 
     if (mainw->com_failed) {
       com=lives_strdup_printf("%s clear_symlinks \"%s\"",prefs->backend_sync,cfile->handle);
-      lives_system (com,TRUE);
-      lives_free (com);
+      lives_system(com,TRUE);
+      lives_free(com);
       cfile->nopreview=FALSE;
       switch_to_file(mainw->current_file,current_file);
       d_print_cancelled();
@@ -1717,8 +1702,8 @@ void save_file (int clip, int start, int end, const char *filename) {
     cfile->nopreview=TRUE;
     if (!(do_progress_dialog(TRUE,TRUE,_("Linking selection")))) {
       com=lives_strdup_printf("%s clear_symlinks \"%s\"",prefs->backend_sync,cfile->handle);
-      lives_system (com,TRUE);
-      lives_free (com);
+      lives_system(com,TRUE);
+      lives_free(com);
       cfile->nopreview=FALSE;
       switch_to_file(mainw->current_file,current_file);
       if (mainw->error) d_print_failed();
@@ -1739,8 +1724,8 @@ void save_file (int clip, int start, int end, const char *filename) {
 
     reget_afilesize(clip);
 
-    aud_start=calc_time_from_frame (clip,1)*sfile->arps/sfile->arate;
-    aud_end=calc_time_from_frame (clip,end-start+1)*sfile->arps/sfile->arate;
+    aud_start=calc_time_from_frame(clip,1)*sfile->arps/sfile->arate;
+    aud_end=calc_time_from_frame(clip,end-start+1)*sfile->arps/sfile->arate;
     cfile->nopreview=FALSE;
   }
 
@@ -1753,14 +1738,14 @@ void save_file (int clip, int start, int end, const char *filename) {
       do_threaded_dialog(_("Pulling frames from clip"),TRUE);
       resb=virtual_to_images(clip,1,sfile->frames,TRUE,NULL);
       end_threaded_dialog();
-      
+
       if (mainw->cancelled!=CANCEL_NONE||!resb) {
-	mainw->cancelled=CANCEL_USER;
-	if (mainw->subt_save_file!=NULL) lives_free(mainw->subt_save_file);
-	mainw->subt_save_file=NULL;
-	if (!resb) d_print_file_error_failed();
-	switch_to_file(mainw->current_file,current_file);
-	return;
+        mainw->cancelled=CANCEL_USER;
+        if (mainw->subt_save_file!=NULL) lives_free(mainw->subt_save_file);
+        mainw->subt_save_file=NULL;
+        if (!resb) d_print_file_error_failed();
+        switch_to_file(mainw->current_file,current_file);
+        return;
       }
     }
   }
@@ -1768,26 +1753,25 @@ void save_file (int clip, int start, int end, const char *filename) {
 
   if (!mainw->save_with_sound||prefs->encoder.of_allowed_acodecs==0) {
     bit=lives_strdup(_(" (with no sound)\n"));
-  }
-  else {
+  } else {
     bit=lives_strdup("\n");
   }
 
   if (!save_all) {
     mesg=lives_strdup_printf(_("Saving frames %d to %d%s as \"%s\" : encoder = %s : format = %s..."),
-			 start,end,bit,full_file_name,prefs->encoder.name,prefs->encoder.of_desc);
+                             start,end,bit,full_file_name,prefs->encoder.name,prefs->encoder.of_desc);
   } // end selection
   else {
     mesg=lives_strdup_printf(_("Saving frames 1 to %d%s as \"%s\" : encoder %s : format = %s..."),
-			 sfile->frames,bit,full_file_name,prefs->encoder.name,prefs->encoder.of_desc);
+                             sfile->frames,bit,full_file_name,prefs->encoder.name,prefs->encoder.of_desc);
   }
-  lives_free (bit);
-  
+  lives_free(bit);
+
 
   mainw->no_switch_dprint=TRUE;
-  d_print (mesg);
+  d_print(mesg);
   mainw->no_switch_dprint=FALSE;
-  lives_free (mesg);
+  lives_free(mesg);
 
 
   if (prefs->show_gui) {
@@ -1804,46 +1788,44 @@ void save_file (int clip, int start, int end, const char *filename) {
       retval=0;
       new_stderr=open(new_stderr_name,O_CREAT|O_RDONLY|O_TRUNC|O_SYNC,S_IRUSR|S_IWUSR);
       if (new_stderr<0) {
-	retval=do_write_failed_error_s_with_retry(new_stderr_name,lives_strerror(errno),NULL);
-	if (retval==LIVES_RESPONSE_CANCEL) redir=lives_strdup("1>&2");
-      }
-      else {
+        retval=do_write_failed_error_s_with_retry(new_stderr_name,lives_strerror(errno),NULL);
+        if (retval==LIVES_RESPONSE_CANCEL) redir=lives_strdup("1>&2");
+      } else {
 
 #ifdef IS_MINGW
-	setmode(new_stderr,O_BINARY);
+        setmode(new_stderr,O_BINARY);
 #ifdef GUI_GTK
-	mainw->iochan=g_io_channel_win32_new_fd(new_stderr);
+        mainw->iochan=g_io_channel_win32_new_fd(new_stderr);
 #endif
-	redir=lives_strdup_printf("2>&1 >\"%s\"",new_stderr_name);
+        redir=lives_strdup_printf("2>&1 >\"%s\"",new_stderr_name);
 #else
 #ifdef GUI_GTK
-	mainw->iochan=g_io_channel_unix_new(new_stderr);
+        mainw->iochan=g_io_channel_unix_new(new_stderr);
 #endif
-	redir=lives_strdup_printf("2>\"%s\"",new_stderr_name);
+        redir=lives_strdup_printf("2>\"%s\"",new_stderr_name);
 #endif
 
 #ifdef GUI_QT
-	mainw->iochan = new QFile;
-	mainw->iochan->open(new_stderr, QIODevice::ReadOnly);
+        mainw->iochan = new QFile;
+        mainw->iochan->open(new_stderr, QIODevice::ReadOnly);
 #endif
 
 #ifdef GUI_GTK
-	g_io_channel_set_encoding (mainw->iochan, NULL, NULL);
-	g_io_channel_set_buffer_size(mainw->iochan,0);
-	g_io_channel_set_flags(mainw->iochan,G_IO_FLAG_NONBLOCK,&gerr);
-	if (gerr!=NULL) lives_error_free(gerr);
-	gerr=NULL;
+        g_io_channel_set_encoding(mainw->iochan, NULL, NULL);
+        g_io_channel_set_buffer_size(mainw->iochan,0);
+        g_io_channel_set_flags(mainw->iochan,G_IO_FLAG_NONBLOCK,&gerr);
+        if (gerr!=NULL) lives_error_free(gerr);
+        gerr=NULL;
 #endif
-	mainw->optextview=create_output_textview();
+        mainw->optextview=create_output_textview();
       }
     } while (retval==LIVES_RESPONSE_RETRY);
-  }
-  else {
+  } else {
     lives_free(redir);
     redir=lives_strdup("1>&2");
   }
 
-  if (lives_file_test ((tmp=lives_filename_from_utf8(full_file_name,-1,NULL,NULL,NULL)), LIVES_FILE_TEST_EXISTS)) {
+  if (lives_file_test((tmp=lives_filename_from_utf8(full_file_name,-1,NULL,NULL,NULL)), LIVES_FILE_TEST_EXISTS)) {
     stat(tmp,&filestat);
     file_mtime=filestat.st_mtime;
   }
@@ -1855,10 +1837,9 @@ void save_file (int clip, int start, int end, const char *filename) {
   if (arate!=0) arate=cfile->arate;
 
   if (!cfile->ratio_fps) {
-    fps_string=lives_strdup_printf ("%.3f",cfile->fps);
-  }
-  else {
-    fps_string=lives_strdup_printf ("%.8f",cfile->fps);
+    fps_string=lives_strdup_printf("%.3f",cfile->fps);
+  } else {
+    fps_string=lives_strdup_printf("%.8f",cfile->fps);
   }
 
   // if startframe is -ve, we will use the links created for safe_symlinks - in /tmp
@@ -1867,30 +1848,29 @@ void save_file (int clip, int start, int end, const char *filename) {
 
   if (prefs->encoder.capabilities&ENCODER_NON_NATIVE) {
     com=lives_strdup_printf("%s save \"%s\" \"%s\" \"%s\" \"%s\" %d %d %d %d %d %d %.4f %.4f %s %s",prefs->backend,
-			cfile->handle,
-			enc_exec_name,fps_string,(tmp=lives_filename_from_utf8(full_file_name,-1,NULL,NULL,NULL)),
-			startframe,cfile->frames,arate,cfile->achans,cfile->asampsize,
-			asigned|aendian,aud_start,aud_end,(extra_params==NULL)?"":extra_params,redir);
+                            cfile->handle,
+                            enc_exec_name,fps_string,(tmp=lives_filename_from_utf8(full_file_name,-1,NULL,NULL,NULL)),
+                            startframe,cfile->frames,arate,cfile->achans,cfile->asampsize,
+                            asigned|aendian,aud_start,aud_end,(extra_params==NULL)?"":extra_params,redir);
     lives_free(tmp);
-  }
-  else {
+  } else {
     // for native (perl) plugins we go via the plugin
     com=lives_strdup_printf("%s\"%s\" save \"%s\" \"%s\" \"%s\" \"%s\" %d %d %d %d %d %d %.4f %.4f %s %s",
-			cmd, enc_exec_name, cfile->handle, "",
-			fps_string,(tmp=lives_filename_from_utf8(full_file_name,-1,NULL,NULL,NULL)),
-			startframe,cfile->frames,arate,cfile->achans,cfile->asampsize,
-			asigned|aendian,aud_start,aud_end,(extra_params==NULL?"":extra_params),redir);
+                            cmd, enc_exec_name, cfile->handle, "",
+                            fps_string,(tmp=lives_filename_from_utf8(full_file_name,-1,NULL,NULL,NULL)),
+                            startframe,cfile->frames,arate,cfile->achans,cfile->asampsize,
+                            asigned|aendian,aud_start,aud_end,(extra_params==NULL?"":extra_params),redir);
 
     lives_free(tmp);
   }
-  lives_free (fps_string);
+  lives_free(fps_string);
 
   if (extra_params!=NULL) lives_free(extra_params);
   extra_params=NULL;
 
   mainw->effects_paused=FALSE;
   cfile->nokeep=TRUE;
-  
+
   unlink(cfile->info_file);
   mainw->write_failed=FALSE;
   save_file_comments(current_file);
@@ -1908,14 +1888,14 @@ void save_file (int clip, int start, int end, const char *filename) {
     char *pluginstr;
 
     not_cancelled=do_progress_dialog(TRUE,TRUE,_("Saving [can take a long time]"));
-    mesg=lives_strdup (mainw->msg);
-    
+    mesg=lives_strdup(mainw->msg);
+
     if (mainw->iochan!=NULL) {
       // flush last of stdout/stderr from plugin
-      
+
       lives_fsync(new_stderr);
       pump_io_chan(mainw->iochan);
-      
+
 #ifdef GUI_GTK
       g_io_channel_shutdown(mainw->iochan,FALSE,&gerr);
       g_io_channel_unref(mainw->iochan);
@@ -1930,26 +1910,25 @@ void save_file (int clip, int start, int end, const char *filename) {
       lives_free(new_stderr_name);
       lives_free(redir);
     }
-    
+
     mainw->effects_paused=FALSE;
     cfile->nokeep=FALSE;
-    
+
     pluginstr=lives_build_filename(prefs->lib_dir, PLUGIN_EXEC_DIR, NULL);
 
     com=lives_strdup_printf("%s plugin_clear \"%s\" 1 %d \"%s\" \"%s\" \"%s\"",prefs->backend_sync,cfile->handle,
-			cfile->frames, pluginstr, PLUGIN_ENCODERS, prefs->encoder.name);
+                            cfile->frames, pluginstr, PLUGIN_ENCODERS, prefs->encoder.name);
     lives_free(pluginstr);
 
     lives_system(com,FALSE);
     lives_free(com);
-  }
-  else {
+  } else {
     if (mainw->iochan!=NULL) {
       // flush last of stdout/stderr from plugin
-      
+
       lives_fsync(new_stderr);
       pump_io_chan(mainw->iochan);
-      
+
 #ifdef GUI_GTK
       g_io_channel_shutdown(mainw->iochan,FALSE,&gerr);
       g_io_channel_unref(mainw->iochan);
@@ -1976,41 +1955,40 @@ void save_file (int clip, int start, int end, const char *filename) {
       lives_free(full_file_name);
       if (!save_all&&!safe_symlinks) {
 #ifdef IS_MINGW
-	// kill any active processes: for other OSes the backend does this
-	// get pid from backend
-	FILE *rfile;
-	ssize_t rlen;
-	char val[16];
-	int pid;
-	com=lives_strdup_printf("%s get_pid_for_handle \"%s\"",prefs->backend_sync,cfile->handle);
-	rfile=popen(com,"r");
-	rlen=fread(val,1,16,rfile);
-	pclose(rfile);
-	memset(val+rlen,0,1);
-	pid=atoi(val);
-      
-	lives_win32_kill_subprocesses(pid,TRUE);
+        // kill any active processes: for other OSes the backend does this
+        // get pid from backend
+        FILE *rfile;
+        ssize_t rlen;
+        char val[16];
+        int pid;
+        com=lives_strdup_printf("%s get_pid_for_handle \"%s\"",prefs->backend_sync,cfile->handle);
+        rfile=popen(com,"r");
+        rlen=fread(val,1,16,rfile);
+        pclose(rfile);
+        memset(val+rlen,0,1);
+        pid=atoi(val);
+
+        lives_win32_kill_subprocesses(pid,TRUE);
 #endif
-	lives_system ((com=lives_strdup_printf("%s close \"%s\"",prefs->backend,cfile->handle)),TRUE);
-	lives_free(com);
-	lives_free (cfile);
-	cfile=NULL;
-	if (mainw->first_free_file==-1||mainw->first_free_file>mainw->current_file)
-	  mainw->first_free_file=mainw->current_file;
-      }
-      else if (!save_all&&safe_symlinks) {
-	com=lives_strdup_printf("%s clear_symlinks \"%s\"",prefs->backend_sync,cfile->handle);
-	lives_system (com,TRUE);
-	lives_free (com);
+        lives_system((com=lives_strdup_printf("%s close \"%s\"",prefs->backend,cfile->handle)),TRUE);
+        lives_free(com);
+        lives_free(cfile);
+        cfile=NULL;
+        if (mainw->first_free_file==-1||mainw->first_free_file>mainw->current_file)
+          mainw->first_free_file=mainw->current_file;
+      } else if (!save_all&&safe_symlinks) {
+        com=lives_strdup_printf("%s clear_symlinks \"%s\"",prefs->backend_sync,cfile->handle);
+        lives_system(com,TRUE);
+        lives_free(com);
       }
 
       switch_to_file(mainw->current_file,current_file);
       do_blocking_error_dialog(mesg);
-      lives_free (mesg);
+      lives_free(mesg);
 
       if (mainw->iochan!=NULL) {
-	mainw->iochan=NULL;
-	lives_object_unref(mainw->optextview);
+        mainw->iochan=NULL;
+        lives_object_unref(mainw->optextview);
       }
 
       if (mainw->subt_save_file!=NULL) lives_free(mainw->subt_save_file);
@@ -2018,10 +1996,10 @@ void save_file (int clip, int start, int end, const char *filename) {
       sensitize();
       return;
     }
-    lives_free (mesg);
+    lives_free(mesg);
 
 
-    if (lives_file_test ((tmp=lives_filename_from_utf8(full_file_name,-1,NULL,NULL,NULL)), LIVES_FILE_TEST_EXISTS)) {
+    if (lives_file_test((tmp=lives_filename_from_utf8(full_file_name,-1,NULL,NULL,NULL)), LIVES_FILE_TEST_EXISTS)) {
       lives_free(tmp);
       stat((tmp=lives_filename_from_utf8(full_file_name,-1,NULL,NULL,NULL)),&filestat);
       if (filestat.st_size>0) output_exists=TRUE;
@@ -2035,46 +2013,45 @@ void save_file (int clip, int start, int end, const char *filename) {
       lives_free(full_file_name);
       if (!save_all&&!safe_symlinks) {
 #ifdef IS_MINGW
-	// kill any active processes: for other OSes the backend does this
-	// get pid from backend
-	FILE *rfile;
-	ssize_t rlen;
-	char val[16];
-	int pid;
-	com=lives_strdup_printf("%s get_pid_for_handle \"%s\"",prefs->backend_sync,cfile->handle);
-	rfile=popen(com,"r");
-	rlen=fread(val,1,16,rfile);
-	pclose(rfile);
-	memset(val+rlen,0,1);
-	pid=atoi(val);
-	
-	lives_win32_kill_subprocesses(pid,TRUE);
+        // kill any active processes: for other OSes the backend does this
+        // get pid from backend
+        FILE *rfile;
+        ssize_t rlen;
+        char val[16];
+        int pid;
+        com=lives_strdup_printf("%s get_pid_for_handle \"%s\"",prefs->backend_sync,cfile->handle);
+        rfile=popen(com,"r");
+        rlen=fread(val,1,16,rfile);
+        pclose(rfile);
+        memset(val+rlen,0,1);
+        pid=atoi(val);
+
+        lives_win32_kill_subprocesses(pid,TRUE);
 #endif
-	lives_system ((com=lives_strdup_printf("%s close \"%s\"",prefs->backend,cfile->handle)),TRUE);
-	lives_free(com);
-	lives_free (cfile);
-	cfile=NULL;
-	if (mainw->first_free_file==-1||mainw->first_free_file>mainw->current_file) 
-	  mainw->first_free_file=mainw->current_file;
-      }
-      else if (!save_all&&safe_symlinks) {
-	com=lives_strdup_printf("%s clear_symlinks \"%s\"",prefs->backend_sync,cfile->handle);
-	lives_system (com,TRUE);
-	lives_free (com);
+        lives_system((com=lives_strdup_printf("%s close \"%s\"",prefs->backend,cfile->handle)),TRUE);
+        lives_free(com);
+        lives_free(cfile);
+        cfile=NULL;
+        if (mainw->first_free_file==-1||mainw->first_free_file>mainw->current_file)
+          mainw->first_free_file=mainw->current_file;
+      } else if (!save_all&&safe_symlinks) {
+        com=lives_strdup_printf("%s clear_symlinks \"%s\"",prefs->backend_sync,cfile->handle);
+        lives_system(com,TRUE);
+        lives_free(com);
       }
 
       switch_to_file(mainw->current_file,current_file);
       retval=do_blocking_error_dialog(_("\n\nEncoder error - output file was not created !\n"));
 
       if (retval==LIVES_RESPONSE_SHOW_DETAILS) {
-	// show iochan (encoder) details
-	on_details_button_clicked();
+        // show iochan (encoder) details
+        on_details_button_clicked();
       }
 
       if (mainw->iochan!=NULL) {
-	  save_log_file("failed_encoder_log");
-	  mainw->iochan=NULL;
-	  lives_object_unref(mainw->optextview);
+        save_log_file("failed_encoder_log");
+        mainw->iochan=NULL;
+        lives_object_unref(mainw->optextview);
       }
 
       if (mainw->subt_save_file!=NULL) lives_free(mainw->subt_save_file);
@@ -2090,35 +2067,35 @@ void save_file (int clip, int start, int end, const char *filename) {
     if (save_all) {
 
       if (prefs->enc_letterbox) {
-	// replace letterboxed frames with maxspect frames
-	int iwidth=sfile->ohsize;
-	int iheight=sfile->ovsize;
-	boolean bad_header=FALSE;
+        // replace letterboxed frames with maxspect frames
+        int iwidth=sfile->ohsize;
+        int iheight=sfile->ovsize;
+        boolean bad_header=FALSE;
 
-	com=lives_strdup_printf("%s mv_mgk \"%s\" %d %d \"%s\" 1",prefs->backend,sfile->handle,1,sfile->frames,
-			    get_image_ext_for_type(sfile->img_type));
+        com=lives_strdup_printf("%s mv_mgk \"%s\" %d %d \"%s\" 1",prefs->backend,sfile->handle,1,sfile->frames,
+                                get_image_ext_for_type(sfile->img_type));
 
-	unlink(sfile->info_file);
-	lives_system(com,FALSE);
+        unlink(sfile->info_file);
+        lives_system(com,FALSE);
 
-	do_progress_dialog(TRUE,FALSE,_("Clearing letterbox"));
+        do_progress_dialog(TRUE,FALSE,_("Clearing letterbox"));
 
-	if (mainw->error) {
-	  //	  cfile->may_be_damaged=TRUE;
-	  d_print_failed();
-	  return;
-	}
+        if (mainw->error) {
+          //	  cfile->may_be_damaged=TRUE;
+          d_print_failed();
+          return;
+        }
 
-	calc_maxspect(sfile->hsize,sfile->vsize,&iwidth,&iheight);
+        calc_maxspect(sfile->hsize,sfile->vsize,&iwidth,&iheight);
 
-	sfile->hsize=iwidth;
-	sfile->vsize=iheight;
+        sfile->hsize=iwidth;
+        sfile->vsize=iheight;
 
-	save_clip_value(clip,CLIP_DETAILS_WIDTH,&sfile->hsize);
-	if (mainw->com_failed||mainw->write_failed) bad_header=TRUE;
-	save_clip_value(clip,CLIP_DETAILS_HEIGHT,&sfile->vsize);
-	if (mainw->com_failed||mainw->write_failed) bad_header=TRUE;
-	if (bad_header) do_header_write_error(mainw->current_file);
+        save_clip_value(clip,CLIP_DETAILS_WIDTH,&sfile->hsize);
+        if (mainw->com_failed||mainw->write_failed) bad_header=TRUE;
+        save_clip_value(clip,CLIP_DETAILS_HEIGHT,&sfile->vsize);
+        if (mainw->com_failed||mainw->write_failed) bad_header=TRUE;
+        if (bad_header) do_header_write_error(mainw->current_file);
 
       }
 
@@ -2128,47 +2105,45 @@ void save_file (int clip, int start, int end, const char *filename) {
       sfile->changed=FALSE;
 
       // save was successful
-      sfile->f_size=sget_file_size (full_file_name);
+      sfile->f_size=sget_file_size(full_file_name);
 
       if (sfile->is_untitled) {
-	sfile->is_untitled=FALSE;
+        sfile->is_untitled=FALSE;
       }
       if (!sfile->was_renamed) {
-	set_menu_text(sfile->menuentry,full_file_name,FALSE);
-	lives_snprintf(sfile->name,256,"%s",full_file_name);
+        set_menu_text(sfile->menuentry,full_file_name,FALSE);
+        lives_snprintf(sfile->name,256,"%s",full_file_name);
       }
       set_main_title(cfile->name,0);
-      add_to_recent (full_file_name,0.,0,NULL);
-    }
-    else {
+      add_to_recent(full_file_name,0.,0,NULL);
+    } else {
       if (!safe_symlinks) {
 #ifdef IS_MINGW
-	// kill any active processes: for other OSes the backend does this
-	// get pid from backend
-	FILE *rfile;
-	ssize_t rlen;
-	char val[16];
-	int pid;
-	com=lives_strdup_printf("%s get_pid_for_handle \"%s\"",prefs->backend_sync,nfile->handle);
-	rfile=popen(com,"r");
-	rlen=fread(val,1,16,rfile);
-	pclose(rfile);
-	memset(val+rlen,0,1);
-	pid=atoi(val);
-	
-	lives_win32_kill_subprocesses(pid,TRUE);
+        // kill any active processes: for other OSes the backend does this
+        // get pid from backend
+        FILE *rfile;
+        ssize_t rlen;
+        char val[16];
+        int pid;
+        com=lives_strdup_printf("%s get_pid_for_handle \"%s\"",prefs->backend_sync,nfile->handle);
+        rfile=popen(com,"r");
+        rlen=fread(val,1,16,rfile);
+        pclose(rfile);
+        memset(val+rlen,0,1);
+        pid=atoi(val);
+
+        lives_win32_kill_subprocesses(pid,TRUE);
 #endif
-	lives_system ((com=lives_strdup_printf("%s close \"%s\"",prefs->backend,nfile->handle)),TRUE);
-	lives_free(com);
-	lives_free (nfile);
-	mainw->files[new_file]=NULL;
-	if (mainw->first_free_file==-1||mainw->first_free_file>mainw->current_file) 
-	  mainw->first_free_file=new_file;
-      }
-      else {
-	com=lives_strdup_printf("%s clear_symlinks \"%s\"",prefs->backend_sync,cfile->handle);
-	lives_system (com,TRUE);
-	lives_free (com);
+        lives_system((com=lives_strdup_printf("%s close \"%s\"",prefs->backend,nfile->handle)),TRUE);
+        lives_free(com);
+        lives_free(nfile);
+        mainw->files[new_file]=NULL;
+        if (mainw->first_free_file==-1||mainw->first_free_file>mainw->current_file)
+          mainw->first_free_file=new_file;
+      } else {
+        com=lives_strdup_printf("%s clear_symlinks \"%s\"",prefs->backend_sync,cfile->handle);
+        lives_system(com,TRUE);
+        lives_free(com);
       }
     }
   }
@@ -2202,8 +2177,8 @@ void save_file (int clip, int start, int end, const char *filename) {
     mainw->no_switch_dprint=FALSE;
 
     lives_notify(LIVES_OSC_NOTIFY_SUCCESS,
-		 (mesg=lives_strdup_printf("encode %d \"%s\"",clip,
-					   (tmp=lives_filename_from_utf8(full_file_name,-1,NULL,NULL,NULL)))));
+                 (mesg=lives_strdup_printf("encode %d \"%s\"",clip,
+                                           (tmp=lives_filename_from_utf8(full_file_name,-1,NULL,NULL,NULL)))));
     lives_free(tmp);
     lives_free(mesg);
 
@@ -2215,7 +2190,7 @@ void save_file (int clip, int start, int end, const char *filename) {
 
 
 
-void play_file (void) {
+void play_file(void) {
   // play the current clip from 'mainw->play_start' to 'mainw->play_end'
   LiVESWidgetClosure *freeze_closure;
 
@@ -2228,8 +2203,8 @@ void play_file (void) {
 #endif
 
   char *com;
-  char *com2=lives_strdup (" ");
-  char *com3=lives_strdup (" ");
+  char *com2=lives_strdup(" ");
+  char *com3=lives_strdup(" ");
   char *stopcom=NULL;
   char *stfile;
   char *xtrabit,*title;
@@ -2273,8 +2248,8 @@ void play_file (void) {
   mainw->pre_src_audio_file=mainw->current_file;
 
   // enable the freeze button
-  lives_accel_group_connect (LIVES_ACCEL_GROUP (mainw->accel_group), LIVES_KEY_BackSpace, (LiVESXModifierType)LIVES_CONTROL_MASK, 
-			   (LiVESAccelFlags)0, (freeze_closure=lives_cclosure_new (LIVES_GUI_CALLBACK (freeze_callback),NULL,NULL)));
+  lives_accel_group_connect(LIVES_ACCEL_GROUP(mainw->accel_group), LIVES_KEY_BackSpace, (LiVESXModifierType)LIVES_CONTROL_MASK,
+                            (LiVESAccelFlags)0, (freeze_closure=lives_cclosure_new(LIVES_GUI_CALLBACK(freeze_callback),NULL,NULL)));
 
   if (mainw->multitrack!=NULL) {
     mainw->event_list=mainw->multitrack->event_list;
@@ -2287,20 +2262,18 @@ void play_file (void) {
   if (mainw->record) {
     if (mainw->preview) {
       mainw->record=FALSE;
-      d_print (_("recording aborted by preview.\n"));
-    }
-    else if (mainw->current_file==0) {
+      d_print(_("recording aborted by preview.\n"));
+    } else if (mainw->current_file==0) {
       mainw->record=FALSE;
-      d_print (_("recording aborted by clipboard playback.\n"));
-    }
-    else {
+      d_print(_("recording aborted by clipboard playback.\n"));
+    } else {
       d_print(_("Recording performance..."));
       mainw->clip_switched=FALSE;
       // TODO
       if (mainw->current_file>0&&(cfile->undo_action==UNDO_RESAMPLE||cfile->undo_action==UNDO_RENDER)) {
-	lives_widget_set_sensitive (mainw->undo,FALSE);
-	lives_widget_set_sensitive (mainw->redo,FALSE);
-	cfile->undoable=cfile->redoable=FALSE;
+        lives_widget_set_sensitive(mainw->undo,FALSE);
+        lives_widget_set_sensitive(mainw->redo,FALSE);
+        cfile->undoable=cfile->redoable=FALSE;
       }
     }
   }
@@ -2314,11 +2287,11 @@ void play_file (void) {
 
   if (mainw->event_list!=NULL) {
     // play performance data
-    if (event_list_get_end_secs (mainw->event_list)>cfile->frames/cfile->fps&&!mainw->playing_sel) {
-      mainw->audio_end=(event_list_get_end_secs (mainw->event_list)*cfile->fps+1.)*cfile->arate/cfile->arps;
+    if (event_list_get_end_secs(mainw->event_list)>cfile->frames/cfile->fps&&!mainw->playing_sel) {
+      mainw->audio_end=(event_list_get_end_secs(mainw->event_list)*cfile->fps+1.)*cfile->arate/cfile->arps;
     }
   }
-  
+
   if (mainw->audio_end==0) {
     mainw->audio_start=(calc_time_from_frame(mainw->current_file,mainw->play_start)*cfile->fps+1.)*cfile->arate/cfile->arps;
     mainw->audio_end=(calc_time_from_frame(mainw->current_file,mainw->play_end)*cfile->fps+1.)*cfile->arate/cfile->arps;
@@ -2340,16 +2313,15 @@ void play_file (void) {
   if (mainw->multitrack==NULL) {
     if (!mainw->preview) {
       lives_frame_set_label(LIVES_FRAME(mainw->playframe),_("Play"));
-    }
-    else {
+    } else {
       lives_frame_set_label(LIVES_FRAME(mainw->playframe),_("Preview"));
     }
-    
+
     if (palette->style&STYLE_1) {
-      lives_widget_set_fg_color(lives_frame_get_label_widget(LIVES_FRAME(mainw->playframe)), 
-			   LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
+      lives_widget_set_fg_color(lives_frame_get_label_widget(LIVES_FRAME(mainw->playframe)),
+                                LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
     }
-    
+
     // blank the background if asked to
     if ((mainw->faded||(mainw->fs&&!mainw->sep_win))&&(cfile->frames>0||mainw->foreign)) {
       fade_background();
@@ -2366,7 +2338,7 @@ void play_file (void) {
     // plug the plug into the playframe socket if we need to
     add_to_playframe();
   }
-  
+
   arate=cfile->arate;
 
   mute=mainw->mute;
@@ -2406,7 +2378,7 @@ void play_file (void) {
   }
 
   if (mainw->record) {
-    if (mainw->event_list!=NULL) event_list_free (mainw->event_list);
+    if (mainw->event_list!=NULL) event_list_free(mainw->event_list);
     mainw->event_list=add_filter_init_events(NULL,0);
   }
 
@@ -2414,9 +2386,9 @@ void play_file (void) {
     lives_widget_hide(mainw->scrolledwindow);
   }
 
-  lives_widget_set_sensitive (mainw->stop, TRUE);
+  lives_widget_set_sensitive(mainw->stop, TRUE);
 
-  if (mainw->multitrack==NULL) lives_widget_set_sensitive (mainw->m_playbutton, FALSE);
+  if (mainw->multitrack==NULL) lives_widget_set_sensitive(mainw->m_playbutton, FALSE);
   else if (!cfile->opening) {
     if (!mainw->is_processing) mt_swap_play_pause(mainw->multitrack,TRUE);
     else {
@@ -2425,125 +2397,122 @@ void play_file (void) {
     }
   }
 
-  lives_widget_set_sensitive (mainw->m_playselbutton, FALSE);
-  lives_widget_set_sensitive (mainw->m_rewindbutton, FALSE);
-  lives_widget_set_sensitive (mainw->m_mutebutton, is_realtime_aplayer(audio_player)||mainw->multitrack!=NULL);
+  lives_widget_set_sensitive(mainw->m_playselbutton, FALSE);
+  lives_widget_set_sensitive(mainw->m_rewindbutton, FALSE);
+  lives_widget_set_sensitive(mainw->m_mutebutton, is_realtime_aplayer(audio_player)||mainw->multitrack!=NULL);
 
-  lives_widget_set_sensitive (mainw->m_loopbutton, (!cfile->achans||mainw->mute||mainw->multitrack!=NULL||
-						    mainw->loop_cont||is_realtime_aplayer(audio_player))
-			      &&mainw->current_file>0);
-  lives_widget_set_sensitive (mainw->loop_continue, (!cfile->achans||mainw->mute||mainw->loop_cont||
-						     is_realtime_aplayer(audio_player))
-			      &&mainw->current_file>0);
+  lives_widget_set_sensitive(mainw->m_loopbutton, (!cfile->achans||mainw->mute||mainw->multitrack!=NULL||
+                             mainw->loop_cont||is_realtime_aplayer(audio_player))
+                             &&mainw->current_file>0);
+  lives_widget_set_sensitive(mainw->loop_continue, (!cfile->achans||mainw->mute||mainw->loop_cont||
+                             is_realtime_aplayer(audio_player))
+                             &&mainw->current_file>0);
 
   if (cfile->frames==0&&mainw->multitrack==NULL) {
     if (mainw->preview_box!=NULL&&lives_widget_get_parent(mainw->preview_box)!=NULL) {
-      lives_container_remove (LIVES_CONTAINER (mainw->play_window), mainw->preview_box);
+      lives_container_remove(LIVES_CONTAINER(mainw->play_window), mainw->preview_box);
 
-      mainw->pw_scroll_func=lives_signal_connect (LIVES_GUI_OBJECT (mainw->play_window), LIVES_WIDGET_SCROLL_EVENT,
-					      LIVES_GUI_CALLBACK (on_mouse_scroll),
-					      NULL);
+      mainw->pw_scroll_func=lives_signal_connect(LIVES_GUI_OBJECT(mainw->play_window), LIVES_WIDGET_SCROLL_EVENT,
+                            LIVES_GUI_CALLBACK(on_mouse_scroll),
+                            NULL);
 
     }
-  }
-  else {
+  } else {
     if (mainw->sep_win) {
       // create a separate window for the internal player if requested
       if (prefs->sepwin_type==SEPWIN_TYPE_NON_STICKY) {
-	// needed
-	block_expose();
-	make_play_window();
-	unblock_expose();
-      }
-      else {
-	if (mainw->multitrack==NULL) {
-	  if (mainw->preview_box!=NULL&&lives_widget_get_parent(mainw->preview_box)!=NULL) {
-	    lives_container_remove (LIVES_CONTAINER (mainw->play_window), mainw->preview_box);
+        // needed
+        block_expose();
+        make_play_window();
+        unblock_expose();
+      } else {
+        if (mainw->multitrack==NULL) {
+          if (mainw->preview_box!=NULL&&lives_widget_get_parent(mainw->preview_box)!=NULL) {
+            lives_container_remove(LIVES_CONTAINER(mainw->play_window), mainw->preview_box);
 
-	    mainw->pw_scroll_func=lives_signal_connect (LIVES_GUI_OBJECT (mainw->play_window), LIVES_WIDGET_SCROLL_EVENT,
-						    LIVES_GUI_CALLBACK (on_mouse_scroll),
-						    NULL);
-	  }
-	}
+            mainw->pw_scroll_func=lives_signal_connect(LIVES_GUI_OBJECT(mainw->play_window), LIVES_WIDGET_SCROLL_EVENT,
+                                  LIVES_GUI_CALLBACK(on_mouse_scroll),
+                                  NULL);
+          }
+        }
 
-	if (mainw->multitrack==NULL||mainw->fs) {
-	  char *xtrabit,*title;
-	  resize_play_window();
-	  if (mainw->sepwin_scale!=100.) xtrabit=lives_strdup_printf(_(" (%d %% scale)"),(int)mainw->sepwin_scale);
-	  else xtrabit=lives_strdup("");
-	  title=lives_strdup_printf(_("LiVES: - Play Window%s"),xtrabit);
-	  if (mainw->play_window!=NULL)
-	    lives_window_set_title (LIVES_WINDOW (mainw->play_window), title);
-	  lives_free(title);
-	  lives_free(xtrabit);
-	}
+        if (mainw->multitrack==NULL||mainw->fs) {
+          char *xtrabit,*title;
+          resize_play_window();
+          if (mainw->sepwin_scale!=100.) xtrabit=lives_strdup_printf(_(" (%d %% scale)"),(int)mainw->sepwin_scale);
+          else xtrabit=lives_strdup("");
+          title=lives_strdup_printf(_("LiVES: - Play Window%s"),xtrabit);
+          if (mainw->play_window!=NULL)
+            lives_window_set_title(LIVES_WINDOW(mainw->play_window), title);
+          lives_free(title);
+          lives_free(xtrabit);
+        }
 
-	// needed
-	if (mainw->multitrack==NULL) {
-	  block_expose();
-	  mainw->noswitch=TRUE;
-	  lives_widget_context_update();
-	  mainw->noswitch=FALSE;
-	  unblock_expose();
-	}
-	else {
-	  // this doesn't get called if we don't call resize_play_window()
-	  if (mainw->play_window!=NULL) {
-	    lives_window_present (LIVES_WINDOW (mainw->play_window));
-	    lives_xwindow_raise(lives_widget_get_xwindow(mainw->play_window));
-	  }
-	}
+        // needed
+        if (mainw->multitrack==NULL) {
+          block_expose();
+          mainw->noswitch=TRUE;
+          lives_widget_context_update();
+          mainw->noswitch=FALSE;
+          unblock_expose();
+        } else {
+          // this doesn't get called if we don't call resize_play_window()
+          if (mainw->play_window!=NULL) {
+            lives_window_present(LIVES_WINDOW(mainw->play_window));
+            lives_xwindow_raise(lives_widget_get_xwindow(mainw->play_window));
+          }
+        }
       }
     }
 
     if (mainw->play_window!=NULL) {
-      hide_cursor (lives_widget_get_xwindow(mainw->play_window));
+      hide_cursor(lives_widget_get_xwindow(mainw->play_window));
       lives_widget_set_app_paintable(mainw->play_window,TRUE);
-      if (mainw->vpp!=NULL&&!(mainw->vpp->capabilities&VPP_LOCAL_DISPLAY)&&mainw->fs) 
-	lives_window_set_title (LIVES_WINDOW (mainw->play_window),_("LiVES: - Streaming"));
+      if (mainw->vpp!=NULL&&!(mainw->vpp->capabilities&VPP_LOCAL_DISPLAY)&&mainw->fs)
+        lives_window_set_title(LIVES_WINDOW(mainw->play_window),_("LiVES: - Streaming"));
       else {
-	char *title,*xtrabit;
-	if (mainw->sepwin_scale!=100.) xtrabit=lives_strdup_printf(_(" (%d %% scale)"),(int)mainw->sepwin_scale);
-	else xtrabit=lives_strdup("");
-	title=lives_strdup_printf(_("LiVES: - Play Window%s"),xtrabit);
-	lives_window_set_title (LIVES_WINDOW (mainw->play_window), title);
-	lives_free(title);
-	lives_free(xtrabit);
+        char *title,*xtrabit;
+        if (mainw->sepwin_scale!=100.) xtrabit=lives_strdup_printf(_(" (%d %% scale)"),(int)mainw->sepwin_scale);
+        else xtrabit=lives_strdup("");
+        title=lives_strdup_printf(_("LiVES: - Play Window%s"),xtrabit);
+        lives_window_set_title(LIVES_WINDOW(mainw->play_window), title);
+        lives_free(title);
+        lives_free(xtrabit);
       }
     }
-  
+
     if (!mainw->foreign&&!mainw->sep_win) {
       hide_cursor(lives_widget_get_xwindow(mainw->playarea));
     }
-    
+
     // pwidth and pheight are playback width and height
     if (!mainw->sep_win&&!mainw->foreign) {
       do {
-	mainw->pwidth=lives_widget_get_allocation_width(mainw->playframe)-H_RESIZE_ADJUST;
-	mainw->pheight=lives_widget_get_allocation_height(mainw->playframe)-V_RESIZE_ADJUST;
-	if (mainw->pwidth*mainw->pheight==0) {
-	  lives_widget_queue_draw (mainw->playframe);
-	  mainw->noswitch=TRUE;
-	  lives_widget_context_update();
-	  mainw->noswitch=FALSE;
-	}
+        mainw->pwidth=lives_widget_get_allocation_width(mainw->playframe)-H_RESIZE_ADJUST;
+        mainw->pheight=lives_widget_get_allocation_height(mainw->playframe)-V_RESIZE_ADJUST;
+        if (mainw->pwidth*mainw->pheight==0) {
+          lives_widget_queue_draw(mainw->playframe);
+          mainw->noswitch=TRUE;
+          lives_widget_context_update();
+          mainw->noswitch=FALSE;
+        }
       } while (mainw->pwidth*mainw->pheight==0);
       // double size
       if (mainw->double_size) {
-	frame_size_update();
+        frame_size_update();
       }
     }
 
     if (mainw->vpp!=NULL&&mainw->vpp->fheight>-1&&mainw->vpp->fwidth>-1) {
       // fixed o/p size for stream
       if (!(mainw->vpp->fwidth*mainw->vpp->fheight)) {
-	mainw->vpp->fwidth=cfile->hsize;
-	mainw->vpp->fheight=cfile->vsize;
+        mainw->vpp->fwidth=cfile->hsize;
+        mainw->vpp->fheight=cfile->vsize;
       }
       mainw->pwidth=mainw->vpp->fwidth;
       mainw->pheight=mainw->vpp->fheight;
     }
-    
+
     if (mainw->fs&&!mainw->sep_win&&cfile->frames>0) {
       fullscreen_internal();
     }
@@ -2552,33 +2521,31 @@ void play_file (void) {
 
   // moved down because xdg-screensaver requires a mapped windowID
   if (prefs->stop_screensaver) {
-    lives_free (com2);
+    lives_free(com2);
     com2=NULL;
 #ifdef GDK_WINDOWING_X11
     if (!prefs->show_gui&&prefs->show_playwin&&mainw->play_window!=NULL) {
       awinid=lives_widget_get_xwinid(mainw->play_window,NULL);
-    }
-    else if (prefs->show_gui) {
+    } else if (prefs->show_gui) {
       if (mainw->multitrack!=NULL) {
-	awinid=lives_widget_get_xwinid(mainw->multitrack->window,NULL);
-      }
-      else if (mainw->LiVES!=NULL) {
-	awinid=lives_widget_get_xwinid(mainw->LiVES,NULL);
+        awinid=lives_widget_get_xwinid(mainw->multitrack->window,NULL);
+      } else if (mainw->LiVES!=NULL) {
+        awinid=lives_widget_get_xwinid(mainw->LiVES,NULL);
       }
     }
 
     com2=lives_strdup("xset s off 2>/dev/null; xset -dpms 2>/dev/null ;");
-    
+
     if (capable->has_gconftool_2) {
       char *xnew=lives_strdup(" gconftool-2 --set --type bool /apps/gnome-screensaver/idle_activation_enabled false 2>/dev/null ;");
-      tmp=lives_strconcat (com2,xnew,NULL);
+      tmp=lives_strconcat(com2,xnew,NULL);
       lives_free(com2);
       lives_free(xnew);
       com2=tmp;
     }
     if (capable->has_xdg_screensaver&&awinid!=-1) {
       char *xnew=lives_strdup_printf(" xdg-screensaver suspend %"PRIu64" 2>/dev/null ;",awinid);
-      tmp=lives_strconcat (com2,xnew,NULL);
+      tmp=lives_strconcat(com2,xnew,NULL);
       lives_free(com2);
       lives_free(xnew);
       com2=tmp;
@@ -2586,38 +2553,39 @@ void play_file (void) {
 #else
     if (capable->has_gconftool_2) {
       com2=lives_strdup("gconftool-2 --set --type bool /apps/gnome-screensaver/idle_activation_enabled false 2>/dev/null ;");
-    }
-    else com2=lives_strdup("");
+    } else com2=lives_strdup("");
 #endif
     if (com2==NULL) com2=lives_strdup("");
   }
 
 
   if (!mainw->foreign&&prefs->midisynch&&!mainw->preview) {
-    lives_free (com3);
-    com3=lives_strdup  ("midistart");
+    lives_free(com3);
+    com3=lives_strdup("midistart");
   }
-  com=lives_strconcat (com2,com3,NULL);
-  if (strlen (com)) {
+  com=lives_strconcat(com2,com3,NULL);
+  if (strlen(com)) {
     // allow this to fail - not all sub-commands may be present
-    lives_system (com,TRUE);
+    lives_system(com,TRUE);
   }
-  lives_free (com); lives_free (com2); lives_free (com3);
-  com3=lives_strdup (" ");
+  lives_free(com);
+  lives_free(com2);
+  lives_free(com3);
+  com3=lives_strdup(" ");
   com2=NULL;
   com=NULL;
 
 
 
   lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_pb_fps),cfile->pb_fps);
-    
+
   mainw->last_blend_file=-1;
 
   // show the framebar
   if (mainw->multitrack==NULL&&(prefs->show_framecount&&
-				(!mainw->fs||(prefs->gui_monitor!=prefs->play_monitor&&mainw->sep_win!=0)||
-				 (mainw->vpp!=NULL&&mainw->sep_win&&!(mainw->vpp->capabilities&VPP_LOCAL_DISPLAY)))&&
-				((!mainw->preview&&(cfile->frames>0||mainw->foreign))||cfile->opening))) {
+                                (!mainw->fs||(prefs->gui_monitor!=prefs->play_monitor&&mainw->sep_win!=0)||
+                                 (mainw->vpp!=NULL&&mainw->sep_win&&!(mainw->vpp->capabilities&VPP_LOCAL_DISPLAY)))&&
+                                ((!mainw->preview&&(cfile->frames>0||mainw->foreign))||cfile->opening))) {
     lives_widget_show(mainw->framebar);
   }
 
@@ -2630,8 +2598,8 @@ void play_file (void) {
   if (!mainw->preview&&!mainw->is_rendering&&!mainw->foreign) weed_reinit_all();
 
   if (!mainw->foreign&&(!(prefs->audio_src==AUDIO_SRC_EXT&&
-			((audio_player==AUD_PLAYER_JACK) ||
-			 (audio_player==AUD_PLAYER_PULSE))))) {
+                          ((audio_player==AUD_PLAYER_JACK) ||
+                           (audio_player==AUD_PLAYER_PULSE))))) {
     cfile->aseek_pos=(long)((double)(mainw->play_start-1.)/cfile->fps*cfile->arate)*cfile->achans*(cfile->asampsize/8);
 
     // start up our audio player (jack or pulse)
@@ -2639,38 +2607,36 @@ void play_file (void) {
 #ifdef ENABLE_JACK
       if (mainw->jackd!=NULL) jack_aud_pb_ready(mainw->current_file);
 #endif
-    }
-    else if (audio_player==AUD_PLAYER_PULSE) {
+    } else if (audio_player==AUD_PLAYER_PULSE) {
 #ifdef HAVE_PULSE_AUDIO
       if (mainw->pulsed!=NULL) pulse_aud_pb_ready(mainw->current_file);
 #endif
-    }
-    else if (cfile->achans>0) {
+    } else if (cfile->achans>0) {
       // sox or mplayer audio - run as background process
 
       if (mainw->loop_cont) {
-	// tell audio to loop forever
-	loop=-1;
+        // tell audio to loop forever
+        loop=-1;
       }
 
       stfile=lives_build_filename(prefs->tmpdir,cfile->handle,".stoploop",NULL);
-      unlink (stfile);
-    
+      unlink(stfile);
+
       if (cfile->achans>0||(!cfile->is_loaded&&!mainw->is_generating)) {
-	if (loop) {
-	  lives_free (com3);
+        if (loop) {
+          lives_free(com3);
 #ifndef IS_MINGW
-	  com3=lives_strdup_printf ("/bin/touch \"%s\" 2>/dev/null;",stfile);
+          com3=lives_strdup_printf("/bin/touch \"%s\" 2>/dev/null;",stfile);
 #else
-	  com3=lives_strdup_printf ("touch.exe \"%s\" 2>NUL;",stfile);
+          com3=lives_strdup_printf("touch.exe \"%s\" 2>NUL;",stfile);
 #endif
-	}
-	
-	if (cfile->achans>0) {
-	  com2=lives_strdup_printf("%s stop_audio %s",prefs->backend_sync,cfile->handle);
-	}
-    
-	stopcom=lives_strconcat (com3,com2,NULL);
+        }
+
+        if (cfile->achans>0) {
+          com2=lives_strdup_printf("%s stop_audio %s",prefs->backend_sync,cfile->handle);
+        }
+
+        stopcom=lives_strconcat(com3,com2,NULL);
       }
 
       lives_free(stfile);
@@ -2688,21 +2654,20 @@ void play_file (void) {
       // PLAY
 
       if (cfile->clip_type==CLIP_TYPE_DISK&&cfile->opening) {
-	  com=lives_strdup_printf("%s play_opening_preview \"%s\" %.3f %d %d %d %d %d %d %d %d",prefs->backend,
-			      cfile->handle,cfile->fps,mainw->audio_start,audio_end,0,
-			      arate,cfile->achans,cfile->asampsize,asigned,aendian);
-      }
-      else {
-	// this is only used now for sox or mplayer audio player
-	com=lives_strdup_printf("%s play %s %.3f %d %d %d %d %d %d %d %d",prefs->backend,cfile->handle,
-			    cfile->fps,mainw->audio_start,audio_end,loop,
-			    arate,cfile->achans,cfile->asampsize,asigned,aendian);
+        com=lives_strdup_printf("%s play_opening_preview \"%s\" %.3f %d %d %d %d %d %d %d %d",prefs->backend,
+                                cfile->handle,cfile->fps,mainw->audio_start,audio_end,0,
+                                arate,cfile->achans,cfile->asampsize,asigned,aendian);
+      } else {
+        // this is only used now for sox or mplayer audio player
+        com=lives_strdup_printf("%s play %s %.3f %d %d %d %d %d %d %d %d",prefs->backend,cfile->handle,
+                                cfile->fps,mainw->audio_start,audio_end,loop,
+                                arate,cfile->achans,cfile->asampsize,asigned,aendian);
       }
       if (mainw->multitrack==NULL&&com!=NULL) lives_system(com,FALSE);
     }
   }
 
-  lives_free (com3);
+  lives_free(com3);
 
   // if recording, set up recorder (jack or pulse)
   if (!mainw->foreign&&!mainw->preview&&(prefs->audio_src==AUDIO_SRC_EXT||(mainw->record&&mainw->agen_key!=0))&&
@@ -2713,28 +2678,27 @@ void play_file (void) {
       // creat temp clip
       open_ascrap_file();
       if (mainw->ascrap_file!=-1) {
-	
-	mainw->rec_aclip=mainw->ascrap_file;
-	mainw->rec_avel=1.;
-	mainw->rec_aseek=0;
+
+        mainw->rec_aclip=mainw->ascrap_file;
+        mainw->rec_avel=1.;
+        mainw->rec_aseek=0;
       }
     }
     if (audio_player==AUD_PLAYER_JACK) {
 #ifdef ENABLE_JACK
       if (prefs->audio_src==AUDIO_SRC_EXT&&mainw->jackd!=NULL) {
-	if (mainw->agen_key!=0) {
-	  mainw->jackd->playing_file=mainw->current_file;
-	  mainw->jackd->frames_written=0;
-	  mainw->jackd->in_use=TRUE;
-	  if (mainw->ascrap_file!=-1 || !prefs->perm_audio_reader) 
-	    jack_rec_audio_to_clip(mainw->ascrap_file, -1, RECA_GENERATED);
-	  mainw->jackd_read->in_use=TRUE;
-	}
-	else {
-	  if (mainw->ascrap_file!=-1 || !prefs->perm_audio_reader) 
-	    jack_rec_audio_to_clip(mainw->ascrap_file, -1, RECA_EXTERNAL);
-	  mainw->jackd_read->in_use=TRUE;
-	}
+        if (mainw->agen_key!=0) {
+          mainw->jackd->playing_file=mainw->current_file;
+          mainw->jackd->frames_written=0;
+          mainw->jackd->in_use=TRUE;
+          if (mainw->ascrap_file!=-1 || !prefs->perm_audio_reader)
+            jack_rec_audio_to_clip(mainw->ascrap_file, -1, RECA_GENERATED);
+          mainw->jackd_read->in_use=TRUE;
+        } else {
+          if (mainw->ascrap_file!=-1 || !prefs->perm_audio_reader)
+            jack_rec_audio_to_clip(mainw->ascrap_file, -1, RECA_EXTERNAL);
+          mainw->jackd_read->in_use=TRUE;
+        }
       }
       mainw->jackd->frames_written=0;
 #endif
@@ -2742,19 +2706,18 @@ void play_file (void) {
     if (audio_player==AUD_PLAYER_PULSE) {
 #ifdef HAVE_PULSE_AUDIO
       if (prefs->audio_src==AUDIO_SRC_EXT&&mainw->pulsed!=NULL) {
-	if (mainw->agen_key!=0) {
-	  mainw->pulsed->playing_file=mainw->current_file;
-	  mainw->pulsed->frames_written=0;
-	  mainw->pulsed->in_use=TRUE;
-	  if (mainw->ascrap_file!=-1 || !prefs->perm_audio_reader) 
-	    pulse_rec_audio_to_clip(mainw->ascrap_file, -1, RECA_GENERATED);
-	  mainw->pulsed_read->in_use=TRUE;
-	}
-	else {
-	  if (mainw->ascrap_file!=-1 || !prefs->perm_audio_reader) 
-	    pulse_rec_audio_to_clip(mainw->ascrap_file, -1, RECA_EXTERNAL);
-	  mainw->pulsed_read->in_use=TRUE;
-	}
+        if (mainw->agen_key!=0) {
+          mainw->pulsed->playing_file=mainw->current_file;
+          mainw->pulsed->frames_written=0;
+          mainw->pulsed->in_use=TRUE;
+          if (mainw->ascrap_file!=-1 || !prefs->perm_audio_reader)
+            pulse_rec_audio_to_clip(mainw->ascrap_file, -1, RECA_GENERATED);
+          mainw->pulsed_read->in_use=TRUE;
+        } else {
+          if (mainw->ascrap_file!=-1 || !prefs->perm_audio_reader)
+            pulse_rec_audio_to_clip(mainw->ascrap_file, -1, RECA_EXTERNAL);
+          mainw->pulsed_read->in_use=TRUE;
+        }
       }
       mainw->pulsed->frames_written=0;
 #endif
@@ -2769,27 +2732,27 @@ void play_file (void) {
   if (mainw->foreign||weed_playback_gen_start()) {
 
     lives_notify(LIVES_OSC_NOTIFY_PLAYBACK_STARTED,"");
-    
+
 #ifdef ENABLE_JACK
     if (mainw->event_list!=NULL&&!mainw->record&&audio_player==AUD_PLAYER_JACK&&mainw->jackd!=NULL&&
-	!(mainw->preview&&mainw->is_processing&&
-	  !(mainw->multitrack!=NULL&&mainw->preview&&mainw->multitrack->is_rendering))) {
+        !(mainw->preview&&mainw->is_processing&&
+          !(mainw->multitrack!=NULL&&mainw->preview&&mainw->multitrack->is_rendering))) {
       // if playing an event list, we switch to audio memory buffer mode
       if (mainw->multitrack!=NULL) init_jack_audio_buffers(cfile->achans,cfile->arate,exact_preview);
       else init_jack_audio_buffers(DEFAULT_AUDIO_CHANS,DEFAULT_AUDIO_RATE,FALSE);
       has_audio_buffers=TRUE;
     }
-#endif    
+#endif
 #ifdef HAVE_PULSE_AUDIO
     if (mainw->event_list!=NULL&&!mainw->record&&audio_player==AUD_PLAYER_PULSE&&mainw->pulsed!=NULL&&
-	!(mainw->preview&&mainw->is_processing&&
-	  !(mainw->multitrack!=NULL&&mainw->preview&&mainw->multitrack->is_rendering))) {
+        !(mainw->preview&&mainw->is_processing&&
+          !(mainw->multitrack!=NULL&&mainw->preview&&mainw->multitrack->is_rendering))) {
       // if playing an event list, we switch to audio memory buffer mode
       if (mainw->multitrack!=NULL) init_pulse_audio_buffers(cfile->achans,cfile->arate,exact_preview);
       else init_pulse_audio_buffers(DEFAULT_AUDIO_CHANS,DEFAULT_AUDIO_RATE,FALSE);
       has_audio_buffers=TRUE;
     }
-#endif    
+#endif
 
     mainw->abufs_to_fill=0;
 
@@ -2798,139 +2761,138 @@ void play_file (void) {
       mainw->cancelled=CANCEL_NONE;
 
       if (mainw->event_list!=NULL&&!mainw->record) {
-	if (pb_start_event==NULL) pb_start_event=get_first_event(mainw->event_list);
+        if (pb_start_event==NULL) pb_start_event=get_first_event(mainw->event_list);
 
-	if (!(mainw->preview&&mainw->multitrack!=NULL&&mainw->multitrack->is_rendering))
-	  init_track_decoders();
+        if (!(mainw->preview&&mainw->multitrack!=NULL&&mainw->multitrack->is_rendering))
+          init_track_decoders();
 
-	if (has_audio_buffers) {
+        if (has_audio_buffers) {
 
 #ifdef ENABLE_JACK
-	  if (audio_player==AUD_PLAYER_JACK) {
-	    int i;
-	    mainw->write_abuf=0;
-	    
-	    // fill our audio buffers now
-	    // this will also get our effects state
+          if (audio_player==AUD_PLAYER_JACK) {
+            int i;
+            mainw->write_abuf=0;
 
-	    // reset because audio sync may have set it
-	    if (mainw->multitrack!=NULL) mainw->jackd->abufs[0]->arate=cfile->arate;
-	    fill_abuffer_from(mainw->jackd->abufs[0],mainw->event_list,pb_start_event,exact_preview);
-	    for (i=1;i<prefs->num_rtaudiobufs;i++) {
-	      // reset because audio sync may have set it
-	      if (mainw->multitrack!=NULL) mainw->jackd->abufs[i]->arate=cfile->arate;
-	      fill_abuffer_from(mainw->jackd->abufs[i],mainw->event_list,NULL,FALSE);
-	    }
-	    
-	    pthread_mutex_lock(&mainw->abuf_mutex);
-	    mainw->jackd->read_abuf=0;
-	    mainw->abufs_to_fill=0;
-	    pthread_mutex_unlock(&mainw->abuf_mutex);
-	    mainw->jackd->in_use=TRUE;
-	  }
+            // fill our audio buffers now
+            // this will also get our effects state
+
+            // reset because audio sync may have set it
+            if (mainw->multitrack!=NULL) mainw->jackd->abufs[0]->arate=cfile->arate;
+            fill_abuffer_from(mainw->jackd->abufs[0],mainw->event_list,pb_start_event,exact_preview);
+            for (i=1; i<prefs->num_rtaudiobufs; i++) {
+              // reset because audio sync may have set it
+              if (mainw->multitrack!=NULL) mainw->jackd->abufs[i]->arate=cfile->arate;
+              fill_abuffer_from(mainw->jackd->abufs[i],mainw->event_list,NULL,FALSE);
+            }
+
+            pthread_mutex_lock(&mainw->abuf_mutex);
+            mainw->jackd->read_abuf=0;
+            mainw->abufs_to_fill=0;
+            pthread_mutex_unlock(&mainw->abuf_mutex);
+            mainw->jackd->in_use=TRUE;
+          }
 #endif
 #ifdef HAVE_PULSE_AUDIO
-	  if (audio_player==AUD_PLAYER_PULSE) {
-	    int i;
-	    mainw->write_abuf=0;
-	    
-	    // fill our audio buffers now
-	    // this will also get our effects state
-	    fill_abuffer_from(mainw->pulsed->abufs[0],mainw->event_list,pb_start_event,exact_preview);
-	    for (i=1;i<prefs->num_rtaudiobufs;i++) {
-	      fill_abuffer_from(mainw->pulsed->abufs[i],mainw->event_list,NULL,FALSE);
-	    }
-	    
-	    pthread_mutex_lock(&mainw->abuf_mutex);
-	    mainw->pulsed->read_abuf=0;
-	    mainw->abufs_to_fill=0;
-	    pthread_mutex_unlock(&mainw->abuf_mutex);
-	    mainw->pulsed->in_use=TRUE;
-	    
-	  }
+          if (audio_player==AUD_PLAYER_PULSE) {
+            int i;
+            mainw->write_abuf=0;
+
+            // fill our audio buffers now
+            // this will also get our effects state
+            fill_abuffer_from(mainw->pulsed->abufs[0],mainw->event_list,pb_start_event,exact_preview);
+            for (i=1; i<prefs->num_rtaudiobufs; i++) {
+              fill_abuffer_from(mainw->pulsed->abufs[i],mainw->event_list,NULL,FALSE);
+            }
+
+            pthread_mutex_lock(&mainw->abuf_mutex);
+            mainw->pulsed->read_abuf=0;
+            mainw->abufs_to_fill=0;
+            pthread_mutex_unlock(&mainw->abuf_mutex);
+            mainw->pulsed->in_use=TRUE;
+
+          }
 #endif
-	  // let transport roll
-	  mainw->video_seek_ready=TRUE;
-	}
+          // let transport roll
+          mainw->video_seek_ready=TRUE;
+        }
 
       }
 
       if (mainw->multitrack==NULL||mainw->multitrack->pb_start_event==NULL) {
-	do_progress_dialog(FALSE,FALSE,NULL);
+        do_progress_dialog(FALSE,FALSE,NULL);
 
-	// reset audio buffers
+        // reset audio buffers
 #ifdef ENABLE_JACK
-	if (audio_player==AUD_PLAYER_JACK&&mainw->jackd!=NULL) {
-	  // must do this before deinit fx
-	  pthread_mutex_lock(&mainw->abuf_mutex);
-	  mainw->jackd->read_abuf=-1;
-	  pthread_mutex_unlock(&mainw->abuf_mutex);
-	}
+        if (audio_player==AUD_PLAYER_JACK&&mainw->jackd!=NULL) {
+          // must do this before deinit fx
+          pthread_mutex_lock(&mainw->abuf_mutex);
+          mainw->jackd->read_abuf=-1;
+          pthread_mutex_unlock(&mainw->abuf_mutex);
+        }
 #endif
 #ifdef HAVE_PULSE_AUDIO
-	if (audio_player==AUD_PLAYER_PULSE&&mainw->pulsed!=NULL) {
-	  // must do this before deinit fx
-	  pthread_mutex_lock(&mainw->abuf_mutex);
-	  mainw->pulsed->read_abuf=-1;
-	  pthread_mutex_unlock(&mainw->abuf_mutex);
-	}
+        if (audio_player==AUD_PLAYER_PULSE&&mainw->pulsed!=NULL) {
+          // must do this before deinit fx
+          pthread_mutex_lock(&mainw->abuf_mutex);
+          mainw->pulsed->read_abuf=-1;
+          pthread_mutex_unlock(&mainw->abuf_mutex);
+        }
 #endif
 
-      }
-      else {
-	// play from middle of mt timeline
-	cfile->next_event=mainw->multitrack->pb_start_event;
+      } else {
+        // play from middle of mt timeline
+        cfile->next_event=mainw->multitrack->pb_start_event;
 
-	if (!has_audio_buffers) {
-	  // no audio buffering
-	  // get just effects state
-	  get_audio_and_effects_state_at(mainw->multitrack->event_list,mainw->multitrack->pb_start_event,FALSE,
-					 mainw->multitrack->exact_preview);
-	}
+        if (!has_audio_buffers) {
+          // no audio buffering
+          // get just effects state
+          get_audio_and_effects_state_at(mainw->multitrack->event_list,mainw->multitrack->pb_start_event,FALSE,
+                                         mainw->multitrack->exact_preview);
+        }
 
-	do_progress_dialog(FALSE,FALSE,NULL);
+        do_progress_dialog(FALSE,FALSE,NULL);
 
-	// reset audio read buffers
+        // reset audio read buffers
 #ifdef ENABLE_JACK
-	if (audio_player==AUD_PLAYER_JACK&&mainw->jackd!=NULL) {
-	  // must do this before deinit fx
-	  pthread_mutex_lock(&mainw->abuf_mutex);
-	  mainw->jackd->read_abuf=-1;
-	  pthread_mutex_unlock(&mainw->abuf_mutex);
-	}
+        if (audio_player==AUD_PLAYER_JACK&&mainw->jackd!=NULL) {
+          // must do this before deinit fx
+          pthread_mutex_lock(&mainw->abuf_mutex);
+          mainw->jackd->read_abuf=-1;
+          pthread_mutex_unlock(&mainw->abuf_mutex);
+        }
 #endif
 #ifdef HAVE_PULSE_AUDIO
-	if (audio_player==AUD_PLAYER_PULSE&&mainw->pulsed!=NULL) {
-	  // must do this before deinit fx
-	  pthread_mutex_lock(&mainw->abuf_mutex);
-	  mainw->pulsed->read_abuf=-1;
-	  pthread_mutex_unlock(&mainw->abuf_mutex);
-	}
+        if (audio_player==AUD_PLAYER_PULSE&&mainw->pulsed!=NULL) {
+          // must do this before deinit fx
+          pthread_mutex_lock(&mainw->abuf_mutex);
+          mainw->pulsed->read_abuf=-1;
+          pthread_mutex_unlock(&mainw->abuf_mutex);
+        }
 #endif
 
-	// realtime effects off
-	deinit_render_effects();
+        // realtime effects off
+        deinit_render_effects();
 
-	cfile->next_event=NULL;
+        cfile->next_event=NULL;
 
-	if (!(mainw->preview&&mainw->multitrack!=NULL&&mainw->multitrack->is_rendering))
-	  free_track_decoders();
+        if (!(mainw->preview&&mainw->multitrack!=NULL&&mainw->multitrack->is_rendering))
+          free_track_decoders();
 
-	// multitrack loop - go back to loop start position unless external transport moved us
-	if (mainw->scratch==SCRATCH_NONE) {
-	  mainw->multitrack->pb_start_event=mainw->multitrack->pb_loop_event;
-	}
+        // multitrack loop - go back to loop start position unless external transport moved us
+        if (mainw->scratch==SCRATCH_NONE) {
+          mainw->multitrack->pb_start_event=mainw->multitrack->pb_loop_event;
+        }
       }
       if (mainw->multitrack!=NULL) pb_start_event=mainw->multitrack->pb_start_event;
     } while (mainw->multitrack!=NULL&&(mainw->loop_cont||mainw->scratch!=SCRATCH_NONE)&&
-	     (mainw->cancelled==CANCEL_NONE||mainw->cancelled==CANCEL_EVENT_LIST_END));
+             (mainw->cancelled==CANCEL_NONE||mainw->cancelled==CANCEL_EVENT_LIST_END));
 
   }
 
   mainw->osc_block=TRUE;
   mainw->rte_textparm=NULL;
   mainw->playing_file=-1;
-    
+
   // play completed
 
   mainw->video_seek_ready=FALSE;
@@ -2938,7 +2900,7 @@ void play_file (void) {
 #ifdef ENABLE_JACK
   if (audio_player==AUD_PLAYER_JACK&&(mainw->jackd!=NULL||mainw->jackd_read!=NULL)) {
 
-    if (mainw->jackd_read!=NULL||mainw->aud_rec_fd!=-1) 
+    if (mainw->jackd_read!=NULL||mainw->aud_rec_fd!=-1)
       jack_rec_audio_end(!(prefs->perm_audio_reader&&prefs->audio_src==AUDIO_SRC_EXT),TRUE);
 
     // send jack transport stop
@@ -2949,7 +2911,7 @@ void play_file (void) {
       boolean timeout;
       int alarm_handle=lives_alarm_set(LIVES_ACONNECT_TIMEOUT);
       while (!(timeout=lives_alarm_get(alarm_handle))&&jack_get_msgq(mainw->jackd)!=NULL) {
-	sched_yield(); // wait for seek
+        sched_yield(); // wait for seek
       }
       if (timeout) jack_try_reconnect();
       lives_alarm_clear(alarm_handle);
@@ -2965,46 +2927,44 @@ void play_file (void) {
       insert_audio_event_at(mainw->event_list,event,-1,1,0.,0.); // audio switch off
     }
 
-  }
-  else {
+  } else {
 #endif
 #ifdef HAVE_PULSE_AUDIO
     if (audio_player==AUD_PLAYER_PULSE&&(mainw->pulsed!=NULL||mainw->pulsed_read!=NULL)) {
 
-    if (mainw->pulsed_read!=NULL||mainw->aud_rec_fd!=-1) 
-      pulse_rec_audio_end(!(prefs->perm_audio_reader&&prefs->audio_src==AUDIO_SRC_EXT),TRUE);
+      if (mainw->pulsed_read!=NULL||mainw->aud_rec_fd!=-1)
+        pulse_rec_audio_end(!(prefs->perm_audio_reader&&prefs->audio_src==AUDIO_SRC_EXT),TRUE);
 
-    // tell pulse client to close audio file
-    if (mainw->pulsed!=NULL&&(mainw->pulsed->playing_file>0||mainw->pulsed->fd>0)) {
-      boolean timeout;
-      int alarm_handle=lives_alarm_set(LIVES_ACONNECT_TIMEOUT);
-      while (!(timeout=lives_alarm_get(alarm_handle))&&pulse_get_msgq(mainw->pulsed)!=NULL) {
-	sched_yield(); // wait for seek
+      // tell pulse client to close audio file
+      if (mainw->pulsed!=NULL&&(mainw->pulsed->playing_file>0||mainw->pulsed->fd>0)) {
+        boolean timeout;
+        int alarm_handle=lives_alarm_set(LIVES_ACONNECT_TIMEOUT);
+        while (!(timeout=lives_alarm_get(alarm_handle))&&pulse_get_msgq(mainw->pulsed)!=NULL) {
+          sched_yield(); // wait for seek
+        }
+        if (timeout) pulse_try_reconnect();
+        lives_alarm_clear(alarm_handle);
+
+        pulse_message.command=ASERVER_CMD_FILE_CLOSE;
+        pulse_message.data=NULL;
+        pulse_message.next=NULL;
+        mainw->pulsed->msgq=&pulse_message;
       }
-      if (timeout) pulse_try_reconnect();
-      lives_alarm_clear(alarm_handle);
+      if (mainw->record&&(prefs->rec_opts&REC_AUDIO)) {
+        weed_plant_t *event=get_last_frame_event(mainw->event_list);
+        insert_audio_event_at(mainw->event_list,event,-1,1,0.,0.); // audio switch off
+      }
 
-      pulse_message.command=ASERVER_CMD_FILE_CLOSE;
-      pulse_message.data=NULL;
-      pulse_message.next=NULL;
-      mainw->pulsed->msgq=&pulse_message;
-    }
-    if (mainw->record&&(prefs->rec_opts&REC_AUDIO)) {
-      weed_plant_t *event=get_last_frame_event(mainw->event_list);
-      insert_audio_event_at(mainw->event_list,event,-1,1,0.,0.); // audio switch off
-    }
-
-  }
-  else {
+    } else {
 #endif
-    if (!is_realtime_aplayer(audio_player)&&stopcom!=NULL) {
-      // kill sound(if still playing)
-      lives_system(stopcom,TRUE);
-      mainw->aud_file_to_kill=-1;
-      lives_free (stopcom);
-    }
+      if (!is_realtime_aplayer(audio_player)&&stopcom!=NULL) {
+        // kill sound(if still playing)
+        lives_system(stopcom,TRUE);
+        mainw->aud_file_to_kill=-1;
+        lives_free(stopcom);
+      }
 #ifdef ENABLE_JACK
-  }
+    }
 #endif
 #ifdef HAVE_PULSE_AUDIO
   }
@@ -3026,17 +2986,17 @@ void play_file (void) {
 
 #ifdef GDK_WINDOWING_X11
     com=lives_strdup("xset s on 2>/dev/null; xset +dpms 2>/dev/null ;");
-    
+
     if (capable->has_gconftool_2) {
       char *xnew=lives_strdup(" gconftool-2 --set --type bool /apps/gnome-screensaver/idle_activation_enabled true 2>/dev/null ;");
-      tmp=lives_strconcat (com,xnew,NULL);
+      tmp=lives_strconcat(com,xnew,NULL);
       lives_free(com);
       lives_free(xnew);
       com=tmp;
     }
     if (capable->has_xdg_screensaver&&awinid!=-1) {
       char *xnew=lives_strdup_printf(" xdg-screensaver resume %"PRIu64" 2>/dev/null ;",awinid);
-      tmp=lives_strconcat (com,xnew,NULL);
+      tmp=lives_strconcat(com,xnew,NULL);
       lives_free(com);
       lives_free(xnew);
       com=tmp;
@@ -3044,8 +3004,7 @@ void play_file (void) {
 #else
     if (capable->has_gconftool_2) {
       com=lives_strdup("gconftool-2 --set --type bool /apps/gnome-screensaver/idle_activation_enabled true 2>/dev/null ;");
-    }
-    else com=lives_strdup("");
+    } else com=lives_strdup("");
 #endif
     if (com!=NULL) {
       lives_system(com,TRUE);
@@ -3053,7 +3012,7 @@ void play_file (void) {
     }
   }
 
-  if (!mainw->foreign&&prefs->midisynch) lives_system ("midistop",TRUE);
+  if (!mainw->foreign&&prefs->midisynch) lives_system("midistop",TRUE);
 
   if (mainw->ext_playback) {
     vid_playback_plugin_exit();
@@ -3115,10 +3074,10 @@ void play_file (void) {
       if (mainw->sepwin_scale!=100.) xtrabit=lives_strdup_printf(_(" (%d %% scale)"),(int)mainw->sepwin_scale);
       else xtrabit=lives_strdup("");
       title=lives_strdup_printf("%s%s",lives_window_get_title(LIVES_WINDOW
-							      ((mainw->multitrack==NULL?mainw->LiVES:
-								mainw->multitrack->window))),xtrabit);
+                                ((mainw->multitrack==NULL?mainw->LiVES:
+                                  mainw->multitrack->window))),xtrabit);
       if (mainw->play_window!=NULL)
-	lives_window_set_title(LIVES_WINDOW(mainw->play_window),title);
+        lives_window_set_title(LIVES_WINDOW(mainw->play_window),title);
       lives_free(title);
       lives_free(xtrabit);
     }
@@ -3136,25 +3095,25 @@ void play_file (void) {
     lives_widget_show(mainw->eventbox4);
     lives_widget_show(mainw->sep_image);
     lives_frame_set_label(LIVES_FRAME(mainw->playframe),_("Preview"));
-    lives_container_set_border_width (LIVES_CONTAINER (mainw->playframe), widget_opts.border_width);
+    lives_container_set_border_width(LIVES_CONTAINER(mainw->playframe), widget_opts.border_width);
     resize(1);
     lives_widget_show(mainw->t_bckground);
     lives_widget_show(mainw->t_double);
   }
 
   if (prefs->show_gui&&(lives_widget_get_allocation_height(mainw->eventbox)+lives_widget_get_allocation_height(mainw->menubar)
-			>mainw->scr_height-2||lives_widget_get_allocation_width(mainw->LiVES)>mainw->scr_width-2)) {
+                        >mainw->scr_height-2||lives_widget_get_allocation_width(mainw->LiVES)>mainw->scr_width-2)) {
     int wx,wy;
     // the screen grew too much...remaximise it
-    lives_window_unmaximize (LIVES_WINDOW(mainw->LiVES));
+    lives_window_unmaximize(LIVES_WINDOW(mainw->LiVES));
     mainw->noswitch=TRUE;
     lives_widget_context_update();
     mainw->noswitch=FALSE;
-    lives_window_get_position (LIVES_WINDOW (mainw->LiVES),&wx,&wy);
+    lives_window_get_position(LIVES_WINDOW(mainw->LiVES),&wx,&wy);
     if (prefs->gui_monitor==0) lives_window_move(LIVES_WINDOW(mainw->LiVES),0,0);
-    lives_window_maximize (LIVES_WINDOW(mainw->LiVES));
+    lives_window_maximize(LIVES_WINDOW(mainw->LiVES));
   }
-  
+
   if (mainw->multitrack==NULL) {
     lives_widget_hide(mainw->playframe);
     lives_widget_show(mainw->frame1);
@@ -3162,8 +3121,8 @@ void play_file (void) {
     lives_widget_show(mainw->eventbox3);
     lives_widget_show(mainw->eventbox4);
     disable_record();
-    
-    lives_container_set_border_width (LIVES_CONTAINER (mainw->playframe), widget_opts.border_width);
+
+    lives_container_set_border_width(LIVES_CONTAINER(mainw->playframe), widget_opts.border_width);
   }
 
   if (!is_realtime_aplayer(audio_player)) mainw->mute=mute;
@@ -3172,14 +3131,14 @@ void play_file (void) {
     sensitize();
   }
   if (mainw->current_file>-1&&cfile->opening) {
-    lives_widget_set_sensitive (mainw->mute_audio, cfile->achans>0);
-    lives_widget_set_sensitive (mainw->loop_continue, TRUE);
-    lives_widget_set_sensitive (mainw->loop_video, cfile->achans>0&&cfile->frames>0);
+    lives_widget_set_sensitive(mainw->mute_audio, cfile->achans>0);
+    lives_widget_set_sensitive(mainw->loop_continue, TRUE);
+    lives_widget_set_sensitive(mainw->loop_video, cfile->achans>0&&cfile->frames>0);
   }
 
   if (mainw->cancelled!=CANCEL_USER_PAUSED) {
-    lives_widget_set_sensitive (mainw->stop, FALSE);
-    lives_widget_set_sensitive (mainw->m_stopbutton, FALSE);
+    lives_widget_set_sensitive(mainw->stop, FALSE);
+    lives_widget_set_sensitive(mainw->m_stopbutton, FALSE);
   }
 
   if (mainw->multitrack==NULL) {
@@ -3194,62 +3153,61 @@ void play_file (void) {
     lives_window_unfullscreen(LIVES_WINDOW(mainw->play_window));
     if (prefs->sepwin_type==SEPWIN_TYPE_NON_STICKY) {
       kill_play_window();
-    }
-    else {
+    } else {
       // or resize it back to single size
       if (mainw->current_file>-1&&cfile->is_loaded&&cfile->frames>0&&!mainw->is_rendering&&
-	  (cfile->clip_type!=CLIP_TYPE_GENERATOR)) {
-	if (mainw->preview_box==NULL) {
-	  // create the preview in the sepwin
-	  lives_signal_handler_disconnect (mainw->play_window, mainw->pw_scroll_func);
-	  make_preview_box();
-	}
-	if (mainw->current_file!=current_file) {
-	  // now we have to guess how to center the play window
-	  mainw->opwx=mainw->opwy=-1;
-	  mainw->preview_frame=0;
-	}
+          (cfile->clip_type!=CLIP_TYPE_GENERATOR)) {
+        if (mainw->preview_box==NULL) {
+          // create the preview in the sepwin
+          lives_signal_handler_disconnect(mainw->play_window, mainw->pw_scroll_func);
+          make_preview_box();
+        }
+        if (mainw->current_file!=current_file) {
+          // now we have to guess how to center the play window
+          mainw->opwx=mainw->opwy=-1;
+          mainw->preview_frame=0;
+        }
       }
 
       if (mainw->play_window!=NULL) {
-	if (mainw->multitrack==NULL) {
-	  mainw->playing_file=-2;
-	  resize_play_window();
-	  mainw->playing_file=-1;
+        if (mainw->multitrack==NULL) {
+          mainw->playing_file=-2;
+          resize_play_window();
+          mainw->playing_file=-1;
 
-	  if (mainw->sepwin_scale!=100.) xtrabit=lives_strdup_printf(_(" (%d %% scale)"),(int)mainw->sepwin_scale);
-	  else xtrabit=lives_strdup("");
-	  title=lives_strdup_printf("%s%s",lives_window_get_title(LIVES_WINDOW
-								  ((mainw->multitrack==NULL?mainw->LiVES:
-								    mainw->multitrack->window))),xtrabit);
-	  lives_window_set_title(LIVES_WINDOW(mainw->play_window),title);
-	  lives_free(title);
-	  lives_free(xtrabit);
+          if (mainw->sepwin_scale!=100.) xtrabit=lives_strdup_printf(_(" (%d %% scale)"),(int)mainw->sepwin_scale);
+          else xtrabit=lives_strdup("");
+          title=lives_strdup_printf("%s%s",lives_window_get_title(LIVES_WINDOW
+                                    ((mainw->multitrack==NULL?mainw->LiVES:
+                                      mainw->multitrack->window))),xtrabit);
+          lives_window_set_title(LIVES_WINDOW(mainw->play_window),title);
+          lives_free(title);
+          lives_free(xtrabit);
 
-	  lives_widget_queue_draw (mainw->LiVES);
-	  mainw->noswitch=TRUE;
+          lives_widget_queue_draw(mainw->LiVES);
+          mainw->noswitch=TRUE;
 
-	  lives_widget_context_update();
-	  if (mainw->play_window!=NULL) {
-	    char *title,*xtrabit;
-	    
-	    //load_preview_image(FALSE);
-	    
-	    mainw->noswitch=FALSE;
-	    if (mainw->sepwin_scale!=100.) xtrabit=lives_strdup_printf(_(" (%d %% scale)"),(int)mainw->sepwin_scale);
-	    else xtrabit=lives_strdup("");
-	    title=lives_strdup_printf("%s%s",lives_window_get_title(LIVES_WINDOW
-								    ((mainw->multitrack==NULL?mainw->LiVES:
-								      mainw->multitrack->window))),xtrabit);
-	    lives_window_set_title(LIVES_WINDOW(mainw->play_window),title);
-	    lives_free(title);
-	    lives_free(xtrabit);
+          lives_widget_context_update();
+          if (mainw->play_window!=NULL) {
+            char *title,*xtrabit;
 
-	    lives_window_present (LIVES_WINDOW (mainw->play_window));
-	    lives_xwindow_raise(lives_widget_get_xwindow(mainw->play_window));
-	    unhide_cursor (lives_widget_get_xwindow(mainw->play_window));
-	  }
-	}
+            //load_preview_image(FALSE);
+
+            mainw->noswitch=FALSE;
+            if (mainw->sepwin_scale!=100.) xtrabit=lives_strdup_printf(_(" (%d %% scale)"),(int)mainw->sepwin_scale);
+            else xtrabit=lives_strdup("");
+            title=lives_strdup_printf("%s%s",lives_window_get_title(LIVES_WINDOW
+                                      ((mainw->multitrack==NULL?mainw->LiVES:
+                                        mainw->multitrack->window))),xtrabit);
+            lives_window_set_title(LIVES_WINDOW(mainw->play_window),title);
+            lives_free(title);
+            lives_free(xtrabit);
+
+            lives_window_present(LIVES_WINDOW(mainw->play_window));
+            lives_xwindow_raise(lives_widget_get_xwindow(mainw->play_window));
+            unhide_cursor(lives_widget_get_xwindow(mainw->play_window));
+          }
+        }
       }
     }
 
@@ -3259,7 +3217,7 @@ void play_file (void) {
       mainw->frame_layer=NULL;
     }
   }
-  
+
   if (!mainw->foreign) {
     unhide_cursor(lives_widget_get_xwindow(mainw->playarea));
   }
@@ -3269,7 +3227,7 @@ void play_file (void) {
   if (mainw->blend_file!=-1&&mainw->blend_file!=mainw->current_file&&mainw->files[mainw->blend_file]!=NULL&&
       mainw->files[mainw->blend_file]->clip_type==CLIP_TYPE_GENERATOR) {
     int xcurrent_file=mainw->current_file;
-    weed_bg_generator_end ((weed_plant_t *)mainw->files[mainw->blend_file]->ext_src);
+    weed_bg_generator_end((weed_plant_t *)mainw->files[mainw->blend_file]->ext_src);
     mainw->current_file=xcurrent_file;
   }
 
@@ -3278,23 +3236,24 @@ void play_file (void) {
   mainw->audio_event=NULL;
 
   // disable the freeze key
-  lives_accel_group_disconnect (LIVES_ACCEL_GROUP (mainw->accel_group), freeze_closure);
-  
+  lives_accel_group_disconnect(LIVES_ACCEL_GROUP(mainw->accel_group), freeze_closure);
+
   if (mainw->multitrack==NULL) lives_widget_show(mainw->scrolledwindow);
 
   if (mainw->current_file>-1) {
     if (mainw->toy_type==LIVES_TOY_MAD_FRAMES&&!cfile->opening) {
-      load_start_image (cfile->start);
-      load_end_image (cfile->end);
+      load_start_image(cfile->start);
+      load_end_image(cfile->end);
     }
   }
   if (prefs->show_player_stats) {
     if (mainw->fps_measure>0.) {
-      d_print (_("Average FPS was %.4f\n"),mainw->fps_measure);
+      d_print(_("Average FPS was %.4f\n"),mainw->fps_measure);
     }
   }
   if (mainw->size_warn) {
-    do_error_dialog (_("\n\nSome frames in this clip are wrongly sized.\nYou should click on Tools--->Resize All\nand resize all frames to the current size.\n"));
+    do_error_dialog(
+      _("\n\nSome frames in this clip are wrongly sized.\nYou should click on Tools--->Resize All\nand resize all frames to the current size.\n"));
     mainw->size_warn=FALSE;
   }
   mainw->is_processing=mainw->preview;
@@ -3307,7 +3266,7 @@ void play_file (void) {
   }
 
   // TODO - can this be done earlier ?
-  if (mainw->cancelled==CANCEL_APP_QUIT) on_quit_activate (NULL,NULL);
+  if (mainw->cancelled==CANCEL_APP_QUIT) on_quit_activate(NULL,NULL);
 
   // end record performance
 
@@ -3319,7 +3278,7 @@ void play_file (void) {
       sched_yield(); // wait for seek
     }
     if (timeout) jack_try_reconnect();
-    
+
     lives_alarm_clear(alarm_handle);
 
     mainw->jackd->in_use=FALSE;
@@ -3339,11 +3298,11 @@ void play_file (void) {
     while (!(timeout=lives_alarm_get(alarm_handle))&&pulse_get_msgq(mainw->pulsed)!=NULL) {
       sched_yield(); // wait for seek
     }
-    
+
     if (timeout) pulse_try_reconnect();
-    
+
     lives_alarm_clear(alarm_handle);
-    
+
     mainw->pulsed->in_use=FALSE;
 
     if (has_audio_buffers) {
@@ -3366,7 +3325,7 @@ void play_file (void) {
     if (!mainw->preview&&cfile->clip_type==CLIP_TYPE_GENERATOR) {
       // just deinit the generator here, to possibly save CPU cycles
       mainw->osc_block=TRUE;
-      wge_inner ((weed_plant_t *)cfile->ext_src);
+      wge_inner((weed_plant_t *)cfile->ext_src);
       mainw->osc_block=FALSE;
     }
     deal_with_render_choice(TRUE);
@@ -3376,11 +3335,11 @@ void play_file (void) {
 
   if (!mainw->preview&&cfile->clip_type==CLIP_TYPE_GENERATOR) {
     mainw->osc_block=TRUE;
-    weed_generator_end ((weed_plant_t *)cfile->ext_src);
+    weed_generator_end((weed_plant_t *)cfile->ext_src);
     mainw->osc_block=FALSE;
     if (mainw->multitrack==NULL) {
-      if (mainw->files[current_file]!=NULL) switch_to_file (mainw->current_file,current_file);
-      else if (mainw->pre_src_file!=-1) switch_to_file (mainw->current_file,mainw->pre_src_file);
+      if (mainw->files[current_file]!=NULL) switch_to_file(mainw->current_file,current_file);
+      else if (mainw->pre_src_file!=-1) switch_to_file(mainw->current_file,mainw->pre_src_file);
     }
   }
 
@@ -3532,10 +3491,10 @@ void create_cfile(void) {
   memset(cfile->file_name,0,1);
   memset(cfile->save_file_name,0,1);
 
-  memset (cfile->comment,0,1);
-  memset (cfile->author,0,1);
-  memset (cfile->title,0,1);
-  memset (cfile->keywords,0,1);
+  memset(cfile->comment,0,1);
+  memset(cfile->author,0,1);
+  memset(cfile->title,0,1);
+  memset(cfile->keywords,0,1);
 
   cfile->signed_endian=AFORM_UNKNOWN;
   lives_snprintf(cfile->undo_text,32,"%s",_("_Undo"));
@@ -3549,7 +3508,7 @@ void create_cfile(void) {
 
   lives_snprintf(cfile->info_file,PATH_MAX,"%s",stfile);
   lives_free(stfile);
-  
+
   cfile->laudio_drawable=NULL;
   cfile->raudio_drawable=NULL;
 
@@ -3557,7 +3516,7 @@ void create_cfile(void) {
 }
 
 
-boolean get_new_handle (int index, const char *name) {
+boolean get_new_handle(int index, const char *name) {
   // here is where we first initialize for the clipboard
   // and for paste_as_new, and restore
   // pass in name as NULL or "" and it will be set with an untitled number
@@ -3569,7 +3528,7 @@ boolean get_new_handle (int index, const char *name) {
   int current_file=mainw->current_file;
   if (!get_temp_handle(index,TRUE)) return FALSE;
 
-  // note : don't need to update first_free_file for the clipboard 
+  // note : don't need to update first_free_file for the clipboard
   if (index!=0) {
     get_next_free_file();
   }
@@ -3577,8 +3536,7 @@ boolean get_new_handle (int index, const char *name) {
   if (name==NULL||!strlen(name)) {
     cfile->is_untitled=TRUE;
     xname=lives_strdup_printf(_("Untitled%d"),mainw->untitled_number++);
-  }
-  else xname=lives_strdup(name);
+  } else xname=lives_strdup(name);
 
   lives_snprintf(cfile->file_name,PATH_MAX,"%s",xname);
   lives_snprintf(cfile->name,256,"%s",xname);
@@ -3601,61 +3559,60 @@ boolean add_file_info(const char *check_handle, boolean aud_only) {
   char *test_fps_string1;
   char *test_fps_string2;
 
- 
+
   if (!strcmp(mainw->msg,"killed")) {
     get_frame_count(mainw->current_file);
     cfile->frames--; // just in case last frame is damaged
     reget_afilesize(mainw->current_file);
     d_print(_("%d frames are enough !\n"),cfile->frames);
-  }
-  else {
+  } else {
     if (check_handle!=NULL) {
       if (mainw->msg==NULL||get_token_count(mainw->msg,'|')==1) return FALSE;
 
       array=lives_strsplit(mainw->msg,"|",-1);
-    
+
       // sanity check handle against status file
       // (this should never happen...)
-    
+
       if (strcmp(check_handle,array[1])) {
-	LIVES_ERROR("Handle!=statusfile !");
-	mesg=lives_strdup_printf(_("\nError getting file info for clip %s.\nBad things may happen with this clip.\n"),
-			     check_handle);
-	do_error_dialog(mesg);
-	lives_free(mesg);
-	lives_strfreev(array);
-	return FALSE;
+        LIVES_ERROR("Handle!=statusfile !");
+        mesg=lives_strdup_printf(_("\nError getting file info for clip %s.\nBad things may happen with this clip.\n"),
+                                 check_handle);
+        do_error_dialog(mesg);
+        lives_free(mesg);
+        lives_strfreev(array);
+        return FALSE;
       }
-    
+
       if (!aud_only) {
-	cfile->frames=atoi(array[2]);
-	lives_snprintf(cfile->type,40,"%s",array[3]);
-	cfile->hsize=atoi(array[4]);
-	cfile->vsize=atoi(array[5]);
-	cfile->bpp=atoi(array[6]);
-	cfile->pb_fps=cfile->fps=lives_strtod(array[7],NULL);
-      
-	cfile->f_size=strtol(array[8],NULL,10);
+        cfile->frames=atoi(array[2]);
+        lives_snprintf(cfile->type,40,"%s",array[3]);
+        cfile->hsize=atoi(array[4]);
+        cfile->vsize=atoi(array[5]);
+        cfile->bpp=atoi(array[6]);
+        cfile->pb_fps=cfile->fps=lives_strtod(array[7],NULL);
+
+        cfile->f_size=strtol(array[8],NULL,10);
       }
 
       cfile->arps=cfile->arate=atoi(array[9]);
       cfile->achans=atoi(array[10]);
       cfile->asampsize=atoi(array[11]);
-      cfile->signed_endian=get_signed_endian(atoi (array[12]), atoi (array[13]));
+      cfile->signed_endian=get_signed_endian(atoi(array[12]), atoi(array[13]));
       cfile->afilesize=strtol(array[14],NULL,10);
-    
-      pieces=get_token_count (mainw->msg,'|');
-    
+
+      pieces=get_token_count(mainw->msg,'|');
+
       if (!strlen(cfile->title)&&pieces>14&&array[15]!=NULL) {
-	lives_snprintf (cfile->title,256,"%s",lives_strstrip(array[15]));
+        lives_snprintf(cfile->title,256,"%s",lives_strstrip(array[15]));
       }
       if (!strlen(cfile->author)&&pieces>15&&array[16]!=NULL) {
-	lives_snprintf (cfile->author,256,"%s",lives_strstrip(array[16]));
+        lives_snprintf(cfile->author,256,"%s",lives_strstrip(array[16]));
       }
       if (!strlen(cfile->comment)&&pieces>16&&array[17]!=NULL) {
-	lives_snprintf (cfile->comment,256,"%s",lives_strstrip(array[17]));
+        lives_snprintf(cfile->comment,256,"%s",lives_strstrip(array[17]));
       }
-    
+
       lives_strfreev(array);
     }
   }
@@ -3663,17 +3620,16 @@ boolean add_file_info(const char *check_handle, boolean aud_only) {
 
   if (aud_only) return TRUE;
 
-  test_fps_string1=lives_strdup_printf ("%.3f00000",cfile->fps);
-  test_fps_string2=lives_strdup_printf ("%.8f",cfile->fps);
+  test_fps_string1=lives_strdup_printf("%.3f00000",cfile->fps);
+  test_fps_string2=lives_strdup_printf("%.8f",cfile->fps);
 
-  if (strcmp (test_fps_string1,test_fps_string2)) {
+  if (strcmp(test_fps_string1,test_fps_string2)) {
     cfile->ratio_fps=TRUE;
-  }
-  else {
+  } else {
     cfile->ratio_fps=FALSE;
   }
-  lives_free (test_fps_string1);
-  lives_free (test_fps_string2);
+  lives_free(test_fps_string1);
+  lives_free(test_fps_string2);
 
   if (!mainw->save_with_sound) {
     cfile->arps=cfile->arate=cfile->achans=cfile->asampsize=0;
@@ -3686,9 +3642,8 @@ boolean add_file_info(const char *check_handle, boolean aud_only) {
       return FALSE;
     }
     cfile->start=cfile->end=cfile->undo_start=cfile->undo_end=0;
-  }
-  else {
-  // start with all selected
+  } else {
+    // start with all selected
     cfile->start=1;
     cfile->end=cfile->frames;
     cfile->undo_start=cfile->start;
@@ -3701,33 +3656,32 @@ boolean add_file_info(const char *check_handle, boolean aud_only) {
   // some files give us silly frame rates, even single frames...
   // fps of 1000. is used for some streams (i.e. play each frame as it is received)
   if (cfile->fps==0.||cfile->fps==1000.||(cfile->frames<2&&cfile->is_loaded)) {
-      double xduration=0.;
+    double xduration=0.;
 
-      if (cfile->ext_src!=NULL&&cfile->fps>0) {
-	  xduration=cfile->frames/cfile->fps;
-      }
+    if (cfile->ext_src!=NULL&&cfile->fps>0) {
+      xduration=cfile->frames/cfile->fps;
+    }
 
     if (!(cfile->afilesize*cfile->asampsize*cfile->arate*cfile->achans)||cfile->frames<2) {
       if (cfile->frames!=1) {
-      d_print(_("\nPlayback speed not found or invalid ! Using default fps of %.3f fps. \nDefault can be set in Tools | Preferences | Misc.\n"),
-	      prefs->default_fps);
+        d_print(_("\nPlayback speed not found or invalid ! Using default fps of %.3f fps. \nDefault can be set in Tools | Preferences | Misc.\n"),
+                prefs->default_fps);
       }
       cfile->pb_fps=cfile->fps=prefs->default_fps;
-    }
-    else {
+    } else {
       cfile->laudio_time=cfile->raudio_time=cfile->afilesize/cfile->asampsize*8./cfile->arate/cfile->achans;
       cfile->pb_fps=cfile->fps=1.*(int)(cfile->frames/cfile->laudio_time);
       if (cfile->fps>FPS_MAX||cfile->fps<1.) {
-	cfile->pb_fps=cfile->fps=prefs->default_fps;
+        cfile->pb_fps=cfile->fps=prefs->default_fps;
       }
       d_print(_("Playback speed was adjusted to %.3f frames per second to fit audio.\n"),cfile->fps);
     }
 
     if (xduration>0.) {
-	lives_clip_data_t *cdata=((lives_decoder_t *)cfile->ext_src)->cdata;
-	// we should not (!) do this, but we don t have proper handling for variable fps clips
-	cdata->nframes=cfile->frames=xduration*cfile->fps;
-	cdata->fps=cfile->fps;
+      lives_clip_data_t *cdata=((lives_decoder_t *)cfile->ext_src)->cdata;
+      // we should not (!) do this, but we don t have proper handling for variable fps clips
+      cdata->nframes=cfile->frames=xduration*cfile->fps;
+      cdata->fps=cfile->fps;
     }
 
   }
@@ -3738,33 +3692,31 @@ boolean add_file_info(const char *check_handle, boolean aud_only) {
 
   if (cfile->bpp==256) {
     mesg1=lives_strdup_printf(_("Frames=%d type=%s size=%dx%d *bpp=Greyscale* fps=%.3f\nAudio:"),cfile->frames,
-			      cfile->type,cfile->hsize,cfile->vsize,cfile->fps);
-  }
-  else {
+                              cfile->type,cfile->hsize,cfile->vsize,cfile->fps);
+  } else {
     if (cfile->bpp!=32) cfile->bpp=24; // assume RGB24  *** TODO - check
     mesg1=lives_strdup_printf(_("Frames=%d type=%s size=%dx%d bpp=%d fps=%.3f\nAudio:"),cfile->frames,
-			      cfile->type,cfile->hsize,cfile->vsize,cfile->bpp,cfile->fps);
+                              cfile->type,cfile->hsize,cfile->vsize,cfile->bpp,cfile->fps);
   }
 
   if (cfile->achans==0) {
-    mesg=lives_strdup_printf (_("%s none\n"),mesg1);
-  }
-  else {
+    mesg=lives_strdup_printf(_("%s none\n"),mesg1);
+  } else {
     mesg=lives_strdup_printf(P_("%s %d Hz %d channel %d bps\n","%s %d Hz %d channels %d bps\n",cfile->achans),
-			 mesg1,cfile->arate,cfile->achans,cfile->asampsize);
+                             mesg1,cfile->arate,cfile->achans,cfile->asampsize);
   }
   d_print(mesg);
   lives_free(mesg1);
   lives_free(mesg);
 
   // get the author,title,comments
-  if (strlen (cfile->author)) {
+  if (strlen(cfile->author)) {
     d_print(_(" - Author: %s\n"),cfile->author);
   }
-  if (strlen (cfile->title)) {
+  if (strlen(cfile->title)) {
     d_print(_(" - Title: %s\n"),cfile->title);
   }
-  if (strlen (cfile->comment)) {
+  if (strlen(cfile->comment)) {
     d_print(_(" - Comment: %s\n"),cfile->comment);
   }
 
@@ -3772,14 +3724,14 @@ boolean add_file_info(const char *check_handle, boolean aud_only) {
 }
 
 
-boolean save_file_comments (int fileno) {
+boolean save_file_comments(int fileno) {
   // save the comments etc for smogrify
   int retval;
   int comment_fd;
-  char *comment_file=lives_strdup_printf ("%s/%s/.comment",prefs->tmpdir,cfile->handle);
+  char *comment_file=lives_strdup_printf("%s/%s/.comment",prefs->tmpdir,cfile->handle);
   lives_clip_t *sfile=mainw->files[fileno];
 
-  unlink (comment_file);
+  unlink(comment_file);
 
   do {
     retval=0;
@@ -3787,24 +3739,23 @@ boolean save_file_comments (int fileno) {
     if (comment_fd<0) {
       mainw->write_failed=TRUE;
       retval=do_write_failed_error_s_with_retry(comment_file,lives_strerror(errno),NULL);
-    }
-    else {
+    } else {
       mainw->write_failed=FALSE;
-      lives_write(comment_fd,sfile->title,strlen (sfile->title),TRUE);
+      lives_write(comment_fd,sfile->title,strlen(sfile->title),TRUE);
       lives_write(comment_fd,"||%",3,TRUE);
-      lives_write(comment_fd,sfile->author,strlen (sfile->author),TRUE);
+      lives_write(comment_fd,sfile->author,strlen(sfile->author),TRUE);
       lives_write(comment_fd,"||%",3,TRUE);
-      lives_write(comment_fd,sfile->comment,strlen (sfile->comment),TRUE);
-      
-      close (comment_fd);
-      
+      lives_write(comment_fd,sfile->comment,strlen(sfile->comment),TRUE);
+
+      close(comment_fd);
+
       if (mainw->write_failed) {
-	retval=do_write_failed_error_s_with_retry(comment_file,NULL,NULL);
+        retval=do_write_failed_error_s_with_retry(comment_file,NULL,NULL);
       }
     }
   } while (retval==LIVES_RESPONSE_RETRY);
 
-  lives_free (comment_file);
+  lives_free(comment_file);
 
   if (mainw->write_failed) return FALSE;
 
@@ -3816,7 +3767,7 @@ boolean save_file_comments (int fileno) {
 
 
 void
-wait_for_stop (const char *stop_command) {
+wait_for_stop(const char *stop_command) {
   FILE *infofile;
 
   // only used for audio player mplayer or audio player sox
@@ -3826,7 +3777,7 @@ wait_for_stop (const char *stop_command) {
 
   double time_waited=0.;
   boolean sent_second_stop=FALSE;
-  
+
   // send another stop if necessary
   mainw->noswitch=TRUE;
   while (!(infofile=fopen(cfile->info_file,"r"))) {
@@ -3837,7 +3788,7 @@ wait_for_stop (const char *stop_command) {
       lives_system(stop_command,TRUE);
       sent_second_stop=TRUE;
     }
-    
+
     if (time_waited>STOP_GIVE_UP_TIME) {
       // give up waiting, but send a last try...
       lives_system(stop_command,TRUE);
@@ -3845,7 +3796,7 @@ wait_for_stop (const char *stop_command) {
     }
   }
   mainw->noswitch=FALSE;
-  if (infofile) fclose (infofile);
+  if (infofile) fclose(infofile);
 }
 
 
@@ -3862,36 +3813,35 @@ boolean save_frame_inner(int clip, int frame, const char *file_name, int width, 
 
   if (!from_osc&&strrchr(file_name,'.')==NULL) {
     lives_snprintf(full_file_name,PATH_MAX,"%s.%s",file_name,get_image_ext_for_type(sfile->img_type));
-  }
-  else {
+  } else {
     lives_snprintf(full_file_name,PATH_MAX,"%s",file_name);
     if (!allow_over) allow_over=TRUE;
   }
 
   // TODO - allow overwriting in sandbox
-  if (from_osc&&lives_file_test (full_file_name, LIVES_FILE_TEST_EXISTS)) return FALSE;
+  if (from_osc&&lives_file_test(full_file_name, LIVES_FILE_TEST_EXISTS)) return FALSE;
 
   if (!check_file(full_file_name,!allow_over)) return FALSE;
 
-  tmp=lives_filename_from_utf8 (full_file_name,-1,NULL,NULL,NULL);
+  tmp=lives_filename_from_utf8(full_file_name,-1,NULL,NULL,NULL);
 
   if (mainw->multitrack==NULL) {
     d_print(_("Saving frame %d as %s..."),frame,full_file_name);
-    
+
     if (sfile->clip_type==CLIP_TYPE_FILE) {
       boolean resb=virtual_to_images(clip,frame,frame,FALSE,NULL);
       if (!resb) {
-	d_print_file_error_failed();
-	return FALSE;
+        d_print_file_error_failed();
+        return FALSE;
       }
     }
 
     com=lives_strdup_printf("%s save_frame %s %d %s %d %d",prefs->backend_sync,sfile->handle,
-			frame,tmp,width,height);
+                            frame,tmp,width,height);
     result=lives_system(com,FALSE);
     lives_free(com);
     lives_free(tmp);
-    
+
     if (result==256) {
       d_print_file_error_failed();
       do_file_perm_error(full_file_name);
@@ -3902,8 +3852,7 @@ boolean save_frame_inner(int clip, int frame, const char *file_name, int width, 
       d_print_done();
       return TRUE;
     }
-  }
-  else {
+  } else {
     // multitrack mode
     LiVESError *gerr=NULL;
     LiVESPixbuf *pixbuf;
@@ -3922,9 +3871,9 @@ boolean save_frame_inner(int clip, int frame, const char *file_name, int width, 
       else if (sfile->img_type==IMG_TYPE_PNG) lives_pixbuf_save(pixbuf, tmp, IMG_TYPE_PNG, 100, FALSE, &gerr);
 
       if (gerr!=NULL) {
-	retval=do_write_failed_error_s_with_retry(full_file_name,gerr->message,NULL);
-	lives_error_free(gerr);
-	gerr=NULL;
+        retval=do_write_failed_error_s_with_retry(full_file_name,gerr->message,NULL);
+        lives_error_free(gerr);
+        gerr=NULL;
       }
 
     } while (retval==LIVES_RESPONSE_RETRY);
@@ -3956,8 +3905,7 @@ void backup_file(int clip, int start, int end, const char *file_name) {
   if (strrchr(file_name,'.')==NULL) {
     lives_snprintf(full_file_name,PATH_MAX,"%s.lv1",file_name);
     allow_over=FALSE;
-   }
-  else {
+  } else {
     lives_snprintf(full_file_name,PATH_MAX,"%s",file_name);
     allow_over=TRUE;
   }
@@ -4004,12 +3952,12 @@ void backup_file(int clip, int start, int end, const char *file_name) {
   }
 
   com=lives_strdup_printf("%s backup %s %d %d %d %s",prefs->backend,sfile->handle,withsound,
-		      start,end,(tmp=lives_filename_from_utf8 (full_file_name,-1,NULL,NULL,NULL)));
+                          start,end,(tmp=lives_filename_from_utf8(full_file_name,-1,NULL,NULL,NULL)));
 
   // TODO
   mainw->current_file=clip;
 
-  unlink (cfile->info_file);
+  unlink(cfile->info_file);
   cfile->nopreview=TRUE;
   mainw->com_failed=FALSE;
   lives_system(com,FALSE);
@@ -4031,11 +3979,11 @@ void backup_file(int clip, int start, int end, const char *file_name) {
 
     // cancelled - clear up files
     cfile->nopreview=FALSE;
-    lives_free (com);
+    lives_free(com);
 
     // using restore details in the 'wrong' way here...it will also clear files
     com=lives_strdup_printf("%s restore_details %s",prefs->backend,cfile->handle);
-    unlink (cfile->info_file);
+    unlink(cfile->info_file);
 
     lives_system(com,FALSE);
     // auto-d
@@ -4071,7 +4019,7 @@ void backup_file(int clip, int start, int end, const char *file_name) {
     set_main_title(cfile->name,0);
     set_menu_text(sfile->menuentry,full_file_name,FALSE);
   }
-  add_to_recent (full_file_name,0.,0,NULL);
+  add_to_recent(full_file_name,0.,0,NULL);
 
   sfile->changed=FALSE;
   // set is_untitled to stop users from saving with a .lv1 extension
@@ -4080,7 +4028,7 @@ void backup_file(int clip, int start, int end, const char *file_name) {
 }
 
 
-boolean write_headers (lives_clip_t *file) {
+boolean write_headers(lives_clip_t *file) {
   // this function is included only for backwards compatibility with ancient builds of LiVES
   //
 
@@ -4096,10 +4044,9 @@ boolean write_headers (lives_clip_t *file) {
     header_fd=creat(hdrfile,S_IRUSR|S_IWUSR);
     if (header_fd<0) {
       retval=do_write_failed_error_s_with_retry(hdrfile,lives_strerror(errno),NULL);
-    }
-    else {
+    } else {
       mainw->write_failed=FALSE;
-      
+
       lives_write_le(header_fd,&cfile->bpp,4,TRUE);
       lives_write_le(header_fd,&cfile->fps,8,TRUE);
       lives_write_le(header_fd,&cfile->hsize,4,TRUE);
@@ -4110,12 +4057,12 @@ boolean write_headers (lives_clip_t *file) {
       lives_write_le(header_fd,&cfile->unique_id,8,TRUE);
       lives_write_le(header_fd,&cfile->achans,4,TRUE);
       lives_write_le(header_fd,&cfile->asampsize,4,TRUE);
-      
+
       lives_write(header_fd,LiVES_VERSION,strlen(LiVES_VERSION),TRUE);
       close(header_fd);
-      
+
       if (mainw->write_failed) retval=do_write_failed_error_s_with_retry(hdrfile,NULL,NULL);
-      
+
     }
   } while (retval==LIVES_RESPONSE_RETRY);
 
@@ -4129,19 +4076,18 @@ boolean write_headers (lives_clip_t *file) {
     do {
       retval=0;
       header_fd=creat(hdrfile,S_IRUSR|S_IWUSR);
-    
+
       if (header_fd<0) {
-	retval=do_write_failed_error_s_with_retry(hdrfile,lives_strerror(errno),NULL);
+        retval=do_write_failed_error_s_with_retry(hdrfile,lives_strerror(errno),NULL);
+      } else {
+        mainw->write_failed=FALSE;
+        lives_write_le(header_fd,&file->frames,4,TRUE);
+        lives_write(header_fd,&file->title,256,TRUE);
+        lives_write(header_fd,&file->author,256,TRUE);
+        lives_write(header_fd,&file->comment,256,TRUE);
+        close(header_fd);
       }
-      else {
-	mainw->write_failed=FALSE;
-	lives_write_le(header_fd,&file->frames,4,TRUE);
-	lives_write(header_fd,&file->title,256,TRUE);
-	lives_write(header_fd,&file->author,256,TRUE);
-	lives_write(header_fd,&file->comment,256,TRUE);
-	close(header_fd);
-      }
-      
+
       if (mainw->write_failed) retval=do_write_failed_error_s_with_retry(hdrfile,NULL,NULL);
     } while (retval==LIVES_RESPONSE_RETRY);
 
@@ -4195,192 +4141,188 @@ boolean read_headers(const char *file_name) {
 
       detail=CLIP_DETAILS_FRAMES;
       if (get_clip_value(mainw->current_file,detail,&cfile->frames,0)) {
-	int asigned,aendian;
-	char *tmp;
-	int alarm_handle;
+        int asigned,aendian;
+        char *tmp;
+        int alarm_handle;
 
-	// use new style header (LiVES 0.9.6+)
-	lives_free(old_hdrfile);
+        // use new style header (LiVES 0.9.6+)
+        lives_free(old_hdrfile);
 
-	// clean up and get file sizes
-	com=lives_strdup_printf("%s restore_details %s %s %d",prefs->backend_sync,cfile->handle,
-			    (tmp=lives_filename_from_utf8 (file_name,-1,NULL,NULL,NULL)),!strcmp (file_name,"."));
+        // clean up and get file sizes
+        com=lives_strdup_printf("%s restore_details %s %s %d",prefs->backend_sync,cfile->handle,
+                                (tmp=lives_filename_from_utf8(file_name,-1,NULL,NULL,NULL)),!strcmp(file_name,"."));
 
-	mainw->com_failed=FALSE;
-	lives_system(com,FALSE);
-	lives_free(com);
-	lives_free(tmp);
-     
-	if (mainw->com_failed) {
-	  mainw->com_failed=FALSE;
-	  return FALSE;
-	}
+        mainw->com_failed=FALSE;
+        lives_system(com,FALSE);
+        lives_free(com);
+        lives_free(tmp);
+
+        if (mainw->com_failed) {
+          mainw->com_failed=FALSE;
+          return FALSE;
+        }
 
 
-	do {
-	  retval2=0;
-	  timeout=FALSE;
-	  memset(buff,0,1);
+        do {
+          retval2=0;
+          timeout=FALSE;
+          memset(buff,0,1);
 
 #define LIVES_RESTORE_TIMEOUT  (30 * U_SEC) // 30 sec
 
-	  alarm_handle=lives_alarm_set(LIVES_RESTORE_TIMEOUT);
+          alarm_handle=lives_alarm_set(LIVES_RESTORE_TIMEOUT);
 
-	  while (!((infofile=fopen(cfile->info_file,"r")) || (timeout=lives_alarm_get(alarm_handle)))) {
-	    lives_usleep(prefs->sleep_time);
-	  }
-	  
-	  lives_alarm_clear(alarm_handle);
-	  
-	  if (!timeout) {
-	    mainw->read_failed=FALSE;
-	    lives_fgets(buff,1024,infofile);
-	    fclose(infofile);
-	  }
+          while (!((infofile=fopen(cfile->info_file,"r")) || (timeout=lives_alarm_get(alarm_handle)))) {
+            lives_usleep(prefs->sleep_time);
+          }
 
-	  if (timeout || mainw->read_failed) {
-	    retval2=do_read_failed_error_s_with_retry(cfile->info_file,NULL,NULL);
-	  }
-	} while (retval2==LIVES_RESPONSE_RETRY);
+          lives_alarm_clear(alarm_handle);
 
-	if (retval2==LIVES_RESPONSE_CANCEL) {
-	  return FALSE;
-	}
+          if (!timeout) {
+            mainw->read_failed=FALSE;
+            lives_fgets(buff,1024,infofile);
+            fclose(infofile);
+          }
 
-	pieces=get_token_count (buff,'|');
+          if (timeout || mainw->read_failed) {
+            retval2=do_read_failed_error_s_with_retry(cfile->info_file,NULL,NULL);
+          }
+        } while (retval2==LIVES_RESPONSE_RETRY);
 
-	if (pieces>3) {
-	  array=lives_strsplit(buff,"|",pieces);
-	
-	  cfile->f_size=strtol(array[1],NULL,10);
-	  cfile->afilesize=strtol(array[2],NULL,10);
-	  if (cfile->clip_type==CLIP_TYPE_DISK) {
-	    if (!strcmp(array[3],"jpg")) cfile->img_type=IMG_TYPE_JPEG;
-	    else cfile->img_type=IMG_TYPE_PNG;
-	  }
-	  lives_strfreev(array);
-	}
+        if (retval2==LIVES_RESPONSE_CANCEL) {
+          return FALSE;
+        }
 
-	threaded_dialog_spin();
+        pieces=get_token_count(buff,'|');
 
-	do {
-	  retval2=0;
-	  if (!cache_file_contents(lives_header)) {
-	    retval2=do_read_failed_error_s_with_retry(lives_header,NULL,NULL);
-	  }
-	} while (retval2==LIVES_RESPONSE_RETRY);
+        if (pieces>3) {
+          array=lives_strsplit(buff,"|",pieces);
 
-	lives_free(lives_header);
+          cfile->f_size=strtol(array[1],NULL,10);
+          cfile->afilesize=strtol(array[2],NULL,10);
+          if (cfile->clip_type==CLIP_TYPE_DISK) {
+            if (!strcmp(array[3],"jpg")) cfile->img_type=IMG_TYPE_JPEG;
+            else cfile->img_type=IMG_TYPE_PNG;
+          }
+          lives_strfreev(array);
+        }
 
-	threaded_dialog_spin();
+        threaded_dialog_spin();
 
-	detail=CLIP_DETAILS_HEADER_VERSION;
-	retval=get_clip_value(mainw->current_file,detail,&cfile->header_version,16);
-	if (retval) {
-	  detail=CLIP_DETAILS_BPP;
-	  retval=get_clip_value(mainw->current_file,detail,&cfile->bpp,0);
-	}
-	if (retval) {
-	  detail=CLIP_DETAILS_FPS;
-	  retval=get_clip_value(mainw->current_file,detail,&cfile->fps,0);
-	}
-	if (retval) {
-	  detail=CLIP_DETAILS_PB_FPS;
-	  retval=get_clip_value(mainw->current_file,detail,&cfile->pb_fps,0);
-	  if (!retval) {
-	    retval=TRUE;
-	    cfile->pb_fps=cfile->fps;
-	  }
-	}
-	if (retval) {
-	  retval=get_clip_value(mainw->current_file,CLIP_DETAILS_PB_FRAMENO,&cfile->frameno,0);
-	  if (!retval) {
-	    retval=TRUE;
-	    cfile->frameno=1;
-	  }
-	}
-	if (retval) {
-	  detail=CLIP_DETAILS_WIDTH;
-	  retval=get_clip_value(mainw->current_file,detail,&cfile->hsize,0);
-	}
-	if (retval) {
-	  detail=CLIP_DETAILS_HEIGHT;
-	  retval=get_clip_value(mainw->current_file,detail,&cfile->vsize,0);
-	}
-	if (retval) {
-	  detail=CLIP_DETAILS_CLIPNAME;
-	  get_clip_value(mainw->current_file,detail,cfile->name,256);
-	}
-	if (retval) {
-	  detail=CLIP_DETAILS_FILENAME;
-	  get_clip_value(mainw->current_file,detail,cfile->file_name,PATH_MAX);
-	}
+        do {
+          retval2=0;
+          if (!cache_file_contents(lives_header)) {
+            retval2=do_read_failed_error_s_with_retry(lives_header,NULL,NULL);
+          }
+        } while (retval2==LIVES_RESPONSE_RETRY);
 
-	if (retval) {
-	  detail=CLIP_DETAILS_ACHANS;
-	  retvala=get_clip_value(mainw->current_file,detail,&cfile->achans,0);
-	  if (!retvala) cfile->achans=0;
-	}
+        lives_free(lives_header);
 
-	if (cfile->achans==0) retvala=FALSE;
-	else retvala=TRUE;
+        threaded_dialog_spin();
 
-	if (retval&&retvala) {
-	  detail=CLIP_DETAILS_ARATE;
-	  retvala=get_clip_value(mainw->current_file,detail,&cfile->arps,0);
-	}
+        detail=CLIP_DETAILS_HEADER_VERSION;
+        retval=get_clip_value(mainw->current_file,detail,&cfile->header_version,16);
+        if (retval) {
+          detail=CLIP_DETAILS_BPP;
+          retval=get_clip_value(mainw->current_file,detail,&cfile->bpp,0);
+        }
+        if (retval) {
+          detail=CLIP_DETAILS_FPS;
+          retval=get_clip_value(mainw->current_file,detail,&cfile->fps,0);
+        }
+        if (retval) {
+          detail=CLIP_DETAILS_PB_FPS;
+          retval=get_clip_value(mainw->current_file,detail,&cfile->pb_fps,0);
+          if (!retval) {
+            retval=TRUE;
+            cfile->pb_fps=cfile->fps;
+          }
+        }
+        if (retval) {
+          retval=get_clip_value(mainw->current_file,CLIP_DETAILS_PB_FRAMENO,&cfile->frameno,0);
+          if (!retval) {
+            retval=TRUE;
+            cfile->frameno=1;
+          }
+        }
+        if (retval) {
+          detail=CLIP_DETAILS_WIDTH;
+          retval=get_clip_value(mainw->current_file,detail,&cfile->hsize,0);
+        }
+        if (retval) {
+          detail=CLIP_DETAILS_HEIGHT;
+          retval=get_clip_value(mainw->current_file,detail,&cfile->vsize,0);
+        }
+        if (retval) {
+          detail=CLIP_DETAILS_CLIPNAME;
+          get_clip_value(mainw->current_file,detail,cfile->name,256);
+        }
+        if (retval) {
+          detail=CLIP_DETAILS_FILENAME;
+          get_clip_value(mainw->current_file,detail,cfile->file_name,PATH_MAX);
+        }
 
-	if (!retvala) cfile->arps=cfile->achans=cfile->arate=cfile->asampsize=0;
-	if (cfile->arps==0) retvala=FALSE; 
+        if (retval) {
+          detail=CLIP_DETAILS_ACHANS;
+          retvala=get_clip_value(mainw->current_file,detail,&cfile->achans,0);
+          if (!retvala) cfile->achans=0;
+        }
 
-	if (retvala&&retval) {
-	  detail=CLIP_DETAILS_PB_ARATE;
-	  retvala=get_clip_value(mainw->current_file,detail,&cfile->arate,0);
-	  if (!retvala) {
-	    retvala=TRUE;
-	    cfile->arate=cfile->arps;
-	  }
-	}
-	if (retvala&&retval) {
-	  detail=CLIP_DETAILS_ASIGNED;
-	  retval=get_clip_value(mainw->current_file,detail,&asigned,0);
-	}
-	if (retvala&&retval) {
-	  detail=CLIP_DETAILS_AENDIAN;
-	  retval=get_clip_value(mainw->current_file,detail,&aendian,0);
-	}
+        if (cfile->achans==0) retvala=FALSE;
+        else retvala=TRUE;
 
-	cfile->signed_endian=asigned+aendian;
+        if (retval&&retvala) {
+          detail=CLIP_DETAILS_ARATE;
+          retvala=get_clip_value(mainw->current_file,detail,&cfile->arps,0);
+        }
 
-	if (retvala&&retval) {
-	  detail=CLIP_DETAILS_ASAMPS;
-	  retval=get_clip_value(mainw->current_file,detail,&cfile->asampsize,0);
-	}
-	
-	get_clip_value(mainw->current_file,CLIP_DETAILS_TITLE,cfile->title,256);
-	get_clip_value(mainw->current_file,CLIP_DETAILS_AUTHOR,cfile->author,256);
-	get_clip_value(mainw->current_file,CLIP_DETAILS_COMMENT,cfile->comment,256);
-	get_clip_value(mainw->current_file,CLIP_DETAILS_KEYWORDS,cfile->keywords,1024);
-	get_clip_value(mainw->current_file,CLIP_DETAILS_INTERLACE,&cfile->interlace,0);
-	if (cfile->interlace!=LIVES_INTERLACE_NONE) cfile->deinterlace=TRUE; // user must have forced this
+        if (!retvala) cfile->arps=cfile->achans=cfile->arate=cfile->asampsize=0;
+        if (cfile->arps==0) retvala=FALSE;
 
-	if (!retval) {
-	  if (mainw->cached_list!=NULL) {
-	    retval2=do_header_missing_detail_error(mainw->current_file,detail);
-	  }
-	  else {
-	    retval2=do_header_read_error_with_retry(mainw->current_file);
-	  }
-	}
-	else return TRUE;
-      }
-      else {
-	if (mainw->cached_list!=NULL) {
-	  retval2=do_header_missing_detail_error(mainw->current_file,CLIP_DETAILS_FRAMES);
-	}
-	else {
-	  retval2=do_header_read_error_with_retry(mainw->current_file);
-	}
+        if (retvala&&retval) {
+          detail=CLIP_DETAILS_PB_ARATE;
+          retvala=get_clip_value(mainw->current_file,detail,&cfile->arate,0);
+          if (!retvala) {
+            retvala=TRUE;
+            cfile->arate=cfile->arps;
+          }
+        }
+        if (retvala&&retval) {
+          detail=CLIP_DETAILS_ASIGNED;
+          retval=get_clip_value(mainw->current_file,detail,&asigned,0);
+        }
+        if (retvala&&retval) {
+          detail=CLIP_DETAILS_AENDIAN;
+          retval=get_clip_value(mainw->current_file,detail,&aendian,0);
+        }
+
+        cfile->signed_endian=asigned+aendian;
+
+        if (retvala&&retval) {
+          detail=CLIP_DETAILS_ASAMPS;
+          retval=get_clip_value(mainw->current_file,detail,&cfile->asampsize,0);
+        }
+
+        get_clip_value(mainw->current_file,CLIP_DETAILS_TITLE,cfile->title,256);
+        get_clip_value(mainw->current_file,CLIP_DETAILS_AUTHOR,cfile->author,256);
+        get_clip_value(mainw->current_file,CLIP_DETAILS_COMMENT,cfile->comment,256);
+        get_clip_value(mainw->current_file,CLIP_DETAILS_KEYWORDS,cfile->keywords,1024);
+        get_clip_value(mainw->current_file,CLIP_DETAILS_INTERLACE,&cfile->interlace,0);
+        if (cfile->interlace!=LIVES_INTERLACE_NONE) cfile->deinterlace=TRUE; // user must have forced this
+
+        if (!retval) {
+          if (mainw->cached_list!=NULL) {
+            retval2=do_header_missing_detail_error(mainw->current_file,detail);
+          } else {
+            retval2=do_header_read_error_with_retry(mainw->current_file);
+          }
+        } else return TRUE;
+      } else {
+        if (mainw->cached_list!=NULL) {
+          retval2=do_header_missing_detail_error(mainw->current_file,CLIP_DETAILS_FRAMES);
+        } else {
+          retval2=do_header_read_error_with_retry(mainw->current_file);
+        }
       }
     } while (retval2==LIVES_RESPONSE_RETRY);
     return FALSE; // retval2==LIVES_RESPONSE_CANCEL
@@ -4392,57 +4334,54 @@ boolean read_headers(const char *file_name) {
   do {
     retval=0;
     mainw->read_failed=FALSE;
-    memset (version,0,32);
-    memset (buff,0,1024);
-    
+    memset(version,0,32);
+    memset(buff,0,1024);
+
     header_fd=open(old_hdrfile,O_RDONLY);
 
     if (header_fd<0) {
       retval=do_read_failed_error_s_with_retry(old_hdrfile,lives_strerror(errno),NULL);
-    }
-    else {
+    } else {
       mainw->read_failed=FALSE;
       header_size=get_file_size(header_fd);
-  
+
       if (header_size<sizhead) {
-	lives_free(old_hdrfile);
-	close (header_fd);
-	return FALSE;
-      }
-      else {
-	mainw->read_failed=FALSE;
-	lives_read_le(header_fd,&cfile->bpp,4,FALSE);
-	if (!mainw->read_failed)
-	  lives_read_le(header_fd,&cfile->fps,8,FALSE);
-	if (!mainw->read_failed)
-	  lives_read_le(header_fd,&cfile->hsize,4,FALSE);
-	if (!mainw->read_failed)
-	  lives_read_le(header_fd,&cfile->vsize,4,FALSE);
-	if (!mainw->read_failed)
-	  lives_read_le(header_fd,&cfile->arps,4,FALSE);
-	if (!mainw->read_failed)
-	  lives_read_le(header_fd,&cfile->signed_endian,4,FALSE);
-	if (!mainw->read_failed)
-	  lives_read_le(header_fd,&cfile->arate,4,FALSE);
-	if (!mainw->read_failed)
-	  lives_read_le(header_fd,&cfile->unique_id,8,FALSE);
-	if (!mainw->read_failed)
-	  lives_read_le(header_fd,&cfile->achans,4,FALSE);
-	if (!mainw->read_failed)
-	  lives_read_le(header_fd,&cfile->asampsize,4,FALSE);
-      
-	if (header_size>sizhead) {
-	  if (header_size-sizhead>31) {
-	    if (!mainw->read_failed)
-	      lives_read(header_fd,&version,31,FALSE);
-	    version[31]='\0';
-	  }
-	  else {
-	    if (!mainw->read_failed)
-	      lives_read(header_fd,&version,header_size-sizhead,FALSE);
-	    version[header_size-sizhead]='\0';
-	  }
-	}
+        lives_free(old_hdrfile);
+        close(header_fd);
+        return FALSE;
+      } else {
+        mainw->read_failed=FALSE;
+        lives_read_le(header_fd,&cfile->bpp,4,FALSE);
+        if (!mainw->read_failed)
+          lives_read_le(header_fd,&cfile->fps,8,FALSE);
+        if (!mainw->read_failed)
+          lives_read_le(header_fd,&cfile->hsize,4,FALSE);
+        if (!mainw->read_failed)
+          lives_read_le(header_fd,&cfile->vsize,4,FALSE);
+        if (!mainw->read_failed)
+          lives_read_le(header_fd,&cfile->arps,4,FALSE);
+        if (!mainw->read_failed)
+          lives_read_le(header_fd,&cfile->signed_endian,4,FALSE);
+        if (!mainw->read_failed)
+          lives_read_le(header_fd,&cfile->arate,4,FALSE);
+        if (!mainw->read_failed)
+          lives_read_le(header_fd,&cfile->unique_id,8,FALSE);
+        if (!mainw->read_failed)
+          lives_read_le(header_fd,&cfile->achans,4,FALSE);
+        if (!mainw->read_failed)
+          lives_read_le(header_fd,&cfile->asampsize,4,FALSE);
+
+        if (header_size>sizhead) {
+          if (header_size-sizhead>31) {
+            if (!mainw->read_failed)
+              lives_read(header_fd,&version,31,FALSE);
+            version[31]='\0';
+          } else {
+            if (!mainw->read_failed)
+              lives_read(header_fd,&version,header_size-sizhead,FALSE);
+            version[header_size-sizhead]='\0';
+          }
+        }
       }
       close(header_fd);
     }
@@ -4450,8 +4389,8 @@ boolean read_headers(const char *file_name) {
     if (mainw->read_failed) {
       retval=do_read_failed_error_s_with_retry(old_hdrfile,NULL,NULL);
       if (retval==LIVES_RESPONSE_CANCEL) {
-	lives_free(old_hdrfile);
-	return FALSE;
+        lives_free(old_hdrfile);
+        return FALSE;
       }
     }
   } while (retval==LIVES_RESPONSE_RETRY);
@@ -4464,9 +4403,9 @@ boolean read_headers(const char *file_name) {
     cfile->arps=cfile->arate;
     cfile->signed_endian=mainw->endian;
   }
-  
+
   com=lives_strdup_printf("%s restore_details %s %s %d",prefs->backend_sync,cfile->handle,
-		      (tmp=lives_filename_from_utf8 (file_name,-1,NULL,NULL,NULL)),!strcmp (file_name,"."));
+                          (tmp=lives_filename_from_utf8(file_name,-1,NULL,NULL,NULL)),!strcmp(file_name,"."));
   mainw->com_failed=FALSE;
   lives_system(com,FALSE);
   lives_free(com);
@@ -4490,7 +4429,7 @@ boolean read_headers(const char *file_name) {
     }
 
     lives_alarm_clear(alarm_handle);
-  
+
     if (!timeout) {
       mainw->read_failed=FALSE;
       lives_fgets(buff,1024,infofile);
@@ -4500,7 +4439,7 @@ boolean read_headers(const char *file_name) {
     if (timeout || mainw->read_failed) {
       retval2=do_read_failed_error_s_with_retry(cfile->info_file,NULL,NULL);
     }
-  
+
   } while (retval2==LIVES_RESPONSE_RETRY);
 
   if (retval2==LIVES_RESPONSE_CANCEL) {
@@ -4508,7 +4447,7 @@ boolean read_headers(const char *file_name) {
     return FALSE;
   }
 
-  pieces=get_token_count (buff,'|');
+  pieces=get_token_count(buff,'|');
   array=lives_strsplit(buff,"|",pieces);
   cfile->f_size=strtol(array[1],NULL,10);
   cfile->afilesize=strtol(array[2],NULL,10);
@@ -4521,29 +4460,29 @@ boolean read_headers(const char *file_name) {
   cfile->frames=atoi(array[4]);
 
   cfile->bpp=(cfile->img_type==IMG_TYPE_JPEG)?24:32;
-  
+
   if (pieces>4&&array[5]!=NULL) {
-    lives_snprintf (cfile->title,256,"%s",lives_strstrip(array[4]));
+    lives_snprintf(cfile->title,256,"%s",lives_strstrip(array[4]));
   }
   if (pieces>5&&array[6]!=NULL) {
-    lives_snprintf (cfile->author,256,"%s",lives_strstrip(array[5]));
+    lives_snprintf(cfile->author,256,"%s",lives_strstrip(array[5]));
   }
   if (pieces>6&&array[7]!=NULL) {
-    lives_snprintf (cfile->comment,256,"%s",lives_strstrip(array[6]));
+    lives_snprintf(cfile->comment,256,"%s",lives_strstrip(array[6]));
   }
-  
+
   lives_strfreev(array);
   return TRUE;
 }
 
 
-void open_set_file (const char *set_name, int clipnum) {
+void open_set_file(const char *set_name, int clipnum) {
   char name[256];
   boolean needs_update=FALSE;
 
   if (mainw->current_file<1) return;
 
-  memset (name,0,256);
+  memset(name,0,256);
 
   if (mainw->cached_list!=NULL) {
     boolean retval;
@@ -4575,8 +4514,7 @@ void open_set_file (const char *set_name, int clipnum) {
     }
     if (cfile->interlace!=LIVES_INTERLACE_NONE) cfile->deinterlace=TRUE;
 
-  }
-  else {
+  } else {
     // pre 0.9.6 <- ancient code
     ssize_t nlen;
     int set_fd;
@@ -4587,29 +4525,27 @@ void open_set_file (const char *set_name, int clipnum) {
     do {
       retval=0;
       if ((set_fd=open(setfile,O_RDONLY))>-1) {
-	// get perf_start
-	if ((nlen=lives_read_le(set_fd,&pb_fps,4,TRUE))>0) {
-	  cfile->pb_fps=pb_fps/1000.;
-	  lives_read_le(set_fd,&cfile->frameno,4,TRUE);
-	  lives_read(set_fd,name,256,TRUE);
-	}
-	close (set_fd);
-      }
-      else retval=do_read_failed_error_s_with_retry(setfile,lives_strerror(errno),NULL);
+        // get perf_start
+        if ((nlen=lives_read_le(set_fd,&pb_fps,4,TRUE))>0) {
+          cfile->pb_fps=pb_fps/1000.;
+          lives_read_le(set_fd,&cfile->frameno,4,TRUE);
+          lives_read(set_fd,name,256,TRUE);
+        }
+        close(set_fd);
+      } else retval=do_read_failed_error_s_with_retry(setfile,lives_strerror(errno),NULL);
     } while (retval==LIVES_RESPONSE_RETRY);
 
-    lives_free (setfile);
+    lives_free(setfile);
     needs_update=TRUE;
   }
 
   if (strlen(name)==0) {
-    lives_snprintf (name,256,"set_clip %.3d",clipnum);
+    lives_snprintf(name,256,"set_clip %.3d",clipnum);
   }
-  if (strlen(mainw->set_name)&&strcmp (name+strlen (name)-1,")")) {
-    lives_snprintf (cfile->name,256,"%s (%s)",name,set_name);
-  }
-  else {
-    lives_snprintf (cfile->name,256,"%s",name);
+  if (strlen(mainw->set_name)&&strcmp(name+strlen(name)-1,")")) {
+    lives_snprintf(cfile->name,256,"%s (%s)",name,set_name);
+  } else {
+    lives_snprintf(cfile->name,256,"%s",name);
   }
 
   if (needs_update) save_clip_values(mainw->current_file);
@@ -4634,29 +4570,29 @@ ulong restore_file(const char *file_name) {
   if (!get_new_handle(new_file,fname)) {
     return 0;
   }
-  
+
   d_print(_("Restoring %s..."),file_name);
-  
+
   mainw->current_file=new_file;
-  
+
   cfile->hsize=mainw->def_width;
   cfile->vsize=mainw->def_height;
-  
+
   switch_to_file((mainw->current_file=old_file),new_file);
   set_main_title(cfile->file_name,0);
-  
-  
+
+
   com=lives_strdup_printf("%s restore %s %s",prefs->backend,cfile->handle,
-		      (tmp=lives_filename_from_utf8(file_name,-1,NULL,NULL,NULL)));
+                          (tmp=lives_filename_from_utf8(file_name,-1,NULL,NULL,NULL)));
 
   mainw->com_failed=FALSE;
-  unlink (cfile->info_file);
+  unlink(cfile->info_file);
 
   lives_system(com,FALSE);
 
   lives_free(tmp);
   lives_free(com);
-  
+
   if (mainw->com_failed) {
     mainw->com_failed=FALSE;
     close_current_file(old_file);
@@ -4669,12 +4605,12 @@ ulong restore_file(const char *file_name) {
 
   if (mainw->error||!not_cancelled) {
     if (mainw->error && mainw->cancelled!=CANCEL_ERROR) {
-      do_blocking_error_dialog (mainw->msg);
+      do_blocking_error_dialog(mainw->msg);
     }
     close_current_file(old_file);
     return 0;
   }
-  
+
   // call function to return rest of file details
   //fsize, afilesize and frames
   is_OK=read_headers(file_name);
@@ -4689,13 +4625,13 @@ ulong restore_file(const char *file_name) {
     mesg=lives_strdup_printf(_("\n\nThe file %s is corrupt.\nLiVES was unable to restore it.\n"),file_name);
     do_blocking_error_dialog(mesg);
     lives_free(mesg);
-    
+
     d_print_failed();
     close_current_file(old_file);
     return 0;
   }
   if (!check_frame_count(mainw->current_file)) get_frame_count(mainw->current_file);
-  
+
   // add entry to window menu
   // TODO - do this earlier and allow switching during restore
   add_to_clipmenu();
@@ -4706,8 +4642,7 @@ ulong restore_file(const char *file_name) {
 
   if (cfile->frames>0) {
     cfile->start=1;
-  }
-  else {
+  } else {
     cfile->start=0;
   }
   cfile->end=cfile->frames;
@@ -4722,12 +4657,11 @@ ulong restore_file(const char *file_name) {
     subfname=lives_strdup_printf("%s/%s/subs.srt",prefs->tmpdir,cfile->handle);
     if (lives_file_test(subfname,LIVES_FILE_TEST_EXISTS)) {
       subtitles_init(cfile,subfname,SUBTITLE_TYPE_SRT);
-    }
-    else {
+    } else {
       lives_free(subfname);
       subfname=lives_strdup_printf("%s/%s/subs.sub",prefs->tmpdir,cfile->handle);
       if (lives_file_test(subfname,LIVES_FILE_TEST_EXISTS)) {
-	subtitles_init(cfile,subfname,SUBTITLE_TYPE_SUB);
+        subtitles_init(cfile,subfname,SUBTITLE_TYPE_SUB);
       }
     }
     lives_free(subfname);
@@ -4735,15 +4669,14 @@ ulong restore_file(const char *file_name) {
 
   lives_snprintf(cfile->type,40,"Frames");
   mesg1=lives_strdup_printf(_("Frames=%d type=%s size=%dx%d bpp=%d fps=%.3f\nAudio:"),cfile->frames,cfile->type,
-			    cfile->hsize,cfile->vsize,cfile->bpp,cfile->fps);
+                            cfile->hsize,cfile->vsize,cfile->bpp,cfile->fps);
 
   if (cfile->afilesize==0l) {
     cfile->achans=0;
-    mesg=lives_strdup_printf (_("%s none\n"),mesg1);
-  }
-  else {
+    mesg=lives_strdup_printf(_("%s none\n"),mesg1);
+  } else {
     mesg=lives_strdup_printf(P_("%s %d Hz %d channel %d bps\n","%s %d Hz %d channels %d bps\n",cfile->achans),
-			 mesg1,cfile->arate,cfile->achans,cfile->asampsize);
+                             mesg1,cfile->arate,cfile->achans,cfile->asampsize);
   }
   d_print(mesg);
   lives_free(mesg);
@@ -4784,14 +4717,14 @@ int save_event_frames(void) {
   int nevents;
 
   if (cfile->event_list==NULL) {
-    unlink (hdrfile);
+    unlink(hdrfile);
     return -1;
   }
-  
-  perf_start=(int)(cfile->fps*event_list_get_start_secs (cfile->event_list))+1;
-  perf_end=perf_start+(nevents=count_events (cfile->event_list,FALSE,0,0))-1;
-  
-  event_list_to_block (cfile->event_list,nevents);
+
+  perf_start=(int)(cfile->fps*event_list_get_start_secs(cfile->event_list))+1;
+  perf_end=perf_start+(nevents=count_events(cfile->event_list,FALSE,0,0))-1;
+
+  event_list_to_block(cfile->event_list,nevents);
 
   if (cfile->frame_index!=NULL) {
     int xframes=cfile->frames;
@@ -4802,7 +4735,7 @@ int save_event_frames(void) {
 
     create_frame_index(mainw->current_file,FALSE,0,nevents);
 
-    for (i=0;i<nevents;i++) {
+    for (i=0; i<nevents; i++) {
       cfile->frame_index[i]=cfile->frame_index_back[(cfile->events[0]+i)->value-1];
     }
 
@@ -4816,25 +4749,24 @@ int save_event_frames(void) {
     header_fd=creat(hdrfile,S_IRUSR|S_IWUSR);
     if (header_fd<0) {
       retval=do_write_failed_error_s_with_retry(hdrfile,lives_strerror(errno),NULL);
-    }
-    else {
+    } else {
       // use machine endian.
       // When we call "smogrify reorder", we will pass the endianness as 3rd parameter
 
       mainw->write_failed=FALSE;
       lives_write(header_fd,&perf_start,4,FALSE);
-      
+
       if (!(cfile->events[0]==NULL)) {
-	for (i=0;i<=perf_end-perf_start;i++) {
-	  if (mainw->write_failed) break;
-	  lives_write(header_fd,&((cfile->events[0]+i)->value),4,TRUE);
-	}
-	lives_free (cfile->events[0]);
-	cfile->events[0]=NULL;
+        for (i=0; i<=perf_end-perf_start; i++) {
+          if (mainw->write_failed) break;
+          lives_write(header_fd,&((cfile->events[0]+i)->value),4,TRUE);
+        }
+        lives_free(cfile->events[0]);
+        cfile->events[0]=NULL;
       }
 
       if (mainw->write_failed) {
-	retval=do_write_failed_error_s_with_retry(hdrfile,NULL,NULL);
+        retval=do_write_failed_error_s_with_retry(hdrfile,NULL,NULL);
       }
 
       close(header_fd);
@@ -4868,15 +4800,15 @@ static double scrap_mb;  // MB written to frame file
 static double ascrap_mb;  // MB written to audio file
 static uint64_t free_mb; // MB free to write
 
-boolean open_scrap_file (void) {
+boolean open_scrap_file(void) {
   // create a scrap file for recording generated video frames
   int current_file=mainw->current_file;
   int new_file=mainw->first_free_file;
-  
+
   char *dir;
   char *scrap_handle;
 
-  if (!get_temp_handle (new_file,TRUE)) return FALSE;
+  if (!get_temp_handle(new_file,TRUE)) return FALSE;
   get_next_free_file();
 
   mainw->scrap_file=mainw->current_file=new_file;
@@ -4891,7 +4823,7 @@ boolean open_scrap_file (void) {
   add_to_recovery_file(scrap_handle);
 
   pthread_mutex_lock(&mainw->clip_list_mutex);
-  mainw->cliplist = lives_list_append (mainw->cliplist, LIVES_INT_TO_POINTER (mainw->current_file));
+  mainw->cliplist = lives_list_append(mainw->cliplist, LIVES_INT_TO_POINTER(mainw->current_file));
   pthread_mutex_unlock(&mainw->clip_list_mutex);
 
   lives_free(scrap_handle);
@@ -4910,15 +4842,15 @@ boolean open_scrap_file (void) {
 
 
 
-boolean open_ascrap_file (void) {
+boolean open_ascrap_file(void) {
   // create a scrap file for recording audio
   int current_file=mainw->current_file;
   int new_file=mainw->first_free_file;
-  
+
   char *dir;
   char *ascrap_handle;
 
-  if (!get_temp_handle (new_file,TRUE)) return FALSE;
+  if (!get_temp_handle(new_file,TRUE)) return FALSE;
   get_next_free_file();
 
   mainw->ascrap_file=mainw->current_file=new_file;
@@ -4934,7 +4866,7 @@ boolean open_ascrap_file (void) {
   add_to_recovery_file(ascrap_handle);
 
   pthread_mutex_lock(&mainw->clip_list_mutex);
-  mainw->cliplist = lives_list_append (mainw->cliplist, LIVES_INT_TO_POINTER (mainw->current_file));
+  mainw->cliplist = lives_list_append(mainw->cliplist, LIVES_INT_TO_POINTER(mainw->current_file));
   pthread_mutex_unlock(&mainw->clip_list_mutex);
 
   lives_free(ascrap_handle);
@@ -4970,7 +4902,7 @@ boolean load_from_scrap_file(weed_plant_t *layer, int frame) {
 
   int i,fd;
 
-  char *oname=lives_strdup_printf ("%s/%s/%08d.scrap",prefs->tmpdir,mainw->files[mainw->scrap_file]->handle,frame);
+  char *oname=lives_strdup_printf("%s/%s/%08d.scrap",prefs->tmpdir,mainw->files[mainw->scrap_file]->handle,frame);
 
 
   ssize_t bytes;
@@ -5000,12 +4932,12 @@ boolean load_from_scrap_file(weed_plant_t *layer, int frame) {
 
     bytes=lives_read_le(fd,&subspace,4,TRUE);
     if (bytes<4) return FALSE;
-    
+
     weed_set_int_value(layer,"YUV_subspace",subspace);
 
     bytes=lives_read_le(fd,&sampling,4,TRUE);
     if (bytes<4) return FALSE;
-    
+
     weed_set_int_value(layer,"YUV_sampling",sampling);
   }
 
@@ -5026,7 +4958,7 @@ boolean load_from_scrap_file(weed_plant_t *layer, int frame) {
 
   rowstrides=(int *)lives_malloc(nplanes*sizint);
 
-  for (i=0;i<nplanes;i++) {
+  for (i=0; i<nplanes; i++) {
     bytes=lives_read_le(fd,&rowstrides[i],4,TRUE);
     if (bytes<4) {
       lives_free(rowstrides);
@@ -5038,13 +4970,13 @@ boolean load_from_scrap_file(weed_plant_t *layer, int frame) {
 
   pdata=(void **)lives_malloc(nplanes*sizeof(void *));
 
-  for (i=0;i<nplanes;i++) {
+  for (i=0; i<nplanes; i++) {
     pdata[i]=NULL;
   }
 
   weed_set_voidptr_array(layer,"pixel_data",nplanes,pdata);
 
-  for (i=0;i<nplanes;i++) {
+  for (i=0; i<nplanes; i++) {
     tsize=rowstrides[i]*height*weed_palette_get_plane_ratio_vertical(palette,i);
     pdata[i]=lives_malloc(tsize);
     bytes=read(fd,pdata[i],tsize);
@@ -5061,14 +4993,14 @@ boolean load_from_scrap_file(weed_plant_t *layer, int frame) {
   lives_free(pdata);
 
 
-  close (fd);
+  close(fd);
 
   return TRUE;
 }
 
 
 
-int save_to_scrap_file (weed_plant_t *layer) {
+int save_to_scrap_file(weed_plant_t *layer) {
   // returns frame number
 
   // dump the raw frame data to a file (in machine endian format)
@@ -5083,7 +5015,7 @@ int save_to_scrap_file (weed_plant_t *layer) {
 
   int fd;
   int flags=O_WRONLY|O_CREAT|O_TRUNC;
-  
+
   int width,height,palette,nplanes,error;
   int *rowstrides;
 
@@ -5095,8 +5027,8 @@ int save_to_scrap_file (weed_plant_t *layer) {
 
   void **pdata;
 
-  char *oname=lives_strdup_printf ("%s/%s/%08d.scrap",prefs->tmpdir,mainw->files[mainw->scrap_file]->handle,
-				mainw->files[mainw->scrap_file]->frames+1);
+  char *oname=lives_strdup_printf("%s/%s/%08d.scrap",prefs->tmpdir,mainw->files[mainw->scrap_file]->handle,
+                                  mainw->files[mainw->scrap_file]->frames+1);
 
   char *framecount;
 
@@ -5131,20 +5063,17 @@ int save_to_scrap_file (weed_plant_t *layer) {
   if (weed_palette_is_yuv_palette(palette)) {
     if (weed_plant_has_leaf(layer,"YUV_clamping")) {
       clamping=weed_get_int_value(layer,"YUV_clamping",&error);
-    }
-    else clamping=WEED_YUV_CLAMPING_CLAMPED;
+    } else clamping=WEED_YUV_CLAMPING_CLAMPED;
     lives_write_le(fd,&clamping,4,TRUE);
 
     if (weed_plant_has_leaf(layer,"YUV_subspace")) {
       subspace=weed_get_int_value(layer,"YUV_subspace",&error);
-    }
-    else subspace=WEED_YUV_SUBSPACE_YUV;
+    } else subspace=WEED_YUV_SUBSPACE_YUV;
     lives_write_le(fd,&subspace,4,TRUE);
 
     if (weed_plant_has_leaf(layer,"YUV_sampling")) {
       sampling=weed_get_int_value(layer,"YUV_sampling",&error);
-    }
-    else sampling=WEED_YUV_SAMPLING_DEFAULT;
+    } else sampling=WEED_YUV_SAMPLING_DEFAULT;
     lives_write_le(fd,&sampling,4,TRUE);
   }
 
@@ -5155,22 +5084,22 @@ int save_to_scrap_file (weed_plant_t *layer) {
   lives_write_le(fd,&height,4,TRUE);
 
   nplanes=weed_palette_get_numplanes(palette);
-  
+
   rowstrides=weed_get_int_array(layer,"rowstrides",&error);
-  
-  for (i=0;i<nplanes;i++) {
+
+  for (i=0; i<nplanes; i++) {
     lives_write_le(fd,&rowstrides[i],4,TRUE);
   }
-  
-   
+
+
   // now write pixel_data planes
-  
+
   pdata=weed_get_voidptr_array(layer,"pixel_data",&error);
-  
-  for (i=0;i<nplanes;i++) {
+
+  for (i=0; i<nplanes; i++) {
     lives_write(fd,pdata[i],rowstrides[i]*height*weed_palette_get_plane_ratio_vertical(palette,i),TRUE);
   }
-  
+
   fstat(fd,&filestat);
 
   scrap_mb+=(double)(filestat.st_size)/1000000.;
@@ -5187,15 +5116,14 @@ int save_to_scrap_file (weed_plant_t *layer) {
     if ((scrap_mb+ascrap_mb)<(double)free_mb*.75) {
       // TRANSLATORS: rec(ord) %.2f M(ega)B(ytes)
       framecount=lives_strdup_printf(_("rec %.2f MB"),scrap_mb+ascrap_mb);
-    }
-    else {
+    } else {
       // warn if scrap_file > 3/4 of free space
       // TRANSLATORS: !rec(ord) %.2f M(ega)B(ytes)
       if (wrtable)
-	framecount=lives_strdup_printf(_("!rec %.2f MB"),scrap_mb+ascrap_mb);
+        framecount=lives_strdup_printf(_("!rec %.2f MB"),scrap_mb+ascrap_mb);
       else
-	// TRANSLATORS: rec(ord) ?? M(ega)B(ytes)
-	framecount=lives_strdup(_("rec ?? MB"));
+        // TRANSLATORS: rec(ord) ?? M(ega)B(ytes)
+        framecount=lives_strdup(_("rec ?? MB"));
     }
     lives_entry_set_text(LIVES_ENTRY(mainw->framecounter),framecount);
     lives_free(framecount);
@@ -5219,11 +5147,11 @@ int save_to_scrap_file (weed_plant_t *layer) {
 
     if (wrtable) {
       if ((int64_t)(((double)free_mb-(scrap_mb+ascrap_mb))/1000.)<prefs->rec_stop_gb) {
-	if (mainw->record&&!mainw->record_paused) {
-	  d_print(_("\nRECORDING WAS PAUSED BECAUSE FREE DISK SPACE in %s IS BELOW %d GB !\nRecord stop level can be set in Preferences.\n"),
-		  dir,prefs->rec_stop_gb);
-	  on_record_perf_activate(NULL,NULL);
-	}
+        if (mainw->record&&!mainw->record_paused) {
+          d_print(_("\nRECORDING WAS PAUSED BECAUSE FREE DISK SPACE in %s IS BELOW %d GB !\nRecord stop level can be set in Preferences.\n"),
+                  dir,prefs->rec_stop_gb);
+          on_record_perf_activate(NULL,NULL);
+        }
       }
       lives_free(dir);
     }
@@ -5234,7 +5162,7 @@ int save_to_scrap_file (weed_plant_t *layer) {
 
 
 
-void close_scrap_file (void) {
+void close_scrap_file(void) {
   int current_file=mainw->current_file;
 
   if (mainw->scrap_file==-1) return;
@@ -5243,7 +5171,7 @@ void close_scrap_file (void) {
   close_current_file(current_file);
 
   pthread_mutex_lock(&mainw->clip_list_mutex);
-  mainw->cliplist=lives_list_remove (mainw->cliplist, LIVES_INT_TO_POINTER (mainw->scrap_file));
+  mainw->cliplist=lives_list_remove(mainw->cliplist, LIVES_INT_TO_POINTER(mainw->scrap_file));
   pthread_mutex_unlock(&mainw->clip_list_mutex);
 
   if (prefs->crash_recovery) rewrite_recovery_file();
@@ -5253,7 +5181,7 @@ void close_scrap_file (void) {
 
 
 
-void close_ascrap_file (void) {
+void close_ascrap_file(void) {
   int current_file=mainw->current_file;
 
   if (mainw->ascrap_file==-1) return;
@@ -5262,7 +5190,7 @@ void close_ascrap_file (void) {
   close_current_file(current_file);
 
   pthread_mutex_lock(&mainw->clip_list_mutex);
-  mainw->cliplist=lives_list_remove (mainw->cliplist, LIVES_INT_TO_POINTER (mainw->ascrap_file));
+  mainw->cliplist=lives_list_remove(mainw->cliplist, LIVES_INT_TO_POINTER(mainw->ascrap_file));
   pthread_mutex_unlock(&mainw->clip_list_mutex);
 
   if (prefs->crash_recovery) rewrite_recovery_file();
@@ -5280,7 +5208,7 @@ void recover_layout_map(int numclips) {
 
   char **array;
   char *check_handle;
-  
+
   if (numclips>MAX_FILES) numclips=MAX_FILES;
 
   if ((omlist=load_layout_map())!=NULL) {
@@ -5289,61 +5217,61 @@ void recover_layout_map(int numclips) {
     mlist=omlist;
 
     // assign layout map to clips
-    for (i=1;i<=numclips;i++) {
+    for (i=1; i<=numclips; i++) {
       if (mainw->files[i]==NULL) continue;
       lmap_node=mlist;
       while (lmap_node!=NULL) {
-	lmap_node_next=lmap_node->next;
-	lmap_entry=(layout_map *)lmap_node->data;
+        lmap_node_next=lmap_node->next;
+        lmap_entry=(layout_map *)lmap_node->data;
 
-	check_handle=lives_strdup(mainw->files[i]->handle);
+        check_handle=lives_strdup(mainw->files[i]->handle);
 
-	if (strstr(lmap_entry->handle,"/")==NULL) {
-	  lives_free(check_handle);
-	  check_handle=lives_path_get_basename(mainw->files[i]->handle);
-	}
+        if (strstr(lmap_entry->handle,"/")==NULL) {
+          lives_free(check_handle);
+          check_handle=lives_path_get_basename(mainw->files[i]->handle);
+        }
 
-	if (!strcmp(check_handle,lmap_entry->handle)&&(mainw->files[i]->unique_id==lmap_entry->unique_id)) {
-	  // check handle and unique id match
-	  // got a match, assign list to layout_map and delete this node
-	  lmap_entry_list=lmap_entry->list;
-	  while (lmap_entry_list!=NULL) {
-	    lmap_entry_list_next=lmap_entry_list->next;
-	    array=lives_strsplit((char *)lmap_entry_list->data,"|",-1);
-	    if (!lives_file_test(array[0],LIVES_FILE_TEST_EXISTS)) {
-	      // layout file has been deleted, remove this entry
-	      if (lmap_entry_list->prev!=NULL) lmap_entry_list->prev->next=lmap_entry_list_next;
-	      else lmap_entry->list=lmap_node_next;
-	      if (lmap_entry_list_next!=NULL) lmap_entry_list_next->prev=lmap_entry_list->prev;
-	      lives_free((livespointer)lmap_entry_list->data);
-	      //lives_free(lmap_entry_list);    // i don't know why, but this causes a segfault
-	    }
-	    lives_strfreev(array);
-	    lmap_entry_list=lmap_entry_list_next;
-	  }
-	  mainw->files[i]->layout_map=lmap_entry->list;
-	  lives_free(lmap_entry->handle);
-	  lives_free(lmap_entry->name);
-	  lives_free(lmap_entry);
-	  if (lmap_node->prev!=NULL) lmap_node->prev->next=lmap_node_next;
-	  else mlist=lmap_node_next;
-	  if (lmap_node_next!=NULL) lmap_node_next->prev=lmap_node->prev;
-	  //lives_free(lmap_node);   // i don't know why, but this causes a segfault
-	}
+        if (!strcmp(check_handle,lmap_entry->handle)&&(mainw->files[i]->unique_id==lmap_entry->unique_id)) {
+          // check handle and unique id match
+          // got a match, assign list to layout_map and delete this node
+          lmap_entry_list=lmap_entry->list;
+          while (lmap_entry_list!=NULL) {
+            lmap_entry_list_next=lmap_entry_list->next;
+            array=lives_strsplit((char *)lmap_entry_list->data,"|",-1);
+            if (!lives_file_test(array[0],LIVES_FILE_TEST_EXISTS)) {
+              // layout file has been deleted, remove this entry
+              if (lmap_entry_list->prev!=NULL) lmap_entry_list->prev->next=lmap_entry_list_next;
+              else lmap_entry->list=lmap_node_next;
+              if (lmap_entry_list_next!=NULL) lmap_entry_list_next->prev=lmap_entry_list->prev;
+              lives_free((livespointer)lmap_entry_list->data);
+              //lives_free(lmap_entry_list);    // i don't know why, but this causes a segfault
+            }
+            lives_strfreev(array);
+            lmap_entry_list=lmap_entry_list_next;
+          }
+          mainw->files[i]->layout_map=lmap_entry->list;
+          lives_free(lmap_entry->handle);
+          lives_free(lmap_entry->name);
+          lives_free(lmap_entry);
+          if (lmap_node->prev!=NULL) lmap_node->prev->next=lmap_node_next;
+          else mlist=lmap_node_next;
+          if (lmap_node_next!=NULL) lmap_node_next->prev=lmap_node->prev;
+          //lives_free(lmap_node);   // i don't know why, but this causes a segfault
+        }
 
-	lives_free(check_handle);
-	lmap_node=lmap_node_next;
+        lives_free(check_handle);
+        lmap_node=lmap_node_next;
       }
     }
-  
+
     lmap_node=mlist;
     while (lmap_node!=NULL) {
       lmap_entry=(layout_map *)lmap_node->data;
       if (lmap_entry->name!=NULL) lives_free(lmap_entry->name);
       if (lmap_entry->handle!=NULL) lives_free(lmap_entry->handle);
       if (lmap_entry->list!=NULL) {
-	lives_list_free_strings(lmap_entry->list);
-	lives_list_free(lmap_entry->list);
+        lives_list_free_strings(lmap_entry->list);
+        lives_list_free(lmap_entry->list);
       }
       lmap_node=lmap_node->next;
     }
@@ -5354,141 +5282,137 @@ void recover_layout_map(int numclips) {
 
 
 
- boolean reload_clip(int fileno) {
-   // cd to clip directory - so decoder plugins can write temp files
+boolean reload_clip(int fileno) {
+  // cd to clip directory - so decoder plugins can write temp files
 
-   lives_clip_t *sfile=mainw->files[fileno];
+  lives_clip_t *sfile=mainw->files[fileno];
 
-   char *ppath=lives_build_filename(prefs->tmpdir,sfile->handle,NULL);
+  char *ppath=lives_build_filename(prefs->tmpdir,sfile->handle,NULL);
 
-   const lives_clip_data_t *cdata=NULL;
+  const lives_clip_data_t *cdata=NULL;
 
-   lives_clip_data_t *fake_cdata=(lives_clip_data_t *)lives_calloc(sizeof(lives_clip_data_t),1);
+  lives_clip_data_t *fake_cdata=(lives_clip_data_t *)lives_calloc(sizeof(lives_clip_data_t),1);
 
-   boolean was_renamed=FALSE;
+  boolean was_renamed=FALSE;
 
-   lives_chdir(ppath,FALSE);
-   lives_free(ppath);
+  lives_chdir(ppath,FALSE);
+  lives_free(ppath);
 
-   while (1) {
-     threaded_dialog_spin();
+  while (1) {
+    threaded_dialog_spin();
 
-     fake_cdata->URI=lives_strdup(sfile->file_name);
-     fake_cdata->fps=sfile->fps;
-     fake_cdata->nframes=sfile->frames;
+    fake_cdata->URI=lives_strdup(sfile->file_name);
+    fake_cdata->fps=sfile->fps;
+    fake_cdata->nframes=sfile->frames;
 
-     if ((cdata=get_decoder_cdata(fileno,prefs->disabled_decoders,fake_cdata->fps!=0.?fake_cdata:NULL))==NULL) {
-       if (mainw->error) {
-	 if (do_original_lost_warning(sfile->file_name)) {
-	   int resp;
-	   char fname[PATH_MAX],dirname[PATH_MAX],*newname;
-	   LiVESWidget *chooser;
+    if ((cdata=get_decoder_cdata(fileno,prefs->disabled_decoders,fake_cdata->fps!=0.?fake_cdata:NULL))==NULL) {
+      if (mainw->error) {
+        if (do_original_lost_warning(sfile->file_name)) {
+          int resp;
+          char fname[PATH_MAX],dirname[PATH_MAX],*newname;
+          LiVESWidget *chooser;
 
-	   lives_snprintf(dirname,PATH_MAX,"%s",sfile->file_name);
-	   lives_snprintf(fname,PATH_MAX,"%s",sfile->file_name);
+          lives_snprintf(dirname,PATH_MAX,"%s",sfile->file_name);
+          lives_snprintf(fname,PATH_MAX,"%s",sfile->file_name);
 
-	   get_dirname(dirname);
-	   get_basename(fname);
+          get_dirname(dirname);
+          get_basename(fname);
 
-	   chooser=choose_file_with_preview(dirname,fname,LIVES_FILE_SELECTION_VIDEO_AUDIO);
+          chooser=choose_file_with_preview(dirname,fname,LIVES_FILE_SELECTION_VIDEO_AUDIO);
 
-	   resp=lives_dialog_run(LIVES_DIALOG(chooser));
+          resp=lives_dialog_run(LIVES_DIALOG(chooser));
 
-	   end_fs_preview();
+          end_fs_preview();
 
-	   if (resp==LIVES_RESPONSE_ACCEPT) {
-	     newname=lives_file_chooser_get_filename (LIVES_FILE_CHOOSER(chooser));
-	     lives_widget_destroy(LIVES_WIDGET(chooser));
+          if (resp==LIVES_RESPONSE_ACCEPT) {
+            newname=lives_file_chooser_get_filename(LIVES_FILE_CHOOSER(chooser));
+            lives_widget_destroy(LIVES_WIDGET(chooser));
 
-	     if (newname!=NULL) {
-	       if (strlen(newname)) {
-		 char *tmp;
-		 lives_snprintf(sfile->file_name,PATH_MAX,"%s",(tmp=lives_filename_to_utf8(newname,-1,NULL,NULL,NULL)));
-		 lives_free(tmp);
-	       }
-	       lives_free(newname);
-	     }
+            if (newname!=NULL) {
+              if (strlen(newname)) {
+                char *tmp;
+                lives_snprintf(sfile->file_name,PATH_MAX,"%s",(tmp=lives_filename_to_utf8(newname,-1,NULL,NULL,NULL)));
+                lives_free(tmp);
+              }
+              lives_free(newname);
+            }
 
-	     if (fake_cdata->URI!=NULL) lives_free(fake_cdata->URI);
-	     fake_cdata->URI=NULL;
+            if (fake_cdata->URI!=NULL) lives_free(fake_cdata->URI);
+            fake_cdata->URI=NULL;
 
-	     //re-scan for these
-	     sfile->fps=0.;
-	     sfile->frames=0;
+            //re-scan for these
+            sfile->fps=0.;
+            sfile->frames=0;
 
-	     was_renamed=TRUE;
-	     continue;
-	   }
-	   lives_widget_destroy(LIVES_WIDGET(chooser));
-	 }
-	 else {
-	   // deleted : TODO ** - show layout errors
+            was_renamed=TRUE;
+            continue;
+          }
+          lives_widget_destroy(LIVES_WIDGET(chooser));
+        } else {
+          // deleted : TODO ** - show layout errors
 
-	 }
-	      
-       }
-       else {
-	 do_no_decoder_error(sfile->file_name);
-       }
+        }
 
-       // NOT found, switch to another clip (if any)
+      } else {
+        do_no_decoder_error(sfile->file_name);
+      }
 
-       // index stuff
-       sfile=NULL;
-	    
-       if (fileno==mainw->current_file) {
-	 if (mainw->cliplist!=NULL) {
-	   LiVESList *list_index;
-	   int index=-1;
+      // NOT found, switch to another clip (if any)
 
-	   list_index=lives_list_last (mainw->cliplist);
-	   do {
-	     if ((list_index=lives_list_previous(list_index))==NULL) list_index=lives_list_last (mainw->cliplist);
-	     index=LIVES_POINTER_TO_INT (list_index->data);
-	   } while ((mainw->files[index]==NULL||
-		     ((index==mainw->scrap_file||index==mainw->ascrap_file)&&index>-1))&&index!=fileno);
-	   if (index==fileno) index=-1;
+      // index stuff
+      sfile=NULL;
 
-	   mainw->current_file=index;
-	 }
-	 else mainw->current_file=-1;
-       }
-       if (fake_cdata->URI!=NULL) lives_free(fake_cdata->URI);
-       lives_free(fake_cdata);
-       return FALSE;
-     }
-     // got cdata
-     threaded_dialog_spin();
-     if (fake_cdata->URI!=NULL) lives_free(fake_cdata->URI);
-     lives_free(fake_cdata);
-     break;
-   }
+      if (fileno==mainw->current_file) {
+        if (mainw->cliplist!=NULL) {
+          LiVESList *list_index;
+          int index=-1;
 
-   sfile->clip_type=CLIP_TYPE_FILE;
-   get_mime_type(sfile->type,40,cdata);
-   if (!strcmp(prefs->image_ext,"png")) sfile->img_type=IMG_TYPE_PNG; // read_headers() will have set this to "jpeg" (default)
-   // we will set correct value in check_clip_integrity() if there are any real images
+          list_index=lives_list_last(mainw->cliplist);
+          do {
+            if ((list_index=lives_list_previous(list_index))==NULL) list_index=lives_list_last(mainw->cliplist);
+            index=LIVES_POINTER_TO_INT(list_index->data);
+          } while ((mainw->files[index]==NULL||
+                    ((index==mainw->scrap_file||index==mainw->ascrap_file)&&index>-1))&&index!=fileno);
+          if (index==fileno) index=-1;
 
-   if (sfile->ext_src!=NULL) {
-     boolean bad_header=FALSE;
-     boolean correct=check_clip_integrity(fileno,cdata); // get correct img_type, fps, etc.
-     if (!correct||was_renamed) {
-       save_clip_values(fileno);
-       if (mainw->com_failed||mainw->write_failed) bad_header=TRUE;
-     }
-     else {
-       lives_decoder_t *dplug=(lives_decoder_t *)sfile->ext_src;
-       lives_decoder_sys_t *dpsys=(lives_decoder_sys_t *)dplug->decoder;
-       save_clip_value(fileno,CLIP_DETAILS_DECODER_NAME,dpsys->name);
-       if (mainw->com_failed||mainw->write_failed) bad_header=TRUE;
-     }
-	
-     if (bad_header) do_header_write_error(fileno);
-   }
+          mainw->current_file=index;
+        } else mainw->current_file=-1;
+      }
+      if (fake_cdata->URI!=NULL) lives_free(fake_cdata->URI);
+      lives_free(fake_cdata);
+      return FALSE;
+    }
+    // got cdata
+    threaded_dialog_spin();
+    if (fake_cdata->URI!=NULL) lives_free(fake_cdata->URI);
+    lives_free(fake_cdata);
+    break;
+  }
 
-   return TRUE;
+  sfile->clip_type=CLIP_TYPE_FILE;
+  get_mime_type(sfile->type,40,cdata);
+  if (!strcmp(prefs->image_ext,"png")) sfile->img_type=IMG_TYPE_PNG; // read_headers() will have set this to "jpeg" (default)
+  // we will set correct value in check_clip_integrity() if there are any real images
 
- }
+  if (sfile->ext_src!=NULL) {
+    boolean bad_header=FALSE;
+    boolean correct=check_clip_integrity(fileno,cdata); // get correct img_type, fps, etc.
+    if (!correct||was_renamed) {
+      save_clip_values(fileno);
+      if (mainw->com_failed||mainw->write_failed) bad_header=TRUE;
+    } else {
+      lives_decoder_t *dplug=(lives_decoder_t *)sfile->ext_src;
+      lives_decoder_sys_t *dpsys=(lives_decoder_sys_t *)dplug->decoder;
+      save_clip_value(fileno,CLIP_DETAILS_DECODER_NAME,dpsys->name);
+      if (mainw->com_failed||mainw->write_failed) bad_header=TRUE;
+    }
+
+    if (bad_header) do_header_write_error(fileno);
+  }
+
+  return TRUE;
+
+}
 
 
 static boolean recover_files(char *recovery_file, boolean auto_recover) {
@@ -5520,11 +5444,11 @@ static boolean recover_files(char *recovery_file, boolean auto_recover) {
 
   if (!auto_recover) {
     if (!do_yesno_dialog
-	(_("\nFiles from a previous run of LiVES were found.\nDo you want to attempt to recover them ?\n"))) {
+        (_("\nFiles from a previous run of LiVES were found.\nDo you want to attempt to recover them ?\n"))) {
       unlink(recovery_file);
 
       if (mainw->multitrack!=NULL) {
-	mt_sensitise(mainw->multitrack);
+        mt_sensitise(mainw->multitrack);
       }
 
       return FALSE;
@@ -5540,22 +5464,22 @@ static boolean recover_files(char *recovery_file, boolean auto_recover) {
     }
   } while (retval==LIVES_RESPONSE_RETRY);
 
-  
+
   mainw->is_ready=TRUE;
   do_threaded_dialog(_("Recovering files"),FALSE);
   mainw->is_ready=FALSE;
 
   d_print(_("Recovering files..."));
   threaded_dialog_spin();
-  
+
   mainw->suppress_dprint=TRUE;
-  
+
   while (1) {
 
     threaded_dialog_spin();
     is_scrap=FALSE;
     is_ascrap=FALSE;
-    
+
     if (mainw->cached_list!=NULL) {
       lives_list_free_strings(mainw->cached_list);
       lives_list_free(mainw->cached_list);
@@ -5563,18 +5487,18 @@ static boolean recover_files(char *recovery_file, boolean auto_recover) {
     }
 
     mainw->read_failed=FALSE;
-    
+
     if (lives_fgets(buff,256,rfile)==NULL) {
       int current_file=mainw->current_file;
       if (last_was_normal_file&&mainw->multitrack==NULL) {
-	if (current_file!=-1) switch_to_file((mainw->current_file=0),current_file);
+        if (current_file!=-1) switch_to_file((mainw->current_file=0),current_file);
       }
       reset_clipmenu();
       lives_widget_context_update();
       threaded_dialog_spin();
 
       if (mainw->read_failed) {
-	do_read_failed_error_s(recovery_file,NULL);
+        do_read_failed_error_s(recovery_file,NULL);
       }
       break;
     }
@@ -5588,79 +5512,76 @@ static boolean recover_files(char *recovery_file, boolean auto_recover) {
       if (!is_legal_set_name(buff,TRUE)) continue;
 
       if (!reload_set(buff)) {
-	fclose(rfile);
-	end_threaded_dialog();
+        fclose(rfile);
+        end_threaded_dialog();
 
-	if (strlen(mainw->set_name)>0) recover_layout_map(mainw->current_file);
+        if (strlen(mainw->set_name)>0) recover_layout_map(mainw->current_file);
 
-	if (mainw->multitrack!=NULL) {
-	  mainw->current_file=mainw->multitrack->render_file;
-	  polymorph(mainw->multitrack,POLY_NONE);
-	  polymorph(mainw->multitrack,POLY_CLIPS);
-	  mt_sensitise(mainw->multitrack);
-	}
+        if (mainw->multitrack!=NULL) {
+          mainw->current_file=mainw->multitrack->render_file;
+          polymorph(mainw->multitrack,POLY_NONE);
+          polymorph(mainw->multitrack,POLY_CLIPS);
+          mt_sensitise(mainw->multitrack);
+        }
 
-	mainw->suppress_dprint=FALSE;
-	d_print_failed();
-	return TRUE;
+        mainw->suppress_dprint=FALSE;
+        d_print_failed();
+        return TRUE;
       }
-    }
-    else {
+    } else {
       // load single file
 
       if (!strncmp(buff,"scrap|",6)) {
-	is_scrap=TRUE;
-	buffptr=buff+6;
-      }
-      else if (!strncmp(buff,"ascrap|",7)) {
-	is_ascrap=TRUE;
-	buffptr=buff+7;
-      }
-      else {
-	buffptr=buff;
+        is_scrap=TRUE;
+        buffptr=buff+6;
+      } else if (!strncmp(buff,"ascrap|",7)) {
+        is_ascrap=TRUE;
+        buffptr=buff+7;
+      } else {
+        buffptr=buff;
       }
 
       clipdir=lives_build_filename(prefs->tmpdir,buffptr,NULL);
 
       if (!lives_file_test(clipdir,LIVES_FILE_TEST_IS_DIR)) {
-	lives_free(clipdir);
-	continue;
+        lives_free(clipdir);
+        continue;
       }
       lives_free(clipdir);
       if ((new_file=mainw->first_free_file)==-1) {
-	fclose(rfile);
-	end_threaded_dialog();
-	too_many_files();
+        fclose(rfile);
+        end_threaded_dialog();
+        too_many_files();
 
-	if (strlen(mainw->set_name)>0) recover_layout_map(mainw->current_file);
+        if (strlen(mainw->set_name)>0) recover_layout_map(mainw->current_file);
 
-	if (mainw->multitrack!=NULL) {
-	  mainw->current_file=mainw->multitrack->render_file;
-	  polymorph(mainw->multitrack,POLY_NONE);
-	  polymorph(mainw->multitrack,POLY_CLIPS);
-	  mt_sensitise(mainw->multitrack);
-	  mainw->multitrack->idlefunc=mt_idle_add(mainw->multitrack);
-	}
+        if (mainw->multitrack!=NULL) {
+          mainw->current_file=mainw->multitrack->render_file;
+          polymorph(mainw->multitrack,POLY_NONE);
+          polymorph(mainw->multitrack,POLY_CLIPS);
+          mt_sensitise(mainw->multitrack);
+          mainw->multitrack->idlefunc=mt_idle_add(mainw->multitrack);
+        }
 
-	mainw->suppress_dprint=FALSE;
-	d_print_failed();
-	return TRUE;
+        mainw->suppress_dprint=FALSE;
+        d_print_failed();
+        return TRUE;
       }
       // TODO - dirsep
       if (strstr(buffptr,"/clips/")) {
-	char **array;
-	threaded_dialog_spin();
-	array=lives_strsplit(buffptr,"/clips/",-1);
-	mainw->was_set=TRUE;
-	lives_snprintf(mainw->set_name,128,"%s",array[0]);
-	lives_strfreev(array);
+        char **array;
+        threaded_dialog_spin();
+        array=lives_strsplit(buffptr,"/clips/",-1);
+        mainw->was_set=TRUE;
+        lives_snprintf(mainw->set_name,128,"%s",array[0]);
+        lives_strfreev(array);
 
-	if (!did_set_check&&!check_for_lock_file(mainw->set_name,0)) {
-	  do_set_locked_warning(mainw->set_name);
-	  did_set_check=TRUE;
-	}
+        if (!did_set_check&&!check_for_lock_file(mainw->set_name,0)) {
+          do_set_locked_warning(mainw->set_name);
+          did_set_check=TRUE;
+        }
 
-	threaded_dialog_spin();
+        threaded_dialog_spin();
       }
       last_was_normal_file=TRUE;
       mainw->current_file=new_file;
@@ -5674,145 +5595,141 @@ static boolean recover_files(char *recovery_file, boolean auto_recover) {
       threaded_dialog_spin();
 
       if (!is_scrap) {
-	if (!is_ascrap) {
-	  // get file details
-	  read_headers(".");
-	}
-	else {
-	  lives_clip_details_t detail;
-	  int asigned,aendian;
-	  detail=CLIP_DETAILS_ACHANS;
-	  retval=get_clip_value(mainw->current_file,detail,&cfile->achans,0);
-	  if (!retval) cfile->achans=0;
-	  
-	  if (cfile->achans==0) retval=FALSE;
-	  else retval=TRUE;
-	  
-	  if (retval) {
-	    detail=CLIP_DETAILS_ARATE;
-	    retval=get_clip_value(mainw->current_file,detail,&cfile->arps,0);
-	  }
+        if (!is_ascrap) {
+          // get file details
+          read_headers(".");
+        } else {
+          lives_clip_details_t detail;
+          int asigned,aendian;
+          detail=CLIP_DETAILS_ACHANS;
+          retval=get_clip_value(mainw->current_file,detail,&cfile->achans,0);
+          if (!retval) cfile->achans=0;
 
-	  if (!retval) cfile->arps=cfile->achans=cfile->arate=cfile->asampsize=0;
-	  if (cfile->arps==0) retval=FALSE; 
+          if (cfile->achans==0) retval=FALSE;
+          else retval=TRUE;
 
-	  cfile->arate=cfile->arps;
-	  
-	  if (retval) {
-	    detail=CLIP_DETAILS_ASIGNED;
-	    retval=get_clip_value(mainw->current_file,detail,&asigned,0);
-	  }
-	  if (retval) {
-	    detail=CLIP_DETAILS_AENDIAN;
-	    retval=get_clip_value(mainw->current_file,detail,&aendian,0);
-	  }
-	  
-	  cfile->signed_endian=asigned+aendian;
-	  
-	  if (retval) {
-	    detail=CLIP_DETAILS_ASAMPS;
-	    retval=get_clip_value(mainw->current_file,detail,&cfile->asampsize,0);
-	  }
+          if (retval) {
+            detail=CLIP_DETAILS_ARATE;
+            retval=get_clip_value(mainw->current_file,detail,&cfile->arps,0);
+          }
 
-	  if (!retval) {
-	    mainw->first_free_file=mainw->current_file;
-	    continue;
-	  }
-	  mainw->ascrap_file=mainw->current_file;
-	}
-      }
-      else {
-	mainw->scrap_file=mainw->current_file;
+          if (!retval) cfile->arps=cfile->achans=cfile->arate=cfile->asampsize=0;
+          if (cfile->arps==0) retval=FALSE;
+
+          cfile->arate=cfile->arps;
+
+          if (retval) {
+            detail=CLIP_DETAILS_ASIGNED;
+            retval=get_clip_value(mainw->current_file,detail,&asigned,0);
+          }
+          if (retval) {
+            detail=CLIP_DETAILS_AENDIAN;
+            retval=get_clip_value(mainw->current_file,detail,&aendian,0);
+          }
+
+          cfile->signed_endian=asigned+aendian;
+
+          if (retval) {
+            detail=CLIP_DETAILS_ASAMPS;
+            retval=get_clip_value(mainw->current_file,detail,&cfile->asampsize,0);
+          }
+
+          if (!retval) {
+            mainw->first_free_file=mainw->current_file;
+            continue;
+          }
+          mainw->ascrap_file=mainw->current_file;
+        }
+      } else {
+        mainw->scrap_file=mainw->current_file;
       }
 
       if (mainw->current_file<1) continue;
 
       if (load_frame_index(mainw->current_file)) {
-	// CLIP_TYPE_FILE
-	if (!reload_clip(mainw->current_file)) continue;
-      }
-      else {
-	// CLIP_TYPE_DISK
-	if (is_scrap||!check_frame_count(mainw->current_file)) {
-	  get_frame_count(mainw->current_file);
-	  needs_update=TRUE;
-	}
-	if (!is_scrap&&cfile->frames>0&&(cfile->hsize*cfile->vsize==0)) {
-	  get_frames_sizes(mainw->current_file,1);
-	  needs_update=TRUE;
-	}
-	if (is_ascrap&&cfile->afilesize==0) reget_afilesize(mainw->current_file);
+        // CLIP_TYPE_FILE
+        if (!reload_clip(mainw->current_file)) continue;
+      } else {
+        // CLIP_TYPE_DISK
+        if (is_scrap||!check_frame_count(mainw->current_file)) {
+          get_frame_count(mainw->current_file);
+          needs_update=TRUE;
+        }
+        if (!is_scrap&&cfile->frames>0&&(cfile->hsize*cfile->vsize==0)) {
+          get_frames_sizes(mainw->current_file,1);
+          needs_update=TRUE;
+        }
+        if (is_ascrap&&cfile->afilesize==0) reget_afilesize(mainw->current_file);
       }
 
       if (!is_scrap&&!is_ascrap) {
-	// read the playback fps, play frame, and name
-	threaded_dialog_spin();
-	open_set_file (mainw->set_name,++clipnum);
-	threaded_dialog_spin();
+        // read the playback fps, play frame, and name
+        threaded_dialog_spin();
+        open_set_file(mainw->set_name,++clipnum);
+        threaded_dialog_spin();
 
-	if (mainw->cached_list!=NULL) {
-	  threaded_dialog_spin();
-	  lives_list_free_strings(mainw->cached_list);
-	  lives_list_free(mainw->cached_list);
-	  threaded_dialog_spin();
-	  mainw->cached_list=NULL;
-	}
-	
-	if (mainw->current_file<1) continue;
-	
-	get_total_time (cfile);
-	if (cfile->achans) cfile->aseek_pos=(int64_t)((double)(cfile->frameno-1.)/cfile->fps*cfile->arate*
-						   cfile->achans*(cfile->asampsize/8));
+        if (mainw->cached_list!=NULL) {
+          threaded_dialog_spin();
+          lives_list_free_strings(mainw->cached_list);
+          lives_list_free(mainw->cached_list);
+          threaded_dialog_spin();
+          mainw->cached_list=NULL;
+        }
 
-	if (needs_update) {
-	  save_clip_values(mainw->current_file);
-	  needs_update=FALSE;
-	}
-	
-	// add to clip menu
-	threaded_dialog_spin();
-	add_to_clipmenu();
-	get_next_free_file();
-	cfile->start=cfile->frames>0?1:0;
-	cfile->end=cfile->frames;
-	cfile->is_loaded=TRUE;
-	cfile->changed=TRUE;
-	unlink (cfile->info_file);
-	set_main_title(cfile->name,0);
+        if (mainw->current_file<1) continue;
 
-	if (mainw->multitrack==NULL) {
-	  if (mainw->current_file>0) {
-	    resize(1);
-	    load_start_image (cfile->start);
-	    load_end_image (cfile->end);
-	    lives_widget_context_update();
-	  }
-	}
+        get_total_time(cfile);
+        if (cfile->achans) cfile->aseek_pos=(int64_t)((double)(cfile->frameno-1.)/cfile->fps*cfile->arate*
+                                              cfile->achans*(cfile->asampsize/8));
 
-	if (mainw->multitrack!=NULL) {
-	  int current_file=mainw->current_file;
-	  lives_mt *multi=mainw->multitrack;
-	  mainw->multitrack=NULL;
-	  reget_afilesize (mainw->current_file);
-	  mainw->multitrack=multi;
-	  get_total_time(cfile);
-	  mainw->current_file=mainw->multitrack->render_file;
-	  mt_init_clips(mainw->multitrack,current_file,TRUE);
-	  lives_widget_context_update();
-	  mt_clip_select(mainw->multitrack,TRUE);
-	  lives_widget_context_update();
-	  mainw->current_file=current_file;
-	}
-	
-	threaded_dialog_spin();
-	
-	lives_notify(LIVES_OSC_NOTIFY_CLIP_OPENED,"");
-      }
-      else {
-	pthread_mutex_lock(&mainw->clip_list_mutex);
-	mainw->cliplist = lives_list_append (mainw->cliplist, LIVES_INT_TO_POINTER (mainw->current_file));
-	pthread_mutex_unlock(&mainw->clip_list_mutex);
-	get_next_free_file();
+        if (needs_update) {
+          save_clip_values(mainw->current_file);
+          needs_update=FALSE;
+        }
+
+        // add to clip menu
+        threaded_dialog_spin();
+        add_to_clipmenu();
+        get_next_free_file();
+        cfile->start=cfile->frames>0?1:0;
+        cfile->end=cfile->frames;
+        cfile->is_loaded=TRUE;
+        cfile->changed=TRUE;
+        unlink(cfile->info_file);
+        set_main_title(cfile->name,0);
+
+        if (mainw->multitrack==NULL) {
+          if (mainw->current_file>0) {
+            resize(1);
+            load_start_image(cfile->start);
+            load_end_image(cfile->end);
+            lives_widget_context_update();
+          }
+        }
+
+        if (mainw->multitrack!=NULL) {
+          int current_file=mainw->current_file;
+          lives_mt *multi=mainw->multitrack;
+          mainw->multitrack=NULL;
+          reget_afilesize(mainw->current_file);
+          mainw->multitrack=multi;
+          get_total_time(cfile);
+          mainw->current_file=mainw->multitrack->render_file;
+          mt_init_clips(mainw->multitrack,current_file,TRUE);
+          lives_widget_context_update();
+          mt_clip_select(mainw->multitrack,TRUE);
+          lives_widget_context_update();
+          mainw->current_file=current_file;
+        }
+
+        threaded_dialog_spin();
+
+        lives_notify(LIVES_OSC_NOTIFY_CLIP_OPENED,"");
+      } else {
+        pthread_mutex_lock(&mainw->clip_list_mutex);
+        mainw->cliplist = lives_list_append(mainw->cliplist, LIVES_INT_TO_POINTER(mainw->current_file));
+        pthread_mutex_unlock(&mainw->clip_list_mutex);
+        get_next_free_file();
       }
     }
   }
@@ -5824,7 +5741,7 @@ static boolean recover_files(char *recovery_file, boolean auto_recover) {
 
   fclose(rfile);
 
-  if (mainw->current_file!=-1) 
+  if (mainw->current_file!=-1)
     if (strlen(mainw->set_name)>0) recover_layout_map(mainw->current_file);
 
   if (mainw->multitrack!=NULL) {
@@ -5833,8 +5750,7 @@ static boolean recover_files(char *recovery_file, boolean auto_recover) {
     polymorph(mainw->multitrack,POLY_CLIPS);
     mt_sensitise(mainw->multitrack);
     mainw->multitrack->idlefunc=mt_idle_add(mainw->multitrack);
-  }
-  else {
+  } else {
     int start_file=mainw->current_file;
     if (mainw->current_file>1&&mainw->current_file==mainw->ascrap_file&&mainw->files[mainw->current_file-1]!=NULL) {
       start_file--;
@@ -5863,7 +5779,7 @@ static boolean recover_files(char *recovery_file, boolean auto_recover) {
 
 
 
-void add_to_recovery_file (const char *handle) {
+void add_to_recovery_file(const char *handle) {
 #ifndef IS_MINGW
   char *com=lives_strdup_printf("/bin/echo \"%s\" >> \"%s\"",handle,mainw->recovery_file);
 #else
@@ -5878,7 +5794,7 @@ void add_to_recovery_file (const char *handle) {
     return;
   }
 
-  if ((mainw->multitrack!=NULL&&mainw->multitrack->event_list!=NULL)||mainw->stored_event_list!=NULL) 
+  if ((mainw->multitrack!=NULL&&mainw->multitrack->event_list!=NULL)||mainw->stored_event_list!=NULL)
     write_backup_layout_numbering(mainw->multitrack);
 }
 
@@ -5910,17 +5826,17 @@ void rewrite_recovery_file(void) {
     while (clist!=NULL) {
       i=LIVES_POINTER_TO_INT(clist->data);
       if (mainw->files[i]->clip_type==CLIP_TYPE_FILE||mainw->files[i]->clip_type==CLIP_TYPE_DISK) {
-	if (i!=mainw->scrap_file) recovery_entry=lives_strdup_printf("%s\n",mainw->files[i]->handle);
-	else recovery_entry=lives_strdup_printf("scrap|%s\n",mainw->files[i]->handle);
+        if (i!=mainw->scrap_file) recovery_entry=lives_strdup_printf("%s\n",mainw->files[i]->handle);
+        else recovery_entry=lives_strdup_printf("scrap|%s\n",mainw->files[i]->handle);
 
-	if (!opened) recovery_fd=creat(mainw->recovery_file,S_IRUSR|S_IWUSR);
-	if (recovery_fd<0) retval=do_write_failed_error_s_with_retry(mainw->recovery_file,lives_strerror(errno),NULL);
-	else {
-	  opened=TRUE;
-	  lives_write(recovery_fd,recovery_entry,strlen(recovery_entry),TRUE);
-	  if (mainw->write_failed) retval=do_write_failed_error_s_with_retry(mainw->recovery_file,NULL,NULL);
-	}
-	lives_free(recovery_entry);
+        if (!opened) recovery_fd=creat(mainw->recovery_file,S_IRUSR|S_IWUSR);
+        if (recovery_fd<0) retval=do_write_failed_error_s_with_retry(mainw->recovery_file,lives_strerror(errno),NULL);
+        else {
+          opened=TRUE;
+          lives_write(recovery_fd,recovery_entry,strlen(recovery_entry),TRUE);
+          if (mainw->write_failed) retval=do_write_failed_error_s_with_retry(mainw->recovery_file,NULL,NULL);
+        }
+        lives_free(recovery_entry);
       }
       if (mainw->write_failed) break;
       clist=clist->next;
@@ -5931,13 +5847,13 @@ void rewrite_recovery_file(void) {
   if (!opened) unlink(mainw->recovery_file);
   else if (recovery_fd>=0) close(recovery_fd);
 
-  if ((mainw->multitrack!=NULL&&mainw->multitrack->event_list!=NULL)||mainw->stored_event_list!=NULL) 
+  if ((mainw->multitrack!=NULL&&mainw->multitrack->event_list!=NULL)||mainw->stored_event_list!=NULL)
     write_backup_layout_numbering(mainw->multitrack);
 
 }
 
 
-boolean check_for_recovery_files (boolean auto_recover) {
+boolean check_for_recovery_files(boolean auto_recover) {
   uint32_t recpid=0;
 
   ssize_t bytes;
@@ -5955,8 +5871,8 @@ boolean check_for_recovery_files (boolean auto_recover) {
   lives_pgid_t lpid=capable->mainpid;
 
   com=lives_strdup_printf("%s get_recovery_file %d %d %s recovery> \"%s\"",prefs->backend_sync,luid,lgid,
-			     capable->myname,info_file);
-  
+                          capable->myname,info_file);
+
   unlink(info_file);
   mainw->com_failed=FALSE;
   lives_system(com,FALSE);
@@ -5972,7 +5888,7 @@ boolean check_for_recovery_files (boolean auto_recover) {
     if ((bytes=read(info_fd,mainw->msg,256))>0) {
       memset(mainw->msg+bytes,0,1);
       if ((recpid=atoi(mainw->msg))>0) {
-	
+
       }
     }
     close(info_fd);
@@ -5981,12 +5897,12 @@ boolean check_for_recovery_files (boolean auto_recover) {
   lives_free(info_file);
 
   if (recpid==0) return FALSE;
-  
+
   retval=recover_files((recovery_file=lives_strdup_printf("%s/recovery.%d.%d.%d",prefs->tmpdir,luid,
-						      lgid,recpid)),auto_recover);
+                                      lgid,recpid)),auto_recover);
   unlink(recovery_file);
   lives_free(recovery_file);
-  
+
 #if !GTK_CHECK_VERSION(3,0,0)
   if (mainw->current_file>-1&&cfile!=NULL) {
     load_start_image(cfile->start);
@@ -6001,37 +5917,36 @@ boolean check_for_recovery_files (boolean auto_recover) {
 
   // check for layout recovery file
   recovery_file=lives_strdup_printf("%s/layout.%d.%d.%d",prefs->tmpdir,luid,lgid,recpid);
-  if (lives_file_test (recovery_file, LIVES_FILE_TEST_EXISTS)) {
+  if (lives_file_test(recovery_file, LIVES_FILE_TEST_EXISTS)) {
     // move files temporarily to stop them being cleansed
 #ifndef IS_MINGW
     com=lives_strdup_printf("/bin/mv \"%s\" \"%s/.layout.%d.%d.%d\"",recovery_file,prefs->tmpdir,luid,
-			lgid,lpid);
+                            lgid,lpid);
 #else
     com=lives_strdup_printf("mv.exe \"%s\" \"%s/.layout.%d.%d.%d\"",recovery_file,prefs->tmpdir,luid,
-			lgid,lpid);
+                            lgid,lpid);
 #endif
     lives_system(com,FALSE);
     lives_free(com);
     recovery_numbering_file=lives_strdup_printf("%s/layout_numbering.%d.%d.%d",prefs->tmpdir,luid,
-					    lgid,recpid);
+                            lgid,recpid);
 #ifndef IS_MINGW
     com=lives_strdup_printf("/bin/mv \"%s\" \"%s/.layout_numbering.%d.%d.%d\"",recovery_numbering_file,prefs->tmpdir,
-			luid,lgid,lpid);
+                            luid,lgid,lpid);
 #else
     com=lives_strdup_printf("mv.exe \"%s\" \"%s/.layout_numbering.%d.%d.%d\"",recovery_numbering_file,prefs->tmpdir,
-			luid,lgid,lpid);
+                            luid,lgid,lpid);
 #endif
     lives_system(com,FALSE);
     lives_free(com);
     lives_free(recovery_numbering_file);
     mainw->recoverable_layout=TRUE;
-  }
-  else {
+  } else {
     if (mainw->scrap_file!=-1) close_scrap_file();
     if (mainw->ascrap_file!=-1) close_ascrap_file();
   }
   lives_free(recovery_file);
-  
+
   if (mainw->com_failed) return FALSE;
 
   com=lives_strdup_printf("%s clean_recovery_files %d %d \"%s\"",prefs->backend_sync,luid,lgid,capable->myname);
@@ -6042,10 +5957,10 @@ boolean check_for_recovery_files (boolean auto_recover) {
     recovery_file=lives_strdup_printf("%s/.layout.%d.%d.%d",prefs->tmpdir,luid,lgid,lpid);
 #ifndef IS_MINGW
     com=lives_strdup_printf("/bin/mv \"%s\" \"%s/layout.%d.%d.%d\"",recovery_file,prefs->tmpdir,luid,
-			lgid,lpid);
+                            lgid,lpid);
 #else
     com=lives_strdup_printf("mv.exe \"%s\" \"%s/layout.%d.%d.%d\"",recovery_file,prefs->tmpdir,luid,
-			lgid,lpid);
+                            lgid,lpid);
 #endif
     lives_system(com,FALSE);
     lives_free(com);
@@ -6054,10 +5969,10 @@ boolean check_for_recovery_files (boolean auto_recover) {
     recovery_numbering_file=lives_strdup_printf("%s/.layout_numbering.%d.%d.%d",prefs->tmpdir,luid,lgid,lpid);
 #ifndef IS_MINGW
     com=lives_strdup_printf("/bin/mv \"%s\" \"%s/layout_numbering.%d.%d.%d\"",recovery_numbering_file,prefs->tmpdir,luid,
-			lgid,lpid);
+                            lgid,lpid);
 #else
     com=lives_strdup_printf("mv.exe \"%s\" \"%s/layout_numbering.%d.%d.%d\"",recovery_numbering_file,prefs->tmpdir,luid,
-			lgid,lpid);
+                            lgid,lpid);
 #endif
     lives_system(com,FALSE);
     lives_free(com);

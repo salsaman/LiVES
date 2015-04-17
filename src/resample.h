@@ -40,31 +40,31 @@ _resaudw *resaudw;
 
 weed_timecode_t q_gint64(weed_timecode_t in, double fps);
 weed_timecode_t q_gint64_floor(weed_timecode_t in, double fps);
-weed_timecode_t q_dbl (double in, double fps);
+weed_timecode_t q_dbl(double in, double fps);
 
 
-weed_plant_t *quantise_events (weed_plant_t *in_list, double new_fps, boolean allow_gap); ///< quantise frame events for a single clip
+weed_plant_t *quantise_events(weed_plant_t *in_list, double new_fps, boolean allow_gap);  ///< quantise frame events for a single clip
 
 ///////////////////////////////////////////////////////
-int count_resampled_frames (int in_frames, double orig_fps, double resampled_fps);
+int count_resampled_frames(int in_frames, double orig_fps, double resampled_fps);
 
 /////////////////////////////////////////
 
 // GUI functions
 /// window change speed from Tools menu
-void create_new_pb_speed (short type);
+void create_new_pb_speed(short type);
 
 /// resample audio window
 ///
-/// type 1 : show current and new, 
+/// type 1 : show current and new,
 /// type 2 : show new
-_resaudw* create_resaudw (short type, render_details *rdet, LiVESWidget *top_vbox);
+_resaudw *create_resaudw(short type, render_details *rdet, LiVESWidget *top_vbox);
 
-void on_change_speed_activate (LiVESMenuItem *, livespointer);
-void on_change_speed_ok_clicked (LiVESButton *, livespointer);
+void on_change_speed_activate(LiVESMenuItem *, livespointer);
+void on_change_speed_ok_clicked(LiVESButton *, livespointer);
 
-boolean auto_resample_resize (int width, int height, double fps, int fps_num, 
-			       int fps_denom, int arate, int asigned, boolean swap_endian);
+boolean auto_resample_resize(int width, int height, double fps, int fps_num,
+                             int fps_denom, int arate, int asigned, boolean swap_endian);
 int reorder_frames(int rwidth, int rheight);
 int deorder_frames(int old_framecount, boolean leave_bak); ///< leave_bak is a special mode for the clipboard
 

@@ -44,30 +44,28 @@ typedef enum {
 typedef struct _GiwTimeline   GiwTimeline;
 typedef struct _GiwTimelineClass   GiwTimelineClass;
 
-struct _GiwTimeline
-{
+struct _GiwTimeline {
   GtkScale  scale;
 };
 
-struct _GiwTimelineClass
-{
+struct _GiwTimelineClass {
   GtkScaleClass  parent_class;
 
 };
 
 
-GType       giw_timeline_get_type            (void) G_GNUC_CONST;
-GtkWidget * giw_timeline_new                 (GtkOrientation  orientation);
-void        giw_timeline_add_track_widget    (GiwTimeline      *timeline,
-					      GtkWidget      *widget);
-void        giw_timeline_remove_track_widget (GiwTimeline      *timeline,
-					      GtkWidget      *widget);
-void        giw_timeline_set_max_size        (GiwTimeline      *timeline,
-					      gdouble         max_size);
-gdouble     giw_timeline_get_max_size        (GiwTimeline    *timeline);
-void        giw_timeline_set_unit            (GiwTimeline    *timeline, 
-					      GiwTimeUnit    unit);
-GiwTimeUnit giw_timeline_get_unit            (GiwTimeline    *timeline);
+GType       giw_timeline_get_type(void) G_GNUC_CONST;
+GtkWidget *giw_timeline_new(GtkOrientation  orientation);
+void        giw_timeline_add_track_widget(GiwTimeline      *timeline,
+    GtkWidget      *widget);
+void        giw_timeline_remove_track_widget(GiwTimeline      *timeline,
+    GtkWidget      *widget);
+void        giw_timeline_set_max_size(GiwTimeline      *timeline,
+                                      gdouble         max_size);
+gdouble     giw_timeline_get_max_size(GiwTimeline    *timeline);
+void        giw_timeline_set_unit(GiwTimeline    *timeline,
+                                  GiwTimeUnit    unit);
+GiwTimeUnit giw_timeline_get_unit(GiwTimeline    *timeline);
 
 
 G_END_DECLS

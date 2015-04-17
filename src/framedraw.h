@@ -18,13 +18,13 @@
 
 
 /// call this to add framedraw widget to an hbox
-void widget_add_framedraw (LiVESVBox *, int start, int end, boolean add_preview_button, int width, int height);
+void widget_add_framedraw(LiVESVBox *, int start, int end, boolean add_preview_button, int width, int height);
 
 /// redraw when exposed/frame number changes
-void framedraw_redraw (lives_special_framedraw_rect_t *, boolean reload_image, LiVESPixbuf *);
+void framedraw_redraw(lives_special_framedraw_rect_t *, boolean reload_image, LiVESPixbuf *);
 
 /// callback for widgets
-void after_framedraw_widget_changed (LiVESWidget *, lives_special_framedraw_rect_t *);
+void after_framedraw_widget_changed(LiVESWidget *, lives_special_framedraw_rect_t *);
 
 
 /// activate the image for clicks and draws
@@ -48,23 +48,23 @@ void load_rfx_preview(lives_rfx_t *rfx); ///< rfx preview
 void redraw_framedraw_image(void);
 
 /// change the frame number
-void after_framedraw_frame_spinbutton_changed (LiVESSpinButton *, lives_special_framedraw_rect_t *);
+void after_framedraw_frame_spinbutton_changed(LiVESSpinButton *, lives_special_framedraw_rect_t *);
 
 /// reset button
-void on_framedraw_reset_clicked (LiVESButton *, lives_special_framedraw_rect_t *);
+void on_framedraw_reset_clicked(LiVESButton *, lives_special_framedraw_rect_t *);
 
 
-boolean on_framedraw_mouse_start (LiVESWidget *, LiVESXEventButton *, lives_special_framedraw_rect_t *);
-boolean on_framedraw_mouse_update (LiVESWidget *, LiVESXEventMotion *, lives_special_framedraw_rect_t *);
-boolean on_framedraw_mouse_reset (LiVESWidget *, LiVESXEventButton *, lives_special_framedraw_rect_t *);
+boolean on_framedraw_mouse_start(LiVESWidget *, LiVESXEventButton *, lives_special_framedraw_rect_t *);
+boolean on_framedraw_mouse_update(LiVESWidget *, LiVESXEventMotion *, lives_special_framedraw_rect_t *);
+boolean on_framedraw_mouse_reset(LiVESWidget *, LiVESXEventButton *, lives_special_framedraw_rect_t *);
 
 
-boolean on_framedraw_leave (LiVESWidget *, LiVESXEventCrossing *, lives_special_framedraw_rect_t *);
-boolean on_framedraw_enter (LiVESWidget *, LiVESXEventCrossing *, lives_special_framedraw_rect_t *);
+boolean on_framedraw_leave(LiVESWidget *, LiVESXEventCrossing *, lives_special_framedraw_rect_t *);
+boolean on_framedraw_enter(LiVESWidget *, LiVESXEventCrossing *, lives_special_framedraw_rect_t *);
 
 // graphics routines
 
-void draw_rect_demask (lives_colRGBA32_t *col, int x1, int y1, int x2, int y2, boolean filled);
+void draw_rect_demask(lives_colRGBA32_t *col, int x1, int y1, int x2, int y2, boolean filled);
 
 
 #endif

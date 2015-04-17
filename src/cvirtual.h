@@ -17,15 +17,15 @@ boolean load_frame_index(int fileno) WARN_UNUSED;
 boolean check_clip_integrity(int fileno, const lives_clip_data_t *cdata);
 
 boolean virtual_to_images(int sfileno, int sframe, int eframe, boolean update_progress, LiVESPixbuf **pbr) WARN_UNUSED;
-void delete_frames_from_virtual (int sfileno, int start, int end);
-void insert_images_in_virtual (int sfileno, int where, int frames, int *frame_index, int start);
+void delete_frames_from_virtual(int sfileno, int start, int end);
+void insert_images_in_virtual(int sfileno, int where, int frames, int *frame_index, int start);
 void del_frame_index(lives_clip_t *sfile);
 void reverse_frame_index(int sfileno);
-void clean_images_from_virtual (lives_clip_t *sfile, int oldframes);
+void clean_images_from_virtual(lives_clip_t *sfile, int oldframes);
 int *frame_index_copy(int *findex, int nframes, int offset);
 boolean check_if_non_virtual(int fileno, int start, int end);
 
-void restore_frame_index_back (int sfileno);
+void restore_frame_index_back(int sfileno);
 
 boolean is_virtual_frame(int sfileno, int frame);
 

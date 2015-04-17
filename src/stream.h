@@ -42,10 +42,10 @@ typedef struct {
 #define LIVES_VSTREAM_COMPRESSION_NONE 0
 
 
-void lives2lives_read_stream (const char *host, int port);
-void weed_layer_set_from_lives2lives (weed_plant_t *layer, int clip, lives_vstream_t *lstream);
-void on_open_lives2lives_activate (LiVESMenuItem *, livespointer);
-void on_send_lives2lives_activate (LiVESMenuItem *, livespointer);
+void lives2lives_read_stream(const char *host, int port);
+void weed_layer_set_from_lives2lives(weed_plant_t *layer, int clip, lives_vstream_t *lstream);
+void on_open_lives2lives_activate(LiVESMenuItem *, livespointer);
+void on_send_lives2lives_activate(LiVESMenuItem *, livespointer);
 
 typedef struct {
   LiVESWidget *dialog;
@@ -57,7 +57,7 @@ typedef struct {
   LiVESWidget *rb_anyhost;
 } lives_pandh_w;
 
-lives_pandh_w* create_pandh_dialog (int type);
+lives_pandh_w *create_pandh_dialog(int type);
 
 
 

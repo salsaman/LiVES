@@ -146,7 +146,7 @@ static int padup(char **str, int arglen) {
 /// extern functions with no headers
 
 boolean lives_osc_cb_saveset(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra);
-boolean lives_osc_cb_play (void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra);
+boolean lives_osc_cb_play(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra);
 
 
 /////////// value return functions ///////////////////////
@@ -155,7 +155,7 @@ boolean lives_osc_cb_play (void *context, int arglen, const void *vargs, OSCTime
 static void ext_caller_return_int(ulong caller_id, int ret) {
   // this is for the C++ binding
   char *msgstring = lives_strdup_printf("%lu %d",caller_id,ret);
-  if (mainw!=NULL) binding_cb (LIVES_CALLBACK_PRIVATE, msgstring, mainw->id);
+  if (mainw!=NULL) binding_cb(LIVES_CALLBACK_PRIVATE, msgstring, mainw->id);
   lives_free(msgstring);
 }
 
@@ -163,7 +163,7 @@ static void ext_caller_return_int(ulong caller_id, int ret) {
 static void ext_caller_return_ulong(ulong caller_id, ulong ret) {
   // this is for the C++ binding
   char *msgstring = lives_strdup_printf("%lu %lu",caller_id,ret);
-  if (mainw!=NULL) binding_cb (LIVES_CALLBACK_PRIVATE, msgstring, mainw->id);
+  if (mainw!=NULL) binding_cb(LIVES_CALLBACK_PRIVATE, msgstring, mainw->id);
   lives_free(msgstring);
 }
 
@@ -171,7 +171,7 @@ static void ext_caller_return_ulong(ulong caller_id, ulong ret) {
 static void ext_caller_return_string(ulong caller_id, const char *ret) {
   // this is for the C++ binding
   char *msgstring = lives_strdup_printf("%lu %s",caller_id,ret);
-  if (mainw!=NULL) binding_cb (LIVES_CALLBACK_PRIVATE, msgstring, mainw->id);
+  if (mainw!=NULL) binding_cb(LIVES_CALLBACK_PRIVATE, msgstring, mainw->id);
   lives_free(msgstring);
 }
 
@@ -211,8 +211,8 @@ int cnum_for_uid(ulong uid) {
     while (list!=NULL) {
       int cnum=LIVES_POINTER_TO_INT(list->data);
       if (mainw->files[cnum]!=NULL && uid==mainw->files[cnum]->unique_id) {
-	pthread_mutex_unlock(&mainw->clip_list_mutex);
-	return cnum;
+        pthread_mutex_unlock(&mainw->clip_list_mutex);
+        return cnum;
       }
       list=list->next;
     }
@@ -395,10 +395,10 @@ static boolean call_file_choose_with_preview(livespointer data) {
     mainw->fs_playarea=NULL;
 
     if (response == LIVES_RESPONSE_ACCEPT) {
-      fname=lives_file_chooser_get_filename (LIVES_FILE_CHOOSER(chooser));
+      fname=lives_file_chooser_get_filename(LIVES_FILE_CHOOSER(chooser));
     }
     if (fname==NULL) fname=lives_strdup("");
-  
+
     on_filechooser_cancel_clicked(chooser);
 
     if (fdata->dir!=NULL) lives_free(fdata->dir);
@@ -422,8 +422,7 @@ static boolean call_choose_set(livespointer data) {
     if (setname==NULL) setname=lives_strdup("");
     ext_caller_return_string(ud->id,setname);
     lives_free(setname);
-  }
-  else ext_caller_return_string(ud->id,"");
+  } else ext_caller_return_string(ud->id,"");
   lives_free(data);
   return FALSE;
 }
@@ -435,8 +434,7 @@ static boolean call_set_set_name(livespointer data) {
 
   if (mainw!=NULL&&!mainw->go_away&&!mainw->is_processing&&mainw->playing_file==-1) {
     ret=set_new_set_name(mainw->multitrack);
-  }
-  else ext_caller_return_int(uid,(int)ret);
+  } else ext_caller_return_int(uid,(int)ret);
   return FALSE;
 }
 
@@ -468,8 +466,7 @@ static boolean call_reload_set(livespointer data) {
     if (!is_legal_set_name(mdata->msg,TRUE)) {
       mainw->osc_auto=0;
       resp=FALSE;
-    }
-    else {
+    } else {
       mainw->osc_auto=0;
       resp=reload_set(mdata->msg);
     }
@@ -487,8 +484,7 @@ static boolean call_set_interactive(livespointer data) {
     mainw->interactive=sint->setting;
     set_interactive(mainw->interactive);
     ext_caller_return_int(sint->id,TRUE);
-  }
-  else ext_caller_return_int(sint->id,FALSE);
+  } else ext_caller_return_int(sint->id,FALSE);
   lives_free(data);
   return FALSE;
 }
@@ -500,8 +496,7 @@ static boolean call_set_sepwin(livespointer data) {
     if (mainw->sep_win!=sint->setting)
       on_sepwin_pressed(NULL,NULL);
     ext_caller_return_int(sint->id,TRUE);
-  }
-  else ext_caller_return_int(sint->id,FALSE);
+  } else ext_caller_return_int(sint->id,FALSE);
   lives_free(data);
   return FALSE;
 }
@@ -515,8 +510,7 @@ static boolean call_set_fullscreen(livespointer data) {
     if (mainw->fs!=sint->setting)
       on_full_screen_pressed(NULL,NULL);
     ext_caller_return_int(sint->id,TRUE);
-  }
-  else ext_caller_return_int(sint->id,FALSE);
+  } else ext_caller_return_int(sint->id,FALSE);
   lives_free(data);
   return FALSE;
 }
@@ -531,8 +525,7 @@ static boolean call_set_fullscreen_sepwin(livespointer data) {
     if (mainw->fs!=sint->setting)
       on_full_screen_pressed(NULL,NULL);
     ext_caller_return_int(sint->id,TRUE);
-  }
-  else ext_caller_return_int(sint->id,FALSE);
+  } else ext_caller_return_int(sint->id,FALSE);
   lives_free(data);
   return FALSE;
 }
@@ -544,8 +537,7 @@ static boolean call_set_ping_pong(livespointer data) {
     if (mainw->ping_pong!=sint->setting)
       lives_check_menu_item_set_active(LIVES_CHECK_MENU_ITEM(mainw->loop_ping_pong),!mainw->ping_pong);
     ext_caller_return_int(sint->id,TRUE);
-  }
-  else ext_caller_return_int(sint->id,FALSE);
+  } else ext_caller_return_int(sint->id,FALSE);
   lives_free(data);
   return FALSE;
 }
@@ -556,8 +548,7 @@ static boolean call_set_pref_bool(livespointer data) {
   if (mainw!=NULL&&!mainw->go_away) {
     pref_factory_bool(bdata->prefidx, bdata->val);
     ext_caller_return_int(bdata->id,TRUE);
-  }
-  else ext_caller_return_int(bdata->id,FALSE);
+  } else ext_caller_return_int(bdata->id,FALSE);
   lives_free(data);
   return FALSE;
 }
@@ -568,8 +559,7 @@ static boolean call_set_pref_int(livespointer data) {
   if (mainw!=NULL&&!mainw->go_away) {
     pref_factory_int(idata->prefidx, idata->val);
     ext_caller_return_int(idata->id,TRUE);
-  }
-  else ext_caller_return_int(idata->id,FALSE);
+  } else ext_caller_return_int(idata->id,FALSE);
   lives_free(data);
   return FALSE;
 }
@@ -581,8 +571,7 @@ static boolean call_set_pref_bitmapped(livespointer data) {
   if (mainw!=NULL&&!mainw->go_away) {
     pref_factory_bitmapped(bmdata->prefidx, bmdata->bitfield, bmdata->val);
     ext_caller_return_int(bmdata->id,TRUE);
-  }
-  else ext_caller_return_int(bmdata->id,FALSE);
+  } else ext_caller_return_int(bmdata->id,FALSE);
   lives_free(data);
   return FALSE;
 }
@@ -594,8 +583,7 @@ static boolean call_set_gravity(livespointer data) {
     lives_mt_grav_mode_t grav=trans_constant(idata->val,const_domain_grav);
     mainw->multitrack->opts.grav_mode=grav;
     update_grav_mode(mainw->multitrack);
-  }
-  else ext_caller_return_int(idata->id,FALSE);
+  } else ext_caller_return_int(idata->id,FALSE);
   lives_free(idata);
   return FALSE;
 }
@@ -607,8 +595,7 @@ static boolean call_set_insert_mode(livespointer data) {
     lives_mt_insert_mode_t mode=trans_constant(idata->val,const_domain_insert_mode);
     mainw->multitrack->opts.insert_mode=mode;
     update_insert_mode(mainw->multitrack);
-  }
-  else ext_caller_return_int(idata->id,FALSE);
+  } else ext_caller_return_int(idata->id,FALSE);
   lives_free(idata);
   return FALSE;
 }
@@ -616,13 +603,12 @@ static boolean call_set_insert_mode(livespointer data) {
 
 static boolean call_mt_set_track(livespointer data) {
   ipref *idata=(ipref *)data;
-  if (mainw!=NULL&&!mainw->go_away&&mainw->multitrack!=NULL && (mt_track_is_video(mainw->multitrack, idata->val) 
-								|| mt_track_is_audio(mainw->multitrack, idata->val))) {
+  if (mainw!=NULL&&!mainw->go_away&&mainw->multitrack!=NULL && (mt_track_is_video(mainw->multitrack, idata->val)
+      || mt_track_is_audio(mainw->multitrack, idata->val))) {
     mainw->multitrack->current_track=idata->val;
     track_select(mainw->multitrack);
     ext_caller_return_int(idata->id,TRUE);
-  }
-  else ext_caller_return_int(idata->id,FALSE);
+  } else ext_caller_return_int(idata->id,FALSE);
   lives_free(idata);
   return FALSE;
 }
@@ -630,20 +616,18 @@ static boolean call_mt_set_track(livespointer data) {
 
 static boolean call_mt_set_track_label(livespointer data) {
   lset *ldata=(lset *)data;
-  if (mainw!=NULL&&!mainw->go_away&&mainw->multitrack!=NULL && (mt_track_is_video(mainw->multitrack, ldata->val) 
-								|| mt_track_is_audio(mainw->multitrack, ldata->val))) {
+  if (mainw!=NULL&&!mainw->go_away&&mainw->multitrack!=NULL && (mt_track_is_video(mainw->multitrack, ldata->val)
+      || mt_track_is_audio(mainw->multitrack, ldata->val))) {
     if (ldata->string==NULL) {
       int current_track=mainw->multitrack->current_track;
       mainw->multitrack->current_track=ldata->val;
       on_rename_track_activate(NULL,(livespointer)mainw->multitrack);
       mainw->multitrack->current_track=current_track;
-    }
-    else {
+    } else {
       set_track_label_string(mainw->multitrack,ldata->val,ldata->string);
     }
     ext_caller_return_int(ldata->id,TRUE);
-  }
-  else ext_caller_return_int(ldata->id,FALSE);
+  } else ext_caller_return_int(ldata->id,FALSE);
   if (ldata->string!=NULL) lives_free(ldata->string);
   lives_free(data);
   return FALSE;
@@ -661,8 +645,7 @@ static boolean call_set_if_mode(livespointer data) {
       while (mainw->multitrack==NULL || !mainw->multitrack->is_ready) lives_usleep(prefs->sleep_time);
     }
     ext_caller_return_int(idata->id,TRUE);
-  }
-  else ext_caller_return_int(idata->id,FALSE);
+  } else ext_caller_return_int(idata->id,FALSE);
   lives_free(data);
   return FALSE;
 }
@@ -673,8 +656,7 @@ static boolean call_switch_clip(livespointer data) {
   if (mainw!=NULL&&!mainw->go_away&&!mainw->is_processing) {
     switch_clip(idata->prefidx,idata->val);
     ext_caller_return_int(idata->id,TRUE);
-  }
-  else ext_caller_return_int(idata->id,FALSE);
+  } else ext_caller_return_int(idata->id,FALSE);
   lives_free(data);
   return FALSE;
 }
@@ -685,21 +667,19 @@ static boolean call_set_current_time(livespointer data) {
   if (mainw!=NULL&&!mainw->go_away&&!mainw->is_processing) {
     if (mainw->multitrack!=NULL) {
       if (idata->stime >=0.) {
-	if (idata->stime>mainw->multitrack->end_secs) set_timeline_end_secs(mainw->multitrack,idata->stime);
-	mt_tl_move(mainw->multitrack,idata->stime);
+        if (idata->stime>mainw->multitrack->end_secs) set_timeline_end_secs(mainw->multitrack,idata->stime);
+        mt_tl_move(mainw->multitrack,idata->stime);
       }
-    }
-    else {
+    } else {
       if (mainw->current_file>0 && idata->stime>=0. && idata->stime<=cfile->total_time) {
-	cfile->pointer_time=idata->stime;
-	lives_ruler_set_value(LIVES_RULER (mainw->hruler),cfile->pointer_time);
-	lives_widget_queue_draw (mainw->hruler);
-	get_play_times();
+        cfile->pointer_time=idata->stime;
+        lives_ruler_set_value(LIVES_RULER(mainw->hruler),cfile->pointer_time);
+        lives_widget_queue_draw(mainw->hruler);
+        get_play_times();
       }
     }
     ext_caller_return_int(idata->id,TRUE);
-  }
-  else ext_caller_return_int(idata->id,FALSE);
+  } else ext_caller_return_int(idata->id,FALSE);
   lives_free(data);
   return FALSE;
 }
@@ -710,8 +690,7 @@ static boolean call_unmap_effects(livespointer data) {
   if (mainw!=NULL&&!mainw->go_away&&!mainw->is_processing) {
     on_clear_all_clicked(NULL,NULL);
     ext_caller_return_int(id,TRUE);
-  }
-  else ext_caller_return_int(id,FALSE);
+  } else ext_caller_return_int(id,FALSE);
   return FALSE;
 }
 
@@ -723,8 +702,7 @@ static boolean call_map_effect(livespointer data) {
     int error=rte_switch_keymode(fxdata->key,fxdata->mode,hashname);
     ext_caller_return_int(fxdata->id,(error==0));
     lives_free(hashname);
-  }
-  else ext_caller_return_int(fxdata->id,FALSE);
+  } else ext_caller_return_int(fxdata->id,FALSE);
   lives_free(data);
   return FALSE;
 }
@@ -736,8 +714,7 @@ static boolean call_unmap_effect(livespointer data) {
     int idx=fxdata->key*rte_getmodespk()+fxdata->mode;
     on_clear_clicked(NULL,LIVES_INT_TO_POINTER(idx));
     ext_caller_return_int(fxdata->id,TRUE);
-  }
-  else ext_caller_return_int(fxdata->id,FALSE);
+  } else ext_caller_return_int(fxdata->id,FALSE);
   lives_free(data);
   return FALSE;
 }
@@ -748,8 +725,7 @@ static boolean call_fx_setmode(livespointer data) {
   if (mainw!=NULL&&!mainw->go_away&&!mainw->is_processing) {
     boolean ret=rte_key_setmode(fxdata->key,fxdata->mode);
     ext_caller_return_int(fxdata->id,(int)ret);
-  }
-  else ext_caller_return_int(fxdata->id,FALSE);
+  } else ext_caller_return_int(fxdata->id,FALSE);
   lives_free(data);
   return FALSE;
 }
@@ -762,13 +738,12 @@ static boolean call_wipe_layout(livespointer data) {
   if (mainw!=NULL&&!mainw->go_away&&!mainw->is_processing&&mainw->multitrack!=NULL) {
     if (force) {
       wipe_layout(mainw->multitrack);
-    }
-    else {
+    } else {
       memset(mainw->recent_file,0,1);
       check_for_layout_del(mainw->multitrack, FALSE);
       if (strlen(mainw->recent_file)) {
-	lives_free(lname);
-	lname=strdup(mainw->recent_file);
+        lives_free(lname);
+        lname=strdup(mainw->recent_file);
       }
     }
   }
@@ -882,8 +857,7 @@ static boolean call_set_current_fps(livespointer data) {
   if (mainw!=NULL&&!mainw->go_away&&!mainw->is_processing&&mainw->playing_file>-1) {
     lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_pb_fps),idata->stime);
     ext_caller_return_int(idata->id,(int)TRUE);
-  }
-  else ext_caller_return_int(idata->id,(int)FALSE);
+  } else ext_caller_return_int(idata->id,(int)FALSE);
   lives_free(data);
   return FALSE;
 }
@@ -901,15 +875,13 @@ static boolean call_select_all(livespointer data) {
       mainw->selwidth_locked=FALSE;
       if (cnum==mainw->current_file) on_select_all_activate(NULL,NULL);
       else {
-	sfile->start=sfile->frames>0?1:0;
-	sfile->end=sfile->frames;
+        sfile->start=sfile->frames>0?1:0;
+        sfile->end=sfile->frames;
       }
       mainw->selwidth_locked=selwidth_locked;
       ext_caller_return_int(idata->id,(int)TRUE);
-    }
-    else ext_caller_return_int(idata->id,(int)FALSE);
-  }
-  else ext_caller_return_int(idata->id,(int)FALSE);
+    } else ext_caller_return_int(idata->id,(int)FALSE);
+  } else ext_caller_return_int(idata->id,(int)FALSE);
   lives_free(data);
   return FALSE;
 }
@@ -929,16 +901,14 @@ static boolean call_select_start(livespointer data) {
       mainw->selwidth_locked=FALSE;
       if (cnum==mainw->current_file) lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_start),frame);
       else {
-	if (frame>sfile->frames) frame=sfile->frames;
-	if (sfile->end<frame) sfile->end=frame;
-	sfile->start=frame;
+        if (frame>sfile->frames) frame=sfile->frames;
+        if (sfile->end<frame) sfile->end=frame;
+        sfile->start=frame;
       }
       mainw->selwidth_locked=selwidth_locked;
       ext_caller_return_int(idata->id,(int)TRUE);
-    }
-    else ext_caller_return_int(idata->id,(int)FALSE);
-  }
-  else ext_caller_return_int(idata->id,(int)FALSE);
+    } else ext_caller_return_int(idata->id,(int)FALSE);
+  } else ext_caller_return_int(idata->id,(int)FALSE);
   lives_free(data);
   return FALSE;
 }
@@ -957,16 +927,14 @@ static boolean call_select_end(livespointer data) {
       mainw->selwidth_locked=FALSE;
       if (cnum==mainw->current_file) lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_end),frame);
       else {
-	if (frame>sfile->frames) frame=sfile->frames;
-	if (sfile->start>frame) sfile->start=frame;
-	sfile->end=frame;
+        if (frame>sfile->frames) frame=sfile->frames;
+        if (sfile->start>frame) sfile->start=frame;
+        sfile->end=frame;
       }
       mainw->selwidth_locked=selwidth_locked;
       ext_caller_return_int(idata->id,(int)TRUE);
-    }
-    else ext_caller_return_int(idata->id,(int)FALSE);
-  }
-  else ext_caller_return_int(idata->id,(int)FALSE);
+    } else ext_caller_return_int(idata->id,(int)FALSE);
+  } else ext_caller_return_int(idata->id,(int)FALSE);
   lives_free(data);
   return FALSE;
 }
@@ -997,8 +965,7 @@ static boolean call_insert_block(livespointer data) {
 
     block_uid=mt_get_last_block_uid(mainw->multitrack);
     ext_caller_return_ulong(idata->id,block_uid);
-  }
-  else ext_caller_return_ulong(idata->id,0l);
+  } else ext_caller_return_ulong(idata->id,0l);
   lives_free(data);
   return FALSE;
 }
@@ -1015,8 +982,7 @@ static boolean call_remove_block(livespointer data) {
     delete_block_cb(NULL,(livespointer)mainw->multitrack);
     if (oblock!=rdata->block) mainw->multitrack->block_selected=oblock;
     ext_caller_return_int(rdata->id,(int)TRUE);
-  }
-  else ext_caller_return_int(rdata->id,(int)FALSE);
+  } else ext_caller_return_int(rdata->id,(int)FALSE);
   lives_free(data);
   return FALSE;
 }
@@ -1056,27 +1022,25 @@ static boolean call_fx_enable(livespointer data) {
     if (nstate) {
       // fx is on
       if (!(mainw->rte&(GU641<<(effect_key-1)))) {
-	weed_plant_t *filter=rte_keymode_get_filter(effect_key,rte_key_getmode(effect_key));
-	if (filter==NULL) ret=FALSE;
-	else {
-	  int count=enabled_in_channels(filter, FALSE);
-	  if (mainw->playing_file==-1&&count==0) {
-	    // return value first because...
-	    ext_caller_return_int(fxdata->id,(int)TRUE);
-	    // ...we are going to hang here until playback ends
-	    ret=rte_on_off_callback_hook(NULL,LIVES_INT_TO_POINTER(effect_key));
-	    return FALSE;
-	  }
-	  else {
-	    ret=rte_on_off_callback_hook(NULL,LIVES_INT_TO_POINTER(effect_key));
-	    mainw->last_grabbable_effect=grab;
-	  }
-	}
+        weed_plant_t *filter=rte_keymode_get_filter(effect_key,rte_key_getmode(effect_key));
+        if (filter==NULL) ret=FALSE;
+        else {
+          int count=enabled_in_channels(filter, FALSE);
+          if (mainw->playing_file==-1&&count==0) {
+            // return value first because...
+            ext_caller_return_int(fxdata->id,(int)TRUE);
+            // ...we are going to hang here until playback ends
+            ret=rte_on_off_callback_hook(NULL,LIVES_INT_TO_POINTER(effect_key));
+            return FALSE;
+          } else {
+            ret=rte_on_off_callback_hook(NULL,LIVES_INT_TO_POINTER(effect_key));
+            mainw->last_grabbable_effect=grab;
+          }
+        }
       }
-    }
-    else {
+    } else {
       if (mainw->rte&(GU641<<(effect_key-1))) {
-	ret=rte_on_off_callback_hook(NULL,LIVES_INT_TO_POINTER(effect_key));
+        ret=rte_on_off_callback_hook(NULL,LIVES_INT_TO_POINTER(effect_key));
       }
     }
   }
@@ -1094,21 +1058,17 @@ static boolean call_set_loop_mode(livespointer data) {
     if (lmode==LIVES_LOOP_MODE_NONE) {
       if (mainw->loop_cont) on_loop_button_activate(NULL,NULL);
       if (mainw->loop) lives_check_menu_item_set_active(LIVES_CHECK_MENU_ITEM(mainw->loop_video),!mainw->loop);
-    }
-    else {
+    } else {
       if (lmode & LIVES_LOOP_MODE_CONTINUOUS) {
-	if (!mainw->loop_cont) on_loop_button_activate(NULL,NULL);
-      }
-      else if (mainw->loop_cont) on_loop_button_activate(NULL,NULL);
+        if (!mainw->loop_cont) on_loop_button_activate(NULL,NULL);
+      } else if (mainw->loop_cont) on_loop_button_activate(NULL,NULL);
 
       if (lmode & LIVES_LOOP_MODE_FIT_AUDIO) {
-	if (mainw->loop) lives_check_menu_item_set_active(LIVES_CHECK_MENU_ITEM(mainw->loop_video),!mainw->loop);
-      }
-      else if (!mainw->loop) lives_check_menu_item_set_active(LIVES_CHECK_MENU_ITEM(mainw->loop_video),!mainw->loop);
+        if (mainw->loop) lives_check_menu_item_set_active(LIVES_CHECK_MENU_ITEM(mainw->loop_video),!mainw->loop);
+      } else if (!mainw->loop) lives_check_menu_item_set_active(LIVES_CHECK_MENU_ITEM(mainw->loop_video),!mainw->loop);
     }
     ext_caller_return_int(idata->id,(int)TRUE);
-  }
-  else ext_caller_return_int(idata->id,(int)FALSE);
+  } else ext_caller_return_int(idata->id,(int)FALSE);
   lives_free(data);
   return FALSE;
 }
@@ -1118,10 +1078,9 @@ static boolean call_set_loop_mode(livespointer data) {
 static boolean call_resync_fps(livespointer data) {
   ipref *idata=(ipref *)data;
   if (mainw!=NULL&& mainw->playing_file>-1) {
-    fps_reset_callback (NULL, NULL, 0, (LiVESXModifierType)0, NULL);
+    fps_reset_callback(NULL, NULL, 0, (LiVESXModifierType)0, NULL);
     ext_caller_return_int(idata->id,(int)TRUE);
-  }
-  else ext_caller_return_int(idata->id,(int)FALSE);
+  } else ext_caller_return_int(idata->id,(int)FALSE);
   lives_free(data);
   return FALSE;
 }
@@ -1133,8 +1092,7 @@ static boolean call_cancel_proc(livespointer data) {
   if (mainw==NULL||mainw->current_file==-1||cfile==NULL||cfile->proc_ptr==NULL||
       !lives_widget_is_visible(cfile->proc_ptr->cancel_button)) {
     ext_caller_return_int(idata->id,(int)FALSE);
-  }
-  else {
+  } else {
     on_cancel_keep_button_clicked(NULL,NULL);
     ext_caller_return_int(idata->id,(int)TRUE);
   }
@@ -1255,7 +1213,7 @@ boolean idle_choose_file_with_preview(const char *dirname, const char *title, in
 
   if (dirname!=NULL && strlen(dirname) > 0) data->dir=strdup(dirname);
   else data->dir=NULL;
-  
+
   if (title!=NULL && strlen(title) > 0) data->title=strdup(title);
   else data->title=NULL;
 
@@ -1378,7 +1336,7 @@ boolean idle_set_fullscreen_sepwin(boolean setting, ulong id) {
 
 boolean idle_set_ping_pong(boolean setting, ulong id) {
   sintdata *data;
-  
+
   if (mainw==NULL||mainw->go_away) return FALSE;
 
   data=(sintdata *)lives_malloc(sizeof(sintdata));
@@ -1392,7 +1350,7 @@ boolean idle_set_ping_pong(boolean setting, ulong id) {
 
 boolean idle_set_gravity(int grav, ulong id) {
   ipref *data;
-  
+
   if (mainw==NULL||mainw->go_away) return FALSE;
 
   data=(ipref *)lives_malloc(sizeof(ipref));
@@ -1405,7 +1363,7 @@ boolean idle_set_gravity(int grav, ulong id) {
 
 boolean idle_set_insert_mode(int mode, ulong id) {
   ipref *data;
-  
+
   if (mainw==NULL||mainw->go_away) return FALSE;
 
   data=(ipref *)lives_malloc(sizeof(ipref));

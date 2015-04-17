@@ -24,11 +24,11 @@ typedef struct {
 
 boolean rec(s_cam *cam);
 void camplay(s_cam *cam);
-void camstop (s_cam *cam);
-void camrew (s_cam *cam);
-void camff (s_cam *cam);
-void campause (s_cam *cam);
-void cameject (s_cam *cam);
+void camstop(s_cam *cam);
+void camrew(s_cam *cam);
+void camff(s_cam *cam);
+void campause(s_cam *cam);
+void cameject(s_cam *cam);
 
 void close_raw1394(raw1394handle_t handle);
 

@@ -31,26 +31,26 @@ typedef struct {
   boolean ready;
 } lives_yuv4m_t;
 
-void weed_layer_set_from_yuv4m (weed_plant_t *layer, lives_clip_t *);
+void weed_layer_set_from_yuv4m(weed_plant_t *layer, lives_clip_t *);
 
 // callbacks
-void on_open_yuv4m_activate (LiVESMenuItem *, livespointer);
-void on_live_tvcard_activate (LiVESMenuItem *, livespointer);
-void on_live_fw_activate (LiVESMenuItem *, livespointer);
+void on_open_yuv4m_activate(LiVESMenuItem *, livespointer);
+void on_live_tvcard_activate(LiVESMenuItem *, livespointer);
+void on_live_fw_activate(LiVESMenuItem *, livespointer);
 
-void lives_yuv_stream_stop_read (lives_yuv4m_t *);
+void lives_yuv_stream_stop_read(lives_yuv4m_t *);
 
 
 /// not used
-boolean lives_yuv_stream_start_write (lives_yuv4m_t *, const char *filename, int hsize, int vsize, double fps);
-boolean lives_yuv_stream_write_frame (lives_yuv4m_t *, void *pixel_data);
-void lives_yuv_stream_stop_write (lives_yuv4m_t *);
+boolean lives_yuv_stream_start_write(lives_yuv4m_t *, const char *filename, int hsize, int vsize, double fps);
+boolean lives_yuv_stream_write_frame(lives_yuv4m_t *, void *pixel_data);
+void lives_yuv_stream_stop_write(lives_yuv4m_t *);
 
 
 typedef struct {
   LiVESWidget *dialog;
   LiVESWidget *card_spin;
-  LiVESWidget * channel_spin;
+  LiVESWidget *channel_spin;
 } lives_card_w;
 
 

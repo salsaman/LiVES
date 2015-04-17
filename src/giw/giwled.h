@@ -16,7 +16,7 @@ Copyright (C) 2006  Alexandre Pereira Bueno, Eduardo Parente Ribeiro
     Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 Maintainers
-Alexandre Pereira Bueno - alpebu@yahoo.com.br 
+Alexandre Pereira Bueno - alpebu@yahoo.com.br
 James Scott Jr <skoona@users.sourceforge.net>
 */
 
@@ -40,8 +40,7 @@ G_BEGIN_DECLS
 typedef struct _GiwLed        GiwLed;
 typedef struct _GiwLedClass   GiwLedClass;
 
-struct _GiwLed
-{
+struct _GiwLed {
 #if GTK_CHECK_VERSION(3,0,0)
   GtkWidget parent_instance;
 #endif
@@ -56,29 +55,28 @@ struct _GiwLed
 
   guint size; // Size of the led
   guint x, y; // Position inside the widget's window
-  
+
   guint radius; // the led radius
-  
+
   guint8 enable_mouse; // 0 for disable mouse using, other value to enable it
 };
 
-struct _GiwLedClass
-{
+struct _GiwLedClass {
   GtkWidgetClass parent_class;
 
-  void (* mode_changed) (GiwLed *led); //Signal emited when the mode is chaged (on to off, or off to on)
+  void (* mode_changed)(GiwLed *led);  //Signal emited when the mode is chaged (on to off, or off to on)
 };
 
 
-GtkWidget*     giw_led_new                    (void);
-GType          giw_led_get_type               (void) G_GNUC_CONST;
-void           giw_led_set_mode               (GiwLed *led, guint8 mode);    
-guint8         giw_led_get_mode               (GiwLed *led);    
+GtkWidget     *giw_led_new(void);
+GType          giw_led_get_type(void) G_GNUC_CONST;
+void           giw_led_set_mode(GiwLed *led, guint8 mode);
+guint8         giw_led_get_mode(GiwLed *led);
 #if GTK_CHECK_VERSION(3,0,0)
-void           giw_led_set_rgba               (GiwLed *led, GdkRGBA on_color, GdkRGBA off_color);
+void           giw_led_set_rgba(GiwLed *led, GdkRGBA on_color, GdkRGBA off_color);
 #endif
-void           giw_led_set_colors             (GiwLed *led, GdkColor on_color, GdkColor off_color);
-void           giw_led_enable_mouse           (GiwLed *led, gboolean option);
+void           giw_led_set_colors(GiwLed *led, GdkColor on_color, GdkColor off_color);
+void           giw_led_enable_mouse(GiwLed *led, gboolean option);
 
 G_END_DECLS
 

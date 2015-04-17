@@ -54,7 +54,7 @@ static boolean lives_wait_user_buffer(lives_vdev_t *ldev, unicap_data_buffer_t *
 #endif
 
     if (ncount>=0) {
-      if (!SUCCESS (unicap_wait_buffer (ldev->handle, buff))) return FALSE;
+      if (!SUCCESS(unicap_wait_buffer(ldev->handle, buff))) return FALSE;
       return TRUE;
     }
 
@@ -98,8 +98,8 @@ static boolean lives_wait_system_buffer(lives_vdev_t *ldev, double timeout) {
 
 
 
-static void new_frame_cb (unicap_event_t event, unicap_handle_t handle,
-			  unicap_data_buffer_t * buffer, void *usr_data) {
+static void new_frame_cb(unicap_event_t event, unicap_handle_t handle,
+                         unicap_data_buffer_t *buffer, void *usr_data) {
   lives_vdev_t *ldev=(lives_vdev_t *)usr_data;
   if (mainw->playing_file==-1||(mainw->playing_file!=ldev->fileno&&mainw->blend_file!=ldev->fileno)) {
     ldev->buffer_ready=0;
@@ -109,8 +109,7 @@ static void new_frame_cb (unicap_event_t event, unicap_handle_t handle,
   if (ldev->buffer_ready!=1) {
     lives_memcpy(ldev->buffer1.data,buffer->data,ldev->buffer1.buffer_size);
     ldev->buffer_ready=1;
-  }
-  else {
+  } else {
     lives_memcpy(ldev->buffer2.data,buffer->data,ldev->buffer2.buffer_size);
     ldev->buffer_ready=2;
   }
@@ -120,7 +119,7 @@ static void new_frame_cb (unicap_event_t event, unicap_handle_t handle,
 
 
 
-boolean weed_layer_set_from_lvdev (weed_plant_t *layer, lives_clip_t *sfile, double timeoutsecs) {
+boolean weed_layer_set_from_lvdev(weed_plant_t *layer, lives_clip_t *sfile, double timeoutsecs) {
   lives_vdev_t *ldev=(lives_vdev_t *)sfile->ext_src;
   unicap_data_buffer_t *returned_buffer=NULL;
   void **pixel_data;
@@ -128,7 +127,7 @@ boolean weed_layer_set_from_lvdev (weed_plant_t *layer, lives_clip_t *sfile, dou
   int error;
 
   weed_set_int_value(layer,"width",sfile->hsize/
-		     weed_palette_get_pixels_per_macropixel(ldev->current_palette));
+                     weed_palette_get_pixels_per_macropixel(ldev->current_palette));
   weed_set_int_value(layer,"height",sfile->vsize);
   weed_set_int_value(layer,"current_palette",ldev->current_palette);
   weed_set_int_value(layer,"YUV_subspace",WEED_YUV_SUBSPACE_YCBCR); // TODO - handle bt.709
@@ -143,20 +142,19 @@ boolean weed_layer_set_from_lvdev (weed_plant_t *layer, lives_clip_t *sfile, dou
       ldev->buffer1.data=(unsigned char *)weed_get_voidptr_value(layer,"pixel_data",&error);
     }
 
-    unicap_queue_buffer (ldev->handle, &ldev->buffer1);
-    
+    unicap_queue_buffer(ldev->handle, &ldev->buffer1);
+
     if (!lives_wait_user_buffer(ldev, &returned_buffer, timeoutsecs)) {
 #ifdef DEBUG_UNICAP
       lives_printerr("Failed to wait for user buffer!\n");
-      unicap_stop_capture (ldev->handle);
-      unicap_dequeue_buffer (ldev->handle, &returned_buffer);
-      unicap_start_capture (ldev->handle);
+      unicap_stop_capture(ldev->handle);
+      unicap_dequeue_buffer(ldev->handle, &returned_buffer);
+      unicap_start_capture(ldev->handle);
 #endif
       ldev->buffer1.data=(unsigned char *)odata;
       return FALSE;
     }
-  }
-  else {
+  } else {
     // wait for callback to fill buffer
     if (!lives_wait_system_buffer(ldev,timeoutsecs)) {
 #ifdef DEBUG_UNICAP
@@ -171,16 +169,15 @@ boolean weed_layer_set_from_lvdev (weed_plant_t *layer, lives_clip_t *sfile, dou
 
   if (weed_palette_get_numplanes(ldev->current_palette)>1&&!ldev->is_really_grey) {
     pixel_data_planar_from_membuf(pixel_data, returned_buffer->data, sfile->hsize*sfile->vsize, ldev->current_palette);
-  }
-  else {
+  } else {
     if (ldev->buffer_type==UNICAP_BUFFER_TYPE_SYSTEM) {
       int rowstride=weed_get_int_value(layer,"rowstrides",&error);
       size_t bsize=rowstride*sfile->vsize;
       if (bsize>returned_buffer->buffer_size) {
 #ifdef DEBUG_UNICAP
-	lives_printerr("Warning - returned buffer size too small !\n");
+        lives_printerr("Warning - returned buffer size too small !\n");
 #endif
-	bsize=returned_buffer->buffer_size;
+        bsize=returned_buffer->buffer_size;
       }
       lives_memcpy(pixel_data[0], returned_buffer->data, bsize);
     }
@@ -201,8 +198,8 @@ boolean weed_layer_set_from_lvdev (weed_plant_t *layer, lives_clip_t *sfile, dou
 }
 
 
-static unicap_format_t *lvdev_get_best_format(const unicap_format_t *formats, 
-						    lives_vdev_t *ldev, int palette, int width, int height) {
+static unicap_format_t *lvdev_get_best_format(const unicap_format_t *formats,
+    lives_vdev_t *ldev, int palette, int width, int height) {
   // get nearest format for given palette, width and height
   // if palette is WEED_PALETTE_END, or cannot be matched, get best quality palette (preferring RGB)
   // width and height must be set, actual width and height will be set as near to this as possible
@@ -220,9 +217,9 @@ static unicap_format_t *lvdev_get_best_format(const unicap_format_t *formats,
   int cpal;
 
   // get details
-  for (format_count = 0; SUCCESS (status) && (format_count < MAX_FORMATS);format_count++){
+  for (format_count = 0; SUCCESS(status) && (format_count < MAX_FORMATS); format_count++) {
     unicap_format_t *format=(unicap_format_t *)(&formats[format_count]);
-    status = unicap_enumerate_formats (ldev->handle, NULL, (unicap_format_t *)format, format_count);
+    status = unicap_enumerate_formats(ldev->handle, NULL, (unicap_format_t *)format, format_count);
 
     // TODO - check if we need to free format->sizes
 
@@ -232,16 +229,16 @@ static unicap_format_t *lvdev_get_best_format(const unicap_format_t *formats,
     if (cpal==WEED_PALETTE_END||weed_palette_is_alpha_palette(cpal)) {
 #ifdef DEBUG_UNICAP
       // set format to try and get more data
-      unicap_set_format (ldev->handle, format);
+      unicap_set_format(ldev->handle, format);
       lives_printerr("Unusable palette with fourcc 0x%x  bpp=%d, size=%dx%d buf=%d\n",format->fourcc,format->bpp,format->size.width,
-		 format->size.height,(int)format->buffer_size);
+                     format->size.height,(int)format->buffer_size);
 #endif
       continue;
     }
 
     if (bestp==WEED_PALETTE_END||cpal==palette||weed_palette_is_alpha_palette(bestp)||
-	weed_palette_is_lower_quality(bestp,cpal)||
-	(weed_palette_is_yuv_palette(bestp)&&weed_palette_is_rgb_palette(cpal))) {
+        weed_palette_is_lower_quality(bestp,cpal)||
+        (weed_palette_is_yuv_palette(bestp)&&weed_palette_is_rgb_palette(cpal))) {
       // got better palette, or exact match
 
       // prefer exact match on target palette if we have it
@@ -254,73 +251,71 @@ static unicap_format_t *lvdev_get_best_format(const unicap_format_t *formats,
       // for now we just go with the smallest size >= target (or largest frame size if none are >= target)
 
       if (width>=format->min_size.width && height>=format->min_size.height) {
-	if (format->h_stepping>0&&format->v_stepping>0) {
+        if (format->h_stepping>0&&format->v_stepping>0) {
 #ifdef DEBUG_UNICAP
-	  lives_printerr("Can set any size with step %d and %d; min %d x %d, max %d x %d\n",format->h_stepping,format->v_stepping,
-		     format->min_size.width,format->min_size.height,format->max_size.width,format->max_size.height);
+          lives_printerr("Can set any size with step %d and %d; min %d x %d, max %d x %d\n",format->h_stepping,format->v_stepping,
+                         format->min_size.width,format->min_size.height,format->max_size.width,format->max_size.height);
 #endif
-	  // can set exact size (within stepping limits)
-	  format->size.width=(int)(((double)width+(double)format->h_stepping/2.)
-				   /(double)format->h_stepping) * format->h_stepping;
+          // can set exact size (within stepping limits)
+          format->size.width=(int)(((double)width+(double)format->h_stepping/2.)
+                                   /(double)format->h_stepping) * format->h_stepping;
 
-	  format->size.height=(int)(((double)height+(double)format->v_stepping/2.)
-				   /(double)format->v_stepping) * format->v_stepping;
+          format->size.height=(int)(((double)height+(double)format->v_stepping/2.)
+                                    /(double)format->v_stepping) * format->v_stepping;
 
-	  if (format->size.width>format->max_size.width) format->size.width=format->max_size.width;
-	  if (format->size.height>format->max_size.height) format->size.height=format->max_size.height;
+          if (format->size.width>format->max_size.width) format->size.width=format->max_size.width;
+          if (format->size.height>format->max_size.height) format->size.height=format->max_size.height;
 
-	  if (format->size.width>bestw || format->size.height>besth) {
-	    bestw=format->size.width;
-	    besth=format->size.height;
-	    f=format_count;
-	  }
-	}
-	else {
-	  // array of sizes supported
-	  // step through sizes
+          if (format->size.width>bestw || format->size.height>besth) {
+            bestw=format->size.width;
+            besth=format->size.height;
+            f=format_count;
+          }
+        } else {
+          // array of sizes supported
+          // step through sizes
 #ifdef DEBUG_UNICAP
-	  lives_printerr("Checking %d array sizes\n",format->size_count);
+          lives_printerr("Checking %d array sizes\n",format->size_count);
 #endif
 
-	  if (format->size_count==0) {
-	    // only one size we can use, this is it...
+          if (format->size_count==0) {
+            // only one size we can use, this is it...
 
-	    if ((format->size.width>bestw||format->size.height>besth)&&(bestw<width||besth<height)) {
-	      // this format supports a better size match
-	      bestw=format->size.width=format->size.width;
-	      besth=format->size.height=format->size.height;
-	      f=format_count;
+            if ((format->size.width>bestw||format->size.height>besth)&&(bestw<width||besth<height)) {
+              // this format supports a better size match
+              bestw=format->size.width=format->size.width;
+              besth=format->size.height=format->size.height;
+              f=format_count;
 #ifdef DEBUG_UNICAP
-	      lives_printerr("Size is best so far\n");
+              lives_printerr("Size is best so far\n");
 #endif
-	    }
-	    continue;
-	  }
-	  
-	  // array of sizes
-	  for (i=0;i<format->size_count;i++) {
+            }
+            continue;
+          }
+
+          // array of sizes
+          for (i=0; i<format->size_count; i++) {
 #ifdef DEBUG_UNICAP
-	    lives_printerr("entry %d:%d x %d\n",i,format->sizes[i].width,format->sizes[i].height);
+            lives_printerr("entry %d:%d x %d\n",i,format->sizes[i].width,format->sizes[i].height);
 #endif
-	    if (format->sizes[i].width>bestw&&format->sizes[i].height>besth&&
-		(bestw<width||besth<height)) {
-	      // this format supports a better size match
-	      bestw=format->size.width=format->sizes[i].width;
-	      besth=format->size.height=format->sizes[i].height;
-	      f=format_count;
+            if (format->sizes[i].width>bestw&&format->sizes[i].height>besth&&
+                (bestw<width||besth<height)) {
+              // this format supports a better size match
+              bestw=format->size.width=format->sizes[i].width;
+              besth=format->size.height=format->sizes[i].height;
+              f=format_count;
 #ifdef DEBUG_UNICAP
-	      lives_printerr("Size is best so far\n");
+              lives_printerr("Size is best so far\n");
 #endif
-	    }
-	  }
-	}
-      }
-      else {
-	// target is smaller than min width, height
-	if (bestw<format->min_size.width||besth<format->min_size.height) continue; // TODO - minimise aspect delta
-	bestw=format->size.width=format->min_size.width;
-	besth=format->size.height=format->min_size.height;
-	f=format_count;
+            }
+          }
+        }
+      } else {
+        // target is smaller than min width, height
+        if (bestw<format->min_size.width||besth<format->min_size.height) continue; // TODO - minimise aspect delta
+        bestw=format->size.width=format->min_size.width;
+        besth=format->size.height=format->min_size.height;
+        f=format_count;
       }
     }
   }
@@ -346,7 +341,7 @@ static boolean open_vdev_inner(unicap_device_t *device) {
 
   //check return value and take appropriate action
   if (ldev->handle==NULL) {
-    LIVES_ERROR ("vdev input: cannot open device");
+    LIVES_ERROR("vdev input: cannot open device");
     lives_free(ldev);
     return FALSE;
   }
@@ -354,8 +349,8 @@ static boolean open_vdev_inner(unicap_device_t *device) {
   unicap_lock_stream(ldev->handle);
 
   format=lvdev_get_best_format(formats, ldev, WEED_PALETTE_END, DEF_GEN_WIDTH, DEF_GEN_HEIGHT);
-  
-  if(format==NULL) {
+
+  if (format==NULL) {
     LIVES_INFO("No useful formats found");
     unicap_unlock_stream(ldev->handle);
     unicap_close(ldev->handle);
@@ -368,24 +363,23 @@ static boolean open_vdev_inner(unicap_device_t *device) {
     format->buffer_type = UNICAP_BUFFER_TYPE_SYSTEM;
 
     // set a callback for new frame
-    unicap_register_callback (ldev->handle, UNICAP_EVENT_NEW_FRAME, (unicap_callback_t) new_frame_cb, 
-			      (void *) ldev);
+    unicap_register_callback(ldev->handle, UNICAP_EVENT_NEW_FRAME, (unicap_callback_t) new_frame_cb,
+                             (void *) ldev);
 
-  }
-  else format->buffer_type = UNICAP_BUFFER_TYPE_USER;
+  } else format->buffer_type = UNICAP_BUFFER_TYPE_USER;
 
   ldev->buffer_type = format->buffer_type;
 
   // ignore YUV subspace for now
-  ldev->current_palette=fourccp_to_weedp(format->fourcc, format->bpp, (int *)&cfile->interlace, 
-					 &ldev->YUV_sampling, &ldev->YUV_subspace, &ldev->YUV_clamping);
+  ldev->current_palette=fourccp_to_weedp(format->fourcc, format->bpp, (int *)&cfile->interlace,
+                                         &ldev->YUV_sampling, &ldev->YUV_subspace, &ldev->YUV_clamping);
 
 #ifdef DEBUG_UNICAP
   lives_printerr("\nUsing palette with fourcc 0x%x, translated as %s\n",format->fourcc,
-	     weed_palette_get_name(ldev->current_palette));
+                 weed_palette_get_name(ldev->current_palette));
 #endif
 
-  if (!SUCCESS (unicap_set_format (ldev->handle, format))) {
+  if (!SUCCESS(unicap_set_format(ldev->handle, format))) {
     LIVES_ERROR("Unicap error setting format");
     unicap_unlock_stream(ldev->handle);
     unicap_close(ldev->handle);
@@ -413,7 +407,7 @@ static boolean open_vdev_inner(unicap_device_t *device) {
 #endif
 
     format->buffer_size=format->size.width*format->size.height*weed_palette_get_bits_per_macropixel(ldev->current_palette)/
-      weed_palette_get_pixels_per_macropixel(ldev->current_palette)/8;
+                        weed_palette_get_pixels_per_macropixel(ldev->current_palette)/8;
   }
 
   cfile->hsize=format->size.width;
@@ -421,10 +415,10 @@ static boolean open_vdev_inner(unicap_device_t *device) {
 
   cfile->ext_src=ldev;
 
-  ldev->buffer1.data = (unsigned char *)lives_malloc (format->buffer_size);
+  ldev->buffer1.data = (unsigned char *)lives_malloc(format->buffer_size);
   ldev->buffer1.buffer_size = format->buffer_size;
 
-  ldev->buffer2.data = (unsigned char *)lives_malloc (format->buffer_size);
+  ldev->buffer2.data = (unsigned char *)lives_malloc(format->buffer_size);
   ldev->buffer2.buffer_size = format->buffer_size;
 
   ldev->buffer_ready=0;
@@ -432,14 +426,13 @@ static boolean open_vdev_inner(unicap_device_t *device) {
 
   cfile->bpp = format->bpp;
 
-  unicap_start_capture (ldev->handle); 
+  unicap_start_capture(ldev->handle);
 
   // if it is greyscale, we will add fake U and V planes
   if (ldev->current_palette==WEED_PALETTE_A8) {
     ldev->current_palette=WEED_PALETTE_YUV444P;
     ldev->is_really_grey=TRUE;
-  }
-  else ldev->is_really_grey=FALSE;
+  } else ldev->is_really_grey=FALSE;
 
   return TRUE;
 }
@@ -447,7 +440,7 @@ static boolean open_vdev_inner(unicap_device_t *device) {
 
 void lives_vdev_free(lives_vdev_t *ldev) {
   if (ldev==NULL) return;
-  unicap_stop_capture (ldev->handle);
+  unicap_stop_capture(ldev->handle);
   unicap_unlock_stream(ldev->handle);
   unicap_close(ldev->handle);
   if (ldev->buffer1.data!=NULL) lives_free(ldev->buffer1.data);
@@ -456,7 +449,7 @@ void lives_vdev_free(lives_vdev_t *ldev) {
 
 
 
-void on_open_vdev_activate (LiVESMenuItem *menuitem, livespointer user_data) {
+void on_open_vdev_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   unicap_device_t devices[MAX_DEVICES];
 
   LiVESList *devlist=NULL;
@@ -479,23 +472,23 @@ void on_open_vdev_activate (LiVESMenuItem *menuitem, livespointer user_data) {
 
   mainw->open_deint=FALSE;
 
-  status = unicap_reenumerate_devices (&dev_count);
+  status = unicap_reenumerate_devices(&dev_count);
 
   if (dev_count == 0) {
     do_no_in_vdevs_error();
     return;
   }
 
- // get device list
-  for (i = 0; SUCCESS (status) && (dev_count < MAX_DEVICES); i++) {
-    status = unicap_enumerate_devices (NULL, &devices[i], i);
-    if (!SUCCESS (status)) {
+  // get device list
+  for (i = 0; SUCCESS(status) && (dev_count < MAX_DEVICES); i++) {
+    status = unicap_enumerate_devices(NULL, &devices[i], i);
+    if (!SUCCESS(status)) {
       if (i==0) LIVES_INFO("Unicap failed to get any devices");
       break;
     }
   }
 
-  for (i=0;i<dev_count;i++) {
+  for (i=0; i<dev_count; i++) {
     if (!unicap_is_stream_locked(&devices[i])) {
       devlist=lives_list_prepend(devlist,devices[i].identifier);
     }
@@ -519,11 +512,11 @@ void on_open_vdev_activate (LiVESMenuItem *menuitem, livespointer user_data) {
 
   lives_widget_destroy(card_dialog);
 
-  for (i=dev_count-1;i>=0;i--) {
+  for (i=dev_count-1; i>=0; i--) {
     if (!unicap_is_stream_locked(&devices[i])) {
       if (mainw->fx1_val==0) {
-	devno=i;
-	break;
+        devno=i;
+        break;
       }
     }
     mainw->fx1_val--;
@@ -558,7 +551,7 @@ void on_open_vdev_activate (LiVESMenuItem *menuitem, livespointer user_data) {
 
   lives_snprintf(cfile->type,40,"%s",fname);
 
-  d_print (_("Opened device %s\n"),devices[devno].identifier);
+  d_print(_("Opened device %s\n"),devices[devno].identifier);
 
   switch_to_file((mainw->current_file=old_file),new_file);
 

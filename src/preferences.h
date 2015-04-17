@@ -83,7 +83,7 @@ typedef struct {
 #define WARN_MASK_MT_ACHANS (1<<16)
 
 #define WARN_MASK_LAYOUT_DELETE_AUDIO (1<<17)
-  
+
   /* next two are off by default (on a fresh install) */
 #define WARN_MASK_LAYOUT_SHIFT_AUDIO (1<<18)
 #define WARN_MASK_LAYOUT_ALTER_AUDIO (1<<19)
@@ -138,7 +138,7 @@ typedef struct {
 #define REC_CLIPS (1<<3)
 #define REC_AUDIO (1<<4)
 #define REC_AFTER_PB (1<<5)
-  
+
 
   int audio_src;
 #define AUDIO_SRC_INT 0
@@ -253,7 +253,7 @@ typedef struct {
 
   char omc_js_fname[PATH_MAX];  ///< utf8
   char omc_midi_fname[PATH_MAX]; ///< utf8
-  
+
   boolean mouse_scroll_clips;
 
   int num_rtaudiobufs;
@@ -347,27 +347,27 @@ typedef struct {
 } _prefs;
 
 enum {
-    LIST_ENTRY_GUI,
-    LIST_ENTRY_DECODING,
-    LIST_ENTRY_PLAYBACK,
-    LIST_ENTRY_RECORDING,
-    LIST_ENTRY_ENCODING,
-    LIST_ENTRY_EFFECTS,
-    LIST_ENTRY_DIRECTORIES,
-    LIST_ENTRY_WARNINGS,
-    LIST_ENTRY_MISC,
-    LIST_ENTRY_THEMES,
-    LIST_ENTRY_NET,
-    LIST_ENTRY_JACK,
-    LIST_ENTRY_MIDI,
-    LIST_ENTRY_MULTITRACK
+  LIST_ENTRY_GUI,
+  LIST_ENTRY_DECODING,
+  LIST_ENTRY_PLAYBACK,
+  LIST_ENTRY_RECORDING,
+  LIST_ENTRY_ENCODING,
+  LIST_ENTRY_EFFECTS,
+  LIST_ENTRY_DIRECTORIES,
+  LIST_ENTRY_WARNINGS,
+  LIST_ENTRY_MISC,
+  LIST_ENTRY_THEMES,
+  LIST_ENTRY_NET,
+  LIST_ENTRY_JACK,
+  LIST_ENTRY_MIDI,
+  LIST_ENTRY_MULTITRACK
 };
 
 enum {
-    LIST_ICON = 0,
-    LIST_ITEM,
-    LIST_NUM,
-    N_COLUMNS
+  LIST_ICON = 0,
+  LIST_ITEM,
+  LIST_NUM,
+  N_COLUMNS
 };
 
 
@@ -381,7 +381,7 @@ typedef struct {
   ulong encoder_ofmt_fn;
   ulong encoder_name_fn;
   LiVESWidget *prefs_dialog;
-  
+
   LiVESWidget *prefs_list;
   LiVESWidget *prefs_table;
   LiVESWidget *vbox_right_gui;
@@ -593,18 +593,18 @@ _prefs *prefs;
 _future_prefs *future_prefs;
 _prefsw *prefsw;
 
-void set_acodec_list_from_allowed (_prefsw *, render_details *);
-void  rdet_acodec_changed (LiVESCombo *acodec_combo, livespointer user_data);
+void set_acodec_list_from_allowed(_prefsw *, render_details *);
+void  rdet_acodec_changed(LiVESCombo *acodec_combo, livespointer user_data);
 
-_prefsw* create_prefs_dialog (void);
+_prefsw *create_prefs_dialog(void);
 
-boolean on_prefs_delete_event (LiVESWidget *, LiVESXEvent *, livespointer prefsw);
+boolean on_prefs_delete_event(LiVESWidget *, LiVESXEvent *, livespointer prefsw);
 
-void on_preferences_activate (LiVESMenuItem *, livespointer);
+void on_preferences_activate(LiVESMenuItem *, livespointer);
 
-void on_prefs_close_clicked (LiVESButton *, livespointer);
+void on_prefs_close_clicked(LiVESButton *, livespointer);
 
-void on_prefs_revert_clicked (LiVESButton *, livespointer);
+void on_prefs_revert_clicked(LiVESButton *, livespointer);
 
 void set_vpp(boolean set_in_prefs);
 

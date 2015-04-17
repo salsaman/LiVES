@@ -7,12 +7,12 @@
 #ifndef HAS_LIVES_INTERFACE_H
 #define HAS_LIVES_INTERFACE_H
 
-LiVESWidget* create_info_error_dialog (lives_dialog_t info_type, const char *text, LiVESWindow *transient, int mask, boolean is_blocking);
-LiVESWidget* create_opensel_dialog (void);
-LiVESWidget* create_encoder_prep_dialog (const char *text1, const char *text2, boolean opt_resize);
+LiVESWidget *create_info_error_dialog(lives_dialog_t info_type, const char *text, LiVESWindow *transient, int mask, boolean is_blocking);
+LiVESWidget *create_opensel_dialog(void);
+LiVESWidget *create_encoder_prep_dialog(const char *text1, const char *text2, boolean opt_resize);
 
-void widget_add_preview(LiVESWidget *widget, LiVESBox *for_preview, LiVESBox *for_button, 
-			LiVESBox *for_deinterlace, int preview_type);  ///< for fileselector preview
+void widget_add_preview(LiVESWidget *widget, LiVESBox *for_preview, LiVESBox *for_button,
+                        LiVESBox *for_deinterlace, int preview_type);  ///< for fileselector preview
 
 boolean do_audio_choice_dialog(short startup_phase);
 
@@ -34,7 +34,7 @@ typedef struct {
   LiVESWidget *textview_rrate;
 } lives_clipinfo_t;
 
-lives_clipinfo_t * create_clip_info_window (int audio_channels, boolean is_mt);
+lives_clipinfo_t *create_clip_info_window(int audio_channels, boolean is_mt);
 
 
 typedef struct {
@@ -46,9 +46,9 @@ typedef struct {
   LiVESList *setlist;
 } _entryw;
 
-_entryw* create_rename_dialog (int type);
-_entryw* create_location_dialog (int type);
-_entryw* create_cds_dialog (int type);
+_entryw *create_rename_dialog(int type);
+_entryw *create_location_dialog(int type);
+_entryw *create_cds_dialog(int type);
 
 typedef struct __insertw {
   LiVESWidget *insert_dialog;
@@ -58,7 +58,7 @@ typedef struct __insertw {
   LiVESWidget *fit_checkbutton;
 } _insertw;
 
-_insertw* create_insert_dialog (void);
+_insertw *create_insert_dialog(void);
 
 
 typedef struct __commentsw {
@@ -70,7 +70,7 @@ typedef struct __commentsw {
   LiVESWidget *subt_entry;
 } _commentsw;
 
-_commentsw* create_comments_dialog (lives_clip_t *sfile, char *filename);
+_commentsw *create_comments_dialog(lives_clip_t *sfile, char *filename);
 
 
 typedef struct {
@@ -80,7 +80,7 @@ typedef struct {
   LiVESWidget *textview;
 } text_window;
 
-text_window* create_text_window (const char *title_part, const char *text, LiVESTextBuffer *);
+text_window *create_text_window(const char *title_part, const char *text, LiVESTextBuffer *);
 
 
 typedef struct {
@@ -108,15 +108,15 @@ typedef struct {
 #define LIVES_PREVIEW_TYPE_VIDEO_AUDIO 1
 #define LIVES_PREVIEW_TYPE_AUDIO_ONLY 2
 #define LIVES_PREVIEW_TYPE_RANGE 3
-  
+
 #define LIVES_FILE_SELECTION_VIDEO_AUDIO 1
 #define LIVES_FILE_SELECTION_AUDIO_ONLY 2
 #define LIVES_FILE_SELECTION_VIDEO_AUDIO_MULTI 3
 #define LIVES_FILE_SELECTION_VIDEO_RANGE 4
 
 
-aud_dialog_t *create_audfade_dialog (int type);
-LiVESWidget *create_combo_dialog (int type, livespointer user_data);
+aud_dialog_t *create_audfade_dialog(int type);
+LiVESWidget *create_combo_dialog(int type, livespointer user_data);
 
 _commentsw *commentsw;
 _entryw *renamew;

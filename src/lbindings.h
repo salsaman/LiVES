@@ -7,10 +7,10 @@
 #ifndef HAS_LIVES_LBINDINGS_H
 #define HAS_LIVES_LBINDINGS_H
 
-#ifndef __cplusplus 
+#ifndef __cplusplus
 
 #ifdef IS_LIBLIVES
-void binding_cb (int msgnumber, const char *msgstring, ulong myid);
+void binding_cb(int msgnumber, const char *msgstring, ulong myid);
 
 #endif
 

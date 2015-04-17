@@ -81,9 +81,9 @@ typedef struct {
   int fileno; // [readonly by server]
 
   // readonly by server:
-  
+
   // use one or other
-  off_t seek; 
+  off_t seek;
   weed_timecode_t start_tc;
 
   double arate;
@@ -103,7 +103,7 @@ typedef struct {
 
   size_t samp_space; ///< buffer space in samples (* by sizeof(type) to get bytesize) [if interleaf, also * by chans]
 
-  
+
   // in or out buffers
   uint8_t **buffer8; ///< sample data in 8 bit format (or NULL)
   short   **buffer16; ///< sample data in 16 bit format (or NULL)
@@ -115,8 +115,8 @@ typedef struct {
   boolean s16_signed;
   boolean s24_signed;
   boolean s32_signed;
-  
-  // ring buffer 
+
+  // ring buffer
   size_t samples_filled; ///< number of samples filled (readonly client)
   size_t start_sample; ///< used for reading (readonly server)
 
@@ -124,7 +124,7 @@ typedef struct {
   // private fields (used by server)
   uint8_t *_filebuffer; ///< raw data to/from file - can be cast to int16_t
   ssize_t _cbytesize; ///< current _filebuffer bytesize; if this changes we need to realloc _filebuffer
-  size_t _csamp_space; ///< current sample buffer size in single channel samples  
+  size_t _csamp_space; ///< current sample buffer size in single channel samples
   int _fd; ///< file descriptor
   int _cfileno; ///< current fileno
   int _cseek;  ///< current seek pos
@@ -148,31 +148,33 @@ typedef enum lives_audio_loop {
 
 
 
-void sample_silence_dS (float *dst, uint64_t nsamples);
+void sample_silence_dS(float *dst, uint64_t nsamples);
 
 void sample_move_d8_d16(short *dst, uint8_t *src,
-			uint64_t nsamples, size_t tbytes, float scale, int nDstChannels, int nSrcChannels, int swap_sign);
+                        uint64_t nsamples, size_t tbytes, float scale, int nDstChannels, int nSrcChannels, int swap_sign);
 
 void sample_move_d16_d16(short *dst, short *src,
-			 uint64_t nsamples, size_t tbytes, float scale, int nDstChannels, int nSrcChannels, int swap_endian, int swap_sign);
+                         uint64_t nsamples, size_t tbytes, float scale, int nDstChannels, int nSrcChannels, int swap_endian, int swap_sign);
 
 void sample_move_d16_d8(uint8_t *dst, short *src,
-			uint64_t nsamples, size_t tbytes, float scale, int nDstChannels, int nSrcChannels, int swap_sign);
+                        uint64_t nsamples, size_t tbytes, float scale, int nDstChannels, int nSrcChannels, int swap_sign);
 
-void sample_move_d16_float (float *dst, short *src, uint64_t nsamples, uint64_t src_skip, int is_unsigned, boolean rev_endian, float vol);
+void sample_move_d16_float(float *dst, short *src, uint64_t nsamples, uint64_t src_skip, int is_unsigned, boolean rev_endian, float vol);
 
-int64_t sample_move_float_int(void *holding_buff, float **float_buffer, int nsamps, float scale, int chans, int asamps, int usigned, boolean swap_endian, boolean float_interleaved, float vol); ///< returns frames output
+int64_t sample_move_float_int(void *holding_buff, float **float_buffer, int nsamps, float scale, int chans, int asamps, int usigned,
+                              boolean swap_endian, boolean float_interleaved, float vol); ///< returns frames output
 
-int64_t sample_move_abuf_float (float **obuf, int nchans, int nsamps, int out_arate, float vol);
+int64_t sample_move_abuf_float(float **obuf, int nchans, int nsamps, int out_arate, float vol);
 
-int64_t sample_move_abuf_int16 (short *obuf, int nchans, int nsamps, int out_arate);
+int64_t sample_move_abuf_int16(short *obuf, int nchans, int nsamps, int out_arate);
 
-void sample_move_float_float (float *dst, float *src, uint64_t nsamples, float scale, int dst_skip);
+void sample_move_float_float(float *dst, float *src, uint64_t nsamples, float scale, int dst_skip);
 
 boolean float_deinterleave(float *fbuffer, int nsamps, int nchans);
 boolean float_interleave(float *fbuffer, int nsamps, int nchans);
 
-int64_t render_audio_segment(int nfiles, int *from_files, int to_file, double *avels, double *fromtime, weed_timecode_t tc_start, weed_timecode_t tc_end, double *chvol, double opvol_start, double opvol_end, lives_audio_buf_t *obuf);
+int64_t render_audio_segment(int nfiles, int *from_files, int to_file, double *avels, double *fromtime, weed_timecode_t tc_start,
+                             weed_timecode_t tc_end, double *chvol, double opvol_start, double opvol_end, lives_audio_buf_t *obuf);
 
 void aud_fade(int fileno, double startt, double endt, double startv, double endv); ///< fade in/fade out
 
@@ -200,21 +202,22 @@ void fill_abuffer_from(lives_audio_buf_t *abuf, weed_plant_t *event_list, weed_p
 boolean resync_audio(int frameno);
 
 
-lives_audio_track_state_t *get_audio_and_effects_state_at(weed_plant_t *event_list, weed_plant_t *st_event, boolean get_audstate, boolean exact);
+lives_audio_track_state_t *get_audio_and_effects_state_at(weed_plant_t *event_list, weed_plant_t *st_event, boolean get_audstate,
+    boolean exact);
 
 boolean get_audio_from_plugin(float *fbuffer, int nchans, int arate, int nsamps);
 void reinit_audio_gen(void);
 
-void init_jack_audio_buffers (int achans, int arate, boolean exact);
+void init_jack_audio_buffers(int achans, int arate, boolean exact);
 void free_jack_audio_buffers(void);
 
-void init_pulse_audio_buffers (int achans, int arate, boolean exact);
+void init_pulse_audio_buffers(int achans, int arate, boolean exact);
 void free_pulse_audio_buffers(void);
 
 void audio_free_fnames(void);
 
-lives_audio_buf_t *audio_cache_init (void);
-void audio_cache_end (void);
+lives_audio_buf_t *audio_cache_init(void);
+void audio_cache_end(void);
 lives_audio_buf_t *audio_cache_get_buffer(void);
 
 boolean apply_rte_audio_init(void);

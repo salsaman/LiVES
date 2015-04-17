@@ -410,7 +410,7 @@ typedef struct {
   int rte_keys; ///< which effect is bound to keyboard
   int num_tr_applied; ///< number of transitions active
   double blend_factor; ///< keyboard control parameter
-  
+
   int blend_file;
   int last_blend_file;
 
@@ -498,9 +498,9 @@ typedef struct {
 
   boolean size_warn; ///< warn the user that incorrectly sized frames were found
 
-  /// set to TRUE during frame load/display operation. If TRUE we should not switch clips, 
+  /// set to TRUE during frame load/display operation. If TRUE we should not switch clips,
   /// close the current clip, or call load_frame_image()
-  boolean noswitch; 
+  boolean noswitch;
   int new_clip;
 
   int aud_file_to_kill; ///< # of audio file to kill on crash
@@ -534,7 +534,7 @@ typedef struct {
 
   /// internal fx
   boolean internal_messaging;
-  lives_render_error_t (*progress_fn) (boolean reset);
+  lives_render_error_t (*progress_fn)(boolean reset);
 
   volatile boolean threaded_dialog;
 
@@ -788,7 +788,7 @@ typedef struct {
   weed_plant_t *filter_map; // the video filter map for rendering
   weed_plant_t *afilter_map; // the audio filter map for renering
   weed_plant_t *audio_event; // event for audio render tracking
-  void ***pchains; // parameter value chains for interpolation
+  void ** *pchains; // parameter value chains for interpolation
 
   // for the internal player
   LiVESWidget *play_image;
@@ -950,7 +950,7 @@ typedef struct {
   LiVESList *affected_layouts_map; ///< map of layouts with errors
   LiVESList *current_layouts_map; ///< map of all layouts for set
 
-  /// list of pairs of marks in affected_layouts_map, text between them should be deleted when 
+  /// list of pairs of marks in affected_layouts_map, text between them should be deleted when
   /// stored_layout is deleted
   LiVESList *affected_layout_marks;
 
@@ -987,7 +987,8 @@ typedef struct {
 
   volatile lives_rfx_t *vrfx_update;
 
-  lives_fx_candidate_t fx_candidates[MAX_FX_CANDIDATE_TYPES]; ///< effects which can have candidates from which a delegate is selected (current examples are: audio_volume, resize)
+  lives_fx_candidate_t
+  fx_candidates[MAX_FX_CANDIDATE_TYPES]; ///< effects which can have candidates from which a delegate is selected (current examples are: audio_volume, resize)
 
   LiVESList *cached_list;  ///< cache of preferences or file header file (or NULL)
   FILE *clip_header;
@@ -1051,10 +1052,10 @@ typedef struct {
   /// external control inputs
   boolean ext_cntl[MAX_EXT_CNTL];
 
-  #ifdef ALSA_MIDI
+#ifdef ALSA_MIDI
   snd_seq_t *seq_handle;
   int alsa_midi_port;
-  #endif
+#endif
 
   weed_plant_t *rte_textparm; ///< send keyboard input to this paramter (usually NULL)
 
@@ -1182,7 +1183,7 @@ typedef struct {
   ulong id;
 
   boolean interactive;
-////////////////////
+  ////////////////////
 
 } mainwindow;
 
@@ -1206,7 +1207,7 @@ typedef struct {
 
 } _merge_opts;
 
-extern _merge_opts* merge_opts;
+extern _merge_opts *merge_opts;
 
 /// note, we can only have two of these currently, one for rendered effects, one for real time effects
 /// 0 for rfx, 1 for rte
@@ -1225,13 +1226,13 @@ extern LiVESWidget *fx_dialog[2];
 
 
 #ifdef ENABLE_JACK
-  volatile aserver_message_t jack_message;
-  volatile aserver_message_t jack_message2;
+volatile aserver_message_t jack_message;
+volatile aserver_message_t jack_message2;
 #endif
 
 #ifdef HAVE_PULSE_AUDIO
-  volatile aserver_message_t pulse_message;
-  volatile aserver_message_t pulse_message2;
+volatile aserver_message_t pulse_message;
+volatile aserver_message_t pulse_message2;
 #endif
 
 #endif // HAS_LIVES_MAINWINDOW_H

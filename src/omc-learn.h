@@ -125,7 +125,7 @@ enum {
   OFFS2_COLUMN,
   NUM_COLUMNS
 };
- 
+
 
 enum {
   TITLE2_COLUMN,
@@ -147,7 +147,7 @@ enum {
 #define OMC_MIDI_PGM_CHANGE 133
 
 /// start learning MIDI inputs
-void on_midi_learn_activate (LiVESMenuItem *, livespointer);
+void on_midi_learn_activate(LiVESMenuItem *, livespointer);
 
 /// process a string (i.e. convert to an OSC message and pass to OSC subsys)
 /// only need to set omclw if learn is TRUE
@@ -157,15 +157,15 @@ boolean omc_process_string(int supertype, const char *string, boolean learn, omc
 
 #define OMC_FILE_VSTRING "LiVES OMC map version 1.0"
 
-void on_midi_save_activate (LiVESMenuItem *, livespointer);
-void on_midi_load_activate (LiVESMenuItem *, livespointer);
+void on_midi_save_activate(LiVESMenuItem *, livespointer);
+void on_midi_load_activate(LiVESMenuItem *, livespointer);
 
 
 #include "osc.h"
 
 
 #define OSC_BUF_SIZE 1024
-#define OSC_MAX_TYPETAGS 64 
+#define OSC_MAX_TYPETAGS 64
 
 /// decode learnt behaviours
 OSCbuf *omc_learner_decode(int type, int index, const char *string);

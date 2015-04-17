@@ -18,7 +18,7 @@ typedef gboolean                          boolean;
 #ifdef GDK_WINDOWING_WIN32
 #include <gdk/gdkwin32.h>
 
-#ifndef GDK_IS_WIN32_DISPLAY 
+#ifndef GDK_IS_WIN32_DISPLAY
 #define GDK_IS_WIN32_DISPLAY(display) (TRUE)
 #endif
 
@@ -31,18 +31,18 @@ typedef gboolean                          boolean;
 
 #include <gdk/gdkx.h>
 
-#ifndef GDK_IS_X11_DISPLAY 
+#ifndef GDK_IS_X11_DISPLAY
 #define GDK_IS_X11_DISPLAY(display) (TRUE)
 #endif
 
-#ifndef GDK_IS_WIN32_DISPLAY 
+#ifndef GDK_IS_WIN32_DISPLAY
 #define GDK_IS_WIN32_DISPLAY(display) (FALSE)
 #endif
 
 
 #else
 
-#ifndef GDK_IS_X11_DISPLAY 
+#ifndef GDK_IS_X11_DISPLAY
 #define GDK_IS_X11_DISPLAY(display) (FALSE)
 #endif
 
@@ -92,8 +92,8 @@ typedef cairo_operator_t lives_painter_operator_t;
 
 typedef cairo_fill_rule_t lives_painter_fill_rule_t;
 
-#define LIVES_PAINTER_FILL_RULE_WINDING  CAIRO_FILL_RULE_WINDING 
-#define LIVES_PAINTER_FILL_RULE_EVEN_ODD CAIRO_FILL_RULE_EVEN_ODD 
+#define LIVES_PAINTER_FILL_RULE_WINDING  CAIRO_FILL_RULE_WINDING
+#define LIVES_PAINTER_FILL_RULE_EVEN_ODD CAIRO_FILL_RULE_EVEN_ODD
 
 
 #endif
@@ -147,10 +147,10 @@ typedef GLogLevelFlags LiVESLogLevelFlags;
 
 #define return_true gtk_true
 
-typedef void (*LiVESGuiCallback) (void);
-typedef void (*LiVESWidgetCallback) (GtkWidget *widget, gpointer data);
-typedef gboolean (*LiVESWidgetSourceFunc) (gpointer data);
-typedef gint (*LiVESCompareFunc) (gconstpointer a, gconstpointer b);
+typedef void (*LiVESGuiCallback)(void);
+typedef void (*LiVESWidgetCallback)(GtkWidget *widget, gpointer data);
+typedef gboolean(*LiVESWidgetSourceFunc)(gpointer data);
+typedef gint(*LiVESCompareFunc)(gconstpointer a, gconstpointer b);
 
 #define LIVES_LITTLE_ENDIAN G_LITTLE_ENDIAN
 #define LIVES_BIG_ENDIAN G_BIG_ENDIAN
@@ -245,10 +245,10 @@ typedef gint (*LiVESCompareFunc) (gconstpointer a, gconstpointer b);
 
 #define lives_path_get_dirname(a) g_path_get_dirname(a)
 
-#define U82L(String) ( g_locale_from_utf8 (String,-1,NULL,NULL,NULL) ) 
-#define L2U8(String) ( g_locale_to_utf8 (String,-1,NULL,NULL,NULL) ) 
+#define U82L(String) ( g_locale_from_utf8 (String,-1,NULL,NULL,NULL) )
+#define L2U8(String) ( g_locale_to_utf8 (String,-1,NULL,NULL,NULL) )
 
-#define U82F(String) ( g_filename_from_utf8 (String,-1,NULL,NULL,NULL) ) 
+#define U82F(String) ( g_filename_from_utf8 (String,-1,NULL,NULL,NULL) )
 #define F2U8(String) ( g_filename_to_utf8 (String,-1,NULL,NULL,NULL) )
 
 
@@ -579,7 +579,7 @@ typedef GtkReliefStyle LiVESReliefStyle;
 #define LIVES_RELIEF_NONE GTK_RELIEF_NONE
 
 #define LIVES_ACCEL_VISIBLE GTK_ACCEL_VISIBLE
-  
+
 typedef GtkToolbarStyle LiVESToolbarStyle;
 #define LIVES_TOOLBAR_ICONS GTK_TOOLBAR_ICONS
 #define LIVES_TOOLBAR_TEXT  GTK_TOOLBAR_TEXT

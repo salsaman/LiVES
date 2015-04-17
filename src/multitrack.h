@@ -79,20 +79,20 @@ typedef enum {
 
 
 typedef enum {
-// undo actions
-/// no event_list
+  // undo actions
+  /// no event_list
   MT_UNDO_NONE=0,
   MT_UNDO_INSERT_BLOCK=1,
   MT_UNDO_INSERT_AUDIO_BLOCK=2,
 
-// minimal event_list
+  // minimal event_list
   MT_UNDO_APPLY_FILTER=512,
   MT_UNDO_DELETE_FILTER=513,
   MT_UNDO_SPLIT=514,
   MT_UNDO_SPLIT_MULTI=515,
   MT_UNDO_FILTER_MAP_CHANGE=516,
 
-// full backups of event_list
+  // full backups of event_list
   MT_UNDO_DELETE_BLOCK=1024,
   MT_UNDO_MOVE_BLOCK=1025,
   MT_UNDO_REMOVE_GAPS=1026,
@@ -110,7 +110,7 @@ typedef enum {
   NB_ERROR_NOCOMP,
   NB_ERROR_NOCLIP
 } lives_mt_nb_error_t;
-  
+
 
 
 typedef enum {
@@ -147,7 +147,7 @@ typedef enum {
 
 
 typedef enum {
-// block state
+  // block state
   BLOCK_UNSELECTED=0,
   BLOCK_SELECTED
 } lives_mt_block_state_t;
@@ -404,7 +404,7 @@ struct _mt {
   ulong grav_normal_func;
   ulong grav_left_func;
   ulong grav_right_func;
-  
+
   ulong sepwin_func;
   ulong mute_audio_func;
   ulong loop_cont_func;
@@ -587,7 +587,7 @@ struct _mt {
 
   boolean playing_sel; ///< are we playing just the time selection ?
 
-  uint32_t idlefunc; ///< autobackup function 
+  uint32_t idlefunc; ///< autobackup function
 
   LiVESList *clip_labels;
 
@@ -649,8 +649,9 @@ struct _track_rect {
   boolean start_anchored;
   boolean end_anchored;
   boolean ordered; ///< are frames in sequential order ?
-  
-  LiVESWidget *eventbox; ///< pointer to eventbox widget which contains this block; we can use its "layer_number" to get the track/layer number
+
+  LiVESWidget
+  *eventbox; ///< pointer to eventbox widget which contains this block; we can use its "layer_number" to get the track/layer number
 
 };
 
@@ -678,64 +679,64 @@ typedef struct {
 
 // setup functions
 
-lives_mt *multitrack (weed_plant_t *, int orig_file, double fps); ///< create and return lives_mt struct
-void mt_init_tracks (lives_mt *, boolean set_min_max);  ///< add basic tracks, or set tracks from mt->event_list
-boolean on_multitrack_activate (LiVESMenuItem *menuitem, weed_plant_t *event_list); ///< menuitem callback
+lives_mt *multitrack(weed_plant_t *, int orig_file, double fps);  ///< create and return lives_mt struct
+void mt_init_tracks(lives_mt *, boolean set_min_max);   ///< add basic tracks, or set tracks from mt->event_list
+boolean on_multitrack_activate(LiVESMenuItem *menuitem, weed_plant_t *event_list);  ///< menuitem callback
 
 // delete function
-boolean multitrack_delete (lives_mt *, boolean save);
+boolean multitrack_delete(lives_mt *, boolean save);
 
 // morph the poly window
-void polymorph (lives_mt *, lives_mt_poly_state_t poly);
+void polymorph(lives_mt *, lives_mt_poly_state_t poly);
 
 // sens/desens
-void mt_desensitise (lives_mt *);
-void mt_sensitise (lives_mt *);
+void mt_desensitise(lives_mt *);
+void mt_sensitise(lives_mt *);
 
 // external control callbacks
-void insert_here_cb (LiVESMenuItem *, livespointer mt);
-void insert_audio_here_cb (LiVESMenuItem *, livespointer mt);
-void insert_at_ctx_cb (LiVESMenuItem *, livespointer mt);
-void insert_audio_at_ctx_cb (LiVESMenuItem *, livespointer mt);
-void multitrack_end_cb (LiVESMenuItem *, livespointer mt);
-void delete_block_cb (LiVESMenuItem *, livespointer mt);
-void selblock_cb (LiVESMenuItem *, livespointer mt);
-void list_fx_here_cb (LiVESMenuItem *, livespointer mt);
-void edit_start_end_cb (LiVESMenuItem *, livespointer mt);
-void close_clip_cb (LiVESMenuItem *, livespointer mt);
-void show_clipinfo_cb (LiVESMenuItem *, livespointer mt);
+void insert_here_cb(LiVESMenuItem *, livespointer mt);
+void insert_audio_here_cb(LiVESMenuItem *, livespointer mt);
+void insert_at_ctx_cb(LiVESMenuItem *, livespointer mt);
+void insert_audio_at_ctx_cb(LiVESMenuItem *, livespointer mt);
+void multitrack_end_cb(LiVESMenuItem *, livespointer mt);
+void delete_block_cb(LiVESMenuItem *, livespointer mt);
+void selblock_cb(LiVESMenuItem *, livespointer mt);
+void list_fx_here_cb(LiVESMenuItem *, livespointer mt);
+void edit_start_end_cb(LiVESMenuItem *, livespointer mt);
+void close_clip_cb(LiVESMenuItem *, livespointer mt);
+void show_clipinfo_cb(LiVESMenuItem *, livespointer mt);
 
-boolean multitrack_insert (LiVESMenuItem *, livespointer mt);
-track_rect *move_block (lives_mt *, track_rect *block, double timesecs, int old_track, int new_track);
+boolean multitrack_insert(LiVESMenuItem *, livespointer mt);
+track_rect *move_block(lives_mt *, track_rect *block, double timesecs, int old_track, int new_track);
 
-void update_grav_mode (lives_mt *);
-void update_insert_mode (lives_mt *);
+void update_grav_mode(lives_mt *);
+void update_insert_mode(lives_mt *);
 
 
-boolean on_render_activate (LiVESMenuItem *, livespointer mt);
+boolean on_render_activate(LiVESMenuItem *, livespointer mt);
 
 void mt_set_autotrans(int idx);
 
 
 // event_list functions
-weed_plant_t *add_blank_frames_up_to (weed_plant_t *event_list, weed_plant_t *start_event, weed_timecode_t end_tc, double fps);
+weed_plant_t *add_blank_frames_up_to(weed_plant_t *event_list, weed_plant_t *start_event, weed_timecode_t end_tc, double fps);
 
 // track functions
-void on_cback_audio_activate (LiVESMenuItem *, livespointer mt);
-LiVESWidget *add_audio_track (lives_mt *, int trackno, boolean behind);
-void add_video_track_behind (LiVESMenuItem *, livespointer mt);
-void add_video_track_front (LiVESMenuItem *, livespointer mt);
+void on_cback_audio_activate(LiVESMenuItem *, livespointer mt);
+LiVESWidget *add_audio_track(lives_mt *, int trackno, boolean behind);
+void add_video_track_behind(LiVESMenuItem *, livespointer mt);
+void add_video_track_front(LiVESMenuItem *, livespointer mt);
 void delete_video_track(lives_mt *, int layer, boolean full);
 void delete_audio_track(lives_mt *, LiVESWidget *eventbox, boolean full);
 void delete_audio_tracks(lives_mt *, LiVESList *list, boolean full);
-void remove_gaps (LiVESMenuItem *, livespointer mt);
-void remove_first_gaps (LiVESMenuItem *, livespointer mt);
-void on_insgap_sel_activate (LiVESMenuItem *, livespointer mt);
-void on_insgap_cur_activate (LiVESMenuItem *, livespointer mt);
-void on_split_activate (LiVESMenuItem *, livespointer mt);
-void scroll_tracks (lives_mt *, int top_track, boolean set_value);
-boolean track_arrow_pressed (LiVESWidget *ahbox, LiVESXEventButton *, livespointer mt);
-void track_select (lives_mt *); ///< must call after setting mt->current_track
+void remove_gaps(LiVESMenuItem *, livespointer mt);
+void remove_first_gaps(LiVESMenuItem *, livespointer mt);
+void on_insgap_sel_activate(LiVESMenuItem *, livespointer mt);
+void on_insgap_cur_activate(LiVESMenuItem *, livespointer mt);
+void on_split_activate(LiVESMenuItem *, livespointer mt);
+void scroll_tracks(lives_mt *, int top_track, boolean set_value);
+boolean track_arrow_pressed(LiVESWidget *ahbox, LiVESXEventButton *, livespointer mt);
+void track_select(lives_mt *);  ///< must call after setting mt->current_track
 boolean mt_track_is_audio(lives_mt *, int ntrack); ///< return TRUE if ntrack is a valid backing audio track
 boolean mt_track_is_video(lives_mt *, int ntrack); ///< return TRUE if ntrack is a valid video track
 char *get_track_name(lives_mt *mt, int track_num, boolean is_audio);
@@ -745,36 +746,36 @@ void mt_do_autotransition(lives_mt *, track_rect *block); ///< call this on a bl
 void set_track_label_string(lives_mt *mt, int track, const char *label);
 
 LiVESWidget *get_eventbox_for_track(lives_mt *mt, int ntrack);
-void on_rename_track_activate (LiVESMenuItem *menuitem, livespointer mt);
+void on_rename_track_activate(LiVESMenuItem *menuitem, livespointer mt);
 
 
 // track mouse movement
-boolean on_track_click (LiVESWidget *eventbox, LiVESXEventButton *, livespointer mt);
-boolean on_atrack_click (LiVESWidget *eventbox, LiVESXEventButton *, livespointer mt);
-boolean on_track_header_click (LiVESWidget *eventbox, LiVESXEventButton *, livespointer mt);
-boolean on_track_between_click (LiVESWidget *eventbox, LiVESXEventButton *, livespointer mt);
-boolean on_track_release (LiVESWidget *eventbox, LiVESXEventButton *event, livespointer mt);
-boolean on_atrack_release (LiVESWidget *eventbox, LiVESXEventButton *event, livespointer mt);
-boolean on_track_header_release (LiVESWidget *eventbox, LiVESXEventButton *, livespointer mt);
-boolean on_track_between_release (LiVESWidget *eventbox, LiVESXEventButton *, livespointer mt);
-boolean on_track_move (LiVESWidget *widget, LiVESXEventMotion *event, livespointer mt);
-boolean on_track_header_move (LiVESWidget *widget, LiVESXEventMotion *event, livespointer mt);
+boolean on_track_click(LiVESWidget *eventbox, LiVESXEventButton *, livespointer mt);
+boolean on_atrack_click(LiVESWidget *eventbox, LiVESXEventButton *, livespointer mt);
+boolean on_track_header_click(LiVESWidget *eventbox, LiVESXEventButton *, livespointer mt);
+boolean on_track_between_click(LiVESWidget *eventbox, LiVESXEventButton *, livespointer mt);
+boolean on_track_release(LiVESWidget *eventbox, LiVESXEventButton *event, livespointer mt);
+boolean on_atrack_release(LiVESWidget *eventbox, LiVESXEventButton *event, livespointer mt);
+boolean on_track_header_release(LiVESWidget *eventbox, LiVESXEventButton *, livespointer mt);
+boolean on_track_between_release(LiVESWidget *eventbox, LiVESXEventButton *, livespointer mt);
+boolean on_track_move(LiVESWidget *widget, LiVESXEventMotion *event, livespointer mt);
+boolean on_track_header_move(LiVESWidget *widget, LiVESXEventMotion *event, livespointer mt);
 
-void unselect_all (lives_mt *); ///< unselect all blocks
-void insert_frames (int filenum, weed_timecode_t offset_start, weed_timecode_t offset_end, weed_timecode_t tc, 
-		    lives_direction_t direction, LiVESWidget *eventbox, lives_mt *, track_rect *in_block);
-void insert_audio (int filenum, weed_timecode_t offset_start, weed_timecode_t offset_end, weed_timecode_t tc, 
-		   double avel, lives_direction_t direction, LiVESWidget *eventbox, lives_mt *, track_rect *in_block);
-void on_seltrack_toggled (LiVESWidget *, livespointer mt);
-void scroll_track_by_scrollbar (LiVESScrollbar *sbar, livespointer mt);
+void unselect_all(lives_mt *);  ///< unselect all blocks
+void insert_frames(int filenum, weed_timecode_t offset_start, weed_timecode_t offset_end, weed_timecode_t tc,
+                   lives_direction_t direction, LiVESWidget *eventbox, lives_mt *, track_rect *in_block);
+void insert_audio(int filenum, weed_timecode_t offset_start, weed_timecode_t offset_end, weed_timecode_t tc,
+                  double avel, lives_direction_t direction, LiVESWidget *eventbox, lives_mt *, track_rect *in_block);
+void on_seltrack_toggled(LiVESWidget *, livespointer mt);
+void scroll_track_by_scrollbar(LiVESScrollbar *sbar, livespointer mt);
 
 // block functions
-void in_out_start_changed (LiVESWidget *, livespointer mt);
-void in_out_end_changed (LiVESWidget *, livespointer mt);
-void in_anchor_toggled (LiVESToggleButton *, livespointer mt);
-void out_anchor_toggled (LiVESToggleButton *, livespointer mt);
-void avel_reverse_toggled (LiVESToggleButton *, livespointer mt);
-void avel_spin_changed (LiVESSpinButton *, livespointer mt);
+void in_out_start_changed(LiVESWidget *, livespointer mt);
+void in_out_end_changed(LiVESWidget *, livespointer mt);
+void in_anchor_toggled(LiVESToggleButton *, livespointer mt);
+void out_anchor_toggled(LiVESToggleButton *, livespointer mt);
+void avel_reverse_toggled(LiVESToggleButton *, livespointer mt);
+void avel_spin_changed(LiVESSpinButton *, livespointer mt);
 
 // block API functions
 track_rect *find_block_by_uid(lives_mt *mt, ulong uid);
@@ -792,35 +793,35 @@ int get_clip_for_block(track_rect *block);
 // timeline functions
 void mt_tl_move_relative(lives_mt *, double pos_rel);
 void mt_tl_move(lives_mt *, double pos_abs);
-void set_timeline_end_secs (lives_mt *, double secs);
-boolean on_timeline_press (LiVESWidget *, LiVESXEventButton *, livespointer mt);
-boolean on_timeline_release (LiVESWidget *, LiVESXEventButton *, livespointer mt);
-boolean on_timeline_update (LiVESWidget *, LiVESXEventMotion *, livespointer mt);
-void draw_region (lives_mt *mt);
-void tc_to_rs (LiVESMenuItem *, livespointer mt);
-void tc_to_re (LiVESMenuItem *, livespointer mt);
-void rs_to_tc (LiVESMenuItem *, livespointer mt);
-void re_to_tc (LiVESMenuItem *, livespointer mt);
+void set_timeline_end_secs(lives_mt *, double secs);
+boolean on_timeline_press(LiVESWidget *, LiVESXEventButton *, livespointer mt);
+boolean on_timeline_release(LiVESWidget *, LiVESXEventButton *, livespointer mt);
+boolean on_timeline_update(LiVESWidget *, LiVESXEventMotion *, livespointer mt);
+void draw_region(lives_mt *mt);
+void tc_to_rs(LiVESMenuItem *, livespointer mt);
+void tc_to_re(LiVESMenuItem *, livespointer mt);
+void rs_to_tc(LiVESMenuItem *, livespointer mt);
+void re_to_tc(LiVESMenuItem *, livespointer mt);
 
-boolean mt_mark_callback (LiVESAccelGroup *group, LiVESObject *obj, uint32_t keyval, LiVESXModifierType mod, livespointer user_data);
+boolean mt_mark_callback(LiVESAccelGroup *group, LiVESObject *obj, uint32_t keyval, LiVESXModifierType mod, livespointer user_data);
 
-void multitrack_clear_marks (LiVESMenuItem *, livespointer mt);
+void multitrack_clear_marks(LiVESMenuItem *, livespointer mt);
 void mt_show_current_frame(lives_mt *, boolean return_layer);  ///< preview the current frame
 void mt_clear_timeline(lives_mt *mt);
 
 
 // context box text
-void clear_context (lives_mt *);
-void add_context_label (lives_mt *, const char *text);
+void clear_context(lives_mt *);
+void add_context_label(lives_mt *, const char *text);
 void mouse_mode_context(lives_mt *);
-void do_sel_context (lives_mt *);
-void do_fx_list_context (lives_mt *, int fxcount);
+void do_sel_context(lives_mt *);
+void do_fx_list_context(lives_mt *, int fxcount);
 void do_fx_move_context(lives_mt *mt);
 
 // playback / animation
-void multitrack_playall (lives_mt *);
-void multitrack_play_sel (LiVESMenuItem *, livespointer mt);
-void animate_multitrack (lives_mt *);
+void multitrack_playall(lives_mt *);
+void multitrack_play_sel(LiVESMenuItem *, livespointer mt);
+void animate_multitrack(lives_mt *);
 void unpaint_line(lives_mt *, LiVESWidget *eventbox);
 void unpaint_lines(lives_mt *);
 
@@ -829,30 +830,30 @@ void mt_post_playback(lives_mt *);
 
 
 // effect node controls
-void on_next_node_clicked  (LiVESWidget *, livespointer mt);
-void on_prev_node_clicked  (LiVESWidget *, livespointer mt);
-void on_del_node_clicked  (LiVESWidget *, livespointer mt);
-void on_node_spin_value_changed (LiVESSpinButton *, livespointer mt);
+void on_next_node_clicked(LiVESWidget *, livespointer mt);
+void on_prev_node_clicked(LiVESWidget *, livespointer mt);
+void on_del_node_clicked(LiVESWidget *, livespointer mt);
+void on_node_spin_value_changed(LiVESSpinButton *, livespointer mt);
 double mt_get_effect_time(lives_mt *);
 
-void on_frame_preview_clicked (LiVESButton *, livespointer mt);
-void show_preview (lives_mt *, weed_timecode_t tc);
+void on_frame_preview_clicked(LiVESButton *, livespointer mt);
+void show_preview(lives_mt *, weed_timecode_t tc);
 
 boolean add_mt_param_box(lives_mt *);
 
 // filter list controls
-weed_plant_t *get_prev_fm (lives_mt *, int current_track, weed_plant_t *frame);
-weed_plant_t *get_next_fm (lives_mt *, int current_track, weed_plant_t *frame);
+weed_plant_t *get_prev_fm(lives_mt *, int current_track, weed_plant_t *frame);
+weed_plant_t *get_next_fm(lives_mt *, int current_track, weed_plant_t *frame);
 
-void on_prev_fm_clicked  (LiVESWidget *button, livespointer mt);
-void on_next_fm_clicked  (LiVESWidget *button, livespointer mt);
-void on_fx_insb_clicked  (LiVESWidget *button, livespointer mt);
-void on_fx_insa_clicked  (LiVESWidget *button, livespointer mt);
+void on_prev_fm_clicked(LiVESWidget *button, livespointer mt);
+void on_next_fm_clicked(LiVESWidget *button, livespointer mt);
+void on_fx_insb_clicked(LiVESWidget *button, livespointer mt);
+void on_fx_insa_clicked(LiVESWidget *button, livespointer mt);
 
 // utils
 uint32_t event_list_get_byte_size(lives_mt *, weed_plant_t *event_list, int *num_events);  ///< returns bytes and sets num_events
 boolean event_list_rectify(lives_mt *, weed_plant_t *event_listy);
-boolean make_backup_space (lives_mt *, size_t space_needed);
+boolean make_backup_space(lives_mt *, size_t space_needed);
 void activate_mt_preview(lives_mt *); ///< sensitize Show Preview and Apply buttons
 void **mt_get_pchain(void);
 void event_list_free_undos(lives_mt *);
@@ -862,35 +863,36 @@ boolean set_new_set_name(lives_mt *);
 
 
 // event_list utilities
-boolean compare_filter_maps(weed_plant_t *fm1, weed_plant_t *fm2, int ctrack); ///< ctrack can be -1 to compare all events, else we cf for ctrack
-void move_init_in_filter_map(lives_mt *, weed_plant_t *event_list, weed_plant_t *fmap, weed_plant_t *ifrom, 
-			     weed_plant_t *ito, int track, boolean after);
-void update_filter_events(lives_mt *, weed_plant_t *first_event, weed_timecode_t start_tc, weed_timecode_t end_tc, 
-			  int track, weed_timecode_t new_start_tc, int new_track);
+boolean compare_filter_maps(weed_plant_t *fm1, weed_plant_t *fm2,
+                            int ctrack); ///< ctrack can be -1 to compare all events, else we cf for ctrack
+void move_init_in_filter_map(lives_mt *, weed_plant_t *event_list, weed_plant_t *fmap, weed_plant_t *ifrom,
+                             weed_plant_t *ito, int track, boolean after);
+void update_filter_events(lives_mt *, weed_plant_t *first_event, weed_timecode_t start_tc, weed_timecode_t end_tc,
+                          int track, weed_timecode_t new_start_tc, int new_track);
 void mt_fixup_events(lives_mt *, weed_plant_t *old_event, weed_plant_t *new_event);
 
 // event_list load/save
 char *get_eload_filename(lives_mt *mt, boolean allow_auto_reload);
 weed_plant_t *load_event_list(lives_mt *, char *eload_file);
-boolean on_save_event_list_activate (LiVESMenuItem *, livespointer mt);
+boolean on_save_event_list_activate(LiVESMenuItem *, livespointer mt);
 
 
 // layouts and layout maps
 LiVESList *load_layout_map(void);
 void add_markers(lives_mt *, weed_plant_t *event_list);
 void remove_markers(weed_plant_t *event_list);
-void save_layout_map (int *lmap, double *lmap_audio, const char *file, const char *dir);
+void save_layout_map(int *lmap, double *lmap_audio, const char *file, const char *dir);
 
 void wipe_layout(lives_mt *);
 
-void migrate_layouts (const char *old_set_name, const char *new_set_name);
+void migrate_layouts(const char *old_set_name, const char *new_set_name);
 
 LiVESList *layout_frame_is_affected(int clipno, int frame);
 LiVESList *layout_audio_is_affected(int clipno, double time);
 
-boolean check_for_layout_del (lives_mt *, boolean exiting);
+boolean check_for_layout_del(lives_mt *, boolean exiting);
 
-boolean on_load_event_list_activate (LiVESMenuItem *, livespointer mt);
+boolean on_load_event_list_activate(LiVESMenuItem *, livespointer mt);
 
 void stored_event_list_free_all(boolean wiped);
 void stored_event_list_free_undos(void);
@@ -905,25 +907,25 @@ boolean write_backup_layout_numbering(lives_mt *);
 
 
 // amixer funcs
-void amixer_show (LiVESButton *, livespointer mt);
-void on_amixer_close_clicked (LiVESButton *, lives_mt *mt);
-LiVESWidget * amixer_add_channel_slider (lives_mt *, int i);
+void amixer_show(LiVESButton *, livespointer mt);
+void on_amixer_close_clicked(LiVESButton *, lives_mt *mt);
+LiVESWidget *amixer_add_channel_slider(lives_mt *, int i);
 
 
 // misc
-void mt_change_disp_tracks_ok (LiVESButton *, livespointer mt);
-void mt_swap_play_pause (lives_mt *, boolean put_pause);
+void mt_change_disp_tracks_ok(LiVESButton *, livespointer mt);
+void mt_swap_play_pause(lives_mt *, boolean put_pause);
 char *set_values_from_defs(lives_mt *, boolean from_prefs);
 
 
 // clip boxes
-void mt_clip_select (lives_mt *, boolean scroll);
+void mt_clip_select(lives_mt *, boolean scroll);
 void mt_delete_clips(lives_mt *, int file);
-void mt_init_clips (lives_mt *, int orig_file, boolean add);
+void mt_init_clips(lives_mt *, int orig_file, boolean add);
 
 // key shortcuts
-boolean mt_prevclip (LiVESAccelGroup *, LiVESObject *, uint32_t keyval, LiVESXModifierType mod, livespointer);
-boolean mt_nextclip (LiVESAccelGroup *, LiVESObject *, uint32_t keyval, LiVESXModifierType mod, livespointer);
+boolean mt_prevclip(LiVESAccelGroup *, LiVESObject *, uint32_t keyval, LiVESXModifierType mod, livespointer);
+boolean mt_nextclip(LiVESAccelGroup *, LiVESObject *, uint32_t keyval, LiVESXModifierType mod, livespointer);
 
 typedef enum {
   /* default to warn about */

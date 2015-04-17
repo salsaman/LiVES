@@ -1609,8 +1609,12 @@ static int lives_mkv_read_header(lives_clip_data_t *cdata) {
 
   switch (priv->vidst->codec->codec_id) { 	 
   case CODEC_ID_VP8  : sprintf(cdata->video_name,"%s","vp8"); break; 	 
-  case CODEC_ID_THEORA  : sprintf(cdata->video_name,"%s","theora"); break; 	 
+  case CODEC_ID_THEORA  : sprintf(cdata->video_name,"%s","theora"); break;
+
+#if FF_API_SNOW
   case CODEC_ID_SNOW  : sprintf(cdata->video_name,"%s","snow"); break; 	 
+#endif
+
   case CODEC_ID_DIRAC  : sprintf(cdata->video_name,"%s","dirac"); break; 	 
   case CODEC_ID_MJPEG  : sprintf(cdata->video_name,"%s","mjpeg"); break; 	 
   case CODEC_ID_MPEG1VIDEO  : sprintf(cdata->video_name,"%s","mpeg1"); break; 	 

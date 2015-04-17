@@ -990,6 +990,42 @@ namespace lives {
   }
 
 
+  bool set::setName(livesString name) const {
+    if (!isValid()) return false;
+    if (strlen(mainw->set_name) > 0) return false;
+    if (numClips() == 0) return false;
+    
+    if (!name.empty()) {
+      const char *new_set_name = name.toEncoding(LIVES_CHAR_ENCODING_FILESYSTEM).c_str();
+      if (is_legal_set_name(new_set_name, TRUE)) {
+	lives_snprintf(mainw->set_name,128,"%s",new_set_name);
+	return true;
+      }
+      return false;
+    }
+
+    spinning = true;
+    msg_id = lives_random();
+    ulong cbid = m_lives->addCallback(LIVES_CALLBACK_PRIVATE, private_cb, NULL);
+    
+    pthread_mutex_lock(&spin_mutex);
+    if (!idle_set_set_name(msg_id)) {
+      pthread_mutex_unlock(&spin_mutex);
+      spinning = false;
+      m_lives->removeCallback(cbid);
+      return false;
+    }
+    while (spinning) pthread_cond_wait(&cond_done, &spin_mutex);
+    pthread_mutex_unlock(&spin_mutex);
+    if (isValid()) {
+      bool ret = (bool)atoi(private_response);
+      lives_free(private_response);
+      return ret;
+    }
+    return false;
+  }
+
+
   unsigned int set::numClips() const {
     if (!isValid()) return 0;
     (const_cast<set *>(this))->update_clip_list();
@@ -1022,6 +1058,7 @@ namespace lives {
     int arglen = 3;
     char **vargs=(char **)lives_malloc(sizeof(char *));
     const char *cname = name.toEncoding(LIVES_CHAR_ENCODING_FILESYSTEM).c_str();
+
     *vargs = strdup(",si");
     arglen = padup(vargs, arglen);
     arglen = add_string_arg(vargs, arglen, cname);
@@ -1051,6 +1088,12 @@ namespace lives {
     lives_free(*vargs);
     return ret;
   }
+
+
+  bool set::save() const {
+    return save(name());
+  }
+
 
 
   void set::update_clip_list() {
@@ -2114,6 +2157,19 @@ namespace lives {
     }
     return insertMode();
   }
+
+
+  int multitrack::numAudioTracks() const {
+    if (!isActive()) return 0;
+    return mainw->multitrack->opts.back_audio_tracks;
+  }
+
+
+  int multitrack::numVideoTracks() const {
+    if (!isActive()) return 0;
+    return mainw->multitrack->num_video_tracks;
+  }
+
 
 
   //////////////////////////////////////////////

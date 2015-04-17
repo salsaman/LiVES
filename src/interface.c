@@ -1399,11 +1399,13 @@ _entryw* create_rename_dialog (int type) {
 
   cancelbutton = lives_button_new_from_stock (LIVES_STOCK_CANCEL);
 
-  lives_dialog_add_action_widget (LIVES_DIALOG (renamew->dialog), cancelbutton, LIVES_RESPONSE_CANCEL);
-  lives_widget_set_can_focus_and_default (cancelbutton);
-
-  lives_widget_add_accelerator (cancelbutton, LIVES_WIDGET_CLICKED_SIGNAL, accel_group,
-			      LIVES_KEY_Escape, (LiVESXModifierType)0, (LiVESAccelFlags)0);
+  if (!(type==4&&!mainw->interactive)) {
+    lives_dialog_add_action_widget (LIVES_DIALOG (renamew->dialog), cancelbutton, LIVES_RESPONSE_CANCEL);
+    lives_widget_set_can_focus_and_default (cancelbutton);
+    
+    lives_widget_add_accelerator (cancelbutton, LIVES_WIDGET_CLICKED_SIGNAL, accel_group,
+				  LIVES_KEY_Escape, (LiVESXModifierType)0, (LiVESAccelFlags)0);
+  }
 
   if (type==6) {
     okbutton = lives_button_new_from_stock (LIVES_STOCK_GO_FORWARD);

@@ -6504,6 +6504,8 @@ boolean lives_osc_cb_new_audio(void *context, int arglen, const void *vargs, OSC
 boolean lives_osc_cb_loadset(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
   char setname[OSC_STRING_SIZE];
 
+  char *tmp;
+
   if (mainw->preview||mainw->is_processing||mainw->multitrack!=NULL) return lives_osc_notify_failure();
 
   if (mainw->playing_file>-1) return lives_osc_notify_failure();
@@ -6516,11 +6518,14 @@ boolean lives_osc_cb_loadset(void *context, int arglen, const void *vargs, OSCTi
   lives_osc_parse_string_argument(vargs,setname);
 
   mainw->osc_auto=1;
-  if (!is_legal_set_name(setname,TRUE)) {
+  if (!is_legal_set_name((tmp=U82F(setname)),TRUE)) {
     mainw->osc_auto=0;
+    lives_free(tmp);
     return lives_osc_notify_failure();
   }
   mainw->osc_auto=0;
+
+  lives_free(tmp);
 
   reload_set(setname);
   return lives_osc_notify_success(NULL);
@@ -6532,6 +6537,8 @@ boolean lives_osc_cb_saveset(void *context, int arglen, const void *vargs, OSCTi
   boolean ret;
   int force_append=0;
   char setname[OSC_STRING_SIZE];
+
+  char *tmp;
 
   // setname should be in filesystem encoding
 
@@ -6564,16 +6571,19 @@ boolean lives_osc_cb_saveset(void *context, int arglen, const void *vargs, OSCTi
     else return lives_osc_notify_failure();
   }
   
-  if (is_legal_set_name(setname,TRUE)) {
+  if (is_legal_set_name((tmp=U82F(setname)),TRUE)) {
     mainw->only_close=TRUE;
     if (force_append) mainw->osc_auto=2;
     else mainw->osc_auto=1;
     ret=on_save_set_activate(NULL,setname);
     mainw->osc_auto=0;
     mainw->only_close=FALSE;
+    lives_free(tmp);
     if (ret) return lives_osc_notify_success(NULL);
     else return lives_osc_notify_failure();
   }
+
+  lives_free(tmp);
 
   return lives_osc_notify_failure();
 

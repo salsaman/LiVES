@@ -9,7 +9,8 @@ Fix "fade background mode" (b) so it looks nice again.
 Stability fix for expose event during startup.
 Stability fix for mkv_decoder with broken end frames.
 Implement C++ language bindings (liblives).
-Code cleanup.
+Fixes for several smaller issues (Thomas Berger).
+Code cleanup / reformat.
 
 
 

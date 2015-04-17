@@ -260,7 +260,11 @@ typedef struct AVCodecTag {
 #define CODEC_ID_TRUEMOTION2 AV_CODEC_ID_TRUEMOTION2
 #define CODEC_ID_MSZH AV_CODEC_ID_MSZH
 #define CODEC_ID_ZLIB AV_CODEC_ID_ZLIB
+
+#if FF_API_SNOW
 #define CODEC_ID_SNOW AV_CODEC_ID_SNOW
+#endif
+
 #define CODEC_ID_4XM AV_CODEC_ID_4XM
 #define CODEC_ID_FLV1 AV_CODEC_ID_FLV1
 #define CODEC_ID_FLASHSV AV_CODEC_ID_FLASHSV
@@ -526,7 +530,9 @@ const AVCodecTag codec_bmp_tags[] = {
   { CODEC_ID_TRUEMOTION1,  MKTAG('P', 'V', 'E', 'Z') },
   { CODEC_ID_MSZH,         MKTAG('M', 'S', 'Z', 'H') },
   { CODEC_ID_ZLIB,         MKTAG('Z', 'L', 'I', 'B') },
+#if FF_API_SNOW
   { CODEC_ID_SNOW,         MKTAG('S', 'N', 'O', 'W') },
+#endif
   { CODEC_ID_4XM,          MKTAG('4', 'X', 'M', 'V') },
   { CODEC_ID_FLV1,         MKTAG('F', 'L', 'V', '1') },
   { CODEC_ID_FLASHSV,      MKTAG('F', 'S', 'V', '1') },

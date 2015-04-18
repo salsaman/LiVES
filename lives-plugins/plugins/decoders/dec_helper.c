@@ -12,13 +12,11 @@
 double get_fps(const char *uri) {
   // use mplayer to get fps if we can...it seems to have some magical way
   int rc;
-  double ret = -1;
+  double ret = -1.;
   const char *binary;
   char buffer[1024];
   char cmd[1024];
-  ssize_t bytes;
 
-  FILE *fp;
 #define FIND_PLAYER(player) \
     rc = system("which " #player); \
     if ( rc == 0 ) { binary = #player; goto found_player; }

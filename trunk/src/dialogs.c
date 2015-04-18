@@ -1290,9 +1290,9 @@ boolean process_one(boolean visible) {
     // play next frame
     if (LIVES_LIKELY(mainw->cancelled==CANCEL_NONE)) {
 
-      // calculate the audio 'frame' for no-realtime audio players
+      // calculate the audio 'frame' for non-realtime audio players
       // for realtime players, we did this in calc_new_playback_position()
-      if (prefs->audio_player==AUD_PLAYER_SOX||prefs->audio_player==AUD_PLAYER_MPLAYER||prefs->audio_player==AUD_PLAYER_MPLAYER2) {
+      if (!is_realtime_aplayer(prefs->audio_player)) {
         mainw->aframeno=(int64_t)(mainw->currticks-mainw->firstticks)*cfile->fps/U_SEC+audio_start;
         if (LIVES_UNLIKELY(mainw->loop_cont&&(mainw->aframeno>(mainw->audio_end?mainw->audio_end:
                                               cfile->laudio_time*cfile->fps)))) {

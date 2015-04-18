@@ -23,8 +23,8 @@ double get_fps(const char *uri) {
     rc = system("which " #player); \
     if ( rc == 0 ) { binary = #player; goto found_player; }
 
-  FIND_PLAYER(mplayer2)
   FIND_PLAYER(mplayer)
+  FIND_PLAYER(mplayer2)
   FIND_PLAYER(mpv)
 
   // if we get here, we did not find a player

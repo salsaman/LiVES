@@ -411,7 +411,7 @@ boolean do_audio_choice_dialog(short startup_phase) {
 
   lives_widget_destroy(dialog);
 
-  if (prefs->audio_player==AUD_PLAYER_SOX||prefs->audio_player==AUD_PLAYER_MPLAYER||prefs->audio_player==AUD_PLAYER_MPLAYER2) {
+  if (!is_realtime_aplayer(prefs->audio_player)) {
     lives_widget_hide(mainw->vol_toolitem);
     if (mainw->vol_label!=NULL) lives_widget_hide(mainw->vol_label);
     lives_widget_hide(mainw->recaudio_submenu);

@@ -444,7 +444,6 @@ namespace lives {
     bool isValid();
 
     /**
-       Equivalent to status() == LIVES_STATUS_READY.
        @return true if status() == LIVES_STATUS_READY.
        @see status().
     */
@@ -458,25 +457,21 @@ namespace lives {
     bool isPlaying();
 
     /**
-       Returns the current set
        @return the current set.
     */
     const set& getSet();
 
     /**
-       Returns the current effectKeyMap
        @return the current effectKeyMap.
     */
     const effectKeyMap& getEffectKeyMap();
 
     /**
-       Returns the player for this livesApp.
        @return the player for this livesApp.
     */
     const player& getPlayer();
 
     /**
-       Returns the multitrack object for this livesApp.
        @return the multitrack object for this livesApp.
     */
     const multitrack& getMultitrack();
@@ -645,7 +640,6 @@ namespace lives {
     */
     lives_status_t status();
 
-
     /**
        If status() is LIVES_STATUS_PROCESSING, cancel the current processing if possible.
        @return true if the processing was cancelled.
@@ -723,32 +717,32 @@ namespace lives {
     /**
        Number of frames in this clip. 
        If the clip is audio only, 0 is returned.
-       If clip is not valid then -1 is returned.
-       @return int number of frames, or -1 if clip is not valid.
+       If clip is not valid then 0 is returned.
+       @return int number of frames, or 0 if clip is not valid.
     */
     int frames();
 
     /**
        Width of the clip in pixels.
        If the clip is audio only, 0 is returned.
-       If clip is not valid then -1 is returned.
-       @return int width in pixels, or -1 if clip is not valid.
+       If clip is not valid then 0 is returned.
+       @return int width in pixels, or 0 if clip is not valid.
     */
     int width();
 
     /**
        Height of the clip in pixels.
        If the clip is audio only, 0 is returned.
-       If clip is not valid then -1 is returned.
-       @return int height in pixels, or -1 if clip is not valid.
+       If clip is not valid then 0 is returned.
+       @return int height in pixels, or 0 if clip is not valid.
     */
     int height();
 
     /**
        Framerate (frames per second) of the clip.
        If the clip is audio only, 0.0 is returned.
-       If clip is not valid then -1.0 is returned.
-       @return double framerate of the clip, or -1.0 if clip is not valid.
+       If clip is not valid then 0.0 is returned.
+       @return double framerate of the clip, or 0.0 if clip is not valid.
     */
     double FPS();
 
@@ -773,9 +767,9 @@ namespace lives {
     /**
        Audio rate for this clip. 
        If the clip is video only, 0 is returned.
-       If clip is not valid then -1 is returned.
+       If clip is not valid then 0 is returned.
        Note this is not necessarily the same as the soundcard audio rate which can be obtained via prefs::audioPlayerRate().
-       @return int audio rate, or -1 if clip is not valid.
+       @return int audio rate, or 0 if clip is not valid.
        @see playbackAudioRate()
     */
     int audioRate();
@@ -783,10 +777,10 @@ namespace lives {
     /**
        The current playback audio rate for this clip, which may differ from audioRate(). 
        If the clip is video only, 0 is returned.
-       If clip is not valid then -1 is returned.
+       If clip is not valid then 0 is returned.
        Note this is not necessarily the same as the soundcard audio rate which can be obtained via prefs::audioPlayerRate().
        If livesApp::mode() is LIVES_INTERFACE_MODE_MULTITRACK then this will return multitrack::audioRate().
-       @return int playback audio rate, or -1 if clip is not valid.
+       @return int playback audio rate, or 0 if clip is not valid.
        @see audiorate().
     */
     int playbackAudioRate();
@@ -794,16 +788,16 @@ namespace lives {
     /**
        Number of audio channels (eg. left, right) for this clip. 
        If the clip is video only, 0 is returned.
-       If clip is not valid then -1 is returned.
-       @return int audio channels, or -1 if clip is not valid.
+       If clip is not valid then 0 is returned.
+       @return int audio channels, or 0 if clip is not valid.
     */
     int audioChannels();
 
     /**
        Size in bits of audio samples (eg. 8, 16, 32) for this clip. 
        If the clip is video only, 0 is returned.
-       If clip is not valid then -1 is returned.
-       @return int audio sample size, or -1 if clip is not valid.
+       If clip is not valid then 0 is returned.
+       @return int audio sample size, or 0 if clip is not valid.
     */
     int audioSampleSize();
 
@@ -821,19 +815,27 @@ namespace lives {
     */
     lives_endian_t audioEndian();
 
+
+    /**
+       Returns the length in seconds for audio in the clip
+       If the clip is invalid, returns 0.
+       @return the length of the clip audio, in seconds.
+    */
+    double audioLength();
+
     /**
        Start of the selected frame region.
        If the clip is audio only, 0 is returned.
-       If clip is not valid then -1 is returned.
-       @return int frame selection start, or -1 if clip is not valid.
+       If clip is not valid then 0 is returned.
+       @return int frame selection start, or 0 if clip is not valid.
     */
     int selectionStart();
 
     /**
        End of the selected frame region.
        If the clip is audio only, 0 is returned.
-       If clip is not valid then -1 is returned.
-       @return int frame selection end, or -1 if clip is not valid.
+       If clip is not valid then 0 is returned.
+       @return int frame selection end, or 0 if clip is not valid.
     */
     int selectionEnd();
 
@@ -1038,9 +1040,15 @@ namespace lives {
     bool isValid() const;
 
     /**
-       Returns true if the livesApp::status() is LIVES_STATUS_PLAYING.
+       @return true if the livesApp::status() is LIVES_STATUS_PLAYING.
     */
     bool isPlaying() const;
+
+
+    /**
+       @return true if the player is set to record. Recording will only actually occur if isPlaying() is also true.
+    */
+    bool isRecording() const;
 
     /**
        Set playback in a detached window.
@@ -1146,40 +1154,66 @@ namespace lives {
        The miminum value is 0.0 in every mode. Values < 0. will be ignored.
        If isValid() is false, nothing happens and 0. is returned.
        @param time the time in seconds to set playback start time to.
-       @returns the new playback start time.
-       @see playbackTime().
-       @see setAudioPlaybackTime().
+       @return the new playback start time.
+       @see videoPlaybackTime().
        @see multitrack::setCurrentTime().
     */
-    double setPlaybackTime(double time) const;
+    double setPlaybackStartTime(double time) const;
 
     /**
-       Return the current clip playback time in seconds. If livesApp::mode() is LIVES_INTERFACE_MODE_CLIPEDIT, then this returns 
-       the current playback time for video in the current foreground clip.
-       If livesApp::mode() is LIVES_INTERFACE_MODE_MULTITRACK, then this returns the current player time in the multitrack timeline 
-       (equivalent to elapsedTime()).
-       This function works in livesApp::status() LIVE_STATUS_READY and LIVES_STATUS_PLAYING.
+       Set the video playback frame. Only works if livesApp::status() is LIVES_STATUS_PLAYING and livesApp::mode() is 
+       LIVES_INTERFACE_MODE_CLIPEDIT.
+       If the frame parameter is < 1 or > foregroundClip().frames() nothing happens.
+       If background is true, the function sets the frame for backgroundClip().
+       If background is false and prefs::audioFollowsVideoFPSChanges() is true, then the audio playback will sync to the new video position.
+       @param frame the new frame to set to
+       @param background if true sets the frame for the background clip (if any)
+       @return the video frame set to, or 0 if the operation is invalid.
+       @see videoPlaybackTime()
+       @see setPlaybackTime()
+    */
+    int setVideoPlaybackFrame(int frame, bool background=false) const;
+
+    /**
+       Return the current clip playback time. If livesApp::mode() is LIVES_INTERFACE_MODE_CLIPEDIT, then this returns 
+       the current playback time for video in the current foregroundClip(), or the current backgroundClip() if background is true:
+       if there is no background clip, 0. is returned.
+       If livesApp::mode() is LIVES_INTERFACE_MODE_MULTITRACK, then this returns the current player time in the multitrack timeline, 
+       (equivalent to multitrack::currentTime()), and the background parameter is ignored.
+       This function works if livesApp::status() is LIVES_STATUS_READY or LIVES_STATUS_PLAYING.
        If isValid() is false, 0. is returned.
-       @returns the current clip playback time.
-       @see setPlaybackTime().
+       @param background if true returns the playback time for the background clip.
+       @return the current foreground or background clip playback time.
+       @see setVideoPlaybackFrame().
        @see audioPlaybackTime().
        @see elapsedTime().
        @see multitrack::currentTime().
     */
-    double playbackTime() const;
-    
+    double videoPlaybackTime(bool background=false) const;
 
-    //    double setAudioPlaybackTime(double time) const;
+    /**
+       Set the audio playback time. Only works if livesApp::status() is LIVES_STATUS_PLAYING and livesApp::mode() is 
+       LIVES_INTERFACE_MODE_CLIPEDIT and prefs::isRealtimeAudioPlayer() is true for prefs::audioPlayer().
+       Does not work if prefs::audioSource() is LIVES_AUDIO_SOURCE_INTERNAL and player::recording() is true.
+       If the time parameter is < 0. or > clip::audioLength() nothing happens.
+       The time is actually set to the nearest video frame start to the requested time.
+       @param the new time to set to
+       @return the audio playback time, or 0. if the operation is invalid.
+       @see audioPlaybackTime()
+       @see setVideoPlaybackFrame()
+    */
+    double setAudioPlaybackTime(double time) const;
        
     /**
        Return the current clip audio playback time in seconds. If livesApp::mode() is LIVES_INTERFACE_MODE_CLIPEDIT, then this returns 
-       the current playback time for audio in the current foreground clip.
+       the current playback time for audio in the current foregroundClip().
        If livesApp::mode() is LIVES_INTERFACE_MODE_MULTITRACK, then this returns the current player time in the multitrack timeline 
-       (equivalent to elapsedTime()).
-       This function works with livesApp::status() of LIVE_STATUS_READY and LIVES_STATUS_PLAYING.
+       (equivalent to multitrack::currentTime()).
+       This function works with livesApp::status() of LIVES_STATUS_READY and LIVES_STATUS_PLAYING.
        If isValid() is false, 0. is returned.
-       @returns the current clip audio playback time.
-       @see playbackTime().
+       If prefs::audioSource() is not LIVES_AUDIO_SOURCE_INTERNAL the value returned is not defined.
+       @return the current clip audio playback time.
+       @see videoPlaybackTime().
        @see elapsedTime().
        @see multitrack::currentTime().
     */
@@ -1626,7 +1660,7 @@ namespace lives {
        If the block is invalid, nothing happens and false is returned.
        Only works if livesApp::status() is LIVES_STATUS_READY.
        May cause other blocks to move, depending on the setting of multitrack::gravity().
-       @returns true if the block was removed.
+       @return true if the block was removed.
        @see multitrack::insertBlock().
     */
     bool remove();
@@ -1710,7 +1744,7 @@ namespace lives {
        The miminum value is 0.0; values < 0.0 will be ignored.
        This function is synonymous with player::setPlaybackTime().
        @param time the time in seconds to set playback start time to.
-       @returns the new playback start time.
+       @return the new playback start time.
        @see currentTime().
     */
     double setCurrentTime(double time) const;
@@ -1719,8 +1753,8 @@ namespace lives {
        Return the current playback time in seconds. If isActive() is true this returns the current player time in the multitrack timeline 
        (equivalent to to player::playbackTime(), and during playback, equivalent to player::elapsedTime() plus a constant offset).
        This function works when livesApp::status() is LIVE_STATUS_READY or LIVES_STATUS_PLAYING.
-       If isActive() is false, -1. is returned.
-       @returns the current clip playback time.
+       If isActive() is false, 0. is returned.
+       @return the current clip playback time.
        @see setCurrentTime().
        @see currentAudioTime().
        @see elapsedTime().
@@ -1783,7 +1817,12 @@ namespace lives {
     lives_insert_mode_t setInsertMode(lives_insert_mode_t) const;
 
 
-    bool addVideoTrack(bool in_front) const;
+    /**
+       Append a new video track into the timeline. Only works if isActive() is true, and livesApp::status() is LIVES_STATUS_READY.
+       @param in_front set to true to insert a video track in front of existing video tracks. Otherwise insert will be behind.
+       @return the index number of the newly added track, or -1 if the operation failed.
+    */
+    int addVideoTrack(bool in_front) const;
 
 
     /**
@@ -2031,7 +2070,7 @@ namespace lives {
        Only valid if isRealtimeAudioPlayer(lives.audioPlayer()) is true.
        @param lives a reference to a livesApp instance
        @return the current audio player rate in Hz.
-       @see isRealtime()
+       @see isRealtimeAudioPlayer()
     */
     int audioPlayerRate(livesApp);
 

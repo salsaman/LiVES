@@ -5110,7 +5110,9 @@ static weed_plant_t *load_event_list_inner(lives_mt *mt, int fd, boolean show_er
     if (show_errors) {
       char *set_needed=weed_get_string_value(event_list,"needs_set",&error);
       char *err;
-      if (!mainw->was_set||strcmp(set_needed,mainw->set_name)) {
+      char *tmp=NULL;
+      if (!mainw->was_set||strcmp((tmp=U82F(set_needed)),mainw->set_name)) {
+        if (tmp!=NULL) lives_free(tmp);
         err=lives_strdup_printf(
               _("\nThis layout requires the set \"%s\"\nIn order to load it you must return to the Clip Editor, \nclose the current set,\nthen load in the new set from the File menu.\n"),
               set_needed);
@@ -5120,6 +5122,7 @@ static weed_plant_t *load_event_list_inner(lives_mt *mt, int fd, boolean show_er
         lives_free(set_needed);
         return NULL;
       }
+      if (tmp!=NULL) lives_free(tmp);
       lives_free(set_needed);
     }
   } else if (!show_errors&&mem==NULL) return NULL; // no change needed
@@ -10356,7 +10359,7 @@ void set_track_label_string(lives_mt *mt, int track, const char *label) {
 }
 
 
-void add_video_track(lives_mt *mt, boolean behind) {
+static int add_video_track(lives_mt *mt, boolean behind) {
   // add another video track to our timeline_table
   LiVESWidget *label;
   LiVESWidget *checkbutton;
@@ -10503,20 +10506,26 @@ void add_video_track(lives_mt *mt, boolean behind) {
 
   lives_widget_queue_draw(mt->vpaned);
 
+  if (!behind) return 0;
+  else return mt->num_video_tracks-1;
 }
 
-void add_video_track_behind(LiVESMenuItem *menuitem, livespointer user_data) {
+int add_video_track_behind(LiVESMenuItem *menuitem, livespointer user_data) {
+  int tnum;
   lives_mt *mt=(lives_mt *)user_data;
   if (menuitem!=NULL) mt_desensitise(mt);
-  add_video_track(mt,TRUE);
+  tnum=add_video_track(mt,TRUE);
   if (menuitem!=NULL) mt_sensitise(mt);
+  return tnum;
 }
 
-void add_video_track_front(LiVESMenuItem *menuitem, livespointer user_data) {
+int add_video_track_front(LiVESMenuItem *menuitem, livespointer user_data) {
+  int tnum;
   lives_mt *mt=(lives_mt *)user_data;
   if (menuitem!=NULL) mt_desensitise(mt);
-  add_video_track(mt,FALSE);
+  tnum=add_video_track(mt,FALSE);
   if (menuitem!=NULL) mt_sensitise(mt);
+  return tnum;
 }
 
 
@@ -19602,7 +19611,9 @@ boolean on_save_event_list_activate(LiVESMenuItem *menuitem, livespointer user_d
   }
 
   if (strlen(mainw->set_name)>0) {
-    weed_set_string_value(event_list,"needs_set",mainw->set_name);
+    char *tmp;
+    weed_set_string_value(event_list,"needs_set",(tmp=F2U8(mainw->set_name)));
+    lives_free(tmp);
   } else if (mainw->interactive) {
     set_new_set_name(mt);
   } else return FALSE;
@@ -21688,7 +21699,8 @@ void migrate_layouts(const char *old_set_name, const char *new_set_name) {
           if ((event_list=load_event_list_inner(NULL,fd,FALSE,NULL,NULL,NULL))!=NULL) {
             lives_close_buffered(fd);
             // adjust the value of "needs_set" to new_set_name
-            weed_set_string_value(event_list,"needs_set",new_set_name);
+            weed_set_string_value(event_list,"needs_set",(tmp=F2U8(new_set_name)));
+            lives_free(tmp);
             // save the event_list with the same name
             unlink((char *)map->data);
 

@@ -1364,6 +1364,12 @@ void on_open_fw_activate(LiVESMenuItem *menuitem, livespointer format);
 // round (double) a up to next (integer) multiple of (double) b
 #define CEIL(a,b) ((int)(((double)a+(double)b-.000000001)/((double)b))*b)
 
+#ifdef NEED_ENDIAN_TEST
+#undef NEED_ENDIAN_TEST
+static int32_t testint = 0x12345678;
+#define IS_BIG_ENDIAN (((char *)&testint)[0] == 0x12)
+#endif
+
 
 char *dummychar;
 

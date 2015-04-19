@@ -724,8 +724,8 @@ weed_plant_t *add_blank_frames_up_to(weed_plant_t *event_list, weed_plant_t *sta
 // track functions
 void on_cback_audio_activate(LiVESMenuItem *, livespointer mt);
 LiVESWidget *add_audio_track(lives_mt *, int trackno, boolean behind);
-void add_video_track_behind(LiVESMenuItem *, livespointer mt);
-void add_video_track_front(LiVESMenuItem *, livespointer mt);
+int add_video_track_behind(LiVESMenuItem *, livespointer mt);
+int add_video_track_front(LiVESMenuItem *, livespointer mt);
 void delete_video_track(lives_mt *, int layer, boolean full);
 void delete_audio_track(lives_mt *, LiVESWidget *eventbox, boolean full);
 void delete_audio_tracks(lives_mt *, LiVESList *list, boolean full);

@@ -38,6 +38,8 @@
 
 #define NEED_DEF_WIDGET_OPTS
 
+#define NEED_ENDIAN_TEST
+
 #include "main.h"
 #include "interface.h"
 #include "support.h"
@@ -2047,13 +2049,6 @@ void set_palette_colours(void) {
 }
 
 
-boolean is_big_endian() {
-  int32_t testint = 0x12345678;
-  char *pMem;
-  pMem = (char *) &testint;
-  if (pMem[0] == 0x78) return FALSE;
-  return TRUE;
-}
 
 
 capability *get_capabilities(void) {
@@ -2088,7 +2083,7 @@ capability *get_capabilities(void) {
   if (sizeof(void *)==8) capable->cpu_bits=64;
 
   // _runtime_ byte order
-  if (is_big_endian())
+  if (IS_BIG_ENDIAN)
     capable->byte_order=LIVES_BIG_ENDIAN;
   else
     capable->byte_order=LIVES_LITTLE_ENDIAN;

@@ -12,13 +12,13 @@ int main() {
 
   while (lives.status() != LIVES_STATUS_READY) sleep(1);
 
-  set cset = lives.currentSet();
+  set cset = lives.getSet();
 
   if (cset.numClips() < 2) {
     lives.showInfo("We need at least two clips loaded for this demo.\nLet's load some more.");
 
     while (cset.numClips() < 2) {
-      LiVESString fname = lives.chooseFileWithPreview(prefs::currentVideoLoadDir(lives), LIVES_FILE_CHOOSER_VIDEO_AUDIO);
+      livesString fname = lives.chooseFileWithPreview(prefs::currentVideoLoadDir(lives), LIVES_FILE_CHOOSER_VIDEO_AUDIO);
       lives.openFile(fname);
     }
 
@@ -33,10 +33,11 @@ int main() {
   clip1.switchTo();
 
   // map chroma blend effect to effectKey 1, mode 0
-  effectKeyMap fxmap = lives.currentEffectKeyMap();
+  effectKeyMap fxmap = lives.getEffectKeyMap();
+
   fxmap.clear();
 
-  effect simpleblend(lives, "", "chroma blend", "salsaman");
+  effect simpleblend(lives, livesString(""), livesString("chroma blend"), livesString("salsaman"));
 
   fxmap[1].appendMapping(simpleblend);
 
@@ -44,9 +45,9 @@ int main() {
   fxmap[1].setEnabled(true);
 
   // must do this AFTER enabling the transition
-  clip2.setAsBackground();
+  clip2.setIsBackground();
 
-  player p = lives.currentPlayer();
+  player p = lives.getPlayer();
 
   p.play();
 

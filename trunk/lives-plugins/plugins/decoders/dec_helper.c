@@ -11,6 +11,7 @@
 
 double get_fps(const char *uri) {
   // use mplayer to get fps if we can...it seems to have some magical way
+  FILE *fp;
   int rc;
   double ret = -1.;
   const char *binary;

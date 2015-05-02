@@ -135,14 +135,12 @@ void break_me(void) {
 }
 
 
-#ifdef IS_LIBLIVES
 // in library we run gtk in a thread so we can return to caller
-static pthread_t gtk_thread;
 void *gtk_thread_wrapper(void *data) {
   gtk_main();
   return NULL;
 }
-#endif
+
 
 #ifdef USE_GLIB
 static void lives_log_handler(const char *domain, LiVESLogLevelFlags level, const char *message,  livespointer data) {
@@ -2788,7 +2786,7 @@ void set_signal_handlers(SignalHandlerPointer sigfunc) {
 }
 
 
-int real_main(int argc, char *argv[], ulong id) {
+ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
 #ifdef ENABLE_OSC
 #ifdef IS_MINGW
   WSADATA wsaData;
@@ -2863,6 +2861,7 @@ int real_main(int argc, char *argv[], ulong id) {
   memset(start_file,0,1);
   mainw->has_session_tmpdir=FALSE;
 
+  mainw->libthread=gtk_thread;
   mainw->id=id;
 
 #ifndef IS_MINGW
@@ -3146,12 +3145,14 @@ int real_main(int argc, char *argv[], ulong id) {
 
   lives_idle_add(lives_startup,NULL);
 
-#ifndef IS_LIBLIVES
+
 #ifdef GUI_GTK
-  gtk_main();
-#endif
-#else
-  pthread_create(&gtk_thread,NULL,gtk_thread_wrapper,NULL);
+  if (gtk_thread==NULL) {
+    gtk_main();
+  }
+  else {
+    pthread_create(gtk_thread,NULL,gtk_thread_wrapper,NULL);
+  }
 #endif
 
 #ifdef GUI_QT
@@ -3942,7 +3943,7 @@ void load_end_image(int frame) {
 #ifndef IS_LIBLIVES
 int main(int argc, char *argv[]) {
   // call any hooks here
-  return real_main(argc, argv, 0l);
+  return real_main(argc, argv, NULL, 0l);
 }
 #endif
 

@@ -441,20 +441,20 @@ namespace lives {
        A valid instance is connected to a running LiVES application.
        @return true if instance is connected to a running LiVES application.
     */
-    bool isValid();
+    bool isValid() const;
 
     /**
        @return true if status() == LIVES_STATUS_READY.
        @see status().
     */
-    bool isReady();
+    bool isReady() const;
 
     /**
        Equivalent to status() == LIVES_STATUS_PLAYING.
        @return true if status() == LIVES_STATUS_PLAYING.
        @see status().
     */
-    bool isPlaying();
+    bool isPlaying() const;
 
     /**
        @return the current set.
@@ -481,7 +481,7 @@ namespace lives {
        @param id value previously returned from addCallback.
        @return true if playback was stopped.
     */
-    bool removeCallback(ulong id);
+    bool removeCallback(ulong id) const;
 
     /**
        Add a modeChanged callback.
@@ -492,7 +492,7 @@ namespace lives {
        @see LIVES_CALLBACK_MODE_CHANGED
        @see removeCallback().
     */
-    ulong addCallback(lives_callback_t cb_type, modeChanged_callback_f func, void *data);
+    ulong addCallback(lives_callback_t cb_type, modeChanged_callback_f func, void *data) const;
 
     /**
        Add an appQuit callback.
@@ -503,7 +503,7 @@ namespace lives {
        @see LIVES_CALLBACK_APP_QUIT
        @see removeCallback().
     */
-    ulong addCallback(lives_callback_t cb_type, appQuit_callback_f func, void *data);
+    ulong addCallback(lives_callback_t cb_type, appQuit_callback_f func, void *data) const;
 
     /**
        Add an objectDestroyed callback.
@@ -514,7 +514,7 @@ namespace lives {
        @see LIVES_CALLBACK_OBJECT_DESTROYED
        @see removeCallback().
     */
-    ulong addCallback(lives_callback_t cb_type, objectDestroyed_callback_f func, void *data);
+    ulong addCallback(lives_callback_t cb_type, objectDestroyed_callback_f func, void *data) const;
 
     /**
        Show Info dialog in the LiVES GUI.
@@ -638,7 +638,7 @@ namespace lives {
        @see isReady().
        @see isPlaying().
     */
-    lives_status_t status();
+    lives_status_t status() const;
 
     /**
        If status() is LIVES_STATUS_PROCESSING, cancel the current processing if possible.
@@ -654,14 +654,14 @@ namespace lives {
     void invalidate();
     void setClosures(closureList cl);
     
-    bool setPref(int prefidx, bool val);
-    bool setPref(int prefidx, int val);
-    bool setPref(int prefidx, int bitfield, bool val);
+    bool setPref(int prefidx, bool val) const;
+    bool setPref(int prefidx, int val) const;
+    bool setPref(int prefidx, int bitfield, bool val) const;
 
 #endif
 
   protected:
-    ulong addCallback(lives_callback_t cb_type, private_callback_f func, void *data);
+    ulong addCallback(lives_callback_t cb_type, private_callback_f func, void *data) const;
 
   private:
     ulong m_id;
@@ -671,13 +671,15 @@ namespace lives {
     effectKeyMap * m_effectKeyMap;
     multitrack *m_multitrack;
 
+    pthread_t *m_thread;
+
     bool m_deinterlace;
 
-    ulong appendClosure(lives_callback_t cb_type, callback_f func, void *data);
+    ulong appendClosure(lives_callback_t cb_type, callback_f func, void *data) const;
     void init(int argc, char *argv[]);
 
     void operator=(livesApp const&); // Don't implement
-
+    livesApp(const livesApp &other); // Don't implement
 
   };
 
@@ -712,7 +714,7 @@ namespace lives {
        @see livesApp::openFile().
        @return true if the clip is valid.
     */
-    bool isValid();
+    bool isValid() const;
 
     /**
        Number of frames in this clip. 
@@ -1350,7 +1352,7 @@ namespace lives {
        and the key value is in the range 1 <= key <= prefs::rteKeysVirtual.
        @return true if the effectKey is valid.
     */
-    bool isValid();
+    bool isValid() const;
 
     /**
        Return the (physical or virtual) key associated with this effectKey.
@@ -1422,7 +1424,7 @@ namespace lives {
        @return the mode number the effect was mapped to, or -1 if the mapping failed.
        @see removeMapping().
     */
-    int appendMapping(effect fx);
+    int appendMapping(effect e);
 
     /**
        Remove an effect from being mapped to this key.
@@ -1546,6 +1548,8 @@ namespace lives {
        The hashname should be in utf-8 format, and matching is case insensitive.
        In the case of no matches, an invalid effect is returned.
        If livesApp::isInvalid() is true, or livesApp::status() is LIVES_STATUS_NOTREADY, an invalid effect will be returned.
+       Implementation note: we use const livesApp & here to avoid the destructor being called on a copy object, 
+       which would cause LiVES to terminate prematurely.
        @param lives a livesApp instance
        @param hashname the hashname of an effect, a concatenation of package name, filter name, and if match_full is true, 
        author and version string. If the filter has "extra_authors" these are also checked.
@@ -1553,13 +1557,15 @@ namespace lives {
        If false then the hashname and the target must be equivalent strings.
        @return an effect.
     */
-    effect(livesApp lives, livesString hashname, bool match_full=false);
+    effect(const livesApp &lives, livesString hashname, bool match_full=false);
 
     /**
        Create a new effect from a template. In case of multiple matches, only the first match is returned. 
        In the case of no matches, an invalid effect is returned.
        LiVESStrings here should be in utf-8 format and matching is case insensitive.
        If livesApp::isInvalid() is true, or livesApp::status() is LIVES_STATUS_NOTREADY, an invalid effect will be returned.
+       Implementation note: we use const livesApp & here to avoid the destructor being called on a copy object, 
+       which would cause LiVES to terminate prematurely.
        @param lives a livesApp instance
        @param package a package name (e.g. "frei0r", "LADSPA"), or "" to match any package.
        @param fxname the name of a filter (e.g. "chroma blend") or "" to match any filter name.
@@ -1568,7 +1574,7 @@ namespace lives {
        @param version the number of a version to match, or 0 to match any version.
        @return an effect.
     */
-    effect(livesApp lives, livesString package, livesString fxname, livesString author=livesString(), int version=0);
+    effect(const livesApp &lives, livesString package, livesString fxname, livesString author=livesString(), int version=0);
 
     /**
        Returns whether the effect is valid or not.
@@ -1576,7 +1582,7 @@ namespace lives {
        and which references an existing effect plugin.
        @return true if the effect is valid.
     */
-    bool isValid();
+    bool isValid() const;
 
     /**
        @return true if the two effects have the same index and the same livesApp owner
@@ -1584,7 +1590,6 @@ namespace lives {
     inline bool operator==(const effect& other) {
       return other.m_idx == m_idx && m_lives == other.m_lives;
     }
-
 
   protected:
     effect();
@@ -1614,7 +1619,7 @@ namespace lives {
        If the livesApp::mode() is changed from LIVES_INTERFACE_MODE_MULTITRACK, then all existing blocks become invalid.
        @return whether the block is contained in an active multitrack instance.
     */
-    bool isValid();
+    bool isValid() const;
 
     /**
        Returns a reference to the block on the specified track at the specified time. If no such block exists, returns an invalid block.
@@ -2014,19 +2019,21 @@ namespace lives {
 
   /**
      Preferences. Valid values are only returned if the livesApp::isValid() is true, and livesApp::status() is not LIVES_STATUS_NOTREADY.
+     Implementation note: we use const livesApp & here to avoid the destructor being called on a copy object, 
+     which would cause LiVES to terminate prematurely.
   */
   namespace prefs {
     /**
       @param lives a reference to a valid livesApp instance
       @return the currently preferred directory for loading video clips.
     */
-    livesString currentVideoLoadDir(livesApp lives); 
+    livesString currentVideoLoadDir(const livesApp &lives); 
 
     /**
-       @param lives a reference to a valid livesApp instance
+       @param lives a reference to a valid const livesApp &instance
        @return the currently preferred directory for loading and saving audio.
        */
-    livesString currentAudioDir(livesApp lives); 
+    livesString currentAudioDir(const livesApp &lives); 
 
     /**
        Despite the name, this is the working directory for the LiVES application. 
@@ -2042,14 +2049,14 @@ namespace lives {
        @param lives a reference to a valid livesApp instance
        @return the LiVES working directory
     */
-    livesString tmpDir(livesApp lives);
+    livesString tmpDir(const livesApp &lives);
 
     /**
        @param lives a reference to a valid livesApp instance
        @return the current audio source
        @see setAudioSource().
      */
-    lives_audio_source_t audioSource(livesApp lives);
+    lives_audio_source_t audioSource(const livesApp &lives);
 
     /**
        Set the audio source. Only works if livesApp::status() is LIVES_STATUS_READY.
@@ -2057,13 +2064,13 @@ namespace lives {
        @param asrc the desired audio source
        @return true if the audio source could be changed.
     */
-    bool setAudioSource(livesApp, lives_audio_source_t); 
+    bool setAudioSource(const livesApp &lives, lives_audio_source_t); 
 
     /**
        @param lives a reference to a livesApp instance
        @return the current audio player
     */
-    lives_audio_player_t audioPlayer(livesApp);
+    lives_audio_player_t audioPlayer(const livesApp &lives);
 
     /**
        Returns the audio rate for the player. Note this may be different from the clip audio rate.
@@ -2072,7 +2079,7 @@ namespace lives {
        @return the current audio player rate in Hz.
        @see isRealtimeAudioPlayer()
     */
-    int audioPlayerRate(livesApp);
+    int audioPlayerRate(const livesApp &lives);
 
     /**
        @param an audio player type
@@ -2084,27 +2091,27 @@ namespace lives {
        @param lives a reference to a valid livesApp instance
        @return the maximum value for effectKey indices
     */
-    int rteKeysVirtual(livesApp);
+    int rteKeysVirtual(const livesApp &lives);
 
     /**
        @param lives a reference to a valid livesApp instance
        @return the maximum allowed framerate for a clip
     */
-    double maxFPS(livesApp);
+    double maxFPS(const livesApp &lives);
 
     /**
        @param lives a reference to a valid livesApp instance
        @return true if the audio clip changes to match video clip changes during playback
        @see setAudioFollowsVideoClipChanges().
     */
-    bool audioFollowsVideoClipChanges(livesApp lives);
+    bool audioFollowsVideoClipChanges(const livesApp &lives);
 
     /**
        @param lives a reference to a valid livesApp instance
        @return true if the clip audio playback rate changes to match video clip framerate changes during playback
        @see setAudioFollowsVideoFPSChanges().
     */
-    bool audioFollowsVideoFPSChanges(livesApp lives);
+    bool audioFollowsVideoFPSChanges(const livesApp &lives);
 
     /**
        @param lives a reference to a valid livesApp instance
@@ -2112,7 +2119,7 @@ namespace lives {
        @return true if the preference was updated
        @see audioFollowsVideoFPSChanges
     */
-    bool setAudioFollowsVideoFPSChanges(livesApp lives, bool);
+    bool setAudioFollowsVideoFPSChanges(const livesApp &lives, bool);
 
     /**
        @param lives a reference to a valid livesApp instance
@@ -2120,7 +2127,7 @@ namespace lives {
        @return true if the preference was updated
        @see audioFollowsVideoFPSChanges
     */
-    bool setAudioFollowsVideoClipChanges(livesApp lives, bool);
+    bool setAudioFollowsVideoClipChanges(const livesApp &lives, bool);
 
     /**
        @param lives a reference to a valid livesApp instance
@@ -2128,7 +2135,7 @@ namespace lives {
        @see setSepWinSticky()
        @see player::sepWin()
     */
-    bool sepWinSticky(livesApp lives);
+    bool sepWinSticky(const livesApp &lives);
 
     /**
        @param lives a reference to a valid livesApp instance
@@ -2137,7 +2144,7 @@ namespace lives {
        @see sepWinSticky()
        @see player::sepWin()
     */
-    bool setSepWinSticky(livesApp lives, bool);
+    bool setSepWinSticky(const livesApp &lives, bool);
 
     /**
        @param lives a reference to a valid livesApp instance
@@ -2145,7 +2152,7 @@ namespace lives {
        @see setMtExitRender()
        @see multitrack::render()
     */
-    bool mtExitRender(livesApp lives);
+    bool mtExitRender(const livesApp &lives);
 
     /**
        @param lives a reference to a valid livesApp instance
@@ -2154,7 +2161,7 @@ namespace lives {
        @see mtExitRender().
        @see multitrack::render().
     */
-    bool setMtExitRender(livesApp lives, bool);
+    bool setMtExitRender(const livesApp &lives, bool);
 
 
   }

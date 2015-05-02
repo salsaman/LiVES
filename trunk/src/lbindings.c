@@ -269,7 +269,7 @@ boolean start_player(void) {
   // this will set our idlefunc and return
   ret = lives_osc_cb_play(NULL, arglen, (const void *)(*vargs), OSCTT_CurrentTime(), NULL);
   if (ret) {
-    while (!mainw->error && mainw->playing_file < 0) usleep(prefs->sleep_time);
+    while (!mainw->error && mainw->playing_file < 0) lives_usleep(prefs->sleep_time);
     if (mainw->error) ret=FALSE;
   }
 
@@ -1351,14 +1351,12 @@ boolean idle_stop_playback(ulong id) {
 
 
 
-boolean idle_quit(pthread_t *gtk_thread, ulong id) {
+boolean idle_quit(pthread_t *gtk_thread) {
   if (mainw==NULL) return FALSE;
 
   lives_idle_add(call_quit_app,NULL);
 
   pthread_join(*gtk_thread,NULL);
-
-  ext_caller_return_int(id,(int)TRUE);
 
   return TRUE;
 }

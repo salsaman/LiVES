@@ -38,6 +38,7 @@ static volatile bool spinning;
 static ulong msg_id;
 static char *private_response;
 static pthread_mutex_t spin_mutex = PTHREAD_MUTEX_INITIALIZER;
+static pthread_mutex_t cond_mutex = PTHREAD_MUTEX_INITIALIZER;
 static pthread_cond_t cond_done = PTHREAD_COND_INITIALIZER;
 
 static bool private_cb(lives::_privateInfo *info, void *data) {
@@ -188,24 +189,7 @@ namespace lives {
 
   livesApp::~livesApp() {
     if (!isValid()) return;
-
-    spinning = true;
-    msg_id = lives_random();
-    ulong cbid = addCallback(LIVES_CALLBACK_PRIVATE, private_cb, NULL);
-    pthread_mutex_lock(&spin_mutex);
-    if (!idle_quit(m_thread, msg_id)) {
-      pthread_mutex_unlock(&spin_mutex);
-      spinning = false;
-      removeCallback(cbid);
-    }
-    else {
-      while (spinning) pthread_cond_wait(&cond_done, &spin_mutex);
-      pthread_mutex_unlock(&spin_mutex);
-      if (isValid()) {
-	lives_free(private_response);
-      }
-    }
-
+    idle_quit(m_thread);
   }
 
 
@@ -246,7 +230,10 @@ namespace lives {
     cl->cb_type = cb_type;
     cl->func = (callback_f)func;
     cl->data = data;
-    pthread_mutex_lock(&spin_mutex); // lock mutex so that new callbacks cannot be added yet
+    while (pthread_mutex_trylock(&spin_mutex)) {
+      // lock mutex so that new callbacks cannot be added yet
+      lives_usleep(::prefs->sleep_time);
+    }
     ((livesApp *)this)->m_closures.push_back(cl);
     pthread_mutex_unlock(&spin_mutex);
     return cl->id;
@@ -278,7 +265,10 @@ namespace lives {
   }
 
   bool livesApp::removeCallback(ulong id) const {
-    pthread_mutex_lock(&spin_mutex); // lock mutex so that new callbacks cannot be added yet
+    while (pthread_mutex_trylock(&spin_mutex)) {
+      // lock mutex so that new callbacks cannot be added yet
+      lives_usleep(::prefs->sleep_time);
+    }
     closureListIterator it = ((livesApp *)this)->m_closures.begin();
     while (it != ((livesApp *)this)->m_closures.end()) {
       if ((*it)->id == id) {
@@ -302,15 +292,15 @@ namespace lives {
       spinning = true;
       msg_id = lives_random();
       ulong cbid = addCallback(LIVES_CALLBACK_PRIVATE, private_cb, NULL); 
-      pthread_mutex_lock(&spin_mutex);
+      pthread_mutex_lock(&cond_mutex);
       if (!idle_show_info(text.toEncoding(LIVES_CHAR_ENCODING_UTF8).c_str(),blocking, msg_id)) {
-	pthread_mutex_unlock(&spin_mutex);
+	pthread_mutex_unlock(&cond_mutex);
 	spinning = false;
 	removeCallback(cbid);
       }
       else {
-	while (spinning) pthread_cond_wait(&cond_done, &spin_mutex);
-	pthread_mutex_unlock(&spin_mutex);
+	while (spinning) pthread_cond_wait(&cond_done, &cond_mutex);
+	pthread_mutex_unlock(&cond_mutex);
 	if (isValid()) {
 	  ret = (lives_dialog_response_t)atoi(private_response);
 	  lives_free(private_response);
@@ -331,17 +321,17 @@ namespace lives {
     spinning = true;
     msg_id = lives_random();
     ulong cbid = addCallback(LIVES_CALLBACK_PRIVATE, private_cb, NULL);
-    pthread_mutex_lock(&spin_mutex);
+    pthread_mutex_lock(&cond_mutex);
     if (!idle_choose_file_with_preview(dirname.toEncoding(LIVES_CHAR_ENCODING_FILESYSTEM).c_str(),
 				       title.toEncoding(LIVES_CHAR_ENCODING_UTF8).c_str(),
 				       preview_type, msg_id)) {
-      pthread_mutex_unlock(&spin_mutex);
+      pthread_mutex_unlock(&cond_mutex);
       spinning = false;
       removeCallback(cbid);
     }
     else {
-      while (spinning) pthread_cond_wait(&cond_done, &spin_mutex);
-      pthread_mutex_unlock(&spin_mutex);
+      while (spinning) pthread_cond_wait(&cond_done, &cond_mutex);
+      pthread_mutex_unlock(&cond_mutex);
       if (isValid()) {
 	// last 2 chars are " " and %d (deinterlace choice)
 	livesString str(private_response, strlen(private_response) - 2, LIVES_CHAR_ENCODING_FILESYSTEM);
@@ -360,15 +350,15 @@ namespace lives {
     spinning = true;
     msg_id = lives_random();
     ulong cbid = addCallback(LIVES_CALLBACK_PRIVATE, private_cb, NULL);
-    pthread_mutex_lock(&spin_mutex);
+    pthread_mutex_lock(&cond_mutex);
     if (!idle_choose_set(msg_id)) {
-      pthread_mutex_unlock(&spin_mutex);
+      pthread_mutex_unlock(&cond_mutex);
       spinning = false;
       removeCallback(cbid);
     }
     else {
-      while (spinning) pthread_cond_wait(&cond_done, &spin_mutex);
-      pthread_mutex_unlock(&spin_mutex);
+      while (spinning) pthread_cond_wait(&cond_done, &cond_mutex);
+      pthread_mutex_unlock(&cond_mutex);
       if (isValid()) {
 	livesString str(private_response, LIVES_CHAR_ENCODING_FILESYSTEM);
 	lives_free(private_response);
@@ -401,15 +391,15 @@ namespace lives {
     ulong cbid = addCallback(LIVES_CALLBACK_PRIVATE, private_cb, NULL);
     ulong cid = 0l;
     
-    pthread_mutex_lock(&spin_mutex);
+    pthread_mutex_lock(&cond_mutex);
     if (!idle_open_file(fname.toEncoding(LIVES_CHAR_ENCODING_FILESYSTEM).c_str(), stime, frames, msg_id)) {
-      pthread_mutex_unlock(&spin_mutex);
+      pthread_mutex_unlock(&cond_mutex);
       spinning = false;
       removeCallback(cbid);
     }
     else {
-      while (spinning) pthread_cond_wait(&cond_done, &spin_mutex);
-      pthread_mutex_unlock(&spin_mutex);
+      while (spinning) pthread_cond_wait(&cond_done, &cond_mutex);
+      pthread_mutex_unlock(&cond_mutex);
       if (isValid()) {
 	cid = strtoul(private_response, NULL, 10);
 	lives_free(private_response);
@@ -425,15 +415,15 @@ namespace lives {
     msg_id = lives_random();
     ulong cbid = addCallback(LIVES_CALLBACK_PRIVATE, private_cb, NULL);
     
-    pthread_mutex_lock(&spin_mutex);
+    pthread_mutex_lock(&cond_mutex);
     if (!idle_reload_set(setname.toEncoding(LIVES_CHAR_ENCODING_FILESYSTEM).c_str(), msg_id)) {
-      pthread_mutex_unlock(&spin_mutex);
+      pthread_mutex_unlock(&cond_mutex);
       spinning = false;
       removeCallback(cbid);
       return false;
     }
-    while (spinning) pthread_cond_wait(&cond_done, &spin_mutex);
-    pthread_mutex_unlock(&spin_mutex);
+    while (spinning) pthread_cond_wait(&cond_done, &cond_mutex);
+    pthread_mutex_unlock(&cond_mutex);
     if (isValid()) {
       bool ret = (bool)atoi(private_response);
       lives_free(private_response);
@@ -460,15 +450,15 @@ namespace lives {
     msg_id = lives_random();
     ulong cbid = addCallback(LIVES_CALLBACK_PRIVATE, private_cb, NULL);
     
-    pthread_mutex_lock(&spin_mutex);
+    pthread_mutex_lock(&cond_mutex);
     if (!idle_set_if_mode(newmode, msg_id)) {
-      pthread_mutex_unlock(&spin_mutex);
+      pthread_mutex_unlock(&cond_mutex);
       spinning = false;
       removeCallback(cbid);
       return mode();
     }
-    while (spinning) pthread_cond_wait(&cond_done, &spin_mutex);
-    pthread_mutex_unlock(&spin_mutex);
+    while (spinning) pthread_cond_wait(&cond_done, &cond_mutex);
+    pthread_mutex_unlock(&cond_mutex);
     if (isValid()) {
       bool ret = (bool)atoi(private_response);
       lives_free(private_response);
@@ -496,15 +486,15 @@ namespace lives {
     msg_id = lives_random();
     ulong cbid = addCallback(LIVES_CALLBACK_PRIVATE, private_cb, NULL);
     
-    pthread_mutex_lock(&spin_mutex);
+    pthread_mutex_lock(&cond_mutex);
     if (!idle_cancel_proc(msg_id)) {
-      pthread_mutex_unlock(&spin_mutex);
+      pthread_mutex_unlock(&cond_mutex);
       spinning = false;
       removeCallback(cbid);
       return false;
     }
-    while (spinning) pthread_cond_wait(&cond_done, &spin_mutex);
-    pthread_mutex_unlock(&spin_mutex);
+    while (spinning) pthread_cond_wait(&cond_done, &cond_mutex);
+    pthread_mutex_unlock(&cond_mutex);
     if (isValid()) {
       ret = (bool)atoi(private_response);
       lives_free(private_response);
@@ -531,14 +521,14 @@ namespace lives {
     spinning = true;
     msg_id = lives_random();
     ulong cbid = addCallback(LIVES_CALLBACK_PRIVATE, private_cb, NULL); 
-    pthread_mutex_lock(&spin_mutex);
+    pthread_mutex_lock(&cond_mutex);
     if (!idle_set_interactive(setting, msg_id)) {
-      pthread_mutex_unlock(&spin_mutex);
+      pthread_mutex_unlock(&cond_mutex);
       spinning = false;
       removeCallback(cbid);
     }
-    while (spinning) pthread_cond_wait(&cond_done, &spin_mutex);
-    pthread_mutex_unlock(&spin_mutex);
+    while (spinning) pthread_cond_wait(&cond_done, &cond_mutex);
+    pthread_mutex_unlock(&cond_mutex);
     if (isValid()) {
       lives_free(private_response);
     }
@@ -558,15 +548,15 @@ namespace lives {
     spinning = true;
     msg_id = lives_random();
     ulong cbid = addCallback(LIVES_CALLBACK_PRIVATE, private_cb, NULL); 
-    pthread_mutex_lock(&spin_mutex);
+    pthread_mutex_lock(&cond_mutex);
     if (!idle_set_pref_bool(prefidx, val, msg_id)) {
-      pthread_mutex_unlock(&spin_mutex);
+      pthread_mutex_unlock(&cond_mutex);
       spinning = false;
       removeCallback(cbid);
       return false;
     }
-    while (spinning) pthread_cond_wait(&cond_done, &spin_mutex);
-    pthread_mutex_unlock(&spin_mutex);
+    while (spinning) pthread_cond_wait(&cond_done, &cond_mutex);
+    pthread_mutex_unlock(&cond_mutex);
     if (isValid()) {
       lives_free(private_response);
     }
@@ -578,15 +568,15 @@ namespace lives {
     spinning = true;
     msg_id = lives_random();
     ulong cbid = addCallback(LIVES_CALLBACK_PRIVATE, private_cb, NULL); 
-    pthread_mutex_lock(&spin_mutex);
+    pthread_mutex_lock(&cond_mutex);
     if (!idle_set_pref_int(prefidx, val, msg_id)) {
-      pthread_mutex_unlock(&spin_mutex);
+      pthread_mutex_unlock(&cond_mutex);
       spinning = false;
       removeCallback(cbid);
       return false;
     }
-    while (spinning) pthread_cond_wait(&cond_done, &spin_mutex);
-    pthread_mutex_unlock(&spin_mutex);
+    while (spinning) pthread_cond_wait(&cond_done, &cond_mutex);
+    pthread_mutex_unlock(&cond_mutex);
     if (isValid()) {
       lives_free(private_response);
     }
@@ -598,15 +588,15 @@ namespace lives {
     spinning = true;
     msg_id = lives_random();
     ulong cbid = addCallback(LIVES_CALLBACK_PRIVATE, private_cb, NULL); 
-    pthread_mutex_lock(&spin_mutex);
+    pthread_mutex_lock(&cond_mutex);
     if (!idle_set_pref_bitmapped(prefidx, bitfield, val, msg_id)) {
-      pthread_mutex_unlock(&spin_mutex);
+      pthread_mutex_unlock(&cond_mutex);
       spinning = false;
       removeCallback(cbid);
       return false;
     }
-    while (spinning) pthread_cond_wait(&cond_done, &spin_mutex);
-    pthread_mutex_unlock(&spin_mutex);
+    while (spinning) pthread_cond_wait(&cond_done, &cond_mutex);
+    pthread_mutex_unlock(&cond_mutex);
     if (isValid()) {
       lives_free(private_response);
     }
@@ -647,15 +637,15 @@ namespace lives {
     spinning = true;
     msg_id = lives_random();
     ulong cbid = m_lives->addCallback(LIVES_CALLBACK_PRIVATE, private_cb, NULL); 
-    pthread_mutex_lock(&spin_mutex);
+    pthread_mutex_lock(&cond_mutex);
     if (!idle_stop_playback(msg_id)) {
-      pthread_mutex_unlock(&spin_mutex);
+      pthread_mutex_unlock(&cond_mutex);
       spinning = false;
       m_lives->removeCallback(cbid);
       return false;
     }
-    while (spinning) pthread_cond_wait(&cond_done, &spin_mutex);
-    pthread_mutex_unlock(&spin_mutex);
+    while (spinning) pthread_cond_wait(&cond_done, &cond_mutex);
+    pthread_mutex_unlock(&cond_mutex);
     if (isValid()) {
       bool ret = atoi(private_response);
       lives_free(private_response);
@@ -670,15 +660,15 @@ namespace lives {
     spinning = true;
     msg_id = lives_random();
     ulong cbid = m_lives->addCallback(LIVES_CALLBACK_PRIVATE, private_cb, NULL); 
-    pthread_mutex_lock(&spin_mutex);
+    pthread_mutex_lock(&cond_mutex);
     if (!idle_set_sepwin(setting, msg_id)) {
-      pthread_mutex_unlock(&spin_mutex);
+      pthread_mutex_unlock(&cond_mutex);
       spinning = false;
       m_lives->removeCallback(cbid);
       return;
     }
-    while (spinning) pthread_cond_wait(&cond_done, &spin_mutex);
-    pthread_mutex_unlock(&spin_mutex);
+    while (spinning) pthread_cond_wait(&cond_done, &cond_mutex);
+    pthread_mutex_unlock(&cond_mutex);
     if (isValid()) {
       lives_free(private_response);
     }
@@ -691,15 +681,15 @@ namespace lives {
     spinning = true;
     msg_id = lives_random();
     ulong cbid = m_lives->addCallback(LIVES_CALLBACK_PRIVATE, private_cb, NULL); 
-    pthread_mutex_lock(&spin_mutex);
+    pthread_mutex_lock(&cond_mutex);
     if (!idle_set_fullscreen(setting, msg_id)) {
-      pthread_mutex_unlock(&spin_mutex);
+      pthread_mutex_unlock(&cond_mutex);
       spinning = false;
       m_lives->removeCallback(cbid);
       return;
     }
-    while (spinning) pthread_cond_wait(&cond_done, &spin_mutex);
-    pthread_mutex_unlock(&spin_mutex);
+    while (spinning) pthread_cond_wait(&cond_done, &cond_mutex);
+    pthread_mutex_unlock(&cond_mutex);
     if (isValid()) {
       lives_free(private_response);
     }
@@ -749,15 +739,15 @@ namespace lives {
     spinning = true;
     msg_id = lives_random();
     ulong cbid = m_lives->addCallback(LIVES_CALLBACK_PRIVATE, private_cb, NULL); 
-    pthread_mutex_lock(&spin_mutex);
+    pthread_mutex_lock(&cond_mutex);
     if (!idle_set_fullscreen_sepwin(setting, msg_id)) {
-      pthread_mutex_unlock(&spin_mutex);
+      pthread_mutex_unlock(&cond_mutex);
       spinning = false;
       m_lives->removeCallback(cbid);
       return;
     }
-    while (spinning) pthread_cond_wait(&cond_done, &spin_mutex);
-    pthread_mutex_unlock(&spin_mutex);
+    while (spinning) pthread_cond_wait(&cond_done, &cond_mutex);
+    pthread_mutex_unlock(&cond_mutex);
     if (isValid()) {
       lives_free(private_response);
     }
@@ -814,15 +804,15 @@ namespace lives {
     spinning = true;
     msg_id = lives_random();
     ulong cbid = m_lives->addCallback(LIVES_CALLBACK_PRIVATE, private_cb, NULL);
-    pthread_mutex_lock(&spin_mutex);
+    pthread_mutex_lock(&cond_mutex);
     if (!idle_set_current_audio_time(time, msg_id)) {
-      pthread_mutex_unlock(&spin_mutex);
+      pthread_mutex_unlock(&cond_mutex);
       spinning = false;
       m_lives->removeCallback(cbid);
     }
     else {
-      while (spinning) pthread_cond_wait(&cond_done, &spin_mutex);
-      pthread_mutex_unlock(&spin_mutex);
+      while (spinning) pthread_cond_wait(&cond_done, &cond_mutex);
+      pthread_mutex_unlock(&cond_mutex);
       if (isValid()) {
 	lives_free(private_response);
       }
@@ -838,15 +828,15 @@ namespace lives {
     spinning = true;
     msg_id = lives_random();
     ulong cbid = m_lives->addCallback(LIVES_CALLBACK_PRIVATE, private_cb, NULL);
-    pthread_mutex_lock(&spin_mutex);
+    pthread_mutex_lock(&cond_mutex);
     if (!idle_set_current_time(time, msg_id)) {
-      pthread_mutex_unlock(&spin_mutex);
+      pthread_mutex_unlock(&cond_mutex);
       spinning = false;
       m_lives->removeCallback(cbid);
     }
     else {
-      while (spinning) pthread_cond_wait(&cond_done, &spin_mutex);
-      pthread_mutex_unlock(&spin_mutex);
+      while (spinning) pthread_cond_wait(&cond_done, &cond_mutex);
+      pthread_mutex_unlock(&cond_mutex);
       if (isValid()) {
 	lives_free(private_response);
       }
@@ -862,15 +852,15 @@ namespace lives {
     spinning = true;
     msg_id = lives_random();
     ulong cbid = m_lives->addCallback(LIVES_CALLBACK_PRIVATE, private_cb, NULL);
-    pthread_mutex_lock(&spin_mutex);
+    pthread_mutex_lock(&cond_mutex);
     if (!idle_set_current_frame(frame, bg, msg_id)) {
-      pthread_mutex_unlock(&spin_mutex);
+      pthread_mutex_unlock(&cond_mutex);
       spinning = false;
       m_lives->removeCallback(cbid);
     }
     else {
-      while (spinning) pthread_cond_wait(&cond_done, &spin_mutex);
-      pthread_mutex_unlock(&spin_mutex);
+      while (spinning) pthread_cond_wait(&cond_done, &cond_mutex);
+      pthread_mutex_unlock(&cond_mutex);
       if (isValid()) {
 	lives_free(private_response);
       }
@@ -899,15 +889,15 @@ namespace lives {
     spinning = true;
     msg_id = lives_random();
     ulong cbid = m_lives->addCallback(LIVES_CALLBACK_PRIVATE, private_cb, NULL);
-    pthread_mutex_lock(&spin_mutex);
+    pthread_mutex_lock(&cond_mutex);
     if (!idle_set_current_fps(fps, msg_id)) {
-      pthread_mutex_unlock(&spin_mutex);
+      pthread_mutex_unlock(&cond_mutex);
       spinning = false;
       m_lives->removeCallback(cbid);
     }
     else {
-      while (spinning) pthread_cond_wait(&cond_done, &spin_mutex);
-      pthread_mutex_unlock(&spin_mutex);
+      while (spinning) pthread_cond_wait(&cond_done, &cond_mutex);
+      pthread_mutex_unlock(&cond_mutex);
       if (isValid()) {
 	lives_free(private_response);
       }
@@ -929,15 +919,15 @@ namespace lives {
     spinning = true;
     msg_id = lives_random();
     ulong cbid = m_lives->addCallback(LIVES_CALLBACK_PRIVATE, private_cb, NULL);
-    pthread_mutex_lock(&spin_mutex);
+    pthread_mutex_lock(&cond_mutex);
     if (!idle_set_loop_mode(mode, msg_id)) {
-      pthread_mutex_unlock(&spin_mutex);
+      pthread_mutex_unlock(&cond_mutex);
       spinning = false;
       m_lives->removeCallback(cbid);
     }
     else {
-      while (spinning) pthread_cond_wait(&cond_done, &spin_mutex);
-      pthread_mutex_unlock(&spin_mutex);
+      while (spinning) pthread_cond_wait(&cond_done, &cond_mutex);
+      pthread_mutex_unlock(&cond_mutex);
       if (isValid()) {
 	lives_free(private_response);
       }
@@ -963,15 +953,15 @@ namespace lives {
     spinning = true;
     msg_id = lives_random();
     ulong cbid = m_lives->addCallback(LIVES_CALLBACK_PRIVATE, private_cb, NULL);
-    pthread_mutex_lock(&spin_mutex);
+    pthread_mutex_lock(&cond_mutex);
     if (!idle_set_ping_pong(setting, msg_id)) {
-      pthread_mutex_unlock(&spin_mutex);
+      pthread_mutex_unlock(&cond_mutex);
       spinning = false;
       m_lives->removeCallback(cbid);
     }
     else {
-      while (spinning) pthread_cond_wait(&cond_done, &spin_mutex);
-      pthread_mutex_unlock(&spin_mutex);
+      while (spinning) pthread_cond_wait(&cond_done, &cond_mutex);
+      pthread_mutex_unlock(&cond_mutex);
       if (isValid()) {
 	lives_free(private_response);
       }
@@ -991,15 +981,15 @@ namespace lives {
     spinning = true;
     msg_id = lives_random();
     ulong cbid = m_lives->addCallback(LIVES_CALLBACK_PRIVATE, private_cb, NULL);
-    pthread_mutex_lock(&spin_mutex);
+    pthread_mutex_lock(&cond_mutex);
     if (!idle_resync_fps(msg_id)) {
-      pthread_mutex_unlock(&spin_mutex);
+      pthread_mutex_unlock(&cond_mutex);
       spinning = false;
       m_lives->removeCallback(cbid);
     }
     else {
-      while (spinning) pthread_cond_wait(&cond_done, &spin_mutex);
-      pthread_mutex_unlock(&spin_mutex);
+      while (spinning) pthread_cond_wait(&cond_done, &cond_mutex);
+      pthread_mutex_unlock(&cond_mutex);
       if (isValid()) {
 	lives_free(private_response);
       }
@@ -1046,15 +1036,15 @@ namespace lives {
     msg_id = lives_random();
     ulong cbid = m_lives->addCallback(LIVES_CALLBACK_PRIVATE, private_cb, NULL);
     
-    pthread_mutex_lock(&spin_mutex);
+    pthread_mutex_lock(&cond_mutex);
     if (!idle_set_set_name(msg_id)) {
-      pthread_mutex_unlock(&spin_mutex);
+      pthread_mutex_unlock(&cond_mutex);
       spinning = false;
       m_lives->removeCallback(cbid);
       return false;
     }
-    while (spinning) pthread_cond_wait(&cond_done, &spin_mutex);
-    pthread_mutex_unlock(&spin_mutex);
+    while (spinning) pthread_cond_wait(&cond_done, &cond_mutex);
+    pthread_mutex_unlock(&cond_mutex);
     if (isValid()) {
       bool ret = (bool)atoi(private_response);
       lives_free(private_response);
@@ -1102,15 +1092,15 @@ namespace lives {
 
     bool ret = false;
 
-    pthread_mutex_lock(&spin_mutex);
+    pthread_mutex_lock(&cond_mutex);
     if (!idle_save_set(cname,force_append, msg_id)) {
-      pthread_mutex_unlock(&spin_mutex);
+      pthread_mutex_unlock(&cond_mutex);
       spinning = false;
       m_lives->removeCallback(cbid);
     }
     else {
-      while (spinning) pthread_cond_wait(&cond_done, &spin_mutex);
-      pthread_mutex_unlock(&spin_mutex);
+      while (spinning) pthread_cond_wait(&cond_done, &cond_mutex);
+      pthread_mutex_unlock(&cond_mutex);
       if (isValid()) {
 	ret = (bool)(atoi(private_response));
 	lives_free(private_response);
@@ -1301,15 +1291,15 @@ namespace lives {
     ulong cbid = m_lives->addCallback(LIVES_CALLBACK_PRIVATE, private_cb, NULL);
     
     int cnum = cnum_for_uid(m_uid);
-    pthread_mutex_lock(&spin_mutex);
+    pthread_mutex_lock(&cond_mutex);
     if (!idle_select_all(cnum, msg_id)) {
-      pthread_mutex_unlock(&spin_mutex);
+      pthread_mutex_unlock(&cond_mutex);
       spinning = false;
       m_lives->removeCallback(cbid);
       return false;
     }
-    while (spinning) pthread_cond_wait(&cond_done, &spin_mutex);
-    pthread_mutex_unlock(&spin_mutex);
+    while (spinning) pthread_cond_wait(&cond_done, &cond_mutex);
+    pthread_mutex_unlock(&cond_mutex);
     if (isValid()) {
       bool ret = (bool)atoi(private_response);
       lives_free(private_response);
@@ -1327,15 +1317,15 @@ namespace lives {
     ulong cbid = m_lives->addCallback(LIVES_CALLBACK_PRIVATE, private_cb, NULL);
     
     int cnum = cnum_for_uid(m_uid);
-    pthread_mutex_lock(&spin_mutex);
+    pthread_mutex_lock(&cond_mutex);
     if (!idle_select_start(cnum, frame, msg_id)) {
-      pthread_mutex_unlock(&spin_mutex);
+      pthread_mutex_unlock(&cond_mutex);
       spinning = false;
       m_lives->removeCallback(cbid);
       return false;
     }
-    while (spinning) pthread_cond_wait(&cond_done, &spin_mutex);
-    pthread_mutex_unlock(&spin_mutex);
+    while (spinning) pthread_cond_wait(&cond_done, &cond_mutex);
+    pthread_mutex_unlock(&cond_mutex);
     if (isValid()) {
       bool ret = (bool)atoi(private_response);
       lives_free(private_response);
@@ -1352,15 +1342,15 @@ namespace lives {
     ulong cbid = m_lives->addCallback(LIVES_CALLBACK_PRIVATE, private_cb, NULL);
     
     int cnum = cnum_for_uid(m_uid);
-    pthread_mutex_lock(&spin_mutex);
+    pthread_mutex_lock(&cond_mutex);
     if (!idle_select_end(cnum, frame, msg_id)) {
-      pthread_mutex_unlock(&spin_mutex);
+      pthread_mutex_unlock(&cond_mutex);
       spinning = false;
       m_lives->removeCallback(cbid);
       return false;
     }
-    while (spinning) pthread_cond_wait(&cond_done, &spin_mutex);
-    pthread_mutex_unlock(&spin_mutex);
+    while (spinning) pthread_cond_wait(&cond_done, &cond_mutex);
+    pthread_mutex_unlock(&cond_mutex);
     if (isValid()) {
       bool ret = (bool)atoi(private_response);
       lives_free(private_response);
@@ -1378,15 +1368,15 @@ namespace lives {
     ulong cbid = m_lives->addCallback(LIVES_CALLBACK_PRIVATE, private_cb, NULL);
     
     int cnum = cnum_for_uid(m_uid);
-    pthread_mutex_lock(&spin_mutex);
+    pthread_mutex_lock(&cond_mutex);
     if (!idle_switch_clip(1,cnum, msg_id)) {
-      pthread_mutex_unlock(&spin_mutex);
+      pthread_mutex_unlock(&cond_mutex);
       spinning = false;
       m_lives->removeCallback(cbid);
       return false;
     }
-    while (spinning) pthread_cond_wait(&cond_done, &spin_mutex);
-    pthread_mutex_unlock(&spin_mutex);
+    while (spinning) pthread_cond_wait(&cond_done, &cond_mutex);
+    pthread_mutex_unlock(&cond_mutex);
     if (isValid()) {
       bool ret = (bool)atoi(private_response);
       lives_free(private_response);
@@ -1404,15 +1394,15 @@ namespace lives {
     ulong cbid = m_lives->addCallback(LIVES_CALLBACK_PRIVATE, private_cb, NULL);
     
     int cnum = cnum_for_uid(m_uid);
-    pthread_mutex_lock(&spin_mutex);
+    pthread_mutex_lock(&cond_mutex);
     if (!idle_switch_clip(2,cnum, msg_id)) {
-      pthread_mutex_unlock(&spin_mutex);
+      pthread_mutex_unlock(&cond_mutex);
       spinning = false;
       m_lives->removeCallback(cbid);
       return false;
     }
-    while (spinning) pthread_cond_wait(&cond_done, &spin_mutex);
-    pthread_mutex_unlock(&spin_mutex);
+    while (spinning) pthread_cond_wait(&cond_done, &cond_mutex);
+    pthread_mutex_unlock(&cond_mutex);
     if (isValid()) {
       bool ret = (bool)atoi(private_response);
       lives_free(private_response);
@@ -1449,15 +1439,15 @@ namespace lives {
     msg_id = lives_random();
     ulong cbid = m_lives->addCallback(LIVES_CALLBACK_PRIVATE, private_cb, NULL);
     
-    pthread_mutex_lock(&spin_mutex);
+    pthread_mutex_lock(&cond_mutex);
     if (!idle_unmap_effects(msg_id)) {
-      pthread_mutex_unlock(&spin_mutex);
+      pthread_mutex_unlock(&cond_mutex);
       spinning = false;
       m_lives->removeCallback(cbid);
       return false;
     }
-    while (spinning) pthread_cond_wait(&cond_done, &spin_mutex);
-    pthread_mutex_unlock(&spin_mutex);
+    while (spinning) pthread_cond_wait(&cond_done, &cond_mutex);
+    pthread_mutex_unlock(&cond_mutex);
     if (isValid()) {
       bool ret = (bool)atoi(private_response);
       lives_free(private_response);
@@ -1521,15 +1511,15 @@ namespace lives {
     msg_id = lives_random();
     ulong cbid = m_lives->addCallback(LIVES_CALLBACK_PRIVATE, private_cb, NULL);
     
-    pthread_mutex_lock(&spin_mutex);
+    pthread_mutex_lock(&cond_mutex);
     if (!idle_fx_setmode(m_key, new_mode, msg_id)) {
-      pthread_mutex_unlock(&spin_mutex);
+      pthread_mutex_unlock(&cond_mutex);
       spinning = false;
       m_lives->removeCallback(cbid);
       return currentMode();
     }
-    while (spinning) pthread_cond_wait(&cond_done, &spin_mutex);
-    pthread_mutex_unlock(&spin_mutex);
+    while (spinning) pthread_cond_wait(&cond_done, &cond_mutex);
+    pthread_mutex_unlock(&cond_mutex);
     if (isValid()) {
       bool ret = (bool)atoi(private_response);
       lives_free(private_response);
@@ -1546,14 +1536,14 @@ namespace lives {
     msg_id = lives_random();
     ulong cbid = m_lives->addCallback(LIVES_CALLBACK_PRIVATE, private_cb, NULL);
     
-    pthread_mutex_lock(&spin_mutex);
+    pthread_mutex_lock(&cond_mutex);
     if (!idle_fx_enable(m_key, setting,  msg_id)) {
       spinning = false;
       m_lives->removeCallback(cbid);
       return enabled();
     }
-    while (spinning) pthread_cond_wait(&cond_done, &spin_mutex);
-    pthread_mutex_unlock(&spin_mutex);
+    while (spinning) pthread_cond_wait(&cond_done, &cond_mutex);
+    pthread_mutex_unlock(&cond_mutex);
     if (isValid()) {
       bool ret = (bool)atoi(private_response);
       lives_free(private_response);
@@ -1583,15 +1573,15 @@ namespace lives {
     msg_id = lives_random();
     ulong cbid = m_lives->addCallback(LIVES_CALLBACK_PRIVATE, private_cb, NULL);
     
-    pthread_mutex_lock(&spin_mutex);
+    pthread_mutex_lock(&cond_mutex);
     if (!idle_map_fx(m_key, mode, fx.m_idx, msg_id)) {
-      pthread_mutex_unlock(&spin_mutex);
+      pthread_mutex_unlock(&cond_mutex);
       spinning = false;
       m_lives->removeCallback(cbid);
       return -1;
     }
-    while (spinning) pthread_cond_wait(&cond_done, &spin_mutex);
-    pthread_mutex_unlock(&spin_mutex);
+    while (spinning) pthread_cond_wait(&cond_done, &cond_mutex);
+    pthread_mutex_unlock(&cond_mutex);
     if (isValid()) {
       bool ret = (bool)atoi(private_response);
       lives_free(private_response);
@@ -1612,15 +1602,15 @@ namespace lives {
     msg_id = lives_random();
     ulong cbid = m_lives->addCallback(LIVES_CALLBACK_PRIVATE, private_cb, NULL);
     
-    pthread_mutex_lock(&spin_mutex);
+    pthread_mutex_lock(&cond_mutex);
     if (!idle_unmap_fx(m_key, mode, msg_id)) {
-      pthread_mutex_unlock(&spin_mutex);
+      pthread_mutex_unlock(&cond_mutex);
       spinning = false;
       m_lives->removeCallback(cbid);
       return false;
     }
-    while (spinning) pthread_cond_wait(&cond_done, &spin_mutex);
-    pthread_mutex_unlock(&spin_mutex);
+    while (spinning) pthread_cond_wait(&cond_done, &cond_mutex);
+    pthread_mutex_unlock(&cond_mutex);
     if (isValid()) {
       bool ret = (bool)atoi(private_response);
       lives_free(private_response);
@@ -1739,15 +1729,15 @@ namespace lives {
     spinning = true;
     msg_id = lives_random();
     ulong cbid = m_lives->addCallback(LIVES_CALLBACK_PRIVATE, private_cb, NULL); 
-    pthread_mutex_lock(&spin_mutex);
+    pthread_mutex_lock(&cond_mutex);
     if (!idle_remove_block(m_uid, msg_id)) {
-      pthread_mutex_unlock(&spin_mutex);
+      pthread_mutex_unlock(&cond_mutex);
       spinning = false;
       m_lives->removeCallback(cbid);
       return false;
     }
-    while (spinning) pthread_cond_wait(&cond_done, &spin_mutex);
-    pthread_mutex_unlock(&spin_mutex);
+    while (spinning) pthread_cond_wait(&cond_done, &cond_mutex);
+    pthread_mutex_unlock(&cond_mutex);
     if (isValid()) {
       bool ret=(bool)atoi(private_response);
       lives_free(private_response);
@@ -1768,15 +1758,15 @@ namespace lives {
     spinning = true;
     msg_id = lives_random();
     ulong cbid = m_lives->addCallback(LIVES_CALLBACK_PRIVATE, private_cb, NULL); 
-    pthread_mutex_lock(&spin_mutex);
+    pthread_mutex_lock(&cond_mutex);
     if (!idle_move_block(m_uid, track, time, msg_id)) {
-      pthread_mutex_unlock(&spin_mutex);
+      pthread_mutex_unlock(&cond_mutex);
       spinning = false;
       m_lives->removeCallback(cbid);
       return false;
     }
-    while (spinning) pthread_cond_wait(&cond_done, &spin_mutex);
-    pthread_mutex_unlock(&spin_mutex);
+    while (spinning) pthread_cond_wait(&cond_done, &cond_mutex);
+    pthread_mutex_unlock(&cond_mutex);
     if (isValid()) {
       bool ret=(bool)atoi(private_response);
       lives_free(private_response);
@@ -1827,15 +1817,15 @@ namespace lives {
     spinning = true;
     msg_id = lives_random();
     ulong cbid = m_lives->addCallback(LIVES_CALLBACK_PRIVATE, private_cb, NULL); 
-    pthread_mutex_lock(&spin_mutex);
+    pthread_mutex_lock(&cond_mutex);
     if (!idle_insert_block(clipno, ign_sel, !without_audio, msg_id)) {
-      pthread_mutex_unlock(&spin_mutex);
+      pthread_mutex_unlock(&cond_mutex);
       spinning = false;
       m_lives->removeCallback(cbid);
       return block();
     }
-    while (spinning) pthread_cond_wait(&cond_done, &spin_mutex);
-    pthread_mutex_unlock(&spin_mutex);
+    while (spinning) pthread_cond_wait(&cond_done, &cond_mutex);
+    pthread_mutex_unlock(&cond_mutex);
     if (isValid()) {
       ulong uid = strtoul(private_response, NULL, 10);
       lives_free(private_response);
@@ -1855,15 +1845,15 @@ namespace lives {
     msg_id = lives_random();
     ulong cbid = m_lives->addCallback(LIVES_CALLBACK_PRIVATE, private_cb, NULL);
     
-    pthread_mutex_lock(&spin_mutex);
+    pthread_mutex_lock(&cond_mutex);
     if (!idle_wipe_layout(force,  msg_id)) {
-      pthread_mutex_unlock(&spin_mutex);
+      pthread_mutex_unlock(&cond_mutex);
       spinning = false;
       m_lives->removeCallback(cbid);
       return emptystr;
     }
-    while (spinning) pthread_cond_wait(&cond_done, &spin_mutex);
-    pthread_mutex_unlock(&spin_mutex);
+    while (spinning) pthread_cond_wait(&cond_done, &cond_mutex);
+    pthread_mutex_unlock(&cond_mutex);
     if (isValid()) {
       livesString str(private_response, LIVES_CHAR_ENCODING_UTF8);
       lives_free(private_response);
@@ -1883,15 +1873,15 @@ namespace lives {
     msg_id = lives_random();
     ulong cbid = m_lives->addCallback(LIVES_CALLBACK_PRIVATE, private_cb, NULL);
     
-    pthread_mutex_lock(&spin_mutex);
+    pthread_mutex_lock(&cond_mutex);
     if (!idle_choose_layout(msg_id)) {
-      pthread_mutex_unlock(&spin_mutex);
+      pthread_mutex_unlock(&cond_mutex);
       spinning = false;
       m_lives->removeCallback(cbid);
       return emptystr;
     }
-    while (spinning) pthread_cond_wait(&cond_done, &spin_mutex);
-    pthread_mutex_unlock(&spin_mutex);
+    while (spinning) pthread_cond_wait(&cond_done, &cond_mutex);
+    pthread_mutex_unlock(&cond_mutex);
     if (isValid()) {
       livesString str(private_response, LIVES_CHAR_ENCODING_UTF8);
       lives_free(private_response);
@@ -1923,15 +1913,15 @@ namespace lives {
     msg_id = lives_random();
     ulong cbid = m_lives->addCallback(LIVES_CALLBACK_PRIVATE, private_cb, NULL);
     
-    pthread_mutex_lock(&spin_mutex);
+    pthread_mutex_lock(&cond_mutex);
     if (!idle_reload_layout(layoutname.toEncoding(LIVES_CHAR_ENCODING_FILESYSTEM).c_str(), msg_id)) {
-      pthread_mutex_unlock(&spin_mutex);
+      pthread_mutex_unlock(&cond_mutex);
       spinning = false;
       m_lives->removeCallback(cbid);
       return false;
     }
-    while (spinning) pthread_cond_wait(&cond_done, &spin_mutex);
-    pthread_mutex_unlock(&spin_mutex);
+    while (spinning) pthread_cond_wait(&cond_done, &cond_mutex);
+    pthread_mutex_unlock(&cond_mutex);
     if (isValid()) {
       bool ret = (bool)atoi(private_response);
       lives_free(private_response);
@@ -1950,15 +1940,15 @@ namespace lives {
     msg_id = lives_random();
     ulong cbid = m_lives->addCallback(LIVES_CALLBACK_PRIVATE, private_cb, NULL);
     
-    pthread_mutex_lock(&spin_mutex);
+    pthread_mutex_lock(&cond_mutex);
     if (!idle_save_layout(name.toEncoding(LIVES_CHAR_ENCODING_FILESYSTEM).c_str(), msg_id)) {
-      pthread_mutex_unlock(&spin_mutex);
+      pthread_mutex_unlock(&cond_mutex);
       spinning = false;
       m_lives->removeCallback(cbid);
       return emptystr;
     }
-    while (spinning) pthread_cond_wait(&cond_done, &spin_mutex);
-    pthread_mutex_unlock(&spin_mutex);
+    while (spinning) pthread_cond_wait(&cond_done, &cond_mutex);
+    pthread_mutex_unlock(&cond_mutex);
     if (isValid()) {
       char *lname = strdup(private_response);
       lives_free(private_response);
@@ -1977,15 +1967,15 @@ namespace lives {
     msg_id = lives_random();
     ulong cbid = m_lives->addCallback(LIVES_CALLBACK_PRIVATE, private_cb, NULL);
     
-    pthread_mutex_lock(&spin_mutex);
+    pthread_mutex_lock(&cond_mutex);
     if (!idle_save_layout(NULL, msg_id)) {
-      pthread_mutex_unlock(&spin_mutex);
+      pthread_mutex_unlock(&cond_mutex);
       spinning = false;
       m_lives->removeCallback(cbid);
       return emptystr;
     }
-    while (spinning) pthread_cond_wait(&cond_done, &spin_mutex);
-    pthread_mutex_unlock(&spin_mutex);
+    while (spinning) pthread_cond_wait(&cond_done, &cond_mutex);
+    pthread_mutex_unlock(&cond_mutex);
     if (isValid()) {
       char *lname = strdup(private_response);
       lives_free(private_response);
@@ -2004,15 +1994,15 @@ namespace lives {
     msg_id = lives_random();
     ulong cbid = m_lives->addCallback(LIVES_CALLBACK_PRIVATE, private_cb, NULL);
     
-    pthread_mutex_lock(&spin_mutex);
+    pthread_mutex_lock(&cond_mutex);
     if (!idle_render_layout(with_audio, normalise_audio, msg_id)) {
-      pthread_mutex_unlock(&spin_mutex);
+      pthread_mutex_unlock(&cond_mutex);
       spinning = false;
       m_lives->removeCallback(cbid);
       return c;
     }
-    while (spinning) pthread_cond_wait(&cond_done, &spin_mutex);
-    pthread_mutex_unlock(&spin_mutex);
+    while (spinning) pthread_cond_wait(&cond_done, &cond_mutex);
+    pthread_mutex_unlock(&cond_mutex);
     if (isValid()) {
       ulong uid = strtoul(private_response,NULL,10);
       c = clip(uid, m_lives);
@@ -2065,15 +2055,15 @@ namespace lives {
     spinning = true;
     msg_id = lives_random();
     ulong cbid = m_lives->addCallback(LIVES_CALLBACK_PRIVATE, private_cb, NULL);
-    pthread_mutex_lock(&spin_mutex);
+    pthread_mutex_lock(&cond_mutex);
     if (!idle_mt_set_track(track, msg_id)) {
-      pthread_mutex_unlock(&spin_mutex);
+      pthread_mutex_unlock(&cond_mutex);
       spinning = false;
       m_lives->removeCallback(cbid);
     }
     else {
-      while (spinning) pthread_cond_wait(&cond_done, &spin_mutex);
-      pthread_mutex_unlock(&spin_mutex);
+      while (spinning) pthread_cond_wait(&cond_done, &cond_mutex);
+      pthread_mutex_unlock(&cond_mutex);
       if (isValid()) {
 	bool ret=(bool)(atoi(private_response));
 	lives_free(private_response);
@@ -2112,15 +2102,15 @@ namespace lives {
     spinning = true;
     msg_id = lives_random();
     ulong cbid = m_lives->addCallback(LIVES_CALLBACK_PRIVATE, private_cb, NULL);
-    pthread_mutex_lock(&spin_mutex);
+    pthread_mutex_lock(&cond_mutex);
     if (!idle_set_track_label(track, label.toEncoding(LIVES_CHAR_ENCODING_UTF8).c_str(), msg_id)) {
-      pthread_mutex_unlock(&spin_mutex);
+      pthread_mutex_unlock(&cond_mutex);
       spinning = false;
       m_lives->removeCallback(cbid);
     }
     else {
-      while (spinning) pthread_cond_wait(&cond_done, &spin_mutex);
-      pthread_mutex_unlock(&spin_mutex);
+      while (spinning) pthread_cond_wait(&cond_done, &cond_mutex);
+      pthread_mutex_unlock(&cond_mutex);
       if (isValid()) {
 	bool ret=(bool)(atoi(private_response));
 	lives_free(private_response);
@@ -2149,15 +2139,15 @@ namespace lives {
     spinning = true;
     msg_id = lives_random();
     ulong cbid = m_lives->addCallback(LIVES_CALLBACK_PRIVATE, private_cb, NULL);
-    pthread_mutex_lock(&spin_mutex);
+    pthread_mutex_lock(&cond_mutex);
     if (!idle_set_gravity((int)grav, msg_id)) {
-      pthread_mutex_unlock(&spin_mutex);
+      pthread_mutex_unlock(&cond_mutex);
       spinning = false;
       m_lives->removeCallback(cbid);
     }
     else {
-      while (spinning) pthread_cond_wait(&cond_done, &spin_mutex);
-      pthread_mutex_unlock(&spin_mutex);
+      while (spinning) pthread_cond_wait(&cond_done, &cond_mutex);
+      pthread_mutex_unlock(&cond_mutex);
       if (isValid()) {
 	lives_free(private_response);
       }
@@ -2182,15 +2172,15 @@ namespace lives {
     spinning = true;
     msg_id = lives_random();
     ulong cbid = m_lives->addCallback(LIVES_CALLBACK_PRIVATE, private_cb, NULL);
-    pthread_mutex_lock(&spin_mutex);
+    pthread_mutex_lock(&cond_mutex);
     if (!idle_set_insert_mode((int)mode, msg_id)) {
-      pthread_mutex_unlock(&spin_mutex);
+      pthread_mutex_unlock(&cond_mutex);
       spinning = false;
       m_lives->removeCallback(cbid);
     }
     else {
-      while (spinning) pthread_cond_wait(&cond_done, &spin_mutex);
-      pthread_mutex_unlock(&spin_mutex);
+      while (spinning) pthread_cond_wait(&cond_done, &cond_mutex);
+      pthread_mutex_unlock(&cond_mutex);
       if (isValid()) {
 	lives_free(private_response);
       }
@@ -2218,15 +2208,15 @@ namespace lives {
     spinning = true;
     msg_id = lives_random();
     ulong cbid = m_lives->addCallback(LIVES_CALLBACK_PRIVATE, private_cb, NULL);
-    pthread_mutex_lock(&spin_mutex);
+    pthread_mutex_lock(&cond_mutex);
     if (!idle_insert_vtrack(in_front, msg_id)) {
-      pthread_mutex_unlock(&spin_mutex);
+      pthread_mutex_unlock(&cond_mutex);
       spinning = false;
       m_lives->removeCallback(cbid);
     }
     else {
-      while (spinning) pthread_cond_wait(&cond_done, &spin_mutex);
-      pthread_mutex_unlock(&spin_mutex);
+      while (spinning) pthread_cond_wait(&cond_done, &cond_mutex);
+      pthread_mutex_unlock(&cond_mutex);
       if (isValid()) {
 	int tnum = atoi(private_response);
 	lives_free(private_response);

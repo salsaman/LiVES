@@ -25,7 +25,7 @@ int add_int_arg(char **str, int arglen, int val);
 boolean start_player(void);
 boolean idle_stop_playback(ulong id);
 
-boolean idle_quit(pthread_t *gtk_thread, ulong id);
+boolean idle_quit(pthread_t *gtk_thread);
 
 boolean idle_show_info(const char *text, boolean blocking, ulong id);
 boolean idle_save_set(const char *name, boolean force_append, ulong id);

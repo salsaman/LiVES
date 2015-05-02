@@ -761,6 +761,30 @@ static boolean call_unmap_effects(livespointer data) {
 }
 
 
+static boolean call_stop_playback(livespointer data) {
+  ulong id=(ulong)data;
+  if (mainw!=NULL&&!mainw->go_away&&!mainw->is_processing) {
+    on_stop_activate(NULL,NULL); // should send play stop event
+    ext_caller_return_int(id,TRUE);
+  } else ext_caller_return_int(id,FALSE);
+  return FALSE;
+}
+
+
+static boolean call_quit_app(livespointer data) {
+  if (mainw!=NULL) {
+    mainw->only_close=mainw->no_exit=FALSE;
+    mainw->leave_recovery=FALSE;
+
+    if (mainw->was_set) {
+      on_save_set_activate(NULL,mainw->set_name);
+    } else mainw->leave_files=FALSE;
+    lives_exit(0);
+  }
+  return FALSE;
+}
+
+
 static boolean call_map_effect(livespointer data) {
   fxmapdata *fxdata=(fxmapdata *)data;
   if (mainw!=NULL&&!mainw->go_away&&!mainw->is_processing) {
@@ -1312,6 +1336,29 @@ boolean idle_unmap_effects(ulong id) {
   if (mainw==NULL||(mainw->preview||(mainw->multitrack==NULL&&mainw->event_list!=NULL))||mainw->go_away||mainw->is_processing) return FALSE;
 
   lives_idle_add(call_unmap_effects,(livespointer)id);
+
+  return TRUE;
+}
+
+
+boolean idle_stop_playback(ulong id) {
+  if (mainw==NULL||mainw->go_away||mainw->is_processing) return FALSE;
+
+  lives_idle_add(call_stop_playback,(livespointer)id);
+
+  return TRUE;
+}
+
+
+
+boolean idle_quit(pthread_t *gtk_thread, ulong id) {
+  if (mainw==NULL) return FALSE;
+
+  lives_idle_add(call_quit_app,NULL);
+
+  pthread_join(*gtk_thread,NULL);
+
+  ext_caller_return_int(id,(int)TRUE);
 
   return TRUE;
 }

@@ -1663,8 +1663,6 @@ boolean lives_osc_cb_bgclip_select_previous(void *context, int arglen, const voi
 
 boolean lives_osc_cb_quit(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
 
-  if (mainw->playing_file>-1) return lives_osc_notify_failure();
-
   mainw->only_close=mainw->no_exit=FALSE;
   mainw->leave_recovery=FALSE;
 

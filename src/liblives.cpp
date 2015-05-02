@@ -25,12 +25,9 @@ extern "C" {
 #include "lbindings.h"
 #include "effects-weed.h"
 
-  int real_main(int argc, char *argv[], ulong id);
-
-  bool is_big_endian(void);
+  int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id);
 
   bool lives_osc_cb_quit(void *context, int arglen, const void *vargs, OSCTimeTag when, void * ra);
-  bool lives_osc_cb_stop(void *context, int arglen, const void *vargs, OSCTimeTag when, void * ra);
 
   track_rect *find_block_by_uid(lives_mt *mt, ulong uid);
 
@@ -152,11 +149,13 @@ namespace lives {
     }
 
     ulong id = lives_random();
-    livesAppCtx ctx;
+    livesAppCtx *ctx = new livesAppCtx;
 
-    ctx.id = id;
-    ctx.app = this;
-    appMgr.push_back(ctx);
+    pthread_t *gtk_thread = new pthread_t;
+
+    ctx->id = id;
+    ctx->app = this;
+    appMgr.push_back(*ctx);
 
     m_set = new set(this);
     m_player = new player(this);
@@ -165,9 +164,13 @@ namespace lives {
 
     m_deinterlace = false;
 
-    real_main(argc, argv, id);
-    free(argv);
+    m_thread = gtk_thread;
+
     m_id = id;
+
+    real_main(argc, argv, m_thread, m_id);
+    free(argv);
+
 
   }
 
@@ -186,38 +189,37 @@ namespace lives {
   livesApp::~livesApp() {
     if (!isValid()) return;
 
-    int arglen = 1;
-    char **vargs=(char **)lives_malloc(sizeof(char *));
-    *vargs = strdup(",");
-    arglen = padup(vargs, arglen);
-
-    // call object destructor callback
-    binding_cb (LIVES_CALLBACK_OBJECT_DESTROYED, NULL, (ulong)this);
-    
-    closureListIterator it = m_closures.begin();
-    while (it != m_closures.end()) {
-      delete *it;
-      it = m_closures.erase(it);
+    spinning = true;
+    msg_id = lives_random();
+    ulong cbid = addCallback(LIVES_CALLBACK_PRIVATE, private_cb, NULL);
+    pthread_mutex_lock(&spin_mutex);
+    if (!idle_quit(m_thread, msg_id)) {
+      pthread_mutex_unlock(&spin_mutex);
+      spinning = false;
+      removeCallback(cbid);
+    }
+    else {
+      while (spinning) pthread_cond_wait(&cond_done, &spin_mutex);
+      pthread_mutex_unlock(&spin_mutex);
+      if (isValid()) {
+	lives_free(private_response);
+      }
     }
 
-    appMgr.clear();
-
-    lives_osc_cb_quit(NULL, arglen, (const void *)(*vargs), OSCTT_CurrentTime(), NULL);
-    lives_free(*vargs);
   }
 
 
-  bool livesApp::isValid() {
+  bool livesApp::isValid() const {
     return this != NULL && m_id != 0l;
   }
 
 
-  bool livesApp::isPlaying() {
+  bool livesApp::isPlaying() const {
     return status() == LIVES_STATUS_PLAYING;
   }
 
 
-  bool livesApp::isReady() {
+  bool livesApp::isReady() const {
     return status() == LIVES_STATUS_READY;
   }
 
@@ -237,15 +239,15 @@ namespace lives {
   }
 
 
-  ulong livesApp::appendClosure(lives_callback_t cb_type, callback_f func, void *data) {
+  ulong livesApp::appendClosure(lives_callback_t cb_type, callback_f func, void *data) const {
     closure *cl = new closure;
     cl->id = lives_random();
-    cl->object = this;
+    cl->object = (livesApp *)this;
     cl->cb_type = cb_type;
     cl->func = (callback_f)func;
     cl->data = data;
     pthread_mutex_lock(&spin_mutex); // lock mutex so that new callbacks cannot be added yet
-    m_closures.push_back(cl);
+    ((livesApp *)this)->m_closures.push_back(cl);
     pthread_mutex_unlock(&spin_mutex);
     return cl->id;
   }
@@ -255,33 +257,33 @@ namespace lives {
   }
 
 
-  ulong livesApp::addCallback(lives_callback_t cb_type, modeChanged_callback_f func, void *data) {
+  ulong livesApp::addCallback(lives_callback_t cb_type, modeChanged_callback_f func, void *data) const {
     if (cb_type != LIVES_CALLBACK_MODE_CHANGED) return 0l;
     return appendClosure(cb_type, (callback_f)func, data);
   }
 
-  ulong livesApp::addCallback(lives_callback_t cb_type, private_callback_f func, void *data) {
+  ulong livesApp::addCallback(lives_callback_t cb_type, private_callback_f func, void *data) const {
     if (cb_type != LIVES_CALLBACK_PRIVATE) return 0l;
     return appendClosure(cb_type, (callback_f)func, data);
   }
 
-  ulong livesApp::addCallback(lives_callback_t cb_type, objectDestroyed_callback_f func, void *data) {
+  ulong livesApp::addCallback(lives_callback_t cb_type, objectDestroyed_callback_f func, void *data) const {
     if (cb_type != LIVES_CALLBACK_OBJECT_DESTROYED) return 0l;
     return appendClosure(cb_type, (callback_f)func, data);
   }
 
-  ulong livesApp::addCallback(lives_callback_t cb_type, appQuit_callback_f func, void *data) {
+  ulong livesApp::addCallback(lives_callback_t cb_type, appQuit_callback_f func, void *data) const {
     if (cb_type != LIVES_CALLBACK_APP_QUIT) return 0l;
     return appendClosure(cb_type, (callback_f)func, data);
   }
 
-  bool livesApp::removeCallback(ulong id) {
+  bool livesApp::removeCallback(ulong id) const {
     pthread_mutex_lock(&spin_mutex); // lock mutex so that new callbacks cannot be added yet
-    closureListIterator it = m_closures.begin();
-    while (it != m_closures.end()) {
+    closureListIterator it = ((livesApp *)this)->m_closures.begin();
+    while (it != ((livesApp *)this)->m_closures.end()) {
       if ((*it)->id == id) {
 	delete *it;
-	m_closures.erase(it);
+	((livesApp *)this)->m_closures.erase(it);
 	pthread_mutex_unlock(&spin_mutex);
 	return true;
       }
@@ -475,7 +477,7 @@ namespace lives {
   }
 
 
-  lives_status_t livesApp::status() {
+  lives_status_t livesApp::status() const {
     if (!isValid()) return LIVES_STATUS_INVALID;
     if (mainw->go_away) return LIVES_STATUS_NOTREADY;
     if (mainw->is_processing) return LIVES_STATUS_PROCESSING;
@@ -551,7 +553,7 @@ namespace lives {
 
 
 #ifndef DOXYGEN_SKIP
-  bool livesApp::setPref(int prefidx, bool val) {
+  bool livesApp::setPref(int prefidx, bool val) const {
     if (!isValid() || status() == LIVES_STATUS_NOTREADY) return false;
     spinning = true;
     msg_id = lives_random();
@@ -571,7 +573,7 @@ namespace lives {
     return true;
   }
 
-  bool livesApp::setPref(int prefidx, int val) {
+  bool livesApp::setPref(int prefidx, int val) const {
     if (!isValid() || status() == LIVES_STATUS_NOTREADY) return false;
     spinning = true;
     msg_id = lives_random();
@@ -591,7 +593,7 @@ namespace lives {
     return true;
   }
 
-  bool livesApp::setPref(int prefidx, int bitfield, bool val) {
+  bool livesApp::setPref(int prefidx, int bitfield, bool val) const {
     if (!isValid() || status() == LIVES_STATUS_NOTREADY) return false;
     spinning = true;
     msg_id = lives_random();
@@ -642,8 +644,24 @@ namespace lives {
 
   bool player::stop() const {
     if (!isPlaying()) return false;
-    // return false if we are not playing
-    return lives_osc_cb_stop(NULL, 0, NULL, OSCTT_CurrentTime(), NULL);
+    spinning = true;
+    msg_id = lives_random();
+    ulong cbid = m_lives->addCallback(LIVES_CALLBACK_PRIVATE, private_cb, NULL); 
+    pthread_mutex_lock(&spin_mutex);
+    if (!idle_stop_playback(msg_id)) {
+      pthread_mutex_unlock(&spin_mutex);
+      spinning = false;
+      m_lives->removeCallback(cbid);
+      return false;
+    }
+    while (spinning) pthread_cond_wait(&cond_done, &spin_mutex);
+    pthread_mutex_unlock(&spin_mutex);
+    if (isValid()) {
+      bool ret = atoi(private_response);
+      lives_free(private_response);
+      return ret;
+    }
+    return false;
   }
 
 
@@ -1134,7 +1152,7 @@ namespace lives {
     m_lives = lives;
   }
 
-  bool clip::isValid() {
+  bool clip::isValid() const {
     return (m_lives != NULL && m_lives->isValid() && m_lives->status() != LIVES_STATUS_NOTREADY && cnum_for_uid(m_uid) != -1);
   }
 
@@ -1461,7 +1479,7 @@ namespace lives {
     m_key = key;
   }
 
-  bool effectKey::isValid() {
+  bool effectKey::isValid() const {
     return m_lives != NULL && m_lives->isValid() && m_lives->status() != LIVES_STATUS_NOTREADY && 
       m_key >= 1 && m_key <= prefs::rteKeysVirtual(*(m_lives));
   }
@@ -1551,6 +1569,7 @@ namespace lives {
 
   int effectKey::appendMapping(effect fx) {
     if (!isValid()) return -1;
+
     if (!fx.isValid()) return -1;
 
     if (fx.m_lives != m_lives) return -1;
@@ -1623,26 +1642,26 @@ namespace lives {
 
   ////////////////////////////////////////////////////////
 
-  effect::effect(livesApp lives, livesString hashname, bool match_full) {
+  effect::effect(const livesApp &lives, livesString hashname, bool match_full) {
     m_idx = -1;
-    m_lives = &lives;
+    m_lives = (livesApp *)&lives;
     if (m_lives != NULL && m_lives->isValid() && m_lives->status() != LIVES_STATUS_NOTREADY) {
       m_idx = weed_get_idx_for_hashname(hashname.toEncoding(LIVES_CHAR_ENCODING_UTF8).c_str(), match_full);
     }
   }
 
-  effect::effect(livesApp lives, livesString package, livesString fxname, livesString author, int version) {
+  effect::effect(const livesApp &lives, livesString package, livesString fxname, livesString author, int version) {
     m_idx = -1;
-    m_lives = &lives;
+    m_lives = (livesApp *)&lives;
     if (m_lives != NULL && m_lives->isValid() && m_lives->status() != LIVES_STATUS_NOTREADY) {
       m_idx = get_first_fx_matched(package.toEncoding(LIVES_CHAR_ENCODING_UTF8).c_str(), 
-				   fxname.toEncoding(LIVES_CHAR_ENCODING_UTF8).c_str(), 
-				   author.toEncoding(LIVES_CHAR_ENCODING_UTF8).c_str(), 
-				   version);
+    				   fxname.toEncoding(LIVES_CHAR_ENCODING_UTF8).c_str(), 
+    				   author.toEncoding(LIVES_CHAR_ENCODING_UTF8).c_str(), 
+    				   version);
     }
   }
 
-  bool effect::isValid() {
+  bool effect::isValid() const {
     return (m_idx != -1 && m_lives != NULL && m_lives->isValid() && m_lives->status() != LIVES_STATUS_NOTREADY);
   }
 
@@ -1672,7 +1691,7 @@ namespace lives {
     }
   }
 
-  bool block::isValid() {
+  bool block::isValid() const {
     if (m_lives == NULL || !m_lives->isValid() || !m_lives->m_multitrack->isActive() || m_uid == 0l || 
 	find_block_by_uid(mainw->multitrack, m_uid) == NULL) return false;
     return true;
@@ -1798,7 +1817,7 @@ namespace lives {
   }
 
 
-  block multitrack::insertBlock(clip c, bool ign_sel, bool with_audio) const {
+  block multitrack::insertBlock(clip c, bool ign_sel, bool without_audio) const {
     if (!isActive()) return block();
     if (!c.isValid()) return block();
     if (!m_lives->isReady()) return block();
@@ -1809,7 +1828,7 @@ namespace lives {
     msg_id = lives_random();
     ulong cbid = m_lives->addCallback(LIVES_CALLBACK_PRIVATE, private_cb, NULL); 
     pthread_mutex_lock(&spin_mutex);
-    if (!idle_insert_block(clipno, ign_sel, with_audio, msg_id)) {
+    if (!idle_insert_block(clipno, ign_sel, !without_audio, msg_id)) {
       pthread_mutex_unlock(&spin_mutex);
       spinning = false;
       m_lives->removeCallback(cbid);
@@ -2224,33 +2243,33 @@ namespace lives {
   
 
   namespace prefs {
-    livesString currentVideoLoadDir(livesApp lives) {
+    livesString currentVideoLoadDir(const livesApp &lives) {
       if (!lives.isValid() || lives.status() == LIVES_STATUS_NOTREADY) return livesString();
       return livesString(mainw->vid_load_dir, LIVES_CHAR_ENCODING_UTF8);
     }
 
-    livesString currentAudioDir(livesApp lives) {
+    livesString currentAudioDir(const livesApp &lives) {
       if (!lives.isValid() || lives.status() == LIVES_STATUS_NOTREADY) return livesString();
       return livesString(mainw->audio_dir, LIVES_CHAR_ENCODING_UTF8);
     }
 
-    livesString tmpDir(livesApp lives) {
+    livesString tmpDir(const livesApp &lives) {
       if (!lives.isValid() || lives.status() == LIVES_STATUS_NOTREADY) return livesString();
       return livesString(::prefs->tmpdir, LIVES_CHAR_ENCODING_FILESYSTEM);
     }
 
-    lives_audio_source_t audioSource(livesApp lives) {
+    lives_audio_source_t audioSource(const livesApp &lives) {
       if (!lives.isValid() || lives.status() == LIVES_STATUS_NOTREADY) return LIVES_AUDIO_SOURCE_UNKNOWN;
       if (::prefs->audio_src == AUDIO_SRC_EXT) return LIVES_AUDIO_SOURCE_EXTERNAL;
       return LIVES_AUDIO_SOURCE_INTERNAL;
     }
 
-    bool setAudioSource(livesApp lives, lives_audio_source_t asrc) {
+    bool setAudioSource(const livesApp &lives, lives_audio_source_t asrc) {
       if (!lives.isReady()) return false;
       return lives.setPref(PREF_REC_EXT_AUDIO, (bool)(asrc==LIVES_AUDIO_SOURCE_EXTERNAL));
     }
 
-    lives_audio_player_t audioPlayer(livesApp lives) {
+    lives_audio_player_t audioPlayer(const livesApp &lives) {
       if (!lives.isValid() || lives.status() == LIVES_STATUS_NOTREADY) return LIVES_AUDIO_PLAYER_UNKNOWN;
       if (::prefs->audio_player == AUD_PLAYER_SOX) return LIVES_AUDIO_PLAYER_SOX;
       if (::prefs->audio_player == AUD_PLAYER_JACK) return LIVES_AUDIO_PLAYER_JACK;
@@ -2259,7 +2278,7 @@ namespace lives {
       if (::prefs->audio_player == AUD_PLAYER_MPLAYER2) return LIVES_AUDIO_PLAYER_MPLAYER2;
     }
 
-    int audioPlayerRate(livesApp lives) {
+    int audioPlayerRate(const livesApp &lives) {
       if (!lives.isValid() || lives.status() == LIVES_STATUS_NOTREADY) return 0;
 #ifdef ENABLE_JACK
       if (::prefs->audio_player == AUD_PLAYER_JACK && mainw->jackd != NULL) return mainw->jackd->sample_out_rate;
@@ -2280,52 +2299,52 @@ namespace lives {
       return is_realtime_aplayer(ptype);
     }
 
-    int rteKeysVirtual(livesApp lives) {
+    int rteKeysVirtual(const livesApp &lives) {
       if (!lives.isValid() || lives.status() == LIVES_STATUS_NOTREADY) return 0;
       return ::prefs->rte_keys_virtual;
     }
 
-    double maxFPS(livesApp lives) {
+    double maxFPS(const livesApp &lives) {
       if (!lives.isValid() || lives.status() == LIVES_STATUS_NOTREADY) return 0.;
       return FPS_MAX;
     }
 
-    bool audioFollowsVideoChanges(livesApp lives) {
+    bool audioFollowsVideoChanges(const livesApp &lives) {
       if (!lives.isValid() || lives.status() == LIVES_STATUS_NOTREADY) return false;
       return ::prefs->audio_opts & AUDIO_OPTS_FOLLOW_CLIPS;
     }
 
-    bool audioFollowsFPSChanges(livesApp lives) {
+    bool audioFollowsFPSChanges(const livesApp &lives) {
       if (!lives.isValid() || lives.status() == LIVES_STATUS_NOTREADY) return false;
       return ::prefs->audio_opts & AUDIO_OPTS_FOLLOW_FPS;
     }
 
-    bool setAudioFollowsVideoChanges(livesApp lives, bool setting) {
+    bool setAudioFollowsVideoChanges(const livesApp &lives, bool setting) {
       if (!lives.isValid() || lives.status() == LIVES_STATUS_NOTREADY) return false;
       return lives.setPref(PREF_AUDIO_OPTS, AUDIO_OPTS_FOLLOW_CLIPS, setting);
     }
 
-    bool setAudioFollowsFPSChanges(livesApp lives, bool setting) {
+    bool setAudioFollowsFPSChanges(const livesApp &lives, bool setting) {
       if (!lives.isValid() || lives.status() == LIVES_STATUS_NOTREADY) return false;
       return lives.setPref(PREF_AUDIO_OPTS, AUDIO_OPTS_FOLLOW_FPS, setting);
     }
 
-    bool sepWinSticky(livesApp lives) {
+    bool sepWinSticky(const livesApp &lives) {
       if (!lives.isValid() || lives.status() == LIVES_STATUS_NOTREADY) return false;
       return ::prefs->sepwin_type==SEPWIN_TYPE_STICKY;
     }
 
-    bool setSepWinSticky(livesApp lives, bool setting) {
+    bool setSepWinSticky(const livesApp &lives, bool setting) {
       if (!lives.isValid() || lives.status() == LIVES_STATUS_NOTREADY) return false;
       return lives.setPref(PREF_SEPWIN_STICKY, setting);
     }
 
-    bool mtExitRender(livesApp lives) {
+    bool mtExitRender(const livesApp &lives) {
       if (!lives.isValid() || lives.status() == LIVES_STATUS_NOTREADY) return false;
       return ::prefs->mt_exit_render;
     }
 
-    bool setMtExitRender(livesApp lives, bool setting) {
+    bool setMtExitRender(const livesApp &lives, bool setting) {
       if (!lives.isValid() || lives.status() == LIVES_STATUS_NOTREADY) return false;
       return lives.setPref(PREF_MT_EXIT_RENDER, setting);
     }

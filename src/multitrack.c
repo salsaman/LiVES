@@ -2016,6 +2016,21 @@ static int get_top_track_for(lives_mt *mt, int track) {
 }
 
 
+static void redraw_all_event_boxes(lives_mt *mt) {
+  LiVESList *slist;
+
+  slist=mt->audio_draws;
+  while (slist!=NULL) {
+    redraw_eventbox(mt,(LiVESWidget *)slist->data);
+    slist=slist->next;
+  }
+
+  slist=mt->video_draws;
+  while (slist!=NULL) {
+    redraw_eventbox(mt,(LiVESWidget *)slist->data);
+    slist=slist->next;
+  }
+}
 
 
 
@@ -2558,6 +2573,11 @@ void scroll_tracks(lives_mt *mt, int top_track, boolean set_value) {
   lives_widget_show_all(mt->timeline_table);
   lives_widget_queue_draw(mt->vpaned);
 
+  if (mt->is_ready) {
+    mt->no_expose=FALSE;
+    lives_widget_context_update();
+  }
+
 }
 
 
@@ -2872,21 +2892,6 @@ static void set_time_scrollbar(lives_mt *mt) {
 
 }
 
-void redraw_all_event_boxes(lives_mt *mt) {
-  LiVESList *slist;
-
-  slist=mt->audio_draws;
-  while (slist!=NULL) {
-    redraw_eventbox(mt,(LiVESWidget *)slist->data);
-    slist=slist->next;
-  }
-
-  slist=mt->video_draws;
-  while (slist!=NULL) {
-    redraw_eventbox(mt,(LiVESWidget *)slist->data);
-    slist=slist->next;
-  }
-}
 
 void set_timeline_end_secs(lives_mt *mt, double secs) {
   double pos=mt->ptr_time;
@@ -18355,8 +18360,7 @@ void do_fx_move_context(lives_mt *mt) {
 
 
 
-boolean
-on_timeline_release(LiVESWidget *eventbox, LiVESXEventButton *event, livespointer user_data) {
+boolean on_timeline_release(LiVESWidget *eventbox, LiVESXEventButton *event, livespointer user_data) {
   //button release
   lives_mt *mt=(lives_mt *)user_data;
   double pos=mt->region_end;

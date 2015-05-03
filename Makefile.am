@@ -73,7 +73,7 @@ EXTRA_DIST = \
 	liblives.doxygen \
 	src/liblives.cpp \
 	src/liblives.hpp \
-	src/lbindigs.c \
+	src/lbindings.c \
 	src/lbindings.h \
 	$(doc_DATA)
 

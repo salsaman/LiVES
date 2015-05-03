@@ -1,0 +1,661 @@
+\hypertarget{classlives_1_1multitrack}{\section{lives\-:\-:multitrack Class Reference}
+\label{classlives_1_1multitrack}\index{lives\-::multitrack@{lives\-::multitrack}}
+}
+
+
+class \char`\"{}multitrack\char`\"{}.  
+
+
+
+
+{\ttfamily \#include $<$liblives.\-hpp$>$}
+
+\subsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+bool \hyperlink{classlives_1_1multitrack_ab3cfc5e22b91d440a6042edf89128443}{is\-Valid} () const 
+\begin{DoxyCompactList}\small\item\em returns whether the multitrack is valid or not. \end{DoxyCompactList}\item 
+bool \hyperlink{classlives_1_1multitrack_adeb7b705e8e050f64673e938dddf2e36}{is\-Active} () const 
+\begin{DoxyCompactList}\small\item\em returns whether the multitrack is active or not. \end{DoxyCompactList}\item 
+bool \hyperlink{classlives_1_1multitrack_a5c460e735627c14a0ed9c7762ec16605}{set\-Current\-Track} (int track) const 
+\begin{DoxyCompactList}\small\item\em Set the current track if \hyperlink{classlives_1_1multitrack_adeb7b705e8e050f64673e938dddf2e36}{is\-Active()} is true. \end{DoxyCompactList}\item 
+int \hyperlink{classlives_1_1multitrack_afd651f56d20b98bf46d68ccfa25c50e8}{current\-Track} () const 
+\begin{DoxyCompactList}\small\item\em If \hyperlink{classlives_1_1multitrack_adeb7b705e8e050f64673e938dddf2e36}{is\-Active()} is true, then this method returns the current active track. \end{DoxyCompactList}\item 
+double \hyperlink{classlives_1_1multitrack_ad793b13bd2843823b594e43e0e058a52}{set\-Current\-Time} (double time) const 
+\begin{DoxyCompactList}\small\item\em Set the current playback start time in seconds. \end{DoxyCompactList}\item 
+double \hyperlink{classlives_1_1multitrack_a30f00aaa45426e7035cab06878481ccb}{current\-Time} () const 
+\begin{DoxyCompactList}\small\item\em Return the current playback time in seconds. \end{DoxyCompactList}\item 
+\hyperlink{classlives_1_1livesString}{lives\-String} \hyperlink{classlives_1_1multitrack_acae4482fa4581f46fec031459c1c82e5}{track\-Label} (int track) const 
+\begin{DoxyCompactList}\small\item\em If \hyperlink{classlives_1_1multitrack_adeb7b705e8e050f64673e938dddf2e36}{is\-Active()} is true, then this method returns the label for a track. \end{DoxyCompactList}\item 
+bool \hyperlink{classlives_1_1multitrack_a50d2874d3db625d3cc2ea50f2d0e6e87}{set\-Track\-Label} (int track, \hyperlink{classlives_1_1livesString}{lives\-String} label=\hyperlink{classlives_1_1livesString}{lives\-String}()) const 
+\begin{DoxyCompactList}\small\item\em Set the label for a track. \end{DoxyCompactList}\item 
+\hyperlink{liblives_8hpp_a85e44abde9be7196c1da9fd5922b7558}{lives\-\_\-gravity\-\_\-t} \hyperlink{classlives_1_1multitrack_a9bf9b673e0a9b38e9e9c6e08d93ce9e7}{gravity} () const 
+\begin{DoxyCompactList}\small\item\em Returns the value of the multitrack gravity. \end{DoxyCompactList}\item 
+\hyperlink{liblives_8hpp_a85e44abde9be7196c1da9fd5922b7558}{lives\-\_\-gravity\-\_\-t} \hyperlink{classlives_1_1multitrack_a7b2751e2cdafd83bb61956d3ef8dbf75}{set\-Gravity} (\hyperlink{liblives_8hpp_a85e44abde9be7196c1da9fd5922b7558}{lives\-\_\-gravity\-\_\-t}) const 
+\begin{DoxyCompactList}\small\item\em Set the gravity mode for multitrack. \end{DoxyCompactList}\item 
+\hyperlink{liblives_8hpp_a38030320722a0ce9eabf23a05e313ac5}{lives\-\_\-insert\-\_\-mode\-\_\-t} \hyperlink{classlives_1_1multitrack_af8aee088d4a3cab50e6d2565af599356}{insert\-Mode} () const 
+\begin{DoxyCompactList}\small\item\em Returns the value of the multitrack insert mode. \end{DoxyCompactList}\item 
+\hyperlink{liblives_8hpp_a38030320722a0ce9eabf23a05e313ac5}{lives\-\_\-insert\-\_\-mode\-\_\-t} \hyperlink{classlives_1_1multitrack_a7441bc16cee7181e2ca0f428707f0f83}{set\-Insert\-Mode} (\hyperlink{liblives_8hpp_a38030320722a0ce9eabf23a05e313ac5}{lives\-\_\-insert\-\_\-mode\-\_\-t}) const 
+\begin{DoxyCompactList}\small\item\em Set the gravity mode for multitrack. \end{DoxyCompactList}\item 
+int \hyperlink{classlives_1_1multitrack_a13509e7731f57c25b935cd4a03b49c05}{add\-Video\-Track} (bool in\-\_\-front) const 
+\begin{DoxyCompactList}\small\item\em Append a new video track into the timeline. \end{DoxyCompactList}\item 
+int \hyperlink{classlives_1_1multitrack_a98ed8d2f9eee0456283908f472facbc3}{num\-Video\-Tracks} () const 
+\begin{DoxyCompactList}\small\item\em Returns the number of video tracks for multitrack. \end{DoxyCompactList}\item 
+int \hyperlink{classlives_1_1multitrack_a49e84f7e6d8c162afd8f60f8075e2c1a}{num\-Audio\-Tracks} () const 
+\begin{DoxyCompactList}\small\item\em Returns the number of audio backing tracks for multitrack. \end{DoxyCompactList}\item 
+double \hyperlink{classlives_1_1multitrack_aa5709b2f8bc04c5e3ff14919f2e477f0}{F\-P\-S} () const 
+\begin{DoxyCompactList}\small\item\em Return the framerate of the multitrack in frames per second. \end{DoxyCompactList}\item 
+\hyperlink{classlives_1_1block}{block} \hyperlink{classlives_1_1multitrack_a2c59268f0edecd2597d48ac997319225}{insert\-Block} (\hyperlink{classlives_1_1clip}{clip} c, bool ignore\-\_\-selection\-\_\-limits=false, bool without\-\_\-audio=false) const 
+\begin{DoxyCompactList}\small\item\em Insert frames from clip c into \hyperlink{classlives_1_1multitrack_afd651f56d20b98bf46d68ccfa25c50e8}{current\-Track()} at \hyperlink{classlives_1_1multitrack_a30f00aaa45426e7035cab06878481ccb}{current\-Time()} If ignore\-\_\-selection\-\_\-limits is true, then all frames from the clip will be inserted, otherwise (the default) only frames from \hyperlink{classlives_1_1clip_ae3bec5d06c36693307baab2f0ae2c591}{clip\-::selection\-Start()} to \hyperlink{classlives_1_1clip_a4e2b3c1a80795906f39f27390b8545ae}{clip\-::selection\-End()} will be used. \end{DoxyCompactList}\item 
+\hyperlink{classlives_1_1livesString}{lives\-String} \hyperlink{classlives_1_1multitrack_ad885f138aa6c679aa12012c1b8c17eff}{wipe\-Layout} (bool force=false) const 
+\begin{DoxyCompactList}\small\item\em Wipe the current layout, leaving a blank layout. \end{DoxyCompactList}\item 
+\hyperlink{classlives_1_1livesString}{lives\-String} \hyperlink{classlives_1_1multitrack_a0cca1e969b0a453dd45a22cba913bcd4}{choose\-Layout} () const 
+\begin{DoxyCompactList}\small\item\em Allow the user to graphically choose a layout to load for the set. \end{DoxyCompactList}\item 
+lives\-String\-List \hyperlink{classlives_1_1multitrack_aa2211ef787da9b6e015489bfe1aaa6ef}{available\-Layouts} () const 
+\begin{DoxyCompactList}\small\item\em Return a list of the available layouts for the currently loaded set. \end{DoxyCompactList}\item 
+bool \hyperlink{classlives_1_1multitrack_a7b3e2b981aecdd9a76957cb48d2ec7e1}{reload\-Layout} (\hyperlink{classlives_1_1livesString}{lives\-String} filename) const 
+\begin{DoxyCompactList}\small\item\em Reload the selected layout, replacing the current multitrack layout. \end{DoxyCompactList}\item 
+\hyperlink{classlives_1_1livesString}{lives\-String} \hyperlink{classlives_1_1multitrack_a1317da7f96369c0c9dd31cac1096eaa7}{save\-Layout} (\hyperlink{classlives_1_1livesString}{lives\-String} name) const 
+\begin{DoxyCompactList}\small\item\em Save the current layout using the name supplied. \end{DoxyCompactList}\item 
+\hyperlink{classlives_1_1livesString}{lives\-String} \hyperlink{classlives_1_1multitrack_a051845885961bd42d7d5f36444b29053}{save\-Layout} () const 
+\begin{DoxyCompactList}\small\item\em Save the current layout using the current layout name. \end{DoxyCompactList}\item 
+\hyperlink{classlives_1_1clip}{clip} \hyperlink{classlives_1_1multitrack_aa766afca893af628a4e0ed93cd1a211f}{render} (bool render\-\_\-audio=true, bool normalise\-\_\-audio=true) const 
+\begin{DoxyCompactList}\small\item\em Render the current layout to a new clip and return it. \end{DoxyCompactList}\item 
+\hyperlink{classlives_1_1effect}{effect} \hyperlink{classlives_1_1multitrack_acc79b336b1fe1d2beffce4260b44da4f}{auto\-Transition} () const 
+\begin{DoxyCompactList}\small\item\em Returns the current autotransition effect for multitrack mode. \end{DoxyCompactList}\item 
+bool \hyperlink{classlives_1_1multitrack_af906b5636a475439947272e83bde0ead}{disable\-Auto\-Transition} () const 
+\begin{DoxyCompactList}\small\item\em Set the current autotransition effect for multitrack mode to \char`\"{}\-None\char`\"{} (no effect). \end{DoxyCompactList}\item 
+bool \hyperlink{classlives_1_1multitrack_a217f391d49113830176a3f664e2562b7}{set\-Auto\-Transition} (\hyperlink{classlives_1_1effect}{effect} autotrans) const 
+\begin{DoxyCompactList}\small\item\em Set the current autotransition effect for multitrack mode. \end{DoxyCompactList}\item 
+bool \hyperlink{classlives_1_1multitrack_a29420bc94d63fe785c48b841236c7b51}{operator==} (const \hyperlink{classlives_1_1multitrack}{multitrack} \&other) const 
+\end{DoxyCompactItemize}
+\subsection*{Protected Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\hypertarget{classlives_1_1multitrack_a508d9d16c2101dde4e4f7102e82793ac}{\hyperlink{classlives_1_1multitrack_a508d9d16c2101dde4e4f7102e82793ac}{multitrack} (\hyperlink{classlives_1_1livesApp}{lives\-App} $\ast$lives=N\-U\-L\-L)}\label{classlives_1_1multitrack_a508d9d16c2101dde4e4f7102e82793ac}
+
+\begin{DoxyCompactList}\small\item\em multitrack \end{DoxyCompactList}\end{DoxyCompactItemize}
+\subsection*{Protected Attributes}
+\begin{DoxyCompactItemize}
+\item 
+\hypertarget{classlives_1_1multitrack_a590315201973b2511750931ae8a5f304}{\hyperlink{classlives_1_1livesApp}{lives\-App} $\ast$ {\bfseries m\-\_\-lives}}\label{classlives_1_1multitrack_a590315201973b2511750931ae8a5f304}
+
+\end{DoxyCompactItemize}
+
+
+\subsection{Detailed Description}
+class \char`\"{}multitrack\char`\"{}. 
+
+Represents the multitrack object in a \hyperlink{classlives_1_1livesApp}{lives\-App}. 
+
+\subsection{Member Function Documentation}
+\hypertarget{classlives_1_1multitrack_a13509e7731f57c25b935cd4a03b49c05}{\index{lives\-::multitrack@{lives\-::multitrack}!add\-Video\-Track@{add\-Video\-Track}}
+\index{add\-Video\-Track@{add\-Video\-Track}!lives::multitrack@{lives\-::multitrack}}
+\subsubsection[{add\-Video\-Track}]{\setlength{\rightskip}{0pt plus 5cm}int lives\-::multitrack\-::add\-Video\-Track (
+\begin{DoxyParamCaption}
+\item[{bool}]{in\-\_\-front}
+\end{DoxyParamCaption}
+) const}}\label{classlives_1_1multitrack_a13509e7731f57c25b935cd4a03b49c05}
+
+
+Append a new video track into the timeline. 
+
+Only works if \hyperlink{classlives_1_1multitrack_adeb7b705e8e050f64673e938dddf2e36}{is\-Active()} is true, and \hyperlink{classlives_1_1livesApp_afcb05464af9146f5efbb896f2611c8e7}{lives\-App\-::status()} is L\-I\-V\-E\-S\-\_\-\-S\-T\-A\-T\-U\-S\-\_\-\-R\-E\-A\-D\-Y. 
+\begin{DoxyParams}{Parameters}
+{\em in\-\_\-front} & set to true to insert a video track in front of existing video tracks. Otherwise insert will be behind. \\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+the index number of the newly added track, or -\/1 if the operation failed. 
+\end{DoxyReturn}
+\hypertarget{classlives_1_1multitrack_acc79b336b1fe1d2beffce4260b44da4f}{\index{lives\-::multitrack@{lives\-::multitrack}!auto\-Transition@{auto\-Transition}}
+\index{auto\-Transition@{auto\-Transition}!lives::multitrack@{lives\-::multitrack}}
+\subsubsection[{auto\-Transition}]{\setlength{\rightskip}{0pt plus 5cm}{\bf effect} lives\-::multitrack\-::auto\-Transition (
+\begin{DoxyParamCaption}
+{}
+\end{DoxyParamCaption}
+) const}}\label{classlives_1_1multitrack_acc79b336b1fe1d2beffce4260b44da4f}
+
+
+Returns the current autotransition effect for multitrack mode. 
+
+If no effect is set, returns an invalid effect. If the owning lives\-App\-::is\-Invalid() is true, or if lives\-App\-::\-Status() is L\-I\-V\-E\-S\-\_\-\-S\-T\-A\-T\-U\-S\-\_\-\-N\-O\-T\-R\-E\-A\-D\-Y, returns an invalid effect. \begin{DoxyReturn}{Returns}
+the autotransition effect for multitrack. 
+\end{DoxyReturn}
+\begin{DoxySeeAlso}{See Also}
+\hyperlink{classlives_1_1multitrack_a217f391d49113830176a3f664e2562b7}{set\-Auto\-Transition()}. 
+
+\hyperlink{classlives_1_1multitrack_af906b5636a475439947272e83bde0ead}{disable\-Auto\-Transition()}. 
+\end{DoxySeeAlso}
+\hypertarget{classlives_1_1multitrack_aa2211ef787da9b6e015489bfe1aaa6ef}{\index{lives\-::multitrack@{lives\-::multitrack}!available\-Layouts@{available\-Layouts}}
+\index{available\-Layouts@{available\-Layouts}!lives::multitrack@{lives\-::multitrack}}
+\subsubsection[{available\-Layouts}]{\setlength{\rightskip}{0pt plus 5cm}lives\-String\-List lives\-::multitrack\-::available\-Layouts (
+\begin{DoxyParamCaption}
+{}
+\end{DoxyParamCaption}
+) const}}\label{classlives_1_1multitrack_aa2211ef787da9b6e015489bfe1aaa6ef}
+
+
+Return a list of the available layouts for the currently loaded set. 
+
+If \hyperlink{classlives_1_1livesApp_a4fcefcf7c5dc1e745a12c5a0c07fe220}{lives\-App\-::is\-Ready()} is false, or if no set is loaded, then an empty lives\-String\-List is returned. \begin{DoxyReturn}{Returns}
+list of available layouts for the currently loaded set 
+\end{DoxyReturn}
+\begin{DoxySeeAlso}{See Also}
+\hyperlink{classlives_1_1multitrack_a7b3e2b981aecdd9a76957cb48d2ec7e1}{reload\-Layout()}. 
+\end{DoxySeeAlso}
+\hypertarget{classlives_1_1multitrack_a0cca1e969b0a453dd45a22cba913bcd4}{\index{lives\-::multitrack@{lives\-::multitrack}!choose\-Layout@{choose\-Layout}}
+\index{choose\-Layout@{choose\-Layout}!lives::multitrack@{lives\-::multitrack}}
+\subsubsection[{choose\-Layout}]{\setlength{\rightskip}{0pt plus 5cm}{\bf lives\-String} lives\-::multitrack\-::choose\-Layout (
+\begin{DoxyParamCaption}
+{}
+\end{DoxyParamCaption}
+) const}}\label{classlives_1_1multitrack_a0cca1e969b0a453dd45a22cba913bcd4}
+
+
+Allow the user to graphically choose a layout to load for the set. 
+
+Only works if \hyperlink{classlives_1_1livesApp_afcb05464af9146f5efbb896f2611c8e7}{lives\-App\-::status()} is L\-I\-V\-E\-S\-\_\-\-S\-T\-A\-T\-U\-S\-\_\-\-R\-E\-A\-D\-Y and \hyperlink{classlives_1_1multitrack_adeb7b705e8e050f64673e938dddf2e36}{is\-Active()} is true, otherwise an empty \hyperlink{classlives_1_1livesString}{lives\-String} is returned. \begin{DoxyReturn}{Returns}
+the name of the layout selected. 
+\end{DoxyReturn}
+\begin{DoxySeeAlso}{See Also}
+\hyperlink{classlives_1_1multitrack_a7b3e2b981aecdd9a76957cb48d2ec7e1}{reload\-Layout()}. 
+
+\hyperlink{classlives_1_1multitrack_aa2211ef787da9b6e015489bfe1aaa6ef}{available\-Layouts()}. 
+\end{DoxySeeAlso}
+\hypertarget{classlives_1_1multitrack_a30f00aaa45426e7035cab06878481ccb}{\index{lives\-::multitrack@{lives\-::multitrack}!current\-Time@{current\-Time}}
+\index{current\-Time@{current\-Time}!lives::multitrack@{lives\-::multitrack}}
+\subsubsection[{current\-Time}]{\setlength{\rightskip}{0pt plus 5cm}double lives\-::multitrack\-::current\-Time (
+\begin{DoxyParamCaption}
+{}
+\end{DoxyParamCaption}
+) const}}\label{classlives_1_1multitrack_a30f00aaa45426e7035cab06878481ccb}
+
+
+Return the current playback time in seconds. 
+
+If \hyperlink{classlives_1_1multitrack_adeb7b705e8e050f64673e938dddf2e36}{is\-Active()} is true this returns the current player time in the multitrack timeline (equivalent to to player\-::playback\-Time(), and during playback, equivalent to \hyperlink{classlives_1_1player_a412c342ef5220bafba0c479e9ef9111f}{player\-::elapsed\-Time()} plus a constant offset). This function works when \hyperlink{classlives_1_1livesApp_afcb05464af9146f5efbb896f2611c8e7}{lives\-App\-::status()} is L\-I\-V\-E\-\_\-\-S\-T\-A\-T\-U\-S\-\_\-\-R\-E\-A\-D\-Y or L\-I\-V\-E\-S\-\_\-\-S\-T\-A\-T\-U\-S\-\_\-\-P\-L\-A\-Y\-I\-N\-G. If \hyperlink{classlives_1_1multitrack_adeb7b705e8e050f64673e938dddf2e36}{is\-Active()} is false, 0. is returned. \begin{DoxyReturn}{Returns}
+the current clip playback time. 
+\end{DoxyReturn}
+\begin{DoxySeeAlso}{See Also}
+\hyperlink{classlives_1_1multitrack_ad793b13bd2843823b594e43e0e058a52}{set\-Current\-Time()}. 
+
+current\-Audio\-Time(). 
+
+elapsed\-Time(). 
+\end{DoxySeeAlso}
+\hypertarget{classlives_1_1multitrack_afd651f56d20b98bf46d68ccfa25c50e8}{\index{lives\-::multitrack@{lives\-::multitrack}!current\-Track@{current\-Track}}
+\index{current\-Track@{current\-Track}!lives::multitrack@{lives\-::multitrack}}
+\subsubsection[{current\-Track}]{\setlength{\rightskip}{0pt plus 5cm}int lives\-::multitrack\-::current\-Track (
+\begin{DoxyParamCaption}
+{}
+\end{DoxyParamCaption}
+) const}}\label{classlives_1_1multitrack_afd651f56d20b98bf46d68ccfa25c50e8}
+
+
+If \hyperlink{classlives_1_1multitrack_adeb7b705e8e050f64673e938dddf2e36}{is\-Active()} is true, then this method returns the current active track. 
+
+The active track defines the insertion point for video and audio, along with the \hyperlink{classlives_1_1multitrack_a30f00aaa45426e7035cab06878481ccb}{current\-Time()}. If \hyperlink{classlives_1_1multitrack_adeb7b705e8e050f64673e938dddf2e36}{is\-Active()} is false, or the \hyperlink{classlives_1_1livesApp_afcb05464af9146f5efbb896f2611c8e7}{lives\-App\-::status} is not L\-I\-V\-E\-S\-\_\-\-S\-T\-A\-T\-U\-S\-\_\-\-R\-E\-A\-D\-Y or L\-I\-V\-E\-S\-\_\-\-S\-T\-A\-T\-U\-S\-\_\-\-P\-L\-A\-Y\-I\-N\-G then the return value is undefined. \begin{DoxyReturn}{Returns}
+the current active track in multitrack mode. A value $>$= 0 represents a video track, a value $<$ 0 represents a backing audio track. 
+\end{DoxyReturn}
+\begin{DoxySeeAlso}{See Also}
+\hyperlink{classlives_1_1multitrack_a5c460e735627c14a0ed9c7762ec16605}{set\-Current\-Track()}. 
+\end{DoxySeeAlso}
+\hypertarget{classlives_1_1multitrack_af906b5636a475439947272e83bde0ead}{\index{lives\-::multitrack@{lives\-::multitrack}!disable\-Auto\-Transition@{disable\-Auto\-Transition}}
+\index{disable\-Auto\-Transition@{disable\-Auto\-Transition}!lives::multitrack@{lives\-::multitrack}}
+\subsubsection[{disable\-Auto\-Transition}]{\setlength{\rightskip}{0pt plus 5cm}bool lives\-::multitrack\-::disable\-Auto\-Transition (
+\begin{DoxyParamCaption}
+{}
+\end{DoxyParamCaption}
+) const}}\label{classlives_1_1multitrack_af906b5636a475439947272e83bde0ead}
+
+
+Set the current autotransition effect for multitrack mode to \char`\"{}\-None\char`\"{} (no effect). 
+
+If the \hyperlink{classlives_1_1livesApp_afcb05464af9146f5efbb896f2611c8e7}{lives\-App\-::status()} is not L\-I\-V\-E\-S\-\_\-\-S\-T\-A\-T\-U\-S\-\_\-\-R\-E\-A\-D\-Y or L\-I\-V\-E\-S\-\_\-\-S\-T\-A\-T\-U\-S\-\_\-\-P\-L\-A\-Y\-I\-N\-G, returns false and nothing happens. \begin{DoxyReturn}{Returns}
+true if the autotransition was disabled. 
+\end{DoxyReturn}
+\begin{DoxySeeAlso}{See Also}
+\hyperlink{classlives_1_1multitrack_acc79b336b1fe1d2beffce4260b44da4f}{auto\-Transition()}. 
+
+\hyperlink{classlives_1_1multitrack_a217f391d49113830176a3f664e2562b7}{set\-Auto\-Transition()}. 
+\end{DoxySeeAlso}
+\hypertarget{classlives_1_1multitrack_aa5709b2f8bc04c5e3ff14919f2e477f0}{\index{lives\-::multitrack@{lives\-::multitrack}!F\-P\-S@{F\-P\-S}}
+\index{F\-P\-S@{F\-P\-S}!lives::multitrack@{lives\-::multitrack}}
+\subsubsection[{F\-P\-S}]{\setlength{\rightskip}{0pt plus 5cm}double lives\-::multitrack\-::\-F\-P\-S (
+\begin{DoxyParamCaption}
+{}
+\end{DoxyParamCaption}
+) const}}\label{classlives_1_1multitrack_aa5709b2f8bc04c5e3ff14919f2e477f0}
+
+
+Return the framerate of the multitrack in frames per second. 
+
+If \hyperlink{classlives_1_1multitrack_adeb7b705e8e050f64673e938dddf2e36}{is\-Active()} is false, returns 0. Otherwise when the lives\-A\-P\-P\-::status() is L\-I\-V\-E\-S\-\_\-\-S\-T\-A\-T\-U\-S\-\_\-\-P\-L\-A\-Y\-I\-N\-G, player\-::\-F\-P\-S() takes this value. \begin{DoxyReturn}{Returns}
+the framerate of the multitrack in frames per second. 
+\end{DoxyReturn}
+\hypertarget{classlives_1_1multitrack_a9bf9b673e0a9b38e9e9c6e08d93ce9e7}{\index{lives\-::multitrack@{lives\-::multitrack}!gravity@{gravity}}
+\index{gravity@{gravity}!lives::multitrack@{lives\-::multitrack}}
+\subsubsection[{gravity}]{\setlength{\rightskip}{0pt plus 5cm}{\bf lives\-\_\-gravity\-\_\-t} lives\-::multitrack\-::gravity (
+\begin{DoxyParamCaption}
+{}
+\end{DoxyParamCaption}
+) const}}\label{classlives_1_1multitrack_a9bf9b673e0a9b38e9e9c6e08d93ce9e7}
+
+
+Returns the value of the multitrack gravity. 
+
+This value, together with the \hyperlink{classlives_1_1multitrack_af8aee088d4a3cab50e6d2565af599356}{insert\-Mode()} defines what happens when a block is inserted, moved or deleted. If \hyperlink{classlives_1_1multitrack_adeb7b705e8e050f64673e938dddf2e36}{is\-Active()} is false, the return value is undefined. \begin{DoxyReturn}{Returns}
+the multitrack gravity. 
+\end{DoxyReturn}
+\begin{DoxySeeAlso}{See Also}
+\hyperlink{classlives_1_1multitrack_af8aee088d4a3cab50e6d2565af599356}{insert\-Mode()}. 
+\end{DoxySeeAlso}
+\hypertarget{classlives_1_1multitrack_a2c59268f0edecd2597d48ac997319225}{\index{lives\-::multitrack@{lives\-::multitrack}!insert\-Block@{insert\-Block}}
+\index{insert\-Block@{insert\-Block}!lives::multitrack@{lives\-::multitrack}}
+\subsubsection[{insert\-Block}]{\setlength{\rightskip}{0pt plus 5cm}{\bf block} lives\-::multitrack\-::insert\-Block (
+\begin{DoxyParamCaption}
+\item[{{\bf clip}}]{c, }
+\item[{bool}]{ignore\-\_\-selection\-\_\-limits = {\ttfamily false}, }
+\item[{bool}]{without\-\_\-audio = {\ttfamily false}}
+\end{DoxyParamCaption}
+) const}}\label{classlives_1_1multitrack_a2c59268f0edecd2597d48ac997319225}
+
+
+Insert frames from clip c into \hyperlink{classlives_1_1multitrack_afd651f56d20b98bf46d68ccfa25c50e8}{current\-Track()} at \hyperlink{classlives_1_1multitrack_a30f00aaa45426e7035cab06878481ccb}{current\-Time()} If ignore\-\_\-selection\-\_\-limits is true, then all frames from the clip will be inserted, otherwise (the default) only frames from \hyperlink{classlives_1_1clip_ae3bec5d06c36693307baab2f0ae2c591}{clip\-::selection\-Start()} to \hyperlink{classlives_1_1clip_a4e2b3c1a80795906f39f27390b8545ae}{clip\-::selection\-End()} will be used. 
+
+If without\-\_\-audio is false (the default), audio is also inserted. Frames are automatically resampled to fit layout\-::fps(). Depending on the \hyperlink{classlives_1_1multitrack_af8aee088d4a3cab50e6d2565af599356}{insert\-Mode()}, it may not be possible to do the insertion. In case of failure an invalid block is returned. If the current track is a backing audio track, then only audio is inserted; in this case if without\-\_\-audio is true an invalid block is returned. Only works if \hyperlink{classlives_1_1livesApp_afcb05464af9146f5efbb896f2611c8e7}{lives\-App\-::status()} is L\-I\-V\-E\-S\-\_\-\-S\-T\-A\-T\-U\-S\-\_\-\-R\-E\-A\-D\-Y and \hyperlink{classlives_1_1multitrack_adeb7b705e8e050f64673e938dddf2e36}{is\-Active()} is true. Note\-: the actual place where the block ends up, and its final size depends on various factors such as the \hyperlink{classlives_1_1multitrack_a9bf9b673e0a9b38e9e9c6e08d93ce9e7}{gravity()} setting, the \hyperlink{classlives_1_1multitrack_af8aee088d4a3cab50e6d2565af599356}{insert\-Mode()} setting, and the location of other blocks in the layout. The insertion may cause other blocks to relocate. 
+\begin{DoxyParams}{Parameters}
+{\em c} & the clip to insert from \\
+\hline
+{\em ignore\-\_\-selection\-\_\-limits} & if true then all frames from the clip will be inserted \\
+\hline
+{\em without\-\_\-audio} & if false then audio is also inserted \\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+the newly inserted block. 
+\end{DoxyReturn}
+\begin{DoxySeeAlso}{See Also}
+\hyperlink{classlives_1_1multitrack_a5c460e735627c14a0ed9c7762ec16605}{set\-Current\-Track()}. 
+
+\hyperlink{classlives_1_1multitrack_ad793b13bd2843823b594e43e0e058a52}{set\-Current\-Time()}. 
+
+\hyperlink{classlives_1_1clip_a01d1d840575c077e8c44ebe71df4ef82}{clip\-::set\-Selection\-Start()}. 
+
+\hyperlink{classlives_1_1clip_abb198e92872582f71ce178e0a0c4c9ac}{clip\-::set\-Selection\-End()}. 
+
+\hyperlink{classlives_1_1multitrack_a7b2751e2cdafd83bb61956d3ef8dbf75}{set\-Gravity()}. 
+
+\hyperlink{classlives_1_1block_a9127196f416f0538a53facf6838021f1}{block\-::remove()}. 
+\end{DoxySeeAlso}
+\hypertarget{classlives_1_1multitrack_af8aee088d4a3cab50e6d2565af599356}{\index{lives\-::multitrack@{lives\-::multitrack}!insert\-Mode@{insert\-Mode}}
+\index{insert\-Mode@{insert\-Mode}!lives::multitrack@{lives\-::multitrack}}
+\subsubsection[{insert\-Mode}]{\setlength{\rightskip}{0pt plus 5cm}{\bf lives\-\_\-insert\-\_\-mode\-\_\-t} lives\-::multitrack\-::insert\-Mode (
+\begin{DoxyParamCaption}
+{}
+\end{DoxyParamCaption}
+) const}}\label{classlives_1_1multitrack_af8aee088d4a3cab50e6d2565af599356}
+
+
+Returns the value of the multitrack insert mode. 
+
+This value, together with \hyperlink{classlives_1_1multitrack_a9bf9b673e0a9b38e9e9c6e08d93ce9e7}{gravity()} defines what happens when a block is inserted, moved or deleted. If \hyperlink{classlives_1_1multitrack_adeb7b705e8e050f64673e938dddf2e36}{is\-Active()} is false, the return value is undefined. \begin{DoxyReturn}{Returns}
+the multitrack insert mode. 
+\end{DoxyReturn}
+\begin{DoxySeeAlso}{See Also}
+\hyperlink{classlives_1_1multitrack_a9bf9b673e0a9b38e9e9c6e08d93ce9e7}{gravity()}. 
+\end{DoxySeeAlso}
+\hypertarget{classlives_1_1multitrack_adeb7b705e8e050f64673e938dddf2e36}{\index{lives\-::multitrack@{lives\-::multitrack}!is\-Active@{is\-Active}}
+\index{is\-Active@{is\-Active}!lives::multitrack@{lives\-::multitrack}}
+\subsubsection[{is\-Active}]{\setlength{\rightskip}{0pt plus 5cm}bool lives\-::multitrack\-::is\-Active (
+\begin{DoxyParamCaption}
+{}
+\end{DoxyParamCaption}
+) const}}\label{classlives_1_1multitrack_adeb7b705e8e050f64673e938dddf2e36}
+
+
+returns whether the multitrack is active or not. 
+
+This is equivent to \hyperlink{classlives_1_1livesApp_aafa7b7f9c2666d097d0413e84bf4eccc}{lives\-App\-::mode()} == L\-I\-V\-E\-S\-\_\-\-I\-N\-T\-E\-R\-F\-A\-C\-E\-\_\-\-M\-O\-D\-E\-\_\-\-M\-U\-L\-T\-I\-T\-R\-A\-C\-K. \begin{DoxyReturn}{Returns}
+whether the multitrack is active or not. 
+\end{DoxyReturn}
+\hypertarget{classlives_1_1multitrack_ab3cfc5e22b91d440a6042edf89128443}{\index{lives\-::multitrack@{lives\-::multitrack}!is\-Valid@{is\-Valid}}
+\index{is\-Valid@{is\-Valid}!lives::multitrack@{lives\-::multitrack}}
+\subsubsection[{is\-Valid}]{\setlength{\rightskip}{0pt plus 5cm}bool lives\-::multitrack\-::is\-Valid (
+\begin{DoxyParamCaption}
+{}
+\end{DoxyParamCaption}
+) const}}\label{classlives_1_1multitrack_ab3cfc5e22b91d440a6042edf89128443}
+
+
+returns whether the multitrack is valid or not. 
+
+A valid multitrack is one which is owned by a valid \hyperlink{classlives_1_1livesApp}{lives\-App}, whose \hyperlink{classlives_1_1livesApp_afcb05464af9146f5efbb896f2611c8e7}{lives\-App\-::status()} is not L\-I\-V\-E\-S\-\_\-\-S\-T\-A\-T\-U\-S\-\_\-\-N\-O\-T\-R\-E\-A\-D\-Y. \begin{DoxyReturn}{Returns}
+whether the multitrack is valid 
+\end{DoxyReturn}
+\hypertarget{classlives_1_1multitrack_a49e84f7e6d8c162afd8f60f8075e2c1a}{\index{lives\-::multitrack@{lives\-::multitrack}!num\-Audio\-Tracks@{num\-Audio\-Tracks}}
+\index{num\-Audio\-Tracks@{num\-Audio\-Tracks}!lives::multitrack@{lives\-::multitrack}}
+\subsubsection[{num\-Audio\-Tracks}]{\setlength{\rightskip}{0pt plus 5cm}int lives\-::multitrack\-::num\-Audio\-Tracks (
+\begin{DoxyParamCaption}
+{}
+\end{DoxyParamCaption}
+) const}}\label{classlives_1_1multitrack_a49e84f7e6d8c162afd8f60f8075e2c1a}
+
+
+Returns the number of audio backing tracks for multitrack. 
+
+If \hyperlink{classlives_1_1multitrack_adeb7b705e8e050f64673e938dddf2e36}{is\-Active()} is false, 0 is returned. \begin{DoxyReturn}{Returns}
+the number of audio tracks 
+\end{DoxyReturn}
+\hypertarget{classlives_1_1multitrack_a98ed8d2f9eee0456283908f472facbc3}{\index{lives\-::multitrack@{lives\-::multitrack}!num\-Video\-Tracks@{num\-Video\-Tracks}}
+\index{num\-Video\-Tracks@{num\-Video\-Tracks}!lives::multitrack@{lives\-::multitrack}}
+\subsubsection[{num\-Video\-Tracks}]{\setlength{\rightskip}{0pt plus 5cm}int lives\-::multitrack\-::num\-Video\-Tracks (
+\begin{DoxyParamCaption}
+{}
+\end{DoxyParamCaption}
+) const}}\label{classlives_1_1multitrack_a98ed8d2f9eee0456283908f472facbc3}
+
+
+Returns the number of video tracks for multitrack. 
+
+If \hyperlink{classlives_1_1multitrack_adeb7b705e8e050f64673e938dddf2e36}{is\-Active()} is false, 0 is returned. \begin{DoxyReturn}{Returns}
+the number of video tracks 
+\end{DoxyReturn}
+\begin{DoxySeeAlso}{See Also}
+\hyperlink{classlives_1_1multitrack_a13509e7731f57c25b935cd4a03b49c05}{add\-Video\-Track()} 
+\end{DoxySeeAlso}
+\hypertarget{classlives_1_1multitrack_a29420bc94d63fe785c48b841236c7b51}{\index{lives\-::multitrack@{lives\-::multitrack}!operator==@{operator==}}
+\index{operator==@{operator==}!lives::multitrack@{lives\-::multitrack}}
+\subsubsection[{operator==}]{\setlength{\rightskip}{0pt plus 5cm}bool lives\-::multitrack\-::operator== (
+\begin{DoxyParamCaption}
+\item[{const {\bf multitrack} \&}]{other}
+\end{DoxyParamCaption}
+) const\hspace{0.3cm}{\ttfamily [inline]}}}\label{classlives_1_1multitrack_a29420bc94d63fe785c48b841236c7b51}
+\begin{DoxyReturn}{Returns}
+true if the two layouts have the same \hyperlink{classlives_1_1livesApp}{lives\-App} owner 
+\end{DoxyReturn}
+\hypertarget{classlives_1_1multitrack_a7b3e2b981aecdd9a76957cb48d2ec7e1}{\index{lives\-::multitrack@{lives\-::multitrack}!reload\-Layout@{reload\-Layout}}
+\index{reload\-Layout@{reload\-Layout}!lives::multitrack@{lives\-::multitrack}}
+\subsubsection[{reload\-Layout}]{\setlength{\rightskip}{0pt plus 5cm}bool lives\-::multitrack\-::reload\-Layout (
+\begin{DoxyParamCaption}
+\item[{{\bf lives\-String}}]{filename}
+\end{DoxyParamCaption}
+) const}}\label{classlives_1_1multitrack_a7b3e2b981aecdd9a76957cb48d2ec7e1}
+
+
+Reload the selected layout, replacing the current multitrack layout. 
+
+Only works if \hyperlink{classlives_1_1livesApp_afcb05464af9146f5efbb896f2611c8e7}{lives\-App\-::status()} is L\-I\-V\-E\-S\-\_\-\-S\-T\-A\-T\-U\-S\-\_\-\-R\-E\-A\-D\-Y and \hyperlink{classlives_1_1multitrack_adeb7b705e8e050f64673e938dddf2e36}{is\-Active()} is true. The layout must be \char`\"{}owned\char`\"{} by the currently loaded set, otherwise an error may be shown and it will not be loaded. If filename is an empty \hyperlink{classlives_1_1livesString}{lives\-String}, \hyperlink{classlives_1_1multitrack_a0cca1e969b0a453dd45a22cba913bcd4}{choose\-Layout()} will be called first to get the layout name. If \hyperlink{classlives_1_1livesApp_a33b85eae23bbb5e55c9843b9016dcff9}{lives\-App\-::interactive()} is true, the user will have a chance to save the current layout (if any) first. 
+\begin{DoxyParams}{Parameters}
+{\em the} & filename of the layout to load \\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+true if the specified layout could be loaded 
+\end{DoxyReturn}
+\begin{DoxySeeAlso}{See Also}
+\hyperlink{classlives_1_1multitrack_a0cca1e969b0a453dd45a22cba913bcd4}{choose\-Layout()}. 
+
+\hyperlink{classlives_1_1multitrack_aa2211ef787da9b6e015489bfe1aaa6ef}{available\-Layouts()}. 
+
+\hyperlink{classlives_1_1multitrack_a1317da7f96369c0c9dd31cac1096eaa7}{save\-Layout()}. 
+\end{DoxySeeAlso}
+\hypertarget{classlives_1_1multitrack_aa766afca893af628a4e0ed93cd1a211f}{\index{lives\-::multitrack@{lives\-::multitrack}!render@{render}}
+\index{render@{render}!lives::multitrack@{lives\-::multitrack}}
+\subsubsection[{render}]{\setlength{\rightskip}{0pt plus 5cm}{\bf clip} lives\-::multitrack\-::render (
+\begin{DoxyParamCaption}
+\item[{bool}]{render\-\_\-audio = {\ttfamily true}, }
+\item[{bool}]{normalise\-\_\-audio = {\ttfamily true}}
+\end{DoxyParamCaption}
+) const}}\label{classlives_1_1multitrack_aa766afca893af628a4e0ed93cd1a211f}
+
+
+Render the current layout to a new clip and return it. 
+
+Only works if \hyperlink{classlives_1_1multitrack_adeb7b705e8e050f64673e938dddf2e36}{is\-Active()} is true, and \hyperlink{classlives_1_1livesApp_afcb05464af9146f5efbb896f2611c8e7}{lives\-App\-::status()} is L\-I\-V\-E\-S\-\_\-\-S\-T\-A\-T\-U\-S\-\_\-\-R\-E\-A\-D\-Y, and the current layout is not empty. If \hyperlink{classlives_1_1livesApp_a33b85eae23bbb5e55c9843b9016dcff9}{lives\-App\-::interactive()} is true, the user may choose to cancel the operation, or to render fewer than all frames. After rendering, if \hyperlink{namespacelives_1_1prefs_a47055c8f50d9191d66337e53eb447c9f}{prefs\-::mt\-Exit\-Render()} is true, the \hyperlink{classlives_1_1livesApp_aafa7b7f9c2666d097d0413e84bf4eccc}{lives\-App\-::mode()} will change to L\-I\-V\-E\-S\-\_\-\-I\-N\-T\-E\-R\-F\-A\-C\-E\-\_\-\-M\-O\-D\-E\-\_\-\-C\-L\-I\-P\-E\-D\-I\-T, and \hyperlink{classlives_1_1multitrack_adeb7b705e8e050f64673e938dddf2e36}{is\-Active()} will change to false. 
+\begin{DoxyParams}{Parameters}
+{\em render\-\_\-audio} & true if audio should be rendered in addition to video. \\
+\hline
+{\em normalise\-\_\-audio} & if true then the audio volume is normalized (backing audio gets half volume, video tracks get half volume) \\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+clip a new clip which contains the rendered video, or an invalid clip in case of failure. 
+\end{DoxyReturn}
+\hypertarget{classlives_1_1multitrack_a1317da7f96369c0c9dd31cac1096eaa7}{\index{lives\-::multitrack@{lives\-::multitrack}!save\-Layout@{save\-Layout}}
+\index{save\-Layout@{save\-Layout}!lives::multitrack@{lives\-::multitrack}}
+\subsubsection[{save\-Layout}]{\setlength{\rightskip}{0pt plus 5cm}{\bf lives\-String} lives\-::multitrack\-::save\-Layout (
+\begin{DoxyParamCaption}
+\item[{{\bf lives\-String}}]{name}
+\end{DoxyParamCaption}
+) const}}\label{classlives_1_1multitrack_a1317da7f96369c0c9dd31cac1096eaa7}
+
+
+Save the current layout using the name supplied. 
+
+The layout will be saved in the layouts directory for the currently loaded set, so the name should not include any directory component. Only works if the \hyperlink{classlives_1_1livesApp_afcb05464af9146f5efbb896f2611c8e7}{lives\-App\-::status()} is L\-I\-V\-E\-S\-\_\-\-S\-T\-A\-T\-U\-S\-\_\-\-R\-E\-A\-D\-Y, and the current layout is not empty, otherwise an empty \hyperlink{classlives_1_1livesString}{lives\-String} is returned. Note that this W\-I\-L\-L work even if \hyperlink{classlives_1_1multitrack_adeb7b705e8e050f64673e938dddf2e36}{is\-Active()} is false. If \hyperlink{classlives_1_1livesApp_a33b85eae23bbb5e55c9843b9016dcff9}{lives\-App\-::interactive()} is true, the user may choose to cancel the operation. If the layout name is empty, the user will be prompted graphically to enter a name. If the set name is empty, the user will be prompted to enter a set name (if \hyperlink{classlives_1_1livesApp_a33b85eae23bbb5e55c9843b9016dcff9}{lives\-App\-::interactive()} is true; otherwise this will fail and an empty string will be returned). Rarely it will not be possible to save a layout (if it was generated by recording events, and it contains generated audio or video). 
+\begin{DoxyParams}{Parameters}
+{\em the} & name to save the layout \\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+the filename the set was saved to, or empty \hyperlink{classlives_1_1livesString}{lives\-String} if saving failed. 
+\end{DoxyReturn}
+\begin{DoxySeeAlso}{See Also}
+\hyperlink{classlives_1_1multitrack_ad885f138aa6c679aa12012c1b8c17eff}{wipe\-Layout()}. 
+
+\hyperlink{classlives_1_1multitrack_a7b3e2b981aecdd9a76957cb48d2ec7e1}{reload\-Layout()}; 
+
+\hyperlink{classlives_1_1set_a1e41621e140c4770bc502b13b582c6b9}{set\-::set\-Name()}. 
+\end{DoxySeeAlso}
+\hypertarget{classlives_1_1multitrack_a051845885961bd42d7d5f36444b29053}{\index{lives\-::multitrack@{lives\-::multitrack}!save\-Layout@{save\-Layout}}
+\index{save\-Layout@{save\-Layout}!lives::multitrack@{lives\-::multitrack}}
+\subsubsection[{save\-Layout}]{\setlength{\rightskip}{0pt plus 5cm}{\bf lives\-String} lives\-::multitrack\-::save\-Layout (
+\begin{DoxyParamCaption}
+{}
+\end{DoxyParamCaption}
+) const}}\label{classlives_1_1multitrack_a051845885961bd42d7d5f36444b29053}
+
+
+Save the current layout using the current layout name. 
+
+Only works if the \hyperlink{classlives_1_1livesApp_afcb05464af9146f5efbb896f2611c8e7}{lives\-App\-::status()} is L\-I\-V\-E\-S\-\_\-\-S\-T\-A\-T\-U\-S\-\_\-\-R\-E\-A\-D\-Y, and the current layout is not empty, otherwise an empty \hyperlink{classlives_1_1livesString}{lives\-String} is returned. Note that this W\-I\-L\-L work even if \hyperlink{classlives_1_1multitrack_adeb7b705e8e050f64673e938dddf2e36}{is\-Active()} is false. If \hyperlink{classlives_1_1livesApp_a33b85eae23bbb5e55c9843b9016dcff9}{lives\-App\-::interactive()} is true, the user may choose to cancel the operation. If the layout name has not been previously set, the user will be prompted graphically to enter a name. If the set name is empty, the user will be prompted to enter a set name (if \hyperlink{classlives_1_1livesApp_a33b85eae23bbb5e55c9843b9016dcff9}{lives\-App\-::interactive()} is true; otherwise this will fail and an empty string will be returned). Rarely it will not be possible to save a layout (if it was generated by recording events, and it contains generated audio or video). 
+\begin{DoxyParams}{Parameters}
+{\em the} & name to save the layout \\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+the filename the set was saved to, or empty \hyperlink{classlives_1_1livesString}{lives\-String} if saving failed. 
+\end{DoxyReturn}
+\begin{DoxySeeAlso}{See Also}
+\hyperlink{classlives_1_1multitrack_ad885f138aa6c679aa12012c1b8c17eff}{wipe\-Layout()}. 
+
+\hyperlink{classlives_1_1multitrack_a7b3e2b981aecdd9a76957cb48d2ec7e1}{reload\-Layout()}; 
+
+\hyperlink{classlives_1_1set_a1e41621e140c4770bc502b13b582c6b9}{set\-::set\-Name()}. 
+\end{DoxySeeAlso}
+\hypertarget{classlives_1_1multitrack_a217f391d49113830176a3f664e2562b7}{\index{lives\-::multitrack@{lives\-::multitrack}!set\-Auto\-Transition@{set\-Auto\-Transition}}
+\index{set\-Auto\-Transition@{set\-Auto\-Transition}!lives::multitrack@{lives\-::multitrack}}
+\subsubsection[{set\-Auto\-Transition}]{\setlength{\rightskip}{0pt plus 5cm}bool lives\-::multitrack\-::set\-Auto\-Transition (
+\begin{DoxyParamCaption}
+\item[{{\bf effect}}]{autotrans}
+\end{DoxyParamCaption}
+) const}}\label{classlives_1_1multitrack_a217f391d49113830176a3f664e2562b7}
+
+
+Set the current autotransition effect for multitrack mode. 
+
+If the \hyperlink{classlives_1_1livesApp_afcb05464af9146f5efbb896f2611c8e7}{lives\-App\-::status()} is not L\-I\-V\-E\-S\-\_\-\-S\-T\-A\-T\-U\-S\-\_\-\-R\-E\-A\-D\-Y or L\-I\-V\-E\-S\-\_\-\-S\-T\-A\-T\-U\-S\-\_\-\-P\-L\-A\-Y\-I\-N\-G, returns false and nothing happens. If the effect is not a transition, false is returned and nothing happens. If the effect is invalid, this is the same as calling \hyperlink{classlives_1_1multitrack_af906b5636a475439947272e83bde0ead}{disable\-Auto\-Transition()}. 
+\begin{DoxyParams}{Parameters}
+{\em the} & new autotransition effect for multitrack. \\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+true if the autotransition was changed. 
+\end{DoxyReturn}
+\begin{DoxySeeAlso}{See Also}
+\hyperlink{classlives_1_1multitrack_acc79b336b1fe1d2beffce4260b44da4f}{auto\-Transition()}. 
+
+\hyperlink{classlives_1_1multitrack_af906b5636a475439947272e83bde0ead}{disable\-Auto\-Transition()}. 
+\end{DoxySeeAlso}
+\hypertarget{classlives_1_1multitrack_ad793b13bd2843823b594e43e0e058a52}{\index{lives\-::multitrack@{lives\-::multitrack}!set\-Current\-Time@{set\-Current\-Time}}
+\index{set\-Current\-Time@{set\-Current\-Time}!lives::multitrack@{lives\-::multitrack}}
+\subsubsection[{set\-Current\-Time}]{\setlength{\rightskip}{0pt plus 5cm}double lives\-::multitrack\-::set\-Current\-Time (
+\begin{DoxyParamCaption}
+\item[{double}]{time}
+\end{DoxyParamCaption}
+) const}}\label{classlives_1_1multitrack_ad793b13bd2843823b594e43e0e058a52}
+
+
+Set the current playback start time in seconds. 
+
+This is also the insertion point for \hyperlink{classlives_1_1multitrack_a2c59268f0edecd2597d48ac997319225}{insert\-Block()}. Only works if the \hyperlink{classlives_1_1livesApp_afcb05464af9146f5efbb896f2611c8e7}{lives\-App\-::status()} is L\-I\-V\-E\-S\-\_\-\-S\-T\-A\-T\-U\-S\-\_\-\-R\-E\-A\-D\-Y and \hyperlink{classlives_1_1multitrack_adeb7b705e8e050f64673e938dddf2e36}{is\-Active()} is true. Setting the current time may cause the timeline to stretch visually (i.\-e zoom out). The miminum value is 0.\-0; values $<$ 0.\-0 will be ignored. This function is synonymous with player\-::set\-Playback\-Time(). 
+\begin{DoxyParams}{Parameters}
+{\em time} & the time in seconds to set playback start time to. \\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+the new playback start time. 
+\end{DoxyReturn}
+\begin{DoxySeeAlso}{See Also}
+\hyperlink{classlives_1_1multitrack_a30f00aaa45426e7035cab06878481ccb}{current\-Time()}. 
+\end{DoxySeeAlso}
+\hypertarget{classlives_1_1multitrack_a5c460e735627c14a0ed9c7762ec16605}{\index{lives\-::multitrack@{lives\-::multitrack}!set\-Current\-Track@{set\-Current\-Track}}
+\index{set\-Current\-Track@{set\-Current\-Track}!lives::multitrack@{lives\-::multitrack}}
+\subsubsection[{set\-Current\-Track}]{\setlength{\rightskip}{0pt plus 5cm}bool lives\-::multitrack\-::set\-Current\-Track (
+\begin{DoxyParamCaption}
+\item[{int}]{track}
+\end{DoxyParamCaption}
+) const}}\label{classlives_1_1multitrack_a5c460e735627c14a0ed9c7762ec16605}
+
+
+Set the current track if \hyperlink{classlives_1_1multitrack_adeb7b705e8e050f64673e938dddf2e36}{is\-Active()} is true. 
+
+Only works when \hyperlink{classlives_1_1livesApp_afcb05464af9146f5efbb896f2611c8e7}{lives\-App\-::status()} is L\-I\-V\-E\-S\-\_\-\-S\-T\-A\-T\-U\-S\-\_\-\-R\-E\-A\-D\-Y or L\-I\-V\-E\-S\-\_\-\-S\-T\-A\-T\-U\-S\-\_\-\-P\-L\-A\-Y\-I\-N\-G. 
+\begin{DoxyParams}{Parameters}
+{\em track} & a value $>$= 0 represents a video track, a value $<$ 0 represents a backing audio track. \\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+true if the track setting was successful. 
+\end{DoxyReturn}
+\begin{DoxySeeAlso}{See Also}
+\hyperlink{classlives_1_1multitrack_afd651f56d20b98bf46d68ccfa25c50e8}{current\-Track()}. 
+\end{DoxySeeAlso}
+\hypertarget{classlives_1_1multitrack_a7b2751e2cdafd83bb61956d3ef8dbf75}{\index{lives\-::multitrack@{lives\-::multitrack}!set\-Gravity@{set\-Gravity}}
+\index{set\-Gravity@{set\-Gravity}!lives::multitrack@{lives\-::multitrack}}
+\subsubsection[{set\-Gravity}]{\setlength{\rightskip}{0pt plus 5cm}{\bf lives\-\_\-gravity\-\_\-t} lives\-::multitrack\-::set\-Gravity (
+\begin{DoxyParamCaption}
+\item[{{\bf lives\-\_\-gravity\-\_\-t}}]{grav}
+\end{DoxyParamCaption}
+) const}}\label{classlives_1_1multitrack_a7b2751e2cdafd83bb61956d3ef8dbf75}
+
+
+Set the gravity mode for multitrack. 
+
+If \hyperlink{classlives_1_1multitrack_adeb7b705e8e050f64673e938dddf2e36}{is\-Active()} is false, nothing happens and an undefined value is returned, otherwise if \hyperlink{classlives_1_1livesApp_afcb05464af9146f5efbb896f2611c8e7}{lives\-App\-::status()} is not L\-I\-V\-E\-S\-\_\-\-S\-T\-A\-T\-U\-S\-\_\-\-R\-E\-A\-D\-Y or L\-I\-V\-E\-S\-\_\-\-S\-T\-A\-T\-U\-S\-\_\-\-P\-L\-A\-Y\-I\-N\-G, nothing happens. 
+\begin{DoxyParams}{Parameters}
+{\em the} & new gravity mode to set. \\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+the new gravity mode. 
+\end{DoxyReturn}
+\begin{DoxySeeAlso}{See Also}
+\hyperlink{classlives_1_1multitrack_a9bf9b673e0a9b38e9e9c6e08d93ce9e7}{gravity()}. 
+\end{DoxySeeAlso}
+\hypertarget{classlives_1_1multitrack_a7441bc16cee7181e2ca0f428707f0f83}{\index{lives\-::multitrack@{lives\-::multitrack}!set\-Insert\-Mode@{set\-Insert\-Mode}}
+\index{set\-Insert\-Mode@{set\-Insert\-Mode}!lives::multitrack@{lives\-::multitrack}}
+\subsubsection[{set\-Insert\-Mode}]{\setlength{\rightskip}{0pt plus 5cm}{\bf lives\-\_\-insert\-\_\-mode\-\_\-t} lives\-::multitrack\-::set\-Insert\-Mode (
+\begin{DoxyParamCaption}
+\item[{{\bf lives\-\_\-insert\-\_\-mode\-\_\-t}}]{mode}
+\end{DoxyParamCaption}
+) const}}\label{classlives_1_1multitrack_a7441bc16cee7181e2ca0f428707f0f83}
+
+
+Set the gravity mode for multitrack. 
+
+If \hyperlink{classlives_1_1multitrack_adeb7b705e8e050f64673e938dddf2e36}{is\-Active()} is false, nothing happens and an undefined value is returned, otherwise if \hyperlink{classlives_1_1livesApp_afcb05464af9146f5efbb896f2611c8e7}{lives\-App\-::status()} is not L\-I\-V\-E\-S\-\_\-\-S\-T\-A\-T\-U\-S\-\_\-\-R\-E\-A\-D\-Y or L\-I\-V\-E\-S\-\_\-\-S\-T\-A\-T\-U\-S\-\_\-\-P\-L\-A\-Y\-I\-N\-G, nothing happens. 
+\begin{DoxyParams}{Parameters}
+{\em the} & new insert mode to set. \\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+the new insert mode. 
+\end{DoxyReturn}
+\begin{DoxySeeAlso}{See Also}
+\hyperlink{classlives_1_1multitrack_af8aee088d4a3cab50e6d2565af599356}{insert\-Mode()}. 
+\end{DoxySeeAlso}
+\hypertarget{classlives_1_1multitrack_a50d2874d3db625d3cc2ea50f2d0e6e87}{\index{lives\-::multitrack@{lives\-::multitrack}!set\-Track\-Label@{set\-Track\-Label}}
+\index{set\-Track\-Label@{set\-Track\-Label}!lives::multitrack@{lives\-::multitrack}}
+\subsubsection[{set\-Track\-Label}]{\setlength{\rightskip}{0pt plus 5cm}bool lives\-::multitrack\-::set\-Track\-Label (
+\begin{DoxyParamCaption}
+\item[{int}]{track, }
+\item[{{\bf lives\-String}}]{label = {\ttfamily {\bf lives\-String}()}}
+\end{DoxyParamCaption}
+) const}}\label{classlives_1_1multitrack_a50d2874d3db625d3cc2ea50f2d0e6e87}
+
+
+Set the label for a track. 
+
+This is for display purposes only and has no other effect. If \hyperlink{classlives_1_1multitrack_adeb7b705e8e050f64673e938dddf2e36}{is\-Active()} is false, the track label is not changed, and false is returned. If the label is not provided, or is an empty \hyperlink{classlives_1_1livesString}{lives\-String}, the user will be prompted to enter a name at runtime. 
+\begin{DoxyParams}{Parameters}
+{\em track} & the track number. Must be $>$= 0. \\
+\hline
+{\em label} & a \hyperlink{classlives_1_1livesString}{lives\-String} containing the text to label the track with. \\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+true if it was possible to change the label. 
+\end{DoxyReturn}
+\begin{DoxySeeAlso}{See Also}
+\hyperlink{classlives_1_1multitrack_acae4482fa4581f46fec031459c1c82e5}{track\-Label()}. 
+\end{DoxySeeAlso}
+\hypertarget{classlives_1_1multitrack_acae4482fa4581f46fec031459c1c82e5}{\index{lives\-::multitrack@{lives\-::multitrack}!track\-Label@{track\-Label}}
+\index{track\-Label@{track\-Label}!lives::multitrack@{lives\-::multitrack}}
+\subsubsection[{track\-Label}]{\setlength{\rightskip}{0pt plus 5cm}{\bf lives\-String} lives\-::multitrack\-::track\-Label (
+\begin{DoxyParamCaption}
+\item[{int}]{track}
+\end{DoxyParamCaption}
+) const}}\label{classlives_1_1multitrack_acae4482fa4581f46fec031459c1c82e5}
+
+
+If \hyperlink{classlives_1_1multitrack_adeb7b705e8e050f64673e938dddf2e36}{is\-Active()} is true, then this method returns the label for a track. 
+
+
+\begin{DoxyParams}{Parameters}
+{\em track} & the track number. A value $>$= 0 represents a video track, a value $<$ 0 represents a backing audio track. \\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+the track label, or empty \hyperlink{classlives_1_1livesString}{lives\-String} if the specified track does not exist. 
+\end{DoxyReturn}
+\begin{DoxySeeAlso}{See Also}
+\hyperlink{classlives_1_1multitrack_a50d2874d3db625d3cc2ea50f2d0e6e87}{set\-Track\-Label()}. 
+\end{DoxySeeAlso}
+\hypertarget{classlives_1_1multitrack_ad885f138aa6c679aa12012c1b8c17eff}{\index{lives\-::multitrack@{lives\-::multitrack}!wipe\-Layout@{wipe\-Layout}}
+\index{wipe\-Layout@{wipe\-Layout}!lives::multitrack@{lives\-::multitrack}}
+\subsubsection[{wipe\-Layout}]{\setlength{\rightskip}{0pt plus 5cm}{\bf lives\-String} lives\-::multitrack\-::wipe\-Layout (
+\begin{DoxyParamCaption}
+\item[{bool}]{force = {\ttfamily false}}
+\end{DoxyParamCaption}
+) const}}\label{classlives_1_1multitrack_ad885f138aa6c679aa12012c1b8c17eff}
+
+
+Wipe the current layout, leaving a blank layout. 
+
+If force is false, then the user will have a chance to cancel (if \hyperlink{classlives_1_1livesApp_a33b85eae23bbb5e55c9843b9016dcff9}{lives\-App\-::interactive()} is true), or to save the layout. Only works if \hyperlink{classlives_1_1livesApp_afcb05464af9146f5efbb896f2611c8e7}{lives\-App\-::status()} is L\-I\-V\-E\-S\-\_\-\-S\-T\-A\-T\-U\-S\-\_\-\-R\-E\-A\-D\-Y and \hyperlink{classlives_1_1multitrack_adeb7b705e8e050f64673e938dddf2e36}{is\-Active()} is true. Otherwise, the layout will not be wiped, and an empty \hyperlink{classlives_1_1livesString}{lives\-String} will be returned. 
+\begin{DoxyParams}{Parameters}
+{\em force} & set to true to force the layout to be wiped. \\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+the name which the layout was saved to, or empty \hyperlink{classlives_1_1livesString}{lives\-String} if it was not saved. 
+\end{DoxyReturn}
+
+
+The documentation for this class was generated from the following files\-:\begin{DoxyCompactItemize}
+\item 
+src/\hyperlink{liblives_8hpp}{liblives.\-hpp}\item 
+src/\hyperlink{liblives_8cpp}{liblives.\-cpp}\end{DoxyCompactItemize}

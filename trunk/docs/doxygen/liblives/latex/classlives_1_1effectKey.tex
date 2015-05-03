@@ -1,0 +1,287 @@
+\hypertarget{classlives_1_1effectKey}{\section{lives\-:\-:effect\-Key Class Reference}
+\label{classlives_1_1effectKey}\index{lives\-::effect\-Key@{lives\-::effect\-Key}}
+}
+
+
+class \char`\"{}effect\-Key\char`\"{}.  
+
+
+
+
+{\ttfamily \#include $<$liblives.\-hpp$>$}
+
+\subsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\hyperlink{classlives_1_1effectKey_a4dfc621647eec6ef95e0cd07e96317c4}{effect\-Key} ()
+\begin{DoxyCompactList}\small\item\em Creates a new, invalid effect key. \end{DoxyCompactList}\item 
+bool \hyperlink{classlives_1_1effectKey_addeea27aff7ce581cb180c86ed265ff5}{is\-Valid} () const 
+\begin{DoxyCompactList}\small\item\em Returns whether the \hyperlink{classlives_1_1effectKey}{effect\-Key} is valid or not. \end{DoxyCompactList}\item 
+int \hyperlink{classlives_1_1effectKey_a85b593e043742bf99b2eabaa4147416f}{key} ()
+\begin{DoxyCompactList}\small\item\em Return the (physical or virtual) key associated with this \hyperlink{classlives_1_1effectKey}{effect\-Key}. \end{DoxyCompactList}\item 
+int \hyperlink{classlives_1_1effectKey_a46957ebba6461246a708fdfa8a815eb7}{num\-Modes} ()
+\begin{DoxyCompactList}\small\item\em Return the number of modes for this \hyperlink{classlives_1_1effectKey}{effect\-Key} slot. \end{DoxyCompactList}\item 
+int \hyperlink{classlives_1_1effectKey_af68fdec3fb53242e630ebd5d398e9bed}{num\-Mapped\-Modes} ()
+\begin{DoxyCompactList}\small\item\em Return the number of mapped modes for this \hyperlink{classlives_1_1effectKey}{effect\-Key} slot. \end{DoxyCompactList}\item 
+int \hyperlink{classlives_1_1effectKey_a0dfed643fbaf4173c397aaa2b418c114}{set\-Current\-Mode} (int mode)
+\begin{DoxyCompactList}\small\item\em Set the current mode this \hyperlink{classlives_1_1effectKey}{effect\-Key}. \end{DoxyCompactList}\item 
+int \hyperlink{classlives_1_1effectKey_a3f310ea6e3a239a59b6a36aa5d26a475}{current\-Mode} ()
+\begin{DoxyCompactList}\small\item\em Get the current mode for this \hyperlink{classlives_1_1effectKey}{effect\-Key}. \end{DoxyCompactList}\item 
+bool \hyperlink{classlives_1_1effectKey_acadcbd5a27ec07a455929b985bf02421}{set\-Enabled} (bool)
+\begin{DoxyCompactList}\small\item\em Enable an effect mapped to this \hyperlink{classlives_1_1effectKey}{effect\-Key}, mode(). \end{DoxyCompactList}\item 
+bool \hyperlink{classlives_1_1effectKey_adc4b14bedffde89150e7a2da4e5cb0ad}{enabled} ()
+\begin{DoxyCompactList}\small\item\em Return a value to indicate whether the effect mapped to this \hyperlink{classlives_1_1effectKey}{effect\-Key}, mode() is active. \end{DoxyCompactList}\item 
+int \hyperlink{classlives_1_1effectKey_a90b3e0276cc6e42bc8861b78ee7ace62}{append\-Mapping} (\hyperlink{classlives_1_1effect}{effect} e)
+\begin{DoxyCompactList}\small\item\em Map an effect to the next unused mode for the \hyperlink{classlives_1_1effectKey}{effect\-Key}. \end{DoxyCompactList}\item 
+bool \hyperlink{classlives_1_1effectKey_a21c75140b4c9179d89ec57f1b33002d2}{remove\-Mapping} (int mode)
+\begin{DoxyCompactList}\small\item\em Remove an effect from being mapped to this key. \end{DoxyCompactList}\item 
+\hyperlink{classlives_1_1effect}{effect} \hyperlink{classlives_1_1effectKey_ad7056943355855c0f9bdc7df0b45906d}{at} (int mode)
+\begin{DoxyCompactList}\small\item\em Returns the effect mapped to the key at the specified mode. \end{DoxyCompactList}\item 
+bool \hyperlink{classlives_1_1effectKey_ab41c84f90b457e7f5cde247c9bf967c0}{operator==} (const \hyperlink{classlives_1_1effectKey}{effect\-Key} \&other)
+\end{DoxyCompactItemize}
+\subsection*{Protected Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\hypertarget{classlives_1_1effectKey_a982e197af95e50f2909841af5f0381c3}{{\bfseries effect\-Key} (\hyperlink{classlives_1_1livesApp}{lives\-App} $\ast$lives, int \hyperlink{classlives_1_1effectKey_a85b593e043742bf99b2eabaa4147416f}{key})}\label{classlives_1_1effectKey_a982e197af95e50f2909841af5f0381c3}
+
+\end{DoxyCompactItemize}
+
+
+\subsection{Detailed Description}
+class \char`\"{}effect\-Key\char`\"{}. 
+
+Represents a single effect key slot. A valid \hyperlink{classlives_1_1livesApp}{lives\-App} will have a map of these (effect\-Key\-Mapping()) whose size() is equal to \hyperlink{namespacelives_1_1prefs_a7c4b71b02f07b43d032ed749406ebca3}{prefs\-::rte\-Keys\-Virtual()}. \begin{DoxySeeAlso}{See Also}
+\hyperlink{classlives_1_1effectKeyMap_a5a3516b5f5687083edc8179883933f61}{effect\-Key\-Map\-::operator\mbox{[}$\,$\mbox{]}} 
+\end{DoxySeeAlso}
+
+
+\subsection{Constructor \& Destructor Documentation}
+\hypertarget{classlives_1_1effectKey_a4dfc621647eec6ef95e0cd07e96317c4}{\index{lives\-::effect\-Key@{lives\-::effect\-Key}!effect\-Key@{effect\-Key}}
+\index{effect\-Key@{effect\-Key}!lives::effectKey@{lives\-::effect\-Key}}
+\subsubsection[{effect\-Key}]{\setlength{\rightskip}{0pt plus 5cm}lives\-::effect\-Key\-::effect\-Key (
+\begin{DoxyParamCaption}
+{}
+\end{DoxyParamCaption}
+)}}\label{classlives_1_1effectKey_a4dfc621647eec6ef95e0cd07e96317c4}
+
+
+Creates a new, invalid effect key. 
+
+\hyperlink{classlives_1_1effectKey}{effect\-Key} 
+
+\subsection{Member Function Documentation}
+\hypertarget{classlives_1_1effectKey_a90b3e0276cc6e42bc8861b78ee7ace62}{\index{lives\-::effect\-Key@{lives\-::effect\-Key}!append\-Mapping@{append\-Mapping}}
+\index{append\-Mapping@{append\-Mapping}!lives::effectKey@{lives\-::effect\-Key}}
+\subsubsection[{append\-Mapping}]{\setlength{\rightskip}{0pt plus 5cm}int lives\-::effect\-Key\-::append\-Mapping (
+\begin{DoxyParamCaption}
+\item[{{\bf effect}}]{e}
+\end{DoxyParamCaption}
+)}}\label{classlives_1_1effectKey_a90b3e0276cc6e42bc8861b78ee7ace62}
+
+
+Map an effect to the next unused mode for the \hyperlink{classlives_1_1effectKey}{effect\-Key}. 
+
+Will only work if the \hyperlink{classlives_1_1livesApp_afcb05464af9146f5efbb896f2611c8e7}{lives\-App\-::status()} is L\-I\-V\-E\-S\-\_\-\-S\-T\-A\-T\-U\-S\-\_\-\-P\-L\-A\-Y\-I\-N\-G or L\-I\-V\-E\-S\-\_\-\-S\-T\-A\-T\-U\-S\-\_\-\-R\-E\-A\-D\-Y. The \hyperlink{classlives_1_1effectKey}{effect\-Key} and the effect must share the same owner \hyperlink{classlives_1_1livesApp}{lives\-App}, and both must be valid. 
+\begin{DoxyParams}{Parameters}
+{\em the} & effect to append \\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+the mode number the effect was mapped to, or -\/1 if the mapping failed. 
+\end{DoxyReturn}
+\begin{DoxySeeAlso}{See Also}
+\hyperlink{classlives_1_1effectKey_a21c75140b4c9179d89ec57f1b33002d2}{remove\-Mapping()}. 
+\end{DoxySeeAlso}
+\hypertarget{classlives_1_1effectKey_ad7056943355855c0f9bdc7df0b45906d}{\index{lives\-::effect\-Key@{lives\-::effect\-Key}!at@{at}}
+\index{at@{at}!lives::effectKey@{lives\-::effect\-Key}}
+\subsubsection[{at}]{\setlength{\rightskip}{0pt plus 5cm}{\bf effect} lives\-::effect\-Key\-::at (
+\begin{DoxyParamCaption}
+\item[{int}]{mode}
+\end{DoxyParamCaption}
+)}}\label{classlives_1_1effectKey_ad7056943355855c0f9bdc7df0b45906d}
+
+
+Returns the effect mapped to the key at the specified mode. 
+
+If the \hyperlink{classlives_1_1effectKey}{effect\-Key} is invalid, or if no effect is mapped to the mode, an invalid effect is returned. 
+\begin{DoxyParams}{Parameters}
+{\em mode} & the specified mode. \\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+the effect mapped to the key at the specified mode. 
+\end{DoxyReturn}
+\hypertarget{classlives_1_1effectKey_a3f310ea6e3a239a59b6a36aa5d26a475}{\index{lives\-::effect\-Key@{lives\-::effect\-Key}!current\-Mode@{current\-Mode}}
+\index{current\-Mode@{current\-Mode}!lives::effectKey@{lives\-::effect\-Key}}
+\subsubsection[{current\-Mode}]{\setlength{\rightskip}{0pt plus 5cm}int lives\-::effect\-Key\-::current\-Mode (
+\begin{DoxyParamCaption}
+{}
+\end{DoxyParamCaption}
+)}}\label{classlives_1_1effectKey_a3f310ea6e3a239a59b6a36aa5d26a475}
+
+
+Get the current mode for this \hyperlink{classlives_1_1effectKey}{effect\-Key}. 
+
+If the \hyperlink{classlives_1_1effectKey}{effect\-Key} is invalid, the current mode is -\/1. \begin{DoxyReturn}{Returns}
+the current mode of the \hyperlink{classlives_1_1effectKey}{effect\-Key}. 
+\end{DoxyReturn}
+\begin{DoxySeeAlso}{See Also}
+\hyperlink{classlives_1_1effectKey_a0dfed643fbaf4173c397aaa2b418c114}{set\-Current\-Mode()}. 
+\end{DoxySeeAlso}
+\hypertarget{classlives_1_1effectKey_adc4b14bedffde89150e7a2da4e5cb0ad}{\index{lives\-::effect\-Key@{lives\-::effect\-Key}!enabled@{enabled}}
+\index{enabled@{enabled}!lives::effectKey@{lives\-::effect\-Key}}
+\subsubsection[{enabled}]{\setlength{\rightskip}{0pt plus 5cm}bool lives\-::effect\-Key\-::enabled (
+\begin{DoxyParamCaption}
+{}
+\end{DoxyParamCaption}
+)}}\label{classlives_1_1effectKey_adc4b14bedffde89150e7a2da4e5cb0ad}
+
+
+Return a value to indicate whether the effect mapped to this \hyperlink{classlives_1_1effectKey}{effect\-Key}, mode() is active. 
+
+If the \hyperlink{classlives_1_1effectKey}{effect\-Key} is invalid, returns false. \begin{DoxyReturn}{Returns}
+true if the effect mapped at mode() is enabled. 
+\end{DoxyReturn}
+\begin{DoxySeeAlso}{See Also}
+\hyperlink{classlives_1_1effectKey_acadcbd5a27ec07a455929b985bf02421}{set\-Enabled()}. 
+\end{DoxySeeAlso}
+\hypertarget{classlives_1_1effectKey_addeea27aff7ce581cb180c86ed265ff5}{\index{lives\-::effect\-Key@{lives\-::effect\-Key}!is\-Valid@{is\-Valid}}
+\index{is\-Valid@{is\-Valid}!lives::effectKey@{lives\-::effect\-Key}}
+\subsubsection[{is\-Valid}]{\setlength{\rightskip}{0pt plus 5cm}bool lives\-::effect\-Key\-::is\-Valid (
+\begin{DoxyParamCaption}
+{}
+\end{DoxyParamCaption}
+) const}}\label{classlives_1_1effectKey_addeea27aff7ce581cb180c86ed265ff5}
+
+
+Returns whether the \hyperlink{classlives_1_1effectKey}{effect\-Key} is valid or not. 
+
+An effect key is valid if it is owned by a valid \hyperlink{classlives_1_1livesApp}{lives\-App}, and the \hyperlink{classlives_1_1livesApp_afcb05464af9146f5efbb896f2611c8e7}{lives\-App\-::status()} is not L\-I\-V\-E\-S\-\_\-\-S\-T\-A\-T\-U\-S\-\_\-\-N\-O\-T\-R\-E\-A\-D\-Y, and the key value is in the range 1 $<$= key $<$= \hyperlink{namespacelives_1_1prefs_a7c4b71b02f07b43d032ed749406ebca3}{prefs\-::rte\-Keys\-Virtual}. \begin{DoxyReturn}{Returns}
+true if the \hyperlink{classlives_1_1effectKey}{effect\-Key} is valid. 
+\end{DoxyReturn}
+\hypertarget{classlives_1_1effectKey_a85b593e043742bf99b2eabaa4147416f}{\index{lives\-::effect\-Key@{lives\-::effect\-Key}!key@{key}}
+\index{key@{key}!lives::effectKey@{lives\-::effect\-Key}}
+\subsubsection[{key}]{\setlength{\rightskip}{0pt plus 5cm}int lives\-::effect\-Key\-::key (
+\begin{DoxyParamCaption}
+{}
+\end{DoxyParamCaption}
+)}}\label{classlives_1_1effectKey_a85b593e043742bf99b2eabaa4147416f}
+
+
+Return the (physical or virtual) key associated with this \hyperlink{classlives_1_1effectKey}{effect\-Key}. 
+
+Effects (apart from generators) are applied in ascending key order. Physical keys (1 -\/ 9) can also be toggled from the keyboard, provided \hyperlink{classlives_1_1livesApp_a33b85eae23bbb5e55c9843b9016dcff9}{lives\-App\-::interactive()} is true. If the \hyperlink{classlives_1_1effectKey}{effect\-Key} is invalid, 0 is returned. \begin{DoxyReturn}{Returns}
+the physical or virtual key associated with this \hyperlink{classlives_1_1effectKey}{effect\-Key}. 
+\end{DoxyReturn}
+\hypertarget{classlives_1_1effectKey_af68fdec3fb53242e630ebd5d398e9bed}{\index{lives\-::effect\-Key@{lives\-::effect\-Key}!num\-Mapped\-Modes@{num\-Mapped\-Modes}}
+\index{num\-Mapped\-Modes@{num\-Mapped\-Modes}!lives::effectKey@{lives\-::effect\-Key}}
+\subsubsection[{num\-Mapped\-Modes}]{\setlength{\rightskip}{0pt plus 5cm}int lives\-::effect\-Key\-::num\-Mapped\-Modes (
+\begin{DoxyParamCaption}
+{}
+\end{DoxyParamCaption}
+)}}\label{classlives_1_1effectKey_af68fdec3fb53242e630ebd5d398e9bed}
+
+
+Return the number of mapped modes for this \hyperlink{classlives_1_1effectKey}{effect\-Key} slot. 
+
+Modes run from 0 to \hyperlink{classlives_1_1effectKey_a46957ebba6461246a708fdfa8a815eb7}{num\-Modes()} -\/ 1. When \hyperlink{classlives_1_1effectKey_af68fdec3fb53242e630ebd5d398e9bed}{num\-Mapped\-Modes()} == \hyperlink{classlives_1_1effectKey_a46957ebba6461246a708fdfa8a815eb7}{num\-Modes()} for an \hyperlink{classlives_1_1effectKey}{effect\-Key}, no more effects may be mapped to it until a mapping is erased. If the \hyperlink{classlives_1_1effectKey}{effect\-Key} is invalid, 0 will be returned. \begin{DoxyReturn}{Returns}
+the number of modes for this \hyperlink{classlives_1_1effectKey}{effect\-Key}. 
+\end{DoxyReturn}
+\hypertarget{classlives_1_1effectKey_a46957ebba6461246a708fdfa8a815eb7}{\index{lives\-::effect\-Key@{lives\-::effect\-Key}!num\-Modes@{num\-Modes}}
+\index{num\-Modes@{num\-Modes}!lives::effectKey@{lives\-::effect\-Key}}
+\subsubsection[{num\-Modes}]{\setlength{\rightskip}{0pt plus 5cm}int lives\-::effect\-Key\-::num\-Modes (
+\begin{DoxyParamCaption}
+{}
+\end{DoxyParamCaption}
+)}}\label{classlives_1_1effectKey_a46957ebba6461246a708fdfa8a815eb7}
+
+
+Return the number of modes for this \hyperlink{classlives_1_1effectKey}{effect\-Key} slot. 
+
+Modes run from 0 to \hyperlink{classlives_1_1effectKey_a46957ebba6461246a708fdfa8a815eb7}{num\-Modes()} -\/ 1. Effects can be mapped to modes in ascending order, but only one mode is the active mode for the \hyperlink{classlives_1_1effectKey}{effect\-Key}. If the \hyperlink{classlives_1_1effectKey}{effect\-Key} is invalid, 0 will be returned. \begin{DoxyReturn}{Returns}
+the number of modes for this \hyperlink{classlives_1_1effectKey}{effect\-Key}. 
+\end{DoxyReturn}
+\hypertarget{classlives_1_1effectKey_ab41c84f90b457e7f5cde247c9bf967c0}{\index{lives\-::effect\-Key@{lives\-::effect\-Key}!operator==@{operator==}}
+\index{operator==@{operator==}!lives::effectKey@{lives\-::effect\-Key}}
+\subsubsection[{operator==}]{\setlength{\rightskip}{0pt plus 5cm}bool lives\-::effect\-Key\-::operator== (
+\begin{DoxyParamCaption}
+\item[{const {\bf effect\-Key} \&}]{other}
+\end{DoxyParamCaption}
+)\hspace{0.3cm}{\ttfamily [inline]}}}\label{classlives_1_1effectKey_ab41c84f90b457e7f5cde247c9bf967c0}
+\begin{DoxyReturn}{Returns}
+true if the two effect\-Keys have the same \hyperlink{classlives_1_1livesApp}{lives\-App} and key value and belong to the same \hyperlink{classlives_1_1livesApp}{lives\-App} 
+\end{DoxyReturn}
+\hypertarget{classlives_1_1effectKey_a21c75140b4c9179d89ec57f1b33002d2}{\index{lives\-::effect\-Key@{lives\-::effect\-Key}!remove\-Mapping@{remove\-Mapping}}
+\index{remove\-Mapping@{remove\-Mapping}!lives::effectKey@{lives\-::effect\-Key}}
+\subsubsection[{remove\-Mapping}]{\setlength{\rightskip}{0pt plus 5cm}bool lives\-::effect\-Key\-::remove\-Mapping (
+\begin{DoxyParamCaption}
+\item[{int}]{mode}
+\end{DoxyParamCaption}
+)}}\label{classlives_1_1effectKey_a21c75140b4c9179d89ec57f1b33002d2}
+
+
+Remove an effect from being mapped to this key. 
+
+Will only work if the \hyperlink{classlives_1_1livesApp_afcb05464af9146f5efbb896f2611c8e7}{lives\-App\-::status()} is L\-I\-V\-E\-S\-\_\-\-S\-T\-A\-T\-U\-S\-\_\-\-P\-L\-A\-Y\-I\-N\-G or L\-I\-V\-E\-S\-\_\-\-S\-T\-A\-T\-U\-S\-\_\-\-R\-E\-A\-D\-Y. If the \hyperlink{classlives_1_1effectKey}{effect\-Key} is invalid, or if no effect is mapped to the mode, false is returned and nothing happens. If an effect is removed, effects mapped to higher mode numbers on the same \hyperlink{classlives_1_1effectKey}{effect\-Key} will move down a mode to close the gap. Note\-: the \hyperlink{classlives_1_1effectKey_a3f310ea6e3a239a59b6a36aa5d26a475}{current\-Mode()} does not change unless this is the last mapped effect for this \hyperlink{classlives_1_1effectKey}{effect\-Key}, so this may cause the currently enabled effect to change. 
+\begin{DoxyParams}{Parameters}
+{\em mode} & the mode to remove the effect from. \\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+true if an effect was unmapped. 
+\end{DoxyReturn}
+\begin{DoxySeeAlso}{See Also}
+\hyperlink{classlives_1_1effectKey_a90b3e0276cc6e42bc8861b78ee7ace62}{append\-Mapping()}. 
+\end{DoxySeeAlso}
+\hypertarget{classlives_1_1effectKey_a0dfed643fbaf4173c397aaa2b418c114}{\index{lives\-::effect\-Key@{lives\-::effect\-Key}!set\-Current\-Mode@{set\-Current\-Mode}}
+\index{set\-Current\-Mode@{set\-Current\-Mode}!lives::effectKey@{lives\-::effect\-Key}}
+\subsubsection[{set\-Current\-Mode}]{\setlength{\rightskip}{0pt plus 5cm}int lives\-::effect\-Key\-::set\-Current\-Mode (
+\begin{DoxyParamCaption}
+\item[{int}]{mode}
+\end{DoxyParamCaption}
+)}}\label{classlives_1_1effectKey_a0dfed643fbaf4173c397aaa2b418c114}
+
+
+Set the current mode this \hyperlink{classlives_1_1effectKey}{effect\-Key}. 
+
+Only works if the effec\-Key is valid, a valid effect is mapped to the mode, and \hyperlink{classlives_1_1livesApp_afcb05464af9146f5efbb896f2611c8e7}{lives\-App\-::status()} is L\-I\-V\-E\-S\-\_\-\-S\-T\-A\-T\-U\-S\-\_\-\-P\-L\-A\-Y\-I\-N\-G or L\-I\-V\-E\-S\-\_\-\-S\-T\-A\-T\-U\-S\-\_\-\-R\-E\-A\-D\-Y. 
+\begin{DoxyParams}{Parameters}
+{\em mode} & the mode to switch to. \\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+the new mode of the \hyperlink{classlives_1_1effectKey}{effect\-Key}. 
+\end{DoxyReturn}
+\begin{DoxySeeAlso}{See Also}
+\hyperlink{classlives_1_1effectKey_a3f310ea6e3a239a59b6a36aa5d26a475}{current\-Mode()}. 
+
+\hyperlink{classlives_1_1effectKey_af68fdec3fb53242e630ebd5d398e9bed}{num\-Mapped\-Modes()}. 
+\end{DoxySeeAlso}
+\hypertarget{classlives_1_1effectKey_acadcbd5a27ec07a455929b985bf02421}{\index{lives\-::effect\-Key@{lives\-::effect\-Key}!set\-Enabled@{set\-Enabled}}
+\index{set\-Enabled@{set\-Enabled}!lives::effectKey@{lives\-::effect\-Key}}
+\subsubsection[{set\-Enabled}]{\setlength{\rightskip}{0pt plus 5cm}bool lives\-::effect\-Key\-::set\-Enabled (
+\begin{DoxyParamCaption}
+\item[{bool}]{setting}
+\end{DoxyParamCaption}
+)}}\label{classlives_1_1effectKey_acadcbd5a27ec07a455929b985bf02421}
+
+
+Enable an effect mapped to this \hyperlink{classlives_1_1effectKey}{effect\-Key}, mode(). 
+
+Only works if the effec\-Key is valid, a valid effect is mapped to the mode, and \hyperlink{classlives_1_1livesApp_afcb05464af9146f5efbb896f2611c8e7}{lives\-App\-::status()} is L\-I\-V\-E\-S\-\_\-\-S\-T\-A\-T\-U\-S\-\_\-\-P\-L\-A\-Y\-I\-N\-G or L\-I\-V\-E\-S\-\_\-\-S\-T\-A\-T\-U\-S\-\_\-\-R\-E\-A\-D\-Y. 
+\begin{DoxyParams}{Parameters}
+{\em the} & value to set to \\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+the new state of the \hyperlink{classlives_1_1effectKey}{effect\-Key} 
+\end{DoxyReturn}
+\begin{DoxySeeAlso}{See Also}
+\hyperlink{classlives_1_1effectKey_adc4b14bedffde89150e7a2da4e5cb0ad}{enabled()}. 
+\end{DoxySeeAlso}
+
+
+The documentation for this class was generated from the following files\-:\begin{DoxyCompactItemize}
+\item 
+src/\hyperlink{liblives_8hpp}{liblives.\-hpp}\item 
+src/\hyperlink{liblives_8cpp}{liblives.\-cpp}\end{DoxyCompactItemize}

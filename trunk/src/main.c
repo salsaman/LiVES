@@ -2786,7 +2786,7 @@ void set_signal_handlers(SignalHandlerPointer sigfunc) {
 }
 
 
- int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
+int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
 #ifdef ENABLE_OSC
 #ifdef IS_MINGW
   WSADATA wsaData;
@@ -3149,8 +3149,7 @@ void set_signal_handlers(SignalHandlerPointer sigfunc) {
 #ifdef GUI_GTK
   if (gtk_thread==NULL) {
     gtk_main();
-  }
-  else {
+  } else {
     pthread_create(gtk_thread,NULL,gtk_thread_wrapper,NULL);
   }
 #endif

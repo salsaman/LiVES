@@ -22,7 +22,7 @@ sendOSC_PROGRAMS = sendOSC
 installdirs:
 	$(MKDIR_P) "$(DESTDIR)$(bindir)"
 
-install:
+install-exec-local:
 	cp -f $(sendOSC) "$(DESTDIR)$(bindir)" && chmod a+rx "$(DESTDIR)$(bindir)/$(sendOSC)"
 
 

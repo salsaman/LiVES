@@ -1,5 +1,5 @@
-Version 2.4.0
--------------
+Version 2.4.0 (3 May 2015)
+-------------------------
 Implement workaround for expose event problems in gtk+ 3.10.
 Fix threading crash in multitrack.
 Fix invalid saving of layouts in multitrack.

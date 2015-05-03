@@ -1,0 +1,475 @@
+\hypertarget{liblives_8hpp}{\section{src/liblives.hpp File Reference}
+\label{liblives_8hpp}\index{src/liblives.\-hpp@{src/liblives.\-hpp}}
+}
+
+
+Header file for liblives.  
+
+
+{\ttfamily \#include $<$vector$>$}\\*
+{\ttfamily \#include $<$list$>$}\\*
+{\ttfamily \#include $<$map$>$}\\*
+{\ttfamily \#include $<$inttypes.\-h$>$}\\*
+{\ttfamily \#include $<$string$>$}\\*
+\subsection*{Classes}
+\begin{DoxyCompactItemize}
+\item 
+class \hyperlink{classlives_1_1livesString}{lives\-::lives\-String}
+\begin{DoxyCompactList}\small\item\em class \char`\"{}lives\-String\char`\"{}. \end{DoxyCompactList}\item 
+struct \hyperlink{structlives_1_1modeChangedInfo}{lives\-::mode\-Changed\-Info}
+\begin{DoxyCompactList}\small\item\em Struct passed to mode\-Changed callback. \end{DoxyCompactList}\item 
+struct \hyperlink{structlives_1_1appQuitInfo}{lives\-::app\-Quit\-Info}
+\begin{DoxyCompactList}\small\item\em Struct passed to app\-Quit callback. \end{DoxyCompactList}\item 
+class \hyperlink{classlives_1_1livesApp}{lives\-::lives\-App}
+\begin{DoxyCompactList}\small\item\em class \char`\"{}lives\-App\char`\"{}. \end{DoxyCompactList}\item 
+class \hyperlink{classlives_1_1clip}{lives\-::clip}
+\begin{DoxyCompactList}\small\item\em class \char`\"{}clip\char`\"{}. \end{DoxyCompactList}\item 
+class \hyperlink{classlives_1_1set}{lives\-::set}
+\begin{DoxyCompactList}\small\item\em class \char`\"{}set\char`\"{}. \end{DoxyCompactList}\item 
+class \hyperlink{classlives_1_1player}{lives\-::player}
+\begin{DoxyCompactList}\small\item\em class \char`\"{}player\char`\"{}. \end{DoxyCompactList}\item 
+class \hyperlink{classlives_1_1effectKey}{lives\-::effect\-Key}
+\begin{DoxyCompactList}\small\item\em class \char`\"{}effect\-Key\char`\"{}. \end{DoxyCompactList}\item 
+class \hyperlink{classlives_1_1effectKeyMap}{lives\-::effect\-Key\-Map}
+\begin{DoxyCompactList}\small\item\em class \char`\"{}effect\-Key\-Map\char`\"{}. \end{DoxyCompactList}\item 
+class \hyperlink{classlives_1_1effect}{lives\-::effect}
+\begin{DoxyCompactList}\small\item\em class \char`\"{}effect\char`\"{}. \end{DoxyCompactList}\item 
+class \hyperlink{classlives_1_1block}{lives\-::block}
+\begin{DoxyCompactList}\small\item\em class \char`\"{}block\char`\"{}. \end{DoxyCompactList}\item 
+class \hyperlink{classlives_1_1multitrack}{lives\-::multitrack}
+\begin{DoxyCompactList}\small\item\em class \char`\"{}multitrack\char`\"{}. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\subsection*{Namespaces}
+\begin{DoxyCompactItemize}
+\item 
+\hyperlink{namespacelives}{lives}
+\begin{DoxyCompactList}\small\item\em lives namespace. \end{DoxyCompactList}\item 
+\hyperlink{namespacelives_1_1prefs}{lives\-::prefs}
+\begin{DoxyCompactList}\small\item\em Preferences. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\subsection*{Macros}
+\begin{DoxyCompactItemize}
+\item 
+\hypertarget{liblives_8hpp_a42294fb9751e330bdaf61cf8411d269d}{\#define \hyperlink{liblives_8hpp_a42294fb9751e330bdaf61cf8411d269d}{L\-I\-V\-E\-S\-\_\-\-V\-E\-R\-S\-I\-O\-N\-\_\-\-M\-A\-J\-O\-R}~2}\label{liblives_8hpp_a42294fb9751e330bdaf61cf8411d269d}
+
+\begin{DoxyCompactList}\small\item\em Version number major. \end{DoxyCompactList}\item 
+\hypertarget{liblives_8hpp_acbae9a798b1d49a396a288ddb9bbc7c2}{\#define \hyperlink{liblives_8hpp_acbae9a798b1d49a396a288ddb9bbc7c2}{L\-I\-V\-E\-S\-\_\-\-V\-E\-R\-S\-I\-O\-N\-\_\-\-M\-I\-N\-O\-R}~4}\label{liblives_8hpp_acbae9a798b1d49a396a288ddb9bbc7c2}
+
+\begin{DoxyCompactList}\small\item\em Version number minor. \end{DoxyCompactList}\item 
+\hypertarget{liblives_8hpp_af50d0bff89214e1b66424fb770254624}{\#define \hyperlink{liblives_8hpp_af50d0bff89214e1b66424fb770254624}{L\-I\-V\-E\-S\-\_\-\-V\-E\-R\-S\-I\-O\-N\-\_\-\-M\-I\-C\-R\-O}~0}\label{liblives_8hpp_af50d0bff89214e1b66424fb770254624}
+
+\begin{DoxyCompactList}\small\item\em Version number micro. \end{DoxyCompactList}\item 
+\hypertarget{liblives_8hpp_a1ae07be20ba084c9f55ff99f1168ab03}{\#define \hyperlink{liblives_8hpp_a1ae07be20ba084c9f55ff99f1168ab03}{L\-I\-V\-E\-S\-\_\-\-C\-H\-E\-C\-K\-\_\-\-V\-E\-R\-S\-I\-O\-N}(major, minor, micro)~(major $>$ \hyperlink{liblives_8hpp_a42294fb9751e330bdaf61cf8411d269d}{L\-I\-V\-E\-S\-\_\-\-V\-E\-R\-S\-I\-O\-N\-\_\-\-M\-A\-J\-O\-R} $\vert$$\vert$ (major == \hyperlink{liblives_8hpp_a42294fb9751e330bdaf61cf8411d269d}{L\-I\-V\-E\-S\-\_\-\-V\-E\-R\-S\-I\-O\-N\-\_\-\-M\-A\-J\-O\-R} \&\& (minor $>$ \hyperlink{liblives_8hpp_acbae9a798b1d49a396a288ddb9bbc7c2}{L\-I\-V\-E\-S\-\_\-\-V\-E\-R\-S\-I\-O\-N\-\_\-\-M\-I\-N\-O\-R} $\vert$$\vert$ (minor == \hyperlink{liblives_8hpp_acbae9a798b1d49a396a288ddb9bbc7c2}{L\-I\-V\-E\-S\-\_\-\-V\-E\-R\-S\-I\-O\-N\-\_\-\-M\-I\-N\-O\-R} \&\& micro $>$= \hyperlink{liblives_8hpp_af50d0bff89214e1b66424fb770254624}{L\-I\-V\-E\-S\-\_\-\-V\-E\-R\-S\-I\-O\-N\-\_\-\-M\-I\-C\-R\-O}))))}\label{liblives_8hpp_a1ae07be20ba084c9f55ff99f1168ab03}
+
+\begin{DoxyCompactList}\small\item\em Macro to check if lives\-App version is $>$= major.\-minor.\-micro. \end{DoxyCompactList}\item 
+\hypertarget{liblives_8hpp_aa725ee775f37908fca65f712c202b6c9}{\#define \hyperlink{liblives_8hpp_aa725ee775f37908fca65f712c202b6c9}{L\-I\-V\-E\-S\-\_\-\-C\-H\-A\-R\-\_\-\-E\-N\-C\-O\-D\-I\-N\-G\-\_\-\-D\-E\-F\-A\-U\-L\-T}~\hyperlink{liblives_8hpp_ac7022da9e6d00c731395516feb5dc3e5ab4cb43a57491aa58abf13c436118dfe2}{L\-I\-V\-E\-S\-\_\-\-C\-H\-A\-R\-\_\-\-E\-N\-C\-O\-D\-I\-N\-G\-\_\-\-U\-T\-F8}}\label{liblives_8hpp_aa725ee775f37908fca65f712c202b6c9}
+
+\begin{DoxyCompactList}\small\item\em Default character encoding. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\subsection*{Typedefs}
+\begin{DoxyCompactItemize}
+\item 
+\hypertarget{liblives_8hpp_a718b4eb2652c286f4d42dc18a8e71a1a}{typedef unsigned long \hyperlink{liblives_8hpp_a718b4eb2652c286f4d42dc18a8e71a1a}{ulong}}\label{liblives_8hpp_a718b4eb2652c286f4d42dc18a8e71a1a}
+
+\begin{DoxyCompactList}\small\item\em typedef \end{DoxyCompactList}\item 
+\hypertarget{namespacelives_a86fb37876fc3d921867e0b8dbeba6a00}{typedef class lives\-App \hyperlink{namespacelives_a86fb37876fc3d921867e0b8dbeba6a00}{lives\-::lives\-App}}\label{namespacelives_a86fb37876fc3d921867e0b8dbeba6a00}
+
+\begin{DoxyCompactList}\small\item\em typedef \end{DoxyCompactList}\item 
+\hypertarget{namespacelives_a3e8aa16c8d4cc3d4ee5c7b110813c27b}{typedef class set \hyperlink{namespacelives_a3e8aa16c8d4cc3d4ee5c7b110813c27b}{lives\-::set}}\label{namespacelives_a3e8aa16c8d4cc3d4ee5c7b110813c27b}
+
+\begin{DoxyCompactList}\small\item\em typedef \end{DoxyCompactList}\item 
+\hypertarget{namespacelives_a489f7c440b1190bc88d89e49971fd233}{typedef class clip \hyperlink{namespacelives_a489f7c440b1190bc88d89e49971fd233}{lives\-::clip}}\label{namespacelives_a489f7c440b1190bc88d89e49971fd233}
+
+\begin{DoxyCompactList}\small\item\em typedef \end{DoxyCompactList}\item 
+\hypertarget{namespacelives_aa04fd38ebd75be1b874165b00e2787e1}{typedef class effect\-Key \hyperlink{namespacelives_aa04fd38ebd75be1b874165b00e2787e1}{lives\-::effect\-Key}}\label{namespacelives_aa04fd38ebd75be1b874165b00e2787e1}
+
+\begin{DoxyCompactList}\small\item\em typedef \end{DoxyCompactList}\item 
+\hypertarget{namespacelives_a24744112f352a8bd69cf3360ee7fca4e}{typedef class effect\-Key\-Map \hyperlink{namespacelives_a24744112f352a8bd69cf3360ee7fca4e}{lives\-::effect\-Key\-Map}}\label{namespacelives_a24744112f352a8bd69cf3360ee7fca4e}
+
+\begin{DoxyCompactList}\small\item\em typedef \end{DoxyCompactList}\item 
+\hypertarget{namespacelives_ae6573e61b6d61607207b5f327ac20f57}{typedef class effect \hyperlink{namespacelives_ae6573e61b6d61607207b5f327ac20f57}{lives\-::effect}}\label{namespacelives_ae6573e61b6d61607207b5f327ac20f57}
+
+\begin{DoxyCompactList}\small\item\em typedef \end{DoxyCompactList}\item 
+\hypertarget{namespacelives_ac83636f0c52481c1a1fcbe011f56605a}{typedef class player \hyperlink{namespacelives_ac83636f0c52481c1a1fcbe011f56605a}{lives\-::player}}\label{namespacelives_ac83636f0c52481c1a1fcbe011f56605a}
+
+\begin{DoxyCompactList}\small\item\em typedef \end{DoxyCompactList}\item 
+\hypertarget{namespacelives_a550a6074a1d675d83ddf7cc0c766da24}{typedef class multitrack \hyperlink{namespacelives_a550a6074a1d675d83ddf7cc0c766da24}{lives\-::multitrack}}\label{namespacelives_a550a6074a1d675d83ddf7cc0c766da24}
+
+\begin{DoxyCompactList}\small\item\em typedef \end{DoxyCompactList}\item 
+\hypertarget{namespacelives_a66b3c9054889137c1a63b226953fa174}{typedef class block \hyperlink{namespacelives_a66b3c9054889137c1a63b226953fa174}{lives\-::block}}\label{namespacelives_a66b3c9054889137c1a63b226953fa174}
+
+\begin{DoxyCompactList}\small\item\em typedef \end{DoxyCompactList}\item 
+\hypertarget{namespacelives_ad3373819c9d6cb6e7929f7e76e83b986}{typedef class lives\-String \hyperlink{namespacelives_ad3373819c9d6cb6e7929f7e76e83b986}{lives\-::lives\-String}}\label{namespacelives_ad3373819c9d6cb6e7929f7e76e83b986}
+
+\begin{DoxyCompactList}\small\item\em typedef \end{DoxyCompactList}\item 
+\hypertarget{namespacelives_af8765db2769fbeb69399fd6980e9990f}{typedef list$<$ lives\-String $>$ {\bfseries lives\-::lives\-String\-List}}\label{namespacelives_af8765db2769fbeb69399fd6980e9990f}
+
+\item 
+typedef bool($\ast$ \hyperlink{namespacelives_a3f53f9a55851d8980f02ddc790b12720}{lives\-::mode\-Changed\-\_\-callback\-\_\-f} )(lives\-App $\ast$, mode\-Changed\-Info $\ast$, void $\ast$)
+\begin{DoxyCompactList}\small\item\em Type of callback function for L\-I\-V\-E\-S\-\_\-\-C\-A\-L\-L\-B\-A\-C\-K\-\_\-\-M\-O\-D\-E\-\_\-\-C\-H\-A\-N\-G\-E\-D. \end{DoxyCompactList}\item 
+typedef bool($\ast$ \hyperlink{namespacelives_a097f122e1e32156c1acc94f8987d3384}{lives\-::app\-Quit\-\_\-callback\-\_\-f} )(lives\-App $\ast$, app\-Quit\-Info $\ast$, void $\ast$)
+\begin{DoxyCompactList}\small\item\em Type of callback function for L\-I\-V\-E\-S\-\_\-\-C\-A\-L\-L\-B\-A\-C\-K\-\_\-\-A\-P\-P\-\_\-\-Q\-U\-I\-T. \end{DoxyCompactList}\item 
+typedef bool($\ast$ \hyperlink{namespacelives_af2316179e783c96b4c146713929726f7}{lives\-::object\-Destroyed\-\_\-callback\-\_\-f} )(lives\-App $\ast$, void $\ast$)
+\begin{DoxyCompactList}\small\item\em Type of callback function for L\-I\-V\-E\-S\-\_\-\-C\-A\-L\-L\-B\-A\-C\-K\-\_\-\-O\-B\-J\-E\-C\-T\-\_\-\-D\-E\-S\-T\-R\-O\-Y\-E\-D. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\subsection*{Enumerations}
+\begin{DoxyCompactItemize}
+\item 
+enum \hyperlink{liblives_8hpp_a12c81bbcff6fecc0791e83b19f024a9a}{lives\-\_\-filechooser\-\_\-t} \{ \hyperlink{liblives_8hpp_a12c81bbcff6fecc0791e83b19f024a9aa3b3954c207ddb61f41c0ed26ce829ccf}{L\-I\-V\-E\-S\-\_\-\-F\-I\-L\-E\-\_\-\-C\-H\-O\-O\-S\-E\-R\-\_\-\-V\-I\-D\-E\-O\-\_\-\-A\-U\-D\-I\-O}, 
+\hyperlink{liblives_8hpp_a12c81bbcff6fecc0791e83b19f024a9aa30e78f7f3840d93d80178763ca6a3ec3}{L\-I\-V\-E\-S\-\_\-\-F\-I\-L\-E\-\_\-\-C\-H\-O\-O\-S\-E\-R\-\_\-\-A\-U\-D\-I\-O\-\_\-\-O\-N\-L\-Y}
+ \}
+\begin{DoxyCompactList}\small\item\em Filechooser hinting types. \end{DoxyCompactList}\item 
+enum \hyperlink{liblives_8hpp_a3033beb0f401e14cbff66f72a4168d1f}{lives\-\_\-interface\-\_\-mode\-\_\-t} \{ \hyperlink{liblives_8hpp_a3033beb0f401e14cbff66f72a4168d1fa4e04348924ebace5c5cb943d70af6b11}{L\-I\-V\-E\-S\-\_\-\-I\-N\-T\-E\-R\-F\-A\-C\-E\-\_\-\-M\-O\-D\-E\-\_\-\-I\-N\-V\-A\-L\-I\-D} =-\/1, 
+\hyperlink{liblives_8hpp_a3033beb0f401e14cbff66f72a4168d1faeca820fcd54837e99f48827c2a0ec38e}{L\-I\-V\-E\-S\-\_\-\-I\-N\-T\-E\-R\-F\-A\-C\-E\-\_\-\-M\-O\-D\-E\-\_\-\-C\-L\-I\-P\-E\-D\-I\-T}, 
+\hyperlink{liblives_8hpp_a3033beb0f401e14cbff66f72a4168d1fa1dddd6ae45a0e822712294e5d2913118}{L\-I\-V\-E\-S\-\_\-\-I\-N\-T\-E\-R\-F\-A\-C\-E\-\_\-\-M\-O\-D\-E\-\_\-\-M\-U\-L\-T\-I\-T\-R\-A\-C\-K}
+ \}
+\begin{DoxyCompactList}\small\item\em Li\-V\-E\-S operation mode. \end{DoxyCompactList}\item 
+enum \hyperlink{liblives_8hpp_a4748f68756cfc1002a1b68425e91ecad}{lives\-\_\-status\-\_\-t} \{ \\*
+\hyperlink{liblives_8hpp_a4748f68756cfc1002a1b68425e91ecada4500d1dbbfe1d6030cd3cc898a77baca}{L\-I\-V\-E\-S\-\_\-\-S\-T\-A\-T\-U\-S\-\_\-\-I\-N\-V\-A\-L\-I\-D} =-\/1, 
+\hyperlink{liblives_8hpp_a4748f68756cfc1002a1b68425e91ecada7dbc59fd8187f2d6de925420336f6ae8}{L\-I\-V\-E\-S\-\_\-\-S\-T\-A\-T\-U\-S\-\_\-\-N\-O\-T\-R\-E\-A\-D\-Y}, 
+\hyperlink{liblives_8hpp_a4748f68756cfc1002a1b68425e91ecadaadc0856a72f9c3ebcfeba5a0bc21a592}{L\-I\-V\-E\-S\-\_\-\-S\-T\-A\-T\-U\-S\-\_\-\-R\-E\-A\-D\-Y}, 
+\hyperlink{liblives_8hpp_a4748f68756cfc1002a1b68425e91ecada57fd3ce404529f7b0f86f6ce62066861}{L\-I\-V\-E\-S\-\_\-\-S\-T\-A\-T\-U\-S\-\_\-\-P\-L\-A\-Y\-I\-N\-G}, 
+\\*
+\hyperlink{liblives_8hpp_a4748f68756cfc1002a1b68425e91ecadaa1767ced4e4a43702e99a8cc144abdf4}{L\-I\-V\-E\-S\-\_\-\-S\-T\-A\-T\-U\-S\-\_\-\-P\-R\-O\-C\-E\-S\-S\-I\-N\-G}, 
+\hyperlink{liblives_8hpp_a4748f68756cfc1002a1b68425e91ecadaede9a135a19bd2367efd210b9c653378}{L\-I\-V\-E\-S\-\_\-\-S\-T\-A\-T\-U\-S\-\_\-\-P\-R\-E\-V\-I\-E\-W}
+ \}
+\begin{DoxyCompactList}\small\item\em Li\-V\-E\-S operational status. \end{DoxyCompactList}\item 
+enum \hyperlink{liblives_8hpp_a1f91078fecf5ea3583c71ed1db238393}{lives\-\_\-endian\-\_\-t} \{ {\bfseries L\-I\-V\-E\-S\-\_\-\-L\-I\-T\-T\-L\-E\-E\-N\-D\-I\-A\-N}, 
+{\bfseries L\-I\-V\-E\-S\-\_\-\-B\-I\-G\-E\-N\-D\-I\-A\-N}
+ \}
+\begin{DoxyCompactList}\small\item\em Endian values. \end{DoxyCompactList}\item 
+enum \hyperlink{liblives_8hpp_a61f9a031360f0a0280151f44695c2519}{lives\-\_\-callback\-\_\-t} \{ \\*
+\hyperlink{liblives_8hpp_a61f9a031360f0a0280151f44695c2519a39119bba5c1abe821d0c15a063bb3c25}{L\-I\-V\-E\-S\-\_\-\-C\-A\-L\-L\-B\-A\-C\-K\-\_\-\-F\-R\-A\-M\-E\-\_\-\-S\-Y\-N\-C\-H} = 1, 
+\hyperlink{liblives_8hpp_a61f9a031360f0a0280151f44695c2519aa9aa272400aad9726f10b59121f0cd54}{L\-I\-V\-E\-S\-\_\-\-C\-A\-L\-L\-B\-A\-C\-K\-\_\-\-P\-L\-A\-Y\-B\-A\-C\-K\-\_\-\-S\-T\-A\-R\-T\-E\-D} = 2, 
+\hyperlink{liblives_8hpp_a61f9a031360f0a0280151f44695c2519af7d769fe5a802de7e56f9c14ad5f0c5a}{L\-I\-V\-E\-S\-\_\-\-C\-A\-L\-L\-B\-A\-C\-K\-\_\-\-P\-L\-A\-Y\-B\-A\-C\-K\-\_\-\-S\-T\-O\-P\-P\-E\-D} = 3, 
+\hyperlink{liblives_8hpp_a61f9a031360f0a0280151f44695c2519ac7d1eb87307c66940a8acc86c4f65dd7}{L\-I\-V\-E\-S\-\_\-\-C\-A\-L\-L\-B\-A\-C\-K\-\_\-\-P\-L\-A\-Y\-B\-A\-C\-K\-\_\-\-S\-T\-O\-P\-P\-E\-D\-\_\-\-R\-D} = 4, 
+\\*
+\hyperlink{liblives_8hpp_a61f9a031360f0a0280151f44695c2519a39355f3c32b44630dedd3a2d53c4d86e}{L\-I\-V\-E\-S\-\_\-\-C\-A\-L\-L\-B\-A\-C\-K\-\_\-\-R\-E\-C\-O\-R\-D\-\_\-\-S\-T\-A\-R\-T\-E\-D} = 32, 
+\hyperlink{liblives_8hpp_a61f9a031360f0a0280151f44695c2519a9540f9938b6b156805555fb59940b720}{L\-I\-V\-E\-S\-\_\-\-C\-A\-L\-L\-B\-A\-C\-K\-\_\-\-R\-E\-C\-O\-R\-D\-\_\-\-S\-T\-O\-P\-P\-E\-D} = 33, 
+\hyperlink{liblives_8hpp_a61f9a031360f0a0280151f44695c2519a0a2bd8765b9404d4e01a1567b3e9a5ec}{L\-I\-V\-E\-S\-\_\-\-C\-A\-L\-L\-B\-A\-C\-K\-\_\-\-A\-P\-P\-\_\-\-Q\-U\-I\-T} = 64, 
+\hyperlink{liblives_8hpp_a61f9a031360f0a0280151f44695c2519a73c50d6584c7eb382c2569349820602a}{L\-I\-V\-E\-S\-\_\-\-C\-A\-L\-L\-B\-A\-C\-K\-\_\-\-C\-L\-I\-P\-\_\-\-O\-P\-E\-N\-E\-D} = 128, 
+\\*
+\hyperlink{liblives_8hpp_a61f9a031360f0a0280151f44695c2519a048dcb33acc26b5d7343f841aea4dcc6}{L\-I\-V\-E\-S\-\_\-\-C\-A\-L\-L\-B\-A\-C\-K\-\_\-\-C\-L\-I\-P\-\_\-\-C\-L\-O\-S\-E\-D} = 129, 
+\hyperlink{liblives_8hpp_a61f9a031360f0a0280151f44695c2519a4ec59342af63d7d04ac91e962ff328d6}{L\-I\-V\-E\-S\-\_\-\-C\-A\-L\-L\-B\-A\-C\-K\-\_\-\-C\-L\-I\-P\-S\-E\-T\-\_\-\-O\-P\-E\-N\-E\-D} = 256, 
+\hyperlink{liblives_8hpp_a61f9a031360f0a0280151f44695c2519a6d6c361d9994f9e311d54f58b0a0b362}{L\-I\-V\-E\-S\-\_\-\-C\-A\-L\-L\-B\-A\-C\-K\-\_\-\-C\-L\-I\-P\-S\-E\-T\-\_\-\-S\-A\-V\-E\-D} = 257, 
+\hyperlink{liblives_8hpp_a61f9a031360f0a0280151f44695c2519add31b9d6425736ea9dab6c057327ad48}{L\-I\-V\-E\-S\-\_\-\-C\-A\-L\-L\-B\-A\-C\-K\-\_\-\-M\-O\-D\-E\-\_\-\-C\-H\-A\-N\-G\-E\-D} = 4096, 
+\\*
+\hyperlink{liblives_8hpp_a61f9a031360f0a0280151f44695c2519ae341e96064358748bb98867aeb8a9c5c}{L\-I\-V\-E\-S\-\_\-\-C\-A\-L\-L\-B\-A\-C\-K\-\_\-\-O\-B\-J\-E\-C\-T\-\_\-\-D\-E\-S\-T\-R\-O\-Y\-E\-D} = 16384
+ \}
+\begin{DoxyCompactList}\small\item\em Callback types. \end{DoxyCompactList}\item 
+enum \hyperlink{liblives_8hpp_ac7022da9e6d00c731395516feb5dc3e5}{lives\-\_\-char\-\_\-encoding\-\_\-t} \{ \hyperlink{liblives_8hpp_ac7022da9e6d00c731395516feb5dc3e5ab4cb43a57491aa58abf13c436118dfe2}{L\-I\-V\-E\-S\-\_\-\-C\-H\-A\-R\-\_\-\-E\-N\-C\-O\-D\-I\-N\-G\-\_\-\-U\-T\-F8}, 
+\hyperlink{liblives_8hpp_ac7022da9e6d00c731395516feb5dc3e5a17a6d59afb729c48ae03d381e9c1bc62}{L\-I\-V\-E\-S\-\_\-\-C\-H\-A\-R\-\_\-\-E\-N\-C\-O\-D\-I\-N\-G\-\_\-\-L\-O\-C\-A\-L8\-B\-I\-T}, 
+\hyperlink{liblives_8hpp_ac7022da9e6d00c731395516feb5dc3e5a1b761b11109b66d2be7bd127dd2cbdc1}{L\-I\-V\-E\-S\-\_\-\-C\-H\-A\-R\-\_\-\-E\-N\-C\-O\-D\-I\-N\-G\-\_\-\-F\-I\-L\-E\-S\-Y\-S\-T\-E\-M}
+ \}
+\begin{DoxyCompactList}\small\item\em Character encoding types. \end{DoxyCompactList}\item 
+enum \hyperlink{liblives_8hpp_afc1c16ade7ad25b77f9e301e6091f7d8}{lives\-\_\-dialog\-\_\-response\-\_\-t} \{ \\*
+\hyperlink{liblives_8hpp_afc1c16ade7ad25b77f9e301e6091f7d8a76fcb1bed1f573f3f1c1280fbd92efbc}{L\-I\-V\-E\-S\-\_\-\-D\-I\-A\-L\-O\-G\-\_\-\-R\-E\-S\-P\-O\-N\-S\-E\-\_\-\-I\-N\-V\-A\-L\-I\-D} =-\/1, 
+\hyperlink{liblives_8hpp_afc1c16ade7ad25b77f9e301e6091f7d8aed84724cbe78eb8f58d45b8231f9faef}{L\-I\-V\-E\-S\-\_\-\-D\-I\-A\-L\-O\-G\-\_\-\-R\-E\-S\-P\-O\-N\-S\-E\-\_\-\-N\-O\-N\-E} =0, 
+\hyperlink{liblives_8hpp_afc1c16ade7ad25b77f9e301e6091f7d8a4988796fd3bbe88e65d98956dfe6bec9}{L\-I\-V\-E\-S\-\_\-\-D\-I\-A\-L\-O\-G\-\_\-\-R\-E\-S\-P\-O\-N\-S\-E\-\_\-\-O\-K}, 
+\hyperlink{liblives_8hpp_afc1c16ade7ad25b77f9e301e6091f7d8a398cecd2fdaa8dd2d883f71805c73965}{L\-I\-V\-E\-S\-\_\-\-D\-I\-A\-L\-O\-G\-\_\-\-R\-E\-S\-P\-O\-N\-S\-E\-\_\-\-R\-E\-T\-R\-Y}, 
+\\*
+\hyperlink{liblives_8hpp_afc1c16ade7ad25b77f9e301e6091f7d8a8b11d444d6a58dc09d8914b2db1a6d05}{L\-I\-V\-E\-S\-\_\-\-D\-I\-A\-L\-O\-G\-\_\-\-R\-E\-S\-P\-O\-N\-S\-E\-\_\-\-A\-B\-O\-R\-T}, 
+\hyperlink{liblives_8hpp_afc1c16ade7ad25b77f9e301e6091f7d8a08dd945409e704699aa6e0172bc8f586}{L\-I\-V\-E\-S\-\_\-\-D\-I\-A\-L\-O\-G\-\_\-\-R\-E\-S\-P\-O\-N\-S\-E\-\_\-\-R\-E\-S\-E\-T}, 
+\hyperlink{liblives_8hpp_afc1c16ade7ad25b77f9e301e6091f7d8adec8e758b76352f3569d11060f032652}{L\-I\-V\-E\-S\-\_\-\-D\-I\-A\-L\-O\-G\-\_\-\-R\-E\-S\-P\-O\-N\-S\-E\-\_\-\-S\-H\-O\-W\-\_\-\-D\-E\-T\-A\-I\-L\-S}, 
+\hyperlink{liblives_8hpp_afc1c16ade7ad25b77f9e301e6091f7d8aa34ae7cf0ed109914b797f536400a1b4}{L\-I\-V\-E\-S\-\_\-\-D\-I\-A\-L\-O\-G\-\_\-\-R\-E\-S\-P\-O\-N\-S\-E\-\_\-\-C\-A\-N\-C\-E\-L}, 
+\\*
+\hyperlink{liblives_8hpp_afc1c16ade7ad25b77f9e301e6091f7d8a6da2371c11d1ce0130e2a09f254388d7}{L\-I\-V\-E\-S\-\_\-\-D\-I\-A\-L\-O\-G\-\_\-\-R\-E\-S\-P\-O\-N\-S\-E\-\_\-\-A\-C\-C\-E\-P\-T}, 
+\hyperlink{liblives_8hpp_afc1c16ade7ad25b77f9e301e6091f7d8a72f0c6b053bd21413968b044a383b529}{L\-I\-V\-E\-S\-\_\-\-D\-I\-A\-L\-O\-G\-\_\-\-R\-E\-S\-P\-O\-N\-S\-E\-\_\-\-Y\-E\-S}, 
+\hyperlink{liblives_8hpp_afc1c16ade7ad25b77f9e301e6091f7d8a2d46de360b476292fcf4cce07d5fd8b2}{L\-I\-V\-E\-S\-\_\-\-D\-I\-A\-L\-O\-G\-\_\-\-R\-E\-S\-P\-O\-N\-S\-E\-\_\-\-N\-O}
+ \}
+\begin{DoxyCompactList}\small\item\em Dialog response values. \end{DoxyCompactList}\item 
+enum \hyperlink{liblives_8hpp_ad6a0fc86b58b6ddc9e37d7375107ca5e}{lives\-\_\-audio\-\_\-source\-\_\-t} \{ \hyperlink{liblives_8hpp_ad6a0fc86b58b6ddc9e37d7375107ca5ead8915f39e685f9823ce8d273068bdc1b}{L\-I\-V\-E\-S\-\_\-\-A\-U\-D\-I\-O\-\_\-\-S\-O\-U\-R\-C\-E\-\_\-\-U\-N\-K\-N\-O\-W\-N}, 
+\hyperlink{liblives_8hpp_ad6a0fc86b58b6ddc9e37d7375107ca5ea8f5251eec3e35d3c9bf1a7495ebcf665}{L\-I\-V\-E\-S\-\_\-\-A\-U\-D\-I\-O\-\_\-\-S\-O\-U\-R\-C\-E\-\_\-\-I\-N\-T\-E\-R\-N\-A\-L}, 
+\hyperlink{liblives_8hpp_ad6a0fc86b58b6ddc9e37d7375107ca5ea4c1d4029e00923fc143cbf2b3d45f9df}{L\-I\-V\-E\-S\-\_\-\-A\-U\-D\-I\-O\-\_\-\-S\-O\-U\-R\-C\-E\-\_\-\-E\-X\-T\-E\-R\-N\-A\-L}
+ \}
+\begin{DoxyCompactList}\small\item\em Audio sources. \end{DoxyCompactList}\item 
+enum \hyperlink{liblives_8hpp_a52acbff46461d04771fba866edd01139}{lives\-\_\-audio\-\_\-player\-\_\-t} \{ \\*
+\hyperlink{liblives_8hpp_a52acbff46461d04771fba866edd01139afda01f436829ba85f4db256c58e4299c}{L\-I\-V\-E\-S\-\_\-\-A\-U\-D\-I\-O\-\_\-\-P\-L\-A\-Y\-E\-R\-\_\-\-U\-N\-K\-N\-O\-W\-N}, 
+\hyperlink{liblives_8hpp_a52acbff46461d04771fba866edd01139aa1a28684ac7636622556e8944ccce04c}{L\-I\-V\-E\-S\-\_\-\-A\-U\-D\-I\-O\-\_\-\-P\-L\-A\-Y\-E\-R\-\_\-\-P\-U\-L\-S\-E}, 
+\hyperlink{liblives_8hpp_a52acbff46461d04771fba866edd01139a695f64df70b60ded3f9530b15c026a03}{L\-I\-V\-E\-S\-\_\-\-A\-U\-D\-I\-O\-\_\-\-P\-L\-A\-Y\-E\-R\-\_\-\-J\-A\-C\-K}, 
+\hyperlink{liblives_8hpp_a52acbff46461d04771fba866edd01139a17604c241c8ad79207e5750bd5c3e6ad}{L\-I\-V\-E\-S\-\_\-\-A\-U\-D\-I\-O\-\_\-\-P\-L\-A\-Y\-E\-R\-\_\-\-S\-O\-X}, 
+\\*
+\hyperlink{liblives_8hpp_a52acbff46461d04771fba866edd01139ad1c6c6b7cb654fd1c4ee4b9c9d2a3284}{L\-I\-V\-E\-S\-\_\-\-A\-U\-D\-I\-O\-\_\-\-P\-L\-A\-Y\-E\-R\-\_\-\-M\-P\-L\-A\-Y\-E\-R}, 
+\hyperlink{liblives_8hpp_a52acbff46461d04771fba866edd01139a251c0e4f2d1eae1093a3ca8e58fd640c}{L\-I\-V\-E\-S\-\_\-\-A\-U\-D\-I\-O\-\_\-\-P\-L\-A\-Y\-E\-R\-\_\-\-M\-P\-L\-A\-Y\-E\-R2}
+ \}
+\begin{DoxyCompactList}\small\item\em Audio players. \end{DoxyCompactList}\item 
+enum \hyperlink{liblives_8hpp_a38030320722a0ce9eabf23a05e313ac5}{lives\-\_\-insert\-\_\-mode\-\_\-t} \{ {\bfseries L\-I\-V\-E\-S\-\_\-\-I\-N\-S\-E\-R\-T\-\_\-\-M\-O\-D\-E\-\_\-\-N\-O\-R\-M\-A\-L}
+ \}
+\begin{DoxyCompactList}\small\item\em Multitrack insert modes. \end{DoxyCompactList}\item 
+enum \hyperlink{liblives_8hpp_a85e44abde9be7196c1da9fd5922b7558}{lives\-\_\-gravity\-\_\-t} \{ \hyperlink{liblives_8hpp_a85e44abde9be7196c1da9fd5922b7558acc91d8deb255b05eef9205677bab016a}{L\-I\-V\-E\-S\-\_\-\-G\-R\-A\-V\-I\-T\-Y\-\_\-\-N\-O\-R\-M\-A\-L}, 
+\hyperlink{liblives_8hpp_a85e44abde9be7196c1da9fd5922b7558a194ecf225670967dca8fb496055fbccd}{L\-I\-V\-E\-S\-\_\-\-G\-R\-A\-V\-I\-T\-Y\-\_\-\-L\-E\-F\-T}, 
+\hyperlink{liblives_8hpp_a85e44abde9be7196c1da9fd5922b7558a5ad71f9955b11c2a4250a25ae360a2e6}{L\-I\-V\-E\-S\-\_\-\-G\-R\-A\-V\-I\-T\-Y\-\_\-\-R\-I\-G\-H\-T}
+ \}
+\begin{DoxyCompactList}\small\item\em Multitrack gravity. \end{DoxyCompactList}\item 
+enum \hyperlink{liblives_8hpp_ac271a064408719bb65e09fb6e48040bd}{lives\-\_\-loop\-\_\-mode\-\_\-t} \{ \hyperlink{liblives_8hpp_ac271a064408719bb65e09fb6e48040bdae8c5903fadad5fc3c3f5f5a8ff078208}{L\-I\-V\-E\-S\-\_\-\-L\-O\-O\-P\-\_\-\-M\-O\-D\-E\-\_\-\-N\-O\-N\-E} =0, 
+\hyperlink{liblives_8hpp_ac271a064408719bb65e09fb6e48040bda6c58b2c4d0996bf77af4a96fbd49f22f}{L\-I\-V\-E\-S\-\_\-\-L\-O\-O\-P\-\_\-\-M\-O\-D\-E\-\_\-\-C\-O\-N\-T\-I\-N\-U\-O\-U\-S} =1, 
+\hyperlink{liblives_8hpp_ac271a064408719bb65e09fb6e48040bda53ec9dc2a02806094cacd11e530a2505}{L\-I\-V\-E\-S\-\_\-\-L\-O\-O\-P\-\_\-\-M\-O\-D\-E\-\_\-\-F\-I\-T\-\_\-\-A\-U\-D\-I\-O} =2
+ \}
+\begin{DoxyCompactList}\small\item\em Player looping modes (bitmap) \end{DoxyCompactList}\end{DoxyCompactItemize}
+\subsection*{Functions}
+\begin{DoxyCompactItemize}
+\item 
+lives\-String \hyperlink{namespacelives_1_1prefs_a8a5cb486bc86e992b76af3580c6bf181}{lives\-::prefs\-::current\-Video\-Load\-Dir} (const lives\-App \&lives)
+\item 
+lives\-String \hyperlink{namespacelives_1_1prefs_a42feaa9ad0c621aa8706a4658c6e7c48}{lives\-::prefs\-::current\-Audio\-Dir} (const lives\-App \&lives)
+\item 
+lives\-String \hyperlink{namespacelives_1_1prefs_aeb5550c8f3266f6d3bffeb40e8389d60}{lives\-::prefs\-::tmp\-Dir} (const lives\-App \&lives)
+\begin{DoxyCompactList}\small\item\em Despite the name, this is the working directory for the Li\-V\-E\-S application. \end{DoxyCompactList}\item 
+\hyperlink{liblives_8hpp_ad6a0fc86b58b6ddc9e37d7375107ca5e}{lives\-\_\-audio\-\_\-source\-\_\-t} \hyperlink{namespacelives_1_1prefs_a380b01381790ad43770e134d35980e35}{lives\-::prefs\-::audio\-Source} (const lives\-App \&lives)
+\item 
+bool \hyperlink{namespacelives_1_1prefs_a73bc9032d8864ddebb0e26a96839dfaa}{lives\-::prefs\-::set\-Audio\-Source} (const lives\-App \&lives, \hyperlink{liblives_8hpp_ad6a0fc86b58b6ddc9e37d7375107ca5e}{lives\-\_\-audio\-\_\-source\-\_\-t})
+\begin{DoxyCompactList}\small\item\em Set the audio source. \end{DoxyCompactList}\item 
+\hyperlink{liblives_8hpp_a52acbff46461d04771fba866edd01139}{lives\-\_\-audio\-\_\-player\-\_\-t} \hyperlink{namespacelives_1_1prefs_a4555839976526ff8e37135d098fafd50}{lives\-::prefs\-::audio\-Player} (const lives\-App \&lives)
+\item 
+int \hyperlink{namespacelives_1_1prefs_ae176785f5d16a4fa28dc9ebd7e3f80d5}{lives\-::prefs\-::audio\-Player\-Rate} (const lives\-App \&lives)
+\begin{DoxyCompactList}\small\item\em Returns the audio rate for the player. \end{DoxyCompactList}\item 
+bool \hyperlink{namespacelives_1_1prefs_a8c55d19e8559c9dec0d65a6ecf13206e}{lives\-::prefs\-::is\-Realtime\-Audio\-Player} (\hyperlink{liblives_8hpp_a52acbff46461d04771fba866edd01139}{lives\-\_\-audio\-\_\-player\-\_\-t})
+\item 
+int \hyperlink{namespacelives_1_1prefs_a7c4b71b02f07b43d032ed749406ebca3}{lives\-::prefs\-::rte\-Keys\-Virtual} (const lives\-App \&lives)
+\item 
+double \hyperlink{namespacelives_1_1prefs_ab9a8faf195a2de6d7cb83110bacad073}{lives\-::prefs\-::max\-F\-P\-S} (const lives\-App \&lives)
+\item 
+bool \hyperlink{namespacelives_1_1prefs_aea0e2ef16f2d3af5478a005923f0bcf5}{lives\-::prefs\-::audio\-Follows\-Video\-Clip\-Changes} (const lives\-App \&lives)
+\item 
+bool \hyperlink{namespacelives_1_1prefs_a60f9b6187ab68e0bfabf3bb6a613710e}{lives\-::prefs\-::audio\-Follows\-Video\-F\-P\-S\-Changes} (const lives\-App \&lives)
+\item 
+bool \hyperlink{namespacelives_1_1prefs_a75144d61799c556862c164761129c637}{lives\-::prefs\-::set\-Audio\-Follows\-Video\-F\-P\-S\-Changes} (const lives\-App \&lives, bool)
+\item 
+bool \hyperlink{namespacelives_1_1prefs_a5d3ce19bb1b262849103bfb65dcf2e88}{lives\-::prefs\-::set\-Audio\-Follows\-Video\-Clip\-Changes} (const lives\-App \&lives, bool)
+\item 
+bool \hyperlink{namespacelives_1_1prefs_af65cac20915b2cbdfbded62f649b4efd}{lives\-::prefs\-::sep\-Win\-Sticky} (const lives\-App \&lives)
+\item 
+bool \hyperlink{namespacelives_1_1prefs_a693a8c834571488713a338edca18cc66}{lives\-::prefs\-::set\-Sep\-Win\-Sticky} (const lives\-App \&lives, bool)
+\item 
+bool \hyperlink{namespacelives_1_1prefs_a47055c8f50d9191d66337e53eb447c9f}{lives\-::prefs\-::mt\-Exit\-Render} (const lives\-App \&lives)
+\item 
+bool \hyperlink{namespacelives_1_1prefs_a84b0f6b47b008696d236c06c4a277867}{lives\-::prefs\-::set\-Mt\-Exit\-Render} (const lives\-App \&lives, bool)
+\end{DoxyCompactItemize}
+
+
+\subsection{Detailed Description}
+Header file for liblives. 
+
+\subsection{Enumeration Type Documentation}
+\hypertarget{liblives_8hpp_a52acbff46461d04771fba866edd01139}{\index{liblives.\-hpp@{liblives.\-hpp}!lives\-\_\-audio\-\_\-player\-\_\-t@{lives\-\_\-audio\-\_\-player\-\_\-t}}
+\index{lives\-\_\-audio\-\_\-player\-\_\-t@{lives\-\_\-audio\-\_\-player\-\_\-t}!liblives.hpp@{liblives.\-hpp}}
+\subsubsection[{lives\-\_\-audio\-\_\-player\-\_\-t}]{\setlength{\rightskip}{0pt plus 5cm}enum {\bf lives\-\_\-audio\-\_\-player\-\_\-t}}}\label{liblives_8hpp_a52acbff46461d04771fba866edd01139}
+
+
+Audio players. 
+
+\begin{Desc}
+\item[Enumerator]\par
+\begin{description}
+\index{L\-I\-V\-E\-S\-\_\-\-A\-U\-D\-I\-O\-\_\-\-P\-L\-A\-Y\-E\-R\-\_\-\-U\-N\-K\-N\-O\-W\-N@{L\-I\-V\-E\-S\-\_\-\-A\-U\-D\-I\-O\-\_\-\-P\-L\-A\-Y\-E\-R\-\_\-\-U\-N\-K\-N\-O\-W\-N}!liblives.\-hpp@{liblives.\-hpp}}\index{liblives.\-hpp@{liblives.\-hpp}!L\-I\-V\-E\-S\-\_\-\-A\-U\-D\-I\-O\-\_\-\-P\-L\-A\-Y\-E\-R\-\_\-\-U\-N\-K\-N\-O\-W\-N@{L\-I\-V\-E\-S\-\_\-\-A\-U\-D\-I\-O\-\_\-\-P\-L\-A\-Y\-E\-R\-\_\-\-U\-N\-K\-N\-O\-W\-N}}\item[{\em 
+\hypertarget{liblives_8hpp_a52acbff46461d04771fba866edd01139afda01f436829ba85f4db256c58e4299c}{L\-I\-V\-E\-S\-\_\-\-A\-U\-D\-I\-O\-\_\-\-P\-L\-A\-Y\-E\-R\-\_\-\-U\-N\-K\-N\-O\-W\-N}\label{liblives_8hpp_a52acbff46461d04771fba866edd01139afda01f436829ba85f4db256c58e4299c}
+}]Unknown / invalid. \index{L\-I\-V\-E\-S\-\_\-\-A\-U\-D\-I\-O\-\_\-\-P\-L\-A\-Y\-E\-R\-\_\-\-P\-U\-L\-S\-E@{L\-I\-V\-E\-S\-\_\-\-A\-U\-D\-I\-O\-\_\-\-P\-L\-A\-Y\-E\-R\-\_\-\-P\-U\-L\-S\-E}!liblives.\-hpp@{liblives.\-hpp}}\index{liblives.\-hpp@{liblives.\-hpp}!L\-I\-V\-E\-S\-\_\-\-A\-U\-D\-I\-O\-\_\-\-P\-L\-A\-Y\-E\-R\-\_\-\-P\-U\-L\-S\-E@{L\-I\-V\-E\-S\-\_\-\-A\-U\-D\-I\-O\-\_\-\-P\-L\-A\-Y\-E\-R\-\_\-\-P\-U\-L\-S\-E}}\item[{\em 
+\hypertarget{liblives_8hpp_a52acbff46461d04771fba866edd01139aa1a28684ac7636622556e8944ccce04c}{L\-I\-V\-E\-S\-\_\-\-A\-U\-D\-I\-O\-\_\-\-P\-L\-A\-Y\-E\-R\-\_\-\-P\-U\-L\-S\-E}\label{liblives_8hpp_a52acbff46461d04771fba866edd01139aa1a28684ac7636622556e8944ccce04c}
+}]Audio playback is through Pulse\-Audio. \index{L\-I\-V\-E\-S\-\_\-\-A\-U\-D\-I\-O\-\_\-\-P\-L\-A\-Y\-E\-R\-\_\-\-J\-A\-C\-K@{L\-I\-V\-E\-S\-\_\-\-A\-U\-D\-I\-O\-\_\-\-P\-L\-A\-Y\-E\-R\-\_\-\-J\-A\-C\-K}!liblives.\-hpp@{liblives.\-hpp}}\index{liblives.\-hpp@{liblives.\-hpp}!L\-I\-V\-E\-S\-\_\-\-A\-U\-D\-I\-O\-\_\-\-P\-L\-A\-Y\-E\-R\-\_\-\-J\-A\-C\-K@{L\-I\-V\-E\-S\-\_\-\-A\-U\-D\-I\-O\-\_\-\-P\-L\-A\-Y\-E\-R\-\_\-\-J\-A\-C\-K}}\item[{\em 
+\hypertarget{liblives_8hpp_a52acbff46461d04771fba866edd01139a695f64df70b60ded3f9530b15c026a03}{L\-I\-V\-E\-S\-\_\-\-A\-U\-D\-I\-O\-\_\-\-P\-L\-A\-Y\-E\-R\-\_\-\-J\-A\-C\-K}\label{liblives_8hpp_a52acbff46461d04771fba866edd01139a695f64df70b60ded3f9530b15c026a03}
+}]Audio playback is thorugh Jack. \index{L\-I\-V\-E\-S\-\_\-\-A\-U\-D\-I\-O\-\_\-\-P\-L\-A\-Y\-E\-R\-\_\-\-S\-O\-X@{L\-I\-V\-E\-S\-\_\-\-A\-U\-D\-I\-O\-\_\-\-P\-L\-A\-Y\-E\-R\-\_\-\-S\-O\-X}!liblives.\-hpp@{liblives.\-hpp}}\index{liblives.\-hpp@{liblives.\-hpp}!L\-I\-V\-E\-S\-\_\-\-A\-U\-D\-I\-O\-\_\-\-P\-L\-A\-Y\-E\-R\-\_\-\-S\-O\-X@{L\-I\-V\-E\-S\-\_\-\-A\-U\-D\-I\-O\-\_\-\-P\-L\-A\-Y\-E\-R\-\_\-\-S\-O\-X}}\item[{\em 
+\hypertarget{liblives_8hpp_a52acbff46461d04771fba866edd01139a17604c241c8ad79207e5750bd5c3e6ad}{L\-I\-V\-E\-S\-\_\-\-A\-U\-D\-I\-O\-\_\-\-P\-L\-A\-Y\-E\-R\-\_\-\-S\-O\-X}\label{liblives_8hpp_a52acbff46461d04771fba866edd01139a17604c241c8ad79207e5750bd5c3e6ad}
+}]Audio playback is through Sox. \index{L\-I\-V\-E\-S\-\_\-\-A\-U\-D\-I\-O\-\_\-\-P\-L\-A\-Y\-E\-R\-\_\-\-M\-P\-L\-A\-Y\-E\-R@{L\-I\-V\-E\-S\-\_\-\-A\-U\-D\-I\-O\-\_\-\-P\-L\-A\-Y\-E\-R\-\_\-\-M\-P\-L\-A\-Y\-E\-R}!liblives.\-hpp@{liblives.\-hpp}}\index{liblives.\-hpp@{liblives.\-hpp}!L\-I\-V\-E\-S\-\_\-\-A\-U\-D\-I\-O\-\_\-\-P\-L\-A\-Y\-E\-R\-\_\-\-M\-P\-L\-A\-Y\-E\-R@{L\-I\-V\-E\-S\-\_\-\-A\-U\-D\-I\-O\-\_\-\-P\-L\-A\-Y\-E\-R\-\_\-\-M\-P\-L\-A\-Y\-E\-R}}\item[{\em 
+\hypertarget{liblives_8hpp_a52acbff46461d04771fba866edd01139ad1c6c6b7cb654fd1c4ee4b9c9d2a3284}{L\-I\-V\-E\-S\-\_\-\-A\-U\-D\-I\-O\-\_\-\-P\-L\-A\-Y\-E\-R\-\_\-\-M\-P\-L\-A\-Y\-E\-R}\label{liblives_8hpp_a52acbff46461d04771fba866edd01139ad1c6c6b7cb654fd1c4ee4b9c9d2a3284}
+}]Audio playback is through mplayer. \index{L\-I\-V\-E\-S\-\_\-\-A\-U\-D\-I\-O\-\_\-\-P\-L\-A\-Y\-E\-R\-\_\-\-M\-P\-L\-A\-Y\-E\-R2@{L\-I\-V\-E\-S\-\_\-\-A\-U\-D\-I\-O\-\_\-\-P\-L\-A\-Y\-E\-R\-\_\-\-M\-P\-L\-A\-Y\-E\-R2}!liblives.\-hpp@{liblives.\-hpp}}\index{liblives.\-hpp@{liblives.\-hpp}!L\-I\-V\-E\-S\-\_\-\-A\-U\-D\-I\-O\-\_\-\-P\-L\-A\-Y\-E\-R\-\_\-\-M\-P\-L\-A\-Y\-E\-R2@{L\-I\-V\-E\-S\-\_\-\-A\-U\-D\-I\-O\-\_\-\-P\-L\-A\-Y\-E\-R\-\_\-\-M\-P\-L\-A\-Y\-E\-R2}}\item[{\em 
+\hypertarget{liblives_8hpp_a52acbff46461d04771fba866edd01139a251c0e4f2d1eae1093a3ca8e58fd640c}{L\-I\-V\-E\-S\-\_\-\-A\-U\-D\-I\-O\-\_\-\-P\-L\-A\-Y\-E\-R\-\_\-\-M\-P\-L\-A\-Y\-E\-R2}\label{liblives_8hpp_a52acbff46461d04771fba866edd01139a251c0e4f2d1eae1093a3ca8e58fd640c}
+}]Audio playback is through mplayer2. \end{description}
+\end{Desc}
+\hypertarget{liblives_8hpp_ad6a0fc86b58b6ddc9e37d7375107ca5e}{\index{liblives.\-hpp@{liblives.\-hpp}!lives\-\_\-audio\-\_\-source\-\_\-t@{lives\-\_\-audio\-\_\-source\-\_\-t}}
+\index{lives\-\_\-audio\-\_\-source\-\_\-t@{lives\-\_\-audio\-\_\-source\-\_\-t}!liblives.hpp@{liblives.\-hpp}}
+\subsubsection[{lives\-\_\-audio\-\_\-source\-\_\-t}]{\setlength{\rightskip}{0pt plus 5cm}enum {\bf lives\-\_\-audio\-\_\-source\-\_\-t}}}\label{liblives_8hpp_ad6a0fc86b58b6ddc9e37d7375107ca5e}
+
+
+Audio sources. 
+
+\begin{Desc}
+\item[Enumerator]\par
+\begin{description}
+\index{L\-I\-V\-E\-S\-\_\-\-A\-U\-D\-I\-O\-\_\-\-S\-O\-U\-R\-C\-E\-\_\-\-U\-N\-K\-N\-O\-W\-N@{L\-I\-V\-E\-S\-\_\-\-A\-U\-D\-I\-O\-\_\-\-S\-O\-U\-R\-C\-E\-\_\-\-U\-N\-K\-N\-O\-W\-N}!liblives.\-hpp@{liblives.\-hpp}}\index{liblives.\-hpp@{liblives.\-hpp}!L\-I\-V\-E\-S\-\_\-\-A\-U\-D\-I\-O\-\_\-\-S\-O\-U\-R\-C\-E\-\_\-\-U\-N\-K\-N\-O\-W\-N@{L\-I\-V\-E\-S\-\_\-\-A\-U\-D\-I\-O\-\_\-\-S\-O\-U\-R\-C\-E\-\_\-\-U\-N\-K\-N\-O\-W\-N}}\item[{\em 
+\hypertarget{liblives_8hpp_ad6a0fc86b58b6ddc9e37d7375107ca5ead8915f39e685f9823ce8d273068bdc1b}{L\-I\-V\-E\-S\-\_\-\-A\-U\-D\-I\-O\-\_\-\-S\-O\-U\-R\-C\-E\-\_\-\-U\-N\-K\-N\-O\-W\-N}\label{liblives_8hpp_ad6a0fc86b58b6ddc9e37d7375107ca5ead8915f39e685f9823ce8d273068bdc1b}
+}]Unknown / invalid. \index{L\-I\-V\-E\-S\-\_\-\-A\-U\-D\-I\-O\-\_\-\-S\-O\-U\-R\-C\-E\-\_\-\-I\-N\-T\-E\-R\-N\-A\-L@{L\-I\-V\-E\-S\-\_\-\-A\-U\-D\-I\-O\-\_\-\-S\-O\-U\-R\-C\-E\-\_\-\-I\-N\-T\-E\-R\-N\-A\-L}!liblives.\-hpp@{liblives.\-hpp}}\index{liblives.\-hpp@{liblives.\-hpp}!L\-I\-V\-E\-S\-\_\-\-A\-U\-D\-I\-O\-\_\-\-S\-O\-U\-R\-C\-E\-\_\-\-I\-N\-T\-E\-R\-N\-A\-L@{L\-I\-V\-E\-S\-\_\-\-A\-U\-D\-I\-O\-\_\-\-S\-O\-U\-R\-C\-E\-\_\-\-I\-N\-T\-E\-R\-N\-A\-L}}\item[{\em 
+\hypertarget{liblives_8hpp_ad6a0fc86b58b6ddc9e37d7375107ca5ea8f5251eec3e35d3c9bf1a7495ebcf665}{L\-I\-V\-E\-S\-\_\-\-A\-U\-D\-I\-O\-\_\-\-S\-O\-U\-R\-C\-E\-\_\-\-I\-N\-T\-E\-R\-N\-A\-L}\label{liblives_8hpp_ad6a0fc86b58b6ddc9e37d7375107ca5ea8f5251eec3e35d3c9bf1a7495ebcf665}
+}]Audio source is internal to Li\-V\-E\-S. \index{L\-I\-V\-E\-S\-\_\-\-A\-U\-D\-I\-O\-\_\-\-S\-O\-U\-R\-C\-E\-\_\-\-E\-X\-T\-E\-R\-N\-A\-L@{L\-I\-V\-E\-S\-\_\-\-A\-U\-D\-I\-O\-\_\-\-S\-O\-U\-R\-C\-E\-\_\-\-E\-X\-T\-E\-R\-N\-A\-L}!liblives.\-hpp@{liblives.\-hpp}}\index{liblives.\-hpp@{liblives.\-hpp}!L\-I\-V\-E\-S\-\_\-\-A\-U\-D\-I\-O\-\_\-\-S\-O\-U\-R\-C\-E\-\_\-\-E\-X\-T\-E\-R\-N\-A\-L@{L\-I\-V\-E\-S\-\_\-\-A\-U\-D\-I\-O\-\_\-\-S\-O\-U\-R\-C\-E\-\_\-\-E\-X\-T\-E\-R\-N\-A\-L}}\item[{\em 
+\hypertarget{liblives_8hpp_ad6a0fc86b58b6ddc9e37d7375107ca5ea4c1d4029e00923fc143cbf2b3d45f9df}{L\-I\-V\-E\-S\-\_\-\-A\-U\-D\-I\-O\-\_\-\-S\-O\-U\-R\-C\-E\-\_\-\-E\-X\-T\-E\-R\-N\-A\-L}\label{liblives_8hpp_ad6a0fc86b58b6ddc9e37d7375107ca5ea4c1d4029e00923fc143cbf2b3d45f9df}
+}]Audio source is external to Li\-V\-E\-S. \end{description}
+\end{Desc}
+\hypertarget{liblives_8hpp_a61f9a031360f0a0280151f44695c2519}{\index{liblives.\-hpp@{liblives.\-hpp}!lives\-\_\-callback\-\_\-t@{lives\-\_\-callback\-\_\-t}}
+\index{lives\-\_\-callback\-\_\-t@{lives\-\_\-callback\-\_\-t}!liblives.hpp@{liblives.\-hpp}}
+\subsubsection[{lives\-\_\-callback\-\_\-t}]{\setlength{\rightskip}{0pt plus 5cm}enum {\bf lives\-\_\-callback\-\_\-t}}}\label{liblives_8hpp_a61f9a031360f0a0280151f44695c2519}
+
+
+Callback types. 
+
+\begin{Desc}
+\item[Enumerator]\par
+\begin{description}
+\index{L\-I\-V\-E\-S\-\_\-\-C\-A\-L\-L\-B\-A\-C\-K\-\_\-\-F\-R\-A\-M\-E\-\_\-\-S\-Y\-N\-C\-H@{L\-I\-V\-E\-S\-\_\-\-C\-A\-L\-L\-B\-A\-C\-K\-\_\-\-F\-R\-A\-M\-E\-\_\-\-S\-Y\-N\-C\-H}!liblives.\-hpp@{liblives.\-hpp}}\index{liblives.\-hpp@{liblives.\-hpp}!L\-I\-V\-E\-S\-\_\-\-C\-A\-L\-L\-B\-A\-C\-K\-\_\-\-F\-R\-A\-M\-E\-\_\-\-S\-Y\-N\-C\-H@{L\-I\-V\-E\-S\-\_\-\-C\-A\-L\-L\-B\-A\-C\-K\-\_\-\-F\-R\-A\-M\-E\-\_\-\-S\-Y\-N\-C\-H}}\item[{\em 
+\hypertarget{liblives_8hpp_a61f9a031360f0a0280151f44695c2519a39119bba5c1abe821d0c15a063bb3c25}{L\-I\-V\-E\-S\-\_\-\-C\-A\-L\-L\-B\-A\-C\-K\-\_\-\-F\-R\-A\-M\-E\-\_\-\-S\-Y\-N\-C\-H}\label{liblives_8hpp_a61f9a031360f0a0280151f44695c2519a39119bba5c1abe821d0c15a063bb3c25}
+}]sent when a frame is displayed \index{L\-I\-V\-E\-S\-\_\-\-C\-A\-L\-L\-B\-A\-C\-K\-\_\-\-P\-L\-A\-Y\-B\-A\-C\-K\-\_\-\-S\-T\-A\-R\-T\-E\-D@{L\-I\-V\-E\-S\-\_\-\-C\-A\-L\-L\-B\-A\-C\-K\-\_\-\-P\-L\-A\-Y\-B\-A\-C\-K\-\_\-\-S\-T\-A\-R\-T\-E\-D}!liblives.\-hpp@{liblives.\-hpp}}\index{liblives.\-hpp@{liblives.\-hpp}!L\-I\-V\-E\-S\-\_\-\-C\-A\-L\-L\-B\-A\-C\-K\-\_\-\-P\-L\-A\-Y\-B\-A\-C\-K\-\_\-\-S\-T\-A\-R\-T\-E\-D@{L\-I\-V\-E\-S\-\_\-\-C\-A\-L\-L\-B\-A\-C\-K\-\_\-\-P\-L\-A\-Y\-B\-A\-C\-K\-\_\-\-S\-T\-A\-R\-T\-E\-D}}\item[{\em 
+\hypertarget{liblives_8hpp_a61f9a031360f0a0280151f44695c2519aa9aa272400aad9726f10b59121f0cd54}{L\-I\-V\-E\-S\-\_\-\-C\-A\-L\-L\-B\-A\-C\-K\-\_\-\-P\-L\-A\-Y\-B\-A\-C\-K\-\_\-\-S\-T\-A\-R\-T\-E\-D}\label{liblives_8hpp_a61f9a031360f0a0280151f44695c2519aa9aa272400aad9726f10b59121f0cd54}
+}]sent when a/v playback starts or clip is switched \index{L\-I\-V\-E\-S\-\_\-\-C\-A\-L\-L\-B\-A\-C\-K\-\_\-\-P\-L\-A\-Y\-B\-A\-C\-K\-\_\-\-S\-T\-O\-P\-P\-E\-D@{L\-I\-V\-E\-S\-\_\-\-C\-A\-L\-L\-B\-A\-C\-K\-\_\-\-P\-L\-A\-Y\-B\-A\-C\-K\-\_\-\-S\-T\-O\-P\-P\-E\-D}!liblives.\-hpp@{liblives.\-hpp}}\index{liblives.\-hpp@{liblives.\-hpp}!L\-I\-V\-E\-S\-\_\-\-C\-A\-L\-L\-B\-A\-C\-K\-\_\-\-P\-L\-A\-Y\-B\-A\-C\-K\-\_\-\-S\-T\-O\-P\-P\-E\-D@{L\-I\-V\-E\-S\-\_\-\-C\-A\-L\-L\-B\-A\-C\-K\-\_\-\-P\-L\-A\-Y\-B\-A\-C\-K\-\_\-\-S\-T\-O\-P\-P\-E\-D}}\item[{\em 
+\hypertarget{liblives_8hpp_a61f9a031360f0a0280151f44695c2519af7d769fe5a802de7e56f9c14ad5f0c5a}{L\-I\-V\-E\-S\-\_\-\-C\-A\-L\-L\-B\-A\-C\-K\-\_\-\-P\-L\-A\-Y\-B\-A\-C\-K\-\_\-\-S\-T\-O\-P\-P\-E\-D}\label{liblives_8hpp_a61f9a031360f0a0280151f44695c2519af7d769fe5a802de7e56f9c14ad5f0c5a}
+}]sent when a/v playback ends \index{L\-I\-V\-E\-S\-\_\-\-C\-A\-L\-L\-B\-A\-C\-K\-\_\-\-P\-L\-A\-Y\-B\-A\-C\-K\-\_\-\-S\-T\-O\-P\-P\-E\-D\-\_\-\-R\-D@{L\-I\-V\-E\-S\-\_\-\-C\-A\-L\-L\-B\-A\-C\-K\-\_\-\-P\-L\-A\-Y\-B\-A\-C\-K\-\_\-\-S\-T\-O\-P\-P\-E\-D\-\_\-\-R\-D}!liblives.\-hpp@{liblives.\-hpp}}\index{liblives.\-hpp@{liblives.\-hpp}!L\-I\-V\-E\-S\-\_\-\-C\-A\-L\-L\-B\-A\-C\-K\-\_\-\-P\-L\-A\-Y\-B\-A\-C\-K\-\_\-\-S\-T\-O\-P\-P\-E\-D\-\_\-\-R\-D@{L\-I\-V\-E\-S\-\_\-\-C\-A\-L\-L\-B\-A\-C\-K\-\_\-\-P\-L\-A\-Y\-B\-A\-C\-K\-\_\-\-S\-T\-O\-P\-P\-E\-D\-\_\-\-R\-D}}\item[{\em 
+\hypertarget{liblives_8hpp_a61f9a031360f0a0280151f44695c2519ac7d1eb87307c66940a8acc86c4f65dd7}{L\-I\-V\-E\-S\-\_\-\-C\-A\-L\-L\-B\-A\-C\-K\-\_\-\-P\-L\-A\-Y\-B\-A\-C\-K\-\_\-\-S\-T\-O\-P\-P\-E\-D\-\_\-\-R\-D}\label{liblives_8hpp_a61f9a031360f0a0280151f44695c2519ac7d1eb87307c66940a8acc86c4f65dd7}
+}]sent when a/v playback ends and there is recorded data for rendering/previewing \index{L\-I\-V\-E\-S\-\_\-\-C\-A\-L\-L\-B\-A\-C\-K\-\_\-\-R\-E\-C\-O\-R\-D\-\_\-\-S\-T\-A\-R\-T\-E\-D@{L\-I\-V\-E\-S\-\_\-\-C\-A\-L\-L\-B\-A\-C\-K\-\_\-\-R\-E\-C\-O\-R\-D\-\_\-\-S\-T\-A\-R\-T\-E\-D}!liblives.\-hpp@{liblives.\-hpp}}\index{liblives.\-hpp@{liblives.\-hpp}!L\-I\-V\-E\-S\-\_\-\-C\-A\-L\-L\-B\-A\-C\-K\-\_\-\-R\-E\-C\-O\-R\-D\-\_\-\-S\-T\-A\-R\-T\-E\-D@{L\-I\-V\-E\-S\-\_\-\-C\-A\-L\-L\-B\-A\-C\-K\-\_\-\-R\-E\-C\-O\-R\-D\-\_\-\-S\-T\-A\-R\-T\-E\-D}}\item[{\em 
+\hypertarget{liblives_8hpp_a61f9a031360f0a0280151f44695c2519a39355f3c32b44630dedd3a2d53c4d86e}{L\-I\-V\-E\-S\-\_\-\-C\-A\-L\-L\-B\-A\-C\-K\-\_\-\-R\-E\-C\-O\-R\-D\-\_\-\-S\-T\-A\-R\-T\-E\-D}\label{liblives_8hpp_a61f9a031360f0a0280151f44695c2519a39355f3c32b44630dedd3a2d53c4d86e}
+}]sent when record starts (T\-O\-D\-O) \index{L\-I\-V\-E\-S\-\_\-\-C\-A\-L\-L\-B\-A\-C\-K\-\_\-\-R\-E\-C\-O\-R\-D\-\_\-\-S\-T\-O\-P\-P\-E\-D@{L\-I\-V\-E\-S\-\_\-\-C\-A\-L\-L\-B\-A\-C\-K\-\_\-\-R\-E\-C\-O\-R\-D\-\_\-\-S\-T\-O\-P\-P\-E\-D}!liblives.\-hpp@{liblives.\-hpp}}\index{liblives.\-hpp@{liblives.\-hpp}!L\-I\-V\-E\-S\-\_\-\-C\-A\-L\-L\-B\-A\-C\-K\-\_\-\-R\-E\-C\-O\-R\-D\-\_\-\-S\-T\-O\-P\-P\-E\-D@{L\-I\-V\-E\-S\-\_\-\-C\-A\-L\-L\-B\-A\-C\-K\-\_\-\-R\-E\-C\-O\-R\-D\-\_\-\-S\-T\-O\-P\-P\-E\-D}}\item[{\em 
+\hypertarget{liblives_8hpp_a61f9a031360f0a0280151f44695c2519a9540f9938b6b156805555fb59940b720}{L\-I\-V\-E\-S\-\_\-\-C\-A\-L\-L\-B\-A\-C\-K\-\_\-\-R\-E\-C\-O\-R\-D\-\_\-\-S\-T\-O\-P\-P\-E\-D}\label{liblives_8hpp_a61f9a031360f0a0280151f44695c2519a9540f9938b6b156805555fb59940b720}
+}]sent when record stops (T\-O\-D\-O) \index{L\-I\-V\-E\-S\-\_\-\-C\-A\-L\-L\-B\-A\-C\-K\-\_\-\-A\-P\-P\-\_\-\-Q\-U\-I\-T@{L\-I\-V\-E\-S\-\_\-\-C\-A\-L\-L\-B\-A\-C\-K\-\_\-\-A\-P\-P\-\_\-\-Q\-U\-I\-T}!liblives.\-hpp@{liblives.\-hpp}}\index{liblives.\-hpp@{liblives.\-hpp}!L\-I\-V\-E\-S\-\_\-\-C\-A\-L\-L\-B\-A\-C\-K\-\_\-\-A\-P\-P\-\_\-\-Q\-U\-I\-T@{L\-I\-V\-E\-S\-\_\-\-C\-A\-L\-L\-B\-A\-C\-K\-\_\-\-A\-P\-P\-\_\-\-Q\-U\-I\-T}}\item[{\em 
+\hypertarget{liblives_8hpp_a61f9a031360f0a0280151f44695c2519a0a2bd8765b9404d4e01a1567b3e9a5ec}{L\-I\-V\-E\-S\-\_\-\-C\-A\-L\-L\-B\-A\-C\-K\-\_\-\-A\-P\-P\-\_\-\-Q\-U\-I\-T}\label{liblives_8hpp_a61f9a031360f0a0280151f44695c2519a0a2bd8765b9404d4e01a1567b3e9a5ec}
+}]sent when app quits \index{L\-I\-V\-E\-S\-\_\-\-C\-A\-L\-L\-B\-A\-C\-K\-\_\-\-C\-L\-I\-P\-\_\-\-O\-P\-E\-N\-E\-D@{L\-I\-V\-E\-S\-\_\-\-C\-A\-L\-L\-B\-A\-C\-K\-\_\-\-C\-L\-I\-P\-\_\-\-O\-P\-E\-N\-E\-D}!liblives.\-hpp@{liblives.\-hpp}}\index{liblives.\-hpp@{liblives.\-hpp}!L\-I\-V\-E\-S\-\_\-\-C\-A\-L\-L\-B\-A\-C\-K\-\_\-\-C\-L\-I\-P\-\_\-\-O\-P\-E\-N\-E\-D@{L\-I\-V\-E\-S\-\_\-\-C\-A\-L\-L\-B\-A\-C\-K\-\_\-\-C\-L\-I\-P\-\_\-\-O\-P\-E\-N\-E\-D}}\item[{\em 
+\hypertarget{liblives_8hpp_a61f9a031360f0a0280151f44695c2519a73c50d6584c7eb382c2569349820602a}{L\-I\-V\-E\-S\-\_\-\-C\-A\-L\-L\-B\-A\-C\-K\-\_\-\-C\-L\-I\-P\-\_\-\-O\-P\-E\-N\-E\-D}\label{liblives_8hpp_a61f9a031360f0a0280151f44695c2519a73c50d6584c7eb382c2569349820602a}
+}]sent after a clip is opened \index{L\-I\-V\-E\-S\-\_\-\-C\-A\-L\-L\-B\-A\-C\-K\-\_\-\-C\-L\-I\-P\-\_\-\-C\-L\-O\-S\-E\-D@{L\-I\-V\-E\-S\-\_\-\-C\-A\-L\-L\-B\-A\-C\-K\-\_\-\-C\-L\-I\-P\-\_\-\-C\-L\-O\-S\-E\-D}!liblives.\-hpp@{liblives.\-hpp}}\index{liblives.\-hpp@{liblives.\-hpp}!L\-I\-V\-E\-S\-\_\-\-C\-A\-L\-L\-B\-A\-C\-K\-\_\-\-C\-L\-I\-P\-\_\-\-C\-L\-O\-S\-E\-D@{L\-I\-V\-E\-S\-\_\-\-C\-A\-L\-L\-B\-A\-C\-K\-\_\-\-C\-L\-I\-P\-\_\-\-C\-L\-O\-S\-E\-D}}\item[{\em 
+\hypertarget{liblives_8hpp_a61f9a031360f0a0280151f44695c2519a048dcb33acc26b5d7343f841aea4dcc6}{L\-I\-V\-E\-S\-\_\-\-C\-A\-L\-L\-B\-A\-C\-K\-\_\-\-C\-L\-I\-P\-\_\-\-C\-L\-O\-S\-E\-D}\label{liblives_8hpp_a61f9a031360f0a0280151f44695c2519a048dcb33acc26b5d7343f841aea4dcc6}
+}]sent after a clip is closed \index{L\-I\-V\-E\-S\-\_\-\-C\-A\-L\-L\-B\-A\-C\-K\-\_\-\-C\-L\-I\-P\-S\-E\-T\-\_\-\-O\-P\-E\-N\-E\-D@{L\-I\-V\-E\-S\-\_\-\-C\-A\-L\-L\-B\-A\-C\-K\-\_\-\-C\-L\-I\-P\-S\-E\-T\-\_\-\-O\-P\-E\-N\-E\-D}!liblives.\-hpp@{liblives.\-hpp}}\index{liblives.\-hpp@{liblives.\-hpp}!L\-I\-V\-E\-S\-\_\-\-C\-A\-L\-L\-B\-A\-C\-K\-\_\-\-C\-L\-I\-P\-S\-E\-T\-\_\-\-O\-P\-E\-N\-E\-D@{L\-I\-V\-E\-S\-\_\-\-C\-A\-L\-L\-B\-A\-C\-K\-\_\-\-C\-L\-I\-P\-S\-E\-T\-\_\-\-O\-P\-E\-N\-E\-D}}\item[{\em 
+\hypertarget{liblives_8hpp_a61f9a031360f0a0280151f44695c2519a4ec59342af63d7d04ac91e962ff328d6}{L\-I\-V\-E\-S\-\_\-\-C\-A\-L\-L\-B\-A\-C\-K\-\_\-\-C\-L\-I\-P\-S\-E\-T\-\_\-\-O\-P\-E\-N\-E\-D}\label{liblives_8hpp_a61f9a031360f0a0280151f44695c2519a4ec59342af63d7d04ac91e962ff328d6}
+}]sent after a clip set is opened \index{L\-I\-V\-E\-S\-\_\-\-C\-A\-L\-L\-B\-A\-C\-K\-\_\-\-C\-L\-I\-P\-S\-E\-T\-\_\-\-S\-A\-V\-E\-D@{L\-I\-V\-E\-S\-\_\-\-C\-A\-L\-L\-B\-A\-C\-K\-\_\-\-C\-L\-I\-P\-S\-E\-T\-\_\-\-S\-A\-V\-E\-D}!liblives.\-hpp@{liblives.\-hpp}}\index{liblives.\-hpp@{liblives.\-hpp}!L\-I\-V\-E\-S\-\_\-\-C\-A\-L\-L\-B\-A\-C\-K\-\_\-\-C\-L\-I\-P\-S\-E\-T\-\_\-\-S\-A\-V\-E\-D@{L\-I\-V\-E\-S\-\_\-\-C\-A\-L\-L\-B\-A\-C\-K\-\_\-\-C\-L\-I\-P\-S\-E\-T\-\_\-\-S\-A\-V\-E\-D}}\item[{\em 
+\hypertarget{liblives_8hpp_a61f9a031360f0a0280151f44695c2519a6d6c361d9994f9e311d54f58b0a0b362}{L\-I\-V\-E\-S\-\_\-\-C\-A\-L\-L\-B\-A\-C\-K\-\_\-\-C\-L\-I\-P\-S\-E\-T\-\_\-\-S\-A\-V\-E\-D}\label{liblives_8hpp_a61f9a031360f0a0280151f44695c2519a6d6c361d9994f9e311d54f58b0a0b362}
+}]sent after a clip set is closed \index{L\-I\-V\-E\-S\-\_\-\-C\-A\-L\-L\-B\-A\-C\-K\-\_\-\-M\-O\-D\-E\-\_\-\-C\-H\-A\-N\-G\-E\-D@{L\-I\-V\-E\-S\-\_\-\-C\-A\-L\-L\-B\-A\-C\-K\-\_\-\-M\-O\-D\-E\-\_\-\-C\-H\-A\-N\-G\-E\-D}!liblives.\-hpp@{liblives.\-hpp}}\index{liblives.\-hpp@{liblives.\-hpp}!L\-I\-V\-E\-S\-\_\-\-C\-A\-L\-L\-B\-A\-C\-K\-\_\-\-M\-O\-D\-E\-\_\-\-C\-H\-A\-N\-G\-E\-D@{L\-I\-V\-E\-S\-\_\-\-C\-A\-L\-L\-B\-A\-C\-K\-\_\-\-M\-O\-D\-E\-\_\-\-C\-H\-A\-N\-G\-E\-D}}\item[{\em 
+\hypertarget{liblives_8hpp_a61f9a031360f0a0280151f44695c2519add31b9d6425736ea9dab6c057327ad48}{L\-I\-V\-E\-S\-\_\-\-C\-A\-L\-L\-B\-A\-C\-K\-\_\-\-M\-O\-D\-E\-\_\-\-C\-H\-A\-N\-G\-E\-D}\label{liblives_8hpp_a61f9a031360f0a0280151f44695c2519add31b9d6425736ea9dab6c057327ad48}
+}]sent when interface mode changes \index{L\-I\-V\-E\-S\-\_\-\-C\-A\-L\-L\-B\-A\-C\-K\-\_\-\-O\-B\-J\-E\-C\-T\-\_\-\-D\-E\-S\-T\-R\-O\-Y\-E\-D@{L\-I\-V\-E\-S\-\_\-\-C\-A\-L\-L\-B\-A\-C\-K\-\_\-\-O\-B\-J\-E\-C\-T\-\_\-\-D\-E\-S\-T\-R\-O\-Y\-E\-D}!liblives.\-hpp@{liblives.\-hpp}}\index{liblives.\-hpp@{liblives.\-hpp}!L\-I\-V\-E\-S\-\_\-\-C\-A\-L\-L\-B\-A\-C\-K\-\_\-\-O\-B\-J\-E\-C\-T\-\_\-\-D\-E\-S\-T\-R\-O\-Y\-E\-D@{L\-I\-V\-E\-S\-\_\-\-C\-A\-L\-L\-B\-A\-C\-K\-\_\-\-O\-B\-J\-E\-C\-T\-\_\-\-D\-E\-S\-T\-R\-O\-Y\-E\-D}}\item[{\em 
+\hypertarget{liblives_8hpp_a61f9a031360f0a0280151f44695c2519ae341e96064358748bb98867aeb8a9c5c}{L\-I\-V\-E\-S\-\_\-\-C\-A\-L\-L\-B\-A\-C\-K\-\_\-\-O\-B\-J\-E\-C\-T\-\_\-\-D\-E\-S\-T\-R\-O\-Y\-E\-D}\label{liblives_8hpp_a61f9a031360f0a0280151f44695c2519ae341e96064358748bb98867aeb8a9c5c}
+}]sent when lives\-App object is deleted \end{description}
+\end{Desc}
+\hypertarget{liblives_8hpp_ac7022da9e6d00c731395516feb5dc3e5}{\index{liblives.\-hpp@{liblives.\-hpp}!lives\-\_\-char\-\_\-encoding\-\_\-t@{lives\-\_\-char\-\_\-encoding\-\_\-t}}
+\index{lives\-\_\-char\-\_\-encoding\-\_\-t@{lives\-\_\-char\-\_\-encoding\-\_\-t}!liblives.hpp@{liblives.\-hpp}}
+\subsubsection[{lives\-\_\-char\-\_\-encoding\-\_\-t}]{\setlength{\rightskip}{0pt plus 5cm}enum {\bf lives\-\_\-char\-\_\-encoding\-\_\-t}}}\label{liblives_8hpp_ac7022da9e6d00c731395516feb5dc3e5}
+
+
+Character encoding types. 
+
+\begin{Desc}
+\item[Enumerator]\par
+\begin{description}
+\index{L\-I\-V\-E\-S\-\_\-\-C\-H\-A\-R\-\_\-\-E\-N\-C\-O\-D\-I\-N\-G\-\_\-\-U\-T\-F8@{L\-I\-V\-E\-S\-\_\-\-C\-H\-A\-R\-\_\-\-E\-N\-C\-O\-D\-I\-N\-G\-\_\-\-U\-T\-F8}!liblives.\-hpp@{liblives.\-hpp}}\index{liblives.\-hpp@{liblives.\-hpp}!L\-I\-V\-E\-S\-\_\-\-C\-H\-A\-R\-\_\-\-E\-N\-C\-O\-D\-I\-N\-G\-\_\-\-U\-T\-F8@{L\-I\-V\-E\-S\-\_\-\-C\-H\-A\-R\-\_\-\-E\-N\-C\-O\-D\-I\-N\-G\-\_\-\-U\-T\-F8}}\item[{\em 
+\hypertarget{liblives_8hpp_ac7022da9e6d00c731395516feb5dc3e5ab4cb43a57491aa58abf13c436118dfe2}{L\-I\-V\-E\-S\-\_\-\-C\-H\-A\-R\-\_\-\-E\-N\-C\-O\-D\-I\-N\-G\-\_\-\-U\-T\-F8}\label{liblives_8hpp_ac7022da9e6d00c731395516feb5dc3e5ab4cb43a57491aa58abf13c436118dfe2}
+}]U\-T\-F-\/8 char encoding. \index{L\-I\-V\-E\-S\-\_\-\-C\-H\-A\-R\-\_\-\-E\-N\-C\-O\-D\-I\-N\-G\-\_\-\-L\-O\-C\-A\-L8\-B\-I\-T@{L\-I\-V\-E\-S\-\_\-\-C\-H\-A\-R\-\_\-\-E\-N\-C\-O\-D\-I\-N\-G\-\_\-\-L\-O\-C\-A\-L8\-B\-I\-T}!liblives.\-hpp@{liblives.\-hpp}}\index{liblives.\-hpp@{liblives.\-hpp}!L\-I\-V\-E\-S\-\_\-\-C\-H\-A\-R\-\_\-\-E\-N\-C\-O\-D\-I\-N\-G\-\_\-\-L\-O\-C\-A\-L8\-B\-I\-T@{L\-I\-V\-E\-S\-\_\-\-C\-H\-A\-R\-\_\-\-E\-N\-C\-O\-D\-I\-N\-G\-\_\-\-L\-O\-C\-A\-L8\-B\-I\-T}}\item[{\em 
+\hypertarget{liblives_8hpp_ac7022da9e6d00c731395516feb5dc3e5a17a6d59afb729c48ae03d381e9c1bc62}{L\-I\-V\-E\-S\-\_\-\-C\-H\-A\-R\-\_\-\-E\-N\-C\-O\-D\-I\-N\-G\-\_\-\-L\-O\-C\-A\-L8\-B\-I\-T}\label{liblives_8hpp_ac7022da9e6d00c731395516feb5dc3e5a17a6d59afb729c48ae03d381e9c1bc62}
+}]8 bit locale file encoding \index{L\-I\-V\-E\-S\-\_\-\-C\-H\-A\-R\-\_\-\-E\-N\-C\-O\-D\-I\-N\-G\-\_\-\-F\-I\-L\-E\-S\-Y\-S\-T\-E\-M@{L\-I\-V\-E\-S\-\_\-\-C\-H\-A\-R\-\_\-\-E\-N\-C\-O\-D\-I\-N\-G\-\_\-\-F\-I\-L\-E\-S\-Y\-S\-T\-E\-M}!liblives.\-hpp@{liblives.\-hpp}}\index{liblives.\-hpp@{liblives.\-hpp}!L\-I\-V\-E\-S\-\_\-\-C\-H\-A\-R\-\_\-\-E\-N\-C\-O\-D\-I\-N\-G\-\_\-\-F\-I\-L\-E\-S\-Y\-S\-T\-E\-M@{L\-I\-V\-E\-S\-\_\-\-C\-H\-A\-R\-\_\-\-E\-N\-C\-O\-D\-I\-N\-G\-\_\-\-F\-I\-L\-E\-S\-Y\-S\-T\-E\-M}}\item[{\em 
+\hypertarget{liblives_8hpp_ac7022da9e6d00c731395516feb5dc3e5a1b761b11109b66d2be7bd127dd2cbdc1}{L\-I\-V\-E\-S\-\_\-\-C\-H\-A\-R\-\_\-\-E\-N\-C\-O\-D\-I\-N\-G\-\_\-\-F\-I\-L\-E\-S\-Y\-S\-T\-E\-M}\label{liblives_8hpp_ac7022da9e6d00c731395516feb5dc3e5a1b761b11109b66d2be7bd127dd2cbdc1}
+}]file system encoding (U\-T\-F-\/8 on windows, local8bit on others) \end{description}
+\end{Desc}
+\hypertarget{liblives_8hpp_afc1c16ade7ad25b77f9e301e6091f7d8}{\index{liblives.\-hpp@{liblives.\-hpp}!lives\-\_\-dialog\-\_\-response\-\_\-t@{lives\-\_\-dialog\-\_\-response\-\_\-t}}
+\index{lives\-\_\-dialog\-\_\-response\-\_\-t@{lives\-\_\-dialog\-\_\-response\-\_\-t}!liblives.hpp@{liblives.\-hpp}}
+\subsubsection[{lives\-\_\-dialog\-\_\-response\-\_\-t}]{\setlength{\rightskip}{0pt plus 5cm}enum {\bf lives\-\_\-dialog\-\_\-response\-\_\-t}}}\label{liblives_8hpp_afc1c16ade7ad25b77f9e301e6091f7d8}
+
+
+Dialog response values. 
+
+\begin{Desc}
+\item[Enumerator]\par
+\begin{description}
+\index{L\-I\-V\-E\-S\-\_\-\-D\-I\-A\-L\-O\-G\-\_\-\-R\-E\-S\-P\-O\-N\-S\-E\-\_\-\-I\-N\-V\-A\-L\-I\-D@{L\-I\-V\-E\-S\-\_\-\-D\-I\-A\-L\-O\-G\-\_\-\-R\-E\-S\-P\-O\-N\-S\-E\-\_\-\-I\-N\-V\-A\-L\-I\-D}!liblives.\-hpp@{liblives.\-hpp}}\index{liblives.\-hpp@{liblives.\-hpp}!L\-I\-V\-E\-S\-\_\-\-D\-I\-A\-L\-O\-G\-\_\-\-R\-E\-S\-P\-O\-N\-S\-E\-\_\-\-I\-N\-V\-A\-L\-I\-D@{L\-I\-V\-E\-S\-\_\-\-D\-I\-A\-L\-O\-G\-\_\-\-R\-E\-S\-P\-O\-N\-S\-E\-\_\-\-I\-N\-V\-A\-L\-I\-D}}\item[{\em 
+\hypertarget{liblives_8hpp_afc1c16ade7ad25b77f9e301e6091f7d8a76fcb1bed1f573f3f1c1280fbd92efbc}{L\-I\-V\-E\-S\-\_\-\-D\-I\-A\-L\-O\-G\-\_\-\-R\-E\-S\-P\-O\-N\-S\-E\-\_\-\-I\-N\-V\-A\-L\-I\-D}\label{liblives_8hpp_afc1c16ade7ad25b77f9e301e6091f7d8a76fcb1bed1f573f3f1c1280fbd92efbc}
+}]I\-N\-V\-A\-L\-I\-D response. \index{L\-I\-V\-E\-S\-\_\-\-D\-I\-A\-L\-O\-G\-\_\-\-R\-E\-S\-P\-O\-N\-S\-E\-\_\-\-N\-O\-N\-E@{L\-I\-V\-E\-S\-\_\-\-D\-I\-A\-L\-O\-G\-\_\-\-R\-E\-S\-P\-O\-N\-S\-E\-\_\-\-N\-O\-N\-E}!liblives.\-hpp@{liblives.\-hpp}}\index{liblives.\-hpp@{liblives.\-hpp}!L\-I\-V\-E\-S\-\_\-\-D\-I\-A\-L\-O\-G\-\_\-\-R\-E\-S\-P\-O\-N\-S\-E\-\_\-\-N\-O\-N\-E@{L\-I\-V\-E\-S\-\_\-\-D\-I\-A\-L\-O\-G\-\_\-\-R\-E\-S\-P\-O\-N\-S\-E\-\_\-\-N\-O\-N\-E}}\item[{\em 
+\hypertarget{liblives_8hpp_afc1c16ade7ad25b77f9e301e6091f7d8aed84724cbe78eb8f58d45b8231f9faef}{L\-I\-V\-E\-S\-\_\-\-D\-I\-A\-L\-O\-G\-\_\-\-R\-E\-S\-P\-O\-N\-S\-E\-\_\-\-N\-O\-N\-E}\label{liblives_8hpp_afc1c16ade7ad25b77f9e301e6091f7d8aed84724cbe78eb8f58d45b8231f9faef}
+}]Response not obtained. \index{L\-I\-V\-E\-S\-\_\-\-D\-I\-A\-L\-O\-G\-\_\-\-R\-E\-S\-P\-O\-N\-S\-E\-\_\-\-O\-K@{L\-I\-V\-E\-S\-\_\-\-D\-I\-A\-L\-O\-G\-\_\-\-R\-E\-S\-P\-O\-N\-S\-E\-\_\-\-O\-K}!liblives.\-hpp@{liblives.\-hpp}}\index{liblives.\-hpp@{liblives.\-hpp}!L\-I\-V\-E\-S\-\_\-\-D\-I\-A\-L\-O\-G\-\_\-\-R\-E\-S\-P\-O\-N\-S\-E\-\_\-\-O\-K@{L\-I\-V\-E\-S\-\_\-\-D\-I\-A\-L\-O\-G\-\_\-\-R\-E\-S\-P\-O\-N\-S\-E\-\_\-\-O\-K}}\item[{\em 
+\hypertarget{liblives_8hpp_afc1c16ade7ad25b77f9e301e6091f7d8a4988796fd3bbe88e65d98956dfe6bec9}{L\-I\-V\-E\-S\-\_\-\-D\-I\-A\-L\-O\-G\-\_\-\-R\-E\-S\-P\-O\-N\-S\-E\-\_\-\-O\-K}\label{liblives_8hpp_afc1c16ade7ad25b77f9e301e6091f7d8a4988796fd3bbe88e65d98956dfe6bec9}
+}]O\-K button clicked. \index{L\-I\-V\-E\-S\-\_\-\-D\-I\-A\-L\-O\-G\-\_\-\-R\-E\-S\-P\-O\-N\-S\-E\-\_\-\-R\-E\-T\-R\-Y@{L\-I\-V\-E\-S\-\_\-\-D\-I\-A\-L\-O\-G\-\_\-\-R\-E\-S\-P\-O\-N\-S\-E\-\_\-\-R\-E\-T\-R\-Y}!liblives.\-hpp@{liblives.\-hpp}}\index{liblives.\-hpp@{liblives.\-hpp}!L\-I\-V\-E\-S\-\_\-\-D\-I\-A\-L\-O\-G\-\_\-\-R\-E\-S\-P\-O\-N\-S\-E\-\_\-\-R\-E\-T\-R\-Y@{L\-I\-V\-E\-S\-\_\-\-D\-I\-A\-L\-O\-G\-\_\-\-R\-E\-S\-P\-O\-N\-S\-E\-\_\-\-R\-E\-T\-R\-Y}}\item[{\em 
+\hypertarget{liblives_8hpp_afc1c16ade7ad25b77f9e301e6091f7d8a398cecd2fdaa8dd2d883f71805c73965}{L\-I\-V\-E\-S\-\_\-\-D\-I\-A\-L\-O\-G\-\_\-\-R\-E\-S\-P\-O\-N\-S\-E\-\_\-\-R\-E\-T\-R\-Y}\label{liblives_8hpp_afc1c16ade7ad25b77f9e301e6091f7d8a398cecd2fdaa8dd2d883f71805c73965}
+}]Retry button clicked. \index{L\-I\-V\-E\-S\-\_\-\-D\-I\-A\-L\-O\-G\-\_\-\-R\-E\-S\-P\-O\-N\-S\-E\-\_\-\-A\-B\-O\-R\-T@{L\-I\-V\-E\-S\-\_\-\-D\-I\-A\-L\-O\-G\-\_\-\-R\-E\-S\-P\-O\-N\-S\-E\-\_\-\-A\-B\-O\-R\-T}!liblives.\-hpp@{liblives.\-hpp}}\index{liblives.\-hpp@{liblives.\-hpp}!L\-I\-V\-E\-S\-\_\-\-D\-I\-A\-L\-O\-G\-\_\-\-R\-E\-S\-P\-O\-N\-S\-E\-\_\-\-A\-B\-O\-R\-T@{L\-I\-V\-E\-S\-\_\-\-D\-I\-A\-L\-O\-G\-\_\-\-R\-E\-S\-P\-O\-N\-S\-E\-\_\-\-A\-B\-O\-R\-T}}\item[{\em 
+\hypertarget{liblives_8hpp_afc1c16ade7ad25b77f9e301e6091f7d8a8b11d444d6a58dc09d8914b2db1a6d05}{L\-I\-V\-E\-S\-\_\-\-D\-I\-A\-L\-O\-G\-\_\-\-R\-E\-S\-P\-O\-N\-S\-E\-\_\-\-A\-B\-O\-R\-T}\label{liblives_8hpp_afc1c16ade7ad25b77f9e301e6091f7d8a8b11d444d6a58dc09d8914b2db1a6d05}
+}]Abort button clicked. \index{L\-I\-V\-E\-S\-\_\-\-D\-I\-A\-L\-O\-G\-\_\-\-R\-E\-S\-P\-O\-N\-S\-E\-\_\-\-R\-E\-S\-E\-T@{L\-I\-V\-E\-S\-\_\-\-D\-I\-A\-L\-O\-G\-\_\-\-R\-E\-S\-P\-O\-N\-S\-E\-\_\-\-R\-E\-S\-E\-T}!liblives.\-hpp@{liblives.\-hpp}}\index{liblives.\-hpp@{liblives.\-hpp}!L\-I\-V\-E\-S\-\_\-\-D\-I\-A\-L\-O\-G\-\_\-\-R\-E\-S\-P\-O\-N\-S\-E\-\_\-\-R\-E\-S\-E\-T@{L\-I\-V\-E\-S\-\_\-\-D\-I\-A\-L\-O\-G\-\_\-\-R\-E\-S\-P\-O\-N\-S\-E\-\_\-\-R\-E\-S\-E\-T}}\item[{\em 
+\hypertarget{liblives_8hpp_afc1c16ade7ad25b77f9e301e6091f7d8a08dd945409e704699aa6e0172bc8f586}{L\-I\-V\-E\-S\-\_\-\-D\-I\-A\-L\-O\-G\-\_\-\-R\-E\-S\-P\-O\-N\-S\-E\-\_\-\-R\-E\-S\-E\-T}\label{liblives_8hpp_afc1c16ade7ad25b77f9e301e6091f7d8a08dd945409e704699aa6e0172bc8f586}
+}]Reset button clicked. \index{L\-I\-V\-E\-S\-\_\-\-D\-I\-A\-L\-O\-G\-\_\-\-R\-E\-S\-P\-O\-N\-S\-E\-\_\-\-S\-H\-O\-W\-\_\-\-D\-E\-T\-A\-I\-L\-S@{L\-I\-V\-E\-S\-\_\-\-D\-I\-A\-L\-O\-G\-\_\-\-R\-E\-S\-P\-O\-N\-S\-E\-\_\-\-S\-H\-O\-W\-\_\-\-D\-E\-T\-A\-I\-L\-S}!liblives.\-hpp@{liblives.\-hpp}}\index{liblives.\-hpp@{liblives.\-hpp}!L\-I\-V\-E\-S\-\_\-\-D\-I\-A\-L\-O\-G\-\_\-\-R\-E\-S\-P\-O\-N\-S\-E\-\_\-\-S\-H\-O\-W\-\_\-\-D\-E\-T\-A\-I\-L\-S@{L\-I\-V\-E\-S\-\_\-\-D\-I\-A\-L\-O\-G\-\_\-\-R\-E\-S\-P\-O\-N\-S\-E\-\_\-\-S\-H\-O\-W\-\_\-\-D\-E\-T\-A\-I\-L\-S}}\item[{\em 
+\hypertarget{liblives_8hpp_afc1c16ade7ad25b77f9e301e6091f7d8adec8e758b76352f3569d11060f032652}{L\-I\-V\-E\-S\-\_\-\-D\-I\-A\-L\-O\-G\-\_\-\-R\-E\-S\-P\-O\-N\-S\-E\-\_\-\-S\-H\-O\-W\-\_\-\-D\-E\-T\-A\-I\-L\-S}\label{liblives_8hpp_afc1c16ade7ad25b77f9e301e6091f7d8adec8e758b76352f3569d11060f032652}
+}]Show details button clicked. \index{L\-I\-V\-E\-S\-\_\-\-D\-I\-A\-L\-O\-G\-\_\-\-R\-E\-S\-P\-O\-N\-S\-E\-\_\-\-C\-A\-N\-C\-E\-L@{L\-I\-V\-E\-S\-\_\-\-D\-I\-A\-L\-O\-G\-\_\-\-R\-E\-S\-P\-O\-N\-S\-E\-\_\-\-C\-A\-N\-C\-E\-L}!liblives.\-hpp@{liblives.\-hpp}}\index{liblives.\-hpp@{liblives.\-hpp}!L\-I\-V\-E\-S\-\_\-\-D\-I\-A\-L\-O\-G\-\_\-\-R\-E\-S\-P\-O\-N\-S\-E\-\_\-\-C\-A\-N\-C\-E\-L@{L\-I\-V\-E\-S\-\_\-\-D\-I\-A\-L\-O\-G\-\_\-\-R\-E\-S\-P\-O\-N\-S\-E\-\_\-\-C\-A\-N\-C\-E\-L}}\item[{\em 
+\hypertarget{liblives_8hpp_afc1c16ade7ad25b77f9e301e6091f7d8aa34ae7cf0ed109914b797f536400a1b4}{L\-I\-V\-E\-S\-\_\-\-D\-I\-A\-L\-O\-G\-\_\-\-R\-E\-S\-P\-O\-N\-S\-E\-\_\-\-C\-A\-N\-C\-E\-L}\label{liblives_8hpp_afc1c16ade7ad25b77f9e301e6091f7d8aa34ae7cf0ed109914b797f536400a1b4}
+}]Cancel button clicked. \index{L\-I\-V\-E\-S\-\_\-\-D\-I\-A\-L\-O\-G\-\_\-\-R\-E\-S\-P\-O\-N\-S\-E\-\_\-\-A\-C\-C\-E\-P\-T@{L\-I\-V\-E\-S\-\_\-\-D\-I\-A\-L\-O\-G\-\_\-\-R\-E\-S\-P\-O\-N\-S\-E\-\_\-\-A\-C\-C\-E\-P\-T}!liblives.\-hpp@{liblives.\-hpp}}\index{liblives.\-hpp@{liblives.\-hpp}!L\-I\-V\-E\-S\-\_\-\-D\-I\-A\-L\-O\-G\-\_\-\-R\-E\-S\-P\-O\-N\-S\-E\-\_\-\-A\-C\-C\-E\-P\-T@{L\-I\-V\-E\-S\-\_\-\-D\-I\-A\-L\-O\-G\-\_\-\-R\-E\-S\-P\-O\-N\-S\-E\-\_\-\-A\-C\-C\-E\-P\-T}}\item[{\em 
+\hypertarget{liblives_8hpp_afc1c16ade7ad25b77f9e301e6091f7d8a6da2371c11d1ce0130e2a09f254388d7}{L\-I\-V\-E\-S\-\_\-\-D\-I\-A\-L\-O\-G\-\_\-\-R\-E\-S\-P\-O\-N\-S\-E\-\_\-\-A\-C\-C\-E\-P\-T}\label{liblives_8hpp_afc1c16ade7ad25b77f9e301e6091f7d8a6da2371c11d1ce0130e2a09f254388d7}
+}]Accept button clicked. \index{L\-I\-V\-E\-S\-\_\-\-D\-I\-A\-L\-O\-G\-\_\-\-R\-E\-S\-P\-O\-N\-S\-E\-\_\-\-Y\-E\-S@{L\-I\-V\-E\-S\-\_\-\-D\-I\-A\-L\-O\-G\-\_\-\-R\-E\-S\-P\-O\-N\-S\-E\-\_\-\-Y\-E\-S}!liblives.\-hpp@{liblives.\-hpp}}\index{liblives.\-hpp@{liblives.\-hpp}!L\-I\-V\-E\-S\-\_\-\-D\-I\-A\-L\-O\-G\-\_\-\-R\-E\-S\-P\-O\-N\-S\-E\-\_\-\-Y\-E\-S@{L\-I\-V\-E\-S\-\_\-\-D\-I\-A\-L\-O\-G\-\_\-\-R\-E\-S\-P\-O\-N\-S\-E\-\_\-\-Y\-E\-S}}\item[{\em 
+\hypertarget{liblives_8hpp_afc1c16ade7ad25b77f9e301e6091f7d8a72f0c6b053bd21413968b044a383b529}{L\-I\-V\-E\-S\-\_\-\-D\-I\-A\-L\-O\-G\-\_\-\-R\-E\-S\-P\-O\-N\-S\-E\-\_\-\-Y\-E\-S}\label{liblives_8hpp_afc1c16ade7ad25b77f9e301e6091f7d8a72f0c6b053bd21413968b044a383b529}
+}]Yes button clicked. \index{L\-I\-V\-E\-S\-\_\-\-D\-I\-A\-L\-O\-G\-\_\-\-R\-E\-S\-P\-O\-N\-S\-E\-\_\-\-N\-O@{L\-I\-V\-E\-S\-\_\-\-D\-I\-A\-L\-O\-G\-\_\-\-R\-E\-S\-P\-O\-N\-S\-E\-\_\-\-N\-O}!liblives.\-hpp@{liblives.\-hpp}}\index{liblives.\-hpp@{liblives.\-hpp}!L\-I\-V\-E\-S\-\_\-\-D\-I\-A\-L\-O\-G\-\_\-\-R\-E\-S\-P\-O\-N\-S\-E\-\_\-\-N\-O@{L\-I\-V\-E\-S\-\_\-\-D\-I\-A\-L\-O\-G\-\_\-\-R\-E\-S\-P\-O\-N\-S\-E\-\_\-\-N\-O}}\item[{\em 
+\hypertarget{liblives_8hpp_afc1c16ade7ad25b77f9e301e6091f7d8a2d46de360b476292fcf4cce07d5fd8b2}{L\-I\-V\-E\-S\-\_\-\-D\-I\-A\-L\-O\-G\-\_\-\-R\-E\-S\-P\-O\-N\-S\-E\-\_\-\-N\-O}\label{liblives_8hpp_afc1c16ade7ad25b77f9e301e6091f7d8a2d46de360b476292fcf4cce07d5fd8b2}
+}]No button clicked. \end{description}
+\end{Desc}
+\hypertarget{liblives_8hpp_a12c81bbcff6fecc0791e83b19f024a9a}{\index{liblives.\-hpp@{liblives.\-hpp}!lives\-\_\-filechooser\-\_\-t@{lives\-\_\-filechooser\-\_\-t}}
+\index{lives\-\_\-filechooser\-\_\-t@{lives\-\_\-filechooser\-\_\-t}!liblives.hpp@{liblives.\-hpp}}
+\subsubsection[{lives\-\_\-filechooser\-\_\-t}]{\setlength{\rightskip}{0pt plus 5cm}enum {\bf lives\-\_\-filechooser\-\_\-t}}}\label{liblives_8hpp_a12c81bbcff6fecc0791e83b19f024a9a}
+
+
+Filechooser hinting types. 
+
+\begin{Desc}
+\item[Enumerator]\par
+\begin{description}
+\index{L\-I\-V\-E\-S\-\_\-\-F\-I\-L\-E\-\_\-\-C\-H\-O\-O\-S\-E\-R\-\_\-\-V\-I\-D\-E\-O\-\_\-\-A\-U\-D\-I\-O@{L\-I\-V\-E\-S\-\_\-\-F\-I\-L\-E\-\_\-\-C\-H\-O\-O\-S\-E\-R\-\_\-\-V\-I\-D\-E\-O\-\_\-\-A\-U\-D\-I\-O}!liblives.\-hpp@{liblives.\-hpp}}\index{liblives.\-hpp@{liblives.\-hpp}!L\-I\-V\-E\-S\-\_\-\-F\-I\-L\-E\-\_\-\-C\-H\-O\-O\-S\-E\-R\-\_\-\-V\-I\-D\-E\-O\-\_\-\-A\-U\-D\-I\-O@{L\-I\-V\-E\-S\-\_\-\-F\-I\-L\-E\-\_\-\-C\-H\-O\-O\-S\-E\-R\-\_\-\-V\-I\-D\-E\-O\-\_\-\-A\-U\-D\-I\-O}}\item[{\em 
+\hypertarget{liblives_8hpp_a12c81bbcff6fecc0791e83b19f024a9aa3b3954c207ddb61f41c0ed26ce829ccf}{L\-I\-V\-E\-S\-\_\-\-F\-I\-L\-E\-\_\-\-C\-H\-O\-O\-S\-E\-R\-\_\-\-V\-I\-D\-E\-O\-\_\-\-A\-U\-D\-I\-O}\label{liblives_8hpp_a12c81bbcff6fecc0791e83b19f024a9aa3b3954c207ddb61f41c0ed26ce829ccf}
+}]file chooser options for single video or audio file \index{L\-I\-V\-E\-S\-\_\-\-F\-I\-L\-E\-\_\-\-C\-H\-O\-O\-S\-E\-R\-\_\-\-A\-U\-D\-I\-O\-\_\-\-O\-N\-L\-Y@{L\-I\-V\-E\-S\-\_\-\-F\-I\-L\-E\-\_\-\-C\-H\-O\-O\-S\-E\-R\-\_\-\-A\-U\-D\-I\-O\-\_\-\-O\-N\-L\-Y}!liblives.\-hpp@{liblives.\-hpp}}\index{liblives.\-hpp@{liblives.\-hpp}!L\-I\-V\-E\-S\-\_\-\-F\-I\-L\-E\-\_\-\-C\-H\-O\-O\-S\-E\-R\-\_\-\-A\-U\-D\-I\-O\-\_\-\-O\-N\-L\-Y@{L\-I\-V\-E\-S\-\_\-\-F\-I\-L\-E\-\_\-\-C\-H\-O\-O\-S\-E\-R\-\_\-\-A\-U\-D\-I\-O\-\_\-\-O\-N\-L\-Y}}\item[{\em 
+\hypertarget{liblives_8hpp_a12c81bbcff6fecc0791e83b19f024a9aa30e78f7f3840d93d80178763ca6a3ec3}{L\-I\-V\-E\-S\-\_\-\-F\-I\-L\-E\-\_\-\-C\-H\-O\-O\-S\-E\-R\-\_\-\-A\-U\-D\-I\-O\-\_\-\-O\-N\-L\-Y}\label{liblives_8hpp_a12c81bbcff6fecc0791e83b19f024a9aa30e78f7f3840d93d80178763ca6a3ec3}
+}]file chooser options for single audio file \end{description}
+\end{Desc}
+\hypertarget{liblives_8hpp_a85e44abde9be7196c1da9fd5922b7558}{\index{liblives.\-hpp@{liblives.\-hpp}!lives\-\_\-gravity\-\_\-t@{lives\-\_\-gravity\-\_\-t}}
+\index{lives\-\_\-gravity\-\_\-t@{lives\-\_\-gravity\-\_\-t}!liblives.hpp@{liblives.\-hpp}}
+\subsubsection[{lives\-\_\-gravity\-\_\-t}]{\setlength{\rightskip}{0pt plus 5cm}enum {\bf lives\-\_\-gravity\-\_\-t}}}\label{liblives_8hpp_a85e44abde9be7196c1da9fd5922b7558}
+
+
+Multitrack gravity. 
+
+\begin{Desc}
+\item[Enumerator]\par
+\begin{description}
+\index{L\-I\-V\-E\-S\-\_\-\-G\-R\-A\-V\-I\-T\-Y\-\_\-\-N\-O\-R\-M\-A\-L@{L\-I\-V\-E\-S\-\_\-\-G\-R\-A\-V\-I\-T\-Y\-\_\-\-N\-O\-R\-M\-A\-L}!liblives.\-hpp@{liblives.\-hpp}}\index{liblives.\-hpp@{liblives.\-hpp}!L\-I\-V\-E\-S\-\_\-\-G\-R\-A\-V\-I\-T\-Y\-\_\-\-N\-O\-R\-M\-A\-L@{L\-I\-V\-E\-S\-\_\-\-G\-R\-A\-V\-I\-T\-Y\-\_\-\-N\-O\-R\-M\-A\-L}}\item[{\em 
+\hypertarget{liblives_8hpp_a85e44abde9be7196c1da9fd5922b7558acc91d8deb255b05eef9205677bab016a}{L\-I\-V\-E\-S\-\_\-\-G\-R\-A\-V\-I\-T\-Y\-\_\-\-N\-O\-R\-M\-A\-L}\label{liblives_8hpp_a85e44abde9be7196c1da9fd5922b7558acc91d8deb255b05eef9205677bab016a}
+}]no gravity \index{L\-I\-V\-E\-S\-\_\-\-G\-R\-A\-V\-I\-T\-Y\-\_\-\-L\-E\-F\-T@{L\-I\-V\-E\-S\-\_\-\-G\-R\-A\-V\-I\-T\-Y\-\_\-\-L\-E\-F\-T}!liblives.\-hpp@{liblives.\-hpp}}\index{liblives.\-hpp@{liblives.\-hpp}!L\-I\-V\-E\-S\-\_\-\-G\-R\-A\-V\-I\-T\-Y\-\_\-\-L\-E\-F\-T@{L\-I\-V\-E\-S\-\_\-\-G\-R\-A\-V\-I\-T\-Y\-\_\-\-L\-E\-F\-T}}\item[{\em 
+\hypertarget{liblives_8hpp_a85e44abde9be7196c1da9fd5922b7558a194ecf225670967dca8fb496055fbccd}{L\-I\-V\-E\-S\-\_\-\-G\-R\-A\-V\-I\-T\-Y\-\_\-\-L\-E\-F\-T}\label{liblives_8hpp_a85e44abde9be7196c1da9fd5922b7558a194ecf225670967dca8fb496055fbccd}
+}]inserted blocks gravitate to the left \index{L\-I\-V\-E\-S\-\_\-\-G\-R\-A\-V\-I\-T\-Y\-\_\-\-R\-I\-G\-H\-T@{L\-I\-V\-E\-S\-\_\-\-G\-R\-A\-V\-I\-T\-Y\-\_\-\-R\-I\-G\-H\-T}!liblives.\-hpp@{liblives.\-hpp}}\index{liblives.\-hpp@{liblives.\-hpp}!L\-I\-V\-E\-S\-\_\-\-G\-R\-A\-V\-I\-T\-Y\-\_\-\-R\-I\-G\-H\-T@{L\-I\-V\-E\-S\-\_\-\-G\-R\-A\-V\-I\-T\-Y\-\_\-\-R\-I\-G\-H\-T}}\item[{\em 
+\hypertarget{liblives_8hpp_a85e44abde9be7196c1da9fd5922b7558a5ad71f9955b11c2a4250a25ae360a2e6}{L\-I\-V\-E\-S\-\_\-\-G\-R\-A\-V\-I\-T\-Y\-\_\-\-R\-I\-G\-H\-T}\label{liblives_8hpp_a85e44abde9be7196c1da9fd5922b7558a5ad71f9955b11c2a4250a25ae360a2e6}
+}]inserted blocks gravitate to the right \end{description}
+\end{Desc}
+\hypertarget{liblives_8hpp_a3033beb0f401e14cbff66f72a4168d1f}{\index{liblives.\-hpp@{liblives.\-hpp}!lives\-\_\-interface\-\_\-mode\-\_\-t@{lives\-\_\-interface\-\_\-mode\-\_\-t}}
+\index{lives\-\_\-interface\-\_\-mode\-\_\-t@{lives\-\_\-interface\-\_\-mode\-\_\-t}!liblives.hpp@{liblives.\-hpp}}
+\subsubsection[{lives\-\_\-interface\-\_\-mode\-\_\-t}]{\setlength{\rightskip}{0pt plus 5cm}enum {\bf lives\-\_\-interface\-\_\-mode\-\_\-t}}}\label{liblives_8hpp_a3033beb0f401e14cbff66f72a4168d1f}
+
+
+Li\-V\-E\-S operation mode. 
+
+\begin{Desc}
+\item[Enumerator]\par
+\begin{description}
+\index{L\-I\-V\-E\-S\-\_\-\-I\-N\-T\-E\-R\-F\-A\-C\-E\-\_\-\-M\-O\-D\-E\-\_\-\-I\-N\-V\-A\-L\-I\-D@{L\-I\-V\-E\-S\-\_\-\-I\-N\-T\-E\-R\-F\-A\-C\-E\-\_\-\-M\-O\-D\-E\-\_\-\-I\-N\-V\-A\-L\-I\-D}!liblives.\-hpp@{liblives.\-hpp}}\index{liblives.\-hpp@{liblives.\-hpp}!L\-I\-V\-E\-S\-\_\-\-I\-N\-T\-E\-R\-F\-A\-C\-E\-\_\-\-M\-O\-D\-E\-\_\-\-I\-N\-V\-A\-L\-I\-D@{L\-I\-V\-E\-S\-\_\-\-I\-N\-T\-E\-R\-F\-A\-C\-E\-\_\-\-M\-O\-D\-E\-\_\-\-I\-N\-V\-A\-L\-I\-D}}\item[{\em 
+\hypertarget{liblives_8hpp_a3033beb0f401e14cbff66f72a4168d1fa4e04348924ebace5c5cb943d70af6b11}{L\-I\-V\-E\-S\-\_\-\-I\-N\-T\-E\-R\-F\-A\-C\-E\-\_\-\-M\-O\-D\-E\-\_\-\-I\-N\-V\-A\-L\-I\-D}\label{liblives_8hpp_a3033beb0f401e14cbff66f72a4168d1fa4e04348924ebace5c5cb943d70af6b11}
+}]lives\-App instance is invalid \index{L\-I\-V\-E\-S\-\_\-\-I\-N\-T\-E\-R\-F\-A\-C\-E\-\_\-\-M\-O\-D\-E\-\_\-\-C\-L\-I\-P\-E\-D\-I\-T@{L\-I\-V\-E\-S\-\_\-\-I\-N\-T\-E\-R\-F\-A\-C\-E\-\_\-\-M\-O\-D\-E\-\_\-\-C\-L\-I\-P\-E\-D\-I\-T}!liblives.\-hpp@{liblives.\-hpp}}\index{liblives.\-hpp@{liblives.\-hpp}!L\-I\-V\-E\-S\-\_\-\-I\-N\-T\-E\-R\-F\-A\-C\-E\-\_\-\-M\-O\-D\-E\-\_\-\-C\-L\-I\-P\-E\-D\-I\-T@{L\-I\-V\-E\-S\-\_\-\-I\-N\-T\-E\-R\-F\-A\-C\-E\-\_\-\-M\-O\-D\-E\-\_\-\-C\-L\-I\-P\-E\-D\-I\-T}}\item[{\em 
+\hypertarget{liblives_8hpp_a3033beb0f401e14cbff66f72a4168d1faeca820fcd54837e99f48827c2a0ec38e}{L\-I\-V\-E\-S\-\_\-\-I\-N\-T\-E\-R\-F\-A\-C\-E\-\_\-\-M\-O\-D\-E\-\_\-\-C\-L\-I\-P\-E\-D\-I\-T}\label{liblives_8hpp_a3033beb0f401e14cbff66f72a4168d1faeca820fcd54837e99f48827c2a0ec38e}
+}]clip editor mode \index{L\-I\-V\-E\-S\-\_\-\-I\-N\-T\-E\-R\-F\-A\-C\-E\-\_\-\-M\-O\-D\-E\-\_\-\-M\-U\-L\-T\-I\-T\-R\-A\-C\-K@{L\-I\-V\-E\-S\-\_\-\-I\-N\-T\-E\-R\-F\-A\-C\-E\-\_\-\-M\-O\-D\-E\-\_\-\-M\-U\-L\-T\-I\-T\-R\-A\-C\-K}!liblives.\-hpp@{liblives.\-hpp}}\index{liblives.\-hpp@{liblives.\-hpp}!L\-I\-V\-E\-S\-\_\-\-I\-N\-T\-E\-R\-F\-A\-C\-E\-\_\-\-M\-O\-D\-E\-\_\-\-M\-U\-L\-T\-I\-T\-R\-A\-C\-K@{L\-I\-V\-E\-S\-\_\-\-I\-N\-T\-E\-R\-F\-A\-C\-E\-\_\-\-M\-O\-D\-E\-\_\-\-M\-U\-L\-T\-I\-T\-R\-A\-C\-K}}\item[{\em 
+\hypertarget{liblives_8hpp_a3033beb0f401e14cbff66f72a4168d1fa1dddd6ae45a0e822712294e5d2913118}{L\-I\-V\-E\-S\-\_\-\-I\-N\-T\-E\-R\-F\-A\-C\-E\-\_\-\-M\-O\-D\-E\-\_\-\-M\-U\-L\-T\-I\-T\-R\-A\-C\-K}\label{liblives_8hpp_a3033beb0f401e14cbff66f72a4168d1fa1dddd6ae45a0e822712294e5d2913118}
+}]multitrack mode \end{description}
+\end{Desc}
+\hypertarget{liblives_8hpp_ac271a064408719bb65e09fb6e48040bd}{\index{liblives.\-hpp@{liblives.\-hpp}!lives\-\_\-loop\-\_\-mode\-\_\-t@{lives\-\_\-loop\-\_\-mode\-\_\-t}}
+\index{lives\-\_\-loop\-\_\-mode\-\_\-t@{lives\-\_\-loop\-\_\-mode\-\_\-t}!liblives.hpp@{liblives.\-hpp}}
+\subsubsection[{lives\-\_\-loop\-\_\-mode\-\_\-t}]{\setlength{\rightskip}{0pt plus 5cm}enum {\bf lives\-\_\-loop\-\_\-mode\-\_\-t}}}\label{liblives_8hpp_ac271a064408719bb65e09fb6e48040bd}
+
+
+Player looping modes (bitmap) 
+
+\begin{Desc}
+\item[Enumerator]\par
+\begin{description}
+\index{L\-I\-V\-E\-S\-\_\-\-L\-O\-O\-P\-\_\-\-M\-O\-D\-E\-\_\-\-N\-O\-N\-E@{L\-I\-V\-E\-S\-\_\-\-L\-O\-O\-P\-\_\-\-M\-O\-D\-E\-\_\-\-N\-O\-N\-E}!liblives.\-hpp@{liblives.\-hpp}}\index{liblives.\-hpp@{liblives.\-hpp}!L\-I\-V\-E\-S\-\_\-\-L\-O\-O\-P\-\_\-\-M\-O\-D\-E\-\_\-\-N\-O\-N\-E@{L\-I\-V\-E\-S\-\_\-\-L\-O\-O\-P\-\_\-\-M\-O\-D\-E\-\_\-\-N\-O\-N\-E}}\item[{\em 
+\hypertarget{liblives_8hpp_ac271a064408719bb65e09fb6e48040bdae8c5903fadad5fc3c3f5f5a8ff078208}{L\-I\-V\-E\-S\-\_\-\-L\-O\-O\-P\-\_\-\-M\-O\-D\-E\-\_\-\-N\-O\-N\-E}\label{liblives_8hpp_ac271a064408719bb65e09fb6e48040bdae8c5903fadad5fc3c3f5f5a8ff078208}
+}]no looping \index{L\-I\-V\-E\-S\-\_\-\-L\-O\-O\-P\-\_\-\-M\-O\-D\-E\-\_\-\-C\-O\-N\-T\-I\-N\-U\-O\-U\-S@{L\-I\-V\-E\-S\-\_\-\-L\-O\-O\-P\-\_\-\-M\-O\-D\-E\-\_\-\-C\-O\-N\-T\-I\-N\-U\-O\-U\-S}!liblives.\-hpp@{liblives.\-hpp}}\index{liblives.\-hpp@{liblives.\-hpp}!L\-I\-V\-E\-S\-\_\-\-L\-O\-O\-P\-\_\-\-M\-O\-D\-E\-\_\-\-C\-O\-N\-T\-I\-N\-U\-O\-U\-S@{L\-I\-V\-E\-S\-\_\-\-L\-O\-O\-P\-\_\-\-M\-O\-D\-E\-\_\-\-C\-O\-N\-T\-I\-N\-U\-O\-U\-S}}\item[{\em 
+\hypertarget{liblives_8hpp_ac271a064408719bb65e09fb6e48040bda6c58b2c4d0996bf77af4a96fbd49f22f}{L\-I\-V\-E\-S\-\_\-\-L\-O\-O\-P\-\_\-\-M\-O\-D\-E\-\_\-\-C\-O\-N\-T\-I\-N\-U\-O\-U\-S}\label{liblives_8hpp_ac271a064408719bb65e09fb6e48040bda6c58b2c4d0996bf77af4a96fbd49f22f}
+}]both video and audio loop continuously \index{L\-I\-V\-E\-S\-\_\-\-L\-O\-O\-P\-\_\-\-M\-O\-D\-E\-\_\-\-F\-I\-T\-\_\-\-A\-U\-D\-I\-O@{L\-I\-V\-E\-S\-\_\-\-L\-O\-O\-P\-\_\-\-M\-O\-D\-E\-\_\-\-F\-I\-T\-\_\-\-A\-U\-D\-I\-O}!liblives.\-hpp@{liblives.\-hpp}}\index{liblives.\-hpp@{liblives.\-hpp}!L\-I\-V\-E\-S\-\_\-\-L\-O\-O\-P\-\_\-\-M\-O\-D\-E\-\_\-\-F\-I\-T\-\_\-\-A\-U\-D\-I\-O@{L\-I\-V\-E\-S\-\_\-\-L\-O\-O\-P\-\_\-\-M\-O\-D\-E\-\_\-\-F\-I\-T\-\_\-\-A\-U\-D\-I\-O}}\item[{\em 
+\hypertarget{liblives_8hpp_ac271a064408719bb65e09fb6e48040bda53ec9dc2a02806094cacd11e530a2505}{L\-I\-V\-E\-S\-\_\-\-L\-O\-O\-P\-\_\-\-M\-O\-D\-E\-\_\-\-F\-I\-T\-\_\-\-A\-U\-D\-I\-O}\label{liblives_8hpp_ac271a064408719bb65e09fb6e48040bda53ec9dc2a02806094cacd11e530a2505}
+}]video keeps looping until audio playback finishes \end{description}
+\end{Desc}
+\hypertarget{liblives_8hpp_a4748f68756cfc1002a1b68425e91ecad}{\index{liblives.\-hpp@{liblives.\-hpp}!lives\-\_\-status\-\_\-t@{lives\-\_\-status\-\_\-t}}
+\index{lives\-\_\-status\-\_\-t@{lives\-\_\-status\-\_\-t}!liblives.hpp@{liblives.\-hpp}}
+\subsubsection[{lives\-\_\-status\-\_\-t}]{\setlength{\rightskip}{0pt plus 5cm}enum {\bf lives\-\_\-status\-\_\-t}}}\label{liblives_8hpp_a4748f68756cfc1002a1b68425e91ecad}
+
+
+Li\-V\-E\-S operational status. 
+
+\begin{Desc}
+\item[Enumerator]\par
+\begin{description}
+\index{L\-I\-V\-E\-S\-\_\-\-S\-T\-A\-T\-U\-S\-\_\-\-I\-N\-V\-A\-L\-I\-D@{L\-I\-V\-E\-S\-\_\-\-S\-T\-A\-T\-U\-S\-\_\-\-I\-N\-V\-A\-L\-I\-D}!liblives.\-hpp@{liblives.\-hpp}}\index{liblives.\-hpp@{liblives.\-hpp}!L\-I\-V\-E\-S\-\_\-\-S\-T\-A\-T\-U\-S\-\_\-\-I\-N\-V\-A\-L\-I\-D@{L\-I\-V\-E\-S\-\_\-\-S\-T\-A\-T\-U\-S\-\_\-\-I\-N\-V\-A\-L\-I\-D}}\item[{\em 
+\hypertarget{liblives_8hpp_a4748f68756cfc1002a1b68425e91ecada4500d1dbbfe1d6030cd3cc898a77baca}{L\-I\-V\-E\-S\-\_\-\-S\-T\-A\-T\-U\-S\-\_\-\-I\-N\-V\-A\-L\-I\-D}\label{liblives_8hpp_a4748f68756cfc1002a1b68425e91ecada4500d1dbbfe1d6030cd3cc898a77baca}
+}]lives\-App instance is invalid \index{L\-I\-V\-E\-S\-\_\-\-S\-T\-A\-T\-U\-S\-\_\-\-N\-O\-T\-R\-E\-A\-D\-Y@{L\-I\-V\-E\-S\-\_\-\-S\-T\-A\-T\-U\-S\-\_\-\-N\-O\-T\-R\-E\-A\-D\-Y}!liblives.\-hpp@{liblives.\-hpp}}\index{liblives.\-hpp@{liblives.\-hpp}!L\-I\-V\-E\-S\-\_\-\-S\-T\-A\-T\-U\-S\-\_\-\-N\-O\-T\-R\-E\-A\-D\-Y@{L\-I\-V\-E\-S\-\_\-\-S\-T\-A\-T\-U\-S\-\_\-\-N\-O\-T\-R\-E\-A\-D\-Y}}\item[{\em 
+\hypertarget{liblives_8hpp_a4748f68756cfc1002a1b68425e91ecada7dbc59fd8187f2d6de925420336f6ae8}{L\-I\-V\-E\-S\-\_\-\-S\-T\-A\-T\-U\-S\-\_\-\-N\-O\-T\-R\-E\-A\-D\-Y}\label{liblives_8hpp_a4748f68756cfc1002a1b68425e91ecada7dbc59fd8187f2d6de925420336f6ae8}
+}]application is starting up; not ready \index{L\-I\-V\-E\-S\-\_\-\-S\-T\-A\-T\-U\-S\-\_\-\-R\-E\-A\-D\-Y@{L\-I\-V\-E\-S\-\_\-\-S\-T\-A\-T\-U\-S\-\_\-\-R\-E\-A\-D\-Y}!liblives.\-hpp@{liblives.\-hpp}}\index{liblives.\-hpp@{liblives.\-hpp}!L\-I\-V\-E\-S\-\_\-\-S\-T\-A\-T\-U\-S\-\_\-\-R\-E\-A\-D\-Y@{L\-I\-V\-E\-S\-\_\-\-S\-T\-A\-T\-U\-S\-\_\-\-R\-E\-A\-D\-Y}}\item[{\em 
+\hypertarget{liblives_8hpp_a4748f68756cfc1002a1b68425e91ecadaadc0856a72f9c3ebcfeba5a0bc21a592}{L\-I\-V\-E\-S\-\_\-\-S\-T\-A\-T\-U\-S\-\_\-\-R\-E\-A\-D\-Y}\label{liblives_8hpp_a4748f68756cfc1002a1b68425e91ecadaadc0856a72f9c3ebcfeba5a0bc21a592}
+}]application is ready for commands \index{L\-I\-V\-E\-S\-\_\-\-S\-T\-A\-T\-U\-S\-\_\-\-P\-L\-A\-Y\-I\-N\-G@{L\-I\-V\-E\-S\-\_\-\-S\-T\-A\-T\-U\-S\-\_\-\-P\-L\-A\-Y\-I\-N\-G}!liblives.\-hpp@{liblives.\-hpp}}\index{liblives.\-hpp@{liblives.\-hpp}!L\-I\-V\-E\-S\-\_\-\-S\-T\-A\-T\-U\-S\-\_\-\-P\-L\-A\-Y\-I\-N\-G@{L\-I\-V\-E\-S\-\_\-\-S\-T\-A\-T\-U\-S\-\_\-\-P\-L\-A\-Y\-I\-N\-G}}\item[{\em 
+\hypertarget{liblives_8hpp_a4748f68756cfc1002a1b68425e91ecada57fd3ce404529f7b0f86f6ce62066861}{L\-I\-V\-E\-S\-\_\-\-S\-T\-A\-T\-U\-S\-\_\-\-P\-L\-A\-Y\-I\-N\-G}\label{liblives_8hpp_a4748f68756cfc1002a1b68425e91ecada57fd3ce404529f7b0f86f6ce62066861}
+}]application is playing, only player commands will be responded to \index{L\-I\-V\-E\-S\-\_\-\-S\-T\-A\-T\-U\-S\-\_\-\-P\-R\-O\-C\-E\-S\-S\-I\-N\-G@{L\-I\-V\-E\-S\-\_\-\-S\-T\-A\-T\-U\-S\-\_\-\-P\-R\-O\-C\-E\-S\-S\-I\-N\-G}!liblives.\-hpp@{liblives.\-hpp}}\index{liblives.\-hpp@{liblives.\-hpp}!L\-I\-V\-E\-S\-\_\-\-S\-T\-A\-T\-U\-S\-\_\-\-P\-R\-O\-C\-E\-S\-S\-I\-N\-G@{L\-I\-V\-E\-S\-\_\-\-S\-T\-A\-T\-U\-S\-\_\-\-P\-R\-O\-C\-E\-S\-S\-I\-N\-G}}\item[{\em 
+\hypertarget{liblives_8hpp_a4748f68756cfc1002a1b68425e91ecadaa1767ced4e4a43702e99a8cc144abdf4}{L\-I\-V\-E\-S\-\_\-\-S\-T\-A\-T\-U\-S\-\_\-\-P\-R\-O\-C\-E\-S\-S\-I\-N\-G}\label{liblives_8hpp_a4748f68756cfc1002a1b68425e91ecadaa1767ced4e4a43702e99a8cc144abdf4}
+}]application is processing, commands will be ignored \index{L\-I\-V\-E\-S\-\_\-\-S\-T\-A\-T\-U\-S\-\_\-\-P\-R\-E\-V\-I\-E\-W@{L\-I\-V\-E\-S\-\_\-\-S\-T\-A\-T\-U\-S\-\_\-\-P\-R\-E\-V\-I\-E\-W}!liblives.\-hpp@{liblives.\-hpp}}\index{liblives.\-hpp@{liblives.\-hpp}!L\-I\-V\-E\-S\-\_\-\-S\-T\-A\-T\-U\-S\-\_\-\-P\-R\-E\-V\-I\-E\-W@{L\-I\-V\-E\-S\-\_\-\-S\-T\-A\-T\-U\-S\-\_\-\-P\-R\-E\-V\-I\-E\-W}}\item[{\em 
+\hypertarget{liblives_8hpp_a4748f68756cfc1002a1b68425e91ecadaede9a135a19bd2367efd210b9c653378}{L\-I\-V\-E\-S\-\_\-\-S\-T\-A\-T\-U\-S\-\_\-\-P\-R\-E\-V\-I\-E\-W}\label{liblives_8hpp_a4748f68756cfc1002a1b68425e91ecadaede9a135a19bd2367efd210b9c653378}
+}]user is previewing an operation, commands will be ignored \end{description}
+\end{Desc}

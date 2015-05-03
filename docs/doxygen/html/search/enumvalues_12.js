@@ -1,0 +1,23 @@
+var searchData=
+[
+  ['undo_5fappend_5faudio',['UNDO_APPEND_AUDIO',['../main_8h.html#a25889bdffe60f52bb09ef6defe894925a48d69fe65a539e652ef0fea6bbdd3881',1,'main.h']]],
+  ['undo_5fatomic_5fresample_5fresize',['UNDO_ATOMIC_RESAMPLE_RESIZE',['../main_8h.html#a25889bdffe60f52bb09ef6defe894925aa2e58f8c65d9460506fa45d17fd9e859',1,'main.h']]],
+  ['undo_5faudio_5fresample',['UNDO_AUDIO_RESAMPLE',['../main_8h.html#a25889bdffe60f52bb09ef6defe894925a019e1275e5d83564d5d1d9bbd40aaf27',1,'main.h']]],
+  ['undo_5fchange_5fspeed',['UNDO_CHANGE_SPEED',['../main_8h.html#a25889bdffe60f52bb09ef6defe894925a6e88441241e5425607b13c2198ab48ef',1,'main.h']]],
+  ['undo_5fcut',['UNDO_CUT',['../main_8h.html#a25889bdffe60f52bb09ef6defe894925abbfb81626e80b011193cc78d229eaf3f',1,'main.h']]],
+  ['undo_5fdelete',['UNDO_DELETE',['../main_8h.html#a25889bdffe60f52bb09ef6defe894925aeb83a74fd5d2e3ca058808dae36f47f5',1,'main.h']]],
+  ['undo_5fdelete_5faudio',['UNDO_DELETE_AUDIO',['../main_8h.html#a25889bdffe60f52bb09ef6defe894925a6a496a79f8fc3d56dc61ba45948b936b',1,'main.h']]],
+  ['undo_5feffect',['UNDO_EFFECT',['../main_8h.html#a25889bdffe60f52bb09ef6defe894925a1889a5b0dcd973fbb3a4d318c7d54d6f',1,'main.h']]],
+  ['undo_5ffade_5faudio',['UNDO_FADE_AUDIO',['../main_8h.html#a25889bdffe60f52bb09ef6defe894925ad1825f0ef8278c82b117e81edabb484d',1,'main.h']]],
+  ['undo_5finsert',['UNDO_INSERT',['../main_8h.html#a25889bdffe60f52bb09ef6defe894925a85bdc3d2cee2cac809348770a76f224f',1,'main.h']]],
+  ['undo_5finsert_5fsilence',['UNDO_INSERT_SILENCE',['../main_8h.html#a25889bdffe60f52bb09ef6defe894925a9757df0e924061cda4037a5765b5ae2b',1,'main.h']]],
+  ['undo_5finsert_5fwith_5faudio',['UNDO_INSERT_WITH_AUDIO',['../main_8h.html#a25889bdffe60f52bb09ef6defe894925a5e2a5902df9d363d899b3548607ef5cd',1,'main.h']]],
+  ['undo_5fmerge',['UNDO_MERGE',['../main_8h.html#a25889bdffe60f52bb09ef6defe894925a533bcd826b46383d023393504e304640',1,'main.h']]],
+  ['undo_5fnew_5faudio',['UNDO_NEW_AUDIO',['../main_8h.html#a25889bdffe60f52bb09ef6defe894925a5080614ce83525d4626a030dc048421e',1,'main.h']]],
+  ['undo_5fnone',['UNDO_NONE',['../main_8h.html#a25889bdffe60f52bb09ef6defe894925a9ba198055c3f54cc5192192306bdce19',1,'main.h']]],
+  ['undo_5frec_5faudio',['UNDO_REC_AUDIO',['../main_8h.html#a25889bdffe60f52bb09ef6defe894925a50468b5c6b4a4e36c464508b0fa59a8c',1,'main.h']]],
+  ['undo_5frender',['UNDO_RENDER',['../main_8h.html#a25889bdffe60f52bb09ef6defe894925a3dbbb809efd23a17a759df7293f74b28',1,'main.h']]],
+  ['undo_5fresample',['UNDO_RESAMPLE',['../main_8h.html#a25889bdffe60f52bb09ef6defe894925a9a91b18b504ab716b497e6e0e1930540',1,'main.h']]],
+  ['undo_5fresizable',['UNDO_RESIZABLE',['../main_8h.html#a25889bdffe60f52bb09ef6defe894925a8c504a7dab00df99f92d665c3568ea4a',1,'main.h']]],
+  ['undo_5ftrim_5faudio',['UNDO_TRIM_AUDIO',['../main_8h.html#a25889bdffe60f52bb09ef6defe894925a8f5bd7bd118614e83bfb34e92814e67e',1,'main.h']]]
+];

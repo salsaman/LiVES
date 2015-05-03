@@ -1,0 +1,431 @@
+\hypertarget{classlives_1_1clip}{\section{lives\-:\-:clip Class Reference}
+\label{classlives_1_1clip}\index{lives\-::clip@{lives\-::clip}}
+}
+
+
+class \char`\"{}clip\char`\"{}.  
+
+
+
+
+{\ttfamily \#include $<$liblives.\-hpp$>$}
+
+\subsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\hypertarget{classlives_1_1clip_a8ec807cbd20bb024f61d948380aaf3ee}{\hyperlink{classlives_1_1clip_a8ec807cbd20bb024f61d948380aaf3ee}{clip} ()}\label{classlives_1_1clip_a8ec807cbd20bb024f61d948380aaf3ee}
+
+\begin{DoxyCompactList}\small\item\em Creates a new, invalid clip. \end{DoxyCompactList}\item 
+bool \hyperlink{classlives_1_1clip_a88bf045cdf742f71a69e304600f6e754}{is\-Valid} () const 
+\begin{DoxyCompactList}\small\item\em Check if clip is valid. \end{DoxyCompactList}\item 
+int \hyperlink{classlives_1_1clip_ad39f6a40689883e78027abb732012ccc}{frames} ()
+\begin{DoxyCompactList}\small\item\em Number of frames in this clip. \end{DoxyCompactList}\item 
+int \hyperlink{classlives_1_1clip_ae3f457877690885c22a53dc5f907a5ae}{width} ()
+\begin{DoxyCompactList}\small\item\em Width of the clip in pixels. \end{DoxyCompactList}\item 
+int \hyperlink{classlives_1_1clip_aeb64c681f3cc583d140ddeca48c08d63}{height} ()
+\begin{DoxyCompactList}\small\item\em Height of the clip in pixels. \end{DoxyCompactList}\item 
+double \hyperlink{classlives_1_1clip_aa05a99708f06d6718fee8621a621f894}{F\-P\-S} ()
+\begin{DoxyCompactList}\small\item\em Framerate (frames per second) of the clip. \end{DoxyCompactList}\item 
+double \hyperlink{classlives_1_1clip_ac1ac02deaaa685277b02b20363a6335a}{playback\-F\-P\-S} ()
+\begin{DoxyCompactList}\small\item\em Framerate (frames per second) that the clip is/will be played back at. \end{DoxyCompactList}\item 
+\hyperlink{classlives_1_1livesString}{lives\-String} \hyperlink{classlives_1_1clip_a29e213434a96677925531f576b23ff0b}{name} ()
+\begin{DoxyCompactList}\small\item\em Human readable name of the clip. \end{DoxyCompactList}\item 
+int \hyperlink{classlives_1_1clip_a9106502f20d85061483b713f296b457e}{audio\-Rate} ()
+\begin{DoxyCompactList}\small\item\em Audio rate for this clip. \end{DoxyCompactList}\item 
+int \hyperlink{classlives_1_1clip_a59cc4153ad00eb210d9e96b325338022}{playback\-Audio\-Rate} ()
+\begin{DoxyCompactList}\small\item\em The current playback audio rate for this clip, which may differ from \hyperlink{classlives_1_1clip_a9106502f20d85061483b713f296b457e}{audio\-Rate()}. \end{DoxyCompactList}\item 
+int \hyperlink{classlives_1_1clip_af961407642f31a02fe6e965f55a06661}{audio\-Channels} ()
+\begin{DoxyCompactList}\small\item\em Number of audio channels (eg. \end{DoxyCompactList}\item 
+int \hyperlink{classlives_1_1clip_a71b4222b98c6438f6d7a045ba76834d4}{audio\-Sample\-Size} ()
+\begin{DoxyCompactList}\small\item\em Size in bits of audio samples (eg. \end{DoxyCompactList}\item 
+bool \hyperlink{classlives_1_1clip_aaa350d735b9f44197dc217d507196529}{audio\-Signed} ()
+\begin{DoxyCompactList}\small\item\em Returns whether the audio is signed (true) or unsigned (false). \end{DoxyCompactList}\item 
+\hyperlink{liblives_8hpp_a1f91078fecf5ea3583c71ed1db238393}{lives\-\_\-endian\-\_\-t} \hyperlink{classlives_1_1clip_a42e672b29e36c890dbea26719257cc9a}{audio\-Endian} ()
+\begin{DoxyCompactList}\small\item\em Returns the endianness of the audio. \end{DoxyCompactList}\item 
+double \hyperlink{classlives_1_1clip_af7460c94c508e8712b0eadd8bb5e0f16}{audio\-Length} ()
+\begin{DoxyCompactList}\small\item\em Returns the length in seconds for audio in the clip If the clip is invalid, returns 0. \end{DoxyCompactList}\item 
+int \hyperlink{classlives_1_1clip_ae3bec5d06c36693307baab2f0ae2c591}{selection\-Start} ()
+\begin{DoxyCompactList}\small\item\em Start of the selected frame region. \end{DoxyCompactList}\item 
+int \hyperlink{classlives_1_1clip_a4e2b3c1a80795906f39f27390b8545ae}{selection\-End} ()
+\begin{DoxyCompactList}\small\item\em End of the selected frame region. \end{DoxyCompactList}\item 
+bool \hyperlink{classlives_1_1clip_ac06a024a56ba4b3e32a090d942fb71fd}{select\-All} ()
+\begin{DoxyCompactList}\small\item\em Select all frames in the clip. \end{DoxyCompactList}\item 
+bool \hyperlink{classlives_1_1clip_a01d1d840575c077e8c44ebe71df4ef82}{set\-Selection\-Start} (unsigned int start)
+\begin{DoxyCompactList}\small\item\em Set the selection start frame for the clip. \end{DoxyCompactList}\item 
+bool \hyperlink{classlives_1_1clip_abb198e92872582f71ce178e0a0c4c9ac}{set\-Selection\-End} (unsigned int end)
+\begin{DoxyCompactList}\small\item\em Set the selection end frame for the clip. \end{DoxyCompactList}\item 
+bool \hyperlink{classlives_1_1clip_aa809f02996c2c676934883ad14918b1b}{switch\-To} ()
+\begin{DoxyCompactList}\small\item\em Switch to this clip as the current foreground clip. \end{DoxyCompactList}\item 
+bool \hyperlink{classlives_1_1clip_a3f8614e13193d38a584dafe82a828361}{set\-Is\-Background} ()
+\begin{DoxyCompactList}\small\item\em Switch to this clip as the current background clip. \end{DoxyCompactList}\item 
+bool \hyperlink{classlives_1_1clip_ad4721076828112e5adfa44dca7d54a02}{operator==} (const \hyperlink{classlives_1_1clip}{clip} \&other)
+\end{DoxyCompactItemize}
+\subsection*{Protected Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\hypertarget{classlives_1_1clip_ad63c37c7e2d95910390fae5a516230f6}{{\bfseries clip} (\hyperlink{liblives_8hpp_a718b4eb2652c286f4d42dc18a8e71a1a}{ulong} uid, \hyperlink{classlives_1_1livesApp}{lives\-App} $\ast$lives=N\-U\-L\-L)}\label{classlives_1_1clip_ad63c37c7e2d95910390fae5a516230f6}
+
+\end{DoxyCompactItemize}
+\subsection*{Protected Attributes}
+\begin{DoxyCompactItemize}
+\item 
+\hypertarget{classlives_1_1clip_a1262803842dec83e17675ea6b38f13f0}{\hyperlink{liblives_8hpp_a718b4eb2652c286f4d42dc18a8e71a1a}{ulong} {\bfseries m\-\_\-uid}}\label{classlives_1_1clip_a1262803842dec83e17675ea6b38f13f0}
+
+\end{DoxyCompactItemize}
+
+
+\subsection{Detailed Description}
+class \char`\"{}clip\char`\"{}. 
+
+Represents a clip which is open in Li\-V\-E\-S. \begin{DoxySeeAlso}{See Also}
+\hyperlink{classlives_1_1set_a1a24eb00d4f9c35592a74079d19be4fd}{set\-::nth\-Clip()} 
+
+\hyperlink{classlives_1_1livesApp_ae4edac76c513657c223e6b29a18a2c51}{lives\-App\-::open\-File()} 
+
+\hyperlink{classlives_1_1player_ac365200b225c69e8cbd8e4ce7f48babb}{player\-::foreground\-Clip()} 
+
+\hyperlink{classlives_1_1player_a1a9bacebdfc790dba3f5d54353dee462}{player\-::background\-Clip()} 
+\end{DoxySeeAlso}
+
+
+\subsection{Member Function Documentation}
+\hypertarget{classlives_1_1clip_af961407642f31a02fe6e965f55a06661}{\index{lives\-::clip@{lives\-::clip}!audio\-Channels@{audio\-Channels}}
+\index{audio\-Channels@{audio\-Channels}!lives::clip@{lives\-::clip}}
+\subsubsection[{audio\-Channels}]{\setlength{\rightskip}{0pt plus 5cm}int lives\-::clip\-::audio\-Channels (
+\begin{DoxyParamCaption}
+{}
+\end{DoxyParamCaption}
+)}}\label{classlives_1_1clip_af961407642f31a02fe6e965f55a06661}
+
+
+Number of audio channels (eg. 
+
+left, right) for this clip. If the clip is video only, 0 is returned. If clip is not valid then 0 is returned. \begin{DoxyReturn}{Returns}
+int audio channels, or 0 if clip is not valid. 
+\end{DoxyReturn}
+\hypertarget{classlives_1_1clip_a42e672b29e36c890dbea26719257cc9a}{\index{lives\-::clip@{lives\-::clip}!audio\-Endian@{audio\-Endian}}
+\index{audio\-Endian@{audio\-Endian}!lives::clip@{lives\-::clip}}
+\subsubsection[{audio\-Endian}]{\setlength{\rightskip}{0pt plus 5cm}{\bf lives\-\_\-endian\-\_\-t} lives\-::clip\-::audio\-Endian (
+\begin{DoxyParamCaption}
+{}
+\end{DoxyParamCaption}
+)}}\label{classlives_1_1clip_a42e672b29e36c890dbea26719257cc9a}
+
+
+Returns the endianness of the audio. 
+
+If clip is video only or not valid then the return value is undefined. \begin{DoxyReturn}{Returns}
+bool audio signed. 
+\end{DoxyReturn}
+\hypertarget{classlives_1_1clip_af7460c94c508e8712b0eadd8bb5e0f16}{\index{lives\-::clip@{lives\-::clip}!audio\-Length@{audio\-Length}}
+\index{audio\-Length@{audio\-Length}!lives::clip@{lives\-::clip}}
+\subsubsection[{audio\-Length}]{\setlength{\rightskip}{0pt plus 5cm}double lives\-::clip\-::audio\-Length (
+\begin{DoxyParamCaption}
+{}
+\end{DoxyParamCaption}
+)}}\label{classlives_1_1clip_af7460c94c508e8712b0eadd8bb5e0f16}
+
+
+Returns the length in seconds for audio in the clip If the clip is invalid, returns 0. 
+
+\begin{DoxyReturn}{Returns}
+the length of the clip audio, in seconds. 
+\end{DoxyReturn}
+\hypertarget{classlives_1_1clip_a9106502f20d85061483b713f296b457e}{\index{lives\-::clip@{lives\-::clip}!audio\-Rate@{audio\-Rate}}
+\index{audio\-Rate@{audio\-Rate}!lives::clip@{lives\-::clip}}
+\subsubsection[{audio\-Rate}]{\setlength{\rightskip}{0pt plus 5cm}int lives\-::clip\-::audio\-Rate (
+\begin{DoxyParamCaption}
+{}
+\end{DoxyParamCaption}
+)}}\label{classlives_1_1clip_a9106502f20d85061483b713f296b457e}
+
+
+Audio rate for this clip. 
+
+If the clip is video only, 0 is returned. If clip is not valid then 0 is returned. Note this is not necessarily the same as the soundcard audio rate which can be obtained via \hyperlink{namespacelives_1_1prefs_ae176785f5d16a4fa28dc9ebd7e3f80d5}{prefs\-::audio\-Player\-Rate()}. \begin{DoxyReturn}{Returns}
+int audio rate, or 0 if clip is not valid. 
+\end{DoxyReturn}
+\begin{DoxySeeAlso}{See Also}
+\hyperlink{classlives_1_1clip_a59cc4153ad00eb210d9e96b325338022}{playback\-Audio\-Rate()} 
+\end{DoxySeeAlso}
+\hypertarget{classlives_1_1clip_a71b4222b98c6438f6d7a045ba76834d4}{\index{lives\-::clip@{lives\-::clip}!audio\-Sample\-Size@{audio\-Sample\-Size}}
+\index{audio\-Sample\-Size@{audio\-Sample\-Size}!lives::clip@{lives\-::clip}}
+\subsubsection[{audio\-Sample\-Size}]{\setlength{\rightskip}{0pt plus 5cm}int lives\-::clip\-::audio\-Sample\-Size (
+\begin{DoxyParamCaption}
+{}
+\end{DoxyParamCaption}
+)}}\label{classlives_1_1clip_a71b4222b98c6438f6d7a045ba76834d4}
+
+
+Size in bits of audio samples (eg. 
+
+8, 16, 32) for this clip. If the clip is video only, 0 is returned. If clip is not valid then 0 is returned. \begin{DoxyReturn}{Returns}
+int audio sample size, or 0 if clip is not valid. 
+\end{DoxyReturn}
+\hypertarget{classlives_1_1clip_aaa350d735b9f44197dc217d507196529}{\index{lives\-::clip@{lives\-::clip}!audio\-Signed@{audio\-Signed}}
+\index{audio\-Signed@{audio\-Signed}!lives::clip@{lives\-::clip}}
+\subsubsection[{audio\-Signed}]{\setlength{\rightskip}{0pt plus 5cm}bool lives\-::clip\-::audio\-Signed (
+\begin{DoxyParamCaption}
+{}
+\end{DoxyParamCaption}
+)}}\label{classlives_1_1clip_aaa350d735b9f44197dc217d507196529}
+
+
+Returns whether the audio is signed (true) or unsigned (false). 
+
+If clip is video only or not valid then the return value is undefined. \begin{DoxyReturn}{Returns}
+bool audio signed. 
+\end{DoxyReturn}
+\hypertarget{classlives_1_1clip_aa05a99708f06d6718fee8621a621f894}{\index{lives\-::clip@{lives\-::clip}!F\-P\-S@{F\-P\-S}}
+\index{F\-P\-S@{F\-P\-S}!lives::clip@{lives\-::clip}}
+\subsubsection[{F\-P\-S}]{\setlength{\rightskip}{0pt plus 5cm}double lives\-::clip\-::\-F\-P\-S (
+\begin{DoxyParamCaption}
+{}
+\end{DoxyParamCaption}
+)}}\label{classlives_1_1clip_aa05a99708f06d6718fee8621a621f894}
+
+
+Framerate (frames per second) of the clip. 
+
+If the clip is audio only, 0.\-0 is returned. If clip is not valid then 0.\-0 is returned. \begin{DoxyReturn}{Returns}
+double framerate of the clip, or 0.\-0 if clip is not valid. 
+\end{DoxyReturn}
+\hypertarget{classlives_1_1clip_ad39f6a40689883e78027abb732012ccc}{\index{lives\-::clip@{lives\-::clip}!frames@{frames}}
+\index{frames@{frames}!lives::clip@{lives\-::clip}}
+\subsubsection[{frames}]{\setlength{\rightskip}{0pt plus 5cm}int lives\-::clip\-::frames (
+\begin{DoxyParamCaption}
+{}
+\end{DoxyParamCaption}
+)}}\label{classlives_1_1clip_ad39f6a40689883e78027abb732012ccc}
+
+
+Number of frames in this clip. 
+
+If the clip is audio only, 0 is returned. If clip is not valid then 0 is returned. \begin{DoxyReturn}{Returns}
+int number of frames, or 0 if clip is not valid. 
+\end{DoxyReturn}
+\hypertarget{classlives_1_1clip_aeb64c681f3cc583d140ddeca48c08d63}{\index{lives\-::clip@{lives\-::clip}!height@{height}}
+\index{height@{height}!lives::clip@{lives\-::clip}}
+\subsubsection[{height}]{\setlength{\rightskip}{0pt plus 5cm}int lives\-::clip\-::height (
+\begin{DoxyParamCaption}
+{}
+\end{DoxyParamCaption}
+)}}\label{classlives_1_1clip_aeb64c681f3cc583d140ddeca48c08d63}
+
+
+Height of the clip in pixels. 
+
+If the clip is audio only, 0 is returned. If clip is not valid then 0 is returned. \begin{DoxyReturn}{Returns}
+int height in pixels, or 0 if clip is not valid. 
+\end{DoxyReturn}
+\hypertarget{classlives_1_1clip_a88bf045cdf742f71a69e304600f6e754}{\index{lives\-::clip@{lives\-::clip}!is\-Valid@{is\-Valid}}
+\index{is\-Valid@{is\-Valid}!lives::clip@{lives\-::clip}}
+\subsubsection[{is\-Valid}]{\setlength{\rightskip}{0pt plus 5cm}bool lives\-::clip\-::is\-Valid (
+\begin{DoxyParamCaption}
+{}
+\end{DoxyParamCaption}
+) const}}\label{classlives_1_1clip_a88bf045cdf742f71a69e304600f6e754}
+
+
+Check if clip is valid. 
+
+A clip is valid if it is loaded in a valid \hyperlink{classlives_1_1livesApp}{lives\-App} instance, and the \hyperlink{classlives_1_1livesApp_afcb05464af9146f5efbb896f2611c8e7}{lives\-App\-::status()} is not L\-I\-V\-E\-S\-\_\-\-S\-T\-A\-T\-U\-S\-\_\-\-N\-O\-T\-R\-E\-A\-D\-Y. \begin{DoxySeeAlso}{See Also}
+\hyperlink{classlives_1_1livesApp_ae4edac76c513657c223e6b29a18a2c51}{lives\-App\-::open\-File()}. 
+\end{DoxySeeAlso}
+\begin{DoxyReturn}{Returns}
+true if the clip is valid. 
+\end{DoxyReturn}
+\hypertarget{classlives_1_1clip_a29e213434a96677925531f576b23ff0b}{\index{lives\-::clip@{lives\-::clip}!name@{name}}
+\index{name@{name}!lives::clip@{lives\-::clip}}
+\subsubsection[{name}]{\setlength{\rightskip}{0pt plus 5cm}{\bf lives\-String} lives\-::clip\-::name (
+\begin{DoxyParamCaption}
+{}
+\end{DoxyParamCaption}
+)}}\label{classlives_1_1clip_a29e213434a96677925531f576b23ff0b}
+
+
+Human readable name of the clip. 
+
+If clip is not valid then empty \hyperlink{classlives_1_1livesString}{lives\-String} is returned. \begin{DoxyReturn}{Returns}
+\hyperlink{classlives_1_1livesString}{lives\-String} name, or empty \hyperlink{classlives_1_1livesString}{lives\-String} if clip is not valid. 
+\end{DoxyReturn}
+\hypertarget{classlives_1_1clip_ad4721076828112e5adfa44dca7d54a02}{\index{lives\-::clip@{lives\-::clip}!operator==@{operator==}}
+\index{operator==@{operator==}!lives::clip@{lives\-::clip}}
+\subsubsection[{operator==}]{\setlength{\rightskip}{0pt plus 5cm}bool lives\-::clip\-::operator== (
+\begin{DoxyParamCaption}
+\item[{const {\bf clip} \&}]{other}
+\end{DoxyParamCaption}
+)\hspace{0.3cm}{\ttfamily [inline]}}}\label{classlives_1_1clip_ad4721076828112e5adfa44dca7d54a02}
+\begin{DoxyReturn}{Returns}
+true if the two clips have the same internal id, and belong to the same \hyperlink{classlives_1_1livesApp}{lives\-App}. 
+\end{DoxyReturn}
+\hypertarget{classlives_1_1clip_a59cc4153ad00eb210d9e96b325338022}{\index{lives\-::clip@{lives\-::clip}!playback\-Audio\-Rate@{playback\-Audio\-Rate}}
+\index{playback\-Audio\-Rate@{playback\-Audio\-Rate}!lives::clip@{lives\-::clip}}
+\subsubsection[{playback\-Audio\-Rate}]{\setlength{\rightskip}{0pt plus 5cm}int lives\-::clip\-::playback\-Audio\-Rate (
+\begin{DoxyParamCaption}
+{}
+\end{DoxyParamCaption}
+)}}\label{classlives_1_1clip_a59cc4153ad00eb210d9e96b325338022}
+
+
+The current playback audio rate for this clip, which may differ from \hyperlink{classlives_1_1clip_a9106502f20d85061483b713f296b457e}{audio\-Rate()}. 
+
+If the clip is video only, 0 is returned. If clip is not valid then 0 is returned. Note this is not necessarily the same as the soundcard audio rate which can be obtained via \hyperlink{namespacelives_1_1prefs_ae176785f5d16a4fa28dc9ebd7e3f80d5}{prefs\-::audio\-Player\-Rate()}. If \hyperlink{classlives_1_1livesApp_aafa7b7f9c2666d097d0413e84bf4eccc}{lives\-App\-::mode()} is L\-I\-V\-E\-S\-\_\-\-I\-N\-T\-E\-R\-F\-A\-C\-E\-\_\-\-M\-O\-D\-E\-\_\-\-M\-U\-L\-T\-I\-T\-R\-A\-C\-K then this will return multitrack\-::audio\-Rate(). \begin{DoxyReturn}{Returns}
+int playback audio rate, or 0 if clip is not valid. 
+\end{DoxyReturn}
+\begin{DoxySeeAlso}{See Also}
+audiorate(). 
+\end{DoxySeeAlso}
+\hypertarget{classlives_1_1clip_ac1ac02deaaa685277b02b20363a6335a}{\index{lives\-::clip@{lives\-::clip}!playback\-F\-P\-S@{playback\-F\-P\-S}}
+\index{playback\-F\-P\-S@{playback\-F\-P\-S}!lives::clip@{lives\-::clip}}
+\subsubsection[{playback\-F\-P\-S}]{\setlength{\rightskip}{0pt plus 5cm}double lives\-::clip\-::playback\-F\-P\-S (
+\begin{DoxyParamCaption}
+{}
+\end{DoxyParamCaption}
+)}}\label{classlives_1_1clip_ac1ac02deaaa685277b02b20363a6335a}
+
+
+Framerate (frames per second) that the clip is/will be played back at. 
+
+This may vary from the normal \hyperlink{classlives_1_1clip_aa05a99708f06d6718fee8621a621f894}{F\-P\-S()}. During playback it will be equivalent to player\-::\-F\-P\-S(). If \hyperlink{classlives_1_1livesApp_aafa7b7f9c2666d097d0413e84bf4eccc}{lives\-App\-::mode()} is L\-I\-V\-E\-S\-\_\-\-I\-N\-T\-E\-R\-F\-A\-C\-E\-\_\-\-M\-O\-D\-E\-\_\-\-M\-U\-L\-T\-I\-T\-R\-A\-C\-K then this will return \hyperlink{classlives_1_1multitrack_aa5709b2f8bc04c5e3ff14919f2e477f0}{multitrack\-::\-F\-P\-S()}. I\-F the clip is invalid, 0. is returned. \begin{DoxyReturn}{Returns}
+the playback framerate 
+\end{DoxyReturn}
+\begin{DoxySeeAlso}{See Also}
+\hyperlink{classlives_1_1player_a15a2921cbcfe6092deced20e0b05c914}{player\-::set\-Current\-F\-P\-S()}. 
+
+player\-::\-F\-P\-S(). 
+\end{DoxySeeAlso}
+\hypertarget{classlives_1_1clip_ac06a024a56ba4b3e32a090d942fb71fd}{\index{lives\-::clip@{lives\-::clip}!select\-All@{select\-All}}
+\index{select\-All@{select\-All}!lives::clip@{lives\-::clip}}
+\subsubsection[{select\-All}]{\setlength{\rightskip}{0pt plus 5cm}bool lives\-::clip\-::select\-All (
+\begin{DoxyParamCaption}
+{}
+\end{DoxyParamCaption}
+)}}\label{classlives_1_1clip_ac06a024a56ba4b3e32a090d942fb71fd}
+
+
+Select all frames in the clip. 
+
+if the clip is invalid does nothing. Only works is \hyperlink{classlives_1_1livesApp_afcb05464af9146f5efbb896f2611c8e7}{lives\-App\-::status()} is L\-I\-V\-E\-S\-\_\-\-S\-T\-A\-T\-U\-S\-\_\-\-R\-E\-A\-D\-Y or L\-I\-V\-E\-S\-\_\-\-S\-T\-A\-T\-U\-S\-\_\-\-P\-L\-A\-Y\-I\-N\-G. \begin{DoxyReturn}{Returns}
+true if the operation was successful. 
+\end{DoxyReturn}
+\hypertarget{classlives_1_1clip_a4e2b3c1a80795906f39f27390b8545ae}{\index{lives\-::clip@{lives\-::clip}!selection\-End@{selection\-End}}
+\index{selection\-End@{selection\-End}!lives::clip@{lives\-::clip}}
+\subsubsection[{selection\-End}]{\setlength{\rightskip}{0pt plus 5cm}int lives\-::clip\-::selection\-End (
+\begin{DoxyParamCaption}
+{}
+\end{DoxyParamCaption}
+)}}\label{classlives_1_1clip_a4e2b3c1a80795906f39f27390b8545ae}
+
+
+End of the selected frame region. 
+
+If the clip is audio only, 0 is returned. If clip is not valid then 0 is returned. \begin{DoxyReturn}{Returns}
+int frame selection end, or 0 if clip is not valid. 
+\end{DoxyReturn}
+\hypertarget{classlives_1_1clip_ae3bec5d06c36693307baab2f0ae2c591}{\index{lives\-::clip@{lives\-::clip}!selection\-Start@{selection\-Start}}
+\index{selection\-Start@{selection\-Start}!lives::clip@{lives\-::clip}}
+\subsubsection[{selection\-Start}]{\setlength{\rightskip}{0pt plus 5cm}int lives\-::clip\-::selection\-Start (
+\begin{DoxyParamCaption}
+{}
+\end{DoxyParamCaption}
+)}}\label{classlives_1_1clip_ae3bec5d06c36693307baab2f0ae2c591}
+
+
+Start of the selected frame region. 
+
+If the clip is audio only, 0 is returned. If clip is not valid then 0 is returned. \begin{DoxyReturn}{Returns}
+int frame selection start, or 0 if clip is not valid. 
+\end{DoxyReturn}
+\hypertarget{classlives_1_1clip_a3f8614e13193d38a584dafe82a828361}{\index{lives\-::clip@{lives\-::clip}!set\-Is\-Background@{set\-Is\-Background}}
+\index{set\-Is\-Background@{set\-Is\-Background}!lives::clip@{lives\-::clip}}
+\subsubsection[{set\-Is\-Background}]{\setlength{\rightskip}{0pt plus 5cm}bool lives\-::clip\-::set\-Is\-Background (
+\begin{DoxyParamCaption}
+{}
+\end{DoxyParamCaption}
+)}}\label{classlives_1_1clip_a3f8614e13193d38a584dafe82a828361}
+
+
+Switch to this clip as the current background clip. 
+
+Only works if \hyperlink{classlives_1_1livesApp_afcb05464af9146f5efbb896f2611c8e7}{lives\-App\-::status()} is L\-I\-V\-E\-S\-\_\-\-S\-T\-A\-T\-U\-S\-\_\-\-R\-E\-A\-D\-Y or L\-I\-V\-E\-S\-\_\-\-S\-T\-A\-T\-U\-S\-\_\-\-P\-L\-A\-Y\-I\-N\-G and \hyperlink{classlives_1_1livesApp_aafa7b7f9c2666d097d0413e84bf4eccc}{lives\-App\-::mode()} is L\-I\-V\-E\-S\-\_\-\-I\-N\-T\-E\-R\-F\-A\-C\-E\-\_\-\-M\-O\-D\-E\-\_\-\-C\-L\-I\-P\-\_\-\-E\-D\-I\-T\-O\-R. If the clip is invalid, nothing happens and false is returned. \begin{DoxyReturn}{Returns}
+true if the switch was successful. 
+\end{DoxyReturn}
+\begin{DoxySeeAlso}{See Also}
+\hyperlink{classlives_1_1player_acbef85e26dbd27584a4f90d5b05cb360}{player\-::set\-Background\-Clip()} 
+\end{DoxySeeAlso}
+\hypertarget{classlives_1_1clip_abb198e92872582f71ce178e0a0c4c9ac}{\index{lives\-::clip@{lives\-::clip}!set\-Selection\-End@{set\-Selection\-End}}
+\index{set\-Selection\-End@{set\-Selection\-End}!lives::clip@{lives\-::clip}}
+\subsubsection[{set\-Selection\-End}]{\setlength{\rightskip}{0pt plus 5cm}bool lives\-::clip\-::set\-Selection\-End (
+\begin{DoxyParamCaption}
+\item[{unsigned int}]{end}
+\end{DoxyParamCaption}
+)}}\label{classlives_1_1clip_abb198e92872582f71ce178e0a0c4c9ac}
+
+
+Set the selection end frame for the clip. 
+
+If the new end is $<$ \hyperlink{classlives_1_1clip_ae3bec5d06c36693307baab2f0ae2c591}{selection\-Start()} then selection start will be set to the new end. If the clip is invalid there is no effect. Only functions if \hyperlink{classlives_1_1livesApp_afcb05464af9146f5efbb896f2611c8e7}{lives\-App\-::status()} is L\-I\-V\-E\-S\-\_\-\-S\-T\-A\-T\-U\-S\-\_\-\-R\-E\-A\-D\-Y or L\-I\-V\-E\-S\-\_\-\-S\-T\-A\-T\-U\-S\-\_\-\-P\-L\-A\-Y\-I\-N\-G. 
+\begin{DoxyParams}{Parameters}
+{\em end} & the selection end frame which must be in range 1 $<$= end $<$= \hyperlink{classlives_1_1clip_ad39f6a40689883e78027abb732012ccc}{frames()}. \\
+\hline
+\end{DoxyParams}
+\begin{DoxySeeAlso}{See Also}
+\hyperlink{classlives_1_1clip_a01d1d840575c077e8c44ebe71df4ef82}{set\-Selection\-Start()}. 
+\end{DoxySeeAlso}
+\hypertarget{classlives_1_1clip_a01d1d840575c077e8c44ebe71df4ef82}{\index{lives\-::clip@{lives\-::clip}!set\-Selection\-Start@{set\-Selection\-Start}}
+\index{set\-Selection\-Start@{set\-Selection\-Start}!lives::clip@{lives\-::clip}}
+\subsubsection[{set\-Selection\-Start}]{\setlength{\rightskip}{0pt plus 5cm}bool lives\-::clip\-::set\-Selection\-Start (
+\begin{DoxyParamCaption}
+\item[{unsigned int}]{start}
+\end{DoxyParamCaption}
+)}}\label{classlives_1_1clip_a01d1d840575c077e8c44ebe71df4ef82}
+
+
+Set the selection start frame for the clip. 
+
+If the new start is $>$ \hyperlink{classlives_1_1clip_a4e2b3c1a80795906f39f27390b8545ae}{selection\-End()} then selection end will be set to the new start. If the clip is invalid there is no effect. Only functions if \hyperlink{classlives_1_1livesApp_afcb05464af9146f5efbb896f2611c8e7}{lives\-App\-::status()} is L\-I\-V\-E\-S\-\_\-\-S\-T\-A\-T\-U\-S\-\_\-\-R\-E\-A\-D\-Y or L\-I\-V\-E\-S\-\_\-\-S\-T\-A\-T\-U\-S\-\_\-\-P\-L\-A\-Y\-I\-N\-G. 
+\begin{DoxyParams}{Parameters}
+{\em start} & the selection start frame which must be in range 1 $<$= start $<$= \hyperlink{classlives_1_1clip_ad39f6a40689883e78027abb732012ccc}{frames()}. \\
+\hline
+\end{DoxyParams}
+\begin{DoxySeeAlso}{See Also}
+\hyperlink{classlives_1_1clip_abb198e92872582f71ce178e0a0c4c9ac}{set\-Selection\-End()}. 
+\end{DoxySeeAlso}
+\hypertarget{classlives_1_1clip_aa809f02996c2c676934883ad14918b1b}{\index{lives\-::clip@{lives\-::clip}!switch\-To@{switch\-To}}
+\index{switch\-To@{switch\-To}!lives::clip@{lives\-::clip}}
+\subsubsection[{switch\-To}]{\setlength{\rightskip}{0pt plus 5cm}bool lives\-::clip\-::switch\-To (
+\begin{DoxyParamCaption}
+{}
+\end{DoxyParamCaption}
+)}}\label{classlives_1_1clip_aa809f02996c2c676934883ad14918b1b}
+
+
+Switch to this clip as the current foreground clip. 
+
+Only works if \hyperlink{classlives_1_1livesApp_afcb05464af9146f5efbb896f2611c8e7}{lives\-App\-::status()} is L\-I\-V\-E\-S\-\_\-\-S\-T\-A\-T\-U\-S\-\_\-\-R\-E\-A\-D\-Y or L\-I\-V\-E\-S\-\_\-\-S\-T\-A\-T\-U\-S\-\_\-\-P\-L\-A\-Y\-I\-N\-G and \hyperlink{classlives_1_1livesApp_aafa7b7f9c2666d097d0413e84bf4eccc}{lives\-App\-::mode()} is L\-I\-V\-E\-S\-\_\-\-I\-N\-T\-E\-R\-F\-A\-C\-E\-\_\-\-M\-O\-D\-E\-\_\-\-C\-L\-I\-P\-\_\-\-E\-D\-I\-T\-O\-R. If clips are switched during playback, the application acts as if lives\-App\-::loop\-Mode() were set to L\-I\-V\-E\-S\-\_\-\-L\-O\-O\-P\-\_\-\-M\-O\-D\-E\-\_\-\-C\-O\-N\-T\-I\-N\-U\-O\-U\-S. If the clip is invalid, nothing happens and false is returned. \begin{DoxyReturn}{Returns}
+true if the switch was successful. 
+\end{DoxyReturn}
+\begin{DoxySeeAlso}{See Also}
+\hyperlink{classlives_1_1player_afebf64a8167e16087f8328c0755f0c64}{player\-::set\-Foreground\-Clip()} 
+\end{DoxySeeAlso}
+\hypertarget{classlives_1_1clip_ae3f457877690885c22a53dc5f907a5ae}{\index{lives\-::clip@{lives\-::clip}!width@{width}}
+\index{width@{width}!lives::clip@{lives\-::clip}}
+\subsubsection[{width}]{\setlength{\rightskip}{0pt plus 5cm}int lives\-::clip\-::width (
+\begin{DoxyParamCaption}
+{}
+\end{DoxyParamCaption}
+)}}\label{classlives_1_1clip_ae3f457877690885c22a53dc5f907a5ae}
+
+
+Width of the clip in pixels. 
+
+If the clip is audio only, 0 is returned. If clip is not valid then 0 is returned. \begin{DoxyReturn}{Returns}
+int width in pixels, or 0 if clip is not valid. 
+\end{DoxyReturn}
+
+
+The documentation for this class was generated from the following files\-:\begin{DoxyCompactItemize}
+\item 
+src/\hyperlink{liblives_8hpp}{liblives.\-hpp}\item 
+src/\hyperlink{liblives_8cpp}{liblives.\-cpp}\end{DoxyCompactItemize}

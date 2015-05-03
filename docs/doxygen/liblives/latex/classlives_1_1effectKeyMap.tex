@@ -1,0 +1,144 @@
+\hypertarget{classlives_1_1effectKeyMap}{\section{lives\-:\-:effect\-Key\-Map Class Reference}
+\label{classlives_1_1effectKeyMap}\index{lives\-::effect\-Key\-Map@{lives\-::effect\-Key\-Map}}
+}
+
+
+class \char`\"{}effect\-Key\-Map\char`\"{}.  
+
+
+
+
+{\ttfamily \#include $<$liblives.\-hpp$>$}
+
+\subsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+bool \hyperlink{classlives_1_1effectKeyMap_a58a3827a33e56539e53b73153052cd99}{is\-Valid} () const 
+\begin{DoxyCompactList}\small\item\em Returns whether the \hyperlink{classlives_1_1effectKeyMap}{effect\-Key\-Map} is valid or not. \end{DoxyCompactList}\item 
+bool \hyperlink{classlives_1_1effectKeyMap_a09893bcee195b64316342b00b1dbeec9}{clear} () const 
+\begin{DoxyCompactList}\small\item\em Unmap all effects from \hyperlink{classlives_1_1effectKey}{effect\-Key} mappings, leaving an empty map. \end{DoxyCompactList}\item 
+\hyperlink{classlives_1_1effectKey}{effect\-Key} \hyperlink{classlives_1_1effectKeyMap_a9ebd88928ef0202d192c41886f98f433}{at} (int i) const 
+\begin{DoxyCompactList}\small\item\em Returns the ith effect key for this key map. \end{DoxyCompactList}\item 
+size\-\_\-t \hyperlink{classlives_1_1effectKeyMap_a2a9610e8cab2c3cb765ca23a4629af99}{size} () const 
+\begin{DoxyCompactList}\small\item\em Returns the number of key slots (indices) in the \hyperlink{classlives_1_1effectKeyMap}{effect\-Key\-Map}. \end{DoxyCompactList}\item 
+bool \hyperlink{classlives_1_1effectKeyMap_a2c211c5b282d1ba0cdbf81ba3854ddce}{operator==} (const \hyperlink{classlives_1_1effectKeyMap}{effect\-Key\-Map} \&other) const 
+\item 
+\hyperlink{classlives_1_1effectKey}{effect\-Key} \hyperlink{classlives_1_1effectKeyMap_a5a3516b5f5687083edc8179883933f61}{operator\mbox{[}$\,$\mbox{]}} (int i) const 
+\begin{DoxyCompactList}\small\item\em Returns an effect key with index i for this key map. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\subsection*{Protected Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\hypertarget{classlives_1_1effectKeyMap_a02aecc82443a4daefddaf0feae474c87}{{\bfseries effect\-Key\-Map} (\hyperlink{classlives_1_1livesApp}{lives\-App} $\ast$lives)}\label{classlives_1_1effectKeyMap_a02aecc82443a4daefddaf0feae474c87}
+
+\end{DoxyCompactItemize}
+
+
+\subsection{Detailed Description}
+class \char`\"{}effect\-Key\-Map\char`\"{}. 
+
+Represents a mapping of \hyperlink{classlives_1_1effectKey}{effect\-Key} instances to key slots. Real time effects are always applied in order of ascending index value (with the exception of generator effects, which are applied first). \begin{DoxySeeAlso}{See Also}
+\hyperlink{classlives_1_1livesApp_a37cca224eeac4874e643027ab90404a3}{lives\-App\-::get\-Effect\-Key\-Map()} 
+\end{DoxySeeAlso}
+
+
+\subsection{Member Function Documentation}
+\hypertarget{classlives_1_1effectKeyMap_a9ebd88928ef0202d192c41886f98f433}{\index{lives\-::effect\-Key\-Map@{lives\-::effect\-Key\-Map}!at@{at}}
+\index{at@{at}!lives::effectKeyMap@{lives\-::effect\-Key\-Map}}
+\subsubsection[{at}]{\setlength{\rightskip}{0pt plus 5cm}{\bf effect\-Key} lives\-::effect\-Key\-Map\-::at (
+\begin{DoxyParamCaption}
+\item[{int}]{i}
+\end{DoxyParamCaption}
+) const}}\label{classlives_1_1effectKeyMap_a9ebd88928ef0202d192c41886f98f433}
+
+
+Returns the ith effect key for this key map. 
+
+Valid range for i is 1 $<$= i $<$= \hyperlink{namespacelives_1_1prefs_a7c4b71b02f07b43d032ed749406ebca3}{prefs\-::rte\-Keys\-Virtual()}. For values of i outside this range, an invalid \hyperlink{classlives_1_1effectKey}{effect\-Key} is returned. 
+\begin{DoxyParams}{Parameters}
+{\em the} & index value \\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+an \hyperlink{classlives_1_1effectKey}{effect\-Key} with index i. 
+\end{DoxyReturn}
+\begin{DoxySeeAlso}{See Also}
+effect\-Key\-::operator\mbox{[}$\,$\mbox{]} 
+\end{DoxySeeAlso}
+\hypertarget{classlives_1_1effectKeyMap_a09893bcee195b64316342b00b1dbeec9}{\index{lives\-::effect\-Key\-Map@{lives\-::effect\-Key\-Map}!clear@{clear}}
+\index{clear@{clear}!lives::effectKeyMap@{lives\-::effect\-Key\-Map}}
+\subsubsection[{clear}]{\setlength{\rightskip}{0pt plus 5cm}bool lives\-::effect\-Key\-Map\-::clear (
+\begin{DoxyParamCaption}
+{}
+\end{DoxyParamCaption}
+) const}}\label{classlives_1_1effectKeyMap_a09893bcee195b64316342b00b1dbeec9}
+
+
+Unmap all effects from \hyperlink{classlives_1_1effectKey}{effect\-Key} mappings, leaving an empty map. 
+
+Only has an effect when \hyperlink{classlives_1_1livesApp_afcb05464af9146f5efbb896f2611c8e7}{lives\-App\-::status()} is L\-I\-V\-E\-S\-\_\-\-S\-T\-A\-T\-U\-S\-\_\-\-R\-E\-A\-D\-Y. \begin{DoxyReturn}{Returns}
+true if all effects were unmapped 
+\end{DoxyReturn}
+\hypertarget{classlives_1_1effectKeyMap_a58a3827a33e56539e53b73153052cd99}{\index{lives\-::effect\-Key\-Map@{lives\-::effect\-Key\-Map}!is\-Valid@{is\-Valid}}
+\index{is\-Valid@{is\-Valid}!lives::effectKeyMap@{lives\-::effect\-Key\-Map}}
+\subsubsection[{is\-Valid}]{\setlength{\rightskip}{0pt plus 5cm}bool lives\-::effect\-Key\-Map\-::is\-Valid (
+\begin{DoxyParamCaption}
+{}
+\end{DoxyParamCaption}
+) const}}\label{classlives_1_1effectKeyMap_a58a3827a33e56539e53b73153052cd99}
+
+
+Returns whether the \hyperlink{classlives_1_1effectKeyMap}{effect\-Key\-Map} is valid or not. 
+
+A valid \hyperlink{classlives_1_1effectKeyMap}{effect\-Key\-Map} is owned by a valid \hyperlink{classlives_1_1livesApp}{lives\-App}, the \hyperlink{classlives_1_1livesApp_afcb05464af9146f5efbb896f2611c8e7}{lives\-App\-::status()} is not L\-I\-V\-E\-S\-\_\-\-S\-T\-A\-T\-U\-S\-\_\-\-N\-O\-T\-R\-E\-A\-D\-Y, and the index is 1 $<$= i $<$= \hyperlink{namespacelives_1_1prefs_a7c4b71b02f07b43d032ed749406ebca3}{prefs\-::rte\-Keys\-Virtual()}. \begin{DoxyReturn}{Returns}
+true if the \hyperlink{classlives_1_1effectKeyMap}{effect\-Key\-Map} is valid. 
+\end{DoxyReturn}
+\hypertarget{classlives_1_1effectKeyMap_a2c211c5b282d1ba0cdbf81ba3854ddce}{\index{lives\-::effect\-Key\-Map@{lives\-::effect\-Key\-Map}!operator==@{operator==}}
+\index{operator==@{operator==}!lives::effectKeyMap@{lives\-::effect\-Key\-Map}}
+\subsubsection[{operator==}]{\setlength{\rightskip}{0pt plus 5cm}bool lives\-::effect\-Key\-Map\-::operator== (
+\begin{DoxyParamCaption}
+\item[{const {\bf effect\-Key\-Map} \&}]{other}
+\end{DoxyParamCaption}
+) const\hspace{0.3cm}{\ttfamily [inline]}}}\label{classlives_1_1effectKeyMap_a2c211c5b282d1ba0cdbf81ba3854ddce}
+\begin{DoxyReturn}{Returns}
+true if the two effect\-Key\-Maps have the same \hyperlink{classlives_1_1livesApp}{lives\-App} 
+\end{DoxyReturn}
+\hypertarget{classlives_1_1effectKeyMap_a5a3516b5f5687083edc8179883933f61}{\index{lives\-::effect\-Key\-Map@{lives\-::effect\-Key\-Map}!operator\mbox{[}$\,$\mbox{]}@{operator[]}}
+\index{operator\mbox{[}$\,$\mbox{]}@{operator[]}!lives::effectKeyMap@{lives\-::effect\-Key\-Map}}
+\subsubsection[{operator[]}]{\setlength{\rightskip}{0pt plus 5cm}{\bf effect\-Key} lives\-::effect\-Key\-Map\-::operator\mbox{[}$\,$\mbox{]} (
+\begin{DoxyParamCaption}
+\item[{int}]{i}
+\end{DoxyParamCaption}
+) const\hspace{0.3cm}{\ttfamily [inline]}}}\label{classlives_1_1effectKeyMap_a5a3516b5f5687083edc8179883933f61}
+
+
+Returns an effect key with index i for this key map. 
+
+The value of i may be chosen freely, but if it is outside the range 1 $<$= i $<$= \hyperlink{classlives_1_1effectKeyMap_a2a9610e8cab2c3cb765ca23a4629af99}{size()} then the \hyperlink{classlives_1_1effectKey}{effect\-Key} will be considered invalid. \begin{DoxyReturn}{Returns}
+an \hyperlink{classlives_1_1effectKey}{effect\-Key} with index i for this key map. 
+\end{DoxyReturn}
+\begin{DoxySeeAlso}{See Also}
+\hyperlink{classlives_1_1effectKeyMap_a9ebd88928ef0202d192c41886f98f433}{at()} 
+\end{DoxySeeAlso}
+\hypertarget{classlives_1_1effectKeyMap_a2a9610e8cab2c3cb765ca23a4629af99}{\index{lives\-::effect\-Key\-Map@{lives\-::effect\-Key\-Map}!size@{size}}
+\index{size@{size}!lives::effectKeyMap@{lives\-::effect\-Key\-Map}}
+\subsubsection[{size}]{\setlength{\rightskip}{0pt plus 5cm}size\-\_\-t lives\-::effect\-Key\-Map\-::size (
+\begin{DoxyParamCaption}
+{}
+\end{DoxyParamCaption}
+) const}}\label{classlives_1_1effectKeyMap_a2a9610e8cab2c3cb765ca23a4629af99}
+
+
+Returns the number of key slots (indices) in the \hyperlink{classlives_1_1effectKeyMap}{effect\-Key\-Map}. 
+
+The valid range of keys is 1 $<$= key $<$= \hyperlink{classlives_1_1effectKeyMap_a2a9610e8cab2c3cb765ca23a4629af99}{size()}. Equivalent to \hyperlink{namespacelives_1_1prefs_a7c4b71b02f07b43d032ed749406ebca3}{prefs\-::rte\-Keys\-Virtual()}, except that if the \hyperlink{classlives_1_1effectKeyMap}{effect\-Key\-Map} is invalid, returns 0. \begin{DoxyReturn}{Returns}
+the number of key slots. 
+\end{DoxyReturn}
+\begin{DoxySeeAlso}{See Also}
+\hyperlink{namespacelives_1_1prefs_a7c4b71b02f07b43d032ed749406ebca3}{prefs\-::rte\-Keys\-Virtual()} 
+\end{DoxySeeAlso}
+
+
+The documentation for this class was generated from the following files\-:\begin{DoxyCompactItemize}
+\item 
+src/\hyperlink{liblives_8hpp}{liblives.\-hpp}\item 
+src/\hyperlink{liblives_8cpp}{liblives.\-cpp}\end{DoxyCompactItemize}

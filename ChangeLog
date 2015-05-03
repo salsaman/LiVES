@@ -11,6 +11,7 @@ Stability fix for mkv_decoder with broken end frames.
 Implement C++ language bindings (liblives).
 Fixes for several smaller issues (Thomas Berger).
 Code cleanup / reformat.
+Updated translations to UK English, French, Galician, German, Russian and Simplified Chinese.
 
 
 

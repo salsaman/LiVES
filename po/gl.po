@@ -2,21 +2,21 @@
 # Copyright (c) 2008 Rosetta Contributors and Canonical Ltd 2008
 # This file is distributed under the same license as the lives package.
 # FIRST AUTHOR <EMAIL@ADDRESS>, 2008.
-#
+# Miguel Anxo Bouzada <mbouzada@gmail.com>, 2015.
 msgid ""
 msgstr ""
 "Project-Id-Version: lives\n"
 "Report-Msgid-Bugs-To: https://sourceforge.net/p/lives/bugs/\n"
-"POT-Creation-Date: 2015-05-02 10:58-0300\n"
-"PO-Revision-Date: 2013-03-14 12:31+0000\n"
-"Last-Translator: Launchpad Translations Administrators <Unknown>\n"
-"Language-Team: Galician <gl@li.org>\n"
+"POT-Creation-Date: 2015-05-03 12:54-0300\n"
+"PO-Revision-Date: 2015-04-20 18:32+0000\n"
+"Last-Translator: Miguel Anxo Bouzada <mbouzada@gmail.com>\n"
+"Language-Team: Galician <proxecto@trasno.net>\n"
 "Language: gl\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Launchpad-Export-Date: 2013-03-28 10:42+0000\n"
-"X-Generator: Launchpad (build 16546)\n"
+"X-Launchpad-Export-Date: 2015-05-03 15:41+0000\n"
+"X-Generator: Launchpad (build 17474)\n"
 
 #: src/main.c:128
 msgid ""
@@ -30,17 +30,17 @@ msgstr ""
 #: src/main.c:153
 #, c-format
 msgid "%s Warning: %s\n"
-msgstr ""
+msgstr "%s Aviso: %s\n"
 
 #: src/main.c:157
 #, c-format
 msgid "%s Critical error: %s\n"
-msgstr ""
+msgstr "%s Erro crítico: %s\n"
 
 #: src/main.c:158
 #, c-format
 msgid "%s Fatal error: %s\n"
-msgstr ""
+msgstr "%s Erro grave: %s\n"
 
 #: src/main.c:198
 msgid ""
@@ -51,10 +51,10 @@ msgid ""
 "Thanks. Recovery should be possible if you restart LiVES.\n"
 msgstr ""
 "\n"
-"Desafortunadamente LiVES caeu.\n"
-"Por favor reporte este erro no http://sourceforge.net/tracker/?"
+"Desafortunadamente LiVES quebrou.\n"
+"Informe deste erro en http://sourceforge.net/tracker/?"
 "group_id=64341&atid=507139\n"
-"Grazas. A recuperación debe ser posible se reinicia LiVES.\n"
+"Grazas. Deber ser posíbel a recuperación se reinicia LiVES.\n"
 
 #: src/main.c:199
 msgid ""
@@ -65,15 +65,15 @@ msgid ""
 msgstr ""
 "\n"
 "\n"
-"Cando falla de información, por favor inclúa os detalles do seu sistema "
-"operativo, distribución, ea versión LiVES ("
+"Cando informe de quebras, inclúa os detalles do seu sistema operativo, "
+"distribución, e a versión de LiVES ("
 
 #: src/main.c:203
 msgid ""
 "and any information shown below:\n"
 "\n"
 msgstr ""
-"e todas as informacións que aparecen a continuación:\n"
+"e calquera outra información amosada embaixo:\n"
 "\n"
 
 #: src/main.c:206
@@ -82,13 +82,13 @@ msgid ""
 "information.\n"
 "\n"
 msgstr ""
-"Por favor, instalar e executar gdb vive coa opción -debug para recopilar "
-"máis información.\n"
+"Instale «gdb» e e execute LiVES coa opción -debug para recompilar máis "
+"información.\n"
 "\n"
 
 #: src/main.c:216
 msgid "Preserving set.\n"
-msgstr "Preservar set.\n"
+msgstr "Preservar o conxunto.\n"
 
 #: src/main.c:691
 msgid "Resizing"
@@ -96,12 +96,12 @@ msgstr "Redimensionando"
 
 #: src/main.c:698
 msgid "_Resize All Frames"
-msgstr "_Redimensionar todos os cadros"
+msgstr "_Redimensionar todos os fotogramas"
 
 #. TRANSLATORS: text saying "Any", for encoder and output format (as in "does not matter")
 #: src/main.c:948
 msgid "Any"
-msgstr "Calquer"
+msgstr "Calquera"
 
 #. TRANSLATORS: text saying "None", for playback plugin name (as in "none specified")
 #: src/main.c:950
@@ -116,7 +116,7 @@ msgstr "recomendado"
 #. TRANSLATORS: text saying "disabled", (as in "not enabled")
 #: src/main.c:954
 msgid "disabled !"
-msgstr "minusválidos !"
+msgstr "desactivado !"
 
 #. TRANSLATORS: text saying "**The current layout**", to warn users that the current layout is affected
 #: src/main.c:956
@@ -140,28 +140,27 @@ msgstr "Proba"
 
 #: src/main.c:1107
 msgid "Foreground"
-msgstr ""
+msgstr "Primeiro plano"
 
 #: src/main.c:1108
-#, fuzzy
 msgid "Background"
-msgstr "_Inicio"
+msgstr "Fondo"
 
 #: src/main.c:1624
 msgid "Loading realtime effect plugins..."
-msgstr ""
+msgstr "Cargando complementos de efectos en tempo real..."
 
 #: src/main.c:1690
 msgid "Starting jack audio server..."
-msgstr ""
+msgstr "Iniciando o servidor de son jack..."
 
 #: src/main.c:1692
 msgid "Starting jack transport server..."
-msgstr ""
+msgstr "Iniciando o servidor de transporte jack..."
 
 #: src/main.c:1693
 msgid "Connecting to jack transport server..."
-msgstr ""
+msgstr "Conectando co servidor de transporte jack..."
 
 #: src/main.c:1723
 #, c-format
@@ -177,37 +176,37 @@ msgstr ""
 
 #: src/main.c:1758
 msgid "Starting pulse audio server..."
-msgstr ""
+msgstr "Iniciando o servidor pulse audio..."
 
 #: src/main.c:1825
 msgid "Checking optional dependencies:"
-msgstr "Comprobar dependencias opcionais:"
+msgstr "Comprobando as dependencias opcionais:"
 
 #: src/main.c:1826
 msgid "mplayer...detected..."
-msgstr "mplayer...detectados..."
+msgstr "mplayer...detectado..."
 
 #: src/main.c:1827
 msgid "mplayer...NOT DETECTED..."
-msgstr "mplayer...NON DETECTA..."
+msgstr "mplayer...NON DETECTADO..."
 
 #: src/main.c:1828
 #, fuzzy
 msgid "mplayer2...detected..."
-msgstr "mplayer...detectados..."
+msgstr "mplayer...detectado..."
 
 #: src/main.c:1829
 #, fuzzy
 msgid "mplayer2...NOT DETECTED..."
-msgstr "mplayer...NON DETECTA..."
+msgstr "mplayer...NON DETECTADO..."
 
 #: src/main.c:1830
 msgid "convert...detected..."
-msgstr "convert...detectados..."
+msgstr "convert...detectado..."
 
 #: src/main.c:1831
 msgid "convert...NOT DETECTED..."
-msgstr "convert...NON DETECTA..."
+msgstr "convert...NON DETECTADO..."
 
 #: src/main.c:1832
 msgid "composite...detected..."
@@ -215,35 +214,35 @@ msgstr "composite...detectados..."
 
 #: src/main.c:1833
 msgid "composite...NOT DETECTED..."
-msgstr "composite...NON DETECTA..."
+msgstr "composite...NON DETECTADO..."
 
 #: src/main.c:1834
 msgid "sox...detected\n"
-msgstr "sox...detectados\n"
+msgstr "sox...detectado\n"
 
 #: src/main.c:1835
 msgid "sox...NOT DETECTED\n"
-msgstr "sox...NON DETECTA\n"
+msgstr "sox...NON DETECTADO\n"
 
 #: src/main.c:1836
 msgid "cdda2wav...detected..."
-msgstr "cdda2wav...detectados..."
+msgstr "cdda2wav...detectado..."
 
 #: src/main.c:1837
 msgid "cdda2wav...NOT DETECTED..."
-msgstr "cdda2wav...NON DETECTA..."
+msgstr "cdda2wav...NON DETECTADO..."
 
 #: src/main.c:1838
 msgid "jackd...detected..."
-msgstr "jackd...detectados..."
+msgstr "jackd...detectado..."
 
 #: src/main.c:1839
 msgid "jackd...NOT DETECTED..."
-msgstr "jackd...NON DETECTA..."
+msgstr "jackd...NON DETECTADO..."
 
 #: src/main.c:1840
 msgid "pulse audio...detected..."
-msgstr "pulse audio...detectados..."
+msgstr "pulse audio...detectado..."
 
 #: src/main.c:1841
 msgid "pulse audio...NOT DETECTED..."
@@ -251,36 +250,36 @@ msgstr "pulse audio...NON DETECTA..."
 
 #: src/main.c:1842
 msgid "python...detected..."
-msgstr "python...detectados..."
+msgstr "python...detectado..."
 
 #: src/main.c:1843
 msgid "python...NOT DETECTED..."
-msgstr "python...NON DETECTA..."
+msgstr "python...NON DETECTADO..."
 
 #: src/main.c:1844
 msgid "dvgrab...detected..."
-msgstr "dvgrab...detectados..."
+msgstr "dvgrab...detectado..."
 
 #: src/main.c:1845
 msgid "dvgrab...NOT DETECTED..."
-msgstr "dvgrab...NON DETECTA..."
+msgstr "dvgrab...NON DETECTADO..."
 
 #: src/main.c:1846
 msgid "xwininfo...detected..."
-msgstr "xwininfo...detectados..."
+msgstr "xwininfo...detectado..."
 
 #: src/main.c:1847
 msgid "xwininfo...NOT DETECTED..."
-msgstr "xwininfo...NON DETECTA..."
+msgstr "xwininfo...NON DETECTADO..."
 
 #: src/main.c:1853
 #, c-format
 msgid "Windows version %04X"
-msgstr ""
+msgstr "Versión de Windows %04X"
 
 #: src/main.c:1855
 msgid "UNKNOWN - please patch me !"
-msgstr ""
+msgstr "DESCOÑECIDO - arranxe isto !"
 
 #: src/main.c:1859
 #, c-format
@@ -291,7 +290,7 @@ msgid ""
 msgstr ""
 "\n"
 "\n"
-"Informes como xestor de xanelas \"%s\"; "
+"O xestor de xanelas é recoñecido como «%s»; "
 
 #: src/main.c:1862
 #, c-format
@@ -301,38 +300,38 @@ msgstr "número de monitores detectado: %d\n"
 #: src/main.c:1865
 #, c-format
 msgid "Number of CPUs detected: %d "
-msgstr ""
+msgstr "Número de CPU detectadas: %d "
 
 #: src/main.c:1868 src/multitrack.c:5068
 msgid "little endian"
-msgstr ""
+msgstr "little endian"
 
 #: src/main.c:1869 src/multitrack.c:5067
 msgid "big endian"
-msgstr ""
+msgstr "big endian"
 
 #: src/main.c:1870
 #, c-format
 msgid "(%d bits, %s)\n"
-msgstr ""
+msgstr "(%d bits, %s)\n"
 
 #: src/main.c:1874
 msgid "GUI type is: "
-msgstr ""
+msgstr "A interface é do tipo: "
 
 #: src/main.c:1878
 #, c-format
 msgid "GTK+ version %d.%d.%d (compiled with %d.%d.%d)"
-msgstr ""
+msgstr "GTK+ versión %d.%d.%d (compilado con %d.%d.%d)"
 
 #: src/main.c:1900
 msgid ", with cairo support"
-msgstr ""
+msgstr ", con compatibilidade con cairo"
 
 #: src/main.c:1907
 #, c-format
 msgid "Temp directory is %s\n"
-msgstr "Directorio temporal é %s\n"
+msgstr "O directorio temporal é %s\n"
 
 #: src/main.c:1911
 msgid ""
@@ -340,14 +339,17 @@ msgid ""
 "jack or pulse audio support.\n"
 "Many audio features will be unavailable.\n"
 msgstr ""
+"AVISO - esta versión de LiVES foi compilada sen compatibilidade\n"
+"con jack ou pulse audio.\n"
+"Moitas funcións de son non estarán dispoñíbeis.\n"
 
 #: src/main.c:1914
 msgid "Compiled with jack support, good !\n"
-msgstr "Feita con soporte a jack, boa !\n"
+msgstr "Compilado con compatibilidade con jack, perfecto !\n"
 
 #: src/main.c:1917
 msgid "Compiled with pulse audio support, wonderful !\n"
-msgstr "Feita con soporte a pulse audio, marabilloso !\n"
+msgstr "Compilado con compatibilidade con pulse audio, marabilloso !\n"
 
 #: src/main.c:1921
 #, c-format
@@ -355,7 +357,7 @@ msgid ""
 "Welcome to LiVES version %s.\n"
 "\n"
 msgstr ""
-"Benvido á LiVES versión %s.\n"
+"Benvido/a á LiVES versión %s.\n"
 "\n"
 
 #: src/main.c:2368
@@ -364,46 +366,56 @@ msgid ""
 "\n"
 "Startup syntax is: %s [opts] [filename [start_time] [frames]]\n"
 msgstr ""
+"\n"
+"A sintaxe de inicio é: %s [opcións] [nome_ficheiro [momento_de_inicio] "
+"[fotogramas]]\n"
 
 #: src/main.c:2369
 msgid "Where: filename is the name of a media file or backup file.\n"
 msgstr ""
+"Onde: nome_ficheiro é o nome do ficheiro multimedia ou a copia de seguranza "
+"do ficheiro.\n"
 
 #: src/main.c:2370
 msgid "start_time : filename start time in seconds\n"
-msgstr ""
+msgstr "momento_de_inicio : momento do inicio de nome_ficheiro en segundos\n"
 
 #: src/main.c:2371
 msgid "frames : maximum number of frames to open\n"
-msgstr "frames : número máximo de cadros para abrir\n"
+msgstr "fotogramas : número máximo de fotogramas para abrir\n"
 
 #: src/main.c:2373
 msgid "opts can be:\n"
-msgstr "opts pode ser:\n"
+msgstr "opcións pode ser:\n"
 
 #: src/main.c:2374
 msgid "-help            : show this help text and exit\n"
-msgstr "-help : amosar esta axuda e sae\n"
+msgstr "-help              : amosa esta axuda e sae\n"
 
 #: src/main.c:2375
 msgid "-tmpdir <tempdir>: use alternate working directory (e.g /var/ramdisk)\n"
 msgstr ""
+"-tmpdir <dirtemp>  : usar un directorio de traballo alternativo (p. ex. /var/"
+"ramdisk)\n"
 
 #: src/main.c:2376
 msgid "-set <setname>   : autoload clip set setname\n"
 msgstr ""
+"-set <nomeconxunto>: cargar automaticamente o conxunto de fragmentos "
+"«nomeconxunto»\n"
 
 #: src/main.c:2377
 msgid "-noset           : do not load any set on startup\n"
-msgstr "-noset : non cargar ningún set na inicialización\n"
+msgstr "-noset             : non cargar ningún conxunto na inicialización\n"
 
 #: src/main.c:2378
 msgid "-norecover       : force no-loading of crash recovery\n"
-msgstr "-norecover : forza non carga de Recuperación\n"
+msgstr ""
+"-norecover         : forza que NON cargue a recuperación tras unha quebra\n"
 
 #: src/main.c:2379
 msgid "-recover         : force loading of crash recovery\n"
-msgstr ""
+msgstr "-recover           : forza a carga da recuperación tras unha quebra\n"
 
 #: src/main.c:2380
 msgid ""
@@ -412,15 +424,15 @@ msgstr ""
 
 #: src/main.c:2381
 msgid "-nogui           : do not show the gui\n"
-msgstr "-nogui : non mostrar o gui\n"
+msgstr "-nogui             : non amosar a interface\n"
 
 #: src/main.c:2382
 msgid "-nosplash        : do not show the splash window\n"
-msgstr ""
+msgstr "-nosplash          : non amosar a xanela de inicio\n"
 
 #: src/main.c:2383
 msgid "-noplaywin       : do not show the play window\n"
-msgstr ""
+msgstr "-noplaywin         : non amosar a xanela de reprodución\n"
 
 #: src/main.c:2384
 msgid "-noninteractive  : disable menu interactivity\n"
@@ -428,25 +440,27 @@ msgstr ""
 
 #: src/main.c:2385
 msgid "-startup-ce      : start in clip editor mode\n"
-msgstr "-startup-ce : iniciar no modo de editor clip\n"
+msgstr "-startup-ce        : iniciar no modo de edición de fragmentos\n"
 
 #: src/main.c:2386
 msgid "-startup-mt      : start in multitrack mode\n"
-msgstr ""
+msgstr "-startup-mt        : iniciar no modo miltipista\n"
 
 #: src/main.c:2387
 msgid ""
 "-fxmodesmax <n>  : allow <n> modes per effect key (minimum is 1, default is "
 "8)\n"
 msgstr ""
+"-fxmodesmax <n>    : permitir <n> modos por tecla de efecto (o mínimo é 1, o "
+"predeterminado é 8)\n"
 
 #: src/main.c:2389
 msgid "-oscstart <port> : start OSC listener on UDP port <port>\n"
-msgstr ""
+msgstr "-oscstart <porto>  : iniciar a escoita OSC no porto <porto> UDP\n"
 
 #: src/main.c:2390
 msgid "-nooscstart      : do not start OSC listener\n"
-msgstr ""
+msgstr "-nooscstart        : non iniciar a escoita OSC\n"
 
 #: src/main.c:2392
 #, fuzzy
@@ -454,8 +468,8 @@ msgid ""
 "-aplayer <ap>    : start with selected audio player. <ap> can be mplayer, "
 "mplayer2"
 msgstr ""
-"-aplayer >ap> : comezar con lector de audio seleccionado. <ap> pode ser "
-"mplayer"
+"-aplayer <ap>      : iniciar co reprodutor de son seleccionado. <ap> pode "
+"ser mplayer"
 
 #. TRANSLATORS: pulse (audio)
 #: src/main.c:2395
@@ -472,6 +486,11 @@ msgid ""
 "transport client, 2 = jack transport master, 4 = start jack transport "
 "server, 8 = pause audio when video paused, 16 = start jack audio server] \n"
 msgstr ""
+"-jackopts <ops>         : «ops» é unha máscara de bits coas opcións de "
+"inicio de jack [1 = transporte de jack como cliente, 2 = transporte de jack "
+"como mestre, 4 = iniciar servidor de transporte de jack, 8 = poñer en pausa "
+"o son cando o vídeo tamén sexa posto en pausa, 16 = iniciar o servidor de "
+"son jack] \n"
 
 #: src/main.c:2402
 msgid " or sox\n"
@@ -480,20 +499,26 @@ msgstr " ou sox\n"
 #: src/main.c:2404
 msgid "-devicemap <mapname>          : autoload devicemap\n"
 msgstr ""
+"-devicemap <nomemapa>   : cargar automaticamente o mapa do dispositivo\n"
 
 #: src/main.c:2406
 msgid ""
 "-vppdefaults <file>          : load video playback plugin defaults from "
 "<file> (Note: only sets the settings, not the plugin type)\n"
 msgstr ""
+"-vppdefaults <ficheiro> : carga o engadido de reprodución de vídeo "
+"predeterminado desde <ficheiro> (Nota: só estabelece os axustes, non o tipo "
+"de engadido)\n"
 
 #: src/main.c:2407
 msgid "-debug            : try to debug crashes (requires 'gdb' installed)\n"
-msgstr "-debug : tentar depurar erros (require 'gdb' instalado)\n"
+msgstr ""
+"-debug                   : tentar depurar erros (require ter «gdb» "
+"instalado)\n"
 
 #: src/main.c:2437 src/gui.c:1127
 msgid "Starting GUI..."
-msgstr ""
+msgstr "Iniciando a interface..."
 
 #: src/main.c:2463
 #, c-format
@@ -505,6 +530,12 @@ msgid ""
 "%s/%s.\n"
 "(Maybe you need to change the value of <prefix_dir> in your %s file)\n"
 msgstr ""
+"\n"
+"\n"
+"Non foi posíbel atopar o tema que solicitou. Asegúrese de que ten instalados "
+"os temas en\n"
+"%s/%s.\n"
+"(Quizais necesite cambiar o valor de <prefix_dir> no ficheiro %s)\n"
 
 #: src/main.c:2480
 #, c-format
@@ -513,6 +544,9 @@ msgid ""
 "LiVES was unable to write a small file to %s\n"
 "Please make sure you have write access to %s and try again.\n"
 msgstr ""
+"\n"
+"LiVES non foi quen de crear un ficheiro pequeno en %s\n"
+"Asegúrese de que ten acceso de escritura a %s e tenteo de novo.\n"
 
 #: src/main.c:2486
 msgid ""
@@ -522,6 +556,11 @@ msgid ""
 "Please review the README file which came with this package\n"
 "before running LiVES.\n"
 msgstr ""
+"\n"
+"«smogrify» debe estar na súa ruta, e ten que ser executábel\n"
+"\n"
+"Lea o ficheiro README que ven con este paquete antes de\n"
+"iniciar LiVES.\n"
 
 #: src/main.c:2492
 #, c-format
@@ -551,6 +590,9 @@ msgid ""
 "%s\n"
 "and try again.\n"
 msgstr ""
+"Comprobe o axuste do <dirtemp> en\n"
+"%s\n"
+"e tenteo de novo.\n"
 
 #: src/main.c:2516
 #, c-format
@@ -561,6 +603,11 @@ msgid ""
 "\n"
 "%s"
 msgstr ""
+"\n"
+"LiVES non foi quen de empregar o directorio temporal\n"
+"%s\n"
+"\n"
+"%s"
 
 #: src/main.c:2524
 msgid ""
@@ -572,27 +619,46 @@ msgid ""
 "\n"
 "Thankyou.\n"
 msgstr ""
+"\n"
+"Atopouse unha versión incorrecta de smogrify na súa ruta.\n"
+"\n"
+"Lea o ficheiro README que ven con este paquete antes de\n"
+"iniciar LiVES.\n"
+"\n"
+"Grazas.\n"
 
 #: src/main.c:2529
+#, fuzzy
 msgid ""
 "\n"
 "LiVES currently requires 'mplayer', 'mplayer2' or 'sox' to function. Please "
 "install one or other of these, and try again.\n"
 msgstr ""
+"\n"
+"LiVES require actualmente «mplayer» ou «sox» para funcionar. Instale un "
+"deles e tenteo de novo.\n"
 
 #: src/main.c:2534
+#, fuzzy
 msgid ""
 "\n"
 "LiVES currently requires both 'mplayer' or 'mplayer2' and 'sox' to function. "
 "Please install these, and try again.\n"
 msgstr ""
+"\n"
+"LiVES require actualmente «mplayer» e «sox» para funcionar. Instáleos e "
+"tenteo de novo.\n"
 
 #: src/main.c:2544
+#, fuzzy
 msgid ""
 "\n"
 "LiVES was unable to locate 'mplayer' or 'mplayer2'. You may wish to install "
 "either one to use LiVES more fully.\n"
 msgstr ""
+"\n"
+"LiVES non foi quen de atopar o «mplayer». É probábel que queira instalar o "
+"mplayer para usar LiVES dun xeito máis completo.\n"
 
 #: src/main.c:2549
 msgid ""
@@ -600,6 +666,9 @@ msgid ""
 "LiVES was unable to locate 'convert'. You should install convert and image-"
 "magick if you want to use rendered effects.\n"
 msgstr ""
+"\n"
+"LiVES non foi quen de atopar o «convert». Debe instalar convert e image-"
+"magick se quere utilizar efectos de renderizado.\n"
 
 #: src/main.c:2554
 msgid ""
@@ -607,6 +676,9 @@ msgid ""
 "LiVES was unable to locate 'composite'. You should install composite and "
 "image-magick if you want to use the merge function.\n"
 msgstr ""
+"\n"
+"LiVES non foi quen de atopar o «composite». Debe instalar composite e image-"
+"magick se quere utilizar a función de combinación.\n"
 
 #: src/main.c:2558
 msgid ""
@@ -614,6 +686,9 @@ msgid ""
 "LiVES was unable to locate 'sox'. Some audio features may not work. You "
 "should install 'sox'.\n"
 msgstr ""
+"\n"
+"LiVES non foi quen de atopar o «sox». É probábel que algunhas "
+"características de son no funcionen. Debe instalar «sox».\n"
 
 #: src/main.c:2563
 #, c-format
@@ -634,32 +709,32 @@ msgstr ""
 #. TRANSLATORS: localised name may be used here
 #: src/main.c:2890
 msgid "LiVES"
-msgstr ""
+msgstr "LiVES"
 
 #: src/main.c:3054
 #, c-format
 msgid "Invalid audio player %s\n"
-msgstr ""
+msgstr "Reprodutor de son incorrecto %s\n"
 
 #: src/main.c:3203
 #, c-format
 msgid "LiVES-%s: <Untitled%d> %dx%d : %d frames %d bpp %.3f fps"
-msgstr ""
+msgstr "LiVES-%s: <Untitled%d> %dx%d : %d fotogramas %d bpp %.3f fps"
 
 #: src/main.c:3208
 #, c-format
 msgid "LiVES-%s: <%s> %dx%d : ??? frames ??? bpp %.3f fps"
-msgstr ""
+msgstr "LiVES-%s: <%s> %dx%d : ??? fotogramas ??? bpp %.3f fps"
 
 #: src/main.c:3211
 #, c-format
 msgid "LiVES-%s: <%s> %dx%d : %d frames %d bpp %.3f fps"
-msgstr "LiVES-%s: <%s> %dx%d : %d cadros %d bpp %.3f fps"
+msgstr "LiVES-%s: <%s> %dx%d : %d fotogramas %d bpp %.3f fps"
 
 #: src/main.c:3218
 #, c-format
 msgid "LiVES-%s: <No File>"
-msgstr "LiVES-%s: <No ficheiro>"
+msgstr "LiVES-%s: <Non hai ficheiro>"
 
 #. TRANSLATORS: rec(ord)
 #: src/main.c:5190
@@ -683,7 +758,7 @@ msgid ""
 "LiVES was unable to capture this image\n"
 "\n"
 msgstr ""
-"LiVES non puido capturar esta foto\n"
+"LiVES non puido capturar esta imaxe\n"
 "\n"
 
 #: src/main.c:6334
@@ -708,13 +783,14 @@ msgstr "Vídeo"
 
 #: src/main.c:6573 src/interface.c:468 src/gui.c:2348
 msgid "Left Audio"
-msgstr ""
+msgstr "Son esquerdo"
 
 #: src/main.c:6574 src/gui.c:2371
 msgid "Right Audio"
-msgstr ""
+msgstr "Son dereito"
 
 #: src/main.c:6619
+#, fuzzy
 msgid ""
 "\n"
 "\n"
@@ -722,10 +798,15 @@ msgid ""
 "mplayer or mplayer2.\n"
 "Please adjust the playback options in Preferences and try again.\n"
 msgstr ""
+"\n"
+"\n"
+"LiVES non pode cambiar os fragmento ao abrirse se o reprodutor de son está "
+"configurado a mplayer.\n"
+"Axuste as opcións de reprodución en Preferencias e tenteo de novo.\n"
 
 #: src/main.c:7123 src/plugins.c:1468
 msgid "LiVES: - Play Window"
-msgstr ""
+msgstr "LiVES: - Xanela de reprodución"
 
 #: src/startup.c:24
 #, c-format
@@ -736,6 +817,11 @@ msgid ""
 "\n"
 "(Free space = %s)\n"
 msgstr ""
+"Xa existe un directorio chamado\n"
+"%s\n"
+"Quere usar este directorio aínda así ?\n"
+"\n"
+"(Espazo libre = %s)\n"
 
 #: src/startup.c:29
 #, c-format
@@ -746,6 +832,10 @@ msgid ""
 "LiVES could not write to this directory or read its free space.\n"
 "Please select another location.\n"
 msgstr ""
+"Xa existe un directorio chamado\n"
+"%s\n"
+"LiVES non pode escribir neste directorio ou ler o espazo libre.\n"
+"Seleccione outra localización.\n"
 
 #: src/startup.c:46
 #, c-format
@@ -757,6 +847,12 @@ msgid ""
 "\n"
 "(Free space = %s)"
 msgstr ""
+"\n"
+"Crear o directorio\n"
+"%s\n"
+"?\n"
+"\n"
+"(Espazo libre = %s)"
 
 #: src/startup.c:50
 #, c-format
@@ -1059,7 +1155,7 @@ msgstr ""
 #: src/dialogs.c:1804 src/dialogs.c:1805 src/framedraw.c:236
 #: src/multitrack.c:8210
 msgid "Preview"
-msgstr "Previsualización"
+msgstr "Vista previa"
 
 #: src/interface.c:123
 msgid "Click here to _Preview any selected video, image or audio file"
@@ -1098,7 +1194,7 @@ msgid ""
 "Please Wait"
 msgstr ""
 "\n"
-"Espere por favor"
+"Agarde"
 
 #: src/interface.c:228
 msgid "Show Details"
@@ -1127,7 +1223,7 @@ msgstr "_Cancelar"
 #: src/interface.c:359
 #, c-format
 msgid "LiVES: - %s"
-msgstr ""
+msgstr "LiVES: - %s"
 
 #: src/interface.c:361
 msgid "LiVES: - Multitrack details"
@@ -1201,11 +1297,11 @@ msgstr ""
 
 #: src/interface.c:675
 msgid "Keep _my settings"
-msgstr "Manter _miñas opcións"
+msgstr "Manter as _miñas opcións"
 
 #: src/interface.c:676
 msgid "Use _recommended settings"
-msgstr "Usar configuración _recomendadas"
+msgstr "Usar os axustes _recomendados"
 
 #: src/interface.c:767
 msgid "_Close Window"
@@ -1237,7 +1333,7 @@ msgstr ""
 
 #: src/interface.c:873
 msgid "Insert _after selection"
-msgstr "Inserir _despois a selección"
+msgstr "Inserir a_pós a selección"
 
 #: src/interface.c:875
 msgid "Insert clipboard after selected frames"
@@ -1265,11 +1361,11 @@ msgstr ""
 
 #: src/interface.c:1086
 msgid "LiVES: - Open Location"
-msgstr "LiVES: - Abrir Local"
+msgstr "LiVES: - Abrir a localización"
 
 #: src/interface.c:1088
 msgid "LiVES: - Open Youtube Clip"
-msgstr ""
+msgstr "LiVES: - Abrir un fragmento do Youtube"
 
 #: src/interface.c:1107
 msgid ""
@@ -1282,9 +1378,9 @@ msgid ""
 msgstr ""
 "\n"
 "\n"
-"Para abrir un fluxo, debe ter seguro que ten as bibliotecas correcta feita "
-"no mplayer.\n"
-"Tamén asegúrese de ter definido a súa banda Preferencias | Streaming\n"
+"Para abrir un fluxo, debe ter seguro que ten as bibliotecas correctas "
+"compiladas no mplayer.\n"
+"Asegúrese tamén de ter definido o seu largo de banda en Preferencias|Fluxo\n"
 "\n"
 
 #: src/interface.c:1110
@@ -1309,7 +1405,7 @@ msgstr "URL : "
 
 #: src/interface.c:1125
 msgid "Youtube URL : "
-msgstr ""
+msgstr "URL do Youtube: "
 
 #: src/interface.c:1129
 msgid "Do not send bandwidth information"
@@ -1329,7 +1425,7 @@ msgstr ""
 
 #: src/interface.c:1176
 msgid ".webm"
-msgstr ""
+msgstr ".webm"
 
 #: src/interface.c:1254
 msgid "LiVES: - Rename Clip"
@@ -1615,20 +1711,17 @@ msgstr ""
 "Que desexa facer ?\n"
 
 #: src/interface.c:2408
-#, fuzzy
 msgid ""
 "The current layout has *not* been changed since it was last saved.\n"
 "What would you like to do ?\n"
 msgstr ""
-"O actual trazado non cambiou desde que foi gardado por última vez.\n"
-"Que desexa facer ?\n"
 
 #: src/interface.c:2413
 msgid ""
 "The current layout contains generated frames and cannot be retained.\n"
 "You may wish to render it before exiting multitrack mode.\n"
 msgstr ""
-"O esquema actual contén cadros xerados e non pode ser sostida.\n"
+"O esquema actual contén fotogramas xerados e non pode ser sostida.\n"
 "Se o desexa, pode facelo antes de saír do modo multi-pista.\n"
 
 #: src/interface.c:2416
@@ -2239,6 +2332,7 @@ msgid "translator_credits"
 msgstr ""
 "Launchpad Contributions:\n"
 "  Guybrush88 https://launchpad.net/~guybrush\n"
+"  Miguel Anxo Bouzada https://launchpad.net/~mbouzada\n"
 "  nitrofurano https://launchpad.net/~nitrofurano-3t\n"
 "  salsaman https://launchpad.net/~salsaman"
 
@@ -2479,17 +2573,13 @@ msgid "Enough"
 msgstr ""
 
 #: src/callbacks.c:9278
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "\n"
 "Paused\n"
 "(click %s to keep what you have and stop)\n"
 "(click Resume to continue processing)"
 msgstr ""
-"\n"
-"Parado\n"
-"(prema En conserva para manter o que tes e deter)\n"
-"(preme Continuar para continuar procesamento)"
 
 #: src/callbacks.c:9296
 msgid "Cancel"
@@ -2703,7 +2793,7 @@ msgstr ""
 
 #: src/merge.c:96
 msgid "LiVES: - Merge"
-msgstr ""
+msgstr "LiVES: - Combinar"
 
 #: src/merge.c:113
 #, c-format
@@ -2754,7 +2844,7 @@ msgstr ""
 
 #: src/merge.c:539
 msgid "Merge done.\n"
-msgstr ""
+msgstr "feita a combinación.\n"
 
 #: src/gui.c:122
 msgid "_Custom Generators"
@@ -2899,11 +2989,11 @@ msgstr ""
 
 #: src/gui.c:738
 msgid "_Merge Clipboard with Selection..."
-msgstr ""
+msgstr "_Combinar o portapapeis coa selección..."
 
 #: src/gui.c:745
 msgid "_Delete Selection"
-msgstr "_Borrar selección"
+msgstr "_Eliminar a selección"
 
 #: src/gui.c:763
 msgid "Decouple _Video from Audio"
@@ -2935,7 +3025,7 @@ msgstr ""
 
 #: src/gui.c:820
 msgid "Select Last Insertion/_Merge"
-msgstr ""
+msgstr "Seleccionar a última inserción/_Combinar"
 
 #: src/gui.c:824
 msgid "Select Last _Effect"
@@ -4057,7 +4147,7 @@ msgstr "Sentítulo%d"
 #: src/saveplay.c:3567
 #, c-format
 msgid "%d frames are enough !\n"
-msgstr "%d  cadros son abondo !\n"
+msgstr "%d  fotogramas son abondo !\n"
 
 #: src/saveplay.c:3579
 #, c-format
@@ -4100,9 +4190,9 @@ msgid "%s none\n"
 msgstr ""
 
 #: src/saveplay.c:3714
-#, fuzzy, c-format
+#, c-format
 msgid " - Author: %s\n"
-msgstr "Autor: %s"
+msgstr ""
 
 #: src/saveplay.c:3717
 #, c-format
@@ -4216,12 +4306,12 @@ msgstr ""
 #: src/dialogs.c:194
 #, fuzzy
 msgid "LiVES: - Error !"
-msgstr "LiVES: - Inserir"
+msgstr "LiVES: - %s"
 
 #: src/dialogs.c:204
 #, fuzzy
 msgid "LiVES: - Information"
-msgstr "LiVES: - Abrir Local"
+msgstr "LiVES: - Abrir a localización"
 
 #: src/dialogs.c:230
 msgid "LiVES: - Question"
@@ -4241,7 +4331,7 @@ msgstr ""
 
 #: src/dialogs.c:306
 msgid "Show _Details"
-msgstr "Amosar _Detalles"
+msgstr "Amosar os _detalles"
 
 #: src/dialogs.c:657
 #, c-format
@@ -4338,11 +4428,15 @@ msgid ""
 msgstr ""
 
 #: src/dialogs.c:2059
+#, fuzzy
 msgid ""
 "\n"
 "LiVES currently requires either 'mplayer', 'mplayer2', or 'sox' to function. "
 "Please install one or other of these, and try again.\n"
 msgstr ""
+"\n"
+"LiVES require actualmente «mplayer» ou «sox» para funcionar. Instale un "
+"deles e tenteo de novo.\n"
 
 #: src/dialogs.c:2064
 msgid ""
@@ -5220,7 +5314,7 @@ msgstr ""
 
 #: src/effects.c:89
 msgid "Utilities"
-msgstr "Utensilios"
+msgstr "Utilidades"
 
 #: src/effects.c:91
 msgid "compositor"
@@ -5627,9 +5721,8 @@ msgid "Add another connection for this output parameter"
 msgstr ""
 
 #: src/effects-data.c:4055 src/effects-data.c:4104
-#, fuzzy
 msgid "Delete this connection"
-msgstr "_Borrar selección"
+msgstr ""
 
 #: src/effects-data.c:4091
 msgid "Add another connection for this output channel"
@@ -5980,9 +6073,9 @@ msgid ""
 msgstr ""
 
 #: src/plugins.c:2366
-#, fuzzy, c-format
+#, c-format
 msgid " using %s"
-msgstr "Abrindo %s"
+msgstr ""
 
 #: src/plugins.c:2448
 #, c-format
@@ -6884,7 +6977,7 @@ msgstr ""
 
 #: src/preferences.c:2340
 msgid "GUI"
-msgstr "GUI"
+msgstr "Interface"
 
 #: src/preferences.c:2355
 msgid "When entering Multitrack mode:"
@@ -9397,9 +9490,8 @@ msgid "_Autoreload each time"
 msgstr ""
 
 #: src/multitrack.c:19702
-#, fuzzy
 msgid "Saving layout"
-msgstr "_Gardar esquema"
+msgstr ""
 
 #: src/multitrack.c:19725
 #, c-format
@@ -9416,7 +9508,7 @@ msgstr ""
 
 #: src/multitrack.c:21130
 msgid "frames"
-msgstr "cadros"
+msgstr "fotogramas"
 
 #: src/multitrack.c:21140
 msgid ""
@@ -9468,13 +9560,10 @@ msgid "Multitrack fps set to %.3f\n"
 msgstr ""
 
 #: src/multitrack.c:21576
-#, fuzzy
 msgid ""
 "The current layout has changes which have not been saved.\n"
 "Are you sure you wish to wipe it ?\n"
 msgstr ""
-"O esquema actual non foi salvo.\n"
-"Que desexa facer ?\n"
 
 #: src/multitrack.c:22385
 msgid "LiVES: Multitrack audio mixer"
@@ -9953,17 +10042,15 @@ msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/contrast.script:0
 msgid "Adjust contrast"
-msgstr "Axustar o contraste"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/contrast.script:0
-#, fuzzy
 msgid "Adjusting contrast of"
-msgstr "Axustar o contraste"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/noisify.script:0
-#, fuzzy
 msgid "Adjusting noise on"
-msgstr "Axustar o contraste"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/charcoal.script:0
 msgid "Applying charcoal to"
@@ -9986,66 +10073,56 @@ msgid "B/W thresholding"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/blank_frames.script:0
-#, fuzzy
 msgid "Blank _Colour"
-msgstr "_Inicio"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/blank_frames.script:0
-#, fuzzy
 msgid "Blank frames"
-msgstr "Rematar no fotograma"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/blank_frames.script:0
 msgid "Blanking"
-msgstr "Baleirando"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/pixilate.script:0
-#, fuzzy
 msgid "Block _height"
-msgstr "_Altura"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/pixilate.script:0
-#, fuzzy
 msgid "Block _width"
-msgstr "_Altura"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/blur.script:0
 msgid "Blur"
-msgstr "Desenfoque"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/blur.script:0
 msgid "Bluring"
-msgstr "Desenfoquando"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/trim_frames.script:0
-#, fuzzy
 msgid "Border _Colour"
-msgstr "_Inicio"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/brightness_change.script:0
-#, fuzzy
 msgid "Brightness _end"
-msgstr "_Ignorar as mudanzas"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/brightness_change.script:0
-#, fuzzy
 msgid "Brightness _start"
-msgstr "_Ignorar as mudanzas"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/brightness_change.script:0
-#, fuzzy
 msgid "Brightness change"
-msgstr "_Ignorar as mudanzas"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/modulate.script:0
-#, fuzzy
 msgid "Brightness end"
-msgstr "_Ignorar as mudanzas"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/modulate.script:0
-#, fuzzy
 msgid "Brightness start"
-msgstr "_Ignorar as mudanzas"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/transition_bwthresh.script:0
 #: /usr/share/lives/plugins/effects/rendered/transition_fade.script:0
@@ -10075,95 +10152,83 @@ msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/charcoal.script:0
 msgid "Charcoal"
-msgstr "Carbón"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/transition_checkerboard.script:0
 msgid "Checkerboard"
-msgstr "Tabuleiro de Xadrez"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/transition_checkerboard.script:0
-#, fuzzy
 msgid "Checkerboarding"
-msgstr "Tabuleiro de Xadrez"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/transition_bwthresh.script:0
-#, fuzzy
 msgid "Clipboard _over selection"
-msgstr "Inserir _despois a selección"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/transition_bwthresh.script:0
-#, fuzzy
 msgid "Clipboard _under selection"
-msgstr "Inserir _despois a selección"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/colorize.script:0
 msgid "Colorize"
-msgstr "Colorar"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/colorize.script:0
-#, fuzzy
 msgid "Colorizing"
-msgstr "Colorar"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/cycle.script:0
-#, fuzzy
 msgid "Colour cycle"
-msgstr "Colorar"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/cycle.script:0
-#, fuzzy
 msgid "Colour cycling"
-msgstr "Colorar"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
-#, fuzzy
 msgid "Colour filter"
-msgstr "Colorar"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
-#, fuzzy
 msgid "Colour filtering"
-msgstr "Colorar"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/colour_replace.script:0
-#, fuzzy
 msgid "Colour replace"
-msgstr "Colorar"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/noisify.script:0
 msgid "Constant noise level"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/cycle.script:0
-#, fuzzy
 msgid "Cycle _Step"
-msgstr "_Inicio"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/deinterlace.script:0
 msgid "Deinterlace"
-msgstr "Desentrelazar"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/deinterlace.script:0
 msgid "Deinterlacing"
-msgstr "Desentrelazamento"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/despekle.script:0
 msgid "Despeckle"
-msgstr "Desembarazar"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/despekle.script:0
-#, fuzzy
 msgid "Despeckling"
-msgstr "Desembarazar"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/dream.script:0
 msgid "Dream"
-msgstr "Soño"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/dream.script:0
-#, fuzzy
 msgid "Dreamifying"
-msgstr "Soño"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/colorize.script:0
 #: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
@@ -10180,12 +10245,11 @@ msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/emboss.script:0
 msgid "Emboss"
-msgstr "Elevar"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/emboss.script:0
-#, fuzzy
 msgid "Embossing"
-msgstr "Elevar"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/image_overlay.script:0
 msgid "End _Alpha:"
@@ -10201,37 +10265,32 @@ msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/enhance.script:0
 msgid "Enhance"
-msgstr "Realzar"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/enhance.script:0
-#, fuzzy
 msgid "Enhancing"
-msgstr "Realzar"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/transition_fade.script:0
 msgid "Envelope length"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/fade_in_out.script:0
-#, fuzzy
 msgid "Fade _colour"
-msgstr "Esvaír"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/skip_forwards.script:0
 #: /usr/share/lives/plugins/effects/rendered/transition_fade.script:0
-#, fuzzy
 msgid "Fade _end"
-msgstr "Esvaír"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/fade_in_out.script:0
-#, fuzzy
 msgid "Fade _in"
-msgstr "Esvaír"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/fade_in_out.script:0
-#, fuzzy
 msgid "Fade _out"
-msgstr "Esvaír"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/fade_in_out.script:0
 msgid "Fade video to or from color"
@@ -10239,50 +10298,43 @@ msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/transition_fade.script:0
 msgid "Fade"
-msgstr "Esvaír"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/fade_in_out.script:0
-#, fuzzy
 msgid "Fading video"
-msgstr "Fundido"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/transition_fade.script:0
 msgid "Fading"
-msgstr "Fundido"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/shrink_expand.script:0
-#, fuzzy
 msgid "Fina_l frame"
-msgstr "Rematar no fotograma"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/photo_still.script:0
-#, fuzzy
 msgid "Flash _colour"
-msgstr "Esvaír"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/flip.script:0
 msgid "Flip vertically"
-msgstr "Voltear verticalmente"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/flop.script:0
-#, fuzzy
 msgid "Flop horizontally"
-msgstr "Voltear verticalmente"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/frame_calculator.script:0
-#, fuzzy
 msgid "Frame Calculator"
-msgstr "_Inicio"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/gen_coloured_frames.script:0
-#, fuzzy
 msgid "Frame _Colour"
-msgstr "_Inicio"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
-#, fuzzy
 msgid "Frame _height"
-msgstr "Tamaño do fotograma"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/transition_fade.script:0
 msgid "Frame _in frame position of clipboard..."
@@ -10293,69 +10345,56 @@ msgid "Frame _in frame position of top frame..."
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
-#, fuzzy
 msgid "Frame _width"
-msgstr "Tamaño do fotograma"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/frame_calculator.script:0
-#, fuzzy
 msgid "Frames _per second (FPS)"
-msgstr "segundos"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/gamma_change.script:0
-#, fuzzy
 msgid "Gamma _end"
-msgstr "Esvaír"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/gamma_change.script:0
-#, fuzzy
 msgid "Gamma _start"
-msgstr "_Inicio"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/gamma_change.script:0
-#, fuzzy
 msgid "Gamma change"
-msgstr "_Ignorar as mudanzas"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/gen_blank_frames.script:0
-#, fuzzy
 msgid "Generate blank frames"
-msgstr "Rematar no fotograma"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/gen_clip_from_image.script:0
-#, fuzzy
 msgid "Generate clip from image"
-msgstr "Rematar no fotograma"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/gen_coloured_frames.script:0
-#, fuzzy
 msgid "Generate coloured frames"
-msgstr "Rematar no fotograma"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
-#, fuzzy
 msgid "Generate title frames"
-msgstr "Rematar no fotograma"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/gen_blank_frames.script:0
-#, fuzzy
 msgid "Generating blank frames"
-msgstr "Rematar no fotograma"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/gen_clip_from_image.script:0
-#, fuzzy
 msgid "Generating clip from image"
-msgstr "Rematar no fotograma"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/gen_coloured_frames.script:0
-#, fuzzy
 msgid "Generating coloured frames"
-msgstr "Rematar no fotograma"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
-#, fuzzy
 msgid "Generating title frames"
-msgstr "Rematar no fotograma"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/flop.script:0
 msgid "Horizontal flopping"
@@ -10366,29 +10405,24 @@ msgid "Horizontal shifting"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/hue_change.script:0
-#, fuzzy
 msgid "Hue _end"
-msgstr "Esvaír"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/hue_change.script:0
-#, fuzzy
 msgid "Hue _start"
-msgstr "_Inicio"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/hue_change.script:0
-#, fuzzy
 msgid "Hue change"
-msgstr "_Ignorar as mudanzas"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/modulate.script:0
-#, fuzzy
 msgid "Hue end"
-msgstr "Esvaír"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/modulate.script:0
-#, fuzzy
 msgid "Hue start"
-msgstr "_Inicio"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/image_overlay.script:0
 msgid "Image overlay"
@@ -10415,9 +10449,8 @@ msgid "Jumbling"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/trim_frames.script:0
-#, fuzzy
 msgid "Keep _Centered"
-msgstr "_Outros"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/image_overlay.script:0
 msgid "Keep image aspect _ratio"
@@ -10428,32 +10461,28 @@ msgid "L_eft"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/monochrome.script:0
-#, fuzzy
 msgid "Making monochrome"
-msgstr "Monocromático"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/modulate.script:0
-#, fuzzy
 msgid "Modulate (BSH)"
-msgstr "Rotando"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/modulate.script:0
-#, fuzzy
 msgid "Modulating"
-msgstr "Rotando"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/monochrome.script:0
 msgid "Monochrome"
-msgstr "Monocromático"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/negate.script:0
 msgid "Negate"
-msgstr "Negar"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/negate.script:0
-#, fuzzy
 msgid "Negating"
-msgstr "Negar"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/noisify.script:0
 msgid "Noise type"
@@ -10465,16 +10494,15 @@ msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/normalize.script:0
 msgid "Normalize"
-msgstr "Normalizar"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/normalize.script:0
 msgid "Normalizing"
-msgstr "Normalizando"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
-#, fuzzy
 msgid "Number of _frames"
-msgstr "_Número de veces para introducir"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/image_overlay.script:0
 msgid "Overlaying an image onto video"
@@ -10489,23 +10517,20 @@ msgid "Photo/still"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/pixilate.script:0
-#, fuzzy
 msgid "Pixilate"
-msgstr "Rotando"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/pixilate.script:0
-#, fuzzy
 msgid "Pixilating"
-msgstr "Rotando"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/posterize.script:0
 msgid "Posterize"
-msgstr "Posterizar"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/posterize.script:0
-#, fuzzy
 msgid "Posterizing"
-msgstr "Posterizar"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/randomzoom.script:0
 msgid "Random zoom"
@@ -10528,63 +10553,53 @@ msgid "Replacing colours in"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/resize.script:0
-#, fuzzy
 msgid "Resize All Frames"
-msgstr "_Redimensionar todos os cadros"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/rotate.script:0
-#, fuzzy
 msgid "Rotate Clip"
-msgstr "Rotando"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/rotate.script:0
 msgid "Rotating"
-msgstr "Rotando"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/colorize.script:0
 #: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
-#, fuzzy
 msgid "S_tart %"
-msgstr "_Inicio"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/saturation_change.script:0
-#, fuzzy
 msgid "Saturation _end"
-msgstr "Transicións"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/saturation_change.script:0
-#, fuzzy
 msgid "Saturation _start"
-msgstr "Transicións"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/saturation_change.script:0
-#, fuzzy
 msgid "Saturation change"
-msgstr "Transicións"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/modulate.script:0
-#, fuzzy
 msgid "Saturation end"
-msgstr "Transicións"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/modulate.script:0
-#, fuzzy
 msgid "Saturation start"
-msgstr "Transicións"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/sepia.script:0
 msgid "Sepia"
-msgstr "Sepia"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/shift_horizontal.script:0
-#, fuzzy
 msgid "Shift horizontally"
-msgstr "Voltear verticalmente"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/shift_vertical.script:0
-#, fuzzy
 msgid "Shift vertically"
-msgstr "Voltear verticalmente"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/shrink_expand.script:0
 msgid "Shrink/Expand"
@@ -10596,25 +10611,23 @@ msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/skip_forwards.script:0
 msgid "Skip forward"
-msgstr "Saltar adiante"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/solarize.script:0
 msgid "Solarize"
-msgstr "Solarizar"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/solarize.script:0
-#, fuzzy
 msgid "Solarizing"
-msgstr "Solarizar"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/spin.script:0
 msgid "Spin"
-msgstr "Rodar"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/spin.script:0
-#, fuzzy
 msgid "Spinning"
-msgstr "Rodar"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/transition_splice.script:0
 msgid "Splice"
@@ -10626,42 +10639,37 @@ msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/spread.script:0
 msgid "Spread"
-msgstr "Esparexer"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/spread.script:0
 msgid "Spreading"
-msgstr "Esparexendo"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/solarize.script:0
-#, fuzzy
 msgid "Step _Value"
-msgstr "Comezar no fotograma"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/spin.script:0
 #: /usr/share/lives/plugins/effects/rendered/shift_horizontal.script:0
 #: /usr/share/lives/plugins/effects/rendered/shift_vertical.script:0
-#, fuzzy
 msgid "Step per _Frame"
-msgstr "Comezar no fotograma"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/swirl.script:0
-#, fuzzy
 msgid "Swirl _start"
-msgstr "Remuíño"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/swirl.script:0
-#, fuzzy
 msgid "Swirl s_tep"
-msgstr "Remuíño"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/swirl.script:0
 msgid "Swirl"
-msgstr "Remuíño"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/swirl.script:0
-#, fuzzy
 msgid "Swirling"
-msgstr "Remuíño"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/textover.script:0
 msgid "Text Overlay"
@@ -10681,12 +10689,11 @@ msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/tunnel.script:0
 msgid "Tunnel"
-msgstr "Túnel"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/tunnel.script:0
-#, fuzzy
 msgid "Tunneling"
-msgstr "Túnel"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/image_overlay.script:0
 msgid "Use _Natural Size"
@@ -10706,11 +10713,11 @@ msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/wave.script:0
 msgid "Wave"
-msgstr "Onda"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/wave.script:0
 msgid "Waving"
-msgstr "Ondear"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/spin.script:0
 #: /usr/share/lives/plugins/effects/rendered/shift_horizontal.script:0
@@ -10718,14 +10725,12 @@ msgstr "Ondear"
 #: /usr/share/lives/plugins/effects/rendered/shrink_expand.script:0
 #: /usr/share/lives/plugins/effects/rendered/rotate.script:0
 #: /usr/share/lives/plugins/effects/rendered/shift_vertical.script:0
-#, fuzzy
 msgid "_Background Colour"
-msgstr "_Inicio"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
-#, fuzzy
 msgid "_Background colour"
-msgstr "_Inicio"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/photo_still.script:0
 msgid "_Black and white camera"
@@ -10737,22 +10742,19 @@ msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/shrink_expand.script:0
 msgid "_Bottom"
-msgstr "A_baixo"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/frame_calculator.script:0
-#, fuzzy
 msgid "_Calculate"
-msgstr "_Inicio"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/cycle.script:0
-#, fuzzy
 msgid "_Cycle Start"
-msgstr "_Inicio"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/contrast.script:0
-#, fuzzy
 msgid "_Decrease Contrast"
-msgstr "Axustar o contraste"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/dream.script:0
 #: /usr/share/lives/plugins/effects/rendered/tunnel.script:0
@@ -10761,9 +10763,8 @@ msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/colorize.script:0
 #: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
-#, fuzzy
 msgid "_End Colour"
-msgstr "_Inicio"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/image_overlay.script:0
 msgid "_End Size X:"
@@ -10774,78 +10775,66 @@ msgid "_End Size Y:"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/spread.script:0
-#, fuzzy
 msgid "_End amount"
-msgstr "Rematar no fotograma"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/dream.script:0
 #: /usr/share/lives/plugins/effects/rendered/tunnel.script:0
-#, fuzzy
 msgid "_Fade level"
-msgstr "Esvaír"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/skip_forwards.script:0
 #: /usr/share/lives/plugins/effects/rendered/transition_fade.script:0
-#, fuzzy
 msgid "_Fade start"
-msgstr "_Raio"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
 #: /usr/share/lives/plugins/effects/rendered/textover.script:0
-#, fuzzy
 msgid "_Fill colour"
-msgstr "Esvaír"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/shrink_expand.script:0
-#, fuzzy
 msgid "_First frame"
-msgstr "Comezar no fotograma"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/photo_still.script:0
-#, fuzzy
 msgid "_Flash for"
-msgstr "Esvaír"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
 msgid "_Font"
-msgstr "_Tipo de letra"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/gen_blank_frames.script:0
 #: /usr/share/lives/plugins/effects/rendered/gen_clip_from_image.script:0
 #: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
 #: /usr/share/lives/plugins/effects/rendered/gen_coloured_frames.script:0
-#, fuzzy
 msgid "_Frames per second"
-msgstr "segundos"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/frame_calculator.script:0
-#, fuzzy
 msgid "_Frames"
-msgstr "Fotogramas"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/photo_still.script:0
-#, fuzzy
 msgid "_Hold for"
-msgstr "Esvaír"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/transition_checkerboard.script:0
 msgid "_Horizontal segments"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/gen_clip_from_image.script:0
-#, fuzzy
 msgid "_Image File"
-msgstr "_Ficheiro"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/image_overlay.script:0
-#, fuzzy
 msgid "_Image"
-msgstr "_Ficheiro"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/contrast.script:0
-#, fuzzy
 msgid "_Increase Contrast"
-msgstr "Axustar o contraste"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/image_overlay.script:0
 msgid "_Init Size X:"
@@ -10877,16 +10866,14 @@ msgid "_Midtone"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/negate.script:0
-#, fuzzy
 msgid "_Negate"
-msgstr "Negar"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/gen_blank_frames.script:0
 #: /usr/share/lives/plugins/effects/rendered/gen_clip_from_image.script:0
 #: /usr/share/lives/plugins/effects/rendered/gen_coloured_frames.script:0
-#, fuzzy
 msgid "_Number of frames"
-msgstr "_Número de veces para introducir"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/trim_frames.script:0
 msgid "_Offset X"
@@ -10897,41 +10884,36 @@ msgid "_Offset Y"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/shrink_expand.script:0
-#, fuzzy
 msgid "_Other Center"
-msgstr "_Outros"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/rotate.script:0
 msgid "_Other"
-msgstr "_Outros"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
 #: /usr/share/lives/plugins/effects/rendered/textover.script:0
-#, fuzzy
 msgid "_Point size"
-msgstr "Tamaño do ficheiro"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/blur.script:0
-#, fuzzy
 msgid "_Radius end"
-msgstr "_Raio"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/blur.script:0
-#, fuzzy
 msgid "_Radius start"
-msgstr "_Raio"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/edge_detect.script:0
 #: /usr/share/lives/plugins/effects/rendered/emboss.script:0
 #: /usr/share/lives/plugins/effects/rendered/charcoal.script:0
 msgid "_Radius"
-msgstr "_Raio"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/colorize.script:0
 #: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
-#, fuzzy
 msgid "_Random colour each frame"
-msgstr "Rematar no fotograma"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/dream.script:0
 #: /usr/share/lives/plugins/effects/rendered/tunnel.script:0
@@ -10940,40 +10922,35 @@ msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/shrink_expand.script:0
 msgid "_Right"
-msgstr "_Dereita"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/spin.script:0
-#, fuzzy
 msgid "_Rotate Selection by"
-msgstr "_Borrar selección"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/spin.script:0
 msgid "_Shrink rotated window to fit frame size"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/blur.script:0
-#, fuzzy
 msgid "_Sigma end"
-msgstr "_Inicio"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/blur.script:0
-#, fuzzy
 msgid "_Sigma start"
-msgstr "_Inicio"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/skip_forwards.script:0
-#, fuzzy
 msgid "_Skip ahead"
-msgstr "_Saltar"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/negate.script:0
 msgid "_Skip"
-msgstr "_Saltar"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/colour_replace.script:0
-#, fuzzy
 msgid "_Source Colour"
-msgstr "_Inicio"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/transition_splice.script:0
 msgid "_Splice"
@@ -10981,42 +10958,36 @@ msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/colorize.script:0
 #: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
-#, fuzzy
 msgid "_Start Colour"
-msgstr "_Inicio"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/solarize.script:0
 #: /usr/share/lives/plugins/effects/rendered/shift_horizontal.script:0
 #: /usr/share/lives/plugins/effects/rendered/shift_vertical.script:0
-#, fuzzy
 msgid "_Start Value"
-msgstr "Comezar no fotograma"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/spread.script:0
-#, fuzzy
 msgid "_Start amount"
-msgstr "Comezar no fotograma"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
 #: /usr/share/lives/plugins/effects/rendered/textover.script:0
-#, fuzzy
 msgid "_Stroke colour"
-msgstr "_Inicio"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/colour_replace.script:0
-#, fuzzy
 msgid "_Target Colour"
-msgstr "_Inicio"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
 #: /usr/share/lives/plugins/effects/rendered/textover.script:0
 msgid "_Text"
-msgstr "_Texto"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/frame_calculator.script:0
-#, fuzzy
 msgid "_Time (seconds)"
-msgstr "segundos"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/transition_checkerboard.script:0
 msgid "_Top left is clipboard"
@@ -11027,9 +10998,8 @@ msgid "_Vertical segments"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/wave.script:0
-#, fuzzy
 msgid "_Wavemax"
-msgstr "Onda"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/transition_bwthresh.script:0
 msgid "_White is transparent"
@@ -11038,21 +11008,19 @@ msgstr ""
 #: /usr/share/lives/plugins/effects/rendered/shift_horizontal.script:0
 #: /usr/share/lives/plugins/effects/rendered/shift_vertical.script:0
 msgid "_Wrap Around"
-msgstr "_Dar a volta"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/shrink_expand.script:0
-#, fuzzy
 msgid "_X Center"
-msgstr "_Outros"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/trim_frames.script:0
 msgid "_X End"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/trim_frames.script:0
-#, fuzzy
 msgid "_X Start"
-msgstr "_Inicio"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
 #: /usr/share/lives/plugins/effects/rendered/textover.script:0
@@ -11060,18 +11028,16 @@ msgid "_X offset"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/shrink_expand.script:0
-#, fuzzy
 msgid "_Y Center"
-msgstr "_Outros"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/trim_frames.script:0
 msgid "_Y End"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/trim_frames.script:0
-#, fuzzy
 msgid "_Y Start"
-msgstr "_Inicio"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
 #: /usr/share/lives/plugins/effects/rendered/textover.script:0
@@ -11087,62 +11053,52 @@ msgid "_then"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/blank_frames.script:0
-#, fuzzy
 msgid "blank_frames"
-msgstr "cadros"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/blur.script:0
 msgid "blur"
-msgstr "emborrallar"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/brightness_change.script:0
-#, fuzzy
 msgid "brightness_change"
-msgstr "_Ignorar as mudanzas"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/charcoal.script:0
-#, fuzzy
 msgid "charcoal"
-msgstr "Carbón"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/colorize.script:0
-#, fuzzy
 msgid "colorize"
-msgstr "Colorar"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
-#, fuzzy
 msgid "colour_filter"
-msgstr "Colorar"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/colour_replace.script:0
-#, fuzzy
 msgid "colour_replace"
-msgstr "Colorar"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/contrast.script:0
-#, fuzzy
 msgid "contrast"
-msgstr "Axustar o contraste"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/cycle.script:0
 msgid "cycle"
-msgstr "ciclo"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/deinterlace.script:0
-#, fuzzy
 msgid "deinterlace"
-msgstr "Desentrelazar"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/despekle.script:0
-#, fuzzy
 msgid "despeckle"
-msgstr "Desembarazar"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/dream.script:0
-#, fuzzy
 msgid "dream"
-msgstr "Soño"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/edge_detect.script:0
 msgid "edge_detect"
@@ -11150,25 +11106,23 @@ msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/emboss.script:0
 msgid "emboss"
-msgstr "relevo"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/enhance.script:0
-#, fuzzy
 msgid "enhance"
-msgstr "Realzar"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/noisify.script:0
 msgid "every"
-msgstr "todas"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/fade_in_out.script:0
-#, fuzzy
 msgid "fade_in_out"
-msgstr "Esvaír"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/frame_calculator.script:0
 msgid "fc"
-msgstr "fc"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/flip.script:0
 msgid "flip"
@@ -11179,38 +11133,32 @@ msgid "flop"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/frame_calculator.script:0
-#, fuzzy
 msgid "frame_calculator"
-msgstr "_Inicio"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/gamma_change.script:0
-#, fuzzy
 msgid "gamma_change"
-msgstr "_Ignorar as mudanzas"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/gen_blank_frames.script:0
-#, fuzzy
 msgid "gen_blank_frames"
-msgstr "cadros"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/gen_clip_from_image.script:0
-#, fuzzy
 msgid "gen_clip_from_image"
-msgstr "Rematar no fotograma"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/gen_coloured_frames.script:0
-#, fuzzy
 msgid "gen_coloured_frames"
-msgstr "cadros"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
 msgid "gen_text"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/hue_change.script:0
-#, fuzzy
 msgid "hue_change"
-msgstr "_Ignorar as mudanzas"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/image_overlay.script:0
 msgid "image_overlay"
@@ -11221,42 +11169,36 @@ msgid "jumble"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/modulate.script:0
-#, fuzzy
 msgid "modulate"
-msgstr "Rotando"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/monochrome.script:0
-#, fuzzy
 msgid "monochrome"
-msgstr "Monocromático"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/negate.script:0
-#, fuzzy
 msgid "negate"
-msgstr "Negar"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/noisify.script:0
 msgid "noisify"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/normalize.script:0
-#, fuzzy
 msgid "normalize"
-msgstr "Normalizar"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/photo_still.script:0
 msgid "photo_still"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/pixilate.script:0
-#, fuzzy
 msgid "pixilate"
-msgstr "Rotando"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/posterize.script:0
-#, fuzzy
 msgid "posterize"
-msgstr "Posterizar"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/randomzoom.script:0
 msgid "randomzoom"
@@ -11264,107 +11206,91 @@ msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/resize.script:0
 msgid "resize"
-msgstr "redimensionar"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/rotate.script:0
-#, fuzzy
 msgid "rotate"
-msgstr "estado"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/saturation_change.script:0
-#, fuzzy
 msgid "saturation_change"
-msgstr "Transicións"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/sepia.script:0
 msgid "sepia"
-msgstr "sepia"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/shift_horizontal.script:0
-#, fuzzy
 msgid "shift_horizontal"
-msgstr "Voltear verticalmente"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/shift_vertical.script:0
-#, fuzzy
 msgid "shift_vertical"
-msgstr "Voltear verticalmente"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/shrink_expand.script:0
 msgid "shrink_expand"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/skip_forwards.script:0
-#, fuzzy
 msgid "skip_forwards"
-msgstr "Saltar adiante"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/solarize.script:0
-#, fuzzy
 msgid "solarize"
-msgstr "Solarizar"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/spin.script:0
 msgid "spin"
-msgstr "xiratorio"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/spread.script:0
-#, fuzzy
 msgid "spread"
-msgstr "Esparexer"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/swirl.script:0
-#, fuzzy
 msgid "swirl"
-msgstr "Remuíño"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/textover.script:0
 msgid "textover"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/transition_bwthresh.script:0
-#, fuzzy
 msgid "transition_bwthresh"
-msgstr "Transicións"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/transition_checkerboard.script:0
-#, fuzzy
 msgid "transition_checkerboard"
-msgstr "Tabuleiro de Xadrez"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/transition_fade.script:0
-#, fuzzy
 msgid "transition_fade2"
-msgstr "Transicións"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/transition_splice.script:0
-#, fuzzy
 msgid "transition_splice"
-msgstr "Transicións"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/trim_frames.script:0
-#, fuzzy
 msgid "trim_frames"
-msgstr "cadros"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/tunnel.script:0
 msgid "tunnel"
-msgstr "túnel"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/wave.script:0
 msgid "wave"
-msgstr "onda"
+msgstr ""
 
 #: /usr/bin/smogrify:0
 msgid "Unable to open output file !"
-msgstr "Non se pode abrir o ficheiro de saída !"
+msgstr ""
 
 #: /usr/bin/smogrify:0
-#, fuzzy
 msgid "LiVES could not write to $nfile."
 msgstr ""
-"LiVES non puido capturar esta foto\n"
-"\n"
 
 #: /usr/bin/smogrify:0
 msgid "Unable to locate the program $rfx_builder_multi"
@@ -11392,11 +11318,8 @@ msgid "This does not appear to be a valid video or image file"
 msgstr ""
 
 #: /usr/bin/smogrify:0
-#, fuzzy
 msgid "LiVES was unable to open it."
 msgstr ""
-"LiVES non puido capturar esta foto\n"
-"\n"
 
 #: /usr/bin/smogrify:0
 msgid "Check the terminal window for more details."
@@ -11411,15 +11334,12 @@ msgid "This does not appear to be a valid backup file"
 msgstr ""
 
 #: /usr/bin/smogrify:0
-#, fuzzy
 msgid "LiVES was not able to open the file"
 msgstr ""
-"LiVES non puido capturar esta foto\n"
-"\n"
 
 #: /usr/bin/smogrify:0
 msgid "$file"
-msgstr "$file"
+msgstr ""
 
 #: /usr/bin/smogrify:0
 msgid "LiVES audio error."
@@ -11443,7 +11363,7 @@ msgstr ""
 
 #: /usr/bin/smogrify:0
 msgid "$error"
-msgstr "$error"
+msgstr ""
 
 #~ msgid "Pause"
 #~ msgstr "Pausa"
@@ -11453,18 +11373,3 @@ msgstr "$error"
 
 #~ msgid "End frame"
 #~ msgstr "Rematar no fotograma"
-
-#~ msgid "                                                            "
-#~ msgstr "                                                            "
-
-#~ msgid "warning"
-#~ msgstr "advertencia"
-
-#~ msgid "LiVES: recover layout ?"
-#~ msgstr "LiVES: recuperar esquema ?"
-
-#~ msgid "Couldn't find pixmap file: %s"
-#~ msgstr "Non se atopou o ficheiro de pixmap: %s"
-
-#~ msgid "No Description"
-#~ msgstr "Sen descripción"

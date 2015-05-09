@@ -19,10 +19,10 @@ sendOSC_SOURCES = htmsocket.c htmsocket.h sendOSC.c
 
 sendOSC_PROGRAMS = sendOSC
 
-installdirs:
-	$(MKDIR_P) "$(DESTDIR)$(bindir)"
+
 
 install-exec-local:
+	$(MKDIR_P) "$(DESTDIR)$(bindir)"
 	cp -f $(sendOSC) "$(DESTDIR)$(bindir)" && chmod a+rx "$(DESTDIR)$(bindir)/$(sendOSC)"
 
 

@@ -19,7 +19,7 @@
 
 
 /** count virtual frames between start and end (inclusive) */
-LIVES_INLINE int count_virtual_frames(int *findex, int start, int end) {
+int count_virtual_frames(int *findex, int start, int end) {
   register int i;
   int count=0;
   for (i=start-1; i<end; i++) if (findex[i]!=-1) count++;

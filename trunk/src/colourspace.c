@@ -32,8 +32,6 @@
 
 #include <math.h>
 
-#include "main.h"
-
 #ifdef USE_SWSCALE
 
 #include <libswscale/swscale.h>
@@ -66,6 +64,8 @@
 #endif // HAVE_SYSTEM_WEED_COMPAT
 
 #endif // USE_SWSCALE
+
+#include "main.h"
 
 #include "cvirtual.h"
 

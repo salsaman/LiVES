@@ -239,10 +239,13 @@ namespace lives {
     return cl->id;
   }
 
+#ifndef DOXYGEN_SKIP
+
   void livesApp::setClosures(closureList cl) {
     m_closures = cl;
   }
 
+#endif
 
   ulong livesApp::addCallback(lives_callback_t cb_type, modeChanged_callback_f func, void *data) const {
     if (cb_type != LIVES_CALLBACK_MODE_CHANGED) return 0l;
@@ -502,10 +505,14 @@ namespace lives {
     return ret;
   }
 
+#ifndef DOXYGEN_SKIP
 
   closureList& livesApp::closures() {
     return m_closures;
   }
+
+
+#endif
 
   void livesApp::invalidate() {
     m_id = 0l;

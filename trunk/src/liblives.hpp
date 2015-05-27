@@ -292,6 +292,9 @@ namespace lives {
   typedef class livesString livesString;
 
 
+  /**
+     typedef
+  */
   typedef list<livesString> livesStringList;
 
 
@@ -593,11 +596,11 @@ namespace lives {
     /**
        Change the interactivity of the GUI application.
        Interactivity is via menus and keyboard accelerators
-       @param set to true to allow interaction with the GUI.
+       @param setting set to true to allow interaction with the GUI.
        @return the new setting.
        @see interactive().
     */
-    bool setInteractive(bool);
+    bool setInteractive(bool setting);
 
     /**
        Returns whether the GUI app is in interactive mode.
@@ -626,11 +629,11 @@ namespace lives {
        Set the current interface mode of the livesApp.
        Only works if status() is LIVES_STATUS_READY.
        If the livesApp is invalid, returns LIVES_INTERFACE_MODE_INVALID.
-       @param the mode to set to
-       @return the new mode.
+       @param mode the interface mode to set to
+       @return the new interface mode.
        @see mode().
     */
-    lives_interface_mode_t setMode(lives_interface_mode_t);//, livesMultitrackSettings settings=NULL);
+    lives_interface_mode_t setMode(lives_interface_mode_t mode);//, livesMultitrackSettings settings=NULL);
 
     /**
        Get the current operational status of the livesApp.
@@ -942,7 +945,7 @@ namespace lives {
        If name is an empty string, the user can choose the name at runtime. If livesApp::interactive() is false, the user can cancel.
        Valid set names may not be empty, begin with a "." or contain spaces or the characters / \ * or ". The set name must not be in use by 
        another copy of LiVES. The maximum length of a set name is 128 characters.
-       @param the name of the set
+       @param name the name of the set
        @return true if the name was set.
        @see name().
     */
@@ -1056,11 +1059,11 @@ namespace lives {
        Set playback in a detached window.
        If the livesApp::mode() is LIVES_INTERFACE_MODE_CLIPEDIT and prefs::sepWinSticky() is true, the window appears straight away;
        otherwise it appears only when isPlaying() is true.
-       @param the value to set to
+       @param setting the value to set to
        @see setFS().
        @see sepWin().
     */
-    void setSepWin(bool) const;
+    void setSepWin(bool setting) const;
 
     /**
        @return true if playback is in a separate window from the main GUI.
@@ -1070,11 +1073,11 @@ namespace lives {
 
     /**
        Set playback fullscreen. Use of setFS() is recommended instead.
-       @param the value to set to
+       @param setting the value to set to
        @see setFS().
        @see fullScreen().
     */
-    void setFullScreen(bool) const;
+    void setFullScreen(bool setting) const;
 
     /**
        @return true if playback is full screen.
@@ -1086,11 +1089,11 @@ namespace lives {
        Combines the functionality of setSepWin() and setFullScreen().
        If the livesApp::mode() is LIVES_INTERFACE_MODE_CLIPEDIT and prefs::sepWinSticky() is true, the window appears straight away,
        but it will only fill the screen when isPlaying() is true; otherwise it appears only when isPlaying() is true.
-       @param the value to set to
+       @param setting the value to set to
        @see setSepWin()
        @see setFullScreen()
     */
-    void setFS(bool) const;
+    void setFS(bool setting) const;
 
     /**
        Commence playback of video and audio with the currently selected clip.
@@ -1167,7 +1170,7 @@ namespace lives {
        LIVES_INTERFACE_MODE_CLIPEDIT.
        If the frame parameter is < 1 or > foregroundClip().frames() nothing happens.
        If background is true, the function sets the frame for backgroundClip().
-       If background is false and prefs::audioFollowsVideoFPSChanges() is true, then the audio playback will sync to the new video position.
+       If background is false and prefs::audioFollowsFPSChanges() is true, then the audio playback will sync to the new video position.
        @param frame the new frame to set to
        @param background if true sets the frame for the background clip (if any)
        @return the video frame set to, or 0 if the operation is invalid.
@@ -1199,7 +1202,7 @@ namespace lives {
        Does not work if prefs::audioSource() is LIVES_AUDIO_SOURCE_INTERNAL and player::recording() is true.
        If the time parameter is < 0. or > clip::audioLength() nothing happens.
        The time is actually set to the nearest video frame start to the requested time.
-       @param the new time to set to
+       @param time the new time to set to
        @return the audio playback time, or 0. if the operation is invalid.
        @see audioPlaybackTime()
        @see setVideoPlaybackFrame()
@@ -1234,8 +1237,8 @@ namespace lives {
     /**
        Set the current playback framerate in frames per second. Only works if livesApp::mode() is LIVES_INTERFACE_MODE_CLIPEDIT and
        livesApp::status() is LIVES_STATUS_PLAYING.
-       Allowed values range from -prefs::maxFPS to +prefs::maxFPS.
-       If prefs::audioFollowsVideoFPSChanges() is true, then the audio playback rate will change proportionally.
+       Allowed values range from -prefs::maxFPS() to +prefs::maxFPS().
+       If prefs::audioFollowsFPSChanges() is true, then the audio playback rate will change proportionally.
        If isPlaying() is false, nothing happens and 0. is returned.
        Note, the setting only applies to the current clip; if the clip being played is switched then currentFPS() may change.
        @param fps the framerate to set
@@ -1268,11 +1271,11 @@ namespace lives {
        Set the loop mode for the player. The value is a bitmap, however LIVES_LOOP_MODE_FIT_AUDIO 
        only has meaning when livesApp::mode() is LIVES_INTERFACE_MODE_CLIPEDIT.
        If isValid() is false, nothing happens.
-       @param the desired loop mode
+       @param mode the desired loop mode
        @return the new loop mode
        @see loopMode().
     */
-    lives_loop_mode_t setLoopMode(lives_loop_mode_t) const;
+    lives_loop_mode_t setLoopMode(lives_loop_mode_t mode) const;
 
     /**
        Return the loop mode of the player.
@@ -1286,12 +1289,12 @@ namespace lives {
        Set ping pong mode. If pingPong is true then rather than looping forward, video and audio will "bounce" 
        forwards and backwards off their end points, provided the mode() is LIVES_INTERFACE_MODE_CLIPEDIT.
        If mode() is LIVES_INTERFACE_MODE_MULTITRACK, then the value is ignored.
-       @param the desired value
+       @param setting the desired value
        @return the new value
        @see pingPong().
        @see loopMode().
     */
-    bool setPingPong(bool) const;
+    bool setPingPong(bool setting) const;
 
     /**
        Return ping pong mode. If pingPong is true then rather than looping forward, video and audio will "bounce" 
@@ -1357,7 +1360,8 @@ namespace lives {
     /**
        Return the (physical or virtual) key associated with this effectKey.
        Effects (apart from generators) are applied in ascending key order.
-       Physical keys (1 - 9) can also be toggled from the keyboard, provided livesApp::interactive() is true.
+       Physical keys (1 - 9) can also be toggled from the keyboard by simultaneously holding down the ctrl key, 
+       provided livesApp::interactive() is true.
        If the effectKey is invalid, 0 is returned.
        @return the physical or virtual key associated with this effectKey.
     */
@@ -1402,11 +1406,11 @@ namespace lives {
        Enable an effect mapped to this effectKey, mode().
        Only works if the effecKey is valid, a valid effect is mapped to the mode, and livesApp::status() is 
        LIVES_STATUS_PLAYING or LIVES_STATUS_READY.
-       @param the value to set to
+       @param setting the value to set to
        @return the new state of the effectKey
        @see enabled().
     */
-    bool setEnabled(bool);
+    bool setEnabled(bool setting);
 
     /**
        Return a value to indicate whether the effect mapped to this effectKey, mode() is active. 
@@ -1420,7 +1424,7 @@ namespace lives {
        Map an effect to the next unused mode for the effectKey.
        Will only work if the livesApp::status() is LIVES_STATUS_PLAYING or LIVES_STATUS_READY.
        The effectKey and the effect must share the same owner livesApp, and both must be valid.
-       @param the effect to append
+       @param e the effect to append
        @return the mode number the effect was mapped to, or -1 if the mapping failed.
        @see removeMapping().
     */
@@ -1493,7 +1497,7 @@ namespace lives {
 	 Returns the ith effect key for this key map.
 	 Valid range for i is 1 <= i <= prefs::rteKeysVirtual().
 	 For values of i outside this range, an invalid effectKey is returned.
-	 @param the index value
+	 @param i the index value
 	 @return an effectKey with index i.
 	 @see effectKey::operator[]
       */
@@ -1623,7 +1627,7 @@ namespace lives {
 
     /**
        Returns a reference to the block on the specified track at the specified time. If no such block exists, returns an invalid block.
-       @param the multitrack object
+       @param m the multitrack object
        @param track the track number. Values < 0 indicate backing audio tracks.
        @param time the time in seconds on the timeline.
        @return the block on the given track at the given time.
@@ -1688,6 +1692,9 @@ namespace lives {
 
 
   protected:
+    /**
+       Protected initialiser
+    */
     block(multitrack *m=NULL, ulong uid=0l);
 
 
@@ -1797,11 +1804,11 @@ namespace lives {
     /**
        Set the gravity mode for multitrack. If isActive() is false, nothing happens and an undefined value is returned, 
        otherwise if livesApp::status() is not LIVES_STATUS_READY or LIVES_STATUS_PLAYING, nothing happens.
-       @param the new gravity mode to set.
+       @param mode the new gravity mode to set.
        @return the new gravity mode.
        @see gravity().
     */
-    lives_gravity_t setGravity(lives_gravity_t) const;
+    lives_gravity_t setGravity(lives_gravity_t mode) const;
 
     /**
        Returns the value of the multitrack insert mode. This value, together with gravity() defines what happens when a block is inserted, 
@@ -1815,11 +1822,11 @@ namespace lives {
     /**
        Set the gravity mode for multitrack. If isActive() is false, nothing happens and an undefined value is returned, 
        otherwise if livesApp::status() is not LIVES_STATUS_READY or LIVES_STATUS_PLAYING, nothing happens.
-       @param the new insert mode to set.
+       @param mode the new insert mode to set.
        @return the new insert mode.
        @see insertMode().
     */
-    lives_insert_mode_t setInsertMode(lives_insert_mode_t) const;
+    lives_insert_mode_t setInsertMode(lives_insert_mode_t mode) const;
 
 
     /**
@@ -1912,7 +1919,7 @@ namespace lives {
        The layout must be "owned" by the currently loaded set, otherwise an error may be shown and it will not be loaded.
        If filename is an empty livesString, chooseLayout() will be called first to get the layout name.
        If livesApp::interactive() is true, the user will have a chance to save the current layout (if any) first.
-       @param the filename of the layout to load
+       @param filename the filename of the layout to load
        @return true if the specified layout could be loaded
        @see chooseLayout().
        @see availableLayouts().
@@ -1929,7 +1936,7 @@ namespace lives {
        If the layout name is empty, the user will be prompted graphically to enter a name. If the set name is empty, the user will be 
        prompted to enter a set name (if livesApp::interactive() is true; otherwise this will fail and an empty string will be returned).
        Rarely it will not be possible to save a layout (if it was generated by recording events, and it contains generated audio or video).
-       @param the name to save the layout
+       @param name the name to save the layout
        @return the filename the set was saved to, or empty livesString if saving failed.
        @see wipeLayout().
        @see reloadLayout();
@@ -1946,7 +1953,6 @@ namespace lives {
        If the set name is empty, the user will be 
        prompted to enter a set name (if livesApp::interactive() is true; otherwise this will fail and an empty string will be returned).
        Rarely it will not be possible to save a layout (if it was generated by recording events, and it contains generated audio or video).
-       @param the name to save the layout
        @return the filename the set was saved to, or empty livesString if saving failed.
        @see wipeLayout().
        @see reloadLayout();
@@ -1990,7 +1996,7 @@ namespace lives {
        If the livesApp::status() is not LIVES_STATUS_READY or LIVES_STATUS_PLAYING, returns false and nothing happens.
        If the effect is not a transition, false is returned and nothing happens.
        If the effect is invalid, this is the same as calling disableAutoTransition().
-       @param the new autotransition effect for multitrack.
+       @param autotrans the new autotransition effect for multitrack.
        @return true if the autotransition was changed.
        @see autoTransition().
        @see disableAutoTransition().
@@ -2007,6 +2013,10 @@ namespace lives {
 
   protected:
     multitrack(livesApp *lives=NULL);
+
+    /**
+       The linked LiVES application
+    */
     livesApp *m_lives;
 
 
@@ -2064,7 +2074,7 @@ namespace lives {
        @param asrc the desired audio source
        @return true if the audio source could be changed.
     */
-    bool setAudioSource(const livesApp &lives, lives_audio_source_t); 
+    bool setAudioSource(const livesApp &lives, lives_audio_source_t asrc); 
 
     /**
        @param lives a reference to a livesApp instance
@@ -2082,10 +2092,10 @@ namespace lives {
     int audioPlayerRate(const livesApp &lives);
 
     /**
-       @param an audio player type
+       @param ptype an audio player type
        @return true if the audio player type is realtime controllable
     */
-    bool isRealtimeAudioPlayer(lives_audio_player_t);
+    bool isRealtimeAudioPlayer(lives_audio_player_t ptype);
 
     /**
        @param lives a reference to a valid livesApp instance
@@ -2102,32 +2112,32 @@ namespace lives {
     /**
        @param lives a reference to a valid livesApp instance
        @return true if the audio clip changes to match video clip changes during playback
-       @see setAudioFollowsVideoClipChanges().
+       @see setAudioFollowsVideoChanges().
     */
-    bool audioFollowsVideoClipChanges(const livesApp &lives);
+    bool audioFollowsVideoChanges(const livesApp &lives);
 
     /**
        @param lives a reference to a valid livesApp instance
        @return true if the clip audio playback rate changes to match video clip framerate changes during playback
-       @see setAudioFollowsVideoFPSChanges().
+       @see setAudioFollowsFPSChanges().
     */
-    bool audioFollowsVideoFPSChanges(const livesApp &lives);
+    bool audioFollowsFPSChanges(const livesApp &lives);
 
     /**
        @param lives a reference to a valid livesApp instance
-       @param the new setting
+       @param setting the new setting
        @return true if the preference was updated
-       @see audioFollowsVideoFPSChanges
+       @see audioFollowsFPSChanges
     */
-    bool setAudioFollowsVideoFPSChanges(const livesApp &lives, bool);
+    bool setAudioFollowsFPSChanges(const livesApp &lives, bool setting);
 
     /**
        @param lives a reference to a valid livesApp instance
-       @param the new setting
+       @param setting the new setting
        @return true if the preference was updated
-       @see audioFollowsVideoFPSChanges
+       @see audioFollowsFPSChanges
     */
-    bool setAudioFollowsVideoClipChanges(const livesApp &lives, bool);
+    bool setAudioFollowsVideoChanges(const livesApp &lives, bool setting);
 
     /**
        @param lives a reference to a valid livesApp instance
@@ -2139,7 +2149,6 @@ namespace lives {
 
     /**
        @param lives a reference to a valid livesApp instance
-       @param the new setting
        @return true if the preference was updated
        @see sepWinSticky()
        @see player::sepWin()
@@ -2156,12 +2165,12 @@ namespace lives {
 
     /**
        @param lives a reference to a valid livesApp instance
-       @param the new setting
+       @param setting the new setting
        @return true if the preference was updated
        @see mtExitRender().
        @see multitrack::render().
     */
-    bool setMtExitRender(const livesApp &lives, bool);
+    bool setMtExitRender(const livesApp &lives, bool setting);
 
 
   }

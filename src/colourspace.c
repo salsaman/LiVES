@@ -11287,7 +11287,7 @@ void insert_blank_frames(int sfileno, int nframes, int after) {
       lives_snprintf(nname,PATH_MAX,"%s/%s/%08d.%s",prefs->tmpdir,sfile->handle,i+nframes,get_image_ext_for_type(sfile->img_type));
       mainw->com_failed=FALSE;
 #ifndef IS_MINGW
-      com=lives_strdup_printf("/bin/mv \"%s\" \"%s\"",
+      com=lives_strdup_printf("%s \"%s\" \"%s\"",capable->mv_cmd,
                               oname,nname);
 #else
       com=lives_strdup_printf("mv.exe \"%s\" \"%s\"",

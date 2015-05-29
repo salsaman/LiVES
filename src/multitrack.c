@@ -877,7 +877,7 @@ static void mt_load_recovery_layout(lives_mt *mt) {
     lives_mkdir_with_parents(uldir,S_IRWXU);
 
 #ifndef IS_MINGW
-    com=lives_strdup_printf("/bin/mv \"%s\" \"%s\"",eload_file,uldir);
+    com=lives_strdup_printf("%s \"%s\" \"%s\"",capable->mv_cmd,eload_file,uldir);
 #else
     com=lives_strdup_printf("mv.exe \"%s\" \"%s\"",eload_file,uldir);
 #endif
@@ -885,7 +885,7 @@ static void mt_load_recovery_layout(lives_mt *mt) {
     lives_free(com);
 
 #ifndef IS_MINGW
-    com=lives_strdup_printf("/bin/mv \"%s\" \"%s\"",aload_file,uldir);
+    com=lives_strdup_printf("%s \"%s\" \"%s\"",capable->mv_cmd,aload_file,uldir);
 #else
     com=lives_strdup_printf("mv.exe \"%s\" \"%s\"",aload_file,uldir);
 #endif
@@ -16230,7 +16230,7 @@ boolean on_render_activate(LiVESMenuItem *menuitem, livespointer user_data) {
       do_threaded_dialog(_("Cleaning up..."),FALSE);
       curtmpdir=lives_build_filename(prefs->tmpdir,cfile->handle,NULL);
 #ifndef IS_MINGW
-      com=lives_strdup_printf("/bin/rm -rf \"%s/\"*",curtmpdir);
+      com=lives_strdup_printf("%s -rf \"%s/\"*",capable->rm_cmd,curtmpdir);
 #else
       com=lives_strdup_printf("DEL /q \"%s/\"*",curtmpdir);
       lives_system(com,TRUE);
@@ -19413,7 +19413,7 @@ void save_layout_map(int *lmap, double *lmap_audio, const char *file, const char
     LIVES_DEBUG("Removing layout dir: ");
     LIVES_DEBUG(ldir);
 #ifndef IS_MINGW
-    com=lives_strdup_printf("/bin/rmdir \"%s\" 2>/dev/null",ldir);
+    com=lives_strdup_printf("%s \"%s\" 2>/dev/null",capable->rmdir_cmd,ldir);
 #else
     com=lives_strdup_printf("rmdir.exe \"%s\" 2>NUL",ldir);
 #endif
@@ -19650,7 +19650,7 @@ boolean on_save_event_list_activate(LiVESMenuItem *menuitem, livespointer user_d
   if (esave_file==NULL||!check_storage_space(NULL,FALSE)) {
     char *cdir;
 #ifndef IS_MINGW
-    com=lives_strdup_printf("/bin/rmdir \"%s\" 2>/dev/null",esave_dir);
+    com=lives_strdup_printf("%s \"%s\" 2>/dev/null",capable->rmdir_cmd,esave_dir);
 #else
     com=lives_strdup_printf("rmdir.exe \"%s\" 2>NUL",esave_dir);
 #endif
@@ -19659,7 +19659,7 @@ boolean on_save_event_list_activate(LiVESMenuItem *menuitem, livespointer user_d
 
     cdir=lives_build_filename(prefs->tmpdir,mainw->set_name,NULL);
 #ifndef IS_MINGW
-    com=lives_strdup_printf("/bin/rmdir \"%s\" 2>/dev/null",cdir);
+    com=lives_strdup_printf("%s \"%s\" 2>/dev/null",capable->rmdir_cmd,cdir);
 #else
     com=lives_strdup_printf("rmdir.exe \"%s\" 2>NUL",cdir);
 #endif
@@ -21218,7 +21218,7 @@ char *get_eload_filename(lives_mt *mt, boolean allow_auto_reload) {
 
     char *cdir;
 #ifndef IS_MINGW
-    com=lives_strdup_printf("/bin/rmdir \"%s\" 2>/dev/null",eload_dir);
+    com=lives_strdup_printf("%s \"%s\" 2>/dev/null",capable->rmdir_cmd,eload_dir);
 #else
     com=lives_strdup_printf("rmdir.exe \"%s\" 2>NUL",eload_dir);
 #endif
@@ -21227,7 +21227,7 @@ char *get_eload_filename(lives_mt *mt, boolean allow_auto_reload) {
 
     cdir=lives_build_filename(prefs->tmpdir,mainw->set_name,NULL);
 #ifndef IS_MINGW
-    com=lives_strdup_printf("/bin/rmdir \"%s\" 2>/dev/null",cdir);
+    com=lives_strdup_printf("%s \"%s\" 2>/dev/null",capable->rmdir_cmd,cdir);
 #else
     com=lives_strdup_printf("rmdir.exe \"%s\" 2>NUL",cdir);
 #endif
@@ -21742,7 +21742,7 @@ void migrate_layouts(const char *old_set_name, const char *new_set_name) {
         lives_free(tmp);
 #ifndef IS_MINGW
         tmp=lives_strdup_printf("%s/%s/layouts/%s-%s",prefs->tmpdir,new_set_name,old_set_name,(char *)map->data+chlen);
-        com=lives_strdup_printf("/bin/mv \"%s\" \"%s\"",(char *)map->data,tmp);
+        com=lives_strdup_printf("%s \"%s\" \"%s\"",capable->mv_cmd,(char *)map->data,tmp);
 #else
         tmp=lives_strdup_printf("%s\\%s\\layouts\\%s-%s",prefs->tmpdir,new_set_name,old_set_name,(char *)map->data+chlen);
         com=lives_strdup_printf("mv.exe \"%s\" \"%s\"",(char *)map->data,tmp);

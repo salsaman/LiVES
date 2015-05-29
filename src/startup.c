@@ -144,7 +144,7 @@ top:
   }
 
 #ifndef IS_MINGW
-  com=lives_strdup_printf("/bin/chmod 777 \"%s\" 2>/dev/null",dirname);
+  com=lives_strdup_printf("%s 777 \"%s\" 2>/dev/null",capable->chmod_cmd,dirname);
   lives_system(com,FALSE);
   lives_free(com);
 #endif

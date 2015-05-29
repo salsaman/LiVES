@@ -2562,7 +2562,7 @@ void remove_layout_files(LiVESList *map) {
 
       if (!is_current) {
 #ifndef IS_MINGW
-        com=lives_strdup_printf("/bin/rm \"%s\" 2>/dev/null",fname);
+        com=lives_strdup_printf("%s \"%s\" 2>/dev/null",capable->rm_cmd,fname);
 #else
         com=lives_strdup_printf("rm.exe \"%s\" 2>NUL",fname);
 #endif
@@ -2581,7 +2581,7 @@ void remove_layout_files(LiVESList *map) {
           mainw->com_failed=FALSE;
           // touch a file in tpmdir, so we cannot remove tmpdir itself
 #ifndef IS_MINGW
-          com=lives_strdup_printf("/bin/touch \"%s\" >/dev/null 2>&1",protect_file);
+          com=lives_strdup_printf("%s \"%s\" >/dev/null 2>&1",capable->touch_cmd,protect_file);
 #else
           com=lives_strdup_printf("touch.exe \"%s\" >NUL 2>&1",protect_file);
 #endif
@@ -2593,7 +2593,7 @@ void remove_layout_files(LiVESList *map) {
             // now we call rmdir -p : remove directory + any empty parents
             fdir=lives_path_get_dirname(fname);
 #ifndef IS_MINGW
-            com=lives_strdup_printf("/bin/rmdir -p \"%s\" 2>/dev/null",fdir);
+            com=lives_strdup_printf("%s -p \"%s\" 2>/dev/null",capable->rmdir_cmd,fdir);
 #else
             com=lives_strdup_printf("rmdir.exe /p \"%s\" 2>NUL",fdir);
 #endif
@@ -3930,7 +3930,7 @@ boolean check_dir_access(const char *dir) {
 
   testfile=lives_build_filename(dir,"livestst.txt",NULL);
 #ifndef IS_MINGW
-  com=lives_strdup_printf("/bin/touch \"%s\"",testfile);
+  com=lives_strdup_printf("%s \"%s\"",capable->touch_cmd,testfile);
 #else
   com=lives_strdup_printf("touch.exe \"%s\"",testfile);
 #endif

@@ -2819,7 +2819,7 @@ void load_default_keymap(void) {
       }
 
 #ifndef IS_MINGW
-      com=lives_strdup_printf("/bin/cp \"%s\" \"%s\"",keymap_template,keymap_file);
+      com=lives_strdup_printf("%s \"%s\" \"%s\"",capable->cp_cmd,keymap_template,keymap_file);
 #else
       com=lives_strdup_printf("cp.exe \"%s\" \"%s\"",keymap_template,keymap_file);
 #endif

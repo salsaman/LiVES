@@ -36,9 +36,10 @@ static int package_version=1; // version of this package
 /////////////////////////////////////////////////////////////
 
 typedef struct {
-  int inited;
+  uint8_t *inited;
   unsigned char *old_pixel_data;
 } static_data;
+
 
 //////////////////////////////////////////////
 
@@ -54,7 +55,20 @@ int alien_over_init(weed_plant_t *inst) {
   if (sdata==NULL) return WEED_ERROR_MEMORY_ALLOCATION;
 
   sdata->old_pixel_data=(unsigned char *)weed_malloc(height*width);
-  sdata->inited=0;
+  if (sdata->old_pixel_data==NULL) {
+    weed_free(sdata);
+    return WEED_ERROR_MEMORY_ALLOCATION;
+  }
+
+  sdata->inited=(uint8_t *)weed_malloc(height);
+  if (sdata->inited==NULL) {
+    weed_free(sdata);
+    weed_free(sdata->old_pixel_data);
+    return WEED_ERROR_MEMORY_ALLOCATION;
+  }
+
+  weed_memset(sdata->inited,0,height);
+
   weed_set_voidptr_value(inst,"plugin_internal",sdata);
 
   return WEED_NO_ERROR;
@@ -65,6 +79,7 @@ int alien_over_deinit(weed_plant_t *inst) {
   int error;
   static_data *sdata=weed_get_voidptr_value(inst,"plugin_internal",&error);
   if (sdata!=NULL) {
+    weed_free(sdata->inited);
     weed_free(sdata->old_pixel_data);
     weed_free(sdata);
     weed_set_voidptr_value(inst,"plugin_internal",NULL);
@@ -90,7 +105,7 @@ int alien_over_process(weed_plant_t *inst, weed_timecode_t timestamp) {
   unsigned char *old_pixel_data;
   unsigned char *end=src+height*irowstride;
   static_data *sdata;
-  register int j;
+  register int j,i=0;
 
   sdata=weed_get_voidptr_value(inst,"plugin_internal",&error);
   old_pixel_data=sdata->old_pixel_data;
@@ -104,11 +119,13 @@ int alien_over_process(weed_plant_t *inst, weed_timecode_t timestamp) {
     dst+=offset*orowstride;
     end=src+dheight*irowstride;
     old_pixel_data+=width*offset;
+    i=offset;
   }
+
 
   for (; src<end; src+=irowstride) {
     for (j=0; j<width; j++) {
-      if (sdata->inited) {
+      if (sdata->inited[i]) {
         if (!inplace) {
           dst[j]=((char)(old_pixel_data[j])+(char)(src[j]))>>1;
           old_pixel_data[j]=src[j];
@@ -119,10 +136,10 @@ int alien_over_process(weed_plant_t *inst, weed_timecode_t timestamp) {
         }
       } else old_pixel_data[j]=dst[j]=src[j];
     }
+    sdata->inited[i++]=1;
     dst+=orowstride;
     old_pixel_data+=width;
   }
-  sdata->inited=1;
 
   return WEED_NO_ERROR;
 }

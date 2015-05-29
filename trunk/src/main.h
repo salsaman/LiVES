@@ -143,6 +143,12 @@ typedef int lives_pgid_t;
 #include <stdint.h>
 #include <stdarg.h>
 
+
+#ifndef ulong
+#define ulong unsigned long
+#endif
+
+
 #define QUOTEME(x) #x
 
 

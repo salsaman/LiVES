@@ -2091,6 +2091,18 @@ capability *get_capabilities(void) {
 
   capable->mainpid=lives_getpid();
 
+#ifndef IS_MINGW
+  get_location("touch", capable->touch_cmd, PATH_MAX);
+  get_location("rm", capable->rm_cmd, PATH_MAX);
+  get_location("mv", capable->mv_cmd, PATH_MAX);
+  get_location("cp", capable->cp_cmd, PATH_MAX);
+  get_location("ln", capable->ln_cmd, PATH_MAX);
+  get_location("chmod", capable->chmod_cmd, PATH_MAX);
+  get_location("cat", capable->cat_cmd, PATH_MAX);
+  get_location("echo", capable->echo_cmd, PATH_MAX);
+  get_location("rmdir", capable->rmdir_cmd, PATH_MAX);
+#endif
+
   // required
   capable->can_write_to_tmp=FALSE;
   capable->can_write_to_tempdir=FALSE;

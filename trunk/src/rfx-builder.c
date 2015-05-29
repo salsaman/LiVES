@@ -3886,7 +3886,7 @@ void on_delete_rfx_activate(LiVESMenuItem *menuitem, livespointer user_data) {
     if (!(ret=unlink(rfx_script_file))) {
       char *com;
 #ifndef IS_MINGW
-      com=lives_strdup_printf("/bin/rm -rf \"%s\"",rfx_script_dir);
+      com=lives_strdup_printf("%s -rf \"%s\"",capable->rm_cmd,rfx_script_dir);
 #else
       com=lives_strdup_printf("DEL /q \"%s\"",rfx_script_dir);
       lives_system(com,TRUE);
@@ -3997,7 +3997,7 @@ void on_export_rfx_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   d_print(_("Copying %s to %s..."),rfx_script_from,filename);
 
 #ifndef IS_MINGW
-  com=lives_strdup_printf("/bin/cp \"%s\" \"%s\"",(tmp=lives_filename_from_utf8(rfx_script_from,-1,NULL,NULL,NULL)),
+  com=lives_strdup_printf("%s \"%s\" \"%s\"",capable->cp_cmd,(tmp=lives_filename_from_utf8(rfx_script_from,-1,NULL,NULL,NULL)),
                           (tmp2=lives_filename_from_utf8(filename,-1,NULL,NULL,NULL)));
 #else
   com=lives_strdup_printf("cp.exe \"%s\" \"%s\"",(tmp=lives_filename_from_utf8(rfx_script_from,-1,NULL,NULL,NULL)),
@@ -4074,7 +4074,7 @@ void on_import_rfx_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   d_print(_("Copying %s to %s..."),filename,rfx_script_to);
 
 #ifndef IS_MINGW
-  com=lives_strdup_printf("/bin/cp \"%s\" \"%s\"",(tmp=lives_filename_from_utf8(filename,-1,NULL,NULL,NULL)),
+  com=lives_strdup_printf("%s \"%s\" \"%s\"",capable->cp_cmd,(tmp=lives_filename_from_utf8(filename,-1,NULL,NULL,NULL)),
                           (tmp2=lives_filename_from_utf8(rfx_script_to,-1,NULL,NULL,NULL)));
 #else
   com=lives_strdup_printf("cp.exe \"%s\" \"%s\"",(tmp=lives_filename_from_utf8(filename,-1,NULL,NULL,NULL)),

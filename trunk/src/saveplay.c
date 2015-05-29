@@ -892,7 +892,7 @@ ulong open_file_sel(const char *file_name, double start, int frames) {
       }
       if (subtype!=SUBTITLE_TYPE_NONE) {
 #ifndef IS_MINGW
-        com=lives_strdup_printf("/bin/cp \"%s\" \"%s\"",isubfname,subfname);
+        com=lives_strdup_printf("%s \"%s\" \"%s\"",capable->cp_cmd,isubfname,subfname);
 #else
         com=lives_strdup_printf("cp.exe \"%s\" \"%s\"",isubfname,subfname);
 #endif
@@ -2626,7 +2626,7 @@ void play_file(void) {
         if (loop) {
           lives_free(com3);
 #ifndef IS_MINGW
-          com3=lives_strdup_printf("/bin/touch \"%s\" 2>/dev/null;",stfile);
+          com3=lives_strdup_printf("%s \"%s\" 2>/dev/null;",capable->touch_cmd,stfile);
 #else
           com3=lives_strdup_printf("touch.exe \"%s\" 2>NUL;",stfile);
 #endif
@@ -5781,7 +5781,7 @@ static boolean recover_files(char *recovery_file, boolean auto_recover) {
 
 void add_to_recovery_file(const char *handle) {
 #ifndef IS_MINGW
-  char *com=lives_strdup_printf("/bin/echo \"%s\" >> \"%s\"",handle,mainw->recovery_file);
+  char *com=lives_strdup_printf("%s \"%s\" >> \"%s\"",capable->echo_cmd,handle,mainw->recovery_file);
 #else
   char *com=lives_strdup_printf("echo.exe \"%s\" >> \"%s\"",handle,mainw->recovery_file);
 #endif
@@ -5920,7 +5920,7 @@ boolean check_for_recovery_files(boolean auto_recover) {
   if (lives_file_test(recovery_file, LIVES_FILE_TEST_EXISTS)) {
     // move files temporarily to stop them being cleansed
 #ifndef IS_MINGW
-    com=lives_strdup_printf("/bin/mv \"%s\" \"%s/.layout.%d.%d.%d\"",recovery_file,prefs->tmpdir,luid,
+    com=lives_strdup_printf("%s \"%s\" \"%s/.layout.%d.%d.%d\"",capable->mv_cmd,recovery_file,prefs->tmpdir,luid,
                             lgid,lpid);
 #else
     com=lives_strdup_printf("mv.exe \"%s\" \"%s/.layout.%d.%d.%d\"",recovery_file,prefs->tmpdir,luid,
@@ -5931,7 +5931,7 @@ boolean check_for_recovery_files(boolean auto_recover) {
     recovery_numbering_file=lives_strdup_printf("%s/layout_numbering.%d.%d.%d",prefs->tmpdir,luid,
                             lgid,recpid);
 #ifndef IS_MINGW
-    com=lives_strdup_printf("/bin/mv \"%s\" \"%s/.layout_numbering.%d.%d.%d\"",recovery_numbering_file,prefs->tmpdir,
+    com=lives_strdup_printf("%s \"%s\" \"%s/.layout_numbering.%d.%d.%d\"",capable->mv_cmd,recovery_numbering_file,prefs->tmpdir,
                             luid,lgid,lpid);
 #else
     com=lives_strdup_printf("mv.exe \"%s\" \"%s/.layout_numbering.%d.%d.%d\"",recovery_numbering_file,prefs->tmpdir,
@@ -5956,7 +5956,7 @@ boolean check_for_recovery_files(boolean auto_recover) {
   if (mainw->recoverable_layout) {
     recovery_file=lives_strdup_printf("%s/.layout.%d.%d.%d",prefs->tmpdir,luid,lgid,lpid);
 #ifndef IS_MINGW
-    com=lives_strdup_printf("/bin/mv \"%s\" \"%s/layout.%d.%d.%d\"",recovery_file,prefs->tmpdir,luid,
+    com=lives_strdup_printf("%s \"%s\" \"%s/layout.%d.%d.%d\"",capable->mv_cmd,recovery_file,prefs->tmpdir,luid,
                             lgid,lpid);
 #else
     com=lives_strdup_printf("mv.exe \"%s\" \"%s/layout.%d.%d.%d\"",recovery_file,prefs->tmpdir,luid,
@@ -5968,7 +5968,7 @@ boolean check_for_recovery_files(boolean auto_recover) {
 
     recovery_numbering_file=lives_strdup_printf("%s/.layout_numbering.%d.%d.%d",prefs->tmpdir,luid,lgid,lpid);
 #ifndef IS_MINGW
-    com=lives_strdup_printf("/bin/mv \"%s\" \"%s/layout_numbering.%d.%d.%d\"",recovery_numbering_file,prefs->tmpdir,luid,
+    com=lives_strdup_printf("%s \"%s\" \"%s/layout_numbering.%d.%d.%d\"",capable->mv_cmd,recovery_numbering_file,prefs->tmpdir,luid,
                             lgid,lpid);
 #else
     com=lives_strdup_printf("mv.exe \"%s\" \"%s/layout_numbering.%d.%d.%d\"",recovery_numbering_file,prefs->tmpdir,luid,

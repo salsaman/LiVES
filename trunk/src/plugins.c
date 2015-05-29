@@ -1032,7 +1032,7 @@ _vppaw *on_vpp_advanced_clicked(LiVESButton *button, livespointer user_data) {
     lives_box_pack_start(LIVES_BOX(dialog_vbox), scrolledwindow, TRUE, TRUE, 0);
 
 #ifndef IS_MINGW
-    com=lives_strdup_printf("/bin/echo -e \"%s\"",(*tmpvpp->get_init_rfx)());
+    com=lives_strdup_printf("%s -e \"%s\"",capable->echo_cmd,(*tmpvpp->get_init_rfx)());
 #else
     com=lives_strdup_printf("echo.exe -e \"%s\"",(*tmpvpp->get_init_rfx)());
 #endif

@@ -1,6 +1,6 @@
 // yuv4mpeg.c
 // LiVES
-// (c) G. Finch 2004 - 2013 <salsaman@gmail.com>
+// (c) G. Finch 2004 - 2015 <salsaman@gmail.com>
 // released under the GNU GPL 3 or later
 // see file ../COPYING or www.gnu.org for licensing details
 
@@ -453,7 +453,7 @@ void on_open_yuv4m_activate(LiVESMenuItem *menuitem, livespointer user_data) {
 
 #ifndef IS_MINGW
     // fake file will go away when we close the current clip
-    lives_system((tmp=lives_strdup_printf("/bin/ln -s \"%s\" \"%s\" >/dev/null 2>&1",
+    lives_system((tmp=lives_strdup_printf("%s -s \"%s\" \"%s\" >/dev/null 2>&1",capable->ln_cmd,
                                           audio_real,audio_fake)),TRUE);
 #else
     // TODO

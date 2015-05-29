@@ -697,6 +697,18 @@ typedef struct {
   /// system tempdir (e.g /tmp for linux, C:\TEMP for win32)
   char system_tmpdir[PATH_MAX];  ///< kept in locale encoding
 
+#ifndef IS_MINGW
+  char touch_cmd[PATH_MAX];
+  char rm_cmd[PATH_MAX];
+  char mv_cmd[PATH_MAX];
+  char cp_cmd[PATH_MAX];
+  char ln_cmd[PATH_MAX];
+  char chmod_cmd[PATH_MAX];
+  char cat_cmd[PATH_MAX];
+  char echo_cmd[PATH_MAX];
+  char rmdir_cmd[PATH_MAX];
+#endif
+
   char *rcfile;
 
   /// used for returning startup messages from the backend

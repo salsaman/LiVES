@@ -104,7 +104,7 @@ void lives_exit(int signum) {
       if (!is_realtime_aplayer(prefs->audio_player)&&mainw->aud_file_to_kill>-1&&mainw->files[mainw->aud_file_to_kill]!=NULL) {
         char *lsname=lives_build_filename(prefs->tmpdir,mainw->files[mainw->aud_file_to_kill]->handle,NULL);
 #ifndef IS_MINGW
-        com=lives_strdup_printf("/bin/touch \"%s\" 2>/dev/null",lsname);
+        com=lives_strdup_printf("%s \"%s\" 2>/dev/null",capable->touch_cmd,lsname);
 #else
         com=lives_strdup_printf("touch.exe \"%s\" 2>NUL",lsname);
 #endif
@@ -338,7 +338,7 @@ void lives_exit(int signum) {
 
         // note, we do not use the flag -f
 #ifndef IS_MINGW
-        com=lives_strdup_printf("/bin/rm -r \"%s/\" 2>/dev/null",sdname);
+        com=lives_strdup_printf("%s -r \"%s/\" 2>/dev/null",capable->rm_cmd,sdname);
 #else
         com=lives_strdup_printf("rm.exe -r \"%s/\" 2>NUL",sdname);
 #endif
@@ -349,7 +349,7 @@ void lives_exit(int signum) {
       } else {
         char *dname=lives_build_filename(prefs->tmpdir,mainw->set_name,"clips",NULL);
 #ifndef IS_MINGW
-        com=lives_strdup_printf("/bin/rm -r \"%s\" 2>/dev/null",dname);
+        com=lives_strdup_printf("%s -r \"%s\" 2>/dev/null",capable->rm_cmd,dname);
 #else
         com=lives_strdup_printf("rm.exe -r \"%s\" 2>NUL",dname);
 #endif
@@ -359,7 +359,7 @@ void lives_exit(int signum) {
         lives_free(com);
         dname=lives_build_filename(prefs->tmpdir,mainw->set_name,"order",NULL);
 #ifndef IS_MINGW
-        com=lives_strdup_printf("/bin/rm \"%s\" 2>/dev/null",dname);
+        com=lives_strdup_printf("%s \"%s\" 2>/dev/null",capable->rm_cmd,dname);
 #else
         com=lives_strdup_printf("rm.exe \"%s\" 2>NUL",dname);
 #endif
@@ -1233,7 +1233,7 @@ void on_close_activate(LiVESMenuItem *menuitem, livespointer user_data) {
         // delete layout directory
         laydir=lives_build_filename(prefs->tmpdir,mainw->set_name,"layouts",NULL);
 #ifndef IS_MINGW
-        com=lives_strdup_printf("/bin/rm -r \"%s/\" 2>/dev/null &",laydir);
+        com=lives_strdup_printf("%s -r \"%s/\" 2>/dev/null &",capable->rm_cmd,laydir);
 #else
         com=lives_strdup_printf("START /MIN /b rm.exe -r \"%s/\" 2>NUL",laydir);
 #endif
@@ -1248,7 +1248,7 @@ void on_close_activate(LiVESMenuItem *menuitem, livespointer user_data) {
 
 
 #ifndef IS_MINGW
-    com=lives_strdup_printf("/bin/rmdir \"%s\" 2>/dev/null",cdir);
+    com=lives_strdup_printf("%s \"%s\" 2>/dev/null",capable->rmdir_cmd,cdir);
 #else
     com=lives_strdup_printf("rmdir.exe \"%s\"",cdir);
 #endif
@@ -1269,7 +1269,7 @@ void on_close_activate(LiVESMenuItem *menuitem, livespointer user_data) {
 
     lfiles=lives_build_filename(prefs->tmpdir,mainw->set_name,"lock",NULL);
 #ifndef IS_MINGW
-    com=lives_strdup_printf("/bin/rm \"%s\"* 2>/dev/null",lfiles);
+    com=lives_strdup_printf("%s \"%s\"* 2>/dev/null",capable->rm_cmd,lfiles);
 #else
     com=lives_strdup_printf("DEL \"%s*\" 2>NUL",lfiles);
 #endif
@@ -1279,7 +1279,7 @@ void on_close_activate(LiVESMenuItem *menuitem, livespointer user_data) {
 
     ofile=lives_build_filename(prefs->tmpdir,mainw->set_name,"order",NULL);
 #ifndef IS_MINGW
-    com=lives_strdup_printf("/bin/rm \"%s\" 2>/dev/null",ofile);
+    com=lives_strdup_printf("%s \"%s\" 2>/dev/null",capable->rm_cmd,ofile);
 #else
     com=lives_strdup_printf("rm.exe \"%s\" 2>NUL",ofile);
 #endif
@@ -1293,7 +1293,7 @@ void on_close_activate(LiVESMenuItem *menuitem, livespointer user_data) {
 
     sdir=lives_build_filename(prefs->tmpdir,mainw->set_name,NULL);
 #ifndef IS_MINGW
-    com=lives_strdup_printf("/bin/rmdir \"%s/\" 2>/dev/null",sdir);
+    com=lives_strdup_printf("%s \"%s/\" 2>/dev/null",capable->rmdir_cmd,sdir);
 #else
     com=lives_strdup_printf("rmdir.exe \"%s/\" 2>NUL",sdir);
 #endif
@@ -1709,7 +1709,7 @@ void on_quit_activate(LiVESMenuItem *menuitem, livespointer user_data) {
         // delete layout directory
         esave_dir=lives_build_filename(prefs->tmpdir,mainw->set_name,"layouts",NULL);
 #ifndef IS_MINGW
-        com=lives_strdup_printf("/bin/rm -r \"%s/\" 2>/dev/null &",esave_dir);
+        com=lives_strdup_printf("%s -r \"%s/\" 2>/dev/null &",capable->rm_cmd,esave_dir);
 #else
         com=lives_strdup_printf("START /MIN /b rm.exe -r \"%s/\" 2>NUL",esave_dir);
 #endif
@@ -4601,7 +4601,7 @@ boolean on_save_set_activate(LiVESMenuItem *menuitem, livespointer user_data) {
           // clear _old_layout maps
           char *dfile=lives_build_filename(prefs->tmpdir,mainw->set_name,"layouts",NULL);
 #ifndef IS_MINGW
-          com=lives_strdup_printf("/bin/rm -r \"%s/\" 2>/dev/null",dfile);
+          com=lives_strdup_printf("%s -r \"%s/\" 2>/dev/null",capable->rm_cmd,dfile);
 #else
           com=lives_strdup_printf("rm.exe -r \"%s/\" 2>NUL",dfile);
 #endif
@@ -4715,7 +4715,7 @@ boolean on_save_set_activate(LiVESMenuItem *menuitem, livespointer user_data) {
 
             mainw->com_failed=FALSE;
 #ifndef IS_MINGW
-            com=lives_strdup_printf("/bin/mv \"%s/%s\" \"%s/%s\"",
+            com=lives_strdup_printf("%s \"%s/%s\" \"%s/%s\"",capable->mv_cmd,
                                     prefs->tmpdir,mainw->files[i]->handle,prefs->tmpdir,new_handle);
 #else
             com=lives_strdup_printf("mv.exe \"%s\\%s\" \"%s\\%s\"",
@@ -4793,14 +4793,14 @@ boolean on_save_set_activate(LiVESMenuItem *menuitem, livespointer user_data) {
 
       //append current layout.map to target one
 #ifndef IS_MINGW
-      com=lives_strdup_printf("/bin/cat \"%s\" >> \"%s\" 2>/dev/null",osetn,nsetn);
+      com=lives_strdup_printf("%s \"%s\" >> \"%s\" 2>/dev/null",capable->cat_cmd,osetn,nsetn);
 #else
       com=lives_strdup_printf("cat.exe \"%s\" >> \"%s\" 2>NUL",osetn,nsetn);
 #endif
       lives_system(com,TRUE);
       lives_free(com);
 #ifndef IS_MINGW
-      com=lives_strdup_printf("/bin/rm \"%s\" 2>/dev/null",osetn);
+      com=lives_strdup_printf("%s \"%s\" 2>/dev/null",capable->rm_cmd,osetn);
 #else
       com=lives_strdup_printf("rm.exe \"%s\" 2>NUL",osetn);
 #endif
@@ -4815,7 +4815,7 @@ boolean on_save_set_activate(LiVESMenuItem *menuitem, livespointer user_data) {
 
     // move any layouts from old set to new (including layout.map)
 #ifndef IS_MINGW
-    com=lives_strdup_printf("/bin/cp -a \"%s\" \"%s/\" 2>/dev/null",osetn,nsetn);
+    com=lives_strdup_printf("%s -a \"%s\" \"%s/\" 2>/dev/null",capable->cp_cmd,osetn,nsetn);
 #else
     com=lives_strdup_printf("cp.exe -a \"%s\" \"%s/\" 2>NUL",osetn,nsetn);
 #endif
@@ -4829,7 +4829,7 @@ boolean on_save_set_activate(LiVESMenuItem *menuitem, livespointer user_data) {
 
     // remove old set dir
 #ifndef IS_MINGW
-    com=lives_strdup_printf("/bin/rm -r \"%s\" 2>/dev/null",osetn);
+    com=lives_strdup_printf("%s -r \"%s\" 2>/dev/null",capable->rm_cmd,osetn);
 #else
     com=lives_strdup_printf("rm.exe -r \"%s\" 2>NUL",osetn);
 #endif
@@ -5125,7 +5125,7 @@ boolean reload_set(const char *set_name) {
 
       // lock the set
 #ifndef IS_MINGW
-      com=lives_strdup_printf("/bin/touch \"%s/%s/lock.%d\"",prefs->tmpdir,set_name,capable->mainpid);
+      com=lives_strdup_printf("%s \"%s/%s/lock.%d\"",capable->touch_cmd,prefs->tmpdir,set_name,capable->mainpid);
 #else
       com=lives_strdup_printf("touch.exe \"%s\\%s\\lock.%d\"",prefs->tmpdir,set_name,capable->mainpid);
 #endif
@@ -5949,7 +5949,7 @@ void on_fs_preview_clicked(LiVESWidget *widget, livespointer user_data) {
 
     thm_dir=lives_strdup_printf("%s/thm%d",prefs->tmpdir,capable->mainpid);
 #ifndef IS_MINGW
-    com=lives_strdup_printf("/bin/rm -rf \"%s\"",thm_dir);
+    com=lives_strdup_printf("%s -rf \"%s\"",capable->rm_cmd,thm_dir);
 #else
     com=lives_strdup_printf("DEL /q \"%s\"",thm_dir);
     lives_system(com,TRUE);
@@ -7698,7 +7698,7 @@ void on_load_subs_activate(LiVESMenuItem *menuitem, livespointer user_data) {
 
   mainw->com_failed=FALSE;
 #ifndef IS_MINGW
-  com=lives_strdup_printf("/bin/cp \"%s\" \"%s\"",lfile_name,subfname);
+  com=lives_strdup_printf("%s \"%s\" \"%s\"",capable->cp_cmd,lfile_name,subfname);
 #else
   com=lives_strdup_printf("cp.exe \"%s\" \"%s\"",lfile_name,subfname);
 #endif

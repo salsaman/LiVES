@@ -173,7 +173,7 @@ void del_frame_index(lives_clip_t *sfile) {
     idxfile=lives_build_filename(prefs->tmpdir,sfile->handle,"file_index",NULL);
 
 #ifndef IS_MINGW
-    com=lives_strdup_printf("/bin/rm -f \"%s\"",idxfile);
+    com=lives_strdup_printf("%s -f \"%s\"",capable->rm_cmd,idxfile);
 #else
     com=lives_strdup_printf("rm.exe -f \"%s\"",idxfile);
 #endif
@@ -535,7 +535,7 @@ void clean_images_from_virtual(lives_clip_t *sfile, int oldframes) {
       iname=lives_strdup_printf("%s/%s/%08d.%s",prefs->tmpdir,sfile->handle,i,get_image_ext_for_type(sfile->img_type));
 
 #ifndef IS_MINGW
-      com=lives_strdup_printf("/bin/rm -f \"%s\"",iname);
+      com=lives_strdup_printf("%s -f \"%s\"",capable->rm_cmd,iname);
 #else
       com=lives_strdup_printf("rm.exe -f \"%s\"",iname);
 #endif

@@ -70,7 +70,7 @@ boolean lives_jack_init(void) {
 #endif
         lives_system(com,FALSE);
         lives_free(com);
-        com=lives_strdup_printf("/bin/chmod o+x \"%s\"",prefs->jack_aserver);
+        com=lives_strdup_printf("%s o+x \"%s\"",capable->chmod_cmd,prefs->jack_aserver);
         lives_system(com,FALSE);
         lives_free(com);
       }

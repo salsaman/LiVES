@@ -5751,6 +5751,67 @@ donate_activate(LiVESMenuItem     *menuitem,
 
 
 
+
+
+#if GTK_CHECK_VERSION(3,0,0)
+boolean expose_fsplayarea_event(LiVESWidget *widget, lives_painter_t *cr, livespointer user_data) {
+  //LiVESXEventExpose *event=NULL;
+#else
+boolean expose_fsplayarea_event(LiVESWidget *widget, LiVESXEventExpose *event) {
+  lives_painter_t *cr=NULL;
+#endif
+
+  boolean dest_cr=FALSE;
+
+  LiVESPixbuf *pixbuf=(LiVESPixbuf *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(widget), "pixbuf");
+
+  int fwidth, fheight, owidth, oheight, width, height;
+  int offs_x,offs_y;
+
+  if (cr==NULL) {
+    cr=lives_painter_create_from_widget(widget);
+    dest_cr=TRUE;
+  }
+
+  fwidth=lives_widget_get_allocation_width(widget);
+  fheight=lives_widget_get_allocation_height(widget);
+
+  owidth=width=lives_pixbuf_get_width(pixbuf);
+  oheight=height=lives_pixbuf_get_height(pixbuf);
+
+  calc_maxspect(fwidth,fheight,&width,&height);
+
+  width=(width>>1)<<1;
+  height=(height>>1)<<1;
+
+  if (width>owidth && height>oheight) {
+    width=owidth;
+    height=oheight;
+  }
+
+  lives_painter_set_source_rgb(cr,0.,0.,0.);
+  lives_painter_rectangle(cr,0.,0.,fwidth,fheight);
+
+  lives_painter_fill(cr);
+  lives_painter_paint(cr);
+
+  offs_x=(fwidth-width)/2;
+  offs_y=(fheight-height)/2;
+
+  lives_painter_set_source_pixbuf(cr, pixbuf, offs_x, offs_y);
+  lives_painter_fill(cr);
+  lives_painter_paint(cr);
+
+  if (dest_cr) lives_painter_destroy(cr);
+
+  return TRUE;
+}
+
+
+
+
+
+
 void on_fs_preview_clicked(LiVESWidget *widget, livespointer user_data) {
   // file selector preview
   double start_time=0.;
@@ -5761,8 +5822,6 @@ void on_fs_preview_clicked(LiVESWidget *widget, livespointer user_data) {
 
   lives_painter_t *cr;
 
-  LiVESPixbuf *blank;
-
   char **array;
 
   int preview_frames=1000000000;
@@ -5771,7 +5830,6 @@ void on_fs_preview_clicked(LiVESWidget *widget, livespointer user_data) {
   int height=0,width=0;
   int fwidth,fheight,owidth,oheight;
 
-  int offs_x,offs_y;
   pid_t pid=capable->mainpid;
   int alarm_handle;
   int retval;
@@ -5783,8 +5841,9 @@ void on_fs_preview_clicked(LiVESWidget *widget, livespointer user_data) {
   char *com;
   char *dfile;
 
+  end_fs_preview();
+
   if (mainw->in_fs_preview) {
-    end_fs_preview();
 
 #ifndef IS_MINGW
     com=lives_strdup_printf("%s stopsubsub thm%d 2>/dev/null",prefs->backend_sync,pid);
@@ -5894,56 +5953,23 @@ void on_fs_preview_clicked(LiVESWidget *widget, livespointer user_data) {
       LiVESError *error=NULL;
       char *thumb=lives_strdup_printf("%s/thm%d/%08d.%s",prefs->tmpdir,pid,1,prefs->image_ext);
       LiVESPixbuf *pixbuf=lives_pixbuf_new_from_file((tmp=lives_filename_from_utf8(thumb,-1,NULL,NULL,NULL)),&error);
+      lives_free(thumb);
       lives_free(tmp);
 
       if (error==NULL) {
-        fwidth=lives_widget_get_allocation_width(mainw->fs_playalign)-20;
-        fheight=lives_widget_get_allocation_height(mainw->fs_playalign)-20;
-
-        owidth=width=lives_pixbuf_get_width(pixbuf);
-        oheight=height=lives_pixbuf_get_height(pixbuf);
-
-        calc_maxspect(fwidth,fheight,
-                      &width,&height);
-
-        width=(width>>1)<<1;
-        height=(height>>1)<<1;
-
-        if (width>owidth && height>oheight) {
-          width=owidth;
-          height=oheight;
-        }
-
-        lives_alignment_set(LIVES_ALIGNMENT(mainw->fs_playalign),0.5,
-                            0.5,1.,1.);
-
-        lives_widget_context_update();
-
-        blank=lives_pixbuf_new_blank(fwidth+20,fheight+20,WEED_PALETTE_RGB24);
-
-        cr = lives_painter_create_from_widget(mainw->fs_playarea);
-        lives_painter_set_source_pixbuf(cr, blank, 0, 0);
-        lives_painter_fill(cr);
-        lives_painter_destroy(cr);
-        lives_object_unref(blank);
-
-        lives_widget_context_update();
-
-
-        offs_x=(fwidth-width)/2;
-        offs_y=(fheight-height)/2;
-
-        cr = lives_painter_create_from_widget(mainw->fs_playarea);
-        lives_painter_set_source_pixbuf(cr, pixbuf, offs_x, offs_y);
-        lives_painter_fill(cr);
-        lives_painter_destroy(cr);
+        lives_widget_object_set_data(LIVES_WIDGET_OBJECT(mainw->fs_playarea),"pixbuf",pixbuf);
+#if GTK_CHECK_VERSION(3,0,0)
+        expose_fsplayarea_event(mainw->fs_playarea,NULL,NULL);
+#else
+        expose_fsplayarea_event(mainw->fs_playarea,NULL);
+#endif
+        lives_signal_connect(LIVES_GUI_OBJECT(mainw->fs_playarea), LIVES_WIDGET_EXPOSE_EVENT,
+                             LIVES_GUI_CALLBACK(expose_fsplayarea_event),
+                             NULL);
       } else {
         lives_error_free(error);
       }
-      if (pixbuf!=NULL) {
-        lives_object_unref(pixbuf);
-      }
-      lives_free(thumb);
+
     }
     lives_free(info_file);
 
@@ -6091,13 +6117,14 @@ void on_fs_preview_clicked(LiVESWidget *widget, livespointer user_data) {
 
       lives_widget_context_update();
 
-      blank=lives_pixbuf_new_blank(fwidth+20,fheight+20,WEED_PALETTE_RGB24);
-
       cr = lives_painter_create_from_widget(mainw->fs_playarea);
-      lives_painter_set_source_pixbuf(cr, blank, 0, 0);
+
+      lives_painter_set_source_rgb(cr,0.,0.,0.);
+      lives_painter_rectangle(cr,0,0,fwidth+20,fheight+20);
+
       lives_painter_fill(cr);
+      lives_painter_paint(cr);
       lives_painter_destroy(cr);
-      lives_object_unref(blank);
 
       lives_widget_context_update();
     }
@@ -6349,6 +6376,11 @@ void end_fs_preview(void) {
   // clean up if we were playing a preview - should be called from all callbacks
   // where there is a possibility of fs preview still playing
   char *com;
+
+  LiVESPixbuf *pixbuf=(LiVESPixbuf *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(mainw->fs_playarea), "pixbuf");
+
+  if (pixbuf!=NULL) lives_object_unref(pixbuf);
+  lives_widget_object_set_data(LIVES_WIDGET_OBJECT(mainw->fs_playarea),"pixbuf",NULL);
 
   if (mainw->in_fs_preview) {
 #ifndef IS_MINGW

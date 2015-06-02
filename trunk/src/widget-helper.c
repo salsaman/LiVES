@@ -2348,7 +2348,18 @@ LIVES_INLINE LiVESWidget *lives_arrow_new(LiVESArrowType arrow_type, LiVESShadow
 LIVES_INLINE LiVESWidget *lives_alignment_new(float xalign, float yalign, float xscale, float yscale) {
   LiVESWidget *alignment=NULL;
 #ifdef GUI_GTK
+#if GTK_CHECK_VERSION(3,0,0)
+  alignment=gtk_frame_new(NULL);
+  gtk_frame_set_shadow_type(LIVES_FRAME(alignment), GTK_SHADOW_NONE);
+  if (xalign==0.5) gtk_widget_set_halign(alignment,GTK_ALIGN_CENTER);
+  if (xalign==0.&&xscale==1.) gtk_widget_set_halign(alignment,GTK_ALIGN_FILL);
+  if (xalign==0.&&xscale==0.) gtk_widget_set_halign(alignment,GTK_ALIGN_START);
+  if (yalign==0.5) gtk_widget_set_valign(alignment,GTK_ALIGN_CENTER);
+  if (yalign==0.&&yscale==1.) gtk_widget_set_valign(alignment,GTK_ALIGN_FILL);
+  if (yalign==0.&&yscale==0.) gtk_widget_set_valign(alignment,GTK_ALIGN_START);
+#else
   alignment=gtk_alignment_new(xalign,yalign,xscale,yscale);
+#endif
 #endif
 #ifdef GUI_QT
   alignment = new LiVESAlignment(xalign,yalign,xscale,yscale);
@@ -2359,8 +2370,17 @@ LIVES_INLINE LiVESWidget *lives_alignment_new(float xalign, float yalign, float 
 
 LIVES_INLINE boolean lives_alignment_set(LiVESAlignment *alignment, float xalign, float yalign, float xscale, float yscale) {
 #ifdef GUI_GTK
+#if GTK_CHECK_VERSION(3,0,0)
+  if (xalign==0.5) gtk_widget_set_halign(alignment,GTK_ALIGN_CENTER);
+  if (xalign==0.&&xscale==1.) gtk_widget_set_halign(alignment,GTK_ALIGN_FILL);
+  if (xalign==0.&&xscale==0.) gtk_widget_set_halign(alignment,GTK_ALIGN_START);
+  if (yalign==0.5) gtk_widget_set_valign(alignment,GTK_ALIGN_CENTER);
+  if (yalign==0.&&yscale==1.) gtk_widget_set_valign(alignment,GTK_ALIGN_FILL);
+  if (yalign==0.&&yscale==0.) gtk_widget_set_valign(alignment,GTK_ALIGN_START);
+#else
   gtk_alignment_set(alignment,xalign,yalign,xscale,yscale);
   return TRUE;
+#endif
 #endif
 #ifdef GUI_QT
   alignment->set_alignment(xalign,yalign,xscale,yscale);

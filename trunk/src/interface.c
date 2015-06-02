@@ -97,6 +97,8 @@ void widget_add_preview(LiVESWidget *widget, LiVESBox *for_preview, LiVESBox *fo
   mainw->fs_playalign = lives_alignment_new(0.,0.,1.,1.);
   mainw->fs_playarea = lives_event_box_new();
 
+  lives_widget_object_set_data(LIVES_WIDGET_OBJECT(mainw->fs_playarea),"pixbuf",NULL);
+
   if (preview_type==LIVES_PREVIEW_TYPE_VIDEO_AUDIO||preview_type==LIVES_PREVIEW_TYPE_RANGE) {
     lives_container_set_border_width(LIVES_CONTAINER(mainw->fs_playframe), widget_opts.border_width);
 

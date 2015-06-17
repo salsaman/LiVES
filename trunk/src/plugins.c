@@ -2197,6 +2197,9 @@ static boolean sanity_check_cdata(lives_clip_data_t *cdata) {
     return FALSE;
   }
 
+  // no usable palettes found
+  if (cdata->palettes[0]==WEED_PALETTE_END) return FALSE;
+
   // all checks passed - OK
   return TRUE;
 

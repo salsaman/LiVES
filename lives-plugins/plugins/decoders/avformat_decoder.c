@@ -8,6 +8,12 @@
 #include "decplugin.h"
 
 
+#ifdef HAVE_SYSTEM_WEED
+#include <weed/weed-compat.h>
+#else
+#include "../../libweed/weed-compat.h"
+#endif
+
 ///////////////////////////////////////////////////////
 #include <stdio.h>
 #include <inttypes.h>
@@ -69,54 +75,6 @@ static int stream_peek(int fd, unsigned char *str, size_t len) {
 }
 
 
-
-static int pix_fmt_to_palette(enum PixelFormat pix_fmt, int *clamped) {
-  if (clamped) *clamped=WEED_YUV_CLAMPING_CLAMPED;
-
-  switch (pix_fmt) {
-  case PIX_FMT_RGB24:
-    return WEED_PALETTE_RGB24;
-  case PIX_FMT_BGR24:
-    return WEED_PALETTE_BGR24;
-  case PIX_FMT_RGBA:
-    return WEED_PALETTE_RGBA32;
-  case PIX_FMT_BGRA:
-    return WEED_PALETTE_BGRA32;
-  case PIX_FMT_ARGB:
-    return WEED_PALETTE_ARGB32;
-  case PIX_FMT_YUV444P:
-    return WEED_PALETTE_YUV444P;
-  case PIX_FMT_YUV422P:
-    return WEED_PALETTE_YUV422P;
-  case PIX_FMT_YUV420P:
-    return WEED_PALETTE_YUV420P;
-  case PIX_FMT_YUYV422:
-    return WEED_PALETTE_YUYV;
-  case PIX_FMT_UYVY422:
-    return WEED_PALETTE_UYVY;
-  case PIX_FMT_UYYVYY411:
-    return WEED_PALETTE_YUV411;
-  case PIX_FMT_GRAY8:
-  case PIX_FMT_Y400A:
-    return WEED_PALETTE_A8;
-  case PIX_FMT_MONOWHITE:
-  case PIX_FMT_MONOBLACK:
-    return WEED_PALETTE_A1;
-  case PIX_FMT_YUVJ422P:
-    if (clamped) *clamped=WEED_YUV_CLAMPING_UNCLAMPED;
-    return WEED_PALETTE_YUV422P;
-  case PIX_FMT_YUVJ444P:
-    if (clamped) *clamped=WEED_YUV_CLAMPING_UNCLAMPED;
-    return WEED_PALETTE_YUV444P;
-  case PIX_FMT_YUVJ420P:
-    if (clamped) *clamped=WEED_YUV_CLAMPING_UNCLAMPED;
-    return WEED_PALETTE_YUV420P;
-
-  default:
-    fprintf(stderr,"unknown pix_fmt %d\n",pix_fmt);
-    return WEED_PALETTE_END;
-  }
-}
 
 
 
@@ -416,7 +374,7 @@ skip_init:
       cdata->YUV_subspace=WEED_YUV_SUBSPACE_YCBCR;
       cdata->YUV_sampling=WEED_YUV_SAMPLING_DEFAULT;
 
-      cdata->palettes[0]=pix_fmt_to_palette(cc->pix_fmt,&cdata->YUV_clamping);
+      cdata->palettes[0]=avi_pix_fmt_to_weed_palette(cc->pix_fmt,&cdata->YUV_clamping);
       cdata->palettes[1]=WEED_PALETTE_END;
 
       sprintf(cdata->video_name,"%s",cc->codec_name);

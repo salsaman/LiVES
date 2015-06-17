@@ -149,6 +149,7 @@ const char *module_check_init(void);
 boolean set_palette(lives_clip_data_t *);
 
 int64_t rip_audio(const lives_clip_data_t *, const char *fname, int64_t stframe, int64_t nframes, unsigned char **abuff);
+boolean rip_audio_sequential(const lives_clip_data_t *, const char *fname);
 void rip_audio_cleanup(const lives_clip_data_t *);
 
 void module_unload(void);
@@ -165,6 +166,8 @@ void module_unload(void);
 
 #define ABS(a) ((a)>=0.?(a):-(a))
 
+
+double get_fps(const char *uri);
 
 enum LiVESMediaType {
   LIVES_MEDIA_TYPE_UNKNOWN=0,

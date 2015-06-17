@@ -3,7 +3,7 @@
 // released under the GNU GPL 3 or later
 // see file COPYING or www.gnu.org for details
 
-#include "dec_helper.h"
+#include "decplugin.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

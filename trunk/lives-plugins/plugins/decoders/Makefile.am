@@ -1,7 +1,5 @@
 ## Process this with automake to create Makefile.in
 
-
-
 LIBS=
 
 decoderpluginslibdir = "$(libdir)/$(PACKAGE)/plugins/decoders"

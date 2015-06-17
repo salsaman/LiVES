@@ -24,5 +24,7 @@ typedef struct  {
   int64_t found_pts;
 
   int last_frame;
+
+  size_t pkt_offs;
 } lives_av_priv_t;
 

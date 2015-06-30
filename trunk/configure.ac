@@ -949,7 +949,6 @@ lives-plugins/plugins/effects/compound/Makefile
 lives-plugins/plugins/effects/Makefile
 lives-plugins/plugins/encoders/Makefile
 lives-plugins/plugins/decoders/Makefile
-lives-plugins/plugins/decoders/audio/Makefile
 lives-plugins/plugins/Makefile
 lives-plugins/plugins/playback/video/Makefile
 lives-plugins/plugins/playback/audiostream/Makefile

@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: lives\n"
 "Report-Msgid-Bugs-To: https://sourceforge.net/p/lives/bugs/\n"
-"POT-Creation-Date: 2015-05-03 13:14-0300\n"
+"POT-Creation-Date: 2015-05-25 21:17-0300\n"
 "PO-Revision-Date: 2015-04-05 16:35+0000\n"
 "Last-Translator: Timothy Gu <timothy_gu@hotmail.com>\n"
 "Language-Team: Simplified Chinese <zh_CN@li.org>\n"
@@ -682,44 +682,44 @@ msgstr ""
 msgid "Invalid audio player %s\n"
 msgstr "无效的音频播放器 %s\n"
 
-#: src/main.c:3203
+#: src/main.c:3202
 #, c-format
 msgid "LiVES-%s: <Untitled%d> %dx%d : %d frames %d bpp %.3f fps"
 msgstr "LiVES-%s: <Untitled%d> %dx%d : %d 帧 %d bpp %.3f fps"
 
-#: src/main.c:3208
+#: src/main.c:3207
 #, c-format
 msgid "LiVES-%s: <%s> %dx%d : ??? frames ??? bpp %.3f fps"
 msgstr "LiVES-%s: <%s> %dx%d : ??? 帧 ??? bpp %.3f fps"
 
-#: src/main.c:3211
+#: src/main.c:3210
 #, c-format
 msgid "LiVES-%s: <%s> %dx%d : %d frames %d bpp %.3f fps"
 msgstr "LiVES-%s: <%s> %dx%d : %d 帧 %d bpp %.3f fps"
 
-#: src/main.c:3218
+#: src/main.c:3217
 #, c-format
 msgid "LiVES-%s: <No File>"
 msgstr "LiVES-%s: <没有文件>"
 
 #. TRANSLATORS: rec(ord)
-#: src/main.c:5190
+#: src/main.c:5189
 #, c-format
 msgid "rec %9d/%d"
 msgstr ""
 
 #. TRANSLATORS: out of memory (rec(ord))
-#: src/main.c:5195
+#: src/main.c:5194
 #, c-format
 msgid "!rec %9d/%d"
 msgstr ""
 
-#: src/main.c:5489 src/main.c:5490 src/gui.c:2108 src/gui.c:3331
+#: src/main.c:5488 src/main.c:5489 src/gui.c:2108 src/gui.c:3331
 #: src/saveplay.c:2315
 msgid "Play"
 msgstr "播放"
 
-#: src/main.c:6205
+#: src/main.c:6204
 msgid ""
 "LiVES was unable to capture this image\n"
 "\n"
@@ -727,35 +727,35 @@ msgstr ""
 "LiVES 无法捕获此图片\n"
 "\n"
 
-#: src/main.c:6334
+#: src/main.c:6333
 #, c-format
 msgid "Closed file %s\n"
 msgstr "已关闭文件 %s\n"
 
-#: src/main.c:6531 src/gui.c:647 src/utils.c:4256 src/utils.c:4286
+#: src/main.c:6530 src/gui.c:647 src/utils.c:4256 src/utils.c:4286
 #: src/saveplay.c:3500 src/multitrack.c:4678 src/multitrack.c:6447
 msgid "_Undo"
 msgstr "撤消(_U)"
 
-#: src/main.c:6532 src/gui.c:665 src/utils.c:4257 src/utils.c:4287
+#: src/main.c:6531 src/gui.c:665 src/utils.c:4257 src/utils.c:4287
 #: src/saveplay.c:3501 src/multitrack.c:4698 src/multitrack.c:6472
 msgid "_Redo"
 msgstr "重做(_R)"
 
-#: src/main.c:6572 src/interface.c:455 src/gui.c:2324 src/preferences.c:2391
+#: src/main.c:6571 src/interface.c:455 src/gui.c:2324 src/preferences.c:2391
 #: src/resample.c:1488
 msgid "Video"
 msgstr "视频"
 
-#: src/main.c:6573 src/interface.c:468 src/gui.c:2348
+#: src/main.c:6572 src/interface.c:468 src/gui.c:2348
 msgid "Left Audio"
 msgstr "左声道"
 
-#: src/main.c:6574 src/gui.c:2371
+#: src/main.c:6573 src/gui.c:2371
 msgid "Right Audio"
 msgstr "右声道"
 
-#: src/main.c:6619
+#: src/main.c:6618
 #, fuzzy
 msgid ""
 "\n"
@@ -769,7 +769,7 @@ msgstr ""
 "如果指定音频播放器为 mplayer，LiVES 无法在同时打开的片段见切换。\n"
 "请调整首选项中的回放设置并重试。\n"
 
-#: src/main.c:7123 src/plugins.c:1468
+#: src/main.c:7122 src/plugins.c:1468
 msgid "LiVES: - Play Window"
 msgstr "LiVES: - 播放窗口"
 

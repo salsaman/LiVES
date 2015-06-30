@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: lives\n"
 "Report-Msgid-Bugs-To: https://sourceforge.net/p/lives/bugs/\n"
-"POT-Creation-Date: 2015-05-03 13:14-0300\n"
+"POT-Creation-Date: 2015-05-25 21:17-0300\n"
 "PO-Revision-Date: 2013-03-14 12:31+0000\n"
 "Last-Translator: Launchpad Translations Administrators <Unknown>\n"
 "Language-Team: Occitan (post 1500) <oc@li.org>\n"
@@ -628,78 +628,78 @@ msgstr ""
 msgid "Invalid audio player %s\n"
 msgstr "Lector àudio invalid %s\n"
 
-#: src/main.c:3203
+#: src/main.c:3202
 #, c-format
 msgid "LiVES-%s: <Untitled%d> %dx%d : %d frames %d bpp %.3f fps"
 msgstr "LiVES-%s: <Sens títol%d> %dx%d : %d quadres %d bpp %.3f fps"
 
-#: src/main.c:3208
+#: src/main.c:3207
 #, c-format
 msgid "LiVES-%s: <%s> %dx%d : ??? frames ??? bpp %.3f fps"
 msgstr "LiVES-%s: <%s> %dx%d : ??? quadres ??? bpp %.3f fps"
 
-#: src/main.c:3211
+#: src/main.c:3210
 #, c-format
 msgid "LiVES-%s: <%s> %dx%d : %d frames %d bpp %.3f fps"
 msgstr "LiVES-%s: <%s> %dx%d : %d quadres %d bpp %.3f fps"
 
-#: src/main.c:3218
+#: src/main.c:3217
 #, c-format
 msgid "LiVES-%s: <No File>"
 msgstr "LiVES-%s: <Pas de Fichièr>"
 
 #. TRANSLATORS: rec(ord)
-#: src/main.c:5190
+#: src/main.c:5189
 #, c-format
 msgid "rec %9d/%d"
 msgstr ""
 
 #. TRANSLATORS: out of memory (rec(ord))
-#: src/main.c:5195
+#: src/main.c:5194
 #, c-format
 msgid "!rec %9d/%d"
 msgstr ""
 
-#: src/main.c:5489 src/main.c:5490 src/gui.c:2108 src/gui.c:3331
+#: src/main.c:5488 src/main.c:5489 src/gui.c:2108 src/gui.c:3331
 #: src/saveplay.c:2315
 msgid "Play"
 msgstr "Legir"
 
-#: src/main.c:6205
+#: src/main.c:6204
 msgid ""
 "LiVES was unable to capture this image\n"
 "\n"
 msgstr ""
 
-#: src/main.c:6334
+#: src/main.c:6333
 #, c-format
 msgid "Closed file %s\n"
 msgstr "Fichièr Tampat %s\n"
 
-#: src/main.c:6531 src/gui.c:647 src/utils.c:4256 src/utils.c:4286
+#: src/main.c:6530 src/gui.c:647 src/utils.c:4256 src/utils.c:4286
 #: src/saveplay.c:3500 src/multitrack.c:4678 src/multitrack.c:6447
 msgid "_Undo"
 msgstr "_Anullar"
 
-#: src/main.c:6532 src/gui.c:665 src/utils.c:4257 src/utils.c:4287
+#: src/main.c:6531 src/gui.c:665 src/utils.c:4257 src/utils.c:4287
 #: src/saveplay.c:3501 src/multitrack.c:4698 src/multitrack.c:6472
 msgid "_Redo"
 msgstr "_Restablir"
 
-#: src/main.c:6572 src/interface.c:455 src/gui.c:2324 src/preferences.c:2391
+#: src/main.c:6571 src/interface.c:455 src/gui.c:2324 src/preferences.c:2391
 #: src/resample.c:1488
 msgid "Video"
 msgstr "Vidèo"
 
-#: src/main.c:6573 src/interface.c:468 src/gui.c:2348
+#: src/main.c:6572 src/interface.c:468 src/gui.c:2348
 msgid "Left Audio"
 msgstr "Àudio Esquèrra"
 
-#: src/main.c:6574 src/gui.c:2371
+#: src/main.c:6573 src/gui.c:2371
 msgid "Right Audio"
 msgstr "Àudio Drecha"
 
-#: src/main.c:6619
+#: src/main.c:6618
 msgid ""
 "\n"
 "\n"
@@ -708,7 +708,7 @@ msgid ""
 "Please adjust the playback options in Preferences and try again.\n"
 msgstr ""
 
-#: src/main.c:7123 src/plugins.c:1468
+#: src/main.c:7122 src/plugins.c:1468
 msgid "LiVES: - Play Window"
 msgstr "LiVES: - Fenèstra de Lectura"
 

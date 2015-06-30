@@ -2371,12 +2371,12 @@ LIVES_INLINE LiVESWidget *lives_alignment_new(float xalign, float yalign, float 
 LIVES_INLINE boolean lives_alignment_set(LiVESAlignment *alignment, float xalign, float yalign, float xscale, float yscale) {
 #ifdef GUI_GTK
 #if GTK_CHECK_VERSION(3,0,0)
-  if (xalign==0.5) gtk_widget_set_halign(alignment,GTK_ALIGN_CENTER);
-  if (xalign==0.&&xscale==1.) gtk_widget_set_halign(alignment,GTK_ALIGN_FILL);
-  if (xalign==0.&&xscale==0.) gtk_widget_set_halign(alignment,GTK_ALIGN_START);
-  if (yalign==0.5) gtk_widget_set_valign(alignment,GTK_ALIGN_CENTER);
-  if (yalign==0.&&yscale==1.) gtk_widget_set_valign(alignment,GTK_ALIGN_FILL);
-  if (yalign==0.&&yscale==0.) gtk_widget_set_valign(alignment,GTK_ALIGN_START);
+  if (xalign==0.5) gtk_widget_set_halign((GtkWidget *)alignment,GTK_ALIGN_CENTER);
+  if (xalign==0.&&xscale==1.) gtk_widget_set_halign((GtkWidget *)alignment,GTK_ALIGN_FILL);
+  if (xalign==0.&&xscale==0.) gtk_widget_set_halign((GtkWidget *)alignment,GTK_ALIGN_START);
+  if (yalign==0.5) gtk_widget_set_valign((GtkWidget *)alignment,GTK_ALIGN_CENTER);
+  if (yalign==0.&&yscale==1.) gtk_widget_set_valign((GtkWidget *)alignment,GTK_ALIGN_FILL);
+  if (yalign==0.&&yscale==0.) gtk_widget_set_valign((GtkWidget *)alignment,GTK_ALIGN_START);
 #else
   gtk_alignment_set(alignment,xalign,yalign,xscale,yscale);
   return TRUE;

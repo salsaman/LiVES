@@ -1,3 +1,18 @@
+Version 2.4.1
+-------------
+NOTE: the LiVES homepage has moved to http://lives-video.com
+
+General compilation fixes.
+Minor fixes for BSD compilation.
+Minor fix for initialisation of "alien_overlay" effect.
+Fix image file previews within File Open dialog (regression).
+
+
+
+
+
+
+
 Version 2.4.0 (3 May 2015)
 -------------------------
 Implement workaround for expose event problems in gtk+ 3.10.

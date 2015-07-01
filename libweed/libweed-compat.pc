@@ -7,6 +7,6 @@ Name: libweed-compat
 Description: Compatibility utilities for libweed
 Requires: 
 Requires.private: 
-Version: 0.8.0
+Version: 0.9.0
 Libs:
 Cflags: -I${includedir}

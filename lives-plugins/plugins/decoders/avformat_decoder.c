@@ -11,7 +11,7 @@
 #ifdef HAVE_SYSTEM_WEED
 #include <weed/weed-compat.h>
 #else
-#include "../../libweed/weed-compat.h"
+#include "../../../libweed/weed-compat.h"
 #endif
 
 ///////////////////////////////////////////////////////

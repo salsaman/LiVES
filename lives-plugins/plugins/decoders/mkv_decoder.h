@@ -334,7 +334,11 @@ const CodecTags ff_mkv_codec_tags[]= {
   {"V_REAL/RV20"      , CODEC_ID_RV20},
   {"V_REAL/RV30"      , CODEC_ID_RV30},
   {"V_REAL/RV40"      , CODEC_ID_RV40},
+
+#if FF_API_SNOW
   {"V_SNOW"           , CODEC_ID_SNOW},
+#endif
+
   {"V_THEORA"         , CODEC_ID_THEORA},
   {"V_UNCOMPRESSED"   , CODEC_ID_RAWVIDEO},
   {"V_VP8"            , CODEC_ID_VP8},

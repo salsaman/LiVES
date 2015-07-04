@@ -281,8 +281,6 @@ static inline void skip_bits_long(GetBitContext *s, int n) {
 #define MP4SLDescrTag                   0x06
 
 
-#define CODEC_ID_MPEG4SYSTEMS 0x20001
-
 /* http://www.mp4ra.org */
 /* ordered by muxing preference */
 const AVCodecTag ff_mp4_obj_type[] = {

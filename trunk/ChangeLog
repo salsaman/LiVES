@@ -3,6 +3,7 @@ Version 2.4.1
 NOTE: the LiVES homepage has moved to http://lives-video.com
 
 General compilation fixes.
+Compilation fixes for libav.
 Minor fixes for BSD compilation.
 Minor fix for initialisation of "alien_overlay" effect.
 Fix image file previews within File Open dialog (regression).

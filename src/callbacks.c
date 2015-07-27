@@ -9314,12 +9314,15 @@ void on_effects_paused(LiVESButton *button, livespointer user_data) {
         }
         d_print(_("paused..."));
       }
-#ifdef RT_AUDIO
-      if ((mainw->jackd!=NULL&&mainw->jackd_read!=NULL&&mainw->jackd_read->in_use)
-          ||(mainw->pulsed!=NULL&&mainw->pulsed_read!=NULL&&mainw->pulsed_read->in_use))
+#ifdef ENABLE_JACK
+      if (mainw->jackd!=NULL&&mainw->jackd_read!=NULL&&mainw->jackd_read->in_use)
         lives_widget_hide(cfile->proc_ptr->stop_button);
 #endif
-    } else {
+#ifdef HAVE_PULSE_AUDIO
+      if (mainw->pulsed!=NULL&&mainw->pulsed_read!=NULL&&mainw->pulsed_read->in_use)
+        lives_widget_hide(cfile->proc_ptr->stop_button);
+#endif
+      } else {
       mainw->timeout_ticks+=xticks;
       com=lives_strdup_printf("%s resume \"%s\"",prefs->backend_sync,cfile->handle);
       if (!mainw->preview) {
@@ -9329,19 +9332,30 @@ void on_effects_paused(LiVESButton *button, livespointer user_data) {
         lives_label_set_text(LIVES_LABEL(cfile->proc_ptr->label2),_("\nPlease Wait"));
         d_print(_("resumed..."));
       }
-#ifdef RT_AUDIO
-      if ((mainw->jackd!=NULL&&mainw->jackd_read!=NULL&&mainw->jackd_read->in_use)
-          ||(mainw->pulsed!=NULL&&mainw->pulsed_read!=NULL&&mainw->pulsed_read->in_use))
+#ifdef ENABLE_JACK
+      if (mainw->jackd!=NULL&&mainw->jackd_read!=NULL&&mainw->jackd_read->in_use)
+        lives_widget_show(cfile->proc_ptr->stop_button);
+#endif
+#ifdef HAVE_PULSE_AUDIO
+      if (mainw->pulsed!=NULL&&mainw->pulsed_read!=NULL&&mainw->pulsed_read->in_use)
         lives_widget_show(cfile->proc_ptr->stop_button);
 #endif
     }
 
     if (!cfile->opening&&!mainw->internal_messaging
-#ifdef RT_AUDIO
-        &&!((mainw->jackd!=NULL&&mainw->jackd_read!=NULL&&mainw->jackd_read->in_use)
-            ||(mainw->pulsed!=NULL&&mainw->pulsed_read!=NULL&&mainw->pulsed->in_use))
+        && !(
+#ifdef ENABLE_JACK
+	     (mainw->jackd!=NULL&&mainw->jackd_read!=NULL&&mainw->jackd_read->in_use)
+#else
+	     0
 #endif
-       ) {
+	     ||
+#ifdef HAVE_PULSE_AUDIO
+	     (mainw->pulsed!=NULL&&mainw->pulsed_read!=NULL&&mainw->pulsed->in_use)
+#else
+	     0
+#endif
+	     )) {
       lives_system(com,FALSE);
     }
   }

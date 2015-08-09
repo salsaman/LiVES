@@ -78,7 +78,7 @@ else {
 }
 
 
-$builder_version="2.4.1-svn";
+$builder_version="2.4.1";
 
 if ($in_channels==0&&$properties&0x0004) {
     #batch mode generator
@@ -655,7 +655,7 @@ sub gen_onchange {
     }
 	
     if ($pass==1) {
-	foreach $which (keys %hash) {
+	foreach $which (sort keys %hash) {
 	    print OUT "\nif (\$command eq \"onchange_$which\") {\n";
 
 	    if (@requires&&$is_util&&$which eq "init") {

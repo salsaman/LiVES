@@ -7,6 +7,8 @@
 
 #include "decplugin.h"
 
+#define HAVE_AVCODEC
+#define HAVE_AVUTIL
 
 #ifdef HAVE_SYSTEM_WEED
 #include <weed/weed-compat.h>

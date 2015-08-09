@@ -23,7 +23,7 @@ $GUI_NAME="LiVES";
 # Do not change these except for testing !
 
 $background=1;
-$version="2.4.1-svn";
+$version="2.4.1";
 #$dyneversion="LIVES-20091209";
 
 ###################################################################

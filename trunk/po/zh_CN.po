@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: lives\n"
 "Report-Msgid-Bugs-To: https://sourceforge.net/p/lives/bugs/\n"
-"POT-Creation-Date: 2015-08-09 14:05-0300\n"
+"POT-Creation-Date: 2015-08-11 08:57-0300\n"
 "PO-Revision-Date: 2015-04-05 16:35+0000\n"
 "Last-Translator: Timothy Gu <timothy_gu@hotmail.com>\n"
 "Language-Team: Simplified Chinese <zh_CN@li.org>\n"
@@ -9806,7 +9806,7 @@ msgstr ""
 msgid "LiVES will exit and you can choose another audio player.\n"
 msgstr ""
 
-#: src/pulse.c:1335
+#: src/pulse.c:1337
 msgid ""
 "\n"
 "Connection to pulse audio was reset.\n"
@@ -10220,8 +10220,9 @@ msgid "Adjusting contrast of"
 msgstr "调整 %s(_A)"
 
 #: /usr/share/lives/plugins/effects/rendered/noisify.script:0
+#, fuzzy
 msgid "Adjusting noise on"
-msgstr ""
+msgstr "调整 %s(_A)"
 
 #: /usr/share/lives/plugins/effects/rendered/charcoal.script:0
 msgid "Applying charcoal to"
@@ -10357,8 +10358,9 @@ msgid "Clipboard _under selection"
 msgstr "插入到选区后（_A）"
 
 #: /usr/share/lives/plugins/effects/rendered/colorize.script:0
+#, fuzzy
 msgid "Colorize"
-msgstr ""
+msgstr "正在调整尺寸"
 
 #: /usr/share/lives/plugins/effects/rendered/colorize.script:0
 #, fuzzy
@@ -10370,16 +10372,18 @@ msgid "Colour cycle"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/cycle.script:0
+#, fuzzy
 msgid "Colour cycling"
-msgstr ""
+msgstr "正在调整尺寸"
 
 #: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
 msgid "Colour filter"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
+#, fuzzy
 msgid "Colour filtering"
-msgstr ""
+msgstr "正在调整尺寸"
 
 #: /usr/share/lives/plugins/effects/rendered/colour_replace.script:0
 msgid "Colour replace"
@@ -10559,8 +10563,9 @@ msgid "Frames _per second (FPS)"
 msgstr "帧每秒(_F) "
 
 #: /usr/share/lives/plugins/effects/rendered/gamma_change.script:0
+#, fuzzy
 msgid "Gamma _end"
-msgstr ""
+msgstr "起始(_S)"
 
 #: /usr/share/lives/plugins/effects/rendered/gamma_change.script:0
 #, fuzzy
@@ -10621,8 +10626,9 @@ msgid "Horizontal shifting"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/hue_change.script:0
+#, fuzzy
 msgid "Hue _end"
-msgstr ""
+msgstr "淡入音频"
 
 #: /usr/share/lives/plugins/effects/rendered/hue_change.script:0
 #, fuzzy
@@ -10715,8 +10721,9 @@ msgid "Noisify"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/normalize.script:0
+#, fuzzy
 msgid "Normalize"
-msgstr ""
+msgstr "正在调整尺寸"
 
 #: /usr/share/lives/plugins/effects/rendered/normalize.script:0
 #, fuzzy
@@ -10853,8 +10860,9 @@ msgid "Skip forward"
 msgstr "已跳过"
 
 #: /usr/share/lives/plugins/effects/rendered/solarize.script:0
+#, fuzzy
 msgid "Solarize"
-msgstr ""
+msgstr "正在调整尺寸"
 
 #: /usr/share/lives/plugins/effects/rendered/solarize.script:0
 #, fuzzy
@@ -10907,8 +10915,9 @@ msgid "Swirl _start"
 msgstr "起始(_S)"
 
 #: /usr/share/lives/plugins/effects/rendered/swirl.script:0
+#, fuzzy
 msgid "Swirl s_tep"
-msgstr ""
+msgstr "起始(_S)"
 
 #: /usr/share/lives/plugins/effects/rendered/swirl.script:0
 msgid "Swirl"
@@ -10996,8 +11005,9 @@ msgid "_Bottom"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/frame_calculator.script:0
+#, fuzzy
 msgid "_Calculate"
-msgstr ""
+msgstr "显示帧计数器(_H)"
 
 #: /usr/share/lives/plugins/effects/rendered/cycle.script:0
 #, fuzzy
@@ -11005,8 +11015,9 @@ msgid "_Cycle Start"
 msgstr "起始(_S)"
 
 #: /usr/share/lives/plugins/effects/rendered/contrast.script:0
+#, fuzzy
 msgid "_Decrease Contrast"
-msgstr ""
+msgstr "调整 %s(_A)"
 
 #: /usr/share/lives/plugins/effects/rendered/dream.script:0
 #: /usr/share/lives/plugins/effects/rendered/tunnel.script:0
@@ -11034,8 +11045,9 @@ msgstr "结尾帧"
 
 #: /usr/share/lives/plugins/effects/rendered/dream.script:0
 #: /usr/share/lives/plugins/effects/rendered/tunnel.script:0
+#, fuzzy
 msgid "_Fade level"
-msgstr ""
+msgstr "淡入音频"
 
 #: /usr/share/lives/plugins/effects/rendered/skip_forwards.script:0
 #: /usr/share/lives/plugins/effects/rendered/transition_fade.script:0
@@ -11055,8 +11067,9 @@ msgid "_First frame"
 msgstr "首帧"
 
 #: /usr/share/lives/plugins/effects/rendered/photo_still.script:0
+#, fuzzy
 msgid "_Flash for"
-msgstr ""
+msgstr "淡出音频"
 
 #: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
 msgid "_Font"
@@ -11094,8 +11107,9 @@ msgid "_Image"
 msgstr "文件(_F)"
 
 #: /usr/share/lives/plugins/effects/rendered/contrast.script:0
+#, fuzzy
 msgid "_Increase Contrast"
-msgstr ""
+msgstr "调整 %s(_A)"
 
 #: /usr/share/lives/plugins/effects/rendered/image_overlay.script:0
 msgid "_Init Size X:"
@@ -11162,8 +11176,9 @@ msgid "_Point size"
 msgstr "指针(_P)"
 
 #: /usr/share/lives/plugins/effects/rendered/blur.script:0
+#, fuzzy
 msgid "_Radius end"
-msgstr ""
+msgstr "起始(_S)"
 
 #: /usr/share/lives/plugins/effects/rendered/blur.script:0
 #, fuzzy
@@ -11173,8 +11188,9 @@ msgstr "起始(_S)"
 #: /usr/share/lives/plugins/effects/rendered/edge_detect.script:0
 #: /usr/share/lives/plugins/effects/rendered/emboss.script:0
 #: /usr/share/lives/plugins/effects/rendered/charcoal.script:0
+#, fuzzy
 msgid "_Radius"
-msgstr ""
+msgstr "起始(_S)"
 
 #: /usr/share/lives/plugins/effects/rendered/colorize.script:0
 #: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
@@ -11355,16 +11371,18 @@ msgid "charcoal"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/colorize.script:0
+#, fuzzy
 msgid "colorize"
-msgstr ""
+msgstr "正在调整尺寸"
 
 #: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
 msgid "colour_filter"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/colour_replace.script:0
+#, fuzzy
 msgid "colour_replace"
-msgstr ""
+msgstr "删除多余的帧"
 
 #: /usr/share/lives/plugins/effects/rendered/contrast.script:0
 #, fuzzy
@@ -11423,12 +11441,14 @@ msgid "flop"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/frame_calculator.script:0
+#, fuzzy
 msgid "frame_calculator"
-msgstr ""
+msgstr "显示帧计数器(_H)"
 
 #: /usr/share/lives/plugins/effects/rendered/gamma_change.script:0
+#, fuzzy
 msgid "gamma_change"
-msgstr ""
+msgstr "_忽略的变化"
 
 #: /usr/share/lives/plugins/effects/rendered/gen_blank_frames.script:0
 #, fuzzy
@@ -11463,24 +11483,27 @@ msgid "jumble"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/modulate.script:0
+#, fuzzy
 msgid "modulate"
-msgstr ""
+msgstr "粘贴"
 
 #: /usr/share/lives/plugins/effects/rendered/monochrome.script:0
 msgid "monochrome"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/negate.script:0
+#, fuzzy
 msgid "negate"
-msgstr ""
+msgstr "粘贴"
 
 #: /usr/share/lives/plugins/effects/rendered/noisify.script:0
 msgid "noisify"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/normalize.script:0
+#, fuzzy
 msgid "normalize"
-msgstr ""
+msgstr "正在调整尺寸"
 
 #: /usr/share/lives/plugins/effects/rendered/photo_still.script:0
 msgid "photo_still"
@@ -11532,12 +11555,14 @@ msgid "shrink_expand"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/skip_forwards.script:0
+#, fuzzy
 msgid "skip_forwards"
-msgstr ""
+msgstr "已跳过"
 
 #: /usr/share/lives/plugins/effects/rendered/solarize.script:0
+#, fuzzy
 msgid "solarize"
-msgstr ""
+msgstr "正在调整尺寸"
 
 #: /usr/share/lives/plugins/effects/rendered/spin.script:0
 msgid "spin"

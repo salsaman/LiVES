@@ -95,6 +95,8 @@ mainwindow *mainw;
 
 static boolean no_recover=FALSE,auto_recover=FALSE;
 static boolean upgrade_error=FALSE;
+static boolean info_only;
+
 static char start_file[PATH_MAX];
 static double start=0.;
 static int end=0;
@@ -450,6 +452,8 @@ static boolean pre_init(void) {
   // TODO - for mingw we will get from the registry, whatever was set at install time
   lives_snprintf(prefs->prefix_dir,PATH_MAX,"%s",PREFIX_DEFAULT);
 #endif
+
+  info_only=FALSE;
 
   // check the backend is there, get some system details and prefs
   capable=get_capabilities();
@@ -2051,15 +2055,18 @@ void set_palette_colours(void) {
 
 capability *get_capabilities(void) {
   // get capabilities of backend system
-  char *safer_bfile;
+  FILE *bootfile;
+
   char **array;
 
+  char *safer_bfile;
+  char *tmp;
+
   char buffer[4096+PATH_MAX];
-  FILE *bootfile;
   char string[256];
+
   int err;
   int numtok;
-  char *tmp;
 
 #ifdef IS_DARWIN
   processor_info_array_t processorInfo;
@@ -2072,6 +2079,7 @@ capability *get_capabilities(void) {
   FILE *tfile;
 #endif
 #endif
+
 
   capable=(capability *)lives_malloc(sizeof(capability));
 
@@ -2257,9 +2265,11 @@ capability *get_capabilities(void) {
     if (!strcmp(array[3],"!updmsg")) {
       char *text=get_upd_msg();
       lives_snprintf(capable->startup_msg,256,"%s\n\n",text);
+      info_only=TRUE;
       lives_free(text);
 
       if (numtok>4&&strlen(array[4])) {
+	info_only=FALSE;
         lives_strappend(capable->startup_msg,256,array[4]);
       }
     } else {
@@ -2548,6 +2558,7 @@ static boolean lives_startup(livespointer data) {
 #endif
                 else {
                   if (strlen(capable->startup_msg)) {
+                    if (info_only) startup_message_info(capable->startup_msg);
                     startup_message_nonfatal(capable->startup_msg);
                   } else {
                     // non-fatal errors

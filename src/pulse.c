@@ -962,11 +962,13 @@ void pulse_shutdown(void) {
 
 
 void pulse_close_client(pulse_driver_t *pdriver) {
-  pa_threaded_mainloop_lock(pa_mloop);
-  pa_stream_set_write_callback(pdriver->pstream,NULL,NULL);
-  pa_stream_set_read_callback(pdriver->pstream,NULL,NULL);
-  if (pdriver->pstream!=NULL) pa_stream_disconnect(pdriver->pstream);
-  pa_threaded_mainloop_unlock(pa_mloop);
+  if (pdriver->pstream!=NULL) {
+    pa_threaded_mainloop_lock(pa_mloop);
+    pa_stream_set_write_callback(pdriver->pstream,NULL,NULL);
+    pa_stream_set_read_callback(pdriver->pstream,NULL,NULL);
+    pa_stream_disconnect(pdriver->pstream);
+    pa_threaded_mainloop_unlock(pa_mloop);
+  }
   if (pdriver->pa_props!=NULL) pa_proplist_free(pdriver->pa_props);
   pdriver->pa_props=NULL;
   pdriver->pstream=NULL;

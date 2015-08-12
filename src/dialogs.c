@@ -2737,6 +2737,8 @@ void do_threaded_dialog(char *trans_text, boolean has_cancel) {
 
   char *copy_text;
 
+  if (!prefs->show_gui) return;
+
   if (mainw->threaded_dialog) return;
 
   copy_text=lives_strdup(trans_text);

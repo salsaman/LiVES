@@ -814,6 +814,7 @@ LIVES_INLINE boolean lives_widget_reparent(LiVESWidget *widget, LiVESWidget *new
 
 
 LIVES_INLINE boolean lives_widget_set_app_paintable(LiVESWidget *widget, boolean paintable) {
+  return TRUE;
 #ifdef GUI_GTK
   gtk_widget_set_app_paintable(widget,paintable);
   return TRUE;

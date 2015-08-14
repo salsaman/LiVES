@@ -9488,7 +9488,7 @@ boolean multitrack_delete(lives_mt *mt, boolean save_layout) {
   if (mainw->current_file>0) sensitize();
   lives_widget_hide(mainw->playframe);
   mainw->is_rendering=FALSE;
-  if (transfer_focus) lives_window_present(LIVES_WINDOW(mainw->LiVES));
+  if (transfer_focus&&prefs->show_gui) lives_window_present(LIVES_WINDOW(mainw->LiVES));
 
   reset_clipmenu();
   mainw->last_dprint_file=-1;
@@ -11319,7 +11319,7 @@ boolean on_multitrack_activate(LiVESMenuItem *menuitem, weed_plant_t *event_list
 
   lives_idle_add(mt_idle_show_current_frame,(livespointer)multi);
 
-  if (transfer_focus) lives_window_present(LIVES_WINDOW(multi->window));
+  if (transfer_focus&&prefs->show_gui) lives_window_present(LIVES_WINDOW(multi->window));
 
   mainw_was_ready=mainw->is_ready;
   mainw->is_ready=TRUE;

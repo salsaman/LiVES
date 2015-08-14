@@ -2323,7 +2323,7 @@ void play_file(void) {
     }
 
     // blank the background if asked to
-    if ((mainw->faded||(mainw->fs&&!mainw->sep_win))&&(cfile->frames>0||mainw->foreign)) {
+    if ((mainw->faded||(prefs->show_playwin&&!prefs->show_gui)||(mainw->fs&&(!mainw->sep_win)))&&(cfile->frames>0||mainw->foreign)) {
       fade_background();
     }
 
@@ -2458,9 +2458,11 @@ void play_file(void) {
         } else {
           // this doesn't get called if we don't call resize_play_window()
           if (mainw->play_window!=NULL) {
-            lives_window_present(LIVES_WINDOW(mainw->play_window));
-            lives_xwindow_raise(lives_widget_get_xwindow(mainw->play_window));
-          }
+	    if (prefs->show_playwin) {
+	      lives_window_present(LIVES_WINDOW(mainw->play_window));
+	      lives_xwindow_raise(lives_widget_get_xwindow(mainw->play_window));
+	    }
+	  }
         }
       }
     }
@@ -3203,8 +3205,10 @@ void play_file(void) {
             lives_free(title);
             lives_free(xtrabit);
 
-            lives_window_present(LIVES_WINDOW(mainw->play_window));
-            lives_xwindow_raise(lives_widget_get_xwindow(mainw->play_window));
+	    if (prefs->show_playwin) {
+	      lives_window_present(LIVES_WINDOW(mainw->play_window));
+	      lives_xwindow_raise(lives_widget_get_xwindow(mainw->play_window));
+	    }
             unhide_cursor(lives_widget_get_xwindow(mainw->play_window));
           }
         }

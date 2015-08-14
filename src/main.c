@@ -7179,7 +7179,7 @@ void load_frame_image(int frame) {
       mainw->frame_layer=frame_layer;
     }
 
-    if (mainw->play_window!=NULL) {
+    if (mainw->play_window!=NULL&&prefs->show_playwin) {
       lives_window_present(LIVES_WINDOW(mainw->play_window));
       lives_xwindow_raise(lives_widget_get_xwindow(mainw->play_window));
     }

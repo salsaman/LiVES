@@ -292,7 +292,7 @@ void create_LiVES(void) {
   lives_window_set_hide_titlebar_when_maximized(LIVES_WINDOW(mainw->LiVES),FALSE);
 
 
-  if (prefs->present)
+  if (prefs->present&&prefs->show_gui)
     lives_window_present(LIVES_WINDOW(mainw->LiVES));
 
 #ifdef GUI_GTK
@@ -3394,7 +3394,7 @@ void unfade_background(void) {
   lives_widget_set_fg_color(mainw->vps_label, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
   lives_widget_set_fg_color(mainw->curf_label, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
 
-  if (stop_closure!=NULL) {
+  if (stop_closure!=NULL&&prefs->show_gui) {
     lives_accel_group_disconnect(LIVES_ACCEL_GROUP(mainw->accel_group), stop_closure);
     lives_widget_add_accelerator(mainw->stop, LIVES_WIDGET_ACTIVATE_SIGNAL, mainw->accel_group,
                                  LIVES_KEY_q, (LiVESXModifierType)0,
@@ -3921,9 +3921,11 @@ void make_play_window(void) {
     lives_widget_set_bg_color(mainw->play_window, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
   }
 
-  // show the window (so we can hide its cursor !), and get its xwin
-  if (!(mainw->fs&&mainw->playing_file>-1&&mainw->vpp!=NULL)) {
-    lives_widget_show(mainw->play_window);
+  if (prefs->show_playwin) {
+    // show the window (so we can hide its cursor !), and get its xwin
+    if (!(mainw->fs&&mainw->playing_file>-1&&mainw->vpp!=NULL)) {
+      lives_widget_show(mainw->play_window);
+    }
   }
 
   resize_play_window();
@@ -4069,7 +4071,9 @@ void resize_play_window(void) {
 
     if (mainw->fs) {
       if (!lives_widget_is_visible(mainw->play_window)) {
-        lives_widget_show(mainw->play_window);
+	if (prefs->show_playwin) {
+	  lives_widget_show(mainw->play_window);
+	}
         // be careful, the user could switch out of sepwin here !
         mainw->noswitch=TRUE;
         lives_widget_context_update();
@@ -4175,8 +4179,11 @@ void resize_play_window(void) {
         if (pmonitor!=0) {
           fullscreen=FALSE;
           if (mainw->play_window!=NULL) {
-            xwinid=lives_widget_get_xwinid(mainw->play_window,"Unsupported display type for playback plugin");
-            if (xwinid==-1) return;
+	    if (prefs->show_playwin) {
+	      xwinid=lives_widget_get_xwinid(mainw->play_window,"Unsupported display type for playback plugin");
+	      if (xwinid==-1) return;
+	    }
+	    else xwinid=-1;
           }
         }
         if (mainw->ext_playback) {
@@ -4259,8 +4266,10 @@ point1:
         lives_window_move(LIVES_WINDOW(mainw->play_window), xcen, ycen);
       }
     }
-    lives_window_present(LIVES_WINDOW(mainw->play_window));
-    lives_xwindow_raise(lives_widget_get_xwindow(mainw->play_window));
+    if (prefs->show_playwin) {
+      lives_window_present(LIVES_WINDOW(mainw->play_window));
+      lives_xwindow_raise(lives_widget_get_xwindow(mainw->play_window));
+    }
   } else {
     // not playing
     if (mainw->fs&&mainw->playing_file==-2&&mainw->sep_win&&prefs->sepwin_type==SEPWIN_TYPE_STICKY) {

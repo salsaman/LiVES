@@ -3405,11 +3405,13 @@ boolean switch_aud_to_pulse(void) {
       jack_close_device(mainw->jackd);
       mainw->jackd=NULL;
     }
-#endif
 
     if (prefs->perm_audio_reader&&prefs->audio_src==AUDIO_SRC_EXT) {
       jack_rec_audio_to_clip(-1,-1,RECA_EXTERNAL);
     }
+
+
+#endif
 
     return retval;
   }

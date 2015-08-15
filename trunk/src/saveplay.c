@@ -2458,11 +2458,11 @@ void play_file(void) {
         } else {
           // this doesn't get called if we don't call resize_play_window()
           if (mainw->play_window!=NULL) {
-	    if (prefs->show_playwin) {
-	      lives_window_present(LIVES_WINDOW(mainw->play_window));
-	      lives_xwindow_raise(lives_widget_get_xwindow(mainw->play_window));
-	    }
-	  }
+            if (prefs->show_playwin) {
+              lives_window_present(LIVES_WINDOW(mainw->play_window));
+              lives_xwindow_raise(lives_widget_get_xwindow(mainw->play_window));
+            }
+          }
         }
       }
     }
@@ -3205,10 +3205,10 @@ void play_file(void) {
             lives_free(title);
             lives_free(xtrabit);
 
-	    if (prefs->show_playwin) {
-	      lives_window_present(LIVES_WINDOW(mainw->play_window));
-	      lives_xwindow_raise(lives_widget_get_xwindow(mainw->play_window));
-	    }
+            if (prefs->show_playwin) {
+              lives_window_present(LIVES_WINDOW(mainw->play_window));
+              lives_xwindow_raise(lives_widget_get_xwindow(mainw->play_window));
+            }
             unhide_cursor(lives_widget_get_xwindow(mainw->play_window));
           }
         }

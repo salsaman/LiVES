@@ -2269,7 +2269,7 @@ capability *get_capabilities(void) {
       lives_free(text);
 
       if (numtok>4&&strlen(array[4])) {
-	info_only=FALSE;
+        info_only=FALSE;
         lives_strappend(capable->startup_msg,256,array[4]);
       }
     } else {

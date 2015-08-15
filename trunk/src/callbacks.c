@@ -9322,7 +9322,7 @@ void on_effects_paused(LiVESButton *button, livespointer user_data) {
       if (mainw->pulsed!=NULL&&mainw->pulsed_read!=NULL&&mainw->pulsed_read->in_use)
         lives_widget_hide(cfile->proc_ptr->stop_button);
 #endif
-      } else {
+    } else {
       mainw->timeout_ticks+=xticks;
       com=lives_strdup_printf("%s resume \"%s\"",prefs->backend_sync,cfile->handle);
       if (!mainw->preview) {
@@ -9345,17 +9345,17 @@ void on_effects_paused(LiVESButton *button, livespointer user_data) {
     if (!cfile->opening&&!mainw->internal_messaging
         && !(
 #ifdef ENABLE_JACK
-	     (mainw->jackd!=NULL&&mainw->jackd_read!=NULL&&mainw->jackd_read->in_use)
+          (mainw->jackd!=NULL&&mainw->jackd_read!=NULL&&mainw->jackd_read->in_use)
 #else
-	     0
+          0
 #endif
-	     ||
+          ||
 #ifdef HAVE_PULSE_AUDIO
-	     (mainw->pulsed!=NULL&&mainw->pulsed_read!=NULL&&mainw->pulsed->in_use)
+          (mainw->pulsed!=NULL&&mainw->pulsed_read!=NULL&&mainw->pulsed->in_use)
 #else
-	     0
+          0
 #endif
-	     )) {
+        )) {
       lives_system(com,FALSE);
     }
   }

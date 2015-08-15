@@ -2779,7 +2779,7 @@ void end_threaded_dialog(void) {
   mainw->cancel_type=CANCEL_KILL;
   mainw->threaded_dialog=FALSE;
 
-  if (mainw->is_ready) 
+  if (mainw->is_ready)
     lives_widget_context_update();
 }
 

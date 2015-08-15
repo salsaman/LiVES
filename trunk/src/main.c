@@ -6051,6 +6051,8 @@ void load_frame_image(int frame) {
 
     check_layer_ready(mainw->frame_layer);
 
+    if (mainw->sep_win&&!prefs->show_playwin||!mainw->sep_win&&!prefs->show_gui) return;
+
     layer_palette=weed_layer_get_palette(mainw->frame_layer);
 
     if (cfile->img_type==IMG_TYPE_JPEG||!weed_palette_has_alpha_channel(layer_palette)) cpal=WEED_PALETTE_RGB24;

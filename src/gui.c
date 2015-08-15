@@ -4071,9 +4071,9 @@ void resize_play_window(void) {
 
     if (mainw->fs) {
       if (!lives_widget_is_visible(mainw->play_window)) {
-	if (prefs->show_playwin) {
-	  lives_widget_show(mainw->play_window);
-	}
+        if (prefs->show_playwin) {
+          lives_widget_show(mainw->play_window);
+        }
         // be careful, the user could switch out of sepwin here !
         mainw->noswitch=TRUE;
         lives_widget_context_update();
@@ -4179,11 +4179,10 @@ void resize_play_window(void) {
         if (pmonitor!=0) {
           fullscreen=FALSE;
           if (mainw->play_window!=NULL) {
-	    if (prefs->show_playwin) {
-	      xwinid=lives_widget_get_xwinid(mainw->play_window,"Unsupported display type for playback plugin");
-	      if (xwinid==-1) return;
-	    }
-	    else xwinid=-1;
+            if (prefs->show_playwin) {
+              xwinid=lives_widget_get_xwinid(mainw->play_window,"Unsupported display type for playback plugin");
+              if (xwinid==-1) return;
+            } else xwinid=-1;
           }
         }
         if (mainw->ext_playback) {

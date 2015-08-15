@@ -2395,6 +2395,9 @@ LIVES_INLINE LiVESWidget *lives_expander_new_with_mnemonic(const char *label) {
   LiVESWidget *expander=NULL;
 #ifdef GUI_GTK
   expander=gtk_expander_new_with_mnemonic(label);
+#if GTK_CHECK_VERSION(3,2,0)
+  gtk_expander_set_resize_toplevel(GTK_EXPANDER(expander),TRUE);
+#endif
 #endif
   return expander;
 }
@@ -2405,6 +2408,9 @@ LIVES_INLINE LiVESWidget *lives_expander_new(const char *label) {
   LiVESWidget *expander=NULL;
 #ifdef GUI_GTK
   expander=gtk_expander_new(label);
+#if GTK_CHECK_VERSION(3,2,0)
+  gtk_expander_set_resize_toplevel(GTK_EXPANDER(expander),TRUE);
+#endif
 #endif
   return expander;
 }

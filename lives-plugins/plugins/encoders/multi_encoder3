@@ -527,7 +527,12 @@ if __name__ == '__main__':
             print(message, file=sys.stderr)
 
         os.system(encode_command)
-        os.chmod(outfile_orig,stat.S_IRUSR|stat.S_IWUSR|stat.S_IRGRP|stat.S_IROTH)
+        
+        if os.name != 'nt':
+            try:
+                os.chmod(outfile_orig,stat.S_IRUSR|stat.S_IWUSR|stat.S_IRGRP|stat.S_IROTH)
+            except:
+                pass
 
         raise SystemExit
 

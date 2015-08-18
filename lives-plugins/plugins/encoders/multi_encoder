@@ -544,7 +544,10 @@ if __name__ == '__main__':
 
         
         if os.name != 'nt':
-            os.chmod(outfile_orig,stat.S_IRUSR|stat.S_IWUSR|stat.S_IRGRP|stat.S_IROTH)
+            try:
+                os.chmod(outfile_orig,stat.S_IRUSR|stat.S_IWUSR|stat.S_IRGRP|stat.S_IROTH)
+            except:
+                pass
 
         raise SystemExit
 

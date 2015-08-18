@@ -2,7 +2,7 @@
 
 
 import locale
-locale.setlocale(locale.LC_NUMERIC,"")
+locale.setlocale(locale.LC_NUMERIC,"C")
 
 """
 lives_avi_encoder3

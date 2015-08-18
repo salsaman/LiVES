@@ -3,7 +3,7 @@
 import time
 
 import locale
-locale.setlocale(locale.LC_NUMERIC,"")
+locale.setlocale(locale.LC_NUMERIC,"C")
 
 """
 lives_mkv_encoder

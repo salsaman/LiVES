@@ -329,7 +329,7 @@ weed_plant_t *weed_setup(weed_bootstrap_f weed_boot) {
     weed_set_int_value(in_params[1],"flags",flags);
     in_params[2]=NULL;
 
-    g_free(defmaskfile);
+    weed_free(defmaskfile);
 
     filter_class=weed_filter_class_init("mask_overlay","salsaman",1,WEED_FILTER_HINT_MAY_THREAD,&masko_init,&masko_process,&masko_deinit,
                                         in_chantmpls,out_chantmpls,in_params,NULL);

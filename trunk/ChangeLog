@@ -2,6 +2,9 @@ Version 2.4.2
 -------------
 Fix occasional hang in shutdown via OSC.
 Minor fixes for headless (nogui, noplaywin) modes.
+Increase size of debug output window when encoding (Regression).
+Fix for compiling without jack.
+Fix crash in mask_overlay effect.
 
 
 

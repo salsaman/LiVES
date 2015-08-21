@@ -358,6 +358,7 @@ int beat_process(weed_plant_t *inst, weed_timecode_t timestamp) {
         ) {
           varx=(val1-val2);
           if (varx<0.) varx=0.;
+	  if (varx>1000.) varx=0.; // ignore invalid value
           var+=(double)varx/(double)ONSET_WINDOW;
         }
       }
@@ -384,6 +385,7 @@ int beat_process(weed_plant_t *inst, weed_timecode_t timestamp) {
   //fprintf(stderr,"\n\n");
 
 done:
+
   weed_set_boolean_value(out_params[0],"value",beat_pulse);
   weed_set_int64_value(out_params[0],"timecode",timestamp);
   weed_set_boolean_value(out_params[1],"value",beat_hold);

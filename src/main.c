@@ -4694,6 +4694,7 @@ boolean pull_frame_at_size(weed_plant_t *layer, const char *image_ext, weed_time
     mainw->osc_block=FALSE;
     return FALSE;
   }
+
   mainw->osc_block=FALSE;
 
   if (!is_thread) {

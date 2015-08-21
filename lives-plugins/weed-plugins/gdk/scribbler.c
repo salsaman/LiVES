@@ -243,7 +243,7 @@ static void cairo_to_channel(cairo_t *cairo, weed_plant_t *channel) {
     dst=pixel_data;
     for (i=0; i<height; i++) {
       weed_memcpy((void *)dst,(void *)src,widthx);
-      weed_memset((void *)(dst+widthx),0,widthx-orowstride);
+      //weed_memset((void *)(dst+widthx),0,orowstride-widthx);  // can cause a crash, not sure why
       dst+=orowstride;
       src+=irowstride;
     }

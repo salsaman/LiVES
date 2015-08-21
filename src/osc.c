@@ -5682,10 +5682,13 @@ boolean lives_osc_cb_rte_getoparamval(void *context, int arglen, const void *var
 
   if (end>weed_leaf_num_elements(param,"value")) return lives_osc_notify_failure();
 
+  filter_mutex_lock(effect_key-1);
   msg=lives_osc_format_result(param,"value",st,end);
+  filter_mutex_unlock(effect_key-1);
 
   lives_status_send(msg);
   lives_free(msg);
+
 
   return TRUE;
 }

@@ -1,5 +1,6 @@
 Version 2.4.2
 -------------
+Fix crash after recording with pulseaudio external audio.
 Fix occasional hang in shutdown via OSC.
 Minor fixes for headless (nogui, noplaywin) modes.
 Increase size of debug output window when encoding (Regression).
@@ -8,6 +9,7 @@ Fix crash in mask_overlay effect.
 Fix some threading problems when running audio and video effects together.
 Improve OSC responsiveness during playback.
 Fixes for beat_detector and scribbler plugins.
+Fix latency issue with pulseaudio external input.
 
 
 

@@ -206,7 +206,6 @@ int beat_process(weed_plant_t *inst, weed_timecode_t timestamp) {
     goto done;
   }
 
-
   rate=weed_get_int_value(in_channel,"audio_rate",&error);
 
   chans=weed_get_int_value(in_channel,"audio_channels",&error);
@@ -224,6 +223,7 @@ int beat_process(weed_plant_t *inst, weed_timecode_t timestamp) {
         sdata->buf[i][j]=sdata->buf[i][j+1];
         if (sdata->buf[i][j]!=-1.) sdata->av[i]+=(double)sdata->buf[i][j];
       }
+
     }
 
     has_data=WEED_TRUE;
@@ -236,6 +236,11 @@ int beat_process(weed_plant_t *inst, weed_timecode_t timestamp) {
   }
 
   sdata->totsamps+=onsamps;
+
+  for (j=0; j<sdata->bufidx; j++) {
+    sdata->bufsize[j]=sdata->bufsize[j+1];
+  }
+
   sdata->bufsize[sdata->bufidx]=onsamps;
 
   for (s=0; s<NSLICES; s++) {
@@ -311,7 +316,7 @@ int beat_process(weed_plant_t *inst, weed_timecode_t timestamp) {
           // sum values over range
           // average over range
           totx+=sqrtf(outs[base][k][0]*outs[base][k][0]+outs[base][k][1]*outs[base][k][1]);
-        }
+	}
 
         // average over bandwidth
         totx/=((float)rkmax-(float)rkmin+1.);
@@ -320,6 +325,7 @@ int beat_process(weed_plant_t *inst, weed_timecode_t timestamp) {
         totx/=((float)rkmax-(float)rkmin+1.);
 
         // store this value in the buffer
+
         sdata->buf[s][sdata->bufidx]+=totx/(float)chans;
 
         okmin=kmin;
@@ -373,6 +379,8 @@ int beat_process(weed_plant_t *inst, weed_timecode_t timestamp) {
 
   for (i=0; i<NSLICES; i++) {
     av=sdata->av[i]/(double)sdata->bufidx;
+    //if (i==0) printf("VALS %.2f %.2f %.2f %.2f %.2f %d %d %d %d %d\n",var,varlim,sdata->buf[i][sdata->bufidx],avlim*av,sdata->av[i],sdata->bufidx,sdata->totsamps,onsamps,base,rndlog2(onsamps));
+
     if (var>=varlim && sdata->buf[i][sdata->bufidx] >= (avlim*av)) {
       // got a beat !
       beat_pulse=beat_hold=WEED_TRUE;
@@ -385,6 +393,8 @@ int beat_process(weed_plant_t *inst, weed_timecode_t timestamp) {
   //fprintf(stderr,"\n\n");
 
 done:
+  //if (beat_hold) printf("BEAT %p !\n",out_params[1]);
+  //else printf("NOBEAT %.2f\n",osrc!=NULL?osrc[0]:1.23);
 
   weed_set_boolean_value(out_params[0],"value",beat_pulse);
   weed_set_int64_value(out_params[0],"timecode",timestamp);

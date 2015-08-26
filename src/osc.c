@@ -380,6 +380,8 @@ static char *lives_osc_format_result(weed_plant_t *plant, const char *key, int s
       retval=tmp;
     }
     lives_free(vals);
+    //g_print("get from %p %s %s\n", plant, key, tmp);
+
     break;
   }
 
@@ -5683,6 +5685,7 @@ boolean lives_osc_cb_rte_getoparamval(void *context, int arglen, const void *var
   if (end>weed_leaf_num_elements(param,"value")) return lives_osc_notify_failure();
 
   filter_mutex_lock(effect_key-1);
+  
   msg=lives_osc_format_result(param,"value",st,end);
   filter_mutex_unlock(effect_key-1);
 

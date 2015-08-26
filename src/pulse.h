@@ -20,6 +20,7 @@
 
 #define LIVES_PA_BUFF_MAXLEN 16384
 #define LIVES_PA_BUFF_TARGET 1024
+#define LIVES_PA_BUFF_FRAGSIZE 1024
 
 typedef struct {
   size_t size;

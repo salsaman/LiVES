@@ -155,8 +155,10 @@ static void sample_silence_pulse(pulse_driver_t *pdriver, size_t nbytes, size_t 
     if (pdriver->astream_fd!=-1) audio_stream(buff,xbytes,pdriver->astream_fd);
     if (mainw->audio_frame_buffer!=NULL) {
       pthread_mutex_lock(&mainw->abuf_frame_mutex);
-      append_to_audio_buffer16(mainw->audio_frame_buffer,buff,xbytes/2,0);
-      mainw->audio_frame_buffer->samples_filled+=xbytes/2;
+      if (mainw->audio_frame_buffer!=NULL) {
+	append_to_audio_buffer16(mainw->audio_frame_buffer,buff,xbytes/2,0);
+	mainw->audio_frame_buffer->samples_filled+=xbytes/2;
+      }
       pthread_mutex_unlock(&mainw->abuf_frame_mutex);
     }
     pa_stream_write(pdriver->pstream,buff,xbytes,pulse_buff_free,0,PA_SEEK_RELATIVE);
@@ -689,8 +691,10 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
           if (pulsed->astream_fd!=-1) audio_stream(buffer,xbytes,pulsed->astream_fd);
           if (mainw->audio_frame_buffer!=NULL) {
             pthread_mutex_lock(&mainw->abuf_frame_mutex);
-            append_to_audio_buffer16(mainw->audio_frame_buffer,buffer,xbytes/2,0);
-            mainw->audio_frame_buffer->samples_filled+=xbytes/2;
+	    if (mainw->audio_frame_buffer!=NULL) {
+	      append_to_audio_buffer16(mainw->audio_frame_buffer,buffer,xbytes/2,0);
+	      mainw->audio_frame_buffer->samples_filled+=xbytes/2;
+	    }
             pthread_mutex_unlock(&mainw->abuf_frame_mutex);
           }
           pa_stream_write(pulsed->pstream,buffer,xbytes,buffer==pulsed->aPlayPtr->data?NULL:
@@ -703,8 +707,10 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
             if (pulsed->astream_fd!=-1) audio_stream(shortbuffer,xbytes,pulsed->astream_fd);
             if (mainw->audio_frame_buffer!=NULL) {
               pthread_mutex_lock(&mainw->abuf_frame_mutex);
-              append_to_audio_buffer16(mainw->audio_frame_buffer,shortbuffer,xbytes/2,0);
-              mainw->audio_frame_buffer->samples_filled+=xbytes/2;
+	      if (mainw->audio_frame_buffer!=NULL) {
+		append_to_audio_buffer16(mainw->audio_frame_buffer,shortbuffer,xbytes/2,0);
+		mainw->audio_frame_buffer->samples_filled+=xbytes/2;
+	      }
               pthread_mutex_unlock(&mainw->abuf_frame_mutex);
             }
             pa_stream_write(pulsed->pstream,shortbuffer,xbytes,pulse_buff_free,0,PA_SEEK_RELATIVE);
@@ -892,8 +898,10 @@ static void pulse_audio_read_process(pa_stream *pstream, size_t nbytes, void *ar
         if (mainw->audio_frame_buffer!=NULL) {
           // if we have audio triggered gens., push audio to it
           pthread_mutex_lock(&mainw->abuf_frame_mutex);
-          append_to_audio_bufferf(mainw->audio_frame_buffer,fltbuf[i],xnframes,i);
-          mainw->audio_frame_buffer->samples_filled+=xnframes;
+	  if (mainw->audio_frame_buffer!=NULL) {
+	    append_to_audio_bufferf(mainw->audio_frame_buffer,fltbuf[i],xnframes,i);
+	    mainw->audio_frame_buffer->samples_filled+=xnframes;
+	  }
           pthread_mutex_unlock(&mainw->abuf_frame_mutex);
         }
       }
@@ -901,6 +909,7 @@ static void pulse_audio_read_process(pa_stream *pstream, size_t nbytes, void *ar
       if (memok) {
         int64_t tc=pulsed->audio_ticks+(int64_t)(pulsed->frames_written/(double)pulsed->in_arate*U_SEC);
         // apply any audio effects with in channels but no out channels
+
         weed_apply_audio_effects_rt(fltbuf,pulsed->in_achans,xnframes,pulsed->in_arate,tc,TRUE);
 
         for (i=0; i<pulsed->in_achans; i++) {
@@ -916,6 +925,9 @@ static void pulse_audio_read_process(pa_stream *pstream, size_t nbytes, void *ar
 
   if (pulsed->playing_file==-1||(mainw->record&&mainw->record_paused)) {
     pa_stream_drop(pulsed->pstream);
+    if (pulsed->playing_file==-1) {
+      pa_stream_flush(pulsed->pstream,NULL,NULL); // if not recording, flush the rest of audio (to reduce latency)
+    }
     return;
   }
 
@@ -1116,6 +1128,7 @@ int pulse_driver_activate(pulse_driver_t *pdriver) {
   } else {
     pa_battr.maxlength=(uint32_t)-1;
     pa_battr.tlength=(uint32_t)-1;
+    pa_battr.fragsize=LIVES_PA_BUFF_FRAGSIZE;
   }
 
   pa_battr.minreq=(uint32_t)-1;

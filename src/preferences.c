@@ -454,6 +454,17 @@ void pref_factory_bool(int prefidx, boolean newval) {
     } else if (!rec_ext_audio&&prefs->audio_src==AUDIO_SRC_EXT) {
       prefs->audio_src=AUDIO_SRC_INT;
       set_int_pref("audio_src",AUDIO_SRC_INT);
+
+      mainw->aud_rec_fd=-1;
+      if (prefs->perm_audio_reader) {
+#ifdef ENABLE_JACK
+        jack_rec_audio_end(TRUE,TRUE);
+#endif
+#ifdef HAVE_PULSE_AUDIO
+        pulse_rec_audio_end(TRUE,TRUE);
+#endif
+      }
+
     }
     if (prefsw!=NULL)
       lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(prefsw->rextaudio),prefs->audio_src==AUDIO_SRC_EXT);

@@ -1686,7 +1686,10 @@ void pulse_rec_audio_end(boolean close_device, boolean close_fd) {
     pa_threaded_mainloop_unlock(mainw->pulsed_read->mloop);
 
     if (close_device) mainw->pulsed_read=NULL;
-    else mainw->pulsed_read->in_use=FALSE;
+    else {
+      mainw->pulsed_read->in_use=FALSE;
+      mainw->pulsed_read->playing_file=-1;
+    }
   }
 
   if (mainw->aud_rec_fd!=-1&&close_fd) {
@@ -2235,18 +2238,18 @@ static void *cache_my_audio(void *arg) {
       if (cbuffer->bufferf!=NULL) {
         // free float channels
         for (i=0; i<(cbuffer->_cout_interleaf?1:cbuffer->_cachans); i++) {
-          free(cbuffer->bufferf[i]);
+          lives_free(cbuffer->bufferf[i]);
         }
-        free(cbuffer->bufferf);
+        lives_free(cbuffer->bufferf);
         cbuffer->bufferf=NULL;
       }
 
       if (cbuffer->buffer16!=NULL) {
         // free 16bit channels
         for (i=0; i<(cbuffer->_cout_interleaf?1:cbuffer->_cachans); i++) {
-          free(cbuffer->buffer16[i]);
+          lives_free(cbuffer->buffer16[i]);
         }
-        free(cbuffer->buffer16);
+        lives_free(cbuffer->buffer16);
         cbuffer->buffer16=NULL;
       }
 
@@ -2268,9 +2271,9 @@ static void *cache_my_audio(void *arg) {
       if (cbuffer->bufferf!=NULL) {
         // free float channels
         for (i=0; i<(cbuffer->_cout_interleaf?1:cbuffer->_cachans); i++) {
-          free(cbuffer->bufferf[i]);
+          lives_free(cbuffer->bufferf[i]);
         }
-        free(cbuffer->bufferf);
+        lives_free(cbuffer->bufferf);
         cbuffer->bufferf=NULL;
       }
 
@@ -2297,7 +2300,7 @@ static void *cache_my_audio(void *arg) {
         // free any excess channels
 
         for (i=(cbuffer->out_interleaf?1:cbuffer->out_achans); i<(cbuffer->_cout_interleaf?1:cbuffer->_cachans); i++) {
-          free(cbuffer->buffer16[i]);
+          lives_free(cbuffer->buffer16[i]);
         }
 
         if ((cbuffer->out_interleaf?1:cbuffer->out_achans) < (cbuffer->_cout_interleaf?1:cbuffer->_cachans)) {
@@ -2336,7 +2339,7 @@ static void *cache_my_audio(void *arg) {
         // free any excess channels
 
         for (i=(cbuffer->in_interleaf?1:cbuffer->out_achans); i<(cbuffer->_cin_interleaf?1:cbuffer->_cachans); i++) {
-          free(cbuffer->buffer16[i]);
+          lives_free(cbuffer->buffer16[i]);
         }
 
 
@@ -2372,7 +2375,7 @@ static void *cache_my_audio(void *arg) {
         // free any excess channels
 
         for (i=(cbuffer->out_interleaf?1:cbuffer->out_achans); i<(cbuffer->_cout_interleaf?1:cbuffer->_cachans); i++) {
-          free(cbuffer->bufferf[i]);
+          lives_free(cbuffer->bufferf[i]);
         }
 
 
@@ -2530,7 +2533,6 @@ lives_audio_buf_t *audio_cache_init(void) {
 
 
 void audio_cache_end(void) {
-  // TODO - check why we are using free() here
 
   int i;
   lives_audio_buf_t *xcache_buffer;
@@ -2541,25 +2543,25 @@ void audio_cache_end(void) {
   // free all buffers
 
   for (i=0; i<(cache_buffer->_cin_interleaf?1:cache_buffer->_cachans); i++) {
-    if (cache_buffer->buffer8!=NULL&&cache_buffer->buffer8[i]!=NULL) free(cache_buffer->buffer8[i]);
-    if (cache_buffer->buffer16!=NULL&&cache_buffer->buffer16[i]!=NULL) free(cache_buffer->buffer16[i]);
-    if (cache_buffer->buffer24!=NULL&&cache_buffer->buffer24[i]!=NULL) free(cache_buffer->buffer24[i]);
-    if (cache_buffer->buffer32!=NULL&&cache_buffer->buffer32[i]!=NULL) free(cache_buffer->buffer32[i]);
-    if (cache_buffer->bufferf!=NULL&&cache_buffer->bufferf[i]!=NULL) free(cache_buffer->bufferf[i]);
+    if (cache_buffer->buffer8!=NULL&&cache_buffer->buffer8[i]!=NULL) lives_free(cache_buffer->buffer8[i]);
+    if (cache_buffer->buffer16!=NULL&&cache_buffer->buffer16[i]!=NULL) lives_free(cache_buffer->buffer16[i]);
+    if (cache_buffer->buffer24!=NULL&&cache_buffer->buffer24[i]!=NULL) lives_free(cache_buffer->buffer24[i]);
+    if (cache_buffer->buffer32!=NULL&&cache_buffer->buffer32[i]!=NULL) lives_free(cache_buffer->buffer32[i]);
+    if (cache_buffer->bufferf!=NULL&&cache_buffer->bufferf[i]!=NULL) lives_free(cache_buffer->bufferf[i]);
   }
 
-  if (cache_buffer->buffer8!=NULL) free(cache_buffer->buffer8);
-  if (cache_buffer->buffer16!=NULL) free(cache_buffer->buffer16);
-  if (cache_buffer->buffer24!=NULL) free(cache_buffer->buffer24);
-  if (cache_buffer->buffer32!=NULL) free(cache_buffer->buffer32);
-  if (cache_buffer->bufferf!=NULL) free(cache_buffer->bufferf);
+  if (cache_buffer->buffer8!=NULL) lives_free(cache_buffer->buffer8);
+  if (cache_buffer->buffer16!=NULL) lives_free(cache_buffer->buffer16);
+  if (cache_buffer->buffer24!=NULL) lives_free(cache_buffer->buffer24);
+  if (cache_buffer->buffer32!=NULL) lives_free(cache_buffer->buffer32);
+  if (cache_buffer->bufferf!=NULL) lives_free(cache_buffer->bufferf);
 
-  if (cache_buffer->_filebuffer!=NULL) free(cache_buffer->_filebuffer);
+  if (cache_buffer->_filebuffer!=NULL) lives_free(cache_buffer->_filebuffer);
 
   // make this threadsafe
   xcache_buffer=cache_buffer;
   cache_buffer=NULL;
-  free(xcache_buffer);
+  lives_free(xcache_buffer);
 }
 
 
@@ -3031,11 +3033,8 @@ boolean push_audio_to_channel(weed_plant_t *achan, lives_audio_buf_t *abuf) {
       }
       dst+=alen*sizeof(float);
     } else {
-      // interleaved
-      for (i=0; i<tchans; i++) {
-        sample_move_float_float((float *)dst,(float *)src,alen,scale,tchans);
-        dst+=sizeof(float);
-      }
+      sample_move_float_float((float *)dst,(float *)src,alen,scale,tchans);
+      dst+=sizeof(float);
     }
   }
   return TRUE;

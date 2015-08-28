@@ -1,7 +1,8 @@
 Version 2.4.2
 -------------
 Fix crash after recording with pulseaudio external audio.
-Fix crash when converting from YUV420 to UYVY / YUYV.
+Fix possible crash when converting from YUV420 to UYVY / YUYV.
+Fix memory issue in audio triggered video generators.
 Fix occasional hang in shutdown via OSC.
 Minor fixes for headless (nogui, noplaywin) modes.
 Increase size of debug output window when encoding (Regression).

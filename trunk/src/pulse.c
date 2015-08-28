@@ -153,12 +153,10 @@ static void sample_silence_pulse(pulse_driver_t *pdriver, size_t nbytes, size_t 
     buff=(uint8_t *)lives_try_malloc0(xbytes);
     if (!buff) return;
     if (pdriver->astream_fd!=-1) audio_stream(buff,xbytes,pdriver->astream_fd);
-    if (mainw->audio_frame_buffer!=NULL) {
+    if (mainw->audio_frame_buffer!=NULL&&prefs->audio_src!=AUDIO_SRC_EXT) {
       pthread_mutex_lock(&mainw->abuf_frame_mutex);
-      if (mainw->audio_frame_buffer!=NULL) {
-	append_to_audio_buffer16(mainw->audio_frame_buffer,buff,xbytes/2,0);
-	mainw->audio_frame_buffer->samples_filled+=xbytes/2;
-      }
+      append_to_audio_buffer16(mainw->audio_frame_buffer,buff,xbytes/2,0);
+      mainw->audio_frame_buffer->samples_filled+=xbytes/2;
       pthread_mutex_unlock(&mainw->abuf_frame_mutex);
     }
     pa_stream_write(pdriver->pstream,buff,xbytes,pulse_buff_free,0,PA_SEEK_RELATIVE);
@@ -689,12 +687,10 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
             needs_free=TRUE;
           }
           if (pulsed->astream_fd!=-1) audio_stream(buffer,xbytes,pulsed->astream_fd);
-          if (mainw->audio_frame_buffer!=NULL) {
+	  if (mainw->audio_frame_buffer!=NULL&&prefs->audio_src!=AUDIO_SRC_EXT) {
             pthread_mutex_lock(&mainw->abuf_frame_mutex);
-	    if (mainw->audio_frame_buffer!=NULL) {
-	      append_to_audio_buffer16(mainw->audio_frame_buffer,buffer,xbytes/2,0);
-	      mainw->audio_frame_buffer->samples_filled+=xbytes/2;
-	    }
+	    append_to_audio_buffer16(mainw->audio_frame_buffer,buffer,xbytes/2,0);
+	    mainw->audio_frame_buffer->samples_filled+=xbytes/2;
             pthread_mutex_unlock(&mainw->abuf_frame_mutex);
           }
           pa_stream_write(pulsed->pstream,buffer,xbytes,buffer==pulsed->aPlayPtr->data?NULL:
@@ -705,12 +701,10 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
             if (!shortbuffer) return;
             sample_move_abuf_int16(shortbuffer,pulsed->out_achans,(xbytes>>1)/pulsed->out_achans,pulsed->out_arate);
             if (pulsed->astream_fd!=-1) audio_stream(shortbuffer,xbytes,pulsed->astream_fd);
-            if (mainw->audio_frame_buffer!=NULL) {
+	    if (mainw->audio_frame_buffer!=NULL&&prefs->audio_src!=AUDIO_SRC_EXT) {
               pthread_mutex_lock(&mainw->abuf_frame_mutex);
-	      if (mainw->audio_frame_buffer!=NULL) {
-		append_to_audio_buffer16(mainw->audio_frame_buffer,shortbuffer,xbytes/2,0);
-		mainw->audio_frame_buffer->samples_filled+=xbytes/2;
-	      }
+	      append_to_audio_buffer16(mainw->audio_frame_buffer,shortbuffer,xbytes/2,0);
+	      mainw->audio_frame_buffer->samples_filled+=xbytes/2;
               pthread_mutex_unlock(&mainw->abuf_frame_mutex);
             }
             pa_stream_write(pulsed->pstream,shortbuffer,xbytes,pulse_buff_free,0,PA_SEEK_RELATIVE);
@@ -895,13 +889,11 @@ static void pulse_audio_read_process(pa_stream *pstream, size_t nbytes, void *ar
 
         sample_move_d16_float(fltbuf[i],(short *)data+i,xnframes,pulsed->in_achans,FALSE,FALSE,1.0);
 
-        if (mainw->audio_frame_buffer!=NULL) {
+	if (mainw->audio_frame_buffer!=NULL&&prefs->audio_src==AUDIO_SRC_EXT) {
           // if we have audio triggered gens., push audio to it
           pthread_mutex_lock(&mainw->abuf_frame_mutex);
-	  if (mainw->audio_frame_buffer!=NULL) {
-	    append_to_audio_bufferf(mainw->audio_frame_buffer,fltbuf[i],xnframes,i);
-	    mainw->audio_frame_buffer->samples_filled+=xnframes;
-	  }
+	  append_to_audio_bufferf(mainw->audio_frame_buffer,fltbuf[i],xnframes,i);
+	  mainw->audio_frame_buffer->samples_filled+=xnframes;
           pthread_mutex_unlock(&mainw->abuf_frame_mutex);
         }
       }

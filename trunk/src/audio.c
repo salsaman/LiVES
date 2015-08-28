@@ -26,7 +26,6 @@
 #include "effects.h"
 #include "support.h"
 
-
 // keep first 16 audio_in filesysten handles open - multitrack only
 #define NSTOREDFDS 16
 static char *storedfnames[NSTOREDFDS];
@@ -82,7 +81,7 @@ void append_to_audio_bufferf(lives_audio_buf_t *abuf, float *src, uint64_t nsamp
     abuf->out_achans=channum;
   }
   channum--;
-  abuf->bufferf[channum]=(float *)lives_realloc(abuf->bufferf[channum],nsampsize);
+  abuf->bufferf[channum]=(float *)lives_realloc(abuf->bufferf[channum],nsampsize*sizeof(float));
   lives_memcpy(&abuf->bufferf[channum][abuf->samples_filled],src,nsamples*sizeof(float));
 }
 
@@ -107,7 +106,7 @@ void append_to_audio_buffer16(lives_audio_buf_t *abuf, void *src, uint64_t nsamp
     abuf->out_achans=channum;
   }
   channum--;
-  abuf->buffer16[channum]=(int16_t *)lives_realloc(abuf->buffer16[channum],nsampsize);
+  abuf->buffer16[channum]=(int16_t *)lives_realloc(abuf->buffer16[channum],nsampsize*2);
   lives_memcpy(&abuf->buffer16[channum][abuf->samples_filled],src,nsamples*2);
 #ifdef DEBUG_AFB
   g_print("append16 to afb\n");
@@ -442,7 +441,7 @@ void sample_move_d16_float(float *dst, short *src, uint64_t nsamples, uint64_t s
 
 void sample_move_float_float(float *dst, float *src, uint64_t nsamples, float scale, int dst_skip) {
   // copy one channel of float to a buffer, applying the scale (scale 2.0 to double the rate, etc)
-  size_t offs=0;
+  volatile size_t offs=0;
   float offs_f=0.;
   register int i;
 

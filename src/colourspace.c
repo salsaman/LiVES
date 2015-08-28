@@ -3755,7 +3755,7 @@ void *convert_yuyv_to_argb_frame_thread(void *data) {
 }
 
 
-static void convert_yuv420_to_uyvy_frame(uint8_t **src, int width, int height, uyvy_macropixel *dest) {
+static void convert_yuv420_to_uyvy_frame(uint8_t **src, int width, int height, uyvy_macropixel *dest, boolean clamped) {
   register int i=0,j;
   uint8_t *y,*u,*v,*end;
   int hwidth=width>>1;
@@ -3769,6 +3769,8 @@ static void convert_yuv420_to_uyvy_frame(uint8_t **src, int width, int height, u
   v=src[2];
 
   end=y+width*height;
+
+  set_conversion_arrays(clamped?WEED_YUV_CLAMPING_CLAMPED:WEED_YUV_CLAMPING_UNCLAMPED,WEED_YUV_SUBSPACE_YCBCR);
 
   while (y<end) {
     for (j=0; j<hwidth; j++) {
@@ -3797,7 +3799,7 @@ static void convert_yuv420_to_uyvy_frame(uint8_t **src, int width, int height, u
 }
 
 
-static void convert_yuv420_to_yuyv_frame(uint8_t **src, int width, int height, yuyv_macropixel *dest) {
+static void convert_yuv420_to_yuyv_frame(uint8_t **src, int width, int height, yuyv_macropixel *dest, boolean clamped) {
   register int i=0,j;
   uint8_t *y,*u,*v,*end;
   int hwidth=width>>1;
@@ -3811,6 +3813,8 @@ static void convert_yuv420_to_yuyv_frame(uint8_t **src, int width, int height, y
   v=src[2];
 
   end=y+width*height;
+
+  set_conversion_arrays(clamped?WEED_YUV_CLAMPING_CLAMPED:WEED_YUV_CLAMPING_UNCLAMPED,WEED_YUV_SUBSPACE_YCBCR);
 
   while (y<end) {
     for (j=0; j<hwidth; j++) {
@@ -9504,14 +9508,14 @@ boolean convert_layer_palette_full(weed_plant_t *layer, int outpl, int osamtype,
       weed_set_int_value(layer,"width",width>>1);
       create_empty_pixel_data(layer,FALSE,TRUE);
       gudest=(uint8_t *)weed_get_voidptr_value(layer,"pixel_data",&error);
-      convert_yuv420_to_uyvy_frame(gusrc_array,width,height,(uyvy_macropixel *)gudest);
+      convert_yuv420_to_uyvy_frame(gusrc_array,width,height,(uyvy_macropixel *)gudest,iclamped);
       break;
     case WEED_PALETTE_YUYV8888:
       weed_set_int_value(layer,"current_palette",outpl);
       weed_set_int_value(layer,"width",width>>1);
       create_empty_pixel_data(layer,FALSE,TRUE);
       gudest=(uint8_t *)weed_get_voidptr_value(layer,"pixel_data",&error);
-      convert_yuv420_to_yuyv_frame(gusrc_array,width,height,(yuyv_macropixel *)gudest);
+      convert_yuv420_to_yuyv_frame(gusrc_array,width,height,(yuyv_macropixel *)gudest,iclamped);
       break;
     case WEED_PALETTE_YUV422P:
       weed_set_int_value(layer,"current_palette",outpl);

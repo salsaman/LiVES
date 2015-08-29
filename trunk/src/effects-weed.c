@@ -2094,8 +2094,7 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
 
     set_channel_size(channel,incwidth,incheight,0,NULL);
 
-    palette=weed_get_int_value(layer,"current_palette",&error);
-    inpalette=cpalette;
+    inpalette=palette=weed_get_int_value(layer,"current_palette",&error);
 
     // check if we need to resize
     if ((inwidth!=width)||(inheight!=height)) {
@@ -2119,7 +2118,7 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
         }
       }
       // check palette again in case it changed during resize
-      inpalette=weed_get_int_value(channel,"current_palette",&error);
+      inpalette=weed_get_int_value(layer,"current_palette",&error);
 
       inwidth=weed_get_int_value(layer,"width",&error)*weed_palette_get_pixels_per_macropixel(inpalette)/
               weed_palette_get_pixels_per_macropixel(palette);
@@ -2136,7 +2135,6 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
     }
 
     i++;
-
 
     // try to match palettes with first enabled in channel:
     // TODO ** - we should see which palette causes the least palette conversions
@@ -2296,7 +2294,6 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
     }
 
 
-
     if (cpalette!=inpalette||isubspace!=osubspace) {
 
       if (all_outs_alpha&&(weed_palette_is_lower_quality(inpalette,cpalette)||
@@ -2308,6 +2305,7 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
         orig_layer=layer;
         layer=weed_layer_copy(NULL,orig_layer);
       }
+
 
       if (!convert_layer_palette_full(layer,inpalette,
                                       osampling,oclamping,osubspace)) {
@@ -3393,8 +3391,6 @@ audinst1:
   }
 
 
-  if (((float *)weed_get_voidptr_value(layers[0],"audio_data",&error))[0]<-1.0) g_print("INV VAL 4\n");
-
   retval2=weed_apply_audio_instance_inner(instance,init_event,layers,tc,nbtracks);
   if (retval==FILTER_NO_ERROR) retval=retval2;
 
@@ -3656,6 +3652,7 @@ apply_inst3:
               weed_reinit_effect(instance,FALSE);
             }
           }
+
 
           filter_error=weed_apply_instance(instance,NULL,layers,opwidth,opheight,tc);
 

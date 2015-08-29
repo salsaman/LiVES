@@ -1,6 +1,6 @@
 // colourspace.c
 // LiVES
-// (c) G. Finch 2004 - 2013 <salsaman@gmail.com>
+// (c) G. Finch 2004 - 2015 <salsaman@gmail.com>
 // Released under the GPL 3 or later
 // see file ../COPYING for licensing details
 
@@ -8153,10 +8153,6 @@ boolean convert_layer_palette_full(weed_plant_t *layer, int outpl, int osamtype,
   // but we will convert to/from the 5 other RGB palettes and 10 YUV palettes
   // giving a total of 15*14=210 conversions
   //
-  // number coded so far 180
-  // ~85% complete
-
-  // some conversions to and from ARGB and to and from yuv411 are missing
 
   // NOTE - if converting to YUV411, we cut pixels so (RGB) width is divisible by 4
   //        if converting to other YUV, we cut pixels so (RGB) width is divisible by 2
@@ -8185,6 +8181,7 @@ boolean convert_layer_palette_full(weed_plant_t *layer, int outpl, int osamtype,
   int isamtype,isubspace;
   boolean iclamped,contig=FALSE;
 
+  if (layer==NULL) return FALSE;
 
   inpl=weed_get_int_value(layer,"current_palette",&error);
 

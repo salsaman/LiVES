@@ -903,7 +903,6 @@ weed_plant_t *on_rte_apply(weed_plant_t *layer, int opwidth, int opheight, weed_
     retlayer=layers[0];
     weed_plant_free(init_event);
   } else {
-
     retlayer=weed_apply_effects(layers,mainw->filter_map,tc,opwidth,opheight,mainw->pchains);
   }
 

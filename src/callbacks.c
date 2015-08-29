@@ -4030,9 +4030,9 @@ void on_record_perf_activate(LiVESMenuItem *menuitem, livespointer user_data) {
 
       if (prefs->rec_opts&REC_EFFECTS) {
         // add deinit events for all active effects
-	pthread_mutex_unlock(&mainw->event_list_mutex);
+        pthread_mutex_unlock(&mainw->event_list_mutex);
         add_filter_deinit_events(mainw->event_list);
-	pthread_mutex_lock(&mainw->event_list_mutex);
+        pthread_mutex_lock(&mainw->event_list_mutex);
       }
 
       // write a RECORD_END marker

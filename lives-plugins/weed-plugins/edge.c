@@ -88,9 +88,9 @@ int edge_deinit(weed_plant_t *inst) {
 }
 
 
-static inline RGB32 copywalpha(RGB32 *dest, RGB32 *src, size_t offs, RGB32 val) {
+static inline RGB32 copywalpha(RGB32 *dest, RGB32 *src, size_t ioffs, size_t ooffs, RGB32 val) {
   // copy alpha from src, and RGB from val; return val
-  dest[offs]=(src[offs]&0xff000000)|(val&0xffffff);
+  dest[ooffs]=(src[ioffs]&0xff000000)|(val&0xffffff);
   return val;
 }
 
@@ -100,22 +100,30 @@ int edge_process(weed_plant_t *inst, weed_timecode_t timestamp) {
   weed_plant_t *in_channel=weed_get_plantptr_value(inst,"in_channels",&error),*out_channel=weed_get_plantptr_value(inst,"out_channels",
                            &error);
   RGB32 *src=weed_get_voidptr_value(in_channel,"pixel_data",&error);
-  RGB32 *dest=weed_get_voidptr_value(out_channel,"pixel_data",&error);
+  RGB32 *dest=weed_get_voidptr_value(out_channel,"pixel_data",&error),*odest=dest;
   int video_width=weed_get_int_value(in_channel,"width",&error);
   int video_height=weed_get_int_value(in_channel,"height",&error);
   int r,g,b;
   static_data *sdata=weed_get_voidptr_value(inst,"plugin_internal",&error);
   RGB32 *map=sdata->map;
+
   int map_width=video_width/4;
-  int map_height=video_height/4;
+  int map_height=video_height;
+
   register int x, y;
   RGB32 p, q;
   RGB32 v0, v1, v2, v3;
-  int video_width_margin = video_width - video_width/4 * 4;
-  int row=video_width*3+8+video_width_margin;
 
-  src += video_width*4+4;
-  dest += video_width*4+4;
+  //int video_width_margin = video_width - video_width/4 * 4;
+  //int row=video_width*3+8+video_width_margin;
+
+  int irow=weed_get_int_value(in_channel,"rowstrides",&error)/4;
+  int irowx = irow - video_width + 2;
+  int orow=weed_get_int_value(out_channel,"rowstrides",&error)/4;
+  int orowx = orow - video_width + 2;
+
+  src += video_width+1;
+  dest += video_width+1;
 
   for (y=1; y<map_height-1; y++) {
     for (x=1; x<map_width-1; x++) {
@@ -138,7 +146,7 @@ int edge_process(weed_plant_t *inst, weed_timecode_t timestamp) {
       v2 = (r<<17)|(g<<9)|b;
 
       /* difference between the current pixel and upper neighbor. */
-      q = *(src - video_width*4);
+      q = *(src - irow);
       r = ((int)(p & 0xff0000) - (int)(q & 0xff0000))>>16;
       g = ((int)(p & 0x00ff00) - (int)(q & 0x00ff00))>>8;
       b = ((int)(p & 0x0000ff) - (int)(q & 0x0000ff));
@@ -153,29 +161,35 @@ int edge_process(weed_plant_t *inst, weed_timecode_t timestamp) {
       if (b>255) b = 255;
       v3 = (r<<17)|(g<<9)|b;
 
-      map[y*map_width*2+x*2+1] = copywalpha(dest,src,2,copywalpha(dest,src,3,copywalpha(dest,src,video_width+2,copywalpha(dest,src,video_width+3,
-                                            v3))));
-      map[y*map_width*2+x*2] = copywalpha(dest,src,video_width*2,copywalpha(dest,src,video_width*2+1,copywalpha(dest,src,video_width*3,
-                                          copywalpha(dest,src,video_width*3+1,v2))));
+      map[y*map_width*2+x*2+1] = copywalpha(dest,src,2,2,copywalpha(dest,src,3,3,copywalpha(dest,src,irow+2,orow+2,
+											    copywalpha(dest,src,irow+3,orow+3,
+												       v3))));
+      map[y*map_width*2+x*2] = copywalpha(dest,src,irow*2,orow*2,copywalpha(dest,src,irow*2+1,orow*2+1,
+									    copywalpha(dest,src,irow*3,orow*3,
+										       copywalpha(dest,src,irow*3+1,orow*3+1,v2))));
 
       v0 = map[(y-1)*map_width*2+x*2];
       v1 = map[y*map_width*2+(x-1)*2+1];
 
       g = (r=v0+v1) & 0x01010100;
-      copywalpha(dest,src,0,r | (g - (g>>8)));
+      copywalpha(dest,src,0,0,r | (g - (g>>8)));
       g = (r=v0+v3) & 0x01010100;
-      copywalpha(dest,src,1,r | (g - (g>>8)));
+      copywalpha(dest,src,1,1,r | (g - (g>>8)));
       g = (r=v2+v1) & 0x01010100;
-      copywalpha(dest,src,video_width,r | (g - (g>>8)));
+      copywalpha(dest,src,irow,orow,r | (g - (g>>8)));
       g = (r=v2+v3) & 0x01010100;
-      copywalpha(dest,src,video_width+1,r | (g - (g>>8)));
+      copywalpha(dest,src,irow+1,orow+1,r | (g - (g>>8)));
 
       src += 4;
       dest += 4;
     }
-    src += row;
-    dest += row;
+    src += irowx;
+    dest += orowx;
   }
+
+  weed_memset(dest,0,orow*4-4);
+  weed_memset(odest,0,orow*4+4);
+
   return WEED_NO_ERROR;
 }
 

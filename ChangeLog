@@ -10,7 +10,7 @@ Fix for compiling without jack.
 Fix crash in mask_overlay effect.
 Fix some threading problems when running audio and video effects together.
 Improve OSC responsiveness during playback.
-Fixes for beat_detector and scribbler plugins.
+Fixes for beat_detector and edge plugins.
 Fix latency issue with pulseaudio external input.
 
 

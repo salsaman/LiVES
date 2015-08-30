@@ -1794,10 +1794,18 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const char *tex
     // we got a message from the backend...
 
     if (visible&&(!accelerators_swapped||cfile->opening)&&cancellable&&(!cfile->nopreview||cfile->keep_without_preview)) {
-      if (!cfile->nopreview&&!(cfile->opening&&mainw->multitrack!=NULL))
+      if (!cfile->nopreview&&!(cfile->opening&&mainw->multitrack!=NULL)) {
         lives_widget_show(cfile->proc_ptr->preview_button);
-      if (cfile->opening_loc) lives_widget_show(cfile->proc_ptr->stop_button);
-      else lives_widget_show(cfile->proc_ptr->pause_button);
+      }
+
+      // show buttons
+      if (cfile->opening_loc) {
+        lives_widget_hide(cfile->proc_ptr->pause_button);
+        lives_widget_show(cfile->proc_ptr->stop_button);
+      } else {
+        lives_widget_show(cfile->proc_ptr->pause_button);
+        lives_widget_hide(cfile->proc_ptr->stop_button);
+      }
 
       if (!cfile->opening&&!cfile->nopreview) {
         lives_widget_grab_default(cfile->proc_ptr->preview_button);
@@ -1969,6 +1977,8 @@ boolean do_auto_dialog(const char *text, int type) {
     clear_mainw_msg();
     alarm_handle=lives_alarm_set(MIN_FLASH_TIME); // don't want to flash too fast...
   } else if (type==1) {
+
+    // show buttons
     lives_widget_show(proc_ptr->stop_button);
     lives_widget_show(proc_ptr->cancel_button);
 #ifdef HAVE_PULSE_AUDIO

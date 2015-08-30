@@ -240,7 +240,7 @@ xprocess *create_processing(const char *text) {
   dialog_action_area = lives_dialog_get_action_area(LIVES_DIALOG(procw->processing));
   lives_button_box_set_layout(LIVES_BUTTON_BOX(dialog_action_area), LIVES_BUTTONBOX_END);
 
-  procw->stop_button = lives_button_new_with_mnemonic(_("_Enough"));
+  procw->stop_button = lives_button_new_with_mnemonic(_("_Enough")); // used only for open location and for audio recording
   procw->preview_button = lives_button_new_with_mnemonic(_("_Preview"));
 
   if (cfile->nokeep) procw->pause_button = lives_button_new_with_mnemonic(_("Paus_e"));
@@ -265,6 +265,8 @@ xprocess *create_processing(const char *text) {
 #endif
        ) {
       // the "enough" button for opening
+
+      // show buttons
       lives_dialog_add_action_widget(LIVES_DIALOG(procw->processing), procw->stop_button, 0);
       lives_widget_show(procw->stop_button);
       lives_widget_set_can_focus_and_default(procw->stop_button);

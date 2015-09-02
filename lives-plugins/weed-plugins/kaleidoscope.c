@@ -271,7 +271,6 @@ int kal_process(weed_plant_t *inst, weed_timecode_t timestamp) {
 
   xangle=sdata->angle+(float)angleoffs/360.*TWO_PI;
   if (xangle>=TWO_PI) xangle-=TWO_PI;
-  sdata->old_tc=timestamp;
 
   if (sdata->owidth!=width||sdata->oheight!=height) {
     if (sizerev&&sdata->owidth!=0&&sdata->oheight!=0) sdata->revrot=1-sdata->revrot;
@@ -345,6 +344,7 @@ int kal_process(weed_plant_t *inst, weed_timecode_t timestamp) {
     sdata->angle+=anglerot*TWO_PI;
     if (sdata->angle>=TWO_PI) sdata->angle-=TWO_PI;
     else if (sdata->angle<0.) sdata->angle+=TWO_PI;
+    sdata->old_tc=timestamp;
   }
 
   return WEED_NO_ERROR;

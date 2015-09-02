@@ -293,7 +293,7 @@ static gboolean cairo_to_channel(cairo_t *cairo, weed_plant_t *channel) {
 
     for (i=0; i<height; i++) {
       weed_memcpy(dst,src,widthx);
-      weed_memset(dst+widthx,0,widthx-orowstride);
+      weed_memset(dst+widthx,0,orowstride-widthx);
       dst+=orowstride;
       src+=irowstride;
     }

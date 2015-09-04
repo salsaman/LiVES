@@ -565,7 +565,7 @@ boolean on_open_vdev_activate(LiVESMenuItem *menuitem, livespointer user_data) {
 
   d_print(_("Opened device %s\n"),devices[devno].identifier);
 
-  switch_to_file((mainw->current_file=old_file),new_file);
+  switch_clip(0,new_file);
 
   lives_free(fname);
 

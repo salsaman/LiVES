@@ -7068,7 +7068,7 @@ void load_frame_image(int frame) {
     }
 
 
-    if (new_file==mainw->current_file) {
+    if (new_file==mainw->current_file&&(mainw->playing_file==-1||mainw->playing_file==mainw->current_file)) {
       if (!((mainw->fs&&prefs->gui_monitor==prefs->play_monitor)||(mainw->faded&&mainw->double_size)||
             mainw->multitrack!=NULL)) {
         switch_to_file(mainw->current_file=0, new_file);

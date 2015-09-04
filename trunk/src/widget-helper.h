@@ -552,6 +552,7 @@ boolean lives_entry_set_visibility(LiVESEntry *, boolean vis);
 boolean lives_entry_set_has_frame(LiVESEntry *, boolean has);
 
 double lives_scale_button_get_value(LiVESScaleButton *);
+boolean lives_scale_button_set_value(LiVESScaleButton *, double value);
 
 LiVESWidget *lives_table_new(uint32_t rows, uint32_t cols, boolean homogeneous);
 boolean lives_table_set_row_spacings(LiVESTable *, uint32_t spacing);

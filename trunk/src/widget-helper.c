@@ -6268,6 +6268,22 @@ LIVES_INLINE double lives_scale_button_get_value(LiVESScaleButton *scale) {
   return value;
 }
 
+LIVES_INLINE boolean lives_scale_button_set_value(LiVESScaleButton *scale, double value) {
+#ifdef GUI_GTK
+#if GTK_CHECK_VERSION(2,14,0)
+  gtk_scale_button_set_value(scale,value);
+#else
+  gtk_adjustment_set_value(gtk_range_get_adjustment(scale),value);
+#endif
+  return TRUE;
+#endif
+#ifdef GUI_QT
+  value = scale->value();
+  return TRUE;
+#endif
+  return FALSE;
+}
+
 
 LIVES_INLINE char *lives_file_chooser_get_filename(LiVESFileChooser *chooser) {
   char *fname=NULL;

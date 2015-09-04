@@ -5606,7 +5606,7 @@ void switch_clip(int type, int newclip) {
 
   // switch fg clip
 
-  if (newclip==mainw->current_file) return;
+  if (newclip==mainw->current_file&&(mainw->playing_file==-1||mainw->playing_file==newclip)) return;
   if (!cfile->is_loaded) mainw->cancelled=CANCEL_NO_PROPOGATE;
 
   if (mainw->playing_file>-1) {

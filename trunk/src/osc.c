@@ -34,6 +34,9 @@
 #include "resample.h"
 #include "paramwindow.h"
 #include "ce_thumbs.h"
+#ifdef HAVE_UNICAP
+#include "videodev.h"
+#endif
 #include "lbindings.h"
 
 void *status_socket;
@@ -6665,8 +6668,6 @@ boolean lives_osc_cb_open_unicap(void *context, int arglen, const void *vargs, O
   if ((mainw->preview||(mainw->multitrack==NULL&&mainw->event_list!=NULL))||mainw->is_processing||
       mainw->multitrack!=NULL) return lives_osc_notify_failure();
 
-  if (mainw->playing_file>-1) return lives_osc_notify_failure();
-
   if (!lives_osc_check_arguments(arglen,vargs,"si",FALSE)) {
     if (lives_osc_check_arguments(arglen,vargs,"s",FALSE)) {
       lives_osc_parse_string_argument(vargs,devname);
@@ -6674,7 +6675,7 @@ boolean lives_osc_cb_open_unicap(void *context, int arglen, const void *vargs, O
   }
   else {
     lives_osc_parse_string_argument(vargs,devname);
-    lives_osc_parse_int_argument(vargs,deint);
+    lives_osc_parse_int_argument(vargs,&deint);
     boolstr=lives_strdup_printf("%d",deint);
     if (!strcmp(boolstr,get_omc_const("LIVES_TRUE"))) deint=TRUE;
     else {
@@ -7065,7 +7066,7 @@ static struct {
   {	"/video/pingpong/",	"pingpong",        39, 5,0   	},
   {	"/audio/",	 	"audio",	 6, -1,0   	},
   {	"/audio/mute",	 	"mute",	 300, 6,0   	},
-  {	"/audio/volume",	 	"volume",	 300, 6,0   	},
+  {	"/audio/volume",	 	"volume",	 301, 6,0   	},
   {	"/clip/", 		"clip",		 1, -1,0	},
   {	"/clip/fps/", 		"fps",		 113, 1,0	},
   {	"/clip/foreground/", 	"foreground",    47, 1,0	},

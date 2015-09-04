@@ -13,6 +13,7 @@ Fix some threading problems when running audio and video effects together.
 Improve OSC responsiveness during playback.
 Fixes for beat_detector,edge,vector_visualiser, and kaleidoscope plugins.
 Fix latency issue with pulseaudio external input.
+Fix for opening unicap device during playback.
 Implement OSC commands /audio/mute/set, /audio/mute/get, /audio/volume/set, /audio/volume/get and /clip/open/unicap.
 
 

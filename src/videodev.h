@@ -1,5 +1,5 @@
 // LiVES - videodev input
-// (c) G. Finch 2010 - 2013 <salsaman@gmail.com>
+// (c) G. Finch 2010 - 2015 <salsaman@gmail.com>
 // released under the GNU GPL 3 or later
 // see file COPYING or www.gnu.org for details
 
@@ -25,7 +25,7 @@ typedef struct {
 #define MAX_DEVICES 1024
 #define MAX_FORMATS 1024
 
-void on_open_vdev_activate(LiVESMenuItem *, livespointer);
+boolean on_open_vdev_activate(LiVESMenuItem *, livespointer devname);
 boolean weed_layer_set_from_lvdev(weed_plant_t *layer, lives_clip_t *sfile, double timeoutsecs);
 void lives_vdev_free(lives_vdev_t *);
 

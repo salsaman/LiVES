@@ -1475,7 +1475,10 @@ static void after_dialog_combo_changed(LiVESWidget *combo, livespointer user_dat
 LiVESWidget *create_combo_dialog(int type, livespointer user_data) {
   // create a dialog with combo box selector
 
-  // type 1 == 1 combo box
+  // type 1 == unicap device
+
+  // afterwards, mainw->fx1_val points to index selected
+
 
   LiVESWidget *combo_dialog;
   LiVESWidget *dialog_vbox;

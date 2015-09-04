@@ -449,7 +449,7 @@ void lives_vdev_free(lives_vdev_t *ldev) {
 
 
 
-void on_open_vdev_activate(LiVESMenuItem *menuitem, livespointer user_data) {
+boolean on_open_vdev_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   unicap_device_t devices[MAX_DEVICES];
 
   LiVESList *devlist=NULL;
@@ -476,7 +476,7 @@ void on_open_vdev_activate(LiVESMenuItem *menuitem, livespointer user_data) {
 
   if (dev_count == 0) {
     do_no_in_vdevs_error();
-    return;
+    return FALSE;
   }
 
   // get device list
@@ -496,21 +496,33 @@ void on_open_vdev_activate(LiVESMenuItem *menuitem, livespointer user_data) {
 
   if (devlist==NULL) {
     do_locked_in_vdevs_error();
-    return;
+    return FALSE;
   }
 
-  mainw->fx1_val=0;
-  mainw->open_deint=FALSE;
-  card_dialog=create_combo_dialog(1,(livespointer)devlist);
-  response=lives_dialog_run(LIVES_DIALOG(card_dialog));
-  lives_list_free(devlist);
+  if (user_data==NULL) {
+    mainw->fx1_val=0;
+    mainw->open_deint=FALSE;
+    card_dialog=create_combo_dialog(1,(livespointer)devlist);
+    response=lives_dialog_run(LIVES_DIALOG(card_dialog));
+    lives_list_free(devlist);
 
-  if (response==LIVES_RESPONSE_CANCEL) {
+    if (response==LIVES_RESPONSE_CANCEL) {
+      lives_widget_destroy(card_dialog);
+      return FALSE;
+    }
+
     lives_widget_destroy(card_dialog);
-    return;
   }
-
-  lives_widget_destroy(card_dialog);
+  else {
+    char *device=(char *)user_data;
+    for (i=0;i<dev_count;i++) {
+      if (!strcmp(device,devices[i].device)) {
+	mainw->fx1_val=i;
+	break;
+      }
+    }
+  }
+  
 
   for (i=dev_count-1; i>=0; i--) {
     if (!unicap_is_stream_locked(&devices[i])) {
@@ -527,7 +539,7 @@ void on_open_vdev_activate(LiVESMenuItem *menuitem, livespointer user_data) {
 
   if (!get_new_handle(new_file,fname)) {
     lives_free(fname);
-    return;
+    return FALSE;
   }
 
   mainw->current_file=new_file;
@@ -539,7 +551,7 @@ void on_open_vdev_activate(LiVESMenuItem *menuitem, livespointer user_data) {
     d_print(_("Unable to open device %s\n"),fname);
     lives_free(fname);
     close_current_file(old_file);
-    return;
+    return FALSE;
   }
 
   if (cfile->interlace!=LIVES_INTERLACE_NONE&&prefs->auto_deint) cfile->deinterlace=TRUE; ///< auto deinterlace
@@ -557,6 +569,7 @@ void on_open_vdev_activate(LiVESMenuItem *menuitem, livespointer user_data) {
 
   lives_free(fname);
 
+  return TRUE;
 }
 
 

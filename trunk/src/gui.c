@@ -4377,10 +4377,15 @@ void add_to_clipmenu(void) {
   // TODO - indicate "opening"
   char *tmp;
 
+#ifndef GTK_RADIO_MENU_BUG
   cfile->menuentry = lives_radio_menu_item_new_with_label(mainw->clips_group, tmp=get_menu_name(cfile));
-  lives_free(tmp);
-
   mainw->clips_group=lives_radio_menu_item_get_group(LIVES_RADIO_MENU_ITEM(cfile->menuentry));
+#else
+  cfile->menuentry = lives_check_menu_item_new_with_label(tmp=get_menu_name(cfile));
+  gtk_check_menu_item_set_draw_as_radio(cfile->menuentry,TRUE);
+#endif
+
+  lives_free(tmp);
 
   lives_widget_show(cfile->menuentry);
   lives_container_add(LIVES_CONTAINER(mainw->clipsmenu), cfile->menuentry);
@@ -4418,6 +4423,8 @@ void remove_from_clipmenu(void) {
 
   list=mainw->cliplist;
   mainw->clips_group=NULL;
+
+#ifndef GTK_RADIO_MENU_BUG
   while (list!=NULL) {
     fileno=LIVES_POINTER_TO_INT(list->data);
     if (mainw->files[fileno]!=NULL&&mainw->files[fileno]->menuentry!=NULL) {
@@ -4425,6 +4432,7 @@ void remove_from_clipmenu(void) {
       break;
     }
   }
+#endif
 
 }
 

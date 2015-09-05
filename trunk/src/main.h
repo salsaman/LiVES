@@ -1295,7 +1295,7 @@ void on_cleardisk_activate(LiVESWidget *, livespointer user_data);
 void on_cleardisk_advanced_clicked(LiVESWidget *, livespointer user_data);
 void popup_lmap_errors(LiVESMenuItem *, livespointer);
 void on_filesel_button_clicked(LiVESButton *, livespointer user_data);
-void switch_clip(int type, int newclip);
+void switch_clip(int type, int newclip, boolean force);
 void on_details_button_clicked(void);
 
 

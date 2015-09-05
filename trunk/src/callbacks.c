@@ -4443,7 +4443,7 @@ boolean prevclip_callback(LiVESAccelGroup *group, LiVESObject *obj, uint32_t key
            i!=((type==2||(mainw->playing_file>0&&mainw->active_sa_clips==SCREEN_AREA_BACKGROUND&&type!=1))?
                mainw->blend_file:mainw->current_file));
 
-  switch_clip(type,i);
+  switch_clip(type,i,FALSE);
 
   return TRUE;
 }
@@ -4481,7 +4481,7 @@ boolean nextclip_callback(LiVESAccelGroup *group, LiVESObject *obj, uint32_t key
            i!=((type==2||(mainw->playing_file>0&&mainw->active_sa_clips==SCREEN_AREA_BACKGROUND&&type!=1))?
                mainw->blend_file:mainw->current_file));
 
-  switch_clip(type,i);
+  switch_clip(type,i,FALSE);
 
   return TRUE;
 }
@@ -5574,8 +5574,11 @@ void on_show_clipboard_info_activate(LiVESMenuItem *menuitem, livespointer user_
 }
 
 
-void switch_clip(int type, int newclip) {
+void switch_clip(int type, int newclip, boolean force) {
   // generic switch clip callback
+
+  // This is the new single entry function for switching clips. 
+  // It should eventually replace switch_to_file() and do_quick_switch()
 
   // prev clip
   // type = 0 : if the effect is a transition, this will change the background clip
@@ -5606,13 +5609,14 @@ void switch_clip(int type, int newclip) {
 
   // switch fg clip
 
-  if (newclip==mainw->current_file&&(mainw->playing_file==-1||mainw->playing_file==newclip)) return;
+  if (!force&&(newclip==mainw->current_file&&(mainw->playing_file==-1||mainw->playing_file==newclip))) return;
   if (!cfile->is_loaded) mainw->cancelled=CANCEL_NO_PROPOGATE;
 
   if (mainw->playing_file>-1) {
     mainw->pre_src_file=newclip;
     mainw->new_clip=newclip;
   } else {
+    if (force&&newclip==mainw->current_file) mainw->current_file=0;
     switch_to_file(mainw->current_file,newclip);
   }
 }
@@ -5625,13 +5629,11 @@ void switch_clip_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   if (mainw->current_file<1||mainw->preview||(mainw->is_processing&&cfile->is_loaded)||mainw->cliplist==NULL) return;
 
   for (i=1; i<MAX_FILES; i++) {
-    if (!(mainw->files[i]==NULL)) {
+    if (mainw->files[i]!=NULL) {
       if (LIVES_MENU_ITEM(menuitem)==LIVES_MENU_ITEM(mainw->files[i]->menuentry)&&
           lives_check_menu_item_get_active(LIVES_CHECK_MENU_ITEM(mainw->files[i]->menuentry))) {
-        if (!(i==mainw->current_file)) {
-          switch_clip(0,i);
-        }
-        return;
+	switch_clip(0,i,FALSE);
+	return;
       }
     }
   }
@@ -10228,7 +10230,7 @@ boolean storeclip_callback(LiVESAccelGroup *group, LiVESObject *obj, uint32_t ke
   if (mainw->clipstore[clip]<1||mainw->files[mainw->clipstore[clip]]==NULL) {
     mainw->clipstore[clip]=mainw->current_file;
   } else {
-    switch_clip(0,mainw->clipstore[clip]);
+    switch_clip(0,mainw->clipstore[clip],FALSE);
   }
   return TRUE;
 }

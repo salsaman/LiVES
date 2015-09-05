@@ -707,7 +707,7 @@ static boolean call_set_if_mode(livespointer data) {
 static boolean call_switch_clip(livespointer data) {
   ipref *idata=(ipref *)data;
   if (mainw!=NULL&&!mainw->go_away&&!mainw->is_processing) {
-    switch_clip(idata->prefidx,idata->val);
+    switch_clip(idata->prefidx,idata->val,FALSE);
     ext_caller_return_int(idata->id,TRUE);
   } else ext_caller_return_int(idata->id,FALSE);
   lives_free(data);

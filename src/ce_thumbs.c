@@ -67,7 +67,7 @@ static boolean switch_clip_cb(LiVESWidget *eventbox, LiVESXEventButton *event, l
   int i=LIVES_POINTER_TO_INT(user_data);
   if (mainw->playing_file==-1) return FALSE;
   if (!mainw->interactive) return FALSE;
-  switch_clip(0,i);
+  switch_clip(0,i,FALSE);
   return FALSE;
 }
 

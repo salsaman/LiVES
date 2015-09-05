@@ -6627,6 +6627,9 @@ void load_frame_image(int frame) {
 
   void switch_to_file(int old_file, int new_file) {
     // this function is used for full clip switching (during non-playback or non fs)
+
+    // calling this function directly is now deprecated in favour of switch_clip()
+
     char title[256];
     int orig_file=mainw->current_file;
 
@@ -6737,20 +6740,12 @@ void load_frame_image(int frame) {
 
 
     if (cfile->menuentry!=NULL) {
-      // TODO - indicate "opening"
-      //char menutext[32768];
-      //get_menu_text_long(cfile->menuentry,menutext);
-      lives_signal_handler_block(cfile->menuentry, cfile->menuentry_func);
-      lives_check_menu_item_set_active(LIVES_CHECK_MENU_ITEM(cfile->menuentry),TRUE);
-      lives_signal_handler_unblock(cfile->menuentry, cfile->menuentry_func);
-      //set_menu_text(cfile->menuentry,menutext,FALSE);
+      reset_clipmenu();
     }
-
 
     if (cfile->clip_type==CLIP_TYPE_DISK||cfile->clip_type==CLIP_TYPE_FILE) {
       reget_afilesize(mainw->current_file);
     }
-
 
     if (!mainw->switch_during_pb) {
       // switch on/off loop video if we have/don't have audio
@@ -7053,6 +7048,8 @@ void load_frame_image(int frame) {
 
   void do_quick_switch(int new_file) {
     // handle clip switching during playback
+
+    // calling this function directly is now deprecated in favour of switch_clip()
 
     int ovsize=mainw->pheight;
     int ohsize=mainw->pwidth;

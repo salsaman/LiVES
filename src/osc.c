@@ -949,7 +949,7 @@ boolean lives_osc_cb_fgclip_set(void *context, int arglen, const void *vargs, OS
     if (mainw->files[clip]!=NULL&&(mainw->files[clip]->clip_type==CLIP_TYPE_DISK||mainw->files[clip]->clip_type==CLIP_TYPE_FILE)) {
       if (mainw->playing_file!=0) {
         char *msg=lives_strdup_printf("%d",clip);
-        switch_clip(1,clip);
+        switch_clip(1,clip,FALSE);
         lives_osc_notify_success(msg);
         lives_free(msg);
         return TRUE;
@@ -973,7 +973,7 @@ boolean lives_osc_cb_bgclip_set(void *context, int arglen, const void *vargs, OS
   if (clip>0&&clip<MAX_FILES-1) {
     if (mainw->files[clip]!=NULL&&(mainw->files[clip]->clip_type==CLIP_TYPE_DISK||mainw->files[clip]->clip_type==CLIP_TYPE_FILE)) {
       char *msg=lives_strdup_printf("%d",clip);
-      switch_clip(2,clip);
+      switch_clip(2,clip,FALSE);
       lives_osc_notify_success(msg);
       lives_free(msg);
       return TRUE;
@@ -1004,7 +1004,7 @@ boolean lives_osc_cb_fgclip_select(void *context, int arglen, const void *vargs,
   if (i==mainw->current_file) return lives_osc_notify_failure();
   if (mainw->playing_file!=0) {
     char *msg;
-    switch_clip(1,i);
+    switch_clip(1,i,FALSE);
     msg=lives_strdup_printf("%d",i);
     lives_osc_notify_success(msg);
     lives_free(msg);
@@ -1039,7 +1039,7 @@ boolean lives_osc_cb_bgclip_select(void *context, int arglen, const void *vargs,
 
   if (i==mainw->blend_file) return lives_osc_notify_failure();
 
-  switch_clip(2,i);
+  switch_clip(2,i,FALSE);
 
   msg=lives_strdup_printf("%d",i);
   lives_osc_notify_success(msg);

@@ -11,6 +11,11 @@
 
 #ifdef GUI_GTK
 
+
+#define GTK_RADIO_MENU_BUG // a bug where gtk_radio_menu_item_set_active() does not update visually
+
+
+
 #ifndef IS_MINGW
 typedef gboolean                          boolean;
 #endif

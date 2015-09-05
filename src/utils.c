@@ -3854,7 +3854,18 @@ void reset_clipmenu(void) {
   // sometimes the clip menu gets messed up, e.g. after reloading a set.
   // This function will clean up the 'x's and so on.
 
+  register int i;
+
   if (mainw->current_file>0&&cfile!=NULL&&cfile->menuentry!=NULL) {
+#ifdef GTK_RADIO_MENU_BUG
+    for (i=1; i<MAX_FILES; i++) {
+      if (i!=mainw->current_file&&mainw->files[i]!=NULL&&mainw->files[i]->menuentry!=NULL) {
+	lives_signal_handler_block(mainw->files[i]->menuentry, mainw->files[i]->menuentry_func);
+	lives_check_menu_item_set_active(LIVES_CHECK_MENU_ITEM(mainw->files[i]->menuentry), FALSE);
+	lives_signal_handler_unblock(mainw->files[i]->menuentry, mainw->files[i]->menuentry_func);
+      }
+    }
+#endif
     lives_signal_handler_block(cfile->menuentry, cfile->menuentry_func);
     lives_check_menu_item_set_active(LIVES_CHECK_MENU_ITEM(cfile->menuentry), TRUE);
     lives_signal_handler_unblock(cfile->menuentry, cfile->menuentry_func);

@@ -3075,6 +3075,23 @@ if ($file=~/:\/\//) {
     }
 
 
+    if ($command eq "recover_audio") {
+        $audio_in="audiodump.pcm";
+
+
+        $audio_out="audio";
+        &convert_audio_to_raw;
+        if ($panic) {
+            unlink "$pidfile";
+            exit 1;
+        }
+        unlink "$audio_in";
+
+
+    }
+
+
+
 
     if ($command eq "append_audio") {
 # here we end up with (raw) 'audiodump', which will be renamed to 'audio' in commit_audio
@@ -3433,6 +3450,12 @@ if ($file=~/:\/\//) {
 
     if ($command eq "commit_audio") {
 # commit the audio file in either audiodump or audiodump.wav as new audio file
+
+        $allow_nonex=0;
+        if (defined $ARGV[2]) {
+            $allow_nonex=$ARGV[2];
+        }
+
         smog_chdir("$curtmpdir");
         $audio_out="audio";
         $audio_bak="audio.bak";
@@ -3502,7 +3525,9 @@ if ($file=~/:\/\//) {
                 $arate=$achans=$asamps=0;
                 $signed=$endian=1;
             } else {
-                &sig_error("$GUI_NAME audio error.");
+                unless($allow_nonex) {
+                    &sig_error("$GUI_NAME audio error.");
+                }
             }
         }
         unlink glob "audiodump.*";

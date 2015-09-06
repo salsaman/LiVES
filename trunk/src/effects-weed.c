@@ -6020,8 +6020,8 @@ void wge_inner(weed_plant_t *inst, boolean unref) {
   else next_inst=NULL;
 
   weed_call_deinit_func(inst);
- 
-  if (unref) 
+
+  if (unref)
     weed_instance_unref(inst);
 
   if (next_inst!=NULL) {

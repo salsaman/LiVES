@@ -5918,6 +5918,15 @@ LIVES_INLINE LiVESWidget *lives_check_menu_item_new_with_mnemonic(const char *la
 }
 
 
+LIVES_INLINE boolean lives_check_menu_item_set_draw_as_radio(LiVESCheckMenuItem *item, boolean setting) {
+#ifdef GUI_GTK
+  gtk_check_menu_item_set_draw_as_radio(item,setting);
+  return TRUE;
+#endif
+  return FALSE;
+}
+
+
 LIVES_INLINE LiVESWidget *lives_image_menu_item_new_from_stock(const char *stock_id, LiVESAccelGroup *accel_group) {
   LiVESWidget *menuitem=NULL;
 #ifdef GUI_GTK

@@ -10461,6 +10461,8 @@ boolean resize_layer(weed_plant_t *layer, int width, int height, LiVESInterpType
     lives_free(orowstrides);
     lives_free(irowstrides);
 
+    lives_free(in_pixel_data);
+
     return TRUE;
   }
 #endif
@@ -11276,24 +11278,25 @@ void insert_blank_frames(int sfileno, int nframes, int after) {
   LiVESError *error=NULL;
   char oname[PATH_MAX];
   char nname[PATH_MAX];
-  char *com;
+  char *com,*tmp;
 
   register int i;
 
   blankp=lives_pixbuf_new_blank(sfile->hsize,sfile->vsize,WEED_PALETTE_RGB24);
 
   for (i=1; i<=sfile->frames; i++) {
-    lives_snprintf(oname,PATH_MAX,"%s/%s/%08d.%s",prefs->tmpdir,sfile->handle,i,get_image_ext_for_type(sfile->img_type));
+    tmp=make_image_file_name(sfile,i,get_image_ext_for_type(sfile->img_type));
+    lives_snprintf(oname,PATH_MAX,"%s",tmp);
+    lives_free(tmp);
     if (lives_file_test(oname,LIVES_FILE_TEST_EXISTS)) {
-      lives_snprintf(nname,PATH_MAX,"%s/%s/%08d.%s",prefs->tmpdir,sfile->handle,i+nframes,get_image_ext_for_type(sfile->img_type));
+      tmp=make_image_file_name(sfile,i+nframes,get_image_ext_for_type(sfile->img_type));
+      lives_snprintf(oname,PATH_MAX,"%s",tmp);
+      lives_free(tmp);
       mainw->com_failed=FALSE;
 #ifndef IS_MINGW
-      com=lives_strdup_printf("%s \"%s\" \"%s\"",capable->mv_cmd,
-                              oname,nname);
+      com=lives_strdup_printf("%s \"%s\" \"%s\"",capable->mv_cmd,oname,nname);
 #else
-      com=lives_strdup_printf("mv.exe \"%s\" \"%s\"",
-                              oname,nname);
-
+      com=lives_strdup_printf("mv.exe \"%s\" \"%s\"",oname,nname);
 #endif
       lives_system(com,FALSE);
       lives_free(com);
@@ -11305,7 +11308,9 @@ void insert_blank_frames(int sfileno, int nframes, int after) {
   }
 
   for (i=after; i<after+nframes; i++) {
-    lives_snprintf(oname,PATH_MAX,"%s/%s/%08d.%s",prefs->tmpdir,sfile->handle,i+1,get_image_ext_for_type(sfile->img_type));
+    tmp=make_image_file_name(sfile,i+1,get_image_ext_for_type(sfile->img_type));
+    lives_snprintf(oname,PATH_MAX,"%s",tmp);
+    lives_free(tmp);
     lives_pixbuf_save(blankp, oname, sfile->img_type, 100-prefs->ocp, TRUE, &error);
     if (error!=NULL) {
       lives_error_free(error);

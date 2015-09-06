@@ -602,7 +602,7 @@ void load_rfx_preview(lives_rfx_t *rfx) {
   }
 
   if (rfx->num_in_channels>0) {
-    img_ext="pre";
+    img_ext=LIVES_FILE_EXT_PRE;
   } else {
     img_ext=get_image_ext_for_type(cfile->img_type);
   }

@@ -705,8 +705,8 @@ boolean lives_osc_cb_set_pingpong(void *context, int arglen, const void *vargs, 
     else {
       if (!strcmp(boolstr,get_omc_const("LIVES_FALSE"))) lmode=FALSE;
       else {
-	lives_free(boolstr);
-	return lives_osc_notify_failure();
+        lives_free(boolstr);
+        return lives_osc_notify_failure();
       }
     }
     lives_free(boolstr);
@@ -2099,8 +2099,8 @@ boolean lives_osc_cb_set_amute(void *context, int arglen, const void *vargs, OSC
     else {
       if (!strcmp(boolstr,get_omc_const("LIVES_FALSE"))) mute=FALSE;
       else {
-	lives_free(boolstr);
-	return lives_osc_notify_failure();
+        lives_free(boolstr);
+        return lives_osc_notify_failure();
       }
     }
     lives_free(boolstr);
@@ -2123,8 +2123,7 @@ boolean lives_osc_cb_set_avol(void *context, int arglen, const void *vargs, OSCT
 
   if (LIVES_IS_RANGE(mainw->volume_scale)) {
     lives_range_set_value(LIVES_RANGE(mainw->volume_scale),vol);
-  }
-  else {
+  } else {
     lives_scale_button_set_value(LIVES_SCALE_BUTTON(mainw->volume_scale),vol);
   }
 
@@ -6672,8 +6671,7 @@ boolean lives_osc_cb_open_unicap(void *context, int arglen, const void *vargs, O
     if (lives_osc_check_arguments(arglen,vargs,"s",FALSE)) {
       lives_osc_parse_string_argument(vargs,devname);
     } else return lives_osc_notify_failure();
-  }
-  else {
+  } else {
     lives_osc_parse_string_argument(vargs,devname);
     lives_osc_parse_int_argument(vargs,&deint);
     boolstr=lives_strdup_printf("%d",deint);
@@ -6681,8 +6679,8 @@ boolean lives_osc_cb_open_unicap(void *context, int arglen, const void *vargs, O
     else {
       if (!strcmp(boolstr,get_omc_const("LIVES_FALSE"))) deint=FALSE;
       else {
-	lives_free(boolstr);
-	return lives_osc_notify_failure();
+        lives_free(boolstr);
+        return lives_osc_notify_failure();
       }
     }
     lives_free(boolstr);
@@ -6781,11 +6779,11 @@ boolean lives_osc_cb_saveset(void *context, int arglen, const void *vargs, OSCTi
       boolstr=lives_strdup_printf("%d",force_append);
       if (!strcmp(boolstr,get_omc_const("LIVES_TRUE"))) force_append=TRUE;
       else {
-	if (!strcmp(boolstr,get_omc_const("LIVES_FALSE"))) force_append=FALSE;
-	else {
-	  lives_free(boolstr);
-	  return lives_osc_notify_failure();
-	}
+        if (!strcmp(boolstr,get_omc_const("LIVES_FALSE"))) force_append=FALSE;
+        else {
+          lives_free(boolstr);
+          return lives_osc_notify_failure();
+        }
       }
       lives_free(boolstr);
     }

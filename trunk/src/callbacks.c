@@ -4331,9 +4331,7 @@ void on_encoder_entry_changed(LiVESCombo *combo, livespointer ptr) {
 }
 
 
-void
-on_insertwsound_toggled(LiVESToggleButton *togglebutton,
-                        livespointer         user_data) {
+void on_insertwsound_toggled(LiVESToggleButton *togglebutton, livespointer user_data) {
   if (lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(togglebutton))) {
     lives_widget_set_sensitive(insertw->fit_checkbutton,FALSE);
   } else {
@@ -4343,9 +4341,7 @@ on_insertwsound_toggled(LiVESToggleButton *togglebutton,
 }
 
 
-void
-on_insfitaudio_toggled(LiVESToggleButton *togglebutton,
-                       livespointer         user_data) {
+void on_insfitaudio_toggled(LiVESToggleButton *togglebutton, livespointer user_data) {
   mainw->fx1_bool=!mainw->fx1_bool;
 
   if (lives_toggle_button_get_active(togglebutton)) {
@@ -5577,7 +5573,7 @@ void on_show_clipboard_info_activate(LiVESMenuItem *menuitem, livespointer user_
 void switch_clip(int type, int newclip, boolean force) {
   // generic switch clip callback
 
-  // This is the new single entry function for switching clips. 
+  // This is the new single entry function for switching clips.
   // It should eventually replace switch_to_file() and do_quick_switch()
 
   // prev clip
@@ -5632,8 +5628,8 @@ void switch_clip_activate(LiVESMenuItem *menuitem, livespointer user_data) {
     if (mainw->files[i]!=NULL) {
       if (LIVES_MENU_ITEM(menuitem)==LIVES_MENU_ITEM(mainw->files[i]->menuentry)&&
           lives_check_menu_item_get_active(LIVES_CHECK_MENU_ITEM(mainw->files[i]->menuentry))) {
-	switch_clip(0,i,FALSE);
-	return;
+        switch_clip(0,i,FALSE);
+        return;
       }
     }
   }

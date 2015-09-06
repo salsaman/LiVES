@@ -603,6 +603,8 @@ LiVESWidget *lives_menu_item_new_with_label(const char *label);
 
 LiVESWidget *lives_check_menu_item_new_with_mnemonic(const char *label);
 LiVESWidget *lives_check_menu_item_new_with_label(const char *label);
+boolean lives_check_menu_item_set_draw_as_radio(LiVESCheckMenuItem *, boolean setting);
+
 LiVESWidget *lives_radio_menu_item_new_with_label(LiVESSList *group, const char *label);
 LiVESWidget *lives_image_menu_item_new_with_label(const char *label);
 LiVESWidget *lives_image_menu_item_new_with_mnemonic(const char *label);

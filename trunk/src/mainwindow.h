@@ -245,6 +245,14 @@ enum {
 };
 
 
+// file extensions
+#define LIVES_FILE_EXT_PNG "png"
+#define LIVES_FILE_EXT_JPG "jpg"
+#define LIVES_FILE_EXT_MGK "mgk"
+#define LIVES_FILE_EXT_PRE "pre"
+#define LIVES_FILE_EXT_SCRAP "scrap"
+
+
 typedef struct {
   double top;
   double left;

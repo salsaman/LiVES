@@ -1,3 +1,4 @@
+
 // saveplay.c
 // LiVES (lives-exe)
 // (c) G. Finch 2003 - 2015
@@ -529,6 +530,7 @@ ulong open_file_sel(const char *file_name, double start, int frames) {
               lives_free(msgstr);
 
               cfile->opening=FALSE;
+
               reget_afilesize(mainw->current_file);
               get_total_time(cfile);
 
@@ -3129,9 +3131,10 @@ void play_file(void) {
 
   if (!is_realtime_aplayer(audio_player)) mainw->mute=mute;
 
-  if (!mainw->preview||!cfile->opening) {
+  if (!mainw->preview&&!cfile->opening) {
     sensitize();
   }
+
   if (mainw->current_file>-1&&cfile->opening) {
     lives_widget_set_sensitive(mainw->mute_audio, cfile->achans>0);
     lives_widget_set_sensitive(mainw->loop_continue, TRUE);
@@ -3329,10 +3332,11 @@ void play_file(void) {
     if (!mainw->preview&&cfile->clip_type==CLIP_TYPE_GENERATOR) {
       // just deinit the generator here, to possibly save CPU cycles
       mainw->osc_block=TRUE;
-      wge_inner((weed_plant_t *)cfile->ext_src);
+      wge_inner((weed_plant_t *)cfile->ext_src,FALSE);
       mainw->osc_block=FALSE;
     }
     deal_with_render_choice(TRUE);
+    sensitize();
   }
 
   mainw->record_paused=mainw->record_starting=FALSE;
@@ -3565,8 +3569,19 @@ boolean add_file_info(const char *check_handle, boolean aud_only) {
 
 
   if (!strcmp(mainw->msg,"killed")) {
+    char *com;
+
     get_frame_count(mainw->current_file);
     cfile->frames--; // just in case last frame is damaged
+
+    // commit audio
+    mainw->cancelled=CANCEL_NONE;
+    unlink(cfile->info_file);
+
+    com=lives_strdup_printf("%s commit_audio \"%s\" 1",prefs->backend,cfile->handle);
+    lives_system(com, TRUE);
+    lives_free(com);
+
     reget_afilesize(mainw->current_file);
     d_print(_("%d frames are enough !\n"),cfile->frames);
   } else {

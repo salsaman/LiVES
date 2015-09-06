@@ -6004,21 +6004,30 @@ void weed_instance_ref(weed_plant_t *inst) {
 
 
 
-void wge_inner(weed_plant_t *inst) {
+void wge_inner(weed_plant_t *inst, boolean unref) {
   weed_plant_t *next_inst=NULL;
 
   int error;
+
+  if (weed_plant_has_leaf(inst,"host_key")) {
+    int key=weed_get_int_value(inst,"host_key",&error);
+    filter_mutex_lock(key);
+    key_to_instance[key][key_modes[key]]=NULL;
+    filter_mutex_unlock(key);
+  }
 
   if (weed_plant_has_leaf(inst,"host_next_instance")) next_inst=weed_get_plantptr_value(inst,"host_next_instance",&error);
   else next_inst=NULL;
 
   weed_call_deinit_func(inst);
-  weed_instance_unref(inst);
+ 
+  if (unref) 
+    weed_instance_unref(inst);
 
   if (next_inst!=NULL) {
     // handle compound fx
     inst=next_inst;
-    wge_inner(inst);
+    wge_inner(inst,unref);
   }
 
 }
@@ -6098,7 +6107,7 @@ void weed_generator_end(weed_plant_t *inst) {
     if (mainw->blend_file==mainw->current_file) mainw->blend_file=-1;
   }
 
-  wge_inner(inst);
+  wge_inner(inst,TRUE);
 
   // if the param window is already open, show any reinits now
   if (fx_dialog[1]!=NULL) {

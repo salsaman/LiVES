@@ -4504,7 +4504,9 @@ boolean pull_frame_at_size(weed_plant_t *layer, const char *image_ext, weed_time
   int clip=weed_get_int_value(layer,"clip",&error);
   int frame=weed_get_int_value(layer,"frame",&error);
   int clip_type;
+#ifdef HAVE_POSIX_FADVISE
   int fd;
+#endif
 
   boolean is_thread=FALSE;
 
@@ -4649,6 +4651,7 @@ boolean pull_frame_at_size(weed_plant_t *layer, const char *image_ext, weed_time
         }
         lives_free(fname);
 
+#ifdef HAVE_POSIX_FADVISE
         // advise that we will read the next frame
         if (sfile->pb_fps>0.)
           fname=make_image_file_name(sfile,frame+1,image_ext);
@@ -4661,6 +4664,7 @@ boolean pull_frame_at_size(weed_plant_t *layer, const char *image_ext, weed_time
           close(fd);
         }
         lives_free(fname);
+#endif
 
         mainw->osc_block=FALSE;
         if (ret==FALSE) return FALSE;

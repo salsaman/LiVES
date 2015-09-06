@@ -177,7 +177,7 @@ weed_plant_t *weed_layer_new_from_generator(weed_plant_t *inst, weed_timecode_t 
 void weed_generator_end(weed_plant_t *inst);
 boolean weed_playback_gen_start(void);
 void weed_bg_generator_end(weed_plant_t *inst);
-void wge_inner(weed_plant_t *inst); ///< deinit instance(s) for generator
+void wge_inner(weed_plant_t *inst, boolean unref); ///< deinit instance(s) for generator
 
 /// for multitrack
 void backup_weed_instances(void);

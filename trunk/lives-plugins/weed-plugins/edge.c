@@ -162,11 +162,11 @@ int edge_process(weed_plant_t *inst, weed_timecode_t timestamp) {
       v3 = (r<<17)|(g<<9)|b;
 
       map[y*map_width*2+x*2+1] = copywalpha(dest,src,2,2,copywalpha(dest,src,3,3,copywalpha(dest,src,irow+2,orow+2,
-											    copywalpha(dest,src,irow+3,orow+3,
-												       v3))));
+                                            copywalpha(dest,src,irow+3,orow+3,
+                                                v3))));
       map[y*map_width*2+x*2] = copywalpha(dest,src,irow*2,orow*2,copywalpha(dest,src,irow*2+1,orow*2+1,
-									    copywalpha(dest,src,irow*3,orow*3,
-										       copywalpha(dest,src,irow*3+1,orow*3+1,v2))));
+                                          copywalpha(dest,src,irow*3,orow*3,
+                                              copywalpha(dest,src,irow*3+1,orow*3+1,v2))));
 
       v0 = map[(y-1)*map_width*2+x*2];
       v1 = map[y*map_width*2+(x-1)*2+1];

@@ -316,7 +316,7 @@ int beat_process(weed_plant_t *inst, weed_timecode_t timestamp) {
           // sum values over range
           // average over range
           totx+=sqrtf(outs[base][k][0]*outs[base][k][0]+outs[base][k][1]*outs[base][k][1]);
-	}
+        }
 
         // average over bandwidth
         totx/=((float)rkmax-(float)rkmin+1.);
@@ -364,7 +364,7 @@ int beat_process(weed_plant_t *inst, weed_timecode_t timestamp) {
         ) {
           varx=(val1-val2);
           if (varx<0.) varx=0.;
-	  if (varx>1000.) varx=0.; // ignore invalid value
+          if (varx>1000.) varx=0.; // ignore invalid value
           var+=(double)varx/(double)ONSET_WINDOW;
         }
       }

@@ -978,12 +978,12 @@ boolean apply_prefs(boolean skip_warn) {
   }
 
   // jpeg/png
-  if (strcmp(prefs->image_ext,"jpg")&&ext_jpeg) {
+  if (strcmp(prefs->image_ext,LIVES_FILE_EXT_JPG)&&ext_jpeg) {
     set_pref("default_image_format","jpeg");
-    lives_snprintf(prefs->image_ext,16,"jpg");
-  } else if (!strcmp(prefs->image_ext,"jpg")&&!ext_jpeg) {
+    lives_snprintf(prefs->image_ext,16,LIVES_FILE_EXT_JPG);
+  } else if (!strcmp(prefs->image_ext,LIVES_FILE_EXT_JPG)&&!ext_jpeg) {
     set_pref("default_image_format","png");
-    lives_snprintf(prefs->image_ext,16,"png");
+    lives_snprintf(prefs->image_ext,16,LIVES_FILE_EXT_PNG);
   }
 
   // instant open
@@ -2610,7 +2610,7 @@ _prefsw *create_prefs_dialog(void) {
   jpeg_png = lives_radio_button_get_group(LIVES_RADIO_BUTTON(prefsw->jpeg));
 
   png = lives_standard_radio_button_new(_("_png"),TRUE,jpeg_png,LIVES_BOX(hbox),NULL);
-  lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(png),!strcmp(prefs->image_ext,"png"));
+  lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(png),!strcmp(prefs->image_ext,LIVES_FILE_EXT_PNG));
 
   // ---
   hbox = lives_hbox_new(FALSE, 0);

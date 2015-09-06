@@ -339,7 +339,7 @@ ulong open_file_sel(const char *file_name, double start, int frames) {
       mainw->multitrack->has_audio_file=TRUE;
     }
 
-    if (!strcmp(prefs->image_ext,"png")) cfile->img_type=IMG_TYPE_PNG;
+    if (!strcmp(prefs->image_ext,LIVES_FILE_EXT_PNG)) cfile->img_type=IMG_TYPE_PNG;
 
     if (prefs->instant_open) {
       // cd to clip directory - so decoder plugins can write temp files
@@ -3482,7 +3482,7 @@ void create_cfile(void) {
   cfile->keep_without_preview=FALSE;
   cfile->cb_src=-1;
 
-  if (!strcmp(prefs->image_ext,"jpg")) cfile->img_type=IMG_TYPE_JPEG;
+  if (!strcmp(prefs->image_ext,LIVES_FILE_EXT_JPG)) cfile->img_type=IMG_TYPE_JPEG;
   else cfile->img_type=IMG_TYPE_PNG;
 
   cfile->bpp=(cfile->img_type==IMG_TYPE_JPEG)?24:32;
@@ -4921,8 +4921,7 @@ boolean load_from_scrap_file(weed_plant_t *layer, int frame) {
 
   int i,fd;
 
-  char *oname=lives_strdup_printf("%s/%s/%08d.scrap",prefs->tmpdir,mainw->files[mainw->scrap_file]->handle,frame);
-
+  char *oname=make_image_file_name(mainw->files[mainw->scrap_file],frame,LIVES_FILE_EXT_SCRAP);
 
   ssize_t bytes;
   ssize_t tsize;
@@ -5046,8 +5045,7 @@ int save_to_scrap_file(weed_plant_t *layer) {
 
   void **pdata;
 
-  char *oname=lives_strdup_printf("%s/%s/%08d.scrap",prefs->tmpdir,mainw->files[mainw->scrap_file]->handle,
-                                  mainw->files[mainw->scrap_file]->frames+1);
+  char *oname=make_image_file_name(mainw->files[mainw->scrap_file],mainw->files[mainw->scrap_file]->frames+1,LIVES_FILE_EXT_SCRAP);
 
   char *framecount;
 
@@ -5410,7 +5408,7 @@ boolean reload_clip(int fileno) {
 
   sfile->clip_type=CLIP_TYPE_FILE;
   get_mime_type(sfile->type,40,cdata);
-  if (!strcmp(prefs->image_ext,"png")) sfile->img_type=IMG_TYPE_PNG; // read_headers() will have set this to "jpeg" (default)
+  if (!strcmp(prefs->image_ext,LIVES_FILE_EXT_PNG)) sfile->img_type=IMG_TYPE_PNG; // read_headers() will have set this to "jpeg" (default)
   // we will set correct value in check_clip_integrity() if there are any real images
 
   if (sfile->ext_src!=NULL) {

@@ -1401,9 +1401,9 @@ LIVES_INLINE LiVESList *lives_list_append_unique(LiVESList *xlist, const char *a
 LIVES_INLINE const char *get_image_ext_for_type(lives_image_type_t imgtype) {
   switch (imgtype) {
   case IMG_TYPE_JPEG:
-    return "jpg";
+    return LIVES_FILE_EXT_JPG; // "jpg"
   case IMG_TYPE_PNG:
-    return "png";
+    return LIVES_FILE_EXT_PNG; // "png"
   default:
     return "";
   }
@@ -2225,6 +2225,10 @@ boolean is_legal_set_name(const char *set_name, boolean allow_dupes) {
 
 
 
+LIVES_INLINE char *make_image_file_name(lives_clip_t *sfile, int frame, const char *img_ext) {
+  return lives_strdup_printf("%s/%s/%08d.%s",prefs->tmpdir,sfile->handle,frame,img_ext);
+}
+
 
 boolean check_frame_count(int idx) {
   // check number of frames is correct
@@ -2236,8 +2240,7 @@ boolean check_frame_count(int idx) {
   // ingores gaps
 
   // make sure nth frame is there...
-  char *frame=lives_strdup_printf("%s/%s/%08d.%s",prefs->tmpdir,mainw->files[idx]->handle,mainw->files[idx]->frames,
-                                  get_image_ext_for_type(mainw->files[idx]->img_type));
+  char *frame=make_image_file_name(mainw->files[idx],mainw->files[idx]->frames,get_image_ext_for_type(mainw->files[idx]->img_type));
 
   if (!lives_file_test(frame,LIVES_FILE_TEST_EXISTS)) {
     // not enough frames
@@ -2247,8 +2250,8 @@ boolean check_frame_count(int idx) {
   lives_free(frame);
 
   // ...make sure n + 1 th frame is not
-  frame=lives_strdup_printf("%s/%s/%08d.%s",prefs->tmpdir,mainw->files[idx]->handle,mainw->files[idx]->frames+1,
-                            get_image_ext_for_type(mainw->files[idx]->img_type));
+  frame=make_image_file_name(mainw->files[idx],mainw->files[idx]->frames+1,get_image_ext_for_type(mainw->files[idx]->img_type));
+
   if (lives_file_test(frame,LIVES_FILE_TEST_EXISTS)) {
     // too many frames
     lives_free(frame);
@@ -3860,9 +3863,9 @@ void reset_clipmenu(void) {
 #ifdef GTK_RADIO_MENU_BUG
     for (i=1; i<MAX_FILES; i++) {
       if (i!=mainw->current_file&&mainw->files[i]!=NULL&&mainw->files[i]->menuentry!=NULL) {
-	lives_signal_handler_block(mainw->files[i]->menuentry, mainw->files[i]->menuentry_func);
-	lives_check_menu_item_set_active(LIVES_CHECK_MENU_ITEM(mainw->files[i]->menuentry), FALSE);
-	lives_signal_handler_unblock(mainw->files[i]->menuentry, mainw->files[i]->menuentry_func);
+        lives_signal_handler_block(mainw->files[i]->menuentry, mainw->files[i]->menuentry_func);
+        lives_check_menu_item_set_active(LIVES_CHECK_MENU_ITEM(mainw->files[i]->menuentry), FALSE);
+        lives_signal_handler_unblock(mainw->files[i]->menuentry, mainw->files[i]->menuentry_func);
       }
     }
 #endif
@@ -4309,8 +4312,7 @@ void set_redoable(const char *what, boolean sensitive) {
 }
 
 
-void
-set_sel_label(LiVESWidget *sel_label) {
+void set_sel_label(LiVESWidget *sel_label) {
   char *tstr,*frstr,*tmp;
   char *sy,*sz;
 
@@ -5301,11 +5303,13 @@ lives_cancel_t check_for_bad_ffmpeg(void) {
   fcount=cfile->frames;
 
   for (i=1; i<=fcount; i++) {
-    fname_next=lives_strdup_printf("%s/%s/%08d.%s",prefs->tmpdir,cfile->handle,i,prefs->image_ext);
+    fname_next=make_image_file_name(cfile,i,prefs->image_ext);
     if (sget_file_size(fname_next)>0) {
+      lives_free(fname_next);
       maybeok=TRUE;
       break;
     }
+    lives_free(fname_next);
   }
 
   cfile->frames=ofcount;

@@ -602,7 +602,7 @@ boolean do_startup_tests(boolean tshoot) {
   add_test(table,1,_("Checking if sox can convert audio"),success);
 
   if (!tshoot) set_pref("default_image_format","png");
-  lives_snprintf(prefs->image_ext,16,"%s","png");
+  lives_snprintf(prefs->image_ext,16,"%s",LIVES_FILE_EXT_PNG);
 
   get_temp_handle(mainw->first_free_file,TRUE);
 
@@ -854,9 +854,9 @@ boolean do_startup_tests(boolean tshoot) {
     if (res==0) {
       pass_test(table,5);
       if (!success3) {
-        if (!strcmp(prefs->image_ext,"png")) imgext_switched=TRUE;
+        if (!strcmp(prefs->image_ext,LIVES_FILE_EXT_PNG)) imgext_switched=TRUE;
         set_pref("default_image_format","jpeg");
-        lives_snprintf(prefs->image_ext,16,"%s","jpg");
+        lives_snprintf(prefs->image_ext,16,"%s",LIVES_FILE_EXT_JPG);
       }
     } else {
       if (!success3) fail_test(table,5,_("You should install mplayer with either png/alpha or jpeg support"));

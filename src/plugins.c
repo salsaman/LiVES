@@ -2094,7 +2094,7 @@ LiVESList *filter_encoders_by_img_ext(LiVESList *encoders, const char *img_ext) 
       continue;
     }
 
-    if (!strcmp(img_ext,"jpg")) {
+    if (!strcmp(img_ext,LIVES_FILE_EXT_JPG)) {
       list=listnext;
       continue;
     }
@@ -2104,7 +2104,7 @@ LiVESList *filter_encoders_by_img_ext(LiVESList *encoders, const char *img_ext) 
       encoders=lives_list_delete_link(encoders,list);
     } else {
       caps=atoi((char *)lives_list_nth_data(encoder_capabilities,0));
-      if (!(caps&CAN_ENCODE_PNG)&&!strcmp(img_ext,"png")) {
+      if (!(caps&CAN_ENCODE_PNG)&&!strcmp(img_ext,LIVES_FILE_EXT_PNG)) {
         lives_free((livespointer)list->data);
         encoders=lives_list_delete_link(encoders,list);
       }

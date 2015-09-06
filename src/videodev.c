@@ -512,17 +512,16 @@ boolean on_open_vdev_activate(LiVESMenuItem *menuitem, livespointer user_data) {
     }
 
     lives_widget_destroy(card_dialog);
-  }
-  else {
+  } else {
     char *device=(char *)user_data;
-    for (i=0;i<dev_count;i++) {
+    for (i=0; i<dev_count; i++) {
       if (!strcmp(device,devices[i].device)) {
-	mainw->fx1_val=i;
-	break;
+        mainw->fx1_val=i;
+        break;
       }
     }
   }
-  
+
 
   for (i=dev_count-1; i>=0; i--) {
     if (!unicap_is_stream_locked(&devices[i])) {

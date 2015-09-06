@@ -1150,7 +1150,7 @@ static void lives_init(_ign_opts *ign_opts) {
     mainw->ext_playback=mainw->ext_keyboard=FALSE;
 
     get_pref("default_image_format",buff,256);
-    if (!strcmp(buff,"jpeg")) lives_snprintf(prefs->image_ext,16,"%s","jpg");
+    if (!strcmp(buff,"jpeg")) lives_snprintf(prefs->image_ext,16,"%s",LIVES_FILE_EXT_JPG);
     else lives_snprintf(prefs->image_ext,16,"%s",buff);
 
     prefs->loop_recording=TRUE;
@@ -4337,7 +4337,7 @@ static boolean weed_layer_new_from_file_progressive(weed_plant_t *layer,
   xxwidth=width;
   xxheight=height;
 
-  if (!strcmp(img_ext,"png")) {
+  if (!strcmp(img_ext,LIVES_FILE_EXT_PNG)) {
 #ifdef USE_LIBPNG
     boolean ret=layer_from_png(fp,layer,TRUE);
     fclose(fp);
@@ -4349,7 +4349,7 @@ static boolean weed_layer_new_from_file_progressive(weed_plant_t *layer,
 #endif
   }
 #ifdef GUI_GTK
-  else if (!strcmp(img_ext,"jpg")) pbload=gdk_pixbuf_loader_new_with_type("jpeg",gerror);
+  else if (!strcmp(img_ext,LIVES_FILE_EXT_JPG)) pbload=gdk_pixbuf_loader_new_with_type("jpeg",gerror);
   else pbload=gdk_pixbuf_loader_new();
 
   lives_signal_connect(LIVES_WIDGET_OBJECT(pbload), LIVES_WIDGET_SIZE_PREPARED_SIGNAL,
@@ -4504,6 +4504,7 @@ boolean pull_frame_at_size(weed_plant_t *layer, const char *image_ext, weed_time
   int clip=weed_get_int_value(layer,"clip",&error);
   int frame=weed_get_int_value(layer,"frame",&error);
   int clip_type;
+  int fd;
 
   boolean is_thread=FALSE;
 
@@ -4538,7 +4539,7 @@ boolean pull_frame_at_size(weed_plant_t *layer, const char *image_ext, weed_time
       weed_set_int_value(layer,"width",width);
       weed_set_int_value(layer,"height",height);
       if (!weed_plant_has_leaf(layer,"current_palette")) {
-        if (image_ext==NULL||!strcmp(image_ext,"jpg")) weed_set_int_value(layer,"current_palette",WEED_PALETTE_RGB24);
+        if (image_ext==NULL||!strcmp(image_ext,LIVES_FILE_EXT_JPG)) weed_set_int_value(layer,"current_palette",WEED_PALETTE_RGB24);
         else weed_set_int_value(layer,"current_palette",WEED_PALETTE_RGBA32);
       }
       create_empty_pixel_data(layer,TRUE,TRUE);
@@ -4640,13 +4641,27 @@ boolean pull_frame_at_size(weed_plant_t *layer, const char *image_ext, weed_time
       } else {
         // pull frame from decoded images
         boolean ret;
-        char *fname=lives_strdup_printf("%s/%s/%08d.%s",prefs->tmpdir,sfile->handle,frame,image_ext);
+        char *fname=make_image_file_name(sfile,frame,image_ext);
         if (height*width==0) {
           ret=weed_layer_new_from_file_progressive(layer,fname,0,0,image_ext,&gerror);
         } else {
           ret=weed_layer_new_from_file_progressive(layer,fname,width,height,image_ext,&gerror);
         }
         lives_free(fname);
+
+        // advise that we will read the next frame
+        if (sfile->pb_fps>0.)
+          fname=make_image_file_name(sfile,frame+1,image_ext);
+        else
+          fname=make_image_file_name(sfile,frame-1,image_ext);
+
+        fd=open(fname,O_RDONLY);
+        if (fd>-1) {
+          posix_fadvise(fd, 0, 0, POSIX_FADV_WILLNEED);
+          close(fd);
+        }
+        lives_free(fname);
+
         mainw->osc_block=FALSE;
         if (ret==FALSE) return FALSE;
       }
@@ -4819,7 +4834,7 @@ LiVESPixbuf *pull_lives_pixbuf_at_size(int clip, int frame, const char *image_ex
   weed_set_int_value(layer,"clip",clip);
   weed_set_int_value(layer,"frame",frame);
 
-  if (!strcmp(image_ext,"png")) palette=WEED_PALETTE_RGBA32;
+  if (!strcmp(image_ext,LIVES_FILE_EXT_PNG)) palette=WEED_PALETTE_RGBA32;
   else palette=WEED_PALETTE_RGB24;
 
   if (pull_frame_at_size(layer,image_ext,tc,width,height,palette)) {
@@ -5270,7 +5285,7 @@ void load_frame_image(int frame) {
       // play preview
       if (cfile->opening||(cfile->next_event!=NULL&&cfile->proc_ptr==NULL)) {
 
-        fname_next=lives_strdup_printf("%s/%s/%08d.%s",prefs->tmpdir,cfile->handle,frame+1,prefs->image_ext);
+        fname_next=make_image_file_name(cfile,frame+1,prefs->image_ext);
 
         if (!mainw->fs&&prefs->show_framecount&&!mainw->is_rendering) {
           if (framecount!=NULL) lives_free(framecount);
@@ -5298,14 +5313,14 @@ void load_frame_image(int frame) {
         }
       } else {
         if (mainw->is_rendering||mainw->is_generating) {
-          fname_next=lives_strdup_printf("%s/%s/%08d.%s",prefs->tmpdir,cfile->handle,frame+1,prefs->image_ext);
+          fname_next=make_image_file_name(cfile,frame+1,prefs->image_ext);
         } else {
           if (!mainw->keep_pre) {
-            img_ext="mgk";
+            img_ext=LIVES_FILE_EXT_MGK;
           } else {
-            img_ext="pre";
+            img_ext=LIVES_FILE_EXT_PRE;
           }
-          fname_next=lives_strdup_printf("%s/%s/%08d.pre",prefs->tmpdir,cfile->handle,frame+1);
+          fname_next=make_image_file_name(cfile,frame+1,LIVES_FILE_EXT_PRE);
         }
       }
       mainw->actual_frame=frame;
@@ -6211,11 +6226,14 @@ void load_frame_image(int frame) {
       QPixmap qp = qscreen->grabWindow(mainw->foreign_id, 0, 0, xwidth, xheight);
       if (0) { // TODO
 #endif
-        lives_snprintf(fname,PATH_MAX,"%s/%s/%08d.%s",prefs->tmpdir,cfile->handle,frame,prefs->image_ext);
+        tmp=make_image_file_name(cfile,frame,prefs->image_ext);
+        lives_snprintf(fname,PATH_MAX,"%s",tmp);
+        lives_free(tmp);
+
         do {
           if (gerror!=NULL) lives_error_free(gerror);
-          if (!strcmp(prefs->image_ext,"jpg")) lives_pixbuf_save(pixbuf, fname, IMG_TYPE_JPEG, 100, FALSE, &gerror);
-          else if (!strcmp(prefs->image_ext,"png"))
+          if (!strcmp(prefs->image_ext,LIVES_FILE_EXT_JPG)) lives_pixbuf_save(pixbuf, fname, IMG_TYPE_JPEG, 100, FALSE, &gerror);
+          else if (!strcmp(prefs->image_ext,LIVES_FILE_EXT_PNG))
             lives_pixbuf_save(pixbuf, fname, IMG_TYPE_PNG, 100, FALSE, &gerror);
         } while (gerror!=NULL);
 

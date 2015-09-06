@@ -213,7 +213,7 @@ boolean check_clip_integrity(int fileno, const lives_clip_data_t *cdata) {
   for (i=0; i<sfile->frames; i++) {
     if (sfile->frame_index[i]==-1) {
       // this is a non-virtual frame
-      char *frame=lives_strdup_printf("%s/%s/%08d.png",prefs->tmpdir,sfile->handle,i+1);
+      char *frame=make_image_file_name(sfile,i+1,LIVES_FILE_EXT_PNG);
       if (lives_file_test(frame,LIVES_FILE_TEST_EXISTS)) empirical_img_type=IMG_TYPE_PNG;
       else empirical_img_type=IMG_TYPE_JPEG;
       lives_free(frame);
@@ -336,7 +336,7 @@ boolean virtual_to_images(int sfileno, int sframe, int eframe, boolean update_pr
       pixbuf=pull_lives_pixbuf_at_size(sfileno,i,get_image_ext_for_type(sfile->img_type),
                                        q_gint64((i-1.)/sfile->fps,sfile->fps),sfile->hsize,sfile->vsize,LIVES_INTERP_BEST);
 
-      oname=lives_strdup_printf("%s/%s/%08d.%s",prefs->tmpdir,sfile->handle,i,get_image_ext_for_type(sfile->img_type));
+      oname=make_image_file_name(sfile,i,get_image_ext_for_type(sfile->img_type));
 
       do {
         retval=0;
@@ -532,7 +532,7 @@ void clean_images_from_virtual(lives_clip_t *sfile, int oldframes) {
     threaded_dialog_spin();
 
     if ((i<sfile->frames&&sfile->frame_index[i]!=-1)||i>=sfile->frames) {
-      iname=lives_strdup_printf("%s/%s/%08d.%s",prefs->tmpdir,sfile->handle,i,get_image_ext_for_type(sfile->img_type));
+      iname=make_image_file_name(sfile,i,get_image_ext_for_type(sfile->img_type));
 
 #ifndef IS_MINGW
       com=lives_strdup_printf("%s -f \"%s\"",capable->rm_cmd,iname);

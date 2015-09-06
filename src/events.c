@@ -3363,7 +3363,7 @@ lives_render_error_t render_events(boolean reset) {
 
   char *blabel=NULL;
   char *nlabel;
-  char *key_string,*com;
+  char *key_string,*com,*tmp;
   char *filter_name;
 
   if (reset) {
@@ -3692,16 +3692,21 @@ lives_render_error_t render_events(boolean reset) {
           if (next_tc<next_out_tc||next_tc-next_out_tc<next_out_tc-tc) break;
         } else if (next_out_tc>tc) break;
 
-        // TODO - dirsep
-
-        if (cfile->old_frames>0) lives_snprintf(oname,PATH_MAX,"%s/%s/%08d.mgk",prefs->tmpdir,cfile->handle,out_frame);
+        if (cfile->old_frames>0) {
+          tmp=make_image_file_name(cfile,out_frame,LIVES_FILE_EXT_MGK);
+          lives_snprintf(oname,PATH_MAX,"%s",tmp);
+          lives_free(tmp);
+        }
         // sig_progress...
         lives_snprintf(mainw->msg,256,"%d",progress++);
 
         if (prefs->ocp==-1) prefs->ocp=get_int_pref("open_compression_percent");
 
-        if (cfile->old_frames==0) lives_snprintf(oname,PATH_MAX,"%s/%s/%08d.%s",prefs->tmpdir,cfile->handle,
-              out_frame,get_image_ext_for_type(cfile->img_type));
+        if (cfile->old_frames==0) {
+          tmp=make_image_file_name(cfile,out_frame,get_image_ext_for_type(cfile->img_type));
+          lives_snprintf(oname,PATH_MAX,"%s",tmp);
+          lives_free(tmp);
+        }
 
         do {
           retval=0;

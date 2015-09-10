@@ -656,11 +656,13 @@ boolean apply_prefs(boolean skip_warn) {
   boolean jack_tb_start=lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_jack_tb_start));
   boolean jack_tb_client=lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_jack_tb_client));
 #else
+#ifdef ENABLE_JACK
   boolean jack_tstart=FALSE;
   boolean jack_master=FALSE;
   boolean jack_client=FALSE;
   boolean jack_tb_start=FALSE;
   boolean jack_tb_client=FALSE;
+#endif
 #endif
 
 #ifdef ENABLE_JACK

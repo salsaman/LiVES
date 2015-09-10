@@ -5018,6 +5018,25 @@ void free_track_decoders(void) {
 }
 
 
+static void load_frame_cleanup(boolean noswitch) {
+  char *tmp;
+
+  if (mainw->frame_layer!=NULL) weed_layer_free(mainw->frame_layer);
+  mainw->frame_layer=NULL;
+  mainw->noswitch=noswitch;
+
+  if (!mainw->faded&&(!mainw->fs||prefs->gui_monitor!=prefs->play_monitor)&&
+      mainw->current_file!=mainw->scrap_file) get_play_times();
+  if (mainw->multitrack!=NULL&&!cfile->opening) animate_multitrack(mainw->multitrack);
+
+  // format is now msg|timecode|fgclip|fgframe|fgfps|
+  lives_notify(LIVES_OSC_NOTIFY_FRAME_SYNCH,(const char *)
+	       (tmp=lives_strdup_printf("%.8f|%d|%d|%.3f|",(double)mainw->currticks/U_SEC,
+					mainw->current_file,mainw->actual_frame,cfile->pb_fps)));
+  lives_free(tmp);
+}
+
+
 
 
 void load_frame_image(int frame) {
@@ -5782,21 +5801,8 @@ void load_frame_image(int frame) {
       }
 
       if (mainw->vpp->capabilities&VPP_LOCAL_DISPLAY) {
-        if (mainw->frame_layer!=NULL) weed_layer_free(mainw->frame_layer);
-        mainw->frame_layer=NULL;
-        mainw->noswitch=noswitch;
-
-        if (!mainw->faded&&(!mainw->fs||prefs->gui_monitor!=prefs->play_monitor)&&
-            mainw->current_file!=mainw->scrap_file) get_play_times();
-        if (mainw->multitrack!=NULL&&!cfile->opening) animate_multitrack(mainw->multitrack);
-        if (framecount!=NULL) lives_free(framecount);
-
-        // format is now msg|timecode|fgclip|fgframe|fgfps|
-        lives_notify(LIVES_OSC_NOTIFY_FRAME_SYNCH,(const char *)
-                     (tmp=lives_strdup_printf("%.8f|%d|%d|%.3f|",(double)mainw->currticks/U_SEC,
-                                              mainw->current_file,mainw->actual_frame,cfile->pb_fps)));
-        lives_free(tmp);
-
+	load_frame_cleanup(noswitch);
+	if (framecount!=NULL) lives_free(framecount);
         return;
       }
 
@@ -6047,19 +6053,8 @@ void load_frame_image(int frame) {
       }
 
       if (mainw->vpp->capabilities&VPP_LOCAL_DISPLAY) {
-        mainw->noswitch=noswitch;
-
-        if (!mainw->faded&&(!mainw->fs||prefs->gui_monitor!=prefs->play_monitor)&&
-            mainw->current_file!=mainw->scrap_file) get_play_times();
-        if (mainw->multitrack!=NULL&&!cfile->opening) animate_multitrack(mainw->multitrack);
-        if (framecount!=NULL) lives_free(framecount);
-
-        // format is now msg|timecode|fgclip|fgframe|fgfps|
-        lives_notify(LIVES_OSC_NOTIFY_FRAME_SYNCH,(const char *)
-                     (tmp=lives_strdup_printf("%.8f|%d|%d|%.3f|",(double)mainw->currticks/U_SEC,
-                                              mainw->current_file,mainw->actual_frame,cfile->pb_fps)));
-        lives_free(tmp);
-
+	load_frame_cleanup(noswitch);
+	if (framecount!=NULL) lives_free(framecount);
         return;
       }
     }
@@ -6071,7 +6066,11 @@ void load_frame_image(int frame) {
 
     check_layer_ready(mainw->frame_layer);
 
-    if ((mainw->sep_win&&!prefs->show_playwin)||(!mainw->sep_win&&!prefs->show_gui)) return;
+    if ((mainw->sep_win&&!prefs->show_playwin)||(!mainw->sep_win&&!prefs->show_gui)) {
+      load_frame_cleanup(noswitch);
+      if (framecount!=NULL) lives_free(framecount);
+      return;
+    }
 
     layer_palette=weed_layer_get_palette(mainw->frame_layer);
 
@@ -7085,7 +7084,6 @@ void load_frame_image(int frame) {
     if (!mainw->sep_win&&mainw->multitrack==NULL) {
       lives_widget_show(mainw->playframe);
     }
-
 
     if (new_file==mainw->current_file&&(mainw->playing_file==-1||mainw->playing_file==mainw->current_file)) {
       if (!((mainw->fs&&prefs->gui_monitor==prefs->play_monitor)||(mainw->faded&&mainw->double_size)||

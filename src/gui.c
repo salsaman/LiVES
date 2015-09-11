@@ -748,7 +748,7 @@ void create_LiVES(void) {
   lives_widget_set_sensitive(mainw->xdelete, FALSE);
 
 #if LIVES_HAS_IMAGE_MENU_ITEM
-  image = lives_image_new_from_stock("gtk-delete", LIVES_ICON_SIZE_MENU);
+  image = lives_image_new_from_stock(LIVES_STOCK_DELETE, LIVES_ICON_SIZE_MENU);
   lives_widget_show(image);
   lives_image_menu_item_set_image(LIVES_IMAGE_MENU_ITEM(mainw->xdelete), image);
 #endif
@@ -1848,6 +1848,18 @@ void create_LiVES(void) {
 
   lives_container_add(LIVES_CONTAINER(mainw->vol_toolitem),mainw->volume_scale);
   if (capable->smog_version_correct) {
+#ifdef GUI_GTK
+    register int i;
+    for (i=0; i<4; i++) {
+      GtkToolItem *spacer;
+      spacer=gtk_separator_tool_item_new();
+      lives_widget_show(LIVES_WIDGET(spacer));
+      gtk_separator_tool_item_set_draw(GTK_SEPARATOR_TOOL_ITEM(spacer),FALSE);
+      gtk_tool_item_set_homogeneous(LIVES_TOOL_ITEM(spacer),FALSE);
+      gtk_tool_item_set_expand(LIVES_TOOL_ITEM(spacer),TRUE);
+      lives_toolbar_insert(LIVES_TOOLBAR(mainw->btoolbar),LIVES_TOOL_ITEM(spacer),-1);
+    }
+#endif
     lives_toolbar_insert(LIVES_TOOLBAR(mainw->btoolbar),LIVES_TOOL_ITEM(mainw->vol_toolitem),-1);
   }
   lives_widget_set_tooltip_text(mainw->vol_toolitem,_("Audio volume (1.00)"));

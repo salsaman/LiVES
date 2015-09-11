@@ -271,6 +271,8 @@ typedef struct {
 
   boolean ce_maxspect;
 
+  boolean show_button_icons;
+
   boolean lamp_buttons;
 
   boolean autoload_subs;
@@ -539,6 +541,7 @@ typedef struct {
   LiVESWidget *rb_startup_mt;
   LiVESWidget *jack_int_label;
   LiVESWidget *checkbutton_ce_maxspect;
+  LiVESWidget *checkbutton_button_icons;
   LiVESWidget *temp_label;
   LiVESWidget *checkbutton_stream_audio;
   LiVESWidget *checkbutton_rec_after_pb;

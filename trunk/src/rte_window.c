@@ -1753,7 +1753,7 @@ void on_rte_info_clicked(LiVESButton *button, livespointer user_data) {
   hbuttonbox = lives_hbutton_box_new();
   lives_box_pack_start(LIVES_BOX(vbox), hbuttonbox, TRUE, TRUE, 0);
 
-  ok_button = lives_button_new_from_stock(LIVES_STOCK_OK);
+  ok_button = lives_button_new_from_stock(LIVES_STOCK_OK,NULL);
   lives_widget_show(ok_button);
 
   lives_container_add(LIVES_CONTAINER(hbuttonbox), ok_button);
@@ -2280,7 +2280,7 @@ LiVESWidget *create_rte_window(void) {
 
     mode_group=NULL;
 
-    clear_all_button = lives_button_new_with_mnemonic(_("_Clear all effects"));
+    clear_all_button = lives_button_new_from_stock(LIVES_STOCK_CLEAR,_("_Clear all effects"));
 
     for (j=0; j<modes; j++) {
       idx=i*modes+j;
@@ -2381,17 +2381,17 @@ LiVESWidget *create_rte_window(void) {
   lives_container_add(LIVES_CONTAINER(hbuttonbox), clear_all_button);
   lives_widget_set_can_focus_and_default(clear_all_button);
 
-  save_keymap_button = lives_button_new_with_mnemonic(_("_Save as default keymap"));
+  save_keymap_button = lives_button_new_from_stock(LIVES_STOCK_SAVE_AS,_("_Save as default keymap"));
 
   lives_container_add(LIVES_CONTAINER(hbuttonbox), save_keymap_button);
   lives_widget_set_can_focus_and_default(save_keymap_button);
 
-  load_keymap_button = lives_button_new_with_mnemonic(_("_Load default keymap"));
+  load_keymap_button = lives_button_new_from_stock(LIVES_STOCK_OPEN,_("_Load default keymap"));
 
   lives_container_add(LIVES_CONTAINER(hbuttonbox), load_keymap_button);
   lives_widget_set_can_focus_and_default(load_keymap_button);
 
-  ok_button = lives_button_new_with_mnemonic(_("Close _window"));
+  ok_button = lives_button_new_from_stock(LIVES_STOCK_CLOSE,_("Close _window"));
 
   lives_container_add(LIVES_CONTAINER(hbuttonbox), ok_button);
   lives_widget_set_can_focus_and_default(ok_button);

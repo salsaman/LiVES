@@ -163,7 +163,7 @@ void framedraw_add_reset(LiVESVBox *box, lives_special_framedraw_rect_t *framedr
 
   framedraw_add_label(box);
 
-  mainw->framedraw_reset = lives_button_new_from_stock(LIVES_STOCK_REFRESH);
+  mainw->framedraw_reset = lives_button_new_from_stock(LIVES_STOCK_REFRESH,NULL);
   hbox_rst = lives_hbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(box), hbox_rst, FALSE, FALSE, 0);
 
@@ -272,9 +272,7 @@ void widget_add_framedraw(LiVESVBox *box, int start, int end, boolean add_previe
   lives_scale_set_draw_value(LIVES_SCALE(mainw->framedraw_scale),FALSE);
 
   rfx=(lives_rfx_t *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(lives_widget_get_toplevel(LIVES_WIDGET(box))),"rfx");
-  mainw->framedraw_preview = lives_button_new_from_stock(LIVES_STOCK_REFRESH);
-  lives_button_set_label(LIVES_BUTTON(mainw->framedraw_preview),_("_Preview"));
-  lives_button_set_use_underline(LIVES_BUTTON(mainw->framedraw_preview), TRUE);
+  mainw->framedraw_preview = lives_button_new_from_stock(LIVES_STOCK_REFRESH,_("_Preview"));
   lives_box_pack_start(LIVES_BOX(hbox), mainw->framedraw_preview, TRUE, FALSE, 0);
   lives_widget_set_sensitive(mainw->framedraw_spinbutton,FALSE);
   lives_widget_set_sensitive(mainw->framedraw_scale,FALSE);

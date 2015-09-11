@@ -1542,7 +1542,7 @@ _resaudw *create_resaudw(short type, render_details *rdet, LiVESWidget *top_vbox
     lives_widget_show(dialog_action_area);
     lives_button_box_set_layout(LIVES_BUTTON_BOX(dialog_action_area), LIVES_BUTTONBOX_END);
 
-    cancelbutton = lives_button_new_from_stock(LIVES_STOCK_CANCEL);
+    cancelbutton = lives_button_new_from_stock(LIVES_STOCK_CANCEL,NULL);
 
     lives_dialog_add_action_widget(LIVES_DIALOG(resaudw->dialog), cancelbutton, LIVES_RESPONSE_CANCEL);
     lives_widget_set_can_focus_and_default(cancelbutton);
@@ -1551,7 +1551,7 @@ _resaudw *create_resaudw(short type, render_details *rdet, LiVESWidget *top_vbox
           LIVES_KEY_Escape, (LiVESXModifierType)0, (LiVESAccelFlags)0);
 
 
-    okbutton = lives_button_new_from_stock(LIVES_STOCK_OK);
+    okbutton = lives_button_new_from_stock(LIVES_STOCK_OK,NULL);
 
     lives_dialog_add_action_widget(LIVES_DIALOG(resaudw->dialog), okbutton, LIVES_RESPONSE_OK);
     lives_widget_set_can_focus_and_default(okbutton);
@@ -1715,14 +1715,14 @@ void create_new_pb_speed(short type) {
   dialog_action_area = lives_dialog_get_action_area(LIVES_DIALOG(new_pb_speed));
   lives_button_box_set_layout(LIVES_BUTTON_BOX(dialog_action_area), LIVES_BUTTONBOX_END);
 
-  cancelbutton = lives_button_new_from_stock(LIVES_STOCK_CANCEL);
+  cancelbutton = lives_button_new_from_stock(LIVES_STOCK_CANCEL,NULL);
   lives_dialog_add_action_widget(LIVES_DIALOG(new_pb_speed), cancelbutton, LIVES_RESPONSE_CANCEL);
   lives_widget_set_can_focus(cancelbutton,TRUE);
 
   lives_widget_add_accelerator(cancelbutton, LIVES_WIDGET_CLICKED_SIGNAL, accel_group,
                                LIVES_KEY_Escape, (LiVESXModifierType)0, (LiVESAccelFlags)0);
 
-  change_pb_ok = lives_button_new_from_stock(LIVES_STOCK_OK);
+  change_pb_ok = lives_button_new_from_stock(LIVES_STOCK_OK,NULL);
   lives_dialog_add_action_widget(LIVES_DIALOG(new_pb_speed), change_pb_ok, LIVES_RESPONSE_OK);
   lives_widget_set_can_focus_and_default(change_pb_ok);
   lives_widget_grab_default(change_pb_ok);

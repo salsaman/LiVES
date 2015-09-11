@@ -332,10 +332,10 @@ rfx_build_window_t *make_rfx_build_window(const char *script_name, lives_rfx_sta
   dialog_action_area = lives_dialog_get_action_area(LIVES_DIALOG(rfxbuilder->dialog));
   lives_button_box_set_layout(LIVES_BUTTON_BOX(dialog_action_area), LIVES_BUTTONBOX_END);
 
-  cancelbutton = lives_button_new_from_stock(LIVES_STOCK_CANCEL);
+  cancelbutton = lives_button_new_from_stock(LIVES_STOCK_CANCEL,NULL);
   lives_dialog_add_action_widget(LIVES_DIALOG(rfxbuilder->dialog), cancelbutton, LIVES_RESPONSE_CANCEL);
 
-  okbutton = lives_button_new_from_stock(LIVES_STOCK_OK);
+  okbutton = lives_button_new_from_stock(LIVES_STOCK_OK,NULL);
   lives_dialog_add_action_widget(LIVES_DIALOG(rfxbuilder->dialog), okbutton, LIVES_RESPONSE_OK);
   lives_widget_set_can_focus_and_default(okbutton);
 
@@ -645,14 +645,14 @@ void on_list_table_clicked(LiVESButton *button, livespointer user_data) {
   dialog_action_area = lives_dialog_get_action_area(LIVES_DIALOG(dialog));
   lives_button_box_set_layout(LIVES_BUTTON_BOX(dialog_action_area), LIVES_BUTTONBOX_END);
 
-  cancelbutton = lives_button_new_from_stock(LIVES_STOCK_CANCEL);
+  cancelbutton = lives_button_new_from_stock(LIVES_STOCK_CANCEL,NULL);
   lives_dialog_add_action_widget(LIVES_DIALOG(dialog), cancelbutton, LIVES_RESPONSE_CANCEL);
 
   lives_widget_add_accelerator(cancelbutton, LIVES_WIDGET_CLICKED_SIGNAL, accel_group,
                                LIVES_KEY_Escape, (LiVESXModifierType)0, (LiVESAccelFlags)0);
 
 
-  okbutton = lives_button_new_from_stock(LIVES_STOCK_OK);
+  okbutton = lives_button_new_from_stock(LIVES_STOCK_OK,NULL);
   lives_dialog_add_action_widget(LIVES_DIALOG(dialog), okbutton, LIVES_RESPONSE_OK);
   lives_widget_set_can_focus_and_default(okbutton);
 
@@ -1010,10 +1010,10 @@ void on_properties_clicked(LiVESButton *button, livespointer user_data) {
   dialog_action_area = lives_dialog_get_action_area(LIVES_DIALOG(dialog));
   lives_button_box_set_layout(LIVES_BUTTON_BOX(dialog_action_area), LIVES_BUTTONBOX_END);
 
-  cancelbutton = lives_button_new_from_stock(LIVES_STOCK_CANCEL);
+  cancelbutton = lives_button_new_from_stock(LIVES_STOCK_CANCEL,NULL);
   lives_dialog_add_action_widget(LIVES_DIALOG(dialog), cancelbutton, LIVES_RESPONSE_CANCEL);
 
-  okbutton = lives_button_new_from_stock(LIVES_STOCK_OK);
+  okbutton = lives_button_new_from_stock(LIVES_STOCK_OK,NULL);
   lives_dialog_add_action_widget(LIVES_DIALOG(dialog), okbutton, LIVES_RESPONSE_OK);
   lives_widget_set_can_focus_and_default(okbutton);
 
@@ -2902,11 +2902,11 @@ void on_code_clicked(LiVESButton *button, livespointer user_data) {
   dialog_action_area = lives_dialog_get_action_area(LIVES_DIALOG(dialog));
   lives_button_box_set_layout(LIVES_BUTTON_BOX(dialog_action_area), LIVES_BUTTONBOX_END);
 
-  cancelbutton = lives_button_new_from_stock(LIVES_STOCK_CANCEL);
+  cancelbutton = lives_button_new_from_stock(LIVES_STOCK_CANCEL,NULL);
   lives_dialog_add_action_widget(LIVES_DIALOG(dialog), cancelbutton, LIVES_RESPONSE_CANCEL);
   lives_widget_set_can_focus_and_default(cancelbutton);
 
-  okbutton = lives_button_new_from_stock(LIVES_STOCK_OK);
+  okbutton = lives_button_new_from_stock(LIVES_STOCK_OK,NULL);
   lives_dialog_add_action_widget(LIVES_DIALOG(dialog), okbutton, LIVES_RESPONSE_OK);
   lives_widget_set_can_focus_and_default(okbutton);
 
@@ -4228,10 +4228,10 @@ char *prompt_for_script_name(const char *sname, lives_rfx_status_t status) {
   lives_widget_show(dialog_action_area);
   lives_button_box_set_layout(LIVES_BUTTON_BOX(dialog_action_area), LIVES_BUTTONBOX_END);
 
-  cancelbutton = lives_button_new_from_stock(LIVES_STOCK_CANCEL);
+  cancelbutton = lives_button_new_from_stock(LIVES_STOCK_CANCEL,NULL);
   lives_dialog_add_action_widget(LIVES_DIALOG(dialog), cancelbutton, LIVES_RESPONSE_CANCEL);
 
-  copy_script_okbutton = lives_button_new_from_stock(LIVES_STOCK_OK);
+  copy_script_okbutton = lives_button_new_from_stock(LIVES_STOCK_OK,NULL);
   lives_dialog_add_action_widget(LIVES_DIALOG(dialog), copy_script_okbutton, LIVES_RESPONSE_OK);
   lives_widget_set_can_focus_and_default(copy_script_okbutton);
   lives_widget_grab_default(copy_script_okbutton);

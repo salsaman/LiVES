@@ -1,6 +1,6 @@
 // ldvinterface.c
 // LiVES
-// (c) G. Finch 2006-2013 <salsaman@gmail.com>
+// (c) G. Finch 2006-2015 <salsaman@gmail.com>
 // released under the GNU GPL 3 or later
 // see file ../COPYING for licensing details
 
@@ -16,7 +16,6 @@ struct _dvgrabw *create_camwindow(s_cam *cam, int type) {
   LiVESWidget *button3;
   LiVESWidget *button4;
   LiVESWidget *buttond;
-  LiVESWidget *image;
   LiVESWidget *vbox;
   LiVESWidget *hbox;
   LiVESWidget *label;
@@ -40,7 +39,6 @@ struct _dvgrabw *create_camwindow(s_cam *cam, int type) {
   hbox = lives_hbox_new(FALSE,0);
   lives_box_pack_start(LIVES_BOX(vbox),hbox,FALSE,FALSE,widget_opts.packing_height);
 
-
   buttond = lives_standard_file_button_new(TRUE,NULL);
 
   label=lives_standard_label_new_with_mnemonic(_("Save _directory :"),buttond);
@@ -51,7 +49,7 @@ struct _dvgrabw *create_camwindow(s_cam *cam, int type) {
 
   dvgrabw->dirname=lives_filename_to_utf8(lives_get_current_dir(),-1,NULL,NULL,NULL);
   dvgrabw->dirent=lives_standard_entry_new(NULL,FALSE,dvgrabw->dirname,-1,PATH_MAX,
-					   LIVES_BOX(hbox),NULL);
+                  LIVES_BOX(hbox),NULL);
 
 
   lives_signal_connect(buttond, LIVES_WIDGET_CLICKED_SIGNAL, LIVES_GUI_CALLBACK(on_filesel_button_clicked), (livespointer)dvgrabw->dirent);
@@ -90,36 +88,31 @@ struct _dvgrabw *create_camwindow(s_cam *cam, int type) {
 
   lives_box_pack_start(LIVES_BOX(vbox),hbuttonbox1,FALSE,FALSE,widget_opts.packing_height);
 
-  button3 = lives_button_new_from_stock(LIVES_STOCK_MEDIA_REWIND);
+  button3 = lives_button_new_from_stock(LIVES_STOCK_MEDIA_REWIND,NULL);
 
   lives_container_add(LIVES_CONTAINER(hbuttonbox1), button3);
   lives_widget_set_can_focus(button3,TRUE);
 
-  button4 = lives_button_new_from_stock(LIVES_STOCK_MEDIA_FORWARD);
+  button4 = lives_button_new_from_stock(LIVES_STOCK_MEDIA_FORWARD,NULL);
 
   lives_container_add(LIVES_CONTAINER(hbuttonbox1), button4);
   lives_widget_set_can_focus(button4,TRUE);
 
-  dvgrabw->stop = lives_button_new_from_stock(LIVES_STOCK_MEDIA_STOP);
+  dvgrabw->stop = lives_button_new_from_stock(LIVES_STOCK_MEDIA_STOP,NULL);
 
   lives_container_add(LIVES_CONTAINER(hbuttonbox1), dvgrabw->stop);
   lives_widget_set_can_focus_and_default(dvgrabw->stop);
   lives_widget_set_sensitive(dvgrabw->stop,FALSE);
 
-  dvgrabw->play = lives_button_new_from_stock(LIVES_STOCK_MEDIA_PLAY);
+  dvgrabw->play = lives_button_new_from_stock(LIVES_STOCK_MEDIA_PLAY,NULL);
 
   lives_container_add(LIVES_CONTAINER(hbuttonbox1), dvgrabw->play);
   lives_widget_set_can_focus_and_default(dvgrabw->play);
 
-  dvgrabw->grab = lives_button_new_from_stock(LIVES_STOCK_MEDIA_RECORD);
+  dvgrabw->grab = lives_button_new_from_stock(LIVES_STOCK_MEDIA_RECORD,_("_Grab"));
 
   lives_container_add(LIVES_CONTAINER(hbuttonbox1), dvgrabw->grab);
   lives_widget_set_can_focus_and_default(dvgrabw->grab);
-
-  image = lives_image_new_from_stock(LIVES_STOCK_MEDIA_RECORD,LIVES_ICON_SIZE_BUTTON);
-
-  lives_button_set_label(LIVES_BUTTON(dvgrabw->grab),_("_Grab"));
-  lives_button_set_image(LIVES_BUTTON(dvgrabw->grab),image);
 
   label=lives_standard_label_new(
           _("\nUse this tool to control your camera and grab clips.\nAfter grabbing your clips, you can close this window \nand then load them into LiVES.\n"));
@@ -129,14 +122,11 @@ struct _dvgrabw *create_camwindow(s_cam *cam, int type) {
   hbuttonbox2 = lives_hbutton_box_new();
   lives_box_pack_start(LIVES_BOX(vbox),hbuttonbox2,FALSE,FALSE,widget_opts.packing_height);
 
-  dvgrabw->quit = lives_button_new_from_stock(LIVES_STOCK_CLOSE);
+  dvgrabw->quit = lives_button_new_from_stock(LIVES_STOCK_CLOSE,_("_Close Window"));
 
   lives_container_add(LIVES_CONTAINER(hbuttonbox2), dvgrabw->quit);
   lives_widget_set_can_focus_and_default(dvgrabw->quit);
 
-  image=lives_image_new_from_stock(LIVES_STOCK_CLOSE,LIVES_ICON_SIZE_BUTTON);
-  lives_button_set_label(LIVES_BUTTON(dvgrabw->quit),_("_Close Window"));
-  lives_button_set_image(LIVES_BUTTON(dvgrabw->quit),image);
 
   //////////////////////////////////////////////////////////////////////////////////////////
 

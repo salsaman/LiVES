@@ -1,6 +1,6 @@
 // ldvgrab.c
 // LiVES
-// (c) G. Finch 2006 - 2013 <salsaman@gmail.com>
+// (c) G. Finch 2006 - 2015 <salsaman@gmail.com>
 // released under the GNU GPL 3 or later
 // see file ../COPYING for licensing details
 
@@ -34,7 +34,7 @@ int g_rx_channel = RX_CHANNEL;
 int raw_iso_handler(raw1394handle_t handle, int channel, size_t length, quadlet_t *data) {
   if (length < RAW_BUF_SIZE && channel == g_rx_channel) {
     g_rx_length = length;
-    memcpy(g_rx_packet, data, length);
+    lives_memcpy(g_rx_packet, data, length);
   }
   return 0;
 }
@@ -105,14 +105,17 @@ void camdest(s_cam *cam) {
 }
 
 s_cam *camready(void) {
-  char *msg;
   rom1394_directory rom_dir;
-  int i,j;
 
-  int n_ports;
-  struct raw1394_portinfo pinf[ 16 ];
+  struct raw1394_portinfo pinf[16];
 
   s_cam *cam=(s_cam *)lives_malloc(sizeof(s_cam));
+
+  char *msg;
+
+  int n_ports;
+
+  register int i,j;
 
   cam->device=-1;
 
@@ -145,14 +148,18 @@ s_cam *camready(void) {
   for (j = 0; j < n_ports && cam->device == -1; j++) {
 
     if (raw1394_set_port(cam->handle, j) < 0) {
-      d_print(_("\nraw1394 - couldn't set port %d !\n"),j);
+      msg=lives_strdup_printf(_("\nraw1394 - couldn't set port %d !\n"),j);
+      d_print(msg);
+      lives_free(msg);
       continue;
     }
 
     for (i=0; i < raw1394_get_nodecount(cam->handle); ++i) {
 
       if (rom1394_get_directory(cam->handle, i, &rom_dir) < 0) {
-        d_print(_("error reading config rom directory for node %d\n"), i);
+        msg=lives_strdup_printf(_("error reading config rom directory for node %d\n"), i);
+        d_print(msg);
+        lives_free(msg);
         continue;
       }
 
@@ -164,7 +171,7 @@ s_cam *camready(void) {
     }
   }
 
-  if (cam->device == -1) {
+  if (0&&cam->device == -1) {
     do_error_dialog(
       _("\nLiVES could not find any firewire camera.\nPlease make sure your camera is switched on,\nand check that you have read/write permissions for the camera device\n(generally /dev/raw1394*).\n"));
     raw1394_destroy_handle(cam->handle);
@@ -213,8 +220,9 @@ void cameject(s_cam *cam) {
 
 char *find_free_camfile(int format) {
   char *filename=lives_strdup(lives_entry_get_text(LIVES_ENTRY(dvgrabw->filent)));
-  int i;
   char *fname,*tmp=NULL,*tmp2,*tmp3;
+
+  register int i;
 
   if (format==CAM_FORMAT_HDV) {
     for (i=1; i<10000; i++) {
@@ -286,7 +294,9 @@ boolean rec(s_cam *cam) {
                           (tmp2=lives_filename_from_utf8(dvgrabw->dirname,-1,NULL,NULL,NULL)),
                           (tmp3=lives_filename_from_utf8(dvgrabw->filename,-1,NULL,NULL,NULL)));
 #endif
+
   cam->pgid=lives_fork(com);
+
   lives_free(com);
   lives_free(tmp2);
   lives_free(tmp3);

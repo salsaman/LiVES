@@ -8526,7 +8526,7 @@ void popup_lmap_errors(LiVESMenuItem *menuitem, livespointer user_data) {
 
   add_warn_check(LIVES_BOX(vbox),WARN_MASK_LAYOUT_POPUP);
 
-  button = lives_button_new_with_mnemonic(_("Close _Window"));
+  button = lives_button_new_from_stock(LIVES_STOCK_CLOSE,_("_Close Window"));
 
   lives_dialog_add_action_widget(LIVES_DIALOG(textwindow->dialog), button, LIVES_RESPONSE_OK);
 
@@ -8537,7 +8537,7 @@ void popup_lmap_errors(LiVESMenuItem *menuitem, livespointer user_data) {
   lives_container_set_border_width(LIVES_CONTAINER(button), widget_opts.border_width);
   lives_widget_set_can_focus_and_default(button);
 
-  textwindow->clear_button = lives_button_new_with_mnemonic(_("Clear _Errors"));
+  textwindow->clear_button = lives_button_new_from_stock(LIVES_STOCK_CLEAR,_("Clear _Errors"));
 
   lives_dialog_add_action_widget(LIVES_DIALOG(textwindow->dialog), textwindow->clear_button, LIVES_RESPONSE_CANCEL);
 
@@ -8548,7 +8548,7 @@ void popup_lmap_errors(LiVESMenuItem *menuitem, livespointer user_data) {
   lives_container_set_border_width(LIVES_CONTAINER(textwindow->clear_button), widget_opts.border_width);
   lives_widget_set_can_focus_and_default(textwindow->clear_button);
 
-  textwindow->delete_button = lives_button_new_with_mnemonic(_("_Delete affected layouts"));
+  textwindow->delete_button = lives_button_new_from_stock(LIVES_STOCK_DELETE,_("_Delete affected layouts"));
 
   lives_dialog_add_action_widget(LIVES_DIALOG(textwindow->dialog), textwindow->delete_button, LIVES_RESPONSE_CANCEL);
 

@@ -20,6 +20,10 @@ void on_camgrab_clicked(LiVESButton *button, livespointer user_data) {
   lives_widget_set_sensitive(dvgrabw->grab,FALSE);
   lives_set_cursor_style(LIVES_CURSOR_BUSY,dvgrabw->dialog);
   if (!dvgrabw->playing) on_camplay_clicked(NULL,user_data);
+
+  if (dvgrabw->dirname!=NULL) lives_free(dvgrabw->dirname);
+  dvgrabw->dirname=lives_strdup(lives_entry_get_text(LIVES_ENTRY(dvgrabw->dirent)));
+
   msg=lives_strdup_printf(_("Recording to %s/%s"),dvgrabw->dirname,dvgrabw->filename);
   lives_entry_set_text(LIVES_ENTRY(dvgrabw->status_entry),msg);
   if (cam->format==CAM_FORMAT_DV) {
@@ -42,7 +46,7 @@ void on_camstop_clicked(LiVESButton *button, livespointer user_data) {
 
   lives_set_cursor_style(LIVES_CURSOR_NORMAL,dvgrabw->dialog);
   camstop(cam);
-  lives_button_set_label(LIVES_BUTTON(dvgrabw->play),"gtk-media-play");
+  lives_button_set_label(LIVES_BUTTON(dvgrabw->play),LIVES_STOCK_LABEL_MEDIA_PLAY);
   lives_widget_set_sensitive(dvgrabw->grab,TRUE);
   lives_entry_set_text(LIVES_ENTRY(dvgrabw->status_entry),_("Status: Ready"));
 }
@@ -53,9 +57,9 @@ void on_camplay_clicked(LiVESButton *button, livespointer user_data) {
   camplay(cam);
   dvgrabw->playing=!dvgrabw->playing;
   if (dvgrabw->playing) {
-    lives_button_set_label(LIVES_BUTTON(dvgrabw->play),"gtk-media-pause");
+    lives_button_set_label(LIVES_BUTTON(dvgrabw->play),LIVES_STOCK_LABEL_MEDIA_PAUSE);
   } else {
-    lives_button_set_label(LIVES_BUTTON(dvgrabw->play),"gtk-media-play");
+    lives_button_set_label(LIVES_BUTTON(dvgrabw->play),LIVES_STOCK_LABEL_MEDIA_PLAY);
   }
   lives_widget_set_sensitive(dvgrabw->stop,TRUE);
 }
@@ -78,12 +82,12 @@ void on_cameject_clicked(LiVESButton *button, livespointer user_data) {
   cameject(cam);
 }
 
-
+/*
 boolean on_camdelete_event(LiVESWidget *widget, GdkEvent *event, livespointer user_data) {
   on_camquit_clicked(NULL,user_data);
   return FALSE;
 }
-
+*/
 
 void on_camquit_clicked(LiVESButton *button, livespointer user_data) {
   s_cam *cam=(s_cam *)user_data;

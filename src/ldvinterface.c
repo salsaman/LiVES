@@ -20,9 +20,6 @@ struct _dvgrabw *create_camwindow(s_cam *cam, int type) {
   LiVESWidget *vbox;
   LiVESWidget *hbox;
   LiVESWidget *label;
-  LiVESWidget *direntry;
-
-  char *tmp;
 
   struct _dvgrabw *dvgrabw=(struct _dvgrabw *)lives_malloc(sizeof(struct _dvgrabw));
 
@@ -51,13 +48,13 @@ struct _dvgrabw *create_camwindow(s_cam *cam, int type) {
 
   lives_box_pack_start(LIVES_BOX(hbox),buttond,FALSE,FALSE,widget_opts.packing_width);
 
-  direntry=lives_standard_entry_new(NULL,FALSE,(tmp=lives_filename_to_utf8(lives_get_current_dir(),-1,NULL,NULL,NULL)),-1,PATH_MAX,
-                                    LIVES_BOX(hbox),NULL);
 
-  lives_free(tmp);
+  dvgrabw->dirname=lives_filename_to_utf8(lives_get_current_dir(),-1,NULL,NULL,NULL);
+  dvgrabw->dirent=lives_standard_entry_new(NULL,FALSE,dvgrabw->dirname,-1,PATH_MAX,
+					   LIVES_BOX(hbox),NULL);
 
 
-  lives_signal_connect(buttond, LIVES_WIDGET_CLICKED_SIGNAL, LIVES_GUI_CALLBACK(on_filesel_button_clicked), (livespointer)direntry);
+  lives_signal_connect(buttond, LIVES_WIDGET_CLICKED_SIGNAL, LIVES_GUI_CALLBACK(on_filesel_button_clicked), (livespointer)dvgrabw->dirent);
 
 
   //////////////////
@@ -93,54 +90,34 @@ struct _dvgrabw *create_camwindow(s_cam *cam, int type) {
 
   lives_box_pack_start(LIVES_BOX(vbox),hbuttonbox1,FALSE,FALSE,widget_opts.packing_height);
 
-#if GTK_CHECK_VERSION(2,6,0)
-  button3 = lives_button_new_from_stock(GTK_STOCK_MEDIA_REWIND);
-#else
-  button3 = lives_button_new_from_stock(GTK_STOCK_GO_BACK);
-#endif
+  button3 = lives_button_new_from_stock(LIVES_STOCK_MEDIA_REWIND);
 
   lives_container_add(LIVES_CONTAINER(hbuttonbox1), button3);
   lives_widget_set_can_focus(button3,TRUE);
 
-#if GTK_CHECK_VERSION(2,6,0)
-  button4 = lives_button_new_from_stock(GTK_STOCK_MEDIA_FORWARD);
-#else
-  button4 = lives_button_new_from_stock(GTK_STOCK_GO_FORWARD);
-#endif
+  button4 = lives_button_new_from_stock(LIVES_STOCK_MEDIA_FORWARD);
+
   lives_container_add(LIVES_CONTAINER(hbuttonbox1), button4);
   lives_widget_set_can_focus(button4,TRUE);
 
-#if GTK_CHECK_VERSION(2,6,0)
-  dvgrabw->stop = lives_button_new_from_stock(GTK_STOCK_MEDIA_STOP);
-#else
-  dvgrabw->stop = lives_button_new_from_stock(GTK_STOCK_STOP);
-#endif
+  dvgrabw->stop = lives_button_new_from_stock(LIVES_STOCK_MEDIA_STOP);
+
   lives_container_add(LIVES_CONTAINER(hbuttonbox1), dvgrabw->stop);
   lives_widget_set_can_focus_and_default(dvgrabw->stop);
   lives_widget_set_sensitive(dvgrabw->stop,FALSE);
 
-#if GTK_CHECK_VERSION(2,6,0)
-  dvgrabw->play = lives_button_new_from_stock(GTK_STOCK_MEDIA_PLAY);
-#else
-  dvgrabw->play = lives_button_new_from_stock(GTK_STOCK_GO_FORWARD);
-#endif
+  dvgrabw->play = lives_button_new_from_stock(LIVES_STOCK_MEDIA_PLAY);
+
   lives_container_add(LIVES_CONTAINER(hbuttonbox1), dvgrabw->play);
   lives_widget_set_can_focus_and_default(dvgrabw->play);
 
+  dvgrabw->grab = lives_button_new_from_stock(LIVES_STOCK_MEDIA_RECORD);
 
-#if GTK_CHECK_VERSION(2,6,0)
-  dvgrabw->grab = lives_button_new_from_stock(GTK_STOCK_MEDIA_RECORD);
-#else
-  dvgrabw->grab = lives_button_new_from_stock(GTK_STOCK_NO);
-#endif
   lives_container_add(LIVES_CONTAINER(hbuttonbox1), dvgrabw->grab);
   lives_widget_set_can_focus_and_default(dvgrabw->grab);
 
-#if GTK_CHECK_VERSION(2,6,0)
   image = lives_image_new_from_stock(LIVES_STOCK_MEDIA_RECORD,LIVES_ICON_SIZE_BUTTON);
-#else
-  image = lives_image_new_from_stock(GTK_STOCK_NO,LIVES_ICON_SIZE_BUTTON);
-#endif
+
   lives_button_set_label(LIVES_BUTTON(dvgrabw->grab),_("_Grab"));
   lives_button_set_image(LIVES_BUTTON(dvgrabw->grab),image);
 
@@ -152,7 +129,8 @@ struct _dvgrabw *create_camwindow(s_cam *cam, int type) {
   hbuttonbox2 = lives_hbutton_box_new();
   lives_box_pack_start(LIVES_BOX(vbox),hbuttonbox2,FALSE,FALSE,widget_opts.packing_height);
 
-  dvgrabw->quit = lives_button_new_from_stock(GTK_STOCK_CLOSE);
+  dvgrabw->quit = lives_button_new_from_stock(LIVES_STOCK_CLOSE);
+
   lives_container_add(LIVES_CONTAINER(hbuttonbox2), dvgrabw->quit);
   lives_widget_set_can_focus_and_default(dvgrabw->quit);
 
@@ -171,8 +149,6 @@ struct _dvgrabw *create_camwindow(s_cam *cam, int type) {
 
 
   lives_widget_show_all(dvgrabw->dialog);
-
-  dvgrabw->dirname=NULL;
 
   return dvgrabw;
 }

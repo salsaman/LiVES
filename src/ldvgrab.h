@@ -38,6 +38,7 @@ char *find_free_camfile(int format);
 struct _dvgrabw {
   LiVESWidget *dialog;
   LiVESWidget *filent;
+  LiVESWidget *dirent;
   LiVESWidget *stop;
   LiVESWidget *grab;
   LiVESWidget *play;

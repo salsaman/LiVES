@@ -2945,6 +2945,7 @@ LIVES_INLINE LiVESWidget *lives_button_new(void) {
   LiVESWidget *button=NULL;
 #ifdef GUI_GTK
   button=gtk_button_new();
+  gtk_button_set_use_underline(GTK_BUTTON(button),TRUE);
 #endif
 #ifdef GUI_QT
   button = new LiVESButton;
@@ -2981,7 +2982,7 @@ LIVES_INLINE LiVESWidget *lives_button_new_with_label(const char *label) {
 }
 
 
-LIVES_INLINE LiVESWidget *lives_button_new_from_stock(const char *stock_id) {
+LIVES_INLINE LiVESWidget *lives_button_new_from_stock(const char *stock_id, const char *label) {
   LiVESWidget *button=NULL;
 
 #if GTK_CHECK_VERSION(3,10,0) || defined GUI_QT
@@ -3066,7 +3067,10 @@ LIVES_INLINE LiVESWidget *lives_button_new_from_stock(const char *stock_id) {
 #if GTK_CHECK_VERSION(3,6,0)
     gtk_button_set_always_show_image(GTK_BUTTON(button),prefs->show_button_images);
 #endif
+    if (label!=NULL)
+      gtk_button_set_label(GTK_BUTTON(button),label);
 #endif
+
 
     return button;
   }
@@ -7578,8 +7582,8 @@ LiVESWidget *lives_standard_dialog_new(const char *title, boolean add_std_button
 
   if (add_std_buttons) {
     LiVESAccelGroup *accel_group=LIVES_ACCEL_GROUP(lives_accel_group_new());
-    LiVESWidget *cancelbutton = lives_button_new_from_stock(LIVES_STOCK_CANCEL);
-    LiVESWidget *okbutton = lives_button_new_from_stock(LIVES_STOCK_OK);
+    LiVESWidget *cancelbutton = lives_button_new_from_stock(LIVES_STOCK_CANCEL,NULL);
+    LiVESWidget *okbutton = lives_button_new_from_stock(LIVES_STOCK_OK,NULL);
 
     lives_window_add_accel_group(LIVES_WINDOW(dialog), accel_group);
 

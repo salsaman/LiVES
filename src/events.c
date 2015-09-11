@@ -2186,7 +2186,7 @@ LiVESWidget *events_rec_dialog(boolean allow_mt) {
                        LIVES_GUI_CALLBACK(set_render_choice),
                        LIVES_INT_TO_POINTER(RENDER_CHOICE_EVENT_LIST));
 
-  cancelbutton = lives_button_new_from_stock(LIVES_STOCK_CANCEL);
+  cancelbutton = lives_button_new_from_stock(LIVES_STOCK_CANCEL,NULL);
   lives_widget_set_can_focus(cancelbutton,TRUE);
 
   lives_dialog_add_action_widget(LIVES_DIALOG(e_rec_dialog), cancelbutton, LIVES_RESPONSE_CANCEL);
@@ -2201,7 +2201,7 @@ LiVESWidget *events_rec_dialog(boolean allow_mt) {
 
   lives_window_add_accel_group(LIVES_WINDOW(e_rec_dialog), accel_group);
 
-  okbutton = lives_button_new_from_stock(LIVES_STOCK_OK);
+  okbutton = lives_button_new_from_stock(LIVES_STOCK_OK,NULL);
   lives_widget_show(okbutton);
   lives_dialog_add_action_widget(LIVES_DIALOG(e_rec_dialog), okbutton, LIVES_RESPONSE_OK);
   lives_widget_set_can_focus_and_default(okbutton);
@@ -4997,7 +4997,8 @@ LiVESWidget *create_event_list_dialog(weed_plant_t *event_list, weed_timecode_t 
 
   lives_button_box_set_layout(LIVES_BUTTON_BOX(hbuttonbox), LIVES_BUTTONBOX_SPREAD);
 
-  ok_button = lives_button_new_with_mnemonic(_("Close _window"));
+  ok_button = lives_button_new_from_stock(LIVES_STOCK_CLOSE,_("_Close Window"));
+
   lives_widget_show(ok_button);
   lives_container_add(LIVES_CONTAINER(hbuttonbox), ok_button);
 
@@ -5404,7 +5405,7 @@ render_details *create_render_details(int type) {
   add_fill_to_box(LIVES_BOX(daa));
 
 
-  cancelbutton = lives_button_new_from_stock(LIVES_STOCK_CANCEL);
+  cancelbutton = lives_button_new_from_stock(LIVES_STOCK_CANCEL,NULL);
   if (!(prefs->startup_interface==STARTUP_MT&&!mainw->is_ready)) {
     lives_dialog_add_action_widget(LIVES_DIALOG(rdet->dialog), cancelbutton, LIVES_RESPONSE_CANCEL);
 
@@ -5417,11 +5418,10 @@ render_details *create_render_details(int type) {
 
 
   if (!specified) {
-    rdet->okbutton = lives_button_new_from_stock(LIVES_STOCK_OK);
+    rdet->okbutton = lives_button_new_from_stock(LIVES_STOCK_OK,NULL);
     lives_button_box_set_button_width(LIVES_BUTTON_BOX(daa), rdet->okbutton, DEF_BUTTON_WIDTH*2);
   } else  {
-    rdet->okbutton = lives_button_new_from_stock(LIVES_STOCK_GO_FORWARD);
-    lives_button_set_label(LIVES_BUTTON(rdet->okbutton),_("_Next"));
+    rdet->okbutton = lives_button_new_from_stock(LIVES_STOCK_GO_FORWARD,_("_Next"));
   }
 
   lives_dialog_add_action_widget(LIVES_DIALOG(rdet->dialog), rdet->okbutton, LIVES_RESPONSE_OK);

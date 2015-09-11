@@ -1321,7 +1321,7 @@ static omclearn_w *create_omclearn_dialog(void) {
 
   hbuttonbox = lives_dialog_get_action_area(LIVES_DIALOG(omclw->dialog));
 
-  omclw->clear_button = lives_button_new_with_mnemonic(_("Clear _unmatched"));
+  omclw->clear_button = lives_button_new_from_stock(LIVES_STOCK_CLEAR,_("Clear _unmatched"));
 
   lives_container_add(LIVES_CONTAINER(hbuttonbox), omclw->clear_button);
 
@@ -1332,7 +1332,7 @@ static omclearn_w *create_omclearn_dialog(void) {
 
   lives_widget_set_sensitive(omclw->clear_button,FALSE);
 
-  omclw->del_all_button = lives_button_new_with_mnemonic(_("_Delete all"));
+  omclw->del_all_button = lives_button_new_from_stock(LIVES_STOCK_DELETE,_("_Delete all"));
 
   lives_container_add(LIVES_CONTAINER(hbuttonbox), omclw->del_all_button);
 
@@ -1344,7 +1344,7 @@ static omclearn_w *create_omclearn_dialog(void) {
   lives_widget_set_sensitive(omclw->del_all_button,FALSE);
 
 
-  ok_button = lives_button_new_with_mnemonic(_("Close _window"));
+  ok_button = lives_button_new_from_stock(LIVES_STOCK_CLOSE,_("_Close Window"));
 
   lives_container_add(LIVES_CONTAINER(hbuttonbox), ok_button);
 

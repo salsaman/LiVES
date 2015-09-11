@@ -1250,7 +1250,7 @@ static void lives_init(_ign_opts *ign_opts) {
     prefs->ce_thumb_mode=FALSE;
 #endif
 
-    prefs->show_button_images=FALSE;
+    prefs->show_button_images=get_boolean_pref("show_button_icons");
 
     prefs->push_audio_to_gens=TRUE;
 
@@ -5031,8 +5031,8 @@ static void load_frame_cleanup(boolean noswitch) {
 
   // format is now msg|timecode|fgclip|fgframe|fgfps|
   lives_notify(LIVES_OSC_NOTIFY_FRAME_SYNCH,(const char *)
-	       (tmp=lives_strdup_printf("%.8f|%d|%d|%.3f|",(double)mainw->currticks/U_SEC,
-					mainw->current_file,mainw->actual_frame,cfile->pb_fps)));
+               (tmp=lives_strdup_printf("%.8f|%d|%d|%.3f|",(double)mainw->currticks/U_SEC,
+                                        mainw->current_file,mainw->actual_frame,cfile->pb_fps)));
   lives_free(tmp);
 }
 
@@ -5801,8 +5801,8 @@ void load_frame_image(int frame) {
       }
 
       if (mainw->vpp->capabilities&VPP_LOCAL_DISPLAY) {
-	load_frame_cleanup(noswitch);
-	if (framecount!=NULL) lives_free(framecount);
+        load_frame_cleanup(noswitch);
+        if (framecount!=NULL) lives_free(framecount);
         return;
       }
 
@@ -6053,8 +6053,8 @@ void load_frame_image(int frame) {
       }
 
       if (mainw->vpp->capabilities&VPP_LOCAL_DISPLAY) {
-	load_frame_cleanup(noswitch);
-	if (framecount!=NULL) lives_free(framecount);
+        load_frame_cleanup(noswitch);
+        if (framecount!=NULL) lives_free(framecount);
         return;
       }
     }

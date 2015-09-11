@@ -4038,7 +4038,7 @@ static void ptable_row_add_standard_widgets(lives_conx_w *conxwp, int idx) {
   lives_box_pack_start(LIVES_BOX(hbox), conxwp->clabel[idx], FALSE, FALSE, widget_opts.packing_width);
 
 
-  conxwp->add_button[idx]=lives_button_new_from_stock(LIVES_STOCK_ADD);
+  conxwp->add_button[idx]=lives_button_new_from_stock(LIVES_STOCK_ADD,NULL);
   lives_widget_set_tooltip_text(conxwp->add_button[idx],_("Add another connection for this output parameter"));
 
 
@@ -4051,7 +4051,7 @@ static void ptable_row_add_standard_widgets(lives_conx_w *conxwp, int idx) {
                        (livespointer)conxwp);
 
 
-  conxwp->del_button[idx]=lives_button_new_from_stock(LIVES_STOCK_REMOVE);
+  conxwp->del_button[idx]=lives_button_new_from_stock(LIVES_STOCK_REMOVE,NULL);
   lives_widget_set_tooltip_text(conxwp->del_button[idx],_("Delete this connection"));
 
   hbox=lives_hbox_new(FALSE, 0);
@@ -4087,7 +4087,7 @@ static void ctable_row_add_standard_widgets(lives_conx_w *conxwp, int idx) {
   lives_box_pack_start(LIVES_BOX(hbox), conxwp->clabel[idx], FALSE, FALSE, widget_opts.packing_width);
 
 
-  conxwp->add_button[idx]=lives_button_new_from_stock(LIVES_STOCK_ADD);
+  conxwp->add_button[idx]=lives_button_new_from_stock(LIVES_STOCK_ADD,NULL);
   lives_widget_set_tooltip_text(conxwp->add_button[idx],_("Add another connection for this output channel"));
 
 
@@ -4100,7 +4100,7 @@ static void ctable_row_add_standard_widgets(lives_conx_w *conxwp, int idx) {
                        (livespointer)conxwp);
 
 
-  conxwp->del_button[idx]=lives_button_new_from_stock(LIVES_STOCK_REMOVE);
+  conxwp->del_button[idx]=lives_button_new_from_stock(LIVES_STOCK_REMOVE,NULL);
   lives_widget_set_tooltip_text(conxwp->del_button[idx],_("Delete this connection"));
 
   hbox=lives_hbox_new(FALSE, 0);
@@ -4780,10 +4780,10 @@ LiVESWidget *make_datacon_window(int key, int mode) {
     if (cconx_get_nconns(conxw.cconx,0)>0) lives_widget_set_sensitive(conxw.acbutton,TRUE);
   }
 
-  cancelbutton = lives_button_new_from_stock(LIVES_STOCK_CANCEL);
+  cancelbutton = lives_button_new_from_stock(LIVES_STOCK_CANCEL,NULL);
   lives_dialog_add_action_widget(LIVES_DIALOG(conxw.conx_dialog), cancelbutton, LIVES_RESPONSE_CANCEL);
 
-  okbutton = lives_button_new_from_stock(LIVES_STOCK_OK);
+  okbutton = lives_button_new_from_stock(LIVES_STOCK_OK,NULL);
   lives_dialog_add_action_widget(LIVES_DIALOG(conxw.conx_dialog), okbutton, LIVES_RESPONSE_OK);
 
   lives_widget_set_can_focus_and_default(okbutton);

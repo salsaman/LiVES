@@ -1051,7 +1051,7 @@ _vppaw *on_vpp_advanced_clicked(LiVESButton *button, livespointer user_data) {
   }
 
 
-  cancelbutton = lives_button_new_from_stock(LIVES_STOCK_CANCEL);
+  cancelbutton = lives_button_new_from_stock(LIVES_STOCK_CANCEL,NULL);
   lives_dialog_add_action_widget(LIVES_DIALOG(vppa->dialog), cancelbutton, LIVES_RESPONSE_CANCEL);
   lives_widget_set_can_focus(cancelbutton,TRUE);
 
@@ -1059,12 +1059,12 @@ _vppaw *on_vpp_advanced_clicked(LiVESButton *button, livespointer user_data) {
                                LIVES_KEY_Escape, (LiVESXModifierType)0, (LiVESAccelFlags)0);
 
 
-  savebutton = lives_button_new_from_stock(LIVES_STOCK_SAVE_AS);
+  savebutton = lives_button_new_from_stock(LIVES_STOCK_SAVE_AS,NULL);
   lives_dialog_add_action_widget(LIVES_DIALOG(vppa->dialog), savebutton, 1);
   lives_widget_set_can_focus(savebutton,TRUE);
   lives_widget_set_tooltip_text(savebutton, _("Save settings to an alternate file.\n"));
 
-  okbutton = lives_button_new_from_stock(LIVES_STOCK_OK);
+  okbutton = lives_button_new_from_stock(LIVES_STOCK_OK,NULL);
   lives_dialog_add_action_widget(LIVES_DIALOG(vppa->dialog), okbutton, LIVES_RESPONSE_OK);
   lives_widget_set_can_focus_and_default(okbutton);
 
@@ -2637,10 +2637,10 @@ void on_decplug_advanced_clicked(LiVESButton *button, livespointer user_data) {
   }
 
 
-  cancelbutton = lives_button_new_from_stock(LIVES_STOCK_CANCEL);
+  cancelbutton = lives_button_new_from_stock(LIVES_STOCK_CANCEL,NULL);
   lives_dialog_add_action_widget(LIVES_DIALOG(dialog), cancelbutton, LIVES_RESPONSE_CANCEL);
 
-  okbutton = lives_button_new_from_stock(LIVES_STOCK_OK);
+  okbutton = lives_button_new_from_stock(LIVES_STOCK_OK,NULL);
   lives_dialog_add_action_widget(LIVES_DIALOG(dialog), okbutton, LIVES_RESPONSE_OK);
   lives_widget_set_can_focus_and_default(okbutton);
 

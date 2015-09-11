@@ -917,7 +917,7 @@ void on_fx_pre_activate(lives_rfx_t *rfx, int didx, LiVESWidget *pbox) {
 
   if (top_dialog_vbox!=NULL) {
 
-    cancelbutton = lives_button_new_from_stock(LIVES_STOCK_CANCEL);
+    cancelbutton = lives_button_new_from_stock(LIVES_STOCK_CANCEL,NULL);
 
     fxw_accel_group = LIVES_ACCEL_GROUP(lives_accel_group_new());
     lives_window_add_accel_group(LIVES_WINDOW(fx_dialog[didx]), fxw_accel_group);
@@ -931,23 +931,24 @@ void on_fx_pre_activate(lives_rfx_t *rfx, int didx, LiVESWidget *pbox) {
                                    LIVES_KEY_Escape, (LiVESXModifierType)0, (LiVESAccelFlags)0);
 
       if (is_defaults) {
-        okbutton = lives_button_new_with_mnemonic(_("Set as default"));
+        okbutton = lives_button_new_from_stock(LIVES_STOCK_APPLY,_("Set as default"));
         if (!has_param) lives_widget_set_sensitive(okbutton,FALSE);
-        resetbutton = lives_button_new_with_mnemonic(_("Reset"));
+        resetbutton = lives_button_new_from_stock(LIVES_STOCK_REVERT_TO_SAVED,_("Reset"));
         if (!has_param) lives_widget_set_sensitive(resetbutton,FALSE);
         lives_dialog_add_action_widget(LIVES_DIALOG(fx_dialog[didx]), resetbutton, LIVES_RESPONSE_RESET);
-      } else okbutton = lives_button_new_from_stock(LIVES_STOCK_OK);
+      } else okbutton = lives_button_new_from_stock(LIVES_STOCK_OK,NULL);
       lives_dialog_add_action_widget(LIVES_DIALOG(fx_dialog[didx]), okbutton, LIVES_RESPONSE_OK);
     } else {
-      okbutton = lives_button_new_with_mnemonic(_("Set as default"));
+      okbutton = lives_button_new_from_stock(LIVES_STOCK_APPLY,_("Set as default"));
       if (!has_param) lives_widget_set_sensitive(okbutton,FALSE);
-      cancelbutton = lives_button_new_with_mnemonic(_("Close _window"));
+      cancelbutton = lives_button_new_from_stock(LIVES_STOCK_CLOSE,_("_Close Window"));
+
       if (no_process) {
         LiVESWidget *dialog_action_area = lives_dialog_get_action_area(LIVES_DIALOG(fx_dialog[didx]));
         lives_button_box_set_button_width(LIVES_BUTTON_BOX(dialog_action_area), okbutton, DEF_BUTTON_WIDTH*4);
       }
       if (rfx->status==RFX_STATUS_WEED) {
-        resetbutton = lives_button_new_with_mnemonic(_("Reset"));
+        resetbutton = lives_button_new_from_stock(LIVES_STOCK_REVERT_TO_SAVED,_("Reset"));
         lives_dialog_add_action_widget(LIVES_DIALOG(fx_dialog[didx]), resetbutton, LIVES_RESPONSE_RESET);
         lives_dialog_add_action_widget(LIVES_DIALOG(fx_dialog[didx]), okbutton, LIVES_RESPONSE_OK);
       }

@@ -193,7 +193,7 @@ boolean lives_label_set_selectable(LiVESLabel *, boolean setting);
 
 
 LiVESWidget *lives_button_new(void);
-LiVESWidget *lives_button_new_from_stock(const char *stock_id);
+LiVESWidget *lives_button_new_from_stock(const char *stock_id, const char *label);
 LiVESWidget *lives_button_new_with_label(const char *label);
 LiVESWidget *lives_button_new_with_mnemonic(const char *label);
 

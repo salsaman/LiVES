@@ -3017,6 +3017,18 @@ LIVES_INLINE LiVESWidget *lives_button_new_from_stock(const char *stock_id) {
     button=lives_button_new_with_mnemonic(LIVES_STOCK_LABEL_QUIT);
   } else if (!strcmp(stock_id,LIVES_STOCK_GO_FORWARD)) {
     button=lives_button_new_with_mnemonic(LIVES_STOCK_LABEL_GO_FORWARD);
+  } else if (!strcmp(stock_id,LIVES_STOCK_MEDIA_FORWARD)) {
+    button=lives_button_new_with_mnemonic(LIVES_STOCK_LABEL_MEDIA_FORWARD);
+  } else if (!strcmp(stock_id,LIVES_STOCK_MEDIA_REWIND)) {
+    button=lives_button_new_with_mnemonic(LIVES_STOCK_LABEL_MEDIA_REWIND);
+  } else if (!strcmp(stock_id,LIVES_STOCK_MEDIA_STOP)) {
+    button=lives_button_new_with_mnemonic(LIVES_STOCK_LABEL_MEDIA_STOP);
+  } else if (!strcmp(stock_id,LIVES_STOCK_MEDIA_PLAY)) {
+    button=lives_button_new_with_mnemonic(LIVES_STOCK_LABEL_MEDIA_PLAY);
+  } else if (!strcmp(stock_id,LIVES_STOCK_MEDIA_PAUSE)) {
+    button=lives_button_new_with_mnemonic(LIVES_STOCK_LABEL_MEDIA_PAUSE);
+  } else if (!strcmp(stock_id,LIVES_STOCK_MEDIA_RECORD)) {
+    button=lives_button_new_with_mnemonic(LIVES_STOCK_LABEL_MEDIA_RECORD);
   } else {
     // text not known
     button=lives_button_new();
@@ -7773,6 +7785,12 @@ void widget_helper_init(void) {
   lives_snprintf(LIVES_STOCK_LABEL_REFRESH,32,"%s",(_("_Refresh")));
   lives_snprintf(LIVES_STOCK_LABEL_DELETE,32,"%s",(_("_Delete")));
   lives_snprintf(LIVES_STOCK_LABEL_GO_FORWARD,32,"%s",(_("_Forward")));
+  lives_snprintf(LIVES_STOCK_LABEL_MEDIA_FORWARD,32,"%s",(_("R_ewind")));
+  lives_snprintf(LIVES_STOCK_LABEL_MEDIA_REWIND,32,"%s",(_("_Forward")));
+  lives_snprintf(LIVES_STOCK_LABEL_MEDIA_PLAY,32,"%s",(_("_Play")));
+  lives_snprintf(LIVES_STOCK_LABEL_MEDIA_PAUSE,32,"%s",(_("P_ause")));
+  lives_snprintf(LIVES_STOCK_LABEL_MEDIA_STOP,32,"%s",(_("_Stop")));
+  lives_snprintf(LIVES_STOCK_LABEL_MEDIA_RECORD,32,"%s",(_("_Record")));
 #endif
 
   widget_opts = def_widget_opts;

@@ -355,7 +355,7 @@ typedef struct AVCodecTag {
 
 #define CODEC_ID_TTF AV_CODEC_ID_TTF
 
-  // from mkv_decoder.h
+// from mkv_decoder.h
 #define CODEC_ID_R10K AV_CODEC_ID_R10K
 #define CODEC_ID_R210 AV_CODEC_ID_R210
 #define CODEC_ID_V210 AV_CODEC_ID_V210

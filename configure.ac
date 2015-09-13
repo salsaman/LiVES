@@ -5,7 +5,7 @@ ifdef([m4_pattern_allow],
       [m4_pattern_allow([^AC_.*])])
 
 dnl IMPORTANT !! $version must also be set to exactly the same string in smogrify
-AC_INIT(LiVES,2.4.2-svn,https://sourceforge.net/p/lives/bugs/)
+AC_INIT(LiVES,2.4.2,https://sourceforge.net/p/lives/bugs/)
 
 AC_CANONICAL_HOST
 AC_CANONICAL_TARGET
@@ -122,6 +122,9 @@ AM_CONDITIONAL(HAVE_LIBdl,$HAVE_LIBdl)
 
 dnl Check for posix_memalign
 AC_CHECK_FUNCS(posix_memalign)
+
+dnl Check for posix_fadvise
+AC_CHECK_FUNCS(posix_fadvise)
 
 
 AC_PATH_PROGS(PERL, perl perl5)

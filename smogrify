@@ -23,7 +23,7 @@ $GUI_NAME="LiVES";
 # Do not change these except for testing !
 
 $background=1;
-$version="2.4.2-svn";
+$version="2.4.2";
 #$dyneversion="LIVES-20091209";
 
 ###################################################################
@@ -402,10 +402,11 @@ if (defined($ARGV[0])) {
             &rc_set_if_not_set("rec_stop_gb",10);
 
             &rc_set_if_not_set("def_autotrans","chroma blend");
-            &rc_set_if_not_set("audio_src",0);
-#internal
+            &rc_set_if_not_set("audio_src",0); #internal
 
             &rc_set_if_not_set("ce_thumb_mode","true");
+
+            &rc_set_if_not_set("show_button_icons","false");
 
             $tmpdir=&rc_get("tempdir");
             &write_bootstrap_file;

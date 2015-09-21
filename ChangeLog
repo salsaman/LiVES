@@ -1,3 +1,13 @@
+Version 2.4.3
+-------------
+Theming updates for darker themes.
+Fix gtk critical in clip info window.
+Fix window sizing errors in rfxbuilder.
+
+
+
+
+
 Version 2.4.2 (12 September 2015)
 ---------------------------------
 Fix crash after recording with pulseaudio external audio.

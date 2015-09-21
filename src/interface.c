@@ -365,7 +365,7 @@ lives_clipinfo_t *create_clip_info_window(int audio_channels, boolean is_mt) {
   else
     title=lives_strdup(_("LiVES: - Multitrack details"));
 
-  filew->dialog = lives_standard_dialog_new(title,FALSE,-1,-1);
+  filew->dialog = lives_standard_dialog_new(title,FALSE,DEF_DIALOG_WIDTH,DEF_DIALOG_HEIGHT);
   lives_free(title);
 
   accel_group = LIVES_ACCEL_GROUP(lives_accel_group_new());
@@ -387,6 +387,7 @@ lives_clipinfo_t *create_clip_info_window(int audio_channels, boolean is_mt) {
     }
 
     table=lives_table_new(3,4,TRUE);
+
 
     lives_table_set_col_spacings(LIVES_TABLE(table), widget_opts.packing_width*4);
     lives_table_set_row_spacings(LIVES_TABLE(table), widget_opts.packing_height);

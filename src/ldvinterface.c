@@ -27,8 +27,6 @@ struct _dvgrabw *create_camwindow(s_cam *cam, int type) {
   dvgrabw->dialog = lives_standard_dialog_new(_("LiVES: DVGrab"),FALSE,-1,-1);
   dvgrabw->playing=FALSE;
 
-  lives_container_set_border_width(LIVES_CONTAINER(dvgrabw->dialog), widget_opts.border_width*2);
-
   if (prefs->show_gui) {
     if (mainw->multitrack==NULL) lives_window_set_transient_for(LIVES_WINDOW(dvgrabw->dialog),LIVES_WINDOW(mainw->LiVES));
     else lives_window_set_transient_for(LIVES_WINDOW(dvgrabw->dialog),LIVES_WINDOW(mainw->multitrack->window));

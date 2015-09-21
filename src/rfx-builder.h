@@ -55,6 +55,7 @@ void on_export_rfx_activate(LiVESMenuItem *, livespointer status);
 #define PREF_RFXDIALOG_W ((int)(800.*widget_opts.scale))
 #define PREF_RFXDIALOG_H ((int)(650.*widget_opts.scale))
 
+#define WINH_SAFETY
 
 /// maximum decimal places allowed (should correspond to precision of a "float")
 #define RFXBUILD_MAX_DP 16

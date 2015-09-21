@@ -346,6 +346,8 @@ typedef struct {
 
   boolean perm_audio_reader;
 
+  boolean funky_widgets;
+
 } _prefs;
 
 enum {

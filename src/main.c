@@ -498,6 +498,8 @@ static boolean pre_init(void) {
     return FALSE;
   }
 
+  prefs->funky_widgets=FALSE;
+
   prefs->show_splash=TRUE;
 
   // from here onwards we can use get_pref() and friends  //////
@@ -1940,10 +1942,18 @@ void set_palette_colours(void) {
   lives_color_parse("dark red", &palette->dark_red);
   lives_color_parse("light blue", &palette->light_blue);
   lives_color_parse("light yellow", &palette->light_yellow);
-  lives_color_parse("grey10", &palette->grey20);
   lives_color_parse("grey25", &palette->grey25);
   lives_color_parse("grey45", &palette->grey45);
-  lives_color_parse("grey60", &palette->grey60);
+
+  if (prefs->funky_widgets) {
+    lives_color_parse("grey5", &palette->grey20);
+    lives_color_parse("grey10", &palette->grey60);
+  }
+  else {
+    lives_color_parse("grey10", &palette->grey20);
+    lives_color_parse("grey60", &palette->grey60);
+  }
+
   lives_color_parse("pink", &palette->pink);
   lives_color_parse("salmon", &palette->light_red);
   lives_color_parse("DarkOrange4", &palette->dark_orange);
@@ -2009,8 +2019,9 @@ void set_palette_colours(void) {
           palette->style=STYLE_1|STYLE_2|STYLE_3|STYLE_4|STYLE_5;
         } else {
           if (!(strcmp(prefs->theme,"crayons-bright"))) {
-            lives_widget_color_copy(&palette->normal_back,&palette->black);
-            lives_widget_color_copy(&palette->normal_fore,&palette->white);
+	    
+	    lives_widget_color_copy(&palette->normal_back,&palette->black);
+	    lives_widget_color_copy(&palette->normal_fore,&palette->white);
 
             palette->menu_and_bars.red=LIVES_WIDGET_COLOR_SCALE_255(225.);
             palette->menu_and_bars.green=LIVES_WIDGET_COLOR_SCALE_255(160.);
@@ -2032,7 +2043,12 @@ void set_palette_colours(void) {
             palette->style=STYLE_1|STYLE_2|STYLE_3|STYLE_4;
           } else {
             if (!(strcmp(prefs->theme,"crayons"))) {
-              lives_widget_color_copy(&palette->normal_back,&palette->grey25);
+	      if (prefs->funky_widgets) {
+		lives_widget_color_copy(&palette->normal_back,&palette->black);
+	      }
+	      else {
+		lives_widget_color_copy(&palette->normal_back,&palette->grey25);
+	      }
               lives_widget_color_copy(&palette->normal_fore,&palette->white);
               lives_widget_color_copy(&palette->menu_and_bars,&palette->grey60);
               lives_widget_color_copy(&palette->info_base,&palette->grey20);
@@ -3595,10 +3611,19 @@ void set_ce_frame_from_pixbuf(LiVESImage *image, LiVESPixbuf *pixbuf, lives_pain
     int cx=(rwidth-width)/2;
     int cy=(rheight-height)/2;
 
+    if (prefs->funky_widgets) {
+      lives_painter_set_source_rgb(cr, 1., 1., 1.); ///< opaque white
+      lives_painter_rectangle(cr,cx-1,cy-1,
+			      width+2,
+			      height+2);
+      lives_painter_stroke(cr);
+    }
+
     lives_painter_set_source_pixbuf(cr, pixbuf, cx, cy);
     lives_painter_rectangle(cr,cx,cy,
                             width,
                             height);
+
   } else {
     lives_painter_set_source_to_bg(cr,LIVES_WIDGET(image));
 

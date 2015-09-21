@@ -96,6 +96,8 @@ rfx_build_window_t *make_rfx_build_window(const char *script_name, lives_rfx_sta
 
   LiVESAccelGroup *accel_group=LIVES_ACCEL_GROUP(lives_accel_group_new());
 
+  int winsize_h,winsize_v;
+
   char *tmp,*tmp2,*title,*string;
 
   rfxbuilder->rfx_version=lives_strdup(RFX_VERSION);
@@ -135,26 +137,25 @@ rfx_build_window_t *make_rfx_build_window(const char *script_name, lives_rfx_sta
     title=lives_strdup(_("LiVES: - Edit Test RFX"));
   }
 
-  rfxbuilder->dialog = lives_standard_dialog_new(title,FALSE,-1,-1);
+  winsize_h=(PREF_RFXDIALOG_W<mainw->scr_width-SCR_WIDTH_SAFETY/5.)?PREF_RFXDIALOG_W:mainw->scr_width-SCR_WIDTH_SAFETY/5.;
+  winsize_v=(PREF_RFXDIALOG_H<mainw->scr_height-SCR_HEIGHT_SAFETY/2.)?PREF_RFXDIALOG_H:mainw->scr_height-SCR_HEIGHT_SAFETY/2.;
+
+  rfxbuilder->dialog = lives_standard_dialog_new(title,FALSE,winsize_h,winsize_v);
   lives_free(title);
 
   if (prefs->show_gui) {
     lives_window_set_transient_for(LIVES_WINDOW(rfxbuilder->dialog),LIVES_WINDOW(mainw->LiVES));
   }
 
-
   lives_window_add_accel_group(LIVES_WINDOW(rfxbuilder->dialog), accel_group);
 
-  lives_container_set_border_width(LIVES_CONTAINER(rfxbuilder->dialog), widget_opts.border_width>>1);
-
   dialog_vbox = lives_dialog_get_content_area(LIVES_DIALOG(rfxbuilder->dialog));
+  lives_container_set_border_width(LIVES_CONTAINER(lives_widget_get_parent(dialog_vbox)), widget_opts.border_width>>1);
 
   top_vbox = lives_vbox_new(FALSE, 0);
 
-  scrollw = lives_standard_scrolled_window_new((PREF_RFXDIALOG_W<mainw->scr_width-20.*widget_opts.scale)?
-            PREF_RFXDIALOG_W:mainw->scr_width-20.*widget_opts.scale,
-            (PREF_RFXDIALOG_H<mainw->scr_height-60.*widget_opts.scale)?
-            PREF_RFXDIALOG_H:mainw->scr_height-60.*widget_opts.scale,top_vbox);
+  scrollw = lives_standard_scrolled_window_new(winsize_h,winsize_v,top_vbox);
+
   lives_box_pack_start(LIVES_BOX(dialog_vbox), scrollw, TRUE, TRUE, 0);
 
   // types
@@ -510,7 +511,6 @@ void on_list_table_clicked(LiVESButton *button, livespointer user_data) {
   LiVESWidget *dialog_vbox;
   LiVESWidget *dialog_action_area;
   LiVESWidget *hbox;
-  LiVESWidget *vseparator;
   LiVESWidget *button_box;
 
   // buttons
@@ -551,7 +551,7 @@ void on_list_table_clicked(LiVESButton *button, livespointer user_data) {
     rfxbuilder->onum_triggers=rfxbuilder->num_triggers;
   }
 
-  dialog = lives_standard_dialog_new(title,FALSE,-1,-1);
+  dialog = lives_standard_dialog_new(title,FALSE,RFX_WINSIZE_H*5/6,RFX_WINSIZE_V/4);
   if (title!=NULL) lives_free(title);
 
   lives_window_add_accel_group(LIVES_WINDOW(dialog), accel_group);
@@ -598,14 +598,13 @@ void on_list_table_clicked(LiVESButton *button, livespointer user_data) {
 
   lives_box_pack_start(LIVES_BOX(dialog_vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
 
-  scrolledwindow = lives_standard_scrolled_window_new(RFX_WINSIZE_H*5/6,RFX_WINSIZE_V/4,rfxbuilder->table);
+  scrolledwindow = lives_standard_scrolled_window_new(RFX_WINSIZE_H,RFX_WINSIZE_V/4,rfxbuilder->table);
 
-  lives_box_pack_start(LIVES_BOX(hbox),scrolledwindow,FALSE,FALSE,widget_opts.packing_width);
+  lives_box_pack_start(LIVES_BOX(hbox),scrolledwindow,TRUE,TRUE,widget_opts.packing_width);
 
+  add_vsep_to_box(LIVES_BOX(hbox));
 
   // button box on right
-  vseparator = lives_vseparator_new();
-  lives_box_pack_start(LIVES_BOX(hbox), vseparator, TRUE, TRUE, widget_opts.packing_width);
 
   button_box=lives_vbutton_box_new();
   lives_box_pack_start(LIVES_BOX(hbox), button_box, FALSE, FALSE, 0);
@@ -1331,6 +1330,7 @@ void on_table_add_row(LiVESButton *button, livespointer user_data) {
 
     lives_widget_destroy(param_window_dialog);
     lives_widget_queue_resize(lives_widget_get_parent(LIVES_WIDGET(rfxbuilder->table)));
+    lives_widget_queue_resize(LIVES_WIDGET(rfxbuilder->table));
     break;
 
 
@@ -1385,6 +1385,7 @@ void on_table_add_row(LiVESButton *button, livespointer user_data) {
 
     lives_widget_destroy(trigger_dialog);
     lives_widget_queue_resize(lives_widget_get_parent(LIVES_WIDGET(rfxbuilder->table)));
+    lives_widget_queue_resize(LIVES_WIDGET(rfxbuilder->table));
 
     break;
   default:
@@ -2722,7 +2723,7 @@ LiVESWidget *make_trigger_dialog(int tnum, rfx_build_window_t *rfxbuilder) {
     title=lives_strdup(_("LiVES: - Edit RFX Trigger"));
   }
 
-  dialog = lives_standard_dialog_new(title,TRUE,-1,-1);
+  dialog = lives_standard_dialog_new(title,TRUE,PREF_RFXDIALOG_W,PREF_RFXDIALOG_H);
   lives_free(title);
 
   if (prefs->show_gui) {
@@ -2802,7 +2803,7 @@ void on_code_clicked(LiVESButton *button, livespointer user_data) {
 
   char *tmpx;
 
-  dialog = lives_standard_dialog_new(NULL,FALSE,-1,-1);
+  dialog = lives_standard_dialog_new(NULL,FALSE,PREF_RFXDIALOG_W,PREF_RFXDIALOG_H);
 
   if (prefs->show_gui) {
     lives_window_set_transient_for(LIVES_WINDOW(dialog),LIVES_WINDOW(mainw->LiVES));

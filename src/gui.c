@@ -2088,7 +2088,9 @@ void create_LiVES(void) {
   }
   lives_widget_set_vexpand(mainw->freventbox0,FALSE);
   lives_widget_set_hexpand(mainw->freventbox0,FALSE);
+
   lives_container_add(LIVES_CONTAINER(mainw->frame1), mainw->freventbox0);
+
   lives_widget_set_app_paintable(mainw->freventbox0,TRUE);
 
   lives_widget_show(mainw->start_image);
@@ -2111,6 +2113,7 @@ void create_LiVES(void) {
   lives_box_pack_start(LIVES_BOX(hbox1), mainw->playframe, TRUE, FALSE, 0);
   lives_widget_set_size_request(mainw->playframe, DEFAULT_FRAME_HSIZE, DEFAULT_FRAME_VSIZE);
   lives_container_set_border_width(LIVES_CONTAINER(mainw->playframe), widget_opts.border_width);
+
 
   lives_frame_set_shadow_type(LIVES_FRAME(mainw->playframe), LIVES_SHADOW_NONE);
   if (palette->style&STYLE_1) {

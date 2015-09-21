@@ -1179,7 +1179,7 @@ _resaudw *create_resaudw(short type, render_details *rdet, LiVESWidget *top_vbox
       title=lives_strdup(_("LiVES: - External Clip Settings"));
     }
 
-    resaudw->dialog = lives_standard_dialog_new(title,FALSE,-1,-1);
+    resaudw->dialog = lives_standard_dialog_new(title,FALSE,DEF_DIALOG_WIDTH,DEF_DIALOG_HEIGHT);
     lives_free(title);
 
     accel_group = LIVES_ACCEL_GROUP(lives_accel_group_new());
@@ -1642,8 +1642,6 @@ void create_new_pb_speed(short type) {
 
   new_pb_speed = lives_standard_dialog_new(title,FALSE,-1,-1);
   lives_free(title);
-
-  lives_container_set_border_width(LIVES_CONTAINER(new_pb_speed), widget_opts.border_width*2);
 
   accel_group = LIVES_ACCEL_GROUP(lives_accel_group_new());
   lives_window_add_accel_group(LIVES_WINDOW(new_pb_speed), accel_group);

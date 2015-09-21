@@ -784,6 +784,8 @@ void toggle_button_toggle(LiVESToggleButton *);
 // must retain this fn prototype as a callback
 void set_child_colour(LiVESWidget *widget, livespointer set_all);
 
+void funkify_dialog(LiVESWidget *dialog);
+
 void unhide_cursor(LiVESXWindow *);
 void hide_cursor(LiVESXWindow *);
 

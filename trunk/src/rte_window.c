@@ -1642,13 +1642,14 @@ boolean on_load_keymap_clicked(LiVESButton *button, livespointer user_data) {
 void on_rte_info_clicked(LiVESButton *button, livespointer user_data) {
   weed_plant_t *filter;
 
-  LiVESWidget *rte_info_window;
+  LiVESWidget *dialog;
+  LiVESWidget *dialog_action_area;
+
   LiVESWidget *vbox;
   LiVESWidget *hbox;
   LiVESWidget *label;
   LiVESWidget *textview;
 
-  LiVESWidget *hbuttonbox;
   LiVESWidget *ok_button;
 
   char *filter_name;
@@ -1688,52 +1689,46 @@ void on_rte_info_clicked(LiVESButton *button, livespointer user_data) {
 
   filter_version=weed_get_int_value(filter,"version",&weed_error);
 
-  rte_info_window = lives_window_new(LIVES_WINDOW_TOPLEVEL);
-  lives_window_set_title(LIVES_WINDOW(rte_info_window), lives_strdup_printf(_("LiVES: Information for %s"),filter_name));
-  if (palette->style&STYLE_1) {
-    lives_widget_set_bg_color(rte_info_window, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
-  }
+  tmp=lives_strdup_printf(_("LiVES: Information for %s"),filter_name);
 
-  lives_container_set_border_width(LIVES_CONTAINER(rte_info_window), widget_opts.border_width);
-  lives_window_set_transient_for(LIVES_WINDOW(rte_info_window),LIVES_WINDOW(lives_widget_get_toplevel(LIVES_WIDGET(button))));
+  dialog=lives_standard_dialog_new(tmp,FALSE,RTE_INFO_WIDTH,RTE_INFO_HEIGHT);
 
-  lives_window_set_default_size(LIVES_WINDOW(rte_info_window), RTE_INFO_WIDTH, RTE_INFO_HEIGHT);
+  lives_free(tmp);
 
-  vbox = lives_vbox_new(FALSE, widget_opts.packing_height*2);
-  lives_container_add(LIVES_CONTAINER(rte_info_window), vbox);
+  vbox=lives_dialog_get_content_area(LIVES_DIALOG(dialog));
 
   label = lives_standard_label_new((tmp=lives_strdup_printf(_("Effect name: %s"),filter_name)));
   lives_free(tmp);
-  lives_box_pack_start(LIVES_BOX(vbox), label, TRUE, FALSE, 0);
+  lives_box_pack_start(LIVES_BOX(vbox), label, TRUE, FALSE, widget_opts.packing_height);
 
   label = lives_standard_label_new((tmp=lives_strdup_printf(_("Type: %s"),type)));
   lives_free(tmp);
-  lives_box_pack_start(LIVES_BOX(vbox), label, TRUE, FALSE, 0);
+  lives_box_pack_start(LIVES_BOX(vbox), label, TRUE, FALSE, widget_opts.packing_height);
 
   label = lives_standard_label_new((tmp=lives_strdup_printf(_("Plugin name: %s"),plugin_name)));
   lives_free(tmp);
-  lives_box_pack_start(LIVES_BOX(vbox), label, TRUE, FALSE, 0);
+  lives_box_pack_start(LIVES_BOX(vbox), label, TRUE, FALSE, widget_opts.packing_height);
 
   label = lives_standard_label_new((tmp=lives_strdup_printf(_("Author: %s"),filter_author)));
   lives_free(tmp);
-  lives_box_pack_start(LIVES_BOX(vbox), label, TRUE, FALSE, 0);
+  lives_box_pack_start(LIVES_BOX(vbox), label, TRUE, FALSE, widget_opts.packing_height);
 
   if (filter_extra_authors!=NULL) {
     label = lives_standard_label_new((tmp=lives_strdup_printf(_("and: %s"),filter_extra_authors)));
     lives_free(tmp);
-    lives_box_pack_start(LIVES_BOX(vbox), label, TRUE, FALSE, 0);
+    lives_box_pack_start(LIVES_BOX(vbox), label, TRUE, FALSE, widget_opts.packing_height);
   }
 
   label = lives_standard_label_new((tmp=lives_strdup_printf(_("Version: %d"),filter_version)));
   lives_free(tmp);
-  lives_box_pack_start(LIVES_BOX(vbox), label, TRUE, FALSE, 0);
+  lives_box_pack_start(LIVES_BOX(vbox), label, TRUE, FALSE, widget_opts.packing_height);
 
   if (has_desc) {
     hbox = lives_hbox_new(FALSE, widget_opts.packing_width);
-    lives_box_pack_start(LIVES_BOX(vbox), hbox, TRUE, FALSE, 0);
+    lives_box_pack_start(LIVES_BOX(vbox), hbox, TRUE, FALSE, widget_opts.packing_height);
 
     label = lives_standard_label_new(_("Description: "));
-    lives_box_pack_start(LIVES_BOX(hbox), label, FALSE, FALSE, 0);
+    lives_box_pack_start(LIVES_BOX(hbox), label, FALSE, FALSE, widget_opts.packing_height);
 
     textview = lives_text_view_new();
 
@@ -1747,20 +1742,18 @@ void on_rte_info_clicked(LiVESButton *button, livespointer user_data) {
     lives_text_view_set_cursor_visible(LIVES_TEXT_VIEW(textview), FALSE);
 
     lives_text_view_set_text(LIVES_TEXT_VIEW(textview), filter_description,-1);
-    lives_box_pack_start(LIVES_BOX(hbox), textview, TRUE, TRUE, 0);
+    lives_box_pack_start(LIVES_BOX(hbox), textview, TRUE, TRUE, widget_opts.packing_height);
   }
 
-  hbuttonbox = lives_hbutton_box_new();
-  lives_box_pack_start(LIVES_BOX(vbox), hbuttonbox, TRUE, TRUE, 0);
 
   ok_button = lives_button_new_from_stock(LIVES_STOCK_OK,NULL);
-  lives_widget_show(ok_button);
+  lives_dialog_add_action_widget(LIVES_DIALOG(dialog), ok_button, LIVES_RESPONSE_OK);
 
-  lives_container_add(LIVES_CONTAINER(hbuttonbox), ok_button);
   lives_widget_set_can_focus_and_default(ok_button);
   lives_widget_grab_default(ok_button);
 
-  lives_button_box_set_button_width(LIVES_BUTTON_BOX(hbuttonbox), ok_button, DEF_BUTTON_WIDTH);
+  dialog_action_area = lives_dialog_get_action_area(LIVES_DIALOG(dialog));
+  lives_button_box_set_button_width(LIVES_BUTTON_BOX(dialog_action_area), ok_button, DEF_BUTTON_WIDTH*4);
 
   lives_signal_connect(LIVES_GUI_OBJECT(ok_button), LIVES_WIDGET_CLICKED_SIGNAL,
                        LIVES_GUI_CALLBACK(lives_general_button_clicked),
@@ -1773,8 +1766,8 @@ void on_rte_info_clicked(LiVESButton *button, livespointer user_data) {
   lives_free(plugin_name);
   lives_free(type);
 
-  lives_widget_show_all(rte_info_window);
-  lives_window_center(LIVES_WINDOW(rte_info_window));
+  lives_widget_show_all(dialog);
+  lives_window_center(LIVES_WINDOW(dialog));
 }
 
 

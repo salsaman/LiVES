@@ -1008,7 +1008,7 @@ LIVES_INLINE LiVESWidget *lives_event_box_new(void) {
 
 LIVES_INLINE boolean lives_event_box_set_above_child(LiVESEventBox *ebox, boolean set) {
 #ifdef GUI_GTK
-  lives_event_box_set_above_child(ebox,set);
+  gtk_event_box_set_above_child(ebox,set);
   return TRUE;
 #endif
 #ifdef GUI_QT
@@ -7567,8 +7567,6 @@ LiVESWidget *lives_standard_dialog_new(const char *title, boolean add_std_button
   lives_widget_set_hexpand(dialog,TRUE);
   lives_widget_set_vexpand(dialog,TRUE);
 
-  lives_container_set_border_width(LIVES_CONTAINER(dialog), widget_opts.border_width*2);
-
   if (widget_opts.apply_theme) {
     lives_widget_apply_theme(dialog, LIVES_WIDGET_STATE_NORMAL);
 
@@ -7576,6 +7574,14 @@ LiVESWidget *lives_standard_dialog_new(const char *title, boolean add_std_button
     lives_dialog_set_has_separator(LIVES_DIALOG(dialog),FALSE);
 #endif
   }
+
+  if (widget_opts.apply_theme) {
+    funkify_dialog(dialog);
+  }
+  else {
+    lives_container_set_border_width(LIVES_CONTAINER(dialog), widget_opts.border_width*2);
+  }
+
 
   // do this before widget_show(), then call lives_window_center() afterwards
   lives_window_set_position(LIVES_WINDOW(dialog),LIVES_WIN_POS_CENTER_ALWAYS);
@@ -8282,6 +8288,46 @@ void hide_cursor(LiVESXWindow *window) {
 void unhide_cursor(LiVESXWindow *window) {
   if (LIVES_IS_XWINDOW(window)) lives_xwindow_set_cursor(window,NULL);
 }
+
+
+void funkify_dialog(LiVESWidget *dialog) {
+  if (prefs->funky_widgets) {
+    LiVESWidget *frame=lives_frame_new(NULL);
+    LiVESWidget *box=lives_vbox_new(FALSE,0);
+    LiVESWidget *content=lives_dialog_get_content_area(LIVES_DIALOG(dialog));
+    LiVESWidget *action=lives_dialog_get_action_area(LIVES_DIALOG(dialog));
+    LiVESWidget *label=lives_label_new("");
+
+    if (widget_opts.apply_theme) {
+      lives_widget_set_fg_color(frame, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
+      lives_widget_set_bg_color(frame, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
+    }
+
+    lives_object_ref(content);
+    lives_object_ref(action);
+
+    lives_widget_unparent(content);
+    lives_widget_unparent(action);
+
+    lives_container_add(LIVES_CONTAINER(dialog),frame);
+    lives_container_add(LIVES_CONTAINER(frame),box);
+
+    lives_box_pack_start(LIVES_BOX(box),content,TRUE,TRUE,0);
+
+    lives_box_pack_start(LIVES_BOX(box),label,FALSE,TRUE,0);
+
+    lives_box_pack_start(LIVES_BOX(box),action,FALSE,TRUE,0);
+
+    lives_widget_show_all(frame);
+
+    lives_container_set_border_width(LIVES_CONTAINER(box), widget_opts.border_width*2);
+  }
+  else {
+    lives_container_set_border_width(LIVES_CONTAINER(dialog), widget_opts.border_width*2);
+  }
+
+}
+
 
 
 void get_border_size(LiVESWidget *win, int *bx, int *by) {

@@ -257,10 +257,16 @@ LiVESWidget *create_message_dialog(lives_dialog_t diat, const char *text, LiVESW
     lives_widget_set_bg_color(dialog, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
   }
 
+
   lives_window_set_deletable(LIVES_WINDOW(dialog), FALSE);
   lives_window_set_resizable(LIVES_WINDOW(dialog), FALSE);
 
-  lives_container_set_border_width(LIVES_CONTAINER(dialog), widget_opts.border_width*2);
+  if (widget_opts.apply_theme) {
+    funkify_dialog(dialog);
+  }
+  else {
+    lives_container_set_border_width(LIVES_CONTAINER(dialog), widget_opts.border_width*2);
+  }
 
   textx=insert_newlines(text,MAX_MSG_WIDTH_CHARS);
 

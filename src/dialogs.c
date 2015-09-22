@@ -263,8 +263,7 @@ LiVESWidget *create_message_dialog(lives_dialog_t diat, const char *text, LiVESW
 
   if (widget_opts.apply_theme) {
     funkify_dialog(dialog);
-  }
-  else {
+  } else {
     lives_container_set_border_width(LIVES_CONTAINER(dialog), widget_opts.border_width*2);
   }
 
@@ -3254,6 +3253,10 @@ void do_pulse_lost_conn_error(void) {
   do_error_dialog(_("\nLiVES lost its connection to pulseaudio and was unable to reconnect.\nRestarting LiVES is recommended.\n"));
 }
 
+
+void do_cd_error_dialog(void) {
+  do_error_dialog(_("Please set your CD play device in Tools | Preferences | Misc\n"));
+}
 
 
 boolean ask_permission_dialog(int what) {

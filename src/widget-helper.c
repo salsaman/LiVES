@@ -629,6 +629,20 @@ LIVES_INLINE boolean lives_signal_stop_emission_by_name(livespointer instance, c
 LIVES_INLINE boolean lives_widget_set_sensitive(LiVESWidget *widget, boolean state) {
 #ifdef GUI_GTK
   gtk_widget_set_sensitive(widget,state);
+
+#ifdef GTK_SUBMENU_SENS_BUG
+  if (GTK_IS_MENU_ITEM(widget)) {
+    LiVESWidget *sub;
+    if ((sub=gtk_menu_item_get_submenu(GTK_MENU_ITEM(widget)))!=NULL) {
+      g_object_ref(sub);
+      gtk_menu_item_set_submenu(GTK_MENU_ITEM(widget),NULL);
+      gtk_widget_set_sensitive(sub,state);
+      gtk_menu_item_set_submenu(GTK_MENU_ITEM(widget),sub);
+      g_object_unref(sub);
+    }
+  }
+#endif
+
   return TRUE;
 #endif
 #ifdef GUI_QT
@@ -6019,6 +6033,14 @@ LIVES_INLINE boolean lives_menu_tool_button_set_menu(LiVESMenuToolButton *toolbu
 LIVES_INLINE boolean lives_menu_item_set_submenu(LiVESMenuItem *menuitem, LiVESWidget *menu) {
 #ifdef GUI_GTK
   gtk_menu_item_set_submenu(menuitem,menu);
+
+#ifdef GTK_SUBMENU_SENS_BUG
+  if (!lives_widget_is_sensitive(LIVES_WIDGET(menuitem))) {
+    g_print("Warning, adding submenu when insens!");
+    //assert(FALSE);
+  }
+#endif
+
   return TRUE;
 #endif
 #ifdef GUI_QT
@@ -7577,8 +7599,7 @@ LiVESWidget *lives_standard_dialog_new(const char *title, boolean add_std_button
 
   if (widget_opts.apply_theme) {
     funkify_dialog(dialog);
-  }
-  else {
+  } else {
     lives_container_set_border_width(LIVES_CONTAINER(dialog), widget_opts.border_width*2);
   }
 
@@ -8298,6 +8319,8 @@ void funkify_dialog(LiVESWidget *dialog) {
     LiVESWidget *action=lives_dialog_get_action_area(LIVES_DIALOG(dialog));
     LiVESWidget *label=lives_label_new("");
 
+    lives_container_set_border_width(LIVES_CONTAINER(dialog),0);
+
     if (widget_opts.apply_theme) {
       lives_widget_set_fg_color(frame, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
       lives_widget_set_bg_color(frame, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
@@ -8321,8 +8344,7 @@ void funkify_dialog(LiVESWidget *dialog) {
     lives_widget_show_all(frame);
 
     lives_container_set_border_width(LIVES_CONTAINER(box), widget_opts.border_width*2);
-  }
-  else {
+  } else {
     lives_container_set_border_width(LIVES_CONTAINER(dialog), widget_opts.border_width*2);
   }
 

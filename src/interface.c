@@ -2534,7 +2534,7 @@ LiVESWidget *create_cleardisk_advanced_dialog(void) {
 
   char *tmp,*tmp2;
 
-  dialog = lives_standard_dialog_new(_("LiVES: - Disk Recovery Options"),FALSE,-1,-1);
+  dialog = lives_standard_dialog_new(_("LiVES: - Disk Recovery Options"),FALSE,DEF_DIALOG_WIDTH,DEF_DIALOG_HEIGHT);
 
   if (prefs->show_gui) {
     if (mainw->multitrack==NULL) lives_window_set_transient_for(LIVES_WINDOW(dialog),LIVES_WINDOW(mainw->LiVES));
@@ -2547,7 +2547,8 @@ LiVESWidget *create_cleardisk_advanced_dialog(void) {
   lives_container_set_border_width(LIVES_CONTAINER(vbox), widget_opts.border_width*2);
 
   widget_opts.apply_theme=FALSE;
-  scrollw = lives_standard_scrolled_window_new(450.*widget_opts.scale,300.*widget_opts.scale,vbox);
+  scrollw = lives_standard_scrolled_window_new(DEF_DIALOG_WIDTH,DEF_DIALOG_HEIGHT,vbox);
+  lives_widget_set_size_request(scrollw,DEF_DIALOG_WIDTH,DEF_DIALOG_HEIGHT);
   widget_opts.apply_theme=woat;
 
   lives_container_add(LIVES_CONTAINER(dialog_vbox), scrollw);

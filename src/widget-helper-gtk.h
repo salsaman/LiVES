@@ -13,7 +13,7 @@
 
 
 #define GTK_RADIO_MENU_BUG // a bug where gtk_radio_menu_item_set_active() does not update visually
-
+#define GTK_SUBMENU_SENS_BUG // a bug where setting a menuitem insensitive fails if it has a submenu
 
 
 #ifndef IS_MINGW

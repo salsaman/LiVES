@@ -344,6 +344,15 @@ struct _mt {
   LiVESWidget *menu_hbox;
 
   LiVESWidget *open_menu;
+#ifdef HAVE_WEBM
+  LiVESWidget *open_loc_menu;
+#endif
+#ifdef ENABLE_DVD_GRAB
+  LiVESWidget *vcd_dvd_menu;
+#endif
+#ifdef HAVE_LDVGRAB
+  LiVESWidget *device_menu;
+#endif
   LiVESWidget *recent_menu;
   LiVESWidget *recent1;
   LiVESWidget *recent2;

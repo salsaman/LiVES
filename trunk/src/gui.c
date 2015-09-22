@@ -184,9 +184,7 @@ void create_LiVES(void) {
   LiVESWidget *rfx_submenu;
   LiVESWidget *midi_menu;
   LiVESWidget *midi_submenu;
-  LiVESWidget *midi_learn;
   LiVESWidget *midi_load;
-  LiVESWidget *midi_save;
   LiVESWidget *vj_menu;
   LiVESWidget *toys_menu;
   LiVESWidget *win;
@@ -1611,15 +1609,15 @@ void create_LiVES(void) {
   }
   lives_widget_show(midi_menu);
 
-  midi_learn = lives_menu_item_new_with_mnemonic(_("_MIDI/joystick learner..."));
+  mainw->midi_learn = lives_menu_item_new_with_mnemonic(_("_MIDI/joystick learner..."));
 
-  lives_widget_show(midi_learn);
-  lives_container_add(LIVES_CONTAINER(midi_menu), midi_learn);
+  lives_widget_show(mainw->midi_learn);
+  lives_container_add(LIVES_CONTAINER(midi_menu), mainw->midi_learn);
 
-  midi_save = lives_menu_item_new_with_mnemonic(_("_Save device mapping..."));
+  mainw->midi_save = lives_menu_item_new_with_mnemonic(_("_Save device mapping..."));
 
-  lives_widget_show(midi_save);
-  lives_container_add(LIVES_CONTAINER(midi_menu), midi_save);
+  lives_widget_show(mainw->midi_save);
+  lives_container_add(LIVES_CONTAINER(midi_menu), mainw->midi_save);
 
 
   midi_load = lives_menu_item_new_with_mnemonic(_("_Load device mapping..."));
@@ -2927,10 +2925,10 @@ void create_LiVES(void) {
                        LIVES_GUI_CALLBACK(on_vj_reset_activate),
                        NULL);
 #ifdef ENABLE_OSC
-  lives_signal_connect(LIVES_GUI_OBJECT(midi_learn), LIVES_WIDGET_ACTIVATE_SIGNAL,
+  lives_signal_connect(LIVES_GUI_OBJECT(mainw->midi_learn), LIVES_WIDGET_ACTIVATE_SIGNAL,
                        LIVES_GUI_CALLBACK(on_midi_learn_activate),
                        NULL);
-  lives_signal_connect(LIVES_GUI_OBJECT(midi_save), LIVES_WIDGET_ACTIVATE_SIGNAL,
+  lives_signal_connect(LIVES_GUI_OBJECT(mainw->midi_save), LIVES_WIDGET_ACTIVATE_SIGNAL,
                        LIVES_GUI_CALLBACK(on_midi_save_activate),
                        NULL);
   lives_signal_connect(LIVES_GUI_OBJECT(midi_load), LIVES_WIDGET_ACTIVATE_SIGNAL,

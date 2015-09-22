@@ -3656,10 +3656,10 @@ static boolean notebook_page(LiVESWidget *nb, LiVESWidget *nbp, uint32_t tab, li
 static void set_poly_tab(lives_mt *mt, uint32_t tab) {
   int page=poly_tab_to_page(tab);
   lives_widget_show(lives_notebook_get_nth_page(LIVES_NOTEBOOK(mt->nb),page));
-  if (page!=lives_notebook_get_current_page(mt->nb)) {
+  if (page!=lives_notebook_get_current_page(LIVES_NOTEBOOK(mt->nb))) {
     lives_notebook_set_current_page(LIVES_NOTEBOOK(mt->nb),page);
   } else {
-    notebook_page(mt->nb,lives_notebook_get_nth_page(mt->nb,page), page, mt);
+    notebook_page(mt->nb,lives_notebook_get_nth_page(LIVES_NOTEBOOK(mt->nb),page),page,mt);
   }
 }
 
@@ -4054,6 +4054,7 @@ void mt_spin_start_value_changed(LiVESSpinButton *spinbutton, livespointer user_
 
   if ((((mt->region_start!=mt->region_end&&!has_region)||(mt->region_start==mt->region_end&&has_region)))&&
       mt->event_list!=NULL&&get_first_event(mt->event_list)!=NULL) {
+    int statep=get_poly_state_from_page(mt);
     if (mt->selected_tracks!=NULL) {
       lives_widget_set_sensitive(mt->split_sel,TRUE);
       if (mt->region_start!=mt->region_end) {
@@ -4078,9 +4079,9 @@ void mt_spin_start_value_changed(LiVESSpinButton *spinbutton, livespointer user_
         }
       }
       // update labels
-      if (get_poly_state_from_page(mt)==POLY_TRANS||get_poly_state_from_page(mt)==POLY_COMP) {
-        //polymorph(mt,POLY_NONE);
-        polymorph(mt,get_poly_state_from_page(mt));
+      if (statep==POLY_TRANS||statep==POLY_COMP) {
+        polymorph(mt,POLY_NONE);
+        polymorph(mt,statep);
       }
     }
   }
@@ -4109,6 +4110,7 @@ void mt_spin_end_value_changed(LiVESSpinButton *spinbutton, livespointer user_da
 
   if ((((mt->region_start!=mt->region_end&&!has_region)||(mt->region_start==mt->region_end&&has_region)))&&
       mt->event_list!=NULL&&get_first_event(mt->event_list)!=NULL) {
+    int statep=get_poly_state_from_page(mt);
     if (mt->selected_tracks!=NULL) {
       lives_widget_set_sensitive(mt->split_sel,TRUE);
       if (mt->region_start!=mt->region_end) {
@@ -4134,9 +4136,9 @@ void mt_spin_end_value_changed(LiVESSpinButton *spinbutton, livespointer user_da
         }
       }
       // update labels
-      if (get_poly_state_from_page(mt)==POLY_TRANS||get_poly_state_from_page(mt)==POLY_COMP) {
+      if (statep==POLY_TRANS||statep==POLY_COMP) {
         polymorph(mt,POLY_NONE);
-        polymorph(mt,get_poly_state_from_page(mt));
+        polymorph(mt,statep);
       }
     }
   }
@@ -16811,7 +16813,10 @@ void on_seltrack_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   lives_mt *mt=(lives_mt *)user_data;
   LiVESWidget *eventbox;
   LiVESWidget *checkbutton;
+
   boolean mi_state;
+
+  int statep;
 
   if (mt->current_track==-1) return;
 
@@ -16897,11 +16902,10 @@ void on_seltrack_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   }
 
   // update labels
-  int statep=get_poly_state_from_page(mt);
+  statep=get_poly_state_from_page(mt);
   if (statep==POLY_TRANS||statep==POLY_COMP) {
     polymorph(mt,POLY_NONE);
     polymorph(mt,statep);
-    g_print("PT AAAA\n");
   }
 
 }
@@ -18486,7 +18490,10 @@ void do_fx_move_context(lives_mt *mt) {
 boolean on_timeline_release(LiVESWidget *eventbox, LiVESXEventButton *event, livespointer user_data) {
   //button release
   lives_mt *mt=(lives_mt *)user_data;
+
   double pos=mt->region_end;
+
+  int statep;
 
   if (!mainw->interactive) return FALSE;
 
@@ -18596,9 +18603,10 @@ boolean on_timeline_release(LiVESWidget *eventbox, LiVESXEventButton *event, liv
   }
 
   // update labels
-  if (get_poly_state_from_page(mt)==POLY_TRANS||get_poly_state_from_page(mt)==POLY_COMP) {
+  statep=get_poly_state_from_page(mt);
+  if (statep==POLY_TRANS||statep==POLY_COMP) {
     polymorph(mt,POLY_NONE);
-    polymorph(mt,get_poly_state_from_page(mt));
+    polymorph(mt,statep);
   }
 
   return TRUE;

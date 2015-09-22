@@ -498,7 +498,11 @@ static boolean pre_init(void) {
     return FALSE;
   }
 
+#if GTK_CHECK_VERSION(3,0,0)
+  prefs->funky_widgets=TRUE;
+#else
   prefs->funky_widgets=FALSE;
+#endif
 
   prefs->show_splash=TRUE;
 
@@ -1839,8 +1843,8 @@ void do_start_messages(void) {
   else d_print(_("composite...NOT DETECTED..."));
   if (capable->has_sox_sox) d_print(_("sox...detected\n"));
   else d_print(_("sox...NOT DETECTED\n"));
-  if (capable->has_cdda2wav) d_print(_("cdda2wav...detected..."));
-  else d_print(_("cdda2wav...NOT DETECTED..."));
+  if (capable->has_cdda2wav) d_print(_("cdda2wav/icedax...detected..."));
+  else d_print(_("cdda2wav/icedax...NOT DETECTED..."));
   if (capable->has_jackd) d_print(_("jackd...detected..."));
   else d_print(_("jackd...NOT DETECTED..."));
   if (capable->has_pulse_audio) d_print(_("pulse audio...detected..."));
@@ -1947,9 +1951,8 @@ void set_palette_colours(void) {
 
   if (prefs->funky_widgets) {
     lives_color_parse("grey5", &palette->grey20);
-    lives_color_parse("grey10", &palette->grey60);
-  }
-  else {
+    lives_color_parse("grey25", &palette->grey60);
+  } else {
     lives_color_parse("grey10", &palette->grey20);
     lives_color_parse("grey60", &palette->grey60);
   }
@@ -2019,9 +2022,9 @@ void set_palette_colours(void) {
           palette->style=STYLE_1|STYLE_2|STYLE_3|STYLE_4|STYLE_5;
         } else {
           if (!(strcmp(prefs->theme,"crayons-bright"))) {
-	    
-	    lives_widget_color_copy(&palette->normal_back,&palette->black);
-	    lives_widget_color_copy(&palette->normal_fore,&palette->white);
+
+            lives_widget_color_copy(&palette->normal_back,&palette->black);
+            lives_widget_color_copy(&palette->normal_fore,&palette->white);
 
             palette->menu_and_bars.red=LIVES_WIDGET_COLOR_SCALE_255(225.);
             palette->menu_and_bars.green=LIVES_WIDGET_COLOR_SCALE_255(160.);
@@ -2043,12 +2046,11 @@ void set_palette_colours(void) {
             palette->style=STYLE_1|STYLE_2|STYLE_3|STYLE_4;
           } else {
             if (!(strcmp(prefs->theme,"crayons"))) {
-	      if (prefs->funky_widgets) {
-		lives_widget_color_copy(&palette->normal_back,&palette->black);
-	      }
-	      else {
-		lives_widget_color_copy(&palette->normal_back,&palette->grey25);
-	      }
+              if (prefs->funky_widgets) {
+                lives_widget_color_copy(&palette->normal_back,&palette->black);
+              } else {
+                lives_widget_color_copy(&palette->normal_back,&palette->grey25);
+              }
               lives_widget_color_copy(&palette->normal_fore,&palette->white);
               lives_widget_color_copy(&palette->menu_and_bars,&palette->grey60);
               lives_widget_color_copy(&palette->info_base,&palette->grey20);
@@ -2331,6 +2333,10 @@ capability *get_capabilities(void) {
 
   get_location("cdda2wav",string,256);
   if (strlen(string)) capable->has_cdda2wav=TRUE;
+  else {
+    get_location("icedax",string,256);
+    if (strlen(string)) capable->has_cdda2wav=TRUE;
+  }
 
   get_location("jackd",string,256);
   if (strlen(string)) capable->has_jackd=TRUE;
@@ -2887,7 +2893,7 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
 #ifdef GUI_GTK
 #ifdef LIVES_NO_DEBUG
   // don't crash on GTK+ fatals
-  g_log_set_always_fatal((GLogLevelFlags)0);
+  //g_log_set_always_fatal((GLogLevelFlags)0);
 #endif
 
   g_log_set_default_handler(lives_log_handler,NULL);
@@ -3614,8 +3620,8 @@ void set_ce_frame_from_pixbuf(LiVESImage *image, LiVESPixbuf *pixbuf, lives_pain
     if (prefs->funky_widgets) {
       lives_painter_set_source_rgb(cr, 1., 1., 1.); ///< opaque white
       lives_painter_rectangle(cr,cx-1,cy-1,
-			      width+2,
-			      height+2);
+                              width+2,
+                              height+2);
       lives_painter_stroke(cr);
     }
 

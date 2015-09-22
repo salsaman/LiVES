@@ -771,11 +771,12 @@ void create_LiVES(void) {
   mainw->select_submenu = lives_menu_item_new_with_mnemonic(_("_Select..."));
   lives_widget_show(mainw->select_submenu);
   lives_container_add(LIVES_CONTAINER(menuitem_menu), mainw->select_submenu);
-  lives_widget_set_sensitive(mainw->select_submenu,FALSE);
+
 
   select_submenu_menu=lives_menu_new();
 
   lives_menu_item_set_submenu(LIVES_MENU_ITEM(mainw->select_submenu), select_submenu_menu);
+  lives_widget_set_sensitive(mainw->select_submenu,FALSE);
 
   if (palette->style&STYLE_1) {
     lives_widget_set_bg_color(select_submenu_menu, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
@@ -1192,7 +1193,7 @@ void create_LiVES(void) {
   lives_container_add(LIVES_CONTAINER(audio_menu), mainw->eject_cd);
 
   if (capable->smog_version_correct) {
-    if (!(capable->has_cdda2wav&&strlen(prefs->cdplay_device))) {
+    if (!capable->has_cdda2wav) {
       lives_widget_set_sensitive(mainw->load_cdtrack, FALSE);
       lives_widget_set_sensitive(mainw->eject_cd, FALSE);
     }
@@ -1243,10 +1244,12 @@ void create_LiVES(void) {
   mainw->export_submenu = lives_menu_item_new_with_mnemonic(_("_Export Audio..."));
   lives_widget_show(mainw->export_submenu);
   lives_container_add(LIVES_CONTAINER(audio_menu), mainw->export_submenu);
-  lives_widget_set_sensitive(mainw->export_submenu,FALSE);
 
   export_submenu_menu=lives_menu_new();
+  lives_widget_set_sensitive(export_submenu_menu,FALSE);
+
   lives_menu_item_set_submenu(LIVES_MENU_ITEM(mainw->export_submenu), export_submenu_menu);
+
   if (palette->style&STYLE_1) {
     lives_widget_set_bg_color(export_submenu_menu, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
     lives_widget_set_fg_color(export_submenu_menu, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars_fore);
@@ -1269,10 +1272,12 @@ void create_LiVES(void) {
   mainw->trim_submenu = lives_menu_item_new_with_mnemonic(_("_Trim/Pad Audio..."));
   lives_widget_show(mainw->trim_submenu);
   lives_container_add(LIVES_CONTAINER(audio_menu), mainw->trim_submenu);
-  lives_widget_set_sensitive(mainw->trim_submenu,FALSE);
 
   trimaudio_submenu_menu=lives_menu_new();
+  lives_widget_set_sensitive(trimaudio_submenu_menu,FALSE);
+
   lives_menu_item_set_submenu(LIVES_MENU_ITEM(mainw->trim_submenu), trimaudio_submenu_menu);
+
   if (palette->style&STYLE_1) {
     lives_widget_set_bg_color(trimaudio_submenu_menu, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
     lives_widget_set_fg_color(trimaudio_submenu_menu, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars_fore);
@@ -1292,10 +1297,12 @@ void create_LiVES(void) {
   mainw->delaudio_submenu = lives_menu_item_new_with_mnemonic(_("_Delete Audio..."));
   lives_widget_show(mainw->delaudio_submenu);
   lives_container_add(LIVES_CONTAINER(audio_menu), mainw->delaudio_submenu);
-  lives_widget_set_sensitive(mainw->delaudio_submenu,FALSE);
 
   delaudio_submenu_menu=lives_menu_new();
+
   lives_menu_item_set_submenu(LIVES_MENU_ITEM(mainw->delaudio_submenu), delaudio_submenu_menu);
+  lives_widget_set_sensitive(mainw->delaudio_submenu,FALSE);
+
   if (palette->style&STYLE_1) {
     lives_widget_set_bg_color(delaudio_submenu_menu, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
     lives_widget_set_fg_color(delaudio_submenu_menu, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars_fore);

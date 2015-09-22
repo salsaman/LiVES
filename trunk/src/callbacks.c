@@ -3731,25 +3731,19 @@ void on_select_all_activate(LiVESMenuItem *menuitem, livespointer user_data) {
 }
 
 
-void
-on_select_start_only_activate(LiVESMenuItem     *menuitem,
-                              livespointer         user_data) {
+void on_select_start_only_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   if (mainw->current_file==-1) return;
   lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_end),cfile->start);
 }
 
-void
-on_select_end_only_activate(LiVESMenuItem     *menuitem,
-                            livespointer         user_data) {
+void on_select_end_only_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   if (mainw->current_file==-1) return;
   lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_start),cfile->end);
 }
 
 
 
-void
-on_select_invert_activate(LiVESMenuItem     *menuitem,
-                          livespointer         user_data) {
+void on_select_invert_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   if (cfile->start==1) {
     lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_start),cfile->end+1);
     lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_end),cfile->frames);
@@ -3764,9 +3758,8 @@ on_select_invert_activate(LiVESMenuItem     *menuitem,
   load_end_image(cfile->end);
 }
 
-void
-on_select_last_activate(LiVESMenuItem     *menuitem,
-                        livespointer         user_data) {
+
+void on_select_last_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   if (cfile->undo_start > cfile->frames) cfile->undo_start=cfile->frames;
   if (cfile->undo_end > cfile->frames) cfile->undo_end=cfile->frames;
 
@@ -3783,9 +3776,7 @@ on_select_last_activate(LiVESMenuItem     *menuitem,
 }
 
 
-void
-on_select_new_activate(LiVESMenuItem     *menuitem,
-                       livespointer         user_data) {
+void on_select_new_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   if (cfile->insert_start > cfile->frames) cfile->insert_start=cfile->frames;
   if (cfile->insert_end > cfile->frames) cfile->insert_end=cfile->frames;
 
@@ -3801,27 +3792,24 @@ on_select_new_activate(LiVESMenuItem     *menuitem,
   load_end_image(cfile->end);
 }
 
-void
-on_select_to_end_activate(LiVESMenuItem     *menuitem,
-                          livespointer         user_data) {
+
+void on_select_to_end_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_end),cfile->frames);
   cfile->end=cfile->frames;
   get_play_times();
   load_end_image(cfile->end);
 }
 
-void
-on_select_from_start_activate(LiVESMenuItem     *menuitem,
-                              livespointer         user_data) {
+
+void on_select_from_start_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_start),1);
   cfile->start=cfile->frames>0?1:0;
   get_play_times();
   load_start_image(cfile->start);
 }
 
-void
-on_lock_selwidth_activate(LiVESMenuItem     *menuitem,
-                          livespointer         user_data) {
+
+void on_lock_selwidth_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   mainw->selwidth_locked=!mainw->selwidth_locked;
   lives_widget_set_sensitive(mainw->select_submenu,!mainw->selwidth_locked);
 }
@@ -5637,9 +5625,7 @@ void switch_clip_activate(LiVESMenuItem *menuitem, livespointer user_data) {
 
 
 
-void
-on_about_activate(LiVESMenuItem     *menuitem,
-                  livespointer         user_data) {
+void on_about_activate(LiVESMenuItem *menuitem, livespointer user_data) {
 
 #ifdef GUI_GTK
 #if GTK_CHECK_VERSION(2,14,0)
@@ -5705,46 +5691,34 @@ on_about_activate(LiVESMenuItem     *menuitem,
 
 
 
-void
-show_manual_activate(LiVESMenuItem     *menuitem,
-                     livespointer         user_data) {
+void show_manual_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   show_manual_section(NULL,NULL);
 }
 
 
 
-void
-email_author_activate(LiVESMenuItem     *menuitem,
-                      livespointer         user_data) {
+void email_author_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   activate_url_inner(LIVES_AUTHOR_EMAIL);
 }
 
 
-void
-report_bug_activate(LiVESMenuItem     *menuitem,
-                    livespointer         user_data) {
+void report_bug_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   activate_url_inner(LIVES_BUG_URL);
 }
 
 
-void
-suggest_feature_activate(LiVESMenuItem     *menuitem,
-                         livespointer         user_data) {
+void suggest_feature_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   activate_url_inner(LIVES_FEATURE_URL);
 }
 
 
-void
-help_translate_activate(LiVESMenuItem     *menuitem,
-                        livespointer         user_data) {
+void help_translate_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   activate_url_inner(LIVES_TRANSLATE_URL);
 }
 
 
 
-void
-donate_activate(LiVESMenuItem     *menuitem,
-                livespointer         user_data) {
+void donate_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   const char *link=lives_strdup_printf("%s%s",LIVES_DONATE_URL,user_data==NULL?"":(char *)user_data);
   activate_url_inner(link);
 }
@@ -6708,8 +6682,7 @@ void on_details_button_clicked(void) {
 }
 
 
-void on_full_screen_pressed(LiVESButton *button,
-                            livespointer user_data) {
+void on_full_screen_pressed(LiVESButton *button, livespointer user_data) {
   // toolbar button (full screen)
   lives_check_menu_item_set_active(LIVES_CHECK_MENU_ITEM(mainw->full_screen),!mainw->fs);
 }
@@ -6917,17 +6890,14 @@ void on_full_screen_activate(LiVESMenuItem *menuitem, livespointer user_data) {
 }
 
 
-void on_double_size_pressed(LiVESButton *button,
-                            livespointer user_data) {
+void on_double_size_pressed(LiVESButton *button, livespointer user_data) {
   // toolbar button (separate window)
   lives_check_menu_item_set_active(LIVES_CHECK_MENU_ITEM(mainw->dsize),!mainw->double_size);
 }
 
 
 
-void
-on_double_size_activate(LiVESMenuItem     *menuitem,
-                        livespointer         user_data) {
+void on_double_size_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   char buff[PATH_MAX];
   LiVESWidget *sngl_img;
   char *fnamex;
@@ -7312,8 +7282,7 @@ void on_sticky_activate(LiVESMenuItem *menuitem, livespointer user_data) {
 
 
 
-void on_fade_pressed(LiVESButton *button,
-                     livespointer user_data) {
+void on_fade_pressed(LiVESButton *button, livespointer user_data) {
   // toolbar button (unblank background)
   if (mainw->fs&&(mainw->play_window==NULL||prefs->play_monitor==prefs->gui_monitor)) return;
   lives_check_menu_item_set_active(LIVES_CHECK_MENU_ITEM(mainw->fade),!mainw->faded);
@@ -7321,9 +7290,7 @@ void on_fade_pressed(LiVESButton *button,
 
 
 
-void
-on_fade_activate(LiVESMenuItem     *menuitem,
-                 livespointer         user_data) {
+void on_fade_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   mainw->faded=!mainw->faded;
   if (mainw->playing_file>-1&&(!mainw->fs||(prefs->play_monitor!=prefs->gui_monitor&&mainw->play_window!=NULL))) {
     if (mainw->faded) fade_background();
@@ -7549,9 +7516,7 @@ void on_spin_value_changed(LiVESSpinButton *spinbutton, livespointer user_data) 
 }
 
 
-void
-on_spin_start_value_changed(LiVESSpinButton   *spinbutton,
-                            livespointer         user_data) {
+void on_spin_start_value_changed(LiVESSpinButton *spinbutton, livespointer user_data) {
   // generic
   // TODO - use array
   switch (LIVES_POINTER_TO_INT(user_data)) {
@@ -7571,9 +7536,7 @@ on_spin_start_value_changed(LiVESSpinButton   *spinbutton,
 }
 
 
-void
-on_spin_step_value_changed(LiVESSpinButton   *spinbutton,
-                           livespointer         user_data) {
+void on_spin_step_value_changed(LiVESSpinButton *spinbutton, livespointer user_data) {
   // generic
   // TODO - use array
   switch (LIVES_POINTER_TO_INT(user_data)) {
@@ -7592,9 +7555,8 @@ on_spin_step_value_changed(LiVESSpinButton   *spinbutton,
   }
 }
 
-void
-on_spin_end_value_changed(LiVESSpinButton   *spinbutton,
-                          livespointer         user_data) {
+
+void on_spin_end_value_changed(LiVESSpinButton *spinbutton, livespointer user_data) {
   // generic
   // TODO - use array
   switch (LIVES_POINTER_TO_INT(user_data)) {
@@ -8185,13 +8147,13 @@ void on_open_new_audio_clicked(LiVESFileChooser *chooser, livespointer user_data
 
 
 
-void
-on_load_cdtrack_activate(LiVESMenuItem     *menuitem,
-                         livespointer         user_data) {
+void on_load_cdtrack_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   LiVESWidget *cdtrack_dialog;
 
+  lives_widget_context_update();
+
   if (!strlen(prefs->cdplay_device)) {
-    do_error_dialog(_("Please set your CD play device in Tools | Preferences | Misc\n"));
+    do_cd_error_dialog();
     return;
   }
 
@@ -8202,24 +8164,32 @@ on_load_cdtrack_activate(LiVESMenuItem     *menuitem,
 }
 
 
-void
-on_eject_cd_activate(LiVESMenuItem     *menuitem,
-                     livespointer         user_data) {
-  char *com=lives_strdup_printf("eject \"%s\"",prefs->cdplay_device);
+void on_eject_cd_activate(LiVESMenuItem *menuitem, livespointer user_data) {
+  char *com;
+
   lives_widget_context_update();
+
+  if (!strlen(prefs->cdplay_device)) {
+    do_cd_error_dialog();
+    return;
+  }
+
+  com=lives_strdup_printf("eject \"%s\"",prefs->cdplay_device);
+
   lives_system(com,TRUE);
   lives_free(com);
 }
 
 
-void
-on_load_cdtrack_ok_clicked(LiVESButton     *button,
-                           livespointer         user_data) {
+void on_load_cdtrack_ok_clicked(LiVESButton *button, livespointer user_data) {
   char *com;
   char **array;
+
   boolean was_new=FALSE;
+
   int new_file=mainw->first_free_file;
   int asigned,endian;
+
   boolean has_lmap_error=FALSE;
   boolean bad_header=FALSE;
 
@@ -8766,9 +8736,7 @@ void on_toy_activate(LiVESMenuItem *menuitem, livespointer user_data) {
 
 
 
-void
-on_preview_spinbutton_changed(LiVESSpinButton   *spinbutton,
-                              livespointer         user_data) {
+void on_preview_spinbutton_changed(LiVESSpinButton *spinbutton, livespointer user_data) {
   // update the play window preview
   int preview_frame=lives_spin_button_get_value_as_int(spinbutton);
   if ((preview_frame)==mainw->preview_frame) return;
@@ -8776,9 +8744,8 @@ on_preview_spinbutton_changed(LiVESSpinButton   *spinbutton,
   load_preview_image(TRUE);
 }
 
-void
-on_prv_link_toggled(LiVESToggleButton *togglebutton,
-                    livespointer         user_data) {
+
+void on_prv_link_toggled(LiVESToggleButton *togglebutton, livespointer user_data) {
   if (!lives_toggle_button_get_active(togglebutton)) return;
   mainw->prv_link=LIVES_POINTER_TO_INT(user_data);
   if (mainw->is_processing&&(mainw->prv_link==PRV_START||mainw->prv_link==PRV_END)) {

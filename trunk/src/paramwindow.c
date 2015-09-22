@@ -963,8 +963,7 @@ void on_fx_pre_activate(lives_rfx_t *rfx, int didx, LiVESWidget *pbox) {
     if (lives_widget_get_parent(okbutton)!=NULL) {
       lives_widget_set_can_focus_and_default(okbutton);
       lives_widget_grab_default(okbutton);
-    }
-    else {
+    } else {
       lives_widget_set_can_focus_and_default(cancelbutton);
       lives_widget_grab_default(cancelbutton);
     }

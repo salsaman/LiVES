@@ -1,6 +1,6 @@
 // startup.c
 // LiVES
-// (c) G. Finch 2010 - 2013 <salsaman@gmail.com>
+// (c) G. Finch 2010 - 2015 <salsaman@gmail.com>
 // released under the GNU GPL 3 or later
 // see file ../COPYING for licensing details
 
@@ -200,9 +200,17 @@ static void on_init_aplayer_toggled(LiVESToggleButton *tbutton, livespointer use
 
 
 boolean do_audio_choice_dialog(short startup_phase) {
-  LiVESWidget *dialog,*dialog_vbox,*radiobutton0,*radiobutton1,*radiobutton2,*radiobutton3,*radiobutton4,*label;
+  LiVESWidget *dialog,*dialog_vbox,*radiobutton2,*radiobutton3,*radiobutton4,*label;
   LiVESWidget *okbutton,*cancelbutton;
   LiVESWidget *hbox;
+
+#ifdef HAVE_PULSE_AUDIO
+  LiVESWidget *radiobutton0;
+#endif
+
+#ifdef ENABLE_JACK
+  LiVESWidget *radiobutton1;
+#endif
 
   LiVESAccelGroup *accel_group;
 
@@ -385,14 +393,14 @@ boolean do_audio_choice_dialog(short startup_phase) {
   }
 
   cancelbutton = lives_button_new_from_stock(LIVES_STOCK_CANCEL,NULL);
-  lives_widget_show(cancelbutton);
+
   lives_dialog_add_action_widget(LIVES_DIALOG(dialog), cancelbutton, LIVES_RESPONSE_CANCEL);
 
   lives_widget_add_accelerator(cancelbutton, LIVES_WIDGET_CLICKED_SIGNAL, accel_group,
                                LIVES_KEY_Escape, (LiVESXModifierType)0, (LiVESAccelFlags)0);
 
   okbutton = lives_button_new_from_stock(LIVES_STOCK_GO_FORWARD,_("_Next"));
-  lives_widget_show(okbutton);
+
   lives_dialog_add_action_widget(LIVES_DIALOG(dialog), okbutton, LIVES_RESPONSE_OK);
   lives_widget_set_can_focus_and_default(okbutton);
   lives_widget_grab_default(okbutton);
@@ -557,7 +565,7 @@ boolean do_startup_tests(boolean tshoot) {
   lives_container_add(LIVES_CONTAINER(dialog_vbox), label);
 
   cancelbutton = lives_button_new_from_stock(LIVES_STOCK_CANCEL,NULL);
-  lives_widget_show(cancelbutton);
+
   lives_dialog_add_action_widget(LIVES_DIALOG(dialog), cancelbutton, LIVES_RESPONSE_CANCEL);
 
   lives_widget_add_accelerator(cancelbutton, LIVES_WIDGET_CLICKED_SIGNAL, accel_group,
@@ -566,7 +574,7 @@ boolean do_startup_tests(boolean tshoot) {
   if (!tshoot) {
     okbutton = lives_button_new_from_stock(LIVES_STOCK_GO_FORWARD,_("_Next"));
   } else okbutton = lives_button_new_from_stock(LIVES_STOCK_OK,NULL);
-  lives_widget_show(okbutton);
+
   lives_dialog_add_action_widget(LIVES_DIALOG(dialog), okbutton, LIVES_RESPONSE_OK);
   lives_widget_set_can_focus_and_default(okbutton);
   lives_widget_grab_default(okbutton);

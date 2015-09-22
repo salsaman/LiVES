@@ -1072,11 +1072,9 @@ boolean apply_prefs(boolean skip_warn) {
   }
 
   // cd play device
-  if (!capable->has_cdda2wav) {
-    if (strcmp(prefs->cdplay_device,cdplay_device)) {
-      lives_snprintf(prefs->cdplay_device,256,"%s",cdplay_device);
-      set_pref("cdplay_device",prefs->cdplay_device);
-    }
+  if (strcmp(prefs->cdplay_device,cdplay_device)) {
+    lives_snprintf(prefs->cdplay_device,256,"%s",cdplay_device);
+    set_pref("cdplay_device",prefs->cdplay_device);
   }
 
   lives_free(cdplay_device);

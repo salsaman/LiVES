@@ -469,7 +469,7 @@ giw_vslider_expose(GtkWidget      *widget,
 
   cairo_fill(cairo);
 
-  gtk_style_context_get_background_color(gtk_widget_get_style_context(widget), gtk_widget_get_state_flags(widget), &color);
+  gtk_style_context_get_color(gtk_widget_get_style_context(widget), gtk_widget_get_state_flags(widget), &color);
   cairo_set_source_rgba(cairo, color.red, color.green, color.blue, color.alpha);
 
   cairo_rectangle(cairo,
@@ -558,8 +558,9 @@ giw_vslider_expose(GtkWidget      *widget,
                      vslider->y,
                      4,
                      vslider->height);
+
   gdk_draw_rectangle(widget->window,
-                     widget->style->bg_gc[widget->state],
+                     widget->style->fg_gc[widget->state],
                      FALSE,
                      vslider->x+vslider->width/2-2,
                      vslider->y,

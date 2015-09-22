@@ -683,6 +683,7 @@ typedef struct {
   boolean has_composite;
   boolean has_identify;
   boolean has_cdda2wav;
+  boolean has_icedax;
   boolean has_midistartstop;
   boolean has_jackd;
   boolean has_pulse_audio;
@@ -964,6 +965,7 @@ void do_no_autolives_error(void);
 void do_autolives_needs_clips_error(void);
 void do_pulse_lost_conn_error(void);
 void do_jack_lost_conn_error(void);
+void do_cd_error_dialog(void);
 
 boolean process_one(boolean visible);
 void do_threaded_dialog(char *translated_text, boolean has_cancel);

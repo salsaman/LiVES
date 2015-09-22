@@ -708,6 +708,8 @@ typedef struct {
   LiVESWidget *fade;
   LiVESWidget *dsize;
 
+  LiVESWidget *midi_learn;
+  LiVESWidget *midi_save;
   LiVESWidget *change_speed;
   LiVESWidget *capture;
   LiVESWidget *load_audio;

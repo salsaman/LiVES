@@ -3292,6 +3292,7 @@ void sensitize(void) {
   lives_widget_set_sensitive(mainw->backup, mainw->current_file>0);
   lives_widget_set_sensitive(mainw->save_selection, mainw->current_file>0&&cfile->frames>0&&capable->has_encoder_plugins);
   lives_widget_set_sensitive(mainw->clear_ds, TRUE);
+  lives_widget_set_sensitive(mainw->load_cdtrack, TRUE);
   lives_widget_set_sensitive(mainw->playsel, mainw->current_file>0&&cfile->frames>0);
   lives_widget_set_sensitive(mainw->copy, mainw->current_file>0&&cfile->frames>0);
   lives_widget_set_sensitive(mainw->cut, mainw->current_file>0&&cfile->frames>0);
@@ -3455,6 +3456,9 @@ void desensitize(void) {
   lives_widget_set_sensitive(mainw->recent_menu, FALSE);
   lives_widget_set_sensitive(mainw->restore, FALSE);
   lives_widget_set_sensitive(mainw->clear_ds, FALSE);
+  lives_widget_set_sensitive(mainw->midi_learn, FALSE);
+  lives_widget_set_sensitive(mainw->midi_save, FALSE);
+  lives_widget_set_sensitive(mainw->load_cdtrack, FALSE);
   lives_widget_set_sensitive(mainw->save_as, FALSE);
   lives_widget_set_sensitive(mainw->backup, FALSE);
   lives_widget_set_sensitive(mainw->playsel, FALSE);
@@ -6395,6 +6399,8 @@ void load_frame_image(int frame) {
       lives_widget_set_sensitive(mainw->toy_random_frames, TRUE);
       lives_widget_set_sensitive(mainw->vj_load_set, !mainw->was_set);
       lives_widget_set_sensitive(mainw->clear_ds, TRUE);
+      lives_widget_set_sensitive(mainw->midi_learn, TRUE);
+      lives_widget_set_sensitive(mainw->midi_save, TRUE);
       lives_widget_set_sensitive(mainw->gens_submenu, TRUE);
       lives_widget_set_sensitive(mainw->mt_menu, TRUE);
       lives_widget_set_sensitive(mainw->add_live_menu,TRUE);

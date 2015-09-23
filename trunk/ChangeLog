@@ -1,8 +1,20 @@
 Version 2.4.3
 -------------
-Theming updates for darker themes.
+Fix possible dataloss (effects applied) when re-entering multitrack mode.
+Work around a GTK+ bug where menu items with submenus can no longer be set insensitive.
+Fix for setting cdplayer device in Preferences.
 Fix gtk critical in clip info window.
 Fix window sizing errors in rfxbuilder.
+Theming updates for darker themes with gtk+ 3.x
+Add icedax as altname for cdda2wav.
+Make better use of missing CD device warning.
+Remove some spurious effect reinitialisations for webcams.
+Allow application of audio effects to the backing audio track in multitrack mode.
+Minor GUI improvements.
+
+
+
+
 
 
 

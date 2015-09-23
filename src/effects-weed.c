@@ -1706,7 +1706,7 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
   int num_in_tracks,num_out_tracks;
   int error;
   int frame;
-  int inwidth,inheight,inpalette,outpalette,channel_flags,filter_flags=0;
+  int inwidth,inheight,inpalette,outpalette,opalette,channel_flags,filter_flags=0;
   int palette,cpalette;
   int outwidth,outheight;
   int incwidth,incheight,numplanes=0,width,height;
@@ -1973,7 +1973,6 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
     return FILTER_ERROR_MISSING_CHANNEL;
   }
 
-
   // pull frames for tracks
 
   for (i=0; i<num_out_tracks+num_out_alpha; i++) {
@@ -2138,19 +2137,30 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
 
     // try to match palettes with first enabled in channel:
     // TODO ** - we should see which palette causes the least palette conversions
-    if (i>0&&!(channel_flags&WEED_CHANNEL_PALETTE_CAN_VARY))
-      palette=weed_get_int_value(def_channel,"current_palette",&error);
 
-    if (palette!=inpalette) {
+
+    // TODO: logic here was changed 22/09/2015. Check it is OK
+    if (i>0&&!(channel_flags&WEED_CHANNEL_PALETTE_CAN_VARY))
+      inpalette=weed_get_int_value(def_channel,"current_palette",&error);
+
+    opalette=weed_get_int_value(channel,"current_palette",&error);
+
+    if (opalette!=inpalette) {
       // palette change needed; first try to change channel palette
       int num_palettes=weed_leaf_num_elements(chantmpl,"palette_list");
       int *palettes=weed_get_int_array(chantmpl,"palette_list",&error);
-      if ((palette=check_weed_palette_list(palettes,num_palettes,palette))!=inpalette) {
+      if ((palette=check_weed_palette_list(palettes,num_palettes,inpalette))!=opalette) {
+        // palette is the nearest match to inpalette
+
         weed_set_int_value(channel,"current_palette",palette);
         if (channel_flags&WEED_CHANNEL_REINIT_ON_PALETTE_CHANGE) needs_reinit=TRUE;
+
         weed_set_int_value(channel,"width",incwidth/
                            weed_palette_get_pixels_per_macropixel(palette)*
-                           weed_palette_get_pixels_per_macropixel(inpalette));
+                           weed_palette_get_pixels_per_macropixel(opalette));
+
+
+
         nchr=weed_leaf_num_elements(channel,"rowstrides");
         channel_rows=weed_get_int_array(channel,"rowstrides",&error);
         for (j=0; j<nchr; j++) {
@@ -2174,6 +2184,8 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
       }
     }
   }
+
+
 
   // we stored original key/mode to use here
   if (weed_plant_has_leaf(inst,"host_key")) {
@@ -2713,7 +2725,6 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
       for (j=0; j<numplanes; j++) if (pixel_data[j]!=NULL) lives_free(pixel_data[j]);
       lives_free(pixel_data);
     }
-
 
     numplanes=weed_leaf_num_elements(channel,"pixel_data");
     pixel_data=weed_get_voidptr_array(channel,"pixel_data",&error);

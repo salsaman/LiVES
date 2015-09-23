@@ -1821,7 +1821,7 @@ LIVES_INLINE LiVESPixbuf *lives_pixbuf_new_from_file_at_scale(const char *filena
     LiVESError **error) {
 
 #ifdef GUI_GTK
-  return lives_pixbuf_new_from_file_at_scale(filename, width, height, preserve_aspect_ratio, error);
+  return gdk_pixbuf_new_from_file_at_scale(filename, width, height, preserve_aspect_ratio, error);
 #endif
 
 #ifdef GUI_QT

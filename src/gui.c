@@ -451,49 +451,51 @@ void create_LiVES(void) {
 #endif
   }
 
-  mainw->add_live_menu = lives_menu_item_new_with_mnemonic(_("_Add Webcam/TV card..."));
+  menuitem = lives_menu_item_new_with_mnemonic(_("_Add Webcam/TV card..."));
+  mainw->unicap = lives_menu_item_new_with_mnemonic(_("Add _Unicap Device"));
+  mainw->firewire = lives_menu_item_new_with_mnemonic(_("Add Live _Firewire Device"));
+  mainw->tvdev = lives_menu_item_new_with_mnemonic(_("Add _TV Device"));
 
 #if defined(HAVE_UNICAP) || defined(HAVE_YUV4MPEG)
-  lives_container_add(LIVES_CONTAINER(menuitem_menu), mainw->add_live_menu);
-  lives_widget_show(mainw->add_live_menu);
+  lives_container_add(LIVES_CONTAINER(menuitem_menu), menuitem);
+  lives_widget_show(menuitem);
 
 #ifndef HAVE_UNICAP
   if (capable->has_mplayer||capable->has_mplayer2) {
 #endif
 
     submenu=lives_menu_new();
-    lives_menu_item_set_submenu(LIVES_MENU_ITEM(mainw->add_live_menu), submenu);
+    lives_menu_item_set_submenu(LIVES_MENU_ITEM(menuitem), submenu);
     if (palette->style&STYLE_1) {
       lives_widget_set_bg_color(submenu, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
       lives_widget_set_fg_color(submenu, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars_fore);
     }
     lives_widget_show(submenu);
 
+
 #ifdef HAVE_UNICAP
-    menuitem = lives_menu_item_new_with_mnemonic(_("Add _Unicap Device"));
-    lives_container_add(LIVES_CONTAINER(submenu), menuitem);
-    lives_widget_show(menuitem);
-    lives_signal_connect(LIVES_GUI_OBJECT(menuitem), LIVES_WIDGET_ACTIVATE_SIGNAL,
+    lives_container_add(LIVES_CONTAINER(submenu), mainw->unicap);
+    lives_widget_show(mainw->unicap);
+    lives_signal_connect(LIVES_GUI_OBJECT(mainw->unicap), LIVES_WIDGET_ACTIVATE_SIGNAL,
                          LIVES_GUI_CALLBACK(on_open_vdev_activate),
                          NULL);
 #endif
 
+
 #ifdef HAVE_YUV4MPEG
     if (capable->has_dvgrab) {
-      menuitem = lives_menu_item_new_with_mnemonic(_("Add Live _Firewire Device"));
-      lives_container_add(LIVES_CONTAINER(submenu), menuitem);
-      lives_widget_show(menuitem);
+      lives_container_add(LIVES_CONTAINER(submenu), mainw->firewire);
+      lives_widget_show(mainw->firewire);
 
-      lives_signal_connect(LIVES_GUI_OBJECT(menuitem), LIVES_WIDGET_ACTIVATE_SIGNAL,
+      lives_signal_connect(LIVES_GUI_OBJECT(mainw->firewire), LIVES_WIDGET_ACTIVATE_SIGNAL,
                            LIVES_GUI_CALLBACK(on_live_fw_activate),
                            NULL);
     }
 
-    menuitem = lives_menu_item_new_with_mnemonic(_("Add _TV Device"));
-    lives_container_add(LIVES_CONTAINER(submenu), menuitem);
-    lives_widget_show(menuitem);
+    lives_container_add(LIVES_CONTAINER(submenu), mainw->tvdev);
+    lives_widget_show(mainw->tvdev);
 
-    lives_signal_connect(LIVES_GUI_OBJECT(menuitem), LIVES_WIDGET_ACTIVATE_SIGNAL,
+    lives_signal_connect(LIVES_GUI_OBJECT(mainw->tvdev), LIVES_WIDGET_ACTIVATE_SIGNAL,
                          LIVES_GUI_CALLBACK(on_live_tvcard_activate),
                          NULL);
 

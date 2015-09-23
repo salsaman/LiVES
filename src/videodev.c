@@ -128,6 +128,7 @@ boolean weed_layer_set_from_lvdev(weed_plant_t *layer, lives_clip_t *sfile, doub
 
   weed_set_int_value(layer,"width",sfile->hsize/
                      weed_palette_get_pixels_per_macropixel(ldev->current_palette));
+
   weed_set_int_value(layer,"height",sfile->vsize);
   weed_set_int_value(layer,"current_palette",ldev->current_palette);
   weed_set_int_value(layer,"YUV_subspace",WEED_YUV_SUBSPACE_YCBCR); // TODO - handle bt.709

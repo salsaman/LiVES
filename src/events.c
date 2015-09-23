@@ -1,6 +1,6 @@
 // events.c
 // LiVES
-// (c) G. Finch 2005 - 2014 <salsaman@gmail.com>
+// (c) G. Finch 2005 - 2015 <salsaman@gmail.com>
 // released under the GNU GPL 3 or later
 // see file ../COPYING or www.gnu.org for licensing details
 
@@ -540,6 +540,7 @@ weed_plant_t *event_copy_and_insert(weed_plant_t *in_event, weed_plant_t *event_
     event_after=get_first_event(event_list);
     error=weed_set_voidptr_value(event_list,"first",event);
     if (error==WEED_ERROR_MEMORY_ALLOCATION) return NULL;
+    if (event_after==event) event_after=NULL;
   } else {
     event_after=get_next_event(event_before);
     error=weed_set_voidptr_value(event_before,"next",event);
@@ -548,6 +549,7 @@ weed_plant_t *event_copy_and_insert(weed_plant_t *in_event, weed_plant_t *event_
 
   error=weed_set_voidptr_value(event,"previous",event_before);
   if (error==WEED_ERROR_MEMORY_ALLOCATION) return NULL;
+
   error=weed_set_voidptr_value(event,"next",event_after);
   if (error==WEED_ERROR_MEMORY_ALLOCATION) return NULL;
 
@@ -558,6 +560,7 @@ weed_plant_t *event_copy_and_insert(weed_plant_t *in_event, weed_plant_t *event_
   hint=get_event_hint(in_event);
   switch (hint) {
   case WEED_EVENT_HINT_FILTER_INIT:
+    weed_leaf_delete(event,"event_id");
     error=weed_set_voidptr_value(event,"event_id",(void *)in_event);
     if (error==WEED_ERROR_MEMORY_ALLOCATION) return NULL;
     filter_hash=weed_get_string_value(event,"filter",&error);
@@ -583,6 +586,7 @@ weed_plant_t *event_copy_and_insert(weed_plant_t *in_event, weed_plant_t *event_
     new_init_event=find_init_event_by_id(init_event,event);
     error=weed_set_voidptr_value(event,"init_event",new_init_event);
     if (error==WEED_ERROR_MEMORY_ALLOCATION) return NULL;
+    weed_leaf_delete(new_init_event,"event_id");
     error=weed_set_voidptr_value((weed_plant_t *)new_init_event,"event_id",(void *)new_init_event);  // useful later for event_list_rectify
     if (error==WEED_ERROR_MEMORY_ALLOCATION) return NULL;
     break;

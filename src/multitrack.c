@@ -24,6 +24,7 @@
 // or adjust the currently playing one
 // and it would be nice to be able to read/write event lists in other formats than the default
 
+//#define DEBUG_TTABLE
 
 #ifdef HAVE_SYSTEM_WEED
 #include <weed/weed.h>
@@ -220,6 +221,7 @@ static boolean save_event_list_inner(lives_mt *mt, int fd, weed_plant_t *event_l
 
   register int i;
 
+
   if (event_list==NULL) return TRUE;
 
   event=get_first_event(event_list);
@@ -293,6 +295,7 @@ static boolean save_event_list_inner(lives_mt *mt, int fd, weed_plant_t *event_l
 
   mainw->write_failed=FALSE;
   weed_plant_serialise(fd,event_list,mem);
+
   while (!mainw->write_failed&&event!=NULL) {
 
     next=weed_get_voidptr_value(event,"next",&error);
@@ -3811,10 +3814,13 @@ static boolean on_drag_filter_end(LiVESWidget *widget, LiVESXEventButton *event,
     else {*/
     // always apply to block
     track_rect *block;
-    if (tchan==-1) {
+
+    if (tchan==-1&&!is_pure_audio(get_weed_filter(mt->current_fx),FALSE)) {
+      // can only apply audio filters to backing audio
       lives_widget_destroy(dummy_menuitem);
       return FALSE;
     }
+
     block=get_block_from_time(eventbox,timesecs,mt);
     if (block==NULL) {
       lives_widget_destroy(dummy_menuitem);
@@ -5185,6 +5191,7 @@ static weed_plant_t *load_event_list_inner(lives_mt *mt, int fd, boolean show_er
     return NULL;
   }
 
+
   if (weed_plant_has_leaf(event_list,"needs_set")) {
     if (show_errors) {
       char *set_needed=weed_get_string_value(event_list,"needs_set",&error);
@@ -5205,6 +5212,7 @@ static weed_plant_t *load_event_list_inner(lives_mt *mt, int fd, boolean show_er
       lives_free(set_needed);
     }
   } else if (!show_errors&&mem==NULL) return NULL; // no change needed
+
 
   if (event_list==mainw->stored_event_list||(mt!=NULL&&!mt->ignore_load_vals)) {
     if (fps>-1) {
@@ -5316,6 +5324,18 @@ static weed_plant_t *load_event_list_inner(lives_mt *mt, int fd, boolean show_er
     if (mem!=NULL&&(*mem)>=mem_end) break;
     event=weed_plant_deserialise(fd,mem);
     if (event!=NULL) {
+
+#ifdef DEBUG_TTABLE
+      uint64_t event_id;
+      if (weed_plant_has_leaf(event,"init_event")) {
+        if (weed_leaf_seed_type(event,"init_event")==WEED_SEED_INT64)
+          event_id=(uint64_t)(weed_get_int64_value(event,"init_event",&error));
+        else
+          event_id=(uint64_t)((weed_plant_t *)weed_get_voidptr_value(event,"init_event",&error));
+        g_print("got eid is %ld\n",event_id);
+      }
+#endif
+
       if (weed_plant_has_leaf(event,"previous")) weed_leaf_delete(event,"previous");
       if (weed_plant_has_leaf(event,"next")) weed_leaf_delete(event,"next");
       if (eventprev!=NULL) weed_set_voidptr_value(eventprev,"next",event);
@@ -9350,10 +9370,19 @@ boolean multitrack_delete(lives_mt *mt, boolean save_layout) {
     mt->file_selected=file_selected; // because init_clips will reset this
   } else {
     if (mt->event_list!=NULL) {
+
       save_event_list_inner(mt,-1,mt->event_list,NULL); // set width, height, fps etc.
       add_markers(mt,mt->event_list);
 
       mainw->stored_event_list=mt->event_list;
+
+#ifdef DEBUG_TTABLE
+      int error;
+      weed_plant_t *tevent=get_first_event(mt->event_list);
+      tevent=get_next_event(tevent);
+      tevent=get_next_event(tevent);
+      g_print("VALXX is %p\n",weed_get_voidptr_value(tevent,"init_event",&error));
+#endif
 
       mt->event_list=NULL;
       mainw->stored_event_list_changed=mt->changed;
@@ -20517,7 +20546,6 @@ boolean event_list_rectify(lives_mt *mt, weed_plant_t *event_list) {
 
     switch (hint) {
     case WEED_EVENT_HINT_FILTER_INIT:
-      //#define DEBUG_TTABLE
 #ifdef DEBUG_TTABLE
       g_print("\n\ngot filter init %p\n",event);
 #endif
@@ -20845,6 +20873,11 @@ boolean event_list_rectify(lives_mt *mt, weed_plant_t *event_list) {
               event_id=(uint64_t)(weed_get_int64_value(event,"init_event",&error));
             else
               event_id=(uint64_t)((weed_plant_t *)weed_get_voidptr_value(event,"init_event",&error));
+
+#ifdef DEBUG_TTABLE
+            g_print("pc looking for %"PRIu64" in ttable %d\n",event_id,error);
+#endif
+
             if ((init_event=find_init_event_in_ttable(trans_table,event_id,TRUE))==NULL) {
               ebuf=rec_error_add(ebuf,"Param_change has invalid init_event",-1,tc);
               delete_event(event_list,event);
@@ -22201,7 +22234,10 @@ uint32_t event_list_get_byte_size(lives_mt *mt, weed_plant_t *event_list,int *nu
   save_event_list_inner(mt,-1,event_list,NULL);
 
   while (event!=NULL) {
-    if (WEED_EVENT_IS_FILTER_INIT(event)) weed_set_int64_value(event,"event_id",(uint64_t)((void *)event));
+    if (WEED_EVENT_IS_FILTER_INIT(event)) {
+      weed_leaf_delete(event,"event_id");
+      weed_set_int64_value(event,"event_id",(uint64_t)((void *)event));
+    }
     tot_events++;
     leaves=weed_plant_list_leaves(event);
     tot+=sizint; //number of leaves

@@ -2893,7 +2893,7 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
 #ifdef GUI_GTK
 #ifdef LIVES_NO_DEBUG
   // don't crash on GTK+ fatals
-  //g_log_set_always_fatal((GLogLevelFlags)0);
+  g_log_set_always_fatal((GLogLevelFlags)0);
 #endif
 
   g_log_set_default_handler(lives_log_handler,NULL);
@@ -3321,7 +3321,10 @@ void sensitize(void) {
   lives_widget_set_sensitive(mainw->show_file_comments, mainw->current_file>0);
   lives_widget_set_sensitive(mainw->full_screen, TRUE);
   lives_widget_set_sensitive(mainw->mt_menu, TRUE);
-  lives_widget_set_sensitive(mainw->add_live_menu,TRUE);
+  lives_widget_set_sensitive(mainw->unicap,TRUE);
+  lives_widget_set_sensitive(mainw->firewire,TRUE);
+  lives_widget_set_sensitive(mainw->tvdev,TRUE);
+
   lives_widget_set_sensitive(mainw->export_proj, mainw->current_file>0);
   lives_widget_set_sensitive(mainw->import_proj, mainw->current_file==-1);
 
@@ -3451,7 +3454,8 @@ void desensitize(void) {
   lives_widget_set_sensitive(mainw->open_yuv4m, FALSE);
 #endif
 
-  lives_widget_set_sensitive(mainw->add_live_menu, FALSE);
+  lives_widget_set_sensitive(mainw->firewire,FALSE);
+  lives_widget_set_sensitive(mainw->tvdev,FALSE);
 
   lives_widget_set_sensitive(mainw->recent_menu, FALSE);
   lives_widget_set_sensitive(mainw->restore, FALSE);
@@ -3591,6 +3595,7 @@ void procw_desensitize(void) {
   lives_widget_set_sensitive(mainw->load_cdtrack, FALSE);
   lives_widget_set_sensitive(mainw->open_lives2lives, FALSE);
   lives_widget_set_sensitive(mainw->record_perf, FALSE);
+  lives_widget_set_sensitive(mainw->unicap,FALSE);
 
   if (mainw->current_file>0&&cfile->nopreview) {
     lives_widget_set_sensitive(mainw->m_playbutton, FALSE);
@@ -6403,7 +6408,9 @@ void load_frame_image(int frame) {
       lives_widget_set_sensitive(mainw->midi_save, TRUE);
       lives_widget_set_sensitive(mainw->gens_submenu, TRUE);
       lives_widget_set_sensitive(mainw->mt_menu, TRUE);
-      lives_widget_set_sensitive(mainw->add_live_menu,TRUE);
+      lives_widget_set_sensitive(mainw->unicap,TRUE);
+      lives_widget_set_sensitive(mainw->firewire,TRUE);
+      lives_widget_set_sensitive(mainw->tvdev,TRUE);
       lives_widget_set_sensitive(mainw->troubleshoot, TRUE);
 #ifdef HAVE_YUV4MPEG
       lives_widget_set_sensitive(mainw->open_yuv4m, TRUE);

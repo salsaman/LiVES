@@ -649,7 +649,9 @@ typedef struct {
   LiVESWidget *open_device_submenu;
   LiVESWidget *open_firewire;
   LiVESWidget *open_hfirewire;
-  LiVESWidget *add_live_menu;
+  LiVESWidget *unicap;
+  LiVESWidget *firewire;
+  LiVESWidget *tvdev;
   LiVESWidget *recent_menu;
   LiVESWidget *recent_submenu;
   LiVESWidget *recent1;

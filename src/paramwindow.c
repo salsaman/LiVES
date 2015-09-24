@@ -580,7 +580,10 @@ static boolean add_sizes(LiVESBox *vbox, boolean add_fps, boolean has_param, liv
   for (i=0; i<num_chans; i++) {
     tmpl=ctmpls[i];
 
-    // TODO *** - "host_disabled" should be for inst, not template !
+    // TODO ***: allow alteration of "host_disabled" under some circumstances
+    // (e.g. allow enabling a first or second in channel, or first out_channel, or more for alphas)
+
+    // make this into function called from here and from effects with optional enable-able channels
     if (weed_plant_has_leaf(tmpl,"host_disabled")&&weed_get_boolean_value(tmpl,"host_disabled",&error)==WEED_TRUE) continue;
     if (weed_plant_has_leaf(tmpl,"width")&&weed_get_int_value(tmpl,"width",&error)!=0) continue;
     if (weed_plant_has_leaf(tmpl,"height")&&weed_get_int_value(tmpl,"height",&error)!=0) continue;

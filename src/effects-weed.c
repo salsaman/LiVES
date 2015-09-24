@@ -1834,17 +1834,21 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
 
   if (num_in_tracks>num_inc) num_in_tracks=num_inc; // for example, compound fx
 
+
+  // if we have more in_channels in the effect than in_tracks, we MUST (temp) disable the extra in_channels
   if (num_inc>num_in_tracks) {
     for (i=num_in_tracks; i<num_inc+num_in_alpha; i++) {
       if (!weed_palette_is_alpha_palette(weed_get_int_value(in_channels[i],"current_palette",&error))) {
         if (!weed_plant_has_leaf(in_channels[i],"disabled")||
             weed_get_boolean_value(in_channels[i],"disabled",&error)==WEED_FALSE)
           weed_set_boolean_value(in_channels[i],"host_temp_disabled",WEED_TRUE);
-        else weed_set_boolean_value(in_channels[i],"host_temp_disabled",WEED_FALSE);
+        else weed_set_boolean_value(in_channels[i],"host_temp_disabled",WEED_FALSE); // "disabled" will do instead
       }
     }
   }
 
+
+  // count the actual layers fed in
   while (layers[lcount++]!=NULL);
 
   for (k=i=0; i<num_in_tracks; i++) {
@@ -1863,13 +1867,18 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
     weed_set_boolean_value(channel,"host_temp_disabled",WEED_FALSE);
 
     if (in_tracks[i]>=lcount) {
+      // here we have more in_tracks than actual layers (this can happen if we have blank frames)
+      // disable some optional channels if we can
       for (j=k; j<num_in_tracks+num_in_alpha; j++) {
         if (weed_palette_is_alpha_palette(weed_get_int_value(in_channels[j],"current_palette",&error))) continue;
         channel=in_channels[j];
         chantmpl=weed_get_plantptr_value(channel,"template",&error);
-        if (weed_plant_has_leaf(chantmpl,"max_repeats")||(weed_plant_has_leaf(chantmpl,"option")&&
+        if (weed_plant_has_leaf(chantmpl,"max_repeats")||(weed_plant_has_leaf(chantmpl,"optional")&&
             weed_get_boolean_value(chantmpl,"optional",&error)==WEED_TRUE))
-          weed_set_boolean_value(channel,"host_temp_disabled",WEED_TRUE);
+          if (!weed_plant_has_leaf(channel,"disabled")||
+              weed_get_boolean_value(channel,"disabled",&error)==WEED_FALSE)
+            weed_set_boolean_value(channel,"host_temp_disabled",WEED_TRUE);
+          else weed_set_boolean_value(channel,"host_temp_disabled",WEED_FALSE); // "disabled" will do instead
         else {
           lives_free(in_tracks);
           lives_free(out_tracks);
@@ -1882,17 +1891,22 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
     }
     layer=layers[in_tracks[i]];
 
+    // wait for thread to pull layer pixel_data
     check_layer_ready(layer);
 
     if (weed_get_voidptr_value(layer,"pixel_data",&error)==NULL) {
+      // we got no pixel_data for some reason
       frame=weed_get_int_value(layer,"frame",&error);
       if (frame==0) {
         // temp disable channels if we can
         channel=in_channels[k];
         chantmpl=weed_get_plantptr_value(channel,"template",&error);
-        if (weed_plant_has_leaf(chantmpl,"max_repeats")||(weed_plant_has_leaf(chantmpl,"option")&&
+        if (weed_plant_has_leaf(chantmpl,"max_repeats")||(weed_plant_has_leaf(chantmpl,"optional")&&
             weed_get_boolean_value(chantmpl,"optional",&error)==WEED_TRUE)) {
-          weed_set_boolean_value(channel,"host_temp_disabled",WEED_TRUE);
+          if (!weed_plant_has_leaf(channel,"disabled")||
+              weed_get_boolean_value(channel,"disabled",&error)==WEED_FALSE)
+            weed_set_boolean_value(channel,"host_temp_disabled",WEED_TRUE);
+          else weed_set_boolean_value(channel,"host_temp_disabled",WEED_FALSE); // "disabled" will do instead
         } else {
           lives_free(in_tracks);
           lives_free(out_tracks);
@@ -1908,6 +1922,7 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
 
   // ensure all chantmpls not marked "optional" have at least one corresponding enabled channel
   // e.g. we could have disabled all channels from a template with "max_repeats" that is not "optional"
+
   num_ctmpl=weed_leaf_num_elements(filter,"in_channel_templates");
   mand=(int *)lives_malloc(num_ctmpl*sizint);
   for (j=0; j<num_ctmpl; j++) mand[j]=0;
@@ -1943,6 +1958,8 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
   lives_free(in_ctmpls);
   lives_free(mand);
 
+
+  // that is it for in_channels, now we go on to out_channels
 
   num_outc=weed_leaf_num_elements(inst,"out_channels");
 
@@ -1980,8 +1997,10 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
     channel=out_channels[i];
     palette=weed_get_int_value(channel,"current_palette",&error);
     if (weed_palette_is_alpha_palette(palette)) continue;
-    if (weed_plant_has_leaf(channel,"host_temp_disabled")&&
-        weed_get_boolean_value(channel,"host_temp_disabled",&error)==WEED_TRUE) continue;
+    if ((weed_plant_has_leaf(channel,"disabled")&&
+         weed_get_boolean_value(channel,"disabled",&error)==WEED_TRUE)||
+        (weed_plant_has_leaf(channel,"host_temp_disabled")&&
+         weed_get_boolean_value(channel,"host_temp_disabled",&error)==WEED_TRUE)) continue;
     all_outs_alpha=FALSE;
   }
 
@@ -1989,13 +2008,17 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
   for (j=i=0; i<num_in_tracks; i++) {
     while (weed_palette_is_alpha_palette(weed_get_int_value(in_channels[j],"current_palette",&error))) j++;
 
-    if (weed_plant_has_leaf(in_channels[j],"host_temp_disabled")&&
-        weed_get_boolean_value(in_channels[j],"host_temp_disabled",&error)==WEED_TRUE) {
+    if ((weed_plant_has_leaf(in_channels[j],"disabled")&&
+         weed_get_boolean_value(in_channels[j],"disabled",&error)==WEED_TRUE)||
+        (weed_plant_has_leaf(in_channels[j],"host_temp_disabled")&&
+         weed_get_boolean_value(in_channels[j],"host_temp_disabled",&error)==WEED_TRUE)) {
       j++;
       continue;
     }
     layer=layers[in_tracks[i]];
     clip=weed_get_int_value(layer,"clip",&error);
+
+    // check_layer_ready() should have done this, but lets check again
 
     if (!weed_plant_has_leaf(layer,"pixel_data")||weed_get_voidptr_value(layer,"pixel_data",&error)==NULL) {
       // pull_frame will set pixel_data,width,height,current_palette and rowstrides
@@ -2140,6 +2163,8 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
 
 
     // TODO: logic here was changed 22/09/2015. Check it is OK
+    inpalette=weed_get_int_value(layer,"current_palette",&error);
+
     if (i>0&&!(channel_flags&WEED_CHANNEL_PALETTE_CAN_VARY))
       inpalette=weed_get_int_value(def_channel,"current_palette",&error);
 
@@ -2216,7 +2241,10 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
       chantmpl=weed_get_plantptr_value(in_channels[i],"template",&error);
       if (weed_plant_has_leaf(chantmpl,"max_repeats")||(weed_plant_has_leaf(chantmpl,"option")&&
           weed_get_boolean_value(chantmpl,"optional",&error)==WEED_TRUE))
-        weed_set_boolean_value(in_channels[i],"host_temp_disabled",WEED_TRUE);
+        if (!weed_plant_has_leaf(in_channels[i],"disabled")||
+            weed_get_boolean_value(in_channels[i],"disabled",&error)==WEED_FALSE)
+          weed_set_boolean_value(in_channels[i],"host_temp_disabled",WEED_TRUE);
+        else weed_set_boolean_value(in_channels[i],"host_temp_disabled",WEED_FALSE); // "disabled" will do instead
       else {
         lives_free(in_tracks);
         lives_free(out_tracks);
@@ -2236,6 +2264,10 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
 
     do {
       channel=get_enabled_channel(inst,i,TRUE);
+
+      if (weed_plant_has_leaf(channel,"host_temp_disabled")&&
+          weed_get_boolean_value(channel,"host_temp_disabled",&error)==WEED_TRUE) continue;
+
       chantmpl=weed_get_plantptr_value(channel,"template",&error);
 
       inpalette=weed_get_int_value(channel,"current_palette",&error);
@@ -2260,9 +2292,10 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
       }
     } while (weed_palette_is_alpha_palette(weed_get_int_value(channel,"current_palette",&error)));
 
+    chantmpl=weed_get_plantptr_value(channel,"template",&error);
 
-    if (weed_plant_has_leaf(in_channels[i],"host_temp_disabled")&&
-        weed_get_boolean_value(in_channels[i],"host_temp_disabled",&error)==WEED_TRUE) continue;
+    channel_flags=0;
+    if (weed_plant_has_leaf(chantmpl,"flags")) channel_flags=weed_get_int_value(chantmpl,"flags",&error);
 
     layer=layers[in_tracks[i]];
 
@@ -2277,6 +2310,7 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
     if (weed_plant_has_leaf(layer,"YUV_sampling")) isampling=(weed_get_int_value(layer,"YUV_sampling",&error));
     else isampling=WEED_YUV_SAMPLING_DEFAULT;
 
+
     if (osampling==-1||(channel_flags&WEED_CHANNEL_PALETTE_CAN_VARY)) {
       /*   if (weed_plant_has_leaf(chantmpl,"YUV_sampling")) osampling=(weed_get_int_value(layer,"YUV_sampling",&error));
       else */
@@ -2284,7 +2318,6 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
       // cant convert sampling yet
       osampling=isampling;
     }
-
 
     if (weed_plant_has_leaf(layer,"YUV_subspace")) isubspace=(weed_get_int_value(layer,"YUV_subspace",&error));
     else isubspace=WEED_YUV_SUBSPACE_YCBCR;
@@ -2298,6 +2331,7 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
     }
 
     cpalette=weed_get_int_value(layer,"current_palette",&error);
+    inpalette=weed_get_int_value(channel,"current_palette",&error);
 
     if (weed_palette_is_rgb_palette(cpalette)&&weed_palette_is_rgb_palette(inpalette)) {
       oclamping=iclamping;
@@ -2332,7 +2366,9 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
       }
     }
 
-    if (weed_palette_is_yuv_palette(inpalette)) {
+    palette=weed_get_int_value(layer,"current_palette",&error);
+
+    if (weed_palette_is_yuv_palette(palette)) {
       if (weed_plant_has_leaf(layer,"YUV_clamping"))
         oclamping=(weed_get_int_value(layer,"YUV_clamping",&error));
 
@@ -2908,12 +2944,17 @@ static lives_filter_error_t weed_apply_audio_instance_inner(weed_plant_t *inst, 
   for (i=0; i<num_in_tracks; i++) {
     channel=in_channels[i];
     weed_set_boolean_value(channel,"host_temp_disabled",WEED_FALSE);
+    if (weed_plant_has_leaf(channel,"disabled")||weed_get_boolean_value(channel,"disabled",&error)==WEED_TRUE) continue;
     layer=layers[i];
     if (layer==NULL) {
       for (j=i; j<num_in_tracks; j++) {
         channel=in_channels[j];
         chantmpl=weed_get_plantptr_value(channel,"template",&error);
-        if (weed_plant_has_leaf(chantmpl,"max_repeats")) weed_set_boolean_value(channel,"host_temp_disabled",WEED_TRUE);
+        if (weed_plant_has_leaf(chantmpl,"max_repeats"))
+          if (!weed_plant_has_leaf(channel,"disabled")||
+              weed_get_boolean_value(channel,"disabled",&error)==WEED_FALSE)
+            weed_set_boolean_value(channel,"host_temp_disabled",WEED_TRUE);
+          else weed_set_boolean_value(channel,"host_temp_disabled",WEED_FALSE); // "disabled" will do instead
         else {
           lives_free(in_tracks);
           lives_free(out_tracks);
@@ -2926,7 +2967,12 @@ static lives_filter_error_t weed_apply_audio_instance_inner(weed_plant_t *inst, 
     }
     if (weed_get_voidptr_value(layer,"audio_data",&error)==NULL) {
       chantmpl=weed_get_plantptr_value(channel,"template",&error);
-      if (weed_plant_has_leaf(chantmpl,"max_repeats")) weed_set_boolean_value(channel,"host_temp_disabled",WEED_TRUE);
+      if (weed_plant_has_leaf(chantmpl,"max_repeats")) {
+        if (!weed_plant_has_leaf(channel,"disabled")||
+            weed_get_boolean_value(channel,"disabled",&error)==WEED_FALSE)
+          weed_set_boolean_value(channel,"host_temp_disabled",WEED_TRUE);
+        else weed_set_boolean_value(channel,"host_temp_disabled",WEED_FALSE); // "disabled" will do instead
+      }
     }
   }
 
@@ -2963,11 +3009,13 @@ static lives_filter_error_t weed_apply_audio_instance_inner(weed_plant_t *inst, 
   lives_free(mand);
 
   for (i=0; i<num_in_tracks; i++) {
-    if (weed_plant_has_leaf(in_channels[i],"host_temp_disabled")&&
-        weed_get_boolean_value(in_channels[i],"host_temp_disabled",&error)==WEED_TRUE) continue;
 
     layer=layers[i];
     channel=get_enabled_channel(inst,i,TRUE);
+
+    if (weed_plant_has_leaf(channel,"host_temp_disabled")&&
+        weed_get_boolean_value(channel,"host_temp_disabled",&error)==WEED_TRUE) continue;
+
     chantmpl=weed_get_plantptr_value(channel,"template",&error);
 
     weed_set_int64_value(channel,"timecode",tc);
@@ -2994,7 +3042,7 @@ static lives_filter_error_t weed_apply_audio_instance_inner(weed_plant_t *inst, 
   }
 
   // we may need to disable some channels for the plugin
-  for (i=0; i<num_in_tracks; i++) {
+  for (i=0; i<num_inc; i++) {
     if (weed_plant_has_leaf(in_channels[i],"host_temp_disabled")&&
         weed_get_boolean_value(in_channels[i],"host_temp_disabled",&error)==WEED_TRUE)
       weed_set_boolean_value(in_channels[i],"disabled",WEED_TRUE);

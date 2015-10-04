@@ -177,7 +177,7 @@ weed_plant_t *get_filter_map_after(weed_plant_t *event, int ctrack);
 void **get_init_events_before(weed_plant_t *event, weed_plant_t *init_event, boolean add);
 void update_filter_maps(weed_plant_t *event, weed_plant_t *end_event, weed_plant_t *init_event);
 void insert_param_change_event_at(weed_plant_t *event_list, weed_plant_t *at_event, weed_plant_t *event);
-void insert_marker_event_at(weed_plant_t *event_list, weed_plant_t *at_event, int marker_type, livespointer data);
+weed_plant_t *insert_marker_event_at(weed_plant_t *event_list, weed_plant_t *at_event, int marker_type, livespointer data);
 
 void add_init_event_to_filter_map(weed_plant_t *fmap, weed_plant_t *event, void **hints);
 boolean init_event_in_list(void **init_events, int num_inits, weed_plant_t *event);

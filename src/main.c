@@ -3342,6 +3342,14 @@ void sensitize(void) {
     } else lives_widget_set_sensitive(mainw->rendered_fx[0].menuitem,FALSE);
   }
 
+  if (mainw->num_rendered_effects_test>0) {
+    lives_widget_set_sensitive(mainw->run_test_rfx_submenu,TRUE);
+  }
+
+  lives_widget_set_sensitive(mainw->custom_gens_submenu,TRUE);
+  lives_widget_set_sensitive(mainw->custom_tools_submenu,TRUE);
+  lives_widget_set_sensitive(mainw->custom_effects_submenu,TRUE);
+
   lives_widget_set_sensitive(mainw->record_perf, TRUE);
   lives_widget_set_sensitive(mainw->export_submenu, mainw->current_file>0&&(cfile->achans>0));
   lives_widget_set_sensitive(mainw->recaudio_submenu, TRUE);
@@ -3484,6 +3492,11 @@ void desensitize(void) {
           mainw->rendered_fx[i].min_frames>=0)
         lives_widget_set_sensitive(mainw->rendered_fx[i].menuitem,FALSE);
   }
+
+  lives_widget_set_sensitive(mainw->run_test_rfx_submenu,FALSE);
+  lives_widget_set_sensitive(mainw->custom_gens_submenu,FALSE);
+  lives_widget_set_sensitive(mainw->custom_tools_submenu,FALSE);
+  lives_widget_set_sensitive(mainw->custom_effects_submenu,FALSE);
 
   lives_widget_set_sensitive(mainw->export_submenu, FALSE);
   lives_widget_set_sensitive(mainw->recaudio_submenu, FALSE);

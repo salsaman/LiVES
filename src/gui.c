@@ -1489,13 +1489,13 @@ void create_LiVES(void) {
   }
 
   if (mainw->num_rendered_effects_test>0) {
-    lives_widget_set_sensitive(mainw->run_test_rfx_submenu,TRUE);
+    lives_widget_set_sensitive(mainw->run_test_rfx_menu,TRUE);
     lives_widget_set_sensitive(mainw->promote_test_rfx,TRUE);
     lives_widget_set_sensitive(mainw->delete_test_rfx,TRUE);
     lives_widget_set_sensitive(mainw->rename_test_rfx,TRUE);
     lives_widget_set_sensitive(mainw->edit_test_rfx,TRUE);
   } else {
-    lives_widget_set_sensitive(mainw->run_test_rfx_submenu,FALSE);
+    lives_widget_set_sensitive(mainw->run_test_rfx_menu,FALSE);
     lives_widget_set_sensitive(mainw->promote_test_rfx,FALSE);
     lives_widget_set_sensitive(mainw->delete_test_rfx,FALSE);
     lives_widget_set_sensitive(mainw->rename_test_rfx,FALSE);
@@ -3149,13 +3149,40 @@ void set_interactive(boolean interactive) {
     lives_widget_show(mainw->btoolbar);
     lives_widget_set_sensitive(mainw->menubar,TRUE);
     lives_widget_set_sensitive(mainw->btoolbar,TRUE);
+
     if (mainw->multitrack!=NULL) {
       if (lives_widget_get_parent(mainw->multitrack->menubar)==NULL) {
         lives_box_pack_start(LIVES_BOX(mainw->multitrack->menu_hbox), mainw->multitrack->menubar, FALSE, FALSE, 0);
         lives_object_unref(mainw->multitrack->menubar);
       }
       lives_widget_show_all(mainw->multitrack->menubar);
+
+      if (!prefs->show_recent) {
+	lives_widget_hide(mainw->multitrack->recent_menu);
+      }
+      if (!mainw->has_custom_gens) {
+	lives_widget_hide(mainw->custom_gens_menu);
+	lives_widget_hide(mainw->custom_gens_submenu);
+      }
+
+
+      lives_widget_hide(mainw->multitrack->aparam_separator); // no longer used
+
+      if (cfile->achans>0) add_aparam_menuitems(mainw->multitrack);
+      else {
+	lives_widget_hide(mainw->multitrack->render_sep);
+	lives_widget_hide(mainw->multitrack->render_vid);
+	lives_widget_hide(mainw->multitrack->render_aud);
+	lives_widget_hide(mainw->multitrack->normalise_aud);
+	lives_widget_hide(mainw->multitrack->view_audio);
+	lives_widget_hide(mainw->multitrack->aparam_menuitem);
+	lives_widget_hide(mainw->multitrack->aparam_separator);
+      }
+
+      if (mainw->multitrack->opts.back_audio_tracks==0) lives_widget_hide(mainw->multitrack->view_audio);
+
       lives_widget_set_sensitive(mainw->multitrack->menubar,TRUE);
+
       lives_widget_set_sensitive(mainw->multitrack->spinbutton_start,TRUE);
       lives_widget_set_sensitive(mainw->multitrack->spinbutton_end,TRUE);
       lives_widget_set_sensitive(mainw->m_playbutton,TRUE);

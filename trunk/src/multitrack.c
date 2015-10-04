@@ -735,7 +735,7 @@ static void save_mt_autoback(lives_mt *mt, int64_t stime) {
 #ifdef IS_MINGW
       setmode(fd,O_BINARY);
 #endif
-      add_markers(mt,mt->event_list);
+      add_markers(mt,mt->event_list,FALSE);
       do_threaded_dialog(_("Auto backup"),FALSE);
 
       set_signal_handlers((SignalHandlerPointer)defer_sigint);
@@ -4890,7 +4890,7 @@ void mt_backup(lives_mt *mt, int undo_type, weed_timecode_t tc) {
     break;
   }
 
-  add_markers(mt,mt->event_list);
+  add_markers(mt,mt->event_list,TRUE);
   if ((space_needed=estimate_space(mt,undo_type)+sizeof(mt_undo))>
       ((size_t)(prefs->mt_undo_buf*1024*1024)-mt->undo_buffer_used)) {
     if (!make_backup_space(mt,space_needed)) {
@@ -4934,7 +4934,7 @@ static void destroy_widget(LiVESWidget *widget, livespointer user_data) {
 
 
 
-static void add_aparam_menuitems(lives_mt *mt) {
+void add_aparam_menuitems(lives_mt *mt) {
   // add menuitems for avol_fx to the View/Audio parameters submenu
   LiVESWidget *menuitem;
   weed_plant_t *filter;
@@ -9372,7 +9372,7 @@ boolean multitrack_delete(lives_mt *mt, boolean save_layout) {
     if (mt->event_list!=NULL) {
 
       save_event_list_inner(mt,-1,mt->event_list,NULL); // set width, height, fps etc.
-      add_markers(mt,mt->event_list);
+      add_markers(mt,mt->event_list,FALSE);
 
       mainw->stored_event_list=mt->event_list;
 
@@ -11338,29 +11338,13 @@ boolean on_multitrack_activate(LiVESMenuItem *menuitem, weed_plant_t *event_list
   if (prefs->show_gui) {
     lives_widget_show_all(multi->window);
 
-    if (!prefs->show_recent) {
-      lives_widget_hide(multi->recent_menu);
-    }
     if (multi->nb_label!=NULL) {
       lives_widget_hide(multi->poly_box);
       lives_widget_queue_resize(multi->nb_label);
     }
-    if (!mainw->has_custom_gens) {
-      lives_widget_hide(mainw->custom_gens_menu);
-      lives_widget_hide(mainw->custom_gens_submenu);
-    }
   }
 
-  lives_widget_hide(multi->aparam_separator); // no longer used
-
   if (cfile->achans==0) {
-    lives_widget_hide(multi->render_sep);
-    lives_widget_hide(multi->render_vid);
-    lives_widget_hide(multi->render_aud);
-    lives_widget_hide(multi->normalise_aud);
-    lives_widget_hide(multi->view_audio);
-    lives_widget_hide(multi->aparam_menuitem);
-    lives_widget_hide(multi->aparam_separator);
     multi->opts.pertrack_audio=FALSE;
   }
 
@@ -11378,10 +11362,6 @@ boolean on_multitrack_activate(LiVESMenuItem *menuitem, weed_plant_t *event_list
   if (!multi->opts.pertrack_audio) {
     lives_widget_hide(multi->insa_checkbutton);
   }
-
-  if (multi->opts.back_audio_tracks==0) lives_widget_hide(multi->view_audio);
-
-  if (cfile->achans>0) add_aparam_menuitems(multi);
 
   track_select(multi);
   mt_clip_select(multi,TRUE);  // call this again to scroll clip on screen
@@ -11457,6 +11437,7 @@ boolean on_multitrack_activate(LiVESMenuItem *menuitem, weed_plant_t *event_list
   }
 
   set_interactive(mainw->interactive);
+
   return TRUE;
 }
 
@@ -15214,7 +15195,7 @@ void multitrack_undo(LiVESMenuItem *menuitem, livespointer user_data) {
 
   if (last_undo->action!=MT_UNDO_NONE) {
     if (mt->undo_offset==0) {
-      add_markers(mt,mt->event_list);
+      add_markers(mt,mt->event_list,TRUE);
       if ((space_needed=estimate_space(mt,last_undo->action)+sizeof(mt_undo))>space_avail) {
         if (!make_backup_space(mt,space_needed)||mt->undos==NULL) {
           remove_markers(mt->event_list);
@@ -19598,10 +19579,16 @@ void save_layout_map(int *lmap, double *lmap_audio, const char *file, const char
 
 
 
-void add_markers(lives_mt *mt, weed_plant_t *event_list) {
+void add_markers(lives_mt *mt, weed_plant_t *event_list, boolean add_block_ids) {
   // add "block_start" and "block_unordered" markers to a timeline
   // this is done when we save an event_list (layout file).
   // these markers are removed when the event_list is loaded and displayed
+
+  // if add_block_ids id FALSE, we add block start markers only where blocks are split
+  // if it is TRUE, we add block start markers for all blocks along with the block uid.
+  // This helps us keep the same block selected for undo/redo. (work in progress)
+
+
 
   // other hosts are not bound to take notice of "marker" events, so these could be absent or misplaced
   // when the layout is reloaded
@@ -19635,6 +19622,7 @@ void add_markers(lives_mt *mt, weed_plant_t *event_list) {
           if (block->prev!=NULL&&(get_event_timecode(block->prev->end_event)==
                                   q_gint64(tc-U_SEC/mt->fps,mt->fps))&&(tc==get_event_timecode(block->start_event))&&
               (get_frame_event_clip(block->prev->end_event,track)==get_frame_event_clip(block->start_event,track))) {
+
             insert_marker_event_at(mt->event_list,event,EVENT_MARKER_BLOCK_START,LIVES_INT_TO_POINTER(track));
 
             if (mt->audio_draws!=NULL&&lives_list_length(mt->audio_draws)>=track+mt->opts.back_audio_tracks) {
@@ -19856,7 +19844,7 @@ boolean on_save_event_list_activate(LiVESMenuItem *menuitem, livespointer user_d
   lives_snprintf(xlayout_name,PATH_MAX,"%s",esave_file);
   get_basename(xlayout_name);
 
-  if (mt!=NULL) add_markers(mt,mt->event_list);
+  if (mt!=NULL) add_markers(mt,mt->event_list,FALSE);
 
   do {
     retval2=0;
@@ -22084,6 +22072,7 @@ static void mt_ac_audio_toggled(LiVESMenuItem *menuitem, livespointer user_data)
   mt->opts.autocross_audio=!mt->opts.autocross_audio;
 }
 
+
 void mt_change_vals_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   lives_mt *mt=(lives_mt *)user_data;
   boolean response;
@@ -22198,11 +22187,6 @@ void mt_change_vals_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   }
 
   if (cfile->achans==0) {
-    lives_widget_hide(mt->render_sep);
-    lives_widget_hide(mt->render_vid);
-    lives_widget_hide(mt->render_aud);
-    lives_widget_hide(mt->normalise_aud);
-    lives_widget_hide(mt->view_audio);
     delete_audio_tracks(mt,mt->audio_draws,FALSE);
     mt->audio_draws=NULL;
 
@@ -22210,13 +22194,11 @@ void mt_change_vals_activate(LiVESMenuItem *menuitem, livespointer user_data) {
 
     if (mt->audio_vols!=NULL) lives_list_free(mt->audio_vols);
     mt->audio_vols=NULL;
-  } else {
-    lives_widget_show(mt->render_sep);
-    lives_widget_show(mt->render_vid);
-    lives_widget_show(mt->render_aud);
-    lives_widget_show(mt->normalise_aud);
-    lives_widget_show(mt->view_audio);
   }
+
+
+  set_interactive(mainw->interactive);
+
   scroll_tracks(mt,mt->top_track,FALSE);
 }
 

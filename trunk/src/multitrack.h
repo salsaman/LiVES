@@ -702,6 +702,8 @@ void polymorph(lives_mt *, lives_mt_poly_state_t poly);
 void mt_desensitise(lives_mt *);
 void mt_sensitise(lives_mt *);
 
+void add_aparam_menuitems(lives_mt *);
+
 // external control callbacks
 void insert_here_cb(LiVESMenuItem *, livespointer mt);
 void insert_audio_here_cb(LiVESMenuItem *, livespointer mt);
@@ -888,7 +890,7 @@ boolean on_save_event_list_activate(LiVESMenuItem *, livespointer mt);
 
 // layouts and layout maps
 LiVESList *load_layout_map(void);
-void add_markers(lives_mt *, weed_plant_t *event_list);
+void add_markers(lives_mt *, weed_plant_t *event_list, boolean add_block_ids);
 void remove_markers(weed_plant_t *event_list);
 void save_layout_map(int *lmap, double *lmap_audio, const char *file, const char *dir);
 

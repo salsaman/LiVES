@@ -1293,7 +1293,7 @@ weed_plant_t *append_marker_event(weed_plant_t *event_list, weed_timecode_t tc, 
 
 
 
-void insert_marker_event_at(weed_plant_t *event_list, weed_plant_t *at_event, int marker_type, livespointer data) {
+weed_plant_t *insert_marker_event_at(weed_plant_t *event_list, weed_plant_t *at_event, int marker_type, livespointer data) {
   // insert marker event as first event at same timecode as (FRAME_EVENT) at_event
   weed_timecode_t tc=get_event_timecode(at_event);
   weed_plant_t *event=weed_plant_new(WEED_PLANT_EVENT);
@@ -1327,12 +1327,12 @@ void insert_marker_event_at(weed_plant_t *event_list, weed_plant_t *at_event, in
         lives_free(new_tracks);
         lives_free(tracks);
         weed_plant_free(event); // new event not used
-        return;
+        return event;
       }
       if (get_event_timecode(at_event)<tc) {
         // create new event
         if (!insert_event_after(at_event,event)) weed_set_voidptr_value(event_list,"last",event);
-        return;
+        return event;
       }
       break;
     }
@@ -1342,6 +1342,8 @@ void insert_marker_event_at(weed_plant_t *event_list, weed_plant_t *at_event, in
   at_event=get_first_event(event_list);
   insert_event_before(at_event,event);
   weed_set_voidptr_value(event_list,"first",event);
+
+  return event;
 
 }
 

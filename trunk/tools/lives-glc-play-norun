@@ -23,14 +23,16 @@ if (defined($ARGV[2])) {
    $streamin=$ARGV[2];
 }	
 else {
-     $streamin="$home/lives-glcstream.yuv";
+     $streamin="$home/livestmp/stream.yuv";
 }
 
 
 system "mkfifo \"$streamin\"";
 system "mkfifo \"$streamout\"";
 
-system "glc-capture --disable-audio -b back -i -f 25 -s -z none -c 640x480+192+100 -g -o \"$streamout\" \"$com\" &";
+#system "glc-capture --disable-audio -b back -i -f 25 -s -z none -c 640x480+192+100 -g -o \"$streamout\" \"$com\" &";
+
+system "glc-capture --disable-audio -b back -i -f 25 -s -z none -g -o \"$streamout\" \"$com\" &";
 
 system "glc-play -f 25 -t /tmp/glcfifo -y 1 -o \"$streamin\"";
 

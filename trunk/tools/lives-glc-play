@@ -20,13 +20,13 @@ else {
 
 
 if (defined($ARGV[0])) {
-   $streamin=shift];
+   $streamin=shift;
 }	
 else {
      $streamin="$home/lives-glcstream.yuv";
 }
 
 
-system "lives-glc-play \"$com\" \"$streamout\" \"$streamin\" @ARGV &";
+system "./lives-glc-play-norun \"$com\" \"$streamout\" \"$streamin\" @ARGV &";
 system "lives -noset -yuvin \"$streamin\"";
 

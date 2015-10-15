@@ -23,6 +23,7 @@
 #include <sys/stat.h>
 #include <errno.h>
 
+static boolean gotbroken;
 
 typedef struct y4data {
   const char *filename;
@@ -96,8 +97,16 @@ static void *y4frame_thread(void *arg) {
   fill_read(yuv4mpeg->fd,buff,5);
 
   if (strncmp(buff,"FRAME",5)) {
-    thread_data->i=Y4M_ERR_MAGIC;
-    pthread_exit(NULL);
+    if (!gotbroken) {
+      thread_data->i=Y4M_ERR_MAGIC;
+      pthread_exit(NULL);
+    }
+    
+    do {
+      memmove(buff,buff+1,4);
+      fill_read(yuv4mpeg->fd,buff+4,1);
+    } while (strncmp(buff,"FRAME",5));
+
   }
 
   do {
@@ -150,6 +159,8 @@ static boolean lives_yuv_stream_start_read(lives_clip_t *sfile) {
 
     d_print("");
     d_print(_("Waiting for yuv4mpeg frames..."));
+
+    gotbroken=FALSE;
 
     while (!lives_alarm_get(alarm_handle)&&!pthread_kill(y4thread,0)) {
       // wait for thread to complete or timeout
@@ -314,7 +325,9 @@ void weed_layer_set_from_yuv4m(weed_plant_t *layer, lives_clip_t *sfile) {
     // timeout - kill thread and wait for it to terminate
     pthread_cancel(y4thread);
     d_print(_("Unable to read the incoming video frame\n"));
+    gotbroken=TRUE;
   }
+  else gotbroken=FALSE;
 
   pthread_join(y4thread,NULL);
   lives_alarm_clear(alarm_handle);

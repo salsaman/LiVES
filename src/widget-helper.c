@@ -8128,6 +8128,7 @@ boolean lives_widget_context_update(void) {
   if (!mainw->is_exiting&&mt_needs_idlefunc) mainw->multitrack->idlefunc=mt_idle_add(mainw->multitrack);
 
   pthread_mutex_unlock(&mainw->gtk_mutex);
+
   return TRUE;
 
 }

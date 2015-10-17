@@ -3346,8 +3346,14 @@ void sensitize(void) {
     lives_widget_set_sensitive(mainw->run_test_rfx_submenu,TRUE);
   }
 
-  lives_widget_set_sensitive(mainw->custom_gens_submenu,TRUE);
-  lives_widget_set_sensitive(mainw->custom_tools_submenu,TRUE);
+  if (mainw->has_custom_gens) {
+    lives_widget_set_sensitive(mainw->custom_gens_submenu,TRUE);
+  }
+
+  if (mainw->has_custom_tools) {
+    lives_widget_set_sensitive(mainw->custom_tools_submenu,TRUE);
+  }
+
   lives_widget_set_sensitive(mainw->custom_effects_submenu,TRUE);
 
   lives_widget_set_sensitive(mainw->record_perf, TRUE);
@@ -3439,6 +3445,7 @@ void sensitize(void) {
       }
     }
   }
+
 }
 
 
@@ -3494,8 +3501,15 @@ void desensitize(void) {
   }
 
   lives_widget_set_sensitive(mainw->run_test_rfx_submenu,FALSE);
-  lives_widget_set_sensitive(mainw->custom_gens_submenu,FALSE);
-  lives_widget_set_sensitive(mainw->custom_tools_submenu,FALSE);
+
+  if (mainw->has_custom_gens) {
+    lives_widget_set_sensitive(mainw->custom_gens_submenu,FALSE);
+  }
+
+  if (mainw->has_custom_tools) {
+    lives_widget_set_sensitive(mainw->custom_tools_submenu,FALSE);
+  }
+
   lives_widget_set_sensitive(mainw->custom_effects_submenu,FALSE);
 
   lives_widget_set_sensitive(mainw->export_submenu, FALSE);

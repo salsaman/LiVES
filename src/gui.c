@@ -2335,6 +2335,7 @@ void create_LiVES(void) {
 
   if (palette->style&STYLE_1) {
     lives_widget_set_bg_color(mainw->eventbox2, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
+    lives_widget_set_fg_color(mainw->eventbox2, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
     lives_widget_set_bg_color(mainw->hruler, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
     lives_widget_set_fg_color(mainw->hruler, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
   }

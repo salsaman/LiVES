@@ -1469,6 +1469,11 @@ if (defined($ARGV[0])) {
 
             smog_chdir("$curtmpdir");
 
+            if (! -f "$file" && ! -d "$file") {
+                &sig_error("$file","could not be found","$GUI_NAME was unable to open it.","Please check the file name and try again.");
+            }
+
+
 # let get_file_info set this
 #$mplay_command=&rc_get("video_open_command");
 

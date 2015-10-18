@@ -2841,6 +2841,8 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
   ssize_t mynsize;
   char fbuff[PATH_MAX];
 
+  char *tmp;
+
 #ifdef GUI_QT
   qapp = new QApplication(argc,argv);
   qtime = new QTime();
@@ -3026,9 +3028,17 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
         }
         if (!strcmp(charopt,"yuvin")) {
 #ifdef HAVE_YUV4MPEG
+          char *dir;
           lives_snprintf(prefs->yuvin,PATH_MAX,"%s",optarg);
           prefs->startup_interface=STARTUP_CE;
           ign_opts.ign_stmode=TRUE;
+
+          dir=get_dir(prefs->yuvin);
+          get_basename(prefs->yuvin);
+          lives_snprintf(prefs->yuvin,PATH_MAX,"%s",(tmp=lives_build_filename(dir,prefs->yuvin,NULL)));
+          lives_free(tmp);
+          lives_free(dir);
+
 #else
           LIVES_ERROR("Must have mjpegtools installed for yuvin to work");
 #endif
@@ -3051,14 +3061,30 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
 #ifdef ENABLE_OSC
         if (!strcmp(charopt,"devicemap")&&optarg!=NULL) {
           // force devicemap loading
-          on_midi_load_activate(NULL, optarg);
+          char *dir;
+          char devmap[PATH_MAX];
+          lives_snprintf(devmap,PATH_MAX,"%s",optarg);
+          dir=get_dir(devmap);
+          get_basename(devmap);
+          lives_snprintf(devmap,PATH_MAX,"%s",(tmp=lives_build_filename(dir,devmap,NULL)));
+          lives_free(tmp);
+          lives_free(dir);
+          on_midi_load_activate(NULL, devmap);
           continue;
         }
 #endif
         if (!strcmp(charopt,"vppdefaults")&&optarg!=NULL) {
+          char *dir;
           // load alternate vpp file
           lives_snprintf(mainw->vpp_defs_file,PATH_MAX,"%s",optarg);
           ign_opts.ign_vppdefs=TRUE;
+
+          dir=get_dir(mainw->vpp_defs_file);
+          get_basename(mainw->vpp_defs_file);
+          lives_snprintf(mainw->vpp_defs_file,PATH_MAX,"%s",(tmp=lives_build_filename(dir,mainw->vpp_defs_file,NULL)));
+          lives_free(tmp);
+          lives_free(dir);
+
           continue;
         }
         if (!strcmp(charopt,"aplayer")) {
@@ -3180,9 +3206,19 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
       }
       if (optind<argc) {
         // remaining opts are filename [start_time] [end_frame]
+        char *dir;
         lives_snprintf(start_file,PATH_MAX,"%s",argv[optind++]); // filename
         if (optind<argc) start=lives_strtod(argv[optind++],NULL); // start time (seconds)
         if (optind<argc) end=atoi(argv[optind++]); // number of frames
+
+        if (lives_strrstr(start_file,"://")==NULL) {
+          // prepend current directory if needed (unless file contains :// - eg. dvd:// or http://)
+          dir=get_dir(start_file);
+          get_basename(start_file);
+          lives_snprintf(start_file,PATH_MAX,"%s",(tmp=lives_build_filename(dir,start_file,NULL)));
+          lives_free(tmp);
+          lives_free(dir);
+        }
       }
     }
   }

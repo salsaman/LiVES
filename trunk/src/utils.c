@@ -2655,6 +2655,10 @@ void get_play_times(void) {
   // update the on-screen timer bars,
   // and if we are not playing,
   // get play times for video, audio channels, and total (longest) time
+
+  // TODO *** colour_config
+
+
   char *tmpstr;
 
   double offset=0;
@@ -2735,7 +2739,11 @@ void get_play_times(void) {
     if (mainw->video_drawable!=NULL) {
       lives_painter_t *cr=lives_painter_create(mainw->video_drawable);
 
-      lives_painter_set_source_rgb(cr, 0., 0., 0.); ///< opaque black
+      if (palette->style&STYLE_3||palette->style==STYLE_PLAIN) { // light style
+        lives_painter_set_source_rgb(cr, 0., 0., 0.); ///< opaque black
+      } else {
+        lives_painter_set_source_rgb(cr, .1, .1, .1); ///< opaque grey
+      }
 
       lives_painter_rectangle(cr,0,0,
                               cfile->video_time/cfile->total_time*allocwidth-1,
@@ -2775,7 +2783,11 @@ void get_play_times(void) {
     if (mainw->laudio_drawable!=NULL) {
       lives_painter_t *cr=lives_painter_create(mainw->laudio_drawable);
 
-      lives_painter_set_source_rgb(cr, 0., 0., 0.); ///< opaque black
+      if (palette->style&STYLE_3||palette->style==STYLE_PLAIN) { // light style
+        lives_painter_set_source_rgb(cr, 0., 0., 0.); ///< opaque black
+      } else {
+        lives_painter_set_source_rgb(cr, .1, .1, .1); ///< opaque grey
+      }
 
       lives_painter_rectangle(cr,0,0,
                               cfile->laudio_time/cfile->total_time*allocwidth-1,
@@ -2802,7 +2814,11 @@ void get_play_times(void) {
       if (mainw->raudio_drawable!=NULL) {
         lives_painter_t *cr=lives_painter_create(mainw->raudio_drawable);
 
-        lives_painter_set_source_rgb(cr, 0., 0., 0.); ///< opaque black
+        if (palette->style&STYLE_3||palette->style==STYLE_PLAIN) { // light style
+          lives_painter_set_source_rgb(cr, 0., 0., 0.); ///< opaque black
+        } else {
+          lives_painter_set_source_rgb(cr, .1, .1, .1); ///< opaque grey
+        }
 
         lives_painter_rectangle(cr,0,0,
                                 cfile->raudio_time/cfile->total_time*allocwidth-1,

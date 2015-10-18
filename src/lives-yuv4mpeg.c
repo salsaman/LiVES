@@ -101,7 +101,7 @@ static void *y4frame_thread(void *arg) {
       thread_data->i=Y4M_ERR_MAGIC;
       pthread_exit(NULL);
     }
-    
+
     do {
       memmove(buff,buff+1,4);
       fill_read(yuv4mpeg->fd,buff+4,1);
@@ -326,8 +326,7 @@ void weed_layer_set_from_yuv4m(weed_plant_t *layer, lives_clip_t *sfile) {
     pthread_cancel(y4thread);
     d_print(_("Unable to read the incoming video frame\n"));
     gotbroken=TRUE;
-  }
-  else gotbroken=FALSE;
+  } else gotbroken=FALSE;
 
   pthread_join(y4thread,NULL);
   lives_alarm_clear(alarm_handle);

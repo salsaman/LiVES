@@ -11,6 +11,7 @@ Make better use of missing CD device warning.
 Remove some spurious effect reinitialisations for webcams.
 Allow application of audio effects to the backing audio track in multitrack mode.
 Minor GUI improvements.
+Prepend current directory to filenames in startup options when necessary.
 
 
 

@@ -2343,19 +2343,15 @@ void get_dirname(char *filename) {
   //filename should point to char[PATH_MAX]
 
   lives_snprintf(filename,PATH_MAX,"%s%s",(tmp=lives_path_get_dirname(filename)),LIVES_DIR_SEPARATOR_S);
+  if (!strcmp(tmp,".")) {
+    char *tmp1=lives_get_current_dir(),*tmp2=lives_build_filename(tmp1,filename+2,NULL);
+    lives_free(tmp1);
+    lives_snprintf(filename,PATH_MAX,"%s",tmp2);
+    lives_free(tmp2);
+  }
+
   lives_free(tmp);
 
-  if (!strcmp(filename,"//")) {
-    memset(filename+1,0,1);
-    return;
-  }
-
-  if (!strncmp(filename,"./",2)) {
-    char *tmp1=lives_get_current_dir(),*tmp=lives_build_filename(tmp1,filename+2,NULL);
-    lives_free(tmp1);
-    lives_snprintf(filename,PATH_MAX,"%s",tmp);
-    lives_free(tmp);
-  }
 }
 
 
@@ -2375,6 +2371,7 @@ void get_basename(char *filename) {
   lives_snprintf(filename,PATH_MAX,"%s",tmp);
   lives_free(tmp);
 }
+
 
 void get_filename(char *filename, boolean strip_dir) {
   // get filename (part without extension) of a file

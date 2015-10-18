@@ -3158,11 +3158,11 @@ void set_interactive(boolean interactive) {
       lives_widget_show_all(mainw->multitrack->menubar);
 
       if (!prefs->show_recent) {
-	lives_widget_hide(mainw->multitrack->recent_menu);
+        lives_widget_hide(mainw->multitrack->recent_menu);
       }
       if (!mainw->has_custom_gens) {
-	lives_widget_hide(mainw->custom_gens_menu);
-	lives_widget_hide(mainw->custom_gens_submenu);
+        lives_widget_hide(mainw->custom_gens_menu);
+        lives_widget_hide(mainw->custom_gens_submenu);
       }
 
 
@@ -3170,13 +3170,13 @@ void set_interactive(boolean interactive) {
 
       if (cfile->achans>0) add_aparam_menuitems(mainw->multitrack);
       else {
-	lives_widget_hide(mainw->multitrack->render_sep);
-	lives_widget_hide(mainw->multitrack->render_vid);
-	lives_widget_hide(mainw->multitrack->render_aud);
-	lives_widget_hide(mainw->multitrack->normalise_aud);
-	lives_widget_hide(mainw->multitrack->view_audio);
-	lives_widget_hide(mainw->multitrack->aparam_menuitem);
-	lives_widget_hide(mainw->multitrack->aparam_separator);
+        lives_widget_hide(mainw->multitrack->render_sep);
+        lives_widget_hide(mainw->multitrack->render_vid);
+        lives_widget_hide(mainw->multitrack->render_aud);
+        lives_widget_hide(mainw->multitrack->normalise_aud);
+        lives_widget_hide(mainw->multitrack->view_audio);
+        lives_widget_hide(mainw->multitrack->aparam_menuitem);
+        lives_widget_hide(mainw->multitrack->aparam_separator);
       }
 
       if (mainw->multitrack->opts.back_audio_tracks==0) lives_widget_hide(mainw->multitrack->view_audio);

@@ -31,12 +31,12 @@ See my vids at http://amv.reimeika.ca !
 
 
 
-Copyright (C) 2008 - 2010 Salsaman (salsaman@xs4all.nl,salsaman@gmail.com)
+Copyright (C) 2008 - 2015 Salsaman (salsaman@gmail.com)
 
 """
 
 
-version = '0.2.14'
+version = '0.2.15'
 
 import os
 
@@ -112,7 +112,7 @@ directive   one of the following LiVES directives:
             clear
 
             See the LiVES documentation for details:
-            http://www.xs4all.nl/~salsaman/lives/docs.html
+     http://lives-video.com/index.php?do=documentation
      """ % version
 
 # This is the directory where all temp files will be stored.
@@ -274,7 +274,6 @@ if __name__ == '__main__':
         raise SystemExit
 
     if '-V' in opts:
-        print 'multi_encoder version ' + version
         print 'multi_encoder version ' + version
         raise SystemExit
 

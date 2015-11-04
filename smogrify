@@ -3741,6 +3741,10 @@ if ($file=~/:\/\//) {
                 unlink "$pidfile";
                 exit 1;
             }
+	    if ($allow_missing) {
+		&sig_progress($new_frames);
+		sleep(1);
+	    }
         }
 
         if ($with_audio) {

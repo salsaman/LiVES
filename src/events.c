@@ -2269,7 +2269,7 @@ boolean event_list_to_block(weed_plant_t *event_list, int num_events) {
 
   while (event!=NULL) {
     if (WEED_EVENT_IS_FRAME(event)) {
-      (cfile->events[i++])->value=weed_get_int_value(event,"frames",&error);
+      (cfile->events[0]+i++)->value=weed_get_int_value(event,"frames",&error);
     }
     event=get_next_event(event);
   }

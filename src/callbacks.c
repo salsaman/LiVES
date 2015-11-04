@@ -2482,6 +2482,7 @@ void on_copy_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   end=cfile->end;
 
   if (cfile->clip_type==CLIP_TYPE_FILE) {
+    // for virtual frames, we copy only the frame_index
     clipboard->clip_type=CLIP_TYPE_FILE;
     clipboard->interlace=cfile->interlace;
     clipboard->deinterlace=cfile->deinterlace;
@@ -2490,7 +2491,7 @@ void on_copy_activate(LiVESMenuItem *menuitem, livespointer user_data) {
     check_if_non_virtual(0,1,clipboard->frames);
     if (clipboard->clip_type==CLIP_TYPE_FILE) {
       clipboard->ext_src=clone_decoder(mainw->current_file);
-      end=-end;
+      end=-end; // allow missing frames
     }
   }
 
@@ -2499,6 +2500,7 @@ void on_copy_activate(LiVESMenuItem *menuitem, livespointer user_data) {
 
   clipboard->img_type=cfile->img_type;
 
+  // copy audio and frames
   com=lives_strdup_printf("%s insert \"%s\" \"%s\" 0 %d %d \"%s\" %d 0 0 0 %.3f %d %d %d %d %d",prefs->backend,
                           clipboard->handle, get_image_ext_for_type(clipboard->img_type),
                           start, end, cfile->handle, mainw->ccpd_with_sound, cfile->fps, cfile->arate,
@@ -3059,9 +3061,9 @@ void on_insert_activate(LiVESButton *button, livespointer user_data) {
     mainw->cancelled=CANCEL_NONE;
     mainw->current_file=0;
     cfile->progress_start=1;
-    cfile->progress_end=count_virtual_frames(cfile->frame_index,start,end);
+    cfile->progress_end=count_virtual_frames(cfile->frame_index,1,cb_end);
     do_threaded_dialog(_("Pulling frames from clipboard"),TRUE);
-    retb=virtual_to_images(mainw->current_file,start,end,TRUE,NULL);
+    retb=virtual_to_images(mainw->current_file,1,cb_end,TRUE,NULL);
     end_threaded_dialog();
     mainw->current_file=current_file;
 

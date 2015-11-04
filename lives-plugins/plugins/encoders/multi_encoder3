@@ -33,12 +33,12 @@ See my vids at http://amv.reimeika.ca !
 
 
 
-Copyright (C) 2008 - 2010 Salsaman (salsaman@xs4all.nl,salsaman@gmail.com)
+Copyright (C) 2008 - 2015 Salsaman (salsaman@gmail.com)
 
 """
 
 
-version = '0.2.14'
+version = '0.2.15'
 mpeg = 'lives_mpeg_encoder3'
 ogm = 'lives_ogm_encoder3'
 mkv = 'lives_mkv_encoder3'
@@ -50,8 +50,8 @@ gif = 'lives_gif_encoder3'
 
 usage = \
       """
-multi_encoder -h
-multi_encoder [directive [args]]
+multi_encoder3 -h
+multi_encoder3 [directive [args]]
       """
 
 help = \
@@ -111,7 +111,7 @@ directive   one of the following LiVES directives:
             clear
 
             See the LiVES documentation for details:
-            http://www.xs4all.nl/~salsaman/lives/docs.html
+     http://lives-video.com/index.php?do=documentation
      """ % version
 
 # This is the directory where all temp files will be stored.
@@ -251,10 +251,10 @@ if __name__ == '__main__':
     tempdir = os.path.abspath(TEMPDIR)
 
     try:
-        if sys.version_info[0:3] < (2, 3, 0):
+        if sys.version_info[0:3] < (3, 0, 0):
             raise SystemExit
     except:
-        print('You need Python 2.3.0 or greater to run me!', file=sys.stderr)
+        print('You need Python 3.0.0 or greater to run me!', file=sys.stderr)
         raise SystemExit
 
     try:
@@ -275,7 +275,6 @@ if __name__ == '__main__':
         raise SystemExit
 
     if '-V' in opts:
-        print('multi_encoder version ' + version)
         print('multi_encoder version ' + version)
         raise SystemExit
 

@@ -1927,12 +1927,25 @@ if ($file=~/:\/\//) {
             }
             $aendian=&get_endian;
         }
-        if ($ssigned==1) {
-            $asigned="-s";
-        }
-        else {
-            $asigned="-u";
-        }
+
+
+
+	if ($sox_version < 14004001) {
+	    if ($ssigned==1) {
+		$asigned="-s";
+	    }
+	    else {
+		$asigned="-u";
+	    }
+	}
+	else {
+	    if ($ssigned==1) {
+		$asigned="-e signed-integer";
+	    }
+	    else {
+		$asigned="-e unsigned-integer";
+	    }
+	}
 
         if (defined($ARGV[11])) {
             $aud_start=$ARGV[11];
@@ -3042,11 +3055,23 @@ if ($file=~/:\/\//) {
         unless(&is_writeable($nfile)) {
             &sig_error("Unable to open output file !","$GUI_NAME could not write to $nfile.");
         }
-        if ($asigned==1) {
-            $asigned="-s";
-        } else {
-            $asigned="-u";
-        }
+
+	if ($sox_version < 14004001) {
+	    if ($asigned==1) {
+		$asigned="-s";
+	    }
+	    else {
+		$asigned="-u";
+	    }
+	}
+	else {
+	    if ($asigned==1) {
+		$asigned="-e signed-integer";
+	    }
+	    else {
+		$asigned="-e unsigned-integer";
+	    }
+	}
 
         if ($audio_end>0.) {
             $audio_in=&clip_audio($audio_start,$audio_end);
@@ -5428,6 +5453,26 @@ sub convert_audio_to_wav {
         else {
             $nodither="-D";
             $sasamps=$aasamps;
+	    
+	    if ($sox_version >= 14004001) {
+		if ($aasamps == 1) {
+		    $sasamps = "b 8";
+		}
+		elsif ($aasamps == 2) {
+		    $sasamps = "b 16";
+		}
+		elsif ($aasamps == 3) {
+		    $sasamps = "b 24";
+		}
+		elsif ($aasamps == 4) {
+		    $sasamps = "b 32";
+		}
+		elsif ($aasamps == 8) {
+		    $sasamps = "b 64";
+		}
+
+	    }
+
         }
 
         if (!defined($nrate)) {
@@ -5439,12 +5484,12 @@ sub convert_audio_to_wav {
         }
 
         if (!defined($nasamps)) {
-            $nasamps=$sasamps;
+            $nasamps=$asamps;
         }
 
         if (!defined($asigned)) {
             if ($sox_version < 14004001) {
-                if ($sasamps==8) {
+                if ($asamps==8) {
                     $asigned="-u";
                 }
                 else {
@@ -5452,7 +5497,7 @@ sub convert_audio_to_wav {
                 }
             }
             else {
-                if ($sasamps==8) {
+                if ($aasamps==8) {
                     $asigned="-e unsigned-integer";
                 }
                 else {
@@ -5475,7 +5520,28 @@ sub convert_audio_to_wav {
             }
         }
 
-        $smcom="sox $nodither -t .raw -r $arate $asigned -$sasamps -c $achans \"$audio_in\" -t .wav -r $nrate -c $nchans $nsigned -$nasamps \"$curtmpdir/audiodump.wav\" >$nulfile 2>&1";
+	$nnasamps = $nasamps;
+
+	if ($sox_version >= 14004001) {
+	    if ($nasamps == 1) {
+		$nnasamps = "b 8";
+	    }
+	    elsif ($nasamps == 2) {
+		$nnasamps = "b 16";
+	    }
+	    elsif ($nasamps == 3) {
+		$nnasamps = "b 24";
+	    }
+	    elsif ($nasamps == 4) {
+		$nnasamps = "b 32";
+	    }
+	    elsif ($nasamps == 8) {
+		$nnasamps = "b 64";
+	    }
+	    
+	}
+
+        $smcom="sox $nodither -t .raw -r $arate $asigned -$sasamps -c $achans \"$audio_in\" -t .wav -r $nrate -c $nchans $nsigned -$nnasamps \"$curtmpdir/audiodump.wav\" >$nulfile 2>&1";
     }
 
     my $smerr=smog_system("$smcom");
@@ -5586,6 +5652,42 @@ sub resample_audio {
         $osamps=$asamps/8;
         $nsamps/=8;
         $nodither="-D";
+
+	if ($sox_version >= 14004001) {
+	    if ($osamps == 1) {
+		$osamps = "b 8";
+	    }
+	    elsif ($osamps == 2) {
+		$osamps = "b 16";
+	    }
+	    elsif ($osamps == 3) {
+		$osamps = "b 24";
+	    }
+	    elsif ($osamps == 4) {
+		$osamps = "b 32";
+	    }
+	    elsif ($osamps == 8) {
+		$osamps = "b 64";
+	    }
+
+	    if ($nsamps == 1) {
+		$nsamps = "b 8";
+	    }
+	    elsif ($nsamps == 2) {
+		$nsamps = "b 16";
+	    }
+	    elsif ($nsamps == 3) {
+		$nsamps = "b 24";
+	    }
+	    elsif ($nsamps == 4) {
+		$nsamps = "b 32";
+	    }
+	    elsif ($nsamps == 8) {
+		$nsamps = "b 64";
+	    }
+
+	}
+
     }
 
     if ($sox_version < 14000000) {

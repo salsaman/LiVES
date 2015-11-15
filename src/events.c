@@ -2985,7 +2985,7 @@ weed_plant_t *process_events(weed_plant_t *next_event, boolean process_audio, we
   weed_plant_t *filter;
   weed_plant_t *inst;
 
-  weed_plant_t **ctmpl;
+  weed_plant_t **citmpl=NULL,**cotmpl=NULL;
   weed_plant_t **bitmpl=NULL,**botmpl=NULL;
   weed_plant_t **source_params,**in_params;
 
@@ -3186,16 +3186,15 @@ weed_plant_t *process_events(weed_plant_t *next_event, boolean process_audio, we
       if (weed_plant_has_leaf(filter,"in_channel_templates")) {
         if ((num_in_channels=weed_leaf_num_elements(filter,"in_channel_templates"))>0) {
           bitmpl=(weed_plant_t **)weed_malloc(num_in_channels*sizeof(weed_plant_t *));
-          ctmpl=weed_get_plantptr_array(filter,"in_channel_templates",&error);
+          citmpl=weed_get_plantptr_array(filter,"in_channel_templates",&error);
           if (num_in_channels!=num_in_count) LIVES_ERROR("num_in_count != num_in_channels");
           for (i=0; i<num_in_channels; i++) {
-            bitmpl[i]=weed_plant_copy(ctmpl[i]);
+            bitmpl[i]=weed_plant_copy(citmpl[i]);
             if (in_count[i]>0) {
-              weed_set_boolean_value(ctmpl[i],"host_disabled",WEED_FALSE);
-              weed_set_int_value(ctmpl[i],"host_repeats",in_count[i]);
-            } else weed_set_boolean_value(ctmpl[i],"host_disabled",WEED_TRUE);
+              weed_set_boolean_value(citmpl[i],"host_disabled",WEED_FALSE);
+              weed_set_int_value(citmpl[i],"host_repeats",in_count[i]);
+            } else weed_set_boolean_value(citmpl[i],"host_disabled",WEED_TRUE);
           }
-          lives_free(ctmpl);
         }
       }
 
@@ -3203,30 +3202,47 @@ weed_plant_t *process_events(weed_plant_t *next_event, boolean process_audio, we
 
       if (weed_plant_has_leaf(filter,"out_channel_templates")) {
         if ((num_out_channels=weed_leaf_num_elements(filter,"out_channel_templates"))>0) {
-          ctmpl=weed_get_plantptr_array(filter,"out_channel_templates",&error);
+          cotmpl=weed_get_plantptr_array(filter,"out_channel_templates",&error);
           botmpl=(weed_plant_t **)weed_malloc(num_out_channels*sizeof(weed_plant_t *));
           for (i=0; i<num_out_channels; i++) {
-            botmpl[i]=weed_plant_copy(ctmpl[i]);
-            if (!weed_plant_has_leaf(ctmpl[i],"host_disabled")||weed_get_boolean_value(ctmpl[i],"host_disabled",&error)!=WEED_TRUE)
-              weed_set_boolean_value(ctmpl[i],"host_disabled",WEED_FALSE);
-            else weed_set_boolean_value(ctmpl[i],"host_disabled",WEED_TRUE);
+            botmpl[i]=weed_plant_copy(cotmpl[i]);
+            if (!weed_plant_has_leaf(cotmpl[i],"host_disabled")||weed_get_boolean_value(cotmpl[i],"host_disabled",&error)!=WEED_TRUE)
+              weed_set_boolean_value(cotmpl[i],"host_disabled",WEED_FALSE);
+            else weed_set_boolean_value(cotmpl[i],"host_disabled",WEED_TRUE);
           }
-          lives_free(ctmpl);
         }
       }
 
       weed_init_effect(key);
 
+      // restore channel state / number from backup
+
       if (num_in_channels>0) {
-        weed_set_plantptr_array(filter,"in_channel_templates",num_in_channels,bitmpl);
-        weed_free(bitmpl);
+        for (i=0; i<num_in_channels; i++) {
+          if (weed_plant_has_leaf(bitmpl[i],"host_disabled"))
+            weed_set_boolean_value(citmpl[i],"host_disabled",weed_get_boolean_value(bitmpl[i],"host_disabled",&error));
+          else weed_leaf_delete(citmpl[i],"host_disabled");
+          if (weed_plant_has_leaf(bitmpl[i],"host_repeats"))
+            weed_set_int_value(citmpl[i],"host_repeats",weed_get_int_value(bitmpl[i],"host_repeats",&error));
+          else weed_leaf_delete(citmpl[i],"host_repeats");
+        }
+        lives_free(bitmpl);
+        lives_free(citmpl);
       }
+
 
       if (num_out_channels>0) {
-        weed_set_plantptr_array(filter,"out_channel_templates",num_out_channels,botmpl);
-        weed_free(botmpl);
+        for (i=0; i<num_out_channels; i++) {
+          if (weed_plant_has_leaf(botmpl[i],"host_disabled"))
+            weed_set_boolean_value(cotmpl[i],"host_disabled",weed_get_boolean_value(botmpl[i],"host_disabled",&error));
+          else weed_leaf_delete(cotmpl[i],"host_disabled");
+          if (weed_plant_has_leaf(botmpl[i],"host_repeats"))
+            weed_set_int_value(cotmpl[i],"host_repeats",weed_get_int_value(botmpl[i],"host_repeats",&error));
+          else weed_leaf_delete(cotmpl[i],"host_repeats");
+        }
+        lives_free(botmpl);
+        lives_free(cotmpl);
       }
-
 
       // reinit effect with saved parameters
       inst=rte_keymode_get_instance(key+1,0);
@@ -3358,7 +3374,7 @@ lives_render_error_t render_events(boolean reset) {
   LiVESPixbuf *pixbuf=NULL;
 
   weed_plant_t *filter;
-  weed_plant_t **ctmpl;
+  weed_plant_t **citmpl=NULL,**cotmpl=NULL;
   weed_plant_t **bitmpl=NULL,**botmpl=NULL;
   weed_plant_t *inst;
   weed_plant_t *next_frame_event;
@@ -3797,17 +3813,16 @@ lives_render_error_t render_events(boolean reset) {
 
       if (weed_plant_has_leaf(filter,"in_channel_templates")) {
         if ((num_in_channels=weed_leaf_num_elements(filter,"in_channel_templates"))>0) {
-          ctmpl=weed_get_plantptr_array(filter,"in_channel_templates",&weed_error);
           bitmpl=(weed_plant_t **)weed_malloc(num_in_channels*sizeof(weed_plant_t *));
-          if (num_in_channels!=num_in_count) lives_printerr("num_in_count != num_in_channels !!\n");
+          citmpl=weed_get_plantptr_array(filter,"in_channel_templates",&weed_error);
+          if (num_in_channels!=num_in_count) LIVES_ERROR("num_in_count != num_in_channels");
           for (i=0; i<num_in_channels; i++) {
-            bitmpl[i]=weed_plant_copy(ctmpl[i]);
+            bitmpl[i]=weed_plant_copy(citmpl[i]);
             if (in_count[i]>0) {
-              weed_set_boolean_value(ctmpl[i],"host_disabled",WEED_FALSE);
-              weed_set_int_value(ctmpl[i],"host_repeats",in_count[i]);
-            } else weed_set_boolean_value(ctmpl[i],"host_disabled",WEED_TRUE);
+              weed_set_boolean_value(citmpl[i],"host_disabled",WEED_FALSE);
+              weed_set_int_value(citmpl[i],"host_repeats",in_count[i]);
+            } else weed_set_boolean_value(citmpl[i],"host_disabled",WEED_TRUE);
           }
-          lives_free(ctmpl);
         }
       }
 
@@ -3815,32 +3830,47 @@ lives_render_error_t render_events(boolean reset) {
 
       if (weed_plant_has_leaf(filter,"out_channel_templates")) {
         if ((num_out_channels=weed_leaf_num_elements(filter,"out_channel_templates"))>0) {
-          ctmpl=weed_get_plantptr_array(filter,"out_channel_templates",&weed_error);
+          cotmpl=weed_get_plantptr_array(filter,"out_channel_templates",&weed_error);
           botmpl=(weed_plant_t **)weed_malloc(num_out_channels*sizeof(weed_plant_t *));
           for (i=0; i<num_out_channels; i++) {
-            botmpl[i]=weed_plant_copy(ctmpl[i]);
-            if (!weed_plant_has_leaf(ctmpl[i],"host_disabled")||
-                weed_get_boolean_value(ctmpl[i],"host_disabled",&weed_error)!=WEED_TRUE)
-              weed_set_boolean_value(ctmpl[i],"host_disabled",WEED_FALSE);
-            else weed_set_boolean_value(ctmpl[i],"host_disabled",WEED_TRUE);
+            botmpl[i]=weed_plant_copy(cotmpl[i]);
+            if (!weed_plant_has_leaf(cotmpl[i],"host_disabled")||weed_get_boolean_value(cotmpl[i],"host_disabled",&weed_error)!=WEED_TRUE)
+              weed_set_boolean_value(cotmpl[i],"host_disabled",WEED_FALSE);
+            else weed_set_boolean_value(cotmpl[i],"host_disabled",WEED_TRUE);
           }
-          lives_free(ctmpl);
         }
       }
 
       weed_init_effect(key);
 
+      // restore channel state / number from backup
+
       if (num_in_channels>0) {
-        weed_set_plantptr_array(filter,"in_channel_templates",num_in_channels,bitmpl);
-        weed_free(bitmpl);
+        for (i=0; i<num_in_channels; i++) {
+          if (weed_plant_has_leaf(bitmpl[i],"host_disabled"))
+            weed_set_boolean_value(citmpl[i],"host_disabled",weed_get_boolean_value(bitmpl[i],"host_disabled",&weed_error));
+          else weed_leaf_delete(citmpl[i],"host_disabled");
+          if (weed_plant_has_leaf(bitmpl[i],"host_repeats"))
+            weed_set_int_value(citmpl[i],"host_repeats",weed_get_int_value(bitmpl[i],"host_repeats",&weed_error));
+          else weed_leaf_delete(citmpl[i],"host_repeats");
+        }
+        lives_free(bitmpl);
+        lives_free(citmpl);
       }
+
 
       if (num_out_channels>0) {
-        weed_set_plantptr_array(filter,"out_channel_templates",num_out_channels,botmpl);
-        weed_free(botmpl);
+        for (i=0; i<num_out_channels; i++) {
+          if (weed_plant_has_leaf(botmpl[i],"host_disabled"))
+            weed_set_boolean_value(cotmpl[i],"host_disabled",weed_get_boolean_value(botmpl[i],"host_disabled",&weed_error));
+          else weed_leaf_delete(cotmpl[i],"host_disabled");
+          if (weed_plant_has_leaf(botmpl[i],"host_repeats"))
+            weed_set_int_value(cotmpl[i],"host_repeats",weed_get_int_value(botmpl[i],"host_repeats",&weed_error));
+          else weed_leaf_delete(cotmpl[i],"host_repeats");
+        }
+        lives_free(botmpl);
+        lives_free(cotmpl);
       }
-
-
 
       // reinit effect with saved parameters
       inst=rte_keymode_get_instance(key+1,0);

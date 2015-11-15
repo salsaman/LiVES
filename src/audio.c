@@ -1274,6 +1274,7 @@ int64_t render_audio_segment(int nfiles, int *from_files, int to_file, double *a
         // apply audio filter(s)
         if (mainw->multitrack!=NULL) {
           // we work out the "visibility" of each track at tc
+
           vis=get_track_visibility_at_tc(mainw->multitrack->event_list,nfiles,
                                          mainw->multitrack->opts.back_audio_tracks,tc,&shortcut,
                                          mainw->multitrack->opts.audio_bleedthru);

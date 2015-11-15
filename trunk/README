@@ -64,16 +64,16 @@ INSTALLING FROM SOURCE
 If you got LiVES as a tar.gz or tar.bz2, at a terminal prompt, enter the following:
 
 
-          bzip2 -d LiVES-2.4.2.tar.bz2
+          bzip2 -d LiVES-2.4.3.tar.bz2
 or,
-          gzip -d LiVES-2.4.2.tar.gz
+          gzip -d LiVES-2.4.3.tar.gz
 
 depending on which version you have. Then:
 
 
-          tar xvf LIVES-2.4.2.tar
+          tar xvf LIVES-2.4.3.tar
 
-          cd lives-2.4.2
+          cd lives-2.4.3
 
 
 

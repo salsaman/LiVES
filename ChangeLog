@@ -1,10 +1,12 @@
-Version 2.4.3
--------------
+Version 2.4.3 (15 November 2015)
+--------------------------------
+Fix occasional hang when inserting frames in clips.
 Fix possible dataloss (effects applied) when re-entering multitrack mode.
 Work around a GTK+ bug where menu items with submenus can no longer be set insensitive.
 Fix for setting cdplayer device in Preferences.
 Fix gtk critical in clip info window.
 Fix window sizing errors in rfxbuilder.
+Fix for encoding with sox version 14.4.2
 Theming updates for darker themes with gtk+ 3.x
 Add icedax as altname for cdda2wav.
 Make better use of missing CD device warning.

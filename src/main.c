@@ -3438,6 +3438,8 @@ void sensitize(void) {
   lives_widget_set_sensitive(mainw->capture,TRUE);
   lives_widget_set_sensitive(mainw->vj_save_set, mainw->current_file>0);
   lives_widget_set_sensitive(mainw->vj_load_set, !mainw->was_set);
+  lives_widget_set_sensitive(mainw->midi_learn, TRUE);
+  lives_widget_set_sensitive(mainw->midi_save, TRUE);
   lives_widget_set_sensitive(mainw->toy_tv, TRUE);
   lives_widget_set_sensitive(mainw->toy_autolives, TRUE);
   lives_widget_set_sensitive(mainw->toy_random_frames, TRUE);

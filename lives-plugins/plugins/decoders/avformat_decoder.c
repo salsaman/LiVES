@@ -1069,11 +1069,12 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstride
       if (priv->pFrame==NULL) priv->pFrame=av_frame_alloc();
 
 
-#if LIBAVCODEC_VERSION_MAJOR >= 53
+#if LIBAVCODEC_VERSION_MAJOR >= 52
       avcodec_decode_video2(cc, priv->pFrame, &gotFrame, &priv->packet);
 #else
       avcodec_decode_video(cc, priv->pFrame, &gotFrame, priv->packet.data, priv->packet.size);
 #endif
+
 #ifdef DEBUG
       fprintf(stderr,"pt 1 %ld %d %ld\n",tframe,gotFrame,MyPts);
 #endif

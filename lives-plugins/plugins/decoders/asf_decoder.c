@@ -2830,7 +2830,7 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstride
       // decode any frames from this packet
       if (priv->picture==NULL) priv->picture=av_frame_alloc();
 
-#if LIBAVCODEC_VERSION_MAJOR >= 53
+#if LIBAVCODEC_VERSION_MAJOR >= 52
       avcodec_decode_video2(priv->ctx, priv->picture, &got_picture, &priv->avpkt);
 #else
       avcodec_decode_video(priv->ctx, priv->picture, &got_picture, priv->avpkt.data, priv->avpkt.size);

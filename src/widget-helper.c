@@ -6615,6 +6615,7 @@ LIVES_INLINE boolean lives_table_set_row_spacings(LiVESTable *table, uint32_t sp
 }
 
 
+
 LIVES_INLINE boolean lives_table_set_col_spacings(LiVESTable *table, uint32_t spacing) {
 #ifdef GUI_GTK
 #if LIVES_TABLE_IS_GRID  // required for grid remove row

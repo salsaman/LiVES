@@ -69,6 +69,9 @@
 /// clip edit vid/aud bar height
 #define CE_VIDBAR_HEIGHT ((int)(10.*widget_opts.scale))
 
+/// (unexpanded) height of rows in treeviews
+#define TREE_ROW_HEIGHT ((int)(60.*widget_opts.scale))
+
 // a few GUI specific settings
 #define DEFAULT_FRAME_HSIZE 320
 #define DEFAULT_FRAME_VSIZE 200

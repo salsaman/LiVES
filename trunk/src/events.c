@@ -4748,6 +4748,10 @@ enum {
 };
 
 
+static void rowexpand(LiVESWidget *tv, LiVESTreeIter *iter, LiVESTreePath *path, livespointer ud) {
+  lives_widget_queue_resize(tv);
+}
+
 
 LiVESWidget *create_event_list_dialog(weed_plant_t *event_list, weed_timecode_t start_tc, weed_timecode_t end_tc) {
   // TODO - some event properties should be editable, e.g. parameter values
@@ -4818,7 +4822,7 @@ LiVESWidget *create_event_list_dialog(weed_plant_t *event_list, weed_timecode_t 
 
   top_vbox=lives_dialog_get_content_area(LIVES_DIALOG(event_dialog));
 
-  table = lives_table_new(rows, 6, TRUE);
+  table = lives_table_new(rows, 6, FALSE);
   lives_widget_show(table);
 
   while (event!=NULL) {
@@ -5032,6 +5036,7 @@ LiVESWidget *create_event_list_dialog(weed_plant_t *event_list, weed_timecode_t 
 
       // properties
       tree = lives_tree_view_new_with_model(LIVES_TREE_MODEL(treestore));
+
       if (palette->style&STYLE_1) {
         lives_widget_set_base_color(tree, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
         lives_widget_set_text_color(tree, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars_fore);
@@ -5063,6 +5068,12 @@ LiVESWidget *create_event_list_dialog(weed_plant_t *event_list, weed_timecode_t 
       lives_table_attach(LIVES_TABLE(table), tree, 3, 6, currow, currow+1,
                          (LiVESAttachOptions)(LIVES_FILL|LIVES_EXPAND),
                          (LiVESAttachOptions)(LIVES_FILL|LIVES_EXPAND), 0, 0);
+
+      lives_signal_connect(LIVES_GUI_OBJECT(tree), LIVES_WIDGET_ROW_EXPANDED_SIGNAL,
+                           LIVES_GUI_CALLBACK(rowexpand),
+                           NULL);
+
+      lives_widget_set_size_request(tree,-1,TREE_ROW_HEIGHT);
 
       currow++;
     }

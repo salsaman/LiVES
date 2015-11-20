@@ -562,6 +562,7 @@ boolean lives_table_attach(LiVESTable *, LiVESWidget *child, uint32_t left, uint
                            uint32_t top, uint32_t bottom, LiVESAttachOptions xoptions, LiVESAttachOptions yoptions,
                            uint32_t xpad, uint32_t ypad);
 
+
 #if LIVES_TABLE_IS_GRID
 LiVESWidget *lives_grid_new(void);
 boolean lives_grid_set_row_spacing(LiVESGrid *, uint32_t spacing);

@@ -633,6 +633,10 @@ static void cell1_edited_callback(LiVESCellRenderer *spinbutton, const char *pat
 }
 
 
+static void rowexpand(LiVESWidget *tv, LiVESTreeIter *iter, LiVESTreePath *path, livespointer ud) {
+  lives_widget_queue_resize(tv);
+}
+
 
 static void omc_macro_row_add_params(lives_omc_match_node_t *mnode, int row, omclearn_w *omclw) {
   lives_omc_macro_t macro=omc_macros[mnode->macro];
@@ -728,15 +732,15 @@ static void omc_macro_row_add_params(lives_omc_match_node_t *mnode, int row, omc
   lives_tree_view_append_column(LIVES_TREE_VIEW(mnode->treev2), column);
 
 
-
-
-
-
   lives_widget_show(mnode->treev2);
+
+  lives_signal_connect(LIVES_GUI_OBJECT(mnode->treev2), LIVES_WIDGET_ROW_EXPANDED_SIGNAL,
+                       LIVES_GUI_CALLBACK(rowexpand),
+                       NULL);
 
   lives_table_attach(LIVES_TABLE(omclw->table), mnode->treev2, 3, 4, row, row+1,
                      (LiVESAttachOptions)(LIVES_FILL|LIVES_EXPAND),
-                     (LiVESAttachOptions)(0), 0, 0);
+                     (LiVESAttachOptions)(LIVES_EXPAND), 0, 0);
 
 
 
@@ -979,7 +983,7 @@ static void omc_learner_add_row(int type, int detail, lives_omc_match_node_t *mn
   register int i;
 
   omclw->tbl_rows++;
-  lives_table_resize(LIVES_TABLE(omclw->table),omclw->tbl_rows,6);
+  lives_table_resize(LIVES_TABLE(omclw->table),omclw->tbl_rows,4);
 
   mnode->gtkstore = lives_tree_store_new(NUM_COLUMNS, LIVES_COL_TYPE_STRING, LIVES_COL_TYPE_STRING, LIVES_COL_TYPE_BOOLEAN,
                                          LIVES_COL_TYPE_STRING,
@@ -1069,7 +1073,9 @@ static void omc_learner_add_row(int type, int detail, lives_omc_match_node_t *mn
 
   if (labelt!=NULL) lives_free(labelt);
 
+
   omclw->tbl_currow++;
+
   lives_table_attach(LIVES_TABLE(omclw->table), label, 0, 1, omclw->tbl_currow, omclw->tbl_currow+1,
                      (LiVESAttachOptions)(0),
                      (LiVESAttachOptions)(0), 0, 0);
@@ -1175,9 +1181,15 @@ static void omc_learner_add_row(int type, int detail, lives_omc_match_node_t *mn
 
   lives_widget_show(mnode->treev1);
 
+  lives_widget_set_size_request(mnode->treev1,-1,TREE_ROW_HEIGHT);
+
   lives_table_attach(LIVES_TABLE(omclw->table), mnode->treev1, 1, 2, omclw->tbl_currow, omclw->tbl_currow+1,
                      (LiVESAttachOptions)(0),
-                     (LiVESAttachOptions)(0), 0, 0);
+                     (LiVESAttachOptions)(LIVES_EXPAND), 0, 0);
+
+  lives_signal_connect(LIVES_GUI_OBJECT(mnode->treev1), LIVES_WIDGET_ROW_EXPANDED_SIGNAL,
+                       LIVES_GUI_CALLBACK(rowexpand),
+                       NULL);
 
   combo=create_omc_macro_combo(mnode,omclw->tbl_currow,omclw);
 
@@ -1256,6 +1268,8 @@ static void clear_unmatched(LiVESButton *button, livespointer user_data) {
   // destroy everything in table
 
   lives_container_foreach(LIVES_CONTAINER(omclw->table),killit,NULL);
+
+  omclw->tbl_currow=-1;
 
   remove_all_nodes(FALSE,omclw);
 
@@ -1784,9 +1798,13 @@ static lives_omc_match_node_t *lives_omc_match_node_new(int str_type, int index,
   if (str_type==OMC_MIDI) {
     if (index>-1) srch_str=lives_strdup_printf("%d %d %s",str_type,index,(tmp=cut_string_elems(string,nfixed<0?-1:nfixed)));
     else srch_str=lives_strdup_printf("%d %s",str_type,(tmp=cut_string_elems(string,nfixed<0?-1:nfixed)));
-
     lives_free(tmp);
-  } else srch_str=lives_strdup(string);
+  } else {
+    srch_str=lives_strdup_printf("%s",(tmp=cut_string_elems(string,nfixed<0?-1:nfixed)));
+    lives_free(tmp);
+  }
+
+  //g_print("srch_str was %d %d .%s. %d\n",str_type,index,srch_str,nfixed);
 
   mnode->srch=srch_str;
   mnode->macro=-1;

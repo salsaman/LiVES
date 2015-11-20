@@ -349,6 +349,7 @@ typedef GdkFilterReturn LiVESFilterReturn;
 #define LIVES_WIDGET_SWITCH_PAGE_SIGNAL "switch-page"
 #define LIVES_WIDGET_UNMAP_SIGNAL "unmap"
 #define LIVES_WIDGET_EDITED_SIGNAL "edited"
+#define LIVES_WIDGET_ROW_EXPANDED_SIGNAL "row-expanded"
 #define LIVES_WIDGET_COLOR_SET_SIGNAL "color-set"
 #define LIVES_WIDGET_SET_FOCUS_CHILD_SIGNAL "set-focus-child"
 

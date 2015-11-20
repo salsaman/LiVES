@@ -94,7 +94,6 @@ static void av_set_pts_info(AVStream *s, int pts_wrap_bits,
 #endif
 
 
-
 #endif // HAVE_LIBAV_LIBS
 
 #endif // HAVE_LIBAV_HELPER_H

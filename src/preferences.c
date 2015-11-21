@@ -7,6 +7,8 @@
 // functions dealing with getting/setting user preferences
 // TODO - use atom type system for prefs
 
+#include <dlfcn.h>
+
 #ifdef HAVE_SYSTEM_WEED
 #include <weed/weed-palettes.h>
 #else
@@ -19,7 +21,7 @@
 #include "support.h"
 #include "resample.h"
 #include "plugins.h"
-#include <dlfcn.h>
+#include "rte_window.h"
 
 #ifdef ENABLE_OSC
 #include "omc-learn.h"

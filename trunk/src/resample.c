@@ -129,7 +129,13 @@ boolean auto_resample_resize(int width,int height,double fps,int fps_num,int fps
             return FALSE;
           }
 
-          if (RESIZE_ALL_NEEDS_CONVERT&&!capable->has_convert) {
+          if (prefs->enc_letterbox&&LETTERBOX_NEEDS_CONVERT&&!capable->has_convert) {
+            do_lb_convert_error();
+            on_undo_activate(NULL,NULL);
+            return FALSE;
+          }
+
+          if (!prefs->enc_letterbox&&RESIZE_ALL_NEEDS_CONVERT&&!capable->has_convert) {
             do_ra_convert_error();
             on_undo_activate(NULL,NULL);
             return FALSE;
@@ -319,7 +325,13 @@ boolean auto_resample_resize(int width,int height,double fps,int fps_num,int fps
           return FALSE;
         }
 
-        if (RESIZE_ALL_NEEDS_CONVERT&&!capable->has_convert) {
+        if (prefs->enc_letterbox&&LETTERBOX_NEEDS_CONVERT&&!capable->has_convert) {
+          do_lb_convert_error();
+          on_undo_activate(NULL,NULL);
+          return FALSE;
+        }
+
+        if (!prefs->enc_letterbox&&RESIZE_ALL_NEEDS_CONVERT&&!capable->has_convert) {
           do_ra_convert_error();
           on_undo_activate(NULL,NULL);
           return FALSE;
@@ -1999,6 +2011,19 @@ int reorder_frames(int rwidth, int rheight) {
       if (iwidth==cfile->hsize&&iheight==cfile->vsize) {
         iwidth=-iwidth;
         iheight=-iheight;
+      }
+
+      else {
+        if (LETTERBOX_NEEDS_COMPOSITE&&!capable->has_composite) {
+          do_lb_composite_error();
+          return -cur_frames;
+        }
+
+        if (LETTERBOX_NEEDS_CONVERT&&!capable->has_convert) {
+          do_lb_convert_error();
+          return -cur_frames;
+        }
+
       }
 
       com=lives_strdup_printf("%s reorder \"%s\" \"%s\" %d %d %d %d %d %d %d",prefs->backend,cfile->handle,

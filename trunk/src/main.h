@@ -902,6 +902,7 @@ void do_rendered_fx_dialog(void);
 void do_layout_scrap_file_error(void);
 void do_layout_ascrap_file_error(void);
 void do_lb_composite_error(void);
+void do_lb_convert_error(void);
 void do_ra_convert_error(void);
 void do_set_load_lmap_error(void);
 boolean do_set_duplicate_warning(const char *new_set);

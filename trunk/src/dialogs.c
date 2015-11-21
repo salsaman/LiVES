@@ -2567,6 +2567,12 @@ void do_lb_composite_error(void) {
 }
 
 
+void do_lb_convert_error(void) {
+  do_blocking_error_dialog(
+    _("LiVES currently requires convert from ImageMagick to do letterboxing.\nPlease install 'imagemagick' and try again."));
+}
+
+
 void do_ra_convert_error(void) {
   do_blocking_error_dialog(
     _("LiVES currently requires convert from ImageMagick resize frames.\nPlease install 'imagemagick' and try again."));

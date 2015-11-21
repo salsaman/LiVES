@@ -11,6 +11,9 @@
 #include <libavc1394/avc1394.h>
 #include <libavc1394/avc1394_vcr.h>
 
+#define CAM_FORMAT_DV 0
+#define CAM_FORMAT_HDV 1
+
 typedef struct {
   raw1394handle_t handle;
   raw1394handle_t rec_handle;
@@ -33,6 +36,8 @@ void cameject(s_cam *cam);
 void close_raw1394(raw1394handle_t handle);
 
 char *find_free_camfile(int format);
+
+void on_open_fw_activate(LiVESMenuItem *menuitem, livespointer format);
 
 
 struct _dvgrabw {

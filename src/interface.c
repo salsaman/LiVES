@@ -641,10 +641,7 @@ LiVESWidget *create_encoder_prep_dialog(const char *text1, const char *text2, bo
   if (text2!=NULL&&(mainw->fx1_bool||opt_resize)) {
 
     hbox = lives_hbox_new(FALSE, 0);
-    if (capable->has_composite&&capable->has_convert) {
-      // only offer this if we have "composite" and "convert" - for now... TODO ****
-      lives_box_pack_start(LIVES_BOX(dialog_vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
-    }
+    lives_box_pack_start(LIVES_BOX(dialog_vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
 
     checkbutton2 = lives_standard_check_button_new
                    ((tmp=lives_strdup(_("Use _letterboxing to maintain aspect ratio (optional)"))),TRUE,LIVES_BOX(hbox),

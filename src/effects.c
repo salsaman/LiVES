@@ -23,6 +23,7 @@
 
 #include "main.h"
 #include "effects.h"
+#include "interface.h"
 #include "paramwindow.h"
 #include "support.h"
 #include "cvirtual.h"

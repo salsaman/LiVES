@@ -26,6 +26,7 @@
 #include "resample.h"
 #include "support.h"
 #include "effects.h"
+#include "interface.h"
 
 #include "rfx-builder.h"
 #include "paramwindow.h"
@@ -1967,13 +1968,6 @@ boolean check_encoder_restrictions(boolean get_extension, boolean user_audio, bo
   // if we have min or max size, make sure we fit within that
 
 
-
-
-
-
-
-
-
   if (((width!=owidth||height!=oheight)&&width*height>0)||(best_fps_delta>0.)||(best_arate_delta>0&&best_arate>0)||
       best_arate<0||asigned!=0||swap_endian) {
     boolean ofx1_bool=mainw->fx1_bool;
@@ -1983,9 +1977,6 @@ boolean check_encoder_restrictions(boolean get_extension, boolean user_audio, bo
         if (allow_aspect_override) {
           width=owidth;
           height=oheight;
-        } else {
-          do_error_dialog(_("Unable to resize, please install imageMagick\n"));
-          return FALSE;
         }
       }
     }

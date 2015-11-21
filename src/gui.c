@@ -35,6 +35,9 @@
 #include "videodev.h"
 #endif
 
+#ifdef HAVE_LDVGRAB
+#include "ldvgrab.h"
+#endif
 
 // closures for keys for fade/unfade background
 static LiVESWidgetClosure *stop_closure;

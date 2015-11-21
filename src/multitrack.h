@@ -872,6 +872,9 @@ boolean used_in_current_layout(lives_mt *, int file);
 
 boolean set_new_set_name(lives_mt *);
 
+LiVESPixbuf *make_thumb(lives_mt *, int file, int width, int height, int frame, boolean noblanks);
+
+
 
 // event_list utilities
 boolean compare_filter_maps(weed_plant_t *fm1, weed_plant_t *fm2,

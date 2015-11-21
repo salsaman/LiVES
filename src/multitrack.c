@@ -62,6 +62,9 @@
 #include "giw/giwtimeline.h"
 #endif
 
+#ifdef HAVE_LDVGRAB
+#include "ldvgrab.h"
+#endif
 
 #if GTK_CHECK_VERSION(3,0,0)
 static boolean expose_timeline_reg_event(LiVESWidget *, lives_painter_t *cr, livespointer mt);

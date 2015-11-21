@@ -115,8 +115,25 @@ typedef struct {
 #define LIVES_FILE_SELECTION_VIDEO_RANGE 4
 
 
+
 aud_dialog_t *create_audfade_dialog(int type);
 LiVESWidget *create_combo_dialog(int type, livespointer user_data);
+
+xprocess *create_processing(const char *text);
+void add_to_clipmenu(void);
+void remove_from_clipmenu(void);
+void make_play_window(void);
+void resize_play_window(void);
+void kill_play_window(void);
+void make_preview_box(void);
+void play_window_set_title(void);
+void add_to_playframe(void);
+LiVESWidget *create_cdtrack_dialog(int type, livespointer user_data);
+LiVESTextView *create_output_textview(void);
+char *choose_file(const char *dir, const char *fname, char **const filt, LiVESFileChooserAction act, const char *title, LiVESWidget *extra);
+LiVESWidget *choose_file_with_preview(const char *dir, const char *title, int preview_type);
+void add_suffix_check(LiVESBox *box, const char *ext);
+
 
 _commentsw *commentsw;
 _entryw *renamew;

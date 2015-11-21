@@ -16,6 +16,10 @@
 #include "../libweed/weed.h"
 #endif
 
+
+#define RESIZE_ALL_NEEDS_CONVERT 1
+#define LETTERBOX_NEEDS_COMPOSITE 1
+
 /// resample audio window
 typedef struct __resaudw {
   LiVESWidget *dialog;

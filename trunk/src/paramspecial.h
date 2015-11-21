@@ -68,7 +68,6 @@ void set_aspect_ratio_widgets(lives_param_t *w, lives_param_t *h);
 
 boolean is_perchannel_multi(lives_rfx_t *rfx, int pnum);
 
-
 lives_special_mergealign_t mergealign;
 
 

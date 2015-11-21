@@ -638,6 +638,23 @@ void pref_factory_int(int prefidx, int newval);
 void pref_factory_bitmapped(int prefidx, int bitfield, boolean newval);
 
 
+void get_pref(const char *key, char *val, int maxlen);
+void get_pref_utf8(const char *key, char *val, int maxlen);
+void get_pref_default(const char *key, char *val, int maxlen);
+boolean get_boolean_pref(const char *key);
+double get_double_pref(const char *key);
+int get_int_pref(const char *key);
+LiVESList *get_list_pref(const char *key);
+void set_pref(const char *key, const char *value);
+void delete_pref(const char *key);
+void set_boolean_pref(const char *key, boolean value);
+void set_double_pref(const char *key, double value);
+void set_int_pref(const char *key, int value);
+void set_int64_pref(const char *key, int64_t value);
+void set_list_pref(const char *key, LiVESList *values);
+boolean apply_prefs(boolean skip_warnings);
+void save_future_prefs(void);
+
 // permissions
 
 #define LIVES_PERM_OSC_PORTS 1

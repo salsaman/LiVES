@@ -827,22 +827,6 @@ typedef enum {
 
 // some useful functions
 
-// interface.c
-xprocess *create_processing(const char *text);
-void add_to_clipmenu(void);
-void remove_from_clipmenu(void);
-void make_play_window(void);
-void resize_play_window(void);
-void kill_play_window(void);
-void make_preview_box(void);
-void play_window_set_title(void);
-void add_to_playframe(void);
-LiVESWidget *create_cdtrack_dialog(int type, livespointer user_data);
-LiVESTextView *create_output_textview(void);
-char *choose_file(const char *dir, const char *fname, char **const filt, LiVESFileChooserAction act, const char *title, LiVESWidget *extra);
-LiVESWidget *choose_file_with_preview(const char *dir, const char *title, int preview_type);
-void add_suffix_check(LiVESBox *box, const char *ext);
-
 
 // dialogs.c
 boolean do_progress_dialog(boolean visible, boolean cancellable, const char *text);
@@ -917,6 +901,8 @@ void do_aud_during_play_error(void);
 void do_rendered_fx_dialog(void);
 void do_layout_scrap_file_error(void);
 void do_layout_ascrap_file_error(void);
+void do_lb_composite_error(void);
+void do_ra_convert_error(void);
 void do_set_load_lmap_error(void);
 boolean do_set_duplicate_warning(const char *new_set);
 boolean do_set_rename_old_layouts_warning(const char *new_set);
@@ -1282,10 +1268,6 @@ int lives_list_strcmp_index(LiVESList *list, livesconstpointer data);
 
 lives_cancel_t check_for_bad_ffmpeg(void);
 
-// plugins.c
-LiVESList *get_external_window_hints(lives_rfx_t *rfx);
-boolean check_encoder_restrictions(boolean get_extension, boolean user_audio, boolean save_all);
-
 //callbacks.c
 void lives_exit(int signum);
 void lives_notify(int msgnumber,const char *msgstring);
@@ -1304,33 +1286,9 @@ void on_details_button_clicked(void);
 
 
 
-
-//preferences.c
-void get_pref(const char *key, char *val, int maxlen);
-void get_pref_utf8(const char *key, char *val, int maxlen);
-void get_pref_default(const char *key, char *val, int maxlen);
-boolean get_boolean_pref(const char *key);
-double get_double_pref(const char *key);
-int get_int_pref(const char *key);
-LiVESList *get_list_pref(const char *key);
-void set_pref(const char *key, const char *value);
-void delete_pref(const char *key);
-void set_boolean_pref(const char *key, boolean value);
-void set_double_pref(const char *key, double value);
-void set_int_pref(const char *key, int value);
-void set_int64_pref(const char *key, int64_t value);
-void set_list_pref(const char *key, LiVESList *values);
-boolean apply_prefs(boolean skip_warnings);
-void save_future_prefs(void);
-
-// multitrack.c
-LiVESPixbuf *make_thumb(lives_mt *, int file, int width, int height, int frame, boolean noblanks);
-
 // paramspecial.c
 LiVESPixbuf *mt_framedraw(lives_mt *, LiVESPixbuf *);
 
-// rte_window.c
-LiVESWidget *refresh_rte_window(void);
 
 // effects-weed.c
 livespointer _lives_malloc(size_t size);
@@ -1353,26 +1311,7 @@ boolean get_sub_text(lives_clip_t *sfile, double xtime);
 boolean save_sub_subtitles(lives_clip_t *sfile, double start_time, double end_time, double offset_time, const char *filename);
 boolean save_srt_subtitles(lives_clip_t *sfile, double start_time, double end_time, double offset_time, const char *filename);
 
-// osc.c
-#ifdef ENABLE_OSC
-boolean lives_osc_init(uint32_t osc_udp_port);
-boolean lives_osc_poll(livespointer data);
-void lives_osc_end(void);
-boolean lives_osc_notify(int msgtype, const char *msgstring);
-boolean lives_osc_notify_success(const char *msg);
-boolean lives_osc_notify_failure(void);
-void lives_osc_notify_cancel(void);
 #include "osc_notify.h"
-#endif
-
-// ldvgrab.c
-#ifdef HAVE_LDVGRAB
-void on_open_fw_activate(LiVESMenuItem *menuitem, livespointer format);
-
-#define CAM_FORMAT_DV 0
-#define CAM_FORMAT_HDV 1
-
-#endif
 
 // inlines
 #define cfile mainw->files[mainw->current_file]

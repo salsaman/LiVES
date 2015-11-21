@@ -110,6 +110,11 @@ boolean auto_resample_resize(int width,int height,double fps,int fps_num,int fps
     // FPS CHANGE...
     if ((width!=cfile->hsize||height!=cfile->vsize)&&width*height>0) {
       // CHANGING SIZE..
+
+
+      // TODO: check if we have convert / composite installed
+
+
       if (fps>cfile->fps) {
         boolean rs_builtin;
         lives_rfx_t *resize_rfx;
@@ -117,6 +122,19 @@ boolean auto_resample_resize(int width,int height,double fps,int fps_num,int fps
         // we will have more frames...
         // ...do resize first
         if (mainw->fx_candidates[FX_CANDIDATE_RESIZER].delegate==-1||prefs->enc_letterbox) {
+
+          if (prefs->enc_letterbox&&LETTERBOX_NEEDS_COMPOSITE&&!capable->has_composite) {
+            do_lb_composite_error();
+            on_undo_activate(NULL,NULL);
+            return FALSE;
+          }
+
+          if (RESIZE_ALL_NEEDS_CONVERT&&!capable->has_convert) {
+            do_ra_convert_error();
+            on_undo_activate(NULL,NULL);
+            return FALSE;
+          }
+
           cfile->ohsize=cfile->hsize;
           cfile->ovsize=cfile->vsize;
 
@@ -287,12 +305,25 @@ boolean auto_resample_resize(int width,int height,double fps,int fps_num,int fps
     lives_rfx_t *resize_rfx;
     // NO FPS CHANGE
     if ((width!=cfile->hsize||height!=cfile->vsize)&&width*height>0) {
+
       // no fps change - just a normal resize
       cfile->undo_start=1;
       cfile->undo_end=cfile->frames;
 
       if (mainw->fx_candidates[FX_CANDIDATE_RESIZER].delegate==-1||prefs->enc_letterbox) {
         // use builtin resize
+
+        if (prefs->enc_letterbox&&LETTERBOX_NEEDS_COMPOSITE&&!capable->has_composite) {
+          do_lb_composite_error();
+          on_undo_activate(NULL,NULL);
+          return FALSE;
+        }
+
+        if (RESIZE_ALL_NEEDS_CONVERT&&!capable->has_convert) {
+          do_ra_convert_error();
+          on_undo_activate(NULL,NULL);
+          return FALSE;
+        }
 
         if (cfile->clip_type==CLIP_TYPE_FILE) {
           cfile->fx_frame_pump=1;

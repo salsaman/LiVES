@@ -10,6 +10,7 @@
 #include "stream.h"
 #include "htmsocket.h"
 #include "support.h"
+#include "interface.h"
 
 #ifdef HAVE_SYSTEM_WEED
 #include <weed/weed.h>

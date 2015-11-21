@@ -588,6 +588,10 @@ typedef struct {
 _vppaw *on_vpp_advanced_clicked(LiVESButton *, livespointer);
 void on_decplug_advanced_clicked(LiVESButton *button, livespointer user_data);
 
+LiVESList *get_external_window_hints(lives_rfx_t *rfx);
+boolean check_encoder_restrictions(boolean get_extension, boolean user_audio, boolean save_all);
+
+
 
 /// for realtime effects, see effects-weed.h
 

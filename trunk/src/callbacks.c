@@ -38,6 +38,10 @@
 #include "videodev.h"
 #endif
 
+#ifdef ENABLE_OSC
+#include "osc.h"
+#endif
+
 static char file_name[PATH_MAX];
 
 void lives_notify(int msgnumber,const char *msgstring) {

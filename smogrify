@@ -5699,17 +5699,17 @@ sub resample_audio {
 
     if ($sox_version < 14000000) {
         if ($asigned==1) {
-            $osigned="s";
+            $osigned="-s";
         }
         else {
-            $osigned="u";
+            $osigned="-u";
         }
 
         if ($nsigned==1) {
-            $nsigned="s";
+            $nsigned="-s";
         }
         else {
-            $nsigned="u";
+            $nsigned="-u";
         }
     }
     else {
@@ -5743,10 +5743,10 @@ sub resample_audio {
     }
 
     if (defined($stretch)) {
-        $com="sox $nodither -t .raw -r $arate -c $achans -$osigned -$osamps $oendian \"$audio_in\" -t .raw -r $nrate -c $nchans -$nsigned $nendian -$nsamps \"$audio_out\" stretch $stretch>$nulfile 2>&1";
+        $com="sox $nodither -t .raw -r $arate -c $achans $osigned -$osamps $oendian \"$audio_in\" -t .raw -r $nrate -c $nchans $nsigned $nendian -$nsamps \"$audio_out\" stretch $stretch>$nulfile 2>&1";
     }
     else {
-        $com="sox $nodither -t .raw -r $arate -c $achans -$osigned -$osamps $oendian \"$audio_in\" -t .raw -r $nrate -c $nchans -$nsigned $nendian -$nsamps \"$audio_out\">$nulfile 2>&1";
+        $com="sox $nodither -t .raw -r $arate -c $achans $osigned -$osamps $oendian \"$audio_in\" -t .raw -r $nrate -c $nchans $nsigned $nendian -$nsamps \"$audio_out\">$nulfile 2>&1";
     }
     $smerr=smog_system($com);
     if ($smerr) {

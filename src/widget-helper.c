@@ -6633,6 +6633,29 @@ LIVES_INLINE boolean lives_table_set_col_spacings(LiVESTable *table, uint32_t sp
 }
 
 
+LIVES_INLINE boolean lives_table_set_row_homogeneous(LiVESTable *table, boolean homogeneous) {
+#ifdef GUI_GTK
+#if LIVES_TABLE_IS_GRID
+  gtk_grid_set_row_homogeneous(table,homogeneous);
+  return TRUE;
+#endif
+#endif
+  return FALSE;
+}
+
+
+LIVES_INLINE boolean lives_table_set_column_homogeneous(LiVESTable *table, boolean homogeneous) {
+#ifdef GUI_GTK
+#if LIVES_TABLE_IS_GRID
+  gtk_grid_set_column_homogeneous(table,homogeneous);
+  return TRUE;
+#endif
+#endif
+  return FALSE;
+}
+
+
+
 LIVES_INLINE boolean lives_table_resize(LiVESTable *table, uint32_t rows, uint32_t cols) {
 #ifdef GUI_GTK
 #if LIVES_TABLE_IS_GRID  // required for grid remove row

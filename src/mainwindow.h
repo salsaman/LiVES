@@ -13,14 +13,14 @@
 
 #include "effects-data.h"
 
+#include "audio.h"
+
 #ifdef ALSA_MIDI
 #include <alsa/asoundlib.h>
 #endif
 
 #ifdef HAVE_PULSE_AUDIO
 #include "pulse.h"
-#else
-#include "audio.h"
 #endif
 
 // hardware related prefs
@@ -73,8 +73,8 @@
 #define TREE_ROW_HEIGHT ((int)(60.*widget_opts.scale))
 
 // a few GUI specific settings
-#define DEFAULT_FRAME_HSIZE 320
-#define DEFAULT_FRAME_VSIZE 200
+#define DEFAULT_FRAME_HSIZE ((int)(320.*widget_opts.scale))
+#define DEFAULT_FRAME_VSIZE ((int)(200.*widget_opts.scale))
 
 #define MAIN_SPIN_SPACER ((int)52.*widget_opts.scale) ///< pixel spacing for start/end spins for clip and multitrack editors
 

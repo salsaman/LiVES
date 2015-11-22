@@ -388,6 +388,7 @@ lives_clipinfo_t *create_clip_info_window(int audio_channels, boolean is_mt) {
 
     table=lives_table_new(3,4,TRUE);
 
+    lives_table_set_column_homogeneous(LIVES_TABLE(table),FALSE);
 
     lives_table_set_col_spacings(LIVES_TABLE(table), widget_opts.packing_width*4);
     lives_table_set_row_spacings(LIVES_TABLE(table), widget_opts.packing_height);
@@ -489,23 +490,23 @@ lives_clipinfo_t *create_clip_info_window(int audio_channels, boolean is_mt) {
     if (!is_mt) {
       label = lives_standard_label_new(_("Total time"));
       lives_table_attach(LIVES_TABLE(table), label, 0, 1, 0, 1,
-                         (LiVESAttachOptions)(LIVES_FILL|LIVES_EXPAND),
+                         (LiVESAttachOptions)(0),
                          (LiVESAttachOptions)(0), 0, 0);
 
       filew->textview_ltime = aud_text_view_new();
       lives_table_attach(LIVES_TABLE(table), filew->textview_ltime, 1, 2, 0, 1,
-                         (LiVESAttachOptions)(LIVES_FILL|LIVES_EXPAND),
+                         (LiVESAttachOptions)(0),
                          (LiVESAttachOptions)(0), 0, 0);
     }
 
     label = lives_standard_label_new(_("Rate/size"));
     lives_table_attach(LIVES_TABLE(table), label, 2, 3, 0, 1,
-                       (LiVESAttachOptions)(LIVES_FILL|LIVES_EXPAND),
+                       (LiVESAttachOptions)(0),
                        (LiVESAttachOptions)(0), 0, 0);
 
     filew->textview_lrate = aud_text_view_new();
     lives_table_attach(LIVES_TABLE(table), filew->textview_lrate, 3, 4, 0, 1,
-                       (LiVESAttachOptions)(LIVES_FILL|LIVES_EXPAND),
+                       (LiVESAttachOptions)(0),
                        (LiVESAttachOptions)(0), 0, 0);
 
 
@@ -531,23 +532,23 @@ lives_clipinfo_t *create_clip_info_window(int audio_channels, boolean is_mt) {
       if (!is_mt) {
         label = lives_standard_label_new(_("Total time"));
         lives_table_attach(LIVES_TABLE(table), label, 0, 1, 0, 1,
-                           (LiVESAttachOptions)(LIVES_FILL|LIVES_EXPAND),
+                           (LiVESAttachOptions)(0),
                            (LiVESAttachOptions)(0), 0, 0);
 
         filew->textview_rtime = aud_text_view_new();
         lives_table_attach(LIVES_TABLE(table), filew->textview_rtime, 1, 2, 0, 1,
-                           (LiVESAttachOptions)(LIVES_FILL|LIVES_EXPAND),
+                           (LiVESAttachOptions)(0),
                            (LiVESAttachOptions)(0), 0, 0);
       }
 
       label = lives_standard_label_new(_("Rate/size"));
       lives_table_attach(LIVES_TABLE(table), label, 2, 3, 0, 1,
-                         (LiVESAttachOptions)(LIVES_FILL|LIVES_EXPAND),
+                         (LiVESAttachOptions)(0),
                          (LiVESAttachOptions)(0), 0, 0);
 
       filew->textview_rrate = aud_text_view_new();
       lives_table_attach(LIVES_TABLE(table), filew->textview_rrate, 3, 4, 0, 1,
-                         (LiVESAttachOptions)(LIVES_FILL|LIVES_EXPAND),
+                         (LiVESAttachOptions)(0),
                          (LiVESAttachOptions)(0), 0, 0);
 
     }

@@ -13,9 +13,6 @@
 #include <pulse/proplist.h>
 #include <pulse/error.h>
 
-#include "audio.h"
-
-
 #define PULSE_MAX_OUTPUT_CHANS PA_CHANNEL_POSITION_MAX
 
 #define LIVES_PA_BUFF_MAXLEN 16384

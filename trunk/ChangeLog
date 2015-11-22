@@ -1,9 +1,11 @@
 Version 2.4.4
 -------------
+Fix regression in audio resampling with sox.
 GUI improvements to joystick / midi learner for gtk+ 3.x
 GUI improvements for Events window.
 Add support for joystick analog stick control.
-
+Add improved warnings for letterboxing with missing imageMagick.
+Fix overwide Clip Info windows.
 
 
 

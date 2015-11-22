@@ -4086,6 +4086,9 @@ void reget_afilesize(int fileno) {
       }
     }
   }
+
+  //g_print("sfa = %d\n",sfile->achans);
+
   lives_free(afile);
 }
 

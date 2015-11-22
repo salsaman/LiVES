@@ -6876,11 +6876,11 @@ void load_frame_image(int frame) {
     if (cfile->clip_type==CLIP_TYPE_DISK||cfile->clip_type==CLIP_TYPE_FILE) {
       reget_afilesize(mainw->current_file);
 
-      if (cfile->afilesize>0&&cfile->achans==0) {
+      /*      if (cfile->afilesize>0&&cfile->achans==0) {
 	char *msgx=lives_strdup_printf("Audio file but no channels, %s",cfile->handle);
 	LIVES_WARN(msgx);
 	lives_free(msgx);
-      }
+	}*/
 
     }
 

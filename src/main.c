@@ -1407,7 +1407,10 @@ static void lives_init(_ign_opts *ign_opts) {
       if ((prefs->startup_phase==1||prefs->startup_phase==-1)&&capable->has_encoder_plugins&&capable->has_python) {
         LiVESList *ofmt_all=NULL;
         char **array;
-        lives_snprintf(prefs->encoder.name,52,"%s","multi_encoder");
+	if (capable->python_version>=3000000)
+	  lives_snprintf(prefs->encoder.name,52,"%s","multi_encoder3");
+	else 
+	  lives_snprintf(prefs->encoder.name,52,"%s","multi_encoder");
 
         // need to change the output format
 

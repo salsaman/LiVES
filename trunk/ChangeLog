@@ -1,3 +1,18 @@
+Version 2.4.5
+-------------
+Set default encoder to multi_encoder3 if python version >= 3.
+
+
+
+
+
+
+
+
+
+
+
+
 Version 2.4.4 (22 November 2015)
 --------------------------------
 Fix regression in audio resampling with sox.

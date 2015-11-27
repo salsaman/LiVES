@@ -8033,7 +8033,11 @@ void on_open_new_audio_clicked(LiVESFileChooser *chooser, livespointer user_data
     cfile->signed_endian=get_signed_endian(atoi(array[4]), atoi(array[5]));
     cfile->afilesize=strtol(array[6],NULL,10);
     lives_strfreev(array);
+
+    if (cfile->undo_arate>0) cfile->arps=cfile->undo_arps/cfile->undo_arate*cfile->arate;
+    else cfile->arps=cfile->arate;
   }
+
 
   if (cfile->afilesize==0) {
     d_print_failed();

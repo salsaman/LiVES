@@ -172,7 +172,9 @@ LiVESWidget *create_message_dialog(lives_dialog_t diat, const char *text, LiVESW
 
   LiVESAccelGroup *accel_group=LIVES_ACCEL_GROUP(lives_accel_group_new());
 
-  char *textx,*form_text,*pad;
+  char *textx,*form_text,*pad,*mytext;
+
+  mytext=lives_strdup(text); // because of translation issues
 
   switch (diat) {
   case LIVES_DIALOG_WARN:
@@ -267,7 +269,9 @@ LiVESWidget *create_message_dialog(lives_dialog_t diat, const char *text, LiVESW
     lives_container_set_border_width(LIVES_CONTAINER(dialog), widget_opts.border_width*2);
   }
 
-  textx=insert_newlines(text,MAX_MSG_WIDTH_CHARS);
+  textx=insert_newlines(mytext,MAX_MSG_WIDTH_CHARS);
+
+  lives_free(mytext);
 
   pad=lives_strdup("");
   if (strlen(textx) < MIN_MSG_WIDTH_CHARS) {
@@ -433,7 +437,6 @@ boolean do_yesno_dialog(const char *text) {
   // show Yes/No, returns TRUE if Yes
   LiVESWidget *warning;
   int response;
-  char *mytext;
   LiVESWindow *transient=NULL;
 
   if (prefs->show_gui) {
@@ -441,9 +444,7 @@ boolean do_yesno_dialog(const char *text) {
     else if (mainw->multitrack!=NULL&&mainw->multitrack->is_ready) transient=LIVES_WINDOW(mainw->multitrack->window);
   }
 
-  mytext=lives_strdup(text); // translation issues
-  warning=create_message_dialog(LIVES_DIALOG_YESNO,mytext,transient,0,TRUE);
-  if (mytext!=NULL) lives_free(mytext);
+  warning=create_message_dialog(LIVES_DIALOG_YESNO,text,transient,0,TRUE);
 
   response=lives_dialog_run(LIVES_DIALOG(warning));
   lives_widget_destroy(warning);
@@ -603,14 +604,11 @@ int do_error_dialog_with_check_transient(const char *text, boolean is_blocking, 
   // show error box
 
   LiVESWidget *err_box;
-  char *mytext;
 
   int ret=LIVES_RESPONSE_NONE;
 
   if (prefs->warning_mask&warn_mask_number) return ret;
-  mytext=lives_strdup(text);
-  err_box=create_info_error_dialog(warn_mask_number==0?LIVES_DIALOG_ERROR:LIVES_DIALOG_WARN,mytext,transient,warn_mask_number,is_blocking);
-  if (mytext!=NULL) lives_free(mytext);
+  err_box=create_info_error_dialog(warn_mask_number==0?LIVES_DIALOG_ERROR:LIVES_DIALOG_WARN,text,transient,warn_mask_number,is_blocking);
 
   if (is_blocking) {
     ret=lives_dialog_run(LIVES_DIALOG(err_box));
@@ -628,13 +626,10 @@ int do_info_dialog_with_transient(const char *text, boolean is_blocking, LiVESWi
   // info box
 
   LiVESWidget *info_box;
-  char *mytext;
 
   int ret=LIVES_RESPONSE_NONE;
 
-  mytext=lives_strdup(text);
-  info_box=create_info_error_dialog(LIVES_DIALOG_INFO,mytext,transient,0,is_blocking);
-  if (mytext!=NULL) lives_free(mytext);
+  info_box=create_info_error_dialog(LIVES_DIALOG_INFO,text,transient,0,is_blocking);
 
   if (is_blocking) {
     ret=lives_dialog_run(LIVES_DIALOG(info_box));

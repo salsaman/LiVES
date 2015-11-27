@@ -1,6 +1,9 @@
 Version 2.4.5
 -------------
 Set default encoder to multi_encoder3 if python version >= 3.
+Fix some message translation issues in dialog windows.
+Fix missing audio issue after loading new audio for a clip.
+Compatibility fix for ffmpeg_encoder.
 
 
 

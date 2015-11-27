@@ -402,9 +402,17 @@ def do_encode():
 
     fpsnum = fps.split('/')[0]
     fpsden = fps.split('/')[1]
-    mplayer_opts = '-mf type=%s:fps=%s ' % (ext[1:],
-                                            eval('float('+fpsnum+')/'+fpsden)) + \
-                   '-vf hqdn3d=2:1:3,pp=va:128:8/ha:128:8/dr,dsize=%s -vo yuv4mpeg -ao null -nosound' % aspect
+
+    if mplayer != mplayer2:
+        mplayer_opts = '-mf type=%s:fps=%s ' % (ext[1:],
+                                                eval('float('+fpsnum+')/'+fpsden)) + \
+            '-vf hqdn3d=2:1:3,pp=va:128:8/ha:128:8/dr,dsize=%s -vo yuv4mpeg -ao null -nosound' % aspect
+
+    else:
+        mplayer_opts = '-mf type=%s:fps=%s ' % (ext[1:],
+                                                eval('float('+fpsnum+')/'+fpsden)) + \
+            '-vf hqdn3d=2:1:3,dsize=%s -vo yuv4mpeg -ao null -nosound' % aspect
+
 
     if img_dir != work_dir and not enhance:
         source_dir = img_dir

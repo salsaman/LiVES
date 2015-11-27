@@ -6220,6 +6220,10 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
                        LIVES_GUI_CALLBACK(on_open_sel_activate),
                        NULL);
 
+  // TODO: mpv
+
+  // TODO, show these options but show error if no mplayer / mplayer2
+
   if (capable->has_mplayer||capable->has_mplayer2) {
 
 #ifdef HAVE_WEBM
@@ -6303,20 +6307,24 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
     lives_widget_set_fg_color(device_submenu, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars_fore);
   }
 
-  menuitem = lives_menu_item_new_with_mnemonic(_("Import from _Firewire Device (dv)"));
-  lives_container_add(LIVES_CONTAINER(device_submenu), menuitem);
+  if (capable->has_mplayer||capable->has_mplayer2) {
+
+    menuitem = lives_menu_item_new_with_mnemonic(_("Import from _Firewire Device (dv)"));
+    lives_container_add(LIVES_CONTAINER(device_submenu), menuitem);
 
 
-  lives_signal_connect(LIVES_GUI_OBJECT(menuitem), LIVES_WIDGET_ACTIVATE_SIGNAL,
-                       LIVES_GUI_CALLBACK(on_open_fw_activate),
-                       LIVES_INT_TO_POINTER(CAM_FORMAT_DV));
+    lives_signal_connect(LIVES_GUI_OBJECT(menuitem), LIVES_WIDGET_ACTIVATE_SIGNAL,
+			 LIVES_GUI_CALLBACK(on_open_fw_activate),
+			 LIVES_INT_TO_POINTER(CAM_FORMAT_DV));
 
-  menuitem = lives_menu_item_new_with_mnemonic(_("Import from _Firewire Device (hdv)"));
-  lives_container_add(LIVES_CONTAINER(device_submenu), menuitem);
+    menuitem = lives_menu_item_new_with_mnemonic(_("Import from _Firewire Device (hdv)"));
+    lives_container_add(LIVES_CONTAINER(device_submenu), menuitem);
 
-  lives_signal_connect(LIVES_GUI_OBJECT(menuitem), LIVES_WIDGET_ACTIVATE_SIGNAL,
-                       LIVES_GUI_CALLBACK(on_open_fw_activate),
-                       LIVES_INT_TO_POINTER(CAM_FORMAT_HDV));
+    lives_signal_connect(LIVES_GUI_OBJECT(menuitem), LIVES_WIDGET_ACTIVATE_SIGNAL,
+			 LIVES_GUI_CALLBACK(on_open_fw_activate),
+			 LIVES_INT_TO_POINTER(CAM_FORMAT_HDV));
+  }
+
 #endif
 
 

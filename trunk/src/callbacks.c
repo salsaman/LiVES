@@ -5970,7 +5970,8 @@ void on_fs_preview_clicked(LiVESWidget *widget, livespointer user_data) {
 
   if (!(height*width)) {
     // media preview
-    if (!capable->has_mplayer&&!capable->has_mplayer2) {
+
+    if (!capable->has_mplayer&&!capable->has_mplayer2||capable->has_mpv) {
       char *msg;
       if (capable->has_identify) {
         msg=lives_strdup(_("\n\nYou need to install mplayer or mplayer2 to be able to preview this file.\n"));
@@ -7930,7 +7931,8 @@ void on_open_new_audio_clicked(LiVESFileChooser *chooser, livespointer user_data
 
   if (!lives_ascii_strncasecmp(a_type,"wav",3)) israw=0;
 
-  if (capable->has_mplayer||capable->has_mplayer2) {
+
+  if (capable->has_mplayer||capable->has_mplayer2||capable->has_mpv) {
     if (read_file_details(file_name,TRUE)) {
       array=lives_strsplit(mainw->msg,"|",15);
       cfile->arate=atoi(array[9]);

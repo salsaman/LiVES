@@ -597,7 +597,7 @@ void on_live_tvcard_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   int response;
 
   char *com,*tmp;
-  char *fifofile=lives_strdup_printf("%s/tvpic.%d",prefs->tmpdir,capable->mainpid);
+  char *fifofile=lives_strdup_printf("%s/tvpic_%d.y4m",prefs->tmpdir,capable->mainpid);
 
   char *chanstr;
   char *devstr;
@@ -741,7 +741,7 @@ void on_live_fw_activate(LiVESMenuItem *menuitem, livespointer user_data) {
 
   int response;
 
-  char *fifofile=lives_strdup_printf("%s/firew.%d",prefs->tmpdir,capable->mainpid);
+  char *fifofile=lives_strdup_printf("%s/firew_%d.y4m",prefs->tmpdir,capable->mainpid);
   char *fname;
 
   LiVESWidget *card_dialog;

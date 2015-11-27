@@ -5021,16 +5021,21 @@ char *insert_newlines(const char *text, int maxwidth) {
   // crude formating of strings, ensure a newline after every run of maxwidth chars
   // does not take into account for example utf8 multi byte chars
 
+  wchar_t utfsym;
+
   char newline[]="\n";
   char *retstr;
-  register int i;
-  int xtoffs;
-  boolean needsnl=FALSE;
+
+  size_t runlen=0;
   size_t req_size=1;  // for the terminating \0
   size_t tlen;
   size_t nlen=strlen(newline);
-  size_t runlen=0;
-  wchar_t utfsym;
+
+  int xtoffs;
+
+  boolean needsnl=FALSE;
+
+  register int i;
 
   if (text==NULL) return NULL;
 
@@ -5065,6 +5070,8 @@ char *insert_newlines(const char *text, int maxwidth) {
     req_size+=xtoffs;
   }
 
+
+  xtoffs=mbtowc(NULL,NULL,0); // reset read state
 
   retstr=(char *)lives_malloc(req_size);
   req_size=0; // reuse as a ptr to offset in retstr

@@ -1333,6 +1333,12 @@ static void lives_init(_ign_opts *ign_opts) {
         set_pref("video_open_command",prefs->video_open_command);
       }
 
+      if (!strlen(prefs->video_open_command)&&capable->has_mpv) {
+        get_location("mpv",prefs->video_open_command,256);
+        set_pref("video_open_command",prefs->video_open_command);
+      }
+
+
       prefs->warn_file_size=get_int_pref("warn_file_size");
       if (prefs->warn_file_size==0) {
         prefs->warn_file_size=WARN_FILE_SIZE;
@@ -1840,6 +1846,10 @@ void do_start_messages(void) {
   else d_print(_("mplayer...NOT DETECTED..."));
   if (capable->has_mplayer2) d_print(_("mplayer2...detected..."));
   else d_print(_("mplayer2...NOT DETECTED..."));
+#ifdef ALLOW_MPV
+  if (capable->has_mpv) d_print(_("mpv...detected..."));
+  else d_print(_("mpv...NOT DETECTED..."));
+#endif
   if (capable->has_convert) d_print(_("convert...detected..."));
   else d_print(_("convert...NOT DETECTED..."));
   if (capable->has_composite) d_print(_("composite...detected..."));
@@ -2164,6 +2174,7 @@ capability *get_capabilities(void) {
   // optional
   capable->has_mplayer=FALSE;
   capable->has_mplayer2=FALSE;
+  capable->has_mpv=FALSE;
   capable->has_convert=FALSE;
   capable->has_composite=FALSE;
   capable->has_identify=FALSE;
@@ -2309,6 +2320,11 @@ capability *get_capabilities(void) {
 
   get_location("mplayer2",string,256);
   if (strlen(string)) capable->has_mplayer2=TRUE;
+
+#ifdef ALLOW_MPV
+  get_location("mpv",string,256);
+  if (strlen(string)) capable->has_mpv=TRUE;
+#endif
 
 #ifndef IS_MINGW
   get_location("convert",string,256);
@@ -2571,12 +2587,12 @@ static boolean lives_startup(livespointer data) {
                   _("\nAn incorrect version of smogrify was found in your path.\n\nPlease review the README file which came with this package\nbefore running LiVES.\n\nThankyou.\n"));
               } else {
 #ifndef IS_MINGW
-                if ((!capable->has_sox_sox||!capable->has_sox_play)&&!capable->has_mplayer&&!capable->has_mplayer2) {
+                if ((!capable->has_sox_sox||!capable->has_sox_play)&&!capable->has_mplayer&&!capable->has_mplayer2&&!capable->has_mpv) {
                   startup_message_fatal(
                     _("\nLiVES currently requires 'mplayer', 'mplayer2' or 'sox' to function. Please install one or other of these, and try again.\n"));
                 }
 #else
-                if (!capable->has_sox_sox||(!capable->has_mplayer&&!capable->has_mplayer2)) {
+                if (!capable->has_sox_sox||(!capable->has_mplayer&&!capable->has_mplayer2&&!capable->has_mpv)) {
                   startup_message_fatal(
                     _("\nLiVES currently requires both 'mplayer' or 'mplayer2' and 'sox' to function. Please install these, and try again.\n"));
                 }

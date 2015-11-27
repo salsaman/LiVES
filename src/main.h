@@ -679,6 +679,7 @@ typedef struct {
   boolean has_autolives;
   boolean has_mplayer;
   boolean has_mplayer2;
+  boolean has_mpv;
   boolean has_convert;
   boolean has_composite;
   boolean has_identify;

@@ -706,6 +706,8 @@ boolean do_startup_tests(boolean tshoot) {
 
   // check for mplayer presence
 
+  // TODO: mpv
+
   add_test(table,2,_("Checking for \"mplayer\" presence"),TRUE);
 
 
@@ -737,6 +739,8 @@ boolean do_startup_tests(boolean tshoot) {
 
   add_test(table,3,_("Checking if mplayer can convert audio"),success2);
 
+  res=1;
+
   if (success2) {
     if (capable->has_mplayer) {
 #ifndef IS_MINGW
@@ -744,19 +748,29 @@ boolean do_startup_tests(boolean tshoot) {
 #else
       res=system("mplayer -ao help | grep pcm >NUL 2>&1");
 #endif
-    } else {
+    } else if (capable->has_mplayer2) {
 #ifndef IS_MINGW
       res=system("LANG=en LANGUAGE=en mplayer2 -ao help | grep pcm >/dev/null 2>&1");
 #else
       res=system("mplayer2 -ao help | grep pcm >NUL 2>&1");
 #endif
+    } else {
+#ifdef ALLOW_MPV
+#ifndef IS_MINGW
+	res=system("LANG=en LANGUAGE=en mpv --ao help | grep pcm >/dev/null 2>&1");
+#else
+	res=system("mpv --ao help | grep pcm >NUL 2>&1");
+#endif
+#endif
     }
+
     if (res==0) {
       pass_test(table,3);
     } else {
       fail_test(table,3,_("You should install mplayer or mplayer2 with pcm/wav support"));
     }
   }
+
 
   // check if mplayer can decode to png/alpha
 
@@ -769,6 +783,8 @@ boolean do_startup_tests(boolean tshoot) {
 
 
   lives_free(rname);
+
+  // TODO: mpv
 
   add_test(table,4,_("Checking if mplayer can decode to png/alpha"),success2&&success4);
 
@@ -841,6 +857,7 @@ boolean do_startup_tests(boolean tshoot) {
 
   add_test(table,5,_("Checking if mplayer can decode to jpeg"),success2);
 
+  res=1;
 
   if (success2) {
     if (capable->has_mplayer) {
@@ -849,14 +866,22 @@ boolean do_startup_tests(boolean tshoot) {
 #else
       res=system("mplayer -vo help | grep -i \"jpeg file\" >NUL 2>&1");
 #endif
-    } else {
+    } else if (capable->has_mplayer2) {
 #ifndef IS_MINGW
       res=system("LANG=en LANGUAGE=en mplayer2 -vo help | grep -i \"jpeg file\" >/dev/null 2>&1");
 #else
       res=system("mplayer2 -vo help | grep -i \"jpeg file\" >NUL 2>&1");
 #endif
+    } else {
+#ifdef ALLOW_MPV
+#ifndef IS_MINGW
+      res=system("LANG=en LANGUAGE=en mpv --vo help | grep -i \"image\" >/dev/null 2>&1");
+#else
+      res=system("mpv --vo help | grep -i \"image\" >NUL 2>&1");
+#endif
+#endif
     }
-
+    
     if (res==0) {
       pass_test(table,5);
       if (!success3) {

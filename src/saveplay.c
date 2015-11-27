@@ -926,12 +926,18 @@ ulong open_file_sel(const char *file_name, double start, int frames) {
       // we got neither video nor audio...
       lives_snprintf(msg,256,"%s",_
                      ("\n\nLiVES was unable to extract either video or audio.\nPlease check the terminal window for more details.\n"));
-      if (!capable->has_mplayer&&!capable->has_mplayer2) {
+
+      if (!capable->has_mplayer&&!capable->has_mplayer2&&!capable->has_mpv) {
         lives_strappend(msg,256,_("\n\nYou may need to install mplayer to open this file.\n"));
       } else {
         if (capable->has_mplayer) {
           get_location("mplayer",loc,256);
-        } else get_location("mplayer2",loc,256);
+        } else if (capable->has_mplayer2) {
+	  get_location("mplayer2",loc,256);
+	} else if (capable->has_mpv) {
+	  get_location("mpv",loc,256);
+	}
+
         if (strcmp(prefs->video_open_command,loc)) {
           lives_strappend(msg,256,_("\n\nPlease check the setting of Video open command in\nTools|Preferences|Decoding\n"));
         }

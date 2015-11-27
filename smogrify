@@ -1792,6 +1792,8 @@ if ($file=~/:\/\//) {
         }
 
         my $mp=&get_mplayer_location;
+
+	## note does not function with mpv since it cannot convert to yuv4mpeg (complains about missing pixel_fmt)
         $com="$mp -really-quiet tv://$chanstr -tv device=$devstr$inputstr$driverstr$sizestr$outfmt$fpsstr -vo yuv4mpeg:file=$fifofile >$nulfile 2>&1 <$nulfile";
         $smerr=smog_system($com);
         if ($smerr) {
@@ -1809,6 +1811,7 @@ if ($file=~/:\/\//) {
         $cache=$ARGV[3];
         $fifofile=$ARGV[4];
         my $mp=&get_mplayer_location;
+	## note does not function with mpv since it cannot convert to yuv4mpeg (complains about missing pixel_fmt)
         $com="dvgrab -s 0 -noavc -card $cardno -o - 2>$nulfile | $mp - -really-quiet -demuxer lavf -vo yuv4mpeg:file=$fifofile >$nulfile 2>&1";
         $smerr=smog_system("$com");
         if ($smerr) {
@@ -5054,6 +5057,8 @@ sub get_file_info {
 
     $endian="";
 
+    $is_mpv=0;
+
     if ($^O ne "MSWin32") {
 # try to force language to English
         $mplay_command="LANGUAGE=en LANG=en ";
@@ -5069,6 +5074,11 @@ sub get_file_info {
     if ($mplay_command eq "") {
         $panic=1;
         return;
+    }
+
+
+    if ((split(" ",$mplay_command))[0]=="mpv") {
+	$is_mpv=1;
     }
 
     $id_vid_form="";
@@ -5128,32 +5138,49 @@ sub get_file_info {
 
 
         if (-f $file_ident) {
-            $id_vid_form=smog_system_direct("grep ID_VIDEO_CODEC \"$file_ident\" 2>$nulfile");
-            $id_vid_form=(split("=",(split("\n",$id_vid_form))[0]))[1];
-            chomp($id_vid_form);
+	    if (!$is_mpv) {
+		$id_vid_form=smog_system_direct("grep ID_VIDEO_CODEC \"$file_ident\" 2>$nulfile");
+		$id_vid_form=(split("=",(split("\n",$id_vid_form))[0]))[1];
+		chomp($id_vid_form);
 
-            if ($id_vid_form eq "") {
-                $id_vid_form=smog_system_direct("grep ID_VIDEO_FORMAT \"$file_ident\" 2>$nulfile");
-                $id_vid_form=(split("=",(split("\n",$id_vid_form))[0]))[1];
-                chomp($id_vid_form);
-            }
+		if ($id_vid_form eq "") {
+		    $id_vid_form=smog_system_direct("grep ID_VIDEO_FORMAT \"$file_ident\" 2>$nulfile");
+		    $id_vid_form=(split("=",(split("\n",$id_vid_form))[0]))[1];
+		    chomp($id_vid_form);
+		}
+		
+		if ($id_vid_form eq "") {
+		    $id_vid_form=smog_system_direct("grep VIDEO: \"$file_ident\" 2>$nulfile");
+		    $id_vid_form=(split("  ",(split("\n",$id_vid_form))[0]))[1];
+		    chomp($id_vid_form);
+		}
 
-            if ($id_vid_form eq "") {
-                $id_vid_form=smog_system_direct("grep VIDEO: \"$file_ident\" 2>$nulfile");
-                $id_vid_form=(split("  ",(split("\n",$id_vid_form))[0]))[1];
-                chomp($id_vid_form);
-            }
+	    }
+	    else {
+		$id_vid_form=smog_system_direct("grep -i 'selected video' \"$file_ident\" 2>$nulfile");
+		$id_vid_form=(split("video codec: ",(split("\n",$id_vid_form))[0]))[1];
+		chomp($id_vid_form);
+	    }
+
+
             if (! -f $file_ident) {return;};
 
-            $id_aud_form=smog_system_direct("grep ID_AUDIO_FORMAT \"$file_ident\" 2>$nulfile");
-            $id_aud_form=(split("=",(split("\n",$id_aud_form))[0]))[1];
-            chomp($id_aud_form);
+	    if (!$is_mpv) {
+		$id_aud_form=smog_system_direct("grep ID_AUDIO_FORMAT \"$file_ident\" 2>$nulfile");
+		$id_aud_form=(split("=",(split("\n",$id_aud_form))[0]))[1];
+		chomp($id_aud_form);
 
-            if ($id_aud_form eq "") {
-                $id_aud_form=smog_system_direct("grep AUDIO: \"$file_ident\" 2>$nulfile");
-                $id_aud_form=(split("  ",(split("\n",$id_aud_form))[0]))[1];
-                chomp($id_aud_form);
-            }
+		if ($id_aud_form eq "") {
+		    $id_aud_form=smog_system_direct("grep AUDIO: \"$file_ident\" 2>$nulfile");
+		    $id_aud_form=(split("  ",(split("\n",$id_aud_form))[0]))[1];
+		    chomp($id_aud_form);
+		}
+	    }
+	    else {
+		$id_aud_form=smog_system_direct("grep -i 'selected audio' \"$file_ident\" 2>$nulfile");
+		$id_aud_form=(split("audio codec: ",(split("\n",$id_aud_form))[0]))[1];
+		chomp($id_aud_form);
+	    }
 
             if (! -f $file_ident) {return;};
 
@@ -6994,6 +7021,12 @@ sub get_mplayer_location {
     $mpc=&location("mplayer");
     if ($mpc eq "") {
         $mpc=&location("mplayer2");
+    }
+    if (defined $ALLOW_MPV) {
+	if ($mpc eq "") {
+	    ## experimental
+	    $mpc=&location("mpv");
+	}
     }
     return $mpc;
 }

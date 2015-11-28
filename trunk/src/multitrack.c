@@ -9261,9 +9261,8 @@ boolean multitrack_delete(lives_mt *mt, boolean save_layout) {
   // free lives_mt struct
   int *layout_map;
   double *layout_map_audio=NULL;
-#ifdef ENABLE_OSC
+
   char *tmp;
-#endif
 
   boolean transfer_focus=FALSE;
   boolean needs_idlefunc=FALSE;
@@ -11055,13 +11054,14 @@ static boolean mt_idle_show_current_frame(livespointer mt) {
 
 boolean on_multitrack_activate(LiVESMenuItem *menuitem, weed_plant_t *event_list) {
   //returns TRUE if we go into mt mode
-  int orig_file;
+  lives_mt *multi;
+
+  char *tmp;
+
   boolean response;
   boolean transfer_focus=FALSE;
-#ifdef ENABLE_OSC
-  char *tmp;
-#endif
-  lives_mt *multi;
+
+  int orig_file;
 
   xachans=xarate=xasamps=xse=0;
   ptaud=prefs->mt_pertrack_audio;

@@ -2393,7 +2393,7 @@ if ($file=~/:\/\//) {
                 $bgcolour="#000000";
             }
 
-            $com="$smog_convert_command -size $owidthx$oheight\\! xc:$bgcolour $blankname >$nulfile 2>&1";
+            $com="$smog_convert_command -size $owidth"."x$oheight\\! xc:$bgcolour $blankname >$nulfile 2>&1";
             $smerr=smog_system($com);
             if ($smerr) {
                 sig_system_error("$com",$smerr);
@@ -2678,7 +2678,7 @@ if ($file=~/:\/\//) {
                     $bgcolour="#000000";
                 }
 
-                $com="$smog_convert_command -size $owidthx$oheight\\! xc:$bgcolour $blankname>$nulfile 2>&1";
+                $com="$smog_convert_command -size $owidth"."x$oheight\\! xc:$bgcolour $blankname>$nulfile 2>&1";
                 $smerr=smog_system($com);
                 if ($smerr) {
                     sig_system_error("$com",$smerr);
@@ -2686,8 +2686,6 @@ if ($file=~/:\/\//) {
                     exit 1;
                 }
             }
-
-
 
             while ($newframe!=0) {
                 read IN,$val,4;
@@ -4413,7 +4411,8 @@ sub undo {
     for ($i=$start; $i<=$end; $i++) {
         $name=&mkname($i);
         if (-f "$curtmpdir/$name.bak") {
-            if ($param==0) {
+            if ($param==0 && -f "$curtmpdir/$name$img_ext") {
+		# file may not exist if we are undoing resample for example
                 smog_rename("$curtmpdir/$name$img_ext","$curtmpdir/$name.mgk");
             }
             smog_rename("$curtmpdir/$name.bak","$curtmpdir/$name$img_ext");
@@ -4719,7 +4718,7 @@ sub insert {
                     return if $panic;
             } else {
                 if ($antialias eq "false") {
-                        $com="$smog_convert_command +antialias -size $width"."x$height $img_prefix2\"$fromdir/$from$img_ext2\" -scale $widthx$height\\! $img_prefix\"$curtmpdir/$to$img_ext\" >$nulfile 2>&1";
+                        $com="$smog_convert_command +antialias -size $width"."x$height $img_prefix2\"$fromdir/$from$img_ext2\" -scale $width"."x$height\\! $img_prefix\"$curtmpdir/$to$img_ext\" >$nulfile 2>&1";
                         $smerr=smog_system($com);
                         if ($smerr) {
                             sig_system_error("$com",$smerr);
@@ -4727,7 +4726,7 @@ sub insert {
                             return;
                         }
                     } else {
-                        $com="$smog_convert_command -antialias -size $width"."x$height $img_prefix2\"$fromdir/$from$img_ext2\" -scale $widthx$height\\! $img_prefix\"$curtmpdir/$to$img_ext\" >$nulfile 2>&1";
+                        $com="$smog_convert_command -antialias -size $width"."x$height $img_prefix2\"$fromdir/$from$img_ext2\" -scale $width"."x$height\\! $img_prefix\"$curtmpdir/$to$img_ext\" >$nulfile 2>&1";
                         $smerr=smog_system($com);
                         if ($smerr) {
                             sig_system_error("$com",$smerr);
@@ -4785,10 +4784,11 @@ sub resize_frame {
 # TODO ****  !!! provide alternate if imagemagick is not available
 
     if ($antialias eq "false") {
-        $com="$smog_convert_command +antialias -size $width"."x$height $input_prefix\"$name$input_ext\" -scale $widthx$height\\! $resize_prefix\"$name$resize_ext\" >$nulfile 2>&1";
+        $com="$smog_convert_command +antialias -size $width"."x$height $input_prefix\"$name$input_ext\" -scale $width"."x$height\\! $resize_prefix\"$name$resize_ext\" >$nulfile 2>&1";
     } else {
-        $com="$smog_convert_command -size $width"."x$height $input_prefix\"$name$input_ext\" -resize $widthx$height\\! $resize_prefix\"$name$resize_ext\" >$nulfile 2>&1";
+        $com="$smog_convert_command -size $width"."x$height $input_prefix\"$name$input_ext\" -resize $width"."x$height\\! $resize_prefix\"$name$resize_ext\" >$nulfile 2>&1";
     }
+
     $smerr=smog_system($com);
     if ($smerr) {
         sig_system_error("$com",$smerr);
@@ -4817,7 +4817,7 @@ sub letterbox_frame {
 #must unlink first in case $to is a symlink (when saving selection)
     unlink "$to";
 
-    $com="$smog_composite_command -compose plus -dissolve 100 -geometry $iwidthx$iheight\\!+$xstart\\!+$ystart\\! \"$from\" $blankname \"$to\" >$nulfile 2>&1";
+    $com="$smog_composite_command -compose plus -dissolve 100 -geometry $iwidth"."x$iheight\\!+$xstart\\!+$ystart\\! \"$from\" $blankname \"$to\" >$nulfile 2>&1";
     $smerr=smog_system($com);
     if ($smerr) {
         sig_system_error("$com",$smerr);
@@ -4884,9 +4884,9 @@ sub zoom_frame {
     my($nheight)=$bottom-$top+1;
 
     if ($antialias eq "false") {
-        $com="$smog_convert_command -antialias -size $width"."x$height $input_prefix\"$name$input_ext\" -crop $nwidthx$nheight\\!+$left\\!+$top\\! -resize $widthx$height\\! $resize_prefix\"$name$resize_ext\" >$nulfile 2>&1";
+        $com="$smog_convert_command -antialias -size $width"."x$height $input_prefix\"$name$input_ext\" -crop $nwidth"."x$nheight\\!+$left\\!+$top\\! -resize $width"."x$height\\! $resize_prefix\"$name$resize_ext\" >$nulfile 2>&1";
     } else {
-        $com="$smog_convert_command +antialias -size $width"."x$height $input_prefix\"$name$input_ext\" -crop $nwidthx$nheight\\!+$left\\!+$top\\! -resize $widthx$height\\! $resize_prefix\"$name$resize_ext\" >$nulfile 2>&1";
+        $com="$smog_convert_command +antialias -size $width"."x$height $input_prefix\"$name$input_ext\" -crop $nwidth"."x$nheight\\!+$left\\!+$top\\! -resize $width"."x$height\\! $resize_prefix\"$name$resize_ext\" >$nulfile 2>&1";
     }
 
     $smerror=smog_system($com);
@@ -4916,9 +4916,9 @@ sub trim_frame {
         $antialias="false";
     }
     if ($antialias eq "false") {
-        $com="$smog_convert_command +antialias -size $width"."x$height $input_prefix\"$name$input_ext\" -crop $nwidthx$nheight\\!+$x\\!+$y\\! $resize_prefix\"$name$resize_ext\" >$nulfile 2>&1";
+        $com="$smog_convert_command +antialias -size $width"."x$height $input_prefix\"$name$input_ext\" -crop $nwidth"."x$nheight\\!+$x\\!+$y\\! $resize_prefix\"$name$resize_ext\" >$nulfile 2>&1";
     } else {
-        $com="$smog_convert_command -antialias -size $width"."x$height $input_prefix\"$name$input_ext\" -crop $nwidthx$nheight\\!+$x\\!+$y\\! $resize_prefix\"$name$resize_ext\" >$nulfile 2>&1";
+        $com="$smog_convert_command -antialias -size $width"."x$height $input_prefix\"$name$input_ext\" -crop $nwidth"."x$nheight\\!+$x\\!+$y\\! $resize_prefix\"$name$resize_ext\" >$nulfile 2>&1";
     }
 
     $smerror=smog_system($com);

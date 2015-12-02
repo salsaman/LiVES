@@ -29,6 +29,7 @@
 #0.98 checked handling for "," radix (thanks Doug)
 #0.99 Allow selection of aspect ratio for custom2 format (Doug).
 #1.0 use --no-constraints, optimise for multi-cpus (salsaman)
+#1.1 fix error in framerate for vcd-ntsc
 
 # TODO:
 # check all formats for aspect ratios, block sizes and frame rates
@@ -55,7 +56,7 @@ my $tmpaud="tmpaud.mpa";
 
 
 if ($command eq "version") {
-    print "mjpegtools encoder plugin v1.0\n";
+    print "mjpegtools encoder plugin v1.1\n";
     exit 0;
 }
 
@@ -128,7 +129,7 @@ if ($command eq "get_formats") {
 
     #vcd
     print "vcd_pal|vcd (PAL)|4|arate=32000;44100;48000,fps=25,aspect=1:1;4:3;16:9;2.21:1,hblock=16,vblock=16|mpg|\n";
-    print "vcd_ntsc|vcd (NTSC)|4|arate=32000;44100;48000,fps=30000:10001,aspect=1:1;4:3;16:9;2.21:1,hblock=16,vblock=16|mpg|\n";
+    print "vcd_ntsc|vcd (NTSC)|4|arate=32000;44100;48000,fps=30000:1001,aspect=1:1;4:3;16:9;2.21:1,hblock=16,vblock=16|mpg|\n";
 
     #svcd
     print "svcd_pal|svcd (PAL)|4|arate=32000;44100;48000,fps=25,aspect=1:1;4:3;16:9;2.21:1,hblock=16,vblock=16|mpg|\n";

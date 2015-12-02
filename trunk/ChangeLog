@@ -1,5 +1,5 @@
-Version 2.4.5
--------------
+Version 2.4.5 (2 December 2015)
+-------------------------------
 Fix for undo after downsampling video (regression).
 Fix regression in resizing when encoding.
 Set default encoder to multi_encoder3 if python version >= 3.

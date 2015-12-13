@@ -471,8 +471,12 @@ lives_painter_format_t lives_painter_image_surface_get_format(lives_painter_surf
 
 LIVES_INLINE boolean lives_mem_set_vtable(LiVESMemVTable *alt_vtable) {
 #ifdef GUI_GTK
+#if GTK_CHECK_VERSION(3,0,0)
+  return FALSE;
+#else
   g_mem_set_vtable(alt_vtable);
   return TRUE;
+#endif
 #endif
 
 #ifdef GUI_QT
@@ -812,7 +816,14 @@ LIVES_INLINE boolean lives_xwindow_process_all_updates() {
 
 LIVES_INLINE boolean lives_widget_reparent(LiVESWidget *widget, LiVESWidget *new_parent) {
 #ifdef GUI_GTK
+#if GTK_CHECK_VERSION(3,14,0)
+  g_object_ref(widget);
+  gtk_container_remove(GTK_CONTAINER(gtk_widget_get_parent(widget)),widget);
+  gtk_container_add(GTK_CONTAINER(new_parent),widget);
+  g_object_unref(widget);
+#else
   gtk_widget_reparent(widget,new_parent);
+#endif
   return TRUE;
 #endif
 #ifdef GUI_QT
@@ -8300,7 +8311,11 @@ void hide_cursor(LiVESXWindow *window) {
 
 #if GTK_CHECK_VERSION(2,16,0)
   if (GDK_IS_WINDOW(window)) {
+#if GTK_CHECK_VERSION(3,16,0)
+    GdkCursor *cursor=gdk_cursor_new_for_display(gdk_window_get_display(window),GDK_BLANK_CURSOR);
+#else
     GdkCursor *cursor=gdk_cursor_new(GDK_BLANK_CURSOR);
+#endif
     gdk_window_set_cursor(window,cursor);
     lives_cursor_unref(cursor);
   }

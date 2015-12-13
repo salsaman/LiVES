@@ -47,7 +47,7 @@ static inline uint32_t fastrand(void) {
 }
 
 
-inline int pick_direction(weed_timecode_t tc) {
+static inline int pick_direction(weed_timecode_t tc) {
   fastrand_val=tc&0xFFFFFFFF;
   return ((fastrand()>>24)&0x03)+1;
 }

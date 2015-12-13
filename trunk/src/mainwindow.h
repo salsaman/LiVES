@@ -985,13 +985,10 @@ typedef struct {
   double rec_avel;
   double rec_aseek;
 
-  livespointer do_not_free; ///< mess with memory so that lives_object_unref can be forced not to free() the pixel_data
   LiVESMemVTable alt_vtable;
-  void (* free_fn)(livespointer);
 
   pthread_mutex_t gtk_mutex;  ///< gtk drawing mutex - no longer used
   pthread_mutex_t interp_mutex;  ///< interpolation mutex - parameter interpolation must be single threaded
-  pthread_mutex_t free_fn_mutex; ///< stop threads squelching each others free_fns
 
   pthread_mutex_t abuf_mutex;  ///< used to synch audio buffer request count - shared between audio and video threads
   pthread_mutex_t abuf_frame_mutex;  ///< used to synch audio buffer for generators

@@ -95,6 +95,18 @@ oil_LIBFLAGS = @OIL_LIBS@ -loil-0.3
 endif
 oil_CFLAGS =  @OIL_CFLAGS@ -DENABLE_OIL=1
 
+else
+
+if ENABLE_LIBORC
+if IS_MINGW
+oil_LIBFLAGS = @ORC_LIBS@
+else
+oil_LIBFLAGS = @ORC_LIBS@ -lorc-0.4
+endif
+oil_CFLAGS =  @ORC_CFLAGS@ -DENABLE_ORC=1
+endif
+
+
 endif
 
 

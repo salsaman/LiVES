@@ -391,18 +391,19 @@ static boolean pre_init(void) {
   mainw=(mainwindow *)(calloc(1,sizeof(mainwindow))); // must not use lives_malloc() yet !
   mainw->is_ready=mainw->fatal=FALSE;
 
-  mainw->free_fn=_lives_free_normal;
-  mainw->do_not_free=NULL;
 
+  // TODO : deprecated in gtk+ 3.16+
   mainw->alt_vtable.malloc=_lives_malloc;
   mainw->alt_vtable.realloc=_lives_realloc;
-  mainw->alt_vtable.free=_lives_free;  ///< wrapper for mainw->free_fn
+  mainw->alt_vtable.free=_lives_free;
   mainw->alt_vtable.calloc=NULL;
   mainw->alt_vtable.try_malloc=NULL;
   mainw->alt_vtable.try_realloc=NULL;
 
   lives_mem_set_vtable(&mainw->alt_vtable);
 
+
+  
   prefs=(_prefs *)lives_malloc(sizeof(_prefs));
   future_prefs=(_future_prefs *)lives_malloc(sizeof(_future_prefs));
 
@@ -424,8 +425,6 @@ static boolean pre_init(void) {
   pthread_mutex_init(&mainw->event_list_mutex,NULL);
 
   pthread_mutex_init(&mainw->clip_list_mutex,NULL);
-
-  pthread_mutex_init(&mainw->free_fn_mutex,NULL);
 
   for (i=0; i<FX_KEYS_MAX; i++) {
     pthread_mutex_init(&mainw->data_mutex[i],&mattr); // because audio filters can enable/disable video filters and vice-versa
@@ -2877,6 +2876,10 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
   oil_init();
 #endif
 
+#ifdef ENABLE_ORC
+  orc_init();
+#endif
+
   zargc=argc;
   zargv=argv;
 
@@ -2914,7 +2917,7 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
 #ifdef GUI_GTK
 #ifdef LIVES_NO_DEBUG
   // don't crash on GTK+ fatals
-  g_log_set_always_fatal((GLogLevelFlags)0);
+  //g_log_set_always_fatal((GLogLevelFlags)0);
 #endif
 
   g_log_set_default_handler(lives_log_handler,NULL);
@@ -4447,7 +4450,6 @@ static boolean weed_layer_new_from_file_progressive(weed_plant_t *layer,
 
 
   LiVESPixbuf *pixbuf=NULL;
-  boolean do_not_free=TRUE;
 
 #ifndef NO_PROG_LOAD
 #ifdef GUI_GTK
@@ -4532,21 +4534,7 @@ static boolean weed_layer_new_from_file_progressive(weed_plant_t *layer,
     weed_set_int_value(layer,"current_palette",WEED_PALETTE_RGBA32);
   } else weed_set_int_value(layer,"current_palette",WEED_PALETTE_RGB24);
 
-
-  do_not_free=pixbuf_to_layer(layer,pixbuf);
-
-
-  // might be threaded here so we need a mutex to stop other thread resetting free_fn
-  pthread_mutex_lock(&mainw->free_fn_mutex);
-  if (do_not_free) {
-    mainw->do_not_free=(livespointer)lives_pixbuf_get_pixels_readonly(pixbuf);
-    mainw->free_fn=_lives_free_with_check;
-  }
-
-  if (pixbuf!=NULL) lives_object_unref(pixbuf);
-  mainw->do_not_free=NULL;
-  mainw->free_fn=_lives_free_normal;
-  pthread_mutex_unlock(&mainw->free_fn_mutex);
+  if (!pixbuf_to_layer(layer,pixbuf)) lives_object_unref(pixbuf);
 
   return TRUE;
 

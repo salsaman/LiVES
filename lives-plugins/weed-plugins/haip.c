@@ -117,7 +117,7 @@ int haip_deinit(weed_plant_t *inst) {
 }
 
 
-inline int calc_luma(unsigned char *pt) {
+static inline int calc_luma(unsigned char *pt) {
   return (Y_R[pt[0]]+Y_G[pt[1]]+Y_B[pt[2]])>>8;
 }
 

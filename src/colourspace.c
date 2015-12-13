@@ -7319,6 +7319,8 @@ void create_empty_pixel_data(weed_plant_t *layer, boolean black_fill, boolean ma
   weed_set_voidptr_value(layer,"pixel_data", NULL);
   if (weed_plant_has_leaf(layer,"host_pixel_data_contiguous"))
     weed_leaf_delete(layer,"host_pixel_data_contiguous");
+  if (weed_plant_has_leaf(layer,"host_pixbuf_src"))
+    weed_leaf_delete(layer,"host_pixbuf_src");
 
   if (black_fill) {
     if (weed_plant_has_leaf(layer,"YUV_clamping")) clamping=weed_get_int_value(layer,"YUV_clamping",&error);
@@ -8901,10 +8903,17 @@ boolean convert_layer_palette_full(weed_plant_t *layer, int outpl, int osamtype,
       return FALSE;
     }
     if (gusrc_array!=NULL) {
-      if (gusrc_array[0]!=NULL) lives_free(gusrc_array[0]);
-      if (!contig) {
-        lives_free(gusrc_array[1]);
-        lives_free(gusrc_array[2]);
+      if (weed_plant_has_leaf(layer,"host_pixbuf_src")&&weed_get_boolean_value(layer,"host_pixbuf_src",&error)==WEED_TRUE) {
+	LiVESPixbuf *pixbuf=(LiVESPixbuf *)weed_get_voidptr_value(layer,"host_pixbuf_src",&error);
+	weed_leaf_delete(layer,"host_pixbuf_src");
+	lives_object_unref(pixbuf);
+      }
+      else {
+	if (gusrc_array[0]!=NULL) lives_free(gusrc_array[0]);
+	if (!contig) {
+	  lives_free(gusrc_array[1]);
+	  lives_free(gusrc_array[2]);
+	}
       }
       lives_free(gusrc_array);
     }
@@ -9015,11 +9024,18 @@ boolean convert_layer_palette_full(weed_plant_t *layer, int outpl, int osamtype,
       return FALSE;
     }
     if (gusrc_array!=NULL) {
-      if (gusrc_array[0]!=NULL) lives_free(gusrc_array[0]);
-      if (!contig) {
-        lives_free(gusrc_array[1]);
-        lives_free(gusrc_array[2]);
-        lives_free(gusrc_array[3]);
+      if (weed_plant_has_leaf(layer,"host_pixbuf_src")&&weed_get_boolean_value(layer,"host_pixbuf_src",&error)==WEED_TRUE) {
+	LiVESPixbuf *pixbuf=(LiVESPixbuf *)weed_get_voidptr_value(layer,"host_pixbuf_src",&error);
+	weed_leaf_delete(layer,"host_pixbuf_src");
+	lives_object_unref(pixbuf);
+      }
+      else {
+	if (gusrc_array[0]!=NULL) lives_free(gusrc_array[0]);
+	if (!contig) {
+	  lives_free(gusrc_array[1]);
+	  lives_free(gusrc_array[2]);
+	  lives_free(gusrc_array[3]);
+	}
       }
       lives_free(gusrc_array);
     }
@@ -9586,10 +9602,17 @@ boolean convert_layer_palette_full(weed_plant_t *layer, int outpl, int osamtype,
       return FALSE;
     }
     if (gusrc_array!=NULL) {
-      if (gusrc_array[0]!=NULL) lives_free(gusrc_array[0]);
-      if (!contig) {
-        lives_free(gusrc_array[1]);
-        lives_free(gusrc_array[2]);
+      if (weed_plant_has_leaf(layer,"host_pixbuf_src")&&weed_get_boolean_value(layer,"host_pixbuf_src",&error)==WEED_TRUE) {
+	LiVESPixbuf *pixbuf=(LiVESPixbuf *)weed_get_voidptr_value(layer,"host_pixbuf_src",&error);
+	weed_leaf_delete(layer,"host_pixbuf_src");
+	lives_object_unref(pixbuf);
+      }
+      else {
+	if (gusrc_array[0]!=NULL) lives_free(gusrc_array[0]);
+	if (!contig) {
+	  lives_free(gusrc_array[1]);
+	  lives_free(gusrc_array[2]);
+	}
       }
       lives_free(gusrc_array);
 
@@ -9709,10 +9732,17 @@ boolean convert_layer_palette_full(weed_plant_t *layer, int outpl, int osamtype,
       return FALSE;
     }
     if (gusrc_array!=NULL) {
-      if (gusrc_array[0]!=NULL) lives_free(gusrc_array[0]);
-      if (!contig) {
-        lives_free(gusrc_array[1]);
-        lives_free(gusrc_array[2]);
+      if (weed_plant_has_leaf(layer,"host_pixbuf_src")&&weed_get_boolean_value(layer,"host_pixbuf_src",&error)==WEED_TRUE) {
+	LiVESPixbuf *pixbuf=(LiVESPixbuf *)weed_get_voidptr_value(layer,"host_pixbuf_src",&error);
+	weed_leaf_delete(layer,"host_pixbuf_src");
+	lives_object_unref(pixbuf);
+      }
+      else {
+	if (gusrc_array[0]!=NULL) lives_free(gusrc_array[0]);
+	if (!contig) {
+	  lives_free(gusrc_array[1]);
+	  lives_free(gusrc_array[2]);
+	}
       }
       lives_free(gusrc_array);
     }
@@ -9839,8 +9869,16 @@ boolean convert_layer_palette_full(weed_plant_t *layer, int outpl, int osamtype,
                    weed_palette_get_name(outpl));
     return FALSE;
   }
-  if (gusrc!=NULL) lives_free(gusrc);
-
+  if (gusrc!=NULL) {
+    if (weed_plant_has_leaf(layer,"host_pixbuf_src")&&weed_get_boolean_value(layer,"host_pixbuf_src",&error)==WEED_TRUE) {
+      LiVESPixbuf *pixbuf=(LiVESPixbuf *)weed_get_voidptr_value(layer,"host_pixbuf_src",&error);
+      weed_leaf_delete(layer,"host_pixbuf_src");
+      lives_object_unref(pixbuf);
+    }
+    else {
+      lives_free(gusrc);
+    }
+  }
 
   if (weed_palette_is_rgb_palette(outpl)) {
     weed_leaf_delete(layer,"YUV_clamping");
@@ -9919,12 +9957,12 @@ LiVESPixbuf *lives_pixbuf_new_blank(int width, int height, int palette) {
 
 
 
-static LIVES_INLINE LiVESPixbuf *lives_pixbuf_cheat(boolean has_alpha,
-    int width, int height, uint8_t *buf) {
+static LIVES_INLINE LiVESPixbuf *lives_pixbuf_cheat(boolean has_alpha, int width, int height, uint8_t *buf) {
   // we can cheat if our buffer is correctly sized
   LiVESPixbuf *pixbuf;
   int channels=has_alpha?4:3;
   int rowstride=get_rowstride_value(width*channels);
+
   pixbuf=lives_pixbuf_new_from_data(buf, has_alpha, width, height, rowstride,
                                     (LiVESPixbufDestroyNotify)lives_free_buffer, NULL);
   threaded_dialog_spin();
@@ -9943,7 +9981,7 @@ LiVESPixbuf *layer_to_pixbuf(weed_plant_t *layer) {
   int height;
   int irowstride;
   int rowstride,orowstride;
-  uint8_t *pixel_data,*pixels,*end,*orig_pixel_data;
+  uint8_t *pixel_data,*pixels,*end;
   boolean cheat=FALSE,done;
   int n_channels;
 
@@ -9953,8 +9991,9 @@ LiVESPixbuf *layer_to_pixbuf(weed_plant_t *layer) {
   width=weed_get_int_value(layer,"width",&error);
   height=weed_get_int_value(layer,"height",&error);
   irowstride=weed_get_int_value(layer,"rowstrides",&error);
-  orig_pixel_data=pixel_data=(uint8_t *)weed_get_voidptr_value(layer,"pixel_data",&error);
 
+  pixel_data=weed_get_voidptr_value(layer,"pixel_data",&error);
+  
   do {
     done=TRUE;
     switch (palette) {
@@ -10019,11 +10058,8 @@ LiVESPixbuf *layer_to_pixbuf(weed_plant_t *layer) {
       if (rowstride<orowstride) memset(pixels+rowstride,0,orowstride-rowstride);
       pixel_data+=irowstride;
     }
-    if (!weed_plant_has_leaf(layer,"host_orig_pdata") || weed_get_boolean_value(layer,"host_orig_pdata",&error)==WEED_FALSE) {
-      // host_orig_pdata is set if this is an alpha channel we "stole" from another layer
-      lives_free(orig_pixel_data);
-    }
-    pixel_data=NULL;
+
+    weed_layer_pixel_data_free(layer);
 
     // indicates that the pixel data was copied, not shared
     weed_set_voidptr_value(layer,"pixel_data",NULL);
@@ -10451,6 +10487,7 @@ boolean resize_layer(weed_plant_t *layer, int width, int height, LiVESInterpType
 
     if (!keep_in_pixel_data) {
       for (i=0; i<weed_palette_get_numplanes(palette); i++) {
+	// TODO : pixbuf clear
         lives_free(in_pixel_data[i]);
         if (is_contiguous) break;
       }
@@ -10489,20 +10526,10 @@ boolean resize_layer(weed_plant_t *layer, int width, int height, LiVESInterpType
       weed_set_int_value(layer,"rowstrides",lives_pixbuf_get_rowstride(new_pixbuf));
     }
 
-    // might be threaded here so we need a mutex to stop other thread resetting free_fn
-    pthread_mutex_lock(&mainw->free_fn_mutex);
-
     if (weed_get_voidptr_value(layer,"pixel_data",&error)!=NULL && keep_in_pixel_data) {
-      // we created a shared layer/pixbuf, and we need to preserve the data
-      mainw->do_not_free=(livespointer)lives_pixbuf_get_pixels_readonly(pixbuf);
-      mainw->free_fn=_lives_free_with_check;
+      ;; // TODO - check this
     }
-
-    lives_object_unref(pixbuf);
-    mainw->do_not_free=NULL;
-    mainw->free_fn=_lives_free_normal;
-
-    pthread_mutex_unlock(&mainw->free_fn_mutex);
+    else lives_object_unref(pixbuf);
 
     break;
   default:
@@ -10520,21 +10547,9 @@ boolean resize_layer(weed_plant_t *layer, int width, int height, LiVESInterpType
       weed_leaf_delete(layer,"host_orig_pdata");
   }
 
-  // might be threaded here so we need a mutex to stop other thread resetting free_fn
-  pthread_mutex_lock(&mainw->free_fn_mutex);
-
   if (new_pixbuf!=NULL) {
-    if (pixbuf_to_layer(layer,new_pixbuf)) {
-      // TODO - for QImage, cast to parent class and use parent destructor
-      mainw->do_not_free=(livespointer)lives_pixbuf_get_pixels_readonly(new_pixbuf);
-      mainw->free_fn=_lives_free_with_check;
-    }
-    lives_object_unref(new_pixbuf);
-    mainw->do_not_free=NULL;
-    mainw->free_fn=_lives_free_normal;
+    if (!pixbuf_to_layer(layer,new_pixbuf)) lives_object_unref(new_pixbuf);
   }
-
-  pthread_mutex_unlock(&mainw->free_fn_mutex);
 
   return retval;
 }
@@ -10592,6 +10607,7 @@ void letterbox_layer(weed_plant_t *layer, int width, int height, int nwidth, int
     nplanes=1;
 
   if (nwidth<width||nheight<height) {
+    // TODO : pixbuf clear
     for (i=0; i<nplanes; i++) free(new_pixel_data[i]);
     lives_free(new_pixel_data);
     weed_set_voidptr_array(layer,"pixel_data",nplanes,pixel_data);
@@ -10816,6 +10832,7 @@ void letterbox_layer(weed_plant_t *layer, int width, int height, int nwidth, int
   }
 
   for (i=0; i<nplanes; i++) if (pixel_data[i]!=NULL) lives_free(pixel_data[i]);
+  // TODO : pixbuf clear
 
   lives_free(pixel_data);
   lives_free(new_pixel_data);
@@ -10835,31 +10852,25 @@ boolean pixbuf_to_layer(weed_plant_t *layer, LiVESPixbuf *pixbuf) {
   // e.g.: memory may need aligning afterwards for particular plugins which set channel template flags:
   // memory may need aligning, layer palette may need changing, layer may need resizing
 
-  // return TRUE if we can use the original pixbuf pixels; in this case the pixbuf pixels should not be free()d !
+  // return TRUE if we can use the original pixbuf pixels; in this case the pixbuf pixels should only be freed via lives_layer_pixel_data_free()
   // see code example.
 
 
   /* code example:
 
-  boolean needs_unlock=FALSE;
-
   if (pixbuf!=NULL) {
-    if (pixbuf_to_layer(layer,pixbuf)) {
-      mainw->do_not_free=(livespointer)lives_pixbuf_get_pixels_readonly(pixbuf);
-      pthread_mutex_lock(&mainw->free_fn_mutex);
-      needs_unlock=TRUE;
-      mainw->free_fn=_lives_free_with_check;
-    }
-    lives_object_unref(pixbuf);
-    mainw->do_not_free=NULL;
-    mainw->free_fn=_lives_free_normal;
-    if (needs_unlock) pthread_mutex_unlock(&mainw->free_fn_mutex);
-
+    if (!pixbuf_to_layer(layer,pixbuf)) lives_object_unref(pixbuf);
+    else ;// do NOT destroy pixbuf !!!!
   }
+
+  // do something...
+
+  weed_layer_pixel_data_free(layer);
 
 
   */
 
+  
   int rowstride;
   int width;
   int height;
@@ -10886,6 +10897,8 @@ boolean pixbuf_to_layer(weed_plant_t *layer, LiVESPixbuf *pixbuf) {
   weed_set_int_value(layer,"height",height);
   weed_set_int_value(layer,"rowstrides",rowstride);
 
+  weed_leaf_delete(layer,"host_pixbuf_src");
+  
   if (!weed_plant_has_leaf(layer,"current_palette")) {
 #ifdef GUI_GTK
     if (nchannels==4) weed_set_int_value(layer,"current_palette",WEED_PALETTE_RGBA32);
@@ -10908,6 +10921,7 @@ boolean pixbuf_to_layer(weed_plant_t *layer, LiVESPixbuf *pixbuf) {
   if (rowstride==get_last_rowstride_value(width,nchannels)) {
     in_pixel_data=(void *)lives_pixbuf_get_pixels(pixbuf);
     weed_set_voidptr_value(layer,"pixel_data",in_pixel_data);
+    weed_set_boolean_value(layer,"host_pixbuf_src",WEED_TRUE);
     return TRUE;
   }
 #endif
@@ -11214,6 +11228,17 @@ weed_plant_t *weed_layer_copy(weed_plant_t *dlayer, weed_plant_t *slayer) {
 
 
 void weed_layer_pixel_data_free(weed_plant_t *layer) {
+  // free pixel_data from layer
+  // we do not free if "host_orig_pdata" is set (data is an alpha in which "belongs" to another out param)
+
+  // take care of "host_pixel_data_contiguous"
+  // take care of "host_pixbuf_src"
+
+  // sets "pixel_data" to NULL for the layer
+
+  // this should almost ALWAYS be used to free "pixel_data"
+
+  
   void **pixel_data;
 
   int error;
@@ -11240,9 +11265,16 @@ void weed_layer_pixel_data_free(weed_plant_t *layer) {
           weed_leaf_delete(layer,"host_pixel_data_contiguous");
         }
 
-        for (i=0; i<pd_elements; i++) {
-          if (pixel_data[i]!=NULL) lives_free(pixel_data[i]);
-        }
+	if (weed_plant_has_leaf(layer,"host_pixbuf_src")&&weed_get_boolean_value(layer,"host_pixbuf_src",&error)==WEED_TRUE) {
+	  LiVESPixbuf *pixbuf=(LiVESPixbuf *)weed_get_voidptr_value(layer,"host_pixbuf_src",&error);
+	  weed_leaf_delete(layer,"host_pixbuf_src");
+	  if (pixbuf!=NULL) lives_object_unref(pixbuf);
+	}
+	else {
+	  for (i=0; i<pd_elements; i++) {
+	    if (pixel_data[i]!=NULL) lives_free(pixel_data[i]);
+	  }
+	}
 
         lives_free(pixel_data);
         weed_set_voidptr_value(layer,"pixel_data",NULL);
@@ -11252,7 +11284,6 @@ void weed_layer_pixel_data_free(weed_plant_t *layer) {
 }
 
 void weed_layer_free(weed_plant_t *layer) {
-
   if (layer==NULL) return;
   weed_layer_pixel_data_free(layer);
   weed_plant_free(layer);

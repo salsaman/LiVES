@@ -817,6 +817,8 @@ AM_CONDITIONAL(HAVE_PROJECTM,$HAVE_PROJECTM)
 
 
 HAVE_LIBOIL=false
+HAVE_LIBORC=false
+
 AC_ARG_ENABLE( liboil, [  --disable-liboil     Disable liboil support.] , disable_liboil=yes)
 if test "x$disable_liboil" != "xyes" ; then
 
@@ -824,10 +826,21 @@ dnl check for liboil
 PKG_CHECK_MODULES(OIL,liboil-0.3 >= 0.3.9,HAVE_LIBOIL=true,HAVE_LIBOIL=false)
 AC_SUBST(OIL_CFLAGS)
 AC_SUBST(OIL_LIBS)
+
+if test "$HAVE_LIBOIL" = "false"; then
+PKG_CHECK_MODULES(ORC,orc-0.4,HAVE_LIBORC=true,HAVE_LIBORC=false)
+AC_SUBST(ORC_CFLAGS)
+AC_SUBST(ORC_LIBS)
+fi
+
+
 fi
 
 AM_CONDITIONAL(HAVE_LIBOIL,$HAVE_LIBOIL)
 AM_CONDITIONAL(ENABLE_LIBOIL,$HAVE_LIBOIL)
+
+AM_CONDITIONAL(HAVE_LIBORC,$HAVE_LIBORC)
+AM_CONDITIONAL(ENABLE_LIBORC,$HAVE_LIBORC)
 
 
 

@@ -312,6 +312,12 @@ typedef GdkDeviceManager                  LiVESXDeviceManager;
 
 #define LIVES_WIDGET_OBJECT(a) G_OBJECT(a)
 
+#if GTK_CHECK_VERSION(3,0,0)
+#define NO_MEM_OVERRIDE TRUE
+#else
+#define NO_MEM_OVERRIDE g_mem_is_system_malloc()
+#endif
+
 typedef GMemVTable LiVESMemVTable;
 typedef GIOChannel LiVESIOChannel;
 

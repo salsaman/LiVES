@@ -5971,7 +5971,7 @@ void on_fs_preview_clicked(LiVESWidget *widget, livespointer user_data) {
   if (!(height*width)) {
     // media preview
 
-    if (!capable->has_mplayer&&!capable->has_mplayer2||capable->has_mpv) {
+    if (!capable->has_mplayer&&!(capable->has_mplayer2||capable->has_mpv)) {
       char *msg;
       if (capable->has_identify) {
         msg=lives_strdup(_("\n\nYou need to install mplayer or mplayer2 to be able to preview this file.\n"));

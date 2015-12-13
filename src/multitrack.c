@@ -12990,6 +12990,7 @@ void polymorph(lives_mt *mt, lives_mt_poly_state_t poly) {
 
             num_in_tracks=0;
             is_input=FALSE;
+	    fromtrack=-1;
             if (weed_plant_has_leaf(init_event,"in_tracks")) {
               num_in_tracks=weed_leaf_num_elements(init_event,"in_tracks");
               if (num_in_tracks>0) {
@@ -20408,7 +20409,7 @@ boolean event_list_rectify(lives_mt *mt, weed_plant_t *event_list) {
     if ((ev_count%100)==0) threaded_dialog_spin();
 
 
-    if (!weed_get_plant_type(event)==WEED_PLANT_EVENT) {
+    if (weed_get_plant_type(event)!=WEED_PLANT_EVENT) {
       ebuf=rec_error_add(ebuf,"Invalid plant type",weed_get_plant_type(event),tc);
       delete_event(event_list,event);
       event=event_next;

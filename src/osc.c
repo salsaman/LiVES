@@ -6660,7 +6660,7 @@ boolean lives_osc_cb_open_file(void *context, int arglen, const void *vargs, OSC
 boolean lives_osc_cb_open_unicap(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
 #ifdef HAVE_UNICAP
   char devname[OSC_STRING_SIZE];
-  int deint;
+  int deint=FALSE;
 
   char *boolstr;
 

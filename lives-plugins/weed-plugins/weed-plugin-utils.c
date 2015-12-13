@@ -62,7 +62,7 @@
 
 
 ///////////////////////////////////////////////////////////
-inline int _leaf_exists(weed_plant_t *plant, const char *key) {
+static inline int _leaf_exists(weed_plant_t *plant, const char *key) {
   if (weed_leaf_get(plant,key,0,NULL)==WEED_ERROR_NOSUCH_LEAF) return 0;
   return 1;
 }

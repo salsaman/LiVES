@@ -240,6 +240,10 @@ typedef int lives_pgid_t;
 #define HAVE_YUV4MPEG
 #endif
 
+#ifdef ENABLE_ORC
+#include <orc/orc.h>
+#endif
+
 #ifdef ENABLE_OIL
 #include <liboil/liboil.h>
 #endif
@@ -1300,10 +1304,6 @@ void _lives_free(livespointer ptr); ///< calls mainw->free_fn
 livespointer lives_calloc(size_t n_blocks, size_t n_block_bytes);
 livespointer _lives_realloc(livespointer ptr, size_t new_size);
 
-
-/// values of mainw->free_fn
-void _lives_free_normal(livespointer ptr);
-void _lives_free_with_check(livespointer ptr); ///< checks if ptr is mainw->do_not_free, otherwise calls lives_free_normal()
 
 // pangotext.c
 boolean subtitles_init(lives_clip_t *sfile, char *fname, lives_subtitle_type_t);

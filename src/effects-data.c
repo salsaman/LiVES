@@ -4734,7 +4734,10 @@ LiVESWidget *make_datacon_window(int key, int mode) {
     conxw.dispc=(int *)lives_malloc(conxw.num_alpha*sizint);
 
     conxw.acbutton = lives_button_new_with_mnemonic(_("Auto Connect Channels"));
-    lives_box_pack_start(LIVES_BOX(abox), conxw.acbutton, FALSE, FALSE, widget_opts.packing_width);
+
+    lives_dialog_add_action_widget(LIVES_DIALOG(conxw.conx_dialog), conxw.acbutton, LIVES_RESPONSE_NONE);
+    lives_container_set_border_width(LIVES_CONTAINER(conxw.acbutton), widget_opts.border_width);
+
     lives_widget_set_sensitive(conxw.acbutton,FALSE);
 
     lives_signal_connect(LIVES_GUI_OBJECT(conxw.acbutton), LIVES_WIDGET_CLICKED_SIGNAL,
@@ -4746,7 +4749,9 @@ LiVESWidget *make_datacon_window(int key, int mode) {
 
   if (conxw.num_params>EXTRA_PARAMS_OUT) {
     conxw.apbutton = lives_button_new_with_mnemonic(_("Auto Connect Parameters"));
-    lives_box_pack_start(LIVES_BOX(abox), conxw.apbutton, FALSE, FALSE, widget_opts.packing_width);
+    lives_dialog_add_action_widget(LIVES_DIALOG(conxw.conx_dialog), conxw.apbutton, LIVES_RESPONSE_NONE);
+    lives_container_set_border_width(LIVES_CONTAINER(conxw.apbutton), widget_opts.border_width);
+
     lives_widget_set_sensitive(conxw.apbutton,FALSE);
 
     lives_signal_connect(LIVES_GUI_OBJECT(conxw.apbutton), LIVES_WIDGET_CLICKED_SIGNAL,
@@ -4756,14 +4761,15 @@ LiVESWidget *make_datacon_window(int key, int mode) {
   }
 
   conxw.disconbutton = lives_button_new_with_mnemonic(_("Disconnect All"));
-  lives_box_pack_start(LIVES_BOX(abox), conxw.disconbutton, FALSE, FALSE, widget_opts.packing_width);
+  lives_dialog_add_action_widget(LIVES_DIALOG(conxw.conx_dialog), conxw.disconbutton, LIVES_RESPONSE_NONE);
+  lives_container_set_border_width(LIVES_CONTAINER(conxw.disconbutton), widget_opts.border_width);
   lives_widget_set_sensitive(conxw.disconbutton,FALSE);
 
   lives_signal_connect(LIVES_GUI_OBJECT(conxw.disconbutton), LIVES_WIDGET_CLICKED_SIGNAL,
                        LIVES_GUI_CALLBACK(disconbutton_clicked),
                        (livespointer)&conxw);
 
-  if (conxw.num_alpha>0||conxw.num_params>0) add_fill_to_box(LIVES_BOX(abox));
+  if (LIVES_IS_BOX(abox)&&(conxw.num_alpha>0||conxw.num_params>0)) add_fill_to_box(LIVES_BOX(abox));
 
   cbox = lives_dialog_get_content_area(LIVES_DIALOG(conxw.conx_dialog));
 

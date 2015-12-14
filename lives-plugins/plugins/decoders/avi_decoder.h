@@ -29,7 +29,7 @@ const AVCodecTag codec_bmp_tags[] = {
   { CODEC_ID_MPEG4,        MKTAG('X', 'V', 'I', 'D') },
   { CODEC_ID_MPEG4,        MKTAG('M', 'P', '4', 'S') },
   { CODEC_ID_MPEG4,        MKTAG('M', '4', 'S', '2') },
-  { CODEC_ID_MPEG4,        MKTAG( 4 ,  0 ,  0 ,  0 ) }, /* some broken avi use this */
+  { CODEC_ID_MPEG4,        MKTAG(4 ,  0 ,  0 ,  0) },   /* some broken avi use this */
   { CODEC_ID_MPEG4,        MKTAG('D', 'I', 'V', '1') },
   { CODEC_ID_MPEG4,        MKTAG('B', 'L', 'Z', '0') },
   { CODEC_ID_MPEG4,        MKTAG('m', 'p', '4', 'v') },
@@ -94,9 +94,9 @@ const AVCodecTag codec_bmp_tags[] = {
   { CODEC_ID_MPEG1VIDEO,   MKTAG('P', 'I', 'M', '1') },
   { CODEC_ID_MPEG2VIDEO,   MKTAG('P', 'I', 'M', '2') },
   { CODEC_ID_MPEG1VIDEO,   MKTAG('V', 'C', 'R', '2') },
-  { CODEC_ID_MPEG1VIDEO,   MKTAG( 1 ,  0 ,  0 ,  16) },
-  { CODEC_ID_MPEG2VIDEO,   MKTAG( 2 ,  0 ,  0 ,  16) },
-  { CODEC_ID_MPEG4,        MKTAG( 4 ,  0 ,  0 ,  16) },
+  { CODEC_ID_MPEG1VIDEO,   MKTAG(1 ,  0 ,  0 ,  16) },
+  { CODEC_ID_MPEG2VIDEO,   MKTAG(2 ,  0 ,  0 ,  16) },
+  { CODEC_ID_MPEG4,        MKTAG(4 ,  0 ,  0 ,  16) },
   { CODEC_ID_MPEG2VIDEO,   MKTAG('D', 'V', 'R', ' ') },
   { CODEC_ID_MPEG2VIDEO,   MKTAG('M', 'M', 'E', 'S') },
   { CODEC_ID_MPEG2VIDEO,   MKTAG('L', 'M', 'P', '2') }, /* Lead MPEG2 in avi */
@@ -126,8 +126,8 @@ const AVCodecTag codec_bmp_tags[] = {
   { CODEC_ID_HUFFYUV,      MKTAG('H', 'F', 'Y', 'U') },
   { CODEC_ID_FFVHUFF,      MKTAG('F', 'F', 'V', 'H') },
   { CODEC_ID_CYUV,         MKTAG('C', 'Y', 'U', 'V') },
-  { CODEC_ID_RAWVIDEO,     MKTAG( 0 ,  0 ,  0 ,  0 ) },
-  { CODEC_ID_RAWVIDEO,     MKTAG( 3 ,  0 ,  0 ,  0 ) },
+  { CODEC_ID_RAWVIDEO,     MKTAG(0 ,  0 ,  0 ,  0) },
+  { CODEC_ID_RAWVIDEO,     MKTAG(3 ,  0 ,  0 ,  0) },
   { CODEC_ID_RAWVIDEO,     MKTAG('I', '4', '2', '0') },
   { CODEC_ID_RAWVIDEO,     MKTAG('Y', 'U', 'Y', '2') },
   { CODEC_ID_RAWVIDEO,     MKTAG('Y', '4', '2', '2') },
@@ -169,8 +169,8 @@ const AVCodecTag codec_bmp_tags[] = {
   { CODEC_ID_XAN_WC4,      MKTAG('X', 'x', 'a', 'n') },
   { CODEC_ID_MIMIC,        MKTAG('L', 'M', '2', '0') },
   { CODEC_ID_MSRLE,        MKTAG('m', 'r', 'l', 'e') },
-  { CODEC_ID_MSRLE,        MKTAG( 1 ,  0 ,  0 ,  0 ) },
-  { CODEC_ID_MSRLE,        MKTAG( 2 ,  0 ,  0 ,  0 ) },
+  { CODEC_ID_MSRLE,        MKTAG(1 ,  0 ,  0 ,  0) },
+  { CODEC_ID_MSRLE,        MKTAG(2 ,  0 ,  0 ,  0) },
   { CODEC_ID_MSVIDEO1,     MKTAG('M', 'S', 'V', 'C') },
   { CODEC_ID_MSVIDEO1,     MKTAG('m', 's', 'v', 'c') },
   { CODEC_ID_MSVIDEO1,     MKTAG('C', 'R', 'A', 'M') },
@@ -236,45 +236,45 @@ const AVCodecTag codec_bmp_tags[] = {
 
 
 typedef struct AVIStream {
-    int64_t frame_offset; /* current frame (video) or byte (audio) counter
+  int64_t frame_offset; /* current frame (video) or byte (audio) counter
                          (used to compute the pts) */
-    int remaining;
-    int packet_size;
+  int remaining;
+  int packet_size;
 
-    int scale;
-    int rate;
-    int sample_size; /* size of one sample (or packet) (in the rate/scale sense) in bytes */
+  int scale;
+  int rate;
+  int sample_size; /* size of one sample (or packet) (in the rate/scale sense) in bytes */
 
-    int64_t cum_len; /* temporary storage (used during seek) */
+  int64_t cum_len; /* temporary storage (used during seek) */
 
-    int prefix;                       ///< normally 'd'<<8 + 'c' or 'w'<<8 + 'b'
-    int prefix_count;
-    uint32_t pal[256];
-    int has_pal;
-    int dshow_block_align;            ///< block align variable used to emulate bugs in the MS dshow demuxer
+  int prefix;                       ///< normally 'd'<<8 + 'c' or 'w'<<8 + 'b'
+  int prefix_count;
+  uint32_t pal[256];
+  int has_pal;
+  int dshow_block_align;            ///< block align variable used to emulate bugs in the MS dshow demuxer
 
-    AVFormatContext *sub_ctx;
-    AVPacket sub_pkt;
-    uint8_t *sub_buffer;
+  AVFormatContext *sub_ctx;
+  AVPacket sub_pkt;
+  uint8_t *sub_buffer;
 
-    int64_t seek_pos;
+  int64_t seek_pos;
 } AVIStream;
 
 typedef struct {
-    const AVClass *class;
-    int64_t  riff_end;
-    int64_t  movi_end;
-    int64_t  fsize;
-    int64_t movi_list;
-    int64_t last_pkt_pos;
-    int index_loaded;
-    int is_odml;
-    int non_interleaved;
-    int stream_index;
-    int odml_depth;
-    int use_odml;
+  const AVClass *class;
+  int64_t  riff_end;
+  int64_t  movi_end;
+  int64_t  fsize;
+  int64_t movi_list;
+  int64_t last_pkt_pos;
+  int index_loaded;
+  int is_odml;
+  int non_interleaved;
+  int stream_index;
+  int odml_depth;
+  int use_odml;
 #define MAX_ODML_DEPTH 1000
-    int64_t dts_max;
+  int64_t dts_max;
 } AVIContext;
 
 
@@ -360,7 +360,7 @@ typedef struct {
 	  val += (hi<<10) + 0x10000;		\
     }						\
   }						\
-
+ 
 
 #define PUT_UTF8(val, tmp, PUT_BYTE)			\
   {							\

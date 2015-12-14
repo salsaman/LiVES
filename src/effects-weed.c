@@ -1223,7 +1223,7 @@ static boolean align_pixel_data(weed_plant_t *layer, size_t alignment) {
   void **pixel_data,**new_pixel_data;
   uint8_t *npixel_data,zpixel_data=0;
   int *rowstrides;
-  
+
   size_t size,totsize=0;
 
   boolean needs_change=FALSE;
@@ -1232,9 +1232,9 @@ static boolean align_pixel_data(weed_plant_t *layer, size_t alignment) {
   int memerror,error;
 
   int numplanes,height;
-  
+
   register int i;
-  
+
   numplanes=weed_leaf_num_elements(layer,"rowstrides");
   pixel_data=weed_get_voidptr_array(layer,"pixel_data",&error);
 
@@ -1247,12 +1247,12 @@ static boolean align_pixel_data(weed_plant_t *layer, size_t alignment) {
 
   rowstrides=weed_get_int_array(layer,"rowstrides",&error);
   height=weed_get_int_value(layer,"height",&error);
-  
+
   for (i=0; i<numplanes; i++) {
     size=height*rowstrides[i];
     totsize+=CEIL(size,32);
   }
-  
+
   for (i=1; i<numplanes; i++) {
     size=height*rowstrides[i];
     zpixel_data+=CEIL(size,32);
@@ -1272,7 +1272,7 @@ static boolean align_pixel_data(weed_plant_t *layer, size_t alignment) {
       lives_free(rowstrides);
       return FALSE;
     }
-    
+
     for (i=0; i<numplanes; i++) {
       lives_memcpy(npixel_data,pixel_data[i],height*rowstrides[i]);
       new_pixel_data[i]=npixel_data;
@@ -1285,7 +1285,7 @@ static boolean align_pixel_data(weed_plant_t *layer, size_t alignment) {
     weed_set_voidptr_array(layer,"pixel_data",numplanes,new_pixel_data);
     if (numplanes>1) weed_set_boolean_value(layer,"host_pixel_data_contiguous",WEED_TRUE);
     else weed_set_boolean_value(layer,"host_pixel_data_contiguous",WEED_FALSE);
-    
+
     lives_free(new_pixel_data);
     lives_free(pixel_data);
     lives_free(rowstrides);
@@ -1311,7 +1311,7 @@ static boolean align_pixel_data(weed_plant_t *layer, size_t alignment) {
   lives_free(new_pixel_data);
   lives_free(pixel_data);
   lives_free(rowstrides);
-  
+
   weed_set_boolean_value(layer,"host_pixel_data_contiguous",WEED_FALSE);
 
   return TRUE;
@@ -2451,7 +2451,7 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
     pixel_data=weed_get_voidptr_array(layer,"pixel_data",&error);
     weed_set_voidptr_array(channel,"pixel_data",numplanes,pixel_data);
     lives_free(pixel_data);
-    
+
     if (weed_plant_has_leaf(layer,"host_pixel_data_contiguous"))
       weed_set_boolean_value(channel,"host_pixel_data_contiguous",
                              weed_get_boolean_value(layer,"host_pixel_data_contiguous",&error));
@@ -2500,7 +2500,7 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
 
     if (def_channel!=NULL) layer_rows=weed_get_int_array(def_channel,"rowstrides",&error);
     else layer_rows=weed_get_int_array(channel,"rowstrides",&error);
-    
+
     if (def_channel!=NULL&&i==0&&(weed_palette_is_alpha_palette
                                   (weed_get_int_value(channel,"current_palette",&error)&&
                                    weed_palette_is_alpha_palette
@@ -2643,7 +2643,7 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
       if (weed_plant_has_leaf(chantmpl,"alignment")) {
         int alignment=weed_get_int_value(chantmpl,"alignment",&error);
         align_pixel_data(channel,alignment);
-	
+
       }
       weed_set_boolean_value(channel,"inplace",WEED_FALSE);
     }
@@ -10355,7 +10355,7 @@ static int weed_leaf_deserialise(int fd, weed_plant_t *plant, const char *key, u
     else {
       switch (st) {
       case WEED_SEED_INT:
-        // fallthrough
+      // fallthrough
       case WEED_SEED_BOOLEAN:
         ints=(int *)lives_malloc(ne*4);
         for (j=0; j<ne; j++) ints[j]=*(int *)values[j];

@@ -165,6 +165,8 @@ typedef gint(*LiVESCompareFunc)(gconstpointer a, gconstpointer b);
 #define LIVES_MAXSIZE G_MAXSIZE
 #define LIVES_MAXFLOAT G_MAXFLOAT
 
+#define LIVES_IS_RTL (gtk_widget_get_default_direction()==GTK_TEXT_DIR_RTL)
+
 #define LIVES_GUI_CALLBACK(f) ((LiVESGuiCallback) (f))
 
 #define lives_printerr(args...) g_printerr(args)
@@ -814,6 +816,8 @@ typedef GdkInterpType                     LiVESInterpType;
 #define LIVES_IS_VBOX(widget) GTK_IS_VBOX(widget)
 #endif
 
+#define LIVES_IS_BOX(widget) (LIVES_IS_HBOX(widget) || LIVES_IS_VBOX(widget))
+
 #define LIVES_IS_COMBO(widget) GTK_IS_COMBO_BOX(widget)
 #define LIVES_IS_LABEL(widget) GTK_IS_LABEL(widget)
 #define LIVES_IS_BUTTON(widget) GTK_IS_BUTTON(widget)
@@ -826,6 +830,7 @@ typedef GdkInterpType                     LiVESInterpType;
 #define LIVES_IS_TEXT_VIEW(widget) GTK_IS_TEXT_VIEW(widget)
 #define LIVES_IS_MENU_ITEM(widget) GTK_IS_MENU_ITEM(widget)
 #define LIVES_IS_FILE_CHOOSER(widget) GTK_IS_FILE_CHOOSER(widget)
+#define LIVES_IS_BUTTON_BOX(widget) GTK_IS_BUTTON_BOX(widget)
 
 // (image resize) interpolation types
 #define LIVES_INTERP_BEST   GDK_INTERP_HYPER
@@ -854,6 +859,8 @@ typedef GdkInterpType                     LiVESInterpType;
 #define LIVES_STOCK_REVERT_TO_SAVED "document-revert"
 #define LIVES_STOCK_GO_BACK "go-previous"
 #define LIVES_STOCK_GO_FORWARD "go-next"
+#define LIVES_STOCK_GO_UP "go-up"
+#define LIVES_STOCK_GO_DOWN "go-down"
 #define LIVES_STOCK_REFRESH "view-refresh"
 #define LIVES_STOCK_MEDIA_PLAY "media-playback-start"
 #define LIVES_STOCK_MEDIA_STOP "media-playback-stop"

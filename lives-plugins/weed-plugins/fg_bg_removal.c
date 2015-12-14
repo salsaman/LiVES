@@ -207,7 +207,7 @@ int common_process(int type, weed_plant_t *inst, weed_timecode_t timestamp) {
           dest[j]=(uint8_t)((uint8_t)((fastrand(sdata)&0x7f00)>>8)+(dest[j+1]=(uint8_t)((fastrand(sdata)&0x7f00)>>8)));      //R & G
           dest[j+2]=(uint8_t)0;                       //B
           break;
-          //
+        //
         case 2:
           // blue glow
           dest[j]=dest[j+1]=(uint8_t)((fastrand(sdata)&0xff00)>>8);                                                 //R&G

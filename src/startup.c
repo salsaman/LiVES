@@ -757,9 +757,9 @@ boolean do_startup_tests(boolean tshoot) {
     } else {
 #ifdef ALLOW_MPV
 #ifndef IS_MINGW
-	res=system("LANG=en LANGUAGE=en mpv --ao help | grep pcm >/dev/null 2>&1");
+      res=system("LANG=en LANGUAGE=en mpv --ao help | grep pcm >/dev/null 2>&1");
 #else
-	res=system("mpv --ao help | grep pcm >NUL 2>&1");
+      res=system("mpv --ao help | grep pcm >NUL 2>&1");
 #endif
 #endif
     }
@@ -881,7 +881,7 @@ boolean do_startup_tests(boolean tshoot) {
 #endif
 #endif
     }
-    
+
     if (res==0) {
       pass_test(table,5);
       if (!success3) {

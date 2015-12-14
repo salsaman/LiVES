@@ -2125,7 +2125,7 @@ void update_weed_color_value(weed_plant_t *plant, int pnum, int c1, int c2, int 
   cspace=weed_get_int_value(ptmpl,"colorspace",&error);
 
   switch (cspace) {
-    // TODO - other cspaces
+  // TODO - other cspaces
   case WEED_COLORSPACE_RGB:
     if (is_int) {
       if (weed_leaf_num_elements(ptmpl,"max")==3) {

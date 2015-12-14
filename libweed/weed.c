@@ -396,7 +396,7 @@ void weed_init(int api, weed_malloc_f _mallocf, weed_free_f _freef, weed_memcpy_
 
 
   switch (api) {
-    // higher API versions may use different functions, or add to them
+  // higher API versions may use different functions, or add to them
 
   case 100:
   case 110:

@@ -49,29 +49,28 @@ static const char avi_headers[][8] = {
   { 0 }
 };
 
-static enum CodecID ff_codec_get_id(const AVCodecTag *tags, unsigned int tag)
-{
+static enum CodecID ff_codec_get_id(const AVCodecTag *tags, unsigned int tag) {
   int i;
-  for(i=0; tags[i].id != CODEC_ID_NONE;i++) {
-    if(tag == tags[i].tag)
+  for (i=0; tags[i].id != CODEC_ID_NONE; i++) {
+    if (tag == tags[i].tag)
       return tags[i].id;
   }
-  for(i=0; tags[i].id != CODEC_ID_NONE; i++) {
-    if(   toupper((tag >> 0)&0xFF) == toupper((tags[i].tag >> 0)&0xFF)
-	  && toupper((tag >> 8)&0xFF) == toupper((tags[i].tag >> 8)&0xFF)
-	  && toupper((tag >>16)&0xFF) == toupper((tags[i].tag >>16)&0xFF)
-	  && toupper((tag >>24)&0xFF) == toupper((tags[i].tag >>24)&0xFF))
+  for (i=0; tags[i].id != CODEC_ID_NONE; i++) {
+    if (toupper((tag >> 0)&0xFF) == toupper((tags[i].tag >> 0)&0xFF)
+        && toupper((tag >> 8)&0xFF) == toupper((tags[i].tag >> 8)&0xFF)
+        && toupper((tag >>16)&0xFF) == toupper((tags[i].tag >>16)&0xFF)
+        && toupper((tag >>24)&0xFF) == toupper((tags[i].tag >>24)&0xFF))
       return tags[i].id;
   }
   return CODEC_ID_NONE;
 }
 
-static inline int get_duration(AVIStream *ast, int len){
-  if(ast->sample_size){
+static inline int get_duration(AVIStream *ast, int len) {
+  if (ast->sample_size) {
     return len;
-  }else if (ast->dshow_block_align){
+  } else if (ast->dshow_block_align) {
     return (len + ast->dshow_block_align - 1)/ast->dshow_block_align;
-  }else
+  } else
     return 1;
 }
 
@@ -82,7 +81,7 @@ static void freep(void **x) {
 ////////////////////////////////////////////////////////////////////////////
 
 static int pix_fmt_to_palette(enum PixelFormat pix_fmt, int *clamped) {
- 
+
   switch (pix_fmt) {
   case PIX_FMT_RGB24:
     return WEED_PALETTE_RGB24;
@@ -133,7 +132,7 @@ static int pix_fmt_to_palette(enum PixelFormat pix_fmt, int *clamped) {
 /*
   static void convert_quad_chroma(guchar *src, int width, int height, guchar *dest) {
   // width and height here are width and height of dest chroma planes, in bytes
-  
+
   // double the chroma samples vertically and horizontally, with interpolation, eg. 420p to 444p
 
   // output to planes
@@ -262,11 +261,11 @@ static index_entry *add_keyframe(const lives_clip_data_t *cdata, int64_t offs, i
 }
 
 
-static int get_stream_idx(int *d){
-  if(    d[0] >= '0' && d[0] <= '9'
-	 && d[1] >= '0' && d[1] <= '9'){
+static int get_stream_idx(int *d) {
+  if (d[0] >= '0' && d[0] <= '9'
+      && d[1] >= '0' && d[1] <= '9') {
     return (d[0] - '0') * 10 + (d[1] - '0');
-  }else{
+  } else {
     return 100; //invalid stream ID
   }
 }
@@ -281,14 +280,14 @@ static boolean get_sync(lives_avi_priv_t *priv, int exit_early) {
   boolean eof=FALSE;
   unsigned char buffer[1];
 
- start_sync:
+start_sync:
   lseek(priv->fd,priv->input_position,SEEK_SET);
   memset(d, -1, sizeof(int)*8);
 
-  for(i=sync=priv->input_position; !eof; i++) {
+  for (i=sync=priv->input_position; !eof; i++) {
     int j;
 
-    for(j=0; j<7; j++)
+    for (j=0; j<7; j++)
       d[j]= d[j+1];
 
     if (read(priv->fd,buffer,1)<1) {
@@ -307,16 +306,16 @@ static boolean get_sync(lives_avi_priv_t *priv, int exit_early) {
 
     //printf("got %d and %d\n",size,n);
 
-    if(i + (uint64_t)size > avi->fsize || d[0]<0)
+    if (i + (uint64_t)size > avi->fsize || d[0]<0)
       continue;
 
     //printf("pt a2\n");
 
     //parse ix##
-    if(  (d[0] == 'i' && d[1] == 'x' && n < s->nb_streams)
-	 //parse JUNK
-	 ||(d[0] == 'J' && d[1] == 'U' && d[2] == 'N' && d[3] == 'K')
-	 ||(d[0] == 'i' && d[1] == 'd' && d[2] == 'x' && d[3] == '1')){
+    if ((d[0] == 'i' && d[1] == 'x' && n < s->nb_streams)
+        //parse JUNK
+        ||(d[0] == 'J' && d[1] == 'U' && d[2] == 'N' && d[3] == 'K')
+        ||(d[0] == 'i' && d[1] == 'd' && d[2] == 'x' && d[3] == '1')) {
       priv->input_position+=size-8;
       //av_log(s, AV_LOG_DEBUG, "SKIP\n");
       goto start_sync;
@@ -324,7 +323,7 @@ static boolean get_sync(lives_avi_priv_t *priv, int exit_early) {
 
     //printf("pt a23\n");
     //parse stray LIST
-    if(d[0] == 'L' && d[1] == 'I' && d[2] == 'S' && d[3] == 'T'){
+    if (d[0] == 'L' && d[1] == 'I' && d[2] == 'S' && d[3] == 'T') {
       priv->input_position+=4;
       goto start_sync;
     }
@@ -332,7 +331,7 @@ static boolean get_sync(lives_avi_priv_t *priv, int exit_early) {
     n= get_stream_idx(d);
     //printf("pt a2xx %d\n",n);
 
-    if(!((i-avi->last_pkt_pos)&1) && get_stream_idx(d+1) < s->nb_streams)
+    if (!((i-avi->last_pkt_pos)&1) && get_stream_idx(d+1) < s->nb_streams)
       continue;
     //printf("pt a2xxzzzz %d\n",n);
 
@@ -343,105 +342,105 @@ static boolean get_sync(lives_avi_priv_t *priv, int exit_early) {
     //printf("pt a2xxaaaa %d\n",n);
 
     //detect ##ix chunk and skip
-    if(d[2] == 'i' && d[3] == 'x' && n < s->nb_streams){
+    if (d[2] == 'i' && d[3] == 'x' && n < s->nb_streams) {
       priv->input_position+=size-8;
       goto start_sync;
     }
     printf("pt a24\n");
 
     //parse ##dc/##wb
-    if(n < s->nb_streams){
+    if (n < s->nb_streams) {
       AVStream *st;
       AVIStream *ast;
       st = s->streams[n];
       ast = st->priv_data;
-      
-      if(s->nb_streams>=2){
-	AVStream *st1  = s->streams[1];
-	AVIStream *ast1= st1->priv_data;
-	//workaround for broken small-file-bug402.avi
-	if(   d[2] == 'w' && d[3] == 'b'
-	      && n==0
-	      && st ->codec->codec_type == AVMEDIA_TYPE_VIDEO
-	      && st1->codec->codec_type == AVMEDIA_TYPE_AUDIO
-	      && ast->prefix == 'd'*256+'c'
-	      && (d[2]*256+d[3] == ast1->prefix || !ast1->prefix_count)
-	      ){
-	  n=1;
-	  st = st1;
-	  ast = ast1;
-	  fprintf(stderr, "av_decoder: Invalid stream + prefix combination, assuming audio.\n");
-	  priv->input_position+=size-8;
-	  goto start_sync;
-	}
+
+      if (s->nb_streams>=2) {
+        AVStream *st1  = s->streams[1];
+        AVIStream *ast1= st1->priv_data;
+        //workaround for broken small-file-bug402.avi
+        if (d[2] == 'w' && d[3] == 'b'
+            && n==0
+            && st ->codec->codec_type == AVMEDIA_TYPE_VIDEO
+            && st1->codec->codec_type == AVMEDIA_TYPE_AUDIO
+            && ast->prefix == 'd'*256+'c'
+            && (d[2]*256+d[3] == ast1->prefix || !ast1->prefix_count)
+           ) {
+          n=1;
+          st = st1;
+          ast = ast1;
+          fprintf(stderr, "av_decoder: Invalid stream + prefix combination, assuming audio.\n");
+          priv->input_position+=size-8;
+          goto start_sync;
+        }
       }
 
       //printf("pt a25\n");
 
-      if(   (st->discard >= AVDISCARD_DEFAULT && size==0)
-	    /*|| (st->discard >= AVDISCARD_NONKEY && !(pkt->flags & AV_PKT_FLAG_KEY))*/ //FIXME needs a little reordering
-	    || st->discard >= AVDISCARD_ALL){
-	if (!exit_early) {
-	  ast->frame_offset += get_duration(ast, size);
-	}
-	goto start_sync;
+      if ((st->discard >= AVDISCARD_DEFAULT && size==0)
+          /*|| (st->discard >= AVDISCARD_NONKEY && !(pkt->flags & AV_PKT_FLAG_KEY))*/ //FIXME needs a little reordering
+          || st->discard >= AVDISCARD_ALL) {
+        if (!exit_early) {
+          ast->frame_offset += get_duration(ast, size);
+        }
+        goto start_sync;
       }
       //printf("pt a26\n");
 
       if (d[2] == 'p' && d[3] == 'c' && size<=4*256+4) {
-	int k;
-	int last;
-	uint8_t buffer[4];
+        int k;
+        int last;
+        uint8_t buffer[4];
 
-	if (read(priv->fd, buffer, 4)<4) return -4;
-      
-	priv->input_position+=4;
-      
-	k    = buffer[0];
-	last = (k + buffer[1] - 1) & 0xFF;
+        if (read(priv->fd, buffer, 4)<4) return -4;
 
-	for (; k <= last; k++) {
+        priv->input_position+=4;
 
-	  if (read(priv->fd,buffer,4)<4) {
-	    fprintf(stderr, "avi_decoder: read error getting value\n");
-	    return FALSE;
-	  }
-      
-	  priv->input_position+=4;
-      
-	  ast->pal[k] = get_le32int(buffer)>>8; // b + (g << 8) + (r << 16);
-	  size-=4;
-	}
-	ast->has_pal= 1;
-	priv->input_position+=size-8;
-	goto start_sync;
-      } else if(   ((ast->prefix_count<5 || sync+9 > i) && d[2]<128 && d[3]<128) ||
-		   d[2]*256+d[3] == ast->prefix /*||
+        k    = buffer[0];
+        last = (k + buffer[1] - 1) & 0xFF;
+
+        for (; k <= last; k++) {
+
+          if (read(priv->fd,buffer,4)<4) {
+            fprintf(stderr, "avi_decoder: read error getting value\n");
+            return FALSE;
+          }
+
+          priv->input_position+=4;
+
+          ast->pal[k] = get_le32int(buffer)>>8; // b + (g << 8) + (r << 16);
+          size-=4;
+        }
+        ast->has_pal= 1;
+        priv->input_position+=size-8;
+        goto start_sync;
+      } else if (((ast->prefix_count<5 || sync+9 > i) && d[2]<128 && d[3]<128) ||
+                 d[2]*256+d[3] == ast->prefix /*||
 						  (d[2] == 'd' && d[3] == 'c') ||
 						  (d[2] == 'w' && d[3] == 'b')*/) {
-	//printf("pt a27\n");
+        //printf("pt a27\n");
 
-	if (exit_early)
-	  return TRUE;
-	//av_log(s, AV_LOG_DEBUG, "OK\n");
-	if(d[2]*256+d[3] == ast->prefix)
-	  ast->prefix_count++;
-	else{
-	  ast->prefix= d[2]*256+d[3];
-	  ast->prefix_count= 0;
-	}
-	
-	avi->stream_index= n;
-	ast->packet_size= size + 8;
-	ast->remaining= size;
-	
-	/*	if(size || !ast->sample_size){
-		uint64_t pos= avio_tell(pb) - 8;
-		if(!st->index_entries || !st->nb_index_entries || st->index_entries[st->nb_index_entries - 1].pos < pos){
-		av_add_index_entry(st, pos, ast->frame_offset, size, 0, AVINDEX_KEYFRAME);
-		}
-		}*/
-	return TRUE;
+        if (exit_early)
+          return TRUE;
+        //av_log(s, AV_LOG_DEBUG, "OK\n");
+        if (d[2]*256+d[3] == ast->prefix)
+          ast->prefix_count++;
+        else {
+          ast->prefix= d[2]*256+d[3];
+          ast->prefix_count= 0;
+        }
+
+        avi->stream_index= n;
+        ast->packet_size= size + 8;
+        ast->remaining= size;
+
+        /*	if(size || !ast->sample_size){
+        	uint64_t pos= avio_tell(pb) - 8;
+        	if(!st->index_entries || !st->nb_index_entries || st->index_entries[st->nb_index_entries - 1].pos < pos){
+        	av_add_index_entry(st, pos, ast->frame_offset, size, 0, AVINDEX_KEYFRAME);
+        	}
+        	}*/
+        return TRUE;
       }
     }
   }
@@ -514,11 +513,11 @@ static int get_next_video_packet(const lives_clip_data_t *cdata, int tfrag, int6
     }
 
 
-  resync:
+resync:
 
-    if(ast->sample_size <= 1) // minorityreport.AVI block_align=1024 sample_size=1 IMA-ADPCM
+    if (ast->sample_size <= 1) // minorityreport.AVI block_align=1024 sample_size=1 IMA-ADPCM
       size= INT_MAX;
-    else if(ast->sample_size < 32)
+    else if (ast->sample_size < 32)
       // arbitrary multiplier to avoid tiny packets for raw PCM data
       size= 1024*ast->sample_size;
     else
@@ -527,18 +526,18 @@ static int get_next_video_packet(const lives_clip_data_t *cdata, int tfrag, int6
     // TODO ***
     //err= av_get_packet(pb, pkt, size);
 
-    if(ast->has_pal && priv->avpkt.data && priv->avpkt.size<(unsigned)INT_MAX/2){
+    if (ast->has_pal && priv->avpkt.data && priv->avpkt.size<(unsigned)INT_MAX/2) {
 
       // TODO ***
       /*
-	uint8_t *pal;
-	pal = av_packet_new_side_data(&priv->avpkt, AV_PKT_DATA_PALETTE, AVPALETTE_SIZE);
-	if(!pal){
-	frpintf(stderr, "av_decoder: Failed to allocate data for palette\n");
-	}else{
-	memcpy(pal, ast->pal, AVPALETTE_SIZE);
-	ast->has_pal = 0;
-	}*/
+      uint8_t *pal;
+      pal = av_packet_new_side_data(&priv->avpkt, AV_PKT_DATA_PALETTE, AVPALETTE_SIZE);
+      if(!pal){
+      frpintf(stderr, "av_decoder: Failed to allocate data for palette\n");
+      }else{
+      memcpy(pal, ast->pal, AVPALETTE_SIZE);
+      ast->has_pal = 0;
+      }*/
 
 
 
@@ -556,25 +555,25 @@ static int get_next_video_packet(const lives_clip_data_t *cdata, int tfrag, int6
     /* XXX: How to handle B-frames in AVI? */
     priv->avpkt.dts = ast->frame_offset;
     //                priv->avpkt->dts += ast->start;
-    if(ast->sample_size)
+    if (ast->sample_size)
       priv->avpkt.dts /= ast->sample_size;
     //av_log(s, AV_LOG_DEBUG, "dts:%"PRId64" offset:%"PRId64" %d/%d smpl_siz:%d base:%d st:%d size:%d\n", pkt->dts, ast->frame_offset, ast->scale, ast->rate, ast->sample_size, AV_TIME_BASE, avi->stream_index, size);
     priv->avpkt.stream_index = avi->stream_index;
 
-    if(priv->st->codec->codec_id == CODEC_ID_MPEG4){
+    if (priv->st->codec->codec_id == CODEC_ID_MPEG4) {
       int key=1;
       int i;
       uint32_t state=-1;
-      for(i=0; i<FFMIN(size,256); i++){
-	if(state == 0x1B6){
-	  key= !(priv->avpkt.data[i]&0xC0);
+      for (i=0; i<FFMIN(size,256); i++) {
+        if (state == 0x1B6) {
+          key= !(priv->avpkt.data[i]&0xC0);
 
-	  // TODO ***
-	  //if (key) add_index();
-	    
-	  break;
-	}
-	state= (state<<8) + priv->avpkt.data[i];
+          // TODO ***
+          //if (key) add_index();
+
+          break;
+        }
+        state= (state<<8) + priv->avpkt.data[i];
       }
     }
     ast->frame_offset += get_duration(ast, priv->avpkt.size);
@@ -582,30 +581,30 @@ static int get_next_video_packet(const lives_clip_data_t *cdata, int tfrag, int6
     printf("rem %d, size %d %d\n",ast->remaining,size,ast->packet_size);
     ast->remaining -= size;
 
-    if (ast->remaining<=0){
+    if (ast->remaining<=0) {
       return 0;
       //avi->stream_index= -1;
       //ast->packet_size= 0;
     }
-    
+
     /*    if(!avi->non_interleaved && priv->avpkt.pos >= 0 && ast->seek_pos > priv->avpkt.pos){
       av_free_packet(&priv->avpkt);
       goto resync;
       }*/
 
     ast->seek_pos= 0;
-    
+
     // TODO *** - check nb_index_entries, check prefix
-    if(!avi->non_interleaved && priv->st->nb_index_entries>1){
+    if (!avi->non_interleaved && priv->st->nb_index_entries>1) {
       int64_t dts= av_rescale_q(priv->avpkt.dts, priv->st->time_base, AV_TIME_BASE_Q);
-      
-      if(avi->dts_max - dts > 2*AV_TIME_BASE){
-	avi->non_interleaved= 1;
-	av_log(s, AV_LOG_INFO, "Switching to NI mode, due to poor interleaving\n");
-      }else if(avi->dts_max < dts)
-	avi->dts_max = dts;
+
+      if (avi->dts_max - dts > 2*AV_TIME_BASE) {
+        avi->non_interleaved= 1;
+        av_log(s, AV_LOG_INFO, "Switching to NI mode, due to poor interleaving\n");
+      } else if (avi->dts_max < dts)
+        avi->dts_max = dts;
     }
-    
+
   }
 
   // will never reach here
@@ -658,7 +657,7 @@ static int get_last_video_dts(const lives_clip_data_t *cdata) {
 //////////////////////////////////////////////
 
 
-static void detach_stream (lives_clip_data_t *cdata) {
+static void detach_stream(lives_clip_data_t *cdata) {
   // close the file, free the decoder
   lives_avi_priv_t *priv=cdata->priv;
 
@@ -675,8 +674,8 @@ static void detach_stream (lives_clip_data_t *cdata) {
 
   priv->ctx=NULL;
   priv->picture=NULL;
-  
-  if (priv->idx!=NULL) 
+
+  if (priv->idx!=NULL)
     index_free(priv->idx);
 
   priv->idx=NULL;
@@ -700,14 +699,14 @@ static void detach_stream (lives_clip_data_t *cdata) {
 
 static boolean check_header(char *buf) {
   int i;
-  for(i=0; avi_headers[i][0]; i++)
-    if(!memcmp(buf  , avi_headers[i]  , 4) &&
-       !memcmp(buf+8, avi_headers[i]+4, 4))
+  for (i=0; avi_headers[i][0]; i++)
+    if (!memcmp(buf  , avi_headers[i]  , 4) &&
+        !memcmp(buf+8, avi_headers[i]+4, 4))
       return TRUE;
   return FALSE;
 }
 
-static int get_bmp_header (lives_clip_data_t *cdata) {
+static int get_bmp_header(lives_clip_data_t *cdata) {
   lives_avi_priv_t *priv=cdata->priv;
   int tag1;
   unsigned char buffer[4];
@@ -762,36 +761,35 @@ static int get_bmp_header (lives_clip_data_t *cdata) {
   return tag1;
 }
 
-static boolean avi_read_info(lives_clip_data_t *cdata, uint64_t end)
-{
+static boolean avi_read_info(lives_clip_data_t *cdata, uint64_t end) {
   uint32_t tag,size;
   unsigned char buffer[4];
   lives_avi_priv_t *priv=cdata->priv;
 
-    while (priv->input_position < end) {
-      if (read(priv->fd,buffer,4)<4) {
-	return;
-      }
-      
-      priv->input_position+=4;
-      tag=get_le32int(buffer);
-
-      if (read(priv->fd,buffer,4)<4) {
-	return;
-      }
-      
-      priv->input_position+=4;
-      size=get_le32int(buffer);
-
-      size += (size & 1);
-
-      if (size == UINT_MAX)
-        return;
-
-      priv->input_position+=size;
-      lseek(priv->fd, priv->input_position, SEEK_SET);
-
+  while (priv->input_position < end) {
+    if (read(priv->fd,buffer,4)<4) {
+      return;
     }
+
+    priv->input_position+=4;
+    tag=get_le32int(buffer);
+
+    if (read(priv->fd,buffer,4)<4) {
+      return;
+    }
+
+    priv->input_position+=4;
+    size=get_le32int(buffer);
+
+    size += (size & 1);
+
+    if (size == UINT_MAX)
+      return;
+
+    priv->input_position+=size;
+    lseek(priv->fd, priv->input_position, SEEK_SET);
+
+  }
 
 }
 
@@ -839,7 +837,7 @@ static boolean attach_stream(lives_clip_data_t *cdata) {
     return FALSE;
   }
 
-  if (read (priv->fd, header, AVI_PROBE_SIZE) < AVI_PROBE_SIZE) {
+  if (read(priv->fd, header, AVI_PROBE_SIZE) < AVI_PROBE_SIZE) {
     // for example, might be a directory
 #ifdef DEBUG
     fprintf(stderr, "avi_decoder: unable to read header for %s\n",cdata->URI);
@@ -892,12 +890,12 @@ static boolean attach_stream(lives_clip_data_t *cdata) {
   priv->avi_st=NULL;
   priv->ctx=NULL;
 
-  for (i=0;i<128;i++) dar[i].num=dar[i].den=0;
+  for (i=0; i<128; i++) dar[i].num=dar[i].den=0;
 
   fstat(priv->fd,&sb);
   priv->avi->fsize=priv->filesize=sb.st_size;
-  
-  for(;;) {
+
+  for (;;) {
 
     if (read(priv->fd,buffer,4)<4) {
       fprintf(stderr, "avi_decoder: read error in %s\n",cdata->URI);
@@ -929,35 +927,33 @@ static boolean attach_stream(lives_clip_data_t *cdata) {
       /* Ignored, except at start of video packets. */
 
       if (read(priv->fd,buffer,4)<4) {
-	fprintf(stderr, "avi_decoder: read error in %s\n",cdata->URI);
-	detach_stream(cdata);
-	return FALSE;
+        fprintf(stderr, "avi_decoder: read error in %s\n",cdata->URI);
+        detach_stream(cdata);
+        return FALSE;
       }
-      
+
       priv->input_position+=4;
-      
+
       tag1 = get_le32int(buffer);
-      
+
       print_tag("list", tag1, 0);
 
       if (tag1 == MKTAG('m', 'o', 'v', 'i')) {
-	priv->avi->movi_list = priv->input_position - 4;
-	if (size) priv->avi->movi_end = priv->avi->movi_list + size + (size & 1);
-	else priv->avi->movi_end=priv->filesize;
-	goto end_of_header;
-      }
-      else if (tag1 == MKTAG('I', 'N', 'F', 'O')) {
-	avi_read_info(cdata, list_end);
-	if (check_eof(cdata)) {
-	  fprintf(stderr, "avi_decoder: read error in %s\n",cdata->URI);
-	  detach_stream(cdata);
-	  return FALSE;
-	}
-      }
-      else if (tag1 == MKTAG('n', 'c', 'd', 't')) {
-	fprintf(stderr, "avi_decoder: detected dv stream in %s\n",cdata->URI);
-	detach_stream(cdata);
-	return FALSE;
+        priv->avi->movi_list = priv->input_position - 4;
+        if (size) priv->avi->movi_end = priv->avi->movi_list + size + (size & 1);
+        else priv->avi->movi_end=priv->filesize;
+        goto end_of_header;
+      } else if (tag1 == MKTAG('I', 'N', 'F', 'O')) {
+        avi_read_info(cdata, list_end);
+        if (check_eof(cdata)) {
+          fprintf(stderr, "avi_decoder: read error in %s\n",cdata->URI);
+          detach_stream(cdata);
+          return FALSE;
+        }
+      } else if (tag1 == MKTAG('n', 'c', 'd', 't')) {
+        fprintf(stderr, "avi_decoder: detected dv stream in %s\n",cdata->URI);
+        detach_stream(cdata);
+        return FALSE;
       }
       break;
 
@@ -975,7 +971,7 @@ static boolean attach_stream(lives_clip_data_t *cdata) {
       priv->input_position += size + (size & 1);
       lseek(priv->fd,priv->input_position,SEEK_SET);
       break;
-      
+
     case MKTAG('a', 'm', 'v', 'h'):
       amv_file_format=1;
     case MKTAG('a', 'v', 'i', 'h'):
@@ -983,50 +979,50 @@ static boolean attach_stream(lives_clip_data_t *cdata) {
       /* using frame_period is bad idea */
 
       if (read(priv->fd,buffer,4)<4) {
-	fprintf(stderr, "avi_decoder: read error in %s\n",cdata->URI);
-	detach_stream(cdata);
-	return FALSE;
+        fprintf(stderr, "avi_decoder: read error in %s\n",cdata->URI);
+        detach_stream(cdata);
+        return FALSE;
       }
-      
+
       priv->input_position+=4;
-    
+
       frame_period = get_le32int(buffer);
-    
+
       priv->input_position+=8;
       lseek(priv->fd,priv->input_position,SEEK_SET);
-      
+
       if (read(priv->fd,buffer,4)<4) {
-	fprintf(stderr, "avi_decoder: read error in %s\n",cdata->URI);
-	detach_stream(cdata);
-	return FALSE;
+        fprintf(stderr, "avi_decoder: read error in %s\n",cdata->URI);
+        detach_stream(cdata);
+        return FALSE;
       }
-      
+
       priv->input_position+=4;
 
       ni=get_le32int(buffer);
 
 
       priv->avi->non_interleaved |= ni & AVIF_MUSTUSEINDEX;
-    
+
       priv->input_position+=16;
       lseek(priv->fd,priv->input_position,SEEK_SET);
 
       if (read(priv->fd,buffer,4)<4) {
-	fprintf(stderr, "avi_decoder: read error in %s\n",cdata->URI);
-	detach_stream(cdata);
-	return FALSE;
+        fprintf(stderr, "avi_decoder: read error in %s\n",cdata->URI);
+        detach_stream(cdata);
+        return FALSE;
       }
-      
+
       priv->input_position+=4;
 
       avih_width=get_le32int(buffer);
 
       if (read(priv->fd,buffer,4)<4) {
-	fprintf(stderr, "avi_decoder: read error in %s\n",cdata->URI);
-	detach_stream(cdata);
-	return FALSE;
+        fprintf(stderr, "avi_decoder: read error in %s\n",cdata->URI);
+        detach_stream(cdata);
+        return FALSE;
       }
-      
+
       priv->input_position+=4;
 
       avih_height=get_le32int(buffer);
@@ -1037,119 +1033,120 @@ static boolean attach_stream(lives_clip_data_t *cdata) {
 
     case MKTAG('s', 't', 'r', 'h'):
       /* stream header */
-    
+
       if (read(priv->fd,buffer,4)<4) {
-	fprintf(stderr, "avi_decoder: read error in %s\n",cdata->URI);
-	detach_stream(cdata);
-	return FALSE;
+        fprintf(stderr, "avi_decoder: read error in %s\n",cdata->URI);
+        detach_stream(cdata);
+        return FALSE;
       }
-      
+
       priv->input_position+=4;
 
       tag1=get_le32int(buffer);
 
       if (read(priv->fd,buffer,4)<4) {
-	fprintf(stderr, "avi_decoder: read error in %s\n",cdata->URI);
-	detach_stream(cdata);
-	return FALSE;
+        fprintf(stderr, "avi_decoder: read error in %s\n",cdata->URI);
+        detach_stream(cdata);
+        return FALSE;
       }
-      
+
       priv->input_position+=4;
 
       handler=get_le32int(buffer);
 
 
-      if(tag1 == MKTAG('p', 'a', 'd', 's')){
-	priv->input_position += size - 8;
-	lseek(priv->fd,priv->input_position,SEEK_SET);
-	break;
-      }else{
-	stream_index++;
-	priv->st = av_new_stream(priv->s, stream_index);
-	if (!priv->st)
-	  goto fail;
+      if (tag1 == MKTAG('p', 'a', 'd', 's')) {
+        priv->input_position += size - 8;
+        lseek(priv->fd,priv->input_position,SEEK_SET);
+        break;
+      } else {
+        stream_index++;
+        priv->st = av_new_stream(priv->s, stream_index);
+        if (!priv->st)
+          goto fail;
 
-	ast = malloc(sizeof(AVIStream));
-	if (!ast)
-	  goto fail;
-	memset(ast,0,sizeof(AVIStream));
-	priv->st->priv_data = ast;
+        ast = malloc(sizeof(AVIStream));
+        if (!ast)
+          goto fail;
+        memset(ast,0,sizeof(AVIStream));
+        priv->st->priv_data = ast;
       }
-      if(amv_file_format)
-	tag1 = stream_index ? MKTAG('a','u','d','s') : MKTAG('v','i','d','s');
+      if (amv_file_format)
+        tag1 = stream_index ? MKTAG('a','u','d','s') : MKTAG('v','i','d','s');
 
       print_tag("strh", tag1, -1);
 
 
-      if(tag1 == MKTAG('i', 'a', 'v', 's') || tag1 == MKTAG('i', 'v', 'a', 's')){
+      if (tag1 == MKTAG('i', 'a', 'v', 's') || tag1 == MKTAG('i', 'v', 'a', 's')) {
 
-	ast = priv->s->streams[0]->priv_data;
-	freep(&priv->s->streams[0]->codec->extradata);
-	freep(&priv->s->streams[0]->codec);
-	freep(&priv->s->streams[0]);
+        ast = priv->s->streams[0]->priv_data;
+        freep(&priv->s->streams[0]->codec->extradata);
+        freep(&priv->s->streams[0]->codec);
+        freep(&priv->s->streams[0]);
 
-	fprintf(stderr, "avi_decoder: detected dv stream in %s\n",cdata->URI);
-	detach_stream(cdata);
-	return FALSE;
+        fprintf(stderr, "avi_decoder: detected dv stream in %s\n",cdata->URI);
+        detach_stream(cdata);
+        return FALSE;
       }
-      
+
       // TODO ***
       //assert(stream_index < s->nb_streams);
 
       priv->st->codec->stream_codec_tag= handler;
-    
+
       priv->input_position+=12;
       lseek(priv->fd,priv->input_position,SEEK_SET);
-    
+
       if (read(priv->fd,buffer,4)<4) {
-	fprintf(stderr, "avi_decoder: read error in %s\n",cdata->URI);
-	detach_stream(cdata);
-	return FALSE;
+        fprintf(stderr, "avi_decoder: read error in %s\n",cdata->URI);
+        detach_stream(cdata);
+        return FALSE;
       }
-      
+
       priv->input_position+=4;
 
       ast->scale=get_le32int(buffer);
 
 
       if (read(priv->fd,buffer,4)<4) {
-	fprintf(stderr, "avi_decoder: read error in %s\n",cdata->URI);
-	detach_stream(cdata);
-	return FALSE;
+        fprintf(stderr, "avi_decoder: read error in %s\n",cdata->URI);
+        detach_stream(cdata);
+        return FALSE;
       }
-      
+
       priv->input_position+=4;
 
       ast->rate=get_le32int(buffer);
 
 
-      if(!(ast->scale && ast->rate)){
-	fprintf(stderr, "avi_decoder: scale/rate is %u/%u which is invalid. (This file has been generated by broken software.)\n", ast->scale, ast->rate);
-	if(frame_period){
-	  ast->rate = 1000000;
-	  ast->scale = frame_period;
-	}else{
-	  ast->rate = 25;
-	  ast->scale = 1;
-	}
+      if (!(ast->scale && ast->rate)) {
+        fprintf(stderr, "avi_decoder: scale/rate is %u/%u which is invalid. (This file has been generated by broken software.)\n", ast->scale,
+                ast->rate);
+        if (frame_period) {
+          ast->rate = 1000000;
+          ast->scale = frame_period;
+        } else {
+          ast->rate = 25;
+          ast->scale = 1;
+        }
       }
 
       if (read(priv->fd,buffer,4)<4) {
-	fprintf(stderr, "avi_decoder: read error in %s\n",cdata->URI);
-	detach_stream(cdata);
-	return FALSE;
+        fprintf(stderr, "avi_decoder: read error in %s\n",cdata->URI);
+        detach_stream(cdata);
+        return FALSE;
       }
-      
+
       priv->input_position+=4;
 
       ast->cum_len=get_le32int(buffer);
 
       if (read(priv->fd,buffer,4)<4) {
-	fprintf(stderr, "avi_decoder: read error in %s\n",cdata->URI);
-	detach_stream(cdata);
-	return FALSE;
+        fprintf(stderr, "avi_decoder: read error in %s\n",cdata->URI);
+        detach_stream(cdata);
+        return FALSE;
       }
-      
+
       priv->input_position+=4;
 
       priv->st->nb_frames=get_le32int(buffer);
@@ -1160,35 +1157,35 @@ static boolean attach_stream(lives_clip_data_t *cdata) {
       lseek(priv->fd,priv->input_position,SEEK_SET);
 
       if (read(priv->fd,buffer,4)<4) {
-	fprintf(stderr, "avi_decoder: read error in %s\n",cdata->URI);
-	detach_stream(cdata);
-	return FALSE;
+        fprintf(stderr, "avi_decoder: read error in %s\n",cdata->URI);
+        detach_stream(cdata);
+        return FALSE;
       }
-      
+
       priv->input_position+=4;
 
       ast->sample_size=get_le32int(buffer);
 
       ast->cum_len *= FFMAX(1, ast->sample_size);
 
-      switch(tag1) {
+      switch (tag1) {
       case MKTAG('v', 'i', 'd', 's'):
-	codec_type = AVMEDIA_TYPE_VIDEO;
-      
-	ast->sample_size = 0;
-	break;
+        codec_type = AVMEDIA_TYPE_VIDEO;
+
+        ast->sample_size = 0;
+        break;
       case MKTAG('a', 'u', 'd', 's'):
-	codec_type = AVMEDIA_TYPE_AUDIO;
-	break;
+        codec_type = AVMEDIA_TYPE_AUDIO;
+        break;
       case MKTAG('t', 'x', 't', 's'):
-	codec_type = AVMEDIA_TYPE_SUBTITLE;
-	break;
+        codec_type = AVMEDIA_TYPE_SUBTITLE;
+        break;
       default:
-	codec_type = AVMEDIA_TYPE_DATA;
+        codec_type = AVMEDIA_TYPE_DATA;
       }
 
-      if(ast->sample_size == 0)
-	priv->st->duration = priv->st->nb_frames;
+      if (ast->sample_size == 0)
+        priv->st->duration = priv->st->nb_frames;
       ast->frame_offset= ast->cum_len;
 
       priv->input_position+=size - 12 * 4;
@@ -1196,133 +1193,133 @@ static boolean attach_stream(lives_clip_data_t *cdata) {
       lseek(priv->fd,priv->input_position,SEEK_SET);
       break;
 
-    
+
     case MKTAG('s', 't', 'r', 'f'):
       /* stream header */
       if (stream_index >= (unsigned)priv->s->nb_streams) {
-	priv->input_position+= size;
-	lseek(priv->fd,priv->input_position,SEEK_SET);
+        priv->input_position+= size;
+        lseek(priv->fd,priv->input_position,SEEK_SET);
       } else {
-	uint64_t cur_pos = priv->input_position;
-	if (cur_pos < list_end)
-	  size = FFMIN(size, list_end - cur_pos);
-	priv->st = priv->s->streams[stream_index];
-	switch(codec_type) {
-	case AVMEDIA_TYPE_VIDEO:
-	  fprintf(stderr,"pt 1\n");
-	  if (amv_file_format){
-	    fprintf(stderr,"pt 12\n");
-	    priv->st->codec->width=avih_width;
-	    priv->st->codec->height=avih_height;
-	    priv->st->codec->codec_type = AVMEDIA_TYPE_VIDEO;
-	    priv->st->codec->codec_id = CODEC_ID_AMV;
-	    priv->input_position+=size;
-	    lseek(priv->fd,priv->input_position,SEEK_SET);
-	    break;
-	  }
+        uint64_t cur_pos = priv->input_position;
+        if (cur_pos < list_end)
+          size = FFMIN(size, list_end - cur_pos);
+        priv->st = priv->s->streams[stream_index];
+        switch (codec_type) {
+        case AVMEDIA_TYPE_VIDEO:
+          fprintf(stderr,"pt 1\n");
+          if (amv_file_format) {
+            fprintf(stderr,"pt 12\n");
+            priv->st->codec->width=avih_width;
+            priv->st->codec->height=avih_height;
+            priv->st->codec->codec_type = AVMEDIA_TYPE_VIDEO;
+            priv->st->codec->codec_id = CODEC_ID_AMV;
+            priv->input_position+=size;
+            lseek(priv->fd,priv->input_position,SEEK_SET);
+            break;
+          }
 
-	  tag1 = get_bmp_header(cdata);
-	  print_tag("xvideo", tag1, 0);
+          tag1 = get_bmp_header(cdata);
+          print_tag("xvideo", tag1, 0);
 
-	  if (check_eof(cdata)) {
-	    fprintf(stderr, "avi_decoder: read error in %s\n",cdata->URI);
-	    detach_stream(cdata);
-	    return FALSE;
-	  }
+          if (check_eof(cdata)) {
+            fprintf(stderr, "avi_decoder: read error in %s\n",cdata->URI);
+            detach_stream(cdata);
+            return FALSE;
+          }
 
-	  if (tag1 == MKTAG('D', 'X', 'S', 'B') || tag1 == MKTAG('D','X','S','A')) {
-	    priv->st->codec->codec_type = AVMEDIA_TYPE_SUBTITLE;
-	    priv->st->codec->codec_tag = tag1;
-	    priv->st->codec->codec_id = CODEC_ID_XSUB;
-	    break;
-	  }
+          if (tag1 == MKTAG('D', 'X', 'S', 'B') || tag1 == MKTAG('D','X','S','A')) {
+            priv->st->codec->codec_type = AVMEDIA_TYPE_SUBTITLE;
+            priv->st->codec->codec_tag = tag1;
+            priv->st->codec->codec_id = CODEC_ID_XSUB;
+            break;
+          }
 
-	  if(size > 10*4 && size<(1<<30)){
-	    priv->st->codec->extradata_size= size - 10*4;
-	    priv->st->codec->extradata= malloc(priv->st->codec->extradata_size + FF_INPUT_BUFFER_PADDING_SIZE);
-	    if (!priv->st->codec->extradata) {
-	      priv->st->codec->extradata_size= 0;
-	      return AVERROR(ENOMEM);
-	    }
+          if (size > 10*4 && size<(1<<30)) {
+            priv->st->codec->extradata_size= size - 10*4;
+            priv->st->codec->extradata= malloc(priv->st->codec->extradata_size + FF_INPUT_BUFFER_PADDING_SIZE);
+            if (!priv->st->codec->extradata) {
+              priv->st->codec->extradata_size= 0;
+              return AVERROR(ENOMEM);
+            }
 
-	    if (read(priv->fd,priv->st->codec->extradata, priv->st->codec->extradata_size) < priv->st->codec->extradata_size) {
-	      fprintf(stderr, "avi_decoder: read error in %s\n",cdata->URI);
-	      detach_stream(cdata);
-	      return FALSE;
-	    }
-	  }
-	
-	  if(priv->st->codec->extradata_size & 1) {
-	    //FIXME check if the encoder really did this correctly
-	    priv->input_position+=1;
-	    lseek(priv->fd,priv->input_position,SEEK_SET);
-	  }
-	  /* Extract palette from extradata if bpp <= 8. */
-	  /* This code assumes that extradata contains only palette. */
-	  /* This is true for all paletted codecs implemented in FFmpeg. */
-	  if (priv->st->codec->extradata_size && (priv->st->codec->bits_per_coded_sample <= 8)) {
-	    int pal_size = (1 << priv->st->codec->bits_per_coded_sample) << 2;
-	    const uint8_t *pal_src;
-	  
-	    pal_size = FFMIN(pal_size, priv->st->codec->extradata_size);
-	    pal_src = priv->st->codec->extradata + priv->st->codec->extradata_size - pal_size;
+            if (read(priv->fd,priv->st->codec->extradata, priv->st->codec->extradata_size) < priv->st->codec->extradata_size) {
+              fprintf(stderr, "avi_decoder: read error in %s\n",cdata->URI);
+              detach_stream(cdata);
+              return FALSE;
+            }
+          }
+
+          if (priv->st->codec->extradata_size & 1) {
+            //FIXME check if the encoder really did this correctly
+            priv->input_position+=1;
+            lseek(priv->fd,priv->input_position,SEEK_SET);
+          }
+          /* Extract palette from extradata if bpp <= 8. */
+          /* This code assumes that extradata contains only palette. */
+          /* This is true for all paletted codecs implemented in FFmpeg. */
+          if (priv->st->codec->extradata_size && (priv->st->codec->bits_per_coded_sample <= 8)) {
+            int pal_size = (1 << priv->st->codec->bits_per_coded_sample) << 2;
+            const uint8_t *pal_src;
+
+            pal_size = FFMIN(pal_size, priv->st->codec->extradata_size);
+            pal_src = priv->st->codec->extradata + priv->st->codec->extradata_size - pal_size;
 #if HAVE_BIGENDIAN
-	    for (i = 0; i < pal_size/4; i++)
-	      ast->pal[i] = get_le32int((uint8_t *)(((uint32_t*)(pal_src+4*i))));
+            for (i = 0; i < pal_size/4; i++)
+              ast->pal[i] = get_le32int((uint8_t *)(((uint32_t *)(pal_src+4*i))));
 #else
-	    memcpy(ast->pal, pal_src, pal_size);
+            memcpy(ast->pal, pal_src, pal_size);
 #endif
-	    ast->has_pal = 1;
-	  }
-	
-	  print_tag("video", tag1, 0);
-	
-	  vidst=priv->st;
+            ast->has_pal = 1;
+          }
 
-	  priv->st->codec->codec_type = AVMEDIA_TYPE_VIDEO;
-	  priv->st->codec->codec_tag = tag1;
-	  priv->st->codec->codec_id = ff_codec_get_id((const AVCodecTag*)(codec_bmp_tags), tag1);
+          print_tag("video", tag1, 0);
 
-	  // This is needed to get the pict type which is necessary for generating correct pts.
-	  priv->st->need_parsing = AVSTREAM_PARSE_HEADERS;
-	  // Support "Resolution 1:1" for Avid AVI Codec
-	  if(tag1 == MKTAG('A', 'V', 'R', 'n') &&
-	     priv->st->codec->extradata_size >= 31 &&
-	     !memcmp(&priv->st->codec->extradata[28], "1:1", 3))
-	    priv->st->codec->codec_id = CODEC_ID_RAWVIDEO;
+          vidst=priv->st;
 
-	  if(priv->st->codec->codec_tag==0 && priv->st->codec->height > 0 && priv->st->codec->extradata_size < 1U<<30){
-	    priv->st->codec->extradata_size+= 9;
-	    priv->st->codec->extradata= realloc(priv->st->codec->extradata, priv->st->codec->extradata_size + FF_INPUT_BUFFER_PADDING_SIZE);
-	    if(priv->st->codec->extradata)
-	      memcpy(priv->st->codec->extradata + priv->st->codec->extradata_size - 9, "BottomUp", 9);
-	  }
-	  priv->st->codec->height= FFABS(priv->st->codec->height);
+          priv->st->codec->codec_type = AVMEDIA_TYPE_VIDEO;
+          priv->st->codec->codec_tag = tag1;
+          priv->st->codec->codec_id = ff_codec_get_id((const AVCodecTag *)(codec_bmp_tags), tag1);
 
-	  //                    avio_skip(pb, size - 5 * 4);
-	  break;
+          // This is needed to get the pict type which is necessary for generating correct pts.
+          priv->st->need_parsing = AVSTREAM_PARSE_HEADERS;
+          // Support "Resolution 1:1" for Avid AVI Codec
+          if (tag1 == MKTAG('A', 'V', 'R', 'n') &&
+              priv->st->codec->extradata_size >= 31 &&
+              !memcmp(&priv->st->codec->extradata[28], "1:1", 3))
+            priv->st->codec->codec_id = CODEC_ID_RAWVIDEO;
 
-	case AVMEDIA_TYPE_AUDIO:
-	  priv->input_position+=size;
-	  lseek(priv->fd,priv->input_position,SEEK_SET);
-	  break;
-	case AVMEDIA_TYPE_SUBTITLE:
-	  priv->input_position+=size;
-	  lseek(priv->fd,priv->input_position,SEEK_SET);
-	  priv->st->codec->codec_id= CODEC_ID_NONE;
-	  priv->st->codec->codec_tag= 0;
-	  //priv->st->codec->codec_type = AVMEDIA_TYPE_SUBTITLE;
-	  //priv->st->request_probe= 1;
-	  break;
-	default:
-	  priv->st->codec->codec_type = AVMEDIA_TYPE_DATA;
-	  priv->st->codec->codec_id= CODEC_ID_NONE;
-	  priv->st->codec->codec_tag= 0;
+          if (priv->st->codec->codec_tag==0 && priv->st->codec->height > 0 && priv->st->codec->extradata_size < 1U<<30) {
+            priv->st->codec->extradata_size+= 9;
+            priv->st->codec->extradata= realloc(priv->st->codec->extradata, priv->st->codec->extradata_size + FF_INPUT_BUFFER_PADDING_SIZE);
+            if (priv->st->codec->extradata)
+              memcpy(priv->st->codec->extradata + priv->st->codec->extradata_size - 9, "BottomUp", 9);
+          }
+          priv->st->codec->height= FFABS(priv->st->codec->height);
 
-	  priv->input_position+=size;
-	  lseek(priv->fd,priv->input_position,SEEK_SET);
-	  break;
-	}
+          //                    avio_skip(pb, size - 5 * 4);
+          break;
+
+        case AVMEDIA_TYPE_AUDIO:
+          priv->input_position+=size;
+          lseek(priv->fd,priv->input_position,SEEK_SET);
+          break;
+        case AVMEDIA_TYPE_SUBTITLE:
+          priv->input_position+=size;
+          lseek(priv->fd,priv->input_position,SEEK_SET);
+          priv->st->codec->codec_id= CODEC_ID_NONE;
+          priv->st->codec->codec_tag= 0;
+          //priv->st->codec->codec_type = AVMEDIA_TYPE_SUBTITLE;
+          //priv->st->request_probe= 1;
+          break;
+        default:
+          priv->st->codec->codec_type = AVMEDIA_TYPE_DATA;
+          priv->st->codec->codec_id= CODEC_ID_NONE;
+          priv->st->codec->codec_tag= 0;
+
+          priv->input_position+=size;
+          lseek(priv->fd,priv->input_position,SEEK_SET);
+          break;
+        }
       }
       break;
 
@@ -1335,64 +1332,64 @@ static boolean attach_stream(lives_clip_data_t *cdata) {
       break;
 
     case MKTAG('v', 'p', 'r', 'p'):
-      if(stream_index < (unsigned)priv->s->nb_streams && size > 9*4){
-	AVRational active, active_aspect;
+      if (stream_index < (unsigned)priv->s->nb_streams && size > 9*4) {
+        AVRational active, active_aspect;
 
-	priv->st = priv->s->streams[stream_index];
+        priv->st = priv->s->streams[stream_index];
 
-	priv->input_position+=20;
-	lseek(priv->fd,priv->input_position,SEEK_SET);
+        priv->input_position+=20;
+        lseek(priv->fd,priv->input_position,SEEK_SET);
 
-	if (read(priv->fd,buffer,2)<2) {
-	  fprintf(stderr, "avi_decoder: read error in %s\n",cdata->URI);
-	  detach_stream(cdata);
-	  return FALSE;
-	}
-      
-	priv->input_position+=2;
-      
-	active_aspect.den=get_le16int(buffer);
+        if (read(priv->fd,buffer,2)<2) {
+          fprintf(stderr, "avi_decoder: read error in %s\n",cdata->URI);
+          detach_stream(cdata);
+          return FALSE;
+        }
 
-	if (read(priv->fd,buffer,2)<2) {
-	  fprintf(stderr, "avi_decoder: read error in %s\n",cdata->URI);
-	  detach_stream(cdata);
-	  return FALSE;
-	}
-      
-	priv->input_position+=2;
-      
-	active_aspect.num=get_le16int(buffer);
+        priv->input_position+=2;
 
-	if (read(priv->fd,buffer,4)<4) {
-	  fprintf(stderr, "avi_decoder: read error in %s\n",cdata->URI);
-	  detach_stream(cdata);
-	  return FALSE;
-	}
-      
-	priv->input_position+=4;
-      
-	active.num=get_le32int(buffer);
+        active_aspect.den=get_le16int(buffer);
 
-	if (read(priv->fd,buffer,4)<4) {
-	  fprintf(stderr, "avi_decoder: read error in %s\n",cdata->URI);
-	  detach_stream(cdata);
-	  return FALSE;
-	}
-      
-	priv->input_position+=4;
-      
-	active.den=get_le32int(buffer);
+        if (read(priv->fd,buffer,2)<2) {
+          fprintf(stderr, "avi_decoder: read error in %s\n",cdata->URI);
+          detach_stream(cdata);
+          return FALSE;
+        }
+
+        priv->input_position+=2;
+
+        active_aspect.num=get_le16int(buffer);
+
+        if (read(priv->fd,buffer,4)<4) {
+          fprintf(stderr, "avi_decoder: read error in %s\n",cdata->URI);
+          detach_stream(cdata);
+          return FALSE;
+        }
+
+        priv->input_position+=4;
+
+        active.num=get_le32int(buffer);
+
+        if (read(priv->fd,buffer,4)<4) {
+          fprintf(stderr, "avi_decoder: read error in %s\n",cdata->URI);
+          detach_stream(cdata);
+          return FALSE;
+        }
+
+        priv->input_position+=4;
+
+        active.den=get_le32int(buffer);
 
 
 
-	priv->input_position+=4; //fieldsperframe
-	lseek(priv->fd,priv->input_position,SEEK_SET);
+        priv->input_position+=4; //fieldsperframe
+        lseek(priv->fd,priv->input_position,SEEK_SET);
 
-	if(active_aspect.num && active_aspect.den && active.num && active.den){
-	  priv->st->sample_aspect_ratio= av_div_q(active_aspect, active);
-	  //av_log(s, AV_LOG_ERROR, "vprp %d/%d %d/%d\n", active_aspect.num, active_aspect.den, active.num, active.den);
-	}
-	size -= 9*4;
+        if (active_aspect.num && active_aspect.den && active.num && active.den) {
+          priv->st->sample_aspect_ratio= av_div_q(active_aspect, active);
+          //av_log(s, AV_LOG_ERROR, "vprp %d/%d %d/%d\n", active_aspect.num, active_aspect.den, active.num, active.den);
+        }
+        size -= 9*4;
       }
 
       priv->input_position+=size;
@@ -1400,19 +1397,19 @@ static boolean attach_stream(lives_clip_data_t *cdata) {
       break;
 
     case MKTAG('s', 't', 'r', 'n'):
-      if(priv->s->nb_streams){
-	priv->input_position+=size;
-	lseek(priv->fd,priv->input_position,SEEK_SET);
-	break;
+      if (priv->s->nb_streams) {
+        priv->input_position+=size;
+        lseek(priv->fd,priv->input_position,SEEK_SET);
+        break;
       }
     default:
-      if(size > 1000000){
-	fprintf(stderr, "avi_decoder: Something went wrong during header parsing, "
-		"I will ignore it and try to continue anyway.\n");
-	if (error_recognition >= ER_EXPLODE) goto fail;
-	priv->avi->movi_list = priv->input_position - 4;
-	priv->avi->movi_end  = priv->filesize;
-	goto end_of_header;
+      if (size > 1000000) {
+        fprintf(stderr, "avi_decoder: Something went wrong during header parsing, "
+                "I will ignore it and try to continue anyway.\n");
+        if (error_recognition >= ER_EXPLODE) goto fail;
+        priv->avi->movi_list = priv->input_position - 4;
+        priv->avi->movi_end  = priv->filesize;
+        goto end_of_header;
       }
       /* skip tag */
       size += (size & 1);
@@ -1421,10 +1418,10 @@ static boolean attach_stream(lives_clip_data_t *cdata) {
       break;
     }
   }
- end_of_header:
+end_of_header:
   /* check stream number */
   if (stream_index != priv->s->nb_streams - 1) {
-  fail:
+fail:
     return FALSE;
   }
 
@@ -1437,13 +1434,13 @@ static boolean attach_stream(lives_clip_data_t *cdata) {
 
   // TODO *** - crap out if we have no keyframes
 
-  if(priv->avi->non_interleaved) {
+  if (priv->avi->non_interleaved) {
     fprintf(stderr, "av_decoder: non-interleaved AVI\n");
     //clean_index(priv->s);
   }
 
   //ff_metadata_conv_ctx(s, NULL, ff_avi_metadata_conv);
-  
+
 
   ////////////////////////////////////////////////////////
 
@@ -1455,38 +1452,48 @@ static boolean attach_stream(lives_clip_data_t *cdata) {
   priv->input_position=priv->data_start;
   lseek(priv->fd,priv->input_position,SEEK_SET);
 
-  switch(vidst->codec->codec_id) {
+  switch (vidst->codec->codec_id) {
   case CODEC_ID_WMV1:
-    snprintf(cdata->video_name,16,"wmv1"); break;
+    snprintf(cdata->video_name,16,"wmv1");
+    break;
   case CODEC_ID_WMV2:
-    snprintf(cdata->video_name,16,"wmv2"); break;
+    snprintf(cdata->video_name,16,"wmv2");
+    break;
   case CODEC_ID_WMV3:
-    snprintf(cdata->video_name,16,"wmv3"); break;
+    snprintf(cdata->video_name,16,"wmv3");
+    break;
   case CODEC_ID_DVVIDEO:
-    snprintf(cdata->video_name,16,"dv"); break;
+    snprintf(cdata->video_name,16,"dv");
+    break;
   case CODEC_ID_MPEG4:
-    snprintf(cdata->video_name,16,"mpeg4"); break;
+    snprintf(cdata->video_name,16,"mpeg4");
+    break;
   case CODEC_ID_H264:
-    snprintf(cdata->video_name,16,"h264"); break;
+    snprintf(cdata->video_name,16,"h264");
+    break;
   case CODEC_ID_MPEG1VIDEO:
-    snprintf(cdata->video_name,16,"mpeg1"); break;
+    snprintf(cdata->video_name,16,"mpeg1");
+    break;
   case CODEC_ID_MPEG2VIDEO:
-    snprintf(cdata->video_name,16,"mpeg2"); break;
+    snprintf(cdata->video_name,16,"mpeg2");
+    break;
   default:
-    snprintf(cdata->video_name,16,"unknown"); break;
-    fprintf(stderr,"add video format %d\n",vidst->codec->codec_id); break;
+    snprintf(cdata->video_name,16,"unknown");
+    break;
+    fprintf(stderr,"add video format %d\n",vidst->codec->codec_id);
+    break;
   }
 
   if (vidst->codec) codec = avcodec_find_decoder(vidst->codec->codec_id);
 #define DEBUG
 #ifdef DEBUG
   fprintf(stderr,"video type is %s %d x %d (%d x %d +%d +%d) %p\n",cdata->video_name,
-	  cdata->width,cdata->height,cdata->frame_width,cdata->frame_height,cdata->offs_x,cdata->offs_y,codec);
+          cdata->width,cdata->height,cdata->frame_width,cdata->frame_height,cdata->offs_x,cdata->offs_y,codec);
 #endif
 
 
   if (!vidst->codec) {
-    if (strlen(cdata->video_name)>0) 
+    if (strlen(cdata->video_name)>0)
       fprintf(stderr, "avi_decoder: Could not find avcodec codec for video type %s\n",cdata->video_name);
     detach_stream(cdata);
     return FALSE;
@@ -1511,7 +1518,7 @@ static boolean attach_stream(lives_clip_data_t *cdata) {
 
   ctx->width=cdata->width;
   ctx->height=cdata->height;
-  ctx->flags|= CODEC_FLAG_TRUNCATED; 
+  ctx->flags|= CODEC_FLAG_TRUNCATED;
 
 
   do {
@@ -1520,17 +1527,17 @@ static boolean attach_stream(lives_clip_data_t *cdata) {
       //if (priv->avpkt.data!=NULL) free(priv->avpkt.data);
       retval = get_next_video_packet(cdata,0,-1);
       if (retval==-2) {
-	fprintf(stderr, "avi_decoder: No frames found.\n");
-	detach_stream(cdata);
-	return FALSE; // eof
+        fprintf(stderr, "avi_decoder: No frames found.\n");
+        detach_stream(cdata);
+        return FALSE; // eof
       }
     } while (retval!=0);
-    
-    
+
+
 #if LIBAVCODEC_VERSION_MAJOR >= 53
-    len=avcodec_decode_video2(vidst->codec, priv->picture, &got_picture, &priv->avpkt );
-#else 
-    len=avcodec_decode_video(vidst->codec, priv->picture, &got_picture, priv->avpkt.data, priv->avpkt.size );
+    len=avcodec_decode_video2(vidst->codec, priv->picture, &got_picture, &priv->avpkt);
+#else
+    len=avcodec_decode_video(vidst->codec, priv->picture, &got_picture, priv->avpkt.data, priv->avpkt.size);
 #endif
     printf("got len %d\n",len);
     //priv->avpkt.size-=len;
@@ -1552,7 +1559,7 @@ static boolean attach_stream(lives_clip_data_t *cdata) {
 
 #ifdef DEBUG
   printf("first pts is %ld\n",pts);
-#endif  
+#endif
 
   if (pts==AV_NOPTS_VALUE) {
     fprintf(stderr, "avi_decoder: No timestamps for frames, not decoding.\n");
@@ -1565,24 +1572,24 @@ static boolean attach_stream(lives_clip_data_t *cdata) {
   do {
     free(priv->avpkt.data);
     retval = get_next_video_packet(cdata,-1,-1);
-      
+
     // try to get dts of second frame
     if (retval!=-2) { // eof
       if (retval==0) {
 
-	if (priv->frame_dts==AV_NOPTS_VALUE) {
-	  fprintf(stderr, "avi_decoder: No timestamp for second frame, aborting.\n");
-	  detach_stream(cdata);
-	  return FALSE;
-	}
+        if (priv->frame_dts==AV_NOPTS_VALUE) {
+          fprintf(stderr, "avi_decoder: No timestamp for second frame, aborting.\n");
+          detach_stream(cdata);
+          return FALSE;
+        }
 
-	pts=priv->frame_dts-pts;
+        pts=priv->frame_dts-pts;
 
 #ifdef DEBUG
-	printf("delta pts is %ld\n",pts);
+        printf("delta pts is %ld\n",pts);
 #endif
-      
-	if (pts>0) cdata->fps=1000./(double)pts;
+
+        if (pts>0) cdata->fps=1000./(double)pts;
       }
     }
   } while (retval<0&&retval!=-2);
@@ -1620,7 +1627,7 @@ static boolean attach_stream(lives_clip_data_t *cdata) {
 
   if (cdata->width==0) cdata->width=ctx->width-cdata->offs_x*2;
   if (cdata->height==0) cdata->height=ctx->height-cdata->offs_y*2;
-  
+
   if (cdata->width*cdata->height==0) {
     fprintf(stderr, "avi_decoder: invalid width and height (%d X %d)\n",cdata->width,cdata->height);
     detach_stream(cdata);
@@ -1629,7 +1636,7 @@ static boolean attach_stream(lives_clip_data_t *cdata) {
 
 #ifdef DEBUG
   fprintf(stderr,"using palette %d, size %d x %d\n",
-	  cdata->current_palette,cdata->width,cdata->height);
+          cdata->current_palette,cdata->width,cdata->height);
 #endif
 
   cdata->par=(double)ctx->sample_aspect_ratio.num/(double)ctx->sample_aspect_ratio.den;
@@ -1649,7 +1656,7 @@ static boolean attach_stream(lives_clip_data_t *cdata) {
     detach_stream(cdata);
     return FALSE;
   }
-  
+
   if (ctx->ticks_per_frame==2) {
     // TODO - needs checking
     cdata->fps/=2.;
@@ -1684,12 +1691,12 @@ const char *version(void) {
 
 
 
-static lives_clip_data_t *init_cdata (void) {
+static lives_clip_data_t *init_cdata(void) {
   lives_avi_priv_t *priv;
   lives_clip_data_t *cdata=(lives_clip_data_t *)malloc(sizeof(lives_clip_data_t));
 
   cdata->URI=NULL;
-  
+
   cdata->priv=priv=malloc(sizeof(lives_avi_priv_t));
 
   cdata->seek_flag=0;
@@ -1698,7 +1705,7 @@ static lives_clip_data_t *init_cdata (void) {
   priv->picture=NULL;
 
   cdata->palettes=NULL;
-  
+
   return cdata;
 }
 
@@ -1778,7 +1785,7 @@ static size_t write_black_pixel(unsigned char *idst, int pal, int npixels, int y
   unsigned char *dst=idst;
   register int i;
 
-  for (i=0;i<npixels;i++) {
+  for (i=0; i<npixels; i++) {
     switch (pal) {
     case WEED_PALETTE_RGBA32:
     case WEED_PALETTE_BGRA32:
@@ -1816,7 +1823,8 @@ static size_t write_black_pixel(unsigned char *idst, int pal, int npixels, int y
       dst[0]=dst[3]=128;
       dst[1]=dst[2]=dst[4]=dst[5]=y_black;
       dst+=6;
-    default: break;
+    default:
+      break;
     }
   }
   return idst-dst;
@@ -1837,7 +1845,7 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstride
   int y_black=(cdata->YUV_clamping==WEED_YUV_CLAMPING_CLAMPED)?16:0;
   boolean got_picture=FALSE;
   unsigned char *dst,*src;
-  unsigned char black[4]={0,0,0,255};
+  unsigned char black[4]= {0,0,0,255};
   register int i,p;
 
 #ifdef DEBUG_KFRAMES
@@ -1850,17 +1858,17 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstride
     nplanes=3;
     black[0]=y_black;
     black[1]=black[2]=128;
-  }
-  else if (pal==WEED_PALETTE_YUVA4444P) {
+  } else if (pal==WEED_PALETTE_YUVA4444P) {
     nplanes=4;
     black[0]=y_black;
     black[1]=black[2]=128;
     black[3]=255;
   }
-  
+
   if (pal==WEED_PALETTE_RGB24||pal==WEED_PALETTE_BGR24) psize=3;
 
-  if (pal==WEED_PALETTE_RGBA32||pal==WEED_PALETTE_BGRA32||pal==WEED_PALETTE_ARGB32||pal==WEED_PALETTE_UYVY8888||pal==WEED_PALETTE_YUYV8888||pal==WEED_PALETTE_YUV888||pal==WEED_PALETTE_YUVA8888) psize=4;
+  if (pal==WEED_PALETTE_RGBA32||pal==WEED_PALETTE_BGRA32||pal==WEED_PALETTE_ARGB32||pal==WEED_PALETTE_UYVY8888||pal==WEED_PALETTE_YUYV8888||
+      pal==WEED_PALETTE_YUV888||pal==WEED_PALETTE_YUVA8888) psize=4;
 
   if (pal==WEED_PALETTE_YUV411) psize=6;
 
@@ -1890,26 +1898,25 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstride
       priv->avpkt.size=0;
 
       if ((priv->kframe=get_idx_for_pts(cdata,target_pts-priv->start_dts))!=NULL) {
-	priv->input_position=priv->kframe->offs;
-	nextframe=dts_to_frame(cdata,priv->kframe->dts+priv->start_dts);
-	tfrag=priv->kframe->frag;
-      }
-      else priv->input_position=priv->data_start;
-	
+        priv->input_position=priv->kframe->offs;
+        nextframe=dts_to_frame(cdata,priv->kframe->dts+priv->start_dts);
+        tfrag=priv->kframe->frag;
+      } else priv->input_position=priv->data_start;
+
       // we are now at the kframe before or at target - parse packets until we hit target
-      
+
 
 #ifdef DEBUG_KFRAMES
-      if (priv->kframe!=NULL) printf("got kframe %ld frag %d for frame %ld\n",dts_to_frame(cdata,priv->kframe->dts+priv->start_dts),priv->kframe->frag,tframe);
+      if (priv->kframe!=NULL) printf("got kframe %ld frag %d for frame %ld\n",dts_to_frame(cdata,priv->kframe->dts+priv->start_dts),
+                                       priv->kframe->frag,tframe);
 #endif
 
-      avcodec_flush_buffers (priv->ctx);
+      avcodec_flush_buffers(priv->ctx);
 
       // TODO ***
       //avi_reset_header(priv->s);
       priv->black_fill=FALSE;
-    }
-    else {
+    } else {
       nextframe=priv->last_frame+1;
       tfrag=-1;
     }
@@ -1927,24 +1934,24 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstride
       if (nextframe==tframe) priv->ctx->skip_frame=AVDISCARD_DEFAULT;
 
       if (priv->avpkt.size==0) {
-	ret = get_next_video_packet(cdata,tfrag,-1);
-	if (ret<0) {
-	  free(priv->avpkt.data);
-	  priv->avpkt.data=NULL;
-	  priv->avpkt.size=0;
-	  if (ret==-2) {
-	    priv->black_fill=TRUE;
-	    break;
-	  }
-	  fprintf(stderr,"avi_decoder: got frame decode error %d at frame %ld\n",ret,nextframe+1);
-	  continue;
-	}
+        ret = get_next_video_packet(cdata,tfrag,-1);
+        if (ret<0) {
+          free(priv->avpkt.data);
+          priv->avpkt.data=NULL;
+          priv->avpkt.size=0;
+          if (ret==-2) {
+            priv->black_fill=TRUE;
+            break;
+          }
+          fprintf(stderr,"avi_decoder: got frame decode error %d at frame %ld\n",ret,nextframe+1);
+          continue;
+        }
       }
 
 #if LIBAVCODEC_VERSION_MAJOR >= 52
-      len=avcodec_decode_video2(priv->ctx, priv->picture, &got_picture, &priv->avpkt );
-#else 
-      len=avcodec_decode_video(priv->ctx, priv->picture, &got_picture, priv->avpkt.data, priv->avpkt.size );
+      len=avcodec_decode_video2(priv->ctx, priv->picture, &got_picture, &priv->avpkt);
+#else
+      len=avcodec_decode_video(priv->ctx, priv->picture, &got_picture, priv->avpkt.data, priv->avpkt.size);
 #endif
 
       priv->avpkt.size-=len;
@@ -1954,8 +1961,8 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstride
 #endif
 
       if (priv->avpkt.size==0) {
-	free(priv->avpkt.data);
-	priv->avpkt.data=NULL;
+        free(priv->avpkt.data);
+        priv->avpkt.data=NULL;
       }
       tfrag=-1;
       nextframe++;
@@ -1967,38 +1974,38 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstride
 
   if (priv->black_fill) btop=cdata->frame_height;
 
-  for (p=0;p<nplanes;p++) {
+  for (p=0; p<nplanes; p++) {
     dst=pixel_data[p];
     src=priv->picture->data[p];
 
-    for (i=0;i<xheight;i++) {
+    for (i=0; i<xheight; i++) {
       if (i<btop||i>bbot) {
-	// top or bottom border, copy black row
-	if (pal==WEED_PALETTE_YUV420P||pal==WEED_PALETTE_YVU420P||pal==WEED_PALETTE_YUV422P||pal==WEED_PALETTE_YUV444P||pal==WEED_PALETTE_YUVA4444P||pal==WEED_PALETTE_RGB24||pal==WEED_PALETTE_BGR24) {
-	  memset(dst,black[p],dstwidth+(bleft+bright)*psize);
-	  dst+=dstwidth+(bleft+bright)*psize;
-	}
-	else dst+=write_black_pixel(dst,pal,dstwidth/psize+bleft+bright,y_black);
-	continue;
+        // top or bottom border, copy black row
+        if (pal==WEED_PALETTE_YUV420P||pal==WEED_PALETTE_YVU420P||pal==WEED_PALETTE_YUV422P||pal==WEED_PALETTE_YUV444P||
+            pal==WEED_PALETTE_YUVA4444P||pal==WEED_PALETTE_RGB24||pal==WEED_PALETTE_BGR24) {
+          memset(dst,black[p],dstwidth+(bleft+bright)*psize);
+          dst+=dstwidth+(bleft+bright)*psize;
+        } else dst+=write_black_pixel(dst,pal,dstwidth/psize+bleft+bright,y_black);
+        continue;
       }
 
       if (bleft>0) {
-	if (pal==WEED_PALETTE_YUV420P||pal==WEED_PALETTE_YVU420P||pal==WEED_PALETTE_YUV422P||pal==WEED_PALETTE_YUV444P||pal==WEED_PALETTE_YUVA4444P||pal==WEED_PALETTE_RGB24||pal==WEED_PALETTE_BGR24) {
-	  memset(dst,black[p],bleft*psize);
-	  dst+=bleft*psize;
-	}
-	else dst+=write_black_pixel(dst,pal,bleft,y_black);
+        if (pal==WEED_PALETTE_YUV420P||pal==WEED_PALETTE_YVU420P||pal==WEED_PALETTE_YUV422P||pal==WEED_PALETTE_YUV444P||
+            pal==WEED_PALETTE_YUVA4444P||pal==WEED_PALETTE_RGB24||pal==WEED_PALETTE_BGR24) {
+          memset(dst,black[p],bleft*psize);
+          dst+=bleft*psize;
+        } else dst+=write_black_pixel(dst,pal,bleft,y_black);
       }
 
       memcpy(dst,src,dstwidth);
       dst+=dstwidth;
 
       if (bright>0) {
-	if (pal==WEED_PALETTE_YUV420P||pal==WEED_PALETTE_YVU420P||pal==WEED_PALETTE_YUV422P||pal==WEED_PALETTE_YUV444P||pal==WEED_PALETTE_YUVA4444P||pal==WEED_PALETTE_RGB24||pal==WEED_PALETTE_BGR24) {
-	  memset(dst,black[p],bright*psize);
-	  dst+=bright*psize;
-	}
-	else dst+=write_black_pixel(dst,pal,bright,y_black);
+        if (pal==WEED_PALETTE_YUV420P||pal==WEED_PALETTE_YVU420P||pal==WEED_PALETTE_YUV422P||pal==WEED_PALETTE_YUV444P||
+            pal==WEED_PALETTE_YUVA4444P||pal==WEED_PALETTE_RGB24||pal==WEED_PALETTE_BGR24) {
+          memset(dst,black[p],bright*psize);
+          dst+=bright*psize;
+        } else dst+=write_black_pixel(dst,pal,bright,y_black);
       }
 
       src+=priv->picture->linesize[p];
@@ -2040,7 +2047,7 @@ void module_unload(void) {
 
 
 
-int main (void) {
+int main(void) {
   module_check_init();
   lives_clip_data_t *cdata=get_clip_data("foo.avi",NULL);
   if (cdata==NULL) printf("bang\n");

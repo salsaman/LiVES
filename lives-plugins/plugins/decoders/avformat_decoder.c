@@ -420,158 +420,158 @@ skip_init:
 
       break;
 
-      /*        case CODEC_TYPE_SUBTITLE:
+    /*        case CODEC_TYPE_SUBTITLE:
 
 
 
-      if( strncmp( p_sys->ic->iformat->name, "matroska", 8 ) == 0 &&
-                cc->codec_id == CODEC_ID_DVD_SUBTITLE &&
-                cc->extradata != NULL &&
-                cc->extradata_size > 0 )
-      {
-                char *psz_start;
-                char *psz_buf = malloc( cc->extradata_size + 1);
-                if( psz_buf != NULL )
-                {
-      memcpy( psz_buf, cc->extradata , cc->extradata_size );
-      psz_buf[cc->extradata_size] = '\0';
+    if( strncmp( p_sys->ic->iformat->name, "matroska", 8 ) == 0 &&
+              cc->codec_id == CODEC_ID_DVD_SUBTITLE &&
+              cc->extradata != NULL &&
+              cc->extradata_size > 0 )
+    {
+              char *psz_start;
+              char *psz_buf = malloc( cc->extradata_size + 1);
+              if( psz_buf != NULL )
+              {
+    memcpy( psz_buf, cc->extradata , cc->extradata_size );
+    psz_buf[cc->extradata_size] = '\0';
 
-      psz_start = strstr( psz_buf, "size:" );
-      if( psz_start &&
-      vobsub_size_parse( psz_start,
-      &fmt.subs.spu.i_original_frame_width,
-      &fmt.subs.spu.i_original_frame_height ) == VLC_SUCCESS )
-      {
-      msg_Dbg( p_demux, "original frame size: %dx%d",
-      fmt.subs.spu.i_original_frame_width,
-      fmt.subs.spu.i_original_frame_height );
+    psz_start = strstr( psz_buf, "size:" );
+    if( psz_start &&
+    vobsub_size_parse( psz_start,
+    &fmt.subs.spu.i_original_frame_width,
+    &fmt.subs.spu.i_original_frame_height ) == VLC_SUCCESS )
+    {
+    msg_Dbg( p_demux, "original frame size: %dx%d",
+    fmt.subs.spu.i_original_frame_width,
+    fmt.subs.spu.i_original_frame_height );
+    }
+    else
+    {
+    msg_Warn( p_demux, "reading original frame size failed" );
+    }
+
+    psz_start = strstr( psz_buf, "palette:" );
+    if( psz_start &&
+    vobsub_palette_parse( psz_start, &fmt.subs.spu.palette[1] ) == VLC_SUCCESS )
+    {
+    fmt.subs.spu.palette[0] =  0xBeef;
+    msg_Dbg( p_demux, "vobsub palette read" );
+    }
+    else
+    {
+    msg_Warn( p_demux, "reading original palette failed" );
+    }
+    free( psz_buf );
+              }
+    }
+
+    psz_type = "subtitle";
+    break;
+    */
+
+    //        default:
+
+    /*
+    #ifdef HAVE_FFMPEG_CODEC_ATTACHMENT
+    if( cc->codec_type == CODEC_TYPE_ATTACHMENT )
+    {
+    input_attachment_t *p_attachment;
+    psz_type = "attachment";
+    if( cc->codec_id == CODEC_ID_TTF )
+    {
+    p_attachment = vlc_input_attachment_New( s->filename, "application/x-truetype-font", NULL,
+    cc->extradata, (int)cc->extradata_size );
+    TAB_APPEND( p_sys->i_attachments, p_sys->attachments, p_attachment );
+    }
+    else msg_Warn( p_demux, "unsupported attachment type in ffmpeg demux" );
+    }
+    break;
+    #endif
+
+    if( cc->codec_type == CODEC_TYPE_DATA )
+    psz_type = "data";
+
+    msg_Warn( p_demux, "unsupported track type in ffmpeg demux" );
+    break;
       }
-      else
+      fmt.psz_language = strdup( s->language );
+      if( s->disposition & AV_DISPOSITION_DEFAULT )
+    fmt.i_priority = 1000;
+
+    #ifdef HAVE_FFMPEG_CODEC_ATTACHMENT
+      if( cc->codec_type != CODEC_TYPE_ATTACHMENT )
+    #endif
       {
-      msg_Warn( p_demux, "reading original frame size failed" );
-      }
+    const bool    b_ogg = !strcmp( p_sys->fmt->name, "ogg" );
+    const uint8_t *p_extra = cc->extradata;
+    unsigned      i_extra  = cc->extradata_size;
 
-      psz_start = strstr( psz_buf, "palette:" );
-      if( psz_start &&
-      vobsub_palette_parse( psz_start, &fmt.subs.spu.palette[1] ) == VLC_SUCCESS )
-      {
-      fmt.subs.spu.palette[0] =  0xBeef;
-      msg_Dbg( p_demux, "vobsub palette read" );
-      }
-      else
-      {
-      msg_Warn( p_demux, "reading original palette failed" );
-      }
-      free( psz_buf );
-                }
-      }
+    if( cc->codec_id == CODEC_ID_THEORA && b_ogg )
+    {
+    unsigned pi_size[3];
+    void     *pp_data[3];
+    unsigned i_count;
+    for( i_count = 0; i_count < 3; i_count++ )
+    {
+    if( i_extra < 2 )
+    break;
+    pi_size[i_count] = GetWBE( p_extra );
+    pp_data[i_count] = (uint8_t*)&p_extra[2];
+    if( i_extra < pi_size[i_count] + 2 )
+    break;
 
-      psz_type = "subtitle";
-      break;
-      */
+    p_extra += 2 + pi_size[i_count];
+    i_extra -= 2 + pi_size[i_count];
+    }
+    if( i_count > 0 && xiph_PackHeaders( &fmt.i_extra, &fmt.p_extra,
+    pi_size, pp_data, i_count ) )
+    {
+    fmt.i_extra = 0;
+    fmt.p_extra = NULL;
+    }
+    }
+    else if( cc->codec_id == CODEC_ID_SPEEX && b_ogg )
+    {
+    uint8_t p_dummy_comment[] = {
+    0, 0, 0, 0,
+    0, 0, 0, 0,
+    };
+    unsigned pi_size[2];
+    void     *pp_data[2];
 
-      //        default:
+    pi_size[0] = i_extra;
+    pp_data[0] = (uint8_t*)p_extra;
 
-      /*
-      #ifdef HAVE_FFMPEG_CODEC_ATTACHMENT
-      if( cc->codec_type == CODEC_TYPE_ATTACHMENT )
-      {
-      input_attachment_t *p_attachment;
-      psz_type = "attachment";
-      if( cc->codec_id == CODEC_ID_TTF )
-      {
-      p_attachment = vlc_input_attachment_New( s->filename, "application/x-truetype-font", NULL,
-      cc->extradata, (int)cc->extradata_size );
-      TAB_APPEND( p_sys->i_attachments, p_sys->attachments, p_attachment );
+    pi_size[1] = sizeof(p_dummy_comment);
+    pp_data[1] = p_dummy_comment;
+
+    if( pi_size[0] > 0 && xiph_PackHeaders( &fmt.i_extra, &fmt.p_extra,
+    pi_size, pp_data, 2 ) )
+    {
+    fmt.i_extra = 0;
+    fmt.p_extra = NULL;
+    }
+    }
+    else if( cc->extradata_size > 0 )
+    {
+    fmt.p_extra = malloc( i_extra );
+    if( fmt.p_extra )
+    {
+    fmt.i_extra = i_extra;
+    memcpy( fmt.p_extra, p_extra, i_extra );
+    }
+    }
       }
-      else msg_Warn( p_demux, "unsupported attachment type in ffmpeg demux" );
-      }
-      break;
-      #endif
+      es = es_out_Add( p_demux->out, &fmt );
+      if( s->disposition & AV_DISPOSITION_DEFAULT )
+    es_out_Control( p_demux->out, ES_OUT_SET_ES_DEFAULT, es );
+      es_format_Clean( &fmt );
 
-      if( cc->codec_type == CODEC_TYPE_DATA )
-      psz_type = "data";
-
-      msg_Warn( p_demux, "unsupported track type in ffmpeg demux" );
-      break;
-        }
-        fmt.psz_language = strdup( s->language );
-        if( s->disposition & AV_DISPOSITION_DEFAULT )
-      fmt.i_priority = 1000;
-
-      #ifdef HAVE_FFMPEG_CODEC_ATTACHMENT
-        if( cc->codec_type != CODEC_TYPE_ATTACHMENT )
-      #endif
-        {
-      const bool    b_ogg = !strcmp( p_sys->fmt->name, "ogg" );
-      const uint8_t *p_extra = cc->extradata;
-      unsigned      i_extra  = cc->extradata_size;
-
-      if( cc->codec_id == CODEC_ID_THEORA && b_ogg )
-      {
-      unsigned pi_size[3];
-      void     *pp_data[3];
-      unsigned i_count;
-      for( i_count = 0; i_count < 3; i_count++ )
-      {
-      if( i_extra < 2 )
-      break;
-      pi_size[i_count] = GetWBE( p_extra );
-      pp_data[i_count] = (uint8_t*)&p_extra[2];
-      if( i_extra < pi_size[i_count] + 2 )
-      break;
-
-      p_extra += 2 + pi_size[i_count];
-      i_extra -= 2 + pi_size[i_count];
-      }
-      if( i_count > 0 && xiph_PackHeaders( &fmt.i_extra, &fmt.p_extra,
-      pi_size, pp_data, i_count ) )
-      {
-      fmt.i_extra = 0;
-      fmt.p_extra = NULL;
-      }
-      }
-      else if( cc->codec_id == CODEC_ID_SPEEX && b_ogg )
-      {
-      uint8_t p_dummy_comment[] = {
-      0, 0, 0, 0,
-      0, 0, 0, 0,
-      };
-      unsigned pi_size[2];
-      void     *pp_data[2];
-
-      pi_size[0] = i_extra;
-      pp_data[0] = (uint8_t*)p_extra;
-
-      pi_size[1] = sizeof(p_dummy_comment);
-      pp_data[1] = p_dummy_comment;
-
-      if( pi_size[0] > 0 && xiph_PackHeaders( &fmt.i_extra, &fmt.p_extra,
-      pi_size, pp_data, 2 ) )
-      {
-      fmt.i_extra = 0;
-      fmt.p_extra = NULL;
-      }
-      }
-      else if( cc->extradata_size > 0 )
-      {
-      fmt.p_extra = malloc( i_extra );
-      if( fmt.p_extra )
-      {
-      fmt.i_extra = i_extra;
-      memcpy( fmt.p_extra, p_extra, i_extra );
-      }
-      }
-        }
-        es = es_out_Add( p_demux->out, &fmt );
-        if( s->disposition & AV_DISPOSITION_DEFAULT )
-      es_out_Control( p_demux->out, ES_OUT_SET_ES_DEFAULT, es );
-        es_format_Clean( &fmt );
-
-        msg_Dbg( p_demux, "adding es: %s codec = %4.4s",
-      psz_type, (char*)&fcc );
-        TAB_APPEND( p_sys->i_tk, p_sys->tk, es );
-      */
+      msg_Dbg( p_demux, "adding es: %s codec = %4.4s",
+    psz_type, (char*)&fcc );
+      TAB_APPEND( p_sys->i_tk, p_sys->tk, es );
+    */
     default:
       break;
 

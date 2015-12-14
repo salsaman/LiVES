@@ -5264,6 +5264,24 @@ render_details *create_render_details(int type) {
 
   lives_container_set_border_width(LIVES_CONTAINER(top_vbox), 0);
 
+  rdet->always_hbox = lives_hbox_new(TRUE, widget_opts.packing_width*2);
+  rdet->always_checkbutton=lives_standard_check_button_new((tmp=lives_strdup(_("_Always use these values"))),TRUE,
+                           LIVES_BOX(rdet->always_hbox),
+                           (tmp2=lives_strdup(
+                                   _("Check this button to always use these values when entering multitrack mode. Choice can be re-enabled from Preferences."))));
+
+  lives_free(tmp);
+  lives_free(tmp2);
+
+  add_fill_to_box(LIVES_BOX(rdet->always_hbox));
+
+  daa=lives_dialog_get_action_area(LIVES_DIALOG(rdet->dialog));
+
+  if (!LIVES_IS_BOX(daa)) {
+    lives_box_pack_start(LIVES_BOX(top_vbox), rdet->always_hbox, TRUE, TRUE, 0);
+  }
+
+
   frame = lives_frame_new(NULL);
 
   if (type!=1) lives_box_pack_start(LIVES_BOX(top_vbox), frame, TRUE, TRUE, 0);
@@ -5483,40 +5501,26 @@ render_details *create_render_details(int type) {
 
   widget_opts.expand=LIVES_EXPAND_DEFAULT;
 
-  rdet->always_hbox = lives_hbox_new(TRUE, widget_opts.packing_width*2);
-
-  rdet->always_checkbutton=lives_standard_check_button_new((tmp=lives_strdup(_("_Always use these values"))),TRUE,
-                           LIVES_BOX(rdet->always_hbox),
-                           (tmp2=lives_strdup(
-                                   _("Check this button to always use these values when entering multitrack mode. Choice can be re-enabled from Preferences."))));
-
-  lives_free(tmp);
-  lives_free(tmp2);
-
-  add_fill_to_box(LIVES_BOX(rdet->always_hbox));
-
-  daa=lives_dialog_get_action_area(LIVES_DIALOG(rdet->dialog));
-
-  lives_box_pack_start(LIVES_BOX(daa), rdet->always_hbox, FALSE, FALSE, widget_opts.packing_width*2);
-
-  add_fill_to_box(LIVES_BOX(daa));
-
+  if (LIVES_IS_BOX(daa)) {
+    lives_box_pack_start(LIVES_BOX(daa), rdet->always_hbox, FALSE, FALSE, widget_opts.packing_width*2);
+    add_fill_to_box(LIVES_BOX(daa));
+  }
 
   cancelbutton = lives_button_new_from_stock(LIVES_STOCK_CANCEL,NULL);
   if (!(prefs->startup_interface==STARTUP_MT&&!mainw->is_ready)) {
     lives_dialog_add_action_widget(LIVES_DIALOG(rdet->dialog), cancelbutton, LIVES_RESPONSE_CANCEL);
 
     if (!specified) {
-      lives_button_box_set_button_width(LIVES_BUTTON_BOX(daa), cancelbutton, DEF_BUTTON_WIDTH*2);
+      if (LIVES_IS_BUTTON_BOX(daa)) lives_button_box_set_button_width(LIVES_BUTTON_BOX(daa), cancelbutton, DEF_BUTTON_WIDTH*2);
     }
-  } else add_fill_to_box(LIVES_BOX(daa));
+  } else if (LIVES_IS_BOX(daa)) add_fill_to_box(LIVES_BOX(daa));
 
   lives_widget_set_can_focus(cancelbutton,TRUE);
 
 
   if (!specified) {
     rdet->okbutton = lives_button_new_from_stock(LIVES_STOCK_OK,NULL);
-    lives_button_box_set_button_width(LIVES_BUTTON_BOX(daa), rdet->okbutton, DEF_BUTTON_WIDTH*2);
+    if (LIVES_IS_BUTTON_BOX(daa)) lives_button_box_set_button_width(LIVES_BUTTON_BOX(daa), rdet->okbutton, DEF_BUTTON_WIDTH*2);
   } else  {
     rdet->okbutton = lives_button_new_from_stock(LIVES_STOCK_GO_FORWARD,_("_Next"));
   }

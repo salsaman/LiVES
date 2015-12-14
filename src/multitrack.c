@@ -548,7 +548,7 @@ static void mt_set_cursor_style(lives_mt *mt, lives_cursor_t cstyle, int width, 
       }
       break;
     }
-    // fallthrough
+  // fallthrough
   case LIVES_CURSOR_AUDIO_BLOCK:
     pixbuf=lives_pixbuf_new(TRUE, width, height);
     trow=lives_pixbuf_get_rowstride(pixbuf);
@@ -6314,15 +6314,15 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
 
 
     lives_signal_connect(LIVES_GUI_OBJECT(menuitem), LIVES_WIDGET_ACTIVATE_SIGNAL,
-			 LIVES_GUI_CALLBACK(on_open_fw_activate),
-			 LIVES_INT_TO_POINTER(CAM_FORMAT_DV));
+                         LIVES_GUI_CALLBACK(on_open_fw_activate),
+                         LIVES_INT_TO_POINTER(CAM_FORMAT_DV));
 
     menuitem = lives_menu_item_new_with_mnemonic(_("Import from _Firewire Device (hdv)"));
     lives_container_add(LIVES_CONTAINER(device_submenu), menuitem);
 
     lives_signal_connect(LIVES_GUI_OBJECT(menuitem), LIVES_WIDGET_ACTIVATE_SIGNAL,
-			 LIVES_GUI_CALLBACK(on_open_fw_activate),
-			 LIVES_INT_TO_POINTER(CAM_FORMAT_HDV));
+                         LIVES_GUI_CALLBACK(on_open_fw_activate),
+                         LIVES_INT_TO_POINTER(CAM_FORMAT_HDV));
   }
 
 #endif
@@ -12990,7 +12990,7 @@ void polymorph(lives_mt *mt, lives_mt_poly_state_t poly) {
 
             num_in_tracks=0;
             is_input=FALSE;
-	    fromtrack=-1;
+            fromtrack=-1;
             if (weed_plant_has_leaf(init_event,"in_tracks")) {
               num_in_tracks=weed_leaf_num_elements(init_event,"in_tracks");
               if (num_in_tracks>0) {

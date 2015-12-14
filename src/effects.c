@@ -57,7 +57,7 @@ char *lives_fx_cat_to_text(lives_fx_cat_t cat, boolean plural) {
   // return value should be free'd after use
   switch (cat) {
 
-    // main categories
+  // main categories
   case LIVES_FX_CAT_VIDEO_GENERATOR:
     if (!plural) return (lives_strdup(_("generator")));
     else return (lives_strdup(_("Generators")));
@@ -105,7 +105,7 @@ char *lives_fx_cat_to_text(lives_fx_cat_t cat, boolean plural) {
     else return (lives_strdup(_("Analysers")));
 
 
-    // subcategories
+  // subcategories
   case LIVES_FX_CAT_AV_TRANSITION:
     if (!plural) return (lives_strdup(_("audio/video")));
     else return (lives_strdup(_("Audio/Video Transitions")));

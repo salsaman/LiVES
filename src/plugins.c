@@ -1198,27 +1198,27 @@ _vid_playback_plugin *open_vid_playback_plugin(const char *name, boolean in_use)
   vpp->num_play_params=vpp->num_alpha_chans=0;
   vpp->extra_argv=NULL;
 
-  if ((vpp->module_check_init=(const char* ( *)())dlsym(handle,"module_check_init"))==NULL) {
+  if ((vpp->module_check_init=(const char *(*)())dlsym(handle,"module_check_init"))==NULL) {
     OK=FALSE;
   }
-  if ((vpp->version=(const char* ( *)())dlsym(handle,"version"))==NULL) {
+  if ((vpp->version=(const char *(*)())dlsym(handle,"version"))==NULL) {
     OK=FALSE;
   }
-  if ((vpp->get_palette_list=(int* ( *)())dlsym(handle,"get_palette_list"))==NULL) {
+  if ((vpp->get_palette_list=(int *(*)())dlsym(handle,"get_palette_list"))==NULL) {
     OK=FALSE;
   }
-  if ((vpp->set_palette=(boolean( *)(int))dlsym(handle,"set_palette"))==NULL) {
+  if ((vpp->set_palette=(boolean(*)(int))dlsym(handle,"set_palette"))==NULL) {
     OK=FALSE;
   }
-  if ((vpp->get_capabilities=(uint64_t ( *)(int))dlsym(handle,"get_capabilities"))==NULL) {
+  if ((vpp->get_capabilities=(uint64_t (*)(int))dlsym(handle,"get_capabilities"))==NULL) {
     OK=FALSE;
   }
-  if ((vpp->render_frame=(boolean( *)(int, int, int64_t, void **, void **, weed_plant_t **))
+  if ((vpp->render_frame=(boolean(*)(int, int, int64_t, void **, void **, weed_plant_t **))
                          dlsym(handle,"render_frame"))==NULL) {
     OK=FALSE;
   }
-  if ((vpp->get_fps_list=(const char* ( *)(int))dlsym(handle,"get_fps_list"))!=NULL) {
-    if ((vpp->set_fps=(boolean( *)(double))dlsym(handle,"set_fps"))==NULL) {
+  if ((vpp->get_fps_list=(const char *(*)(int))dlsym(handle,"get_fps_list"))!=NULL) {
+    if ((vpp->set_fps=(boolean(*)(double))dlsym(handle,"set_fps"))==NULL) {
       OK=FALSE;
     }
   }
@@ -1251,18 +1251,18 @@ _vid_playback_plugin *open_vid_playback_plugin(const char *name, boolean in_use)
   }
 
   // now check for optional functions
-  vpp->get_description=(const char* ( *)())dlsym(handle,"get_description");
-  vpp->get_init_rfx=(const char* ( *)())dlsym(handle,"get_init_rfx");
+  vpp->get_description=(const char *(*)())dlsym(handle,"get_description");
+  vpp->get_init_rfx=(const char *(*)())dlsym(handle,"get_init_rfx");
 
-  vpp->get_play_params=(const weed_plant_t **( *)(weed_bootstrap_f))dlsym(handle,"get_play_params");
+  vpp->get_play_params=(const weed_plant_t **(*)(weed_bootstrap_f))dlsym(handle,"get_play_params");
 
-  vpp->get_yuv_palette_clamping=(int* ( *)(int))dlsym(handle,"get_yuv_palette_clamping");
-  vpp->set_yuv_palette_clamping=(int ( *)(int))dlsym(handle,"set_yuv_palette_clamping");
-  vpp->send_keycodes=(boolean( *)(plugin_keyfunc))dlsym(handle,"send_keycodes");
-  vpp->get_audio_fmts=(int* ( *)())dlsym(handle,"get_audio_fmts");
-  vpp->init_screen=(boolean( *)(int, int, boolean, uint64_t, int, char **))dlsym(handle,"init_screen");
-  vpp->exit_screen=(void ( *)(uint16_t, uint16_t))dlsym(handle,"exit_screen");
-  vpp->module_unload=(void ( *)())dlsym(handle,"module_unload");
+  vpp->get_yuv_palette_clamping=(int *(*)(int))dlsym(handle,"get_yuv_palette_clamping");
+  vpp->set_yuv_palette_clamping=(int (*)(int))dlsym(handle,"set_yuv_palette_clamping");
+  vpp->send_keycodes=(boolean(*)(plugin_keyfunc))dlsym(handle,"send_keycodes");
+  vpp->get_audio_fmts=(int *(*)())dlsym(handle,"get_audio_fmts");
+  vpp->init_screen=(boolean(*)(int, int, boolean, uint64_t, int, char **))dlsym(handle,"init_screen");
+  vpp->exit_screen=(void (*)(uint16_t, uint16_t))dlsym(handle,"exit_screen");
+  vpp->module_unload=(void (*)())dlsym(handle,"module_unload");
 
   vpp->YUV_sampling=0;
   vpp->YUV_subspace=0;
@@ -2444,18 +2444,18 @@ lives_decoder_sys_t *open_decoder_plugin(const char *plname) {
     return NULL;
   }
 
-  if ((dplug->version=(const char* ( *)())dlsym(dplug->handle,"version"))==NULL) {
+  if ((dplug->version=(const char *(*)())dlsym(dplug->handle,"version"))==NULL) {
     OK=FALSE;
   }
-  if ((dplug->get_clip_data=(lives_clip_data_t* ( *)(char *, const lives_clip_data_t *))
+  if ((dplug->get_clip_data=(lives_clip_data_t *(*)(char *, const lives_clip_data_t *))
                             dlsym(dplug->handle,"get_clip_data"))==NULL) {
     OK=FALSE;
   }
-  if ((dplug->get_frame=(boolean( *)(const lives_clip_data_t *, int64_t, int *, int, void **))
+  if ((dplug->get_frame=(boolean(*)(const lives_clip_data_t *, int64_t, int *, int, void **))
                         dlsym(dplug->handle,"get_frame"))==NULL) {
     OK=FALSE;
   }
-  if ((dplug->clip_data_free=(void ( *)(lives_clip_data_t *))dlsym(dplug->handle,"clip_data_free"))==NULL) {
+  if ((dplug->clip_data_free=(void (*)(lives_clip_data_t *))dlsym(dplug->handle,"clip_data_free"))==NULL) {
     OK=FALSE;
   }
 
@@ -2467,12 +2467,12 @@ lives_decoder_sys_t *open_decoder_plugin(const char *plname) {
   }
 
   // optional
-  dplug->module_check_init=(const char* ( *)())dlsym(dplug->handle,"module_check_init");
-  dplug->set_palette=(boolean( *)(lives_clip_data_t *))dlsym(dplug->handle,"set_palette");
-  dplug->module_unload=(void ( *)())dlsym(dplug->handle,"module_unload");
-  dplug->rip_audio=(int64_t ( *)(const lives_clip_data_t *, const char *, int64_t, int64_t, unsigned char **))
+  dplug->module_check_init=(const char *(*)())dlsym(dplug->handle,"module_check_init");
+  dplug->set_palette=(boolean(*)(lives_clip_data_t *))dlsym(dplug->handle,"set_palette");
+  dplug->module_unload=(void (*)())dlsym(dplug->handle,"module_unload");
+  dplug->rip_audio=(int64_t (*)(const lives_clip_data_t *, const char *, int64_t, int64_t, unsigned char **))
                    dlsym(dplug->handle,"rip_audio");
-  dplug->rip_audio_cleanup=(void ( *)(const lives_clip_data_t *))dlsym(dplug->handle,"rip_audio_cleanup");
+  dplug->rip_audio_cleanup=(void (*)(const lives_clip_data_t *))dlsym(dplug->handle,"rip_audio_cleanup");
 
   if (dplug->module_check_init!=NULL) {
     err=(*dplug->module_check_init)();

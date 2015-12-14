@@ -493,20 +493,20 @@ void create_LiVES(void) {
 #ifdef HAVE_YUV4MPEG
     if (capable->has_dvgrab) {
       if (capable->has_mplayer||capable->has_mplayer2) {
-	lives_container_add(LIVES_CONTAINER(submenu), mainw->firewire);
-	lives_widget_show(mainw->firewire);
+        lives_container_add(LIVES_CONTAINER(submenu), mainw->firewire);
+        lives_widget_show(mainw->firewire);
 
-	lives_signal_connect(LIVES_GUI_OBJECT(mainw->firewire), LIVES_WIDGET_ACTIVATE_SIGNAL,
-			     LIVES_GUI_CALLBACK(on_live_fw_activate),
-			     NULL);
+        lives_signal_connect(LIVES_GUI_OBJECT(mainw->firewire), LIVES_WIDGET_ACTIVATE_SIGNAL,
+                             LIVES_GUI_CALLBACK(on_live_fw_activate),
+                             NULL);
       }
 
       lives_container_add(LIVES_CONTAINER(submenu), mainw->tvdev);
       lives_widget_show(mainw->tvdev);
 
       lives_signal_connect(LIVES_GUI_OBJECT(mainw->tvdev), LIVES_WIDGET_ACTIVATE_SIGNAL,
-			   LIVES_GUI_CALLBACK(on_live_tvcard_activate),
-			   NULL);
+                           LIVES_GUI_CALLBACK(on_live_tvcard_activate),
+                           NULL);
     }
 
 #ifndef HAVE_UNICAP

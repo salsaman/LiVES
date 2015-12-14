@@ -8501,8 +8501,7 @@ void popup_lmap_errors(LiVESMenuItem *menuitem, livespointer user_data) {
   widget_opts.expand=LIVES_EXPAND_DEFAULT;
 
   dialog_action_area = lives_dialog_get_action_area(LIVES_DIALOG(textwindow->dialog));
-
-  lives_button_box_set_layout(LIVES_BUTTON_BOX(dialog_action_area), LIVES_BUTTONBOX_SPREAD);
+  if (LIVES_IS_BUTTON_BOX(dialog_action_area)) lives_button_box_set_layout(LIVES_BUTTON_BOX(dialog_action_area), LIVES_BUTTONBOX_SPREAD);
 
   vbox = lives_dialog_get_content_area(LIVES_DIALOG(textwindow->dialog));
 
@@ -8594,7 +8593,7 @@ void on_toy_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   }
 
   switch (mainw->toy_type) {
-    // old status
+  // old status
   case LIVES_TOY_AUTOLIVES:
     lives_signal_handler_block(mainw->toy_autolives, mainw->toy_func_autolives);
     lives_check_menu_item_set_active(LIVES_CHECK_MENU_ITEM(mainw->toy_autolives),FALSE);

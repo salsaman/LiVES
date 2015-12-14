@@ -317,8 +317,7 @@ LiVESWidget *create_message_dialog(lives_dialog_t diat, const char *text, LiVESW
   }
 
   dialog_action_area = lives_dialog_get_action_area(LIVES_DIALOG(dialog));
-
-  lives_button_box_set_layout(LIVES_BUTTON_BOX(dialog_action_area), LIVES_BUTTONBOX_END);
+  if (LIVES_IS_BUTTON_BOX(dialog_action_area)) lives_button_box_set_layout(LIVES_BUTTON_BOX(dialog_action_area), LIVES_BUTTONBOX_END);
 
   if (cancelbutton != NULL) {
     lives_widget_set_can_focus(cancelbutton,TRUE);

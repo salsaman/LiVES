@@ -80,7 +80,7 @@ int fourccp_to_weedp(unsigned int fourcc, int bpp, int *interlaced, int *samplin
 
   switch (fourcc) {
 
-    // RGB formats
+  // RGB formats
 
   case 0x32524742: // BGR3
   case 0x33524742: // BGR3 - tested and OK
@@ -103,7 +103,7 @@ int fourccp_to_weedp(unsigned int fourcc, int bpp, int *interlaced, int *samplin
     break;
 
 
-    // YUV packed formats
+  // YUV packed formats
 
   case 0x56595549: // IUYV
     if (interlaced!=NULL) *interlaced=1;
@@ -133,7 +133,7 @@ int fourccp_to_weedp(unsigned int fourcc, int bpp, int *interlaced, int *samplin
     return WEED_PALETTE_A8;
 
 
-    // YUV planar formats
+  // YUV planar formats
   case 0x41565559: // YUVA
     return WEED_PALETTE_YUVA4444P;
     break;
@@ -161,7 +161,7 @@ int fourccp_to_weedp(unsigned int fourcc, int bpp, int *interlaced, int *samplin
     return WEED_PALETTE_YUV444P;
 
 
-    // known formats we cannot use
+  // known formats we cannot use
   case 0x50424752: // RGBP - palettised RGB
   case 0x4f424752: // RGB0 - 15 or 16 bit RGB
   case 0x51424752: // RGBQ - 15 or 16 bit RGB
@@ -177,7 +177,7 @@ int fourccp_to_weedp(unsigned int fourcc, int bpp, int *interlaced, int *samplin
   case 0x30343449: // I440 - 440 planar palette
   case 0x30343450: // J440 - 440 planar palette unclamped
 
-    // no match
+  // no match
   default:
     return WEED_PALETTE_END;
   }
@@ -600,7 +600,7 @@ int avi_pix_fmt_to_weed_palette(enum PixelFormat pix_fmt, int *clamped) {
 
   switch (pix_fmt) {
   case PIX_FMT_RGB24:
-      return WEED_PALETTE_RGB24;
+    return WEED_PALETTE_RGB24;
   case PIX_FMT_BGR24:
     return WEED_PALETTE_BGR24;
   case PIX_FMT_RGBA:

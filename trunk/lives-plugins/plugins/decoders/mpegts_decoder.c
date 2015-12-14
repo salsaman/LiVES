@@ -1211,8 +1211,8 @@ skip:
         }
       }
       break;
-      /**********************************************/
-      /* PES packing parsing */
+    /**********************************************/
+    /* PES packing parsing */
     case MPEGTS_PESHEADER:
       len = PES_HEADER_SIZE - pes->data_index;
       if (len < 0)

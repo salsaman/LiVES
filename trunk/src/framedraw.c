@@ -663,7 +663,7 @@ void load_framedraw_image(LiVESPixbuf *pixbuf) {
     if (!pixbuf_to_layer(mainw->fd_layer_orig,pixbuf)) lives_object_unref(pixbuf);
 
   }
-  
+
   if (mainw->fd_layer!=NULL) weed_layer_free(mainw->fd_layer);
   mainw->fd_layer=NULL;
 

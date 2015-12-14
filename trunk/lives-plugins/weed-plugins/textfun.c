@@ -211,7 +211,7 @@ static inline void fill_line(int fontwidth, unsigned char *src,unsigned char *ds
       else weed_memset(dst,0,3);
       break;
     case 2:
-      // greyscale
+    // greyscale
     case 3:
       // colour blocks
       if (fontrow&(1<<i)) weed_memcpy(dst,fillval,3);

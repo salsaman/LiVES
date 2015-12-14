@@ -381,7 +381,7 @@ lives_clipinfo_t *create_clip_info_window(int audio_channels, boolean is_mt) {
   if (cfile->frames>0||is_mt) {
     vidframe = lives_frame_new(NULL);
 
-    lives_box_pack_start(LIVES_BOX(dialog_vbox), vidframe, TRUE, TRUE, 0);
+    lives_box_pack_start(LIVES_BOX(dialog_vbox), vidframe, TRUE, TRUE, widget_opts.packing_height);
     if (palette->style&STYLE_1) {
       lives_widget_set_bg_color(vidframe, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
     }
@@ -466,7 +466,7 @@ lives_clipinfo_t *create_clip_info_window(int audio_channels, boolean is_mt) {
   if (audio_channels>0) {
     laudframe = lives_frame_new(NULL);
 
-    lives_box_pack_start(LIVES_BOX(dialog_vbox), laudframe, TRUE, TRUE, 0);
+    lives_box_pack_start(LIVES_BOX(dialog_vbox), laudframe, TRUE, TRUE, widget_opts.packing_height);
     if (palette->style&STYLE_1) {
       lives_widget_set_bg_color(laudframe, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
     }
@@ -513,7 +513,7 @@ lives_clipinfo_t *create_clip_info_window(int audio_channels, boolean is_mt) {
     if (audio_channels>1) {
       raudframe = lives_frame_new(NULL);
 
-      lives_box_pack_start(LIVES_BOX(dialog_vbox), raudframe, TRUE, TRUE, 0);
+      lives_box_pack_start(LIVES_BOX(dialog_vbox), raudframe, TRUE, TRUE, widget_opts.packing_height);
       if (palette->style&STYLE_1) {
         lives_widget_set_bg_color(raudframe, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
       }

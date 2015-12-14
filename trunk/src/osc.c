@@ -3527,7 +3527,7 @@ grpinvalid:
 
       break;
 
-      // RGBA colorspace
+    // RGBA colorspace
 
 
     case WEED_COLORSPACE_RGBA:

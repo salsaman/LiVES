@@ -238,7 +238,7 @@ boolean pl_key_function(boolean down, uint16_t unicode, uint16_t keymod) {
     // up...
     if (keymod&NEEDS_TRANSLATION) {
       switch (unicode) {
-        // some keys need translating when a modifier is held down
+      // some keys need translating when a modifier is held down
       case (key_left) :
       case (key_left2):
         if (cached_key==LIVES_KEY_Left) cached_key=0;
@@ -265,7 +265,7 @@ boolean pl_key_function(boolean down, uint16_t unicode, uint16_t keymod) {
   // translate hardware code into gdk keyval, and call any accelerators
   if (keymod&NEEDS_TRANSLATION) {
     switch (unicode) {
-      // some keys need translating when a modifier is held down
+    // some keys need translating when a modifier is held down
     case (65) :
       unicode=LIVES_KEY_Space;
       break;
@@ -353,7 +353,7 @@ boolean pl_key_function(boolean down, uint16_t unicode, uint16_t keymod) {
       unicode=LIVES_KEY_Page_Down;
       break;
 
-      // auto repeat keys
+    // auto repeat keys
     case (key_left) :
     case (key_left2):
       unicode=LIVES_KEY_Left;

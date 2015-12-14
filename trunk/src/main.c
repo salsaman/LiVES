@@ -403,7 +403,7 @@ static boolean pre_init(void) {
   lives_mem_set_vtable(&mainw->alt_vtable);
 
 
-  
+
   prefs=(_prefs *)lives_malloc(sizeof(_prefs));
   future_prefs=(_future_prefs *)lives_malloc(sizeof(_future_prefs));
 
@@ -1412,10 +1412,10 @@ static void lives_init(_ign_opts *ign_opts) {
       if ((prefs->startup_phase==1||prefs->startup_phase==-1)&&capable->has_encoder_plugins&&capable->has_python) {
         LiVESList *ofmt_all=NULL;
         char **array;
-	if (capable->python_version>=3000000)
-	  lives_snprintf(prefs->encoder.name,52,"%s","multi_encoder3");
-	else 
-	  lives_snprintf(prefs->encoder.name,52,"%s","multi_encoder");
+        if (capable->python_version>=3000000)
+          lives_snprintf(prefs->encoder.name,52,"%s","multi_encoder3");
+        else
+          lives_snprintf(prefs->encoder.name,52,"%s","multi_encoder");
 
         // need to change the output format
 
@@ -6884,10 +6884,10 @@ void load_frame_image(int frame) {
       reget_afilesize(mainw->current_file);
 
       /*      if (cfile->afilesize>0&&cfile->achans==0) {
-	char *msgx=lives_strdup_printf("Audio file but no channels, %s",cfile->handle);
-	LIVES_WARN(msgx);
-	lives_free(msgx);
-	}*/
+      char *msgx=lives_strdup_printf("Audio file but no channels, %s",cfile->handle);
+      LIVES_WARN(msgx);
+      lives_free(msgx);
+      }*/
 
     }
 

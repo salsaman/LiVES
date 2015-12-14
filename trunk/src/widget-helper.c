@@ -896,10 +896,52 @@ LIVES_INLINE boolean lives_widget_set_bg_color(LiVESWidget *widget, LiVESWidgetS
 }
 
 
+#if GTK_CHECK_VERSION(3,16,0)
+static char *make_random_string() {
+  char *str=malloc(32);
+  register int i;
+  for (i=0; i<31; i++) str[i]=((lives_random()&15)+65);
+  str[31]=0;
+  return str;
+}
+#endif
+
 LIVES_INLINE boolean lives_widget_set_fg_color(LiVESWidget *widget, LiVESWidgetState state, const LiVESWidgetColor *color) {
 #ifdef GUI_GTK
 #if GTK_CHECK_VERSION(3,0,0)
+#if GTK_CHECK_VERSION(3,16,0)
+
+  GtkCssProvider *provider = gtk_css_provider_new();
+  GtkStyleContext *ctx = gtk_widget_get_style_context(widget);
+
+  char *widget_name;
+  char *colref;
+  char *css_string;
+
+  gtk_style_context_add_provider(ctx, GTK_STYLE_PROVIDER
+                                 (provider), GTK_STYLE_PROVIDER_PRIORITY_APPLICATION);
+
+  widget_name=make_random_string();
+
+  gtk_widget_set_name(widget,widget_name);
+
+  colref=gdk_rgba_to_string(color);
+
+  css_string=lives_strdup_printf(" #%s {\n color: %s;\n }\n }\n",widget_name,colref);
+
+  gtk_css_provider_load_from_data(GTK_CSS_PROVIDER(provider),
+                                  css_string,
+                                  -1, NULL);
+
+  lives_free(colref);
+  lives_free(widget_name);
+
+  lives_free(css_string);
+  lives_object_unref(provider);
+
+#else
   gtk_widget_override_color(widget,state,color);
+#endif
 #else
   gtk_widget_modify_fg(widget,state,color);
 #endif
@@ -950,7 +992,39 @@ LIVES_INLINE boolean lives_widget_set_base_color(LiVESWidget *widget, LiVESWidge
 LIVES_INLINE boolean lives_widget_get_bg_state_color(LiVESWidget *widget, LiVESWidgetState state, LiVESWidgetColor *color) {
 #ifdef GUI_GTK
 #if GTK_CHECK_VERSION(3,0,0)
+#if GTK_CHECK_VERSION(3,16,0)
+
+  GtkCssProvider *provider = gtk_css_provider_new();
+  GtkStyleContext *ctx = gtk_widget_get_style_context(widget);
+
+  char *widget_name;
+  char *colref;
+  char *css_string;
+
+  gtk_style_context_add_provider(ctx, GTK_STYLE_PROVIDER
+                                 (provider), GTK_STYLE_PROVIDER_PRIORITY_APPLICATION);
+
+  widget_name=make_random_string();
+
+  gtk_widget_set_name(widget,widget_name);
+
+  colref=gdk_rgba_to_string(color);
+
+  css_string=lives_strdup_printf(" #%s {\n background-color: %s;\n }\n }\n",widget_name,colref);
+
+  gtk_css_provider_load_from_data(GTK_CSS_PROVIDER(provider),
+                                  css_string,
+                                  -1, NULL);
+
+  lives_free(colref);
+  lives_free(widget_name);
+
+  lives_free(css_string);
+  lives_object_unref(provider);
+
+#else
   gtk_style_context_get_background_color(gtk_widget_get_style_context(widget), state, color);
+#endif
 #else
   lives_widget_color_copy(color,&gtk_widget_get_style(widget)->bg[state]);
 #endif
@@ -2358,7 +2432,35 @@ LIVES_INLINE LiVESWidget *lives_label_new(const char *text) {
 LIVES_INLINE LiVESWidget *lives_arrow_new(LiVESArrowType arrow_type, LiVESShadowType shadow_type) {
   LiVESWidget *arrow=NULL;
 #ifdef GUI_GTK
+#if GTK_CHECK_VERSION(3,12,0)
+  const char *arrow_id;
+  switch (arrow_type) {
+  case LIVES_ARROW_UP:
+    arrow_id=LIVES_STOCK_GO_UP;
+    break;
+  case LIVES_ARROW_DOWN:
+    arrow_id=LIVES_STOCK_GO_DOWN;
+    break;
+  case LIVES_ARROW_LEFT:
+    if (LIVES_IS_RTL)
+      arrow_id=LIVES_STOCK_GO_FORWARD;
+    else
+      arrow_id=LIVES_STOCK_GO_BACK;
+    break;
+  case LIVES_ARROW_RIGHT:
+    if (LIVES_IS_RTL)
+      arrow_id=LIVES_STOCK_GO_BACK;
+    else
+      arrow_id=LIVES_STOCK_GO_FORWARD;
+    break;
+  default:
+    arrow_id=LIVES_STOCK_MISSING_IMAGE;
+  }
+
+  arrow=gtk_image_new_from_icon_name(arrow_id,GTK_ICON_SIZE_BUTTON);
+#else
   arrow=gtk_arrow_new(arrow_type,shadow_type);
+#endif
 #endif
 #ifdef GUI_QT
   QStyleOption *qstyleopt = 0;
@@ -6711,8 +6813,13 @@ LIVES_INLINE boolean lives_table_attach(LiVESTable *table, LiVESWidget *child, u
   else
     lives_widget_set_vexpand(child,FALSE);
 
+#if GTK_CHECK_VERSION(3,12,0)
+  gtk_widget_set_margin_start(child,xpad);
+  gtk_widget_set_margin_end(child,xpad);
+#else
   gtk_widget_set_margin_left(child,xpad);
   gtk_widget_set_margin_right(child,xpad);
+#endif
 
   gtk_widget_set_margin_top(child,ypad);
   gtk_widget_set_margin_bottom(child,ypad);

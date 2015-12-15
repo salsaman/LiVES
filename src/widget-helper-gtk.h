@@ -818,6 +818,9 @@ typedef GdkInterpType                     LiVESInterpType;
 
 #define LIVES_IS_BOX(widget) (LIVES_IS_HBOX(widget) || LIVES_IS_VBOX(widget))
 
+#define LIVES_IS_TOOLBAR(widget) GTK_IS_TOOLBAR(widget)
+#define LIVES_IS_EVENT_BOX(widget) GTK_IS_EVENT_BOX(widget)
+
 #define LIVES_IS_COMBO(widget) GTK_IS_COMBO_BOX(widget)
 #define LIVES_IS_LABEL(widget) GTK_IS_LABEL(widget)
 #define LIVES_IS_BUTTON(widget) GTK_IS_BUTTON(widget)

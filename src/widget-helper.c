@@ -883,46 +883,61 @@ LIVES_INLINE boolean lives_dialog_response(LiVESDialog *dialog, int response) {
 static char *make_random_string() {
   char *str=malloc(32);
   register int i;
-  for (i=0; i<31; i++) str[i]=((lives_random()&15)+65);
+
+  str[0]=str[1]=str[2]='X';
+
+  for (i=3; i<31; i++) str[i]=((lives_random()&15)+65);
   str[31]=0;
   return str;
 }
 #endif
 
+#include "giw/giwtimeline.h"
+#include "giw/giwled.h"
 
 LIVES_INLINE boolean lives_widget_set_bg_color(LiVESWidget *widget, LiVESWidgetState state, const LiVESWidgetColor *color) {
 #ifdef GUI_GTK
 #if GTK_CHECK_VERSION(3,0,0)
 #if GTK_CHECK_VERSION(3,16,0)
 
-  GtkCssProvider *provider = gtk_css_provider_new();
-  GtkStyleContext *ctx = gtk_widget_get_style_context(widget);
+  if (GIW_IS_TIMELINE(widget)||GIW_IS_LED(widget)||LIVES_IS_TEXT_VIEW(widget)||LIVES_IS_EVENT_BOX(widget)||LIVES_IS_LABEL(widget)) {
+    gtk_widget_override_background_color(widget,state,color);
+  } else {
 
-  char *widget_name;
-  char *colref;
-  char *css_string;
+    GtkCssProvider *provider = gtk_css_provider_new();
+    GtkStyleContext *ctx = gtk_widget_get_style_context(widget);
 
-  gtk_style_context_add_provider(ctx, GTK_STYLE_PROVIDER
-                                 (provider), GTK_STYLE_PROVIDER_PRIORITY_APPLICATION);
+    char *widget_name;
+    char *colref;
+    char *css_string;
 
-  widget_name=make_random_string();
+    gtk_style_context_add_provider(ctx, GTK_STYLE_PROVIDER
+                                   (provider), GTK_STYLE_PROVIDER_PRIORITY_APPLICATION);
 
-  gtk_widget_set_name(widget,widget_name);
+    widget_name=g_strdup(gtk_widget_get_name(widget));
 
-  colref=gdk_rgba_to_string(color);
+    if (strncmp(widget_name,"XXX",3)) {
+      if (widget_name!=NULL) g_free(widget_name);
+      widget_name=make_random_string();
+      gtk_widget_set_name(widget,widget_name);
+    }
 
-  css_string=lives_strdup_printf(" #%s {\n background-color: %s;\n }\n }\n",widget_name,colref);
+    gtk_widget_set_name(widget,widget_name);
 
-  gtk_css_provider_load_from_data(GTK_CSS_PROVIDER(provider),
-                                  css_string,
-                                  -1, NULL);
+    colref=gdk_rgba_to_string(color);
 
-  lives_free(colref);
-  lives_free(widget_name);
+    css_string=lives_strdup_printf(" #%s {\n background-color: %s;\n }\n }\n",widget_name,colref);
 
-  lives_free(css_string);
-  lives_object_unref(provider);
+    gtk_css_provider_load_from_data(GTK_CSS_PROVIDER(provider),
+                                    css_string,
+                                    -1, NULL);
 
+    lives_free(colref);
+    lives_free(widget_name);
+
+    lives_free(css_string);
+    lives_object_unref(provider);
+  }
 #else
   gtk_widget_override_background_color(widget,state,color);
 #endif
@@ -944,34 +959,42 @@ LIVES_INLINE boolean lives_widget_set_fg_color(LiVESWidget *widget, LiVESWidgetS
 #if GTK_CHECK_VERSION(3,0,0)
 #if GTK_CHECK_VERSION(3,16,0)
 
-  GtkCssProvider *provider = gtk_css_provider_new();
-  GtkStyleContext *ctx = gtk_widget_get_style_context(widget);
+  if (LIVES_IS_TEXT_VIEW(widget)) {
+    gtk_widget_override_color(widget,state,color);
+  } else {
 
-  char *widget_name;
-  char *colref;
-  char *css_string;
+    GtkCssProvider *provider = gtk_css_provider_new();
+    GtkStyleContext *ctx = gtk_widget_get_style_context(widget);
 
-  gtk_style_context_add_provider(ctx, GTK_STYLE_PROVIDER
-                                 (provider), GTK_STYLE_PROVIDER_PRIORITY_APPLICATION);
+    char *widget_name;
+    char *colref;
+    char *css_string;
 
-  widget_name=make_random_string();
+    gtk_style_context_add_provider(ctx, GTK_STYLE_PROVIDER
+                                   (provider), GTK_STYLE_PROVIDER_PRIORITY_APPLICATION);
 
-  gtk_widget_set_name(widget,widget_name);
+    widget_name=g_strdup(gtk_widget_get_name(widget));
 
-  colref=gdk_rgba_to_string(color);
+    if (strncmp(widget_name,"XXX",3)) {
+      if (widget_name!=NULL) g_free(widget_name);
+      widget_name=make_random_string();
+      gtk_widget_set_name(widget,widget_name);
+    }
 
-  css_string=lives_strdup_printf(" #%s {\n color: %s;\n }\n }\n",widget_name,colref);
+    colref=gdk_rgba_to_string(color);
 
-  gtk_css_provider_load_from_data(GTK_CSS_PROVIDER(provider),
-                                  css_string,
-                                  -1, NULL);
+    css_string=lives_strdup_printf(" #%s {\n color: %s;\n }\n }\n",widget_name,colref);
 
-  lives_free(colref);
-  lives_free(widget_name);
+    gtk_css_provider_load_from_data(GTK_CSS_PROVIDER(provider),
+                                    css_string,
+                                    -1, NULL);
 
-  lives_free(css_string);
-  lives_object_unref(provider);
+    lives_free(colref);
+    lives_free(widget_name);
 
+    lives_free(css_string);
+    lives_object_unref(provider);
+  }
 #else
   gtk_widget_override_color(widget,state,color);
 #endif

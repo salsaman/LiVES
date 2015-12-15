@@ -156,7 +156,6 @@ xprocess *create_processing(const char *text) {
   LiVESWidget *dialog_vbox;
   LiVESWidget *vbox2;
   LiVESWidget *vbox3;
-  LiVESWidget *dialog_action_area;
   LiVESWidget *details_arrow;
 
   LiVESAccelGroup *accel_group=LIVES_ACCEL_GROUP(lives_accel_group_new());
@@ -236,9 +235,6 @@ xprocess *create_processing(const char *text) {
 
 
   lives_widget_show_all(vbox3);
-
-  dialog_action_area = lives_dialog_get_action_area(LIVES_DIALOG(procw->processing));
-  lives_button_box_set_layout(LIVES_BUTTON_BOX(dialog_action_area), LIVES_BUTTONBOX_END);
 
   procw->stop_button = lives_button_new_with_mnemonic(_("_Enough")); // used only for open location and for audio recording
   procw->preview_button = lives_button_new_with_mnemonic(_("_Preview"));
@@ -380,6 +376,7 @@ lives_clipinfo_t *create_clip_info_window(int audio_channels, boolean is_mt) {
 
   if (cfile->frames>0||is_mt) {
     vidframe = lives_frame_new(NULL);
+    lives_container_set_border_width(LIVES_CONTAINER(vidframe), widget_opts.border_width);
 
     lives_box_pack_start(LIVES_BOX(dialog_vbox), vidframe, TRUE, TRUE, widget_opts.packing_height);
     if (palette->style&STYLE_1) {
@@ -465,6 +462,7 @@ lives_clipinfo_t *create_clip_info_window(int audio_channels, boolean is_mt) {
 
   if (audio_channels>0) {
     laudframe = lives_frame_new(NULL);
+    lives_container_set_border_width(LIVES_CONTAINER(laudframe), widget_opts.border_width);
 
     lives_box_pack_start(LIVES_BOX(dialog_vbox), laudframe, TRUE, TRUE, widget_opts.packing_height);
     if (palette->style&STYLE_1) {
@@ -512,6 +510,7 @@ lives_clipinfo_t *create_clip_info_window(int audio_channels, boolean is_mt) {
 
     if (audio_channels>1) {
       raudframe = lives_frame_new(NULL);
+      lives_container_set_border_width(LIVES_CONTAINER(raudframe), widget_opts.border_width);
 
       lives_box_pack_start(LIVES_BOX(dialog_vbox), raudframe, TRUE, TRUE, widget_opts.packing_height);
       if (palette->style&STYLE_1) {
@@ -555,7 +554,7 @@ lives_clipinfo_t *create_clip_info_window(int audio_channels, boolean is_mt) {
   }
 
   dialog_action_area = lives_dialog_get_action_area(LIVES_DIALOG(filew->dialog));
-  lives_button_box_set_layout(LIVES_BUTTON_BOX(dialog_action_area), LIVES_BUTTONBOX_SPREAD);
+  if (LIVES_IS_BUTTON_BOX(dialog_action_area)) lives_button_box_set_layout(LIVES_BUTTON_BOX(dialog_action_area), LIVES_BUTTONBOX_SPREAD);
 
   okbutton = lives_button_new_from_stock(LIVES_STOCK_OK,NULL);
   lives_dialog_add_action_widget(LIVES_DIALOG(filew->dialog), okbutton, LIVES_RESPONSE_OK);
@@ -599,7 +598,6 @@ static void on_resizecb_toggled(LiVESToggleButton *t, livespointer user_data) {
 LiVESWidget *create_encoder_prep_dialog(const char *text1, const char *text2, boolean opt_resize) {
   LiVESWidget *dialog;
   LiVESWidget *dialog_vbox;
-  LiVESWidget *dialog_action_area;
   LiVESWidget *cancelbutton;
   LiVESWidget *okbutton;
   LiVESWidget *checkbutton=NULL;
@@ -667,8 +665,6 @@ LiVESWidget *create_encoder_prep_dialog(const char *text1, const char *text2, bo
 
   }
 
-  dialog_action_area = lives_dialog_get_action_area(LIVES_DIALOG(dialog));
-  lives_button_box_set_layout(LIVES_BUTTON_BOX(dialog_action_area), LIVES_BUTTONBOX_END);
 
   if (text2!=NULL) {
     label = lives_standard_label_new(text2);
@@ -718,7 +714,6 @@ text_window *create_text_window(const char *title, const char *text, LiVESTextBu
   // general text window
   LiVESWidget *dialog_vbox;
   LiVESWidget *scrolledwindow;
-  LiVESWidget *dialog_action_area;
   LiVESWidget *okbutton;
 
   char *mytitle=lives_strdup(title);
@@ -767,9 +762,6 @@ text_window *create_text_window(const char *title, const char *text, LiVESTextBu
   if (mytext!=NULL||mainw->iochan!=NULL) {
     LiVESWidget *savebutton;
 
-    dialog_action_area = lives_dialog_get_action_area(LIVES_DIALOG(textwindow->dialog));
-    lives_button_box_set_layout(LIVES_BUTTON_BOX(dialog_action_area), LIVES_BUTTONBOX_END);
-
     okbutton = lives_button_new_from_stock(LIVES_STOCK_CLOSE,_("_Close Window"));
 
     savebutton = lives_button_new_from_stock(LIVES_STOCK_SAVE,_("_Save to file"));
@@ -805,7 +797,6 @@ _insertw *create_insert_dialog(void) {
   LiVESWidget *table;
   LiVESWidget *radiobutton;
   LiVESWidget *vseparator;
-  LiVESWidget *dialog_action_area;
   LiVESWidget *cancelbutton;
   LiVESWidget *okbutton;
 
@@ -926,10 +917,6 @@ _insertw *create_insert_dialog(void) {
                      (LiVESAttachOptions)(LIVES_FILL),
                      (LiVESAttachOptions)(LIVES_FILL), 0, 0);
 
-  dialog_action_area = lives_dialog_get_action_area(LIVES_DIALOG(insertw->insert_dialog));
-
-  lives_button_box_set_layout(LIVES_BUTTON_BOX(dialog_action_area), LIVES_BUTTONBOX_END);
-
   cancelbutton = lives_button_new_from_stock(LIVES_STOCK_CANCEL,NULL);
   lives_dialog_add_action_widget(LIVES_DIALOG(insertw->insert_dialog), cancelbutton, LIVES_RESPONSE_CANCEL);
 
@@ -980,7 +967,6 @@ LiVESWidget *create_opensel_dialog(void) {
   LiVESWidget *table;
   LiVESWidget *label;
   LiVESWidget *spinbutton;
-  LiVESWidget *dialog_action_area;
   LiVESWidget *cancelbutton;
   LiVESWidget *okbutton;
 
@@ -1039,9 +1025,6 @@ LiVESWidget *create_opensel_dialog(void) {
                      (LiVESAttachOptions)(LIVES_EXPAND | LIVES_FILL),
                      (LiVESAttachOptions)(LIVES_EXPAND), widget_opts.packing_height*4+2, 0);
 
-  dialog_action_area = lives_dialog_get_action_area(LIVES_DIALOG(opensel_dialog));
-  lives_button_box_set_layout(LIVES_BUTTON_BOX(dialog_action_area), LIVES_BUTTONBOX_END);
-
   cancelbutton = lives_button_new_from_stock(LIVES_STOCK_CANCEL,NULL);
   lives_dialog_add_action_widget(LIVES_DIALOG(opensel_dialog), cancelbutton, LIVES_RESPONSE_CANCEL);
 
@@ -1075,7 +1058,6 @@ _entryw *create_location_dialog(int type) {
   // type 2 is open youtube: - 3 fields:= URL, directory, file name
 
   LiVESWidget *dialog_vbox;
-  LiVESWidget *dialog_action_area;
   LiVESWidget *cancelbutton;
   LiVESWidget *okbutton;
   LiVESWidget *label;
@@ -1186,11 +1168,6 @@ _entryw *create_location_dialog(int type) {
   }
 
 
-
-  dialog_action_area = lives_dialog_get_action_area(LIVES_DIALOG(locw->dialog));
-  lives_widget_show(dialog_action_area);
-  lives_button_box_set_layout(LIVES_BUTTON_BOX(dialog_action_area), LIVES_BUTTONBOX_END);
-
   cancelbutton = lives_button_new_from_stock(LIVES_STOCK_CANCEL,NULL);
   lives_widget_show(cancelbutton);
   lives_dialog_add_action_widget(LIVES_DIALOG(locw->dialog), cancelbutton, LIVES_RESPONSE_CANCEL);
@@ -1242,7 +1219,6 @@ _entryw *create_rename_dialog(int type) {
   LiVESWidget *dialog_vbox;
   LiVESWidget *hbox;
   LiVESWidget *label;
-  LiVESWidget *dialog_action_area;
   LiVESWidget *cancelbutton;
   LiVESWidget *okbutton;
   LiVESWidget *set_combo;
@@ -1383,10 +1359,6 @@ _entryw *create_rename_dialog(int type) {
 
   lives_entry_set_activates_default(LIVES_ENTRY(renamew->entry), TRUE);
   lives_entry_set_width_chars(LIVES_ENTRY(renamew->entry),RW_ENTRY_DISPWIDTH);
-
-  dialog_action_area = lives_dialog_get_action_area(LIVES_DIALOG(renamew->dialog));
-
-  lives_button_box_set_layout(LIVES_BUTTON_BOX(dialog_action_area), LIVES_BUTTONBOX_END);
 
   cancelbutton = lives_button_new_from_stock(LIVES_STOCK_CANCEL,NULL);
 
@@ -1560,7 +1532,6 @@ LiVESWidget *create_cdtrack_dialog(int type, livespointer user_data) {
   LiVESWidget *dialog_vbox;
   LiVESWidget *hbox;
   LiVESWidget *spinbutton;
-  LiVESWidget *dialog_action_area;
   LiVESWidget *cancelbutton;
   LiVESWidget *okbutton;
 
@@ -1790,9 +1761,6 @@ LiVESWidget *create_cdtrack_dialog(int type, livespointer user_data) {
     lives_widget_object_set_data(LIVES_WIDGET_OBJECT(cd_dialog),"tvcard_data",tvcardw);
 
   }
-
-  dialog_action_area = lives_dialog_get_action_area(LIVES_DIALOG(cd_dialog));
-  lives_button_box_set_layout(LIVES_BUTTON_BOX(dialog_action_area), LIVES_BUTTONBOX_END);
 
   cancelbutton = lives_button_new_from_stock(LIVES_STOCK_CANCEL,NULL);
   lives_dialog_add_action_widget(LIVES_DIALOG(cd_dialog), cancelbutton, LIVES_RESPONSE_CANCEL);
@@ -2340,7 +2308,7 @@ LiVESWidget *choose_file_with_preview(const char *dir, const char *title, int pr
 
   widget_add_preview(chooser,LIVES_BOX(lives_dialog_get_content_area(LIVES_DIALOG(chooser))),
                      LIVES_BOX(lives_dialog_get_content_area(LIVES_DIALOG(chooser))),
-                     LIVES_BOX(lives_dialog_get_action_area(LIVES_DIALOG(chooser))),
+                     LIVES_BOX(lives_dialog_get_content_area(LIVES_DIALOG(chooser))),
                      (preview_type==LIVES_FILE_SELECTION_VIDEO_AUDIO||
                       preview_type==LIVES_FILE_SELECTION_VIDEO_AUDIO_MULTI)?LIVES_PREVIEW_TYPE_VIDEO_AUDIO:
                      LIVES_PREVIEW_TYPE_AUDIO_ONLY);
@@ -2373,7 +2341,6 @@ _entryw *create_cds_dialog(int type) {
 
 
   LiVESWidget *dialog_vbox;
-  LiVESWidget *dialog_action_area;
   LiVESWidget *cancelbutton;
   LiVESWidget *discardbutton;
   LiVESWidget *savebutton;
@@ -2463,9 +2430,6 @@ _entryw *create_cds_dialog(int type) {
   if (type==0&&!(prefs->warning_mask&WARN_MASK_EXIT_MT)) {
     add_warn_check(LIVES_BOX(dialog_vbox),WARN_MASK_EXIT_MT);
   }
-
-  dialog_action_area = lives_dialog_get_action_area(LIVES_DIALOG(cdsw->dialog));
-  lives_button_box_set_layout(LIVES_BUTTON_BOX(dialog_action_area), LIVES_BUTTONBOX_END);
 
   cancelbutton = lives_button_new_from_stock(LIVES_STOCK_CANCEL,NULL);
   lives_dialog_add_action_widget(LIVES_DIALOG(cdsw->dialog), cancelbutton, LIVES_RESPONSE_CANCEL);

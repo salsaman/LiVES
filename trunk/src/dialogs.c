@@ -164,7 +164,6 @@ LiVESWidget *create_message_dialog(lives_dialog_t diat, const char *text, LiVESW
                                    int warn_mask_number, boolean is_blocking) {
   LiVESWidget *dialog;
   LiVESWidget *dialog_vbox;
-  LiVESWidget *dialog_action_area;
   LiVESWidget *label;
   LiVESWidget *cancelbutton=NULL;
   LiVESWidget *okbutton=NULL;
@@ -315,9 +314,6 @@ LiVESWidget *create_message_dialog(lives_dialog_t diat, const char *text, LiVESW
                          LIVES_GUI_CALLBACK(lives_general_button_clicked),
                          NULL);
   }
-
-  dialog_action_area = lives_dialog_get_action_area(LIVES_DIALOG(dialog));
-  if (LIVES_IS_BUTTON_BOX(dialog_action_area)) lives_button_box_set_layout(LIVES_BUTTON_BOX(dialog_action_area), LIVES_BUTTONBOX_END);
 
   if (cancelbutton != NULL) {
     lives_widget_set_can_focus(cancelbutton,TRUE);

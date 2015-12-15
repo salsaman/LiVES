@@ -1148,7 +1148,6 @@ _resaudw *create_resaudw(short type, render_details *rdet, LiVESWidget *top_vbox
   LiVESWidget *combo4;
   LiVESWidget *combo5;
   LiVESWidget *combo6;
-  LiVESWidget *dialog_action_area;
   LiVESWidget *cancelbutton;
   LiVESWidget *okbutton;
   LiVESWidget *label;
@@ -1241,6 +1240,7 @@ _resaudw *create_resaudw(short type, render_details *rdet, LiVESWidget *top_vbox
 
   if (type==1) {
     frame = lives_frame_new(NULL);
+    lives_container_set_border_width(LIVES_CONTAINER(frame), widget_opts.border_width);
 
     lives_box_pack_start(LIVES_BOX(vboxx), frame, TRUE, TRUE, 0);
 
@@ -1249,7 +1249,6 @@ _resaudw *create_resaudw(short type, render_details *rdet, LiVESWidget *top_vbox
     }
 
     hbox2 = lives_hbox_new(FALSE, 0);
-    lives_widget_show(hbox2);
     lives_container_add(LIVES_CONTAINER(frame), hbox2);
     lives_container_set_border_width(LIVES_CONTAINER(hbox2), widget_opts.packing_width);
 
@@ -1276,7 +1275,6 @@ _resaudw *create_resaudw(short type, render_details *rdet, LiVESWidget *top_vbox
     lives_widget_set_can_focus(combo_entry1, FALSE);
 
     vseparator = lives_vseparator_new();
-    lives_widget_show(vseparator);
     lives_box_pack_start(LIVES_BOX(hbox2), vseparator, FALSE, FALSE, widget_opts.packing_width);
 
     vbox = lives_vbox_new(FALSE, 0);
@@ -1340,6 +1338,7 @@ _resaudw *create_resaudw(short type, render_details *rdet, LiVESWidget *top_vbox
 
   if (type<9||type==11) {
     frame = lives_frame_new(NULL);
+    lives_container_set_border_width(LIVES_CONTAINER(frame), widget_opts.border_width);
 
     if (type==4) lives_box_pack_start(LIVES_BOX(vboxx), frame, FALSE, FALSE, widget_opts.packing_height);
     else lives_box_pack_start(LIVES_BOX(vboxx), frame, TRUE, TRUE, 0);
@@ -1430,7 +1429,6 @@ _resaudw *create_resaudw(short type, render_details *rdet, LiVESWidget *top_vbox
     lives_free(tmp);
 
     vseparator = lives_vseparator_new();
-    lives_widget_show(vseparator);
     if (type!=4) lives_box_pack_start(LIVES_BOX(hbox2), vseparator, FALSE, FALSE, widget_opts.packing_width);
 
     vbox = lives_vbox_new(FALSE, 0);
@@ -1511,7 +1509,7 @@ _resaudw *create_resaudw(short type, render_details *rdet, LiVESWidget *top_vbox
 
   if (type>7&&type!=11) {
     frame = lives_frame_new(NULL);
-    lives_widget_show(frame);
+    lives_container_set_border_width(LIVES_CONTAINER(frame), widget_opts.border_width);
     lives_box_pack_start(LIVES_BOX(vboxx), frame, TRUE, TRUE, 0);
 
     if (palette->style&STYLE_1) {
@@ -1519,7 +1517,6 @@ _resaudw *create_resaudw(short type, render_details *rdet, LiVESWidget *top_vbox
     }
 
     hbox = lives_hbox_new(FALSE, 0);
-    lives_widget_show(hbox);
     lives_container_add(LIVES_CONTAINER(frame), hbox);
     lives_container_set_border_width(LIVES_CONTAINER(hbox), widget_opts.border_width);
 
@@ -1537,7 +1534,6 @@ _resaudw *create_resaudw(short type, render_details *rdet, LiVESWidget *top_vbox
     lives_box_set_spacing(LIVES_BOX(dialog_vbox),widget_opts.packing_height*3);
 
     hbox = lives_hbox_new(FALSE, 0);
-    lives_widget_show(hbox);
     lives_box_pack_start(LIVES_BOX(dialog_vbox), hbox, TRUE, TRUE, widget_opts.packing_height);
 
     if (type!=6&&type!=7) {
@@ -1554,7 +1550,6 @@ _resaudw *create_resaudw(short type, render_details *rdet, LiVESWidget *top_vbox
 
 
       hbox = lives_hbox_new(FALSE, 0);
-      lives_widget_show(hbox);
       lives_box_pack_start(LIVES_BOX(dialog_vbox), hbox, TRUE, TRUE, widget_opts.packing_height);
 
       resaudw->unlim_radiobutton=lives_standard_radio_button_new(_("Unlimited"),FALSE,rbgroup,LIVES_BOX(hbox),NULL);
@@ -1570,7 +1565,6 @@ _resaudw *create_resaudw(short type, render_details *rdet, LiVESWidget *top_vbox
 
     if (type<8||type==11) {
       hseparator = lives_hseparator_new();
-      lives_widget_show(hseparator);
       lives_box_pack_start(LIVES_BOX(dialog_vbox), hseparator, TRUE, TRUE, 0);
 
       label=lives_standard_label_new(_("Click OK to begin recording, or Cancel to quit."));
@@ -1581,9 +1575,6 @@ _resaudw *create_resaudw(short type, render_details *rdet, LiVESWidget *top_vbox
 
 
   if (type<3||type>4) {
-    dialog_action_area = lives_dialog_get_action_area(LIVES_DIALOG(resaudw->dialog));
-    lives_widget_show(dialog_action_area);
-    lives_button_box_set_layout(LIVES_BUTTON_BOX(dialog_action_area), LIVES_BUTTONBOX_END);
 
     cancelbutton = lives_button_new_from_stock(LIVES_STOCK_CANCEL,NULL);
 
@@ -1664,7 +1655,6 @@ void create_new_pb_speed(short type) {
   LiVESWidget *radiobutton2=NULL;
   LiVESWidget *spinbutton_pb_speed;
   LiVESWidget *spinbutton_pb_time=NULL;
-  LiVESWidget *dialog_action_area;
   LiVESWidget *cancelbutton;
   LiVESWidget *change_pb_ok;
   LiVESWidget *change_audio_speed;
@@ -1752,9 +1742,6 @@ void create_new_pb_speed(short type) {
 
   lives_box_pack_start(LIVES_BOX(vbox), ca_hbox, TRUE, TRUE, widget_opts.packing_height);
 
-
-  dialog_action_area = lives_dialog_get_action_area(LIVES_DIALOG(new_pb_speed));
-  lives_button_box_set_layout(LIVES_BUTTON_BOX(dialog_action_area), LIVES_BUTTONBOX_END);
 
   cancelbutton = lives_button_new_from_stock(LIVES_STOCK_CANCEL,NULL);
   lives_dialog_add_action_widget(LIVES_DIALOG(new_pb_speed), cancelbutton, LIVES_RESPONSE_CANCEL);

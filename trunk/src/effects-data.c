@@ -4728,8 +4728,6 @@ LiVESWidget *make_datacon_window(int key, int mode) {
   accel_group = LIVES_ACCEL_GROUP(lives_accel_group_new());
   lives_window_add_accel_group(LIVES_WINDOW(conxw.conx_dialog), accel_group);
 
-  abox = lives_dialog_get_action_area(LIVES_DIALOG(conxw.conx_dialog));
-
   if (conxw.num_alpha>0) {
     conxw.dispc=(int *)lives_malloc(conxw.num_alpha*sizint);
 
@@ -4769,6 +4767,7 @@ LiVESWidget *make_datacon_window(int key, int mode) {
                        LIVES_GUI_CALLBACK(disconbutton_clicked),
                        (livespointer)&conxw);
 
+  abox = lives_dialog_get_action_area(LIVES_DIALOG(conxw.conx_dialog));
   if (LIVES_IS_BOX(abox)&&(conxw.num_alpha>0||conxw.num_params>0)) add_fill_to_box(LIVES_BOX(abox));
 
   cbox = lives_dialog_get_content_area(LIVES_DIALOG(conxw.conx_dialog));

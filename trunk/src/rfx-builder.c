@@ -81,7 +81,6 @@ rfx_build_window_t *make_rfx_build_window(const char *script_name, lives_rfx_sta
   // TODO - set mnemonic widgets for entries
 
   LiVESWidget *dialog_vbox;
-  LiVESWidget *dialog_action_area;
   LiVESWidget *hbox;
   LiVESWidget *label;
   LiVESWidget *okbutton;
@@ -330,9 +329,6 @@ rfx_build_window_t *make_rfx_build_window(const char *script_name, lives_rfx_sta
                                 (_("Set trigger code for when the parameter window is shown, or when a parameter is changed. Optional (except for Utilities).")));
 
 
-  dialog_action_area = lives_dialog_get_action_area(LIVES_DIALOG(rfxbuilder->dialog));
-  lives_button_box_set_layout(LIVES_BUTTON_BOX(dialog_action_area), LIVES_BUTTONBOX_END);
-
   cancelbutton = lives_button_new_from_stock(LIVES_STOCK_CANCEL,NULL);
   lives_dialog_add_action_widget(LIVES_DIALOG(rfxbuilder->dialog), cancelbutton, LIVES_RESPONSE_CANCEL);
 
@@ -509,7 +505,6 @@ void after_rfxbuilder_type_toggled(LiVESToggleButton *togglebutton, livespointer
 void on_list_table_clicked(LiVESButton *button, livespointer user_data) {
   LiVESWidget *dialog;
   LiVESWidget *dialog_vbox;
-  LiVESWidget *dialog_action_area;
   LiVESWidget *hbox;
   LiVESWidget *button_box;
 
@@ -640,9 +635,6 @@ void on_list_table_clicked(LiVESButton *button, livespointer user_data) {
       lives_widget_set_sensitive(rfxbuilder->new_entry_button,FALSE);
     }
   }
-
-  dialog_action_area = lives_dialog_get_action_area(LIVES_DIALOG(dialog));
-  lives_button_box_set_layout(LIVES_BUTTON_BOX(dialog_action_area), LIVES_BUTTONBOX_END);
 
   cancelbutton = lives_button_new_from_stock(LIVES_STOCK_CANCEL,NULL);
   lives_dialog_add_action_widget(LIVES_DIALOG(dialog), cancelbutton, LIVES_RESPONSE_CANCEL);
@@ -972,7 +964,6 @@ void on_triggers_cancel(LiVESButton *button, livespointer user_data) {
 void on_properties_clicked(LiVESButton *button, livespointer user_data) {
   LiVESWidget *dialog;
   LiVESWidget *dialog_vbox;
-  LiVESWidget *dialog_action_area;
   LiVESWidget *cancelbutton;
   LiVESWidget *okbutton;
 
@@ -1006,8 +997,6 @@ void on_properties_clicked(LiVESButton *button, livespointer user_data) {
     }
   }
 
-  dialog_action_area = lives_dialog_get_action_area(LIVES_DIALOG(dialog));
-  lives_button_box_set_layout(LIVES_BUTTON_BOX(dialog_action_area), LIVES_BUTTONBOX_END);
 
   cancelbutton = lives_button_new_from_stock(LIVES_STOCK_CANCEL,NULL);
   lives_dialog_add_action_widget(LIVES_DIALOG(dialog), cancelbutton, LIVES_RESPONSE_CANCEL);
@@ -2792,7 +2781,6 @@ LiVESWidget *make_trigger_dialog(int tnum, rfx_build_window_t *rfxbuilder) {
 void on_code_clicked(LiVESButton *button, livespointer user_data) {
   LiVESWidget *dialog;
   LiVESWidget *dialog_vbox;
-  LiVESWidget *dialog_action_area;
   LiVESWidget *cancelbutton;
   LiVESWidget *okbutton;
   LiVESWidget *scrolledwindow;
@@ -2899,9 +2887,6 @@ void on_code_clicked(LiVESButton *button, livespointer user_data) {
       }
     }
   }
-
-  dialog_action_area = lives_dialog_get_action_area(LIVES_DIALOG(dialog));
-  lives_button_box_set_layout(LIVES_BUTTON_BOX(dialog_action_area), LIVES_BUTTONBOX_END);
 
   cancelbutton = lives_button_new_from_stock(LIVES_STOCK_CANCEL,NULL);
   lives_dialog_add_action_widget(LIVES_DIALOG(dialog), cancelbutton, LIVES_RESPONSE_CANCEL);
@@ -4126,7 +4111,6 @@ char *prompt_for_script_name(const char *sname, lives_rfx_status_t status) {
   LiVESWidget *status_combo=NULL;
   LiVESWidget *status_combo_entry=NULL;
   LiVESWidget *dialog;
-  LiVESWidget *dialog_action_area;
   LiVESWidget *cancelbutton;
 
   LiVESList *status_list=NULL;
@@ -4223,11 +4207,6 @@ char *prompt_for_script_name(const char *sname, lives_rfx_status_t status) {
   }
   lives_widget_grab_focus(name_entry);
   lives_entry_set_activates_default(LIVES_ENTRY(name_entry), TRUE);
-
-
-  dialog_action_area = lives_dialog_get_action_area(LIVES_DIALOG(dialog));
-  lives_widget_show(dialog_action_area);
-  lives_button_box_set_layout(LIVES_BUTTON_BOX(dialog_action_area), LIVES_BUTTONBOX_END);
 
   cancelbutton = lives_button_new_from_stock(LIVES_STOCK_CANCEL,NULL);
   lives_dialog_add_action_widget(LIVES_DIALOG(dialog), cancelbutton, LIVES_RESPONSE_CANCEL);

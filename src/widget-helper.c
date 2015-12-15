@@ -927,21 +927,24 @@ LIVES_INLINE boolean lives_widget_set_bg_color(LiVESWidget *widget, LiVESWidgetS
 
     colref=gdk_rgba_to_string(color);
 
-    if (LIVES_IS_TEXT_VIEW(widget)) wname=g_strdup("GtkTextView");
-    else wname=g_strdup_printf("#%s",widget_name);
+#ifdef GTK_TEXT_VIEW_CSS_BUG
+    if (GTK_IS_TEXT_VIEW(widget)) wname=g_strdup("GtkTextView");
+    else
+#endif
+      wname=g_strdup_printf("#%s",widget_name);
 
-    css_string=lives_strdup_printf(" %s {\n background-color: %s;\n }\n }\n",wname,colref);
+    css_string=g_strdup_printf(" %s {\n background-color: %s;\n }\n }\n",wname,colref);
 
     gtk_css_provider_load_from_data(GTK_CSS_PROVIDER(provider),
                                     css_string,
                                     -1, NULL);
 
-    lives_free(colref);
-    lives_free(widget_name);
-    lives_free(wname);
+    g_free(colref);
+    g_free(widget_name);
+    g_free(wname);
 
-    lives_free(css_string);
-    lives_object_unref(provider);
+    g_free(css_string);
+    g_object_unref(provider);
   }
 #else
   gtk_widget_override_background_color(widget,state,color);
@@ -984,21 +987,24 @@ LIVES_INLINE boolean lives_widget_set_fg_color(LiVESWidget *widget, LiVESWidgetS
 
   colref=gdk_rgba_to_string(color);
 
-  if (LIVES_IS_TEXT_VIEW(widget)) wname=g_strdup("GtkTextView");
-  else wname=g_strdup_printf("#%s",widget_name);
+#ifdef GTK_TEXT_VIEW_CSS_BUG
+  if (GTK_IS_TEXT_VIEW(widget)) wname=g_strdup("GtkTextView");
+  else
+#endif
+    wname=g_strdup_printf("#%s",widget_name);
 
-  css_string=lives_strdup_printf(" %s {\n color: %s;\n }\n }\n",wname,colref);
+  css_string=g_strdup_printf(" %s {\n color: %s;\n }\n }\n",wname,colref);
 
   gtk_css_provider_load_from_data(GTK_CSS_PROVIDER(provider),
                                   css_string,
                                   -1, NULL);
 
-  lives_free(colref);
-  lives_free(widget_name);
-  lives_free(wname);
+  g_free(colref);
+  g_free(widget_name);
+  g_free(wname);
 
-  lives_free(css_string);
-  lives_object_unref(provider);
+  g_free(css_string);
+  g_object_unref(provider);
 #else
   gtk_widget_override_color(widget,state,color);
 #endif

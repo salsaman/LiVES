@@ -2042,7 +2042,6 @@ _prefsw *create_prefs_dialog(void) {
   LiVESWidget *hbox2;
   LiVESWidget *vbox;
 
-  LiVESWidget *dialog_action_area;
   LiVESWidget *dirbutton1;
   LiVESWidget *dirbutton2;
   LiVESWidget *dirbutton3;
@@ -4271,14 +4270,14 @@ _prefsw *create_prefs_dialog(void) {
   lives_signal_connect(prefsw->selection, LIVES_WIDGET_CHANGED_SIGNAL, LIVES_GUI_CALLBACK(on_prefDomainChanged), NULL);
   //
 
-  dialog_action_area = lives_dialog_get_action_area(LIVES_DIALOG(prefsw->prefs_dialog));
-  lives_widget_show(dialog_action_area);
-  lives_button_box_set_layout(LIVES_BUTTON_BOX(dialog_action_area), LIVES_BUTTONBOX_END);
 
   // Preferences 'Revert' button
   prefsw->cancelbutton = lives_button_new_from_stock(LIVES_STOCK_REVERT_TO_SAVED,NULL);
   lives_widget_show(prefsw->cancelbutton);
   lives_dialog_add_action_widget(LIVES_DIALOG(prefsw->prefs_dialog), prefsw->cancelbutton, LIVES_RESPONSE_CANCEL);
+  lives_widget_set_size_request(prefsw->cancelbutton, DEF_BUTTON_WIDTH*2, -1);
+  lives_container_set_border_width(LIVES_CONTAINER(prefsw->cancelbutton), widget_opts.border_width);
+
 
   lives_widget_set_can_focus(prefsw->cancelbutton,TRUE);
 
@@ -4289,6 +4288,8 @@ _prefsw *create_prefs_dialog(void) {
   prefsw->applybutton = lives_button_new_from_stock(LIVES_STOCK_APPLY,NULL);
   lives_widget_show(prefsw->applybutton);
   lives_dialog_add_action_widget(LIVES_DIALOG(prefsw->prefs_dialog), prefsw->applybutton, 0);
+  lives_widget_set_size_request(prefsw->applybutton, DEF_BUTTON_WIDTH*2, -1);
+  lives_container_set_border_width(LIVES_CONTAINER(prefsw->applybutton), widget_opts.border_width);
 
   lives_widget_set_can_focus_and_default(prefsw->applybutton);
   // Set 'Apply' button as inactive since there is no changes yet
@@ -4298,6 +4299,8 @@ _prefsw *create_prefs_dialog(void) {
   prefsw->closebutton = lives_button_new_from_stock(LIVES_STOCK_CLOSE,NULL);
   lives_widget_show(prefsw->closebutton);
   lives_dialog_add_action_widget(LIVES_DIALOG(prefsw->prefs_dialog), prefsw->closebutton, LIVES_RESPONSE_OK);
+  lives_widget_set_size_request(prefsw->closebutton, DEF_BUTTON_WIDTH*2, -1);
+  lives_container_set_border_width(LIVES_CONTAINER(prefsw->closebutton), widget_opts.border_width);
 
   lives_widget_set_can_focus_and_default(prefsw->closebutton);
 

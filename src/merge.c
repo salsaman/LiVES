@@ -31,7 +31,6 @@ void create_merge_dialog(void) {
   LiVESWidget *label;
   LiVESWidget *fit_button;
   LiVESWidget *transition_combo;
-  LiVESWidget *dialog_action_area;
   LiVESWidget *cancelbutton;
   LiVESWidget *okbutton;
 
@@ -213,9 +212,6 @@ void create_merge_dialog(void) {
 
   // done !
 
-
-  dialog_action_area = lives_dialog_get_action_area(LIVES_DIALOG(merge_opts->merge_dialog));
-  lives_button_box_set_layout(LIVES_BUTTON_BOX(dialog_action_area), LIVES_BUTTONBOX_END);
 
   cancelbutton = lives_button_new_from_stock(LIVES_STOCK_CANCEL,NULL);
   lives_dialog_add_action_widget(LIVES_DIALOG(merge_opts->merge_dialog), cancelbutton, LIVES_RESPONSE_CANCEL);

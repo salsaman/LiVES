@@ -879,10 +879,53 @@ LIVES_INLINE boolean lives_dialog_response(LiVESDialog *dialog, int response) {
 }
 
 
+#if GTK_CHECK_VERSION(3,16,0)
+static char *make_random_string() {
+  char *str=malloc(32);
+  register int i;
+  for (i=0; i<31; i++) str[i]=((lives_random()&15)+65);
+  str[31]=0;
+  return str;
+}
+#endif
+
+
 LIVES_INLINE boolean lives_widget_set_bg_color(LiVESWidget *widget, LiVESWidgetState state, const LiVESWidgetColor *color) {
 #ifdef GUI_GTK
 #if GTK_CHECK_VERSION(3,0,0)
+#if GTK_CHECK_VERSION(3,16,0)
+
+  GtkCssProvider *provider = gtk_css_provider_new();
+  GtkStyleContext *ctx = gtk_widget_get_style_context(widget);
+
+  char *widget_name;
+  char *colref;
+  char *css_string;
+
+  gtk_style_context_add_provider(ctx, GTK_STYLE_PROVIDER
+                                 (provider), GTK_STYLE_PROVIDER_PRIORITY_APPLICATION);
+
+  widget_name=make_random_string();
+
+  gtk_widget_set_name(widget,widget_name);
+
+  colref=gdk_rgba_to_string(color);
+
+  css_string=lives_strdup_printf(" #%s {\n background-color: %s;\n }\n }\n",widget_name,colref);
+
+  gtk_css_provider_load_from_data(GTK_CSS_PROVIDER(provider),
+                                  css_string,
+                                  -1, NULL);
+
+  lives_free(colref);
+  lives_free(widget_name);
+
+  lives_free(css_string);
+  lives_object_unref(provider);
+
+#else
   gtk_widget_override_background_color(widget,state,color);
+#endif
 #else
   gtk_widget_modify_bg(widget,state,color);
 #endif
@@ -895,16 +938,6 @@ LIVES_INLINE boolean lives_widget_set_bg_color(LiVESWidget *widget, LiVESWidgetS
   return FALSE;
 }
 
-
-#if GTK_CHECK_VERSION(3,16,0)
-static char *make_random_string() {
-  char *str=malloc(32);
-  register int i;
-  for (i=0; i<31; i++) str[i]=((lives_random()&15)+65);
-  str[31]=0;
-  return str;
-}
-#endif
 
 LIVES_INLINE boolean lives_widget_set_fg_color(LiVESWidget *widget, LiVESWidgetState state, const LiVESWidgetColor *color) {
 #ifdef GUI_GTK
@@ -958,7 +991,7 @@ LIVES_INLINE boolean lives_widget_set_fg_color(LiVESWidget *widget, LiVESWidgetS
 LIVES_INLINE boolean lives_widget_set_text_color(LiVESWidget *widget, LiVESWidgetState state, const LiVESWidgetColor *color) {
 #ifdef GUI_GTK
 #if GTK_CHECK_VERSION(3,0,0)
-  gtk_widget_override_color(widget,state,color);
+  lives_widget_set_fg_color(widget,state,color);
 #else
   gtk_widget_modify_text(widget,state,color);
 #endif
@@ -975,7 +1008,7 @@ LIVES_INLINE boolean lives_widget_set_text_color(LiVESWidget *widget, LiVESWidge
 LIVES_INLINE boolean lives_widget_set_base_color(LiVESWidget *widget, LiVESWidgetState state, const LiVESWidgetColor *color) {
 #ifdef GUI_GTK
 #if GTK_CHECK_VERSION(3,0,0)
-  gtk_widget_override_background_color(widget,state,color);
+  lives_widget_set_bg_color(widget,state,color);
 #else
   gtk_widget_modify_base(widget,state,color);
 #endif
@@ -992,39 +1025,7 @@ LIVES_INLINE boolean lives_widget_set_base_color(LiVESWidget *widget, LiVESWidge
 LIVES_INLINE boolean lives_widget_get_bg_state_color(LiVESWidget *widget, LiVESWidgetState state, LiVESWidgetColor *color) {
 #ifdef GUI_GTK
 #if GTK_CHECK_VERSION(3,0,0)
-#if GTK_CHECK_VERSION(3,16,0)
-
-  GtkCssProvider *provider = gtk_css_provider_new();
-  GtkStyleContext *ctx = gtk_widget_get_style_context(widget);
-
-  char *widget_name;
-  char *colref;
-  char *css_string;
-
-  gtk_style_context_add_provider(ctx, GTK_STYLE_PROVIDER
-                                 (provider), GTK_STYLE_PROVIDER_PRIORITY_APPLICATION);
-
-  widget_name=make_random_string();
-
-  gtk_widget_set_name(widget,widget_name);
-
-  colref=gdk_rgba_to_string(color);
-
-  css_string=lives_strdup_printf(" #%s {\n background-color: %s;\n }\n }\n",widget_name,colref);
-
-  gtk_css_provider_load_from_data(GTK_CSS_PROVIDER(provider),
-                                  css_string,
-                                  -1, NULL);
-
-  lives_free(colref);
-  lives_free(widget_name);
-
-  lives_free(css_string);
-  lives_object_unref(provider);
-
-#else
   gtk_style_context_get_background_color(gtk_widget_get_style_context(widget), state, color);
-#endif
 #else
   lives_widget_color_copy(color,&gtk_widget_get_style(widget)->bg[state]);
 #endif
@@ -8463,7 +8464,6 @@ void funkify_dialog(LiVESWidget *dialog) {
     LiVESWidget *frame=lives_frame_new(NULL);
     LiVESWidget *box=lives_vbox_new(FALSE,0);
     LiVESWidget *content=lives_dialog_get_content_area(LIVES_DIALOG(dialog));
-    LiVESWidget *action=lives_dialog_get_action_area(LIVES_DIALOG(dialog));
     LiVESWidget *label=lives_label_new("");
 
     lives_container_set_border_width(LIVES_CONTAINER(dialog),0);
@@ -8474,10 +8474,7 @@ void funkify_dialog(LiVESWidget *dialog) {
     }
 
     lives_object_ref(content);
-    lives_object_ref(action);
-
     lives_widget_unparent(content);
-    lives_widget_unparent(action);
 
     lives_container_add(LIVES_CONTAINER(dialog),frame);
     lives_container_add(LIVES_CONTAINER(frame),box);
@@ -8485,8 +8482,6 @@ void funkify_dialog(LiVESWidget *dialog) {
     lives_box_pack_start(LIVES_BOX(box),content,TRUE,TRUE,0);
 
     lives_box_pack_start(LIVES_BOX(box),label,FALSE,TRUE,0);
-
-    lives_box_pack_start(LIVES_BOX(box),action,FALSE,TRUE,0);
 
     lives_widget_show_all(frame);
 

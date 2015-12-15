@@ -5281,7 +5281,6 @@ render_details *create_render_details(int type) {
     lives_box_pack_start(LIVES_BOX(top_vbox), rdet->always_hbox, TRUE, TRUE, 0);
   }
 
-
   frame = lives_frame_new(NULL);
 
   if (type!=1) lives_box_pack_start(LIVES_BOX(top_vbox), frame, TRUE, TRUE, 0);
@@ -5511,7 +5510,7 @@ render_details *create_render_details(int type) {
     lives_dialog_add_action_widget(LIVES_DIALOG(rdet->dialog), cancelbutton, LIVES_RESPONSE_CANCEL);
 
     if (!specified) {
-      if (LIVES_IS_BUTTON_BOX(daa)) lives_button_box_set_button_width(LIVES_BUTTON_BOX(daa), cancelbutton, DEF_BUTTON_WIDTH*2);
+      lives_widget_set_size_request(cancelbutton, DEF_BUTTON_WIDTH*2, -1);
     }
   } else if (LIVES_IS_BOX(daa)) add_fill_to_box(LIVES_BOX(daa));
 
@@ -5520,7 +5519,7 @@ render_details *create_render_details(int type) {
 
   if (!specified) {
     rdet->okbutton = lives_button_new_from_stock(LIVES_STOCK_OK,NULL);
-    if (LIVES_IS_BUTTON_BOX(daa)) lives_button_box_set_button_width(LIVES_BUTTON_BOX(daa), rdet->okbutton, DEF_BUTTON_WIDTH*2);
+    lives_widget_set_size_request(rdet->okbutton, DEF_BUTTON_WIDTH*2, -1);
   } else  {
     rdet->okbutton = lives_button_new_from_stock(LIVES_STOCK_GO_FORWARD,_("_Next"));
   }

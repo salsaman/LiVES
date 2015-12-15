@@ -1643,7 +1643,6 @@ void on_rte_info_clicked(LiVESButton *button, livespointer user_data) {
   weed_plant_t *filter;
 
   LiVESWidget *dialog;
-  LiVESWidget *dialog_action_area;
 
   LiVESWidget *vbox;
   LiVESWidget *hbox;
@@ -1752,8 +1751,7 @@ void on_rte_info_clicked(LiVESButton *button, livespointer user_data) {
   lives_widget_set_can_focus_and_default(ok_button);
   lives_widget_grab_default(ok_button);
 
-  dialog_action_area = lives_dialog_get_action_area(LIVES_DIALOG(dialog));
-  lives_button_box_set_button_width(LIVES_BUTTON_BOX(dialog_action_area), ok_button, DEF_BUTTON_WIDTH*4);
+  lives_widget_set_size_request(ok_button, DEF_BUTTON_WIDTH*4, -1);
 
   lives_signal_connect(LIVES_GUI_OBJECT(ok_button), LIVES_WIDGET_CLICKED_SIGNAL,
                        LIVES_GUI_CALLBACK(lives_general_button_clicked),
@@ -2503,7 +2501,7 @@ void redraw_pwindow(int key, int mode) {
   LiVESList *child_list;
   lives_rfx_t *rfx;
 
-  LiVESWidget *action_area;
+  LiVESWidget *content_area;
 
   int keyw=0,modew=0;
   int i;
@@ -2517,18 +2515,16 @@ void redraw_pwindow(int key, int mode) {
     if (rfx->is_template||(key==keyw&&mode==modew)) {
       // rip out the contents
       if (mainw->invis==NULL) mainw->invis=lives_vbox_new(FALSE,0);
-      child_list=lives_container_get_children(LIVES_CONTAINER(lives_dialog_get_content_area(LIVES_DIALOG(fx_dialog[1]))));
-      action_area=lives_dialog_get_action_area(LIVES_DIALOG(fx_dialog[1]));
+      content_area=lives_dialog_get_content_area(LIVES_DIALOG(fx_dialog[1]));
+      child_list=lives_container_get_children(LIVES_CONTAINER(content_area));
       // remove focus from any widget we are ripping out
-      lives_container_set_focus_child(LIVES_CONTAINER(action_area),NULL);
+      lives_container_set_focus_child(LIVES_CONTAINER(content_area),NULL);
       for (i=0; i<lives_list_length(child_list); i++) {
         LiVESWidget *widget=(LiVESWidget *)lives_list_nth_data(child_list,i);
-        if (widget!=action_area) {
-          // we have to do this, because using lives_widget_destroy() here
-          // can causes a crash [bug in gtk+ ???]
-          // TODO - test: is this still the case ?
-          lives_widget_reparent(widget,mainw->invis);
-        }
+        // we have to do this, because using lives_widget_destroy() here
+        // can causes a crash [bug in gtk+ ???]
+        // TODO - test: is this still the case ?
+        lives_widget_reparent(widget,mainw->invis);
       }
       if (child_list!=NULL) lives_list_free(child_list);
       on_paramwindow_cancel_clicked(NULL,NULL);
@@ -2668,7 +2664,7 @@ void rte_reset_defs_clicked(LiVESButton *button, lives_rfx_t *rfx) {
 
   LiVESList *child_list;
 
-  LiVESWidget *pbox,*fxdialog,*cancelbutton,*action_area;
+  LiVESWidget *pbox,*fxdialog,*cancelbutton,*content_area;
 
   int error;
   int nchans;
@@ -2765,17 +2761,16 @@ resetdefs1:
   // redraw the window
 
   if (mainw->invis==NULL) mainw->invis=lives_vbox_new(FALSE,0);
-  child_list=lives_container_get_children(LIVES_CONTAINER(lives_dialog_get_content_area(LIVES_DIALOG(fxdialog))));
-
-  action_area=lives_dialog_get_action_area(LIVES_DIALOG(fxdialog));
-
+  content_area=lives_dialog_get_content_area(LIVES_DIALOG(fx_dialog[1]));
+  child_list=lives_container_get_children(LIVES_CONTAINER(content_area));
+  // remove focus from any widget we are ripping out
+  lives_container_set_focus_child(LIVES_CONTAINER(content_area),NULL);
   for (i=0; i<lives_list_length(child_list); i++) {
     LiVESWidget *widget=(LiVESWidget *)lives_list_nth_data(child_list,i);
-    if (widget!=action_area) {
-      // we have to do this, because using lives_widget_destroy() here
-      // can causes a crash [bug in gtk+ ???]
-      lives_widget_reparent(widget,mainw->invis);
-    }
+    // we have to do this, because using lives_widget_destroy() here
+    // can causes a crash [bug in gtk+ ???]
+    // TODO - test: is this still the case ?
+    lives_widget_reparent(widget,mainw->invis);
   }
 
   if (child_list!=NULL) lives_list_free(child_list);

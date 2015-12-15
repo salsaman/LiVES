@@ -727,7 +727,6 @@ void on_fx_pre_activate(lives_rfx_t *rfx, int didx, LiVESWidget *pbox) {
   // pbox != NULL: put params in box
 
   LiVESWidget *top_dialog_vbox=NULL;
-  LiVESWidget *dialog_action_area;
   LiVESWidget *cancelbutton;
   LiVESWidget *okbutton;
   LiVESWidget *resetbutton=NULL;
@@ -925,10 +924,8 @@ void on_fx_pre_activate(lives_rfx_t *rfx, int didx, LiVESWidget *pbox) {
     fxw_accel_group = LIVES_ACCEL_GROUP(lives_accel_group_new());
     lives_window_add_accel_group(LIVES_WINDOW(fx_dialog[didx]), fxw_accel_group);
 
-    dialog_action_area = lives_dialog_get_action_area(LIVES_DIALOG(fx_dialog[didx]));
-
     if (!no_process||is_defaults||rfx->status==RFX_STATUS_SCRAP) {
-      lives_button_box_set_layout(LIVES_BUTTON_BOX(dialog_action_area), LIVES_BUTTONBOX_END);
+
       lives_dialog_add_action_widget(LIVES_DIALOG(fx_dialog[didx]), cancelbutton, LIVES_RESPONSE_CANCEL);
       lives_widget_add_accelerator(cancelbutton, LIVES_WIDGET_CLICKED_SIGNAL, fxw_accel_group,
                                    LIVES_KEY_Escape, (LiVESXModifierType)0, (LiVESAccelFlags)0);
@@ -947,8 +944,7 @@ void on_fx_pre_activate(lives_rfx_t *rfx, int didx, LiVESWidget *pbox) {
       cancelbutton = lives_button_new_from_stock(LIVES_STOCK_CLOSE,_("_Close Window"));
 
       if (no_process) {
-        LiVESWidget *dialog_action_area = lives_dialog_get_action_area(LIVES_DIALOG(fx_dialog[didx]));
-        lives_button_box_set_button_width(LIVES_BUTTON_BOX(dialog_action_area), okbutton, DEF_BUTTON_WIDTH*4);
+        lives_widget_set_size_request(cancelbutton, DEF_BUTTON_WIDTH*4, -1);
       }
       if (rfx->status==RFX_STATUS_WEED) {
         resetbutton = lives_button_new_from_stock(LIVES_STOCK_REVERT_TO_SAVED,_("Reset"));

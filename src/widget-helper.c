@@ -900,14 +900,15 @@ LIVES_INLINE boolean lives_widget_set_bg_color(LiVESWidget *widget, LiVESWidgetS
 #if GTK_CHECK_VERSION(3,0,0)
 #if GTK_CHECK_VERSION(3,16,0)
 
-  if (GIW_IS_TIMELINE(widget)||GIW_IS_LED(widget)||LIVES_IS_TEXT_VIEW(widget)||LIVES_IS_EVENT_BOX(widget)||LIVES_IS_LABEL(widget)) {
+
+  if (GIW_IS_TIMELINE(widget)||GIW_IS_LED(widget)||LIVES_IS_EVENT_BOX(widget)||LIVES_IS_LABEL(widget)) {
     gtk_widget_override_background_color(widget,state,color);
   } else {
 
     GtkCssProvider *provider = gtk_css_provider_new();
     GtkStyleContext *ctx = gtk_widget_get_style_context(widget);
 
-    char *widget_name;
+    char *widget_name,*wname;
     char *colref;
     char *css_string;
 
@@ -926,7 +927,10 @@ LIVES_INLINE boolean lives_widget_set_bg_color(LiVESWidget *widget, LiVESWidgetS
 
     colref=gdk_rgba_to_string(color);
 
-    css_string=lives_strdup_printf(" #%s {\n background-color: %s;\n }\n }\n",widget_name,colref);
+    if (LIVES_IS_TEXT_VIEW(widget)) wname=g_strdup("GtkTextView");
+    else wname=g_strdup_printf("#%s",widget_name);
+
+    css_string=lives_strdup_printf(" %s {\n background-color: %s;\n }\n }\n",wname,colref);
 
     gtk_css_provider_load_from_data(GTK_CSS_PROVIDER(provider),
                                     css_string,
@@ -934,6 +938,7 @@ LIVES_INLINE boolean lives_widget_set_bg_color(LiVESWidget *widget, LiVESWidgetS
 
     lives_free(colref);
     lives_free(widget_name);
+    lives_free(wname);
 
     lives_free(css_string);
     lives_object_unref(provider);
@@ -959,42 +964,41 @@ LIVES_INLINE boolean lives_widget_set_fg_color(LiVESWidget *widget, LiVESWidgetS
 #if GTK_CHECK_VERSION(3,0,0)
 #if GTK_CHECK_VERSION(3,16,0)
 
-  if (LIVES_IS_TEXT_VIEW(widget)) {
-    gtk_widget_override_color(widget,state,color);
-  } else {
+  GtkCssProvider *provider = gtk_css_provider_new();
+  GtkStyleContext *ctx = gtk_widget_get_style_context(widget);
 
-    GtkCssProvider *provider = gtk_css_provider_new();
-    GtkStyleContext *ctx = gtk_widget_get_style_context(widget);
+  char *widget_name,*wname;
+  char *colref;
+  char *css_string;
 
-    char *widget_name;
-    char *colref;
-    char *css_string;
+  gtk_style_context_add_provider(ctx, GTK_STYLE_PROVIDER
+                                 (provider), GTK_STYLE_PROVIDER_PRIORITY_APPLICATION);
 
-    gtk_style_context_add_provider(ctx, GTK_STYLE_PROVIDER
-                                   (provider), GTK_STYLE_PROVIDER_PRIORITY_APPLICATION);
+  widget_name=g_strdup(gtk_widget_get_name(widget));
 
-    widget_name=g_strdup(gtk_widget_get_name(widget));
-
-    if (strncmp(widget_name,"XXX",3)) {
-      if (widget_name!=NULL) g_free(widget_name);
-      widget_name=make_random_string();
-      gtk_widget_set_name(widget,widget_name);
-    }
-
-    colref=gdk_rgba_to_string(color);
-
-    css_string=lives_strdup_printf(" #%s {\n color: %s;\n }\n }\n",widget_name,colref);
-
-    gtk_css_provider_load_from_data(GTK_CSS_PROVIDER(provider),
-                                    css_string,
-                                    -1, NULL);
-
-    lives_free(colref);
-    lives_free(widget_name);
-
-    lives_free(css_string);
-    lives_object_unref(provider);
+  if (strncmp(widget_name,"XXX",3)) {
+    if (widget_name!=NULL) g_free(widget_name);
+    widget_name=make_random_string();
+    gtk_widget_set_name(widget,widget_name);
   }
+
+  colref=gdk_rgba_to_string(color);
+
+  if (LIVES_IS_TEXT_VIEW(widget)) wname=g_strdup("GtkTextView");
+  else wname=g_strdup_printf("#%s",widget_name);
+
+  css_string=lives_strdup_printf(" %s {\n color: %s;\n }\n }\n",wname,colref);
+
+  gtk_css_provider_load_from_data(GTK_CSS_PROVIDER(provider),
+                                  css_string,
+                                  -1, NULL);
+
+  lives_free(colref);
+  lives_free(widget_name);
+  lives_free(wname);
+
+  lives_free(css_string);
+  lives_object_unref(provider);
 #else
   gtk_widget_override_color(widget,state,color);
 #endif
@@ -7966,7 +7970,7 @@ LIVES_INLINE LiVESXCursor *lives_cursor_new_from_pixbuf(LiVESXDisplay *disp, LiV
 
 // utils
 
-void widget_helper_init(void) {
+boolean widget_helper_init(void) {
 #if GTK_CHECK_VERSION(3,10,0) || defined GUI_QT
   lives_snprintf(LIVES_STOCK_LABEL_CANCEL,32,"%s",(_("_Cancel")));
   lives_snprintf(LIVES_STOCK_LABEL_OK,32,"%s",(_("_OK")));
@@ -8000,6 +8004,8 @@ void widget_helper_init(void) {
   gtk_accel_map_add_entry("<LiVES>/save",LIVES_KEY_s,LIVES_CONTROL_MASK);
   gtk_accel_map_add_entry("<LiVES>/quit",LIVES_KEY_q,LIVES_CONTROL_MASK);
 #endif
+
+  return TRUE;
 }
 
 

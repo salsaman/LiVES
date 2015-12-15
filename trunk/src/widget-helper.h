@@ -88,7 +88,7 @@ lives_painter_format_t lives_painter_image_surface_get_format(lives_painter_surf
 
 // utils
 
-void widget_helper_init(void);
+boolean widget_helper_init(void);
 
 // object funcs.
 

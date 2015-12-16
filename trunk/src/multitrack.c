@@ -80,6 +80,10 @@ static boolean mt_fx_edit_idle(livespointer mt);
 
 static void paint_lines(lives_mt *mt, double currtime, boolean unpaint);
 
+static int *update_layout_map(weed_plant_t *event_list);
+static double *update_layout_map_audio(weed_plant_t *event_list);
+
+
 /// used to match clips from the event recorder with renumbered clips (without gaps)
 static int renumbered_clips[MAX_FILES+1];
 static double lfps[MAX_FILES+1]; ///< table of layout fps
@@ -658,6 +662,22 @@ boolean write_backup_layout_numbering(lives_mt *mt) {
 
 }
 
+static void upd_layout_maps(weed_plant_t *event_list) {
+  int *layout_map;
+  double *layout_map_audio;
+
+  // update layout maps for files from global layout map
+  layout_map=update_layout_map(event_list);
+  layout_map_audio=update_layout_map_audio(event_list);
+
+  save_layout_map(layout_map,layout_map_audio,NULL,NULL);
+
+  lives_free(layout_map);
+  lives_free(layout_map_audio);
+
+}
+
+
 
 static void renumber_from_backup_layout_numbering(lives_mt *mt) {
   // this is used only for crash recovery
@@ -673,6 +693,9 @@ static void renumber_from_backup_layout_numbering(lives_mt *mt) {
                                        capable->mainpid);
   boolean isfirst=TRUE;
   char buf[256];
+
+  // ensure file layouts are updated
+  upd_layout_maps(NULL);
 
   fd=lives_open_buffered_rdonly(aload_file);
 
@@ -1269,7 +1292,7 @@ static void draw_aparams(lives_mt *mt, LiVESWidget *eventbox, lives_painter_t *c
   end_tc=get_event_timecode(deinit_event);
 
   offset_start=(int)((start_tc/U_SEC-mt->tl_min)/tl_span*lives_widget_get_allocation_width(eventbox)+.5);
-  offset_end=(int)((end_tc/U_SEC-mt->tl_min)/tl_span*lives_widget_get_allocation_width(eventbox)+.5);
+  offset_end=(int)((end_tc/U_SEC-mt->tl_min+1./mt->fps)/tl_span*lives_widget_get_allocation_width(eventbox)+.5);
 
   if (offset_end<0||offset_start>lives_widget_get_allocation_width(eventbox)) {
     lives_free(in_params);
@@ -1718,7 +1741,7 @@ static boolean get_track_index(lives_mt *mt, weed_timecode_t tc) {
 
 
 void track_select(lives_mt *mt) {
-  LiVESWidget *labelbox,*label,*hbox,*dummy,*ahbox,*eventbox,*oeventbox,*checkbutton=NULL;
+  LiVESWidget *labelbox,*label,*hbox,*dummy,*ahbox,*arrow,*eventbox,*oeventbox,*checkbutton=NULL;
   weed_timecode_t tc;
 
   int hidden=0;
@@ -1789,6 +1812,7 @@ void track_select(lives_mt *mt) {
       label=(LiVESWidget *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(eventbox),"label");
       hbox=(LiVESWidget *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(eventbox),"hbox");
       ahbox=(LiVESWidget *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(eventbox),"ahbox");
+      arrow=(LiVESWidget *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(eventbox),"arrow");
       checkbutton=(LiVESWidget *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(eventbox), "checkbutton");
       if (i==mt->current_track) {
 
@@ -1802,7 +1826,10 @@ void track_select(lives_mt *mt) {
           if (hbox!=NULL) {
             lives_widget_set_state(hbox,LIVES_WIDGET_STATE_PRELIGHT);
           }
-          if (ahbox!=NULL) lives_widget_set_state(ahbox,LIVES_WIDGET_STATE_PRELIGHT);
+          if (ahbox!=NULL) {
+            lives_widget_set_state(ahbox,LIVES_WIDGET_STATE_PRELIGHT);
+            lives_widget_set_state(arrow,LIVES_WIDGET_STATE_PRELIGHT);
+          }
           if (checkbutton!=NULL) {
             lives_widget_set_state(checkbutton,LIVES_WIDGET_STATE_NORMAL);
             lives_widget_queue_draw(checkbutton);
@@ -1815,7 +1842,10 @@ void track_select(lives_mt *mt) {
           if (labelbox!=NULL) lives_widget_set_state(labelbox,LIVES_WIDGET_STATE_NORMAL);
           if (label!=NULL) lives_widget_set_state(label,LIVES_WIDGET_STATE_NORMAL);
           if (hbox!=NULL) lives_widget_set_state(hbox,LIVES_WIDGET_STATE_NORMAL);
-          if (ahbox!=NULL) lives_widget_set_state(ahbox,LIVES_WIDGET_STATE_NORMAL);
+          if (ahbox!=NULL) {
+            lives_widget_set_state(ahbox,LIVES_WIDGET_STATE_NORMAL);
+            lives_widget_set_state(arrow,LIVES_WIDGET_STATE_NORMAL);
+          }
           if (checkbutton!=NULL) {
             lives_widget_set_state(checkbutton,LIVES_WIDGET_STATE_PRELIGHT);
             lives_widget_queue_draw(checkbutton);
@@ -1848,7 +1878,10 @@ void track_select(lives_mt *mt) {
         if (labelbox!=NULL) lives_widget_set_state(labelbox,LIVES_WIDGET_STATE_NORMAL);
         if (label!=NULL) lives_widget_set_state(label,LIVES_WIDGET_STATE_NORMAL);
         if (hbox!=NULL) lives_widget_set_state(hbox,LIVES_WIDGET_STATE_NORMAL);
-        if (ahbox!=NULL) lives_widget_set_state(ahbox,LIVES_WIDGET_STATE_NORMAL);
+        if (ahbox!=NULL) {
+          lives_widget_set_state(ahbox,LIVES_WIDGET_STATE_NORMAL);
+          lives_widget_set_state(arrow,LIVES_WIDGET_STATE_NORMAL);
+        }
         if (checkbutton!=NULL) {
           lives_widget_set_state(checkbutton,LIVES_WIDGET_STATE_NORMAL);
           lives_widget_queue_draw(checkbutton);
@@ -2346,6 +2379,7 @@ void scroll_tracks(lives_mt *mt, int top_track, boolean set_value) {
       lives_widget_object_set_data(LIVES_WIDGET_OBJECT(eventbox),"label",label);
       lives_widget_object_set_data(LIVES_WIDGET_OBJECT(eventbox),"hbox",hbox);
       lives_widget_object_set_data(LIVES_WIDGET_OBJECT(eventbox),"ahbox",ahbox);
+      lives_widget_object_set_data(LIVES_WIDGET_OBJECT(eventbox),"arrow",arrow);
       lives_widget_object_set_data(LIVES_WIDGET_OBJECT(ahbox),"eventbox",eventbox);
 
       lives_table_attach(LIVES_TABLE(mt->timeline_table), eventbox, 7, 40, rows, rows+1,
@@ -2747,7 +2781,9 @@ static void renumber_clips(void) {
 }
 
 
-static void rerenumber_clips(const char *lfile) {
+
+
+static void rerenumber_clips(const char *lfile, weed_plant_t *event_list) {
   // we loaded an event_list, now we match clip numbers in event_list with our current clips, using the layout map file
   // the renumbering is used for translations in event_list_rectify
   // in mt_init_tracks we alter the clip numbers in the event_list
@@ -2760,6 +2796,9 @@ static void rerenumber_clips(const char *lfile) {
   LiVESList *lmap;
   int i,rnc;
   char **array;
+
+  // ensure file layouts are updated
+  upd_layout_maps(event_list);
 
   renumbered_clips[0]=0;
 
@@ -2774,9 +2813,12 @@ static void rerenumber_clips(const char *lfile) {
     for (i=1; i<=MAX_FILES&&mainw->files[i]!=NULL; i++) {
       lmap=mainw->files[i]->layout_map;
       while (lmap!=NULL) {
+        g_print("VALS2 %d %s %s\n",i,(char *)lmap->data,lfile);
 
         // lmap->data starts with layout name
         if (!strncmp((char *)lmap->data,lfile,strlen(lfile))) {
+          g_print("VALS %d %s %s\n",i,(char *)lmap->data,lfile);
+
           threaded_dialog_spin();
           array=lives_strsplit((char *)lmap->data,"|",-1);
           threaded_dialog_spin();
@@ -11175,7 +11217,7 @@ boolean on_multitrack_activate(LiVESMenuItem *menuitem, weed_plant_t *event_list
 
   if (mainw->stored_event_list!=NULL) {
     event_list=mainw->stored_event_list;
-    rerenumber_clips(NULL);
+    rerenumber_clips(NULL,event_list);
   }
 
   if (prefs->show_gui) {
@@ -18093,7 +18135,7 @@ static void draw_soundwave(LiVESWidget *ebox, lives_painter_surface_t *surf, int
       return;
     }
 
-    offset_endd=get_event_timecode(block->end_event)/U_SEC+1./cfile->fps;
+    offset_endd=get_event_timecode(block->end_event)/U_SEC;//+1./cfile->fps;
     offset_end=(offset_endd-mt->tl_min)/tl_span*lives_widget_get_allocation_width(ebox);
 
     if (offset_end<mt->tl_min) {
@@ -19346,7 +19388,7 @@ void save_layout_map(int *lmap, double *lmap_audio, const char *file, const char
   LiVESList *map,*map_next;
 
   char *new_entry;
-  char *map_name,*ldir;
+  char *map_name=NULL,*ldir=NULL;
   char *string;
   char *com;
 
@@ -19356,28 +19398,35 @@ void save_layout_map(int *lmap, double *lmap_audio, const char *file, const char
 
   boolean written=FALSE;
 
-  int fd;
+  boolean write_to_file=TRUE;
+
+  int fd=0;
   int len;
   int retval;
   int max_frame;
 
   register int i;
 
+
   if (dir==NULL&&strlen(mainw->set_name)==0) return;
 
-  if (file!=NULL&&(mainw->current_layouts_map==NULL||
-                   !lives_list_find(mainw->current_layouts_map,file)))
-    mainw->current_layouts_map=lives_list_append(mainw->current_layouts_map,lives_strdup(file));
-  if (dir==NULL) ldir=lives_build_filename(prefs->tmpdir,mainw->set_name,"layouts",NULL);
-  else ldir=lives_strdup(dir);
+  if (file==NULL) write_to_file=FALSE;
+  else {
 
-  map_name=lives_build_filename(ldir,"layout.map",NULL);
+    if (file!=NULL&&(mainw->current_layouts_map==NULL||
+                     !lives_list_find(mainw->current_layouts_map,file)))
+      mainw->current_layouts_map=lives_list_append(mainw->current_layouts_map,lives_strdup(file));
+    if (dir==NULL) ldir=lives_build_filename(prefs->tmpdir,mainw->set_name,"layouts",NULL);
+    else ldir=lives_strdup(dir);
 
-  lives_mkdir_with_parents(ldir,S_IRWXU);
+    map_name=lives_build_filename(ldir,"layout.map",NULL);
+
+    lives_mkdir_with_parents(ldir,S_IRWXU);
+  }
 
   do {
     retval=0;
-    fd=lives_creat_buffered(map_name,DEF_FILE_PERMS);
+    if (write_to_file) fd=lives_creat_buffered(map_name,DEF_FILE_PERMS);
 
     if (fd==-1) {
       retval=do_write_failed_error_s_with_retry(map_name,lives_strerror(errno),NULL);
@@ -19419,7 +19468,7 @@ void save_layout_map(int *lmap, double *lmap_audio, const char *file, const char
             mainw->files[i]->layout_map=lives_list_prepend(mainw->files[i]->layout_map,new_entry);
           }
 
-          if ((map=mainw->files[i]->layout_map)!=NULL) {
+          if (write_to_file&&((map=mainw->files[i]->layout_map)!=NULL)) {
             written=TRUE;
             len=strlen(mainw->files[i]->handle);
             lives_write_le_buffered(fd,&len,4,TRUE);
@@ -19451,7 +19500,7 @@ void save_layout_map(int *lmap, double *lmap_audio, const char *file, const char
     if (retval==LIVES_RESPONSE_RETRY && fd>=0) lives_close_buffered(fd);
   } while (retval==LIVES_RESPONSE_RETRY);
 
-  if (retval!=LIVES_RESPONSE_CANCEL) {
+  if (write_to_file&&retval!=LIVES_RESPONSE_CANCEL) {
     lives_close_buffered(fd);
     size=sget_file_size(map_name);
 
@@ -19472,8 +19521,10 @@ void save_layout_map(int *lmap, double *lmap_audio, const char *file, const char
     lives_free(com);
   }
 
-  lives_free(ldir);
-  lives_free(map_name);
+  if (write_to_file) {
+    lives_free(ldir);
+    lives_free(map_name);
+  }
 }
 
 
@@ -19596,6 +19647,7 @@ boolean set_new_set_name(lives_mt *mt) {
 
   return TRUE;
 }
+
 
 
 boolean on_save_event_list_activate(LiVESMenuItem *menuitem, livespointer user_data) {
@@ -20889,9 +20941,9 @@ boolean event_list_rectify(lives_mt *mt, weed_plant_t *event_list) {
         new_clip_index=(int *)lives_malloc(num_tracks*sizint);
         new_frame_index=(int *)lives_malloc(num_tracks*sizint);
         last_valid_frame=0;
-        //	#define DEBUG_MISSING_CLIPS
+        //#define DEBUG_MISSING_CLIPS
 #ifdef DEBUG_MISSING_CLIPS
-        //g_print("pt zzz %d\n",num_tracks);
+        g_print("pt zzz %d\n",num_tracks);
 #endif
         for (i=0; i<num_tracks; i++) {
           if (clip_index[i]>0&&(clip_index[i]>MAX_FILES||renumbered_clips[clip_index[i]]<1||
@@ -21414,7 +21466,7 @@ weed_plant_t *load_event_list(lives_mt *mt, char *eload_file) {
 
   if (!mainw->recoverable_layout) {
     // re-map clips so our loaded event_list refers to the correct clips and frames
-    rerenumber_clips(eload_file);
+    rerenumber_clips(eload_file,NULL);
   } else {
     renumber_from_backup_layout_numbering(mt);
   }

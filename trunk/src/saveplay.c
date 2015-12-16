@@ -5279,7 +5279,6 @@ void recover_layout_map(int numclips) {
           if (lmap_node->prev!=NULL) lmap_node->prev->next=lmap_node_next;
           else mlist=lmap_node_next;
           if (lmap_node_next!=NULL) lmap_node_next->prev=lmap_node->prev;
-          //lives_free(lmap_node);   // i don't know why, but this causes a segfault
         }
 
         lives_free(check_handle);

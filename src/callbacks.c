@@ -5038,13 +5038,14 @@ boolean reload_set(const char *set_name) {
         reset_clipmenu();
         lives_widget_set_sensitive(mainw->vj_load_set, FALSE);
 
+        lives_snprintf(mainw->set_name,128,"%s",set_name);
+
+        // MUST set set_name before calling this
         recover_layout_map(MAX_FILES);
 
         d_print(_("%d clips and %d layouts were recovered from set (%s).\n"),
                 clipnum,lives_list_length(mainw->current_layouts_map),(tmp=F2U8(set_name)));
         lives_free(tmp);
-
-        lives_snprintf(mainw->set_name,128,"%s",set_name);
 
         lives_notify(LIVES_OSC_NOTIFY_CLIPSET_OPENED,mainw->set_name);
 

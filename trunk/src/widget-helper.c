@@ -892,7 +892,6 @@ static char *make_random_string() {
 }
 #endif
 
-#include "giw/giwtimeline.h"
 #include "giw/giwled.h"
 
 LIVES_INLINE boolean lives_widget_set_bg_color(LiVESWidget *widget, LiVESWidgetState state, const LiVESWidgetColor *color) {
@@ -900,52 +899,67 @@ LIVES_INLINE boolean lives_widget_set_bg_color(LiVESWidget *widget, LiVESWidgetS
 #if GTK_CHECK_VERSION(3,0,0)
 #if GTK_CHECK_VERSION(3,16,0)
 
+  GtkCssProvider *provider = gtk_css_provider_new();
+  GtkStyleContext *ctx = gtk_widget_get_style_context(widget);
 
-  if (GIW_IS_TIMELINE(widget)||GIW_IS_LED(widget)||LIVES_IS_EVENT_BOX(widget)||LIVES_IS_LABEL(widget)) {
-    gtk_widget_override_background_color(widget,state,color);
-  } else {
+  char *widget_name,*wname;
+  char *colref;
+  char *css_string;
+  char *state_str;
 
-    GtkCssProvider *provider = gtk_css_provider_new();
-    GtkStyleContext *ctx = gtk_widget_get_style_context(widget);
+  gtk_style_context_add_provider(ctx, GTK_STYLE_PROVIDER
+                                 (provider), GTK_STYLE_PROVIDER_PRIORITY_APPLICATION);
 
-    char *widget_name,*wname;
-    char *colref;
-    char *css_string;
+  widget_name=g_strdup(gtk_widget_get_name(widget));
 
-    gtk_style_context_add_provider(ctx, GTK_STYLE_PROVIDER
-                                   (provider), GTK_STYLE_PROVIDER_PRIORITY_APPLICATION);
-
-    widget_name=g_strdup(gtk_widget_get_name(widget));
-
-    if (strncmp(widget_name,"XXX",3)) {
-      if (widget_name!=NULL) g_free(widget_name);
-      widget_name=make_random_string();
-      gtk_widget_set_name(widget,widget_name);
-    }
-
+  if (strncmp(widget_name,"XXX",3)) {
+    if (widget_name!=NULL) g_free(widget_name);
+    widget_name=make_random_string();
     gtk_widget_set_name(widget,widget_name);
+  }
 
-    colref=gdk_rgba_to_string(color);
+  gtk_widget_set_name(widget,widget_name);
+
+  colref=gdk_rgba_to_string(color);
 
 #ifdef GTK_TEXT_VIEW_CSS_BUG
-    if (GTK_IS_TEXT_VIEW(widget)) wname=g_strdup("GtkTextView");
-    else
+  if (GTK_IS_TEXT_VIEW(widget)) wname=g_strdup("GtkTextView");
+  else {
 #endif
-      wname=g_strdup_printf("#%s",widget_name);
+    switch (state) {
+    case GTK_STATE_FLAG_ACTIVE:
+      state_str=":active";
+      break;
+    case GTK_STATE_FLAG_PRELIGHT:
+      state_str=":prelight";
+      break;
+    case GTK_STATE_FLAG_SELECTED:
+      state_str=":selected";
+      break;
+    case GTK_STATE_FLAG_INSENSITIVE:
+      state_str=":insensitive";
+      break;
+    default:
+      state_str="";
+    }
+    wname=g_strdup_printf("#%s%s",widget_name,state_str);
 
-    css_string=g_strdup_printf(" %s {\n background-color: %s;\n }\n }\n",wname,colref);
-
-    gtk_css_provider_load_from_data(GTK_CSS_PROVIDER(provider),
-                                    css_string,
-                                    -1, NULL);
-
-    g_free(colref);
-    g_free(widget_name);
-    g_free(wname);
-
-    g_free(css_string);
-    g_object_unref(provider);
+#ifdef GTK_TEXT_VIEW_CSS_BUG
   }
+#endif
+  css_string=g_strdup_printf(" %s {\n background-color: %s;\n }\n }\n",wname,colref);
+
+  gtk_css_provider_load_from_data(GTK_CSS_PROVIDER(provider),
+                                  css_string,
+                                  -1, NULL);
+
+  g_free(colref);
+  g_free(widget_name);
+  g_free(wname);
+
+  g_free(css_string);
+  g_object_unref(provider);
+
 #else
   gtk_widget_override_background_color(widget,state,color);
 #endif
@@ -2467,31 +2481,29 @@ LIVES_INLINE LiVESWidget *lives_arrow_new(LiVESArrowType arrow_type, LiVESShadow
   LiVESWidget *arrow=NULL;
 #ifdef GUI_GTK
 #if GTK_CHECK_VERSION(3,12,0)
-  const char *arrow_id;
+  const char *format = "<b>\%s</b>";
+  char *markup;
+  char *str;
+
   switch (arrow_type) {
-  case LIVES_ARROW_UP:
-    arrow_id=LIVES_STOCK_GO_UP;
-    break;
   case LIVES_ARROW_DOWN:
-    arrow_id=LIVES_STOCK_GO_DOWN;
+    str="v";
     break;
   case LIVES_ARROW_LEFT:
-    if (LIVES_IS_RTL)
-      arrow_id=LIVES_STOCK_GO_FORWARD;
-    else
-      arrow_id=LIVES_STOCK_GO_BACK;
+    str="<";
     break;
   case LIVES_ARROW_RIGHT:
-    if (LIVES_IS_RTL)
-      arrow_id=LIVES_STOCK_GO_BACK;
-    else
-      arrow_id=LIVES_STOCK_GO_FORWARD;
+    str=">";
     break;
   default:
-    arrow_id=LIVES_STOCK_MISSING_IMAGE;
+    return arrow;
   }
 
-  arrow=gtk_image_new_from_icon_name(arrow_id,GTK_ICON_SIZE_BUTTON);
+  arrow=gtk_label_new("");
+  markup = g_markup_printf_escaped(format, str);
+  gtk_label_set_markup(GTK_LABEL(arrow), markup);
+  g_free(markup);
+
 #else
   arrow=gtk_arrow_new(arrow_type,shadow_type);
 #endif

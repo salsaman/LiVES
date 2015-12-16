@@ -1824,6 +1824,7 @@ void track_select(lives_mt *mt) {
           }
         }
 
+
 #ifdef ENABLE_GIW
         if ((prefs->lamp_buttons&&!giw_led_get_mode(GIW_LED(checkbutton)))||(!prefs->lamp_buttons&&
 #else
@@ -2335,7 +2336,7 @@ void scroll_tracks(lives_mt *mt, int top_track, boolean set_value) {
 
       lives_container_add(LIVES_CONTAINER(labelbox), hbox);
       lives_box_pack_start(LIVES_BOX(hbox), checkbutton, FALSE, FALSE, 0);
-      lives_box_pack_start(LIVES_BOX(hbox), label, FALSE, FALSE, 0);
+      lives_box_pack_start(LIVES_BOX(hbox), label, TRUE, TRUE, 0);
       lives_container_add(LIVES_CONTAINER(ahbox), arrow);
 
       lives_table_attach(LIVES_TABLE(mt->timeline_table), labelbox, 0, 6, rows, rows+1, LIVES_FILL, (LiVESAttachOptions)0, 0, 0);
@@ -2449,7 +2450,7 @@ void scroll_tracks(lives_mt *mt, int top_track, boolean set_value) {
           }
 
           lives_container_add(LIVES_CONTAINER(labelbox), hbox);
-          lives_box_pack_start(LIVES_BOX(hbox), label, FALSE, FALSE, 0);
+          lives_box_pack_start(LIVES_BOX(hbox), label, TRUE, TRUE, 0);
           lives_container_add(LIVES_CONTAINER(ahbox), arrow);
 
           lives_table_attach(LIVES_TABLE(mt->timeline_table), dummy, 0, 1, rows, rows+1, LIVES_FILL, (LiVESAttachOptions)0, 0, 0);

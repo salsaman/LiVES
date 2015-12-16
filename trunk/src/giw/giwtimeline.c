@@ -119,6 +119,7 @@ static PangoLayout *giw_timeline_get_layout(GtkWidget      *widget,
     const gchar    *text);
 
 
+
 //G_DEFINE_TYPE (GiwTimeline, giw_timeline, GTK_TYPE_WIDGET)
 
 G_DEFINE_TYPE(GiwTimeline, giw_timeline, GTK_TYPE_SCALE);
@@ -153,6 +154,7 @@ giw_timeline_class_init(GiwTimelineClass *klass) {
 #define GTK_PARAM_WRITABLE (GParamFlags)(G_PARAM_WRITABLE|G_PARAM_STATIC_NAME|G_PARAM_STATIC_NICK|G_PARAM_STATIC_BLURB)
 #define GTK_PARAM_READWRITE (GParamFlags)(G_PARAM_READWRITE|G_PARAM_STATIC_NAME|G_PARAM_STATIC_NICK|G_PARAM_STATIC_BLURB)
 #endif
+
 
 
   g_object_class_install_property(object_class,
@@ -988,6 +990,9 @@ giw_timeline_draw_pos(GiwTimeline *timeline) {
     priv->ysrc = y;
   }
 }
+
+
+
 
 static void
 giw_timeline_make_pixmap(GiwTimeline *timeline) {

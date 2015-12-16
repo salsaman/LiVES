@@ -56,6 +56,9 @@ static void giw_led_get_preferred_height(GtkWidget *widget,
     gint      *minimal_height,
     gint      *natural_height);
 static gboolean giw_led_draw(GtkWidget *widget, cairo_t *cairo);
+static void     giw_led_style_updated(GtkWidget      *widget);
+static void giw_led_state_flags_changed(GtkWidget        *widget,
+                                        GtkStateFlags     previous_state);
 #else
 static gint giw_led_expose(GtkWidget        *widget,
                            GdkEventExpose   *event);
@@ -125,6 +128,8 @@ giw_led_class_init(GiwLedClass *xclass) {
   widget_class->get_preferred_width = giw_led_get_preferred_width;
   widget_class->get_preferred_height = giw_led_get_preferred_height;
   widget_class->draw = giw_led_draw;
+  widget_class->style_updated        = giw_led_style_updated;
+  widget_class->state_flags_changed = giw_led_state_flags_changed;
 #else
   widget_class->expose_event = giw_led_expose;
   widget_class->size_request = giw_led_size_request;
@@ -504,6 +509,17 @@ giw_led_expose(GtkWidget      *widget,
   return FALSE;
 }
 
+#if GTK_CHECK_VERSION(3,0,0)
+static void
+giw_led_style_updated(GtkWidget *widget) {
+  GTK_WIDGET_CLASS(giw_led_parent_class)->style_updated(widget);
+}
+
+static void
+giw_led_state_flags_changed(GtkWidget *widget,GtkStateFlags previous_state) {
+  gtk_widget_queue_draw(widget);
+}
+#endif
 
 static gint
 giw_led_button_press(GtkWidget      *widget,

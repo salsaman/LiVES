@@ -943,9 +943,13 @@ boolean check_storage_space(lives_clip_t *sfile, boolean is_processing) {
 static void cancel_process(boolean visible) {
   if (prefs->show_player_stats&&!visible&&mainw->fps_measure>0.) {
     // statistics
+#ifdef USE_MONOTONIC_TIME
+    mainw->fps_measure/=((lives_get_monotonic_time()-mainw->origusecs)*U_SEC_RATIO)/U_SEC;
+#else
     gettimeofday(&tv, NULL);
     mainw->fps_measure/=(double)(U_SECL*(tv.tv_sec-mainw->origsecs)+tv.tv_usec*U_SEC_RATIO-mainw->origusecs*
                                  U_SEC_RATIO-mainw->offsetticks)/U_SEC;
+#endif
   }
   if (visible) {
     if (mainw->preview_box!=NULL&&!mainw->preview) lives_widget_set_tooltip_text(mainw->p_playbutton,_("Play all"));
@@ -1012,8 +1016,12 @@ static void progbar_pulse_or_fraction(lives_clip_t *sfile, int frames_done) {
     if (frames_done<=sfile->progress_end&&sfile->progress_end>0&&!mainw->effects_paused&&
         frames_done>0) {
 
+#ifdef USE_MONOTONIC_TIME
+      mainw->currticks=(lives_get_monotonic_time()-mainw->origusecs)*U_SEC_RATIO;
+#else
       gettimeofday(&tv, NULL);
       mainw->currticks=U_SECL*(tv.tv_sec-mainw->origsecs)+tv.tv_usec*U_SEC_RATIO-mainw->origusecs*U_SEC_RATIO;
+#endif
       timesofar=(mainw->currticks-mainw->timeout_ticks)/U_SEC;
 
       disp_fraction(frames_done,sfile->progress_start,sfile->progress_end,
@@ -1120,9 +1128,12 @@ boolean process_one(boolean visible) {
       // soundcard time is only updated after sending audio
       // so if we get the same value back we interpolate using the system clock
 
+#ifdef USE_MONOTONIC_TIME
+      current_ticks=(lives_get_monotonic_time()-mainw->origusecs)*U_SEC_RATIO;
+#else
       gettimeofday(&tv, NULL);
       current_ticks=U_SECL*(tv.tv_sec-mainw->origsecs)+tv.tv_usec*U_SEC_RATIO-mainw->origusecs*U_SEC_RATIO;
-
+#endif
       if (sc_ticks!=last_sc_ticks) {
 
         // calculate ratio soundcard rate:sys clock rate
@@ -1162,8 +1173,12 @@ boolean process_one(boolean visible) {
 
     if (time_source==LIVES_TIME_SOURCE_NONE) {
       // get time from system clock
+#ifdef USE_MONOTONIC_TIME
+      mainw->currticks=(lives_get_monotonic_time()-mainw->origusecs)*U_SEC_RATIO;
+#else
       gettimeofday(&tv, NULL);
       mainw->currticks=U_SECL*(tv.tv_sec-mainw->origsecs)+tv.tv_usec*U_SEC_RATIO-mainw->origusecs*U_SEC_RATIO;
+#endif
       if (LIVES_UNLIKELY(mainw->currticks<prev_ticks)) mainw->currticks=prev_ticks;
       time_source=LIVES_TIME_SOURCE_SYSTEM;
       prev_ticks=mainw->currticks;
@@ -1363,8 +1378,12 @@ boolean process_one(boolean visible) {
       if (cfile->opening&&cfile->clip_type==CLIP_TYPE_DISK&&!cfile->opening_only_audio&&
           (cfile->hsize>0||cfile->vsize>0||cfile->frames>0)&&(!mainw->effects_paused||!shown_paused_frames)) {
         uint32_t apxl;
+#ifdef USE_MONOTONIC_TIME
+        mainw->currticks=(lives_get_monotonic_time()-mainw->origusecs)*U_SEC_RATIO;
+#else
         gettimeofday(&tv, NULL);
         mainw->currticks=U_SECL*(tv.tv_sec-mainw->origsecs)+tv.tv_usec*U_SEC_RATIO-mainw->origusecs*U_SEC_RATIO;
+#endif
         if ((mainw->currticks-last_open_check_ticks)>OPEN_CHECK_TICKS*
             ((apxl=get_approx_ln((uint32_t)mainw->opening_frames))<200?apxl:200)||
             (mainw->effects_paused&&!shown_paused_frames)) {
@@ -1438,6 +1457,15 @@ boolean process_one(boolean visible) {
 
   return FALSE;
 }
+
+#ifdef USE_GDK_FRAME_CLOCK
+static volatile boolean ready;
+static boolean gdk_frame_clock;
+static GdkFrameClock *gclock;
+static void clock_upd(GdkFrameClock *clock, gpointer user_data) {
+  ready=TRUE;
+}
+#endif
 
 
 boolean do_progress_dialog(boolean visible, boolean cancellable, const char *text) {
@@ -1594,8 +1622,14 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const char *tex
   consume_ticks=0;
 
   // [IMPORTANT] we subtract these from every calculation to make the numbers smaller
+#ifdef USE_MONOTONIC_TIME
+  mainw->origsecs=0; // not used
+  mainw->origusecs=lives_get_monotonic_time();
+#else
   mainw->origsecs=tv.tv_sec;
   mainw->origusecs=tv.tv_usec;
+#endif
+
 
   if (!visible) {
     // video playback
@@ -1632,11 +1666,16 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const char *tex
     // calculate when we "would have started" at time 0
 
     // WARNING: origticks could be negative
-
+#ifdef USE_MONOTONIC_TIME
+    int64_t origticks=mainw->origusecs*U_SEC_RATIO-
+                      (mainw->offsetticks=get_event_timecode(mainw->multitrack->pb_start_event));
+    mainw->origusecs=((int64_t)(origticks/U_SEC_RATIO));
+#else
     int64_t origticks=mainw->origsecs*U_SEC+mainw->origusecs*U_SEC_RATIO-
                       (mainw->offsetticks=get_event_timecode(mainw->multitrack->pb_start_event));
     mainw->origsecs=origticks/U_SEC;
     mainw->origusecs=((int64_t)(origticks/U_SEC_RATIO)-mainw->origsecs*1000000.);
+#endif
   }
 
 
@@ -1714,6 +1753,20 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const char *tex
 
   mainw->scratch=SCRATCH_NONE;
 
+#ifdef USE_GDK_FRAME_CLOCK
+  gdk_frame_clock=FALSE;
+  if (prefs->show_gui) {
+    gdk_frame_clock=TRUE;
+    if (mainw->multitrack==NULL)
+      gclock=gtk_widget_get_frame_clock(mainw->LiVES);
+    else
+      gclock=gtk_widget_get_frame_clock(mainw->multitrack->window);
+    gdk_frame_clock_begin_updating(gclock);
+    lives_signal_connect(LIVES_GUI_OBJECT(gclock), "update",
+                         LIVES_GUI_CALLBACK(clock_upd),
+                         NULL);
+  }
+#endif
 
   //try to open info file - or if internal_messaging is TRUE, we get mainw->msg
   // from the mainw->progress_fn function
@@ -1728,6 +1781,11 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const char *tex
       if (!process_one(visible)) {
         lives_set_cursor_style(LIVES_CURSOR_NORMAL,NULL);
         if (mainw->current_file>-1&&cfile!=NULL) lives_freep((void **)&cfile->op_dir);
+#ifdef USE_GDK_FRAME_CLOCK
+        if (gdk_frame_clock) {
+          gdk_frame_clock_end_updating(gclock);
+        }
+#endif
         return FALSE;
       }
 
@@ -1735,6 +1793,18 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const char *tex
         // we are generating audio from a plugin and it needs reinit - we do it in this thread so as not to hold up the player thread
         reinit_audio_gen();
       }
+
+#ifdef USE_GDK_FRAME_CLOCK
+      if (prefs->show_gui) {
+        if (!visible) {
+          ready=FALSE;
+          while (!ready) {
+            lives_usleep(prefs->sleep_time);
+            lives_widget_context_update();
+          }
+        }
+      }
+#endif
 
       // normal playback, wth realtime audio player
       if (!visible&&(mainw->whentostop!=STOP_ON_AUD_END||is_realtime_aplayer(prefs->audio_player))) continue;
@@ -1841,6 +1911,11 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const char *tex
       if (!process_one(visible)) {
         lives_set_cursor_style(LIVES_CURSOR_NORMAL,NULL);
         if (mainw->current_file>-1&&cfile!=NULL) lives_freep((void **)&cfile->op_dir);
+#ifdef USE_GDK_FRAME_CLOCK
+        if (gdk_frame_clock) {
+          gdk_frame_clock_end_updating(gclock);
+        }
+#endif
         return FALSE;
       }
 
@@ -1853,9 +1928,17 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const char *tex
         // pump data from stdout to textbuffer
         pump_io_chan(mainw->iochan);
       }
+#ifndef USE_GDK_FRAME_CLOCK
       lives_usleep(prefs->sleep_time);
+#endif
     } else break;
   }
+
+#ifdef USE_GDK_FRAME_CLOCK
+  if (gdk_frame_clock) {
+    gdk_frame_clock_end_updating(gclock);
+  }
+#endif
 
 #ifdef DEBUG
   g_print("exit pt 3 %s\n",mainw->msg);
@@ -1897,9 +1980,13 @@ finish:
   } else {
     if (prefs->show_player_stats) {
       if (mainw->fps_measure>0.) {
+#ifdef USE_MONOTONIC_TIME
+        mainw->fps_measure/=((lives_get_monotonic_time()-mainw->origusecs)*U_SEC_RATIO)/U_SEC;
+#else
         gettimeofday(&tv, NULL);
         mainw->fps_measure/=(double)(U_SECL*(tv.tv_sec-mainw->origsecs)+tv.tv_usec*U_SEC_RATIO-
                                      mainw->origusecs*U_SEC_RATIO-mainw->offsetticks)/U_SEC;
+#endif
       }
     }
     mainw->is_processing=TRUE;

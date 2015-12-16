@@ -9266,9 +9266,12 @@ void on_effects_paused(LiVESButton *button, livespointer user_data) {
 
   if (mainw->iochan==NULL) {
     // pause during effects processing or opening
+#ifdef USE_MONOTONIC_TIME
+    xticks=(lives_get_monotonic_time()-mainw->origusecs)*U_SEC_RATIO;
+#else
     gettimeofday(&tv, NULL);
     xticks=U_SECL*(tv.tv_sec-mainw->origsecs)+tv.tv_usec*U_SEC_RATIO-mainw->origusecs*U_SEC_RATIO;
-
+#endif
     if (!mainw->effects_paused) {
       mainw->timeout_ticks-=xticks;
       com=lives_strdup_printf("%s pause \"%s\"",prefs->backend_sync,cfile->handle);
@@ -9380,8 +9383,12 @@ void on_preview_clicked(LiVESButton *button, livespointer user_data) {
 
   mainw->preview=TRUE;
   old_rte=mainw->rte;
+#ifdef USE_MONOTONIC_TIME
+  xticks=(lives_get_monotonic_time()-mainw->origusecs)*U_SEC_RATIO;
+#else
   gettimeofday(&tv, NULL);
   xticks=U_SECL*(tv.tv_sec-mainw->origsecs)+tv.tv_usec*U_SEC_RATIO-mainw->origusecs*U_SEC_RATIO;
+#endif
   mainw->timeout_ticks-=xticks;
 
   if (mainw->internal_messaging) {
@@ -9561,8 +9568,12 @@ void on_preview_clicked(LiVESButton *button, livespointer user_data) {
     unblock_expose();
     lives_widget_queue_draw(mainw->LiVES);
   }
+#ifdef USE_MONOTONIC_TIME
+  xticks=(lives_get_monotonic_time()-mainw->origusecs)*U_SEC_RATIO;
+#else
   gettimeofday(&tv, NULL);
   xticks=U_SECL*(tv.tv_sec-mainw->origsecs)+tv.tv_usec*U_SEC_RATIO-mainw->origusecs*U_SEC_RATIO;
+#endif
   mainw->timeout_ticks+=xticks;
   mainw->filter_map=filter_map;
   mainw->afilter_map=afilter_map;

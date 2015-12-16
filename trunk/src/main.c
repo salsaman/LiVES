@@ -5624,7 +5624,11 @@ void load_frame_image(int frame) {
             check_layer_ready(mainw->frame_layer);
             return;
           }
+#ifdef USE_MONOTONIC_TIME
+          mainw->currticks=(lives_get_monotonic_time()-mainw->origusecs)*U_SEC_RATIO;
+#else
           gettimeofday(&tv, NULL);
+#endif
           mainw->currticks=U_SECL*(tv.tv_sec-mainw->origsecs)+tv.tv_usec*U_SEC_RATIO-mainw->origusecs*U_SEC_RATIO;
           mainw->startticks=mainw->currticks+mainw->deltaticks;
         }

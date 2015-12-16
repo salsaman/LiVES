@@ -109,7 +109,13 @@ typedef cairo_fill_rule_t lives_painter_fill_rule_t;
 
 #include "support.h"
 
+#define USE_MONOTONIC_TIME
+#define lives_get_monotonic_time() g_get_monotonic_time()
 
+
+#if GTK_CHECK_VERSION(3,8,0)
+#define USE_GDK_FRAME_CLOCK
+#endif
 
 /// Glib type stuff //////////////////////////////////////////
 #ifndef G_ENCODE_VERSION

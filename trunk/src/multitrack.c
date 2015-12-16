@@ -11342,6 +11342,8 @@ boolean on_multitrack_activate(LiVESMenuItem *menuitem, weed_plant_t *event_list
 
   set_interactive(mainw->interactive);
 
+  lives_text_view_scroll_onscreen(LIVES_TEXT_VIEW(mainw->textview1));
+
   return TRUE;
 }
 

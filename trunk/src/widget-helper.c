@@ -8222,22 +8222,13 @@ boolean lives_text_view_scroll_onscreen(LiVESTextView *tview) {
 
 
 int get_box_child_index(LiVESBox *box, LiVESWidget *tchild) {
-  LiVESList *list=lives_container_get_children(LIVES_CONTAINER(box)), *olist=list;
-  LiVESWidget *child;
-  register int i=0;
-
-  for (i=0; list != NULL; i++) {
-    child=(LiVESWidget *)list->data;
-    if (child==tchild) {
-      lives_list_free(olist);
-      return i;
-    }
-    list = list->next;
+  LiVESList *list=lives_container_get_children(LIVES_CONTAINER(box));
+  int val=-1;
+  if (list!=NULL) {
+    val=lives_list_index(list,tchild);
+    lives_list_free(list);
   }
-
-  if (olist!=NULL) lives_list_free(olist);
-
-  return -1;
+  return val;
 }
 
 

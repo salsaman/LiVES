@@ -81,22 +81,22 @@
 /// blank label to show so our message dialogs are not too small
 #define PROCW_STRETCHER "                                                                                                                            "
 
-#define ENC_DETAILS_WIN_H ((int)(600.*widget_opts.scale)) ///< horizontal size in pixels of the encoder output window
-#define ENC_DETAILS_WIN_V ((int)(200.*widget_opts.scale)) ///< vertical size in pixels of the encoder output window
+#define ENC_DETAILS_WIN_H ((int)(640.*widget_opts.scale)) ///< horizontal size in pixels of the encoder output window
+#define ENC_DETAILS_WIN_V ((int)(240.*widget_opts.scale)) ///< vertical size in pixels of the encoder output window
 
 #define MIN_MSG_WIDTH_CHARS ((int)(40.*widget_opts.scale)) ///< min width of text on warning/error labels
 #define MAX_MSG_WIDTH_CHARS ((int)(100.*widget_opts.scale)) ///< max width of text on warning/error labels
 
 /// size of the fx dialog windows scrollwindow
-#define RFX_WINSIZE_H ((int)(mainw->scr_width>1024?(820.*widget_opts.scale):600))
+#define RFX_WINSIZE_H ((int)(mainw->scr_width>=1024?(820.*widget_opts.scale):640))
 #define RFX_WINSIZE_V ((int)(480.*widget_opts.scale))
 
 #define RFX_TEXT_SCROLL_HEIGHT ((int)(80.*widget_opts.scale)) ///< height of textview scrolled window
 
 #define DEF_BUTTON_WIDTH ((int)(80.*widget_opts.scale))
 
-#define DEF_DIALOG_WIDTH 640
-#define DEF_DIALOG_HEIGHT 480
+#define DEF_DIALOG_WIDTH RFX_WINSIZE_H
+#define DEF_DIALOG_HEIGHT RFX_WINSIZE_V
 
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////

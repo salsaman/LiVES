@@ -361,7 +361,7 @@ lives_clipinfo_t *create_clip_info_window(int audio_channels, boolean is_mt) {
   else
     title=lives_strdup(_("LiVES: - Multitrack details"));
 
-  filew->dialog = lives_standard_dialog_new(title,FALSE,DEF_DIALOG_WIDTH,DEF_DIALOG_HEIGHT);
+  filew->dialog = lives_standard_dialog_new(title,FALSE,-1,-1);
   lives_free(title);
 
   accel_group = LIVES_ACCEL_GROUP(lives_accel_group_new());
@@ -2576,7 +2576,7 @@ LiVESTextView *create_output_textview(void) {
     lives_widget_set_text_color(textview, LIVES_WIDGET_STATE_NORMAL, &palette->info_text);
   }
 
-  lives_object_ref_sink(textview);
+  //lives_object_ref_sink(textview);
   lives_object_ref(textview);
   return LIVES_TEXT_VIEW(textview);
 }

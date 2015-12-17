@@ -2894,7 +2894,10 @@ void mt_clip_select(lives_mt *mt, boolean scroll) {
                 *(mt->clip_selected+.5)/len;
       if (scroll) lives_adjustment_clamp_page(adj,value-lives_adjustment_get_page_size(adj)/2,
                                                 value+lives_adjustment_get_page_size(adj)/2);
-      lives_widget_set_state(clipbox,LIVES_WIDGET_STATE_PRELIGHT);
+
+      lives_widget_set_bg_color(clipbox,LIVES_WIDGET_STATE_NORMAL,&palette->menu_and_bars);
+      lives_widget_set_fg_color(clipbox,LIVES_WIDGET_STATE_NORMAL,&palette->menu_and_bars_fore);
+
       lives_widget_set_sensitive(mt->adjust_start_end, mainw->files[mt->file_selected]->frames>0);
       if (mt->current_track>-1) {
         lives_widget_set_sensitive(mt->insert, mainw->files[mt->file_selected]->frames>0);
@@ -2903,7 +2906,10 @@ void mt_clip_select(lives_mt *mt, boolean scroll) {
         lives_widget_set_sensitive(mt->audio_insert, mainw->files[mt->file_selected]->achans>0);
         lives_widget_set_sensitive(mt->insert, FALSE);
       }
-    } else lives_widget_set_state(clipbox,LIVES_WIDGET_STATE_NORMAL);
+    } else {
+      lives_widget_set_bg_color(clipbox,LIVES_WIDGET_STATE_NORMAL,&palette->normal_back);
+      lives_widget_set_fg_color(clipbox,LIVES_WIDGET_STATE_NORMAL,&palette->normal_fore);
+    }
   }
   lives_list_free(list);
 }
@@ -8305,7 +8311,7 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
   lives_box_pack_start(LIVES_BOX(mt->top_vbox), hseparator, FALSE, FALSE, 0);
 
   mt->hbox = lives_hbox_new(FALSE, 0);
-  lives_box_pack_start(LIVES_BOX(mt->top_vbox), mt->hbox, FALSE, FALSE, 0);
+  lives_box_pack_start(LIVES_BOX(mt->top_vbox), mt->hbox, TRUE, TRUE, widget_opts.border_width);
 
   mt->play_blank = lives_image_new_from_pixbuf(mainw->imframe);
   frame = lives_frame_new(_("Preview"));
@@ -10964,10 +10970,7 @@ void mt_init_clips(lives_mt *mt, int orig_file, boolean add) {
       thumbnail=make_thumb(mt,i,width,height,mainw->files[i]->start,TRUE);
 
       eventbox=lives_event_box_new();
-      if (palette->style&STYLE_1) {
-        lives_widget_set_bg_color(eventbox, LIVES_WIDGET_STATE_PRELIGHT, &palette->menu_and_bars);
-        lives_widget_set_fg_color(eventbox, LIVES_WIDGET_STATE_PRELIGHT, &palette->menu_and_bars_fore);
-      }
+
       lives_widget_add_events(eventbox, LIVES_BUTTON_RELEASE_MASK | LIVES_BUTTON_PRESS_MASK | LIVES_ENTER_NOTIFY_MASK);
       lives_signal_connect(LIVES_GUI_OBJECT(eventbox), LIVES_WIDGET_ENTER_EVENT,LIVES_GUI_CALLBACK(on_clipbox_enter),(livespointer)mt);
 
@@ -10989,8 +10992,6 @@ void mt_init_clips(lives_mt *mt, int orig_file, boolean add) {
       get_basename(filename);
       lives_snprintf(clip_name,CLIP_LABEL_LENGTH,"  %s  ",filename);
       label=lives_label_new(clip_name);
-      if (palette->style&STYLE_3) lives_widget_set_fg_color(label, LIVES_WIDGET_STATE_PRELIGHT, &palette->info_text);
-      if (palette->style&STYLE_4) lives_widget_set_fg_color(label, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
       lives_box_pack_start(LIVES_BOX(vbox), label, FALSE, FALSE, 0);
       lives_box_pack_start(LIVES_BOX(vbox), thumb_image, FALSE, FALSE, 0);
 
@@ -10998,35 +10999,25 @@ void mt_init_clips(lives_mt *mt, int orig_file, boolean add) {
         char *tmp;
         label=lives_label_new((tmp=lives_strdup_printf(_("%d frames"),mainw->files[i]->frames)));
         lives_free(tmp);
-        if (palette->style&STYLE_1) lives_widget_set_fg_color(label, LIVES_WIDGET_STATE_PRELIGHT, &palette->info_text);
-        if (palette->style&STYLE_4) lives_widget_set_fg_color(label, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
         lives_box_pack_start(LIVES_BOX(vbox), label, FALSE, FALSE, 0);
 
         label=lives_label_new("");
         mt->clip_labels=lives_list_append(mt->clip_labels,label);
 
-        if (palette->style&STYLE_1) lives_widget_set_fg_color(label, LIVES_WIDGET_STATE_PRELIGHT, &palette->info_text);
-        if (palette->style&STYLE_4) lives_widget_set_fg_color(label, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
         lives_box_pack_start(LIVES_BOX(vbox), label, FALSE, FALSE, 0);
 
         label=lives_label_new("");
         mt->clip_labels=lives_list_append(mt->clip_labels,label);
 
-        if (palette->style&STYLE_1) lives_widget_set_fg_color(label, LIVES_WIDGET_STATE_PRELIGHT, &palette->info_text);
-        if (palette->style&STYLE_4) lives_widget_set_fg_color(label, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
         lives_box_pack_start(LIVES_BOX(vbox), label, FALSE, FALSE, 0);
 
         set_clip_labels_variable(mt,i);
       } else {
         label=lives_label_new(lives_strdup(_("audio only")));
-        if (palette->style&STYLE_1) lives_widget_set_fg_color(label, LIVES_WIDGET_STATE_PRELIGHT, &palette->info_text);
-        if (palette->style&STYLE_4) lives_widget_set_fg_color(label, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
         lives_box_pack_start(LIVES_BOX(vbox), label, FALSE, FALSE, 0);
         mt->clip_labels=lives_list_append(mt->clip_labels,label);
 
         label=lives_label_new(lives_strdup_printf(_("%.2f sec."),mainw->files[i]->laudio_time));
-        if (palette->style&STYLE_1) lives_widget_set_fg_color(label, LIVES_WIDGET_STATE_PRELIGHT, &palette->info_text);
-        if (palette->style&STYLE_4) lives_widget_set_fg_color(label, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
         lives_box_pack_start(LIVES_BOX(vbox), label, FALSE, FALSE, 0);
         mt->clip_labels=lives_list_append(mt->clip_labels,label);
       }

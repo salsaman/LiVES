@@ -884,7 +884,7 @@ void on_fx_pre_activate(lives_rfx_t *rfx, int didx, LiVESWidget *pbox) {
     // rendered fx preview
 
     LiVESWidget *hbox = lives_hbox_new(FALSE, 0);
-    lives_box_pack_start(LIVES_BOX(top_dialog_vbox), hbox, FALSE, FALSE, 0);
+    lives_box_pack_start(LIVES_BOX(top_dialog_vbox), hbox, TRUE, TRUE, 0);
 
     lives_widget_set_hexpand(hbox,TRUE);
     lives_widget_set_vexpand(hbox,TRUE);
@@ -943,7 +943,7 @@ void on_fx_pre_activate(lives_rfx_t *rfx, int didx, LiVESWidget *pbox) {
       if (!has_param) lives_widget_set_sensitive(okbutton,FALSE);
       cancelbutton = lives_button_new_from_stock(LIVES_STOCK_CLOSE,_("_Close Window"));
 
-      if (no_process) {
+      if (rfx->status!=RFX_STATUS_WEED&&no_process) {
         lives_widget_set_size_request(cancelbutton, DEF_BUTTON_WIDTH*4, -1);
       }
       if (rfx->status==RFX_STATUS_WEED) {

@@ -1073,6 +1073,11 @@ static void omc_learner_add_row(int type, int detail, lives_omc_match_node_t *mn
 
   if (labelt!=NULL) lives_free(labelt);
 
+#if !GTK_CHECK_VERSION(3,0,0)
+  if (palette->style&STYLE_1) {
+    lives_widget_set_fg_color(label, LIVES_WIDGET_STATE_NORMAL, &palette->black);
+  }
+#endif
 
   omclw->tbl_currow++;
 
@@ -1181,7 +1186,9 @@ static void omc_learner_add_row(int type, int detail, lives_omc_match_node_t *mn
 
   lives_widget_show(mnode->treev1);
 
+#if LIVES_TABLE_IS_GRID
   lives_widget_set_size_request(mnode->treev1,-1,TREE_ROW_HEIGHT);
+#endif
 
   lives_table_attach(LIVES_TABLE(omclw->table), mnode->treev1, 1, 2, omclw->tbl_currow, omclw->tbl_currow+1,
                      (LiVESAttachOptions)(0),

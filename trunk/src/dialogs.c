@@ -1204,7 +1204,7 @@ boolean process_one(boolean visible) {
               else mainw->jackd->sample_in_rate=cfile->arate*cfile->freeze_fps/cfile->fps*audio_stretch;
             } else mainw->jackd->sample_in_rate=cfile->arate*audio_stretch;
           } else {
-            mainw->jackd->abufs[mainw->jackd->read_abuf]->arate=cfile->arate*audio_stretch;
+            if (mainw->jackd->read_abuf>-1) mainw->jackd->abufs[mainw->jackd->read_abuf]->arate=cfile->arate*audio_stretch;
           }
         }
       }
@@ -1230,7 +1230,7 @@ boolean process_one(boolean visible) {
               else mainw->pulsed->in_arate=cfile->arate*cfile->freeze_fps/cfile->fps*audio_stretch;
             } else mainw->pulsed->in_arate=cfile->arate*audio_stretch;
           } else {
-            mainw->pulsed->abufs[mainw->pulsed->read_abuf]->arate=cfile->arate*audio_stretch;
+            if (mainw->pulsed->read_abuf>-1) mainw->pulsed->abufs[mainw->pulsed->read_abuf]->arate=cfile->arate*audio_stretch;
           }
         }
       }

@@ -3727,11 +3727,7 @@ void set_ce_frame_from_pixbuf(LiVESImage *image, LiVESPixbuf *pixbuf, lives_pain
                             height);
 
   } else {
-    lives_painter_set_source_to_bg(cr,LIVES_WIDGET(image));
-
-    lives_painter_rectangle(cr,0,0,
-                            rwidth,
-                            rheight);
+    lives_painter_render_background(LIVES_WIDGET(image),cr,0,0,rwidth,rheight);
   }
   lives_painter_fill(cr);
   if (cairo==NULL) lives_painter_destroy(cr);

@@ -57,6 +57,8 @@ boolean lives_painter_fill(lives_painter_t *);
 boolean lives_painter_stroke(lives_painter_t *);
 boolean lives_painter_clip(lives_painter_t *);
 
+boolean lives_painter_render_background(LiVESWidget *, lives_painter_t *, double x, double y, double width, double height);
+
 boolean lives_painter_set_source_rgb(lives_painter_t *, double red, double green, double blue);
 boolean lives_painter_set_source_rgba(lives_painter_t *, double red, double green, double blue, double alpha);
 
@@ -220,7 +222,6 @@ boolean lives_widget_set_text_color(LiVESWidget *, LiVESWidgetState state, const
 boolean lives_widget_set_base_color(LiVESWidget *, LiVESWidgetState state, const LiVESWidgetColor *);
 
 boolean lives_widget_get_fg_state_color(LiVESWidget *, LiVESWidgetState state, LiVESWidgetColor *);
-boolean lives_widget_get_bg_state_color(LiVESWidget *, LiVESWidgetState state, LiVESWidgetColor *);
 
 boolean lives_color_parse(const char *spec, LiVESWidgetColor *);
 
@@ -706,8 +707,6 @@ boolean lives_window_set_auto_startup_notification(boolean set);
 
 // compound functions (composed of basic functions)
 
-void lives_painter_set_source_to_bg(lives_painter_t *, LiVESWidget *);
-
 LiVESWidget *lives_standard_label_new(const char *text);
 LiVESWidget *lives_standard_label_new_with_mnemonic(const char *text, LiVESWidget *mnemonic_widget);
 
@@ -749,7 +748,6 @@ boolean lives_widget_context_update(void);
 LiVESWidget *lives_menu_add_separator(LiVESMenu *menu);
 
 void lives_widget_get_fg_color(LiVESWidget *, LiVESWidgetColor *);
-void lives_widget_get_bg_color(LiVESWidget *, LiVESWidgetColor *);
 
 void lives_window_center(LiVESWindow *);
 

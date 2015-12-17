@@ -147,6 +147,42 @@ LIVES_INLINE boolean lives_painter_destroy(lives_painter_t *cr) {
   return FALSE;
 }
 
+
+
+
+
+
+LIVES_INLINE boolean lives_painter_render_background(LiVESWidget *widget, lives_painter_t *cr, double x, double y, double width,
+    double height) {
+#ifdef PAINTER_CAIRO
+#if GTK_CHECK_VERSION(3,0,0)
+  GtkStyleContext *ctx = gtk_widget_get_style_context(widget);
+  gtk_render_background(ctx,cr,x,y,width,height);
+#else
+  LiVESWidgetColor color;
+  lives_widget_color_copy(&color,&gtk_widget_get_style(widget)->bg[state]);
+
+#if LIVES_WIDGET_COLOR_HAS_ALPHA
+  lives_painter_set_source_rgba(cr,
+                                LIVES_WIDGET_COLOR_SCALE(color.red),
+                                LIVES_WIDGET_COLOR_SCALE(color.green),
+                                LIVES_WIDGET_COLOR_SCALE(color.blue),
+                                LIVES_WIDGET_COLOR_SCALE(color.alpha));
+#else
+  lives_painter_set_source_rgb(cr,
+                               LIVES_WIDGET_COLOR_SCALE(color.red),
+                               LIVES_WIDGET_COLOR_SCALE(color.green),
+                               LIVES_WIDGET_COLOR_SCALE(color.blue));
+#endif
+  lives_painter_rectangle(cr,x,y,width,height);
+  lives_painter_fill(cr);
+#endif
+  return TRUE;
+#endif
+  return FALSE;
+}
+
+
 LIVES_INLINE boolean lives_painter_surface_destroy(lives_painter_surface_t *surf) {
 #ifdef PAINTER_CAIRO
   cairo_surface_destroy(surf);
@@ -1068,22 +1104,6 @@ LIVES_INLINE boolean lives_widget_set_base_color(LiVESWidget *widget, LiVESWidge
   return FALSE;
 }
 
-
-LIVES_INLINE boolean lives_widget_get_bg_state_color(LiVESWidget *widget, LiVESWidgetState state, LiVESWidgetColor *color) {
-#ifdef GUI_GTK
-#if GTK_CHECK_VERSION(3,0,0)
-  gtk_style_context_get_background_color(gtk_widget_get_style_context(widget), state, color);
-#else
-  lives_widget_color_copy(color,&gtk_widget_get_style(widget)->bg[state]);
-#endif
-  return TRUE;
-#endif
-#ifdef GUI_QT
-  lives_widget_color_copy(color,widget->get_bg_color(state));
-  return TRUE;
-#endif
-  return FALSE;
-}
 
 
 LIVES_INLINE boolean lives_widget_get_fg_state_color(LiVESWidget *widget, LiVESWidgetState state, LiVESWidgetColor *color) {
@@ -7250,25 +7270,6 @@ static void set_label_state(LiVESWidget *widget, LiVESWidgetState state, livespo
 }
 
 
-void lives_painter_set_source_to_bg(lives_painter_t *cr, LiVESWidget *widget) {
-  LiVESWidgetColor color;
-  lives_widget_get_bg_color(widget, &color);
-
-#if LIVES_WIDGET_COLOR_HAS_ALPHA
-  lives_painter_set_source_rgba(cr,
-                                LIVES_WIDGET_COLOR_SCALE(color.red),
-                                LIVES_WIDGET_COLOR_SCALE(color.green),
-                                LIVES_WIDGET_COLOR_SCALE(color.blue),
-                                LIVES_WIDGET_COLOR_SCALE(color.alpha));
-#else
-  lives_painter_set_source_rgb(cr,
-                               LIVES_WIDGET_COLOR_SCALE(color.red),
-                               LIVES_WIDGET_COLOR_SCALE(color.green),
-                               LIVES_WIDGET_COLOR_SCALE(color.blue));
-#endif
-}
-
-
 
 void lives_tooltips_copy(LiVESWidget *dest, LiVESWidget *source) {
 #ifdef GUI_GTK
@@ -8058,14 +8059,18 @@ LIVES_INLINE void lives_cursor_unref(LiVESXCursor *cursor) {
 
 
 void lives_widget_apply_theme(LiVESWidget *widget, LiVESWidgetState state) {
-  lives_widget_set_fg_color(widget, state, &palette->normal_fore);
-  lives_widget_set_bg_color(widget, state, &palette->normal_back);
+  if (palette->style&STYLE_1) {
+    lives_widget_set_fg_color(widget, state, &palette->normal_fore);
+    lives_widget_set_bg_color(widget, state, &palette->normal_back);
+  }
 }
 
 
 void lives_widget_apply_theme2(LiVESWidget *widget, LiVESWidgetState state) {
-  //lives_widget_set_fg_color(widget, state, &palette->normal_fore);
-  lives_widget_set_bg_color(widget, state, &palette->menu_and_bars);
+  if (palette->style&STYLE_1) {
+    //lives_widget_set_fg_color(widget, state, &palette->normal_fore);
+    lives_widget_set_bg_color(widget, state, &palette->menu_and_bars);
+  }
 }
 
 
@@ -8123,10 +8128,6 @@ void lives_window_center(LiVESWindow *window) {
 }
 
 
-
-void lives_widget_get_bg_color(LiVESWidget *widget, LiVESWidgetColor *color) {
-  lives_widget_get_bg_state_color(widget,LIVES_WIDGET_STATE_NORMAL,color);
-}
 
 void lives_widget_get_fg_color(LiVESWidget *widget, LiVESWidgetColor *color) {
   lives_widget_get_fg_state_color(widget,LIVES_WIDGET_STATE_NORMAL,color);

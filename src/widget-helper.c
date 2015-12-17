@@ -1343,11 +1343,14 @@ LIVES_INLINE LiVESWidget *lives_dialog_get_content_area(LiVESDialog *dialog) {
 
 LIVES_INLINE LiVESWidget *lives_dialog_get_action_area(LiVESDialog *dialog) {
 #ifdef GUI_GTK
-
+#if  GTK_CHECK_VERSION(2,14,0)
+  return NULL;
+#else
 #if GTK_CHECK_VERSION(2,14,0)
   return gtk_dialog_get_action_area(LIVES_DIALOG(dialog));
 #else
   return LIVES_DIALOG(dialog)->vbox;
+#endif
 #endif
 #endif
 #ifdef GUI_QT

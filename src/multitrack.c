@@ -1007,8 +1007,6 @@ static void draw_block(lives_mt *mt, lives_painter_t *cairo,
   // x1 is start point of drawing area (in pixels), x2 is width of drawing area (in pixels)
   lives_painter_t *cr;
 
-  LiVESWidgetColor bgcolor;
-
   weed_plant_t *event=block->start_event;
 
   weed_timecode_t tc=get_event_timecode(event);
@@ -1060,8 +1058,6 @@ static void draw_block(lives_mt *mt, lives_painter_t *cairo,
   if (cr==NULL) return;
 
   lives_painter_set_line_width(cr,1.);
-
-  lives_widget_get_bg_color(mt->window,&bgcolor);
 
   track=LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(eventbox),"layer_number"));
   is_audio=is_audio_eventbox(eventbox);
@@ -1214,10 +1210,12 @@ static void draw_block(lives_mt *mt, lives_painter_t *cairo,
     break;
   case BLOCK_SELECTED:
     lives_painter_new_path(cr);
+
+    // TODO: render background
     lives_painter_set_source_rgba(cr,
-                                  LIVES_WIDGET_COLOR_SCALE(bgcolor.red),
-                                  LIVES_WIDGET_COLOR_SCALE(bgcolor.green),
-                                  LIVES_WIDGET_COLOR_SCALE(bgcolor.blue),
+                                  0.,
+                                  0.,
+                                  0.,
                                   0.6);
     lives_painter_rectangle(cr,offset_start, 0, offset_end-offset_start, lives_widget_get_allocation_height(eventbox));
     lives_painter_fill(cr);
@@ -2163,7 +2161,9 @@ void scroll_tracks(lives_mt *mt, int top_track, boolean set_value) {
   }
 
   mt->timeline_table = lives_table_new(mt->max_disp_vtracks, 40, TRUE);
-  lives_widget_set_bg_color(LIVES_WIDGET(mt->timeline_table), LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
+  if (palette->style&STYLE_1) {
+    lives_widget_set_bg_color(LIVES_WIDGET(mt->timeline_table), LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
+  }
 
   lives_container_add(LIVES_CONTAINER(mt->tl_eventbox), mt->timeline_table);
 
@@ -2895,8 +2895,10 @@ void mt_clip_select(lives_mt *mt, boolean scroll) {
       if (scroll) lives_adjustment_clamp_page(adj,value-lives_adjustment_get_page_size(adj)/2,
                                                 value+lives_adjustment_get_page_size(adj)/2);
 
-      lives_widget_set_bg_color(clipbox,LIVES_WIDGET_STATE_NORMAL,&palette->menu_and_bars);
-      lives_widget_set_fg_color(clipbox,LIVES_WIDGET_STATE_NORMAL,&palette->menu_and_bars_fore);
+      if (palette->style&STYLE_1) {
+        lives_widget_set_bg_color(clipbox,LIVES_WIDGET_STATE_NORMAL,&palette->menu_and_bars);
+        lives_widget_set_fg_color(clipbox,LIVES_WIDGET_STATE_NORMAL,&palette->menu_and_bars_fore);
+      }
 
       lives_widget_set_sensitive(mt->adjust_start_end, mainw->files[mt->file_selected]->frames>0);
       if (mt->current_track>-1) {
@@ -2907,8 +2909,10 @@ void mt_clip_select(lives_mt *mt, boolean scroll) {
         lives_widget_set_sensitive(mt->insert, FALSE);
       }
     } else {
-      lives_widget_set_bg_color(clipbox,LIVES_WIDGET_STATE_NORMAL,&palette->normal_back);
-      lives_widget_set_fg_color(clipbox,LIVES_WIDGET_STATE_NORMAL,&palette->normal_fore);
+      if (palette->style&STYLE_1) {
+        lives_widget_set_bg_color(clipbox,LIVES_WIDGET_STATE_NORMAL,&palette->normal_back);
+        lives_widget_set_fg_color(clipbox,LIVES_WIDGET_STATE_NORMAL,&palette->normal_fore);
+      }
     }
   }
   lives_list_free(list);
@@ -4517,7 +4521,7 @@ void mt_init_start_end_spins(lives_mt *mt) {
   lives_box_pack_start(LIVES_BOX(hbox), mt->l_sel_arrow, FALSE, FALSE, 0);
   lives_widget_set_fg_color(mt->l_sel_arrow, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
 
-  lives_entry_set_width_chars(LIVES_ENTRY(mt->spinbutton_start),12);
+  lives_entry_set_width_chars(LIVES_ENTRY(mt->spinbutton_start),SPBWIDTHCHARS);
   mt->sel_label = lives_standard_label_new(NULL);
 
   set_sel_label(mt->sel_label);
@@ -4535,7 +4539,7 @@ void mt_init_start_end_spins(lives_mt *mt) {
   widget_opts.apply_theme=woat;
   widget_opts.packing_width=dpw;
 
-  lives_entry_set_width_chars(LIVES_ENTRY(mt->spinbutton_end),12);
+  lives_entry_set_width_chars(LIVES_ENTRY(mt->spinbutton_end),SPBWIDTHCHARS);
 
   lives_box_pack_start(LIVES_BOX(hbox), mt->spinbutton_end, TRUE, FALSE, MAIN_SPIN_SPACER);
 
@@ -8077,7 +8081,6 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
 
   mt->tc_func=lives_signal_connect_after(LIVES_WIDGET_OBJECT(mt->timecode),LIVES_WIDGET_FOCUS_OUT_EVENT,
                                          LIVES_GUI_CALLBACK(after_timecode_changed), (livespointer) mt);
-
   lives_widget_set_bg_color(mt->timecode, LIVES_WIDGET_STATE_NORMAL, &palette->black);
   lives_widget_set_base_color(mt->timecode, LIVES_WIDGET_STATE_NORMAL, &palette->black);
   lives_widget_set_text_color(mt->timecode, LIVES_WIDGET_STATE_NORMAL, &palette->light_green);
@@ -8852,10 +8855,11 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
   polymorph(mt,POLY_CLIPS);
 
   mt->context_frame = lives_frame_new(_("Info"));
-  lives_widget_set_bg_color(mt->context_frame, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
-  lives_widget_set_fg_color(mt->context_frame, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
-  lives_widget_set_fg_color(lives_frame_get_label_widget(LIVES_FRAME(mt->context_frame)), LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
-
+  if (palette->style&STYLE_1) {
+    lives_widget_set_bg_color(mt->context_frame, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
+    lives_widget_set_fg_color(mt->context_frame, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
+    lives_widget_set_fg_color(lives_frame_get_label_widget(LIVES_FRAME(mt->context_frame)), LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
+  }
   lives_paned_pack(2, LIVES_PANED(mt->hpaned), mt->context_frame, TRUE, TRUE);
 
   mt->context_scroll=NULL;
@@ -9526,7 +9530,9 @@ boolean multitrack_delete(lives_mt *mt, boolean save_layout) {
     mainw->playarea = lives_hbox_new(FALSE,0);
 
     lives_container_add(LIVES_CONTAINER(mainw->pl_eventbox), mainw->playarea);
-    lives_widget_set_bg_color(mainw->playframe, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
+    if (palette->style&STYLE_1) {
+      lives_widget_set_bg_color(mainw->playframe, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
+    }
     lives_widget_show(mainw->playarea);
   }
 
@@ -12722,7 +12728,9 @@ void polymorph(lives_mt *mt, lives_mt_poly_state_t poly) {
     if (mt->mt_frame_preview) {
       // put blank back in preview window
       lives_object_ref(mainw->playarea);
-      lives_widget_set_bg_color(mt->fd_frame, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
+      if (palette->style&STYLE_1) {
+        lives_widget_set_bg_color(mt->fd_frame, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
+      }
     }
     if (pchain!=NULL&&poly!=POLY_PARAMS) {
       lives_free(pchain);
@@ -14490,6 +14498,8 @@ void mt_view_ctx_toggled(LiVESMenuItem *menuitem, livespointer user_data) {
 
   mt->play_window_width=lives_widget_get_allocation_width(mt->play_box);
   mt->play_window_height=lives_widget_get_allocation_height(mt->play_box);
+
+  redraw_all_event_boxes(mt);
 
   mt_show_current_frame(mt,FALSE);
 }
@@ -17113,8 +17123,9 @@ void mt_prepare_for_playback(lives_mt *mt) {
 
   if (mt->mt_frame_preview) {
     // put blank back in preview window
-    if (mt->framedraw!=NULL) lives_widget_set_bg_color(mt->fd_frame, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
-
+    if (palette->style&STYLE_1) {
+      if (mt->framedraw!=NULL) lives_widget_set_bg_color(mt->fd_frame, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
+    }
   } else {
     lives_object_ref(mt->play_blank);
     lives_container_remove(LIVES_CONTAINER(mt->play_box),mt->play_blank);

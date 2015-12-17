@@ -46,6 +46,9 @@
 #define CE_FRAME_HSPACE ((int)(420.*widget_opts.scale))
 #endif
 
+/// char width of start / end spinbuttons
+#define SPBWIDTHCHARS 12
+
 #define MIN_SEPWIN_WIDTH 600
 #define MIN_SEPWIN_HEIGHT 36
 

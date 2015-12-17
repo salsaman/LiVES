@@ -318,8 +318,11 @@ void create_LiVES(void) {
     }
 #endif
 #endif
+
+    /*
     lives_widget_get_bg_color(mainw->LiVES,&normal);
     lives_widget_color_copy((LiVESWidgetColor *)(&palette->normal_back),&normal);
+    */
 
     lives_widget_get_fg_color(mainw->LiVES,&normal);
     lives_widget_color_copy((LiVESWidgetColor *)(&palette->normal_fore),&normal);
@@ -980,11 +983,14 @@ void create_LiVES(void) {
 
 
   mainw->fade = lives_check_menu_item_new_with_mnemonic(_("_Blank Background"));
-  lives_widget_add_accelerator(mainw->fade, LIVES_WIDGET_ACTIVATE_SIGNAL, mainw->accel_group,
-                               LIVES_KEY_b, (LiVESXModifierType)0,
-                               LIVES_ACCEL_VISIBLE);
-  lives_widget_show(mainw->fade);
-  lives_container_add(LIVES_CONTAINER(menuitem_menu), mainw->fade);
+  if (palette->style!=STYLE_PLAIN) {
+    lives_widget_add_accelerator(mainw->fade, LIVES_WIDGET_ACTIVATE_SIGNAL, mainw->accel_group,
+                                 LIVES_KEY_b, (LiVESXModifierType)0,
+                                 LIVES_ACCEL_VISIBLE);
+    lives_widget_show(mainw->fade);
+
+    lives_container_add(LIVES_CONTAINER(menuitem_menu), mainw->fade);
+  }
 
   mainw->loop_video = lives_check_menu_item_new_with_mnemonic(_("(Auto)_loop Video (to fit audio track)"));
   lives_widget_show(mainw->loop_video);
@@ -1988,7 +1994,9 @@ void create_LiVES(void) {
   lives_widget_set_tooltip_text(mainw->t_hide,_("Hide this toolbar"));
 
   t_label=lives_label_new(_("Press \"s\" to toggle separate play window for improved performance, \"q\" to stop."));
-  lives_widget_set_fg_color(t_label, LIVES_WIDGET_STATE_NORMAL, &palette->white);
+  if (palette->style&STYLE_1) {
+    lives_widget_set_fg_color(t_label, LIVES_WIDGET_STATE_NORMAL, &palette->white);
+  }
   lives_box_pack_start(LIVES_BOX(mainw->tb_hbox), t_label, FALSE, FALSE, 0);
 
   lives_widget_show_all(mainw->tb_hbox);
@@ -2145,7 +2153,9 @@ void create_LiVES(void) {
   lives_frame_set_label_widget(LIVES_FRAME(mainw->playframe), pf_label);
 
   mainw->pl_eventbox = lives_event_box_new();
-  lives_widget_set_bg_color(mainw->pl_eventbox, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
+  if (palette->style&STYLE_1) {
+    lives_widget_set_bg_color(mainw->pl_eventbox, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
+  }
   lives_container_add(LIVES_CONTAINER(mainw->playframe), mainw->pl_eventbox);
   lives_widget_show(mainw->pl_eventbox);
 
@@ -2157,7 +2167,9 @@ void create_LiVES(void) {
 
   mainw->eventbox4 = lives_event_box_new();
   lives_box_pack_start(LIVES_BOX(hbox1), mainw->eventbox4, TRUE, FALSE, 0);
-  lives_widget_set_bg_color(mainw->eventbox4, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
+  if (palette->style&STYLE_1) {
+    lives_widget_set_bg_color(mainw->eventbox4, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
+  }
   lives_widget_set_vexpand(mainw->eventbox4,FALSE);
   lives_widget_set_hexpand(mainw->eventbox4,FALSE);
   lives_widget_show(mainw->eventbox4);
@@ -2252,7 +2264,7 @@ void create_LiVES(void) {
     lives_widget_set_fg_color(mainw->arrow1, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
   }
 
-  lives_entry_set_width_chars(LIVES_ENTRY(mainw->spinbutton_start),12);
+  lives_entry_set_width_chars(LIVES_ENTRY(mainw->spinbutton_start),SPBWIDTHCHARS);
   mainw->sel_label = lives_standard_label_new(NULL);
 
   if (palette->style&STYLE_1) {
@@ -2283,11 +2295,11 @@ void create_LiVES(void) {
   lives_widget_show(mainw->spinbutton_end);
 
 
-  lives_entry_set_width_chars(LIVES_ENTRY(mainw->spinbutton_end),12);
+  lives_entry_set_width_chars(LIVES_ENTRY(mainw->spinbutton_end),SPBWIDTHCHARS);
 
   if (palette->style&STYLE_1&&palette->style&STYLE_2) {
-#if !GTK_CHECK_VERSION(3,0,0)
     // background colour seems to be broken in gtk+3 !!!
+#if !GTK_CHECK_VERSION(3,0,0)
     lives_widget_set_base_color(mainw->spinbutton_start, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
     lives_widget_set_base_color(mainw->spinbutton_start, LIVES_WIDGET_STATE_INSENSITIVE, &palette->normal_back);
     lives_widget_set_base_color(mainw->spinbutton_end, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
@@ -3358,9 +3370,11 @@ void fade_background(void) {
       lives_widget_remove_accelerator(mainw->dsize, mainw->accel_group, LIVES_KEY_d, (LiVESXModifierType)0);
       lives_accel_group_connect(LIVES_ACCEL_GROUP(mainw->accel_group), LIVES_KEY_d, (LiVESXModifierType)0, (LiVESAccelFlags)0,
                                 (dblsize_closure=lives_cclosure_new(LIVES_GUI_CALLBACK(dblsize_callback),NULL,NULL)));
-      lives_widget_remove_accelerator(mainw->fade, mainw->accel_group, LIVES_KEY_b, (LiVESXModifierType)0);
-      lives_accel_group_connect(LIVES_ACCEL_GROUP(mainw->accel_group), LIVES_KEY_b, (LiVESXModifierType)0, (LiVESAccelFlags)0,
-                                (fade_closure=lives_cclosure_new(LIVES_GUI_CALLBACK(fade_callback),NULL,NULL)));
+      if (palette->style!=STYLE_PLAIN) {
+        lives_widget_remove_accelerator(mainw->fade, mainw->accel_group, LIVES_KEY_b, (LiVESXModifierType)0);
+        lives_accel_group_connect(LIVES_ACCEL_GROUP(mainw->accel_group), LIVES_KEY_b, (LiVESXModifierType)0, (LiVESAccelFlags)0,
+                                  (fade_closure=lives_cclosure_new(LIVES_GUI_CALLBACK(fade_callback),NULL,NULL)));
+      }
     }
   }
 
@@ -3382,10 +3396,12 @@ void unfade_background(void) {
   } else {
     lives_label_set_text(LIVES_LABEL(mainw->banner),"                                                ");
   }
-  lives_widget_set_fg_color(mainw->banner, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
-  lives_widget_set_bg_color(mainw->eventbox, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
-  lives_widget_set_bg_color(mainw->vbox1, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
-  lives_widget_set_bg_color(mainw->eventbox3, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
+  if (palette->style&STYLE_1) {
+    lives_widget_set_fg_color(mainw->banner, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
+    lives_widget_set_bg_color(mainw->eventbox, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
+    lives_widget_set_bg_color(mainw->vbox1, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
+    lives_widget_set_bg_color(mainw->eventbox3, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
+  }
   lives_frame_set_label(LIVES_FRAME(mainw->frame1), _("First Frame"));
   if (!mainw->preview) {
     lives_frame_set_label(LIVES_FRAME(mainw->playframe),_("Play"));
@@ -3394,37 +3410,40 @@ void unfade_background(void) {
   }
 
   lives_frame_set_label(LIVES_FRAME(mainw->frame2), _("Last Frame"));
-  lives_widget_set_fg_color(mainw->curf_label, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
-  lives_widget_set_fg_color(mainw->vps_label, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
-  lives_widget_set_bg_color(mainw->LiVES, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
+  if (palette->style&STYLE_1) {
+    lives_widget_set_fg_color(mainw->curf_label, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
+    lives_widget_set_fg_color(mainw->vps_label, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
+    lives_widget_set_bg_color(mainw->LiVES, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
 
-  lives_widget_set_bg_color(mainw->pl_eventbox, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
+    lives_widget_set_bg_color(mainw->pl_eventbox, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
+  }
 
   if (palette->style&STYLE_1) {
     lives_widget_set_fg_color(lives_frame_get_label_widget(LIVES_FRAME(mainw->playframe)), LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
     lives_widget_set_fg_color(lives_frame_get_label_widget(LIVES_FRAME(mainw->frame1)), LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
     lives_widget_set_fg_color(lives_frame_get_label_widget(LIVES_FRAME(mainw->frame2)), LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
+
+
+    lives_widget_set_fg_color(mainw->curf_label, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
+    lives_widget_set_fg_color(mainw->vps_label, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
+    lives_widget_set_bg_color(mainw->vbox1, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
+    lives_widget_set_bg_color(mainw->LiVES, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
+    lives_widget_set_bg_color(mainw->eventbox3, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
+    lives_widget_set_bg_color(lives_widget_get_parent(mainw->message_box), LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
+
+    lives_widget_set_bg_color(mainw->eventbox4, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
+    lives_widget_set_bg_color(mainw->eventbox, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
+    lives_widget_set_bg_color(mainw->pl_eventbox, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
+    lives_widget_set_bg_color(mainw->play_image, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
+
+    lives_widget_set_bg_color(mainw->frame1, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
+    lives_widget_set_bg_color(mainw->frame2, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
+    lives_widget_set_bg_color(mainw->freventbox0, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
+    lives_widget_set_bg_color(mainw->freventbox1, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
+    lives_widget_set_bg_color(mainw->play_image, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
+
+    lives_widget_set_bg_color(mainw->playframe, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
   }
-
-  lives_widget_set_fg_color(mainw->curf_label, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
-  lives_widget_set_fg_color(mainw->vps_label, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
-  lives_widget_set_bg_color(mainw->vbox1, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
-  lives_widget_set_bg_color(mainw->LiVES, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
-  lives_widget_set_bg_color(mainw->eventbox3, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
-  lives_widget_set_bg_color(lives_widget_get_parent(mainw->message_box), LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
-
-  lives_widget_set_bg_color(mainw->eventbox4, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
-  lives_widget_set_bg_color(mainw->eventbox, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
-  lives_widget_set_bg_color(mainw->pl_eventbox, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
-  lives_widget_set_bg_color(mainw->play_image, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
-
-  lives_widget_set_bg_color(mainw->frame1, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
-  lives_widget_set_bg_color(mainw->frame2, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
-  lives_widget_set_bg_color(mainw->freventbox0, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
-  lives_widget_set_bg_color(mainw->freventbox1, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
-  lives_widget_set_bg_color(mainw->play_image, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
-
-  lives_widget_set_bg_color(mainw->playframe, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
   lives_widget_show(mainw->menu_hbox);
   lives_widget_hide(mainw->tb_hbox);
   lives_widget_show(mainw->hseparator);
@@ -3514,11 +3533,12 @@ void unfade_background(void) {
                                  LIVES_KEY_d, (LiVESXModifierType)0,
                                  LIVES_ACCEL_VISIBLE);
 
-    lives_accel_group_disconnect(LIVES_ACCEL_GROUP(mainw->accel_group), fade_closure);
-    lives_widget_add_accelerator(mainw->fade, LIVES_WIDGET_ACTIVATE_SIGNAL, mainw->accel_group,
-                                 LIVES_KEY_b, (LiVESXModifierType)0,
-                                 LIVES_ACCEL_VISIBLE);
-
+    if (palette->style!=STYLE_PLAIN) {
+      lives_accel_group_disconnect(LIVES_ACCEL_GROUP(mainw->accel_group), fade_closure);
+      lives_widget_add_accelerator(mainw->fade, LIVES_WIDGET_ACTIVATE_SIGNAL, mainw->accel_group,
+                                   LIVES_KEY_b, (LiVESXModifierType)0,
+                                   LIVES_ACCEL_VISIBLE);
+    }
     stop_closure=NULL;
 
   }
@@ -4413,7 +4433,9 @@ void add_to_playframe(void) {
     if (!mainw->foreign&&(!mainw->sep_win||prefs->sepwin_type==SEPWIN_TYPE_NON_STICKY)) {
       mainw->plug = lives_hbox_new(FALSE,0);
       lives_container_add(LIVES_CONTAINER(mainw->playarea),mainw->plug);
-      lives_widget_set_bg_color(mainw->plug, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
+      if (palette->style&STYLE_1) {
+        lives_widget_set_bg_color(mainw->plug, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
+      }
       lives_widget_show(mainw->plug);
       lives_container_add(LIVES_CONTAINER(mainw->plug), mainw->play_image);
     }

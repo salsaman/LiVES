@@ -8930,11 +8930,9 @@ boolean expose_vid_event(LiVESWidget *widget, LiVESXEventExpose *event) {
   if (mainw->current_file==-1) {
     lives_painter_t *cr2=lives_painter_create(mainw->video_drawable);
 
-    lives_painter_set_source_to_bg(cr2,mainw->video_draw);
-    lives_painter_rectangle(cr2,0,0,
-                            lives_widget_get_allocation_width(mainw->video_draw),
-                            lives_widget_get_allocation_height(mainw->video_draw));
-    lives_painter_fill(cr2);
+    lives_painter_render_background(mainw->video_draw,cr2,0,0,
+                                    lives_widget_get_allocation_width(mainw->video_draw),
+                                    lives_widget_get_allocation_height(mainw->video_draw));
     lives_painter_destroy(cr2);
   }
 
@@ -8982,11 +8980,10 @@ static void redraw_laudio(lives_painter_t *cr, int ex, int ey, int ew, int eh) {
 
   if (mainw->current_file==-1) {
     lives_painter_t *cr2=lives_painter_create(mainw->laudio_drawable);
-    lives_painter_set_source_to_bg(cr2,mainw->laudio_draw);
-    lives_painter_rectangle(cr2,0,0,
-                            lives_widget_get_allocation_width(mainw->laudio_draw),
-                            lives_widget_get_allocation_height(mainw->laudio_draw));
-    lives_painter_fill(cr2);
+
+    lives_painter_render_background(mainw->laudio_draw,cr2,0,0,
+                                    lives_widget_get_allocation_width(mainw->video_draw),
+                                    lives_widget_get_allocation_height(mainw->video_draw));
     lives_painter_destroy(cr2);
   }
 
@@ -9026,15 +9023,11 @@ static void redraw_raudio(lives_painter_t *cr, int ex, int ey, int ew, int eh) {
     unblock_expose();
   }
 
-  // TODO - ***
   if (mainw->current_file==-1) {
     lives_painter_t *cr2=lives_painter_create(mainw->raudio_drawable);
-    lives_painter_set_source_to_bg(cr2,mainw->raudio_draw);
-
-    lives_painter_rectangle(cr2,0,0,
-                            lives_widget_get_allocation_width(mainw->raudio_draw),
-                            lives_widget_get_allocation_height(mainw->raudio_draw));
-    lives_painter_fill(cr2);
+    lives_painter_render_background(mainw->raudio_draw,cr2,0,0,
+                                    lives_widget_get_allocation_width(mainw->video_draw),
+                                    lives_widget_get_allocation_height(mainw->video_draw));
     lives_painter_destroy(cr2);
 
   }

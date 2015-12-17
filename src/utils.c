@@ -2698,36 +2698,33 @@ void get_play_times(void) {
 
   if (mainw->laudio_drawable!=NULL) {
     lives_painter_t *cr=lives_painter_create(mainw->laudio_drawable);
-    lives_painter_set_source_to_bg(cr,mainw->laudio_draw);
 
-    lives_painter_rectangle(cr,0,0,
-                            allocwidth,
-                            allocheight);
-    lives_painter_fill(cr);
+    lives_painter_render_background(mainw->laudio_draw,cr,0,0,
+                                    allocwidth,
+                                    allocheight);
+
     lives_painter_destroy(cr);
 
   }
 
   if (mainw->raudio_drawable!=NULL) {
     lives_painter_t *cr=lives_painter_create(mainw->raudio_drawable);
-    lives_painter_set_source_to_bg(cr,mainw->raudio_draw);
 
-    lives_painter_rectangle(cr,0,0,
-                            allocwidth,
-                            allocheight);
-    lives_painter_fill(cr);
+    lives_painter_render_background(mainw->raudio_draw,cr,0,0,
+                                    allocwidth,
+                                    allocheight);
+
     lives_painter_destroy(cr);
 
   }
 
   if (mainw->video_drawable!=NULL) {
     lives_painter_t *cr=lives_painter_create(mainw->video_drawable);
-    lives_painter_set_source_to_bg(cr,mainw->video_draw);
 
-    lives_painter_rectangle(cr,0,0,
-                            allocwidth,
-                            allocheight);
-    lives_painter_fill(cr);
+    lives_painter_render_background(mainw->video_draw,cr,0,0,
+                                    allocwidth,
+                                    allocheight);
+
     lives_painter_destroy(cr);
 
   }

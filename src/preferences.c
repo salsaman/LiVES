@@ -2406,54 +2406,21 @@ _prefsw *create_prefs_dialog(void) {
   lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_render_prompt), !prefs->render_prompt);
 
 
-  // ---
-  frame = lives_frame_new(NULL);
+
+
+  frame=add_video_options(&prefsw->spinbutton_mt_def_width,prefs->mt_def_width,&prefsw->spinbutton_mt_def_height,
+                          prefs->mt_def_height,&prefsw->spinbutton_mt_def_fps,prefs->mt_def_fps,FALSE);
+
+
   lives_box_pack_start(LIVES_BOX(prefsw->vbox_right_multitrack), frame, FALSE, FALSE, widget_opts.packing_height);
-  vbox = lives_vbox_new(FALSE, 0);
-  lives_container_add(LIVES_CONTAINER(frame), vbox);
-
-  label = lives_standard_label_new(_("Video"));
-
-  if (palette->style&STYLE_1) {
-    lives_widget_set_bg_color(frame, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
-  }
-  lives_frame_set_label_widget(LIVES_FRAME(frame), label);
-
-
-  // ---
-  hbox = lives_hbox_new(FALSE, 0);
-  lives_box_pack_start(LIVES_BOX(vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
-
-  // ---
-  prefsw->spinbutton_mt_def_width = lives_standard_spin_button_new(_("_Width           "),
-                                    TRUE, prefs->mt_def_width, 0., 8192., 4., 16., 0,
-                                    LIVES_BOX(hbox),NULL);
-
-
-  prefsw->spinbutton_mt_def_height = lives_standard_spin_button_new(_("          _Height      "),
-                                     TRUE, prefs->mt_def_height, 0., 8192., 4., 16., 0,
-                                     LIVES_BOX(hbox),NULL);
-
-  prefsw->spinbutton_mt_def_fps = lives_standard_spin_button_new(_("          _FPS"),
-                                  TRUE, prefs->mt_def_fps, 1., FPS_MAX, .1, 1., 3,
-                                  LIVES_BOX(hbox),NULL);
 
 
 
-  hbox = lives_hbox_new(FALSE, 0);
+  hbox=add_audio_options(&prefsw->backaudio_checkbutton,&prefsw->pertrack_checkbutton);
 
-  prefsw->backaudio_checkbutton = lives_standard_check_button_new(_("Enable backing audio track"),FALSE,LIVES_BOX(hbox),NULL);
 
   lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(prefsw->backaudio_checkbutton), prefs->mt_backaudio>0);
-
-  add_fill_to_box(LIVES_BOX(hbox));
-  // ---
-
-  prefsw->pertrack_checkbutton = lives_standard_check_button_new(_("Audio track per video track"),FALSE,LIVES_BOX(hbox),NULL);
-
   lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(prefsw->pertrack_checkbutton), prefs->mt_pertrack_audio);
-
-
 
 
   // must be done after creating check buttons

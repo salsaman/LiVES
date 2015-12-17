@@ -5150,6 +5150,79 @@ void rdetw_spinf_changed(LiVESSpinButton *spinbutton, livespointer user_data) {
 
 
 
+
+
+LiVESWidget *add_video_options(LiVESWidget **spwidth, int defwidth, LiVESWidget **spheight, int defheight,
+                               LiVESWidget **spfps, double deffps, boolean add_aspect) {
+  static lives_param_t aspect_width,aspect_height;
+
+  LiVESWidget *vbox,*hbox,*label;
+
+  LiVESWidget *frame = lives_frame_new(NULL);
+
+  lives_container_set_border_width(LIVES_CONTAINER(frame), widget_opts.border_width);
+
+  vbox = lives_vbox_new(FALSE, 0);
+  lives_container_add(LIVES_CONTAINER(frame), vbox);
+
+  if (palette->style&STYLE_1) {
+    lives_widget_set_bg_color(frame, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
+  }
+
+  label = lives_standard_label_new(_("Video"));
+  lives_frame_set_label_widget(LIVES_FRAME(frame), label);
+
+  hbox = lives_hbox_new(FALSE, widget_opts.packing_width*5);
+  lives_box_pack_start(LIVES_BOX(vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
+
+  *spwidth = lives_standard_spin_button_new
+             (_("_Width"),TRUE,defwidth,4.,MAX_FRAME_WIDTH,4.,16.,0,LIVES_BOX(hbox),NULL);
+
+  *spheight = lives_standard_spin_button_new
+              (_("_Height"),TRUE,defheight,4.,MAX_FRAME_WIDTH,4.,16.,0,LIVES_BOX(hbox),NULL);
+
+
+  // add aspect button ?
+  if (add_aspect) {
+    // add "aspectratio" widget
+    init_special();
+
+    aspect_width.widgets[0]=rdet->spinbutton_width;
+    aspect_height.widgets[0]=rdet->spinbutton_height;
+
+    set_aspect_ratio_widgets(&aspect_width,&aspect_height);
+    check_for_special(NULL,&aspect_width,LIVES_BOX(vbox));
+    check_for_special(NULL,&aspect_height,LIVES_BOX(vbox));
+  }
+
+  hbox = lives_hbox_new(FALSE, 0);
+  lives_box_pack_start(LIVES_BOX(vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
+
+  *spfps = lives_standard_spin_button_new
+           (_("_Frames per second"),TRUE,deffps,1.,FPS_MAX,1.,10.,0,LIVES_BOX(hbox),NULL);
+
+  return frame;
+}
+
+
+
+LiVESWidget *add_audio_options(LiVESWidget **cbbackaudio, LiVESWidget **cbpertrack) {
+  LiVESWidget *hbox = lives_hbox_new(FALSE, 0);
+
+  *cbbackaudio = lives_standard_check_button_new(_("Enable _backing audio track"),TRUE,LIVES_BOX(hbox),NULL);
+
+  add_fill_to_box(LIVES_BOX(hbox));
+
+  *cbpertrack = lives_standard_check_button_new(_("Audio track _per video track"),TRUE,LIVES_BOX(hbox),NULL);
+
+  return hbox;
+}
+
+
+
+
+
+
 render_details *create_render_details(int type) {
 
   // type == 1 :: pre-save (specified)
@@ -5157,14 +5230,11 @@ render_details *create_render_details(int type) {
   // type == 3 :: enter multitrack (!specified)
   // type == 4 :: change during multitrack (!specified)
 
-  static lives_param_t aspect_width,aspect_height;
-
   LiVESWidget *label;
   LiVESWidget *top_vbox;
   LiVESWidget *dialog_vbox;
   LiVESWidget *scrollw;
   LiVESWidget *hbox;
-  LiVESWidget *vbox;
   LiVESWidget *frame;
   LiVESWidget *cancelbutton;
   LiVESWidget *alabel;
@@ -5281,62 +5351,25 @@ render_details *create_render_details(int type) {
     lives_box_pack_start(LIVES_BOX(top_vbox), rdet->always_hbox, TRUE, TRUE, 0);
   }
 
-  frame = lives_frame_new(NULL);
-
+  frame=add_video_options(&rdet->spinbutton_width,rdet->width,&rdet->spinbutton_height,rdet->height,&rdet->spinbutton_fps,rdet->fps,type==1);
   if (type!=1) lives_box_pack_start(LIVES_BOX(top_vbox), frame, TRUE, TRUE, 0);
-  vbox = lives_vbox_new(FALSE, 0);
-  lives_container_add(LIVES_CONTAINER(frame), vbox);
-
-  if (palette->style&STYLE_1) {
-    lives_widget_set_bg_color(frame, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
-  }
-
-  label = lives_standard_label_new(_("Video"));
-  lives_frame_set_label_widget(LIVES_FRAME(frame), label);
-
-  hbox = lives_hbox_new(FALSE, widget_opts.packing_width*5);
-  lives_box_pack_start(LIVES_BOX(vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
-
-  rdet->spinbutton_width = lives_standard_spin_button_new
-                           (_("_Width"),TRUE,rdet->width,2.,MAX_FRAME_WIDTH,1.,16.,0,LIVES_BOX(hbox),NULL);
 
   lives_signal_connect_after(LIVES_GUI_OBJECT(rdet->spinbutton_width), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
                              LIVES_GUI_CALLBACK(rdetw_spinw_changed),
                              rdet);
 
-
-  rdet->spinbutton_height = lives_standard_spin_button_new
-                            (_("_Height"),TRUE,rdet->height,2.,MAX_FRAME_WIDTH,1.,16.,0,LIVES_BOX(hbox),NULL);
-
   lives_signal_connect_after(LIVES_GUI_OBJECT(rdet->spinbutton_height), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
                              LIVES_GUI_CALLBACK(rdetw_spinh_changed),
                              rdet);
-
-  // add aspect button
-  if (type==1) {
-    // add "aspectratio" widget
-    init_special();
-
-    aspect_width.widgets[0]=rdet->spinbutton_width;
-    aspect_height.widgets[0]=rdet->spinbutton_height;
-
-    set_aspect_ratio_widgets(&aspect_width,&aspect_height);
-    check_for_special(NULL,&aspect_width,LIVES_BOX(vbox));
-    check_for_special(NULL,&aspect_height,LIVES_BOX(vbox));
-  }
-
-
-  hbox = lives_hbox_new(FALSE, 0);
-  lives_box_pack_start(LIVES_BOX(vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
-
-  rdet->spinbutton_fps = lives_standard_spin_button_new
-                         (_("_Frames per second"),TRUE,rdet->fps,1.,FPS_MAX,1.,10.,0,LIVES_BOX(hbox),NULL);
 
   if (type==4&&mainw->multitrack->event_list!=NULL) lives_widget_set_sensitive(rdet->spinbutton_fps,FALSE);
 
   lives_signal_connect_after(LIVES_GUI_OBJECT(rdet->spinbutton_fps), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
                              LIVES_GUI_CALLBACK(rdetw_spinf_changed),
                              rdet);
+
+
+
 
   // TODO
   rdet->pertrack_checkbutton = lives_check_button_new();
@@ -5352,26 +5385,23 @@ render_details *create_render_details(int type) {
 
     lives_box_pack_start(LIVES_BOX(top_vbox), label, FALSE, FALSE, widget_opts.packing_height);
 
-    hbox = lives_hbox_new(FALSE, 0);
+
+    hbox=add_audio_options(&rdet->backaudio_checkbutton,&rdet->pertrack_checkbutton);
+
     lives_box_pack_start(LIVES_BOX(top_vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
-
-    rdet->backaudio_checkbutton=lives_standard_check_button_new
-                                (_("Enable _backing audio track"),TRUE,LIVES_BOX(hbox),NULL);
-
-    add_fill_to_box(LIVES_BOX(hbox));
 
     lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(rdet->backaudio_checkbutton), prefs->mt_backaudio>0);
 
     lives_widget_set_sensitive(rdet->backaudio_checkbutton,
                                lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(resaudw->aud_checkbutton)));
 
-    rdet->pertrack_checkbutton=lives_standard_check_button_new
-                               (_("Audio track _per video track"),TRUE,LIVES_BOX(hbox),NULL);
-
     lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(rdet->pertrack_checkbutton), prefs->mt_pertrack_audio);
 
     lives_widget_set_sensitive(rdet->pertrack_checkbutton,
                                lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(resaudw->aud_checkbutton)));
+
+
+
 
   }
 

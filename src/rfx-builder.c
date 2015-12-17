@@ -547,6 +547,7 @@ void on_list_table_clicked(LiVESButton *button, livespointer user_data) {
   }
 
   dialog = lives_standard_dialog_new(title,FALSE,RFX_WINSIZE_H*5/6,RFX_WINSIZE_V/4);
+  lives_widget_set_size_request(dialog,DEF_DIALOG_WIDTH,DEF_DIALOG_HEIGHT);
   if (title!=NULL) lives_free(title);
 
   lives_window_add_accel_group(LIVES_WINDOW(dialog), accel_group);
@@ -591,7 +592,7 @@ void on_list_table_clicked(LiVESButton *button, livespointer user_data) {
 
   hbox = lives_hbox_new(FALSE,0);
 
-  lives_box_pack_start(LIVES_BOX(dialog_vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
+  lives_box_pack_start(LIVES_BOX(dialog_vbox), hbox, TRUE, TRUE, widget_opts.packing_height);
 
   scrolledwindow = lives_standard_scrolled_window_new(RFX_WINSIZE_H,RFX_WINSIZE_V/4,rfxbuilder->table);
 
@@ -602,24 +603,30 @@ void on_list_table_clicked(LiVESButton *button, livespointer user_data) {
   // button box on right
 
   button_box=lives_vbutton_box_new();
+  lives_button_box_set_layout(LIVES_BUTTON_BOX(button_box), LIVES_BUTTONBOX_START);
+
   lives_box_pack_start(LIVES_BOX(hbox), button_box, FALSE, FALSE, 0);
 
   rfxbuilder->new_entry_button=lives_button_new_with_mnemonic(_("_New Entry"));
-  lives_box_pack_start(LIVES_BOX(button_box), rfxbuilder->new_entry_button, FALSE, FALSE, 0);
+  lives_box_pack_start(LIVES_BOX(button_box), rfxbuilder->new_entry_button, FALSE, FALSE, widget_opts.packing_height);
+  lives_container_set_border_width(LIVES_CONTAINER(rfxbuilder->new_entry_button), widget_opts.border_width);
 
   rfxbuilder->edit_entry_button=lives_button_new_with_mnemonic(_("_Edit Entry"));
-  lives_box_pack_start(LIVES_BOX(button_box), rfxbuilder->edit_entry_button, FALSE, FALSE, 0);
+  lives_box_pack_start(LIVES_BOX(button_box), rfxbuilder->edit_entry_button, FALSE, FALSE, widget_opts.packing_height);
+  lives_container_set_border_width(LIVES_CONTAINER(rfxbuilder->edit_entry_button), widget_opts.border_width);
 
   rfxbuilder->remove_entry_button=lives_button_new_with_mnemonic(_("_Remove Entry"));
-  lives_box_pack_start(LIVES_BOX(button_box), rfxbuilder->remove_entry_button, FALSE, FALSE, 0);
+  lives_box_pack_start(LIVES_BOX(button_box), rfxbuilder->remove_entry_button, FALSE, FALSE, widget_opts.packing_height);
+  lives_container_set_border_width(LIVES_CONTAINER(rfxbuilder->remove_entry_button), widget_opts.border_width);
 
   if (rfxbuilder->table_type==RFX_TABLE_TYPE_PARAM_WINDOW) {
     rfxbuilder->move_up_button=lives_button_new_with_mnemonic(_("Move _Up"));
-    lives_box_pack_start(LIVES_BOX(button_box), rfxbuilder->move_up_button, FALSE, FALSE, 0);
+    lives_box_pack_start(LIVES_BOX(button_box), rfxbuilder->move_up_button, FALSE, FALSE, widget_opts.packing_height);
+    lives_container_set_border_width(LIVES_CONTAINER(rfxbuilder->move_up_button), widget_opts.border_width);
 
     rfxbuilder->move_down_button=lives_button_new_with_mnemonic(_("Move _Down"));
-    lives_box_pack_start(LIVES_BOX(button_box), rfxbuilder->move_down_button, FALSE, FALSE, 0);
-
+    lives_box_pack_start(LIVES_BOX(button_box), rfxbuilder->move_down_button, FALSE, FALSE, widget_opts.packing_height);
+    lives_container_set_border_width(LIVES_CONTAINER(rfxbuilder->move_down_button), widget_opts.border_width);
 
     lives_widget_set_sensitive(rfxbuilder->move_up_button,FALSE);
     lives_widget_set_sensitive(rfxbuilder->move_down_button,FALSE);

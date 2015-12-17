@@ -273,7 +273,6 @@ void check_for_special(lives_rfx_t *rfx, lives_param_t *param, LiVESBox *pbox) {
   slist=fileread;
   while (slist!=NULL) {
     if (param==(lives_param_t *)(slist->data)) {
-      LiVESList *clist;
       int epos;
 
       param->special_type=LIVES_PARAM_SPECIAL_TYPE_FILEREAD;
@@ -288,9 +287,7 @@ void check_for_special(lives_rfx_t *rfx, lives_param_t *param, LiVESBox *pbox) {
 
       if (box==NULL) return;
 
-      clist=lives_container_get_children(LIVES_CONTAINER(box));
-      epos=lives_list_index(clist,param->widgets[0]);
-      lives_list_free(clist);
+      epos=get_box_child_index(LIVES_BOX(box),param->widgets[0]);
 
       buttond = lives_standard_file_button_new(FALSE,lives_get_current_dir());
       lives_box_pack_start(LIVES_BOX(box),buttond,FALSE,FALSE,widget_opts.packing_width);

@@ -81,7 +81,7 @@ livespointer lives_memcpy(livespointer dest, livesconstpointer src, size_t n) {
 #endif
 #endif
 
-G_GNUC_MALLOC livespointer _lives_malloc(size_t size) {
+__attribute__((__malloc__)) livespointer _lives_malloc(size_t size) {
 #ifdef __cplusplus
 #ifdef HAVE_OPENCV
   return fastMalloc(size);
@@ -8782,23 +8782,23 @@ char *rte_keymode_get_plugin_name(int key, int mode) {
 
 
 
-G_GNUC_PURE int rte_getmodespk(void) {
+__attribute__((__pure__)) int rte_getmodespk(void) {
   return prefs->max_modes_per_key;
 }
 
-G_GNUC_PURE int rte_bg_gen_key(void) {
+__attribute__((__pure__)) int rte_bg_gen_key(void) {
   return bg_generator_key;
 }
 
-G_GNUC_PURE int rte_fg_gen_key(void) {
+__attribute__((__pure__)) int rte_fg_gen_key(void) {
   return fg_generator_key;
 }
 
-G_GNUC_PURE int rte_bg_gen_mode(void) {
+__attribute__((__pure__)) int rte_bg_gen_mode(void) {
   return bg_generator_mode;
 }
 
-G_GNUC_PURE int rte_fg_gen_mode(void) {
+__attribute__((__pure__)) int rte_fg_gen_mode(void) {
   return fg_generator_mode;
 }
 

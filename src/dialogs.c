@@ -1613,10 +1613,6 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const char *tex
   mainw->startticks=mainw->currticks=mainw->offsetticks=0;
   last_open_check_ticks=0;
 
-  /***************************************************/
-  gettimeofday(&tv, NULL);
-  /***************************************************/
-
   prev_ticks=0;
   last_sc_ticks=0;
   consume_ticks=0;
@@ -1626,6 +1622,11 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const char *tex
   mainw->origsecs=0; // not used
   mainw->origusecs=lives_get_monotonic_time();
 #else
+
+  /***************************************************/
+  gettimeofday(&tv, NULL);
+  /***************************************************/
+
   mainw->origsecs=tv.tv_sec;
   mainw->origusecs=tv.tv_usec;
 #endif
@@ -2020,7 +2021,7 @@ boolean do_auto_dialog(const char *text, int type) {
 
   FILE *infofile=NULL;
 
-  uint64_t time=0,end_time=1;
+  uint64_t time=0,stime=0;
 
   xprocess *proc_ptr;
 
@@ -2030,6 +2031,14 @@ boolean do_auto_dialog(const char *text, int type) {
   int time_rem,last_time_rem=10000000;
   int alarm_handle=0;
 
+  if (type==1&&mainw->rec_end_time!=-1.) {
+#ifdef USE_MONOTONIC_TIME
+    stime=lives_get_monotonic_time();
+#else
+    gettimeofday(&tv, NULL);
+    stime=tv.tv_sec*1000000.+tv.tv_usec; // time in microseconds
+#endif
+  }
 
   mainw->error=FALSE;
 
@@ -2074,9 +2083,16 @@ boolean do_auto_dialog(const char *text, int type) {
     lives_widget_context_update();
     lives_usleep(prefs->sleep_time);
     if (type==1&&mainw->rec_end_time!=-1.) {
+#ifdef USE_MONOTONIC_TIME
+      time=lives_get_monotonic_time();
+#else
       gettimeofday(&tv, NULL);
-      time=tv.tv_sec*1000000.+tv.tv_usec; // time in microseconds
-      time_rem=(int)((double)(end_time-time)/1000000.+.5);
+      time=tv.tv_sec*1000000.+tv.tv_usec; // current time in microseconds
+#endif
+      // subtract start time
+      time-=stime;
+
+      time_rem=(int)((double)(mainw->rec_end_time-time)/1000000.+.5);
       if (time_rem>=0&&time_rem<last_time_rem) {
         label_text=lives_strdup_printf(_("\nTime remaining: %d sec"),time_rem);
         lives_label_set_text(LIVES_LABEL(proc_ptr->label2),label_text);

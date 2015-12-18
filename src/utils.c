@@ -83,7 +83,7 @@ char *filename_from_fd(char *val, int fd) {
 
 
 
-static void reverse_bytes(uint8_t *out, const uint8_t *in, size_t count) {
+static LIVES_INLINE void reverse_bytes(uint8_t *out, const uint8_t *in, size_t count) {
   register int i;
   for (i=0; i<count; i++) {
     out[i]=in[count-i-1];
@@ -1276,9 +1276,13 @@ LIVES_INLINE int get_approx_ln(uint32_t x) {
 /**  return current (wallclock) time in ticks (units of 10 nanoseconds)
  */
 
-int64_t lives_get_current_ticks(void) {
+LIVES_INLINE int64_t lives_get_current_ticks(void) {
+#ifdef USE_MONOTONIC_TIME
+  return lives_get_monotonic_time()*U_SEC_RATIO;
+#else
   gettimeofday(&tv, NULL);
   return U_SECL*tv.tv_sec+tv.tv_usec*U_SEC_RATIO;
+#endif
 }
 
 
@@ -1460,7 +1464,7 @@ LIVES_INLINE int calc_frame_from_time3(int filenum, double time) {
 
 
 
-boolean is_realtime_aplayer(int ptype) {
+LIVES_INLINE boolean is_realtime_aplayer(int ptype) {
   if (ptype==AUD_PLAYER_JACK||ptype==AUD_PLAYER_PULSE) return TRUE;
   return FALSE;
 }

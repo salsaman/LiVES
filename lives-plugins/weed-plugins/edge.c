@@ -1,6 +1,6 @@
 // edge.c
 // weed plugin
-// (c) G. Finch (salsaman) 2005
+// (c) G. Finch (salsaman) 2005 - 2015
 //
 // released under the GNU GPL 3 or later
 // see file COPYING or www.gnu.org for details

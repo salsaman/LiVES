@@ -222,6 +222,7 @@ boolean lives_widget_set_text_color(LiVESWidget *, LiVESWidgetState state, const
 boolean lives_widget_set_base_color(LiVESWidget *, LiVESWidgetState state, const LiVESWidgetColor *);
 
 boolean lives_widget_get_fg_state_color(LiVESWidget *, LiVESWidgetState state, LiVESWidgetColor *);
+boolean lives_widget_get_bg_state_color(LiVESWidget *, LiVESWidgetState state, LiVESWidgetColor *);
 
 boolean lives_color_parse(const char *spec, LiVESWidgetColor *);
 

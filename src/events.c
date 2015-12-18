@@ -42,7 +42,7 @@ static weed_timecode_t flush_audio_tc=0;
 static void **pchains[FX_KEYS_MAX]; // each pchain is an array of void *, these are parameter changes used for rendering
 ///////////////////////////////////////////////////////
 
-G_GNUC_PURE void ** *get_event_pchains(void) {
+__attribute__((__pure__)) void ** *get_event_pchains(void) {
   return pchains;
 }
 

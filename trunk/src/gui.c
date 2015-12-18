@@ -319,10 +319,8 @@ void create_LiVES(void) {
 #endif
 #endif
 
-    /*
-    lives_widget_get_bg_color(mainw->LiVES,&normal);
+    lives_widget_get_bg_state_color(mainw->LiVES, LIVES_WIDGET_STATE_NORMAL, &normal);
     lives_widget_color_copy((LiVESWidgetColor *)(&palette->normal_back),&normal);
-    */
 
     lives_widget_get_fg_color(mainw->LiVES,&normal);
     lives_widget_color_copy((LiVESWidgetColor *)(&palette->normal_fore),&normal);

@@ -738,7 +738,10 @@ static void save_mt_autoback(lives_mt *mt, int64_t stime) {
   // this is called from an idle funtion - if the specified amount of time has passed and
   // the clip has been altered
 
+
+#ifndef USE_MONOTONIC_TIME
   struct timeval otv;
+#endif
 
   int fd;
   char *asave_file=lives_strdup_printf("%s/layout.%d.%d.%d",prefs->tmpdir,lives_getuid(),lives_getgid(),capable->mainpid);
@@ -796,8 +799,12 @@ static void save_mt_autoback(lives_mt *mt, int64_t stime) {
   lives_free(asave_file);
 
   if (stime==0) {
+#ifdef USE_MONOTONIC_TIME
+    stime=lives_get_monotonic_time()/1000000.;
+#else
     gettimeofday(&otv, NULL);
     stime=otv.tv_sec;
+#endif
   }
 
   mt->auto_back_time=stime;
@@ -809,7 +816,10 @@ static void save_mt_autoback(lives_mt *mt, int64_t stime) {
 
 static boolean mt_auto_backup(livespointer user_data) {
 
+#ifndef USE_MONOTONIC_TIME
   struct timeval otv;
+#endif
+
   int64_t stime,diff;
 
   lives_mt *mt=(lives_mt *)user_data;
@@ -822,8 +832,12 @@ static boolean mt_auto_backup(livespointer user_data) {
   lives_source_remove(mt->idlefunc);
   mt->idlefunc=0;
 
+#ifdef USE_MONOTONIC_TIME
+  stime=lives_get_monotonic_time()/1000000.;
+#else
   gettimeofday(&otv, NULL);
   stime=otv.tv_sec;
+#endif
 
   if (mt->auto_back_time==0) mt->auto_back_time=stime;
 

@@ -36,15 +36,21 @@
 
 static boolean lives_wait_user_buffer(lives_vdev_t *ldev, unicap_data_buffer_t **buff, double timeout) {
   // wait for USER type buffer
-  int64_t stime,dtime,timer;
+#ifndef USE_MONOTONIC_TIME
   struct timeval otv;
+#endif
+  int64_t stime,dtime,timer;
   unicap_status_t status;
   int ncount;
 
   timer=timeout*1000000.;
 
+#ifdef USE_MONOTONIC_TIME
+  stime=lives_get_monotonic_time()*U_SEC_RATIO;
+#else
   gettimeofday(&otv,NULL);
   stime=otv.tv_sec*1000000+otv.tv_usec;
+#endif
 
   while (1) {
     status=unicap_poll_buffer(ldev->handle,&ncount);
@@ -58,9 +64,12 @@ static boolean lives_wait_user_buffer(lives_vdev_t *ldev, unicap_data_buffer_t *
       return TRUE;
     }
 
+#ifdef USE_MONOTONIC_TIME
+    dtime=lives_get_monotonic_time()*U_SEC_RATIO;
+#else
     gettimeofday(&otv,NULL);
     dtime=otv.tv_sec*1000000+otv.tv_usec;
-
+#endif
     if (dtime-stime>timer) return FALSE;
 
     lives_usleep(prefs->sleep_time);
@@ -74,18 +83,26 @@ static boolean lives_wait_user_buffer(lives_vdev_t *ldev, unicap_data_buffer_t *
 
 static boolean lives_wait_system_buffer(lives_vdev_t *ldev, double timeout) {
   // wait for SYSTEM type buffer
-  int64_t stime,dtime,timer;
+#ifndef USE_MONOTONIC_TIME
   struct timeval otv;
+#endif
+  int64_t stime,dtime,timer;
 
   timer=timeout*1000000.;
 
+#ifdef USE_MONOTONIC_TIME
+  stime=lives_get_monotonic_time()*U_SEC_RATIO;
+#else
   gettimeofday(&otv,NULL);
   stime=otv.tv_sec*1000000+otv.tv_usec;
-
+#endif
   while (ldev->buffer_ready==0) {
+#ifdef USE_MONOTONIC_TIME
+    dtime=lives_get_monotonic_time()*U_SEC_RATIO;
+#else
     gettimeofday(&otv,NULL);
     dtime=otv.tv_sec*1000000+otv.tv_usec;
-
+#endif
     if (dtime-stime>timer) return FALSE;
 
     lives_usleep(prefs->sleep_time);

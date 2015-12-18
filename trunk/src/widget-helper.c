@@ -160,7 +160,7 @@ LIVES_INLINE boolean lives_painter_render_background(LiVESWidget *widget, lives_
   gtk_render_background(ctx,cr,x,y,width,height);
 #else
   LiVESWidgetColor color;
-  lives_widget_color_copy(&color,&gtk_widget_get_style(widget)->bg[state]);
+  lives_widget_color_copy(&color,&gtk_widget_get_style(widget)->bg[lives_widget_get_state(widget)]);
 
 #if LIVES_WIDGET_COLOR_HAS_ALPHA
   lives_painter_set_source_rgba(cr,
@@ -1123,6 +1123,25 @@ LIVES_INLINE boolean lives_widget_get_fg_state_color(LiVESWidget *widget, LiVESW
 }
 
 
+LIVES_INLINE boolean lives_widget_get_bg_state_color(LiVESWidget *widget, LiVESWidgetState state, LiVESWidgetColor *color) {
+#ifdef GUI_GTK
+#if GTK_CHECK_VERSION(3,0,0)
+  G_GNUC_BEGIN_IGNORE_DEPRECATIONS
+  gtk_style_context_get_background_color(gtk_widget_get_style_context(widget), LIVES_WIDGET_STATE_NORMAL, color);
+  G_GNUC_END_IGNORE_DEPRECATIONS
+#else
+  lives_widget_color_copy(color,&gtk_widget_get_style(widget)->bg[LIVES_WIDGET_STATE_NORMAL]);
+#endif
+  return TRUE;
+#endif
+#ifdef GUI_QT
+  lives_widget_color_copy(color,widget->get_bg_color(state));
+  return TRUE;
+#endif
+  return FALSE;
+}
+
+
 LIVES_INLINE LiVESWidgetColor *lives_widget_color_copy(LiVESWidgetColor *c1, const LiVESWidgetColor *c2) {
   // if c1 is NULL, create a new copy of c2, otherwise copy c2 -> c1
   LiVESWidgetColor *c0=NULL;
@@ -1343,14 +1362,12 @@ LIVES_INLINE LiVESWidget *lives_dialog_get_content_area(LiVESDialog *dialog) {
 
 LIVES_INLINE LiVESWidget *lives_dialog_get_action_area(LiVESDialog *dialog) {
 #ifdef GUI_GTK
-#if GTK_CHECK_VERSION(3,16,0)
-  return NULL;
-#else
 #if GTK_CHECK_VERSION(2,14,0)
+  G_GNUC_BEGIN_IGNORE_DEPRECATIONS
   return gtk_dialog_get_action_area(LIVES_DIALOG(dialog));
+  G_GNUC_END_IGNORE_DEPRECATIONS
 #else
   return LIVES_DIALOG(dialog)->vbox;
-#endif
 #endif
 #endif
 #ifdef GUI_QT

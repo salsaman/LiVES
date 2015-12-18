@@ -52,7 +52,7 @@ typedef struct _mt_opts mt_opts;
 
 typedef struct _lives_amixer_t lives_amixer_t;
 
-#define MAX_DISP_VTRACKS 10
+#define MAX_DISP_VTRACKS 5
 
 typedef enum {
   MOUSE_MODE_MOVE,

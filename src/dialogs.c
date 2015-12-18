@@ -44,6 +44,8 @@ static double est_time;
 
 static volatile boolean dlg_thread_ready=FALSE;
 
+static volatile boolean display_ready;
+
 void on_warn_mask_toggled(LiVESToggleButton *togglebutton, livespointer user_data) {
   LiVESWidget *tbutton;
 
@@ -1289,7 +1291,12 @@ boolean process_one(boolean visible) {
     cfile->frameno=calc_new_playback_position(mainw->current_file,mainw->startticks,&new_ticks);
 
     if (new_ticks!=mainw->startticks) {
-      show_frame=TRUE;
+      if (display_ready) {
+        show_frame=TRUE;
+#ifdef USE_GDK_FRAME_CLOCK
+        display_ready=FALSE;
+#endif
+      }
       mainw->startticks=new_ticks;
     }
 
@@ -1459,11 +1466,10 @@ boolean process_one(boolean visible) {
 }
 
 #ifdef USE_GDK_FRAME_CLOCK
-static volatile boolean ready;
-static boolean gdk_frame_clock;
+static boolean using_gdk_frame_clock;
 static GdkFrameClock *gclock;
 static void clock_upd(GdkFrameClock *clock, gpointer user_data) {
-  ready=TRUE;
+  display_ready=TRUE;
 }
 #endif
 
@@ -1754,10 +1760,13 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const char *tex
 
   mainw->scratch=SCRATCH_NONE;
 
+  display_ready=TRUE;
+
 #ifdef USE_GDK_FRAME_CLOCK
-  gdk_frame_clock=FALSE;
+  using_gdk_frame_clock=FALSE;
   if (prefs->show_gui) {
-    gdk_frame_clock=TRUE;
+    using_gdk_frame_clock=TRUE;
+    display_ready=FALSE;
     if (mainw->multitrack==NULL)
       gclock=gtk_widget_get_frame_clock(mainw->LiVES);
     else
@@ -1783,7 +1792,7 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const char *tex
         lives_set_cursor_style(LIVES_CURSOR_NORMAL,NULL);
         if (mainw->current_file>-1&&cfile!=NULL) lives_freep((void **)&cfile->op_dir);
 #ifdef USE_GDK_FRAME_CLOCK
-        if (gdk_frame_clock) {
+        if (using_gdk_frame_clock) {
           gdk_frame_clock_end_updating(gclock);
         }
 #endif
@@ -1794,18 +1803,6 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const char *tex
         // we are generating audio from a plugin and it needs reinit - we do it in this thread so as not to hold up the player thread
         reinit_audio_gen();
       }
-
-#ifdef USE_GDK_FRAME_CLOCK
-      if (prefs->show_gui) {
-        if (!visible) {
-          ready=FALSE;
-          while (!ready) {
-            lives_usleep(prefs->sleep_time);
-            lives_widget_context_update();
-          }
-        }
-      }
-#endif
 
       // normal playback, wth realtime audio player
       if (!visible&&(mainw->whentostop!=STOP_ON_AUD_END||is_realtime_aplayer(prefs->audio_player))) continue;
@@ -1913,7 +1910,7 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const char *tex
         lives_set_cursor_style(LIVES_CURSOR_NORMAL,NULL);
         if (mainw->current_file>-1&&cfile!=NULL) lives_freep((void **)&cfile->op_dir);
 #ifdef USE_GDK_FRAME_CLOCK
-        if (gdk_frame_clock) {
+        if (using_gdk_frame_clock) {
           gdk_frame_clock_end_updating(gclock);
         }
 #endif
@@ -1929,14 +1926,14 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const char *tex
         // pump data from stdout to textbuffer
         pump_io_chan(mainw->iochan);
       }
-#ifndef USE_GDK_FRAME_CLOCK
+
       lives_usleep(prefs->sleep_time);
-#endif
+
     } else break;
   }
 
 #ifdef USE_GDK_FRAME_CLOCK
-  if (gdk_frame_clock) {
+  if (using_gdk_frame_clock) {
     gdk_frame_clock_end_updating(gclock);
   }
 #endif

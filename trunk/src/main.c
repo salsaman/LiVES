@@ -1261,6 +1261,8 @@ static void lives_init(_ign_opts *ign_opts) {
 
     prefs->perm_audio_reader=TRUE;
 
+    prefs->max_disp_vtracks=get_int_pref("max_disp_vtracks");
+
     //////////////////////////////////////////////////////////////////
 
     weed_memory_init();

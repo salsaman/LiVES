@@ -643,6 +643,7 @@ boolean apply_prefs(boolean skip_warn) {
   boolean mt_autoback_never=lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->mt_autoback_never));
 
   int mt_autoback_time=lives_spin_button_get_value(LIVES_SPIN_BUTTON(prefsw->spinbutton_mt_ab_time));
+  int max_disp_vtracks=lives_spin_button_get_value(LIVES_SPIN_BUTTON(prefsw->spinbutton_max_disp_vtracks));
   int gui_monitor=lives_spin_button_get_value(LIVES_SPIN_BUTTON(prefsw->spinbutton_gmoni));
   int play_monitor=lives_spin_button_get_value(LIVES_SPIN_BUTTON(prefsw->spinbutton_pmoni));
 
@@ -1461,6 +1462,12 @@ boolean apply_prefs(boolean skip_warn) {
   if (mt_autoback_time!=prefs->mt_auto_back) {
     prefs->mt_auto_back=mt_autoback_time;
     set_int_pref("mt_auto_back",mt_autoback_time);
+  }
+
+  if (max_disp_vtracks!=prefs->max_disp_vtracks) {
+    prefs->max_disp_vtracks=max_disp_vtracks;
+    set_int_pref("max_disp_vtracks",max_disp_vtracks);
+    if (mainw->multitrack!=NULL) scroll_tracks(mainw->multitrack,mainw->multitrack->top_track,FALSE);
   }
 
   if (startup_ce&&future_prefs->startup_interface!=STARTUP_CE) {
@@ -2506,6 +2513,15 @@ _prefsw *create_prefs_dialog(void) {
     lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(prefsw->mt_autoback_every),TRUE);
     lives_spin_button_set_value(LIVES_SPIN_BUTTON(prefsw->spinbutton_mt_ab_time),prefs->mt_auto_back);
   }
+
+
+  hbox2 = lives_hbox_new(FALSE, 0);
+  lives_box_pack_start(LIVES_BOX(prefsw->vbox_right_multitrack), hbox2, FALSE, FALSE, widget_opts.packing_height);
+
+  prefsw->spinbutton_max_disp_vtracks=lives_standard_spin_button_new(_("Maximum number of visible tracks"), FALSE, prefs->max_disp_vtracks,
+                                      5., 15.,
+                                      1., 1., 0, LIVES_BOX(hbox2),NULL);
+
   // ---
   icon = lives_build_filename(prefs->prefix_dir, ICON_DIR, "pref_multitrack.png", NULL);
   pixbuf_multitrack = lives_pixbuf_new_from_file(icon, NULL);
@@ -4358,6 +4374,9 @@ _prefsw *create_prefs_dialog(void) {
                        LIVES_GUI_CALLBACK(apply_button_set_enabled),
                        NULL);
   lives_signal_connect(LIVES_GUI_OBJECT(prefsw->spinbutton_mt_ab_time), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
+                       LIVES_GUI_CALLBACK(apply_button_set_enabled),
+                       NULL);
+  lives_signal_connect(LIVES_GUI_OBJECT(prefsw->spinbutton_max_disp_vtracks), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
                        LIVES_GUI_CALLBACK(apply_button_set_enabled),
                        NULL);
   lives_signal_connect(LIVES_GUI_OBJECT(prefsw->mt_autoback_always), LIVES_WIDGET_TOGGLED_SIGNAL,

@@ -96,6 +96,10 @@ void lives_exit(int signum) {
       mainw->multitrack->undo_mem=NULL;
     }
 
+    if (mainw->multi_opts.set&&!mainw->only_close&&mainw->multi_opts.aparam_view_list!=NULL) {
+      lives_list_free(mainw->multi_opts.aparam_view_list);
+    }
+
     if (mainw->playing_file>-1) {
       mainw->ext_keyboard=FALSE;
       if (mainw->ext_playback) {

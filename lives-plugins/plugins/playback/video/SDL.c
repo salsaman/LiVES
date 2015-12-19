@@ -1,7 +1,12 @@
 // LiVES - SDL playback engine
-// (c) G. Finch 2003 - 2008 <salsaman@xs4all.nl,salsaman@gmail.com>
+// (c) G. Finch 2003 - 2015 <salsaman@gmail.com>
 // released under the GNU GPL 3 or later
 // see file COPYING or www.gnu.org for details
+
+
+// SDL2 does not work well: the window is not properly fullscreen, it goes grey after a few seconds, keys need extra translation
+// and it is impossible to grab an external window
+
 
 #if IS_MINGW
 #include <windows.h>
@@ -13,8 +18,11 @@
 
 ////////////////////////////////////////////////////////////////////////////////////
 
-static char plugin_version[64]="LiVES SDL playback engine version 1.2";
+static char plugin_version[64]="LiVES SDL playback engine version 1.3";
+
+#ifdef HAVE_SDL
 static char error[256];
+#endif
 
 static boolean(*render_fn)(int hsize, int vsize, void **pixel_data);
 static boolean render_frame_rgb(int hsize, int vsize, void **pixel_data);
@@ -32,18 +40,29 @@ static boolean is_ready;
 // SDL specific stuff
 #include <SDL.h>
 
-static  SDL_Surface *screen;
 static  SDL_Surface *RGBimage;
+static  SDL_Surface *screen;
+
+#ifdef HAVE_SDL2
+static SDL_Texture *texture;
+static SDL_Renderer *renderer;
+static SDL_Window *window;
+static SDL_Keymod mod;
+#else
 static  SDL_Overlay *overlay;
+static  SDL_Rect *rect;
+static  SDLMod mod;
+#endif
 static  int ov_hsize;
 static  int ov_vsize;
-static  SDL_Rect *rect;
 static  SDL_Event event;
-static  SDLMod mod;
+
+
 
 //////////////////////////////////////////////
 
 
+#ifdef HAVE_SDL
 static boolean my_setenv(const char *name, const char *value) {
   // ret TRUE on success
 #if IS_MINGW
@@ -64,23 +83,30 @@ static boolean my_setenv(const char *name, const char *value) {
 #endif
 #endif
 }
-
+#endif
 
 const char *module_check_init(void) {
+#if HAVE_SDL
   if (getenv("HAVE_SDL")==NULL&&system("which sdl-config >/dev/null 2>&1")==256) {
     snprintf(error,256,
              "\n\nUnable to find sdl-config in your path.\nPlease make sure you have SDL installed correctly to use this plugin.\nYou can override this with 'export HAVE_SDL=1'\n");
     return error;
   }
-
+#endif
+  
   render_fn=&render_frame_unknown;
-
   RGBimage=NULL;
+
+#ifdef HAVE_SDL2
+  texture=NULL;
+#else
   overlay=NULL;
+  rect=(SDL_Rect *)malloc(sizeof(SDL_Rect));
+#endif
   ov_vsize=ov_hsize=0;
 
   mypalette=WEED_PALETTE_END;
-  rect=(SDL_Rect *)malloc(sizeof(SDL_Rect));
+
 
   return NULL;
 }
@@ -95,16 +121,39 @@ const char *get_description(void) {
   return "The SDL plugin allows faster playback.\n";
 }
 
+
 uint64_t get_capabilities(int palette) {
+#ifdef HAVE_SDL1
+  return VPP_CAN_RESIZE|VPP_LOCAL_DISPLAY;
+#endif  
   if (palette==WEED_PALETTE_UYVY8888) {
     return VPP_CAN_RESIZE|VPP_LOCAL_DISPLAY;
   }
   return VPP_LOCAL_DISPLAY;
 }
 
+
 const char *get_init_rfx(void) {
-  return \
-         "<define>\\n\
+#ifdef HAVE_SDL2
+  return					\
+    "<define>\\n\
+|1.7\\n\
+</define>\\n\
+<language_code>\\n\
+0xF0\\n\
+</language_code>\\n\
+<params> \\n\
+hwa|Hardware _acceleration|bool|1|0 \\n\
+fsover|Over-ride fullscreen setting (for debugging)|bool|0|0 \\n\
+</params> d\\n\
+<param_window> \\n\
+</param_window> \\n\
+<onchange> \\n\
+</onchange> \\n\
+";
+#else
+  return					\
+    "<define>\\n\
 |1.7\\n\
 </define>\\n\
 <language_code>\\n\
@@ -117,12 +166,13 @@ yuvha|_YUV hardware acceleration|bool|1|0 \\n\
 dblbuf|_Double buffering|bool|1|0 \\n\
 hws|Hardware _surface|bool|1|0 \\n\
 fsover|Over-ride fullscreen setting (for debugging)|bool|0|0 \\n\
-</params> \\n\
+</params> d\\n\
 <param_window> \\n\
 </param_window> \\n\
 <onchange> \\n\
 </onchange> \\n\
 ";
+#endif
 }
 
 
@@ -167,24 +217,33 @@ const int *get_yuv_palette_clamping(int palette) {
 
 boolean init_screen(int width, int height, boolean fullscreen, uint64_t window_id, int argc, char **argv) {
   // screen size is in RGB pixels
-  int hwaccel=1;
+#ifdef HAVE_SDL2
+  uint32_t rflags=0;
+  // add vsync ?
+#else
   int yuvdir=1;
   int yuvhwa=1;
   int dblbuf=1;
   int hws=1;
+  uint32_t modeopts=0;
+  char tmp[32];
+#endif
+  
+  int hwaccel=1;
   int fsover=0;
 
-  char tmp[32];
-
-  uint32_t modeopts=0;
 
   if (argc>0) {
     hwaccel=atoi(argv[0]);
+#ifdef HAVE_SDL2 
+    fsover=atoi(argv[1]);
+#else
     yuvdir=atoi(argv[1]);
     yuvhwa=atoi(argv[2]);
     dblbuf=atoi(argv[3]);
     hws=atoi(argv[4]);
     fsover=atoi(argv[5]);
+#endif
   }
 
   if (mypalette==WEED_PALETTE_END) {
@@ -192,6 +251,50 @@ boolean init_screen(int width, int height, boolean fullscreen, uint64_t window_i
     return FALSE;
   }
 
+
+#ifdef HAVE_SDL2
+
+  if ((SDL_Init(SDL_INIT_VIDEO)==-1)) {
+    fprintf(stderr,"SDL player : Could not initialize SDL: %s.\n", SDL_GetError());
+    return FALSE;
+  }
+
+  
+  if (1||!fullscreen) {
+    window=SDL_CreateWindowFrom((const void *)window_id);
+  }
+  else {
+    if (fsover) fullscreen=FALSE;
+    window=SDL_CreateWindow("",0,0,width,height,SDL_WINDOW_BORDERLESS);
+  }
+  if (window==NULL) {
+    fprintf(stderr,"SDL2 player : Could not initialize SDL: %s.\n", SDL_GetError());
+    return FALSE;
+  }
+  
+  rflags=(SDL_RENDERER_ACCELERATED*hwaccel);
+  renderer=SDL_CreateRenderer(window,-1,rflags);
+
+  SDL_ShowCursor(0);
+
+
+  // if palette is RGB, create RGB surface the same size as the screen
+  if (mypalette==WEED_PALETTE_RGB24) {
+    RGBimage = SDL_CreateRGBSurface(0, width, height, 24,
+                                    0x0000FF, 0x00FF00, 0xFF0000, 0x00);
+    if (RGBimage == NULL) {
+      fprintf(stderr,"SDL2 player: Can't create: %s\n", SDL_GetError());
+      return FALSE;
+    }
+    return TRUE;
+  }
+
+  screen=SDL_GetWindowSurface(window);
+  
+
+  
+#else
+  
   snprintf(tmp,32,"%d",yuvdir);
   my_setenv("SDL_VIDEO_YUV_DIRECT", tmp);
 
@@ -219,8 +322,10 @@ boolean init_screen(int width, int height, boolean fullscreen, uint64_t window_i
     return FALSE;
   }
 
+
   /* Enable Unicode translation */
   SDL_EnableUNICODE(1);
+
 
   // if palette is RGB, create RGB surface the same size as the screen
   if (mypalette==WEED_PALETTE_RGB24) {
@@ -233,9 +338,12 @@ boolean init_screen(int width, int height, boolean fullscreen, uint64_t window_i
     return TRUE;
   }
 
+  
   rect->x=rect->y=0;
   rect->h=height;
   rect->w=width;
+#endif
+  
   return TRUE;
 }
 
@@ -251,15 +359,70 @@ boolean render_frame_rgb(int hsize, int vsize, void **pixel_data) {
   SDL_LockSurface(RGBimage);
   memcpy(RGBimage->pixels,pixel_data[0],hsize*vsize*3);
   SDL_UnlockSurface(RGBimage);
+#ifdef HAVE_SDL2
+  SDL_BlitScaled(RGBimage, NULL, screen, NULL);
+  SDL_UpdateWindowSurface(window);
+#else
   SDL_BlitSurface(RGBimage, NULL, screen, NULL);
   //SDL_FreeSurface(RGBimage);
   SDL_UpdateRect(screen, 0, 0, 0, 0);
+#endif
+
   return TRUE;
 }
 
 
 boolean render_frame_yuv(int hsize, int vsize, void **pixel_data) {
   // hsize may be in uyvy-macropixels (2 real pixels per 4 byte macropixel !)
+
+#ifdef HAVE_SDL2
+  void *pixels;
+  int pitch;
+  uint32_t format;
+
+  switch (mypalette) {
+  case WEED_PALETTE_UYVY8888:
+    format=SDL_PIXELFORMAT_UYVY;
+    hsize*=2;
+    break;
+ case WEED_PALETTE_YUYV8888:
+    format=SDL_PIXELFORMAT_YUY2;
+    hsize*=2;
+    break;
+ case WEED_PALETTE_YVU420P:
+    format=SDL_PIXELFORMAT_YV12;
+    break;
+ default:
+    format=SDL_PIXELFORMAT_IYUV;
+    break;
+  }
+
+  if ((ov_hsize!=hsize||ov_vsize!=vsize)&&(texture!=NULL)) {
+    SDL_DestroyTexture(texture);
+    texture=NULL;
+  }
+
+  if (texture==NULL) {
+    texture = SDL_CreateTexture(renderer, format, SDL_TEXTUREACCESS_STREAMING, hsize, vsize);
+    ov_hsize=hsize;
+    ov_vsize=vsize;
+  }
+
+  SDL_LockTexture(texture,NULL,&pixels,&pitch);
+
+  if (mypalette==WEED_PALETTE_UYVY||mypalette==WEED_PALETTE_YUYV) SDL_UpdateTexture(texture,NULL,pixel_data[0],hsize*2);
+  else {
+    SDL_UpdateYUVTexture(texture,NULL,pixel_data[0],hsize,pixel_data[1],hsize>>2,pixel_data[2],hsize>>2);
+  }
+
+  SDL_UnlockTexture(texture);
+
+  SDL_RenderCopy(renderer, texture, NULL, NULL);
+  SDL_RenderPresent(renderer);
+
+  
+#else
+
   uint32_t ovtype=SDL_IYUV_OVERLAY;
 
   if (mypalette==WEED_PALETTE_UYVY8888) {
@@ -293,6 +456,9 @@ boolean render_frame_yuv(int hsize, int vsize, void **pixel_data) {
 
   SDL_UnlockYUVOverlay(overlay);
   SDL_DisplayYUVOverlay(overlay,rect);
+
+#endif
+  
   is_ready=TRUE;
   return TRUE;
 }
@@ -310,6 +476,26 @@ void exit_screen(int16_t mouse_x, int16_t mouse_y) {
       SDL_FreeSurface(RGBimage);
       RGBimage=NULL;
     }
+#ifdef HAVE_SDL2
+  } else if (texture!=NULL) {
+    SDL_DestroyTexture(texture);
+    texture=NULL;
+  }
+  if (mouse_x>=0&&mouse_y>=0) {
+    SDL_ShowCursor(1);
+#if SDL_VERSIONNUM(SDL_MAJOR_VERSION,SDL_MINOR_VERSION,SDL_MICRO_VERSION) >= 2004
+    SDL_WarpMouseGlobal((int16_t)mouse_x, (int16_t)mouse_y);
+#else
+    SDL_WarpMouseInWindow(window,(int16_t)mouse_x, (int16_t)mouse_y);
+#endif
+  }
+  if (renderer!=NULL) {
+    SDL_DestroyRenderer(renderer);
+  }
+  if (window!=NULL) {
+    SDL_DestroyWindow(window);
+  }
+#else
   } else if (overlay!=NULL) {
     SDL_FreeYUVOverlay(overlay);
     overlay=NULL;
@@ -318,13 +504,16 @@ void exit_screen(int16_t mouse_x, int16_t mouse_y) {
     SDL_ShowCursor(TRUE);
     SDL_WarpMouse((int16_t)mouse_x, (int16_t)mouse_y);
   }
+#endif
   SDL_Quit();
   is_ready=FALSE;
 }
 
 
 void module_unload(void) {
+#ifdef HAVE_SDL
   free(rect);
+#endif
 }
 
 
@@ -349,19 +538,27 @@ boolean send_keycodes(keyfunc host_key_fn) {
         mod_mask|=MOD_ALT_MASK;
       }
       if (event.type==SDL_KEYDOWN) {
+#ifdef HAVE_SDL2
+	scancode=event.key.keysym.scancode;
+#else
         if (!mod_mask) {
           scancode=event.key.keysym.unicode;
         }
-        if (!scancode) {
+	if (!scancode) {
           scancode=(uint16_t)event.key.keysym.scancode;
           mod_mask|=MOD_NEEDS_TRANSLATION;
         }
+#endif
         host_key_fn(TRUE,scancode,mod_mask);
       }
 
       else {
+#ifdef HAVE_SDL2
+        host_key_fn(FALSE,(uint16_t)event.key.keysym.scancode,(mod_mask|MOD_NEEDS_TRANSLATION));
+#else
         // key up - no unicode :-(
         host_key_fn(FALSE,(uint16_t)event.key.keysym.scancode,(mod_mask|MOD_NEEDS_TRANSLATION));
+#endif
       }
     }
   }

@@ -28,16 +28,27 @@ else
 
 if HAVE_SDL
 SDL_libs = SDL.la
-CFLAGS_SDL = @SDL_CFLAGS@
+CFLAGS_SDL = @SDL_CFLAGS@ -DHAVE_SDL=1
 LDFLAGS_SDL = @SDL_LIBS@
 
 else
 if FORCE_SDL
 SDL_libs = SDL.la
-CFLAGS_SDL = -I $(SDL_PREFIX)
+CFLAGS_SDL = -I $(SDL_PREFIX) -DHAVE_SDL=1
 LDFLAGS_SDL = -lSDL
+else
+
+if HAVE_SDL2
+SDL_libs = SDL.la
+CFLAGS_SDL = @SDL2_CFLAGS@ -DHAVE_SDL2=1
+LDFLAGS_SDL = @SDL2_LIBS@
+
 endif
 endif
+endif
+
+
+
 
 endif
 

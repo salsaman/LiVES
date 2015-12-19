@@ -1593,7 +1593,7 @@ LiVESWidget *create_cdtrack_dialog(int type, livespointer user_data) {
                  LIVES_BOX(hbox),NULL);
   } else if (type==3) {
     spinbutton = lives_standard_spin_button_new(label_text,FALSE, mainw->fx1_val,
-                 4., 8., 1., 1.,0,
+                 5., 15., 1., 1.,0,
                  LIVES_BOX(hbox),NULL);
   } else {
     spinbutton = lives_standard_spin_button_new(label_text,FALSE, 0.,

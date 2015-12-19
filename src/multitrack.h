@@ -36,6 +36,8 @@
 
 #define TIMECODE_LENGTH 14 ///< length of timecode text entry, must be >12
 
+#define TIMELINE_TABLE_COLUMNS 40
+
 ////////////////////////////////////////////////////////////////////////////////
 
 #define BLOCK_DRAW_SIMPLE 1
@@ -51,8 +53,6 @@ typedef struct _track_rect track_rect;
 typedef struct _mt_opts mt_opts;
 
 typedef struct _lives_amixer_t lives_amixer_t;
-
-#define MAX_DISP_VTRACKS 5
 
 typedef enum {
   MOUSE_MODE_MOVE,
@@ -175,6 +175,7 @@ struct _mt_opts {
   boolean render_vidp; ///< render video
   boolean render_audp; ///< render audio
   boolean normalise_audp; ///< normalise audio
+  LiVESList *aparam_view_list;
 };
 
 
@@ -392,8 +393,6 @@ struct _mt {
 
   LiVESXDisplay *display;
 
-  LiVESList *aparam_view_list;
-
   LiVESPixbuf *frame_pixbuf;
 
   LiVESList *cb_list;
@@ -463,7 +462,6 @@ struct _mt {
   boolean is_rendering; ///< TRUE if we are in the process of rendering/pre-rendering to a clip, cf. mainw->is_rendering
   boolean pr_audio; ///< TRUE if we are in the process of prerendering audio to a clip
 
-  int max_disp_vtracks;
   int current_fx;
 
   boolean mt_frame_preview;

@@ -348,6 +348,8 @@ typedef struct {
 
   boolean funky_widgets;
 
+  int max_disp_vtracks;
+
 } _prefs;
 
 enum {
@@ -509,6 +511,7 @@ typedef struct {
   LiVESWidget *spinbutton_mt_def_fps;
   LiVESWidget *spinbutton_mt_undo_buf;
   LiVESWidget *spinbutton_mt_ab_time;
+  LiVESWidget *spinbutton_max_disp_vtracks;
   LiVESWidget *spinbutton_rec_gb;
   LiVESWidget *mt_autoback_every;
   LiVESWidget *mt_autoback_always;

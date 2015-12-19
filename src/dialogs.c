@@ -1813,6 +1813,8 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const char *tex
         pump_io_chan(mainw->iochan);
       }
 
+      sched_yield();
+
       if (visible&&!mainw->internal_messaging) lives_usleep(prefs->sleep_time);
 
     }

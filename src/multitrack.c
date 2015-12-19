@@ -1473,8 +1473,8 @@ draw1:
         draw_block(mt,cr,NULL,mt->block_selected,-1,-1);
       }
 
-      if (is_audio_eventbox(eventbox)&&mt->avol_init_event!=NULL&&mt->aparam_view_list!=NULL)
-        draw_aparams(mt,eventbox,cr,mt->aparam_view_list,mt->avol_init_event,startx,width);
+      if (is_audio_eventbox(eventbox)&&mt->avol_init_event!=NULL&&mt->opts.aparam_view_list!=NULL)
+        draw_aparams(mt,eventbox,cr,mt->opts.aparam_view_list,mt->avol_init_event,startx,width);
 
       if (idlefunc>0) {
         mt->idlefunc=mt_idle_add(mt);
@@ -2026,7 +2026,7 @@ static int get_top_track_for(lives_mt *mt, int track) {
 
   LiVESWidget *eventbox;
   LiVESList *vdraw;
-  int extras=mt->max_disp_vtracks-1;
+  int extras=prefs->max_disp_vtracks-1;
   int hidden,expanded;
 
   if (mt->opts.back_audio_tracks>0&&mt->audio_draws==NULL) mt->opts.back_audio_tracks=0;
@@ -2123,7 +2123,7 @@ void scroll_tracks(lives_mt *mt, int top_track, boolean set_value) {
   int aud_tracks=0;
   int hidden;
 
-  lives_adjustment_set_page_size(LIVES_ADJUSTMENT(mt->vadjustment),(double)mt->max_disp_vtracks);
+  lives_adjustment_set_page_size(LIVES_ADJUSTMENT(mt->vadjustment),(double)prefs->max_disp_vtracks);
   lives_adjustment_set_upper(LIVES_ADJUSTMENT(mt->vadjustment),(double)(mt->num_video_tracks*2-1));
 
   if (set_value)
@@ -2174,7 +2174,7 @@ void scroll_tracks(lives_mt *mt, int top_track, boolean set_value) {
     lives_widget_destroy(mt->timeline_table);
   }
 
-  mt->timeline_table = lives_table_new(mt->max_disp_vtracks, 40, TRUE);
+  mt->timeline_table = lives_table_new(prefs->max_disp_vtracks, TIMELINE_TABLE_COLUMNS, TRUE);
   if (palette->style&STYLE_1) {
     lives_widget_set_bg_color(LIVES_WIDGET(mt->timeline_table), LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
   }
@@ -2260,7 +2260,7 @@ void scroll_tracks(lives_mt *mt, int top_track, boolean set_value) {
                            LIVES_GUI_CALLBACK(track_arrow_pressed),
                            (livespointer)mt);
 
-      lives_table_attach(LIVES_TABLE(mt->timeline_table), (LiVESWidget *)mt->audio_draws->data, 7, 40, 0, 1,
+      lives_table_attach(LIVES_TABLE(mt->timeline_table), (LiVESWidget *)mt->audio_draws->data, 7, TIMELINE_TABLE_COLUMNS, 0, 1,
                          (LiVESAttachOptions)(LIVES_EXPAND | LIVES_FILL),
                          (LiVESAttachOptions)(LIVES_FILL), 0, 0);
 
@@ -2280,7 +2280,7 @@ void scroll_tracks(lives_mt *mt, int top_track, boolean set_value) {
       if (expanded) {
         xeventbox=(LiVESWidget *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(mt->audio_draws->data),"achan0");
 
-        lives_table_attach(LIVES_TABLE(mt->timeline_table), xeventbox, 7, 40, 1, 2,
+        lives_table_attach(LIVES_TABLE(mt->timeline_table), xeventbox, 7, TIMELINE_TABLE_COLUMNS, 1, 2,
                            (LiVESAttachOptions)(LIVES_EXPAND | LIVES_FILL),
                            (LiVESAttachOptions)(LIVES_FILL), 0, 0);
 
@@ -2293,7 +2293,7 @@ void scroll_tracks(lives_mt *mt, int top_track, boolean set_value) {
         if (cfile->achans>1) {
           xeventbox=(LiVESWidget *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(mt->audio_draws->data),"achan1");
 
-          lives_table_attach(LIVES_TABLE(mt->timeline_table), xeventbox, 7, 40, 2, 3,
+          lives_table_attach(LIVES_TABLE(mt->timeline_table), xeventbox, 7, TIMELINE_TABLE_COLUMNS, 2, 3,
                              (LiVESAttachOptions)(LIVES_EXPAND | LIVES_FILL),
                              (LiVESAttachOptions)(LIVES_FILL), 0, 0);
 
@@ -2317,7 +2317,7 @@ void scroll_tracks(lives_mt *mt, int top_track, boolean set_value) {
 
   rows+=aud_tracks;
 
-  while (vdraws!=NULL&&rows<mt->max_disp_vtracks) {
+  while (vdraws!=NULL&&rows<prefs->max_disp_vtracks) {
     eventbox=(LiVESWidget *)vdraws->data;
 
     hidden=LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(eventbox),"hidden"))&TRACK_I_HIDDEN_USER;
@@ -2396,7 +2396,7 @@ void scroll_tracks(lives_mt *mt, int top_track, boolean set_value) {
       lives_widget_object_set_data(LIVES_WIDGET_OBJECT(eventbox),"arrow",arrow);
       lives_widget_object_set_data(LIVES_WIDGET_OBJECT(ahbox),"eventbox",eventbox);
 
-      lives_table_attach(LIVES_TABLE(mt->timeline_table), eventbox, 7, 40, rows, rows+1,
+      lives_table_attach(LIVES_TABLE(mt->timeline_table), eventbox, 7, TIMELINE_TABLE_COLUMNS, rows, rows+1,
                          (LiVESAttachOptions)(LIVES_EXPAND | LIVES_FILL),
                          (LiVESAttachOptions)(LIVES_FILL), 0, 0);
 
@@ -2432,7 +2432,7 @@ void scroll_tracks(lives_mt *mt, int top_track, boolean set_value) {
                            (livespointer)mt);
       rows++;
 
-      if (rows==mt->max_disp_vtracks) break;
+      if (rows==prefs->max_disp_vtracks) break;
 
 
       if (mt->opts.pertrack_audio&&lives_widget_object_get_data(LIVES_WIDGET_OBJECT(eventbox),"expanded")) {
@@ -2524,7 +2524,7 @@ void scroll_tracks(lives_mt *mt, int top_track, boolean set_value) {
                                LIVES_GUI_CALLBACK(track_arrow_pressed),
                                (livespointer)mt);
 
-          lives_table_attach(LIVES_TABLE(mt->timeline_table), aeventbox, 7, 40, rows, rows+1,
+          lives_table_attach(LIVES_TABLE(mt->timeline_table), aeventbox, 7, TIMELINE_TABLE_COLUMNS, rows, rows+1,
                              (LiVESAttachOptions)(LIVES_EXPAND | LIVES_FILL),
                              (LiVESAttachOptions)(LIVES_FILL), 0, 0);
 
@@ -2544,7 +2544,7 @@ void scroll_tracks(lives_mt *mt, int top_track, boolean set_value) {
 
           rows++;
 
-          if (rows==mt->max_disp_vtracks) break;
+          if (rows==prefs->max_disp_vtracks) break;
 
           if (expanded) {
             xeventbox=(LiVESWidget *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(aeventbox),"achan0");
@@ -2556,7 +2556,7 @@ void scroll_tracks(lives_mt *mt, int top_track, boolean set_value) {
                                              (double)((int)lives_adjustment_get_page_size(LIVES_ADJUSTMENT(mt->vadjustment))-1));
 
 
-              lives_table_attach(LIVES_TABLE(mt->timeline_table), xeventbox, 7, 40, rows, rows+1,
+              lives_table_attach(LIVES_TABLE(mt->timeline_table), xeventbox, 7, TIMELINE_TABLE_COLUMNS, rows, rows+1,
                                  (LiVESAttachOptions)(LIVES_EXPAND | LIVES_FILL),
                                  (LiVESAttachOptions)(LIVES_FILL), 0, 0);
 
@@ -2567,7 +2567,7 @@ void scroll_tracks(lives_mt *mt, int top_track, boolean set_value) {
                                    (livespointer)mt);
 
               rows++;
-              if (rows==mt->max_disp_vtracks) break;
+              if (rows==prefs->max_disp_vtracks) break;
             }
 
             if (cfile->achans>1) {
@@ -2579,7 +2579,7 @@ void scroll_tracks(lives_mt *mt, int top_track, boolean set_value) {
                 lives_adjustment_set_page_size(LIVES_ADJUSTMENT(mt->vadjustment),
                                                (double)((int)lives_adjustment_get_page_size(LIVES_ADJUSTMENT(mt->vadjustment))-1));
 
-                lives_table_attach(LIVES_TABLE(mt->timeline_table), xeventbox, 7, 40, rows, rows+1,
+                lives_table_attach(LIVES_TABLE(mt->timeline_table), xeventbox, 7, TIMELINE_TABLE_COLUMNS, rows, rows+1,
                                    (LiVESAttachOptions)(LIVES_EXPAND | LIVES_FILL),
                                    (LiVESAttachOptions)(LIVES_FILL), 0, 0);
 
@@ -2591,7 +2591,7 @@ void scroll_tracks(lives_mt *mt, int top_track, boolean set_value) {
 
 
                 rows++;
-                if (rows==mt->max_disp_vtracks) break;
+                if (rows==prefs->max_disp_vtracks) break;
 
               }
             }
@@ -4941,8 +4941,8 @@ void mt_aparam_view_toggled(LiVESMenuItem *menuitem, livespointer user_data) {
   register int i;
 
   if (lives_check_menu_item_get_active(LIVES_CHECK_MENU_ITEM(menuitem)))
-    mt->aparam_view_list=lives_list_append(mt->aparam_view_list,LIVES_INT_TO_POINTER(which));
-  else mt->aparam_view_list=lives_list_remove(mt->aparam_view_list,LIVES_INT_TO_POINTER(which));
+    mt->opts.aparam_view_list=lives_list_append(mt->opts.aparam_view_list,LIVES_INT_TO_POINTER(which));
+  else mt->opts.aparam_view_list=lives_list_remove(mt->opts.aparam_view_list,LIVES_INT_TO_POINTER(which));
   for (i=0; i<lives_list_length(mt->audio_draws); i++) {
     lives_widget_queue_draw((LiVESWidget *)lives_list_nth_data(mt->audio_draws,i));
   }
@@ -4975,9 +4975,9 @@ void add_aparam_menuitems(lives_mt *mt) {
     lives_widget_hide(mt->render_vid);
     lives_widget_hide(mt->render_sep);
 
-    if (mt->aparam_view_list!=NULL) {
-      lives_list_free(mt->aparam_view_list);
-      mt->aparam_view_list=NULL;
+    if (mt->opts.aparam_view_list!=NULL&&mainw->multi_opts.aparam_view_list==NULL) {
+      lives_list_free(mt->opts.aparam_view_list);
+      mt->opts.aparam_view_list=NULL;
     }
     return;
   }
@@ -5000,7 +5000,7 @@ void add_aparam_menuitems(lives_mt *mt) {
     // TODO - check rfx->params[i].multi
     if ((rfx->params[i].hidden|HIDDEN_MULTI)==HIDDEN_MULTI&&rfx->params[i].type==LIVES_PARAM_NUM) {
       menuitem = lives_check_menu_item_new_with_label(rfx->params[i].name);
-      if (mt->aparam_view_list!=NULL&&lives_list_find(mt->aparam_view_list,LIVES_INT_TO_POINTER(i)))
+      if (mt->opts.aparam_view_list!=NULL&&lives_list_find(mt->opts.aparam_view_list,LIVES_INT_TO_POINTER(i)))
         lives_check_menu_item_set_active(LIVES_CHECK_MENU_ITEM(menuitem),TRUE);
       else lives_check_menu_item_set_active(LIVES_CHECK_MENU_ITEM(menuitem),FALSE);
       lives_container_add(LIVES_CONTAINER(mt->aparam_submenu), menuitem);
@@ -5034,7 +5034,7 @@ static void apply_avol_filter(lives_mt *mt) {
 
   if (new_end_event==NULL&&init_event!=NULL) {
     remove_filter_from_event_list(mt->event_list,init_event);
-    if (mt->aparam_view_list!=NULL) {
+    if (mt->opts.aparam_view_list!=NULL) {
       for (i=0; i<lives_list_length(mt->audio_draws); i++) {
         lives_widget_queue_draw((LiVESWidget *)lives_list_nth_data(mt->audio_draws,i));
       }
@@ -5092,7 +5092,7 @@ static void apply_avol_filter(lives_mt *mt) {
 
     mt->did_backup=did_backup;
 
-    if (mt->aparam_view_list!=NULL) {
+    if (mt->opts.aparam_view_list!=NULL) {
       for (i=0; i<lives_list_length(mt->audio_draws); i++) {
         lives_widget_queue_draw((LiVESWidget *)lives_list_nth_data(mt->audio_draws,i));
       }
@@ -5109,7 +5109,7 @@ static void apply_avol_filter(lives_mt *mt) {
 
   move_filter_deinit_event(mt->event_list,new_tc,deinit_event,mt->fps,FALSE);
 
-  if (mt->aparam_view_list!=NULL) {
+  if (mt->opts.aparam_view_list!=NULL) {
     for (i=0; i<lives_list_length(mt->audio_draws); i++) {
       lives_widget_queue_draw((LiVESWidget *)lives_list_nth_data(mt->audio_draws,i));
     }
@@ -6075,6 +6075,7 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
     mt->opts.autocross_audio=mainw->multi_opts.autocross_audio;
     mt->opts.render_audp=mainw->multi_opts.render_audp;
     mt->opts.normalise_audp=mainw->multi_opts.normalise_audp;
+    mt->opts.aparam_view_list=mainw->multi_opts.aparam_view_list;
   } else {
     mt->opts.move_effects=TRUE;
     mt->opts.fx_auto_preview=TRUE;
@@ -6089,6 +6090,7 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
     mt->opts.autocross_audio=TRUE;
     mt->opts.render_audp=TRUE;
     mt->opts.normalise_audp=TRUE;
+    mt->opts.aparam_view_list=NULL;
   }
 
   mt->opts.insert_audio=TRUE;
@@ -6117,7 +6119,6 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
   mt->is_rendering=FALSE;
   mt->pr_audio=FALSE;
   mt->selected_tracks=NULL;
-  mt->max_disp_vtracks=MAX_DISP_VTRACKS;
   mt->mt_frame_preview=FALSE;
   mt->current_rfx=NULL;
   mt->current_fx=-1;
@@ -6190,8 +6191,6 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
                                      mainw->fx_candidates[FX_CANDIDATE_AUDIO_VOL].delegate));
   } else mt->avol_fx=-1;
   mt->avol_init_event=NULL;
-
-  mt->aparam_view_list=NULL;
 
   if (prefs->mt_enter_prompt&&rdet!=NULL) {
     mt->user_width=rdet->width;
@@ -8925,7 +8924,7 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
   lives_container_add(LIVES_CONTAINER(mt->vpaned), tl_vbox);
 
 
-  mt->timeline_table_header = lives_table_new(2, 40, TRUE);
+  mt->timeline_table_header = lives_table_new(2, TIMELINE_TABLE_COLUMNS, TRUE);
   lives_table_set_row_spacings(LIVES_TABLE(mt->timeline_table_header),0);
 
   eventbox=lives_event_box_new();
@@ -8965,7 +8964,7 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
 
   lives_box_pack_start(LIVES_BOX(tl_vbox), mt->tl_hbox, TRUE, TRUE, widget_opts.packing_height>>1);
 
-  mt->vadjustment = (LiVESObject *)lives_adjustment_new(0.0,0.0,1.0,1.0,mt->max_disp_vtracks,1.0);
+  mt->vadjustment = (LiVESObject *)lives_adjustment_new(0.0,0.0,1.0,1.0,prefs->max_disp_vtracks,1.0);
   mt->scrollbar=lives_vscrollbar_new(LIVES_ADJUSTMENT(mt->vadjustment));
 
   lives_signal_connect_after(LIVES_GUI_OBJECT(mt->scrollbar), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
@@ -9425,6 +9424,7 @@ boolean multitrack_delete(lives_mt *mt, boolean save_layout) {
 
   mainw->multi_opts.render_audp=mt->opts.render_audp;
   mainw->multi_opts.normalise_audp=mt->opts.normalise_audp;
+  mainw->multi_opts.aparam_view_list=mt->opts.aparam_view_list;
 
   if (mt->poly_state==POLY_PARAMS) polymorph(mt,POLY_CLIPS);
 
@@ -9433,8 +9433,6 @@ boolean multitrack_delete(lives_mt *mt, boolean save_layout) {
   if (mt->undos!=NULL) lives_list_free(mt->undos);
 
   if (mt->selected_tracks!=NULL) lives_list_free(mt->selected_tracks);
-
-  if (mt->aparam_view_list!=NULL) lives_list_free(mt->aparam_view_list);
 
   if (mainw->event_list==mt->event_list) mainw->event_list=NULL;
   if (mt->event_list!=NULL) event_list_free(mt->event_list);
@@ -9902,7 +9900,7 @@ void mt_init_tracks(lives_mt *mt, boolean set_min_max) {
                        (LiVESAttachOptions)(LIVES_EXPAND | LIVES_FILL),
                        (LiVESAttachOptions)(LIVES_FILL), 0, 0);
 
-    lives_table_attach(LIVES_TABLE(mt->timeline_table_header), mt->timeline_eb, 7, 40, 0, 1,
+    lives_table_attach(LIVES_TABLE(mt->timeline_table_header), mt->timeline_eb, 7, TIMELINE_TABLE_COLUMNS, 0, 1,
                        (LiVESAttachOptions)(LIVES_EXPAND | LIVES_FILL),
                        (LiVESAttachOptions)(LIVES_FILL), 0, 0);
 
@@ -9912,7 +9910,7 @@ void mt_init_tracks(lives_mt *mt, boolean set_min_max) {
                        (LiVESAttachOptions)(LIVES_EXPAND | LIVES_FILL),
                        (LiVESAttachOptions)(LIVES_FILL), 0, 0);
 
-    lives_table_attach(LIVES_TABLE(mt->timeline_table_header), mt->timeline_reg, 7, 40, 1, 2,
+    lives_table_attach(LIVES_TABLE(mt->timeline_table_header), mt->timeline_reg, 7, TIMELINE_TABLE_COLUMNS, 1, 2,
                        (LiVESAttachOptions)(LIVES_EXPAND | LIVES_FILL),
                        (LiVESAttachOptions)(LIVES_FILL), 0, 0);
   }
@@ -10279,7 +10277,7 @@ LiVESWidget *add_audio_track(lives_mt *mt, int track, boolean behind) {
   LiVESWidget *vbox;
   LiVESWidget *audio_draw=lives_event_box_new();
   char *pname,*tname;
-  int max_disp_vtracks=mt->max_disp_vtracks-1;
+  int max_disp_vtracks=prefs->max_disp_vtracks-1;
   int llen,vol=0;
   int nachans=0;
   int i;
@@ -10470,7 +10468,7 @@ static int add_video_track(lives_mt *mt, boolean behind) {
   LiVESWidget *aeventbox; // each track has optionally an associated audio track, which we store in LiVESList *audio_draws
   int i;
   LiVESList *liste;
-  int max_disp_vtracks=mt->max_disp_vtracks;
+  int max_disp_vtracks=prefs->max_disp_vtracks;
   char *tmp;
 
   if (mt->audio_draws!=NULL&&mt->audio_draws->data!=NULL&&mt->opts.back_audio_tracks>0&&
@@ -15191,7 +15189,7 @@ void multitrack_undo(LiVESMenuItem *menuitem, livespointer user_data) {
       vlist=vlist->next;
     }
 
-    aparam_view_list=lives_list_copy(mt->aparam_view_list);
+    aparam_view_list=lives_list_copy(mt->opts.aparam_view_list);
     avol_fx=mt->avol_fx;
     mt->avol_fx=-1;
 
@@ -15232,7 +15230,7 @@ void multitrack_undo(LiVESMenuItem *menuitem, livespointer user_data) {
     mt_init_tracks(mt,FALSE);
 
     if (mt->avol_fx==-1) mt->avol_fx=avol_fx;
-    if (mt->avol_fx!=-1) mt->aparam_view_list=lives_list_copy(aparam_view_list);
+    if (mt->avol_fx!=-1) mt->opts.aparam_view_list=lives_list_copy(aparam_view_list);
     if (aparam_view_list!=NULL) lives_list_free(aparam_view_list);
 
     add_aparam_menuitems(mt);
@@ -15380,7 +15378,7 @@ void multitrack_redo(LiVESMenuItem *menuitem, livespointer user_data) {
       vlist=vlist->next;
     }
 
-    aparam_view_list=lives_list_copy(mt->aparam_view_list);
+    aparam_view_list=lives_list_copy(mt->opts.aparam_view_list);
     avol_fx=mt->avol_fx;
     mt->avol_fx=-1;
 
@@ -15420,7 +15418,7 @@ void multitrack_redo(LiVESMenuItem *menuitem, livespointer user_data) {
     mt_init_tracks(mt,FALSE);
 
     if (mt->avol_fx==avol_fx) {
-      mt->aparam_view_list=lives_list_copy(aparam_view_list);
+      mt->opts.aparam_view_list=lives_list_copy(aparam_view_list);
     }
     if (aparam_view_list!=NULL) lives_list_free(aparam_view_list);
 
@@ -18985,7 +18983,7 @@ void on_del_node_clicked(LiVESWidget *button, livespointer user_data) {
   }
   lives_free(in_params);
 
-  if (mt->current_fx==mt->avol_fx&&mt->avol_init_event!=NULL&&mt->aparam_view_list!=NULL) {
+  if (mt->current_fx==mt->avol_fx&&mt->avol_init_event!=NULL&&mt->opts.aparam_view_list!=NULL) {
     LiVESList *slist=mt->audio_draws;
     while (slist!=NULL) {
       lives_widget_queue_draw((LiVESWidget *)slist->data);
@@ -19213,7 +19211,7 @@ void on_set_pvals_clicked(LiVESWidget *button, livespointer user_data) {
 
   lives_widget_set_sensitive(mt->del_node_button,TRUE);
 
-  if (mt->current_fx==mt->avol_fx&&mt->avol_init_event!=NULL&&mt->aparam_view_list!=NULL) {
+  if (mt->current_fx==mt->avol_fx&&mt->avol_init_event!=NULL&&mt->opts.aparam_view_list!=NULL) {
     LiVESList *slist=mt->audio_draws;
     while (slist!=NULL) {
       lives_widget_queue_draw((LiVESWidget *)slist->data);
@@ -21536,10 +21534,11 @@ weed_plant_t *load_event_list(lives_mt *mt, char *eload_file) {
                                      mainw->fx_candidates[FX_CANDIDATE_AUDIO_VOL].delegate));
   }
 
-  if (mt->avol_fx!=old_avol_fx&&mt->aparam_view_list!=NULL) {
+  if (mt->avol_fx!=old_avol_fx&&mt->opts.aparam_view_list!=NULL) {
     // audio volume effect changed, so we reset which parameters are viewed
-    lives_list_free(mt->aparam_view_list);
-    mt->aparam_view_list=NULL;
+    lives_list_free(mt->opts.aparam_view_list);
+    mt->opts.aparam_view_list=NULL;
+    g_print("pt AA\n");
   }
 
   if (event_list!=NULL) {
@@ -22008,7 +22007,8 @@ LiVESList *layout_audio_is_affected(int clipno, double time) {
 void mt_change_disp_tracks_ok(LiVESButton *button, livespointer user_data) {
   lives_mt *mt=(lives_mt *)user_data;
   lives_general_button_clicked(button,NULL);
-  mt->max_disp_vtracks=mainw->fx1_val;
+  prefs->max_disp_vtracks=mainw->fx1_val;
+  set_int_pref("max_disp_vtracks",prefs->max_disp_vtracks);
   scroll_tracks(mt,mt->top_track,FALSE);
 }
 
@@ -22024,7 +22024,7 @@ void mt_change_max_disp_tracks(LiVESMenuItem *menuitem, livespointer user_data) 
   LiVESWidget *dialog;
   lives_mt *mt=(lives_mt *)user_data;
 
-  mainw->fx1_val=mt->max_disp_vtracks;
+  mainw->fx1_val=prefs->max_disp_vtracks;
   dialog=create_cdtrack_dialog(3,mt);
   lives_widget_show(dialog);
 

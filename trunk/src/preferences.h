@@ -399,7 +399,6 @@ typedef struct {
   LiVESWidget *vbox_right_effects;
   LiVESWidget *table_right_directories;
   LiVESWidget *vbox_right_warnings;
-  //  LiVESWidget *vbox_right_warnings_outer;
   LiVESWidget *vbox_right_misc;
   LiVESWidget *vbox_right_themes;
   LiVESWidget *vbox_right_net;

@@ -1,8 +1,10 @@
-Version 2.4.6
--------------
-Fix crashes with gtk+ >= 3.16
+Version 2.4.6 (19 December 2015)
+--------------------------------
+Fix crashes and compatibility issues with gtk+ >= 3.16
 Fix a bug with missing clips when reloading layouts.
+Minor GUI improvements.
 Minor compilation fixes.
+Updates to French translation (thanks Jean-Marc).
 
 
 

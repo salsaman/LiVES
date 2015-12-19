@@ -1162,6 +1162,7 @@ static void lives_init(_ign_opts *ign_opts) {
     prefs->no_bandwidth=FALSE;
     prefs->ocp=get_int_pref("open_compression_percent");
 
+    lives_color_parse("black", &palette->black);
     lives_widget_color_copy(&palette->fade_colour,&palette->black);
 
     // we set the theme here in case it got reset to 'none'

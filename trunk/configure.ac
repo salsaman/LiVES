@@ -5,7 +5,7 @@ ifdef([m4_pattern_allow],
       [m4_pattern_allow([^AC_.*])])
 
 dnl IMPORTANT !! $version must also be set to exactly the same string in smogrify
-AC_INIT(LiVES,2.4.6,https://sourceforge.net/p/lives/bugs/)
+AC_INIT(LiVES,2.4.7-svn,https://sourceforge.net/p/lives/bugs/)
 
 AC_CANONICAL_HOST
 AC_CANONICAL_TARGET
@@ -373,10 +373,11 @@ AM_CONDITIONAL(ENABLE_GIW,$HAVE_GIW)
 
 
 HAVE_SDL=false
+HAVE_SDL2=false
 FORCE_SDL=false
 TRY_SDL=true
 
-AC_ARG_ENABLE( sdl, [  --enable-sdl             Enable SDL playback plugin support without checking for it.] , force_sdl=yes)
+AC_ARG_ENABLE( sdl, [  --enable-sdl             Enable SDL1.x playback plugin support without checking for it.] , force_sdl=yes)
 
 
 AC_ARG_ENABLE(sdl,
@@ -389,6 +390,11 @@ TRY_SDL=false
 
 if test "x$force_sdl" != "xyes" ; then
 if test "$TRY_SDL" != "false" ; then
+
+dnl SDL2 does not work well, skip it
+dnl PKG_CHECK_MODULES(SDL2,sdl2 >= 1.2,HAVE_SDL2=true,HAVE_SDL2=false)
+
+if test "$HAVE_SDL2" = "false"; then
 
 dnl check for SDL
 
@@ -409,16 +415,8 @@ dnl check for SDL
 dnl if AM_PATH_SDL fails, try pkg-config
 PKG_CHECK_MODULES(SDL,sdl >= 1.2,HAVE_SDL=true,HAVE_SDL=false)
 
-
-if test "$HAVE_SDL" != "true"; then
-echo
-echo "*******************************************************************"
-echo You are compiling LiVES without \(optional\) SDL support.
-echo It is recommended that you install the libSDL development  
-echo package and run autoconf again before compiling LiVES.
-echo "*******************************************************************"
-echo
 fi
+
 
 ])
 
@@ -434,7 +432,12 @@ AC_SUBST(SDL_LIBS)
 AC_SUBST(SDL_CFLAGS)
 AC_SUBST(SDL_PREFIX)
 
+AC_SUBST(SDL2_LIBS)
+AC_SUBST(SDL2_CFLAGS)
+AC_SUBST(SDL2_PREFIX)
+
 AM_CONDITIONAL(HAVE_SDL,$HAVE_SDL)
+AM_CONDITIONAL(HAVE_SDL2,$HAVE_SDL2)
 AM_CONDITIONAL(FORCE_SDL,$FORCE_SDL)
 
 

@@ -1363,9 +1363,13 @@ LIVES_INLINE LiVESWidget *lives_dialog_get_content_area(LiVESDialog *dialog) {
 LIVES_INLINE LiVESWidget *lives_dialog_get_action_area(LiVESDialog *dialog) {
 #ifdef GUI_GTK
 #if GTK_CHECK_VERSION(2,14,0)
+#ifdef G_GNUC_BEGIN_IGNORE_DEPRECATIONS
   G_GNUC_BEGIN_IGNORE_DEPRECATIONS
+#endif
   return gtk_dialog_get_action_area(LIVES_DIALOG(dialog));
+#ifdef G_GNUC_END_IGNORE_DEPRECATIONS
   G_GNUC_END_IGNORE_DEPRECATIONS
+#endif
 #else
   return LIVES_DIALOG(dialog)->vbox;
 #endif

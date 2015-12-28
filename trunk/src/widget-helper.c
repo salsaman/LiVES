@@ -978,17 +978,24 @@ LIVES_INLINE boolean lives_widget_set_bg_color(LiVESWidget *widget, LiVESWidgetS
     default:
       state_str="";
     }
-    wname=g_strdup_printf("#%s%s",widget_name,state_str);
+    
+    if (GTK_IS_NOTEBOOK(widget)) wname=g_strdup_printf("#%s tab",widget_name);
+    else wname=g_strdup_printf("#%s%s",widget_name,state_str);
 
 #ifdef GTK_TEXT_VIEW_CSS_BUG
   }
 #endif
+
+
   css_string=g_strdup_printf(" %s {\n background-color: %s;\n }\n }\n",wname,colref);
 
   gtk_css_provider_load_from_data(GTK_CSS_PROVIDER(provider),
                                   css_string,
                                   -1, NULL);
 
+
+
+  
   g_free(colref);
   g_free(widget_name);
   g_free(wname);
@@ -1039,10 +1046,16 @@ LIVES_INLINE boolean lives_widget_set_fg_color(LiVESWidget *widget, LiVESWidgetS
 
 #ifdef GTK_TEXT_VIEW_CSS_BUG
   if (GTK_IS_TEXT_VIEW(widget)) wname=g_strdup("GtkTextView");
-  else
+  else {
 #endif
+    if (GTK_IS_NOTEBOOK(widget)) wname=g_strdup_printf("#%s tab",widget_name);
     wname=g_strdup_printf("#%s",widget_name);
 
+
+#ifdef GTK_TEXT_VIEW_CSS_BUG
+  }
+#endif
+  
   css_string=g_strdup_printf(" %s {\n color: %s;\n }\n }\n",wname,colref);
 
   gtk_css_provider_load_from_data(GTK_CSS_PROVIDER(provider),
@@ -5110,7 +5123,7 @@ LIVES_INLINE LiVESTreeStore *lives_tree_store_new(int ncols, ...) {
     GType types[ncols];
     register int i;
     for (i=0; i<ncols; i++) {
-      types[i]=va_arg(argList,int);
+      types[i]=va_arg(argList, long unsigned int);
     }
     tstore=gtk_tree_store_newv(ncols,types);
   }
@@ -5122,7 +5135,7 @@ LIVES_INLINE LiVESTreeStore *lives_tree_store_new(int ncols, ...) {
     int types[ncols];
 
     for (int i=0; i < ncols; i++) {
-      types[i]=va_arg(argList, int);
+      types[i]=va_arg(argList, long unsigned int);
     }
 
     tstore = new LiVESTreeStore(ncols, types);
@@ -5176,7 +5189,7 @@ LIVES_INLINE boolean lives_tree_store_set(LiVESTreeStore *tstore, LiVESTreeIter 
   QVariant qv;
 
   while (1) {
-    int colnum = va_arg(argList, int);
+    int colnum = va_arg(argList, long unsigned int);
     if (colnum == -1) break;
 
     int coltype = tstore->get_coltype(colnum);
@@ -5440,7 +5453,7 @@ LIVES_INLINE LiVESListStore *lives_list_store_new(int ncols, ...) {
     GType types[ncols];
     register int i;
     for (i=0; i<ncols; i++) {
-      types[i]=va_arg(argList,int);
+      types[i]=va_arg(argList, long unsigned int);
     }
     lstore=gtk_list_store_newv(ncols,types);
   }
@@ -5452,7 +5465,7 @@ LIVES_INLINE LiVESListStore *lives_list_store_new(int ncols, ...) {
     int types[ncols];
 
     for (int i=0; i < ncols; i++) {
-      types[i]=va_arg(argList, int);
+      types[i]=va_arg(argList, long unsigned int);
     }
 
     lstore = new LiVESListStore(ncols, types);
@@ -5485,7 +5498,7 @@ LIVES_INLINE boolean lives_list_store_set(LiVESListStore *lstore, LiVESTreeIter 
 
     // types may be STRING, INT, (BOOLEAN, UINT, PIXBUF)
     if (coltype == LIVES_COL_TYPE_INT) {
-      int iattr = va_arg(argList, int);
+      int iattr = va_arg(argList, long unsigned int);
       qv = QVariant::fromValue(iattr);
       titer->setData(colnum, Qt::DisplayRole, qv);
     }

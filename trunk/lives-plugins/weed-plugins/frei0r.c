@@ -78,7 +78,7 @@ typedef void (*f0r_get_param_value_f)(f0r_instance_t *instance, f0r_param_t *par
 #endif
 
 
-static void getenv_piece(char *target, size_t tlen, char *envvar, int num) {
+static int getenv_piece(char *target, size_t tlen, char *envvar, int num) {
   // get num piece from envvar path and set in target
   char *str1;
   memset(target,0,1);
@@ -96,7 +96,9 @@ static void getenv_piece(char *target, size_t tlen, char *envvar, int num) {
   }
 
   if (str1!=NULL) snprintf(target,tlen,"%s",str1);
-
+  else return 0;
+  return 1;
+  
 }
 
 ////////////////////////////////////////////////////////////////
@@ -370,15 +372,20 @@ weed_plant_t *weed_setup(weed_bootstrap_f weed_boot) {
       }
 
       if (vdirval>9) {
-        getenv_piece(vdir1,PATH_MAX,fpp,vdirval-10);
-        if (!strlen(vdir1)||vdir1==NULL) {
+        if (!getenv_piece(vdir1,PATH_MAX,fpp,vdirval-10)) {
           vdirval=6;
           break;
         }
+
+	if (!strlen(vdir1)) {
+	  vdirval++;
+	  continue;
+	}
+	
         curvdir=opendir(vdir1);
         if (curvdir==NULL) {
-          vdirval=6;
-          break;
+	  vdirval++;
+	  continue;
         }
       }
 

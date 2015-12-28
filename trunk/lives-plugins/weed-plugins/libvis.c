@@ -46,6 +46,10 @@ static int package_version=2; // version of this package
 
 #include <stdlib.h>
 
+#include <sys/types.h>
+#include <dirent.h>
+#include <string.h>
+
 #include <libvisual/lv_actor.h>
 #include <libvisual/lv_input.h>
 #include <libvisual/lv_libvisual.h>
@@ -276,8 +280,14 @@ weed_plant_t *weed_setup(weed_bootstrap_f weed_boot) {
     weed_plant_t *in_params[2];
     const char *listeners[]= {"None","Alsa","ESD","Jack","Mplayer","Auto",NULL};
 
+    DIR *curvdir;
+
     weed_plant_t *in_chantmpls[]= {weed_audio_channel_template_init("In audio",0),NULL};
 
+    char *lpp=getenv("VISUAL_PLUGIN_PATH");
+
+    char *vdir;
+    
     // set hints for host
     weed_set_int_value(in_chantmpls[0],"audio_channels",2);
     weed_set_int_value(in_chantmpls[0],"audio_rate",44100);
@@ -297,6 +307,23 @@ weed_plant_t *weed_setup(weed_bootstrap_f weed_boot) {
       return NULL;
     }
 
+    vdir = strtok(lpp, ":");
+
+    // add lpp paths
+    while (vdir!=NULL) {
+      if (!strlen(vdir)) continue;
+      
+      curvdir=opendir(vdir);
+      if (curvdir==NULL) {
+	continue;
+      }
+
+      visual_init_path_add(vdir);
+      closedir(curvdir);
+      vdir = strtok(NULL, ":");
+    }
+
+    
     in_params[1]=NULL;
     out_chantmpls[1]=NULL;
 

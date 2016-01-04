@@ -978,7 +978,7 @@ LIVES_INLINE boolean lives_widget_set_bg_color(LiVESWidget *widget, LiVESWidgetS
     default:
       state_str="";
     }
-    
+
     if (GTK_IS_NOTEBOOK(widget)) wname=g_strdup_printf("#%s tab",widget_name);
     else wname=g_strdup_printf("#%s%s",widget_name,state_str);
 
@@ -995,7 +995,7 @@ LIVES_INLINE boolean lives_widget_set_bg_color(LiVESWidget *widget, LiVESWidgetS
 
 
 
-  
+
   g_free(colref);
   g_free(widget_name);
   g_free(wname);
@@ -1055,7 +1055,7 @@ LIVES_INLINE boolean lives_widget_set_fg_color(LiVESWidget *widget, LiVESWidgetS
 #ifdef GTK_TEXT_VIEW_CSS_BUG
   }
 #endif
-  
+
   css_string=g_strdup_printf(" %s {\n color: %s;\n }\n }\n",wname,colref);
 
   gtk_css_provider_load_from_data(GTK_CSS_PROVIDER(provider),

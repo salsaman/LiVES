@@ -11558,6 +11558,10 @@ boolean on_ins_silence_activate(LiVESMenuItem *menuitem, livespointer user_data)
   boolean has_lmap_error=FALSE;
   boolean has_new_audio=FALSE;
 
+  if (!cfile->achans) {
+    has_new_audio=TRUE;
+  }
+
   if (menuitem==NULL) {
     // redo
     start=cfile->undo1_dbl;
@@ -11580,7 +11584,11 @@ boolean on_ins_silence_activate(LiVESMenuItem *menuitem, livespointer user_data)
       mainw->error=FALSE;
       return FALSE;
     }
-    has_new_audio=TRUE;
+
+    cfile->undo_arate=cfile->arate;
+    cfile->undo_signed_endian=cfile->signed_endian;
+    cfile->undo_achans=cfile->achans;
+    cfile->undo_asampsize=cfile->asampsize;
   }
 
 
@@ -11658,7 +11666,12 @@ boolean on_ins_silence_activate(LiVESMenuItem *menuitem, livespointer user_data)
     return FALSE;
   }
 
-
+  if (has_new_audio) {
+    cfile->arate=cfile->arps=cfile->undo_arate;
+    cfile->signed_endian=cfile->undo_signed_endian;
+    cfile->achans=cfile->undo_achans;
+    cfile->asampsize=cfile->undo_asampsize;
+  }
 
   set_undoable(_("Insert Silence"),TRUE);
   cfile->undo_action=UNDO_INSERT_SILENCE;

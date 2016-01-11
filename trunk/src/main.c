@@ -6926,6 +6926,9 @@ void load_frame_image(int frame) {
 
     set_sel_label(mainw->sel_label);
 
+    lives_widget_show(mainw->hruler);
+    lives_widget_show(mainw->eventbox5);
+
     lives_widget_show(mainw->vidbar);
     lives_widget_show(mainw->laudbar);
 

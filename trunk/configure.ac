@@ -115,6 +115,11 @@ if test "x$GCC" = "xyes"; then
 fi
 changequote([,])dnl
 
+if test "$GXX" = ""; then
+   AC_MSG_ERROR([A C++ compiler is required to compile some plugins.])
+fi
+
+echo "C++ compiler is $CXX"
 
 dnl Check of -ldl
 AC_CHECK_LIB(dl,open)

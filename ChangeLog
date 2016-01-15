@@ -1,3 +1,22 @@
+Version 2.4.7
+-------------
+Fix regression in "Insert Silence".
+Fix background colour for notebook tabs in multitack (gtk+ 3.x)
+Fix crash when entering Preferences dialog (GType error).
+Reshow timeline after hiding it.
+Tested support for SDL 2.x (does not work)
+Trivial compiler fix for gtk+ 2.x
+
+
+
+
+
+
+
+
+
+
+
 Version 2.4.6 (19 December 2015)
 --------------------------------
 Fix crashes and compatibility issues with gtk+ >= 3.16

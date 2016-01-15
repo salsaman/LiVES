@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: lives\n"
 "Report-Msgid-Bugs-To: https://sourceforge.net/p/lives/bugs/\n"
-"POT-Creation-Date: 2015-12-19 08:17-0300\n"
+"POT-Creation-Date: 2015-12-23 02:51-0300\n"
 "PO-Revision-Date: 2013-12-13 17:20+0000\n"
 "Last-Translator: Yuri Chornoivan <yurchor@gmail.com>\n"
 "Language-Team: Ukrainian <translation@linux.org.ua>\n"
@@ -152,23 +152,23 @@ msgstr "Передній план"
 msgid "Background"
 msgstr "Тло"
 
-#: src/main.c:1644
+#: src/main.c:1645
 msgid "Loading realtime effect plugins..."
 msgstr "Завантаження додатків ефектів реального часу…"
 
-#: src/main.c:1710
+#: src/main.c:1711
 msgid "Starting jack audio server..."
 msgstr "Запуск звукового сервера jack…"
 
-#: src/main.c:1712
+#: src/main.c:1713
 msgid "Starting jack transport server..."
 msgstr "Запуск сервера передавання даних jack…"
 
-#: src/main.c:1713
+#: src/main.c:1714
 msgid "Connecting to jack transport server..."
 msgstr "Встановлення з’єднання з сервером передавання даних jack…"
 
-#: src/main.c:1743
+#: src/main.c:1744
 #, c-format
 msgid ""
 "\n"
@@ -187,126 +187,126 @@ msgstr ""
 "\n"
 "Alternatively, try to start lives with either \"lives -jackopts 16\", or "
 
-#: src/main.c:1778
+#: src/main.c:1779
 msgid "Starting pulse audio server..."
 msgstr "Запуск звукового сервера PulseAudio…"
 
-#: src/main.c:1845
+#: src/main.c:1846
 msgid "Checking optional dependencies:"
 msgstr "Пошук додаткових залежностей:"
 
-#: src/main.c:1846
+#: src/main.c:1847
 msgid "mplayer...detected..."
 msgstr "mplayer… виявлено…"
 
-#: src/main.c:1847
+#: src/main.c:1848
 msgid "mplayer...NOT DETECTED..."
 msgstr "mplayer…НЕ ВИЯВЛЕНО…"
 
-#: src/main.c:1848
+#: src/main.c:1849
 #, fuzzy
 msgid "mplayer2...detected..."
 msgstr "mplayer… виявлено…"
 
-#: src/main.c:1849
+#: src/main.c:1850
 #, fuzzy
 msgid "mplayer2...NOT DETECTED..."
 msgstr "mplayer…НЕ ВИЯВЛЕНО…"
 
-#: src/main.c:1851
+#: src/main.c:1852
 #, fuzzy
 msgid "mpv...detected..."
 msgstr "mplayer… виявлено…"
 
-#: src/main.c:1852
+#: src/main.c:1853
 #, fuzzy
 msgid "mpv...NOT DETECTED..."
 msgstr "mplayer…НЕ ВИЯВЛЕНО…"
 
-#: src/main.c:1854
+#: src/main.c:1855
 msgid "convert...detected..."
 msgstr "convert…виявлено…"
 
-#: src/main.c:1855
+#: src/main.c:1856
 msgid "convert...NOT DETECTED..."
 msgstr "convert...НЕ ВИЯВЛЕНО…"
 
-#: src/main.c:1856
+#: src/main.c:1857
 msgid "composite...detected..."
 msgstr "composite…виявлено…"
 
-#: src/main.c:1857
+#: src/main.c:1858
 msgid "composite...NOT DETECTED..."
 msgstr "composite…НЕ ВИЯВЛЕНО…"
 
-#: src/main.c:1858
+#: src/main.c:1859
 msgid "sox...detected\n"
 msgstr "sox…виявлено\n"
 
-#: src/main.c:1859
+#: src/main.c:1860
 msgid "sox...NOT DETECTED\n"
 msgstr "sox…НЕ ВИЯВЛЕНО\n"
 
-#: src/main.c:1860
+#: src/main.c:1861
 #, fuzzy
 msgid "cdda2wav/icedax...detected..."
 msgstr "cdda2wav...виявлено..."
 
-#: src/main.c:1861
+#: src/main.c:1862
 #, fuzzy
 msgid "cdda2wav/icedax...NOT DETECTED..."
 msgstr "cdda2wav...НЕ ВИЯВЛЕНО..."
 
-#: src/main.c:1862
+#: src/main.c:1863
 msgid "jackd...detected..."
 msgstr "jackd…виявлено…"
 
-#: src/main.c:1863
+#: src/main.c:1864
 msgid "jackd...NOT DETECTED..."
 msgstr "jackd…НЕ ВИЯВЛЕНО…"
 
-#: src/main.c:1864
+#: src/main.c:1865
 msgid "pulse audio...detected..."
 msgstr "pulse audio…виявлено…"
 
-#: src/main.c:1865
+#: src/main.c:1866
 msgid "pulse audio...NOT DETECTED..."
 msgstr "pulse audio…НЕ ВИЯВЛЕНО…"
 
-#: src/main.c:1866
+#: src/main.c:1867
 msgid "python...detected..."
 msgstr "python…виявлено…"
 
-#: src/main.c:1867
+#: src/main.c:1868
 msgid "python...NOT DETECTED..."
 msgstr "python…НЕ ВИЯВЛЕНО…"
 
-#: src/main.c:1868
+#: src/main.c:1869
 msgid "dvgrab...detected..."
 msgstr "dvgrab…виявлено…"
 
-#: src/main.c:1869
+#: src/main.c:1870
 msgid "dvgrab...NOT DETECTED..."
 msgstr "dvgrab…НЕ ВИЯВЛЕНО…"
 
-#: src/main.c:1870
+#: src/main.c:1871
 msgid "xwininfo...detected..."
 msgstr "xwininfo…виявлено…"
 
-#: src/main.c:1871
+#: src/main.c:1872
 msgid "xwininfo...NOT DETECTED..."
 msgstr "xwininfo…НЕ ВИЯВЛЕНО…"
 
-#: src/main.c:1877
+#: src/main.c:1878
 #, c-format
 msgid "Windows version %04X"
 msgstr "Версія Windows %04X"
 
-#: src/main.c:1879
+#: src/main.c:1880
 msgid "UNKNOWN - please patch me !"
 msgstr "НЕВІДОМИЙ — будь ласка, накладіть латку!"
 
-#: src/main.c:1883
+#: src/main.c:1884
 #, c-format
 msgid ""
 "\n"
@@ -317,48 +317,48 @@ msgstr ""
 "\n"
 "Інструмент керування вікнами — «%s»; "
 
-#: src/main.c:1886
+#: src/main.c:1887
 #, c-format
 msgid "number of monitors detected: %d\n"
 msgstr "виявлена кількість моніторів: %d\n"
 
-#: src/main.c:1889
+#: src/main.c:1890
 #, c-format
 msgid "Number of CPUs detected: %d "
 msgstr "Кількість виявлених процесорів: %d "
 
-#: src/main.c:1892 src/multitrack.c:5169
+#: src/main.c:1893 src/multitrack.c:5169
 msgid "little endian"
 msgstr "little endian"
 
-#: src/main.c:1893 src/multitrack.c:5168
+#: src/main.c:1894 src/multitrack.c:5168
 msgid "big endian"
 msgstr "big endian"
 
-#: src/main.c:1894
+#: src/main.c:1895
 #, c-format
 msgid "(%d bits, %s)\n"
 msgstr "(%d-бітова, %s)\n"
 
-#: src/main.c:1898
+#: src/main.c:1899
 msgid "GUI type is: "
 msgstr "Тип графічного інтерфейсу: "
 
-#: src/main.c:1902
+#: src/main.c:1903
 #, c-format
 msgid "GTK+ version %d.%d.%d (compiled with %d.%d.%d)"
 msgstr "Версія GTK+ %d.%d.%d (зібрано з %d.%d.%d)"
 
-#: src/main.c:1924
+#: src/main.c:1925
 msgid ", with cairo support"
 msgstr ", з підтримкою cairo"
 
-#: src/main.c:1931
+#: src/main.c:1932
 #, c-format
 msgid "Temp directory is %s\n"
 msgstr "Каталог тимчасових файлів — %s\n"
 
-#: src/main.c:1935
+#: src/main.c:1936
 msgid ""
 "WARNING - this version of LiVES was compiled without either\n"
 "jack or pulse audio support.\n"
@@ -368,15 +368,15 @@ msgstr ""
 "jack або PulseAudio.\n"
 "Ви не зможете скористатися багатьма можливостями з обробки звуку.\n"
 
-#: src/main.c:1938
+#: src/main.c:1939
 msgid "Compiled with jack support, good !\n"
 msgstr "Зібрано з підтримкою jack, добре!\n"
 
-#: src/main.c:1941
+#: src/main.c:1942
 msgid "Compiled with pulse audio support, wonderful !\n"
 msgstr "Зібрано з підтримкою PulseAudio, чудово!\n"
 
-#: src/main.c:1945
+#: src/main.c:1946
 #, c-format
 msgid ""
 "Welcome to LiVES version %s.\n"
@@ -385,7 +385,7 @@ msgstr ""
 "Вітаємо у LiVES версії %s.\n"
 "\n"
 
-#: src/main.c:2432
+#: src/main.c:2433
 #, c-format
 msgid ""
 "\n"
@@ -395,57 +395,57 @@ msgstr ""
 "Синтаксис команди запуску: %s [параметри] [назва файла [початок_за_часом] "
 "[кількість кадрів]]\n"
 
-#: src/main.c:2433
+#: src/main.c:2434
 msgid "Where: filename is the name of a media file or backup file.\n"
 msgstr ""
 "де «назва файла» — назва файла мультимедійних даних або резервної копії.\n"
 
-#: src/main.c:2434
+#: src/main.c:2435
 msgid "start_time : filename start time in seconds\n"
 msgstr ""
 "початок_за_часом: початок за часом у файлі з вказаною назвою у секундах\n"
 
-#: src/main.c:2435
+#: src/main.c:2436
 msgid "frames : maximum number of frames to open\n"
 msgstr "кількість кадрів: максимальна кількість кадрів, які слід відкрити\n"
 
-#: src/main.c:2437
+#: src/main.c:2438
 msgid "opts can be:\n"
 msgstr "параметри можуть бути такими:\n"
 
-#: src/main.c:2438
+#: src/main.c:2439
 msgid "-help            : show this help text and exit\n"
 msgstr "-help               : показати текст цієї довідки і завершити роботу\n"
 
-#: src/main.c:2439
+#: src/main.c:2440
 msgid "-tmpdir <tempdir>: use alternate working directory (e.g /var/ramdisk)\n"
 msgstr ""
 "-tmpdir <тимч. каталог>: використовувати інший робочий каталог (наприклад /"
 "var/ramdisk)\n"
 
-#: src/main.c:2440
+#: src/main.c:2441
 msgid "-set <setname>   : autoload clip set setname\n"
 msgstr ""
 "-set <назва_набору> : автоматично завантажити набір кліпів з вказаною "
 "назвою\n"
 
-#: src/main.c:2441
+#: src/main.c:2442
 msgid "-noset           : do not load any set on startup\n"
 msgstr "-noset              : не завантажувати жодного набору після запуску\n"
 
-#: src/main.c:2442
+#: src/main.c:2443
 msgid "-norecover       : force no-loading of crash recovery\n"
 msgstr ""
 "-norecover          : не завантажувати відновлені дані під час перезапуску "
 "після аварії\n"
 
-#: src/main.c:2443
+#: src/main.c:2444
 msgid "-recover         : force loading of crash recovery\n"
 msgstr ""
 "-recover            : завантажити відновлені дані під час перезапуску після "
 "аварії\n"
 
-#: src/main.c:2444
+#: src/main.c:2445
 #, fuzzy
 msgid ""
 "-nothreaddialog  : does nothing - retained for backwards compatibility\n"
@@ -453,31 +453,31 @@ msgstr ""
 "-nothreaddialog  : нічого не робити — залишено з міркувань зворотної "
 "сумісності\n"
 
-#: src/main.c:2445
+#: src/main.c:2446
 msgid "-nogui           : do not show the gui\n"
 msgstr "-nogui              : не показувати графічного інтерфейсу\n"
 
-#: src/main.c:2446
+#: src/main.c:2447
 msgid "-nosplash        : do not show the splash window\n"
 msgstr "-nosplash        : не показувати вікна вітання\n"
 
-#: src/main.c:2447
+#: src/main.c:2448
 msgid "-noplaywin       : do not show the play window\n"
 msgstr "-noplaywin       : не показувати вікна відтворення\n"
 
-#: src/main.c:2448
+#: src/main.c:2449
 msgid "-noninteractive  : disable menu interactivity\n"
 msgstr ""
 
-#: src/main.c:2449
+#: src/main.c:2450
 msgid "-startup-ce      : start in clip editor mode\n"
 msgstr "-startup-ce      : запустити у режимі редактора кліпів\n"
 
-#: src/main.c:2450
+#: src/main.c:2451
 msgid "-startup-mt      : start in multitrack mode\n"
 msgstr "-startup-mt      : запустити у режимі роботи з декількома доріжками\n"
 
-#: src/main.c:2451
+#: src/main.c:2452
 msgid ""
 "-fxmodesmax <n>  : allow <n> modes per effect key (minimum is 1, default is "
 "8)\n"
@@ -485,17 +485,17 @@ msgstr ""
 "-fxmodesmax <n>  : надати змогу використовувати <n> режимів на клавішу "
 "ефекту (мінімальне значення — 1, типове — 8)\n"
 
-#: src/main.c:2453
+#: src/main.c:2454
 msgid "-oscstart <port> : start OSC listener on UDP port <port>\n"
 msgstr ""
 "-oscstart <порт>    : запустити програму очікування на дані OSC на вказаному "
 "порті UDP\n"
 
-#: src/main.c:2454
+#: src/main.c:2455
 msgid "-nooscstart      : do not start OSC listener\n"
 msgstr "-nooscstart         : не запускати програми очікування на дані OSC\n"
 
-#: src/main.c:2456
+#: src/main.c:2457
 #, fuzzy
 msgid ""
 "-aplayer <ap>    : start with selected audio player. <ap> can be mplayer, "
@@ -505,15 +505,15 @@ msgstr ""
 "Програвачем <ap> може бути, наприклад, mplayer"
 
 #. TRANSLATORS: pulse (audio)
-#: src/main.c:2459
+#: src/main.c:2460
 msgid ", pulse"
 msgstr ", pulse"
 
-#: src/main.c:2462
+#: src/main.c:2463
 msgid ", sox or jack\n"
 msgstr ", sox або jack\n"
 
-#: src/main.c:2464
+#: src/main.c:2465
 msgid ""
 "-jackopts <opts>    : opts is a bitmap of jack startup options [1 = jack "
 "transport client, 2 = jack transport master, 4 = start jack transport "
@@ -524,16 +524,16 @@ msgstr ""
 "запуск сервера передавання даних jack, 8 = призупинка відтворення звуку, "
 "якщо призупинено відтворення відео, 16 = запуск звукового сервера jack] \n"
 
-#: src/main.c:2466
+#: src/main.c:2467
 msgid " or sox\n"
 msgstr " або sox\n"
 
-#: src/main.c:2468
+#: src/main.c:2469
 msgid "-devicemap <mapname>          : autoload devicemap\n"
 msgstr ""
 "-devicemap <назва карти>         : автоматично завантажити карту пристроїв\n"
 
-#: src/main.c:2470
+#: src/main.c:2471
 msgid ""
 "-vppdefaults <file>          : load video playback plugin defaults from "
 "<file> (Note: only sets the settings, not the plugin type)\n"
@@ -542,17 +542,17 @@ msgstr ""
 "відтворення відео з  <файл>-а (Зауваження: встановлюються лише параметри, а "
 "не тип додатка)\n"
 
-#: src/main.c:2471
+#: src/main.c:2472
 msgid "-debug            : try to debug crashes (requires 'gdb' installed)\n"
 msgstr ""
 "-debug               : спробувати виконати діагностику аварії (доведеться "
 "встановити «gdb»)\n"
 
-#: src/main.c:2501 src/gui.c:1142
+#: src/main.c:2502 src/gui.c:1142
 msgid "Starting GUI..."
 msgstr "Запуск графічного інтерфейсу..."
 
-#: src/main.c:2527
+#: src/main.c:2528
 #, c-format
 msgid ""
 "\n"
@@ -570,7 +570,7 @@ msgstr ""
 "(Можливо, вам доведеться змінити значення параметра <prefix_dir> у вашому "
 "файлі %s)\n"
 
-#: src/main.c:2544
+#: src/main.c:2545
 #, c-format
 msgid ""
 "\n"
@@ -582,7 +582,7 @@ msgstr ""
 "Будь ласка, переконайтеся, що маєте права доступу на запис до %s і повторіть "
 "спробу.\n"
 
-#: src/main.c:2550
+#: src/main.c:2551
 msgid ""
 "\n"
 "`smogrify` must be in your path, and be executable\n"
@@ -597,7 +597,7 @@ msgstr ""
 "Будь ласка, ознайомтеся з файлом README, який постачається\n"
 "разом з цим пакунком, перед запуском LiVES.\n"
 
-#: src/main.c:2556
+#: src/main.c:2557
 #, c-format
 msgid ""
 "\n"
@@ -612,7 +612,7 @@ msgstr ""
 "\n"
 "Будь ласка, змініть права доступу до цього файла і повторіть спробу.\n"
 
-#: src/main.c:2564
+#: src/main.c:2565
 #, c-format
 msgid ""
 "\n"
@@ -629,7 +629,7 @@ msgstr ""
 "Будь ласка, перевірте права доступу на цей файл і каталог,\n"
 "а потім повторіть спробу.\n"
 
-#: src/main.c:2574
+#: src/main.c:2575
 #, c-format
 msgid ""
 "Please check the <tempdir> setting in \n"
@@ -640,7 +640,7 @@ msgstr ""
 "%s\n"
 "і повторіть спробу.\n"
 
-#: src/main.c:2580
+#: src/main.c:2581
 #, c-format
 msgid ""
 "\n"
@@ -655,7 +655,7 @@ msgstr ""
 "\n"
 "%s"
 
-#: src/main.c:2588
+#: src/main.c:2589
 msgid ""
 "\n"
 "An incorrect version of smogrify was found in your path.\n"
@@ -673,7 +673,7 @@ msgstr ""
 "\n"
 "Дякуємо.\n"
 
-#: src/main.c:2593
+#: src/main.c:2594
 #, fuzzy
 msgid ""
 "\n"
@@ -685,7 +685,7 @@ msgstr ""
 "програма «sox». Будь ласка, встановіть одну з цих програм і повторіть "
 "спробу.\n"
 
-#: src/main.c:2598
+#: src/main.c:2599
 #, fuzzy
 msgid ""
 "\n"
@@ -696,7 +696,7 @@ msgstr ""
 "Для роботи поточної версії LiVES потрібні програми «mplayer» та «sox». Будь "
 "ласка, встановіть ці програми і повторіть спробу.\n"
 
-#: src/main.c:2609
+#: src/main.c:2610
 #, fuzzy
 msgid ""
 "\n"
@@ -707,7 +707,7 @@ msgstr ""
 "LiVES не вдалося виявити програму «mplayer». Вам варто встановити mplayer, "
 "щоб скористатися усіма можливостями LiVES.\n"
 
-#: src/main.c:2614
+#: src/main.c:2615
 msgid ""
 "\n"
 "LiVES was unable to locate 'convert'. You should install convert and image-"
@@ -717,7 +717,7 @@ msgstr ""
 "LiVES не вдалося виявити програми «convert». Якщо ви маєте намір "
 "користуватися ефектами показу, вам слід встановити convert і image-magick.\n"
 
-#: src/main.c:2619
+#: src/main.c:2620
 msgid ""
 "\n"
 "LiVES was unable to locate 'composite'. You should install composite and "
@@ -728,7 +728,7 @@ msgstr ""
 "користуватися функціональними можливостями об’єднання, вам слід встановити "
 "composite і image-magick.\n"
 
-#: src/main.c:2623
+#: src/main.c:2624
 msgid ""
 "\n"
 "LiVES was unable to locate 'sox'. Some audio features may not work. You "
@@ -739,7 +739,7 @@ msgstr ""
 "програму, програма не зможе виконувати деякі з функцій обробки звуку. Вам "
 "слід встановити «sox».\n"
 
-#: src/main.c:2628
+#: src/main.c:2629
 #, c-format
 msgid ""
 "\n"
@@ -756,59 +756,59 @@ msgstr ""
 "Без цих додатків ви не зможете скористатися пунктом «Зберегти».\n"
 "Можливо, вам слід змінити значення параметра <lib_dir> у %s\n"
 
-#: src/main.c:2760
+#: src/main.c:2761
 #, c-format
 msgid "Autoloading set %s..."
 msgstr "Автоматичне завантаження набору %s..."
 
 #. TRANSLATORS: localised name may be used here
-#: src/main.c:2961
+#: src/main.c:2962
 msgid "LiVES"
 msgstr "LiVES"
 
-#: src/main.c:3149
+#: src/main.c:3150
 #, c-format
 msgid "Invalid audio player %s\n"
 msgstr "Помилковий аудіопрогравач %s\n"
 
-#: src/main.c:3307
+#: src/main.c:3308
 #, c-format
 msgid "LiVES-%s: <Untitled%d> %dx%d : %d frames %d bpp %.3f fps"
 msgstr "LiVES-%s: <Untitled%d> %dx%d : %d кадрів %d бітів/пк %.3f кд/с"
 
-#: src/main.c:3312
+#: src/main.c:3313
 #, c-format
 msgid "LiVES-%s: <%s> %dx%d : ??? frames ??? bpp %.3f fps"
 msgstr "LiVES-%s: <%s> %dx%d : ??? кадрів ??? бітів/пк %.3f кд/с"
 
-#: src/main.c:3315
+#: src/main.c:3316
 #, c-format
 msgid "LiVES-%s: <%s> %dx%d : %d frames %d bpp %.3f fps"
 msgstr "LiVES-%s: <%s> %dx%d : %d кадрів %d бітів/пк %.3f кд/с"
 
-#: src/main.c:3322
+#: src/main.c:3323
 #, c-format
 msgid "LiVES-%s: <No File>"
 msgstr "LiVES-%s: <файла не вказано>"
 
 #. TRANSLATORS: rec(ord)
-#: src/main.c:5361
+#: src/main.c:5362
 #, c-format
 msgid "rec %9d/%d"
 msgstr "зап %9d/%d"
 
 #. TRANSLATORS: out of memory (rec(ord))
-#: src/main.c:5366
+#: src/main.c:5367
 #, c-format
 msgid "!rec %9d/%d"
 msgstr "!зап %9d/%d"
 
-#: src/main.c:5664 src/main.c:5665 src/gui.c:2146 src/gui.c:3405
+#: src/main.c:5665 src/main.c:5666 src/gui.c:2146 src/gui.c:3405
 #: src/saveplay.c:2323
 msgid "Play"
 msgstr "Пуск"
 
-#: src/main.c:6365
+#: src/main.c:6366
 msgid ""
 "LiVES was unable to capture this image\n"
 "\n"
@@ -816,34 +816,34 @@ msgstr ""
 "LiVES не вдалося захопити це зображення.\n"
 "\n"
 
-#: src/main.c:6498
+#: src/main.c:6499
 #, c-format
 msgid "Closed file %s\n"
 msgstr "Закритий файл %s\n"
 
-#: src/main.c:6695 src/gui.c:658 src/utils.c:4290 src/utils.c:4320
+#: src/main.c:6696 src/gui.c:658 src/utils.c:4290 src/utils.c:4320
 #: src/saveplay.c:3514 src/multitrack.c:4779 src/multitrack.c:6562
 msgid "_Undo"
 msgstr "В_ернути"
 
-#: src/main.c:6696 src/gui.c:676 src/utils.c:4291 src/utils.c:4321
+#: src/main.c:6697 src/gui.c:676 src/utils.c:4291 src/utils.c:4321
 #: src/saveplay.c:3515 src/multitrack.c:4799 src/multitrack.c:6587
 msgid "_Redo"
 msgstr "Повт_орити"
 
-#: src/main.c:6736 src/interface.c:459 src/gui.c:2367 src/resample.c:1528
+#: src/main.c:6737 src/interface.c:459 src/gui.c:2367 src/resample.c:1528
 msgid "Video"
 msgstr "Відео"
 
-#: src/main.c:6737 src/interface.c:473 src/gui.c:2391
+#: src/main.c:6738 src/interface.c:473 src/gui.c:2391
 msgid "Left Audio"
 msgstr "Лівий канал звуку"
 
-#: src/main.c:6738 src/gui.c:2414
+#: src/main.c:6739 src/gui.c:2414
 msgid "Right Audio"
 msgstr "Правий канал звуку"
 
-#: src/main.c:6786
+#: src/main.c:6787
 #, fuzzy
 msgid ""
 "\n"
@@ -858,7 +858,7 @@ msgstr ""
 "визначено mplayer.\n"
 "Будь ласка, змініть налаштування у «Параметрах» і повторіть спробу.\n"
 
-#: src/main.c:7291 src/plugins.c:1469
+#: src/main.c:7292 src/plugins.c:1469
 msgid "LiVES: - Play Window"
 msgstr "LiVES: - Вікно відтворення"
 
@@ -11679,8 +11679,8 @@ msgstr "Мрія"
 msgid "Dreamifying"
 msgstr "Надання мрійливого вигляду"
 
-#: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
 #: /usr/share/lives/plugins/effects/rendered/colorize.script:0
+#: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
 msgid "E_nd %"
 msgstr "К_інець %"
 
@@ -11728,8 +11728,8 @@ msgstr "Тривалість обгортки"
 msgid "Fade _colour"
 msgstr "_Кольорова зміна освітленості"
 
-#: /usr/share/lives/plugins/effects/rendered/transition_fade.script:0
 #: /usr/share/lives/plugins/effects/rendered/skip_forwards.script:0
+#: /usr/share/lives/plugins/effects/rendered/transition_fade.script:0
 msgid "Fade _end"
 msgstr "_Кінцеве згасання"
 
@@ -12013,8 +12013,8 @@ msgstr "Обертати кліп"
 msgid "Rotating"
 msgstr "Обертання"
 
-#: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
 #: /usr/share/lives/plugins/effects/rendered/colorize.script:0
+#: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
 msgid "S_tart %"
 msgstr "S_tart %"
 
@@ -12098,8 +12098,8 @@ msgstr "Розсіювання"
 msgid "Step _Value"
 msgstr "_Величин кроку"
 
-#: /usr/share/lives/plugins/effects/rendered/shift_vertical.script:0
 #: /usr/share/lives/plugins/effects/rendered/shift_horizontal.script:0
+#: /usr/share/lives/plugins/effects/rendered/shift_vertical.script:0
 #: /usr/share/lives/plugins/effects/rendered/spin.script:0
 msgid "Step per _Frame"
 msgstr "Крок за _кадром"
@@ -12168,12 +12168,12 @@ msgstr "Хвиля"
 msgid "Waving"
 msgstr "Вигинання"
 
-#: /usr/share/lives/plugins/effects/rendered/rotate.script:0
-#: /usr/share/lives/plugins/effects/rendered/shift_vertical.script:0
 #: /usr/share/lives/plugins/effects/rendered/shift_horizontal.script:0
 #: /usr/share/lives/plugins/effects/rendered/wave.script:0
-#: /usr/share/lives/plugins/effects/rendered/shrink_expand.script:0
+#: /usr/share/lives/plugins/effects/rendered/rotate.script:0
+#: /usr/share/lives/plugins/effects/rendered/shift_vertical.script:0
 #: /usr/share/lives/plugins/effects/rendered/spin.script:0
+#: /usr/share/lives/plugins/effects/rendered/shrink_expand.script:0
 msgid "_Background Colour"
 msgstr "Колір _тла"
 
@@ -12205,13 +12205,13 @@ msgstr "Початок _циклу"
 msgid "_Decrease Contrast"
 msgstr "З_меншити контрастність"
 
-#: /usr/share/lives/plugins/effects/rendered/tunnel.script:0
 #: /usr/share/lives/plugins/effects/rendered/dream.script:0
+#: /usr/share/lives/plugins/effects/rendered/tunnel.script:0
 msgid "_Diffmax"
 msgstr "_Максимальна різниця"
 
-#: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
 #: /usr/share/lives/plugins/effects/rendered/colorize.script:0
+#: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
 msgid "_End Colour"
 msgstr "_Кінцевий колір"
 
@@ -12227,18 +12227,18 @@ msgstr "_Кінцевий розмір за Y:"
 msgid "_End amount"
 msgstr "_Кінцева величина"
 
-#: /usr/share/lives/plugins/effects/rendered/tunnel.script:0
 #: /usr/share/lives/plugins/effects/rendered/dream.script:0
+#: /usr/share/lives/plugins/effects/rendered/tunnel.script:0
 msgid "_Fade level"
 msgstr "Рівень з_гасання"
 
-#: /usr/share/lives/plugins/effects/rendered/transition_fade.script:0
 #: /usr/share/lives/plugins/effects/rendered/skip_forwards.script:0
+#: /usr/share/lives/plugins/effects/rendered/transition_fade.script:0
 msgid "_Fade start"
 msgstr "П_очаткове згасання"
 
-#: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
 #: /usr/share/lives/plugins/effects/rendered/textover.script:0
+#: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
 msgid "_Fill colour"
 msgstr "Колір _заповнення"
 
@@ -12254,10 +12254,10 @@ msgstr "Сп_палах протягом"
 msgid "_Font"
 msgstr "_Шрифт"
 
-#: /usr/share/lives/plugins/effects/rendered/gen_clip_from_image.script:0
-#: /usr/share/lives/plugins/effects/rendered/gen_coloured_frames.script:0
-#: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
 #: /usr/share/lives/plugins/effects/rendered/gen_blank_frames.script:0
+#: /usr/share/lives/plugins/effects/rendered/gen_clip_from_image.script:0
+#: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
+#: /usr/share/lives/plugins/effects/rendered/gen_coloured_frames.script:0
 msgid "_Frames per second"
 msgstr "_Кадрів на секунду"
 
@@ -12297,8 +12297,8 @@ msgstr "По_чатковий розмір за Y:"
 msgid "_Levels"
 msgstr "_Рівні"
 
-#: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
 #: /usr/share/lives/plugins/effects/rendered/colorize.script:0
+#: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
 msgid "_Link start and end colours"
 msgstr "З’_єднати початковий і кінцевий кольори"
 
@@ -12318,9 +12318,9 @@ msgstr "_Напівтон"
 msgid "_Negate"
 msgstr "_Негатив"
 
+#: /usr/share/lives/plugins/effects/rendered/gen_blank_frames.script:0
 #: /usr/share/lives/plugins/effects/rendered/gen_clip_from_image.script:0
 #: /usr/share/lives/plugins/effects/rendered/gen_coloured_frames.script:0
-#: /usr/share/lives/plugins/effects/rendered/gen_blank_frames.script:0
 msgid "_Number of frames"
 msgstr "_Кількість кадрів"
 
@@ -12340,8 +12340,8 @@ msgstr "_Інший центр"
 msgid "_Other"
 msgstr "_Інше"
 
-#: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
 #: /usr/share/lives/plugins/effects/rendered/textover.script:0
+#: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
 msgid "_Point size"
 msgstr "Р_озмір точки"
 
@@ -12353,19 +12353,19 @@ msgstr "_Кінцевий радіус"
 msgid "_Radius start"
 msgstr "Початковий _радіус"
 
-#: /usr/share/lives/plugins/effects/rendered/edge_detect.script:0
 #: /usr/share/lives/plugins/effects/rendered/emboss.script:0
 #: /usr/share/lives/plugins/effects/rendered/charcoal.script:0
+#: /usr/share/lives/plugins/effects/rendered/edge_detect.script:0
 msgid "_Radius"
 msgstr "_Радіус"
 
-#: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
 #: /usr/share/lives/plugins/effects/rendered/colorize.script:0
+#: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
 msgid "_Random colour each frame"
 msgstr "Вип_адкова зміна кольорів кожного кадру"
 
-#: /usr/share/lives/plugins/effects/rendered/tunnel.script:0
 #: /usr/share/lives/plugins/effects/rendered/dream.script:0
+#: /usr/share/lives/plugins/effects/rendered/tunnel.script:0
 msgid "_Randomness"
 msgstr "В_ипадковість"
 
@@ -12405,14 +12405,14 @@ msgstr "_Початковий колір"
 msgid "_Splice"
 msgstr "_Розрізати"
 
-#: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
 #: /usr/share/lives/plugins/effects/rendered/colorize.script:0
+#: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
 msgid "_Start Colour"
 msgstr "_Початковий колір"
 
-#: /usr/share/lives/plugins/effects/rendered/solarize.script:0
-#: /usr/share/lives/plugins/effects/rendered/shift_vertical.script:0
 #: /usr/share/lives/plugins/effects/rendered/shift_horizontal.script:0
+#: /usr/share/lives/plugins/effects/rendered/shift_vertical.script:0
+#: /usr/share/lives/plugins/effects/rendered/solarize.script:0
 msgid "_Start Value"
 msgstr "_Початкове значення"
 
@@ -12420,8 +12420,8 @@ msgstr "_Початкове значення"
 msgid "_Start amount"
 msgstr "_Початкова величина"
 
-#: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
 #: /usr/share/lives/plugins/effects/rendered/textover.script:0
+#: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
 msgid "_Stroke colour"
 msgstr "Колір _штриха"
 
@@ -12429,8 +12429,8 @@ msgstr "Колір _штриха"
 msgid "_Target Colour"
 msgstr "_Кінцевий колір"
 
-#: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
 #: /usr/share/lives/plugins/effects/rendered/textover.script:0
+#: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
 msgid "_Text"
 msgstr "_Текст"
 
@@ -12454,8 +12454,8 @@ msgstr "Максимум _хвилі"
 msgid "_White is transparent"
 msgstr "_Білий є прозорим"
 
-#: /usr/share/lives/plugins/effects/rendered/shift_vertical.script:0
 #: /usr/share/lives/plugins/effects/rendered/shift_horizontal.script:0
+#: /usr/share/lives/plugins/effects/rendered/shift_vertical.script:0
 msgid "_Wrap Around"
 msgstr "За_гортання"
 
@@ -12471,8 +12471,8 @@ msgstr "_Кінець за X"
 msgid "_X Start"
 msgstr "_Початок за X"
 
-#: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
 #: /usr/share/lives/plugins/effects/rendered/textover.script:0
+#: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
 msgid "_X offset"
 msgstr "_Відступ за X"
 
@@ -12488,8 +12488,8 @@ msgstr "Кі_нець за Y"
 msgid "_Y Start"
 msgstr "П_очаток за Y"
 
-#: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
 #: /usr/share/lives/plugins/effects/rendered/textover.script:0
+#: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
 msgid "_Y offset"
 msgstr "В_ідступ за Y"
 

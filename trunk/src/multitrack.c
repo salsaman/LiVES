@@ -3426,6 +3426,7 @@ static void mt_zoom(lives_mt *mt, double scale) {
   set_time_scrollbar(mt);
 
   lives_widget_queue_draw(mt->vpaned);
+  lives_widget_queue_draw(mt->timeline);
 
   redraw_all_event_boxes(mt);
 
@@ -8606,6 +8607,7 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
 
   mt->fx_contents_box=lives_vbox_new(FALSE,2);
 
+
   dph=widget_opts.packing_height;
   widget_opts.packing_height=0;
   add_hsep_to_box(LIVES_BOX(mt->fx_contents_box));
@@ -8645,12 +8647,23 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
   lives_widget_show(hbox);
   lives_box_pack_start(LIVES_BOX(hbox), mt->node_scale, TRUE, TRUE, widget_opts.packing_width);
 
+  if (palette->style&STYLE_1) {
+    lives_widget_set_base_color(label, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
+    lives_widget_set_text_color(label, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars_fore);
+  }
+
 
   hbox=lives_hbox_new(FALSE,widget_opts.packing_width);
   lives_box_pack_end(LIVES_BOX(mt->fx_contents_box), hbox, FALSE, FALSE, 0);
 
   mt->fx_params_label=lives_standard_label_new("");
   lives_box_pack_start(LIVES_BOX(hbox), mt->fx_params_label, TRUE, TRUE, widget_opts.packing_width);
+
+  if (palette->style&STYLE_1) {
+    lives_widget_set_base_color(mt->fx_params_label, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
+    lives_widget_set_text_color(mt->fx_params_label, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars_fore);
+  }
+
 
   mt->del_node_button = lives_button_new_with_mnemonic(_("_Del. node"));
   lives_box_pack_end(LIVES_BOX(hbox), mt->del_node_button, FALSE, FALSE, 0);
@@ -9855,6 +9868,7 @@ void mt_init_tracks(lives_mt *mt, boolean set_min_max) {
 
     lives_widget_add_events(mt->timeline_eb, LIVES_POINTER_MOTION_MASK | LIVES_BUTTON1_MOTION_MASK |
                             LIVES_BUTTON_RELEASE_MASK | LIVES_BUTTON_PRESS_MASK | LIVES_ENTER_NOTIFY_MASK);
+    lives_widget_add_events(mt->timeline,LIVES_BUTTON_RELEASE_MASK | LIVES_BUTTON_PRESS_MASK);
     lives_widget_add_events(mt->timeline_reg, LIVES_POINTER_MOTION_MASK | LIVES_BUTTON1_MOTION_MASK |
                             LIVES_BUTTON_RELEASE_MASK | LIVES_BUTTON_PRESS_MASK | LIVES_ENTER_NOTIFY_MASK);
     lives_signal_connect(LIVES_GUI_OBJECT(mt->timeline_eb), LIVES_WIDGET_ENTER_EVENT,LIVES_GUI_CALLBACK(on_tleb_enter),(livespointer)mt);
@@ -9874,6 +9888,14 @@ void mt_init_tracks(lives_mt *mt, boolean set_min_max) {
 
     lives_signal_connect(LIVES_GUI_OBJECT(mt->timeline_eb), LIVES_WIDGET_BUTTON_PRESS_EVENT,
                          LIVES_GUI_CALLBACK(on_timeline_press),
+                         (livespointer)mt);
+
+    lives_signal_connect(LIVES_GUI_OBJECT(mt->timeline), LIVES_WIDGET_BUTTON_PRESS_EVENT,
+                         LIVES_GUI_CALLBACK(on_timeline_press),
+                         (livespointer)mt);
+
+    lives_signal_connect(LIVES_GUI_OBJECT(mt->timeline), LIVES_WIDGET_BUTTON_RELEASE_EVENT,
+                         LIVES_GUI_CALLBACK(on_timeline_release),
                          (livespointer)mt);
 
     lives_signal_connect(LIVES_GUI_OBJECT(mt->timeline_reg), LIVES_WIDGET_MOTION_NOTIFY_EVENT,
@@ -18602,6 +18624,11 @@ boolean on_timeline_press(LiVESWidget *widget, LiVESXEventButton *event, livespo
     mt->fm_edit_event=NULL;
     mt_tl_move(mt,pos);
     mt->tl_mouse=TRUE;
+  }
+
+  if (widget==mt->timeline) {
+    mt->fm_edit_event=NULL;
+    mt_tl_move(mt,pos);
   }
 
   if (mt->opts.mouse_mode==MOUSE_MODE_SELECT) mouse_select_start(widget,event,mt);

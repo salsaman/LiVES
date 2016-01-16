@@ -708,6 +708,10 @@ giw_timeline_draw_ticks(GiwTimeline *timeline) {
   PangoLayout      *layout;
   PangoRectangle    logical_rect, ink_rect;
 
+#ifdef GTK_RENDER_BACKGROUND_BUG
+  GdkRGBA col;
+#endif
+  
   if (! gtk_widget_is_drawable(widget))
     return;
 
@@ -730,7 +734,21 @@ giw_timeline_draw_ticks(GiwTimeline *timeline) {
 
   cr = cairo_create(priv->backing_store);
 
-  gtk_render_background(context, cr, 0, 0, allocation.width, allocation.height);
+  gtk_render_background(context, cr, 0., 0., allocation.width, allocation.height);
+
+#ifdef GTK_RENDER_BACKGROUND_BUG
+#ifdef G_GNUC_BEGIN_IGNORE_DEPRECATIONS
+  G_GNUC_BEGIN_IGNORE_DEPRECATIONS
+#endif
+  gtk_style_context_get_background_color(context,gtk_widget_get_state_flags(widget),&col);
+#ifdef G_GNUC_END_IGNORE_DEPRECATIONS
+  G_GNUC_END_IGNORE_DEPRECATIONS
+#endif
+  cairo_set_source_rgb(cr, col.red, col.green, col.blue);
+  cairo_rectangle(cr, 0, 0, allocation.width, allocation.height);
+  cairo_fill(cr);
+#endif
+  
   gtk_render_frame(context, cr, 0, 0, allocation.width, allocation.height);
 
   gtk_style_context_get_color(context, gtk_widget_get_state_flags(widget),

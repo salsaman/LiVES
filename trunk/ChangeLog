@@ -1,9 +1,10 @@
-Version 2.4.7
--------------
+Version 2.4.7 (18 Jan 2016)
+---------------------------
 Fix regression in "Insert Silence".
 Fix background colour for notebook tabs in multitack (gtk+ 3.x)
 Fix crash when entering Preferences dialog (GType error).
 Reshow timeline after hiding it.
+Update current time when clicking on timeline header in Multitrack (regression).
 Tested support for SDL 2.x (does not work)
 Trivial compiler fix for gtk+ 2.x
 

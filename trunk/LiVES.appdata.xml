@@ -7,7 +7,7 @@
   <name>LiVES</name>
   <project_license>GPL-3.0+ and LGPL-3.0+</project_license>
   <releases>
-    <release version="%{version}-%{release}" timestamp="1450483200" />
+    <release version="%{version}-%{release}" timestamp="1453075707"/>
   </releases>
   <categories>
    <category>Multimedia</category>
@@ -37,8 +37,8 @@
   </description>
   <url type="homepage">http://lives-video.com/</url>
   <screenshots>
-    <screenshot type="default">https://sagitter.fedorapeople.org/lives-screenshot/lives.png</screenshot>
-    <screenshot>https://sagitter.fedorapeople.org/lives-screenshot/lives2.png</screenshot>
+    <screenshot type="default">http://lives-video.com/images/livescess.png</screenshot>
+    <screenshot>http://lives-video.com/images/livesmtss.png</screenshot>
   </screenshots>
   <updatecontact>salsaman_at_gmail.com</updatecontact>
 </component>

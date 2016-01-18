@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: lives\n"
 "Report-Msgid-Bugs-To: https://sourceforge.net/p/lives/bugs/\n"
-"POT-Creation-Date: 2015-12-23 02:51-0300\n"
+"POT-Creation-Date: 2016-01-17 21:29-0300\n"
 "PO-Revision-Date: 2013-03-14 12:31+0000\n"
 "Last-Translator: Launchpad Translations Administrators <Unknown>\n"
 "Language-Team: Finnish <fi@li.org>\n"
@@ -321,11 +321,11 @@ msgstr "näyttöjä löydetty: %d\n"
 msgid "Number of CPUs detected: %d "
 msgstr ""
 
-#: src/main.c:1893 src/multitrack.c:5169
+#: src/main.c:1893 src/multitrack.c:5170
 msgid "little endian"
 msgstr ""
 
-#: src/main.c:1894 src/multitrack.c:5168
+#: src/main.c:1894 src/multitrack.c:5169
 msgid "big endian"
 msgstr ""
 
@@ -736,12 +736,12 @@ msgid "Closed file %s\n"
 msgstr "Tiedosto %s suljettiin\n"
 
 #: src/main.c:6696 src/gui.c:658 src/utils.c:4290 src/utils.c:4320
-#: src/saveplay.c:3514 src/multitrack.c:4779 src/multitrack.c:6562
+#: src/saveplay.c:3514 src/multitrack.c:4780 src/multitrack.c:6563
 msgid "_Undo"
 msgstr "Kum_oa"
 
 #: src/main.c:6697 src/gui.c:676 src/utils.c:4291 src/utils.c:4321
-#: src/saveplay.c:3515 src/multitrack.c:4799 src/multitrack.c:6587
+#: src/saveplay.c:3515 src/multitrack.c:4800 src/multitrack.c:6588
 msgid "_Redo"
 msgstr "_Tee uudestaan"
 
@@ -766,7 +766,7 @@ msgid ""
 "Please adjust the playback options in Preferences and try again.\n"
 msgstr ""
 
-#: src/main.c:7292 src/plugins.c:1469
+#: src/main.c:7295 src/plugins.c:1469
 msgid "LiVES: - Play Window"
 msgstr "LiVES: - Toistoikkuna"
 
@@ -1137,7 +1137,7 @@ msgstr ""
 #: src/callbacks.c:9548 src/gui.c:3407 src/gui.c:4026 src/saveplay.c:2325
 #: src/saveplay.c:3107 src/dialogs.c:1600 src/dialogs.c:1601
 #: src/dialogs.c:1873 src/dialogs.c:1874 src/framedraw.c:236
-#: src/multitrack.c:8333
+#: src/multitrack.c:8334
 msgid "Preview"
 msgstr "Esikatselu"
 
@@ -1921,7 +1921,7 @@ msgstr "Poistetaan leikesarja"
 msgid "Set %s was permanently deleted from the disk.\n"
 msgstr "Leikesarja %s poistettiin lopullisesti levyltä.\n"
 
-#: src/callbacks.c:1800 src/callbacks.c:11663
+#: src/callbacks.c:1800 src/callbacks.c:11676
 msgid "Insert Silence"
 msgstr ""
 
@@ -2020,7 +2020,7 @@ msgid ""
 "Are you sure you wish to continue ?\n"
 msgstr ""
 
-#: src/callbacks.c:2893 src/callbacks.c:11593
+#: src/callbacks.c:2893 src/callbacks.c:11601
 msgid ""
 "\n"
 "Insertion will cause audio to shift in some multitrack layouts.\n"
@@ -2390,7 +2390,7 @@ msgstr ""
 #: src/callbacks.c:6826 src/callbacks.c:6965 src/callbacks.c:7265
 #: src/callbacks.c:7280 src/gui.c:3916 src/saveplay.c:2450 src/saveplay.c:2485
 #: src/saveplay.c:3084 src/saveplay.c:3189 src/saveplay.c:3208
-#: src/multitrack.c:9624 src/multitrack.c:11337
+#: src/multitrack.c:9637 src/multitrack.c:11359
 #, c-format
 msgid " (%d %% scale)"
 msgstr ""
@@ -2576,7 +2576,7 @@ msgstr "Peruuta"
 msgid "Stop"
 msgstr ""
 
-#: src/callbacks.c:9955 src/multitrack.c:13541
+#: src/callbacks.c:9955 src/multitrack.c:13563
 msgid "LiVES: Selected frame"
 msgstr ""
 
@@ -2792,12 +2792,12 @@ msgstr ""
 msgid "Record new audio"
 msgstr ""
 
-#: src/callbacks.c:11627
+#: src/callbacks.c:11635
 #, c-format
 msgid "Inserting silence from %.2f to %.2f seconds..."
 msgstr ""
 
-#: src/callbacks.c:11653
+#: src/callbacks.c:11661
 msgid "Inserting Silence"
 msgstr ""
 
@@ -2868,11 +2868,11 @@ msgstr ""
 msgid "Custom _Utilities"
 msgstr ""
 
-#: src/gui.c:353 src/multitrack.c:6250
+#: src/gui.c:353 src/multitrack.c:6251
 msgid "_File"
 msgstr "_Tiedosto"
 
-#: src/gui.c:368 src/multitrack.c:6275
+#: src/gui.c:368 src/multitrack.c:6276
 msgid "_Open File/Directory"
 msgstr "_Avaa tiedosto/hakemisto"
 
@@ -2880,12 +2880,12 @@ msgstr "_Avaa tiedosto/hakemisto"
 msgid "O_pen Part of File..."
 msgstr ""
 
-#: src/gui.c:380 src/gui.c:384 src/multitrack.c:6296 src/multitrack.c:6313
-#: src/multitrack.c:6318
+#: src/gui.c:380 src/gui.c:384 src/multitrack.c:6297 src/multitrack.c:6314
+#: src/multitrack.c:6319
 msgid "Open _Location/Stream..."
 msgstr "Avaa sijainti/suo_ratoisto..."
 
-#: src/gui.c:394 src/multitrack.c:6306
+#: src/gui.c:394 src/multitrack.c:6307
 msgid "Open _Youtube Clip..."
 msgstr ""
 
@@ -2905,11 +2905,11 @@ msgstr ""
 msgid "_Import from Firewire"
 msgstr ""
 
-#: src/gui.c:429 src/multitrack.c:6378
+#: src/gui.c:429 src/multitrack.c:6379
 msgid "Import from _Firewire Device (dv)"
 msgstr "Tuo Firewire-laitteelta (_dv)"
 
-#: src/gui.c:430 src/multitrack.c:6386
+#: src/gui.c:430 src/multitrack.c:6387
 msgid "Import from _Firewire Device (hdv)"
 msgstr "Tuo Firewire-laitteelta (_hdv)"
 
@@ -2929,15 +2929,15 @@ msgstr ""
 msgid "Add _TV Device"
 msgstr ""
 
-#: src/gui.c:520 src/multitrack.c:6411
+#: src/gui.c:520 src/multitrack.c:6412
 msgid "_Recent Files..."
 msgstr "_Viimeisimmät tiedostot..."
 
-#: src/gui.c:570 src/multitrack.c:6471
+#: src/gui.c:570 src/multitrack.c:6472
 msgid "_Reload Clip Set..."
 msgstr "Lataa leikesarja _uudestaan..."
 
-#: src/gui.c:574 src/multitrack.c:6479
+#: src/gui.c:574 src/multitrack.c:6480
 msgid "Close/Sa_ve All Clips"
 msgstr "Sulje/tallenna _kaikki leikkeet"
 
@@ -2969,11 +2969,11 @@ msgstr "Tallenna/lataa/varmuuskopioi _äänen kanssa"
 msgid "Auto load subtitles"
 msgstr "Lataa tekstitykset automaattisesti"
 
-#: src/gui.c:638 src/multitrack.c:6518
+#: src/gui.c:638 src/multitrack.c:6519
 msgid "Clean _up Diskspace"
 msgstr "Siivoa lev_ytila"
 
-#: src/gui.c:646 src/multitrack.c:6551
+#: src/gui.c:646 src/multitrack.c:6552
 msgid "_Edit"
 msgstr "_Muokkaa"
 
@@ -3049,7 +3049,7 @@ msgstr "Tee k_äänteinen valinta"
 msgid "_Lock Selection Width"
 msgstr "Luki_tse valinnan leveys"
 
-#: src/gui.c:853 src/multitrack.c:6706
+#: src/gui.c:853 src/multitrack.c:6707
 msgid "_Play"
 msgstr "T_oisto"
 
@@ -3065,15 +3065,15 @@ msgstr "Toista _valinta"
 msgid "Play _Clipboard"
 msgstr "Toista _leikepöydän sisältö"
 
-#: src/gui.c:910 src/multitrack.c:6738
+#: src/gui.c:910 src/multitrack.c:6739
 msgid "_Stop"
 msgstr "_Pysäytä"
 
-#: src/gui.c:925 src/multitrack.c:6750
+#: src/gui.c:925 src/multitrack.c:6751
 msgid "Re_wind"
 msgstr "Palaa _alkuun"
 
-#: src/gui.c:957 src/multitrack.c:6768
+#: src/gui.c:957 src/multitrack.c:6769
 msgid "_Full Screen"
 msgstr "K_okoruutu"
 
@@ -3081,7 +3081,7 @@ msgstr "K_okoruutu"
 msgid "_Double Size"
 msgstr "Kak_sinkertainen koko"
 
-#: src/gui.c:974 src/multitrack.c:6776
+#: src/gui.c:974 src/multitrack.c:6777
 msgid "Play in _Separate Window"
 msgstr "Toista _erillisessä ikkunassa"
 
@@ -3093,7 +3093,7 @@ msgstr "P_imennä tausta"
 msgid "(Auto)_loop Video (to fit audio track)"
 msgstr ""
 
-#: src/gui.c:1002 src/multitrack.c:6784
+#: src/gui.c:1002 src/multitrack.c:6785
 msgid "L_oop Continuously"
 msgstr "_Jatkuva silmukka"
 
@@ -3101,7 +3101,7 @@ msgstr "_Jatkuva silmukka"
 msgid "Pin_g Pong Loops"
 msgstr "Pin_g Pong -silmukka"
 
-#: src/gui.c:1019 src/multitrack.c:6792
+#: src/gui.c:1019 src/multitrack.c:6793
 msgid "_Mute"
 msgstr "_Vaimenna ääni"
 
@@ -3121,7 +3121,7 @@ msgstr "Näytä tekstitykset"
 msgid "Letterbox mode"
 msgstr ""
 
-#: src/gui.c:1065 src/multitrack.c:6804
+#: src/gui.c:1065 src/multitrack.c:6805
 msgid "Effect_s"
 msgstr "T_ehosteet"
 
@@ -3133,7 +3133,7 @@ msgstr "Tehosteet lisätään nykyiseen valintaan."
 msgid "_Run Test Rendered Effect/Tool/Generator..."
 msgstr ""
 
-#: src/gui.c:1086 src/multitrack.c:7423
+#: src/gui.c:1086 src/multitrack.c:7424
 msgid "_Tools"
 msgstr "T_yökalut"
 
@@ -3161,7 +3161,7 @@ msgstr "A_puvälineet"
 msgid "Custom _Tools"
 msgstr ""
 
-#: src/gui.c:1130 src/multitrack.c:7449
+#: src/gui.c:1130 src/multitrack.c:7450
 msgid "_Generate"
 msgstr "Lu_o"
 
@@ -3177,11 +3177,11 @@ msgstr "Lataa _tekstitykset tiedostosta..."
 msgid "Erase subtitles"
 msgstr ""
 
-#: src/gui.c:1166 src/multitrack.c:7458
+#: src/gui.c:1166 src/multitrack.c:7459
 msgid "Capture _External Window... "
 msgstr "Kaappaa _ulkoisesta ikkunasta... "
 
-#: src/gui.c:1173 src/multitrack.c:7473
+#: src/gui.c:1173 src/multitrack.c:7474
 msgid "_Preferences..."
 msgstr "_Asetukset..."
 
@@ -3285,15 +3285,15 @@ msgstr "Näytä/_muokkaa tiedostokommentteja"
 msgid "Show _Clipboard Info"
 msgstr "Näytä _leikepöydän tiedot"
 
-#: src/gui.c:1380 src/multitrack.c:7586
+#: src/gui.c:1380 src/multitrack.c:7587
 msgid "Show _Messages"
 msgstr "Näytä _viestit"
 
-#: src/gui.c:1384 src/multitrack.c:7665
+#: src/gui.c:1384 src/multitrack.c:7666
 msgid "Show _Layout Errors"
 msgstr "Näytä _asetteluvirheet"
 
-#: src/gui.c:1389 src/multitrack.c:7563
+#: src/gui.c:1389 src/multitrack.c:7564
 msgid "_Clips"
 msgstr "_Leikkeet"
 
@@ -3449,39 +3449,39 @@ msgstr "Le_vottomat kuvat"
 msgid "_LiVES TV (broadband)"
 msgstr "_LiVES TV (laajakaista)"
 
-#: src/gui.c:1691 src/multitrack.c:7687
+#: src/gui.c:1691 src/multitrack.c:7688
 msgid "_Help"
 msgstr "O_hje"
 
-#: src/gui.c:1703 src/multitrack.c:7707
+#: src/gui.c:1703 src/multitrack.c:7708
 msgid "_Manual (opens in browser)"
 msgstr "Käyttöo_hje (avautuu selaimessa)"
 
-#: src/gui.c:1710 src/multitrack.c:7716
+#: src/gui.c:1710 src/multitrack.c:7717
 msgid "_Donate to the project !"
 msgstr "Tee _lahjoitus projektille!"
 
-#: src/gui.c:1714 src/multitrack.c:7720
+#: src/gui.c:1714 src/multitrack.c:7721
 msgid "_Email the author"
 msgstr "Lähetä _postia tekijälle"
 
-#: src/gui.c:1718 src/multitrack.c:7724
+#: src/gui.c:1718 src/multitrack.c:7725
 msgid "Report a _bug"
 msgstr "Tee _vikailmoitus"
 
-#: src/gui.c:1722 src/multitrack.c:7728
+#: src/gui.c:1722 src/multitrack.c:7729
 msgid "Suggest a _feature"
 msgstr "Ehdota _ominaisuutta"
 
-#: src/gui.c:1726 src/multitrack.c:7732
+#: src/gui.c:1726 src/multitrack.c:7733
 msgid "Assist with _translating"
 msgstr "Auta _kääntämisessä"
 
-#: src/gui.c:1733 src/multitrack.c:7739
+#: src/gui.c:1733 src/multitrack.c:7740
 msgid "_Troubleshoot"
 msgstr ""
 
-#: src/gui.c:1737 src/multitrack.c:7743
+#: src/gui.c:1737 src/multitrack.c:7744
 msgid "_About"
 msgstr "_Tietoja ohjelmasta"
 
@@ -3489,7 +3489,7 @@ msgstr "_Tietoja ohjelmasta"
 msgid "Rewind to start (w)"
 msgstr "Palaa alkuun (w)"
 
-#: src/gui.c:1779 src/multitrack.c:17103
+#: src/gui.c:1779 src/multitrack.c:17125
 msgid "Play all (p)"
 msgstr "Toista kaikki (p)"
 
@@ -3659,7 +3659,7 @@ msgstr ""
 msgid "Effects"
 msgstr "Tehosteet"
 
-#: src/ce_thumbs.c:299 src/multitrack.c:5906
+#: src/ce_thumbs.c:299 src/multitrack.c:5907
 msgid "Clips"
 msgstr "Leikkeet"
 
@@ -3965,12 +3965,12 @@ msgstr ""
 "\n"
 "Korvataanko se?\n"
 
-#: src/utils.c:4284 src/utils.c:4314 src/multitrack.c:4773
+#: src/utils.c:4284 src/utils.c:4314 src/multitrack.c:4774
 #, c-format
 msgid "_Undo %s"
 msgstr "Kum_oa %s"
 
-#: src/utils.c:4285 src/utils.c:4315 src/multitrack.c:4794
+#: src/utils.c:4285 src/utils.c:4315 src/multitrack.c:4795
 #, c-format
 msgid "_Redo %s"
 msgstr "Tee uu_destaan %s"
@@ -5513,7 +5513,7 @@ msgstr ""
 msgid "Video only Transitions"
 msgstr ""
 
-#: src/effects.c:116 src/multitrack.c:11034
+#: src/effects.c:116 src/multitrack.c:11056
 msgid "audio only"
 msgstr ""
 
@@ -5521,7 +5521,7 @@ msgstr ""
 msgid "Audio only Transitions"
 msgstr ""
 
-#: src/effects.c:119 src/effects.c:122 src/multitrack.c:19204
+#: src/effects.c:119 src/effects.c:122 src/multitrack.c:19231
 msgid "audio"
 msgstr ""
 
@@ -8429,7 +8429,7 @@ msgstr "_Poista kaikki tehosteet"
 msgid "Mode active"
 msgstr "Käytössä"
 
-#: src/rte_window.c:2298 src/multitrack.c:8870
+#: src/rte_window.c:2298 src/multitrack.c:8883
 msgid "Info"
 msgstr "Tietoa"
 
@@ -8564,12 +8564,12 @@ msgstr ""
 msgid "%s : parameters for %s"
 msgstr "Ei arvoja"
 
-#: src/multitrack.c:1949 src/multitrack.c:3718
+#: src/multitrack.c:1949 src/multitrack.c:3719
 #, c-format
 msgid "Current track: %s (layer %d)\n"
 msgstr "Nykyinen raita: %s (taso %d)\n"
 
-#: src/multitrack.c:1953 src/multitrack.c:3720
+#: src/multitrack.c:1953 src/multitrack.c:3721
 msgid "Current track: Backing audio\n"
 msgstr ""
 
@@ -8583,12 +8583,12 @@ msgstr "Nykyinen raita: Tason %d ääni\n"
 msgid "%.2f sec.\n"
 msgstr "%.2f s\n"
 
-#: src/multitrack.c:1962 src/multitrack.c:3726
+#: src/multitrack.c:1962 src/multitrack.c:3727
 #, c-format
 msgid "Source: %s"
 msgstr "Lähde: %s"
 
-#: src/multitrack.c:1965 src/multitrack.c:3728
+#: src/multitrack.c:1965 src/multitrack.c:3729
 msgid "Right click for context menu.\n"
 msgstr ""
 
@@ -8598,7 +8598,7 @@ msgid ""
 "to select it."
 msgstr ""
 
-#: src/multitrack.c:3528
+#: src/multitrack.c:3529
 msgid ""
 "\n"
 "\n"
@@ -8607,7 +8607,7 @@ msgid ""
 "right or double clicking on it.\n"
 msgstr ""
 
-#: src/multitrack.c:3531
+#: src/multitrack.c:3532
 msgid ""
 "\n"
 "\n"
@@ -8615,7 +8615,7 @@ msgid ""
 "Select an effect in FX stack first to view its parameters.\n"
 msgstr ""
 
-#: src/multitrack.c:3534
+#: src/multitrack.c:3535
 msgid ""
 "\n"
 "\n"
@@ -8625,7 +8625,7 @@ msgstr ""
 "\n"
 "Ei ladattuja leikkeitä.\n"
 
-#: src/multitrack.c:3538
+#: src/multitrack.c:3539
 msgid ""
 "You must select two video tracks\n"
 "and a time region\n"
@@ -8635,7 +8635,7 @@ msgid ""
 "before inserting clips into the timeline."
 msgstr ""
 
-#: src/multitrack.c:3541
+#: src/multitrack.c:3542
 msgid ""
 "\n"
 "\n"
@@ -8644,12 +8644,12 @@ msgid ""
 "to apply compositors.\n"
 msgstr ""
 
-#: src/multitrack.c:3723
+#: src/multitrack.c:3724
 #, c-format
 msgid "%.2f sec. to %.2f sec.\n"
 msgstr "%.2f s - %.2f s\n"
 
-#: src/multitrack.c:3729
+#: src/multitrack.c:3730
 msgid ""
 "Single click on timeline\n"
 "to select a frame.\n"
@@ -8657,199 +8657,199 @@ msgstr ""
 "Napsauta kerran aikajanalla\n"
 "valitaksesi kuvan.\n"
 
-#: src/multitrack.c:3951 src/multitrack.c:7084
+#: src/multitrack.c:3952 src/multitrack.c:7085
 #, c-format
 msgid "%s [unstable]"
 msgstr ""
 
-#: src/multitrack.c:4061
+#: src/multitrack.c:4062
 msgid ""
 "You can click and drag\n"
 "below the timeline"
 msgstr ""
 
-#: src/multitrack.c:4062
+#: src/multitrack.c:4063
 msgid "to select a time region.\n"
 msgstr ""
 
-#: src/multitrack.c:4237
+#: src/multitrack.c:4238
 msgid "LiVES: Selected clip"
 msgstr ""
 
-#: src/multitrack.c:4245
+#: src/multitrack.c:4246
 msgid "_Adjust start and end points"
 msgstr ""
 
-#: src/multitrack.c:4254
+#: src/multitrack.c:4255
 msgid "_Edit/encode in clip editor"
 msgstr ""
 
-#: src/multitrack.c:4261
+#: src/multitrack.c:4262
 msgid "_Show clip information"
 msgstr "_Näytä leikkeen tiedot"
 
-#: src/multitrack.c:4268
+#: src/multitrack.c:4269
 msgid "_Close this clip"
 msgstr "_Sulje tämä leike"
 
-#: src/multitrack.c:4489
+#: src/multitrack.c:4490
 msgid "Audio mixer (ctrl-m)"
 msgstr "Äänimikseri (ctrl-m)"
 
-#: src/multitrack.c:4589
+#: src/multitrack.c:4590
 msgid "Single click on timeline"
 msgstr ""
 
-#: src/multitrack.c:4590
+#: src/multitrack.c:4591
 msgid "to select a frame."
 msgstr ""
 
-#: src/multitrack.c:4591
+#: src/multitrack.c:4592
 msgid "Double click or right click on timeline"
 msgstr ""
 
-#: src/multitrack.c:4592
+#: src/multitrack.c:4593
 msgid "to select a block."
 msgstr ""
 
-#: src/multitrack.c:4593
+#: src/multitrack.c:4594
 msgid "Clips can be dragged"
 msgstr "Leikkeitä voi raahata"
 
-#: src/multitrack.c:4594
+#: src/multitrack.c:4595
 msgid "onto the timeline."
 msgstr "aikajanalle."
 
-#: src/multitrack.c:4596
+#: src/multitrack.c:4597
 msgid "Mouse mode is: Move"
 msgstr "Hiiren tila on: Siirrä"
 
-#: src/multitrack.c:4597
+#: src/multitrack.c:4598
 msgid "clips can be moved around."
 msgstr ""
 
-#: src/multitrack.c:4601
+#: src/multitrack.c:4602
 msgid "Mouse mode is: Select."
 msgstr "Hiiren tila on: Valitse"
 
-#: src/multitrack.c:4602
+#: src/multitrack.c:4603
 msgid "Drag with mouse on timeline"
 msgstr ""
 
-#: src/multitrack.c:4603
+#: src/multitrack.c:4604
 msgid "to select tracks and time."
 msgstr ""
 
-#: src/multitrack.c:4610
+#: src/multitrack.c:4611
 msgid "_Insert mode: Normal"
 msgstr ""
 
-#: src/multitrack.c:4638
+#: src/multitrack.c:4639
 msgid "_Mouse mode: Move"
 msgstr "H_iiren tila: Siirrä"
 
-#: src/multitrack.c:4641
+#: src/multitrack.c:4642
 msgid "_Mouse mode: Select"
 msgstr "H_iiren tila: Valitse"
 
-#: src/multitrack.c:4664 src/multitrack.c:8227
+#: src/multitrack.c:4665 src/multitrack.c:8228
 msgid "Gravity: Normal"
 msgstr ""
 
-#: src/multitrack.c:4666
+#: src/multitrack.c:4667
 msgid "Gravity: Left"
 msgstr ""
 
-#: src/multitrack.c:4670
+#: src/multitrack.c:4671
 msgid "Gravity: Right"
 msgstr ""
 
-#: src/multitrack.c:4671
+#: src/multitrack.c:4672
 msgid "Close _last gap(s) in selected tracks/time"
 msgstr ""
 
-#: src/multitrack.c:4673
+#: src/multitrack.c:4674
 msgid "Close _first gap(s) in selected tracks/time"
 msgstr ""
 
-#: src/multitrack.c:4728
+#: src/multitrack.c:4729
 msgid "Close gaps"
 msgstr "Sulje välit"
 
-#: src/multitrack.c:4730
+#: src/multitrack.c:4731
 msgid "Move block"
 msgstr "Siirrä lohkoa"
 
-#: src/multitrack.c:4732
+#: src/multitrack.c:4733
 msgid "Move audio block"
 msgstr "Siirrä äänilohkoa"
 
-#: src/multitrack.c:4734
+#: src/multitrack.c:4735
 msgid "Delete block"
 msgstr "Poista lohko"
 
-#: src/multitrack.c:4736
+#: src/multitrack.c:4737
 msgid "Delete audio block"
 msgstr "Poista äänilohko"
 
-#: src/multitrack.c:4738
+#: src/multitrack.c:4739
 msgid "Split tracks"
 msgstr ""
 
-#: src/multitrack.c:4740
+#: src/multitrack.c:4741
 msgid "Split block"
 msgstr ""
 
-#: src/multitrack.c:4743
+#: src/multitrack.c:4744
 #, c-format
 msgid "Apply %s"
 msgstr ""
 
-#: src/multitrack.c:4748
+#: src/multitrack.c:4749
 #, c-format
 msgid "Delete %s"
 msgstr "Poista %s"
 
-#: src/multitrack.c:4752
+#: src/multitrack.c:4753
 msgid "Insert block"
 msgstr ""
 
-#: src/multitrack.c:4754
+#: src/multitrack.c:4755
 msgid "Insert gap"
 msgstr "Lisää väli"
 
-#: src/multitrack.c:4756
+#: src/multitrack.c:4757
 msgid "Insert audio block"
 msgstr ""
 
-#: src/multitrack.c:4758
+#: src/multitrack.c:4759
 msgid "Effect order change"
 msgstr ""
 
-#: src/multitrack.c:5165
+#: src/multitrack.c:5166
 msgid "unsigned "
 msgstr ""
 
-#: src/multitrack.c:5166
+#: src/multitrack.c:5167
 msgid "signed "
 msgstr ""
 
-#: src/multitrack.c:5172
+#: src/multitrack.c:5173
 #, c-format
 msgid ""
 "Multitrack values set to %.3f fps, frame size %d x %d, audio channels %d, "
 "audio rate %d, audio sample size %d, %s.\n"
 msgstr ""
 
-#: src/multitrack.c:5205
+#: src/multitrack.c:5206
 msgid "invalid event list. Failed.\n"
 msgstr ""
 
-#: src/multitrack.c:5211
+#: src/multitrack.c:5212
 msgid "event list has invalid fps. Failed.\n"
 msgstr ""
 
-#: src/multitrack.c:5224
+#: src/multitrack.c:5225
 #, c-format
 msgid ""
 "\n"
@@ -8859,7 +8859,7 @@ msgid ""
 "then load in the new set from the File menu.\n"
 msgstr ""
 
-#: src/multitrack.c:5266
+#: src/multitrack.c:5267
 #, c-format
 msgid ""
 "\n"
@@ -8867,431 +8867,431 @@ msgid ""
 "It cannot be loaded.\n"
 msgstr ""
 
-#: src/multitrack.c:5567
+#: src/multitrack.c:5568
 msgid "Layout was wiped.\n"
 msgstr ""
 
-#: src/multitrack.c:5662
+#: src/multitrack.c:5663
 #, c-format
 msgid "LiVES-%s: Multitrack %dx%d : %d bpp %.3f fps"
 msgstr "LiVES-%s: Multitrack %dx%d : %d bpp %.3f fps"
 
-#: src/multitrack.c:5908
+#: src/multitrack.c:5909
 msgid "In/out"
 msgstr ""
 
-#: src/multitrack.c:5910
+#: src/multitrack.c:5911
 msgid "FX stack"
 msgstr ""
 
-#: src/multitrack.c:5918 src/omc-learn.c:663
+#: src/multitrack.c:5919 src/omc-learn.c:663
 msgid "Params."
 msgstr ""
 
-#: src/multitrack.c:6264
+#: src/multitrack.c:6265
 msgid "_Open..."
 msgstr ""
 
-#: src/multitrack.c:6282
+#: src/multitrack.c:6283
 msgid "O_pen File Selection..."
 msgstr "A_vaa tiedostovalinta..."
 
-#: src/multitrack.c:6330
+#: src/multitrack.c:6331
 msgid "Import Selection from _dvd/vcd..."
 msgstr "Tuo valinta _dvd/vcd-levyltä..."
 
-#: src/multitrack.c:6340
+#: src/multitrack.c:6341
 msgid "Import Selection from _dvd"
 msgstr "Tuo valinta _dvd:ltä"
 
-#: src/multitrack.c:6350
+#: src/multitrack.c:6351
 msgid "Import Selection from _vcd"
 msgstr "Tuo valinta _vcd:ltä"
 
-#: src/multitrack.c:6366
+#: src/multitrack.c:6367
 msgid "_Import from Device"
 msgstr "Tuo _laitteelta"
 
-#: src/multitrack.c:6397
+#: src/multitrack.c:6398
 msgid "_Close the selected clip"
 msgstr ""
 
-#: src/multitrack.c:6492
+#: src/multitrack.c:6493
 msgid "_Save layout as..."
 msgstr "_Tallenna asettelu nimellä.."
 
-#: src/multitrack.c:6500
+#: src/multitrack.c:6501
 msgid "_Load layout..."
 msgstr "L_ataa asettelu..."
 
-#: src/multitrack.c:6504
+#: src/multitrack.c:6505
 msgid "_Wipe/Delete layout..."
 msgstr "_Pyyhi/poista asettelu..."
 
-#: src/multitrack.c:6530
+#: src/multitrack.c:6531
 msgid "_Ignore width, height and audio values from loaded layouts"
 msgstr ""
 
-#: src/multitrack.c:6534
+#: src/multitrack.c:6535
 msgid "Auto load _subtitles with clips"
 msgstr ""
 
-#: src/multitrack.c:6616
+#: src/multitrack.c:6617
 msgid "_CLIP EDITOR"
 msgstr "_LEIKEMUOKKAIN"
 
-#: src/multitrack.c:6628
+#: src/multitrack.c:6629
 msgid "_Adjust selected clip start/end points"
 msgstr "_Säädä valitun leikkeen aloitus/lopetuskohtaa"
 
-#: src/multitrack.c:6637
+#: src/multitrack.c:6638
 msgid "_Insert selected clip"
 msgstr "L_isää valittu leike"
 
-#: src/multitrack.c:6649
+#: src/multitrack.c:6650
 msgid "_Insert selected clip audio"
 msgstr "L_isää valittu äänileike"
 
-#: src/multitrack.c:6658
+#: src/multitrack.c:6659
 msgid "_Delete selected block"
 msgstr "_Poista valittu lohko"
 
-#: src/multitrack.c:6670
+#: src/multitrack.c:6671
 msgid "_Jump to previous block boundary"
 msgstr "Hyppää e_delliseen lohkorajaan"
 
-#: src/multitrack.c:6679
+#: src/multitrack.c:6680
 msgid "_Jump to next block boundary"
 msgstr "Hyppää s_euraavaan lohkorajaan"
 
-#: src/multitrack.c:6692
+#: src/multitrack.c:6693
 msgid "Clear _marks from timeline"
 msgstr "Poista aikajanan _merkit"
 
-#: src/multitrack.c:6700
+#: src/multitrack.c:6701
 msgid "Ignore selection limits when inserting"
 msgstr ""
 
-#: src/multitrack.c:6717 src/multitrack.c:17102
+#: src/multitrack.c:6718 src/multitrack.c:17124
 msgid "_Play from Timeline Position"
 msgstr "_Toista aikajanan sijainnista alkaen"
 
-#: src/multitrack.c:6731
+#: src/multitrack.c:6732
 msgid "Pla_y selected time only"
 msgstr ""
 
-#: src/multitrack.c:6815
+#: src/multitrack.c:6816
 msgid "_Move effects with blocks"
 msgstr ""
 
-#: src/multitrack.c:6828
+#: src/multitrack.c:6829
 msgid "Select _autotransition effect..."
 msgstr ""
 
-#: src/multitrack.c:6839
+#: src/multitrack.c:6840
 msgid "Crossfade audio with autotransition"
 msgstr ""
 
-#: src/multitrack.c:6847
+#: src/multitrack.c:6848
 msgid "View/_Edit selected effect"
 msgstr ""
 
-#: src/multitrack.c:6851
+#: src/multitrack.c:6852
 msgid "_Delete selected effect"
 msgstr "_Poista valittu tehoste"
 
-#: src/multitrack.c:6859
+#: src/multitrack.c:6860
 msgid "Apply effect to _block..."
 msgstr ""
 
-#: src/multitrack.c:6917
+#: src/multitrack.c:6918
 msgid "Apply effect to _region..."
 msgstr ""
 
-#: src/multitrack.c:7185
+#: src/multitrack.c:7186
 msgid "_Tracks"
 msgstr "_Raidat"
 
-#: src/multitrack.c:7196
+#: src/multitrack.c:7197
 msgid "Rename current track"
 msgstr ""
 
-#: src/multitrack.c:7204
+#: src/multitrack.c:7205
 msgid "Make _Backing Audio current track"
 msgstr ""
 
-#: src/multitrack.c:7215
+#: src/multitrack.c:7216
 msgid "Add Video Track at _Rear"
 msgstr ""
 
-#: src/multitrack.c:7223
+#: src/multitrack.c:7224
 msgid "Add Video Track at _Front"
 msgstr ""
 
-#: src/multitrack.c:7236
+#: src/multitrack.c:7237
 msgid "_Split current track at cursor"
 msgstr "Jaa nykyinen raita osiin _osoittimen kohdalta"
 
-#: src/multitrack.c:7248
+#: src/multitrack.c:7249
 msgid "_Split selected video tracks"
 msgstr "Jaa _valitut raidat osiin"
 
-#: src/multitrack.c:7261
+#: src/multitrack.c:7262
 msgid "Insert gap in selected tracks/time"
 msgstr ""
 
-#: src/multitrack.c:7269
+#: src/multitrack.c:7270
 msgid "Insert gap in current track/selected time"
 msgstr ""
 
-#: src/multitrack.c:7281
+#: src/multitrack.c:7282
 msgid "Close all _gaps in selected tracks/time"
 msgstr ""
 
-#: src/multitrack.c:7307
+#: src/multitrack.c:7308
 msgid "Se_lection"
 msgstr "Va_linnat"
 
-#: src/multitrack.c:7318
+#: src/multitrack.c:7319
 msgid "_Select Current Track"
 msgstr ""
 
-#: src/multitrack.c:7325
+#: src/multitrack.c:7326
 msgid "Select _all video tracks"
 msgstr "Valitse _kaikki videoraidat"
 
-#: src/multitrack.c:7332
+#: src/multitrack.c:7333
 msgid "Select _no video tracks"
 msgstr ""
 
-#: src/multitrack.c:7339
+#: src/multitrack.c:7340
 msgid "Select all _time"
 msgstr ""
 
-#: src/multitrack.c:7350
+#: src/multitrack.c:7351
 msgid "Select from _zero time"
 msgstr ""
 
-#: src/multitrack.c:7357
+#: src/multitrack.c:7358
 msgid "Select to _end time"
 msgstr ""
 
-#: src/multitrack.c:7364
+#: src/multitrack.c:7365
 msgid "_Copy..."
 msgstr "_Kopioi..."
 
-#: src/multitrack.c:7375
+#: src/multitrack.c:7376
 msgid "_Timecode to region start"
 msgstr ""
 
-#: src/multitrack.c:7382
+#: src/multitrack.c:7383
 msgid "_Timecode to region end"
 msgstr ""
 
-#: src/multitrack.c:7389
+#: src/multitrack.c:7390
 msgid "_Region start to timecode"
 msgstr ""
 
-#: src/multitrack.c:7396
+#: src/multitrack.c:7397
 msgid "_Region end to timecode"
 msgstr ""
 
-#: src/multitrack.c:7410
+#: src/multitrack.c:7411
 msgid "Select/deselect block at current track/time"
 msgstr ""
 
-#: src/multitrack.c:7435
+#: src/multitrack.c:7436
 msgid "_Change width, height and audio values..."
 msgstr "_Muuta leveys-, korkeus- ja ääniarvoja..."
 
-#: src/multitrack.c:7494
+#: src/multitrack.c:7495
 msgid "_Render"
 msgstr ""
 
-#: src/multitrack.c:7505
+#: src/multitrack.c:7506
 msgid "_Render all to new clip"
 msgstr ""
 
-#: src/multitrack.c:7520
+#: src/multitrack.c:7521
 msgid "Render _video"
 msgstr ""
 
-#: src/multitrack.c:7525
+#: src/multitrack.c:7526
 msgid "Render _audio"
 msgstr ""
 
-#: src/multitrack.c:7535
+#: src/multitrack.c:7536
 msgid "_Normalise rendered audio"
 msgstr ""
 
-#: src/multitrack.c:7542
+#: src/multitrack.c:7543
 msgid "_Pre-render audio"
 msgstr ""
 
-#: src/multitrack.c:7551
+#: src/multitrack.c:7552
 msgid "_View"
 msgstr "_Näytä"
 
-#: src/multitrack.c:7570
+#: src/multitrack.c:7571
 msgid "Block _In/out points"
 msgstr ""
 
-#: src/multitrack.c:7579
+#: src/multitrack.c:7580
 msgid "_Effects at current"
 msgstr ""
 
-#: src/multitrack.c:7597
+#: src/multitrack.c:7598
 msgid "Audio parameters"
 msgstr ""
 
-#: src/multitrack.c:7608
+#: src/multitrack.c:7609
 msgid "Show backing _audio track"
 msgstr ""
 
-#: src/multitrack.c:7612
+#: src/multitrack.c:7613
 msgid "Compact view"
 msgstr ""
 
-#: src/multitrack.c:7620
+#: src/multitrack.c:7621
 msgid "Maximum tracks to display..."
 msgstr ""
 
-#: src/multitrack.c:7627
+#: src/multitrack.c:7628
 msgid "Scroll to follow playback"
 msgstr ""
 
-#: src/multitrack.c:7631
+#: src/multitrack.c:7632
 msgid "_Center on cursor"
 msgstr ""
 
-#: src/multitrack.c:7638
+#: src/multitrack.c:7639
 msgid "_Zoom in"
 msgstr "L_ähennä"
 
-#: src/multitrack.c:7649
+#: src/multitrack.c:7650
 msgid "_Zoom out"
 msgstr "L_oitonna"
 
-#: src/multitrack.c:7661
+#: src/multitrack.c:7662
 msgid "Multitrack _details"
 msgstr "_Multitrack-tiedot"
 
-#: src/multitrack.c:7674
+#: src/multitrack.c:7675
 msgid "_Event Window"
 msgstr "_Tapahtumaikkuna"
 
-#: src/multitrack.c:7678
+#: src/multitrack.c:7679
 msgid "_Event Window (selected time only)"
 msgstr ""
 
-#: src/multitrack.c:7682
+#: src/multitrack.c:7683
 msgid "_Show FRAME events"
 msgstr ""
 
-#: src/multitrack.c:7699
+#: src/multitrack.c:7700
 msgid "_Show multitrack keys"
 msgstr "_Näytä multitrack-näppäimet"
 
-#: src/multitrack.c:7768
+#: src/multitrack.c:7769
 msgid "Mouse mode: _Move"
 msgstr "Hiiren tila: _Siirrä"
 
-#: src/multitrack.c:7776
+#: src/multitrack.c:7777
 msgid "Mouse mode: _Select"
 msgstr "Hiiren tila: _Valitse"
 
-#: src/multitrack.c:7805
+#: src/multitrack.c:7806
 msgid "Insert mode: _Normal"
 msgstr ""
 
-#: src/multitrack.c:8033
+#: src/multitrack.c:8034
 msgid "Insert with _audio"
 msgstr ""
 
-#: src/multitrack.c:8034
+#: src/multitrack.c:8035
 msgid ""
 "Select whether video clips are inserted and moved with their audio or not"
 msgstr ""
 
-#: src/multitrack.c:8130
+#: src/multitrack.c:8131
 msgid "Select _overlap"
 msgstr ""
 
-#: src/multitrack.c:8131
+#: src/multitrack.c:8132
 msgid ""
 "Select whether timeline selection snaps to overlap between selected tracks "
 "or not"
 msgstr ""
 
-#: src/multitrack.c:8196 src/multitrack.c:14474
+#: src/multitrack.c:8197 src/multitrack.c:14496
 msgid "Expanded View (d)"
 msgstr "Laajempi näkymä (d)"
 
-#: src/multitrack.c:8199 src/multitrack.c:14480
+#: src/multitrack.c:8200 src/multitrack.c:14502
 msgid "Compact View (d)"
 msgstr "Suppea näkymä (d)"
 
-#: src/multitrack.c:8241
+#: src/multitrack.c:8242
 msgid "Gravity: _Normal"
 msgstr ""
 
-#: src/multitrack.c:8254
+#: src/multitrack.c:8255
 msgid "Gravity: _Left"
 msgstr ""
 
-#: src/multitrack.c:8269
+#: src/multitrack.c:8270
 msgid "Gravity: _Right"
 msgstr ""
 
-#: src/multitrack.c:8619
+#: src/multitrack.c:8621
 msgid "_Apply"
 msgstr ""
 
-#: src/multitrack.c:8641
+#: src/multitrack.c:8643
 msgid "Time"
 msgstr ""
 
-#: src/multitrack.c:8655
+#: src/multitrack.c:8668
 msgid "_Del. node"
 msgstr ""
 
-#: src/multitrack.c:8663
+#: src/multitrack.c:8676
 msgid "_Next node"
 msgstr ""
 
-#: src/multitrack.c:8671
+#: src/multitrack.c:8684
 msgid "_Prev node"
 msgstr ""
 
-#: src/multitrack.c:8697
+#: src/multitrack.c:8710
 msgid "_Reverse playback  "
 msgstr ""
 
-#: src/multitrack.c:8714
+#: src/multitrack.c:8727
 msgid "_Velocity  "
 msgstr ""
 
-#: src/multitrack.c:8777
+#: src/multitrack.c:8790
 msgid "Anchor _start"
 msgstr ""
 
-#: src/multitrack.c:8778
+#: src/multitrack.c:8791
 msgid "Anchor the start point to the timeline"
 msgstr "Ankkuroi aloituspiste aikajanaan"
 
-#: src/multitrack.c:8836
+#: src/multitrack.c:8849
 msgid "Anchor _end"
 msgstr ""
 
-#: src/multitrack.c:8837
+#: src/multitrack.c:8850
 msgid "Anchor the end point to the timeline"
 msgstr "Ankkuroi lopetuspiste aikajanaan"
 
-#: src/multitrack.c:9018
+#: src/multitrack.c:9031
 msgid "Scroll"
 msgstr "Vieritys"
 
-#: src/multitrack.c:9600
+#: src/multitrack.c:9613
 msgid ""
 "\n"
 "==============================\n"
@@ -9301,91 +9301,91 @@ msgstr ""
 "==============================\n"
 "Vaihdettiin leikemuokkaustilaan\n"
 
-#: src/multitrack.c:9806
+#: src/multitrack.c:9819
 msgid "Timeline (seconds)"
 msgstr "Aikajana (sekuntia)"
 
-#: src/multitrack.c:10303
+#: src/multitrack.c:10325
 msgid " Backing audio"
 msgstr ""
 
-#: src/multitrack.c:10305
+#: src/multitrack.c:10327
 #, c-format
 msgid " Layer %d audio"
 msgstr " Tason %d ääni"
 
-#: src/multitrack.c:10313
+#: src/multitrack.c:10335
 msgid "Show/hide audio details"
 msgstr ""
 
-#: src/multitrack.c:10322 src/multitrack.c:10547
+#: src/multitrack.c:10344 src/multitrack.c:10569
 #, c-format
 msgid "Layer %d audio"
 msgstr "Tason %d ääni"
 
-#: src/multitrack.c:10448 src/multitrack.c:10576
+#: src/multitrack.c:10470 src/multitrack.c:10598
 #, c-format
 msgid "%s (layer %d)"
 msgstr "%s (taso %d)"
 
-#: src/multitrack.c:10498
+#: src/multitrack.c:10520
 msgid "Select track"
 msgstr ""
 
-#: src/multitrack.c:10502
+#: src/multitrack.c:10524
 msgid "Show/hide audio"
 msgstr ""
 
-#: src/multitrack.c:10508
+#: src/multitrack.c:10530
 #, c-format
 msgid "Video %d"
 msgstr "Video %d"
 
-#: src/multitrack.c:10548
+#: src/multitrack.c:10570
 #, c-format
 msgid " %s"
 msgstr " %s"
 
-#: src/multitrack.c:10662
+#: src/multitrack.c:10684
 msgid "LiVES: Selected effect"
 msgstr ""
 
-#: src/multitrack.c:10674
+#: src/multitrack.c:10696
 msgid "_View/Edit this effect"
 msgstr ""
 
-#: src/multitrack.c:10676
+#: src/multitrack.c:10698
 msgid "_View this effect"
 msgstr ""
 
-#: src/multitrack.c:10684
+#: src/multitrack.c:10706
 msgid "_Delete this effect"
 msgstr "_Poista tämä tehoste"
 
-#: src/multitrack.c:10736
+#: src/multitrack.c:10758
 msgid "Cannot insert after this effect"
 msgstr ""
 
-#: src/multitrack.c:10765
+#: src/multitrack.c:10787
 msgid "This effect cannot be moved"
 msgstr "Tätä tehostetta ei voi siirtää"
 
-#: src/multitrack.c:10812
+#: src/multitrack.c:10834
 #, c-format
 msgid "  %d to %d selected  "
 msgstr "  %d - %d valittuna  "
 
-#: src/multitrack.c:10815 src/multitrack.c:11038
+#: src/multitrack.c:10837 src/multitrack.c:11060
 #, c-format
 msgid "%.2f sec."
 msgstr "%.2f s"
 
-#: src/multitrack.c:11018
+#: src/multitrack.c:11040
 #, c-format
 msgid "%d frames"
 msgstr "%d kuvaa"
 
-#: src/multitrack.c:11348
+#: src/multitrack.c:11370
 msgid ""
 "\n"
 "==============================\n"
@@ -9395,70 +9395,70 @@ msgstr ""
 "==============================\n"
 "Vaihdettiin Multitrack-tilaan\n"
 
-#: src/multitrack.c:12994
+#: src/multitrack.c:13016
 msgid "Drag the time slider to where you"
 msgstr ""
 
-#: src/multitrack.c:12995
+#: src/multitrack.c:13017
 msgid "want to set effect parameters"
 msgstr ""
 
-#: src/multitrack.c:12996
+#: src/multitrack.c:13018
 msgid "Set parameters, then click \"Apply\"\n"
 msgstr ""
 
-#: src/multitrack.c:12997
+#: src/multitrack.c:13019
 msgid ""
 "NODES are points where parameters\n"
 "have been set.\n"
 "Nodes can be deleted."
 msgstr ""
 
-#: src/multitrack.c:12999
+#: src/multitrack.c:13021
 msgid "Effect has no parameters.\n"
 msgstr ""
 
-#: src/multitrack.c:13091
+#: src/multitrack.c:13113
 #, c-format
 msgid "%s output"
 msgstr ""
 
-#: src/multitrack.c:13096 src/multitrack.c:13104
+#: src/multitrack.c:13118 src/multitrack.c:13126
 #, c-format
 msgid "layer %d"
 msgstr ""
 
-#: src/multitrack.c:13097 src/multitrack.c:13105
+#: src/multitrack.c:13119 src/multitrack.c:13127
 msgid "audio track"
 msgstr ""
 
-#: src/multitrack.c:13098
+#: src/multitrack.c:13120
 #, c-format
 msgid "%s to %s"
 msgstr ""
 
-#: src/multitrack.c:13106
+#: src/multitrack.c:13128
 #, c-format
 msgid "%s from %s"
 msgstr ""
 
-#: src/multitrack.c:13151
+#: src/multitrack.c:13173
 msgid "_Prev filter map"
 msgstr ""
 
-#: src/multitrack.c:13162
+#: src/multitrack.c:13184
 msgid "Insert _before"
 msgstr ""
 
-#: src/multitrack.c:13172
+#: src/multitrack.c:13194
 msgid "Insert _after"
 msgstr ""
 
-#: src/multitrack.c:13186
+#: src/multitrack.c:13208
 msgid "_Next filter map"
 msgstr ""
 
-#: src/multitrack.c:13200
+#: src/multitrack.c:13222
 msgid ""
 "\n"
 "\n"
@@ -9466,21 +9466,21 @@ msgid ""
 "current time.\n"
 msgstr ""
 
-#: src/multitrack.c:13218
+#: src/multitrack.c:13240
 msgid ""
 "Drag a compositor anywhere\n"
 "on the timeline\n"
 "to apply it to the selected region."
 msgstr ""
 
-#: src/multitrack.c:13225
+#: src/multitrack.c:13247
 msgid ""
 "Drag a transition anywhere\n"
 "on the timeline\n"
 "to apply it to the selected region."
 msgstr ""
 
-#: src/multitrack.c:13233
+#: src/multitrack.c:13255
 msgid ""
 "Effects can be dragged\n"
 "onto blocks on the timeline."
@@ -9488,135 +9488,135 @@ msgstr ""
 "Tehosteita voi raahata\n"
 "aikajanalla oleviin lohkoihin."
 
-#: src/multitrack.c:13458
+#: src/multitrack.c:13480
 msgid "LiVES: Selected block/frame"
 msgstr ""
 
-#: src/multitrack.c:13465
+#: src/multitrack.c:13487
 msgid "_Select this block"
 msgstr "_Valitse tämä lohko"
 
-#: src/multitrack.c:13475
+#: src/multitrack.c:13497
 msgid "_Split block here"
 msgstr "_Jaa lohko osiin tästä"
 
-#: src/multitrack.c:13483
+#: src/multitrack.c:13505
 msgid "List _effects here"
 msgstr ""
 
-#: src/multitrack.c:13492 src/multitrack.c:13570
+#: src/multitrack.c:13514 src/multitrack.c:13592
 #, c-format
 msgid "_Adjust %s"
 msgstr ""
 
-#: src/multitrack.c:13507
+#: src/multitrack.c:13529
 msgid "_Delete this block"
 msgstr "_Poista tämä lohko"
 
-#: src/multitrack.c:13552
+#: src/multitrack.c:13574
 msgid "_Insert here"
 msgstr ""
 
-#: src/multitrack.c:13557
+#: src/multitrack.c:13579
 msgid "_Insert audio here"
 msgstr ""
 
-#: src/multitrack.c:15071
+#: src/multitrack.c:15093
 #, c-format
 msgid "Inserted gap in selected tracks from time %.4f to %.4f\n"
 msgstr ""
 
-#: src/multitrack.c:15102
+#: src/multitrack.c:15124
 #, c-format
 msgid "Inserted gap in track %s from time %.4f to %.4f\n"
 msgstr ""
 
-#: src/multitrack.c:15298
+#: src/multitrack.c:15320
 #, c-format
 msgid "Undid %s\n"
 msgstr ""
 
-#: src/multitrack.c:15499
+#: src/multitrack.c:15521
 #, c-format
 msgid "Redid %s\n"
 msgstr ""
 
-#: src/multitrack.c:15529
+#: src/multitrack.c:15551
 msgid ""
 "\n"
 " (variable)"
 msgstr ""
 
-#: src/multitrack.c:15764 src/multitrack.c:15877 src/multitrack.c:19184
-#: src/multitrack.c:19196
+#: src/multitrack.c:15786 src/multitrack.c:15899 src/multitrack.c:19211
+#: src/multitrack.c:19223
 #, c-format
 msgid "track %s"
 msgstr "raita %s"
 
-#: src/multitrack.c:15769 src/multitrack.c:15882 src/multitrack.c:19189
+#: src/multitrack.c:15791 src/multitrack.c:15904 src/multitrack.c:19216
 #, c-format
 msgid "tracks %s and %s"
 msgstr "raidat %s ja %s"
 
-#: src/multitrack.c:15775 src/multitrack.c:15888 src/multitrack.c:19198
+#: src/multitrack.c:15797 src/multitrack.c:15910 src/multitrack.c:19225
 msgid "selected tracks"
 msgstr "valitut raidat"
 
-#: src/multitrack.c:15780
+#: src/multitrack.c:15802
 #, c-format
 msgid "Added %s %s to %s from %.4f to %.4f\n"
 msgstr ""
 
-#: src/multitrack.c:15814
+#: src/multitrack.c:15836
 #, c-format
 msgid "Added effect %s to track %s from %.4f to %.4f\n"
 msgstr ""
 
-#: src/multitrack.c:15899
+#: src/multitrack.c:15921
 #, c-format
 msgid "Deleted %s %s from %s from %.4f to %.4f\n"
 msgstr ""
 
-#: src/multitrack.c:16197
+#: src/multitrack.c:16219
 #, c-format
 msgid "rendered %d frames to new clip.\n"
 msgstr ""
 
-#: src/multitrack.c:16284
+#: src/multitrack.c:16306
 msgid "Cleaning up..."
 msgstr "Siivotaan..."
 
-#: src/multitrack.c:17096
+#: src/multitrack.c:17118
 msgid "_Pause"
 msgstr ""
 
-#: src/multitrack.c:17097
+#: src/multitrack.c:17119
 msgid "Pause (p)"
 msgstr ""
 
-#: src/multitrack.c:17245
+#: src/multitrack.c:17267
 msgid "Press 'm' during playback"
 msgstr "Paina toiston aikana \"m\""
 
-#: src/multitrack.c:17246
+#: src/multitrack.c:17268
 msgid "to make a mark on the timeline"
 msgstr "tehdäksesi merkin aikajanalle"
 
-#: src/multitrack.c:17592
+#: src/multitrack.c:17614
 #, c-format
 msgid ""
 "Inserted audio %.4f to %.4f from clip %s into backing audio from time %.4f "
 "to %.4f\n"
 msgstr ""
 
-#: src/multitrack.c:17853
+#: src/multitrack.c:17875
 #, c-format
 msgid ""
 "Inserted frames %d to %d from clip %s into track %s from time %.4f to %.4f\n"
 msgstr ""
 "Lisättiin kuvat %d - %d leikkeestä %s raitaan %s aikaväliltä %.4f - %.4f\n"
 
-#: src/multitrack.c:18426
+#: src/multitrack.c:18448
 #, c-format
 msgid ""
 "Time region %.3f to %.3f\n"
@@ -9625,7 +9625,7 @@ msgstr ""
 "Aikajakso %.3f - %.3f\n"
 "valittu.\n"
 
-#: src/multitrack.c:18430
+#: src/multitrack.c:18452
 msgid ""
 "select one or more tracks\n"
 "to create a region.\n"
@@ -9633,12 +9633,12 @@ msgstr ""
 "valitse yksi tai useampia raitoja\n"
 "luodaksesi alueen.\n"
 
-#: src/multitrack.c:18431
+#: src/multitrack.c:18453
 #, c-format
 msgid "%d video tracks selected.\n"
 msgstr "%d videoraita(a) valittu.\n"
 
-#: src/multitrack.c:18433
+#: src/multitrack.c:18455
 msgid ""
 "Double click on timeline\n"
 "to deselect time region."
@@ -9646,7 +9646,7 @@ msgstr ""
 "Kaksoisnapsauta aikajanaa\n"
 "poistaaksesi aikajakson valinnan."
 
-#: src/multitrack.c:18440
+#: src/multitrack.c:18462
 msgid ""
 "Single click on an effect\n"
 "to select it."
@@ -9654,7 +9654,7 @@ msgstr ""
 "Napsauta tehostetta\n"
 "valitaksesi sen."
 
-#: src/multitrack.c:18441
+#: src/multitrack.c:18463
 msgid ""
 "Double click on an effect\n"
 "to edit it."
@@ -9662,7 +9662,7 @@ msgstr ""
 "Kaksoisnapsauta tehostetta\n"
 "muokataksesi sitä."
 
-#: src/multitrack.c:18442
+#: src/multitrack.c:18464
 msgid ""
 "Right click on an effect\n"
 "for context menu.\n"
@@ -9670,83 +9670,83 @@ msgstr ""
 "Napsauta tehostetta hiiren\n"
 "oikealla avataksesi pikavalikon.\n"
 
-#: src/multitrack.c:18444
+#: src/multitrack.c:18466
 msgid ""
 "Effect order can be changed at\n"
 "FILTER MAPS"
 msgstr ""
 
-#: src/multitrack.c:18451
+#: src/multitrack.c:18473
 msgid ""
 "You can select an effect,\n"
 "then use the INSERT BEFORE"
 msgstr ""
 
-#: src/multitrack.c:18452
+#: src/multitrack.c:18474
 msgid "or INSERT AFTER buttons to move it."
 msgstr ""
 
-#: src/multitrack.c:18746 src/multitrack.c:18759
+#: src/multitrack.c:18773 src/multitrack.c:18786
 msgid "Click on another effect,"
 msgstr ""
 
-#: src/multitrack.c:18747 src/multitrack.c:18760
+#: src/multitrack.c:18774 src/multitrack.c:18787
 msgid ""
 "and the selected one\n"
 "will be inserted"
 msgstr ""
 
-#: src/multitrack.c:18748
+#: src/multitrack.c:18775
 msgid "after it.\n"
 msgstr ""
 
-#: src/multitrack.c:18761
+#: src/multitrack.c:18788
 msgid "before it.\n"
 msgstr ""
 
-#: src/multitrack.c:18996
+#: src/multitrack.c:19023
 #, c-format
 msgid "Removed parameter values for effect %s at time %.4f\n"
 msgstr ""
 
-#: src/multitrack.c:19207
+#: src/multitrack.c:19234
 #, c-format
 msgid "Set parameter values for %s %s on %s at time %.4f\n"
 msgstr ""
 
-#: src/multitrack.c:19754 src/multitrack.c:21323
+#: src/multitrack.c:19781 src/multitrack.c:21350
 msgid "_Autoreload each time"
 msgstr ""
 
-#: src/multitrack.c:19826
+#: src/multitrack.c:19853
 #, fuzzy
 msgid "Saving layout"
 msgstr "_Tallenna asettelu"
 
-#: src/multitrack.c:19849
+#: src/multitrack.c:19876
 #, c-format
 msgid "Saved layout to %s\n"
 msgstr ""
 
-#: src/multitrack.c:21253
+#: src/multitrack.c:21280
 msgid "clips and frames"
 msgstr ""
 
-#: src/multitrack.c:21256
+#: src/multitrack.c:21283
 msgid "clips"
 msgstr ""
 
-#: src/multitrack.c:21258
+#: src/multitrack.c:21285
 msgid "frames"
 msgstr ""
 
-#: src/multitrack.c:21268
+#: src/multitrack.c:21295
 msgid ""
 "\n"
 "Auto reload layout.\n"
 msgstr ""
 
-#: src/multitrack.c:21271
+#: src/multitrack.c:21298
 #, c-format
 msgid ""
 "%s\n"
@@ -9754,11 +9754,11 @@ msgid ""
 "Therefore it could not be loaded properly.\n"
 msgstr ""
 
-#: src/multitrack.c:21412
+#: src/multitrack.c:21439
 msgid "auto backup"
 msgstr ""
 
-#: src/multitrack.c:21415
+#: src/multitrack.c:21442
 #, c-format
 msgid ""
 "\n"
@@ -9767,31 +9767,31 @@ msgstr ""
 "\n"
 "Asettelutiedostoa %s ei voitu ladata\n"
 
-#: src/multitrack.c:21436
+#: src/multitrack.c:21463
 #, c-format
 msgid "Loading layout from %s..."
 msgstr ""
 
-#: src/multitrack.c:21466
+#: src/multitrack.c:21493
 #, c-format
 msgid "Got %d events...processing..."
 msgstr ""
 
-#: src/multitrack.c:21477
+#: src/multitrack.c:21504
 msgid "Checking and rebuilding event list"
 msgstr ""
 
-#: src/multitrack.c:21502
+#: src/multitrack.c:21529
 #, c-format
 msgid "%d errors detected.\n"
 msgstr "virheitä havaittu %d.\n"
 
-#: src/multitrack.c:21551
+#: src/multitrack.c:21578
 #, c-format
 msgid "Multitrack fps set to %.3f\n"
 msgstr ""
 
-#: src/multitrack.c:21705
+#: src/multitrack.c:21732
 #, fuzzy
 msgid ""
 "The current layout has changes which have not been saved.\n"
@@ -9800,33 +9800,33 @@ msgstr ""
 "Nykyistä asettelua ei ole tallennettu.\n"
 "Mitä haluat tehdä?\n"
 
-#: src/multitrack.c:22512
+#: src/multitrack.c:22539
 msgid "LiVES: Multitrack audio mixer"
 msgstr "LiVES: Multitrack-äänimikseri"
 
-#: src/multitrack.c:22541
+#: src/multitrack.c:22568
 msgid "_Reset values"
 msgstr "_Palauta arvot"
 
-#: src/multitrack.c:22545
+#: src/multitrack.c:22572
 msgid "_Close mixer"
 msgstr "_Sulje mikseri"
 
-#: src/multitrack.c:22593
+#: src/multitrack.c:22620
 msgid ""
 "_Invert backing audio\n"
 "and layer volumes"
 msgstr ""
 
-#: src/multitrack.c:22595
+#: src/multitrack.c:22622
 msgid "Adjust backing and layer audio values so that they sum to 1.0"
 msgstr ""
 
-#: src/multitrack.c:22637
+#: src/multitrack.c:22664
 msgid "_Gang layer audio"
 msgstr ""
 
-#: src/multitrack.c:22639
+#: src/multitrack.c:22666
 msgid "Adjust all layer audio values to the same value"
 msgstr ""
 

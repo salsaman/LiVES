@@ -3529,8 +3529,6 @@ lives_render_error_t render_events(boolean reset) {
 
                 // check if ext_src survives old->new
 
-                g_print("change clip from %d to %d\n",oclip,nclip);
-
                 ////
                 if (oclip>0) {
                   if (mainw->files[oclip]->clip_type==CLIP_TYPE_FILE) {
@@ -3547,7 +3545,6 @@ lives_render_error_t render_events(boolean reset) {
                     if (!mainw->ext_src_used[nclip]) {
                       mainw->track_decoders[i]=(lives_decoder_t *)mainw->files[nclip]->ext_src;
                       mainw->ext_src_used[nclip]=TRUE;
-                      g_print("new decoder\n");
                     } else {
                       // add new clone for nclip
                       mainw->track_decoders[i]=clone_decoder(nclip);
@@ -3555,9 +3552,6 @@ lives_render_error_t render_events(boolean reset) {
                   }
                 }
               }
-
-              g_print("clipvals from %d to %d\n",oclip,nclip);
-
 
               mainw->old_active_track_list[i]=mainw->active_track_list[i];
 

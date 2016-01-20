@@ -2914,7 +2914,7 @@ weed_plant_t *append_filter_map_event(weed_plant_t *event_list, weed_timecode_t 
 
 
 void get_active_track_list(int *clip_index, int num_tracks, weed_plant_t *filter_map) {
-  // replace entries in mainw->clip_index with 0 if the track is not either the front track or an input to a filter
+  // replace entries in clip_index with 0 if the track is not either the front track or an input to a filter
 
   // TODO *** we should ignore any filter which does not eventually output to the front track,
   // this involves examining the filter map in reverse order and mapping out_tracks back to in_tracks
@@ -3382,7 +3382,6 @@ lives_render_error_t render_events(boolean reset) {
   static weed_plant_t *event,*eventnext;
 
   int *in_count=NULL;
-  int *clip_index,*frame_index;
 
   weed_plant_t **source_params,**in_params;
   weed_plant_t **layers,*layer;
@@ -3475,12 +3474,16 @@ lives_render_error_t render_events(boolean reset) {
           int scrap_track=-1;
 
           num_tracks=weed_leaf_num_elements(event,"clips");
-          clip_index=weed_get_int_array(event,"clips",&weed_error);
-          frame_index=weed_get_int_array(event,"frames",&weed_error);
+
+          if (mainw->clip_index!=NULL) lives_free(mainw->clip_index);
+          if (mainw->frame_index!=NULL) lives_free(mainw->frame_index);
+
+          mainw->clip_index=weed_get_int_array(event,"clips",&weed_error);
+          mainw->frame_index=weed_get_int_array(event,"frames",&weed_error);
 
           if (mainw->scrap_file!=-1) {
             for (i=0; i<num_tracks; i++) {
-              if (clip_index[i]!=mainw->scrap_file) {
+              if (mainw->clip_index[i]!=mainw->scrap_file) {
                 scrap_track=-1;
                 break;
               }
@@ -3491,8 +3494,8 @@ lives_render_error_t render_events(boolean reset) {
           if (scrap_track!=-1) {
             // do not apply fx, just pull frame
             layer=weed_plant_new(WEED_PLANT_CHANNEL);
-            weed_set_int_value(layer,"clip",clip_index[scrap_track]);
-            weed_set_int_value(layer,"frame",frame_index[scrap_track]);
+            weed_set_int_value(layer,"clip",mainw->clip_index[scrap_track]);
+            weed_set_int_value(layer,"frame",mainw->frame_index[scrap_track]);
             if (!pull_frame(layer,prefs->image_ext,tc)) {
               weed_plant_free(layer);
               layer=NULL;
@@ -3513,10 +3516,10 @@ lives_render_error_t render_events(boolean reset) {
             }
 
             for (i=0; i<num_tracks; i++) {
-              if (clip_index[i]>0&&frame_index[i]>0&&mainw->multitrack!=NULL) is_blank=FALSE;
+              if (mainw->clip_index[i]>0&&mainw->frame_index[i]>0&&mainw->multitrack!=NULL) is_blank=FALSE;
               layers[i]=weed_plant_new(WEED_PLANT_CHANNEL);
-              weed_set_int_value(layers[i],"clip",clip_index[i]);
-              weed_set_int_value(layers[i],"frame",frame_index[i]);
+              weed_set_int_value(layers[i],"clip",mainw->clip_index[i]);
+              weed_set_int_value(layers[i],"frame",mainw->frame_index[i]);
               weed_set_voidptr_value(layers[i],"pixel_data",NULL);
 
               if ((oclip=mainw->old_active_track_list[i])!=(nclip=mainw->active_track_list[i])) {
@@ -3526,6 +3529,7 @@ lives_render_error_t render_events(boolean reset) {
 
                 // check if ext_src survives old->new
 
+                g_print("change clip from %d to %d\n",oclip,nclip);
 
                 ////
                 if (oclip>0) {
@@ -3543,6 +3547,7 @@ lives_render_error_t render_events(boolean reset) {
                     if (!mainw->ext_src_used[nclip]) {
                       mainw->track_decoders[i]=(lives_decoder_t *)mainw->files[nclip]->ext_src;
                       mainw->ext_src_used[nclip]=TRUE;
+                      g_print("new decoder\n");
                     } else {
                       // add new clone for nclip
                       mainw->track_decoders[i]=clone_decoder(nclip);
@@ -3550,6 +3555,9 @@ lives_render_error_t render_events(boolean reset) {
                   }
                 }
               }
+
+              g_print("clipvals from %d to %d\n",oclip,nclip);
+
 
               mainw->old_active_track_list[i]=mainw->active_track_list[i];
 
@@ -3575,8 +3583,6 @@ lives_render_error_t render_events(boolean reset) {
             lives_free(layers);
           }
 
-          lives_free(clip_index);
-          lives_free(frame_index);
 
           if (layer!=NULL) {
             layer_palette=weed_layer_get_palette(layer);

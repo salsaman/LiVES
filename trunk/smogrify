@@ -3925,11 +3925,11 @@ if (defined($ARGV[0])) {
 
         if ($num_in_channels==2) {
 # transitions get some extra params
-            $img_ext2=".".$ARGV[8];
+            $img_ext2=".".$ARGV[7];
             $img_prefix2=&get_img_prefix($img_ext2);
             splice(@ARGV,7,1);
-            $start2=$ARGV[9];
-            $clipboard=$ARGV[10];
+            $start2=$ARGV[7];
+            $clipboard=$ARGV[8];
         }
 
         $fps=0;

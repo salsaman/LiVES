@@ -93,7 +93,7 @@ const char *module_check_init(void) {
     return error;
   }
 #endif
-  
+
   render_fn=&render_frame_unknown;
   RGBimage=NULL;
 
@@ -125,7 +125,7 @@ const char *get_description(void) {
 uint64_t get_capabilities(int palette) {
 #ifdef HAVE_SDL1
   return VPP_CAN_RESIZE|VPP_LOCAL_DISPLAY;
-#endif  
+#endif
   if (palette==WEED_PALETTE_UYVY8888) {
     return VPP_CAN_RESIZE|VPP_LOCAL_DISPLAY;
   }
@@ -136,7 +136,7 @@ uint64_t get_capabilities(int palette) {
 const char *get_init_rfx(void) {
 #ifdef HAVE_SDL2
   return					\
-    "<define>\\n\
+                  "<define>\\n\
 |1.7\\n\
 </define>\\n\
 <language_code>\\n\
@@ -153,7 +153,7 @@ fsover|Over-ride fullscreen setting (for debugging)|bool|0|0 \\n\
 ";
 #else
   return					\
-    "<define>\\n\
+                  "<define>\\n\
 |1.7\\n\
 </define>\\n\
 <language_code>\\n\
@@ -228,14 +228,14 @@ boolean init_screen(int width, int height, boolean fullscreen, uint64_t window_i
   uint32_t modeopts=0;
   char tmp[32];
 #endif
-  
+
   int hwaccel=1;
   int fsover=0;
 
 
   if (argc>0) {
     hwaccel=atoi(argv[0]);
-#ifdef HAVE_SDL2 
+#ifdef HAVE_SDL2
     fsover=atoi(argv[1]);
 #else
     yuvdir=atoi(argv[1]);
@@ -259,11 +259,10 @@ boolean init_screen(int width, int height, boolean fullscreen, uint64_t window_i
     return FALSE;
   }
 
-  
+
   if (1||!fullscreen) {
     window=SDL_CreateWindowFrom((const void *)window_id);
-  }
-  else {
+  } else {
     if (fsover) fullscreen=FALSE;
     window=SDL_CreateWindow("",0,0,width,height,SDL_WINDOW_BORDERLESS);
   }
@@ -271,7 +270,7 @@ boolean init_screen(int width, int height, boolean fullscreen, uint64_t window_i
     fprintf(stderr,"SDL2 player : Could not initialize SDL: %s.\n", SDL_GetError());
     return FALSE;
   }
-  
+
   rflags=(SDL_RENDERER_ACCELERATED*hwaccel);
   renderer=SDL_CreateRenderer(window,-1,rflags);
 
@@ -290,11 +289,11 @@ boolean init_screen(int width, int height, boolean fullscreen, uint64_t window_i
   }
 
   screen=SDL_GetWindowSurface(window);
-  
 
-  
+
+
 #else
-  
+
   snprintf(tmp,32,"%d",yuvdir);
   my_setenv("SDL_VIDEO_YUV_DIRECT", tmp);
 
@@ -338,12 +337,12 @@ boolean init_screen(int width, int height, boolean fullscreen, uint64_t window_i
     return TRUE;
   }
 
-  
+
   rect->x=rect->y=0;
   rect->h=height;
   rect->w=width;
 #endif
-  
+
   return TRUE;
 }
 
@@ -385,14 +384,14 @@ boolean render_frame_yuv(int hsize, int vsize, void **pixel_data) {
     format=SDL_PIXELFORMAT_UYVY;
     hsize*=2;
     break;
- case WEED_PALETTE_YUYV8888:
+  case WEED_PALETTE_YUYV8888:
     format=SDL_PIXELFORMAT_YUY2;
     hsize*=2;
     break;
- case WEED_PALETTE_YVU420P:
+  case WEED_PALETTE_YVU420P:
     format=SDL_PIXELFORMAT_YV12;
     break;
- default:
+  default:
     format=SDL_PIXELFORMAT_IYUV;
     break;
   }
@@ -420,7 +419,7 @@ boolean render_frame_yuv(int hsize, int vsize, void **pixel_data) {
   SDL_RenderCopy(renderer, texture, NULL, NULL);
   SDL_RenderPresent(renderer);
 
-  
+
 #else
 
   uint32_t ovtype=SDL_IYUV_OVERLAY;
@@ -458,7 +457,7 @@ boolean render_frame_yuv(int hsize, int vsize, void **pixel_data) {
   SDL_DisplayYUVOverlay(overlay,rect);
 
 #endif
-  
+
   is_ready=TRUE;
   return TRUE;
 }
@@ -496,7 +495,8 @@ void exit_screen(int16_t mouse_x, int16_t mouse_y) {
     SDL_DestroyWindow(window);
   }
 #else
-  } else if (overlay!=NULL) {
+  }
+  else if (overlay!=NULL) {
     SDL_FreeYUVOverlay(overlay);
     overlay=NULL;
   }
@@ -539,12 +539,12 @@ boolean send_keycodes(keyfunc host_key_fn) {
       }
       if (event.type==SDL_KEYDOWN) {
 #ifdef HAVE_SDL2
-	scancode=event.key.keysym.scancode;
+        scancode=event.key.keysym.scancode;
 #else
         if (!mod_mask) {
           scancode=event.key.keysym.unicode;
         }
-	if (!scancode) {
+        if (!scancode) {
           scancode=(uint16_t)event.key.keysym.scancode;
           mod_mask|=MOD_NEEDS_TRANSLATION;
         }

@@ -1334,7 +1334,11 @@ if (defined($ARGV[0])) {
 
                 $audio_play_command=&rc_get("audio_play_command");
 
-                if ($audio_player eq "sox") {
+		if ($audio_play_command eq "" or $audio_play_command eq '""') {
+		    $time=($audio_end-$audio_start);
+		    select(undef, undef, undef, $time);
+		}
+                elsif ($audio_player eq "sox") {
                     $audio_effect=&rc_get("audio_effect");
                     $trimcom=" trim $audio_start";
 

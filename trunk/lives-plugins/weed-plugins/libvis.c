@@ -287,7 +287,7 @@ weed_plant_t *weed_setup(weed_bootstrap_f weed_boot) {
     char *lpp=getenv("VISUAL_PLUGIN_PATH");
 
     char *vdir;
-    
+
     // set hints for host
     weed_set_int_value(in_chantmpls[0],"audio_channels",2);
     weed_set_int_value(in_chantmpls[0],"audio_rate",44100);
@@ -312,10 +312,10 @@ weed_plant_t *weed_setup(weed_bootstrap_f weed_boot) {
     // add lpp paths
     while (vdir!=NULL) {
       if (!strlen(vdir)) continue;
-      
+
       curvdir=opendir(vdir);
       if (curvdir==NULL) {
-	continue;
+        continue;
       }
 
       visual_init_path_add(vdir);
@@ -323,7 +323,7 @@ weed_plant_t *weed_setup(weed_bootstrap_f weed_boot) {
       vdir = strtok(NULL, ":");
     }
 
-    
+
     in_params[1]=NULL;
     out_chantmpls[1]=NULL;
 

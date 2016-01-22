@@ -98,7 +98,7 @@ static int getenv_piece(char *target, size_t tlen, char *envvar, int num) {
   if (str1!=NULL) snprintf(target,tlen,"%s",str1);
   else return 0;
   return 1;
-  
+
 }
 
 ////////////////////////////////////////////////////////////////
@@ -377,15 +377,15 @@ weed_plant_t *weed_setup(weed_bootstrap_f weed_boot) {
           break;
         }
 
-	if (!strlen(vdir1)) {
-	  vdirval++;
-	  continue;
-	}
-	
+        if (!strlen(vdir1)) {
+          vdirval++;
+          continue;
+        }
+
         curvdir=opendir(vdir1);
         if (curvdir==NULL) {
-	  vdirval++;
-	  continue;
+          vdirval++;
+          continue;
         }
       }
 

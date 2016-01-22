@@ -1334,11 +1334,11 @@ if (defined($ARGV[0])) {
 
                 $audio_play_command=&rc_get("audio_play_command");
 
-		if ($audio_play_command eq "" or $audio_play_command eq '""') {
-		    $time=($audio_end-$audio_start);
-		    select(undef, undef, undef, $time);
-		}
-                elsif ($audio_player eq "sox") {
+                if ($audio_play_command eq "" or $audio_play_command eq '""') {
+                    $time=($audio_end-$audio_start);
+                    select(undef, undef, undef, $time);
+                }
+                elsif($audio_player eq "sox") {
                     $audio_effect=&rc_get("audio_effect");
                     $trimcom=" trim $audio_start";
 
@@ -1392,7 +1392,8 @@ if (defined($ARGV[0])) {
                     } else {
                         $syscom2="$audio_play_command $mute -c $achans -r $arate -$signed $aendian -t $aformat -$asamps $audiofile $trimcom $audio_effect";
                     }
-                } else {
+                }
+                else {
 # mplayer seemingly has no easy way of playing unsigned or wrong endian
                     $syscom2="$audio_play_command -demuxer rawaudio -rawaudio rate=$arate :channels=$achans:samplesize=$asamps $mute $audiofile -ss ".
                              ($audio_start-1);

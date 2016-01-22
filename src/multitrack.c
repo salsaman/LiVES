@@ -2827,11 +2827,9 @@ static void rerenumber_clips(const char *lfile, weed_plant_t *event_list) {
     for (i=1; i<=MAX_FILES&&mainw->files[i]!=NULL; i++) {
       lmap=mainw->files[i]->layout_map;
       while (lmap!=NULL) {
-        g_print("VALS2 %d %s %s\n",i,(char *)lmap->data,lfile);
 
         // lmap->data starts with layout name
         if (!strncmp((char *)lmap->data,lfile,strlen(lfile))) {
-          g_print("VALS %d %s %s\n",i,(char *)lmap->data,lfile);
 
           threaded_dialog_spin();
           array=lives_strsplit((char *)lmap->data,"|",-1);
@@ -17961,9 +17959,13 @@ void multitrack_view_events(LiVESMenuItem *menuitem, livespointer user_data) {
       (!prefs->event_window_show_frame_events&&((count_events(mt->event_list,TRUE,0,0)
           -count_events(mt->event_list,FALSE,0,0))>1000)))
     if (!do_event_list_warning()) return;
+  mt_desensitise(mt);
+  lives_widget_context_update();
   elist_dialog=create_event_list_dialog(mt->event_list,0,0);
   lives_dialog_run(LIVES_DIALOG(elist_dialog));
   lives_widget_destroy(elist_dialog);
+  mt_sensitise(mt);
+
 }
 
 
@@ -17978,7 +17980,10 @@ void multitrack_view_sel_events(LiVESMenuItem *menuitem, livespointer user_data)
       (!prefs->event_window_show_frame_events&&((count_events(mt->event_list,TRUE,tc_start,tc_end)
           -count_events(mt->event_list,FALSE,tc_start,tc_end))>1000)))
     if (!do_event_list_warning()) return;
+  mt_desensitise(mt);
+  lives_widget_context_update();
   elist_dialog=create_event_list_dialog(mt->event_list,tc_start,tc_end);
+  mt_sensitise(mt);
   lives_dialog_run(LIVES_DIALOG(elist_dialog));
   lives_widget_destroy(elist_dialog);
 }
@@ -21565,7 +21570,6 @@ weed_plant_t *load_event_list(lives_mt *mt, char *eload_file) {
     // audio volume effect changed, so we reset which parameters are viewed
     lives_list_free(mt->opts.aparam_view_list);
     mt->opts.aparam_view_list=NULL;
-    g_print("pt AA\n");
   }
 
   if (event_list!=NULL) {

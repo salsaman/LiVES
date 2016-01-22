@@ -1,3 +1,17 @@
+Version 2.4.8
+-------------
+Fix hang in merge in Clip Editor (regression).
+Fix rendering error in multitrack (wrong clip number).
+
+
+
+
+
+
+
+
+
+
 Version 2.4.7 (18 Jan 2016)
 ---------------------------
 Fix regression in "Insert Silence".

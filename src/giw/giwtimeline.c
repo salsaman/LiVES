@@ -711,7 +711,7 @@ giw_timeline_draw_ticks(GiwTimeline *timeline) {
 #ifdef GTK_RENDER_BACKGROUND_BUG
   GdkRGBA col;
 #endif
-  
+
   if (! gtk_widget_is_drawable(widget))
     return;
 
@@ -748,7 +748,7 @@ giw_timeline_draw_ticks(GiwTimeline *timeline) {
   cairo_rectangle(cr, 0, 0, allocation.width, allocation.height);
   cairo_fill(cr);
 #endif
-  
+
   gtk_render_frame(context, cr, 0, 0, allocation.width, allocation.height);
 
   gtk_style_context_get_color(context, gtk_widget_get_state_flags(widget),

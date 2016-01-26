@@ -553,7 +553,7 @@ static boolean pre_init(void) {
 
   set_palette_colours();
 
-  
+
   get_pref("cdplay_device",prefs->cdplay_device,256);
   prefs->warning_mask=(uint32_t)get_int_pref("lives_warning_mask");
 

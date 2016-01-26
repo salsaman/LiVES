@@ -553,6 +553,7 @@ static boolean pre_init(void) {
 
   set_palette_colours();
 
+  
   get_pref("cdplay_device",prefs->cdplay_device,256);
   prefs->warning_mask=(uint32_t)get_int_pref("lives_warning_mask");
 
@@ -1161,9 +1162,6 @@ static void lives_init(_ign_opts *ign_opts) {
     prefs->loop_recording=TRUE;
     prefs->no_bandwidth=FALSE;
     prefs->ocp=get_int_pref("open_compression_percent");
-
-    lives_color_parse("black", &palette->black);
-    lives_widget_color_copy(&palette->fade_colour,&palette->black);
 
     // we set the theme here in case it got reset to 'none'
     set_pref("gui_theme",prefs->theme);
@@ -1963,6 +1961,8 @@ void set_palette_colours(void) {
   lives_color_parse("light yellow", &palette->light_yellow);
   lives_color_parse("grey25", &palette->grey25);
   lives_color_parse("grey45", &palette->grey45);
+
+  lives_widget_color_copy(&palette->fade_colour,&palette->black);
 
   if (prefs->funky_widgets) {
     lives_color_parse("grey5", &palette->grey20);

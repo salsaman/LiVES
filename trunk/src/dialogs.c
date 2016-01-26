@@ -791,8 +791,11 @@ void pump_io_chan(LiVESIOChannel *iochan) {
   retlen = strlen(str_return);
 #endif
   if (retlen>0) {
+    double max;
+    LiVESAdjustment *adj=lives_scrolled_window_get_vadjustment(LIVES_SCROLLED_WINDOW(((xprocess *)(cfile->proc_ptr))->scrolledwindow));
     lives_text_buffer_insert_at_end(optextbuf,str_return);
-    lives_text_view_scroll_onscreen(LIVES_TEXT_VIEW(mainw->optextview));
+    max=gtk_adjustment_get_upper(adj);
+    lives_adjustment_set_value(adj,max);
   }
 
   if (str_return!=NULL) lives_free(str_return);
@@ -2824,6 +2827,9 @@ void threaded_dialog_spin(void) {
 
   if (procw==NULL||!procw->is_ready) return;
 
+#define GDB
+#ifndef GDB
+
   if (mainw->current_file<0||cfile==NULL||cfile->progress_start==0||cfile->progress_end==0||
       strlen(mainw->msg)==0||(progress=atoi(mainw->msg))==0) {
     // pulse the progress bar
@@ -2834,7 +2840,8 @@ void threaded_dialog_spin(void) {
     timesofar=(double)(tv.tv_sec*1000000+tv.tv_usec-sttime)*U_SEC_RATIO/U_SEC;
     disp_fraction(progress,cfile->progress_start,cfile->progress_end,timesofar,procw);
   }
-
+#endif
+  
   if (LIVES_IS_WIDGET(procw->processing)) lives_widget_queue_draw(procw->processing);
   lives_widget_context_update();
 

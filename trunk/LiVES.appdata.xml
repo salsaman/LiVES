@@ -7,7 +7,7 @@
   <name>LiVES</name>
   <project_license>GPL-3.0+ and LGPL-3.0+</project_license>
   <releases>
-    <release version="%{version}-%{release}" timestamp="1453075707"/>
+    <release version="%{version}-%{release}" timestamp="1453647719"/>
   </releases>
   <categories>
    <category>Multimedia</category>

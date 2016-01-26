@@ -1,5 +1,18 @@
-Version 2.4.8
+Version 2.4.9
 -------------
+Fix memory leak in new gdkpixbuf converter.
+Fix memory leak in pulseaudio input analysis.
+Autoscroll "Show details" when encoding.
+
+
+
+
+
+	
+
+
+Version 2.4.8 (24 Jan 2016)
+--------------------------
 Fix hang in merge in Clip Editor (regression).
 Fix rendering error in multitrack (wrong clip number).
 

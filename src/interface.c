@@ -225,8 +225,7 @@ xprocess *create_processing(const char *text) {
     widget_opts.apply_theme=FALSE;
     procw->scrolledwindow = lives_standard_scrolled_window_new(ENC_DETAILS_WIN_H, ENC_DETAILS_WIN_V, LIVES_WIDGET(mainw->optextview));
     lives_widget_set_size_request(procw->scrolledwindow, ENC_DETAILS_WIN_H, ENC_DETAILS_WIN_V);
-    lives_widget_set_size_request(mainw->optextview, ENC_DETAILS_WIN_H, ENC_DETAILS_WIN_V);
-    
+
     widget_opts.apply_theme=woat;
 
     details_arrow=lives_standard_expander_new(_("Show Details"),FALSE,LIVES_BOX(vbox3),procw->scrolledwindow);

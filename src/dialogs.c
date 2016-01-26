@@ -790,7 +790,7 @@ void pump_io_chan(LiVESIOChannel *iochan) {
   str_return = strdup(qba.constData());
   retlen = strlen(str_return);
 #endif
-  if (retlen>0) {
+  if (retlen>0&&cfile->proc_ptr!=NULL) {
     double max;
     LiVESAdjustment *adj=lives_scrolled_window_get_vadjustment(LIVES_SCROLLED_WINDOW(((xprocess *)(cfile->proc_ptr))->scrolledwindow));
     lives_text_buffer_insert_at_end(optextbuf,str_return);
@@ -1730,7 +1730,6 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const char *tex
 
   if (prefs->audio_player==AUD_PLAYER_PULSE&&cfile->achans>0&&cfile->laudio_time>0.&&
       !mainw->is_rendering&&!(cfile->opening&&!mainw->preview)&&mainw->pulsed!=NULL&&mainw->pulsed->playing_file>-1) {
-
     if (!pulse_audio_seek_frame(mainw->pulsed,mainw->play_start)) {
       if (pulse_try_reconnect()) pulse_audio_seek_frame(mainw->pulsed,mainw->play_start);
     }
@@ -2827,21 +2826,21 @@ void threaded_dialog_spin(void) {
 
   if (procw==NULL||!procw->is_ready) return;
 
-#define GDB
-#ifndef GDB
 
   if (mainw->current_file<0||cfile==NULL||cfile->progress_start==0||cfile->progress_end==0||
       strlen(mainw->msg)==0||(progress=atoi(mainw->msg))==0) {
     // pulse the progress bar
+    //#define GDB
+#ifndef GDB
     if (LIVES_IS_PROGRESS_BAR(procw->progressbar)) lives_progress_bar_pulse(LIVES_PROGRESS_BAR(procw->progressbar));
+#endif
   } else {
     // show fraction
     gettimeofday(&tv, NULL);
     timesofar=(double)(tv.tv_sec*1000000+tv.tv_usec-sttime)*U_SEC_RATIO/U_SEC;
     disp_fraction(progress,cfile->progress_start,cfile->progress_end,timesofar,procw);
   }
-#endif
-  
+
   if (LIVES_IS_WIDGET(procw->processing)) lives_widget_queue_draw(procw->processing);
   lives_widget_context_update();
 

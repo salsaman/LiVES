@@ -1195,7 +1195,7 @@ static void draw_block(lives_mt *mt, lives_painter_t *cairo,
         col_black.red=col_black.green=col_black.blue=0;
 
 
-        layout=render_text_to_cr(cr,fname,sfont,10.,
+        layout=render_text_to_cr(NULL,cr,fname,sfont,10.,
                                  LIVES_TEXT_MODE_FOREGROUND_ONLY,&col_white,&col_white,FALSE,FALSE,0.2,text_start,
                                  text_end-text_start,lives_widget_get_allocation_height(eventbox));
 

@@ -72,12 +72,16 @@ static void add_xlays_widget(LiVESBox *box) {
 
   LiVESWidget *expander=lives_expander_new_with_mnemonic(_("Show affected _layouts"));
   LiVESWidget *textview=lives_text_view_new();
-  LiVESWidget *label;
+  LiVESWidget *label,*scrolledwindow;
   LiVESList *xlist=mainw->xlays;
   LiVESTextBuffer *textbuffer = lives_text_view_get_buffer(LIVES_TEXT_VIEW(textview));
 
+  scrolledwindow = lives_standard_scrolled_window_new(ENC_DETAILS_WIN_H, ENC_DETAILS_WIN_V, LIVES_WIDGET(textview));
+  lives_widget_set_size_request(scrolledwindow, ENC_DETAILS_WIN_H, ENC_DETAILS_WIN_V);
+
   lives_text_view_set_editable(LIVES_TEXT_VIEW(textview), FALSE);
-  lives_container_add(LIVES_CONTAINER(expander), textview);
+
+  expander=lives_standard_expander_new(_("Show affeced _layouts"),FALSE,LIVES_BOX(box),scrolledwindow);
 
   if (palette->style&STYLE_1) {
     label=lives_expander_get_label_widget(LIVES_EXPANDER(expander));
@@ -88,6 +92,8 @@ static void add_xlays_widget(LiVESBox *box) {
 
     lives_widget_set_base_color(textview, LIVES_WIDGET_STATE_NORMAL, &palette->info_base);
     lives_widget_set_text_color(textview, LIVES_WIDGET_STATE_NORMAL, &palette->info_text);
+    lives_widget_set_base_color(scrolledwindow, LIVES_WIDGET_STATE_NORMAL, &palette->info_base);
+    lives_widget_set_text_color(scrolledwindow, LIVES_WIDGET_STATE_NORMAL, &palette->info_text);
   }
 
   lives_text_buffer_insert_at_cursor(textbuffer,"\n",strlen("\n"));
@@ -98,7 +104,7 @@ static void add_xlays_widget(LiVESBox *box) {
     xlist=xlist->next;
   }
 
-  lives_box_pack_start(box, expander, FALSE, FALSE, widget_opts.packing_height);
+
   lives_widget_show_all(expander);
 }
 

@@ -277,6 +277,20 @@ typedef int lives_pgid_t;
 
 uint64_t lives_random(void);
 
+typedef struct {
+  uint16_t red;
+  uint16_t green;
+  uint16_t blue;
+} lives_colRGB24_t;
+
+typedef struct {
+  uint16_t red;
+  uint16_t green;
+  uint16_t blue;
+  uint16_t alpha;
+} lives_colRGBA32_t;
+
+
 #include "widget-helper.h"
 
 typedef  void *(*fn_ptr)(void *ptr);
@@ -455,20 +469,6 @@ typedef enum {
 #define AFORM_UNSIGNED 1
 #define AFORM_BIG_ENDIAN (1<<1)
 #define AFORM_UNKNOWN 65536
-
-
-typedef struct {
-  uint16_t red;
-  uint16_t green;
-  uint16_t blue;
-} lives_colRGB24_t;
-
-typedef struct {
-  uint16_t red;
-  uint16_t green;
-  uint16_t blue;
-  uint16_t alpha;
-} lives_colRGBA32_t;
 
 
 typedef enum {

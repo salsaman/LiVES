@@ -7990,6 +7990,8 @@ LiVESWidget *lives_standard_expander_new(const char *ltext, boolean use_mnemonic
   lives_box_pack_start(parent, expander, FALSE, FALSE, widget_opts.packing_height);
 
   lives_container_add(LIVES_CONTAINER(expander), child);
+  lives_container_set_border_width(LIVES_CONTAINER(expander),widget_opts.border_width);
+
 #endif
 
   return expander;
@@ -8166,8 +8168,8 @@ void lives_window_center(LiVESWindow *window) {
 
 
 
-void lives_widget_get_fg_color(LiVESWidget *widget, LiVESWidgetColor *color) {
-  lives_widget_get_fg_state_color(widget,LIVES_WIDGET_STATE_NORMAL,color);
+boolean lives_widget_get_fg_color(LiVESWidget *widget, LiVESWidgetColor *color) {
+  return lives_widget_get_fg_state_color(widget,LIVES_WIDGET_STATE_NORMAL,color);
 }
 
 void lives_widget_unparent(LiVESWidget *widget) {
@@ -8695,6 +8697,19 @@ LIVES_INLINE boolean lives_button_box_set_button_width(LiVESButtonBox *bbox, LiV
 #endif
 }
 
+
+
+
+LIVES_INLINE boolean widget_rgba_to_lives_rgba(lives_colRGBA32_t *lcolor, LiVESWidgetColor *color) {
+#ifdef GUI_GTK
+  lcolor->red=color->red*65535.;
+  lcolor->green=color->green*65535.;
+  lcolor->blue=color->blue*65535.;
+  lcolor->alpha=color->alpha*65535.;
+  return TRUE;
+#endif
+  return FALSE;
+}
 
 
 

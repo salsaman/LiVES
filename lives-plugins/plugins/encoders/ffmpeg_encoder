@@ -19,6 +19,7 @@
 # v 2.9 check for avconv, change -quality to -qscale
 # v 2.10 move -meta options after png/audio
 # v 2.11 change fussy order of -pass option
+# v 2.12 add h264/aac/mp4, show missing libraries
 #######################################################################
 
 if (!defined($standalone)) {
@@ -40,7 +41,7 @@ else {
 
 
 if ($command eq "version") {
-    print "ffmpeg encoder plugin v2.11\n";
+    print "ffmpeg encoder plugin v2.12\n";
     exit 0;
 }
 
@@ -87,16 +88,72 @@ if ($command eq "get_formats") {
    # means "can only encode at xx.yy frames per second", size=x X y, arate=audio rate 
     # - otherwise set it to 'none'
 
+    $has_webm=(system("ffmpeg -encoders 2>/dev/null | grep vpx")==0);
+    $has_x264=(system("ffmpeg -encoders 2>/dev/null | grep x264")==0);
+    $has_flv=(system("ffmpeg -encoders 2>/dev/null | grep flv")==0);
+    $has_3gp=(system("ffmpeg -encoders 2>/dev/null | grep h263")==0);
 
-    print "webmh|webm high quality|8|none|webm|\n";
-    print "webmm|webm medium quality|8|none|webm|\n";
-    print "webml|webm low (stream) quality|8|none|webm|\n";
-    print "flv|flv|9|arate=44100;22050;11025|flv|\n";
-    print "divx|divx (25 fps)|5|fps=25.00|avi|\n";
-    print "3gp_h263|3gp (h263)|96|size=176x144,arate=8000|3gp|\n";
-    print "3gp_mp4|3gp (mp4)|96|size=176x144,arate=8000|3gp|\n";
-    print "flv-youtube|flv (425x318, optimised for youtube)|33|arate=44100;22050;11025,size=425x318|flv|\n";
-    print "flv-youtubex|flv (other sizes, optimised for youtube)|33|arate=44100;22050;11025,aspect=1.3333:1|flv|\n";
+    $has_aac=(system("ffmpeg -encoders 2>/dev/null | grep aac")==0);
+    $has_vorbis=(system("ffmpeg -encoders 2>/dev/null | grep vorbis")==0);
+    $has_amr=(system("ffmpeg -encoders 2>/dev/null | grep amr")==0);
+    $has_mp3=(system("ffmpeg -encoders 2>/dev/null | grep mp3")==0);
+    $has_mp2=(system("ffmpeg -encoders 2>/dev/null | grep mp2")==0);
+
+
+    $errwebm=$errx264=$errflv=$err3gp="";
+
+    $erraac=$errvorbis=$erramraac=$errmp3aac=$errmp3mp2="";
+    
+    unless ($has_webm) {
+	$errwebm=" (MISSING libvxp support) ";
+    }
+
+    unless ($has_x264) {
+	$errx264=" (MISSING libx264 support) ";
+    }
+
+    unless ($has_flv) {
+	$errflv=" (MISSING flv support) ";
+    }
+
+    unless ($has_3gp) {
+	$err3gp=" (MISSING h263 support) ";
+    }
+
+
+    unless ($has_aac) {
+	$erraac=" (MISSING aac support) ";
+    }
+
+    unless ($has_vorbis) {
+	$errvorbis=" (MISSING libvorbis support) ";
+    }
+
+    unless ($has_amr || $has_aac) {
+	$erramraac=" (MISSING amr or aac support) ";
+    }
+
+    unless ($has_mp3 || $has_aac) {
+	$errmp3aac=" (MISSING mp3 or aac support) ";
+    }
+    
+    unless ($has_mp3 || $has_mp2) {
+	$errmp3mp2=" (MISSING mp3 or mp2 audio support) ";
+    }
+
+    
+    print "webmh|webm high quality$errwebm$errvorbis|8|none|webm|\n";
+    print "webmm|webm medium quality$errwebm$errvorbis|8|none|webm|\n";
+    print "webml|webm low (stream) quality$errwebm$errvorbis|8|none|webm|\n";
+
+
+    print "x264|h264/aac/mp4$errx264$erraac|32|none|mp4|\n";
+    print "flv|flv$errflv$errmp3aac|9|arate=44100;22050;11025|flv|\n";
+    print "divx|divx (25 fps)$errflv$errmp3mp2|5|fps=25.00|avi|\n";
+    print "3gp_h263|3gp (h263)$err3gp$erramraac|96|size=176x144,arate=8000|3gp|\n";
+    print "3gp_mp4|3gp (mp4)$err3gp$erramraac|96|size=176x144,arate=8000|3gp|\n";
+    print "flv-youtube|flv (425x318, optimised for youtube)$errflv$errmp3aac|33|arate=44100;22050;11025,size=425x318|flv|\n";
+    print "flv-youtubex|flv (other sizes, optimised for youtube)$errflv$errmp3aac|33|arate=44100;22050;11025,aspect=1.3333:1|flv|\n";
     exit 0;
 }
 
@@ -251,6 +308,9 @@ if ($command eq "encode") {
     elsif ($otype eq "webml") {
 	$vcodec="-f webm -vcodec libvpx -g 60 -qscale 31";
     }
+    elsif ($otype eq "x264") { 
+	$vcodec="-vcodec libx264 -vf 'scale=trunc(iw/2)*2:trunc(ih/2)*2'";
+    }
 
     if ($otype eq "flv-youtube"||$otype eq "flv-youtubex") {
 	$vcodec.=" -b 1024k -bt 256k -maxrate 1024k -minrate 1024k -bufsize 8192k";
@@ -306,15 +366,22 @@ if ($command eq "encode") {
 	}
 
     }
+
+    if ($ffver>=52) {
+	$metadata="-metadata comment=\"$comment\" -metadata author=\"$author\" -metadata title=\"$title\"";
+    } else {
+	$metadata="-comment \"$comment\" -author \"$author\" -title \"$title\"";
+    }
+    
     
     # unfortunately this does not work yet...
     if ($otype eq "theora") {
 	$syscom="ffmpeg2theora -o \"$nfile\" -f image2 -i %8d$img_ext $audio_com -d off $err";
     }
     elsif ($otype eq "3gp") {
-	$passfile="passfile";
 	for $pass (1,2) {
-	    $syscom="$encoder_command -strict 1 -y -r $fps -f image2 -i %8d$img_ext $audio_com -t $vid_length $vcodec -pass $pass \"$nfile\" $err";
+	    $passf="-pass $pass -passlogfile passfile";
+	    $syscom="$encoder_command -strict 1 -y -r $fps -f image2 -i %8d$img_ext $audio_com -t $vid_length $vcodec $metadata $passf \"$nfile\" $err";
 		if (defined($DEBUG_ENCODERS)) {
 		    print STDERR "ffmpeg_encoder command is: $syscom\n";
 		}
@@ -332,12 +399,8 @@ if ($command eq "encode") {
 
 	if ($otype eq "webmh") {
 	    for $pass (1,2) {
-		if ($ffver>=52) {
-		    $syscom="$encoder_command $threads -y -r $fps -f image2 -i %8d$img_ext $audio_com -t $vid_length $vcodec -metadata comment=\"$comment\" -metadata author=\"$author\" -metadata title=\"$title\" -pass $pass \"$nfile\" $err";
-		}
-		else {
-		    $syscom="$encoder_command -pass $pass $threads -comment \"$comment\" -author \"$author\" -title \"$title\" -y -r $fps -f image2 -i %8d$img_ext $audio_com -t $vid_length $vcodec \"$nfile\" $err";
-		}
+		$passf="-pass $pass -passlogfile passfile";
+		$syscom="$encoder_command $threads -y -r $fps -f image2 -i %8d$img_ext $audio_com -t $vid_length $vcodec $metadata $passf \"$nfile\" $err";
 
 		if (defined($DEBUG_ENCODERS)) {
 		    print STDERR "ffmpeg_encoder command is: $syscom\n";
@@ -347,12 +410,7 @@ if ($command eq "encode") {
 	    }
 	}
 	else {
-	    if ($ffver>=52) {
-		$syscom="$encoder_command $threads -y -r $fps -f image2 -i %8d$img_ext $audio_com -t $vid_length $vcodec -metadata comment=\"$comment\" -metadata author=\"$author\" -metadata title=\"$title\" \"$nfile\" $err";
-	    }
-	    else {
-		$syscom="$encoder_command $threads -comment \"$comment\" -author \"$author\" -title \"$title\" -y -r $fps -f image2 -i %8d$img_ext $audio_com -t $vid_length $vcodec \"$nfile\" $err";
-	    }
+	    $syscom="$encoder_command $threads -y -r $fps -f image2 -i %8d$img_ext $audio_com -t $vid_length $vcodec $metadata \"$nfile\" $err";
 
 	    if (defined($DEBUG_ENCODERS)) {
 		print STDERR "ffmpeg_encoder command is: $syscom\n";

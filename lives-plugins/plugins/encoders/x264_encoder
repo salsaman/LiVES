@@ -90,12 +90,13 @@ if ($command eq "get_formats") {
     print "mp4|h264/aac/mp4 (super high quality mp4)|32|none|mp4|\n";
     print "divx+|DivX Plus HD|32|fps=24;24000:1001;25;30000:1001;30,hblock=8,vblock=8,minw=320,minh=240,maxw=1920,maxh=1024|mkv|\n";
     print "divxh+|DivX Plus HD high framerate|32|fps=50;60000:1001;60,hblock=8,vblock=8,minw=320,minh=240,maxw=1280,maxh=720|mkv|\n";
-    print "x264_br_1080p|x264 blu-ray 1080p NTSC (Experimental)|32|size=1920x1080,fps=24000:1001;24|mpg|\n"; # NTSC 1080p
-    print "x264_br_1080pp|x264 blu-ray 1080p PAL (Experimental)|32|size=1920x1080,fps=25|mpg|\n"; # PAL 1080p
-    print "x264_br_720p|x264 blu-ray 720p NTSC (Experimental)|32|size=1280x720,fps=60000:1001|mpg|\n"; # 720p
-    print "x264_br_720pp|x264 blu-ray 720p PAL (Experimental)|32|size=1280x720,fps=50000:1001|mpg|\n"; # 720p
-    print "x264_br_720p|x264 blu-ray 720p 30 fps NTSC (Experimental)|32|size=1280x720,fps=30|mpg|\n"; # 720p
-    print "x264_br_720pp|x264 blu-ray 720p 24/25 fps PAL (Experimental)|32|size=1280x720,fps=24;25|mpg|\n"; # 720p
+    print "x264_br_1080p|x264 blu-ray 1080p NTSC high quality|32|size=1920x1080,fps=24000:1001;24|mpg|\n"; # NTSC 1080p
+    print "x264_br_1080pp|x264 blu-ray 1080p PAL high quality|32|size=1920x1080,fps=25|mpg|\n"; # PAL 1080p
+    print "x264_br_720p|x264 blu-ray 720p NTSC 60 fps high quality|32|size=1280x720,fps=60000:1001|mpg|\n"; # 720p
+    print "x264_br_720pp|x264 blu-ray 720p PAL 50 fps high quality|32|size=1280x720,fps=50000:1001|mpg|\n"; # 720p
+    print "x264_br_720px|x264 blu-ray 720p NTSC 30 fps high quality|32|size=1280x720,fps=30|mpg|\n"; # 720p
+    print "x264_br_720ppx|x264 blu-ray 720p PAL 24 or 25 fps high quality|32|size=1280x720,fps=24;25|mpg|\n"; # 720p
+
 
     exit 0;
 }

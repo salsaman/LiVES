@@ -3,12 +3,14 @@ Version 2.4.9
 Fix memory leak in new gdkpixbuf converter.
 Fix memory leak in pulseaudio input analysis.
 Autoscroll "Show details" when encoding.
+Work around a gtk+ crash bug in GtkTextView.
+Add h264/aac encoding to ffmpeg_encoder.
+Better info showing missing libraries in ffmpeg_encoder.
 
 
 
 
 
-	
 
 
 Version 2.4.8 (24 Jan 2016)

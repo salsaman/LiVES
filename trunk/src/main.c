@@ -2494,6 +2494,7 @@ static boolean lives_startup(livespointer data) {
   boolean got_files=FALSE;
   char *tmp;
 
+
   if (!mainw->foreign) {
     if (prefs->show_splash) splash_init();
     print_notice();
@@ -2506,6 +2507,9 @@ static boolean lives_startup(livespointer data) {
   widget_opts.apply_theme=FALSE;
 
   set_interactive(mainw->interactive);
+
+  // needed to avoid priv->pulse2 > priv->pulse1 gtk error
+  lives_widget_context_update();
 
 #ifdef GUI_GTK
   icon=lives_build_filename(prefs->prefix_dir,DESKTOP_ICON_DIR,"lives.png",NULL);

@@ -1,6 +1,6 @@
 // multitrack.c
 // LiVES
-// (c) G. Finch 2005 - 2015 <salsaman@gmail.com>
+// (c) G. Finch 2005 - 2016 <salsaman@gmail.com>
 // released under the GNU GPL 3 or later
 // see file ../COPYING for licensing details
 
@@ -11155,7 +11155,7 @@ boolean on_multitrack_activate(LiVESMenuItem *menuitem, weed_plant_t *event_list
           check_encoder_restrictions(FALSE,lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(resaudw->aud_checkbutton)),TRUE);
         }
       }
-    } while (rdet->suggestion_followed);
+    } while (rdet->suggestion_followed||response==LIVES_RESPONSE_RESET);
 
     xarate=(int)atoi(lives_entry_get_text(LIVES_ENTRY(resaudw->entry_arate)));
     xachans=(int)atoi(lives_entry_get_text(LIVES_ENTRY(resaudw->entry_achans)));

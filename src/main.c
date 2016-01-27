@@ -1,6 +1,6 @@
 // main.c
 // LiVES (lives-exe)
-// (c) G. Finch 2003 - 2015
+// (c) G. Finch 2003 - 2016
 
 /*  This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License version 3 or higher as published by
@@ -6227,7 +6227,7 @@ void load_frame_image(int frame) {
     if (mainw->play_window!=NULL&&!mainw->fs) {
       mainw->pwidth=lives_widget_get_allocation_width(mainw->play_window);
       mainw->pheight=lives_widget_get_allocation_height(mainw->play_window);
-    } else if (!mainw->fs) {
+    } else if (!mainw->fs||(mainw->multitrack!=NULL&&!mainw->sep_win)) {
       if (mainw->pwidth>lives_widget_get_allocation_width(mainw->play_image)-widget_opts.border_width*2)
         mainw->pwidth=lives_widget_get_allocation_width(mainw->play_image)-widget_opts.border_width*2;
       if (mainw->pheight>lives_widget_get_allocation_height(mainw->play_image)-widget_opts.border_width*2)

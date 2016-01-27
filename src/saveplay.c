@@ -1,7 +1,6 @@
-
 // saveplay.c
 // LiVES (lives-exe)
-// (c) G. Finch 2003 - 2015
+// (c) G. Finch 2003 - 2016
 // released under the GNU GPL 3 or later
 // see file ../COPYING or www.gnu.org for licensing details
 
@@ -1307,6 +1306,11 @@ void save_file(int clip, int start, int end, const char *filename) {
   add_suffix_check(LIVES_BOX(hbox),prefs->encoder.of_def_ext);
   lives_widget_show_all(hbox);
 
+  if (palette->style&STYLE_1) {
+    lives_widget_set_fg_color(hbox, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
+    lives_widget_set_bg_color(hbox, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
+  }
+
   if (filename==NULL) {
     char *ttl=lives_strdup(_("LiVES: Save Clip as..."));
     do {
@@ -1894,6 +1898,9 @@ void save_file(int clip, int start, int end, const char *filename) {
 
   if (!mainw->error) {
     char *pluginstr;
+
+    cfile->progress_start=1;
+    cfile->progress_end=cfile->frames;
 
     not_cancelled=do_progress_dialog(TRUE,TRUE,_("Saving [can take a long time]"));
     mesg=lives_strdup(mainw->msg);

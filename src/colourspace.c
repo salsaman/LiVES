@@ -1,6 +1,6 @@
 // colourspace.c
 // LiVES
-// (c) G. Finch 2004 - 2015 <salsaman@gmail.com>
+// (c) G. Finch 2004 - 2016 <salsaman@gmail.com>
 // Released under the GPL 3 or later
 // see file ../COPYING for licensing details
 

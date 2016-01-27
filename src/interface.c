@@ -1,7 +1,6 @@
-
 // interface.c
 // LiVES
-// (c) G. Finch 2003 - 2015 <salsaman@gmail.com>
+// (c) G. Finch 2003 - 2016 <salsaman@gmail.com>
 // Released under the GNU GPL 3 or later
 // see file ../COPYING for licensing details
 
@@ -2142,11 +2141,6 @@ char *choose_file(const char *dir, const char *fname, char **const filt, LiVESFi
   gtk_file_chooser_set_local_only(LIVES_FILE_CHOOSER(chooser),TRUE);
 
 
-  if (mainw->is_ready && palette->style&STYLE_1) {
-    lives_widget_set_bg_color(chooser, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
-    set_child_colour(chooser,FALSE);
-  }
-
   if (dir!=NULL) {
     gtk_file_chooser_set_current_folder(LIVES_FILE_CHOOSER(chooser),dir);
     gtk_file_chooser_add_shortcut_folder(LIVES_FILE_CHOOSER(chooser),dir,NULL);
@@ -2170,6 +2164,23 @@ char *choose_file(const char *dir, const char *fname, char **const filt, LiVESFi
   }
 
   if (extra_widget!=NULL && extra_widget!=mainw->LiVES) gtk_file_chooser_set_extra_widget(LIVES_FILE_CHOOSER(chooser),extra_widget);
+
+  if (palette->style&STYLE_1) {
+    GtkWidget *parent=lives_widget_get_parent(extra_widget);
+
+    while (parent!=NULL) {
+      lives_widget_set_fg_color(parent, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
+      lives_widget_set_bg_color(parent, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
+      parent=lives_widget_get_parent(parent);
+    }
+
+  }
+
+  if (mainw->is_ready && palette->style&STYLE_1) {
+    lives_widget_set_bg_color(chooser, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
+    set_child_colour(chooser,FALSE);
+  }
+
 
 #endif
 

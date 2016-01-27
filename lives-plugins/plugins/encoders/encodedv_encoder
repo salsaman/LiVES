@@ -17,6 +17,7 @@
 # version 2.1 increase quality settings, restrict audio rates.
 # version 2.11 add package name libdv-bin
 # version 2.12 allow png encoding; add check for "convert"
+# versiob 2.13 verbose mode
 
 #######################################################################
 
@@ -42,7 +43,7 @@ else {
 
 
 if ($command eq "version") {
-    print "encodedv encoder plugin v2.12\n";
+    print "encodedv encoder plugin v2.13\n";
     exit 0;
 }
 
@@ -88,12 +89,12 @@ if ($command eq "get_formats") {
    # audio types are: 0 - cannot encode audio, 1 - can encode using
     #  mp3, 2 - can encode using pcm, 3 - can encode using pcm and mp3
     
-    print "dv_ntsc_med|dv (NTSC) medium quality|2|size=720x480,fps=30000:1001,arate=48000;44100|dv|\n"; # NTSC
-    print "dv_pal_med|dv (PAL) medium quality|2|size=720x576,fps=25.000,arate=48000;44100|dv|\n"; # PAL
-    print "dv_ntsc_medhi|dv (NTSC) medium/high quality|2|size=720x480,fps=30000:1001,arate=48000;44100|dv|\n"; # NTSC
-    print "dv_pal_medhi|dv (PAL) medium/high quality|2|size=720x576,fps=25.000,arate=48000;44100|dv|\n"; # PAL
-    print "dv_ntsc_hi|dv (NTSC) high quality|2|size=720x480,fps=30000:1001,arate=48000;44100|dv|\n"; # NTSC
-    print "dv_pal_hi|dv (PAL) high quality|2|size=720x576,fps=25.000,arate=48000;44100|dv|\n"; # PAL
+    print "dv_ntsc_med|dv (NTSC) medium quality|2|size=720x480,fps=30000:1001,arate=48000;44100|dv|[|\n"; # NTSC
+    print "dv_pal_med|dv (PAL) medium quality|2|size=720x576,fps=25.000,arate=48000;44100|dv|[|\n"; # PAL
+    print "dv_ntsc_medhi|dv (NTSC) medium/high quality|2|size=720x480,fps=30000:1001,arate=48000;44100|dv|[|\n"; # NTSC
+    print "dv_pal_medhi|dv (PAL) medium/high quality|2|size=720x576,fps=25.000,arate=48000;44100|dv|[|\n"; # PAL
+    print "dv_ntsc_hi|dv (NTSC) high quality|2|size=720x480,fps=30000:1001,arate=48000;44100|dv|[|\n"; # NTSC
+    print "dv_pal_hi|dv (PAL) high quality|2|size=720x576,fps=25.000,arate=48000;44100|dv|[|\n"; # PAL
 
     exit 0;
 }
@@ -126,10 +127,10 @@ if ($command eq "encode") {
     }
 
     if (-f $audiofile) {
-	$syscom="$encoder_command -s 0 -e ".($end-$start)." -p $passes %08d$to_ext -a wav $audiofile > \"$nfile\"";
+	$syscom="$encoder_command --verbose -s 0 -e ".($end-$start)." -p $passes %08d$to_ext -a wav $audiofile > \"$nfile\"";
     }
     else {
-	$syscom=$encoder_command . " -s 0 -e ".($end-$start)." -p $passes %08d$to_ext > \"$nfile\"";
+	$syscom=$encoder_command . " --verbose -s 0 -e ".($end-$start)." -p $passes %08d$to_ext > \"$nfile\"";
     }
 
     if (defined($DEBUG_ENCODERS)) {

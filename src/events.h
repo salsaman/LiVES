@@ -1,6 +1,6 @@
 // events.h
 // LiVES
-// (c) G. Finch 2005 - 2010 <salsaman@gmail.com>
+// (c) G. Finch 2005 - 2016 <salsaman@gmail.com>
 // released under the GNU GPL 3 or later
 // see file ../COPYING or www.gnu.org for licensing details
 
@@ -112,6 +112,7 @@ typedef struct {
   boolean ratio_fps;
   LiVESWidget *dialog;
   LiVESWidget *okbutton;
+  LiVESWidget *usecur_button;
   LiVESWidget *encoder_combo;
   LiVESWidget *ofmt_combo;
   LiVESWidget *acodec_combo;

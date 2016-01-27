@@ -6,12 +6,12 @@
 # see file COPYING or www.gnu.org for details
 
 #######################################################################
-# LiVES pdf plugin v1.2
+# LiVES pdf plugin v1.3
 
 # version 1.0 original - salsaman
 # version 1.1 - add support for png, correct requires error text
 # version 1.2 - add support for Win32
-
+# version 1.3 - more verbose
 #######################################################################
 
 if (!defined($standalone)) {
@@ -37,7 +37,7 @@ else {
 
 
 if ($command eq "version") {
-    print "pdf encoder plugin v1.2\n";
+    print "pdf encoder plugin v1.3\n";
     exit 0;
 }
 
@@ -82,7 +82,7 @@ if ($command eq "get_formats") {
    # audio types are: 0 - cannot encode audio, 1 - can encode using
     #  mp3, 2 - can encode using pcm, 3 - can encode using pcm and mp3
     
-    print "pdf|pdf|0|none|pdf|\n";
+    print "pdf|pdf|0|none|pdf|converted|\n";
     exit 0;
 }
 
@@ -93,6 +93,7 @@ if ($command eq "encode") {
     for ($i=$start;$i<=$end;$i++) {
 	$name=&mkname($i);
 	`convert $name$img_ext $name.pdf`;
+	print STDERR "converted $i\n";
     }
 
     if ($^O eq "MSWin32") {

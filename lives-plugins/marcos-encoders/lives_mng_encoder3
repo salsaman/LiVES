@@ -345,7 +345,7 @@ def do_encode():
         print('Creating MNG file')
 
     command = """cd %(source_dir)s ; \\
-%(convert)s -delay %(spf)s %(syml)s%(img_pre)s*%(ext)s %(mngv)s
+%(convert)s -monitor -delay %(spf)s %(syml)s%(img_pre)s*%(ext)s %(mngv)s
 """ % all_vars
     run(command)
 

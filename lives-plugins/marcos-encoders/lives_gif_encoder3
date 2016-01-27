@@ -345,7 +345,7 @@ def do_encode():
         print('Creating GIF file')
 
     command = """cd %(source_dir)s ; \\
-%(convert)s -delay %(spf)s %(syml)s%(img_pre)s*%(ext)s %(gifv)s
+%(convert)s -monitor -delay %(spf)s %(syml)s%(img_pre)s*%(ext)s %(gifv)s
 """ % all_vars
     run(command)
 

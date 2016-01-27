@@ -1,6 +1,6 @@
 // preferences.c
 // LiVES (lives-exe)
-// (c) G. Finch 2004 - 2014
+// (c) G. Finch 2004 - 2016
 // released under the GNU GPL 3 or later
 // see file ../COPYING or www.gnu.org for licensing details
 
@@ -3128,6 +3128,7 @@ _prefsw *create_prefs_dialog(void) {
           array=lives_strsplit((char *)lives_list_nth_data(ofmt_all,i),"|",-1);
           if (!strcmp(array[0],prefs->encoder.of_name)) {
             prefs->encoder.of_allowed_acodecs=atoi(array[2]);
+            lives_snprintf(prefs->encoder.of_restrict,1024,"%s",array[3]);
           }
           ofmt = lives_list_append(ofmt, lives_strdup(array[1]));
           lives_strfreev(array);

@@ -16,6 +16,7 @@
 #define GTK_SUBMENU_SENS_BUG // a bug where setting a menuitem insensitive fails if it has a submenu
 #define GTK_TEXT_VIEW_CSS_BUG // a bug where named textviews cannot be set by CSS
 #define GTK_RENDER_BACKGROUND_BUG // a bug where bg of custom widgets is not rendered
+#define GTK_TEXT_VIEW_DRAW_BUG // a bug where textview crashes if too much text in it
 
 
 #ifndef IS_MINGW
@@ -508,7 +509,6 @@ typedef GtkStateType LiVESWidgetState;
 #define LIVES_WIDGET_STATE_FOCUSED        (GTK_STATE_INSENSITIVE+2)
 #define LIVES_WIDGET_STATE_BACKDROP       (GTK_STATE_INSENSITIVE+3)
 #endif
-
 
 typedef int LiVESResponseType;
 #define LIVES_RESPONSE_NONE GTK_RESPONSE_NONE

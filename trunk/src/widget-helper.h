@@ -92,6 +92,9 @@ lives_painter_format_t lives_painter_image_surface_get_format(lives_painter_surf
 
 boolean widget_helper_init(void);
 
+boolean widget_rgba_to_lives_rgba(lives_colRGBA32_t *, LiVESWidgetColor *);
+
+
 // object funcs.
 
 livespointer lives_object_ref(livespointer); ///< increase refcount by one
@@ -748,7 +751,7 @@ boolean lives_widget_context_update(void);
 
 LiVESWidget *lives_menu_add_separator(LiVESMenu *menu);
 
-void lives_widget_get_fg_color(LiVESWidget *, LiVESWidgetColor *);
+boolean lives_widget_get_fg_color(LiVESWidget *, LiVESWidgetColor *);
 
 void lives_window_center(LiVESWindow *);
 

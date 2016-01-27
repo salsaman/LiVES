@@ -135,7 +135,7 @@ static int font_cmp(const void *p1, const void *p2) {
 
 
 
-LingoLayout *render_text_to_cr(lives_painter_t *cr, const char *text, const char *fontname,
+LingoLayout *render_text_to_cr(LiVESWidget *widget, lives_painter_t *cr, const char *text, const char *fontname,
                                double size, lives_text_mode_t mode, lives_colRGBA32_t *fg, lives_colRGBA32_t *bg,
                                boolean center, boolean rising, double top, int offs_x, int width, int height) {
 
@@ -149,7 +149,7 @@ LingoLayout *render_text_to_cr(lives_painter_t *cr, const char *text, const char
   // aligned to left (offs_x), unless "center" is TRUE
 
 #ifdef GUI_GTK
-  PangoFontDescription *font;
+  PangoFontDescription *font=NULL;
 #endif
 
   LingoLayout *layout;
@@ -167,14 +167,19 @@ LingoLayout *render_text_to_cr(lives_painter_t *cr, const char *text, const char
   if (cr==NULL) return NULL;
 
 #ifdef GUI_GTK
-  layout = pango_cairo_create_layout(cr);
-  if (layout==NULL) return NULL;
+  if (widget!=NULL) {
+    PangoContext *ctx=gtk_widget_get_pango_context(widget);
+    layout=pango_layout_new(ctx);
+  } else {
+    layout = pango_cairo_create_layout(cr);
+    if (layout==NULL) return NULL;
 
-  font = pango_font_description_new();
-  pango_font_description_set_family(font, fontname);
-  pango_font_description_set_absolute_size(font, size*PANGO_SCALE);
+    font = pango_font_description_new();
+    pango_font_description_set_family(font, fontname);
+    pango_font_description_set_absolute_size(font, size*PANGO_SCALE);
 
-  pango_layout_set_font_description(layout, font);
+    pango_layout_set_font_description(layout, font);
+  }
   pango_layout_set_text(layout, text, -1);
 #endif
 
@@ -202,7 +207,7 @@ LingoLayout *render_text_to_cr(lives_painter_t *cr, const char *text, const char
   case LIVES_TEXT_MODE_BACKGROUND_ONLY:
     lingo_layout_set_text(layout, "", -1);
   case LIVES_TEXT_MODE_FOREGROUND_AND_BACKGROUND:
-    lives_painter_set_source_rgba(cr,bg->red/66535., bg->green/66535., bg->blue/66535., b_alpha);
+    lives_painter_set_source_rgba(cr,(double)bg->red/66535., (double)bg->green/66535., (double)bg->blue/66535., b_alpha);
     fill_bckg(cr, x_pos, y_pos, dwidth, dheight);
     break;
   default:
@@ -211,14 +216,16 @@ LingoLayout *render_text_to_cr(lives_painter_t *cr, const char *text, const char
 
   lives_painter_new_path(cr);
   lives_painter_move_to(cr, x_text, y_text);
-  lives_painter_set_source_rgba(cr,fg->red/66535., fg->green/66535., fg->blue/66535., f_alpha);
+  lives_painter_set_source_rgba(cr,(double)fg->red/66535., (double)fg->green/66535., (double)fg->blue/66535., f_alpha);
 
 #ifdef GUI_QT
   lingo_layout_set_coords(layout, x_pos, y_pos, dwidth, dheight);
 #endif
 
 #ifdef GUI_GTK
-  pango_font_description_free(font);
+  if (font!=NULL) {
+    pango_font_description_free(font);
+  }
 #endif
 
   return layout;
@@ -252,7 +259,7 @@ weed_plant_t *render_text_to_layer(weed_plant_t *layer, const char *text, const 
   cr=layer_to_lives_painter(layer);
   if (cr==NULL) return layer; ///< error occured
 
-  layout = render_text_to_cr(cr,text,fontname,size,mode,fg_col,bg_col,center,rising,top,0,width,height);
+  layout = render_text_to_cr(NULL,cr,text,fontname,size,mode,fg_col,bg_col,center,rising,top,0,width,height);
 
   lingo_painter_show_layout(cr, layout);
 

@@ -1,6 +1,6 @@
 // widget-helper.c
 // LiVES
-// (c) G. Finch 2012 - 2015 <salsaman@gmail.com>
+// (c) G. Finch 2012 - 2016 <salsaman@gmail.com>
 // released under the GNU GPL 3 or later
 // see file ../COPYING or www.gnu.org for licensing details
 

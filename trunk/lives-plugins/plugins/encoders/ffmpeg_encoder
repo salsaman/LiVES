@@ -142,18 +142,16 @@ if ($command eq "get_formats") {
     }
 
     
-    print "webmh|webm high quality$errwebm$errvorbis|8|none|webm|\n";
-    print "webmm|webm medium quality$errwebm$errvorbis|8|none|webm|\n";
-    print "webml|webm low (stream) quality$errwebm$errvorbis|8|none|webm|\n";
+    print "webmh|webm high quality$errwebm$errvorbis|8|none|webm|frame=|\n";
+    print "webmm|webm medium quality$errwebm$errvorbis|8|none|webm|frame=|\n";
+    print "webml|webm low (stream) quality$errwebm$errvorbis|8|none|webm|frame=|\n";
 
-
-    print "x264|h264/aac/mp4$errx264$erraac|32|none|mp4|\n";
-    print "flv|flv$errflv$errmp3aac|9|arate=44100;22050;11025|flv|\n";
-    print "divx|divx (25 fps)$errflv$errmp3mp2|5|fps=25.00|avi|\n";
-    print "3gp_h263|3gp (h263)$err3gp$erramraac|96|size=176x144,arate=8000|3gp|\n";
-    print "3gp_mp4|3gp (mp4)$err3gp$erramraac|96|size=176x144,arate=8000|3gp|\n";
-    print "flv-youtube|flv (425x318, optimised for youtube)$errflv$errmp3aac|33|arate=44100;22050;11025,size=425x318|flv|\n";
-    print "flv-youtubex|flv (other sizes, optimised for youtube)$errflv$errmp3aac|33|arate=44100;22050;11025,aspect=1.3333:1|flv|\n";
+    print "x264|h264/aac/mp4$errx264$erraac|32|none|mp4|frame=|\n";
+    print "flv|flv$errflv$errmp3aac|33|arate=44100;22050;11025|flv|frame=|\n";
+    print "flv-youtubex|flv (optimised for youtube)$errflv$errmp3aac|33|arate=44100;22050;11025,aspect=1.3333:1|flv|frame=|\n";
+    print "divx|divx (25 fps)$errflv$errmp3mp2|5|fps=25.00|avi|frame=|\n";
+    print "3gp_h263|3gp (h263)$err3gp$erramraac|96|size=176x144,arate=8000|3gp|frame=|\n";
+    print "3gp_mp4|3gp (mp4)$err3gp$erramraac|96|size=176x144,arate=8000|3gp|frame=|\n";
     exit 0;
 }
 
@@ -435,7 +433,7 @@ if ($command eq "clear") {
 
     unlink "temp.vid";
 
-    unlink "passfile";
+    unlink glob "passfile*";
     &sig_complete;
     exit 0;
 }

@@ -1,6 +1,6 @@
 // plugins.h
 // LiVES
-// (c) G. Finch 2003-2012 <salsaman@gmail.com>
+// (c) G. Finch 2003-2016 <salsaman@gmail.com>
 // released under the GNU GPL 3 or later
 // see file ../COPYING or www.gnu.org for licensing details
 
@@ -180,6 +180,7 @@ typedef struct {
   int of_allowed_acodecs;
   char of_restrict[1024];
   char of_def_ext[16];
+  char ptext[512];
 }
 _encoder;
 

@@ -1,6 +1,6 @@
 // dialogs.c
 // LiVES (lives-exe)
-// (c) G. Finch 2003 - 2015
+// (c) G. Finch 2003 - 2016
 // Released under the GPL 3 or later
 // see file ../COPYING for licensing details
 
@@ -781,6 +781,7 @@ void pump_io_chan(LiVESIOChannel *iochan) {
   // pump data from stdout to textbuffer
   char *str_return=NULL;
   size_t retlen=0;
+  size_t plen;
   LiVESTextBuffer *optextbuf=lives_text_view_get_buffer(mainw->optextview);
 
 #ifdef GUI_GTK
@@ -796,12 +797,45 @@ void pump_io_chan(LiVESIOChannel *iochan) {
   str_return = strdup(qba.constData());
   retlen = strlen(str_return);
 #endif
+  // check each line of str_return, if it contains ptext, (whitespace), then number get the number and set percentage
+
   if (retlen>0&&cfile->proc_ptr!=NULL) {
     double max;
     LiVESAdjustment *adj=lives_scrolled_window_get_vadjustment(LIVES_SCROLLED_WINDOW(((xprocess *)(cfile->proc_ptr))->scrolledwindow));
     lives_text_buffer_insert_at_end(optextbuf,str_return);
     max=gtk_adjustment_get_upper(adj);
     lives_adjustment_set_value(adj,max);
+
+    if ((plen=strlen(prefs->encoder.ptext))>0) {
+      boolean linebrk=FALSE;
+      char *cptr=str_return;
+      int ispct=0;
+
+      if (prefs->encoder.ptext[0]=='%') {
+        ispct=1;
+        plen--;
+      }
+
+      while (cptr<(str_return+retlen-plen)) {
+        if (!strncmp(cptr,prefs->encoder.ptext+ispct,plen)) {
+          cptr+=plen;
+          while (*cptr==' '||*cptr=='\n') {
+            if (*cptr=='\n') {
+              linebrk=TRUE;
+              break;
+            }
+            cptr++;
+          }
+          if (!linebrk) {
+            if (ispct) cfile->proc_ptr->frames_done=(int)(strtod(cptr,NULL)*(cfile->progress_end-cfile->progress_start+1.)/100.);
+            else cfile->proc_ptr->frames_done=atoi(cptr);
+          }
+          break;
+        }
+        cptr++;
+      }
+
+    }
   }
 
   if (str_return!=NULL) lives_free(str_return);

@@ -5220,6 +5220,48 @@ LiVESWidget *add_audio_options(LiVESWidget **cbbackaudio, LiVESWidget **cbpertra
 
 
 
+static void rdet_use_current(LiVESButton *button, livespointer user_data) {
+  char *arate,*achans,*asamps;
+  int aendian;
+
+  lives_spin_button_set_value(LIVES_SPIN_BUTTON(rdet->spinbutton_width),cfile->hsize);
+  lives_spin_button_set_value(LIVES_SPIN_BUTTON(rdet->spinbutton_height),cfile->vsize);
+  lives_spin_button_set_value(LIVES_SPIN_BUTTON(rdet->spinbutton_fps),cfile->fps);
+
+  if (cfile->achans>0) {
+    rdet->ratio_fps=cfile->ratio_fps;
+
+    arate=lives_strdup_printf("%d",cfile->arate);
+    lives_entry_set_text(LIVES_ENTRY(resaudw->entry_arate),arate);
+    lives_free(arate);
+
+    achans=lives_strdup_printf("%d",cfile->achans);
+    lives_entry_set_text(LIVES_ENTRY(resaudw->entry_achans),achans);
+    lives_free(achans);
+
+    asamps=lives_strdup_printf("%d",cfile->asampsize);
+    lives_entry_set_text(LIVES_ENTRY(resaudw->entry_asamps),asamps);
+    lives_free(asamps);
+
+    aendian=cfile->signed_endian;
+
+    if (aendian&AFORM_UNSIGNED) {
+      lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(resaudw->rb_unsigned), TRUE);
+    } else {
+      lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(resaudw->rb_signed), TRUE);
+    }
+
+    if (aendian&AFORM_BIG_ENDIAN) {
+      lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(resaudw->rb_bigend), TRUE);
+    } else {
+      lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(resaudw->rb_littleend), TRUE);
+    }
+  }
+
+  lives_widget_queue_draw(rdet->dialog);
+
+}
+
 
 
 
@@ -5546,6 +5588,15 @@ render_details *create_render_details(int type) {
 
   lives_widget_set_can_focus(cancelbutton,TRUE);
 
+
+
+  if (!(prefs->startup_interface==STARTUP_MT&&!mainw->is_ready)) {
+    if (mainw->current_file!=-1&&mainw->current_file!=mainw->scrap_file&&mainw->current_file!=mainw->ascrap_file&&type==3) {
+      rdet->usecur_button=lives_button_new_with_mnemonic(_("_Use current clip values"));
+      lives_dialog_add_action_widget(LIVES_DIALOG(rdet->dialog), rdet->usecur_button, LIVES_RESPONSE_RESET);
+      lives_signal_connect(LIVES_COMBO(rdet->usecur_button), LIVES_WIDGET_CLICKED_SIGNAL, LIVES_GUI_CALLBACK(rdet_use_current), rdet);
+    }
+  }
 
   if (!specified) {
     rdet->okbutton = lives_button_new_from_stock(LIVES_STOCK_OK,NULL);

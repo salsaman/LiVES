@@ -31,7 +31,7 @@ See my vids at http://amv.reimeika.ca !
 
 
 
-Copyright (C) 2008 - 2015 Salsaman (salsaman@gmail.com)
+Copyright (C) 2008 - 2016 Salsaman (salsaman@gmail.com)
 
 """
 
@@ -334,24 +334,24 @@ if __name__ == '__main__':
        vb = 'vblock=16'
        sr = 'arate=32000;44100;48000'
        if is_installed(mpeg):
-           specs = '|4|%s,%s,%s,%s,%s|mpg|' % (fps, ar, hb, vb, sr)
+           specs = '|4|%s,%s,%s,%s,%s|mpg|Pass2|' % (fps, ar, hb, vb, sr)
            print 'qlo-mpeg|Fast, very low Quality MPG (MPEG-1/MP2)' + specs
            print 'lo-mpeg|Low Quality MPG (MPEG-1/MP2)' + specs
            print 'ml-mpeg|Medium-Low Quality MPG (MPEG-1/MP2)' + specs
            print 'mh-mpeg|Medium-High Quality MPG (MPEG-1/MP2)'+ specs
            print 'hi-mpeg|High Quality MPG (MPEG-1/MP2)' + specs
 
-           specs = '|4|%s,%s,%s,%s,%s|mpg|' % (ntscfps, ar, hb, vb, sr)
+           specs = '|4|%s,%s,%s,%s,%s|mpg|Pass2|' % (ntscfps, ar, hb, vb, sr)
            print 'vcd-mpeg|VCD-compatible MPG (NTSC)' + specs
            print 'svcd-mpeg|SVCD-compatible MPG (NTSC)' + specs
            # For DVD the encoder will resample the sound rate to 48000
            print 'dvd-mpeg|DVD-compatible MPG (NTSC)' + specs
 
-           specs = '|2|%s,%s,%s,%s,%s|mpg|' % (ntscfps, ar, hb, vb, sr)
+           specs = '|2|%s,%s,%s,%s,%s|mpg|Pass2|' % (ntscfps, ar, hb, vb, sr)
            print 'sdvd-mpeg|Strictly DVD-compatible MPG (NTSC)' + specs
-           specs = '|4|%s,%s,%s,%s,%s|mpg|' % (palfps, ar, hb, vb, sr)
+           specs = '|4|%s,%s,%s,%s,%s|mpg|Pass2|' % (palfps, ar, hb, vb, sr)
            print 'pvcd-mpeg|VCD-compatible MPG (PAL)' + specs
-           specs = '|2|%s,%s,%s,%s,%s|mpg|' % (palfps, ar, hb, vb, sr)
+           specs = '|2|%s,%s,%s,%s,%s|mpg|Pass2|' % (palfps, ar, hb, vb, sr)
            print 'psvcd-mpeg|SVCD-compatible MPG (PAL)' + specs
            # For DVD the encoder will resample the sound rate to 48000
            print 'pdvd-mpeg|DVD-compatible MPG (PAL)' + specs
@@ -399,7 +399,7 @@ if __name__ == '__main__':
            print 'hi_x-avi|High Quality AVI (XVID/MP3)' + specs
 
        if is_installed(ogg):
-           specs = '|8|%s,%s,%s,%s|ogv|' % (ar, hb, vb, sr)
+           specs = '|8|%s,%s,%s,%s|ogv|%%V:' % (ar, hb, vb, sr)
            print 'lo-theora|Low Quality OGG (THEORA/VORBIS)' + specs
            print 'ml-theora|Medium-Low Quality OGG (THEORA/VORBIS)' + specs
            print 'mh-theora|Medium-High Quality OGG (THEORA/VORBIS)' + specs
@@ -415,8 +415,8 @@ if __name__ == '__main__':
            print 'll-dirac|EXP Lossless Dirac (DIRAC/VORBIS/MKV)' + specs
 
        if is_installed(mng):
-           specs = '|0|none|mng|'
-           print 'hi-mng|MNG (MNG/NONE) format' + specs
+           specs = '|0|none|mng|mng]:|'
+           print 'hi-mng|MNG (MNG/NONE) format (not suitable for large files)' + specs
        if is_installed(gif):
            specs = '|0|none|gif|'
            print 'hi-gif|Animated GIF (GIF/NONE) format' + specs
@@ -622,4 +622,5 @@ Jun 2009 : 0.2.11 : salsaman - replace deprecated os.popen
 Feb 2010 : 0.2.12 : salsaman - pipe error/info output to stderr
 Mar 2010 : 0.2.13 : salsaman - remove metd toplevel directory and set outfile mode
 Jun 2010 : 0.2.14 : change names e.g. dirac_encoder.py -> lives_dirac_encoder
+Jan 2016 : 0.2.15 : salsaman - add progress texts
 """

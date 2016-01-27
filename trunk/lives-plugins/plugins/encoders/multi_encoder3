@@ -33,7 +33,7 @@ See my vids at http://amv.reimeika.ca !
 
 
 
-Copyright (C) 2008 - 2015 Salsaman (salsaman@gmail.com)
+Copyright (C) 2008 - 2016 Salsaman (salsaman@gmail.com)
 
 """
 
@@ -335,76 +335,76 @@ if __name__ == '__main__':
        vb = 'vblock=16'
        sr = 'arate=32000;44100;48000'
        if is_installed(mpeg):
-           specs = '|4|%s,%s,%s,%s,%s|mpg|' % (fps, ar, hb, vb, sr)
-           print('qlo-mpeg|Fast, very low Quality MPG (MPEG-1/MP2)' + specs)
-           print('lo-mpeg|Low Quality MPG (MPEG-1/MP2)' + specs)
-           print('ml-mpeg|Medium-Low Quality MPG (MPEG-1/MP2)' + specs)
-           print('mh-mpeg|Medium-High Quality MPG (MPEG-1/MP2)'+ specs)
-           print('hi-mpeg|High Quality MPG (MPEG-1/MP2)' + specs)
+           specs = '|4|%s,%s,%s,%s,%s|mpg|Pass2|' % (fps, ar, hb, vb, sr)
+           print 'qlo-mpeg|Fast, very low Quality MPG (MPEG-1/MP2)' + specs
+           print 'lo-mpeg|Low Quality MPG (MPEG-1/MP2)' + specs
+           print 'ml-mpeg|Medium-Low Quality MPG (MPEG-1/MP2)' + specs
+           print 'mh-mpeg|Medium-High Quality MPG (MPEG-1/MP2)'+ specs
+           print 'hi-mpeg|High Quality MPG (MPEG-1/MP2)' + specs
 
-           specs = '|4|%s,%s,%s,%s,%s|mpg|' % (ntscfps, ar, hb, vb, sr)
-           print('vcd-mpeg|VCD-compatible MPG (NTSC)' + specs)
-           print('svcd-mpeg|SVCD-compatible MPG (NTSC)' + specs)
+           specs = '|4|%s,%s,%s,%s,%s|mpg|Pass2|' % (ntscfps, ar, hb, vb, sr)
+           print 'vcd-mpeg|VCD-compatible MPG (NTSC)' + specs
+           print 'svcd-mpeg|SVCD-compatible MPG (NTSC)' + specs
            # For DVD the encoder will resample the sound rate to 48000
-           print('dvd-mpeg|DVD-compatible MPG (NTSC)' + specs)
+           print 'dvd-mpeg|DVD-compatible MPG (NTSC)' + specs
 
-           specs = '|2|%s,%s,%s,%s,%s|mpg|' % (ntscfps, ar, hb, vb, sr)
-           print('sdvd-mpeg|Strictly DVD-compatible MPG (NTSC)' + specs)
-           specs = '|4|%s,%s,%s,%s,%s|mpg|' % (palfps, ar, hb, vb, sr)
-           print('pvcd-mpeg|VCD-compatible MPG (PAL)' + specs)
-           specs = '|2|%s,%s,%s,%s,%s|mpg|' % (palfps, ar, hb, vb, sr)
-           print('psvcd-mpeg|SVCD-compatible MPG (PAL)' + specs)
+           specs = '|2|%s,%s,%s,%s,%s|mpg|Pass2|' % (ntscfps, ar, hb, vb, sr)
+           print 'sdvd-mpeg|Strictly DVD-compatible MPG (NTSC)' + specs
+           specs = '|4|%s,%s,%s,%s,%s|mpg|Pass2|' % (palfps, ar, hb, vb, sr)
+           print 'pvcd-mpeg|VCD-compatible MPG (PAL)' + specs
+           specs = '|2|%s,%s,%s,%s,%s|mpg|Pass2|' % (palfps, ar, hb, vb, sr)
+           print 'psvcd-mpeg|SVCD-compatible MPG (PAL)' + specs
            # For DVD the encoder will resample the sound rate to 48000
-           print('pdvd-mpeg|DVD-compatible MPG (PAL)' + specs)
-           print('spdvd-mpeg|Strictly DVD-compatible MPG (PAL)' + specs)
+           print 'pdvd-mpeg|DVD-compatible MPG (PAL)' + specs
+           print 'spdvd-mpeg|Strictly DVD-compatible MPG (PAL)' + specs
        sr = 'arate=8000;11025;12000;16000;22050;24000;32000;44100;48000'
        if is_installed(ogm):
            specs = '|8|%s,%s,%s,%s|ogm|' % (ar, hb, vb, sr)
-           print('lo_d-ogm|Low Quality OGM (DIVX 4:5/VORBIS)' + specs)
-           print('ml_d-ogm|Medium-Low Quality OGM (DIVX 4:5/VORBIS)' + specs)
-           print('mh_d-ogm|Medium-High Quality OGM (DIVX 4:5/VORBIS)' + specs)
-           print('hi_d-ogm|High Quality OGM (DIVX 4:5/VORBIS)' + specs)
-           print('lo_x-ogm|Low Quality OGM (XVID/VORBIS)' + specs)
-           print('ml_x-ogm|Medium-Low Quality OGM (XVID/VORBIS)' + specs)
-           print('mh_x-ogm|Medium-High Quality OGM (XVID/VORBIS)' + specs)
-           print('hi_x-ogm|High Quality OGM (XVID/VORBIS)' + specs)
+           print 'lo_d-ogm|Low Quality OGM (DIVX 4:5/VORBIS)' + specs
+           print 'ml_d-ogm|Medium-Low Quality OGM (DIVX 4:5/VORBIS)' + specs
+           print 'mh_d-ogm|Medium-High Quality OGM (DIVX 4:5/VORBIS)' + specs
+           print 'hi_d-ogm|High Quality OGM (DIVX 4:5/VORBIS)' + specs
+           print 'lo_x-ogm|Low Quality OGM (XVID/VORBIS)' + specs
+           print 'ml_x-ogm|Medium-Low Quality OGM (XVID/VORBIS)' + specs
+           print 'mh_x-ogm|Medium-High Quality OGM (XVID/VORBIS)' + specs
+           print 'hi_x-ogm|High Quality OGM (XVID/VORBIS)' + specs
 
        if is_installed(mkv):
            specs = '|8|%s,%s,%s,%s|mkv|' % (ar, hb, vb, sr)
-           print('lo_d-mkv|Low Quality MKV (DIVX 4:5/VORBIS)' + specs)
-           print('ml_d-mkv|Medium-Low Quality MKV (DIVX 4:5/VORBIS)' + specs)
-           print('mh_d-mkv|Medium-High Quality MKV (DIVX 4:5/VORBIS)' + specs)
-           print('hi_d-mkv|High Quality MKV (DIVX 4:5/VORBIS)' + specs)
-           print('lo_x-mkv|Low Quality MKV (XVID/VORBIS)' + specs)
-           print('ml_x-mkv|Medium-Low Quality MKV (XVID/VORBIS)' + specs)
-           print('mh_x-mkv|Medium-High Quality MKV (XVID/VORBIS)' + specs)
-           print('hi_x-mkv|High Quality MKV (XVID/VORBIS)' + specs)
-           print('lo_h-mkv|Low Quality MKV (H.264/VORBIS)' + specs)
-           print('ml_h-mkv|Medium-Low Quality MKV (H.264/VORBIS)' + specs)
-           print('mh_h-mkv|Medium-High Quality MKV (H.264/VORBIS)' + specs)
-           print('hi_h-mkv|High Quality MKV (H.264/VORBIS)' + specs)
+           print 'lo_d-mkv|Low Quality MKV (DIVX 4:5/VORBIS)' + specs
+           print 'ml_d-mkv|Medium-Low Quality MKV (DIVX 4:5/VORBIS)' + specs
+           print 'mh_d-mkv|Medium-High Quality MKV (DIVX 4:5/VORBIS)' + specs
+           print 'hi_d-mkv|High Quality MKV (DIVX 4:5/VORBIS)' + specs
+           print 'lo_x-mkv|Low Quality MKV (XVID/VORBIS)' + specs
+           print 'ml_x-mkv|Medium-Low Quality MKV (XVID/VORBIS)' + specs
+           print 'mh_x-mkv|Medium-High Quality MKV (XVID/VORBIS)' + specs
+           print 'hi_x-mkv|High Quality MKV (XVID/VORBIS)' + specs
+           print 'lo_h-mkv|Low Quality MKV (H.264/VORBIS)' + specs
+           print 'ml_h-mkv|Medium-Low Quality MKV (H.264/VORBIS)' + specs
+           print 'mh_h-mkv|Medium-High Quality MKV (H.264/VORBIS)' + specs
+           print 'hi_h-mkv|High Quality MKV (H.264/VORBIS)' + specs
 
        if is_installed(avi):
            specs = '|1|%s,%s,%s,%s|avi|' % (ar, hb, vb, sr)
-           print('lo_s-avi|EXP Low Quality AVI (SNOW/MP3)' + specs)
-           print('ml_s-avi|EXP Medium-Low Quality AVI (SNOW/MP3)' + specs)
-           print('mh_s-avi|EXP Medium-High Quality AVI (SNOW/MP3)' + specs)
-           print('hi_s-avi|EXP High Quality AVI (SNOW/MP3)' + specs)
-           print('lo_h-avi|EXP Low Quality AVI (H.264/MP3)' + specs)
-           print('ml_h-avi|EXP Medium-Low Quality AVI (H.264/MP3)' + specs)
-           print('mh_h-avi|EXP Medium-High Quality AVI (H.264/MP3)' + specs)
-           print('hi_h-avi|EXP High Quality AVI (H.264/MP3)' + specs)
-           print('lo_x-avi|Low Quality AVI (XVID/MP3)' + specs)
-           print('ml_x-avi|Medium-Low Quality AVI (XVID/MP3)' + specs)
-           print('mh_x-avi|Medium-High Quality AVI (XVID/MP3)' + specs)
-           print('hi_x-avi|High Quality AVI (XVID/MP3)' + specs)
+           print 'lo_s-avi|EXP Low Quality AVI (SNOW/MP3)' + specs
+           print 'ml_s-avi|EXP Medium-Low Quality AVI (SNOW/MP3)' + specs
+           print 'mh_s-avi|EXP Medium-High Quality AVI (SNOW/MP3)' + specs
+           print 'hi_s-avi|EXP High Quality AVI (SNOW/MP3)' + specs
+           print 'lo_h-avi|EXP Low Quality AVI (H.264/MP3)' + specs
+           print 'ml_h-avi|EXP Medium-Low Quality AVI (H.264/MP3)' + specs
+           print 'mh_h-avi|EXP Medium-High Quality AVI (H.264/MP3)' + specs
+           print 'hi_h-avi|EXP High Quality AVI (H.264/MP3)' + specs
+           print 'lo_x-avi|Low Quality AVI (XVID/MP3)' + specs
+           print 'ml_x-avi|Medium-Low Quality AVI (XVID/MP3)' + specs
+           print 'mh_x-avi|Medium-High Quality AVI (XVID/MP3)' + specs
+           print 'hi_x-avi|High Quality AVI (XVID/MP3)' + specs
 
        if is_installed(ogg):
-           specs = '|8|%s,%s,%s,%s|ogg|' % (ar, hb, vb, sr)
-           print('lo-theora|Low Quality OGG (THEORA/VORBIS)' + specs)
-           print('ml-theora|Medium-Low Quality OGG (THEORA/VORBIS)' + specs)
-           print('mh-theora|Medium-High Quality OGG (THEORA/VORBIS)' + specs)
-           print('hi-theora|High Quality OGG (THEORA/VORBIS)' + specs)
+           specs = '|8|%s,%s,%s,%s|ogv|%%V:' % (ar, hb, vb, sr)
+           print 'lo-theora|Low Quality OGG (THEORA/VORBIS)' + specs
+           print 'ml-theora|Medium-Low Quality OGG (THEORA/VORBIS)' + specs
+           print 'mh-theora|Medium-High Quality OGG (THEORA/VORBIS)' + specs
+           print 'hi-theora|High Quality OGG (THEORA/VORBIS)' + specs
 
        # EXPERIMENTAL.
        if is_installed(drc):
@@ -413,13 +413,14 @@ if __name__ == '__main__':
            print 'ml-dirac|EXP Medium-Low Quality Dirac (DIRAC/VORBIS/MKV)' + specs
            print 'mh-dirac|EXP Medium-High Quality Dirac (DIRAC/VORBIS/MKV)' + specs
            print 'hi-dirac|EXP High Quality Dirac (DIRAC/VORBIS/MKV)' + specs
+           print 'll-dirac|EXP Lossless Dirac (DIRAC/VORBIS/MKV)' + specs
 
        if is_installed(mng):
-           specs = '|0|none|mng|'
-           print('hi-mng|MNG (MNG/NONE) format' + specs)
+           specs = '|0|none|mng|mng]:|'
+           print 'hi-mng|MNG (MNG/NONE) format (not suitable for large files)' + specs
        if is_installed(gif):
            specs = '|0|none|gif|'
-           print('hi-gif|Animated GIF (GIF/NONE) format' + specs)
+           print 'hi-gif|Animated GIF (GIF/NONE) format' + specs
        raise SystemExit
 
     if dir == 'get_format_request':
@@ -607,5 +608,6 @@ Jun 2009 : 0.2.11 : salsaman - replace deprecated os.popen
 Feb 2010 : 0.2.12 : salsaman - pipe error/info output to stderr
 Mar 2010 : 0.2.13 : salsaman - remove metd toplevel directory and set outfile mode
 Jun 2010 : 0.2.14 : change names e.g. dirac_encoder.py -> lives_dirac_encoder
+Jan 2016 : 0.2.15 : salsaman - add progress texts
 
 """

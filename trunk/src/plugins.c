@@ -1,6 +1,6 @@
 // plugins.c
 // LiVES
-// (c) G. Finch 2003 - 2013 <salsaman@gmail.com>
+// (c) G. Finch 2003 - 2016 <salsaman@gmail.com>
 // released under the GNU GPL 3 or later
 // see file ../COPYING or www.gnu.org for licensing details
 
@@ -1643,12 +1643,17 @@ boolean check_encoder_restrictions(boolean get_extension, boolean user_audio, bo
 
   // TODO - allow lists for size
   lives_snprintf(prefs->encoder.of_restrict,5,"none");
-  if (!((ofmt_all=plugin_request_by_line(PLUGIN_ENCODERS,prefs->encoder.name,"get_formats"))==NULL)) {
+  if ((ofmt_all=plugin_request_by_line(PLUGIN_ENCODERS,prefs->encoder.name,"get_formats"))!=NULL) {
     // get any restrictions for the current format
     for (i=0; i<lives_list_length(ofmt_all); i++) {
       if ((numtok=get_token_count((char *)lives_list_nth_data(ofmt_all,i),'|'))>2) {
         array=lives_strsplit((char *)lives_list_nth_data(ofmt_all,i),"|",-1);
         if (!strcmp(array[0],prefs->encoder.of_name)) {
+          if (numtok>5) {
+            lives_snprintf(prefs->encoder.ptext,512,"%s",array[5]);
+          } else {
+            memset(prefs->encoder.ptext,0,1);
+          }
           if (numtok>4) {
             lives_snprintf(prefs->encoder.of_def_ext,16,"%s",array[4]);
           } else {

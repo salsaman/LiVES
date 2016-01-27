@@ -381,7 +381,27 @@ def do_encode():
     """
     Encode a series of images into a Theora movie.
     """
+    if os.name == 'nt':
+        convert = 'convert.exe'
+        mplayer = 'mplayer.exe'
+        mplayer2 = 'mplayer2.exe'
+        theora_encoder  = 'encoder_example.exe'
+        theora_encoder2 = 'theora_encoder_example.exe'
+        theora_encoder3 = 'theora_encode.exe'
+        sox = 'sox.exe'
+        identify = 'identify.exe'
 
+    else:
+        convert = 'convert'
+        mplayer = 'mplayer'
+        mplayer2 = 'mplayer2'
+        theora_encoder  = 'encoder_example'
+        theora_encoder2 = 'theora_encoder_example'
+        theora_encoder3 = 'theora_encode'
+        sox = 'sox'
+        identify = 'identify'
+
+    
     if verbose:
         std = ''
         std2 = ''

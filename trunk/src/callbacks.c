@@ -1,6 +1,6 @@
 // callbacks.c
 // LiVES
-// (c) G. Finch 2003 - 2015 <salsaman@gmail.com>
+// (c) G. Finch 2003 - 2016 <salsaman@gmail.com>
 // released under the GNU GPL 3 or later
 // see file ../COPYING for licensing details
 
@@ -5672,7 +5672,7 @@ void on_about_activate(LiVESMenuItem *menuitem, livespointer user_data) {
                         "name", "LiVES",
                         "version", LiVES_VERSION,
                         "comments",comments,
-                        "copyright", "(C) 2002-2015 salsaman <salsaman@gmail.com> and others",
+                        "copyright", "(C) 2002-2016 salsaman <salsaman@gmail.com> and others",
                         "website", "http://lives.sourceforge.net",
                         "license", license,
                         "title", title,
@@ -5694,7 +5694,7 @@ void on_about_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   char *mesg;
   mesg=lives_strdup_printf(
          _("LiVES Version %s\n(c) G. Finch (salsaman) %s\n\nReleased under the GPL 3 or later (http://www.gnu.org/licenses/gpl.txt)\nLiVES is distributed WITHOUT WARRANTY\n\nContact the author at:\nsalsaman@gmail.com\nHomepage: http://lives.sourceforge.net"),
-         LiVES_VERSION,"2002-2015");
+         LiVES_VERSION,"2002-2016");
   do_error_dialog(mesg);
   lives_free(mesg);
 
@@ -10535,6 +10535,7 @@ void on_encoder_ofmt_changed(LiVESCombo *combo, livespointer user_data) {
           lives_snprintf(future_prefs->encoder.of_desc,128,"%s",array[1]);
 
           future_prefs->encoder.of_allowed_acodecs=atoi(array[2]);
+          lives_snprintf(future_prefs->encoder.of_restrict,1024,"%s",array[3]);
           lives_strfreev(array);
           break;
         }

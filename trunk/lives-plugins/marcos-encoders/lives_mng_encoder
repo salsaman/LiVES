@@ -351,13 +351,13 @@ def do_encode():
     if os.name == 'nt':
 
         command = """cd %(source_dir)s ; \\
-%(convert.exe)s -delay %(spf)s %(syml)s%(img_pre)s*%(ext)s %(mngv)s
+%(convert.exe)s -monitor -delay %(spf)s %(syml)s%(img_pre)s*%(ext)s %(mngv)s
 """ % all_vars
         
     else:
 
         command = """cd %(source_dir)s ; \\
-%(convert)s -delay %(spf)s %(syml)s%(img_pre)s*%(ext)s %(mngv)s
+%(convert)s -monitor -delay %(spf)s %(syml)s%(img_pre)s*%(ext)s %(mngv)s
 """ % all_vars
 
     run(command)

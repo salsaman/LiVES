@@ -1632,6 +1632,7 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const char *tex
             return FALSE;
           }
           lives_widget_context_update();
+          if (cfile->clip_type!=CLIP_TYPE_FILE) break;
         }
         cfile->fx_frame_pump+=FX_FRAME_PUMP_VAL>>1;
       }

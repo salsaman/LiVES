@@ -88,16 +88,16 @@ if ($command eq "get_formats") {
    # means "can only encode at xx.yy frames per second", size=x X y, arate=audio rate 
     # - otherwise set it to 'none'
 
-    $has_webm=(system("ffmpeg -encoders 2>/dev/null | grep vpx")==0);
-    $has_x264=(system("ffmpeg -encoders 2>/dev/null | grep x264")==0);
-    $has_flv=(system("ffmpeg -encoders 2>/dev/null | grep flv")==0);
-    $has_3gp=(system("ffmpeg -encoders 2>/dev/null | grep h263")==0);
+    $has_webm=(system("ffmpeg -encoders 2>/dev/null | grep vpx >/dev/null")==0);
+    $has_x264=(system("ffmpeg -encoders 2>/dev/null | grep x264 >/dev/null")==0);
+    $has_flv=(system("ffmpeg -encoders 2>/dev/null | grep flv >/dev/null")==0);
+    $has_3gp=(system("ffmpeg -encoders 2>/dev/null | grep h263 >/dev/null")==0);
 
-    $has_aac=(system("ffmpeg -encoders 2>/dev/null | grep aac")==0);
-    $has_vorbis=(system("ffmpeg -encoders 2>/dev/null | grep vorbis")==0);
-    $has_amr=(system("ffmpeg -encoders 2>/dev/null | grep amr")==0);
-    $has_mp3=(system("ffmpeg -encoders 2>/dev/null | grep mp3")==0);
-    $has_mp2=(system("ffmpeg -encoders 2>/dev/null | grep mp2")==0);
+    $has_aac=(system("ffmpeg -encoders 2>/dev/null | grep aac >/dev/null")==0);
+    $has_vorbis=(system("ffmpeg -encoders 2>/dev/null | grep vorbis >/dev/null")==0);
+    $has_amr=(system("ffmpeg -encoders 2>/dev/null | grep amr >/dev/null")==0);
+    $has_mp3=(system("ffmpeg -encoders 2>/dev/null | grep mp3 >/dev/null")==0);
+    $has_mp2=(system("ffmpeg -encoders 2>/dev/null | grep mp2 >/dev/null")==0);
 
 
     $errwebm=$errx264=$errflv=$err3gp="";
@@ -150,6 +150,11 @@ if ($command eq "get_formats") {
     print "flv|flv$errflv$errmp3aac|33|arate=44100;22050;11025|flv|frame=|\n";
     print "flv-youtubex|flv (optimised for youtube)$errflv$errmp3aac|33|arate=44100;22050;11025,aspect=1.3333:1|flv|frame=|\n";
     print "divx|divx (25 fps)$errflv$errmp3mp2|5|fps=25.00|avi|frame=|\n";
+
+    print "wmv2|wmv2/wma2/asf|256|arate=44100;22050;11025|wmv|\n";
+    print "ffv1|ffv1 (lossless)|2|none|avi|\n";
+    print "mjpeg|mjpg|2|none|avi|\n";
+
     print "3gp_h263|3gp (h263)$err3gp$erramraac|96|size=176x144,arate=8000|3gp|frame=|\n";
     print "3gp_mp4|3gp (mp4)$err3gp$erramraac|96|size=176x144,arate=8000|3gp|frame=|\n";
     exit 0;
@@ -294,7 +299,16 @@ if ($command eq "encode") {
     elsif ($otype eq "3gp_mp4") {
 	$vcodec="-f mp4";
     }
-    elsif ($otype eq "flv"||$otype eq "flv-youtube"||$otype eq "flv-youtubex") {
+    elsif ($otype eq "wmv2") {
+	$vcodec="-f wmv2";
+    }
+    elsif ($otype eq "ffv1") {
+	$vcodec="-f ffv1 -pix_fmt +";
+    }
+    elsif ($otype eq "ffv1") {
+	$vcodec="-f mjpeg";
+    }
+    elsif ($otype eq "flv"||$otype eq "flv-youtubex") {
 	$vcodec="-f flv";
     }
     elsif ($otype eq "webmh") {
@@ -310,7 +324,7 @@ if ($command eq "encode") {
 	$vcodec="-vcodec libx264 -vf 'scale=trunc(iw/2)*2:trunc(ih/2)*2'";
     }
 
-    if ($otype eq "flv-youtube"||$otype eq "flv-youtubex") {
+    if ($otype eq "flv-youtubex") {
 	$vcodec.=" -b 1024k -bt 256k -maxrate 1024k -minrate 1024k -bufsize 8192k";
     }
 
@@ -353,7 +367,7 @@ if ($command eq "encode") {
 	    $audio_com.=" -acodec mp2";
 	}
 
-	if ($otype eq "flv-youtube"||$otype eq "flv-youtubex") {
+	if ($otype eq "flv-youtubex") {
 	    $audio_com.=" -ab 128k -ar $arate";
 	}
 	elsif ($otype eq "flv") {
@@ -361,6 +375,9 @@ if ($command eq "encode") {
 	}
 	elsif ($otype eq "3gp_h263" || $otype eq "3gp_mp4") {
 	    $audio_com.=" -ac 1 -ab 12 -ar 8000";
+	}
+	elsif ($otype eq "wmv2") {
+	    $audio_com.=" -acodec wmav2";
 	}
 
     }

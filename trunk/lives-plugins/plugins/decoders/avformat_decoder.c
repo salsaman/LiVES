@@ -1026,6 +1026,8 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstride
         xtarget_pts=priv->found_pts;
       else xtarget_pts=target_pts;
 
+      xtarget_pts+=priv->ic->start_time;
+
       seek_target=av_rescale_q(xtarget_pts, AV_TIME_BASE_Q, s->time_base);
       av_seek_frame(priv->ic, priv->vstream, seek_target, AVSEEK_FLAG_BACKWARD);
       avcodec_flush_buffers(cc);
@@ -1059,7 +1061,7 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstride
       if (MyPts==-1) {
         MyPts = priv->packet.pts;
         MyPts = av_rescale_q(MyPts, s->time_base, AV_TIME_BASE_Q)-priv->ic->start_time;
-        priv->found_pts=MyPts;
+        priv->found_pts=MyPts; // PTS of end of frame, set so start_time is zero
       }
 
 #ifdef DEBUG

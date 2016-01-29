@@ -5853,7 +5853,7 @@ void on_fs_preview_clicked(LiVESWidget *widget, livespointer user_data) {
     lives_widget_context_update();
   }
 
-  if (preview_type==3) {
+  if (preview_type==LIVES_PREVIEW_TYPE_RANGE) {
     // open selection
     start_time=mainw->fx1_val;
     preview_frames=(int)mainw->fx2_val;
@@ -5875,7 +5875,7 @@ void on_fs_preview_clicked(LiVESWidget *widget, livespointer user_data) {
 #endif
   unlink(info_file);
 
-  if (preview_type==1) {
+  if (preview_type==LIVES_PREVIEW_TYPE_VIDEO_AUDIO) {
 
     preview_frames=1000000000;
 
@@ -6004,10 +6004,11 @@ void on_fs_preview_clicked(LiVESWidget *widget, livespointer user_data) {
 
     lives_free(dfile);
 
-
-    lives_widget_set_bg_color(mainw->fs_playarea, LIVES_WIDGET_STATE_NORMAL, &palette->black);
-    lives_widget_set_bg_color(mainw->fs_playframe, LIVES_WIDGET_STATE_NORMAL, &palette->black);
-    lives_widget_set_bg_color(mainw->fs_playalign, LIVES_WIDGET_STATE_NORMAL, &palette->black);
+    if (preview_type!=LIVES_PREVIEW_TYPE_AUDIO_ONLY) {
+      lives_widget_set_bg_color(mainw->fs_playarea, LIVES_WIDGET_STATE_NORMAL, &palette->black);
+      lives_widget_set_bg_color(mainw->fs_playframe, LIVES_WIDGET_STATE_NORMAL, &palette->black);
+      lives_widget_set_bg_color(mainw->fs_playalign, LIVES_WIDGET_STATE_NORMAL, &palette->black);
+    }
 
     mainw->in_fs_preview=TRUE;
 
@@ -6076,7 +6077,7 @@ void on_fs_preview_clicked(LiVESWidget *widget, livespointer user_data) {
 
     unlink(info_file);
 
-    if (preview_type!=2) {
+    if (preview_type!=LIVES_PREVIEW_TYPE_AUDIO_ONLY) {
 
       owidth=width;
       oheight=height;
@@ -6127,7 +6128,7 @@ void on_fs_preview_clicked(LiVESWidget *widget, livespointer user_data) {
     }
 
 
-    if (preview_type==1||preview_type==3) {
+    if (preview_type==LIVES_PREVIEW_TYPE_VIDEO_AUDIO||preview_type==LIVES_PREVIEW_TYPE_RANGE) {
       xwin=lives_widget_get_xwinid(mainw->fs_playarea,"Unsupported display type for preview.");
       if (xwin==-1) {
         end_fs_preview();
@@ -6135,7 +6136,6 @@ void on_fs_preview_clicked(LiVESWidget *widget, livespointer user_data) {
         return;
       }
     }
-
 
 
     if (file_open_params!=NULL) {
@@ -6151,10 +6151,11 @@ void on_fs_preview_clicked(LiVESWidget *widget, livespointer user_data) {
 
     lives_free(tmp);
 
-    if (preview_type!=2) lives_widget_set_app_paintable(mainw->fs_playarea,TRUE);
+    if (preview_type!=LIVES_PREVIEW_TYPE_AUDIO_ONLY) lives_widget_set_app_paintable(mainw->fs_playarea,TRUE);
 
     mainw->com_failed=FALSE;
 
+    mainw->in_fs_preview=TRUE;
     lives_system(com,FALSE);
     lives_free(com);
 
@@ -6164,9 +6165,9 @@ void on_fs_preview_clicked(LiVESWidget *widget, livespointer user_data) {
       return;
     }
 
-    // loop here until preview has finished, or the user cancels
-
-    while ((!(ifile=fopen(info_file,"r")))&&mainw->in_fs_preview) {
+    // loop here until preview has finished, or the user presses OK or Cancel
+    
+    while ((!(ifile=fopen(info_file,"r")))&&mainw->in_fs_preview&&mainw->fc_buttonresponse==LIVES_RESPONSE_NONE) {
       lives_widget_context_update();
       lives_usleep(prefs->sleep_time);
     }
@@ -6178,6 +6179,7 @@ void on_fs_preview_clicked(LiVESWidget *widget, livespointer user_data) {
     end_fs_preview();
     lives_free(info_file);
   }
+
   if (file_open_params!=NULL) lives_free(file_open_params);
 }
 

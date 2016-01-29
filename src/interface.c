@@ -92,13 +92,14 @@ void widget_add_preview(LiVESWidget *widget, LiVESBox *for_preview, LiVESBox *fo
   LiVESWidget *preview_button=NULL;
   LiVESWidget *fs_label;
 
-  mainw->fs_playframe = lives_frame_new(NULL);
-  mainw->fs_playalign = lives_alignment_new(0.,0.,1.,1.);
-  mainw->fs_playarea = lives_event_box_new();
-
-  lives_widget_object_set_data(LIVES_WIDGET_OBJECT(mainw->fs_playarea),"pixbuf",NULL);
 
   if (preview_type==LIVES_PREVIEW_TYPE_VIDEO_AUDIO||preview_type==LIVES_PREVIEW_TYPE_RANGE) {
+    mainw->fs_playframe = lives_frame_new(NULL);
+    mainw->fs_playalign = lives_alignment_new(0.,0.,1.,1.);
+    mainw->fs_playarea = lives_event_box_new();
+
+    lives_widget_object_set_data(LIVES_WIDGET_OBJECT(mainw->fs_playarea),"pixbuf",NULL);
+
     lives_container_set_border_width(LIVES_CONTAINER(mainw->fs_playframe), widget_opts.border_width);
 
     widget_opts.justify=LIVES_JUSTIFY_RIGHT;
@@ -117,7 +118,8 @@ void widget_add_preview(LiVESWidget *widget, LiVESBox *for_preview, LiVESBox *fo
     lives_widget_set_bg_color(mainw->fs_playframe, LIVES_WIDGET_STATE_NORMAL, &palette->black);
     lives_widget_set_bg_color(mainw->fs_playalign, LIVES_WIDGET_STATE_NORMAL, &palette->black);
 
-  }
+  } else mainw->fs_playframe = mainw->fs_playalign = mainw->fs_playarea = NULL; // AUDIO_ONLY
+
 
 
   if (preview_type==LIVES_PREVIEW_TYPE_VIDEO_AUDIO) {
@@ -2087,6 +2089,10 @@ static void chooser_check_dir(LiVESFileChooser *chooser, livespointer user_data)
 }
 
 
+static void chooser_response(LiVESWidget *widget, int response, livespointer udata) {
+  mainw->fc_buttonresponse=response;
+}
+
 
 
 char *choose_file(const char *dir, const char *fname, char **const filt, LiVESFileChooserAction act,
@@ -2263,6 +2269,10 @@ char *choose_file(const char *dir, const char *fname, char **const filt, LiVESFi
 
   memset(last_good_folder,0,1);
 
+  // set this so we know when button is pressed, even if waiting for preview to finish
+  mainw->fc_buttonresponse=LIVES_RESPONSE_NONE;
+  lives_signal_connect(chooser, LIVES_WIDGET_RESPONSE_SIGNAL, LIVES_GUI_CALLBACK(chooser_response), NULL);
+  
   if (extra_widget==mainw->LiVES) {
     return (char *)chooser; // kludge to allow custom adding of extra widgets
   }

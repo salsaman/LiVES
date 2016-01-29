@@ -1199,6 +1199,8 @@ typedef struct {
   ulong id;
 
   boolean interactive;
+
+  int fc_buttonresponse;
   ////////////////////
 
 } mainwindow;

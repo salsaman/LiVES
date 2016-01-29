@@ -19,7 +19,7 @@
 # v 2.9 check for avconv, change -quality to -qscale
 # v 2.10 move -meta options after png/audio
 # v 2.11 change fussy order of -pass option
-# v 2.12 add h264/aac/mp4, show missing libraries
+# v 2.12 add h264/aac/mp4, wmv2, ffv1 and mjpeg; show missing libraries
 #######################################################################
 
 if (!defined($standalone)) {
@@ -89,6 +89,9 @@ if ($command eq "get_formats") {
     # - otherwise set it to 'none'
 
     $has_webm=(system("ffmpeg -encoders 2>/dev/null | grep vpx >/dev/null")==0);
+    $has_wmv2=(system("ffmpeg -encoders 2>/dev/null | grep wmv2 >/dev/null")==0);
+    $has_ffv1=(system("ffmpeg -encoders 2>/dev/null | grep ffv1 >/dev/null")==0);
+    $has_mjpeg=(system("ffmpeg -encoders 2>/dev/null | grep mjpeg >/dev/null")==0);
     $has_x264=(system("ffmpeg -encoders 2>/dev/null | grep x264 >/dev/null")==0);
     $has_flv=(system("ffmpeg -encoders 2>/dev/null | grep flv >/dev/null")==0);
     $has_3gp=(system("ffmpeg -encoders 2>/dev/null | grep h263 >/dev/null")==0);
@@ -98,14 +101,27 @@ if ($command eq "get_formats") {
     $has_amr=(system("ffmpeg -encoders 2>/dev/null | grep amr >/dev/null")==0);
     $has_mp3=(system("ffmpeg -encoders 2>/dev/null | grep mp3 >/dev/null")==0);
     $has_mp2=(system("ffmpeg -encoders 2>/dev/null | grep mp2 >/dev/null")==0);
+    $has_wmav2=(system("ffmpeg -encoders 2>/dev/null | grep wmav2 >/dev/null")==0);
 
 
-    $errwebm=$errx264=$errflv=$err3gp="";
+    $errwebm=$errx264=$errflv=$err3gp=$errwmv2=$errffv1=$errmjpeg="";
 
-    $erraac=$errvorbis=$erramraac=$errmp3aac=$errmp3mp2="";
+    $erraac=$errvorbis=$erramraac=$errmp3aac=$errmp3mp2=$errwmav2="";
     
     unless ($has_webm) {
 	$errwebm=" (MISSING libvxp support) ";
+    }
+
+    unless ($has_wmv2) {
+	$errwmv2=" (MISSING wmv2 support) ";
+    }
+
+    unless ($has_ffv1) {
+	$errffv1=" (MISSING ffv1 support) ";
+    }
+
+    unless ($has_mjpeg) {
+	$errmjpeg=" (MISSING mjpeg support) ";
     }
 
     unless ($has_x264) {
@@ -129,6 +145,10 @@ if ($command eq "get_formats") {
 	$errvorbis=" (MISSING libvorbis support) ";
     }
 
+    unless ($has_wmav2) {
+	$errwmav2=" (MISSING wmav2 support) ";
+    }
+
     unless ($has_amr || $has_aac) {
 	$erramraac=" (MISSING amr or aac support) ";
     }
@@ -142,18 +162,19 @@ if ($command eq "get_formats") {
     }
 
     
+    print "x264|h264/aac/mp4 high quality $errx264$erraac|32|vstep=2,hstep=2|mp4|frame=|\n";
+
     print "webmh|webm high quality$errwebm$errvorbis|8|none|webm|frame=|\n";
     print "webmm|webm medium quality$errwebm$errvorbis|8|none|webm|frame=|\n";
     print "webml|webm low (stream) quality$errwebm$errvorbis|8|none|webm|frame=|\n";
 
-    print "x264|h264/aac/mp4$errx264$erraac|32|none|mp4|frame=|\n";
     print "flv|flv$errflv$errmp3aac|33|arate=44100;22050;11025|flv|frame=|\n";
     print "flv-youtubex|flv (optimised for youtube)$errflv$errmp3aac|33|arate=44100;22050;11025,aspect=1.3333:1|flv|frame=|\n";
     print "divx|divx (25 fps)$errflv$errmp3mp2|5|fps=25.00|avi|frame=|\n";
 
-    print "wmv2|wmv2/wma2/asf|256|arate=44100;22050;11025|wmv|\n";
-    print "ffv1|ffv1 (lossless)|2|none|avi|\n";
-    print "mjpeg|mjpg|2|none|avi|\n";
+    print "wmv2|wmv2/wma2/asf (low quality)$errwmv2$errwmav2|256|arate=44100;22050;11025|wmv|frame=|\n";
+    print "ffv1|ffv1 (lossless)$errffv1|2|none|avi|frame=|\n";
+    print "mjpeg|mjpg$errmjpeg|2|none|avi|frame=|\n";
 
     print "3gp_h263|3gp (h263)$err3gp$erramraac|96|size=176x144,arate=8000|3gp|frame=|\n";
     print "3gp_mp4|3gp (mp4)$err3gp$erramraac|96|size=176x144,arate=8000|3gp|frame=|\n";
@@ -300,13 +321,20 @@ if ($command eq "encode") {
 	$vcodec="-f mp4";
     }
     elsif ($otype eq "wmv2") {
-	$vcodec="-f wmv2";
+	$vcodec="-vcodec wmv2";
     }
     elsif ($otype eq "ffv1") {
-	$vcodec="-f ffv1 -pix_fmt +";
+	if ($img_ext eq ".png") {
+	    $format="bgr24";
+	}
+	else {
+	    #jpeg
+	    $format="yuvj420p";
+	}
+	$vcodec="-vcodec ffv1 -pix_fmt $format";
     }
-    elsif ($otype eq "ffv1") {
-	$vcodec="-f mjpeg";
+    elsif ($otype eq "mjpeg") {
+	$vcodec="-vcodec mjpeg";
     }
     elsif ($otype eq "flv"||$otype eq "flv-youtubex") {
 	$vcodec="-f flv";
@@ -321,7 +349,7 @@ if ($command eq "encode") {
 	$vcodec="-f webm -vcodec libvpx -g 60 -qscale 31";
     }
     elsif ($otype eq "x264") { 
-	$vcodec="-vcodec libx264 -vf 'scale=trunc(iw/2)*2:trunc(ih/2)*2'";
+	$vcodec="-vcodec libx264 -qscale 1";
     }
 
     if ($otype eq "flv-youtubex") {

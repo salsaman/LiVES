@@ -6363,10 +6363,15 @@ void end_fs_preview(void) {
   // where there is a possibility of fs preview still playing
   char *com;
 
-  LiVESPixbuf *pixbuf=(LiVESPixbuf *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(mainw->fs_playarea), "pixbuf");
+  LiVESPixbuf *pixbuf=NULL;
+
+  if (mainw->fs_playarea!=NULL) {
+    pixbuf=(LiVESPixbuf *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(mainw->fs_playarea), "pixbuf");
+    lives_widget_object_set_data(LIVES_WIDGET_OBJECT(mainw->fs_playarea),"pixbuf",NULL);
+    lives_widget_set_app_paintable(mainw->fs_playarea,FALSE);
+  }
 
   if (pixbuf!=NULL) lives_object_unref(pixbuf);
-  lives_widget_object_set_data(LIVES_WIDGET_OBJECT(mainw->fs_playarea),"pixbuf",NULL);
 
   if (mainw->in_fs_preview) {
 #ifndef IS_MINGW
@@ -6394,9 +6399,6 @@ void end_fs_preview(void) {
 
     mainw->in_fs_preview=FALSE;
 
-    if (mainw->fs_playarea!=NULL&&(LIVES_IS_WIDGET(mainw->fs_playarea))) {
-      lives_widget_set_app_paintable(mainw->fs_playarea,FALSE);
-    }
   }
 }
 

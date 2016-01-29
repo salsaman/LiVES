@@ -1,15 +1,16 @@
 Version 2.4.9
 -------------
 Fix crash when applying rendered effects to virtual clips.
-Fix memory leak in new gdkpixbuf converter.
-Fix memory leak in pulseaudio input analysis.
-Fix bug in avformat decoder with non-zero start time.
-Autoscroll "Show details" when encoding.
-Work around a gtk+ crash bug in GtkTextView.
 Add h264/aac, wmv2, ffv1 and mjpeg encodings to ffmpeg_encoder.
-Better info showing required libraries in ffmpeg_encoder.
-Show time estimate for most encoder formats.
+Fix memory leak in new style gdkpixbuf converter.
+Fix frame seek bug in avformat decoder with non-zero start time.
+Autoscroll "Show details" when encoding.
+Work around a gtk+ crash bug in GtkTextView with lots of text.
+Show missing libraries in ffmpeg_encoder.
+Show time remaining estimate for encoding for most encoder formats.
+OK / Cancel in the file chooser should immediately cancel any preview (regression).
 Add "Use current clip values" button when entering multitrack.
+Fix memory leak in pulseaudio input analysis.
 Minor GUI improvements.
 
 

@@ -745,6 +745,8 @@ LiVESXCursor *lives_cursor_new_from_pixbuf(LiVESXDisplay *, LiVESPixbuf *, int x
 void lives_widget_apply_theme(LiVESWidget *, LiVESWidgetState state); // normal theme colours
 void lives_widget_apply_theme2(LiVESWidget *, LiVESWidgetState state); // menu and bars colours (bg only...)
 
+boolean global_recent_manager_add(const char *file_name);
+
 void lives_cursor_unref(LiVESXCursor *cursor);
 
 boolean lives_widget_context_update(void);

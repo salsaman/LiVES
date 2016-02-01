@@ -2130,7 +2130,10 @@ void save_file(int clip, int start, int end, const char *filename) {
         lives_snprintf(sfile->name,256,"%s",full_file_name);
       }
       set_main_title(cfile->name,0);
-      add_to_recent(full_file_name,0.,0,NULL);
+      if (prefs->show_recent) {
+	add_to_recent(full_file_name,0.,0,NULL);
+	global_recent_manager_add(full_file_name);
+      }
     } else {
       if (!safe_symlinks) {
 #ifdef IS_MINGW
@@ -4051,7 +4054,8 @@ void backup_file(int clip, int start, int end, const char *file_name) {
     set_main_title(cfile->name,0);
     set_menu_text(sfile->menuentry,full_file_name,FALSE);
   }
-  add_to_recent(full_file_name,0.,0,NULL);
+  if (prefs->show_recent) 
+    add_to_recent(full_file_name,0.,0,NULL);
 
   sfile->changed=FALSE;
   // set is_untitled to stop users from saving with a .lv1 extension

@@ -3879,6 +3879,7 @@ void on_playsel_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   if (!mainw->is_rendering) {
     mainw->play_start=cfile->start;
     mainw->play_end=cfile->end;
+    mainw->clip_switched=FALSE;
   }
 
   if (!mainw->preview) {

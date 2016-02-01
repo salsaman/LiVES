@@ -7287,6 +7287,16 @@ LIVES_INLINE int lives_screen_get_height(LiVESXScreen *screen) {
 }
 
 
+LIVES_INLINE boolean global_recent_manager_add(const char *full_file_name) {
+#ifdef GUI_GTK
+  char *tmp=g_filename_to_uri(full_file_name,NULL,NULL);
+  gtk_recent_manager_add_item(gtk_recent_manager_get_default(),tmp);
+  g_free(tmp);
+  return TRUE;
+#endif
+  return FALSE;
+}
+
 // compound functions
 
 

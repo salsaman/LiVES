@@ -327,7 +327,7 @@ boolean virtual_to_images(int sfileno, int sframe, int eframe, boolean update_pr
       oname=NULL;
 
       if (update_progress) {
-        threaded_dialog_spin();
+        threaded_dialog_spin(0.);
         lives_widget_context_update();
       }
 
@@ -365,7 +365,7 @@ boolean virtual_to_images(int sfileno, int sframe, int eframe, boolean update_pr
       if (update_progress) {
         // sig_progress...
         lives_snprintf(mainw->msg,256,"%d",progress++);
-        threaded_dialog_spin();
+        threaded_dialog_spin(0.);
         lives_widget_context_update();
       }
 
@@ -527,9 +527,9 @@ void clean_images_from_virtual(lives_clip_t *sfile, int oldframes) {
   if (sfile==NULL||sfile->frame_index==NULL) return;
 
   for (i=0; i<oldframes; i++) {
-    threaded_dialog_spin();
+    threaded_dialog_spin(0.);
     lives_widget_context_update();
-    threaded_dialog_spin();
+    threaded_dialog_spin(0.);
 
     if ((i<sfile->frames&&sfile->frame_index[i]!=-1)||i>=sfile->frames) {
       iname=make_image_file_name(sfile,i,get_image_ext_for_type(sfile->img_type));

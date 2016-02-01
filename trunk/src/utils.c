@@ -2119,10 +2119,10 @@ boolean check_for_lock_file(const char *set_name, int type) {
                                 capable->mainpid,info_file);
 
   unlink(info_file);
-  threaded_dialog_spin();
+  threaded_dialog_spin(0.);
   mainw->com_failed=FALSE;
   lives_system(com,FALSE);
-  threaded_dialog_spin();
+  threaded_dialog_spin(0.);
   lives_free(com);
 
   clear_mainw_msg();
@@ -2137,9 +2137,9 @@ boolean check_for_lock_file(const char *set_name, int type) {
 
       if (type==0) {
         msg=lives_strdup_printf(_("Set %s\ncannot be opened, as it is in use\nby another copy of LiVES.\n"),set_name);
-        threaded_dialog_spin();
+        threaded_dialog_spin(0.);
         do_error_dialog(msg);
-        threaded_dialog_spin();
+        threaded_dialog_spin(0.);
       } else if (type==1) {
         msg=lives_strdup_printf
             (_("\nThe set %s is currently in use by another copy of LiVES.\nPlease choose another set name.\n"),set_name);
@@ -3189,7 +3189,7 @@ void draw_little_bars(double ptrtime) {
       }
     }
   }
-  threaded_dialog_spin();
+  threaded_dialog_spin(0.);
 }
 
 
@@ -4385,7 +4385,7 @@ boolean cache_file_contents(const char *filename) {
   if (!(hfile=fopen(filename,"r"))) return FALSE;
   while (fgets(buff,65536,hfile)!=NULL) {
     mainw->cached_list=lives_list_append(mainw->cached_list,lives_strdup(buff));
-    threaded_dialog_spin();
+    threaded_dialog_spin(0.);
   }
   fclose(hfile);
   return TRUE;
@@ -4586,11 +4586,11 @@ boolean get_clip_value(int which, lives_clip_details_t what, void *retval, size_
     val=(char *)lives_malloc(maxlen);
     memset(val,0,maxlen);
 
-    threaded_dialog_spin();
+    threaded_dialog_spin(0.);
 
     if (lives_system(com,TRUE)) {
       tempdir_warning();
-      threaded_dialog_spin();
+      threaded_dialog_spin(0.);
       lives_free(com);
       return FALSE;
     }

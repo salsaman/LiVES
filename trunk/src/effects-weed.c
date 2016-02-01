@@ -4941,7 +4941,7 @@ void weed_load_all(void) {
   weed_filters=dupe_weed_filters=NULL;
   hashnames=dupe_hashnames=NULL;
 
-  threaded_dialog_spin();
+  threaded_dialog_spin(0.);
   lives_weed_plugin_path=lives_build_filename(prefs->lib_dir,PLUGIN_EXEC_DIR,PLUGIN_WEED_FX_BUILTIN,NULL);
 
 #ifdef DEBUG_WEED
@@ -4982,7 +4982,7 @@ void weed_load_all(void) {
   next_free_key=FX_KEYS_MAX_VIRTUAL;
 
 
-  threaded_dialog_spin();
+  threaded_dialog_spin(0.);
   weed_p_path=getenv("WEED_PLUGIN_PATH");
   if (weed_p_path==NULL) weed_plugin_path=lives_strdup("");
   else weed_plugin_path=lives_strdup(weed_p_path);
@@ -5003,7 +5003,7 @@ void weed_load_all(void) {
   numdirs=get_token_count(weed_plugin_path,';');
   dirs=lives_strsplit(weed_plugin_path,";",-1);
 #endif
-  threaded_dialog_spin();
+  threaded_dialog_spin(0.);
 
   for (i=0; i<numdirs; i++) {
     // get list of all files
@@ -5012,7 +5012,7 @@ void weed_load_all(void) {
 
     // parse twice, first we get the plugins, then 1 level of subdirs
     for (plugin_idx=0; plugin_idx<listlen; plugin_idx++) {
-      threaded_dialog_spin();
+      threaded_dialog_spin(0.);
       plugin_name=(char *)lives_list_nth_data(weed_plugin_list,plugin_idx);
 #ifndef IS_MINGW
       if (!strncmp(plugin_name+strlen(plugin_name)-3,".so",3))
@@ -5028,13 +5028,13 @@ void weed_load_all(void) {
         plugin_idx--;
         listlen--;
       }
-      threaded_dialog_spin();
+      threaded_dialog_spin(0.);
 
     }
 
     // get 1 level of subdirs
     for (subdir_idx=0; subdir_idx<listlen; subdir_idx++) {
-      threaded_dialog_spin();
+      threaded_dialog_spin(0.);
       subdir_name=(char *)lives_list_nth_data(weed_plugin_list,subdir_idx);
       subdir_path=lives_build_filename(dirs[i],subdir_name,NULL);
       if (!lives_file_test(subdir_path, LIVES_FILE_TEST_IS_DIR)||!strcmp(subdir_name,"icons")||!strcmp(subdir_name,"data")) {
@@ -5058,7 +5058,7 @@ void weed_load_all(void) {
         lives_list_free(weed_plugin_sublist);
       }
       lives_free(subdir_path);
-      threaded_dialog_spin();
+      threaded_dialog_spin(0.);
     }
     if (weed_plugin_list!=NULL) {
       lives_list_free_strings(weed_plugin_list);
@@ -5071,11 +5071,11 @@ void weed_load_all(void) {
 
   d_print(_("Successfully loaded %d Weed filters\n"),num_weed_filters);
 
-  threaded_dialog_spin();
+  threaded_dialog_spin(0.);
   load_compound_fx();
-  threaded_dialog_spin();
+  threaded_dialog_spin(0.);
   make_fx_defs_menu();
-  threaded_dialog_spin();
+  threaded_dialog_spin(0.);
   if (num_weed_dupes>0) merge_dupes();
 
 }
@@ -5184,7 +5184,7 @@ static void weed_filter_free(weed_plant_t *filter, LiVESList **freed_ptrs) {
     nitems=weed_leaf_num_elements(filter,"out_parameter_templates");
     if (nitems>0) {
       plants=weed_get_plantptr_array(filter,"out_parameter_templates",&error);
-      threaded_dialog_spin();
+      threaded_dialog_spin(0.);
       for (i=0; i<nitems; i++) {
         if (weed_plant_has_leaf(plants[i],"gui")) weed_plant_free(weed_get_plantptr_value(plants[i],"gui",&error));
         weed_plant_free_if_not_in_list(plants[i],freed_ptrs);
@@ -5782,7 +5782,7 @@ void load_compound_fx(void) {
 
   char *lives_compound_plugin_path,*plugin_name,*plugin_path;
 
-  threaded_dialog_spin();
+  threaded_dialog_spin(0.);
 
   lives_compound_plugin_path=lives_build_filename(capable->home_dir,PLUGIN_COMPOUND_EFFECTS_CUSTOM,NULL);
   compound_plugin_list=get_plugin_list(PLUGIN_COMPOUND_EFFECTS_CUSTOM,TRUE,lives_compound_plugin_path,NULL);
@@ -5792,7 +5792,7 @@ void load_compound_fx(void) {
     plugin_path=lives_build_filename(lives_compound_plugin_path,plugin_name,NULL);
     load_compound_plugin(plugin_name,plugin_path);
     lives_free(plugin_path);
-    threaded_dialog_spin();
+    threaded_dialog_spin(0.);
   }
 
   if (compound_plugin_list!=NULL) {
@@ -5800,7 +5800,7 @@ void load_compound_fx(void) {
     lives_list_free(compound_plugin_list);
   }
 
-  threaded_dialog_spin();
+  threaded_dialog_spin(0.);
   lives_free(lives_compound_plugin_path);
 
   lives_compound_plugin_path=lives_build_filename(prefs->prefix_dir,PLUGIN_COMPOUND_DIR,PLUGIN_COMPOUND_EFFECTS_BUILTIN,NULL);
@@ -5811,7 +5811,7 @@ void load_compound_fx(void) {
     plugin_path=lives_build_filename(lives_compound_plugin_path,plugin_name,NULL);
     load_compound_plugin(plugin_name,plugin_path);
     lives_free(plugin_path);
-    threaded_dialog_spin();
+    threaded_dialog_spin(0.);
   }
 
   if (compound_plugin_list!=NULL) {
@@ -5824,7 +5824,7 @@ void load_compound_fx(void) {
   }
 
   lives_free(lives_compound_plugin_path);
-  threaded_dialog_spin();
+  threaded_dialog_spin(0.);
 
 }
 
@@ -5882,7 +5882,7 @@ void weed_unload_all(void) {
       }
 
       dlclose(handle);
-      threaded_dialog_spin();
+      threaded_dialog_spin(0.);
       handle=NULL;
       weed_set_voidptr_value(plugin_info,"handle",handle);
     }
@@ -5915,7 +5915,7 @@ void weed_unload_all(void) {
     lives_free(key_to_instance_copy[i]);
   }
 
-  threaded_dialog_spin();
+  threaded_dialog_spin(0.);
 
   if (mainw->chdir_failed) {
     char *dirs=lives_strdup(_("Some plugin directories"));

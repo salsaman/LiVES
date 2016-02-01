@@ -3791,11 +3791,11 @@ void on_rebuild_rfx_activate(LiVESMenuItem *menuitem, livespointer user_data) {
 
   d_print(_("rebuilding dynamic menu entries..."));
   lives_widget_context_update();
-  threaded_dialog_spin();
+  threaded_dialog_spin(0.);
   add_rfx_effects();
-  threaded_dialog_spin();
+  threaded_dialog_spin(0.);
   d_print_done();
-  threaded_dialog_spin();
+  threaded_dialog_spin(0.);
   end_threaded_dialog();
 
   lives_widget_queue_draw(mainw->LiVES);
@@ -4407,12 +4407,12 @@ void add_rfx_effects(void) {
       if (mainw->rendered_fx!=NULL) {
         if (mainw->rendered_fx[i].menuitem!=NULL) {
           lives_widget_destroy(mainw->rendered_fx[i].menuitem);
-          threaded_dialog_spin();
+          threaded_dialog_spin(0.);
         }
       }
     }
 
-    threaded_dialog_spin();
+    threaded_dialog_spin(0.);
 
     if (mainw->rte_separator!=NULL) {
       if (mainw->custom_effects_separator!=NULL) lives_widget_destroy(mainw->custom_effects_separator);
@@ -4432,7 +4432,7 @@ void add_rfx_effects(void) {
 
     lives_widget_queue_draw(mainw->effects_menu);
     lives_widget_context_update();
-    threaded_dialog_spin();
+    threaded_dialog_spin(0.);
 
     if (mainw->rendered_fx!=NULL) rfx_free_all();
   }
@@ -4440,7 +4440,7 @@ void add_rfx_effects(void) {
   mainw->num_rendered_effects_builtin=mainw->num_rendered_effects_custom=mainw->num_rendered_effects_test=0;
 
 
-  threaded_dialog_spin();
+  threaded_dialog_spin(0.);
 
   make_custom_submenus();
 
@@ -4496,7 +4496,7 @@ void add_rfx_effects(void) {
 
   rfx_list_length=rfx_builtin_list_length+rfx_custom_list_length+rfx_test_list_length;
 
-  threaded_dialog_spin();
+  threaded_dialog_spin(0.);
 
   rendered_fx=(lives_rfx_t *)lives_malloc((rfx_list_length+1)*sizeof(lives_rfx_t));
 
@@ -4534,7 +4534,7 @@ void add_rfx_effects(void) {
 
 
     for (plugin_idx=0; plugin_idx<rfx_list_length; plugin_idx++) {
-      threaded_dialog_spin();
+      threaded_dialog_spin(0.);
       if (mainw->splash_window==NULL) {
         lives_widget_context_update();
       }
@@ -4643,7 +4643,7 @@ void add_rfx_effects(void) {
 
   rfx_slot_count--;
 
-  threaded_dialog_spin();
+  threaded_dialog_spin(0.);
   // sort menu text by alpha order (apart from [0])
   sort_rfx_array(rendered_fx,rfx_slot_count);
   lives_free(rendered_fx);
@@ -4683,16 +4683,16 @@ void add_rfx_effects(void) {
 
   mainw->custom_effects_separator=lives_menu_add_separator(LIVES_MENU(mainw->effects_menu));
 
-  threaded_dialog_spin();
+  threaded_dialog_spin(0.);
 
   // now we need to add to the effects menu and set a callback
   for (rfx=&mainw->rendered_fx[(plugin_idx=1)]; plugin_idx<=rfx_slot_count; rfx=&mainw->rendered_fx[++plugin_idx]) {
-    threaded_dialog_spin();
+    threaded_dialog_spin(0.);
     if (mainw->splash_window==NULL) {
       lives_widget_context_update();
     }
     render_fx_get_params(rfx,rfx->name,rfx->status);
-    threaded_dialog_spin();
+    threaded_dialog_spin(0.);
     rfx->source=NULL;
     rfx->extra=NULL;
     rfx->menuitem=NULL;
@@ -4760,7 +4760,7 @@ void add_rfx_effects(void) {
     }
   }
 
-  threaded_dialog_spin();
+  threaded_dialog_spin(0.);
 
   // custom effects
   if (rc_child>0) {
@@ -4808,13 +4808,13 @@ void add_rfx_effects(void) {
 
   lives_container_add(LIVES_CONTAINER(mainw->custom_tools_menu), mainw->custom_utilities_submenu);
 
-  threaded_dialog_spin();
+  threaded_dialog_spin(0.);
 
   mainw->resize_menuitem=NULL;
 
   if (rfx_slot_count) {
     for (rfx=&mainw->rendered_fx[(plugin_idx=1)]; plugin_idx<=rfx_slot_count; rfx=&mainw->rendered_fx[++plugin_idx]) {
-      threaded_dialog_spin();
+      threaded_dialog_spin(0.);
       if (mainw->splash_window==NULL) {
         lives_widget_context_update();
       }
@@ -4913,7 +4913,7 @@ void add_rfx_effects(void) {
   }
 
 
-  threaded_dialog_spin();
+  threaded_dialog_spin(0.);
 
   if (mainw->has_custom_tools||mainw->has_custom_utilities) {
     lives_widget_show(mainw->custom_tools_separator);

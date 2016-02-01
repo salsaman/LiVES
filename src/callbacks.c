@@ -81,7 +81,7 @@ void lives_exit(int signum) {
       mainw->multitrack->idlefunc=0;
     }
 
-    threaded_dialog_spin();
+    threaded_dialog_spin(0.);
 
     if (mainw->toy_type!=LIVES_TOY_NONE) {
       on_toy_activate(NULL, LIVES_INT_TO_POINTER(LIVES_TOY_NONE));
@@ -188,9 +188,9 @@ void lives_exit(int signum) {
     if (!mainw->leave_recovery) {
       unlink(mainw->recovery_file);
       // hide the main window
-      threaded_dialog_spin();
+      threaded_dialog_spin(0.);
       lives_widget_context_update();
-      threaded_dialog_spin();
+      threaded_dialog_spin(0.);
     }
 
     if (strcmp(future_prefs->tmpdir,prefs->tmpdir)) {
@@ -221,7 +221,7 @@ void lives_exit(int signum) {
     for (i=1; i<=MAX_FILES; i++) {
       if (mainw->files[i]!=NULL) {
         mainw->current_file=i;
-        threaded_dialog_spin();
+        threaded_dialog_spin(0.);
         if (cfile->event_list_back!=NULL) event_list_free(cfile->event_list_back);
         if (cfile->event_list!=NULL) event_list_free(cfile->event_list);
 
@@ -246,10 +246,10 @@ void lives_exit(int signum) {
           char *ppath=lives_build_filename(prefs->tmpdir,cfile->handle,NULL);
           lives_chdir(ppath,FALSE);
           lives_free(ppath);
-          threaded_dialog_spin();
+          threaded_dialog_spin(0.);
           close_decoder_plugin((lives_decoder_t *)mainw->files[i]->ext_src);
           mainw->files[i]->ext_src=NULL;
-          threaded_dialog_spin();
+          threaded_dialog_spin(0.);
         }
 
         if (mainw->files[i]->frame_index!=NULL) {
@@ -294,7 +294,7 @@ void lives_exit(int signum) {
             lives_free(mainw->files[i]->ext_src);
           }
 #endif
-          threaded_dialog_spin();
+          threaded_dialog_spin(0.);
 #ifdef IS_MINGW
           // kill any active processes: for other OSes the backend does this
           // get pid from backend
@@ -310,13 +310,13 @@ void lives_exit(int signum) {
           com=lives_strdup_printf("%s close \"%s\"",prefs->backend,mainw->files[i]->handle);
           lives_system(com,FALSE);
           lives_free(com);
-          threaded_dialog_spin();
+          threaded_dialog_spin(0.);
         } else {
-          threaded_dialog_spin();
+          threaded_dialog_spin(0.);
           // or just clean them up
           com=lives_strdup_printf("%s clear_tmp_files \"%s\"",prefs->backend_sync,mainw->files[i]->handle);
           lives_system(com,FALSE);
-          threaded_dialog_spin();
+          threaded_dialog_spin(0.);
           lives_free(com);
           if (mainw->files[i]->frame_index!=NULL) {
             save_frame_index(i);
@@ -352,7 +352,7 @@ void lives_exit(int signum) {
 #endif
         lives_free(sdname);
         lives_system(com,TRUE);
-        threaded_dialog_spin();
+        threaded_dialog_spin(0.);
         lives_free(com);
       } else {
         char *dname=lives_build_filename(prefs->tmpdir,mainw->set_name,"clips",NULL);
@@ -363,7 +363,7 @@ void lives_exit(int signum) {
 #endif
         lives_free(dname);
         lives_system(com,TRUE);
-        threaded_dialog_spin();
+        threaded_dialog_spin(0.);
         lives_free(com);
         dname=lives_build_filename(prefs->tmpdir,mainw->set_name,"order",NULL);
 #ifndef IS_MINGW
@@ -373,7 +373,7 @@ void lives_exit(int signum) {
 #endif
         lives_free(dname);
         lives_system(com,TRUE);
-        threaded_dialog_spin();
+        threaded_dialog_spin(0.);
         lives_free(com);
       }
       lives_free(set_layout_dir);
@@ -383,7 +383,7 @@ void lives_exit(int signum) {
       char *set_lock_file=lives_strdup_printf("%s/%s/lock.%d",prefs->tmpdir,mainw->set_name,capable->mainpid);
       unlink(set_lock_file);
       lives_free(set_lock_file);
-      threaded_dialog_spin();
+      threaded_dialog_spin(0.);
     }
 
     if (mainw->only_close) {
@@ -394,7 +394,7 @@ void lives_exit(int signum) {
                                         i!=mainw->multitrack->render_file)) {
           mainw->current_file=i;
           close_current_file(0);
-          threaded_dialog_spin();
+          threaded_dialog_spin(0.);
         }
       }
       mainw->suppress_dprint=FALSE;
@@ -405,7 +405,7 @@ void lives_exit(int signum) {
       mainw->only_close=FALSE;
       prefs->crash_recovery=TRUE;
 
-      threaded_dialog_spin();
+      threaded_dialog_spin(0.);
       if (mainw->current_file>-1) sensitize();
       lives_widget_queue_draw(mainw->LiVES);
       d_print_done();
@@ -439,9 +439,9 @@ void lives_exit(int signum) {
     }
 
     if (mainw->sep_win&&(mainw->playing_file>-1||prefs->sepwin_type==SEPWIN_TYPE_STICKY)) {
-      threaded_dialog_spin();
+      threaded_dialog_spin(0.);
       kill_play_window();
-      threaded_dialog_spin();
+      threaded_dialog_spin(0.);
     }
   }
 
@@ -462,10 +462,10 @@ void lives_exit(int signum) {
 
     weed_unload_all();
 
-    threaded_dialog_spin();
+    threaded_dialog_spin(0.);
 
     rfx_free_all();
-    threaded_dialog_spin();
+    threaded_dialog_spin(0.);
 
 #ifdef ENABLE_OSC
     if (prefs->osc_udp_started) lives_osc_end();
@@ -1550,7 +1550,7 @@ void on_restore_activate(LiVESMenuItem *menuitem, livespointer user_data) {
 void mt_memory_free(void) {
   int i;
 
-  threaded_dialog_spin();
+  threaded_dialog_spin(0.);
 
   mainw->multitrack->no_expose=TRUE;
 
@@ -1578,7 +1578,7 @@ void mt_memory_free(void) {
 
   recover_layout_cancelled(FALSE);
 
-  threaded_dialog_spin();
+  threaded_dialog_spin(0.);
 }
 
 
@@ -4684,7 +4684,7 @@ boolean on_save_set_activate(LiVESMenuItem *menuitem, livespointer user_data) {
 
       while (cliplist!=NULL) {
         if (mainw->write_failed) break;
-        threaded_dialog_spin();
+        threaded_dialog_spin(0.);
         lives_widget_context_update();
 
         // TODO - dirsep
@@ -4976,7 +4976,7 @@ boolean reload_set(const char *set_name) {
 
   while (1) {
     if (prefs->show_gui) {
-      threaded_dialog_spin();
+      threaded_dialog_spin(0.);
     }
 
     if (mainw->cached_list!=NULL) {
@@ -5030,9 +5030,9 @@ boolean reload_set(const char *set_name) {
       mainw->current_file=current_file;
 
       if (last_file>0) {
-        threaded_dialog_spin();
+        threaded_dialog_spin(0.);
         switch_to_file(current_file,last_file);
-        threaded_dialog_spin();
+        threaded_dialog_spin(0.);
       }
 
       if (clipnum==0) {
@@ -5055,7 +5055,7 @@ boolean reload_set(const char *set_name) {
 
       }
 
-      threaded_dialog_spin();
+      threaded_dialog_spin(0.);
       if (mainw->multitrack==NULL) {
         if (mainw->is_ready) {
           if (clipnum>0&&mainw->current_file>0) {
@@ -5094,7 +5094,7 @@ boolean reload_set(const char *set_name) {
         continue;
       }
       lives_free(clipdir);
-      threaded_dialog_spin();
+      threaded_dialog_spin(0.);
       if ((new_file=mainw->first_free_file)==-1) {
         mainw->suppress_dprint=FALSE;
 
@@ -5133,11 +5133,11 @@ boolean reload_set(const char *set_name) {
 
     //create a new cfile and fill in the details
     create_cfile();
-    threaded_dialog_spin();
+    threaded_dialog_spin(0.);
 
     // get file details
     read_headers(".");
-    threaded_dialog_spin();
+    threaded_dialog_spin(0.);
 
     // if the clip has a frame_index file, then it is CLIP_TYPE_FILE
     // and we must load the frame_index and locate a suitable decoder plugin
@@ -5161,7 +5161,7 @@ boolean reload_set(const char *set_name) {
 
     // read the playback fps, play frame, and name
     open_set_file(set_name,++clipnum);
-    threaded_dialog_spin();
+    threaded_dialog_spin(0.);
 
     if (needs_update) {
       save_clip_values(mainw->current_file);
@@ -5186,7 +5186,7 @@ boolean reload_set(const char *set_name) {
         }
       }
       lives_free(subfname);
-      threaded_dialog_spin();
+      threaded_dialog_spin(0.);
     }
 
     get_total_time(cfile);
@@ -5194,7 +5194,7 @@ boolean reload_set(const char *set_name) {
                                           cfile->fps*cfile->arate*cfile->achans*cfile->asampsize/8);
 
     // add to clip menu
-    threaded_dialog_spin();
+    threaded_dialog_spin(0.);
     add_to_clipmenu();
     get_next_free_file();
     cfile->start=cfile->frames>0?1:0;
@@ -5416,26 +5416,32 @@ void on_show_keys_activate(LiVESMenuItem *menuitem, livespointer user_data) {
 
 
 void on_vj_reset_activate(LiVESMenuItem *menuitem, livespointer user_data) {
-  boolean bad_header=FALSE;
+  LiVESList *clip_list=mainw->cliplist;
 
-  register int i;
+  boolean bad_header=FALSE;
+  
+  int i;
 
   //mainw->soft_debug=TRUE;
-
+  
   do_threaded_dialog(_("Resetting frame rates and frame values..."),FALSE);
 
-  for (i=1; i<MAX_FILES; i++) {
-    if (mainw->files[i]!=NULL&&i!=mainw->playing_file) {
-      mainw->files[i]->pb_fps=mainw->files[i]->fps;
-      mainw->files[i]->frameno=1;
-      mainw->files[i]->aseek_pos=0;
+  while (clip_list!=NULL) {
+    i=LIVES_POINTER_TO_INT(clip_list->data);
+    mainw->files[i]->pb_fps=mainw->files[i]->fps;
+    mainw->files[i]->frameno=1;
+    mainw->files[i]->aseek_pos=0;
 
-      save_clip_value(i,CLIP_DETAILS_PB_FPS,&mainw->files[i]->pb_fps);
-      if (mainw->com_failed||mainw->write_failed) bad_header=TRUE;
-      save_clip_value(i,CLIP_DETAILS_PB_FRAMENO,&mainw->files[i]->frameno);
-      if (mainw->com_failed||mainw->write_failed) bad_header=TRUE;
+    save_clip_value(i,CLIP_DETAILS_PB_FPS,&mainw->files[i]->pb_fps);
+    if (mainw->com_failed||mainw->write_failed) bad_header=TRUE;
+    save_clip_value(i,CLIP_DETAILS_PB_FRAMENO,&mainw->files[i]->frameno);
+    if (mainw->com_failed||mainw->write_failed) bad_header=TRUE;
+    threaded_dialog_spin((double)i/(double)mainw->clips_available);
+
+    if (bad_header) {
+      if (!do_header_write_error(i)) break;
     }
-    if (bad_header) do_header_write_error(i);
+    else clip_list=clip_list->next;
   }
 
 
@@ -6041,7 +6047,7 @@ void on_fs_preview_clicked(LiVESWidget *widget, livespointer user_data) {
       while (!((ifile=fopen(info_file,"r")) || (timeout=lives_alarm_get(alarm_handle)))
              &&mainw->in_fs_preview) {
         lives_widget_context_update();
-        threaded_dialog_spin();
+        threaded_dialog_spin(0.);
         lives_usleep(prefs->sleep_time);
       }
 
@@ -11012,9 +11018,9 @@ void on_fade_audio_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   do_threaded_dialog(_("Fading audio..."),FALSE);
   alarm_handle=lives_alarm_set(1);
 
-  threaded_dialog_spin();
+  threaded_dialog_spin(0.);
   lives_widget_context_update();
-  threaded_dialog_spin();
+  threaded_dialog_spin(0.);
 
   if (!prefs->conserve_space) {
     mainw->error=FALSE;

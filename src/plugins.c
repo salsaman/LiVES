@@ -58,7 +58,7 @@ static LiVESList *get_plugin_result(const char *command, const char *delim, bool
   char *com;
   char buffer[65536];
 
-  threaded_dialog_spin();
+  threaded_dialog_spin(0.);
 
 #ifndef IS_MINGW
   outfile=lives_strdup_printf("%s/.smogplugin.%d",prefs->tmpdir,capable->mainpid);
@@ -97,17 +97,17 @@ static LiVESList *get_plugin_result(const char *command, const char *delim, bool
       }
     }
     lives_free(outfile);
-    threaded_dialog_spin();
+    threaded_dialog_spin(0.);
     unlink(outfile);
     return list;
   }
   lives_free(com);
   if (!lives_file_test(outfile, LIVES_FILE_TEST_EXISTS)) {
     lives_free(outfile);
-    threaded_dialog_spin();
+    threaded_dialog_spin(0.);
     return NULL;
   }
-  threaded_dialog_spin();
+  threaded_dialog_spin(0.);
 
   do {
     retval=0;
@@ -136,7 +136,7 @@ static LiVESList *get_plugin_result(const char *command, const char *delim, bool
       if (bytes<0) {
         retval=do_read_failed_error_s_with_retry(outfile,NULL,NULL);
       } else {
-        threaded_dialog_spin();
+        threaded_dialog_spin(0.);
         memset(buffer+bytes,0,1);
       }
     }
@@ -146,7 +146,7 @@ static LiVESList *get_plugin_result(const char *command, const char *delim, bool
   lives_free(outfile);
 
   if (retval==LIVES_RESPONSE_CANCEL) {
-    threaded_dialog_spin();
+    threaded_dialog_spin(0.);
     return list;
   }
 
@@ -171,7 +171,7 @@ static LiVESList *get_plugin_result(const char *command, const char *delim, bool
     }
   }
   lives_strfreev(array);
-  threaded_dialog_spin();
+  threaded_dialog_spin(0.);
   return list;
 }
 
@@ -269,7 +269,7 @@ LiVESList *plugin_request_common(const char *plugin_type, const char *plugin_nam
   list_plugins=FALSE;
   reslist=get_plugin_result(com,delim,allow_blanks);
   lives_free(com);
-  threaded_dialog_spin();
+  threaded_dialog_spin(0.);
   return reslist;
 }
 
@@ -326,7 +326,7 @@ LiVESList *get_plugin_list(const char *plugin_type, boolean allow_nonex, const c
 
   pluglist=get_plugin_result(com,"|",FALSE);
   lives_free(com);
-  threaded_dialog_spin();
+  threaded_dialog_spin(0.);
   return pluglist;
 }
 
@@ -2741,7 +2741,7 @@ void render_fx_get_params(lives_rfx_t *rfx, const char *plugin_name, short statu
     return;
   }
 
-  threaded_dialog_spin();
+  threaded_dialog_spin(0.);
   rfx->num_params=lives_list_length(parameter_list);
   rfx->params=(lives_param_t *)lives_malloc(rfx->num_params*sizeof(lives_param_t));
 
@@ -2878,7 +2878,7 @@ void render_fx_get_params(lives_rfx_t *rfx, const char *plugin_name, short statu
   }
   lives_list_free_strings(parameter_list);
   lives_list_free(parameter_list);
-  threaded_dialog_spin();
+  threaded_dialog_spin(0.);
 }
 
 

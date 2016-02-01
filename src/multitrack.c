@@ -233,7 +233,7 @@ static boolean save_event_list_inner(lives_mt *mt, int fd, weed_plant_t *event_l
 
   event=get_first_event(event_list);
 
-  threaded_dialog_spin();
+  threaded_dialog_spin(0.);
 
   weed_set_int_value(event_list,"width",cfile->hsize);
   weed_set_int_value(event_list,"height",cfile->vsize);
@@ -298,7 +298,7 @@ static boolean save_event_list_inner(lives_mt *mt, int fd, weed_plant_t *event_l
 
   if (mem==NULL&&fd<0) return TRUE;
 
-  threaded_dialog_spin();
+  threaded_dialog_spin(0.);
 
   mainw->write_failed=FALSE;
   weed_plant_serialise(fd,event_list,mem);
@@ -350,7 +350,7 @@ static boolean save_event_list_inner(lives_mt *mt, int fd, weed_plant_t *event_l
     event=get_next_event(event);
     if (++count==100) {
       count=0;
-      threaded_dialog_spin();
+      threaded_dialog_spin(0.);
     }
   }
 
@@ -2831,9 +2831,9 @@ static void rerenumber_clips(const char *lfile, weed_plant_t *event_list) {
         // lmap->data starts with layout name
         if (!strncmp((char *)lmap->data,lfile,strlen(lfile))) {
 
-          threaded_dialog_spin();
+          threaded_dialog_spin(0.);
           array=lives_strsplit((char *)lmap->data,"|",-1);
-          threaded_dialog_spin();
+          threaded_dialog_spin(0.);
 
           // piece 2 is the clip number
           rnc=atoi(array[1]);
@@ -2842,9 +2842,9 @@ static void rerenumber_clips(const char *lfile, weed_plant_t *event_list) {
 
           // original fps
           lfps[i]=strtod(array[3],NULL);
-          threaded_dialog_spin();
+          threaded_dialog_spin(0.);
           lives_strfreev(array);
-          threaded_dialog_spin();
+          threaded_dialog_spin(0.);
         }
         lmap=lmap->next;
       }
@@ -19924,7 +19924,7 @@ static char *rec_error_add(char *ebuf, char *msg, int num, weed_timecode_t tc) {
 
   elist_errors++;
 
-  threaded_dialog_spin();
+  threaded_dialog_spin(0.);
   if (tc==-1) xnew=lives_strdup(msg); // missing timecode
   else {
     if (num==-1) xnew=lives_strdup_printf("%s at timecode %"PRId64"\n",msg,tc);
@@ -19937,7 +19937,7 @@ static char *rec_error_add(char *ebuf, char *msg, int num, weed_timecode_t tc) {
 #endif
   lives_free(ebuf);
   lives_free(xnew);
-  threaded_dialog_spin();
+  threaded_dialog_spin(0.);
   return tmp;
 }
 
@@ -20507,7 +20507,7 @@ boolean event_list_rectify(lives_mt *mt, weed_plant_t *event_list) {
 
     ev_count++;
     lives_snprintf(mainw->msg,256,"%d|",ev_count);
-    if ((ev_count%100)==0) threaded_dialog_spin();
+    if ((ev_count%100)==0) threaded_dialog_spin(0.);
 
 
     if (weed_get_plant_type(event)!=WEED_PLANT_EVENT) {

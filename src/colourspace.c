@@ -9960,7 +9960,7 @@ static LIVES_INLINE LiVESPixbuf *lives_pixbuf_cheat(boolean has_alpha, int width
 
   pixbuf=lives_pixbuf_new_from_data(buf, has_alpha, width, height, rowstride,
                                     (LiVESPixbufDestroyNotify)lives_free_buffer, NULL);
-  threaded_dialog_spin();
+  threaded_dialog_spin(0.);
   return pixbuf;
 }
 
@@ -10512,9 +10512,9 @@ boolean resize_layer(weed_plant_t *layer, int width, int height, LiVESInterpType
     // create a new pixbuf
     pixbuf=layer_to_pixbuf(layer);
 
-    threaded_dialog_spin();
+    threaded_dialog_spin(0.);
     new_pixbuf=lives_pixbuf_scale_simple(pixbuf,width,height,interp);
-    threaded_dialog_spin();
+    threaded_dialog_spin(0.);
     if (new_pixbuf!=NULL) {
       weed_set_int_value(layer,"width",lives_pixbuf_get_width(new_pixbuf));
       weed_set_int_value(layer,"height",lives_pixbuf_get_height(new_pixbuf));

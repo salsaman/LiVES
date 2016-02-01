@@ -1646,9 +1646,9 @@ static void lives_init(_ign_opts *ign_opts) {
       // replace any multi choice effects with their delegates
       replace_with_delegates();
 
-      threaded_dialog_spin();
+      threaded_dialog_spin(0.);
       load_default_keymap();
-      threaded_dialog_spin();
+      threaded_dialog_spin(0.);
 
       prefs->audio_opts=get_int_pref("audio_opts");
 #ifdef ENABLE_JACK
@@ -2606,7 +2606,7 @@ static boolean lives_startup(livespointer data) {
                 else {
                   if (strlen(capable->startup_msg)) {
                     if (info_only) startup_message_info(capable->startup_msg);
-                    startup_message_nonfatal(capable->startup_msg);
+                    else startup_message_nonfatal(capable->startup_msg);
                   } else {
                     // non-fatal errors
                     if (!capable->has_mplayer&&!capable->has_mplayer2&&!(prefs->warning_mask&WARN_MASK_NO_MPLAYER)) {
@@ -3787,13 +3787,13 @@ void load_start_image(int frame) {
 
   if (mainw->current_file<0||cfile==NULL||frame<1||frame>cfile->frames||
       (cfile->clip_type!=CLIP_TYPE_DISK&&cfile->clip_type!=CLIP_TYPE_FILE)) {
-    threaded_dialog_spin();
+    threaded_dialog_spin(0.);
     if (!(mainw->imframe==NULL)) {
       set_ce_frame_from_pixbuf(LIVES_IMAGE(mainw->start_image),mainw->imframe,NULL);
     } else {
       set_ce_frame_from_pixbuf(LIVES_IMAGE(mainw->start_image),NULL,NULL);
     }
-    threaded_dialog_spin();
+    threaded_dialog_spin(0.);
 #if GTK_CHECK_VERSION(3,0,0)
     lives_signal_handlers_unblock_by_func(mainw->start_image,(livespointer)expose_sim,NULL);
     lives_signal_stop_emission_by_name(mainw->start_image,LIVES_WIDGET_EXPOSE_EVENT);
@@ -3804,7 +3804,7 @@ void load_start_image(int frame) {
   tc=((frame-1.))/cfile->fps*U_SECL;
 
   if (!prefs->ce_maxspect||(mainw->double_size&&mainw->playing_file>-1)) {
-    threaded_dialog_spin();
+    threaded_dialog_spin(0.);
 
     // if we are not playing, and it would be slow to seek to the frame, convert it to an image
     if (mainw->playing_file==-1&&cfile->clip_type==CLIP_TYPE_FILE&&is_virtual_frame(mainw->current_file,frame)&&cfile->ext_src!=NULL) {
@@ -3835,7 +3835,7 @@ void load_start_image(int frame) {
         lives_object_unref(start_pixbuf);
       }
     }
-    threaded_dialog_spin();
+    threaded_dialog_spin(0.);
 #if GTK_CHECK_VERSION(3,0,0)
     lives_signal_handlers_unblock_by_func(mainw->start_image,(livespointer)expose_sim,NULL);
     lives_signal_stop_emission_by_name(mainw->start_image,LIVES_WIDGET_EXPOSE_EVENT);
@@ -3845,7 +3845,7 @@ void load_start_image(int frame) {
 
   mainw->noswitch=TRUE;
 
-  threaded_dialog_spin();
+  threaded_dialog_spin(0.);
 
   do {
     width=cfile->hsize;
@@ -3911,7 +3911,7 @@ void load_start_image(int frame) {
   }
   while (FALSE);
 #endif
-  threaded_dialog_spin();
+  threaded_dialog_spin(0.);
   mainw->noswitch=noswitch;
 
 #if GTK_CHECK_VERSION(3,0,0)
@@ -3958,13 +3958,13 @@ void load_end_image(int frame) {
 
   if (mainw->current_file<0||cfile==NULL||frame<1||frame>cfile->frames||
       (cfile->clip_type!=CLIP_TYPE_DISK&&cfile->clip_type!=CLIP_TYPE_FILE)) {
-    threaded_dialog_spin();
+    threaded_dialog_spin(0.);
     if (!(mainw->imframe==NULL)) {
       set_ce_frame_from_pixbuf(LIVES_IMAGE(mainw->end_image),mainw->imframe,NULL);
     } else {
       set_ce_frame_from_pixbuf(LIVES_IMAGE(mainw->end_image),NULL,NULL);
     }
-    threaded_dialog_spin();
+    threaded_dialog_spin(0.);
 #if GTK_CHECK_VERSION(3,0,0)
     lives_signal_handlers_unblock_by_func(mainw->end_image,(livespointer)expose_eim,NULL);
     lives_signal_stop_emission_by_name(mainw->end_image,LIVES_WIDGET_EXPOSE_EVENT);
@@ -3976,7 +3976,7 @@ void load_end_image(int frame) {
   tc=((frame-1.))/cfile->fps*U_SECL;
 
   if (!prefs->ce_maxspect||(mainw->double_size&&mainw->playing_file>-1)) {
-    threaded_dialog_spin();
+    threaded_dialog_spin(0.);
 
     // if we are not playing, and it would be slow to seek to the frame, convert it to an image
     if (mainw->playing_file==-1&&cfile->clip_type==CLIP_TYPE_FILE&&is_virtual_frame(mainw->current_file,frame)&&cfile->ext_src!=NULL) {
@@ -4008,7 +4008,7 @@ void load_end_image(int frame) {
         lives_object_unref(end_pixbuf);
       }
     }
-    threaded_dialog_spin();
+    threaded_dialog_spin(0.);
 #if GTK_CHECK_VERSION(3,0,0)
     lives_signal_handlers_unblock_by_func(mainw->end_image,(livespointer)expose_eim,NULL);
     lives_signal_stop_emission_by_name(mainw->end_image,LIVES_WIDGET_EXPOSE_EVENT);
@@ -4018,7 +4018,7 @@ void load_end_image(int frame) {
 
   mainw->noswitch=TRUE;
 
-  threaded_dialog_spin();
+  threaded_dialog_spin(0.);
   do {
     width=cfile->hsize;
     height=cfile->vsize;
@@ -4081,7 +4081,7 @@ void load_end_image(int frame) {
   while (FALSE);
 #endif
 
-  threaded_dialog_spin();
+  threaded_dialog_spin(0.);
   mainw->noswitch=noswitch;
 
 #if GTK_CHECK_VERSION(3,0,0)
@@ -4964,11 +4964,11 @@ LiVESPixbuf *pull_lives_pixbuf_at_size(int clip, int frame, const char *image_ex
   if (pixbuf!=NULL&&((width!=0&&lives_pixbuf_get_width(pixbuf)!=width)
                      ||(height!=0&&lives_pixbuf_get_height(pixbuf)!=height))) {
     LiVESPixbuf *pixbuf2;
-    threaded_dialog_spin();
+    threaded_dialog_spin(0.);
     // TODO - could use resize plugin here
     pixbuf2=lives_pixbuf_scale_simple(pixbuf,width,height,interp);
     if (pixbuf!=NULL) lives_object_unref(pixbuf);
-    threaded_dialog_spin();
+    threaded_dialog_spin(0.);
     pixbuf=pixbuf2;
   }
   return pixbuf;

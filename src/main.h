@@ -962,7 +962,7 @@ void do_cd_error_dialog(void);
 boolean process_one(boolean visible);
 void do_threaded_dialog(char *translated_text, boolean has_cancel);
 void end_threaded_dialog(void);
-void threaded_dialog_spin(void);
+void threaded_dialog_spin(double fraction);
 void response_ok(LiVESButton *button, livespointer user_data);
 void pump_io_chan(LiVESIOChannel *iochan);
 

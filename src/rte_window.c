@@ -2794,7 +2794,7 @@ void load_default_keymap(void) {
 
   int retval;
 
-  threaded_dialog_spin();
+  threaded_dialog_spin(0.);
 
   if (hash_list==NULL) hash_list=weed_get_all_names(FX_LIST_HASHNAME);
 
@@ -2830,7 +2830,7 @@ void load_default_keymap(void) {
         lives_free(keymap_template);
         lives_free(dir);
 
-        threaded_dialog_spin();
+        threaded_dialog_spin(0.);
         return;
       }
     }
@@ -2841,5 +2841,5 @@ void load_default_keymap(void) {
   lives_free(keymap_file);
   lives_free(keymap_template);
   lives_free(dir);
-  threaded_dialog_spin();
+  threaded_dialog_spin(0.);
 }

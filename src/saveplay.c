@@ -179,7 +179,7 @@ boolean read_file_details(const char *file_name, boolean is_audio) {
     return do_progress_dialog(TRUE,TRUE,_("Examining file header"));
 
 
-  threaded_dialog_spin();
+  threaded_dialog_spin(0.);
 
   do {
     retval=0;
@@ -192,7 +192,7 @@ boolean read_file_details(const char *file_name, boolean is_audio) {
 
     while (!((infofile=fopen(cfile->info_file,"r")) || (timeout=lives_alarm_get(alarm_handle)))) {
       lives_widget_context_update();
-      threaded_dialog_spin();
+      threaded_dialog_spin(0.);
       lives_usleep(prefs->sleep_time);
     }
 
@@ -209,7 +209,7 @@ boolean read_file_details(const char *file_name, boolean is_audio) {
     }
   } while (retval==LIVES_RESPONSE_RETRY);
 
-  threaded_dialog_spin();
+  threaded_dialog_spin(0.);
   return TRUE;
 }
 
@@ -405,7 +405,7 @@ ulong open_file_sel(const char *file_name, double start, int frames) {
             if (stframe+nframes>maxframe) nframes=maxframe-stframe;
             if (nframes<=0) break;
             (dplug->decoder->rip_audio)(cdata,afile,stframe,nframes,NULL);
-            threaded_dialog_spin();
+            threaded_dialog_spin(0.);
             stframe+=nframes;
           } while (mainw->cancelled==CANCEL_NONE);
 
@@ -4239,7 +4239,7 @@ boolean read_headers(const char *file_name) {
           lives_strfreev(array);
         }
 
-        threaded_dialog_spin();
+        threaded_dialog_spin(0.);
 
         do {
           retval2=0;
@@ -4250,7 +4250,7 @@ boolean read_headers(const char *file_name) {
 
         lives_free(lives_header);
 
-        threaded_dialog_spin();
+        threaded_dialog_spin(0.);
 
         detail=CLIP_DETAILS_HEADER_VERSION;
         retval=get_clip_value(mainw->current_file,detail,&cfile->header_version,16);
@@ -5328,7 +5328,7 @@ boolean reload_clip(int fileno) {
   lives_free(ppath);
 
   while (1) {
-    threaded_dialog_spin();
+    threaded_dialog_spin(0.);
 
     fake_cdata->URI=lives_strdup(sfile->file_name);
     fake_cdata->fps=sfile->fps;
@@ -5412,7 +5412,7 @@ boolean reload_clip(int fileno) {
       return FALSE;
     }
     // got cdata
-    threaded_dialog_spin();
+    threaded_dialog_spin(0.);
     if (fake_cdata->URI!=NULL) lives_free(fake_cdata->URI);
     lives_free(fake_cdata);
     break;
@@ -5499,13 +5499,13 @@ static boolean recover_files(char *recovery_file, boolean auto_recover) {
   mainw->is_ready=FALSE;
 
   d_print(_("Recovering files..."));
-  threaded_dialog_spin();
+  threaded_dialog_spin(0.);
 
   mainw->suppress_dprint=TRUE;
 
   while (1) {
 
-    threaded_dialog_spin();
+    threaded_dialog_spin(0.);
     is_scrap=FALSE;
     is_ascrap=FALSE;
 
@@ -5524,7 +5524,7 @@ static boolean recover_files(char *recovery_file, boolean auto_recover) {
       }
       reset_clipmenu();
       lives_widget_context_update();
-      threaded_dialog_spin();
+      threaded_dialog_spin(0.);
 
       if (mainw->read_failed) {
         do_read_failed_error_s(recovery_file,NULL);
@@ -5599,7 +5599,7 @@ static boolean recover_files(char *recovery_file, boolean auto_recover) {
       // TODO - dirsep
       if (strstr(buffptr,"/clips/")) {
         char **array;
-        threaded_dialog_spin();
+        threaded_dialog_spin(0.);
         array=lives_strsplit(buffptr,"/clips/",-1);
         mainw->was_set=TRUE;
         lives_snprintf(mainw->set_name,128,"%s",array[0]);
@@ -5610,18 +5610,18 @@ static boolean recover_files(char *recovery_file, boolean auto_recover) {
           did_set_check=TRUE;
         }
 
-        threaded_dialog_spin();
+        threaded_dialog_spin(0.);
       }
       last_was_normal_file=TRUE;
       mainw->current_file=new_file;
-      threaded_dialog_spin();
+      threaded_dialog_spin(0.);
       cfile=(lives_clip_t *)(lives_malloc(sizeof(lives_clip_t)));
       lives_snprintf(cfile->handle,256,"%s",buffptr);
       cfile->clip_type=CLIP_TYPE_DISK; // the default
 
       //create a new cfile and fill in the details
       create_cfile();
-      threaded_dialog_spin();
+      threaded_dialog_spin(0.);
 
       if (!is_scrap) {
         if (!is_ascrap) {
@@ -5693,15 +5693,15 @@ static boolean recover_files(char *recovery_file, boolean auto_recover) {
 
       if (!is_scrap&&!is_ascrap) {
         // read the playback fps, play frame, and name
-        threaded_dialog_spin();
+        threaded_dialog_spin(0.);
         open_set_file(mainw->set_name,++clipnum);
-        threaded_dialog_spin();
+        threaded_dialog_spin(0.);
 
         if (mainw->cached_list!=NULL) {
-          threaded_dialog_spin();
+          threaded_dialog_spin(0.);
           lives_list_free_strings(mainw->cached_list);
           lives_list_free(mainw->cached_list);
-          threaded_dialog_spin();
+          threaded_dialog_spin(0.);
           mainw->cached_list=NULL;
         }
 
@@ -5717,7 +5717,7 @@ static boolean recover_files(char *recovery_file, boolean auto_recover) {
         }
 
         // add to clip menu
-        threaded_dialog_spin();
+        threaded_dialog_spin(0.);
         add_to_clipmenu();
         get_next_free_file();
         cfile->start=cfile->frames>0?1:0;
@@ -5751,7 +5751,7 @@ static boolean recover_files(char *recovery_file, boolean auto_recover) {
           mainw->current_file=current_file;
         }
 
-        threaded_dialog_spin();
+        threaded_dialog_spin(0.);
 
         lives_notify(LIVES_OSC_NOTIFY_CLIP_OPENED,"");
       } else {

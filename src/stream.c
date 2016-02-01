@@ -110,7 +110,7 @@ static size_t l2l_rcv_packet(lives_vstream_t *lstream, size_t buflen, void *buf)
       mainw->frame_layer=NULL;
       lives_widget_context_update();
       mainw->frame_layer=frame_layer;
-      threaded_dialog_spin();
+      threaded_dialog_spin(0.);
       if (mainw->cancelled) return buflen+btoread;
       lives_usleep(prefs->sleep_time);
     }
@@ -146,7 +146,7 @@ static size_t l2l_rcv_packet(lives_vstream_t *lstream, size_t buflen, void *buf)
       mainw->frame_layer=NULL;
       lives_widget_context_update();
       mainw->frame_layer=frame_layer;
-      threaded_dialog_spin();
+      threaded_dialog_spin(0.);
       if (mainw->cancelled) {
         return -1;
       }
@@ -183,7 +183,7 @@ static boolean lives_stream_in_chunks(lives_vstream_t *lstream, size_t buflen, u
         mainw->frame_layer=NULL;
         lives_widget_context_update();
         mainw->frame_layer=frame_layer;
-        threaded_dialog_spin();
+        threaded_dialog_spin(0.);
         if (mainw->cancelled) return TRUE;
         lives_usleep(prefs->sleep_time);
       }

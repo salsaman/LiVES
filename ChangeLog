@@ -1,5 +1,5 @@
-Version 2.4.9
--------------
+Version 2.6.0 (1 Feb 2016)
+--------------------------
 Fix crash when applying rendered effects to virtual clips.
 Add h264/aac, wmv2, ffv1 and mjpeg encodings to ffmpeg_encoder.
 Fix memory leak in new style gdkpixbuf converter.

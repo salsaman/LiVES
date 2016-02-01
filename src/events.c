@@ -213,11 +213,11 @@ void unlink_event(weed_plant_t *event_list, weed_plant_t *event) {
 
 void delete_event(weed_plant_t *event_list, weed_plant_t *event) {
   // delete event from event_list
-  threaded_dialog_spin();
+  threaded_dialog_spin(0.);
   unlink_event(event_list,event);
   if (mainw->multitrack!=NULL) mt_fixup_events(mainw->multitrack,event,NULL);
   weed_plant_free(event);
-  threaded_dialog_spin();
+  threaded_dialog_spin(0.);
 }
 
 

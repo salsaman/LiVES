@@ -27,7 +27,7 @@ static uint64_t event_start;
 static double audio_start;
 static boolean accelerators_swapped;
 static int frames_done;
-static int disp_frames_done;
+static double disp_fraction_done;
 
 static uint64_t last_open_check_ticks;
 
@@ -1025,18 +1025,17 @@ static void cancel_process(boolean visible) {
 
 
 
-static void disp_fraction(int done, int start, int end, double timesofar, xprocess *proc) {
+static void disp_fraction(double fraction_done, double timesofar, xprocess *proc) {
   // display fraction done and estimated time remaining
   char *prog_label;
   double est_time;
-  double fraction_done=(done-start)/(end-start+1.);
 
   const char *stretch="                                         ";
 
   if (fraction_done>1.) fraction_done=1.;
   if (fraction_done<0.) fraction_done=0.;
 
-  if (done>disp_frames_done) lives_progress_bar_set_fraction(LIVES_PROGRESS_BAR(proc->progressbar),fraction_done);
+  if (fraction_done>disp_fraction_done) lives_progress_bar_set_fraction(LIVES_PROGRESS_BAR(proc->progressbar),fraction_done);
 
   est_time=timesofar/fraction_done-timesofar;
   prog_label=lives_strdup_printf(_("\n%s%d%% done. Time remaining: %u sec%s\n"),stretch,(int)(fraction_done*100.),(uint32_t)(est_time+.5),
@@ -1044,7 +1043,7 @@ static void disp_fraction(int done, int start, int end, double timesofar, xproce
   if (LIVES_IS_LABEL(proc->label3)) lives_label_set_text(LIVES_LABEL(proc->label3),prog_label);
   lives_free(prog_label);
 
-  disp_frames_done=done;
+  disp_fraction_done=fraction_done;
 
 }
 
@@ -1055,7 +1054,7 @@ static int progress_count;
 #define PROG_LOOP_VAL 200
 
 static void progbar_pulse_or_fraction(lives_clip_t *sfile, int frames_done) {
-  double timesofar;
+  double timesofar,fraction_done;
 
   if (progress_count++>=PROG_LOOP_VAL) {
     if (frames_done<=sfile->progress_end&&sfile->progress_end>0&&!mainw->effects_paused&&
@@ -1069,8 +1068,9 @@ static void progbar_pulse_or_fraction(lives_clip_t *sfile, int frames_done) {
 #endif
       timesofar=(mainw->currticks-mainw->timeout_ticks)/U_SEC;
 
-      disp_fraction(frames_done,sfile->progress_start,sfile->progress_end,
-                    timesofar,sfile->proc_ptr);
+      fraction_done=(double)(frames_done-sfile->progress_start)/(double)(sfile->progress_end-sfile->progress_start+1.);
+
+      disp_fraction(fraction_done,timesofar,sfile->proc_ptr);
       progress_count=0;
     } else {
       lives_progress_bar_pulse(LIVES_PROGRESS_BAR(sfile->proc_ptr->progressbar));
@@ -1550,7 +1550,8 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const char *tex
   event_start=0;
   audio_start=mainw->play_start;
   if (visible) accelerators_swapped=FALSE;
-  frames_done=disp_frames_done=0;
+  frames_done=0;
+  disp_fraction_done=0.;
   mainw->last_display_ticks=0;
   shown_paused_frames=FALSE;
   est_time=-1.;
@@ -2856,7 +2857,7 @@ static void create_threaded_dialog(char *text, boolean has_cancel) {
 static double sttime;
 
 
-void threaded_dialog_spin(void) {
+void threaded_dialog_spin(double fraction) {
   double timesofar;
   int progress;
 
@@ -2868,20 +2869,29 @@ void threaded_dialog_spin(void) {
   if (procw==NULL||!procw->is_ready) return;
 
 
-  if (mainw->current_file<0||cfile==NULL||cfile->progress_start==0||cfile->progress_end==0||
-      strlen(mainw->msg)==0||(progress=atoi(mainw->msg))==0) {
-    // pulse the progress bar
-    //#define GDB
-#ifndef GDB
-    if (LIVES_IS_PROGRESS_BAR(procw->progressbar)) lives_progress_bar_pulse(LIVES_PROGRESS_BAR(procw->progressbar));
-#endif
-  } else {
-    // show fraction
+
+  if (fraction>0.) {
     gettimeofday(&tv, NULL);
     timesofar=(double)(tv.tv_sec*1000000+tv.tv_usec-sttime)*U_SEC_RATIO/U_SEC;
-    disp_fraction(progress,cfile->progress_start,cfile->progress_end,timesofar,procw);
+    disp_fraction(fraction,timesofar,procw);
   }
-
+  else{
+    if (mainw->current_file<0||cfile==NULL||cfile->progress_start==0||cfile->progress_end==0||
+	strlen(mainw->msg)==0||(progress=atoi(mainw->msg))==0) {
+      // pulse the progress bar
+      //#define GDB
+#ifndef GDB
+      if (LIVES_IS_PROGRESS_BAR(procw->progressbar)) lives_progress_bar_pulse(LIVES_PROGRESS_BAR(procw->progressbar));
+#endif
+    } else {
+      // show fraction
+      double fraction_done=(double)(progress-cfile->progress_start)/(double)(cfile->progress_end-cfile->progress_start+1.);
+      gettimeofday(&tv, NULL);
+      timesofar=(double)(tv.tv_sec*1000000+tv.tv_usec-sttime)*U_SEC_RATIO/U_SEC;
+      disp_fraction(fraction_done,timesofar,procw);
+    }
+  }
+  
   if (LIVES_IS_WIDGET(procw->processing)) lives_widget_queue_draw(procw->processing);
   lives_widget_context_update();
 

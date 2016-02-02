@@ -2608,8 +2608,8 @@ static boolean exposetview(LiVESWidget *widget, lives_painter_t *cr, livespointe
   lives_widget_get_fg_state_color(widget,lives_widget_get_state(widget),&fgcol);
   lives_widget_get_bg_state_color(widget,lives_widget_get_state(widget),&bgcol);
 
-  widget_rgba_to_lives_rgba(&fg,&fgcol);
-  widget_rgba_to_lives_rgba(&bg,&bgcol);
+  widget_color_to_lives_rgba(&fg,&fgcol);
+  widget_color_to_lives_rgba(&bg,&bgcol);
 
   // TODO - can we clip cr to visible area ?
 

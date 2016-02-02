@@ -8710,7 +8710,7 @@ LIVES_INLINE boolean lives_button_box_set_button_width(LiVESButtonBox *bbox, LiV
 
 
 
-LIVES_INLINE boolean widget_rgba_to_lives_rgba(lives_colRGBA32_t *lcolor, LiVESWidgetColor *color) {
+LIVES_INLINE boolean widget_color_to_lives_rgba(lives_colRGBA32_t *lcolor, LiVESWidgetColor *color) {
 #ifdef GUI_GTK
   lcolor->red=color->red*65535.;
   lcolor->green=color->green*65535.;

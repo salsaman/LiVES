@@ -92,7 +92,7 @@ lives_painter_format_t lives_painter_image_surface_get_format(lives_painter_surf
 
 boolean widget_helper_init(void);
 
-boolean widget_rgba_to_lives_rgba(lives_colRGBA32_t *, LiVESWidgetColor *);
+boolean widget_color_to_lives_rgba(lives_colRGBA32_t *, LiVESWidgetColor *);
 
 
 // object funcs.

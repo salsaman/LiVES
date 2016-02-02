@@ -2874,10 +2874,9 @@ void threaded_dialog_spin(double fraction) {
     gettimeofday(&tv, NULL);
     timesofar=(double)(tv.tv_sec*1000000+tv.tv_usec-sttime)*U_SEC_RATIO/U_SEC;
     disp_fraction(fraction,timesofar,procw);
-  }
-  else{
+  } else {
     if (mainw->current_file<0||cfile==NULL||cfile->progress_start==0||cfile->progress_end==0||
-	strlen(mainw->msg)==0||(progress=atoi(mainw->msg))==0) {
+        strlen(mainw->msg)==0||(progress=atoi(mainw->msg))==0) {
       // pulse the progress bar
       //#define GDB
 #ifndef GDB
@@ -2891,7 +2890,7 @@ void threaded_dialog_spin(double fraction) {
       disp_fraction(fraction_done,timesofar,procw);
     }
   }
-  
+
   if (LIVES_IS_WIDGET(procw->processing)) lives_widget_queue_draw(procw->processing);
   lives_widget_context_update();
 

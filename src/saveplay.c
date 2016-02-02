@@ -2131,8 +2131,8 @@ void save_file(int clip, int start, int end, const char *filename) {
       }
       set_main_title(cfile->name,0);
       if (prefs->show_recent) {
-	add_to_recent(full_file_name,0.,0,NULL);
-	global_recent_manager_add(full_file_name);
+        add_to_recent(full_file_name,0.,0,NULL);
+        global_recent_manager_add(full_file_name);
       }
     } else {
       if (!safe_symlinks) {
@@ -4054,7 +4054,7 @@ void backup_file(int clip, int start, int end, const char *file_name) {
     set_main_title(cfile->name,0);
     set_menu_text(sfile->menuentry,full_file_name,FALSE);
   }
-  if (prefs->show_recent) 
+  if (prefs->show_recent)
     add_to_recent(full_file_name,0.,0,NULL);
 
   sfile->changed=FALSE;

@@ -8715,7 +8715,11 @@ LIVES_INLINE boolean widget_rgba_to_lives_rgba(lives_colRGBA32_t *lcolor, LiVESW
   lcolor->red=color->red*65535.;
   lcolor->green=color->green*65535.;
   lcolor->blue=color->blue*65535.;
+#if LIVES_WIDGET_COLOR_HAS_ALPHA
   lcolor->alpha=color->alpha*65535.;
+#else
+  lcolor->alpha=65535;
+#endif
   return TRUE;
 #endif
   return FALSE;

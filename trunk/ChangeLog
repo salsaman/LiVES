@@ -1,3 +1,14 @@
+Version 2.6.1
+-------------
+Play selections should function even after switching clips, restarting playback.
+Add encoded files to global "recently used files".
+Minor compilation fix for gtk+ 2.x
+
+
+
+
+
+
 Version 2.6.0 (1 Feb 2016)
 --------------------------
 Fix crash when applying rendered effects to virtual clips.

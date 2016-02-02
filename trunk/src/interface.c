@@ -2272,7 +2272,7 @@ char *choose_file(const char *dir, const char *fname, char **const filt, LiVESFi
   // set this so we know when button is pressed, even if waiting for preview to finish
   mainw->fc_buttonresponse=LIVES_RESPONSE_NONE;
   lives_signal_connect(chooser, LIVES_WIDGET_RESPONSE_SIGNAL, LIVES_GUI_CALLBACK(chooser_response), NULL);
-  
+
   if (extra_widget==mainw->LiVES) {
     return (char *)chooser; // kludge to allow custom adding of extra widgets
   }

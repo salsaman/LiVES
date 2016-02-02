@@ -5420,11 +5420,11 @@ void on_vj_reset_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   LiVESList *clip_list=mainw->cliplist;
 
   boolean bad_header=FALSE;
-  
+
   int i;
 
   //mainw->soft_debug=TRUE;
-  
+
   do_threaded_dialog(_("Resetting frame rates and frame values..."),FALSE);
 
   while (clip_list!=NULL) {
@@ -5441,8 +5441,7 @@ void on_vj_reset_activate(LiVESMenuItem *menuitem, livespointer user_data) {
 
     if (bad_header) {
       if (!do_header_write_error(i)) break;
-    }
-    else clip_list=clip_list->next;
+    } else clip_list=clip_list->next;
   }
 
 
@@ -6173,7 +6172,7 @@ void on_fs_preview_clicked(LiVESWidget *widget, livespointer user_data) {
     }
 
     // loop here until preview has finished, or the user presses OK or Cancel
-    
+
     while ((!(ifile=fopen(info_file,"r")))&&mainw->in_fs_preview&&mainw->fc_buttonresponse==LIVES_RESPONSE_NONE) {
       lives_widget_context_update();
       lives_usleep(prefs->sleep_time);

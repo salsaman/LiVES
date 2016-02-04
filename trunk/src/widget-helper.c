@@ -8021,6 +8021,65 @@ LIVES_INLINE LiVESWidget *lives_standard_file_button_new(boolean is_dir, const c
 }
 
 
+
+
+LiVESWidget *lives_standard_color_button_new(LiVESBox *parent, char *name, boolean has_alpha, double red, double green, double blue, \
+					     double alpha, LiVESWidget **sb_red, LiVESWidget **sp_green, LiVESWidget **sp_blue, LiVESWidget **sp_alpha) {
+
+  lives_widget_set_hexpand(LIVES_WIDGET(parent),FALSE);
+
+  lives_box_set_homogeneous(parent,FALSE);
+
+    // colsel button
+
+    colr.red=rgb.red<<8;
+    colr.green=rgb.green<<8;
+    colr.blue=rgb.blue<<8;
+
+    cbutton = lives_color_button_new_with_color(&colr);
+    lives_color_button_set_use_alpha(LIVES_COLOR_BUTTON(cbutton),FALSE);
+    lives_color_button_set_title(LIVES_COLOR_BUTTON(cbutton),_("LiVES: - Select Colour"));
+    lives_color_button_set_color(LIVES_COLOR_BUTTON(cbutton),&colr);
+
+    lives_widget_object_set_data(LIVES_WIDGET_OBJECT(cbutton),"param_number",LIVES_INT_TO_POINTER(pnum));
+    if (param->desc!=NULL) lives_widget_set_tooltip_text(cbutton, param->desc);
+    else lives_widget_set_tooltip_text(cbutton, (_("Click to set the colour")));
+
+    if (use_mnemonic) {
+      labelcname=lives_standard_label_new_with_mnemonic(_(name),cbutton);
+    } else labelcname=lives_standard_label_new(_(name));
+    if (param->desc!=NULL) lives_widget_set_tooltip_text(labelcname, param->desc);
+
+    lives_box_pack_start(LIVES_BOX(hbox), labelcname, FALSE, FALSE, widget_opts.packing_width);
+
+    widget_opts.packing_width=4;
+
+    spinbutton_red = lives_standard_spin_button_new((tmp=lives_strdup(_("_Red"))), TRUE, rgb.red, 0., 255., 1., 1., 0,
+                     (LiVESBox *)hbox, (tmp2=lives_strdup(_("The red value (0 - 255)"))));
+    lives_free(tmp);
+    lives_free(tmp2);
+    spinbutton_green = lives_standard_spin_button_new((tmp=lives_strdup(_("_Green"))), TRUE, rgb.green, 0., 255., 1., 1., 0,
+                       (LiVESBox *)hbox, (tmp2=lives_strdup(_("The green value (0 - 255)"))));
+    lives_free(tmp);
+    lives_free(tmp2);
+    spinbutton_blue = lives_standard_spin_button_new((tmp=lives_strdup(_("_Blue"))), TRUE, rgb.blue, 0., 255., 1., 1., 0,
+                      (LiVESBox *)hbox, (tmp2=lives_strdup(_("The blue value (0 - 255)"))));
+    lives_free(tmp);
+    lives_free(tmp2);
+
+    widget_opts.packing_width=def_packing_width;
+
+    lives_box_pack_start(LIVES_BOX(hbox), cbutton, TRUE, TRUE, widget_opts.packing_width);
+
+    lives_signal_connect(LIVES_GUI_OBJECT(cbutton), LIVES_WIDGET_COLOR_SET_SIGNAL,
+                         LIVES_GUI_CALLBACK(on_pwcolsel),
+                         (livespointer)rfx);
+
+
+
+
+
+
 LIVES_INLINE LiVESXCursor *lives_cursor_new_from_pixbuf(LiVESXDisplay *disp, LiVESPixbuf *pixbuf, int x, int y) {
   LiVESXCursor *cursor=NULL;
 #ifdef GUI_GTK
@@ -8710,15 +8769,12 @@ LIVES_INLINE boolean lives_button_box_set_button_width(LiVESButtonBox *bbox, LiV
 
 
 
-LIVES_INLINE boolean widget_color_to_lives_rgba(lives_colRGBA32_t *lcolor, LiVESWidgetColor *color) {
+LIVES_INLINE boolean widget_color_to_lives_rgba(lives_colRGBA64_t *lcolor, LiVESWidgetColor *color) {
 #ifdef GUI_GTK
   lcolor->red=color->red*65535.;
   lcolor->green=color->green*65535.;
   lcolor->blue=color->blue*65535.;
-#if LIVES_WIDGET_COLOR_HAS_ALPHA
   lcolor->alpha=color->alpha*65535.;
-#else
-  lcolor->alpha=65535;
 #endif
   return TRUE;
 #endif

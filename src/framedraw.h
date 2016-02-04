@@ -64,7 +64,7 @@ boolean on_framedraw_enter(LiVESWidget *, LiVESXEventCrossing *, lives_special_f
 
 // graphics routines
 
-void draw_rect_demask(lives_colRGBA32_t *col, int x1, int y1, int x2, int y2, boolean filled);
+void draw_rect_demask(lives_colRGBA64_t *col, int x1, int y1, int x2, int y2, boolean filled);
 
 
 #endif

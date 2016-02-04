@@ -1369,12 +1369,6 @@ boolean make_param_box(LiVESVBox *top_vbox, lives_rfx_t *rfx) {
 
 
 
-#define GIW_KNOB_WIDTH (40.*widget_opts.scale)
-#define GIW_KNOB_HEIGHT (40.*widget_opts.scale)
-
-
-
-
 
 boolean add_param_to_box(LiVESBox *box, lives_rfx_t *rfx, int pnum, boolean add_slider) {
   // box here is vbox inside top_hbox inside top_dialog
@@ -1382,7 +1376,6 @@ boolean add_param_to_box(LiVESBox *box, lives_rfx_t *rfx, int pnum, boolean add_
   // add paramter pnum for rfx to box
 
   LiVESWidget *label;
-  LiVESWidget *labelcname;
   LiVESWidget *checkbutton;
   LiVESWidget *radiobutton;
   LiVESWidget *spinbutton;
@@ -1409,19 +1402,17 @@ boolean add_param_to_box(LiVESBox *box, lives_rfx_t *rfx, int pnum, boolean add_
   lives_widget_group_t *group;
   LiVESSList *rbgroup;
 
-  lives_colRGB24_t rgb;
-  LiVESWidgetColor colr;
+  lives_colRGB48_t rgb;
+  lives_colRGBA64_t rgba;
 
   char *name;
-  char *txt,*tmp,*tmp2;
+  char *txt,*tmp;
   char *disp_string;
 
   boolean use_mnemonic;
   boolean was_num=FALSE;
 
   boolean add_scalers=TRUE;
-
-  int def_packing_width=widget_opts.packing_width;
 
   if (pnum>=rfx->num_params) {
     add_param_label_to_box(box,FALSE,(_("Invalid parameter")));
@@ -1598,54 +1589,16 @@ boolean add_param_to_box(LiVESBox *box, lives_rfx_t *rfx, int pnum, boolean add_
   case LIVES_PARAM_COLRGB24 :
     get_colRGB24_param(param->value,&rgb);
 
-    lives_widget_set_hexpand(hbox,FALSE);
+    rgba.red=rgb.red<<8;
+    rgba.green=rgb.green<<8;
+    rgba.blue=rgb.blue<<8;
+    rgba.alpha=65535;
 
-    lives_box_set_homogeneous(LIVES_BOX(hbox),FALSE);
-
-    // colsel button
-
-    colr.red=rgb.red<<8;
-    colr.green=rgb.green<<8;
-    colr.blue=rgb.blue<<8;
-
-    cbutton = lives_color_button_new_with_color(&colr);
-    lives_color_button_set_use_alpha(LIVES_COLOR_BUTTON(cbutton),FALSE);
-    lives_color_button_set_title(LIVES_COLOR_BUTTON(cbutton),_("LiVES: - Select Colour"));
-    lives_color_button_set_color(LIVES_COLOR_BUTTON(cbutton),&colr);
+    cbutton = lives_standard_color_button_new(LIVES_BOX(hbox),_(name),use_mnemonic,FALSE,&rgba,&spinbutton_red,&spinbutton_green,
+              &spinbutton_blue,NULL);
 
     lives_widget_object_set_data(LIVES_WIDGET_OBJECT(cbutton),"param_number",LIVES_INT_TO_POINTER(pnum));
     if (param->desc!=NULL) lives_widget_set_tooltip_text(cbutton, param->desc);
-    else lives_widget_set_tooltip_text(cbutton, (_("Click to set the colour")));
-
-    if (use_mnemonic) {
-      labelcname=lives_standard_label_new_with_mnemonic(_(name),cbutton);
-    } else labelcname=lives_standard_label_new(_(name));
-    if (param->desc!=NULL) lives_widget_set_tooltip_text(labelcname, param->desc);
-
-    lives_box_pack_start(LIVES_BOX(hbox), labelcname, FALSE, FALSE, widget_opts.packing_width);
-
-    widget_opts.packing_width=4;
-
-    spinbutton_red = lives_standard_spin_button_new((tmp=lives_strdup(_("_Red"))), TRUE, rgb.red, 0., 255., 1., 1., 0,
-                     (LiVESBox *)hbox, (tmp2=lives_strdup(_("The red value (0 - 255)"))));
-    lives_free(tmp);
-    lives_free(tmp2);
-    spinbutton_green = lives_standard_spin_button_new((tmp=lives_strdup(_("_Green"))), TRUE, rgb.green, 0., 255., 1., 1., 0,
-                       (LiVESBox *)hbox, (tmp2=lives_strdup(_("The green value (0 - 255)"))));
-    lives_free(tmp);
-    lives_free(tmp2);
-    spinbutton_blue = lives_standard_spin_button_new((tmp=lives_strdup(_("_Blue"))), TRUE, rgb.blue, 0., 255., 1., 1., 0,
-                      (LiVESBox *)hbox, (tmp2=lives_strdup(_("The blue value (0 - 255)"))));
-    lives_free(tmp);
-    lives_free(tmp2);
-
-    widget_opts.packing_width=def_packing_width;
-
-    lives_box_pack_start(LIVES_BOX(hbox), cbutton, TRUE, TRUE, widget_opts.packing_width);
-
-    lives_signal_connect(LIVES_GUI_OBJECT(cbutton), LIVES_WIDGET_COLOR_SET_SIGNAL,
-                         LIVES_GUI_CALLBACK(on_pwcolsel),
-                         (livespointer)rfx);
 
     lives_signal_connect_after(LIVES_GUI_OBJECT(spinbutton_red), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
                                LIVES_GUI_CALLBACK(after_param_red_changed),
@@ -1655,6 +1608,10 @@ boolean add_param_to_box(LiVESBox *box, lives_rfx_t *rfx, int pnum, boolean add_
                                (livespointer)rfx);
     lives_signal_connect_after(LIVES_GUI_OBJECT(spinbutton_blue), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
                                LIVES_GUI_CALLBACK(after_param_blue_changed),
+                               (livespointer)rfx);
+
+    lives_signal_connect_after(LIVES_GUI_OBJECT(cbutton), LIVES_WIDGET_COLOR_SET_SIGNAL,
+                               LIVES_GUI_CALLBACK(on_pwcolsel),
                                (livespointer)rfx);
 
     // store parameter so we know whose trigger to use
@@ -2218,11 +2175,7 @@ void update_weed_color_value(weed_plant_t *plant, int pnum, int c1, int c2, int 
 void after_param_red_changed(LiVESSpinButton *spinbutton, lives_rfx_t *rfx) {
   LiVESList *retvals=NULL;
 
-  lives_colRGB24_t old_value;
-
-  LiVESWidgetColor colr;
-
-  LiVESWidget *cbutton;
+  lives_colRGB48_t old_value;
 
   int param_number=LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(spinbutton),"param_number"));
   int new_red;
@@ -2248,14 +2201,6 @@ void after_param_red_changed(LiVESSpinButton *spinbutton, lives_rfx_t *rfx) {
 
 
   set_colRGB24_param(param->value,new_red,old_value.green,old_value.blue);
-
-  colr.red=LIVES_WIDGET_COLOR_SCALE_255(new_red);
-  colr.green=LIVES_WIDGET_COLOR_SCALE_255(old_value.green);
-  colr.blue=LIVES_WIDGET_COLOR_SCALE_255(old_value.blue);
-
-  cbutton=param->widgets[4];
-  lives_color_button_set_color(LIVES_COLOR_BUTTON(cbutton),&colr);
-
 
   if (mainw->framedraw_preview!=NULL) lives_widget_set_sensitive(mainw->framedraw_preview,TRUE);
 
@@ -2302,11 +2247,7 @@ void after_param_red_changed(LiVESSpinButton *spinbutton, lives_rfx_t *rfx) {
 void after_param_green_changed(LiVESSpinButton *spinbutton, lives_rfx_t *rfx) {
   LiVESList *retvals=NULL;
 
-  lives_colRGB24_t old_value;
-
-  LiVESWidgetColor colr;
-
-  LiVESWidget *cbutton;
+  lives_colRGB48_t old_value;
 
   int new_green;
   int copyto=-1;
@@ -2333,13 +2274,6 @@ void after_param_green_changed(LiVESSpinButton *spinbutton, lives_rfx_t *rfx) {
   }
 
   set_colRGB24_param(param->value,old_value.red,new_green,old_value.blue);
-
-  colr.red=LIVES_WIDGET_COLOR_SCALE_255(old_value.red);
-  colr.green=LIVES_WIDGET_COLOR_SCALE_255(new_green);
-  colr.blue=LIVES_WIDGET_COLOR_SCALE_255(old_value.blue);
-
-  cbutton=param->widgets[4];
-  lives_color_button_set_color(LIVES_COLOR_BUTTON(cbutton),&colr);
 
   if (mainw->framedraw_preview!=NULL) lives_widget_set_sensitive(mainw->framedraw_preview,TRUE);
 
@@ -2386,11 +2320,7 @@ void after_param_green_changed(LiVESSpinButton *spinbutton, lives_rfx_t *rfx) {
 void after_param_blue_changed(LiVESSpinButton *spinbutton, lives_rfx_t *rfx) {
   LiVESList *retvals=NULL;
 
-  lives_colRGB24_t old_value;
-
-  LiVESWidgetColor colr;
-
-  LiVESWidget *cbutton;
+  lives_colRGB48_t old_value;
 
   int new_blue;
   int copyto=-1;
@@ -2415,14 +2345,6 @@ void after_param_blue_changed(LiVESSpinButton *spinbutton, lives_rfx_t *rfx) {
   }
 
   set_colRGB24_param(param->value,old_value.red,old_value.green,new_blue);
-
-  colr.red=LIVES_WIDGET_COLOR_SCALE_255(old_value.red);
-  colr.green=LIVES_WIDGET_COLOR_SCALE_255(old_value.green);
-  colr.blue=LIVES_WIDGET_COLOR_SCALE_255(new_blue);
-
-  cbutton=param->widgets[4];
-  lives_color_button_set_color(LIVES_COLOR_BUTTON(cbutton),&colr);
-
 
   if (mainw->framedraw_preview!=NULL) lives_widget_set_sensitive(mainw->framedraw_preview,TRUE);
 
@@ -2468,11 +2390,15 @@ void after_param_blue_changed(LiVESSpinButton *spinbutton, lives_rfx_t *rfx) {
 void after_param_alpha_changed(LiVESSpinButton *spinbutton, lives_rfx_t *rfx) {
   // not used yet
   int param_number=LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(spinbutton),"param_number"));
+
   LiVESList *retvals=NULL;
+
   lives_param_t *param=&rfx->params[param_number];
-  lives_colRGBA32_t old_value;
+
+  lives_colRGBA64_t old_value;
+
   int new_alpha=lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(spinbutton));
-  //boolean was_reinited=FALSE;
+
   int copyto=-1;
 
   if (mainw->block_param_updates) return; // updates are blocked until all params are ready
@@ -2488,7 +2414,6 @@ void after_param_alpha_changed(LiVESSpinButton *spinbutton, lives_rfx_t *rfx) {
   get_colRGBA32_param(param->value,&old_value);
 
   if (mainw->framedraw_preview!=NULL) lives_widget_set_sensitive(mainw->framedraw_preview,TRUE);
-
 
   set_colRGBA32_param(param->value,old_value.red,old_value.green,old_value.blue,new_alpha);
 
@@ -2765,7 +2690,7 @@ char **param_marshall_to_argv(lives_rfx_t *rfx) {
 
   // the returned **argv should be lives_free()'ed after use
 
-  lives_colRGB24_t rgb;
+  lives_colRGB48_t rgb;
 
   char **argv=(char **)lives_malloc((rfx->num_params+1)*(sizeof(char *)));
 
@@ -2817,7 +2742,7 @@ char *param_marshall(lives_rfx_t *rfx, boolean with_min_max) {
   // quotes will be escaped \"
 
   // the returned string should be lives_free()'ed after use
-  lives_colRGB24_t rgb;
+  lives_colRGB48_t rgb;
 
   char *new_return=lives_strdup("");
   char *old_return=new_return;
@@ -3279,7 +3204,6 @@ void on_pwcolsel(LiVESButton *button, lives_rfx_t *rfx) {
   b=(int)((double)(selected.blue+LIVES_WIDGET_COLOR_SCALE_255(0.5))/(double)LIVES_WIDGET_COLOR_SCALE_255(1.));
 
   set_colRGB24_param(param->value,r,g,b);
-
 
   lives_spin_button_set_value(LIVES_SPIN_BUTTON(param->widgets[0]),(double)r);
   lives_spin_button_set_value(LIVES_SPIN_BUTTON(param->widgets[1]),(double)g);

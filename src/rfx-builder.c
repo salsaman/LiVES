@@ -1939,7 +1939,7 @@ LiVESWidget *make_param_dialog(int pnum, rfx_build_window_t *rfxbuilder) {
 
   LiVESList *typelist=NULL;
 
-  lives_colRGB24_t rgb;
+  lives_colRGB48_t rgb;
 
   char *tmp,*tmp2,*title;
 
@@ -3058,7 +3058,7 @@ boolean perform_param_checks(rfx_build_window_t *rfxbuilder, int index, int rows
 
 boolean rfxbuilder_to_script(rfx_build_window_t *rfxbuilder) {
   FILE *sfile;
-  lives_colRGB24_t rgb;
+  lives_colRGB48_t rgb;
   char **array;
 
   double stepwrap;

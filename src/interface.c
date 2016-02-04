@@ -4,10 +4,6 @@
 // Released under the GNU GPL 3 or later
 // see file ../COPYING for licensing details
 
-// TODO - use lives_widget_showall where poss.
-// and don't forget lives_box_pack_end (doh)
-// and just use label instead of labelnn, etc.
-
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -179,24 +175,19 @@ xprocess *create_processing(const char *text) {
   }
 
   dialog_vbox = lives_dialog_get_content_area(LIVES_DIALOG(procw->processing));
-  lives_widget_show(dialog_vbox);
 
   vbox2 = lives_vbox_new(FALSE, 0);
-  lives_widget_show(vbox2);
   lives_box_pack_start(LIVES_BOX(dialog_vbox), vbox2, TRUE, TRUE, 0);
 
   vbox3 = lives_vbox_new(FALSE, 0);
-  lives_widget_show(vbox3);
   lives_box_pack_start(LIVES_BOX(vbox2), vbox3, TRUE, TRUE, 0);
 
   lives_snprintf(tmp_label,256,"%s...\n",text);
   procw->label = lives_standard_label_new(tmp_label);
-  lives_widget_show(procw->label);
 
   lives_box_pack_start(LIVES_BOX(vbox3), procw->label, TRUE, TRUE, 0);
 
   procw->progressbar = lives_progress_bar_new();
-  lives_widget_show(procw->progressbar);
   lives_box_pack_start(LIVES_BOX(vbox3), procw->progressbar, FALSE, FALSE, 0);
   if (palette->style&STYLE_1) {
     lives_widget_set_fg_color(procw->progressbar, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
@@ -212,13 +203,10 @@ xprocess *create_processing(const char *text) {
   else procw->label2=lives_standard_label_new(_("\nPlease Wait"));
   widget_opts.justify=LIVES_JUSTIFY_DEFAULT;
 
-  lives_widget_show(procw->label2);
-
   lives_box_pack_start(LIVES_BOX(vbox3), procw->label2, FALSE, FALSE, 0);
 
   widget_opts.justify=LIVES_JUSTIFY_CENTER;
   procw->label3 = lives_standard_label_new(PROCW_STRETCHER);
-  lives_widget_show(procw->label3);
   lives_box_pack_start(LIVES_BOX(vbox3), procw->label3, FALSE, FALSE, 0);
   widget_opts.justify=LIVES_JUSTIFY_DEFAULT;
 
@@ -232,13 +220,9 @@ xprocess *create_processing(const char *text) {
     widget_opts.apply_theme=woat;
 
     details_arrow=lives_standard_expander_new(_("Show Details"),FALSE,LIVES_BOX(vbox3),procw->scrolledwindow);
-
     lives_widget_show_all(details_arrow);
 
   }
-
-
-  lives_widget_show_all(vbox3);
 
   procw->stop_button = lives_button_new_with_mnemonic(_("_Enough")); // used only for open location and for audio recording
   procw->preview_button = lives_button_new_with_mnemonic(_("_Preview"));
@@ -268,7 +252,6 @@ xprocess *create_processing(const char *text) {
 
       // show buttons
       lives_dialog_add_action_widget(LIVES_DIALOG(procw->processing), procw->stop_button, 0);
-      lives_widget_show(procw->stop_button);
       lives_widget_set_can_focus_and_default(procw->stop_button);
     }
   }
@@ -302,14 +285,15 @@ xprocess *create_processing(const char *text) {
                        LIVES_GUI_CALLBACK(on_cancel_keep_button_clicked),
                        NULL);
 
+  if (mainw->show_procd) lives_widget_show_all(procw->processing);
+  lives_widget_hide(procw->preview_button);
+  lives_widget_hide(procw->pause_button);
+  //lives_widget_hide(procw->cancel_button);
+  lives_widget_hide(procw->stop_button);
 
   return procw;
 }
 
-
-#define TB_WIDTH 200
-#define TB_HEIGHT_VID 80
-#define TB_HEIGHT_AUD 50
 
 static LiVESWidget *vid_text_view_new(void) {
   LiVESWidget *textview=lives_text_view_new();
@@ -1173,12 +1157,10 @@ _entryw *create_location_dialog(int type) {
 
 
   cancelbutton = lives_button_new_from_stock(LIVES_STOCK_CANCEL,NULL);
-  lives_widget_show(cancelbutton);
   lives_dialog_add_action_widget(LIVES_DIALOG(locw->dialog), cancelbutton, LIVES_RESPONSE_CANCEL);
   lives_widget_set_can_focus_and_default(cancelbutton);
 
   okbutton = lives_button_new_from_stock(LIVES_STOCK_OK,NULL);
-  lives_widget_show(okbutton);
   lives_dialog_add_action_widget(LIVES_DIALOG(locw->dialog), okbutton, LIVES_RESPONSE_OK);
   lives_widget_set_can_focus_and_default(okbutton);
   lives_widget_grab_default(okbutton);
@@ -1207,7 +1189,6 @@ _entryw *create_location_dialog(int type) {
   return locw;
 }
 
-#define RW_ENTRY_DISPWIDTH 40
 
 _entryw *create_rename_dialog(int type) {
   // type 1 = rename clip in menu
@@ -2596,7 +2577,7 @@ LiVESWidget *create_cleardisk_advanced_dialog(void) {
 
 static boolean exposetview(LiVESWidget *widget, lives_painter_t *cr, livespointer user_data) {
   LiVESWidgetColor fgcol,bgcol;
-  lives_colRGBA32_t fg,bg;
+  lives_colRGBA64_t fg,bg;
   LingoLayout *layout;
   lives_painter_surface_t *surface;
 

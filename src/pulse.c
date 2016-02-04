@@ -45,9 +45,6 @@ static void pulse_server_cb(pa_context *c,const pa_server_info *info, void *user
   pulse_server_rate=info->sample_spec.rate;
 }
 
-// wait 5 seconds to startup
-#define PULSE_START_WAIT 500000000
-
 
 boolean lives_pulse_init(short startup_phase) {
   // startup pulse audio server
@@ -68,14 +65,14 @@ boolean lives_pulse_init(short startup_phase) {
 
   stime=lives_get_current_ticks();
 
-  while (pa_state!=PA_CONTEXT_READY&&ntime<PULSE_START_WAIT) {
+  while (pa_state!=PA_CONTEXT_READY&&ntime<LIVES_SHORT_TIMEOUT) {
     lives_usleep(prefs->sleep_time);
     sched_yield();
     pa_state=pa_context_get_state(pcon);
     ntime=lives_get_current_ticks()-stime;
   }
 
-  if (ntime>=PULSE_START_WAIT) {
+  if (ntime>=LIVES_SHORT_TIMEOUT) {
     pa_context_unref(pcon);
     pcon=NULL;
     pulse_shutdown();
@@ -1228,7 +1225,7 @@ int64_t lives_pulse_get_time(pulse_driver_t *pulsed, boolean absolute) {
 
   if (msg!=NULL&&msg->command==ASERVER_CMD_FILE_SEEK) {
     boolean timeout;
-    int alarm_handle=lives_alarm_set(LIVES_ACONNECT_TIMEOUT);
+    int alarm_handle=lives_alarm_set(LIVES_DEFAULT_TIMEOUT);
     while (!(timeout=lives_alarm_get(alarm_handle))&&pulse_get_msgq(pulsed)!=NULL) {
       sched_yield(); // wait for seek
     }
@@ -1265,7 +1262,7 @@ boolean pulse_audio_seek_frame(pulse_driver_t *pulsed, int frame) {
   // position will be adjusted to (floor) nearest sample
   int64_t seekstart;
   volatile aserver_message_t *pmsg;
-  int alarm_handle=lives_alarm_set(LIVES_ACONNECT_TIMEOUT);
+  int alarm_handle=lives_alarm_set(LIVES_DEFAULT_TIMEOUT);
   boolean timeout;
 
   if (alarm_handle==-1) {
@@ -1299,7 +1296,7 @@ int64_t pulse_audio_seek_bytes(pulse_driver_t *pulsed, int64_t bytes) {
   volatile aserver_message_t *pmsg;
 
   boolean timeout;
-  int alarm_handle=lives_alarm_set(LIVES_ACONNECT_TIMEOUT);
+  int alarm_handle=lives_alarm_set(LIVES_DEFAULT_TIMEOUT);
 
   int64_t seekstart;
 
@@ -1396,7 +1393,7 @@ void pulse_aud_pb_ready(int fileno) {
         mainw->pulsed->reverse_endian=TRUE;
       else mainw->pulsed->reverse_endian=FALSE;
 
-      alarm_handle=lives_alarm_set(LIVES_ACONNECT_TIMEOUT);
+      alarm_handle=lives_alarm_set(LIVES_DEFAULT_TIMEOUT);
       while (!(timeout=lives_alarm_get(alarm_handle))&&pulse_get_msgq(mainw->pulsed)!=NULL) {
         sched_yield(); // wait for seek
       }

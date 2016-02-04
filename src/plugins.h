@@ -553,8 +553,8 @@ typedef struct {
 boolean get_bool_param(void *value);
 int get_int_param(void *value);
 double get_double_param(void *value);
-void get_colRGB24_param(void *value, lives_colRGB24_t *rgb);
-void get_colRGBA32_param(void *value, lives_colRGBA32_t *rgba);
+void get_colRGB24_param(void *value, lives_colRGB48_t *rgb);
+void get_colRGBA32_param(void *value, lives_colRGBA64_t *rgba);
 
 void set_bool_param(void *value, boolean);
 void set_int_param(void *value, int);

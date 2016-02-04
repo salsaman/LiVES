@@ -2209,11 +2209,9 @@ LiVESWidget *events_rec_dialog(boolean allow_mt) {
   lives_window_add_accel_group(LIVES_WINDOW(e_rec_dialog), accel_group);
 
   okbutton = lives_button_new_from_stock(LIVES_STOCK_OK,NULL);
-  lives_widget_show(okbutton);
   lives_dialog_add_action_widget(LIVES_DIALOG(e_rec_dialog), okbutton, LIVES_RESPONSE_OK);
   lives_widget_set_can_focus_and_default(okbutton);
   lives_widget_grab_default(okbutton);
-  lives_widget_show_all(e_rec_dialog);
 
   return e_rec_dialog;
 
@@ -4463,9 +4461,8 @@ boolean deal_with_render_choice(boolean add_deinit) {
   oplay_start=mainw->play_start;
 
   do {
-    //e_rec_dialog=events_rec_dialog(!was_paused);
     e_rec_dialog=events_rec_dialog(TRUE);
-    lives_widget_show(e_rec_dialog);
+    lives_widget_show_all(e_rec_dialog);
     lives_dialog_run(LIVES_DIALOG(e_rec_dialog));
     lives_widget_destroy(e_rec_dialog);
     lives_widget_context_update();
@@ -4824,7 +4821,6 @@ LiVESWidget *create_event_list_dialog(weed_plant_t *event_list, weed_timecode_t 
   top_vbox=lives_dialog_get_content_area(LIVES_DIALOG(event_dialog));
 
   table = lives_table_new(rows, 6, FALSE);
-  lives_widget_show(table);
 
   while (event!=NULL) {
     tc=get_event_timecode(event);
@@ -5088,7 +5084,6 @@ LiVESWidget *create_event_list_dialog(weed_plant_t *event_list, weed_timecode_t 
   lives_box_pack_start(LIVES_BOX(top_vbox), scrolledwindow, TRUE, TRUE, widget_opts.packing_height);
 
   hbuttonbox = lives_hbutton_box_new();
-  lives_widget_show(hbuttonbox);
 
   lives_box_pack_start(LIVES_BOX(top_vbox), hbuttonbox, FALSE, TRUE, widget_opts.packing_height);
 
@@ -5096,7 +5091,6 @@ LiVESWidget *create_event_list_dialog(weed_plant_t *event_list, weed_timecode_t 
 
   ok_button = lives_button_new_from_stock(LIVES_STOCK_CLOSE,_("_Close Window"));
 
-  lives_widget_show(ok_button);
   lives_container_add(LIVES_CONTAINER(hbuttonbox), ok_button);
 
   lives_button_box_set_button_width(LIVES_BUTTON_BOX(hbuttonbox), ok_button, DEF_BUTTON_WIDTH*4);

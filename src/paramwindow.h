@@ -18,6 +18,9 @@ typedef struct {
 #define RFX_DEF_NUM_MAX 1000000. ///< default param max when not defined
 
 
+#define GIW_KNOB_WIDTH ((int)(40.*widget_opts.scale))
+#define GIW_KNOB_HEIGHT ((int)(40.*widget_opts.scale))
+
 void on_paramwindow_ok_clicked(LiVESButton *, lives_rfx_t *);
 void on_paramwindow_cancel_clicked(LiVESButton *, lives_rfx_t *);
 void on_paramwindow_cancel_clicked2(LiVESButton *, lives_rfx_t *);

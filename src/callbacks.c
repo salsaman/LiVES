@@ -707,7 +707,7 @@ void on_open_vcd_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   mainw->fx2_val=1;
   mainw->fx3_val=128;
   vcdtrack_dialog = create_cdtrack_dialog(LIVES_POINTER_TO_INT(user_data),NULL);
-  lives_widget_show(vcdtrack_dialog);
+  lives_widget_show_all(vcdtrack_dialog);
 }
 
 
@@ -723,7 +723,7 @@ void on_open_loc_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   }
 
   locw=create_location_dialog(1);
-  lives_widget_show(locw->dialog);
+  lives_widget_show_all(locw->dialog);
 
 }
 
@@ -740,7 +740,7 @@ void on_open_utube_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   }
 
   locw=create_location_dialog(2);
-  lives_widget_show(locw->dialog);
+  lives_widget_show_all(locw->dialog);
 }
 
 
@@ -1441,7 +1441,7 @@ void on_export_proj_activate(LiVESMenuItem *menuitem, livespointer user_data) {
     do {
       // prompt for a set name, advise user to save set
       renamew=create_rename_dialog(5);
-      lives_widget_show(renamew->dialog);
+      lives_widget_show_all(renamew->dialog);
       response=lives_dialog_run(LIVES_DIALOG(renamew->dialog));
       if (response==LIVES_RESPONSE_CANCEL) {
         lives_widget_destroy(renamew->dialog);
@@ -1640,7 +1640,7 @@ void on_quit_activate(LiVESMenuItem *menuitem, livespointer user_data) {
     had_clips=TRUE;
     do {
       legal_set_name=TRUE;
-      lives_widget_show(cdsw->dialog);
+      lives_widget_show_all(cdsw->dialog);
       resp=lives_dialog_run(LIVES_DIALOG(cdsw->dialog));
       if (resp==LIVES_RESPONSE_CANCEL) {
         lives_widget_destroy(cdsw->dialog);
@@ -2724,7 +2724,7 @@ void on_paste_as_new_activate(LiVESMenuItem *menuitem, livespointer user_data) {
 void on_insert_pre_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   insertw = create_insert_dialog();
 
-  lives_widget_show(insertw->insert_dialog);
+  lives_widget_show_all(insertw->insert_dialog);
   mainw->fx1_bool=FALSE;
   mainw->fx1_val=1;
 
@@ -4549,7 +4549,7 @@ boolean on_save_set_activate(LiVESMenuItem *menuitem, livespointer user_data) {
     do {
       // prompt for a set name, advise user to save set
       renamew=create_rename_dialog(2);
-      lives_widget_show(renamew->dialog);
+      lives_widget_show_all(renamew->dialog);
       response=lives_dialog_run(LIVES_DIALOG(renamew->dialog));
       if (response==LIVES_RESPONSE_CANCEL) {
         lives_widget_destroy(renamew->dialog);
@@ -5897,12 +5897,10 @@ void on_fs_preview_clicked(LiVESWidget *widget, livespointer user_data) {
       lives_system(com,FALSE);
       lives_free(com);
 
-#define LIVES_FILE_READ_TIMEOUT  (10 * U_SEC) // 5 sec timeout
-
       do {
         retval=0;
         timeout=FALSE;
-        alarm_handle=lives_alarm_set(LIVES_FILE_READ_TIMEOUT);
+        alarm_handle=lives_alarm_set(LIVES_DEFAULT_TIMEOUT);
 
         while (!((ifile=fopen(info_file,"r")) || (timeout=lives_alarm_get(alarm_handle)))) {
           lives_widget_context_update();
@@ -6040,9 +6038,7 @@ void on_fs_preview_clicked(LiVESWidget *widget, livespointer user_data) {
       timeout=FALSE;
       clear_mainw_msg();
 
-#define LIVES_LONGER_TIMEOUT  (10 * U_SEC) // 10 second timeout
-
-      alarm_handle=lives_alarm_set(LIVES_LONGER_TIMEOUT);
+      alarm_handle=lives_alarm_set(LIVES_DEFAULT_TIMEOUT);
 
       while (!((ifile=fopen(info_file,"r")) || (timeout=lives_alarm_get(alarm_handle)))
              &&mainw->in_fs_preview) {
@@ -6357,7 +6353,7 @@ void open_sel_range_activate(void) {
   // open selection range dialog
 
   LiVESWidget *opensel_dialog = create_opensel_dialog();
-  lives_widget_show(opensel_dialog);
+  lives_widget_show_all(opensel_dialog);
   mainw->fx1_val=0.;
   mainw->fx2_val=1000;
 
@@ -8185,7 +8181,7 @@ void on_load_cdtrack_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   }
 
   cdtrack_dialog = create_cdtrack_dialog(0,NULL);
-  lives_widget_show(cdtrack_dialog);
+  lives_widget_show_all(cdtrack_dialog);
   mainw->fx1_val=1;
 
 }
@@ -8563,7 +8559,7 @@ void popup_lmap_errors(LiVESMenuItem *menuitem, livespointer user_data) {
 
 void on_rename_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   renamew=create_rename_dialog(1);
-  lives_widget_show(renamew->dialog);
+  lives_widget_show_all(renamew->dialog);
 }
 
 
@@ -10013,8 +10009,6 @@ void on_slower_pressed(LiVESButton *button, livespointer user_data) {
   if (mainw->record&&!mainw->record_paused&&!(prefs->rec_opts&REC_FPS)) return;
   if (sfile->next_event!=NULL) return;
 
-#define PB_CHANGE_RATE .005
-
   change*=PB_CHANGE_RATE*sfile->pb_fps;
 
   if (sfile->pb_fps==0.) return;
@@ -10080,24 +10074,26 @@ void on_faster_pressed(LiVESButton *button, livespointer user_data) {
 
 
 
-//TODO - make pref
-#define CHANGE_SPEED (cfile->pb_fps*(double)KEY_RPT_INTERVAL/100.)
 void on_back_pressed(LiVESButton *button, livespointer user_data) {
+  double change_speed=cfile->pb_fps*(double)KEY_RPT_INTERVAL*PB_SCRATCH_VALUE;
+
   if (mainw->playing_file==-1||mainw->internal_messaging||(mainw->is_processing&&cfile->is_loaded)) return;
   if (mainw->record&&!(prefs->rec_opts&REC_FRAMES)) return;
   if (cfile->next_event!=NULL) return;
 
-  mainw->deltaticks-=(int64_t)(CHANGE_SPEED*3*mainw->period);
+  mainw->deltaticks-=(int64_t)(change_speed*3.*mainw->period);
   mainw->scratch=SCRATCH_BACK;
 
 }
 
 void on_forward_pressed(LiVESButton *button, livespointer user_data) {
+  double change_speed=cfile->pb_fps*(double)KEY_RPT_INTERVAL*PB_SCRATCH_VALUE;
+
   if (mainw->playing_file==-1||mainw->internal_messaging||(mainw->is_processing&&cfile->is_loaded)) return;
   if (mainw->record&&!(prefs->rec_opts&REC_FRAMES)) return;
   if (cfile->next_event!=NULL) return;
 
-  mainw->deltaticks+=(int64_t)(CHANGE_SPEED*mainw->period);
+  mainw->deltaticks+=(int64_t)(change_speed*mainw->period);
   mainw->scratch=SCRATCH_FWD;
 
 }
@@ -11321,7 +11317,7 @@ void on_recaudsel_activate(LiVESMenuItem *menuitem, livespointer user_data) {
     mainw->fx4_val=mainw->endian;
     resaudw=create_resaudw(6,NULL,NULL);
   }
-  lives_widget_show(resaudw->dialog);
+  lives_widget_show_all(resaudw->dialog);
 }
 
 

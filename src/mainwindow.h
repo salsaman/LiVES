@@ -33,6 +33,18 @@
 #define U_SEC_RATIO (U_SECL/1000000) ///< how many U_SECs (ticks) in a microsecond [default 100]
 
 
+#define LIVES_SHORTEST_TIMEOUT  (2. * U_SEC) // 2 sec timeout
+#define LIVES_SHORT_TIMEOUT  (5. * U_SEC) // 5 sec timeout
+#define LIVES_DEFAULT_TIMEOUT  (10. * U_SEC) // 10 sec timeout
+#define LIVES_LONGER_TIMEOUT  (20. * U_SEC) // 20 sec timeout
+#define LIVES_LONGEST_TIMEOUT  (30. * U_SEC) // 30 sec timeout
+
+
+/// rate to change pb fps when faster/slower pressed (TODO: make pref)
+#define PB_CHANGE_RATE .005
+
+/// forward/back scratch value (TODO: make pref)
+#define PB_SCRATCH_VALUE 0.01
 
 /////// GUI related constants /////////////////////////////////////////////////////////
 
@@ -198,8 +210,7 @@ typedef struct {
 #define STYLE_2 1<<1 ///< colour the spinbuttons on the front page if set
 #define STYLE_3 1<<2 ///< style is lightish - allow themeing of widgets with dark text, otherwise use menu bg
 #define STYLE_4 1<<3 ///< coloured bg for poly window in mt
-#define STYLE_5 1<<4 ///< drop down menu text col. in mt
-#define STYLE_6 1<<4 ///< separator col. in mt
+#define STYLE_5 1<<4 ///< separator col. in mt
 
   LiVESWidgetColor white;
   LiVESWidgetColor black;

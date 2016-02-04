@@ -4553,7 +4553,7 @@ static weed_plant_t *render_subs_from_file(lives_clip_t *sfile, double xtime, we
 
   //char *sfont=mainw->font_list[prefs->sub_font];
   const char *sfont="Sans";
-  lives_colRGBA32_t col_white,col_black_a;
+  lives_colRGBA64_t col_white,col_black_a;
 
   int error,size;
 
@@ -5764,7 +5764,7 @@ void load_frame_image(int frame) {
 #ifdef ENABLE_JACK
     if (!mainw->foreign&&mainw->jackd!=NULL&&prefs->audio_player==AUD_PLAYER_JACK) {
       boolean timeout;
-      int alarm_handle=lives_alarm_set(LIVES_ACONNECT_TIMEOUT);
+      int alarm_handle=lives_alarm_set(LIVES_DEFAULT_TIMEOUT);
       while (!(timeout=lives_alarm_get(alarm_handle))&&jack_get_msgq(mainw->jackd)!=NULL) {
         sched_yield(); // wait for seek
       }
@@ -5776,7 +5776,7 @@ void load_frame_image(int frame) {
 #ifdef HAVE_PULSE_AUDIO
     if (!mainw->foreign&&mainw->pulsed!=NULL&&prefs->audio_player==AUD_PLAYER_PULSE) {
       boolean timeout;
-      int alarm_handle=lives_alarm_set(LIVES_ACONNECT_TIMEOUT);
+      int alarm_handle=lives_alarm_set(LIVES_DEFAULT_TIMEOUT);
       while (!(timeout=lives_alarm_get(alarm_handle))&&pulse_get_msgq(mainw->pulsed)!=NULL) {
         sched_yield(); // wait for seek
       }
@@ -7006,7 +7006,7 @@ void load_frame_image(int frame) {
 #ifdef ENABLE_JACK
       if (mainw->jackd!=NULL) {
         boolean timeout;
-        int alarm_handle=lives_alarm_set(LIVES_ACONNECT_TIMEOUT);
+        int alarm_handle=lives_alarm_set(LIVES_DEFAULT_TIMEOUT);
         if (!activate) mainw->jackd->in_use=FALSE;
 
         if (mainw->jackd->playing_file==new_file) return;
@@ -7023,7 +7023,7 @@ void load_frame_image(int frame) {
           jack_message.next=NULL;
           mainw->jackd->msgq=&jack_message;
 
-          lives_alarm_set(LIVES_ACONNECT_TIMEOUT);
+          lives_alarm_set(LIVES_DEFAULT_TIMEOUT);
           while (!(timeout=lives_alarm_get(alarm_handle))&&jack_get_msgq(mainw->jackd)!=NULL) {
             sched_yield(); // wait for seek
           }
@@ -7107,7 +7107,7 @@ void load_frame_image(int frame) {
 
         if (mainw->pulsed->playing_file==new_file) return;
 
-        alarm_handle=lives_alarm_set(LIVES_ACONNECT_TIMEOUT);
+        alarm_handle=lives_alarm_set(LIVES_DEFAULT_TIMEOUT);
 
         while (!(timeout=lives_alarm_get(alarm_handle))&&pulse_get_msgq(mainw->pulsed)!=NULL) {
           sched_yield(); // wait for seek
@@ -7121,7 +7121,7 @@ void load_frame_image(int frame) {
           pulse_message.next=NULL;
           mainw->pulsed->msgq=&pulse_message;
 
-          lives_alarm_set(LIVES_ACONNECT_TIMEOUT);
+          lives_alarm_set(LIVES_DEFAULT_TIMEOUT);
           while (!(timeout=lives_alarm_get(alarm_handle))&&pulse_get_msgq(mainw->pulsed)!=NULL) {
             sched_yield(); // wait for seek
           }

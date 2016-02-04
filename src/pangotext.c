@@ -136,7 +136,7 @@ static int font_cmp(const void *p1, const void *p2) {
 
 
 LingoLayout *render_text_to_cr(LiVESWidget *widget, lives_painter_t *cr, const char *text, const char *fontname,
-                               double size, lives_text_mode_t mode, lives_colRGBA32_t *fg, lives_colRGBA32_t *bg,
+                               double size, lives_text_mode_t mode, lives_colRGBA64_t *fg, lives_colRGBA64_t *bg,
                                boolean center, boolean rising, double top, int offs_x, int width, int height) {
 
   // fontname may be eg. "Sans"
@@ -236,7 +236,7 @@ LingoLayout *render_text_to_cr(LiVESWidget *widget, lives_painter_t *cr, const c
 
 
 weed_plant_t *render_text_to_layer(weed_plant_t *layer, const char *text, const char *fontname,
-                                   double size, lives_text_mode_t mode, lives_colRGBA32_t *fg_col, lives_colRGBA32_t *bg_col,
+                                   double size, lives_text_mode_t mode, lives_colRGBA64_t *fg_col, lives_colRGBA64_t *bg_col,
                                    boolean center, boolean rising, double top) {
   // render text to layer and return a new layer, which may have a new "rowstrides", "width" and/or "current_palette"
   // original layer is freed in the process and should not be used

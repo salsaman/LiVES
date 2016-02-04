@@ -186,9 +186,7 @@ boolean read_file_details(const char *file_name, boolean is_audio) {
     timeout=FALSE;
     clear_mainw_msg();
 
-#define LIVES_LONGER_TIMEOUT  (30 * U_SEC) // 30 second timeout
-
-    alarm_handle=lives_alarm_set(LIVES_LONGER_TIMEOUT);
+    alarm_handle=lives_alarm_set(LIVES_LONGEST_TIMEOUT);
 
     while (!((infofile=fopen(cfile->info_file,"r")) || (timeout=lives_alarm_get(alarm_handle)))) {
       lives_widget_context_update();
@@ -1117,9 +1115,7 @@ boolean get_handle_from_info_file(int index) {
     timeout=FALSE;
     clear_mainw_msg();
 
-#define LIVES_MEDIUM_TIMEOUT  (10 * U_SEC) // 60 sec timeout
-
-    alarm_handle=lives_alarm_set(LIVES_MEDIUM_TIMEOUT);
+    alarm_handle=lives_alarm_set(LIVES_DEFAULT_TIMEOUT);
 
     while (!((infofile=fopen(mainw->first_info_file,"r")) || (timeout=lives_alarm_get(alarm_handle)))) {
       lives_usleep(prefs->sleep_time);
@@ -2929,7 +2925,7 @@ void play_file(void) {
     // tell jack client to close audio file
     if (mainw->jackd!=NULL&&mainw->jackd->playing_file>0) {
       boolean timeout;
-      int alarm_handle=lives_alarm_set(LIVES_ACONNECT_TIMEOUT);
+      int alarm_handle=lives_alarm_set(LIVES_DEFAULT_TIMEOUT);
       while (!(timeout=lives_alarm_get(alarm_handle))&&jack_get_msgq(mainw->jackd)!=NULL) {
         sched_yield(); // wait for seek
       }
@@ -2958,7 +2954,7 @@ void play_file(void) {
       // tell pulse client to close audio file
       if (mainw->pulsed!=NULL&&(mainw->pulsed->playing_file>0||mainw->pulsed->fd>0)) {
         boolean timeout;
-        int alarm_handle=lives_alarm_set(LIVES_ACONNECT_TIMEOUT);
+        int alarm_handle=lives_alarm_set(LIVES_DEFAULT_TIMEOUT);
         while (!(timeout=lives_alarm_get(alarm_handle))&&pulse_get_msgq(mainw->pulsed)!=NULL) {
           sched_yield(); // wait for seek
         }
@@ -3296,7 +3292,7 @@ void play_file(void) {
 #ifdef ENABLE_JACK
   if (audio_player==AUD_PLAYER_JACK&&mainw->jackd!=NULL) {
     boolean timeout;
-    int alarm_handle=lives_alarm_set(LIVES_ACONNECT_TIMEOUT);
+    int alarm_handle=lives_alarm_set(LIVES_DEFAULT_TIMEOUT);
     while (!(timeout=lives_alarm_get(alarm_handle))&&jack_get_msgq(mainw->jackd)!=NULL) {
       sched_yield(); // wait for seek
     }
@@ -3317,7 +3313,7 @@ void play_file(void) {
 #ifdef HAVE_PULSE_AUDIO
   if (audio_player==AUD_PLAYER_PULSE&&mainw->pulsed!=NULL) {
     boolean timeout;
-    int alarm_handle=lives_alarm_set(LIVES_ACONNECT_TIMEOUT);
+    int alarm_handle=lives_alarm_set(LIVES_DEFAULT_TIMEOUT);
     while (!(timeout=lives_alarm_get(alarm_handle))&&pulse_get_msgq(mainw->pulsed)!=NULL) {
       sched_yield(); // wait for seek
     }
@@ -4204,9 +4200,7 @@ boolean read_headers(const char *file_name) {
           timeout=FALSE;
           memset(buff,0,1);
 
-#define LIVES_RESTORE_TIMEOUT  (30 * U_SEC) // 30 sec
-
-          alarm_handle=lives_alarm_set(LIVES_RESTORE_TIMEOUT);
+          alarm_handle=lives_alarm_set(LIVES_LONGEST_TIMEOUT);
 
           while (!((infofile=fopen(cfile->info_file,"r")) || (timeout=lives_alarm_get(alarm_handle)))) {
             lives_usleep(prefs->sleep_time);
@@ -4452,13 +4446,11 @@ boolean read_headers(const char *file_name) {
     return FALSE;
   }
 
-#define LIVES_RESTORE_TIMEOUT  (30 * U_SEC) // 120 sec timeout
-
   do {
     retval2=0;
     timeout=FALSE;
 
-    alarm_handle=lives_alarm_set(LIVES_RESTORE_TIMEOUT);
+    alarm_handle=lives_alarm_set(LIVES_LONGEST_TIMEOUT);
 
     while (!((infofile=fopen(cfile->info_file,"r")) || (timeout=lives_alarm_get(alarm_handle)))) {
       lives_usleep(prefs->sleep_time);

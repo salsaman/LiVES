@@ -44,13 +44,9 @@ void *notify_socket;
 
 static lives_osc *livesOSC=NULL;
 
-#define CONSTLEN 8
-
-static char constval[CONSTLEN];
+static char constval[OSC_CONSTLEN];
 
 static boolean via_shortcut=FALSE;
-
-#define OSC_STRING_SIZE 256
 
 #define FX_MAX FX_KEYS_MAX_VIRTUAL-1
 
@@ -220,7 +216,7 @@ void lives_osc_close_notify_socket(void) {
 
 
 static LIVES_INLINE const char *get_value_of(const int what) {
-  snprintf(constval,CONSTLEN,"%d",what);
+  snprintf(constval,OSC_CONSTLEN,"%d",what);
   return (const char *)&constval;
 }
 

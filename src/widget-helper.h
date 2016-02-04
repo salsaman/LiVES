@@ -92,7 +92,7 @@ lives_painter_format_t lives_painter_image_surface_get_format(lives_painter_surf
 
 boolean widget_helper_init(void);
 
-boolean widget_color_to_lives_rgba(lives_colRGBA32_t *, LiVESWidgetColor *);
+boolean widget_color_to_lives_rgba(lives_colRGBA64_t *, LiVESWidgetColor *);
 
 
 // object funcs.
@@ -737,6 +737,11 @@ LiVESWidget *lives_standard_expander_new(const char *label, boolean use_mnemonic
 LiVESWidget *lives_volume_button_new(LiVESOrientation orientation, LiVESAdjustment *, double volume);
 
 LiVESWidget *lives_standard_file_button_new(boolean is_dir, const char *def_dir);
+
+LiVESWidget *lives_standard_color_button_new(LiVESBox *parent, char *name, boolean use_mnemonic, boolean use_alpha, lives_colRGBA64_t *rgba,
+    \
+    LiVESWidget **sb_red, LiVESWidget **sb_green, LiVESWidget **sb_blue, LiVESWidget **sb_alpha);
+
 
 LiVESXCursor *lives_cursor_new_from_pixbuf(LiVESXDisplay *, LiVESPixbuf *, int x, int y);
 

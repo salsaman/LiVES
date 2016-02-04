@@ -499,11 +499,9 @@ void load_rfx_preview(lives_rfx_t *rfx) {
   mainw->write_failed=FALSE;
 
 
-#define LIVES_RFX_TIMER 10*U_SEC
-
   if (cfile->clip_type==CLIP_TYPE_FILE&&vend<=cfile->end) {
     // pull some frames for 10 seconds
-    alarm_handle=lives_alarm_set(LIVES_RFX_TIMER);
+    alarm_handle=lives_alarm_set(LIVES_DEFAULT_TIMEOUT);
     do {
       lives_widget_context_update();
       if (is_virtual_frame(mainw->current_file,vend)) {

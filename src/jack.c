@@ -1224,10 +1224,6 @@ static void jack_error_func(const char *desc) {
 }
 
 
-// wait 5 seconds to startup
-#define JACK_START_WAIT 500000000
-
-
 // create a new client and connect it to jack, connect the ports
 int jack_open_device(jack_driver_t *jackd) {
   const char *client_name="LiVES_audio_out";
@@ -1250,7 +1246,7 @@ int jack_open_device(jack_driver_t *jackd) {
 
   stime=lives_get_current_ticks();
 
-  while (jackd->client==NULL&&ntime<JACK_START_WAIT) {
+  while (jackd->client==NULL&&ntime<LIVES_SHORT_TIMEOUT) {
     jackd->client = jack_client_open(client_name, options, &status, server_name);
 
     lives_usleep(prefs->sleep_time);
@@ -1708,7 +1704,7 @@ uint64_t lives_jack_get_time(jack_driver_t *jackd, boolean absolute) {
 
   if (msg!=NULL&&msg->command==ASERVER_CMD_FILE_SEEK) {
     boolean timeout;
-    int alarm_handle=lives_alarm_set(LIVES_ACONNECT_TIMEOUT);
+    int alarm_handle=lives_alarm_set(LIVES_DEFAULT_TIMEOUT);
     while (!(timeout=lives_alarm_get(alarm_handle))&&jack_get_msgq(jackd)!=NULL) {
       sched_yield(); // wait for seek
     }
@@ -1738,7 +1734,7 @@ boolean jack_audio_seek_frame(jack_driver_t *jackd, int frame) {
 
   volatile aserver_message_t *jmsg;
   int64_t seekstart;
-  int alarm_handle=lives_alarm_set(LIVES_ACONNECT_TIMEOUT);
+  int alarm_handle=lives_alarm_set(LIVES_DEFAULT_TIMEOUT);
   boolean timeout;
 
   if (alarm_handle==-1) return FALSE;
@@ -1770,7 +1766,7 @@ int64_t jack_audio_seek_bytes(jack_driver_t *jackd, int64_t bytes) {
   int64_t seekstart;
 
   boolean timeout;
-  int alarm_handle=lives_alarm_set(LIVES_ACONNECT_TIMEOUT);
+  int alarm_handle=lives_alarm_set(LIVES_DEFAULT_TIMEOUT);
 
   seek_err=FALSE;
 
@@ -1866,7 +1862,7 @@ void jack_aud_pb_ready(int fileno) {
         mainw->jackd->reverse_endian=TRUE;
       else mainw->jackd->reverse_endian=FALSE;
 
-      alarm_handle=lives_alarm_set(LIVES_ACONNECT_TIMEOUT);
+      alarm_handle=lives_alarm_set(LIVES_DEFAULT_TIMEOUT);
       while (!(timeout=lives_alarm_get(alarm_handle))&&jack_get_msgq(mainw->jackd)!=NULL) {
         sched_yield(); // wait for seek
       }

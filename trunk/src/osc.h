@@ -50,6 +50,9 @@ extern "C" {
 }
 #endif
 
+#define OSC_CONSTLEN 8
+#define OSC_STRING_SIZE 256
+
 typedef struct osc_arg_t {
   int a;
   int b;

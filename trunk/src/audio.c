@@ -26,8 +26,6 @@
 #include "effects.h"
 #include "support.h"
 
-// keep first 16 audio_in filesysten handles open - multitrack only
-#define NSTOREDFDS 16
 static char *storedfnames[NSTOREDFDS];
 static int storedfds[NSTOREDFDS];
 static boolean storedfdsset=FALSE;
@@ -3095,7 +3093,7 @@ boolean start_audio_stream(void) {
 
   astream_pgid=lives_fork(com);
 
-  alarm_handle=lives_alarm_set(LIVES_ACONNECT_TIMEOUT);
+  alarm_handle=lives_alarm_set(LIVES_DEFAULT_TIMEOUT);
 
   do {
     // wait for other thread to create stream (or timeout)

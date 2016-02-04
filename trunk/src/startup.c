@@ -1,6 +1,6 @@
 // startup.c
 // LiVES
-// (c) G. Finch 2010 - 2015 <salsaman@gmail.com>
+// (c) G. Finch 2010 - 2016 <salsaman@gmail.com>
 // released under the GNU GPL 3 or later
 // see file ../COPYING for licensing details
 
@@ -1000,7 +1000,6 @@ void do_startup_interface_query(void) {
 
   okbutton = lives_button_new_from_stock(LIVES_STOCK_GO_FORWARD,_("_Finish"));
 
-  lives_widget_show(okbutton);
   lives_dialog_add_action_widget(LIVES_DIALOG(dialog), okbutton, LIVES_RESPONSE_OK);
   lives_widget_set_can_focus_and_default(okbutton);
   lives_widget_grab_default(okbutton);

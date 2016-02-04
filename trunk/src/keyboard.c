@@ -112,9 +112,6 @@ boolean ext_triggers_poll(livespointer data) {
 }
 
 
-#define LIVES_XEVENT_TYPE_KEYPRESS 2
-#define LIVES_XEVENT_TYPE_KEYRELEASE 3
-
 #if defined HAVE_X11 || defined IS_MINGW
 LiVESFilterReturn filter_func(LiVESXXEvent *xevent, LiVESXEvent *event, livespointer data) {
   // filter events at X11 level and act on key press/release

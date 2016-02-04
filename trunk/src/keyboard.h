@@ -3,6 +3,10 @@
 // (c) G. Finch 2004 - 2015 <salsaman@gmail.com>
 // see file ../COPYING for licensing details
 
+
+#define LIVES_XEVENT_TYPE_KEYPRESS 2
+#define LIVES_XEVENT_TYPE_KEYRELEASE 3
+
 // repeating keys
 uint16_t cached_key;
 uint16_t cached_mod;

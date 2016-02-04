@@ -104,8 +104,6 @@ static void add_xlays_widget(LiVESBox *box) {
     xlist=xlist->next;
   }
 
-
-  lives_widget_show_all(expander);
 }
 
 
@@ -115,13 +113,10 @@ static void add_xlays_widget(LiVESBox *box) {
 
 void add_warn_check(LiVESBox *box, int warn_mask_number) {
   LiVESWidget *checkbutton;
-  LiVESWidget *hbox=lives_hbox_new(FALSE, 0);
 
   checkbutton=lives_standard_check_button_new(
                 _("Do _not show this warning any more\n(can be turned back on from Preferences/Warnings)"),
                 TRUE,LIVES_BOX(box),NULL);
-
-  lives_widget_show_all(hbox);
 
   lives_signal_connect(LIVES_GUI_OBJECT(checkbutton), LIVES_WIDGET_TOGGLED_SIGNAL,
                        LIVES_GUI_CALLBACK(on_warn_mask_toggled),
@@ -137,7 +132,6 @@ static void add_clear_ds_button(LiVESDialog *dialog) {
                        LIVES_GUI_CALLBACK(on_cleardisk_activate),
                        (livespointer)button);
 
-  lives_widget_show(button);
   lives_dialog_add_action_widget(dialog, button, LIVES_RESPONSE_RETRY);
 
 }
@@ -150,8 +144,6 @@ static void add_clear_ds_adv(LiVESBox *box) {
 
   lives_box_pack_start(LIVES_BOX(hbox), button, FALSE, FALSE, widget_opts.packing_width*2);
   lives_box_pack_start(box, hbox, FALSE, FALSE, widget_opts.packing_height);
-
-  lives_widget_show_all(hbox);
 
   lives_signal_connect(LIVES_GUI_OBJECT(button), LIVES_WIDGET_CLICKED_SIGNAL,
                        LIVES_GUI_CALLBACK(on_cleardisk_advanced_clicked),
@@ -1590,12 +1582,11 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const char *tex
     if (mytext!=NULL) lives_free(mytext);
 
     lives_progress_bar_set_pulse_step(LIVES_PROGRESS_BAR(cfile->proc_ptr->progressbar),.01);
-    if (mainw->show_procd) lives_widget_show(cfile->proc_ptr->processing);
 
     cfile->proc_ptr->frames_done=0;
 
-    if (cancellable) {
-      lives_widget_show(cfile->proc_ptr->cancel_button);
+    if (!cancellable) {
+      lives_widget_hide(cfile->proc_ptr->cancel_button);
     }
 
     if (!mainw->interactive) {
@@ -2086,6 +2077,7 @@ boolean do_auto_dialog(const char *text, int type) {
   mainw->error=FALSE;
 
   proc_ptr=create_processing(mytext);
+
   if (mytext!=NULL) lives_free(mytext);
   lives_widget_hide(proc_ptr->stop_button);
   lives_window_set_modal(LIVES_WINDOW(proc_ptr->processing), TRUE);
@@ -2097,7 +2089,6 @@ boolean do_auto_dialog(const char *text, int type) {
   }
 
   lives_progress_bar_set_pulse_step(LIVES_PROGRESS_BAR(proc_ptr->progressbar),.01);
-  lives_widget_show(proc_ptr->processing);
 
   lives_set_cursor_style(LIVES_CURSOR_BUSY,NULL);
   lives_set_cursor_style(LIVES_CURSOR_BUSY,proc_ptr->processing);
@@ -2791,10 +2782,7 @@ static void create_threaded_dialog(char *text, boolean has_cancel) {
 
   dialog_vbox = lives_dialog_get_content_area(LIVES_DIALOG(procw->processing));
 
-  lives_widget_show(dialog_vbox);
-
   vbox = lives_vbox_new(FALSE, 0);
-  lives_widget_show(vbox);
   lives_box_pack_start(LIVES_BOX(dialog_vbox), vbox, TRUE, TRUE, 0);
 
   lives_snprintf(tmp_label,256,"%s...\n",text);
@@ -2825,7 +2813,7 @@ static void create_threaded_dialog(char *text, boolean has_cancel) {
 
     if (mainw->current_file>-1&&cfile!=NULL&&cfile->opening_only_audio) {
       LiVESWidget *enoughbutton = lives_button_new_with_mnemonic(_("_Enough"));
-      lives_widget_show(enoughbutton);
+
       lives_dialog_add_action_widget(LIVES_DIALOG(procw->processing), enoughbutton, LIVES_RESPONSE_CANCEL);
       lives_widget_set_can_focus_and_default(enoughbutton);
 

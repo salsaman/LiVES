@@ -19,8 +19,8 @@ typedef enum {
 
 // for future use
 typedef struct {
-  lives_colRGB24_t fg;
-  lives_colRGB24_t bg;
+  lives_colRGB48_t fg;
+  lives_colRGB48_t bg;
 } lives_subtitle_style_t;
 
 
@@ -57,11 +57,11 @@ typedef enum {
 char **get_font_list(void);
 
 weed_plant_t *render_text_to_layer(weed_plant_t *layer, const char *text, const char *fontname,
-                                   double size, lives_text_mode_t mode, lives_colRGBA32_t *fg_col,
-                                   lives_colRGBA32_t *bg_col, boolean center, boolean rising, double top);
+                                   double size, lives_text_mode_t mode, lives_colRGBA64_t *fg_col,
+                                   lives_colRGBA64_t *bg_col, boolean center, boolean rising, double top);
 
 LingoLayout *render_text_to_cr(LiVESWidget *widget, lives_painter_t *, const char *text, const char *fontname,
-                               double size, lives_text_mode_t mode, lives_colRGBA32_t *fg_col, lives_colRGBA32_t *bg_col,
+                               double size, lives_text_mode_t mode, lives_colRGBA64_t *fg_col, lives_colRGBA64_t *bg_col,
                                boolean center, boolean rising, double top, int start, int width, int height);
 
 #endif

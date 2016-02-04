@@ -1,6 +1,6 @@
 // utils.c
 // LiVES
-// (c) G. Finch 2003 - 2015 <salsaman@gmail.com>
+// (c) G. Finch 2003 - 2016 <salsaman@gmail.com>
 // released under the GNU GPL 3 or later
 // see file ../COPYING or www.gnu.org for licensing details
 
@@ -3589,6 +3589,7 @@ void switch_aud_to_mplayer2(boolean set_in_prefs) {
 
 }
 
+
 boolean prepare_to_play_foreign(void) {
   // here we are going to 'play' a captured external window
 
@@ -3852,8 +3853,7 @@ void get_menu_text(LiVESWidget *menuitem, char *text) {
   lives_snprintf(text,255,"%s",lives_label_get_text(LIVES_LABEL(label)));
 }
 
-void
-get_menu_text_long(LiVESWidget *menuitem, char *text) {
+void get_menu_text_long(LiVESWidget *menuitem, char *text) {
   LiVESWidget *label=lives_bin_get_child(LIVES_BIN(menuitem));
   lives_snprintf(text,32768,"%s",lives_label_get_text(LIVES_LABEL(label)));
 }
@@ -4606,7 +4606,7 @@ boolean get_clip_value(int which, lives_clip_details_t what, void *retval, size_
       timeout=FALSE;
       mainw->read_failed=FALSE;
 
-      alarm_handle=lives_alarm_set(LIVES_PREFS_TIMEOUT);
+      alarm_handle=lives_alarm_set(LIVES_DEFAULT_TIMEOUT);
 
       do {
         if (!((valfile=fopen(vfile,"r")) || (timeout=lives_alarm_get(alarm_handle)))) {

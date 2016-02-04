@@ -135,9 +135,6 @@ struct _dvgrabw *create_camwindow(s_cam *cam, int type) {
   lives_signal_connect(dvgrabw->grab, LIVES_WIDGET_CLICKED_SIGNAL,LIVES_GUI_CALLBACK(on_camgrab_clicked),(livespointer)cam);
   lives_signal_connect(dvgrabw->quit, LIVES_WIDGET_CLICKED_SIGNAL,LIVES_GUI_CALLBACK(on_camquit_clicked),(livespointer)cam);
 
-
-  lives_widget_show_all(dvgrabw->dialog);
-
   return dvgrabw;
 }
 

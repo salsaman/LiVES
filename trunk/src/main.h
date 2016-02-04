@@ -281,14 +281,14 @@ typedef struct {
   uint16_t red;
   uint16_t green;
   uint16_t blue;
-} lives_colRGB24_t;
+} lives_colRGB48_t;
 
 typedef struct {
   uint16_t red;
   uint16_t green;
   uint16_t blue;
   uint16_t alpha;
-} lives_colRGBA32_t;
+} lives_colRGBA64_t;
 
 
 #include "widget-helper.h"

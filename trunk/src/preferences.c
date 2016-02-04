@@ -81,7 +81,7 @@ void get_pref(const char *key, char *val, int maxlen) {
 
   do {
     retval=0;
-    alarm_handle=lives_alarm_set(LIVES_PREFS_TIMEOUT);
+    alarm_handle=lives_alarm_set(LIVES_DEFAULT_TIMEOUT);
     timeout=FALSE;
     mainw->read_failed=FALSE;
 
@@ -186,7 +186,7 @@ void get_pref_default(const char *key, char *val, int maxlen) {
     timeout=FALSE;
     mainw->read_failed=FALSE;
 
-    alarm_handle=lives_alarm_set(LIVES_PREFS_TIMEOUT);
+    alarm_handle=lives_alarm_set(LIVES_DEFAULT_TIMEOUT);
 
     do {
       if (!((valfile=fopen(vfile,"r")) || (timeout=lives_alarm_get(alarm_handle)))) {
@@ -2064,6 +2064,8 @@ _prefsw *create_prefs_dialog(void) {
   LiVESWidget *advbutton;
   LiVESWidget *rbutton;
 
+  LiVESWidget *cbutton;
+
 #ifdef ENABLE_OSC
 #ifdef OMC_MIDI_IMPL
   LiVESWidget *raw_midi_button;
@@ -2099,6 +2101,8 @@ _prefsw *create_prefs_dialog(void) {
   LiVESList *audp = NULL;
   LiVESList *encoders = NULL;
   LiVESList *vid_playback_plugins = NULL;
+
+  lives_colRGBA64_t rgba;
 
   char **array;
   char *tmp,*tmp2,*tmp3;
@@ -3868,12 +3872,74 @@ _prefsw *create_prefs_dialog(void) {
   lives_list_free_strings(themes);
   lives_list_free(themes);
 
+  //
+  frame = lives_frame_new(NULL);
+  label = lives_standard_label_new(_("Current Theme Details"));
+  lives_frame_set_label_widget(LIVES_FRAME(frame), label);
+
+  lives_box_pack_start(LIVES_BOX(prefsw->vbox_right_themes), frame, TRUE, TRUE, widget_opts.packing_height);
+
+  vbox=lives_vbox_new(FALSE, 0);
+  lives_container_add(LIVES_CONTAINER(frame), vbox);
+  lives_container_set_border_width(LIVES_CONTAINER(vbox), widget_opts.border_width);
+
+  ///////////////////
+  hbox = lives_hbox_new(FALSE, 0);
+  lives_box_pack_start(LIVES_BOX(vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
+  widget_color_to_lives_rgba(&rgba,&palette->normal_fore);
+  cbutton = lives_standard_color_button_new(LIVES_BOX(hbox),_("        _Foreground Color"),TRUE,FALSE,&rgba,NULL,NULL,NULL,NULL);
+
+  hbox = lives_hbox_new(FALSE, 0);
+  lives_box_pack_start(LIVES_BOX(vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
+  widget_color_to_lives_rgba(&rgba,&palette->normal_back);
+  cbutton = lives_standard_color_button_new(LIVES_BOX(hbox),_("        _Background Color"),TRUE,FALSE,&rgba,NULL,NULL,NULL,NULL);
+
+  hbox = lives_hbox_new(FALSE, 0);
+  lives_box_pack_start(LIVES_BOX(vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
+  widget_color_to_lives_rgba(&rgba,&palette->menu_and_bars_fore);
+  cbutton = lives_standard_color_button_new(LIVES_BOX(hbox),_("_Alt Foreground Color"),TRUE,FALSE,&rgba,NULL,NULL,NULL,NULL);
+
+  hbox = lives_hbox_new(FALSE, 0);
+  lives_box_pack_start(LIVES_BOX(vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
+  widget_color_to_lives_rgba(&rgba,&palette->menu_and_bars);
+  cbutton = lives_standard_color_button_new(LIVES_BOX(hbox),_("_Alt Background Color"),TRUE,FALSE,&rgba,NULL,NULL,NULL,NULL);
+
+  hbox = lives_hbox_new(FALSE, 0);
+  lives_box_pack_start(LIVES_BOX(vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
+  widget_color_to_lives_rgba(&rgba,&palette->info_text);
+  cbutton = lives_standard_color_button_new(LIVES_BOX(hbox),_("              Info _Text Color"),TRUE,FALSE,&rgba,NULL,NULL,NULL,NULL);
+
+  hbox = lives_hbox_new(FALSE, 0);
+  lives_box_pack_start(LIVES_BOX(vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
+  widget_color_to_lives_rgba(&rgba,&palette->info_base);
+  cbutton = lives_standard_color_button_new(LIVES_BOX(hbox),_("              Info _Base Color"),TRUE,FALSE,&rgba,NULL,NULL,NULL,NULL);
+
+  hbox = lives_hbox_new(FALSE, 0);
+  lives_box_pack_start(LIVES_BOX(vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
+  cbutton=lives_standard_check_button_new(_("Theme is _light"),TRUE,LIVES_BOX(hbox),NULL); // STYLE_3
+
+  hbox = lives_hbox_new(FALSE, 0);
+  lives_box_pack_start(LIVES_BOX(vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
+  cbutton=lives_standard_check_button_new(_("Color the start/end frame spinbuttons"),FALSE,LIVES_BOX(hbox),NULL); // STYLE_2
+
+  hbox = lives_hbox_new(FALSE, 0);
+  lives_box_pack_start(LIVES_BOX(vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
+  cbutton=lives_standard_check_button_new(_("Color the polymorph window background in multitrack"),FALSE,LIVES_BOX(hbox),NULL); // STYLE_4
+
+  add_fill_to_box(LIVES_BOX(hbox));
+
+  cbutton=lives_standard_check_button_new(_("Color the horizontal separators in multitrack"),FALSE,LIVES_BOX(hbox),NULL); // STYLE_5
+
+
+
+
   icon = lives_build_filename(prefs->prefix_dir, ICON_DIR, "pref_themes.png", NULL);
   pixbuf_themes = lives_pixbuf_new_from_file(icon, NULL);
   lives_free(icon);
 
-  prefs_add_to_list(prefsw->prefs_list, pixbuf_themes, _("Themes"), LIST_ENTRY_THEMES);
+  prefs_add_to_list(prefsw->prefs_list, pixbuf_themes, _("Themes/Colors"), LIST_ENTRY_THEMES);
   lives_container_add(LIVES_CONTAINER(dialog_table), prefsw->scrollw_right_themes);
+
 
   // --------------------------,
   // streaming/networking      |

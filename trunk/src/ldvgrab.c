@@ -335,11 +335,11 @@ void on_open_fw_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   }
 
   dvgrabw = create_camwindow(cam,type);
+  lives_widget_show_all(dvgrabw->dialog);
   dvgrabw->cursor=NULL;
   cam->format=type;
   cam->grabbed_clips=FALSE;
   cam->pgid=0;
-  lives_widget_show(dvgrabw->dialog);
   dvgrabw->cam=cam;
 }
 

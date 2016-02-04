@@ -89,9 +89,9 @@ static int renumbered_clips[MAX_FILES+1];
 static double lfps[MAX_FILES+1]; ///< table of layout fps
 static void **pchain; ///< param chain for currently being edited filter
 
-static lives_colRGB24_t audcol;
-static lives_colRGB24_t vidcol;
-static lives_colRGB24_t fxcol;
+static lives_colRGB48_t audcol;
+static lives_colRGB48_t vidcol;
+static lives_colRGB48_t fxcol;
 
 static int xachans,xarate,xasamps,xse;
 static boolean ptaud;
@@ -1180,7 +1180,7 @@ static void draw_block(lives_mt *mt, lives_painter_t *cairo,
       if (needs_text) {
         const char *sfont="Sans";
         char *fname=lives_path_get_basename(mainw->files[filenum]->name);
-        lives_colRGBA32_t col_white,col_black;
+        lives_colRGBA64_t col_white,col_black;
         LingoLayout *layout;
         lives_painter_surface_t *surface;
 

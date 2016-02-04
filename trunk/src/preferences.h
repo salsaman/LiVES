@@ -7,8 +7,6 @@
 #ifndef HAS_LIVES_PREFS_H
 #define HAS_LIVES_PREFS_H
 
-#define LIVES_PREFS_TIMEOUT  (10 * U_SEC) // 10 sec timeout
-
 #define PREFS_PANED_POS ((int)(200.*widget_opts.scale))
 
 typedef struct {

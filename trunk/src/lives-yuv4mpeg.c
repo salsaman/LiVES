@@ -123,10 +123,6 @@ static void *y4frame_thread(void *arg) {
 
 
 
-#define YUV4_O_TIME 200000000 // ticks to wait to open fifo
-#define YUV4_H_TIME 500000000 // ticks to wait to get stream header
-
-
 static boolean lives_yuv_stream_start_read(lives_clip_t *sfile) {
   double ofps=sfile->fps;
 
@@ -155,7 +151,7 @@ static boolean lives_yuv_stream_start_read(lives_clip_t *sfile) {
 
     pthread_create(&y4thread,NULL,y4open_thread,(void *)&thread_data);
 
-    alarm_handle=lives_alarm_set(YUV4_O_TIME);
+    alarm_handle=lives_alarm_set(LIVE_SHORTEST_TIMEOUT);
 
     d_print("");
     d_print(_("Waiting for yuv4mpeg frames..."));
@@ -200,7 +196,7 @@ static boolean lives_yuv_stream_start_read(lives_clip_t *sfile) {
   // create a thread to open the stream header
   thread_data.yuv4mpeg=yuv4mpeg;
   pthread_create(&y4thread,NULL,y4header_thread,&thread_data);
-  alarm_handle=lives_alarm_set(YUV4_H_TIME);
+  alarm_handle=lives_alarm_set(LIVES_SHORT_TIMEOUT);
 
   while (!lives_alarm_get(alarm_handle)&&!pthread_kill(y4thread,0)) {
     // wait for thread to complete or timeout
@@ -279,7 +275,6 @@ void lives_yuv_stream_stop_read(lives_yuv4m_t *yuv4mpeg) {
 
 }
 
-#define YUV4_F_TIME 200000000 // ticks to wait to get stream header
 
 
 void weed_layer_set_from_yuv4m(weed_plant_t *layer, lives_clip_t *sfile) {
@@ -313,7 +308,7 @@ void weed_layer_set_from_yuv4m(weed_plant_t *layer, lives_clip_t *sfile) {
   thread_data.yuv4mpeg=yuv4mpeg;
   pthread_create(&y4thread,NULL,y4frame_thread,&thread_data);
 
-  alarm_handle=lives_alarm_set(YUV4_F_TIME);
+  alarm_handle=lives_alarm_set(LIVES_SHORTEST_TIMEOUT);
 
   while (!lives_alarm_get(alarm_handle)&&!pthread_kill(y4thread,0)) {
     // wait for thread to complete or timeout

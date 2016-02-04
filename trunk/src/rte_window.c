@@ -2604,7 +2604,7 @@ void rte_set_key_defs(LiVESButton *button, lives_rfx_t *rfx) {
 void rte_set_defs_ok(LiVESButton *button, lives_rfx_t *rfx) {
   weed_plant_t *ptmpl,*filter;
 
-  lives_colRGB24_t *rgbp;
+  lives_colRGB48_t *rgbp;
 
   register int i;
 
@@ -2619,7 +2619,7 @@ void rte_set_defs_ok(LiVESButton *button, lives_rfx_t *rfx) {
       ptmpl=weed_filter_in_paramtmpl(filter,i,FALSE);
       switch (rfx->params[i].type) {
       case LIVES_PARAM_COLRGB24:
-        rgbp=(lives_colRGB24_t *)rfx->params[i].value;
+        rgbp=(lives_colRGB48_t *)rfx->params[i].value;
         update_weed_color_value(filter,i,rgbp->red,rgbp->green,rgbp->blue,0);
         break;
       case LIVES_PARAM_STRING:

@@ -113,9 +113,7 @@ static LiVESList *get_plugin_result(const char *command, const char *delim, bool
     retval=0;
     timeout=FALSE;
 
-#define LIVES_PLUGIN_TIMEOUT  (20 * U_SEC) // 20 sec
-
-    alarm_handle=lives_alarm_set(LIVES_PLUGIN_TIMEOUT);
+    alarm_handle=lives_alarm_set(LIVES_LONGER_TIMEOUT);
 
     while ((outfile_fd=open(outfile,O_RDONLY))==-1&&!(timeout=lives_alarm_get(alarm_handle))) {
       lives_usleep(prefs->sleep_time);
@@ -2821,8 +2819,8 @@ void render_fx_get_params(lives_rfx_t *rfx, const char *plugin_name, short statu
       red=(short)atoi(param_array[3]);
       green=(short)atoi(param_array[4]);
       blue=(short)atoi(param_array[5]);
-      cparam->value=lives_malloc(sizeof(lives_colRGB24_t));
-      cparam->def=lives_malloc(sizeof(lives_colRGB24_t));
+      cparam->value=lives_malloc(sizeof(lives_colRGB48_t));
+      cparam->def=lives_malloc(sizeof(lives_colRGB48_t));
       set_colRGB24_param(cparam->def,red,green,blue);
       set_colRGB24_param(cparam->value,red,green,blue);
     } else if (cparam->type==LIVES_PARAM_STRING) {
@@ -3080,8 +3078,8 @@ void sort_rfx_array(lives_rfx_t *in, int num) {
       }
       break;
     case LIVES_PARAM_COLRGB24:
-      dest->def=lives_malloc(sizeof(lives_colRGB24_t));
-      lives_memcpy(dest->def,src->def,sizeof(lives_colRGB24_t));
+      dest->def=lives_malloc(sizeof(lives_colRGB48_t));
+      lives_memcpy(dest->def,src->def,sizeof(lives_colRGB48_t));
       break;
     case LIVES_PARAM_STRING:
       dest->def=lives_strdup((char *)src->def);
@@ -3117,12 +3115,12 @@ void sort_rfx_array(lives_rfx_t *in, int num) {
     return ret;
   }
 
-  void get_colRGB24_param(void *value, lives_colRGB24_t *rgb) {
-    lives_memcpy(rgb,value,sizeof(lives_colRGB24_t));
+  void get_colRGB24_param(void *value, lives_colRGB48_t *rgb) {
+    lives_memcpy(rgb,value,sizeof(lives_colRGB48_t));
   }
 
-  void get_colRGBA32_param(void *value, lives_colRGBA32_t *rgba) {
-    lives_memcpy(rgba,value,sizeof(lives_colRGBA32_t));
+  void get_colRGBA32_param(void *value, lives_colRGBA64_t *rgba) {
+    lives_memcpy(rgba,value,sizeof(lives_colRGBA64_t));
   }
 
   void set_bool_param(void *value, boolean _const) {
@@ -3138,7 +3136,7 @@ void sort_rfx_array(lives_rfx_t *in, int num) {
   }
 
   void set_colRGB24_param(void *value, short red, short green, short blue) {
-    lives_colRGB24_t *rgbp=(lives_colRGB24_t *)value;
+    lives_colRGB48_t *rgbp=(lives_colRGB48_t *)value;
 
     if (red<0) red=0;
     if (red>255) red=255;
@@ -3154,7 +3152,7 @@ void sort_rfx_array(lives_rfx_t *in, int num) {
   }
 
   void set_colRGBA32_param(void *value, short red, short green, short blue, short alpha) {
-    lives_colRGBA32_t *rgbap=(lives_colRGBA32_t *)value;
+    lives_colRGBA64_t *rgbap=(lives_colRGBA64_t *)value;
     rgbap->red=red;
     rgbap->green=green;
     rgbap->blue=blue;

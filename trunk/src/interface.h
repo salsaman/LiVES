@@ -147,5 +147,10 @@ text_window *textwindow;
 
 #define MIN_MSGBOX_WIDTH ((int)(mainw->scr_width>1024?(820.*widget_opts.scale):600))
 
+#define TB_WIDTH ((int)(200.*widget_opts.scale))
+#define TB_HEIGHT_VID ((int)(80.*widget_opts.scale))
+#define TB_HEIGHT_AUD ((int)(50.*widget_opts.scale))
+
+#define RW_ENTRY_DISPWIDTH 40
 
 #endif

@@ -230,6 +230,7 @@ boolean lives_widget_get_bg_state_color(LiVESWidget *, LiVESWidgetState state, L
 boolean lives_color_parse(const char *spec, LiVESWidgetColor *);
 
 LiVESWidgetColor *lives_widget_color_copy(LiVESWidgetColor *c1orNULL, const LiVESWidgetColor *c2);
+boolean lives_widget_color_equal(LiVESWidgetColor *, const LiVESWidgetColor *);
 
 LiVESWidget *lives_event_box_new(void);
 

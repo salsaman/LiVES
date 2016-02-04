@@ -1183,7 +1183,6 @@ static void lives_init(_ign_opts *ign_opts) {
 
     }
 
-
     if (prefs->open_maximised&&prefs->show_gui) {
       lives_window_maximize(LIVES_WINDOW(mainw->LiVES));
     }
@@ -2666,7 +2665,7 @@ static boolean lives_startup(livespointer data) {
                   if (prefs->startup_interface!=STARTUP_MT) {
                     if (prefs->show_gui) {
                       // mainw->ready gets set here
-                      lives_widget_show(mainw->LiVES);
+                      show_lives();
                     }
                   }
                 }

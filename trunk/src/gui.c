@@ -160,12 +160,159 @@ boolean expose_pim(LiVESWidget *widget, lives_painter_t *cr, livespointer user_d
 }
 #endif
 
+
+
+
+
+void set_colours(LiVESWidgetColor *colf, LiVESWidgetColor *colb, LiVESWidgetColor *colf2,
+                 LiVESWidgetColor *colb2, LiVESWidgetColor *coli, LiVESWidgetColor *colt) {
+
+  lives_widget_set_bg_color(mainw->LiVES, LIVES_WIDGET_STATE_NORMAL, colb);
+  lives_widget_set_fg_color(mainw->LiVES, LIVES_WIDGET_STATE_NORMAL, colf);
+  lives_widget_set_bg_color(mainw->menubar, LIVES_WIDGET_STATE_NORMAL, colb2);
+  lives_widget_set_fg_color(mainw->menubar, LIVES_WIDGET_STATE_NORMAL, colf2);
+
+  lives_widget_set_bg_color(mainw->sel_label, LIVES_WIDGET_STATE_NORMAL, colb);
+  lives_widget_set_bg_color(mainw->vidbar, LIVES_WIDGET_STATE_NORMAL, colb);
+  lives_widget_set_bg_color(mainw->laudbar, LIVES_WIDGET_STATE_NORMAL, colb);
+  lives_widget_set_bg_color(mainw->raudbar, LIVES_WIDGET_STATE_NORMAL, colb);
+
+#ifdef HAVE_WEBM
+  lives_widget_set_bg_color(mainw->open_loc_submenu, LIVES_WIDGET_STATE_NORMAL, colb2);
+  lives_widget_set_fg_color(mainw->open_loc_submenu, LIVES_WIDGET_STATE_NORMAL, colf2);
+#endif
+
+  lives_widget_set_bg_color(mainw->open_vcd_submenu, LIVES_WIDGET_STATE_NORMAL, colb2);
+  lives_widget_set_fg_color(mainw->open_vcd_submenu, LIVES_WIDGET_STATE_NORMAL, colf2);
+
+  lives_widget_set_bg_color(mainw->open_device_submenu, LIVES_WIDGET_STATE_NORMAL, colb2);
+  lives_widget_set_fg_color(mainw->open_device_submenu, LIVES_WIDGET_STATE_NORMAL, colf2);
+
+  lives_widget_set_bg_color(mainw->recent_submenu, LIVES_WIDGET_STATE_NORMAL, colb2);
+  lives_widget_set_fg_color(mainw->recent_submenu, LIVES_WIDGET_STATE_NORMAL, colf2);
+
+  lives_widget_set_bg_color(mainw->effects_menu, LIVES_WIDGET_STATE_NORMAL, colb2);
+  lives_widget_set_fg_color(mainw->effects_menu, LIVES_WIDGET_STATE_NORMAL, colf2);
+
+  lives_widget_set_bg_color(mainw->tools_menu, LIVES_WIDGET_STATE_NORMAL, colb2);
+  lives_widget_set_fg_color(mainw->tools_menu, LIVES_WIDGET_STATE_NORMAL, colf2);
+
+  lives_widget_set_bg_color(mainw->clipsmenu, LIVES_WIDGET_STATE_NORMAL, colb2);
+  lives_widget_set_fg_color(mainw->clipsmenu, LIVES_WIDGET_STATE_NORMAL, colf2);
+
+  lives_widget_set_bg_color(mainw->rte_defs, LIVES_WIDGET_STATE_NORMAL, colb2);
+  lives_widget_set_fg_color(mainw->rte_defs, LIVES_WIDGET_STATE_NORMAL, colf2);
+
+  lives_widget_set_bg_color(mainw->btoolbar, LIVES_WIDGET_STATE_NORMAL, colb2);
+  lives_widget_set_fg_color(mainw->btoolbar, LIVES_WIDGET_STATE_NORMAL, colf2);
+
+  lives_widget_set_bg_color(mainw->eventbox, LIVES_WIDGET_STATE_NORMAL, colb);
+  lives_widget_set_bg_color(mainw->vbox1, LIVES_WIDGET_STATE_NORMAL, colb);
+
+  lives_widget_set_bg_color(mainw->eventbox3, LIVES_WIDGET_STATE_NORMAL, colb);
+
+  lives_widget_set_bg_color(mainw->frame1, LIVES_WIDGET_STATE_NORMAL, colb);
+  lives_widget_set_fg_color(mainw->frame1, LIVES_WIDGET_STATE_NORMAL, colf);
+
+  lives_widget_set_bg_color(lives_frame_get_label_widget(LIVES_FRAME(mainw->frame1)), LIVES_WIDGET_STATE_NORMAL, colb);
+  lives_widget_set_fg_color(lives_frame_get_label_widget(LIVES_FRAME(mainw->frame1)), LIVES_WIDGET_STATE_NORMAL, colf);
+
+  lives_widget_set_bg_color(mainw->freventbox0, LIVES_WIDGET_STATE_NORMAL, colb);
+
+  lives_widget_set_bg_color(mainw->start_image, LIVES_WIDGET_STATE_NORMAL, colb);
+
+  lives_widget_set_bg_color(mainw->playframe, LIVES_WIDGET_STATE_NORMAL, colb);
+
+  lives_widget_set_bg_color(mainw->pl_eventbox, LIVES_WIDGET_STATE_NORMAL, colb);
+
+  lives_widget_set_bg_color(mainw->eventbox4, LIVES_WIDGET_STATE_NORMAL, colb);
+
+  lives_widget_set_fg_color(mainw->frame2, LIVES_WIDGET_STATE_NORMAL, colf);
+  lives_widget_set_bg_color(mainw->frame2, LIVES_WIDGET_STATE_NORMAL, colb);
+
+  lives_widget_set_bg_color(lives_frame_get_label_widget(LIVES_FRAME(mainw->frame1)), LIVES_WIDGET_STATE_NORMAL, colb);
+  lives_widget_set_fg_color(lives_frame_get_label_widget(LIVES_FRAME(mainw->frame1)), LIVES_WIDGET_STATE_NORMAL, colf);
+
+  lives_widget_set_bg_color(mainw->freventbox1, LIVES_WIDGET_STATE_NORMAL, colb);
+
+  lives_widget_set_bg_color(mainw->end_image, LIVES_WIDGET_STATE_NORMAL, colb);
+
+  lives_widget_set_bg_color(mainw->play_image, LIVES_WIDGET_STATE_NORMAL, colb);
+
+  lives_widget_set_bg_color(mainw->eventbox5, LIVES_WIDGET_STATE_NORMAL, colb);
+
+  lives_widget_set_bg_color(mainw->eventbox2, LIVES_WIDGET_STATE_NORMAL, colb);
+  lives_widget_set_fg_color(mainw->eventbox2, LIVES_WIDGET_STATE_NORMAL, colf);
+  lives_widget_set_bg_color(mainw->hruler, LIVES_WIDGET_STATE_NORMAL, colb);
+  lives_widget_set_fg_color(mainw->hruler, LIVES_WIDGET_STATE_NORMAL, colf);
+
+  lives_widget_set_fg_color(mainw->vidbar, LIVES_WIDGET_STATE_NORMAL, colf);
+
+  lives_widget_set_bg_color(mainw->video_draw, LIVES_WIDGET_STATE_NORMAL, colb);
+
+  lives_widget_set_bg_color(mainw->laudio_draw, LIVES_WIDGET_STATE_NORMAL, colb);
+
+  lives_widget_set_fg_color(mainw->laudbar, LIVES_WIDGET_STATE_NORMAL, colf);
+
+  lives_widget_set_fg_color(mainw->raudbar, LIVES_WIDGET_STATE_NORMAL, colf);
+
+  lives_widget_set_bg_color(mainw->raudio_draw, LIVES_WIDGET_STATE_NORMAL, colb);
+
+  lives_widget_set_fg_color(mainw->vps_label, LIVES_WIDGET_STATE_NORMAL, colf);
+  lives_widget_set_bg_color(mainw->vps_label, LIVES_WIDGET_STATE_NORMAL, colb);
+
+  lives_widget_set_fg_color(mainw->curf_label, LIVES_WIDGET_STATE_NORMAL, colf);
+  lives_widget_set_bg_color(mainw->curf_label, LIVES_WIDGET_STATE_NORMAL, colb);
+
+  lives_widget_set_fg_color(mainw->banner, LIVES_WIDGET_STATE_NORMAL, colf);
+  lives_widget_set_fg_color(mainw->arrow1, LIVES_WIDGET_STATE_NORMAL, colf);
+
+  lives_widget_set_fg_color(mainw->sel_label, LIVES_WIDGET_STATE_NORMAL, colf);
+
+  lives_widget_set_fg_color(mainw->arrow2, LIVES_WIDGET_STATE_NORMAL, colf);
+
+  lives_widget_set_fg_color(lives_frame_get_label_widget(LIVES_FRAME(mainw->playframe)), LIVES_WIDGET_STATE_NORMAL, colf);
+  lives_widget_set_fg_color(lives_frame_get_label_widget(LIVES_FRAME(mainw->frame1)), LIVES_WIDGET_STATE_NORMAL, colf);
+  lives_widget_set_fg_color(lives_frame_get_label_widget(LIVES_FRAME(mainw->frame2)), LIVES_WIDGET_STATE_NORMAL, colf);
+
+  lives_widget_set_bg_color(lives_widget_get_parent(mainw->message_box), LIVES_WIDGET_STATE_NORMAL, colb);
+  lives_widget_set_bg_color(lives_widget_get_parent(mainw->playframe), LIVES_WIDGET_STATE_NORMAL, colb);
+
+  lives_widget_set_bg_color(lives_widget_get_parent(mainw->framebar), LIVES_WIDGET_STATE_NORMAL, colb);
+  lives_widget_set_bg_color(mainw->framebar, LIVES_WIDGET_STATE_NORMAL, colb);
+
+  lives_widget_set_base_color(mainw->textview1, LIVES_WIDGET_STATE_NORMAL, coli);
+  lives_widget_set_text_color(mainw->textview1, LIVES_WIDGET_STATE_NORMAL, colt);
+
+  if (palette->style&STYLE_2) {
+    // background colour seems to be broken in gtk+3 !!!
+#if !GTK_CHECK_VERSION(3,0,0)
+    lives_widget_set_base_color(mainw->spinbutton_start, LIVES_WIDGET_STATE_NORMAL, colb);
+    lives_widget_set_base_color(mainw->spinbutton_start, LIVES_WIDGET_STATE_INSENSITIVE, colb);
+    lives_widget_set_base_color(mainw->spinbutton_end, LIVES_WIDGET_STATE_NORMAL, colb);
+    lives_widget_set_base_color(mainw->spinbutton_end, LIVES_WIDGET_STATE_INSENSITIVE, colb);
+    lives_widget_set_text_color(mainw->spinbutton_start, LIVES_WIDGET_STATE_NORMAL, colf);
+    lives_widget_set_text_color(mainw->spinbutton_start, LIVES_WIDGET_STATE_INSENSITIVE, colf);
+    lives_widget_set_text_color(mainw->spinbutton_end, LIVES_WIDGET_STATE_NORMAL, colf);
+    lives_widget_set_text_color(mainw->spinbutton_end, LIVES_WIDGET_STATE_INSENSITIVE, colf);
+#endif
+    lives_widget_set_fg_color(mainw->sel_label, LIVES_WIDGET_STATE_NORMAL, colf);
+  }
+
+  lives_widget_set_bg_color(mainw->tb_hbox, LIVES_WIDGET_STATE_NORMAL, &palette->fade_colour);
+  lives_widget_set_bg_color(mainw->toolbar, LIVES_WIDGET_STATE_NORMAL, &palette->fade_colour);
+
+}
+
+
+
+
+
 void create_LiVES(void) {
   LiVESWidget *hbox1;
   LiVESWidget *vbox2;
   LiVESWidget *menuitem;
   LiVESWidget *menuitem_menu;
-  LiVESWidget *separatormenuitem;
   LiVESWidget *select_submenu_menu;
   LiVESWidget *submenu_menu;
   LiVESWidget *export_submenu_menu;
@@ -217,9 +364,8 @@ void create_LiVES(void) {
 
   LiVESWidget *tmp_toolbar_icon;
 
-  LiVESAdjustment *adj;
 
-  LiVESWidgetColor normal;
+  LiVESAdjustment *adj;
 
   LiVESPixbuf *pixbuf;
 
@@ -258,13 +404,28 @@ void create_LiVES(void) {
   mainw->end_image = lives_image_new_from_pixbuf(NULL);
   mainw->imframe=mainw->imsep=NULL;
 
-  lives_widget_show(mainw->start_image);
-  lives_widget_show(mainw->end_image);
+  lives_widget_show(mainw->start_image);  // needed to get size
+  lives_widget_show(mainw->end_image);  // needed to get size
 
   if (palette->style&STYLE_1) {
     load_theme();
-  }
+  } else {
+#ifdef GUI_GTK
+    LiVESWidgetColor normal;
+#if !GTK_CHECK_VERSION(3,0,0)
+    if (!mainw->foreign) {
+      gtk_widget_ensure_style(mainw->LiVES);
+    }
+#endif
+#endif
 
+    lives_widget_get_bg_state_color(mainw->LiVES, LIVES_WIDGET_STATE_NORMAL, &normal);
+    lives_widget_color_copy((LiVESWidgetColor *)(&palette->normal_back),&normal);
+
+    lives_widget_get_fg_color(mainw->LiVES,&normal);
+    lives_widget_color_copy((LiVESWidgetColor *)(&palette->normal_fore),&normal);
+
+  }
 
 #if GTK_CHECK_VERSION(3,0,0)
   lives_signal_connect(LIVES_GUI_OBJECT(mainw->start_image), LIVES_WIDGET_EXPOSE_EVENT,
@@ -293,9 +454,6 @@ void create_LiVES(void) {
   lives_window_set_hide_titlebar_when_maximized(LIVES_WINDOW(mainw->LiVES),FALSE);
 
 
-  if (prefs->present&&prefs->show_gui)
-    lives_window_present(LIVES_WINDOW(mainw->LiVES));
-
 #ifdef GUI_GTK
   // TODO - can we use just DEFAULT_DROP ?
   gtk_drag_dest_set(mainw->LiVES,GTK_DEST_DEFAULT_ALL,mainw->target_table,2,
@@ -309,49 +467,18 @@ void create_LiVES(void) {
 
   if (capable->smog_version_correct) lives_window_set_decorated(LIVES_WINDOW(mainw->LiVES),prefs->open_decorated);
 
-  if (palette->style==STYLE_PLAIN) {
-    // if lives_widget_ensure_style is used, we can't grab external frames...
-#ifdef GUI_GTK
-#if !GTK_CHECK_VERSION(3,0,0)
-    if (!mainw->foreign) {
-      gtk_widget_ensure_style(mainw->LiVES);
-    }
-#endif
-#endif
-
-    lives_widget_get_bg_state_color(mainw->LiVES, LIVES_WIDGET_STATE_NORMAL, &normal);
-    lives_widget_color_copy((LiVESWidgetColor *)(&palette->normal_back),&normal);
-
-    lives_widget_get_fg_color(mainw->LiVES,&normal);
-    lives_widget_color_copy((LiVESWidgetColor *)(&palette->normal_fore),&normal);
-  }
-
-  if (palette->style&STYLE_1) {
-    lives_widget_set_bg_color(mainw->LiVES, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
-    lives_widget_set_fg_color(mainw->LiVES, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
-  }
-
   lives_window_set_title(LIVES_WINDOW(mainw->LiVES), "LiVES");
 
   mainw->vbox1 = lives_vbox_new(FALSE, 0);
   lives_container_add(LIVES_CONTAINER(mainw->LiVES), mainw->vbox1);
-  lives_widget_show(mainw->vbox1);
 
   mainw->menu_hbox = lives_hbox_new(FALSE, 0);
-  lives_widget_show(mainw->menu_hbox);
   lives_box_pack_start(LIVES_BOX(mainw->vbox1), mainw->menu_hbox, FALSE, FALSE, 0);
 
   mainw->menubar = lives_menu_bar_new();
-  lives_widget_show(mainw->menubar);
   lives_box_pack_start(LIVES_BOX(mainw->menu_hbox), mainw->menubar, FALSE, FALSE, 0);
 
-  if (palette->style&STYLE_1) {
-    lives_widget_set_bg_color(mainw->menubar, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
-    lives_widget_set_fg_color(mainw->menubar, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars_fore);
-  }
-
   menuitem = lives_menu_item_new_with_mnemonic(_("_File"));
-  lives_widget_show(menuitem);
   lives_container_add(LIVES_CONTAINER(mainw->menubar), menuitem);
 
   menuitem_menu = lives_menu_new();
@@ -386,10 +513,6 @@ void create_LiVES(void) {
 
   mainw->open_loc_submenu=lives_menu_new();
   lives_menu_item_set_submenu(LIVES_MENU_ITEM(mainw->open_loc_menu), mainw->open_loc_submenu);
-  if (palette->style&STYLE_1) {
-    lives_widget_set_bg_color(mainw->open_loc_submenu, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
-    lives_widget_set_fg_color(mainw->open_loc_submenu, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars_fore);
-  }
 
   mainw->open_utube = lives_menu_item_new_with_mnemonic(_("Open _Youtube Clip..."));
   lives_container_add(LIVES_CONTAINER(mainw->open_loc_submenu), mainw->open_utube);
@@ -403,28 +526,29 @@ void create_LiVES(void) {
 #endif
 
   mainw->open_vcd_menu = lives_menu_item_new_with_mnemonic(_("Import from _dvd/vcd..."));
-  lives_container_add(LIVES_CONTAINER(menuitem_menu), mainw->open_vcd_menu);
-  mainw->open_vcd_submenu=lives_menu_new();
-  lives_menu_item_set_submenu(LIVES_MENU_ITEM(mainw->open_vcd_menu), mainw->open_vcd_submenu);
-  if (palette->style&STYLE_1) {
-    lives_widget_set_bg_color(mainw->open_vcd_submenu, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
-    lives_widget_set_fg_color(mainw->open_vcd_submenu, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars_fore);
+
+  // TODO: show these options, but give errors for no mplayer / mplayer2
+  // TODO - mpv
+  if (capable->has_mplayer||capable->has_mplayer2) {
+#ifdef ENABLE_DVD_GRAB
+    lives_container_add(LIVES_CONTAINER(menuitem_menu), mainw->open_vcd_menu);
+#endif
   }
 
-  mainw->open_dvd = lives_menu_item_new_with_mnemonic(_("Import from _dvd"));
-  lives_container_add(LIVES_CONTAINER(mainw->open_vcd_submenu), mainw->open_dvd);
+  mainw->open_vcd_submenu=lives_menu_new();
+  lives_menu_item_set_submenu(LIVES_MENU_ITEM(mainw->open_vcd_menu), mainw->open_vcd_submenu);
 
+  mainw->open_dvd = lives_menu_item_new_with_mnemonic(_("Import from _dvd"));
   mainw->open_vcd = lives_menu_item_new_with_mnemonic(_("Import from _vcd"));
+
+  lives_container_add(LIVES_CONTAINER(mainw->open_vcd_submenu), mainw->open_dvd);
   lives_container_add(LIVES_CONTAINER(mainw->open_vcd_submenu), mainw->open_vcd);
+
 
   mainw->open_device_menu = lives_menu_item_new_with_mnemonic(_("_Import from Firewire"));
   lives_container_add(LIVES_CONTAINER(menuitem_menu), mainw->open_device_menu);
   mainw->open_device_submenu=lives_menu_new();
   lives_menu_item_set_submenu(LIVES_MENU_ITEM(mainw->open_device_menu), mainw->open_device_submenu);
-  if (palette->style&STYLE_1) {
-    lives_widget_set_bg_color(mainw->open_device_submenu, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
-    lives_widget_set_fg_color(mainw->open_device_submenu, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars_fore);
-  }
 
   mainw->open_firewire = lives_menu_item_new_with_mnemonic(_("Import from _Firewire Device (dv)"));
   mainw->open_hfirewire = lives_menu_item_new_with_mnemonic(_("Import from _Firewire Device (hdv)"));
@@ -432,33 +556,7 @@ void create_LiVES(void) {
 #ifdef HAVE_LDVGRAB
   lives_container_add(LIVES_CONTAINER(mainw->open_device_submenu), mainw->open_firewire);
   lives_container_add(LIVES_CONTAINER(mainw->open_device_submenu), mainw->open_hfirewire);
-  lives_widget_show(mainw->open_firewire);
-  lives_widget_show(mainw->open_hfirewire);
-  lives_widget_show(mainw->open_device_menu);
-  lives_widget_show(mainw->open_device_submenu);
 #endif
-
-  lives_widget_show(mainw->open);
-
-  lives_widget_show(mainw->open_sel);
-
-  // TODO - mpv
-
-  // TODO: show these options, but give errors for no mplayer / mplayer2
-
-  if (capable->has_mplayer||capable->has_mplayer2) {
-#ifdef ENABLE_DVD_GRAB
-    lives_widget_show(mainw->open_vcd_menu);
-    lives_widget_show(mainw->open_vcd_submenu);
-    lives_widget_show(mainw->open_dvd);
-    lives_widget_show(mainw->open_vcd);
-#endif
-#ifdef HAVE_WEBM
-    lives_widget_show_all(mainw->open_loc_menu);
-#else
-    lives_widget_show(mainw->open_loc);
-#endif
-  }
 
   menuitem = lives_menu_item_new_with_mnemonic(_("_Add Webcam/TV card..."));
   mainw->unicap = lives_menu_item_new_with_mnemonic(_("Add _Unicap Device"));
@@ -467,7 +565,6 @@ void create_LiVES(void) {
 
 #if defined(HAVE_UNICAP) || defined(HAVE_YUV4MPEG)
   lives_container_add(LIVES_CONTAINER(menuitem_menu), menuitem);
-  lives_widget_show(menuitem);
 
 #ifndef HAVE_UNICAP
   if (capable->has_mplayer||capable->has_mplayer2) {
@@ -479,12 +576,9 @@ void create_LiVES(void) {
       lives_widget_set_bg_color(submenu, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
       lives_widget_set_fg_color(submenu, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars_fore);
     }
-    lives_widget_show(submenu);
-
 
 #ifdef HAVE_UNICAP
     lives_container_add(LIVES_CONTAINER(submenu), mainw->unicap);
-    lives_widget_show(mainw->unicap);
     lives_signal_connect(LIVES_GUI_OBJECT(mainw->unicap), LIVES_WIDGET_ACTIVATE_SIGNAL,
                          LIVES_GUI_CALLBACK(on_open_vdev_activate),
                          NULL);
@@ -495,7 +589,6 @@ void create_LiVES(void) {
     if (capable->has_dvgrab) {
       if (capable->has_mplayer||capable->has_mplayer2) {
         lives_container_add(LIVES_CONTAINER(submenu), mainw->firewire);
-        lives_widget_show(mainw->firewire);
 
         lives_signal_connect(LIVES_GUI_OBJECT(mainw->firewire), LIVES_WIDGET_ACTIVATE_SIGNAL,
                              LIVES_GUI_CALLBACK(on_live_fw_activate),
@@ -503,7 +596,6 @@ void create_LiVES(void) {
       }
 
       lives_container_add(LIVES_CONTAINER(submenu), mainw->tvdev);
-      lives_widget_show(mainw->tvdev);
 
       lives_signal_connect(LIVES_GUI_OBJECT(mainw->tvdev), LIVES_WIDGET_ACTIVATE_SIGNAL,
                            LIVES_GUI_CALLBACK(on_live_tvcard_activate),
@@ -529,55 +621,36 @@ void create_LiVES(void) {
     get_pref_utf8("recent1",buff,32768);
   }
   mainw->recent1 = lives_menu_item_new_with_label(buff);
-  if (strlen(buff)) lives_widget_show(mainw->recent1);
   if (capable->smog_version_correct&&capable->can_write_to_tempdir) {
     get_pref_utf8("recent2",buff,32768);
   }
   mainw->recent2 = lives_menu_item_new_with_label(buff);
-  if (strlen(buff)) lives_widget_show(mainw->recent2);
 
   if (capable->smog_version_correct&&capable->can_write_to_tempdir) {
     get_pref_utf8("recent3",buff,32768);
   }
   mainw->recent3 = lives_menu_item_new_with_label(buff);
-  if (strlen(buff)) lives_widget_show(mainw->recent3);
 
   if (capable->smog_version_correct&&capable->can_write_to_tempdir) {
     get_pref_utf8("recent4",buff,32768);
   }
   mainw->recent4 = lives_menu_item_new_with_label(buff);
-  if (strlen(buff)) lives_widget_show(mainw->recent4);
 
   lives_container_add(LIVES_CONTAINER(mainw->recent_submenu), mainw->recent1);
   lives_container_add(LIVES_CONTAINER(mainw->recent_submenu), mainw->recent2);
   lives_container_add(LIVES_CONTAINER(mainw->recent_submenu), mainw->recent3);
   lives_container_add(LIVES_CONTAINER(mainw->recent_submenu), mainw->recent4);
 
-  if (palette->style&STYLE_1) {
-    lives_widget_set_bg_color(mainw->recent_submenu, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
-    lives_widget_set_fg_color(mainw->recent_submenu, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars_fore);
-  }
-
-  lives_widget_show(mainw->recent_submenu);
-
-  if (capable->smog_version_correct&&prefs->show_recent) {
-    lives_widget_show(mainw->recent_menu);
-  }
-
-  separatormenuitem=lives_menu_add_separator(LIVES_MENU(menuitem_menu));
-  lives_widget_show(separatormenuitem);
+  lives_menu_add_separator(LIVES_MENU(menuitem_menu));
 
   mainw->vj_load_set = lives_menu_item_new_with_mnemonic(_("_Reload Clip Set..."));
-  lives_widget_show(mainw->vj_load_set);
   lives_container_add(LIVES_CONTAINER(menuitem_menu), mainw->vj_load_set);
 
   mainw->vj_save_set = lives_menu_item_new_with_mnemonic(_("Close/Sa_ve All Clips"));
-  lives_widget_show(mainw->vj_save_set);
   lives_widget_set_sensitive(mainw->vj_save_set, FALSE);
   lives_container_add(LIVES_CONTAINER(menuitem_menu), mainw->vj_save_set);
 
-  separatormenuitem=lives_menu_add_separator(LIVES_MENU(menuitem_menu));
-  lives_widget_show(separatormenuitem);
+  lives_menu_add_separator(LIVES_MENU(menuitem_menu));
 
   mainw->save_as = lives_image_menu_item_new_from_stock(LIVES_STOCK_LABEL_SAVE, mainw->accel_group);
   lives_container_add(LIVES_CONTAINER(menuitem_menu), mainw->save_as);
@@ -588,22 +661,16 @@ void create_LiVES(void) {
   lives_container_add(LIVES_CONTAINER(menuitem_menu), mainw->save_selection);
   lives_widget_set_sensitive(mainw->save_selection, FALSE);
 
-  lives_widget_show(mainw->save_as);
-  lives_widget_show(mainw->save_selection);
-
   mainw->close = lives_menu_item_new_with_mnemonic(_("_Close This Clip"));
   lives_widget_add_accelerator(mainw->close, LIVES_WIDGET_ACTIVATE_SIGNAL, mainw->accel_group,
                                LIVES_KEY_w, LIVES_CONTROL_MASK,
                                LIVES_ACCEL_VISIBLE);
-  lives_widget_show(mainw->close);
   lives_container_add(LIVES_CONTAINER(menuitem_menu), mainw->close);
   lives_widget_set_sensitive(mainw->close, FALSE);
 
-  separatormenuitem=lives_menu_add_separator(LIVES_MENU(menuitem_menu));
-  lives_widget_show(separatormenuitem);
+  lives_menu_add_separator(LIVES_MENU(menuitem_menu));
 
   mainw->backup = lives_menu_item_new_with_mnemonic(_("_Backup Clip as .lv1..."));
-  lives_widget_show(mainw->backup);
   lives_container_add(LIVES_CONTAINER(menuitem_menu), mainw->backup);
   lives_widget_set_sensitive(mainw->backup, FALSE);
 
@@ -612,39 +679,31 @@ void create_LiVES(void) {
                                LIVES_ACCEL_VISIBLE);
 
   mainw->restore = lives_menu_item_new_with_mnemonic(_("_Restore Clip from .lv1..."));
-  lives_widget_show(mainw->restore);
   lives_container_add(LIVES_CONTAINER(menuitem_menu), mainw->restore);
 
   lives_widget_add_accelerator(mainw->restore, LIVES_WIDGET_ACTIVATE_SIGNAL, mainw->accel_group,
                                LIVES_KEY_r, LIVES_CONTROL_MASK,
                                LIVES_ACCEL_VISIBLE);
 
-  separatormenuitem=lives_menu_add_separator(LIVES_MENU(menuitem_menu));
-  lives_widget_show(separatormenuitem);
+  lives_menu_add_separator(LIVES_MENU(menuitem_menu));
 
   mainw->sw_sound = lives_check_menu_item_new_with_mnemonic(_("Encode/Load/Backup _with Sound"));
-  lives_widget_show(mainw->sw_sound);
   lives_container_add(LIVES_CONTAINER(menuitem_menu), mainw->sw_sound);
   lives_check_menu_item_set_active(LIVES_CHECK_MENU_ITEM(mainw->sw_sound),TRUE);
 
   mainw->aload_subs = lives_check_menu_item_new_with_mnemonic(_("Auto load subtitles"));
-  lives_widget_show(mainw->aload_subs);
   lives_container_add(LIVES_CONTAINER(menuitem_menu), mainw->aload_subs);
   lives_check_menu_item_set_active(LIVES_CHECK_MENU_ITEM(mainw->aload_subs),prefs->autoload_subs);
 
-  separatormenuitem=lives_menu_add_separator(LIVES_MENU(menuitem_menu));
-  lives_widget_show(separatormenuitem);
+  lives_menu_add_separator(LIVES_MENU(menuitem_menu));
 
   mainw->clear_ds = lives_menu_item_new_with_mnemonic(_("Clean _up Diskspace"));
-  lives_widget_show(mainw->clear_ds);
   lives_container_add(LIVES_CONTAINER(menuitem_menu), mainw->clear_ds);
 
   mainw->quit = lives_image_menu_item_new_from_stock(LIVES_STOCK_LABEL_QUIT, mainw->accel_group);
-  lives_widget_show(mainw->quit);
   lives_container_add(LIVES_CONTAINER(menuitem_menu), mainw->quit);
 
   menuitem = lives_menu_item_new_with_mnemonic(_("_Edit"));
-  lives_widget_show(menuitem);
   lives_container_add(LIVES_CONTAINER(mainw->menubar), menuitem);
 
   menuitem_menu = lives_menu_new();
@@ -657,7 +716,6 @@ void create_LiVES(void) {
 
   mainw->undo = lives_image_menu_item_new_with_mnemonic(_("_Undo"));
 
-  lives_widget_show(mainw->undo);
   lives_container_add(LIVES_CONTAINER(menuitem_menu), mainw->undo);
   lives_widget_set_sensitive(mainw->undo, FALSE);
 
@@ -668,13 +726,11 @@ void create_LiVES(void) {
 
 #if LIVES_HAS_IMAGE_MENU_ITEM
   image = lives_image_new_from_stock(LIVES_STOCK_UNDO, LIVES_ICON_SIZE_MENU);
-  lives_widget_show(image);
 
   lives_image_menu_item_set_image(LIVES_IMAGE_MENU_ITEM(mainw->undo), image);
 #endif
 
   mainw->redo = lives_image_menu_item_new_with_mnemonic(_("_Redo"));
-  lives_widget_hide(mainw->redo);
   lives_container_add(LIVES_CONTAINER(menuitem_menu), mainw->redo);
   lives_widget_set_sensitive(mainw->redo, FALSE);
 
@@ -684,27 +740,22 @@ void create_LiVES(void) {
 
 #if LIVES_HAS_IMAGE_MENU_ITEM
   image = lives_image_new_from_stock(LIVES_STOCK_REDO, LIVES_ICON_SIZE_MENU);
-  lives_widget_show(image);
 
   lives_image_menu_item_set_image(LIVES_IMAGE_MENU_ITEM(mainw->redo), image);
 #endif
 
-  separatormenuitem=lives_menu_add_separator(LIVES_MENU(menuitem_menu));
-  lives_widget_show(separatormenuitem);
+  lives_menu_add_separator(LIVES_MENU(menuitem_menu));
 
   mainw->mt_menu = lives_image_menu_item_new_with_mnemonic(_("_MULTITRACK mode"));
-  lives_widget_show(mainw->mt_menu);
   lives_container_add(LIVES_CONTAINER(menuitem_menu), mainw->mt_menu);
 
-  separatormenuitem=lives_menu_add_separator(LIVES_MENU(menuitem_menu));
-  lives_widget_show(separatormenuitem);
+  lives_menu_add_separator(LIVES_MENU(menuitem_menu));
 
   lives_widget_add_accelerator(mainw->mt_menu, LIVES_WIDGET_ACTIVATE_SIGNAL, mainw->accel_group,
                                LIVES_KEY_m, LIVES_CONTROL_MASK,
                                LIVES_ACCEL_VISIBLE);
 
   mainw->copy = lives_image_menu_item_new_with_mnemonic(_("_Copy Selection"));
-  lives_widget_show(mainw->copy);
   lives_container_add(LIVES_CONTAINER(menuitem_menu), mainw->copy);
   lives_widget_set_sensitive(mainw->copy, FALSE);
 
@@ -713,7 +764,6 @@ void create_LiVES(void) {
                                LIVES_ACCEL_VISIBLE);
 
   mainw->cut = lives_image_menu_item_new_with_mnemonic(_("Cu_t Selection"));
-  lives_widget_show(mainw->cut);
   lives_container_add(LIVES_CONTAINER(menuitem_menu), mainw->cut);
   lives_widget_set_sensitive(mainw->cut, FALSE);
 
@@ -722,7 +772,6 @@ void create_LiVES(void) {
                                LIVES_ACCEL_VISIBLE);
 
   mainw->insert = lives_image_menu_item_new_with_mnemonic(_("_Insert from Clipboard..."));
-  lives_widget_show(mainw->insert);
   lives_container_add(LIVES_CONTAINER(menuitem_menu), mainw->insert);
   lives_widget_set_sensitive(mainw->insert, FALSE);
 
@@ -732,13 +781,11 @@ void create_LiVES(void) {
 
 #if LIVES_HAS_IMAGE_MENU_ITEM
   image = lives_image_new_from_stock(LIVES_STOCK_ADD, LIVES_ICON_SIZE_MENU);
-  lives_widget_show(image);
 
   lives_image_menu_item_set_image(LIVES_IMAGE_MENU_ITEM(mainw->insert), image);
 #endif
 
   mainw->paste_as_new = lives_image_menu_item_new_with_mnemonic(_("Paste as _New"));
-  lives_widget_show(mainw->paste_as_new);
   lives_container_add(LIVES_CONTAINER(menuitem_menu), mainw->paste_as_new);
   lives_widget_set_sensitive(mainw->paste_as_new, FALSE);
 
@@ -747,20 +794,16 @@ void create_LiVES(void) {
                                LIVES_ACCEL_VISIBLE);
 
   mainw->merge = lives_menu_item_new_with_mnemonic(_("_Merge Clipboard with Selection..."));
-  if (capable->has_composite&&capable->has_convert) {
-    lives_widget_show(mainw->merge);
-  }
+
   lives_container_add(LIVES_CONTAINER(menuitem_menu), mainw->merge);
   lives_widget_set_sensitive(mainw->merge, FALSE);
 
   mainw->xdelete = lives_image_menu_item_new_with_mnemonic(_("_Delete Selection"));
-  lives_widget_show(mainw->xdelete);
   lives_container_add(LIVES_CONTAINER(menuitem_menu), mainw->xdelete);
   lives_widget_set_sensitive(mainw->xdelete, FALSE);
 
 #if LIVES_HAS_IMAGE_MENU_ITEM
   image = lives_image_new_from_stock(LIVES_STOCK_DELETE, LIVES_ICON_SIZE_MENU);
-  lives_widget_show(image);
   lives_image_menu_item_set_image(LIVES_IMAGE_MENU_ITEM(mainw->xdelete), image);
 #endif
 
@@ -768,19 +811,15 @@ void create_LiVES(void) {
                                LIVES_KEY_d, LIVES_CONTROL_MASK,
                                LIVES_ACCEL_VISIBLE);
 
-  separatormenuitem=lives_menu_add_separator(LIVES_MENU(menuitem_menu));
-  lives_widget_show(separatormenuitem);
+  lives_menu_add_separator(LIVES_MENU(menuitem_menu));
 
   mainw->ccpd_sound = lives_check_menu_item_new_with_mnemonic(_("Decouple _Video from Audio"));
-  lives_widget_show(mainw->ccpd_sound);
   lives_container_add(LIVES_CONTAINER(menuitem_menu), mainw->ccpd_sound);
   lives_check_menu_item_set_active(LIVES_CHECK_MENU_ITEM(mainw->ccpd_sound),!mainw->ccpd_with_sound);
 
-  separatormenuitem=lives_menu_add_separator(LIVES_MENU(menuitem_menu));
-  lives_widget_show(separatormenuitem);
+  lives_menu_add_separator(LIVES_MENU(menuitem_menu));
 
   mainw->select_submenu = lives_menu_item_new_with_mnemonic(_("_Select..."));
-  lives_widget_show(mainw->select_submenu);
   lives_container_add(LIVES_CONTAINER(menuitem_menu), mainw->select_submenu);
 
 
@@ -795,7 +834,6 @@ void create_LiVES(void) {
   }
 
   mainw->select_all = lives_menu_item_new_with_mnemonic(_("Select _All Frames"));
-  lives_widget_show(mainw->select_all);
   lives_container_add(LIVES_CONTAINER(select_submenu_menu), mainw->select_all);
 
   lives_widget_add_accelerator(mainw->select_all, LIVES_WIDGET_ACTIVATE_SIGNAL, mainw->accel_group,
@@ -803,7 +841,6 @@ void create_LiVES(void) {
                                LIVES_ACCEL_VISIBLE);
 
   mainw->select_start_only = lives_image_menu_item_new_with_mnemonic(_("_Start Frame Only"));
-  lives_widget_show(mainw->select_start_only);
   lives_container_add(LIVES_CONTAINER(select_submenu_menu), mainw->select_start_only);
 
   lives_widget_add_accelerator(mainw->select_start_only, LIVES_WIDGET_ACTIVATE_SIGNAL, mainw->accel_group,
@@ -811,34 +848,27 @@ void create_LiVES(void) {
                                LIVES_ACCEL_VISIBLE);
 
   mainw->select_end_only = lives_image_menu_item_new_with_mnemonic(_("_End Frame Only"));
-  lives_widget_show(mainw->select_end_only);
   lives_container_add(LIVES_CONTAINER(select_submenu_menu), mainw->select_end_only);
   lives_widget_add_accelerator(mainw->select_end_only, LIVES_WIDGET_ACTIVATE_SIGNAL, mainw->accel_group,
                                LIVES_KEY_End, LIVES_CONTROL_MASK,
                                LIVES_ACCEL_VISIBLE);
 
 
-  separatormenuitem=lives_menu_add_separator(LIVES_MENU(select_submenu_menu));
-  lives_widget_show(separatormenuitem);
+  lives_menu_add_separator(LIVES_MENU(select_submenu_menu));
 
   mainw->select_from_start = lives_image_menu_item_new_with_mnemonic(_("Select from _First Frame"));
-  lives_widget_show(mainw->select_from_start);
   lives_container_add(LIVES_CONTAINER(select_submenu_menu), mainw->select_from_start);
 
   mainw->select_to_end = lives_image_menu_item_new_with_mnemonic(_("Select to _Last Frame"));
   lives_container_add(LIVES_CONTAINER(select_submenu_menu), mainw->select_to_end);
-  lives_widget_show(mainw->select_to_end);
 
   mainw->select_new = lives_image_menu_item_new_with_mnemonic(_("Select Last Insertion/_Merge"));
-  lives_widget_show(mainw->select_new);
   lives_container_add(LIVES_CONTAINER(select_submenu_menu), mainw->select_new);
 
   mainw->select_last = lives_image_menu_item_new_with_mnemonic(_("Select Last _Effect"));
-  lives_widget_show(mainw->select_last);
   lives_container_add(LIVES_CONTAINER(select_submenu_menu), mainw->select_last);
 
   mainw->select_invert = lives_image_menu_item_new_with_mnemonic(_("_Invert Selection"));
-  lives_widget_show(mainw->select_invert);
   lives_container_add(LIVES_CONTAINER(select_submenu_menu), mainw->select_invert);
 
   lives_widget_add_accelerator(mainw->select_invert, LIVES_WIDGET_ACTIVATE_SIGNAL, mainw->accel_group,
@@ -846,12 +876,10 @@ void create_LiVES(void) {
                                LIVES_ACCEL_VISIBLE);
 
   mainw->lock_selwidth = lives_check_menu_item_new_with_mnemonic(_("_Lock Selection Width"));
-  lives_widget_show(mainw->lock_selwidth);
   lives_container_add(LIVES_CONTAINER(menuitem_menu), mainw->lock_selwidth);
   lives_widget_set_sensitive(mainw->lock_selwidth,FALSE);
 
   menuitem = lives_menu_item_new_with_mnemonic(_("_Play"));
-  lives_widget_show(menuitem);
   lives_container_add(LIVES_CONTAINER(mainw->menubar), menuitem);
 
   menuitem_menu = lives_menu_new();
@@ -866,13 +894,11 @@ void create_LiVES(void) {
   lives_widget_add_accelerator(mainw->playall, LIVES_WIDGET_ACTIVATE_SIGNAL, mainw->accel_group,
                                LIVES_KEY_p, (LiVESXModifierType)0,
                                LIVES_ACCEL_VISIBLE);
-  lives_widget_show(mainw->playall);
   lives_container_add(LIVES_CONTAINER(menuitem_menu), mainw->playall);
   lives_widget_set_sensitive(mainw->playall, FALSE);
 
 #if LIVES_HAS_IMAGE_MENU_ITEM
   image = lives_image_new_from_stock(LIVES_STOCK_REFRESH, LIVES_ICON_SIZE_MENU);
-  lives_widget_show(image);
 
   lives_image_menu_item_set_image(LIVES_IMAGE_MENU_ITEM(mainw->playall), image);
 #endif
@@ -881,12 +907,10 @@ void create_LiVES(void) {
   lives_widget_add_accelerator(mainw->playsel, LIVES_WIDGET_ACTIVATE_SIGNAL, mainw->accel_group,
                                LIVES_KEY_y, (LiVESXModifierType)0,
                                LIVES_ACCEL_VISIBLE);
-  lives_widget_show(mainw->playsel);
   lives_container_add(LIVES_CONTAINER(menuitem_menu), mainw->playsel);
   lives_widget_set_sensitive(mainw->playsel, FALSE);
 
   mainw->playclip = lives_image_menu_item_new_with_mnemonic(_("Play _Clipboard"));
-  lives_widget_show(mainw->playclip);
   lives_container_add(LIVES_CONTAINER(menuitem_menu), mainw->playclip);
   lives_widget_set_sensitive(mainw->playclip, FALSE);
 
@@ -902,13 +926,11 @@ void create_LiVES(void) {
 
 #if LIVES_HAS_IMAGE_MENU_ITEM
   image = lives_image_new_from_stock(LIVES_STOCK_MEDIA_PLAY, LIVES_ICON_SIZE_MENU);
-  lives_widget_show(image);
 
   lives_image_menu_item_set_image(LIVES_IMAGE_MENU_ITEM(mainw->playclip), image);
 #endif
 
   mainw->stop = lives_image_menu_item_new_with_mnemonic(_("_Stop"));
-  lives_widget_show(mainw->stop);
   lives_container_add(LIVES_CONTAINER(menuitem_menu), mainw->stop);
   lives_widget_set_sensitive(mainw->stop, FALSE);
   lives_widget_add_accelerator(mainw->stop, LIVES_WIDGET_ACTIVATE_SIGNAL, mainw->accel_group,
@@ -918,19 +940,16 @@ void create_LiVES(void) {
 
 #if LIVES_HAS_IMAGE_MENU_ITEM
   image = lives_image_new_from_stock(LIVES_STOCK_MEDIA_STOP, LIVES_ICON_SIZE_MENU);
-  lives_widget_show(image);
   lives_image_menu_item_set_image(LIVES_IMAGE_MENU_ITEM(mainw->stop), image);
 #endif
 
   mainw->rewind = lives_image_menu_item_new_with_mnemonic(_("Re_wind"));
-  lives_widget_show(mainw->rewind);
   lives_container_add(LIVES_CONTAINER(menuitem_menu), mainw->rewind);
   lives_widget_set_sensitive(mainw->rewind, FALSE);
 
 #if LIVES_HAS_IMAGE_MENU_ITEM
   image = lives_image_new_from_stock(LIVES_STOCK_MEDIA_REWIND, LIVES_ICON_SIZE_MENU);
 
-  lives_widget_show(image);
   lives_image_menu_item_set_image(LIVES_IMAGE_MENU_ITEM(mainw->rewind), image);
 #endif
 
@@ -946,16 +965,12 @@ void create_LiVES(void) {
                                LIVES_KEY_r, (LiVESXModifierType)0,
                                LIVES_ACCEL_VISIBLE);
 
-  lives_widget_show(mainw->record_perf);
-
   lives_container_add(LIVES_CONTAINER(menuitem_menu), mainw->record_perf);
   lives_check_menu_item_set_active(LIVES_CHECK_MENU_ITEM(mainw->record_perf),FALSE);
 
-  separatormenuitem=lives_menu_add_separator(LIVES_MENU(menuitem_menu));
-  lives_widget_show(separatormenuitem);
+  lives_menu_add_separator(LIVES_MENU(menuitem_menu));
 
   mainw->full_screen = lives_check_menu_item_new_with_mnemonic(_("_Full Screen"));
-  lives_widget_show(mainw->full_screen);
   lives_container_add(LIVES_CONTAINER(menuitem_menu), mainw->full_screen);
 
 
@@ -964,7 +979,6 @@ void create_LiVES(void) {
                                LIVES_ACCEL_VISIBLE);
 
   mainw->dsize = lives_check_menu_item_new_with_mnemonic(_("_Double Size"));
-  lives_widget_show(mainw->dsize);
   lives_container_add(LIVES_CONTAINER(menuitem_menu), mainw->dsize);
 
   lives_widget_add_accelerator(mainw->dsize, LIVES_WIDGET_ACTIVATE_SIGNAL, mainw->accel_group,
@@ -972,7 +986,6 @@ void create_LiVES(void) {
                                LIVES_ACCEL_VISIBLE);
 
   mainw->sepwin = lives_check_menu_item_new_with_mnemonic(_("Play in _Separate Window"));
-  lives_widget_show(mainw->sepwin);
   lives_container_add(LIVES_CONTAINER(menuitem_menu), mainw->sepwin);
 
   lives_widget_add_accelerator(mainw->sepwin, LIVES_WIDGET_ACTIVATE_SIGNAL, mainw->accel_group,
@@ -985,13 +998,11 @@ void create_LiVES(void) {
     lives_widget_add_accelerator(mainw->fade, LIVES_WIDGET_ACTIVATE_SIGNAL, mainw->accel_group,
                                  LIVES_KEY_b, (LiVESXModifierType)0,
                                  LIVES_ACCEL_VISIBLE);
-    lives_widget_show(mainw->fade);
 
     lives_container_add(LIVES_CONTAINER(menuitem_menu), mainw->fade);
   }
 
   mainw->loop_video = lives_check_menu_item_new_with_mnemonic(_("(Auto)_loop Video (to fit audio track)"));
-  lives_widget_show(mainw->loop_video);
   lives_container_add(LIVES_CONTAINER(menuitem_menu), mainw->loop_video);
   lives_widget_set_sensitive(mainw->loop_video, FALSE);
   lives_check_menu_item_set_active(LIVES_CHECK_MENU_ITEM(mainw->loop_video),mainw->loop);
@@ -1000,7 +1011,6 @@ void create_LiVES(void) {
                                LIVES_ACCEL_VISIBLE);
 
   mainw->loop_continue = lives_check_menu_item_new_with_mnemonic(_("L_oop Continuously"));
-  lives_widget_show(mainw->loop_continue);
   lives_container_add(LIVES_CONTAINER(menuitem_menu), mainw->loop_continue);
   lives_widget_set_sensitive(mainw->loop_continue, FALSE);
 
@@ -1009,7 +1019,6 @@ void create_LiVES(void) {
                                LIVES_ACCEL_VISIBLE);
 
   mainw->loop_ping_pong = lives_check_menu_item_new_with_mnemonic(_("Pin_g Pong Loops"));
-  lives_widget_show(mainw->loop_ping_pong);
   lives_container_add(LIVES_CONTAINER(menuitem_menu), mainw->loop_ping_pong);
 
   lives_widget_add_accelerator(mainw->loop_ping_pong, LIVES_WIDGET_ACTIVATE_SIGNAL, mainw->accel_group,
@@ -1017,7 +1026,6 @@ void create_LiVES(void) {
                                LIVES_ACCEL_VISIBLE);
 
   mainw->mute_audio = lives_check_menu_item_new_with_mnemonic(_("_Mute"));
-  lives_widget_show(mainw->mute_audio);
   lives_container_add(LIVES_CONTAINER(menuitem_menu), mainw->mute_audio);
   lives_widget_set_sensitive(mainw->mute_audio, FALSE);
 
@@ -1025,11 +1033,9 @@ void create_LiVES(void) {
                                LIVES_KEY_z, (LiVESXModifierType)0,
                                LIVES_ACCEL_VISIBLE);
 
-  separatormenuitem=lives_menu_add_separator(LIVES_MENU(menuitem_menu));
-  lives_widget_show(separatormenuitem);
+  lives_menu_add_separator(LIVES_MENU(menuitem_menu));
 
   mainw->sticky = lives_check_menu_item_new_with_mnemonic(_("Separate Window 'S_ticky' Mode"));
-  lives_widget_show(mainw->sticky);
 
   lives_container_add(LIVES_CONTAINER(menuitem_menu), mainw->sticky);
   if (capable->smog_version_correct&&prefs->sepwin_type==SEPWIN_TYPE_STICKY) {
@@ -1037,7 +1043,6 @@ void create_LiVES(void) {
   }
 
   mainw->showfct = lives_check_menu_item_new_with_mnemonic(_("S_how Frame Counter"));
-  lives_widget_show(mainw->showfct);
   lives_container_add(LIVES_CONTAINER(menuitem_menu), mainw->showfct);
 
   lives_widget_add_accelerator(mainw->showfct, LIVES_WIDGET_ACTIVATE_SIGNAL, mainw->accel_group,
@@ -1047,7 +1052,6 @@ void create_LiVES(void) {
   lives_check_menu_item_set_active(LIVES_CHECK_MENU_ITEM(mainw->showfct),capable->smog_version_correct&&prefs->show_framecount);
 
   mainw->showsubs = lives_check_menu_item_new_with_mnemonic(_("Show Subtitles"));
-  lives_widget_show(mainw->showsubs);
   lives_container_add(LIVES_CONTAINER(menuitem_menu), mainw->showsubs);
 
   lives_widget_add_accelerator(mainw->showsubs, LIVES_WIDGET_ACTIVATE_SIGNAL, mainw->accel_group,
@@ -1057,24 +1061,17 @@ void create_LiVES(void) {
   lives_check_menu_item_set_active(LIVES_CHECK_MENU_ITEM(mainw->showsubs),prefs->show_subtitles);
 
   mainw->letter = lives_check_menu_item_new_with_mnemonic(_("Letterbox mode"));
-  lives_widget_show(mainw->letter);
   lives_container_add(LIVES_CONTAINER(menuitem_menu), mainw->letter);
 
   lives_check_menu_item_set_active(LIVES_CHECK_MENU_ITEM(mainw->letter),prefs->letterbox);
 
   effects = lives_menu_item_new_with_mnemonic(_("Effect_s"));
-  lives_widget_show(effects);
   lives_container_add(LIVES_CONTAINER(mainw->menubar), effects);
   lives_widget_set_tooltip_text(effects,(_("Effects are applied to the current selection.")));
 
   // the dynamic effects menu
   mainw->effects_menu = lives_menu_new();
   lives_menu_item_set_submenu(LIVES_MENU_ITEM(effects), mainw->effects_menu);
-
-  if (palette->style&STYLE_1) {
-    lives_widget_set_bg_color(mainw->effects_menu, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
-    lives_widget_set_fg_color(mainw->effects_menu, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars_fore);
-  }
 
   mainw->custom_effects_menu=NULL;
 
@@ -1084,20 +1081,13 @@ void create_LiVES(void) {
   mainw->num_rendered_effects_builtin=mainw->num_rendered_effects_custom=mainw->num_rendered_effects_test=0;
 
   tools = lives_menu_item_new_with_mnemonic(_("_Tools"));
-  lives_widget_show(tools);
   lives_container_add(LIVES_CONTAINER(mainw->menubar), tools);
   lives_widget_set_tooltip_text(tools,(_("Tools are applied to complete clips.")));
 
   mainw->tools_menu = lives_menu_new();
   lives_menu_item_set_submenu(LIVES_MENU_ITEM(tools), mainw->tools_menu);
 
-  if (palette->style&STYLE_1) {
-    lives_widget_set_bg_color(mainw->tools_menu, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
-    lives_widget_set_fg_color(mainw->tools_menu, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars_fore);
-  }
-
   mainw->rev_clipboard = lives_menu_item_new_with_mnemonic(_("_Reverse Clipboard"));
-  lives_widget_show(mainw->rev_clipboard);
   lives_container_add(LIVES_CONTAINER(mainw->tools_menu), mainw->rev_clipboard);
   lives_widget_set_sensitive(mainw->rev_clipboard, FALSE);
 
@@ -1106,18 +1096,15 @@ void create_LiVES(void) {
                                LIVES_ACCEL_VISIBLE);
 
   mainw->change_speed = lives_menu_item_new_with_mnemonic(_("_Change Playback/Save Speed..."));
-  lives_widget_show(mainw->change_speed);
   lives_container_add(LIVES_CONTAINER(mainw->tools_menu), mainw->change_speed);
   lives_widget_set_sensitive(mainw->change_speed, FALSE);
 
   mainw->resample_video = lives_menu_item_new_with_mnemonic(_("Resample _Video to New Frame Rate..."));
-  lives_widget_show(mainw->resample_video);
   lives_container_add(LIVES_CONTAINER(mainw->tools_menu), mainw->resample_video);
   lives_widget_set_sensitive(mainw->resample_video, FALSE);
 
   mainw->utilities_menu=NULL;
   mainw->utilities_submenu = lives_menu_item_new_with_mnemonic(_("_Utilities"));
-  lives_widget_show(mainw->utilities_submenu);
 
   mainw->custom_utilities_menu=NULL;
 
@@ -1128,7 +1115,6 @@ void create_LiVES(void) {
 
   mainw->gens_menu=NULL;
   mainw->gens_submenu = lives_menu_item_new_with_mnemonic(_("_Generate"));
-  lives_widget_show(mainw->gens_submenu);
 
   // add RFX plugins
   mainw->rte_separator=NULL;
@@ -1147,31 +1133,24 @@ void create_LiVES(void) {
   lives_container_add(LIVES_CONTAINER(mainw->tools_menu), mainw->custom_tools_submenu);
   lives_container_add(LIVES_CONTAINER(mainw->tools_menu), mainw->gens_submenu);
 
-  separatormenuitem=lives_menu_add_separator(LIVES_MENU(mainw->tools_menu));
-  lives_widget_show(separatormenuitem);
+  lives_menu_add_separator(LIVES_MENU(mainw->tools_menu));
 
   mainw->load_subs = lives_menu_item_new_with_mnemonic(_("Load _Subtitles from File..."));
-  lives_widget_show(mainw->load_subs);
   lives_container_add(LIVES_CONTAINER(mainw->tools_menu), mainw->load_subs);
   lives_widget_set_sensitive(mainw->load_subs, FALSE);
 
   mainw->erase_subs = lives_menu_item_new_with_mnemonic(_("Erase subtitles"));
-  lives_widget_show(mainw->erase_subs);
   lives_container_add(LIVES_CONTAINER(mainw->tools_menu), mainw->erase_subs);
   lives_widget_set_sensitive(mainw->erase_subs, FALSE);
 
-  separatormenuitem=lives_menu_add_separator(LIVES_MENU(mainw->tools_menu));
-  lives_widget_show(separatormenuitem);
+  lives_menu_add_separator(LIVES_MENU(mainw->tools_menu));
 
   mainw->capture = lives_menu_item_new_with_mnemonic(_("Capture _External Window... "));
-  lives_widget_show(mainw->capture);
   lives_container_add(LIVES_CONTAINER(mainw->tools_menu), mainw->capture);
 
-  separatormenuitem=lives_menu_add_separator(LIVES_MENU(mainw->tools_menu));
-  lives_widget_show(separatormenuitem);
+  lives_menu_add_separator(LIVES_MENU(mainw->tools_menu));
 
   mainw->preferences = lives_image_menu_item_new_with_mnemonic(_("_Preferences..."));
-  lives_widget_show(mainw->preferences);
   lives_container_add(LIVES_CONTAINER(mainw->tools_menu), mainw->preferences);
   lives_widget_add_accelerator(mainw->preferences, LIVES_WIDGET_ACTIVATE_SIGNAL, mainw->accel_group,
                                LIVES_KEY_p, LIVES_CONTROL_MASK,
@@ -1179,12 +1158,10 @@ void create_LiVES(void) {
 
 #if LIVES_HAS_IMAGE_MENU_ITEM
   image = lives_image_new_from_stock(LIVES_STOCK_PREFERENCES, LIVES_ICON_SIZE_MENU);
-  lives_widget_show(image);
   lives_image_menu_item_set_image(LIVES_IMAGE_MENU_ITEM(mainw->preferences), image);
 #endif
 
   audio = lives_menu_item_new_with_mnemonic(_("_Audio"));
-  lives_widget_show(audio);
   lives_container_add(LIVES_CONTAINER(mainw->menubar), audio);
 
   audio_menu = lives_menu_new();
@@ -1197,7 +1174,6 @@ void create_LiVES(void) {
 
   mainw->load_audio = lives_menu_item_new_with_mnemonic(_("Load _New Audio for Clip..."));
 
-  lives_widget_show(mainw->load_audio);
   lives_container_add(LIVES_CONTAINER(audio_menu), mainw->load_audio);
   lives_widget_set_sensitive(mainw->load_audio, FALSE);
 
@@ -1213,13 +1189,10 @@ void create_LiVES(void) {
     }
   }
 
-  lives_widget_show(mainw->eject_cd);
-  lives_widget_show(mainw->load_cdtrack);
 
   mainw->recaudio_submenu = lives_menu_item_new_with_mnemonic(_("Record E_xternal Audio..."));
   if ((prefs->audio_player==AUD_PLAYER_JACK&&capable->has_jackd)||(prefs->audio_player==AUD_PLAYER_PULSE&&capable->has_pulse_audio))
-    lives_widget_show(mainw->recaudio_submenu);
-  lives_container_add(LIVES_CONTAINER(audio_menu), mainw->recaudio_submenu);
+    lives_container_add(LIVES_CONTAINER(audio_menu), mainw->recaudio_submenu);
 
   submenu_menu=lives_menu_new();
   lives_menu_item_set_submenu(LIVES_MENU_ITEM(mainw->recaudio_submenu), submenu_menu);
@@ -1227,36 +1200,28 @@ void create_LiVES(void) {
     lives_widget_set_bg_color(submenu_menu, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
     lives_widget_set_fg_color(submenu_menu, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars_fore);
   }
-  lives_widget_show(mainw->recaudio_submenu);
 
   mainw->recaudio_clip = lives_menu_item_new_with_mnemonic(_("to New _Clip..."));
-  lives_widget_show(mainw->recaudio_clip);
   lives_container_add(LIVES_CONTAINER(submenu_menu), mainw->recaudio_clip);
 
   mainw->recaudio_sel = lives_menu_item_new_with_mnemonic(_("to _Selection"));
-  lives_widget_show(mainw->recaudio_sel);
   lives_container_add(LIVES_CONTAINER(submenu_menu), mainw->recaudio_sel);
   lives_widget_set_sensitive(mainw->recaudio_sel,FALSE);
 
-  separatormenuitem=lives_menu_add_separator(LIVES_MENU(audio_menu));
-  lives_widget_show(separatormenuitem);
+  lives_menu_add_separator(LIVES_MENU(audio_menu));
 
   mainw->fade_aud_in = lives_menu_item_new_with_mnemonic(_("Fade Audio _In..."));
   lives_container_add(LIVES_CONTAINER(audio_menu), mainw->fade_aud_in);
-  lives_widget_show(mainw->fade_aud_in);
 
   mainw->fade_aud_out = lives_menu_item_new_with_mnemonic(_("Fade Audio _Out..."));
   lives_container_add(LIVES_CONTAINER(audio_menu), mainw->fade_aud_out);
-  lives_widget_show(mainw->fade_aud_out);
 
   lives_widget_set_sensitive(mainw->fade_aud_in, FALSE);
   lives_widget_set_sensitive(mainw->fade_aud_out, FALSE);
 
-  separatormenuitem=lives_menu_add_separator(LIVES_MENU(audio_menu));
-  lives_widget_show(separatormenuitem);
+  lives_menu_add_separator(LIVES_MENU(audio_menu));
 
   mainw->export_submenu = lives_menu_item_new_with_mnemonic(_("_Export Audio..."));
-  lives_widget_show(mainw->export_submenu);
   lives_container_add(LIVES_CONTAINER(audio_menu), mainw->export_submenu);
 
   export_submenu_menu=lives_menu_new();
@@ -1268,23 +1233,18 @@ void create_LiVES(void) {
     lives_widget_set_bg_color(export_submenu_menu, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
     lives_widget_set_fg_color(export_submenu_menu, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars_fore);
   }
-  lives_widget_show(mainw->export_submenu);
 
   mainw->export_selaudio = lives_menu_item_new_with_mnemonic(_("Export _Selected Audio..."));
-  lives_widget_show(mainw->export_selaudio);
   lives_container_add(LIVES_CONTAINER(export_submenu_menu), mainw->export_selaudio);
 
   mainw->export_allaudio = lives_menu_item_new_with_mnemonic(_("Export _All Audio..."));
-  lives_widget_show(mainw->export_allaudio);
   lives_container_add(LIVES_CONTAINER(export_submenu_menu), mainw->export_allaudio);
 
   mainw->append_audio = lives_menu_item_new_with_mnemonic(_("_Append Audio..."));
-  lives_widget_show(mainw->append_audio);
   lives_container_add(LIVES_CONTAINER(audio_menu), mainw->append_audio);
   lives_widget_set_sensitive(mainw->append_audio, FALSE);
 
   mainw->trim_submenu = lives_menu_item_new_with_mnemonic(_("_Trim/Pad Audio..."));
-  lives_widget_show(mainw->trim_submenu);
   lives_container_add(LIVES_CONTAINER(audio_menu), mainw->trim_submenu);
 
   trimaudio_submenu_menu=lives_menu_new();
@@ -1297,19 +1257,15 @@ void create_LiVES(void) {
     lives_widget_set_fg_color(trimaudio_submenu_menu, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars_fore);
   }
 
-  lives_widget_show(mainw->trim_submenu);
   mainw->trim_audio = lives_menu_item_new_with_mnemonic(_("Trim/Pad Audio to _Selection"));
-  lives_widget_show(mainw->trim_audio);
   lives_container_add(LIVES_CONTAINER(trimaudio_submenu_menu), mainw->trim_audio);
   lives_widget_set_sensitive(mainw->trim_audio, FALSE);
 
   mainw->trim_to_pstart = lives_menu_item_new_with_mnemonic(_("Trim/Pad Audio from Beginning to _Play Start"));
-  lives_widget_show(mainw->trim_to_pstart);
   lives_container_add(LIVES_CONTAINER(trimaudio_submenu_menu), mainw->trim_to_pstart);
   lives_widget_set_sensitive(mainw->trim_to_pstart, FALSE);
 
   mainw->delaudio_submenu = lives_menu_item_new_with_mnemonic(_("_Delete Audio..."));
-  lives_widget_show(mainw->delaudio_submenu);
   lives_container_add(LIVES_CONTAINER(audio_menu), mainw->delaudio_submenu);
 
   delaudio_submenu_menu=lives_menu_new();
@@ -1321,28 +1277,22 @@ void create_LiVES(void) {
     lives_widget_set_bg_color(delaudio_submenu_menu, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
     lives_widget_set_fg_color(delaudio_submenu_menu, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars_fore);
   }
-  lives_widget_show(mainw->delaudio_submenu);
 
   mainw->delsel_audio = lives_menu_item_new_with_mnemonic(_("Delete _Selected Audio"));
-  lives_widget_show(mainw->delsel_audio);
   lives_container_add(LIVES_CONTAINER(delaudio_submenu_menu), mainw->delsel_audio);
 
   mainw->delall_audio = lives_menu_item_new_with_mnemonic(_("Delete _All Audio"));
-  lives_widget_show(mainw->delall_audio);
   lives_container_add(LIVES_CONTAINER(delaudio_submenu_menu), mainw->delall_audio);
 
   mainw->ins_silence = lives_menu_item_new_with_mnemonic(_("Insert _Silence in Selection"));
-  lives_widget_show(mainw->ins_silence);
   lives_container_add(LIVES_CONTAINER(audio_menu), mainw->ins_silence);
   lives_widget_set_sensitive(mainw->ins_silence, FALSE);
 
   mainw->resample_audio = lives_menu_item_new_with_mnemonic(_("_Resample Audio..."));
-  lives_widget_show(mainw->resample_audio);
   lives_container_add(LIVES_CONTAINER(audio_menu), mainw->resample_audio);
   lives_widget_set_sensitive(mainw->resample_audio, FALSE);
 
   info = lives_menu_item_new_with_mnemonic(_("_Info"));
-  lives_widget_show(info);
   lives_container_add(LIVES_CONTAINER(mainw->menubar), info);
 
   info_menu = lives_menu_new();
@@ -1357,57 +1307,42 @@ void create_LiVES(void) {
   lives_widget_add_accelerator(mainw->show_file_info, LIVES_WIDGET_ACTIVATE_SIGNAL, mainw->accel_group,
                                LIVES_KEY_i, (LiVESXModifierType)0,
                                LIVES_ACCEL_VISIBLE);
-  lives_widget_show(mainw->show_file_info);
   lives_container_add(LIVES_CONTAINER(info_menu), mainw->show_file_info);
   lives_widget_set_sensitive(mainw->show_file_info, FALSE);
 
   mainw->show_file_comments = lives_image_menu_item_new_with_mnemonic(_("Show/_Edit File Comments"));
-  lives_widget_show(mainw->show_file_comments);
   lives_container_add(LIVES_CONTAINER(info_menu), mainw->show_file_comments);
   lives_widget_set_sensitive(mainw->show_file_comments, FALSE);
 
   mainw->show_clipboard_info = lives_image_menu_item_new_with_mnemonic(_("Show _Clipboard Info"));
-  lives_widget_show(mainw->show_clipboard_info);
   lives_container_add(LIVES_CONTAINER(info_menu), mainw->show_clipboard_info);
   lives_widget_set_sensitive(mainw->show_clipboard_info, FALSE);
 
 #if LIVES_HAS_IMAGE_MENU_ITEM
   image = lives_image_new_from_stock(LIVES_STOCK_DIALOG_INFO, LIVES_ICON_SIZE_MENU);
-  lives_widget_show(image);
   lives_image_menu_item_set_image(LIVES_IMAGE_MENU_ITEM(mainw->show_file_info), image);
 #endif
 
   mainw->show_messages = lives_image_menu_item_new_with_mnemonic(_("Show _Messages"));
-  lives_widget_show(mainw->show_messages);
   lives_container_add(LIVES_CONTAINER(info_menu), mainw->show_messages);
 
   mainw->show_layout_errors = lives_image_menu_item_new_with_mnemonic(_("Show _Layout Errors"));
-  lives_widget_show(mainw->show_layout_errors);
   lives_container_add(LIVES_CONTAINER(info_menu), mainw->show_layout_errors);
   lives_widget_set_sensitive(mainw->show_layout_errors, FALSE);
 
   win = lives_menu_item_new_with_mnemonic(_("_Clips"));
-  lives_widget_show(win);
   lives_container_add(LIVES_CONTAINER(mainw->menubar), win);
 
   mainw->clipsmenu = lives_menu_new();
   lives_menu_item_set_submenu(LIVES_MENU_ITEM(win), mainw->clipsmenu);
 
-  if (palette->style&STYLE_1) {
-    lives_widget_set_bg_color(mainw->clipsmenu, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
-    lives_widget_set_fg_color(mainw->clipsmenu, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars_fore);
-  }
-
   mainw->rename = lives_image_menu_item_new_with_mnemonic(_("_Rename Current Clip in Menu..."));
-  lives_widget_show(mainw->rename);
   lives_container_add(LIVES_CONTAINER(mainw->clipsmenu), mainw->rename);
   lives_widget_set_sensitive(mainw->rename, FALSE);
 
-  separatormenuitem=lives_menu_add_separator(LIVES_MENU(mainw->clipsmenu));
-  lives_widget_show(separatormenuitem);
+  lives_menu_add_separator(LIVES_MENU(mainw->clipsmenu));
 
   menuitemsep = lives_menu_item_new_with_label("|");
-  lives_widget_show(menuitemsep);
   lives_container_add(LIVES_CONTAINER(mainw->menubar), menuitemsep);
   lives_widget_set_sensitive(menuitemsep,FALSE);
 
@@ -1417,7 +1352,6 @@ void create_LiVES(void) {
   }
 
   advanced = lives_menu_item_new_with_mnemonic(_("A_dvanced"));
-  lives_widget_show(advanced);
   lives_container_add(LIVES_CONTAINER(mainw->menubar), advanced);
 
   advanced_menu = lives_menu_new();
@@ -1427,10 +1361,8 @@ void create_LiVES(void) {
     lives_widget_set_bg_color(advanced_menu, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
     lives_widget_set_fg_color(advanced_menu, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars_fore);
   }
-  lives_widget_show(advanced_menu);
 
   rfx_submenu = lives_menu_item_new_with_mnemonic(_("_RFX Effects/Tools/Utilities"));
-  lives_widget_show(rfx_submenu);
   lives_container_add(LIVES_CONTAINER(advanced_menu), rfx_submenu);
 
   rfx_menu=lives_menu_new();
@@ -1439,58 +1371,43 @@ void create_LiVES(void) {
     lives_widget_set_bg_color(rfx_menu, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
     lives_widget_set_fg_color(rfx_menu, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars_fore);
   }
-  lives_widget_show(rfx_menu);
 
   new_test_rfx=lives_menu_item_new_with_mnemonic(_("_New Test RFX Script..."));
-  lives_widget_show(new_test_rfx);
   lives_container_add(LIVES_CONTAINER(rfx_menu), new_test_rfx);
 
   copy_rfx=lives_menu_item_new_with_mnemonic(_("_Copy RFX Script to Test..."));
-  lives_widget_show(copy_rfx);
   lives_container_add(LIVES_CONTAINER(rfx_menu), copy_rfx);
 
   mainw->edit_test_rfx=lives_menu_item_new_with_mnemonic(_("_Edit Test RFX Script..."));
-  lives_widget_show(mainw->edit_test_rfx);
   lives_container_add(LIVES_CONTAINER(rfx_menu), mainw->edit_test_rfx);
 
   mainw->rename_test_rfx=lives_menu_item_new_with_mnemonic(_("Rena_me Test RFX Script..."));
-  lives_widget_show(mainw->rename_test_rfx);
   lives_container_add(LIVES_CONTAINER(rfx_menu), mainw->rename_test_rfx);
 
   mainw->delete_test_rfx=lives_menu_item_new_with_mnemonic(_("_Delete Test RFX Script..."));
-  lives_widget_show(mainw->delete_test_rfx);
   lives_container_add(LIVES_CONTAINER(rfx_menu), mainw->delete_test_rfx);
 
-  separatormenuitem=lives_menu_add_separator(LIVES_MENU(rfx_menu));
-  lives_widget_show(separatormenuitem);
+  lives_menu_add_separator(LIVES_MENU(rfx_menu));
 
-  lives_widget_show(mainw->run_test_rfx_submenu);
   lives_container_add(LIVES_CONTAINER(rfx_menu), mainw->run_test_rfx_submenu);
 
   mainw->promote_test_rfx=lives_menu_item_new_with_mnemonic(_("_Promote Test Rendered Effect/Tool/Generator..."));
-  lives_widget_show(mainw->promote_test_rfx);
   lives_container_add(LIVES_CONTAINER(rfx_menu), mainw->promote_test_rfx);
 
-  separatormenuitem=lives_menu_add_separator(LIVES_MENU(rfx_menu));
-  lives_widget_show(separatormenuitem);
+  lives_menu_add_separator(LIVES_MENU(rfx_menu));
 
   import_custom_rfx=lives_menu_item_new_with_mnemonic(_("_Import Custom RFX script..."));
-  lives_widget_show(import_custom_rfx);
   lives_container_add(LIVES_CONTAINER(rfx_menu), import_custom_rfx);
 
   mainw->export_custom_rfx=lives_menu_item_new_with_mnemonic(_("E_xport Custom RFX script..."));
-  lives_widget_show(mainw->export_custom_rfx);
   lives_container_add(LIVES_CONTAINER(rfx_menu), mainw->export_custom_rfx);
 
   mainw->delete_custom_rfx=lives_menu_item_new_with_mnemonic(_("De_lete Custom RFX Script..."));
-  lives_widget_show(mainw->delete_custom_rfx);
   lives_container_add(LIVES_CONTAINER(rfx_menu), mainw->delete_custom_rfx);
 
-  separatormenuitem=lives_menu_add_separator(LIVES_MENU(rfx_menu));
-  lives_widget_show(separatormenuitem);
+  lives_menu_add_separator(LIVES_MENU(rfx_menu));
 
   rebuild_rfx=lives_menu_item_new_with_mnemonic(_("Re_build all RFX plugins"));
-  lives_widget_show(rebuild_rfx);
   lives_container_add(LIVES_CONTAINER(rfx_menu), rebuild_rfx);
 
 
@@ -1518,13 +1435,9 @@ void create_LiVES(void) {
 
   mainw->open_lives2lives = lives_menu_item_new_with_mnemonic(_("Receive _LiVES stream from..."));
 
-  separatormenuitem=lives_menu_add_separator(LIVES_MENU(advanced_menu));
-  lives_widget_show(separatormenuitem);
+  lives_menu_add_separator(LIVES_MENU(advanced_menu));
 
   mainw->send_lives2lives = lives_menu_item_new_with_mnemonic(_("_Send LiVES stream to..."));
-
-  lives_widget_show(mainw->send_lives2lives);
-  lives_widget_show(mainw->open_lives2lives);
 
   lives_container_add(LIVES_CONTAINER(advanced_menu), mainw->send_lives2lives);
   lives_container_add(LIVES_CONTAINER(advanced_menu), mainw->open_lives2lives);
@@ -1534,10 +1447,8 @@ void create_LiVES(void) {
                         prefs->tmpdir)));
     lives_free(tmp);
 #ifdef HAVE_YUV4MPEG
-    separatormenuitem=lives_menu_add_separator(LIVES_MENU(advanced_menu));
-    lives_widget_show(separatormenuitem);
+    lives_menu_add_separator(LIVES_MENU(advanced_menu));
 
-    lives_widget_show(mainw->open_yuv4m);
     lives_container_add(LIVES_CONTAINER(advanced_menu), mainw->open_yuv4m);
 
     // TODO - apply a deinterlace filter to yuv4mpeg frames
@@ -1549,20 +1460,16 @@ void create_LiVES(void) {
   }
 
 
-  separatormenuitem=lives_menu_add_separator(LIVES_MENU(advanced_menu));
-  lives_widget_show(separatormenuitem);
+  lives_menu_add_separator(LIVES_MENU(advanced_menu));
 
   mainw->import_proj = lives_menu_item_new_with_mnemonic(_("_Import Project (.lv2)..."));
   lives_container_add(LIVES_CONTAINER(advanced_menu), mainw->import_proj);
-  lives_widget_show(mainw->import_proj);
 
   mainw->export_proj = lives_menu_item_new_with_mnemonic(_("E_xport Project (.lv2)..."));
   lives_container_add(LIVES_CONTAINER(advanced_menu), mainw->export_proj);
-  lives_widget_show(mainw->export_proj);
   lives_widget_set_sensitive(mainw->export_proj, FALSE);
 
   mainw->vj_menu = lives_menu_item_new_with_mnemonic(_("_VJ"));
-  lives_widget_show(mainw->vj_menu);
   lives_container_add(LIVES_CONTAINER(mainw->menubar), mainw->vj_menu);
 
   vj_menu = lives_menu_new();
@@ -1574,7 +1481,6 @@ void create_LiVES(void) {
   }
 
   assign_rte_keys = lives_menu_item_new_with_mnemonic(_("Real Time _Effect Mapping"));
-  lives_widget_show(assign_rte_keys);
   lives_container_add(LIVES_CONTAINER(vj_menu), assign_rte_keys);
   lives_widget_add_accelerator(assign_rte_keys, LIVES_WIDGET_ACTIVATE_SIGNAL, mainw->accel_group,
                                LIVES_KEY_v, LIVES_CONTROL_MASK,
@@ -1588,32 +1494,20 @@ void create_LiVES(void) {
   mainw->rte_defs=lives_menu_new();
   lives_menu_item_set_submenu(LIVES_MENU_ITEM(mainw->rte_defs_menu), mainw->rte_defs);
 
-  if (palette->style&STYLE_1) {
-    lives_widget_set_bg_color(mainw->rte_defs, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
-    lives_widget_set_fg_color(mainw->rte_defs, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars_fore);
-  }
-
-  lives_widget_show(mainw->rte_defs_menu);
-  lives_widget_show(mainw->rte_defs);
-
   mainw->save_rte_defs=lives_menu_item_new_with_mnemonic(_("Save Real Time Effect _Defaults"));
   lives_container_add(LIVES_CONTAINER(vj_menu), mainw->save_rte_defs);
-  lives_widget_show(mainw->save_rte_defs);
   lives_widget_set_tooltip_text(mainw->save_rte_defs,(_("Save real time effect defaults so they will be restored each time you use LiVES.")));
 
 
-  separatormenuitem=lives_menu_add_separator(LIVES_MENU(vj_menu));
-  lives_widget_show(separatormenuitem);
+  lives_menu_add_separator(LIVES_MENU(vj_menu));
 
   mainw->vj_reset=lives_menu_item_new_with_mnemonic(_("_Reset all playback speeds and positions"));
   lives_container_add(LIVES_CONTAINER(vj_menu), mainw->vj_reset);
-  lives_widget_show(mainw->vj_reset);
   lives_widget_set_tooltip_text(mainw->vj_reset,(_("Reset all playback positions to frame 1, and reset all playback frame rates.")));
 
   midi_submenu = lives_menu_item_new_with_mnemonic(_("_MIDI/joystick interface"));
 
 #ifdef ENABLE_OSC
-  lives_widget_show(midi_submenu);
   lives_container_add(LIVES_CONTAINER(vj_menu), midi_submenu);
 #endif
 
@@ -1623,33 +1517,25 @@ void create_LiVES(void) {
     lives_widget_set_bg_color(midi_menu, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
     lives_widget_set_fg_color(midi_menu, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars_fore);
   }
-  lives_widget_show(midi_menu);
 
   mainw->midi_learn = lives_menu_item_new_with_mnemonic(_("_MIDI/joystick learner..."));
 
-  lives_widget_show(mainw->midi_learn);
   lives_container_add(LIVES_CONTAINER(midi_menu), mainw->midi_learn);
 
   mainw->midi_save = lives_menu_item_new_with_mnemonic(_("_Save device mapping..."));
 
-  lives_widget_show(mainw->midi_save);
   lives_container_add(LIVES_CONTAINER(midi_menu), mainw->midi_save);
-
 
   midi_load = lives_menu_item_new_with_mnemonic(_("_Load device mapping..."));
 
-  lives_widget_show(midi_load);
   lives_container_add(LIVES_CONTAINER(midi_menu), midi_load);
 
-  separatormenuitem=lives_menu_add_separator(LIVES_MENU(vj_menu));
-  lives_widget_show(separatormenuitem);
+  lives_menu_add_separator(LIVES_MENU(vj_menu));
 
   mainw->vj_show_keys = lives_menu_item_new_with_mnemonic(_("Show VJ _Keys"));
-  lives_widget_show(mainw->vj_show_keys);
   lives_container_add(LIVES_CONTAINER(vj_menu), mainw->vj_show_keys);
 
   mainw->toys = lives_menu_item_new_with_mnemonic(_("To_ys"));
-  lives_widget_show(mainw->toys);
   lives_container_add(LIVES_CONTAINER(mainw->menubar), mainw->toys);
 
   toys_menu = lives_menu_new();
@@ -1661,20 +1547,16 @@ void create_LiVES(void) {
   }
 
   mainw->toy_none = lives_check_menu_item_new_with_mnemonic(_("_None"));
-  lives_widget_show(mainw->toy_none);
   lives_container_add(LIVES_CONTAINER(toys_menu), mainw->toy_none);
   lives_check_menu_item_set_active(LIVES_CHECK_MENU_ITEM(mainw->toy_none),TRUE);
 
-  separatormenuitem=lives_menu_add_separator(LIVES_MENU(toys_menu));
-  lives_widget_show(separatormenuitem);
+  lives_menu_add_separator(LIVES_MENU(toys_menu));
 
   mainw->toy_autolives = lives_check_menu_item_new_with_mnemonic(_("_Autolives"));
-  lives_widget_show(mainw->toy_autolives);
   lives_container_add(LIVES_CONTAINER(toys_menu), mainw->toy_autolives);
   lives_check_menu_item_set_active(LIVES_CHECK_MENU_ITEM(mainw->toy_autolives),FALSE);
 
   mainw->toy_random_frames = lives_check_menu_item_new_with_mnemonic(_("_Mad Frames"));
-  lives_widget_show(mainw->toy_random_frames);
   lives_container_add(LIVES_CONTAINER(toys_menu), mainw->toy_random_frames);
   lives_check_menu_item_set_active(LIVES_CHECK_MENU_ITEM(mainw->toy_random_frames),FALSE);
 
@@ -1682,14 +1564,7 @@ void create_LiVES(void) {
 
   lives_container_add(LIVES_CONTAINER(toys_menu), mainw->toy_tv);
 
-#ifdef LIVES_TV_CHANNEL1
-  lives_widget_show(mainw->toy_tv);
-#else
-  lives_widget_hide(mainw->toy_tv);
-# endif
-
   menuitem = lives_menu_item_new_with_mnemonic(_("_Help"));
-  lives_widget_show(menuitem);
   lives_container_add(LIVES_CONTAINER(mainw->menubar), menuitem);
 
   menuitem_menu = lives_menu_new();
@@ -1701,56 +1576,42 @@ void create_LiVES(void) {
   }
 
   show_manual = lives_menu_item_new_with_mnemonic(_("_Manual (opens in browser)"));
-  lives_widget_show(show_manual);
   lives_container_add(LIVES_CONTAINER(menuitem_menu), show_manual);
 
-  separatormenuitem=lives_menu_add_separator(LIVES_MENU(menuitem_menu));
-  lives_widget_show(separatormenuitem);
+  lives_menu_add_separator(LIVES_MENU(menuitem_menu));
 
   donate = lives_menu_item_new_with_mnemonic(_("_Donate to the project !"));
-  lives_widget_show(donate);
   lives_container_add(LIVES_CONTAINER(menuitem_menu), donate);
 
   email_author = lives_menu_item_new_with_mnemonic(_("_Email the author"));
-  lives_widget_show(email_author);
   lives_container_add(LIVES_CONTAINER(menuitem_menu), email_author);
 
   report_bug = lives_menu_item_new_with_mnemonic(_("Report a _bug"));
-  lives_widget_show(report_bug);
   lives_container_add(LIVES_CONTAINER(menuitem_menu), report_bug);
 
   suggest_feature = lives_menu_item_new_with_mnemonic(_("Suggest a _feature"));
-  lives_widget_show(suggest_feature);
   lives_container_add(LIVES_CONTAINER(menuitem_menu), suggest_feature);
 
   help_translate = lives_menu_item_new_with_mnemonic(_("Assist with _translating"));
-  lives_widget_show(help_translate);
   lives_container_add(LIVES_CONTAINER(menuitem_menu), help_translate);
 
-  separatormenuitem=lives_menu_add_separator(LIVES_MENU(menuitem_menu));
-  lives_widget_show(separatormenuitem);
+  lives_menu_add_separator(LIVES_MENU(menuitem_menu));
 
   mainw->troubleshoot=lives_menu_item_new_with_mnemonic(_("_Troubleshoot"));
-  lives_widget_show(mainw->troubleshoot);
   lives_container_add(LIVES_CONTAINER(menuitem_menu), mainw->troubleshoot);
 
   about = lives_menu_item_new_with_mnemonic(_("_About"));
-  lives_widget_show(about);
   lives_container_add(LIVES_CONTAINER(menuitem_menu), about);
 
   mainw->btoolbar=lives_toolbar_new();
   lives_toolbar_set_show_arrow(LIVES_TOOLBAR(mainw->btoolbar),TRUE);
-  lives_box_pack_start(LIVES_BOX(mainw->menu_hbox), mainw->btoolbar, TRUE, TRUE, 0);
-
-  if (palette->style&STYLE_1) {
-    lives_widget_set_bg_color(mainw->btoolbar, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
-    lives_widget_set_fg_color(mainw->btoolbar, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars_fore);
-  }
 
   lives_toolbar_set_style(LIVES_TOOLBAR(mainw->btoolbar), LIVES_TOOLBAR_ICONS);
   lives_toolbar_set_icon_size(LIVES_TOOLBAR(mainw->btoolbar),LIVES_ICON_SIZE_MENU);
 
   if (capable->smog_version_correct) {
+    lives_box_pack_start(LIVES_BOX(mainw->menu_hbox), mainw->btoolbar, TRUE, TRUE, 0);
+
     fnamex=lives_build_filename(prefs->prefix_dir,ICON_DIR,"sepwin.png",NULL);
     lives_snprintf(buff,PATH_MAX,"%s",fnamex);
     lives_free(fnamex);
@@ -1785,6 +1646,7 @@ void create_LiVES(void) {
     mainw->m_stopbutton=LIVES_WIDGET(lives_tool_button_new(LIVES_WIDGET(tmp_toolbar_icon),""));
     lives_toolbar_insert(LIVES_TOOLBAR(mainw->btoolbar),LIVES_TOOL_ITEM(mainw->m_stopbutton),-1);
     lives_widget_set_tooltip_text(mainw->m_stopbutton,_("Stop playback (q)"));
+    lives_widget_set_bg_color(tmp_toolbar_icon, 65535, &palette->menu_and_bars);
 
     lives_widget_set_sensitive(mainw->m_stopbutton,FALSE);
 
@@ -1826,8 +1688,6 @@ void create_LiVES(void) {
     lives_toolbar_insert(LIVES_TOOLBAR(mainw->btoolbar),LIVES_TOOL_ITEM(mainw->m_mutebutton),-1);
     lives_widget_set_tooltip_text(mainw->m_mutebutton,_("Mute the audio (z)"));
 
-    lives_widget_show_all(mainw->btoolbar);
-
   } else {
     mainw->m_sepwinbutton = lives_menu_item_new();
     mainw->m_rewindbutton = lives_menu_item_new();
@@ -1850,11 +1710,8 @@ void create_LiVES(void) {
       label=lives_label_new(_("Volume"));
       lives_container_add(LIVES_CONTAINER(mainw->vol_label),label);
       lives_toolbar_insert(LIVES_TOOLBAR(mainw->btoolbar),LIVES_TOOL_ITEM(mainw->vol_label),-1);
-      lives_widget_show(mainw->vol_label);
     }
   } else lives_object_unref(adj);
-
-  lives_widget_show(mainw->volume_scale);
 
   mainw->vol_toolitem=LIVES_WIDGET(lives_tool_item_new());
 
@@ -1863,10 +1720,6 @@ void create_LiVES(void) {
   gtk_tool_item_set_expand(LIVES_TOOL_ITEM(mainw->vol_toolitem),TRUE);
 #endif
 
-  if ((prefs->audio_player==AUD_PLAYER_JACK&&capable->has_jackd)||
-      (prefs->audio_player==AUD_PLAYER_PULSE&&capable->has_pulse_audio))
-    lives_widget_show(mainw->vol_toolitem);
-
   lives_container_add(LIVES_CONTAINER(mainw->vol_toolitem),mainw->volume_scale);
   if (capable->smog_version_correct) {
 #ifdef GUI_GTK
@@ -1874,7 +1727,6 @@ void create_LiVES(void) {
     for (i=0; i<4; i++) {
       GtkToolItem *spacer;
       spacer=gtk_separator_tool_item_new();
-      lives_widget_show(LIVES_WIDGET(spacer));
       gtk_separator_tool_item_set_draw(GTK_SEPARATOR_TOOL_ITEM(spacer),FALSE);
       gtk_tool_item_set_homogeneous(LIVES_TOOL_ITEM(spacer),FALSE);
       gtk_tool_item_set_expand(LIVES_TOOL_ITEM(spacer),TRUE);
@@ -1893,8 +1745,7 @@ void create_LiVES(void) {
 
   mainw->tb_hbox=lives_hbox_new(FALSE, 0);
   mainw->toolbar = lives_toolbar_new();
-  lives_widget_set_bg_color(mainw->tb_hbox, LIVES_WIDGET_STATE_NORMAL, &palette->fade_colour);
-  lives_widget_set_bg_color(mainw->toolbar, LIVES_WIDGET_STATE_NORMAL, &palette->fade_colour);
+
   lives_toolbar_set_show_arrow(LIVES_TOOLBAR(mainw->toolbar),FALSE);
 
   lives_box_pack_start(LIVES_BOX(mainw->vbox1), mainw->tb_hbox, FALSE, FALSE, 0);
@@ -1997,22 +1848,16 @@ void create_LiVES(void) {
   }
   lives_box_pack_start(LIVES_BOX(mainw->tb_hbox), t_label, FALSE, FALSE, 0);
 
-  lives_widget_show_all(mainw->tb_hbox);
-  lives_widget_hide(mainw->tb_hbox);
 
   vbox4 = lives_vbox_new(FALSE, 0);
-  lives_widget_show(vbox4);
-
-  mainw->eventbox = lives_event_box_new();
-  lives_widget_show(mainw->eventbox);
-  lives_box_pack_start(LIVES_BOX(mainw->vbox1), mainw->eventbox, TRUE, TRUE, 0);
-  lives_container_add(LIVES_CONTAINER(mainw->eventbox), vbox4);
 
   if (palette->style&STYLE_1) {
-    lives_widget_set_bg_color(mainw->eventbox, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
     lives_widget_set_bg_color(vbox4, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
-    lives_widget_set_bg_color(mainw->vbox1, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
   }
+
+  mainw->eventbox = lives_event_box_new();
+  lives_box_pack_start(LIVES_BOX(mainw->vbox1), mainw->eventbox, TRUE, TRUE, 0);
+  lives_container_add(LIVES_CONTAINER(mainw->eventbox), vbox4);
 
   lives_widget_set_events(mainw->eventbox, LIVES_SCROLL_MASK);
 
@@ -2021,7 +1866,6 @@ void create_LiVES(void) {
                        NULL);
 
   mainw->framebar = lives_hbox_new(FALSE, 0);
-  lives_widget_show(mainw->framebar);
   lives_box_pack_start(LIVES_BOX(vbox4), mainw->framebar, FALSE, FALSE, 0);
   lives_container_set_border_width(LIVES_CONTAINER(mainw->framebar), 2*widget_opts.scale);
 
@@ -2032,17 +1876,10 @@ void create_LiVES(void) {
   lives_label_set_text(LIVES_LABEL(mainw->vps_label),tmp);
   lives_free(tmp);
 
-  if (palette->style&STYLE_1) {
-    lives_widget_set_fg_color(mainw->vps_label, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
-  }
-
-  lives_widget_show(mainw->vps_label);
   lives_box_pack_start(LIVES_BOX(mainw->framebar), mainw->vps_label, FALSE, FALSE, 0);
 
   mainw->spinbutton_pb_fps = lives_standard_spin_button_new(NULL,FALSE,1, -FPS_MAX, FPS_MAX, 0.1, 0.01, 3,
                              LIVES_BOX(mainw->framebar),_("Vary the video speed"));
-
-  lives_widget_show(mainw->spinbutton_pb_fps);
 
   widget_opts.justify=LIVES_JUSTIFY_CENTER;
   if (palette->style==STYLE_PLAIN) {
@@ -2052,12 +1889,9 @@ void create_LiVES(void) {
   }
   widget_opts.justify=widget_opts.default_justify;
 
-  lives_widget_show(mainw->banner);
-
   lives_box_pack_start(LIVES_BOX(mainw->framebar), mainw->banner, TRUE, TRUE, 0);
 
   mainw->framecounter = lives_entry_new();
-  lives_widget_show(mainw->framecounter);
   lives_box_pack_start(LIVES_BOX(mainw->framebar), mainw->framecounter, FALSE, TRUE, 0);
   lives_entry_set_editable(LIVES_ENTRY(mainw->framecounter), FALSE);
   lives_entry_set_has_frame(LIVES_ENTRY(mainw->framecounter), FALSE);
@@ -2066,49 +1900,31 @@ void create_LiVES(void) {
   lives_widget_set_can_focus(mainw->framecounter, FALSE);
 
   mainw->curf_label = lives_standard_label_new("                                                            ");
-  lives_widget_show(mainw->curf_label);
   lives_box_pack_start(LIVES_BOX(mainw->framebar), mainw->curf_label, FALSE, FALSE, 0);
 
-  if (palette->style&STYLE_1) {
-    lives_widget_set_fg_color(mainw->curf_label, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
-  }
-
-  lives_widget_hide(mainw->framebar);
-
   hbox1 = lives_hbox_new(FALSE, 0);
-  lives_widget_show(hbox1);
   lives_box_pack_start(LIVES_BOX(vbox4), hbox1, FALSE, FALSE, 0);
+
+
   if (palette->style&STYLE_1) {
     lives_widget_set_bg_color(hbox1, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
   }
   lives_widget_set_vexpand(hbox1,FALSE);
 
   mainw->eventbox3 = lives_event_box_new();
-  lives_widget_show(mainw->eventbox3);
   lives_box_pack_start(LIVES_BOX(hbox1), mainw->eventbox3, TRUE, FALSE, 0);
-  if (palette->style&STYLE_1) {
-    lives_widget_set_bg_color(mainw->eventbox3, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
-  }
 
   mainw->frame1 = lives_frame_new(NULL);
-  lives_widget_show(mainw->frame1);
   lives_container_set_border_width(LIVES_CONTAINER(mainw->frame1), widget_opts.border_width);
   lives_container_add(LIVES_CONTAINER(mainw->eventbox3), mainw->frame1);
 
-  if (palette->style&STYLE_1) {
-    lives_widget_set_bg_color(mainw->frame1, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
-    lives_widget_set_fg_color(mainw->frame1, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
-  }
   lives_widget_set_vexpand(mainw->frame1,FALSE);
   lives_widget_set_hexpand(mainw->frame1,FALSE);
 
   lives_frame_set_shadow_type(LIVES_FRAME(mainw->frame1), LIVES_SHADOW_NONE);
 
   mainw->freventbox0=lives_event_box_new();
-  lives_widget_show(mainw->freventbox0);
-  if (palette->style&STYLE_1) {
-    lives_widget_set_bg_color(mainw->freventbox0, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
-  }
+
   lives_widget_set_vexpand(mainw->freventbox0,FALSE);
   lives_widget_set_hexpand(mainw->freventbox0,FALSE);
 
@@ -2116,46 +1932,36 @@ void create_LiVES(void) {
 
   lives_widget_set_app_paintable(mainw->freventbox0,TRUE);
 
-  lives_widget_show(mainw->start_image);
   lives_container_add(LIVES_CONTAINER(mainw->freventbox0), mainw->start_image);
   lives_widget_set_vexpand(mainw->start_image,FALSE);
   lives_widget_set_hexpand(mainw->start_image,FALSE);
-  if (palette->style&STYLE_1) {
-    lives_widget_set_bg_color(mainw->start_image, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
-  }
 
   label = lives_standard_label_new(_("First Frame"));
   if (palette->style&STYLE_1) {
     lives_widget_set_fg_color(label, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
   }
-  lives_widget_show(label);
+
   lives_frame_set_label_widget(LIVES_FRAME(mainw->frame1), label);
 
   mainw->playframe = lives_frame_new(NULL);
-  lives_widget_hide(mainw->playframe);
+
   lives_box_pack_start(LIVES_BOX(hbox1), mainw->playframe, TRUE, FALSE, 0);
   lives_widget_set_size_request(mainw->playframe, DEFAULT_FRAME_HSIZE, DEFAULT_FRAME_VSIZE);
   lives_container_set_border_width(LIVES_CONTAINER(mainw->playframe), widget_opts.border_width);
 
 
   lives_frame_set_shadow_type(LIVES_FRAME(mainw->playframe), LIVES_SHADOW_NONE);
-  if (palette->style&STYLE_1) {
-    lives_widget_set_bg_color(mainw->playframe, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
-  }
 
   pf_label = lives_standard_label_new(_("Play"));
   if (palette->style&STYLE_1) {
     lives_widget_set_fg_color(pf_label, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
   }
-  lives_widget_show(pf_label);
+
   lives_frame_set_label_widget(LIVES_FRAME(mainw->playframe), pf_label);
 
   mainw->pl_eventbox = lives_event_box_new();
-  if (palette->style&STYLE_1) {
-    lives_widget_set_bg_color(mainw->pl_eventbox, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
-  }
+
   lives_container_add(LIVES_CONTAINER(mainw->playframe), mainw->pl_eventbox);
-  lives_widget_show(mainw->pl_eventbox);
 
   mainw->playarea = lives_hbox_new(FALSE,0);
 
@@ -2165,43 +1971,30 @@ void create_LiVES(void) {
 
   mainw->eventbox4 = lives_event_box_new();
   lives_box_pack_start(LIVES_BOX(hbox1), mainw->eventbox4, TRUE, FALSE, 0);
-  if (palette->style&STYLE_1) {
-    lives_widget_set_bg_color(mainw->eventbox4, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
-  }
+
   lives_widget_set_vexpand(mainw->eventbox4,FALSE);
   lives_widget_set_hexpand(mainw->eventbox4,FALSE);
-  lives_widget_show(mainw->eventbox4);
 
   mainw->frame2 = lives_frame_new(NULL);
-  lives_widget_show(mainw->frame2);
   lives_container_set_border_width(LIVES_CONTAINER(mainw->frame2), widget_opts.border_width);
   lives_container_add(LIVES_CONTAINER(mainw->eventbox4), mainw->frame2);
-  if (palette->style&STYLE_1) {
-    lives_widget_set_bg_color(mainw->frame2, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
-  }
+
   lives_widget_set_vexpand(mainw->frame2,FALSE);
   lives_widget_set_hexpand(mainw->frame2,FALSE);
 
   lives_frame_set_shadow_type(LIVES_FRAME(mainw->frame2), LIVES_SHADOW_NONE);
 
   mainw->freventbox1=lives_event_box_new();
-  lives_widget_show(mainw->freventbox1);
-  if (palette->style&STYLE_1) {
-    lives_widget_set_bg_color(mainw->freventbox1, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
-  }
+
   lives_widget_set_vexpand(mainw->freventbox1,FALSE);
   lives_widget_set_hexpand(mainw->freventbox1,FALSE);
   lives_widget_set_app_paintable(mainw->freventbox1,TRUE);
 
   lives_container_add(LIVES_CONTAINER(mainw->frame2), mainw->freventbox1);
 
-  lives_widget_show(mainw->end_image);
   lives_container_add(LIVES_CONTAINER(mainw->freventbox1), mainw->end_image);
   lives_widget_set_vexpand(mainw->end_image,FALSE);
   lives_widget_set_hexpand(mainw->end_image,FALSE);
-  if (palette->style&STYLE_1) {
-    lives_widget_set_bg_color(mainw->end_image, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
-  }
 
   // default frame sizes
   mainw->def_width=DEFAULT_FRAME_HSIZE;
@@ -2219,11 +2012,8 @@ void create_LiVES(void) {
   // the actual playback image for the internal player
   mainw->play_image = lives_image_new_from_pixbuf(NULL);
 
-  lives_widget_show(mainw->play_image);
+  lives_widget_show(mainw->play_image); // needed to get size
   lives_object_ref(mainw->play_image);
-  if (palette->style&STYLE_1) {
-    lives_widget_set_bg_color(mainw->play_image, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
-  }
 
   lives_widget_set_hexpand(mainw->play_image,TRUE);
   lives_widget_set_vexpand(mainw->play_image,TRUE);
@@ -2231,14 +2021,12 @@ void create_LiVES(void) {
   lives_object_ref_sink(mainw->play_image);
 
   label = lives_standard_label_new(_("Last Frame"));
-  lives_widget_show(label);
   lives_frame_set_label_widget(LIVES_FRAME(mainw->frame2), label);
   if (palette->style&STYLE_1) {
     lives_widget_set_fg_color(label, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
   }
 
   hbox3 = lives_hbox_new(FALSE, 0);
-  lives_widget_show(hbox3);
   lives_box_pack_start(LIVES_BOX(vbox4), hbox3, FALSE, TRUE, 0);
 
   dpw=widget_opts.packing_width;
@@ -2252,34 +2040,18 @@ void create_LiVES(void) {
   widget_opts.packing_width=dpw;
   widget_opts.apply_theme=woat;
 
-  lives_widget_show(mainw->spinbutton_start);
-
   mainw->arrow1 = lives_arrow_new(LIVES_ARROW_LEFT, LIVES_SHADOW_OUT);
-  lives_widget_show(mainw->arrow1);
   lives_box_pack_start(LIVES_BOX(hbox3), mainw->arrow1, FALSE, FALSE, 0);
-
-  if (palette->style&STYLE_1) {
-    lives_widget_set_fg_color(mainw->arrow1, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
-  }
 
   lives_entry_set_width_chars(LIVES_ENTRY(mainw->spinbutton_start),SPBWIDTHCHARS);
   mainw->sel_label = lives_standard_label_new(NULL);
-
-  if (palette->style&STYLE_1) {
-    lives_widget_set_fg_color(mainw->sel_label, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
-  }
 
   set_sel_label(mainw->sel_label);
   lives_widget_show(mainw->sel_label);
   lives_box_pack_start(LIVES_BOX(hbox3), mainw->sel_label, FALSE, FALSE, 0);
 
   mainw->arrow2 = lives_arrow_new(LIVES_ARROW_RIGHT, LIVES_SHADOW_OUT);
-  lives_widget_show(mainw->arrow2);
   lives_box_pack_start(LIVES_BOX(hbox3), mainw->arrow2, FALSE, FALSE, 0);
-
-  if (palette->style&STYLE_1) {
-    lives_widget_set_fg_color(mainw->arrow2, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
-  }
 
   widget_opts.expand=LIVES_EXPAND_EXTRA;
   widget_opts.packing_width=MAIN_SPIN_SPACER;
@@ -2290,25 +2062,7 @@ void create_LiVES(void) {
   widget_opts.packing_width=dpw;
   widget_opts.apply_theme=woat;
 
-  lives_widget_show(mainw->spinbutton_end);
-
-
   lives_entry_set_width_chars(LIVES_ENTRY(mainw->spinbutton_end),SPBWIDTHCHARS);
-
-  if (palette->style&STYLE_1&&palette->style&STYLE_2) {
-    // background colour seems to be broken in gtk+3 !!!
-#if !GTK_CHECK_VERSION(3,0,0)
-    lives_widget_set_base_color(mainw->spinbutton_start, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
-    lives_widget_set_base_color(mainw->spinbutton_start, LIVES_WIDGET_STATE_INSENSITIVE, &palette->normal_back);
-    lives_widget_set_base_color(mainw->spinbutton_end, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
-    lives_widget_set_base_color(mainw->spinbutton_end, LIVES_WIDGET_STATE_INSENSITIVE, &palette->normal_back);
-    lives_widget_set_text_color(mainw->spinbutton_start, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
-    lives_widget_set_text_color(mainw->spinbutton_start, LIVES_WIDGET_STATE_INSENSITIVE, &palette->normal_fore);
-    lives_widget_set_text_color(mainw->spinbutton_end, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
-    lives_widget_set_text_color(mainw->spinbutton_end, LIVES_WIDGET_STATE_INSENSITIVE, &palette->normal_fore);
-#endif
-    lives_widget_set_fg_color(mainw->sel_label, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
-  }
 
   lives_widget_set_sensitive(mainw->spinbutton_start,FALSE);
   lives_widget_set_sensitive(mainw->spinbutton_end,FALSE);
@@ -2317,21 +2071,14 @@ void create_LiVES(void) {
 
   if (palette->style&STYLE_1) {
     lives_box_pack_start(LIVES_BOX(vbox4), mainw->sep_image, FALSE, TRUE, widget_opts.packing_height*2);
-    lives_widget_show(mainw->sep_image);
   }
 
   else {
     lives_box_pack_start(LIVES_BOX(vbox4), mainw->hseparator, TRUE, TRUE, 0);
-    lives_widget_show(mainw->hseparator);
   }
 
   mainw->eventbox5 = lives_event_box_new();
   lives_box_pack_start(LIVES_BOX(vbox4), mainw->eventbox5, FALSE, FALSE, 0);
-  lives_widget_show(mainw->eventbox5);
-
-  if (palette->style&STYLE_1) {
-    lives_widget_set_bg_color(mainw->eventbox5, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
-  }
 
 #ifdef ENABLE_GIW_3
   mainw->hruler=giw_timeline_new(LIVES_ORIENTATION_HORIZONTAL);
@@ -2347,99 +2094,45 @@ void create_LiVES(void) {
                           LIVES_BUTTON_PRESS_MASK | LIVES_ENTER_NOTIFY_MASK);
 
   mainw->eventbox2 = lives_event_box_new();
-  lives_widget_show(mainw->eventbox2);
   lives_box_pack_start(LIVES_BOX(vbox4), mainw->eventbox2, TRUE, TRUE, 0);
   lives_widget_add_events(mainw->eventbox2, LIVES_BUTTON1_MOTION_MASK | LIVES_BUTTON_RELEASE_MASK | LIVES_BUTTON_PRESS_MASK);
 
   lives_widget_set_vexpand(mainw->eventbox2,TRUE);
 
-  if (palette->style&STYLE_1) {
-    lives_widget_set_bg_color(mainw->eventbox2, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
-    lives_widget_set_fg_color(mainw->eventbox2, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
-    lives_widget_set_bg_color(mainw->hruler, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
-    lives_widget_set_fg_color(mainw->hruler, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
-  }
-
   vbox2 = lives_vbox_new(FALSE, 0);
-  lives_widget_show(vbox2);
   lives_container_add(LIVES_CONTAINER(mainw->eventbox2), vbox2);
 
   mainw->vidbar = lives_standard_label_new(_("Video"));
-
-  if (palette->style&STYLE_1) {
-    lives_widget_set_fg_color(mainw->vidbar, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
-  }
-
-  if (palette->style==STYLE_PLAIN) {
-    lives_widget_show(mainw->vidbar);
-  } else {
-    lives_widget_set_bg_color(vbox2, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
-    lives_widget_hide(mainw->vidbar);
-  }
 
   lives_box_pack_start(LIVES_BOX(vbox2), mainw->vidbar, TRUE, TRUE, 0);
 
   mainw->video_draw = lives_drawing_area_new();
   lives_widget_set_app_paintable(mainw->video_draw,TRUE);
   lives_widget_set_size_request(mainw->video_draw,lives_widget_get_allocation_width(mainw->LiVES),CE_VIDBAR_HEIGHT);
-  lives_widget_show(mainw->video_draw);
   lives_box_pack_start(LIVES_BOX(vbox2), mainw->video_draw, TRUE, TRUE, 0);
-  if (palette->style&STYLE_1) {
-    lives_widget_set_bg_color(mainw->video_draw, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
-  }
 
   mainw->laudbar = lives_standard_label_new(_("Left Audio"));
 
-  if (palette->style&STYLE_1) {
-    lives_widget_set_fg_color(mainw->laudbar, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
-  }
-
   lives_box_pack_start(LIVES_BOX(vbox2), mainw->laudbar, TRUE, TRUE, 0);
-
-  if (palette->style==STYLE_PLAIN) {
-    lives_widget_show(mainw->laudbar);
-  } else {
-    lives_widget_hide(mainw->laudbar);
-  }
 
   mainw->laudio_draw = lives_drawing_area_new();
   lives_widget_set_app_paintable(mainw->laudio_draw,TRUE);
   lives_widget_set_size_request(mainw->laudio_draw,lives_widget_get_allocation_width(mainw->LiVES),CE_VIDBAR_HEIGHT);
-  lives_widget_show(mainw->laudio_draw);
   lives_box_pack_start(LIVES_BOX(vbox2), mainw->laudio_draw, TRUE, TRUE, 0);
-  if (palette->style&STYLE_1) {
-    lives_widget_set_bg_color(mainw->laudio_draw, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
-  }
 
   mainw->raudbar = lives_standard_label_new(_("Right Audio"));
 
-  if (palette->style&STYLE_1) {
-    lives_widget_set_fg_color(mainw->raudbar, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
-  }
-
   lives_box_pack_start(LIVES_BOX(vbox2), mainw->raudbar, TRUE, TRUE, 0);
-
-  if (palette->style==STYLE_PLAIN) {
-    lives_widget_show(mainw->raudbar);
-  } else {
-    lives_widget_hide(mainw->raudbar);
-  }
 
   mainw->raudio_draw = lives_drawing_area_new();
   lives_widget_set_app_paintable(mainw->raudio_draw,TRUE);
   lives_widget_set_size_request(mainw->raudio_draw,lives_widget_get_allocation_width(mainw->LiVES),CE_VIDBAR_HEIGHT);
-  lives_widget_show(mainw->raudio_draw);
   lives_box_pack_start(LIVES_BOX(vbox2), mainw->raudio_draw, TRUE, TRUE, 0);
-  if (palette->style&STYLE_1) {
-    lives_widget_set_bg_color(mainw->raudio_draw, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
-  }
 
   eventbox=lives_event_box_new();
   lives_widget_set_vexpand(eventbox,TRUE);
-  lives_widget_show(eventbox);
 
   mainw->message_box=lives_vbox_new(FALSE, 0);
-  lives_widget_show(mainw->message_box);
 
   lives_widget_set_vexpand(mainw->message_box,TRUE);
 
@@ -3121,6 +2814,64 @@ void create_LiVES(void) {
 }
 
 
+void show_lives(void) {
+  char buff[PATH_MAX];
+
+  lives_widget_show_all(mainw->LiVES); // this calls the config_event()
+
+  if (palette->style&STYLE_1) {
+    lives_widget_hide(mainw->vidbar);
+    lives_widget_hide(mainw->laudbar);
+    lives_widget_hide(mainw->raudbar);
+    set_colours(&palette->normal_fore,&palette->normal_back,&palette->menu_and_bars_fore,&palette->menu_and_bars,\
+                &palette->info_base,&palette->info_text);
+  } else {
+    lives_widget_show(mainw->vidbar);
+    lives_widget_show(mainw->laudbar);
+    lives_widget_show(mainw->raudbar);
+  }
+
+  lives_widget_hide(mainw->redo);
+#ifdef LIVES_TV_CHANNEL1
+  lives_widget_show(mainw->toy_tv);
+#else
+  lives_widget_hide(mainw->toy_tv);
+# endif
+  lives_widget_hide(mainw->tb_hbox);
+  lives_widget_hide(mainw->framebar);
+  lives_widget_hide(mainw->playframe);
+
+  if (capable->smog_version_correct&&prefs->show_recent) {
+    lives_widget_show(mainw->recent_menu);
+  } else {
+    lives_widget_hide(mainw->recent_menu);
+  }
+
+  get_menu_text(mainw->recent1,buff);
+  if (!strlen(buff)) lives_widget_hide(mainw->recent1);
+  get_menu_text(mainw->recent2,buff);
+  if (!strlen(buff)) lives_widget_hide(mainw->recent2);
+  get_menu_text(mainw->recent3,buff);
+  if (!strlen(buff)) lives_widget_hide(mainw->recent3);
+  get_menu_text(mainw->recent4,buff);
+  if (!strlen(buff)) lives_widget_hide(mainw->recent4);
+
+  if (!capable->has_composite||!capable->has_convert) {
+    lives_widget_hide(mainw->merge);
+  }
+
+  if (!((prefs->audio_player==AUD_PLAYER_JACK&&capable->has_jackd)||
+        (prefs->audio_player==AUD_PLAYER_PULSE&&capable->has_pulse_audio)))
+    lives_widget_hide(mainw->vol_toolitem);
+
+  lives_widget_hide(mainw->hruler);
+
+  if (prefs->present&&prefs->show_gui)
+    lives_window_present(LIVES_WINDOW(mainw->LiVES));
+
+}
+
+
 void set_interactive(boolean interactive) {
   LiVESList *list;
 
@@ -3253,6 +3004,7 @@ void fade_background(void) {
     lives_label_set_text(LIVES_LABEL(mainw->vps_label),("                      "));
   } else {
     lives_widget_set_bg_color(mainw->playframe, LIVES_WIDGET_STATE_NORMAL, &palette->fade_colour);
+    lives_widget_set_bg_color(lives_widget_get_parent(mainw->playframe), LIVES_WIDGET_STATE_NORMAL, &palette->fade_colour);
     if (mainw->sep_win) {
       lives_widget_hide(mainw->playframe);
     }
@@ -3261,24 +3013,10 @@ void fade_background(void) {
 
   lives_frame_set_label(LIVES_FRAME(mainw->playframe), "");
 
-  lives_widget_set_fg_color(mainw->curf_label, LIVES_WIDGET_STATE_NORMAL, &palette->fade_colour);
-  lives_widget_set_fg_color(mainw->vps_label, LIVES_WIDGET_STATE_NORMAL, &palette->fade_colour);
-  lives_widget_set_bg_color(mainw->vbox1, LIVES_WIDGET_STATE_NORMAL, &palette->fade_colour);
-  lives_widget_set_bg_color(mainw->LiVES, LIVES_WIDGET_STATE_NORMAL, &palette->fade_colour);
-  lives_widget_set_bg_color(mainw->eventbox3, LIVES_WIDGET_STATE_NORMAL, &palette->fade_colour);
-  lives_widget_set_bg_color(lives_widget_get_parent(mainw->message_box), LIVES_WIDGET_STATE_NORMAL, &palette->fade_colour);
+  set_colours(&palette->normal_fore,&palette->fade_colour,&palette->menu_and_bars_fore,&palette->menu_and_bars,	\
+              &palette->info_base,&palette->info_text);
 
-  lives_widget_set_bg_color(mainw->eventbox4, LIVES_WIDGET_STATE_NORMAL, &palette->fade_colour);
-  lives_widget_set_bg_color(mainw->eventbox, LIVES_WIDGET_STATE_NORMAL, &palette->fade_colour);
-  lives_widget_set_bg_color(mainw->pl_eventbox, LIVES_WIDGET_STATE_NORMAL, &palette->fade_colour);
-  lives_widget_set_bg_color(mainw->play_image, LIVES_WIDGET_STATE_NORMAL, &palette->fade_colour);
-
-  lives_widget_set_bg_color(mainw->frame1, LIVES_WIDGET_STATE_NORMAL, &palette->fade_colour);
-  lives_widget_set_bg_color(mainw->frame2, LIVES_WIDGET_STATE_NORMAL, &palette->fade_colour);
-  lives_widget_set_bg_color(mainw->freventbox0, LIVES_WIDGET_STATE_NORMAL, &palette->fade_colour);
   lives_widget_set_app_paintable(mainw->freventbox0,FALSE);
-
-  lives_widget_set_bg_color(mainw->freventbox1, LIVES_WIDGET_STATE_NORMAL, &palette->fade_colour);
   lives_widget_set_app_paintable(mainw->freventbox1,FALSE);
 
   lives_frame_set_shadow_type(LIVES_FRAME(mainw->frame1), LIVES_SHADOW_NONE);
@@ -3394,12 +3132,7 @@ void unfade_background(void) {
   } else {
     lives_label_set_text(LIVES_LABEL(mainw->banner),"                                                ");
   }
-  if (palette->style&STYLE_1) {
-    lives_widget_set_fg_color(mainw->banner, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
-    lives_widget_set_bg_color(mainw->eventbox, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
-    lives_widget_set_bg_color(mainw->vbox1, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
-    lives_widget_set_bg_color(mainw->eventbox3, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
-  }
+
   lives_frame_set_label(LIVES_FRAME(mainw->frame1), _("First Frame"));
   if (!mainw->preview) {
     lives_frame_set_label(LIVES_FRAME(mainw->playframe),_("Play"));
@@ -3408,40 +3141,7 @@ void unfade_background(void) {
   }
 
   lives_frame_set_label(LIVES_FRAME(mainw->frame2), _("Last Frame"));
-  if (palette->style&STYLE_1) {
-    lives_widget_set_fg_color(mainw->curf_label, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
-    lives_widget_set_fg_color(mainw->vps_label, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
-    lives_widget_set_bg_color(mainw->LiVES, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
 
-    lives_widget_set_bg_color(mainw->pl_eventbox, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
-  }
-
-  if (palette->style&STYLE_1) {
-    lives_widget_set_fg_color(lives_frame_get_label_widget(LIVES_FRAME(mainw->playframe)), LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
-    lives_widget_set_fg_color(lives_frame_get_label_widget(LIVES_FRAME(mainw->frame1)), LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
-    lives_widget_set_fg_color(lives_frame_get_label_widget(LIVES_FRAME(mainw->frame2)), LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
-
-
-    lives_widget_set_fg_color(mainw->curf_label, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
-    lives_widget_set_fg_color(mainw->vps_label, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
-    lives_widget_set_bg_color(mainw->vbox1, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
-    lives_widget_set_bg_color(mainw->LiVES, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
-    lives_widget_set_bg_color(mainw->eventbox3, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
-    lives_widget_set_bg_color(lives_widget_get_parent(mainw->message_box), LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
-
-    lives_widget_set_bg_color(mainw->eventbox4, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
-    lives_widget_set_bg_color(mainw->eventbox, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
-    lives_widget_set_bg_color(mainw->pl_eventbox, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
-    lives_widget_set_bg_color(mainw->play_image, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
-
-    lives_widget_set_bg_color(mainw->frame1, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
-    lives_widget_set_bg_color(mainw->frame2, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
-    lives_widget_set_bg_color(mainw->freventbox0, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
-    lives_widget_set_bg_color(mainw->freventbox1, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
-    lives_widget_set_bg_color(mainw->play_image, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
-
-    lives_widget_set_bg_color(mainw->playframe, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
-  }
   lives_widget_show(mainw->menu_hbox);
   lives_widget_hide(mainw->tb_hbox);
   lives_widget_show(mainw->hseparator);
@@ -3468,8 +3168,6 @@ void unfade_background(void) {
   lives_widget_show(mainw->arrow2);
   lives_widget_show(mainw->spinbutton_pb_fps);
   lives_widget_show(mainw->message_box);
-  lives_widget_set_fg_color(mainw->vps_label, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
-  lives_widget_set_fg_color(mainw->curf_label, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
 
   if (stop_closure!=NULL&&prefs->show_gui) {
     lives_accel_group_disconnect(LIVES_ACCEL_GROUP(mainw->accel_group), stop_closure);
@@ -3550,6 +3248,9 @@ void unfade_background(void) {
 
   lives_widget_set_app_paintable(mainw->freventbox0,TRUE);
   lives_widget_set_app_paintable(mainw->freventbox1,TRUE);
+
+  set_colours(&palette->normal_fore,&palette->normal_back,&palette->menu_and_bars_fore,&palette->menu_and_bars,	\
+              &palette->info_base,&palette->info_text);
 }
 
 

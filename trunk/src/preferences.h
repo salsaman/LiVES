@@ -480,6 +480,8 @@ typedef struct {
   LiVESWidget *spinbutton_warn_fsize;
   LiVESWidget *spinbutton_bwidth;
   LiVESWidget *theme_combo;
+  LiVESWidget *cbutton_fore;
+  LiVESWidget *cbutton_back;
   LiVESWidget *check_midi;
   LiVESWidget *ins_speed;
   LiVESWidget *jpeg;

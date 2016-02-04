@@ -1155,6 +1155,18 @@ LIVES_INLINE boolean lives_widget_get_bg_state_color(LiVESWidget *widget, LiVESW
 }
 
 
+LIVES_INLINE boolean lives_widget_color_equal(LiVESWidgetColor *c1, const LiVESWidgetColor *c2) {
+#ifdef GUI_GTK
+#if LIVES_WIDGET_COLOR_HAS_ALPHA
+  if (c1->alpha!=c2->alpha) return FALSE;
+#endif
+  if (c1->red!=c2->red||c1->green!=c2->green||c1->blue!=c2->blue) return FALSE;
+  return TRUE;
+#endif
+  return FALSE;
+}
+
+
 LIVES_INLINE LiVESWidgetColor *lives_widget_color_copy(LiVESWidgetColor *c1, const LiVESWidgetColor *c2) {
   // if c1 is NULL, create a new copy of c2, otherwise copy c2 -> c1
   LiVESWidgetColor *c0=NULL;
@@ -8187,7 +8199,6 @@ static void after_param_alpha_changedx(LiVESSpinButton *spinbutton, livespointer
 
 
 LiVESWidget *lives_standard_color_button_new(LiVESBox *parent, char *name, boolean use_mnemonic, boolean use_alpha, lives_colRGBA64_t *rgba,
-    \
     LiVESWidget **sb_red, LiVESWidget **sb_green, LiVESWidget **sb_blue, LiVESWidget **sb_alpha) {
 
   LiVESWidgetColor colr;

@@ -534,6 +534,8 @@ boolean apply_prefs(boolean skip_warn) {
   char *audio_codec=NULL;
   char *pb_quality = lives_combo_get_active_text(LIVES_COMBO(prefsw->pbq_combo));
 
+  LiVESWidgetColor colf,colb;
+
   int pbq=PB_QUALITY_MED;
   int idx;
 
@@ -735,6 +737,18 @@ boolean apply_prefs(boolean skip_warn) {
   char *tmp;
 
   char *cdplay_device=lives_filename_from_utf8((char *)lives_entry_get_text(LIVES_ENTRY(prefsw->cdplay_entry)),-1,NULL,NULL,NULL);
+
+  lives_color_button_get_color(LIVES_COLOR_BUTTON(prefsw->cbutton_fore),&colf);
+  lives_color_button_get_color(LIVES_COLOR_BUTTON(prefsw->cbutton_back),&colb);
+
+  if (!lives_widget_color_equal(&colf,&palette->normal_fore)||
+      !lives_widget_color_equal(&colb,&palette->normal_back)
+     ) {
+    lives_widget_color_copy(&palette->normal_fore,&colf);
+    lives_widget_color_copy(&palette->normal_back,&colb);
+    set_colours(&palette->normal_fore,&palette->normal_back,&palette->menu_and_bars_fore,&palette->menu_and_bars, \
+                &palette->info_base,&palette->info_text);
+  }
 
   if (capable->has_encoder_plugins) {
     audio_codec = lives_combo_get_active_text(LIVES_COMBO(prefsw->acodec_combo));
@@ -3887,12 +3901,12 @@ _prefsw *create_prefs_dialog(void) {
   hbox = lives_hbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
   widget_color_to_lives_rgba(&rgba,&palette->normal_fore);
-  cbutton = lives_standard_color_button_new(LIVES_BOX(hbox),_("        _Foreground Color"),TRUE,FALSE,&rgba,NULL,NULL,NULL,NULL);
+  prefsw->cbutton_fore = lives_standard_color_button_new(LIVES_BOX(hbox),_("        _Foreground Color"),TRUE,FALSE,&rgba,NULL,NULL,NULL,NULL);
 
   hbox = lives_hbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
   widget_color_to_lives_rgba(&rgba,&palette->normal_back);
-  cbutton = lives_standard_color_button_new(LIVES_BOX(hbox),_("        _Background Color"),TRUE,FALSE,&rgba,NULL,NULL,NULL,NULL);
+  prefsw->cbutton_back = lives_standard_color_button_new(LIVES_BOX(hbox),_("        _Background Color"),TRUE,FALSE,&rgba,NULL,NULL,NULL,NULL);
 
   hbox = lives_hbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
@@ -4366,6 +4380,12 @@ _prefsw *create_prefs_dialog(void) {
   lives_signal_connect(dirbutton6, LIVES_WIDGET_CLICKED_SIGNAL, LIVES_GUI_CALLBACK(on_filesel_complex_clicked),prefsw->tmpdir_entry);
 
   // Connect signals for 'Apply' button activity handling
+  lives_signal_connect(LIVES_GUI_OBJECT(prefsw->cbutton_fore), LIVES_WIDGET_COLOR_SET_SIGNAL, LIVES_GUI_CALLBACK(apply_button_set_enabled),
+                       NULL);
+  lives_signal_connect(LIVES_GUI_OBJECT(prefsw->cbutton_back), LIVES_WIDGET_COLOR_SET_SIGNAL, LIVES_GUI_CALLBACK(apply_button_set_enabled),
+                       NULL);
+
+
   lives_signal_connect(LIVES_GUI_OBJECT(prefsw->wpp_entry), LIVES_WIDGET_CHANGED_SIGNAL, LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
   lives_signal_connect(LIVES_GUI_OBJECT(prefsw->frei0r_entry), LIVES_WIDGET_CHANGED_SIGNAL, LIVES_GUI_CALLBACK(apply_button_set_enabled),
                        NULL);

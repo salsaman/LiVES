@@ -11709,7 +11709,13 @@ void clear_context(lives_mt *mt) {
 
   mt->context_box = lives_vbox_new(FALSE, 4);
   if (palette->style&STYLE_1) {
-    lives_widget_set_bg_color(mt->context_box, LIVES_WIDGET_STATE_NORMAL, &palette->info_base);
+    if (palette->style&STYLE_4) {
+      lives_widget_set_bg_color(mt->context_box, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
+      lives_widget_set_fg_color(mt->context_box, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
+    } else {
+      lives_widget_set_bg_color(mt->context_box, LIVES_WIDGET_STATE_NORMAL, &palette->info_base);
+      lives_widget_set_fg_color(mt->context_box, LIVES_WIDGET_STATE_NORMAL, &palette->info_text);
+    }
   }
 
   lives_scrolled_window_add_with_viewport(LIVES_SCROLLED_WINDOW(mt->context_scroll), mt->context_box);
@@ -11737,6 +11743,16 @@ void add_context_label(lives_mt *mt, const char *text) {
 
   lives_widget_show(label);
   lives_box_pack_start(LIVES_BOX(mt->context_box), label, FALSE, FALSE, 0);
+
+  if (palette->style&STYLE_1) {
+    if (palette->style&STYLE_4) {
+      lives_widget_set_bg_color(label, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
+      lives_widget_set_fg_color(label, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
+    } else {
+      lives_widget_set_bg_color(label, LIVES_WIDGET_STATE_NORMAL, &palette->info_base);
+      lives_widget_set_fg_color(label, LIVES_WIDGET_STATE_NORMAL, &palette->info_text);
+    }
+  }
 }
 
 

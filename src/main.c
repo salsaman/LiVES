@@ -391,19 +391,6 @@ static boolean pre_init(void) {
   mainw=(mainwindow *)(calloc(1,sizeof(mainwindow))); // must not use lives_malloc() yet !
   mainw->is_ready=mainw->fatal=FALSE;
 
-
-  // TODO : deprecated in gtk+ 3.16+
-  mainw->alt_vtable.malloc=_lives_malloc;
-  mainw->alt_vtable.realloc=_lives_realloc;
-  mainw->alt_vtable.free=_lives_free;
-  mainw->alt_vtable.calloc=NULL;
-  mainw->alt_vtable.try_malloc=NULL;
-  mainw->alt_vtable.try_realloc=NULL;
-
-  lives_mem_set_vtable(&mainw->alt_vtable);
-
-
-
   prefs=(_prefs *)lives_malloc(sizeof(_prefs));
   future_prefs=(_future_prefs *)lives_malloc(sizeof(_future_prefs));
 
@@ -1991,7 +1978,7 @@ void set_palette_colours(void) {
     lives_widget_color_copy(&palette->menu_and_bars,&palette->pink);
     lives_widget_color_copy(&palette->info_text,&palette->normal_fore);
     lives_widget_color_copy(&palette->info_base,&palette->normal_back);
-    palette->style=STYLE_1|STYLE_2|STYLE_3|STYLE_4|STYLE_5;
+    palette->style=STYLE_1|STYLE_2|STYLE_3|STYLE_4;
     lives_widget_color_copy(&palette->menu_and_bars_fore,&palette->normal_fore);
   } else {
     if (!(strcmp(prefs->theme,"cutting_room"))) {

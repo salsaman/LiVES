@@ -482,6 +482,13 @@ typedef struct {
   LiVESWidget *theme_combo;
   LiVESWidget *cbutton_fore;
   LiVESWidget *cbutton_back;
+  LiVESWidget *cbutton_mabf;
+  LiVESWidget *cbutton_mab;
+  LiVESWidget *cbutton_infot;
+  LiVESWidget *cbutton_infob;
+  LiVESWidget *theme_style2;
+  LiVESWidget *theme_style3;
+  LiVESWidget *theme_style5;
   LiVESWidget *check_midi;
   LiVESWidget *ins_speed;
   LiVESWidget *jpeg;

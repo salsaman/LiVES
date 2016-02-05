@@ -534,7 +534,7 @@ boolean apply_prefs(boolean skip_warn) {
   char *audio_codec=NULL;
   char *pb_quality = lives_combo_get_active_text(LIVES_COMBO(prefsw->pbq_combo));
 
-  LiVESWidgetColor colf,colb;
+  LiVESWidgetColor colf,colb,colf2,colb2,coli,colt;
 
   int pbq=PB_QUALITY_MED;
   int idx;
@@ -715,6 +715,10 @@ boolean apply_prefs(boolean skip_warn) {
 #endif
 #endif
 
+  boolean pstyle2;
+  boolean pstyle3=lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->theme_style3));
+  boolean pstyle5=!(lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->theme_style5)));
+
   int rec_gb=lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(prefsw->spinbutton_rec_gb));
 
   char audio_player[256];
@@ -738,14 +742,37 @@ boolean apply_prefs(boolean skip_warn) {
 
   char *cdplay_device=lives_filename_from_utf8((char *)lives_entry_get_text(LIVES_ENTRY(prefsw->cdplay_entry)),-1,NULL,NULL,NULL);
 
+  if (prefsw->theme_style2!=NULL) 
+    pstyle2=lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->theme_style2));
+  else
+    pstyle2=(palette->style&STYLE_2);
+  
   lives_color_button_get_color(LIVES_COLOR_BUTTON(prefsw->cbutton_fore),&colf);
   lives_color_button_get_color(LIVES_COLOR_BUTTON(prefsw->cbutton_back),&colb);
+  lives_color_button_get_color(LIVES_COLOR_BUTTON(prefsw->cbutton_mabf),&colf2);
+  lives_color_button_get_color(LIVES_COLOR_BUTTON(prefsw->cbutton_mab),&colb2);
+  lives_color_button_get_color(LIVES_COLOR_BUTTON(prefsw->cbutton_infob),&coli);
+  lives_color_button_get_color(LIVES_COLOR_BUTTON(prefsw->cbutton_infot),&colt);
 
   if (!lives_widget_color_equal(&colf,&palette->normal_fore)||
-      !lives_widget_color_equal(&colb,&palette->normal_back)
-     ) {
+      !lives_widget_color_equal(&colb,&palette->normal_back)||
+      !lives_widget_color_equal(&colf2,&palette->menu_and_bars_fore)||
+      !lives_widget_color_equal(&colb2,&palette->menu_and_bars)||
+      !lives_widget_color_equal(&coli,&palette->info_text)||
+      !lives_widget_color_equal(&colb,&palette->info_base)||
+      (pstyle2!=(palette->style&STYLE_2))||
+      (pstyle3!=(palette->style&STYLE_3))||
+      (pstyle5!=(palette->style&STYLE_5))
+      ) {
     lives_widget_color_copy(&palette->normal_fore,&colf);
     lives_widget_color_copy(&palette->normal_back,&colb);
+    lives_widget_color_copy(&palette->menu_and_bars_fore,&colf2);
+    lives_widget_color_copy(&palette->menu_and_bars,&colb2);
+    lives_widget_color_copy(&palette->info_base,&coli);
+    lives_widget_color_copy(&palette->info_text,&colt);
+
+    palette->style=STYLE_1|(pstyle2*STYLE_2)|(pstyle3*STYLE_3)|(pstyle5*STYLE_5);
+    
     set_colours(&palette->normal_fore,&palette->normal_back,&palette->menu_and_bars_fore,&palette->menu_and_bars, \
                 &palette->info_base,&palette->info_text);
   }
@@ -3911,39 +3938,45 @@ _prefsw *create_prefs_dialog(void) {
   hbox = lives_hbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
   widget_color_to_lives_rgba(&rgba,&palette->menu_and_bars_fore);
-  cbutton = lives_standard_color_button_new(LIVES_BOX(hbox),_("_Alt Foreground Color"),TRUE,FALSE,&rgba,NULL,NULL,NULL,NULL);
+  prefsw->cbutton_mabf = lives_standard_color_button_new(LIVES_BOX(hbox),_("_Alt Foreground Color"),TRUE,FALSE,&rgba,NULL,NULL,NULL,NULL);
 
   hbox = lives_hbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
   widget_color_to_lives_rgba(&rgba,&palette->menu_and_bars);
-  cbutton = lives_standard_color_button_new(LIVES_BOX(hbox),_("_Alt Background Color"),TRUE,FALSE,&rgba,NULL,NULL,NULL,NULL);
+  prefsw->cbutton_mab = lives_standard_color_button_new(LIVES_BOX(hbox),_("_Alt Background Color"),TRUE,FALSE,&rgba,NULL,NULL,NULL,NULL);
 
   hbox = lives_hbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
   widget_color_to_lives_rgba(&rgba,&palette->info_text);
-  cbutton = lives_standard_color_button_new(LIVES_BOX(hbox),_("              Info _Text Color"),TRUE,FALSE,&rgba,NULL,NULL,NULL,NULL);
+  prefsw->cbutton_infot = lives_standard_color_button_new(LIVES_BOX(hbox),_("              Info _Text Color"),TRUE,FALSE,&rgba,NULL,NULL,NULL,
+                          NULL);
 
   hbox = lives_hbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
   widget_color_to_lives_rgba(&rgba,&palette->info_base);
-  cbutton = lives_standard_color_button_new(LIVES_BOX(hbox),_("              Info _Base Color"),TRUE,FALSE,&rgba,NULL,NULL,NULL,NULL);
+  prefsw->cbutton_infob = lives_standard_color_button_new(LIVES_BOX(hbox),_("              Info _Base Color"),TRUE,FALSE,&rgba,NULL,NULL,NULL,
+                          NULL);
 
   hbox = lives_hbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
-  cbutton=lives_standard_check_button_new(_("Theme is _light"),TRUE,LIVES_BOX(hbox),NULL); // STYLE_3
+  prefsw->theme_style3=lives_standard_check_button_new(_("Theme is _light"),TRUE,LIVES_BOX(hbox),_("Affects some contrast details of the timeline"));
+  lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(prefsw->theme_style3), palette->style&STYLE_3);
 
   hbox = lives_hbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
-  cbutton=lives_standard_check_button_new(_("Color the start/end frame spinbuttons"),FALSE,LIVES_BOX(hbox),NULL); // STYLE_2
 
+#if !GTK_CHECK_VERSION(3,0,0)
+  prefsw->theme_style2=lives_standard_check_button_new(_("Color the start/end frame spinbuttons (requires restart)"),FALSE,LIVES_BOX(hbox),NULL);
+  lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(prefsw->theme_style2), palette->style&STYLE_2);
+#else
+  prefsw->theme_style2=NULL;
+#endif
+  
   hbox = lives_hbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
-  cbutton=lives_standard_check_button_new(_("Color the polymorph window background in multitrack"),FALSE,LIVES_BOX(hbox),NULL); // STYLE_4
 
-  add_fill_to_box(LIVES_BOX(hbox));
-
-  cbutton=lives_standard_check_button_new(_("Color the horizontal separators in multitrack"),FALSE,LIVES_BOX(hbox),NULL); // STYLE_5
-
+  prefsw->theme_style5=lives_standard_check_button_new(_("Highlight horizontal separators in multitrack"),FALSE,LIVES_BOX(hbox),NULL);
+  lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(prefsw->theme_style5), !(palette->style&STYLE_5));
 
 
 
@@ -4384,6 +4417,21 @@ _prefsw *create_prefs_dialog(void) {
                        NULL);
   lives_signal_connect(LIVES_GUI_OBJECT(prefsw->cbutton_back), LIVES_WIDGET_COLOR_SET_SIGNAL, LIVES_GUI_CALLBACK(apply_button_set_enabled),
                        NULL);
+  lives_signal_connect(LIVES_GUI_OBJECT(prefsw->cbutton_mabf), LIVES_WIDGET_COLOR_SET_SIGNAL, LIVES_GUI_CALLBACK(apply_button_set_enabled),
+                       NULL);
+  lives_signal_connect(LIVES_GUI_OBJECT(prefsw->cbutton_mab), LIVES_WIDGET_COLOR_SET_SIGNAL, LIVES_GUI_CALLBACK(apply_button_set_enabled),
+                       NULL);
+  lives_signal_connect(LIVES_GUI_OBJECT(prefsw->cbutton_infot), LIVES_WIDGET_COLOR_SET_SIGNAL, LIVES_GUI_CALLBACK(apply_button_set_enabled),
+                       NULL);
+  lives_signal_connect(LIVES_GUI_OBJECT(prefsw->cbutton_infob), LIVES_WIDGET_COLOR_SET_SIGNAL, LIVES_GUI_CALLBACK(apply_button_set_enabled),
+                       NULL);
+  if (prefsw->theme_style2!=NULL) 
+    lives_signal_connect(LIVES_GUI_OBJECT(prefsw->theme_style2), LIVES_WIDGET_TOGGLED_SIGNAL,
+			 LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
+  lives_signal_connect(LIVES_GUI_OBJECT(prefsw->theme_style3), LIVES_WIDGET_TOGGLED_SIGNAL,
+                       LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
+  lives_signal_connect(LIVES_GUI_OBJECT(prefsw->theme_style5), LIVES_WIDGET_TOGGLED_SIGNAL,
+                       LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
 
 
   lives_signal_connect(LIVES_GUI_OBJECT(prefsw->wpp_entry), LIVES_WIDGET_CHANGED_SIGNAL, LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);

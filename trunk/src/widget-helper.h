@@ -139,8 +139,6 @@ boolean lives_pixbuf_saturate_and_pixelate(const LiVESPixbuf *src, LiVESPixbuf *
 
 // basic widget fns (TODO - amend all void to return boolean)
 
-boolean lives_mem_set_vtable(LiVESMemVTable *alt_vtable);
-
 
 #ifdef GUI_GTK
 

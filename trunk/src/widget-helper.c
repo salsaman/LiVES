@@ -949,7 +949,7 @@ LIVES_INLINE boolean lives_widget_set_bg_color(LiVESWidget *widget, LiVESWidgetS
       state_str="";
     }
 
-    if (GTK_IS_NOTEBOOK(widget)) wname=g_strdup_printf("#%s tab",widget_name);
+    if (GTK_IS_NOTEBOOK(widget)) wname=g_strdup_printf("#%s%s tab",widget_name,state_str);
     else wname=g_strdup_printf("#%s%s",widget_name,state_str);
 
 #ifdef GTK_TEXT_VIEW_CSS_BUG
@@ -8098,7 +8098,7 @@ static void after_param_green_changedx(LiVESSpinButton *spinbutton, livespointer
 #if LIVES_WIDGET_COLOR_HAS_ALPHA
   LiVESWidget *sp_alpha=(LiVESWidget *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(cbutton),"sp_alpha");
 #endif
-  
+
   int new_green=lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(spinbutton));
   int old_red=lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(sp_red));
   int old_blue=lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(sp_blue));
@@ -8127,7 +8127,7 @@ static void after_param_blue_changedx(LiVESSpinButton *spinbutton, livespointer 
 #if LIVES_WIDGET_COLOR_HAS_ALPHA
   LiVESWidget *sp_alpha=(LiVESWidget *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(cbutton),"sp_alpha");
 #endif
-  
+
   int new_blue=lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(spinbutton));
   int old_green=lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(sp_green));
   int old_red=lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(sp_red));

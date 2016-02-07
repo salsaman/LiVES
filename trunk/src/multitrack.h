@@ -338,6 +338,25 @@ struct _mt {
   LiVESWidget *nb;
   LiVESWidget *nb_label;
 
+  LiVESWidget *eventbox;
+  LiVESWidget *scroll_label;
+  LiVESWidget *preview_frame;
+  LiVESWidget *preview_eventbox;
+  LiVESWidget *btoolbarx;
+  LiVESWidget *btoolbary;
+  LiVESWidget *time_label;
+  LiVESWidget *insa_label;
+  LiVESWidget *overlap_label;
+  LiVESWidget *amix_label;
+  LiVESWidget *tl_label;
+  LiVESWidget *dumlabel1;
+  LiVESWidget *dumlabel2;
+  LiVESWidget *top_eventbox;
+  LiVESWidget *tlx_eventbox;
+  LiVESWidget *amixb_eventbox;
+
+  LiVESWidget *grav_submenu;
+
   LiVESWidget *btoolbar;
   LiVESWidget *btoolbar2;
   LiVESWidget *btoolbar3;
@@ -689,6 +708,9 @@ typedef struct {
 lives_mt *multitrack(weed_plant_t *, int orig_file, double fps);  ///< create and return lives_mt struct
 void mt_init_tracks(lives_mt *, boolean set_min_max);   ///< add basic tracks, or set tracks from mt->event_list
 boolean on_multitrack_activate(LiVESMenuItem *menuitem, weed_plant_t *event_list);  ///< menuitem callback
+
+// theming
+void set_mt_colours(lives_mt *);
 
 // delete function
 boolean multitrack_delete(lives_mt *, boolean save);

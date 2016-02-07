@@ -180,7 +180,7 @@ void set_colours(LiVESWidgetColor *colf, LiVESWidgetColor *colb, LiVESWidgetColo
   lives_widget_set_bg_color(mainw->menubar, LIVES_WIDGET_STATE_NORMAL, colb2);
   lives_widget_set_fg_color(mainw->menubar, LIVES_WIDGET_STATE_NORMAL, colf2);
 
-  if (mainw->plug!=NULL) 
+  if (mainw->plug!=NULL)
     lives_widget_set_bg_color(mainw->plug, LIVES_WIDGET_STATE_NORMAL, colb);
 
   lives_widget_set_bg_color(mainw->sel_label, LIVES_WIDGET_STATE_NORMAL, colb);
@@ -310,7 +310,7 @@ void set_colours(LiVESWidgetColor *colf, LiVESWidgetColor *colb, LiVESWidgetColo
     lives_widget_set_text_color(mainw->spinbutton_end, LIVES_WIDGET_STATE_INSENSITIVE, colf);
 #endif
   }
-  
+
   lives_widget_set_fg_color(mainw->sel_label, LIVES_WIDGET_STATE_NORMAL, colf);
 
   lives_widget_set_bg_color(mainw->tb_hbox, LIVES_WIDGET_STATE_NORMAL, &palette->fade_colour);
@@ -1868,7 +1868,7 @@ void create_LiVES(void) {
   lives_widget_set_hexpand(mainw->start_image,FALSE);
 
   label = lives_standard_label_new(_("First Frame"));
-  
+
   lives_frame_set_label_widget(LIVES_FRAME(mainw->frame1), label);
 
   mainw->playframe = lives_frame_new(NULL);
@@ -3334,6 +3334,7 @@ void make_preview_box(void) {
   lives_widget_set_vexpand(hbox,FALSE);
   lives_container_set_border_width(LIVES_CONTAINER(hbox), 0);
 
+  lives_widget_set_bg_color(hbox, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
 
   mainw->preview_spinbutton = lives_standard_spin_button_new(NULL,FALSE,(mainw->current_file>-1&&cfile->frames>0.)?1.:0.,
                               (mainw->current_file>-1&&cfile->frames>0.)?1.:0.,

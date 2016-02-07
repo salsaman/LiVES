@@ -742,11 +742,11 @@ boolean apply_prefs(boolean skip_warn) {
 
   char *cdplay_device=lives_filename_from_utf8((char *)lives_entry_get_text(LIVES_ENTRY(prefsw->cdplay_entry)),-1,NULL,NULL,NULL);
 
-  if (prefsw->theme_style2!=NULL) 
+  if (prefsw->theme_style2!=NULL)
     pstyle2=lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->theme_style2));
   else
     pstyle2=(palette->style&STYLE_2);
-  
+
   lives_color_button_get_color(LIVES_COLOR_BUTTON(prefsw->cbutton_fore),&colf);
   lives_color_button_get_color(LIVES_COLOR_BUTTON(prefsw->cbutton_back),&colb);
   lives_color_button_get_color(LIVES_COLOR_BUTTON(prefsw->cbutton_mabf),&colf2);
@@ -763,7 +763,7 @@ boolean apply_prefs(boolean skip_warn) {
       (pstyle2!=(palette->style&STYLE_2))||
       (pstyle3!=(palette->style&STYLE_3))||
       (pstyle5!=(palette->style&STYLE_5))
-      ) {
+     ) {
     lives_widget_color_copy(&palette->normal_fore,&colf);
     lives_widget_color_copy(&palette->normal_back,&colb);
     lives_widget_color_copy(&palette->menu_and_bars_fore,&colf2);
@@ -772,9 +772,16 @@ boolean apply_prefs(boolean skip_warn) {
     lives_widget_color_copy(&palette->info_text,&colt);
 
     palette->style=STYLE_1|(pstyle2*STYLE_2)|(pstyle3*STYLE_3)|(pstyle5*STYLE_5);
-    
+
     set_colours(&palette->normal_fore,&palette->normal_back,&palette->menu_and_bars_fore,&palette->menu_and_bars, \
                 &palette->info_base,&palette->info_text);
+
+    if (mainw->multitrack!=NULL) {
+      set_mt_colours(mainw->multitrack);
+      scroll_tracks(mainw->multitrack,mainw->multitrack->top_track,FALSE);
+      track_select(mainw->multitrack);
+      mt_clip_select(mainw->multitrack,FALSE);
+    }
   }
 
   if (capable->has_encoder_plugins) {
@@ -3959,19 +3966,21 @@ _prefsw *create_prefs_dialog(void) {
 
   hbox = lives_hbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
-  prefsw->theme_style3=lives_standard_check_button_new(_("Theme is _light"),TRUE,LIVES_BOX(hbox),_("Affects some contrast details of the timeline"));
+  prefsw->theme_style3=lives_standard_check_button_new(_("Theme is _light"),TRUE,LIVES_BOX(hbox),
+                       _("Affects some contrast details of the timeline"));
   lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(prefsw->theme_style3), palette->style&STYLE_3);
 
   hbox = lives_hbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
 
 #if !GTK_CHECK_VERSION(3,0,0)
-  prefsw->theme_style2=lives_standard_check_button_new(_("Color the start/end frame spinbuttons (requires restart)"),FALSE,LIVES_BOX(hbox),NULL);
+  prefsw->theme_style2=lives_standard_check_button_new(_("Color the start/end frame spinbuttons (requires restart)"),FALSE,LIVES_BOX(hbox),
+                       NULL);
   lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(prefsw->theme_style2), palette->style&STYLE_2);
 #else
   prefsw->theme_style2=NULL;
 #endif
-  
+
   hbox = lives_hbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
 
@@ -4425,9 +4434,9 @@ _prefsw *create_prefs_dialog(void) {
                        NULL);
   lives_signal_connect(LIVES_GUI_OBJECT(prefsw->cbutton_infob), LIVES_WIDGET_COLOR_SET_SIGNAL, LIVES_GUI_CALLBACK(apply_button_set_enabled),
                        NULL);
-  if (prefsw->theme_style2!=NULL) 
+  if (prefsw->theme_style2!=NULL)
     lives_signal_connect(LIVES_GUI_OBJECT(prefsw->theme_style2), LIVES_WIDGET_TOGGLED_SIGNAL,
-			 LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
+                         LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
   lives_signal_connect(LIVES_GUI_OBJECT(prefsw->theme_style3), LIVES_WIDGET_TOGGLED_SIGNAL,
                        LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
   lives_signal_connect(LIVES_GUI_OBJECT(prefsw->theme_style5), LIVES_WIDGET_TOGGLED_SIGNAL,

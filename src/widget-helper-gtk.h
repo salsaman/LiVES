@@ -820,6 +820,7 @@ typedef GdkInterpType                     LiVESInterpType;
 #define LIVES_IS_XWINDOW(widget) GDK_IS_WINDOW(widget)
 #define LIVES_IS_PIXBUF(widget) GDK_IS_PIXBUF(widget)
 #define LIVES_IS_CONTAINER(widget) GTK_IS_CONTAINER(widget)
+#define LIVES_IS_BIN(widget) GTK_IS_BIN(widget)
 
 #if GTK_CHECK_VERSION(3,0,0)
 #define LIVES_IS_HBOX(widget) (GTK_IS_BOX(widget)&&gtk_orientable_get_orientation(GTK_ORIENTABLE(widget))==GTK_ORIENTATION_HORIZONTAL)

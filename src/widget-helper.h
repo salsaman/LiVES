@@ -747,7 +747,7 @@ LiVESXCursor *lives_cursor_new_from_pixbuf(LiVESXDisplay *, LiVESPixbuf *, int x
 // util functions
 
 void lives_widget_apply_theme(LiVESWidget *, LiVESWidgetState state); // normal theme colours
-void lives_widget_apply_theme2(LiVESWidget *, LiVESWidgetState state); // menu and bars colours (bg only...)
+void lives_widget_apply_theme2(LiVESWidget *, LiVESWidgetState state, boolean set_fg); // menu and bars colours
 
 boolean global_recent_manager_add(const char *file_name);
 
@@ -793,8 +793,9 @@ boolean widget_act_toggle(LiVESWidget *, LiVESToggleButton *);
 
 void toggle_button_toggle(LiVESToggleButton *);
 
-// must retain this fn prototype as a callback
-void set_child_colour(LiVESWidget *widget, livespointer set_all);
+
+void set_child_colour(LiVESWidget *widget, boolean set_all);
+void set_child_alt_colour(LiVESWidget *widget, boolean set_all);
 
 void funkify_dialog(LiVESWidget *dialog);
 

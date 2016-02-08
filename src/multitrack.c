@@ -3889,7 +3889,6 @@ static void populate_filter_box(LiVESWidget *box, int ninchans, lives_mt *mt) {
         lives_widget_add_events(xeventbox, LIVES_BUTTON_RELEASE_MASK | LIVES_BUTTON_PRESS_MASK);
         if (palette->style&STYLE_1) {
           lives_widget_set_bg_color(xeventbox, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
-          lives_widget_set_bg_color(xeventbox, LIVES_WIDGET_STATE_PRELIGHT, &palette->menu_and_bars);
         }
 
         vbox=lives_vbox_new(FALSE,0);
@@ -3900,8 +3899,10 @@ static void populate_filter_box(LiVESWidget *box, int ninchans, lives_mt *mt) {
         lives_free(txt);
 
         if (palette->style&STYLE_1) {
-          lives_widget_set_fg_color(label, LIVES_WIDGET_STATE_NORMAL, &palette->info_text);
-          lives_widget_set_fg_color(label, LIVES_WIDGET_STATE_PRELIGHT, &palette->info_text);
+          lives_widget_set_fg_color(label, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
+          lives_widget_set_fg_color(xeventbox, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
+          lives_widget_set_fg_color(vbox, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
+          lives_widget_set_fg_color(box, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
         }
         lives_container_set_border_width(LIVES_CONTAINER(xeventbox), widget_opts.border_width>>1);
         lives_box_pack_start(LIVES_BOX(vbox), label, FALSE, FALSE, 0);
@@ -5272,8 +5273,8 @@ static void on_insa_toggled(LiVESToggleButton *tbutton, livespointer user_data) 
   if (!mainw->interactive) return;
   mt->opts.insert_audio=lives_toggle_button_get_active(tbutton);
   if (prefs->lamp_buttons) {
-    if (mt->opts.insert_audio) lives_widget_set_bg_color(LIVES_WIDGET(tbutton), LIVES_WIDGET_STATE_PRELIGHT, &palette->light_green);
-    else lives_widget_set_bg_color(LIVES_WIDGET(tbutton), LIVES_WIDGET_STATE_PRELIGHT, &palette->dark_red);
+    if (mt->opts.insert_audio) lives_widget_set_bg_color(LIVES_WIDGET(tbutton), LIVES_WIDGET_STATE_ACTIVE, &palette->light_green);
+    else lives_widget_set_bg_color(LIVES_WIDGET(tbutton), LIVES_WIDGET_STATE_NORMAL, &palette->dark_red);
   }
 }
 
@@ -5282,8 +5283,8 @@ static void on_snapo_toggled(LiVESToggleButton *tbutton, livespointer user_data)
   if (!mainw->interactive) return;
   mt->opts.snap_over=lives_toggle_button_get_active(tbutton);
   if (prefs->lamp_buttons) {
-    if (mt->opts.snap_over) lives_widget_set_bg_color(LIVES_WIDGET(tbutton), LIVES_WIDGET_STATE_PRELIGHT, &palette->light_green);
-    else lives_widget_set_bg_color(LIVES_WIDGET(tbutton), LIVES_WIDGET_STATE_PRELIGHT, &palette->dark_red);
+    if (mt->opts.snap_over) lives_widget_set_bg_color(LIVES_WIDGET(tbutton), LIVES_WIDGET_STATE_ACTIVE, &palette->light_green);
+    else lives_widget_set_bg_color(LIVES_WIDGET(tbutton), LIVES_WIDGET_STATE_NORMAL, &palette->dark_red);
   }
 }
 
@@ -5842,6 +5843,11 @@ void set_mt_colours(lives_mt *mt) {
 
   lives_widget_set_fg_color(mt->l_sel_arrow, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
   lives_widget_set_fg_color(mt->r_sel_arrow, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
+
+  set_child_colour(mt->in_out_box, FALSE);
+
+  lives_widget_set_bg_color(mt->in_image, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
+  lives_widget_set_bg_color(mt->out_image, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
 
   // for gtk+2.x (At least) this sets the amixer button
   lives_widget_set_bg_color(mt->amixb_eventbox, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
@@ -8446,7 +8452,6 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
   lives_widget_set_hexpand(mt->in_out_box,TRUE);
   lives_widget_set_vexpand(mt->in_out_box,TRUE);
 
-
   vbox = lives_vbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(mt->in_out_box),vbox,FALSE,TRUE,0);
 
@@ -9862,7 +9867,6 @@ void mt_init_tracks(lives_mt *mt, boolean set_min_max) {
     if (block_marker_tracks!=NULL) lives_free(block_marker_tracks);
     if (block_marker_uo_tracks!=NULL) lives_free(block_marker_uo_tracks);
 
-    // xyzzy
     if (cfile->achans>0&&mt->opts.back_audio_tracks>0) lives_widget_show(mt->view_audio);
 
     if (mt->avol_fx!=-1) locate_avol_init_event(mt,mt->event_list,mt->avol_fx);
@@ -10441,6 +10445,7 @@ static boolean fx_ebox_pressed(LiVESWidget *eventbox, LiVESXEventButton *event, 
 
       mt->selected_init_event=osel;
       mt->fx_order=FX_ORD_NONE;
+      mt->selected_init_event=NULL;
       polymorph(mt,POLY_FX_STACK);
       mt_show_current_frame(mt, FALSE); ///< show updated preview
       return FALSE;
@@ -10461,17 +10466,24 @@ static boolean fx_ebox_pressed(LiVESWidget *eventbox, LiVESXEventButton *event, 
     if (mt->selected_init_event!=mt->avol_init_event) lives_widget_set_sensitive(mt->fx_delete,TRUE);
   }
 
-  // set clicked-on widget to selected state and reset all others
-  xlist=children=lives_container_get_children(LIVES_CONTAINER(mt->fx_list_vbox));
-  while (children!=NULL) {
-    LiVESWidget *child=(LiVESWidget *)children->data;
-    if (child!=eventbox) lives_widget_set_state(child,LIVES_WIDGET_STATE_NORMAL);
-    else lives_widget_set_state(child,LIVES_WIDGET_STATE_PRELIGHT);
-    children=children->next;
+  if (palette->style&STYLE_1) {
+    // set clicked-on widget to selected state and reset all others
+    xlist=children=lives_container_get_children(LIVES_CONTAINER(mt->fx_list_vbox));
+    while (children!=NULL) {
+      LiVESWidget *child=(LiVESWidget *)children->data;
+      if (child!=eventbox) {
+        lives_widget_set_bg_color(child, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
+        lives_widget_set_fg_color(child, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
+        set_child_colour(child,TRUE);
+      } else {
+        lives_widget_set_bg_color(child, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
+        lives_widget_set_fg_color(child, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars_fore);
+        set_child_alt_colour(child,TRUE);
+      }
+      children=children->next;
+    }
+    if (xlist!=NULL) lives_list_free(xlist);
   }
-
-  if (xlist!=NULL) lives_list_free(xlist);
-
   if (event->button==3&&mainw->playing_file==-1) {
     do_effect_context(mt,event);
   }
@@ -12817,13 +12829,7 @@ void polymorph(lives_mt *mt, lives_mt_poly_state_t poly) {
             lives_widget_object_set_data(LIVES_WIDGET_OBJECT(xeventbox),"init_event",(livespointer)init_event);
 
             lives_widget_add_events(xeventbox, LIVES_BUTTON_RELEASE_MASK | LIVES_BUTTON_PRESS_MASK);
-            if (palette->style&STYLE_1) {
-              lives_widget_set_bg_color(xeventbox, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
-              lives_widget_set_bg_color(xeventbox, LIVES_WIDGET_STATE_PRELIGHT, &palette->menu_and_bars);
-              lives_widget_set_fg_color(xeventbox, LIVES_WIDGET_STATE_PRELIGHT, &palette->menu_and_bars_fore);
-            }
 
-            if (init_event==mt->selected_init_event) lives_widget_set_state(xeventbox,LIVES_WIDGET_STATE_PRELIGHT);
             vbox=lives_vbox_new(FALSE,0);
 
             lives_container_set_border_width(LIVES_CONTAINER(vbox), widget_opts.border_width>>1);
@@ -12832,13 +12838,19 @@ void polymorph(lives_mt *mt, lives_mt_poly_state_t poly) {
             lives_free(txt);
             lives_free(fname);
 
-            if (palette->style&STYLE_1) {
-              lives_widget_set_fg_color(label, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
-              lives_widget_set_fg_color(label, LIVES_WIDGET_STATE_PRELIGHT, &palette->menu_and_bars_fore);
-            }
             lives_container_set_border_width(LIVES_CONTAINER(xeventbox), widget_opts.border_width>>1);
             lives_box_pack_start(LIVES_BOX(vbox), label, FALSE, FALSE, 0);
             lives_box_pack_start(LIVES_BOX(mt->fx_list_vbox), xeventbox, FALSE, FALSE, 0);
+
+            if (init_event==mt->selected_init_event) {
+              lives_widget_set_bg_color(xeventbox, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
+              lives_widget_set_fg_color(xeventbox, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars_fore);
+              set_child_alt_colour(xeventbox,TRUE);
+            } else {
+              lives_widget_set_bg_color(xeventbox, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
+              lives_widget_set_fg_color(xeventbox, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
+              set_child_colour(xeventbox,TRUE);
+            }
 
             lives_signal_connect(LIVES_GUI_OBJECT(xeventbox), LIVES_WIDGET_BUTTON_PRESS_EVENT,
                                  LIVES_GUI_CALLBACK(fx_ebox_pressed),
@@ -22009,8 +22021,8 @@ static void after_amixer_gang_toggled(LiVESToggleButton *toggle, lives_amixer_t 
   lives_widget_set_sensitive(amixer->inv_checkbutton,(lives_toggle_button_get_active(toggle)));
   if (prefs->lamp_buttons) {
     if (lives_toggle_button_get_active(toggle))
-      lives_widget_set_bg_color(LIVES_WIDGET(toggle), LIVES_WIDGET_STATE_PRELIGHT, &palette->light_green);
-    else lives_widget_set_bg_color(LIVES_WIDGET(toggle), LIVES_WIDGET_STATE_PRELIGHT, &palette->dark_red);
+      lives_widget_set_bg_color(LIVES_WIDGET(toggle), LIVES_WIDGET_STATE_ACTIVE, &palette->light_green);
+    else lives_widget_set_bg_color(LIVES_WIDGET(toggle), LIVES_WIDGET_STATE_ACTIVE, &palette->dark_red);
   }
 }
 
@@ -22018,8 +22030,8 @@ static void after_amixer_gang_toggled(LiVESToggleButton *toggle, lives_amixer_t 
 static void after_amixer_inv_toggled(LiVESToggleButton *toggle, lives_amixer_t *amixer) {
   if (prefs->lamp_buttons) {
     if (lives_toggle_button_get_active(toggle))
-      lives_widget_set_bg_color(LIVES_WIDGET(toggle), LIVES_WIDGET_STATE_PRELIGHT, &palette->light_green);
-    else lives_widget_set_bg_color(LIVES_WIDGET(toggle), LIVES_WIDGET_STATE_PRELIGHT, &palette->dark_red);
+      lives_widget_set_bg_color(LIVES_WIDGET(toggle), LIVES_WIDGET_STATE_ACTIVE, &palette->light_green);
+    else lives_widget_set_bg_color(LIVES_WIDGET(toggle), LIVES_WIDGET_STATE_NORMAL, &palette->dark_red);
   }
 }
 

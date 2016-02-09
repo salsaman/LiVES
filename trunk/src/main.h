@@ -888,7 +888,7 @@ void do_mt_backup_space_error(lives_mt *, int memreq_mb);
 boolean do_clipboard_fps_warning(void);
 void perf_mem_warning(void);
 void do_dvgrab_error(void);
-boolean do_comments_dialog(lives_clip_t *sfile, char *filename);
+boolean do_comments_dialog(int fileno, char *filename);
 boolean do_auto_dialog(const char *text, int type);
 void do_encoder_acodec_error(void);
 void do_encoder_sox_error(void);

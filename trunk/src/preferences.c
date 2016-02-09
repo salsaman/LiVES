@@ -717,7 +717,7 @@ boolean apply_prefs(boolean skip_warn) {
 
   boolean pstyle2;
   boolean pstyle3=lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->theme_style3));
-  boolean pstyle5=!(lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->theme_style5)));
+  boolean pstyle4=lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->theme_style4));
 
   int rec_gb=lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(prefsw->spinbutton_rec_gb));
 
@@ -745,7 +745,7 @@ boolean apply_prefs(boolean skip_warn) {
   if (prefsw->theme_style2!=NULL)
     pstyle2=lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->theme_style2));
   else
-    pstyle2=(palette->style&STYLE_2);
+    pstyle2=0;
 
   lives_color_button_get_color(LIVES_COLOR_BUTTON(prefsw->cbutton_fore),&colf);
   lives_color_button_get_color(LIVES_COLOR_BUTTON(prefsw->cbutton_back),&colb);
@@ -762,7 +762,7 @@ boolean apply_prefs(boolean skip_warn) {
       !lives_widget_color_equal(&colb,&palette->info_base)||
       (pstyle2!=(palette->style&STYLE_2))||
       (pstyle3!=(palette->style&STYLE_3))||
-      (pstyle5!=(palette->style&STYLE_5))
+      (pstyle4!=(palette->style&STYLE_4))
      ) {
     lives_widget_color_copy(&palette->normal_fore,&colf);
     lives_widget_color_copy(&palette->normal_back,&colb);
@@ -771,7 +771,7 @@ boolean apply_prefs(boolean skip_warn) {
     lives_widget_color_copy(&palette->info_base,&coli);
     lives_widget_color_copy(&palette->info_text,&colt);
 
-    palette->style=STYLE_1|(pstyle2*STYLE_2)|(pstyle3*STYLE_3)|(pstyle5*STYLE_5);
+    palette->style=STYLE_1|(pstyle2*STYLE_2)|(pstyle3*STYLE_3)|(pstyle4*STYLE_4);
 
     set_colours(&palette->normal_fore,&palette->normal_back,&palette->menu_and_bars_fore,&palette->menu_and_bars, \
                 &palette->info_base,&palette->info_text);
@@ -3984,8 +3984,8 @@ _prefsw *create_prefs_dialog(void) {
   hbox = lives_hbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
 
-  prefsw->theme_style5=lives_standard_check_button_new(_("Highlight horizontal separators in multitrack"),FALSE,LIVES_BOX(hbox),NULL);
-  lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(prefsw->theme_style5), !(palette->style&STYLE_5));
+  prefsw->theme_style4=lives_standard_check_button_new(_("Highlight horizontal separators in multitrack"),FALSE,LIVES_BOX(hbox),NULL);
+  lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(prefsw->theme_style4), (palette->style&STYLE_4));
 
 
 
@@ -4439,7 +4439,7 @@ _prefsw *create_prefs_dialog(void) {
                          LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
   lives_signal_connect(LIVES_GUI_OBJECT(prefsw->theme_style3), LIVES_WIDGET_TOGGLED_SIGNAL,
                        LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
-  lives_signal_connect(LIVES_GUI_OBJECT(prefsw->theme_style5), LIVES_WIDGET_TOGGLED_SIGNAL,
+  lives_signal_connect(LIVES_GUI_OBJECT(prefsw->theme_style4), LIVES_WIDGET_TOGGLED_SIGNAL,
                        LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
 
 

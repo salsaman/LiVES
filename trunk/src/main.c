@@ -1978,7 +1978,7 @@ void set_palette_colours(void) {
     lives_widget_color_copy(&palette->menu_and_bars,&palette->pink);
     lives_widget_color_copy(&palette->info_text,&palette->normal_fore);
     lives_widget_color_copy(&palette->info_base,&palette->normal_back);
-    palette->style=STYLE_1|STYLE_2|STYLE_3;
+    palette->style=STYLE_1|STYLE_2|STYLE_3|STYLE_4;
     lives_widget_color_copy(&palette->menu_and_bars_fore,&palette->normal_fore);
   } else {
     if (!(strcmp(prefs->theme,"cutting_room"))) {
@@ -1995,7 +1995,7 @@ void set_palette_colours(void) {
       lives_widget_color_copy(&palette->info_text,&palette->normal_fore);
       lives_widget_color_copy(&palette->info_base,&palette->white);
       lives_widget_color_copy(&palette->menu_and_bars_fore,&palette->normal_fore);
-      palette->style=STYLE_1|STYLE_2|STYLE_3;
+      palette->style=STYLE_1|STYLE_2|STYLE_3|STYLE_4;
     } else {
       if (!(strcmp(prefs->theme,"camera"))) {
 
@@ -2011,7 +2011,7 @@ void set_palette_colours(void) {
         lives_widget_color_copy(&palette->info_base,&palette->normal_back);
         lives_widget_color_copy(&palette->info_text,&palette->normal_fore);
         lives_widget_color_copy(&palette->menu_and_bars_fore,&palette->normal_fore);
-        palette->style=STYLE_1|STYLE_2|STYLE_3;
+        palette->style=STYLE_1|STYLE_2|STYLE_3|STYLE_4;
       } else {
         if (!(strcmp(prefs->theme,"editor"))) {
           lives_widget_color_copy(&palette->normal_back,&palette->grey25);
@@ -2020,7 +2020,7 @@ void set_palette_colours(void) {
           lives_widget_color_copy(&palette->info_base,&palette->grey20);
           lives_widget_color_copy(&palette->info_text,&palette->white);
           lives_widget_color_copy(&palette->menu_and_bars_fore,&palette->normal_fore);
-          palette->style=STYLE_1|STYLE_2|STYLE_3|STYLE_5;
+          palette->style=STYLE_1|STYLE_2|STYLE_3;
         } else {
           if (!(strcmp(prefs->theme,"crayons-bright"))) {
 
@@ -2044,7 +2044,7 @@ void set_palette_colours(void) {
             lives_widget_color_copy(&palette->info_text,&palette->black);
             lives_widget_color_copy(&palette->menu_and_bars_fore,&palette->normal_fore);
 
-            palette->style=STYLE_1|STYLE_2;
+            palette->style=STYLE_1|STYLE_2|STYLE_4;
           } else {
             if (!(strcmp(prefs->theme,"crayons"))) {
               if (prefs->funky_widgets) {
@@ -2057,7 +2057,7 @@ void set_palette_colours(void) {
               lives_widget_color_copy(&palette->info_base,&palette->grey20);
               lives_widget_color_copy(&palette->info_text,&palette->white);
               lives_widget_color_copy(&palette->menu_and_bars_fore,&palette->normal_fore);
-              palette->style=STYLE_1|STYLE_2|STYLE_5;
+              palette->style=STYLE_1|STYLE_2;
 
             } else {
               palette->style=STYLE_PLAIN;

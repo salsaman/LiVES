@@ -38,6 +38,8 @@
 
 #define TIMELINE_TABLE_COLUMNS 40
 
+#define MENUBAR_MIN 1024
+
 ////////////////////////////////////////////////////////////////////////////////
 
 #define BLOCK_DRAW_SIMPLE 1
@@ -356,12 +358,24 @@ struct _mt {
   LiVESWidget *amixb_eventbox;
 
   LiVESWidget *grav_submenu;
+  LiVESWidget *ins_submenu;
+  LiVESWidget *mm_submenu;
+  LiVESWidget *ins_label;
+  LiVESWidget *mm_label;
+
+  LiVESToolItem *sep1;
+  LiVESToolItem *sep2;
+  LiVESToolItem *sep3;
+  LiVESToolItem *sep4;
 
   LiVESWidget *btoolbar;
   LiVESWidget *btoolbar2;
   LiVESWidget *btoolbar3;
 
   LiVESWidget *menu_hbox;
+
+  LiVESWidget *hseparator;
+  LiVESWidget *hseparator2;
 
   LiVESWidget *open_menu;
 #ifdef HAVE_WEBM

@@ -5562,7 +5562,7 @@ void on_show_file_info_activate(LiVESMenuItem *menuitem, livespointer user_data)
 
 
 void on_show_file_comments_activate(LiVESMenuItem *menuitem, livespointer user_data) {
-  do_comments_dialog(NULL,NULL);
+  do_comments_dialog(mainw->current_file,NULL);
 }
 
 

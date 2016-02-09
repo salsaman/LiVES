@@ -1358,7 +1358,7 @@ void save_file(int clip, int start, int end, const char *filename) {
     if (!strlen(sfile->comment)) {
       lives_snprintf(sfile->comment,251,"Created with LiVES");
     }
-    if (!do_comments_dialog(sfile,full_file_name)) {
+    if (!do_comments_dialog(clip,full_file_name)) {
       lives_free(full_file_name);
       if (rdet!=NULL) {
         lives_widget_destroy(rdet->dialog);

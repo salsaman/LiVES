@@ -209,8 +209,7 @@ typedef struct {
 #define STYLE_1 1<<0 ///< turn on theming if set
 #define STYLE_2 1<<1 ///< colour the spinbuttons on the front page if set
 #define STYLE_3 1<<2 ///< style is lightish - allow themeing of widgets with dark text, otherwise use menu bg
-#define STYLE_4 1<<3 ///< not used (deprecated)
-#define STYLE_5 1<<4 ///< separator col. in mt
+#define STYLE_4 1<<3 ///< separator col. in mt
 
   LiVESWidgetColor white;
   LiVESWidgetColor black;

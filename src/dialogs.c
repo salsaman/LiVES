@@ -2448,7 +2448,9 @@ boolean do_yuv4m_open_warning(void) {
 
 
 
-boolean do_comments_dialog(lives_clip_t *sfile, char *filename) {
+boolean do_comments_dialog(int fileno, char *filename) {
+  lives_clip_t *sfile=mainw->files[fileno];
+
   boolean response;
   boolean ok=FALSE;
   boolean encoding=FALSE;
@@ -2464,6 +2466,10 @@ boolean do_comments_dialog(lives_clip_t *sfile, char *filename) {
       lives_snprintf(sfile->title,256,"%s",lives_entry_get_text(LIVES_ENTRY(commentsw->title_entry)));
       lives_snprintf(sfile->author,256,"%s",lives_entry_get_text(LIVES_ENTRY(commentsw->author_entry)));
       lives_snprintf(sfile->comment,256,"%s",lives_entry_get_text(LIVES_ENTRY(commentsw->comment_entry)));
+
+      save_clip_value(fileno,CLIP_DETAILS_FRAMES,sfile->title);
+      save_clip_value(fileno,CLIP_DETAILS_FRAMES,sfile->author);
+      save_clip_value(fileno,CLIP_DETAILS_FRAMES,sfile->comment);
 
       if (encoding&&sfile->subt!=NULL&&lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(commentsw->subt_checkbutton))) {
         char *ext=get_extension(lives_entry_get_text(LIVES_ENTRY(commentsw->subt_entry)));

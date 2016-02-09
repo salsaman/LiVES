@@ -488,7 +488,7 @@ typedef struct {
   LiVESWidget *cbutton_infob;
   LiVESWidget *theme_style2;
   LiVESWidget *theme_style3;
-  LiVESWidget *theme_style5;
+  LiVESWidget *theme_style4;
   LiVESWidget *check_midi;
   LiVESWidget *ins_speed;
   LiVESWidget *jpeg;

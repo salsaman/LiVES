@@ -1079,6 +1079,8 @@ void  create_LiVES(void);
 void show_lives(void);
 void set_colours(LiVESWidgetColor *colf, LiVESWidgetColor *colb, LiVESWidgetColor *colf2,
                  LiVESWidgetColor *colb2, LiVESWidgetColor *coli, LiVESWidgetColor *colt);
+void set_preview_box_colours(void);
+void load_theme_images(void);
 void set_interactive(boolean interactive);
 char *get_menu_name(lives_clip_t *sfile);
 void enable_record(void);

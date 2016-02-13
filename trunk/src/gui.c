@@ -54,26 +54,75 @@ static LiVESWidgetClosure *mute_audio_closure;
 static LiVESWidgetClosure *ping_pong_closure;
 
 
-void load_theme(void) {
+void load_theme_images(void) {
   // load the theme images
   // TODO - set palette in here ?
   LiVESError *error=NULL;
-  char *tmp=lives_build_filename(prefs->prefix_dir,THEME_DIR,prefs->theme,"main.jpg",NULL);
-  mainw->imsep=lives_pixbuf_new_from_file(tmp,&error);
-  lives_free(tmp);
+  LiVESPixbuf *pixbuf;
+  char *tmp;
 
-  if (!(error==NULL)) {
+  int width,height;
+
+  if (!strlen(mainw->sepimg_path)) {
+    tmp=lives_build_filename(prefs->prefix_dir,THEME_DIR,prefs->theme,"main.jpg",NULL);
+    lives_snprintf(mainw->sepimg_path,PATH_MAX,"%s",tmp);
+    lives_free(tmp);
+  }
+
+  pixbuf=lives_pixbuf_new_from_file(mainw->sepimg_path,&error);
+
+  if (mainw->imsep!=NULL) lives_object_unref(mainw->imsep);
+  mainw->imsep=NULL;
+  if (mainw->imframe!=NULL) lives_object_unref(mainw->imframe);
+  mainw->imframe=NULL;
+
+  if (error!=NULL) {
     palette->style=STYLE_PLAIN;
     lives_snprintf(prefs->theme,64,"%%ERROR%%");
     lives_error_free(error);
+
   } else {
-    mainw->sep_image = lives_image_new_from_pixbuf(mainw->imsep);
-    tmp=lives_build_filename(prefs->prefix_dir,THEME_DIR,prefs->theme,"frame.jpg",NULL);
-    mainw->imframe=lives_pixbuf_new_from_file(tmp,&error);
-    lives_free(tmp);
-    if (!(error==NULL)) {
-      lives_error_free(error);
+    if (pixbuf!=NULL) {
+      //resize
+      width=lives_pixbuf_get_width(pixbuf);
+      height=lives_pixbuf_get_height(pixbuf);
+
+      if (width>IMSEP_MAX_WIDTH||height>IMSEP_MAX_HEIGHT) calc_maxspect(IMSEP_MAX_WIDTH,IMSEP_MAX_HEIGHT,&width,&height);
+
+      mainw->imsep=lives_pixbuf_scale_simple(pixbuf,width,height,LIVES_INTERP_BEST);
+      lives_object_unref(pixbuf);
     }
+
+    lives_image_set_from_pixbuf(LIVES_IMAGE(mainw->sep_image),mainw->imsep);
+    lives_widget_queue_draw(mainw->sep_image);
+
+    // imframe
+
+    if (!strlen(mainw->frameblank_path)) {
+      tmp=lives_build_filename(prefs->prefix_dir,THEME_DIR,prefs->theme,"frame.jpg",NULL);
+      lives_snprintf(mainw->frameblank_path,PATH_MAX,"%s",tmp);
+      lives_free(tmp);
+    }
+
+    pixbuf=lives_pixbuf_new_from_file(mainw->frameblank_path,&error);
+
+    if (error!=NULL) {
+      lives_error_free(error);
+    } else {
+      if (pixbuf!=NULL) {
+        width=lives_pixbuf_get_width(pixbuf);
+        height=lives_pixbuf_get_height(pixbuf);
+
+        if (width<FRAMEBLANK_MIN_WIDTH) width=FRAMEBLANK_MIN_WIDTH;
+        if (width>FRAMEBLANK_MAX_WIDTH) width=FRAMEBLANK_MAX_WIDTH;
+        if (height<FRAMEBLANK_MIN_HEIGHT) height=FRAMEBLANK_MIN_HEIGHT;
+        if (height>FRAMEBLANK_MAX_HEIGHT) height=FRAMEBLANK_MAX_HEIGHT;
+
+        mainw->imframe=lives_pixbuf_scale_simple(pixbuf,width,height,LIVES_INTERP_BEST);
+        lives_object_unref(pixbuf);
+      }
+    }
+
   }
 }
 
@@ -422,7 +471,7 @@ void create_LiVES(void) {
   lives_widget_show(mainw->end_image);  // needed to get size
 
   if (palette->style&STYLE_1) {
-    load_theme();
+    load_theme_images();
   } else {
 #ifdef GUI_GTK
     LiVESWidgetColor normal;
@@ -3263,11 +3312,20 @@ void unblock_expose(void) {
 }
 
 
+void set_preview_box_colours(void) {
+  lives_widget_set_bg_color(mainw->preview_image, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
+  lives_widget_set_bg_color(mainw->preview_box, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
+  lives_widget_set_fg_color(mainw->preview_box, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
+  lives_widget_set_bg_color(mainw->preview_hbox, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
+  lives_widget_set_fg_color(mainw->preview_hbox, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
+  set_child_colour(mainw->preview_box,TRUE);
+}
+
 
 
 void make_preview_box(void) {
   // create a box to show frames in, this will go in the sepwin when we are not playing
-  LiVESWidget *hbox;
+  LiVESWidget *eventbox;
   LiVESWidget *hbox_buttons;
   LiVESWidget *radiobutton_free;
   LiVESWidget *radiobutton_start;
@@ -3277,7 +3335,6 @@ void make_preview_box(void) {
   LiVESWidget *playsel_img;
   LiVESWidget *play_img;
   LiVESWidget *loop_img;
-  LiVESWidget *eventbox;
 
   LiVESSList *radiobutton_group = NULL;
 
@@ -3330,39 +3387,34 @@ void make_preview_box(void) {
   lives_box_pack_start(LIVES_BOX(mainw->preview_box), mainw->preview_controls, FALSE, FALSE, 0);
   lives_widget_set_vexpand(mainw->preview_controls,FALSE);
 
-  hbox = lives_hbox_new(FALSE, 0);
-  lives_widget_set_vexpand(hbox,FALSE);
-  lives_container_set_border_width(LIVES_CONTAINER(hbox), 0);
+  mainw->preview_hbox = lives_hbox_new(FALSE, 0);
+  lives_widget_set_vexpand(mainw->preview_hbox,FALSE);
+  lives_container_set_border_width(LIVES_CONTAINER(mainw->preview_hbox), 0);
 
-  lives_widget_set_bg_color(hbox, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
+  lives_widget_set_bg_color(mainw->preview_hbox, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
 
   mainw->preview_spinbutton = lives_standard_spin_button_new(NULL,FALSE,(mainw->current_file>-1&&cfile->frames>0.)?1.:0.,
                               (mainw->current_file>-1&&cfile->frames>0.)?1.:0.,
                               (mainw->current_file>-1&&cfile->frames>0.)?cfile->frames:0.,
                               1., 10., 0,
-                              LIVES_BOX(hbox),_("Frame number to preview"));
+                              LIVES_BOX(mainw->preview_hbox),_("Frame number to preview"));
 
   mainw->preview_scale=lives_hscale_new(lives_spin_button_get_adjustment(LIVES_SPIN_BUTTON(mainw->preview_spinbutton)));
   lives_scale_set_draw_value(LIVES_SCALE(mainw->preview_scale),FALSE);
 
-  if (palette->style&STYLE_1) {
-    lives_widget_set_bg_color(mainw->preview_image, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
-    lives_widget_set_bg_color(eventbox, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
-    lives_widget_set_fg_color(mainw->preview_scale, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
-  }
 
   lives_box_pack_start(LIVES_BOX(mainw->preview_controls), mainw->preview_scale,FALSE, FALSE, 0);
-  lives_box_pack_start(LIVES_BOX(mainw->preview_controls), hbox, FALSE, FALSE, 0);
+  lives_box_pack_start(LIVES_BOX(mainw->preview_controls), mainw->preview_hbox, FALSE, FALSE, 0);
 
   lives_entry_set_width_chars(LIVES_ENTRY(mainw->preview_spinbutton),8);
 
-  radiobutton_free=lives_standard_radio_button_new((tmp=lives_strdup(_("_Free"))),TRUE,radiobutton_group,LIVES_BOX(hbox),
+  radiobutton_free=lives_standard_radio_button_new((tmp=lives_strdup(_("_Free"))),TRUE,radiobutton_group,LIVES_BOX(mainw->preview_hbox),
                    (tmp2=lives_strdup(_("Free choice of frame number"))));
   lives_free(tmp);
   lives_free(tmp2);
   radiobutton_group = lives_radio_button_get_group(LIVES_RADIO_BUTTON(radiobutton_free));
 
-  radiobutton_start=lives_standard_radio_button_new((tmp=lives_strdup(_("_Start"))),TRUE,radiobutton_group,LIVES_BOX(hbox),
+  radiobutton_start=lives_standard_radio_button_new((tmp=lives_strdup(_("_Start"))),TRUE,radiobutton_group,LIVES_BOX(mainw->preview_hbox),
                     (tmp2=lives_strdup(_("Frame number is linked to start frame"))));
   lives_free(tmp);
   lives_free(tmp2);
@@ -3371,7 +3423,7 @@ void make_preview_box(void) {
   lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(radiobutton_start), mainw->prv_link==PRV_START);
 
 
-  radiobutton_end=lives_standard_radio_button_new((tmp=lives_strdup(_("_End"))),TRUE,radiobutton_group,LIVES_BOX(hbox),
+  radiobutton_end=lives_standard_radio_button_new((tmp=lives_strdup(_("_End"))),TRUE,radiobutton_group,LIVES_BOX(mainw->preview_hbox),
                   (tmp2=lives_strdup(_("Frame number is linked to end frame"))));
   lives_free(tmp);
   lives_free(tmp2);
@@ -3380,7 +3432,7 @@ void make_preview_box(void) {
   lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(radiobutton_end), mainw->prv_link==PRV_END);
 
 
-  radiobutton_ptr=lives_standard_radio_button_new((tmp=lives_strdup(_("_Pointer"))),TRUE,radiobutton_group,LIVES_BOX(hbox),
+  radiobutton_ptr=lives_standard_radio_button_new((tmp=lives_strdup(_("_Pointer"))),TRUE,radiobutton_group,LIVES_BOX(mainw->preview_hbox),
                   (tmp2=lives_strdup(_("Frame number is linked to playback pointer"))));
   lives_free(tmp);
   lives_free(tmp2);
@@ -3496,6 +3548,10 @@ void make_preview_box(void) {
   mainw->preview_spin_func=lives_signal_connect_after(LIVES_GUI_OBJECT(mainw->preview_spinbutton), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
                            LIVES_GUI_CALLBACK(on_preview_spinbutton_changed),
                            NULL);
+
+  if (palette->style&STYLE_1) {
+    set_preview_box_colours();
+  }
 
   lives_widget_show_all(mainw->preview_box);
 

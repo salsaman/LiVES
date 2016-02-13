@@ -4,6 +4,8 @@ Play selections should function even after switching clips, restarting playback.
 Add encoded files to global "recently used files".
 Implement custom themes / colours in Preferences (in progress).
 Minor compilation fix for gtk+ 2.x
+Fix bug in finding of "Next filter map" in multitrack.
+
 
 
 

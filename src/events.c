@@ -724,13 +724,14 @@ weed_plant_t *get_filter_map_after(weed_plant_t *event, int ctrack) {
 
 boolean init_event_is_relevant(weed_plant_t *init_event, int ctrack) {
   // see if init_event mentions ctrack as an in_track or an out_track
-  // ignore any process_last filters
+  // NOT ! ignore any process_last filters
 
   register int j;
   int *in_tracks,*out_tracks,error;
   int num_tracks;
 
-  if (init_event_is_process_last(init_event)) return FALSE;
+  //if (init_event_is_process_last(init_event)) return FALSE;
+
   if (weed_plant_has_leaf(init_event,"in_tracks")) {
     in_tracks=weed_get_int_array(init_event,"in_tracks",&error);
     num_tracks=weed_leaf_num_elements(init_event,"in_tracks");

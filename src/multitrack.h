@@ -363,6 +363,14 @@ struct _mt {
   LiVESWidget *ins_label;
   LiVESWidget *mm_label;
 
+  LiVESWidget *nb_label1;
+  LiVESWidget *nb_label2;
+  LiVESWidget *nb_label3;
+  LiVESWidget *nb_label4;
+  LiVESWidget *nb_label5;
+  LiVESWidget *nb_label6;
+  LiVESWidget *nb_label7;
+
   LiVESToolItem *sep1;
   LiVESToolItem *sep2;
   LiVESToolItem *sep3;

@@ -3044,9 +3044,7 @@ void mt_show_current_frame(lives_mt *mt, boolean return_layer) {
       set_ce_frame_from_pixbuf(LIVES_IMAGE(mainw->play_image),NULL,NULL);
 #endif
     }
-    lives_widget_queue_draw_area(mt->play_box,0,0,
-                                 lives_widget_get_allocation_width(mt->play_box),
-                                 lives_widget_get_allocation_height(mt->play_box));
+    lives_widget_queue_draw(mt->play_box);
     return;
   }
 
@@ -6059,6 +6057,41 @@ void set_mt_colours(lives_mt *mt) {
   lives_widget_set_fg_color(mt->sel_label, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
   lives_widget_set_bg_color(mt->sel_label, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
 
+  lives_widget_set_fg_color(mt->nb_label1, LIVES_WIDGET_STATE_ACTIVE, &palette->menu_and_bars_fore); // not working for gtk+ 3.x
+  lives_widget_set_bg_color(mt->nb_label1, LIVES_WIDGET_STATE_ACTIVE, &palette->menu_and_bars);
+  lives_widget_set_fg_color(mt->nb_label1, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
+  lives_widget_set_bg_color(mt->nb_label1, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
+
+  lives_widget_set_fg_color(mt->nb_label2, LIVES_WIDGET_STATE_ACTIVE, &palette->menu_and_bars_fore); // not working for gtk+ 3.x
+  lives_widget_set_bg_color(mt->nb_label2, LIVES_WIDGET_STATE_ACTIVE, &palette->menu_and_bars);
+  lives_widget_set_fg_color(mt->nb_label2, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
+  lives_widget_set_bg_color(mt->nb_label2, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
+
+  lives_widget_set_fg_color(mt->nb_label3, LIVES_WIDGET_STATE_ACTIVE, &palette->menu_and_bars_fore); // not working for gtk+ 3.x
+  lives_widget_set_bg_color(mt->nb_label3, LIVES_WIDGET_STATE_ACTIVE, &palette->menu_and_bars);
+  lives_widget_set_fg_color(mt->nb_label3, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
+  lives_widget_set_bg_color(mt->nb_label3, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
+
+  lives_widget_set_fg_color(mt->nb_label4, LIVES_WIDGET_STATE_ACTIVE, &palette->menu_and_bars_fore); // not working for gtk+ 3.x
+  lives_widget_set_bg_color(mt->nb_label4, LIVES_WIDGET_STATE_ACTIVE, &palette->menu_and_bars);
+  lives_widget_set_fg_color(mt->nb_label4, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
+  lives_widget_set_bg_color(mt->nb_label4, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
+
+  lives_widget_set_fg_color(mt->nb_label5, LIVES_WIDGET_STATE_ACTIVE, &palette->menu_and_bars_fore); // not working for gtk+ 3.x
+  lives_widget_set_bg_color(mt->nb_label5, LIVES_WIDGET_STATE_ACTIVE, &palette->menu_and_bars);
+  lives_widget_set_fg_color(mt->nb_label5, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
+  lives_widget_set_bg_color(mt->nb_label5, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
+
+  lives_widget_set_fg_color(mt->nb_label6, LIVES_WIDGET_STATE_ACTIVE, &palette->menu_and_bars_fore); // not working for gtk+ 3.x
+  lives_widget_set_bg_color(mt->nb_label6, LIVES_WIDGET_STATE_ACTIVE, &palette->menu_and_bars);
+  lives_widget_set_fg_color(mt->nb_label6, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
+  lives_widget_set_bg_color(mt->nb_label6, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
+
+  lives_widget_set_fg_color(mt->nb_label7, LIVES_WIDGET_STATE_ACTIVE, &palette->menu_and_bars_fore); // not working for gtk+ 3.x
+  lives_widget_set_bg_color(mt->nb_label7, LIVES_WIDGET_STATE_ACTIVE, &palette->menu_and_bars);
+  lives_widget_set_fg_color(mt->nb_label7, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
+  lives_widget_set_bg_color(mt->nb_label7, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
+
 }
 
 
@@ -6089,7 +6122,6 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
   LiVESWidget *vbox;
   LiVESWidget *view_ctx;
   LiVESWidget *eventbox;
-  LiVESWidget *label;
   LiVESWidget *ign_ins_sel;
   LiVESWidget *recent_submenu;
 #ifdef ENABLE_DVD_GRAB
@@ -6214,6 +6246,7 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
     mt->opts.follow_playback=mainw->multi_opts.follow_playback;
     mt->opts.autocross_audio=mainw->multi_opts.autocross_audio;
     mt->opts.render_audp=mainw->multi_opts.render_audp;
+    mt->opts.render_vidp=mainw->multi_opts.render_vidp;
     mt->opts.normalise_audp=mainw->multi_opts.normalise_audp;
     mt->opts.aparam_view_list=mainw->multi_opts.aparam_view_list;
   } else {
@@ -6228,13 +6261,13 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
     mt->opts.grav_mode=GRAV_MODE_NORMAL;
     mt->opts.insert_mode=INSERT_MODE_NORMAL;
     mt->opts.autocross_audio=TRUE;
+    mt->opts.render_vidp=TRUE;
     mt->opts.render_audp=TRUE;
     mt->opts.normalise_audp=TRUE;
     mt->opts.aparam_view_list=NULL;
   }
 
   mt->opts.insert_audio=TRUE;
-  mt->opts.render_vidp=TRUE;
 
   mt->opts.pertrack_audio=prefs->mt_pertrack_audio;
   mt->opts.audio_bleedthru=FALSE;
@@ -7473,7 +7506,9 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
   lives_widget_set_sensitive(mt->render_sep, FALSE);
 
   mt->render_vid = lives_check_menu_item_new_with_mnemonic(_("Render _video"));
-  lives_check_menu_item_set_active(LIVES_CHECK_MENU_ITEM(mt->render_vid), TRUE);
+  lives_check_menu_item_set_active(LIVES_CHECK_MENU_ITEM(mt->render_vid), mt->opts.render_vidp);
+  lives_widget_set_sensitive(mt->render_vid,mt->opts.render_audp);
+
 
   lives_container_add(LIVES_CONTAINER(menuitem_menu), mt->render_vid);
 
@@ -7489,6 +7524,7 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
 
   mt->normalise_aud = lives_check_menu_item_new_with_mnemonic(_("_Normalise rendered audio"));
   lives_check_menu_item_set_active(LIVES_CHECK_MENU_ITEM(mt->normalise_aud), mt->opts.normalise_audp);
+  lives_widget_set_sensitive(mt->normalise_aud,mt->opts.render_audp);
 
   lives_container_add(LIVES_CONTAINER(menuitem_menu), mt->normalise_aud);
 
@@ -8288,15 +8324,8 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
   lives_container_add(LIVES_CONTAINER(mt->nb), hbox);
 
   tname=get_tab_name(POLY_CLIPS);
-  label=lives_standard_label_new(tname);
+  mt->nb_label1=lives_standard_label_new(tname);
   lives_free(tname);
-
-  if (palette->style&STYLE_1) {
-    lives_widget_set_fg_color(label, LIVES_WIDGET_STATE_ACTIVE, &palette->menu_and_bars_fore); // not working for gtk+ 3.x
-    lives_widget_set_bg_color(label, LIVES_WIDGET_STATE_ACTIVE, &palette->menu_and_bars);
-    lives_widget_set_fg_color(label, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
-    lives_widget_set_bg_color(label, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
-  }
 
   // prepare polymorph box
   mt->poly_box = lives_vbox_new(FALSE, 0);
@@ -8306,7 +8335,7 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
 
   lives_container_add(LIVES_CONTAINER(hbox), mt->poly_box);
 
-  lives_notebook_set_tab_label(LIVES_NOTEBOOK(mt->nb), lives_notebook_get_nth_page(LIVES_NOTEBOOK(mt->nb), 0), label);
+  lives_notebook_set_tab_label(LIVES_NOTEBOOK(mt->nb), lives_notebook_get_nth_page(LIVES_NOTEBOOK(mt->nb), 0), mt->nb_label1);
 
   // poly box is first page in notebook
 
@@ -8334,7 +8363,7 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
   // add a dummy hbox to nb (adds a tab with a label)
 
   tname=get_tab_name(POLY_IN_OUT);
-  label=lives_label_new(tname);
+  mt->nb_label2=lives_label_new(tname);
   lives_free(tname);
 
 
@@ -8343,19 +8372,13 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
   lives_widget_set_vexpand(hbox,TRUE);
 
   lives_container_add(LIVES_CONTAINER(mt->nb), hbox);
-  lives_notebook_set_tab_label(LIVES_NOTEBOOK(mt->nb), lives_notebook_get_nth_page(LIVES_NOTEBOOK(mt->nb), 1), label);
+  lives_notebook_set_tab_label(LIVES_NOTEBOOK(mt->nb), lives_notebook_get_nth_page(LIVES_NOTEBOOK(mt->nb), 1), mt->nb_label2);
 
-  if (palette->style&STYLE_1) {
-    lives_widget_set_fg_color(label, LIVES_WIDGET_STATE_ACTIVE, &palette->menu_and_bars_fore);
-    lives_widget_set_bg_color(label, LIVES_WIDGET_STATE_ACTIVE, &palette->menu_and_bars);
-    lives_widget_set_fg_color(label, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
-    lives_widget_set_bg_color(label, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
-  }
 
   // add a dummy hbox to nb (adds a tab with label)
 
   tname=get_tab_name(POLY_FX_STACK);
-  label=lives_label_new(tname);
+  mt->nb_label3=lives_label_new(tname);
   lives_free(tname);
 
   hbox = lives_hbox_new(FALSE, 0);
@@ -8363,18 +8386,13 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
   lives_widget_set_vexpand(hbox,TRUE);
 
   lives_container_add(LIVES_CONTAINER(mt->nb), hbox);
-  lives_notebook_set_tab_label(LIVES_NOTEBOOK(mt->nb), lives_notebook_get_nth_page(LIVES_NOTEBOOK(mt->nb), 2), label);
-  if (palette->style&STYLE_1) {
-    lives_widget_set_fg_color(label, LIVES_WIDGET_STATE_ACTIVE, &palette->menu_and_bars_fore);
-    lives_widget_set_bg_color(label, LIVES_WIDGET_STATE_ACTIVE, &palette->menu_and_bars);
-    lives_widget_set_fg_color(label, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
-    lives_widget_set_bg_color(label, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
-  }
+  lives_notebook_set_tab_label(LIVES_NOTEBOOK(mt->nb), lives_notebook_get_nth_page(LIVES_NOTEBOOK(mt->nb), 2), mt->nb_label3);
+
 
   // add a dummy hbox to nb
 
   tname=get_tab_name(POLY_EFFECTS);
-  label=lives_label_new(tname);
+  mt->nb_label4=lives_label_new(tname);
   lives_free(tname);
 
   hbox = lives_hbox_new(FALSE, 0);
@@ -8382,19 +8400,13 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
   lives_widget_set_vexpand(hbox,TRUE);
 
   lives_container_add(LIVES_CONTAINER(mt->nb), hbox);
-  lives_notebook_set_tab_label(LIVES_NOTEBOOK(mt->nb), lives_notebook_get_nth_page(LIVES_NOTEBOOK(mt->nb), 3), label);
-  if (palette->style&STYLE_1) {
-    lives_widget_set_fg_color(label, LIVES_WIDGET_STATE_ACTIVE, &palette->menu_and_bars_fore);
-    lives_widget_set_bg_color(label, LIVES_WIDGET_STATE_ACTIVE, &palette->menu_and_bars);
-    lives_widget_set_fg_color(label, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
-    lives_widget_set_bg_color(label, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
-  }
+  lives_notebook_set_tab_label(LIVES_NOTEBOOK(mt->nb), lives_notebook_get_nth_page(LIVES_NOTEBOOK(mt->nb), 3), mt->nb_label4);
 
   // add a dummy hbox to nb
 
 
   tname=get_tab_name(POLY_TRANS);
-  label=lives_label_new(tname);
+  mt->nb_label5=lives_label_new(tname);
   lives_free(tname);
 
   hbox = lives_hbox_new(FALSE, 0);
@@ -8402,18 +8414,12 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
   lives_widget_set_vexpand(hbox,TRUE);
 
   lives_container_add(LIVES_CONTAINER(mt->nb), hbox);
-  lives_notebook_set_tab_label(LIVES_NOTEBOOK(mt->nb), lives_notebook_get_nth_page(LIVES_NOTEBOOK(mt->nb), 4), label);
-  if (palette->style&STYLE_1) {
-    lives_widget_set_fg_color(label, LIVES_WIDGET_STATE_ACTIVE, &palette->menu_and_bars_fore);
-    lives_widget_set_bg_color(label, LIVES_WIDGET_STATE_ACTIVE, &palette->menu_and_bars);
-    lives_widget_set_fg_color(label, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
-    lives_widget_set_bg_color(label, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
-  }
+  lives_notebook_set_tab_label(LIVES_NOTEBOOK(mt->nb), lives_notebook_get_nth_page(LIVES_NOTEBOOK(mt->nb), 4), mt->nb_label5);
 
   // add a dummy hbox to nb
 
   tname=get_tab_name(POLY_COMP);
-  label=lives_label_new(tname);
+  mt->nb_label6=lives_label_new(tname);
   lives_free(tname);
 
   hbox = lives_hbox_new(FALSE, 0);
@@ -8421,18 +8427,12 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
   lives_widget_set_vexpand(hbox,TRUE);
 
   lives_container_add(LIVES_CONTAINER(mt->nb), hbox);
-  lives_notebook_set_tab_label(LIVES_NOTEBOOK(mt->nb), lives_notebook_get_nth_page(LIVES_NOTEBOOK(mt->nb), 5), label);
-  if (palette->style&STYLE_1) {
-    lives_widget_set_fg_color(label, LIVES_WIDGET_STATE_ACTIVE, &palette->menu_and_bars_fore);
-    lives_widget_set_bg_color(label, LIVES_WIDGET_STATE_ACTIVE, &palette->menu_and_bars);
-    lives_widget_set_fg_color(label, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
-    lives_widget_set_bg_color(label, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
-  }
+  lives_notebook_set_tab_label(LIVES_NOTEBOOK(mt->nb), lives_notebook_get_nth_page(LIVES_NOTEBOOK(mt->nb), 5), mt->nb_label6);
 
   // add a dummy hbox to nb
 
   tname=get_tab_name(POLY_PARAMS);
-  label=lives_label_new(tname);
+  mt->nb_label7=lives_label_new(tname);
   lives_free(tname);
 
   hbox = lives_hbox_new(FALSE, 0);
@@ -8441,13 +8441,7 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
 
 
   lives_container_add(LIVES_CONTAINER(mt->nb), hbox);
-  lives_notebook_set_tab_label(LIVES_NOTEBOOK(mt->nb), lives_notebook_get_nth_page(LIVES_NOTEBOOK(mt->nb), 6), label);
-  if (palette->style&STYLE_1) {
-    lives_widget_set_fg_color(label, LIVES_WIDGET_STATE_ACTIVE, &palette->menu_and_bars_fore);
-    lives_widget_set_bg_color(label, LIVES_WIDGET_STATE_ACTIVE, &palette->menu_and_bars);
-    lives_widget_set_fg_color(label, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
-    lives_widget_set_bg_color(label, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
-  }
+  lives_notebook_set_tab_label(LIVES_NOTEBOOK(mt->nb), lives_notebook_get_nth_page(LIVES_NOTEBOOK(mt->nb), 6), mt->nb_label7);
 
 
   // params contents
@@ -9232,6 +9226,7 @@ boolean multitrack_delete(lives_mt *mt, boolean save_layout) {
   mainw->multi_opts.autocross_audio=mt->opts.autocross_audio;
 
   mainw->multi_opts.render_audp=mt->opts.render_audp;
+  mainw->multi_opts.render_vidp=mt->opts.render_vidp;
   mainw->multi_opts.normalise_audp=mt->opts.normalise_audp;
   mainw->multi_opts.aparam_view_list=mt->opts.aparam_view_list;
 
@@ -18535,7 +18530,6 @@ weed_plant_t *get_next_fm(lives_mt *mt, int current_track, weed_plant_t *event) 
 
   // find the first filter_map which differs from the current
   while (1) {
-
     if (!compare_filter_maps(event2,event3,current_track)) break;
 
     event=get_next_event(event2);
@@ -18547,7 +18541,6 @@ weed_plant_t *get_next_fm(lives_mt *mt, int current_track, weed_plant_t *event) 
     if ((event2=get_filter_map_after(event,current_track))==NULL) return NULL;
 
   }
-
 
   if (filter_map_after_frame(event2)) return get_next_frame_event(event2);
 
@@ -19931,6 +19924,7 @@ boolean compare_filter_maps(weed_plant_t *fm1, weed_plant_t *fm2, int ctrack) {
        (weed_get_voidptr_value(fm1,"init_events",&error)!=NULL&&
         weed_get_voidptr_value(fm2,"init_events",&error)==NULL))) return FALSE;
 
+
   num_events1=weed_leaf_num_elements(fm1,"init_events");
   num_events2=weed_leaf_num_elements(fm2,"init_events");
   if (ctrack==-1000000&&num_events1!=num_events2) return FALSE;
@@ -19948,6 +19942,7 @@ boolean compare_filter_maps(weed_plant_t *fm1, weed_plant_t *fm2, int ctrack) {
       // for process_last we don't care about the exact order
       if (init_event_in_list(inits1,num_events1,(weed_plant_t *)inits2[i2])) {
         i2++;
+        i1--;
         continue;
       }
     }

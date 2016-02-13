@@ -2390,6 +2390,7 @@ void get_filename(char *filename, boolean strip_dir) {
 
 
 char *get_extension(const char *filename) {
+  // return file extension without the "."
   char *tmp=lives_path_get_basename(filename);
   int ntok=get_token_count((char *)filename,'.');
   char **array=lives_strsplit(tmp,".",-1);

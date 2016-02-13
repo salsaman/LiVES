@@ -2473,8 +2473,8 @@ boolean do_comments_dialog(int fileno, char *filename) {
 
       if (encoding&&sfile->subt!=NULL&&lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(commentsw->subt_checkbutton))) {
         char *ext=get_extension(lives_entry_get_text(LIVES_ENTRY(commentsw->subt_entry)));
-        if (strcmp(ext,"sub")&&strcmp(ext,"srt")) {
-          if (!do_sub_type_warning(ext,sfile->subt->type==SUBTITLE_TYPE_SRT?"srt":"sub")) {
+        if (strcmp(ext,LIVES_FILE_EXT_SUB)&&strcmp(ext,LIVES_FILE_EXT_SRT)) {
+          if (!do_sub_type_warning(ext,sfile->subt->type==SUBTITLE_TYPE_SRT?LIVES_FILE_EXT_SRT:LIVES_FILE_EXT_SUB)) {
             lives_entry_set_text(LIVES_ENTRY(commentsw->subt_entry),mainw->subt_save_file);
             ok=FALSE;
             continue;

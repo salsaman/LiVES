@@ -2015,11 +2015,11 @@ _commentsw *create_comments_dialog(lives_clip_t *sfile, char *filename) {
       get_filename(xfilename,FALSE); // strip extension
       switch (sfile->subt->type) {
       case SUBTITLE_TYPE_SRT:
-        osubfname=lives_strdup_printf("%s.srt",xfilename);
+        osubfname=lives_strdup_printf("%s.%s",xfilename,LIVES_FILE_EXT_SRT);
         break;
 
       case SUBTITLE_TYPE_SUB:
-        osubfname=lives_strdup_printf("%s.sub",xfilename);
+        osubfname=lives_strdup_printf("%s.%s",xfilename,LIVES_FILE_EXT_SUB);
         break;
 
       default:

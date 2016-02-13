@@ -279,6 +279,16 @@ enum {
 #define LIVES_FILE_EXT_PRE "pre"
 #define LIVES_FILE_EXT_SCRAP "scrap"
 
+#define LIVES_FILE_EXT_SRT "srt"
+#define LIVES_FILE_EXT_SUB "sub"
+
+#define LIVES_FILE_EXT_WAV "wav"
+
+// filters
+
+#define LIVES_SUBS_FILTER  ((char*[]){"*.srt","*.sub",NULL})
+#define LIVES_AUDIO_LOAD_FILTER  ((char*[]){"*.it","*.mp3","*.wav","*.ogg","*.mod","*.xm","*.wma","*.flac",NULL})
+
 
 typedef struct {
   double top;

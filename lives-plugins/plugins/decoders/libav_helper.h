@@ -1,5 +1,5 @@
-// LiVES - asf decoder plugin
-// (c) G. Finch 2011 - 2014 <salsaman@gmail.com>
+// LiVES - libav helper
+// (c) G. Finch 2011 - 2016 <salsaman@gmail.com>
 
 /*
  * This file is free software; you can redistribute it and/or
@@ -54,6 +54,10 @@
 
 #if HAVE_AVFORMAT_CLOSE_INPUT
 #define av_close_input_file(a) avformat_close_input(&a)
+#endif
+
+#if HAVE_AVPACKET_UNREF
+#define av_free_packet(a) av_packet_unref(a)
 #endif
 
 

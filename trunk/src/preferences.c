@@ -32,8 +32,6 @@ static int nmons;
 
 static uint32_t prefs_current_page;
 
-static boolean colours_changed;
-
 static void select_pref_list_row(uint32_t selected_idx);
 
 #ifdef ENABLE_OSC
@@ -744,8 +742,6 @@ boolean apply_prefs(boolean skip_warn) {
 #endif
 #endif
 
-  boolean img_changed=FALSE;
-
   char *tmp;
 
   char *cdplay_device=lives_filename_from_utf8((char *)lives_entry_get_text(LIVES_ENTRY(prefsw->cdplay_entry)),-1,NULL,NULL,NULL);
@@ -780,22 +776,8 @@ boolean apply_prefs(boolean skip_warn) {
     lives_widget_color_copy(&palette->info_text,&colt);
 
     palette->style=STYLE_1|(pstyle2*STYLE_2)|(pstyle3*STYLE_3)|(pstyle4*STYLE_4);
+    mainw->prefs_changed|=PREFS_COLOURS_CHANGED;
 
-    set_colours(&palette->normal_fore,&palette->normal_back,&palette->menu_and_bars_fore,&palette->menu_and_bars, \
-                &palette->info_base,&palette->info_text);
-
-    if (mainw->multitrack!=NULL) {
-      set_mt_colours(mainw->multitrack);
-      scroll_tracks(mainw->multitrack,mainw->multitrack->top_track,FALSE);
-      track_select(mainw->multitrack);
-      mt_clip_select(mainw->multitrack,FALSE);
-    }
-
-    if (mainw->preview_box!=NULL) {
-      set_preview_box_colours();
-    }
-
-    colours_changed=TRUE;
   }
 
   if (capable->has_encoder_plugins) {
@@ -906,21 +888,12 @@ boolean apply_prefs(boolean skip_warn) {
 
   if (strcmp(sepimg_path,mainw->sepimg_path)) {
     lives_snprintf(mainw->sepimg_path,PATH_MAX,"%s",sepimg_path);
-    img_changed=TRUE;
+    mainw->prefs_changed|=PREFS_IMAGES_CHANGED;
   }
 
   if (strcmp(frameblank_path,mainw->frameblank_path)) {
     lives_snprintf(mainw->frameblank_path,PATH_MAX,"%s",frameblank_path);
-    img_changed=TRUE;
-  }
-
-  if (img_changed) {
-    load_theme_images();
-    if (mainw->current_file==-1) {
-      load_start_image(0);
-      load_end_image(0);
-      if (mainw->preview_box!=NULL) load_preview_image(FALSE);
-    }
+    mainw->prefs_changed|=PREFS_IMAGES_CHANGED;
   }
 
   ensure_isdir(tmpdir);
@@ -1208,10 +1181,19 @@ boolean apply_prefs(boolean skip_warn) {
   if (strcmp(future_prefs->theme,theme)&&!(!lives_ascii_strcasecmp(future_prefs->theme,"none")&&
       !strcmp(theme,mainw->string_constants[LIVES_STRING_CONSTANT_NONE]))) {
     if (strcmp(theme,mainw->string_constants[LIVES_STRING_CONSTANT_NONE])) {
+      lives_snprintf(prefs->theme,64,"%s",theme);
       lives_snprintf(future_prefs->theme,64,"%s",theme);
-    } else lives_snprintf(future_prefs->theme,64,"none");
-    set_pref("gui_theme",future_prefs->theme);
-    mainw->prefs_changed|=PREFS_THEME_CHANGED;
+      set_pref("gui_theme",future_prefs->theme);
+      set_palette_colours();
+      memset(mainw->sepimg_path,0,1);
+      memset(mainw->frameblank_path,0,1);
+      load_theme_images();
+      mainw->prefs_changed|=PREFS_COLOURS_CHANGED|PREFS_IMAGES_CHANGED;
+    } else {
+      lives_snprintf(future_prefs->theme,64,"none");
+      set_pref("gui_theme",future_prefs->theme);
+      mainw->prefs_changed|=PREFS_THEME_CHANGED;
+    }
   }
 
   lives_free(theme);
@@ -2189,8 +2171,6 @@ _prefsw *create_prefs_dialog(void) {
   int dph;
 
   register int i;
-
-  colours_changed=FALSE;
 
   // Allocate memory for the preferences structure
   prefsw = (_prefsw *)(lives_malloc(sizeof(_prefsw)));
@@ -4951,13 +4931,47 @@ void on_prefs_apply_clicked(LiVESButton *button, livespointer user_data) {
     do_blocking_info_dialog(_("Jack options will not take effect until the next time you start LiVES."));
   }
 
-  mainw->prefs_changed = 0;
 
-  if (colours_changed) {
+  if (mainw->prefs_changed & PREFS_IMAGES_CHANGED) {
+    load_theme_images();
+    if (prefs->show_gui) {
+      if (mainw->current_file==-1) {
+        load_start_image(0);
+        load_end_image(0);
+        if (mainw->preview_box!=NULL) load_preview_image(FALSE);
+      }
+      lives_widget_queue_draw(mainw->LiVES);
+      if (mainw->multitrack!=NULL) {
+        lives_image_set_from_pixbuf(LIVES_IMAGE(mainw->multitrack->sep_image),mainw->imsep);
+        mt_show_current_frame(mainw->multitrack,FALSE);
+        lives_widget_queue_draw(mainw->multitrack->window);
+      }
+    }
+  }
+
+
+  if (mainw->prefs_changed & PREFS_COLOURS_CHANGED) {
     // force reshow of window
+    set_colours(&palette->normal_fore,&palette->normal_back,&palette->menu_and_bars_fore,&palette->menu_and_bars, \
+                &palette->info_base,&palette->info_text);
+
+    if (mainw->preview_box!=NULL) {
+      set_preview_box_colours();
+    }
+
+    if (prefs->show_gui) {
+      if (mainw->multitrack!=NULL) {
+        set_mt_colours(mainw->multitrack);
+        scroll_tracks(mainw->multitrack,mainw->multitrack->top_track,FALSE);
+        track_select(mainw->multitrack);
+        mt_clip_select(mainw->multitrack,FALSE);
+      }
+    }
+
     on_prefs_revert_clicked(button,NULL);
   }
 
+  mainw->prefs_changed = 0;
 
 }
 

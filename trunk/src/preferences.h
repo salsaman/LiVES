@@ -9,6 +9,13 @@
 
 #define PREFS_PANED_POS ((int)(200.*widget_opts.scale))
 
+// for mainw->prefs_changed
+#define PREFS_THEME_CHANGED (1<<0)
+#define PREFS_JACK_CHANGED (1<<1)
+#define PREFS_TEMPDIR_CHANGED (1<<2)
+#define PREFS_COLOURS_CHANGED (1<<3)
+#define PREFS_IMAGES_CHANGED (1<<4)
+
 typedef struct {
   char bgcolour[256];
   boolean stop_screensaver;

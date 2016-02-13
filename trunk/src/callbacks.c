@@ -5197,12 +5197,12 @@ boolean reload_set(const char *set_name) {
     }
 
     if (prefs->autoload_subs) {
-      subfname=lives_build_filename(prefs->tmpdir,cfile->handle,"subs.srt",NULL);
+      subfname=lives_build_filename(prefs->tmpdir,cfile->handle,"subs.",LIVES_FILE_EXT_SRT,NULL);
       if (lives_file_test(subfname,LIVES_FILE_TEST_EXISTS)) {
         subtitles_init(cfile,subfname,SUBTITLE_TYPE_SRT);
       } else {
         lives_free(subfname);
-        subfname=lives_build_filename(prefs->tmpdir,cfile->handle,"subs.sub",NULL);
+        subfname=lives_build_filename(prefs->tmpdir,cfile->handle,"subs.",LIVES_FILE_EXT_SUB,NULL);
         if (lives_file_test(subfname,LIVES_FILE_TEST_EXISTS)) {
           subtitles_init(cfile,subfname,SUBTITLE_TYPE_SUB);
         }
@@ -7675,7 +7675,7 @@ void on_rev_clipboard_activate(LiVESMenuItem *menuitem, livespointer user_data) 
 
 void on_load_subs_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   char *subfile;
-  char *filt[]= {"*.srt","*.sub",NULL};
+  char **const filt=LIVES_SUBS_FILTER;
   char filename[512];
   char *subfname,*isubfname,*com;
   lives_subtitle_type_t subtype=SUBTITLE_TYPE_NONE;
@@ -7700,20 +7700,20 @@ void on_load_subs_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   lives_free(subfile);
 
   get_filename(filename,FALSE); // strip extension
-  isubfname=lives_strdup_printf("%s.srt",filename);
+  isubfname=lives_strdup_printf("%s.%s",filename,LIVES_FILE_EXT_SRT);
   lfile_name=lives_filename_from_utf8(isubfname,-1,NULL,NULL,NULL);
 
   if (lives_file_test(lfile_name,LIVES_FILE_TEST_EXISTS)) {
-    subfname=lives_build_filename(prefs->tmpdir,cfile->handle,"subs.srt",NULL);
+    subfname=lives_build_filename(prefs->tmpdir,cfile->handle,"subs.",LIVES_FILE_EXT_SRT,NULL);
     subtype=SUBTITLE_TYPE_SRT;
   } else {
     lives_free(isubfname);
     lives_free(lfile_name);
-    isubfname=lives_strdup_printf("%s.sub",filename);
+    isubfname=lives_strdup_printf("%s.%s",filename,LIVES_FILE_EXT_SUB);
     lfile_name=lives_filename_from_utf8(isubfname,-1,NULL,NULL,NULL);
 
     if (lives_file_test(isubfname,LIVES_FILE_TEST_EXISTS)) {
-      subfname=lives_build_filename(prefs->tmpdir,cfile->handle,"subs.sub",NULL);
+      subfname=lives_build_filename(prefs->tmpdir,cfile->handle,"subs.",LIVES_FILE_EXT_SUB,NULL);
       subtype=SUBTITLE_TYPE_SUB;
     } else {
       lives_free(isubfname);
@@ -7799,11 +7799,11 @@ void on_erase_subs_activate(LiVESMenuItem *menuitem, livespointer user_data) {
 
   switch (cfile->subt->type) {
   case SUBTITLE_TYPE_SRT:
-    sfname=lives_build_filename(prefs->tmpdir,cfile->handle,"subs.srt",NULL);
+    sfname=lives_build_filename(prefs->tmpdir,cfile->handle,"subs.",LIVES_FILE_EXT_SRT,NULL);
     break;
 
   case SUBTITLE_TYPE_SUB:
-    sfname=lives_build_filename(prefs->tmpdir,cfile->handle,"subs.sub",NULL);
+    sfname=lives_build_filename(prefs->tmpdir,cfile->handle,"subs.",LIVES_FILE_EXT_SUB,NULL);
     break;
 
   default:
@@ -7829,6 +7829,9 @@ void on_erase_subs_activate(LiVESMenuItem *menuitem, livespointer user_data) {
 
 void on_load_audio_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   LiVESWidget *chooser;
+
+  char **filt=LIVES_AUDIO_LOAD_FILTER;
+
   int resp;
 
   if (mainw->multitrack!=NULL) {
@@ -7841,7 +7844,7 @@ void on_load_audio_activate(LiVESMenuItem *menuitem, livespointer user_data) {
     lives_widget_set_sensitive(mainw->m_playbutton, TRUE);
   }
 
-  chooser=choose_file_with_preview(strlen(mainw->audio_dir)?mainw->audio_dir:NULL,_("LiVES: - Select Audio File"),NULL,
+  chooser=choose_file_with_preview(strlen(mainw->audio_dir)?mainw->audio_dir:NULL,_("LiVES: - Select Audio File"),filt,
                                    LIVES_FILE_SELECTION_AUDIO_ONLY);
 
   resp=lives_dialog_run(LIVES_DIALOG(chooser));
@@ -7872,6 +7875,9 @@ void on_open_new_audio_clicked(LiVESFileChooser *chooser, livespointer user_data
   boolean has_lmap_error=FALSE;
   boolean bad_header=FALSE;
   boolean preparse=FALSE;
+  boolean gotit=FALSE;
+
+  register int i;
 
   if (!(prefs->warning_mask&WARN_MASK_LAYOUT_DELETE_AUDIO)) {
     if ((mainw->xlays=layout_audio_is_affected(mainw->current_file,0.))!=NULL) {
@@ -7940,14 +7946,16 @@ void on_open_new_audio_clicked(LiVESFileChooser *chooser, livespointer user_data
   lives_widget_context_update();
   mainw->fs_playarea=NULL;
 
-  a_type=file_name+strlen(file_name)-3;
+  a_type=get_extension(file_name);
 
-  if (!lives_ascii_strncasecmp(a_type,".it",3)||
-      !lives_ascii_strncasecmp(a_type,"mp3",3)||
-      !lives_ascii_strncasecmp(a_type,"ogg",3)||
-      !lives_ascii_strncasecmp(a_type,"wav",3)||
-      !lives_ascii_strncasecmp(a_type,"mod",3)||
-      !lives_ascii_strncasecmp(a_type,".xm",3)) {
+  if (strlen(a_type)) {
+    char **filt=LIVES_AUDIO_LOAD_FILTER;
+    for (i=0; filt[i]!=NULL; i++) {
+      if (!lives_ascii_strcasecmp(a_type,filt[i]+2)) gotit=TRUE; // skip past "*." in filt
+    }
+  }
+
+  if (gotit) {
     com=lives_strdup_printf("%s audioopen \"%s\" \"%s\"",prefs->backend,cfile->handle,
                             (tmp=lives_filename_from_utf8(file_name,-1,NULL,NULL,NULL)));
     lives_free(tmp);
@@ -7961,8 +7969,7 @@ void on_open_new_audio_clicked(LiVESFileChooser *chooser, livespointer user_data
     return;
   }
 
-  if (!lives_ascii_strncasecmp(a_type,"wav",3)) israw=0;
-
+  if (!lives_ascii_strncasecmp(a_type,LIVES_FILE_EXT_WAV,3)) israw=0;
 
   if (capable->has_mplayer||capable->has_mplayer2||capable->has_mpv) {
     if (read_file_details(file_name,TRUE)) {
@@ -10684,13 +10691,19 @@ void on_export_audio_activate(LiVESMenuItem *menuitem, livespointer user_data) {
 void on_append_audio_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   LiVESWidget *chooser;
 
+  char **const filt=LIVES_AUDIO_LOAD_FILTER;
+
   char *com,*tmp,*tmp2;
   char *a_type;
+
+  boolean gotit=FALSE;
 
   int asigned=!(cfile->signed_endian&AFORM_UNSIGNED);
   int aendian=!(cfile->signed_endian&AFORM_BIG_ENDIAN);
 
   int resp;
+
+  register int i;
 
   if (!(prefs->warning_mask&WARN_MASK_LAYOUT_ALTER_AUDIO)&&
       (mainw->xlays=layout_audio_is_affected(mainw->current_file,0.))!=NULL) {
@@ -10707,7 +10720,7 @@ void on_append_audio_activate(LiVESMenuItem *menuitem, livespointer user_data) {
     mainw->xlays=NULL;
   }
 
-  chooser=choose_file_with_preview(strlen(mainw->audio_dir)?mainw->audio_dir:NULL,_("LiVES: - Append Audio File"),NULL,
+  chooser=choose_file_with_preview(strlen(mainw->audio_dir)?mainw->audio_dir:NULL,_("LiVES: - Append Audio File"),filt,
                                    LIVES_FILE_SELECTION_AUDIO_ONLY);
 
   resp=lives_dialog_run(LIVES_DIALOG(chooser));
@@ -10730,13 +10743,19 @@ void on_append_audio_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   lives_widget_queue_draw(mainw->LiVES);
   lives_widget_context_update();
 
-  a_type=file_name+strlen(file_name)-3;
-
   lives_snprintf(mainw->audio_dir,PATH_MAX,"%s",file_name);
   get_dirname(mainw->audio_dir);
 
-  if (!lives_ascii_strncasecmp(a_type,".it",2)||!lives_ascii_strncasecmp(a_type,"mp3",3)||!lives_ascii_strncasecmp(a_type,"ogg",3)||
-      !lives_ascii_strncasecmp(a_type,"wav",3)||!lives_ascii_strncasecmp(a_type,"mod",3)||!lives_ascii_strncasecmp(a_type,"xm",2)) {
+  a_type=get_extension(file_name);
+
+  if (strlen(a_type)) {
+    char **filt=LIVES_AUDIO_LOAD_FILTER;
+    for (i=0; filt[i]!=NULL; i++) {
+      if (!lives_ascii_strcasecmp(a_type,filt[i]+2)) gotit=TRUE; // skip past "*." in filt
+    }
+  }
+
+  if (gotit) {
     com=lives_strdup_printf("%s append_audio \"%s\" \"%s\" %d %d %d %d %d \"%s\"",prefs->backend,cfile->handle,
                             a_type,cfile->arate,
                             cfile->achans,cfile->asampsize,asigned,aendian,

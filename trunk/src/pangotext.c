@@ -1,7 +1,7 @@
 // pangotext.c
 // text handling code
 // (c) A. Penkov 2010
-// (c) G. Finch 2010 - 2015
+// (c) G. Finch 2010 - 2016
 // pieces of code taken and modified from scribbler.c
 // released under the GNU GPL 3 or later
 // see file COPYING or www.gnu.org for details

@@ -877,15 +877,15 @@ ulong open_file_sel(const char *file_name, double start, int frames) {
 
       lives_snprintf(filename,512,"%s",file_name);
       get_filename(filename,FALSE); // strip extension
-      isubfname=lives_strdup_printf("%s.srt",filename);
+      isubfname=lives_strdup_printf("%s.%s",filename,LIVES_FILE_EXT_SRT);
       if (lives_file_test(isubfname,LIVES_FILE_TEST_EXISTS)) {
-        subfname=lives_build_filename(prefs->tmpdir,cfile->handle,"subs.srt",NULL);
+        subfname=lives_build_filename(prefs->tmpdir,cfile->handle,"subs.",LIVES_FILE_EXT_SRT,NULL);
         subtype=SUBTITLE_TYPE_SRT;
       } else {
         lives_free(isubfname);
-        isubfname=lives_strdup_printf("%s.sub",filename);
+        isubfname=lives_strdup_printf("%s.%s",filename,LIVES_FILE_EXT_SUB);
         if (lives_file_test(isubfname,LIVES_FILE_TEST_EXISTS)) {
-          subfname=lives_build_filename(prefs->tmpdir,cfile->handle,"subs.sub",NULL);
+          subfname=lives_build_filename(prefs->tmpdir,cfile->handle,"subs.",LIVES_FILE_EXT_SUB,NULL);
           subtype=SUBTITLE_TYPE_SUB;
         }
       }
@@ -1069,8 +1069,8 @@ static void save_subs_to_file(lives_clip_t *sfile, char *fname) {
 
   ext=get_extension(fname);
 
-  if (!strcmp(ext,"sub")) otype=SUBTITLE_TYPE_SUB;
-  else if (!strcmp(ext,"srt")) otype=SUBTITLE_TYPE_SRT;
+  if (!strcmp(ext,LIVES_FILE_EXT_SUB)) otype=SUBTITLE_TYPE_SUB;
+  else if (!strcmp(ext,LIVES_FILE_EXT_SRT)) otype=SUBTITLE_TYPE_SRT;
   else otype=itype;
 
   lives_free(ext);
@@ -4682,12 +4682,12 @@ ulong restore_file(const char *file_name) {
   cfile->changed=FALSE;
 
   if (prefs->autoload_subs) {
-    subfname=lives_strdup_printf("%s/%s/subs.srt",prefs->tmpdir,cfile->handle);
+    subfname=lives_strdup_printf("%s/%s/subs.%s",prefs->tmpdir,cfile->handle,LIVES_FILE_EXT_SRT);
     if (lives_file_test(subfname,LIVES_FILE_TEST_EXISTS)) {
       subtitles_init(cfile,subfname,SUBTITLE_TYPE_SRT);
     } else {
       lives_free(subfname);
-      subfname=lives_strdup_printf("%s/%s/subs.sub",prefs->tmpdir,cfile->handle);
+      subfname=lives_strdup_printf("%s/%s/subs.%s",prefs->tmpdir,cfile->handle,LIVES_FILE_EXT_SUB);
       if (lives_file_test(subfname,LIVES_FILE_TEST_EXISTS)) {
         subtitles_init(cfile,subfname,SUBTITLE_TYPE_SUB);
       }

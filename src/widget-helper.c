@@ -7743,13 +7743,10 @@ LiVESWidget *lives_standard_combo_new(const char *labeltext, boolean use_mnemoni
 
 
 LiVESWidget *lives_standard_entry_new(const char *labeltext, boolean use_mnemonic, const char *txt, int dispwidth, int maxchars,
-                                      LiVESBox *box,
-                                      const char *tooltip) {
+                                      LiVESBox *box, const char *tooltip) {
 
   LiVESWidget *entry=NULL;
-
   LiVESWidget *label=NULL;
-
   LiVESWidget *hbox=NULL;
 
   entry=lives_entry_new();
@@ -8293,6 +8290,12 @@ LiVESWidget *lives_standard_color_button_new(LiVESBox *parent, char *name, boole
 // utils
 
 boolean widget_helper_init(void) {
+#ifdef GUI_GTK
+  GSList *flist,*slist;
+  LiVESList *dlist,*xlist=NULL;
+  register int i;
+#endif
+
 #if GTK_CHECK_VERSION(3,10,0) || defined GUI_QT
   lives_snprintf(LIVES_STOCK_LABEL_CANCEL,32,"%s",(_("_Cancel")));
   lives_snprintf(LIVES_STOCK_LABEL_OK,32,"%s",(_("_OK")));
@@ -8325,7 +8328,30 @@ boolean widget_helper_init(void) {
 #ifdef GUI_GTK
   gtk_accel_map_add_entry("<LiVES>/save",LIVES_KEY_s,LIVES_CONTROL_MASK);
   gtk_accel_map_add_entry("<LiVES>/quit",LIVES_KEY_q,LIVES_CONTROL_MASK);
+
+  slist=flist=gdk_pixbuf_get_formats();
+  while (slist!=NULL) {
+    GdkPixbufFormat *form=(GdkPixbufFormat *)slist->data;
+    char **ext=gdk_pixbuf_format_get_extensions(form);
+    for (i=0; ext[i]!=NULL; i++) {
+      xlist=lives_list_append_unique(xlist,ext[i]);
+    }
+    slist=slist->next;
+  }
+  g_slist_free(flist);
 #endif
+
+  if (xlist!=NULL) {
+    dlist=xlist;
+    widget_opts.image_filter=(char **)lives_malloc((lives_list_length(xlist)+1)*sizeof(char *));
+    for (i=0; dlist!=NULL; i++) {
+      widget_opts.image_filter[i]=lives_strdup_printf("*.%s",(char *)dlist->data);
+      dlist=dlist->next;
+    }
+    widget_opts.image_filter[i]=NULL;
+    lives_list_free_strings(xlist);
+    lives_list_free(xlist);
+  }
 
   return TRUE;
 }

@@ -9183,7 +9183,7 @@ boolean multitrack_delete(lives_mt *mt, boolean save_layout) {
       mt->event_list=NULL;
       mainw->stored_event_list_changed=mt->changed;
       mainw->stored_event_list_auto_changed=mt->auto_changed;
-      snprintf(mainw->stored_layout_name,256,"%s",mt->layout_name);
+      lives_snprintf(mainw->stored_layout_name,256,"%s",mt->layout_name);
       mainw->stored_layout_undos=mt->undos;
       mainw->sl_undo_mem=mt->undo_mem;
       mainw->sl_undo_buffer_used=mt->undo_buffer_used;
@@ -11098,7 +11098,7 @@ boolean on_multitrack_activate(LiVESMenuItem *menuitem, weed_plant_t *event_list
     }
     remove_markers(multi->event_list);
     set_audio_mixer_vols(multi,multi->event_list);
-    snprintf(multi->layout_name,256,"%s",mainw->stored_layout_name);
+    lives_snprintf(multi->layout_name,256,"%s",mainw->stored_layout_name);
     multi->changed=mainw->stored_event_list_changed;
     multi->auto_changed=mainw->stored_event_list_auto_changed;
   }
@@ -15365,7 +15365,7 @@ void multitrack_view_details(LiVESMenuItem *menuitem, livespointer user_data) {
 
   // type
   lives_snprintf(buff,512,"\n  Event List");
-  lives_text_view_set_text(LIVES_TEXT_VIEW(filew->textview24),buff, -1);
+  lives_text_view_set_text(LIVES_TEXT_VIEW(filew->textview_type),buff, -1);
 
   // fps
   if (mt->fps>0) {
@@ -15374,11 +15374,11 @@ void multitrack_view_details(LiVESMenuItem *menuitem, livespointer user_data) {
     lives_snprintf(buff,512,"%s",_("\n (variable)"));
   }
 
-  lives_text_view_set_text(LIVES_TEXT_VIEW(filew->textview25),buff, -1);
+  lives_text_view_set_text(LIVES_TEXT_VIEW(filew->textview_fps),buff, -1);
 
   // image size
   lives_snprintf(buff,512,"\n  %dx%d",rfile->hsize,rfile->vsize);
-  lives_text_view_set_text(LIVES_TEXT_VIEW(filew->textview26),buff, -1);
+  lives_text_view_set_text(LIVES_TEXT_VIEW(filew->textview_size),buff, -1);
 
   // elist time
   if (mt->event_list!=NULL) {
@@ -15388,14 +15388,14 @@ void multitrack_view_details(LiVESMenuItem *menuitem, livespointer user_data) {
 
   // events
   lives_snprintf(buff,512,"\n  %d",num_events);
-  lives_text_view_set_text(LIVES_TEXT_VIEW(filew->textview27),buff, -1);
+  lives_text_view_set_text(LIVES_TEXT_VIEW(filew->textview_frames),buff, -1);
 
   lives_snprintf(buff,512,"\n  %.3f sec",time);
-  lives_text_view_set_text(LIVES_TEXT_VIEW(filew->textview28),buff, -1);
+  lives_text_view_set_text(LIVES_TEXT_VIEW(filew->textview_vtime),buff, -1);
 
   // byte size
   lives_snprintf(buff,512,"\n  %d bytes",bsize);
-  lives_text_view_set_text(LIVES_TEXT_VIEW(filew->textview29),buff, -1);
+  lives_text_view_set_text(LIVES_TEXT_VIEW(filew->textview_fsize),buff, -1);
 
   if (cfile->achans>0) {
     lives_snprintf(buff,512,"\n  %d Hz %d bit",cfile->arate,cfile->asampsize);

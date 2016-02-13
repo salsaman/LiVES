@@ -365,9 +365,9 @@ ulong open_file_sel(const char *file_name, double start, int frames) {
 
         cfile->frames=cdata->nframes;
 
-        snprintf(cfile->author,256,"%s",cdata->author);
-        snprintf(cfile->title,256,"%s",cdata->title);
-        snprintf(cfile->comment,256,"%s",cdata->comment);
+        lives_snprintf(cfile->author,256,"%s",cdata->author);
+        lives_snprintf(cfile->title,256,"%s",cdata->title);
+        lives_snprintf(cfile->comment,256,"%s",cdata->comment);
 
         if (frames>0&&cfile->frames>frames) cfile->frames=frames;
 
@@ -5343,7 +5343,7 @@ boolean reload_clip(int fileno) {
           get_dirname(dirname);
           get_basename(fname);
 
-          chooser=choose_file_with_preview(dirname,fname,LIVES_FILE_SELECTION_VIDEO_AUDIO);
+          chooser=choose_file_with_preview(dirname,fname,NULL,LIVES_FILE_SELECTION_VIDEO_AUDIO);
 
           resp=lives_dialog_run(LIVES_DIALOG(chooser));
 

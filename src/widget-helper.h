@@ -858,6 +858,7 @@ typedef struct {
   LiVESWidget *last_label; // label widget of last standard widget (spin,radio,check,entry,combo) [readonly]
   LiVESJustification justify; // justify for labels
   LiVESJustification default_justify;
+  char **image_filter; /// NULL or NULL terminated list of image extensions which can be loaded
 } widget_opts_t;
 
 
@@ -880,7 +881,8 @@ const widget_opts_t def_widget_opts = {
   8, // def fill width (in chars)
   NULL, // last_label
   LIVES_JUSTIFY_LEFT, // justify
-  LIVES_JUSTIFY_LEFT // default justify
+  LIVES_JUSTIFY_LEFT, // default justify
+  NULL // image_filter
 };
 
 #else

@@ -744,6 +744,7 @@ giw_timeline_draw_ticks(GiwTimeline *timeline) {
 #ifdef G_GNUC_END_IGNORE_DEPRECATIONS
   G_GNUC_END_IGNORE_DEPRECATIONS
 #endif
+
   cairo_set_source_rgb(cr, col.red, col.green, col.blue);
   cairo_rectangle(cr, 0, 0, allocation.width, allocation.height);
   cairo_fill(cr);

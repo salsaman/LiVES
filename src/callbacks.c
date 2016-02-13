@@ -552,17 +552,25 @@ void lives_exit(int signum) {
 void on_filesel_button_clicked(LiVESButton *button, livespointer user_data) {
   LiVESWidget *tentry=LIVES_WIDGET(user_data);
 
-  boolean is_dir=TRUE;
+  char **filt=NULL;
 
-  char *dirname;
+  char *dirname=NULL;
   char *fname;
   char *tmp;
 
   char *def_dir=NULL;
 
+  boolean is_dir=TRUE;
+
+  int filesel_type=LIVES_FILE_SELECTION_UNDEFINED;
+
   if (button!=NULL) {
     def_dir=(char *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(button),"def_dir");
     is_dir=LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(button),"is_dir"));
+    filt=(char **)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(button), "filter");
+    if (lives_widget_object_get_data(LIVES_WIDGET_OBJECT(button), "filesel_type")!=NULL) {
+      filesel_type=LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(button),"filesel_type"));
+    }
   }
 
   if (LIVES_IS_TEXT_VIEW(tentry)) fname=lives_text_view_get_text(LIVES_TEXT_VIEW(tentry));
@@ -575,11 +583,24 @@ void on_filesel_button_clicked(LiVESButton *button, livespointer user_data) {
 
   lives_widget_context_update();
 
-  dirname=choose_file(fname,NULL,NULL,
-                      is_dir?LIVES_FILE_CHOOSER_ACTION_SELECT_FOLDER:
-                      (fname==def_dir&&!strcmp(def_dir,LIVES_DEVICE_DIR))?LIVES_FILE_CHOOSER_ACTION_SELECT_DEVICE:
-                      LIVES_FILE_CHOOSER_ACTION_OPEN,
-                      NULL,NULL);
+  if (filesel_type==LIVES_FILE_SELECTION_UNDEFINED)
+    dirname=choose_file(fname,NULL,filt,
+                        is_dir?LIVES_FILE_CHOOSER_ACTION_SELECT_FOLDER:
+                        (fname==def_dir&&def_dir!=NULL&&!strcmp(def_dir,LIVES_DEVICE_DIR))?LIVES_FILE_CHOOSER_ACTION_SELECT_DEVICE:
+                        LIVES_FILE_CHOOSER_ACTION_OPEN,
+                        NULL,NULL);
+  else {
+    LiVESWidget *chooser=choose_file_with_preview(fname,NULL,filt,filesel_type);
+    int resp=lives_dialog_run(LIVES_DIALOG(chooser));
+
+    end_fs_preview();
+
+    if (resp==LIVES_RESPONSE_ACCEPT) {
+      dirname=lives_file_chooser_get_filename(LIVES_FILE_CHOOSER(chooser));
+    }
+
+    lives_widget_destroy(LIVES_WIDGET(chooser));
+  }
 
   if (fname!=NULL&&fname!=def_dir) lives_free(fname);
 
@@ -644,7 +665,7 @@ void on_open_sel_activate(LiVESMenuItem *menuitem, livespointer user_data) {
     lives_widget_set_sensitive(mainw->m_playbutton, TRUE);
   }
 
-  chooser=choose_file_with_preview(strlen(mainw->vid_load_dir)?mainw->vid_load_dir:NULL,NULL,LIVES_FILE_SELECTION_VIDEO_AUDIO);
+  chooser=choose_file_with_preview(strlen(mainw->vid_load_dir)?mainw->vid_load_dir:NULL,NULL,NULL,LIVES_FILE_SELECTION_VIDEO_AUDIO);
   resp=lives_dialog_run(LIVES_DIALOG(chooser));
 
   end_fs_preview();
@@ -5474,14 +5495,14 @@ void on_show_file_info_activate(LiVESMenuItem *menuitem, livespointer user_data)
                                       cfile->clip_type==CLIP_TYPE_VIDEODEV)?(_("buffered")):
                                      (cfile->img_type==IMG_TYPE_JPEG?"jpeg":"png"))),cfile->bpp,"pcm");
     lives_free(tmp);
-    lives_text_view_set_text(LIVES_TEXT_VIEW(filew->textview24),buff, -1);
+    lives_text_view_set_text(LIVES_TEXT_VIEW(filew->textview_type),buff, -1);
     // fps
     lives_snprintf(buff,512,"\n  %.3f%s",cfile->fps,cfile->ratio_fps?"...":"");
 
-    lives_text_view_set_text(LIVES_TEXT_VIEW(filew->textview25),buff, -1);
+    lives_text_view_set_text(LIVES_TEXT_VIEW(filew->textview_fps),buff, -1);
     // image size
     lives_snprintf(buff,512,"\n  %dx%d",cfile->hsize,cfile->vsize);
-    lives_text_view_set_text(LIVES_TEXT_VIEW(filew->textview26),buff, -1);
+    lives_text_view_set_text(LIVES_TEXT_VIEW(filew->textview_size),buff, -1);
     // frames
     if ((cfile->opening&&!cfile->opening_audio&&cfile->frames==0)||cfile->frames==123456789) {
       lives_snprintf(buff,512,"%s",_("\n  Opening..."));
@@ -5499,21 +5520,21 @@ void on_show_file_info_activate(LiVESMenuItem *menuitem, livespointer user_data)
       }
 
     }
-    lives_text_view_set_text(LIVES_TEXT_VIEW(filew->textview27),buff, -1);
+    lives_text_view_set_text(LIVES_TEXT_VIEW(filew->textview_frames),buff, -1);
     // video time
     if ((cfile->opening&&!cfile->opening_audio&&cfile->frames==0)||cfile->frames==123456789) {
       lives_snprintf(buff,512,"%s",_("\n  Opening..."));
     } else {
       lives_snprintf(buff,512,_("\n  %.2f sec."),cfile->video_time);
     }
-    lives_text_view_set_text(LIVES_TEXT_VIEW(filew->textview28),buff, -1);
+    lives_text_view_set_text(LIVES_TEXT_VIEW(filew->textview_vtime),buff, -1);
     // file size
     if (cfile->f_size>=0l) {
       char *file_ds=lives_format_storage_space_string((uint64_t)cfile->f_size);
       lives_snprintf(buff,512,"\n  %s",file_ds);
       lives_free(file_ds);
     } else lives_snprintf(buff,512,"%s",_("\n  Unknown"));
-    lives_text_view_set_text(LIVES_TEXT_VIEW(filew->textview29),buff, -1);
+    lives_text_view_set_text(LIVES_TEXT_VIEW(filew->textview_fsize),buff, -1);
   }
 
   if (cfile->achans>0) {
@@ -5881,7 +5902,7 @@ void on_fs_preview_clicked(LiVESWidget *widget, livespointer user_data) {
 #endif
   unlink(info_file);
 
-  if (preview_type==LIVES_PREVIEW_TYPE_VIDEO_AUDIO) {
+  if (preview_type==LIVES_PREVIEW_TYPE_VIDEO_AUDIO||preview_type==LIVES_PREVIEW_TYPE_IMAGE_ONLY) {
 
     preview_frames=1000000000;
 
@@ -5977,7 +5998,7 @@ void on_fs_preview_clicked(LiVESWidget *widget, livespointer user_data) {
   }
 
 
-  if (!(height*width)) {
+  if (!(height*width)&&preview_type!=LIVES_PREVIEW_TYPE_IMAGE_ONLY) {
     // media preview
 
     if (!capable->has_mplayer&&!(capable->has_mplayer2||capable->has_mpv)) {
@@ -6203,7 +6224,7 @@ void on_open_activate(LiVESMenuItem *menuitem, livespointer user_data) {
     lives_widget_set_sensitive(mainw->m_playbutton, TRUE);
   }
 
-  chooser=choose_file_with_preview(strlen(mainw->vid_load_dir)?mainw->vid_load_dir:NULL,NULL,LIVES_FILE_SELECTION_VIDEO_AUDIO_MULTI);
+  chooser=choose_file_with_preview(strlen(mainw->vid_load_dir)?mainw->vid_load_dir:NULL,NULL,NULL,LIVES_FILE_SELECTION_VIDEO_AUDIO_MULTI);
 
   resp=lives_dialog_run(LIVES_DIALOG(chooser));
 
@@ -7820,7 +7841,7 @@ void on_load_audio_activate(LiVESMenuItem *menuitem, livespointer user_data) {
     lives_widget_set_sensitive(mainw->m_playbutton, TRUE);
   }
 
-  chooser=choose_file_with_preview(strlen(mainw->audio_dir)?mainw->audio_dir:NULL,_("LiVES: - Select Audio File"),
+  chooser=choose_file_with_preview(strlen(mainw->audio_dir)?mainw->audio_dir:NULL,_("LiVES: - Select Audio File"),NULL,
                                    LIVES_FILE_SELECTION_AUDIO_ONLY);
 
   resp=lives_dialog_run(LIVES_DIALOG(chooser));
@@ -10686,7 +10707,7 @@ void on_append_audio_activate(LiVESMenuItem *menuitem, livespointer user_data) {
     mainw->xlays=NULL;
   }
 
-  chooser=choose_file_with_preview(strlen(mainw->audio_dir)?mainw->audio_dir:NULL,_("LiVES: - Append Audio File"),
+  chooser=choose_file_with_preview(strlen(mainw->audio_dir)?mainw->audio_dir:NULL,_("LiVES: - Append Audio File"),NULL,
                                    LIVES_FILE_SELECTION_AUDIO_ONLY);
 
   resp=lives_dialog_run(LIVES_DIALOG(chooser));

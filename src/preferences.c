@@ -22,6 +22,7 @@
 #include "resample.h"
 #include "plugins.h"
 #include "rte_window.h"
+#include "interface.h"
 
 #ifdef ENABLE_OSC
 #include "omc-learn.h"
@@ -30,6 +31,8 @@
 static int nmons;
 
 static uint32_t prefs_current_page;
+
+static boolean colours_changed;
 
 static void select_pref_list_row(uint32_t selected_idx);
 
@@ -528,6 +531,9 @@ boolean apply_prefs(boolean skip_warn) {
   const char *frei0r_path=lives_entry_get_text(LIVES_ENTRY(prefsw->frei0r_entry));
   const char *ladspa_path=lives_entry_get_text(LIVES_ENTRY(prefsw->ladspa_entry));
 
+  const char *sepimg_path=lives_entry_get_text(LIVES_ENTRY(prefsw->sepimg_entry));
+  const char *frameblank_path=lives_entry_get_text(LIVES_ENTRY(prefsw->frameblank_entry));
+
   char tmpdir[PATH_MAX];
   char *theme = lives_combo_get_active_text(LIVES_COMBO(prefsw->theme_combo));
   char *audp = lives_combo_get_active_text(LIVES_COMBO(prefsw->audp_combo));
@@ -738,6 +744,8 @@ boolean apply_prefs(boolean skip_warn) {
 #endif
 #endif
 
+  boolean img_changed=FALSE;
+
   char *tmp;
 
   char *cdplay_device=lives_filename_from_utf8((char *)lives_entry_get_text(LIVES_ENTRY(prefsw->cdplay_entry)),-1,NULL,NULL,NULL);
@@ -782,6 +790,12 @@ boolean apply_prefs(boolean skip_warn) {
       track_select(mainw->multitrack);
       mt_clip_select(mainw->multitrack,FALSE);
     }
+
+    if (mainw->preview_box!=NULL) {
+      set_preview_box_colours();
+    }
+
+    colours_changed=TRUE;
   }
 
   if (capable->has_encoder_plugins) {
@@ -877,17 +891,36 @@ boolean apply_prefs(boolean skip_warn) {
 
   if (strcmp(wp_path,prefs->weed_plugin_path)) {
     set_pref("weed_plugin_path",wp_path);
-    snprintf(prefs->weed_plugin_path,PATH_MAX,"%s",wp_path);
+    lives_snprintf(prefs->weed_plugin_path,PATH_MAX,"%s",wp_path);
   }
 
   if (strcmp(frei0r_path,prefs->frei0r_path)) {
     set_pref("frei0r_path",frei0r_path);
-    snprintf(prefs->frei0r_path,PATH_MAX,"%s",frei0r_path);
+    lives_snprintf(prefs->frei0r_path,PATH_MAX,"%s",frei0r_path);
   }
 
   if (strcmp(ladspa_path,prefs->ladspa_path)) {
     set_pref("ladspa_path",ladspa_path);
-    snprintf(prefs->ladspa_path,PATH_MAX,"%s",ladspa_path);
+    lives_snprintf(prefs->ladspa_path,PATH_MAX,"%s",ladspa_path);
+  }
+
+  if (strcmp(sepimg_path,mainw->sepimg_path)) {
+    lives_snprintf(mainw->sepimg_path,PATH_MAX,"%s",sepimg_path);
+    img_changed=TRUE;
+  }
+
+  if (strcmp(frameblank_path,mainw->frameblank_path)) {
+    lives_snprintf(mainw->frameblank_path,PATH_MAX,"%s",frameblank_path);
+    img_changed=TRUE;
+  }
+
+  if (img_changed) {
+    load_theme_images();
+    if (mainw->current_file==-1) {
+      load_start_image(0);
+      load_end_image(0);
+      if (mainw->preview_box!=NULL) load_preview_image(FALSE);
+    }
   }
 
   ensure_isdir(tmpdir);
@@ -2097,12 +2130,8 @@ _prefsw *create_prefs_dialog(void) {
   LiVESWidget *hbox2;
   LiVESWidget *vbox;
 
-  LiVESWidget *dirbutton1;
-  LiVESWidget *dirbutton2;
-  LiVESWidget *dirbutton3;
-  LiVESWidget *dirbutton4;
-  LiVESWidget *dirbutton5;
-  LiVESWidget *dirbutton6;
+  LiVESWidget *dirbutton;
+  LiVESWidget *filebutton;
 
   LiVESWidget *pp_combo;
   LiVESWidget *png;
@@ -2111,8 +2140,6 @@ _prefsw *create_prefs_dialog(void) {
 
   LiVESWidget *advbutton;
   LiVESWidget *rbutton;
-
-  LiVESWidget *cbutton;
 
 #ifdef ENABLE_OSC
 #ifdef OMC_MIDI_IMPL
@@ -2163,6 +2190,7 @@ _prefsw *create_prefs_dialog(void) {
 
   register int i;
 
+  colours_changed=FALSE;
 
   // Allocate memory for the preferences structure
   prefsw = (_prefsw *)(lives_malloc(sizeof(_prefsw)));
@@ -3429,41 +3457,58 @@ _prefsw *create_prefs_dialog(void) {
 
   lives_entry_set_editable(LIVES_ENTRY(prefsw->tmpdir_entry),FALSE);
 
-  dirbutton1 = lives_standard_file_button_new(TRUE,NULL);
+  dirbutton = lives_standard_file_button_new(TRUE,NULL);
 
-  lives_table_attach(LIVES_TABLE(prefsw->table_right_directories), dirbutton1, 2, 3, 4, 5,
+  lives_table_attach(LIVES_TABLE(prefsw->table_right_directories), dirbutton, 2, 3, 4, 5,
                      (LiVESAttachOptions)(0),
                      (LiVESAttachOptions)(0), 0, 0);
 
-  dirbutton2 = lives_standard_file_button_new(TRUE,NULL);
+  lives_signal_connect(dirbutton, LIVES_WIDGET_CLICKED_SIGNAL, LIVES_GUI_CALLBACK(on_filesel_button_clicked),prefsw->vid_load_dir_entry);
 
-  lives_table_attach(LIVES_TABLE(prefsw->table_right_directories), dirbutton2, 2, 3, 5, 6,
+
+  dirbutton = lives_standard_file_button_new(TRUE,NULL);
+
+  lives_table_attach(LIVES_TABLE(prefsw->table_right_directories), dirbutton, 2, 3, 5, 6,
                      (LiVESAttachOptions)(0),
                      (LiVESAttachOptions)(0), 0, 0);
 
-  dirbutton3 = lives_standard_file_button_new(TRUE,NULL);
+  lives_signal_connect(dirbutton, LIVES_WIDGET_CLICKED_SIGNAL, LIVES_GUI_CALLBACK(on_filesel_button_clicked),prefsw->vid_save_dir_entry);
 
-  lives_table_attach(LIVES_TABLE(prefsw->table_right_directories), dirbutton3, 2, 3, 6, 7,
+
+  dirbutton = lives_standard_file_button_new(TRUE,NULL);
+
+  lives_table_attach(LIVES_TABLE(prefsw->table_right_directories), dirbutton, 2, 3, 6, 7,
                      (LiVESAttachOptions)(0),
                      (LiVESAttachOptions)(0), 0, 0);
 
-  dirbutton4 = lives_standard_file_button_new(TRUE,NULL);
+  lives_signal_connect(dirbutton, LIVES_WIDGET_CLICKED_SIGNAL, LIVES_GUI_CALLBACK(on_filesel_button_clicked),prefsw->audio_dir_entry);
 
-  lives_table_attach(LIVES_TABLE(prefsw->table_right_directories), dirbutton4, 2, 3, 7, 8,
+
+  dirbutton = lives_standard_file_button_new(TRUE,NULL);
+
+  lives_table_attach(LIVES_TABLE(prefsw->table_right_directories), dirbutton, 2, 3, 7, 8,
                      (LiVESAttachOptions)(0),
                      (LiVESAttachOptions)(0), 0, 0);
 
-  dirbutton5 = lives_standard_file_button_new(TRUE,NULL);
+  lives_signal_connect(dirbutton, LIVES_WIDGET_CLICKED_SIGNAL, LIVES_GUI_CALLBACK(on_filesel_button_clicked),prefsw->image_dir_entry);
 
-  lives_table_attach(LIVES_TABLE(prefsw->table_right_directories), dirbutton5, 2, 3, 8, 9,
+
+  dirbutton = lives_standard_file_button_new(TRUE,NULL);
+
+  lives_table_attach(LIVES_TABLE(prefsw->table_right_directories), dirbutton, 2, 3, 8, 9,
                      (LiVESAttachOptions)(0),
                      (LiVESAttachOptions)(0), 0, 0);
 
-  dirbutton6 = lives_standard_file_button_new(TRUE,NULL);
+  lives_signal_connect(dirbutton, LIVES_WIDGET_CLICKED_SIGNAL, LIVES_GUI_CALLBACK(on_filesel_button_clicked),prefsw->proj_dir_entry);
 
-  lives_table_attach(LIVES_TABLE(prefsw->table_right_directories), dirbutton6, 2, 3, 3, 4,
+
+  dirbutton = lives_standard_file_button_new(TRUE,NULL);
+
+  lives_table_attach(LIVES_TABLE(prefsw->table_right_directories), dirbutton, 2, 3, 3, 4,
                      (LiVESAttachOptions)(0),
                      (LiVESAttachOptions)(0), 0, 0);
+
+  lives_signal_connect(dirbutton, LIVES_WIDGET_CLICKED_SIGNAL, LIVES_GUI_CALLBACK(on_filesel_complex_clicked),prefsw->tmpdir_entry);
 
   icon = lives_build_filename(prefs->prefix_dir, ICON_DIR, "pref_directory.png", NULL);
   pixbuf_directories = lives_pixbuf_new_from_file(icon, NULL);
@@ -3988,6 +4033,44 @@ _prefsw *create_prefs_dialog(void) {
   lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(prefsw->theme_style4), (palette->style&STYLE_4));
 
 
+  //
+  hbox = lives_hbox_new(FALSE, 0);
+  lives_box_pack_start(LIVES_BOX(vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
+
+  prefsw->frameblank_entry = lives_standard_entry_new((tmp=lives_strdup(_("Frame blank image"))),TRUE,mainw->frameblank_path,
+                             -1,PATH_MAX,LIVES_BOX(hbox),
+                             (tmp2=lives_strdup(_("The frame image which is shown when there is no clip loaded."))));
+  lives_free(tmp);
+  lives_free(tmp2);
+
+  filebutton = lives_standard_file_button_new(FALSE,NULL);
+  lives_box_pack_start(LIVES_BOX(hbox), filebutton, FALSE, FALSE, widget_opts.packing_width);
+
+  lives_signal_connect(filebutton, LIVES_WIDGET_CLICKED_SIGNAL, LIVES_GUI_CALLBACK(on_filesel_button_clicked),prefsw->frameblank_entry);
+
+  lives_widget_object_set_data(LIVES_WIDGET_OBJECT(filebutton),"filter",widget_opts.image_filter);
+  lives_widget_object_set_data(LIVES_WIDGET_OBJECT(filebutton),"filesel_type",LIVES_INT_TO_POINTER(LIVES_FILE_SELECTION_IMAGE_ONLY));
+
+
+  hbox = lives_hbox_new(FALSE, 0);
+  lives_box_pack_start(LIVES_BOX(vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
+
+  prefsw->sepimg_entry = lives_standard_entry_new((tmp=lives_strdup(_("Separator image"))),TRUE,mainw->sepimg_path,
+                         -1,PATH_MAX,LIVES_BOX(hbox),
+                         (tmp2=lives_strdup(_("The image shown in the center of the interface."))));
+  lives_free(tmp);
+  lives_free(tmp2);
+
+  filebutton = lives_standard_file_button_new(FALSE,NULL);
+  lives_box_pack_start(LIVES_BOX(hbox), filebutton, FALSE, FALSE, widget_opts.packing_width);
+
+  lives_signal_connect(filebutton, LIVES_WIDGET_CLICKED_SIGNAL, LIVES_GUI_CALLBACK(on_filesel_button_clicked),prefsw->sepimg_entry);
+
+  lives_widget_object_set_data(LIVES_WIDGET_OBJECT(filebutton),"filter",widget_opts.image_filter);
+  lives_widget_object_set_data(LIVES_WIDGET_OBJECT(filebutton),"filesel_type",LIVES_INT_TO_POINTER(LIVES_FILE_SELECTION_IMAGE_ONLY));
+
+
+
 
   icon = lives_build_filename(prefs->prefix_dir, ICON_DIR, "pref_themes.png", NULL);
   pixbuf_themes = lives_pixbuf_new_from_file(icon, NULL);
@@ -4414,13 +4497,6 @@ _prefsw *create_prefs_dialog(void) {
                                LIVES_KEY_Escape, (LiVESXModifierType)0, (LiVESAccelFlags)0);
 
 
-  lives_signal_connect(dirbutton1, LIVES_WIDGET_CLICKED_SIGNAL, LIVES_GUI_CALLBACK(on_filesel_button_clicked),prefsw->vid_load_dir_entry);
-  lives_signal_connect(dirbutton2, LIVES_WIDGET_CLICKED_SIGNAL, LIVES_GUI_CALLBACK(on_filesel_button_clicked),prefsw->vid_save_dir_entry);
-  lives_signal_connect(dirbutton3, LIVES_WIDGET_CLICKED_SIGNAL, LIVES_GUI_CALLBACK(on_filesel_button_clicked),prefsw->audio_dir_entry);
-  lives_signal_connect(dirbutton4, LIVES_WIDGET_CLICKED_SIGNAL, LIVES_GUI_CALLBACK(on_filesel_button_clicked),prefsw->image_dir_entry);
-  lives_signal_connect(dirbutton5, LIVES_WIDGET_CLICKED_SIGNAL, LIVES_GUI_CALLBACK(on_filesel_button_clicked),prefsw->proj_dir_entry);
-  lives_signal_connect(dirbutton6, LIVES_WIDGET_CLICKED_SIGNAL, LIVES_GUI_CALLBACK(on_filesel_complex_clicked),prefsw->tmpdir_entry);
-
   // Connect signals for 'Apply' button activity handling
   lives_signal_connect(LIVES_GUI_OBJECT(prefsw->cbutton_fore), LIVES_WIDGET_COLOR_SET_SIGNAL, LIVES_GUI_CALLBACK(apply_button_set_enabled),
                        NULL);
@@ -4530,6 +4606,10 @@ _prefsw *create_prefs_dialog(void) {
   lives_signal_connect(LIVES_GUI_OBJECT(prefsw->mt_autoback_every), LIVES_WIDGET_TOGGLED_SIGNAL, LIVES_GUI_CALLBACK(apply_button_set_enabled),
                        NULL);
   lives_signal_connect(LIVES_GUI_OBJECT(prefsw->video_open_entry), LIVES_WIDGET_CHANGED_SIGNAL, LIVES_GUI_CALLBACK(apply_button_set_enabled),
+                       NULL);
+  lives_signal_connect(LIVES_GUI_OBJECT(prefsw->frameblank_entry), LIVES_WIDGET_CHANGED_SIGNAL, LIVES_GUI_CALLBACK(apply_button_set_enabled),
+                       NULL);
+  lives_signal_connect(LIVES_GUI_OBJECT(prefsw->sepimg_entry), LIVES_WIDGET_CHANGED_SIGNAL, LIVES_GUI_CALLBACK(apply_button_set_enabled),
                        NULL);
   lives_signal_connect(LIVES_GUI_OBJECT(prefsw->spinbutton_ocp), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
                        LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
@@ -4855,7 +4935,7 @@ void on_prefs_apply_clicked(LiVESButton *button, livespointer user_data) {
   lives_widget_set_sensitive(LIVES_WIDGET(prefsw->cancelbutton), FALSE);
   lives_widget_set_sensitive(LIVES_WIDGET(prefsw->closebutton), TRUE);
 
-  if (FALSE == mainw->prefs_need_restart) {
+  if (!mainw->prefs_need_restart) {
     mainw->prefs_need_restart = needs_restart;
   }
 
@@ -4872,6 +4952,12 @@ void on_prefs_apply_clicked(LiVESButton *button, livespointer user_data) {
   }
 
   mainw->prefs_changed = 0;
+
+  if (colours_changed) {
+    // force reshow of window
+    on_prefs_revert_clicked(button,NULL);
+  }
+
 
 }
 

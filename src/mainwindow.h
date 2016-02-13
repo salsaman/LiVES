@@ -91,6 +91,17 @@
 #define DEFAULT_FRAME_HSIZE ((int)(320.*widget_opts.scale))
 #define DEFAULT_FRAME_VSIZE ((int)(200.*widget_opts.scale))
 
+
+#define FRAMEBLANK_MIN_WIDTH ((int)(240.*widget_opts.scale))
+#define FRAMEBLANK_MAX_WIDTH ((int)(400.*widget_opts.scale))
+
+#define FRAMEBLANK_MIN_HEIGHT ((int)(180.*widget_opts.scale))
+#define FRAMEBLANK_MAX_HEIGHT ((int)(300.*widget_opts.scale))
+
+#define IMSEP_MAX_HEIGHT ((int)(86.*widget_opts.scale))
+#define IMSEP_MAX_WIDTH (mainw->scr_width-20)
+
+
 #define MAIN_SPIN_SPACER ((int)52.*widget_opts.scale) ///< pixel spacing for start/end spins for clip and multitrack editors
 
 /// blank label to show so our message dialogs are not too small
@@ -313,7 +324,7 @@ typedef struct {
   LiVESSList *clips_group;
 
   /// sets
-  char set_name[256];   // actually 128 is the limit now, filesystem encoding
+  char set_name[256];   // actually 128 is the (soft) limit now, filesystem encoding
 
   // playback
   boolean faded;
@@ -830,6 +841,7 @@ typedef struct {
   LiVESWidget *preview_image;
   LiVESWidget *preview_spinbutton;
   LiVESWidget *preview_scale;
+  LiVESWidget *preview_hbox;
   int preview_frame;
   ulong preview_spin_func;
   int prv_link;
@@ -1211,6 +1223,10 @@ typedef struct {
   boolean interactive;
 
   int fc_buttonresponse;
+
+  char frameblank_path[PATH_MAX];
+  char sepimg_path[PATH_MAX];
+
   ////////////////////
 
 } mainwindow;

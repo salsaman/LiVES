@@ -538,8 +538,12 @@ static boolean pre_init(void) {
 
   needs_update=FALSE;
 
-  set_palette_colours();
+  memset(mainw->sepimg_path,0,1);
+  memset(mainw->frameblank_path,0,1);
 
+  mainw->imsep=mainw->imframe=NULL;
+
+  set_palette_colours();
 
   get_pref("cdplay_device",prefs->cdplay_device,256);
   prefs->warning_mask=(uint32_t)get_int_pref("lives_warning_mask");
@@ -1123,6 +1127,7 @@ static void lives_init(_ign_opts *ign_opts) {
   mainw->afbuffer_clients=0;
 
   memset(mainw->recent_file,0,1);
+
   /////////////////////////////////////////////////// add new stuff just above here ^^
 
 
@@ -1598,7 +1603,7 @@ static void lives_init(_ign_opts *ign_opts) {
         lives_setenv("WEED_PLUGIN_PATH",weed_plugin_path);
         needs_free=TRUE;
       }
-      snprintf(prefs->weed_plugin_path,PATH_MAX,"%s",weed_plugin_path);
+      lives_snprintf(prefs->weed_plugin_path,PATH_MAX,"%s",weed_plugin_path);
       if (needs_free) lives_free(weed_plugin_path);
 
       needs_free=FALSE;
@@ -1611,7 +1616,7 @@ static void lives_init(_ign_opts *ign_opts) {
         lives_setenv("FREI0R_PATH",frei0r_path);
         needs_free=TRUE;
       }
-      snprintf(prefs->frei0r_path,PATH_MAX,"%s",frei0r_path);
+      lives_snprintf(prefs->frei0r_path,PATH_MAX,"%s",frei0r_path);
       if (needs_free) lives_free(frei0r_path);
 
       needs_free=FALSE;
@@ -1623,7 +1628,7 @@ static void lives_init(_ign_opts *ign_opts) {
         lives_setenv("LADSPA_PATH",ladspa_path);
         needs_free=TRUE;
       }
-      snprintf(prefs->ladspa_path,PATH_MAX,"%s",ladspa_path);
+      lives_snprintf(prefs->ladspa_path,PATH_MAX,"%s",ladspa_path);
       if (needs_free) lives_free(ladspa_path);
 
       splash_msg(_("Loading realtime effect plugins..."),.6);
@@ -2144,9 +2149,7 @@ capability *get_capabilities(void) {
 
   lives_snprintf(capable->home_dir,PATH_MAX,"%s\\Application Data\\LiVES",g_get_home_dir());
 #endif
-
-  g_snprintf(capable->system_tmpdir,PATH_MAX,"%s",g_get_tmp_dir());
-
+  lives_snprintf(capable->system_tmpdir,PATH_MAX,"%s",g_get_tmp_dir());
 #endif
 
 #ifdef GUI_QT

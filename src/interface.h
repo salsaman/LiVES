@@ -1,6 +1,6 @@
 // interface.h
 // LiVES
-// (c) G. Finch 2003 - 2012 <salsaman@gmail.com>
+// (c) G. Finch 2003 - 2016 <salsaman@gmail.com>
 // Released under the GNU GPL 3 or later
 // see file ../COPYING for licensing details
 
@@ -22,12 +22,12 @@ LiVESWidget *create_cleardisk_advanced_dialog(void);
 
 typedef struct {
   LiVESWidget *dialog;
-  LiVESWidget *textview24;
-  LiVESWidget *textview25;
-  LiVESWidget *textview26;
-  LiVESWidget *textview27;
-  LiVESWidget *textview28;
-  LiVESWidget *textview29;
+  LiVESWidget *textview_type;
+  LiVESWidget *textview_fps;
+  LiVESWidget *textview_size;
+  LiVESWidget *textview_frames;
+  LiVESWidget *textview_vtime;
+  LiVESWidget *textview_fsize;
   LiVESWidget *textview_ltime;
   LiVESWidget *textview_rtime;
   LiVESWidget *textview_lrate;
@@ -108,12 +108,14 @@ typedef struct {
 #define LIVES_PREVIEW_TYPE_VIDEO_AUDIO 1
 #define LIVES_PREVIEW_TYPE_AUDIO_ONLY 2
 #define LIVES_PREVIEW_TYPE_RANGE 3
+#define LIVES_PREVIEW_TYPE_IMAGE_ONLY 4
 
+#define LIVES_FILE_SELECTION_UNDEFINED 0
 #define LIVES_FILE_SELECTION_VIDEO_AUDIO 1
 #define LIVES_FILE_SELECTION_AUDIO_ONLY 2
 #define LIVES_FILE_SELECTION_VIDEO_AUDIO_MULTI 3
 #define LIVES_FILE_SELECTION_VIDEO_RANGE 4
-
+#define LIVES_FILE_SELECTION_IMAGE_ONLY 5
 
 
 aud_dialog_t *create_audfade_dialog(int type);
@@ -131,7 +133,7 @@ void add_to_playframe(void);
 LiVESWidget *create_cdtrack_dialog(int type, livespointer user_data);
 LiVESTextView *create_output_textview(void);
 char *choose_file(const char *dir, const char *fname, char **const filt, LiVESFileChooserAction act, const char *title, LiVESWidget *extra);
-LiVESWidget *choose_file_with_preview(const char *dir, const char *title, int preview_type);
+LiVESWidget *choose_file_with_preview(const char *dir, const char *title, char **const filt, int preview_type);
 void add_suffix_check(LiVESBox *box, const char *ext);
 
 
@@ -147,10 +149,16 @@ text_window *textwindow;
 
 #define MIN_MSGBOX_WIDTH ((int)(mainw->scr_width>1024?(820.*widget_opts.scale):600))
 
+// textboxes for clip info
 #define TB_WIDTH ((int)(200.*widget_opts.scale))
 #define TB_HEIGHT_VID ((int)(80.*widget_opts.scale))
 #define TB_HEIGHT_AUD ((int)(50.*widget_opts.scale))
 
-#define RW_ENTRY_DISPWIDTH 40
+// rename window entry
+#define RW_ENTRY_DISPWIDTH ((int)(40.*widget_opts.scale))
+
+// download text entry
+#define STD_ENTRY_WIDTH ((int)(80.*widget_opts.scale))
+#define SHORT_ENTRY_WIDTH ((int)(32.*widget_opts.scale))
 
 #endif

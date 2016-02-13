@@ -561,6 +561,8 @@ typedef struct {
   LiVESWidget *ladspa_entry;
   LiVESWidget *cdda_hbox;
   LiVESWidget *midi_hbox;
+  LiVESWidget *frameblank_entry;
+  LiVESWidget *sepimg_entry;
   LiVESTreeSelection *selection;
   boolean needs_restart;
 } _prefsw;

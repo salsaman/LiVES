@@ -429,7 +429,7 @@ static boolean call_file_choose_with_preview(livespointer data) {
   if (mainw!=NULL&&!mainw->go_away&&!mainw->is_processing) {
     if (fdata->preview_type==LIVES_FILE_CHOOSER_VIDEO_AUDIO) preview_type=LIVES_FILE_SELECTION_VIDEO_AUDIO;
     else preview_type=LIVES_FILE_SELECTION_AUDIO_ONLY;
-    chooser=choose_file_with_preview(fdata->dir, fdata->title, preview_type);
+    chooser=choose_file_with_preview(fdata->dir, fdata->title, NULL, preview_type);
     response=lives_dialog_run(LIVES_DIALOG(chooser));
     end_fs_preview();
     mainw->fs_playarea=NULL;

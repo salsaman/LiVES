@@ -89,7 +89,7 @@ void widget_add_preview(LiVESWidget *widget, LiVESBox *for_preview, LiVESBox *fo
   LiVESWidget *fs_label;
 
 
-  if (preview_type==LIVES_PREVIEW_TYPE_VIDEO_AUDIO||preview_type==LIVES_PREVIEW_TYPE_RANGE) {
+  if (preview_type==LIVES_PREVIEW_TYPE_VIDEO_AUDIO||preview_type==LIVES_PREVIEW_TYPE_RANGE||preview_type==LIVES_PREVIEW_TYPE_IMAGE_ONLY) {
     mainw->fs_playframe = lives_frame_new(NULL);
     mainw->fs_playalign = lives_alignment_new(0.,0.,1.,1.);
     mainw->fs_playarea = lives_event_box_new();
@@ -124,6 +124,8 @@ void widget_add_preview(LiVESWidget *widget, LiVESBox *for_preview, LiVESBox *fo
     preview_button = lives_button_new_with_mnemonic(_("Click here to _Preview any selected audio file"));
   } else if (preview_type==LIVES_PREVIEW_TYPE_RANGE) {
     preview_button = lives_button_new_with_mnemonic(_("Click here to _Preview the video"));
+  } else {
+    preview_button = lives_button_new_with_mnemonic(_("Click here to _Preview the file"));
   }
 
 
@@ -413,33 +415,33 @@ lives_clipinfo_t *create_clip_info_window(int audio_channels, boolean is_mt) {
                        (LiVESAttachOptions)(LIVES_FILL|LIVES_EXPAND),
                        (LiVESAttachOptions)(0), 0, 0);
 
-    filew->textview24 = vid_text_view_new();
-    lives_table_attach(LIVES_TABLE(table), filew->textview24, 1, 2, 0, 1,
+    filew->textview_type = vid_text_view_new();
+    lives_table_attach(LIVES_TABLE(table), filew->textview_type, 1, 2, 0, 1,
                        (LiVESAttachOptions)(LIVES_FILL|LIVES_EXPAND),
                        (LiVESAttachOptions)(0), 0, 0);
 
-    filew->textview25 = vid_text_view_new();
-    lives_table_attach(LIVES_TABLE(table), filew->textview25, 3, 4, 0, 1,
+    filew->textview_fps = vid_text_view_new();
+    lives_table_attach(LIVES_TABLE(table), filew->textview_fps, 3, 4, 0, 1,
                        (LiVESAttachOptions)(LIVES_FILL|LIVES_EXPAND),
                        (LiVESAttachOptions)(0), 0, 0);
 
-    filew->textview26 = vid_text_view_new();
-    lives_table_attach(LIVES_TABLE(table), filew->textview26, 1, 2, 1, 2,
+    filew->textview_size = vid_text_view_new();
+    lives_table_attach(LIVES_TABLE(table), filew->textview_size, 1, 2, 1, 2,
                        (LiVESAttachOptions)(LIVES_FILL|LIVES_EXPAND),
                        (LiVESAttachOptions)(0), 0, 0);
 
-    filew->textview27 = vid_text_view_new();
-    lives_table_attach(LIVES_TABLE(table), filew->textview27, 3, 4, 1, 2,
+    filew->textview_frames = vid_text_view_new();
+    lives_table_attach(LIVES_TABLE(table), filew->textview_frames, 3, 4, 1, 2,
                        (LiVESAttachOptions)(LIVES_FILL|LIVES_EXPAND),
                        (LiVESAttachOptions)(0), 0, 0);
 
-    filew->textview28 = vid_text_view_new();
-    lives_table_attach(LIVES_TABLE(table), filew->textview28, 3, 4, 2, 3,
+    filew->textview_vtime = vid_text_view_new();
+    lives_table_attach(LIVES_TABLE(table), filew->textview_vtime, 3, 4, 2, 3,
                        (LiVESAttachOptions)(LIVES_FILL|LIVES_EXPAND),
                        (LiVESAttachOptions)(0), 0, 0);
 
-    filew->textview29 = vid_text_view_new();
-    lives_table_attach(LIVES_TABLE(table), filew->textview29, 1, 2, 2, 3,
+    filew->textview_fsize = vid_text_view_new();
+    lives_table_attach(LIVES_TABLE(table), filew->textview_fsize, 1, 2, 2, 3,
                        (LiVESAttachOptions)(LIVES_FILL|LIVES_EXPAND),
                        (LiVESAttachOptions)(0), 0, 0);
 
@@ -1099,7 +1101,7 @@ _entryw *create_location_dialog(int type) {
   hbox = lives_hbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(dialog_vbox), hbox, TRUE, TRUE, widget_opts.packing_height*2);
 
-  locw->entry = lives_standard_entry_new(type==1?_("URL : "):_("Youtube URL : "),FALSE,"",79,32768,LIVES_BOX(hbox),NULL);
+  locw->entry = lives_standard_entry_new(type==1?_("URL : "):_("Youtube URL : "),FALSE,"",STD_ENTRY_WIDTH,32768,LIVES_BOX(hbox),NULL);
 
   if (type==1) {
     hbox=lives_hbox_new(FALSE, 0);
@@ -1128,7 +1130,7 @@ _entryw *create_location_dialog(int type) {
     lives_box_pack_start(LIVES_BOX(dialog_vbox),hbox,TRUE,FALSE,widget_opts.packing_height);
 
     locw->dir_entry = lives_standard_entry_new(_("Download to _Directory : "),TRUE,mainw->vid_dl_dir,
-                      72.*widget_opts.scale,PATH_MAX,LIVES_BOX(hbox),NULL);
+                      STD_ENTRY_WIDTH,PATH_MAX,LIVES_BOX(hbox),NULL);
 
     lives_entry_set_editable(LIVES_ENTRY(locw->dir_entry),FALSE);
     lives_entry_set_max_length(LIVES_ENTRY(locw->dir_entry),PATH_MAX);
@@ -1146,7 +1148,7 @@ _entryw *create_location_dialog(int type) {
     lives_box_pack_start(LIVES_BOX(dialog_vbox),hbox,TRUE,FALSE,widget_opts.packing_height);
 
     locw->name_entry = lives_standard_entry_new(_("Download _File Name : "),TRUE,"",
-                       74.*widget_opts.scale,PATH_MAX,LIVES_BOX(hbox),NULL);
+                       STD_ENTRY_WIDTH - 6.,PATH_MAX,LIVES_BOX(hbox),NULL);
 
     lives_signal_connect(buttond, LIVES_WIDGET_CLICKED_SIGNAL, LIVES_GUI_CALLBACK(on_filesel_button_clicked), (livespointer)locw->dir_entry);
 
@@ -1950,19 +1952,19 @@ _commentsw *create_comments_dialog(lives_clip_t *sfile, char *filename) {
 
   lives_label_set_halignment(LIVES_LABEL(label), 0.5);
 
-  commentsw->title_entry = lives_standard_entry_new(NULL,FALSE,cfile->title,80,-1,NULL,NULL);
+  commentsw->title_entry = lives_standard_entry_new(NULL,FALSE,cfile->title,STD_ENTRY_WIDTH,-1,NULL,NULL);
 
   lives_table_attach(LIVES_TABLE(table), commentsw->title_entry, 1, 2, 0, 1,
                      (LiVESAttachOptions)(LIVES_EXPAND | LIVES_FILL),
                      (LiVESAttachOptions)(LIVES_EXPAND), 0, 0);
 
-  commentsw->author_entry = lives_standard_entry_new(NULL,FALSE,cfile->author,80,-1,NULL,NULL);
+  commentsw->author_entry = lives_standard_entry_new(NULL,FALSE,cfile->author,STD_ENTRY_WIDTH,-1,NULL,NULL);
 
   lives_table_attach(LIVES_TABLE(table), commentsw->author_entry, 1, 2, 1, 2,
                      (LiVESAttachOptions)(LIVES_EXPAND | LIVES_FILL),
                      (LiVESAttachOptions)(LIVES_EXPAND), 0, 0);
 
-  commentsw->comment_entry = lives_standard_entry_new(NULL,FALSE,cfile->comment,80,250,NULL,NULL);
+  commentsw->comment_entry = lives_standard_entry_new(NULL,FALSE,cfile->comment,STD_ENTRY_WIDTH,250,NULL,NULL);
 
   lives_table_attach(LIVES_TABLE(table), commentsw->comment_entry, 1, 2, 3, 4,
                      (LiVESAttachOptions)(LIVES_EXPAND | LIVES_FILL),
@@ -1990,7 +1992,7 @@ _commentsw *create_comments_dialog(lives_clip_t *sfile, char *filename) {
     hbox = lives_hbox_new(FALSE, 0);
     lives_box_pack_start(LIVES_BOX(vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
 
-    commentsw->subt_entry=lives_standard_entry_new(_("Subtitle file"),FALSE,NULL,32,-1,LIVES_BOX(hbox),NULL);
+    commentsw->subt_entry=lives_standard_entry_new(_("Subtitle file"),FALSE,NULL,SHORT_ENTRY_WIDTH,-1,LIVES_BOX(hbox),NULL);
 
     buttond = lives_button_new_with_mnemonic(_("Browse..."));
 
@@ -2150,17 +2152,17 @@ char *choose_file(const char *dir, const char *fname, char **const filt, LiVESFi
     }
   }
 
-  if (extra_widget!=NULL && extra_widget!=mainw->LiVES) gtk_file_chooser_set_extra_widget(LIVES_FILE_CHOOSER(chooser),extra_widget);
+  if (extra_widget!=NULL && extra_widget!=mainw->LiVES) {
+    gtk_file_chooser_set_extra_widget(LIVES_FILE_CHOOSER(chooser),extra_widget);
+    if (palette->style&STYLE_1) {
+      GtkWidget *parent=lives_widget_get_parent(extra_widget);
 
-  if (palette->style&STYLE_1) {
-    GtkWidget *parent=lives_widget_get_parent(extra_widget);
-
-    while (parent!=NULL) {
-      lives_widget_set_fg_color(parent, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
-      lives_widget_set_bg_color(parent, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
-      parent=lives_widget_get_parent(parent);
+      while (parent!=NULL) {
+        lives_widget_set_fg_color(parent, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
+        lives_widget_set_bg_color(parent, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
+        parent=lives_widget_get_parent(parent);
+      }
     }
-
   }
 
   if (mainw->is_ready && palette->style&STYLE_1) {
@@ -2284,24 +2286,33 @@ rundlg:
 
 
 
-LiVESWidget *choose_file_with_preview(const char *dir, const char *title, int preview_type) {
-  // preview_type 1 - video and audio open (single - opensel)
+LiVESWidget *choose_file_with_preview(const char *dir, const char *title, char **const filt, int filesel_type) {
+  // filesel_type 1 - video and audio open (single - opensel)
   //LIVES_FILE_SELECTION_VIDEO_AUDIO
 
   // preview type 2 - import audio
   // LIVES_FILE_SELECTION_AUDIO_ONLY
 
-  // preview_type 3 - video and audio open (multiple)
+  // filesel_type 3 - video and audio open (multiple)
   //LIVES_FILE_SELECTION_VIDEO_AUDIO_MULTI
 
   // type 4
   // LIVES_FILE_SELECTION_VIDEO_RANGE
 
+  // type 5
+  // LIVES_FILE_SELECTION_IMAGE_ONLY
+
+
+  // unfortunately we cannot simply run this and return a filename, in case there is a selection
+
+
   LiVESWidget *chooser;
 
-  chooser=(LiVESWidget *)choose_file(dir,NULL,NULL,LIVES_FILE_CHOOSER_ACTION_OPEN,title,mainw->LiVES);
+  int preview_type;
 
-  if (preview_type==LIVES_FILE_SELECTION_VIDEO_AUDIO_MULTI) {
+  chooser=(LiVESWidget *)choose_file(dir,NULL,filt,LIVES_FILE_CHOOSER_ACTION_OPEN,title,mainw->LiVES);
+
+  if (filesel_type==LIVES_FILE_SELECTION_VIDEO_AUDIO_MULTI) {
 #ifdef GUI_GTK
     gtk_file_chooser_set_select_multiple(LIVES_FILE_CHOOSER(chooser),TRUE);
 #endif
@@ -2311,12 +2322,22 @@ LiVESWidget *choose_file_with_preview(const char *dir, const char *title, int pr
 #endif
   }
 
+  switch (filesel_type) {
+  case LIVES_FILE_SELECTION_VIDEO_AUDIO:
+  case LIVES_FILE_SELECTION_VIDEO_AUDIO_MULTI:
+    preview_type=LIVES_PREVIEW_TYPE_VIDEO_AUDIO;
+    break;
+  case LIVES_FILE_SELECTION_IMAGE_ONLY:
+    preview_type=LIVES_PREVIEW_TYPE_IMAGE_ONLY;
+    break;
+  default:
+    preview_type=LIVES_PREVIEW_TYPE_AUDIO_ONLY;
+  }
+
   widget_add_preview(chooser,LIVES_BOX(lives_dialog_get_content_area(LIVES_DIALOG(chooser))),
                      LIVES_BOX(lives_dialog_get_content_area(LIVES_DIALOG(chooser))),
                      LIVES_BOX(lives_dialog_get_content_area(LIVES_DIALOG(chooser))),
-                     (preview_type==LIVES_FILE_SELECTION_VIDEO_AUDIO||
-                      preview_type==LIVES_FILE_SELECTION_VIDEO_AUDIO_MULTI)?LIVES_PREVIEW_TYPE_VIDEO_AUDIO:
-                     LIVES_PREVIEW_TYPE_AUDIO_ONLY);
+                     preview_type);
 
   if (prefs->fileselmax) {
     lives_window_set_resizable(LIVES_WINDOW(chooser),TRUE);
@@ -2408,7 +2429,7 @@ _entryw *create_cds_dialog(int type) {
     lives_box_pack_start(LIVES_BOX(dialog_vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
 
     cdsw->entry = lives_standard_entry_new(_("Clip set _name"),TRUE,strlen(mainw->set_name)?mainw->set_name:"",
-                                           32.*widget_opts.scale,128.*widget_opts.scale,LIVES_BOX(hbox),NULL);
+                                           SHORT_ENTRY_WIDTH,128,LIVES_BOX(hbox),NULL);
 
     hbox = lives_hbox_new(FALSE, 0);
     lives_box_pack_start(LIVES_BOX(dialog_vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
